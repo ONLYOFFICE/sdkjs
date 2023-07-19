@@ -1508,7 +1508,11 @@ background-repeat: no-repeat;\
 		var viewer = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
 
 		viewer.registerEvent("onNeedPassword", function(){
-			_t.sendEvent("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.DRM);
+			if (_t.asc_checkNeedCallback("asc_onAdvancedOptions")) {
+				_t.sendEvent("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.DRM);
+			} else {
+				_t.sendEvent("asc_onError", c_oAscError.ID.ConvertationPassword, c_oAscError.Level.Critical);
+			}
 		});
 		viewer.registerEvent("onStructure", function(structure){
 			_t.sendEvent("asc_onViewerBookmarksUpdate", structure);
@@ -7990,9 +7994,7 @@ background-repeat: no-repeat;\
 				else
 				{
 					Document.RecalculateAllTables();
-					var data = {All : true};
-					Document.DrawingObjects.recalculate_(data);
-					Document.DrawingObjects.recalculateText_(data);
+					Document.DrawingObjects.recalculate();
 
 					if (!this.WordControl.IsReaderMode())
 						this.ChangeReaderMode();
@@ -10002,6 +10004,7 @@ background-repeat: no-repeat;\
 
 		if (oContentControl && oContentControl.GetContentControlType)
 		{
+			oContentControl.SkipSpecialContentControlLock(true);
 			if (c_oAscSdtLevelType.Block === oContentControl.GetContentControlType())
 			{
 				isLocked = oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {
@@ -10029,6 +10032,7 @@ background-repeat: no-repeat;\
 			}
 
 			Id = oContentControl.GetId();
+			oContentControl.SkipSpecialContentControlLock(false);
 		}
 
 		if (false === isLocked)
@@ -12233,6 +12237,22 @@ background-repeat: no-repeat;\
 
 		oLogicDocument.ChangeTextCase(nType);
 	};
+	asc_docs_api.prototype.asc_SetSmartParagraphSelection = function(isSmart)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		logicDocument.SetSmartParagraphSelection(isSmart);
+	};
+	asc_docs_api.prototype.asc_IsSmartParagraphSelection = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+		
+		return logicDocument.IsSmartParagraphSelection(isSmart);
+	};
 
 	//comparison
 	asc_docs_api.prototype.asc_CompareDocumentUrl = function (sUrl, oOptions, token) {
@@ -14377,6 +14397,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_AddCrossRefToCaption']                  = asc_docs_api.prototype.asc_AddCrossRefToCaption;
 
 	asc_docs_api.prototype['asc_ChangeTextCase']                        = asc_docs_api.prototype.asc_ChangeTextCase;
+	asc_docs_api.prototype['asc_putSmartParagraphSelection']            = asc_docs_api.prototype.asc_SetSmartParagraphSelection;
+	asc_docs_api.prototype['asc_isSmartParagraphSelection']             = asc_docs_api.prototype.asc_IsSmartParagraphSelection;
 
     asc_docs_api.prototype['SetTableDrawMode']         					= asc_docs_api.prototype.SetTableDrawMode;
     asc_docs_api.prototype['SetTableEraseMode']         				= asc_docs_api.prototype.SetTableEraseMode;

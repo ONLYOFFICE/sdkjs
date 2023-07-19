@@ -13710,6 +13710,22 @@ QueryTableField.prototype.clone = function() {
 		this.init();
 	};
 
+	CHeaderFooter.prototype.isEmpty = function () {
+		if (this.alignWithMargins === null &&
+			this.differentFirst === null &&
+			this.differentOddEven === null &&
+			this.scaleWithDoc === null &&
+			this.evenFooter === null &&
+			this.evenHeader === null &&
+			this.firstFooter === null &&
+			this.firstHeader === null &&
+			this.oddFooter === null &&
+			this.oddHeader === null) {
+			return true;
+		}
+		return false;
+	};
+
 
 	function CHeaderFooterData(str) {
 		this.str = str;
@@ -15508,6 +15524,227 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
+	function CRowColBreaks(/*ws*/) {
+		this.count = null;
+		this.manualBreakCount = null;
+		this.breaks = [];
+
+		return this;
+	}
+	CRowColBreaks.prototype.clone = function () {
+		var res = new CRowColBreaks();
+		res.count = this.count;
+		res.manualBreakCount = this.count;
+
+		for (let i = 0 ; i < this.breaks.length; i++) {
+			res.breaks.push(this.breaks[i].clone());
+		}
+
+		return res;
+	};
+	CRowColBreaks.prototype.setCount = function (val) {
+		this.count = val;
+	};
+	CRowColBreaks.prototype.setManualBreakCount = function (val) {
+		this.manualBreakCount = val;
+	};
+	CRowColBreaks.prototype.pushBreak = function (val) {
+		this.breaks.push(val);
+	};
+	CRowColBreaks.prototype.getCount = function () {
+		return this.count;
+	};
+	CRowColBreaks.prototype.getManualBreakCount = function () {
+		return this.manualBreakCount;
+	};
+	CRowColBreaks.prototype.getBreaks = function () {
+		return this.breaks;
+	};
+	CRowColBreaks.prototype.isBreak = function (index, opt_min, opt_max) {
+		if (this.count > 0) {
+			for (let i = 0; i < this.breaks.length; i++) {
+				if (this.breaks[i].isBreak(index, opt_min, opt_max)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	};
+	CRowColBreaks.prototype.forEach = function (callback) {
+		for (var i = 0, l = this.breaks.length; i < l; ++i) {
+			if (callback(this.breaks[i], i)) {
+				break;
+			}
+		}
+	};
+	CRowColBreaks.prototype.containsBreak = function (id, min, max) {
+		let res = false;
+		this.forEach(function (breaksElem) {
+			if (breaksElem.id === id) {
+				res = true;
+				return true;
+			}
+		});
+		return res;
+	};
+	CRowColBreaks.prototype.getBreak = function (id) {
+		let res = null;
+		this.forEach(function (breaksElem) {
+			if (breaksElem.id === id) {
+				res = breaksElem;
+				return true;
+			}
+		});
+		return res;
+	};
+
+	CRowColBreaks.prototype.changeBreak = function (idFrom, idTo, min, max, man, pt) {
+		let breakElem = this.getBreak(idFrom);
+		if (breakElem) {
+			let res = breakElem.set(idTo, min, max, man, pt);
+			this.reSortingBreaks();
+			return res;
+		}
+	};
+
+	CRowColBreaks.prototype.addBreak = function (id, min, max, man, pt) {
+		if (!id) {
+			return false;
+		}
+		let newBreak = new CBreak();
+		newBreak.set(id, min, max, man, pt);
+
+		let res = this._addBreak(newBreak);
+		this.reSortingBreaks();
+		return res;
+	};
+
+	CRowColBreaks.prototype._addBreak = function (newBreak) {
+		this.breaks.push(newBreak);
+		if (this.manualBreakCount === null) {
+			this.manualBreakCount = 0;
+		}
+		if (this.count === null) {
+			this.count = 0;
+		}
+		this.manualBreakCount++;
+		this.count++;
+		return true;
+	};
+
+	CRowColBreaks.prototype.removeBreak = function (id, min, max) {
+		let isDeleted = false;
+		for (let i = 0; i < this.breaks.length; i++) {
+			if (this.breaks[i].isBreak(id, min, max)) {
+				this.breaks.splice(i, 1);
+				isDeleted = true;
+				this.manualBreakCount--;
+				this.count--;
+				break;
+			}
+		}
+		this.reSortingBreaks();
+		return isDeleted;
+	};
+
+	CRowColBreaks.prototype.reSortingBreaks = function () {
+		this.breaks.sort(function sortArr(a, b) {
+			return a.id - b.id;
+		});
+	};
+
+
+	function CBreak(/*ws*/) {
+		this.id = null;
+		this.min = null;
+		this.max = null;
+
+		this.man = null;
+		this.pt = null;
+
+		return this;
+	}
+	CBreak.prototype.clone = function () {
+		var res = new CBreak();
+		res.id = this.id;
+
+		res.min = this.min;
+		res.max = this.max;
+
+		res.man = this.man;
+		res.pt = this.pt;
+
+		return res;
+	};
+	CBreak.prototype.setId = function (val) {
+		this.id = val;
+	};
+	CBreak.prototype.setMan = function (val) {
+		this.man = val;
+	};
+	CBreak.prototype.setMax = function (val) {
+		this.max = val;
+	};
+	CBreak.prototype.setMin = function (val) {
+		this.min = val;
+	};
+	CBreak.prototype.setPt = function (val) {
+		this.pt = val;
+	};
+	CBreak.prototype.getId = function () {
+		return this.id;
+	};
+	CBreak.prototype.getMan = function () {
+		return this.man;
+	};
+	CBreak.prototype.getMax = function () {
+		return this.max;
+	};
+	CBreak.prototype.getMin = function () {
+		return this.min;
+	};
+	CBreak.prototype.getPt = function () {
+		return this.pt;
+	};
+	CBreak.prototype.isBreak = function (index, opt_min, opt_max) {
+		let res = this.id === index;
+		if (res) {
+			if (opt_min != null && opt_max != null) {
+				if (this.min == null && this.max == null) {
+					res = false;
+				} else {
+					if (this.min > opt_max || this.max < opt_min) {
+						res = false;
+					}
+				}
+			}
+		}
+		return res;
+	};
+	CBreak.prototype.set = function (id, min, max, man, pt) {
+		let isChanged = false;
+		if (id !== this.getId()) {
+			this.setId(id);
+			isChanged = true;
+		}
+		if (min !== this.getMin()) {
+			this.setMin(min);
+			isChanged = true;
+		}
+		if (max !== this.getMax()) {
+			this.setMax(max);
+			isChanged = true;
+		}
+		if (man !== this.getMan()) {
+			this.setMan(man);
+			isChanged = true;
+		}
+		if (pt !== this.getPt()) {
+			this.setPt(pt);
+			isChanged = true;
+		}
+		return isChanged ? this : null;
+	};
 
 
 
@@ -15981,6 +16218,9 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_getCell"] = prot.asc_getCell;
 	prot["asc_getValue"] = prot.asc_getValue;
 	prot["asc_getFormula"] = prot.asc_getFormula;
+
+	window["AscCommonExcel"].CRowColBreaks = CRowColBreaks;
+	window["AscCommonExcel"].CBreak = CBreak;
 
 
 })(window);

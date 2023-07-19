@@ -62,7 +62,8 @@
 		GetMMPerDot : function(value){return value / this.GetDotsPerMM(1);},
 		GetDotsPerMM : function(value) {return 72;},
 		EndTrackTable : function() {},
-		SetCurrentPage : function(pageNum) {}
+		SetCurrentPage : function(pageNum) {},
+		SelectClear : function() {}
 	};
 
 	drawingDocument.CanvasHit = document.createElement('canvas');

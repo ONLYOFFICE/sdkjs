@@ -1817,6 +1817,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
         if (DrawingDocument)
         	DrawingDocument.m_oLogicDocument = this;
     }
+	this.MainDocument = false !== isMainLogicDocument;
     //__________________________________________________________________________________________________________________
 
     this.Id = this.IdCounter.Get_NewId();
@@ -2035,7 +2036,9 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.ForceDrawFormHighlight    = null;  // null - редактор решает рисовать или нет в зависимости от других параметров
 	this.ConcatParagraphsOnRemove  = false; // Во время удаления объединять ли первый и последний параграфы
 	this.StartCheckTextFormFormat  = false; // Флаг, что в данный момент мы уже проверяем формат текстовых форм, чтобы не вызывать повторно
+	this.StartCheckCCPlaceholder   = false; //
 	this.CompileStyleOnLoad        = false; // Компилировать ли принудительно стили во время загрузки
+	this.SmartParagraphSelection   = true;  // Выделять ли автоматически знак параграфа, когда все содержимое параграфа выделено
 
 
 	this.DrawTableMode = {
@@ -3203,8 +3206,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 
     History.Reset_RecalcIndex();
 
-    this.DrawingObjects.recalculate_(RecalcData.Drawings);
-    this.DrawingObjects.recalculateText_(RecalcData.Drawings);
+    this.DrawingObjects.recalculate(RecalcData.Drawings);
 
     // 1. Пересчитываем все автофигуры, которые нужно пересчитать. Изменения в них ни на что не влияют.
     for (var GraphIndex = 0; GraphIndex < RecalcData.Flow.length; GraphIndex++)
@@ -7406,6 +7408,11 @@ CDocument.prototype.Internal_GetContentPosByXY = function(X, Y, nCurPage, Column
 };
 CDocument.prototype.RemoveSelection = function(bNoCheckDrawing)
 {
+	// Не отправляем во время действия, потому что во время некоторых действий это может происходить по нескольку раз
+	// Если появится необходимость, то это надо обработать на окончании действия
+	if (this.IsTextSelectionUse() && !this.Action.Start)
+		this.private_OnSelectionCancel();
+	
 	this.ResetWordSelection();
 	this.Controller.RemoveSelection(bNoCheckDrawing);
 };
@@ -8516,6 +8523,9 @@ CDocument.prototype.IsInContentControl = function(X, Y, nPageAbs)
 };
 CDocument.prototype.IsUseInDocument = function(Id)
 {
+	if (!this.MainDocument)
+		return false;
+	
 	if (undefined === Id || null === Id)
 		return true;
 
@@ -9544,7 +9554,7 @@ CDocument.prototype.OnKeyDown = function(e)
 					if ((oItemRun.Get_Type() === 49 || oItemRun.Get_Type() === 39) && (oItemRun.Parent === oItemParent || oItemParent == null))
 					{
 						var oItemParent = oItemRun.Parent;
-						oItemRun.ChangeUnicodeText(ListForUnicode, oSettings);
+						oItemRun.CollectTextToUnicode(ListForUnicode, oSettings);
 						if (ListForUnicode.length > 6) break;
 						if (oItemRun.Selection.EndPos === oItemRun.Content.length && oItemRun.Selection.Use === true && (oSettings.nDirection === 0 || oSettings.nDirection === 1))
 						{
@@ -10299,7 +10309,7 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 				this.FinalizeAction();
 			}
 
-			if (this.Api.isFormatPainterOn())
+			if (this.Api.canTurnOffFormatPainter())
 				this.Api.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
 		}
 		else if (true === this.Api.isMarkerFormat && true === this.IsTextSelectionUse())
@@ -11978,7 +11988,10 @@ CDocument.prototype.UpdateContentControlFocusState = function(oCC)
 		return;
 
 	if (this.FocusCC)
+	{
 		this.CheckTextFormFormatOnBlur(this.FocusCC);
+		this.CheckContentControlPlaceholderOnBlur(this.FocusCC);
+	}
 
 	if (this.FocusCC && this.Api)
 		this.Api.asc_OnBlurContentControl(this.FocusCC);
@@ -12032,6 +12045,41 @@ CDocument.prototype.CheckTextFormFormatOnBlur = function(oForm)
 	this.History.ClearFormFillingInfo();
 
 	this.StartCheckTextFormFormat = false;
+};
+CDocument.prototype.CheckContentControlPlaceholderOnBlur = function(contentControl)
+{
+	if (!contentControl
+		|| !contentControl.IsUseInDocument()
+		|| contentControl.IsForm()
+		|| contentControl.IsPlaceHolder()
+		|| !contentControl.IsEmpty()
+		|| this.StartCheckCCPlaceholder)
+		return;
+	
+	this.StartCheckCCPlaceholder = true;
+	
+	let state = this.SaveDocumentState();
+	contentControl.SelectContentControl();
+	contentControl.SkipSpecialContentControlLock(true);
+	
+	if (this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, this.IsFillingFormMode()))
+	{
+		contentControl.SkipSpecialContentControlLock(false);
+		this.LoadDocumentState(state);
+		this.StartCheckCCPlaceholder = false;
+		return;
+	}
+	contentControl.SkipSpecialContentControlLock(false);
+	contentControl.MoveCursorToContentControl(true);
+	this.StartAction(AscDFH.historydescription_Document_FillContentControlPlaceholderOnBlur, this.GetSelectionState());
+	
+	contentControl.ReplaceContentWithPlaceHolder();
+	this.LoadDocumentState(state);
+	this.Recalculate();
+	this.UpdateInterface();
+	this.FinalizeAction();
+	
+	this.StartCheckCCPlaceholder = false;
 };
 CDocument.prototype.private_UpdateFormInnerText = function(form, text)
 {
@@ -16056,6 +16104,10 @@ CDocument.prototype.GetColumnSize = function()
 CDocument.prototype.private_OnSelectionEnd = function()
 {
 	this.Api.sendEvent("asc_onSelectionEnd");
+};
+CDocument.prototype.private_OnSelectionCancel = function()
+{
+	this.Api.sendEvent("asc_onSelectionCancel");
 };
 CDocument.prototype.AddPageCount = function()
 {
@@ -22136,10 +22188,14 @@ CDocument.prototype.RemoveContentControl = function(Id)
 	var oContentControl = this.TableId.Get_ById(Id);
 	if (!oContentControl || !oContentControl.GetContentControlType)
 		return;
-
-	if (c_oAscSdtLevelType.Block === oContentControl.GetContentControlType() && oContentControl.Parent)
+	
+	// TODO: По хорошему надо сделать метод у CStdBase и перенести реализации в соответствующие классы
+	this.RemoveSelection();
+	if (oContentControl.IsBlockLevel())
 	{
-		this.RemoveSelection();
+		if (!oContentControl.Parent)
+			return;
+		
 		var oDocContent = oContentControl.Parent;
 		oDocContent.Update_ContentIndexing();
 		var nIndex = oContentControl.GetIndex();
@@ -22164,29 +22220,30 @@ CDocument.prototype.RemoveContentControl = function(Id)
 			oDocContent.CurPos.ContentPos = Math.max(0, Math.min(oDocContent.GetElementsCount() - 1, nCurPos - 1));
 		}
 	}
-	else if (c_oAscSdtLevelType.Inline === oContentControl.GetContentControlType())
+	else if (oContentControl.IsInlineLevel())
 	{
-		this.SelectContentControl(Id);
-		this.Remove(-1, false, false, false);
+		oContentControl.RemoveThisFromParent(true);
 	}
 };
 CDocument.prototype.RemoveContentControlWrapper = function(Id)
 {
 	if (!this.CanPerformAction())
 		return;
-
-	var oContentControl = this.TableId.Get_ById(Id);
-	if (!oContentControl)
+	
+	let contentControl = this.TableId.Get_ById(Id);
+	if (!contentControl)
 		return;
-
+	
 	this.StartAction();
-
-	if (oContentControl.IsForm())
-	{
-		oContentControl.RemoveFormPr();
-	}
-
-	oContentControl.RemoveContentControlWrapper();
+	
+	if (contentControl.IsForm())
+		contentControl.RemoveFormPr();
+	
+	if (contentControl.IsPlaceHolder())
+		this.RemoveContentControl(Id);
+	else
+		contentControl.RemoveContentControlWrapper();
+	
 	this.Recalculate();
 	this.UpdateInterface();
 	this.UpdateSelection();
@@ -24875,6 +24932,22 @@ CDocument.prototype.CheckFormAutoFit = function(oForm)
 		this.Action.Additional.FormAutoFit = [];
 
 	this.Action.Additional.FormAutoFit.push(oForm);
+};
+/**
+ * Выставляем настройку выделять знак параграфа, когда выделено все его содержимое
+ * @param {boolean} isUse
+ */
+CDocument.prototype.SetSmartParagraphSelection = function(isUse)
+{
+	this.SmartParagraphSelection = isUse;
+};
+/**
+ * Выделять ли знак параграфа, когда выделено все его содержимое
+ * @returns {boolean}
+ */
+CDocument.prototype.IsSmartParagraphSelection = function()
+{
+	return this.SmartParagraphSelection;
 };
 /**
  * Функция для рисования таблицы с помощью мыши

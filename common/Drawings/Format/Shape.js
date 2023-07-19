@@ -4719,13 +4719,6 @@
 			return Math.PI * 0.5 + Math.atan2(px - this.extX * 0.5, py - this.extY * 0.5);
 		};
 
-
-		CShape.prototype.recalculateGeometry = function () {
-			if (this.spPr && isRealObject(this.spPr.geometry)) {
-				var transform = this.getTransform();
-				this.spPr.geometry.Recalculate(transform.extX, transform.extY);
-			}
-		};
 		CShape.prototype.drawAdjustments = function (drawingDocument) {
 			if (this.spPr && isRealObject(this.spPr.geometry) && this.canChangeAdjustments()) {
 				this.spPr.geometry.drawAdjustments(drawingDocument, this.transform, false);
@@ -5061,7 +5054,7 @@
 			var _transform = transform ? transform : this.transform;
 			var _transform_text = transformText ? transformText : this.transformText;
 			var _transform_text2 = options.transformText2 || this.transformText2;
-			var geometry = this.calcGeometry || this.spPr && this.spPr.geometry;
+			var geometry = this.getGeometry();
 
 			if (graphics.IsSlideBoundsCheckerType === true) {
 
@@ -5896,7 +5889,7 @@
 			}
 			var invert_transform;
 			var t_x, t_y, ret;
-			var _calcGeom = this.calcGeometry || (this.spPr && this.spPr.geometry);
+			var _calcGeom = this.getGeometry();
 			var _dist;
 			if (global_mouseEvent && global_mouseEvent.AscHitToHandlesEpsilon) {
 				_dist = global_mouseEvent.AscHitToHandlesEpsilon;
@@ -5982,7 +5975,7 @@
 				}
 				var x_t = invert_transform.TransformPointX(x, y);
 				var y_t = invert_transform.TransformPointY(x, y);
-				var oGeometry = this.spPr && this.spPr.geometry || this.calcGeometry;
+				var oGeometry = this.getGeometry();
 				if (isRealObject(oGeometry) && oGeometry.pathLst.length > 0 && !(this.getObjectType && this.getObjectType() === AscDFH.historyitem_type_ChartSpace))
 					return oGeometry.hitInInnerArea(this.getCanvasContext(), x_t, y_t);
 				if (this.getObjectType() === AscDFH.historyitem_type_Shape) {
@@ -6211,17 +6204,10 @@
 		};
 
 		CShape.prototype.recalculateBounds = function () {
-			var boundsChecker = new AscFormat.CSlideBoundsChecker();
-			this.draw(boundsChecker, this.localTransform, this.localTransformText, undefined, {transformText2: this.localTransformText2});
-			this.bounds.l = boundsChecker.Bounds.min_x;
-			this.bounds.t = boundsChecker.Bounds.min_y;
-			this.bounds.r = boundsChecker.Bounds.max_x;
-			this.bounds.b = boundsChecker.Bounds.max_y;
-
-			this.bounds.x = this.bounds.l;
-			this.bounds.y = this.bounds.t;
-			this.bounds.w = this.bounds.r - this.bounds.l;
-			this.bounds.h = this.bounds.b - this.bounds.t;
+			const oBoundsChecker = new AscFormat.CSlideBoundsChecker();
+			this.draw(oBoundsChecker, this.localTransform, this.localTransformText, undefined, {transformText2: this.localTransformText2});
+			const oBounds = oBoundsChecker.Bounds;
+			this.bounds.reset(oBounds.min_x, oBounds.min_y, oBounds.max_x, oBounds.max_y);
 		};
 
 		CShape.prototype.checkContentWordArt = function (oContent) {
@@ -6688,6 +6674,126 @@
 			}
 		};
 
+		CShape.prototype.getText = function() {
+			const oContent = this.getDocContent();
+			if(!oContent) {
+				return "";
+			}
+			oContent.SetApplyToAll(true);
+			const sText = oContent.GetSelectedText(true, {});
+			oContent.SetApplyToAll(false);
+			return sText;
+		};
+
+		CShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
+
+			if(!oDrawingToCheck) {
+				return oCurCandidate;
+			}
+			const nOwnType = this.getObjectType();
+			const nCheckType = oDrawingToCheck.getObjectType();
+			if(nOwnType !== nCheckType) {
+				return oCurCandidate;
+			}
+			const sName = this.getOwnName();
+			const sText = this.getText();
+			const sPreset = this.getPresetGeom();
+			let sOwnImageId, sCheckImageId, sCandidateImageId;
+			if(this.blipFill) {
+				sOwnImageId = this.blipFill.RasterImageId;
+			}
+			if(oDrawingToCheck.blipFill) {
+				sCheckImageId = oDrawingToCheck.blipFill.RasterImageId;
+			}
+			if(oCurCandidate) {
+				if(oCurCandidate.blipFill) {
+					sCandidateImageId = oCurCandidate.blipFill.RasterImageId;
+				}
+			}
+			if(sName && sName.startsWith(AscFormat.OBJECT_MORPH_MARKER)) {
+				const sCheckName = oDrawingToCheck.getOwnName();
+				if(sName !== sCheckName) {
+					return oCurCandidate;
+				}
+			}
+			else {
+				if(sOwnImageId && sOwnImageId !== sCheckImageId) {
+					return oCurCandidate;
+				}
+				if(oDrawingToCheck.getText() !== sText) {
+					return oCurCandidate;
+				}
+				if(sPreset !== oDrawingToCheck.getPresetGeom()) {
+					return oCurCandidate;
+				}
+			}
+			if(!oCurCandidate) {
+				return oDrawingToCheck;
+			}
+
+			if(sOwnImageId) {
+				if(sCheckImageId !== sOwnImageId && sCandidateImageId === sOwnImageId) {
+					return oCurCandidate;
+				}
+				if(sCheckImageId === sOwnImageId && sCandidateImageId !== sOwnImageId) {
+					return oDrawingToCheck;
+				}
+			}
+			if(oDrawingToCheck.getText() !== sText && oCurCandidate.getText() === sText) {
+				return oCurCandidate;
+			}
+			if(oDrawingToCheck.getText() === sText && oCurCandidate.getText() !== sText) {
+				return oDrawingToCheck;
+			}
+
+			if(sPreset) {
+				if(oDrawingToCheck.getPresetGeom() !== sPreset && oCurCandidate.getPresetGeom() === sPreset) {
+					return oCurCandidate;
+				}
+				if(oDrawingToCheck.getPresetGeom() === sPreset && oCurCandidate.getPresetGeom() !== sPreset) {
+					return oDrawingToCheck;
+				}
+			}
+
+
+			const oBrush = this.brush;
+			const oPen = this.pen;
+			const oBrushCheck = oDrawingToCheck.brush;
+			const oPenCheck = oDrawingToCheck.pen;
+			const oBrushCandidate = oCurCandidate.brush;
+			const oPenCandidate = oCurCandidate.pen;
+			const bBrushCheckEqual = !oBrush && !oBrushCheck || oBrush && oBrush.isEqual(oBrushCheck);
+			const bPenCheckEqual = !oPen && !oPenCheck || oPen && oPen.isEqual(oPenCheck);
+			const bBrushPenCheckEqual = bBrushCheckEqual && bPenCheckEqual;
+
+			const bBrushCandidateEqual = !oBrush && !oBrushCandidate || oBrush && oBrush.isEqual(oBrushCandidate);
+			const bPenCandidateEqual = !oPen && !oPenCandidate || oPen && oPen.isEqual(oPenCandidate);
+			const bBrushPenCandidateEqual = bBrushCandidateEqual && bPenCandidateEqual;
+			if(bBrushPenCheckEqual && !bBrushPenCandidateEqual) {
+				return oDrawingToCheck;
+			}
+			if(!bBrushPenCheckEqual && bBrushPenCandidateEqual) {
+				return oCurCandidate;
+			}
+			if(bBrushCheckEqual && !bBrushCandidateEqual) {
+				return oDrawingToCheck;
+			}
+			if(!bBrushCheckEqual && bBrushCandidateEqual) {
+				return oCurCandidate;
+			}
+			if(bPenCheckEqual && !bPenCandidateEqual) {
+				return oDrawingToCheck;
+			}
+			if(!bPenCheckEqual && bPenCandidateEqual) {
+				return oCurCandidate;
+			}
+			const dDistCheck = this.getDistanceL1(oDrawingToCheck);
+			const dDistCur = this.getDistanceL1(oCurCandidate);
+			if(dDistCur < dDistCheck) {
+				return  oCurCandidate;
+			}
+			return oDrawingToCheck;
+		};
 
 		function CreateBinaryReader(szSrc, offset, srcLen) {
 			var memoryData = AscCommon.Base64.decode(szSrc, true, srcLen, offset);

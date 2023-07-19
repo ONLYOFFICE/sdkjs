@@ -2867,6 +2867,24 @@
 			}
 			return false;
 		};
+		CSrcRect.prototype.isEqual = function(r) {
+			if(!r) {
+				return false;
+			}
+			if(r.l !== this.l) {
+				return false;
+			}
+			if(r.t !== this.t) {
+				return false;
+			}
+			if(r.r !== this.r) {
+				return false;
+			}
+			if(r.b !== this.v) {
+				return false;
+			}
+			return true;
+		};
 
 		function CBlipFillTile() {
 			CBaseNoIdObject.call(this)
@@ -3097,6 +3115,14 @@
 				}
 			} else {
 				if (fill.tile) {
+					return false;
+				}
+			}
+			if(fill.srcRect && !this.srcRect || this.srcRect && !fill.srcRect) {
+				return false;
+			}
+			if(fill.srcRect) {
+				if(!fill.srcRect.isEqual(this.srcRect)) {
 					return false;
 				}
 			}
@@ -5299,12 +5325,13 @@
 			return _ret.fill;
 		};
 		CUniFill.prototype.isSolidFillRGB = function () {
-			return (this.fill && this.fill.color && this.fill.color.color
-				&& this.fill.color.color.type === window['Asc'].c_oAscColor.COLOR_TYPE_SRGB)
+			return (this.isSolidFill() && this.fill.color.color.type === window['Asc'].c_oAscColor.COLOR_TYPE_SRGB)
+		};
+		CUniFill.prototype.isSolidFill = function () {
+			return !!(this.fill && this.fill.color && this.fill.color.color);
 		};
 		CUniFill.prototype.isSolidFillScheme = function () {
-			return (this.fill && this.fill.color && this.fill.color.color
-				&& this.fill.color.color.type === window['Asc'].c_oAscColor.COLOR_TYPE_SCHEME)
+			return (this.isSolidFill() && this.fill.color.color.type === window['Asc'].c_oAscColor.COLOR_TYPE_SCHEME)
 		};
 		CUniFill.prototype.isNoFill = function () {
 			return this.fill && this.fill.type === window['Asc'].c_oAscFill.FILL_TYPE_NOFILL;
@@ -5333,6 +5360,11 @@
 		};
 		CUniFill.prototype.isBlipFill = function() {
 			if(this.fill && this.fill.type === c_oAscFill.FILL_TYPE_BLIP) {
+				return true;
+			}
+		};
+		CUniFill.prototype.isGradientFill = function() {
+			if(this.fill && this.fill.type === c_oAscFill.FILL_TYPE_GRAD) {
 				return true;
 			}
 		};
@@ -5746,6 +5778,9 @@
 			}
 			if (shapeProp1.description === shapeProp2.description) {
 				_result_shape_prop.description = shapeProp1.description;
+			}
+			if (shapeProp1.name === shapeProp2.name) {
+				_result_shape_prop.name = shapeProp1.name;
 			}
 			if (shapeProp1.columnNumber === shapeProp2.columnNumber) {
 				_result_shape_prop.columnNumber = shapeProp1.columnNumber;
@@ -6186,6 +6221,9 @@
 				&& (this.tailEnd == null ? ln.tailEnd == null : this.tailEnd.IsIdentical(ln.headEnd)) &&
 				this.algn == ln.algn && this.cap == ln.cap && this.cmpd == ln.cmpd && this.w == ln.w && this.prstDash === ln.prstDash;
 		};
+		CLn.prototype.isEqual = function (ln) {
+			return this.IsIdentical(ln);
+		};
 		CLn.prototype.setFill = function (fill) {
 			this.Fill = fill;
 		};
@@ -6456,7 +6494,10 @@
 			}
 			this.cmpd = 1;
 		};
-
+		CLn.prototype.getWidthMM = function () {
+			const nEmu = AscFormat.isRealNumber(this.w) ? this.w : 12700;
+			return nEmu * AscCommonWord.g_dKoef_emu_to_mm;
+		};
 // -----------------------------
 
 // SHAPE ----------------------------
@@ -13309,6 +13350,35 @@
 
 		InitClass(CPres, CBaseNoIdObject, 0);
 
+		CPres.prototype.readSz = function(s) {
+			const oSldSize = new AscCommonSlide.CSlideSize();
+			s.Skip2(5); // len + start attributes
+
+			while (true) {
+				var _at = s.GetUChar();
+
+				if (_at === g_nodeAttributeEnd)
+					break;
+
+				switch (_at) {
+					case 0: {
+						oSldSize.setCX(s.GetLong());
+						break;
+					}
+					case 1: {
+						oSldSize.setCY(s.GetLong());
+						break;
+					}
+					case 2: {
+						oSldSize.setType(s.GetUChar());
+						break;
+					}
+					default:
+						return;
+				}
+			}
+			return oSldSize;
+		};
 		CPres.prototype.fromStream = function (s, reader) {
 			var _type = s.GetUChar();
 			var _len = s.GetULong();
@@ -13398,7 +13468,10 @@
 						break;
 					}
 					case 3: {
-						s.SkipRecord();
+						let oNotesSize = this.readSz(s);
+						if (oPresentattion.setNotesSz) {
+							oPresentattion.setNotesSz(oNotesSize);
+						}
 						break;
 					}
 					case 4: {
@@ -13406,32 +13479,7 @@
 						break;
 					}
 					case 5: {
-						var oSldSize = new AscCommonSlide.CSlideSize();
-						s.Skip2(5); // len + start attributes
-
-						while (true) {
-							var _at = s.GetUChar();
-
-							if (_at === g_nodeAttributeEnd)
-								break;
-
-							switch (_at) {
-								case 0: {
-									oSldSize.setCX(s.GetLong());
-									break;
-								}
-								case 1: {
-									oSldSize.setCY(s.GetLong());
-									break;
-								}
-								case 2: {
-									oSldSize.setType(s.GetUChar());
-									break;
-								}
-								default:
-									return;
-							}
-						}
+						let oSldSize = this.readSz(s);
 						if (oPresentattion.setSldSz) {
 							oPresentattion.setSldSz(oSldSize);
 						}
@@ -14377,6 +14425,7 @@
 			}
 			obj.title = shapeProp.title;
 			obj.description = shapeProp.description;
+			obj.name = shapeProp.name;
 			obj.columnNumber = shapeProp.columnNumber;
 			obj.columnSpace = shapeProp.columnSpace;
 			obj.textFitType = shapeProp.textFitType;
@@ -15241,6 +15290,7 @@
 			builder_SetAxisMinorGridlines(oChartSpace.chart.plotArea.getHorizontalAxis(), oLn);
 		}
 
+		const OBJECT_MORPH_MARKER = "!!";
 //----------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};
 		window['AscFormat'].CreateFontRef = CreateFontRef;
@@ -15569,5 +15619,6 @@
 		window['AscFormat'].MAP_AUTONUM_TYPES = MAP_AUTONUM_TYPES;
 		window['AscFormat'].CLR_NAME_MAP = CLR_NAME_MAP;
 		window['AscFormat'].LINE_PRESETS_MAP = LINE_PRESETS_MAP;
+		window['AscFormat'].OBJECT_MORPH_MARKER = OBJECT_MORPH_MARKER;
 	})
 (window);

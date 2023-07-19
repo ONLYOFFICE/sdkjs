@@ -213,7 +213,7 @@ _null_object.val = function () { return this; };
 _null_object.remove = function () {};
 _null_object.getComputedStyle = function () { return null; };
 _null_object.getContext = function (type) { return (type == "2d") ? new native_context2d(this) : null; };
-_null_object.getBoundingClientRect = function() { return { left : 0, top : 0, right : this.width(), bottom : this.height() }; };
+_null_object.getBoundingClientRect = function() { return { left : 0, top : 0, right : 0, bottom : 0 }; };
 
 document.createElement = function (type)
 {

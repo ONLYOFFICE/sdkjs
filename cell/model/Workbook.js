@@ -11836,7 +11836,118 @@
 		return printProps.getJson(this);
 	};
 
+	Worksheet.prototype.changeRowColBreaks = function (from, to, range, byCol, addToHistory) {
+		let min = null;
+		let max = !byCol ? gc_nMaxCol0 : gc_nMaxRow0;
+		let man = true, pt = null;
 
+		let printArea = this.workbook.getDefinesNames("Print_Area", this.getId());
+		if (printArea && range) {
+			if (byCol) {
+				min = range.r1;
+				max = range.r2;
+			} else {
+				min = range.c1;
+				max = range.c2;
+			}
+		}
+
+		this._changeRowColBreaks(from, to, min, max, man, pt, byCol, addToHistory);
+	};
+
+	Worksheet.prototype._changeRowColBreaks = function (from, to, min, max, man, pt, byCol, addToHistory) {
+		let t = this;
+		let rowColBreaks = !byCol ? t.rowBreaks : t.colBreaks;
+
+		let checkInit = function () {
+			if (!byCol) {
+				if (!t.rowBreaks) {
+					t.rowBreaks = new AscCommonExcel.CRowColBreaks();
+					rowColBreaks = t.rowBreaks;
+				}
+			} else {
+				if (!t.colBreaks) {
+					t.colBreaks = new AscCommonExcel.CRowColBreaks();
+					rowColBreaks = t.colBreaks;
+				}
+			}
+		};
+
+		let isChanged = false;
+		let oFromBreak = rowColBreaks && rowColBreaks.getBreak(from, min, max);
+		if (oFromBreak) {
+			if (to) {
+				//change
+				checkInit();
+				isChanged = rowColBreaks.changeBreak(from, to, min, max, true);
+			} else {
+				//delete
+				isChanged = rowColBreaks && rowColBreaks.removeBreak(from, min, max);
+			}
+		} else if (to) {
+			//add
+			checkInit();
+			isChanged = rowColBreaks.addBreak(to, min, max, true, null)
+		}
+
+		if (isChanged && addToHistory) {
+			let fromData = oFromBreak && new AscCommonExcel.UndoRedoData_RowColBreaks(from, oFromBreak.min, oFromBreak.max, oFromBreak.man, oFromBreak.pt, byCol);
+			let toData = new AscCommonExcel.UndoRedoData_RowColBreaks(to, min, max, man, pt, byCol);
+
+			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ChangeRowColBreaks, this.getId(),
+				null, new AscCommonExcel.UndoRedoData_FromTo(fromData, toData));
+		}
+
+		this.workbook.handlers.trigger("onChangePageSetupProps", this.getId());
+	};
+
+	Worksheet.prototype.resetAllPageBreaks = function () {
+		let t = this;
+
+		let doRemoveBreaks = function(_breaks, byCol) {
+			if (!_breaks) {
+				return;
+			}
+			let aBreaks = _breaks.getBreaks();
+			for (let i = 0; i < aBreaks.length; i++) {
+				let fromData = new AscCommonExcel.UndoRedoData_RowColBreaks(aBreaks[i].id, aBreaks[i].min, aBreaks[i].max, aBreaks[i].man, aBreaks[i].pt, byCol);
+				if (_breaks.removeBreak(aBreaks[i].id)) {
+					History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ChangeRowColBreaks, t.getId(),
+						null, new AscCommonExcel.UndoRedoData_FromTo(fromData, null));
+					i--;
+				}
+			}
+		};
+
+		if (this.rowBreaks) {
+			doRemoveBreaks(this.rowBreaks);
+		}
+		if (this.colBreaks) {
+			doRemoveBreaks(this.colBreaks, true);
+		}
+		this.workbook.handlers.trigger("onChangePageSetupProps", this.getId());
+	};
+
+	Worksheet.prototype.getPrintAreaRangeByRowCol = function (row, col) {
+		let printArea = this.workbook.getDefinesNames("Print_Area", this.getId());
+		let t = this;
+
+		if (printArea) {
+			let ranges;
+			AscCommonExcel.executeInR1C1Mode(false, function () {
+				ranges = AscCommonExcel.getRangeByRef(printArea.ref, t, true, true)
+			});
+			if (ranges) {
+				for (let i = 0; i < ranges.length; i++) {
+					if (ranges[i].bbox.contains(col, row)) {
+						return ranges[i].bbox;
+					}
+				}
+			}
+		}
+
+		return null;
+	};
 
 	Worksheet.prototype.addCellWatch = function (ref, addToHistory) {
 		for (var i = 0; i < this.aCellWatches.length; i++) {

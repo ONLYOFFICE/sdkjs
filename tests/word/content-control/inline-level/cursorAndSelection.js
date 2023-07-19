@@ -44,20 +44,36 @@ $(function ()
 		return cc;
 	}
 	
+	function CreateCheckBoxContentControl()
+	{
+		let cc = new AscWord.CInlineLevelSdt();
+		cc.ApplyCheckBoxPr(new AscWord.CSdtCheckBoxPr(), new AscWord.CTextPr());
+		return cc;
+	}
+	
+	function CreatePictureContentControl()
+	{
+		let cc = new AscWord.CInlineLevelSdt();
+		cc.ApplyPicturePr(true);
+		return cc;
+	}
+	
+	function AddParagraph(text)
+	{
+		let p = AscTest.CreateParagraph();
+		logicDocument.PushToContent(p);
+		let run = new AscWord.CRun();
+		p.AddToContent(0, run);
+		if (text)
+			run.AddText(text);
+		
+		return p;
+	}
+	
 	QUnit.module("Test the positioning of the cursor and selection for inline-level content controls");
 	
 	QUnit.test("Test behaviour of controls filled with placeholder", function (assert)
 	{
-		function AddParagraph(text)
-		{
-			let p = AscTest.CreateParagraph();
-			logicDocument.PushToContent(p);
-			let run = new AscWord.CRun();
-			p.AddToContent(0, run);
-			run.AddText(text);
-			return p;
-		}
-		
 		function TestDeletionEmptyContentControl(isFromStart)
 		{
 			let key = isFromStart ? AscTest.Key.delete : AscTest.Key.backspace;
@@ -98,6 +114,62 @@ $(function ()
 		// Тестируем удаление контрола, заполненного плейсхолдером, через тройное нажатие на backspace/delete
 		TestDeletionEmptyContentControl(true);
 		TestDeletionEmptyContentControl(false);
+	});
+	
+	QUnit.test("Test deletion checkbox content control", function (assert)
+	{
+		function TestCheckBoxDeletion(isFromStart)
+		{
+			let key = isFromStart ? AscTest.Key.delete : AscTest.Key.backspace;
+			
+			AscTest.ClearDocument();
+			let p = AddParagraph("");
+			let cc = CreateCheckBoxContentControl();
+			assert.strictEqual(cc.IsUseInDocument(), false, "Create content control and check if it is being used in the document");
+			
+			p.AddToContent(0, new AscWord.CRun());
+			p.AddToContent(1, cc);
+			p.AddToContent(2, new AscWord.CRun());
+			
+			AscTest.MoveCursorToParagraph(p, isFromStart);
+			AscTest.PressKey(key);
+			
+			assert.strictEqual(cc.IsSelectedOnlyThis(), true, "Check if content control is being selected");
+			
+			AscTest.PressKey(key);
+			assert.strictEqual(cc.IsUseInDocument(), false, "Check if content control is not being used in the document");
+			assert.strictEqual(AscTest.GetParagraphText(p), "", "Check text of the paragraph after removing content control");
+		}
+		
+		// Тестируем удаление чекбокса, через двойное нажатие на backspace/delete
+		TestCheckBoxDeletion(true);
+		TestCheckBoxDeletion(false);
+		
+		function TestPictureDeletion(isFromStart)
+		{
+			let key = isFromStart ? AscTest.Key.delete : AscTest.Key.backspace;
+			
+			AscTest.ClearDocument();
+			let p = AddParagraph("");
+			let cc = CreatePictureContentControl();
+			assert.strictEqual(cc.IsUseInDocument(), false, "Create content control and check if it is being used in the document");
+			
+			p.AddToContent(0, new AscWord.CRun());
+			p.AddToContent(1, cc);
+			p.AddToContent(2, new AscWord.CRun());
+			
+			AscTest.MoveCursorToParagraph(p, isFromStart);
+			AscTest.PressKey(key);
+			
+			assert.strictEqual(cc.IsSelectedOnlyThis(), true, "Check if content control is being selected");
+			
+			AscTest.PressKey(key);
+			assert.strictEqual(cc.IsUseInDocument(), false, "Check if content control is not being used in the document");
+			assert.strictEqual(AscTest.GetParagraphText(p), "", "Check text of the paragraph after removing content control");
+		}
+		
+		TestPictureDeletion(true);
+		TestPictureDeletion(false);
 	});
 
 });

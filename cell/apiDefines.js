@@ -571,6 +571,14 @@ var c_oAscPopUpSelectorType = {
     path: 2
   };
 
+  var c_oAscPageBreaksDisableType = {
+    none: 0,
+    all: 1,
+    insertRemove: 2,
+    reset: 3
+  };
+
+
   var c_oAscRemoveArrowsType = {
     all: 0,
     precedent: 1,
@@ -971,12 +979,17 @@ var c_oAscPopUpSelectorType = {
   prot['link'] = prot.link;
   prot['path'] = prot.path;
 
+  window['Asc']['c_oAscPageBreaksDisableType'] = window['Asc'].c_oAscPageBreaksDisableType = c_oAscPageBreaksDisableType;
+  prot = c_oAscPageBreaksDisableType;
+  prot['none'] = prot.none;
+  prot['all'] = prot.all;
+  prot['insertRemove'] = prot.insertRemove;
+  prot['reset'] = prot.reset;
   window['Asc']['c_oAscRemoveArrowsType'] = window['Asc'].c_oAscRemoveArrowsType = c_oAscRemoveArrowsType;
   prot = c_oAscRemoveArrowsType;
   prot['all'] = prot.all;
   prot['precedent'] = prot.precedent;
   prot['dependent'] = prot.dependent;
-
 
 
 })(window);

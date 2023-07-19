@@ -86,6 +86,23 @@
 			return Asc.c_oAscLocalRestrictionType.None;
 		return this.localRestrintions;
 	};
+
+	AscCommon.baseEditorsApi.prototype["startExternalConvertation"] = function(type)
+	{
+		let params = "";
+		try {
+			params = JSON.stringify(this["getAdditionalSaveParams"]());
+		}
+		catch (e) {
+			params = "";
+		}
+		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+		window["AscDesktopEditor"]["startExternalConvertation"](type, params);
+	};
+	AscCommon.baseEditorsApi.prototype["endExternalConvertation"] = function()
+	{
+		this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+	};
 })(window);
 
 /////////////////////////////////////////////////////////

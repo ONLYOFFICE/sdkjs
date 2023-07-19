@@ -80,6 +80,10 @@
 		if (false === this.Flags.Use)
 			return;
 
+		if(Context.m_bIsTextDrawer)
+		{
+			Context.CheckSpaceDraw();
+		}
 		if (undefined !== editor && editor.ShowParaMarks)
 		{
 			// Цвет и шрифт можно не запоминать и не выставлять старый, т.к. на данном элемента всегда заканчивается

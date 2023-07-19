@@ -381,6 +381,10 @@ CSdtPr.prototype.IsBuiltInDocPart = function()
 
 	return false;
 };
+CSdtPr.prototype.GetDocPartGallery = function()
+{
+	return this.DocPartObj ? this.DocPartObj.Gallery : undefined;
+}
 
 function CContentControlPr(nType)
 {
@@ -391,23 +395,25 @@ function CContentControlPr(nType)
 	this.Lock       = undefined;
 	this.InternalId = undefined;
 	this.CCType     = undefined !== nType ? nType : c_oAscSdtLevelType.Inline;
-
-    // section property
+	
+	this.Temporary  = undefined;
+	
+	// section property
 	this.SectionBreak = undefined;
-	this.PageSizeW	  = undefined;
-	this.PageSizeH	  = undefined;
-	this.Orient 	  = undefined;
-
+	this.PageSizeW    = undefined;
+	this.PageSizeH    = undefined;
+	this.Orient       = undefined;
+	
 	// Margins 
-	this.MarginT	 		 = undefined;
-	this.MarginL	 		 = undefined;
-	this.MarginR	 		 = undefined;
-	this.MarginB	 		 = undefined;
+	this.MarginT = undefined;
+	this.MarginL = undefined;
+	this.MarginR = undefined;
+	this.MarginB = undefined;
 	
 	
 	this.Appearance = Asc.c_oAscSdtAppearance.Frame;
 	this.Color      = undefined;
-
+	
 	this.CheckBoxPr    = undefined;
 	this.ComboBoxPr    = undefined;
 	this.DropDownPr    = undefined;
@@ -415,9 +421,9 @@ function CContentControlPr(nType)
 	this.TextFormPr    = undefined;
 	this.PictureFormPr = undefined;
 	this.ComplexFormPr = undefined;
-
+	
 	this.PlaceholderText = undefined;
-
+	
 	this.FormPr = undefined;
 }
 CContentControlPr.prototype.GetEventObject = function()
@@ -469,6 +475,7 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	this.Alias      = oContentControl.GetAlias();
 	this.Appearance = oContentControl.GetAppearance();
 	this.Color      = oContentControl.GetColor();
+	this.Temporary  = oContentControl.IsContentControlTemporary();
 
 	if (oContentControl.IsCheckBox())
 		this.CheckBoxPr = oContentControl.GetCheckBoxPr().Copy();
@@ -518,11 +525,10 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 	{
 		oContentControl.GetLogicDocument().OnChangeRadioRequired(oContentControl.GetRadioButtonGroupKey(), this.FormPr.GetRequired());
 	}
-
-
+	
 	if (undefined !== this.Tag)
 		oContentControl.SetTag(this.Tag);
-
+	
 	if (undefined !== this.Id)
 		oContentControl.SetContentControlId(this.Id);
 
@@ -543,6 +549,9 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		else
 			oContentControl.SetColor(new CDocumentColor(this.Color.r, this.Color.g, this.Color.b));
 	}
+	
+	if (undefined !== this.Temporary)
+		oContentControl.SetContentControlTemporary(this.Temporary);
 
 	if (undefined !== this.CheckBoxPr)
 	{
@@ -772,6 +781,14 @@ CContentControlPr.prototype.SetColor = function(r, g, b)
 		this.Color = null;
 	else
 		this.Color = new CDocumentColor(r, g, b);
+};
+CContentControlPr.prototype.GetTemporary = function()
+{
+	return this.Temporary;
+};
+CContentControlPr.prototype.SetTemporary = function(isTemporary)
+{
+	this.Temporary = isTemporary;
 };
 CContentControlPr.prototype.GetSpecificType = function()
 {
@@ -1008,6 +1025,8 @@ CContentControlPr.prototype['get_Appearance']         = CContentControlPr.protot
 CContentControlPr.prototype['put_Appearance']         = CContentControlPr.prototype.SetAppearance;
 CContentControlPr.prototype['get_Color']              = CContentControlPr.prototype.GetColor;
 CContentControlPr.prototype['put_Color']              = CContentControlPr.prototype.SetColor;
+CContentControlPr.prototype['get_Temporary']          = CContentControlPr.prototype.GetTemporary;
+CContentControlPr.prototype['put_Temporary']          = CContentControlPr.prototype.SetTemporary;
 CContentControlPr.prototype['get_SpecificType']       = CContentControlPr.prototype.GetSpecificType;
 CContentControlPr.prototype['get_CheckBoxPr']         = CContentControlPr.prototype.GetCheckBoxPr;
 CContentControlPr.prototype['put_CheckBoxPr']         = CContentControlPr.prototype.SetCheckBoxPr;

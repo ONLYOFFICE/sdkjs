@@ -1819,12 +1819,6 @@ function GetArrayPolygonsByPaths(dEpsilon, aPathLst)
     return aByPaths;
 }
 
-function ComparisonEdgeByTopPoint(graphEdge1, graphEdge2)
-{
-    return Math.min(graphEdge1.point1.y, graphEdge1.point2.y) - Math.min(graphEdge2.point1.y, graphEdge2.point2.y);
-}
-
-
 
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};

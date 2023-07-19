@@ -9964,7 +9964,7 @@
 		loadScript('../../../../sdkjs/common/Charts/ChartStyles.js', onSuccess, onError);
 	}
 
-	function loadSmartArtBinary(fOnError) {
+	function loadSmartArtBinary(fOnSuccess, fOnError) {
 		if (window["NATIVE_EDITOR_ENJINE"]) {
 			return;
 		}
@@ -9985,6 +9985,7 @@
 					const nPosition = oFileStream.GetULong();
 					AscCommon.g_oBinarySmartArts.shifts[nType] = nPosition;
 				}
+				fOnSuccess && fOnSuccess();
 			} else {
 				fOnError(httpRequest);
 			}
@@ -12148,6 +12149,9 @@
 	CFormatPainter.prototype.isOff = function() {
 		return this.state === AscCommon.c_oAscFormatPainterState.kOff;
 	};
+	CFormatPainter.prototype.isMultiple = function() {
+		return this.state === AscCommon.c_oAscFormatPainterState.kMultiple;
+	};
 	CFormatPainter.prototype.toggle = function() {
 		if(this.isOn()) {
 			this.changeState(AscCommon.c_oAscFormatPainterState.kOff);
@@ -13296,6 +13300,17 @@
 			this["guid"] = sOlePluginGuid;
 		}
 	}
+
+
+	function deg2rad(deg)
+	{
+		return deg * Math.PI / 180.0;
+	}
+
+	function rad2deg(rad)
+	{
+		return rad * 180.0 / Math.PI;
+	}
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -13510,8 +13525,9 @@
 	window["AscCommon"].CEyedropper = CEyedropper;
 	window["AscCommon"].CInkDrawer = CInkDrawer;
 	window["AscCommon"].CPluginCtxMenuInfo = CPluginCtxMenuInfo;
+	window['AscCommon'].deg2rad = deg2rad;
+	window['AscCommon'].rad2deg = rad2deg;
 	window["AscCommon"].c_oAscImageUploadProp = c_oAscImageUploadProp;
-
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)

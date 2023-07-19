@@ -984,14 +984,7 @@ CShape.prototype.CheckTableCoincidence = function(table)
 
 CShape.prototype.GetPrevElementEndInfo = function(CurElement)
 {
-    var para_drawing = this.GetParaDrawing();
-    if(isRealObject(para_drawing) && isRealObject(para_drawing.DocumentContent) && (para_drawing.DocumentContent.GetPrevElementEndInfo) )
-    {
-        var parent_paragraph = para_drawing.Get_ParentParagraph();
-        if(parent_paragraph)
-            return para_drawing.DocumentContent.GetPrevElementEndInfo(parent_paragraph);
-    }
-    return null;
+	return null;
 };
 CShape.prototype.IsThisElementCurrent = function(CurElement)
 {

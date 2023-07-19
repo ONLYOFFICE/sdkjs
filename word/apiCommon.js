@@ -430,6 +430,7 @@
 			this.PercentFullWidth = tblProp.PercentFullWidth;
 			this.TableDescription = tblProp.TableDescription;
 			this.TableCaption = tblProp.TableCaption;
+			this.TableName = tblProp.TableName;
 
 			this.ColumnWidth = tblProp.ColumnWidth;
 			this.RowHeight   = tblProp.RowHeight;
@@ -758,6 +759,14 @@
 	{
 		this.TableCaption = v;
 	};
+	CTableProp.prototype.get_TableName = function ()
+	{
+		return this.TableName;
+	};
+	CTableProp.prototype.put_TableName = function (v)
+	{
+		this.TableName = v;
+	};
 	CTableProp.prototype.get_ColumnWidth = function()
 	{
 		return this.ColumnWidth;
@@ -838,6 +847,8 @@
 	CTableProp.prototype['put_TableDescription'] = CTableProp.prototype.put_TableDescription;
 	CTableProp.prototype['get_TableCaption'] = CTableProp.prototype.get_TableCaption;
 	CTableProp.prototype['put_TableCaption'] = CTableProp.prototype.put_TableCaption;
+	CTableProp.prototype['get_TableName'] = CTableProp.prototype.get_TableName;
+	CTableProp.prototype['put_TableName'] = CTableProp.prototype.put_TableName;
 	CTableProp.prototype['get_ColumnWidth'] = CTableProp.prototype.get_ColumnWidth;
 	CTableProp.prototype['put_ColumnWidth'] = CTableProp.prototype.put_ColumnWidth;
 	CTableProp.prototype['get_RowHeight'] = CTableProp.prototype.get_RowHeight;
@@ -2382,18 +2393,12 @@
 	window['Asc']['CAscCaptionProperties'] = window['Asc'].CAscCaptionProperties = CAscCaptionProperties;
 	var prot = CAscCaptionProperties.prototype;
 	prot.get_Name = prot["get_Name"] = function(){return this.Name;};
-	prot.get_Label = prot["get_Label"] = function(){
-		if(typeof this.Label === "string")
-		{
-			var aSplit = this.Label.split("_");
-			var sResult = aSplit[0];
-			for(var nIdx = 1; nIdx < aSplit.length; ++nIdx)
-			{
-				sResult += (" " + aSplit[nIdx]);
-			}
-			return sResult;
-		}
-		return this.Label;
+	prot.get_Label = prot["get_Label"] = function()
+	{
+		if (!(typeof this.Label === "string"))
+			return this.Label;
+		
+		return this.Label.split("_").join(" ");
 	};
 	prot.get_Before = prot["get_Before"] = function(){return this.Before;};
 	prot.get_ExcludeLabel = prot["get_ExcludeLabel"] = function(){return this.ExcludeLabel;};
@@ -2456,17 +2461,10 @@
 	};
 	prot.getLabelForInstruction = function()
 	{
-		if(typeof this.Label === "string")
-		{
-			var aSplited = this.Label.split(" ");
-			var sResult = aSplited[0];
-			for(var nIdx = 1; nIdx < aSplited.length; ++nIdx)
-			{
-				sResult += ("_" + aSplited[nIdx]);
-			}
-			return sResult;
-		}
-		return "";
+		if (!(typeof this.Label === "string"))
+			return "";
+		
+		return this.Label.split(" ").join("_");
 	};
 	prot.getSeqInstructionLine = function()
 	{

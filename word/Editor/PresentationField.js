@@ -150,11 +150,18 @@
     CPresentationField.prototype.private_CalculateContent = function()
     {
         AscFormat.ExecuteNoHistory(function(){
+            const bSelectionUse = this.IsSelectionUse();
+            const oSelection = this.State.Selection;
+            const nDirection = oSelection.EndPos - oSelection.StartPos;
             this.Content.length = 0;
             var sStr = this.private_GetString();
             if(typeof sStr === 'string')
             {
                 this.AddText(sStr, -1);
+            }
+            if(bSelectionUse)
+            {
+                this.SelectAll(nDirection);
             }
         }, this, []);
     };
@@ -186,10 +193,7 @@
                     var nFirstSlideNum = 1;
                     if(oStylesObject.presentation)
                     {
-                        if(AscFormat.isRealNumber(oStylesObject.presentation.firstSlideNum))
-                        {
-                            nFirstSlideNum = oStylesObject.presentation.firstSlideNum;
-                        }
+                        nFirstSlideNum = oStylesObject.presentation.getFirstSlideNumber();
                     }
                     if(oStylesObject.slide)
                     {

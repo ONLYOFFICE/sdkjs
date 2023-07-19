@@ -261,24 +261,9 @@ function CStyle(Name, BasedOnId, NextId, type, bNoCreateTablePr)
     this.TablePr     = new CTablePr();
     this.TableRowPr  = new CTableRowPr();
     this.TableCellPr = new CTableCellPr();
-
-    if(bNoCreateTablePr !== true)
-    {
-        // Условные типы форматирования стилей таблицы
-        this.TableBand1Horz  = new CTableStylePr();
-        this.TableBand1Vert  = new CTableStylePr();
-        this.TableBand2Horz  = new CTableStylePr();
-        this.TableBand2Vert  = new CTableStylePr();
-        this.TableFirstCol   = new CTableStylePr();
-        this.TableFirstRow   = new CTableStylePr();
-        this.TableLastCol    = new CTableStylePr();
-        this.TableLastRow    = new CTableStylePr();
-        this.TableTLCell     = new CTableStylePr();
-        this.TableTRCell     = new CTableStylePr();
-        this.TableBLCell     = new CTableStylePr();
-        this.TableBRCell     = new CTableStylePr();
-        this.TableWholeTable = new CTableStylePr();
-    }
+	
+	if (true !== bNoCreateTablePr)
+		this.InitConditionalTableStyles();
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
     AscCommon.g_oTableId.Add( this, this.Id );
@@ -6083,6 +6068,7 @@ CStyle.prototype =
         // Variable(CTablePr)     : TablePr
         // Variable(CTableRowPr)  : TableRowPr
         // Variable(CTableCellPr) : TableCellPr
+		// Bool : ConditionTableStyles?
         // Variable(CTableStylePr) : TableBand1Horz
         // Variable(CTableStylePr) : TableBand1Vert
         // Variable(CTableStylePr) : TableBand2Horz
@@ -6117,20 +6103,26 @@ CStyle.prototype =
         this.TablePr.Write_ToBinary(Writer);
         this.TableRowPr.Write_ToBinary(Writer);
         this.TableCellPr.Write_ToBinary(Writer);
+		
+		let conditionalTableStyles = !!this.TableBand1Horz;
 
-        this.TableBand1Horz.Write_ToBinary(Writer);
-        this.TableBand1Vert.Write_ToBinary(Writer);
-        this.TableBand2Horz.Write_ToBinary(Writer);
-        this.TableBand2Vert.Write_ToBinary(Writer);
-        this.TableFirstCol.Write_ToBinary(Writer);
-        this.TableFirstRow.Write_ToBinary(Writer);
-        this.TableLastCol.Write_ToBinary(Writer);
-        this.TableLastRow.Write_ToBinary(Writer);
-        this.TableTLCell.Write_ToBinary(Writer);
-        this.TableTRCell.Write_ToBinary(Writer);
-        this.TableBLCell.Write_ToBinary(Writer);
-        this.TableBRCell.Write_ToBinary(Writer);
-        this.TableWholeTable.Write_ToBinary(Writer);
+		Writer.WriteBool(conditionalTableStyles);
+		if (conditionalTableStyles)
+		{
+			this.TableBand1Horz.Write_ToBinary(Writer);
+			this.TableBand1Vert.Write_ToBinary(Writer);
+			this.TableBand2Horz.Write_ToBinary(Writer);
+			this.TableBand2Vert.Write_ToBinary(Writer);
+			this.TableFirstCol.Write_ToBinary(Writer);
+			this.TableFirstRow.Write_ToBinary(Writer);
+			this.TableLastCol.Write_ToBinary(Writer);
+			this.TableLastRow.Write_ToBinary(Writer);
+			this.TableTLCell.Write_ToBinary(Writer);
+			this.TableTRCell.Write_ToBinary(Writer);
+			this.TableBLCell.Write_ToBinary(Writer);
+			this.TableBRCell.Write_ToBinary(Writer);
+			this.TableWholeTable.Write_ToBinary(Writer);
+		}
     },
 
     private_WriteUndefinedNullString : function(Writer, Value)
@@ -6243,6 +6235,7 @@ CStyle.prototype =
         // Variable(CTablePr)     : TablePr
         // Variable(CTableRowPr)  : TableRowPr
         // Variable(CTableCellPr) : TableCellPr
+		// Bool : ConditionTableStyles?
         // Variable(CTableStylePr) : TableBand1Horz
         // Variable(CTableStylePr) : TableBand1Vert
         // Variable(CTableStylePr) : TableBand2Horz
@@ -6277,20 +6270,25 @@ CStyle.prototype =
         this.TablePr.Read_FromBinary(Reader);
         this.TableRowPr.Read_FromBinary(Reader);
         this.TableCellPr.Read_FromBinary(Reader);
-
-        this.TableBand1Horz.Read_FromBinary(Reader);
-        this.TableBand1Vert.Read_FromBinary(Reader);
-        this.TableBand2Horz.Read_FromBinary(Reader);
-        this.TableBand2Vert.Read_FromBinary(Reader);
-        this.TableFirstCol.Read_FromBinary(Reader);
-        this.TableFirstRow.Read_FromBinary(Reader);
-        this.TableLastCol.Read_FromBinary(Reader);
-        this.TableLastRow.Read_FromBinary(Reader);
-        this.TableTLCell.Read_FromBinary(Reader);
-        this.TableTRCell.Read_FromBinary(Reader);
-        this.TableBLCell.Read_FromBinary(Reader);
-        this.TableBRCell.Read_FromBinary(Reader);
-        this.TableWholeTable.Read_FromBinary(Reader);
+		
+		if (Reader.GetBool())
+		{
+			this.InitConditionalTableStyles();
+			
+			this.TableBand1Horz.Read_FromBinary(Reader);
+			this.TableBand1Vert.Read_FromBinary(Reader);
+			this.TableBand2Horz.Read_FromBinary(Reader);
+			this.TableBand2Vert.Read_FromBinary(Reader);
+			this.TableFirstCol.Read_FromBinary(Reader);
+			this.TableFirstRow.Read_FromBinary(Reader);
+			this.TableLastCol.Read_FromBinary(Reader);
+			this.TableLastRow.Read_FromBinary(Reader);
+			this.TableTLCell.Read_FromBinary(Reader);
+			this.TableTRCell.Read_FromBinary(Reader);
+			this.TableBLCell.Read_FromBinary(Reader);
+			this.TableBRCell.Read_FromBinary(Reader);
+			this.TableWholeTable.Read_FromBinary(Reader);
+		}
     },
 
     Load_LinkData : function(LinkData)
@@ -7778,6 +7776,25 @@ CStyle.prototype.UpdateNumberingCollection = function()
 		paragraph.RecalcCompiledPr();
 		numberingCollection.CheckParagraph(paragraph);
 	});
+};
+/**
+ * Инициализируем условные табличные стили
+ */
+CStyle.prototype.InitConditionalTableStyles = function()
+{
+	this.TableBand1Horz  = new CTableStylePr();
+	this.TableBand1Vert  = new CTableStylePr();
+	this.TableBand2Horz  = new CTableStylePr();
+	this.TableBand2Vert  = new CTableStylePr();
+	this.TableFirstCol   = new CTableStylePr();
+	this.TableFirstRow   = new CTableStylePr();
+	this.TableLastCol    = new CTableStylePr();
+	this.TableLastRow    = new CTableStylePr();
+	this.TableTLCell     = new CTableStylePr();
+	this.TableTRCell     = new CTableStylePr();
+	this.TableBLCell     = new CTableStylePr();
+	this.TableBRCell     = new CTableStylePr();
+	this.TableWholeTable = new CTableStylePr();
 };
 
 function CStyles(bCreateDefault)

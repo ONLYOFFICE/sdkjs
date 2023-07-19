@@ -45,7 +45,33 @@ $(function() {
 		AscCommon.baseEditorsApi.prototype._onEndLoadSdk.call(this);
 	};
 	Asc.spreadsheet_api.prototype.initGlobalObjects = function(wbModel) {
+		AscCommonExcel.g_oUndoRedoCell = new AscCommonExcel.UndoRedoCell(wbModel);
+		AscCommonExcel.g_oUndoRedoWorksheet = new AscCommonExcel.UndoRedoWoorksheet(wbModel);
+		AscCommonExcel.g_oUndoRedoWorkbook = new AscCommonExcel.UndoRedoWorkbook(wbModel);
+		AscCommonExcel.g_oUndoRedoCol = new AscCommonExcel.UndoRedoRowCol(wbModel, false);
+		AscCommonExcel.g_oUndoRedoRow = new AscCommonExcel.UndoRedoRowCol(wbModel, true);
+		AscCommonExcel.g_oUndoRedoComment = new AscCommonExcel.UndoRedoComment(wbModel);
+		AscCommonExcel.g_oUndoRedoAutoFilters = new AscCommonExcel.UndoRedoAutoFilters(wbModel);
+		AscCommonExcel.g_oUndoRedoSparklines = new AscCommonExcel.UndoRedoSparklines(wbModel);
 		AscCommonExcel.g_DefNameWorksheet = new AscCommonExcel.Worksheet(wbModel, -1);
+		AscCommonExcel.g_oUndoRedoSharedFormula = new AscCommonExcel.UndoRedoSharedFormula(wbModel);
+		AscCommonExcel.g_oUndoRedoLayout = new AscCommonExcel.UndoRedoRedoLayout(wbModel);
+		AscCommonExcel.g_oUndoRedoHeaderFooter = new AscCommonExcel.UndoRedoHeaderFooter(wbModel);
+		AscCommonExcel.g_oUndoRedoArrayFormula = new AscCommonExcel.UndoRedoArrayFormula(wbModel);
+		AscCommonExcel.g_oUndoRedoSortState = new AscCommonExcel.UndoRedoSortState(wbModel);
+		AscCommonExcel.g_oUndoRedoSlicer = new AscCommonExcel.UndoRedoSlicer(wbModel);
+		AscCommonExcel.g_oUndoRedoPivotTables = new AscCommonExcel.UndoRedoPivotTables(wbModel);
+		AscCommonExcel.g_oUndoRedoPivotFields = new AscCommonExcel.UndoRedoPivotFields(wbModel);
+		AscCommonExcel.g_oUndoRedoCF = new AscCommonExcel.UndoRedoCF(wbModel);
+		AscCommonExcel.g_oUndoRedoProtectedRange = new AscCommonExcel.UndoRedoProtectedRange(wbModel);
+		AscCommonExcel.g_oUndoRedoProtectedSheet = new AscCommonExcel.UndoRedoProtectedSheet(wbModel);
+		AscCommonExcel.g_oUndoRedoProtectedWorkbook = new AscCommonExcel.UndoRedoProtectedWorkbook(wbModel);
+		AscCommonExcel.g_oUndoRedoNamedSheetViews = new AscCommonExcel.UndoRedoNamedSheetViews(wbModel);
+		AscCommonExcel.g_oUndoRedoUserProtectedRange = new AscCommonExcel.UndoRedoUserProtectedRange(wbModel);
+
+		History.init(wbModel);
+	};
+	Asc.spreadsheet_api.prototype._onUpdateDocumentCanSave = function() {
 	};
 	AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged = function() {
 	};
@@ -59,8 +85,6 @@ $(function() {
 	AscCommonExcel.WorksheetView.prototype.updateRanges = function() {
 	};
 	AscCommonExcel.WorksheetView.prototype._autoFitColumnsWidth = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype.setSelection = function() {
 	};
 	AscCommonExcel.WorksheetView.prototype.draw = function() {
 	};
@@ -93,7 +117,8 @@ $(function() {
 		startTests();
 	};
 
-	AscCommon.CHistory.prototype.Create_NewPoint = function() {
+	AscCommon.CHistory.prototype.UndoRedoEnd = function () {
+		this.TurnOn();
 	};
 
 	var api = new Asc.spreadsheet_api({
@@ -116,7 +141,7 @@ $(function() {
 	function comparePrintPageSettings (assert, obj1, obj2, desc) {
 		for (let i in obj1) {
 			if (obj1.hasOwnProperty(i)) {
-				if (i === "pageRange") {
+				if (typeof(obj1[i]) === "object" && (i === "pageRange" || i === "titleRowRange" || i === "titleColRange")) {
 					for (let j in obj1[i]) {
 						if (obj1[i].hasOwnProperty(j)) {
 							assert.strictEqual(obj1[i][j], obj2[i][j], desc + j);
@@ -134,9 +159,15 @@ $(function() {
 		wsView.changeWorksheet("update", {reinitRanges: true});
 	}
 
+	function undoAll() {
+		while(AscCommon.History.Index !== -1) {
+			AscCommon.History.Undo();
+		}
+	}
+
 	let wb, ws, wsView;
 	function testPrintFileSettings() {
-		QUnit.test("Test: open print settings ", function(assert ) {
+		QUnit.test("Test: open print settings ", function (assert) {
 			let printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
 			assert.strictEqual(printPagesData.arrPages.length, 1, "Compare pages length 1");
 			let page = printPagesData.arrPages[0];
@@ -350,6 +381,1011 @@ $(function() {
 			};
 
 			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings changes without scale page4: ");
+
+			undoAll();
+			updateView();
+
+			printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
+			assert.strictEqual(printPagesData.arrPages.length, 1, "Compare pages length 1");
+			page = printPagesData.arrPages[0];
+			referenceObj = {
+				indexWorksheet: 0,
+				leftFieldInPx: 38.79527559055118,
+				pageClipRectHeight: 700.7800000000003,
+				pageClipRectLeft: 37.79527559055118,
+				pageClipRectTop: 37.79527559055118,
+				pageClipRectWidth: 796.2399999999999,
+				pageGridLines: false,
+				pageHeadings: false,
+				pageHeight: 210,
+				pageWidth: 297,
+				scale: 0.74,
+				startOffset: 0,
+				startOffsetPx: 0,
+				titleColRange: null,
+				titleHeight: 0,
+				titleRowRange: null,
+				titleWidth: 0,
+				topFieldInPx: 38.79527559055118,
+				pageRange: {
+					c1: 0,
+					c2: 18,
+					r1: 0,
+					r2: 57,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings 1:");
+			AscCommon.History.Clear();
+		});
+	}
+
+	function testPageBreaksSimple() {
+		QUnit.test("Test: page break settings ", function (assert) {
+			//change active cell and add page break
+			//C5
+			wsView.setSelection(new Asc.Range(2, 4, 2, 4));
+			api.asc_InsertPageBreak();
+
+			let printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
+			assert.strictEqual(printPagesData.arrPages.length, 1, "Compare pages length 1");
+			let page = printPagesData.arrPages[0];
+			let referenceObj = {
+				indexWorksheet: 0,
+				leftFieldInPx: 38.79527559055118,
+				pageClipRectHeight: 700.7800000000003,
+				pageClipRectLeft: 37.79527559055118,
+				pageClipRectTop: 37.79527559055118,
+				pageClipRectWidth: 796.2399999999999,
+				pageGridLines: false,
+				pageHeadings: false,
+				pageHeight: 210,
+				pageWidth: 297,
+				scale: 0.74,
+				startOffset: 0,
+				startOffsetPx: 0,
+				titleColRange: null,
+				titleHeight: 0,
+				titleRowRange: null,
+				titleWidth: 0,
+				topFieldInPx: 38.79527559055118,
+				pageRange: {
+					c1: 0,
+					c2: 18,
+					r1: 0,
+					r2: 57,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings 1:");
+			wsView._changeFitToPage(0, 0);
+			updateView();
+
+
+			printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
+			assert.strictEqual(printPagesData.arrPages.length, 4, "Compare pages length 2");
+
+			page = printPagesData.arrPages[0];
+
+			referenceObj = {
+				indexWorksheet:0,
+				leftFieldInPx:38.79527559055118,
+				pageClipRectHeight:43.66,
+				pageClipRectLeft:37.79527559055118,
+				pageClipRectTop:37.79527559055118,
+				pageClipRectWidth:67.34,
+				pageGridLines:false,
+				pageHeadings:false,
+				pageHeight:210,
+				pageWidth:297,
+				scale:0.74,
+				startOffset:0,
+				startOffsetPx:0,
+				titleColRange:null,
+				titleHeight:0,
+				titleRowRange:null,
+				titleWidth:0,
+				topFieldInPx:38.79527559055118,
+				pageRange: {
+					c1: 0,
+					c2: 1,
+					r1: 0,
+					r2: 3,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings changes with scale page1: ");
+
+			page = printPagesData.arrPages[1];
+
+			referenceObj = {
+				indexWorksheet:0,
+				leftFieldInPx:38.79527559055118,
+				pageClipRectHeight:43.66,
+				pageClipRectLeft:37.79527559055118,
+				pageClipRectTop:37.79527559055118,
+				pageClipRectWidth:728.9,
+				pageGridLines:false,
+				pageHeadings:false,
+				pageHeight:210,
+				pageWidth:297,
+				scale:0.74,
+				startOffset:0,
+				startOffsetPx:0,
+				titleColRange:null,
+				titleHeight:0,
+				titleRowRange:null,
+				titleWidth:0,
+				topFieldInPx:38.79527559055118,
+				pageRange: {
+					c1: 2,
+					c2: 18,
+					r1: 0,
+					r2: 3,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings changes with scale page2: ");
+
+
+			page = printPagesData.arrPages[2];
+
+			referenceObj = {
+				indexWorksheet:0,
+				leftFieldInPx:38.79527559055118,
+				pageClipRectHeight:657.1200000000002,
+				pageClipRectLeft:37.79527559055118,
+				pageClipRectTop:37.79527559055118,
+				pageClipRectWidth:67.34,
+				pageGridLines:false,
+				pageHeadings:false,
+				pageHeight:210,
+				pageWidth:297,
+				scale:0.74,
+				startOffset:0,
+				startOffsetPx:0,
+				titleColRange:null,
+				titleHeight:0,
+				titleRowRange:null,
+				titleWidth:0,
+				topFieldInPx:38.79527559055118,
+				pageRange: {
+					c1: 0,
+					c2: 1,
+					r1: 4,
+					r2: 57,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings changes with scale page3: ");
+
+			page = printPagesData.arrPages[3];
+
+			referenceObj = {
+				indexWorksheet:0,
+				leftFieldInPx:38.79527559055118,
+				pageClipRectHeight:657.1200000000002,
+				pageClipRectLeft:37.79527559055118,
+				pageClipRectTop:37.79527559055118,
+				pageClipRectWidth:728.9,
+				pageGridLines:false,
+				pageHeadings:false,
+				pageHeight:210,
+				pageWidth:297,
+				scale:0.74,
+				startOffset:0,
+				startOffsetPx:0,
+				titleColRange:null,
+				titleHeight:0,
+				titleRowRange:null,
+				titleWidth:0,
+				topFieldInPx:38.79527559055118,
+				pageRange: {
+					c1: 2,
+					c2: 18,
+					r1: 4,
+					r2: 57,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings changes with scale page4: ");
+
+			api.asc_SetPrintScale(null, null, 100);
+
+			updateView();
+
+			printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
+			assert.strictEqual(printPagesData.arrPages.length, 6, "Compare pages length 2");
+
+			page = printPagesData.arrPages[0];
+
+			referenceObj = {
+				indexWorksheet:0,
+				leftFieldInPx:38.79527559055118,
+				pageClipRectHeight:59,
+				pageClipRectLeft:37.79527559055118,
+				pageClipRectTop:37.79527559055118,
+				pageClipRectWidth:91,
+				pageGridLines:false,
+				pageHeadings:false,
+				pageHeight:210,
+				pageWidth:297,
+				scale:1,
+				startOffset:0,
+				startOffsetPx:0,
+				titleColRange:null,
+				titleHeight:0,
+				titleRowRange:null,
+				titleWidth:0,
+				topFieldInPx:38.79527559055118,
+				pageRange: {
+					c1: 0,
+					c2: 1,
+					r1: 0,
+					r2: 3,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings changes without scale page1: ");
+
+			page = printPagesData.arrPages[1];
+
+			referenceObj = {
+				indexWorksheet:0,
+				leftFieldInPx:38.79527559055118,
+				pageClipRectHeight:59,
+				pageClipRectLeft:37.79527559055118,
+				pageClipRectTop:37.79527559055118,
+				pageClipRectWidth:985,
+				pageGridLines:false,
+				pageHeadings:false,
+				pageHeight:210,
+				pageWidth:297,
+				scale:1,
+				startOffset:0,
+				startOffsetPx:0,
+				titleColRange:null,
+				titleHeight:0,
+				titleRowRange:null,
+				titleWidth:0,
+				topFieldInPx:38.79527559055118,
+				pageRange: {
+					c1: 2,
+					c2: 18,
+					r1: 0,
+					r2: 3,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings changes without scale page2: ");
+
+			page = printPagesData.arrPages[2];
+
+			referenceObj = {
+				indexWorksheet:0,
+				leftFieldInPx:38.79527559055118,
+				pageClipRectHeight:705,
+				pageClipRectLeft:37.79527559055118,
+				pageClipRectTop:37.79527559055118,
+				pageClipRectWidth:91,
+				pageGridLines:false,
+				pageHeadings:false,
+				pageHeight:210,
+				pageWidth:297,
+				scale:1,
+				startOffset:0,
+				startOffsetPx:0,
+				titleColRange:null,
+				titleHeight:0,
+				titleRowRange:null,
+				titleWidth:0,
+				topFieldInPx:38.79527559055118,
+				pageRange: {
+					c1: 0,
+					c2: 1,
+					r1: 4,
+					r2: 48,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings changes without scale page3: ");
+
+			page = printPagesData.arrPages[3];
+
+			referenceObj = {
+				indexWorksheet:0,
+				leftFieldInPx:38.79527559055118,
+				pageClipRectHeight:705,
+				pageClipRectLeft:37.79527559055118,
+				pageClipRectTop:37.79527559055118,
+				pageClipRectWidth:985,
+				pageGridLines:false,
+				pageHeadings:false,
+				pageHeight:210,
+				pageWidth:297,
+				scale:1,
+				startOffset:0,
+				startOffsetPx:0,
+				titleColRange:null,
+				titleHeight:0,
+				titleRowRange:null,
+				titleWidth:0,
+				topFieldInPx:38.79527559055118,
+				pageRange: {
+					c1: 2,
+					c2: 18,
+					r1: 4,
+					r2: 48,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings changes without scale page4: ");
+
+			page = printPagesData.arrPages[4];
+
+			referenceObj = {
+				indexWorksheet:0,
+				leftFieldInPx:38.79527559055118,
+				pageClipRectHeight:183,
+				pageClipRectLeft:37.79527559055118,
+				pageClipRectTop:37.79527559055118,
+				pageClipRectWidth:91,
+				pageGridLines:false,
+				pageHeadings:false,
+				pageHeight:210,
+				pageWidth:297,
+				scale:1,
+				startOffset:0,
+				startOffsetPx:0,
+				titleColRange:null,
+				titleHeight:0,
+				titleRowRange:null,
+				titleWidth:0,
+				topFieldInPx:38.79527559055118,
+				pageRange: {
+					c1: 0,
+					c2: 1,
+					r1: 49,
+					r2: 57,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings changes without scale page5: ");
+
+			page = printPagesData.arrPages[5];
+
+			referenceObj = {
+				indexWorksheet:0,
+				leftFieldInPx:38.79527559055118,
+				pageClipRectHeight:183,
+				pageClipRectLeft:37.79527559055118,
+				pageClipRectTop:37.79527559055118,
+				pageClipRectWidth:985,
+				pageGridLines:false,
+				pageHeadings:false,
+				pageHeight:210,
+				pageWidth:297,
+				scale:1,
+				startOffset:0,
+				startOffsetPx:0,
+				titleColRange:null,
+				titleHeight:0,
+				titleRowRange:null,
+				titleWidth:0,
+				topFieldInPx:38.79527559055118,
+				pageRange: {
+					c1: 2,
+					c2: 18,
+					r1: 49,
+					r2: 57,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings changes without scale page6: ");
+
+			undoAll();
+			updateView();
+
+			printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
+			assert.strictEqual(printPagesData.arrPages.length, 1, "Compare pages length 6 after undo");
+			page = printPagesData.arrPages[0];
+			referenceObj = {
+				indexWorksheet: 0,
+				leftFieldInPx: 38.79527559055118,
+				pageClipRectHeight: 700.7800000000003,
+				pageClipRectLeft: 37.79527559055118,
+				pageClipRectTop: 37.79527559055118,
+				pageClipRectWidth: 796.2399999999999,
+				pageGridLines: false,
+				pageHeadings: false,
+				pageHeight: 210,
+				pageWidth: 297,
+				scale: 0.74,
+				startOffset: 0,
+				startOffsetPx: 0,
+				titleColRange: null,
+				titleHeight: 0,
+				titleRowRange: null,
+				titleWidth: 0,
+				topFieldInPx: 38.79527559055118,
+				pageRange: {
+					c1: 0,
+					c2: 18,
+					r1: 0,
+					r2: 57,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings after undo:");
+			AscCommon.History.Clear();
+		});
+	}
+
+	function testPageBreaksAndTitles() {
+		QUnit.test("Test: page break and titles settings ", function (assert) {
+			api.asc_SetPrintScale(null, null, 100);
+			api.asc_changePrintTitles("$A:$D", "$1:$5", 0);
+			wsView.setSelection(new Asc.Range(1, 3, 1, 3));
+			api.asc_InsertPageBreak();
+
+			let printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
+			assert.strictEqual(printPagesData.arrPages.length, 9, "Compare pages length with print titles");
+
+			let page = printPagesData.arrPages[0];
+
+			let referenceObj = {
+				"pageWidth": 297,
+				"pageHeight": 210,
+				"pageClipRectLeft": 37.79527559055118,
+				"pageClipRectTop": 37.79527559055118,
+				"pageClipRectWidth": 21,
+				"pageClipRectHeight": 45,
+				"pageRange": {"c1": 0, "r1": 0, "c2": 0, "r2": 2, "refType1": 3, "refType2": 3},
+				"leftFieldInPx": 38.79527559055118,
+				"topFieldInPx": 38.79527559055118,
+				"pageGridLines": false,
+				"pageHeadings": false,
+				"indexWorksheet": 0,
+				"startOffset": 0,
+				"startOffsetPx": 0,
+				"scale": 1,
+				"titleRowRange": null,
+				"titleColRange": null,
+				"titleWidth": 0,
+				"titleHeight": 0
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings with titles 1:");
+
+			page = printPagesData.arrPages[1];
+
+			referenceObj = {
+				"pageWidth": 297,
+				"pageHeight": 210,
+				"pageClipRectLeft": 37.79527559055118,
+				"pageClipRectTop": 37.79527559055118,
+				"pageClipRectWidth": 966,
+				"pageClipRectHeight": 45,
+				"pageRange": {"c1": 1, "r1": 0, "c2": 16, "r2": 2, "refType1": 3, "refType2": 3},
+				"leftFieldInPx": 38.79527559055118,
+				"topFieldInPx": 38.79527559055118,
+				"pageGridLines": false,
+				"pageHeadings": false,
+				"indexWorksheet": 0,
+				"startOffset": 0,
+				"startOffsetPx": 0,
+				"scale": 1,
+				"titleRowRange": null,
+				"titleColRange": {"c1": 0, "r1": 0, "c2": 0, "r2": 2, "refType1": 3, "refType2": 3},
+				"titleWidth": 21,
+				"titleHeight": 0
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings with titles 2:");
+
+			page = printPagesData.arrPages[2];
+
+			referenceObj = {
+				"pageWidth": 297,
+				"pageHeight": 210,
+				"pageClipRectLeft": 37.79527559055118,
+				"pageClipRectTop": 37.79527559055118,
+				"pageClipRectWidth": 89,
+				"pageClipRectHeight": 45,
+				"pageRange": {"c1": 17, "r1": 0, "c2": 18, "r2": 2, "refType1": 3, "refType2": 3},
+				"leftFieldInPx": 38.79527559055118,
+				"topFieldInPx": 38.79527559055118,
+				"pageGridLines": false,
+				"pageHeadings": false,
+				"indexWorksheet": 0,
+				"startOffset": 0,
+				"startOffsetPx": 0,
+				"scale": 1,
+				"titleRowRange": null,
+				"titleColRange": {"c1": 0, "r1": 0, "c2": 3, "r2": 2, "refType1": 3, "refType2": 3},
+				"titleWidth": 177,
+				"titleHeight": 0
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings with titles 3:");
+
+			page = printPagesData.arrPages[3];
+
+			referenceObj = {
+				"pageWidth": 297,
+				"pageHeight": 210,
+				"pageClipRectLeft": 37.79527559055118,
+				"pageClipRectTop": 37.79527559055118,
+				"pageClipRectWidth": 21,
+				"pageClipRectHeight": 662,
+				"pageRange": {"c1": 0, "r1": 3, "c2": 0, "r2": 45, "refType1": 3, "refType2": 3},
+				"leftFieldInPx": 38.79527559055118,
+				"topFieldInPx": 38.79527559055118,
+				"pageGridLines": false,
+				"pageHeadings": false,
+				"indexWorksheet": 0,
+				"startOffset": 0,
+				"startOffsetPx": 0,
+				"scale": 1,
+				"titleRowRange": {"c1": 0, "r1": 0, "c2": 0, "r2": 2, "refType1": 3, "refType2": 3},
+				"titleColRange": null,
+				"titleWidth": 0,
+				"titleHeight": 45
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings with titles 4:");
+
+			page = printPagesData.arrPages[4];
+
+			referenceObj = {
+				"pageWidth": 297,
+				"pageHeight": 210,
+				"pageClipRectLeft": 37.79527559055118,
+				"pageClipRectTop": 37.79527559055118,
+				"pageClipRectWidth": 966,
+				"pageClipRectHeight": 662,
+				"pageRange": {"c1": 1, "r1": 3, "c2": 16, "r2": 45, "refType1": 3, "refType2": 3},
+				"leftFieldInPx": 38.79527559055118,
+				"topFieldInPx": 38.79527559055118,
+				"pageGridLines": false,
+				"pageHeadings": false,
+				"indexWorksheet": 0,
+				"startOffset": 0,
+				"startOffsetPx": 0,
+				"scale": 1,
+				"titleRowRange": {"c1": 1, "r1": 0, "c2": 16, "r2": 2, "refType1": 3, "refType2": 3},
+				"titleColRange": {"c1": 0, "r1": 3, "c2": 0, "r2": 45, "refType1": 3, "refType2": 3},
+				"titleWidth": 21,
+				"titleHeight": 45
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings with titles 5:");
+
+			page = printPagesData.arrPages[5];
+
+			referenceObj = {
+				"pageWidth": 297,
+				"pageHeight": 210,
+				"pageClipRectLeft": 37.79527559055118,
+				"pageClipRectTop": 37.79527559055118,
+				"pageClipRectWidth": 89,
+				"pageClipRectHeight": 662,
+				"pageRange": {"c1": 17, "r1": 3, "c2": 18, "r2": 45, "refType1": 3, "refType2": 3},
+				"leftFieldInPx": 38.79527559055118,
+				"topFieldInPx": 38.79527559055118,
+				"pageGridLines": false,
+				"pageHeadings": false,
+				"indexWorksheet": 0,
+				"startOffset": 0,
+				"startOffsetPx": 0,
+				"scale": 1,
+				"titleRowRange": {"c1": 17, "r1": 0, "c2": 18, "r2": 2, "refType1": 3, "refType2": 3},
+				"titleColRange": {"c1": 0, "r1": 3, "c2": 3, "r2": 45, "refType1": 3, "refType2": 3},
+				"titleWidth": 177,
+				"titleHeight": 45
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings with titles 6:");
+
+			page = printPagesData.arrPages[7];
+
+			referenceObj = {
+				"pageWidth": 297,
+				"pageHeight": 210,
+				"pageClipRectLeft": 37.79527559055118,
+				"pageClipRectTop": 37.79527559055118,
+				"pageClipRectWidth": 966,
+				"pageClipRectHeight": 240,
+				"pageRange": {"c1": 1, "r1": 46, "c2": 16, "r2": 57, "refType1": 3, "refType2": 3},
+				"leftFieldInPx": 38.79527559055118,
+				"topFieldInPx": 38.79527559055118,
+				"pageGridLines": false,
+				"pageHeadings": false,
+				"indexWorksheet": 0,
+				"startOffset": 0,
+				"startOffsetPx": 0,
+				"scale": 1,
+				"titleRowRange": {"c1": 1, "r1": 0, "c2": 16, "r2": 4, "refType1": 3, "refType2": 3},
+				"titleColRange": {"c1": 0, "r1": 46, "c2": 0, "r2": 57, "refType1": 3, "refType2": 3},
+				"titleWidth": 21,
+				"titleHeight": 73
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings with titles 8:");
+
+			undoAll();
+			updateView();
+
+			printPagesData = api.wb.calcPagesPrint(new Asc.asc_CAdjustPrint());
+			assert.strictEqual(printPagesData.arrPages.length, 1, "Compare pages length 6 after undo");
+			page = printPagesData.arrPages[0];
+			referenceObj = {
+				indexWorksheet: 0,
+				leftFieldInPx: 38.79527559055118,
+				pageClipRectHeight: 700.7800000000003,
+				pageClipRectLeft: 37.79527559055118,
+				pageClipRectTop: 37.79527559055118,
+				pageClipRectWidth: 796.2399999999999,
+				pageGridLines: false,
+				pageHeadings: false,
+				pageHeight: 210,
+				pageWidth: 297,
+				scale: 0.74,
+				startOffset: 0,
+				startOffsetPx: 0,
+				titleColRange: null,
+				titleHeight: 0,
+				titleRowRange: null,
+				titleWidth: 0,
+				topFieldInPx: 38.79527559055118,
+				pageRange: {
+					c1: 0,
+					c2: 18,
+					r1: 0,
+					r2: 57,
+					refType1: 3,
+					refType2: 3
+				}
+			};
+
+			comparePrintPageSettings(assert, page, referenceObj, "Compare pages settings after undo:");
+			AscCommon.History.Clear();
+		});
+	}
+
+	function checkUndoRedo(fBefore, fAfter, desc, skipLastUndo) {
+		fAfter("after_" + desc);
+		AscCommon.History.Undo();
+		fBefore("undo_" + desc);
+		AscCommon.History.Redo();
+		fAfter("redo_" + desc);
+		if (!skipLastUndo) {
+			AscCommon.History.Undo();
+		}
+	}
+
+	function testPageBreaksManipulation() {
+		QUnit.test("Test: page break manipulation ", function (assert) {
+			//add breaks
+			ws = api.wbModel.aWorksheets[0];
+
+			let beforeFunc = function(desc) {
+				assert.strictEqual((ws.colBreaks == null || ws.colBreaks.getCount() === 0) ? null : 1, null, desc);
+				assert.strictEqual((ws.rowBreaks == null || ws.rowBreaks.getCount() === 0) ? null : 1, null, desc);
+			};
+
+			let insertColBreakId = 1;
+			let insertRowBreakId = 3;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, desc + " check col contains");
+				assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, desc + " check row contains");
+			}, "insert page break_col1row3");
+
+
+			insertColBreakId = 5;
+			insertRowBreakId = 5;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, desc + " check col contains");
+				assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, desc + " check row contains");
+			}, "insert page break_col5row5");
+
+
+
+			insertColBreakId = 1;
+			insertRowBreakId = 1;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, desc + " check col contains");
+				assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, desc + " check row contains");
+			}, "insert page break_col1row1");
+
+			insertColBreakId = 0;
+			insertRowBreakId = 0;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 0, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 0, desc + " check row count");
+			}, "insert page break_col0row0");
+
+			insertColBreakId = 0;
+			insertRowBreakId = 1;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 0, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc + " check row count");
+
+				assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, desc + " check row contains");
+			}, "insert page break_col0row1");
+
+			insertColBreakId = 1;
+			insertRowBreakId = 0;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 0, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, desc + " check col contains");
+			}, "insert page break_col1row0");
+
+			insertColBreakId = 3;
+			insertRowBreakId = 3;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(beforeFunc, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, desc + " check col contains");
+				assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, desc + " check row contains");
+			}, "insert page break_col3row3", true);
+
+			//remove
+			insertColBreakId = 4;
+			insertRowBreakId = 4;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_RemovePageBreak();
+
+			assert.strictEqual(ws.colBreaks.getCount(), 1, " check col count + remove1");
+			assert.strictEqual(ws.rowBreaks.getCount(), 1, " check row count + remove1");
+
+			assert.strictEqual(ws.colBreaks.containsBreak(3), true, " check col contains + remove1");
+			assert.strictEqual(ws.rowBreaks.containsBreak(3), true, " check row contains + remove1");
+
+
+			insertColBreakId = 3;
+			insertRowBreakId = 3;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_RemovePageBreak();
+
+			checkUndoRedo(function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, desc + " check col contains");
+				assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, desc + " check row contains");
+			}, beforeFunc, "remove page break_col3row3");
+
+			assert.strictEqual(ws.colBreaks.getCount(), 1, " check col count + remove2");
+			assert.strictEqual(ws.rowBreaks.getCount(), 1, " check row count + remove2");
+
+			assert.strictEqual(ws.colBreaks.containsBreak(3), true, " check col contains + remove2");
+			assert.strictEqual(ws.rowBreaks.containsBreak(3), true, " check row contains + remove2");
+
+			insertColBreakId = 5;
+			insertRowBreakId = 5;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(function (desc) {
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc);
+				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc);
+			}, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 2, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 2, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(insertColBreakId), true, desc + " check col contains");
+				assert.strictEqual(ws.rowBreaks.containsBreak(insertRowBreakId), true, desc + " check row contains");
+			}, "insert page break_col5row5", true);
+
+			//reset all
+			api.asc_ResetAllPageBreaks();
+			checkUndoRedo(function (desc) {
+				assert.strictEqual(ws.colBreaks.getCount(), 2, desc);
+				assert.strictEqual(ws.rowBreaks.getCount(), 2, desc);
+
+				assert.strictEqual(ws.colBreaks.containsBreak(5), true, desc + " check col contains");
+				assert.strictEqual(ws.rowBreaks.containsBreak(5), true, desc + " check row contains");
+				assert.strictEqual(ws.colBreaks.containsBreak(3), true, desc + " check col contains");
+				assert.strictEqual(ws.rowBreaks.containsBreak(3), true, desc + " check row contains");
+
+			}, beforeFunc, "remove all page breaks");
+
+			//move
+			insertColBreakId = 8;
+			insertRowBreakId = 8;
+			wsView.setSelection(new Asc.Range(insertColBreakId, insertRowBreakId, insertColBreakId, insertRowBreakId));
+			api.asc_InsertPageBreak();
+
+			checkUndoRedo(function (desc) {
+				assert.strictEqual(ws.colBreaks.getCount(), 2, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 2, desc + " check row count");
+			}, function (desc){
+				assert.strictEqual(ws.colBreaks.getCount(), 3, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 3, desc + " check row count");
+			}, "insert page break_col8row8", true);
+
+			wsView.changeRowColBreaks(3, 4, new Asc.Range(0, 0, 16, 57), true, true);
+
+			checkUndoRedo(function (desc) {
+				assert.strictEqual(ws.colBreaks.getCount(), 3, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 3, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(8), true, desc + " check col contains 8");
+				assert.strictEqual(ws.rowBreaks.containsBreak(8), true, desc + " check row contains 8");
+				assert.strictEqual(ws.colBreaks.containsBreak(5), true, desc + " check col contains 5");
+				assert.strictEqual(ws.rowBreaks.containsBreak(5), true, desc + " check row contains 5");
+				assert.strictEqual(ws.colBreaks.containsBreak(3), true, desc + " check col contains 3");
+				assert.strictEqual(ws.rowBreaks.containsBreak(3), true, desc + " check row contains 3");
+			}, function (desc){
+
+				assert.strictEqual(ws.colBreaks.getCount(), 3, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 3, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(8), true, desc + " check col contains 8");
+				assert.strictEqual(ws.rowBreaks.containsBreak(8), true, desc + " check row contains 8");
+				assert.strictEqual(ws.colBreaks.containsBreak(5), true, desc + " check col contains 5");
+				assert.strictEqual(ws.rowBreaks.containsBreak(5), true, desc + " check row contains 5");
+				assert.strictEqual(ws.colBreaks.containsBreak(4), true, desc + " check col contains 4");
+				assert.strictEqual(ws.rowBreaks.containsBreak(3), true, desc + " check row contains 4");
+
+			}, "change page col break_from3to4");
+
+			wsView.changeRowColBreaks(3, 12, new Asc.Range(0, 0, 16, 57), true, true);
+
+			checkUndoRedo(function (desc) {
+				assert.strictEqual(ws.colBreaks.getCount(), 3, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 3, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(8), true, desc + " check col contains 8");
+				assert.strictEqual(ws.rowBreaks.containsBreak(8), true, desc + " check row contains 8");
+				assert.strictEqual(ws.colBreaks.containsBreak(5), true, desc + " check col contains 5");
+				assert.strictEqual(ws.rowBreaks.containsBreak(5), true, desc + " check row contains 5");
+				assert.strictEqual(ws.colBreaks.containsBreak(3), true, desc + " check col contains 3");
+				assert.strictEqual(ws.rowBreaks.containsBreak(3), true, desc + " check row contains 3");
+			}, function (desc){
+
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 3, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(12), true, desc + " check col contains 12");
+				assert.strictEqual(ws.rowBreaks.containsBreak(8), true, desc + " check row contains 8");
+				assert.strictEqual(ws.rowBreaks.containsBreak(5), true, desc + " check row contains 5");
+				assert.strictEqual(ws.rowBreaks.containsBreak(3), true, desc + " check row contains 4");
+
+			}, "change page col break_from3to12");
+
+			wsView.changeRowColBreaks(3, 12, new Asc.Range(0, 0, 16, 57), null, true);
+
+			checkUndoRedo(function (desc) {
+				assert.strictEqual(ws.colBreaks.getCount(), 3, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 3, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(8), true, desc + " check col contains 8");
+				assert.strictEqual(ws.rowBreaks.containsBreak(8), true, desc + " check row contains 8");
+				assert.strictEqual(ws.colBreaks.containsBreak(5), true, desc + " check col contains 5");
+				assert.strictEqual(ws.rowBreaks.containsBreak(5), true, desc + " check row contains 5");
+				assert.strictEqual(ws.colBreaks.containsBreak(3), true, desc + " check col contains 3");
+				assert.strictEqual(ws.rowBreaks.containsBreak(3), true, desc + " check row contains 3");
+			}, function (desc){
+
+				assert.strictEqual(ws.colBreaks.getCount(), 3, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc + " check row count");
+
+				assert.strictEqual(ws.rowBreaks.containsBreak(12), true, desc + " check row contains 12");
+				assert.strictEqual(ws.colBreaks.containsBreak(8), true, desc + " check col contains 8");
+				assert.strictEqual(ws.colBreaks.containsBreak(5), true, desc + " check col contains 5");
+				assert.strictEqual(ws.colBreaks.containsBreak(3), true, desc + " check col contains 4");
+
+			}, "change page row break_from3to12");
+
+
+			wsView.changeRowColBreaks(8, 2, new Asc.Range(0, 0, 16, 57), true, true);
+
+			checkUndoRedo(function (desc) {
+				assert.strictEqual(ws.colBreaks.getCount(), 3, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 3, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(8), true, desc + " check col contains 8");
+				assert.strictEqual(ws.rowBreaks.containsBreak(8), true, desc + " check row contains 8");
+				assert.strictEqual(ws.colBreaks.containsBreak(5), true, desc + " check col contains 5");
+				assert.strictEqual(ws.rowBreaks.containsBreak(5), true, desc + " check row contains 5");
+				assert.strictEqual(ws.colBreaks.containsBreak(3), true, desc + " check col contains 3");
+				assert.strictEqual(ws.rowBreaks.containsBreak(3), true, desc + " check row contains 3");
+			}, function (desc){
+
+				assert.strictEqual(ws.colBreaks.getCount(), 1, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 3, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(2), true, desc + " check col contains 12");
+				assert.strictEqual(ws.rowBreaks.containsBreak(8), true, desc + " check row contains 8");
+				assert.strictEqual(ws.rowBreaks.containsBreak(5), true, desc + " check row contains 5");
+				assert.strictEqual(ws.rowBreaks.containsBreak(3), true, desc + " check row contains 4");
+
+			}, "change page col break_from8to2");
+
+			wsView.changeRowColBreaks(8, 2, new Asc.Range(0, 0, 16, 57), null, true);
+
+			checkUndoRedo(function (desc) {
+				assert.strictEqual(ws.colBreaks.getCount(), 3, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 3, desc + " check row count");
+
+				assert.strictEqual(ws.colBreaks.containsBreak(8), true, desc + " check col contains 8");
+				assert.strictEqual(ws.rowBreaks.containsBreak(8), true, desc + " check row contains 8");
+				assert.strictEqual(ws.colBreaks.containsBreak(5), true, desc + " check col contains 5");
+				assert.strictEqual(ws.rowBreaks.containsBreak(5), true, desc + " check row contains 5");
+				assert.strictEqual(ws.colBreaks.containsBreak(3), true, desc + " check col contains 3");
+				assert.strictEqual(ws.rowBreaks.containsBreak(3), true, desc + " check row contains 3");
+			}, function (desc){
+
+				assert.strictEqual(ws.colBreaks.getCount(), 3, desc + " check col count");
+				assert.strictEqual(ws.rowBreaks.getCount(), 1, desc + " check row count");
+
+				assert.strictEqual(ws.rowBreaks.containsBreak(2), true, desc + " check row contains 12");
+				assert.strictEqual(ws.colBreaks.containsBreak(8), true, desc + " check col contains 8");
+				assert.strictEqual(ws.colBreaks.containsBreak(5), true, desc + " check col contains 5");
+				assert.strictEqual(ws.colBreaks.containsBreak(3), true, desc + " check col contains 4");
+
+			}, "change page row break_from8to2");
 		});
 	}
 
@@ -358,6 +1394,9 @@ $(function() {
 	function startTests() {
 		QUnit.start();
 		testPrintFileSettings();
+		testPageBreaksSimple();
+		testPageBreaksAndTitles();
+		testPageBreaksManipulation();
 	}
 
 

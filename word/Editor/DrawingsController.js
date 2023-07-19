@@ -697,13 +697,26 @@ CDrawingsController.prototype.IsTableCellSelection = function()
 
 	return false;
 };
-CDrawingsController.prototype.IsSelectionLocked = function(nCheckType)
+CDrawingsController.prototype.IsSelectionLocked = function(checkType)
 {
-	this.DrawingObjects.documentIsSelectionLocked(nCheckType);
+	this.DrawingObjects.documentIsSelectionLocked(checkType);
 
-	var oContentControl = this.private_GetParentContentControl();
-	if (oContentControl)
-		oContentControl.Document_Is_SelectionLocked(nCheckType);
+	let contentControl = this.private_GetParentContentControl();
+	if (contentControl)
+	{
+		if (contentControl.IsPicture()
+			&& (AscCommon.changestype_Remove === checkType
+				|| AscCommon.changestype_Delete === checkType))
+		{
+			contentControl.SkipSpecialContentControlLock(true);
+			contentControl.Document_Is_SelectionLocked(checkType);
+			contentControl.SkipSpecialContentControlLock(false);
+		}
+		else
+		{
+			contentControl.Document_Is_SelectionLocked(checkType);
+		}
+	}
 };
 CDrawingsController.prototype.CollectSelectedReviewChanges = function(oTrackManager)
 {

@@ -915,6 +915,10 @@ CComplexField.prototype.private_UpdateTOC = function()
 				}
 				else if (Asc.c_oAscNumberingSuff.Tab === nNumSuff)
 				{
+					// Выставление родительского класса нужно для правильного расчета ширины рана с учетом того,
+					// что используемые шрифты могут быть заданы в темах
+					oPara.SetParent(oSrcParagraph.GetParent());
+					
 					numTabPos = 0;
 					AscWord.ParagraphTextShaper.ShapeRun(oNumberingRun);
 					for (let runItemIndex = 0; runItemIndex < oNumberingRun.GetElementsCount(); ++runItemIndex)
