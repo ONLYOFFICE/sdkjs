@@ -575,7 +575,7 @@ $(function() {
 			assert.strictEqual(traceManager._getPrecedents(B10Index, E6Index), 1);
 			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), 1);
 			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), 1);
-			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), 1);
 			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), undefined);
 			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), undefined);
 			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), undefined);
@@ -591,6 +591,21 @@ $(function() {
 			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), 1);
 			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), 1);
 			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), 1);
+
+			// clear last built precedents
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.precedent);
+			assert.strictEqual(traceManager._getPrecedents(E13Index, B8Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B8Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B9Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(B10Index, E6Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(E6Index, B3Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), undefined);
 			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), 1);
 			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), 1);
 			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), 1);
