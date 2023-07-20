@@ -3286,7 +3286,7 @@
 
 	/**
 	 * Properties for make search and replace.
-	 * @typedef ReplacehData
+	 * @typedef ReplaceData
 	 * @param {string | undefined} What - The data to search for.
 	 * @param {string} Replacement - The replacement string.
 	 * @param {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
@@ -3457,7 +3457,7 @@
 	 * Replaces specific information to another one in a range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {ReplacehData} oReplaceData - The data used to make search and replace.
+	 * @param {ReplaceData} oReplaceData - The data used to make search and replace.
 	 * @returns {ApiRange | null} - Returns null if the current range does not contain such text.
 	 * @also
 	 * Replaces specific information to another one in a range.
