@@ -62,6 +62,8 @@ function (window, undefined) {
 
 	var maxGammaArgument = 171.624376956302;
 
+	var g_cCharDelimiter = AscCommon.g_cCharDelimiter;
+
 	cFormulaFunctionGroup['Statistical'] = cFormulaFunctionGroup['Statistical'] || [];
 	cFormulaFunctionGroup['Statistical'].push(cAVEDEV, cAVERAGE, cAVERAGEA, cAVERAGEIF, cAVERAGEIFS, cBETADIST,
 		cBETA_DIST, cBETA_INV, cBETAINV, cBINOMDIST, cBINOM_DIST, cBINOM_DIST_RANGE, cBINOM_INV, cCHIDIST, cCHIINV, cCHISQ_DIST,
@@ -1394,6 +1396,9 @@ function (window, undefined) {
 	function matrixClone(matrix) {
 		var cloneMatrix = [];
 		for (var i = 0; i < matrix.length; i++) {
+			if (!matrix[i]) {
+				continue;
+			}
 			for (var j = 0; j < matrix[i].length; j++) {
 				if (!cloneMatrix[i]) {
 					cloneMatrix[i] = [];
@@ -5112,6 +5117,7 @@ function (window, undefined) {
 	cCOUNTIF.prototype.arrayIndexes = {0: 1};
 	cCOUNTIF.prototype.argumentsType = [argType.reference, argType.any];
 	cCOUNTIF.prototype.Calculate = function (arg) {
+		return new cError(cErrorType.wrong_value_type)
 		let arg0 = arg[0], arg1 = arg[1], _count = 0, matchingInfo;
 
 		if (cElementType.error === arg0.type) {
@@ -5190,6 +5196,7 @@ function (window, undefined) {
 	cCOUNTIFS.prototype.argumentsType = [[argType.reference, argType.any]];
 	cCOUNTIFS.prototype.Calculate = function (arg) {
 		let i, j, arg0, arg1, matchingInfo, arg0Matrix, arg1Matrix, _count = 0, argBaseDimension, argNextDimension;
+		let nullMap = {};
 		for (let k = 0; k < arg.length; k += 2) {
 			arg0 = arg[k];
 			arg1 = arg[k + 1];
@@ -5212,11 +5219,17 @@ function (window, undefined) {
 
 			argNextDimension = arg0.getDimensions();
 			matchingInfo = AscCommonExcel.matchingValue(arg1);
+
 			if (arg1.value === "") {
 				arg1Matrix = arg0.getMatrix();
 			} else {
-				arg1Matrix = arg0.getMatrixNoEmpty ? arg0.getMatrixNoEmpty() : arg0.getMatrix();
+				if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+					arg1Matrix = g_oFormulaRangesCache.get(arg0);
+				} else {
+					arg1Matrix = arg0.getMatrixNoEmpty ? arg0.getMatrixNoEmpty() : arg0.getMatrix();
+				}
 			}
+
 			if (cElementType.cellsRange3D === arg0.type) {
 				arg1Matrix = arg1Matrix[0];
 			}
@@ -5229,23 +5242,26 @@ function (window, undefined) {
 			}
 			for (i = 0; i < arg1Matrix.length; ++i) {
 				if (!arg1Matrix[i]) {
-					arg0Matrix[i] = null;
+					nullMap[i] = 1;
 					continue;
 				}
 				for (j = 0; j < arg1Matrix[i].length; ++j) {
-					if (arg0Matrix[i] && arg0Matrix[i][j] && !matching(arg1Matrix[i][j], matchingInfo)) {
-						arg0Matrix[i][j] = null;
+					if ((!nullMap[i] || (nullMap[i] !== 1 && nullMap[i][j] !== 1)) && !matching(arg1Matrix[i][j], matchingInfo)) {
+						if (!nullMap[i]) {
+							nullMap[i] = {};
+						}
+						nullMap[i][j] = 1;
 					}
 				}
 			}
 		}
 
 		for (i = 0; i < arg0Matrix.length; ++i) {
-			if (!arg0Matrix[i]) {
+			if (!arg0Matrix[i] || nullMap[i] === 1) {
 				continue;
 			}
 			for (j = 0; j < arg0Matrix[i].length; ++j) {
-				if (arg0Matrix[i] && arg0Matrix[i][j]) {
+				if (arg0Matrix[i] && arg0Matrix[i][j] && (!nullMap[i] || !nullMap[i][j])) {
 					++_count;
 				}
 			}
@@ -11880,6 +11896,45 @@ function (window, undefined) {
 	cZ_TEST.prototype.isXLFN = true;
 	cZ_TEST.prototype.argumentsType = [argType.number, argType.number, argType.number];
 
+	/**
+	 * @constructor
+	 */
+	function FormulaRangesCache() {
+		this.cacheRanges = {};
+		this.cacheId = {};
+	}
+	FormulaRangesCache.prototype.get = function (area) {
+		let range = area.getRange();
+		let wsId = range.getWorksheet().getId();
+
+		let sRangeName;
+		AscCommonExcel.executeInR1C1Mode(false, function () {
+			sRangeName = wsId + g_cCharDelimiter + range.getName();
+		});
+
+		let cacheElem = this.cacheId[sRangeName];
+		if (!cacheElem) {
+			cacheElem = area.getMatrixNoEmpty ? area.getMatrixNoEmpty() : area.getMatrix();
+			this.cacheId[sRangeName] = cacheElem;
+			let cacheRange = this.cacheRanges[wsId];
+			if (!cacheRange) {
+				cacheRange = new AscCommonExcel.RangeDataManager(null);
+				this.cacheRanges[wsId] = cacheRange;
+			}
+			cacheRange.add(range.getBBox0(), cacheElem);
+		}
+
+		return cacheElem;
+	};
+	FormulaRangesCache.prototype.clean = function () {
+		this.cacheRanges = {};
+	};
+
+	FormulaRangesCache.prototype.remove = function () {
+	};
+
+	let g_oFormulaRangesCache = new FormulaRangesCache();
+
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].phi = phi;
@@ -11908,5 +11963,7 @@ function (window, undefined) {
 	window['AscCommonExcel'].cQUARTILE_INC = cQUARTILE_INC;
 	window['AscCommonExcel'].cPERCENTILE_EXC = cPERCENTILE_EXC;
 	window['AscCommonExcel'].cQUARTILE_EXC = cQUARTILE_EXC;
+
+	window['AscCommonExcel'].g_oFormulaRangesCache = g_oFormulaRangesCache;
 
 })(window);
