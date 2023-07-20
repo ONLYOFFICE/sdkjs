@@ -5196,7 +5196,6 @@ function (window, undefined) {
 	cCOUNTIFS.prototype.argumentsType = [[argType.reference, argType.any]];
 	cCOUNTIFS.prototype.Calculate = function (arg) {
 		let i, j, arg0, arg1, matchingInfo, arg0Matrix, arg1Matrix, _count = 0, argBaseDimension, argNextDimension;
-		let nullMap = {};
 		for (let k = 0; k < arg.length; k += 2) {
 			arg0 = arg[k];
 			arg1 = arg[k + 1];
@@ -5229,12 +5228,11 @@ function (window, undefined) {
 					arg1Matrix = arg0.getMatrixNoEmpty ? arg0.getMatrixNoEmpty() : arg0.getMatrix();
 				}
 			}
-
 			if (cElementType.cellsRange3D === arg0.type) {
 				arg1Matrix = arg1Matrix[0];
 			}
 			if (!arg0Matrix) {
-				arg0Matrix = arg1Matrix;
+				arg0Matrix = matrixClone(arg1Matrix);
 				argBaseDimension = argNextDimension;
 			}
 			if (argNextDimension.row !== argBaseDimension.row || argNextDimension.col !== argBaseDimension.col) {
@@ -5242,26 +5240,23 @@ function (window, undefined) {
 			}
 			for (i = 0; i < arg1Matrix.length; ++i) {
 				if (!arg1Matrix[i]) {
-					nullMap[i] = 1;
+					arg0Matrix[i] = null;
 					continue;
 				}
 				for (j = 0; j < arg1Matrix[i].length; ++j) {
-					if ((!nullMap[i] || (nullMap[i] !== 1 && nullMap[i][j] !== 1)) && !matching(arg1Matrix[i][j], matchingInfo)) {
-						if (!nullMap[i]) {
-							nullMap[i] = {};
-						}
-						nullMap[i][j] = 1;
+					if (arg0Matrix[i] && arg0Matrix[i][j] && !matching(arg1Matrix[i][j], matchingInfo, null, true)) {
+						arg0Matrix[i][j] = null;
 					}
 				}
 			}
 		}
 
 		for (i = 0; i < arg0Matrix.length; ++i) {
-			if (!arg0Matrix[i] || nullMap[i] === 1) {
+			if (!arg0Matrix[i]) {
 				continue;
 			}
 			for (j = 0; j < arg0Matrix[i].length; ++j) {
-				if (arg0Matrix[i] && arg0Matrix[i][j] && (!nullMap[i] || !nullMap[i][j])) {
+				if (arg0Matrix[i] && arg0Matrix[i][j]) {
 					++_count;
 				}
 			}
