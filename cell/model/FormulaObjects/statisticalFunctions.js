@@ -5117,7 +5117,6 @@ function (window, undefined) {
 	cCOUNTIF.prototype.arrayIndexes = {0: 1};
 	cCOUNTIF.prototype.argumentsType = [argType.reference, argType.any];
 	cCOUNTIF.prototype.Calculate = function (arg) {
-		return new cError(cErrorType.wrong_value_type)
 		let arg0 = arg[0], arg1 = arg[1], _count = 0, matchingInfo;
 
 		if (cElementType.error === arg0.type) {
@@ -5161,16 +5160,16 @@ function (window, undefined) {
 		matchingInfo = AscCommonExcel.matchingValue(arg1);
 		if (cElementType.cellsRange === arg0.type || cElementType.array === arg0.type) {
 			arg0.foreach2(function (_val) {
-				_count += checkEmptyValue(matching(_val, matchingInfo, true), _val, matchingInfo);
+				_count += checkEmptyValue(matching(_val, matchingInfo, true, true), _val, matchingInfo);
 			})
 		} else if (cElementType.cellsRange3D === arg0.type) {
 			val = arg0.getValue();
 			for (let i = 0; i < val.length; i++) {
-				_count += checkEmptyValue(matching(val[i], matchingInfo, true), val[i], matchingInfo);
+				_count += checkEmptyValue(matching(val[i], matchingInfo, true, true), val[i], matchingInfo);
 			}
 		} else {
 			val = arg0.getValue();
-			_count += checkEmptyValue(matching(val, matchingInfo, true), val, matchingInfo);
+			_count += checkEmptyValue(matching(val, matchingInfo, true, true), val, matchingInfo);
 		}
 
 		return new cNumber(_count);
@@ -5244,7 +5243,7 @@ function (window, undefined) {
 					continue;
 				}
 				for (j = 0; j < arg1Matrix[i].length; ++j) {
-					if (arg0Matrix[i] && arg0Matrix[i][j] && !matching(arg1Matrix[i][j], matchingInfo, null, true)) {
+					if (arg0Matrix[i] && arg0Matrix[i][j] && !matching(arg1Matrix[i][j], matchingInfo, true, true)) {
 						arg0Matrix[i][j] = null;
 					}
 				}
