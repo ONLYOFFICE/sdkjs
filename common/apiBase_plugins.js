@@ -1599,7 +1599,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} id - The button ID.
 	 * @param {boolean} bShow - The flag specifies whether the button is shown (**true**) or hidden (**false**).
-	 * @param {string} aligh - The parametr indicates whether the button will be displayed on the right side of the window or on the left (*left* by default).
+	 * @param {string} aligh - The parameter indicates whether the button will be displayed on the right side of the window or on the left (*left* by default).
 	 * @alias ShowButton 
 	 * @since 7.2.0
 	 */
