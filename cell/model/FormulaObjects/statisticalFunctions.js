@@ -5100,9 +5100,6 @@ function (window, undefined) {
 		}
 	};
 
-	window.counter1 = 0;
-	window.counter2 = 0;
-	
 	/**
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
@@ -11875,12 +11872,9 @@ function (window, undefined) {
 	FormulaRangesCache.prototype.remove = function () {
 	};
 
-
-
-
-
-
-
+	/**
+	 * @constructor
+	 */
 	function CountIfCache() {
 		this.cacheId = {};
 		this.cacheRanges = {};

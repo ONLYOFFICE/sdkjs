@@ -1070,9 +1070,8 @@
 				if (!bUndoChanges && !bRedoChanges) {
 					this._resetTablePartStyle();
 				}
-
 				worksheet.workbook.dependencyFormulas.unlockRecal();
-				
+
 				return {minChangeRow: minChangeRow, rangeOldFilter: rangeOldFilter, nOpenRowsCount: nOpenRowsCount, nAllRowsCount: nAllRowsCount};
 			},
 
