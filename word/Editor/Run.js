@@ -3826,7 +3826,10 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 					if (para_ContinuationSeparator === ItemType || para_Separator === ItemType)
 						Item.UpdateWidth(PRS);
 					else if (para_Text === ItemType)
+					{
 						Item.ResetTemporaryGrapheme();
+						Item.ResetTemporaryHyphen();
+					}
 
 					if (true !== PRS.IsFastRecalculate())
 					{

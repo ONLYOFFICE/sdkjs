@@ -39,24 +39,23 @@
 	const FLAGS_CS                          = 0x00000001; // FontSlot (не флагами, а значением
 	const FLAGS_HANSI                       = 0x00000002; // от 0 до 3)
 	const FLAGS_EASTASIA                    = 0x00000003; //
-	const FLAGS_FONTKOEF_SCRIPT             = 0x00000004; // 2 бит
-	const FLAGS_FONTKOEF_SMALLCAPS          = 0x00000008; // 3 бит
-	const FLAGS_SPACEAFTER                  = 0x00000010; // 4 бит
-	const FLAGS_CAPITALS                    = 0x00000020; // 5 бит
-	const FLAGS_LIGATURE                    = 0x00000040; // 6 бит
-	const FLAGS_LIGATURE_CONTINUE           = 0x00000080; // 7 бит
-	const FLAGS_COMBINING_MARK              = 0x00000100; // 8 бит
-	const FLAGS_TEMPORARY                   = 0x00000200; // 9 бит
-	const FLAGS_TEMPORARY_LIGATURE          = 0x00000400; // 10 бит
-	const FLAGS_TEMPORARY_LIGATURE_CONTINUE = 0x00000800; // 11 бит
-	const FLAGS_TEMPORARY_COMBINING_MARK    = 0x00001000; // 12 бит
-	const FLAGS_VISIBLE_WIDTH               = 0x00002000; // 13 бит
-	const FLAGS_GAPS                        = 0x00004000; // 14 бит
-	const FLAGS_SPACEAFTER_HYPHENATE        = 0x00008000; // 15
+	const FLAGS_FONTKOEF_SMALLCAPS          = 0x00000004; // 2 бит
+	const FLAGS_SPACEAFTER                  = 0x00000008; // 3 бит
+	const FLAGS_CAPITALS                    = 0x00000010; // 4 бит
+	const FLAGS_LIGATURE                    = 0x00000020; // 5 бит
+	const FLAGS_LIGATURE_CONTINUE           = 0x00000040; // 6 бит
+	const FLAGS_COMBINING_MARK              = 0x00000080; // 7 бит
+	const FLAGS_TEMPORARY                   = 0x00000100; // 8 бит
+	const FLAGS_TEMPORARY_LIGATURE          = 0x00000200; // 9 бит
+	const FLAGS_TEMPORARY_LIGATURE_CONTINUE = 0x00000400; // 10 бит
+	const FLAGS_TEMPORARY_COMBINING_MARK    = 0x00000800; // 11 бит
+	const FLAGS_VISIBLE_WIDTH               = 0x00001000; // 12 бит
+	const FLAGS_GAPS                        = 0x00002000; // 13 бит
+	const FLAGS_HYPHEN_AFTER                = 0x00004000; // 14
+	const FLAGS_TEMPORARY_HYPHEN_AFTER      = 0x00008000; // 15
 
 	// 16-31 биты зарезервированы под FontSize
 
-	const FLAGS_NON_FONTKOEF_SCRIPT             = FLAGS_MASK ^ FLAGS_FONTKOEF_SCRIPT;
 	const FLAGS_NON_FONTKOEF_SMALLCAPS          = FLAGS_MASK ^ FLAGS_FONTKOEF_SMALLCAPS;
 	const FLAGS_NON_SPACEAFTER                  = FLAGS_MASK ^ FLAGS_SPACEAFTER;
 	const FLAGS_NON_CAPITALS                    = FLAGS_MASK ^ FLAGS_CAPITALS;
@@ -69,7 +68,8 @@
 	const FLAGS_NON_VISIBLE_WIDTH               = FLAGS_MASK ^ FLAGS_VISIBLE_WIDTH;
 	const FLAGS_NON_TEMPORARY_COMBINING_MARK    = FLAGS_MASK ^ FLAGS_TEMPORARY_COMBINING_MARK;
 	const FLAGS_NON_GAPS                        = FLAGS_MASK ^ FLAGS_GAPS;
-	const FLAGS_NON_SPACEAFTER_HYPHENATE        = FLAGS_MASK ^ FLAGS_SPACEAFTER_HYPHENATE;
+	const FLAGS_NON_HYPHEN_AFTER                = FLAGS_MASK ^ FLAGS_HYPHEN_AFTER;
+	const FLAGS_NON_TEMPORARY_HYPHEN_AFTER      = FLAGS_MASK ^ FLAGS_TEMPORARY_HYPHEN_AFTER;
 
 	function CreateNonBreakingHyphen()
 	{
@@ -179,7 +179,7 @@
 				nFS = FLAGS_CS;
 
 			this.Flags = (this.Flags & 0xFFFFFFFC) | nFS;
-
+			
 			if (oTextPr.Caps || oTextPr.SmallCaps)
 			{
 				this.Flags |= FLAGS_CAPITALS;
@@ -194,15 +194,12 @@
 				this.Flags &= FLAGS_NON_CAPITALS;
 				this.Flags &= FLAGS_NON_FONTKOEF_SMALLCAPS;
 			}
+			
+			let isCoeffScript = oTextPr.VertAlign !== AscCommon.vertalign_Baseline;
 
-			if (oTextPr.VertAlign !== AscCommon.vertalign_Baseline)
-				this.Flags |= FLAGS_FONTKOEF_SCRIPT;
-			else
-				this.Flags &= FLAGS_NON_FONTKOEF_SCRIPT;
-
-			if (this.Flags & FLAGS_FONTKOEF_SCRIPT && this.Flags & FLAGS_FONTKOEF_SMALLCAPS)
+			if (isCoeffScript && this.Flags & FLAGS_FONTKOEF_SMALLCAPS)
 				nFontCoef = smallcaps_and_script_koef;
-			else if (this.Flags & FLAGS_FONTKOEF_SCRIPT)
+			else if (isCoeffScript)
 				nFontCoef = AscCommon.vaKSize;
 			else if (this.Flags & FLAGS_FONTKOEF_SMALLCAPS)
 				nFontCoef = smallcaps_Koef;
@@ -435,14 +432,25 @@
 	};
 	CRunText.prototype.IsSpaceAfter = function()
 	{
-		return !!((this.Flags & FLAGS_SPACEAFTER) || (this.Flags & FLAGS_SPACEAFTER_HYPHENATE));
+		return !!((this.Flags & FLAGS_SPACEAFTER) || (this.Flags & FLAGS_HYPHEN_AFTER));
 	};
-	CRunText.prototype.SetHyphenate = function(isHyphen)
+	CRunText.prototype.SetHyphenAfter = function(isHyphen)
 	{
 		if (isHyphen)
-			this.Flags |= FLAGS_SPACEAFTER_HYPHENATE;
+			this.Flags |= FLAGS_HYPHEN_AFTER;
 		else
-			this.Flags &= FLAGS_NON_SPACEAFTER_HYPHENATE;
+			this.Flags &= FLAGS_NON_HYPHEN_AFTER;
+	};
+	CRunText.prototype.ResetTemporaryHyphenAfter = function()
+	{
+		this.Flags &= FLAGS_NON_TEMPORARY_HYPHEN_AFTER;
+	};
+	CRunText.prototype.SetTemporaryHyphenAfter = function(isHyphen)
+	{
+		if (isHyphen)
+			this.Flags |= FLAGS_TEMPORARY_HYPHEN_AFTER;
+		else
+			this.Flags &= FLAGS_NON_TEMPORARY_HYPHEN_AFTER;
 	};
 	/**
 	 * Получаем символ для проверки орфографии
