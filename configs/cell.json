@@ -150,6 +150,7 @@
 			"cell/model/FormulaObjects/informationFunctions.js",
 			"cell/model/FormulaObjects/logicalFunctions.js",
 			"cell/model/CellComment.js",
+			"cell/model/whatIfAnalysis.js",
 			"cell/model/WorkbookElems.js",
 			"cell/model/Workbook.js",
 			"cell/model/Serialize.js",
