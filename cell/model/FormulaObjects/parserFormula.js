@@ -2883,7 +2883,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.getFirstElement = function () {
 		return this.getElementRowCol(0,0);	
-	}
+	};
 
 
 
