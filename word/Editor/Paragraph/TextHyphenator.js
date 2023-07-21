@@ -45,9 +45,12 @@
 		this.Word     = false;
 		this.FontSlot = fontslot_Unknown;
 		this.Lang     = lcid_enUS;
+		this.Buffer   = [];
 	}
 	CTextHyphenator.prototype.Hyphenate = function(paragraph)
 	{
+		console.log(`Start hyphenate paragraph ${paragraph.GetId()}`);
+		
 		let self = this;
 		paragraph.CheckRunContent(function(run, startPos, endPos)
 		{
@@ -57,7 +60,7 @@
 	};
 	CTextHyphenator.prototype.HyphenateRun = function(run, startPos, endPos)
 	{
-		for (let pos = startPos; nPos < endPos; ++pos)
+		for (let pos = startPos; pos < endPos; ++pos)
 		{
 			let item = run.GetElement(pos);
 			if (!item.IsText())
@@ -71,12 +74,11 @@
 			else
 			{
 				if (!this.Word)
-					this.GetLang(run, item.GetFontSlot());
+					this.GetLang(run, item.GetFontSlot(run.Get_CompiledPr(false)));
 				
-				if (this.Word)
-					this.AppendToWord(item);
+				this.AppendToWord(item);
 				
-				if (oItem.IsSpaceAfter())
+				if (item.IsSpaceAfter())
 					this.FlushWord();
 			}
 		}
@@ -111,16 +113,51 @@
 	};
 	CTextHyphenator.prototype.AppendToWord = function(textItem)
 	{
-	
+		this.Word = true;
+		this.Buffer.push(textItem);
+		AddCodePoint(textItem.GetCodePoint());
+		textItem.SetHyphenate(false);
 	};
 	CTextHyphenator.prototype.FlushWord = function()
 	{
 		if (!this.Word)
 			return;
 		
+		let result = Hyphenate();
+		for (let i = 0, len = result.length; i < len; ++i)
+		{
+			this.Buffer[result[i]].SetHyphenate(true);
+		}
 		
+		this.Buffer.length = 0;
 		this.Word = false;
 	};
+	
+	// Это тестовые функции, которые должны быть заменены на нормальные
+	let BUFFER_STRING = "";
+	function AddCodePoint(codePoint)
+	{
+		BUFFER_STRING += String.fromCodePoint(codePoint);
+	}
+	function HyphenateBuffer()
+	{
+		if ("reenter" === BUFFER_STRING)
+			return [1];
+		else if ("coauthor" === BUFFER_STRING)
+			return [1];
+		else if ("привет" === BUFFER_STRING)
+			return [2];
+		else if ("участвовавшими" === BUFFER_STRING)
+			return [3, 6, 9, 11];
+		
+		return [];
+	}
+	function Hyphenate()
+	{
+		let result = HyphenateBuffer();
+		BUFFER_STRING = "";
+		return result;
+	}
 	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CTextHyphenator = CTextHyphenator;

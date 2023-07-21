@@ -333,6 +333,8 @@ Paragraph.prototype.RecalculateFastRunRange = function(oParaPos)
 	// а для всех строк, не учавствующих в быстром пересчете, мы должны все сохранить как есть
 	this.ShapeText();
 	this.ShapeTextInRange(this.Get_StartRangePos2(Line, Range), this.Get_EndRangePos2(Line, Range));
+	
+	this.HyphenateText();
 
 	// Если у нас отрезок, в котором произошли изменения является отрезком с нумерацией, тогда надо запустить
 	// обычный пересчет.
@@ -430,6 +432,7 @@ Paragraph.prototype.Recalculate_Page = function(CurPage)
 	{
 		this.CalculatedFrame = null;
 		this.ShapeText();
+		this.HyphenateText();
 	}
 
     this.Clear_NearestPosArray();
@@ -2533,6 +2536,14 @@ Paragraph.prototype.ShapeText = function()
 
 	AscWord.ParagraphTextShaper.Shape(this);
 	this.RecalcInfo.ShapeText = false;
+};
+Paragraph.prototype.HyphenateText = function()
+{
+	if (!this.RecalcInfo.HyphenateText)
+		return;
+	
+	AscWord.TextHyphenator.Hyphenate(this);
+	this.RecalcInfo.HyphenateText = false;
 };
 
 Paragraph.prototype.ShapeTextInRange = function(oStartPos, oEndPos)

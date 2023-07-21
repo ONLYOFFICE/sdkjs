@@ -1301,6 +1301,7 @@ Paragraph.prototype.OnContentChange = function()
 	this.SpellChecker.ClearCollector();
 	this.RecalcInfo.NeedSpellCheck();
 	this.RecalcInfo.NeedShapeText();
+	this.RecalcInfo.NeedHyphenateText();
 	
 	if (this.Parent && this.Parent.OnContentChange)
 		this.Parent.OnContentChange();
@@ -18736,9 +18737,10 @@ var pararecalc_0_None = 1;
 
 function CParaRecalcInfo()
 {
-    this.Recalc_0_Type = pararecalc_0_All;
-    this.SpellCheck = false;
-	this.ShapeText  = true;
+	this.Recalc_0_Type = pararecalc_0_All;
+	this.SpellCheck    = false;
+	this.ShapeText     = true;
+	this.HyphenateText = true;
 }
 
 CParaRecalcInfo.prototype =
@@ -18755,6 +18757,10 @@ CParaRecalcInfo.prototype.NeedSpellCheck = function()
 CParaRecalcInfo.prototype.NeedShapeText = function()
 {
 	this.ShapeText = true;
+};
+CParaRecalcInfo.prototype.NeedHyphenateText = function()
+{
+	this.HyphenateText = true;
 };
 
 function CDocumentBounds(Left, Top, Right, Bottom)
