@@ -3821,14 +3821,12 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     // Отмечаем, что началось слово
                     StartWord = true;
 					
-					
-
 					if (para_ContinuationSeparator === ItemType || para_Separator === ItemType)
 						Item.UpdateWidth(PRS);
 					else if (para_Text === ItemType)
 					{
 						Item.ResetTemporaryGrapheme();
-						Item.ResetTemporaryHyphen();
+						Item.ResetTemporaryHyphenAfter();
 					}
 
 					if (true !== PRS.IsFastRecalculate())
@@ -3983,6 +3981,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 							else if (Item.CanBeAtBeginOfLine())
 							{
 								PRS.Set_LineBreakPos(Pos, FirstItemOnLine);
+								PRS.SetLastHyphenItem(PRS.LastItem);
 							}
 
 							// Если текущий символ с переносом, например, дефис, тогда на нем заканчивается слово
@@ -4711,6 +4710,8 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 
                     NewRange = true;
                     End      = true;
+	
+					PRS.OnEndRecalculateLineRanges();
 
                     RangeEndPos = Pos + 1;
 
@@ -5348,7 +5349,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                 else
                     WidthVisible = Item.GetWidth() + PRSA.JustifyWord;
 
-                Item.SetWidthVisible(WidthVisible);
+                Item.SetWidthVisible(WidthVisible, this.Get_CompiledPr(false));
 
 				if (para_FootnoteReference === ItemType || para_EndnoteReference === ItemType)
 				{

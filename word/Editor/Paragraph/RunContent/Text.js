@@ -289,8 +289,14 @@
 	{
 		this.TempWidth = ((nWidth * (((this.Flags >> 16) & 0xFFFF) / 64)) * AscWord.TEXTWIDTH_DIVIDER) | 0;
 	};
-	CRunText.prototype.SetWidthVisible = function(nWidth)
+	CRunText.prototype.SetWidthVisible = function(nWidth, textPr)
 	{
+		if (this.Flags & FLAGS_TEMPORARY_HYPHEN_AFTER)
+		{
+			let fontInfo = textPr.GetFontInfo(AscWord.fontslot_ASCII);
+			nWidth += AscFonts.GetGraphemeWidth(AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x002D, fontInfo.Name, fontInfo.Style)) * (((this.Flags >> 16) & 0xFFFF) / 64);
+		}
+		
 		let nW = (nWidth * AscWord.TEXTWIDTH_DIVIDER) | 0;
 
 		let isTemporary = this.IsTemporary();
@@ -364,6 +370,9 @@
 		{
 			AscFonts.DrawGrapheme(this.Grapheme, Context, X, Y, nFontSize);
 		}
+		
+		if (this.Flags & FLAGS_TEMPORARY_HYPHEN_AFTER)
+			this.DrawHyphenAfter(Context, X, Y, nFontSize, oTextPr);
 
 		if (this.Flags & FLAGS_GAPS)
 			Context.RestoreGrState();
@@ -378,6 +387,13 @@
 		let shift     = (width - nbspWidth) / 2;
 
 		AscFonts.DrawGrapheme(this.Grapheme, Context, X + shift, Y, nFontSize);
+	};
+	CRunText.prototype.DrawHyphenAfter = function(context, X, Y, fontSize, textPr)
+	{
+		let fontInfo   = textPr.GetFontInfo(AscWord.fontslot_ASCII);
+		let graphemeId = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x002D, fontInfo.Name, fontInfo.Style);
+		let shift      = this.GetWidth();
+		AscFonts.DrawGrapheme(graphemeId, context, X + shift, Y, fontSize);
 	};
 	CRunText.prototype.Measure = function(oMeasurer, oTextPr)
 	{
@@ -433,6 +449,10 @@
 	CRunText.prototype.IsSpaceAfter = function()
 	{
 		return !!((this.Flags & FLAGS_SPACEAFTER) || (this.Flags & FLAGS_HYPHEN_AFTER));
+	};
+	CRunText.prototype.IsHyphenAfter = function()
+	{
+		return !!(this.Flags & FLAGS_HYPHEN_AFTER);
 	};
 	CRunText.prototype.SetHyphenAfter = function(isHyphen)
 	{

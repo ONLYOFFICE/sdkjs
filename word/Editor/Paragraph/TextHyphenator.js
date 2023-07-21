@@ -116,7 +116,7 @@
 		this.Word = true;
 		this.Buffer.push(textItem);
 		AddCodePoint(textItem.GetCodePoint());
-		textItem.SetHyphenate(false);
+		textItem.SetHyphenAfter(false);
 	};
 	CTextHyphenator.prototype.FlushWord = function()
 	{
@@ -126,7 +126,7 @@
 		let result = Hyphenate();
 		for (let i = 0, len = result.length; i < len; ++i)
 		{
-			this.Buffer[result[i]].SetHyphenate(true);
+			this.Buffer[result[i]].SetHyphenAfter(true);
 		}
 		
 		this.Buffer.length = 0;

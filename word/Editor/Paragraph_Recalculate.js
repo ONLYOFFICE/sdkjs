@@ -3233,7 +3233,7 @@ function CParagraphRecalculateStateWrap(Para)
                                                       // если у нас не убирается слово, то разрыв ставим перед ним)
 	this.LastItem       = null;                       // Последний непробельный элемент
 	this.UpdateLBP      = true;                       // Флаг для первичного обновления позиции переноса в отрезке
-
+	this.LastHyphenItem = null;
 
     this.RunRecalcInfoLast  = null; // RecalcInfo последнего рана
     this.RunRecalcInfoBreak = null; // RecalcInfo рана, на котором произошел разрыв отрезка/строки
@@ -3375,6 +3375,7 @@ CParagraphRecalculateStateWrap.prototype =
 		this.LineBreakFirst = true;
 		this.LastItem       = null;
 		this.UpdateLBP      = true;
+		this.LastHyphenItem = null;
 
         // for ParaMath
         this.bMath_OneLine    = false;
@@ -3400,6 +3401,25 @@ CParagraphRecalculateStateWrap.prototype =
 		this.LineBreakPos.Set(this.CurPos);
 		this.LineBreakPos.Add(PosObj);
 		this.LineBreakFirst = isFirstItemOnLine;
+		this.ResetLastHyphenItem();
+	},
+	
+	ResetLastHyphenItem : function()
+	{
+		if (!this.LastHyphenItem)
+			return;
+		
+		this.LastHyphenItem.SetTemporaryHyphenAfter(false);
+		this.LastHyphenItem = null;
+	},
+	
+	SetLastHyphenItem : function(item)
+	{
+		if (!item || !item.IsText() || !item.IsHyphenAfter())
+			return;
+		
+		this.LastHyphenItem = item;
+		item.SetTemporaryHyphenAfter(true);
 	},
 
     Set_NumberingPos : function(PosObj, Item)
@@ -4015,6 +4035,10 @@ CParagraphRecalculateStateWrap.prototype.IsLastElementInWord = function(oRun, nP
 CParagraphRecalculateStateWrap.prototype.IsAutoHyphenation = function()
 {
 	return this.AutoHyphenation;
+};
+CParagraphRecalculateStateWrap.prototype.OnEndRecalculateLineRanges = function()
+{
+	this.ResetLastHyphenItem();
 };
 
 function CParagraphRecalculateStateCounter()
