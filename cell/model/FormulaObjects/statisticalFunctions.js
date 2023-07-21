@@ -11927,6 +11927,158 @@ function (window, undefined) {
 	FormulaRangesCache.prototype.remove = function () {
 	};
 
+
+
+
+	function CountIfCache() {
+		this.cacheId = {};
+		this.cacheRanges = {};
+	}
+
+	CountIfCache.prototype = Object.create(VHLOOKUPCache.prototype);
+	CountIfCache.prototype.constructor = CountIfCache;
+	CountIfCache.prototype.calculate = function (arg, _arg1) {
+		let arg0 = arg[0], arg1 = arg[1];
+
+		if (cElementType.cellsRange3D === arg0.type || cElementType.cellsRange === arg0.type) {
+			// TODO пересмотреть поведение функции при получении массива первым аргументом
+			arg0 = arg0.cross(_arg1);
+
+			if (cElementType.empty === arg0.type) {
+				return new cError(cErrorType.not_available);
+			}
+		} else if (cElementType.array === arg0.type) {
+			arg0 = arg0.getElementRowCol(0,0);
+		} else if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+
+		if(cElementType.error === arg1.type) {
+			return arg1;
+		} else if (cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type && cElementType.array !== arg1.type) {
+			// if value is not array/range, make it array
+			let arg1Array = new cArray();
+			if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
+				arg1 = arg1.getValue();
+			}
+			arg1Array.addElement(arg1);
+			arg1 = arg1Array;
+		}
+
+		if (cElementType.array === arg1.type) {
+			arg1 = arg1.getMatrix();
+
+			let i, a1RowCount = arg1.length, a1ColumnCount = arg1[0].length, arr;
+
+			if (a1RowCount > 1 && a1ColumnCount > 1) {
+				return new cError(cErrorType.not_available);
+			} else if (a1RowCount === 1 && a1ColumnCount >= 1) {
+				arr = arg1[0];
+			} else {
+				arr = [];
+				for (i = 0; i < a1RowCount; i++) {
+					arr[i] = arg1[i][0];
+				}
+			}
+			return this._calculate(arr, arg0, a2Value);
+		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ||
+			cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
+			// add range.isonecell
+			let oSearchRange = arg1.getRange();
+			if (!oSearchRange) {
+				return new cError(cErrorType.bad_reference);
+			}
+
+			let a1RowCount = oSearchRange.bbox.r2 - oSearchRange.bbox.r1 + 1, a1ColumnCount = oSearchRange.bbox.c2 - oSearchRange.bbox.c1 + 1;
+			let bHor = false;
+			if (a1RowCount > 1 && a1ColumnCount > 1) {
+				return new cError(cErrorType.not_available);
+			} else if (a1RowCount === 1 && a1ColumnCount >= 1) {
+				bHor = true;
+			}
+
+			return this._get(oSearchRange, arg0);
+		} else {
+			return new cError(cErrorType.wrong_value_type);
+		}
+	};
+	CountIfCache.prototype._get = function (range, arg0) {
+		let res, _this = this, wsId = range.getWorksheet().getId(),
+			sRangeName = wsId + g_cCharDelimiter + range.getName(), cacheElem = this.cacheId[sRangeName],
+			valueForSearching = arg0.getValue();
+
+		if (!cacheElem) {
+			cacheElem = {elements: [], results: {}};
+
+			range._foreachNoEmpty(function (cell, r, c) {
+				cacheElem.elements.push({v: checkTypeCell(cell), i: (bHor ? c - range.bbox.c1 : r -  range.bbox.r1)});
+			});
+			this.cacheId[sRangeName] = cacheElem;
+			let cacheRange = this.cacheRanges[wsId];
+			if (!cacheRange) {
+				cacheRange = new AscCommonExcel.RangeDataManager(null);
+				this.cacheRanges[wsId] = cacheRange;
+			}
+			cacheRange.add(range.getBBox0(), cacheElem);
+		}
+		let sInputKey = valueForSearching;
+		res = cacheElem.results[sInputKey];
+
+		if (!res) {
+			cacheElem.results[sInputKey] = res = this._calculate(cacheElem.elements, arg0);
+		}
+		return res;
+	};
+	CountIfCache.prototype._calculate = function (arr, a0) {
+		let a2Value = a2,
+			a0Type = a0.type,
+			a0Value = a0.getValue();
+
+		if (!(cElementType.number === a0Type || cElementType.string === a0Type || cElementType.bool === a0Type ||
+			cElementType.error === a0Type || cElementType.empty === a0Type)) {
+			if(cElementType.empty === a0Value.type) {
+				a0Value = a0Value.tocNumber();
+			}
+			a0Type = a0Value.type;
+			a0Value = a0Value.getValue();
+		}
+
+		let item, index = -1, curIndex;
+		for (let i = 0; i < arr.length; ++i) {
+			item = undefined !== arr[i].v ? arr[i].v : arr[i];
+			curIndex = undefined !== arr[i].i ? arr[i].i : i;
+			if (item.type === a0Type) {
+				if (0 === a2Value) {
+					if (cElementType.string === a0Type) {
+						if (AscCommonExcel.searchRegExp2(item.toString(), a0Value)) {
+							index = curIndex;
+							break;
+						}
+					} else {
+						if (item == a0Value) {
+							index = curIndex;
+							break;
+						}
+					}
+				} else if (1 === a2Value) {
+					if (item <= a0Value) {
+						index = curIndex;
+					} else {
+						break;
+					}
+				} else if (-1 === a2Value) {
+					if (item >= a0Value) {
+						index = curIndex;
+					} else {
+						break;
+					}
+				}
+			}
+		}
+		return (-1 < index) ? new cNumber(index + 1) : new cError(cErrorType.not_available);
+	};
+
+
 	let g_oFormulaRangesCache = new FormulaRangesCache();
 
 	//----------------------------------------------------------export----------------------------------------------------
