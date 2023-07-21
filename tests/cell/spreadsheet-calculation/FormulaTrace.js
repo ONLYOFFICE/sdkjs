@@ -459,7 +459,7 @@ $(function() {
 		});
 		QUnit.test("Test: \"Areas tests\"", function (assert) {
 			let bbox;
-			// precedents
+			// -------------- precedents --------------
 			ws.getRange2("A1:J20").cleanAll();
 
 			ws.selectionRange.ranges = [ws.getRange2("E13").getBBox0()];
@@ -503,6 +503,14 @@ $(function() {
 				C5Index = AscCommonExcel.getCellIndex(ws.getRange2("C5").bbox.r1, ws.getRange2("C5").bbox.c1),
 				C6Index = AscCommonExcel.getCellIndex(ws.getRange2("C6").bbox.r1, ws.getRange2("C6").bbox.c1);
 			let C14Index = AscCommonExcel.getCellIndex(ws.getRange2("C14").bbox.r1, ws.getRange2("C14").bbox.c1);
+
+			bbox = ws.getRange2("C3").bbox;
+			ws.getRange2("C3").setValue("=A1:A6", undefined, undefined, bbox);
+			ws.getRange2("C4").setValue("24");
+			bbox = ws.getRange2("C5:C6").bbox;
+			ws.getRange2("C5:C6").setValue("=A1:A6", undefined, undefined, bbox);
+			bbox = ws.getRange2("C14").bbox;
+			ws.getRange2("C14").setValue("=A1:A6", undefined, undefined, bbox);
 
 			let E1Index = AscCommonExcel.getCellIndex(ws.getRange2("E1").bbox.r1, ws.getRange2("E1").bbox.c1),
 				E2Index = AscCommonExcel.getCellIndex(ws.getRange2("E2").bbox.r1, ws.getRange2("E2").bbox.c1),
@@ -614,6 +622,73 @@ $(function() {
 
 			// clear traces
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+
+			// -------------- dependents --------------
+			ws.selectionRange.ranges = [ws.getRange2("B12").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("B12").getBBox0().r1, ws.getRange2("B12").getBBox0().c1);
+
+			// precedents click on B12
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), 1);
+			assert.strictEqual(traceManager._getDependents(B12Index, A12Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), undefined);
+			assert.strictEqual(traceManager._getDependents(A12Index, A4Index), undefined);
+
+			// precedents click on B12
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), 1);
+			assert.strictEqual(traceManager._getDependents(B12Index, A12Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), 1);
+			assert.strictEqual(traceManager._getDependents(A12Index, A4Index), 1);
+			assert.strictEqual(traceManager._getDependents(A4Index, B1Index), undefined);
+			assert.strictEqual(traceManager._getDependents(A4Index, B3Index), undefined);
+			assert.strictEqual(traceManager._getDependents(A4Index, B8Index), undefined);
+			assert.strictEqual(traceManager._getDependents(A4Index, B9Index), undefined);
+			assert.strictEqual(traceManager._getDependents(A4Index, C3Index), undefined);
+			assert.strictEqual(traceManager._getDependents(A4Index, C5Index), undefined);
+			assert.strictEqual(traceManager._getDependents(A4Index, C6Index), undefined);
+			assert.strictEqual(traceManager._getDependents(A4Index, C14Index), undefined);
+
+			// precedents click on B12
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), 1);
+			assert.strictEqual(traceManager._getDependents(B12Index, A12Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), 1);
+			assert.strictEqual(traceManager._getDependents(A12Index, A4Index), 1);
+			assert.strictEqual(traceManager._getDependents(A4Index, B1Index), 1);
+			assert.strictEqual(traceManager._getDependents(A4Index, B3Index), 1);
+			assert.strictEqual(traceManager._getDependents(A4Index, B8Index), 1);
+			assert.strictEqual(traceManager._getDependents(A4Index, B9Index), 1);
+			assert.strictEqual(traceManager._getDependents(A4Index, C3Index), 1);
+			assert.strictEqual(traceManager._getDependents(A4Index, C5Index), 1);
+			assert.strictEqual(traceManager._getDependents(A4Index, C6Index), 1);
+			assert.strictEqual(traceManager._getDependents(A4Index, C14Index), 1);
+
+			// clear last built dependents
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.dependent);
+			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), 1);
+			assert.strictEqual(traceManager._getDependents(B12Index, A12Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), 1);
+			assert.strictEqual(traceManager._getDependents(A12Index, A4Index), 1);
+			assert.strictEqual(traceManager._getDependents(A4Index, B1Index), undefined);
+
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.dependent);
+			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), 1);
+			assert.strictEqual(traceManager._getDependents(B12Index, A12Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), undefined);
+			assert.strictEqual(traceManager._getDependents(A12Index, A4Index), undefined);
+			assert.strictEqual(traceManager._getDependents(A4Index, B1Index), undefined);
+
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.dependent);
+			assert.strictEqual(traceManager._getPrecedents(A12Index, B12Index), undefined);
+			assert.strictEqual(traceManager._getDependents(B12Index, A12Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(A4Index, A12Index), undefined);
+			assert.strictEqual(traceManager._getDependents(A12Index, A4Index), undefined);
+			assert.strictEqual(traceManager._getDependents(A4Index, B1Index), undefined);
+
+			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+
 		});
 		QUnit.test("Test: \"Shared tests\"", function (assert) {
 			let cellWithFormula, oParser, sharedRef, bbox;
@@ -674,6 +749,7 @@ $(function() {
 		// QUnit.test("Test: \"Tables tests\"", function (assert) {
 		// });
 		QUnit.test("Test: \"Deletes tests\"", function (assert) {
+			let bbox;
 			// ------------------- base precedents ------------------- //
 			ws.selectionRange.ranges = [ws.getRange2("I1").getBBox0()];
 			ws.selectionRange.setActiveCell(ws.getRange2("I1").getBBox0().r1, ws.getRange2("I1").getBBox0().c1);
@@ -817,8 +893,13 @@ $(function() {
 			ws.getRange2("A1:J10").cleanAll();
 
 			ws.getRange2("A1").setValue("1");
+			ws.getRange2("A6").setValue("7");
+			ws.getRange2("A7").setValue("7");
+			ws.getRange2("A8").setValue("=A7");
 			ws.getRange2("C1").setValue("=A1");
 			ws.getRange2("C4").setValue("=A1");
+			bbox = ws.getRange2("C7").bbox;
+			ws.getRange2("C7").setValue("=A6:A8", undefined, undefined, bbox);
 			ws.getRange2("E1").setValue("=C1");
 			ws.getRange2("E4").setValue("=C4");
 			ws.getRange2("G1").setValue("=E1+E4");
@@ -827,6 +908,10 @@ $(function() {
 			ws.getRange2("H6").setValue("=G4");
 
 			let A1Index = AscCommonExcel.getCellIndex(ws.getRange2("A1").bbox.r1, ws.getRange2("A1").bbox.c1),
+				A6Index = AscCommonExcel.getCellIndex(ws.getRange2("A6").bbox.r1, ws.getRange2("A6").bbox.c1),
+				A7Index = AscCommonExcel.getCellIndex(ws.getRange2("A7").bbox.r1, ws.getRange2("A7").bbox.c1),
+				A8Index = AscCommonExcel.getCellIndex(ws.getRange2("A8").bbox.r1, ws.getRange2("A8").bbox.c1),
+				C7Index = AscCommonExcel.getCellIndex(ws.getRange2("C7").bbox.r1, ws.getRange2("C7").bbox.c1),
 				E4Index = AscCommonExcel.getCellIndex(ws.getRange2("E4").bbox.r1, ws.getRange2("E4").bbox.c1),
 				F6Index = AscCommonExcel.getCellIndex(ws.getRange2("F6").bbox.r1, ws.getRange2("F6").bbox.c1),
 				H6Index = AscCommonExcel.getCellIndex(ws.getRange2("H6").bbox.r1, ws.getRange2("H6").bbox.c1);
@@ -913,7 +998,6 @@ $(function() {
 
 			// first clear
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.dependent);
-
 			assert.strictEqual(traceManager._getDependents(A1Index, C1Index), 1);
 			assert.strictEqual(traceManager._getDependents(A1Index, C4Index), 1);
 			assert.strictEqual(traceManager._getDependents(A1Index, A1ExternalIndex), 1);
@@ -922,15 +1006,152 @@ $(function() {
 
 			// second clear
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.dependent);
-
 			assert.strictEqual(traceManager._getDependents(A1Index, C1Index), undefined);
 			assert.strictEqual(traceManager._getDependents(A1Index, C4Index), undefined);
-			assert.strictEqual(traceManager._getDependents(A1Index, A1ExternalIndex), undefined);
+			assert.strictEqual(traceManager._getDependents(A1Index, A1ExternalIndex), undefined);	// ?
 			assert.strictEqual(traceManager._getDependents(C1Index, E1Index), undefined);
 			assert.strictEqual(traceManager._getDependents(C4Index, E4Index), undefined);
 
-
+			// clear all
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+
+			ws.selectionRange.ranges = [ws.getRange2("A7").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("A7").getBBox0().r1, ws.getRange2("A7").getBBox0().c1);
+
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getDependents(A7Index, A8Index), 1);
+			assert.strictEqual(traceManager._getDependents(A7Index, C7Index), 1);
+			assert.strictEqual(traceManager._getDependents(A8Index, C7Index), undefined);
+			
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getDependents(A7Index, A8Index), 1);
+			assert.strictEqual(traceManager._getDependents(A7Index, C7Index), 1);
+			assert.strictEqual(traceManager._getDependents(A8Index, C7Index), 1);
+
+			// first clear
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.dependent);
+			assert.strictEqual(traceManager._getDependents(A7Index, A8Index), 1);
+			assert.strictEqual(traceManager._getDependents(A7Index, C7Index), 1);
+			assert.strictEqual(traceManager._getDependents(A8Index, C7Index), undefined);
+
+			// second clear
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.dependent);
+			assert.strictEqual(traceManager._getDependents(A7Index, A8Index), undefined);
+			assert.strictEqual(traceManager._getDependents(A7Index, C7Index), undefined);
+			assert.strictEqual(traceManager._getDependents(A8Index, C7Index), undefined);
+
+			// clear all
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+		});
+		QUnit.test("Test: \"Circular reference tests\"", function (assert) {
+			ws.getRange2("A1:J20").cleanAll();
+
+			let A1Index = AscCommonExcel.getCellIndex(ws.getRange2("A1").bbox.r1, ws.getRange2("A1").bbox.c1),
+				C1Index = AscCommonExcel.getCellIndex(ws.getRange2("C1").bbox.r1, ws.getRange2("C1").bbox.c1),
+				A2Index = AscCommonExcel.getCellIndex(ws.getRange2("A2").bbox.r1, ws.getRange2("A2").bbox.c1),
+				C2Index = AscCommonExcel.getCellIndex(ws.getRange2("C2").bbox.r1, ws.getRange2("C2").bbox.c1),
+				B3Index = AscCommonExcel.getCellIndex(ws.getRange2("B3").bbox.r1, ws.getRange2("B3").bbox.c1),
+				C3Index = AscCommonExcel.getCellIndex(ws.getRange2("C3").bbox.r1, ws.getRange2("C3").bbox.c1),
+				D3Index = AscCommonExcel.getCellIndex(ws.getRange2("D3").bbox.r1, ws.getRange2("D3").bbox.c1);
+
+			ws.getRange2("A1").setValue("=C1");
+			ws.getRange2("C1").setValue("=A1");
+			ws.getRange2("A2").setValue("=A2+C2");
+			ws.getRange2("C2").setValue("=A2+C2");
+			ws.getRange2("B3").setValue("=C1");
+			ws.getRange2("C3").setValue("=C1");
+			ws.getRange2("D3").setValue("=C1");
+
+			ws.selectionRange.ranges = [ws.getRange2("A1").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("A1").getBBox0().r1, ws.getRange2("A1").getBBox0().c1);
+
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), 1);
+			assert.strictEqual(traceManager._getDependents(C1Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(C1Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getDependents(A1Index, C1Index), undefined);
+			assert.strictEqual(traceManager._getDependents(C1Index, B3Index), undefined);
+			assert.strictEqual(traceManager._getDependents(C1Index, C3Index), undefined);
+			assert.strictEqual(traceManager._getDependents(C1Index, D3Index), undefined);
+
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), 1);
+			assert.strictEqual(traceManager._getDependents(C1Index, A1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(C1Index, A1Index), 1);
+			assert.strictEqual(traceManager._getDependents(A1Index, C1Index), 1);
+			assert.strictEqual(traceManager._getDependents(C1Index, B3Index), undefined);
+			assert.strictEqual(traceManager._getDependents(C1Index, C3Index), undefined);
+			assert.strictEqual(traceManager._getDependents(C1Index, D3Index), undefined);
+
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.precedent);
+			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), undefined);	// 1
+			assert.strictEqual(traceManager._getDependents(C1Index, A1Index), undefined);	// 1
+			assert.strictEqual(traceManager._getPrecedents(C1Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getDependents(A1Index, C1Index), undefined);
+
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.precedent);
+			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), undefined);
+			assert.strictEqual(traceManager._getDependents(C1Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getPrecedents(C1Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getDependents(A1Index, C1Index), undefined);
+
+			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getPrecedents(C1Index, A1Index), 1);
+			assert.strictEqual(traceManager._getDependents(A1Index, C1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), undefined);
+			assert.strictEqual(traceManager._getDependents(C1Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getDependents(C1Index, B3Index), undefined);
+			assert.strictEqual(traceManager._getDependents(C1Index, C3Index), undefined);
+			assert.strictEqual(traceManager._getDependents(C1Index, D3Index), undefined);
+
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getPrecedents(C1Index, A1Index), 1);
+			assert.strictEqual(traceManager._getDependents(A1Index, C1Index), 1);
+			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), 1);
+			assert.strictEqual(traceManager._getDependents(C1Index, A1Index), 1);
+			assert.strictEqual(traceManager._getDependents(C1Index, B3Index), 1);
+			assert.strictEqual(traceManager._getDependents(C1Index, C3Index), 1);
+			assert.strictEqual(traceManager._getDependents(C1Index, D3Index), 1);
+
+			api.asc_TraceDependents();
+			api.asc_TraceDependents();
+			api.asc_TraceDependents();
+			api.asc_TraceDependents();
+			api.asc_TraceDependents();
+			api.asc_TraceDependents();
+			api.asc_TraceDependents();
+			api.asc_TraceDependents();
+			api.asc_TraceDependents();
+			api.asc_TraceDependents();
+
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.dependent);
+			assert.strictEqual(traceManager._getPrecedents(C1Index, A1Index), undefined);	// 1
+			assert.strictEqual(traceManager._getDependents(A1Index, C1Index), undefined);	// 1
+			assert.strictEqual(traceManager._getPrecedents(A1Index, C1Index), undefined);
+			assert.strictEqual(traceManager._getDependents(C1Index, A1Index), undefined);
+			assert.strictEqual(traceManager._getDependents(C1Index, B3Index), 1);	// undef
+			assert.strictEqual(traceManager._getDependents(C1Index, C3Index), 1);	// undef
+			assert.strictEqual(traceManager._getDependents(C1Index, D3Index), 1);	// undef
+
+			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+
 		});
 		QUnit.test("Test: \"Mixed tests\"", function (assert) {
 			ws.getRange2("A1:J20").cleanAll();
