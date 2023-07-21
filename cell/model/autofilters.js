@@ -869,22 +869,6 @@
 
 				var minChangeRow = null;
 
-				let str = "["
-				for (let i = 0; i < autoFiltersObject.values.length; i++) {
-					str+= "{"
-					for (let j in autoFiltersObject.values[i]) {
-						if (autoFiltersObject.values[i].hasOwnProperty(j) && typeof autoFiltersObject.values[i][j] !== "object" && j !== "hiddenByOtherColumns" && j !== "repeats" && j !== "text") {
-							str+= j + ":" + autoFiltersObject.values[i][j] + ","
-						}
-					}
-					str = str.slice(0, -1);
-					str+= "}";
-					if (i  !== autoFiltersObject.values.length - 1) {
-						str += ","
-					}
-				}
-				str += "]";
-
 				//**get filter**
 				var filterObj = this._getPressedFilter(ar, autoFiltersObject.cellId);
 				var currentFilter = filterObj.filter;
@@ -892,7 +876,6 @@
 				if (filterObj.filter === null) {
 					return;
 				}
-
 
 				var activeNamedSheetViewId = worksheet.getActiveNamedSheetViewId();
 				var bCollaborativeChanges = this.worksheet.workbook.bCollaborativeChanges;

@@ -1594,18 +1594,19 @@
 	};
 
 	/**
-    * Shows or hides buttons in the header.
-     * @memberof Api
-     * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} id - The button ID.
-     * @param {boolean} bShow - The flag specifies whether the button is shown (**true**) or hidden (**false**).
-     * @alias ShowButton 
-     * @since 7.2.0
-     */
-	Api.prototype["pluginMethod_ShowButton"] = function(id, bShow)
+	* Shows or hides buttons in the header.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} id - The button ID.
+	 * @param {boolean} bShow - The flag specifies whether the button is shown (**true**) or hidden (**false**).
+	 * @param {string} align - The parameter indicates whether the button will be displayed on the right side of the window or on the left (*left* by default).
+	 * @alias ShowButton 
+	 * @since 7.2.0
+	 */
+	Api.prototype["pluginMethod_ShowButton"] = function(id, bShow, align)
 	{
 		if (bShow) {
-			this.sendEvent("asc_onPluginShowButton", id);
+			this.sendEvent("asc_onPluginShowButton", id, (align === 'right'));
 		} else {
 			this.sendEvent("asc_onPluginHideButton", id);
 		}

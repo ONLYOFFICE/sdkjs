@@ -554,7 +554,11 @@ CBlockLevelSdt.prototype.Remove = function(nCount, isRemoveWholeElement, bRemove
 
 	var bResult = this.Content.Remove(nCount, isRemoveWholeElement, bRemoveOnlySelection, bOnAddText, isWord);
 
-	if (this.IsEmpty()
+	if (bResult && this.IsContentControlTemporary())
+	{
+		this.RemoveContentControlWrapper();
+	}
+	else if (this.IsEmpty()
 		&& !bOnAddText
 		&& (true !== isRemoveWholeElement || bResult)
 		&& this.CanBeEdited())
@@ -574,7 +578,7 @@ CBlockLevelSdt.prototype.Add = function(oParaItem)
 	var isRemoveWrapper = false;
 	if (oParaItem && oParaItem.Type !== para_TextPr)
 	{
-		isRemoveWrapper = this.IsPlaceHolder() && this.IsContentControlTemporary();
+		isRemoveWrapper = this.IsContentControlTemporary();
 		this.private_ReplacePlaceHolderWithContent(true);
 	}
 	else if (oParaItem && oParaItem.Type !== para_TextPr && this.IsPlaceHolder())
@@ -944,7 +948,7 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPa
 		return;
 	}
 
-	if (Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance() || (this.LogicDocument && this.LogicDocument.IsForceHideContentControlTrack()))
+	if (this.IsHideContentControlTrack())
 	{
 		oDrawingDocument.OnDrawContentControl(null, nType);
 		return;

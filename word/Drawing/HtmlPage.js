@@ -362,6 +362,11 @@ function CEditorPage(api)
 		this.m_oMainView.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top | g_anchor_bottom);
 		this.m_oMainContent.AddControl(this.m_oMainView);
 
+		// проблема с фокусом fixed-позиционированного элемента внутри (bug 63194)
+		this.m_oMainView.HtmlElement.onscroll = function() {
+			this.scrollTop = 0;
+		};
+
 		this.m_oEditor = AscCommon.CreateControl("id_viewer");
 		this.m_oEditor.Bounds.SetParams(0, 0, 1000, 1000, false, false, false, false, -1, -1);
 		this.m_oEditor.Anchor = (g_anchor_left | g_anchor_top | g_anchor_right | g_anchor_bottom);
@@ -3190,7 +3195,7 @@ function CEditorPage(api)
 		AscBrowser.checkZoom();
 
 		var isNewSize = this.checkBodySize();
-		if (!isNewSize && false === isAttack)
+		if (!isNewSize && this.retinaScaling === AscCommon.AscBrowser.retinaPixelRatio && false === isAttack)
 			return;
 
 		this.m_nZoomValueMin = -1;

@@ -1286,15 +1286,8 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         return this.showMasterSp !== false;
     };
 
-    Slide.prototype.draw = function(graphics) {
-        let bCheckBounds = graphics.IsSlideBoundsCheckerType;
-        let bSlideShow = this.graphicObjects.isSlideShow();
-        let bClipBySlide = !this.graphicObjects.canEdit();
-        if (bCheckBounds && (bSlideShow || bClipBySlide)) {
-            graphics.rect(0, 0, this.Width, this.Height);
-            return;
-        }
-        let _bounds, i;
+    Slide.prototype.drawBgMasterAndLayout = function(graphics, bClipBySlide, bCheckBounds) {
+        let _bounds;
         DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);
         if(bClipBySlide) {
             graphics.SaveGrState();
@@ -1318,6 +1311,17 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
                 this.Layout.draw(graphics, this);
             }
         }
+    };
+    Slide.prototype.draw = function(graphics) {
+        let bCheckBounds = graphics.IsSlideBoundsCheckerType;
+        let bSlideShow = this.graphicObjects.isSlideShow();
+        let bClipBySlide = !this.graphicObjects.canEdit();
+        if (bCheckBounds && (bSlideShow || bClipBySlide)) {
+            graphics.rect(0, 0, this.Width, this.Height);
+            return;
+        }
+        let _bounds, i;
+        this.drawBgMasterAndLayout(graphics, bClipBySlide, bCheckBounds);
         this.collaborativeMarks.Init_Drawing();
         let oCollColor;
         let fDist = 3;

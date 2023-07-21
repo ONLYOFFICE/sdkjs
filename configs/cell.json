@@ -363,11 +363,13 @@
 		"mobile": [
 			"common/libfont/engine/fonts_native.js",
 			"common/Charts/ChartStyles.js",
+
+			"common/Native/Wrappers/serialize.js",
 			"common/Native/Wrappers/DrawingStream.js",
 			"common/Native/Wrappers/ShapeDrawer.js",
+
 			"cell/native/Overlay.js",
 			"cell/native/Graphics.js",
-			"word/Drawing/cachemanager.js",
 			"cell/native/DrawingDocument.js",
 			"cell/native/native.js"
 		],
@@ -375,11 +377,13 @@
 			"vendor/iscroll.js",
 			"common/Overlay.js",
 			"common/Controls.js",
+
 			"common/Scrolls/mobileTouchManagerBase.js",
+			"cell/view/mobileTouch.js",
+
 			"word/Drawing/ShapeDrawer.js",
 			"cell/model/DrawingObjects/DrawingDocument.js",
-			"cell/model/DrawingObjects/Graphics.js",
-			"cell/view/mobileTouch.js"
+			"cell/model/DrawingObjects/Graphics.js"			
 		]
 	}
 }

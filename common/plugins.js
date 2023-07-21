@@ -1153,7 +1153,7 @@
 	function checkReturnCommand(obj, recursionDepth)
 	{
 		let depth = (recursionDepth === undefined) ? 0 : recursionDepth;
-		if (depth > 5)
+		if (depth > 10)
 			return false;
 
 		switch (typeof obj)
@@ -1191,7 +1191,16 @@
 					}
 				}
 
-				return false;
+				for (let prop in obj)
+				{
+					if (obj.hasOwnProperty(prop))
+					{
+						if (!checkReturnCommand(obj[prop], depth + 1))
+							return false;
+					}
+				}
+
+				return true;
 			}
 			default:
 				break;

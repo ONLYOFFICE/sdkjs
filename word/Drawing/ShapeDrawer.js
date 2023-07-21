@@ -690,6 +690,21 @@ CShapeDrawer.prototype =
             this.Graphics.ArrayPoints = [];
     },
 
+    drawTransitionTextures : function(oCanvas1, dAlpha1, oCanvas2, dAlpha2)
+    {
+        const dOldGlobalAlpha = this.Graphics.m_oContext.globalAlpha;
+        const dX = this.min_x;
+        const dY = this.min_y;
+        const dW = this.max_x - this.min_x;
+        const dH = this.max_y - this.min_y;
+        this.Graphics.m_oContext.globalAlpha = dAlpha1;
+        this.Graphics.drawImage(null, dX, dY, dW, dH, undefined, null, oCanvas1);
+        this.Graphics.m_oContext.globalAlpha = dAlpha2;
+        this.Graphics.drawImage(null, dX, dY, dW, dH, undefined, null, oCanvas2);
+        this.Graphics.m_oContext.globalAlpha = dOldGlobalAlpha;
+    },
+
+
     df : function(mode)
     {
         if (mode == "none" || this.bIsNoFillAttack)
@@ -745,7 +760,11 @@ CShapeDrawer.prototype =
             {
                 if (this.IsRectShape)
                 {
-                    if ((null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
+                    if(this.UniFill.IsTransitionTextures)
+                    {
+                        this.drawTransitionTextures(this.UniFill.canvas1, this.UniFill.alpha1, this.UniFill.canvas2, this.UniFill.alpha2);
+                    }
+                    else if ((null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
                     {
                         this.Graphics.drawImage(getFullImageSrc2(this.UniFill.fill.RasterImageId), this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), undefined, this.UniFill.fill.srcRect, this.UniFill.fill.canvas);
                     }
@@ -762,7 +781,11 @@ CShapeDrawer.prototype =
                     this.Graphics.save();
                     this.Graphics.clip();
 
-                    if (this.Graphics.IsNoSupportTextDraw == true || true == this.Graphics.IsTrack || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
+                    if(this.UniFill.IsTransitionTextures)
+                    {
+                        this.drawTransitionTextures(this.UniFill.canvas1, this.UniFill.alpha1, this.UniFill.canvas2, this.UniFill.alpha2);
+                    }
+                    else if (this.Graphics.IsNoSupportTextDraw == true || true == this.Graphics.IsTrack || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
                     {
                         this.Graphics.drawImage(getFullImageSrc2(this.UniFill.fill.RasterImageId), this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), undefined, this.UniFill.fill.srcRect, this.UniFill.fill.canvas);
                     }

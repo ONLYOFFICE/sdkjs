@@ -1626,6 +1626,31 @@
 			}
 		};
 
+		CGroupShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
+			if(this.getObjectType() !== oDrawingToCheck.getObjectType()) {
+				return oCurCandidate;
+			}
+			const sName = this.getOwnName();
+			if(sName && sName.startsWith(AscFormat.OBJECT_MORPH_MARKER)) {
+				const sCheckName = oDrawingToCheck.getOwnName();
+				if(sName !== sCheckName) {
+					return oCurCandidate;
+				}
+				return oDrawingToCheck;
+			}
+			if(this.spTree.length !== oDrawingToCheck.spTree.length) {
+				return oCurCandidate;
+			}
+			for(let nSp = 0; nSp < this.spTree.length; ++nSp) {
+				let oSp = this.spTree[nSp];
+				let oSpCheck = oDrawingToCheck.spTree[nSp];
+				if(!oSp.compareForMorph(oSpCheck, null)) {
+					return oCurCandidate;
+				}
+			}
+			return oDrawingToCheck;
+		};
+
 		//--------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};
 		window['AscFormat'].CGroupShape = CGroupShape;

@@ -1324,7 +1324,7 @@ function CDrawingDocument()
     this.Native = window["native"];
     this.Api    = window.editor;
     this.m_oApi = this.Api;
-    this.CanvasHitContext = CreateHitControl();
+    this.CanvasHitContext = CreateEmbedObject("CHitNativeEmbed");
 
     this.IsLockObjectsEnable = false;
 
@@ -1338,8 +1338,6 @@ function CDrawingDocument()
     this.m_lDrawingFirst    = -1;
     this.m_lDrawingEnd      = -1;
     this.m_lCurrentPage     = -1;
-
-    this.m_oCacheManager    = new CCacheManager();
 
     this.m_lCountCalculatePages = 0;
 
@@ -1486,69 +1484,10 @@ function CDrawingDocument()
 
 	this.ChangePageAttack = function(pageIndex)
 	{
-//		if (pageIndex < this.m_lDrawingFirst || pageIndex > this.m_lDrawingEnd)
-//			return;
-//
-//		this.StopRenderingPage(pageIndex);
-//		this.m_oWordControl.OnScroll();
 	};
 
     this.StartRenderingPage = function(pageIndex)
     {
-//        if (true === this.IsFreezePage(pageIndex))
-//        {
-//            return;
-//        }
-//
-//        var page = this.m_arrPages[pageIndex];
-//
-//        var w = parseInt(this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix * page.width_mm / 100);
-//        var h = parseInt(this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix * page.height_mm / 100);
-//
-//        if (this.m_oWordControl.bIsRetinaSupport)
-//        {
-//            w *= 2;
-//            h *= 2;
-//        }
-//
-//        // заглушка под мобильную версию (iPad не рисует большие картинки (наверное страховка по памяти))
-//        if (g_bIsMobile)
-//        {
-//            var _mobile_max = 2000;
-//            if (w > _mobile_max || h > _mobile_max)
-//            {
-//                if (w > h)
-//                {
-//                    h = parseInt(h * _mobile_max / w);
-//                    w = _mobile_max;
-//                }
-//                else
-//                {
-//                    w = parseInt(w * _mobile_max / h);
-//                    h = _mobile_max;
-//                }
-//            }
-//        }
-//
-//        page.drawingPage.cachedImage = this.m_oCacheManager.Lock(w, h);
-//
-//        //var StartTime = new Date().getTime();
-//
-//        // теперь берем графикс
-//        var g = new CGraphics();
-//        g.init(page.drawingPage.cachedImage.image.ctx, w, h, page.width_mm, page.height_mm);
-//        g.m_oFontManager = g_fontManager;
-//
-//        g.transform(1,0,0,1,0,0);
-//
-//		if (null == this.m_oDocumentRenderer)
-//	        this.m_oLogicDocument.DrawPage(pageIndex, g);
-//		else
-//			this.m_oDocumentRenderer.drawPage(pageIndex, g);
-//
-//        //var EndTime = new Date().getTime();
-//
-//        //alert("" + ((EndTime - StartTime) / 1000));
     };
 
     this.IsFreezePage = function(pageIndex)
@@ -1671,13 +1610,6 @@ function CDrawingDocument()
 
     this.StopRenderingPage = function(pageIndex)
     {
-		if (null != this.m_oDocumentRenderer)
-			this.m_oDocumentRenderer.stopRenderingPage(pageIndex);
-        if (null != this.m_arrPages[pageIndex].drawingPage.cachedImage)
-        {
-            this.m_oCacheManager.UnLock(this.m_arrPages[pageIndex].drawingPage.cachedImage);
-            this.m_arrPages[pageIndex].drawingPage.cachedImage = null;
-        }
     };
 
     this.ClearCachePages = function()

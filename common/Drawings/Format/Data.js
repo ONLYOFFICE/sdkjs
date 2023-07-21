@@ -1797,6 +1797,7 @@ Because of this, the display is sometimes not correct.
           'node1': ['imageRepeatNode'],
           'alignImgPlace1': ['ChildAccent', 'bentUpArrow1', 'ParentShape1', 'ParentShape2', 'Text1', 'Text2', 'Text3', 'Text4', 'Text5', 'Text6'],
           'bgImgPlace1': ['LeftNode', 'RightNode', 'Background'],
+	        'alignNode1': ['imageAccentRepeatNode']
         };
         if (oExcludes[sStyleLbl]) {
           if (oExcludes[sStyleLbl].indexOf(sName) !== -1) {
@@ -10150,6 +10151,17 @@ Because of this, the display is sometimes not correct.
     SmartArt.prototype.getName = function () {
       return 'SmartArt';
     };
+
+	  SmartArt.prototype.getAllRasterImages = function (arrImages)
+	  {
+			const oBgFormat = this.getBg();
+			if (oBgFormat)
+			{
+				if (oBgFormat.fill && oBgFormat.fill.fill && typeof (oBgFormat.fill.fill.RasterImageId) === "string" && oBgFormat.fill.fill.RasterImageId.length > 0)
+					arrImages.push(oBgFormat.fill.fill.RasterImageId);
+			}
+		  CGroupShape.prototype.getAllRasterImages.call(this, arrImages);
+	  };
 
     SmartArt.prototype.hasSmartArt = function (bRetSmartArt) {
       return bRetSmartArt ? this : true;

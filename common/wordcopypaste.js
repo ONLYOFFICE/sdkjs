@@ -5227,11 +5227,14 @@ PasteProcessor.prototype =
 								var img = oThis.aNeedRecalcImgSize[i].img;
 								if (drawing && img) {
 									var imgSize = oThis._getImgSize(img);
+									let fitPagePictureSize = oThis.fitPictureSizeToPage(imgSize.width, imgSize.height);
+									let nWidth = fitPagePictureSize.nWidth;
+									let nHeight = fitPagePictureSize.nHeight;
 
-									if (imgSize && drawing.Extent && (drawing.Extent.H !== imgSize.height || drawing.Extent.W !== imgSize.width)) {
-										drawing.setExtent(imgSize.width, imgSize.height);
-										drawing.GraphicObj.spPr.xfrm.setExtX(imgSize.width);
-										drawing.GraphicObj.spPr.xfrm.setExtY(imgSize.height);
+									if (imgSize && drawing.Extent && (drawing.Extent.H !== nHeight || drawing.Extent.W !== nWidth)) {
+										drawing.setExtent(nWidth, nHeight);
+										drawing.GraphicObj.spPr.xfrm.setExtX(nWidth);
+										drawing.GraphicObj.spPr.xfrm.setExtY(nHeight);
 									}
 								}
 							} else {
@@ -9798,23 +9801,9 @@ PasteProcessor.prototype =
 									oThis.oCurRun.Pr.Underline = false;
 								}
 
-                                if(oThis.apiEditor && oThis.apiEditor.isDocumentEditor) {
-                                    if(oThis.oLogicDocument && oThis.oLogicDocument.GetColumnSize ) {
-
-                                        var oColumnSize = oThis.oLogicDocument.GetColumnSize();
-                                        if(oColumnSize) {
-                                            if(nWidth > oColumnSize.W || nHeight > oColumnSize.H) {
-                                                if(oColumnSize.W > 0 && oColumnSize.H > 0)  {
-                                                    var dScaleW = oColumnSize.W/nWidth;
-                                                    var dScaleH = oColumnSize.H/nHeight;
-                                                    var dScale = Math.min(dScaleW, dScaleH);
-                                                    nWidth *= dScale;
-                                                    nHeight *= dScale;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+								let fitPagePictureSize = oThis.fitPictureSizeToPage(nWidth, nHeight);
+								nWidth = fitPagePictureSize.nWidth;
+								nHeight = fitPagePictureSize.nHeight;
 
 								var Drawing = CreateImageFromBinary(sSrc, nWidth, nHeight);
 								if(!oThis.aNeedRecalcImgSize) {
@@ -10614,6 +10603,27 @@ PasteProcessor.prototype =
 				oThis.bIsForFootEndnote = false;
 			}
 		return bAddParagraph;
+	},
+
+
+	fitPictureSizeToPage: function (nWidth, nHeight) {
+		if (this.apiEditor && this.apiEditor.isDocumentEditor) {
+			if (this.oLogicDocument && this.oLogicDocument.GetColumnSize) {
+				var oColumnSize = this.oLogicDocument.GetColumnSize();
+				if (oColumnSize) {
+					if (nWidth > oColumnSize.W || nHeight > oColumnSize.H) {
+						if (oColumnSize.W > 0 && oColumnSize.H > 0) {
+							var dScaleW = oColumnSize.W / nWidth;
+							var dScaleH = oColumnSize.H / nHeight;
+							var dScale = Math.min(dScaleW, dScaleH);
+							nWidth *= dScale;
+							nHeight *= dScale;
+						}
+					}
+				}
+			}
+		}
+		return {nWidth: nWidth, nHeight: nHeight};
 	},
 
 	_parseMathContent: function (node, oPar) {

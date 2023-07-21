@@ -3723,6 +3723,9 @@ function CThumbnailsManager()
 		{
 			oThis.m_oWordControl.m_oApi.checkInterfaceElementBlur();
 			oThis.m_oWordControl.m_oApi.checkLastWork();
+
+			// после fullscreen возможно изменение X, Y после вызова Resize.
+			oThis.m_oWordControl.checkBodyOffset();
 		}
 		
 		AscCommon.stopEvent(e);
@@ -4552,9 +4555,10 @@ function CThumbnailsManager()
 			g.SetFont(font);
 
 			// меряем надпись номера слайда
-			var DrawNumSlide = i + 1;
+			let nSlideNumber = i + _logicDocument.getFirstSlideNumber();
+			var DrawNumSlide = nSlideNumber;
 			var num_slide_text_width = 0;
-			while (DrawNumSlide != 0)
+			while (DrawNumSlide !== 0)
 			{
 				var _last_dig = DrawNumSlide % 10;
 				num_slide_text_width += this.DigitWidths[_last_dig];
@@ -4572,7 +4576,7 @@ function CThumbnailsManager()
 
 			let dX = (_digit_distance - num_slide_text_width) / 2;
 			let dY = page.top * g_dKoef_pix_to_mm + 3 * AscCommon.AscBrowser.retinaPixelRatio;
-			let _bounds = g.t("" + (i + 1), dX, dY, true);
+			let _bounds = g.t("" + nSlideNumber, dX, dY, true);
 			if (_logicDocument.Slides[i] && !_logicDocument.Slides[i].isVisible())
 			{
 				context.lineWidth = 1;
@@ -5194,7 +5198,6 @@ function CThumbnailsManager()
 			nX = oRect.X + oRect.W - AscCommon.specialPasteElemWidth;
 		}
 		nY = oRect.Y + oRect.H;
-		nY = Math.max(Math.min(oThContainer.GetCSS_height() - 25, nY), 0);
 		return {X: nX, Y: nY};
 	};
 
@@ -5754,7 +5757,9 @@ function CSlideDrawer()
 			this.m_oWordControl.m_oLogicDocument.DrawPage(slideNum, g);
 		}
 
-		if (this.m_oWordControl.m_oApi.watermarkDraw)
+		if (this.m_oWordControl.m_oApi.watermarkDraw &&
+			!this.m_oWordControl.DemonstrationManager.Mode &&
+			!this.m_oWordControl.m_oDrawingDocument.TransitionSlide.IsPlaying())
 		{
 			this.m_oWordControl.m_oApi.watermarkDraw.Draw(outputCtx,
 				AscCommon.AscBrowser.convertToRetinaValue(_rect.left, true),
@@ -6027,6 +6032,9 @@ function CNotesDrawer(page)
 	{
 		if (-1 == oThis.HtmlPage.m_oDrawingDocument.SlideCurrent)
 			return;
+
+		// после fullscreen возможно изменение X, Y после вызова Resize.
+		oThis.HtmlPage.checkBodyOffset();
 
 		AscCommon.check_MouseDownEvent(e, true);
 		global_mouseEvent.LockMouse();
