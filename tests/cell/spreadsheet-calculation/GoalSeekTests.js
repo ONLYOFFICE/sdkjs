@@ -34,7 +34,7 @@ $(function () {
     let CGoalSeek = AscCommonExcel.CGoalSeek;
     let CParserFormula = AscCommonExcel.parserFormula;
     let g_oIdCounter = AscCommon.g_oIdCounter;
-    let sData = AscCommon.getEmpty()
+    let sData = AscCommon.getEmpty();
     let wb, ws, oParserFormula, oGoalSeek, nResult, nDesiredVal, nExpectedVal;
 
     if (AscCommon.c_oSerFormat.Signature === sData.substring(0, AscCommon.c_oSerFormat.Signature.length)) {
@@ -100,7 +100,7 @@ $(function () {
             ['', '180', '100000'],
             ['0.072', '', '100000'],
             ['0.072', '180', '']
-        ]
+        ];
         // Fill data
         let oRange = ws.getRange4(0, 0);
         oRange.fillData(aTestData);
@@ -130,7 +130,7 @@ $(function () {
         let aTestData = [
             ['', '5'],
             ['2000', '']
-        ]
+        ];
         // Fill data
         let oRange = ws.getRange4(0, 0);
         oRange.fillData(aTestData);

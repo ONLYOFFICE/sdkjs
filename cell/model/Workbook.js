@@ -2459,7 +2459,7 @@
 	};
 	Workbook.prototype.isChartOleObject = function () {
 		return this.aWorksheets.length === 2;
-	}
+	};
 	Workbook.prototype.setCommonIndexObjectsFrom = function(wb) {
 		this.oStyleManager = wb.oStyleManager;
 		this.sharedStrings = wb.sharedStrings;
@@ -12244,6 +12244,17 @@
 		this.nColsCount = val;
 	};
 
+	Worksheet.prototype.formulaGoalSeek = function(sFormulaCell, nExpectedValue, sChangingCell) {
+		let oParserFormula;
+		let oFormulaCell = this.getCell2(sFormulaCell);
+		this._getCell(oFormulaCell.bbox.r1, oFormulaCell.bbox.c1, function (cell) {
+			oParserFormula = cell.getFormulaParsed();
+		});
+
+		let oGoalSeek = new CGoalSeek(oParserFormula, nExpectedValue, this.getRange2(sChangingCell));
+		// Run goal seek
+		oGoalSeek.calculate();
+	};
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;

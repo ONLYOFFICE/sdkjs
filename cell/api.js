@@ -8878,16 +8878,26 @@ var editor;
 				//disable reset
 				res = Asc.c_oAscPageBreaksDisableType.reset;
 			}
-		}
+		};
 
 		return res;
 	};
 
+	spreadsheet_api.prototype.asc_FormulaGoalSeek = function (sFormulaCell, nExpectedValue, sChangingCell) {
+		if (!this.wbModel) {
+			return;
+		}
 
-  /*
-   * Export
-   * -----------------------------------------------------------------------------
-   */
+		let sheetIndex = this.wbModel.getActive();
+		let ws = this.wbModel.getWorksheet(sheetIndex);
+
+		return ws && ws.formulaGoalSeek(sFormulaCell, nExpectedValue, sChangingCell);
+	};
+
+	/*
+	 * Export
+	 * -----------------------------------------------------------------------------
+	 */
 
   asc["spreadsheet_api"] = spreadsheet_api;
   prot = spreadsheet_api.prototype;
@@ -9454,6 +9464,7 @@ var editor;
   prot["asc_ResetAllPageBreaks"]      = prot.asc_ResetAllPageBreaks;
   prot["asc_GetPageBreaksDisableType"]= prot.asc_GetPageBreaksDisableType;
 
+  prot["asc_FormulaGoalSeek"]= prot.asc_FormulaGoalSeek;
 
 
 
