@@ -12246,12 +12246,16 @@
 
 	Worksheet.prototype.formulaGoalSeek = function(sFormulaCell, nExpectedValue, sChangingCell) {
 		let oParserFormula;
+
+		sFormulaCell = sFormulaCell.split("!")[1];
+
 		let oFormulaCell = this.getCell2(sFormulaCell);
 		this._getCell(oFormulaCell.bbox.r1, oFormulaCell.bbox.c1, function (cell) {
 			oParserFormula = cell.getFormulaParsed();
 		});
 
-		let oGoalSeek = new CGoalSeek(oParserFormula, nExpectedValue, this.getRange2(sChangingCell));
+		sChangingCell = sChangingCell.split("!")[1];
+		let oGoalSeek = new AscCommonExcel.CGoalSeek(oParserFormula, nExpectedValue, this.getRange2(sChangingCell));
 		// Run goal seek
 		oGoalSeek.calculate();
 	};

@@ -8878,7 +8878,7 @@ var editor;
 				//disable reset
 				res = Asc.c_oAscPageBreaksDisableType.reset;
 			}
-		};
+		}
 
 		return res;
 	};

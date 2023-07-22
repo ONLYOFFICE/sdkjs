@@ -114,31 +114,31 @@ function (window, undefined) {
             nDesiredVal = (nLow + nHigh) / 2;
             nCurAttempt++;
         }
-    }
+    };
     CGoalSeek.prototype.getParsedFormula = function() {
         return this.oParsedFormula;
-    }
+    };
     CGoalSeek.prototype.getExpectedVal = function() {
         return this.nExpectedVal;
-    }
+    };
     CGoalSeek.prototype.getDesiredVal = function() {
         return this.oDesiredVal
-    }
+    };
     CGoalSeek.prototype.setDesiredVal = function(oDesiredVal) {
         this.oDesiredVal = oDesiredVal;
-    }
+    };
     CGoalSeek.prototype.getRelativeError = function() {
         return this.nRelativeError;
-    }
+    };
     CGoalSeek.prototype.setRelativeError = function(nRelativeError) {
         this.nRelativeError = nRelativeError;
-    }
+    };
     CGoalSeek.prototype.getMaxIterations = function() {
         return this.nMaxIterations;
-    }
+    };
     CGoalSeek.prototype.setMaxIterations = function(nMaxIterations) {
         this.nMaxIterations = nMaxIterations;
-    }
+    };
 
     // Export
     window['AscCommonExcel'] = window['AscCommonExcel'] || {};
