@@ -1219,11 +1219,7 @@ function (window, undefined) {
 			}
 			delete this.precedents[cellIndex];
 		}
-	}
-
-
-
-
+	};
 
 
 

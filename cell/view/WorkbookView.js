@@ -943,6 +943,16 @@
     });
     this.model.handlers.add("changeDocument", function(prop, arg1, arg2) {
 		self.SearchEngine && self.SearchEngine.changeDocument(prop, arg1, arg2);
+
+		if (prop === AscCommonExcel.docChangedType.cellValue) {
+			let wsId = arg1 && arg1.ws && arg1.ws.getId();
+			let ws = wsId && self.getWorksheetById(wsId);
+			if (arg1 && ws) {
+				ws.traceDependentsManager.clearCellTraces(arg1.nCol, arg1.nRow);
+			}
+		} else if (prop === AscCommonExcel.docChangedType.rangeValues) {
+
+		}
     });
     this.model.handlers.add("showWorksheet", function(wsId) {
       var wsModel = self.model.getWorksheetById(wsId), index;
