@@ -948,7 +948,7 @@
 			let wsId = arg1 && arg1.ws && arg1.ws.getId();
 			let ws = wsId && self.getWorksheetById(wsId);
 			if (arg1 && ws) {
-				ws.traceDependentsManager.clearCellTraces(arg1.nCol, arg1.nRow);
+				ws.traceDependentsManager.clearCellTraces(arg1.nRow, arg1.nCol);
 			}
 		} else if (prop === AscCommonExcel.docChangedType.rangeValues) {
 

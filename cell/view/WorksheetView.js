@@ -5289,9 +5289,6 @@
 			// Horizontal lines
 			for (let j = 1; j < 3; j++) {
 				let y2 = j * cellHeight;
-				// if (j === 1) {
-				// 	y2 = j * cellHeight + (zoom < 1.2 ? 0.5 : 0);
-				// }
 				ctx.beginPath();
 				ctx.lineHor(x1, y1 + y2, x1 + tableWidth);
 				ctx.stroke();
