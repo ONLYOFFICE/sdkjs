@@ -12251,7 +12251,7 @@ background-repeat: no-repeat;\
 		if (!logicDocument)
 			return false;
 		
-		return logicDocument.IsSmartParagraphSelection(isSmart);
+		return logicDocument.IsSmartParagraphSelection();
 	};
 
 	//comparison

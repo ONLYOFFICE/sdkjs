@@ -2883,7 +2883,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.getFirstElement = function () {
 		return this.getElementRowCol(0,0);	
-	}
+	};
 
 
 
@@ -8213,7 +8213,7 @@ function parserFormula( formula, parent, _ws ) {
 		return res;
 	}
 
-	function matching(x, matchingInfo, doNotParseNum) {
+	function matching(x, matchingInfo, doNotParseNum, doNotParseFormat) {
 		var y = matchingInfo.val;
 		var operator = matchingInfo.op;
 		var res = false, rS;
@@ -8275,7 +8275,7 @@ function parserFormula( formula, parent, _ws ) {
 							res = true;
 							break;
 						}
-						var parseRes = AscCommon.g_oFormatParser.parse(x.value);
+						var parseRes = !doNotParseFormat && AscCommon.g_oFormatParser.parse(x.value);
 						if (parseRes && parseRes.value === y.value) {
 							res = true;
 							break;

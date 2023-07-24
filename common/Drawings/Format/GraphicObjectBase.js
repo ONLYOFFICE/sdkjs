@@ -1285,6 +1285,60 @@
 		this.spPr.xfrm.setFlipH(flipH);
 		this.spPr.xfrm.setFlipV(flipV);
 	};
+
+	CGraphicObjectBase.prototype.updateTransformMatrix = function()
+	{
+		var oParentTransform = null;
+		if(this.parent && this.parent.Get_ParentParagraph)
+		{
+			var oParagraph = this.parent.Get_ParentParagraph();
+			if(oParagraph)
+			{
+				oParentTransform = oParagraph.Get_ParentTextTransform();
+			}
+		}
+		this.transform = this.localTransform.CreateDublicate();
+		global_MatrixTransformer.TranslateAppend(this.transform, this.posX, this.posY);
+		if(oParentTransform)
+		{
+			global_MatrixTransformer.MultiplyAppend(this.transform, oParentTransform);
+		}
+		this.invertTransform = global_MatrixTransformer.Invert(this.transform);
+
+		if(this.localTransformText)
+		{
+			this.transformText = this.localTransformText.CreateDublicate();
+			global_MatrixTransformer.TranslateAppend(this.transformText, this.posX, this.posY);
+			if(oParentTransform)
+			{
+				global_MatrixTransformer.MultiplyAppend(this.transformText, oParentTransform);
+			}
+			this.invertTransformText = global_MatrixTransformer.Invert(this.transformText);
+		}
+		if(this.localTransformTextWordArt)
+		{
+			this.transformTextWordArt = this.localTransformTextWordArt.CreateDublicate();
+			global_MatrixTransformer.TranslateAppend(this.transformTextWordArt, this.posX, this.posY);
+			if(oParentTransform)
+			{
+				global_MatrixTransformer.MultiplyAppend(this.transformTextWordArt, oParentTransform);
+			}
+			this.invertTransformTextWordArt = global_MatrixTransformer.Invert(this.transformTextWordArt);
+		}
+		if(this.localTransformText2)
+		{
+
+			this.transformText2 = this.localTransformText2.CreateDublicate();
+			global_MatrixTransformer.TranslateAppend(this.transformText2, this.posX, this.posY);
+			if(oParentTransform)
+			{
+				global_MatrixTransformer.MultiplyAppend(this.transformText2, oParentTransform);
+			}
+			this.invertTransformText2 = global_MatrixTransformer.Invert(this.transformText2);
+		}
+		this.checkShapeChildTransform && this.checkShapeChildTransform();
+		this.checkContentDrawings && this.checkContentDrawings();
+	};
 	CGraphicObjectBase.prototype.getPlaceholderType = function () {
 		return null;
 	};

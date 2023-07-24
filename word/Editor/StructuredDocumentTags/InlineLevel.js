@@ -3054,12 +3054,16 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 		|| oParagraph.IsInFixedForm())
 		return null;
 
-	let oParaDrawing = this.private_ConvertFormToFixed(nW, nH);
-	oParaDrawing.Set_PositionH(Asc.c_oAscRelativeFromH.Page, false, X, false);
-	oParaDrawing.Set_PositionV(Asc.c_oAscRelativeFromV.Page, false, Y, false);
+	let drawing = this.private_ConvertFormToFixed(nW, nH);
+	drawing.Set_PositionH(Asc.c_oAscRelativeFromH.Page, false, X, false);
+	drawing.Set_PositionV(Asc.c_oAscRelativeFromV.Page, false, Y, false);
+	drawing.Set_Distance(0, 0, 0, 0);
+	drawing.Set_DrawingType(drawing_Anchor);
+	drawing.Set_WrappingType(WRAPPING_TYPE_SQUARE);
+	drawing.Set_BehindDoc(false);
 	
 	var oRun = new ParaRun(oParagraph, false);
-	oRun.AddToContent(0, oParaDrawing);
+	oRun.AddToContent(0, drawing);
 
 	// Этот код выравнивает позицию рана по вертикали, чтобы после конвертации типа формы текст внутри автофигуры
 	// визуально оставался на месте, но сама настройка позиции по вертикали вызывает много непонятных ситуаций у
@@ -3094,7 +3098,7 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 		this.SetTextFormPr(oNewPr);
 	}
 
-	return oParaDrawing;
+	return drawing;
 };
 CInlineLevelSdt.prototype.private_ConvertFormToFixed = function(nW, nH)
 {

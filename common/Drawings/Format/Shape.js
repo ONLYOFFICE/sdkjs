@@ -1257,6 +1257,19 @@
 			this.textBoxContent.Content[0].Set_DocumentIndex(0);
 		};
 
+		CShape.prototype.checkContentDrawings = function()
+		{
+			const oDocContent = this.getDocContent();
+			if(oDocContent)
+			{
+				const aDrawings = oDocContent.GetAllDrawingObjects([]);
+				for(let nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing)
+				{
+					aDrawings[nDrawing].GraphicObj.updateTransformMatrix();
+				}
+			}
+		};
+
 		CShape.prototype.paragraphAdd = function (paraItem, bRecalculate) {
 			var content_to_add = this.getDocContent();
 			if (!content_to_add) {

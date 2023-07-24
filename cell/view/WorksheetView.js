@@ -3807,6 +3807,7 @@
 			return;
 		}
 
+
 		//new CHeaderFooter();
 		//при печати берём колонтитул либо из настроек печати(если есть), либо из модели 
 		var printPreview = this.workbook.printPreviewState;
@@ -3833,6 +3834,9 @@
 				curHeader.parser = new AscCommonExcel.HeaderFooterParser();
 				curHeader.parser.parse(curHeader.str);
 			}
+			curHeader.parser.calculateTokens(this, indexPrintPage, countPrintPages);
+
+			//get current tokens -> curHeader.parser -> getTokensByPosition(AscCommomExcel.c_oPortionPosition)
 			this._drawHeaderFooterText(drawingCtx, printPagesData, curHeader.parser, indexPrintPage, countPrintPages, false, opt_headerFooter);
 		}
 
@@ -3851,146 +3855,171 @@
 				curFooter.parser = new AscCommonExcel.HeaderFooterParser();
 				curFooter.parser.parse(curFooter.str);
 			}
+			curFooter.parser.calculateTokens(this, indexPrintPage, countPrintPages);
+			//get current tokens -> curHeader.parser -> getTokensByPosition(AscCommomExcel.c_oPortionPosition)
 			this._drawHeaderFooterText(drawingCtx, printPagesData, curFooter.parser, indexPrintPage, countPrintPages, true, opt_headerFooter);
 		}
 	};
 
+
 	/** Рисует текст ячейки */
 	WorksheetView.prototype._drawHeaderFooterText = function (drawingCtx, printPagesData, headerFooterParser, indexPrintPage, countPrintPages, bFooter, opt_headerFooter) {
-        //TODO нужно проверить на retina!!!
-
-		var t = this;
-
-		var getFragmentText = function(val) {
-			if ( asc_typeof(val) === "string" ){
-				return val;
-			} else {
-				return val.getText(t, indexPrintPage, countPrintPages);
-			}
-		};
-
-		var getFragments = function(portion) {
-			var res = [];
-			for(var i = 0; i < portion.length; i++){
-				var str = new AscCommonExcel.Fragment();
-				str.setFragmentText(getFragmentText(portion[i].text));
-				str.format = portion[i].format.clone();
-				//TODO уменьшаю только размер текста. пересмотреть!
-				var fSize = str.format.fs ? str.format.fs : AscCommonExcel.g_oDefaultFormat.Font.fs;
-				str.format.fs = isPrintPreview ? fSize * printScale : fSize;
-				res.push(str);
-			}
-			return res;
-		};
-
-		var vector_koef = AscCommonExcel.vector_koef / this.getZoom();
-		if (AscCommon.AscBrowser.isCustomScaling()) {
-			vector_koef /= this.getRetinaPixelRatio();
-		}
-
-		var _printScale = printPagesData ? printPagesData.scale : this.getPrintScale();
-		var hF = opt_headerFooter ? opt_headerFooter : this.model.headerFooter;
-		var scaleWithDoc = hF.getScaleWithDoc();
+		const t = this;
+		const _printScale = printPagesData ? printPagesData.scale : this.getPrintScale();
+		const hF = opt_headerFooter ? opt_headerFooter : this.model.headerFooter;
+		let scaleWithDoc = hF.getScaleWithDoc();
 		scaleWithDoc =  scaleWithDoc === null || scaleWithDoc === true;
-		var printScale = scaleWithDoc ? _printScale : 1;
+		let printScale = scaleWithDoc ? _printScale : 1;
 
-		//посольку в данном случае printScale уже включен в zoom, то меняем printScale
-		var isPrintPreview = this.workbook.printPreviewState && this.workbook.printPreviewState.isStart();
-		if (isPrintPreview) {
-			printScale = scaleWithDoc ? 1 : 1 / _printScale;
-		}
 
-		//for print preview
-		var printScaleForPrintPreview = 1;
-		if (isPrintPreview) {
-			printScaleForPrintPreview = printPagesData.scale;
-			vector_koef = vector_koef * printScaleForPrintPreview;
-		} else {
-			vector_koef = vector_koef * printScale;
-		}
-
-		var margins = this.model.PagePrintOptions.asc_getPageMargins();
-		var width = printPagesData.pageWidth / vector_koef;
-		var height = printPagesData.pageHeight / vector_koef;
+		const margins = this.model.PagePrintOptions.asc_getPageMargins();
+		const width = printPagesData.pageWidth;
+		const height = printPagesData.pageHeight;
 
 		//это стандартный маргин для случая, если alignWithMargins = true
 		//TODO необходимо перепроверить размер маргина
-		var defaultMargin = 17.8;
-		var alignWithMargins = hF.getAlignWithMargins();
-		var left =  alignWithMargins ? margins.left / vector_koef : defaultMargin / vector_koef;
-		var right = alignWithMargins ? margins.right / vector_koef : defaultMargin / vector_koef;
-		//для превью - делю на zoom
-		var top = margins.header / (AscCommonExcel.vector_koef / (this.getZoom() / printScaleForPrintPreview));
-		var bottom = margins.footer / (AscCommonExcel.vector_koef / (this.getZoom() / printScaleForPrintPreview));
+		const defaultMargin = 17.8;
+		const alignWithMargins = hF.getAlignWithMargins();
+		const left =  alignWithMargins ? margins.left : defaultMargin;
+		const right = alignWithMargins ? margins.right  : defaultMargin;
+		const top = margins.header;
+		const bottom = margins.footer;
 
-		if (!isPrintPreview) {
-			top = top / printScale;
-			bottom = bottom / printScale;
-		}
-
-		//TODO пересмотреть минимальный отступ
-		var rowTop = (this._getRowTop(0) - this.groupHeight) / printScaleForPrintPreview;
-		if(top < rowTop) {
-			top = rowTop;
-		}
-		var footerStartPos = height - bottom;
-
-		var drawPortion = function(index) {
-			var portion = headerFooterParser.portions[index];
+		const footerStartPos = height - bottom;
+		let drawPortion = function(index) {
+			let portion = headerFooterParser.tokens[index];
 			if(!portion) {
 				return;
 			}
 
-			//добавляю флаги для учета переноса строки
-			var cellFlags = new AscCommonExcel.CellFlags();
-			cellFlags.wrapText = true;
-			cellFlags.textAlign = window["AscCommonExcel"].CHeaderFooterEditorSection.prototype.getAlign.call(null, index);
-			var fragments = getFragments(portion);
-			t.stringRender.setString(fragments, cellFlags);
+			const nAlign = window["AscCommonExcel"].CHeaderFooterEditorSection.prototype.getAlign.call(null, index);
+            const aFragments = portion;
+			const maxWidth = (width - left - right) / printScale;
 
-			var maxWidth = width - left - right;
-			var textMetrics = t.stringRender._measureChars(maxWidth);
-			var x, y;
-			switch(index) {
-				case window["AscCommonExcel"].c_oPortionPosition.left: {
-					x = left;
-					y = !bFooter ? top : footerStartPos - textMetrics.height;
-					break;
-				}
-				case window["AscCommonExcel"].c_oPortionPosition.center: {
-					x = ((width - left - right) / 2 + left) - textMetrics.width / 2;
-					y = !bFooter ? top : footerStartPos - textMetrics.height;
-					break;
-				}
-				case window["AscCommonExcel"].c_oPortionPosition.right: {
-					x = width - right - textMetrics.width;
-					y = !bFooter ? top : footerStartPos - textMetrics.height;
-					break;
-				}
-			}
+            const oShape = AscFormat.ExecuteNoHistory(function() {
 
-			t.stringRender.fontNeedUpdate = true;
-			t.stringRender.render(drawingCtx, x, y, textMetrics.width, t.settings.activeCellBorderColor);
+                const oMockLogicDoc = {
+                    Get_PageLimits : function(PageAbs) {
+                        return {X: 0, Y: 0, XLimit: Page_Width, YLimit: Page_Height};
+                    },
+                    Get_PageFields : function (PageAbs, isInHdrFtr) {
+                        return {X: 0, Y: 0, XLimit: 2000, YLimit: 2000};
+                    },
+
+                    IsTrackRevisions: function() {
+                        return false;
+                    },
+
+                    IsDocumentEditor: function() {
+                        return false;
+                    },
+                    Spelling: {
+                        AddParagraphToCheck: function(Para) {}
+                    },
+
+                    IsSplitPageBreakAndParaMark: function () {
+                        return false;
+                    },
+                    IsDoNotExpandShiftReturn: function () {
+                        return false;
+                    },
+
+                    SearchEngine: {
+                        Selection: []
+                    }
+                };
+
+                const oShape = new AscFormat.CShape();
+                oShape.setWorksheet(t.model);
+                oShape.createTextBody();
+                let oBodyPr = oShape.txBody.bodyPr;
+                oBodyPr.bIns = 0;
+                oBodyPr.tIns = 0;
+                oBodyPr.lIns = 0;
+                oBodyPr.rIns = 0;
+                oBodyPr.anchor = 4;//top
+                let oContent = oShape.txBody.content;
+                const oParagraph = oContent.GetAllParagraphs()[0];
+                oParagraph.LogicDocument = oMockLogicDoc;
+                oParagraph.MoveCursorToStartPos();
+                oParagraph.Set_Align(nAlign);
+                let oImage;
+                if(t.model.legacyDrawingHF && t.model.legacyDrawingHF.drawings[0]) {
+                    oImage = t.model.legacyDrawingHF.drawings[0].graphicObject;
+                }
+                for(let nFragment = 0; nFragment < aFragments.length; ++nFragment) {
+                    let oFragment = aFragments[nFragment];
+                    let sText = oFragment._calculatedText;
+
+                    let oFormat = oFragment.format.clone();
+                    oFormat.merge(AscCommonExcel.g_oDefaultFormat.Font);
+                    let oParaRun = new AscCommonWord.ParaRun(oParagraph);
+                    let oTextPr = new CTextPr();
+                    oTextPr.FillFromExcelFont(oFormat);
+                    oParaRun.Set_Pr(oTextPr);
+                    if(oFragment.field === asc.c_oAscHeaderFooterField.picture) {
+                        if(oImage) {
+                            let dW = oImage.getXfrmExtX();
+                            let dH = oImage.getXfrmExtY();
+                            oImage.recalculate();
+                            let oDrawing = new ParaDrawing(dW, dH, oImage, oShape.getDrawingDocument(), oContent, oParaRun);
+                            oDrawing.bCellHF = true;
+                            oImage.setParent(oDrawing);
+                            oParaRun.AddToContent(0, oDrawing, true);
+                        }
+                    }
+                    else if(sText) {
+                        oParaRun.AddText(sText);
+                    }
+                    oParagraph.AddToContent(nFragment, oParaRun);
+                }
+
+                oShape.setTransformParams(-1.6, 0, maxWidth + 3.2, 2000, 0, false, false);
+                oShape.setBDeleted(false);
+                oShape.recalculate();
+
+                let x, y;
+                x = left  / printScale;
+                y = (!bFooter ? top : footerStartPos - oShape.contentHeight) / printScale;
+                oShape.posX += x ;
+                oShape.posY += y;
+                oShape.updateTransformMatrix();
+                if(oImage) {
+                    oImage.updateTransformMatrix();
+                }
+                oShape.clipRect = null;
+                return oShape;
+
+            }, this, []);
+
+
+            let oGraphics;
+            if(drawingCtx instanceof AscCommonExcel.CPdfPrinter) {
+                oGraphics = drawingCtx.DocumentRenderer;
+                oGraphics.SaveGrState();
+                oGraphics.SetBaseTransform(new AscCommon.CMatrix());
+            }
+            else {
+                oGraphics = new AscCommon.CGraphics();
+                oGraphics.init(drawingCtx.ctx, drawingCtx.getWidth(0), drawingCtx.getHeight(0),
+                    width  / printScale, height / printScale);
+                oGraphics.m_oFontManager = AscCommon.g_fontManager;
+            }
+
+            oGraphics.SaveGrState();
+            oGraphics.transform3(new AscCommon.CMatrix());
+            oGraphics.AddClipRect(left / printScale, top / printScale, (width - (left + right)) / printScale, (height - (top + bottom)) / printScale);
+            oShape.draw(oGraphics);
+
+            oGraphics.RestoreGrState();
+            if (drawingCtx instanceof AscCommonExcel.CPdfPrinter) {
+                oGraphics.SetBaseTransform(null);
+                oGraphics.RestoreGrState();
+            }
 		};
 
-		//добавил аналогично другим отрисовка.
-		//без этого отсутвует drawingCtx.DocumentRenderer.m_arrayPages[0].FontPicker.LastPickFont
-		//пока добавляю зум от printScale не для предварительного просмотра. пп - проверить и сделать аналогично
-		var transformMatrix;
-		if (!isPrintPreview && printScale !== 1 && drawingCtx.Transform) {
-			transformMatrix = drawingCtx.Transform.CreateDublicate();
-
-			drawingCtx.setTransform(printScale, drawingCtx.Transform.shy, drawingCtx.Transform.shx, printScale, 0, 0);
-		}
-
-		this._setDefaultFont(drawingCtx);
-		for(var i = 0; i < headerFooterParser.portions.length; i++) {
-			drawPortion(i);
-		}
-
-		if (transformMatrix) {
-			drawingCtx.setTransform(transformMatrix.sx, transformMatrix.shy, transformMatrix.shx,
-				transformMatrix.sy, transformMatrix.tx, transformMatrix.ty);
+		for(let nTokeIdx = 0; nTokeIdx < headerFooterParser.tokens.length; nTokeIdx++) {
+			drawPortion(nTokeIdx);
 		}
 	};
 
@@ -4096,26 +4125,27 @@
 		if (!printScale) {
 			printScale = this.getPrintScale();
 		}
-		var ctx = drawingCtx || this.drawingCtx;
-		var widthCtx = (width) ? width / printScale : ctx.getWidth() / printScale;
-		var heightCtx = (height) ? height / printScale : ctx.getHeight() / printScale;
-		var offsetX = (undefined !== leftFieldInPx) ? leftFieldInPx : this._getColLeft(this.visibleRange.c1) - this.cellsLeft;
-		var offsetY = (undefined !== topFieldInPx) ? topFieldInPx : this._getRowTop(this.visibleRange.r1) - this.cellsTop;
+		let ctx = drawingCtx || this.drawingCtx;
+		let widthCtx = (width) ? width / printScale : ctx.getWidth() / printScale;
+		let heightCtx = (height) ? height / printScale : ctx.getHeight() / printScale;
+		let offsetX = (undefined !== leftFieldInPx) ? leftFieldInPx : this._getColLeft(this.visibleRange.c1) - this.cellsLeft;
+		let offsetY = (undefined !== topFieldInPx) ? topFieldInPx : this._getRowTop(this.visibleRange.r1) - this.cellsTop;
 		if (!drawingCtx && this.topLeftFrozenCell) {
 			if (undefined === leftFieldInPx) {
-				var cFrozen = this.topLeftFrozenCell.getCol0();
+				let cFrozen = this.topLeftFrozenCell.getCol0();
 				offsetX -= this._getColLeft(cFrozen) - this._getColLeft(0);
 			}
 			if (undefined === topFieldInPx) {
-				var rFrozen = this.topLeftFrozenCell.getRow0();
+				let rFrozen = this.topLeftFrozenCell.getRow0();
 				offsetY -= this._getRowTop(rFrozen) - this._getRowTop(0);
 			}
 		}
-		var x1 = this._getColLeft(range.c1) - offsetX;
-		var y1 = this._getRowTop(range.r1) - offsetY;
-		var x2 = Math.min(this._getColLeft(range.c2 + 1) - offsetX, widthCtx);
-		var y2 = Math.min(this._getRowTop(range.r2 + 1) - offsetY, heightCtx);
-		if (!ctx.isNotDrawBackground) {
+		let x1 = this._getColLeft(range.c1) - offsetX;
+		let y1 = this._getRowTop(range.r1) - offsetY;
+		let x2 = Math.min(this._getColLeft(range.c2 + 1) - offsetX, widthCtx);
+		let y2 = Math.min(this._getRowTop(range.r2 + 1) - offsetY, heightCtx);
+		let isPrint = this.usePrintScale;
+		if (!ctx.isNotDrawBackground && !isPrint) {
 			ctx.setFillStyle(this.settings.cells.defaultState.background)
 				.fillRect(x1, y1, x2 - x1, y2 - y1);
 		}
@@ -4126,7 +4156,7 @@
 		ctx.setStrokeStyle(this.settings.cells.defaultState.border)
 			.setLineWidth(1).beginPath();
 
-		var i, d, l;
+		let i, d, l;
 		if (ctx.isPreviewOleObjectContext) {
 			ctx.lineVerPrevPx(1, y1, y2);
 		}
@@ -4157,7 +4187,7 @@
 		ctx.stroke();
 
 		// Clear grid for pivot tables with classic and outline layout
-		var clearRange, pivotRange, clearRanges = this.model.getPivotTablesClearRanges(range);
+		let clearRange, pivotRange, clearRanges = this.model.getPivotTablesClearRanges(range);
 		ctx.setFillStyle(this.settings.cells.defaultState.background);
 		for (i = 0; i < clearRanges.length; i += 2) {
 			clearRange = clearRanges[i];

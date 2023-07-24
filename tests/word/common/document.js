@@ -112,7 +112,7 @@
 			return null;
 		
 		let drawingObjects = logicDocument.GetDrawingObjects();
-		let drawing = new ParaDrawing(w, h, null, drawingObjects, logicDocument, null);
+		let drawing = new ParaDrawing(w, h, null, logicDocument.DrawingDocument, logicDocument, null);
 		let image   = drawingObjects.createImage(AscCommon.g_sWordPlaceholderImage, 0, 0, w, h);
 		image.setParent(drawing);
 		drawing.Set_GraphicObject(image);

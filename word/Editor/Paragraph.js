@@ -5851,7 +5851,7 @@ Paragraph.prototype.Get_ParaContentPosByXY = function(X, Y, PageIndex, bYLine, S
 		{
 			var _CurRange  = this.Lines[CurLine].Ranges[CurRange];
 			var _NextRange = this.Lines[CurLine].Ranges[CurRange + 1];
-			if (X < (_CurRange.XEnd + _NextRange.X) / 2)
+			if (X < (_CurRange.XEnd + _NextRange.X) / 2 || _CurRange.WEnd > 0.001)
 				break;
 		}
 	}
