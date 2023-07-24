@@ -43,11 +43,10 @@ function XYAdjustmentTrack(originalShape, adjIndex, bTextWarp)
         var oPen, oBrush;
         if(bTextWarp !== true)
         {
-            if(originalShape.spPr && originalShape.spPr.geometry){
-                this.geometry = originalShape.spPr.geometry.createDuplicate();
-            }
-            else if(originalShape.calcGeometry){
-                this.geometry = originalShape.calcGeometry.createDuplicate();
+            const oGeometry = originalShape.getGeometry();
+            if(oGeometry)
+            {
+                this.geometry = oGeometry.createDuplicate();
             }
             this.shapeWidth = originalShape.extX;
             this.shapeHeight = originalShape.extY;
@@ -321,11 +320,10 @@ function PolarAdjustmentTrack(originalShape, adjIndex, bTextWarp)
         var oPen, oBrush;
         if(bTextWarp !== true)
         {
-            if(originalShape.spPr && originalShape.spPr.geometry){
-                this.geometry = originalShape.spPr.geometry.createDuplicate();
-            }
-            else if(originalShape.calcGeometry){
-                this.geometry = originalShape.calcGeometry.createDuplicate();
+            const oGeometry = originalShape.getGeometry();
+            if(oGeometry)
+            {
+                this.geometry = oGeometry.createDuplicate();
             }
             this.shapeWidth = originalShape.extX;
             this.shapeHeight = originalShape.extY;

@@ -1981,18 +1981,36 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
         aImagesSync = [];
 
-        aObjects = currentSheet.model.Drawings;
-        for (let i = 0; currentSheet.model.Drawings && (i < currentSheet.model.Drawings.length); i++)
+        const oWS = currentSheet.model;
+        aObjects = oWS.Drawings;
+        let oGraphic;
+        for (let i = 0; aObjects && (i < aObjects.length); i++)
         {
             aObjects[i] = _this.cloneDrawingObject(aObjects[i]);
             const drawingObject = aObjects[i];
             // Check drawing area
             drawingObject.drawingArea = _this.drawingArea;
             drawingObject.worksheet = currentSheet;
-            drawingObject.graphicObject.setDrawingBase(drawingObject);
-            drawingObject.graphicObject.setDrawingObjects(_this);
-            drawingObject.graphicObject.getAllRasterImages(aImagesSync);
+            oGraphic = drawingObject.graphicObject;
+            oGraphic.setDrawingBase(drawingObject);
+            oGraphic.setDrawingObjects(_this);
+            oGraphic.getAllRasterImages(aImagesSync);
         }
+        aImagesSync = _this.checkImageBullets(currentSheet, aImagesSync);
+        const oLegacyDrawing = oWS.legacyDrawingHF;
+        if(oLegacyDrawing)
+        {
+            const aLegacyDrawings = oLegacyDrawing.drawings;
+            for(let nDrawing = 0; nDrawing < aLegacyDrawings.length; ++nDrawing)
+            {
+                let oLegacyDrawing = aLegacyDrawings[nDrawing];
+                let oGraphic = oLegacyDrawing.graphicObject;
+                oGraphic.getAllRasterImages(aImagesSync);
+            }
+        }
+
+
+
         aImagesSync = _this.checkImageBullets(currentSheet, aImagesSync);
 
         for(let i = 0; i < aImagesSync.length; ++i)
@@ -4299,11 +4317,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         nX *= nPXtoMM;
         nY *= nPXtoMM;
 
-        const oRet = oDrawingDocument.placeholders.onPointerMove({X: nX, Y: nY, Page: nPage}, oRect, oContext.canvas.width * nPXtoMM, oContext.canvas.height * nPXtoMM);
-        if (oRet) {
-            return {cursor: "default"};
-        }
-        return null;
+        return oDrawingDocument.placeholders.onPointerMove({X: nX, Y: nY, Page: nPage}, oRect, oContext.canvas.width * nPXtoMM, oContext.canvas.height * nPXtoMM);
     };
     
     _this.checkCursorDrawingObject = function(x, y) {
@@ -4338,14 +4352,13 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 			if(objectInfo) {
 				let oData = oApi.getFormatPainterData();
 				if(oData && oData.isDrawingData()) {
-					objectInfo.cursor = AscCommon.kCurFormatPainterDrawing;
+					objectInfo.cursor = AscCommon.Cursors.ShapeCopy;
 				}
 			}
 		}
 
 	    if(oApi.isInkDrawerOn()) {
 		    if(objectInfo) {
-			    let oData = oApi.getFormatPainterData();
 			    objectInfo.cursor = "default";
 		    }
 	    }

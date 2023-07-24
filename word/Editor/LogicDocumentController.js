@@ -373,7 +373,7 @@ CLogicDocumentController.prototype.SetSelectionState = function(State, StateInde
 };
 CLogicDocumentController.prototype.AddHyperlink = function(Props)
 {
-	this.LogicDocument.controller_AddHyperlink(Props);
+	return this.LogicDocument.controller_AddHyperlink(Props);
 };
 CLogicDocumentController.prototype.ModifyHyperlink = function(Props)
 {

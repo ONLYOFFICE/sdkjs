@@ -349,6 +349,13 @@
 				}
 			}
 		};
+		CGroupShape.prototype.clearLang = function () {
+			for (var i = 0; i < this.spTree.length; ++i) {
+				if (typeof this.spTree[i].clearLang === "function") {
+					this.spTree[i].clearLang();
+				}
+			}
+		};
 
 		CGroupShape.prototype.convertToWord = function (document) {
 			this.setBDeleted(true);
@@ -366,6 +373,7 @@
 				c.addToSpTree(c.spTree.length, this.spTree[i].convertToWord(document));
 				c.spTree[c.spTree.length - 1].setGroup(c);
 			}
+			c.removePlaceholder();
 			return c;
 		};
 
@@ -1616,6 +1624,31 @@
 			for (let nSp = 0; nSp < this.spTree.length; ++nSp) {
 				this.spTree[nSp].pasteFormatting(oFormatData);
 			}
+		};
+
+		CGroupShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
+			if(this.getObjectType() !== oDrawingToCheck.getObjectType()) {
+				return oCurCandidate;
+			}
+			const sName = this.getOwnName();
+			if(sName && sName.startsWith(AscFormat.OBJECT_MORPH_MARKER)) {
+				const sCheckName = oDrawingToCheck.getOwnName();
+				if(sName !== sCheckName) {
+					return oCurCandidate;
+				}
+				return oDrawingToCheck;
+			}
+			if(this.spTree.length !== oDrawingToCheck.spTree.length) {
+				return oCurCandidate;
+			}
+			for(let nSp = 0; nSp < this.spTree.length; ++nSp) {
+				let oSp = this.spTree[nSp];
+				let oSpCheck = oDrawingToCheck.spTree[nSp];
+				if(!oSp.compareForMorph(oSpCheck, null)) {
+					return oCurCandidate;
+				}
+			}
+			return oDrawingToCheck;
 		};
 
 		//--------------------------------------------------------export----------------------------------------------------

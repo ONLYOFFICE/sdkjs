@@ -211,7 +211,6 @@ CImageShape.prototype.hitInInnerArea = CShape.prototype.hitInInnerArea;
 CImageShape.prototype.hitInPath = CShape.prototype.hitInPath;
 CImageShape.prototype.check_bounds = CShape.prototype.check_bounds;
 CImageShape.prototype.updatePosition = CShape.prototype.updatePosition;
-CImageShape.prototype.updateTransformMatrix = CShape.prototype.updateTransformMatrix;
 CImageShape.prototype.getDrawingDocument = CShape.prototype.getDrawingDocument;
 CImageShape.prototype.getArrayWrapIntervals = CShape.prototype.getArrayWrapIntervals;
 CImageShape.prototype.getBounds = CShape.prototype.getBounds;

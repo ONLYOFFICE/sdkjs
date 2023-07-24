@@ -165,9 +165,9 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 	if (typeof CWrapPolygon !== "undefined")
 		this.wrappingPolygon = new CWrapPolygon(this);
 
-	this.document        = editor.WordControl.m_oLogicDocument;
+	this.document        = this.LogicDocument;
 	this.drawingDocument = DrawingDocument;
-	this.graphicObjects  = editor.WordControl.m_oLogicDocument.DrawingObjects;
+	this.graphicObjects  = this.LogicDocument ? this.LogicDocument.DrawingObjects : null;
 	this.selected        = false;
 
 	this.behindDoc    = false;
@@ -191,6 +191,7 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 		if (History.CanRegisterClasses())
 			this.graphicObjects.addGraphicObject(this);
 	}
+	this.bCellHF = false;
 }
 ParaDrawing.prototype = Object.create(AscWord.CRunElementBase.prototype);
 ParaDrawing.prototype.constructor = ParaDrawing;
@@ -1450,7 +1451,7 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.DocumentContent = oDocumentContent;
 	var PageNum          = ParaLayout.PageNum;
 
-	var OtherFlowObjects = editor.WordControl.m_oLogicDocument.DrawingObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent);
+	var OtherFlowObjects = this.graphicObjects ? this.graphicObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent) : [];
 	var bInline          = this.Is_Inline();
 	this.Internal_Position.SetScaleFactor(this.GetScaleCoefficient());
 	this.Internal_Position.Set(this.GraphicObj.extX, this.GraphicObj.extY, this.getXfrmRot(), this.EffectExtent, this.YOffset, ParaLayout, PageLimits);
@@ -1573,10 +1574,13 @@ ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 	let _x = x;
 	let _y = y;
 
-	this.graphicObjects.removeById(pageIndex, this.Get_Id());
-	if (AscFormat.isRealNumber(oldPageNum))
+	if(this.graphicObjects)
 	{
-		this.graphicObjects.removeById(oldPageNum, this.Get_Id());
+		this.graphicObjects.removeById(pageIndex, this.Get_Id());
+		if (AscFormat.isRealNumber(oldPageNum))
+		{
+			this.graphicObjects.removeById(oldPageNum, this.Get_Id());
+		}
 	}
 	var bChangePageIndex = this.pageIndex !== pageIndex;
 	this.setPageIndex(pageIndex);
@@ -1585,20 +1589,54 @@ ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 		var bIsHfdFtr = this.DocumentContent && this.DocumentContent.IsHdrFtr();
 		this.GraphicObj.setStartPage(pageIndex, bIsHfdFtr, bIsHfdFtr || bChangePageIndex);
 	}
-	if (!(this.DocumentContent && this.DocumentContent.IsHdrFtr() && this.DocumentContent.Get_StartPage_Absolute() !== pageIndex))
+
+	if(this.graphicObjects)
 	{
-		// TODO: ситуацию в колонтитуле с привязкой к полю нужно отдельно обрабатывать через дополнительные пересчеты
-		if (!this.DocumentContent || !this.DocumentContent.IsHdrFtr() || this.GetPositionV().RelativeFrom !== Asc.c_oAscRelativeFromV.Margin)
-			this.graphicObjects.addObjectOnPage(pageIndex, this.GraphicObj);
+		if (!(this.DocumentContent && this.DocumentContent.IsHdrFtr() && this.DocumentContent.Get_StartPage_Absolute() !== pageIndex))
+		{
+			// TODO: ситуацию в колонтитуле с привязкой к полю нужно отдельно обрабатывать через дополнительные пересчеты
+			if (!this.DocumentContent || !this.DocumentContent.IsHdrFtr() || this.GetPositionV().RelativeFrom !== Asc.c_oAscRelativeFromV.Margin)
+				this.graphicObjects.addObjectOnPage(pageIndex, this.GraphicObj);
 
-		this.bNoNeedToAdd = false;
+			this.bNoNeedToAdd = false;
+		}
+		else
+		{
+			this.bNoNeedToAdd = true;
+		}
 	}
-	else
+
+	if(this.bCellHF)
 	{
-		this.bNoNeedToAdd = true;
+		let oDocContent = this.DocumentContent;
+		let oParagraph = this.GetParagraph();
+		if(oDocContent && oParagraph)
+		{
+			let dExtX = this.getXfrmExtX();
+			if(dExtX > oDocContent.XLimit)
+			{
+				let nAlign = oParagraph.GetParagraphAlign();
+				switch (nAlign)
+				{
+					case AscCommon.align_Center:
+					{
+						_x = oDocContent.X + oDocContent.XLimit / 2 - dExtX / 2;
+						break;
+					}
+					case AscCommon.align_Right:
+					{
+						_x = oDocContent.X + oDocContent.XLimit - dExtX;
+						break;
+					}
+					case AscCommon.align_Left:
+					{
+						_x = oDocContent.X;
+						break;
+					}
+				}
+			}
+		}
 	}
-
-
 
 	if (this.GraphicObj.bNeedUpdatePosition || !(AscFormat.isRealNumber(this.GraphicObj.posX) && AscFormat.isRealNumber(this.GraphicObj.posY)) || !(Math.abs(this.GraphicObj.posX - _x) < MOVE_DELTA && Math.abs(this.GraphicObj.posY - _y) < MOVE_DELTA))
 		this.GraphicObj.updatePosition(_x, _y);

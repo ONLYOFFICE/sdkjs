@@ -80,7 +80,7 @@ function MoveShapeImageTrack(originalObject)
     {
         this.cropObject = this.originalObject.cropObject;
     }
-    this.overlayObject = new AscFormat.OverlayObject(originalObject.getGeom(), this.originalObject.extX, this.originalObject.extY, this.brush, this.pen, this.transform);
+    this.overlayObject = new AscFormat.OverlayObject(originalObject.getTrackGeometry(), this.originalObject.extX, this.originalObject.extY, this.brush, this.pen, this.transform);
 
     this.groupInvertMatrix = null;
     if(this.originalObject.group)
@@ -506,7 +506,7 @@ function MoveGroupTrack(originalObject)
         var gr_obj_transform_copy = arr_graphic_objects[i].transform.CreateDublicate();
         global_MatrixTransformer.MultiplyAppend(gr_obj_transform_copy, group_invert_transform);
         this.arrTransforms2[i] = gr_obj_transform_copy;
-        this.overlayObjects[i] = new AscFormat.OverlayObject(arr_graphic_objects[i].getGeom(), arr_graphic_objects[i].extX, arr_graphic_objects[i].extY,
+        this.overlayObjects[i] = new AscFormat.OverlayObject(arr_graphic_objects[i].getTrackGeometry(), arr_graphic_objects[i].extX, arr_graphic_objects[i].extY,
             arr_graphic_objects[i].brush,  arr_graphic_objects[i].pen, new CMatrix());
     }
 

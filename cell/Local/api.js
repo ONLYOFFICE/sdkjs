@@ -127,7 +127,7 @@ var c_oAscError = Asc.c_oAscError;
 			this._onUpdateDocumentCanSave();
 
 			if (undefined !== window["AscDesktopEditor"]) {
-				window["AscDesktopEditor"]["onDocumentModifiedChanged"](AscCommon.History ? AscCommon.History.Have_Changes(undefined, true) : bValue);
+				window["AscDesktopEditor"]["onDocumentModifiedChanged"](AscCommon.History ? AscCommon.History.Have_Changes(undefined, true) : bIsModified);
 			}
 		}
 	};
@@ -182,6 +182,15 @@ var c_oAscError = Asc.c_oAscError;
 	spreadsheet_api.prototype["asc_DownloadAs"] = spreadsheet_api.prototype.asc_DownloadAs;
 	spreadsheet_api.prototype["asc_isOffline"] = spreadsheet_api.prototype.asc_isOffline;
 	spreadsheet_api.prototype["asc_addImage"] = spreadsheet_api.prototype.asc_addImage;
+
+	spreadsheet_api.prototype["getAdditionalSaveParams"] = function()
+	{
+		var printOptionsObj = asc["editor"].getPrintOptionsJson();
+		printOptionsObj["documentLayout"] = { "openedAt" : asc["editor"].openedAt };
+		printOptionsObj["locale"] = asc["editor"].asc_getLocale();
+		printOptionsObj["translate"] = AscCommon.translateManager.mapTranslate;
+		return printOptionsObj;
+	};
 
 	/////////////////////////////////////////////////////////
 	//////////////        CHANGES       /////////////////////
@@ -247,11 +256,7 @@ var c_oAscError = Asc.c_oAscError;
 		{
 			try
 			{
-				var printOptionsObj = asc["editor"].getPrintOptionsJson();
-				printOptionsObj["documentLayout"] = { "openedAt" : asc["editor"].openedAt };
-				printOptionsObj["locale"] = asc["editor"].asc_getLocale();
-				printOptionsObj["translate"] = AscCommon.translateManager.mapTranslate;
-
+				var printOptionsObj = asc["editor"]["getAdditionalSaveParams"]();
 				printOptions = JSON.stringify(printOptionsObj);
 			}
 			catch (e)

@@ -645,6 +645,7 @@ CDocumentContentElementBase.prototype.GetTableProps = function()
 };
 CDocumentContentElementBase.prototype.AddHyperlink = function(Props)
 {
+	return null;
 };
 CDocumentContentElementBase.prototype.ModifyHyperlink = function(Props)
 {

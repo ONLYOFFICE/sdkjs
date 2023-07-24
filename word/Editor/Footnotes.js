@@ -989,22 +989,14 @@ CFootnotesController.prototype.EndSelection = function(X, Y, PageAbs, MouseEvent
 	//        и нового положения сносок на странице
 	if (this.Selection.Start.Footnote !== this.Selection.End.Footnote)
 	{
-		if (this.Selection.Start.Page > this.Selection.End.Page
-			|| (this.Selection.Start.Page === this.Selection.End.Page
-			&& (this.Selection.Start.Column > this.Selection.End.Column
-			|| (this.Selection.Start.Column === this.Selection.End.Column
-			&& this.Selection.Start.Index > this.Selection.End.Index))))
-		{
-			this.Selection.Start.Footnote.Selection_SetEnd(-MEASUREMENT_MAX_MM_VALUE, -MEASUREMENT_MAX_MM_VALUE, 0, MouseEvent);
-			this.Selection.End.Footnote.Selection_SetStart(MEASUREMENT_MAX_MM_VALUE, MEASUREMENT_MAX_MM_VALUE, this.Selection.End.Footnote.Pages.length - 1, MouseEvent);
-			this.Selection.Direction = -1;
-		}
-		else
-		{
-			this.Selection.Start.Footnote.Selection_SetEnd(MEASUREMENT_MAX_MM_VALUE, MEASUREMENT_MAX_MM_VALUE, this.Selection.Start.Footnote.Pages.length - 1, MouseEvent);
-			this.Selection.End.Footnote.Selection_SetStart(-MEASUREMENT_MAX_MM_VALUE, -MEASUREMENT_MAX_MM_VALUE, 0, MouseEvent);
-			this.Selection.Direction = 1;
-		}
+		this.Selection.Direction = this.private_GetSelectionDirection();
+		
+		this.Selection.Start.Footnote.SetSelectionUse(true);
+		this.Selection.Start.Footnote.SetSelectionToBeginEnd(false, this.Selection.Direction < 0);
+		
+		this.Selection.End.Footnote.SetSelectionUse(true);
+		this.Selection.End.Footnote.SetSelectionToBeginEnd(true, this.Selection.Direction > 0);
+		
 		this.Selection.End.Footnote.Selection_SetEnd(X, Y, this.Selection.End.FootnotePageIndex, MouseEvent);
 
 		var oRange = this.private_GetFootnotesRange(this.Selection.Start, this.Selection.End);
@@ -1418,6 +1410,20 @@ CFootnotesController.prototype.private_GetSelectionArray = function()
 		return this.private_GetFootnotesLogicRange(this.Selection.Start.Footnote, this.Selection.End.Footnote);
 	else
 		return this.private_GetFootnotesLogicRange(this.Selection.End.Footnote, this.Selection.Start.Footnote);
+};
+CFootnotesController.prototype.private_GetSelectionDirection = function()
+{
+	if (this.Selection.Start.Page > this.Selection.End.Page)
+		return -1;
+	else if (this.Selection.Start.Page < this.Selection.End.Page)
+		return 1;
+	
+	if (this.Selection.Start.Column > this.Selection.End.Column)
+		return -1;
+	else if (this.Selection.Start.Column < this.Selection.End.Column)
+		return 1;
+	
+	return this.Selection.Start.Index > this.Selection.End.Index ? -1 : 1;
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Controller area
@@ -2993,8 +2999,10 @@ CFootnotesController.prototype.AddHyperlink = function(Props)
 {
 	if (true !== this.IsSelectionUse() || true === this.private_IsOnFootnoteSelected())
 	{
-		this.CurFootnote.AddHyperlink(Props);
+		return this.CurFootnote.AddHyperlink(Props);
 	}
+	
+	return null;
 };
 CFootnotesController.prototype.ModifyHyperlink = function(Props)
 {

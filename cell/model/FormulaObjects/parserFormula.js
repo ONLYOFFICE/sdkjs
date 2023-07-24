@@ -1271,25 +1271,36 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this.getValueByRowCol(0, 0);
 	};
 	cArea.prototype._getCol = function (colIndex) {
-		if (colIndex < 0 || colIndex > this.getDimensions().col) {
+		let dimensions = this.getDimensions();
+		if (colIndex < 0 || colIndex > dimensions.col) {
 			return null;
 		}
 
 		let col = [];
-		for (let i = 0; i < this.getDimensions().row; i++) {
+		for (let i = 0; i < dimensions.row; i++) {
+			let valInRow = this.getValueByRowCol(i, colIndex);
+			let elem = this.getValueByRowCol(i, colIndex);
+			if (!elem) {
+				elem = new cEmpty();
+			}
 			col[i] = [];
-			col[i].push(this.getValueByRowCol(i, colIndex));
+			col[i].push(elem);
 		}
 		return col;
 	};
 	cArea.prototype._getRow = function (rowIndex) {
-		if (rowIndex < 0 || rowIndex > this.getDimensions().row) {
+		let dimensions = this.getDimensions();
+		if (rowIndex < 0 || rowIndex > dimensions.row) {
 			return null;
 		}
 
 		let row = [[]];
 		for (let j = 0; j < this.getDimensions().col; j++) {
-			row[0].push(this.getValueByRowCol(rowIndex, j));
+			let elem = this.getValueByRowCol(rowIndex, j);
+			if (!elem) {
+				elem = new cEmpty();
+			}
+			row[0].push(elem);
 		}
 		return row;
 	};
@@ -1666,25 +1677,36 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this.getValueByRowCol(0, 0);
 	};
 	cArea3D.prototype._getCol = function (colIndex) {
-		if (colIndex < 0 || colIndex > this.getDimensions().col) {
+		let dimensions = this.getDimensions();
+		if (colIndex < 0 || colIndex > dimensions.col) {
 			return null;
 		}
 
 		let col = [];
-		for (let i = 0; i < this.getDimensions().row; i++) {
+		for (let i = 0; i < dimensions.row; i++) {
+			let valInRow = this.getValueByRowCol(i, colIndex);
+			let elem = this.getValueByRowCol(i, colIndex);
+			if (!elem) {
+				elem = new cEmpty();
+			}
 			col[i] = [];
-			col[i].push(this.getValueByRowCol(i, colIndex));
+			col[i].push(elem);
 		}
 		return col;
 	};
 	cArea3D.prototype._getRow = function (rowIndex) {
-		if (rowIndex < 0 || rowIndex > this.getDimensions().row) {
+		let dimensions = this.getDimensions();
+		if (rowIndex < 0 || rowIndex > dimensions.row) {
 			return null;
 		}
 
 		let row = [[]];
 		for (let j = 0; j < this.getDimensions().col; j++) {
-			row[0].push(this.getValueByRowCol(rowIndex, j));
+			let elem = this.getValueByRowCol(rowIndex, j);
+			if (!elem) {
+				elem = new cEmpty();
+			}
+			row[0].push(elem);
 		}
 		return row;
 	};
@@ -2861,7 +2883,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.getFirstElement = function () {
 		return this.getElementRowCol(0,0);	
-	}
+	};
 
 
 
@@ -8191,7 +8213,7 @@ function parserFormula( formula, parent, _ws ) {
 		return res;
 	}
 
-	function matching(x, matchingInfo, doNotParseNum) {
+	function matching(x, matchingInfo, doNotParseNum, doNotParseFormat) {
 		var y = matchingInfo.val;
 		var operator = matchingInfo.op;
 		var res = false, rS;
@@ -8253,7 +8275,7 @@ function parserFormula( formula, parent, _ws ) {
 							res = true;
 							break;
 						}
-						var parseRes = AscCommon.g_oFormatParser.parse(x.value);
+						var parseRes = !doNotParseFormat && AscCommon.g_oFormatParser.parse(x.value);
 						if (parseRes && parseRes.value === y.value) {
 							res = true;
 							break;
@@ -8419,7 +8441,7 @@ function parserFormula( formula, parent, _ws ) {
 					values.push(value);
 				}
 
-				resultArr.addElement(func(true, values));
+				resultArr.addElement(func(values, true));
 			}
 		}
 

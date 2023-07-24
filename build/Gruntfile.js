@@ -171,7 +171,7 @@ module.exports = function(grunt) {
 	const formatting = grunt.option('formatting') || '';
 
 	require('google-closure-compiler').grunt(grunt, {
-		platform: 'java',
+		platform: ['native', 'java'],
 		extraArguments: ['-Xms2048m']
 	});
 
@@ -219,7 +219,6 @@ module.exports = function(grunt) {
 		`--define=window.AscCommon.g_cBuildNumber='${buildNumber}'`,
 		`--define=window.AscCommon.g_cIsBeta='${beta}'`,
 		'--rewrite_polyfills=true',
-		'--jscomp_off=checkVars',
 		'--warning_level=QUIET',
 		'--language_out=ECMASCRIPT5',
 		'--compilation_level=' + level,

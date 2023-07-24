@@ -353,8 +353,6 @@
 					arrSelectedContent.push(new ApiParagraph(oTempElm));
 				else if (oTempElm instanceof ParaRun)
 					arrSelectedContent.push(new ApiRun(oTempElm));
-				else if (oTempElm instanceof ParaRun)
-					arrSelectedContent.push(new ApiRun(oTempElm));
 			}
 
 			for (nElm = 0; nElm < arrSelectedContent.length; nElm ++)
@@ -405,8 +403,9 @@
 		}
 
 		// рендер html тагов
-		if (!this.Config.renderHTMLTags)
-			sOutputText = sOutputText.replace(/</gi, '&lt;');
+		if (!this.Config.renderHTMLTags) {
+			sOutputText = sOutputText.replace(/</gi, '&lt;').replace(/>/gi, '&gt;');
+		}
 
 		return sOutputText;
 	};
@@ -554,7 +553,7 @@
 					break;
 			}
 
-			if (nHeadingLvl)
+			if (nHeadingLvl !== -1)
 			{
 				// понижаем уровень заголовка, если указано в конфиге (h1 -> h2)
 				if (oCMarkdownConverter.Config.demoteHeadings && nHeadingLvl === 0)
@@ -654,15 +653,14 @@
 			return sOutputText;
 		}
 
-		if (!oPara.Next && oPara.GetText().trim() === '')
+		if (!oPara.Next && oPara.Paragraph.IsEmpty())
 		{
 			if (HaveSepLine(oPara.Paragraph) && this.Config.convertType === "html")
 				return "<hr>";
 			return '';
 		}
 			
-		if (oPara.Paragraph.IsTableCellContent())
-			this.isTableCellContent = true;
+		this.isTableCellContent = oPara.Paragraph.IsTableCellContent();
 
 		var oDocument  = private_GetLogicDocument();
 		var sNumId     = null;
@@ -735,7 +733,8 @@
 		if (HaveSepLine(oPara.Paragraph) && this.Config.convertType === "html")
 			sOutputText += "\n<hr>"
 
-		return sOutputText + '\n';
+		// Add \n\n for correct parsing
+		return sOutputText + '\n\n';
 	};
 	CMarkdownConverter.prototype.HandleHyperlink = function(oHyperlink, sType)
 	{
@@ -1157,7 +1156,8 @@
 			sOutputText += this.HandleChildElement(oTable.GetRow(nRow), this.Config.convertType);
 		}
 
-		sOutputText += '</table>\n';
+		// Add \n\n for correct parsing
+		sOutputText += '</table>\n\n';
 		return sOutputText;
 	};
 	CMarkdownConverter.prototype.HandleTableRow = function(oTableRow)
@@ -1174,7 +1174,10 @@
 	};
 	CMarkdownConverter.prototype.HandleTableCell = function(oTableCell)
 	{
-		var sOutputText = '   <td>\n';
+		// Add 'th' for the firs row
+		let symbol = (oTableCell.GetRowIndex() === 0) ? 'td' : 'td';
+		// Add \n\n for correct parsing
+		var sOutputText = '   <' + symbol + '>\n\n';
 		var apiCellContent = oTableCell.GetContent();
 
 		for (var nElm = 0, nElmsCount = apiCellContent.GetElementsCount(); nElm < nElmsCount; nElm++)
@@ -1182,7 +1185,7 @@
 			sOutputText += this.HandleChildElement(apiCellContent.GetElement(nElm), this.Config.convertType);
 		}
 
-		sOutputText += '</td>\n';
+		sOutputText += '</' + symbol + '>\n';
 		return sOutputText;
 	};
 	/**
@@ -3109,7 +3112,7 @@
 	{
 		this.Sdt = oSdt;
 	}
-
+	
 	/**
 	 * Class representing a document text field.
 	 * @constructor
@@ -3666,6 +3669,28 @@
 	function ApiInlineLvlSdt(Sdt)
 	{
 		this.Sdt = Sdt;
+	}
+
+	/**
+	 * Class representing a list values of combobox/dropdown list content control.
+	 * @constructor
+	 */
+	function ApiContentControlList(Parent)
+	{
+		this.Sdt    = Parent.Sdt;
+		this.Parent = Parent;
+	}
+
+	/**
+	 * Class representing an entry of a list values of combobox/dropdown list content control.
+	 * @constructor
+	 */
+	function ApiContentControlListEntry(Sdt, Parent, Text, Value)
+	{
+		this.Sdt    = Sdt;
+		this.Parent = Parent;
+		this.Text   = Text;
+		this.Value  = Value;
 	}
 
 	/**
@@ -5471,7 +5496,7 @@
 		else if ("table" === sStyleType)
 			return new ApiStyle(oStyles.Get(oStyles.Get_Default_Table()));
 		else if ("run" === sStyleType)
-			return new ApiStyle(oStyles.Get(oStyles.Get_Default_Character()));
+			return new ApiStyle(oStyles.Get(oStyles.GetDefaultCharacter()));
 		else if ("numbering" === sStyleType)
 			return new ApiStyle(oStyles.Get(oStyles.Get_Default_Numbering()));
 
@@ -5516,14 +5541,18 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiParagraph} oParagraph - The paragraph after which a new document section will be inserted.
 	 * Paragraph must be in a document.
-	 * @returns {ApiSection}
+	 * @returns {ApiSection | null}
 	 */
 	ApiDocument.prototype.CreateSection = function(oParagraph)
 	{
-		if (!(oParagraph instanceof ApiParagraph))
-			return new Error('Parameter is invalid.');
-		if (!oParagraph.Paragraph.CanAddSectionPr())
-			return new Error('Paragraph must be in a document.');
+		if (!(oParagraph instanceof ApiParagraph)) {
+			console.error(new Error('Parameter is invalid.'));
+			return null;
+		}
+		if (!oParagraph.Paragraph.CanAddSectionPr()) {
+			console.error(new Error('Paragraph must be in a document.'));
+			return null;
+		}
 
 		var oSectPr = new CSectionPr(this.Document);
 
@@ -5648,12 +5677,37 @@
 		oParagraph.Clear_NearestPosArray();
 		return true;
 	};
-
+	
+	/**
+	 * Record of one comment
+	 * @typedef {Object} CommentReportRecord
+	 * @property {boolean} [IsAnswer=false] - Is this an initial comment or a reply to another comment
+	 * @property {string} CommentMessage - The text of the current comment.
+	 * @property {number} Date - The time when this change was made in local time.
+	 * @property {number} DateUTC - The time when this change was made in UTC.
+	 * @property {string} [QuoteText=undefined] - The text to which this comment related.
+	 */
+	
+	/**
+	 * Report on all review changes.
+	 * This is a dictionary where the keys are usernames.
+	 * @typedef {Object.<string, Array.<CommentReportRecord>>} CommentReport
+	 * @example
+	 *  {
+	 *    "John Smith" : [{IsAnswer: false, CommentMessage: 'Good text', Date: 1688588002698, DateUTC: 1688570002698, QuoteText: 'Some text'},
+	 *      {IsAnswer: true, CommentMessage: "I don't think so", Date: 1688588012661, DateUTC: 1688570012661}],
+	 *
+	 *    "Mark Pottato" : [{IsAnswer: false, CommentMessage: 'Need to change this part', Date: 1688587967245, DateUTC: 1688569967245, QuoteText: 'The quick brown fox jumps over the lazy dog'},
+	 *      {IsAnswer: false, CommentMessage: 'We need to add a link', Date: 1688587967245, DateUTC: 1688569967245, QuoteText: 'OnlyOffice'}]
+	 *  }
+	 */
+	
+	
 	/**
 	 * Returns a report about all the comments added to the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @returns {object}
+	 * @returns {CommentReport}
 	 */
 	ApiDocument.prototype.GetCommentsReport = function()
 	{
@@ -7034,7 +7088,7 @@
 		return this.Document.GetPagesCount();
 	};
 	/**
-	 * Returns all styles of current document.
+	 * Returns all styles of the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiStyle[]}
@@ -7731,8 +7785,8 @@
 	 */
 	ApiParagraph.prototype.SetHighlight = function(sColor)
 	{
-		if (!editor || Asc.editor)
-			return this;
+		if (!editor && Asc.editor)
+		 	return this;
 
 		this.Paragraph.SetApplyToAll(true);
 		if ("none" === sColor)
@@ -8874,8 +8928,10 @@
 		if (typeof(oSection) != "object" || !(oSection instanceof ApiSection))
 			return false;
 
-		if (!this.Paragraph.CanAddSectionPr())
-			return new Error('Paragraph must be in a document.');
+		if (!this.Paragraph.CanAddSectionPr()) {
+			console.error(new Error('Paragraph must be in a document.'));
+			return false;
+		}
 
 		let oDoc = private_GetLogicDocument();
 		if (!oDoc)
@@ -12011,8 +12067,8 @@
 	 */
 	ApiTextPr.prototype.SetHighlight = function(sColor)
 	{
-		if (!editor || Asc.editor)
-			return this;
+		if (!editor && Asc.editor)
+		 	return this;
 
 		if ("none" === sColor)
 		{
@@ -16209,6 +16265,361 @@
 		oDocument.UpdateSelection();
 		return new ApiComment(comment)
 	};
+
+	/**
+	 * Checks if the content control is a form.
+	 * @memberof ApiInlineLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiContentControlList}
+	 */
+	ApiInlineLvlSdt.prototype.GetDropdownList = function()
+	{
+		if (!this.Sdt.IsComboBox() && !this.Sdt.IsDropDownList())
+			throw "Not a drop down content control";
+		
+		return new ApiContentControlList(this);
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiContentControlList
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns a type of the ApiContentControlList class.
+	 * @memberof ApiContentControlList
+	 * @typeofeditors ["CDE"]
+	 * @returns {"contentControlList"}
+	 */
+	ApiContentControlList.prototype.GetClassType = function()
+	{
+		return "contentControlList";
+	};
+
+	/**
+	 * Returns a collection of the ApiContentControlListEntry of a list.
+	 * @memberof ApiContentControlList
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiContentControlListEntry[]}
+	 */
+	ApiContentControlList.prototype.GetAllItems = function()
+	{
+		let nCount	= this.GetElementsCount();
+		let aResult	= [];
+		
+		for (let i = 0; i < nCount; ++i)
+		{
+			aResult.push(this.GetItem(i));
+		}
+		
+		return aResult;
+	};
+
+	/**
+	 * Gets items count of the list of values of combobox/listbox.
+	 * @memberof ApiContentControlList
+	 * @typeofeditors ["CDE"]
+	 * @returns {number}
+	 */
+	ApiContentControlList.prototype.GetElementsCount = function()
+	{
+		return this.GetListPr().GetItemsCount();
+	};
+
+	/**
+	 * Gets parent content control.
+	 * @memberof ApiContentControlList
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiInlineLvlSdt | ApiBlockLvlSdt}
+	 */
+	ApiContentControlList.prototype.GetParent = function()
+	{
+		return this.Parent;
+	};
+
+	/**
+	 * Adds the new value to list of values of combobox/dropdown list.
+	 * @memberof ApiContentControlList
+	 * @param {string} sText - Specifies the display text for the list item..
+	 * @param {string} [sValue=sText] - Specifies the value of the list item.
+	 * @param {number} [nIndex=this.GetElementsCount()] - position to add.
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiContentControlList.prototype.Add = function(sText, sValue, nIndex)
+	{
+		let nItemsCount = this.GetElementsCount();
+		
+		sText = AscBuilder.GetStringParameter(sText, null);
+		if (!sText)
+			return false;
+		
+		sValue = AscBuilder.GetStringParameter(sValue, sText);
+		nIndex = AscBuilder.GetNumberParameter(nIndex, nItemsCount);
+		if (nIndex < 0 || nIndex > nItemsCount)
+			nIndex = nItemsCount;
+
+		let listPr = this.GetListPr().Copy();
+		if (!listPr.AddItem(sText, sValue, nIndex))
+			return false;
+		
+		this.SetListPr(listPr);
+		return true;
+	};
+
+	/**
+	 * Clears the list of values of combobox/dropdown list.
+	 * @memberof ApiContentControlList
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiContentControlList.prototype.Clear = function()
+	{
+		let listPr = this.GetListPr().Copy();
+		listPr.Clear();
+		this.SetListPr(listPr)
+		this.Sdt.SelectListItem("");
+	};
+
+	/**
+	 * Gets the item of values of combobox/dropdown list.
+	 * @memberof ApiContentControlList
+	 * @param {number} nIndex
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiContentControlListEntry}
+	 */
+	ApiContentControlList.prototype.GetItem = function(nIndex)
+	{
+		let listPr = this.GetListPr();
+		
+		nIndex = AscBuilder.GetNumberParameter(nIndex, null);
+		if (null === nIndex)
+			throw "Index must be a number";
+		else if (nIndex < 0 || nIndex >= listPr.GetItemsCount())
+			throw "Index out of list range";
+		
+		return new ApiContentControlListEntry(this.Sdt, this, listPr.GetItemDisplayText(nIndex), listPr.GetItemValue(nIndex));
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiContentControlListEntry
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns a type of the ApiContentControlListEntry class.
+	 * @memberof ApiContentControlListEntry
+	 * @typeofeditors ["CDE"]
+	 * @returns {"contentControlList"}
+	 */
+	ApiContentControlListEntry.prototype.GetClassType = function()
+	{
+		return "contentControlListEntry";
+	};
+
+	/**
+	 * Returns the parent of a content control list item in the collection of list items.
+	 * @memberof ApiContentControlListEntry
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiContentControlList}
+	 */
+	ApiContentControlListEntry.prototype.GetParent = function()
+	{
+		if (-1 === this.GetIndex())
+			return null;
+		
+		return this.Parent;
+	};
+
+	/**
+	 * Selects the list entry in a drop-down list or combo box content control and sets the text of the content control to the value of the item.
+	 * @memberof ApiContentControlListEntry
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiContentControlListEntry.prototype.Select = function()
+	{
+		if (-1 === this.GetIndex())
+			return false;
+		
+		this.Sdt.SelectListItem(this.GetValue());
+		return true;
+	};
+
+	/**
+	 * Moves the current item in the parent drop-down list or combo box content control up one element.
+	 * @memberof ApiContentControlListEntry
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiContentControlListEntry.prototype.MoveUp = function()
+	{
+		let nCurIndex = this.GetIndex();
+		if (-1 === nCurIndex || 0 === nCurIndex)
+			return false;
+		
+		return this.SetIndex(nCurIndex - 1);
+	};
+
+	/**
+	 * Moves an item in a drop-down list or combo box content control down one item, so that it is after the item that originally followed it.
+	 * @memberof ApiContentControlListEntry
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiContentControlListEntry.prototype.MoveDown = function()
+	{
+		let nCurIndex = this.GetIndex();
+		let nItemsCount = this.Parent.GetListPr().GetItemsCount();
+		if (-1 === nCurIndex || nCurIndex >= nItemsCount - 1)
+			return false;
+		
+		return this.SetIndex(nCurIndex + 1);
+	};
+
+	/**
+	 * Returns the index of a content control list item in the collection of list items.
+	 * @memberof ApiContentControlListEntry
+	 * @typeofeditors ["CDE"]
+	 * @returns {number}
+	 */
+	ApiContentControlListEntry.prototype.GetIndex = function()
+	{
+		let listPr = this.Parent.GetListPr();
+		return listPr.GetIndex(this.Value);
+	};
+
+	/**
+	 * Sets the index of a content control list item in the collection of list items.
+	 * @memberof ApiContentControlListEntry
+	 * @param {number} nIndex
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiContentControlListEntry.prototype.SetIndex = function(nIndex)
+	{
+		let nCurIndex = this.GetIndex();
+		if (-1 === nCurIndex)
+			return false;
+		else if (nIndex === nCurIndex)
+			return true;
+		
+		let listPr = this.Parent.GetListPr().Copy();
+		listPr.RemoveItem(nCurIndex);
+		listPr.AddItem(this.Text, this.Value, nIndex);
+		this.Parent.SetListPr(listPr);
+		
+		return true;
+	};
+
+	/**
+	 * Deletes the specified item in a combo box or drop-down list content control..
+	 * @memberof ApiContentControlListEntry
+	 * @typeofeditors ["CDE"]
+	 * @returns {boolean}
+	 */
+	ApiContentControlListEntry.prototype.Delete = function()
+	{
+		let nCurIndex = this.GetIndex();
+		if (nCurIndex === -1)
+			return false;
+		
+		let listPr = this.Parent.GetListPr().Copy();
+		listPr.RemoveItem(nCurIndex);
+		this.Parent.SetListPr(listPr);
+		
+		if (listPr.GetItemsCount())
+		{
+			this.Parent.GetItem(0).Select();
+		}
+		else
+		{
+			this.Sdt.SetShowingPlcHdr(true)
+			this.Sdt.ReplaceContentWithPlaceHolder();
+		}
+		
+		return true;
+	};
+
+	/**
+	 * Returns a String that represents the display text of a list item for a drop-down list or combo box content control.
+	 * @memberof ApiContentControlListEntry
+	 * @typeofeditors ["CDE"]
+	 * @returns {string}
+	 */
+	ApiContentControlListEntry.prototype.GetText = function()
+	{
+		return this.Text;
+	};
+
+	/**
+	 * Sets a String that represents the display text of a list item for a drop-down list or combo box content control.
+	 * @memberof ApiContentControlListEntry
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sText
+	 * @returns {boolean}
+	 */
+	ApiContentControlListEntry.prototype.SetText = function(sText)
+	{
+		let nCurIndex = this.GetIndex();
+		if (this.GetValue() === "" || -1 === nCurIndex)
+			return false;
+		
+		sText = AscBuilder.GetStringParameter(sText, null);
+		if (null === sText)
+			return false;
+		
+		this.Text = sText;
+		
+		let listPr = this.Parent.GetListPr().Copy();
+		listPr.RemoveItem(nCurIndex);
+		listPr.AddItem(this.Text, this.Value, nCurIndex);
+		this.Parent.SetListPr(listPr);
+		this.Select();
+		return true;
+	};
+
+	/**
+	 * Returns a String that represents the value of a list item for a drop-down list or combo box content control.
+	 * @memberof ApiContentControlListEntry
+	 * @typeofeditors ["CDE"]
+	 * @returns {string}
+	 */
+	ApiContentControlListEntry.prototype.GetValue = function()
+	{
+		return this.Value;
+	};
+
+	/**
+	 * Sets a String that represents the value of a list item for a drop-down list or combo box content control.
+	 * @memberof ApiContentControlListEntry
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sValue
+	 * @returns {boolean}
+	 */
+	ApiContentControlListEntry.prototype.SetValue = function(sValue)
+	{
+		let nCurIndex = this.GetIndex();
+		sValue = AscBuilder.GetStringParameter(sValue, null);
+		
+		if (null === sValue
+			|| this.GetValue() === ""
+			|| this.GetValue() === sValue
+			|| -1 === nCurIndex
+			|| -1 !== this.Parent.GetListPr().GetIndex(sValue))
+			return false;
+		
+		this.Value = sValue;
+		
+		let listPr = this.Parent.GetListPr().Copy();
+		listPr.RemoveItem(nCurIndex);
+		listPr.AddItem(this.Text, this.Value, nCurIndex);
+		this.Parent.SetListPr(listPr);
+		this.Select();
+		return true;
+	};
+	
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiBlockLvlSdt
@@ -16934,7 +17345,20 @@
 		oDoc.AddCaption(oCapPr);
 		return true;
 	};
-
+	
+	/**
+	 * Checks if the content control is a form.
+	 * @memberof ApiBlockLvlSdt
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiContentControlList}
+	 */
+	ApiBlockLvlSdt.prototype.GetDropdownList = function()
+	{
+		if (!this.Sdt.IsComboBox() && !this.Sdt.IsDropDownList())
+			throw "Not a drop down content control";
+		
+		return new ApiContentControlList(this);
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiFormBase
@@ -17507,6 +17931,7 @@
 			return false;
 
 		this.Sdt.SetInnerText(_sText);
+		this.OnChangeValue();
 		return true;
 	};
 
@@ -17708,6 +18133,7 @@
 		if (oImg)
 		{
 			oImg.setBlipFill(AscFormat.CreateBlipFillRasterImageId(sImageSrc));
+			this.OnChangeValue();
 			return true;
 		}
 
@@ -17754,7 +18180,7 @@
 		let isComboBox = this.Sdt.IsComboBox();
 		let oSpecProps = isComboBox ? this.Sdt.GetComboBoxPr() : this.Sdt.GetDropDownListPr();
 		if (!oSpecProps)
-			return [];
+			return false;
 
 		oSpecProps = oSpecProps.Copy();
 		oSpecProps.Clear();
@@ -17787,10 +18213,11 @@
 		if (!oSpecProps)
 			return false;
 
-		if (!oSpecProps.GetTextByValue(sValue))
+		if (null == oSpecProps.GetTextByValue(sValue))
 			return false;
 
 		this.Sdt.SelectListItem(sValue);
+		this.OnChangeValue();
 		return true;
 	};
 	/**
@@ -17815,7 +18242,8 @@
 		let oRun = this.Sdt.MakeSingleRunElement();
 		oRun.ClearContent();
 		oRun.AddText(sText);
-
+		
+		this.OnChangeValue();
 		return true;
 	};
 	/**
@@ -17848,6 +18276,7 @@
 			return false;
 
 		this.Sdt.ToggleCheckBox(isChecked);
+		this.OnChangeValue();
 		return true;
 	};
 	/**
@@ -18415,7 +18844,7 @@
 	/**
 	 * Returns the full name of the currently opened file.
 	 * @memberof Api
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
 	 */
 	Api.prototype.GetFullName = function () {
@@ -18832,7 +19261,6 @@
 	Api.prototype["MailMerge"]                       = Api.prototype.MailMerge;
 	Api.prototype["ReplaceTextSmart"]				 = Api.prototype.ReplaceTextSmart;
 	Api.prototype["CoAuthoringChatSendMessage"]		 = Api.prototype.CoAuthoringChatSendMessage;
-	Api.prototype["ConvertDocument"]		         = Api.prototype.ConvertDocument;
 	Api.prototype["CreateTextPr"]		             = Api.prototype.CreateTextPr;
 	Api.prototype["CreateWordArt"]		             = Api.prototype.CreateWordArt;
 	Api.prototype["CreateOleObject"]		         = Api.prototype.CreateOleObject;
@@ -19486,6 +19914,28 @@
 	ApiInlineLvlSdt.prototype["SetPlaceholderText"]     = ApiInlineLvlSdt.prototype.SetPlaceholderText;
 	ApiInlineLvlSdt.prototype["IsForm"]                 = ApiInlineLvlSdt.prototype.IsForm;
 	ApiInlineLvlSdt.prototype["GetForm"]                = ApiInlineLvlSdt.prototype.GetForm;
+	ApiInlineLvlSdt.prototype["GetDropdownList"]        = ApiInlineLvlSdt.prototype.GetDropdownList;
+
+	ApiContentControlList.prototype["GetClassType"]		= ApiContentControlList.prototype.GetClassType;
+	ApiContentControlList.prototype["GetAllItems"]		= ApiContentControlList.prototype.GetAllItems;
+	ApiContentControlList.prototype["GetElementsCount"]	= ApiContentControlList.prototype.GetElementsCount;
+	ApiContentControlList.prototype["GetParent"]		= ApiContentControlList.prototype.GetParent;
+	ApiContentControlList.prototype["Add"]				= ApiContentControlList.prototype.Add;
+	ApiContentControlList.prototype["Clear"]			= ApiContentControlList.prototype.Clear;
+	ApiContentControlList.prototype["GetItem"]			= ApiContentControlList.prototype.GetItem;
+
+	ApiContentControlListEntry.prototype["GetClassType"]	= ApiContentControlListEntry.prototype.GetClassType;
+	ApiContentControlListEntry.prototype["GetParent"]		= ApiContentControlListEntry.prototype.GetParent;
+	ApiContentControlListEntry.prototype["Select"]			= ApiContentControlListEntry.prototype.Select;
+	ApiContentControlListEntry.prototype["MoveUp"]			= ApiContentControlListEntry.prototype.MoveUp;
+	ApiContentControlListEntry.prototype["MoveDown"]		= ApiContentControlListEntry.prototype.MoveDown;
+	ApiContentControlListEntry.prototype["GetIndex"]		= ApiContentControlListEntry.prototype.GetIndex;
+	ApiContentControlListEntry.prototype["SetIndex"]		= ApiContentControlListEntry.prototype.SetIndex;
+	ApiContentControlListEntry.prototype["Delete"]			= ApiContentControlListEntry.prototype.Delete;
+	ApiContentControlListEntry.prototype["GetText"]			= ApiContentControlListEntry.prototype.GetText;
+	ApiContentControlListEntry.prototype["SetText"]			= ApiContentControlListEntry.prototype.SetText;
+	ApiContentControlListEntry.prototype["GetValue"]		= ApiContentControlListEntry.prototype.GetValue;
+	ApiContentControlListEntry.prototype["SetValue"]		= ApiContentControlListEntry.prototype.SetValue;
 
 	ApiBlockLvlSdt.prototype["GetClassType"]            = ApiBlockLvlSdt.prototype.GetClassType;
 	ApiBlockLvlSdt.prototype["SetLock"]                 = ApiBlockLvlSdt.prototype.SetLock;
@@ -19521,6 +19971,7 @@
 	ApiBlockLvlSdt.prototype["AddComment"]              = ApiBlockLvlSdt.prototype.AddComment;
 	ApiBlockLvlSdt.prototype["SetBackgroundColor"]      = ApiBlockLvlSdt.prototype.SetBackgroundColor;
 	ApiBlockLvlSdt.prototype["AddCaption"]              = ApiBlockLvlSdt.prototype.AddCaption;
+	ApiBlockLvlSdt.prototype["GetDropdownList"]         = ApiBlockLvlSdt.prototype.GetDropdownList;
 
 	ApiFormBase.prototype["GetClassType"]        = ApiFormBase.prototype.GetClassType;
 	ApiFormBase.prototype["GetFormType"]         = ApiFormBase.prototype.GetFormType;
@@ -20502,6 +20953,20 @@
 	{
 		return this.Sdt;
 	};
+	ApiContentControlList.prototype.GetListPr = function()
+	{
+		if (this.Sdt.IsComboBox())
+			return this.Sdt.GetComboBoxPr();
+		else
+			return this.Sdt.GetDropDownListPr();
+	};
+	ApiContentControlList.prototype.SetListPr = function(newPr)
+	{
+		if (this.Sdt.IsComboBox())
+			return this.Sdt.SetComboBoxPr(newPr);
+		else
+			return this.Sdt.SetDropDownListPr(newPr);
+	};
 
 	ApiFormBase.prototype.private_GetImpl = function()
 	{
@@ -20520,7 +20985,16 @@
 		this.Sdt.Apply_TextPr(oApiTextPr.TextPr);
 		oApiTextPr.TextPr = this.Sdt.Pr.TextPr;
 	};
-
+	ApiFormBase.prototype.OnChangeValue = function()
+	{
+		let logicDocument = private_GetLogicDocument();
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
+			return;
+		
+		logicDocument.ClearActionOnChangeForm();
+		logicDocument.GetFormsManager().OnChange(this.Sdt);
+	};
+	
 	ApiComment.prototype.private_OnChange = function()
 	{
 		let oLogicDocument = private_GetLogicDocument();

@@ -690,6 +690,21 @@ CShapeDrawer.prototype =
             this.Graphics.ArrayPoints = [];
     },
 
+    drawTransitionTextures : function(oCanvas1, dAlpha1, oCanvas2, dAlpha2)
+    {
+        const dOldGlobalAlpha = this.Graphics.m_oContext.globalAlpha;
+        const dX = this.min_x;
+        const dY = this.min_y;
+        const dW = this.max_x - this.min_x;
+        const dH = this.max_y - this.min_y;
+        this.Graphics.m_oContext.globalAlpha = dAlpha1;
+        this.Graphics.drawImage(null, dX, dY, dW, dH, undefined, null, oCanvas1);
+        this.Graphics.m_oContext.globalAlpha = dAlpha2;
+        this.Graphics.drawImage(null, dX, dY, dW, dH, undefined, null, oCanvas2);
+        this.Graphics.m_oContext.globalAlpha = dOldGlobalAlpha;
+    },
+
+
     df : function(mode)
     {
         if (mode == "none" || this.bIsNoFillAttack)
@@ -745,7 +760,11 @@ CShapeDrawer.prototype =
             {
                 if (this.IsRectShape)
                 {
-                    if ((null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
+                    if(this.UniFill.IsTransitionTextures)
+                    {
+                        this.drawTransitionTextures(this.UniFill.canvas1, this.UniFill.alpha1, this.UniFill.canvas2, this.UniFill.alpha2);
+                    }
+                    else if ((null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
                     {
                         this.Graphics.drawImage(getFullImageSrc2(this.UniFill.fill.RasterImageId), this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), undefined, this.UniFill.fill.srcRect, this.UniFill.fill.canvas);
                     }
@@ -762,7 +781,11 @@ CShapeDrawer.prototype =
                     this.Graphics.save();
                     this.Graphics.clip();
 
-                    if (this.Graphics.IsNoSupportTextDraw == true || true == this.Graphics.IsTrack || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
+                    if(this.UniFill.IsTransitionTextures)
+                    {
+                        this.drawTransitionTextures(this.UniFill.canvas1, this.UniFill.alpha1, this.UniFill.canvas2, this.UniFill.alpha2);
+                    }
+                    else if (this.Graphics.IsNoSupportTextDraw == true || true == this.Graphics.IsTrack || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
                     {
                         this.Graphics.drawImage(getFullImageSrc2(this.UniFill.fill.RasterImageId), this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), undefined, this.UniFill.fill.srcRect, this.UniFill.fill.canvas);
                     }
@@ -1127,10 +1150,14 @@ CShapeDrawer.prototype =
         var isArrowsPresent = (arr != null && arr.length > 1 && this.IsCurrentPathCanArrows === true) ? true : false;
 
         var rgba = this.StrokeUniColor;
-		if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null && !isArrowsPresent)
-			rgba.A = this.Ln.Fill.transparent;
+        let nAlpha = 0xFF;
+        if(!isArrowsPresent && !this.IsArrowsDrawing)
+        {
+            if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null)
+                nAlpha = this.Ln.Fill.transparent;
+        }
 
-        this.Graphics.p_color(rgba.R, rgba.G, rgba.B, rgba.A);
+        this.Graphics.p_color(rgba.R, rgba.G, rgba.B, nAlpha);
 
         if (this.IsRectShape && this.Graphics.AddSmartRect !== undefined)
         {
@@ -1266,10 +1293,15 @@ CShapeDrawer.prototype =
                 }
 
                 var rgba = this.StrokeUniColor;
-				if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null && !isArrowsPresent)
-					rgba.A = this.Ln.Fill.transparent;
+                let nAlpha = 0xFF;
+                if(!isArrowsPresent && !this.IsArrowsDrawing)
+                {
+                    if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null)
+                        nAlpha = this.Ln.Fill.transparent;
+                }
 
-                this.Graphics.p_color(rgba.R, rgba.G, rgba.B, rgba.A);
+                this.Graphics.p_color(rgba.R, rgba.G, rgba.B, nAlpha);
+
             }
 
             if (fill_mode == "none" || this.bIsNoFillAttack)

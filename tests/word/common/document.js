@@ -35,6 +35,8 @@
 (function(window)
 {
 	let logicDocument = null;
+	let styleManager  = null;
+	let styleCounter  = 0;
 
 	const Key = {
 		_0 : 48,
@@ -65,6 +67,7 @@
 		space : 32,
 		backspace : 8,
 		minus : 45,
+		delete : 46,
 		enter : 13
 	};
 
@@ -72,7 +75,8 @@
 	{
 		return (Key.space === key
 			|| Key.backspace === key
-			|| Key.enter === key);
+			|| Key.enter === key
+			|| Key.delete === key);
 	}
 
 	function CreateLogicDocument()
@@ -85,6 +89,8 @@
 		logicDocument.On_EndLoad();
 
 		AscTest.DrawingDocument.m_oLogicDocument = logicDocument;
+		
+		styleManager = logicDocument.GetStyleManager();
 
 		return logicDocument;
 	}
@@ -92,9 +98,45 @@
 	{
 		return new AscWord.CParagraph(AscTest.DrawingDocument);
 	}
+	function CreateRun()
+	{
+		return new AscWord.CRun();
+	}
 	function CreateTable(rows, cols)
 	{
 		return new AscWord.CTable(AscTest.DrawingDocument, null, true, rows, cols);
+	}
+	function CreateImage(w, h)
+	{
+		if (!logicDocument)
+			return null;
+		
+		let drawingObjects = logicDocument.GetDrawingObjects();
+		let drawing = new ParaDrawing(w, h, null, logicDocument.DrawingDocument, logicDocument, null);
+		let image   = drawingObjects.createImage(AscCommon.g_sWordPlaceholderImage, 0, 0, w, h);
+		image.setParent(drawing);
+		drawing.Set_GraphicObject(image);
+		return drawing;
+	}
+	function CreateStyle(styleType, name)
+	{
+		if (!styleManager)
+			return null;
+		
+		if (!name)
+			name = "style" + (++styleCounter);
+		
+		let style = new AscWord.CStyle(name, null, null, styleType);
+		styleManager.Add(style);
+		return style;
+	}
+	function CreateParagraphStyle(name)
+	{
+		return CreateStyle(styletype_Paragraph, name);
+	}
+	function CreateRunStyle(name)
+	{
+		return CreateStyle(styletype_Character, name);
 	}
 	function GetParagraphText(paragraph)
 	{
@@ -130,6 +172,13 @@
 		editor.restrictions = Asc.c_oAscRestrictionType.None;
 
 		editor.DocInfo = {Format : "docx"};
+	}
+	function SetTrackRevisions(turnOn)
+	{
+		if (!logicDocument)
+			return;
+		
+		logicDocument.SetLocalTrackRevisions(turnOn);
 	}
 	function PressKey(keyCode, isCtrl, isShift, isAlt)
 	{
@@ -203,6 +252,13 @@
 			return;
 
 		logicDocument.RemoveFromContent(0, logicDocument.GetElementsCount(), false);
+	}
+	function ClearParagraph(p)
+	{
+		if (!p)
+			return;
+		
+		p.RemoveFromContent(0, p.GetElementsCount());
 	}
 	function EnterText(text)
 	{
@@ -305,20 +361,41 @@
 			logicDocument.Content[pos].SelectAll(direction);
 		}
 	}
+	function GetFinalSection()
+	{
+		if (!logicDocument)
+			return null;
+		
+		return logicDocument.SectPr;
+	}
+	function SetCompatibilityMode(mode)
+	{
+		if (!logicDocument)
+			return;
+		
+		logicDocument.Settings.CompatibilityMode = mode;
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.CreateLogicDocument      = CreateLogicDocument;
 	AscTest.CreateParagraph          = CreateParagraph;
+	AscTest.CreateRun                = CreateRun;
 	AscTest.CreateTable              = CreateTable;
+	AscTest.CreateImage              = CreateImage;
+	AscTest.CreateStyle              = CreateStyle;
+	AscTest.CreateParagraphStyle     = CreateParagraphStyle;
+	AscTest.CreateRunStyle           = CreateRunStyle;
 	AscTest.GetParagraphText         = GetParagraphText;
 	AscTest.RemoveTableBorders       = RemoveTableBorders;
 	AscTest.SetFillingFormMode       = SetFillingFormMode;
 	AscTest.SetEditingMode           = SetEditingMode;
+	AscTest.SetTrackRevisions        = SetTrackRevisions;
 	AscTest.PressKey                 = PressKey;
 	AscTest.MoveCursorLeft           = MoveCursorLeft;
 	AscTest.MoveCursorRight          = MoveCursorRight;
 	AscTest.Recalculate              = Recalculate;
 	AscTest.ClickMouseButton         = ClickMouseButton;
 	AscTest.ClearDocument            = ClearDocument;
+	AscTest.ClearParagraph           = ClearParagraph;
 	AscTest.EnterText                = EnterText;
 	AscTest.CorrectEnterText         = CorrectEnterText;
 	AscTest.BeginCompositeInput      = BeginCompositeInput;
@@ -330,6 +407,8 @@
 	AscTest.AddNumbering             = AddNumbering;
 	AscTest.SetParagraphNumberingLvl = SetParagraphNumberingLvl;
 	AscTest.SelectDocumentRange      = SelectDocumentRange;
+	AscTest.GetFinalSection          = GetFinalSection;
+	AscTest.SetCompatibilityMode     = SetCompatibilityMode;
 
 })(window);
 

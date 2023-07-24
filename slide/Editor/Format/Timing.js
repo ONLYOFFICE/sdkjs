@@ -1161,7 +1161,7 @@
         if (!oObject) {
             return null;
         }
-        if (!oObject.brush || !oObject.brush.isNoFill()) {
+        if (!oObject.brush || oObject.brush.isNoFill()) {
             var oBrush = AscFormat.CreateUniFillByUniColor(AscFormat.CreateUniColorRGB(255, 255, 255));
             oBrush.fill.color.RGBA.R = 255;
             oBrush.fill.color.RGBA.G = 255;
@@ -2620,7 +2620,7 @@
     CTiming.prototype.getEffectsForDemo = function () {
         var aEffectsForDemo, aCurEffects;
         var aSelectedEffects = this.getSelectedEffects();
-        if (aSelectedEffects.length > 0) {
+        if (aSelectedEffects.length > 0 && !this.isAllSlideAnimations) {
             aCurEffects = aSelectedEffects;
         } else {
             aCurEffects = this.getAllAnimEffects();
@@ -10014,7 +10014,15 @@
         this.x = nX;
         this.y = nY;
     }
-
+    CBaseAnimTexture.prototype.drawInRect = function(oGraphics, dAlpha, nX, nY, nW, nH) {
+        oGraphics.SaveGrState();
+        oGraphics.SetIntegerGrid(true);
+        oGraphics.put_GlobalAlpha(true, dAlpha);
+        oGraphics.m_oContext.drawImage(this.canvas, nX, nY, nW, nH);
+        oGraphics.put_GlobalAlpha(false, 1.0);
+        oGraphics.RestoreGrState();
+        oGraphics.FreeFont && oGraphics.FreeFont();
+    };
     CBaseAnimTexture.prototype.draw = function (oGraphics, oTransform) {
         var bNoTransform = false;
         if (!oTransform) {
@@ -10051,6 +10059,18 @@
 			this.canvas.height = 0;
 		}
 	};
+	CBaseAnimTexture.prototype.getWidth = function() {
+		if(this.canvas) {
+			return this.canvas.width;
+		}
+        return 0;
+	};
+	CBaseAnimTexture.prototype.getHeight = function() {
+		if(this.canvas) {
+			return this.canvas.height;
+		}
+        return 0;
+	};
 
     function CAnimTexture(oCache, oCanvas, fScale, nX, nY) {
         CBaseAnimTexture.call(this, oCanvas, fScale, nX, nY);
@@ -10064,6 +10084,24 @@
             return false;
         }
         return true;
+    };
+    CAnimTexture.prototype.checkSize = function (nWidth, nHeight) {
+        return this.getWidth() === nWidth && this.getHeight() === nHeight;
+    };
+    CAnimTexture.prototype.checkSizeAndScale = function (nWidth, nHeight, fScale) {
+        return this.checkSize(nWidth, nHeight) && this.checkScale(fScale);
+    };
+
+    CAnimTexture.prototype.changeSizeAndScale = function (nWidth, nHeight, dScale) {
+        if(this.canvas) {
+            if(this.canvas.width !== nWidth) {
+                this.canvas.width = nWidth;
+            }
+            if(this.canvas.height !== nHeight) {
+                this.canvas.height = nHeight;
+            }
+        }
+        this.scale = dScale;
     };
     CAnimTexture.prototype.createEffectTexture = function (oEffect) {
         if (!oEffect) {
@@ -11081,29 +11119,49 @@
         oCtx.globalAlpha = 1;
         return oTexture;
     };
+    CAnimTexture.prototype.createFadeIn = function (fTime) {
+        return this.createFade(fTime, TRANSITION_TYPE_IN);
+    };
 
 
-    function CTexturesCache(oDrawer) {
-        this.drawer = oDrawer;
+    function CTexturesCache() {
         this.map = {};
     }
 
-    CTexturesCache.prototype.checkTexture = function (sId, fScale) {
-        if (!this.map[sId] || !this.map[sId].checkScale(fScale)) {
-            this.map[sId] = this.createDrawingTexture(sId, fScale);
-            if (!this.map[sId]) {
-                this.removeTexture(sId);
+    CTexturesCache.prototype.checkTexture = function (sId, fScale, bMorph, bCheckSize) {
+        let bCreate = false;
+        if(!this.map[sId] || !this.map[sId].checkScale(fScale)) {
+            bCreate = true;
+        }
+        else if(bMorph && bCheckSize) {
+            const oDrawing = AscCommon.g_oTableId.Get_ById(sId);
+            if (!oDrawing) {
                 return undefined;
+            }
+            let oTexture = this.map[sId];
+            let oPixSize = oDrawing.bounds.getPixSize(fScale);
+            if(oPixSize.w !== oTexture.getWidth() || oPixSize.h !== oTexture.getHeight()) {
+                this.removeTexture(sId);
+                bCreate = true;
+            }
+        }
+        if (bCreate) {
+            const oTexture = this.createDrawingTexture(sId, fScale, bMorph);
+            if(oTexture) {
+                this.map[sId] = oTexture;
             }
         }
         return this.map[sId];
     };
-    CTexturesCache.prototype.createDrawingTexture = function (sId, fScale) {
+    CTexturesCache.prototype.checkMorphTexture = function (sId, fScale, bCheckSize) {
+        return this.checkTexture(sId, fScale, true, bCheckSize);
+    };
+    CTexturesCache.prototype.createDrawingTexture = function (sId, fScale, bMorph) {
         var oDrawing = AscCommon.g_oTableId.Get_ById(sId);
         if (!oDrawing) {
             return undefined;
         }
-        var oBaseTexture = oDrawing.getAnimTexture(fScale);
+        var oBaseTexture = oDrawing.getAnimTexture(fScale, bMorph);
 		if(!oBaseTexture) {
 			return undefined;
 		}
@@ -11120,12 +11178,62 @@
 			this.removeTexture(sId);
         }
     };
+    CTexturesCache.prototype.createBoundsTexture = function(sTextureId, oBounds, dScale) {
+        const oCanvas = oBounds.createCanvas(dScale);
+        const oTexture = new CAnimTexture(this, oBounds.createCanvas(dScale), dScale, 0, 0);
+        this.map[sTextureId] = oTexture;
+        return oTexture;
+    }
+    CTexturesCache.prototype.checkTransitionFillTexture = function(sId1, sId2, oUnifill1, oUnifill2, oBounds, dScale, dTime) {
+        const sTextureId = "transition_" + sId1 + "_" + sId2;
+        let oTexture = this.map[sTextureId];
+        const oPixSize = oBounds.getPixSize();
+        if(oTexture) {
+            if(oTexture.checkSizeAndScale(oPixSize.w, oPixSize.h, dScale)) {
+                oTexture.changeSizeAndScale(oPixSize.w, oPixSize.h, dScale);
+            }
+        }
+        else {
+            oTexture = this.createBoundsTexture(sTextureId, oBounds, dScale);
+        }
+        //const oTexture1 = this.checkObjectFillTexture(sId1, oUnifill1, oBounds, dScale);
+        //const oTexture2 = this.checkObjectFillTexture(sId2, oUnifill2, oBounds, dScale);
+        const dOldTransparent1 = oUnifill1.transparent;
+        const dOldTransparent2 = oUnifill2.transparent;
+        const isN = AscFormat.isRealNumber;
+        const dNewTransparent1 = isN(dOldTransparent1) ? dOldTransparent1 * (1 - dTime) : (1 - dTime);
+        const dNewTransparent2 = isN(dOldTransparent2) ? dOldTransparent2 * dTime : dTime;
+        oUnifill1.setTransparent(dNewTransparent1);
+        oUnifill2.setTransparent(dNewTransparent2);
+        const oGraphics = oBounds.createGraphicsFromCanvas(oTexture.canvas);
+        oBounds.drawFillTexture(oGraphics, oUnifill1);
+        oBounds.drawFillTexture(oGraphics, oUnifill2);
+        oUnifill1.setTransparent(dOldTransparent1);
+        oUnifill2.setTransparent(dOldTransparent2);
+        return oTexture;
+    };
+    CTexturesCache.prototype.checkObjectFillTexture = function (sId, oUnifill, oBounds, dScale) {
+        const sTextureId = "fill_" + sId;
+        let oTexture = this.map[sTextureId];
+        if(oTexture) {
+           const oPixSize = oBounds.getPixSize();
+           if(oTexture.checkSizeAndScale(oPixSize.w, oPixSize.h, dScale)) {
+               return oTexture;
+           }
+           oTexture.changeSizeAndScale(oPixSize.w, oPixSize.h, dScale);
+        }
+        if(!oTexture) {
+            oTexture = this.createBoundsTexture(sTextureId, oBounds, dScale);
+        }
+        oBounds.drawFillTexture(oBounds.createGraphicsFromCanvas(oTexture.canvas), oUnifill);
+        return oTexture;
+    };
 
     function CAnimationDrawer(player) {
         this.player = player;
         this.sandwiches = {};//map by drawing id
         this.lastFrameSandwiches = {};
-        this.texturesCache = new CTexturesCache(this);
+        this.texturesCache = new CTexturesCache();
         this.hiddenObjects = {};
         this.showObjects = {};
         this.collectHiddenObjects();
@@ -11189,10 +11297,10 @@
             return;
         }
         var oGraphics = this.createGraphics(oCanvas, oRect);
-        oGraphics.m_oContext.clearRect(0, 0, oRect.width, oRect.height);
+        oGraphics.m_oContext.clearRect(oRect.x, oRect.y, oRect.w, oRect.h);
         var bClip = false;
         if (oRect.x !== 0 || oRect.y !== 0 ||
-            oRect.width !== oCanvas.width || oRect.height !== oCanvas.height) {
+            oRect.w !== oCanvas.width || oRect.h !== oCanvas.height) {
             oGraphics.SaveGrState();
             oGraphics.AddClipRect(0, 0, this.getSlideWidth(), this.getSlideHeight());
             bClip = true;
@@ -11202,6 +11310,8 @@
         if (bClip) {
             oGraphics.RestoreGrState();
         }
+
+        oSlide.getDrawingDocument().m_oWordControl.DemonstrationManager.CheckWatermarkInternal(oGraphics.m_oContext, oRect);
     };
     CAnimationDrawer.prototype.drawObject = function (oDrawing, oGraphics) {
         var sDrawingId = oDrawing.Get_Id();
@@ -15828,6 +15938,7 @@
     window['AscCommon'].CSeqListContainer = CSeqListContainer;
     window['AscCommon'].CTimelineContainer = CTimelineContainer;
     window['AscCommon'].CColorPercentage = CColorPercentage;
+    window['AscCommon'].CTexturesCache = CTexturesCache;
 
 
     window['AscFormat'].NODE_FILL_FREEZE = NODE_FILL_FREEZE;

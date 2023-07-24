@@ -258,6 +258,8 @@
 		{
 			this.private_InsertCommon();
 		}
+		
+		this.CheckTemporaryContentControl();
 
 		if (false !== isLocalTrack)
 			oLogicDocument.SetLocalTrackRevisions(isLocalTrack);
@@ -843,13 +845,28 @@
 		let oMathContent      = oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 2];
 		let nInMathContentPos = oParaAnchorPos.NearPos.ContentPos.Data[oParaAnchorPos.Classes.length - 2];
 
-		let oInsertMath = this.ConvertToMath();
-		if (oInsertMath)
+		let paraMath = oMathContent.ParaMath;
+		let insertMath = this.ConvertToMath();
+		let paragraph = paraMath ? paraMath.GetParagraph() : null;
+		if (!insertMath || !paraMath || !paragraph)
+			return;
+		
+		if (paraMath.GetParent() instanceof AscWord.CInlineLevelSdt && paraMath.GetParent().IsContentControlEquation())
+		{
+			let contentControl = paraMath.GetParent();
+			paraMath = contentControl.ReplacePlaceholderEquation();
+			contentControl.RemoveContentControlWrapper();
+			
+			oMathContent = paraMath.Root;
+			oMathContent.AddToContent(0, new AscWord.CRun(paragraph, true));
+			oMathContent.InsertMathContent(insertMath.Root, 0, this.Select);
+		}
+		else
 		{
 			let oRun = oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 1];
 			let oNewRun = oRun.Split(oParaAnchorPos.NearPos.ContentPos, oParaAnchorPos.Classes.length - 1);
 			oMathContent.AddToContent(nInMathContentPos + 1, oNewRun);
-			oMathContent.InsertMathContent(oInsertMath.Root, nInMathContentPos + 1, this.Select);
+			oMathContent.InsertMathContent(insertMath.Root, nInMathContentPos + 1, this.Select);
 		}
 	};
 	CSelectedContent.prototype.private_InsertToPictureCC = function()
@@ -945,31 +962,31 @@
 	CSelectedContent.prototype.private_InsertInline = function()
 	{
 		let oParaAnchorPos = this.ParaAnchorPos;
-
-		let oInlineLeveLSdt = this.Run.GetParent();
-		if (oInlineLeveLSdt instanceof CInlineLevelSdt
-			&& (oInlineLeveLSdt.IsPlaceHolder() || oInlineLeveLSdt.IsContentControlTemporary()))
+		
+		let runParent = this.Run.GetParent();
+		let inlineSdt = runParent && runParent instanceof CInlineLevelSdt ? runParent : null;
+		if (inlineSdt && inlineSdt.IsPlaceHolder())
 		{
-			if (oInlineLeveLSdt.IsContentControlTemporary())
+			if (inlineSdt.IsContentControlTemporary())
 			{
-				let oResult = oInlineLeveLSdt.RemoveContentControlWrapper();
-
+				let oResult = inlineSdt.RemoveContentControlWrapper();
+				
 				let oSdtParent = oResult.Parent;
 				let oSdtPos    = oResult.Pos;
 				let oSdtCount  = oResult.Count;
-
+				
 				if (!oSdtParent
 					|| oParaAnchorPos.Classes.length < 3
-					|| oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 2] !== oInlineLeveLSdt
+					|| oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 2] !== inlineSdt
 					|| oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 3] !== oSdtParent)
 					return;
-
+				
 				let oRun = new ParaRun(undefined, false);
-				oRun.SetPr(oInlineLeveLSdt.GetDefaultTextPr().Copy());
-
+				oRun.SetPr(inlineSdt.GetDefaultTextPr().Copy());
+				
 				oSdtParent.RemoveFromContent(oSdtPos, oSdtCount);
 				oSdtParent.AddToContent(oSdtPos, oRun);
-
+				
 				oParaAnchorPos.Classes.length--;
 				oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 1] = oRun;
 				oParaAnchorPos.NearPos.ContentPos.Update(oSdtPos, oParaAnchorPos.Classes.length - 2);
@@ -977,36 +994,37 @@
 			}
 			else
 			{
-				oInlineLeveLSdt.ReplacePlaceHolderWithContent();
-				oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 1] = oInlineLeveLSdt.GetElement(0);
+				inlineSdt.ReplacePlaceHolderWithContent();
+				oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 1] = inlineSdt.GetElement(0);
 				oParaAnchorPos.NearPos.ContentPos.Update(0, oParaAnchorPos.Classes.length - 2);
 				oParaAnchorPos.NearPos.ContentPos.Update(0, oParaAnchorPos.Classes.length - 1);
 			}
+			inlineSdt = null;
 		}
-
+		
 		let oRun    = oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 1];
 		let oNewRun = oRun.Split(oParaAnchorPos.NearPos.ContentPos, oParaAnchorPos.Classes.length - 1);
-
+		
 		let oParent      = oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 2];
 		let nInParentPos = oParaAnchorPos.NearPos.ContentPos.Data[oParaAnchorPos.Classes.length - 2];
-
+		
 		oParent.AddToContent(nInParentPos + 1, oNewRun);
-
+		
 		let oParagraph     = this.Elements[0].Element;
 		let nElementsCount = oParagraph.Content.length - 1; // Последний ран с para_End не добавляем
-
+		
 		let isSelect = this.Select && !this.MoveDrawing;
 		for (let nPos = 0; nPos < nElementsCount; ++nPos)
 		{
 			let oItem = oParagraph.GetElement(nPos);
 			oParent.AddToContent(nInParentPos + 1 + nPos, oItem);
-
+			
 			if (isSelect)
 				oItem.SelectAll();
 			else
 				oItem.RemoveSelection();
 		}
-
+		
 		if (this.MoveDrawing)
 		{
 		}
@@ -1032,13 +1050,16 @@
 				oParent.GetElement(nInParentPos + nElementsCount).MoveCursorToStartPos();
 			}
 		}
-
+		
 		if (oParent.CorrectContent)
 			oParent.CorrectContent();
-
+		
 		if (this.LogicDocument && this.LogicDocument.IsDocumentEditor())
 			this.private_AdjustSizeForInlineDrawing();
-
+		
+		if (inlineSdt && inlineSdt.IsContentControlTemporary())
+			inlineSdt.RemoveContentControlWrapper()
+		
 		this.private_CheckInsertSignatures();
 	};
 	CSelectedContent.prototype.private_OverwriteTableCells = function()
@@ -1194,6 +1215,24 @@
 		blockSdt.ReplacePlaceHolderWithContent();
 		let docContent = blockSdt.GetContent();
 		this.ReplaceContent(docContent, true);
+	};
+	CSelectedContent.prototype.CheckTemporaryContentControl = function()
+	{
+		let paragraph = this.Run.GetParagraph();
+		if (!paragraph)
+			return;
+		
+		let paraIndex  = paragraph.GetIndex();
+		let docContent = paragraph.GetParent();
+		
+		if (!docContent
+			|| paragraph !== docContent.GetElement(paraIndex)
+			|| !docContent.IsBlockLevelSdtContent())
+			return;
+		
+		let blockSdt = docContent.GetParent();
+		if (blockSdt.IsContentControlTemporary())
+			blockSdt.RemoveContentControlWrapper();
 	};
 
 	/**

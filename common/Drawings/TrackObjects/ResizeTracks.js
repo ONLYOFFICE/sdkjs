@@ -311,7 +311,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
         this.resizedRot = originalObject.rot;
 
         this.transform = originalObject.transform.CreateDublicate();
-        this.geometry = AscFormat.ExecuteNoHistory(function(){ return originalObject.getGeom().createDuplicate();}, this, []);
+        this.geometry = AscFormat.ExecuteNoHistory(function(){ return originalObject.getTrackGeometry().createDuplicate();}, this, []);
         this.cropObject = originalObject.cropObject;
         var nObjectType = originalObject.getObjectType && originalObject.getObjectType();
         if(nObjectType === AscDFH.historyitem_type_Chart
@@ -399,7 +399,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             var _beginConnectionInfo, _endConnectionInfo;
             if(this.numberHandle === 0){
                 if(oEndShape){
-                    var oConectionObject = oEndShape.getGeom().cnxLst[oConnectorInfo.endCnxIdx];
+                    var oConectionObject = oEndShape.getTrackGeometry().cnxLst[oConnectorInfo.endCnxIdx];
                     var g_conn_info =  {idx: oConnectorInfo.endCnxIdx, ang: oConectionObject.ang, x: oConectionObject.x, y: oConectionObject.y};
                     var _flipH = oEndShape.flipH;
                     var _flipV = oEndShape.flipV;
@@ -424,7 +424,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             }
             else{
                 if(oBeginShape){
-                    var oConectionObject = oBeginShape.getGeom().cnxLst[oConnectorInfo.stCnxIdx];
+                    var oConectionObject = oBeginShape.getTrackGeometry().cnxLst[oConnectorInfo.stCnxIdx];
                     var g_conn_info =  {idx: oConnectorInfo.stCnxIdx, ang: oConectionObject.ang, x: oConectionObject.x, y: oConectionObject.y};
                     var _flipH = oBeginShape.flipH;
                     var _flipV = oBeginShape.flipV;
@@ -2192,7 +2192,7 @@ function ShapeForResizeInGroup(originalObject, parentTrack)
         this.centerDistX = this.x + this.extX*0.5 - this.parentTrack.extX*0.5;
         this.centerDistY = this.y + this.extY*0.5 - this.parentTrack.extY*0.5;
 
-        this.geometry = AscFormat.ExecuteNoHistory(function(){ return originalObject.getGeom().createDuplicate();}, this, []);
+        this.geometry = AscFormat.ExecuteNoHistory(function(){ return originalObject.getTrackGeometry().createDuplicate();}, this, []);
         if(this.geometry)
         {
             this.geometry.Recalculate(this.extX, this.extY);

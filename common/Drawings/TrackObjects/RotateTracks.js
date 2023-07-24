@@ -185,7 +185,7 @@ function OverlayObject(geometry, extX, extY, brush, pen, transform )
     };
 }
 
-function ObjectToDraw(brush, pen, extX, extY, geometry, transform, x, y, oComment)
+function ObjectToDraw(brush, pen, extX, extY, geometry, transform, x, y, oComment, Code)
 {
     this.extX = extX;
     this.extY = extY;
@@ -194,6 +194,7 @@ function ObjectToDraw(brush, pen, extX, extY, geometry, transform, x, y, oCommen
     this.geometry = geometry;
     this.parentShape = null;
     this.Comment = oComment;
+    this.Code = Code;
     this.pen = pen;
     this.brush = brush;
 
@@ -221,7 +222,7 @@ ObjectToDraw.prototype =
         }
     },
 
-    resetBrushPen: function(brush, pen, x, y)
+    resetBrushPen: function(brush, pen, x, y, Code)
     {
         this.brush = brush;
         this.pen = pen;
@@ -230,6 +231,10 @@ ObjectToDraw.prototype =
         {
             this.x = x;
             this.y = y;
+        }
+        if(AscFormat.isRealNumber(Code))
+        {
+            this.Code = Code;
         }
     },
 
@@ -346,6 +351,13 @@ ObjectToDraw.prototype =
 
     createDuplicate: function()
     {
+    },
+
+    compareForMorph: function(oDrawingToCheck, oCurCandidate) {
+        if(AscFormat.isRealNumber(this.Code) && oDrawingToCheck.Code === this.Code) {
+            return oDrawingToCheck;
+        }
+        return oCurCandidate;
     }
 };
 function RotateTrackShapeImage(originalObject)
@@ -363,7 +375,7 @@ function RotateTrackShapeImage(originalObject)
     {
         brush = originalObject.brush;
     }
-    this.overlayObject = new OverlayObject(originalObject.getGeom(), originalObject.extX, originalObject.extY, brush, originalObject.pen, this.transform);
+    this.overlayObject = new OverlayObject(originalObject.getTrackGeometry(), originalObject.extX, originalObject.extY, brush, originalObject.pen, this.transform);
 
     this.angle = originalObject.rot;
     var full_flip_h = this.originalObject.getFullFlipH();
@@ -510,7 +522,7 @@ function RotateTrackGroup(originalObject)
             var gr_obj_transform_copy = arr_graphic_objects[i].getTransformMatrix().CreateDublicate();
             global_MatrixTransformer.MultiplyAppend(gr_obj_transform_copy, group_invert_transform);
             this.arrTransforms2[i] = gr_obj_transform_copy;
-            this.overlayObjects[i] = new OverlayObject(arr_graphic_objects[i].getGeom(), arr_graphic_objects[i].extX, arr_graphic_objects[i].extY,
+            this.overlayObjects[i] = new OverlayObject(arr_graphic_objects[i].getTrackGeometry(), arr_graphic_objects[i].extX, arr_graphic_objects[i].extY,
                 arr_graphic_objects[i].brush,  arr_graphic_objects[i].pen, new CMatrix());
         }
     }

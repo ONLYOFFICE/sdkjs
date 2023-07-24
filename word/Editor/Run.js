@@ -5170,6 +5170,9 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
             }
             case para_Drawing:
             {
+				if (!Item.IsInline() && !PRSC.Paragraph.Parent.Is_DrawingShape())
+					break;
+				
                 PRSC.Words++;
                 PRSC.Range.W += PRSC.SpaceLen;
 
@@ -5182,8 +5185,7 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
                 PRSC.SpacesCount = 0;
                 PRSC.SpaceLen    = 0;
 
-                if ( true === Item.Is_Inline() || true === PRSC.Paragraph.Parent.Is_DrawingShape() )
-                    PRSC.Range.W += Item.GetWidth();
+                PRSC.Range.W += Item.GetWidth();
 
                 break;
             }
@@ -5609,27 +5611,31 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                     }
                     else
 					{
+						let nParaTop = Para.Pages[_CurPage].Y;
+						let nLineTop = Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Ascent;
+						
 						// ColumnStartX и ParaTop считаются по тексту, смотри баг #50253
-						var nPageStartLine = Para.Pages[_CurPage].StartLine;
-						var nParaTop       = Para.Pages[_CurPage].Y + Para.Lines[nPageStartLine].Top;
-						var nLineTop       = Para.Pages[CurPage].Y + Para.Lines[CurLine].Y - Para.Lines[CurLine].Metrics.Ascent;
-						var _nColumnStartX = ColumnStartX;
-
-						if (Para.Lines[nPageStartLine].Ranges.length > 1)
+						let compatibilityMode = LogicDocument && LogicDocument.IsDocumentEditor() ? LogicDocument.GetCompatibilityMode() : AscCommon.document_compatibility_mode_Current;
+						if (compatibilityMode <= AscCommon.document_compatibility_mode_Word14)
 						{
-							var arrTempRanges = Para.Lines[nPageStartLine].Ranges;
-							for (var nTempCurRange = 0, nTempRangesCount = arrTempRanges.length; nTempCurRange < nTempRangesCount; ++nTempCurRange)
+							let nPageStartLine = Para.Pages[_CurPage].StartLine;
+							nParaTop           = Para.Pages[_CurPage].Y + Para.Lines[nPageStartLine].Top;
+							if (Para.Lines[nPageStartLine].Ranges.length > 1)
 							{
-								if (arrTempRanges[nTempCurRange].W > 0.001 || arrTempRanges[nTempCurRange].WEnd > 0.001)
+								var arrTempRanges = Para.Lines[nPageStartLine].Ranges;
+								for (var nTempCurRange = 0, nTempRangesCount = arrTempRanges.length; nTempCurRange < nTempRangesCount; ++nTempCurRange)
 								{
-									_nColumnStartX = arrTempRanges[nTempCurRange].X;
-									break;
+									if (arrTempRanges[nTempCurRange].W > 0.001 || arrTempRanges[nTempCurRange].WEnd > 0.001)
+									{
+										ColumnStartX = arrTempRanges[nTempCurRange].X;
+										break;
+									}
 								}
 							}
 						}
-
+						
 						// Картинка ложится на или под текст, в данном случае пересчет можно спокойно продолжать
-						Item.Update_Position(PRSA.Paragraph, new CParagraphLayout(PRSA.X, PRSA.Y, PageAbs, PRSA.LastW, _nColumnStartX, ColumnEndX, X_Left_Margin, X_Right_Margin, Page_Width, Top_Margin, Bottom_Margin, Page_H, PageFields.X, PageFields.Y, nLineTop, nParaTop), PageLimits, PageLimitsOrigin, _CurLine);
+						Item.Update_Position(PRSA.Paragraph, new CParagraphLayout(PRSA.X, PRSA.Y, PageAbs, PRSA.LastW, ColumnStartX, ColumnEndX, X_Left_Margin, X_Right_Margin, Page_Width, Top_Margin, Bottom_Margin, Page_H, PageFields.X, PageFields.Y, nLineTop, nParaTop), PageLimits, PageLimitsOrigin, _CurLine);
 						Item.Reset_SavedPosition();
 					}
                 }
@@ -6417,7 +6423,7 @@ ParaRun.prototype.Draw_HighLights = function(PDSH)
 
         var DrawColl = this.CollaborativeMarks.Check( Pos );
 
-        if ( true === bDrawShd )
+        if ( true === bDrawShd && !Item.IsParaEnd() )
             aShd.Add( Y0, Y1, X, X + ItemWidthVisible, 0, ShdColor.r, ShdColor.g, ShdColor.b, undefined, oShd );
 
 		if (PDSH.ComplexFields.IsComplexField()
@@ -9838,18 +9844,21 @@ ParaRun.prototype.Get_HighLight = function()
 };
 
 
-ParaRun.prototype.Set_RStyle = function(Value)
+ParaRun.prototype.Set_RStyle = function(styleId)
 {
-    if ( Value !== this.Pr.RStyle )
-    {
-        var OldValue = this.Pr.RStyle;
-        this.Pr.RStyle = Value;
-
-        History.Add(new CChangesRunRStyle(this, OldValue, Value, this.private_IsCollPrChangeMine()));
-
-        this.Recalc_CompiledPr(true);
-        this.private_UpdateTrackRevisionOnChangeTextPr(true);
-    }
+	if (!styleId)
+		styleId = undefined;
+	
+	if (styleId === this.Pr.RStyle)
+		return;
+	
+	let oldStyleId = this.Pr.RStyle;
+	this.Pr.RStyle = styleId;
+	
+	History.Add(new CChangesRunRStyle(this, oldStyleId, styleId, this.private_IsCollPrChangeMine()));
+	
+	this.Recalc_CompiledPr(true);
+	this.private_UpdateTrackRevisionOnChangeTextPr(true);
 };
 ParaRun.prototype.Get_RStyle = function()
 {
@@ -10359,9 +10368,15 @@ ParaRun.prototype.IncreaseDecreaseFontSize = function(isIncrease)
 };
 ParaRun.prototype.ApplyFontFamily = function(sFontName)
 {
-	let nFontSlot = this.GetFontSlotInRange(0, this.Content.length);
-	if (nFontSlot & AscWord.fontslot_EastAsia)
-		this.SetRFontsEastAsia({Name : sFontName, Index : -1});
+	// let nFontSlot = this.GetFontSlotInRange(0, this.Content.length);
+	// if (nFontSlot & AscWord.fontslot_EastAsia)
+	// 	this.SetRFontsEastAsia({Name : sFontName, Index : -1});
+	
+	// https://bugzilla.onlyoffice.com/show_bug.cgi?id=60106
+	// Пока мы не можем разруливать как в MSWord, потому что у нас нет возможности получать текущую раскладку
+	// и нет события о смене раскладки
+	this.SetRFontsEastAsia({Name : sFontName, Index : -1});
+	//------------------------------------------------------------------------------------------------------------------
 
 	this.SetRFontsAscii({Name : sFontName, Index : -1});
 	this.SetRFontsHAnsi({Name : sFontName, Index : -1});
@@ -11804,7 +11819,7 @@ ParaRun.prototype.CheckRevisionsChanges = function(Checker, ContentPos, Depth)
     if (true !== Checker.Is_ParaEndRun() && true !== Checker.Is_CheckOnlyTextPr())
     {
         var ReviewType = this.GetReviewType();
-        if (ReviewType !== Checker.GetAddRemoveType() || (reviewtype_Common !== ReviewType && (this.ReviewInfo.GetUserId() !== Checker.Get_AddRemoveUserId() || this.GetReviewMoveType() !== Checker.GetAddRemoveMoveType())))
+		if (Checker.IsStopAddRemoveChange(ReviewType, this.GetReviewInfo()))
         {
             Checker.FlushAddRemoveChange();
             ContentPos.Update(0, Depth);
@@ -12529,43 +12544,21 @@ ParaRun.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 		var oItem = this.Content[nPos];
 		if (para_FieldChar === oItem.Type)
 		{
-			var oComplexField = oItem.GetComplexField();
-			if(oComplexField)
+			let complexField = oItem.GetComplexField();
+			let instruction  = complexField ? complexField.GetInstruction() : null;
+			if (instruction
+				&& instruction.Type === fieldtype_SEQ
+				&& instruction.CheckId(sType)
+				&& -1 === aFields.indexOf(complexField))
 			{
-				var oInstruction = oComplexField.Instruction;
-				if(oInstruction)
-				{
-					if(oInstruction.Type === fieldtype_SEQ)
-					{
-						if(oInstruction.Id === sType)
-						{
-							var isNeedAdd = true;
-							for (var nFieldIndex = 0, nFieldsCount = aFields.length; nFieldIndex < nFieldsCount; ++nFieldIndex)
-							{
-								if (oComplexField === aFields[nFieldIndex])
-								{
-									isNeedAdd = false;
-									break;
-								}
-							}
-							if (isNeedAdd)
-							{
-								aFields.push(oComplexField);
-							}
-						}
-					}
-				}
+				aFields.push(complexField);
 			}
 		}
-		else if(para_Field === oItem.Type)
+		else if (para_Field === oItem.Type
+			&& oItem.FieldType === fieldtype_SEQ
+			&& oItem.Arguments[0] === sType)
 		{
-			if(oItem.FieldType === fieldtype_SEQ)
-			{
-				if(oItem.Arguments[0] === sType)
-				{
-					aFields.push(oItem);
-				}
-			}
+			aFields.push(oItem);
 		}
 		else if (para_Drawing === oItem.Type)
 		{
@@ -12733,69 +12726,64 @@ ParaRun.prototype.ProcessAutoCorrectOnParaEnd = function(nHistoryActions)
 
 	this.ProcessAutoCorrect(0, oParaEnd.GetAutoCorrectFlags(), nHistoryActions);
 };
-ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, oSettings)
+ParaRun.prototype.CollectTextToUnicode = function(ListForUnicode, oSettings)
 {
-	var nStartPos = 0;
-	var nEndPos   = -1;
-
-	if (this.Selection.Use)
+	if (!this.Selection.Use)
+		return;
+	
+	if (oSettings.nDirection === 1)
+		oSettings.textForUnicode += this.GetSelectedText(false);
+	else
+		oSettings.textForUnicode = this.GetSelectedText(false) + oSettings.textForUnicode;
+	
+	let startPos = this.Selection.StartPos;
+	let endPos   = this.Selection.EndPos;
+	
+	function HandleItem(run, pos)
 	{
-        if (oSettings.nDirection === 1)
-            oSettings.textForUnicode += this.GetSelectedText(false);
-        else
-            oSettings.textForUnicode = this.GetSelectedText(false) + oSettings.textForUnicode;
-		nStartPos = this.Selection.StartPos;
-		nEndPos   = this.Selection.EndPos;
-		if (nStartPos > nEndPos)
+		let item = run.Content[pos];
+		if (para_Text === item.Type
+			|| para_Space === item.Type
+			|| para_Math_Text === item.Type
+			|| para_Math_BreakOperator === item.Type)
 		{
-            oSettings.nDirection = -1;
-            for (var nPos = nStartPos, nCount = nEndPos; nPos >= nCount; --nPos)
-            {
-                var oItem = this.Content[nPos];
-                if (nPos >= nEndPos && nPos < nStartPos)
-                {
-                    if (oItem.Type === para_Text || oItem.Type === para_Space || oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator)
-                    {
-                        ListForUnicode[oSettings.fFlagForUnicode] = {
-                            oRun: this,
-                            currentPos: nPos,
-                            value: (oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator) ? oItem.value : oItem.Value
-                        };
-                        oSettings.fFlagForUnicode++;
-                        if (oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator)
-                            oSettings.IsForMathPart = -1;
-                    }
-                    else
-                    {
-                        oSettings.bBreak = true;
-                    }
-                }
-            }
+			ListForUnicode[oSettings.fFlagForUnicode++] = {
+				oRun: run,
+				currentPos: pos,
+				value: item.GetCodePoint()
+			};
+			
+			if (para_Math_Text === item.Type || para_Math_BreakOperator === item.Type)
+				oSettings.IsForMathPart = -1;
 		}
-        else
-            for (var nPos = nStartPos, nCount = nEndPos; nPos < nCount; ++nPos)
-            {
-                var oItem = this.Content[nPos];
-                if (nPos >= nStartPos && nPos < nEndPos)
-                {
-                    oSettings.nDirection = 1;
-                    if (oItem.Type === para_Text || oItem.Type === para_Space || oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator)
-                    {
-                        ListForUnicode[oSettings.fFlagForUnicode] = {
-                            oRun: this,
-                            currentPos: nPos,
-                            value: (oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator) ? oItem.value : oItem.Value
-                        };
-                        oSettings.fFlagForUnicode++;
-                        if (oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator)
-                            oSettings.IsForMathPart = -1;
-                    }
-                    else
-                    {
-                        oSettings.bBreak = true;
-                    }
-                }
-            }
+		else
+		{
+			if (!item.IsParaEnd())
+				oSettings.bBreak = true;
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
+	if (startPos > endPos)
+	{
+		oSettings.nDirection = -1;
+		for (let pos = startPos - 1; pos >= endPos; --pos)
+		{
+			if (HandleItem(this, pos))
+				break;
+		}
+	}
+	else
+	{
+		oSettings.nDirection = 1;
+		for (let pos = startPos; pos < endPos; ++pos)
+		{
+			if (HandleItem(this, pos))
+				break;
+		}
 	}
 };
 ParaRun.prototype.UpdateBookmarks = function(oManager)
@@ -13835,6 +13823,13 @@ CReviewInfo.prototype.IsEqual = function(oAnotherReviewInfo, bIsMergingDocuments
 		return false;
 	}
 	return bEquals;
+};
+/**
+ * @returns {Asc.c_oAscRevisionsMove}
+ */
+CReviewInfo.prototype.GetMoveType = function()
+{
+	return this.MoveType;
 };
 
 /**

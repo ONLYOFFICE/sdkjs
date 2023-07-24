@@ -284,6 +284,7 @@
 
         _elem = document.createElement("div");
         _elem.id = "pmpastehtml";
+        _elem.style.color = "rgb(0,0,0)";
 
         if (this.editorId == AscCommon.c_oEditorId.Word || this.editorId == AscCommon.c_oEditorId.Presentation)
         {
@@ -422,8 +423,9 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias EndAction
-     * @param {number} type - A value which defines an action type which can take <b>0</b> if this is the *Information* action or <b>1</b> if this is the *BlockInteraction* action.
+     * @param {number} type - A value which defines an action type which can take <b>"Block"</b> if this is the *BlockInteraction* action or <b>"Information</b> if this is the *Information* action.
      * @param {string} description - A string value that specifies the description text for the operation end action.
+	 * @param {string} status - The error status code. If no error occurs, then an empty string is passed.
      */
     Api.prototype["pluginMethod_EndAction"] = function(type, description, status)
     {
@@ -479,7 +481,6 @@
      * @param {string} obj.type - The type of encrypting operation:
      * * <b>generatePassword</b> - generates a password for the document,
      * * <b>getPasswordByFile</b> - sends the password when opening the document,
-     * * <b>setPasswordByFile</b> - sets a password to the document,
      * * <b>encryptData</b> - encrypts changes when co-editing,
      * * <b>decryptData</b> - decrypts changes when co-editing.
      * @param {string} obj.password - A string value specifying the password to access the document.
@@ -1477,8 +1478,8 @@
     * Removes a plugin with the specified GUID.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} [guid] - The plugin identifier. It must be of the *asc.{UUID}* type.
-	 * @param {string} [backup] - The plugin backup. This parameter is used when working with the desktop editors.
+     * @param {string} guid - The plugin identifier. It must be of the *asc.{UUID}* type.
+	 * @param {string} backup - The plugin backup. This parameter is used when working with the desktop editors.
      * @alias RemovePlugin
      * @returns {object} - An object with the result information.
      * @since 7.2.0
@@ -1593,18 +1594,19 @@
 	};
 
 	/**
-    * Shows or hides buttons in the header.
-     * @memberof Api
-     * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} [id] - The button ID.
-     * @param {boolean} [bShow] - The flag specifies whether the button is shown (**true**) or hidden (**false**).
-     * @alias ShowButton 
-     * @since 7.2.0
-     */
-	Api.prototype["pluginMethod_ShowButton"] = function(id, bShow)
+	* Shows or hides buttons in the header.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} id - The button ID.
+	 * @param {boolean} bShow - The flag specifies whether the button is shown (**true**) or hidden (**false**).
+	 * @param {string} align - The parameter indicates whether the button will be displayed on the right side of the window or on the left (*left* by default).
+	 * @alias ShowButton 
+	 * @since 7.2.0
+	 */
+	Api.prototype["pluginMethod_ShowButton"] = function(id, bShow, align)
 	{
 		if (bShow) {
-			this.sendEvent("asc_onPluginShowButton", id);
+			this.sendEvent("asc_onPluginShowButton", id, (align === 'right'));
 		} else {
 			this.sendEvent("asc_onPluginHideButton", id);
 		}
@@ -1788,7 +1790,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} windowID - The frame ID.
 	 * @param {string} name - The event name.
-	 * @param {object} data - The even data.
+	 * @param {object} data - The event data.
 	 * @alias SendToWindow
 	 * @since 7.4.0
 	 */
@@ -1801,10 +1803,10 @@
 	 * Resizes the plugin modal window.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} [frameId] - The frame ID.
-	 * @param {number} [size] - The frame size.
-	 * @param {number} [minSize] - The frame minimum size.
-	 * @param {number} [maxSize] - The frame maximum size.
+	 * @param {string} frameId - The frame ID.
+	 * @param {number} size - The frame size.
+	 * @param {number} minSize - The frame minimum size.
+	 * @param {number} maxSize - The frame maximum size.
 	 * @alias ResizeWindow
 	 * @since 7.4.0
 	 */
@@ -1817,12 +1819,12 @@
 	};
 
 	/**
-	 * Send an event to the plugin when the mouse button is released inside the plugin iframe.
+	 * Sends an event to the plugin when the mouse button is released inside the plugin iframe.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} [frameId] - The frame ID.
-	 * @param {number} [x] - The X coordinate.
-	 * @param {number} [y] - The Y coordinate.
+	 * @param {string} frameId - The frame ID.
+	 * @param {number} x - The X coordinate.
+	 * @param {number} y - The Y coordinate.
 	 * @alias MouseUpWindow
 	 * @since 7.4.0
 	 */
@@ -1832,12 +1834,12 @@
 	};
 
 	/**
-	 * Send an event to the plugin when the mouse button is moved inside the plugin iframe.
+	 * Sends an event to the plugin when the mouse button is moved inside the plugin iframe.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} [frameId] - The frame ID.
- 	 * @param {number} [x] - The X coordinate.
-	 * @param {number} [y] - The Y coordinate.
+	 * @param {string} frameId - The frame ID.
+ 	 * @param {number} x - The X coordinate.
+	 * @param {number} y - The Y coordinate.
 	 * @alias MouseMoveWindow
 	 * @since 7.4.0
 	 */

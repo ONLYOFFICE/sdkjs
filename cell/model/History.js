@@ -114,6 +114,10 @@ function (window, undefined) {
 
 	window['AscCH'].historyitem_Worksheet_SetSheetViewType = 61;
 
+	window['AscCH'].historyitem_Worksheet_SetShowFormulas = 62;
+
+	window['AscCH'].historyitem_Worksheet_ChangeRowColBreaks = 63;
+
 	window['AscCH'].historyitem_RowCol_Fontname = 1;
 	window['AscCH'].historyitem_RowCol_Fontsize = 2;
 	window['AscCH'].historyitem_RowCol_Fontcolor = 3;
@@ -249,6 +253,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_PivotTable_DataFieldSetBaseField = 58;
 	window['AscCH'].historyitem_PivotTable_DataFieldSetBaseItem = 59;
 	window['AscCH'].historyitem_PivotTable_DataFieldSetNumFormat = 60;
+	window['AscCH'].historyitem_PivotTable_PivotFieldSetNumFormat = 61;
 
 	window['AscCH'].historyitem_SharedFormula_ChangeFormula = 1;
 	window['AscCH'].historyitem_SharedFormula_ChangeShared = 2;

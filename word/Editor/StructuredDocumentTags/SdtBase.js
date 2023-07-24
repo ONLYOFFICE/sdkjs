@@ -730,6 +730,29 @@ CSdtBase.prototype.GetAllSubForms = function(arrForms)
 	return arrForms;
 };
 /**
+ * Получаем порядковый номер данного подполя в родительском сложном поле
+ * Если данный объект не является полем или подполем в сложном поле, то вернется -1
+ * @returns {number}
+ */
+CSdtBase.prototype.GetSubFormIndex = function()
+{
+	if (!this.IsForm())
+		return -1;
+	
+	let mainForm = this.GetMainForm();
+	if (this === mainForm)
+		return -1;
+	
+	let subForms = mainForm.GetAllSubForms();
+	for (let index = 0, count = subForms.length; index < count; ++index)
+	{
+		if (subForms[index] === this)
+			return index;
+	}
+	
+	return -1;
+};
+/**
  * Провяеряем является ли данная форма текущей, с учетом того, что она либо сама является составной формой, либо
  * лежит в составной
  * @returns {boolean}
@@ -882,6 +905,10 @@ CSdtBase.prototype.IsBuiltInUnique = function()
 {
 	return (this.Pr && this.Pr.DocPartObj && true === this.Pr.DocPartObj.Unique);
 };
+CSdtBase.prototype.GetBuiltInGallery = function()
+{
+	return (this.Pr && this.Pr.DocPartObj && this.Pr.DocPartObj.Gallery ? this.Pr.DocPartObj.Gallery : undefined)
+};
 CSdtBase.prototype.GetInnerText = function()
 {
 	return "";
@@ -1028,3 +1055,20 @@ CSdtBase.prototype.CanPlaceCursorInside = function()
 CSdtBase.prototype.SkipFillingFormModeCheck = function(isSkip)
 {
 };
+/**
+ * Нужно ли рисовать рамку вокруг контрола
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsHideContentControlTrack = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsForceHideContentControlTrack())
+		return true;
+	
+	if (this.GetBuiltInGallery()
+		&& !this.IsBuiltInTableOfContents())
+		return true;
+	
+	return Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance();
+};
+

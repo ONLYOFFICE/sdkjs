@@ -85,8 +85,6 @@ function CGraphicObjects(document, drawingDocument, api)
     this.urlMap = [];
     this.recalcMap = {};
 
-    this.recalculateMap = {};
-
     this.selectedObjects = [];
     this.selection =
     {
@@ -286,7 +284,7 @@ CGraphicObjects.prototype =
 						let oData = oAPI.getFormatPainterData();
 						if(oData.isDrawingData())
 						{
-							sCursorType = AscCommon.kCurFormatPainterDrawing;
+							sCursorType = AscCommon.Cursors.ShapeCopy;
 						}
 					}
 				}
@@ -595,92 +593,65 @@ CGraphicObjects.prototype =
         }, this, []);
 
     },
+	
+	recalculateAll : function()
+	{
+		for (let iDrawing = 0; iDrawing < this.drawingObjects.length; ++iDrawing)
+		{
+			let drawing = this.drawingObjects[iDrawing];
+			let shape   = drawing ? drawing.GraphicObj : null;
+			if (!shape)
+				continue;
+			if (shape.recalcText)
+				shape.recalcText();
+			if (shape.handleUpdateExtents)
+				shape.handleUpdateExtents();
+			shape.recalculate();
+		}
+		for (let iDrawing = 0; iDrawing < this.drawingObjects.length; ++iDrawing)
+		{
+			let drawing = this.drawingObjects[iDrawing];
+			let shape   = drawing ? drawing.GraphicObj : null;
+			if (!shape)
+				continue;
+            if (shape.recalculateText)
+                shape.recalculateText();
+		}
+	},
+	
+	recalculate : function(data)
+	{
+		if (!data || data.All || !data.Map)
+			return this.recalculateAll();
+		
+		let shapeMap = data.Map;
+        //recalculate drawings and text in drawings separately
+        //to be assured that all internal drawings have calculated sizes to be correctly measured
+		for (let id in shapeMap)
+		{
+			if (!shapeMap.hasOwnProperty(id))
+				continue;
+			
+			let shape = shapeMap[id];
+			if (!shape.IsUseInDocument())
+				continue;
+			
+			shape.recalculate();
 
-    recalculate_: function(data)
-    {
-        if(data.All)
-        {
-            for(let nDrawing = 0; nDrawing < this.drawingObjects.length; ++nDrawing)
-            {
-                let oParaDrawing = this.drawingObjects[nDrawing];
-                if(oParaDrawing)
-                {
-                    let oSp = oParaDrawing.GraphicObj;
-                    if(oSp)
-                    {
-                        if(oSp.recalcText)
-                        {
-                            oSp.recalcText();
-                        }
-                        if(oSp.handleUpdateExtents)
-                        {
-                            oSp.handleUpdateExtents();
-                        }
-                        oSp.recalculate();
-                    }
-                }
-            }
-            for(let nDrawing = 0; nDrawing < this.drawingObjects.length; ++nDrawing)
-            {
-                let oParaDrawing = this.drawingObjects[nDrawing];
-                if(oParaDrawing)
-                {
-                    let oSp = oParaDrawing.GraphicObj;
-                    if(oSp)
-                    {
-                        if(oSp.recalculateText)
-                        {
-                            oSp.recalculateText();
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            let oDrawingsMap = data.Map;
-            for(let sId in oDrawingsMap)
-            {
-                if(oDrawingsMap.hasOwnProperty(sId))
-                {
-                    oDrawingsMap[sId].recalculate();
-                }
-            }
-        }
-    },
+		}
+		for (let id in shapeMap)
+		{
+			if (!shapeMap.hasOwnProperty(id))
+				continue;
 
-    recalculateText_: function(data)
-    {
-        if(data.All)
-        {
-            //TODO
-        }
-        else
-        {
-            let oDrawingsMap = data.Map;
-            for(let sId in oDrawingsMap)
-            {
-                if(oDrawingsMap.hasOwnProperty(sId))
-                {
-                    let oDrawing = oDrawingsMap[sId];
-                    if(oDrawing.recalculateText)
-                    {
-                        oDrawing.recalculateText();
-                    }
-                }
-            }
-        }
-    },
+			let shape = shapeMap[id];
+			if (!shape.IsUseInDocument())
+				continue;
 
-    recalculate: function()
-    {
-        for(var key in this.recalculateMap)
-        {
-            if(this.recalculateMap.hasOwnProperty(key))
-                this.recalculateMap[key].recalculate();
-        }
-        this.recalculateMap = {};
-    },
+			if (shape.recalculateText)
+				shape.recalculateText();
+		}
+	},
 
 
     selectObject: DrawingObjectsController.prototype.selectObject,
@@ -1427,6 +1398,7 @@ CGraphicObjects.prototype =
     OnMouseDown: function(e, x, y, pageIndex)
     {
         //console.log("down " + this.curState.id);
+        this.checkInkState();
         this.curState.onMouseDown(e, x, y, pageIndex);
     },
 
@@ -4179,6 +4151,7 @@ CGraphicObjects.prototype =
 
     loadDocumentStateAfterLoadChanges:  DrawingObjectsController.prototype.loadDocumentStateAfterLoadChanges,
     checkTrackDrawings:  DrawingObjectsController.prototype.checkTrackDrawings,
+    isTrackingDrawings:  DrawingObjectsController.prototype.isTrackingDrawings,
 
     canChangeWrapPolygon: function()
     {

@@ -62,7 +62,8 @@
 		GetMMPerDot : function(value){return value / this.GetDotsPerMM(1);},
 		GetDotsPerMM : function(value) {return 72;},
 		EndTrackTable : function() {},
-		SetCurrentPage : function(pageNum) {}
+		SetCurrentPage : function(pageNum) {},
+		SelectClear : function() {}
 	};
 
 	drawingDocument.CanvasHit = document.createElement('canvas');
@@ -88,12 +89,24 @@
 	editor.private_GetLogicDocument = function(){return this.WordControl.m_oLogicDocument;};
 	editor.asc_getKeyboardLanguage = function(){return -1;};
 	editor.GenerateStyles = function(){};
+	editor.sync_BeginCatchSelectedElements = function(){};
+	editor.sync_EndCatchSelectedElements = function(){};
+	editor.ClearPropObjCallback = function(){};
+	editor.Update_ParaTab = function(){};
+	editor.UpdateParagraphProp = function(){};
+	editor.UpdateTextPr = function(){};
+	editor.sync_CanAddHyperlinkCallback = function(){};
+	editor.sync_PageOrientCallback = function(){};
+	editor.sync_DocSizeCallback = function(){};
+	editor.sync_ColumnsPropsCallback = function(){};
+	editor.sync_LineNumbersPropsCollback = function(){};
+	editor.sync_SectionPropsCallback = function(){};
 	
-
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.DrawingDocument = drawingDocument;
 	AscTest.Editor          = editor;
 
 	window.editor = editor;
+	Asc['editor'] = Asc.editor = editor;
 
 })(window);
