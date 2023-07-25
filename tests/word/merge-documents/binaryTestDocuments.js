@@ -42,15 +42,15 @@ let oMainComments;
 mockEditor.sync_AddComment = function ()
 {
 	
-}
+};
 mockEditor.sync_ChangeCommentData = function ()
 {
 
-}
+};
 mockEditor.sync_RemoveComment = function ()
 {
 	
-}
+};
 AscCommon.ParaComment.prototype.getTestObject = function (arrParentContent)
 {
 	let oComment = oMainComments.Get_ById(this.GetCommentId());
@@ -59,7 +59,7 @@ AscCommon.ParaComment.prototype.getTestObject = function (arrParentContent)
 		const oContentObject = {type: 'comment', text: oComment.Data.Get_Text(), quoteText: oComment.Data.Get_QuoteText(), arrAnswers: oComment.Data.m_aReplies.map((e) => e.Get_Text())};
 		arrParentContent.push(oContentObject);
 	}
-}
+};
 AscCommonWord.CDocument.prototype.getTestObject = function ()
 {
 	const oContentObject = {type: 'document', content: []};
@@ -106,7 +106,7 @@ AscCommonWord.CTable.prototype.getTestObject = function (arrParentContent)
 		const row = this.Content[i];
 		row.getTestObject(oContentObject.rows);
 	}
-}
+};
 
 AscCommonWord.CTableRow.prototype.getTestObject = function (arrParentContent)
 {
@@ -117,7 +117,7 @@ AscCommonWord.CTableRow.prototype.getTestObject = function (arrParentContent)
 		const cell = this.Content[i];
 		cell.getTestObject(oContentObject.content);
 	}
-}
+};
 
 AscCommonWord.CTableCell.prototype.getTestObject = function (arrParentContent)
 {
@@ -128,8 +128,17 @@ AscCommonWord.CTableCell.prototype.getTestObject = function (arrParentContent)
 	{
 		oRun.getTestObject(oContentObject.content);
 	});
-}
+};
 
+
+AscCommonWord.CDocument.prototype.CreateStyles = function()
+{
+	this.Styles = getDocumentStyles(this);
+};
+CGlossaryDocument.prototype.CreateStyles = function()
+{
+	this.Styles = getDocumentGlossaryStyles();
+};
 
 ParaMath.prototype.getTestObject = function (arrParentContent)
 {
@@ -305,10 +314,11 @@ window['AscCommonWord']['CDocumentComparison'].prototype.setReviewInfo = functio
 
 let GLOBAL_DOC_STYLES = null;
 let GLOBAL_GLOSSARY_STYLES = null;
-function getDocumentStyles() {
+function getDocumentStyles(oLogicDocument) {
 	if(!GLOBAL_DOC_STYLES) {
 		GLOBAL_DOC_STYLES = new CStyles();
 	}
+	GLOBAL_DOC_STYLES.Set_LogicDocument(oLogicDocument);
 	return GLOBAL_DOC_STYLES;
 }
 function getDocumentGlossaryStyles() {

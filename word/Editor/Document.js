@@ -1791,7 +1791,7 @@ CSelectedElementsInfo.prototype.IsFixedFormShape = function()
  * @constructor
  * @extends {CDocumentContentBase}
  */
-function CDocument(DrawingDocument, isMainLogicDocument, bCreateStyles)
+function CDocument(DrawingDocument, isMainLogicDocument)
 {
 	CDocumentContentBase.call(this);
 
@@ -1950,11 +1950,8 @@ function CDocument(DrawingDocument, isMainLogicDocument, bCreateStyles)
 	this.NumberingApplicator = new AscWord.CNumberingApplicator(this); // Класс для применения нумерации к текущему выделение
 	this.NumberingCollection = new AscWord.CNumberingCollection(this); // Класс, хранящий нумерации, используемые в документе
 
-    if(bCreateStyles !== false)
-    {
-        this.Styles    = new CStyles();
-        this.Styles.Set_LogicDocument(this);
-    }
+
+    this.CreateStyles();
 
     this.DrawingDocument = DrawingDocument;
 
@@ -2152,7 +2149,7 @@ function CDocument(DrawingDocument, isMainLogicDocument, bCreateStyles)
 
     this.DocumentOutline = new CDocumentOutline(this);
 
-    this.GlossaryDocument = new CGlossaryDocument(this, bCreateStyles);
+    this.GlossaryDocument = new CGlossaryDocument(this);
 
 	this.AutoCorrectSettings = new AscCommon.CAutoCorrectSettings();
 
@@ -10620,6 +10617,13 @@ CDocument.prototype.GetStyleFromFormatting = function()
 {
 	return this.Controller.GetStyleFromFormatting();
 };
+
+CDocument.prototype.CreateStyles = function()
+{
+    this.Styles = new CStyles();
+    this.Styles.Set_LogicDocument(this);
+};
+
 /**
  * Добавляем новый стиль (или заменяем старый с таким же названием).
  * И сразу применяем его к выделенному фрагменту.
