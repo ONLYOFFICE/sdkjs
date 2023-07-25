@@ -488,7 +488,7 @@
 		{
 			this.canNextElement = false;
 		}
-	}
+	};
 
 	CReviewChangesIterator.prototype.value = function ()
 	{
@@ -510,18 +510,18 @@
 	CReviewChangesIterator.prototype.getMainElement = function ()
 	{
 		return this.mainElements[this.elementIndex];
-	}
+	};
 	CReviewChangesIterator.prototype.getRevisedElement = function ()
 	{
 		return this.revisedElements[this.elementIndex];
-	}
+	};
 	CReviewChangesIterator.prototype.findFirstChange = function ()
 	{
 		this.isFindFirstChange = true;
 		this.next();
 		this.isFindFirstChange = false;
 		this.next();
-	}
+	};
 	CReviewChangesIterator.prototype.getPriorityChange = function ()
 	{
 		const oRevisedElement = this.getRevisedElement();
@@ -572,7 +572,7 @@
 			}
 			return oChange;
 		}
-	}
+	};
 	CReviewChangesIterator.prototype.endCurrentAndFindNextChange = function ()
 	{
 		const oPriorityChange = this.getPriorityChange();
@@ -591,7 +591,7 @@
 			}
 		}
 		return false;
-	}
+	};
 	CReviewChangesIterator.prototype.updateCurrentChange = function (oPriorityChange)
 	{
 		if (this.isFindFirstChange || !this.currentChange)
@@ -633,7 +633,7 @@
 			return true;
 		}
 		return false;
-	}
+	};
 
     function CNode(oElement, oParent)
     {
@@ -710,7 +710,7 @@
 				}
 				comparison.applyResolveTypes(oNeedReviewWithUser);
 			}
-	}
+	};
     CNode.prototype.getElement = function()
     {
         return this.element;
@@ -721,42 +721,42 @@
 		{
 			this.element.addBookmark(oBookmark, nInsertIndex);
 		}
-	}
-		CNode.prototype.getLastBookmarks = function ()
+	};
+	CNode.prototype.getLastBookmarks = function ()
+	{
+		if (this.element instanceof CTextElement)
 		{
-			if (this.element instanceof CTextElement)
-			{
-				return this.element.getLastBookmarks();
-			}
+			return this.element.getLastBookmarks();
 		}
+	};
 	CNode.prototype.getFirstBookmarks = function ()
 	{
 		if (this.element instanceof CTextElement)
 		{
 			return this.element.getFirstBookmarks();
 		}
-	}
+	};
 	CNode.prototype.addComment = function (oBookmark, nInsertIndex)
 	{
 		if (this.element instanceof CTextElement)
 		{
 			this.element.addComment(oBookmark, nInsertIndex);
 		}
-	}
+	};
 	CNode.prototype.getLastComments = function ()
 	{
 		if (this.element instanceof CTextElement)
 		{
 			return this.element.getLastComments();
 		}
-	}
+	};
 	CNode.prototype.getFirstComments = function ()
 	{
 		if (this.element instanceof CTextElement)
 		{
 			return this.element.getFirstComments();
 		}
-	}
+	};
 		// debug method
 	CNode.prototype.getText = function()
 	{
@@ -828,11 +828,11 @@
             }
         }
         return k;
-    }
+    };
     // comparison need for extends
     CNode.prototype.pushToArrInsertContent = function (aContentToInsert, elem, comparison) {
         aContentToInsert.push(elem);
-    }
+    };
 
     CNode.prototype.pushToArrInsertContentWithCopy = function (aContentToInsert, elem, comparison) {
         const elemCopy = elem.Copy(false, comparison.copyPr);
@@ -841,7 +841,7 @@
 				{
 					comparison.oCommentManager.pushToArrInsertContentFromMerge(elem, aContentToInsert);
 				}
-    }
+    };
 
     CNode.prototype.cleanStartOfInsertSameRun = function (oNewRun, idxOfChange) {
         const oChange = this.changes[idxOfChange];
@@ -862,7 +862,7 @@
                 }
             }
         }
-    }
+    };
 
     CNode.prototype.copyRunWithMockParagraph = function (oRun, mockParagraph, comparison) {
         const oTempParagraph = oRun.Paragraph;
@@ -871,7 +871,7 @@
         oRun.Paragraph = oTempParagraph;
 
         return oNewRun;
-    }
+    };
 
     CNode.prototype.cleanStartOfInsertDifferentRun = function (aContentToInsert, posOfLastInsertRun, idxOfChange, comparison) {
         const oChange = this.changes[idxOfChange];
@@ -926,7 +926,7 @@
                 break;
             }
         }
-    }
+    };
 	CNode.prototype.checkCommentsFromInsert = function (idxOfChange, comparison)
 	{
 		const mapRevisedComments = {};
@@ -975,7 +975,7 @@
 			const arrMainComments = oCheckCommentNode.element.comments[nLastIndex];
 			comparison.oCommentManager.checkComments(arrMainComments, arrRevisedComments, arrMainComments);
 		}
-	}
+	};
     CNode.prototype.getArrOfInsertsFromChanges = function (idxOfChange, comparison) {
         const oChange = this.changes[idxOfChange];
         const aContentToInsert = [];
@@ -1022,11 +1022,11 @@
         } else {
             this.applyInsertsToParagraphsWithoutRemove(comparison, aContentToInsert, idxOfChange);
         }
-    }
+    };
 
     CNode.prototype.getStartPosition = function (comparison) {
         return 0;
-    }
+    };
 
     CNode.prototype.applyInsertsToParagraphsWithoutRemove = function (comparison, aContentToInsert, idxOfChange) {
         const oChange = this.changes[idxOfChange];
@@ -1099,11 +1099,11 @@
 
     CNode.prototype.getApplyParagraph = function (comparison) {
         return this.element;
-    }
+    };
 
     CNode.prototype.setCommonReviewTypeWithInfo = function (element, info) {
         element.SetReviewTypeWithInfo(reviewtype_Common, info);
-    }
+    };
 
     CNode.prototype.prepareEndOfRemoveChange = function (idxOfChange, comparison, arrSetRemove) {
         const oChange = this.changes[idxOfChange];
@@ -1124,7 +1124,7 @@
 			}
         let k = oApplyParagraph.Content.length - 1;
         let nInsertPosition = -1;
-        
+
         for(k; k > -1; --k)
         {
             const oCurRun = oApplyParagraph.Content[k];
@@ -1159,7 +1159,7 @@
             }
         }
         return {posLastRunInContent: k, nInsertPosition: nInsertPosition };
-    }
+    };
 
     CNode.prototype.setReviewTypeForRemoveChanges = function (comparison, idxOfChange, posLastRunInContent, nInsertPosition, arrSetRemoveReviewType) {
         const oApplyParagraph = this.getApplyParagraph(comparison);
@@ -1209,14 +1209,14 @@
             }
         }
         return nInsertPosition;
-    }
+    };
 
     CNode.prototype.applyInsert = function (arrToInsert, arrToRemove, nInsertPosition, comparison, options) {
 			for (let i = 0; i < arrToRemove.length; i += 1) {
             comparison.setRemoveReviewType(arrToRemove[i]);
         }
         this.insertContentAfterRemoveChanges(arrToInsert, nInsertPosition, comparison, options);
-    }
+    };
 
     CNode.prototype.applyInsertsToParagraphsWithRemove = function (comparison, aContentToInsert, idxOfChange) {
         const arrSetRemoveReviewType = [];
@@ -1240,7 +1240,7 @@
                 }
             }
         }
-    }
+    };
 
     CNode.prototype.getNeighbors  = function()
     {
@@ -1412,7 +1412,7 @@
             node.forEach(callback, T);
         });
     };
-    
+
     CNode.prototype.forEachRight = function (callback, T) {
         const arrNodes = [];
         this.forEach(function (oNode) {
@@ -1456,14 +1456,14 @@
     };
 
 
-		function CCommentElement(oComment, oParaComment)
+	function CCommentElement(oComment, oParaComment)
+	{
+		this.element = oParaComment;
+		if (oComment)
 		{
-			this.element = oParaComment;
-			if (oComment)
-			{
-				this.data = oComment.Data;
-			}
+			this.data = oComment.Data;
 		}
+	}
 	CCommentElement.prototype.getQuoteText = function ()
 	{
 		if (this.data)
@@ -1471,11 +1471,11 @@
 			return this.data.Get_QuoteText();
 		}
 		return '';
-	}
+	};
 	CCommentElement.prototype.getCommentId = function ()
 	{
 		return this.element.GetCommentId();
-	}
+	};
 	CCommentElement.prototype.getFullMergeComments = function (oAnotherElement)
 	{
 		const arrMainAnswers = this.getAnswers();
@@ -1494,7 +1494,7 @@
 			}
 		}
 		return Math.abs(arrMainAnswers.length - arrAnotherAnswers.length);
-	}
+	};
 	CCommentElement.prototype.getAnswerMap = function ()
 	{
 		const oAnswerMap = {};
@@ -1510,7 +1510,7 @@
 			oAnswerMap[sText].push(oAnswer);
 		}
 		return oAnswerMap;
-	}
+	};
 	CCommentElement.prototype.getPartMergeComments = function (oAnotherElement)
 	{
 		let nDifference = 0;
@@ -1577,7 +1577,7 @@
 			return this.data.Get_Text();
 		}
 		return '';
-	}
+	};
 	CCommentElement.prototype.getAnswers = function ()
 	{
 		if (this.data)
@@ -1585,7 +1585,7 @@
 			return this.data.m_aReplies;
 		}
 		return [];
-	}
+	};
     function CTextElement()
     {
         this.elements = [];
@@ -1599,35 +1599,35 @@
 	{
 		return (Object.keys(arrLabels).map(function (e) {return parseInt(e, 10);})
 			.sort(function (a, b) {return b - a;}));
-	}
+	};
 	CTextElement.prototype.compareReviewElements = function (oAnotherElement)
 	{
 		return true;
-	}
+	};
 	CTextElement.prototype.getBookmarkInsertIndexes = function ()
 	{
 		return this.getSortedInsertIndexesFromMap(this.bookmarks);
-	}
+	};
 	CTextElement.prototype.getCommentInsertIndexes = function ()
 	{
 		return this.getSortedInsertIndexesFromMap(this.comments);
-	}
+	};
 	CTextElement.prototype.getLastBookmarks = function ()
 	{
 		return this.bookmarks[this.elements.length];
-	}
+	};
 	CTextElement.prototype.getFirstBookmarks = function ()
 	{
 		return this.bookmarks[0];
-	}
+	};
 	CTextElement.prototype.getLastComments = function ()
 	{
 		return this.comments[this.elements.length];
-	}
+	};
 	CTextElement.prototype.getFirstComments = function ()
 	{
 		return this.comments[0];
-	}
+	};
 	CTextElement.prototype.addBookmark = function (oBookmark, nInsertIndex)
 	{
 		if (!this.bookmarks[nInsertIndex])
@@ -1635,7 +1635,7 @@
 			this.bookmarks[nInsertIndex] = [];
 		}
 		this.bookmarks[nInsertIndex].push(oBookmark);
-	}
+	};
 	CTextElement.prototype.addComment = function (oComment, nInsertIndex)
 	{
 		if (!this.comments[nInsertIndex])
@@ -1643,24 +1643,24 @@
 			this.comments[nInsertIndex] = [];
 		}
 		this.comments[nInsertIndex].push(oComment);
-	}
+	};
     CTextElement.prototype.getPosOfStart = function () {
         const startElement = this.elements[0];
         return this.firstRun.GetElementPosition(startElement);
-    }
+    };
 
     CTextElement.prototype.addToElements = function (element, options) {
         this.elements.push(element);
-    }
+    };
 
     CTextElement.prototype.getPosOfEnd = function () {
         const endElement = this.elements[this.elements.length - 1];
         return this.lastRun.GetElementPosition(endElement);
-    }
+    };
 
     CTextElement.prototype.getElement = function (idx) {
         return this.elements[idx];
-    }
+    };
 
     CTextElement.prototype.equals = function (other, bNeedCheckReview)
     {
@@ -1926,12 +1926,12 @@
         this.nInsertChangesType = reviewtype_Add;
         this.nRemoveChangesType = reviewtype_Remove;
         this.oComparisonMoveMarkManager = new CMoveMarkComparisonManager();
-				this.oBookmarkManager = new CComparisonBookmarkManager(oOriginalDocument, oRevisedDocument);
-				this.oCommentManager = new CComparisonCommentManager(this);
+		this.oBookmarkManager = new CComparisonBookmarkManager(oOriginalDocument, oRevisedDocument);
+		this.oCommentManager = new CComparisonCommentManager(this);
     }
     CDocumentComparison.prototype.checkOriginalAndSplitRun = function (oOriginalRun, oSplitRun) {
 
-    }
+    };
 	CDocumentComparison.prototype.removeCommentsFromMap = function ()
 	{
 		for (let sCommentId in this.oCommentManager.mapDelete)
@@ -1939,7 +1939,7 @@
 			this.originalDocument.RemoveComment(sCommentId, true);
 		}
 		this.oCommentManager.mapDelete = {};
-	}
+	};
     CDocumentComparison.prototype.checkCopyParaRun = function (oNewRun, oOldRun) {
         const sMoveName = this.oComparisonMoveMarkManager.getMoveMarkNameByRun(oOldRun);
         this.oComparisonMoveMarkManager.addRunMoveMarkNameRelation(sMoveName, oNewRun);
@@ -1958,7 +1958,7 @@
         {
             this.updateReviewInfo(oNewRun, this.nInsertChangesType);
         }
-    }
+    };
     CDocumentComparison.prototype.setRemoveReviewType = function (element) {
         if(!(element.IsParaEndRun && element.IsParaEndRun()))
         {
@@ -1980,11 +1980,11 @@
 
     CDocumentComparison.prototype.getMinJaccardCoefficient = function () {
         return MIN_JACCARD;
-    }
+    };
 
     CDocumentComparison.prototype.getMinDiffCoefficient = function () {
         return MIN_DIFF;
-    }
+    };
     CDocumentComparison.prototype.getLCSCallback = function (oLCS, bOrig) {
         const oThis = this;
         return function(x, y) {
@@ -2003,12 +2003,12 @@
             oThis.applyChangesToChildNode(oOrigNode);
             oThis.compareNotes(oMatching);
         };
-    }
+    };
 
     CDocumentComparison.prototype.forEachChangeCallback = function(oOperation) {
         oOperation.anchor.base.addChange(oOperation);
     };
-    
+
     CDocumentComparison.prototype.getLCSEqualsMethod = function (oEqualMap, oMapEquals) {
         return function(a, b) {
             const bEquals = oMapEquals[a.element.Id] || oMapEquals[b.element.Id];
@@ -2039,8 +2039,8 @@
             }
             return false;
         };
-    }
-    
+    };
+
     CDocumentComparison.prototype.compareElementsArray = function(aBase, aCompare, bOrig, bUseMinDiff)
     {
         const oMapEquals = {};
@@ -2245,7 +2245,7 @@
 			this.oCommentManager.previousNode = oNode;
 		}
 		return oNode;
-	}
+	};
     CDocumentComparison.prototype.compareGroups = function(oBaseGroup, oCompareGroup)
     {
         const NodeConstructor = this.getNodeConstructor();
@@ -2330,7 +2330,7 @@
             const oCompareGrObject = oCompareDrawing.GraphicObj;
             this.compareGraphicObject(oBaseGrObject, oCompareGrObject);
         }
-    }
+    };
 
     CDocumentComparison.prototype.compareDrawingObjectsFromMatching = function(oMatching, bOrig)
     {
@@ -2639,8 +2639,8 @@
                 }
             }
         }
-    }
-    
+    };
+
     CDocumentComparison.prototype.applyChangesToSectPr = function (oNode) {
         const oElement = oNode.element;
         if(oNode.partner)
@@ -2657,7 +2657,7 @@
                 this.compareSectPr(oElement, oPartnerElement);
             }
         }
-    }
+    };
 
     CDocumentComparison.prototype.compareSectPr = function(oElement, oPartnerElement)
     {
@@ -3182,7 +3182,7 @@
                 }
             }
         }
-    }
+    };
 
     CDocumentComparison.prototype.setReviewInfoRecursive = function(oObject, nType)
     {
@@ -3410,18 +3410,18 @@
             }
         }
         return oLastText;
-    }
+    };
 
     CDocumentComparison.prototype.getCompareReviewInfo = function (oRun) {
 
-    }
+    };
 
     CDocumentComparison.prototype.createNodeFromRun = function (oRun, oLastText, oHashWords, oRet) {
         const TextElementConstructor = this.getTextElementConstructor();
         const NodeConstructor = this.getNodeConstructor();
         const oReviewInfo = this.getCompareReviewInfo(oRun);
         return this._createNodeFromRun(oRun, oLastText, oHashWords, oRet, TextElementConstructor, NodeConstructor, oReviewInfo);
-    }
+    };
     CDocumentComparison.prototype.createNodeFromRunContentElement = function(oElement, oParentNode, oHashWords, isOriginalDocument)
     {
 	    this.oBookmarkManager.previousNode = null;
@@ -3734,16 +3734,16 @@
         this.isResolveConflictMode = bOldModeValue;
     };
 
-		function CComparisonBookmarkManager()
-		{
-			this.mapNamesForMerge = {};
-			this.mapIdToBookmarkId = {};
-			this.needUpdateBookmarks = false;
-			this.IdName = {};
-			this.bookmarkStack = [];
-			this.mapBookmarkMeeting = {};
-			this.previousNode = null;
-		}
+	function CComparisonBookmarkManager()
+	{
+		this.mapNamesForMerge = {};
+		this.mapIdToBookmarkId = {};
+		this.needUpdateBookmarks = false;
+		this.IdName = {};
+		this.bookmarkStack = [];
+		this.mapBookmarkMeeting = {};
+		this.previousNode = null;
+	}
 
 	CComparisonBookmarkManager.prototype.init = function (oMainDocument, oRevisedDocument)
 	{
@@ -3786,7 +3786,7 @@
 	CComparisonBookmarkManager.prototype.getId = function (oBookmark)
 	{
 		return this.mapIdToBookmarkId[oBookmark.GetId()];
-	}
+	};
 	CComparisonBookmarkManager.prototype.addToStack = function (oBookmark, nInsertIndex)
 	{
 		if (!this.isSkip(oBookmark))
@@ -3843,7 +3843,7 @@
 	CComparisonCommentManager.prototype.addToLink = function (sKey, sValue)
 	{
 		this.mapLink[sKey] = sValue;
-	}
+	};
 	CComparisonCommentManager.prototype.getAddedComment = function (oData)
 	{
 		const oComments = this.comparison.originalDocument.Comments;
@@ -3851,11 +3851,11 @@
 		oComments.Add(oComment);
 		this.comparison.api.sync_AddComment(oComment.Id, oData);
 		return oComment;
-	}
+	};
 	CComparisonCommentManager.prototype.getMergeLater = function (sCommentId)
 	{
 		return this.mapMergeLater[sCommentId];
-	}
+	};
 	CComparisonCommentManager.prototype.addToMergeLater = function (oParaComment, sCommentId)
 	{
 		if (!this.mapMergeLater[sCommentId])
@@ -3863,7 +3863,7 @@
 			this.mapMergeLater[sCommentId] = [];
 		}
 		this.mapMergeLater[sCommentId].push(oParaComment);
-	}
+	};
 	CComparisonCommentManager.prototype.pushToArrInsertContentFromMerge = function (oParaComment, arrContentToInsert)
 	{
 		if (!oParaComment.IsCommentStart())
@@ -3874,7 +3874,7 @@
 		{
 			arrContentToInsert.push.apply(arrContentToInsert, arrMerge);
 		}
-	}
+	};
 	CComparisonCommentManager.prototype.applyCommentFromData = function (oData, arrCommentElements, sRevisedQuoteText, sRevisedCommentId)
 	{
 		const oCopyData = oData.Copy();
@@ -3885,7 +3885,7 @@
 		const oEndCommentElement = new CCommentElement(oComment, oEndParaComment);
 		arrCommentElements.push(oEndCommentElement);
 		this.addToMergeLater(oStartParaComment, sRevisedCommentId);
-	}
+	};
 	CComparisonCommentManager.prototype.getSortedFunction = function ()
 	{
 		return function (a, b)
@@ -3897,7 +3897,7 @@
 			}
 			return a.commentDifference - b.commentDifference;
 		}
-	}
+	};
 
 	CComparisonCommentManager.prototype.checkComments = function (arrMainComments, arrRevisedComments, arrCommentElements)
 	{
@@ -3987,7 +3987,7 @@
 				this.addToDelete(sMainCommentId);
 			}
 		}
-	}
+	};
 
 	CComparisonCommentManager.prototype.check = function (sCommentId)
 	{
@@ -4069,37 +4069,37 @@
 	CTextElementRunIterator.prototype.startCollectRuns = function ()
 	{
 		this.isCollectRuns = true;
-	}
+	};
 	CTextElementRunIterator.prototype.addToCollectCurrentRun = function ()
 	{
 		if (this.isCollectRuns)
 		{
 			this.addToCollect(this.currentRun);
 		}
-	}
+	};
 	CTextElementRunIterator.prototype.dropLastCollect = function ()
 	{
 		return this.collectRuns.pop();
-	}
+	};
 	CTextElementRunIterator.prototype.addToCollect = function (oRun)
 	{
 		this.collectRuns.push(oRun);
-	}
+	};
 	CTextElementRunIterator.prototype.addToCollectBack = function (oRun)
 	{
 		this.collectRuns.unshift(oRun);
-	}
+	};
 	CTextElementRunIterator.prototype.endCollectRuns = function ()
 	{
 		this.isCollectRuns = false;
 		const arrRet = this.collectRuns;
 		this.collectRuns = [];
 		return arrRet;
-	}
+	};
 	CTextElementRunIterator.prototype.getCurrentElement = function ()
 	{
 		return this.textElements[this.textElementIndex];
-	}
+	};
 	CTextElementRunIterator.prototype.next = function ()
 	{
 		if (this.currentRun === this.textElements[0].firstRun && this.innerElementIndex === 0)
@@ -4127,14 +4127,14 @@
 				this.innerElementIndex = this.getCurrentElement().elements.length - 1;
 			}
 		}
-	}
+	};
 	CTextElementRunIterator.prototype.splitCurrentRun = function (nSplitIndex)
 	{
 		nSplitIndex = typeof nSplitIndex === 'number' ? nSplitIndex : this.runElementIndex;
 
 		const oRun = this.getRun();
 		return oRun.Split2(nSplitIndex, this.parent, this.runIndex);
-	}
+	};
 
 	CTextElementRunIterator.prototype.skipTo = function (nTextElementIndex, nInnerTextElementIndex)
 	{
@@ -4158,11 +4158,11 @@
 			this.next();
 		}
 		return true;
-	}
+	};
 	CTextElementRunIterator.prototype.check = function ()
 	{
 		return this.bNext;
-	}
+	};
 	CTextElementRunIterator.prototype.getRunTextElement = function ()
 	{
 		return this.getCurrentElement().elements[this.innerElementIndex];
