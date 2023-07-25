@@ -3960,7 +3960,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 								{
 									NewRange    = true;
 									RangeEndPos = Pos;
-									PRS.ResetLastAutoHyphen();
+									PRS.CheckLastAutoHyphen(PRS.LastItem);
 								}
 							}
 						}

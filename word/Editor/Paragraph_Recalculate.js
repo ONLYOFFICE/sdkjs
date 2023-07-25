@@ -3416,6 +3416,8 @@ CParagraphRecalculateStateWrap.prototype =
 	
 	CheckLastAutoHyphen : function(item)
 	{
+		this.ResetLastAutoHyphen();
+		
 		if (!item || !item.IsText() || !item.IsHyphenAfter())
 			return;
 		
