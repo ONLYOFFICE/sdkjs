@@ -41,11 +41,10 @@
 	 * Import
 	 * -----------------------------------------------------------------------------
 	 */
-	var AscBrowser = AscCommon.AscBrowser;
-	var History = AscCommon.History;
-	var asc = window["Asc"];
-	var asc_typeof = asc.typeOf;
-	var c_oAscError = asc.c_oAscError;
+	const AscBrowser = AscCommon.AscBrowser;
+	const History = AscCommon.History;
+	const asc = window["Asc"];
+	const c_oAscError = asc.c_oAscError;
 
 	//HEADER/FOOTER
 	function HeaderFooterField(val, format, text) {
@@ -56,7 +55,7 @@
 		this._calculatedText = null;
 	}
 	HeaderFooterField.prototype.clone = function () {
-		var res = new HeaderFooterField();
+		let res = new HeaderFooterField();
 
 		res.filed = this.filed;
 		res.format = this.format.clone();
@@ -153,18 +152,18 @@
 		this.isCalc = null;
 	}
 
-	var c_oPortionPosition = {
+	let c_oPortionPosition = {
 		left: 0,
 		center: 1,
 		right: 2
 	};
 
-	var c_nPortionLeftHeader = 0;
-	var c_nPortionCenterHeader = 1;
-	var c_nPortionRightHeader = 2;
-	var c_nPortionLeftFooter = 3;
-	var c_nPortionCenterFooter = 4;
-	var c_nPortionRightFooter = 5;
+	let c_nPortionLeftHeader = 0;
+	let c_nPortionCenterHeader = 1;
+	let c_nPortionRightHeader = 2;
+	let c_nPortionLeftFooter = 3;
+	let c_nPortionCenterFooter = 4;
+	let c_nPortionRightFooter = 5;
 
 	/*Documentation:
 		There is no required order in which these codes need to appear.
@@ -217,7 +216,7 @@
 		&H - code for "shadow style"
 	*/
 	HeaderFooterParser.prototype.parse = function (date) {
-		var c_nText = 0, c_nToken = 1, c_nFontName = 2, c_nFontStyle = 3, c_nFontHeight = 4;
+		let c_nText = 0, c_nToken = 1, c_nFontName = 2, c_nFontStyle = 3, c_nFontHeight = 4;
 
 		this.date = date;
 
@@ -225,13 +224,13 @@
 		this.curTokenPosition = c_oPortionPosition.center;
 		this.str = "";
 
-		var nState = c_nText;
-		var nFontHeight = 0;
-		var sFontName = "";
-		var sFontStyle = "";
+		let nState = c_nText;
+		let nFontHeight = 0;
+		let sFontName = "";
+		let sFontStyle = "";
 
-		for (var i = 0; i < date.length; i++) {
-			var cChar = date[i];
+		for (let i = 0; i < date.length; i++) {
+			let cChar = date[i];
 			switch (nState) {
 				case c_nText: {
 					switch (cChar) {
@@ -427,10 +426,10 @@
 	};
 
 	HeaderFooterParser.prototype.convertFontColor = function(rColor) {
-		var color;
+		let color;
 		if( (rColor[ 2 ] === '+') || (rColor[ 2 ] === '-') ) {
-			var theme = rColor.substr(0, 2) - 0;
-			var tint = rColor.substr(2) - 0;
+			let theme = rColor.substr(0, 2) - 0;
+			let tint = rColor.substr(2) - 0;
 			color = AscCommonExcel.g_oColorManager.getThemeColor(theme, tint / 100);
 
 		} else {
@@ -440,14 +439,14 @@
 	};
 
 	HeaderFooterParser.prototype.convertFontColorFromObj = function(obj) {
-		var color = null;
+		let color = null;
 
 		if(obj instanceof AscCommonExcel.ThemeColor) {
-			var theme = obj.theme.toString();
+			let theme = obj.theme.toString();
 			if(theme.length === 1) {
 				theme = "0" + theme;
 			}
-			var tint = (obj.tint * 100).toFixed(0);
+			let tint = (obj.tint * 100).toFixed(0);
 			if(1 === tint.length) {
 				tint = "00" + tint;
 			} else if(2 === tint.length) {
@@ -456,8 +455,8 @@
 			color = theme + "+" + tint;
 		} else if(obj instanceof AscCommonExcel.RgbColor) {
 
-			var toHex = function componentToHex(c) {
-				var res = c.toString(16);
+			let toHex = function componentToHex(c) {
+				let res = c.toString(16);
 				return res.length === 1 ? "0" + res : res;
 			};
 
@@ -497,7 +496,6 @@
 		this.pushField(new HeaderFooterField(asc.c_oAscHeaderFooterField.lineBreak));
 	};
 
-
 	HeaderFooterParser.prototype.convertFontName = function (rName) {
 		if ("" !== rName) {
 			// single dash is document default font
@@ -515,8 +513,8 @@
 		//в ms жесткая завязка на font style. в lo - ддопускаются следующие строчки - "bold italic bold"  и тп
 		this.font.b = this.font.i = false;
 
-		var fontStyleArr = rStyle.split(" ");
-		for(var i = 0; i < fontStyleArr.length; i++) {
+		let fontStyleArr = rStyle.split(" ");
+		for(let i = 0; i < fontStyleArr.length; i++) {
 			if("italic" === fontStyleArr[i].toLowerCase()) {
 				this.font.i = true;
 			} else if("bold" === fontStyleArr[i].toLowerCase()) {
@@ -530,7 +528,7 @@
 	};
 
 	HeaderFooterParser.prototype.setPortion = function (val) {
-		if (val != this.curTokenPosition) {
+		if (val !== this.curTokenPosition) {
 			this.endPortion();
 			this.curTokenPosition = val;
 		}
@@ -541,7 +539,7 @@
 	};
 
 	HeaderFooterParser.prototype.getAllFonts = function (oFontMap) {
-		for(var i in this.allFontsMap) {
+		for(let i in this.allFontsMap) {
 			if(!oFontMap[i]) {
 				oFontMap[i] = 1;
 			}
@@ -549,16 +547,16 @@
 	};
 
 	HeaderFooterParser.prototype.assembleText = function () {
-		var newStr = "";
-		var curPortionLeft = this.assemblePortionText(c_oPortionPosition.left);
+		let newStr = "";
+		let curPortionLeft = this.assemblePortionText(c_oPortionPosition.left);
 		if(curPortionLeft) {
 			newStr += curPortionLeft;
 		}
-		var curPortionCenter = this.assemblePortionText(c_oPortionPosition.center);
+		let curPortionCenter = this.assemblePortionText(c_oPortionPosition.center);
 		if(curPortionCenter) {
 			newStr += curPortionCenter;
 		}
-		var curPortionRight = this.assemblePortionText(c_oPortionPosition.right);
+		let curPortionRight = this.assemblePortionText(c_oPortionPosition.right);
 		if(curPortionRight) {
 			newStr += curPortionRight;
 		}
@@ -567,19 +565,15 @@
 	};
 
 	HeaderFooterParser.prototype.splitByParagraph = function (cPortionCode) {
-		var res = [];
+		let res = [];
 
 		if(this.tokens[cPortionCode]) {
-			var index = 0;
-			var curPortion = this.tokens[cPortionCode];
-			for(var i = 0; i < curPortion.length; i++) {
+			let index = 0;
+			let curPortion = this.tokens[cPortionCode];
+			for(let i = 0; i < curPortion.length; i++) {
 				if(!res[index]) {
 					res[index] = [];
 				}
-				/*if(curPortion[i] instanceof HeaderFooterField) {
-				 index++;
-				 continue;
-				 }*/
 				res[index].push(curPortion[i]);
 			}
 		}
@@ -588,7 +582,7 @@
 	};
 
 	HeaderFooterParser.prototype.assemblePortionText = function (cPortion) {
-		var symbolPortion;
+		let symbolPortion;
 		switch (cPortion) {
 			case c_oPortionPosition.left: {
 				symbolPortion = "L";
@@ -604,8 +598,8 @@
 			}
 		}
 
-		var compareColors = function(color1, color2) {
-			var isEqual = true;
+		let compareColors = function(color1, color2) {
+			let isEqual = true;
 
 			if(color1 !== color2 || (color1 && color2 && color1.rgb !== color2.rgb)) {
 				isEqual = false;
@@ -613,24 +607,24 @@
 
 			return isEqual;
 		};
-		var res = "";
-		var fontList = true;
+		let res = "";
+		let fontList = true;
 
-		var aText = "";
-		var prevFont = new AscCommonExcel.Font();
-		var paragraphs = this.splitByParagraph(cPortion);
-		for (var j = 0; j < paragraphs.length; ++j) {
-			var aParaText = "";
-			var aPosList = paragraphs[j];
+		let aText = "";
+		let prevFont = new AscCommonExcel.Font();
+		let paragraphs = this.splitByParagraph(cPortion);
+		for (let j = 0; j < paragraphs.length; ++j) {
+			let aParaText = "";
+			let aPosList = paragraphs[j];
 
-			for (var i = 0; i < aPosList.length; ++i) {
+			for (let i = 0; i < aPosList.length; ++i) {
 
-				var aFont = aPosList[i].format;
+				let aFont = aPosList[i].format;
 
 				// font name and style
-				var newFont = aPosList[i].format;
-				var bNewFontName = !(prevFont.fn == newFont.fn);
-				var bNewStyle = (prevFont.b != newFont.b) || (prevFont.i != newFont.i);
+				let newFont = aPosList[i].format;
+				let bNewFontName = !(prevFont.fn === newFont.fn);
+				let bNewStyle = (prevFont.b !== newFont.b) || (prevFont.i !== newFont.i);
 
 				if (bNewFontName || (bNewStyle && fontList)) {
 					if(null === newFont.fn) {
@@ -641,7 +635,7 @@
 
 					//TODO пересмотреть. MS каждый раз прописывает новый font style:
 					// сли у предыдущего фрагмента был bold, у нового bold и italic - то у нового будет прописаны и bold и italic
-					var fontStyleStr = "";
+					let fontStyleStr = "";
 					if(prevFont.b !== newFont.b) {
 						fontStyleStr = ",";
 						if(newFont.b === true) {
@@ -670,24 +664,24 @@
 
 				//font size
 				newFont.fs = aFont.fs;
-				var bFontHtChanged = (prevFont.fs != newFont.fs);
+				let bFontHtChanged = (prevFont.fs !== newFont.fs);
 				if (bFontHtChanged) {
 					aParaText += "&" + newFont.fs;
 				}
 
 				// underline
-				if (prevFont.u != newFont.u) {
-					var underline = (newFont.u == Asc.EUnderline.u) ? prevFont.u : newFont.u;
-					(underline == Asc.EUnderline.underlineSingle) ? aParaText += "&U" : aParaText += "&E";
+				if (prevFont.u !== newFont.u) {
+					let underline = (newFont.u === Asc.EUnderline.u) ? prevFont.u : newFont.u;
+					(underline === Asc.EUnderline.underlineSingle) ? aParaText += "&U" : aParaText += "&E";
 				}
 
 				// strikeout
-				if (prevFont.s != newFont.s) {
+				if (prevFont.s !== newFont.s) {
 					aParaText += "&S";
 				}
 
 				// super/sub script
-				if (prevFont.va != newFont.va) {
+				if (prevFont.va !== newFont.va) {
 					//aParaText += "&S";
 
 					switch(newFont.va)
@@ -701,7 +695,7 @@
 
 
 				if(!compareColors(prevFont.c, newFont.c)) {
-					var newColor = this.convertFontColorFromObj(newFont.c);
+					let newColor = this.convertFontColorFromObj(newFont.c);
 					if(null !== newColor) {
 						aParaText += "&K";
 						aParaText += newColor;
@@ -787,7 +781,7 @@
 		this.changed = false;
 	}
 	CHeaderFooterEditorSection.prototype.clone = function () {
-		var res = new CHeaderFooterEditorSection();
+		let res = new CHeaderFooterEditorSection();
 
 		res.type = this.type;
 		res.portion = this.portion;
@@ -795,7 +789,7 @@
 		res.pictures = this.pictures;
 		if (this.fragments) {
 			res.fragments = [];
-			for (var i = 0; i < this.fragments.length; i++) {
+			for (let i = 0; i < this.fragments.length; i++) {
 				res.fragments.push(this.fragments[i].clone());
 			}
 		}
@@ -806,7 +800,7 @@
 		this.fragments = this.isEmptyFragments(val) ? null : val;
 	};
 	CHeaderFooterEditorSection.prototype.isEmptyFragments = function (val) {
-		var res = false;
+		let res = false;
 		if(val && val.length === 1 && val[0].getFragmentText() === "") {
 			res = true;
 		}
@@ -816,7 +810,7 @@
 		return this.fragments;
 	};
 	CHeaderFooterEditorSection.prototype.drawText = function () {
-		var t = this;
+		let t = this;
 
 		if (!this.canvasObj || !this.canvasObj.drawingCtx) {
 			return;
@@ -824,7 +818,7 @@
 
 		this.canvasObj.drawingCtx.clear();
 
-		var drawBackground = function () {
+		let drawBackground = function () {
 			t.canvasObj.drawingCtx.setFillStyle(new AscCommon.CColor(255, 255, 255))
 				.fillRect(0, 0, t.canvasObj.canvas.width, t.canvasObj.canvas.height);
 		};
@@ -835,26 +829,26 @@
 			return;
 		}
 
-		var canvas = this.canvasObj.canvas;
-		var width = this.canvasObj.width;
-		var drawingCtx = this.canvasObj.drawingCtx;
+		let canvas = this.canvasObj.canvas;
+		let width = this.canvasObj.width;
+		let drawingCtx = this.canvasObj.drawingCtx;
 
 		//draw
 		//добавляю флаги для учета переноса строки
-		var wb = window["Asc"]["editor"].wb;
-		var ws = window["Asc"]["editor"].wb.getWorksheet();
-		var cellFlags = new AscCommonExcel.CellFlags();
+		let wb = window["Asc"]["editor"].wb;
+		let ws = window["Asc"]["editor"].wb.getWorksheet();
+		let cellFlags = new AscCommonExcel.CellFlags();
 		cellFlags.wrapText = true;
 		cellFlags.textAlign = this.getAlign();
 
 		//не зависит от зума страницы
-		var realZoom = ws.stringRender.drawingCtx.getZoom();
+		let realZoom = ws.stringRender.drawingCtx.getZoom();
 		ws.stringRender.drawingCtx.changeZoom(1);
 
-		var cellEditorWidth = width - 2 * wb.defaults.worksheetView.cells.padding + 1 + 2 * correctCanvasDiff;
+		let cellEditorWidth = width - 2 * wb.defaults.worksheetView.cells.padding + 1 + 2 * correctCanvasDiff;
 		ws.stringRender.setString(this.fragments, cellFlags);
-		var textMetrics = ws.stringRender._measureChars(cellEditorWidth);
-		var parentHeight = document.getElementById(this.canvasObj.idParent).clientHeight;
+		let textMetrics = ws.stringRender._measureChars(cellEditorWidth);
+		let parentHeight = document.getElementById(this.canvasObj.idParent).clientHeight;
 		canvas.height = textMetrics.height > parentHeight ? textMetrics.height : AscCommon.AscBrowser.convertToRetinaValue(parentHeight + 1, true);
 
 		drawBackground();
@@ -866,14 +860,14 @@
 		return document.getElementById(this.canvasObj.idParent);
 	};
 	CHeaderFooterEditorSection.prototype.appendEditor = function (editorElemId) {
-		var curElem = this.getElem();
-		var editorElem = document.getElementById(editorElemId);
+		let curElem = this.getElem();
+		let editorElem = document.getElementById(editorElemId);
 		curElem.appendChild(editorElem);
 	};
 	CHeaderFooterEditorSection.prototype.getAlign = function (portion) {
 		portion = undefined !== portion ? portion : this.portion;
 
-		var res = AscCommon.align_Left;
+		let res = AscCommon.align_Left;
 		if(portion === c_nPortionCenterHeader || portion === c_nPortionCenterFooter) {
 			res = AscCommon.align_Center;
 		} else if(portion === c_nPortionRightHeader || portion === c_nPortionRightFooter) {
@@ -881,18 +875,21 @@
 		}
 		return res;
 	};
+	CHeaderFooterEditorSection.prototype.getPictures = function () {
+		return this.pictures;
+	};
 
 
 	function convertFieldToMenuText(val, _text) {
-		var textField = null;
-		var tM = AscCommon.translateManager;
-		var pageTag = "&[" + tM.getValue("Page") + "]";
-		var pagesTag = "&[" + tM.getValue("Pages") + "]";
-		var tabTag = "&[" + tM.getValue("Tab") + "]";
-		var dateTag = "&[" + tM.getValue("Date") + "]";
-		var fileTag = "&[" + tM.getValue("File") + "]";
-		var timeTag = "&[" + tM.getValue("Time") + "]";
-		var pictureTag = "&[" + tM.getValue("Picture") + "]";
+		let textField = null;
+		let tM = AscCommon.translateManager;
+		let pageTag = "&[" + tM.getValue("Page") + "]";
+		let pagesTag = "&[" + tM.getValue("Pages") + "]";
+		let tabTag = "&[" + tM.getValue("Tab") + "]";
+		let dateTag = "&[" + tM.getValue("Date") + "]";
+		let fileTag = "&[" + tM.getValue("File") + "]";
+		let timeTag = "&[" + tM.getValue("Time") + "]";
+		let pictureTag = "&[" + tM.getValue("Picture") + "]";
 
 		switch (val){
 			case asc.c_oAscHeaderFooterField.pageNumber: {
@@ -1542,6 +1539,19 @@
 			return;
 		}
 
+		if (val === asc.c_oAscHeaderFooterField.picture) {
+			let curSection = this._getSectionById(this.curParentFocusId);
+			let bSectionContainsPictures = curSection && curSection.getPictures();
+			if (bSectionContainsPictures) {
+				//confirm dialog
+				//replace/keep options
+
+			} else {
+				//add new pictures
+
+			}
+		}
+
 		let textField = convertFieldToMenuText(val);
 		if(null !== textField) {
 			this.cellEditor.pasteText(textField);
@@ -1808,11 +1818,11 @@
 	};
 
 	CHeaderFooterEditor.prototype._getCurPageHF = function (type, opt_headerFooter, ws) {
-		var res = null;
+		let res = null;
 		if (!ws) {
 			ws = this.wb.getWorksheet();
 		}
-		var hF = opt_headerFooter ? opt_headerFooter : ws.model.headerFooter;
+		let hF = opt_headerFooter ? opt_headerFooter : ws.model.headerFooter;
 
 		//TODO можно у класса CHeaderFooter реализовать данную функцию
 		if(hF) {
@@ -1847,9 +1857,9 @@
 	};
 
 	CHeaderFooterEditor.prototype._getSectionById = function (id) {
-		var res = null;
-		var type = this._getHeaderFooterType(this.pageType);
-		var i;
+		let res = null;
+		let type = this._getHeaderFooterType(this.pageType);
+		let i;
 		if(this.sections && this.sections[type]) {
 			for(i = 0; i < this.sections[type].length; i++) {
 				if(id === this.sections[type][i].canvasObj.idParent) {
@@ -1874,14 +1884,14 @@
 		}
 
 		//TODO возможно стоит созадавать tokens внутри парсера с элементами Fragments
-		var res = [];
+		let res = [];
 
-		var tM = AscCommon.translateManager;
+		let tM = AscCommon.translateManager;
 
-		var bToken, text, symbol, startToken, tokenText, tokenFormat;
-		for(var j = 0; j < fragments.length; j++) {
+		let bToken, text, symbol, startToken, tokenText, tokenFormat;
+		for(let j = 0; j < fragments.length; j++) {
 			text = "";
-			for(var n = 0; n < fragments[j].getFragmentText().length; n++) {
+			for(let n = 0; n < fragments[j].getFragmentText().length; n++) {
 				symbol = fragments[j].getFragmentText()[n];
 				if(symbol !== "&") {
 					text += symbol;
@@ -2046,32 +2056,32 @@
 	};
 
 	CHeaderFooterEditor.prototype._getFragments = function(text, format) {
-		var tempFragment = new AscCommonExcel.Fragment();
+		let tempFragment = new AscCommonExcel.Fragment();
 		tempFragment.setFragmentText(text);
 		tempFragment.format = format;
 		return tempFragment;
 	};
 
 	CHeaderFooterEditor.prototype._generatePresetsArr = function() {
-		var docInfo = window["Asc"]["editor"].DocInfo;
-		var userInfo = docInfo ? docInfo.get_UserInfo() : null;
-		var userName = userInfo ? userInfo.get_FullName() : "";
-		var fileName = docInfo ? docInfo.get_Title() : "";
+		let docInfo = window["Asc"]["editor"].DocInfo;
+		let userInfo = docInfo ? docInfo.get_UserInfo() : null;
+		let userName = userInfo ? userInfo.get_FullName() : "";
+		let fileName = docInfo ? docInfo.get_Title() : "";
 
-		var tM = AscCommon.translateManager;
-		var confidential = tM.getValue("Confidential");
-		var preparedBy = tM.getValue("Prepared by ");
-		var page = tM.getValue("Page");
-		var pageOf = tM.getValue("Page %1 of %2");
+		let tM = AscCommon.translateManager;
+		let confidential = tM.getValue("Confidential");
+		let preparedBy = tM.getValue("Prepared by ");
+		let page = tM.getValue("Page");
+		let pageOf = tM.getValue("Page %1 of %2");
 
-		var pageTag = "&[" + page + "]";
-		var pagesTag = "&[" + tM.getValue("Pages") + "]";
-		var tabTag = "&[" + tM.getValue("Tab") + "]";
-		var dateTag = "&[" + tM.getValue("Date") + "]";
-		var fileTag = "&[" + tM.getValue("File") + "]";
+		let pageTag = "&[" + page + "]";
+		let pagesTag = "&[" + tM.getValue("Pages") + "]";
+		let tabTag = "&[" + tM.getValue("Tab") + "]";
+		let dateTag = "&[" + tM.getValue("Date") + "]";
+		let fileTag = "&[" + tM.getValue("File") + "]";
 
-		var arrPresets = [];
-		var arrPresetsMenu = [];
+		let arrPresets = [];
+		let arrPresetsMenu = [];
 		arrPresets[0] = arrPresetsMenu[0] = [null, null, null];
 		arrPresets[1] = arrPresetsMenu[1] = [null,  page + " " + pageTag, null];
 		arrPresets[2] = [null, pageOf.replace("%1", pageTag).replace("%2", pagesTag), null];
@@ -2145,7 +2155,7 @@
 	window["AscCommonExcel"].CHeaderFooterEditorSection = CHeaderFooterEditorSection;
 
 	window["Asc"]["asc_CHeaderFooterEditor"] = window["AscCommonExcel"].CHeaderFooterEditor = CHeaderFooterEditor;
-	var prot = CHeaderFooterEditor.prototype;
+	let prot = CHeaderFooterEditor.prototype;
 	prot["click"] 	= prot.click;
 	prot["destroy"] = prot.destroy;
 	prot["setFontName"] = prot.setFontName;
