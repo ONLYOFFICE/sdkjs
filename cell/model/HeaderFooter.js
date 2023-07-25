@@ -782,6 +782,8 @@
 		this.canvasObj = canvasObj;
 		this.fragments = null;
 
+		this.pictures = null;
+
 		this.changed = false;
 	}
 	CHeaderFooterEditorSection.prototype.clone = function () {
@@ -790,6 +792,7 @@
 		res.type = this.type;
 		res.portion = this.portion;
 		res.canvasObj = this.canvasObj;
+		res.pictures = this.pictures;
 		if (this.fragments) {
 			res.fragments = [];
 			for (var i = 0; i < this.fragments.length; i++) {
@@ -938,7 +941,7 @@
 		return textField;
 	}
 
-	var correctCanvasDiff = 0;
+	let correctCanvasDiff = 0;
 	window.Asc.g_header_footer_editor = null;
 	function CHeaderFooterEditor(idArr, width, pageType, opt_objForSave) {
 		this.parentWidth = AscCommon.AscBrowser.convertToRetinaValue(this.correctCanvasWidth(width), true);
@@ -974,9 +977,9 @@
 		//создаем 6 канвы(+ добавляем их в дом структуру внутрь элемента от меню) + 3 drawingCtx, необходимые для отрисовки 3 поля
 		//делается это только 1 раз при инициализации класса
 		//потом эти 6 канвы используются для отрисовки всех first/odd/even
-		var t = this;
-		var createAndPushCanvasObj = function(id) {
-			var obj = {};
+		let t = this;
+		let createAndPushCanvasObj = function(id) {
+			let obj = {};
 			obj.idParent = id;
 			obj.id = id + "-canvas";
 			obj.width = t.parentWidth;
@@ -991,7 +994,7 @@
 			obj.canvas.height = t.parentHeight;
 			obj.canvas.style.width = AscCommon.AscBrowser.convertToRetinaValue(t.parentWidth) + "px";
 
-			var curElem = document.getElementById(id);
+			let curElem = document.getElementById(id);
 			curElem.appendChild(obj.canvas);
 
 			obj.drawingCtx = new asc.DrawingContext({
@@ -1011,8 +1014,8 @@
 
 
 		//add common options
-		var optHeaderFooterProps = opt_objForSave && opt_objForSave.headerFooter;
-		var ws = this.wb.getWorksheet();
+		let optHeaderFooterProps = opt_objForSave && opt_objForSave.headerFooter;
+		let ws = this.wb.getWorksheet();
 		this.alignWithMargins = optHeaderFooterProps ? optHeaderFooterProps.alignWithMargins : ws.model.headerFooter.alignWithMargins;
 		this.differentFirst = optHeaderFooterProps ? optHeaderFooterProps.differentFirst : ws.model.headerFooter.differentFirst;
 		this.differentOddEven = optHeaderFooterProps ? optHeaderFooterProps.differentOddEven : ws.model.headerFooter.differentOddEven;
@@ -1034,15 +1037,15 @@
 		if(type === this.pageType) {
 			return;
 		}
-		var isError = this._checkSave();
+		let isError = this._checkSave();
 		if(null !== isError) {
 			return isError;
 		}
 
 		if(this.cellEditor) {
 			//save
-			var prevField = this._getSectionById(this.curParentFocusId);
-			var prevFragments = this.cellEditor.options.fragments;
+			let prevField = this._getSectionById(this.curParentFocusId);
+			let prevFragments = this.cellEditor.options.fragments;
 			prevField.setFragments(prevFragments);
 			prevField.drawText();
 
@@ -1061,11 +1064,11 @@
 	};
 
 	CHeaderFooterEditor.prototype.click = function (id, x, y) {
-		var api = this.api;
-		var wb = this.wb;
-		var t = this;
+		let api = this.api;
+		let wb = this.wb;
+		let t = this;
 
-		var editLockCallback = function() {
+		let editLockCallback = function() {
 			id = id.replace("#", "");
 
 			//если находимся в том же элементе
@@ -1077,8 +1080,8 @@
 			//TODO ещё нужно учитывать, что находимся в той же вкладке - odd/even/...
 			//если перед этим редактировали другое поле, сохраняем данные
 			if(null !== t.curParentFocusId) {
-				var prevField = t._getSectionById(t.curParentFocusId);
-				var prevFragments = t.cellEditor.options.fragments;
+				let prevField = t._getSectionById(t.curParentFocusId);
+				let prevFragments = t.cellEditor.options.fragments;
 				prevField.setFragments(prevFragments);
 				prevField.drawText();
 
@@ -1088,11 +1091,11 @@
 			t.curParentFocusId = id;
 
 
-			var cSection = t._getSectionById(id);
+			let cSection = t._getSectionById(id);
 			if(cSection) {
-				var sectionElem = cSection.getElem();
-				var fragments = cSection.getFragments();
-				var self = wb;
+				let sectionElem = cSection.getElem();
+				let fragments = cSection.getFragments();
+				let self = wb;
 				if(!t.cellEditor) {
 					t.cellEditor =
 						new AscCommonExcel.CellEditor(sectionElem, wb.input, wb.fmgrGraphics, wb.m_oFont, /*handlers*/{
@@ -1155,32 +1158,32 @@
 	};
 
 	CHeaderFooterEditor.prototype._openCellEditor = function (editor, fragments, x, y) {
-		var t = this;
+		let t = this;
 
-		var wb = this.wb;
-		var ws = wb.getWorksheet();
+		let wb = this.wb;
+		let ws = wb.getWorksheet();
 
 		if (!fragments) {
 			fragments = [];
-			var tempFragment = new AscCommonExcel.Fragment();
+			let tempFragment = new AscCommonExcel.Fragment();
 			tempFragment.setFragmentText("");
 			tempFragment.format = new AscCommonExcel.Font();
 			fragments.push(tempFragment);
 		}
 
-		var curSection = this._getSectionById(this.curParentFocusId);
+		let curSection = this._getSectionById(this.curParentFocusId);
 		curSection.changed = true;
-		var flags = new window["AscCommonExcel"].CellFlags();
+		let flags = new window["AscCommonExcel"].CellFlags();
 		flags.wrapText = true;
 		flags.textAlign = curSection.getAlign();
 
-		var enterOptions = new AscCommonExcel.CEditorEnterOptions();
+		let enterOptions = new AscCommonExcel.CEditorEnterOptions();
 		enterOptions.focus = true;
 		if(undefined !== x && undefined !== y) {
 			enterOptions.eventPos = {pageX: x, pageY: y};
 		}
 
-		var options = {
+		let options = {
 			enterOptions: enterOptions,
 			fragments: fragments,
 			flags: flags,
@@ -1194,8 +1197,8 @@
 				//TODO добавил для того, чтобы при нажатии на стрелки не было падения
 			},
 			getSides: function () {
-				var bottomArr = [];
-				for(var i = 0; i < 30; i++) {
+				let bottomArr = [];
+				for(let i = 0; i < 30; i++) {
 					bottomArr.push(t.parentHeight + i * 19);
 				}
 				return {l: [0], r: [t.parentWidth + 2 * correctCanvasDiff], b: bottomArr, cellX: 0, cellY: 0, ri: 0, bi: 0};
@@ -1215,17 +1218,17 @@
 
 	CHeaderFooterEditor.prototype.destroy = function (bSave, opt_objForSave) {
 		//возвращаем cellEditor у wb
-		var t = this;
-		var api = window["Asc"]["editor"];
-		var wb = api.wb;
-		var ws = wb.getWorksheet();
+		let t = this;
+		let api = window["Asc"]["editor"];
+		let wb = api.wb;
+		let ws = wb.getWorksheet();
 
 		if(bSave /*&& bChanged*/&& !ws.collaborativeEditing.getGlobalLock() && wb.canEdit()) {
-			var checkError = this._checkSave();
+			let checkError = this._checkSave();
 			if(null === checkError) {
 				wb.cellEditor.close();
 				wb.cellEditor = this.wbCellEditor;
-				var saveCallback = function(isSuccess) {
+				let saveCallback = function(isSuccess) {
 					if (false === isSuccess) {
 						ws.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedAllError, c_oAscError.Level.NoCritical);
 						return;
@@ -1250,27 +1253,27 @@
 	};
 
 	CHeaderFooterEditor.prototype._checkSave = function() {
-		var t = this;
+		let t = this;
 
 		if(null !== this.curParentFocusId) {
-			var prevField = this._getSectionById(this.curParentFocusId);
-			var prevFragments = this.cellEditor.options.fragments;
+			let prevField = this._getSectionById(this.curParentFocusId);
+			let prevFragments = this.cellEditor.options.fragments;
 			prevField.setFragments(prevFragments);
 
 			prevField.canvasObj.canvas.style.display = "block";
 		}
 
-		var checkError = function(type) {
-			var prevHeaderFooter = t._getCurPageHF(type);
-			var curHeaderFooter = new Asc.CHeaderFooterData();
+		let checkError = function(type) {
+			let prevHeaderFooter = t._getCurPageHF(type);
+			let curHeaderFooter = new Asc.CHeaderFooterData();
 			curHeaderFooter.parser = new window["AscCommonExcel"].HeaderFooterParser();
 			if(prevHeaderFooter && prevHeaderFooter.parser) {
-				var newTokens = [];
-				for(var i in prevHeaderFooter.parser.tokens) {
+				let newTokens = [];
+				for(let i in prevHeaderFooter.parser.tokens) {
 					if(prevHeaderFooter.parser.tokens[i]) {
 						newTokens[i] = [];
-						for(var j in prevHeaderFooter.parser.tokens[i]) {
-							var curPortion = prevHeaderFooter.parser.tokens[i][j];
+						for(let j in prevHeaderFooter.parser.tokens[i]) {
+							let curPortion = prevHeaderFooter.parser.tokens[i][j];
 							if(curPortion) {
 								newTokens[i][j] = curPortion.clone();
 							}
@@ -1290,10 +1293,10 @@
 				curHeaderFooter.parser.tokens[c_oPortionPosition.right] = t._convertFragments(t.sections[type][c_oPortionPosition.right].fragments);
 			}
 
-			var oData = curHeaderFooter.parser.assembleText();
+			let oData = curHeaderFooter.parser.assembleText();
 			if(oData.str && oData.str.length > Asc.c_oAscMaxHeaderFooterLength) {
-				var maxLength = oData.left.length;
-				var section = c_oPortionPosition.left;
+				let maxLength = oData.left.length;
+				let section = c_oPortionPosition.left;
 				if(oData.right.length > oData.left.length && oData.right.length > oData.center.length) {
 					section = c_oPortionPosition.right;
 					maxLength = oData.right.length;
@@ -1309,10 +1312,10 @@
 			return false
 		};
 
-		var pageHeaderType = this._getHeaderFooterType(this.pageType);
-		var pageFooterType = this._getHeaderFooterType(this.pageType, true);
-		var headerCheck = checkError(pageHeaderType);
-		var footerCheck = checkError(pageFooterType);
+		let pageHeaderType = this._getHeaderFooterType(this.pageType);
+		let pageFooterType = this._getHeaderFooterType(this.pageType, true);
+		let headerCheck = checkError(pageHeaderType);
+		let footerCheck = checkError(pageFooterType);
 		if(headerCheck && footerCheck) {
 			return headerCheck.max > footerCheck.max ? headerCheck.id : footerCheck.id;
 		} else if(headerCheck) {
@@ -1325,12 +1328,12 @@
 	};
 
 	CHeaderFooterEditor.prototype.setPropsFromInterface = function (props, doChanged) {
-		var sections = props.sections;
+		let sections = props.sections;
 		if (doChanged) {
-			var newSections = [];
-			for (var i in sections) {
+			let newSections = [];
+			for (let i in sections) {
 				newSections[i] = [];
-				for (var j in sections[i]) {
+				for (let j in sections[i]) {
 					newSections[i][j] = sections[i][j] && sections[i][j].clone();
 					if (newSections[i][j]) {
 						newSections[i][j].changed = true;
@@ -1349,13 +1352,13 @@
 	};
 
 	CHeaderFooterEditor.prototype.getPropsToInterface = function (savedHeaderFooter) {
-		var res = savedHeaderFooter ? savedHeaderFooter : {};
+		let res = savedHeaderFooter ? savedHeaderFooter : {};
 
 		//merge
 		if (this.sections) {
-			for (var i in this.sections) {
+			for (let i in this.sections) {
 				if (this.sections[i]) {
-					for (var j in this.sections[i]) {
+					for (let j in this.sections[i]) {
 						if (!res.sections) {
 							res.sections = [];
 						}
@@ -1381,8 +1384,8 @@
 			ws = this.wb && this.wb.getWorksheet();
 		}
 
-		var hF = opt_headerFooter ? opt_headerFooter : ws.model.headerFooter;
-		var isAddHistory = false;
+		let hF = opt_headerFooter ? opt_headerFooter : ws.model.headerFooter;
+		let isAddHistory = false;
 
 		if (reWrite) {
 			History.Create_NewPoint();
@@ -1391,7 +1394,7 @@
 			hF.clean();
 		}
 
-		for(var i = 0; i < this.sections.length; i++) {
+		for(let i = 0; i < this.sections.length; i++) {
 			if(!this.sections[i]) {
 				continue;
 			}
@@ -1399,7 +1402,7 @@
 			//сначала формируем новый объект, затем доблавляем в модель и записываем в историю полученную строку
 			//возможно стоит пересмотреть(получать вначале строку) - создаём вначале парсер,
 			//добавляем туда полученные при редактировании фрагменты, затем получаем строку
-			var curHeaderFooter = this._getCurPageHF(i, opt_headerFooter, ws);
+			let curHeaderFooter = this._getCurPageHF(i, opt_headerFooter, ws);
 			if(null === curHeaderFooter) {
 				curHeaderFooter = new Asc.CHeaderFooterData();
 			}
@@ -1407,7 +1410,7 @@
 				curHeaderFooter.parser = new window["AscCommonExcel"].HeaderFooterParser();
 			}
 
-			var isChanged = false;
+			let isChanged = false;
 			if(this.sections[i][c_oPortionPosition.left] && (this.sections[i][c_oPortionPosition.left].changed || reWrite)) {
 				curHeaderFooter.parser.tokens[c_oPortionPosition.left] = this._convertFragments(this.sections[i][c_oPortionPosition.left].fragments);
 				isChanged = true;
@@ -1451,7 +1454,7 @@
 			return;
 		}
 
-		var t = this, fonts = {};
+		let t = this, fonts = {};
 		fonts[fontName] = 1;
 		t.api._loadFonts(fonts, function() {
 			t.cellEditor.setTextStyle("fn", fontName);
@@ -1539,42 +1542,42 @@
 			return;
 		}
 
-		var textField = convertFieldToMenuText(val);
+		let textField = convertFieldToMenuText(val);
 		if(null !== textField) {
 			this.cellEditor.pasteText(textField);
 		}
 	};
 
 	CHeaderFooterEditor.prototype.getTextPresetsArr = function() {
-		var wb = this.wb;
-		var ws = wb.getWorksheet();
+		let wb = this.wb;
+		let ws = wb.getWorksheet();
 
-		var arrPresets = this.menuPresets;
+		let arrPresets = this.menuPresets;
 		if(!arrPresets) {
 			return [];
 		}
 
-		var getFragmentText = function(val) {
+		let getFragmentText = function(val) {
 			return val.getText(ws, 0, 1);
 		};
 
-		var getFragmentsText = function(fragments) {
-			var res = "";
-			for(var n = 0; n < fragments.length; n++) {
+		let getFragmentsText = function(fragments) {
+			let res = "";
+			for(let n = 0; n < fragments.length; n++) {
 				res += getFragmentText(fragments[n]);
 			}
 			return res;
 		};
 
-		var textPresetsArr = [];
-		for(var i = 0; i < arrPresets.length; i++) {
+		let textPresetsArr = [];
+		for(let i = 0; i < arrPresets.length; i++) {
 			if(!arrPresets[i]) {
 				continue;
 			}
 			textPresetsArr[i] = "";
-			for(var j = 0; j < arrPresets[i].length; j++) {
+			for(let j = 0; j < arrPresets[i].length; j++) {
 				if(arrPresets[i][j]) {
-					var fragments = this._convertFragments([this._getFragments(arrPresets[i][j])]);
+					let fragments = this._convertFragments([this._getFragments(arrPresets[i][j])]);
 					if("" !== textPresetsArr[i]) {
 						textPresetsArr[i] += ", ";
 					}
@@ -1591,8 +1594,8 @@
 
 	CHeaderFooterEditor.prototype.applyPreset = function(type, bFooter) {
 
-		var curType = this._getHeaderFooterType(this.pageType, bFooter);
-		var section = this.sections[curType];
+		let curType = this._getHeaderFooterType(this.pageType, bFooter);
+		let section = this.sections[curType];
 
 		if(this.cellEditor) {
 			if(section[c_oPortionPosition.left] && section[c_oPortionPosition.left].canvasObj) {
@@ -1602,8 +1605,8 @@
 
 		this.curParentFocusId = null;
 
-		var fragments;
-		for(var i = 0; i < section.length; i++) {
+		let fragments;
+		for(let i = 0; i < section.length; i++) {
 			if(!this.presets[type][i]) {
 				section[i].setFragments(null);
 			} else {
@@ -1617,12 +1620,12 @@
 	};
 
 	CHeaderFooterEditor.prototype.getAppliedPreset = function(type, bFooter) {
-		var res = Asc.c_oAscHeaderFooterPresets.none;
+		let res = Asc.c_oAscHeaderFooterPresets.none;
 		type = undefined !== type ? type : this.pageType;
-		var curType = this._getHeaderFooterType(type, bFooter);
-		var section = this.sections[curType];
+		let curType = this._getHeaderFooterType(type, bFooter);
+		let section = this.sections[curType];
 
-		for(var i = 0; i < section.length; i++) {
+		for(let i = 0; i < section.length; i++) {
 
 			if(null !== section[i].fragments) {
 				res = Asc.c_oAscHeaderFooterPresets.custom;
@@ -1638,7 +1641,7 @@
 	};
 
 	CHeaderFooterEditor.prototype.setDifferentFirst = function(val) {
-		var checkError;
+		let checkError;
 		if(!val && (checkError = this._checkSave()) !== null) {
 			return checkError;
 		}
@@ -1648,7 +1651,7 @@
 	};
 
 	CHeaderFooterEditor.prototype.setDifferentOddEven = function(val) {
-		var checkError;
+		let checkError;
 		if(!val && (checkError = this._checkSave()) !== null) {
 			return checkError;
 		}
@@ -1678,29 +1681,41 @@
 	};
 
 	CHeaderFooterEditor.prototype._createAndDrawSections = function(pageCommonType, opt_objForSave, opt_headerFooter) {
-		var pageHeaderType = this._getHeaderFooterType(pageCommonType);
-		var pageFooterType = this._getHeaderFooterType(pageCommonType, true);
+		let pageHeaderType = this._getHeaderFooterType(pageCommonType);
+		let pageFooterType = this._getHeaderFooterType(pageCommonType, true);
 
-		var getFragments = function(textPropsArr) {
+		let getFragments = function(textPropsArr) {
 			if(!textPropsArr) {
 				return null;
 			}
-			var res = [];
-			for(var i = 0; i < textPropsArr.length; i++) {
-				var curProps = textPropsArr[i];
-				var text = convertFieldToMenuText(curProps.field, curProps.textField);
+			let _fragments = [];
+			let pictures;
+			for(let i = 0; i < textPropsArr.length; i++) {
+				let curProps = textPropsArr[i];
+				let text = convertFieldToMenuText(curProps.field, curProps.textField);
 				if(null !== text) {
-					var tempFragment = new AscCommonExcel.Fragment();
+					let tempFragment = new AscCommonExcel.Fragment();
 					tempFragment.setFragmentText(text);
 					tempFragment.format = curProps.format;
-					res.push(tempFragment);
+					_fragments.push(tempFragment);
+				}
+				if (curProps.field === asc.c_oAscHeaderFooterField.picture) {
+					pictures = true;
 				}
 			}
-			return res;
+			return {fragments: _fragments, pictures: pictures};
+		};
+
+		let _addFragments = function (_curParser, curSection) {
+			let _fragments = getFragments(_curParser);
+			if(null !== _fragments.fragments) {
+				curSection.fragments = _fragments.fragments;
+				curSection.pictures = _fragments.pictures;
+			}
 		};
 
 		//header
-		var curPageHF, parser, leftFragments, centerFragments, rightFragments;
+		let curPageHF, parser;
 		if(!this.sections[pageHeaderType]) {
 			this.sections[pageHeaderType] = [];
 
@@ -1728,18 +1743,9 @@
 						curPageHF.parse();
 					}
 					parser = curPageHF.parser.tokens;
-					leftFragments = getFragments(parser[0]);
-					if(null !== leftFragments) {
-						this.sections[pageHeaderType][c_oPortionPosition.left].fragments = leftFragments;
-					}
-					centerFragments = getFragments(parser[1]);
-					if(null !== centerFragments) {
-						this.sections[pageHeaderType][c_oPortionPosition.center].fragments = centerFragments;
-					}
-					rightFragments = getFragments(parser[2]);
-					if(null !== rightFragments) {
-						this.sections[pageHeaderType][c_oPortionPosition.right].fragments = rightFragments;
-					}
+					_addFragments(parser[0], this.sections[pageHeaderType][c_oPortionPosition.left]);
+					_addFragments(parser[1], this.sections[pageHeaderType][c_oPortionPosition.center]);
+					_addFragments(parser[2], this.sections[pageHeaderType][c_oPortionPosition.right]);
 				}
 			}
 		}
@@ -1772,18 +1778,9 @@
 						curPageHF.parse();
 					}
 					parser = curPageHF.parser.tokens;
-					leftFragments = getFragments(parser[0]);
-					if(null !== leftFragments) {
-						this.sections[pageFooterType][c_oPortionPosition.left].fragments = leftFragments;
-					}
-					centerFragments = getFragments(parser[1]);
-					if(null !== centerFragments) {
-						this.sections[pageFooterType][c_oPortionPosition.center].fragments = centerFragments;
-					}
-					rightFragments = getFragments(parser[2]);
-					if(null !== rightFragments) {
-						this.sections[pageFooterType][c_oPortionPosition.right].fragments = rightFragments;
-					}
+					_addFragments(parser[0], this.sections[pageFooterType][c_oPortionPosition.left]);
+					_addFragments(parser[1], this.sections[pageFooterType][c_oPortionPosition.center]);
+					_addFragments(parser[2], this.sections[pageFooterType][c_oPortionPosition.right]);
 				}
 			}
 		}
@@ -1799,7 +1796,7 @@
 	};
 
 	CHeaderFooterEditor.prototype._getHeaderFooterType = function(type, bFooter) {
-		var res = bFooter ? asc.c_oAscPageHFType.oddFooter : asc.c_oAscPageHFType.oddHeader;
+		let res = bFooter ? asc.c_oAscPageHFType.oddFooter : asc.c_oAscPageHFType.oddHeader;
 
 		if(type === asc.c_oAscHeaderFooterType.first) {
 			res = bFooter ? asc.c_oAscPageHFType.firstFooter : asc.c_oAscPageHFType.firstHeader;
