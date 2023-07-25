@@ -303,11 +303,28 @@ window['AscCommonWord']['CDocumentComparison'].prototype.setReviewInfo = functio
 	}
 };
 
+let GLOBAL_DOC_STYLES = null;
+let GLOBAL_GLOSSARY_STYLES = null;
+function getDocumentStyles() {
+	if(!GLOBAL_DOC_STYLES) {
+		GLOBAL_DOC_STYLES = new CStyles();
+	}
+	return GLOBAL_DOC_STYLES;
+}
+function getDocumentGlossaryStyles() {
+	if(!GLOBAL_GLOSSARY_STYLES) {
+		GLOBAL_GLOSSARY_STYLES = new CStyles();
+	}
+	return GLOBAL_GLOSSARY_STYLES;
+}
 function readMainDocument(oMainDocumentInfo)
 {
-	const oDocument = new AscWord.CDocument(mockEditor.WordControl.m_oDrawingDocument, true);
+	const oDocument = new AscWord.CDocument(mockEditor.WordControl.m_oDrawingDocument, true, false);
 	mockEditor.WordControl.m_oDrawingDocument.m_oLogicDocument = oDocument;
 	mockEditor.WordControl.m_oLogicDocument = oDocument;
+	oDocument.Styles = getDocumentStyles();
+	oDocument.Styles.Set_LogicDocument(oDocument);
+	oDocument.GlossaryDocument.Styles = getDocumentGlossaryStyles();
 	oDocument.Api = mockEditor;
 	oMainComments = oDocument.Comments;
 	createTestDocument(oDocument, oMainDocumentInfo);
@@ -317,9 +334,12 @@ function readMainDocument(oMainDocumentInfo)
 function readRevisedDocument(oRevisedDocumentInfo)
 {
 	const oMainDocument = mockEditor.WordControl.m_oLogicDocument;
-	const oRevisedDocument = new CDocument(mockEditor.WordControl.m_oDrawingDocument, true);
+	const oRevisedDocument = new CDocument(mockEditor.WordControl.m_oDrawingDocument, true, false);
 	mockEditor.WordControl.m_oDrawingDocument.m_oLogicDocument = oRevisedDocument;
 	mockEditor.WordControl.m_oLogicDocument = oRevisedDocument;
+	oRevisedDocument.Styles = getDocumentStyles();
+	oRevisedDocument.Styles.Set_LogicDocument(oRevisedDocument);
+	oRevisedDocument.GlossaryDocument.Styles = getDocumentGlossaryStyles();
 
 	createTestDocument(oRevisedDocument, oRevisedDocumentInfo);
 

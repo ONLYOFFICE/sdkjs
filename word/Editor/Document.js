@@ -1791,7 +1791,7 @@ CSelectedElementsInfo.prototype.IsFixedFormShape = function()
  * @constructor
  * @extends {CDocumentContentBase}
  */
-function CDocument(DrawingDocument, isMainLogicDocument)
+function CDocument(DrawingDocument, isMainLogicDocument, bCreateStyles)
 {
 	CDocumentContentBase.call(this);
 
@@ -1949,9 +1949,12 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.Numbering           = new AscWord.CNumbering();               // Форматный класс для хранения всех нумераций согласно формату
 	this.NumberingApplicator = new AscWord.CNumberingApplicator(this); // Класс для применения нумерации к текущему выделение
 	this.NumberingCollection = new AscWord.CNumberingCollection(this); // Класс, хранящий нумерации, используемые в документе
-	
-    this.Styles    = new CStyles();
-    this.Styles.Set_LogicDocument(this);
+
+    if(bCreateStyles !== false)
+    {
+        this.Styles    = new CStyles();
+        this.Styles.Set_LogicDocument(this);
+    }
 
     this.DrawingDocument = DrawingDocument;
 
@@ -2149,7 +2152,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
     this.DocumentOutline = new CDocumentOutline(this);
 
-    this.GlossaryDocument = new CGlossaryDocument(this);
+    this.GlossaryDocument = new CGlossaryDocument(this, bCreateStyles);
 
 	this.AutoCorrectSettings = new AscCommon.CAutoCorrectSettings();
 

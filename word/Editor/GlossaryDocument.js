@@ -53,7 +53,7 @@ var c_oAscDefaultPlaceholderName = {
  * @param {CDocument} oLogicDocument
  * @constructor
  */
-function CGlossaryDocument(oLogicDocument)
+function CGlossaryDocument(oLogicDocument, bCreateStyles)
 {
 	this.Id = oLogicDocument.GetIdCounter().Get_NewId();
 
@@ -77,7 +77,10 @@ function CGlossaryDocument(oLogicDocument)
 
 	// TODO: Реализовать работу нумерации, стилей, сносок, заданных в контентах по-нормальному
 	this.Numbering = new AscWord.CNumbering();
-	this.Styles    = new CStyles();
+	if(bCreateStyles !== false)
+	{
+		this.Styles = new CStyles();
+	}
 	this.Footnotes = new CFootnotesController(oLogicDocument);
 	this.Endnotes  = new CEndnotesController(oLogicDocument);
 
