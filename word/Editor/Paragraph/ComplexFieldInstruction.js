@@ -1137,6 +1137,13 @@ CFieldInstructionSEQ.prototype.SetGeneralSwitches = function (aSwitches)
 		this.NumFormat = GeneralToNumFormat(aSwitches[i]);
 	}
 };
+CFieldInstructionSEQ.prototype.CheckId = function(type)
+{
+	if (!(typeof type === "string"))
+		return type === this.Id;
+	
+	return (type.split(" ").join("_") === this.Id);
+};
 
 function GeneralToNumFormat(sFormat)
 {

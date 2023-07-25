@@ -5227,11 +5227,14 @@ PasteProcessor.prototype =
 								var img = oThis.aNeedRecalcImgSize[i].img;
 								if (drawing && img) {
 									var imgSize = oThis._getImgSize(img);
+									let fitPagePictureSize = oThis.fitPictureSizeToPage(imgSize.width, imgSize.height);
+									let nWidth = fitPagePictureSize.nWidth;
+									let nHeight = fitPagePictureSize.nHeight;
 
-									if (imgSize && drawing.Extent && (drawing.Extent.H !== imgSize.height || drawing.Extent.W !== imgSize.width)) {
-										drawing.setExtent(imgSize.width, imgSize.height);
-										drawing.GraphicObj.spPr.xfrm.setExtX(imgSize.width);
-										drawing.GraphicObj.spPr.xfrm.setExtY(imgSize.height);
+									if (imgSize && drawing.Extent && (drawing.Extent.H !== nHeight || drawing.Extent.W !== nWidth)) {
+										drawing.setExtent(nWidth, nHeight);
+										drawing.GraphicObj.spPr.xfrm.setExtX(nWidth);
+										drawing.GraphicObj.spPr.xfrm.setExtY(nHeight);
 									}
 								}
 							} else {
@@ -6579,7 +6582,7 @@ PasteProcessor.prototype =
 			}
 
 			//принудительно добавляю для математики шрифт Cambria Math
-			if (child && child.nodeName.toLowerCase() === "#comment" && -1 !== child.nodeValue.indexOf("[if gte msEquation 12]") && !this.pasteInExcel && this.apiEditor["asc_isSupportFeature"]("ooxml")) {
+			if (child && child.nodeName.toLowerCase() === "#comment" && this.isSupportPasteMathContent(child.nodeValue, true) && !this.pasteInExcel && this.apiEditor["asc_isSupportFeature"]("ooxml")) {
 				//TODO пока только в документы разрешаю вставку математики математику
 				var mathFont = "Cambria Math";
 				this.oFonts[mathFont] = {
@@ -6641,7 +6644,7 @@ PasteProcessor.prototype =
 			if (parent && (parent.nodeName.toLowerCase() === "p" || parent.nodeName.toLowerCase() === "body")) {
 				for (let i = 0; i < parent.childNodes.length; i++) {
 					let child = parent.childNodes[i];
-					if (child && child.nodeName.toLowerCase() === "#comment" && -1 !== child.nodeValue.indexOf("[if gte msEquation 12]")) {
+					if (child && child.nodeName.toLowerCase() === "#comment" && this.isSupportPasteMathContent(child.nodeValue, true)) {
 						return true;
 					}
 				}
@@ -9798,23 +9801,9 @@ PasteProcessor.prototype =
 									oThis.oCurRun.Pr.Underline = false;
 								}
 
-                                if(oThis.apiEditor && oThis.apiEditor.isDocumentEditor) {
-                                    if(oThis.oLogicDocument && oThis.oLogicDocument.GetColumnSize ) {
-
-                                        var oColumnSize = oThis.oLogicDocument.GetColumnSize();
-                                        if(oColumnSize) {
-                                            if(nWidth > oColumnSize.W || nHeight > oColumnSize.H) {
-                                                if(oColumnSize.W > 0 && oColumnSize.H > 0)  {
-                                                    var dScaleW = oColumnSize.W/nWidth;
-                                                    var dScaleH = oColumnSize.H/nHeight;
-                                                    var dScale = Math.min(dScaleW, dScaleH);
-                                                    nWidth *= dScale;
-                                                    nHeight *= dScale;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+								let fitPagePictureSize = oThis.fitPictureSizeToPage(nWidth, nHeight);
+								nWidth = fitPagePictureSize.nWidth;
+								nHeight = fitPagePictureSize.nHeight;
 
 								var Drawing = CreateImageFromBinary(sSrc, nWidth, nHeight);
 								if(!oThis.aNeedRecalcImgSize) {
@@ -10018,7 +10007,7 @@ PasteProcessor.prototype =
 		};
 
 		let pushMathContent = function (_child) {
-			if (-1 !== _child.nodeValue.indexOf("[if gte msEquation 12]") && !oThis.pasteInExcel && oThis.apiEditor["asc_isSupportFeature"]("ooxml")) {
+			if (oThis.isSupportPasteMathContent(child.nodeValue, true) && !oThis.pasteInExcel && oThis.apiEditor["asc_isSupportFeature"]("ooxml")) {
 				let oPar = new Paragraph(oThis.oLogicDocument.DrawingDocument, bPresentation ? oShapeContent : null, bPresentation);
 
 				History.TurnOff();
@@ -10555,7 +10544,7 @@ PasteProcessor.prototype =
 					if (-1 !== value.indexOf("supportLineBreakNewLine")) {
 						bSkip = true;
 					}
-					if (-1 !== value.indexOf("[if !msEquation]") && !this.pasteInExcel && this.apiEditor["asc_isSupportFeature"]("ooxml")) {
+					if (this.isSupportPasteMathContent(value) && !this.pasteInExcel && this.apiEditor["asc_isSupportFeature"]("ooxml")) {
 						//TODO пока только в документы разрешаю вставку математики математику
 						bSkip = true;
 					}
@@ -10614,6 +10603,38 @@ PasteProcessor.prototype =
 				oThis.bIsForFootEndnote = false;
 			}
 		return bAddParagraph;
+	},
+
+	isSupportPasteMathContent: function (val, checkVersion) {
+		let res = false;
+		if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Word) {
+			if (checkVersion && -1 !== val.indexOf("[if gte msEquation 12]")) {
+				res = true;
+			} else if (!checkVersion && -1 !== val.indexOf("[if !msEquation]")) {
+				res = true;
+			}
+		}
+		return res;
+	},
+
+	fitPictureSizeToPage: function (nWidth, nHeight) {
+		if (this.apiEditor && this.apiEditor.isDocumentEditor) {
+			if (this.oLogicDocument && this.oLogicDocument.GetColumnSize) {
+				var oColumnSize = this.oLogicDocument.GetColumnSize();
+				if (oColumnSize) {
+					if (nWidth > oColumnSize.W || nHeight > oColumnSize.H) {
+						if (oColumnSize.W > 0 && oColumnSize.H > 0) {
+							var dScaleW = oColumnSize.W / nWidth;
+							var dScaleH = oColumnSize.H / nHeight;
+							var dScale = Math.min(dScaleW, dScaleH);
+							nWidth *= dScale;
+							nHeight *= dScale;
+						}
+					}
+				}
+			}
+		}
+		return {nWidth: nWidth, nHeight: nHeight};
 	},
 
 	_parseMathContent: function (node, oPar) {

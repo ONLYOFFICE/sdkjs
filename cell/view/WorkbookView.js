@@ -1743,7 +1743,7 @@
 
 		if (this.Api.isEditVisibleAreaOleEditor && target.isOleRange) {
 			d = ws.changeSelectionMoveResizeVisibleAreaHandle(x, y, target);
-		} else if (target.isPageBreakPreview) {
+		} else if (target.pageBreakSelectionType) {
 			d = ws.changePageBreakPreviewAreaHandle(x, y, target);
 	    } else {
 			d = ws.changeSelectionMoveResizeRangeHandle(x, y, target, this.cellEditor);

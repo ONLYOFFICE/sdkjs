@@ -77,7 +77,7 @@ function CGlossaryDocument(oLogicDocument)
 
 	// TODO: Реализовать работу нумерации, стилей, сносок, заданных в контентах по-нормальному
 	this.Numbering = new AscWord.CNumbering();
-	this.Styles    = new CStyles();
+	this.CreateStyles();
 	this.Footnotes = new CFootnotesController(oLogicDocument);
 	this.Endnotes  = new CEndnotesController(oLogicDocument);
 
@@ -108,6 +108,11 @@ CGlossaryDocument.prototype.Get_Id = function()
 CGlossaryDocument.prototype.GetNumbering = function()
 {
 	return this.Numbering;
+};
+
+CGlossaryDocument.prototype.CreateStyles = function()
+{
+	this.Styles = new CStyles();
 };
 /**
  * @return {CStyles}

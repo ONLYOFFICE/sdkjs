@@ -1765,12 +1765,9 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
 
         case 22004: // ASC_EVENT_TYPE_SPELLCHECK_MESSAGE
         {
-            var json = JSON.parse(_params[0]);
-            if (json && json["spellCheckData"]) {
-                if (_api.SpellCheckApi) {
-                    _api.SpellCheckApi.onSpellCheck(json["spellCheckData"]);
-                }
-            }
+            var spellData = JSON.parse(_params[0]);
+            if (_api.SpellCheckApi && spellData)
+                _api.SpellCheckApi.onSpellCheck(spellData);
             break;
         }
 

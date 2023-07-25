@@ -235,16 +235,12 @@ CDocumentOutline.prototype.GetText = function(nIndex)
 	if (!oParagraph)
 		return "";
 
-	var sText = oParagraph.GetText();
+	let text = oParagraph.GetText({Numbering : false});
+	let numText = oParagraph.IsNumberedNumbering() ? oParagraph.GetNumberingText() : "";
+	if (numText !== "")
+		text = numText + " " + text;
 
-	if (oParagraph.IsNumberedNumbering())
-	{
-		var sNumText = oParagraph.GetNumberingText();
-		if (sNumText !== "")
-			sText = sNumText + " " + sText;
-	}
-
-	return sText;
+	return text;
 };
 CDocumentOutline.prototype.GetLevel = function(nIndex)
 {

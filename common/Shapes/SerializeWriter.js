@@ -633,7 +633,7 @@ function CBinaryFileWriter()
         for (var i = 0; i < _slide_count; i++)
         {
             _dst_slides[i] = _slides[i];
-            if(_slides[i].notes && !_slides[i].notes.isEmptyBody())
+            if(_slides[i].notes)
             {
                 _dst_notes.push(_slides[i].notes);
             }
@@ -1163,6 +1163,19 @@ function CBinaryFileWriter()
 
         this.WriteRecord2(0, presentation.defaultTextStyle, this.WriteTextListStyle);
 
+        var oNotesSz = presentation.notesSz;
+        if(oNotesSz)
+        {
+            this.StartRecord(3);
+            this.WriteUChar(g_nodeAttributeStart);
+
+            this._WriteInt1(0, oNotesSz.cx);
+            this._WriteInt1(1, oNotesSz.cy);
+
+            this.WriteUChar(g_nodeAttributeEnd);
+            this.EndRecord();
+        }
+
         // 5
         var oSldSz = presentation.sldSz;
         if(oSldSz)
@@ -1177,16 +1190,6 @@ function CBinaryFileWriter()
             this.WriteUChar(g_nodeAttributeEnd);
             this.EndRecord();
         }
-
-        // 3
-        this.StartRecord(3);
-        this.WriteUChar(g_nodeAttributeStart);
-
-        this._WriteInt1(0, presentation.GetWidthEMU());
-        this._WriteInt1(1, presentation.GetHeightEMU());
-
-        this.WriteUChar(g_nodeAttributeEnd);
-        this.EndRecord();
 
         if (!this.IsUseFullUrl)
         {

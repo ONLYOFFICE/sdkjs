@@ -12544,43 +12544,21 @@ ParaRun.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 		var oItem = this.Content[nPos];
 		if (para_FieldChar === oItem.Type)
 		{
-			var oComplexField = oItem.GetComplexField();
-			if(oComplexField)
+			let complexField = oItem.GetComplexField();
+			let instruction  = complexField ? complexField.GetInstruction() : null;
+			if (instruction
+				&& instruction.Type === fieldtype_SEQ
+				&& instruction.CheckId(sType)
+				&& -1 === aFields.indexOf(complexField))
 			{
-				var oInstruction = oComplexField.Instruction;
-				if(oInstruction)
-				{
-					if(oInstruction.Type === fieldtype_SEQ)
-					{
-						if(oInstruction.Id === sType)
-						{
-							var isNeedAdd = true;
-							for (var nFieldIndex = 0, nFieldsCount = aFields.length; nFieldIndex < nFieldsCount; ++nFieldIndex)
-							{
-								if (oComplexField === aFields[nFieldIndex])
-								{
-									isNeedAdd = false;
-									break;
-								}
-							}
-							if (isNeedAdd)
-							{
-								aFields.push(oComplexField);
-							}
-						}
-					}
-				}
+				aFields.push(complexField);
 			}
 		}
-		else if(para_Field === oItem.Type)
+		else if (para_Field === oItem.Type
+			&& oItem.FieldType === fieldtype_SEQ
+			&& oItem.Arguments[0] === sType)
 		{
-			if(oItem.FieldType === fieldtype_SEQ)
-			{
-				if(oItem.Arguments[0] === sType)
-				{
-					aFields.push(oItem);
-				}
-			}
+			aFields.push(oItem);
 		}
 		else if (para_Drawing === oItem.Type)
 		{
@@ -12748,69 +12726,64 @@ ParaRun.prototype.ProcessAutoCorrectOnParaEnd = function(nHistoryActions)
 
 	this.ProcessAutoCorrect(0, oParaEnd.GetAutoCorrectFlags(), nHistoryActions);
 };
-ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, oSettings)
+ParaRun.prototype.CollectTextToUnicode = function(ListForUnicode, oSettings)
 {
-	var nStartPos = 0;
-	var nEndPos   = -1;
-
-	if (this.Selection.Use)
+	if (!this.Selection.Use)
+		return;
+	
+	if (oSettings.nDirection === 1)
+		oSettings.textForUnicode += this.GetSelectedText(false);
+	else
+		oSettings.textForUnicode = this.GetSelectedText(false) + oSettings.textForUnicode;
+	
+	let startPos = this.Selection.StartPos;
+	let endPos   = this.Selection.EndPos;
+	
+	function HandleItem(run, pos)
 	{
-        if (oSettings.nDirection === 1)
-            oSettings.textForUnicode += this.GetSelectedText(false);
-        else
-            oSettings.textForUnicode = this.GetSelectedText(false) + oSettings.textForUnicode;
-		nStartPos = this.Selection.StartPos;
-		nEndPos   = this.Selection.EndPos;
-		if (nStartPos > nEndPos)
+		let item = run.Content[pos];
+		if (para_Text === item.Type
+			|| para_Space === item.Type
+			|| para_Math_Text === item.Type
+			|| para_Math_BreakOperator === item.Type)
 		{
-            oSettings.nDirection = -1;
-            for (var nPos = nStartPos, nCount = nEndPos; nPos >= nCount; --nPos)
-            {
-                var oItem = this.Content[nPos];
-                if (nPos >= nEndPos && nPos < nStartPos)
-                {
-                    if (oItem.Type === para_Text || oItem.Type === para_Space || oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator)
-                    {
-                        ListForUnicode[oSettings.fFlagForUnicode] = {
-                            oRun: this,
-                            currentPos: nPos,
-                            value: (oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator) ? oItem.value : oItem.Value
-                        };
-                        oSettings.fFlagForUnicode++;
-                        if (oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator)
-                            oSettings.IsForMathPart = -1;
-                    }
-                    else
-                    {
-                        oSettings.bBreak = true;
-                    }
-                }
-            }
+			ListForUnicode[oSettings.fFlagForUnicode++] = {
+				oRun: run,
+				currentPos: pos,
+				value: item.GetCodePoint()
+			};
+			
+			if (para_Math_Text === item.Type || para_Math_BreakOperator === item.Type)
+				oSettings.IsForMathPart = -1;
 		}
-        else
-            for (var nPos = nStartPos, nCount = nEndPos; nPos < nCount; ++nPos)
-            {
-                var oItem = this.Content[nPos];
-                if (nPos >= nStartPos && nPos < nEndPos)
-                {
-                    oSettings.nDirection = 1;
-                    if (oItem.Type === para_Text || oItem.Type === para_Space || oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator)
-                    {
-                        ListForUnicode[oSettings.fFlagForUnicode] = {
-                            oRun: this,
-                            currentPos: nPos,
-                            value: (oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator) ? oItem.value : oItem.Value
-                        };
-                        oSettings.fFlagForUnicode++;
-                        if (oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator)
-                            oSettings.IsForMathPart = -1;
-                    }
-                    else
-                    {
-                        oSettings.bBreak = true;
-                    }
-                }
-            }
+		else
+		{
+			if (!item.IsParaEnd())
+				oSettings.bBreak = true;
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
+	if (startPos > endPos)
+	{
+		oSettings.nDirection = -1;
+		for (let pos = startPos - 1; pos >= endPos; --pos)
+		{
+			if (HandleItem(this, pos))
+				break;
+		}
+	}
+	else
+	{
+		oSettings.nDirection = 1;
+		for (let pos = startPos; pos < endPos; ++pos)
+		{
+			if (HandleItem(this, pos))
+				break;
+		}
 	}
 };
 ParaRun.prototype.UpdateBookmarks = function(oManager)

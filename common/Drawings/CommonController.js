@@ -1232,13 +1232,15 @@
 
 				checkFormatPainterOnMouseEvent: function () {
 					let oAPI = this.getEditorApi();
-					if (oAPI.isFormatPainterOn()) {
+					if (oAPI.isFormatPainterOn() ) {
 						let oData = oAPI.getFormatPainterData();
 						if (oData) {
 							if (oData.isDrawingData()) {
 								this.pasteFormattingWithPoint(oData.getDocData());
 								this.resetTracking();
-								oAPI.sendPaintFormatEvent(AscCommon.c_oAscFormatPainterState.kOff);
+								if(oAPI.canTurnOffFormatPainter()) {
+									oAPI.sendPaintFormatEvent(AscCommon.c_oAscFormatPainterState.kOff);
+								}
 								return true;
 							}
 						}
@@ -3716,7 +3718,23 @@
 							objects_by_type.smartArts[i].setDescription(props.description);
 						}
 					}
-
+					if (props.name !== null && props.name !== undefined && props.name !== "") {
+						for (i = 0; i < objects_by_type.shapes.length; ++i) {
+							objects_by_type.shapes[i].setName(props.name);
+						}
+						for (i = 0; i < objects_by_type.groups.length; ++i) {
+							objects_by_type.groups[i].setName(props.name);
+						}
+						for (i = 0; i < objects_by_type.charts.length; ++i) {
+							objects_by_type.charts[i].setName(props.name);
+						}
+						for (i = 0; i < objects_by_type.images.length; ++i) {
+							objects_by_type.images[i].setName(props.name);
+						}
+						for (i = 0; i < objects_by_type.smartArts.length; ++i) {
+							objects_by_type.smartArts[i].setName(props.name);
+						}
+					}
 					if (props.anchor !== null && props.anchor !== undefined) {
 						for (i = 0; i < this.selectedObjects.length; ++i) {
 							var oSelectedObject = this.selectedObjects[i];
@@ -7063,6 +7081,7 @@
 						}
 						var lockAspect = drawing.getNoChangeAspect();
 						var oMainGroup = drawing.getMainGroup();
+						let sOwnName = drawing.getObjectName();
 						switch (drawing.getObjectType()) {
 							case AscDFH.historyitem_type_Shape:
 							case AscDFH.historyitem_type_Cnx:
@@ -7091,6 +7110,7 @@
 										textArtProperties: drawing.getTextArtProperties(),
 										lockAspect: lockAspect,
 										title: drawing.getTitle(),
+										name: sOwnName,
 										description: drawing.getDescription(),
 										columnNumber: drawing.getColumnNumber(),
 										columnSpace: drawing.getColumnSpace(),
@@ -7126,6 +7146,7 @@
 										y: drawing.y,
 										lockAspect: lockAspect,
 										title: drawing.getTitle(),
+										name: sOwnName,
 										description: drawing.getDescription(),
 										anchor: drawing.getDrawingBaseType(),
 										protectionLockText: (bGroupSelection || !drawing.group) ? drawing.getProtectionLockText() : null,
@@ -7192,6 +7213,7 @@
 										textArtProperties: null,
 										lockAspect: lockAspect,
 										title: drawing.getTitle(),
+										name: sOwnName,
 										description: drawing.getDescription(),
 										columnNumber: null,
 										columnSpace: null,
@@ -7234,6 +7256,7 @@
 										pluginGuid: drawing.m_sApplicationId,
 										pluginData: pluginData,
 										title: drawing.getTitle(),
+										name: sOwnName,
 										description: drawing.getDescription(),
 										anchor: drawing.getDrawingBaseType(),
 										protectionLockText: (bGroupSelection || !drawing.group) ? drawing.getProtectionLockText() : null,
@@ -7281,6 +7304,7 @@
 										locked: locked,
 										lockAspect: lockAspect,
 										title: drawing.getTitle(),
+										name: sOwnName,
 										description: drawing.getDescription(),
 										anchor: drawing.getDrawingBaseType(),
 										protectionLockText: (bGroupSelection || !drawing.group) ? drawing.getProtectionLockText() : null,
@@ -7347,6 +7371,7 @@
 										textArtProperties: null,
 										lockAspect: lockAspect,
 										title: drawing.getTitle(),
+										name: sOwnName,
 										description: drawing.getDescription(),
 										signatureId: drawing.getSignatureLineGuid(),
 										anchor: drawing.getDrawingBaseType(),
@@ -7384,6 +7409,7 @@
 										locked: locked,
 										lockAspect: lockAspect,
 										title: drawing.getTitle(),
+										name: sOwnName,
 										description: drawing.getDescription(),
 										anchor: drawing.getDrawingBaseType(),
 										slicerProps: oSlicerCopy,
@@ -7469,6 +7495,7 @@
 									}
 									new_table_props.TableDescription = drawing.getDescription();
 									new_table_props.TableCaption = drawing.getTitle();
+									new_table_props.TableName = sOwnName;
 									new_table_props.FrameWidth = drawing.extX;
 									new_table_props.FrameHeight = drawing.extY;
 									new_table_props.FrameX = drawing.x;
@@ -8953,19 +8980,20 @@
 				putImageToSelection: function (sImageUrl, nWidth, nHeight, replaceMode) {
 					let spTree;
 					let selectedObjects = this.getSelectedArray();
-					let oFirstSelectedObject = selectedObjects[0];
-					if(!oFirstSelectedObject) {
-						return;
-					}
-					if(!oFirstSelectedObject.group) {
-						spTree = this.getDrawingArray();
-					}
-					else {
-						spTree = oFirstSelectedObject.group.spTree;
-					}
+
 					const nPageIndex = 0;
 					let oController = this;
-					if (selectedObjects.length > 0 && !this.getTargetDocContent()) {
+					if (selectedObjects.length > 0) {
+						let oFirstSelectedObject = selectedObjects[0];
+						if(!oFirstSelectedObject) {
+							return;
+						}
+						if(!oFirstSelectedObject.group) {
+							spTree = this.getDrawingArray();
+						}
+						else {
+							spTree = oFirstSelectedObject.group.spTree;
+						}
 						this.checkSelectedObjectsAndCallback(function () {
 
 							let _w = nWidth * AscCommon.g_dKoef_pix_to_mm;
@@ -9028,6 +9056,7 @@
 					}
 					AscCommon.History.Create_NewPoint(0);
 					this.addImage(sImageUrl, nWidth, nHeight, null, null);
+					this.startRecalculate();
 				},
 				getSelectionImageData: function () {
 					let sImageUrl;

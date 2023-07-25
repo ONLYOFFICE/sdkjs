@@ -279,7 +279,7 @@
 			t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
 		});
 
-		AscCommon.loadSmartArtBinary(function (err) {
+		AscCommon.loadSmartArtBinary(function (){}, function (err) {
 			t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingBinError, c_oAscError.Level.NoCritical);
 		});
 
@@ -4511,6 +4511,12 @@
 	};
 	baseEditorsApi.prototype.isFormatPainterOn = function() {
 		return this.formatPainter.isOn();
+	};
+	baseEditorsApi.prototype.isFormatPainterMultiple = function() {
+		return this.formatPainter.isMultiple();
+	};
+	baseEditorsApi.prototype.canTurnOffFormatPainter = function() {
+		return this.isFormatPainterOn() && !this.isFormatPainterMultiple();
 	};
 	baseEditorsApi.prototype.checkFormatPainterData = function() {
 		return this.formatPainter.checkData();

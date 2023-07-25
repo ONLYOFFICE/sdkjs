@@ -3827,7 +3827,7 @@ function (window, undefined) {
 		}
 
 		return (-1 < index) ? new cNumber(index + 1) : new cError(cErrorType.not_available);
-	}
+	};
 
 	function LOOKUPCache() {
 		this.cacheId = {};

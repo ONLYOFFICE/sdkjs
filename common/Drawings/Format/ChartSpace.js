@@ -494,7 +494,7 @@ function(window, undefined) {
 
 	function CPathMemory() {
 		this.size = 1000;
-		this.ArrPathCommand = new Float64Array(this.size);
+		this.ArrPathCommand = new Float64Array(1000);
 		this.curPos = -1;
 
 		this.path = new AscFormat.Path2(this);

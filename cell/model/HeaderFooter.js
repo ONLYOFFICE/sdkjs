@@ -48,19 +48,34 @@
 	var c_oAscError = asc.c_oAscError;
 
 	//HEADER/FOOTER
-	function HeaderFooterField(val) {
+	function HeaderFooterField(val, format, text) {
 		this.field = val;
+		this.format = format;
+
+		this.textField = text;
+		this._calculatedText = null;
 	}
-	HeaderFooterField.prototype.getText = function (ws, indexPrintPage, countPrintPages) {
+	HeaderFooterField.prototype.clone = function () {
+		var res = new HeaderFooterField();
+
+		res.filed = this.filed;
+		res.format = this.format.clone();
+
+		res.textField = this.textField;
+		res._calculatedText = this._calculatedText;
+
+		return res;
+	};
+	HeaderFooterField.prototype.calculateText = function (ws, indexPrintPage, countPrintPages) {
 		let res = "";
 		let api = window["Asc"]["editor"];
-		let printPreviewState = ws.workbook && ws.workbook.printPreviewState;
+		let printPreviewState = ws && ws.workbook && ws.workbook.printPreviewState;
 		let pageSetup;
 		if (printPreviewState && printPreviewState.isStart()) {
 			pageSetup = printPreviewState.getActivePageSetup();
 		}
 		if (!pageSetup) {
-			pageSetup = ws.model && ws.model.PagePrintOptions && ws.model.PagePrintOptions.pageSetup;
+			pageSetup = ws && ws.model && ws.model.PagePrintOptions && ws.model.PagePrintOptions.pageSetup;
 		}
 
 		switch(this.field) {
@@ -74,7 +89,7 @@
 				break;
 			}
 			case asc.c_oAscHeaderFooterField.sheetName: {
-				res = ws.model.sName;
+				res = ws && ws.model && ws.model.sName;
 				break;
 			}
 			case asc.c_oAscHeaderFooterField.fileName: {
@@ -98,20 +113,44 @@
 				res = "\n";
 				break;
 			}
+			case asc.c_oAscHeaderFooterField.text: {
+				res = this.textField;
+				break;
+			}
 		}
+		this._calculatedText = res;
 		return res;
 	};
 
+	HeaderFooterField.prototype.pushFormat = function (val) {
+		this.format = val;
+	};
+
+	HeaderFooterField.prototype.getText = function (ws, indexPrintPage, countPrintPages) {
+		return this._calculatedText ? this._calculatedText : this.calculateText(ws, indexPrintPage, countPrintPages);
+	};
+
+	HeaderFooterField.prototype.getFormat = function (val) {
+		return this.format;
+	};
+
+	HeaderFooterField.prototype.getField = function () {
+		return this.field;
+	};
+
+
 
 	function HeaderFooterParser() {
-		this.portions = [];
-		this.currPortion = null;
+		this.tokens = [];
+		this.curTokenPosition = null;
 		this.str = null;
 		this.font = null;
 
 		this.date = null;
 
 		this.allFontsMap = [];
+
+		this.isCalc = null;
 	}
 
 	var c_oPortionPosition = {
@@ -127,13 +166,63 @@
 	var c_nPortionCenterFooter = 4;
 	var c_nPortionRightFooter = 5;
 
+	/*Documentation:
+		There is no required order in which these codes need to appear.
+		The first occurrence of the following codes turns the formatting ON, the second occurrence turns it OFF again:
+		strikethrough
+		superscript
+		subscript
+		Superscript and subscript cannot both be ON at same time. Whichever comes first wins and the other is ignored,
+		while the first is ON.
+
+		&L - code for "left section" (there are three header / footer locations, "left", "center", and "right"). When two or
+		more occurrences of this section marker exist, the contents from all markers are concatenated, in the order of
+		appearance, and placed into the left section.
+		&P - code for "current page #"
+					  &N - code for "total pages"
+									&font size - code for "text font size", where font size is a font size in points.
+		&K - code for "text font color"
+		RGB Color is specified as RRGGBB
+		Theme Color is specified as TTSNN where TT is the theme color Id, S is either "+" or "-" of the tint/shade
+		value, NN is the tint/shade value.
+
+		&S - code for "text strikethrough" on / off
+		&X - code for "text super script" on / off
+		&Y - code for "text subscript" on / off
+		&C - code for "center section". When two or more occurrences of this section marker exist, the contents from all
+		markers are concatenated, in the order of appearance, and placed into the center section.
+		&D - code for "date"
+		&T - code for "time"
+		&G - code for "picture as background"
+		&U - code for "text single underline"
+		&E - code for "double underline"
+		&R - code for "right section". When two or more occurrences of this section marker exist, the contents from all
+		markers are concatenated, in the order of appearance, and placed into the right section.
+		&Z - code for "this workbook's file path"
+		&F - code for "this workbook's file name"
+		&A - code for "sheet tab name"
+		&+ - code for add to page #.
+		&- - code for subtract from page #.
+		&"font name,font type" - code for "text font name" and "text font type", where font name and font type are
+		strings specifying the name and type of the font, separated by a comma. When a hyphen appears in font name,
+		it means "none specified". Both of font name and font type can be localized values.
+		&"-,Bold" - code for "bold font style"
+		&B - also means "bold font style".
+		&"-,Regular" - code for "regular font style"
+		&"-,Italic" - code for "italic font style"
+
+		&I - also means "italic font style"
+		&"-,Bold Italic" code for "bold italic font style"
+		&O - code for "outline style"
+		&H - code for "shadow style"
+	*/
 	HeaderFooterParser.prototype.parse = function (date) {
 		var c_nText = 0, c_nToken = 1, c_nFontName = 2, c_nFontStyle = 3, c_nFontHeight = 4;
 
 		this.date = date;
 
 		this.font = new AscCommonExcel.Font();
-		this.currPortion = c_oPortionPosition.center;
+		this.curTokenPosition = c_oPortionPosition.center;
 		this.str = "";
 
 		var nState = c_nText;
@@ -256,6 +345,9 @@
 							sFontStyle = "";
 							nState = c_nFontName;
 							break;
+						case 'G':   //picture
+							this.pushField(new HeaderFooterField(asc.c_oAscHeaderFooterField.picture));
+							break;
 						default:
 							if (('0' <= cChar) && (cChar <= '9'))    // font size
 							{
@@ -319,9 +411,24 @@
 		this.endPortion();
 	};
 
+	HeaderFooterParser.prototype.calculateTokens = function (ws, indexPrintPage, countPrintPages, forceCalc) {
+		if (this.isCalc && !forceCalc) {
+			return;
+		}
+		for (let i = 0; i < this.tokens.length; i++) {
+			if (this.tokens[i]) {
+				for (let j = 0; j < this.tokens[i].length; j++) {
+					let token = this.tokens[i][j];
+					token && token.calculateText(ws, indexPrintPage, countPrintPages);
+				}
+			}
+		}
+		this.isCalc = true;
+	};
+
 	HeaderFooterParser.prototype.convertFontColor = function(rColor) {
 		var color;
-		if( (rColor[ 2 ] == '+') || (rColor[ 2 ] == '-') ) {
+		if( (rColor[ 2 ] === '+') || (rColor[ 2 ] === '-') ) {
 			var theme = rColor.substr(0, 2) - 0;
 			var tint = rColor.substr(2) - 0;
 			color = AscCommonExcel.g_oColorManager.getThemeColor(theme, tint / 100);
@@ -351,7 +458,7 @@
 
 			var toHex = function componentToHex(c) {
 				var res = c.toString(16);
-				return res.length == 1 ? "0" + res : res;
+				return res.length === 1 ? "0" + res : res;
 			};
 
 			color = toHex(obj.getR()) + toHex(obj.getG()) + toHex(obj.getB());
@@ -364,10 +471,11 @@
 
 	HeaderFooterParser.prototype.pushText = function () {
 		if (0 !== this.str.length) {
-			if (!this.portions[this.currPortion]) {
-				this.portions[this.currPortion] = [{format: this.font.clone(), text: this.str}];
+			let newTextField = new HeaderFooterField(asc.c_oAscHeaderFooterField.text, this.font.clone(), this.str);
+			if (!this.tokens[this.curTokenPosition]) {
+				this.tokens[this.curTokenPosition] = [newTextField];
 			} else {
-				this.portions[this.currPortion].push({format: this.font.clone(), text: this.str});
+				this.tokens[this.curTokenPosition].push(newTextField);
 			}
 
 			this.str = [];
@@ -375,10 +483,13 @@
 	};
 
 	HeaderFooterParser.prototype.pushField = function (field) {
-		if (!this.portions[this.currPortion]) {
-			this.portions[this.currPortion] = [{format: this.font.clone(), text: field}];
+		if (field) {
+			field.pushFormat(this.font.clone());
+		}
+		if (!this.tokens[this.curTokenPosition]) {
+			this.tokens[this.curTokenPosition] = [field];
 		} else {
-			this.portions[this.currPortion].push({format: this.font.clone(), text: field});
+			this.tokens[this.curTokenPosition].push(field);
 		}
 	};
 
@@ -419,10 +530,14 @@
 	};
 
 	HeaderFooterParser.prototype.setPortion = function (val) {
-		if (val != this.currPortion) {
+		if (val != this.curTokenPosition) {
 			this.endPortion();
-			this.currPortion = val;
+			this.curTokenPosition = val;
 		}
+	};
+
+	HeaderFooterParser.prototype.getTokensByPosition = function (val) {
+		return this.tokens && this.tokens[val];
 	};
 
 	HeaderFooterParser.prototype.getAllFonts = function (oFontMap) {
@@ -454,9 +569,9 @@
 	HeaderFooterParser.prototype.splitByParagraph = function (cPortionCode) {
 		var res = [];
 
-		if(this.portions[cPortionCode]) {
+		if(this.tokens[cPortionCode]) {
 			var index = 0;
-			var curPortion = this.portions[cPortionCode];
+			var curPortion = this.tokens[cPortionCode];
 			for(var i = 0; i < curPortion.length; i++) {
 				if(!res[index]) {
 					res[index] = [];
@@ -595,9 +710,9 @@
 
 				prevFont = newFont;
 
-				if (aPosList[i].text instanceof HeaderFooterField) {
-					if (aPosList[i].text.field !== undefined) {
-						switch(aPosList[i].text.field) {
+				if (aPosList[i] instanceof HeaderFooterField) {
+					if (aPosList[i].field !== undefined) {
+						switch(aPosList[i].field) {
 							case asc.c_oAscHeaderFooterField.pageNumber: {
 								aParaText += "&P";
 								break;
@@ -626,18 +741,24 @@
 
 								break;
 							}
+							case asc.c_oAscHeaderFooterField.picture: {
+								aParaText += "&G";
+								break;
+							}
+							case asc.c_oAscHeaderFooterField.text: {
+								let aPortionText = aPosList[i].getText();
+								if (bFontHtChanged && aParaText.length && "" !== aPortionText) {
+									let cLast = aParaText[aParaText.length - 1];
+									let cFirst = aPortionText[0];
+									if (('0' <= cLast) && (cLast <= '9') && ('0' <= cFirst) && (cFirst <= '9')) {
+										aParaText += " ";
+									}
+								}
+								aParaText += aPortionText;
+								break;
+							}
 						}
 					}
-				} else {
-					var aPortionText = aPosList[i].text;
-					if (bFontHtChanged && aParaText.length && "" !== aPortionText) {
-						var cLast = aParaText[aParaText.length - 1];
-						var cFirst = aPortionText[0];
-						if (('0' <= cLast) && (cLast <= '9') && ('0' <= cFirst) && (cFirst <= '9')) {
-							aParaText += " ";
-						}
-					}
-					aParaText += aPortionText;
 				}
 			}
 
@@ -724,7 +845,7 @@
 		cellFlags.textAlign = this.getAlign();
 
 		//не зависит от зума страницы
-		var realZoom = ws.stringRender.drawingCtx.getZoom()
+		var realZoom = ws.stringRender.drawingCtx.getZoom();
 		ws.stringRender.drawingCtx.changeZoom(1);
 
 		var cellEditorWidth = width - 2 * wb.defaults.worksheetView.cells.padding + 1 + 2 * correctCanvasDiff;
@@ -759,7 +880,7 @@
 	};
 
 
-	function convertFieldToMenuText(val) {
+	function convertFieldToMenuText(val, _text) {
 		var textField = null;
 		var tM = AscCommon.translateManager;
 		var pageTag = "&[" + tM.getValue("Page") + "]";
@@ -768,6 +889,7 @@
 		var dateTag = "&[" + tM.getValue("Date") + "]";
 		var fileTag = "&[" + tM.getValue("File") + "]";
 		var timeTag = "&[" + tM.getValue("Time") + "]";
+		var pictureTag = "&[" + tM.getValue("Picture") + "]";
 
 		switch (val){
 			case asc.c_oAscHeaderFooterField.pageNumber: {
@@ -800,6 +922,16 @@
 			}
 			case asc.c_oAscHeaderFooterField.lineBreak: {
 				textField = "\n";
+				break;
+			}
+			case asc.c_oAscHeaderFooterField.picture: {
+				//TODO translate?
+				textField = pictureTag;
+				break;
+			}
+			case asc.c_oAscHeaderFooterField.text: {
+				//TODO translate?
+				textField = _text;
 				break;
 			}
 		}
@@ -1133,29 +1265,29 @@
 			var curHeaderFooter = new Asc.CHeaderFooterData();
 			curHeaderFooter.parser = new window["AscCommonExcel"].HeaderFooterParser();
 			if(prevHeaderFooter && prevHeaderFooter.parser) {
-				var newPortions = [];
-				for(var i in prevHeaderFooter.parser.portions) {
-					if(prevHeaderFooter.parser.portions[i]) {
-						newPortions[i] = [];
-						for(var j in prevHeaderFooter.parser.portions[i]) {
-							var curPortion = prevHeaderFooter.parser.portions[i][j];
+				var newTokens = [];
+				for(var i in prevHeaderFooter.parser.tokens) {
+					if(prevHeaderFooter.parser.tokens[i]) {
+						newTokens[i] = [];
+						for(var j in prevHeaderFooter.parser.tokens[i]) {
+							var curPortion = prevHeaderFooter.parser.tokens[i][j];
 							if(curPortion) {
-								newPortions[i][j] = {text: curPortion.text, format: curPortion.format.clone()}
+								newTokens[i][j] = curPortion.clone();
 							}
 						}
 					}
 				}
-				curHeaderFooter.parser.portions = newPortions;
+				curHeaderFooter.parser.tokens = newTokens;
 			}
 
 			if(t.sections[type][c_oPortionPosition.left] && t.sections[type][c_oPortionPosition.left].changed) {
-				curHeaderFooter.parser.portions[c_oPortionPosition.left] = t._convertFragments(t.sections[type][c_oPortionPosition.left].fragments);
+				curHeaderFooter.parser.tokens[c_oPortionPosition.left] = t._convertFragments(t.sections[type][c_oPortionPosition.left].fragments);
 			}
 			if(t.sections[type][c_oPortionPosition.center] && t.sections[type][c_oPortionPosition.center].changed) {
-				curHeaderFooter.parser.portions[c_oPortionPosition.center] = t._convertFragments(t.sections[type][c_oPortionPosition.center].fragments);
+				curHeaderFooter.parser.tokens[c_oPortionPosition.center] = t._convertFragments(t.sections[type][c_oPortionPosition.center].fragments);
 			}
 			if(t.sections[type][c_oPortionPosition.right] && t.sections[type][c_oPortionPosition.right].changed) {
-				curHeaderFooter.parser.portions[c_oPortionPosition.right] = t._convertFragments(t.sections[type][c_oPortionPosition.right].fragments);
+				curHeaderFooter.parser.tokens[c_oPortionPosition.right] = t._convertFragments(t.sections[type][c_oPortionPosition.right].fragments);
 			}
 
 			var oData = curHeaderFooter.parser.assembleText();
@@ -1277,15 +1409,15 @@
 
 			var isChanged = false;
 			if(this.sections[i][c_oPortionPosition.left] && (this.sections[i][c_oPortionPosition.left].changed || reWrite)) {
-				curHeaderFooter.parser.portions[c_oPortionPosition.left] = this._convertFragments(this.sections[i][c_oPortionPosition.left].fragments);
+				curHeaderFooter.parser.tokens[c_oPortionPosition.left] = this._convertFragments(this.sections[i][c_oPortionPosition.left].fragments);
 				isChanged = true;
 			}
 			if(this.sections[i][c_oPortionPosition.center] && (this.sections[i][c_oPortionPosition.center].changed || reWrite)) {
-				curHeaderFooter.parser.portions[c_oPortionPosition.center] = this._convertFragments(this.sections[i][c_oPortionPosition.center].fragments);
+				curHeaderFooter.parser.tokens[c_oPortionPosition.center] = this._convertFragments(this.sections[i][c_oPortionPosition.center].fragments);
 				isChanged = true;
 			}
 			if(this.sections[i][c_oPortionPosition.right] && (this.sections[i][c_oPortionPosition.right].changed || reWrite)) {
-				curHeaderFooter.parser.portions[c_oPortionPosition.right] = this._convertFragments(this.sections[i][c_oPortionPosition.right].fragments);
+				curHeaderFooter.parser.tokens[c_oPortionPosition.right] = this._convertFragments(this.sections[i][c_oPortionPosition.right].fragments);
 				isChanged = true;
 			}
 			//нужно добавлять в историю
@@ -1423,17 +1555,13 @@
 		}
 
 		var getFragmentText = function(val) {
-			if ( asc_typeof(val) === "string" ){
-				return val;
-			} else {
-				return val.getText(ws, 0, 1);
-			}
+			return val.getText(ws, 0, 1);
 		};
 
 		var getFragmentsText = function(fragments) {
 			var res = "";
 			for(var n = 0; n < fragments.length; n++) {
-				res += getFragmentText(fragments[n].text);
+				res += getFragmentText(fragments[n]);
 			}
 			return res;
 		};
@@ -1560,7 +1688,7 @@
 			var res = [];
 			for(var i = 0; i < textPropsArr.length; i++) {
 				var curProps = textPropsArr[i];
-				var text = asc_typeof(curProps.text) === "string" ? curProps.text : convertFieldToMenuText(curProps.text.field);
+				var text = convertFieldToMenuText(curProps.field, curProps.textField);
 				if(null !== text) {
 					var tempFragment = new AscCommonExcel.Fragment();
 					tempFragment.setFragmentText(text);
@@ -1599,7 +1727,7 @@
 					if(!curPageHF.parser) {
 						curPageHF.parse();
 					}
-					parser = curPageHF.parser.portions;
+					parser = curPageHF.parser.tokens;
 					leftFragments = getFragments(parser[0]);
 					if(null !== leftFragments) {
 						this.sections[pageHeaderType][c_oPortionPosition.left].fragments = leftFragments;
@@ -1643,7 +1771,7 @@
 					if(!curPageHF.parser) {
 						curPageHF.parse();
 					}
-					parser = curPageHF.parser.portions;
+					parser = curPageHF.parser.tokens;
 					leftFragments = getFragments(parser[0]);
 					if(null !== leftFragments) {
 						this.sections[pageFooterType][c_oPortionPosition.left].fragments = leftFragments;
@@ -1748,7 +1876,7 @@
 			return null;
 		}
 
-		//TODO возможно стоит созадавать portions внутри парсера с элементами Fragments
+		//TODO возможно стоит созадавать tokens внутри парсера с элементами Fragments
 		var res = [];
 
 		var tM = AscCommon.translateManager;
@@ -1766,7 +1894,7 @@
 				//пока игнорируем данную ситуацию
 				if(symbol === "&") {
 					if("" !== text) {
-						res.push({text: text, format: fragments[j].format});
+						res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 						text = "";
 					}
 
@@ -1777,41 +1905,46 @@
 						switch(tokenText.toLowerCase()) {
 							case tM.getValue("Page").toLowerCase(): {
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.pageNumber), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.pageNumber, tokenFormat));
 								break;
 							}
 							case tM.getValue("Pages").toLowerCase(): {
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.pageCount), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.pageCount, tokenFormat));
 								break;
 							}
 							case tM.getValue("Date").toLowerCase(): {
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.date), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.date, tokenFormat));
 								break;
 							}
 							case tM.getValue("Time").toLowerCase(): {
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.time), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.time, tokenFormat));
 								break;
 							}
 							case tM.getValue("Tab").toLowerCase(): {
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.sheetName), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.sheetName, tokenFormat));
 								break;
 							}
 							case tM.getValue("File").toLowerCase(): {
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.fileName), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.fileName, tokenFormat));
 								break;
 							}
 							case "&[Path]&[File]": {
 								text = "";
 								break;
 							}
+							case tM.getValue("Picture").toLowerCase(): {
+								text = "";
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.picture, tokenFormat));
+								break;
+							}
 							default: {
 								if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
-									res.push({text: text, format: fragments[j].format});
+									res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 									text = "";
 								}
 								break;
@@ -1824,7 +1957,7 @@
 					}
 
 					if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
-						res.push({text: text, format: fragments[j].format});
+						res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 					}
 				} else if(bToken) {
 					//начинаем просматривать аргумент
@@ -1852,25 +1985,25 @@
 							case 'p':   //page number
 							{
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.pageNumber), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.pageNumber, tokenFormat));
 								break;
 							}
 							case 'n':   //total page count
 							{
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.pageCount), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.pageCount, tokenFormat));
 								break;
 							}
 							case 'a':   //current sheet name
 							{
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.sheetName), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.sheetName, tokenFormat));
 								break;
 							}
 							case 'f':   //file name
 							{
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.fileName), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.fileName, tokenFormat));
 								break;
 							}
 							case 'z':   //file path
@@ -1882,18 +2015,24 @@
 							case 'd':   //date
 							{
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.date), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.date, tokenFormat));
 								break;
 							}
 							case 't':   //time
 							{
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.time), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.time, tokenFormat));
+								break;
+							}
+							case 'g':   //picture
+							{
+								text = "";
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.picture, tokenFormat));
 								break;
 							}
 							default: {
 								if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
-									res.push({text: text, format: fragments[j].format});
+									res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 									text = "";
 								}
 								break;
@@ -1902,7 +2041,7 @@
 						bToken = false;
 					}
 				} else if("" !== text && n === fragments[j].getFragmentText().length - 1) {
-					res.push({text: text, format: fragments[j].format});
+					res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 				}
 			}
 		}
@@ -1965,6 +2104,43 @@
 	};
 
 
+	function CLegacyDrawingHF() {
+		this.drawings = [];
+		this.cfe = null;
+		this.cff = null;
+		this.cfo = null;
+		this.che = null;
+		this.chf = null;
+		this.cho = null;
+		this.lfe = null;
+		this.lff = null;
+		this.lfo = null;
+		this.lhe = null;
+		this.lhf = null;
+		this.lho = null;
+		this.rfe = null;
+		this.rff = null;
+		this.rfo = null;
+		this.rhe = null;
+		this.rhf = null;
+		this.rho = null;
+
+		this.id = null;
+	}
+
+	CLegacyDrawingHF.prototype.init = function () {
+
+	};
+
+	function CLegacyDrawingHFDrawing() {
+		this.id = null;//"LH", "CH", "RH", "LF", "CF", "RF", "LHEVEN",..., "LHFIRST"
+		this.graphicObject = null;
+	}
+
+	CLegacyDrawingHFDrawing.prototype.init = function () {
+
+	};
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 
@@ -2000,6 +2176,9 @@
 	prot["getScaleWithDoc"] = prot.getScaleWithDoc;
 
 	prot["getPageType"] = prot.getPageType;
+
+	window["AscCommonExcel"].CLegacyDrawingHF = CLegacyDrawingHF;
+	window["AscCommonExcel"].CLegacyDrawingHFDrawing = CLegacyDrawingHFDrawing;
 
 	window['AscCommonExcel'].c_oPortionPosition = c_oPortionPosition;
 
