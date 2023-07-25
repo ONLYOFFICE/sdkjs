@@ -3960,6 +3960,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 								{
 									NewRange    = true;
 									RangeEndPos = Pos;
+									PRS.ResetLastAutoHyphen();
 								}
 							}
 						}
@@ -3981,7 +3982,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 							else if (Item.CanBeAtBeginOfLine())
 							{
 								PRS.Set_LineBreakPos(Pos, FirstItemOnLine);
-								PRS.SetLastHyphenItem(PRS.LastItem);
+								PRS.CheckLastAutoHyphen(PRS.LastItem);
 							}
 
 							// Если текущий символ с переносом, например, дефис, тогда на нем заканчивается слово

@@ -3401,23 +3401,25 @@ CParagraphRecalculateStateWrap.prototype =
 		this.LineBreakPos.Set(this.CurPos);
 		this.LineBreakPos.Add(PosObj);
 		this.LineBreakFirst = isFirstItemOnLine;
-		this.ResetLastHyphenItem();
+		this.ResetLastAutoHyphen();
 	},
 	
-	ResetLastHyphenItem : function()
+	ResetLastAutoHyphen : function()
 	{
 		if (!this.LastHyphenItem)
 			return;
 		
+		console.log("Reset ");
 		this.LastHyphenItem.SetTemporaryHyphenAfter(false);
 		this.LastHyphenItem = null;
 	},
 	
-	SetLastHyphenItem : function(item)
+	CheckLastAutoHyphen : function(item)
 	{
 		if (!item || !item.IsText() || !item.IsHyphenAfter())
 			return;
 		
+		console.log("Check " + String.fromCodePoint(item.GetCodePoint()));
 		this.LastHyphenItem = item;
 		item.SetTemporaryHyphenAfter(true);
 	},
@@ -4038,7 +4040,7 @@ CParagraphRecalculateStateWrap.prototype.IsAutoHyphenation = function()
 };
 CParagraphRecalculateStateWrap.prototype.OnEndRecalculateLineRanges = function()
 {
-	this.ResetLastHyphenItem();
+	this.ResetLastAutoHyphen();
 };
 
 function CParagraphRecalculateStateCounter()
