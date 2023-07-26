@@ -736,6 +736,7 @@ function (window, undefined) {
 
 		findMaxNesting(row, col);
 		const maxLevel = this.data.maxRecLevel;
+		console.log({...this.data});
 		if (maxLevel === 0) {
 			this._setDefaultData();
 			return;
@@ -862,7 +863,6 @@ function (window, undefined) {
 					ws.getCell3(cellAddress.row, cellAddress.col)._foreachNoEmpty(function (cell) {
 						formula = cell.formulaParsed;
 					});
-					// let res = isCellHaveUnrecordedTraces(index, formula);
 					let res = this.isCellHaveUnrecordedTraces(index, formula);
 					if (!res) {
 						continue;
@@ -991,10 +991,19 @@ function (window, undefined) {
 
 						// if the area is on the same sheet - write to the array of areas for drawing
 						if (isArea && !is3D) {
+							let areaName, copyRange = elemRange.clone();
+							if (shared && !isTable) {
+								const offset = {
+									row: row - base.nRow,
+									col: col - base.nCol
+								};
+								// set offset according to base shift
+								copyRange.setOffset(offset);
+							}
 							const areaRange = {};
-							const areaName = elem.value;	// areaName - unique key for areaRange
+							areaName = copyRange.getName();			// areaName - unique key for areaRange
 							areaRange[areaName] = {};
-							areaRange[areaName].range = elemRange;
+							areaRange[areaName].range = copyRange;
 							areaRange[areaName].isCalculated = null;
 							areaRange[areaName].areaHeader = elemCellIndex;
 
@@ -1018,12 +1027,10 @@ function (window, undefined) {
 			if (this.checkCircularReference(currentCellIndex, false)) {
 				return;
 			}
-		// else if (!this.getPrecedentsLoop()) {
 			this.currentPrecedents = Object.assign({}, this.precedents);
 			this.currentPrecedentsAreas = Object.assign({}, this._getPrecedentsAreas());
 			this.setPrecedentsLoop(true);
 			// check first level, then if function return false, check second, third and so on
-			// for (let i in this.precedents[currentCellIndex]) {
 			for (let i in this.currentPrecedents[currentCellIndex]) {
 				let coords = AscCommonExcel.getFromCellIndex(i, true);
 				this.calculatePrecedents(coords.row, coords.col, true);	
