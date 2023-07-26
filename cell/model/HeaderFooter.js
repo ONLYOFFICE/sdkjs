@@ -777,6 +777,7 @@
 		this.fragments = null;
 
 		this.pictures = null;
+		this.loadPictureInfo = null;
 
 		this.changed = false;
 	}
@@ -877,6 +878,69 @@
 	};
 	CHeaderFooterEditorSection.prototype.getPictures = function () {
 		return this.pictures;
+	};
+	CHeaderFooterEditorSection.prototype.getStringName = function () {
+		let sPortionPrefix = this.getStringPortion();
+		if (sPortionPrefix) {
+			let sType = this.getStringType();
+			if (sType) {
+				return sPortionPrefix + sType;
+			}
+		}
+		return null;
+	};
+
+	CHeaderFooterEditorSection.prototype.getStringPortion = function () {
+		let sPortion = null;
+		switch (this.portion) {
+			case c_oPortionPosition.left: {
+				sPortion = "L";
+				break;
+			}
+			case c_oPortionPosition.center: {
+				sPortion = "C";
+				break;
+			}
+			case c_oPortionPosition.right: {
+				sPortion = "R";
+				break;
+			}
+		}
+
+		return sPortion;
+	};
+
+	CHeaderFooterEditorSection.prototype.getStringType = function () {
+		//"LH", "CH", "RH", "LF", "CF", "RF", "LHEVEN",..., "LHFIRST"
+		let sType = null;
+		switch (this.type) {
+			case asc.c_oAscPageHFType.oddFooter: {
+				sType = "F";
+				break;
+			}
+			case asc.c_oAscPageHFType.oddHeader: {
+				sType = "H";
+				break;
+			}
+			case asc.c_oAscPageHFType.evenHeader: {
+				sType = "HEVEN";
+				break;
+			}
+			case asc.c_oAscPageHFType.evenFooter: {
+				sType = "FEVEN";
+				break;
+			}
+			case asc.c_oAscPageHFType.firstHeader: {
+				sType = "HFIRST";
+				break;
+			}
+			case asc.c_oAscPageHFType.firstFooter: {
+				sType = "FFIRST";
+				break;
+			}
+		}
+
+		return sType;
 	};
 
 
@@ -1391,6 +1455,7 @@
 			hF.clean();
 		}
 
+		let newPictureSections = [];
 		for(let i = 0; i < this.sections.length; i++) {
 			if(!this.sections[i]) {
 				continue;
@@ -1407,19 +1472,26 @@
 				curHeaderFooter.parser = new window["AscCommonExcel"].HeaderFooterParser();
 			}
 
+			let curSection = this.sections[i][c_oPortionPosition.left];
 			let isChanged = false;
-			if(this.sections[i][c_oPortionPosition.left] && (this.sections[i][c_oPortionPosition.left].changed || reWrite)) {
-				curHeaderFooter.parser.tokens[c_oPortionPosition.left] = this._convertFragments(this.sections[i][c_oPortionPosition.left].fragments);
+			if(curSection && (curSection.changed || reWrite)) {
+				curHeaderFooter.parser.tokens[c_oPortionPosition.left] = this._convertFragments(curSection.fragments);
+				curSection.loadPictureInfo && newPictureSections.push(curSection);
 				isChanged = true;
 			}
+			curSection = this.sections[i][c_oPortionPosition.center];
 			if(this.sections[i][c_oPortionPosition.center] && (this.sections[i][c_oPortionPosition.center].changed || reWrite)) {
-				curHeaderFooter.parser.tokens[c_oPortionPosition.center] = this._convertFragments(this.sections[i][c_oPortionPosition.center].fragments);
+				curHeaderFooter.parser.tokens[c_oPortionPosition.center] = this._convertFragments(curSection.fragments);
+				curSection.loadPictureInfo && newPictureSections.push(curSection);
 				isChanged = true;
 			}
-			if(this.sections[i][c_oPortionPosition.right] && (this.sections[i][c_oPortionPosition.right].changed || reWrite)) {
-				curHeaderFooter.parser.tokens[c_oPortionPosition.right] = this._convertFragments(this.sections[i][c_oPortionPosition.right].fragments);
+			curSection = this.sections[i][c_oPortionPosition.right];
+			if(curSection && (this.sections[i][c_oPortionPosition.right].changed || reWrite)) {
+				curHeaderFooter.parser.tokens[c_oPortionPosition.right] = this._convertFragments(curSection.fragments);
+				curSection.loadPictureInfo && newPictureSections.push(curSection);
 				isChanged = true;
 			}
+
 			//нужно добавлять в историю
 			if(isChanged) {
 				if(!isAddHistory && !opt_headerFooter) {
@@ -1433,6 +1505,15 @@
 				hF.setHeaderFooterData(curHeaderFooter.parser.date, i);
 			}
 		}
+
+		//save pictures
+		for (let i = 0; i < newPictureSections.length; i++) {
+			let newPictureSection = newPictureSections[i];
+			if (newPictureSection.loadPictureInfo) {
+				let sName = newPictureSection.getStringName();
+			}
+		}
+
 
 		//common options
 		hF.setAlignWithMargins(this.alignWithMargins);
@@ -1718,7 +1799,7 @@
 
 		let _addFragments = function (_curParser, curSection) {
 			let _fragments = getFragments(_curParser);
-			if(null !== _fragments.fragments) {
+			if(_fragments && null !== _fragments.fragments) {
 				curSection.fragments = _fragments.fragments;
 				curSection.pictures = _fragments.pictures;
 			}
@@ -1794,7 +1875,6 @@
 				}
 			}
 		}
-
 
 		//DRAW AFTER OPEN MENU
 		this.sections[pageHeaderType][c_oPortionPosition.left].drawText();
