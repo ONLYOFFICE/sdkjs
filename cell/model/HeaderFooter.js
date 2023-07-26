@@ -2251,7 +2251,7 @@
 
 	};
 
-	CLegacyDrawingHF.prototype.changeBySectionsInfo = function (aSectionsInfo) {
+	CLegacyDrawingHF.prototype.changeBySectionsInfo = function (aSectionsInfo, callback) {
 		let loadFiles = [];
 		let t = this;
 		let api = window["Asc"]["editor"];
@@ -2288,8 +2288,9 @@
 					//changeFunction(oldHFDrawing, newHFDrawing);
 
 					aSectionsInfo[i].loadPictureInfo = null;
-
 				}
+
+				callback();
 			});
 		};
 
@@ -2299,6 +2300,7 @@
 			if (c_oAscError.ID.No !== error)
 			{
 				//t.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+				callback();
 			}
 			else
 			{
