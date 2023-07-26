@@ -25564,6 +25564,15 @@
 		return AscBrowser.retinaPixelRatio;
 	};
 
+	WorksheetView.prototype.changeLegacyDrawingHFPictures = function (aSections, callback) {
+		//lock?
+		if (!aSections || !aSections.length) {
+			callback();
+			return;
+		}
+		this.model.changeLegacyDrawingHFPictures(aSections, callback);
+	};
+
 
 	function cAsyncAction() {
 		this.timer = null;

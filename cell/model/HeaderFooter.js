@@ -1506,25 +1506,18 @@
 			}
 		}
 
-		//save pictures
-		for (let i = 0; i < newPictureSections.length; i++) {
-			let newPictureSection = newPictureSections[i];
-			if (newPictureSection.loadPictureInfo) {
-				let sName = newPictureSection.getStringName();
-			}
-		}
-
-
 		//common options
 		hF.setAlignWithMargins(this.alignWithMargins);
 		hF.setDifferentFirst(this.differentFirst);
 		hF.setDifferentOddEven(this.differentOddEven);
 		hF.setScaleWithDoc(this.scaleWithDoc);
 
-
-		if(isAddHistory) {
-			History.EndTransaction();
-		}
+		//save pictures
+		ws.changeLegacyDrawingHFPictures(newPictureSection, function () {
+			if(isAddHistory) {
+				History.EndTransaction();
+			}
+		});
 	};
 
 	CHeaderFooterEditor.prototype.setFontName = function(fontName) {
@@ -2218,6 +2211,32 @@
 	CLegacyDrawingHF.prototype.init = function () {
 
 	};
+
+	CLegacyDrawingHF.prototype.changeBySectionInfo = function (sectionInfo) {
+		let sSectionId = sectionInfo.getStringName();
+		let oldHFDrawing = this.getDrawingById(sSectionId);
+
+		let newHFDrawing = new CLegacyDrawingHFDrawing();
+		newHFDrawing.graphicObject = new Test();
+		newHFDrawing.graphicObject.initByPictureInfo(sectionInfo.loadPictureInfo);
+		newHFDrawing.id = sSectionId;
+		
+		//changeFunction(oldHFDrawing, newHFDrawing)
+	};
+
+	CLegacyDrawingHF.prototype.getDrawingById = function (id) {
+		let res = null;
+
+		for (let i = 0; i < this.drawings.length; i++) {
+			if (this.drawings[i].id === id) {
+				res = {obj: this.drawings[i], index: i};
+				break;
+			}
+		}
+
+		return res;
+	};
+
 
 	function CLegacyDrawingHFDrawing() {
 		this.id = null;//"LH", "CH", "RH", "LF", "CF", "RF", "LHEVEN",..., "LHFIRST"
