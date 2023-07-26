@@ -4007,9 +4007,10 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     }
                     else
                     {
-						if (X + SpaceLen + WordLen + GraphemeLen > XEnd
+						let AutoHyphenWidth = PRS.GetAutoHyphenWidth(this, Item);
+						if (X + SpaceLen + WordLen + GraphemeLen + AutoHyphenWidth > XEnd
 							&& !FirstItemOnLine
-							&& !PRS.TryCondenseSpaces(SpaceLen + WordLen + GraphemeLen, WordLen + GraphemeLen, X, XEnd))
+							&& !PRS.TryCondenseSpaces(SpaceLen + WordLen + GraphemeLen + AutoHyphenWidth, WordLen + GraphemeLen + AutoHyphenWidth, X, XEnd))
 						{
 							MoveToLBP = true;
 							NewRange  = true;
@@ -4020,7 +4021,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                             // Мы убираемся в пределах данной строки. Прибавляем ширину буквы к ширине слова
                             WordLen += LetterLen;
 
-							if (Item.IsSpaceAfter())
+							if (Item.IsSpaceAfter() || Item.IsHyphenAfter())
                             {
                                 // Добавляем длину пробелов до слова и ширину самого слова.
                                 X += SpaceLen + WordLen;
@@ -5098,6 +5099,8 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
 
     var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
     var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
+	
+	let textPr = this.Get_CompiledPr(false);
 
 	// TODO: Сделать возможность показывать инструкцию
 	var isHiddenCFPart = PRSC.ComplexFields.IsComplexFieldCode();
@@ -5131,7 +5134,7 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
                     PRSC.Words++;
                 }
 
-                PRSC.Range.W += Item.GetWidth();
+                PRSC.Range.W += Item.GetWidth(textPr);
                 PRSC.Range.W += PRSC.SpaceLen;
 
                 PRSC.SpaceLen = 0;

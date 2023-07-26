@@ -4044,6 +4044,20 @@ CParagraphRecalculateStateWrap.prototype.OnEndRecalculateLineRanges = function()
 {
 	this.ResetLastAutoHyphen();
 };
+/**
+ * Получам ширину дефиса, если на данном элементе можно разбить слово
+ * @returns {number}
+ */
+CParagraphRecalculateStateWrap.prototype.GetAutoHyphenWidth = function(run, item)
+{
+	if (!item || !item.IsText() || !item.IsHyphenAfter())
+		return 0;
+	
+	let textPr = run.Get_CompiledPr(false);
+	let fontInfo = textPr.GetFontInfo(AscWord.fontslot_ASCII);
+	return AscFonts.GetGraphemeWidth(AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x002D, fontInfo.Name, fontInfo.Style)) * textPr.FontSize;
+};
+
 
 function CParagraphRecalculateStateCounter()
 {

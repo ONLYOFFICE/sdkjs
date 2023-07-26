@@ -321,11 +321,17 @@
 		else
 			return (this.Width / AscWord.TEXTWIDTH_DIVIDER);
 	};
-	CRunText.prototype.GetWidth = function()
+	CRunText.prototype.GetWidth = function(textPr)
 	{
 		let nWidth = (this.Flags & FLAGS_TEMPORARY ?
 			this.TempWidth / AscWord.TEXTWIDTH_DIVIDER :
 			this.Width / AscWord.TEXTWIDTH_DIVIDER);
+		
+		if (textPr && (this.Flags & FLAGS_TEMPORARY_HYPHEN_AFTER))
+		{
+			let fontInfo = textPr.GetFontInfo(AscWord.fontslot_ASCII);
+			nWidth += AscFonts.GetGraphemeWidth(AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x002D, fontInfo.Name, fontInfo.Style)) * (((this.Flags >> 16) & 0xFFFF) / 64);
+		}
 
 		if (this.Flags & FLAGS_GAPS)
 			nWidth += this.LGap + this.RGap;
@@ -448,7 +454,7 @@
 	};
 	CRunText.prototype.IsSpaceAfter = function()
 	{
-		return !!((this.Flags & FLAGS_SPACEAFTER) || (this.Flags & FLAGS_HYPHEN_AFTER));
+		return !!(this.Flags & FLAGS_SPACEAFTER);
 	};
 	CRunText.prototype.IsHyphenAfter = function()
 	{
