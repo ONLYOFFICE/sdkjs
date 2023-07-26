@@ -3960,7 +3960,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 								{
 									NewRange    = true;
 									RangeEndPos = Pos;
-									PRS.CheckLastAutoHyphen(PRS.LastItem);
+									PRS.CheckLastAutoHyphen(X + SpaceLen, XEnd);
 								}
 							}
 						}
@@ -3982,7 +3982,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 							else if (Item.CanBeAtBeginOfLine())
 							{
 								PRS.Set_LineBreakPos(Pos, FirstItemOnLine);
-								PRS.CheckLastAutoHyphen(PRS.LastItem);
+								PRS.CheckLastAutoHyphen(X + SpaceLen, XEnd);
 							}
 
 							// Если текущий символ с переносом, например, дефис, тогда на нем заканчивается слово
@@ -4007,10 +4007,13 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     }
                     else
                     {
-						let AutoHyphenWidth = PRS.GetAutoHyphenWidth(this, Item);
-						if (X + SpaceLen + WordLen + GraphemeLen + AutoHyphenWidth > XEnd
-							&& !FirstItemOnLine
-							&& !PRS.TryCondenseSpaces(SpaceLen + WordLen + GraphemeLen + AutoHyphenWidth, WordLen + GraphemeLen + AutoHyphenWidth, X, XEnd))
+						
+						let AutoHyphenWidth = PRS.GetAutoHyphenWidth(Item, this);
+						
+						let fitOnLine = (X + SpaceLen + WordLen + GraphemeLen + AutoHyphenWidth <= XEnd
+							|| PRS.TryCondenseSpaces(SpaceLen + WordLen + GraphemeLen + AutoHyphenWidth, WordLen + GraphemeLen + AutoHyphenWidth, X, XEnd));
+						
+						if (!fitOnLine && !FirstItemOnLine)
 						{
 							MoveToLBP = true;
 							NewRange  = true;
@@ -4836,7 +4839,10 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
             }
 
             if (para_Space !== ItemType)
-            	PRS.LastItem = Item;
+			{
+				PRS.LastItem    = Item;
+				PRS.LastItemRun = this;
+			}
 
             if (true === NewRange)
                 break;

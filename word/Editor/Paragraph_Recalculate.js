@@ -3225,14 +3225,17 @@ function CParagraphRecalculateStateWrap(Para)
     this.CurPos       = new AscWord.CParagraphContentPos();
 
     this.NumberingPos = new AscWord.CParagraphContentPos(); // Позиция элемента вместе с которым идет нумерация
+	
+	this.MoveToLBP      = false; // Делаем ли разрыв в позиции this.LineBreakPos
+	this.UpdateLBP      = true;  // Флаг для первичного обновления позиции переноса в отрезке
+	this.LineBreakFirst = true;  // Последняя позиция для переноса - это первый элемент в отрезке
+	
+	// Последняя позиция в которой можно будет добавить разрыв отрезка или строки, если что-то не умещается (например,
+	// если у нас не убирается слово, то разрыв ставим перед ним)
+	this.LineBreakPos   = new AscWord.CParagraphContentPos();
 
-    this.MoveToLBP      = false;                      // Делаем ли разрыв в позиции this.LineBreakPos
-	this.LineBreakFirst = true;                       // Последняя позиция для переноса - это первый элемент в отрезке
-    this.LineBreakPos   = new AscWord.CParagraphContentPos(); // Последняя позиция в которой можно будет добавить разрыв
-                                                      // отрезка или строки, если что-то не умещается (например,
-                                                      // если у нас не убирается слово, то разрыв ставим перед ним)
-	this.LastItem       = null;                       // Последний непробельный элемент
-	this.UpdateLBP      = true;                       // Флаг для первичного обновления позиции переноса в отрезке
+	this.LastItem       = null; // Последний непробельный элемент
+	this.LastItemRun    = null; // Run, в котором лежит последний элемент LastItem
 	this.LastHyphenItem = null;
 
     this.RunRecalcInfoLast  = null; // RecalcInfo последнего рана
@@ -3374,6 +3377,7 @@ CParagraphRecalculateStateWrap.prototype =
 		this.LineBreakPos   = new AscWord.CParagraphContentPos();
 		this.LineBreakFirst = true;
 		this.LastItem       = null;
+		this.LastItemRun    = null;
 		this.UpdateLBP      = true;
 		this.LastHyphenItem = null;
 
@@ -3414,11 +3418,17 @@ CParagraphRecalculateStateWrap.prototype =
 		this.LastHyphenItem = null;
 	},
 	
-	CheckLastAutoHyphen : function(item)
+	CheckLastAutoHyphen : function(X, XEnd)
 	{
 		this.ResetLastAutoHyphen();
+		let item = this.LastItem;
+		let run  = this.LastItemRun;
 		
 		if (!item || !item.IsText() || !item.IsHyphenAfter())
+			return;
+		
+		let hyphenWidth = this.GetAutoHyphenWidth(item, run);
+		if (X + hyphenWidth > XEnd)
 			return;
 		
 		console.log("Check " + String.fromCodePoint(item.GetCodePoint()));
@@ -4048,7 +4058,7 @@ CParagraphRecalculateStateWrap.prototype.OnEndRecalculateLineRanges = function()
  * Получам ширину дефиса, если на данном элементе можно разбить слово
  * @returns {number}
  */
-CParagraphRecalculateStateWrap.prototype.GetAutoHyphenWidth = function(run, item)
+CParagraphRecalculateStateWrap.prototype.GetAutoHyphenWidth = function(item, run)
 {
 	if (!item || !item.IsText() || !item.IsHyphenAfter())
 		return 0;
