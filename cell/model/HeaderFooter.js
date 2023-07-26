@@ -1513,11 +1513,17 @@
 		hF.setScaleWithDoc(this.scaleWithDoc);
 
 		//save pictures
-		ws.changeLegacyDrawingHFPictures(newPictureSection, function () {
+		if (ws && ws.changeLegacyDrawingHFPictures) {
+			ws.changeLegacyDrawingHFPictures(newPictureSections, function () {
+				if(isAddHistory) {
+					History.EndTransaction();
+				}
+			});
+		} else {
 			if(isAddHistory) {
 				History.EndTransaction();
 			}
-		});
+		}
 	};
 
 	CHeaderFooterEditor.prototype.setFontName = function(fontName) {
@@ -1613,22 +1619,55 @@
 			return;
 		}
 
-		if (val === asc.c_oAscHeaderFooterField.picture) {
-			let curSection = this._getSectionById(this.curParentFocusId);
-			let bSectionContainsPictures = curSection && curSection.getPictures();
-			if (bSectionContainsPictures) {
-				//confirm dialog
-				//replace/keep options
-
-			} else {
-				//add new pictures
-
+		if (true || val === asc.c_oAscHeaderFooterField.picture) {
+			this.addPictureField();
+		} else {
+			let textField = convertFieldToMenuText(val);
+			if(null !== textField) {
+				this.cellEditor.pasteText(textField);
 			}
 		}
+	};
 
-		let textField = convertFieldToMenuText(val);
-		if(null !== textField) {
-			this.cellEditor.pasteText(textField);
+	CHeaderFooterEditor.prototype.addPictureField = function () {
+		let t = this;
+		let showFileDialog = function (needPushField) {
+			AscCommon.ShowImageFileDialog(t.api.documentId, t.api.documentUserId, t.api.CoAuthoringApi.get_jwt(), function(error, files)
+			{
+				curSection.loadPictureInfo = files;
+				if (needPushField) {
+					let textField = convertFieldToMenuText(asc.c_oAscHeaderFooterField.picture);
+					if(null !== textField) {
+						t.cellEditor.pasteText(textField);
+					}
+				}
+			}, function(error)
+			{
+				/*if (c_oAscError.ID.No !== error)
+				{
+					t.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+				}
+				if (obj && obj.sendUrlsToFrameEditor && t.isOpenedChartFrame)
+				{
+					t.sendStartUploadImageActionToFrameEditor();
+				}
+				t.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);*/
+			});
+		};
+
+		let curSection = this._getSectionById(this.curParentFocusId);
+		let bSectionContainsPictures = curSection && curSection.getPictures();
+		if (bSectionContainsPictures) {
+			//confirm dialog
+			//replace/keep options
+			t.api.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmReplaceRange, function (can) {
+				if (can) {
+					showFileDialog();
+				}
+			});
+		} else {
+			//add new pictures
+			showFileDialog(true);
 		}
 	};
 
@@ -2212,16 +2251,61 @@
 
 	};
 
-	CLegacyDrawingHF.prototype.changeBySectionInfo = function (sectionInfo) {
-		let sSectionId = sectionInfo.getStringName();
-		let oldHFDrawing = this.getDrawingById(sSectionId);
+	CLegacyDrawingHF.prototype.changeBySectionsInfo = function (aSectionsInfo) {
+		let loadFiles = [];
+		let t = this;
+		let api = window["Asc"]["editor"];
 
-		let newHFDrawing = new CLegacyDrawingHFDrawing();
-		newHFDrawing.graphicObject = new Test();
-		newHFDrawing.graphicObject.initByPictureInfo(sectionInfo.loadPictureInfo);
-		newHFDrawing.id = sSectionId;
-		
-		//changeFunction(oldHFDrawing, newHFDrawing)
+		for (let i = 0; i < aSectionsInfo.length; i++) {
+			loadFiles.push(aSectionsInfo[i].loadPictureInfo[0]);
+		}
+
+		let addLoadedImages = function (imageUrls) {
+
+			api.ImageLoader.LoadImagesWithCallback(imageUrls, function() {
+				// CImage
+				//_this.controller.resetSelection();
+				//History.Create_NewPoint();
+				for (var i = 0; i < imageUrls.length; ++i) {
+					/*var sImageUrl = imageUrls[i];
+					var _image = api.ImageLoader.LoadImage(sImageUrl, 1);
+					if (null != _image) {
+						_this.addImageObjectCallback(_image, options);
+					} else {
+						worksheet.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.UplImageUrl, c_oAscError.Level.NoCritical);
+						break;
+					}*/
+
+					let sSectionId = aSectionsInfo[i].getStringName();
+					let oldHFDrawing = t.getDrawingById(sSectionId);
+					let newHFDrawing = new CLegacyDrawingHFDrawing();
+					newHFDrawing.id = sSectionId;
+
+					const ws = api.wb.getWorksheet();
+					newHFDrawing.graphicObject = ws.objectRender.controller.createImage(imageUrls[i], 0, 0, 0, 0);
+
+					t.drawings.push(newHFDrawing);
+					//changeFunction(oldHFDrawing, newHFDrawing);
+
+					aSectionsInfo[i].loadPictureInfo = null;
+
+				}
+			});
+		};
+
+		api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+		AscCommon.UploadImageFiles(loadFiles, api.documentId, api.documentUserId, api.CoAuthoringApi.get_jwt(), function(error, urls)
+		{
+			if (c_oAscError.ID.No !== error)
+			{
+				//t.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+			}
+			else
+			{
+				addLoadedImages(urls/*, obj*/);
+			}
+			api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+		});
 	};
 
 	CLegacyDrawingHF.prototype.getDrawingById = function (id) {

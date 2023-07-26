@@ -12248,9 +12248,7 @@
 		if (!this.legacyDrawingHF) {
 			this.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF();
 		}
-		for (let i = 0; i < aSections.length; i++) {
-			this.legacyDrawingHF.changeBySectionInfo(aSections[i]);
-		}
+		this.legacyDrawingHF.changeBySectionsInfo(aSections);
 		callback();
 	};
 
