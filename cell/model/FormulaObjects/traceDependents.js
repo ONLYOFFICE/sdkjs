@@ -55,7 +55,6 @@ function (window, undefined) {
 		this.inLoop = null;
 		this.isPrecedentsCall = null;
 		this.precedentsAreas = null;
-		this.inPrecedentsAreasLoop = null;
 		this.data = {
 			lastHeaderIndex: -1,
 			prevIndex: -1,
@@ -66,6 +65,13 @@ function (window, undefined) {
 			}
 		};
 		this.currentPrecedentsAreas = null;
+		this.currentCalculatedPrecedentAreas = {
+			// rangeName: {
+			// inProgress: null,
+			// isCalculated: null
+			// }
+
+		};
 	}
 
 	TraceDependentsManager.prototype.setPrecedentsCall = function () {
@@ -736,7 +742,6 @@ function (window, undefined) {
 
 		findMaxNesting(row, col);
 		const maxLevel = this.data.maxRecLevel;
-		console.log({...this.data});
 		if (maxLevel === 0) {
 			this._setDefaultData();
 			return;
@@ -774,13 +779,16 @@ function (window, undefined) {
 		this._setDefaultData();
 	};
 	TraceDependentsManager.prototype.calculatePrecedents = function (row, col, isSecondCall) {
+		if (arguments.length === 0) {
+			this.currentCalculatedPrecedentAreas = {};
+		}
+
 		//depend from row/col cell
 		let ws = this.ws && this.ws.model;
 		if (!ws) {
 			return;
 		}
 		const t = this;
-		const cellIndex = AscCommonExcel.getCellIndex(row, col);
 		if (row == null || col == null) {
 			let selection = ws.getSelection();
 			let activeCell = selection.activeCell;
@@ -788,15 +796,16 @@ function (window, undefined) {
 			col = activeCell.col;
 		}
 
+		const cellIndex = AscCommonExcel.getCellIndex(row, col);
 		const getAllAreaIndexesWithoutCalc = function (areas, cellIndex) {
 			const indexes = [];
 			if (!areas) {
 				return;
 			}
 			for (const area in areas) {
-				// if (areas[area].areaHeader !== cellIndex) {
-				// 	continue;
-				// }
+				if (areas[area].areaHeader !== cellIndex) {
+					continue;
+				}
 				for (let i = areas[area].range.r1; i <= areas[area].range.r2; i++) {
 					for (let j = areas[area].range.c1; j <= areas[area].range.c2; j++) {
 						let index = AscCommonExcel.getCellIndex(i, j);
@@ -806,7 +815,6 @@ function (window, undefined) {
 			}
 			return indexes;
 		};
-
 		const getAllAreaIndexes = function (areas, header) {
 			const indexes = [];
 			if (!areas) {
@@ -827,8 +835,7 @@ function (window, undefined) {
 
 			return indexes;
 		};
-
-		const isCellTableHeader = function (cellIndex) {
+		const isCellAreaHeader = function (cellIndex) {
 			if (!t.currentPrecedentsAreas) {
 				return;
 			}
@@ -837,48 +844,55 @@ function (window, undefined) {
 					return true;
 				} 
 			}
-		}
+		};
+		const getAreaName = function (areas, header) {
+			for (const area in areas) {
+				if (areas[area].areaHeader == header) {
+					return area;
+				}
+			}
+		};
 
 		let formulaParsed;
 		ws.getCell3(row, col)._foreachNoEmpty(function (cell) {
 			formulaParsed = cell.formulaParsed;
 		});
 
-		if (formulaParsed) {
-			this._calculatePrecedents(formulaParsed, row, col, isSecondCall);
-			this.setPrecedentsCall();
-		}
-
 		// TODO another way to check table
-		let isCellHeader = isCellTableHeader(cellIndex);
-
-		if (this.currentPrecedentsAreas && !this.inPrecedentsAreasLoop && isSecondCall && isCellHeader) {
+		let isAreaHeader = isCellAreaHeader(cellIndex);
+		if (this.currentPrecedentsAreas && isSecondCall && isAreaHeader) {
 			// calculate all precedents in areas
-			this.setPrecedentsAreasLoop(true);
+			// let areaIndexes = getAllAreaIndexesWithoutCalc(this.currentPrecedentsAreas, cellIndex);
 			let areaIndexes = getAllAreaIndexes(this.currentPrecedentsAreas, cellIndex);
-			if (areaIndexes.length > 0) {
-				// go through the values and check precedents for each
-				for (let index of areaIndexes) {
-					let cellAddress = AscCommonExcel.getFromCellIndex(index, true), formula;
-					ws.getCell3(cellAddress.row, cellAddress.col)._foreachNoEmpty(function (cell) {
-						formula = cell.formulaParsed;
-					});
-					let res = this.isCellHaveUnrecordedTraces(index, formula);
-					if (!res) {
-						continue;
-					}
-					
-					this.calculatePrecedents(cellAddress.row, cellAddress.col);
-				}
-			} else {
-				areaIndexes = getAllAreaIndexesWithoutCalc(this.currentPrecedentsAreas, cellIndex);
-				for (let index of areaIndexes) {
-					let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
+			let areaName = getAreaName(this.currentPrecedentsAreas, cellIndex);
 
-					this.calculatePrecedents(cellAddress.row, cellAddress.col);
+			if (!this.currentCalculatedPrecedentAreas[areaName]) {
+				this.currentCalculatedPrecedentAreas[areaName] = {};
+				// this.currentCalculatedPrecedentAreas[areaName].inProgress = true;
+				// this.currentCalculatedPrecedentAreas[areaName].isCalculated = false;
+				if (areaIndexes.length > 0) {
+					// go through the values and check precedents for each
+					for (let index of areaIndexes) {
+						let cellAddress = AscCommonExcel.getFromCellIndex(index, true), formula;
+						ws.getCell3(cellAddress.row, cellAddress.col)._foreachNoEmpty(function (cell) {
+							formula = cell.formulaParsed;
+						});
+						if (!formula) {
+							continue;
+						}
+						this.calculatePrecedents(cellAddress.row, cellAddress.col);
+					}
+				} else {
+					areaIndexes = getAllAreaIndexesWithoutCalc(this.currentPrecedentsAreas, cellIndex);
+					for (let index of areaIndexes) {
+						let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
+						this.calculatePrecedents(cellAddress.row, cellAddress.col);
+					}
 				}
 			}
-			this.setPrecedentsAreasLoop(false);
+		} else if (formulaParsed) {
+			this._calculatePrecedents(formulaParsed, row, col, isSecondCall);
+			this.setPrecedentsCall();
 		}
 	};
 	TraceDependentsManager.prototype._calculatePrecedents = function (formulaParsed, row, col, isSecondCall) {
@@ -1128,9 +1142,6 @@ function (window, undefined) {
 	TraceDependentsManager.prototype.setPrecedentsLoop = function (inLoop) {
 		this.inLoop = inLoop;
 	};
-	TraceDependentsManager.prototype.setPrecedentsAreasLoop = function (inLoop) {
-		this.inPrecedentsAreasLoop = inLoop;
-	};
 	TraceDependentsManager.prototype.getPrecedentsLoop = function () {
 		return this.inLoop;
 	};
@@ -1226,7 +1237,7 @@ function (window, undefined) {
 		this.isPrecedentsCall = null;
 		this.precedentsAreas = null;
 		this.currentPrecedentsAreas = null;
-		this.inPrecedentsAreasLoop = null;
+		this.currentCalculatedPrecedentAreas = null;
 		this._setDefaultData();
 	};
 	TraceDependentsManager.prototype.clearCellTraces = function (row, col) {
