@@ -419,6 +419,36 @@ window.startPluginApi = function() {
 	 */
 
 	
+	/**
+	 * > memberof Plugin
+	 * > alias executeCommand
+	 * > deprecated Please use callCommand method.
+	 * > description Defines the method used to send the data back to the editor.
+	 * <note>This method is deprecated, please use the {@link Plugin#callCommand callCommand} method which runs the code from the *data* string parameter.</note>
+	 * 
+	 * Now this method is mainly used to work with the OLE objects or close the plugin without any other commands.
+	 * It is also retained for using with text so that the previous versions of the plugin remain compatible.
+	 * 
+	 * The *callback* is the result that the command returns. It is an optional parameter. In case it is missing, the window.Asc.plugin.onCommandCallback function will be used to return the result of the command execution.
+	 * 
+	 * The second parameter is the JavaScript code for working with <b>ONLYOFFICE Document Builder</b> API 
+	 * that allows the plugin to send structured data inserted to the resulting document file (formatted paragraphs, tables, text parts, and separate words, etc.).
+	 * <note><b>ONLYOFFICE Document Builder</b> commands can be only used to create content and insert it to the document editor
+	 * (using the *Api.GetDocument().InsertContent(...)*). This limitation exists due to the co-editing feature in the online editors.
+	 * If it is necessary to create a plugin for the desktop editors to work with local files, no such limitation is applied.</note>
+	 * 
+	 * When creating/editing OLE objects, two extensions are used to work with them:
+	 * * *Api.asc_addOleObject (window.Asc.plugin.info)* - used to create an OLE object in the document;
+	 * * *Api.asc_editOleObject (window.Asc.plugin.info)* - used to edit the created OLE object.
+	 * 
+	 * When creating/editing the objects, their properties can be passed to the window.Asc.plugin.info object that defines how the object should look.
+	 * > param {string} type - Defines the type of the command. The *close* is used to close the plugin window after executing the function in the *data* parameter.
+	 * The *command* is used to execute the command and leave the window open waiting for the next command.
+     * > param {string} data - Defines the command written in JavaScript code which purpose is to form the structured data which can be inserted to the resulting document file
+	 * (formatted paragraphs, tables, text parts, and separate words, etc.). Then the data is sent to the editors.
+	 * The command must be compatible with ONLYOFFICE Document Builder syntax.
+     * > param {Function} callback - The result that the method returns.
+	 */
 	Plugin.executeCommand = function(type, data, callback)
     {
 		if (this._checkPluginOnWindow() && 0 !== type.indexOf("onmouse")) return;
