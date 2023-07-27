@@ -37,82 +37,79 @@
 * @param {undefined} undefined
 */
 function (window, undefined) {
+    // Import
+    let cBaseOperator = AscCommonExcel.cBaseOperator;
     /**
     * @constructor
     */
-    function CGoalSeek(oParsedFormula, nExpectedVal, oDesiredVal) {
+    function CGoalSeek(oParsedFormula, nExpectedVal, oChangingCell) {
         this.oParsedFormula = oParsedFormula;
         this.nExpectedVal = nExpectedVal;
-        this.oDesiredVal = oDesiredVal;
-        this.nRelativeError = 1e-12; // relative error of goal seek. Default value is 1e-12
+        this.oChangingCell = oChangingCell;
+        this.nRelativeError = 0.001; // relative error of goal seek. Default value is 1e-12
         this.nMaxIterations = 100; // max iterations of goal seek. Default value is 100
     }
     CGoalSeek.prototype.calculate = function() {
-        function findInterval(nX0) {
-            const INTERVAL_MAX_ATTEMPTS = 1500;
-            let nCurIntervalAttempt = 0;
-            // k is constant number for define step
-            const k = bIsSmallScale ? 1 : 0.0001;
-            let nF0, nF1, nX1, nStep;
-
-            while(true) {
-                nCurIntervalAttempt++;
-                oDesiredVal.setValue(String(nX0));
-                oParsedFormula.parse()
-                nF0 = oParsedFormula.calculate().getValue() - nExpectedVal;
-                nStep = k * Math.abs(nF0);
-                nX1 = nX0 + nStep;
-                oDesiredVal.setValue(String(nX1));
-                oParsedFormula.parse()
-                nF1 = oParsedFormula.calculate().getValue() - nExpectedVal;
-
-                if(((nF0 < 0) !== (nF1 < 0)) || nCurIntervalAttempt >= INTERVAL_MAX_ATTEMPTS) {
-                    console.log(`--DEBUG: Attempts for find interval: ${nCurIntervalAttempt}`);
-                    return [nX0, nX1];
-                } else {
-                    nX0 = nX1;
-                    nF0 = nF1;
-                }
-            }
-        }
-
         let oParsedFormula = this.getParsedFormula();
-        let oDesiredVal = this.getDesiredVal();
+        let oChangingCell = this.getChangingCell();
         let nExpectedVal = this.getExpectedVal()
-        let sDesiredVal = this.getDesiredVal().getValue();
+        let sChangingVal = this.getChangingCell().getValue();
+        let nChangingVal = sChangingVal ? Number(sChangingVal) : 0;
+        let nStep = null;
         let nCurAttempt = 0;
-        let nX0 = null;
-        let bIsSmallScale = false;
-        // Desired Value is 0 for define is it small scale?
-        oDesiredVal.setValue("0");
+        let nPrevValue = null;
+        oChangingCell.setValue('0');
         oParsedFormula.parse();
-        let nFirstFormulaValue = Number(oParsedFormula.calculate().getValue());
-        if (nFirstFormulaValue === 0) {
-            bIsSmallScale = true;
-            nX0 = sDesiredVal && sDesiredVal !== "0" ? Number(sDesiredVal) : 1;
-        } else {
-            nX0 = sDesiredVal && sDesiredVal !== "0" ? Number(sDesiredVal) : 0.01;
+        let nFormulaOutStackLen = oParsedFormula.getOutStackSize();
+        let bLastElementIsOperator = oParsedFormula.getOutStackElem(nFormulaOutStackLen - 1) instanceof cBaseOperator;
+        if (bLastElementIsOperator && nExpectedVal < 0) {
+            nStep = bLastElementIsOperator ? -0.1 : -0.01;
         }
-        let [nLow, nHigh] = findInterval(nX0);
-        let nDesiredVal = (nLow + nHigh) / 2;
+        nStep = bLastElementIsOperator ? 0.1 : 0.01;
 
         while(true) {
-            oDesiredVal.setValue(String(nDesiredVal));
-            oParsedFormula.parse()
+            nCurAttempt++;
+            console.log(`-DEBUG: Loop ${nCurAttempt}:  nChangingVal = ${nChangingVal}`);
+            oChangingCell.setValue(String(nChangingVal));
+            oParsedFormula.parse();
             let nFactValue = oParsedFormula.calculate().getValue();
             let nDiff = Math.abs(nFactValue - nExpectedVal);
-
-            if(nDiff <= this.getRelativeError() || nCurAttempt >= this.getMaxIterations()) {
-                console.log(`--DEBUG: Common attempts for goal seek: ${nCurAttempt}`);
+            if (nDiff < this.getRelativeError() || nCurAttempt === this.getMaxIterations()) {
+                console.log(`-DEBUG: Common attempts for goal seek: ${nCurAttempt}`);
                 return;
-            } else if(nFactValue > nExpectedVal) {
-                nHigh = nDesiredVal;
+            } else if (Math.abs(nFactValue) > Math.abs(nExpectedVal)) {
+                //If nFactValue > nExpectedVal, then we use Regula Falsi method for calculate final changing value
+                // in interval [nPrevValue, nChangingVal]
+                console.log(`-DEBUG: Regula Falsi method`);
+                let nLow = nPrevValue
+                let nHigh = nChangingVal;
+                while (true) {
+                    nCurAttempt++;
+                    oChangingCell.setValue(String(nLow));
+                    oParsedFormula.parse();
+                    let nLowFx = oParsedFormula.calculate().getValue() - nExpectedVal;
+                    oChangingCell.setValue(String(nHigh));
+                    oParsedFormula.parse();
+                    let nHighFx = oParsedFormula.calculate().getValue() - nExpectedVal;
+                    nChangingVal = nLow - nLowFx * (nHigh - nLow) / (nHighFx - nLowFx);
+                    console.log(`-DEBUG: Loop ${nCurAttempt}:  nChangingVal = ${nChangingVal}`)
+                    oChangingCell.setValue(String(nChangingVal));
+                    oParsedFormula.parse();
+                    nDiff = Math.abs(oParsedFormula.calculate().getValue() - nExpectedVal);
+                    if (nDiff < this.getRelativeError() || nCurAttempt === this.getMaxIterations()) {
+                        console.log(`-DEBUG: Common attempts for goal seek: ${nCurAttempt}`);
+                        return;
+                    } else if (nDiff < 0 === nLowFx < 0) {
+                        nLow = nChangingVal;
+                    } else if (nDiff < 0 === nHighFx < 0) {
+                        nHigh = nChangingVal;
+                    }
+                }
             } else {
-                nLow = nDesiredVal;
+                nPrevValue = nChangingVal;
+                nChangingVal += nStep;
+                nStep *= 2;
             }
-
-            nDesiredVal = (nLow + nHigh) / 2;
-            nCurAttempt++;
         }
     };
     CGoalSeek.prototype.getParsedFormula = function() {
@@ -121,11 +118,11 @@ function (window, undefined) {
     CGoalSeek.prototype.getExpectedVal = function() {
         return this.nExpectedVal;
     };
-    CGoalSeek.prototype.getDesiredVal = function() {
-        return this.oDesiredVal
+    CGoalSeek.prototype.getChangingCell = function() {
+        return this.oChangingCell
     };
-    CGoalSeek.prototype.setDesiredVal = function(oDesiredVal) {
-        this.oDesiredVal = oDesiredVal;
+    CGoalSeek.prototype.setChangingCell = function(oChangingCell) {
+        this.oChangingCell = oChangingCell;
     };
     CGoalSeek.prototype.getRelativeError = function() {
         return this.nRelativeError;
