@@ -2258,10 +2258,21 @@
 				let url = picturesMap[i].src;
 				let image = picturesMap[i].Image;
 
+				/*var oImgP = new Asc.asc_CImgProperty();
+				oImgP.ImageUrl = image.src;
+				oSize = oImgP.asc_getOriginSize(api);*/
 
 				var __w = Math.max(parseInt(image.width * AscCommon.g_dKoef_pix_to_mm), 1);
 				var __h = Math.max(parseInt(image.height * AscCommon.g_dKoef_pix_to_mm), 1);
 
+				/*let _w = __w;
+				let _h = __h;
+
+				var dKoef = Math.max(__w / _w, __h / _h);
+				if (dKoef > 1) {
+					_w = Math.max(5, __w / dKoef);
+					_h = Math.max(5, __h / dKoef);
+				}*/
 
 				newHFDrawing.graphicObject = ws.objectRender.controller.createImage(url, 0, 0, __w, __h);
 
