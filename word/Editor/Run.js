@@ -4024,7 +4024,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                             // Мы убираемся в пределах данной строки. Прибавляем ширину буквы к ширине слова
                             WordLen += LetterLen;
 
-							if (Item.IsSpaceAfter() || Item.IsHyphenAfter())
+							if (Item.IsSpaceAfter() || (Item.IsHyphenAfter() && fitOnLine))
                             {
                                 // Добавляем длину пробелов до слова и ширину самого слова.
                                 X += SpaceLen + WordLen;
