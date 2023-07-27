@@ -3413,7 +3413,6 @@ CParagraphRecalculateStateWrap.prototype =
 		if (!this.LastHyphenItem)
 			return;
 		
-		console.log("Reset ");
 		this.LastHyphenItem.SetTemporaryHyphenAfter(false);
 		this.LastHyphenItem = null;
 	},
@@ -3431,7 +3430,6 @@ CParagraphRecalculateStateWrap.prototype =
 		if (X + hyphenWidth > XEnd)
 			return;
 		
-		console.log("Check " + String.fromCodePoint(item.GetCodePoint()));
 		this.LastHyphenItem = item;
 		item.SetTemporaryHyphenAfter(true);
 	},

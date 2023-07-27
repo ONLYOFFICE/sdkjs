@@ -49,8 +49,6 @@
 	}
 	CTextHyphenator.prototype.Hyphenate = function(paragraph)
 	{
-		console.log(`Start hyphenate paragraph ${paragraph.GetId()}`);
-		
 		let self = this;
 		paragraph.CheckRunContent(function(run, startPos, endPos)
 		{

@@ -312,7 +312,9 @@ CHistory.prototype =
     {
 		if ( 0 !== this.TurnOffHistory )
 			return false;
-
+		
+		this.RemoveLastTemporaryPoint();
+		
 		if (this.Document && this.Document.ClearListsCache)
 			this.Document.ClearListsCache();
 
@@ -337,6 +339,7 @@ CHistory.prototype =
             Items      : Items, // Массив изменений, начиная с текущего момента
             Time       : Time,  // Текущее время
             Additional : {},    // Дополнительная информация
+			Temporary  : false,
             Description: nDescription
         };
 
@@ -1093,6 +1096,27 @@ CHistory.prototype =
 	{
 		if (this.Points[this.Index] && this.Points[this.Index].Additional.FormFilling)
 			delete this.Points[this.Index].Additional.FormFilling;
+	};
+	CHistory.prototype.SetLastPointTemporary = function()
+	{
+		if (this.Index < 0)
+			return;
+		
+		this.Points[this.Index].Temporary = true;
+	};
+	CHistory.prototype.RemoveLastTemporaryPoint = function()
+	{
+		if (this.Index < 0
+			|| !this.Document.IsDocumentEditor()
+			|| !this.Points[this.Index].Temporary)
+			return;
+		
+		let needOn = this.Document.TurnOff_InterfaceEvents();
+		let changes = this.Undo();
+		this.Document.UpdateAfterUndoRedo(changes);
+		
+		if (needOn)
+			this.Document.TurnOn_InterfaceEvents();
 	};
 CHistory.prototype.ClearAdditional = function()
 {
