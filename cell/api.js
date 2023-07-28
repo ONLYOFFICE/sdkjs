@@ -8893,7 +8893,9 @@ var editor;
 			return;
 		}
 		let ws = wb.getWorksheet();
-		return ws.tracePrecedents();
+		console.time("asd")
+		ws.tracePrecedents();
+		console.timeEnd("asd")
 	};
 
 	spreadsheet_api.prototype.asc_TraceDependents = function() {

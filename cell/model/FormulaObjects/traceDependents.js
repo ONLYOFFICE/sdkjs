@@ -44,6 +44,7 @@ function (window, undefined) {
 	let asc = window["Asc"];
 
 	let asc_Range = asc.Range;
+	let cElementType = AscCommonExcel.cElementType;
 
 	function TraceDependentsManager(ws) {
 		this.ws = ws;
@@ -94,7 +95,7 @@ function (window, undefined) {
 		}
 		return this.precedentsExternal.has(cellIndex);
 	};
-	TraceDependentsManager.prototype.checkCircularReference =  function (cellIndex, isDependentCall) {
+	TraceDependentsManager.prototype.checkCircularReference = function (cellIndex, isDependentCall) {
 		if (this.dependents && this.dependents[cellIndex] && this.precedents && this.precedents[cellIndex]) {
 			if (isDependentCall) {
 				for (let i in this.dependents[cellIndex]) {
@@ -131,7 +132,7 @@ function (window, undefined) {
 		const findMaxNesting = function (row, col) {
 			let currentCellIndex = AscCommonExcel.getCellIndex(row, col);
 
-			if (t.data.prevIndex != -1 && t.data.indices[t.data.prevIndex] && t.data.indices[t.data.prevIndex][currentCellIndex]) {
+			if (t.data.prevIndex !== -1 && t.data.indices[t.data.prevIndex] && t.data.indices[t.data.prevIndex][currentCellIndex]) {
 				return;
 			}
 			if (t.dependents[currentCellIndex]) {
@@ -151,7 +152,7 @@ function (window, undefined) {
 					t.data.prevIndex = currentCellIndex;
 					if (j.includes(";")) {
 						// [fromCurrent][toExternal]
-						if (!t.data.indices[currentCellIndex]) {	
+						if (!t.data.indices[currentCellIndex]) {
 							t.data.indices[currentCellIndex] = {};
 						}
 						t.data.indices[currentCellIndex][j] = t.data.recLevel;
@@ -171,7 +172,6 @@ function (window, undefined) {
 					t.data.indices[t.data.prevIndex] = {};
 				}
 				t.data.indices[t.data.prevIndex][currentCellIndex] = t.data.recLevel;	// [from][to]
-				return;
 			}
 		};
 		const checkCircularReference = function (index) {
@@ -331,7 +331,7 @@ function (window, undefined) {
 								let arr = [];
 								// check each element of the stack for an occurrence in the original cell
 								for (let table in elem.outStack) {
-									if (elem.outStack[table].type !== AscCommonExcel.cElementType.table) {
+									if (elem.outStack[table].type !== cElementType.table) {
 										continue;
 									}
 
@@ -491,7 +491,7 @@ function (window, undefined) {
 						let formula = cellListeners[i].Formula;
 						let is3D = false;
 						const parentInfo = {
-							parent, 
+							parent,
 							parentWsId,
 							isTable,
 							isDefName
@@ -526,7 +526,7 @@ function (window, undefined) {
 							}
 						}
 						let parentCellIndex = getParentIndex(parent);
-						
+
 						if (parentCellIndex === null) {
 							continue;
 						}
@@ -573,7 +573,7 @@ function (window, undefined) {
 						}
 					}
 				}
-				
+
 				if (!isUpdated) {
 					for (let i in this.dependents[cellIndex]) {
 						if (this.dependents[cellIndex].hasOwnProperty(i)) {
@@ -634,7 +634,7 @@ function (window, undefined) {
 			ws.getCell3(row, col)._foreachNoEmpty(function (cell) {
 				formulaParsed = cell.formulaParsed;
 			});
-			
+
 			let ifHeader;
 			if (t.data.recLevel > 0 && t.data.lastHeaderIndex !== currentCellIndex) {
 				// check area header
@@ -659,7 +659,7 @@ function (window, undefined) {
 
 				if (areaIndexes.length > 0) {
 					fork = true;
-					interLevel = t.data.recLevel;	
+					interLevel = t.data.recLevel;
 					// ??? либо пройтись сначала по заголовку, дабы не входить в бесконечный цикл, либо же добавить флаг который не позволит бесконечно заходить в текущий диапазон
 					for (let index of areaIndexes) {
 						let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
@@ -696,7 +696,6 @@ function (window, undefined) {
 				}
 			} else {
 				t.data.indices[currentCellIndex] = t.data.recLevel;
-				return;
 			}
 		};
 		const checkCircularReference = function (index) {
@@ -760,7 +759,7 @@ function (window, undefined) {
 					index = parts[0];
 					fromIndex = parts[1];
 				} else {
-					fromIndex = this.dependents && this.dependents[index] ?  Object.keys(this.dependents[index])[0] : null;		// can be more than one dependent?
+					fromIndex = this.dependents && this.dependents[index] ? Object.keys(this.dependents[index])[0] : null;		// can be more than one dependent?
 				}
 				if (fromIndex) {
 					if (index.includes(";")) {
@@ -842,7 +841,7 @@ function (window, undefined) {
 			for (let area in t.currentPrecedentsAreas) {
 				if (t.currentPrecedentsAreas[area].areaHeader === cellIndex) {
 					return true;
-				} 
+				}
 			}
 		};
 		const getAreaName = function (areas, header) {
@@ -899,29 +898,28 @@ function (window, undefined) {
 		let isHaveUnrecorded = this.isCellHaveUnrecordedTraces(currentCellIndex, formulaParsed);
 
 		if (isHaveUnrecorded) {
-		// if (!this.precedents[currentCellIndex]) {
+			// if (!this.precedents[currentCellIndex]) {
 			let shared, base;
 			if (formulaParsed.shared !== null) {
 				shared = formulaParsed.getShared();
 				base = shared.base;		// base index - where shared formula start
 			}
-			
+
 			if (formulaParsed.outStack) {
 				let currentWsIndex = formulaParsed.ws.index;
 				let ref = formulaParsed.ref;
 				// iterate and find all reference
 				for (const elem of formulaParsed.outStack) {
 					let elemType = elem.type ? elem.type : null;
-					if (elemType === AscCommonExcel.cElementType.cell || elemType === AscCommonExcel.cElementType.cellsRange || 
-						elemType === AscCommonExcel.cElementType.cell3D || elemType === AscCommonExcel.cElementType.cellsRange3D ||
-						elemType === AscCommonExcel.cElementType.name || elemType === AscCommonExcel.cElementType.name3D || 
-						elemType === AscCommonExcel.cElementType.table) {
-						let is3D = elemType === AscCommonExcel.cElementType.cell3D || elemType === AscCommonExcel.cElementType.cellsRange3D || elemType === AscCommonExcel.cElementType.name3D,
-							isArea = elemType === AscCommonExcel.cElementType.cellsRange || elemType === AscCommonExcel.cElementType.name,
-							isDefName = elemType === AscCommonExcel.cElementType.name || elemType === AscCommonExcel.cElementType.name3D,
-							isTable = elemType === AscCommonExcel.cElementType.table,
-							cellRange = new asc_Range(col, row, col, row),
-							elemRange, elemCellIndex;
+
+					let is3D = elemType === cElementType.cell3D || elemType === cElementType.cellsRange3D || elemType === cElementType.name3D,
+						isArea = elemType === cElementType.cellsRange || elemType === cElementType.name,
+						isDefName = elemType === cElementType.name || elemType === cElementType.name3D,
+						isTable = elemType === cElementType.table;
+
+					if (elemType === cElementType.cell || isArea || is3D || isTable) {
+
+						let cellRange = new asc_Range(col, row, col, row), elemRange, elemCellIndex;
 
 						if (isDefName) {
 							let elemDefName = elem.getDefName();
@@ -978,7 +976,7 @@ function (window, undefined) {
 						} else {
 							elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1, elemRange.c1);
 						}
-						
+
 						// cross check for cell
 						if (isArea && !ref && !is3D) {
 							if (elemRange.getWidth() > 1 && elemRange.getHeight() <= 1) {
@@ -1020,7 +1018,7 @@ function (window, undefined) {
 						}
 
 						if (is3D) {
-							// TODO другой механизм отрисовки для внешних precedents 
+							// TODO другой механизм отрисовки для внешних precedents
 							elemCellIndex += ";" + (elem.wsTo ? elem.wsTo.index : elem.ws.index);
 							this._setDependents(elemCellIndex, currentCellIndex);
 							this._setPrecedents(currentCellIndex, elemCellIndex);
@@ -1042,7 +1040,7 @@ function (window, undefined) {
 			// check first level, then if function return false, check second, third and so on
 			for (let i in this.currentPrecedents[currentCellIndex]) {
 				let coords = AscCommonExcel.getFromCellIndex(i, true);
-				this.calculatePrecedents(coords.row, coords.col, true);	
+				this.calculatePrecedents(coords.row, coords.col, true);
 			}
 
 			this.setPrecedentsLoop(false);
@@ -1062,15 +1060,14 @@ function (window, undefined) {
 
 			for (const elem of formulaParsed.outStack) {
 				let elemType = elem.type ? elem.type : null;
-				if (elemType === AscCommonExcel.cElementType.cell || elemType === AscCommonExcel.cElementType.cellsRange || 
-					elemType === AscCommonExcel.cElementType.cell3D || elemType === AscCommonExcel.cElementType.cellsRange3D ||
-					elemType === AscCommonExcel.cElementType.name || elemType === AscCommonExcel.cElementType.name3D || 
-					elemType === AscCommonExcel.cElementType.table) {
-					let is3D = elemType === AscCommonExcel.cElementType.cell3D || elemType === AscCommonExcel.cElementType.cellsRange3D || elemType === AscCommonExcel.cElementType.name3D,
-						isArea = elemType === AscCommonExcel.cElementType.cellsRange || elemType === AscCommonExcel.cElementType.name,
-						isDefName = elemType === AscCommonExcel.cElementType.name || elemType === AscCommonExcel.cElementType.name3D,
-						isTable = elemType === AscCommonExcel.cElementType.table,
-						elemRange, elemCellIndex;
+
+				let is3D = elemType === cElementType.cell3D || elemType === cElementType.cellsRange3D || elemType === cElementType.name3D,
+					isArea = elemType === cElementType.cellsRange || elemType === cElementType.name,
+					isDefName = elemType === cElementType.name || elemType === cElementType.name3D,
+					isTable = elemType === cElementType.table;
+
+				if (elemType === cElementType.cell || isArea || is3D || isTable) {
+					let elemRange, elemCellIndex;
 
 					if (isDefName) {
 						let elemDefName = elem.getDefName(),
@@ -1125,8 +1122,8 @@ function (window, undefined) {
 
 					if (is3D) {
 						elemCellIndex += ";" + (elem.wsTo ? elem.wsTo.index : elem.ws.index);
-						
-					} 
+
+					}
 					if (!this._getPrecedents(cellIndex, elemCellIndex)) {
 						return true;
 					}
@@ -1263,7 +1260,6 @@ function (window, undefined) {
 			}
 		}
 	};
-
 
 
 	//------------------------------------------------------------export---------------------------------------------------
