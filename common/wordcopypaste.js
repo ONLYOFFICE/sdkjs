@@ -6582,7 +6582,7 @@ PasteProcessor.prototype =
 			}
 
 			//принудительно добавляю для математики шрифт Cambria Math
-			if (child && child.nodeName.toLowerCase() === "#comment" && -1 !== child.nodeValue.indexOf("[if gte msEquation 12]") && !this.pasteInExcel && this.apiEditor["asc_isSupportFeature"]("ooxml")) {
+			if (child && child.nodeName.toLowerCase() === "#comment" && this.isSupportPasteMathContent(child.nodeValue, true) && !this.pasteInExcel && this.apiEditor["asc_isSupportFeature"]("ooxml")) {
 				//TODO пока только в документы разрешаю вставку математики математику
 				var mathFont = "Cambria Math";
 				this.oFonts[mathFont] = {
@@ -6644,7 +6644,7 @@ PasteProcessor.prototype =
 			if (parent && (parent.nodeName.toLowerCase() === "p" || parent.nodeName.toLowerCase() === "body")) {
 				for (let i = 0; i < parent.childNodes.length; i++) {
 					let child = parent.childNodes[i];
-					if (child && child.nodeName.toLowerCase() === "#comment" && -1 !== child.nodeValue.indexOf("[if gte msEquation 12]")) {
+					if (child && child.nodeName.toLowerCase() === "#comment" && this.isSupportPasteMathContent(child.nodeValue, true)) {
 						return true;
 					}
 				}
@@ -10007,7 +10007,7 @@ PasteProcessor.prototype =
 		};
 
 		let pushMathContent = function (_child) {
-			if (-1 !== _child.nodeValue.indexOf("[if gte msEquation 12]") && !oThis.pasteInExcel && oThis.apiEditor["asc_isSupportFeature"]("ooxml")) {
+			if (oThis.isSupportPasteMathContent(child.nodeValue, true) && !oThis.pasteInExcel && oThis.apiEditor["asc_isSupportFeature"]("ooxml")) {
 				let oPar = new Paragraph(oThis.oLogicDocument.DrawingDocument, bPresentation ? oShapeContent : null, bPresentation);
 
 				History.TurnOff();
@@ -10544,7 +10544,7 @@ PasteProcessor.prototype =
 					if (-1 !== value.indexOf("supportLineBreakNewLine")) {
 						bSkip = true;
 					}
-					if (-1 !== value.indexOf("[if !msEquation]") && !this.pasteInExcel && this.apiEditor["asc_isSupportFeature"]("ooxml")) {
+					if (this.isSupportPasteMathContent(value) && !this.pasteInExcel && this.apiEditor["asc_isSupportFeature"]("ooxml")) {
 						//TODO пока только в документы разрешаю вставку математики математику
 						bSkip = true;
 					}
@@ -10605,6 +10605,17 @@ PasteProcessor.prototype =
 		return bAddParagraph;
 	},
 
+	isSupportPasteMathContent: function (val, checkVersion) {
+		let res = false;
+		if (AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Word) {
+			if (checkVersion && -1 !== val.indexOf("[if gte msEquation 12]")) {
+				res = true;
+			} else if (!checkVersion && -1 !== val.indexOf("[if !msEquation]")) {
+				res = true;
+			}
+		}
+		return res;
+	},
 
 	fitPictureSizeToPage: function (nWidth, nHeight) {
 		if (this.apiEditor && this.apiEditor.isDocumentEditor) {

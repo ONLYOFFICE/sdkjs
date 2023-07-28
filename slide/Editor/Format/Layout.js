@@ -206,6 +206,13 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
     {
         History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideLayoutSetBg, this.cSld.Bg, bg));
         this.cSld.Bg = bg;
+        this.recalcInfo.recalculateBackground = true;
+    };
+    SlideLayout.prototype.needRecalc = function()
+    {
+        return  this.recalcInfo.recalculateBackground ||
+                this.recalcInfo.recalculateSpTree ||
+                this.recalcInfo.recalculateBounds;
     };
     SlideLayout.prototype.setCSldName = function(name)
     {
@@ -239,6 +246,7 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
         History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideLayoutAddToSpTree, pos, [item], true));
         this.cSld.spTree.splice(pos, 0, item);
         item.setParent2(this);
+        this.recalcInfo.recalculateSpTree = true;
     };
     SlideLayout.prototype.addToSpTreeToPos = function(pos, obj)
     {
@@ -402,6 +410,8 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
             }
             this.recalcInfo.recalculateBounds = false;
         }
+        this.recalcInfo.recalculateBackground = false;
+        this.recalcInfo.recalculateSpTree = false;
     };
     SlideLayout.prototype.recalculate2 = function()
     {
@@ -489,6 +499,11 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
                 case AscDFH.historyitem_SlideLayoutAddToSpTree:
                 {
                     this.recalcInfo.recalculateBounds = true;
+                    this.addToRecalculate();
+                    break;
+                }
+                case AscDFH.historyitem_SlideLayoutSetBg:
+                {
                     this.addToRecalculate();
                     break;
                 }

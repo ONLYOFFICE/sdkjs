@@ -355,7 +355,7 @@ CBookmarksManager.prototype.HaveBookmark = function(sName)
 	for (var nIndex = 0, nCount = this.Bookmarks.length; nIndex < nCount; ++nIndex)
 	{
 		var oStart = this.Bookmarks[nIndex][0];
-		if (oStart.GetBookmarkName().toLowerCase() === sName)
+		if (oStart.GetBookmarkName().toLowerCase() === _sName)
 			return true;
 	}
 
