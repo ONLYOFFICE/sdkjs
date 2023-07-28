@@ -938,9 +938,9 @@ function (window, undefined) {
 							let currentWsId = elem.ws.Id,
 								elemWsId = elem.area.ws ? elem.area.ws.Id : elem.area.wsFrom.Id;
 							// elem.area can be cRef and cArea
-							is3D = currentWsId !== elemWsId ? true : false;
+							is3D = currentWsId !== elemWsId;
 							elemRange = elem.area.bbox ? elem.area.bbox : (elem.area.range ? elem.area.range.bbox : null);
-							isArea = ref ? true : (!elemRange.isOneCell() ? true : false);
+							isArea = ref ? true : !elemRange.isOneCell();
 
 						} else {
 							elemRange = elem.range.bbox ? elem.range.bbox : elem.bbox;
@@ -1085,7 +1085,7 @@ function (window, undefined) {
 					} else if (isTable) {
 						let currentWsId = elem.ws.Id,
 							elemWsId = elem.area.ws ? elem.area.ws.Id : elem.area.wsFrom.Id;
-						is3D = currentWsId !== elemWsId ? true : false;
+						is3D = currentWsId !== elemWsId;
 						elemRange = elem.area.bbox ? elem.area.bbox : (elem.area.range ? elem.area.range.bbox : null);
 					} else {
 						elemRange = elem.range.bbox ? elem.range.bbox : elem.bbox;
@@ -1130,7 +1130,7 @@ function (window, undefined) {
 				}
 			}
 		}
-	}
+	};
 	TraceDependentsManager.prototype.setPrecedentsLoop = function (inLoop) {
 		this.inLoop = inLoop;
 	};
