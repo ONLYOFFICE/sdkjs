@@ -70,9 +70,16 @@ CParagraphBookmark.prototype.GetId = function()
 {
 	return this.Id;
 };
-CParagraphBookmark.prototype.Copy = function()
+CParagraphBookmark.prototype.Copy = function(Selected, oPr, isCopyReviewPr)
 {
-	return new CParagraphBookmark(this.Start, this.BookmarkId, this.BookmarkName);
+	let sId = this.BookmarkId;
+	if (oPr && oPr.Comparison)
+	{
+		const sComparisonId = oPr.Comparison.oBookmarkManager.getId(this);
+		if (sComparisonId)
+			sId = sComparisonId;
+	}
+	return new CParagraphBookmark(this.Start, sId, this.BookmarkName);
 };
 CParagraphBookmark.prototype.GetBookmarkId = function()
 {

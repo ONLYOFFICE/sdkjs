@@ -8373,8 +8373,8 @@
 
     InitClass(CDateAx, CAxisBase, AscDFH.historyitem_type_DateAx);
     CDateAx.prototype.getMenuProps = function() {
-        var oProps = CCatAx.prototype.getMenuProps.call(this);
-        oProps.putAxisType(c_oAscAxisType.date);
+        const oProps = CCatAx.prototype.getMenuProps.call(this);
+        //oProps.putAxisType(c_oAscAxisType.date);
         return oProps;
     };
     CDateAx.prototype.setMenuProps = CCatAx.prototype.setMenuProps;

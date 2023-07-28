@@ -1949,9 +1949,9 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.Numbering           = new AscWord.CNumbering();               // Форматный класс для хранения всех нумераций согласно формату
 	this.NumberingApplicator = new AscWord.CNumberingApplicator(this); // Класс для применения нумерации к текущему выделение
 	this.NumberingCollection = new AscWord.CNumberingCollection(this); // Класс, хранящий нумерации, используемые в документе
-	
-    this.Styles    = new CStyles();
-    this.Styles.Set_LogicDocument(this);
+
+
+    this.CreateStyles();
 
     this.DrawingDocument = DrawingDocument;
 
@@ -10617,6 +10617,13 @@ CDocument.prototype.GetStyleFromFormatting = function()
 {
 	return this.Controller.GetStyleFromFormatting();
 };
+
+CDocument.prototype.CreateStyles = function()
+{
+    this.Styles = new CStyles();
+    this.Styles.Set_LogicDocument(this);
+};
+
 /**
  * Добавляем новый стиль (или заменяем старый с таким же названием).
  * И сразу применяем его к выделенному фрагменту.
