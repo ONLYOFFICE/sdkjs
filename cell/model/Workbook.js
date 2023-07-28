@@ -18359,7 +18359,7 @@
 											padding = sNumber[0] === '0' ? sNumber.length : 0;
 										}
 										// Value of cell is it a time period?
-										sValue = sValue.replace(/[.]/, '').trim();
+										sValue = sValue.replace(/[.]$/, '').trim();
 										sNextValue = _getNextValue(wsFrom, oCell, bVertical, from);
 										nInputTimePeriod = _findIndexAInputTimePeriod(aInputTimePeriodList, sValue);
 										aInputTimePeriod = _getAInputTimePeriod(aInputTimePeriodList, nInputTimePeriod, nPrevInputTimePeriod, sValue, sNextValue);
