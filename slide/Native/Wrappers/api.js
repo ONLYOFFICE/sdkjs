@@ -1840,6 +1840,7 @@ function NativeOpenFileP(_params, documentInfo){
     });
 
     _api.asc_registerCallback("asc_onSendThemeColors", onApiSendThemeColors);
+    _api.asc_registerCallback("asc_onPresentationSize", onApiPageSize);
 
     _api.asc_registerCallback("asc_onUpdateThemeIndex", function(nIndex) {
         var stream = global_memory_stream_menu;
@@ -2181,6 +2182,14 @@ function onApiSendThemeColors(theme_colors, standart_colors) {
         });
     }
     postDataAsJSONString(colors, 2417); // ASC_MENU_EVENT_TYPE_THEMECOLORS
+}
+
+function onApiPageSize(width, height, type) {
+    var size = {
+        "width" : width,
+        "height" : height,
+    };
+    postDataAsJSONString(size, 8129); // ASC_PRESENTATIONS_EVENT_TYPE_SLIDE_SIZE_CHANGE
 }
 
 function onApiError(id, level, errData) {
