@@ -418,12 +418,13 @@ window.startPluginApi = function() {
 	 * METHODS
 	 */
 
-	
 	/**
-	 * > memberof Plugin
-	 * > alias executeCommand
-	 * > deprecated Please use callCommand method.
-	 * > description Defines the method used to send the data back to the editor.
+	 * executeCommand
+	 * @undocumented
+	 * @memberof Plugin
+	 * @alias executeCommand
+	 * @deprecated Please use callCommand method.
+	 * @description Defines the method used to send the data back to the editor.
 	 * <note>This method is deprecated, please use the {@link Plugin#callCommand callCommand} method which runs the code from the *data* string parameter.</note>
 	 * 
 	 * Now this method is mainly used to work with the OLE objects or close the plugin without any other commands.
@@ -442,12 +443,12 @@ window.startPluginApi = function() {
 	 * * *Api.asc_editOleObject (window.Asc.plugin.info)* - used to edit the created OLE object.
 	 * 
 	 * When creating/editing the objects, their properties can be passed to the window.Asc.plugin.info object that defines how the object should look.
-	 * > param {string} type - Defines the type of the command. The *close* is used to close the plugin window after executing the function in the *data* parameter.
+	 * @param {string} type - Defines the type of the command. The *close* is used to close the plugin window after executing the function in the *data* parameter.
 	 * The *command* is used to execute the command and leave the window open waiting for the next command.
-     * > param {string} data - Defines the command written in JavaScript code which purpose is to form the structured data which can be inserted to the resulting document file
+     * @param {string} data - Defines the command written in JavaScript code which purpose is to form the structured data which can be inserted to the resulting document file
 	 * (formatted paragraphs, tables, text parts, and separate words, etc.). Then the data is sent to the editors.
-	 * The command must be compatible with ONLYOFFICE Document Builder syntax.
-     * > param {Function} callback - The result that the method returns.
+	 * The command must be compatible with {@link /docbuilder/basic ONLYOFFICE Document Builder} syntax.
+     * @param {Function} callback - The result that the method returns.
 	 */
 	Plugin.executeCommand = function(type, data, callback)
     {
