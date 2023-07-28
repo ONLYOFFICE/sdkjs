@@ -778,7 +778,7 @@ function (window, undefined) {
 
 		this._setDefaultData();
 	};
-	TraceDependentsManager.prototype.calculatePrecedents = function (row, col, isSecondCall) {
+	TraceDependentsManager.prototype.calculatePrecedents = function (row, col, isSecondCall, callFromArea) {
 		if (arguments.length === 0) {
 			this.currentCalculatedPrecedentAreas = {};
 		}
@@ -859,7 +859,7 @@ function (window, undefined) {
 		});
 
 		// TODO another way to check table
-		let isAreaHeader = isCellAreaHeader(cellIndex);
+		let isAreaHeader = callFromArea ? false : isCellAreaHeader(cellIndex);
 		if (this.currentPrecedentsAreas && isSecondCall && isAreaHeader) {
 			// calculate all precedents in areas
 			// let areaIndexes = getAllAreaIndexesWithoutCalc(this.currentPrecedentsAreas, cellIndex);
@@ -868,25 +868,20 @@ function (window, undefined) {
 
 			if (!this.currentCalculatedPrecedentAreas[areaName]) {
 				this.currentCalculatedPrecedentAreas[areaName] = {};
-				// this.currentCalculatedPrecedentAreas[areaName].inProgress = true;
-				// this.currentCalculatedPrecedentAreas[areaName].isCalculated = false;
 				if (areaIndexes.length > 0) {
 					// go through the values and check precedents for each
 					for (let index of areaIndexes) {
-						let cellAddress = AscCommonExcel.getFromCellIndex(index, true), formula;
-						ws.getCell3(cellAddress.row, cellAddress.col)._foreachNoEmpty(function (cell) {
-							formula = cell.formulaParsed;
-						});
-						if (!formula) {
+						let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
+						if (!ws.getCell3(cellAddress.row, cellAddress.col).isFormula()) {
 							continue;
 						}
-						this.calculatePrecedents(cellAddress.row, cellAddress.col);
+						this.calculatePrecedents(cellAddress.row, cellAddress.col, null, true);
 					}
 				} else {
 					areaIndexes = getAllAreaIndexesWithoutCalc(this.currentPrecedentsAreas, cellIndex);
 					for (let index of areaIndexes) {
 						let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
-						this.calculatePrecedents(cellAddress.row, cellAddress.col);
+						this.calculatePrecedents(cellAddress.row, cellAddress.col, null, true);
 					}
 				}
 			}
