@@ -1457,7 +1457,16 @@
 			hF.clean();
 		}
 
-		let newPictureSections = [];
+		let checkPictures = function (aFr) {
+			for (let i = 0; i < aFr.length; i++) {
+				if (aFr[i].type === asc.c_oAscHeaderFooterField.picture) {
+					return true;
+				}
+			}
+			return false;
+		};
+
+		let removedPictures = [];
 		for(let i = 0; i < this.sections.length; i++) {
 			if(!this.sections[i]) {
 				continue;
@@ -1474,20 +1483,33 @@
 				curHeaderFooter.parser = new window["AscCommonExcel"].HeaderFooterParser();
 			}
 
+			let beforePictures;
 			let curSection = this.sections[i][c_oPortionPosition.left];
 			let isChanged = false;
 			if(curSection && (curSection.changed || reWrite)) {
+				beforePictures = checkPictures(curSection);
 				curHeaderFooter.parser.tokens[c_oPortionPosition.left] = this._convertFragments(curSection.fragments);
+				if (beforePictures && !checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.left])) {
+					removedPictures.push(curSection.getStringName());
+				}
 				isChanged = true;
 			}
 			curSection = this.sections[i][c_oPortionPosition.center];
-			if(this.sections[i][c_oPortionPosition.center] && (this.sections[i][c_oPortionPosition.center].changed || reWrite)) {
+			if(curSection && (curSection.changed || reWrite)) {
+				beforePictures = checkPictures(curSection);
 				curHeaderFooter.parser.tokens[c_oPortionPosition.center] = this._convertFragments(curSection.fragments);
+				if (beforePictures && !checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.left])) {
+					removedPictures.push(curSection.getStringName());
+				}
 				isChanged = true;
 			}
 			curSection = this.sections[i][c_oPortionPosition.right];
-			if(curSection && (this.sections[i][c_oPortionPosition.right].changed || reWrite)) {
+			if(curSection && (curSection.changed || reWrite)) {
+				beforePictures = checkPictures(curSection);
 				curHeaderFooter.parser.tokens[c_oPortionPosition.right] = this._convertFragments(curSection.fragments);
+				if (beforePictures && !checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.left])) {
+					removedPictures.push(curSection.getStringName());
+				}
 				isChanged = true;
 			}
 
@@ -1510,6 +1532,11 @@
 		hF.setDifferentFirst(this.differentFirst);
 		hF.setDifferentOddEven(this.differentOddEven);
 		hF.setScaleWithDoc(this.scaleWithDoc);
+
+		//remove pictures
+		if (removedPictures.length) {
+			ws.removeLegacyDrawingHFPictures(removedPictures);
+		}
 
 		//save pictures
 		if (ws && ws.changeLegacyDrawingHFPictures && this.needAddPicturesMap) {
@@ -2274,6 +2301,18 @@
 		}
 	};
 
+	CLegacyDrawingHF.prototype.removePictures = function (aPictures) {
+		let t = this;
+		let api = window["Asc"]["editor"];
+
+		for (let i = 0; i < aPictures.length; i++) {
+			let oLegacyDrawingHFDrawing = t.getDrawingById(aPictures[i]);
+			if (oLegacyDrawingHFDrawing) {
+				t.changePicture(oLegacyDrawingHFDrawing.obj, null, true);
+			}
+		}
+	};
+
 	CLegacyDrawingHF.prototype.changePicture = function (from, to, addToHistory) {
 		if (from) {
 			this.removePicture(from, addToHistory);
@@ -2282,7 +2321,7 @@
 			this.addPicture(to, addToHistory);
 		}
 
-		if (addToHistory) {
+		if ((from || to) && addToHistory) {
 			let fromData = from && new AscCommonExcel.UndoRedoData_LegacyDrawingHFDrawing(from.id, from.graphicObject.Id);
 			let toData = to && new AscCommonExcel.UndoRedoData_LegacyDrawingHFDrawing(to.id, to.graphicObject.Id);
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ChangeLegacyDrawingHFDrawing, this.ws.getId(),

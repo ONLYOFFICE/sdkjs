@@ -12253,6 +12253,13 @@
 		this.legacyDrawingHF.addPictures(picturesMap);
 	};
 
+	Worksheet.prototype.removeLegacyDrawingHFPictures = function(aPictures) {
+		if (!this.legacyDrawingHF) {
+			this.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF(this);
+		}
+		this.legacyDrawingHF.removePictures(aPictures);
+	};
+
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
