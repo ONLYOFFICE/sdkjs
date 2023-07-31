@@ -2214,7 +2214,7 @@
 	};
 
 
-	function CLegacyDrawingHF() {
+	function CLegacyDrawingHF(ws) {
 		this.drawings = [];
 		this.cfe = null;
 		this.cff = null;
@@ -2236,6 +2236,7 @@
 		this.rho = null;
 
 		this.id = null;
+		this.ws = ws;
 	}
 
 	CLegacyDrawingHF.prototype.init = function () {
@@ -2275,6 +2276,8 @@
 				}*/
 
 				newHFDrawing.graphicObject = ws.objectRender.controller.createImage(url, 0, 0, __w, __h);
+				t.changePicture(oldHFDrawing && oldHFDrawing.obj, newHFDrawing, true);
+
 
 				t.drawings.push(newHFDrawing);
 				//changeFunction(oldHFDrawing, newHFDrawing);
@@ -2282,6 +2285,36 @@
 				delete picturesMap[i];
 			}
 		}
+	};
+
+	CLegacyDrawingHF.prototype.changePicture = function (from, to, addToHistory) {
+		if (from) {
+			this.removePicture(from, addToHistory);
+		}
+		if (to) {
+			this.addPicture(to, addToHistory);
+		}
+
+		if (addToHistory) {
+			let fromData = from && new AscCommonExcel.UndoRedoData_LegacyDrawingHFDrawing(from.id, from.graphicObject.Id);
+			let toData = to && new AscCommonExcel.UndoRedoData_LegacyDrawingHFDrawing(to.id, to.graphicObject.Id);
+			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ChangeLegacyDrawingHFDrawing, this.ws.getId(),
+				null, new AscCommonExcel.UndoRedoData_FromTo(fromData, toData));
+		}
+	};
+
+	CLegacyDrawingHF.prototype.removePicture = function (picture) {
+		for (let i = 0; i < this.drawings.length; i++) {
+			if (this.drawings[i].id === picture.id) {
+
+				this.drawings[i].splice(i);
+				break;
+			}
+		}
+	};
+
+	CLegacyDrawingHF.prototype.addPicture = function (picture) {
+		this.drawings.push(picture);
 	};
 
 	CLegacyDrawingHF.prototype.getDrawingById = function (id) {
@@ -2306,6 +2339,8 @@
 	CLegacyDrawingHFDrawing.prototype.init = function () {
 
 	};
+
+
 
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};

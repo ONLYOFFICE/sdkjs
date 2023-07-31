@@ -12248,7 +12248,7 @@
 
 	Worksheet.prototype.changeLegacyDrawingHFPictures = function(picturesMap) {
 		if (!this.legacyDrawingHF) {
-			this.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF();
+			this.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF(this);
 		}
 		this.legacyDrawingHF.addPictures(picturesMap);
 	};
@@ -19308,43 +19308,43 @@
 	}
 	cDataRow.prototype.getCol = function() {
 		return this.nCol;
-	}
+	};
 	cDataRow.prototype.getVal = function() {
 		return this.nVal;
-	}
+	};
 	cDataRow.prototype.getDelimiter = function() {
 		return this.bDelimiter;
-	}
+	};
 	cDataRow.prototype.getPrefix = function () {
 		return this.sPrefix;
-	}
+	};
 	cDataRow.prototype.getPadding = function() {
 		return this.nPadding;
-	}
+	};
 	cDataRow.prototype.setPadding = function(nPadding) {
 		this.nPadding = nPadding;
-	}
+	};
 	cDataRow.prototype.getIsDate = function() {
 		return this.bDate;
-	}
+	};
 	cDataRow.prototype.getAdditional = function() {
 		return this.oAdditional;
-	}
+	};
 	cDataRow.prototype.getTimePeriods = function () {
 		return this.aTimePeriods;
-	}
+	};
 	cDataRow.prototype.getSequence = function() {
 		return this.oSequence;
-	}
+	};
 	cDataRow.prototype.setSequence = function (oSequence) {
 		this.oSequence = oSequence;
-	}
+	};
 	cDataRow.prototype.getCurValue = function() {
 		return this.nCurValue;
-	}
+	};
 	cDataRow.prototype.setCurValue = function(nCurValue) {
 		this.nCurValue = nCurValue;
-	}
+	};
 	cDataRow.prototype.compare = function(oComparedRowData) {
 		let sComparedTimePeriods =  oComparedRowData.getTimePeriods() ? oComparedRowData.getTimePeriods().join() : null;
 		let sTimePeriods = this.getTimePeriods() ? this.getTimePeriods().join() : null;
@@ -19356,7 +19356,7 @@
 		let bDate = this.getIsDate();
 
 		return bComparedDelimiter === bDelimiter && sComparedPrefix === sPrefix && bComparedDate === bDate && sComparedTimePeriods === sTimePeriods;
-	}
+	};
 
 	cDataRow.prototype.prefixDataCompare = function(oComparedRowData) {
 		let sComparedPrefix = oComparedRowData.getPrefix();
@@ -19365,7 +19365,7 @@
 		let bDate = this.getIsDate();
 
 		return sComparedPrefix === sPrefix && bComparedDate === bDate;
-	}
+	};
 
 
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};

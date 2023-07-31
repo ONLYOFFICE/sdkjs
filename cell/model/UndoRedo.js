@@ -456,6 +456,8 @@ function (window, undefined) {
 
 		this.RowColBreaks = 175;
 
+		this.LegacyDrawingHFDrawing = 180;
+
 		this.Create = function (nType) {
 			switch (nType) {
 				case this.ValueMultiTextElem:
@@ -619,6 +621,8 @@ function (window, undefined) {
 					return new Asc.CUserProtectedRangeUserInfo();
 				case this.RowColBreaks:
 					return new AscCommonExcel.UndoRedoData_RowColBreaks();
+				case this.LegacyDrawingHFDrawing:
+					return new AscCommonExcel.UndoRedoData_LegacyDrawingHFDrawing();
 			}
 			return null;
 		};
@@ -2301,6 +2305,40 @@ function (window, undefined) {
 		}
 	};
 
+	function UndoRedoData_LegacyDrawingHFDrawing(id, graphicId) {
+		this.id = id;
+		this.graphicId = graphicId;
+	}
+
+	UndoRedoData_LegacyDrawingHFDrawing.prototype.Properties = {
+		id: 0, graphicId: 1
+	};
+	UndoRedoData_LegacyDrawingHFDrawing.prototype.getType = function () {
+		return UndoRedoDataTypes.LegacyDrawingHFDrawing;
+	};
+	UndoRedoData_LegacyDrawingHFDrawing.prototype.getProperties = function () {
+		return this.Properties;
+	};
+	UndoRedoData_LegacyDrawingHFDrawing.prototype.getProperty = function (nType) {
+		switch (nType) {
+			case this.Properties.id:
+				return this.id;
+			case this.Properties.graphicId:
+				return this.graphicId;
+		}
+		return null;
+	};
+	UndoRedoData_LegacyDrawingHFDrawing.prototype.setProperty = function (nType, value) {
+		switch (nType) {
+			case this.Properties.id:
+				this.id = value;
+				break;
+			case this.Properties.graphicId:
+				this.graphicId = value;
+				break;
+		}
+	};
+
 	//для применения изменений
 	var UndoRedoClassTypes = new function () {
 		this.aTypes = [];
@@ -3399,6 +3437,40 @@ function (window, undefined) {
 				byCol = (Data.from && Data.from.byCol) || (Data.to && Data.to.byCol);
 			}
 			ws._changeRowColBreaks(from, to, min, max, man, pt, byCol);
+		} else if (AscCH.historyitem_Worksheet_ChangeLegacyDrawingHFDrawing === Type) {
+			let from, to;
+			if (bUndo) {
+				let fromId = Data.to && Data.to.id;
+				if (fromId) {
+					from = new AscCommonExcel.CLegacyDrawingHFDrawing();
+					from.id = fromId;
+					from.graphicObject = AscCommon.g_oTableId.Get_ById(Data.to.graphicId);
+				}
+				let toId = Data.from && Data.from.id;
+				if (toId) {
+					to = new AscCommonExcel.CLegacyDrawingHFDrawing();
+					to.id = toId;
+					to.graphicObject = AscCommon.g_oTableId.Get_ById(Data.from.graphicId);
+				}
+			} else {
+				let fromId = Data.from && Data.from.id;
+				if (fromId) {
+					from = new AscCommonExcel.CLegacyDrawingHFDrawing();
+					from.id = fromId;
+					from.graphicObject = AscCommon.g_oTableId.Get_ById(Data.from.graphicId);
+				}
+				let toId = Data.to && Data.to.id;
+				if (toId) {
+					to = new AscCommonExcel.CLegacyDrawingHFDrawing();
+					to.id = toId;
+					to.graphicObject = AscCommon.g_oTableId.Get_ById(Data.to.graphicId);
+				}
+			}
+
+			if (!ws.legacyDrawingHF) {
+				ws.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF(ws);
+			}
+			ws.legacyDrawingHF.changePicture(from, to);
 		}
 	};
 	UndoRedoWoorksheet.prototype.forwardTransformationIsAffect = function (Type) {
@@ -4971,6 +5043,7 @@ function (window, undefined) {
 	window['AscCommonExcel'].UndoRedoData_ProtectedRange = UndoRedoData_ProtectedRange;
 	window['AscCommonExcel'].UndoRedoData_UserProtectedRange = UndoRedoData_UserProtectedRange;
 	window['AscCommonExcel'].UndoRedoData_RowColBreaks = UndoRedoData_RowColBreaks;
+	window['AscCommonExcel'].UndoRedoData_LegacyDrawingHFDrawing = UndoRedoData_LegacyDrawingHFDrawing;
 	window['AscCommonExcel'].UndoRedoWorkbook = UndoRedoWorkbook;
 	window['AscCommonExcel'].UndoRedoCell = UndoRedoCell;
 	window['AscCommonExcel'].UndoRedoWoorksheet = UndoRedoWoorksheet;
