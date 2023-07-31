@@ -35,7 +35,7 @@
  * @param {Window} window
  * @param {undefined} undefined
  */
-	function (window, undefined) {
+function (window, undefined) {
 
 	/*
 	 * Import
@@ -54,6 +54,7 @@
 		this.textField = text;
 		this._calculatedText = null;
 	}
+
 	HeaderFooterField.prototype.clone = function () {
 		let res = new HeaderFooterField();
 
@@ -77,7 +78,7 @@
 			pageSetup = ws && ws.model && ws.model.PagePrintOptions && ws.model.PagePrintOptions.pageSetup;
 		}
 
-		switch(this.field) {
+		switch (this.field) {
 			case asc.c_oAscHeaderFooterField.pageNumber: {
 				let firstPageNumber = (pageSetup && pageSetup.useFirstPageNumber && pageSetup.firstPageNumber) ? pageSetup.firstPageNumber : 1;
 				res = indexPrintPage + firstPageNumber + "";
@@ -136,7 +137,6 @@
 	HeaderFooterField.prototype.getField = function () {
 		return this.field;
 	};
-
 
 
 	function HeaderFooterParser() {
@@ -425,9 +425,9 @@
 		this.isCalc = true;
 	};
 
-	HeaderFooterParser.prototype.convertFontColor = function(rColor) {
+	HeaderFooterParser.prototype.convertFontColor = function (rColor) {
 		let color;
-		if( (rColor[ 2 ] === '+') || (rColor[ 2 ] === '-') ) {
+		if ((rColor[2] === '+') || (rColor[2] === '-')) {
 			let theme = rColor.substr(0, 2) - 0;
 			let tint = rColor.substr(2) - 0;
 			color = AscCommonExcel.g_oColorManager.getThemeColor(theme, tint / 100);
@@ -438,22 +438,22 @@
 		return color;
 	};
 
-	HeaderFooterParser.prototype.convertFontColorFromObj = function(obj) {
+	HeaderFooterParser.prototype.convertFontColorFromObj = function (obj) {
 		let color = null;
 
-		if(obj instanceof AscCommonExcel.ThemeColor) {
+		if (obj instanceof AscCommonExcel.ThemeColor) {
 			let theme = obj.theme.toString();
-			if(theme.length === 1) {
+			if (theme.length === 1) {
 				theme = "0" + theme;
 			}
 			let tint = (obj.tint * 100).toFixed(0);
-			if(1 === tint.length) {
+			if (1 === tint.length) {
 				tint = "00" + tint;
-			} else if(2 === tint.length) {
+			} else if (2 === tint.length) {
 				tint = "0" + tint;
 			}
 			color = theme + "+" + tint;
-		} else if(obj instanceof AscCommonExcel.RgbColor) {
+		} else if (obj instanceof AscCommonExcel.RgbColor) {
 
 			let toHex = function componentToHex(c) {
 				let res = c.toString(16);
@@ -461,7 +461,7 @@
 			};
 
 			color = toHex(obj.getR()) + toHex(obj.getG()) + toHex(obj.getB());
-		} else if(obj === null){
+		} else if (obj === null) {
 			color = "01+000";
 		}
 
@@ -514,10 +514,10 @@
 		this.font.b = this.font.i = false;
 
 		let fontStyleArr = rStyle.split(" ");
-		for(let i = 0; i < fontStyleArr.length; i++) {
-			if("italic" === fontStyleArr[i].toLowerCase()) {
+		for (let i = 0; i < fontStyleArr.length; i++) {
+			if ("italic" === fontStyleArr[i].toLowerCase()) {
 				this.font.i = true;
-			} else if("bold" === fontStyleArr[i].toLowerCase()) {
+			} else if ("bold" === fontStyleArr[i].toLowerCase()) {
 				this.font.b = true;
 			}
 		}
@@ -539,8 +539,8 @@
 	};
 
 	HeaderFooterParser.prototype.getAllFonts = function (oFontMap) {
-		for(let i in this.allFontsMap) {
-			if(!oFontMap[i]) {
+		for (let i in this.allFontsMap) {
+			if (!oFontMap[i]) {
 				oFontMap[i] = 1;
 			}
 		}
@@ -549,15 +549,15 @@
 	HeaderFooterParser.prototype.assembleText = function () {
 		let newStr = "";
 		let curPortionLeft = this.assemblePortionText(c_oPortionPosition.left);
-		if(curPortionLeft) {
+		if (curPortionLeft) {
 			newStr += curPortionLeft;
 		}
 		let curPortionCenter = this.assemblePortionText(c_oPortionPosition.center);
-		if(curPortionCenter) {
+		if (curPortionCenter) {
 			newStr += curPortionCenter;
 		}
 		let curPortionRight = this.assemblePortionText(c_oPortionPosition.right);
-		if(curPortionRight) {
+		if (curPortionRight) {
 			newStr += curPortionRight;
 		}
 		this.date = newStr;
@@ -567,11 +567,11 @@
 	HeaderFooterParser.prototype.splitByParagraph = function (cPortionCode) {
 		let res = [];
 
-		if(this.tokens[cPortionCode]) {
+		if (this.tokens[cPortionCode]) {
 			let index = 0;
 			let curPortion = this.tokens[cPortionCode];
-			for(let i = 0; i < curPortion.length; i++) {
-				if(!res[index]) {
+			for (let i = 0; i < curPortion.length; i++) {
+				if (!res[index]) {
 					res[index] = [];
 				}
 				res[index].push(curPortion[i]);
@@ -598,10 +598,10 @@
 			}
 		}
 
-		let compareColors = function(color1, color2) {
+		let compareColors = function (color1, color2) {
 			let isEqual = true;
 
-			if(color1 !== color2 || (color1 && color2 && color1.rgb !== color2.rgb)) {
+			if (color1 !== color2 || (color1 && color2 && color1.rgb !== color2.rgb)) {
 				isEqual = false;
 			}
 
@@ -627,7 +627,7 @@
 				let bNewStyle = (prevFont.b !== newFont.b) || (prevFont.i !== newFont.i);
 
 				if (bNewFontName || (bNewStyle && fontList)) {
-					if(null === newFont.fn) {
+					if (null === newFont.fn) {
 						aParaText += "&\"" + "-";
 					} else {
 						aParaText += "&\"" + newFont.fn;
@@ -636,24 +636,24 @@
 					//TODO пересмотреть. MS каждый раз прописывает новый font style:
 					// сли у предыдущего фрагмента был bold, у нового bold и italic - то у нового будет прописаны и bold и italic
 					let fontStyleStr = "";
-					if(prevFont.b !== newFont.b) {
+					if (prevFont.b !== newFont.b) {
 						fontStyleStr = ",";
-						if(newFont.b === true) {
+						if (newFont.b === true) {
 							fontStyleStr += "Bold";
 						} else {
 							fontStyleStr += "Regular";
 						}
 					}
-					if(prevFont.i !== newFont.i) {
-						if("" === fontStyleStr) {
+					if (prevFont.i !== newFont.i) {
+						if ("" === fontStyleStr) {
 							fontStyleStr = ",";
 						} else {
 							fontStyleStr += " ";
 						}
 
-						if(newFont.i === true) {
+						if (newFont.i === true) {
 							fontStyleStr += "Italic";
-						} else if(-1 === fontStyleStr.indexOf("Regular")){
+						} else if (-1 === fontStyleStr.indexOf("Regular")) {
 							fontStyleStr += "Regular";
 						}
 					}
@@ -684,19 +684,24 @@
 				if (prevFont.va !== newFont.va) {
 					//aParaText += "&S";
 
-					switch(newFont.va)
-					{
+					switch (newFont.va) {
 						// close the previous super/sub script.
-						case AscCommon.vertalign_SuperScript: aParaText += "&X";  break;
-						case AscCommon.vertalign_SubScript:   aParaText += "&Y";  break;
-						default: (prevFont.va === AscCommon.vertalign_SuperScript) ? aParaText += "&X" : aParaText += "&Y"; break;
+						case AscCommon.vertalign_SuperScript:
+							aParaText += "&X";
+							break;
+						case AscCommon.vertalign_SubScript:
+							aParaText += "&Y";
+							break;
+						default:
+							(prevFont.va === AscCommon.vertalign_SuperScript) ? aParaText += "&X" : aParaText += "&Y";
+							break;
 					}
 				}
 
 
-				if(!compareColors(prevFont.c, newFont.c)) {
+				if (!compareColors(prevFont.c, newFont.c)) {
 					let newColor = this.convertFontColorFromObj(newFont.c);
-					if(null !== newColor) {
+					if (null !== newColor) {
 						aParaText += "&K";
 						aParaText += newColor;
 					}
@@ -706,7 +711,7 @@
 
 				if (aPosList[i] instanceof HeaderFooterField) {
 					if (aPosList[i].field !== undefined) {
-						switch(aPosList[i].field) {
+						switch (aPosList[i].field) {
 							case asc.c_oAscHeaderFooterField.pageNumber: {
 								aParaText += "&P";
 								break;
@@ -781,6 +786,7 @@
 
 		this.changed = false;
 	}
+
 	CHeaderFooterEditorSection.prototype.clone = function () {
 		let res = new CHeaderFooterEditorSection();
 
@@ -802,7 +808,7 @@
 	};
 	CHeaderFooterEditorSection.prototype.isEmptyFragments = function (val) {
 		let res = false;
-		if(val && val.length === 1 && val[0].getFragmentText() === "") {
+		if (val && val.length === 1 && val[0].getFragmentText() === "") {
 			res = true;
 		}
 		return res;
@@ -824,7 +830,7 @@
 				.fillRect(0, 0, t.canvasObj.canvas.width, t.canvasObj.canvas.height);
 		};
 
-		if(!this.fragments) {
+		if (!this.fragments) {
 			//возможно стоит очищать канву в данном случае
 			drawBackground();
 			return;
@@ -869,9 +875,9 @@
 		portion = undefined !== portion ? portion : this.portion;
 
 		let res = AscCommon.align_Left;
-		if(portion === c_nPortionCenterHeader || portion === c_nPortionCenterFooter) {
+		if (portion === c_nPortionCenterHeader || portion === c_nPortionCenterFooter) {
 			res = AscCommon.align_Center;
-		} else if(portion === c_nPortionRightHeader || portion === c_nPortionRightFooter) {
+		} else if (portion === c_nPortionRightHeader || portion === c_nPortionRightFooter) {
 			res = AscCommon.align_Right;
 		}
 		return res;
@@ -955,7 +961,7 @@
 		let timeTag = "&[" + tM.getValue("Time") + "]";
 		let pictureTag = "&[" + tM.getValue("Picture") + "]";
 
-		switch (val){
+		switch (val) {
 			case asc.c_oAscHeaderFooterField.pageNumber: {
 				textField = pageTag;
 				break;
@@ -1004,6 +1010,7 @@
 
 	let correctCanvasDiff = 0;
 	window.Asc.g_header_footer_editor = null;
+
 	function CHeaderFooterEditor(idArr, width, pageType, opt_objForSave) {
 		this.parentWidth = AscCommon.AscBrowser.convertToRetinaValue(this.correctCanvasWidth(width), true);
 		this.parentHeight = AscCommon.AscBrowser.convertToRetinaValue(90, true);
@@ -1041,7 +1048,7 @@
 		//делается это только 1 раз при инициализации класса
 		//потом эти 6 канвы используются для отрисовки всех first/odd/even
 		let t = this;
-		let createAndPushCanvasObj = function(id) {
+		let createAndPushCanvasObj = function (id) {
 			let obj = {};
 			obj.idParent = id;
 			obj.id = id + "-canvas";
@@ -1097,15 +1104,15 @@
 	};
 
 	CHeaderFooterEditor.prototype.switchHeaderFooterType = function (type) {
-		if(type === this.pageType) {
+		if (type === this.pageType) {
 			return;
 		}
 		let isError = this._checkSave();
-		if(null !== isError) {
+		if (null !== isError) {
 			return isError;
 		}
 
-		if(this.cellEditor) {
+		if (this.cellEditor) {
 			//save
 			let prevField = this._getSectionById(this.curParentFocusId);
 			let prevFragments = this.cellEditor.options.fragments;
@@ -1131,18 +1138,18 @@
 		let wb = this.wb;
 		let t = this;
 
-		let editLockCallback = function() {
+		let editLockCallback = function () {
 			id = id.replace("#", "");
 
 			//если находимся в том же элементе
-			if(t.curParentFocusId === id) {
+			if (t.curParentFocusId === id) {
 				api.asc_enableKeyEvents(true);
 				return;
 			}
 
 			//TODO ещё нужно учитывать, что находимся в той же вкладке - odd/even/...
 			//если перед этим редактировали другое поле, сохраняем данные
-			if(null !== t.curParentFocusId) {
+			if (null !== t.curParentFocusId) {
 				let prevField = t._getSectionById(t.curParentFocusId);
 				let prevFragments = t.cellEditor.options.fragments;
 				prevField.setFragments(prevFragments);
@@ -1155,11 +1162,11 @@
 
 
 			let cSection = t._getSectionById(id);
-			if(cSection) {
+			if (cSection) {
 				let sectionElem = cSection.getElem();
 				let fragments = cSection.getFragments();
 				let self = wb;
-				if(!t.cellEditor) {
+				if (!t.cellEditor) {
 					t.cellEditor =
 						new AscCommonExcel.CellEditor(sectionElem, wb.input, wb.fmgrGraphics, wb.m_oFont, /*handlers*/{
 							"closed": function () {
@@ -1242,7 +1249,7 @@
 
 		let enterOptions = new AscCommonExcel.CEditorEnterOptions();
 		enterOptions.focus = true;
-		if(undefined !== x && undefined !== y) {
+		if (undefined !== x && undefined !== y) {
 			enterOptions.eventPos = {pageX: x, pageY: y};
 		}
 
@@ -1261,10 +1268,18 @@
 			},
 			getSides: function () {
 				let bottomArr = [];
-				for(let i = 0; i < 30; i++) {
+				for (let i = 0; i < 30; i++) {
 					bottomArr.push(t.parentHeight + i * 19);
 				}
-				return {l: [0], r: [t.parentWidth + 2 * correctCanvasDiff], b: bottomArr, cellX: 0, cellY: 0, ri: 0, bi: 0};
+				return {
+					l: [0],
+					r: [t.parentWidth + 2 * correctCanvasDiff],
+					b: bottomArr,
+					cellX: 0,
+					cellY: 0,
+					ri: 0,
+					bi: 0
+				};
 			},
 			checkVisible: function () {
 				return true;
@@ -1286,12 +1301,12 @@
 		let wb = api.wb;
 		let ws = wb.getWorksheet();
 
-		if(bSave /*&& bChanged*/&& !ws.collaborativeEditing.getGlobalLock() && wb.canEdit()) {
+		if (bSave /*&& bChanged*/ && !ws.collaborativeEditing.getGlobalLock() && wb.canEdit()) {
 			let checkError = this._checkSave();
-			if(null === checkError) {
+			if (null === checkError) {
 				wb.cellEditor.close();
 				wb.cellEditor = this.wbCellEditor;
-				let saveCallback = function(isSuccess) {
+				let saveCallback = function (isSuccess) {
 					if (false === isSuccess) {
 						ws.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedAllError, c_oAscError.Level.NoCritical);
 						return;
@@ -1315,10 +1330,10 @@
 		return null;
 	};
 
-	CHeaderFooterEditor.prototype._checkSave = function() {
+	CHeaderFooterEditor.prototype._checkSave = function () {
 		let t = this;
 
-		if(null !== this.curParentFocusId) {
+		if (null !== this.curParentFocusId) {
 			let prevField = this._getSectionById(this.curParentFocusId);
 			let prevFragments = this.cellEditor.options.fragments;
 			prevField.setFragments(prevFragments);
@@ -1326,18 +1341,18 @@
 			prevField.canvasObj.canvas.style.display = "block";
 		}
 
-		let checkError = function(type) {
+		let checkError = function (type) {
 			let prevHeaderFooter = t._getCurPageHF(type);
 			let curHeaderFooter = new Asc.CHeaderFooterData();
 			curHeaderFooter.parser = new window["AscCommonExcel"].HeaderFooterParser();
-			if(prevHeaderFooter && prevHeaderFooter.parser) {
+			if (prevHeaderFooter && prevHeaderFooter.parser) {
 				let newTokens = [];
-				for(let i in prevHeaderFooter.parser.tokens) {
-					if(prevHeaderFooter.parser.tokens[i]) {
+				for (let i in prevHeaderFooter.parser.tokens) {
+					if (prevHeaderFooter.parser.tokens[i]) {
 						newTokens[i] = [];
-						for(let j in prevHeaderFooter.parser.tokens[i]) {
+						for (let j in prevHeaderFooter.parser.tokens[i]) {
 							let curPortion = prevHeaderFooter.parser.tokens[i][j];
-							if(curPortion) {
+							if (curPortion) {
 								newTokens[i][j] = curPortion.clone();
 							}
 						}
@@ -1346,29 +1361,29 @@
 				curHeaderFooter.parser.tokens = newTokens;
 			}
 
-			if(t.sections[type][c_oPortionPosition.left] && t.sections[type][c_oPortionPosition.left].changed) {
+			if (t.sections[type][c_oPortionPosition.left] && t.sections[type][c_oPortionPosition.left].changed) {
 				curHeaderFooter.parser.tokens[c_oPortionPosition.left] = t._convertFragments(t.sections[type][c_oPortionPosition.left].fragments);
 			}
-			if(t.sections[type][c_oPortionPosition.center] && t.sections[type][c_oPortionPosition.center].changed) {
+			if (t.sections[type][c_oPortionPosition.center] && t.sections[type][c_oPortionPosition.center].changed) {
 				curHeaderFooter.parser.tokens[c_oPortionPosition.center] = t._convertFragments(t.sections[type][c_oPortionPosition.center].fragments);
 			}
-			if(t.sections[type][c_oPortionPosition.right] && t.sections[type][c_oPortionPosition.right].changed) {
+			if (t.sections[type][c_oPortionPosition.right] && t.sections[type][c_oPortionPosition.right].changed) {
 				curHeaderFooter.parser.tokens[c_oPortionPosition.right] = t._convertFragments(t.sections[type][c_oPortionPosition.right].fragments);
 			}
 
 			let oData = curHeaderFooter.parser.assembleText();
-			if(oData.str && oData.str.length > Asc.c_oAscMaxHeaderFooterLength) {
+			if (oData.str && oData.str.length > Asc.c_oAscMaxHeaderFooterLength) {
 				let maxLength = oData.left.length;
 				let section = c_oPortionPosition.left;
-				if(oData.right.length > oData.left.length && oData.right.length > oData.center.length) {
+				if (oData.right.length > oData.left.length && oData.right.length > oData.center.length) {
 					section = c_oPortionPosition.right;
 					maxLength = oData.right.length;
-				} else if(oData.center.length > oData.left.length && oData.center.length > oData.right.length) {
+				} else if (oData.center.length > oData.left.length && oData.center.length > oData.right.length) {
 					section = c_oPortionPosition.center;
 					maxLength = oData.center.length;
 				}
 
-				if(t.sections[type] && t.sections[type][section] && t.sections[type][section].canvasObj) {
+				if (t.sections[type] && t.sections[type][section] && t.sections[type][section].canvasObj) {
 					return {id: "#" + t.sections[type][section].canvasObj.idParent, max: maxLength};
 				}
 			}
@@ -1379,11 +1394,11 @@
 		let pageFooterType = this._getHeaderFooterType(this.pageType, true);
 		let headerCheck = checkError(pageHeaderType);
 		let footerCheck = checkError(pageFooterType);
-		if(headerCheck && footerCheck) {
+		if (headerCheck && footerCheck) {
 			return headerCheck.max > footerCheck.max ? headerCheck.id : footerCheck.id;
-		} else if(headerCheck) {
+		} else if (headerCheck) {
 			return headerCheck.id
-		} else if(footerCheck) {
+		} else if (footerCheck) {
 			return footerCheck.id
 		}
 
@@ -1470,8 +1485,8 @@
 		};
 
 		let removedPictures = [];
-		for(let i = 0; i < this.sections.length; i++) {
-			if(!this.sections[i]) {
+		for (let i = 0; i < this.sections.length; i++) {
+			if (!this.sections[i]) {
 				continue;
 			}
 
@@ -1479,17 +1494,17 @@
 			//возможно стоит пересмотреть(получать вначале строку) - создаём вначале парсер,
 			//добавляем туда полученные при редактировании фрагменты, затем получаем строку
 			let curHeaderFooter = this._getCurPageHF(i, opt_headerFooter, ws);
-			if(null === curHeaderFooter) {
+			if (null === curHeaderFooter) {
 				curHeaderFooter = new Asc.CHeaderFooterData();
 			}
-			if(!curHeaderFooter.parser) {
+			if (!curHeaderFooter.parser) {
 				curHeaderFooter.parser = new window["AscCommonExcel"].HeaderFooterParser();
 			}
 
 			let beforePictures;
 			let curSection = this.sections[i][c_oPortionPosition.left];
 			let isChanged = false;
-			if(curSection && (curSection.changed || reWrite)) {
+			if (curSection && (curSection.changed || reWrite)) {
 				beforePictures = checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.left]);
 				curHeaderFooter.parser.tokens[c_oPortionPosition.left] = this._convertFragments(curSection.fragments);
 				if (beforePictures && !checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.left])) {
@@ -1498,7 +1513,7 @@
 				isChanged = true;
 			}
 			curSection = this.sections[i][c_oPortionPosition.center];
-			if(curSection && (curSection.changed || reWrite)) {
+			if (curSection && (curSection.changed || reWrite)) {
 				beforePictures = checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.center]);
 				curHeaderFooter.parser.tokens[c_oPortionPosition.center] = this._convertFragments(curSection.fragments);
 				if (beforePictures && !checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.center])) {
@@ -1507,7 +1522,7 @@
 				isChanged = true;
 			}
 			curSection = this.sections[i][c_oPortionPosition.right];
-			if(curSection && (curSection.changed || reWrite)) {
+			if (curSection && (curSection.changed || reWrite)) {
 				beforePictures = checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.right]);
 				curHeaderFooter.parser.tokens[c_oPortionPosition.right] = this._convertFragments(curSection.fragments);
 				if (beforePictures && !checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.right])) {
@@ -1517,8 +1532,8 @@
 			}
 
 			//нужно добавлять в историю
-			if(isChanged) {
-				if(!isAddHistory && !opt_headerFooter) {
+			if (isChanged) {
+				if (!isAddHistory && !opt_headerFooter) {
 					History.Create_NewPoint();
 					History.StartTransaction();
 					isAddHistory = true;
@@ -1546,26 +1561,26 @@
 			ws.changeLegacyDrawingHFPictures(this.needAddPicturesMap)
 		}
 
-		if(isAddHistory) {
+		if (isAddHistory) {
 			History.EndTransaction();
 		}
 	};
 
-	CHeaderFooterEditor.prototype.setFontName = function(fontName) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.setFontName = function (fontName) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
 		let t = this, fonts = {};
 		fonts[fontName] = 1;
-		t.api._loadFonts(fonts, function() {
+		t.api._loadFonts(fonts, function () {
 			t.cellEditor.setTextStyle("fn", fontName);
 			t.wb.restoreFocus();
 		});
 	};
 
-	CHeaderFooterEditor.prototype.setFontSize = function(fontSize) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.setFontSize = function (fontSize) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
@@ -1573,8 +1588,8 @@
 		this.wb.restoreFocus();
 	};
 
-	CHeaderFooterEditor.prototype.setBold = function(isBold) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.setBold = function (isBold) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
@@ -1582,8 +1597,8 @@
 		this.wb.restoreFocus();
 	};
 
-	CHeaderFooterEditor.prototype.setItalic = function(isItalic) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.setItalic = function (isItalic) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
@@ -1591,8 +1606,8 @@
 		this.wb.restoreFocus();
 	};
 
-	CHeaderFooterEditor.prototype.setUnderline = function(isUnderline) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.setUnderline = function (isUnderline) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
@@ -1600,8 +1615,8 @@
 		this.wb.restoreFocus();
 	};
 
-	CHeaderFooterEditor.prototype.setStrikeout = function(isStrikeout) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.setStrikeout = function (isStrikeout) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
@@ -1609,8 +1624,8 @@
 		this.wb.restoreFocus();
 	};
 
-	CHeaderFooterEditor.prototype.setSubscript = function(isSubscript) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.setSubscript = function (isSubscript) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
@@ -1618,8 +1633,8 @@
 		this.wb.restoreFocus();
 	};
 
-	CHeaderFooterEditor.prototype.setSuperscript = function(isSuperscript) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.setSuperscript = function (isSuperscript) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
@@ -1627,8 +1642,8 @@
 		this.wb.restoreFocus();
 	};
 
-	CHeaderFooterEditor.prototype.setTextColor = function(color) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.setTextColor = function (color) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
@@ -1639,8 +1654,8 @@
 		}
 	};
 
-	CHeaderFooterEditor.prototype.addField = function(val) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.addField = function (val) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
@@ -1648,7 +1663,7 @@
 			this.addPictureField();
 		} else {
 			let textField = convertFieldToMenuText(val);
-			if(null !== textField) {
+			if (null !== textField) {
 				this.cellEditor.pasteText(textField);
 			}
 		}
@@ -1692,43 +1707,43 @@
 		}
 	};
 
-	CHeaderFooterEditor.prototype.getTextPresetsArr = function() {
+	CHeaderFooterEditor.prototype.getTextPresetsArr = function () {
 		let wb = this.wb;
 		let ws = wb.getWorksheet();
 
 		let arrPresets = this.menuPresets;
-		if(!arrPresets) {
+		if (!arrPresets) {
 			return [];
 		}
 
-		let getFragmentText = function(val) {
+		let getFragmentText = function (val) {
 			return val.getText(ws, 0, 1);
 		};
 
-		let getFragmentsText = function(fragments) {
+		let getFragmentsText = function (fragments) {
 			let res = "";
-			for(let n = 0; n < fragments.length; n++) {
+			for (let n = 0; n < fragments.length; n++) {
 				res += getFragmentText(fragments[n]);
 			}
 			return res;
 		};
 
 		let textPresetsArr = [];
-		for(let i = 0; i < arrPresets.length; i++) {
-			if(!arrPresets[i]) {
+		for (let i = 0; i < arrPresets.length; i++) {
+			if (!arrPresets[i]) {
 				continue;
 			}
 			textPresetsArr[i] = "";
-			for(let j = 0; j < arrPresets[i].length; j++) {
-				if(arrPresets[i][j]) {
+			for (let j = 0; j < arrPresets[i].length; j++) {
+				if (arrPresets[i][j]) {
 					let fragments = this._convertFragments([this._getFragments(arrPresets[i][j])]);
-					if("" !== textPresetsArr[i]) {
+					if ("" !== textPresetsArr[i]) {
 						textPresetsArr[i] += ", ";
 					}
 					textPresetsArr[i] += getFragmentsText(fragments);
 				}
 			}
-			if("" === textPresetsArr[i]) {
+			if ("" === textPresetsArr[i]) {
 				textPresetsArr[i] = "None";
 			}
 		}
@@ -1736,13 +1751,13 @@
 		return textPresetsArr;
 	};
 
-	CHeaderFooterEditor.prototype.applyPreset = function(type, bFooter) {
+	CHeaderFooterEditor.prototype.applyPreset = function (type, bFooter) {
 
 		let curType = this._getHeaderFooterType(this.pageType, bFooter);
 		let section = this.sections[curType];
 
-		if(this.cellEditor) {
-			if(section[c_oPortionPosition.left] && section[c_oPortionPosition.left].canvasObj) {
+		if (this.cellEditor) {
+			if (section[c_oPortionPosition.left] && section[c_oPortionPosition.left].canvasObj) {
 				this.click(section[c_oPortionPosition.left].canvasObj.idParent);
 			}
 		}
@@ -1750,8 +1765,8 @@
 		this.curParentFocusId = null;
 
 		let fragments;
-		for(let i = 0; i < section.length; i++) {
-			if(!this.presets[type][i]) {
+		for (let i = 0; i < section.length; i++) {
+			if (!this.presets[type][i]) {
 				section[i].setFragments(null);
 			} else {
 				fragments = [this._getFragments(this.presets[type][i], new AscCommonExcel.Font())];
@@ -1763,15 +1778,15 @@
 		}
 	};
 
-	CHeaderFooterEditor.prototype.getAppliedPreset = function(type, bFooter) {
+	CHeaderFooterEditor.prototype.getAppliedPreset = function (type, bFooter) {
 		let res = Asc.c_oAscHeaderFooterPresets.none;
 		type = undefined !== type ? type : this.pageType;
 		let curType = this._getHeaderFooterType(type, bFooter);
 		let section = this.sections[curType];
 
-		for(let i = 0; i < section.length; i++) {
+		for (let i = 0; i < section.length; i++) {
 
-			if(null !== section[i].fragments) {
+			if (null !== section[i].fragments) {
 				res = Asc.c_oAscHeaderFooterPresets.custom;
 				break;
 			}
@@ -1780,13 +1795,13 @@
 		return res;
 	};
 
-	CHeaderFooterEditor.prototype.setAlignWithMargins = function(val) {
+	CHeaderFooterEditor.prototype.setAlignWithMargins = function (val) {
 		this.alignWithMargins = val;
 	};
 
-	CHeaderFooterEditor.prototype.setDifferentFirst = function(val) {
+	CHeaderFooterEditor.prototype.setDifferentFirst = function (val) {
 		let checkError;
-		if(!val && (checkError = this._checkSave()) !== null) {
+		if (!val && (checkError = this._checkSave()) !== null) {
 			return checkError;
 		}
 		this.differentFirst = val;
@@ -1794,9 +1809,9 @@
 		return null;
 	};
 
-	CHeaderFooterEditor.prototype.setDifferentOddEven = function(val) {
+	CHeaderFooterEditor.prototype.setDifferentOddEven = function (val) {
 		let checkError;
-		if(!val && (checkError = this._checkSave()) !== null) {
+		if (!val && (checkError = this._checkSave()) !== null) {
 			return checkError;
 		}
 		this.differentOddEven = val;
@@ -1804,40 +1819,40 @@
 		return null;
 	};
 
-	CHeaderFooterEditor.prototype.setScaleWithDoc = function(val) {
+	CHeaderFooterEditor.prototype.setScaleWithDoc = function (val) {
 		this.scaleWithDoc = val;
 	};
 
-	CHeaderFooterEditor.prototype.getAlignWithMargins = function() {
+	CHeaderFooterEditor.prototype.getAlignWithMargins = function () {
 		return true === this.alignWithMargins || null === this.alignWithMargins;
 	};
 
-	CHeaderFooterEditor.prototype.getDifferentFirst = function() {
+	CHeaderFooterEditor.prototype.getDifferentFirst = function () {
 		return true === this.differentFirst;
 	};
 
-	CHeaderFooterEditor.prototype.getDifferentOddEven = function() {
+	CHeaderFooterEditor.prototype.getDifferentOddEven = function () {
 		return true === this.differentOddEven;
 	};
 
-	CHeaderFooterEditor.prototype.getScaleWithDoc = function() {
+	CHeaderFooterEditor.prototype.getScaleWithDoc = function () {
 		return true === this.scaleWithDoc || null === this.scaleWithDoc;
 	};
 
-	CHeaderFooterEditor.prototype._createAndDrawSections = function(pageCommonType, opt_objForSave, opt_headerFooter) {
+	CHeaderFooterEditor.prototype._createAndDrawSections = function (pageCommonType, opt_objForSave, opt_headerFooter) {
 		let pageHeaderType = this._getHeaderFooterType(pageCommonType);
 		let pageFooterType = this._getHeaderFooterType(pageCommonType, true);
 
-		let getFragments = function(textPropsArr) {
-			if(!textPropsArr) {
+		let getFragments = function (textPropsArr) {
+			if (!textPropsArr) {
 				return null;
 			}
 			let _fragments = [];
 			let pictures;
-			for(let i = 0; i < textPropsArr.length; i++) {
+			for (let i = 0; i < textPropsArr.length; i++) {
 				let curProps = textPropsArr[i];
 				let text = convertFieldToMenuText(curProps.field, curProps.textField);
-				if(null !== text) {
+				if (null !== text) {
 					let tempFragment = new AscCommonExcel.Fragment();
 					tempFragment.setFragmentText(text);
 					tempFragment.format = curProps.format;
@@ -1852,7 +1867,7 @@
 
 		let _addFragments = function (_curParser, curSection) {
 			let _fragments = getFragments(_curParser);
-			if(_fragments && null !== _fragments.fragments) {
+			if (_fragments && null !== _fragments.fragments) {
 				curSection.fragments = _fragments.fragments;
 				curSection.pictures = _fragments.pictures;
 			}
@@ -1860,7 +1875,7 @@
 
 		//header
 		let curPageHF, parser;
-		if(!this.sections[pageHeaderType]) {
+		if (!this.sections[pageHeaderType]) {
 			this.sections[pageHeaderType] = [];
 
 			//создаём секции, если они уже не созданы
@@ -1870,20 +1885,20 @@
 
 			//в случае print preview храним временно опции в этом объекте
 			if (opt_objForSave) {
-				if(opt_objForSave.sections[pageHeaderType][c_oPortionPosition.left]) {
+				if (opt_objForSave.sections[pageHeaderType][c_oPortionPosition.left]) {
 					this.sections[pageHeaderType][c_oPortionPosition.left].fragments = opt_objForSave.sections[pageHeaderType][c_oPortionPosition.left].fragments;
 				}
-				if(opt_objForSave.sections[pageHeaderType][c_oPortionPosition.center]) {
+				if (opt_objForSave.sections[pageHeaderType][c_oPortionPosition.center]) {
 					this.sections[pageHeaderType][c_oPortionPosition.center].fragments = opt_objForSave.sections[pageHeaderType][c_oPortionPosition.center].fragments;
 				}
-				if(opt_objForSave.sections[pageHeaderType][c_oPortionPosition.right]) {
+				if (opt_objForSave.sections[pageHeaderType][c_oPortionPosition.right]) {
 					this.sections[pageHeaderType][c_oPortionPosition.right].fragments = opt_objForSave.sections[pageHeaderType][c_oPortionPosition.right].fragments;
 				}
 			} else {
 				//получаем из модели необходимый нам элемент
 				curPageHF = this._getCurPageHF(pageHeaderType, opt_headerFooter);
-				if(curPageHF && curPageHF.str) {
-					if(!curPageHF.parser) {
+				if (curPageHF && curPageHF.str) {
+					if (!curPageHF.parser) {
 						curPageHF.parse();
 					}
 					parser = curPageHF.parser.tokens;
@@ -1895,7 +1910,7 @@
 		}
 
 		//footer
-		if(!this.sections[pageFooterType]) {
+		if (!this.sections[pageFooterType]) {
 			this.sections[pageFooterType] = [];
 
 			//создаём секции, если они уже не созданы
@@ -1905,20 +1920,20 @@
 
 			//в случае print preview храним временно опции в этом объекте
 			if (opt_objForSave) {
-				if(opt_objForSave.sections[pageFooterType][c_oPortionPosition.left]) {
+				if (opt_objForSave.sections[pageFooterType][c_oPortionPosition.left]) {
 					this.sections[pageFooterType][c_oPortionPosition.left].fragments = opt_objForSave.sections[pageFooterType][c_oPortionPosition.left].fragments;
 				}
-				if(opt_objForSave.sections[pageFooterType][c_oPortionPosition.center]) {
+				if (opt_objForSave.sections[pageFooterType][c_oPortionPosition.center]) {
 					this.sections[pageFooterType][c_oPortionPosition.center].fragments = opt_objForSave.sections[pageFooterType][c_oPortionPosition.center].fragments;
 				}
-				if(opt_objForSave.sections[pageFooterType][c_oPortionPosition.right]) {
+				if (opt_objForSave.sections[pageFooterType][c_oPortionPosition.right]) {
 					this.sections[pageFooterType][c_oPortionPosition.right].fragments = opt_objForSave.sections[pageFooterType][c_oPortionPosition.right].fragments;
 				}
 			} else {
 				//получаем из модели необходимый нам элемент
 				curPageHF = this._getCurPageHF(pageFooterType, opt_headerFooter);
-				if(curPageHF && curPageHF.str) {
-					if(!curPageHF.parser) {
+				if (curPageHF && curPageHF.str) {
+					if (!curPageHF.parser) {
 						curPageHF.parse();
 					}
 					parser = curPageHF.parser.tokens;
@@ -1938,10 +1953,10 @@
 		this.sections[pageFooterType][c_oPortionPosition.right].drawText();
 	};
 
-	CHeaderFooterEditor.prototype._getHeaderFooterType = function(type, bFooter) {
+	CHeaderFooterEditor.prototype._getHeaderFooterType = function (type, bFooter) {
 		let res = bFooter ? asc.c_oAscPageHFType.oddFooter : asc.c_oAscPageHFType.oddHeader;
 
-		if(type === asc.c_oAscHeaderFooterType.first) {
+		if (type === asc.c_oAscHeaderFooterType.first) {
 			res = bFooter ? asc.c_oAscPageHFType.firstFooter : asc.c_oAscPageHFType.firstHeader;
 		} else if (type === asc.c_oAscHeaderFooterType.even) {
 			res = bFooter ? asc.c_oAscPageHFType.evenFooter : asc.c_oAscPageHFType.evenHeader;
@@ -1958,8 +1973,8 @@
 		let hF = opt_headerFooter ? opt_headerFooter : ws.model.headerFooter;
 
 		//TODO можно у класса CHeaderFooter реализовать данную функцию
-		if(hF) {
-			switch (type){
+		if (hF) {
+			switch (type) {
 				case asc.c_oAscPageHFType.firstHeader: {
 					res = hF.firstHeader;
 					break;
@@ -1993,17 +2008,17 @@
 		let res = null;
 		let type = this._getHeaderFooterType(this.pageType);
 		let i;
-		if(this.sections && this.sections[type]) {
-			for(i = 0; i < this.sections[type].length; i++) {
-				if(id === this.sections[type][i].canvasObj.idParent) {
+		if (this.sections && this.sections[type]) {
+			for (i = 0; i < this.sections[type].length; i++) {
+				if (id === this.sections[type][i].canvasObj.idParent) {
 					return this.sections[type][i];
 				}
 			}
 		}
 		type = this._getHeaderFooterType(this.pageType, true);
-		if(this.sections && this.sections[type]) {
-			for(i = 0; i < this.sections[type].length; i++) {
-				if(id === this.sections[type][i].canvasObj.idParent) {
+		if (this.sections && this.sections[type]) {
+			for (i = 0; i < this.sections[type].length; i++) {
+				if (id === this.sections[type][i].canvasObj.idParent) {
 					return this.sections[type][i];
 				}
 			}
@@ -2011,8 +2026,8 @@
 		return res;
 	};
 
-	CHeaderFooterEditor.prototype._convertFragments = function(fragments) {
-		if(!fragments) {
+	CHeaderFooterEditor.prototype._convertFragments = function (fragments) {
+		if (!fragments) {
 			return null;
 		}
 
@@ -2022,27 +2037,27 @@
 		let tM = AscCommon.translateManager;
 
 		let bToken, text, symbol, startToken, tokenText, tokenFormat;
-		for(let j = 0; j < fragments.length; j++) {
+		for (let j = 0; j < fragments.length; j++) {
 			text = "";
-			for(let n = 0; n < fragments[j].getFragmentText().length; n++) {
+			for (let n = 0; n < fragments[j].getFragmentText().length; n++) {
 				symbol = fragments[j].getFragmentText()[n];
-				if(symbol !== "&") {
+				if (symbol !== "&") {
 					text += symbol;
 				}
 
 				//если несколько таких символов подряд, ms оставляет 1 как текст
 				//пока игнорируем данную ситуацию
-				if(symbol === "&") {
-					if("" !== text) {
+				if (symbol === "&") {
+					if ("" !== text) {
 						res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 						text = "";
 					}
 
 					bToken = true;
 					tokenFormat = fragments[j].format;
-				} else if(startToken) {
-					if(symbol === "]") {
-						switch(tokenText.toLowerCase()) {
+				} else if (startToken) {
+					if (symbol === "]") {
+						switch (tokenText.toLowerCase()) {
 							case tM.getValue("Page").toLowerCase(): {
 								text = "";
 								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.pageNumber, tokenFormat));
@@ -2083,7 +2098,7 @@
 								break;
 							}
 							default: {
-								if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
+								if ("" !== text && j === fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
 									res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 									text = "";
 								}
@@ -2096,17 +2111,17 @@
 						tokenText += symbol;
 					}
 
-					if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
+					if ("" !== text && j === fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
 						res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 					}
-				} else if(bToken) {
+				} else if (bToken) {
 					//начинаем просматривать аргумент
-					if(symbol === "[") {
+					if (symbol === "[") {
 						startToken = true;
 						tokenText = "";
 					} else {
 						//если за "&" следует спецсимвол
-						switch(symbol) {
+						switch (symbol) {
 							case 'l':
 							case 'c':
 							case 'r':
@@ -2171,7 +2186,7 @@
 								break;
 							}
 							default: {
-								if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
+								if ("" !== text && j === fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
 									res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 									text = "";
 								}
@@ -2180,7 +2195,7 @@
 						}
 						bToken = false;
 					}
-				} else if("" !== text && n === fragments[j].getFragmentText().length - 1) {
+				} else if ("" !== text && n === fragments[j].getFragmentText().length - 1) {
 					res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 				}
 			}
@@ -2188,14 +2203,14 @@
 		return res;
 	};
 
-	CHeaderFooterEditor.prototype._getFragments = function(text, format) {
+	CHeaderFooterEditor.prototype._getFragments = function (text, format) {
 		let tempFragment = new AscCommonExcel.Fragment();
 		tempFragment.setFragmentText(text);
 		tempFragment.format = format;
 		return tempFragment;
 	};
 
-	CHeaderFooterEditor.prototype._generatePresetsArr = function() {
+	CHeaderFooterEditor.prototype._generatePresetsArr = function () {
 		let docInfo = window["Asc"]["editor"].DocInfo;
 		let userInfo = docInfo ? docInfo.get_UserInfo() : null;
 		let userName = userInfo ? userInfo.get_FullName() : "";
@@ -2216,7 +2231,7 @@
 		let arrPresets = [];
 		let arrPresetsMenu = [];
 		arrPresets[0] = arrPresetsMenu[0] = [null, null, null];
-		arrPresets[1] = arrPresetsMenu[1] = [null,  page + " " + pageTag, null];
+		arrPresets[1] = arrPresetsMenu[1] = [null, page + " " + pageTag, null];
 		arrPresets[2] = [null, pageOf.replace("%1", pageTag).replace("%2", pagesTag), null];
 		arrPresetsMenu[2] = [null, pageOf.replace("%1", pageTag).replace("%2", "?"), null];
 		arrPresets[3] = arrPresetsMenu[3] = [null, tabTag, null];
@@ -2239,7 +2254,7 @@
 	};
 
 
-	CHeaderFooterEditor.prototype.getPageType = function() {
+	CHeaderFooterEditor.prototype.getPageType = function () {
 		return this.pageType;
 	};
 
@@ -2294,10 +2309,6 @@
 
 				newHFDrawing.graphicObject = ws.objectRender.controller.createImage(url, 0, 0, __w, __h);
 				t.changePicture(oldHFDrawing && oldHFDrawing.obj, newHFDrawing, true);
-
-
-				t.drawings.push(newHFDrawing);
-				//changeFunction(oldHFDrawing, newHFDrawing);
 
 				delete picturesMap[i];
 			}
@@ -2370,7 +2381,6 @@
 	};
 
 
-
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 
@@ -2379,7 +2389,7 @@
 
 	window["Asc"]["asc_CHeaderFooterEditor"] = window["AscCommonExcel"].CHeaderFooterEditor = CHeaderFooterEditor;
 	let prot = CHeaderFooterEditor.prototype;
-	prot["click"] 	= prot.click;
+	prot["click"] = prot.click;
 	prot["destroy"] = prot.destroy;
 	prot["setFontName"] = prot.setFontName;
 	prot["setFontSize"] = prot.setFontSize;
