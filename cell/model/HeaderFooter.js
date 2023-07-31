@@ -1458,8 +1458,11 @@
 		}
 
 		let checkPictures = function (aFr) {
+			if (!aFr) {
+				return false;
+			}
 			for (let i = 0; i < aFr.length; i++) {
-				if (aFr[i].type === asc.c_oAscHeaderFooterField.picture) {
+				if (aFr[i].field === asc.c_oAscHeaderFooterField.picture) {
 					return true;
 				}
 			}
@@ -1487,7 +1490,7 @@
 			let curSection = this.sections[i][c_oPortionPosition.left];
 			let isChanged = false;
 			if(curSection && (curSection.changed || reWrite)) {
-				beforePictures = checkPictures(curSection);
+				beforePictures = checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.left]);
 				curHeaderFooter.parser.tokens[c_oPortionPosition.left] = this._convertFragments(curSection.fragments);
 				if (beforePictures && !checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.left])) {
 					removedPictures.push(curSection.getStringName());
@@ -1496,18 +1499,18 @@
 			}
 			curSection = this.sections[i][c_oPortionPosition.center];
 			if(curSection && (curSection.changed || reWrite)) {
-				beforePictures = checkPictures(curSection);
+				beforePictures = checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.center]);
 				curHeaderFooter.parser.tokens[c_oPortionPosition.center] = this._convertFragments(curSection.fragments);
-				if (beforePictures && !checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.left])) {
+				if (beforePictures && !checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.center])) {
 					removedPictures.push(curSection.getStringName());
 				}
 				isChanged = true;
 			}
 			curSection = this.sections[i][c_oPortionPosition.right];
 			if(curSection && (curSection.changed || reWrite)) {
-				beforePictures = checkPictures(curSection);
+				beforePictures = checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.right]);
 				curHeaderFooter.parser.tokens[c_oPortionPosition.right] = this._convertFragments(curSection.fragments);
-				if (beforePictures && !checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.left])) {
+				if (beforePictures && !checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.right])) {
 					removedPictures.push(curSection.getStringName());
 				}
 				isChanged = true;
