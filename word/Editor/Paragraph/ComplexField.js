@@ -884,7 +884,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 				nContainerPos = oPara.Content.length - 1;
 			}
 
-			var isAddTabForNumbering = false;
+			let numTabPos = null;
 			if (oSrcParagraph.HaveNumbering() && oSrcParagraph.GetParent())
 			{
 				var oNumPr     = oSrcParagraph.GetNumPr();
@@ -915,8 +915,16 @@ CComplexField.prototype.private_UpdateTOC = function()
 				}
 				else if (Asc.c_oAscNumberingSuff.Tab === nNumSuff)
 				{
+					// Выставление родительского класса нужно для правильного расчета ширины рана с учетом того,
+					// что используемые шрифты могут быть заданы в темах
+					oPara.SetParent(oSrcParagraph.GetParent());
+					
+					numTabPos = 0;
+					AscWord.ParagraphTextShaper.ShapeRun(oNumberingRun);
+					for (let runItemIndex = 0; runItemIndex < oNumberingRun.GetElementsCount(); ++runItemIndex)
+						numTabPos += oNumberingRun.GetElement(runItemIndex).GetWidth();
+					
 					oNumTabRun.Add_ToContent(0, new AscWord.CRunTab());
-					isAddTabForNumbering = true;
 					oContainer.Add_ToContent(1, oNumTabRun);
 					nContainerPos++;
 				}
@@ -926,11 +934,8 @@ CComplexField.prototype.private_UpdateTOC = function()
 			oTabs = new CParaTabs();
 			oTabs.Add(oTab);
 
-			if ((!isPreserveTabs && oPara.RemoveTabsForTOC()) || isAddTabForNumbering)
+			if ((!isPreserveTabs && oPara.RemoveTabsForTOC()) || null !== numTabPos)
 			{
-				// TODO: Табы для нумерации как-то зависят от самой нумерации и не совсем такие, как без нумерации
-
-
 				// В данной ситуации ворд делает следующим образом: он пробегает по параграфу и смотрит, если там есть
 				// табы (в контенте, а не в свойствах), тогда он первый таб оставляет, а остальные заменяет на пробелы,
 				// при этом в список табов добавляется новый левый таб без заполнителя, отступающий на 1,16 см от левого
@@ -940,10 +945,13 @@ CComplexField.prototype.private_UpdateTOC = function()
 				var sTOCStyleId  = this.LogicDocument.GetStyles().GetDefaultTOC(arrOutline[nIndex].Lvl);
 				if (sTOCStyleId)
 				{
-					var oParaPr  = this.LogicDocument.GetStyles().Get_Pr(sTOCStyleId, styletype_Paragraph, null, null).ParaPr;
-					nFirstTabPos = 11.6 + (oParaPr.Ind.Left + oParaPr.Ind.FirstLine);
+					let paraPr = this.LogicDocument.GetStyles().Get_Pr(sTOCStyleId, styletype_Paragraph, null, null).ParaPr;
+					if (null !== numTabPos)
+						nFirstTabPos = Math.trunc((paraPr.Ind.Left + paraPr.Ind.FirstLine + numTabPos + 4.9) / 5 + 1) * 5;
+					else
+						nFirstTabPos = 1.6 + (paraPr.Ind.Left + paraPr.Ind.FirstLine);
 				}
-
+				
 				oTabs.Add(new CParaTab(tab_Left, nFirstTabPos, Asc.c_oAscTabLeader.None));
 			}
 

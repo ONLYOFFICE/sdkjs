@@ -91,6 +91,10 @@
 			X += this.LGap;
 		}
 
+		if(Context.m_bIsTextDrawer)
+		{
+			Context.CheckSpaceDraw();
+		}
 		if (undefined !== editor && editor.ShowParaMarks)
 		{
 			Context.SetFontSlot(AscWord.fontslot_ASCII, this.GetFontCoef());

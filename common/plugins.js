@@ -1114,7 +1114,11 @@
 
 		checkOrigin : function(guid, event)
 		{
-			if (event.origin === window.origin)
+			let windowOrigin = window.origin;
+			if (undefined === windowOrigin)
+				windowOrigin = window.location.origin;
+
+			if (event.origin === windowOrigin)
 				return true;
 
 			// allow chrome extensions
@@ -1149,7 +1153,7 @@
 	function checkReturnCommand(obj, recursionDepth)
 	{
 		let depth = (recursionDepth === undefined) ? 0 : recursionDepth;
-		if (depth > 5)
+		if (depth > 10)
 			return false;
 
 		switch (typeof obj)
@@ -1187,7 +1191,16 @@
 					}
 				}
 
-				return false;
+				for (let prop in obj)
+				{
+					if (obj.hasOwnProperty(prop))
+					{
+						if (!checkReturnCommand(obj[prop], depth + 1))
+							return false;
+					}
+				}
+
+				return true;
 			}
 			default:
 				break;

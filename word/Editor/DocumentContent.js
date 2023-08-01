@@ -310,26 +310,6 @@ CDocumentContent.prototype.Get_PageContentStartPos2 = function(StartPageIndex, S
 {
     return this.Get_PageContentStartPos(StartPageIndex + ElementPageIndex);
 };
-CDocumentContent.prototype.Get_Theme = function()
-{
-	if (this.Parent)
-		return this.Parent.Get_Theme();
-
-	if (this.LogicDocument)
-		return this.LogicDocument.GetTheme();
-
-	return AscFormat.GetDefaultTheme();
-};
-CDocumentContent.prototype.Get_ColorMap = function()
-{
-	if (this.Parent)
-		return this.Parent.Get_ColorMap();
-
-	if (this.LogicDocument)
-		return this.LogicDocument.GetColorMap();
-
-	return AscFormat.GetDefaultColorMap();
-};
 CDocumentContent.prototype.Get_PageLimits = function(nCurPage)
 {
 	if (this.Parent && this.Parent.IsCell())
@@ -1484,7 +1464,7 @@ CDocumentContent.prototype.Draw                           = function(nPageIndex,
 	{
 		var oTable = oPage.FlowTables[nFlowTableIndex];
 
-		var nElementPageIndex = this.private_GetElementPageIndex(oTable.GetIndex(), nPageIndex, ColumnIndex, ColumnsCount);
+		var nElementPageIndex = this.private_GetElementPageIndex(oTable.GetIndex(), nPageIndex, 0, 1);
 		oTable.Draw(nElementPageIndex, pGraphics);
 	}
 
@@ -1502,7 +1482,7 @@ CDocumentContent.prototype.Draw                           = function(nPageIndex,
 
 		for (var nFlowIndex = oFrame.StartIndex; nFlowIndex < oFrame.StartIndex + oFrame.FlowCount; ++nFlowIndex)
 		{
-			var nElementPageIndex = this.private_GetElementPageIndex(nFlowIndex, nPageIndex, ColumnIndex, ColumnsCount);
+			var nElementPageIndex = this.private_GetElementPageIndex(nFlowIndex, nPageIndex, 0, 1);
 			this.Content[nFlowIndex].Draw(nElementPageIndex, pGraphics);
 		}
 
@@ -2078,11 +2058,23 @@ CDocumentContent.prototype.GetCurrentParagraph = function(bIgnoreSelection, arrS
 		}
 		else
 		{
-			var Pos = true === this.Selection.Use && true !== bIgnoreSelection ? this.Selection.StartPos : this.CurPos.ContentPos;
-			if (Pos < 0 || Pos >= this.Content.length)
+			let pos = this.CurPos.ContentPos;
+			if (this.Selection.Use && true !== bIgnoreSelection)
+			{
+				pos = this.Selection.StartPos;
+				if (oPr)
+				{
+					if (oPr.FirstInSelection)
+						pos = this.Selection.StartPos <= this.Selection.EndPos ? this.Selection.StartPos : this.Selection.EndPos;
+					else if (oPr.LastInSelection)
+						pos = this.Selection.StartPos <= this.Selection.EndPos ? this.Selection.EndPos : this.Selection.StartPos;
+				}
+			}
+			
+			if (pos < 0 || pos >= this.Content.length)
 				return null;
-
-			return this.Content[Pos].GetCurrentParagraph(bIgnoreSelection, null, oPr);
+			
+			return this.Content[pos].GetCurrentParagraph(bIgnoreSelection, null, oPr);
 		}
 	}
 
@@ -2259,7 +2251,7 @@ CDocumentContent.prototype.Document_UpdateInterfaceState = function()
 		}
 		else
 		{
-			this.Interface_Update_ParaPr();
+			this.UpdateInterfaceParaPr();
 			this.UpdateInterfaceTextPr();
 
 			// Если у нас в выделении находится 1 параграф, или курсор находится в параграфе
@@ -6077,54 +6069,6 @@ CDocumentContent.prototype.GetDirectParaPr = function()
 //-----------------------------------------------------------------------------------
 // Функции для работы с интерфейсом
 //-----------------------------------------------------------------------------------
-
-// Обновляем данные в интерфейсе о свойствах параграфа
-CDocumentContent.prototype.Interface_Update_ParaPr    = function()
-{
-	var oParaPr = this.GetCalculatedParaPr();
-
-	var oApi = editor;
-	if (oParaPr && oApi)
-	{
-		oParaPr.CanAddDropCap = false;
-
-		if (this.LogicDocument)
-		{
-			var oSelectedInfo = this.LogicDocument.GetSelectedElementsInfo({CheckAllSelection : true});
-			var oMath         = oSelectedInfo.GetMath();
-			if (oMath)
-				oParaPr.CanAddImage = false;
-			else if (false !== oParaPr.CanAddImage)
-				oParaPr.CanAddImage = true;
-
-			if (oMath && !oMath.Is_Inline())
-				oParaPr.Jc = oMath.Get_Align();
-
-			oParaPr.CanDeleteBlockCC  = oSelectedInfo.CanDeleteBlockSdts();
-			oParaPr.CanEditBlockCC    = oSelectedInfo.CanEditBlockSdts();
-			oParaPr.CanDeleteInlineCC = oSelectedInfo.CanDeleteInlineSdts();
-			oParaPr.CanEditInlineCC   = oSelectedInfo.CanEditInlineSdts();
-		}
-
-		if (oParaPr.Tabs)
-		{
-			var DefaultTab = oParaPr.DefaultTab != null ? oParaPr.DefaultTab : AscCommonWord.Default_Tab_Stop;
-			oApi.Update_ParaTab(DefaultTab, oParaPr.Tabs);
-		}
-
-		// Если мы находимся внутри автофигуры, тогда нам надо проверить лок параграфа, в котором находится автофигура
-		if (this.LogicDocument && docpostype_DrawingObjects === this.LogicDocument.CurPos.Type && true !== oParaPr.Locked)
-		{
-			var ParaDrawing = this.LogicDocument.DrawingObjects.getMajorParaDrawing();
-			if (ParaDrawing)
-			{
-				oParaPr.Locked = ParaDrawing.Lock.Is_Locked();
-			}
-		}
-
-		oApi.UpdateParagraphProp(oParaPr);
-	}
-};
 CDocumentContent.prototype.Interface_Update_DrawingPr = function(Flag)
 {
     var ImagePr = {};
@@ -7603,8 +7547,10 @@ CDocumentContent.prototype.AddHyperlink = function(HyperProps)
 		&& (false === this.Selection.Use || this.Selection.StartPos === this.Selection.EndPos))
 	{
 		var Pos = ( true == this.Selection.Use ? this.Selection.StartPos : this.CurPos.ContentPos );
-		this.Content[Pos].AddHyperlink(HyperProps);
+		return this.Content[Pos].AddHyperlink(HyperProps);
 	}
+	
+	return null;
 };
 CDocumentContent.prototype.ModifyHyperlink = function(HyperProps)
 {

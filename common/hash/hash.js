@@ -131,8 +131,10 @@
 	window['AscCommon'].calculateProtectHash = function(args, callback) {
 		if (window["NATIVE_EDITOR_ENJINE"])
 		{
-			if (!AscCommon.hashEngine)
-				AscCommon.hashEngine = CreateNativeHash();
+			if (!AscCommon.hashEngine) {
+				/** @suppress {checkVars} */
+				AscCommon.hashEngine = CreateEmbedObject("CHashEmbed");
+			}
 
 			let retArray = [];
 			for (var i = 0, len = args.length; i < len; i++)
@@ -208,8 +210,7 @@
 			return null;
 		}
 
-		let textEncoder = new TextEncoder();
-		let passwordBytes = textEncoder.encode(password);
+		let passwordBytes = AscCommon.Utf8.encode(password);
 
 		let maxPasswordLength = 15;
 		passwordBytes = passwordBytes.slice(0, maxPasswordLength);

@@ -926,6 +926,12 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
         }
         return false;
     };
+    Geometry.prototype.isInk = function()
+    {
+        if(this.pathLst.length !== 1)
+            return false;
+        return this.pathLst[0].isInk();
+    };
 
     Geometry.prototype.createDuplicate = function()
     {
@@ -1812,12 +1818,6 @@ function GetArrayPolygonsByPaths(dEpsilon, aPathLst)
     }
     return aByPaths;
 }
-
-function ComparisonEdgeByTopPoint(graphEdge1, graphEdge2)
-{
-    return Math.min(graphEdge1.point1.y, graphEdge1.point2.y) - Math.min(graphEdge2.point1.y, graphEdge2.point2.y);
-}
-
 
 
     //--------------------------------------------------------export----------------------------------------------------

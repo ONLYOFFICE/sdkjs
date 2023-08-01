@@ -2292,7 +2292,7 @@ void main() {\n\
     {
         var aTextAround = [];
         var oPageMatches, oPart, oLineInfo, oLastPartInfo;
-        var sTempText, nAroundAdded;
+        var aResult, nAroundAdded;
         for (var nPage = 0; nPage < this.SearchResults.Pages.length; nPage++)
         {
             oPageMatches = this.SearchResults.Pages[nPage];
@@ -2300,7 +2300,7 @@ void main() {\n\
             // идём по всем совпадениям
             for (var nMatch = 0; nMatch < oPageMatches.length; nMatch++)
             {
-                sTempText = "";
+                aResult = ["", "", ""];
                 // найденный текст может быть разбит на части (строки)
                 for (var nPart = 0; nPart < oPageMatches[nMatch].length; nPart++)
                 {
@@ -2350,16 +2350,26 @@ void main() {\n\
                     }
 
                     if (nPart == 0 && oPageMatches[nMatch].length == 1)
-                        sTempText += oLineInfo.text.slice(0, oLastPartInfo.posInLine) + '<b>' + oPart.Text + '</b>' + oLineInfo.text.slice(oLastPartInfo.posInLine + oPart.Text.length);
+                    {
+                        aResult[0] = oLineInfo.text.slice(0, oLastPartInfo.posInLine);
+                        aResult[1] = oPart.Text;
+                        aResult[2] = oLineInfo.text.slice(oLastPartInfo.posInLine + oPart.Text.length);
+                    }
                     else if (nPart == 0)
-                        sTempText += oLineInfo.text.slice(0, oLastPartInfo.posInLine) + '<b>' + oPart.Text;
+                    {
+                        aResult[0] = oLineInfo.text.slice(0, oLastPartInfo.posInLine);
+                        aResult[1] = oPart.Text;
+                    }
                     else if (nPart == oPageMatches[nMatch].length - 1)
-                        sTempText += oPart.Text + '</b>' + oLineInfo.text.slice(oLastPartInfo.posInLine + oPart.Text.length);
+                    {
+                        aResult[1] += oPart.Text;
+                        aResult[2] += oLineInfo.text.slice(oLastPartInfo.posInLine + oPart.Text.length);
+                    }
                     else
-                        sTempText += oPart.Text;
+                        aResult[2] += oPart.Text;
                 }
 
-                aTextAround.push([nAroundAdded + nMatch, sTempText]);
+                aTextAround.push([nAroundAdded + nMatch, aResult]);
             }
         }
 

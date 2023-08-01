@@ -33,7 +33,8 @@
 "use strict";
 function CNativeGraphics()
 {
-    this.Native = CreateNativeGraphics();
+    /** @suppress {checkVars} */
+    this.Native = CreateEmbedObject("CGraphicsEmbed");
 
     this.isNativeGraphics = true;
 

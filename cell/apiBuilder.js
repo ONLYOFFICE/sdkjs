@@ -352,7 +352,10 @@
 	 * @param {string} sName - The name of a new worksheet.
 	 */
 	Api.prototype.AddSheet = function (sName) {
-		this.asc_addWorksheet(sName);
+		if (this.GetSheet(sName))
+			console.error(new Error('Worksheet with such a name already exists.'));
+		else
+			this.asc_addWorksheet(sName);
 	};
 
 	/**
@@ -493,19 +496,21 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} Range1 - One of the intersecting ranges. At least two Range objects must be specified.
 	 * @param {ApiRange} Range2 - One of the intersecting ranges. At least two Range objects must be specified.
-	 * @returns {ApiRange | Error}
+	 * @returns {ApiRange | null}
 	 */
 	Api.prototype.Intersect  = function (Range1, Range2) {
+		let result = null;
 		if (Range1.GetWorksheet().Id === Range2.GetWorksheet().Id) {
 			var res = Range1.range.bbox.intersection(Range2.range.bbox);
 			if (!res) {
-				return new Error("Ranges do not intersect.");
+				console.error(new Error("Ranges do not intersect."));
 			} else {
-				return new ApiRange(this.GetActiveSheet().worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
+				result = new ApiRange(this.GetActiveSheet().worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
 			}
 		} else {
-			return new Error('Ranges should be from one worksheet.');
+			console.error(new Error('Ranges should be from one worksheet.'));
 		}
+		return result;
 	};
 
 	/**
@@ -531,7 +536,7 @@
 	 * @param {string} sRef - The reference to the specified range. It must contain the sheet name, followed by sign ! and a range of cells. 
 	 * Example: "Sheet1!$A$1:$B$2".  
 	 * @param {boolean} isHidden - Defines if the range name is hidden or not.
-	 * @returns {Error | true} - returns error if sName or sRef are invalid.
+	 * @returns {boolean} - returns false if sName or sRef are invalid.
 	 */
 	Api.prototype.AddDefName = function (sName, sRef, isHidden) {
 		return private_AddDefName(this.wbModel, sName, sRef, null, isHidden);
@@ -916,13 +921,14 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} row - The row number or the cell number (if only row is defined).
 	 * @param {number} col - The column number.
-	 * @returns {ApiRange | Error}
+	 * @returns {ApiRange | null}
 	 */
 	ApiWorksheet.prototype.GetCells = function (row, col) {
 		let result;
 		if (typeof col == "number" && typeof row == "number") {
 			if (col < 1 || row < 1 || col > AscCommon.gc_nMaxCol0 || row > AscCommon.gc_nMaxRow0) {
-				result = new Error('Invalid paremert "row" or "col".');
+				console.error(new Error('Invalid paremert "row" or "col".'));
+				result = null;
 			} else {
 				row--;
 				col--;
@@ -930,18 +936,21 @@
 			}
 		} else if (typeof row == "number") {
 			if (row < 1 || row > AscCommon.gc_nMaxRow0) {
-				result = new Error('Invalid paremert "row".');
+				console.error(new Error('Invalid paremert "row".'));
+				result = null;
 			} else {
 				row--
 				let r = (row) ?  (row / AscCommon.gc_nMaxCol0) >> 0 : row;
 				let c = (row) ? row % AscCommon.gc_nMaxCol0 : row;
 				if (r && c) c--;
+				console.error()
 				result = new ApiRange(this.worksheet.getRange3(r, c, r, c));
 			}
 			
 		} else if (typeof col == "number") {
 			if (col < 1 || col > AscCommon.gc_nMaxCol0) {
-				result = new Error('Invalid paremert "col".');
+				console.error(new Error('Invalid paremert "col".'))
+				result = null;
 			} else {
 				col--;
 				result = new ApiRange(this.worksheet.getRange3(0, col, 0, col));
@@ -968,7 +977,7 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {string | number} value - Specifies the rows range in the string or number format.
-	 * @returns {ApiRange | Error}
+	 * @returns {ApiRange | null}
 	 */
 	ApiWorksheet.prototype.GetRows = function (value) {
 		if (typeof  value === "undefined") {
@@ -978,7 +987,8 @@
 			if (value > 0 && value <=  AscCommon.gc_nMaxRow0 + 1 && value[0] !== NaN) {
 				value --;
 			} else {
-				return new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1));
+				console.error(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
+				return null;
 			}
 			return new ApiRange(this.worksheet.getRange3(value, 0, value, AscCommon.gc_nMaxCol0));
 		} else {
@@ -993,7 +1003,8 @@
 				}
 			}
 			if (isError) {
-				return new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1));
+				console.error(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
+				return null;
 			} else {
 				return new ApiRange(this.worksheet.getRange3(value[0], 0, value[1], AscCommon.gc_nMaxCol0));
 			}
@@ -1099,7 +1110,8 @@
 		Range1 = (Range1 instanceof ApiRange) ? Range1.range : (typeof Range1 == 'string') ? this.worksheet.getRange2(Range1) : null;
 
 		if (!Range1) {
-			return new Error('Incorrect "Range1" or it is empty.')
+			console.error(new Error('Incorrect "Range1" or it is empty.'));
+			return null;
 		}
 		
 		Range2 = (Range2 instanceof ApiRange) ? Range2.range : (typeof Range2 == 'string') ? this.worksheet.getRange2(Range2) : null;
@@ -1435,7 +1447,7 @@
 	 * @param {string} sRef  - Must contain the sheet name, followed by sign ! and a range of cells. 
 	 * Example: "Sheet1!$A$1:$B$2".  
 	 * @param {boolean} isHidden - Defines if the range name is hidden or not.
-	 * @returns {Error | true} - returns error if sName or sRef are invalid.
+	 * @returns {boolean} - returns false if sName or sRef are invalid.
 	 */
 	ApiWorksheet.prototype.AddDefName = function (sName, sRef, isHidden) {
 		return private_AddDefName(this.worksheet.workbook, sName, sRef, this.worksheet.getId(), isHidden);
@@ -1491,18 +1503,21 @@
 		if ( range && range.range.isOneCell() && (sAddress || subAddress) ) {
 			var externalLink = sAddress ? AscCommon.rx_allowedProtocols.test(sAddress) : false;
 			if (externalLink && AscCommonExcel.getFullHyperlinkLength(sAddress) > Asc.c_nMaxHyperlinkLength) {
-				return new Error('Incorrect "sAddress".');
+				console.error(new Error('Incorrect "sAddress".'));
+				return null;
 			}
 			if (!externalLink) {
 				address = subAddress.split("!");
 				if (address.length == 1) 
 					address.unshift(this.GetName());
-				else if (this.worksheet.workbook.getWorksheetByName(address[0]) === null)
-					return new Error('Invalid "subAddress".')
-				
+				else if (this.worksheet.workbook.getWorksheetByName(address[0]) === null) {
+					console.error(new Error('Invalid "subAddress".'));	
+					return null;
+				}
 				var res = this.worksheet.workbook.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.FormatTable, address[1], false);
 				if (res === Asc.c_oAscError.ID.DataRangeError) {
-					return new Error('Invalid "subAddress".');
+					console.error(new Error('Invalid "subAddress".'));
+					return null;
 				}
 			}
 			this.worksheet.selectionRange.assign2(range.range.bbox);
@@ -1521,7 +1536,7 @@
 				Hyperlink.asc_setRange(address[1]);
 				Hyperlink.asc_setSheet(address[0]);
 			}
-			this.worksheet.workbook.oApi.wb.insertHyperlink(Hyperlink);
+			this.worksheet.workbook.oApi.wb.insertHyperlink(Hyperlink, this.GetIndex());
 		}
 	};
 
@@ -1797,12 +1812,13 @@
 	ApiWorksheet.prototype.Move = function(before, after) {
 		let bb = before instanceof ApiWorksheet;
 		let ba = after instanceof ApiWorksheet;
-		if ( (bb && ba) || (!bb && !ba) )
-			return new Error('Incorrect parametrs.');
-
-		let curIndex = this.GetIndex();
-		let newIndex = ( bb ? ( before.GetIndex() ) : (after.GetIndex() + 1) );
-		this.worksheet.workbook.oApi.asc_moveWorksheet( newIndex, [curIndex] );
+		if ( (bb && ba) || (!bb && !ba) ) {
+			console.error(new Error('Incorrect parametrs.'));
+		} else {
+			let curIndex = this.GetIndex();
+			let newIndex = ( bb ? ( before.GetIndex() ) : (after.GetIndex() + 1) );
+			this.worksheet.workbook.oApi.asc_moveWorksheet( newIndex, [curIndex] );
+		}
 	};
 
 	/**
@@ -1896,24 +1912,24 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nRow - The row number (starts counting from 1, the 0 value returns an error).
-	 * @returns {ApiRange | Error}
+	 * @returns {ApiRange | null}
 	 */
 	ApiRange.prototype.GetRows = function (nRow) {
+		let result = null;
 		if (typeof nRow === "undefined") {
-			return new ApiRange(this.range.worksheet.getRange3(this.range.bbox.r1, 0, this.range.bbox.r2, AscCommon.gc_nMaxCol0));
-			// return new ApiWorksheet(this.range.worksheet).GetRows();	// return all rows from current sheet
+			result = this;
 		} else {
-			if (typeof nRow === "number" && nRow > 0 && nRow <= AscCommon.gc_nMaxRow0 + 1) {
+			if (typeof nRow === "number") {
 				nRow--;
-				if ( (nRow >= this.range.bbox.r1) && (nRow <= this.range.bbox.r2) ) {
-					return new ApiRange(this.range.worksheet.getRange3(nRow, 0, nRow, AscCommon.gc_nMaxCol0));
-				} else {
-					return new ApiRange(this.range.worksheet.getRange3(nRow, this.range.bbox.c1, nRow, this.range.bbox.c2));
-				}
+				let r = this.range.bbox.r1 + nRow;
+				if (r > AscCommon.gc_nMaxRow0) r = AscCommon.gc_nMaxRow0;
+				if (r < 0) r = 0;
+				result = new ApiRange(this.range.worksheet.getRange3(r, this.range.bbox.c1, r, this.range.bbox.c2));
 			} else {
-				return new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1));
+				console.error(new Error('The nRow must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
 			}
 		}
+		return result;
 	};
 	Object.defineProperty(ApiRange.prototype, "Rows", {
 		get: function () {
@@ -1926,26 +1942,25 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nCol - The column number. * 
-	 * @returns {ApiRange | Error}
+	 * @returns {ApiRange | null}
 	 */
-	 ApiRange.prototype.GetCols = function (nCol) {
+	ApiRange.prototype.GetCols = function (nCol) {
+		let result = null;
 		if (typeof nCol === "undefined") {
-			return new ApiRange(this.range.worksheet.getRange3(0, this.range.bbox.c1, AscCommon.gc_nMaxRow0, this.range.bbox.c2));
+			result = this;
 		} else {
-			if (typeof nCol === "number" && nCol > 0 && nCol <= AscCommon.gc_nMaxCol0 + 1)
+			if (typeof nCol === "number")
 			{
 				nCol--;
-				if ( (nCol >= this.range.bbox.c1) && (nCol <= this.range.bbox.c2) ) {
-					return new ApiRange(this.range.worksheet.getRange3(0, nCol, AscCommon.gc_nMaxRow0, nCol));
-				}
-				else {
-					return new ApiRange(this.range.worksheet.getRange3(this.range.bbox.r1, nCol, this.range.bbox.r2, nCol));
-				}
+				let c = this.range.bbox.c1 + nCol;
+				if (c > AscCommon.gc_nMaxCol0) c = AscCommon.gc_nMaxCol0;
+				if (c < 0) c = 0;
+				result = new ApiRange(this.range.worksheet.getRange3(this.range.bbox.r1, c, this.range.bbox.r2, c));
 			} else {
-				return new Error('The nCol must be greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1));
+				console.error(new Error('The nCol must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1)))
 			}
 		} 
-		
+		return result;
 	};
 	Object.defineProperty(ApiRange.prototype, "Cols", {
 		get: function () {
@@ -2221,7 +2236,7 @@
 						for (let indR = 0; indR < nRow; indR++) {
 							let value = (maxDepth == 1 ? data[indC] : data[indR]? data[indR][indC]: null);
 							if (value === undefined || value === null)
-								value = AscCommon.cErrorLocal.na;
+								value = AscCommon.cErrorLocal["na"];
 
 							let cell = this.range.worksheet.getRange3( (bbox.r1 + indR), (bbox.c1 + indC), (bbox.r1 + indR), (bbox.c1 + indC) );
 							value = checkFormat(value.toString());
@@ -2760,7 +2775,7 @@
 	});
 
 	/**
-	 * Returns value that represents the format code for the range.
+	 * Returns a value that represents the format code for the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @returns {string | null} This property returns null if all cells in the specified range don't have the same number format.
@@ -2881,7 +2896,7 @@
 				var bb = this.range.hasMerged();
 				return new ApiRange((bb) ? AscCommonExcel.Range.prototype.createFromBBox(this.range.worksheet, bb) : this.range);
 			} else {
-				return new Error('Range must be is one cell.');
+				console.error(new Error('Range must be is one cell.'));
 			}
 		}
 	});
@@ -3215,7 +3230,7 @@
 			var range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols) );
 			this.range.move(range.bbox, true, destination.range.worksheet);
 		} else {
-			return new Error ("Invalid destination");
+			console.error(new Error ("Invalid destination"));
 		}
 	};
 
@@ -3233,7 +3248,7 @@
 			var range = this.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols) );
 			rangeFrom.range.move(range.bbox, true, range.worksheet);
 		} else {
-			return new Error ("Invalid range");
+			console.error(new Error ("Invalid range"));
 		}
 	};
 
@@ -3258,6 +3273,36 @@
 	 */
 
 	/**
+	 * Properties to make search.
+	 * @typedef {Object} SearchData
+	 * @property {string | undefined} What - The data to search for.
+	 * @property {ApiRange} After - The cell after which you want the search to begin. If this argument is not specified, the search starts after the cell in the upper-left corner of the range.
+	 * @property {XlFindLookIn} LookIn - Search data type (formulas or values).
+	 * @property {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
+	 * @property {XlSearchOrder} SearchOrder - Range search order - by rows or by columns.
+	 * @property {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
+	 * @property {boolean} MatchCase - Case sensitive or not. The default value is "false".
+	 */
+
+	/**
+	 * Properties to make search and replace.
+	 * @typedef {Object} ReplaceData
+	 * @property {string | undefined} What - The data to search for.
+	 * @property {string} Replacement - The replacement string.
+	 * @property {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
+	 * @property {XlSearchOrder} SearchOrder - Range search order - by rows or by columns.
+	 * @property {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
+	 * @property {boolean} MatchCase - Case sensitive or not. The default value is "false".
+	 * @property {boolean} ReplaceAll - Specifies if all the found data will be replaced or not. The default value is "true".
+	 */
+
+	/**
+	 * Finds specific information in the current range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {SearchData} oSearchData - The search data used to make search.
+	 * @returns {ApiRange | null} - Returns null if the current range does not contain such text.
+	 * @also
 	 * Finds specific information in the current range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
@@ -3269,9 +3314,32 @@
 	 * @param {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
 	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
 	 * @returns {ApiRange | null} - Returns null if the current range does not contain such text.
-	 * 
 	 */
-	ApiRange.prototype.Find = function(What, After, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase) {
+	ApiRange.prototype.Find = function(oSearchData) {
+		let What, After, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase;
+
+		if (arguments.length === 1) {
+			if(AscCommon.isRealObject(oSearchData)) {
+				What = oSearchData['What'];
+				After = oSearchData['After'];
+				LookIn = oSearchData['LookIn'];
+				LookAt = oSearchData['LookAt'];
+				SearchOrder = oSearchData['SearchOrder'];
+				SearchDirection = oSearchData['SearchDirection'];
+				MatchCase = oSearchData['MatchCase'];
+			} else {
+				return null;
+			}
+		} else {
+			What = arguments[0];
+			After = arguments[1];
+			LookIn = arguments[2];
+			LookAt = arguments[3];
+			SearchOrder = arguments[4];
+			SearchDirection = arguments[5];
+			MatchCase = arguments[6];
+		}
+
 		if (typeof What === 'string' || What === undefined) {
 			let res = null;
 			let options = new Asc.asc_CFindOptions();
@@ -3300,7 +3368,8 @@
 			this._searchOptions = options;
 			return res;
 		} else {
-			return new Error('Invalid parametr "What".')
+			console.error(new Error('Invalid parametr "What".'));
+			return null;
 		}
 	};
 
@@ -3309,7 +3378,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} After - The cell after which the search will start. If this argument is not specified, the search starts from the last cell found.
-	 * @returns {ApiRange} - Returns null if the range does not contain such text.
+	 * @returns {ApiRange | null} - Returns null if the range does not contain such text.
 	 * 
 	*/
 	ApiRange.prototype.FindNext = function(After) {
@@ -3339,7 +3408,8 @@
 			}
 			return res;
 		} else {
-			return new Error('You should use "Find" method before this.')
+			console.error(new Error('You should use "Find" method before this.'));
+			return null;
 		}
 	};
 
@@ -3348,7 +3418,7 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} Before - The cell before which the search will start. If this argument is not specified, the search starts from the last cell found.
-	 * @returns {ApiRange} - Returns null if the range does not contain such text.
+	 * @returns {ApiRange | null} - Returns null if the range does not contain such text.
 	 * 
 	*/
 	ApiRange.prototype.FindPrevious = function(Before) {
@@ -3378,11 +3448,18 @@
 			}
 			return res;
 		} else {
-			return new Error('You should use "Find" method before this.')
+			console.error(new Error('You should use "Find" method before this.'));
+			return null;
 		}
 	};
 
 	/**
+	 * Replaces specific information to another one in a range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ReplaceData} oReplaceData - The data used to make search and replace.
+	 * @returns {ApiRange | null} - Returns null if the current range does not contain such text.
+	 * @also
 	 * Replaces specific information to another one in a range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
@@ -3395,7 +3472,31 @@
 	 * @param {boolean} ReplaceAll - Specifies if all the found data will be replaced or not. The default value is "true".
 	 * 
 	 */
-	ApiRange.prototype.Replace = function(What, Replacement, LookAt, SearchOrder, SearchDirection, MatchCase, ReplaceAll) {
+	ApiRange.prototype.Replace = function(oReplaceData) {
+		let What, Replacement, LookAt, SearchOrder, SearchDirection, MatchCase, ReplaceAll;
+		
+		if (arguments.length === 1) {
+			if(AscCommon.isRealObject(oReplaceData)) {
+				What = oReplaceData['What'];
+				Replacement = oReplaceData['Replacement'];
+				LookAt = oReplaceData['LookAt'];
+				SearchOrder = oReplaceData['SearchOrder'];
+				SearchDirection = oReplaceData['SearchDirection'];
+				MatchCase = oReplaceData['MatchCase'];
+				ReplaceAll = oReplaceData['ReplaceAll'];
+			} else {
+				return null;
+			}
+		} else {
+			What = arguments[0];
+			Replacement = arguments[1];
+			LookAt = arguments[2];
+			SearchOrder = arguments[3];
+			SearchDirection = arguments[4];
+			MatchCase = arguments[5];
+			ReplaceAll = arguments[6];
+		}
+
 		if (typeof What === 'string' && typeof Replacement === 'string') {
 			let options = new Asc.asc_CFindOptions();
 			options.asc_setFindWhat(What);
@@ -3426,7 +3527,7 @@
 				this.range.worksheet.workbook.oApi.wb.replaceCellText(options);
 			}
 		} else {
-			return new Error('Invalid type of parametr "What" or "Replacement".')
+			console.error(new Error('Invalid type of parametr "What" or "Replacement".'));
 		}
 	};
 
@@ -4441,15 +4542,17 @@
 	 * @memberof ApiName
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName - New name for the range.
-	 * @returns {Error | true} - returns error if sName is invalid.
+	 * @returns {boolean} - returns false if sName is invalid.
 	 */
 	ApiName.prototype.SetName = function (sName) {
 		if (!sName || typeof sName !== 'string' || !this.DefName) {
-			return new Error('Invalid name or Defname is undefined.');
+			console.error(new Error('Invalid name or Defname is undefined.'));
+			return false;
 		}
 		var res = this.DefName.wb.checkDefName(sName);
 		if (!res.status) {
-			return new Error('Invalid name.'); // invalid name
+			console.error(new Error('Invalid name.')); // invalid name
+			return false; 
 		}
 		var oldName = this.DefName.getAscCDefName(false);
 		var newName = this.DefName.getAscCDefName(false);
@@ -4624,7 +4727,7 @@
 
 	/**
 	 * Returns a value that represents a number of objects in the collection.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
 	 * @since 7.4.0
@@ -4641,7 +4744,7 @@
 
 	/**
 	 * Returns the parent object of the specified characters.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange}
 	 * @since 7.4.0
@@ -4658,7 +4761,7 @@
 
 	/**
 	 * Deletes the ApiCharacters object.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @since 7.4.0
 	 */
@@ -4694,7 +4797,7 @@
 
 	/**
 	 * Inserts a string replacing the specified characters.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @param {string} String - The string to insert.
 	 * @since 7.4.0
@@ -4757,7 +4860,7 @@
 
 	/**
 	 * Sets a string value that represents the text of the specified range of characters.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @param {string} Caption - A string value that represents the text of the specified range of characters.
 	 * @since 7.4.0
@@ -4768,7 +4871,7 @@
 
 	/**
 	 * Returns a string value that represents the text of the specified range of characters.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} - A string value that represents the text of the specified range of characters.
 	 * @since 7.4.0
@@ -4792,7 +4895,7 @@
 
 	/**
 	 * Sets the text for the specified characters.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @param {string} Text - The text to be set.
 	 * @since 7.4.0
@@ -4803,7 +4906,7 @@
 
 	/**
 	 * Returns the text of the specified range of characters.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @returns {string} - The text of the specified range of characters.
 	 * @since 7.4.0
@@ -4823,7 +4926,7 @@
 
 	/**
 	 * Returns the ApiFont object that represents the font of the specified characters.
-	 * @memberof ApiAreas
+	 * @memberof ApiCharacters
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiFont}
 	 * @since 7.4.0
@@ -4847,7 +4950,7 @@
 
 	/**
 	 * Returns the parent ApiCharacters object of the specified font.
-	 * @memberof ApiAreas
+	 * @memberof ApiFont
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiCharacters} - The parent ApiCharacters object.
 	 * @since 7.4.0
@@ -5485,7 +5588,7 @@
 	 * @returns {string | null}
 	 * @since 7.4.0
 	 */
-	 ApiFont.prototype.GetName = function () {
+	ApiFont.prototype.GetName = function () {
 		if (this._object instanceof ApiCharacters) {
 			let editor = this._object._parent.range.worksheet.workbook.oApi.wb.cellEditor;
 			let opt = this._object._options;
@@ -5972,11 +6075,13 @@
 	function private_AddDefName(wb, name, ref, sheetId, hidden) {
 		var res = wb.checkDefName(name);
 		if (!res.status) {
-			return new Error('Invalid name.');
+			console.error(new Error('Invalid name.'));
+			return false;
 		}
 		res = wb.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.Chart, ref, false);
 		if (res === Asc.c_oAscError.ID.DataRangeError) {
-			return new Error('Invalid range.');
+			console.error(new Error('Invalid range.'));
+			return false;
 		}
 		if (sheetId) {
 			sheetId = (wb.getWorksheetById(sheetId)) ? sheetId : undefined;

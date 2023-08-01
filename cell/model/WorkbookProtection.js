@@ -1295,6 +1295,161 @@
 	CProtectedRange.sStartLock = 'protectedRange_';
 
 
+	function CFileSharing(wb) {
+		this.algorithmName = null;
+		this.hashValue = null;
+		this.saltValue = null;
+		this.spinCount = null;
+
+		this.password = null;
+		this.userName = null;
+		this.readOnly = null;
+
+		this._wb = wb;
+		/*this.temporaryPassword = null;*/
+
+		return this;
+	}
+
+	CFileSharing.prototype.clone = function(wb) {
+		var res = new CFileSharing(wb);
+
+		res.algorithmName = this.algorithmName;
+		res.hashValue = this.hashValue;
+		res.saltValue = this.saltValue;
+		res.spinCount = this.spinCount;
+
+		res.password = this.password;
+		res.userName = this.userName;
+		res.readOnly = this.readOnly;
+
+		return res;
+	};
+
+	CFileSharing.prototype.set = function (val, addToHistory) {
+		/*this.revisionsAlgorithmName = this.checkProperty(this.revisionsAlgorithmName, val.revisionsAlgorithmName, AscCH.historyitem_Protected_SetRevisionsAlgorithmName, addToHistory);
+		this.revisionsHashValue = this.checkProperty(this.revisionsHashValue, val.revisionsHashValue, AscCH.historyitem_Protected_SetRevisionsHashValue, addToHistory);
+		this.revisionsSaltValue = this.checkProperty(this.revisionsSaltValue, val.revisionsSaltValue, AscCH.historyitem_Protected_SetRevisionsSaltValue, addToHistory);
+		this.revisionsSpinCount = this.checkProperty(this.revisionsSpinCount, val.revisionsSpinCount, AscCH.historyitem_Protected_SetRevisionsSpinCount, addToHistory);
+
+		this.workbookAlgorithmName = this.checkProperty(this.workbookAlgorithmName, val.workbookAlgorithmName, AscCH.historyitem_Protected_SetWorkbookAlgorithmName, addToHistory);
+		this.workbookHashValue = this.checkProperty(this.workbookHashValue, val.workbookHashValue, AscCH.historyitem_Protected_SetWorkbookHashValue, addToHistory);
+		this.workbookSaltValue = this.checkProperty(this.workbookSaltValue, val.workbookSaltValue, AscCH.historyitem_Protected_SetWorkbookSaltValue, addToHistory);
+		this.workbookSpinCount = this.checkProperty(this.workbookSpinCount, val.workbookSpinCount, AscCH.historyitem_Protected_SetWorkbookSpinCount, addToHistory);
+
+		this.workbookPassword = this.checkProperty(this.workbookPassword, val.workbookPassword, AscCH.historyitem_Protected_SetPassword, addToHistory);*/
+	};
+
+	CFileSharing.prototype.checkProperty = function (propOld, propNew, type, addToHistory) {
+		/*if (propOld !== propNew) {
+			if (addToHistory) {
+				History.Add(AscCommonExcel.g_oUndoRedoProtectedWorkbook, type, null, null,
+					new AscCommonExcel.UndoRedoData_ProtectedRange(null, propOld, propNew));
+			}
+			return propNew;
+		}
+		return propOld;*/
+	};
+
+	CFileSharing.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.algorithmName) {
+			w.WriteBool(true);
+			w.WriteLong(this.algorithmName);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.hashValue) {
+			w.WriteBool(true);
+			w.WriteString2(this.hashValue);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.saltValue) {
+			w.WriteBool(true);
+			w.WriteString2(this.saltValue);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.spinCount) {
+			w.WriteBool(true);
+			w.WriteLong(this.spinCount);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.password) {
+			w.WriteBool(true);
+			w.WriteString2(this.password);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.userName) {
+			w.WriteBool(true);
+			w.WriteString2(this.userName);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.readOnly) {
+			w.WriteBool(true);
+			w.WriteBool(this.readOnly);
+		} else {
+			w.WriteBool(false);
+		}
+	};
+
+	CFileSharing.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.algorithmName = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.hashValue = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.saltValue = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.spinCount = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.password = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.userName = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.readOnly = r.GetBool();
+		}
+	};
+	CFileSharing.prototype.asc_getAlgorithmName = function () {
+		return this.algorithmName;
+	};
+	CFileSharing.prototype.asc_getHashValue = function () {
+		return this.hashValue;
+	};
+	CFileSharing.prototype.asc_getSaltValue = function () {
+		return this.saltValue;
+	};
+	CFileSharing.prototype.asc_getSpinCount = function () {
+		return this.spinCount;
+	};
+	CFileSharing.prototype.asc_getReadOnly = function () {
+		return this.readOnly;
+	};
+	CFileSharing.prototype.asc_getSpinCount = function () {
+		return this.spinCount;
+	};
+	CFileSharing.prototype.asc_isPassword = function () {
+		return this.password != null || this.password != null;
+	};
+	CFileSharing.prototype.setPasswordXL = function (val) {
+		this.password = val;
+	};
+	CFileSharing.prototype.getPasswordXL = function () {
+		return this.password;
+	};
+	CFileSharing.prototype.isPasswordXL = function () {
+		return this.password != null;
+	};
+
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
@@ -1387,6 +1542,9 @@
 	prot["asc_getIsLock"] = prot.asc_getIsLock;
 	prot["asc_checkPassword"] = prot.asc_checkPassword;
 	prot["asc_getId"] = prot.asc_getId;
+
+	window["Asc"].CFileSharing = CFileSharing;
+	prot = CFileSharing.prototype;
 
 	window["AscCommonExcel"].getPasswordHash = getPasswordHash;
 	window["AscCommonExcel"].FromXml_ST_AlgorithmName = FromXml_ST_AlgorithmName;

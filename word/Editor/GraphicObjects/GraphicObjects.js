@@ -85,8 +85,6 @@ function CGraphicObjects(document, drawingDocument, api)
     this.urlMap = [];
     this.recalcMap = {};
 
-    this.recalculateMap = {};
-
     this.selectedObjects = [];
     this.selection =
     {
@@ -286,7 +284,7 @@ CGraphicObjects.prototype =
 						let oData = oAPI.getFormatPainterData();
 						if(oData.isDrawingData())
 						{
-							sCursorType = AscCommon.kCurFormatPainterDrawing;
+							sCursorType = AscCommon.Cursors.ShapeCopy;
 						}
 					}
 				}
@@ -595,92 +593,65 @@ CGraphicObjects.prototype =
         }, this, []);
 
     },
+	
+	recalculateAll : function()
+	{
+		for (let iDrawing = 0; iDrawing < this.drawingObjects.length; ++iDrawing)
+		{
+			let drawing = this.drawingObjects[iDrawing];
+			let shape   = drawing ? drawing.GraphicObj : null;
+			if (!shape)
+				continue;
+			if (shape.recalcText)
+				shape.recalcText();
+			if (shape.handleUpdateExtents)
+				shape.handleUpdateExtents();
+			shape.recalculate();
+		}
+		for (let iDrawing = 0; iDrawing < this.drawingObjects.length; ++iDrawing)
+		{
+			let drawing = this.drawingObjects[iDrawing];
+			let shape   = drawing ? drawing.GraphicObj : null;
+			if (!shape)
+				continue;
+            if (shape.recalculateText)
+                shape.recalculateText();
+		}
+	},
+	
+	recalculate : function(data)
+	{
+		if (!data || data.All || !data.Map)
+			return this.recalculateAll();
+		
+		let shapeMap = data.Map;
+        //recalculate drawings and text in drawings separately
+        //to be assured that all internal drawings have calculated sizes to be correctly measured
+		for (let id in shapeMap)
+		{
+			if (!shapeMap.hasOwnProperty(id))
+				continue;
+			
+			let shape = shapeMap[id];
+			if (!shape.IsUseInDocument())
+				continue;
+			
+			shape.recalculate();
 
-    recalculate_: function(data)
-    {
-        if(data.All)
-        {
-            for(let nDrawing = 0; nDrawing < this.drawingObjects.length; ++nDrawing)
-            {
-                let oParaDrawing = this.drawingObjects[nDrawing];
-                if(oParaDrawing)
-                {
-                    let oSp = oParaDrawing.GraphicObj;
-                    if(oSp)
-                    {
-                        if(oSp.recalcText)
-                        {
-                            oSp.recalcText();
-                        }
-                        if(oSp.handleUpdateExtents)
-                        {
-                            oSp.handleUpdateExtents();
-                        }
-                        oSp.recalculate();
-                    }
-                }
-            }
-            for(let nDrawing = 0; nDrawing < this.drawingObjects.length; ++nDrawing)
-            {
-                let oParaDrawing = this.drawingObjects[nDrawing];
-                if(oParaDrawing)
-                {
-                    let oSp = oParaDrawing.GraphicObj;
-                    if(oSp)
-                    {
-                        if(oSp.recalculateText)
-                        {
-                            oSp.recalculateText();
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            let oDrawingsMap = data.Map;
-            for(let sId in oDrawingsMap)
-            {
-                if(oDrawingsMap.hasOwnProperty(sId))
-                {
-                    oDrawingsMap[sId].recalculate();
-                }
-            }
-        }
-    },
+		}
+		for (let id in shapeMap)
+		{
+			if (!shapeMap.hasOwnProperty(id))
+				continue;
 
-    recalculateText_: function(data)
-    {
-        if(data.All)
-        {
-            //TODO
-        }
-        else
-        {
-            let oDrawingsMap = data.Map;
-            for(let sId in oDrawingsMap)
-            {
-                if(oDrawingsMap.hasOwnProperty(sId))
-                {
-                    let oDrawing = oDrawingsMap[sId];
-                    if(oDrawing.recalculateText)
-                    {
-                        oDrawing.recalculateText();
-                    }
-                }
-            }
-        }
-    },
+			let shape = shapeMap[id];
+			if (!shape.IsUseInDocument())
+				continue;
 
-    recalculate: function()
-    {
-        for(var key in this.recalculateMap)
-        {
-            if(this.recalculateMap.hasOwnProperty(key))
-                this.recalculateMap[key].recalculate();
-        }
-        this.recalculateMap = {};
-    },
+			if (shape.recalculateText)
+				shape.recalculateText();
+		}
+	},
 
 
     selectObject: DrawingObjectsController.prototype.selectObject,
@@ -1427,6 +1398,7 @@ CGraphicObjects.prototype =
     OnMouseDown: function(e, x, y, pageIndex)
     {
         //console.log("down " + this.curState.id);
+        this.checkInkState();
         this.curState.onMouseDown(e, x, y, pageIndex);
     },
 
@@ -1573,7 +1545,7 @@ CGraphicObjects.prototype =
         arr = this.getAllDrawingsOnPage(pageIndex, docContent.IsHdrFtr());
         for(i = 0; i < arr.length; ++i)
         {
-            if(arr[i].parent && arr[i].parent.DocumentContent === docContent)
+            if(arr[i].parent && arr[i].parent.GetDocumentContent() === docContent)
             {
                 ret.push(arr[i].parent);
             }
@@ -2859,7 +2831,7 @@ CGraphicObjects.prototype =
 			}
 		}
 
-		if (!object.parent.DocumentContent.IsHdrFtr(true))
+		if (!object.parent.isHdrFtrChild(false))
 		{
 			this.graphicPages[pageIndex].addObject(object);
 		}
@@ -3574,7 +3546,7 @@ CGraphicObjects.prototype =
                         parent_drawing = parent_drawing.group;
                 }
                 if(parent_drawing &&  parent_drawing.parent)
-                    return docContent === parent_drawing.parent.DocumentContent.Is_TopDocument(true);
+                    return docContent === parent_drawing.parent.isInTopDocument(true);
             }
         }
         return false;
@@ -4179,6 +4151,7 @@ CGraphicObjects.prototype =
 
     loadDocumentStateAfterLoadChanges:  DrawingObjectsController.prototype.loadDocumentStateAfterLoadChanges,
     checkTrackDrawings:  DrawingObjectsController.prototype.checkTrackDrawings,
+    isTrackingDrawings:  DrawingObjectsController.prototype.isTrackingDrawings,
 
     canChangeWrapPolygon: function()
     {
@@ -4213,16 +4186,19 @@ CGraphicObjects.prototype =
     },
 
 
-    removeById: function(pageIndex, id)
+    removeById: function(nPageIdx, sId)
     {
-        var object = AscCommon.g_oTableId.Get_ById(id);
-        if(isRealObject(object))
+        const oDrawing = AscCommon.g_oTableId.Get_ById(sId);
+        if(isRealObject(oDrawing))
         {
-            var hdr_ftr = object.DocumentContent.IsHdrFtr(true);
-            var page = !hdr_ftr ? this.graphicPages[pageIndex] : null;
-            if(isRealObject(page))
+            let bHdrFtr = oDrawing.isHdrFtrChild(false);
+            if(!bHdrFtr)
             {
-                page.delObjectById(id);
+                let oPage = this.graphicPages[nPageIdx];
+                if(isRealObject(oPage))
+                {
+                    oPage.delObjectById(sId);
+                }
             }
         }
     },
@@ -4243,9 +4219,10 @@ CGraphicObjects.prototype =
         var obj = AscCommon.g_oTableId.Get_ById(id), nPageIndex = pageIndex;
         if(obj && obj.GraphicObj)
         {
-            if(obj.DocumentContent && obj.DocumentContent.IsHdrFtr())
+            if(obj.isHdrFtrChild(false))
             {
-                if(obj.DocumentContent.Get_StartPage_Absolute() !== obj.PageNum)
+                const oDocContent = obj.GetDocumentContent();
+                if(oDocContent && oDocContent.Get_StartPage_Absolute() !== obj.PageNum)
                 {
                     nPageIndex = obj.PageNum;
                 }

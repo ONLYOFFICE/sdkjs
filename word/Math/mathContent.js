@@ -5658,14 +5658,23 @@ CMathContent.prototype.ConvertContentView = function(intStart, intEnd, nInputTyp
 };
 CMathContent.prototype.SplitContentByContentPos = function()
 {
-    var oCurrentObj = this.Content[this.CurPos];
-    var CursorPos = oCurrentObj.State.ContentPos;
-    var arrContent = [];
+    let oCurrentObj = this.Content[this.CurPos];
+    let nCursorPos = oCurrentObj.State.ContentPos;
+    let arrContent = [];
 
-    if (CursorPos < oCurrentObj.Content.length)
+    if (nCursorPos < oCurrentObj.Content.length)
     {
-        var oNewRun = oCurrentObj.Split_Run(CursorPos);
-        arrContent.push(oNewRun);
+        if (oCurrentObj.Split_Run)
+        {
+            let oNewRun = oCurrentObj.Split_Run(nCursorPos);
+            arrContent.push(oNewRun);
+        }
+        else
+        {
+            // контент в котором мы находимся не является ParaRun
+            // значит делить не нужно т.к мы в обертке - выходим и отменяем автокоррекцию
+            return false;
+        }
     }
 
     for (let i = this.CurPos + 1; i < this.Content.length; i++)
@@ -5694,7 +5703,16 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
     // split content by cursor position
     const arrNextContent = this.SplitContentByContentPos();
 
-    this.CorrectSpecialWordOnCursor(nInputType);
+    if (arrNextContent === false)
+        return;
+
+    if (this.CorrectSpecialWordOnCursor(nInputType))
+    {
+        if (arrNextContent)
+            this.ConcatToContent(this.Content.length, arrNextContent);
+
+        return;
+    }
 
     // convert content of bracket block, near cursor for Unicode (1/2) -> ( CFraction )
     if (nInputType === 0)
@@ -5715,8 +5733,13 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
         }
         else
         {
-            if (this.CorrectWordOnCursor(nInputType === 1, 2))
+            if (this.CorrectWordOnCursor(nInputType === 1, true))
+            {
+                if (arrNextContent)
+                    this.ConcatToContent(this.Content.length, arrNextContent);
+
                 return;
+            }
         }
     }
 
@@ -6447,7 +6470,7 @@ ContentIterator.prototype.CheckRules = function ()
         [true, "┬", true],
         [true, "┴", true],
 
-        ["s","i","n"],["t","a","n"],["t","a","n","h"],["s","u","p"],["s","i","n","h"],["s","e","c"],["k"],
+        ["s","i","n"],["t","a","n"],["t","a","n","h"],["s","u","p"],["s","i","n","h"],["s","e","c"],
         ["h","o","m"],["a","r","g"],["a","r","c","y","a","n"],["a","r","c","s","i","n"],["a","r","c","s","e","c"],
         ["a","r","c","c","s","c"],["a","r","c","c","o","t"],["a","r","c","c","o","s"],["i","n","f"],["g","c","d"],
         ["e","x","p"],["d","i","m"],["d","e","t"],["d","e","g"],["c","s","c"],["c","o","t","h"],["c","o","t"],

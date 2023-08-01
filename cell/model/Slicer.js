@@ -1178,10 +1178,9 @@
 		if (!AscCommon.rx_defName.test(name)) {
 			name = name.replace(/[^a-zA-ZА-Яа-яЁё0-9]/gi,"_")
 		}
-
-		//TODO перевод - проверить на другом языке?
+		
 		var index = 1;
-		name = "Slicer_" + name;
+		name = AscCommon.translateManager.getValue("Slicer") + "_" + name;
 		var newName = name;
 		while (checkAlreadyAdd(newName)) {
 			newName = name + index;

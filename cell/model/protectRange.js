@@ -216,7 +216,7 @@
 		if (this.ref) {
 			result = this.ref.getAbsName();
 			if (this._ws) {
-				result = this._ws.getName() + "!" + result;
+				result = AscCommon.parserHelp.get3DRef(this._ws.getName(), result);
 			}
 		}
 

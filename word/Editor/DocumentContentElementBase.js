@@ -645,6 +645,7 @@ CDocumentContentElementBase.prototype.GetTableProps = function()
 };
 CDocumentContentElementBase.prototype.AddHyperlink = function(Props)
 {
+	return null;
 };
 CDocumentContentElementBase.prototype.ModifyHyperlink = function(Props)
 {
@@ -1138,6 +1139,17 @@ CDocumentContentElementBase.prototype.GetTopElement = function()
 		return this;
 
 	return this.Parent.GetTopElement();
+};
+/**
+ * Получаем верхний DocContent, в котором лежит данный элемент
+ * @returns {?CDocumentContentBase}
+ */
+CDocumentContentElementBase.prototype.GetTopDocumentContent = function()
+{
+	if (!this.Parent)
+		return null;
+	
+	return this.Parent.GetTopDocumentContent();
 };
 /**
  * Получаем объект лока данного элемента

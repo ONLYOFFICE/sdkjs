@@ -111,6 +111,10 @@ var tab_Symbol = 0x0022;//0x2192;
 			}
 		}
 
+		if(Context.m_bIsTextDrawer)
+		{
+			Context.CheckSpaceDraw();
+		}
 		if (editor && editor.ShowParaMarks)
 		{
 			Context.p_color(0, 0, 0, 255);

@@ -285,6 +285,12 @@
 	};
 	CRunFootnoteReference.prototype.PreDelete = function()
 	{
+		let run = this.GetRun();
+		let paragraph = run ? run.GetParagraph() : null;
+		
+		if (!paragraph || !(paragraph.GetTopDocumentContent() instanceof AscWord.CDocument))
+			return;
+		
 		var oFootnote = this.Footnote;
 		if (oFootnote)
 		{

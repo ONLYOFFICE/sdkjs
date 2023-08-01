@@ -2650,11 +2650,16 @@
 		};
 		CUniColor.prototype.getCSSColor = function (transparent) {
 			if (transparent != null) {
-				var _css = "rgba(" + this.RGBA.R + "," + this.RGBA.G + "," + this.RGBA.B + ",1)";
-				return _css;
+				return this.getCSSWithTransparent(1);
 			}
-			var _css = "rgba(" + this.RGBA.R + "," + this.RGBA.G + "," + this.RGBA.B + "," + (this.RGBA.A / 255) + ")";
-			return _css;
+			return this.getCSSWithTransparent(this.RGBA.A / 255);
+		};
+		CUniColor.prototype.getCSSValue = function (r, g, b, a) {
+			return "rgba(" + r + "," + g + "," + b + ","+ a +")";
+		};
+		CUniColor.prototype.getCSSWithTransparent = function(dTransparent) {
+			const oC = this.RGBA;
+			return this.getCSSValue(oC.R, oC.G, oC.B, dTransparent);
 		};
 		CUniColor.prototype.isCorrect = function () {
 			if (this.color !== null && this.color !== undefined) {
@@ -2861,6 +2866,24 @@
 				return true;
 			}
 			return false;
+		};
+		CSrcRect.prototype.isEqual = function(r) {
+			if(!r) {
+				return false;
+			}
+			if(r.l !== this.l) {
+				return false;
+			}
+			if(r.t !== this.t) {
+				return false;
+			}
+			if(r.r !== this.r) {
+				return false;
+			}
+			if(r.b !== this.v) {
+				return false;
+			}
+			return true;
 		};
 
 		function CBlipFillTile() {
@@ -3092,6 +3115,14 @@
 				}
 			} else {
 				if (fill.tile) {
+					return false;
+				}
+			}
+			if(fill.srcRect && !this.srcRect || this.srcRect && !fill.srcRect) {
+				return false;
+			}
+			if(fill.srcRect) {
+				if(!fill.srcRect.isEqual(this.srcRect)) {
 					return false;
 				}
 			}
@@ -3949,6 +3980,11 @@
 		};
 		COuterShdw.prototype.createDuplicate = function () {
 			var oCopy = new COuterShdw();
+			this.fillObject(oCopy);
+			return oCopy;
+		};
+
+		COuterShdw.prototype.fillObject = function (oCopy) {
 			oCopy.color = this.color.createDuplicate();
 			oCopy.algn = this.algn;
 			oCopy.blurRad = this.blurRad;
@@ -3959,7 +3995,6 @@
 			oCopy.rotWithShape = this.rotWithShape;
 			oCopy.sx = this.sx;
 			oCopy.sy = this.sy;
-			return oCopy;
 		};
 		COuterShdw.prototype.IsIdentical = function (other) {
 			if (!other) {
@@ -3980,6 +4015,11 @@
 				return false;
 			}
 			return true;
+		};
+		COuterShdw.prototype.getAscShdw = function() {
+			const oCopy = new asc_CShadowProperty();
+			this.fillObject(oCopy);
+			return oCopy;
 		};
 
 		function asc_CShadowProperty() {
@@ -4076,7 +4116,13 @@
 					}
 				}
 			}
+			return this;
+		};
 
+		asc_CShadowProperty.prototype.createDuplicate = function () {
+			var oCopy = new asc_CShadowProperty();
+			this.fillObject(oCopy);
+			return oCopy;
 		};
 
 
@@ -5279,12 +5325,13 @@
 			return _ret.fill;
 		};
 		CUniFill.prototype.isSolidFillRGB = function () {
-			return (this.fill && this.fill.color && this.fill.color.color
-				&& this.fill.color.color.type === window['Asc'].c_oAscColor.COLOR_TYPE_SRGB)
+			return (this.isSolidFill() && this.fill.color.color.type === window['Asc'].c_oAscColor.COLOR_TYPE_SRGB)
+		};
+		CUniFill.prototype.isSolidFill = function () {
+			return !!(this.fill && this.fill.color && this.fill.color.color);
 		};
 		CUniFill.prototype.isSolidFillScheme = function () {
-			return (this.fill && this.fill.color && this.fill.color.color
-				&& this.fill.color.color.type === window['Asc'].c_oAscColor.COLOR_TYPE_SCHEME)
+			return (this.isSolidFill() && this.fill.color.color.type === window['Asc'].c_oAscColor.COLOR_TYPE_SCHEME)
 		};
 		CUniFill.prototype.isNoFill = function () {
 			return this.fill && this.fill.type === window['Asc'].c_oAscFill.FILL_TYPE_NOFILL;
@@ -5313,6 +5360,11 @@
 		};
 		CUniFill.prototype.isBlipFill = function() {
 			if(this.fill && this.fill.type === c_oAscFill.FILL_TYPE_BLIP) {
+				return true;
+			}
+		};
+		CUniFill.prototype.isGradientFill = function() {
+			if(this.fill && this.fill.type === c_oAscFill.FILL_TYPE_GRAD) {
 				return true;
 			}
 		};
@@ -5726,6 +5778,9 @@
 			}
 			if (shapeProp1.description === shapeProp2.description) {
 				_result_shape_prop.description = shapeProp1.description;
+			}
+			if (shapeProp1.name === shapeProp2.name) {
+				_result_shape_prop.name = shapeProp1.name;
 			}
 			if (shapeProp1.columnNumber === shapeProp2.columnNumber) {
 				_result_shape_prop.columnNumber = shapeProp1.columnNumber;
@@ -6166,6 +6221,9 @@
 				&& (this.tailEnd == null ? ln.tailEnd == null : this.tailEnd.IsIdentical(ln.headEnd)) &&
 				this.algn == ln.algn && this.cap == ln.cap && this.cmpd == ln.cmpd && this.w == ln.w && this.prstDash === ln.prstDash;
 		};
+		CLn.prototype.isEqual = function (ln) {
+			return this.IsIdentical(ln);
+		};
 		CLn.prototype.setFill = function (fill) {
 			this.Fill = fill;
 		};
@@ -6436,7 +6494,10 @@
 			}
 			this.cmpd = 1;
 		};
-
+		CLn.prototype.getWidthMM = function () {
+			const nEmu = AscFormat.isRealNumber(this.w) ? this.w : 12700;
+			return nEmu * AscCommonWord.g_dKoef_emu_to_mm;
+		};
 // -----------------------------
 
 // SHAPE ----------------------------
@@ -6566,11 +6627,17 @@
 		};
 
 
-		var AUDIO_CD = 0;
-		var WAV_AUDIO_FILE = 1;
-		var AUDIO_FILE = 2;
-		var VIDEO_FILE = 3;
-		var QUICK_TIME_FILE = 4;
+		const AUDIO_CD = 0;
+		const WAV_AUDIO_FILE = 1;
+		const AUDIO_FILE = 2;
+		const VIDEO_FILE = 3;
+		const QUICK_TIME_FILE = 4;
+
+
+		const DRAW_TYPE_PEN = 0;
+		const DRAW_TYPE_PENCIL = 1;
+		const DRAW_TYPE_HIGHLITER = 2;
+
 
 
 		function UniMedia() {
@@ -13283,6 +13350,35 @@
 
 		InitClass(CPres, CBaseNoIdObject, 0);
 
+		CPres.prototype.readSz = function(s) {
+			const oSldSize = new AscCommonSlide.CSlideSize();
+			s.Skip2(5); // len + start attributes
+
+			while (true) {
+				var _at = s.GetUChar();
+
+				if (_at === g_nodeAttributeEnd)
+					break;
+
+				switch (_at) {
+					case 0: {
+						oSldSize.setCX(s.GetLong());
+						break;
+					}
+					case 1: {
+						oSldSize.setCY(s.GetLong());
+						break;
+					}
+					case 2: {
+						oSldSize.setType(s.GetUChar());
+						break;
+					}
+					default:
+						return;
+				}
+			}
+			return oSldSize;
+		};
 		CPres.prototype.fromStream = function (s, reader) {
 			var _type = s.GetUChar();
 			var _len = s.GetULong();
@@ -13372,7 +13468,10 @@
 						break;
 					}
 					case 3: {
-						s.SkipRecord();
+						let oNotesSize = this.readSz(s);
+						if (oPresentattion.setNotesSz) {
+							oPresentattion.setNotesSz(oNotesSize);
+						}
 						break;
 					}
 					case 4: {
@@ -13380,32 +13479,7 @@
 						break;
 					}
 					case 5: {
-						var oSldSize = new AscCommonSlide.CSlideSize();
-						s.Skip2(5); // len + start attributes
-
-						while (true) {
-							var _at = s.GetUChar();
-
-							if (_at === g_nodeAttributeEnd)
-								break;
-
-							switch (_at) {
-								case 0: {
-									oSldSize.setCX(s.GetLong());
-									break;
-								}
-								case 1: {
-									oSldSize.setCY(s.GetLong());
-									break;
-								}
-								case 2: {
-									oSldSize.setType(s.GetUChar());
-									break;
-								}
-								default:
-									return;
-							}
-						}
+						let oSldSize = this.readSz(s);
 						if (oPresentattion.setSldSz) {
 							oPresentattion.setSldSz(oSldSize);
 						}
@@ -14351,6 +14425,7 @@
 			}
 			obj.title = shapeProp.title;
 			obj.description = shapeProp.description;
+			obj.name = shapeProp.name;
 			obj.columnNumber = shapeProp.columnNumber;
 			obj.columnSpace = shapeProp.columnSpace;
 			obj.textFitType = shapeProp.textFitType;
@@ -15215,6 +15290,7 @@
 			builder_SetAxisMinorGridlines(oChartSpace.chart.plotArea.getHorizontalAxis(), oLn);
 		}
 
+		const OBJECT_MORPH_MARKER = "!!";
 //----------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};
 		window['AscFormat'].CreateFontRef = CreateFontRef;
@@ -15466,6 +15542,15 @@
 		window['AscFormat'].AUDIO_FILE = AUDIO_FILE;
 		window['AscFormat'].VIDEO_FILE = VIDEO_FILE;
 		window['AscFormat'].QUICK_TIME_FILE = QUICK_TIME_FILE;
+
+
+
+
+		window['AscFormat'].DRAW_TYPE_PEN = DRAW_TYPE_PEN;
+		window['AscFormat'].DRAW_TYPE_PENCIL = DRAW_TYPE_PENCIL;
+		window['AscFormat'].DRAW_TYPE_HIGHLITER = DRAW_TYPE_HIGHLITER;
+
+
 		window['AscFormat'].fCreateEffectByType = fCreateEffectByType;
 		window['AscFormat'].COuterShdw = COuterShdw;
 		window['AscFormat'].CGlow = CGlow;
@@ -15534,5 +15619,6 @@
 		window['AscFormat'].MAP_AUTONUM_TYPES = MAP_AUTONUM_TYPES;
 		window['AscFormat'].CLR_NAME_MAP = CLR_NAME_MAP;
 		window['AscFormat'].LINE_PRESETS_MAP = LINE_PRESETS_MAP;
+		window['AscFormat'].OBJECT_MORPH_MARKER = OBJECT_MORPH_MARKER;
 	})
 (window);

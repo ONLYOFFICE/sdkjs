@@ -374,10 +374,10 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
         {
             // Если у нас началось редактирование диаграммы, а вернулось, что ее редактировать нельзя,
             // посылаем сообщение о закрытии редактора диаграмм.
-            if (true === oEditor.isChartEditor)
+            if (oEditor.isOpenedChartFrame)
                 oEditor.sync_closeChartEditor();
 
-          if (true === oEditor.isOleEditor)
+          if (oEditor.isOleEditor)
             oEditor.sync_closeOleEditor();
 
             // Делаем откат на 1 шаг назад и удаляем из Undo/Redo эту последнюю точку

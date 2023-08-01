@@ -529,24 +529,6 @@ CChartSpace.prototype.getDrawingObjectsController = CShape.prototype.getDrawingO
 //    this.addToRecalculate();
 //};
 
-CChartSpace.prototype.IsHdrFtr = function(bool)
-{
-    if(!this.group)
-    {
-        if(isRealObject(this.parent) && isRealObject(this.parent.DocumentContent))
-            return this.parent.DocumentContent.IsHdrFtr(bool);
-    }
-    else
-    {
-        var cur_group = this.group;
-        while(cur_group.group)
-            cur_group = cur_group.group;
-        if(isRealObject(cur_group.parent) && isRealObject(cur_group.parent.DocumentContent))
-            return cur_group.parent.DocumentContent.IsHdrFtr(bool);
-    }
-    return bool ? null : false;
-};
-
 CChartSpace.prototype.Refresh_RecalcData2 = function(pageIndex, object)
 {
     this.refreshRecalcData2(pageIndex, object);

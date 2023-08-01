@@ -106,9 +106,9 @@
 	/**
 	 * @typedef {("entirely" | "beforeCursor" | "afterCursor")} TextPartType
 	 * Specifies if the whole text or only its part will be returned or replaced:
-	 * * <b>entirely</b> - replaces the whole text with the specified one,
-	 * * <b>beforeCursor</b> - replaces only the part of the text before the cursor,
-	 * * <b>afterCursor</b> - replaces only the part of the text after the cursor.
+	 * * <b>entirely</b> - replaces/returns the whole text,
+	 * * <b>beforeCursor</b> - replaces/returns only the part of the text before the cursor,
+	 * * <b>afterCursor</b> - replaces/returns only the part of the text after the cursor.
 	 */
 
     var Api = window["asc_docs_api"];
@@ -823,7 +823,8 @@
 		var arrIds = [];
 		for(var nIdx = 0; nIdx < arrObjects.length; ++nIdx)
 		{
-			arrIds.push(arrObjects[nIdx].InternalId);
+			let oOleObject = arrObjects[nIdx];
+			arrIds.push(oOleObject["InternalId"]);
 		}
 		this.WordControl.m_oLogicDocument.RemoveDrawingObjects(arrIds);
 	};
@@ -911,41 +912,31 @@
 		let aParaDrawings = [];
 		let oDataMap = {};
 		let oData;
-		for(nDrawing = 0; nDrawing < arrObjectData.length; ++nDrawing)
+		for (nDrawing = 0; nDrawing < arrObjectData.length; ++nDrawing)
 		{
 			oData = arrObjectData[nDrawing];
-			oDrawing = AscCommon.g_oTableId.Get_ById(oData.InternalId);
-			oDataMap[oData.InternalId] = oData;
-			if(oDrawing
+			oDrawing = AscCommon.g_oTableId.Get_ById(oData["InternalId"]);
+			oDataMap[oData["InternalId"]] = oData;
+			if (oDrawing
 				&& oDrawing.getObjectType
-				&& oDrawing.getObjectType() === AscDFH.historyitem_type_OleObject)
+				&& oDrawing.getObjectType() === AscDFH.historyitem_type_OleObject
+				&& oDrawing.IsUseInDocument())
 			{
-				if(oDrawing.IsUseInDocument())
-				{
-					aDrawings.push(oDrawing);
-				}
+				aDrawings.push(oDrawing);
 			}
 		}
-		for(nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing)
+		for (nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing)
 		{
 			oDrawing = aDrawings[nDrawing];
-			if(oDrawing.group)
+			if (oDrawing.group)
 			{
 				oMainGroup = oDrawing.getMainGroup();
-				if(oMainGroup)
-				{
-					if(oMainGroup.parent)
-					{
-						oParaDrawingsMap[oMainGroup.parent.Id] = oMainGroup.parent;
-					}
-				}
+				if (oMainGroup && oMainGroup.parent)
+					oParaDrawingsMap[oMainGroup.parent.Id] = oMainGroup.parent;
 			}
-			else
+			else if (oDrawing.parent)
 			{
-				if(oDrawing.parent)
-				{
-					oParaDrawingsMap[oDrawing.parent.Id] = oDrawing.parent;
-				}
+				oParaDrawingsMap[oDrawing.parent.Id] = oDrawing.parent;
 			}
 		}
 		for(let sId in oParaDrawingsMap)

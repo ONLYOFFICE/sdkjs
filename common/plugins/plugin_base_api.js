@@ -353,7 +353,7 @@ window.startPluginApi = function() {
 	 * @memberof Plugin
 	 * @typeofeditors ["CDE"]
 	 * @alias onCommandCallback
-	 * @description The function called to return the result of the previously executed command. It can be used to return data after executing the {@link Plugin#executeCommand executeCommand} method.
+	 * @description The function called to return the result of the previously executed command. It can be used to return data after executing the {@link Plugin#callCommand callCommand} method.
 	 */
 
 	/**
@@ -420,6 +420,7 @@ window.startPluginApi = function() {
 
 	/**
 	 * executeCommand
+	 * @undocumented
 	 * @memberof Plugin
 	 * @alias executeCommand
 	 * @deprecated Please use callCommand method.
@@ -429,9 +430,9 @@ window.startPluginApi = function() {
 	 * Now this method is mainly used to work with the OLE objects or close the plugin without any other commands.
 	 * It is also retained for using with text so that the previous versions of the plugin remain compatible.
 	 * 
-	 * The *callback* is the result that the command returns. It is an optional parameter. In case it is missing, the {@link Plugin#onCommandCallback window.Asc.plugin.onCommandCallback} function will be used to return the result of the command execution.
+	 * The *callback* is the result that the command returns. It is an optional parameter. In case it is missing, the window.Asc.plugin.onCommandCallback function will be used to return the result of the command execution.
 	 * 
-	 * The second parameter is the JavaScript code for working with <b>ONLYOFFICE Document Builder</b> {@link /docbuilder/basic API} 
+	 * The second parameter is the JavaScript code for working with <b>ONLYOFFICE Document Builder</b> API 
 	 * that allows the plugin to send structured data inserted to the resulting document file (formatted paragraphs, tables, text parts, and separate words, etc.).
 	 * <note><b>ONLYOFFICE Document Builder</b> commands can be only used to create content and insert it to the document editor
 	 * (using the *Api.GetDocument().InsertContent(...)*). This limitation exists due to the co-editing feature in the online editors.
@@ -441,7 +442,7 @@ window.startPluginApi = function() {
 	 * * *Api.asc_addOleObject (window.Asc.plugin.info)* - used to create an OLE object in the document;
 	 * * *Api.asc_editOleObject (window.Asc.plugin.info)* - used to edit the created OLE object.
 	 * 
-	 * When creating/editing the objects, their properties can be passed to the {@link /plugin/info window.Asc.plugin.info} object that defines how the object should look.
+	 * When creating/editing the objects, their properties can be passed to the window.Asc.plugin.info object that defines how the object should look.
 	 * @param {string} type - Defines the type of the command. The *close* is used to close the plugin window after executing the function in the *data* parameter.
 	 * The *command* is used to execute the command and leave the window open waiting for the next command.
      * @param {string} data - Defines the command written in JavaScript code which purpose is to form the structured data which can be inserted to the resulting document file
@@ -560,7 +561,6 @@ window.startPluginApi = function() {
 	 * @memberof Plugin
 	 * @alias callCommand
 	 * @description Defines the method used to send the data back to the editor.
-	 * It replaces the {@link Plugin#executeCommand executeCommand} method when working with texts in order to simplify the syntax of the script that is necessary to pass to the editors using <b>ONLYOFFICE Document Builder</b> {@link /docbuilder/basic API}.
 	 * It allows the plugin to send structured data that can be inserted to the resulting document file (formatted paragraphs, tables, text parts, and separate words, etc.).
 	 * 
 	 * The *callback* is the result that the command returns. It is an optional parameter. In case it is missing, the {@link Plugin#onCommandCallback window.Asc.plugin.onCommandCallback} function will be used to return the result of the command execution.
@@ -645,6 +645,25 @@ window.startPluginApi = function() {
         };
         _client.send();
     };
+
+	/**
+	 * attachEvent
+	 * @memberof Plugin
+	 * @alias attachEvent
+	 * @description Defines the method to add an event listener, a function that will be called whenever the specified event is delivered to the target.
+	 * The list of all the available events can be found {@link Plugin#events here}.
+     * @param {string} id - The event name.
+	 * @param {Function} action - The event listener.
+	 */
+
+	/**
+	 * attachContextMenuClickEvent
+	 * @memberof Plugin
+	 * @alias attachContextMenuClickEvent
+	 * @description Defines the method to add an event listener, a function that will be called whenever the specified event is clicked in the context menu.
+     * @param {string} id - The event name.
+	 * @param {Function} action - The event listener.
+	 */
 
 	/***********************************************************************
 	 * INPUT HELPERS

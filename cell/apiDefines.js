@@ -311,7 +311,8 @@ var c_oTargetType = {
   GroupRow: 16,
   GroupCol: 17,
   TableSelectionChange: 18,
-  Placeholder: 19
+  Placeholder: 19,
+  ColumnRowHeaderMove: 20
 };
 
 var c_oAscAutoFilterTypes = {
@@ -441,7 +442,9 @@ var c_oAscPopUpSelectorType = {
       filePath: 4,
       date: 5,
       time: 6,
-      lineBreak: 7
+      lineBreak: 7,
+	  picture: 8,
+	  text: 9
   };
 
   var c_oAscPageHFType = {
@@ -569,6 +572,14 @@ var c_oAscPopUpSelectorType = {
     link: 1,
     path: 2
   };
+
+  var c_oAscPageBreaksDisableType = {
+    none: 0,
+    all: 1,
+    insertRemove: 2,
+    reset: 3
+  };
+
 
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
@@ -706,6 +717,38 @@ var c_oAscPopUpSelectorType = {
   prot = c_oAscDynamicAutoFilter;
   prot['aboveAverage'] = prot.aboveAverage;
   prot['belowAverage'] = prot.belowAverage;
+  prot['lastMonth']    = prot.lastMonth;
+  prot['lastQuarter']  = prot.lastQuarter;
+  prot['lastWeek']     = prot.lastWeek;
+  prot['lastYear']     = prot.lastYear;
+  prot['m1']           = prot.m1;
+  prot['m11']          = prot.m11;
+  prot['m12']          = prot.m12;
+  prot['m2']           = prot.m2;
+  prot['m3']           = prot.m3;
+  prot['m4']           = prot.m4;
+  prot['m5']           = prot.m5;
+  prot['m6']           = prot.m6;
+  prot['m7']           = prot.m7;
+  prot['m8']           = prot.m8;
+  prot['m9']           = prot.m9;
+  prot['nextMonth']    = prot.nextMonth;
+  prot['nextQuarter']  = prot.nextQuarter;
+  prot['nextWeek']     = prot.nextWeek;
+  prot['nextYear']     = prot.nextYear;
+  prot['nullType']     = prot.nullType;
+  prot['q1']           = prot.q1;
+  prot['q2']           = prot.q2;
+  prot['q3']           = prot.q3;
+  prot['q4']           = prot.q4;
+  prot['thisMonth']    = prot.thisMonth;
+  prot['thisQuarter']  = prot.thisQuarter;
+  prot['thisWeek']     = prot.thisWeek;
+  prot['thisYear']     = prot.thisYear;
+  prot['today']        = prot.today;
+  prot['tomorrow']     = prot.tomorrow;
+  prot['yearToDate']   = prot.yearToDate;
+  prot['yesterday']    = prot.yesterday;
   window['Asc']['c_oAscTop10AutoFilter'] = window['Asc'].c_oAscTop10AutoFilter = c_oAscTop10AutoFilter;
   prot = c_oAscTop10AutoFilter;
   prot['max'] = prot.max;
@@ -815,8 +858,10 @@ var c_oAscPopUpSelectorType = {
   prot['date'] = prot.date;
   prot['time'] = prot.time;
   prot['lineBreak'] = prot.lineBreak;
+  prot['picture'] = prot.picture;
+  prot['text'] = prot.text;
   window['Asc']['c_oAscPageHFType'] = window['Asc'].c_oAscPageHFType = c_oAscPageHFType;
-  prot = c_oAscHeaderFooterField;
+  prot = c_oAscPageHFType;
   prot['firstHeader'] = prot.firstHeader;
   prot['oddHeader'] = prot.oddHeader;
   prot['evenHeader'] = prot.evenHeader;
@@ -861,6 +906,7 @@ var c_oAscPopUpSelectorType = {
   prot['reference'] = prot.reference;
   prot['any'] = prot.any;
   prot['logical'] = prot.logical;
+  prot['array'] = prot.array;
 
   window['Asc']['c_oAscSelectionForCFType'] = window['Asc'].c_oAscSelectionForCFType = c_oAscSelectionForCFType;
   prot = c_oAscSelectionForCFType;
@@ -930,6 +976,13 @@ var c_oAscPopUpSelectorType = {
   prot['referenceData'] = prot.referenceData;
   prot['link'] = prot.link;
   prot['path'] = prot.path;
+
+  window['Asc']['c_oAscPageBreaksDisableType'] = window['Asc'].c_oAscPageBreaksDisableType = c_oAscPageBreaksDisableType;
+  prot = c_oAscPageBreaksDisableType;
+  prot['none'] = prot.none;
+  prot['all'] = prot.all;
+  prot['insertRemove'] = prot.insertRemove;
+  prot['reset'] = prot.reset;
 
 
 })(window);

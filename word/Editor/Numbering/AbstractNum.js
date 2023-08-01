@@ -127,33 +127,12 @@ CAbstractNum.prototype.RecalculateRelatedParagraphs = function(nLvl)
 	let logicDocument = editor.WordControl.m_oLogicDocument;
 	if (!logicDocument || !logicDocument.IsDocumentEditor())
 		return;
-
-	let styleManager = logicDocument.GetStyles();
-	if (undefined !== nLvl)
-	{
-		let lvl   = this.GetLvl(nLvl);
-		let style = styleManager.Get(lvl.GetPStyle());
-		if (style)
-			logicDocument.Add_ChangedStyle(style.GetId());
-	}
-	else
-	{
-		for (let iLvl = 0; iLvl <= 8; ++iLvl)
-		{
-			let lvl   = this.GetLvl(iLvl);
-			let style = styleManager.Get(lvl.GetPStyle());
-			if (style)
-				logicDocument.Add_ChangedStyle(style.GetId());
-		}
-	}
 	
-	logicDocument.GetNumberingCollection().CheckNum(this.Id, nLvl);
-	
-	var arrParagraphs = logicDocument.GetAllParagraphsByNumbering({NumId : this.Id, Lvl : nLvl});
-	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
+	let numberingManager = logicDocument.GetNumbering();
+	numberingManager.GetAllNumsByAbstractNum(this).forEach(function(num)
 	{
-		arrParagraphs[nIndex].RecalcCompiledPr();
-	}
+		num.RecalculateRelatedParagraphs(nLvl);
+	});
 };
 CAbstractNum.prototype.GetMultiLvlType = function()
 {
@@ -504,3 +483,6 @@ CAbstractNum.prototype._isEqualLvlText = function(LvlTextOld, LvlTextNew)
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CAbstractNum = CAbstractNum;
+
+window['AscWord'] = window['AscWord'] || {};
+window['AscWord'].CAbstractNum = CAbstractNum;

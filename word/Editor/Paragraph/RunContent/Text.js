@@ -339,7 +339,7 @@
 	{
 		if (Context.m_bIsTextDrawer === true)
 		{
-			Context.CheckAddNewPath(X, Y);
+			Context.CheckAddNewPath(X, Y, this.Value);
 		}
 		if (this.Flags & FLAGS_GAPS)
 		{
