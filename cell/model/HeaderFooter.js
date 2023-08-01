@@ -1659,7 +1659,7 @@ function (window, undefined) {
 			return;
 		}
 
-		if (true || val === asc.c_oAscHeaderFooterField.picture) {
+		if (val === asc.c_oAscHeaderFooterField.picture) {
 			this.addPictureField();
 		} else {
 			let textField = convertFieldToMenuText(val);
@@ -2354,7 +2354,7 @@ function (window, undefined) {
 	};
 
 	CLegacyDrawingHF.prototype.addPicture = function (picture) {
-		this.drawings.push(picture);
+		this.drawings.unshift(picture);
 	};
 
 	CLegacyDrawingHF.prototype.getDrawingById = function (id) {
