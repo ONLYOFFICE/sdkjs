@@ -1472,18 +1472,6 @@ function (window, undefined) {
 			hF.clean();
 		}
 
-		let checkPictures = function (aFr) {
-			if (!aFr) {
-				return false;
-			}
-			for (let i = 0; i < aFr.length; i++) {
-				if (aFr[i].field === asc.c_oAscHeaderFooterField.picture) {
-					return true;
-				}
-			}
-			return false;
-		};
-
 		let removedPictures = [];
 		for (let i = 0; i < this.sections.length; i++) {
 			if (!this.sections[i]) {
@@ -1505,27 +1493,27 @@ function (window, undefined) {
 			let curSection = this.sections[i][c_oPortionPosition.left];
 			let isChanged = false;
 			if (curSection && (curSection.changed || reWrite)) {
-				beforePictures = checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.left]);
+				beforePictures = this.checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.left]);
 				curHeaderFooter.parser.tokens[c_oPortionPosition.left] = this._convertFragments(curSection.fragments);
-				if (beforePictures && !checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.left])) {
+				if (beforePictures && !this.checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.left])) {
 					removedPictures.push(curSection.getStringName());
 				}
 				isChanged = true;
 			}
 			curSection = this.sections[i][c_oPortionPosition.center];
 			if (curSection && (curSection.changed || reWrite)) {
-				beforePictures = checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.center]);
+				beforePictures = this.checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.center]);
 				curHeaderFooter.parser.tokens[c_oPortionPosition.center] = this._convertFragments(curSection.fragments);
-				if (beforePictures && !checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.center])) {
+				if (beforePictures && !this.checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.center])) {
 					removedPictures.push(curSection.getStringName());
 				}
 				isChanged = true;
 			}
 			curSection = this.sections[i][c_oPortionPosition.right];
 			if (curSection && (curSection.changed || reWrite)) {
-				beforePictures = checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.right]);
+				beforePictures = this.checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.right]);
 				curHeaderFooter.parser.tokens[c_oPortionPosition.right] = this._convertFragments(curSection.fragments);
-				if (beforePictures && !checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.right])) {
+				if (beforePictures && !this.checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.right])) {
 					removedPictures.push(curSection.getStringName());
 				}
 				isChanged = true;
@@ -1577,6 +1565,18 @@ function (window, undefined) {
 			t.cellEditor.setTextStyle("fn", fontName);
 			t.wb.restoreFocus();
 		});
+	};
+
+	CHeaderFooterEditor.prototype.checkPictures = function (aFr) {
+		if (!aFr) {
+			return false;
+		}
+		for (let i = 0; i < aFr.length; i++) {
+			if (aFr[i].field === asc.c_oAscHeaderFooterField.picture) {
+				return true;
+			}
+		}
+		return false;
 	};
 
 	CHeaderFooterEditor.prototype.setFontSize = function (fontSize) {
@@ -1691,16 +1691,26 @@ function (window, undefined) {
 			});
 		};
 
+		let ws = this.wb && this.wb.getWorksheet();
 		let curSection = this._getSectionById(this.curParentFocusId);
-		let bSectionContainsPictures = curSection && curSection.getPictures();
+		let sectionId = curSection && curSection.getStringName();
+		let bSectionContainsPictures = sectionId && (ws.model.getLegacyDrawingHFById(sectionId) || (this.needAddPicturesMap && this.needAddPicturesMap[sectionId]));
 		if (bSectionContainsPictures) {
-			//confirm dialog
-			//replace/keep options
-			t.api.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmReplaceHeaderFooterPicture, function (can) {
-				if (can) {
-					showFileDialog();
+			let thisFragments = this._convertFragments(this.cellEditor.options && this.cellEditor.options.fragments);
+			if (!this.checkPictures(thisFragments)) {
+				let textField = convertFieldToMenuText(asc.c_oAscHeaderFooterField.picture);
+				if (null !== textField) {
+					t.cellEditor.pasteText(textField);
 				}
-			});
+			} else {
+				//confirm dialog
+				//replace/keep options
+				t.api.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmReplaceHeaderFooterPicture, function (can) {
+					if (can) {
+						showFileDialog();
+					}
+				});
+			}
 		} else {
 			//add new pictures
 			showFileDialog(true);
