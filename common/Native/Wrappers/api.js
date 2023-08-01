@@ -5280,7 +5280,6 @@ function NativeOpenFile3(_params, documentInfo)
                                   window["native"]["OnCallMenuEvent"](2404, stream); // ASC_SPREADSHEETS_EVENT_TYPE_COLOR_SCHEMES
                                   });
         _api.asc_registerCallback("asc_onSendThemeColors", onApiSendThemeColors);
-        _api.asc_registerCallback("asc_onPresentationSize", onApiPageSize);
 
         _api.asc_registerCallback("asc_onFocusObject", onFocusObject);
         _api.asc_registerCallback('asc_onStartAction', onApiLongActionBegin);
@@ -6099,14 +6098,6 @@ function onApiSendThemeColors(theme_colors, standart_colors) {
         });
     }
     postDataAsJSONString(colors, 2417); // ASC_MENU_EVENT_TYPE_THEMECOLORS
-}
-
-function onApiPageSize(width, height, type) {
-    var size = {
-        "width" : width,
-        "height" : height,
-    };
-    postDataAsJSONString(size, 8129); // ASC_PRESENTATIONS_EVENT_TYPE_SLIDE_SIZE_CHANGE
 }
 
 // Others

@@ -5973,14 +5973,6 @@ function onApiSendThemeColors(theme_colors, standart_colors) {
     }
     postDataAsJSONString(colors, 2417); // ASC_MENU_EVENT_TYPE_THEMECOLORS
 }
-
-function onApiSendSlideSize(width, height) {
-    var size = {
-        "width" : width,
-        "height" : height,
-    };
-    postDataAsJSONString(size, 8129); // ASC_PRESENTATIONS_EVENT_TYPE_SLIDE_SIZE_CHANGE
-}
 window["Asc"]["spreadsheet_api"].prototype.asc_setDocumentPassword = function(password)
 {
     var v = {
