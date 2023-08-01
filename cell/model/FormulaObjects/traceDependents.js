@@ -195,7 +195,7 @@ function (window, undefined) {
 			// TODO improve check of cyclic references
 			// temporary solution
 			for (let i in this.data.indices) {
-				if (this.data.indices[i] == maxLevel) {
+				if (this.data.indices[i] === maxLevel) {
 					let val = i.split("|");
 					this._deleteDependent(val[0], val[1]);
 					this._deletePrecedent(val[0], val[1]);
@@ -207,7 +207,7 @@ function (window, undefined) {
 
 		for (let index in this.data.indices) {
 			for (let i in this.data.indices[index]) {
-				if (this.data.indices[index][i] == maxLevel) {
+				if (this.data.indices[index][i] === maxLevel) {
 					this._deletePrecedent(i, index);
 					this._deleteDependent(index, i);
 				}
@@ -278,7 +278,7 @@ function (window, undefined) {
 
 			return tableHeader.col === cellAddress.col && tableHeader.row === cellAddress.row;
 		};
-		const getHeader = function (table) {
+		const getTableHeader = function (table) {
 			if (!table.Ref) {
 				return false;
 			}
@@ -286,7 +286,7 @@ function (window, undefined) {
 			return {col: table.Ref.c1, row: table.Ref.r1};
 		};
 		const setDefNameIndexes = function (defName, isTable) {
-			let tableHeader = isTable ? getHeader(ws.getTableByName(defName)) : false;
+			let tableHeader = isTable ? getTableHeader(ws.getTableByName(defName)) : false;
 			let isCurrentCellHeader = isTable ? checkIfHeader(tableHeader) : false;
 			for (const i in allDefNamesListeners) {
 				if (allDefNamesListeners.hasOwnProperty(i) && i.toLowerCase() === defName.toLowerCase()) {
@@ -604,7 +604,7 @@ function (window, undefined) {
 			prevIndex: -1,
 			indices: {}
 		};
-	}
+	};
 	TraceDependentsManager.prototype.clearLastPrecedent = function (row, col) {
 		let ws = this.ws && this.ws.model;
 		if (!ws || !this.precedents) {
@@ -623,88 +623,13 @@ function (window, undefined) {
 			col = activeCell.col;
 		}
 
-		const findMaxNesting = function (row, col) {
-			let currentCellIndex = AscCommonExcel.getCellIndex(row, col);
-
-			if (t.data.indices[currentCellIndex]) {
-				return;
-			}
-
-			let formulaParsed;
-			ws.getCell3(row, col)._foreachNoEmpty(function (cell) {
-				formulaParsed = cell.formulaParsed;
-			});
-
-			let ifHeader;
-			if (t.data.recLevel > 0 && t.data.lastHeaderIndex !== currentCellIndex) {
-				// check area header
-				ifHeader = checkIfHeader(currentCellIndex);
-
-				if (!formulaParsed && !ifHeader) {
-					t.data.indices[currentCellIndex] = t.data.recLevel;
-					return;
-				}
-			} else {
-				// check only oParser
-				if (!formulaParsed) {
-					t.data.indices[currentCellIndex] = t.data.recLevel;
-					return;
-				}
-			}
-
-			let interLevel, fork;
-			if (ifHeader) {
-				// go through area
-				let areaIndexes = getAllAreaIndexes(t.precedentsAreas, currentCellIndex);
-
-				if (areaIndexes.length > 0) {
-					fork = true;
-					interLevel = t.data.recLevel;
-					// ??? либо пройтись сначала по заголовку, дабы не входить в бесконечный цикл, либо же добавить флаг который не позволит бесконечно заходить в текущий диапазон
-					for (let index of areaIndexes) {
-						let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
-						if (index === currentCellIndex) {
-							t.data.lastHeaderIndex = index;
-						}
-						findMaxNesting(cellAddress.row, cellAddress.col);
-						t.data.recLevel = fork ? interLevel : t.data.recLevel;
-					}
-				}
-			} else if (t.precedents[currentCellIndex]) {
-				// check the existence of a circular reference between cells and its dependencies
-				let circular = checkCircularReference(currentCellIndex);
-				if (t.data.indices[currentCellIndex] || circular) {
-					return;
-				}
-
-				if (Object.keys(t.precedents[currentCellIndex]).length > 1) {
-					fork = true;
-				}
-
-				t.data.recLevel++;
-				t.data.maxRecLevel = t.data.recLevel > t.data.maxRecLevel ? t.data.recLevel : t.data.maxRecLevel;
-				interLevel = t.data.recLevel;
-				for (let j in t.precedents[currentCellIndex]) {
-					if (j.includes(";")) {
-						let uniqueIndex = j + "|" + currentCellIndex;
-						t.data.indices[uniqueIndex] = t.data.recLevel;
-						continue;
-					}
-					let coords = AscCommonExcel.getFromCellIndex(j, true);
-					findMaxNesting(coords.row, coords.col);
-					t.data.recLevel = fork ? interLevel : t.data.recLevel;
-				}
-			} else {
-				t.data.indices[currentCellIndex] = t.data.recLevel;
-			}
-		};
 		const checkCircularReference = function (index) {
 			for (let i in t.precedents[index]) {
 				if (t._getPrecedents(index, i) && t._getPrecedents(i, index)) {
+					let related = index + "|" + i;
 					t.data.recLevel = 10 ** 10;
 					t.data.maxRecLevel = t.data.recLevel;
-					t.data.indices[index] = t.data.recLevel;
-					t.data.indices[i] = t.data.recLevel;
+					t.data.indices[related] = t.data.recLevel;
 					return true;
 				}
 			}
@@ -738,43 +663,109 @@ function (window, undefined) {
 			}
 			return indexes;
 		};
+		const findMaxNesting = function (row, col) {
+			let currentCellIndex = AscCommonExcel.getCellIndex(row, col);
+			if (t.data.prevIndex !== -1 && t.data.indices[t.data.prevIndex] && t.data.indices[t.data.prevIndex][currentCellIndex]) {
+				return;
+			}
+			if (t.data.indices[currentCellIndex]) {
+				return;
+			}
+
+			let ifHeader, interLevel, fork;
+			if (t.data.recLevel > 0 && t.data.lastHeaderIndex !== currentCellIndex) {
+				// check area header
+				ifHeader = checkIfHeader(currentCellIndex);
+
+				if (!t.precedents[currentCellIndex] && !ifHeader) {
+					if (!t.data.indices[t.data.prevIndex]) {
+						t.data.indices[t.data.prevIndex] = {};
+					}
+					t.data.indices[t.data.prevIndex][currentCellIndex] = t.data.recLevel;	// [from][to] format 
+					return;
+				}
+			}
+
+			if (ifHeader) {
+				// go through area
+				let areaIndexes = getAllAreaIndexes(t.precedentsAreas, currentCellIndex);
+
+				if (areaIndexes.length > 0) {
+					fork = true;
+					interLevel = t.data.recLevel;
+					for (let index of areaIndexes) {
+						let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
+						if (index === currentCellIndex) {
+							t.data.lastHeaderIndex = index;
+						}
+						findMaxNesting(cellAddress.row, cellAddress.col);
+						t.data.recLevel = fork ? interLevel : t.data.recLevel;
+					}
+				}
+			} else if (t.precedents[currentCellIndex]) {
+				if (checkCircularReference(currentCellIndex)) {
+					return;
+				}
+				if (Object.keys(t.precedents[currentCellIndex]).length > 1) {
+					fork = true;
+				}
+
+				t.data.recLevel++;
+				t.data.maxRecLevel = t.data.recLevel > t.data.maxRecLevel ? t.data.recLevel : t.data.maxRecLevel;
+				interLevel = t.data.recLevel;
+				for (let j in t.precedents[currentCellIndex]) {
+					t.data.prevIndex = currentCellIndex;
+					if (j.includes(";")) {
+						// [fromCurrent][toExternal]
+						if (!t.data.indices[currentCellIndex]) {
+							t.data.indices[currentCellIndex] = {};
+						}
+						t.data.indices[currentCellIndex][j] = t.data.recLevel;
+						continue;
+					}
+					let coords = AscCommonExcel.getFromCellIndex(j, true);
+					findMaxNesting(coords.row, coords.col);
+					t.data.recLevel = fork ? interLevel : t.data.recLevel;
+				}
+			} else {
+				if (!t.data.indices[t.data.prevIndex]) {
+					t.data.indices[t.data.prevIndex] = {};
+				}
+				// [from][to]
+				t.data.indices[t.data.prevIndex][currentCellIndex] = t.data.recLevel;
+			}
+		};
 
 		findMaxNesting(row, col);
+		console.log({...this.data});
 		const maxLevel = this.data.maxRecLevel;
 		if (maxLevel === 0) {
 			this._setDefaultData();
 			return;
 		}
 		// TODO improve check of cyclic references
-		// else if (maxLevel === (10 ** 10)) {
-		// 	// delete only cyclic references
-		// }
-
-		for (let [index, indexLevel] of Object.entries(this.data.indices)) {
-			// ? add is3D flag
-			if (indexLevel == maxLevel) {
-				let fromIndex;
-				if (index.includes(";")) {
-					let parts = index.split("|");
-					index = parts[0];
-					fromIndex = parts[1];
-				} else {
-					fromIndex = this.dependents && this.dependents[index] ? Object.keys(this.dependents[index])[0] : null;		// can be more than one dependent?
-				}
-				if (fromIndex) {
-					if (index.includes(";")) {
-						this._deleteDependent(index, fromIndex);
-						this._deletePrecedent(fromIndex, index);
-						continue;
-					}
-
-					this._deleteDependent(index, fromIndex);
-					this._deletePrecedent(fromIndex, index);
-					this.checkAreas();
+		// temporary solution
+		else if (maxLevel === (10 ** 10)) {
+			for (let i in this.data.indices) {
+				if (this.data.indices[i] === maxLevel) {
+					let val = i.split("|");
+					this._deleteDependent(val[0], val[1]);
+					this._deletePrecedent(val[0], val[1]);
+					this._deleteDependent(val[1], val[0]);
+					this._deletePrecedent(val[1], val[0]);
 				}
 			}
 		}
 
+		for (let index in this.data.indices) {
+			for (let i in this.data.indices[index]) {
+				if (this.data.indices[index][i] === maxLevel) {
+					this._deletePrecedent(index, i);
+					this._deleteDependent(i, index);
+				}
+			}
+		}
+		this.checkAreas();
 		this._setDefaultData();
 	};
 	TraceDependentsManager.prototype.calculatePrecedents = function (row, col, isSecondCall, callFromArea) {
