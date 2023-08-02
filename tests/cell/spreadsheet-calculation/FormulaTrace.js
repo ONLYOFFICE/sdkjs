@@ -1867,6 +1867,7 @@ $(function() {
 			// api.asc_TracePrecedents();	// ~1800ms
 			// api.asc_TracePrecedents();	// ~2600ms
 			// api.asc_TracePrecedents();	// ~3700ms
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.precedent);  // old: ~800ms new: ~250ms
 
 			// clear traces
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);

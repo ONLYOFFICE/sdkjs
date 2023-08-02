@@ -665,10 +665,8 @@ function (window, undefined) {
 		};
 		const findMaxNesting = function (row, col) {
 			let currentCellIndex = AscCommonExcel.getCellIndex(row, col);
-			if (t.data.prevIndex !== -1 && t.data.indices[t.data.prevIndex] && t.data.indices[t.data.prevIndex][currentCellIndex]) {
-				return;
-			}
-			if (t.data.indices[currentCellIndex]) {
+			if (t.data.indices[currentCellIndex] && t.data.indices[currentCellIndex][t.data.prevIndex]) {
+				t.data.indices[currentCellIndex][t.data.prevIndex] = t.data.recLevel;
 				return;
 			}
 
@@ -697,6 +695,9 @@ function (window, undefined) {
 						let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
 						if (index === currentCellIndex) {
 							t.data.lastHeaderIndex = index;
+						}
+						if (!t.precedents[index] && index !== currentCellIndex) {
+							continue;
 						}
 						findMaxNesting(cellAddress.row, cellAddress.col);
 						t.data.recLevel = fork ? interLevel : t.data.recLevel;
@@ -737,7 +738,6 @@ function (window, undefined) {
 		};
 
 		findMaxNesting(row, col);
-		console.log({...this.data});
 		const maxLevel = this.data.maxRecLevel;
 		if (maxLevel === 0) {
 			this._setDefaultData();
