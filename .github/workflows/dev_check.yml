@@ -61,7 +61,6 @@ jobs:
           node-qunit-puppeteer tests/word/merge-documents/mergeDocuments.html
           node-qunit-puppeteer tests/word/shortcuts/shortcuts.html
           node-qunit-puppeteer tests/slide/shortcuts/shortcuts.html
-          node-qunit-puppeteer tests/common/promise-iterators/promiseIterator.html
   builder-tests:
     runs-on: ubuntu-latest
     steps:

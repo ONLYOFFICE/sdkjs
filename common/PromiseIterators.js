@@ -33,14 +33,18 @@
 "use strict";
 
 (function (window) {
-
-	function CPromiseIteratorBase() {
+	function CPromiseGetterIterator(arrFPromiseGetters) {
+		this.promiseGetters = arrFPromiseGetters;
 	}
 
-	CPromiseIteratorBase.prototype.getPromise = function (nIndex) {
-
+	CPromiseGetterIterator.prototype.getPromise = function (nIndex) {
+		const fPromiseGetter = this.promiseGetters[nIndex];
+		if (fPromiseGetter) {
+			return fPromiseGetter();
+		}
 	};
-	CPromiseIteratorBase.prototype.forEachValue = function (fSuccess, fReject, fAfterAll) {
+
+	CPromiseGetterIterator.prototype.forEachValue = function (fSuccess, fReject, fAfterAll) {
 		let nIndex = 0;
 		const oThis = this;
 
@@ -62,7 +66,7 @@
 		};
 		resolveIndexPromise();
 	};
-	CPromiseIteratorBase.prototype.forAllSuccessValues = function (fCallback) {
+	CPromiseGetterIterator.prototype.forAllSuccessValues = function (fCallback) {
 		const arrValues = [];
 		const fAfterAll = function () {
 			fCallback(arrValues);
@@ -72,33 +76,7 @@
 		}, undefined, fAfterAll);
 	};
 
-	function CPromiseIterator(arrPromises) {
-		CPromiseIteratorBase.call(this);
-		this.promises = arrPromises;
-	}
-
-	AscFormat.InitClassWithoutType(CPromiseIterator, CPromiseIteratorBase);
-
-	CPromiseIterator.prototype.getPromise = function (nIndex) {
-		return this.promises[nIndex];
-	};
-
-	function CPromiseGetterIterator(arrFPromiseGetters) {
-		CPromiseIteratorBase.call(this);
-		this.promiseGetters = arrFPromiseGetters;
-	}
-
-	AscFormat.InitClassWithoutType(CPromiseGetterIterator, CPromiseIteratorBase);
-
-	CPromiseGetterIterator.prototype.getPromise = function (nIndex) {
-		const fPromiseGetter = this.promiseGetters[nIndex];
-		if (fPromiseGetter) {
-			return fPromiseGetter();
-		}
-	};
-
-	AscCommon = window.AscCommon = window.AscCommon || {};
-	AscCommon.CPromiseGetterIterator = CPromiseGetterIterator;
-	AscCommon.CPromiseIterator = CPromiseIterator;
+	window.AscCommon = window.AscCommon || {};
+	window.AscCommon.CPromiseGetterIterator = CPromiseGetterIterator;
 
 })(window);
