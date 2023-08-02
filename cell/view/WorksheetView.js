@@ -6604,7 +6604,7 @@
             }
         }
 
-		this.drawTraceDependents();
+        this.drawTraceDependents();
 
         // restore canvas' original clipping range
         ctx.restore();
@@ -6812,14 +6812,14 @@
 	};
 
     WorksheetView.prototype.cleanSelection = function (range, isFrozen) {
-		var api = window["Asc"]["editor"];
-		if (window['IS_NATIVE_EDITOR']) {
+        var api = window["Asc"]["editor"];
+        if (window['IS_NATIVE_EDITOR']) {
             return;
         }
 
-		if (!this.overlayCtx) {
-			return;
-		}
+        if (!this.overlayCtx) {
+            return;
+        }
 
         isFrozen = !!isFrozen;
         if (range === undefined) {
