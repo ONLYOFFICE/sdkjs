@@ -32,6 +32,37 @@
 
 "use strict";
 
+var AscHyphenation = AscHyphenation || {};
+(function()
+{
+	// Это тестовые функции, которые должны быть заменены на нормальные
+	let BUFFER_STRING = "";
+	
+	AscHyphenation.AddCodePoint = function(codePoint)
+	{
+		BUFFER_STRING += String.fromCodePoint(codePoint);
+	};
+	AscHyphenation.HyphenateBuffer = function()
+	{
+		if ("reenter" === BUFFER_STRING)
+			return [1];
+		else if ("coauthor" === BUFFER_STRING)
+			return [1];
+		else if ("привет" === BUFFER_STRING)
+			return [2];
+		else if ("участвовавшими" === BUFFER_STRING)
+			return [3, 6, 9, 11];
+		
+		return [];
+	};
+	AscHyphenation.Hyphenate = function()
+	{
+		let result = AscHyphenation.HyphenateBuffer();
+		BUFFER_STRING = "";
+		return result;
+	};
+})();
+
 (function(window)
 {
 	const DEFAULT_LANG = lcid_enUS;
@@ -113,7 +144,7 @@
 	{
 		this.Word = true;
 		this.Buffer.push(textItem);
-		AddCodePoint(textItem.GetCodePoint());
+		AscHyphenation.AddCodePoint(textItem.GetCodePoint());
 		textItem.SetHyphenAfter(false);
 	};
 	CTextHyphenator.prototype.FlushWord = function()
@@ -121,7 +152,7 @@
 		if (!this.Word)
 			return;
 		
-		let result = Hyphenate();
+		let result = AscHyphenation.Hyphenate();
 		for (let i = 0, len = result.length; i < len; ++i)
 		{
 			this.Buffer[result[i]].SetHyphenAfter(true);
@@ -130,32 +161,6 @@
 		this.Buffer.length = 0;
 		this.Word = false;
 	};
-	
-	// Это тестовые функции, которые должны быть заменены на нормальные
-	let BUFFER_STRING = "";
-	function AddCodePoint(codePoint)
-	{
-		BUFFER_STRING += String.fromCodePoint(codePoint);
-	}
-	function HyphenateBuffer()
-	{
-		if ("reenter" === BUFFER_STRING)
-			return [1];
-		else if ("coauthor" === BUFFER_STRING)
-			return [1];
-		else if ("привет" === BUFFER_STRING)
-			return [2];
-		else if ("участвовавшими" === BUFFER_STRING)
-			return [3, 6, 9, 11];
-		
-		return [];
-	}
-	function Hyphenate()
-	{
-		let result = HyphenateBuffer();
-		BUFFER_STRING = "";
-		return result;
-	}
 	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CTextHyphenator = CTextHyphenator;
