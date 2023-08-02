@@ -163,12 +163,7 @@ function (window, undefined) {
 					t.data.recLevel = fork ? interLevel : t.data.recLevel;
 				}
 			} else {
-				// [from][to] || [to][from]
-				// if (!t.data.indices[currentCellIndex]) {	// [to][from]
-				// 	t.data.indices[currentCellIndex] = {};
-				// }
-				// t.data.indices[currentCellIndex][t.data.prevIndex] = t.data.recLevel;	// [to][from]
-				if (!t.data.indices[t.data.prevIndex]) {	// [from][to]
+				if (!t.data.indices[t.data.prevIndex]) {
 					t.data.indices[t.data.prevIndex] = {};
 				}
 				t.data.indices[t.data.prevIndex][currentCellIndex] = t.data.recLevel;	// [from][to]
@@ -178,7 +173,7 @@ function (window, undefined) {
 			for (let i in t.dependents[index]) {
 				if (t._getDependents(index, i) && t._getDependents(i, index)) {
 					let related = index + "|" + i;
-					t.data.recLevel = 10 ** 10;
+					t.data.recLevel = Math.pow(10, 10);
 					t.data.maxRecLevel = t.data.recLevel;
 					t.data.indices[related] = t.data.recLevel;
 					return true;
@@ -191,7 +186,7 @@ function (window, undefined) {
 		if (maxLevel === 0) {
 			this._setDefaultData();
 			return;
-		} else if (maxLevel === 10 ** 10) {
+		} else if (maxLevel === Math.pow(10, 10)) {
 			// TODO improve check of cyclic references
 			// temporary solution
 			for (let i in this.data.indices) {
@@ -627,7 +622,7 @@ function (window, undefined) {
 			for (let i in t.precedents[index]) {
 				if (t._getPrecedents(index, i) && t._getPrecedents(i, index)) {
 					let related = index + "|" + i;
-					t.data.recLevel = 10 ** 10;
+					t.data.recLevel = Math.pow(10, 10);
 					t.data.maxRecLevel = t.data.recLevel;
 					t.data.indices[related] = t.data.recLevel;
 					return true;
@@ -745,7 +740,7 @@ function (window, undefined) {
 		}
 		// TODO improve check of cyclic references
 		// temporary solution
-		else if (maxLevel === (10 ** 10)) {
+		else if (maxLevel === Math.pow(10, 10)) {
 			for (let i in this.data.indices) {
 				if (this.data.indices[i] === maxLevel) {
 					let val = i.split("|");
@@ -852,7 +847,6 @@ function (window, undefined) {
 		let isAreaHeader = callFromArea ? false : isCellAreaHeader(cellIndex);
 		if (this.currentPrecedentsAreas && isSecondCall && isAreaHeader) {
 			// calculate all precedents in areas
-			// let areaIndexes = getAllAreaIndexesWithoutCalc(this.currentPrecedentsAreas, cellIndex);
 			let areaIndexes = getAllAreaIndexes(this.currentPrecedentsAreas, cellIndex);
 			let areaName = getAreaName(this.currentPrecedentsAreas, cellIndex);
 

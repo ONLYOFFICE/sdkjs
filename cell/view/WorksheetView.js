@@ -4987,17 +4987,7 @@
 			customScale = AscBrowser.retinaPixelRatio,
 			zoom = this.getZoom();
 
-		// let isRetina = AscBrowser.retinaPixelRatio === 2;
-		// let isCustomScaling = AscBrowser.isCustomScaling();
-		// if (isRetina) {
-		// 	widthLine = AscCommon.AscBrowser.convertToRetinaValue(widthLine, true);
-		// }
-		// if (isCustomScaling) {
-		// 	widthLine = customScale * widthLine * zoom;
-		// }
-
 		widthLine = customScale * widthLine * zoom;
-
 		ctx.setLineWidth(widthLine);
 
 		const lineColor = new CColor(78, 128, 245);
@@ -5062,7 +5052,7 @@
 			let angle = Math.atan2(y2 - y1, x2 - x1);
 
 			// Draw the line and subtract the padding to draw the arrowhead correctly
-			let extLength = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+			let extLength = Math.sqrt(Math.pow((x2 - x1), 2) + Math.pow((y2 - y1), 2));
 			if (extLength === 0 && angle === 0) {
 				// temporary exception
 				ctx.lineDiag(x1, y1, x2, y2);
@@ -5136,7 +5126,7 @@
 			let angle = Math.atan2(y2 - y1, x2 - x1);
 
 			// Draw the line and subtract the padding to draw the arrowhead correctly
-			let extLength = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+			let extLength = Math.sqrt(Math.pow((x2 - x1), 2) + Math.pow((y2 - y1), 2));
 			
 			let dx = (x2 - x1) / extLength;
 			let dy = (y2 - y1) / extLength;
@@ -5188,7 +5178,7 @@
 				if (Number.isInteger(size)) {
 					return size % 2 !== 0 ? ++size : size;
 				} else {
-					let intPart = +(size+"").split(".")[0],
+					let intPart = parseInt(size, 10),
 						decimalPart = +(size+"").split(".")[1] ? +(size+"").split(".")[1][0] : null;
 
 					if (decimalPart && intPart % 2 === 0) {
@@ -5212,7 +5202,6 @@
 			ctx.lineTo(x2 + Math.cos(lineDeg1 * Math.PI / 180) * arrowSize / 2, y2 + Math.sin(lineDeg1 * Math.PI / 180) * arrowSize / 2);
 			ctx.lineTo(x2 + Math.cos(lineDeg * Math.PI / 180) * arrowSize, y2 + Math.sin(lineDeg * Math.PI / 180) * arrowSize);
 			ctx.lineTo(x2 + Math.cos(lineDeg2 * Math.PI / 180) * arrowSize / 2, y2 + Math.sin(lineDeg2 * Math.PI / 180) * arrowSize / 2);
-			// ctx.closePath().stroke();
 			ctx.closePath().fill();
 		};
 		const drawDot = function (x, y, color) {
@@ -5249,23 +5238,7 @@
 			// draw main rectangle
 			ctx.beginPath();
 			ctx.strokeRect(x1, y1, tableWidth, tableHeight);
-			// ctx.moveTo(x1, y1);
-			// ctx.lineTo(x1 + tableWidth, y1);
-			// ctx.lineTo(x1 + tableWidth, y1 + tableHeight);
-			// ctx.lineTo(x1, y1 + tableHeight);
-			// ctx.lineTo(x1, y1);
-			// ctx.lineHor(x1, y1 - lineWidth, x1 + tableWidth);
-			// ctx.lineVer(x1 + tableWidth, y1 - lineWidth, y1 + tableHeight);
-			// ctx.lineHor(x1, y1 + tableHeight, x1 + tableWidth);
-			// ctx.lineVer(x1, y1 - lineWidth, y1 + tableHeight);
 			ctx.stroke();
-
-			// Draw additional rectangle
-			// ctx.beginPath();
-			// let multiplier = zoom < 3 ? 1.5 : 1.2;
-			// ctx.fillRect(x1, y1, tableWidth + 0.5, lineWidth * multiplier);
-			// ctx.stroke();
-			// ctx.closePath().fill();
 
 			ctx.beginPath();
 			let multiplier = zoom < 3 ? 1.5 : 1.2;
