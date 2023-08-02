@@ -38,7 +38,8 @@
 */
 function (window, undefined) {
     // Import
-    let cBaseOperator = AscCommonExcel.cBaseOperator;
+    const cBaseOperator = AscCommonExcel.cBaseOperator;
+    const sRegNumDecimalSeparator = AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator;
     /**
     * @constructor
     */
@@ -46,58 +47,55 @@ function (window, undefined) {
         this.oParsedFormula = oParsedFormula;
         this.nExpectedVal = nExpectedVal;
         this.oChangingCell = oChangingCell;
-        this.nRelativeError = 0.001; // relative error of goal seek. Default value is 1e-12
+        this.nRelativeError = 1e-6; // relative error of goal seek. Default value is 1e-6
         this.nMaxIterations = 100; // max iterations of goal seek. Default value is 100
+        this.nStep = null;
     }
     CGoalSeek.prototype.calculate = function() {
         let oParsedFormula = this.getParsedFormula();
         let oChangingCell = this.getChangingCell();
-        let nExpectedVal = this.getExpectedVal()
+        let nExpectedVal = this.getExpectedVal();
         let sChangingVal = this.getChangingCell().getValue();
         let nChangingVal = sChangingVal ? Number(sChangingVal) : 0;
-        let nStep = null;
         let nCurAttempt = 0;
         let nPrevValue = null;
-        oChangingCell.setValue('0');
+        let bReverseCompare = false;
+        this.initStep();
+        let nStep = this.getStep();
+        oChangingCell.setValue(String(nChangingVal).replace('.', sRegNumDecimalSeparator));
         oParsedFormula.parse();
-        let nFormulaOutStackLen = oParsedFormula.getOutStackSize();
-        let bLastElementIsOperator = oParsedFormula.getOutStackElem(nFormulaOutStackLen - 1) instanceof cBaseOperator;
-        if (bLastElementIsOperator && nExpectedVal < 0) {
-            nStep = bLastElementIsOperator ? -0.1 : -0.01;
+        let nFirstFormulaResult = oParsedFormula.calculate().getValue();
+        if (nFirstFormulaResult > nExpectedVal) {
+            bReverseCompare = true;
         }
-        nStep = bLastElementIsOperator ? 0.1 : 0.01;
 
         while(true) {
             nCurAttempt++;
-            console.log(`-DEBUG: Loop ${nCurAttempt}:  nChangingVal = ${nChangingVal}`);
-            oChangingCell.setValue(String(nChangingVal));
+            let sChangingValue = String(nChangingVal).replace('.', sRegNumDecimalSeparator);
+            oChangingCell.setValue(sChangingValue);
             oParsedFormula.parse();
             let nFactValue = oParsedFormula.calculate().getValue();
             let nDiff = Math.abs(nFactValue - nExpectedVal);
             if (nDiff < this.getRelativeError() || nCurAttempt === this.getMaxIterations()) {
-                console.log(`-DEBUG: Common attempts for goal seek: ${nCurAttempt}`);
                 return;
-            } else if (Math.abs(nFactValue) > Math.abs(nExpectedVal)) {
+            } else if ((!bReverseCompare && nFactValue > nExpectedVal) || (bReverseCompare && nFactValue < nExpectedVal)) {
                 //If nFactValue > nExpectedVal, then we use Regula Falsi method for calculate final changing value
                 // in interval [nPrevValue, nChangingVal]
-                console.log(`-DEBUG: Regula Falsi method`);
                 let nLow = nPrevValue
                 let nHigh = nChangingVal;
                 while (true) {
                     nCurAttempt++;
-                    oChangingCell.setValue(String(nLow));
+                    oChangingCell.setValue(String(nLow).replace('.', sRegNumDecimalSeparator));
                     oParsedFormula.parse();
                     let nLowFx = oParsedFormula.calculate().getValue() - nExpectedVal;
-                    oChangingCell.setValue(String(nHigh));
+                    oChangingCell.setValue(String(nHigh).replace('.', sRegNumDecimalSeparator));
                     oParsedFormula.parse();
                     let nHighFx = oParsedFormula.calculate().getValue() - nExpectedVal;
                     nChangingVal = nLow - nLowFx * (nHigh - nLow) / (nHighFx - nLowFx);
-                    console.log(`-DEBUG: Loop ${nCurAttempt}:  nChangingVal = ${nChangingVal}`)
-                    oChangingCell.setValue(String(nChangingVal));
+                    oChangingCell.setValue(String(nChangingVal).replace('.', sRegNumDecimalSeparator));
                     oParsedFormula.parse();
-                    nDiff = Math.abs(oParsedFormula.calculate().getValue() - nExpectedVal);
-                    if (nDiff < this.getRelativeError() || nCurAttempt === this.getMaxIterations()) {
-                        console.log(`-DEBUG: Common attempts for goal seek: ${nCurAttempt}`);
+                    nDiff = oParsedFormula.calculate().getValue() - nExpectedVal;
+                    if (Math.abs(nDiff) < this.getRelativeError() || nCurAttempt === this.getMaxIterations()) {
                         return;
                     } else if (nDiff < 0 === nLowFx < 0) {
                         nLow = nChangingVal;
@@ -112,6 +110,42 @@ function (window, undefined) {
             }
         }
     };
+    CGoalSeek.prototype.initStep = function () {
+        let oChangingCell = this.getChangingCell();
+        let sChangingVal = this.getChangingCell().getValue();
+        let nChangingVal = sChangingVal ? Number(sChangingVal) : 0;
+        let oParsedFormula = this.getParsedFormula();
+        let nExpectedVal = this.getExpectedVal();
+
+        // Find first formula result for init step
+        oChangingCell.setValue(String(nChangingVal).replace('.', sRegNumDecimalSeparator));
+        oParsedFormula.parse();
+        let nFirstFormulaResult = oParsedFormula.calculate().getValue();
+        // Checking: Formula has arithmetic operator
+        let nFormulaOutStackLen = oParsedFormula.getOutStackSize();
+        let oLastElement = oParsedFormula.getOutStackElem(nFormulaOutStackLen - 1);
+        let bLastElementIsOperator = oLastElement instanceof cBaseOperator;
+        if (bLastElementIsOperator && !oLastElement.toString().includes('/') && (nExpectedVal < 0 || nFirstFormulaResult > nExpectedVal)) {
+            this.setStep(bLastElementIsOperator && !oLastElement.toString().includes('^') ? -0.1 : -0.01);
+        } else if (nExpectedVal > 0 && nFirstFormulaResult === 0) { // Checking next value. If next value is negative number than step must be gone reverse
+            oChangingCell.setValue(String('0.1').replace('.', sRegNumDecimalSeparator));
+            oParsedFormula.parse();
+            let nFormulaResult = oParsedFormula.calculate().getValue();
+            if (nFormulaResult < 0) {
+                this.setStep(bLastElementIsOperator && !oLastElement.toString().includes('^') ? -0.1 : -0.01);
+            } else {
+                this.setStep(bLastElementIsOperator && !oLastElement.toString().includes('^') ? 0.1 : 0.01);
+            }
+        } else {
+            this.setStep(bLastElementIsOperator && !oLastElement.toString().includes('^') ? 0.1 : 0.01);
+        }
+    }
+    CGoalSeek.prototype.getStep = function () {
+        return this.nStep;
+    }
+    CGoalSeek.prototype.setStep = function(nStep) {
+        this.nStep = nStep;
+    }
     CGoalSeek.prototype.getParsedFormula = function() {
         return this.oParsedFormula;
     };

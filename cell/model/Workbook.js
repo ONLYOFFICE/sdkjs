@@ -12244,18 +12244,23 @@
 		this.nColsCount = val;
 	};
 
-	Worksheet.prototype.formulaGoalSeek = function(sFormulaCell, nExpectedValue, sChangingCell) {
+	Worksheet.prototype.formulaGoalSeek = function(sFormulaCell, sExpectedValue, sChangingCell) {
 		let oParserFormula;
 
 		sFormulaCell = sFormulaCell.split("!")[1];
-
+		if (~sFormulaCell.indexOf(",")) {
+			sFormulaCell = sFormulaCell.slice(0, sFormulaCell.indexOf(","));
+		}
 		let oFormulaCell = this.getCell2(sFormulaCell);
 		this._getCell(oFormulaCell.bbox.r1, oFormulaCell.bbox.c1, function (cell) {
 			oParserFormula = cell.getFormulaParsed();
 		});
 
 		sChangingCell = sChangingCell.split("!")[1];
-		let oGoalSeek = new AscCommonExcel.CGoalSeek(oParserFormula, nExpectedValue, this.getRange2(sChangingCell));
+		if (~sChangingCell.indexOf(",")) {
+			sChangingCell = sChangingCell.slice(0, sChangingCell.indexOf(","));
+		}
+		let oGoalSeek = new AscCommonExcel.CGoalSeek(oParserFormula, Number(sExpectedValue), this.getRange2(sChangingCell));
 		// Run goal seek
 		oGoalSeek.calculate();
 	};
