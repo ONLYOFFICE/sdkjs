@@ -56,6 +56,7 @@ function (window, undefined) {
 		this.inLoop = null;
 		this.isPrecedentsCall = null;
 		this.precedentsAreas = null;
+		this.precedentsAreasHeaders = null,
 		this.data = {
 			lastHeaderIndex: -1,
 			prevIndex: -1,
@@ -782,59 +783,37 @@ function (window, undefined) {
 		}
 
 		const cellIndex = AscCommonExcel.getCellIndex(row, col);
-		const getAllAreaIndexesWithoutCalc = function (areas, cellIndex) {
+		const getAllAreaIndexesWithFormula = function (areas, areaName) {
 			const indexes = [];
 			if (!areas) {
 				return;
-			}
-			for (const area in areas) {
-				if (areas[area].areaHeader !== cellIndex) {
-					continue;
-				}
-				for (let i = areas[area].range.r1; i <= areas[area].range.r2; i++) {
-					for (let j = areas[area].range.c1; j <= areas[area].range.c2; j++) {
-						let index = AscCommonExcel.getCellIndex(i, j);
-						indexes.push(index);
-					}
-				}
-			}
-			return indexes;
-		};
-		const getAllAreaIndexes = function (areas, header) {
-			const indexes = [];
-			if (!areas) {
-				return;
-			}
-			for (const area in areas) {
-				if (areas[area].isCalculated || areas[area].areaHeader !== header) {
-					continue;
-				}
-				for (let i = areas[area].range.r1; i <= areas[area].range.r2; i++) {
-					for (let j = areas[area].range.c1; j <= areas[area].range.c2; j++) {
-						let index = AscCommonExcel.getCellIndex(i, j);
-						indexes.push(index);
-					}
-				}
-				areas[area].isCalculated = true;
 			}
 
+			let area = areas[areaName];
+			// if (area.isCalculated) {
+			// 	return indexes;
+			// }
+
+			for (let i = area.range.r1; i <= area.range.r2; i++) {
+				for (let j = area.range.c1; j <= area.range.c2; j++) {
+					// ??? check parserFormula and return indexes only with it
+					if (!ws.getCell3(i, j).isFormula()) {
+						continue;
+					}
+					let index = AscCommonExcel.getCellIndex(i, j);
+					indexes.push(index);
+				}
+			}
+
+			area.isCalculated = true;
 			return indexes;
 		};
 		const isCellAreaHeader = function (cellIndex) {
-			if (!t.currentPrecedentsAreas) {
+			if (!t.currentPrecedentsAreas || !t.precedentsAreasHeaders) {
 				return;
 			}
-			for (let area in t.currentPrecedentsAreas) {
-				if (t.currentPrecedentsAreas[area].areaHeader === cellIndex) {
-					return true;
-				}
-			}
-		};
-		const getAreaName = function (areas, header) {
-			for (const area in areas) {
-				if (areas[area].areaHeader == header) {
-					return area;
-				}
+			if (t.precedentsAreasHeaders[cellIndex]) {
+				return true;
 			}
 		};
 
@@ -847,26 +826,18 @@ function (window, undefined) {
 		let isAreaHeader = callFromArea ? false : isCellAreaHeader(cellIndex);
 		if (this.currentPrecedentsAreas && isSecondCall && isAreaHeader) {
 			// calculate all precedents in areas
-			let areaIndexes = getAllAreaIndexes(this.currentPrecedentsAreas, cellIndex);
-			let areaName = getAreaName(this.currentPrecedentsAreas, cellIndex);
+			let areaName = this.precedentsAreasHeaders[cellIndex];
+			let areaIndexes = getAllAreaIndexesWithFormula(this.currentPrecedentsAreas, areaName);
 
 			if (!this.currentCalculatedPrecedentAreas[areaName]) {
 				this.currentCalculatedPrecedentAreas[areaName] = {};
-				if (areaIndexes.length > 0) {
-					// go through the values and check precedents for each
-					for (let index of areaIndexes) {
-						let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
-						if (!ws.getCell3(cellAddress.row, cellAddress.col).isFormula()) {
-							continue;
-						}
-						this.calculatePrecedents(cellAddress.row, cellAddress.col, null, true);
-					}
-				} else {
-					areaIndexes = getAllAreaIndexesWithoutCalc(this.currentPrecedentsAreas, cellIndex);
-					for (let index of areaIndexes) {
-						let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
-						this.calculatePrecedents(cellAddress.row, cellAddress.col, null, true);
-					}
+				// go through the values and check precedents for each
+				for (let index of areaIndexes) {
+					let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
+					// if (!ws.getCell3(cellAddress.row, cellAddress.col).isFormula()) {
+					// 	continue;
+					// }
+					this.calculatePrecedents(cellAddress.row, cellAddress.col, null, true);
 				}
 			}
 		} else if (formulaParsed) {
@@ -900,7 +871,7 @@ function (window, undefined) {
 					let is3D = elemType === cElementType.cell3D || elemType === cElementType.cellsRange3D || elemType === cElementType.name3D,
 						isArea = elemType === cElementType.cellsRange || elemType === cElementType.name,
 						isDefName = elemType === cElementType.name || elemType === cElementType.name3D,
-						isTable = elemType === cElementType.table;
+						isTable = elemType === cElementType.table, areaName;
 
 					if (elemType === cElementType.cell || isArea || is3D || isTable) {
 
@@ -983,7 +954,7 @@ function (window, undefined) {
 
 						// if the area is on the same sheet - write to the array of areas for drawing
 						if (isArea && !is3D) {
-							let areaName, copyRange = elemRange.clone();
+							let copyRange = elemRange.clone();
 							if (shared && !isTable) {
 								const offset = {
 									row: row - base.nRow,
@@ -1009,8 +980,11 @@ function (window, undefined) {
 							this._setPrecedents(currentCellIndex, elemCellIndex);
 							this.setPrecedentExternal(currentCellIndex);
 						} else {
-							this._setPrecedents(currentCellIndex, elemCellIndex);
+							this._setPrecedents(currentCellIndex, elemCellIndex, false, false);
 							this._setDependents(elemCellIndex, currentCellIndex);
+							if (areaName) {
+								this._setPrecedentsAreaHeader(elemCellIndex, areaName);
+							}
 						}
 					}
 				}
@@ -1153,7 +1127,7 @@ function (window, undefined) {
 			}
 		}
 	};
-	TraceDependentsManager.prototype._setPrecedents = function (from, to, isDependent, isAreaHeader) {
+	TraceDependentsManager.prototype._setPrecedents = function (from, to, isDependent, areaName) {
 		if (!this.precedents) {
 			this.precedents = {};
 		}
@@ -1163,7 +1137,13 @@ function (window, undefined) {
 		// TODO calculated: 1, not_calculated: 2
 		// TODO isAreaHeader: "A3:B4"
 		// this.precedents[from][to] = isDependent ? 2 : 1;
-		this.precedents[from][to] = 1;
+		this.precedents[from][to] = areaName ? areaName : 1;
+	};
+	TraceDependentsManager.prototype._setPrecedentsAreaHeader = function (headerCellIndex, areaName) {
+		if (!this.precedentsAreasHeaders) {
+			this.precedentsAreasHeaders = {};
+		}
+		this.precedentsAreasHeaders[headerCellIndex] = areaName;
 	};
 	TraceDependentsManager.prototype._setPrecedentsAreas = function (area) {
 		if (!this.precedentsAreas) {
@@ -1215,6 +1195,7 @@ function (window, undefined) {
 		this.precedentsAreas = null;
 		this.currentPrecedentsAreas = null;
 		this.currentCalculatedPrecedentAreas = null;
+		this.precedentsAreasHeaders = null,
 		this._setDefaultData();
 	};
 	TraceDependentsManager.prototype.clearCellTraces = function (row, col) {
