@@ -8900,10 +8900,10 @@ var editor;
 		return ws && ws.formulaGoalSeek(sFormulaCell, nExpectedValue, sChangingCell);
 	};
 
-	/*
-	 * Export
-	 * -----------------------------------------------------------------------------
-	 */
+  /*
+  * Export
+  * -----------------------------------------------------------------------------
+  */
 
   asc["spreadsheet_api"] = spreadsheet_api;
   prot = spreadsheet_api.prototype;
