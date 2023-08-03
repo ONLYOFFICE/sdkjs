@@ -8373,8 +8373,8 @@
 
     InitClass(CDateAx, CAxisBase, AscDFH.historyitem_type_DateAx);
     CDateAx.prototype.getMenuProps = function() {
-        var oProps = CCatAx.prototype.getMenuProps.call(this);
-        oProps.putAxisType(c_oAscAxisType.date);
+        const oProps = CCatAx.prototype.getMenuProps.call(this);
+        //oProps.putAxisType(c_oAscAxisType.date);
         return oProps;
     };
     CDateAx.prototype.setMenuProps = CCatAx.prototype.setMenuProps;
@@ -13713,7 +13713,7 @@
                 }
                 if(bDocument && para_drawing instanceof AscCommonWord.ParaDrawing) {
 
-                    var hdr_ftr = para_drawing.DocumentContent.IsHdrFtr(true);
+                    var hdr_ftr = para_drawing.isHdrFtrChild(true);
                     if(hdr_ftr) {
                         hdr_ftr.Content.SetDocPosType(docpostype_DrawingObjects);
                         hdr_ftr.Set_CurrentElement(bUpdate);

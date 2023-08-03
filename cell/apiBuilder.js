@@ -3273,27 +3273,27 @@
 	 */
 
 	/**
-	 * Properties for make search.
-	 * @typedef SearchData
-	 * @param {string | undefined} What - The data to search for.
-	 * @param {ApiRange} After - The cell after which you want the search to begin. If this argument is not specified, the search starts after the cell in the upper-left corner of the range.
-	 * @param {XlFindLookIn} LookIn - Search data type (formulas or values).
-	 * @param {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
-	 * @param {XlSearchOrder} SearchOrder - Range search order - by rows or by columns.
-	 * @param {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
-	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
+	 * Properties to make search.
+	 * @typedef {Object} SearchData
+	 * @property {string | undefined} What - The data to search for.
+	 * @property {ApiRange} After - The cell after which you want the search to begin. If this argument is not specified, the search starts after the cell in the upper-left corner of the range.
+	 * @property {XlFindLookIn} LookIn - Search data type (formulas or values).
+	 * @property {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
+	 * @property {XlSearchOrder} SearchOrder - Range search order - by rows or by columns.
+	 * @property {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
+	 * @property {boolean} MatchCase - Case sensitive or not. The default value is "false".
 	 */
 
 	/**
-	 * Properties for make search and replace.
-	 * @typedef ReplaceData
-	 * @param {string | undefined} What - The data to search for.
-	 * @param {string} Replacement - The replacement string.
-	 * @param {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
-	 * @param {XlSearchOrder} SearchOrder - Range search order - by rows or by columns.
-	 * @param {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
-	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
-	 * @param {boolean} ReplaceAll - Specifies if all the found data will be replaced or not. The default value is "true".
+	 * Properties to make search and replace.
+	 * @typedef {Object} ReplaceData
+	 * @property {string | undefined} What - The data to search for.
+	 * @property {string} Replacement - The replacement string.
+	 * @property {XlLookAt} LookAt - Specifies whether the whole search text or any part of the search text is matched.
+	 * @property {XlSearchOrder} SearchOrder - Range search order - by rows or by columns.
+	 * @property {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
+	 * @property {boolean} MatchCase - Case sensitive or not. The default value is "false".
+	 * @property {boolean} ReplaceAll - Specifies if all the found data will be replaced or not. The default value is "true".
 	 */
 
 	/**

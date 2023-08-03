@@ -3696,7 +3696,8 @@ window.AscCommon.g_cIsBeta = "false";
 		ConfirmReplaceFormulaInTable: 2,
 		ConfirmChangeProtectRange: 3,
 		ConfirmMaxChangesSize: 4,
-		ConfirmAddCellWatches: 5
+		ConfirmAddCellWatches: 5,
+		ConfirmReplaceHeaderFooterPicture: 6
 	};
 
 
@@ -5719,6 +5720,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['ConfirmChangeProtectRange'] = prot.ConfirmChangeProtectRange;
 	prot['ConfirmMaxChangesSize'] = prot.ConfirmMaxChangesSize;
 	prot['ConfirmAddCellWatches'] = prot.ConfirmAddCellWatches;
+	prot['ConfirmReplaceHeaderFooterPicture'] = prot.ConfirmReplaceHeaderFooterPicture;
 
 	window['Asc'].c_oAscSmartArtSections = c_oAscSmartArtSections;
 

@@ -4980,8 +4980,9 @@
 						var i, graphic_page;
 						if (direction > 0) {
 							var selectNext = function (oThis, last_selected_object) {
+								let oParaDrawing = last_selected_object.GetParaDrawing();
 								var search_array = oThis.getAllObjectsOnPage(last_selected_object.selectStartPage,
-									last_selected_object.parent && last_selected_object.parent.DocumentContent && last_selected_object.parent.DocumentContent.IsHdrFtr(false));
+									oParaDrawing && oParaDrawing.isHdrFtrChild(false));
 
 								if (search_array.length > 0) {
 									for (var i = search_array.length - 1; i > -1; --i) {
@@ -5031,8 +5032,9 @@
 							}
 						} else {
 							var selectPrev = function (oThis, first_selected_object) {
+								let oParaDrawing = first_selected_object.GetParaDrawing();
 								var search_array = oThis.getAllObjectsOnPage(first_selected_object.selectStartPage,
-									first_selected_object.parent && first_selected_object.parent.DocumentContent && first_selected_object.parent.DocumentContent.IsHdrFtr(false));
+									oParaDrawing && oParaDrawing.isHdrFtrChild(false));
 
 								if (search_array.length > 0) {
 									for (var i = 0; i < search_array.length; ++i) {

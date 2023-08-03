@@ -310,7 +310,7 @@ function CEditorPage(api)
 			if (undefined !== pos.x)
 				this.X = pos.x;
 			else if (undefined !== pos.left)
-				this.X = pos.x;
+				this.X = pos.left;
 
 			if (undefined !== pos.y)
 				this.Y = pos.y;

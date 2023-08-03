@@ -195,7 +195,7 @@ window["DesktopOfflineAppDocumentEndSave"] = function(error, hash, password)
 	editor.LastUserSavedIndex = undefined;
 	
 	if (2 == error)
-		editor.sendEvent("asc_onError", c_oAscError.ID.ConvertationSaveError, c_oAscError.Level.Critical);
+		editor.sendEvent("asc_onError", c_oAscError.ID.ConvertationSaveError, c_oAscError.Level.NoCritical);
 
 	if (0 == error)
 	{

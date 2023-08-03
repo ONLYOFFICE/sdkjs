@@ -25564,6 +25564,22 @@
 		return AscBrowser.retinaPixelRatio;
 	};
 
+	WorksheetView.prototype.changeLegacyDrawingHFPictures = function (picturesMap) {
+		//lock?
+		if (!picturesMap) {
+			return;
+		}
+		this.model.changeLegacyDrawingHFPictures(picturesMap);
+	};
+
+	WorksheetView.prototype.removeLegacyDrawingHFPictures = function (aPictures) {
+		//lock?
+		if (!aPictures) {
+			return;
+		}
+		this.model.removeLegacyDrawingHFPictures(aPictures);
+	};
+
 
 	function cAsyncAction() {
 		this.timer = null;

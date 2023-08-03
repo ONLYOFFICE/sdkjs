@@ -5981,7 +5981,9 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 					undoStandard[i].fill("");
 				}
 				let res = checkHistoryOperation2(assert, pivot, standard, message, undoStandard, function () {
-					pivot.showDetails(wsDetails, row, col);
+					const indexes = pivot.getItemsIndexesByActiveCell(row, col);
+					const arrayItemFieldsMap = pivot.getNoFilterItemFieldsMapArray(indexes.rowItemIndex, indexes.colItemIndex)
+					pivot.showDetails(wsDetails, arrayItemFieldsMap);
 				}, function (assert, pivot, standard, message) {
 					let cells = [];
 					for (let i = 0; i < standard.length; i += 1) {

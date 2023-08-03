@@ -8036,7 +8036,7 @@ function parserFormula( formula, parent, _ws ) {
 			if (ref && opt_ws) {
 				// TODO check behaviour when row === 1
 				row = 1 === val.array.length ? 0 : opt_row - ref.r1;
-				col = 1 === val.array[0].length ? 0 : opt_col - ref.c1;
+				col = (val.array[0] && 1 === val.array[0].length) ? 0 : opt_col - ref.c1;
 				if (val.array[row] && val.array[row][col]) {
 					val = val.getElementRowCol(row, col);
 				} else {

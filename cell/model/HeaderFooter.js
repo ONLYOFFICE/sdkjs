@@ -35,17 +35,16 @@
  * @param {Window} window
  * @param {undefined} undefined
  */
-	function (window, undefined) {
+function (window, undefined) {
 
 	/*
 	 * Import
 	 * -----------------------------------------------------------------------------
 	 */
-	var AscBrowser = AscCommon.AscBrowser;
-	var History = AscCommon.History;
-	var asc = window["Asc"];
-	var asc_typeof = asc.typeOf;
-	var c_oAscError = asc.c_oAscError;
+	const AscBrowser = AscCommon.AscBrowser;
+	const History = AscCommon.History;
+	const asc = window["Asc"];
+	const c_oAscError = asc.c_oAscError;
 
 	//HEADER/FOOTER
 	function HeaderFooterField(val, format, text) {
@@ -55,8 +54,9 @@
 		this.textField = text;
 		this._calculatedText = null;
 	}
+
 	HeaderFooterField.prototype.clone = function () {
-		var res = new HeaderFooterField();
+		let res = new HeaderFooterField();
 
 		res.filed = this.filed;
 		res.format = this.format.clone();
@@ -78,7 +78,7 @@
 			pageSetup = ws && ws.model && ws.model.PagePrintOptions && ws.model.PagePrintOptions.pageSetup;
 		}
 
-		switch(this.field) {
+		switch (this.field) {
 			case asc.c_oAscHeaderFooterField.pageNumber: {
 				let firstPageNumber = (pageSetup && pageSetup.useFirstPageNumber && pageSetup.firstPageNumber) ? pageSetup.firstPageNumber : 1;
 				res = indexPrintPage + firstPageNumber + "";
@@ -139,7 +139,6 @@
 	};
 
 
-
 	function HeaderFooterParser() {
 		this.tokens = [];
 		this.curTokenPosition = null;
@@ -153,18 +152,18 @@
 		this.isCalc = null;
 	}
 
-	var c_oPortionPosition = {
+	let c_oPortionPosition = {
 		left: 0,
 		center: 1,
 		right: 2
 	};
 
-	var c_nPortionLeftHeader = 0;
-	var c_nPortionCenterHeader = 1;
-	var c_nPortionRightHeader = 2;
-	var c_nPortionLeftFooter = 3;
-	var c_nPortionCenterFooter = 4;
-	var c_nPortionRightFooter = 5;
+	let c_nPortionLeftHeader = 0;
+	let c_nPortionCenterHeader = 1;
+	let c_nPortionRightHeader = 2;
+	let c_nPortionLeftFooter = 3;
+	let c_nPortionCenterFooter = 4;
+	let c_nPortionRightFooter = 5;
 
 	/*Documentation:
 		There is no required order in which these codes need to appear.
@@ -217,7 +216,7 @@
 		&H - code for "shadow style"
 	*/
 	HeaderFooterParser.prototype.parse = function (date) {
-		var c_nText = 0, c_nToken = 1, c_nFontName = 2, c_nFontStyle = 3, c_nFontHeight = 4;
+		let c_nText = 0, c_nToken = 1, c_nFontName = 2, c_nFontStyle = 3, c_nFontHeight = 4;
 
 		this.date = date;
 
@@ -225,13 +224,13 @@
 		this.curTokenPosition = c_oPortionPosition.center;
 		this.str = "";
 
-		var nState = c_nText;
-		var nFontHeight = 0;
-		var sFontName = "";
-		var sFontStyle = "";
+		let nState = c_nText;
+		let nFontHeight = 0;
+		let sFontName = "";
+		let sFontStyle = "";
 
-		for (var i = 0; i < date.length; i++) {
-			var cChar = date[i];
+		for (let i = 0; i < date.length; i++) {
+			let cChar = date[i];
 			switch (nState) {
 				case c_nText: {
 					switch (cChar) {
@@ -426,11 +425,11 @@
 		this.isCalc = true;
 	};
 
-	HeaderFooterParser.prototype.convertFontColor = function(rColor) {
-		var color;
-		if( (rColor[ 2 ] === '+') || (rColor[ 2 ] === '-') ) {
-			var theme = rColor.substr(0, 2) - 0;
-			var tint = rColor.substr(2) - 0;
+	HeaderFooterParser.prototype.convertFontColor = function (rColor) {
+		let color;
+		if ((rColor[2] === '+') || (rColor[2] === '-')) {
+			let theme = rColor.substr(0, 2) - 0;
+			let tint = rColor.substr(2) - 0;
 			color = AscCommonExcel.g_oColorManager.getThemeColor(theme, tint / 100);
 
 		} else {
@@ -439,30 +438,30 @@
 		return color;
 	};
 
-	HeaderFooterParser.prototype.convertFontColorFromObj = function(obj) {
-		var color = null;
+	HeaderFooterParser.prototype.convertFontColorFromObj = function (obj) {
+		let color = null;
 
-		if(obj instanceof AscCommonExcel.ThemeColor) {
-			var theme = obj.theme.toString();
-			if(theme.length === 1) {
+		if (obj instanceof AscCommonExcel.ThemeColor) {
+			let theme = obj.theme.toString();
+			if (theme.length === 1) {
 				theme = "0" + theme;
 			}
-			var tint = (obj.tint * 100).toFixed(0);
-			if(1 === tint.length) {
+			let tint = (obj.tint * 100).toFixed(0);
+			if (1 === tint.length) {
 				tint = "00" + tint;
-			} else if(2 === tint.length) {
+			} else if (2 === tint.length) {
 				tint = "0" + tint;
 			}
 			color = theme + "+" + tint;
-		} else if(obj instanceof AscCommonExcel.RgbColor) {
+		} else if (obj instanceof AscCommonExcel.RgbColor) {
 
-			var toHex = function componentToHex(c) {
-				var res = c.toString(16);
+			let toHex = function componentToHex(c) {
+				let res = c.toString(16);
 				return res.length === 1 ? "0" + res : res;
 			};
 
 			color = toHex(obj.getR()) + toHex(obj.getG()) + toHex(obj.getB());
-		} else if(obj === null){
+		} else if (obj === null) {
 			color = "01+000";
 		}
 
@@ -497,7 +496,6 @@
 		this.pushField(new HeaderFooterField(asc.c_oAscHeaderFooterField.lineBreak));
 	};
 
-
 	HeaderFooterParser.prototype.convertFontName = function (rName) {
 		if ("" !== rName) {
 			// single dash is document default font
@@ -515,11 +513,11 @@
 		//в ms жесткая завязка на font style. в lo - ддопускаются следующие строчки - "bold italic bold"  и тп
 		this.font.b = this.font.i = false;
 
-		var fontStyleArr = rStyle.split(" ");
-		for(var i = 0; i < fontStyleArr.length; i++) {
-			if("italic" === fontStyleArr[i].toLowerCase()) {
+		let fontStyleArr = rStyle.split(" ");
+		for (let i = 0; i < fontStyleArr.length; i++) {
+			if ("italic" === fontStyleArr[i].toLowerCase()) {
 				this.font.i = true;
-			} else if("bold" === fontStyleArr[i].toLowerCase()) {
+			} else if ("bold" === fontStyleArr[i].toLowerCase()) {
 				this.font.b = true;
 			}
 		}
@@ -530,7 +528,7 @@
 	};
 
 	HeaderFooterParser.prototype.setPortion = function (val) {
-		if (val != this.curTokenPosition) {
+		if (val !== this.curTokenPosition) {
 			this.endPortion();
 			this.curTokenPosition = val;
 		}
@@ -541,25 +539,25 @@
 	};
 
 	HeaderFooterParser.prototype.getAllFonts = function (oFontMap) {
-		for(var i in this.allFontsMap) {
-			if(!oFontMap[i]) {
+		for (let i in this.allFontsMap) {
+			if (!oFontMap[i]) {
 				oFontMap[i] = 1;
 			}
 		}
 	};
 
 	HeaderFooterParser.prototype.assembleText = function () {
-		var newStr = "";
-		var curPortionLeft = this.assemblePortionText(c_oPortionPosition.left);
-		if(curPortionLeft) {
+		let newStr = "";
+		let curPortionLeft = this.assemblePortionText(c_oPortionPosition.left);
+		if (curPortionLeft) {
 			newStr += curPortionLeft;
 		}
-		var curPortionCenter = this.assemblePortionText(c_oPortionPosition.center);
-		if(curPortionCenter) {
+		let curPortionCenter = this.assemblePortionText(c_oPortionPosition.center);
+		if (curPortionCenter) {
 			newStr += curPortionCenter;
 		}
-		var curPortionRight = this.assemblePortionText(c_oPortionPosition.right);
-		if(curPortionRight) {
+		let curPortionRight = this.assemblePortionText(c_oPortionPosition.right);
+		if (curPortionRight) {
 			newStr += curPortionRight;
 		}
 		this.date = newStr;
@@ -567,19 +565,15 @@
 	};
 
 	HeaderFooterParser.prototype.splitByParagraph = function (cPortionCode) {
-		var res = [];
+		let res = [];
 
-		if(this.tokens[cPortionCode]) {
-			var index = 0;
-			var curPortion = this.tokens[cPortionCode];
-			for(var i = 0; i < curPortion.length; i++) {
-				if(!res[index]) {
+		if (this.tokens[cPortionCode]) {
+			let index = 0;
+			let curPortion = this.tokens[cPortionCode];
+			for (let i = 0; i < curPortion.length; i++) {
+				if (!res[index]) {
 					res[index] = [];
 				}
-				/*if(curPortion[i] instanceof HeaderFooterField) {
-				 index++;
-				 continue;
-				 }*/
 				res[index].push(curPortion[i]);
 			}
 		}
@@ -588,7 +582,7 @@
 	};
 
 	HeaderFooterParser.prototype.assemblePortionText = function (cPortion) {
-		var symbolPortion;
+		let symbolPortion;
 		switch (cPortion) {
 			case c_oPortionPosition.left: {
 				symbolPortion = "L";
@@ -604,36 +598,36 @@
 			}
 		}
 
-		var compareColors = function(color1, color2) {
-			var isEqual = true;
+		let compareColors = function (color1, color2) {
+			let isEqual = true;
 
-			if(color1 !== color2 || (color1 && color2 && color1.rgb !== color2.rgb)) {
+			if (color1 !== color2 || (color1 && color2 && color1.rgb !== color2.rgb)) {
 				isEqual = false;
 			}
 
 			return isEqual;
 		};
-		var res = "";
-		var fontList = true;
+		let res = "";
+		let fontList = true;
 
-		var aText = "";
-		var prevFont = new AscCommonExcel.Font();
-		var paragraphs = this.splitByParagraph(cPortion);
-		for (var j = 0; j < paragraphs.length; ++j) {
-			var aParaText = "";
-			var aPosList = paragraphs[j];
+		let aText = "";
+		let prevFont = new AscCommonExcel.Font();
+		let paragraphs = this.splitByParagraph(cPortion);
+		for (let j = 0; j < paragraphs.length; ++j) {
+			let aParaText = "";
+			let aPosList = paragraphs[j];
 
-			for (var i = 0; i < aPosList.length; ++i) {
+			for (let i = 0; i < aPosList.length; ++i) {
 
-				var aFont = aPosList[i].format;
+				let aFont = aPosList[i].format;
 
 				// font name and style
-				var newFont = aPosList[i].format;
-				var bNewFontName = !(prevFont.fn == newFont.fn);
-				var bNewStyle = (prevFont.b != newFont.b) || (prevFont.i != newFont.i);
+				let newFont = aPosList[i].format;
+				let bNewFontName = !(prevFont.fn === newFont.fn);
+				let bNewStyle = (prevFont.b !== newFont.b) || (prevFont.i !== newFont.i);
 
 				if (bNewFontName || (bNewStyle && fontList)) {
-					if(null === newFont.fn) {
+					if (null === newFont.fn) {
 						aParaText += "&\"" + "-";
 					} else {
 						aParaText += "&\"" + newFont.fn;
@@ -641,25 +635,25 @@
 
 					//TODO пересмотреть. MS каждый раз прописывает новый font style:
 					// сли у предыдущего фрагмента был bold, у нового bold и italic - то у нового будет прописаны и bold и italic
-					var fontStyleStr = "";
-					if(prevFont.b !== newFont.b) {
+					let fontStyleStr = "";
+					if (prevFont.b !== newFont.b) {
 						fontStyleStr = ",";
-						if(newFont.b === true) {
+						if (newFont.b === true) {
 							fontStyleStr += "Bold";
 						} else {
 							fontStyleStr += "Regular";
 						}
 					}
-					if(prevFont.i !== newFont.i) {
-						if("" === fontStyleStr) {
+					if (prevFont.i !== newFont.i) {
+						if ("" === fontStyleStr) {
 							fontStyleStr = ",";
 						} else {
 							fontStyleStr += " ";
 						}
 
-						if(newFont.i === true) {
+						if (newFont.i === true) {
 							fontStyleStr += "Italic";
-						} else if(-1 === fontStyleStr.indexOf("Regular")){
+						} else if (-1 === fontStyleStr.indexOf("Regular")) {
 							fontStyleStr += "Regular";
 						}
 					}
@@ -670,39 +664,44 @@
 
 				//font size
 				newFont.fs = aFont.fs;
-				var bFontHtChanged = (prevFont.fs != newFont.fs);
+				let bFontHtChanged = (prevFont.fs !== newFont.fs);
 				if (bFontHtChanged) {
 					aParaText += "&" + newFont.fs;
 				}
 
 				// underline
-				if (prevFont.u != newFont.u) {
-					var underline = (newFont.u == Asc.EUnderline.u) ? prevFont.u : newFont.u;
-					(underline == Asc.EUnderline.underlineSingle) ? aParaText += "&U" : aParaText += "&E";
+				if (prevFont.u !== newFont.u) {
+					let underline = (newFont.u === Asc.EUnderline.u) ? prevFont.u : newFont.u;
+					(underline === Asc.EUnderline.underlineSingle) ? aParaText += "&U" : aParaText += "&E";
 				}
 
 				// strikeout
-				if (prevFont.s != newFont.s) {
+				if (prevFont.s !== newFont.s) {
 					aParaText += "&S";
 				}
 
 				// super/sub script
-				if (prevFont.va != newFont.va) {
+				if (prevFont.va !== newFont.va) {
 					//aParaText += "&S";
 
-					switch(newFont.va)
-					{
+					switch (newFont.va) {
 						// close the previous super/sub script.
-						case AscCommon.vertalign_SuperScript: aParaText += "&X";  break;
-						case AscCommon.vertalign_SubScript:   aParaText += "&Y";  break;
-						default: (prevFont.va === AscCommon.vertalign_SuperScript) ? aParaText += "&X" : aParaText += "&Y"; break;
+						case AscCommon.vertalign_SuperScript:
+							aParaText += "&X";
+							break;
+						case AscCommon.vertalign_SubScript:
+							aParaText += "&Y";
+							break;
+						default:
+							(prevFont.va === AscCommon.vertalign_SuperScript) ? aParaText += "&X" : aParaText += "&Y";
+							break;
 					}
 				}
 
 
-				if(!compareColors(prevFont.c, newFont.c)) {
-					var newColor = this.convertFontColorFromObj(newFont.c);
-					if(null !== newColor) {
+				if (!compareColors(prevFont.c, newFont.c)) {
+					let newColor = this.convertFontColorFromObj(newFont.c);
+					if (null !== newColor) {
 						aParaText += "&K";
 						aParaText += newColor;
 					}
@@ -712,7 +711,7 @@
 
 				if (aPosList[i] instanceof HeaderFooterField) {
 					if (aPosList[i].field !== undefined) {
-						switch(aPosList[i].field) {
+						switch (aPosList[i].field) {
 							case asc.c_oAscHeaderFooterField.pageNumber: {
 								aParaText += "&P";
 								break;
@@ -782,17 +781,22 @@
 		this.canvasObj = canvasObj;
 		this.fragments = null;
 
+		this.pictures = null;
+		this.loadPictureInfo = null;
+
 		this.changed = false;
 	}
+
 	CHeaderFooterEditorSection.prototype.clone = function () {
-		var res = new CHeaderFooterEditorSection();
+		let res = new CHeaderFooterEditorSection();
 
 		res.type = this.type;
 		res.portion = this.portion;
 		res.canvasObj = this.canvasObj;
+		res.pictures = this.pictures;
 		if (this.fragments) {
 			res.fragments = [];
-			for (var i = 0; i < this.fragments.length; i++) {
+			for (let i = 0; i < this.fragments.length; i++) {
 				res.fragments.push(this.fragments[i].clone());
 			}
 		}
@@ -803,8 +807,8 @@
 		this.fragments = this.isEmptyFragments(val) ? null : val;
 	};
 	CHeaderFooterEditorSection.prototype.isEmptyFragments = function (val) {
-		var res = false;
-		if(val && val.length === 1 && val[0].getFragmentText() === "") {
+		let res = false;
+		if (val && val.length === 1 && val[0].getFragmentText() === "") {
 			res = true;
 		}
 		return res;
@@ -813,7 +817,7 @@
 		return this.fragments;
 	};
 	CHeaderFooterEditorSection.prototype.drawText = function () {
-		var t = this;
+		let t = this;
 
 		if (!this.canvasObj || !this.canvasObj.drawingCtx) {
 			return;
@@ -821,37 +825,37 @@
 
 		this.canvasObj.drawingCtx.clear();
 
-		var drawBackground = function () {
+		let drawBackground = function () {
 			t.canvasObj.drawingCtx.setFillStyle(new AscCommon.CColor(255, 255, 255))
 				.fillRect(0, 0, t.canvasObj.canvas.width, t.canvasObj.canvas.height);
 		};
 
-		if(!this.fragments) {
+		if (!this.fragments) {
 			//возможно стоит очищать канву в данном случае
 			drawBackground();
 			return;
 		}
 
-		var canvas = this.canvasObj.canvas;
-		var width = this.canvasObj.width;
-		var drawingCtx = this.canvasObj.drawingCtx;
+		let canvas = this.canvasObj.canvas;
+		let width = this.canvasObj.width;
+		let drawingCtx = this.canvasObj.drawingCtx;
 
 		//draw
 		//добавляю флаги для учета переноса строки
-		var wb = window["Asc"]["editor"].wb;
-		var ws = window["Asc"]["editor"].wb.getWorksheet();
-		var cellFlags = new AscCommonExcel.CellFlags();
+		let wb = window["Asc"]["editor"].wb;
+		let ws = window["Asc"]["editor"].wb.getWorksheet();
+		let cellFlags = new AscCommonExcel.CellFlags();
 		cellFlags.wrapText = true;
 		cellFlags.textAlign = this.getAlign();
 
 		//не зависит от зума страницы
-		var realZoom = ws.stringRender.drawingCtx.getZoom();
+		let realZoom = ws.stringRender.drawingCtx.getZoom();
 		ws.stringRender.drawingCtx.changeZoom(1);
 
-		var cellEditorWidth = width - 2 * wb.defaults.worksheetView.cells.padding + 1 + 2 * correctCanvasDiff;
+		let cellEditorWidth = width - 2 * wb.defaults.worksheetView.cells.padding + 1 + 2 * correctCanvasDiff;
 		ws.stringRender.setString(this.fragments, cellFlags);
-		var textMetrics = ws.stringRender._measureChars(cellEditorWidth);
-		var parentHeight = document.getElementById(this.canvasObj.idParent).clientHeight;
+		let textMetrics = ws.stringRender._measureChars(cellEditorWidth);
+		let parentHeight = document.getElementById(this.canvasObj.idParent).clientHeight;
 		canvas.height = textMetrics.height > parentHeight ? textMetrics.height : AscCommon.AscBrowser.convertToRetinaValue(parentHeight + 1, true);
 
 		drawBackground();
@@ -863,35 +867,101 @@
 		return document.getElementById(this.canvasObj.idParent);
 	};
 	CHeaderFooterEditorSection.prototype.appendEditor = function (editorElemId) {
-		var curElem = this.getElem();
-		var editorElem = document.getElementById(editorElemId);
+		let curElem = this.getElem();
+		let editorElem = document.getElementById(editorElemId);
 		curElem.appendChild(editorElem);
 	};
 	CHeaderFooterEditorSection.prototype.getAlign = function (portion) {
 		portion = undefined !== portion ? portion : this.portion;
 
-		var res = AscCommon.align_Left;
-		if(portion === c_nPortionCenterHeader || portion === c_nPortionCenterFooter) {
+		let res = AscCommon.align_Left;
+		if (portion === c_nPortionCenterHeader || portion === c_nPortionCenterFooter) {
 			res = AscCommon.align_Center;
-		} else if(portion === c_nPortionRightHeader || portion === c_nPortionRightFooter) {
+		} else if (portion === c_nPortionRightHeader || portion === c_nPortionRightFooter) {
 			res = AscCommon.align_Right;
 		}
 		return res;
 	};
+	CHeaderFooterEditorSection.prototype.getPictures = function () {
+		return this.pictures;
+	};
+	CHeaderFooterEditorSection.prototype.getStringName = function () {
+		let sPortionPrefix = this.getStringPortion();
+		if (sPortionPrefix) {
+			let sType = this.getStringType();
+			if (sType) {
+				return sPortionPrefix + sType;
+			}
+		}
+		return null;
+	};
+
+	CHeaderFooterEditorSection.prototype.getStringPortion = function () {
+		let sPortion = null;
+		switch (this.portion) {
+			case c_oPortionPosition.left: {
+				sPortion = "L";
+				break;
+			}
+			case c_oPortionPosition.center: {
+				sPortion = "C";
+				break;
+			}
+			case c_oPortionPosition.right: {
+				sPortion = "R";
+				break;
+			}
+		}
+
+		return sPortion;
+	};
+
+	CHeaderFooterEditorSection.prototype.getStringType = function () {
+		//"LH", "CH", "RH", "LF", "CF", "RF", "LHEVEN",..., "LHFIRST"
+		let sType = null;
+		switch (this.type) {
+			case asc.c_oAscPageHFType.oddFooter: {
+				sType = "F";
+				break;
+			}
+			case asc.c_oAscPageHFType.oddHeader: {
+				sType = "H";
+				break;
+			}
+			case asc.c_oAscPageHFType.evenHeader: {
+				sType = "HEVEN";
+				break;
+			}
+			case asc.c_oAscPageHFType.evenFooter: {
+				sType = "FEVEN";
+				break;
+			}
+			case asc.c_oAscPageHFType.firstHeader: {
+				sType = "HFIRST";
+				break;
+			}
+			case asc.c_oAscPageHFType.firstFooter: {
+				sType = "FFIRST";
+				break;
+			}
+		}
+
+		return sType;
+	};
 
 
 	function convertFieldToMenuText(val, _text) {
-		var textField = null;
-		var tM = AscCommon.translateManager;
-		var pageTag = "&[" + tM.getValue("Page") + "]";
-		var pagesTag = "&[" + tM.getValue("Pages") + "]";
-		var tabTag = "&[" + tM.getValue("Tab") + "]";
-		var dateTag = "&[" + tM.getValue("Date") + "]";
-		var fileTag = "&[" + tM.getValue("File") + "]";
-		var timeTag = "&[" + tM.getValue("Time") + "]";
-		var pictureTag = "&[" + tM.getValue("Picture") + "]";
+		let textField = null;
+		let tM = AscCommon.translateManager;
+		let pageTag = "&[" + tM.getValue("Page") + "]";
+		let pagesTag = "&[" + tM.getValue("Pages") + "]";
+		let tabTag = "&[" + tM.getValue("Tab") + "]";
+		let dateTag = "&[" + tM.getValue("Date") + "]";
+		let fileTag = "&[" + tM.getValue("File") + "]";
+		let timeTag = "&[" + tM.getValue("Time") + "]";
+		let pictureTag = "&[" + tM.getValue("Picture") + "]";
 
-		switch (val){
+		switch (val) {
 			case asc.c_oAscHeaderFooterField.pageNumber: {
 				textField = pageTag;
 				break;
@@ -938,8 +1008,9 @@
 		return textField;
 	}
 
-	var correctCanvasDiff = 0;
+	let correctCanvasDiff = 0;
 	window.Asc.g_header_footer_editor = null;
+
 	function CHeaderFooterEditor(idArr, width, pageType, opt_objForSave) {
 		this.parentWidth = AscCommon.AscBrowser.convertToRetinaValue(this.correctCanvasWidth(width), true);
 		this.parentHeight = AscCommon.AscBrowser.convertToRetinaValue(90, true);
@@ -964,6 +1035,8 @@
 		this.differentOddEven = null;
 		this.scaleWithDoc = null;
 
+		this.needAddPicturesMap = null;
+
 		if (idArr) {
 			window.Asc.g_header_footer_editor = this;
 			this.init(idArr, opt_objForSave);
@@ -974,9 +1047,9 @@
 		//создаем 6 канвы(+ добавляем их в дом структуру внутрь элемента от меню) + 3 drawingCtx, необходимые для отрисовки 3 поля
 		//делается это только 1 раз при инициализации класса
 		//потом эти 6 канвы используются для отрисовки всех first/odd/even
-		var t = this;
-		var createAndPushCanvasObj = function(id) {
-			var obj = {};
+		let t = this;
+		let createAndPushCanvasObj = function (id) {
+			let obj = {};
 			obj.idParent = id;
 			obj.id = id + "-canvas";
 			obj.width = t.parentWidth;
@@ -991,7 +1064,7 @@
 			obj.canvas.height = t.parentHeight;
 			obj.canvas.style.width = AscCommon.AscBrowser.convertToRetinaValue(t.parentWidth) + "px";
 
-			var curElem = document.getElementById(id);
+			let curElem = document.getElementById(id);
 			curElem.appendChild(obj.canvas);
 
 			obj.drawingCtx = new asc.DrawingContext({
@@ -1011,8 +1084,8 @@
 
 
 		//add common options
-		var optHeaderFooterProps = opt_objForSave && opt_objForSave.headerFooter;
-		var ws = this.wb.getWorksheet();
+		let optHeaderFooterProps = opt_objForSave && opt_objForSave.headerFooter;
+		let ws = this.wb.getWorksheet();
 		this.alignWithMargins = optHeaderFooterProps ? optHeaderFooterProps.alignWithMargins : ws.model.headerFooter.alignWithMargins;
 		this.differentFirst = optHeaderFooterProps ? optHeaderFooterProps.differentFirst : ws.model.headerFooter.differentFirst;
 		this.differentOddEven = optHeaderFooterProps ? optHeaderFooterProps.differentOddEven : ws.model.headerFooter.differentOddEven;
@@ -1031,18 +1104,18 @@
 	};
 
 	CHeaderFooterEditor.prototype.switchHeaderFooterType = function (type) {
-		if(type === this.pageType) {
+		if (type === this.pageType) {
 			return;
 		}
-		var isError = this._checkSave();
-		if(null !== isError) {
+		let isError = this._checkSave();
+		if (null !== isError) {
 			return isError;
 		}
 
-		if(this.cellEditor) {
+		if (this.cellEditor) {
 			//save
-			var prevField = this._getSectionById(this.curParentFocusId);
-			var prevFragments = this.cellEditor.options.fragments;
+			let prevField = this._getSectionById(this.curParentFocusId);
+			let prevFragments = this.cellEditor.options.fragments;
 			prevField.setFragments(prevFragments);
 			prevField.drawText();
 
@@ -1061,24 +1134,24 @@
 	};
 
 	CHeaderFooterEditor.prototype.click = function (id, x, y) {
-		var api = this.api;
-		var wb = this.wb;
-		var t = this;
+		let api = this.api;
+		let wb = this.wb;
+		let t = this;
 
-		var editLockCallback = function() {
+		let editLockCallback = function () {
 			id = id.replace("#", "");
 
 			//если находимся в том же элементе
-			if(t.curParentFocusId === id) {
+			if (t.curParentFocusId === id) {
 				api.asc_enableKeyEvents(true);
 				return;
 			}
 
 			//TODO ещё нужно учитывать, что находимся в той же вкладке - odd/even/...
 			//если перед этим редактировали другое поле, сохраняем данные
-			if(null !== t.curParentFocusId) {
-				var prevField = t._getSectionById(t.curParentFocusId);
-				var prevFragments = t.cellEditor.options.fragments;
+			if (null !== t.curParentFocusId) {
+				let prevField = t._getSectionById(t.curParentFocusId);
+				let prevFragments = t.cellEditor.options.fragments;
 				prevField.setFragments(prevFragments);
 				prevField.drawText();
 
@@ -1088,12 +1161,12 @@
 			t.curParentFocusId = id;
 
 
-			var cSection = t._getSectionById(id);
-			if(cSection) {
-				var sectionElem = cSection.getElem();
-				var fragments = cSection.getFragments();
-				var self = wb;
-				if(!t.cellEditor) {
+			let cSection = t._getSectionById(id);
+			if (cSection) {
+				let sectionElem = cSection.getElem();
+				let fragments = cSection.getFragments();
+				let self = wb;
+				if (!t.cellEditor) {
 					t.cellEditor =
 						new AscCommonExcel.CellEditor(sectionElem, wb.input, wb.fmgrGraphics, wb.m_oFont, /*handlers*/{
 							"closed": function () {
@@ -1155,32 +1228,32 @@
 	};
 
 	CHeaderFooterEditor.prototype._openCellEditor = function (editor, fragments, x, y) {
-		var t = this;
+		let t = this;
 
-		var wb = this.wb;
-		var ws = wb.getWorksheet();
+		let wb = this.wb;
+		let ws = wb.getWorksheet();
 
 		if (!fragments) {
 			fragments = [];
-			var tempFragment = new AscCommonExcel.Fragment();
+			let tempFragment = new AscCommonExcel.Fragment();
 			tempFragment.setFragmentText("");
 			tempFragment.format = new AscCommonExcel.Font();
 			fragments.push(tempFragment);
 		}
 
-		var curSection = this._getSectionById(this.curParentFocusId);
+		let curSection = this._getSectionById(this.curParentFocusId);
 		curSection.changed = true;
-		var flags = new window["AscCommonExcel"].CellFlags();
+		let flags = new window["AscCommonExcel"].CellFlags();
 		flags.wrapText = true;
 		flags.textAlign = curSection.getAlign();
 
-		var enterOptions = new AscCommonExcel.CEditorEnterOptions();
+		let enterOptions = new AscCommonExcel.CEditorEnterOptions();
 		enterOptions.focus = true;
-		if(undefined !== x && undefined !== y) {
+		if (undefined !== x && undefined !== y) {
 			enterOptions.eventPos = {pageX: x, pageY: y};
 		}
 
-		var options = {
+		let options = {
 			enterOptions: enterOptions,
 			fragments: fragments,
 			flags: flags,
@@ -1194,11 +1267,19 @@
 				//TODO добавил для того, чтобы при нажатии на стрелки не было падения
 			},
 			getSides: function () {
-				var bottomArr = [];
-				for(var i = 0; i < 30; i++) {
+				let bottomArr = [];
+				for (let i = 0; i < 30; i++) {
 					bottomArr.push(t.parentHeight + i * 19);
 				}
-				return {l: [0], r: [t.parentWidth + 2 * correctCanvasDiff], b: bottomArr, cellX: 0, cellY: 0, ri: 0, bi: 0};
+				return {
+					l: [0],
+					r: [t.parentWidth + 2 * correctCanvasDiff],
+					b: bottomArr,
+					cellX: 0,
+					cellY: 0,
+					ri: 0,
+					bi: 0
+				};
 			},
 			checkVisible: function () {
 				return true;
@@ -1215,17 +1296,17 @@
 
 	CHeaderFooterEditor.prototype.destroy = function (bSave, opt_objForSave) {
 		//возвращаем cellEditor у wb
-		var t = this;
-		var api = window["Asc"]["editor"];
-		var wb = api.wb;
-		var ws = wb.getWorksheet();
+		let t = this;
+		let api = window["Asc"]["editor"];
+		let wb = api.wb;
+		let ws = wb.getWorksheet();
 
-		if(bSave /*&& bChanged*/&& !ws.collaborativeEditing.getGlobalLock() && wb.canEdit()) {
-			var checkError = this._checkSave();
-			if(null === checkError) {
+		if (bSave /*&& bChanged*/ && !ws.collaborativeEditing.getGlobalLock() && wb.canEdit()) {
+			let checkError = this._checkSave();
+			if (null === checkError) {
 				wb.cellEditor.close();
 				wb.cellEditor = this.wbCellEditor;
-				var saveCallback = function(isSuccess) {
+				let saveCallback = function (isSuccess) {
 					if (false === isSuccess) {
 						ws.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedAllError, c_oAscError.Level.NoCritical);
 						return;
@@ -1249,29 +1330,29 @@
 		return null;
 	};
 
-	CHeaderFooterEditor.prototype._checkSave = function() {
-		var t = this;
+	CHeaderFooterEditor.prototype._checkSave = function () {
+		let t = this;
 
-		if(null !== this.curParentFocusId) {
-			var prevField = this._getSectionById(this.curParentFocusId);
-			var prevFragments = this.cellEditor.options.fragments;
+		if (null !== this.curParentFocusId) {
+			let prevField = this._getSectionById(this.curParentFocusId);
+			let prevFragments = this.cellEditor.options.fragments;
 			prevField.setFragments(prevFragments);
 
 			prevField.canvasObj.canvas.style.display = "block";
 		}
 
-		var checkError = function(type) {
-			var prevHeaderFooter = t._getCurPageHF(type);
-			var curHeaderFooter = new Asc.CHeaderFooterData();
+		let checkError = function (type) {
+			let prevHeaderFooter = t._getCurPageHF(type);
+			let curHeaderFooter = new Asc.CHeaderFooterData();
 			curHeaderFooter.parser = new window["AscCommonExcel"].HeaderFooterParser();
-			if(prevHeaderFooter && prevHeaderFooter.parser) {
-				var newTokens = [];
-				for(var i in prevHeaderFooter.parser.tokens) {
-					if(prevHeaderFooter.parser.tokens[i]) {
+			if (prevHeaderFooter && prevHeaderFooter.parser) {
+				let newTokens = [];
+				for (let i in prevHeaderFooter.parser.tokens) {
+					if (prevHeaderFooter.parser.tokens[i]) {
 						newTokens[i] = [];
-						for(var j in prevHeaderFooter.parser.tokens[i]) {
-							var curPortion = prevHeaderFooter.parser.tokens[i][j];
-							if(curPortion) {
+						for (let j in prevHeaderFooter.parser.tokens[i]) {
+							let curPortion = prevHeaderFooter.parser.tokens[i][j];
+							if (curPortion) {
 								newTokens[i][j] = curPortion.clone();
 							}
 						}
@@ -1280,44 +1361,44 @@
 				curHeaderFooter.parser.tokens = newTokens;
 			}
 
-			if(t.sections[type][c_oPortionPosition.left] && t.sections[type][c_oPortionPosition.left].changed) {
+			if (t.sections[type][c_oPortionPosition.left] && t.sections[type][c_oPortionPosition.left].changed) {
 				curHeaderFooter.parser.tokens[c_oPortionPosition.left] = t._convertFragments(t.sections[type][c_oPortionPosition.left].fragments);
 			}
-			if(t.sections[type][c_oPortionPosition.center] && t.sections[type][c_oPortionPosition.center].changed) {
+			if (t.sections[type][c_oPortionPosition.center] && t.sections[type][c_oPortionPosition.center].changed) {
 				curHeaderFooter.parser.tokens[c_oPortionPosition.center] = t._convertFragments(t.sections[type][c_oPortionPosition.center].fragments);
 			}
-			if(t.sections[type][c_oPortionPosition.right] && t.sections[type][c_oPortionPosition.right].changed) {
+			if (t.sections[type][c_oPortionPosition.right] && t.sections[type][c_oPortionPosition.right].changed) {
 				curHeaderFooter.parser.tokens[c_oPortionPosition.right] = t._convertFragments(t.sections[type][c_oPortionPosition.right].fragments);
 			}
 
-			var oData = curHeaderFooter.parser.assembleText();
-			if(oData.str && oData.str.length > Asc.c_oAscMaxHeaderFooterLength) {
-				var maxLength = oData.left.length;
-				var section = c_oPortionPosition.left;
-				if(oData.right.length > oData.left.length && oData.right.length > oData.center.length) {
+			let oData = curHeaderFooter.parser.assembleText();
+			if (oData.str && oData.str.length > Asc.c_oAscMaxHeaderFooterLength) {
+				let maxLength = oData.left.length;
+				let section = c_oPortionPosition.left;
+				if (oData.right.length > oData.left.length && oData.right.length > oData.center.length) {
 					section = c_oPortionPosition.right;
 					maxLength = oData.right.length;
-				} else if(oData.center.length > oData.left.length && oData.center.length > oData.right.length) {
+				} else if (oData.center.length > oData.left.length && oData.center.length > oData.right.length) {
 					section = c_oPortionPosition.center;
 					maxLength = oData.center.length;
 				}
 
-				if(t.sections[type] && t.sections[type][section] && t.sections[type][section].canvasObj) {
+				if (t.sections[type] && t.sections[type][section] && t.sections[type][section].canvasObj) {
 					return {id: "#" + t.sections[type][section].canvasObj.idParent, max: maxLength};
 				}
 			}
 			return false
 		};
 
-		var pageHeaderType = this._getHeaderFooterType(this.pageType);
-		var pageFooterType = this._getHeaderFooterType(this.pageType, true);
-		var headerCheck = checkError(pageHeaderType);
-		var footerCheck = checkError(pageFooterType);
-		if(headerCheck && footerCheck) {
+		let pageHeaderType = this._getHeaderFooterType(this.pageType);
+		let pageFooterType = this._getHeaderFooterType(this.pageType, true);
+		let headerCheck = checkError(pageHeaderType);
+		let footerCheck = checkError(pageFooterType);
+		if (headerCheck && footerCheck) {
 			return headerCheck.max > footerCheck.max ? headerCheck.id : footerCheck.id;
-		} else if(headerCheck) {
+		} else if (headerCheck) {
 			return headerCheck.id
-		} else if(footerCheck) {
+		} else if (footerCheck) {
 			return footerCheck.id
 		}
 
@@ -1325,12 +1406,12 @@
 	};
 
 	CHeaderFooterEditor.prototype.setPropsFromInterface = function (props, doChanged) {
-		var sections = props.sections;
+		let sections = props.sections;
 		if (doChanged) {
-			var newSections = [];
-			for (var i in sections) {
+			let newSections = [];
+			for (let i in sections) {
 				newSections[i] = [];
-				for (var j in sections[i]) {
+				for (let j in sections[i]) {
 					newSections[i][j] = sections[i][j] && sections[i][j].clone();
 					if (newSections[i][j]) {
 						newSections[i][j].changed = true;
@@ -1349,13 +1430,13 @@
 	};
 
 	CHeaderFooterEditor.prototype.getPropsToInterface = function (savedHeaderFooter) {
-		var res = savedHeaderFooter ? savedHeaderFooter : {};
+		let res = savedHeaderFooter ? savedHeaderFooter : {};
 
 		//merge
 		if (this.sections) {
-			for (var i in this.sections) {
+			for (let i in this.sections) {
 				if (this.sections[i]) {
-					for (var j in this.sections[i]) {
+					for (let j in this.sections[i]) {
 						if (!res.sections) {
 							res.sections = [];
 						}
@@ -1381,8 +1462,8 @@
 			ws = this.wb && this.wb.getWorksheet();
 		}
 
-		var hF = opt_headerFooter ? opt_headerFooter : ws.model.headerFooter;
-		var isAddHistory = false;
+		let hF = opt_headerFooter ? opt_headerFooter : ws.model.headerFooter;
+		let isAddHistory = false;
 
 		if (reWrite) {
 			History.Create_NewPoint();
@@ -1391,38 +1472,56 @@
 			hF.clean();
 		}
 
-		for(var i = 0; i < this.sections.length; i++) {
-			if(!this.sections[i]) {
+		let removedPictures = [];
+		for (let i = 0; i < this.sections.length; i++) {
+			if (!this.sections[i]) {
 				continue;
 			}
 
 			//сначала формируем новый объект, затем доблавляем в модель и записываем в историю полученную строку
 			//возможно стоит пересмотреть(получать вначале строку) - создаём вначале парсер,
 			//добавляем туда полученные при редактировании фрагменты, затем получаем строку
-			var curHeaderFooter = this._getCurPageHF(i, opt_headerFooter, ws);
-			if(null === curHeaderFooter) {
+			let curHeaderFooter = this._getCurPageHF(i, opt_headerFooter, ws);
+			if (null === curHeaderFooter) {
 				curHeaderFooter = new Asc.CHeaderFooterData();
 			}
-			if(!curHeaderFooter.parser) {
+			if (!curHeaderFooter.parser) {
 				curHeaderFooter.parser = new window["AscCommonExcel"].HeaderFooterParser();
 			}
 
-			var isChanged = false;
-			if(this.sections[i][c_oPortionPosition.left] && (this.sections[i][c_oPortionPosition.left].changed || reWrite)) {
-				curHeaderFooter.parser.tokens[c_oPortionPosition.left] = this._convertFragments(this.sections[i][c_oPortionPosition.left].fragments);
+			let beforePictures;
+			let curSection = this.sections[i][c_oPortionPosition.left];
+			let isChanged = false;
+			if (curSection && (curSection.changed || reWrite)) {
+				beforePictures = this.checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.left]);
+				curHeaderFooter.parser.tokens[c_oPortionPosition.left] = this._convertFragments(curSection.fragments);
+				if (beforePictures && !this.checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.left])) {
+					removedPictures.push(curSection.getStringName());
+				}
 				isChanged = true;
 			}
-			if(this.sections[i][c_oPortionPosition.center] && (this.sections[i][c_oPortionPosition.center].changed || reWrite)) {
-				curHeaderFooter.parser.tokens[c_oPortionPosition.center] = this._convertFragments(this.sections[i][c_oPortionPosition.center].fragments);
+			curSection = this.sections[i][c_oPortionPosition.center];
+			if (curSection && (curSection.changed || reWrite)) {
+				beforePictures = this.checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.center]);
+				curHeaderFooter.parser.tokens[c_oPortionPosition.center] = this._convertFragments(curSection.fragments);
+				if (beforePictures && !this.checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.center])) {
+					removedPictures.push(curSection.getStringName());
+				}
 				isChanged = true;
 			}
-			if(this.sections[i][c_oPortionPosition.right] && (this.sections[i][c_oPortionPosition.right].changed || reWrite)) {
-				curHeaderFooter.parser.tokens[c_oPortionPosition.right] = this._convertFragments(this.sections[i][c_oPortionPosition.right].fragments);
+			curSection = this.sections[i][c_oPortionPosition.right];
+			if (curSection && (curSection.changed || reWrite)) {
+				beforePictures = this.checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.right]);
+				curHeaderFooter.parser.tokens[c_oPortionPosition.right] = this._convertFragments(curSection.fragments);
+				if (beforePictures && !this.checkPictures(curHeaderFooter.parser.tokens[c_oPortionPosition.right])) {
+					removedPictures.push(curSection.getStringName());
+				}
 				isChanged = true;
 			}
+
 			//нужно добавлять в историю
-			if(isChanged) {
-				if(!isAddHistory && !opt_headerFooter) {
+			if (isChanged) {
+				if (!isAddHistory && !opt_headerFooter) {
 					History.Create_NewPoint();
 					History.StartTransaction();
 					isAddHistory = true;
@@ -1440,27 +1539,48 @@
 		hF.setDifferentOddEven(this.differentOddEven);
 		hF.setScaleWithDoc(this.scaleWithDoc);
 
+		//remove pictures
+		if (removedPictures.length) {
+			ws.removeLegacyDrawingHFPictures(removedPictures);
+		}
 
-		if(isAddHistory) {
+		//save pictures
+		if (ws && ws.changeLegacyDrawingHFPictures && this.needAddPicturesMap) {
+			ws.changeLegacyDrawingHFPictures(this.needAddPicturesMap)
+		}
+
+		if (isAddHistory) {
 			History.EndTransaction();
 		}
 	};
 
-	CHeaderFooterEditor.prototype.setFontName = function(fontName) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.setFontName = function (fontName) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
-		var t = this, fonts = {};
+		let t = this, fonts = {};
 		fonts[fontName] = 1;
-		t.api._loadFonts(fonts, function() {
+		t.api._loadFonts(fonts, function () {
 			t.cellEditor.setTextStyle("fn", fontName);
 			t.wb.restoreFocus();
 		});
 	};
 
-	CHeaderFooterEditor.prototype.setFontSize = function(fontSize) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.checkPictures = function (aFr) {
+		if (!aFr) {
+			return false;
+		}
+		for (let i = 0; i < aFr.length; i++) {
+			if (aFr[i].field === asc.c_oAscHeaderFooterField.picture) {
+				return true;
+			}
+		}
+		return false;
+	};
+
+	CHeaderFooterEditor.prototype.setFontSize = function (fontSize) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
@@ -1468,8 +1588,8 @@
 		this.wb.restoreFocus();
 	};
 
-	CHeaderFooterEditor.prototype.setBold = function(isBold) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.setBold = function (isBold) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
@@ -1477,8 +1597,8 @@
 		this.wb.restoreFocus();
 	};
 
-	CHeaderFooterEditor.prototype.setItalic = function(isItalic) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.setItalic = function (isItalic) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
@@ -1486,8 +1606,8 @@
 		this.wb.restoreFocus();
 	};
 
-	CHeaderFooterEditor.prototype.setUnderline = function(isUnderline) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.setUnderline = function (isUnderline) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
@@ -1495,8 +1615,8 @@
 		this.wb.restoreFocus();
 	};
 
-	CHeaderFooterEditor.prototype.setStrikeout = function(isStrikeout) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.setStrikeout = function (isStrikeout) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
@@ -1504,8 +1624,8 @@
 		this.wb.restoreFocus();
 	};
 
-	CHeaderFooterEditor.prototype.setSubscript = function(isSubscript) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.setSubscript = function (isSubscript) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
@@ -1513,8 +1633,8 @@
 		this.wb.restoreFocus();
 	};
 
-	CHeaderFooterEditor.prototype.setSuperscript = function(isSuperscript) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.setSuperscript = function (isSuperscript) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
@@ -1522,8 +1642,8 @@
 		this.wb.restoreFocus();
 	};
 
-	CHeaderFooterEditor.prototype.setTextColor = function(color) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.setTextColor = function (color) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
@@ -1534,54 +1654,106 @@
 		}
 	};
 
-	CHeaderFooterEditor.prototype.addField = function(val) {
-		if(null === this.cellEditor) {
+	CHeaderFooterEditor.prototype.addField = function (val) {
+		if (null === this.cellEditor) {
 			return;
 		}
 
-		var textField = convertFieldToMenuText(val);
-		if(null !== textField) {
-			this.cellEditor.pasteText(textField);
+		if (val === asc.c_oAscHeaderFooterField.picture) {
+			this.addPictureField();
+		} else {
+			let textField = convertFieldToMenuText(val);
+			if (null !== textField) {
+				this.cellEditor.pasteText(textField);
+			}
 		}
 	};
 
-	CHeaderFooterEditor.prototype.getTextPresetsArr = function() {
-		var wb = this.wb;
-		var ws = wb.getWorksheet();
+	CHeaderFooterEditor.prototype.addPictureField = function () {
+		let t = this;
+		let showFileDialog = function (needPushField) {
 
-		var arrPresets = this.menuPresets;
-		if(!arrPresets) {
+			t.api.asc_addImage({
+				callback: function (oImage) {
+					if (oImage) {
+						if (!t.needAddPicturesMap) {
+							t.needAddPicturesMap = {};
+						}
+						t.needAddPicturesMap[curSection.getStringName()] = oImage;
+						if (needPushField) {
+							let textField = convertFieldToMenuText(asc.c_oAscHeaderFooterField.picture);
+							if (null !== textField) {
+								t.cellEditor.pasteText(textField);
+							}
+						}
+					}
+				}
+			});
+		};
+
+		let ws = this.wb && this.wb.getWorksheet();
+		let curSection = this._getSectionById(this.curParentFocusId);
+		let sectionId = curSection && curSection.getStringName();
+		let bSectionContainsPictures = sectionId && (ws.model.getLegacyDrawingHFById(sectionId) || (this.needAddPicturesMap && this.needAddPicturesMap[sectionId]));
+		if (bSectionContainsPictures) {
+			let thisFragments = this._convertFragments(this.cellEditor.options && this.cellEditor.options.fragments);
+			if (!this.checkPictures(thisFragments)) {
+				let textField = convertFieldToMenuText(asc.c_oAscHeaderFooterField.picture);
+				if (null !== textField) {
+					t.cellEditor.pasteText(textField);
+				}
+			} else {
+				//confirm dialog
+				//replace/keep options
+				t.api.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmReplaceHeaderFooterPicture, function (can) {
+					if (can) {
+						showFileDialog();
+					}
+				});
+			}
+		} else {
+			//add new pictures
+			showFileDialog(true);
+		}
+	};
+
+	CHeaderFooterEditor.prototype.getTextPresetsArr = function () {
+		let wb = this.wb;
+		let ws = wb.getWorksheet();
+
+		let arrPresets = this.menuPresets;
+		if (!arrPresets) {
 			return [];
 		}
 
-		var getFragmentText = function(val) {
+		let getFragmentText = function (val) {
 			return val.getText(ws, 0, 1);
 		};
 
-		var getFragmentsText = function(fragments) {
-			var res = "";
-			for(var n = 0; n < fragments.length; n++) {
+		let getFragmentsText = function (fragments) {
+			let res = "";
+			for (let n = 0; n < fragments.length; n++) {
 				res += getFragmentText(fragments[n]);
 			}
 			return res;
 		};
 
-		var textPresetsArr = [];
-		for(var i = 0; i < arrPresets.length; i++) {
-			if(!arrPresets[i]) {
+		let textPresetsArr = [];
+		for (let i = 0; i < arrPresets.length; i++) {
+			if (!arrPresets[i]) {
 				continue;
 			}
 			textPresetsArr[i] = "";
-			for(var j = 0; j < arrPresets[i].length; j++) {
-				if(arrPresets[i][j]) {
-					var fragments = this._convertFragments([this._getFragments(arrPresets[i][j])]);
-					if("" !== textPresetsArr[i]) {
+			for (let j = 0; j < arrPresets[i].length; j++) {
+				if (arrPresets[i][j]) {
+					let fragments = this._convertFragments([this._getFragments(arrPresets[i][j])]);
+					if ("" !== textPresetsArr[i]) {
 						textPresetsArr[i] += ", ";
 					}
 					textPresetsArr[i] += getFragmentsText(fragments);
 				}
 			}
-			if("" === textPresetsArr[i]) {
+			if ("" === textPresetsArr[i]) {
 				textPresetsArr[i] = "None";
 			}
 		}
@@ -1589,22 +1761,22 @@
 		return textPresetsArr;
 	};
 
-	CHeaderFooterEditor.prototype.applyPreset = function(type, bFooter) {
+	CHeaderFooterEditor.prototype.applyPreset = function (type, bFooter) {
 
-		var curType = this._getHeaderFooterType(this.pageType, bFooter);
-		var section = this.sections[curType];
+		let curType = this._getHeaderFooterType(this.pageType, bFooter);
+		let section = this.sections[curType];
 
-		if(this.cellEditor) {
-			if(section[c_oPortionPosition.left] && section[c_oPortionPosition.left].canvasObj) {
+		if (this.cellEditor) {
+			if (section[c_oPortionPosition.left] && section[c_oPortionPosition.left].canvasObj) {
 				this.click(section[c_oPortionPosition.left].canvasObj.idParent);
 			}
 		}
 
 		this.curParentFocusId = null;
 
-		var fragments;
-		for(var i = 0; i < section.length; i++) {
-			if(!this.presets[type][i]) {
+		let fragments;
+		for (let i = 0; i < section.length; i++) {
+			if (!this.presets[type][i]) {
 				section[i].setFragments(null);
 			} else {
 				fragments = [this._getFragments(this.presets[type][i], new AscCommonExcel.Font())];
@@ -1616,15 +1788,15 @@
 		}
 	};
 
-	CHeaderFooterEditor.prototype.getAppliedPreset = function(type, bFooter) {
-		var res = Asc.c_oAscHeaderFooterPresets.none;
+	CHeaderFooterEditor.prototype.getAppliedPreset = function (type, bFooter) {
+		let res = Asc.c_oAscHeaderFooterPresets.none;
 		type = undefined !== type ? type : this.pageType;
-		var curType = this._getHeaderFooterType(type, bFooter);
-		var section = this.sections[curType];
+		let curType = this._getHeaderFooterType(type, bFooter);
+		let section = this.sections[curType];
 
-		for(var i = 0; i < section.length; i++) {
+		for (let i = 0; i < section.length; i++) {
 
-			if(null !== section[i].fragments) {
+			if (null !== section[i].fragments) {
 				res = Asc.c_oAscHeaderFooterPresets.custom;
 				break;
 			}
@@ -1633,13 +1805,13 @@
 		return res;
 	};
 
-	CHeaderFooterEditor.prototype.setAlignWithMargins = function(val) {
+	CHeaderFooterEditor.prototype.setAlignWithMargins = function (val) {
 		this.alignWithMargins = val;
 	};
 
-	CHeaderFooterEditor.prototype.setDifferentFirst = function(val) {
-		var checkError;
-		if(!val && (checkError = this._checkSave()) !== null) {
+	CHeaderFooterEditor.prototype.setDifferentFirst = function (val) {
+		let checkError;
+		if (!val && (checkError = this._checkSave()) !== null) {
 			return checkError;
 		}
 		this.differentFirst = val;
@@ -1647,9 +1819,9 @@
 		return null;
 	};
 
-	CHeaderFooterEditor.prototype.setDifferentOddEven = function(val) {
-		var checkError;
-		if(!val && (checkError = this._checkSave()) !== null) {
+	CHeaderFooterEditor.prototype.setDifferentOddEven = function (val) {
+		let checkError;
+		if (!val && (checkError = this._checkSave()) !== null) {
 			return checkError;
 		}
 		this.differentOddEven = val;
@@ -1657,51 +1829,63 @@
 		return null;
 	};
 
-	CHeaderFooterEditor.prototype.setScaleWithDoc = function(val) {
+	CHeaderFooterEditor.prototype.setScaleWithDoc = function (val) {
 		this.scaleWithDoc = val;
 	};
 
-	CHeaderFooterEditor.prototype.getAlignWithMargins = function() {
+	CHeaderFooterEditor.prototype.getAlignWithMargins = function () {
 		return true === this.alignWithMargins || null === this.alignWithMargins;
 	};
 
-	CHeaderFooterEditor.prototype.getDifferentFirst = function() {
+	CHeaderFooterEditor.prototype.getDifferentFirst = function () {
 		return true === this.differentFirst;
 	};
 
-	CHeaderFooterEditor.prototype.getDifferentOddEven = function() {
+	CHeaderFooterEditor.prototype.getDifferentOddEven = function () {
 		return true === this.differentOddEven;
 	};
 
-	CHeaderFooterEditor.prototype.getScaleWithDoc = function() {
+	CHeaderFooterEditor.prototype.getScaleWithDoc = function () {
 		return true === this.scaleWithDoc || null === this.scaleWithDoc;
 	};
 
-	CHeaderFooterEditor.prototype._createAndDrawSections = function(pageCommonType, opt_objForSave, opt_headerFooter) {
-		var pageHeaderType = this._getHeaderFooterType(pageCommonType);
-		var pageFooterType = this._getHeaderFooterType(pageCommonType, true);
+	CHeaderFooterEditor.prototype._createAndDrawSections = function (pageCommonType, opt_objForSave, opt_headerFooter) {
+		let pageHeaderType = this._getHeaderFooterType(pageCommonType);
+		let pageFooterType = this._getHeaderFooterType(pageCommonType, true);
 
-		var getFragments = function(textPropsArr) {
-			if(!textPropsArr) {
+		let getFragments = function (textPropsArr) {
+			if (!textPropsArr) {
 				return null;
 			}
-			var res = [];
-			for(var i = 0; i < textPropsArr.length; i++) {
-				var curProps = textPropsArr[i];
-				var text = convertFieldToMenuText(curProps.field, curProps.textField);
-				if(null !== text) {
-					var tempFragment = new AscCommonExcel.Fragment();
+			let _fragments = [];
+			let pictures;
+			for (let i = 0; i < textPropsArr.length; i++) {
+				let curProps = textPropsArr[i];
+				let text = convertFieldToMenuText(curProps.field, curProps.textField);
+				if (null !== text) {
+					let tempFragment = new AscCommonExcel.Fragment();
 					tempFragment.setFragmentText(text);
 					tempFragment.format = curProps.format;
-					res.push(tempFragment);
+					_fragments.push(tempFragment);
+				}
+				if (curProps.field === asc.c_oAscHeaderFooterField.picture) {
+					pictures = true;
 				}
 			}
-			return res;
+			return {fragments: _fragments, pictures: pictures};
+		};
+
+		let _addFragments = function (_curParser, curSection) {
+			let _fragments = getFragments(_curParser);
+			if (_fragments && null !== _fragments.fragments) {
+				curSection.fragments = _fragments.fragments;
+				curSection.pictures = _fragments.pictures;
+			}
 		};
 
 		//header
-		var curPageHF, parser, leftFragments, centerFragments, rightFragments;
-		if(!this.sections[pageHeaderType]) {
+		let curPageHF, parser;
+		if (!this.sections[pageHeaderType]) {
 			this.sections[pageHeaderType] = [];
 
 			//создаём секции, если они уже не созданы
@@ -1711,41 +1895,32 @@
 
 			//в случае print preview храним временно опции в этом объекте
 			if (opt_objForSave) {
-				if(opt_objForSave.sections[pageHeaderType][c_oPortionPosition.left]) {
+				if (opt_objForSave.sections[pageHeaderType][c_oPortionPosition.left]) {
 					this.sections[pageHeaderType][c_oPortionPosition.left].fragments = opt_objForSave.sections[pageHeaderType][c_oPortionPosition.left].fragments;
 				}
-				if(opt_objForSave.sections[pageHeaderType][c_oPortionPosition.center]) {
+				if (opt_objForSave.sections[pageHeaderType][c_oPortionPosition.center]) {
 					this.sections[pageHeaderType][c_oPortionPosition.center].fragments = opt_objForSave.sections[pageHeaderType][c_oPortionPosition.center].fragments;
 				}
-				if(opt_objForSave.sections[pageHeaderType][c_oPortionPosition.right]) {
+				if (opt_objForSave.sections[pageHeaderType][c_oPortionPosition.right]) {
 					this.sections[pageHeaderType][c_oPortionPosition.right].fragments = opt_objForSave.sections[pageHeaderType][c_oPortionPosition.right].fragments;
 				}
 			} else {
 				//получаем из модели необходимый нам элемент
 				curPageHF = this._getCurPageHF(pageHeaderType, opt_headerFooter);
-				if(curPageHF && curPageHF.str) {
-					if(!curPageHF.parser) {
+				if (curPageHF && curPageHF.str) {
+					if (!curPageHF.parser) {
 						curPageHF.parse();
 					}
 					parser = curPageHF.parser.tokens;
-					leftFragments = getFragments(parser[0]);
-					if(null !== leftFragments) {
-						this.sections[pageHeaderType][c_oPortionPosition.left].fragments = leftFragments;
-					}
-					centerFragments = getFragments(parser[1]);
-					if(null !== centerFragments) {
-						this.sections[pageHeaderType][c_oPortionPosition.center].fragments = centerFragments;
-					}
-					rightFragments = getFragments(parser[2]);
-					if(null !== rightFragments) {
-						this.sections[pageHeaderType][c_oPortionPosition.right].fragments = rightFragments;
-					}
+					_addFragments(parser[0], this.sections[pageHeaderType][c_oPortionPosition.left]);
+					_addFragments(parser[1], this.sections[pageHeaderType][c_oPortionPosition.center]);
+					_addFragments(parser[2], this.sections[pageHeaderType][c_oPortionPosition.right]);
 				}
 			}
 		}
 
 		//footer
-		if(!this.sections[pageFooterType]) {
+		if (!this.sections[pageFooterType]) {
 			this.sections[pageFooterType] = [];
 
 			//создаём секции, если они уже не созданы
@@ -1755,39 +1930,29 @@
 
 			//в случае print preview храним временно опции в этом объекте
 			if (opt_objForSave) {
-				if(opt_objForSave.sections[pageFooterType][c_oPortionPosition.left]) {
+				if (opt_objForSave.sections[pageFooterType][c_oPortionPosition.left]) {
 					this.sections[pageFooterType][c_oPortionPosition.left].fragments = opt_objForSave.sections[pageFooterType][c_oPortionPosition.left].fragments;
 				}
-				if(opt_objForSave.sections[pageFooterType][c_oPortionPosition.center]) {
+				if (opt_objForSave.sections[pageFooterType][c_oPortionPosition.center]) {
 					this.sections[pageFooterType][c_oPortionPosition.center].fragments = opt_objForSave.sections[pageFooterType][c_oPortionPosition.center].fragments;
 				}
-				if(opt_objForSave.sections[pageFooterType][c_oPortionPosition.right]) {
+				if (opt_objForSave.sections[pageFooterType][c_oPortionPosition.right]) {
 					this.sections[pageFooterType][c_oPortionPosition.right].fragments = opt_objForSave.sections[pageFooterType][c_oPortionPosition.right].fragments;
 				}
 			} else {
 				//получаем из модели необходимый нам элемент
 				curPageHF = this._getCurPageHF(pageFooterType, opt_headerFooter);
-				if(curPageHF && curPageHF.str) {
-					if(!curPageHF.parser) {
+				if (curPageHF && curPageHF.str) {
+					if (!curPageHF.parser) {
 						curPageHF.parse();
 					}
 					parser = curPageHF.parser.tokens;
-					leftFragments = getFragments(parser[0]);
-					if(null !== leftFragments) {
-						this.sections[pageFooterType][c_oPortionPosition.left].fragments = leftFragments;
-					}
-					centerFragments = getFragments(parser[1]);
-					if(null !== centerFragments) {
-						this.sections[pageFooterType][c_oPortionPosition.center].fragments = centerFragments;
-					}
-					rightFragments = getFragments(parser[2]);
-					if(null !== rightFragments) {
-						this.sections[pageFooterType][c_oPortionPosition.right].fragments = rightFragments;
-					}
+					_addFragments(parser[0], this.sections[pageFooterType][c_oPortionPosition.left]);
+					_addFragments(parser[1], this.sections[pageFooterType][c_oPortionPosition.center]);
+					_addFragments(parser[2], this.sections[pageFooterType][c_oPortionPosition.right]);
 				}
 			}
 		}
-
 
 		//DRAW AFTER OPEN MENU
 		this.sections[pageHeaderType][c_oPortionPosition.left].drawText();
@@ -1798,10 +1963,10 @@
 		this.sections[pageFooterType][c_oPortionPosition.right].drawText();
 	};
 
-	CHeaderFooterEditor.prototype._getHeaderFooterType = function(type, bFooter) {
-		var res = bFooter ? asc.c_oAscPageHFType.oddFooter : asc.c_oAscPageHFType.oddHeader;
+	CHeaderFooterEditor.prototype._getHeaderFooterType = function (type, bFooter) {
+		let res = bFooter ? asc.c_oAscPageHFType.oddFooter : asc.c_oAscPageHFType.oddHeader;
 
-		if(type === asc.c_oAscHeaderFooterType.first) {
+		if (type === asc.c_oAscHeaderFooterType.first) {
 			res = bFooter ? asc.c_oAscPageHFType.firstFooter : asc.c_oAscPageHFType.firstHeader;
 		} else if (type === asc.c_oAscHeaderFooterType.even) {
 			res = bFooter ? asc.c_oAscPageHFType.evenFooter : asc.c_oAscPageHFType.evenHeader;
@@ -1811,15 +1976,15 @@
 	};
 
 	CHeaderFooterEditor.prototype._getCurPageHF = function (type, opt_headerFooter, ws) {
-		var res = null;
+		let res = null;
 		if (!ws) {
 			ws = this.wb.getWorksheet();
 		}
-		var hF = opt_headerFooter ? opt_headerFooter : ws.model.headerFooter;
+		let hF = opt_headerFooter ? opt_headerFooter : ws.model.headerFooter;
 
 		//TODO можно у класса CHeaderFooter реализовать данную функцию
-		if(hF) {
-			switch (type){
+		if (hF) {
+			switch (type) {
 				case asc.c_oAscPageHFType.firstHeader: {
 					res = hF.firstHeader;
 					break;
@@ -1850,20 +2015,20 @@
 	};
 
 	CHeaderFooterEditor.prototype._getSectionById = function (id) {
-		var res = null;
-		var type = this._getHeaderFooterType(this.pageType);
-		var i;
-		if(this.sections && this.sections[type]) {
-			for(i = 0; i < this.sections[type].length; i++) {
-				if(id === this.sections[type][i].canvasObj.idParent) {
+		let res = null;
+		let type = this._getHeaderFooterType(this.pageType);
+		let i;
+		if (this.sections && this.sections[type]) {
+			for (i = 0; i < this.sections[type].length; i++) {
+				if (id === this.sections[type][i].canvasObj.idParent) {
 					return this.sections[type][i];
 				}
 			}
 		}
 		type = this._getHeaderFooterType(this.pageType, true);
-		if(this.sections && this.sections[type]) {
-			for(i = 0; i < this.sections[type].length; i++) {
-				if(id === this.sections[type][i].canvasObj.idParent) {
+		if (this.sections && this.sections[type]) {
+			for (i = 0; i < this.sections[type].length; i++) {
+				if (id === this.sections[type][i].canvasObj.idParent) {
 					return this.sections[type][i];
 				}
 			}
@@ -1871,38 +2036,38 @@
 		return res;
 	};
 
-	CHeaderFooterEditor.prototype._convertFragments = function(fragments) {
-		if(!fragments) {
+	CHeaderFooterEditor.prototype._convertFragments = function (fragments) {
+		if (!fragments) {
 			return null;
 		}
 
 		//TODO возможно стоит созадавать tokens внутри парсера с элементами Fragments
-		var res = [];
+		let res = [];
 
-		var tM = AscCommon.translateManager;
+		let tM = AscCommon.translateManager;
 
-		var bToken, text, symbol, startToken, tokenText, tokenFormat;
-		for(var j = 0; j < fragments.length; j++) {
+		let bToken, text, symbol, startToken, tokenText, tokenFormat;
+		for (let j = 0; j < fragments.length; j++) {
 			text = "";
-			for(var n = 0; n < fragments[j].getFragmentText().length; n++) {
+			for (let n = 0; n < fragments[j].getFragmentText().length; n++) {
 				symbol = fragments[j].getFragmentText()[n];
-				if(symbol !== "&") {
+				if (symbol !== "&") {
 					text += symbol;
 				}
 
 				//если несколько таких символов подряд, ms оставляет 1 как текст
 				//пока игнорируем данную ситуацию
-				if(symbol === "&") {
-					if("" !== text) {
+				if (symbol === "&") {
+					if ("" !== text) {
 						res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 						text = "";
 					}
 
 					bToken = true;
 					tokenFormat = fragments[j].format;
-				} else if(startToken) {
-					if(symbol === "]") {
-						switch(tokenText.toLowerCase()) {
+				} else if (startToken) {
+					if (symbol === "]") {
+						switch (tokenText.toLowerCase()) {
 							case tM.getValue("Page").toLowerCase(): {
 								text = "";
 								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.pageNumber, tokenFormat));
@@ -1943,7 +2108,7 @@
 								break;
 							}
 							default: {
-								if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
+								if ("" !== text && j === fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
 									res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 									text = "";
 								}
@@ -1956,17 +2121,17 @@
 						tokenText += symbol;
 					}
 
-					if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
+					if ("" !== text && j === fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
 						res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 					}
-				} else if(bToken) {
+				} else if (bToken) {
 					//начинаем просматривать аргумент
-					if(symbol === "[") {
+					if (symbol === "[") {
 						startToken = true;
 						tokenText = "";
 					} else {
 						//если за "&" следует спецсимвол
-						switch(symbol) {
+						switch (symbol) {
 							case 'l':
 							case 'c':
 							case 'r':
@@ -2031,7 +2196,7 @@
 								break;
 							}
 							default: {
-								if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
+								if ("" !== text && j === fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
 									res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 									text = "";
 								}
@@ -2040,7 +2205,7 @@
 						}
 						bToken = false;
 					}
-				} else if("" !== text && n === fragments[j].getFragmentText().length - 1) {
+				} else if ("" !== text && n === fragments[j].getFragmentText().length - 1) {
 					res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 				}
 			}
@@ -2048,35 +2213,35 @@
 		return res;
 	};
 
-	CHeaderFooterEditor.prototype._getFragments = function(text, format) {
-		var tempFragment = new AscCommonExcel.Fragment();
+	CHeaderFooterEditor.prototype._getFragments = function (text, format) {
+		let tempFragment = new AscCommonExcel.Fragment();
 		tempFragment.setFragmentText(text);
 		tempFragment.format = format;
 		return tempFragment;
 	};
 
-	CHeaderFooterEditor.prototype._generatePresetsArr = function() {
-		var docInfo = window["Asc"]["editor"].DocInfo;
-		var userInfo = docInfo ? docInfo.get_UserInfo() : null;
-		var userName = userInfo ? userInfo.get_FullName() : "";
-		var fileName = docInfo ? docInfo.get_Title() : "";
+	CHeaderFooterEditor.prototype._generatePresetsArr = function () {
+		let docInfo = window["Asc"]["editor"].DocInfo;
+		let userInfo = docInfo ? docInfo.get_UserInfo() : null;
+		let userName = userInfo ? userInfo.get_FullName() : "";
+		let fileName = docInfo ? docInfo.get_Title() : "";
 
-		var tM = AscCommon.translateManager;
-		var confidential = tM.getValue("Confidential");
-		var preparedBy = tM.getValue("Prepared by ");
-		var page = tM.getValue("Page");
-		var pageOf = tM.getValue("Page %1 of %2");
+		let tM = AscCommon.translateManager;
+		let confidential = tM.getValue("Confidential");
+		let preparedBy = tM.getValue("Prepared by ");
+		let page = tM.getValue("Page");
+		let pageOf = tM.getValue("Page %1 of %2");
 
-		var pageTag = "&[" + page + "]";
-		var pagesTag = "&[" + tM.getValue("Pages") + "]";
-		var tabTag = "&[" + tM.getValue("Tab") + "]";
-		var dateTag = "&[" + tM.getValue("Date") + "]";
-		var fileTag = "&[" + tM.getValue("File") + "]";
+		let pageTag = "&[" + page + "]";
+		let pagesTag = "&[" + tM.getValue("Pages") + "]";
+		let tabTag = "&[" + tM.getValue("Tab") + "]";
+		let dateTag = "&[" + tM.getValue("Date") + "]";
+		let fileTag = "&[" + tM.getValue("File") + "]";
 
-		var arrPresets = [];
-		var arrPresetsMenu = [];
+		let arrPresets = [];
+		let arrPresetsMenu = [];
 		arrPresets[0] = arrPresetsMenu[0] = [null, null, null];
-		arrPresets[1] = arrPresetsMenu[1] = [null,  page + " " + pageTag, null];
+		arrPresets[1] = arrPresetsMenu[1] = [null, page + " " + pageTag, null];
 		arrPresets[2] = [null, pageOf.replace("%1", pageTag).replace("%2", pagesTag), null];
 		arrPresetsMenu[2] = [null, pageOf.replace("%1", pageTag).replace("%2", "?"), null];
 		arrPresets[3] = arrPresetsMenu[3] = [null, tabTag, null];
@@ -2099,12 +2264,12 @@
 	};
 
 
-	CHeaderFooterEditor.prototype.getPageType = function() {
+	CHeaderFooterEditor.prototype.getPageType = function () {
 		return this.pageType;
 	};
 
 
-	function CLegacyDrawingHF() {
+	function CLegacyDrawingHF(ws) {
 		this.drawings = [];
 		this.cfe = null;
 		this.cff = null;
@@ -2126,11 +2291,95 @@
 		this.rho = null;
 
 		this.id = null;
+		this.ws = ws;
 	}
 
 	CLegacyDrawingHF.prototype.init = function () {
 
 	};
+
+	CLegacyDrawingHF.prototype.addPictures = function (picturesMap) {
+		let t = this;
+		let api = window["Asc"]["editor"];
+
+		for (let i in picturesMap) {
+			if (picturesMap.hasOwnProperty(i)) {
+				let sSectionId = i;
+				let oldHFDrawing = t.getDrawingById(sSectionId);
+				let newHFDrawing = new CLegacyDrawingHFDrawing();
+				newHFDrawing.id = sSectionId;
+
+				const ws = api.wb.getWorksheet();
+
+				let url = picturesMap[i].src;
+				let image = picturesMap[i].Image;
+
+				var __w = Math.max(parseInt(image.width * AscCommon.g_dKoef_pix_to_mm), 1);
+				var __h = Math.max(parseInt(image.height * AscCommon.g_dKoef_pix_to_mm), 1);
+
+				newHFDrawing.graphicObject = ws.objectRender.controller.createImage(url, 0, 0, __w, __h);
+				t.changePicture(oldHFDrawing && oldHFDrawing.obj, newHFDrawing, true);
+
+				delete picturesMap[i];
+			}
+		}
+	};
+
+	CLegacyDrawingHF.prototype.removePictures = function (aPictures) {
+		let t = this;
+		let api = window["Asc"]["editor"];
+
+		for (let i = 0; i < aPictures.length; i++) {
+			let oLegacyDrawingHFDrawing = t.getDrawingById(aPictures[i]);
+			if (oLegacyDrawingHFDrawing) {
+				t.changePicture(oLegacyDrawingHFDrawing.obj, null, true);
+			}
+		}
+	};
+
+	CLegacyDrawingHF.prototype.changePicture = function (from, to, addToHistory) {
+		if (from) {
+			this.removePicture(from, addToHistory);
+		}
+		if (to) {
+			this.addPicture(to, addToHistory);
+		}
+
+		if ((from || to) && addToHistory) {
+			let fromData = from && new AscCommonExcel.UndoRedoData_LegacyDrawingHFDrawing(from.id, from.graphicObject.Id);
+			let toData = to && new AscCommonExcel.UndoRedoData_LegacyDrawingHFDrawing(to.id, to.graphicObject.Id);
+			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ChangeLegacyDrawingHFDrawing, this.ws.getId(),
+				null, new AscCommonExcel.UndoRedoData_FromTo(fromData, toData));
+		}
+	};
+
+	CLegacyDrawingHF.prototype.removePicture = function (picture) {
+		for (let i = 0; i < this.drawings.length; i++) {
+			if (this.drawings[i].id === picture.id) {
+
+				this.drawings.splice(i);
+				break;
+			}
+		}
+	};
+
+	CLegacyDrawingHF.prototype.addPicture = function (picture) {
+		this.drawings.unshift(picture);
+	};
+
+	CLegacyDrawingHF.prototype.getDrawingById = function (id) {
+		let res = null;
+
+		for (let i = 0; i < this.drawings.length; i++) {
+			if (this.drawings[i].id === id) {
+				res = {obj: this.drawings[i], index: i};
+				break;
+			}
+		}
+
+		return res;
+	};
+
 
 	function CLegacyDrawingHFDrawing() {
 		this.id = null;//"LH", "CH", "RH", "LF", "CF", "RF", "LHEVEN",..., "LHFIRST"
@@ -2141,6 +2390,7 @@
 
 	};
 
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 
@@ -2148,8 +2398,8 @@
 	window["AscCommonExcel"].CHeaderFooterEditorSection = CHeaderFooterEditorSection;
 
 	window["Asc"]["asc_CHeaderFooterEditor"] = window["AscCommonExcel"].CHeaderFooterEditor = CHeaderFooterEditor;
-	var prot = CHeaderFooterEditor.prototype;
-	prot["click"] 	= prot.click;
+	let prot = CHeaderFooterEditor.prototype;
+	prot["click"] = prot.click;
 	prot["destroy"] = prot.destroy;
 	prot["setFontName"] = prot.setFontName;
 	prot["setFontSize"] = prot.setFontSize;

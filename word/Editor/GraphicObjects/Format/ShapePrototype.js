@@ -910,10 +910,14 @@ CShape.prototype.Get_StartPage_Relative = function()
 };
 CShape.prototype.CheckTableCoincidence = function(table)
 {
-    var para_drawing = this.GetParaDrawing();
-    if(para_drawing && para_drawing.DocumentContent)
+    const oParaDrawing = this.GetParaDrawing();
+    if(oParaDrawing)
     {
-        return para_drawing.DocumentContent.CheckTableCoincidence(table);
+        const oDocContent = oParaDrawing.GetDocumentContent();
+        if(oDocContent)
+        {
+            return oDocContent.CheckTableCoincidence(table);
+        }
     }
     return false;
 };
@@ -950,40 +954,6 @@ CShape.prototype.IsUseInDocument = function()
         return this.parent.IsUseInDocument();
     }
     return false;
-};
-CShape.prototype.IsHdrFtr = function(bool)
-{
-    if(!this.group)
-    {
-        if(isRealObject(this.parent) && isRealObject(this.parent.DocumentContent))
-            return this.parent.DocumentContent.IsHdrFtr(bool);
-    }
-    else
-    {
-        var cur_group = this.group;
-        while(cur_group.group)
-            cur_group = cur_group.group;
-        if(isRealObject(cur_group.parent) && isRealObject(cur_group.parent.DocumentContent))
-            return cur_group.parent.DocumentContent.IsHdrFtr(bool);
-    }
-    return bool ? null : false;
-};
-CShape.prototype.IsFootnote = function(bReturnFootnote)
-{
-	if(!this.group)
-	{
-		if(isRealObject(this.parent) && isRealObject(this.parent.DocumentContent))
-			return this.parent.DocumentContent.IsFootnote(bReturnFootnote);
-	}
-	else
-	{
-		var cur_group = this.group;
-		while(cur_group.group)
-			cur_group = cur_group.group;
-		if(isRealObject(cur_group.parent) && isRealObject(cur_group.parent.DocumentContent))
-			return cur_group.parent.DocumentContent.IsFootnote(bReturnFootnote);
-	}
-	return bReturnFootnote ? null : false;
 };
 CShape.prototype.OnContentReDraw = function()
 {
@@ -1132,33 +1102,6 @@ CShape.prototype.Get_ColorMap = function()
         return oLogicDoc.Get_ColorMap();
     }
     return AscFormat.GetDefaultColorMap();
-};
-
-CShape.prototype.Is_TopDocument = function(bReturn)
-{
-    if(!bReturn)
-    {
-        return false;
-    }
-    else
-    {
-        var para_drawing;
-        if (this.group)
-        {
-            var main_group = this.group.getMainGroup();
-            para_drawing   = main_group.parent;
-        }
-        else
-        {
-            para_drawing = this.parent;
-        }
-
-        if (para_drawing && para_drawing.DocumentContent)
-        {
-            return para_drawing.DocumentContent.Is_TopDocument(bReturn);
-        }
-        return null;
-    }
 };
 
 CShape.prototype.recalcText = function(bResetRecalcCache)

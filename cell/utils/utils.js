@@ -3429,6 +3429,10 @@
 			var y = this.getUTCFullYear();
 			return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
 		};
+		cDate.prototype.isLeapYear1900 = function () {
+			var y = this.getUTCFullYear();
+			return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0 || 1900 === y;
+		};
 
 		cDate.prototype.getDaysInMonth = function () {
 //    return arguments.callee[this.isLeapYear() ? 'L' : 'R'][this.getMonth()];
@@ -3441,11 +3445,21 @@
 		cDate.prototype.getDaysInMonth.L = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
 		cDate.prototype.getDayOfYear = function () {
-			//https://stackoverflow.com/a/8619946
-			var start = new Date(this.getFullYear(), 0, 0);
-			var diff = (this - start) + ((start.getTimezoneOffset() - this.getTimezoneOffset()) * 60 * 1000);
-			var oneDay = 1000 * 60 * 60 * 24;
-			return Math.floor(diff / oneDay);
+			let year = Date.prototype.getUTCFullYear.call(this);
+			let month = Date.prototype.getUTCMonth.call(this);
+			let date = Date.prototype.getUTCDate.call(this);
+			if (1899 === year && 11 === month && 30 === date) {
+				return 0;
+			} else if (1899 === year && 11 === month && 31 === date) {
+				return 1;
+			}
+			let dayCount = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+			let dayOfYear = dayCount[month] + date;
+			if (month > 1 && this.isLeapYear1900()) dayOfYear++;
+			if (1900 === year && month <= 1) {
+				dayOfYear++;
+			}
+			return dayOfYear;
 		};
 
 		cDate.prototype.truncate = function () {

@@ -3373,22 +3373,13 @@ var editor;
 			AscCommonExcel.c_oAscLockAddSheet, AscCommonExcel.c_oAscLockAddSheet);
 		this.collaborativeEditing.lock([lockInfo], callback);
 	};
-	spreadsheet_api.prototype._addWorksheets = function(arrNames, where, opt_callback) {
+	spreadsheet_api.prototype._addWorksheetsCheck = function(callback) {
+		let t = this;
 		if (this.asc_isProtectedWorkbook()) {
-			if (opt_callback) {
-				opt_callback([]);
-			}
-			return false;
+			callback.call(t, false);
 		}
-		var t = this;
 		this._isLockedAddWorksheets(function (res) {
-			var worksheets = [];
-			if (res) {
-				worksheets = t._addWorksheetsWithoutLock(arrNames, where);
-			}
-			if (opt_callback) {
-				opt_callback(worksheets);
-			}
+			callback.call(t, res);
 		});
 	};
 	spreadsheet_api.prototype._addWorksheetsWithoutLock = function (arrNames, where) {
@@ -3741,7 +3732,11 @@ var editor;
 
   spreadsheet_api.prototype.asc_addWorksheet = function (name) {
     var i = this.wbModel.getActive();
-    this._addWorksheets([name], i + 1);
+    this._addWorksheetsCheck(function (res) {
+        if (res) {
+            this._addWorksheetsWithoutLock([name], i + 1);
+        }
+    });
   };
 
   spreadsheet_api.prototype.asc_insertWorksheet = function (arrNames) {
@@ -3750,7 +3745,11 @@ var editor;
       arrNames = [arrNames];
     }
     var i = this.wbModel.getActive();
-    this._addWorksheets(arrNames, i);
+    this._addWorksheetsCheck(function (res) {
+        if (res) {
+            this._addWorksheetsWithoutLock(arrNames, i);
+        }
+    });
   };
 
   // Удаление листа
@@ -7095,15 +7094,18 @@ var editor;
 		if (!pivotTable) {
 			return false;
 		}
-		this._addWorksheets([this.asc_createSheetName()],  this.wbModel.getActive(), function(worksheets){
-			let ws = worksheets[0];
-			if (!ws) {
+		this._addWorksheetsCheck(function(res){
+			if (!res) {
 				return;
 			}
 			History.Create_NewPoint();
 			History.StartTransaction();
+			const indexes = pivotTable.getItemsIndexesByActiveCell(activeCell.row, activeCell.col);
+			const itemMapArray = pivotTable.getNoFilterItemFieldsMapArray(indexes.rowItemIndex, indexes.colItemIndex)
+			let worksheets = t._addWorksheetsWithoutLock([pivotTable.getShowDetailsSheetName(itemMapArray)], this.wbModel.getActive());
+			let ws = worksheets[0];			
 
-			let lengths = pivotTable.showDetails(ws, activeCell.row, activeCell.col);
+			let lengths = pivotTable.showDetails(ws, itemMapArray);
 
 			let range = new Asc.Range(0, 0, lengths.colLength, lengths.rowLength);
 			let ref = range.getAbsName();
@@ -7152,7 +7154,11 @@ var editor;
 			this.sendEvent('asc_onError', c_oAscError.ID.PivotLabledColumns, c_oAscError.Level.NoCritical);
 		}
 	};
-	spreadsheet_api.prototype.asc_insertPivotExistingWorksheet = function(dataRef, pivotRef, confirmation) {
+	spreadsheet_api.prototype.asc_insertPivotExistingWorksheet = function(dataRef, pivotRef) {
+		if (!Asc.CT_pivotTableDefinition.prototype.isValidDataRef(dataRef)) {
+			this.sendEvent('asc_onError', c_oAscError.ID.PivotLabledColumns, c_oAscError.Level.NoCritical);
+			return;
+		}
 		var location = AscFormat.ExecuteNoHistory(function() {
 			return Asc.CT_pivotTableDefinition.prototype.parseDataRef(pivotRef);
 		}, this, []);

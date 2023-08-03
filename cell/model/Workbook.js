@@ -2367,12 +2367,12 @@
 			this.snapshot = this._getSnapshot();
 		}
 	};
-	Workbook.prototype.addImages = function (aImages, oPlaceholder) {
+	Workbook.prototype.addImages = function (aImages, obj) {
 		const oApi = Asc.editor;
-		if (oPlaceholder && undefined !== oPlaceholder.id && aImages.length === 1 && aImages[0].Image) {
+		if (obj && undefined !== obj.id && aImages.length === 1 && aImages[0].Image) {
 			const oController = oApi.getGraphicController();
 			const oDrawingObjects = oApi.getDrawingObjects();
-			const oPlaceholderTarget = AscCommon.g_oTableId.Get_ById(oPlaceholder.id);
+			const oPlaceholderTarget = AscCommon.g_oTableId.Get_ById(obj.id);
 			if (oPlaceholderTarget) {
 				if (oPlaceholderTarget.isObjectInSmartArt && oPlaceholderTarget.isObjectInSmartArt()) {
 					const oSmartArtGroup = oPlaceholderTarget.group.getMainGroup();
@@ -2381,7 +2381,7 @@
 						if (bLock) {
 							History.Create_NewPoint();
 							oController.resetSelection();
-							oPlaceholderTarget.applyImagePlaceholderCallback && oPlaceholderTarget.applyImagePlaceholderCallback(aImages, oPlaceholder);
+							oPlaceholderTarget.applyImagePlaceholderCallback && oPlaceholderTarget.applyImagePlaceholderCallback(aImages, obj);
 							oController.selectObject(oSmartArtGroup, 0);
 							oController.selection.groupSelection = oSmartArtGroup;
 							oSmartArtGroup.selectObject(oPlaceholderTarget, 0);
@@ -2403,6 +2403,8 @@
 					});
 				}
 			}
+		} else if (obj && obj.callback && aImages.length === 1 && aImages[0].Image) {
+			obj.callback(aImages[0]);
 		}
 	};
 	Workbook.prototype.getOleSize = function () {
@@ -2811,7 +2813,7 @@
 		return -1;
 	};
 	Workbook.prototype.checkValidSheetName=function(name){
-		return (name && name.length < g_nSheetNameMaxLength);
+		return (name && name.length <= g_nSheetNameMaxLength);
 	};
 	Workbook.prototype.getUniqueSheetNameFrom=function(name, bCopy){
 		var nIndex = 1;
@@ -12244,6 +12246,26 @@
 		this.nColsCount = val;
 	};
 
+	Worksheet.prototype.changeLegacyDrawingHFPictures = function(picturesMap) {
+		if (!this.legacyDrawingHF) {
+			this.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF(this);
+		}
+		this.legacyDrawingHF.addPictures(picturesMap);
+	};
+
+	Worksheet.prototype.removeLegacyDrawingHFPictures = function(aPictures) {
+		if (!this.legacyDrawingHF) {
+			this.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF(this);
+		}
+		this.legacyDrawingHF.removePictures(aPictures);
+	};
+
+	Worksheet.prototype.getLegacyDrawingHFById = function(val) {
+		if (!this.legacyDrawingHF) {
+			return null;
+		}
+		return this.legacyDrawingHF.getDrawingById(val);
+	};
 	Worksheet.prototype.formulaGoalSeek = function(sFormulaCell, sExpectedValue, sChangingCell) {
 		let oParserFormula;
 
@@ -18379,6 +18401,7 @@
 											padding = sNumber[0] === '0' ? sNumber.length : 0;
 										}
 										// Value of cell is it a time period?
+										sValue = sValue.replace(/[.]$/, '').trim();
 										sNextValue = _getNextValue(wsFrom, oCell, bVertical, from);
 										nInputTimePeriod = _findIndexAInputTimePeriod(aInputTimePeriodList, sValue);
 										aInputTimePeriod = _getAInputTimePeriod(aInputTimePeriodList, nInputTimePeriod, nPrevInputTimePeriod, sValue, sNextValue);
@@ -19319,43 +19342,43 @@
 	}
 	cDataRow.prototype.getCol = function() {
 		return this.nCol;
-	}
+	};
 	cDataRow.prototype.getVal = function() {
 		return this.nVal;
-	}
+	};
 	cDataRow.prototype.getDelimiter = function() {
 		return this.bDelimiter;
-	}
+	};
 	cDataRow.prototype.getPrefix = function () {
 		return this.sPrefix;
-	}
+	};
 	cDataRow.prototype.getPadding = function() {
 		return this.nPadding;
-	}
+	};
 	cDataRow.prototype.setPadding = function(nPadding) {
 		this.nPadding = nPadding;
-	}
+	};
 	cDataRow.prototype.getIsDate = function() {
 		return this.bDate;
-	}
+	};
 	cDataRow.prototype.getAdditional = function() {
 		return this.oAdditional;
-	}
+	};
 	cDataRow.prototype.getTimePeriods = function () {
 		return this.aTimePeriods;
-	}
+	};
 	cDataRow.prototype.getSequence = function() {
 		return this.oSequence;
-	}
+	};
 	cDataRow.prototype.setSequence = function (oSequence) {
 		this.oSequence = oSequence;
-	}
+	};
 	cDataRow.prototype.getCurValue = function() {
 		return this.nCurValue;
-	}
+	};
 	cDataRow.prototype.setCurValue = function(nCurValue) {
 		this.nCurValue = nCurValue;
-	}
+	};
 	cDataRow.prototype.compare = function(oComparedRowData) {
 		let sComparedTimePeriods =  oComparedRowData.getTimePeriods() ? oComparedRowData.getTimePeriods().join() : null;
 		let sTimePeriods = this.getTimePeriods() ? this.getTimePeriods().join() : null;
@@ -19367,7 +19390,7 @@
 		let bDate = this.getIsDate();
 
 		return bComparedDelimiter === bDelimiter && sComparedPrefix === sPrefix && bComparedDate === bDate && sComparedTimePeriods === sTimePeriods;
-	}
+	};
 
 	cDataRow.prototype.prefixDataCompare = function(oComparedRowData) {
 		let sComparedPrefix = oComparedRowData.getPrefix();
@@ -19376,11 +19399,12 @@
 		let bDate = this.getIsDate();
 
 		return sComparedPrefix === sPrefix && bComparedDate === bDate;
-	}
+	};
 
 
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].g_nVerticalTextAngle = g_nVerticalTextAngle;
+	window['AscCommonExcel'].g_nSheetNameMaxLength = g_nSheetNameMaxLength;
 	window['AscCommonExcel'].oDefaultMetrics = oDefaultMetrics;
 	window['AscCommonExcel'].g_nAllColIndex = g_nAllColIndex;
 	window['AscCommonExcel'].g_nAllRowIndex = g_nAllRowIndex;

@@ -2253,6 +2253,126 @@ $(function () {
 
 		clearData(0, 0, 4, 13);
 	});
+	QUnit.test('Autofill: Days of week and months with spaces and "." - Horizontal sequence', function (assert) {
+		function getAutofillCase(aFrom, aTo, nFillHandleArea, sDescription, expectedData) {
+			const [c1From, c2From, rFrom] = aFrom;
+			const [c1To, c2To, rTo] = aTo;
+			const nHandleDirection = 0; // 0 - Horizontal, 1 - Vertical
+			const autofillC1 =  nFillHandleArea === 3 ? c2From + 1 : c1From - 1;
+			const autoFillAssert = nFillHandleArea === 3 ? autofillData : reverseAutofillData;
+
+			ws.selectionRange.ranges = [getRange(c1From, rFrom, c2From, rFrom)];
+			wsView = getAutoFillRange(wsView, c1To, rTo, c2To, rTo, nHandleDirection, nFillHandleArea);
+			let autoFillRange = getRange(autofillC1, rTo, c2To, rTo);
+			autoFillAssert(assert, autoFillRange, [expectedData], sDescription);
+		}
+		const testData = [
+			['monday '],
+			['monday ', 'tuesday'],
+			[' monday ', 'tuesday '],
+			['mon.'],
+			['mon.', 'tue'],
+			['mon ', 'tue'],
+			[' mon ', 'tue '],
+			['january '],
+			['january ', 'february'],
+			[' january ', 'february'],
+			['jan.'],
+			['jan.', 'feb'],
+			['mon.day']
+		]
+		// Asc cases
+		let range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		// nFillHandleArea: 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
+		getAutofillCase([0, 0, 0], [0, 6, 0], 3, 'Day of week with space. Asc sequence. Range 1 cell', ['tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']);
+		getAutofillCase([0, 1, 1], [0, 5, 1], 3, 'Day of week with space. Asc sequence. Range 2 cell', ['wednesday', 'thursday', 'friday', 'saturday', 'sunday']);
+		getAutofillCase([0, 1, 2], [0, 5, 2], 3, 'Day of week with space. Asc sequence. Range 2 cell', ['wednesday', 'thursday', 'friday', 'saturday', 'sunday']);
+		getAutofillCase([0, 0, 3], [0, 6, 3], 3, 'Day of week short with ".". Asc sequence. Range 1 cell', ['tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
+		getAutofillCase([0, 1, 4], [0, 5, 4], 3, 'Day of week short with ".". Asc sequence. Range 2 cell', ['wed', 'thu', 'fri', 'sat', 'sun']);
+		getAutofillCase([0, 1, 5], [0, 5, 5], 3, 'Day of week short with space. Asc sequence. Range 2 cell', ['wed', 'thu', 'fri', 'sat', 'sun']);
+		getAutofillCase([0, 1, 6], [0, 5, 6], 3, 'Day of week short with spaces. Asc sequence. Range 2 cell', ['wed', 'thu', 'fri', 'sat', 'sun']);
+		getAutofillCase([0, 0, 7], [0, 6, 7], 3, 'Month with space. Asc sequence. Range 1 cell', ['february', 'march', 'april', 'may', 'june', 'july']);
+		getAutofillCase([0, 1, 8], [0, 6, 8], 3, 'Month with space. Asc sequence. Range 2 cell', ['march', 'april', 'may', 'june', 'july', 'august']);
+		getAutofillCase([0, 1, 9], [0, 6, 9], 3, 'Month with spaces. Asc sequence. Range 2 cell', ['march', 'april', 'may', 'june', 'july', 'august']);
+		getAutofillCase([0, 0, 10], [0, 6, 10], 3, 'Month short with ".". Asc sequence. Range 1 cell', ['feb','mar', 'apr', 'may', 'jun', 'jul']);
+		getAutofillCase([0, 1, 11], [0, 6, 11], 3, 'Month short with ".". Asc sequence. Range 2 cell', ['mar', 'apr', 'may', 'jun', 'jul', 'aug']);
+		getAutofillCase([0, 0, 12], [0, 2, 12], 3, 'mon.day. Asc sequence. Range 1 cell', ['mon.day', 'mon.day']);
+		clearData(0, 0, 6, 12);
+		// Reverse cases
+		range = ws.getRange4(0, 7);
+		range.fillData(testData);
+		// nFillHandleArea: 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
+		getAutofillCase([7, 7, 0], [6, 0, 0], 1, 'Day of week with space. Reverse sequence. Range 1 cell', ['sunday', 'saturday', 'friday', 'thursday', 'wednesday', 'tuesday', 'monday']);
+		getAutofillCase([7, 8, 1], [6, 0, 1], 1, 'Day of week with space. Reverse sequence. Range 2 cell', ['sunday', 'saturday', 'friday', 'thursday', 'wednesday', 'tuesday', 'monday']);
+		getAutofillCase([7, 8, 2], [6, 0, 2], 1, 'Day of week with space. Reverse sequence. Range 2 cell', ['sunday', 'saturday', 'friday', 'thursday', 'wednesday', 'tuesday', 'monday']);
+		getAutofillCase([7, 7, 3], [6, 0, 3], 1, 'Day of week short with ".". Reverse sequence. Range 1 cell', ['sun', 'sat', 'fri', 'thu', 'wed', 'tue', 'mon']);
+		getAutofillCase([7, 8, 4], [6, 0, 4], 1, 'Day of week short with ".". Reverse sequence. Range 2 cell', ['sun', 'sat', 'fri', 'thu', 'wed', 'tue', 'mon']);
+		getAutofillCase([7, 8, 5], [6, 0, 5], 1, 'Day of week short with space. Reverse sequence. Range 2 cell', ['sun', 'sat', 'fri', 'thu', 'wed', 'tue', 'mon']);
+		getAutofillCase([7, 8, 6], [6, 0, 6], 1, 'Day of week short with spaces. Reverse sequence. Range 2 cell', ['sun', 'sat', 'fri', 'thu', 'wed', 'tue', 'mon']);
+		getAutofillCase([7, 7, 7], [6, 0, 7], 1, 'Month with space. Reverse sequence. Range 1 cell', ['december', 'november', 'october', 'september', 'august', 'july', 'june']);
+		getAutofillCase([7, 8, 8], [6, 0, 8], 1, 'Month with space. Reverse sequence. Range 2 cell', ['december', 'november', 'october', 'september', 'august', 'july', 'june']);
+		getAutofillCase([7, 8, 9], [6, 0, 9], 1, 'Month with spaces. Reverse sequence. Range 2 cell', ['december', 'november', 'october', 'september', 'august', 'july', 'june']);
+		getAutofillCase([7, 7, 10], [6, 0, 10], 1, 'Month short with ".". Reverse sequence. Range 1 cell', ['dec', 'nov', 'oct', 'sep', 'aug', 'jul', 'jun']);
+		getAutofillCase([7, 8, 11], [6, 0, 11], 1, 'Month short with ".". Reverse sequence. Range 2 cell', ['dec', 'nov', 'oct', 'sep', 'aug', 'jul', 'jun']);
+		getAutofillCase([7, 7, 12], [6, 5, 12], 1, 'mon.day. Reverse sequence. Range 1 cell', ['mon.day', 'mon.day']);
+		clearData(0, 0, 8, 12);
+	});
+	QUnit.test('Autofill: Days of week and months with spaces and "." - Vertical sequence.', function (assert) {
+		function getAutofillCase(aFrom, aTo, nFillHandleArea, sDescription, expectedData) {
+			const [r1From, r2From, cFrom] = aFrom;
+			const [r1To, r2To, cTo] = aTo;
+			const nHandleDirection = 1; // 0 - Horizontal, 1 - Vertical
+			const autofillR1 =  nFillHandleArea === 3 ? r2From + 1 : r1From - 1;
+			const autoFillAssert = nFillHandleArea === 3 ? autofillData : reverseAutofillData;
+
+			ws.selectionRange.ranges = [getRange(cFrom, r1From, cFrom, r2From)];
+			wsView = getAutoFillRange(wsView, cTo, r1To, cTo, r2To, nHandleDirection, nFillHandleArea);
+			let autoFillRange = getRange(cTo, autofillR1, cTo, r2To);
+			autoFillAssert(assert, autoFillRange, expectedData, sDescription);
+		}
+		const testData = [
+			['monday ', 'monday ', ' monday ', 'mon.', 'mon.', 'mon ', ' mon ', 'january ', 'january ', ' january ', 'jan.', 'jan.', 'mon.day'],
+			['', 'tuesday', 'tuesday ', '', 'tue', 'tue', 'tue ', '', 'february', 'february', '', 'feb', '']
+		];
+
+		// Asc cases
+		let range = ws.getRange4(0, 0);
+		range.fillData(testData);
+		// nFillHandleArea: 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
+		getAutofillCase([0, 0, 0], [0, 6, 0], 3, 'Day of week with space. Asc sequence. Range 1 cell', [['tuesday'], ['wednesday'], ['thursday'], ['friday'], ['saturday'], ['sunday']]);
+		getAutofillCase([0, 1, 1], [0, 5, 1], 3, 'Day of week with space. Asc sequence. Range 2 cell', [['wednesday'], ['thursday'], ['friday'], ['saturday'], ['sunday']]);
+		getAutofillCase([0, 1, 2], [0, 5, 2], 3, 'Day of week with space. Asc sequence. Range 2 cell', [['wednesday'], ['thursday'], ['friday'], ['saturday'], ['sunday']]);
+		getAutofillCase([0, 0, 3], [0, 6, 3], 3, 'Day of week short with ".". Asc sequence. Range 1 cell', [['tue'], ['wed'], ['thu'], ['fri'], ['sat'], ['sun']]);
+		getAutofillCase([0, 1, 4], [0, 5, 4], 3, 'Day of week short with ".". Asc sequence. Range 2 cell', [['wed'], ['thu'], ['fri'], ['sat'], ['sun']]);
+		getAutofillCase([0, 1, 5], [0, 5, 5], 3, 'Day of week short with space. Asc sequence. Range 2 cell', [['wed'], ['thu'], ['fri'], ['sat'], ['sun']]);
+		getAutofillCase([0, 1, 6], [0, 5, 6], 3, 'Day of week short with spaces. Asc sequence. Range 2 cell', [['wed'], ['thu'], ['fri'], ['sat'], ['sun']]);
+		getAutofillCase([0, 0, 7], [0, 6, 7], 3, 'Month with space. Asc sequence. Range 1 cell', [['february'], ['march'], ['april'], ['may'], ['june'], ['july']]);
+		getAutofillCase([0, 1, 8], [0, 6, 8], 3, 'Month with space. Asc sequence. Range 2 cell', [['march'], ['april'], ['may'], ['june'], ['july'], ['august']]);
+		getAutofillCase([0, 1, 9], [0, 6, 9], 3, 'Month with spaces. Asc sequence. Range 2 cell', [['march'], ['april'], ['may'], ['june'], ['july'], ['august']]);
+		getAutofillCase([0, 0, 10], [0, 6, 10], 3, 'Month short with ".". Asc sequence. Range 1 cell', [['feb'],['mar'], ['apr'], ['may'], ['jun'], ['jul']]);
+		getAutofillCase([0, 1, 11], [0, 6, 11], 3, 'Month short with ".". Asc sequence. Range 2 cell', [['mar'], ['apr'], ['may'], ['jun'], ['jul'], ['aug']]);
+		getAutofillCase([0, 0, 12], [0, 2, 12], 3, 'mon.day. Asc sequence. Range 1 cell', [['mon.day'], ['mon.day']]);
+		clearData(0, 0, 6, 11);
+		// Reverse cases
+		range = ws.getRange4(7, 0);
+		range.fillData(testData);
+		// nFillHandleArea: 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
+		getAutofillCase([7, 7, 0], [6, 0, 0], 1, 'Day of week with space. Reverse sequence. Range 1 cell', [['sunday'], ['saturday'], ['friday'], ['thursday'], ['wednesday'], ['tuesday'], ['monday']]);
+		getAutofillCase([7, 8, 1], [6, 0, 1], 1, 'Day of week with space. Reverse sequence. Range 2 cell', [['sunday'], ['saturday'], ['friday'], ['thursday'], ['wednesday'], ['tuesday'], ['monday']]);
+		getAutofillCase([7, 8, 2], [6, 0, 2], 1, 'Day of week with space. Reverse sequence. Range 2 cell', [['sunday'], ['saturday'], ['friday'], ['thursday'], ['wednesday'], ['tuesday'], ['monday']]);
+		getAutofillCase([7, 7, 3], [6, 0, 3], 1, 'Day of week short with ".". Reverse sequence. Range 1 cell', [['sun'], ['sat'], ['fri'], ['thu'], ['wed'], ['tue'], ['mon']]);
+		getAutofillCase([7, 8, 4], [6, 0, 4], 1, 'Day of week short with ".". Reverse sequence. Range 2 cell', [['sun'], ['sat'], ['fri'], ['thu'], ['wed'], ['tue'], ['mon']]);
+		getAutofillCase([7, 8, 5], [6, 0, 5], 1, 'Day of week short with space. Reverse sequence. Range 2 cell', [['sun'], ['sat'], ['fri'], ['thu'], ['wed'], ['tue'], ['mon']]);
+		getAutofillCase([7, 8, 6], [6, 0, 6], 1, 'Day of week short with spaces. Reverse sequence. Range 2 cell', [['sun'], ['sat'], ['fri'], ['thu'], ['wed'], ['tue'], ['mon']]);
+		getAutofillCase([7, 7, 7], [6, 0, 7], 1, 'Month with space. Reverse sequence. Range 1 cell', [['december'], ['november'], ['october'], ['september'], ['august'], ['july'], ['june']]);
+		getAutofillCase([7, 8, 8], [6, 0, 8], 1, 'Month with space. Reverse sequence. Range 2 cell', [['december'], ['november'], ['october'], ['september'], ['august'], ['july'], ['june']]);
+		getAutofillCase([7, 8, 9], [6, 0, 9], 1, 'Month with spaces. Reverse sequence. Range 2 cell', [['december'], ['november'], ['october'], ['september'], ['august'], ['july'], ['june']]);
+		getAutofillCase([7, 7, 10], [6, 0, 10], 1, 'Month short with ".". Reverse sequence. Range 1 cell', [['dec'], ['nov'], ['oct'], ['sep'], ['aug'], ['jul'], ['jun']]);
+		getAutofillCase([7, 8, 11], [6, 0, 11], 1, 'Month short with ".". Reverse sequence. Range 2 cell', [['dec'], ['nov'], ['oct'], ['sep'], ['aug'], ['jul'], ['jun']]);
+		getAutofillCase([7, 7, 12], [6, 5, 12], 1, 'mon.day. Reverse sequence. Range 1 cell', [['mon.day'], ['mon.day']]);
+		clearData(0, 0, 8, 11);
+	});
 
 
 	QUnit.module("Sheet structure");

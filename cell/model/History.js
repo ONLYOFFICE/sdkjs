@@ -118,6 +118,8 @@ function (window, undefined) {
 
 	window['AscCH'].historyitem_Worksheet_ChangeRowColBreaks = 63;
 
+	window['AscCH'].historyitem_Worksheet_ChangeLegacyDrawingHFDrawing = 64;
+
 	window['AscCH'].historyitem_RowCol_Fontname = 1;
 	window['AscCH'].historyitem_RowCol_Fontsize = 2;
 	window['AscCH'].historyitem_RowCol_Fontcolor = 3;

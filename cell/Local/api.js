@@ -257,6 +257,14 @@ var c_oAscError = Asc.c_oAscError;
 			try
 			{
 				var printOptionsObj = asc["editor"]["getAdditionalSaveParams"]();
+
+				if (options && options.advancedOptions)
+				{
+					let nativeOptions = options.advancedOptions.asc_getNativeOptions();
+					if (nativeOptions)
+						printOptionsObj["nativeOptions"] = nativeOptions;
+				}
+
 				printOptions = JSON.stringify(printOptionsObj);
 			}
 			catch (e)

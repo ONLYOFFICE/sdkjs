@@ -307,8 +307,13 @@ ParaDrawing.prototype.GetRun = function()
 };
 ParaDrawing.prototype.GetDocumentContent = function()
 {
-	let oParagraph = this.GetParagraph();
-	return (oParagraph ? oParagraph.GetParent() : null);
+	const oParagraph = this.GetParagraph();
+	let oDocumentContent = (oParagraph ? oParagraph.GetParent() : null);
+	if (oDocumentContent && oDocumentContent.IsBlockLevelSdtContent())
+	{
+		oDocumentContent = oDocumentContent.Parent.Parent;
+	}
+	return oDocumentContent;
 };
 ParaDrawing.prototype.Get_Run = function()
 {
@@ -1443,13 +1448,10 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 		this.PositionV.Percent      = this.PositionV_Old.Percent2;
 	}
 
-	var oDocumentContent = this.Parent && this.Parent.Parent;
-	if (oDocumentContent && oDocumentContent.IsBlockLevelSdtContent())
-		oDocumentContent = oDocumentContent.Parent.Parent;
-
-	this.Parent          = Paragraph;
-	this.DocumentContent = oDocumentContent;
-	var PageNum          = ParaLayout.PageNum;
+	this.Parent            = Paragraph;
+	const oDocumentContent = this.GetDocumentContent();
+	this.DocumentContent   = oDocumentContent;
+	let PageNum            = ParaLayout.PageNum;
 
 	var OtherFlowObjects = this.graphicObjects ? this.graphicObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent) : [];
 	var bInline          = this.Is_Inline();
@@ -1459,7 +1461,7 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.Internal_Position.Calculate_Y(bInline, this.PositionV.RelativeFrom, this.PositionV.Align, this.PositionV.Value, this.PositionV.Percent);
 
 
-	var bCorrect = false;
+	let bCorrect = false;
 	if(oDocumentContent && oDocumentContent.IsTableCellContent && oDocumentContent.IsTableCellContent(false))
 	{
 		bCorrect = true;
@@ -1474,7 +1476,7 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.GraphicObj.bounds.t = this.GraphicObj.bounds.y + this.Internal_Position.CalcY;
 	this.GraphicObj.bounds.b = this.GraphicObj.bounds.y + this.GraphicObj.bounds.h + this.Internal_Position.CalcY;
 
-	var OldPageNum = this.PageNum;
+	let OldPageNum = this.PageNum;
 	this.PageNum   = PageNum;
 	this.LineNum   = LineNum;
 	this.X         = this.Internal_Position.CalcX;
@@ -1521,8 +1523,8 @@ ParaDrawing.prototype.GetClipRect = function ()
 {
 	if (this.Is_Inline() || this.Use_TextWrap())
 	{
-		var oCell;
-		if (this.DocumentContent && (oCell = this.DocumentContent.IsTableCellContent(true)))
+		const oCell = this.isTableCellChild(true);
+		if (oCell)
 		{
 			var arrPages = oCell.GetCurPageByAbsolutePage(this.PageNum);
 			for (var nIndex = 0, nCount = arrPages.length; nIndex < nCount; ++nIndex)
@@ -1584,25 +1586,26 @@ ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 	}
 	var bChangePageIndex = this.pageIndex !== pageIndex;
 	this.setPageIndex(pageIndex);
+	let bIsHfdFtr = this.isHdrFtrChild(false);
+	let oDocContent = this.GetDocumentContent();
 	if (typeof this.GraphicObj.setStartPage === "function")
 	{
-		var bIsHfdFtr = this.DocumentContent && this.DocumentContent.IsHdrFtr();
 		this.GraphicObj.setStartPage(pageIndex, bIsHfdFtr, bIsHfdFtr || bChangePageIndex);
 	}
-
 	if(this.graphicObjects)
 	{
-		if (!(this.DocumentContent && this.DocumentContent.IsHdrFtr() && this.DocumentContent.Get_StartPage_Absolute() !== pageIndex))
+		if (!(bIsHfdFtr && oDocContent && oDocContent.Get_StartPage_Absolute() !== pageIndex))
 		{
 			// TODO: ситуацию в колонтитуле с привязкой к полю нужно отдельно обрабатывать через дополнительные пересчеты
-			if (!this.DocumentContent || !this.DocumentContent.IsHdrFtr() || this.GetPositionV().RelativeFrom !== Asc.c_oAscRelativeFromV.Margin)
+			if (!oDocContent || !bIsHfdFtr || this.GetPositionV().RelativeFrom !== Asc.c_oAscRelativeFromV.Margin)
+			{
 				this.graphicObjects.addObjectOnPage(pageIndex, this.GraphicObj);
-
-			this.bNoNeedToAdd = false;
-		}
-		else
-		{
-			this.bNoNeedToAdd = true;
+				this.bNoNeedToAdd = false;
+			}
+			else
+			{
+				this.bNoNeedToAdd = true;
+			}
 		}
 	}
 
@@ -1776,8 +1779,8 @@ ParaDrawing.prototype.private_SetXYByLayout = function(X, Y, PageNum, Layout, bC
 	this.Internal_Position.Set(this.GraphicObj.extX, this.GraphicObj.extY, this.getXfrmRot(), this.EffectExtent, this.YOffset, Layout.ParagraphLayout, Layout.PageLimitsOrigin);
 	this.Internal_Position.Calculate_X(false, c_oAscRelativeFromH.Page, false, X - Layout.PageLimitsOrigin.X, false);
 	this.Internal_Position.Calculate_Y(false, c_oAscRelativeFromV.Page, false, Y - Layout.PageLimitsOrigin.Y, false);
-	var bCorrect = false;
-	if(this.DocumentContent && this.DocumentContent.IsTableCellContent && this.DocumentContent.IsTableCellContent(false))
+	let bCorrect = false;
+	if(this.isTableCellChild(false))
 	{
 		bCorrect = true;
 	}
@@ -2050,7 +2053,7 @@ ParaDrawing.prototype.Get_ParentParagraph = function()
 	if (this.Parent instanceof ParaRun)
 		return this.Parent.Paragraph;
 
-	if (this.Parent && this.Parent.GetParagraph())
+	if (this.Parent && this.Parent.GetParagraph)
 		return this.Parent.GetParagraph();
 
 	return null;
@@ -2509,20 +2512,57 @@ ParaDrawing.prototype.isGroup = function()
 };
 ParaDrawing.prototype.isShapeChild = function(bRetShape)
 {
-	if (!this.Is_Inline() || !this.DocumentContent)
+	const oDocContent = this.GetDocumentContent();
+	if (!this.Is_Inline() || !oDocContent)
 		return bRetShape ? null : false;
 
-	var cur_doc_content = this.DocumentContent;
-	var oCell;
-	while (oCell = cur_doc_content.IsTableCellContent(true))
+	let oCurDocContent = oDocContent;
+	let oCell;
+	while (oCell = oCurDocContent.IsTableCellContent(true))
 	{
-		cur_doc_content = oCell.Row.Table.Parent;
+		oCurDocContent = oCell.Row.Table.Parent;
 	}
-
-	if (AscCommon.isRealObject(cur_doc_content.Parent) && typeof cur_doc_content.Parent.getObjectType === "function" && cur_doc_content.Parent.getObjectType() === AscDFH.historyitem_type_Shape)
-		return bRetShape ? cur_doc_content.Parent : true;
-
+	if(oCurDocContent && oCurDocContent.Is_DrawingShape)
+	{
+		return oCurDocContent.Is_DrawingShape(bRetShape);
+	}
 	return bRetShape ? null : false;
+};
+ParaDrawing.prototype.isHdrFtrChild = function(bRetHdrFtr)
+{
+	const oContent = this.GetDocumentContent();
+	if(!oContent)
+	{
+		return bRetHdrFtr ? null : false;
+	}
+	return oContent.IsHdrFtr(bRetHdrFtr);
+};
+ParaDrawing.prototype.isFootnoteChild = function(bRetFootnote)
+{
+	const oContent = this.GetDocumentContent();
+	if(!oContent)
+	{
+		return bRetFootnote ? null : false;
+	}
+	return oContent.IsFootnote(bRetFootnote);
+};
+ParaDrawing.prototype.isTableCellChild = function(bRetCell)
+{
+	const oContent = this.GetDocumentContent();
+	if(!oContent)
+	{
+		return bRetCell ? null : false;
+	}
+	return oContent.IsTableCellContent(bRetCell);
+};
+ParaDrawing.prototype.isInTopDocument = function(bRetDoc)
+{
+	const oContent = this.GetDocumentContent();
+	if(!oContent)
+	{
+		return bRetDoc ? null : false;
+	}
+	return oContent.Is_TopDocument(bRetDoc);
 };
 ParaDrawing.prototype.checkShapeChildAndGetTopParagraph = function(paragraph)
 {
@@ -3223,9 +3263,12 @@ ParaDrawing.prototype.CheckSignatureLineOnAdd = function()
 		editor && editor.sendEvent("asc_onAddSignature", oGrObject.signatureLine.id);
 	}
 };
-ParaDrawing.prototype.CheckContentControlEditingLock = function(){
-	if(this.DocumentContent && this.DocumentContent.CheckContentControlEditingLock){
-        this.DocumentContent.CheckContentControlEditingLock();
+ParaDrawing.prototype.CheckContentControlEditingLock = function()
+{
+	const oDocContent = this.GetDocumentContent();
+	if(oDocContent && oDocContent.CheckContentControlEditingLock)
+	{
+		oDocContent.CheckContentControlEditingLock();
 	}
 };
 ParaDrawing.prototype.Document_Is_SelectionLocked = function(CheckType)
