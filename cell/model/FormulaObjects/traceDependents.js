@@ -222,6 +222,11 @@ function (window, undefined) {
 			let activeCell = selection.activeCell;
 			row = activeCell.row;
 			col = activeCell.col;
+			let mergedRange = ws.getMergedByCell(row, col);
+			if (mergedRange) {
+				row = mergedRange.r1;
+				col = mergedRange.c1;
+			}
 		}
 
 		let depFormulas = ws.workbook.dependencyFormulas;
@@ -780,6 +785,11 @@ function (window, undefined) {
 			let activeCell = selection.activeCell;
 			row = activeCell.row;
 			col = activeCell.col;
+			let mergedRange = ws.getMergedByCell(row, col);
+			if (mergedRange) {
+				row = mergedRange.r1;
+				col = mergedRange.c1;
+			}
 		}
 
 		const cellIndex = AscCommonExcel.getCellIndex(row, col);
