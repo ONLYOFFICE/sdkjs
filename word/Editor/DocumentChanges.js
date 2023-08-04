@@ -37,18 +37,21 @@
  * Time: 13:02
  */
 
-AscDFH.changesFactory[AscDFH.historyitem_Document_AddItem]                    = CChangesDocumentAddItem;
-AscDFH.changesFactory[AscDFH.historyitem_Document_RemoveItem]                 = CChangesDocumentRemoveItem;
-AscDFH.changesFactory[AscDFH.historyitem_Document_DefaultTab]                 = CChangesDocumentDefaultTab;
-AscDFH.changesFactory[AscDFH.historyitem_Document_EvenAndOddHeaders]          = CChangesDocumentEvenAndOddHeaders;
-AscDFH.changesFactory[AscDFH.historyitem_Document_DefaultLanguage]            = CChangesDocumentDefaultLanguage;
-AscDFH.changesFactory[AscDFH.historyitem_Document_MathSettings]               = CChangesDocumentMathSettings;
-AscDFH.changesFactory[AscDFH.historyitem_Document_SdtGlobalSettings]          = CChangesDocumentSdtGlobalSettings;
-AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_GutterAtTop]       = CChangesDocumentSettingsGutterAtTop;
-AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_MirrorMargins]     = CChangesDocumentSettingsMirrorMargins;
-AscDFH.changesFactory[AscDFH.historyitem_Document_SpecialFormsGlobalSettings] = CChangesDocumentSpecialFormsGlobalSettings;
-AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_TrackRevisions]    = CChangesDocumentSettingsTrackRevisions;
-
+AscDFH.changesFactory[AscDFH.historyitem_Document_AddItem]                         = CChangesDocumentAddItem;
+AscDFH.changesFactory[AscDFH.historyitem_Document_RemoveItem]                      = CChangesDocumentRemoveItem;
+AscDFH.changesFactory[AscDFH.historyitem_Document_DefaultTab]                      = CChangesDocumentDefaultTab;
+AscDFH.changesFactory[AscDFH.historyitem_Document_EvenAndOddHeaders]               = CChangesDocumentEvenAndOddHeaders;
+AscDFH.changesFactory[AscDFH.historyitem_Document_DefaultLanguage]                 = CChangesDocumentDefaultLanguage;
+AscDFH.changesFactory[AscDFH.historyitem_Document_MathSettings]                    = CChangesDocumentMathSettings;
+AscDFH.changesFactory[AscDFH.historyitem_Document_SdtGlobalSettings]               = CChangesDocumentSdtGlobalSettings;
+AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_GutterAtTop]            = CChangesDocumentSettingsGutterAtTop;
+AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_MirrorMargins]          = CChangesDocumentSettingsMirrorMargins;
+AscDFH.changesFactory[AscDFH.historyitem_Document_SpecialFormsGlobalSettings]      = CChangesDocumentSpecialFormsGlobalSettings;
+AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_TrackRevisions]         = CChangesDocumentSettingsTrackRevisions;
+AscDFH.changesFactory[AscDFH.historydescription_Document_DocumentProtection]       = CChangesDocumentProtection;
+AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_AutoHyphenation]        = CChangesDocumentSettingsAutoHyphen;
+AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_ConsecutiveHyphenLimit] = CChangesDocumentSettingsConsecutiveHyphenLimit;
+AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_DoNotHyphenateCaps]     = CChangesDocumentSettingsDoNotHyphenateCaps;
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
 //----------------------------------------------------------------------------------------------------------------------
@@ -723,7 +726,10 @@ CChangesDocumentSettingsTrackRevisions.prototype.CreateReverseChange = function(
 {
 	return new CChangesDocumentSettingsTrackRevisions(this.Class, this.New, this.Old, this.UserId);
 };
-
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBase}
+ */
 function CChangesDocumentProtection(Class, Old, New, sUserId) {
 	AscDFH.CChangesBase.call(this, Class, Old, New);
 	if (Old && New) {
@@ -797,7 +803,6 @@ function CChangesDocumentProtection(Class, Old, New, sUserId) {
 	}
 	this.UserId = sUserId;
 }
-
 CChangesDocumentProtection.prototype = Object.create(AscDFH.CChangesBase.prototype);
 CChangesDocumentProtection.prototype.constructor = CChangesDocumentProtection;
 CChangesDocumentProtection.prototype.Type = AscDFH.historydescription_Document_DocumentProtection;
@@ -1090,5 +1095,50 @@ CChangesDocumentProtection.prototype.CreateReverseChange = function () {
 	return ret;
 };
 
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesDocumentSettingsAutoHyphen(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesDocumentSettingsAutoHyphen.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesDocumentSettingsAutoHyphen.prototype.constructor = CChangesDocumentSettingsAutoHyphen;
+CChangesDocumentSettingsAutoHyphen.prototype.Type = AscDFH.historyitem_Document_Settings_AutoHyphenation;
+CChangesDocumentSettingsAutoHyphen.prototype.private_SetValue = function(value)
+{
+	this.Class.Settings.AutoHyphenation = value;
+};
 
-AscDFH.changesFactory[AscDFH.historydescription_Document_DocumentProtection] = CChangesDocumentProtection;
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesDocumentSettingsConsecutiveHyphenLimit(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesDocumentSettingsConsecutiveHyphenLimit.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesDocumentSettingsConsecutiveHyphenLimit.prototype.constructor = CChangesDocumentSettingsConsecutiveHyphenLimit;
+CChangesDocumentSettingsConsecutiveHyphenLimit.prototype.Type = AscDFH.historyitem_Document_Settings_ConsecutiveHyphenLimit;
+CChangesDocumentSettingsConsecutiveHyphenLimit.prototype.private_SetValue = function(value)
+{
+	this.Class.Settings.ConsecutiveHyphenLimit = value;
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseBoolProperty}
+ */
+function CChangesDocumentSettingsDoNotHyphenateCaps(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
+}
+CChangesDocumentSettingsDoNotHyphenateCaps.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesDocumentSettingsDoNotHyphenateCaps.prototype.constructor = CChangesDocumentSettingsDoNotHyphenateCaps;
+CChangesDocumentSettingsDoNotHyphenateCaps.prototype.Type = AscDFH.historyitem_Document_Settings_DoNotHyphenateCaps;
+CChangesDocumentSettingsDoNotHyphenateCaps.prototype.private_SetValue = function(value)
+{
+	this.Class.Settings.DoNotHyphenateCaps = value;
+};
