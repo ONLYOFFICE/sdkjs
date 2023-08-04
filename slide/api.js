@@ -8059,6 +8059,20 @@ background-repeat: no-repeat;\
 			var dd             = this.WordControl.m_oDrawingDocument;
 			dataContainer.data = dd.ToRendererPart(oAdditionalData["nobase64"], isSelection);
 		}
+		else if (this.insertDocumentUrlsData) {
+			var last = this.insertDocumentUrlsData.documents.shift();
+			oAdditionalData['url'] = last.url;
+			oAdditionalData['format'] = last.format;
+			if (last.token) {
+				oAdditionalData['tokenDownload'] = last.token;
+				//remove to reduce message size
+				oAdditionalData['tokenSession'] = undefined;
+			}
+			oAdditionalData['outputurls']= true;
+			// ToDo select txt params
+			oAdditionalData["codepage"] = AscCommon.c_oAscCodePageUtf8;
+			dataContainer.data = last.data;
+		}
 		else if(this.isOpenOOXInBrowser && this.saveDocumentToZip)
 		{
 			var title = this.documentTitle;
@@ -8123,6 +8137,17 @@ background-repeat: no-repeat;\
             this.WordControl.OnScroll();
     };
 
+	asc_docs_api.prototype.processSavedFile             = function(url, downloadType, filetype)
+	{
+		if (this.insertDocumentUrlsData && this.insertDocumentUrlsData.convertCallback)
+		{
+			this.insertDocumentUrlsData.convertCallback(this, url);
+		}
+		else
+		{
+			AscCommon.baseEditorsApi.prototype.processSavedFile.call(this, url, downloadType, filetype);
+		}
+	};
 
 	asc_docs_api.prototype.asc_Recalculate = function(bIsUpdateInterface)
 	{

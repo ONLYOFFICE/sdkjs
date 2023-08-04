@@ -565,9 +565,10 @@
 
 	var g_FCI = {row: null, col: null};
 
-	function getFromCellIndex(cellIndex) {
+	function getFromCellIndex(cellIndex, returnDuplicate) {
 		g_FCI.row = Math.floor(cellIndex / AscCommon.gc_nMaxCol);
 		g_FCI.col = cellIndex % AscCommon.gc_nMaxCol;
+		return returnDuplicate ? {row: g_FCI.row, col: g_FCI.col} : null;
 	}
 
 	function getVertexIndex(bbox) {
@@ -11472,55 +11473,66 @@
 	};
 
 	Worksheet.prototype.isLockedRange = function (range) {
-		var rangeType = range.getType();
-		var oRange = this.getRange3(range.r1, range.c1, range.r2, range.c2);
-		var res = true;
-		var unLockedRowIndex = range.r1 - 1;
+		let oRange = this.getRange3(range.r1, range.c1, range.r2, range.c2);
+		let res = true;
+
+		let _getLocked = function (_xfs) {
+			let _res = null;
+			if (_xfs && _xfs.applyProtection) {
+				_res = true;//null/true
+				if (_xfs.getLocked() === false) {
+					_res = false;
+				}
+			}
+			return _res;
+		};
+
+		//1. init default value
+		//all cells
+		if (null != this.oAllCol && this.oAllCol.xfs && this.oAllCol.xfs.locked != null) {
+			res = _getLocked(this.oAllCol.xfs);
+		}
+
+		//all selected rows
+		let unLockedRowIndex = range.r1 - 1;
 		oRange._foreachRowNoEmpty(function(row){
-			if(null != row && row.xfs && false === row.xfs.getLocked()) {
+			if(null != row && row.xfs && !res === _getLocked(row.xfs)) {
 				if (unLockedRowIndex + 1 === row.index) {
 					unLockedRowIndex++;
 				}
 			}
 		});
 		if (unLockedRowIndex === range.r2) {
-			//если все строки разлочены, далее можно не проверять
-			return false;
-		} else if (rangeType === Asc.c_oAscSelectionType.RangeMax || rangeType === Asc.c_oAscSelectionType.RangeRow) {
-			//если выделены все строки, но среди них не все разлочены - далее не проверяем и возвращаем true
-			return true;
+			res = !res;
 		}
 
-		var unLockedColndex = range.c1 - 1;
+		//all selected cols
+		let unLockedColIndex = range.c1 - 1;
 		oRange._foreachColNoEmpty(function(col){
-			if(null != col && col.xfs && false === col.xfs.getLocked()) {
-				if (unLockedColndex + 1 === col.index) {
-					unLockedColndex++;
+			if(null != col && col.xfs && !res === _getLocked(col.xfs)) {
+				if (unLockedColIndex + 1 === col.index) {
+					unLockedColIndex++;
 				}
 			}
 		});
-		if (unLockedColndex === range.c2) {
-			//если все столбцы разлочены, далее можно не проверять
-			return false;
-		} else if (rangeType === Asc.c_oAscSelectionType.RangeMax || rangeType === Asc.c_oAscSelectionType.RangeCol) {
-			//если выделены все столбцы, но среди них не все разлочены - далее не проверяем и возвращаем true
-			return true;
+		if (unLockedColIndex === range.c2) {
+			res = !res;
 		}
 
-		oRange._foreach2(function(cell){
+		oRange._foreachNoEmpty(function(cell){
 			if (!cell) {
-				res = true;
-				return true;
+				return;
 			}
-			var cellxfs = cell.xfs;
-			var isLocked = cellxfs && cellxfs.asc_getLocked();
-			if (isLocked === null || isLocked === true) {
+
+			var isLocked = _getLocked(cell.xfs);
+			if (isLocked === true) {
 				res = true;
 				return true;
-			} else {
+			} else if (isLocked === false) {
 				res = false;
 			}
 		});
+
 		return res;
 	};
 
@@ -19395,6 +19407,7 @@
 	window['AscCommonExcel'].oFormulaLocaleInfo = oFormulaLocaleInfo;
 	window['AscCommonExcel'].getDefNameIndex = getDefNameIndex;
 	window['AscCommonExcel'].getCellIndex = getCellIndex;
+	window['AscCommonExcel'].getFromCellIndex = getFromCellIndex;
 	window['AscCommonExcel'].angleFormatToInterface2 = angleFormatToInterface2;
 	window['AscCommonExcel'].angleInterfaceToFormat = angleInterfaceToFormat;
 	window['AscCommonExcel'].Workbook = Workbook;

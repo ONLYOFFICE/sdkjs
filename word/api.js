@@ -3041,14 +3041,6 @@ background-repeat: no-repeat;\
 			AscCommon.baseEditorsApi.prototype.processSavedFile.call(this, url, downloadType, filetype);
 		}
 	};
-	asc_docs_api.prototype.endInsertDocumentUrls = function()
-	{
-		if (this.insertDocumentUrlsData) {
-			this.insertDocumentUrlsData.endCallback(this);
-			this.insertDocumentUrlsData = null;
-			//this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.DownloadAs);
-		}
-	};
 	asc_docs_api.prototype.startGetDocInfo              = function()
 	{
 		/*
@@ -8522,9 +8514,13 @@ background-repeat: no-repeat;\
 	{
 		var t = this;
 		this.sync_StartAction(c_oAscAsyncActionType.Information, c_oAscAsyncAction.Submit);
-		var data = {'type': 'sendForm', 'userconnectionid': this.CoAuthoringApi.getUserConnectionId()};
+		var data = {'type': 'sendForm', 'userconnectionid': this.CoAuthoringApi.getUserConnectionId(), 'formdata': {
+				"key1": "qwerty",
+				"key2": true,
+				"key3": "2023-07-17"
+		}};
 		this.saveFromChanges(data, Asc.c_nMaxConversionTime, function(isTimeout, response) {
-			if (!(response && response.success)) {
+			if (!(response && AscCommon.c_oAscServerCommandErrors.NoError === response.code)) {
 				t.sendEvent('asc_onError', Asc.c_oAscError.ID.Submit, c_oAscError.Level.NoCritical);
 			}
 			t.sync_EndAction(c_oAscAsyncActionType.Information, c_oAscAsyncAction.Submit);
