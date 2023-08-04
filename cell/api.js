@@ -9058,6 +9058,7 @@ var editor;
   prot["asc_setDisplayHeadings"] = prot.asc_setDisplayHeadings;
   prot["asc_setShowZeros"] = prot.asc_setShowZeros;
   prot["asc_setShowFormulas"] = prot.asc_setShowFormulas;
+  prot["asc_getShowFormulas"] = prot.asc_getShowFormulas;
 
 
   // Defined Names
