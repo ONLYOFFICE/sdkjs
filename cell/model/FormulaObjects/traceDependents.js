@@ -1195,8 +1195,30 @@ function (window, undefined) {
 		this.precedentsAreas = null;
 		this.currentPrecedentsAreas = null;
 		this.currentCalculatedPrecedentAreas = null;
-		this.precedentsAreasHeaders = null,
+		this.precedentsAreasHeaders = null;
 		this._setDefaultData();
+	};
+	TraceDependentsManager.prototype.changeDocument = function (prop, arg1, arg2) {
+		switch (prop) {
+			case AscCommonExcel.docChangedType.cellValue:
+				if (arg1) {
+					this.clearCellTraces(arg1.nRow, arg1.nCol);
+				}
+				break;
+			case AscCommonExcel.docChangedType.rangeValues:
+				break;
+			case AscCommonExcel.docChangedType.sheetContent:
+				this.clearAll();
+				break;
+			case AscCommonExcel.docChangedType.sheetRemove:
+				break;
+			case AscCommonExcel.docChangedType.sheetRename:
+				break;
+			case AscCommonExcel.docChangedType.sheetChangeIndex:
+				break;
+			case AscCommonExcel.docChangedType.markModifiedSearch:
+				break;
+		}
 	};
 	TraceDependentsManager.prototype.clearCellTraces = function (row, col) {
 		let ws = this.ws && this.ws.model;
