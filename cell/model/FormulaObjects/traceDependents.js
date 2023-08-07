@@ -1194,7 +1194,7 @@ function (window, undefined) {
 			this.clearLastPrecedent();
 		}
 	};
-	TraceDependentsManager.prototype.clearAll = function () {
+	TraceDependentsManager.prototype.clearAll = function (needDraw) {
 		this.precedents = null;
 		this.precedentsExternal = null;
 		this.currentPrecedents = null;
@@ -1207,6 +1207,12 @@ function (window, undefined) {
 		this.currentCalculatedPrecedentAreas = null;
 		this.precedentsAreasHeaders = null;
 		this._setDefaultData();
+
+		if (needDraw) {
+			if (this.ws && this.ws.overlayCtx) {
+				this.ws._drawSelection();
+			}
+		}
 	};
 	TraceDependentsManager.prototype.changeDocument = function (prop, arg1, arg2) {
 		switch (prop) {
