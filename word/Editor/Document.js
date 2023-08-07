@@ -12667,6 +12667,9 @@ CDocument.prototype.Refresh_RecalcData = function(oData)
 		case AscDFH.historyitem_Document_MathSettings:
 		case AscDFH.historyitem_Document_Settings_GutterAtTop:
 		case AscDFH.historyitem_Document_Settings_MirrorMargins:
+		case AscDFH.historyitem_Document_Settings_AutoHyphenation:
+		case AscDFH.historyitem_Document_Settings_ConsecutiveHyphenLimit:
+		case AscDFH.historyitem_Document_Settings_DoNotHyphenateCaps:
 		{
 			nChangePos = 0;
 			break;
@@ -16270,6 +16273,20 @@ CDocument.prototype.SetDocumentPrintMode = function()
 	});
 
 	this.RecalculateFromStart(true);
+};
+CDocument.prototype.SetAutoHyphenation = function(isAuto)
+{
+	if (this.Settings.IsAutoHyphenation() !== isAuto)
+		return;
+	
+	if (this.IsSelectionLocked(AscCommon.changestype_Document_SectPr))
+		return
+
+	this.StartAction(AscDFH.historydescription_Document_SetAutoHyphenation);
+	this.Settings.SetAutoHyphenation(isAuto);
+	this.Recalculate();
+	this.UpdateInterface();
+	this.FinalizeAction();
 };
 CDocument.prototype.private_SetCurrentSpecialForm = function(oForm)
 {

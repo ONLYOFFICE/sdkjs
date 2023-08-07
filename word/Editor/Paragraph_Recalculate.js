@@ -2542,8 +2542,14 @@ Paragraph.prototype.HyphenateText = function()
 	if (!this.RecalcInfo.HyphenateText)
 		return;
 	
-	AscWord.TextHyphenator.Hyphenate(this);
 	this.RecalcInfo.HyphenateText = false;
+
+	let isAuto = this.IsAutoHyphenation();
+	if (!this.RecalcInfo.AutoHyphenation && !isAuto)
+		return;
+	
+	this.RecalcInfo.AutoHyphenation = isAuto;
+	AscWord.TextHyphenator.Hyphenate(this);
 };
 
 Paragraph.prototype.ShapeTextInRange = function(oStartPos, oEndPos)
