@@ -56,7 +56,7 @@ function (window, undefined) {
 		this.inLoop = null;
 		this.isPrecedentsCall = null;
 		this.precedentsAreas = null;
-		this.precedentsAreasHeaders = null,
+		this.precedentsAreasHeaders = null;
 		this.data = {
 			lastHeaderIndex: -1,
 			prevIndex: -1,
@@ -355,7 +355,6 @@ function (window, undefined) {
 							}
 							t._setDependents(cellIndex, parentCellIndex);
 							t._setPrecedents(parentCellIndex, cellIndex);
-							continue;
 						} else {
 							t._setDependents(cellIndex, parentCellIndex);
 							t._setPrecedents(parentCellIndex, cellIndex);
@@ -488,7 +487,7 @@ function (window, undefined) {
 						let parent = cellListeners[i].parent;
 						let parentWsId = parent.ws ? parent.ws.Id : null;
 						let isTable = parent.parsedRef ? parent.parsedRef.isTable : false;
-						let isDefName = parent.name ? true : false;
+						let isDefName = !!parent.name;
 						let formula = cellListeners[i].Formula;
 						let is3D = false;
 						const parentInfo = {
