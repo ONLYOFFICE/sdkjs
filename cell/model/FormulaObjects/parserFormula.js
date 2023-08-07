@@ -2033,7 +2033,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 
 		if (!defName.parsedRef) {
-			return new cError(cErrorType.wrong_name);
+			defName.setRef(defName.ref, true, true, true);
 		}
 
 		//несмотря на то, что именованный диапазон ссылается на ошибку
