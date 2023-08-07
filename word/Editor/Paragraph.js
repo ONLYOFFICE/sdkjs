@@ -17488,7 +17488,7 @@ Paragraph.prototype.IsAutoHyphenation = function()
 {
 	let logicDocument = this.GetLogicDocument();
 	if (logicDocument && logicDocument.IsDocumentEditor())
-		return logicDocument.GetDocumentSettings().AutoHyphenation;
+		return logicDocument.GetDocumentSettings().IsAutoHyphenation();
 	
 	return false;
 };

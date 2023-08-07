@@ -49,7 +49,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_MirrorMargins]       
 AscDFH.changesFactory[AscDFH.historyitem_Document_SpecialFormsGlobalSettings]      = CChangesDocumentSpecialFormsGlobalSettings;
 AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_TrackRevisions]         = CChangesDocumentSettingsTrackRevisions;
 AscDFH.changesFactory[AscDFH.historydescription_Document_DocumentProtection]       = CChangesDocumentProtection;
-AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_AutoHyphenation]        = CChangesDocumentSettingsAutoHyphen;
+AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_AutoHyphenation]        = CChangesDocumentSettingsAutoHyphenation;
 AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_ConsecutiveHyphenLimit] = CChangesDocumentSettingsConsecutiveHyphenLimit;
 AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_DoNotHyphenateCaps]     = CChangesDocumentSettingsDoNotHyphenateCaps;
 //----------------------------------------------------------------------------------------------------------------------
@@ -1099,14 +1099,14 @@ CChangesDocumentProtection.prototype.CreateReverseChange = function () {
  * @constructor
  * @extends {AscDFH.CChangesBaseBoolProperty}
  */
-function CChangesDocumentSettingsAutoHyphen(Class, Old, New, Color)
+function CChangesDocumentSettingsAutoHyphenation(Class, Old, New, Color)
 {
 	AscDFH.CChangesBaseBoolProperty.call(this, Class, Old, New, Color);
 }
-CChangesDocumentSettingsAutoHyphen.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
-CChangesDocumentSettingsAutoHyphen.prototype.constructor = CChangesDocumentSettingsAutoHyphen;
-CChangesDocumentSettingsAutoHyphen.prototype.Type = AscDFH.historyitem_Document_Settings_AutoHyphenation;
-CChangesDocumentSettingsAutoHyphen.prototype.private_SetValue = function(value)
+CChangesDocumentSettingsAutoHyphenation.prototype = Object.create(AscDFH.CChangesBaseBoolProperty.prototype);
+CChangesDocumentSettingsAutoHyphenation.prototype.constructor = CChangesDocumentSettingsAutoHyphenation;
+CChangesDocumentSettingsAutoHyphenation.prototype.Type = AscDFH.historyitem_Document_Settings_AutoHyphenation;
+CChangesDocumentSettingsAutoHyphenation.prototype.private_SetValue = function(value)
 {
 	this.Class.Settings.AutoHyphenation = value;
 };

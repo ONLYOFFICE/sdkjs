@@ -9369,7 +9369,7 @@
 				|| 0x2611 === nUnicode
 				|| 0x2610 === nUnicode));
 	}
-
+	
 	function ExecuteNoHistory(f, oLogicDocument, oThis, args)
 	{
 		// TODO: Надо перевести все редакторы на StartNoHistoryMode/EndNoHistoryMode
@@ -9404,6 +9404,12 @@
 		}
 
 		return result;
+	}
+	
+	function AddAndExecuteChange(change)
+	{
+		AscCommon.History.Add(change);
+		change.Redo();
 	}
 
 	/**
@@ -13397,6 +13403,7 @@
 	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
 	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
+	window["AscCommon"].AddAndExecuteChange = AddAndExecuteChange;
 	window["AscCommon"].CompareStrings = CompareStrings;
 	window["AscCommon"].IsSupportAscFeature = IsSupportAscFeature;
 	window["AscCommon"].IsSupportOFormFeature = IsSupportOFormFeature;

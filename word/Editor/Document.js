@@ -1835,7 +1835,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.TrackRevisions = null; // Локальный флаг рецензирования, который перекрывает флаг Settings.TrackRevisions, если сам не null
 	this.TrackRevisionsManager = new AscWord.CTrackRevisionsManager(this);
 
-	this.Settings = new AscWord.CDocumentSettings();
+	this.Settings = new AscWord.CDocumentSettings(this);
 
 	this.Layouts = {
 		Print : new AscWord.CDocumentPrintView(this),
@@ -16244,7 +16244,6 @@ CDocument.prototype.SetProtection = function(props)
 		this.Settings.DocumentProtection.setProps(props);
 	}
 };
-
 CDocument.prototype.GetDocumentLayout = function()
 {
 	return this.Layout;
