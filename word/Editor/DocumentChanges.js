@@ -1109,6 +1109,7 @@ CChangesDocumentSettingsAutoHyphenation.prototype.Type = AscDFH.historyitem_Docu
 CChangesDocumentSettingsAutoHyphenation.prototype.private_SetValue = function(value)
 {
 	this.Class.Settings.AutoHyphenation = value;
+	this.Class.OnChangeAutoHyphenation();
 };
 
 /**
@@ -1125,6 +1126,7 @@ CChangesDocumentSettingsConsecutiveHyphenLimit.prototype.Type = AscDFH.historyit
 CChangesDocumentSettingsConsecutiveHyphenLimit.prototype.private_SetValue = function(value)
 {
 	this.Class.Settings.ConsecutiveHyphenLimit = value;
+	this.Class.OnChangeAutoHyphenation();
 };
 
 /**
@@ -1141,4 +1143,5 @@ CChangesDocumentSettingsDoNotHyphenateCaps.prototype.Type = AscDFH.historyitem_D
 CChangesDocumentSettingsDoNotHyphenateCaps.prototype.private_SetValue = function(value)
 {
 	this.Class.Settings.DoNotHyphenateCaps = value;
+	this.Class.OnChangeAutoHyphenation();
 };

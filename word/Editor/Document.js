@@ -16276,7 +16276,7 @@ CDocument.prototype.SetDocumentPrintMode = function()
 };
 CDocument.prototype.SetAutoHyphenation = function(isAuto)
 {
-	if (this.Settings.IsAutoHyphenation() !== isAuto)
+	if (this.Settings.IsAutoHyphenation() === isAuto)
 		return;
 	
 	if (this.IsSelectionLocked(AscCommon.changestype_Document_SectPr))
@@ -16287,6 +16287,14 @@ CDocument.prototype.SetAutoHyphenation = function(isAuto)
 	this.Recalculate();
 	this.UpdateInterface();
 	this.FinalizeAction();
+};
+CDocument.prototype.OnChangeAutoHyphenation = function()
+{
+	let paragraphs = this.GetAllParagraphs();
+	for (let i = 0, count = paragraphs.length; i < count; ++i)
+	{
+		paragraphs[i].NeedHyphenateText();
+	}
 };
 CDocument.prototype.private_SetCurrentSpecialForm = function(oForm)
 {

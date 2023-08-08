@@ -4060,7 +4060,7 @@ CParagraphRecalculateStateWrap.prototype.OnEndRecalculateLineRanges = function()
  */
 CParagraphRecalculateStateWrap.prototype.GetAutoHyphenWidth = function(item, run)
 {
-	if (!item || !item.IsText() || !item.IsHyphenAfter())
+	if (!this.AutoHyphenation || !item || !item.IsText() || !item.IsHyphenAfter())
 		return 0;
 	
 	let textPr = run.Get_CompiledPr(false);

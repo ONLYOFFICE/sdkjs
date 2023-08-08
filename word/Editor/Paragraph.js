@@ -1306,6 +1306,10 @@ Paragraph.prototype.OnContentChange = function()
 	if (this.Parent && this.Parent.OnContentChange)
 		this.Parent.OnContentChange();
 };
+Paragraph.prototype.NeedHyphenateText = function()
+{
+	this.RecalcInfo.NeedHyphenateText();
+};
 Paragraph.prototype.Clear_ContentChanges = function()
 {
 	this.m_oContentChanges.Clear();
