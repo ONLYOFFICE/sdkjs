@@ -1385,6 +1385,10 @@
 				{
 				}
 
+				// Delete empty point in history (if we just run macros without any changes)
+				if (AscCommon.History.Is_LastPointEmpty())
+					AscCommon.History.Remove_LastPoint();
+
 				if (_command_callback_send)
 				{
 					var pluginData = new CPluginData();
