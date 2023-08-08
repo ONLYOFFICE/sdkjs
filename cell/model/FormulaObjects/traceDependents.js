@@ -50,7 +50,6 @@ function (window, undefined) {
 		this.ws = ws;
 		this.precedents = null;
 		this.precedentsExternal = null;
-		this.currentPrecedents = null;
 		this.dependents = null;
 		this.isDependetsCall = null;
 		this.inLoop = null;
@@ -58,6 +57,7 @@ function (window, undefined) {
 		this.precedentsAreas = null;
 		this.precedentsAreasHeaders = null;
 		this.data = {
+			referenceMaxLevel: Math.pow(100, 10),
 			lastHeaderIndex: -1,
 			prevIndex: -1,
 			recLevel: 0,
@@ -66,13 +66,11 @@ function (window, undefined) {
 				// cellIndex[From]: cellIndex[To]: recLevel
 			}
 		};
-		this.currentPrecedentsAreas = null;
 		this.currentCalculatedPrecedentAreas = {
 			// rangeName: {
 			// inProgress: null,
 			// isCalculated: null
 			// }
-
 		};
 	}
 
@@ -174,7 +172,7 @@ function (window, undefined) {
 			for (let i in t.dependents[index]) {
 				if (t._getDependents(index, i) && t._getDependents(i, index)) {
 					let related = index + "|" + i;
-					t.data.recLevel = Math.pow(10, 10);
+					t.data.recLevel = t.data.referenceMaxLevel;
 					t.data.maxRecLevel = t.data.recLevel;
 					t.data.indices[related] = t.data.recLevel;
 					return true;
@@ -187,9 +185,9 @@ function (window, undefined) {
 		if (maxLevel === 0) {
 			this._setDefaultData();
 			return;
-		} else if (maxLevel === Math.pow(10, 10)) {
+		} else if (maxLevel === t.data.referenceMaxLevel) {
 			// TODO improve check of cyclic references
-			// temporary solution
+			// temporary solution: now, when finding cyclic dependencies, the maximum nesting number(100^10) is set for them and only they are will be initially removed
 			for (let i in this.data.indices) {
 				if (this.data.indices[i] === maxLevel) {
 					let val = i.split("|");
@@ -598,6 +596,7 @@ function (window, undefined) {
 	};
 	TraceDependentsManager.prototype._setDefaultData = function () {
 		this.data = {
+			referenceMaxLevel: Math.pow(100, 10),
 			recLevel: 0,
 			maxRecLevel: 0,
 			lastHeaderIndex: -1,
@@ -627,7 +626,7 @@ function (window, undefined) {
 			for (let i in t.precedents[index]) {
 				if (t._getPrecedents(index, i) && t._getPrecedents(i, index)) {
 					let related = index + "|" + i;
-					t.data.recLevel = Math.pow(10, 10);
+					t.data.recLevel = t.data.referenceMaxLevel;
 					t.data.maxRecLevel = t.data.recLevel;
 					t.data.indices[related] = t.data.recLevel;
 					return true;
@@ -635,14 +634,11 @@ function (window, undefined) {
 			}
 		};
 		const checkIfHeader = function (cellIndex) {
-			// TODO можно ускорить алгоритм поиска если при расчете precedents записывать в качестве значения ячейки массив с именами таблиц, заголовками которого является данная ячейка
-			if (!t.precedentsAreas) {
+			if (!t.precedentsAreas || !t.precedentsAreasHeaders) {
 				return;
 			}
-			for (let area in t.precedentsAreas) {
-				if (t.precedentsAreas[area].areaHeader === cellIndex) {
-					return true;
-				}
+			if (t.precedentsAreasHeaders[cellIndex]) {
+				return true;
 			}
 		};
 		const getAllAreaIndexes = function (areas, currentCellIndex) {
@@ -663,7 +659,7 @@ function (window, undefined) {
 			}
 			return indexes;
 		};
-		const findMaxNesting = function (row, col) {
+		const findMaxNesting = function (row, col, callFromArea) {
 			let currentCellIndex = AscCommonExcel.getCellIndex(row, col);
 			if (t.data.indices[currentCellIndex] && t.data.indices[currentCellIndex][t.data.prevIndex]) {
 				t.data.indices[currentCellIndex][t.data.prevIndex] = t.data.recLevel;
@@ -672,8 +668,8 @@ function (window, undefined) {
 
 			let ifHeader, interLevel, fork;
 			if (t.data.recLevel > 0 && t.data.lastHeaderIndex !== currentCellIndex) {
-				// check area header
-				ifHeader = checkIfHeader(currentCellIndex);
+				// checking if a cell is a table header
+				ifHeader = callFromArea ? false : checkIfHeader(currentCellIndex);
 
 				if (!t.precedents[currentCellIndex] && !ifHeader) {
 					if (!t.data.indices[t.data.prevIndex]) {
@@ -699,7 +695,7 @@ function (window, undefined) {
 						if (!t.precedents[index] && index !== currentCellIndex) {
 							continue;
 						}
-						findMaxNesting(cellAddress.row, cellAddress.col);
+						findMaxNesting(cellAddress.row, cellAddress.col, true);
 						t.data.recLevel = fork ? interLevel : t.data.recLevel;
 					}
 				}
@@ -744,8 +740,8 @@ function (window, undefined) {
 			return;
 		}
 		// TODO improve check of cyclic references
-		// temporary solution
-		else if (maxLevel === Math.pow(10, 10)) {
+		// temporary solution: now, when finding cyclic dependencies, the maximum nesting number(100^10) is set for them and only they are will be initially removed
+		else if (maxLevel === t.data.referenceMaxLevel) {
 			for (let i in this.data.indices) {
 				if (this.data.indices[i] === maxLevel) {
 					let val = i.split("|");
@@ -769,10 +765,6 @@ function (window, undefined) {
 		this._setDefaultData();
 	};
 	TraceDependentsManager.prototype.calculatePrecedents = function (row, col, isSecondCall, callFromArea) {
-		if (arguments.length === 0) {
-			this.currentCalculatedPrecedentAreas = {};
-		}
-
 		//depend from row/col cell
 		let ws = this.ws && this.ws.model;
 		if (!ws) {
@@ -780,6 +772,9 @@ function (window, undefined) {
 		}
 		const t = this;
 		if (row == null || col == null) {
+			// if first call, create/clear object with calculated areas 
+			this.currentCalculatedPrecedentAreas = {};
+
 			let selection = ws.getSelection();
 			let activeCell = selection.activeCell;
 			row = activeCell.row;
@@ -818,7 +813,7 @@ function (window, undefined) {
 			return indexes;
 		};
 		const isCellAreaHeader = function (cellIndex) {
-			if (!t.currentPrecedentsAreas || !t.precedentsAreasHeaders) {
+			if (!t.precedentsAreas || !t.precedentsAreasHeaders) {
 				return;
 			}
 			if (t.precedentsAreasHeaders[cellIndex]) {
@@ -833,10 +828,10 @@ function (window, undefined) {
 
 		// TODO another way to check table
 		let isAreaHeader = callFromArea ? false : isCellAreaHeader(cellIndex);
-		if (this.currentPrecedentsAreas && isSecondCall && isAreaHeader) {
+		if (this.precedentsAreas && isSecondCall && isAreaHeader) {
 			// calculate all precedents in areas
 			let areaName = this.precedentsAreasHeaders[cellIndex];
-			let areaIndexes = getAllAreaIndexesWithFormula(this.currentPrecedentsAreas, areaName);
+			let areaIndexes = getAllAreaIndexesWithFormula(this.precedentsAreas, areaName);
 
 			if (!this.currentCalculatedPrecedentAreas[areaName]) {
 				this.currentCalculatedPrecedentAreas[areaName] = {};
@@ -1002,11 +997,9 @@ function (window, undefined) {
 			if (this.checkCircularReference(currentCellIndex, false)) {
 				return;
 			}
-			this.currentPrecedents = Object.assign({}, this.precedents);
-			this.currentPrecedentsAreas = Object.assign({}, this._getPrecedentsAreas());
 			this.setPrecedentsLoop(true);
 			// check first level, then if function return false, check second, third and so on
-			for (let i in this.currentPrecedents[currentCellIndex]) {
+			for (let i in this.precedents[currentCellIndex]) {
 				let coords = AscCommonExcel.getFromCellIndex(i, true);
 				this.calculatePrecedents(coords.row, coords.col, true);
 			}
@@ -1196,13 +1189,11 @@ function (window, undefined) {
 	TraceDependentsManager.prototype.clearAll = function (needDraw) {
 		this.precedents = null;
 		this.precedentsExternal = null;
-		this.currentPrecedents = null;
 		this.dependents = null;
 		this.isDependetsCall = null;
 		this.inLoop = null;
 		this.isPrecedentsCall = null;
 		this.precedentsAreas = null;
-		this.currentPrecedentsAreas = null;
 		this.currentCalculatedPrecedentAreas = null;
 		this.precedentsAreasHeaders = null;
 		this._setDefaultData();
@@ -1260,6 +1251,7 @@ function (window, undefined) {
 			let areaHeader = this.precedentsAreas[i].areaHeader;
 			if (!this.dependents[areaHeader]) {
 				delete this.precedentsAreas[i];
+				delete this.precedentsAreasHeaders[areaHeader];
 			}
 		}
 	};

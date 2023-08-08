@@ -8888,7 +8888,6 @@ var editor;
 			return;
 		}
 		let ws = wb.getWorksheet();
-		//c_oAscRemoveArrowsType
 		return ws.removeTraceArrows(type);
 	};
 
