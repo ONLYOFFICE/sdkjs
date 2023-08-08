@@ -1353,7 +1353,8 @@
 
 						AscFonts.IsCheckSymbols = false;
 
-						if (pluginData.getAttribute("recalculate") == true)
+						// Delete empty point in history (if we just run macros without any changes)
+						if (pluginData.getAttribute("recalculate") == true && !AscCommon.History.Is_LastPointEmpty())
 						{
 							_command_callback_send = false;
 
@@ -1384,10 +1385,6 @@
 				} catch (err)
 				{
 				}
-
-				// Delete empty point in history (if we just run macros without any changes)
-				if (AscCommon.History.Is_LastPointEmpty())
-					AscCommon.History.Remove_LastPoint();
 
 				if (_command_callback_send)
 				{
