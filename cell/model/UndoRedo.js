@@ -3867,6 +3867,12 @@ function (window, undefined) {
 			case AscCH.historyitem_Layout_FirstPageNumber:
 				pageSetup.asc_setFirstPageNumber(value);
 				break;
+			case AscCH.historyitem_Layout_HorizontalCentered:
+				pageOptions.asc_setHorizontalCentered(value);
+				break;
+			case AscCH.historyitem_Layout_VerticalCentered:
+				pageOptions.asc_setVerticalCentered(value);
+				break;
 		}
 
 		this.wb.oApi._onUpdateLayoutMenu(nSheetId);
