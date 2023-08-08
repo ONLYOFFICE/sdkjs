@@ -13376,12 +13376,12 @@ QueryTableField.prototype.clone = function() {
 			this.asc_setGridLines(gridLines);
 		}
 		let horizontalCentered = obj.asc_getHorizontalCentered();
-		if(heading !== this.asc_getHorizontalCentered()) {
-			this.asc_setHorizontalCentered(heading);
+		if(horizontalCentered !== this.asc_getHorizontalCentered()) {
+			this.asc_setHorizontalCentered(horizontalCentered);
 		}
 		let verticalCentered = obj.asc_getVerticalCentered();
-		if(heading !== this.asc_getVerticalCentered()) {
-			this.asc_setVerticalCentered(heading);
+		if(verticalCentered !== this.asc_getVerticalCentered()) {
+			this.asc_setVerticalCentered(verticalCentered);
 		}
 
 		this.asc_getPageMargins().asc_setOptions(obj.asc_getPageMargins());

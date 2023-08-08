@@ -2285,6 +2285,27 @@
 			}
 		}
 
+		let recalculatePageMargins = function (_page) {
+			let horizontalCentered = pageOptions && pageOptions.asc_getHorizontalCentered();
+			horizontalCentered = true;
+			let verticalCentered = pageOptions && pageOptions.asc_getVerticalCentered();
+			verticalCentered = true
+			if (horizontalCentered) {
+				let _offset = (pageWidthWithFieldsHeadings - realPageWidth) / 2;
+				_page.pageClipRectLeft += _offset;
+				_page.leftFieldInPx += _offset;
+				_page.pageClipRectWidth += _offset;
+			}
+
+			if (verticalCentered) {
+				let _offset = (pageHeightWithFieldsHeadings - realPageHeight) / 2;
+				_page.pageClipRectTop += _offset;
+				_page.topFieldInPx += _offset;
+				_page.pageClipRectHeight += _offset;
+			}
+		};
+
+		let realPageWidth, realPageHeight;
 		let currentColIndex = range.c1;
 		let currentWidth = 0;
 		let currentRowIndex = range.r1;
@@ -2422,6 +2443,7 @@
 					} else {
 						newPagePrint.pageClipRectWidth = Math.min(currentWidth, newPagePrint.pageClipRectWidth);
 					}
+					realPageWidth = currentWidth;
 				}
 
 				currentHeight += currentRowHeight;
@@ -2443,6 +2465,7 @@
 			} else {
 				newPagePrint.pageClipRectHeight = Math.min(currentHeight, newPagePrint.pageClipRectHeight);
 			}
+			realPageHeight = currentHeight;
 
 			// Нужно будет пересчитывать колонки
 			isCalcColumnsWidth = true;
@@ -2474,6 +2497,7 @@
 			} else if(scale) {
 				newPagePrint.scale = scale;
 			}
+			recalculatePageMargins(newPagePrint);
 			arrPages.push(newPagePrint);
 			nCountPages++;
 
