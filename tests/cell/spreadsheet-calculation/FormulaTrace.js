@@ -1798,7 +1798,7 @@ $(function() {
 			assert.strictEqual(typeof(traceManager.precedentsAreas["$F$2:$F$2004"]), "object");
 			assert.strictEqual(typeof(traceManager.precedentsAreas["C2:E2"]), "object");
 			// assert.strictEqual(typeof(traceManager.precedentsAreas["C1000:E1000"]), "object");
-			// api.asc_TracePrecedents();	// old: ~2800ms, new: ~280ms
+			api.asc_TracePrecedents();	// old: ~2800ms, new: ~280ms
 			// api.asc_TracePrecedents();	// old: ~5400ms, new: ~280ms
 			// api.asc_TracePrecedents();	// old: ~8400ms, new: ~280ms
 			// api.asc_TracePrecedents();	// old: ~10800ms, new: ~280ms
@@ -1810,6 +1810,10 @@ $(function() {
 		// QUnit.test("Test: \"Interface tests\"", function (assert) {
 		// 	let bbox;
 		// 	// trace dependents/precedents -> click on interface element -> check dependencies
+		// 	// let a = new api.asc_CDefName();
+		// 	// AddComment -> false
+		// 	// asc_Paste -> false
+		// 	// asc_PasteData -> true*
 		// });
 	}
 

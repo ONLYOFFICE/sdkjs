@@ -615,6 +615,7 @@ function (window, undefined) {
 
 		const t = this;
 
+		// TODO merged range
 		if (row == null || col == null) {
 			let selection = ws.getSelection();
 			let activeCell = selection.activeCell;
@@ -641,20 +642,17 @@ function (window, undefined) {
 				return true;
 			}
 		};
-		const getAllAreaIndexes = function (areas, currentCellIndex) {
+		const getAllAreaIndexes = function (areas, areaName) {
 			const indexes = [];
 			if (!areas) {
 				return;
 			}
-			for (const area in areas) {
-				if (areas[area].areaHeader != currentCellIndex) {
-					continue;
-				}
-				for (let i = areas[area].range.r1; i <= areas[area].range.r2; i++) {
-					for (let j = areas[area].range.c1; j <= areas[area].range.c2; j++) {
-						let index = AscCommonExcel.getCellIndex(i, j);
-						indexes.push(index);
-					}
+
+			let area = areas[areaName];
+			for (let i = area.range.r1; i <= area.range.r2; i++) {
+				for (let j = area.range.c1; j <= area.range.c2; j++) {
+					let index = AscCommonExcel.getCellIndex(i, j);
+					indexes.push(index);
 				}
 			}
 			return indexes;
@@ -682,7 +680,8 @@ function (window, undefined) {
 
 			if (ifHeader) {
 				// go through area
-				let areaIndexes = getAllAreaIndexes(t.precedentsAreas, currentCellIndex);
+				let areaName = t.precedentsAreasHeaders[currentCellIndex];
+				let areaIndexes = getAllAreaIndexes(t.precedentsAreas, areaName);
 
 				if (areaIndexes.length > 0) {
 					fork = true;
@@ -732,7 +731,6 @@ function (window, undefined) {
 				t.data.indices[t.data.prevIndex][currentCellIndex] = t.data.recLevel;
 			}
 		};
-
 		findMaxNesting(row, col);
 		const maxLevel = this.data.maxRecLevel;
 		if (maxLevel === 0) {
