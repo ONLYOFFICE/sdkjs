@@ -2539,16 +2539,9 @@ Paragraph.prototype.ShapeText = function()
 };
 Paragraph.prototype.HyphenateText = function()
 {
-	if (!this.RecalcInfo.HyphenateText)
+	if (!this.RecalcInfo.HyphenateText || !this.IsAutoHyphenation())
 		return;
 	
-	this.RecalcInfo.HyphenateText = false;
-
-	let isAuto = this.IsAutoHyphenation();
-	if (!this.RecalcInfo.AutoHyphenation && !isAuto)
-		return;
-	
-	this.RecalcInfo.AutoHyphenation = isAuto;
 	AscWord.TextHyphenator.Hyphenate(this);
 };
 
@@ -3425,6 +3418,9 @@ CParagraphRecalculateStateWrap.prototype =
 	
 	CheckLastAutoHyphen : function(X, XEnd)
 	{
+		if (!this.AutoHyphenation)
+			return;
+		
 		this.ResetLastAutoHyphen();
 		let item = this.LastItem;
 		let run  = this.LastItemRun;

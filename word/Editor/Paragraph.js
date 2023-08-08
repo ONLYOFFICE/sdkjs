@@ -18737,11 +18737,10 @@ var pararecalc_0_None = 1;
 
 function CParaRecalcInfo()
 {
-	this.Recalc_0_Type   = pararecalc_0_All;
-	this.SpellCheck      = false;
-	this.ShapeText       = true;
-	this.HyphenateText   = false;
-	this.AutoHyphenation = false; // Флаг, с которым последний раз произошел расчет автоматических переносов текста
+	this.Recalc_0_Type = pararecalc_0_All;
+	this.SpellCheck    = false;
+	this.ShapeText     = true;
+	this.HyphenateText = false;
 }
 
 CParaRecalcInfo.prototype =
