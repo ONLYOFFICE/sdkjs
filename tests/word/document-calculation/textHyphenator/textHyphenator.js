@@ -57,12 +57,27 @@ $(function ()
 		run.AddText(text);
 	}
 	
+	let autoHyphenation = false;
+	
+	AscWord.CParagraph.prototype.IsAutoHyphenation = function()
+	{
+		return autoHyphenation;
+	};
+	
+	function SetAutoHyphenation(isAuto)
+	{
+		autoHyphenation = isAuto;
+	}
+	
 	QUnit.module("Paragraph Lines");
 	
 	QUnit.test("Test: \"Test regular line break cases\"", function (assert)
 	{
-		function CheckLines(textLines)
+		function CheckLines(isAutoHyphenation, contentWidth, textLines)
 		{
+			SetAutoHyphenation(isAutoHyphenation);
+			Recalculate(contentWidth);
+			
 			assert.strictEqual(para.GetLinesCount(), textLines.length, "Check lines count " + textLines.length);
 			
 			for (let line = 0; line < textLines.length; ++line)
@@ -72,18 +87,12 @@ $(function ()
 		}
 		
 		SetText("abcd abcd");
-		Recalculate(charWidth * 8.5);
-		CheckLines(["abcd ", "abcd"]);
-		
-		Recalculate(charWidth * 8.5);
-		CheckLines(["abcd ab", "cd"]);
+		CheckLines(false, charWidth * 8.5, ["abcd ", "abcd"]);
+		CheckLines(true, charWidth * 8.5, ["abcd ab", "cd"]);
 		
 		SetText("aabbbcccdddd");
-		Recalculate(charWidth * 3.5);
-		CheckLines(["aab", "bbc", "ccd", "ddd"]);
-		
-		Recalculate(charWidth * 3.5);
-		CheckLines(["aa", "bbb", "ccc", "ddd", "d"]);
+		CheckLines(false, charWidth * 3.5, ["aab", "bbc", "ccd", "ddd"]);
+		CheckLines(true, charWidth * 3.5, ["aa", "bbb", "ccc", "ddd", "d"]);
 	});
 
 });
