@@ -86,9 +86,9 @@ $(function ()
 			}
 		}
 		
-		SetText("abcd abcd");
-		CheckLines(false, charWidth * 8.5, ["abcd ", "abcd"]);
-		CheckLines(true, charWidth * 8.5, ["abcd ab", "cd"]);
+		SetText("abcd abcd aaabbb");
+		CheckLines(false, charWidth * 7.5, ["abcd ", "abcd ", "aaabbb"]);
+		CheckLines(true, charWidth * 7.5, ["abcd ab", "cd aaa", "bbb"]);
 		
 		SetText("aabbbcccdddd");
 		CheckLines(false, charWidth * 3.5, ["aab", "bbc", "ccd", "ddd"]);

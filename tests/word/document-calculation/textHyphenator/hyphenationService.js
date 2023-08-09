@@ -45,6 +45,8 @@
 	{
 		if ("abcd" === BUFFER_STRING)
 			return [1];
+		else if ("aaabbb" === BUFFER_STRING)
+			return [2];
 		else if ("testtest" === BUFFER_STRING)
 			return [3];
 		else if ("aabbbcccdddd" === BUFFER_STRING)
