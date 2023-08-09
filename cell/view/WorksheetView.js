@@ -2218,6 +2218,9 @@
 
 		let startPrintPreview = this.workbook.printPreviewState && this.workbook.printPreviewState.isStart();
 
+		let pageWidthWithoutFieldsHeadings = ((pageWidth - pageRightField - pageLeftField) / vector_koef);
+		let pageHeightWithoutFieldsHeadings = ((pageHeight - pageBottomField - pageTopField) / vector_koef);
+
 		let _retinaPixelRatio = this.getRetinaPixelRatio();
 		if (pageHeadings) {
 			// Рисуем заголовки, нужно чуть сдвинуться
@@ -2289,13 +2292,13 @@
 			let horizontalCentered = pageOptions && pageOptions.asc_getHorizontalCentered();
 			let verticalCentered = pageOptions && pageOptions.asc_getVerticalCentered();
 			if (horizontalCentered) {
-				let _offset = (pageWidthWithFieldsHeadings - realPageWidth) / 2;
+				let _offset = (pageWidthWithoutFieldsHeadings - realPageWidth) / 2;
 				_page.pageClipRectLeft += _offset;
 				_page.leftFieldInPx += _offset;
 			}
 
 			if (verticalCentered) {
-				let _offset = (pageHeightWithFieldsHeadings - realPageHeight) / 2;
+				let _offset = (pageHeightWithoutFieldsHeadings - realPageHeight) / 2;
 				_page.pageClipRectTop += _offset;
 				_page.topFieldInPx += _offset;
 			}
