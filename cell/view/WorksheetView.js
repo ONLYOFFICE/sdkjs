@@ -2292,14 +2292,12 @@
 				let _offset = (pageWidthWithFieldsHeadings - realPageWidth) / 2;
 				_page.pageClipRectLeft += _offset;
 				_page.leftFieldInPx += _offset;
-				_page.pageClipRectWidth += _offset;
 			}
 
 			if (verticalCentered) {
 				let _offset = (pageHeightWithFieldsHeadings - realPageHeight) / 2;
 				_page.pageClipRectTop += _offset;
 				_page.topFieldInPx += _offset;
-				_page.pageClipRectHeight += _offset;
 			}
 		};
 

@@ -13389,6 +13389,10 @@ QueryTableField.prototype.clone = function() {
 		if(gridLines !== this.asc_getGridLines()) {
 			this.asc_setGridLines(gridLines);
 		}
+		let heading = obj.asc_getHeadings();
+		if(heading !== this.asc_getHeadings()) {
+			this.asc_setHeadings(heading);
+		}
 		let gridLinesSet = obj.asc_getGridLinesSet();
 		if(gridLinesSet !== this.asc_getGridLinesSet()) {
 			this.asc_setGridLinesSet(gridLinesSet);
