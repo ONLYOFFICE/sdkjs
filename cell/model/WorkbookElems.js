@@ -13150,6 +13150,7 @@ QueryTableField.prototype.clone = function() {
 		this.pageSetup = new asc_CPageSetup(ws);
 		this.gridLines = null;
 		this.headings = null;
+		this.gridLinesSet = null;
 		this.horizontalCentered = null;
 		this.verticalCentered = null;
 
@@ -13174,6 +13175,7 @@ QueryTableField.prototype.clone = function() {
 
 		res["gridLines"] = this.gridLines;
 		res["headings"] = this.headings;
+		res["gridLinesSet"] = this.gridLinesSet;
 		res["horizontalCentered"] = this.horizontalCentered;
 		res["verticalCentered"] = this.verticalCentered;
 		res["pageMargins"] = {};
@@ -13229,6 +13231,8 @@ QueryTableField.prototype.clone = function() {
 	asc_CPageOptions.prototype.setJson = function (props) {
 		this.gridLines = props["gridLines"];
 		this.headings = props["headings"];
+		this.gridLinesSet = props["gridLinesSet"];
+		this.horizontalCentered = props["horizontalCentered"];
 		this.horizontalCentered = props["horizontalCentered"];
 		this.verticalCentered = props["verticalCentered"];
 
@@ -13323,6 +13327,7 @@ QueryTableField.prototype.clone = function() {
 		res.pageSetup = this.pageSetup.clone(ws);
 		res.gridLines = this.gridLines;
 		res.headings = this.headings;
+		res.gridLinesSet = this.gridLinesSet;
 		res.horizontalCentered = this.horizontalCentered;
 		res.verticalCentered = this.verticalCentered;
 
@@ -13332,6 +13337,7 @@ QueryTableField.prototype.clone = function() {
 	asc_CPageOptions.prototype.asc_getPageSetup = function () { return this.pageSetup; };
 	asc_CPageOptions.prototype.asc_getGridLines = function () { return this.gridLines; };
 	asc_CPageOptions.prototype.asc_getHeadings = function () { return this.headings; };
+	asc_CPageOptions.prototype.asc_getGridLinesSet = function () { return this.gridLinesSet; };
 	asc_CPageOptions.prototype.asc_getHorizontalCentered = function () { return this.horizontalCentered; };
 	asc_CPageOptions.prototype.asc_getVerticalCentered = function () { return this.verticalCentered; };
 	//методы только для меню, без добавляем в историю
@@ -13370,10 +13376,22 @@ QueryTableField.prototype.clone = function() {
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
 	};
+	asc_CPageOptions.prototype.asc_setGridLinesSet = function (newVal) {
+		/*let oldVal = this.verticalCentered;
+		this.verticalCentered = newVal;
+		if (this.ws && History.Is_On() && oldVal !== this.verticalCentered) {
+			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_VerticalCentered, this.ws.getId(),
+				null, new UndoRedoData_Layout(oldVal, newVal));
+		}*/
+	};
 	asc_CPageOptions.prototype.asc_setOptions = function (obj) {
 		let gridLines = obj.asc_getGridLines();
 		if(gridLines !== this.asc_getGridLines()) {
 			this.asc_setGridLines(gridLines);
+		}
+		let gridLinesSet = obj.asc_getGridLinesSet();
+		if(gridLinesSet !== this.asc_getGridLinesSet()) {
+			this.asc_setGridLinesSet(gridLinesSet);
 		}
 		let horizontalCentered = obj.asc_getHorizontalCentered();
 		if(horizontalCentered !== this.asc_getHorizontalCentered()) {

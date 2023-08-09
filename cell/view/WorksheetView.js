@@ -2287,9 +2287,7 @@
 
 		let recalculatePageMargins = function (_page) {
 			let horizontalCentered = pageOptions && pageOptions.asc_getHorizontalCentered();
-			horizontalCentered = true;
 			let verticalCentered = pageOptions && pageOptions.asc_getVerticalCentered();
-			verticalCentered = true
 			if (horizontalCentered) {
 				let _offset = (pageWidthWithFieldsHeadings - realPageWidth) / 2;
 				_page.pageClipRectLeft += _offset;

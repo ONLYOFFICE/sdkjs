@@ -521,8 +521,9 @@
     {
         GridLines: 0,
         Headings: 1,
-        HorizontalCentered: 2,
-        VerticalCentered: 3
+        GridLinesSet: 2,
+        HorizontalCentered: 3,
+        VerticalCentered: 4
     };
     /** @enum */
     var c_oSer_TablePart =
@@ -4764,6 +4765,13 @@
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteBool(bHeadings);
             }
+            //GridLinesSet
+            let bGridLinesSet = oPrintOptions.asc_getGridLinesSet();
+            if (null != bGridLinesSet) {
+                this.memory.WriteByte(c_oSer_PrintOptions.GridLinesSet);
+                this.memory.WriteByte(c_oSerPropLenType.Byte);
+                this.memory.WriteBool(bGridLinesSet);
+            }
             //HorizontalCentered
             let bHorizontalCentered = oPrintOptions.asc_getHorizontalCentered();
             if (null != bHorizontalCentered) {
@@ -8842,6 +8850,8 @@
                 oPrintOptions.asc_setGridLines(this.stream.GetBool());
             } else if (c_oSer_PrintOptions.Headings === type) {
                 oPrintOptions.asc_setHeadings(this.stream.GetBool());
+            } else if (c_oSer_PrintOptions.GridLinesSet === type) {
+                oPrintOptions.asc_setGridLinesSet(this.stream.GetBool());
             } else if (c_oSer_PrintOptions.HorizontalCentered === type) {
                 oPrintOptions.asc_setHorizontalCentered(this.stream.GetBool());
             } else if (c_oSer_PrintOptions.VerticalCentered === type) {
