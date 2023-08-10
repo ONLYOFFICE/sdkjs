@@ -2510,6 +2510,7 @@ function (window, undefined) {
 				if (externalReferenceIndex !== null) {
 					from.worksheets = wb.externalReferences[externalReferenceIndex - 1].worksheets;
 					from.initWorksheetsFromSheetDataSet();
+					from.putToChangedCells();
 					wb.externalReferences[externalReferenceIndex - 1] = from;
 				}
 			}
