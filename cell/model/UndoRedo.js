@@ -438,6 +438,8 @@ function (window, undefined) {
 		this.DataValidation = 140;
 		this.DataValidationInner = 141;
 
+		this.ExternalSheetDataSet = 142;
+
 		this.CFData = 150;
 		this.CFDataInner = 151;
 		this.ColorScale = 152;
@@ -623,6 +625,8 @@ function (window, undefined) {
 					return new AscCommonExcel.UndoRedoData_RowColBreaks();
 				case this.LegacyDrawingHFDrawing:
 					return new AscCommonExcel.UndoRedoData_LegacyDrawingHFDrawing();
+				case this.ExternalSheetDataSet:
+					return new AscCommonExcel.ExternalSheetDataSet();
 			}
 			return null;
 		};
@@ -2502,11 +2506,47 @@ function (window, undefined) {
 			} else if (from && to) { //изменение
 				//TODO нужно сохранить ссылки на текущий лист
 				externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
+
 				if (externalReferenceIndex !== null) {
+					from.worksheets = wb.externalReferences[externalReferenceIndex - 1].worksheets;
+					from.initWorksheetsFromSheetDataSet();
 					wb.externalReferences[externalReferenceIndex - 1] = from;
 				}
 			}
 			wb.handlers.trigger("asc_onUpdateExternalReferenceList");
+		} else if (AscCH.historyitem_Workbook_ChangeExternalSheetDataSet === Type) {
+			if (!bUndo) {
+
+			}
+
+			/*let from, to;
+			if (bUndo) {
+				let fromId = Data.to && Data.to.id;
+				if (fromId) {
+					from = new AscCommonExcel.CLegacyDrawingHFDrawing();
+					from.id = fromId;
+					from.graphicObject = AscCommon.g_oTableId.Get_ById(Data.to.graphicId);
+				}
+				let toId = Data.from && Data.from.id;
+				if (toId) {
+					to = new AscCommonExcel.CLegacyDrawingHFDrawing();
+					to.id = toId;
+					to.graphicObject = AscCommon.g_oTableId.Get_ById(Data.from.graphicId);
+				}
+			} else {
+				let fromId = Data.from && Data.from.id;
+				if (fromId) {
+					from = new AscCommonExcel.CLegacyDrawingHFDrawing();
+					from.id = fromId;
+					from.graphicObject = AscCommon.g_oTableId.Get_ById(Data.from.graphicId);
+				}
+				let toId = Data.to && Data.to.id;
+				if (toId) {
+					to = new AscCommonExcel.CLegacyDrawingHFDrawing();
+					to.id = toId;
+					to.graphicObject = AscCommon.g_oTableId.Get_ById(Data.to.graphicId);
+				}
+			}*/
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {

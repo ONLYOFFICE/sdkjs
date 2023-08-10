@@ -1587,6 +1587,7 @@
 	window['AscDFH'].historyitem_type_ChartStyle             = 1197 << 16;
 	window['AscDFH'].historyitem_type_ChartStyleEntry        = 1198 << 16;
 	window['AscDFH'].historyitem_type_MarkerLayout           = 1199 << 16;
+	window['AscDFH'].historyitem_type_ExternalSheetDataSet   = 1200 << 16;
 
 	window['AscDFH'].historyitem_type_DocumentMacros         = 2000 << 16;
 	window['AscDFH'].historyitem_type_PrSet                  = 2001 << 16;
