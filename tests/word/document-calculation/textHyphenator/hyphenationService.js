@@ -51,6 +51,8 @@
 			return [3];
 		else if ("aabbbcccdddd" === BUFFER_STRING)
 			return [1, 4, 7];
+		else if ("zz½www" === BUFFER_STRING)
+			return [1];
 		
 		return [];
 	};

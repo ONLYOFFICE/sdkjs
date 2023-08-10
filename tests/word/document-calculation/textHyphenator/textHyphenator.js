@@ -69,30 +69,58 @@ $(function ()
 		autoHyphenation = isAuto;
 	}
 	
+	function CheckLines(assert, isAutoHyphenation, contentWidth, textLines)
+	{
+		SetAutoHyphenation(isAutoHyphenation);
+		Recalculate(contentWidth);
+		
+		assert.strictEqual(para.GetLinesCount(), textLines.length, "Check lines count " + textLines.length);
+		
+		for (let line = 0; line < textLines.length; ++line)
+		{
+			assert.strictEqual(para.GetTextOnLine(line), textLines[line], "Text on line " + line + " '" + textLines[line] + "'");
+		}
+	}
+	
+	function CheckAutoHyphenAfter(assert, itemPos, isHyphen, _run)
+	{
+		let __run = _run ? _run : run;
+		assert.strictEqual(__run.GetElement(itemPos).IsTemporaryHyphenAfter(), isHyphen, "Check auto hyphen after symbol");
+	}
+	
 	QUnit.module("Paragraph Lines");
 	
 	QUnit.test("Test: \"Test regular line break cases\"", function (assert)
 	{
-		function CheckLines(isAutoHyphenation, contentWidth, textLines)
-		{
-			SetAutoHyphenation(isAutoHyphenation);
-			Recalculate(contentWidth);
-			
-			assert.strictEqual(para.GetLinesCount(), textLines.length, "Check lines count " + textLines.length);
-			
-			for (let line = 0; line < textLines.length; ++line)
-			{
-				assert.strictEqual(para.GetTextOnLine(line), textLines[line], "Text on line " + line + "'" + textLines[line] + "'");
-			}
-		}
-		
 		SetText("abcd abcd aaabbb");
-		CheckLines(false, charWidth * 7.5, ["abcd ", "abcd ", "aaabbb"]);
-		CheckLines(true, charWidth * 7.5, ["abcd ab", "cd aaa", "bbb"]);
+		CheckLines(assert, false, charWidth * 8.5, ["abcd ", "abcd ", "aaabbb"]);
+		CheckLines(assert, true, charWidth * 8.5, ["abcd ab", "cd aaa", "bbb"]);
+		// Дефис переноса не убирается
+		CheckLines(assert, true, charWidth * 7.5, ["abcd ", "abcd ", "aaabbb"]);
 		
 		SetText("aabbbcccdddd");
-		CheckLines(false, charWidth * 3.5, ["aab", "bbc", "ccd", "ddd"]);
-		CheckLines(true, charWidth * 3.5, ["aa", "bbb", "ccc", "ddd", "d"]);
+		CheckLines(assert, false, charWidth * 3.5, ["aab", "bbc", "ccd", "ddd"]);
+		CheckLines(assert, true, charWidth * 3.5, ["aa", "bbb", "ccc", "ddd", "d"]);
+	});
+	
+	QUnit.test("Test: \"Test edge cases\"", function (assert)
+	{
+		SetText("aaaa zz½www bbbb");
+		CheckLines(assert, false, charWidth * 7.5, ["aaaa ", "zz½www ", "bbbb"]);
+		CheckLines(assert, true, charWidth * 7.5, ["aaaa ", "zz½www ", "bbbb"]);
+		CheckLines(assert, true, charWidth * 8.5, ["aaaa zz", "½www bbbb"]);
+
+		// Перенос идет после второго символа z, а следующий за ним символ меньше по ширине, чем
+		// размер дефиса, который мы рисуем во время переноса
+		SetText("zz½www");
+		CheckLines(assert, false, charWidth * 2.75, ["zz½", "ww", "w"]);
+		CheckAutoHyphenAfter(assert, 1, false);
+		CheckLines(assert, true, charWidth * 3.25, ["zz", "½ww", "w"]);
+		CheckAutoHyphenAfter(assert, 1, true);
+		CheckLines(assert, true, charWidth * 2.75, ["zz½", "ww", "w"]);
+		CheckAutoHyphenAfter(assert, 1, false);
+		CheckLines(assert, true, charWidth * 2.25, ["zz", "½w", "ww"]);
+		CheckAutoHyphenAfter(assert, 1, false);
 	});
 
 });

@@ -478,6 +478,10 @@
 		else
 			this.Flags &= FLAGS_NON_TEMPORARY_HYPHEN_AFTER;
 	};
+	CRunText.prototype.IsTemporaryHyphenAfter = function()
+	{
+		return !!(this.Flags & FLAGS_TEMPORARY_HYPHEN_AFTER);
+	};
 	/**
 	 * Получаем символ для проверки орфографии
 	 * @param bCaps {boolean}
