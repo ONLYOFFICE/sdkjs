@@ -14741,7 +14741,6 @@ QueryTableField.prototype.clone = function() {
 				if (index != null) {
 					var externalSheetDataSet = this.SheetDataSet[index];
 					if (externalSheetDataSet) {
-						let cloneExternalSheetDataSet = externalSheetDataSet.clone();
 						if (externalSheetDataSet.updateFromSheet(t.worksheets[sheetName])) {
 							isChanged = true;
 						}
