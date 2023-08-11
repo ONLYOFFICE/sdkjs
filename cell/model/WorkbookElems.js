@@ -14743,10 +14743,6 @@ QueryTableField.prototype.clone = function() {
 					if (externalSheetDataSet) {
 						let cloneExternalSheetDataSet = externalSheetDataSet.clone();
 						if (externalSheetDataSet.updateFromSheet(t.worksheets[sheetName])) {
-							if (History.Is_On()) {
-								History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalSheetDataSet,
-									null, null, new AscCommonExcel.UndoRedoData_FromTo(cloneExternalSheetDataSet, externalSheetDataSet));
-							}
 							isChanged = true;
 						}
 					}
@@ -15069,19 +15065,7 @@ QueryTableField.prototype.clone = function() {
 		this.SheetId = null;
 		this.RefreshError = null;
 		this.Row = [];
-
-		this.Id = AscCommon.g_oIdCounter.Get_NewId();
 	}
-
-	ExternalSheetDataSet.prototype.getObjectType = function () {
-		return AscDFH.historyitem_type_ExternalSheetDataSet;
-	};
-	ExternalSheetDataSet.prototype.getType = function () {
-		return AscCommonExcel.UndoRedoDataTypes.ExternalSheetDataSet;
-	};
-	ExternalSheetDataSet.prototype.Get_Id = function () {
-		return this.Id;
-	};
 
 	ExternalSheetDataSet.prototype.Read_FromBinary2 = function(r) {
 		if (r.GetBool()) {
