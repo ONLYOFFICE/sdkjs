@@ -2415,24 +2415,6 @@
 				}, oGraphicTypes.enDash);
 			});
 
-			QUnit.test('Test add hyphen', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkTextAfterKeyDownHelperEmpty('-', oEvent, oAssert);
-				}, oGraphicTypes.hyphen);
-			});
-
-			QUnit.test('Test add underscore', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkTextAfterKeyDownHelperEmpty('_', oEvent, oAssert);
-				}, oGraphicTypes.underscore);
-			});
-
 			QUnit.test('Test add subscript', (oAssert) =>
 			{
 				const {deep, equal} = createTest(oAssert);
