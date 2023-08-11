@@ -846,7 +846,7 @@ function (window, undefined) {
 		} else if (formulaParsed) {
 			this._calculatePrecedents(formulaParsed, row, col, isSecondCall);
 			this.setPrecedentsCall();
-		} else {
+		} else if (!isSecondCall) {
 			this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TracePrecedentsNoValidReference, c_oAscError.Level.NoCritical);
 		}
 	};
@@ -999,10 +999,16 @@ function (window, undefined) {
 				return;
 			}
 			this.setPrecedentsLoop(true);
+			let isHavePrecedents = false;
 			// check first level, then if function return false, check second, third and so on
 			for (let i in this.precedents[currentCellIndex]) {
 				let coords = AscCommonExcel.getFromCellIndex(i, true);
 				this.calculatePrecedents(coords.row, coords.col, true);
+				isHavePrecedents = true;
+			}
+
+			if (!isHavePrecedents && !isSecondCall) {
+				this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TracePrecedentsNoValidReference, c_oAscError.Level.NoCritical);
 			}
 
 			this.setPrecedentsLoop(false);
