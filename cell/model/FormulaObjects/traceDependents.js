@@ -240,7 +240,7 @@ function (window, undefined) {
 			this.setDependentsCall();
 		}
 	};
-	TraceDependentsManager.prototype._calculateDependents = function (cellIndex, curListener, isRecursive) {
+	TraceDependentsManager.prototype._calculateDependents = function (cellIndex, curListener, isSecondCall) {
 		let t = this;
 		let ws = this.ws.model;
 		let wb = this.ws.model.workbook;
@@ -579,7 +579,7 @@ function (window, undefined) {
 					}
 				}
 			}
-		} else if (!isRecursive) {
+		} else if (!isSecondCall) {
 			this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TraceDependentsNoFormulas, c_oAscError.Level.NoCritical);
 		}
 	};
