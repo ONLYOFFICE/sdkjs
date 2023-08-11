@@ -240,14 +240,13 @@ function (window, undefined) {
 			this.setDependentsCall();
 		}
 	};
-	TraceDependentsManager.prototype._calculateDependents = function (cellIndex, curListener) {
+	TraceDependentsManager.prototype._calculateDependents = function (cellIndex, curListener, isRecursive) {
 		let t = this;
 		let ws = this.ws.model;
 		let wb = this.ws.model.workbook;
 		let dependencyFormulas = wb.dependencyFormulas;
 		let allDefNamesListeners = dependencyFormulas.defNameListeners;
 		let cellAddress = AscCommonExcel.getFromCellIndex(cellIndex, true);
-		const currentCellInfo = {};
 
 		const findCellListeners = function () {
 			const listeners = {};
@@ -575,11 +574,13 @@ function (window, undefined) {
 				if (!isUpdated) {
 					for (let i in this.dependents[cellIndex]) {
 						if (this.dependents[cellIndex].hasOwnProperty(i)) {
-							this._calculateDependents(i, curListener);
+							this._calculateDependents(i, curListener, true);
 						}
 					}
 				}
 			}
+		} else if (!isRecursive) {
+			this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TraceDependentsNoFormulas, c_oAscError.Level.NoCritical);
 		}
 	};
 	TraceDependentsManager.prototype._getDependents = function (from, to) {
@@ -845,6 +846,8 @@ function (window, undefined) {
 		} else if (formulaParsed) {
 			this._calculatePrecedents(formulaParsed, row, col, isSecondCall);
 			this.setPrecedentsCall();
+		} else {
+			this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TracePrecedentsNoValidReference, c_oAscError.Level.NoCritical);
 		}
 	};
 	TraceDependentsManager.prototype._calculatePrecedents = function (formulaParsed, row, col, isSecondCall) {
