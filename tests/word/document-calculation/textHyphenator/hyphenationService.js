@@ -43,15 +43,17 @@
 	};
 	AscHyphenation.HyphenateBuffer = function()
 	{
-		if ("abcd" === BUFFER_STRING)
+		let checkString = BUFFER_STRING.toLowerCase();
+		
+		if ("abcd" === checkString)
 			return [1];
-		else if ("aaabbb" === BUFFER_STRING)
+		else if ("aaabbb" === checkString)
 			return [2];
-		else if ("testtest" === BUFFER_STRING)
+		else if ("testtest" === checkString)
 			return [3];
-		else if ("aabbbcccdddd" === BUFFER_STRING)
+		else if ("aabbbcccdddd" === checkString)
 			return [1, 4, 7];
-		else if ("zz½www" === BUFFER_STRING)
+		else if ("zz½www" === checkString)
 			return [1];
 		
 		return [];

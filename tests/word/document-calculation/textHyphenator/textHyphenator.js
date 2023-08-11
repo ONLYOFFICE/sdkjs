@@ -58,15 +58,24 @@ $(function ()
 	}
 	
 	let autoHyphenation = false;
+	let hyphenateCaps   = true;
 	
 	AscWord.CParagraph.prototype.IsAutoHyphenation = function()
 	{
 		return autoHyphenation;
 	};
+	AscWord.CParagraph.prototype.IsHyphenateCaps = function()
+	{
+		return hyphenateCaps;
+	};
 	
 	function SetAutoHyphenation(isAuto)
 	{
 		autoHyphenation = isAuto;
+	}
+	function SetHyphenateCaps(isHyphenate)
+	{
+		hyphenateCaps = isHyphenate;
 	}
 	
 	function CheckLines(assert, isAutoHyphenation, contentWidth, textLines)
@@ -94,9 +103,12 @@ $(function ()
 	{
 		SetText("abcd abcd aaabbb");
 		CheckLines(assert, false, charWidth * 8.5, ["abcd ", "abcd ", "aaabbb"]);
+		CheckAutoHyphenAfter(assert, 6, false);
 		CheckLines(assert, true, charWidth * 8.5, ["abcd ab", "cd aaa", "bbb"]);
+		CheckAutoHyphenAfter(assert, 6, true);
 		// Дефис переноса не убирается
 		CheckLines(assert, true, charWidth * 7.5, ["abcd ", "abcd ", "aaabbb"]);
+		CheckAutoHyphenAfter(assert, 6, false);
 		
 		SetText("aabbbcccdddd");
 		CheckLines(assert, false, charWidth * 3.5, ["aab", "bbc", "ccd", "ddd"]);
@@ -121,6 +133,26 @@ $(function ()
 		CheckAutoHyphenAfter(assert, 1, false);
 		CheckLines(assert, true, charWidth * 2.25, ["zz", "½w", "ww"]);
 		CheckAutoHyphenAfter(assert, 1, false);
+	});
+	
+	QUnit.test("Test: \"Test DoNotHyphenateCaps parameter\"", function (assert)
+	{
+		SetText("abcde AAABBB aaabbb");
+		
+		CheckLines(assert, false, charWidth * 10.5, ["abcde ", "AAABBB ", "aaabbb"]);
+		CheckAutoHyphenAfter(assert, 8, false);
+		CheckAutoHyphenAfter(assert, 15, false);
+		
+		SetHyphenateCaps(true);
+		CheckLines(assert, true, charWidth * 10.5, ["abcde AAA", "BBB aaabbb"]);
+		CheckAutoHyphenAfter(assert, 8, true);
+		CheckAutoHyphenAfter(assert, 15, false);
+		
+		SetHyphenateCaps(false);
+		CheckLines(assert, true, charWidth * 10.5, ["abcde ", "AAABBB aaa", "bbb"]);
+		CheckAutoHyphenAfter(assert, 8, false);
+		CheckAutoHyphenAfter(assert, 15, true);
+		
 	});
 
 });
