@@ -270,7 +270,7 @@
 	 * @alias PasteHtml
 	 * @param {string} htmlText - A string value that specifies the text in the *HTML* format to be pasted into the document.
 	 */
-	Api.prototype["pluginMethod_PasteHtml"] = function(htmlText) {
+	Api.prototype["pluginMethod_PasteHtml"] = function (htmlText) {
 		if (!AscCommon.g_clipboardBase)
 			return null;
 
@@ -284,9 +284,9 @@
 		let guidAsync = window.g_asc_plugins ? window.g_asc_plugins.setPluginMethodReturnAsync() : null;
 		_elem = document.createElement("div");
 		_elem.id = "pmpastehtml";
-        _elem.style.color = "rgb(0,0,0)";
+		_elem.style.color = "rgb(0,0,0)";
 
-		if (this.editorId == AscCommon.c_oEditorId.Word || this.editorId == AscCommon.c_oEditorId.Presentation) {
+		if (this.editorId === AscCommon.c_oEditorId.Word || this.editorId === AscCommon.c_oEditorId.Presentation) {
 			let textPr = this.get_TextProps();
 			if (textPr) {
 				if (undefined !== textPr.TextPr.FontSize)
@@ -301,7 +301,7 @@
 				else
 					_elem.style.color = "rgb(0,0,0)";
 			}
-		} else if (this.editorId == AscCommon.c_oEditorId.Spreadsheet) {
+		} else if (this.editorId === AscCommon.c_oEditorId.Spreadsheet) {
 			let props = this.asc_getCellInfo();
 
 			if (props && props.font) {
@@ -320,23 +320,19 @@
 		AscCommon.g_clipboardBase.bSaveFormat = false;
 		let _t = this;
 		this.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, _elem, undefined, undefined, undefined,
-			function() {
+			function () {
 				_t.decrementCounterLongAction();
-				if (true) {
-					let fCallback = function() {
-						document.body.removeChild(_elem);
-						_elem = null;
-						AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
-					};
-					if (_t.checkLongActionCallback(fCallback, null)) {
-						fCallback();
-					}
-					if (guidAsync)
-						window.g_asc_plugins.onPluginMethodReturn(guidAsync, true);
-				} else {
+
+				let fCallback = function () {
 					document.body.removeChild(_elem);
 					_elem = null;
 					AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
+				};
+				if (_t.checkLongActionCallback(fCallback, null)) {
+					fCallback();
+				}
+				if (guidAsync) {
+					window.g_asc_plugins.onPluginMethodReturn(guidAsync, true);
 				}
 			}
 		);
