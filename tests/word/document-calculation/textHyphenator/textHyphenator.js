@@ -64,7 +64,7 @@ $(function ()
 	{
 		return autoHyphenation;
 	};
-	AscWord.CParagraph.prototype.IsHyphenateCaps = function()
+	AscWord.CTextHyphenator.prototype.IsHyphenateCaps = function()
 	{
 		return hyphenateCaps;
 	};
@@ -139,17 +139,17 @@ $(function ()
 	{
 		SetText("abcde AAABBB aaabbb");
 		
-		CheckLines(assert, false, charWidth * 10.5, ["abcde ", "AAABBB ", "aaabbb"]);
+		CheckLines(assert, false, charWidth * 11.5, ["abcde ", "AAABBB ", "aaabbb"]);
 		CheckAutoHyphenAfter(assert, 8, false);
 		CheckAutoHyphenAfter(assert, 15, false);
 		
 		SetHyphenateCaps(true);
-		CheckLines(assert, true, charWidth * 10.5, ["abcde AAA", "BBB aaabbb"]);
+		CheckLines(assert, true, charWidth * 11.5, ["abcde AAA", "BBB aaabbb"]);
 		CheckAutoHyphenAfter(assert, 8, true);
 		CheckAutoHyphenAfter(assert, 15, false);
 		
 		SetHyphenateCaps(false);
-		CheckLines(assert, true, charWidth * 10.5, ["abcde ", "AAABBB aaa", "bbb"]);
+		CheckLines(assert, true, charWidth * 11.5, ["abcde ", "AAABBB aaa", "bbb"]);
 		CheckAutoHyphenAfter(assert, 8, false);
 		CheckAutoHyphenAfter(assert, 15, true);
 		

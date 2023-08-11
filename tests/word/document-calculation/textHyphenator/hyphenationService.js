@@ -41,7 +41,7 @@
 	{
 		BUFFER_STRING += String.fromCodePoint(codePoint);
 	};
-	AscHyphenation.HyphenateBuffer = function()
+	AscHyphenation.Hyphenate = function()
 	{
 		let checkString = BUFFER_STRING.toLowerCase();
 		
@@ -58,11 +58,9 @@
 		
 		return [];
 	};
-	AscHyphenation.Hyphenate = function()
+	AscHyphenation.Clear = function()
 	{
-		let result = AscHyphenation.HyphenateBuffer();
 		BUFFER_STRING = "";
-		return result;
 	};
 	
 })(window);

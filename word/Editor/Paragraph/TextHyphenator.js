@@ -42,7 +42,7 @@ var AscHyphenation = AscHyphenation || {};
 	{
 		BUFFER_STRING += String.fromCodePoint(codePoint);
 	};
-	AscHyphenation.HyphenateBuffer = function()
+	AscHyphenation.Hyphenate = function()
 	{
 		if ("reenter" === BUFFER_STRING)
 			return [1];
@@ -55,11 +55,9 @@ var AscHyphenation = AscHyphenation || {};
 		
 		return [];
 	};
-	AscHyphenation.Hyphenate = function()
+	AscHyphenation.Clear = function()
 	{
-		let result = AscHyphenation.HyphenateBuffer();
 		BUFFER_STRING = "";
-		return result;
 	};
 })();
 
@@ -77,9 +75,13 @@ var AscHyphenation = AscHyphenation || {};
 		this.FontSlot = fontslot_Unknown;
 		this.Lang     = lcid_enUS;
 		this.Buffer   = [];
+		
+		this.HyphenateCaps = true;
 	}
 	CTextHyphenator.prototype.Hyphenate = function(paragraph)
 	{
+		this.CheckHyphenateCaps(paragraph);
+		
 		let self = this;
 		paragraph.CheckRunContent(function(run, startPos, endPos)
 		{
@@ -111,6 +113,14 @@ var AscHyphenation = AscHyphenation || {};
 					this.FlushWord();
 			}
 		}
+	};
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Private area
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	CTextHyphenator.prototype.ResetBuffer = function()
+	{
+		this.Buffer.length = 0;
+		AscHyphenation.Clear();
 	};
 	CTextHyphenator.prototype.GetLang = function(run, fontSlot)
 	{
@@ -152,19 +162,45 @@ var AscHyphenation = AscHyphenation || {};
 		if (!this.Word)
 			return;
 		
+		this.Word = false;
+		
+		if (!this.IsHyphenateCaps() && this.IsAllCaps())
+			return this.ResetBuffer();
+		
 		let result = AscHyphenation.Hyphenate();
 		for (let i = 0, len = result.length; i < len; ++i)
 		{
 			this.Buffer[result[i]].SetHyphenAfter(true);
 		}
 		
-		this.Buffer.length = 0;
-		this.Word = false;
+		this.ResetBuffer();
 	};
-	
+	CTextHyphenator.prototype.IsAllCaps = function()
+	{
+		for (let i = 0, len = this.Buffer.length; i < len; ++i)
+		{
+			let char = String.fromCodePoint(this.Buffer[i].GetCodePoint());
+			if (char.toUpperCase() !== char)
+				return false;
+		}
+		
+		return true;
+	};
+	CTextHyphenator.prototype.CheckHyphenateCaps = function(paragraph)
+	{
+		this.HyphenateCaps = true;
+		
+		let logicDocument = paragraph.GetLogicDocument();
+		if (logicDocument && logicDocument.IsDocumentEditor())
+			this.HyphenateCaps = logicDocument.GetDocumentSettings().IsHyphenateCaps();
+	};
+	CTextHyphenator.prototype.IsHyphenateCaps = function()
+	{
+		return this.HyphenateCaps;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CTextHyphenator = CTextHyphenator;
-	window['AscWord'].TextHyphenator  = new  CTextHyphenator();
+	window['AscWord'].TextHyphenator  = new CTextHyphenator();
 	
 })(window);
 
