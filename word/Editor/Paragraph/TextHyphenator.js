@@ -38,11 +38,11 @@ var AscHyphenation = AscHyphenation || {};
 	// Это тестовые функции, которые должны быть заменены на нормальные
 	let BUFFER_STRING = "";
 	
-	AscHyphenation.AddCodePoint = function(codePoint)
+	AscHyphenation.addCodePoint = function(codePoint)
 	{
 		BUFFER_STRING += String.fromCodePoint(codePoint);
 	};
-	AscHyphenation.Hyphenate = function()
+	AscHyphenation.hyphenate = function()
 	{
 		if ("reenter" === BUFFER_STRING)
 			return [1];
@@ -55,7 +55,7 @@ var AscHyphenation = AscHyphenation || {};
 		
 		return [];
 	};
-	AscHyphenation.Clear = function()
+	AscHyphenation.clear = function()
 	{
 		BUFFER_STRING = "";
 	};
@@ -63,66 +63,80 @@ var AscHyphenation = AscHyphenation || {};
 
 (function(window)
 {
+	let hyphenator = null;
+	function getInstance()
+	{
+		if (!hyphenator)
+			hyphenator = new TextHyphenator();
+		
+		return hyphenator;
+	}
+	
 	const DEFAULT_LANG = lcid_enUS;
 	
 	/**
 	 * Класс для автоматической расстановки переносов в тексте
 	 * @constructor
 	 */
-	function CTextHyphenator()
+	function TextHyphenator()
 	{
-		this.Word     = false;
-		this.FontSlot = fontslot_Unknown;
-		this.Lang     = lcid_enUS;
-		this.Buffer   = [];
+		this.word     = false;
+		this.fontSlot = fontslot_Unknown;
+		this.lang     = DEFAULT_LANG;
+		this.buffer   = [];
 		
-		this.HyphenateCaps = true;
+		this.hyphenateCaps = true;
 	}
-	CTextHyphenator.prototype.Hyphenate = function(paragraph)
+	TextHyphenator.hyphenate = function(paragraph)
 	{
-		this.CheckHyphenateCaps(paragraph);
+		let hyphenator = getInstance();
+		hyphenator.hyphenateParagraph(paragraph);
+	};
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Private area
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	TextHyphenator.prototype.hyphenateParagraph = function(paragraph)
+	{
+		this.checkHyphenateCaps(paragraph);
 		
 		let self = this;
 		paragraph.CheckRunContent(function(run, startPos, endPos)
 		{
-			self.HyphenateRun(run, startPos, endPos);
+			self.hyphenateRun(run, startPos, endPos);
 		});
-		this.FlushWord();
+		this.flushWord();
 	};
-	CTextHyphenator.prototype.HyphenateRun = function(run, startPos, endPos)
+	TextHyphenator.prototype.hyphenateRun = function(run, startPos, endPos)
 	{
 		for (let pos = startPos; pos < endPos; ++pos)
 		{
 			let item = run.GetElement(pos);
 			if (!item.IsText())
 			{
-				this.FlushWord();
+				this.flushWord();
 			}
 			else if (item.IsNBSP() || item.IsPunctuation())
 			{
-				this.FlushWord();
+				this.flushWord();
 			}
 			else
 			{
-				if (!this.Word)
-					this.GetLang(run, item.GetFontSlot(run.Get_CompiledPr(false)));
+				if (!this.word)
+					this.getLang(run, item.GetFontSlot(run.Get_CompiledPr(false)));
 				
-				this.AppendToWord(item);
+				this.appendToWord(item);
 				
 				if (item.IsSpaceAfter())
-					this.FlushWord();
+					this.flushWord();
 			}
 		}
 	};
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Private area
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	CTextHyphenator.prototype.ResetBuffer = function()
+	TextHyphenator.prototype.resetBuffer = function()
 	{
-		this.Buffer.length = 0;
-		AscHyphenation.Clear();
+		this.buffer.length = 0;
+		AscHyphenation.clear();
 	};
-	CTextHyphenator.prototype.GetLang = function(run, fontSlot)
+	TextHyphenator.prototype.getLang = function(run, fontSlot)
 	{
 		let textPr = run.Get_CompiledPr(false);
 		let lang;
@@ -147,60 +161,59 @@ var AscHyphenation = AscHyphenation || {};
 			fontSlot = fontslot_CS;
 		}
 		
-		this.Lang     = lang;
-		this.FontSlot = fontSlot;
+		this.lang     = lang;
+		this.fontSlot = fontSlot;
 	};
-	CTextHyphenator.prototype.AppendToWord = function(textItem)
+	TextHyphenator.prototype.appendToWord = function(textItem)
 	{
-		this.Word = true;
-		this.Buffer.push(textItem);
-		AscHyphenation.AddCodePoint(textItem.GetCodePoint());
+		this.word = true;
+		this.buffer.push(textItem);
+		AscHyphenation.addCodePoint(textItem.GetCodePoint());
 		textItem.SetHyphenAfter(false);
 	};
-	CTextHyphenator.prototype.FlushWord = function()
+	TextHyphenator.prototype.flushWord = function()
 	{
-		if (!this.Word)
+		if (!this.word)
 			return;
 		
-		this.Word = false;
+		this.word = false;
 		
-		if (!this.IsHyphenateCaps() && this.IsAllCaps())
-			return this.ResetBuffer();
+		if (!this.isHyphenateCaps() && this.isAllCaps())
+			return this.resetBuffer();
 		
-		let result = AscHyphenation.Hyphenate();
+		let result = AscHyphenation.hyphenate();
 		for (let i = 0, len = result.length; i < len; ++i)
 		{
-			this.Buffer[result[i]].SetHyphenAfter(true);
+			this.buffer[result[i]].SetHyphenAfter(true);
 		}
 		
-		this.ResetBuffer();
+		this.resetBuffer();
 	};
-	CTextHyphenator.prototype.IsAllCaps = function()
+	TextHyphenator.prototype.isAllCaps = function()
 	{
-		for (let i = 0, len = this.Buffer.length; i < len; ++i)
+		for (let i = 0, len = this.buffer.length; i < len; ++i)
 		{
-			let char = String.fromCodePoint(this.Buffer[i].GetCodePoint());
+			let char = String.fromCodePoint(this.buffer[i].GetCodePoint());
 			if (char.toUpperCase() !== char)
 				return false;
 		}
 		
 		return true;
 	};
-	CTextHyphenator.prototype.CheckHyphenateCaps = function(paragraph)
+	TextHyphenator.prototype.checkHyphenateCaps = function(paragraph)
 	{
-		this.HyphenateCaps = true;
+		this.hyphenateCaps = true;
 		
 		let logicDocument = paragraph.GetLogicDocument();
 		if (logicDocument && logicDocument.IsDocumentEditor())
-			this.HyphenateCaps = logicDocument.GetDocumentSettings().IsHyphenateCaps();
+			this.hyphenateCaps = logicDocument.GetDocumentSettings().isHyphenateCaps();
 	};
-	CTextHyphenator.prototype.IsHyphenateCaps = function()
+	TextHyphenator.prototype.isHyphenateCaps = function()
 	{
-		return this.HyphenateCaps;
+		return this.hyphenateCaps;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscWord'].CTextHyphenator = CTextHyphenator;
-	window['AscWord'].TextHyphenator  = new CTextHyphenator();
+	window['AscWord'].TextHyphenator = TextHyphenator;
 	
 })(window);
 

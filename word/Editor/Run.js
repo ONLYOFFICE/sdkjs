@@ -4024,7 +4024,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                             // Мы убираемся в пределах данной строки. Прибавляем ширину буквы к ширине слова
                             WordLen += LetterLen;
 
-							if (Item.IsSpaceAfter() || (PRS.IsAutoHyphenation() && Item.IsHyphenAfter() && fitOnLine))
+							if (Item.IsSpaceAfter() || (PRS.isAutoHyphenation() && Item.IsHyphenAfter() && fitOnLine))
                             {
                                 // Добавляем длину пробелов до слова и ширину самого слова.
                                 X += SpaceLen + WordLen;
@@ -13881,3 +13881,4 @@ window['AscCommonWord'].CanUpdatePosition = CanUpdatePosition;
 window['AscWord'] = window['AscWord'] || {};
 window['AscWord'].ParaRun = ParaRun;
 window['AscWord'].CRun = ParaRun;
+window['AscWord'].Run = ParaRun;

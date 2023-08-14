@@ -17488,11 +17488,11 @@ Paragraph.prototype.IsBalanceSingleByteDoubleByteWidth = function()
 	let oLogicDocument = this.GetLogicDocument();
 	return (oLogicDocument && oLogicDocument.IsDocumentEditor() ? oLogicDocument.IsBalanceSingleByteDoubleByteWidth() : false);
 };
-Paragraph.prototype.IsAutoHyphenation = function()
+Paragraph.prototype.isAutoHyphenation = function()
 {
 	let logicDocument = this.GetLogicDocument();
 	if (logicDocument && logicDocument.IsDocumentEditor())
-		return logicDocument.GetDocumentSettings().IsAutoHyphenation();
+		return logicDocument.GetDocumentSettings().isAutoHyphenation();
 	
 	return false;
 };
@@ -20770,3 +20770,4 @@ window['AscCommonWord'].UnknownValue = UnknownValue;
 window['AscCommonWord'].type_Paragraph = type_Paragraph;
 
 window['AscWord'].CParagraph = Paragraph;
+window['AscWord'].Paragraph = Paragraph;

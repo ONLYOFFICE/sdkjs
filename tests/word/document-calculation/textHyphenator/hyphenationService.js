@@ -37,11 +37,11 @@
 	// Это тестовые функции, которые должны быть заменены на нормальные
 	let BUFFER_STRING = "";
 	
-	AscHyphenation.AddCodePoint = function(codePoint)
+	AscHyphenation.addCodePoint = function(codePoint)
 	{
 		BUFFER_STRING += String.fromCodePoint(codePoint);
 	};
-	AscHyphenation.Hyphenate = function()
+	AscHyphenation.hyphenate = function()
 	{
 		let checkString = BUFFER_STRING.toLowerCase();
 		
@@ -58,7 +58,7 @@
 		
 		return [];
 	};
-	AscHyphenation.Clear = function()
+	AscHyphenation.clear = function()
 	{
 		BUFFER_STRING = "";
 	};

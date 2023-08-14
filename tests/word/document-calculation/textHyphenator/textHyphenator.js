@@ -36,22 +36,22 @@ $(function ()
 {
 	const charWidth = AscTest.CharWidth * AscTest.FontSize;
 	
-	let dc = new AscWord.CDocumentContent();
+	let dc = new AscWord.DocumentContent();
 	dc.ClearContent(false);
 	
-	let para = new AscWord.CParagraph();
+	let para = new AscWord.Paragraph();
 	dc.AddToContent(0, para);
 	
-	let run = new AscWord.CRun();
+	let run = new AscWord.Run();
 	para.AddToContent(0, run);
 	
-	function Recalculate(width)
+	function recalculate(width)
 	{
 		dc.Reset(0, 0, width, 10000);
 		dc.Recalculate_Page(0, true);
 	}
 	
-	function SetText(text)
+	function setText(text)
 	{
 		run.ClearContent();
 		run.AddText(text);
@@ -60,28 +60,28 @@ $(function ()
 	let autoHyphenation = false;
 	let hyphenateCaps   = true;
 	
-	AscWord.CParagraph.prototype.IsAutoHyphenation = function()
+	AscWord.Paragraph.prototype.isAutoHyphenation = function()
 	{
 		return autoHyphenation;
 	};
-	AscWord.CTextHyphenator.prototype.IsHyphenateCaps = function()
+	AscWord.TextHyphenator.prototype.isHyphenateCaps = function()
 	{
 		return hyphenateCaps;
 	};
 	
-	function SetAutoHyphenation(isAuto)
+	function setAutoHyphenation(isAuto)
 	{
 		autoHyphenation = isAuto;
 	}
-	function SetHyphenateCaps(isHyphenate)
+	function setHyphenateCaps(isHyphenate)
 	{
 		hyphenateCaps = isHyphenate;
 	}
 	
-	function CheckLines(assert, isAutoHyphenation, contentWidth, textLines)
+	function checkLines(assert, isAutoHyphenation, contentWidth, textLines)
 	{
-		SetAutoHyphenation(isAutoHyphenation);
-		Recalculate(contentWidth);
+		setAutoHyphenation(isAutoHyphenation);
+		recalculate(contentWidth);
 		
 		assert.strictEqual(para.GetLinesCount(), textLines.length, "Check lines count " + textLines.length);
 		
@@ -91,7 +91,7 @@ $(function ()
 		}
 	}
 	
-	function CheckAutoHyphenAfter(assert, itemPos, isHyphen, _run)
+	function checkAutoHyphenAfter(assert, itemPos, isHyphen, _run)
 	{
 		let __run = _run ? _run : run;
 		assert.strictEqual(__run.GetElement(itemPos).IsTemporaryHyphenAfter(), isHyphen, "Check auto hyphen after symbol");
@@ -101,57 +101,57 @@ $(function ()
 	
 	QUnit.test("Test: \"Test regular line break cases\"", function (assert)
 	{
-		SetText("abcd abcd aaabbb");
-		CheckLines(assert, false, charWidth * 8.5, ["abcd ", "abcd ", "aaabbb"]);
-		CheckAutoHyphenAfter(assert, 6, false);
-		CheckLines(assert, true, charWidth * 8.5, ["abcd ab", "cd aaa", "bbb"]);
-		CheckAutoHyphenAfter(assert, 6, true);
+		setText("abcd abcd aaabbb");
+		checkLines(assert, false, charWidth * 8.5, ["abcd ", "abcd ", "aaabbb"]);
+		checkAutoHyphenAfter(assert, 6, false);
+		checkLines(assert, true, charWidth * 8.5, ["abcd ab", "cd aaa", "bbb"]);
+		checkAutoHyphenAfter(assert, 6, true);
 		// Дефис переноса не убирается
-		CheckLines(assert, true, charWidth * 7.5, ["abcd ", "abcd ", "aaabbb"]);
-		CheckAutoHyphenAfter(assert, 6, false);
+		checkLines(assert, true, charWidth * 7.5, ["abcd ", "abcd ", "aaabbb"]);
+		checkAutoHyphenAfter(assert, 6, false);
 		
-		SetText("aabbbcccdddd");
-		CheckLines(assert, false, charWidth * 3.5, ["aab", "bbc", "ccd", "ddd"]);
-		CheckLines(assert, true, charWidth * 3.5, ["aa", "bbb", "ccc", "ddd", "d"]);
+		setText("aabbbcccdddd");
+		checkLines(assert, false, charWidth * 3.5, ["aab", "bbc", "ccd", "ddd"]);
+		checkLines(assert, true, charWidth * 3.5, ["aa", "bbb", "ccc", "ddd", "d"]);
 	});
 	
 	QUnit.test("Test: \"Test edge cases\"", function (assert)
 	{
-		SetText("aaaa zz½www bbbb");
-		CheckLines(assert, false, charWidth * 7.5, ["aaaa ", "zz½www ", "bbbb"]);
-		CheckLines(assert, true, charWidth * 7.5, ["aaaa ", "zz½www ", "bbbb"]);
-		CheckLines(assert, true, charWidth * 8.5, ["aaaa zz", "½www bbbb"]);
+		setText("aaaa zz½www bbbb");
+		checkLines(assert, false, charWidth * 7.5, ["aaaa ", "zz½www ", "bbbb"]);
+		checkLines(assert, true, charWidth * 7.5, ["aaaa ", "zz½www ", "bbbb"]);
+		checkLines(assert, true, charWidth * 8.5, ["aaaa zz", "½www bbbb"]);
 
 		// Перенос идет после второго символа z, а следующий за ним символ меньше по ширине, чем
 		// размер дефиса, который мы рисуем во время переноса
-		SetText("zz½www");
-		CheckLines(assert, false, charWidth * 2.75, ["zz½", "ww", "w"]);
-		CheckAutoHyphenAfter(assert, 1, false);
-		CheckLines(assert, true, charWidth * 3.25, ["zz", "½ww", "w"]);
-		CheckAutoHyphenAfter(assert, 1, true);
-		CheckLines(assert, true, charWidth * 2.75, ["zz½", "ww", "w"]);
-		CheckAutoHyphenAfter(assert, 1, false);
-		CheckLines(assert, true, charWidth * 2.25, ["zz", "½w", "ww"]);
-		CheckAutoHyphenAfter(assert, 1, false);
+		setText("zz½www");
+		checkLines(assert, false, charWidth * 2.75, ["zz½", "ww", "w"]);
+		checkAutoHyphenAfter(assert, 1, false);
+		checkLines(assert, true, charWidth * 3.25, ["zz", "½ww", "w"]);
+		checkAutoHyphenAfter(assert, 1, true);
+		checkLines(assert, true, charWidth * 2.75, ["zz½", "ww", "w"]);
+		checkAutoHyphenAfter(assert, 1, false);
+		checkLines(assert, true, charWidth * 2.25, ["zz", "½w", "ww"]);
+		checkAutoHyphenAfter(assert, 1, false);
 	});
 	
 	QUnit.test("Test: \"Test DoNotHyphenateCaps parameter\"", function (assert)
 	{
-		SetText("abcde AAABBB aaabbb");
+		setText("abcde AAABBB aaabbb");
 		
-		CheckLines(assert, false, charWidth * 11.5, ["abcde ", "AAABBB ", "aaabbb"]);
-		CheckAutoHyphenAfter(assert, 8, false);
-		CheckAutoHyphenAfter(assert, 15, false);
+		checkLines(assert, false, charWidth * 11.5, ["abcde ", "AAABBB ", "aaabbb"]);
+		checkAutoHyphenAfter(assert, 8, false);
+		checkAutoHyphenAfter(assert, 15, false);
 		
-		SetHyphenateCaps(true);
-		CheckLines(assert, true, charWidth * 11.5, ["abcde AAA", "BBB aaabbb"]);
-		CheckAutoHyphenAfter(assert, 8, true);
-		CheckAutoHyphenAfter(assert, 15, false);
+		setHyphenateCaps(true);
+		checkLines(assert, true, charWidth * 11.5, ["abcde AAA", "BBB aaabbb"]);
+		checkAutoHyphenAfter(assert, 8, true);
+		checkAutoHyphenAfter(assert, 15, false);
 		
-		SetHyphenateCaps(false);
-		CheckLines(assert, true, charWidth * 11.5, ["abcde ", "AAABBB aaa", "bbb"]);
-		CheckAutoHyphenAfter(assert, 8, false);
-		CheckAutoHyphenAfter(assert, 15, true);
+		setHyphenateCaps(false);
+		checkLines(assert, true, charWidth * 11.5, ["abcde ", "AAABBB aaa", "bbb"]);
+		checkAutoHyphenAfter(assert, 8, false);
+		checkAutoHyphenAfter(assert, 15, true);
 		
 	});
 

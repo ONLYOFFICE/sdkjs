@@ -16276,7 +16276,7 @@ CDocument.prototype.SetDocumentPrintMode = function()
 };
 CDocument.prototype.SetAutoHyphenation = function(isAuto)
 {
-	if (this.Settings.IsAutoHyphenation() === isAuto)
+	if (this.Settings.isAutoHyphenation() === isAuto)
 		return;
 	
 	if (this.IsSelectionLocked(AscCommon.changestype_Document_SectPr))

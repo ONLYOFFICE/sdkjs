@@ -70,7 +70,7 @@
 		this.UlTrailSpace                     = false;
 		this.UseFELayout                      = false;
 	}
-	CDocumentSettings.prototype.IsAutoHyphenation = function()
+	CDocumentSettings.prototype.isAutoHyphenation = function()
 	{
 		return !!this.AutoHyphenation;
 	};
@@ -82,7 +82,7 @@
 		
 		AscCommon.AddAndExecuteChange(new CChangesDocumentSettingsAutoHyphenation(this.LogicDocument, this.AutoHyphenation, isAuto));
 	};
-	CDocumentSettings.prototype.IsHyphenateCaps = function()
+	CDocumentSettings.prototype.isHyphenateCaps = function()
 	{
 		return (false !== this.DoNotHyphenateCaps);
 	};

@@ -2539,10 +2539,10 @@ Paragraph.prototype.ShapeText = function()
 };
 Paragraph.prototype.HyphenateText = function()
 {
-	if (!this.RecalcInfo.HyphenateText || !this.IsAutoHyphenation())
+	if (!this.RecalcInfo.HyphenateText || !this.isAutoHyphenation())
 		return;
 	
-	AscWord.TextHyphenator.Hyphenate(this);
+	AscWord.TextHyphenator.hyphenate(this);
 };
 
 Paragraph.prototype.ShapeTextInRange = function(oStartPos, oEndPos)
@@ -3299,7 +3299,7 @@ CParagraphRecalculateStateWrap.prototype =
 
 		this.CondensedSpaces = Paragraph.IsCondensedSpaces();
 		this.BalanceSBDB     = Paragraph.IsBalanceSingleByteDoubleByteWidth();
-		this.AutoHyphenation = Paragraph.IsAutoHyphenation();
+		this.AutoHyphenation = Paragraph.isAutoHyphenation();
 
 		this.Page               = CurPage;
 		this.RunRecalcInfoLast  = (0 === CurPage ? null : Paragraph.Pages[CurPage - 1].EndInfo.RunRecalcInfo);
@@ -4046,7 +4046,7 @@ CParagraphRecalculateStateWrap.prototype.IsLastElementInWord = function(oRun, nP
 
 	return (!oNextItem || !oNextItem.IsText());
 };
-CParagraphRecalculateStateWrap.prototype.IsAutoHyphenation = function()
+CParagraphRecalculateStateWrap.prototype.isAutoHyphenation = function()
 {
 	return this.AutoHyphenation;
 };
