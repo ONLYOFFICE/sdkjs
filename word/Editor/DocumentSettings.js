@@ -39,7 +39,7 @@
 	 * @param {AscWord.CDocument} logicDocument
 	 * @constructor
 	 */
-	function CDocumentSettings(logicDocument)
+	function DocumentSettings(logicDocument)
 	{
 		this.LogicDocument = logicDocument;
 		
@@ -52,10 +52,10 @@
 		this.DocumentProtection   = undefined !== AscCommonWord.CDocProtect ? new AscCommonWord.CDocProtect() : null;
 		
 		// Параметры, связанные с автоматической расстановкой переносов
-		this.AutoHyphenation        = undefined;
-		this.HyphenationZone        = undefined;
-		this.ConsecutiveHyphenLimit = undefined;
-		this.DoNotHyphenateCaps     = undefined;
+		this.autoHyphenation        = undefined;
+		this.hyphenationZone        = undefined;
+		this.consecutiveHyphenLimit = undefined;
+		this.doNotHyphenateCaps     = undefined;
 		
 		this.ListSeparator   = undefined;
 		this.DecimalSymbol   = undefined;
@@ -70,43 +70,43 @@
 		this.UlTrailSpace                     = false;
 		this.UseFELayout                      = false;
 	}
-	CDocumentSettings.prototype.isAutoHyphenation = function()
+	DocumentSettings.prototype.isAutoHyphenation = function()
 	{
-		return !!this.AutoHyphenation;
+		return !!this.autoHyphenation;
 	};
-	CDocumentSettings.prototype.SetAutoHyphenation = function(isAuto)
+	DocumentSettings.prototype.setAutoHyphenation = function(isAuto)
 	{
-		if (this.AutoHyphenation === isAuto
-			|| (!isAuto && undefined === this.AutoHyphenation))
+		if (this.autoHyphenation === isAuto
+			|| (!isAuto && undefined === this.autoHyphenation))
 			return;
 		
-		AscCommon.AddAndExecuteChange(new CChangesDocumentSettingsAutoHyphenation(this.LogicDocument, this.AutoHyphenation, isAuto));
+		AscCommon.AddAndExecuteChange(new CChangesDocumentSettingsAutoHyphenation(this.LogicDocument, this.autoHyphenation, isAuto));
 	};
-	CDocumentSettings.prototype.isHyphenateCaps = function()
+	DocumentSettings.prototype.isHyphenateCaps = function()
 	{
-		return (false !== this.DoNotHyphenateCaps);
+		return (false !== this.doNotHyphenateCaps);
 	};
-	CDocumentSettings.prototype.SetHyphenateCaps = function(isHyphenate)
+	DocumentSettings.prototype.setHyphenateCaps = function(isHyphenate)
 	{
-		if (this.DoNotHyphenateCaps === isHyphenate
-			|| (isHyphenate && undefined === this.DoNotHyphenateCaps))
+		if (this.doNotHyphenateCaps === isHyphenate
+			|| (isHyphenate && undefined === this.doNotHyphenateCaps))
 			return;
 		
-		AscCommon.AddAndExecuteChange(new CChangesDocumentSettingsDoNotHyphenateCaps(this.LogicDocument, this.DoNotHyphenateCaps, !isHyphenate));
+		AscCommon.AddAndExecuteChange(new CChangesDocumentSettingsDoNotHyphenateCaps(this.LogicDocument, this.doNotHyphenateCaps, !isHyphenate));
 	};
-	CDocumentSettings.prototype.GetConsecutiveHyphenLimit = function()
+	DocumentSettings.prototype.getConsecutiveHyphenLimit = function()
 	{
-		return !this.ConsecutiveHyphenLimit ? 0 : this.ConsecutiveHyphenLimit;
+		return !this.consecutiveHyphenLimit ? 0 : this.consecutiveHyphenLimit;
 	};
-	CDocumentSettings.prototype.SetConsecutiveHyphenLimit = function(limit)
+	DocumentSettings.prototype.setConsecutiveHyphenLimit = function(limit)
 	{
-		if (this.ConsecutiveHyphenLimit === limit
-			|| (undefined === this.ConsecutiveHyphenLimit && !limit))
+		if (this.consecutiveHyphenLimit === limit
+			|| (undefined === this.consecutiveHyphenLimit && !limit))
 			return;
 		
-		AscCommon.AddAndExecuteChange(new CChangesDocumentSettingsConsecutiveHyphenLimit(this.LogicDocument, this.ConsecutiveHyphenLimit, limit));
+		AscCommon.AddAndExecuteChange(new CChangesDocumentSettingsConsecutiveHyphenLimit(this.LogicDocument, this.consecutiveHyphenLimit, limit));
 	};
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscWord'].CDocumentSettings = CDocumentSettings;
+	window['AscWord'].DocumentSettings = DocumentSettings;
 
 })(window);

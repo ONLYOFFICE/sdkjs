@@ -1835,7 +1835,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.TrackRevisions = null; // Локальный флаг рецензирования, который перекрывает флаг Settings.TrackRevisions, если сам не null
 	this.TrackRevisionsManager = new AscWord.CTrackRevisionsManager(this);
 
-	this.Settings = new AscWord.CDocumentSettings(this);
+	this.Settings = new AscWord.DocumentSettings(this);
 
 	this.Layouts = {
 		Print : new AscWord.CDocumentPrintView(this),
@@ -16274,7 +16274,7 @@ CDocument.prototype.SetDocumentPrintMode = function()
 
 	this.RecalculateFromStart(true);
 };
-CDocument.prototype.SetAutoHyphenation = function(isAuto)
+CDocument.prototype.setAutoHyphenation = function(isAuto)
 {
 	if (this.Settings.isAutoHyphenation() === isAuto)
 		return;
@@ -16283,7 +16283,7 @@ CDocument.prototype.SetAutoHyphenation = function(isAuto)
 		return
 
 	this.StartAction(AscDFH.historydescription_Document_SetAutoHyphenation);
-	this.Settings.SetAutoHyphenation(isAuto);
+	this.Settings.setAutoHyphenation(isAuto);
 	this.Recalculate();
 	this.UpdateInterface();
 	this.FinalizeAction();

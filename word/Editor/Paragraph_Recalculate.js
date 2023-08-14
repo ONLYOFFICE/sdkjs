@@ -3157,7 +3157,7 @@ function CParagraphRecalculateStateWrap(Para)
     this.SectPr          = null; // настройки секции, к которой относится данный параграф
 	this.CondensedSpaces = false;
 	this.BalanceSBDB     = false; // BalanceSingleByteDoubleByteWidth
-	this.AutoHyphenation = false;
+	this.autoHyphenation = false;
 
 	this.Fast            = false; // Быстрый ли пересчет
 
@@ -3299,7 +3299,7 @@ CParagraphRecalculateStateWrap.prototype =
 
 		this.CondensedSpaces = Paragraph.IsCondensedSpaces();
 		this.BalanceSBDB     = Paragraph.IsBalanceSingleByteDoubleByteWidth();
-		this.AutoHyphenation = Paragraph.isAutoHyphenation();
+		this.autoHyphenation = Paragraph.isAutoHyphenation();
 
 		this.Page               = CurPage;
 		this.RunRecalcInfoLast  = (0 === CurPage ? null : Paragraph.Pages[CurPage - 1].EndInfo.RunRecalcInfo);
@@ -3418,7 +3418,7 @@ CParagraphRecalculateStateWrap.prototype =
 	
 	CheckLastAutoHyphen : function(X, XEnd)
 	{
-		if (!this.AutoHyphenation)
+		if (!this.autoHyphenation)
 			return;
 		
 		this.ResetLastAutoHyphen();
@@ -4048,7 +4048,7 @@ CParagraphRecalculateStateWrap.prototype.IsLastElementInWord = function(oRun, nP
 };
 CParagraphRecalculateStateWrap.prototype.isAutoHyphenation = function()
 {
-	return this.AutoHyphenation;
+	return this.autoHyphenation;
 };
 CParagraphRecalculateStateWrap.prototype.OnEndRecalculateLineRanges = function()
 {
@@ -4060,7 +4060,7 @@ CParagraphRecalculateStateWrap.prototype.OnEndRecalculateLineRanges = function()
  */
 CParagraphRecalculateStateWrap.prototype.GetAutoHyphenWidth = function(item, run)
 {
-	if (!this.AutoHyphenation || !item || !item.IsText() || !item.IsHyphenAfter())
+	if (!this.autoHyphenation || !item || !item.IsText() || !item.IsHyphenAfter())
 		return 0;
 	
 	let textPr = run.Get_CompiledPr(false);

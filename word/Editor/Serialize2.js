@@ -6995,10 +6995,10 @@ function BinarySettingsTableWriter(memory, doc, saveParams)
 		{
 			this.bs.WriteItem(c_oSer_SettingsType.WriteProtection, function(){oThis.WriteWriteProtect();});
 		}
-		if (settings && settings.AutoHyphenation)
+		if (settings && settings.autoHyphenation)
 			this.bs.WriteItem(c_oSer_SettingsType.AutoHyphenation, function() {oThis.memory.WriteBool(true);});
 		if (settings && undefined !== settings.HyphenationZone)
-			this.bs.WriteItem(c_oSer_SettingsType.HyphenationZone, function() {oThis.memory.WriteLong(settings.HyphenationZone);});
+			this.bs.WriteItem(c_oSer_SettingsType.HyphenationZone, function() {oThis.memory.WriteLong(settings.hyphenationZone);});
 		
 		// if (oThis.Document.Settings && null != oThis.Document.Settings.PrintTwoOnOne) {
 		// 	this.bs.WriteItem(c_oSer_SettingsType.PrintTwoOnOne, function() {oThis.memory.WriteBool(oThis.Document.Settings.PrintTwoOnOne);});
@@ -16439,11 +16439,11 @@ function Binary_SettingsTableReader(doc, oReadResult, stream)
 		// }
 		else if (c_oSer_SettingsType.AutoHyphenation === type)
 		{
-			Settings.AutoHyphenation = this.stream.GetBool();
+			Settings.autoHyphenation = this.stream.GetBool();
 		}
 		else if (c_oSer_SettingsType.HyphenationZone === type)
 		{
-			Settings.HyphenationZone = this.stream.GetLong();
+			Settings.hyphenationZone = this.stream.GetLong();
 		}
         else
             res = c_oSerConstants.ReadUnknown;
