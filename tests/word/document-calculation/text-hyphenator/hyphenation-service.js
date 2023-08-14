@@ -53,6 +53,8 @@
 			return [3];
 		else if ("aabbbcccdddd" === checkString)
 			return [1, 4, 7];
+		else if ("ccdddd" === checkString)
+			return [2];
 		else if ("zz½www" === checkString)
 			return [1];
 		

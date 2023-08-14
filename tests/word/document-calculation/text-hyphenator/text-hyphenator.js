@@ -59,6 +59,7 @@ $(function ()
 	
 	let autoHyphenation = false;
 	let hyphenateCaps   = true;
+	let hyphenLimit     = 0;
 	
 	AscWord.Paragraph.prototype.isAutoHyphenation = function()
 	{
@@ -76,6 +77,10 @@ $(function ()
 	function setHyphenateCaps(isHyphenate)
 	{
 		hyphenateCaps = isHyphenate;
+	}
+	function setHyphenLimit(limit)
+	{
+		hyphenLimit = limit;
 	}
 	
 	function checkLines(assert, isAutoHyphenation, contentWidth, textLines)
@@ -97,7 +102,15 @@ $(function ()
 		assert.strictEqual(__run.GetElement(itemPos).IsTemporaryHyphenAfter(), isHyphen, "Check auto hyphen after symbol");
 	}
 	
-	QUnit.module("Paragraph Lines");
+	QUnit.module("Paragraph Lines",
+	{
+		beforeEach : function ()
+		{
+			setAutoHyphenation(false);
+			setHyphenateCaps(true);
+			setHyphenLimit(0);
+		}
+	});
 	
 	QUnit.test("Test: \"Test regular line break cases\"", function (assert)
 	{
@@ -154,5 +167,141 @@ $(function ()
 		checkAutoHyphenAfter(assert, 15, true);
 		
 	});
-
+	
+	QUnit.test("Test: \"Test ConsecutiveHyphenLimit parameter for different words\"", function (assert)
+	{
+		setText("abcd AAABBB aaabbb aaabbb AAABBB aaabbb aaabbb abcd");
+		
+		checkLines(assert, false, charWidth * 9.5, [
+			"abcd ",
+			"AAABBB ",
+			"aaabbb ",
+			"aaabbb ",
+			"AAABBB ",
+			"aaabbb ",
+			"aaabbb ",
+			"abcd"]
+		);
+		checkAutoHyphenAfter(assert, 7, false);
+		checkAutoHyphenAfter(assert, 14, false);
+		checkAutoHyphenAfter(assert, 21, false);
+		checkAutoHyphenAfter(assert, 28, false);
+		checkAutoHyphenAfter(assert, 35, false);
+		checkAutoHyphenAfter(assert, 42, false);
+		
+		checkLines(assert, true, charWidth * 9.5, [
+			"abcd AAA",
+			"BBB aaa",
+			"bbb aaa",
+			"bbb AAA",
+			"BBB aaa",
+			"bbb aaa",
+			"bbb abcd"]
+		);
+		checkAutoHyphenAfter(assert, 7, true);
+		checkAutoHyphenAfter(assert, 14, true);
+		checkAutoHyphenAfter(assert, 21, true);
+		checkAutoHyphenAfter(assert, 28, true);
+		checkAutoHyphenAfter(assert, 35, true);
+		checkAutoHyphenAfter(assert, 42, true);
+		
+		setHyphenLimit(1);
+		checkLines(assert, true, charWidth * 10.5, [
+			"abcd AAA",
+			"BBB ",
+			"aaabbb aaa",
+			"bbb ",
+			"AAABBB aaa",
+			"bbb ",
+			"aaabbb abcd"]
+		);
+		checkAutoHyphenAfter(assert, 7, true);
+		checkAutoHyphenAfter(assert, 14, false);
+		checkAutoHyphenAfter(assert, 21, true);
+		checkAutoHyphenAfter(assert, 28, false);
+		checkAutoHyphenAfter(assert, 35, true);
+		checkAutoHyphenAfter(assert, 42, false);
+		
+		setHyphenLimit(2);
+		checkLines(assert, true, charWidth * 10.5, [
+			"abcd AAA",
+			"BBB aaa",
+			"bbb ",
+			"aaabbb ",
+			"AAABBB aaa",
+			"bbb aaa",
+			"bbb abcd"]
+		);
+		checkAutoHyphenAfter(assert, 7, true);
+		checkAutoHyphenAfter(assert, 14, false);
+		checkAutoHyphenAfter(assert, 21, true);
+		checkAutoHyphenAfter(assert, 28, false);
+		checkAutoHyphenAfter(assert, 35, true);
+		checkAutoHyphenAfter(assert, 42, false);
+		
+		setHyphenLimit(3);
+		checkLines(assert, true, charWidth * 10.5, [
+			"abcd AAA",
+			"BBB aaa",
+			"bbb aaa",
+			"bbb ",
+			"AAABBB aaa",
+			"bbb aaa",
+			"bbb abcd"]
+		);
+		checkAutoHyphenAfter(assert, 7, true);
+		checkAutoHyphenAfter(assert, 14, true);
+		checkAutoHyphenAfter(assert, 21, true);
+		checkAutoHyphenAfter(assert, 28, false);
+		checkAutoHyphenAfter(assert, 35, true);
+		checkAutoHyphenAfter(assert, 42, true);
+	});
+	
+	QUnit.test("Test: \"Test ConsecutiveHyphenLimit parameter for single word\"", function (assert)
+	{
+		setText("aabbbcccdddd");
+		
+		checkLines(assert, false, charWidth * 4.5, [
+			"aabb",
+			"bccc",
+			"dddd"]
+		);
+		checkAutoHyphenAfter(assert, 1, false);
+		checkAutoHyphenAfter(assert, 4, false);
+		checkAutoHyphenAfter(assert, 7, false);
+		
+		checkLines(assert, true, charWidth * 4.5, [
+			"aa",
+			"bbb",
+			"ccc",
+			"dddd"]
+		);
+		checkAutoHyphenAfter(assert, 1, true);
+		checkAutoHyphenAfter(assert, 4, true);
+		checkAutoHyphenAfter(assert, 7, true);
+		
+		// В этом примере важно, что ccdddd тоже переносится по второму символу
+		setHyphenLimit(1);
+		checkLines(assert, true, charWidth * 4.5, [
+			"aa",
+			"bbbc",
+			"cc",
+			"dddd"]
+		);
+		checkAutoHyphenAfter(assert, 1, true);
+		checkAutoHyphenAfter(assert, 4, false);
+		checkAutoHyphenAfter(assert, 7, true);
+		
+		setHyphenLimit(2);
+		checkLines(assert, true, charWidth * 4.5, [
+			"aa",
+			"bbb",
+			"ccсd",
+			"ddd"]
+		);
+		checkAutoHyphenAfter(assert, 1, true);
+		checkAutoHyphenAfter(assert, 4, true);
+		checkAutoHyphenAfter(assert, 7, false);
+		
+	});
 });
