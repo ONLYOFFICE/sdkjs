@@ -2185,7 +2185,7 @@ background-repeat: no-repeat;\
 		return !!(this.WordControl && this.WordControl.DemonstrationManager && this.WordControl.DemonstrationManager.Mode);
 	};
 
-	asc_docs_api.prototype.asc_PasteData = function(_format, data1, data2, text_data)
+	asc_docs_api.prototype.asc_PasteData = function(_format, data1, data2, text_data, null_param, callback)
 	{
 	    if (!this.canEdit())
     	    return;
@@ -2199,7 +2199,7 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oLogicDocument.Create_NewHistoryPoint(AscDFH.historydescription_Document_PasteHotKey);
 
 			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(arguments[5]);
-			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data);
+			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback);
 		}
 	};
 

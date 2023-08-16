@@ -966,9 +966,9 @@ var editor;
     return AscCommon.g_clipboardBase.Button_Cut();
   };
 
-  spreadsheet_api.prototype.asc_PasteData = function (_format, data1, data2, text_data) {
+  spreadsheet_api.prototype.asc_PasteData = function (_format, data1, data2, text_data, doNotShowButton, callback) {
     if (this.canEdit()) {
-      this.wb.pasteData(_format, data1, data2, text_data, arguments[5]);
+      this.wb.pasteData(_format, data1, data2, text_data, doNotShowButton, callback);
       //this.asc_EndMoveSheet2(data1, 1, "test2");
     }
   };

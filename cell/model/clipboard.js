@@ -409,7 +409,7 @@
 			}
 		};
 
-		Clipboard.prototype.pasteData = function (ws, _format, data1, data2, text_data, bIsSpecialPaste, doNotShowButton, isPasteAll) {
+		Clipboard.prototype.pasteData = function (ws, _format, data1, data2, text_data, bIsSpecialPaste, doNotShowButton, isPasteAll, callback) {
 			var t = this;
 			var wb = window["Asc"]["editor"].wb;
 			//if open range dialog - return
@@ -460,7 +460,7 @@
 							this._pasteTextInCellEditor(text_data || data1.innerText);
 						}
 					} else {
-						t.pasteProcessor.editorPasteExec(ws, data1);
+						t.pasteProcessor.editorPasteExec(ws, data1, null, callback);
 					}
 
 					break;
@@ -1607,6 +1607,7 @@
 			this.fontsNew = {};
 			this.oImages = {};
 			this.multipleSettings = null;
+			this.pasteCallBack = null;
 		}
 		
 		PasteProcessorExcel.prototype = {
@@ -2729,7 +2730,7 @@
 				oPasteFromBinaryWord._paste(ws, {content: [drawingObject.graphicObject.graphicObject]});
 			},
 
-			editorPasteExec: function (worksheet, node, isText) {
+			editorPasteExec: function (worksheet, node, isText, cb) {
 				if (node === undefined) {
 					return;
 				}
@@ -2763,6 +2764,8 @@
 						node = binaryResult;
 					}
 				}
+
+				this.pasteCallBack = cb;
 
 				this.activeRange = worksheet.model.selectionRange.getLast().clone();
 				worksheet.workbook.handlers.trigger("cleanCopyData", true);
