@@ -12559,6 +12559,9 @@
 			} else if (-1 !== value.indexOf("pc")) {
 				oType = "pc";
 				oVal *= AscCommonWord.g_dKoef_pc_to_mm;
+			} else if (-1 !== value.indexOf("em")) {
+				oType = "em";
+				oVal *= AscCommonWord.g_dKoef_em_to_mm;
 			} else {
 				oType = "none";
 			}

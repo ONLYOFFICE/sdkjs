@@ -67,6 +67,7 @@ var g_dKoef_emu_to_twips = g_dKoef_emu_to_mm * g_dKoef_mm_to_twips;
 var g_dKoef_pt_to_twips = 20;
 var g_dKoef_twips_to_emu = 1 / g_dKoef_emu_to_twips;
 var g_dKoef_twips_to_pt = 1 / g_dKoef_pt_to_twips;
+var g_dKoef_em_to_mm = 4.21752;
 
 var tblwidth_Auto = 0x00;
 var tblwidth_Mm   = 0x01;
@@ -18295,6 +18296,7 @@ window["AscCommonWord"].g_dKoef_mm_to_pt = g_dKoef_mm_to_pt;
 window["AscCommonWord"].g_dKoef_mm_to_emu = g_dKoef_mm_to_emu;
 window["AscCommonWord"].g_dKoef_twips_to_pt = g_dKoef_twips_to_pt;
 window["AscCommonWord"].g_dKoef_twips_to_emu = g_dKoef_twips_to_emu;
+window["AscCommonWord"].g_dKoef_em_to_mm = g_dKoef_em_to_mm;
 window["AscCommonWord"].g_dKoef_pt_to_twips = g_dKoef_pt_to_twips;
 window["AscCommonWord"].border_Single = border_Single;
 window["AscCommonWord"].Default_Tab_Stop = Default_Tab_Stop;
