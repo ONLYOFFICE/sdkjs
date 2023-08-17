@@ -852,7 +852,7 @@
 			{
 				const {oShape} = getShapeWithParagraphHelper('', true);
 				selectOnlyObjects([oShape]);
-				oGlobalLogicDocument.AddAnimation(1, 1, 0, false, false);
+				oGlobalLogicDocument.AddAnimation(1, 1, 0, null, false, false);
 
 				onKeyDown(oEvent);
 				const oTiming = oGlobalLogicDocument.GetCurTiming();

@@ -4427,13 +4427,13 @@ background-repeat: no-repeat;\
 	{
 		this.WordControl.m_oLogicDocument.AddToLayout();
 	};
-	asc_docs_api.prototype.asc_AddAnimation      = function(nPresetClass, nPresetId, nPresetSubtype, bReplace, bPreview)
+	asc_docs_api.prototype.asc_AddAnimation      = function(nPresetClass, nPresetId, nPresetSubtype, oColor, bReplace, bPreview)
 	{
 		var bStartPreview = true;
 		if(bPreview === false) {
 			bStartPreview = false;
 		}
-		this.WordControl.m_oLogicDocument.AddAnimation(nPresetClass, nPresetId, nPresetSubtype, bReplace, bStartPreview);
+		this.WordControl.m_oLogicDocument.AddAnimation(nPresetClass, nPresetId, nPresetSubtype, oColor, bReplace, bStartPreview);
 	};
 	asc_docs_api.prototype.asc_getCurSlideObjectsNames = function()
 	{

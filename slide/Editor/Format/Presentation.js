@@ -11787,7 +11787,7 @@ CPresentation.prototype.AddToLayout = function () {
 	}, [], false, AscDFH.historydescription_Presentation_AddToLayout);
 };
 
-CPresentation.prototype.AddAnimation = function (nPresetClass, nPresetId, nPresetSubtype, bReplace, bPreview) {
+CPresentation.prototype.AddAnimation = function (nPresetClass, nPresetId, nPresetSubtype, oColor, bReplace, bPreview) {
 	var oSlide = this.GetCurrentSlide();
 	if (oSlide) {
 		if (nPresetClass === AscFormat.PRESET_CLASS_PATH && nPresetId === AscFormat.MOTION_CUSTOM_PATH) {
@@ -11804,7 +11804,7 @@ CPresentation.prototype.AddAnimation = function (nPresetClass, nPresetId, nPrese
 		}
 		if (this.IsSelectionLocked(AscCommon.changestype_Timing) === false) {
 			this.StartAction(0);
-			var aAddedEffects = oSlide.addAnimation(nPresetClass, nPresetId, nPresetSubtype, bReplace);
+			var aAddedEffects = oSlide.addAnimation(nPresetClass, nPresetId, nPresetSubtype, oColor, bReplace);
 			this.FinalizeAction();
 			this.Document_UpdateInterfaceState();
 			if (bPreview && aAddedEffects.length > 0) {
