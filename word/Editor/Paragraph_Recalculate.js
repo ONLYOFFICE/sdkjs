@@ -1211,7 +1211,7 @@ Paragraph.prototype.private_RecalculateLineRanges      = function(CurLine, CurPa
         PRS.Range = CurRange;
         this.private_RecalculateRange(CurRange, CurLine, CurPage, RangesCount, PRS, ParaPr);
 
-        if ( true === PRS.ForceNewPage || true === PRS.NewPage || true === PRS.ForceNewLine )
+        if (PRS.isForceLineBreak())
         {
             // Поскольку мы выходим досрочно из цикла, нам надо удалить лишние отрезки обтекания
             this.Lines[CurLine].Ranges.length = CurRange + 1;
@@ -4066,6 +4066,17 @@ CParagraphRecalculateStateWrap.prototype.GetAutoHyphenWidth = function(item, run
 	let textPr = run.Get_CompiledPr(false);
 	let fontInfo = textPr.GetFontInfo(AscWord.fontslot_ASCII);
 	return AscFonts.GetGraphemeWidth(AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x002D, fontInfo.Name, fontInfo.Style)) * textPr.FontSize;
+};
+/**
+ * Проверяем нужно ли сделать обязательный перенос строки после расчета одного диапазона
+ * @returns {boolean}
+ */
+CParagraphRecalculateStateWrap.prototype.isForceLineBreak = function()
+{
+	return (this.ForceNewPage
+		|| this.NewPage
+		|| this.ForceNewLine
+		|| this.LastHyphenItem);
 };
 
 

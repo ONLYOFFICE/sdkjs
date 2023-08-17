@@ -102,7 +102,7 @@ $(function ()
 		assert.strictEqual(__run.GetElement(itemPos).IsTemporaryHyphenAfter(), isHyphen, "Check auto hyphen after symbol");
 	}
 	
-	QUnit.module("Paragraph Lines",
+	QUnit.module("Text hyphenation",
 	{
 		beforeEach : function ()
 		{
@@ -146,6 +146,12 @@ $(function ()
 		checkAutoHyphenAfter(assert, 1, false);
 		checkLines(assert, true, charWidth * 2.25, ["zz", "½w", "ww"]);
 		checkAutoHyphenAfter(assert, 1, false);
+		
+		// TODO: Разобрать случай, когда перенос слова происходит в двух (или более местах) и следующее место переноса
+		//       надо начинать считать с последнего места переноса, а не с начала слова
+		
+		// TODO: Случай, когда одно длинное слово разбивается по переносам и целиком переходит на следующую страницу
+		//       из-за этого
 	});
 	
 	QUnit.test("Test: \"Test DoNotHyphenateCaps parameter\"", function (assert)

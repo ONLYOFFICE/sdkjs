@@ -52,6 +52,20 @@ var AscHyphenation = AscHyphenation || {};
 			return [2];
 		else if ("участвовавшими" === BUFFER_STRING)
 			return [3, 6, 9, 11];
+		else if ("припри" === BUFFER_STRING)
+			return [2];
+		else if ("приприпри" === BUFFER_STRING)
+			return [2, 5];
+		else if ("приприприпри" === BUFFER_STRING)
+			return [2, 5, 8];
+		else if ("приприприприпри" === BUFFER_STRING)
+			return [2, 5, 8, 11];
+		else if ("приприприприприпри" === BUFFER_STRING)
+			return [2, 5, 8, 11, 14];
+		else if ("приприприприприприпри" === BUFFER_STRING)
+			return [2, 5, 8, 11, 14, 17];
+		else if ("приприприприприприприпри" === BUFFER_STRING)
+			return [2, 5, 8, 11, 14, 17, 20];
 		
 		return [];
 	};
