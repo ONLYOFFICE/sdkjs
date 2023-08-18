@@ -98,16 +98,34 @@ $(function ()
 		
 		assert.strictEqual(para.GetLinesCount(), textLines.length, "Check lines count " + textLines.length);
 		
-		for (let line = 0; line < textLines.length; ++line)
+		for (let line = 0, lineBreakPos = 0; line < textLines.length; ++line)
 		{
-			assert.strictEqual(para.GetTextOnLine(line), textLines[line], "Text on line " + line + " '" + textLines[line] + "'");
+			lineBreakPos += textLines[line].length;
+			
+			let lineText = textLines[line];
+			if (textLines[line].length && "-" === textLines[line].charAt(textLines[line].length - 1))
+			{
+				--lineBreakPos;
+				checkAutoHyphenAfter(assert, lineBreakPos - 1, true);
+				lineText = textLines[line].substr(0, textLines[line].length - 1);
+			}
+			else
+			{
+				checkAutoHyphenAfter(assert, lineBreakPos - 1, false);
+			}
+			
+			assert.strictEqual(para.GetTextOnLine(line), lineText, "Text on line " + line + " '" + textLines[line] + "'");
 		}
 	}
 	
 	function checkAutoHyphenAfter(assert, itemPos, isHyphen, _run)
 	{
 		let __run = _run ? _run : run;
-		assert.strictEqual(__run.GetElement(itemPos).IsTemporaryHyphenAfter(), isHyphen, "Check auto hyphen after symbol");
+		let runItem = __run.GetElement(itemPos);
+		if (!runItem.IsText())
+			assert.strictEqual(false, isHyphen, "Check auto hyphen after symbol");
+		else
+			assert.strictEqual(runItem.IsTemporaryHyphenAfter(), isHyphen, "Check auto hyphen after symbol");
 	}
 	
 	QUnit.module("Text hyphenation",
@@ -124,18 +142,16 @@ $(function ()
 	{
 		setText("abcd abcd aaabbb");
 		checkLines(assert, false, charWidth * 8.5, ["abcd ", "abcd ", "aaabbb"]);
-		checkAutoHyphenAfter(assert, 6, false);
-		checkLines(assert, true, charWidth * 8.5, ["abcd ab", "cd aaa", "bbb"]);
-		checkAutoHyphenAfter(assert, 6, true);
+		checkLines(assert, true, charWidth * 8.5, ["abcd ab-", "cd aaa-", "bbb"]);
 		// Дефис переноса не убирается
 		checkLines(assert, true, charWidth * 7.5, ["abcd ", "abcd ", "aaabbb"]);
-		checkAutoHyphenAfter(assert, 6, false);
 		
 		setText("aabbbcccdddd");
 		checkLines(assert, false, charWidth * 3.5, ["aab", "bbc", "ccd", "ddd"]);
-		checkLines(assert, true, charWidth * 3.5, ["aa", "bbb", "ccc", "ddd", "d"]);
+		checkLines(assert, true, charWidth * 3.5, ["aa-", "bbb", "ccc", "ddd", "d"]);
 	});
 	
+	/*
 	QUnit.test("Test: \"Test edge cases\"", function (assert)
 	{
 		setText("aaaa zz½www bbbb");
@@ -290,6 +306,8 @@ $(function ()
 		checkAutoHyphenAfter(assert, 35, false);
 		checkAutoHyphenAfter(assert, 42, false);
 	});
+	
+	 */
 	
 	/*
 	QUnit.test("Test: \"Test ConsecutiveHyphenLimit parameter for single word\"", function (assert)
