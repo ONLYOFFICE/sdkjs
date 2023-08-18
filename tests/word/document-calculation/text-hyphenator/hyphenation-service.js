@@ -49,6 +49,12 @@
 			return [1];
 		else if ("aaabbb" === checkString)
 			return [2];
+		else if ("aabbb" === checkString)
+			return [1];
+		else if ("abbbb" === checkString)
+			return [0];
+		else if ("aaabbb" === checkString)
+			return [2];
 		else if ("testtest" === checkString)
 			return [3];
 		else if ("aabbbcccdddd" === checkString)
