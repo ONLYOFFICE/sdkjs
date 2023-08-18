@@ -141,35 +141,91 @@ $(function ()
 	QUnit.test("Test: \"Test regular line break cases\"", function (assert)
 	{
 		setText("abcd abcd aaabbb");
-		checkLines(assert, false, charWidth * 8.5, ["abcd ", "abcd ", "aaabbb"]);
-		checkLines(assert, true, charWidth * 8.5, ["abcd ab-", "cd aaa-", "bbb"]);
+		checkLines(assert, false, charWidth * 8.5, [
+			"abcd ",
+			"abcd ",
+			"aaabbb"
+		]);
+		checkLines(assert, true, charWidth * 8.5, [
+			"abcd ab-",
+			"cd aaa-",
+			"bbb"
+		]);
 		// Дефис переноса не убирается
-		checkLines(assert, true, charWidth * 7.5, ["abcd ", "abcd ", "aaabbb"]);
+		checkLines(assert, true, charWidth * 7.5, [
+			"abcd ",
+			"abcd ",
+			"aaabbb"
+		]);
+		
+		// Перенос на первой букве
+		setText("abbb");
+		checkLines(assert, false, charWidth * 3.5, [
+			"abb",
+			"b",
+		]);
+		checkLines(assert, true, charWidth * 3.5, [
+			"a-",
+			"bbb",
+		]);
 		
 		setText("aabbbcccdddd");
-		checkLines(assert, false, charWidth * 3.5, ["aab", "bbc", "ccd", "ddd"]);
-		checkLines(assert, true, charWidth * 3.5, ["aa-", "bbb", "ccc", "ddd", "d"]);
+		checkLines(assert, false, charWidth * 3.5, [
+			"aab",
+			"bbc",
+			"ccd",
+			"ddd"
+		]);
+		checkLines(assert, true, charWidth * 3.5, [
+			"aa-",
+			"bbb",
+			"ccc",
+			"ddd",
+			"d"
+		]);
 	});
 	
-	/*
 	QUnit.test("Test: \"Test edge cases\"", function (assert)
 	{
 		setText("aaaa zz½www bbbb");
-		checkLines(assert, false, charWidth * 7.5, ["aaaa ", "zz½www ", "bbbb"]);
-		checkLines(assert, true, charWidth * 7.5, ["aaaa ", "zz½www ", "bbbb"]);
-		checkLines(assert, true, charWidth * 8.5, ["aaaa zz", "½www bbbb"]);
+		checkLines(assert, false, charWidth * 7.5, [
+			"aaaa ",
+			"zz½www ",
+			"bbbb"
+		]);
+		checkLines(assert, true, charWidth * 7.5, [
+			"aaaa ",
+			"zz½www ",
+			"bbbb"
+		]);
+		checkLines(assert, true, charWidth * 8.5, [
+			"aaaa zz-",
+			"½www bbbb"
+		]);
 
 		// Перенос идет после второго символа z, а следующий за ним символ меньше по ширине, чем
 		// размер дефиса, который мы рисуем во время переноса
 		setText("zz½www");
-		checkLines(assert, false, charWidth * 2.75, ["zz½", "ww", "w"]);
-		checkAutoHyphenAfter(assert, 1, false);
-		checkLines(assert, true, charWidth * 3.25, ["zz", "½ww", "w"]);
-		checkAutoHyphenAfter(assert, 1, true);
-		checkLines(assert, true, charWidth * 2.75, ["zz½", "ww", "w"]);
-		checkAutoHyphenAfter(assert, 1, false);
-		checkLines(assert, true, charWidth * 2.25, ["zz", "½w", "ww"]);
-		checkAutoHyphenAfter(assert, 1, false);
+		checkLines(assert, false, charWidth * 2.75, [
+			"zz½",
+			"ww",
+			"w"
+		]);
+		checkLines(assert, true, charWidth * 3.25, [
+			"zz-",
+			"½ww",
+			"w"
+		]);
+		checkLines(assert, true, charWidth * 2.75, [
+			"zz½",
+			"ww",
+			"w"
+		]);
+		checkLines(assert, true, charWidth * 2.25, [
+			"zz",
+			"½w",
+			"ww"
+		]);
 		
 		// TODO: Разобрать случай, когда перенос слова происходит в двух (или более местах) и следующее место переноса
 		//       надо начинать считать с последнего места переноса, а не с начала слова
@@ -182,20 +238,24 @@ $(function ()
 	{
 		setText("abcde AAABBB aaabbb");
 		
-		checkLines(assert, false, charWidth * 11.5, ["abcde ", "AAABBB ", "aaabbb"]);
-		checkAutoHyphenAfter(assert, 8, false);
-		checkAutoHyphenAfter(assert, 15, false);
+		checkLines(assert, false, charWidth * 11.5, [
+			"abcde ",
+			"AAABBB ",
+			"aaabbb"
+		]);
 		
 		setHyphenateCaps(true);
-		checkLines(assert, true, charWidth * 11.5, ["abcde AAA", "BBB aaabbb"]);
-		checkAutoHyphenAfter(assert, 8, true);
-		checkAutoHyphenAfter(assert, 15, false);
+		checkLines(assert, true, charWidth * 11.5, [
+			"abcde AAA-",
+			"BBB aaabbb"
+		]);
 		
 		setHyphenateCaps(false);
-		checkLines(assert, true, charWidth * 11.5, ["abcde ", "AAABBB aaa", "bbb"]);
-		checkAutoHyphenAfter(assert, 8, false);
-		checkAutoHyphenAfter(assert, 15, true);
-		
+		checkLines(assert, true, charWidth * 11.5, [
+			"abcde ",
+			"AAABBB aaa-",
+			"bbb"]
+		);
 	});
 	
 	QUnit.test("Test: \"Test ConsecutiveHyphenLimit parameter for different words\"", function (assert)
@@ -287,27 +347,30 @@ $(function ()
 		// checkAutoHyphenAfter(assert, 35, true);
 		// checkAutoHyphenAfter(assert, 42, true);
 		
-		setText("abcd aabbb ABBBB abbb AABBB abbbb aaabbbb abcd");
-		
-		checkLines(assert, false, charWidth * 8.5, [
-			"abcd ",
-			"aabbb ",
-			"ABBBB ",
-			"abbb ",
-			"AABBB ",
-			"abbbb ",
-			"aaabbbb ",
-			"abcd"]
-		);
-		checkAutoHyphenAfter(assert, 7, false);
-		checkAutoHyphenAfter(assert, 14, false);
-		checkAutoHyphenAfter(assert, 21, false);
-		checkAutoHyphenAfter(assert, 28, false);
-		checkAutoHyphenAfter(assert, 35, false);
-		checkAutoHyphenAfter(assert, 42, false);
+		// setText("abcd aabbb ABBBB abbb AABBB abbbb aaabbbb abcd");
+		//
+		// checkLines(assert, false, charWidth * 8.5, [
+		// 	"abcd ",
+		// 	"aabbb ",
+		// 	"ABBBB ",
+		// 	"abbb ",
+		// 	"AABBB ",
+		// 	"abbbb ",
+		// 	"aaabbbb ",
+		// 	"abcd"]
+		// );
+		//
+		// checkLines(assert, true, charWidth * 8.5, [
+		// 	"abcd aa-",
+		// 	"bbb A-",
+		// 	"BBBB a-",
+		// 	"bbb AA-",
+		// 	"BBB a-",
+		// 	"bbbb aaa-",
+		// 	"bbbb ",
+		// 	"abcd"]
+		// );
 	});
-	
-	 */
 	
 	/*
 	QUnit.test("Test: \"Test ConsecutiveHyphenLimit parameter for single word\"", function (assert)
@@ -317,46 +380,33 @@ $(function ()
 		checkLines(assert, false, charWidth * 4.5, [
 			"aabb",
 			"bccc",
-			"dddd"]
-		);
-		checkAutoHyphenAfter(assert, 1, false);
-		checkAutoHyphenAfter(assert, 4, false);
-		checkAutoHyphenAfter(assert, 7, false);
+			"dddd"
+		]);
 		
 		checkLines(assert, true, charWidth * 4.5, [
-			"aa",
-			"bbb",
-			"ccc",
-			"dddd"]
-		);
-		checkAutoHyphenAfter(assert, 1, true);
-		checkAutoHyphenAfter(assert, 4, true);
-		checkAutoHyphenAfter(assert, 7, true);
+			"aa-",
+			"bbb-",
+			"ccc-",
+			"dddd"
+		]);
 		
 		// В этом примере важно, что ccdddd тоже переносится по второму символу
 		setHyphenLimit(1);
 		checkLines(assert, true, charWidth * 4.5, [
-			"aa",
+			"aa-",
 			"bbbc",
-			"cc",
-			"dddd"]
-		);
-		checkAutoHyphenAfter(assert, 1, true);
-		checkAutoHyphenAfter(assert, 4, false);
-		checkAutoHyphenAfter(assert, 7, true);
+			"cc-",
+			"dddd"
+		]);
 		
 		setHyphenLimit(2);
 		checkLines(assert, true, charWidth * 4.5, [
-			"aa",
-			"bbb",
+			"aa-",
+			"bbb-",
 			"cccd",
-			"ddd"]
-		);
-		checkAutoHyphenAfter(assert, 1, true);
-		checkAutoHyphenAfter(assert, 4, true);
-		checkAutoHyphenAfter(assert, 7, false);
+			"ddd"
+		]);
 		
 	});
 	*/
-	
 });

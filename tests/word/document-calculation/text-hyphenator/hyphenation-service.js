@@ -47,10 +47,14 @@
 		
 		if ("abcd" === checkString)
 			return [1];
+		else if ("abbb" === checkString)
+			return [0];
 		else if ("aaabbb" === checkString)
 			return [2];
 		else if ("aabbb" === checkString)
 			return [1];
+		else if ("abbb" === checkString)
+			return [0];
 		else if ("abbbb" === checkString)
 			return [0];
 		else if ("aaabbb" === checkString)
