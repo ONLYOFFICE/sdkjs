@@ -83,7 +83,7 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 	this.DrawingDocument = DrawingDocument;
 	this.Parent          = Parent;
 
-	this.LogicDocument = DrawingDocument ? DrawingDocument.m_oLogicDocument : null;
+	this.LogicDocument = Asc.editor && Asc.editor.WordControl && Asc.editor.WordControl.m_oLogicDocument || null;
 
 	// Расстояние до окружающего текста
 	this.Distance = {
@@ -1597,15 +1597,15 @@ ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 		if (!(bIsHfdFtr && oDocContent && oDocContent.Get_StartPage_Absolute() !== pageIndex))
 		{
 			// TODO: ситуацию в колонтитуле с привязкой к полю нужно отдельно обрабатывать через дополнительные пересчеты
-			if (!oDocContent || !bIsHfdFtr || this.GetPositionV().RelativeFrom !== Asc.c_oAscRelativeFromV.Margin)
+			if (!(bIsHfdFtr && this.GetPositionV().RelativeFrom !== Asc.c_oAscRelativeFromV.Margin))
 			{
 				this.graphicObjects.addObjectOnPage(pageIndex, this.GraphicObj);
-				this.bNoNeedToAdd = false;
 			}
-			else
-			{
-				this.bNoNeedToAdd = true;
-			}
+			this.bNoNeedToAdd = false;
+		}
+		else
+		{
+			this.bNoNeedToAdd = true;
 		}
 	}
 

@@ -941,18 +941,12 @@
         ws.changeWorksheet("update", val);
       }
     });
-    this.model.handlers.add("changeDocument", function(prop, arg1, arg2) {
-		self.SearchEngine && self.SearchEngine.changeDocument(prop, arg1, arg2);
-
-		if (prop === AscCommonExcel.docChangedType.cellValue) {
-			let wsId = arg1 && arg1.ws && arg1.ws.getId();
-			let ws = wsId && self.getWorksheetById(wsId);
-			if (arg1 && ws) {
-				ws.traceDependentsManager.clearCellTraces(arg1.nRow, arg1.nCol);
-			}
-		} else if (prop === AscCommonExcel.docChangedType.rangeValues) {
-
-		}
+    this.model.handlers.add("changeDocument", function(prop, arg1, arg2, wsId) {
+      self.SearchEngine && self.SearchEngine.changeDocument(prop, arg1, arg2);
+      let ws = wsId && self.getWorksheetById(wsId);
+      if (ws) {
+        ws.traceDependentsManager.changeDocument(prop, arg1, arg2);
+      }
     });
     this.model.handlers.add("showWorksheet", function(wsId) {
       var wsModel = self.model.getWorksheetById(wsId), index;
@@ -3454,6 +3448,7 @@
         {
           t.handlers.trigger("asc_onRefreshDefNameList");
         }
+        ws.traceDependentsManager && ws.traceDependentsManager.clearAll(true);
       } else {
         t.handlers.trigger("asc_onError", c_oAscError.ID.LockCreateDefName, c_oAscError.Level.NoCritical);
       }
@@ -3508,6 +3503,7 @@
         if (res) {
           t.model.delDefinesNames(oldName);
           t.handlers.trigger("asc_onRefreshDefNameList");
+          ws.traceDependentsManager && ws.traceDependentsManager.clearAll(true);
         } else {
           t.handlers.trigger("asc_onError", c_oAscError.ID.LockCreateDefName, c_oAscError.Level.NoCritical);
         }

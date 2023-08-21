@@ -2502,7 +2502,11 @@ function (window, undefined) {
 			} else if (from && to) { //изменение
 				//TODO нужно сохранить ссылки на текущий лист
 				externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
+
 				if (externalReferenceIndex !== null) {
+					from.worksheets = wb.externalReferences[externalReferenceIndex - 1].worksheets;
+					from.initWorksheetsFromSheetDataSet();
+					from.putToChangedCells();
 					wb.externalReferences[externalReferenceIndex - 1] = from;
 				}
 			}
