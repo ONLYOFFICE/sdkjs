@@ -456,7 +456,7 @@
 	{
 		return !!(this.Flags & FLAGS_SPACEAFTER);
 	};
-	CRunText.prototype.IsHyphenAfter = function()
+	CRunText.prototype.isHyphenAfter = function()
 	{
 		return !!(this.Flags & FLAGS_HYPHEN_AFTER);
 	};

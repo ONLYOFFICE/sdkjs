@@ -208,7 +208,7 @@
 	 * Нужно ли ставить дефис для автоматического переноса
 	 * @returns {boolean}
 	 */
-	CRunElementBase.prototype.IsHyphenAfter = function()
+	CRunElementBase.prototype.isHyphenAfter = function()
 	{
 		return false;
 	};

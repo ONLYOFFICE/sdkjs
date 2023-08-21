@@ -3964,7 +3964,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 								}
 							}
 						}
-
+						
 						if (true !== NewRange)
 						{
 							// Если с данного элемента не может начинаться строка, тогда считает все пробелы идущие
@@ -3986,7 +3986,8 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 							}
 
 							// Если текущий символ с переносом, например, дефис, тогда на нем заканчивается слово
-							if (Item.IsSpaceAfter())
+							if (Item.IsSpaceAfter()
+								|| (PRS.canPlaceAutoHyphenAfter(Item) && X + SpaceLen + LetterLen + PRS.getAutoHyphenWidth(Item, this) <= XEnd))
 							{
 								// Добавляем длину пробелов до слова и ширину самого слова.
 								X += SpaceLen + LetterLen;
@@ -4008,10 +4009,10 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     else
                     {
 						
-						let AutoHyphenWidth = PRS.GetAutoHyphenWidth(Item, this);
+						let autoHyphenWidth = PRS.getAutoHyphenWidth(Item, this);
 						
-						let fitOnLine = (X + SpaceLen + WordLen + GraphemeLen + AutoHyphenWidth <= XEnd
-							|| PRS.TryCondenseSpaces(SpaceLen + WordLen + GraphemeLen + AutoHyphenWidth, WordLen + GraphemeLen + AutoHyphenWidth, X, XEnd));
+						let fitOnLine = (X + SpaceLen + WordLen + GraphemeLen + autoHyphenWidth <= XEnd
+							|| PRS.TryCondenseSpaces(SpaceLen + WordLen + GraphemeLen + autoHyphenWidth, WordLen + GraphemeLen + autoHyphenWidth, X, XEnd));
 						
 						if (!fitOnLine && !FirstItemOnLine)
 						{
@@ -4024,7 +4025,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                             // Мы убираемся в пределах данной строки. Прибавляем ширину буквы к ширине слова
                             WordLen += LetterLen;
 
-							if (Item.IsSpaceAfter() || (PRS.isAutoHyphenation() && Item.IsHyphenAfter() && fitOnLine))
+							if (Item.IsSpaceAfter() || (PRS.canPlaceAutoHyphenAfter(Item) && fitOnLine))
                             {
                                 // Добавляем длину пробелов до слова и ширину самого слова.
                                 X += SpaceLen + WordLen;

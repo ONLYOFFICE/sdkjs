@@ -1262,6 +1262,9 @@ Paragraph.prototype.private_RecalculateLineInfo        = function(CurLine, CurPa
 
 	if (PRS.LongWord)
 		this.Lines[CurLine].Info |= paralineinfo_LongWord;
+	
+	if (PRS.LastHyphenItem)
+		this.Lines[CurLine].Info |= paralineinfo_AutoHyphen;
 };
 
 Paragraph.prototype.private_RecalculateLineMetrics     = function(CurLine, CurPage, PRS, ParaPr)
@@ -2730,6 +2733,7 @@ var paralineinfo_Notes         = 0x0040; // В строке есть сноск�
 var paralineinfo_TextOnLine    = 0x0080; // Есть ли в строке текст
 var paralineinfo_BreakLine     = 0x0100; // Строка закончилась переносом строки
 var paralineinfo_LongWord      = 0x0200; // В строке длинное слово, которое не убралось
+let paralineinfo_AutoHyphen    = 0x0400; // Строка закончилась автопереносом
 
 function CParaLine()
 {
@@ -3233,9 +3237,10 @@ function CParagraphRecalculateStateWrap(Para)
 	// если у нас не убирается слово, то разрыв ставим перед ним)
 	this.LineBreakPos   = new AscWord.CParagraphContentPos();
 
-	this.LastItem       = null; // Последний непробельный элемент
-	this.LastItemRun    = null; // Run, в котором лежит последний элемент LastItem
-	this.LastHyphenItem = null;
+	this.LastItem        = null; // Последний непробельный элемент
+	this.LastItemRun     = null; // Run, в котором лежит последний элемент LastItem
+	this.LastHyphenItem  = null;
+	this.autoHyphenLimit = 0;
 
     this.RunRecalcInfoLast  = null; // RecalcInfo последнего рана
     this.RunRecalcInfoBreak = null; // RecalcInfo рана, на котором произошел разрыв отрезка/строки
@@ -3299,7 +3304,19 @@ CParagraphRecalculateStateWrap.prototype =
 
 		this.CondensedSpaces = Paragraph.IsCondensedSpaces();
 		this.BalanceSBDB     = Paragraph.IsBalanceSingleByteDoubleByteWidth();
-		this.autoHyphenation = Paragraph.isAutoHyphenation();
+	
+		let logicDocument = Paragraph.GetLogicDocument();
+		if (logicDocument && logicDocument.IsDocumentEditor())
+		{
+			let settings = logicDocument.GetDocumentSettings();
+			this.autoHyphenation = settings.isAutoHyphenation();
+			this.autoHyphenLimit = settings.getConsecutiveHyphenLimit();
+		}
+		else
+		{
+			this.autoHyphenation = false;
+			this.autoHyphenLimit = 0;
+		}
 
 		this.Page               = CurPage;
 		this.RunRecalcInfoLast  = (0 === CurPage ? null : Paragraph.Pages[CurPage - 1].EndInfo.RunRecalcInfo);
@@ -3418,18 +3435,21 @@ CParagraphRecalculateStateWrap.prototype =
 	
 	CheckLastAutoHyphen : function(X, XEnd)
 	{
-		if (!this.autoHyphenation)
+		if (!this.isAutoHyphenation())
 			return;
 		
 		this.ResetLastAutoHyphen();
 		let item = this.LastItem;
 		let run  = this.LastItemRun;
 		
-		if (!item || !item.IsText() || !item.IsHyphenAfter())
+		if (!item || !item.IsText() || !item.isHyphenAfter())
 			return;
 		
-		let hyphenWidth = this.GetAutoHyphenWidth(item, run);
+		let hyphenWidth = this.getAutoHyphenWidth(item, run);
 		if (X + hyphenWidth > XEnd)
+			return;
+		
+		if (this.isExceedConsecutiveAutoHyphenLimit())
 			return;
 		
 		this.LastHyphenItem = item;
@@ -4050,6 +4070,10 @@ CParagraphRecalculateStateWrap.prototype.isAutoHyphenation = function()
 {
 	return this.autoHyphenation;
 };
+CParagraphRecalculateStateWrap.prototype.getAutoHyphenLimit = function()
+{
+	return this.autoHyphenLimit;
+};
 CParagraphRecalculateStateWrap.prototype.OnEndRecalculateLineRanges = function()
 {
 	this.ResetLastAutoHyphen();
@@ -4058,9 +4082,9 @@ CParagraphRecalculateStateWrap.prototype.OnEndRecalculateLineRanges = function()
  * Получам ширину дефиса, если на данном элементе можно разбить слово
  * @returns {number}
  */
-CParagraphRecalculateStateWrap.prototype.GetAutoHyphenWidth = function(item, run)
+CParagraphRecalculateStateWrap.prototype.getAutoHyphenWidth = function(item, run)
 {
-	if (!this.autoHyphenation || !item || !item.IsText() || !item.IsHyphenAfter())
+	if (!this.isAutoHyphenation() || !item || !item.IsText() || !item.isHyphenAfter())
 		return 0;
 	
 	let textPr = run.Get_CompiledPr(false);
@@ -4078,6 +4102,29 @@ CParagraphRecalculateStateWrap.prototype.isForceLineBreak = function()
 		|| this.ForceNewLine
 		|| this.LastHyphenItem);
 };
+CParagraphRecalculateStateWrap.prototype.isExceedConsecutiveAutoHyphenLimit = function()
+{
+	let limit = this.getAutoHyphenLimit();
+	if (!limit)
+		return false;
+	
+	let lines   = this.Paragraph.Lines;
+	let curLine = this.Line - 1;
+	
+	while (curLine >= 0 && lines[curLine].Info & paralineinfo_AutoHyphen)
+		--curLine;
+	
+	++curLine;
+	
+	return this.Line - curLine >= limit;
+};
+CParagraphRecalculateStateWrap.prototype.canPlaceAutoHyphenAfter = function(runItem)
+{
+	return (this.isAutoHyphenation()
+		&& !this.isExceedConsecutiveAutoHyphenLimit()
+		&& runItem.isHyphenAfter());
+};
+AscWord.ParagraphRecalculationWrapState = CParagraphRecalculateStateWrap;
 
 
 function CParagraphRecalculateStateCounter()
