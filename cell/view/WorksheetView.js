@@ -4979,8 +4979,21 @@
 	};
 
 	WorksheetView.prototype.drawTraceArrows = function (visibleRange, offsetX, offsetY) {
-		// ? in order to avoid frozen pane, get visible range from WS
-		visibleRange = this.getVisibleRange();
+		let frozenPaneRange, frozenRow, frozenRowCoords, frozenCol, frozenColCoords;
+		if (this.topLeftFrozenCell) {
+			// if the sheet has frozen panes, create and redefine some variables for the x and y arrows
+			// also get the real visible range instead of the frozen pane range that comes in the first argument
+			frozenPaneRange = visibleRange;
+			frozenCol = this.topLeftFrozenCell.getCol0();
+			frozenRow = this.topLeftFrozenCell.getRow0();
+			offsetX = this._getColLeft(this.visibleRange.c1) - this.cellsLeft;
+			offsetX -= this._getColLeft(frozenCol) - this._getColLeft(0);
+			offsetY = this._getRowTop(this.visibleRange.r1) - this.cellsTop;
+			offsetY -= this._getRowTop(frozenRow) - this._getRowTop(0);
+			frozenColCoords = this._getColLeft(frozenCol - 1) + this._getColumnWidth(frozenCol - 1);
+			frozenRowCoords = this._getRowTop(frozenRow - 1) + this._getRowHeight(frozenRow - 1);
+			visibleRange = this.getVisibleRange();
+		}
 		let traceManager = this.traceDependentsManager;
 		let ctx = this.overlayCtx;
 		let widthLine = 2, 
@@ -5073,12 +5086,47 @@
 					drawDot(x1, y1, externalLineColor);
 					drawMiniTable(x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop);
 				} else {
-					// ctx.lineDiag(x1, y1, newX2, newY2);
-					ctx.moveTo(x1, y1);
-					ctx.lineTo(newX2, newY2);
-					ctx.closePath().stroke(); 	// draw regular line
-					drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
-					drawDot(x1, y1, lineColor);
+					if (frozenPane && (frozenColCoords >= x1 || frozenColCoords >= newX2)) {
+						// frozen col
+						if (frozenColCoords >= x1) {
+							// change the angle and remove the drawing of the dot
+							ctx.moveTo(frozenColCoords, y1);
+							ctx.lineTo(newX2, newY2);
+							ctx.closePath().stroke();
+							angle = Math.atan2(newY2 - y1, newX2 - frozenColCoords);
+							drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
+						} else if (frozenColCoords >= newX2) {
+							// remove the drawing of arrow
+							ctx.moveTo(x1, y1);
+							ctx.lineTo(frozenColCoords, newY2);
+							ctx.closePath().stroke();
+							drawDot(x1, y1, lineColor);
+						}
+					} else if (frozenPane && (frozenRowCoords >= y1 || frozenRowCoords >= newY2)) {
+						// frozen row
+						if (frozenRowCoords >= y1) {
+							// change the angle and remove the drawing of the dot
+							ctx.moveTo(x1, frozenRowCoords);
+							ctx.lineTo(newX2, newY2);
+							ctx.closePath().stroke();
+							angle = Math.atan2(newY2 - frozenRowCoords, newX2 - x1);
+							drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
+						} else if (frozenRowCoords >= newY2) {
+							// remove the drawing of arrow
+							ctx.moveTo(x1, y1);
+							ctx.lineTo(newX2, frozenRowCoords);
+							ctx.closePath().stroke();
+							drawDot(x1, y1, lineColor);
+						}
+					} else {
+						// normal draw without frozen panes
+						// ctx.lineDiag(x1, y1, newX2, newY2);
+						ctx.moveTo(x1, y1);
+						ctx.lineTo(newX2, newY2);
+						ctx.closePath().stroke(); 	// draw regular line
+						drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
+						drawDot(x1, y1, lineColor);
+					}
 				}
 			}
 		};
