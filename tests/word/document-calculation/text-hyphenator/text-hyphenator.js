@@ -260,153 +260,101 @@ $(function ()
 	
 	QUnit.test("Test: \"Test ConsecutiveHyphenLimit parameter for different words\"", function (assert)
 	{
-		setText("abcd AAABBBB aaabbbb aaabbbb AAABBBB aaabbbb aaabbbb abcd");
-		setText("abcd AAABBB aaabbb aaabbb AAABBB aaabbb aaabbb abcd");
+		setText("abcd aabbb ABBBB abbb AABBB abbbb aabbbb abcd");
 		
-		checkLines(assert, false, charWidth * 9.5, [
+		checkLines(assert, false, charWidth * 8.5, [
 			"abcd ",
-			"AAABBB ",
-			"aaabbb ",
-			"aaabbb ",
-			"AAABBB ",
-			"aaabbb ",
-			"aaabbb ",
-			"abcd"]
-		);
-		checkAutoHyphenAfter(assert, 7, false);
-		checkAutoHyphenAfter(assert, 14, false);
-		checkAutoHyphenAfter(assert, 21, false);
-		checkAutoHyphenAfter(assert, 28, false);
-		checkAutoHyphenAfter(assert, 35, false);
-		checkAutoHyphenAfter(assert, 42, false);
-		
-		// checkLines(assert, true, charWidth * 9.5, [
-		// 	"abcd AAA",
-		// 	"BBB aaa",
-		// 	"bbb aaa",
-		// 	"bbb AAA",
-		// 	"BBB aaa",
-		// 	"bbb aaa",
-		// 	"bbb abcd"]
-		// );
-		// checkAutoHyphenAfter(assert, 7, true);
-		// checkAutoHyphenAfter(assert, 14, true);
-		// checkAutoHyphenAfter(assert, 21, true);
-		// checkAutoHyphenAfter(assert, 28, true);
-		// checkAutoHyphenAfter(assert, 35, true);
-		// checkAutoHyphenAfter(assert, 42, true);
-		//
-		// setHyphenLimit(1);
-		// checkLines(assert, true, charWidth * 10.5, [
-		// 	"abcd AAA",
-		// 	"BBBB ",
-		// 	"aaabbb aaa",
-		// 	"bbb ",
-		// 	"AAABBB aaa",
-		// 	"bbb ",
-		// 	"aaabbb abcd"]
-		// );
-		// checkAutoHyphenAfter(assert, 7, true);
-		// checkAutoHyphenAfter(assert, 14, false);
-		// checkAutoHyphenAfter(assert, 21, true);
-		// checkAutoHyphenAfter(assert, 28, false);
-		// checkAutoHyphenAfter(assert, 35, true);
-		// checkAutoHyphenAfter(assert, 42, false);
-		//
-		// setHyphenLimit(2);
-		// checkLines(assert, true, charWidth * 10.5, [
-		// 	"abcd AAA",
-		// 	"BBB aaa",
-		// 	"bbb ",
-		// 	"aaabbb ",
-		// 	"AAABBB aaa",
-		// 	"bbb aaa",
-		// 	"bbb abcd"]
-		// );
-		// checkAutoHyphenAfter(assert, 7, true);
-		// checkAutoHyphenAfter(assert, 14, false);
-		// checkAutoHyphenAfter(assert, 21, true);
-		// checkAutoHyphenAfter(assert, 28, false);
-		// checkAutoHyphenAfter(assert, 35, true);
-		// checkAutoHyphenAfter(assert, 42, false);
-		//
-		// setHyphenLimit(3);
-		// checkLines(assert, true, charWidth * 10.5, [
-		// 	"abcd AAA",
-		// 	"BBB aaa",
-		// 	"bbb aaa",
-		// 	"bbb ",
-		// 	"AAABBB aaa",
-		// 	"bbb aaa",
-		// 	"bbb abcd"]
-		// );
-		// checkAutoHyphenAfter(assert, 7, true);
-		// checkAutoHyphenAfter(assert, 14, true);
-		// checkAutoHyphenAfter(assert, 21, true);
-		// checkAutoHyphenAfter(assert, 28, false);
-		// checkAutoHyphenAfter(assert, 35, true);
-		// checkAutoHyphenAfter(assert, 42, true);
-		
-		// setText("abcd aabbb ABBBB abbb AABBB abbbb aaabbbb abcd");
-		//
-		// checkLines(assert, false, charWidth * 8.5, [
-		// 	"abcd ",
-		// 	"aabbb ",
-		// 	"ABBBB ",
-		// 	"abbb ",
-		// 	"AABBB ",
-		// 	"abbbb ",
-		// 	"aaabbbb ",
-		// 	"abcd"]
-		// );
-		//
-		// checkLines(assert, true, charWidth * 8.5, [
-		// 	"abcd aa-",
-		// 	"bbb A-",
-		// 	"BBBB a-",
-		// 	"bbb AA-",
-		// 	"BBB a-",
-		// 	"bbbb aaa-",
-		// 	"bbbb ",
-		// 	"abcd"]
-		// );
-	});
-	
-	/*
-	QUnit.test("Test: \"Test ConsecutiveHyphenLimit parameter for single word\"", function (assert)
-	{
-		setText("aabbbcccdddd");
-		
-		checkLines(assert, false, charWidth * 4.5, [
-			"aabb",
-			"bccc",
-			"dddd"
+			"aabbb ",
+			"ABBBB ",
+			"abbb ",
+			"AABBB ",
+			"abbbb ",
+			"aabbbb ",
+			"abcd"
 		]);
 		
-		checkLines(assert, true, charWidth * 4.5, [
-			"aa-",
-			"bbb-",
-			"ccc-",
-			"dddd"
+		checkLines(assert, true, charWidth * 8.5, [
+			"abcd aa-",
+			"bbb A-",
+			"BBBB a-",
+			"bbb AA-",
+			"BBB a-",
+			"bbbb aa-",
+			"bbbb ab-",
+			"cd"
 		]);
 		
-		// В этом примере важно, что ccdddd тоже переносится по второму символу
 		setHyphenLimit(1);
-		checkLines(assert, true, charWidth * 4.5, [
-			"aa-",
-			"bbbc",
-			"cc-",
-			"dddd"
+		checkLines(assert, true, charWidth * 8.5, [
+			"abcd aa-",
+			"bbb ",
+			"ABBBB a-",
+			"bbb ",
+			"AABBB a-",
+			"bbbb ",
+			"aabbbb ",
+			"abcd"
 		]);
 		
 		setHyphenLimit(2);
-		checkLines(assert, true, charWidth * 4.5, [
-			"aa-",
-			"bbb-",
-			"cccd",
-			"ddd"
-		]);
+		checkLines(assert, true, charWidth * 8.5, [
+			"abcd aa-",
+			"bbb A-",
+			"BBBB ",
+			"abbb AA-",
+			"BBB a-",
+			"bbbb ",
+			"aabbbb ",
+			"abcd"
+		])
 		
+		setHyphenLimit(3);
+		checkLines(assert, true, charWidth * 8.5, [
+			"abcd aa-",
+			"bbb A-",
+			"BBBB a-",
+			"bbb ",
+			"AABBB a-",
+			"bbbb aa-",
+			"bbbb ab-",
+			"cd"
+		]);
 	});
-	*/
+	
+	// QUnit.test("Test: \"Test ConsecutiveHyphenLimit parameter for single word\"", function (assert)
+	// {
+	// 	setText("aabbbcccdddd");
+	//
+	// 	checkLines(assert, false, charWidth * 4.5, [
+	// 		"aabb",
+	// 		"bccc",
+	// 		"dddd"
+	// 	]);
+	//
+	// 	checkLines(assert, true, charWidth * 4.5, [
+	// 		"aa-",
+	// 		"bbb-",
+	// 		"ccc-",
+	// 		"dddd"
+	// 	]);
+	//
+	// 	// В этом примере важно, что ccdddd тоже переносится по второму символу
+	// 	setHyphenLimit(1);
+	// 	checkLines(assert, true, charWidth * 4.5, [
+	// 		"aa-",
+	// 		"bbbc",
+	// 		"cc-",
+	// 		"dddd"
+	// 	]);
+	//
+	// 	setHyphenLimit(2);
+	// 	checkLines(assert, true, charWidth * 4.5, [
+	// 		"aa-",
+	// 		"bbb-",
+	// 		"cccd",
+	// 		"ddd"
+	// 	]);
+	//
+	// });
+	
 });
