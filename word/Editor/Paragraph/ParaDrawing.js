@@ -82,8 +82,11 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 	this.DocumentContent = DocumentContent;
 	this.DrawingDocument = DrawingDocument;
 	this.Parent          = Parent;
-
-	this.LogicDocument = Asc.editor && Asc.editor.WordControl && Asc.editor.WordControl.m_oLogicDocument || null;
+	this.LogicDocument = DrawingDocument ? DrawingDocument.m_oLogicDocument : null;
+	if(!this.LogicDocument)
+	{
+		this.LogicDocument = Asc.editor && Asc.editor.WordControl && Asc.editor.WordControl.m_oLogicDocument || null;
+	}
 
 	// Расстояние до окружающего текста
 	this.Distance = {
