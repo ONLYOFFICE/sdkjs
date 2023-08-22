@@ -3245,7 +3245,7 @@ function (window, undefined) {
 				pivot.replaceSlicersPivotCacheDefinition(oldPivot.cacheDefinition, pivot.cacheDefinition);
 			}
 			ws.deletePivotTable(Data.pivot);
-			ws.insertPivotTable(pivot, false, true);
+			ws.insertPivotTable(pivot, false, false);
 		} else if (AscCH.historyitem_Worksheet_PivotReplaceKeepRecords === Type) {
 			var data = bUndo ? Data.from : Data.to;
 			var pivot = data.getData();
