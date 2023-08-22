@@ -44,27 +44,29 @@ var AscHyphenation = AscHyphenation || {};
 	};
 	AscHyphenation.hyphenate = function()
 	{
-		if ("reenter" === BUFFER_STRING)
+		let checkString = BUFFER_STRING.toLowerCase();
+		
+		if ("reenter" === checkString)
 			return [1];
-		else if ("coauthor" === BUFFER_STRING)
+		else if ("coauthor" === checkString)
 			return [1];
-		else if ("привет" === BUFFER_STRING)
+		else if ("привет" === checkString)
 			return [2];
-		else if ("участвовавшими" === BUFFER_STRING)
+		else if ("участвовавшими" === checkString)
 			return [3, 6, 9, 11];
-		else if ("припри" === BUFFER_STRING)
+		else if ("припри" === checkString)
 			return [2];
-		else if ("приприпри" === BUFFER_STRING)
+		else if ("приприпри" === checkString)
 			return [2, 5];
-		else if ("приприприпри" === BUFFER_STRING)
+		else if ("приприприпри" === checkString)
 			return [2, 5, 8];
-		else if ("приприприприпри" === BUFFER_STRING)
+		else if ("приприприприпри" === checkString)
 			return [2, 5, 8, 11];
-		else if ("приприприприприпри" === BUFFER_STRING)
+		else if ("приприприприприпри" === checkString)
 			return [2, 5, 8, 11, 14];
-		else if ("приприприприприприпри" === BUFFER_STRING)
+		else if ("приприприприприприпри" === checkString)
 			return [2, 5, 8, 11, 14, 17];
-		else if ("приприприприприприприпри" === BUFFER_STRING)
+		else if ("приприприприприприприпри" === checkString)
 			return [2, 5, 8, 11, 14, 17, 20];
 		
 		return [];

@@ -16132,6 +16132,10 @@ CDocument.prototype.GetDocumentSettings = function()
 {
 	return this.Settings;
 };
+CDocument.prototype.getDocumentSettings = function()
+{
+	return this.Settings;
+};
 CDocument.prototype.GetCompatibilityMode = function()
 {
 	return this.Settings.CompatibilityMode;
@@ -16284,6 +16288,34 @@ CDocument.prototype.setAutoHyphenation = function(isAuto)
 
 	this.StartAction(AscDFH.historydescription_Document_SetAutoHyphenation);
 	this.Settings.setAutoHyphenation(isAuto);
+	this.Recalculate();
+	this.UpdateInterface();
+	this.FinalizeAction();
+};
+CDocument.prototype.setConsecutiveHyphenLimit = function(limit)
+{
+	if (this.Settings.getConsecutiveHyphenLimit() === limit)
+		return;
+	
+	if (this.IsSelectionLocked(AscCommon.changestype_Document_SectPr))
+		return
+	
+	this.StartAction(AscDFH.historydescription_Document_SetConsecutiveHyphenLimit);
+	this.Settings.setConsecutiveHyphenLimit(limit);
+	this.Recalculate();
+	this.UpdateInterface();
+	this.FinalizeAction();
+};
+CDocument.prototype.setHyphenateCaps = function(hyphenate)
+{
+	if (this.Settings.isHyphenateCaps() === hyphenate)
+		return;
+	
+	if (this.IsSelectionLocked(AscCommon.changestype_Document_SectPr))
+		return
+	
+	this.StartAction(AscDFH.historydescription_Document_SetHyphenateCaps);
+	this.Settings.setHyphenateCaps(hyphenate);
 	this.Recalculate();
 	this.UpdateInterface();
 	this.FinalizeAction();

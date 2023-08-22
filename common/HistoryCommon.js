@@ -4417,6 +4417,8 @@
 	window['AscDFH'].historydescription_Document_MergeDocuments                     = 0x01a4;
 	window['AscDFH'].historydescription_Document_FillContentControlPlaceholderOnBlur= 0x01a5;
 	window['AscDFH'].historydescription_Document_SetAutoHyphenation                 = 0x01a6;
+	window['AscDFH'].historydescription_Document_SetConsecutiveHyphenLimit          = 0x01a7;
+	window['AscDFH'].historydescription_Document_SetHyphenateCaps                   = 0x01a8;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

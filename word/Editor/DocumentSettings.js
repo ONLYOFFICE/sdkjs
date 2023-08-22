@@ -84,11 +84,11 @@
 	};
 	DocumentSettings.prototype.isHyphenateCaps = function()
 	{
-		return (false !== this.doNotHyphenateCaps);
+		return (true !== this.doNotHyphenateCaps);
 	};
 	DocumentSettings.prototype.setHyphenateCaps = function(isHyphenate)
 	{
-		if (this.doNotHyphenateCaps === isHyphenate
+		if (this.doNotHyphenateCaps === !isHyphenate
 			|| (isHyphenate && undefined === this.doNotHyphenateCaps))
 			return;
 		
