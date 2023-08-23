@@ -1301,9 +1301,14 @@ Paragraph.prototype.OnContentChange = function()
 	this.SpellChecker.ClearCollector();
 	this.RecalcInfo.NeedSpellCheck();
 	this.RecalcInfo.NeedShapeText();
+	this.RecalcInfo.NeedHyphenateText();
 	
 	if (this.Parent && this.Parent.OnContentChange)
 		this.Parent.OnContentChange();
+};
+Paragraph.prototype.NeedHyphenateText = function()
+{
+	this.RecalcInfo.NeedHyphenateText();
 };
 Paragraph.prototype.Clear_ContentChanges = function()
 {
@@ -17483,6 +17488,14 @@ Paragraph.prototype.IsBalanceSingleByteDoubleByteWidth = function()
 	let oLogicDocument = this.GetLogicDocument();
 	return (oLogicDocument && oLogicDocument.IsDocumentEditor() ? oLogicDocument.IsBalanceSingleByteDoubleByteWidth() : false);
 };
+Paragraph.prototype.isAutoHyphenation = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsDocumentEditor())
+		return logicDocument.GetDocumentSettings().isAutoHyphenation();
+	
+	return false;
+};
 /**
  * Выделяем слово, около которого стоит курсор
  * @returns {boolean}
@@ -18728,9 +18741,10 @@ var pararecalc_0_None = 1;
 
 function CParaRecalcInfo()
 {
-    this.Recalc_0_Type = pararecalc_0_All;
-    this.SpellCheck = false;
-	this.ShapeText  = true;
+	this.Recalc_0_Type = pararecalc_0_All;
+	this.SpellCheck    = false;
+	this.ShapeText     = true;
+	this.HyphenateText = false;
 }
 
 CParaRecalcInfo.prototype =
@@ -18747,6 +18761,10 @@ CParaRecalcInfo.prototype.NeedSpellCheck = function()
 CParaRecalcInfo.prototype.NeedShapeText = function()
 {
 	this.ShapeText = true;
+};
+CParaRecalcInfo.prototype.NeedHyphenateText = function()
+{
+	this.HyphenateText = true;
 };
 
 function CDocumentBounds(Left, Top, Right, Bottom)
@@ -20752,3 +20770,4 @@ window['AscCommonWord'].UnknownValue = UnknownValue;
 window['AscCommonWord'].type_Paragraph = type_Paragraph;
 
 window['AscWord'].CParagraph = Paragraph;
+window['AscWord'].Paragraph = Paragraph;

@@ -13676,6 +13676,47 @@ background-repeat: no-repeat;\
 		oCtx.drawImage(oOverlayCanvas, 0, 0);
 		return oCtx.getImageData(0, 0, oCanvas.width, oCanvas.height);
 	};
+	
+	// auto-hyphenation
+	asc_docs_api.prototype.asc_setAutoHyphenation = function(isAuto)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		logicDocument.setAutoHyphenation(isAuto);
+	};
+	asc_docs_api.prototype.asc_isAutoHyphenation = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		return logicDocument ? logicDocument.getDocumentSettings().isAutoHyphenation() : false;
+	};
+	asc_docs_api.prototype.asc_setHyphenateCaps = function(isHyphenateCaps)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		logicDocument.setHyphenateCaps(isHyphenateCaps);
+	};
+	asc_docs_api.prototype.asc_isHyphenateCaps = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		return logicDocument ? logicDocument.getDocumentSettings().isHyphenateCaps() : true;
+	};
+	asc_docs_api.prototype.asc_setConsecutiveHyphenLimit = function(limit)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		logicDocument.setConsecutiveHyphenLimit(limit);
+	};
+	asc_docs_api.prototype.asc_getConsecutiveHyphenLimit = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		return logicDocument ? logicDocument.getDocumentSettings().getConsecutiveHyphenLimit() : 0;
+	};
 
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
@@ -14463,6 +14504,14 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_drawPrintPreview"] 	= asc_docs_api.prototype.asc_drawPrintPreview;
 	asc_docs_api.prototype["asc_closePrintPreview"] = asc_docs_api.prototype.asc_closePrintPreview;
 	asc_docs_api.prototype["asc_getPageSize"] 		= asc_docs_api.prototype.asc_getPageSize;
+	
+	// auto hyphenation
+	asc_docs_api.prototype["asc_setAutoHyphenation"]        = asc_docs_api.prototype.asc_setAutoHyphenation;
+	asc_docs_api.prototype["asc_isAutoHyphenation"]         = asc_docs_api.prototype.asc_isAutoHyphenation;
+	asc_docs_api.prototype["asc_setHyphenateCaps"]          = asc_docs_api.prototype.asc_setHyphenateCaps;
+	asc_docs_api.prototype["asc_isHyphenateCaps"]           = asc_docs_api.prototype.asc_isHyphenateCaps;
+	asc_docs_api.prototype["asc_setConsecutiveHyphenLimit"] = asc_docs_api.prototype.asc_setConsecutiveHyphenLimit;
+	asc_docs_api.prototype["asc_getConsecutiveHyphenLimit"] = asc_docs_api.prototype.asc_getConsecutiveHyphenLimit;
 
 	CDocInfoProp.prototype['get_PageCount']             = CDocInfoProp.prototype.get_PageCount;
 	CDocInfoProp.prototype['put_PageCount']             = CDocInfoProp.prototype.put_PageCount;
