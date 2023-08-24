@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 03.05.2017
- * Time: 14:58
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Alias]            = CChangesSdtPrAlias;
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Id]               = CChangesSdtPrId;

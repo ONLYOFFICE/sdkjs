@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 03.11.2016
- * Time: 11:37
- */
 
 var drawing_Inline = 0x01;
 var drawing_Anchor = 0x02;

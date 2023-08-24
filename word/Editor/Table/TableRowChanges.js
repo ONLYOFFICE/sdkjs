@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 07.11.2016
- * Time: 14:21
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_TableRow_Before]      = CChangesTableRowBefore;
 AscDFH.changesFactory[AscDFH.historyitem_TableRow_After]       = CChangesTableRowAfter;

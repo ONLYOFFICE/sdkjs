@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 03.05.2017
- * Time: 12:12
- */
 
 function CSdtPr()
 {

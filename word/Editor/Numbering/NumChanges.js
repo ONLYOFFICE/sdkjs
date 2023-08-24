@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 14.05.2018
- * Time: 14:32
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_Num_LvlOverrideChange] = CChangesNumLvlOverrideChange;
 AscDFH.changesFactory[AscDFH.historyitem_Num_AbstractNum]       = CChangesNumAbstractNum;

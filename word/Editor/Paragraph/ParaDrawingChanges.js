@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 03.11.2016
- * Time: 11:56
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_Drawing_DrawingType]       = CChangesParaDrawingDrawingType;
 AscDFH.changesFactory[AscDFH.historyitem_Drawing_WrappingType]      = CChangesParaDrawingWrappingType;

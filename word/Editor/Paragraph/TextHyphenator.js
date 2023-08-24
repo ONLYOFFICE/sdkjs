@@ -32,55 +32,6 @@
 
 "use strict";
 
-var AscHyphenation = AscHyphenation || {};
-(function()
-{
-	// Это тестовые функции, которые должны быть заменены на нормальные
-	let BUFFER_STRING = "";
-	
-	AscHyphenation.addCodePoint = function(codePoint)
-	{
-		BUFFER_STRING += String.fromCodePoint(codePoint);
-	};
-	AscHyphenation.setLang = function(langCode)
-	{
-		return true;
-	};
-	AscHyphenation.hyphenate = function()
-	{
-		let checkString = BUFFER_STRING.toLowerCase();
-		
-		if ("reenter" === checkString)
-			return [1];
-		else if ("coauthor" === checkString)
-			return [1];
-		else if ("привет" === checkString)
-			return [2];
-		else if ("участвовавшими" === checkString)
-			return [3, 6, 9, 11];
-		else if ("припри" === checkString)
-			return [2];
-		else if ("приприпри" === checkString)
-			return [2, 5];
-		else if ("приприприпри" === checkString)
-			return [2, 5, 8];
-		else if ("приприприприпри" === checkString)
-			return [2, 5, 8, 11];
-		else if ("приприприприприпри" === checkString)
-			return [2, 5, 8, 11, 14];
-		else if ("приприприприприприпри" === checkString)
-			return [2, 5, 8, 11, 14, 17];
-		else if ("приприприприприприприпри" === checkString)
-			return [2, 5, 8, 11, 14, 17, 20];
-		
-		return [];
-	};
-	AscHyphenation.clear = function()
-	{
-		BUFFER_STRING = "";
-	};
-})();
-
 (function(window)
 {
 	let hyphenator = null;

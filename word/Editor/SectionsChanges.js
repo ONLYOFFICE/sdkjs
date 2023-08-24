@@ -31,12 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 10.11.2016
- * Time: 14:24
- */
-
 
 AscDFH.changesFactory[AscDFH.historyitem_Section_PageSize_Orient]     = CChangesSectionPageOrient;
 AscDFH.changesFactory[AscDFH.historyitem_Section_PageSize_Size]       = CChangesSectionPageSize;

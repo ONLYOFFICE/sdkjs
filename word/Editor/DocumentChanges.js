@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 27.10.2016
- * Time: 13:02
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_Document_AddItem]                         = CChangesDocumentAddItem;
 AscDFH.changesFactory[AscDFH.historyitem_Document_RemoveItem]                      = CChangesDocumentRemoveItem;
