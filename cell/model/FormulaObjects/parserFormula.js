@@ -8673,6 +8673,36 @@ function parserFormula( formula, parent, _ws ) {
 		return retArr;
 	}
 
+	// function convertAreaToArrayNew(area) {
+	// 	let retArr = new cArray(), _arg0;
+	// 	let dimension = area.getDimensions();
+	// 	let ws;
+	// 	if(cElementType.cellsRange3D === area.type) {
+	// 		ws = area.wsFrom;
+	// 		area = area.getMatrixNoEmpty()[0];
+	// 	} else {
+	// 		ws = area.ws;
+	// 		area = area.getMatrixNoEmpty();
+	// 	}
+
+	// 	if (dimension) {
+	// 		let oBBox = dimension.bbox,
+	// 			minC = Math.min( ws.getColDataLength(), oBBox.c2 ),
+	// 			minR = Math.min( ws.cellsByColRowsCount, oBBox.r2 );
+	// 		let rowCount = (oBBox.r2 - oBBox.r1) > 0 ? oBBox.r2 - oBBox.r1 + 1 : 1;
+	// 		let colCount = (oBBox.c2 - oBBox.c1) > 0 ? oBBox.c2 - oBBox.c1 + 1 : 1;
+
+	// 		for ( let iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? retArr.addRow() : true ) {
+	// 			for ( let iCol = 0; iCol < colCount; iCol++ ) {
+	// 				_arg0 = area[iRow] && area[iRow][iCol] ? area[iRow][iCol] : new cEmpty();
+	// 				retArr.addElement(_arg0);
+	// 			}
+	// 		}
+	// 	}
+
+	// 	return retArr;
+	// }
+
 	function convertRefToRowCol (ref, curRef) {
 		var cellAddress = new AscCommon.CellAddress(ref);
 
@@ -8769,6 +8799,18 @@ function parserFormula( formula, parent, _ws ) {
 				for (iCol = 0; iCol < arg0.getCountElementInRow(); iCol++) {
 					_arg0 = arg0.getElementRowCol(0, iCol);
 					_arg1 = arg1.getElementRowCol(iRow, 0);
+					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
+				}
+			}
+		} else if (arg0.getCountElement() !== arg1.getCountElement()) {
+			let arrayRows = arg0.getRowCount() < arg1.getRowCount() ? arg0.getRowCount() : arg1.getRowCount(),
+				arrayCols = arg0.getCountElementInRow() < arg1.getCountElementInRow() ? arg0.getCountElementInRow() : arg1.getCountElementInRow();
+				retArr = new cArray();
+
+			for (iRow = 0; iRow < arrayRows; iRow++, iRow < arrayRows ? retArr.addRow() : true) {
+				for (iCol = 0; iCol < arrayCols; iCol++) {
+					_arg0 = arg0.getElementRowCol(iRow, iCol);
+					_arg1 = arg1.getElementRowCol(iRow, iCol);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
