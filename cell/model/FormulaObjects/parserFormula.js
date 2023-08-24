@@ -3981,29 +3981,43 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cPowOperator.prototype.priority = 40;
 	cPowOperator.prototype.argumentsCurrent = 2;
 	cPowOperator.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cArea) {
+		let arg0 = arg[0], arg1 = arg[1];
+		if (cElementType.cellsRange === arg0.type) {
 			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArea3D) {
+		} else if (cElementType.cellsRange3D === arg0.type) {
 			arg0 = arg0.cross(arguments[1], arguments[3]);
 		}
 		arg0 = arg0.tocNumber();
-		if (arg1 instanceof cArea) {
+
+		if (cElementType.cellsRange === arg1.type) {
 			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cArea3D) {
+		} else if (cElementType.cellsRange3D === arg1.type) {
 			arg1 = arg1.cross(arguments[1], arguments[3]);
 		}
 		arg1 = arg1.tocNumber();
-		if (arg0 instanceof cError) {
+
+		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (cElementType.error === arg1.type) {
 			return arg1;
 		}
 
-		var _v = Math.pow(arg0.getValue(), arg1.getValue());
+		let _v = Math.pow(arg0.getValue(), arg1.getValue());
 		if (isNaN(_v)) {
-			return new cError(cErrorType.not_numeric);
+			let arg0Val = arg0.getValue(),
+				arg1Val = arg1.getValue();
+			
+			if (arg0Val >= 0 || Math.round(arg1Val) === arg1Val) {
+				return new cNumber(Math.pow(arg0Val, arg1Val));
+			} else {
+				let r = -1 * Math.pow(-arg0Val, arg1Val);
+				if (Math.round(Math.pow(r, 1 / arg1Val)) === Math.round(arg0Val)) {
+					return new cNumber(r);
+				} else {
+					return new cNumber(Math.pow(arg0Val, arg1Val));
+				}
+			}
 		} else if (_v === Number.POSITIVE_INFINITY) {
 			return new cError(cErrorType.division_by_zero);
 		}
