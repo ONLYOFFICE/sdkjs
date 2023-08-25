@@ -5870,7 +5870,7 @@
 					{
 					} else if (e.keyCode == 145) // Scroll Lock
 					{
-					} else if (e.keyCode == 187 && canEdit && true === ctrlKey) // Ctrl + Shift + +, Ctrl + = - superscript/subscript
+					} else if ((e.keyCode === 61 || e.keyCode == 187) && canEdit && true === ctrlKey) // Ctrl + Shift + +, Ctrl + = - superscript/subscript
 					{
 						var TextPr = drawingObjectsController.getParagraphTextPr();
 						if (isRealObject(TextPr)) {
@@ -5892,7 +5892,7 @@
 							drawingObjectsController.setCellSuperscript(TextPr.VertAlign === AscCommon.vertalign_SuperScript ? false : true);
 							bRetValue = true;
 						}
-					} else if (e.keyCode == 189 && canEdit && true === ctrlKey && true === e.shiftKey) // Клавиша Num-
+					} else if ((e.keyCode == 189 || e.keyCode == 173) && canEdit && true === ctrlKey && true === e.shiftKey) // Клавиша Num-
 					{
 						if (!this.checkSelectedObjectsProtectionText()) {
 							var Item = null;

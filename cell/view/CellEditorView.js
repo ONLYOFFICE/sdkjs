@@ -2743,6 +2743,7 @@
 				event.preventDefault();
 				return false;
 
+			case 59:
 			case 186: // ctrl + (shift) + ;
 				if (ctrlKey) {
 					var api = window["Asc"]["editor"];

@@ -81,6 +81,7 @@
 			NumLock         : 144,
 			ScrollLock      : 145,
 			Equal           : 187,
+			EqualFirefox    : 61,
 			Comma           : 188,
 			Minus           : 189,
 			Period          : 190,
@@ -425,6 +426,7 @@
 	];
 	oGraphicTestEvents[oGraphicTypes.superscript] = [
 		new CTestEvent(createEvent(oKeyCode.Equal, true, true, false, false, false)),
+		new CTestEvent(createEvent(oKeyCode.EqualFirefox, true, true, false, false, false)),
 		new CTestEvent(createEvent(oKeyCode.Comma, true, false, false, false, false))
 
 	];
@@ -434,6 +436,7 @@
 	];
 	oGraphicTestEvents[oGraphicTypes.subscript] = [
 		new CTestEvent(createEvent(oKeyCode.Equal, true, false, true, false, false)),
+		new CTestEvent(createEvent(oKeyCode.EqualFirefox, true, false, true, false, false)),
 		new CTestEvent(createEvent(oKeyCode.Period, true, false, false, false, false))
 
 	];
@@ -546,10 +549,12 @@
 		new CTestEvent(createEvent(113, false, false, false, false, false))
 	];
 	oTableEvents[oTableTypes.addDate] = [
-		new CTestEvent(createEvent(186, true, false, false, false, false))
+		new CTestEvent(createEvent(186, true, false, false, false, false)),
+		new CTestEvent(createEvent(59, true, false, false, false, false))
 	];
 	oTableEvents[oTableTypes.addTime] = [
-		new CTestEvent(createEvent(186, true, true, false, false, false))
+		new CTestEvent(createEvent(186, true, true, false, false, false)),
+		new CTestEvent(createEvent(59, true, true, false, false, false))
 	];
 	oTableEvents[oTableTypes.removeActiveCell] = [
 		new CTestEvent(createEvent(8, false, false, false, false, false))

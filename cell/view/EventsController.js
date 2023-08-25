@@ -871,6 +871,7 @@
 					t.handlers.trigger("editCell", enterOptions);
 					return result;
 
+				case 59:
 				case 186: // add current date or time Ctrl + (Shift) + ;
 					if (!canEdit || t.getCellEditMode() || selectionDialogMode) {
 						return true;

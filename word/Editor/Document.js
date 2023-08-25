@@ -10580,7 +10580,7 @@ CDocument.prototype.GetAddedTextOnKeyDown = function(e)
 		if (true === e.AltKey) // Ctrl + Alt + E - добавляем знак евро €
 			return [0x20AC];
 	}
-	else if (e.KeyCode == 189) // Клавиша Num-
+	else if (e.KeyCode == 189 || e.KeyCode == 173) // Клавиша Num-
 	{
 		if (true === e.CtrlKey && true === e.ShiftKey)
 			return [0x2013];
