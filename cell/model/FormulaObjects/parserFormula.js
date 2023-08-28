@@ -8773,8 +8773,8 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}
 		} else if (arg0.getCountElement() !== arg1.getCountElement()) {
-			let arrayRows = arg0.getRowCount() < arg1.getRowCount() ? arg0.getRowCount() : arg1.getRowCount(),
-				arrayCols = arg0.getCountElementInRow() < arg1.getCountElementInRow() ? arg0.getCountElementInRow() : arg1.getCountElementInRow();
+			let arrayRows = Math.min(arg0.getRowCount(), arg1.getRowCount()),
+				arrayCols = Math.min(arg0.getCountElementInRow(), arg1.getCountElementInRow());
 				retArr = new cArray();
 
 			for (iRow = 0; iRow < arrayRows; iRow++, iRow < arrayRows ? retArr.addRow() : true) {
