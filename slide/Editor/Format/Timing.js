@@ -8966,7 +8966,42 @@
     CTimeNodeContainer.prototype.deselect = function () {
         this.selected = false;
     };
-
+    CTimeNodeContainer.prototype.asc_getColor = function() {
+        let aEffects = this.merged;
+        if(!Array.isArray(aEffects) || aEffects.length !== 1) {
+            return null;
+        }
+        let oEffect = aEffects[0];
+        let aSimpleAnim = oEffect.getChildrenTimeNodesInternal();
+        let oResultUnicolor = undefined;
+        let oTarget;
+        for(let nAnim = 0; nAnim < aSimpleAnim.length; ++nAnim) {
+            let oEffect = aSimpleAnim[nAnim];
+            if(oEffect instanceof CAnimClr) {
+                if(!oEffect.to) {
+                    return null;
+                }
+                if(!oTarget) {
+                    oTarget = oEffect.getTargetObject();
+                }
+                if(oResultUnicolor === undefined) {
+                    if(!oEffect.to) {
+                        return null;
+                    }
+                    oResultUnicolor = oEffect.to.createDuplicate();
+                }
+                else {
+                    oResultUnicolor = oEffect.to.compare(oResultUnicolor);
+                }
+            }
+        }
+        if(!oResultUnicolor || !oResultUnicolor.color || !oTarget) {
+            return null;
+        }
+        oResultUnicolor.check(oTarget.Get_Theme(), oTarget.Get_ColorMap());
+        return AscCommon.CreateAscColor(oResultUnicolor)
+    };
+    CTimeNodeContainer.prototype["asc_getColor"] = CTimeNodeContainer.prototype.asc_getColor;
 
     function CPar() {
         CTimeNodeContainer.call(this);
