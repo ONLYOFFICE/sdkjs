@@ -3317,7 +3317,7 @@
 				if (Math.round(Math.pow(r, 1 / b)) === Math.round(a)) {
 					return new cNumber(r);
 				} else {
-					return new cNumber(Math.pow(a, b));
+					return new cError(cErrorType.not_numeric);
 				}
 			}
 		}

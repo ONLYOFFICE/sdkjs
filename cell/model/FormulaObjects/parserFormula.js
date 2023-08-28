@@ -3981,47 +3981,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cPowOperator.prototype.priority = 40;
 	cPowOperator.prototype.argumentsCurrent = 2;
 	cPowOperator.prototype.Calculate = function (arg) {
-		let arg0 = arg[0], arg1 = arg[1];
-		if (cElementType.cellsRange === arg0.type) {
-			arg0 = arg0.cross(arguments[1]);
-		} else if (cElementType.cellsRange3D === arg0.type) {
-			arg0 = arg0.cross(arguments[1], arguments[3]);
-		}
-		arg0 = arg0.tocNumber();
+		let res = AscCommonExcel.cFormulaFunction.POWER.prototype.Calculate(arg);
 
-		if (cElementType.cellsRange === arg1.type) {
-			arg1 = arg1.cross(arguments[1]);
-		} else if (cElementType.cellsRange3D === arg1.type) {
-			arg1 = arg1.cross(arguments[1], arguments[3]);
-		}
-		arg1 = arg1.tocNumber();
-
-		if (cElementType.error === arg0.type) {
-			return arg0;
-		}
-		if (cElementType.error === arg1.type) {
-			return arg1;
+		if (res) {
+			return res;
 		}
 
-		let _v = Math.pow(arg0.getValue(), arg1.getValue());
-		if (isNaN(_v)) {
-			let arg0Val = arg0.getValue(),
-				arg1Val = arg1.getValue();
-			
-			if (arg0Val >= 0 || Math.round(arg1Val) === arg1Val) {
-				return new cNumber(Math.pow(arg0Val, arg1Val));
-			} else {
-				let r = -1 * Math.pow(-arg0Val, arg1Val);
-				if (Math.round(Math.pow(r, 1 / arg1Val)) === Math.round(arg0Val)) {
-					return new cNumber(r);
-				} else {
-					return new cNumber(Math.pow(arg0Val, arg1Val));
-				}
-			}
-		} else if (_v === Number.POSITIVE_INFINITY) {
-			return new cError(cErrorType.division_by_zero);
-		}
-		return new cNumber(_v);
+		return new cError(cErrorType.wrong_value_type);
 	};
 
 	/**
