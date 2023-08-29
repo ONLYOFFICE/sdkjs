@@ -13208,7 +13208,7 @@
 			return;
 		}
 		if (api.documentOpenOptions && api.documentOpenOptions["debug"]) {
-			console.log("clientLog: "+ msg);
+			console.log("[speed]: "+ msg);
 		}
 		api.CoAuthoringApi.sendClientLog(level, msg);
 	}
