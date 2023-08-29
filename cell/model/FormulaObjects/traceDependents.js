@@ -494,6 +494,11 @@ function (window, undefined) {
 							isDefName
 						};
 
+						if (parent && parent.constructor && parent.constructor.name && parent.constructor.name === "CT_WorksheetSource") {
+							// if the listener is a pivot table, skip the iteration
+							continue;
+						}
+
 						if (isDefName) {
 							// TODO check external table ref
 							setDefNameIndexes(parent.name, isTable);
