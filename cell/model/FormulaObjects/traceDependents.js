@@ -494,7 +494,7 @@ function (window, undefined) {
 							isDefName
 						};
 
-						if (parent && parent.constructor && parent.constructor.name && parent.constructor.name === "CT_WorksheetSource") {
+						if (parent && parent.Id && parent.toXml && parent instanceof CT_WorksheetSource) {
 							// if the listener is a pivot table, skip the iteration
 							continue;
 						}
@@ -550,7 +550,8 @@ function (window, undefined) {
 					if (cellListeners.hasOwnProperty(i)) {
 						let parent = cellListeners[i].parent;
 						
-						if (parent.name || (parent.constructor && parent.constructor.name && parent.constructor.name === "CT_WorksheetSource")) {
+						if (parent && (parent.name || (parent.Id && parent.toXml && parent instanceof CT_WorksheetSource))) {
+							// if the listener is a pivot table, skip the iteration
 							continue
 						}
 
