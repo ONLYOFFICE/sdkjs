@@ -3241,6 +3241,7 @@ function CParagraphRecalculateStateWrap(Para)
 	this.LastItemRun     = null; // Run, в котором лежит последний элемент LastItem
 	this.LastHyphenItem  = null;
 	this.autoHyphenLimit = 0;
+	this.hyphenationZone = 0;
 
     this.RunRecalcInfoLast  = null; // RecalcInfo последнего рана
     this.RunRecalcInfoBreak = null; // RecalcInfo рана, на котором произошел разрыв отрезка/строки
@@ -3311,11 +3312,13 @@ CParagraphRecalculateStateWrap.prototype =
 			let settings = logicDocument.GetDocumentSettings();
 			this.autoHyphenation = settings.isAutoHyphenation();
 			this.autoHyphenLimit = settings.getConsecutiveHyphenLimit();
+			this.hyphenationZone = AscCommon.TwipsToMM(settings.getHyphenationZone());
 		}
 		else
 		{
 			this.autoHyphenation = false;
 			this.autoHyphenLimit = 0;
+			this.hyphenationZone = 0;
 		}
 
 		this.Page               = CurPage;
@@ -4074,6 +4077,10 @@ CParagraphRecalculateStateWrap.prototype.getAutoHyphenLimit = function()
 {
 	return this.autoHyphenLimit;
 };
+CParagraphRecalculateStateWrap.prototype.getHyphenationZone = function()
+{
+	return this.hyphenationZone;
+};
 CParagraphRecalculateStateWrap.prototype.OnEndRecalculateLineRanges = function()
 {
 	this.ResetLastAutoHyphen();
@@ -4123,6 +4130,24 @@ CParagraphRecalculateStateWrap.prototype.canPlaceAutoHyphenAfter = function(runI
 	return (this.isAutoHyphenation()
 		&& !this.isExceedConsecutiveAutoHyphenLimit()
 		&& runItem.isHyphenAfter());
+};
+CParagraphRecalculateStateWrap.prototype.checkHyphenationZone = function(x)
+{
+	// Делаем как в MSWord (проверено в 2019 версии):
+	// отмеряем сколько уже занято на текущей строке от начала строки, добавляем это значение к левому полю документа
+	// и вычитаем из позиции правого поля параграфа. Если полученное значение больше hyphenationZone, значит можно
+	// делать перенос.
+	// Схема немного странная, т.к. мы считаем расстояние от левой границы параграфа, а добавляем его к левому полю,
+	// поэтому при смещении параграфа целиком влево или вправо (одинаковом изменении левого и правого отступов)
+	// разбиение может происходить по-разному, хотя ширина параграфа не меняется
+	
+	let paraPr = this.Paragraph.Get_CompiledPr2(false).ParaPr;
+	
+	let shift = paraPr.Ind.Left;
+	if (this.UseFirstLine)
+		shift += paraPr.Ind.FirstLine;
+	
+	return x - shift < this.XLimit - this.getHyphenationZone();
 };
 AscWord.ParagraphRecalculationWrapState = CParagraphRecalculateStateWrap;
 

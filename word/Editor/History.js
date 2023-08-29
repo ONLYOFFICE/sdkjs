@@ -1322,6 +1322,44 @@ CHistory.prototype.private_ClearRecalcData = function()
 		AllParagraphs     : null
 	};
 };
+	CHistory.prototype.getRecalcDataByElements = function(elements)
+	{
+		let storedRecalcData = this.RecalculateData;
+		
+		this.RecalculateData = {
+			Inline   : {
+				Pos     : -1,
+				PageNum : 0
+			},
+			Flow     : [],
+			HdrFtr   : [],
+			Drawings : {
+				All         : false,
+				Map         : {},
+				ThemeInfo   : null,
+				SlideMinIdx : null
+			},
+			
+			Tables            : [],
+			NumPr             : [],
+			NotesEnd          : false,
+			NotesEndPage      : 0,
+			Update            : true,
+			ChangedStyles     : {},
+			ChangedNums       : {},
+			LineNumbers       : false,
+			AllParagraphs     : null
+		};
+		
+		for (let i = 0, count = elements.length; i < count; ++i)
+		{
+			elements[i].Refresh_RecalcData2();
+		}
+		
+		let result = this.RecalculateData;
+		this.RecalculateData = storedRecalcData;
+		return result;
+	};
 /**
  * Обработка изменений после Undo/Redo всех изменений
  */

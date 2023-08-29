@@ -32,6 +32,8 @@
 
 "use strict";
 
+const AscHyphenation = {};
+
 (function(window)
 {
 	// Это тестовые функции, которые должны быть заменены на нормальные
@@ -50,29 +52,31 @@
 		let checkString = BUFFER_STRING.toLowerCase();
 		
 		if ("abcd" === checkString)
+			return [2];
+		else if ("abb" === checkString)
 			return [1];
 		else if ("abbb" === checkString)
-			return [0];
-		else if ("aaabbb" === checkString)
-			return [2];
-		else if ("aabbb" === checkString)
 			return [1];
-		else if ("aabbbb" === checkString)
-			return [1];
-		else if ("abbb" === checkString)
-			return [0];
-		else if ("abbbb" === checkString)
-			return [0];
 		else if ("aaabbb" === checkString)
-			return [2];
-		else if ("testtest" === checkString)
 			return [3];
-		else if ("aabbbcccdddd" === checkString)
-			return [1, 4, 7];
-		else if ("ccdddd" === checkString)
+		else if ("aabbb" === checkString)
 			return [2];
-		else if ("zz½www" === checkString)
+		else if ("aabbbb" === checkString)
+			return [2];
+		else if ("abbb" === checkString)
 			return [1];
+		else if ("abbbb" === checkString)
+			return [1];
+		else if ("aaabbb" === checkString)
+			return [3];
+		else if ("testtest" === checkString)
+			return [4];
+		else if ("aabbbcccdddd" === checkString)
+			return [2, 5, 8];
+		else if ("ccdddd" === checkString)
+			return [3];
+		else if ("zz½www" === checkString)
+			return [2];
 		
 		return [];
 	};

@@ -943,7 +943,7 @@
     });
     this.model.handlers.add("changeDocument", function(prop, arg1, arg2, wsId) {
       self.SearchEngine && self.SearchEngine.changeDocument(prop, arg1, arg2);
-      let ws = wsId && self.getWorksheetById(wsId);
+      let ws = wsId && self.getWorksheetById(wsId, true);
       if (ws) {
         ws.traceDependentsManager.changeDocument(prop, arg1, arg2);
       }

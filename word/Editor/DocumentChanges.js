@@ -47,6 +47,7 @@ AscDFH.changesFactory[AscDFH.historydescription_Document_DocumentProtection]    
 AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_AutoHyphenation]        = CChangesDocumentSettingsAutoHyphenation;
 AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_ConsecutiveHyphenLimit] = CChangesDocumentSettingsConsecutiveHyphenLimit;
 AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_DoNotHyphenateCaps]     = CChangesDocumentSettingsDoNotHyphenateCaps;
+AscDFH.changesFactory[AscDFH.historyitem_Document_Settings_HyphenationZone]        = CChangesDocumentSettingsHyphenationZone;
 //----------------------------------------------------------------------------------------------------------------------
 // Карта зависимости изменений
 //----------------------------------------------------------------------------------------------------------------------
@@ -1138,5 +1139,22 @@ CChangesDocumentSettingsDoNotHyphenateCaps.prototype.Type = AscDFH.historyitem_D
 CChangesDocumentSettingsDoNotHyphenateCaps.prototype.private_SetValue = function(value)
 {
 	this.Class.Settings.doNotHyphenateCaps = value;
+	this.Class.OnChangeAutoHyphenation();
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseLongProperty}
+ */
+function CChangesDocumentSettingsHyphenationZone(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseLongProperty.call(this, Class, Old, New, Color);
+}
+CChangesDocumentSettingsHyphenationZone.prototype = Object.create(AscDFH.CChangesBaseLongProperty.prototype);
+CChangesDocumentSettingsHyphenationZone.prototype.constructor = CChangesDocumentSettingsHyphenationZone;
+CChangesDocumentSettingsHyphenationZone.prototype.Type = AscDFH.historyitem_Document_Settings_HyphenationZone;
+CChangesDocumentSettingsHyphenationZone.prototype.private_SetValue = function(value)
+{
+	this.Class.Settings.hyphenationZone = value;
 	this.Class.OnChangeAutoHyphenation();
 };

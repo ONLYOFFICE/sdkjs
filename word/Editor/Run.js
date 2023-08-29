@@ -3987,7 +3987,9 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 
 							// Если текущий символ с переносом, например, дефис, тогда на нем заканчивается слово
 							if (Item.IsSpaceAfter()
-								|| (PRS.canPlaceAutoHyphenAfter(Item) && X + SpaceLen + LetterLen + PRS.getAutoHyphenWidth(Item, this) <= XEnd))
+								|| (PRS.canPlaceAutoHyphenAfter(Item)
+									&& X + SpaceLen + LetterLen + PRS.getAutoHyphenWidth(Item, this) <= XEnd
+									&& (FirstItemOnLine || PRS.checkHyphenationZone(X + SpaceLen))))
 							{
 								// Добавляем длину пробелов до слова и ширину самого слова.
 								X += SpaceLen + LetterLen;
@@ -4025,7 +4027,10 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                             // Мы убираемся в пределах данной строки. Прибавляем ширину буквы к ширине слова
                             WordLen += LetterLen;
 
-							if (Item.IsSpaceAfter() || (PRS.canPlaceAutoHyphenAfter(Item) && fitOnLine))
+							if (Item.IsSpaceAfter()
+								|| (PRS.canPlaceAutoHyphenAfter(Item)
+									&& fitOnLine
+									&& (FirstItemOnLine || PRS.checkHyphenationZone(X + SpaceLen))))
                             {
                                 // Добавляем длину пробелов до слова и ширину самого слова.
                                 X += SpaceLen + WordLen;

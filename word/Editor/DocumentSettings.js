@@ -34,6 +34,8 @@
 
 (function(window)
 {
+	const DEFAULT_HYPHENATION_ZONE = 360;
+	
 	/**
 	 * Класс с глобальными настройками для документа
 	 * @param {AscWord.CDocument} logicDocument
@@ -105,6 +107,18 @@
 			return;
 		
 		AscCommon.AddAndExecuteChange(new CChangesDocumentSettingsConsecutiveHyphenLimit(this.LogicDocument, this.consecutiveHyphenLimit, limit));
+	};
+	DocumentSettings.prototype.getHyphenationZone = function()
+	{
+		return undefined === this.hyphenationZone ? DEFAULT_HYPHENATION_ZONE : this.hyphenationZone;
+	};
+	DocumentSettings.prototype.setHyphenationZone = function(zone)
+	{
+		if (this.hyphenationZone === zone
+			|| (undefined === this.hyphenationZone && DEFAULT_HYPHENATION_ZONE === zone))
+			return;
+		
+		AscCommon.AddAndExecuteChange(new CChangesDocumentSettingsHyphenationZone(this.LogicDocument, this.hyphenationZone, zone));
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].DocumentSettings = DocumentSettings;

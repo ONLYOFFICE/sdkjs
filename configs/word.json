@@ -42,6 +42,7 @@
 			"common/api/tableStylesPreviewGenerator.js",
 			"common/api/spellCheckSettings.js",
 			"common/api/addTextSettings.js",
+			"common/api/auto-hyphenation-settings.js",
 			"common/api/autoCorrectSettings.js",
 			"common/api/firstLetterExceptions.js",
 			"common/api/restrictionSettings.js",

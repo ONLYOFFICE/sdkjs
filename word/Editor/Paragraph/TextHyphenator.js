@@ -43,6 +43,14 @@
 		return hyphenator;
 	}
 	
+	function getWaitingLangCallback(lang, hyphenator)
+	{
+		return function()
+		{
+			hyphenator.onLoadLang(lang);
+		};
+	}
+	
 	const DEFAULT_LANG = lcid_enUS;
 	
 	/**
@@ -57,6 +65,10 @@
 		this.buffer   = [];
 		
 		this.hyphenateCaps = true;
+		
+		this.document     = null;
+		this.paragraph    = null;
+		this.waitingLangs = {};
 	}
 	TextHyphenator.hyphenate = function(paragraph)
 	{
@@ -68,6 +80,10 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	TextHyphenator.prototype.hyphenateParagraph = function(paragraph)
 	{
+		if (!this.document)
+			this.document = paragraph.GetLogicDocument();
+		
+		this.paragraph = paragraph;
 		this.checkHyphenateCaps(paragraph);
 		
 		let self = this;
@@ -152,11 +168,17 @@
 		if (!this.isHyphenateCaps() && this.isAllCaps())
 			return this.resetBuffer();
 		
-		AscHyphenation.setLang(this.lang);
+		if (!this.checkLangAvailability())
+			return this.resetBuffer();
+		
 		let result = AscHyphenation.hyphenate();
 		for (let i = 0, len = result.length; i < len; ++i)
 		{
-			this.buffer[result[i]].SetHyphenAfter(true);
+			let pos = result[i] - 1;
+			if (pos < 0 || pos >= this.buffer.length - 1)
+				continue;
+			
+			this.buffer[pos].SetHyphenAfter(true);
 		}
 		
 		this.resetBuffer();
@@ -183,6 +205,39 @@
 	TextHyphenator.prototype.isHyphenateCaps = function()
 	{
 		return this.hyphenateCaps;
+	};
+	TextHyphenator.prototype.checkLangAvailability = function()
+	{
+		if (this.waitingLangs[this.lang])
+			return false;
+		
+		if (AscHyphenation.setLang(this.lang, getWaitingLangCallback(this.lang, this)))
+			return true;
+		
+		if (!this.waitingLangs[this.lang])
+			this.waitingLangs[this.lang] = [];
+		
+		this.waitingLangs[this.lang].push(this.paragraph);
+		return false;
+	};
+	TextHyphenator.prototype.onLoadLang = function(lang)
+	{
+		if (!this.waitingLangs[lang])
+			return;
+		
+		this.waitingLangs[lang].forEach(function(paragraph)
+		{
+			paragraph.NeedHyphenateText();
+		});
+		
+		if (this.document)
+		{
+			let history    = this.document.GetHistory();
+			let recalcData = history.getRecalcDataByElements(this.waitingLangs[lang]);
+			this.document.RecalculateWithParams(recalcData);
+		}
+		
+		delete this.waitingLangs[lang];
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].TextHyphenator = TextHyphenator;

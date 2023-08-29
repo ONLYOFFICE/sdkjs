@@ -60,6 +60,7 @@ $(function ()
 	let autoHyphenation = false;
 	let hyphenateCaps   = true;
 	let hyphenLimit     = 0;
+	let hyphenationZone = 0;
 	
 	AscWord.Paragraph.prototype.isAutoHyphenation = function()
 	{
@@ -72,6 +73,10 @@ $(function ()
 	AscWord.ParagraphRecalculationWrapState.prototype.getAutoHyphenLimit = function()
 	{
 		return hyphenLimit;
+	};
+	AscWord.ParagraphRecalculationWrapState.prototype.getHyphenationZone = function()
+	{
+		return hyphenationZone;
 	};
 	AscWord.TextHyphenator.prototype.isHyphenateCaps = function()
 	{
@@ -89,6 +94,10 @@ $(function ()
 	function setHyphenLimit(limit)
 	{
 		hyphenLimit = limit;
+	}
+	function setHyphenationZone(zone)
+	{
+		hyphenationZone = zone;
 	}
 	
 	function checkLines(assert, isAutoHyphenation, contentWidth, textLines)
@@ -321,40 +330,145 @@ $(function ()
 		]);
 	});
 	
-	// QUnit.test("Test: \"Test ConsecutiveHyphenLimit parameter for single word\"", function (assert)
-	// {
-	// 	setText("aabbbcccdddd");
-	//
-	// 	checkLines(assert, false, charWidth * 4.5, [
-	// 		"aabb",
-	// 		"bccc",
-	// 		"dddd"
-	// 	]);
-	//
-	// 	checkLines(assert, true, charWidth * 4.5, [
-	// 		"aa-",
-	// 		"bbb-",
-	// 		"ccc-",
-	// 		"dddd"
-	// 	]);
-	//
-	// 	// В этом примере важно, что ccdddd тоже переносится по второму символу
-	// 	setHyphenLimit(1);
-	// 	checkLines(assert, true, charWidth * 4.5, [
-	// 		"aa-",
-	// 		"bbbc",
-	// 		"cc-",
-	// 		"dddd"
-	// 	]);
-	//
-	// 	setHyphenLimit(2);
-	// 	checkLines(assert, true, charWidth * 4.5, [
-	// 		"aa-",
-	// 		"bbb-",
-	// 		"cccd",
-	// 		"ddd"
-	// 	]);
-	//
-	// });
+	QUnit.test("Test: \"Test ConsecutiveHyphenLimit parameter for single word\"", function(assert)
+	{
+		setText("aabbbcccdddd");
+		
+		checkLines(assert, false, charWidth * 4.5, [
+			"aabb",
+			"bccc",
+			"dddd"
+		]);
+		
+		checkLines(assert, true, charWidth * 4.5, [
+			"aa-",
+			"bbb-",
+			"ccc-",
+			"dddd"
+		]);
+		
+		// В этом примере важно, что ccdddd тоже переносится по второму символу
+		setHyphenLimit(1);
+		checkLines(assert, true, charWidth * 4.5, [
+			"aa-",
+			"bbbc",
+			"cc-",
+			"dddd"
+		]);
+		
+		setHyphenLimit(2);
+		checkLines(assert, true, charWidth * 4.5, [
+			"aa-",
+			"bbb-",
+			"cccd",
+			"ddd"
+		]);
+		
+	});
+	
+	QUnit.test("Test: \"Test HyphenationZone parameter\"", function(assert)
+	{
+		// На длинном слове, единственном на строке, не работает HyphenationZone (проверял на MS2019)
+		setText("aabbbcccdddd");
+		
+		setHyphenationZone(2.5 * charWidth);
+		checkLines(assert, true, charWidth * 4.5, [
+			"aa-",
+			"bbb-",
+			"ccc-",
+			"dddd"
+		]);
+		
+		setHyphenationZone(4.5 * charWidth);
+		checkLines(assert, true, charWidth * 4.5, [
+			"aa-",
+			"bbb-",
+			"ccc-",
+			"dddd"
+		]);
+		
+		setText("a aabbbcccdddd");
+		setHyphenationZone(2.5 * charWidth);
+		checkLines(assert, true, charWidth * 5.5, [
+			"a aa-",
+			"bbb-",
+			"ccc-",
+			"dddd"
+		]);
+		
+		setHyphenationZone(4.5 * charWidth);
+		checkLines(assert, true, charWidth * 5.5, [
+			"a ",
+			"aa-",
+			"bbb-",
+			"ccc-",
+			"dddd"
+		]);
+		
+		setText("abcd aabbb ABBBB abbbb ABB abbbb aabbbb abcd");
+		
+		setHyphenationZone(1.5 * charWidth);
+		checkLines(assert, true, charWidth * 8.5, [
+			"abcd aa-",
+			"bbb A-",
+			"BBBB a-",
+			"bbbb ABB ",
+			"abbbb ",
+			"aabbbb ",
+			"abcd"
+		]);
+		
+		setHyphenationZone(4 * charWidth);
+		checkLines(assert, true, charWidth * 8.5, [
+			"abcd ",
+			"aabbb ",
+			"ABBBB ",
+			"abbbb ",
+			"ABB a-",
+			"bbbb ",
+			"aabbbb ",
+			"abcd"
+		]);
+		
+		// Делаем как в MSWord (проверено в 2019 версии)
+		// HyphenationZone расчитываерся начиная от левого поля, а не от левого края параграфа, но прибавляется
+		// текущий сдвиг относительно левого края параграфа
+		para.SetParagraphIndent({Left : 10 * charWidth, FirstLine : 0});
+		setHyphenationZone(4 * charWidth);
+		checkLines(assert, true, charWidth * 18.5, [
+			"abcd aa-",
+			"bbb A-",
+			"BBBB a-",
+			"bbbb ABB ",
+			"abbbb ",
+			"aabbbb ",
+			"abcd"
+		]);
+		
+		para.SetParagraphIndent({Left : 0, FirstLine : 0});
+		
+		// TODO: Реализовать этот случай
+		// Проверяем, что расчет HyphenationZone идет с начала слова, а не с места первого разрыва
+		// setText("abcd aabbbcccdddd");
+		//
+		// setHyphenationZone(6 * charWidth);
+		// checkLines(assert, true, charWidth * 15.5, [
+		// 	"abcd aabbbccc-",
+		// 	"dddd"
+		// ]);
+		//
+		// setHyphenationZone(9 * charWidth);
+		// checkLines(assert, true, charWidth * 15.5, [
+		// 	"abcd aabbbccc-",
+		// 	"dddd"
+		// ]);
+		//
+		// setHyphenationZone(12 * charWidth);
+		// checkLines(assert, true, charWidth * 15.5, [
+		// 	"abcd ",
+		// 	"aabbbcccdddd"
+		// ]);
+		
+	});
 	
 });
