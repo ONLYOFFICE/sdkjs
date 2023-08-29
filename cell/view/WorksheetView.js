@@ -4979,21 +4979,18 @@
 	};
 
 	WorksheetView.prototype.drawTraceArrows = function (visibleRange, offsetX, offsetY) {
-		let frozenPaneRange, frozenRow, frozenRowCoords, frozenCol, frozenColCoords;
-		if (this.topLeftFrozenCell) {
-			// if the sheet has frozen panes, create and redefine some variables for the x and y arrows
-			// also get the real visible range instead of the frozen pane range that comes in the first argument
-			frozenPaneRange = visibleRange;
+		let frozenPaneInfo, frozenRow, frozenRowCoords, frozenCol, frozenColCoords;
+		
+		if (this.topLeftFrozenCell && !visibleRange.isEqualAll(this.getVisibleRange())) {
+			return true;
+		} else if (this.topLeftFrozenCell) {
+			frozenPaneInfo = this.topLeftFrozenCell;
 			frozenCol = this.topLeftFrozenCell.getCol0();
 			frozenRow = this.topLeftFrozenCell.getRow0();
-			offsetX = this._getColLeft(this.visibleRange.c1) - this.cellsLeft;
-			offsetX -= this._getColLeft(frozenCol) - this._getColLeft(0);
-			offsetY = this._getRowTop(this.visibleRange.r1) - this.cellsTop;
-			offsetY -= this._getRowTop(frozenRow) - this._getRowTop(0);
 			frozenColCoords = this._getColLeft(frozenCol - 1) + this._getColumnWidth(frozenCol - 1);
 			frozenRowCoords = this._getRowTop(frozenRow - 1) + this._getRowHeight(frozenRow - 1);
-			visibleRange = this.getVisibleRange();
 		}
+
 		let traceManager = this.traceDependentsManager;
 		let ctx = this.overlayCtx;
 		let widthLine = 2, 
@@ -5086,41 +5083,44 @@
 					drawDot(x1, y1, externalLineColor);
 					drawMiniTable(x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop);
 				} else {
-					if (frozenPane && (frozenColCoords >= x1 || frozenColCoords >= newX2)) {
-						// frozen col
+					if (frozenPaneInfo && (frozenColCoords >= x1 || frozenColCoords >= newX2)) {
+						let y3 = y1 + ((newY2 - y1) / (newX2 - x1)) * (frozenColCoords - x1);
 						if (frozenColCoords >= x1) {
-							// change the angle and remove the drawing of the dot
-							ctx.moveTo(frozenColCoords, y1);
+							// remove the drawing of the dot
+							ctx.beginPath();
+							ctx.moveTo(frozenColCoords, y3);
 							ctx.lineTo(newX2, newY2);
 							ctx.closePath().stroke();
-							angle = Math.atan2(newY2 - y1, newX2 - frozenColCoords);
 							drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
 						} else if (frozenColCoords >= newX2) {
-							// remove the drawing of arrow
+							// remove the drawing of the arrowhead
+							ctx.beginPath();
 							ctx.moveTo(x1, y1);
-							ctx.lineTo(frozenColCoords, newY2);
+							ctx.lineTo(frozenColCoords, y3);
 							ctx.closePath().stroke();
 							drawDot(x1, y1, lineColor);
 						}
-					} else if (frozenPane && (frozenRowCoords >= y1 || frozenRowCoords >= newY2)) {
-						// frozen row
+					} else if (frozenPaneInfo && (frozenRowCoords >= y1 || frozenRowCoords >= newY2)) {
+						let x3 = x1 + ((newX2 - x1) / (newY2 - y1)) * (frozenRowCoords - y1);
 						if (frozenRowCoords >= y1) {
-							// change the angle and remove the drawing of the dot
-							ctx.moveTo(x1, frozenRowCoords);
+							// remove the drawing of the dot
+							ctx.beginPath();
+							ctx.moveTo(x3, frozenRowCoords);
 							ctx.lineTo(newX2, newY2);
 							ctx.closePath().stroke();
-							angle = Math.atan2(newY2 - frozenRowCoords, newX2 - x1);
 							drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
 						} else if (frozenRowCoords >= newY2) {
-							// remove the drawing of arrow
+							// remove the drawing of the arrowhead
+							ctx.beginPath();
 							ctx.moveTo(x1, y1);
-							ctx.lineTo(newX2, frozenRowCoords);
+							ctx.lineTo(x3, frozenRowCoords);
 							ctx.closePath().stroke();
 							drawDot(x1, y1, lineColor);
 						}
 					} else {
 						// normal draw without frozen panes
 						// ctx.lineDiag(x1, y1, newX2, newY2);
+						ctx.beginPath();
 						ctx.moveTo(x1, y1);
 						ctx.lineTo(newX2, newY2);
 						ctx.closePath().stroke(); 	// draw regular line
@@ -5369,6 +5369,8 @@
 		});
 		// draw area
 		drawAreaStroke(traceManager._getPrecedentsAreas());
+
+		// return true;
 	};
 
 	WorksheetView.prototype._drawPageBreakPreviewText = function (drawingCtx, range, leftFieldInPx, topFieldInPx) {
@@ -6466,13 +6468,14 @@
             rFrozen = this.topLeftFrozenCell.getRow0();
             offsetX -= this._getColLeft(cFrozen) - this._getColLeft(0);
             offsetY -= this._getRowTop(rFrozen) - this._getRowTop(0);
-
             var oFrozenRange;
             cFrozen -= 1;
             rFrozen -= 1;
             if (0 <= cFrozen && 0 <= rFrozen) {
                 oFrozenRange = new asc_Range(0, 0, cFrozen, rFrozen);
                 res = drawFunction.call(this, oFrozenRange, this._getColLeft(0) - this.cellsLeft, this._getRowTop(0) - this.cellsTop, args);
+
+				// res = drawFunction.call(this, oFrozenRange, offsetX, offsetY, args);
                 if (!res) {
                     return;
                 }
