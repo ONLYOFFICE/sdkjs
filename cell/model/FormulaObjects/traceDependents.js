@@ -548,13 +548,14 @@ function (window, undefined) {
 				let isUpdated = false;
 				for (let i in cellListeners) {
 					if (cellListeners.hasOwnProperty(i)) {
-						let parent = cellListeners[i].parent,
-							elemCellIndex = cellListeners[i].shared !== null ? currentIndex : getParentIndex(parent),
-							formula = cellListeners[i].Formula;
-
-						if (parent.name) {
-							continue;
+						let parent = cellListeners[i].parent;
+						
+						if (parent.name || (parent.constructor && parent.constructor.name && parent.constructor.name === "CT_WorksheetSource")) {
+							continue
 						}
+
+						let	elemCellIndex = cellListeners[i].shared !== null ? currentIndex : getParentIndex(parent),
+							formula = cellListeners[i].Formula;
 
 						if (formula.includes(":") && !cellListeners[i].is3D) {
 							// call getAllAreaIndexes which return cellIndexes of each element(this will be parentCellIndex)
