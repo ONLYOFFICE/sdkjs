@@ -6529,7 +6529,7 @@ CPresentation.prototype.GetAddedTextOnKeyDown = function (e) {
 	{
 		if (e.AltKey) // Ctrl + Alt + E - добавляем знак евро €
 			return [0x20AC];
-	} else if (e.KeyCode === 189) // Клавиша Num-
+	} else if ((e.KeyCode === 189 || e.KeyCode === 173)) // Клавиша Num-
 	{
 		if (e.CtrlKey && e.ShiftKey)
 			return [0x2013];

@@ -4445,7 +4445,7 @@
 
 		CShape.prototype.setTruthFontSizeInSmartArt = function () {
 			const arrMainContentPoints = this.getSmartArtPointContent();
-			if (!arrMainContentPoints) return;
+			if (!(arrMainContentPoints && arrMainContentPoints.length)) return;
 			const bIsFitText = arrMainContentPoints.every(function (point) {
 				return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && !point.prSet.phldr;
 			});
