@@ -72,7 +72,10 @@ function (window, undefined) {
 		if (nFirstFormulaResult > nExpectedVal) {
 			bReverseCompare = true;
 		}
-
+		/* That algorithm works for most formulas who can solve with help linear or non-linear equations.
+		 * Exception is engineering formula like DEC2BIN, DEC2HEX etc. Those formulas can't be solved with that way because
+		 * they are not linear or non-linear equations.
+		 */
 		while (true) {
 			nCurAttempt++;
 			let sChangingValue = String(nChangingVal).replace('.', sRegNumDecimalSeparator);
