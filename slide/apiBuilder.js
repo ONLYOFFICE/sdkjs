@@ -2671,7 +2671,7 @@
 
 
     /**
-     * Returns the visibility to the current presentation slide.
+     * Returns the visibility of the current presentation slide.
      * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
      * @returns {boolean}
@@ -2687,7 +2687,7 @@
      * Sets the visibility to the current presentation slide.
      * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
-     * @param {boolean} value - Value of visibility of slide.
+     * @param {boolean} value - Slide visibility.
      * @returns {boolean}
      * */
     ApiSlide.prototype.SetVisible = function(value){
