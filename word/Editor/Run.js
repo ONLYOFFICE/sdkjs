@@ -3498,11 +3498,11 @@ ParaRun.prototype.getTextMetrics = function()
 	let fontSlot = this.IsMathRun() ? AscWord.fontslot_ASCII : AscWord.fontslot_None;
 	for (let nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
 	{
-		fontSlot |= this.Content[nPos].GetFontSlot(_oTextPr);
+		fontSlot |= this.Content[nPos].GetFontSlot(textPr);
 	}
 	
 	if (AscWord.fontslot_Unknown === fontSlot)
-		fontSlot = oTextPr.CS || oTextPr.RTL ? AscWord.fontslot_CS : AscWord.fontslot_ASCII;
+		fontSlot = textPr.CS || textPr.RTL ? AscWord.fontslot_CS : AscWord.fontslot_ASCII;
 	
 	return textPr.GetTextMetrics(fontSlot, this.Paragraph.GetTheme());
 };
