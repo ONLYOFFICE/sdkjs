@@ -524,7 +524,7 @@ function (window, undefined) {
 						}
 						let parentCellIndex = getParentIndex(parent);
 
-						if (parentCellIndex === null) {
+						if (parentCellIndex === null || isNaN(parentCellIndex)) {
 							continue;
 						}
 						this._setDependents(cellIndex, parentCellIndex);

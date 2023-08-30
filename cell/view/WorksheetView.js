@@ -4991,16 +4991,13 @@
 		const lineColor = new CColor(78, 128, 245);
 		const externalLineColor = new CColor(68, 68, 68);
 		const whiteColor = new CColor(255, 255, 255);
-		const transparentColor = new CColor(255, 255, 255, 0);
 
 		let t = this;
-		const doDrawArrow = function (_from, _to, external, isPrecedent) {
-			ctx.beginPath();
-			ctx.setStrokeStyle(transparentColor);
-			// clip by visible area
-			ctx.AddClipRect(t._getColLeft(visibleRange.c1) - offsetX, t._getRowTop(visibleRange.r1) - offsetY, Math.abs(t._getColLeft(visibleRange.c2 + 1) - t._getColLeft(visibleRange.c1)), Math.abs(t._getRowTop(visibleRange.r2 + 1) - t._getRowTop(visibleRange.r1)));
-			ctx.closePath();
 
+		// clip by visible area
+		ctx.AddClipRect(t._getColLeft(visibleRange.c1) - offsetX, t._getRowTop(visibleRange.r1) - offsetY, Math.abs(t._getColLeft(visibleRange.c2 + 1) - t._getColLeft(visibleRange.c1)), Math.abs(t._getRowTop(visibleRange.r2 + 1) - t._getRowTop(visibleRange.r1)));
+		
+		const doDrawArrow = function (_from, _to, external, isPrecedent) {
 			// drawing line, arrow, dot, minitable as part of a whole dependency line
 			ctx.beginPath();
 			ctx.setStrokeStyle(!external ? lineColor : externalLineColor);
@@ -5010,8 +5007,6 @@
 			} else {
 				drawDependentLine(_from, _to, external);
 			}
-
-			ctx.RemoveClipRect();
 		};
 
 		const drawDependentLine = function (from, to, external) {
@@ -5329,6 +5324,8 @@
 		});
 		// draw area
 		drawAreaStroke(traceManager._getPrecedentsAreas());
+		// remove clip range
+		ctx.RemoveClipRect();
 
 		return true;
 	};
