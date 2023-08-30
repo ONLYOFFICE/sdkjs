@@ -4996,14 +4996,22 @@
 		let t = this;
 		const doDrawArrow = function (_from, _to, external, isPrecedent) {
 			ctx.beginPath();
+			ctx.setStrokeStyle(transparentColor);
+			// clip by visible area
+			ctx.AddClipRect(t._getColLeft(visibleRange.c1) - offsetX, t._getRowTop(visibleRange.r1) - offsetY, Math.abs(t._getColLeft(visibleRange.c2 + 1) - t._getColLeft(visibleRange.c1)), Math.abs(t._getRowTop(visibleRange.r2 + 1) - t._getRowTop(visibleRange.r1)));
+			ctx.closePath();
+
+			// drawing line, arrow, dot, minitable as part of a whole dependency line
+			ctx.beginPath();
 			ctx.setStrokeStyle(!external ? lineColor : externalLineColor);
 			ctx.setLineDash([]);
-
 			if (isPrecedent && external) {
 				drawExternalPrecedentLine(_from);
 			} else {
 				drawDependentLine(_from, _to, external);
 			}
+
+			ctx.RemoveClipRect();
 		};
 
 		const drawDependentLine = function (from, to, external) {
@@ -5063,7 +5071,7 @@
 				let dy = (y2 - y1) / extLength;
 				let newX2 = x2 - dx * arrowSize;
 				let newY2 = y2 - dy * arrowSize;
-				
+
 				arrowSize = zoom <= 0.5 ? arrowSize * 1.25 : arrowSize;
 
 				if (external) {
@@ -5073,18 +5081,12 @@
 					drawMiniTable(x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop);
 				} else {
 					ctx.beginPath();
-					ctx.setStrokeStyle(transparentColor);
-					// clip by visible area
-					ctx.AddClipRect(t._getColLeft(visibleRange.c1) - offsetX, t._getRowTop(visibleRange.r1) - offsetY, Math.abs(t._getColLeft(visibleRange.c2 + 1) - t._getColLeft(visibleRange.c1)), Math.abs(t._getRowTop(visibleRange.r2 + 1) - t._getRowTop(visibleRange.r1)));
-					ctx.closePath();
-					ctx.beginPath();
 					ctx.setStrokeStyle(!external ? lineColor : externalLineColor);
 					ctx.moveTo(x1, y1);
 					ctx.lineTo(newX2, newY2);
 					ctx.closePath().stroke();
 					drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
 					drawDot(x1, y1, lineColor);
-					ctx.RemoveClipRect();
 				}
 			}
 		};
@@ -5320,7 +5322,7 @@
 			if (from) {
 				let cellFrom = AscCommonExcel.getFromCellIndex(from, true);
 				// check if cellIndex exist in precedentExternal array
-				if (traceManager.checkPrecedentExternal(+from)) {
+				if (traceManager.checkPrecedentExternal(+from) && visibleRange.contains2(cellFrom)) {
 					doDrawArrow(cellFrom, null, true, true);
 				}
 			}
