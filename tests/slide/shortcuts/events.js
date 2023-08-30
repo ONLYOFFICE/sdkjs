@@ -119,7 +119,8 @@
 	};
 	const oMainEvents = {};
 	oMainEvents[oMainShortcutTypes.checkDeleteBack] = [new CTestEvent(createNativeEvent(8, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkDeleteWordBack] = [new CTestEvent(createNativeEvent(8, true, false, false, false, false, false))];
+	oMainEvents[oMainShortcutTypes.checkDeleteWordBack] = [new CTestEvent(createNativeEvent(8, true, false, false, false, false, false), testWindows),
+		new CTestEvent(createNativeEvent(8, false, false, true, false, false, false), testMacOs)];
 	oMainEvents[oMainShortcutTypes.checkRemoveAnimation] = [
 		new CTestEvent(createNativeEvent(8, false, false, false, false, false)),
 		new CTestEvent(createNativeEvent(46, false, false, false, false, false, false))];
@@ -168,21 +169,29 @@
 	oMainEvents[oMainShortcutTypes.checkClearParagraphFormatting] = [new CTestEvent(createNativeEvent(32, true, false, false, false, false, false))];
 	oMainEvents[oMainShortcutTypes.checkAddSpace] = [new CTestEvent(createNativeEvent(32, false, false, false, false, false, false))];
 	oMainEvents[oMainShortcutTypes.checkMoveToEndPosContent] = [new CTestEvent(createNativeEvent(35, true, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveToEndLineContent] = [new CTestEvent(createNativeEvent(35, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkSelectToEndLineContent] = [new CTestEvent(createNativeEvent(35, false, true, false, false, false, false))];
+	oMainEvents[oMainShortcutTypes.checkMoveToEndLineContent] = [new CTestEvent(createNativeEvent(35, false, false, false, false, false, false)),
+		new CTestEvent(createNativeEvent(39, true, false, false, false, false, false), testMacOs)];
+	oMainEvents[oMainShortcutTypes.checkSelectToEndLineContent] = [new CTestEvent(createNativeEvent(35, false, true, false, false, false, false)),
+		new CTestEvent(createNativeEvent(39, true, true, false, false, false, false), testMacOs)];
 	oMainEvents[oMainShortcutTypes.checkMoveToStartPosContent] = [new CTestEvent(createNativeEvent(36, true, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveToStartLineContent] = [new CTestEvent(createNativeEvent(36, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkSelectToStartLineContent] = [new CTestEvent(createNativeEvent(36, false, true, false, false, false, false))];
+	oMainEvents[oMainShortcutTypes.checkMoveToStartLineContent] = [new CTestEvent(createNativeEvent(36, false, false, false, false, false, false)),
+		new CTestEvent(createNativeEvent(37, true, false, false, false, false, false), testMacOs)];
+	oMainEvents[oMainShortcutTypes.checkSelectToStartLineContent] = [new CTestEvent(createNativeEvent(36, false, true, false, false, false, false)),
+		new CTestEvent(createNativeEvent(37, true, true, false, false, false, false), testMacOs)];
 	oMainEvents[oMainShortcutTypes.checkMoveCursorLeft] = [new CTestEvent(createNativeEvent(37, false, false, false, false, false, false))];
 	oMainEvents[oMainShortcutTypes.checkSelectCursorLeft] = [new CTestEvent(createNativeEvent(37, false, true, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkSelectWordCursorLeft] = [new CTestEvent(createNativeEvent(37, true, true, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveCursorWordLeft] = [new CTestEvent(createNativeEvent(37, true, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveCursorLeftTable] = [new CTestEvent(createNativeEvent(37, true, false, false, false, false, false))];
+	oMainEvents[oMainShortcutTypes.checkSelectWordCursorLeft] = [new CTestEvent(createNativeEvent(37, true, true, false, false, false, false), testWindows),
+		new CTestEvent(createNativeEvent(37, false, true, true, false, false, false), testMacOs)];
+	oMainEvents[oMainShortcutTypes.checkMoveCursorWordLeft] = [new CTestEvent(createNativeEvent(37, true, false, false, false, false, false), testWindows),
+		new CTestEvent(createNativeEvent(37, false, false, true, false, false, false), testMacOs)];
+	oMainEvents[oMainShortcutTypes.checkMoveCursorLeftTable] = [new CTestEvent(createNativeEvent(37, false, false, false, false, false, false))];
 	oMainEvents[oMainShortcutTypes.checkMoveCursorRight] = [new CTestEvent(createNativeEvent(39, false, false, false, false, false, false))];
 	oMainEvents[oMainShortcutTypes.checkMoveCursorRightTable] = [new CTestEvent(createNativeEvent(39, false, false, false, false, false, false))];
 	oMainEvents[oMainShortcutTypes.checkSelectCursorRight] = [new CTestEvent(createNativeEvent(39, false, true, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkSelectWordCursorRight] = [new CTestEvent(createNativeEvent(39, true, true, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveCursorWordRight] = [new CTestEvent(createNativeEvent(39, true, false, false, false, false, false))];
+	oMainEvents[oMainShortcutTypes.checkSelectWordCursorRight] = [new CTestEvent(createNativeEvent(39, true, true, false, false, false, false), testWindows),
+		new CTestEvent(createNativeEvent(39, false, true, true, false, false, false), testMacOs)];
+	oMainEvents[oMainShortcutTypes.checkMoveCursorWordRight] = [new CTestEvent(createNativeEvent(39, true, false, false, false, false, false), testWindows),
+		new CTestEvent(createNativeEvent(39, false, false, true, false, false, false), testMacOs)];
 	oMainEvents[oMainShortcutTypes.checkMoveCursorTop] = [new CTestEvent(createNativeEvent(38, false, false, false, false, false, false))];
 	oMainEvents[oMainShortcutTypes.checkMoveCursorTopTable] = [new CTestEvent(createNativeEvent(38, false, false, false, false, false, false))];
 	oMainEvents[oMainShortcutTypes.checkSelectCursorTop] = [new CTestEvent(createNativeEvent(38, false, true, false, false, false, false))];

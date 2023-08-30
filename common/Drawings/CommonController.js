@@ -5574,7 +5574,8 @@
 						}
 					} else if (e.keyCode == 8 && canEdit) // BackSpace
 					{
-						drawingObjectsController.remove(-1, undefined, undefined, undefined, ctrlKey);
+						const bIsWord = bIsMacOs ? e.altKey : ctrlKey;
+						drawingObjectsController.remove(-1, undefined, undefined, undefined, bIsWord);
 						bRetValue = true;
 					} else if (e.keyCode == 9 && canEdit) // Tab
 					{
@@ -5723,7 +5724,24 @@
 						bRetValue = true;
 					} else if (e.keyCode == 37) // Left Arrow
 					{
-						this.cursorMoveLeft(e.shiftKey, ctrlKey);
+						const oTargetTextObject = getTargetTextObject(this);
+						if (!oTargetTextObject)
+						{
+							this.cursorMoveLeft(e.shiftKey, ctrlKey);
+						}
+						else if (bIsMacOs && ctrlKey)
+						{
+							const content = this.getTargetDocContent();
+							if (content)
+							{
+								content.MoveCursorToStartOfLine(e.shiftKey);
+							}
+						}
+						else
+						{
+							const bIsWord = bIsMacOs ? e.altKey : ctrlKey;
+							this.cursorMoveLeft(e.shiftKey, bIsWord);
+						}
 
 						drawingObjectsController.updateSelectionState();
 						drawingObjectsController.updateOverlay();
@@ -5739,7 +5757,24 @@
 						bRetValue = true;
 					} else if (e.keyCode == 39) // Right Arrow
 					{
-						this.cursorMoveRight(e.shiftKey, ctrlKey);
+						const oTargetTextObject = getTargetTextObject(this);
+						if (!oTargetTextObject)
+						{
+							this.cursorMoveRight(e.shiftKey, ctrlKey);
+						}
+						else if (bIsMacOs && ctrlKey)
+						{
+							const content = this.getTargetDocContent();
+							if (content)
+							{
+								content.MoveCursorToEndOfLine(e.shiftKey);
+							}
+						}
+						else
+						{
+							const bIsWord = bIsMacOs ? e.altKey : ctrlKey;
+							this.cursorMoveRight(e.shiftKey, bIsWord);
+						}
 
 						drawingObjectsController.updateSelectionState();
 						drawingObjectsController.updateOverlay();

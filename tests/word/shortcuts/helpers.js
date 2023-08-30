@@ -678,6 +678,7 @@
 			x: round(nX * AscCommon.g_dKoef_pix_to_mm, 13),
 			y: round(nY * AscCommon.g_dKoef_pix_to_mm, 13)
 		});
+		drawingObjects().resetSelection()
 	}
 
 	function drawingContentPosition()

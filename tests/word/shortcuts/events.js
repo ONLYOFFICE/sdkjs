@@ -138,7 +138,8 @@
 	oTestEvents[oTestTypes.bigMoveGraphicObjectUp] = [new CTestEvent(createNativeEvent(38, false, false, false, false, false))];
 	oTestEvents[oTestTypes.littleMoveGraphicObjectUp] = [new CTestEvent(createNativeEvent(38, true, false, false, false, false))];
 	oTestEvents[oTestTypes.removeBackSymbol] = [new CTestEvent(createNativeEvent(8, false, false, false, false))];
-	oTestEvents[oTestTypes.removeBackWord] = [new CTestEvent(createNativeEvent(8, true, false, false, false))];
+	oTestEvents[oTestTypes.removeBackWord] = [new CTestEvent(createNativeEvent(8, true, false, false, false), testWindows),
+		new CTestEvent(createNativeEvent(8, false, false, true, false), testMacOs)];
 	oTestEvents[oTestTypes.removeShape] = [
 		new CTestEvent(createNativeEvent(8, false, false, false, false, false)),
 		new CTestEvent(createNativeEvent(46, false, false, false, false, false))
@@ -179,21 +180,29 @@
 	oTestEvents[oTestTypes.pageUp] = [new CTestEvent()];
 	oTestEvents[oTestTypes.pageDown] = [new CTestEvent()];
 	oTestEvents[oTestTypes.moveToEndDocument] = [new CTestEvent(createNativeEvent(35, true, false, false))];
-	oTestEvents[oTestTypes.moveToEndLine] = [new CTestEvent(createNativeEvent(35, false, false, false, false))];
+	oTestEvents[oTestTypes.moveToEndLine] = [new CTestEvent(createNativeEvent(35, false, false, false, false)),
+		new CTestEvent(createNativeEvent(39, true, false, false, false), testMacOs)];
 	oTestEvents[oTestTypes.selectToEndDocument] = [new CTestEvent(createNativeEvent(35, true, true, false, false))];
-	oTestEvents[oTestTypes.selectToEndLine] = [new CTestEvent(createNativeEvent(35, false, true, false, false))];
-	oTestEvents[oTestTypes.selectToStartLine] = [new CTestEvent(createNativeEvent(36, false, true, false, false))];
+	oTestEvents[oTestTypes.selectToEndLine] = [new CTestEvent(createNativeEvent(35, false, true, false, false)),
+		new CTestEvent(createNativeEvent(39, true, true, false, false), testMacOs)];
+	oTestEvents[oTestTypes.selectToStartLine] = [new CTestEvent(createNativeEvent(36, false, true, false, false)),
+		new CTestEvent(createNativeEvent(37, true, true, false, false), testMacOs)];
 	oTestEvents[oTestTypes.selectToStartDocument] = [new CTestEvent(createNativeEvent(36, true, true, false, false))];
-	oTestEvents[oTestTypes.moveToStartLine] = [new CTestEvent(createNativeEvent(36, false, false, false, false))];
+	oTestEvents[oTestTypes.moveToStartLine] = [new CTestEvent(createNativeEvent(36, false, false, false, false)),
+		new CTestEvent(createNativeEvent(37, true, false, false, false), testMacOs)];
 	oTestEvents[oTestTypes.moveToStartDocument] = [new CTestEvent(createNativeEvent(36, true, false, false))];
-	oTestEvents[oTestTypes.selectLeftWord] = [new CTestEvent(createNativeEvent(37, true, true, false, false))];
-	oTestEvents[oTestTypes.moveToLeftWord] = [new CTestEvent(createNativeEvent(37, true, false, false, false))];
+	oTestEvents[oTestTypes.selectLeftWord] = [new CTestEvent(createNativeEvent(37, true, true, false, false), testWindows),
+		new CTestEvent(createNativeEvent(37, false, true, true, false), testMacOs)];
+	oTestEvents[oTestTypes.moveToLeftWord] = [new CTestEvent(createNativeEvent(37, true, false, false, false)),
+		new CTestEvent(createNativeEvent(37, false, false, true, false), testMacOs)];
 	oTestEvents[oTestTypes.selectLeftSymbol] = [new CTestEvent(createNativeEvent(37, false, true, false, false))];
 	oTestEvents[oTestTypes.moveToLeftChar] = [new CTestEvent(createNativeEvent(37, false, false, false, false))];
 	oTestEvents[oTestTypes.moveToRightChar] = [new CTestEvent(createNativeEvent(39, false, false, false, false))];
 	oTestEvents[oTestTypes.selectRightChar] = [new CTestEvent(createNativeEvent(39, false, true, false, false))];
-	oTestEvents[oTestTypes.moveToRightWord] = [new CTestEvent(createNativeEvent(39, true, false, false, false))];
-	oTestEvents[oTestTypes.selectRightWord] = [new CTestEvent(createNativeEvent(39, true, true, false, false))];
+	oTestEvents[oTestTypes.moveToRightWord] = [new CTestEvent(createNativeEvent(39, true, false, false, false), testWindows),
+		new CTestEvent(createNativeEvent(39, false, false, true, false), testMacOs)];
+	oTestEvents[oTestTypes.selectRightWord] = [new CTestEvent(createNativeEvent(39, true, true, false, false), testWindows),
+		new CTestEvent(createNativeEvent(39, false, true, true, false), testMacOs)];
 	oTestEvents[oTestTypes.moveUp] = [new CTestEvent(createNativeEvent(38, false, false, false, false))];
 	oTestEvents[oTestTypes.selectUp] = [new CTestEvent(createNativeEvent(38, false, true, false, false))];
 	oTestEvents[oTestTypes.previousOptionComboBox] = [new CTestEvent(createNativeEvent(38, false, false, false, false, false))];

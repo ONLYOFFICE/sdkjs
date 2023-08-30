@@ -2407,6 +2407,7 @@
 	CellEditor.prototype._onWindowKeyDown = function (event, isInput) {
 		var t = this, kind = undefined, hieroglyph = false;
 		var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
+		const bIsMacOs = AscCommon.AscBrowser.isMacOs;
 
 		if (this.handlers.trigger('getWizard') || !t.isOpened || (!isInput && !t.enableKeyEvents && event.emulated !== true)) {
 			return true;
@@ -2483,7 +2484,8 @@
 						t._syncEditors();
 					}
 				}
-				t._removeChars(ctrlKey ? kPrevWord : kPrevChar);
+				const bIsWord = bIsMacOs ? event.altKey : ctrlKey;
+				t._removeChars(bIsWord ? kPrevWord : kPrevChar);
 				return false;
 
 			case 32:  // "space"
@@ -2545,8 +2547,17 @@
 				if (hieroglyph) {
 					t._syncEditors();
 				}
-				kind = ctrlKey ? kPrevWord : kPrevChar;
-				event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);
+				if (bIsMacOs && ctrlKey)
+				{
+					event.shiftKey ? t._selectChars(kBeginOfLine) : t._moveCursor(kBeginOfLine);
+				}
+				else
+				{
+					const bWord = bIsMacOs ? event.altKey : ctrlKey;
+					kind = bWord ? kPrevWord : kPrevChar;
+					event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);
+				}
+
 				return false;
 
 			case 38:  // "up"
@@ -2580,8 +2591,16 @@
 				if (hieroglyph) {
 					t._syncEditors();
 				}
-				kind = ctrlKey ? kNextWord : kNextChar;
-				event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);
+				if (bIsMacOs && ctrlKey)
+				{
+					event.shiftKey ? t._selectChars(kEndOfLine) : t._moveCursor(kEndOfLine);
+				}
+				else
+				{
+					const bWord = bIsMacOs ? event.altKey : ctrlKey;
+					kind = bWord ? kNextWord : kNextChar;
+					event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);
+				}
 				return false;
 
 			case 40:  // "down"
