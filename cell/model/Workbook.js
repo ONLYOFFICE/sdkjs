@@ -19385,8 +19385,216 @@
 
 		return sComparedPrefix === sPrefix && bComparedDate === bDate;
 	};
+	//-------------------------------------------------------------------------------------------------
+	/**
+	 * @constructor
+	 */
+	function CSerial (settings, range) {
+		this.bVertical = settings.seriesIn === 'Columns';
+		this.sType = settings.type;
+		this.sDateUnit = settings.date;
+		this.sStep = settings.step;
+		this.sStopValue = settings.stopValue;
+		this.bTrend = settings.trend;
+		this.oFromRange = range;
+		this.oToRange = null;
+		this.ws = range.worksheet;
+		this.nPrevValue = null;
+		this.nIndex = null;
+	}
+	CSerial.prototype.getVertical = function() {
+		return this.bVertical;
+	};
+	CSerial.prototype.getType = function() {
+		return this.sType;
+	};
+	CSerial.prototype.getDateUnit = function() {
+		return this.sDateUnit;
+	};
+	CSerial.prototype.getStep = function() {
+		return this.sStep;
+	};
+	CSerial.prototype.getStopValue = function() {
+		return this.sStopValue;
+	};
+	CSerial.prototype.getTrend = function() {
+		return this.bTrend;
+	};
+	CSerial.prototype.getFromRange = function() {
+		return this.oFromRange;
+	};
+	CSerial.prototype.setToRange = function(oRange) {
+		this.oToRange = oRange;
+	};
+	CSerial.prototype.getToRange = function() {
+		return this.oToRange;
+	};
+	CSerial.prototype.getWs = function() {
+		return this.ws;
+	};
+	CSerial.prototype.setPrevValue = function(nValue) {
+		this.nPrevValue = nValue;
+	};
+	CSerial.prototype.getPrevValue = function() {
+		return this.nPrevValue;
+	};
+	CSerial.prototype.setIndex = function(nIndex) {
+		this.nIndex = nIndex;
+	};
+	CSerial.prototype.getIndex = function() {
+		return this.nIndex;
+	};
+	CSerial.prototype.getFilledRange = function() {
+		let oFromRange = this.getFromRange();
+		let nRow = 0;
+		let nCol = 0;
+		let sType = this.getType();
 
+		oFromRange._foreachNoEmpty(function(oCell, nRow0, nCol0) {
+			if (oCell && oCell.getValueWithoutFormat()) {
+				if (sType === 'AutoFill') {
+					nRow = nRow0;
+					nCol = nCol0;
+				} else { // for other modes uses only first filled cell in range
+					nRow = nRow0;
+					nCol = nCol0;
+					return true; // break loop
+				}
+			} else {
+				return true;
+			}
+		});
+		oFromRange.bbox.r2 = nRow;
+		oFromRange.bbox.c2 = nCol;
 
+		return oFromRange;
+	};
+	CSerial.prototype.initToRange = function() {
+		let ws = this.getWs();
+		let oFilledRange = this.getFilledRange();
+		let oRange = ws.selectionRange.getLast();
+		this.setIndex(this.getVertical() ? oRange.r2 : oRange.c2);
+		let oTo = oFilledRange.canPromote(false, this.getVertical(), this.getIndex()).to;
+		this.setToRange(ws.getRange3(oTo.r1, oTo.c1, oTo.r2, oTo.c2));
+	};
+	CSerial.prototype.getFilledCells = function() {
+		let oCSerial = this;
+		let oFromRange = this.getFromRange();
+		let bVertical = this.getVertical();
+		let sType = this.getType();
+		let aFilledCells = [];
+
+		oFromRange._foreachNoEmpty(function(oCell, nRow, nCol, nRowStart, nColStart) {
+			if (oCell && oCell.getValueWithoutFormat() && sType !== 'AutoFill') {
+				let nType = oCell.getType();
+				let oDirectCondition = {
+					true: nRow === nRowStart,
+					false: nCol === nColStart
+				}
+				if (oDirectCondition[bVertical] && nType === CellValueType.Number) {
+					oCSerial.initToRange();
+					aFilledCells.push({
+						'nValue': oCell.getNumberValue(),
+						'oToRange': oCSerial.getToRange(),
+						'oCell': oCell
+					});
+				}
+			}
+		});
+
+		return aFilledCells;
+	};
+	CSerial.prototype.promoteCells = function(aFilledCells) {
+		let bReverse = this.getIndex() < 0;
+		let nStep = this.getTrend() ? 1 : Number(this.getStep());
+		let nStopValue = this.getStopValue() != null ? Number(this.getStopValue()) : null;
+		let sType = this.getType();
+
+		for (let i = 0, length = aFilledCells.length; i < length; i++) {
+			let oFilledCell = aFilledCells[i];
+			let oTo = oFilledCell.oToRange.bbox;
+			let oToRange = oFilledCell.oToRange;
+			let oWsTo = oFilledCell.oToRange.worksheet;
+			let oFromCell = oFilledCell.oCell;
+			this.setPrevValue(oFilledCell.nValue);
+			let nPrevValue = this.getPrevValue();
+			// Clean exist data in autofill range
+			oToRange.cleanText();
+			// Init variables for filling cells
+			let nStartIndex, nEndIndex, nIterStep;
+			if (this.getVertical()) {
+				if (bReverse) {
+					nStartIndex = oTo.r2;
+					nEndIndex = oTo.r1 - 1;
+					nIterStep = -1;
+				} else {
+					nStartIndex = oTo.r1;
+					nEndIndex = oTo.r2 + 1;
+					nIterStep = 1
+				}
+			} else {
+				if (bReverse) {
+					nStartIndex = oTo.c2;
+					nEndIndex = oTo.c1 - 1;
+					nIterStep = -1;
+				} else {
+					nStartIndex = oTo.c1;
+					nEndIndex = oTo.c2 + 1;
+					nIterStep = 1
+				}
+			}
+			// Fill range cells for i row or col
+			for (let j = nStartIndex; j !== nEndIndex; j += nIterStep) {
+				let nRow = this.getVertical() ? j : i;
+				let nCol = this.getVertical() ? i : j;
+				let bStopLoop = false;
+				let oProgression = {
+					'Linear': nPrevValue + nStep,
+					'Growth': nPrevValue * nStep
+				};
+
+				oWsTo._getCell(nRow, nCol, function(oCopyCell) {
+					if (nPrevValue) {
+						let oCellValue = new AscCommonExcel.CCellValue();
+						let nCurrentValue = oProgression[sType];
+						if (nStopValue && nCurrentValue > nStopValue) {
+							bStopLoop = true;
+							return;
+						}
+						oCellValue.type = CellValueType.Number;
+						oCellValue.number = nCurrentValue;
+						nPrevValue = nCurrentValue;
+						oCopyCell.setValueData(new UndoRedoData_CellValueData(null, oCellValue));
+
+						if (null != oFromCell) {
+							oCopyCell.setStyle(oFromCell.getStyle());
+							oCopyCell.setType(oFromCell.getType());
+						}
+					}
+				});
+				if (bStopLoop) {
+					break;
+				}
+			}
+		}
+	};
+	CSerial.prototype.exec = function() {
+		let oFromRange = this.getFromRange();
+		let bVertical = this.getVertical();
+		let sType = this.getType();
+
+		if (sType === 'AutoFill') {
+			let oFilledRange = this.getFilledRange();
+			let oRange = oFromRange.worksheet.selectionRange.getLast();
+			this.setIndex(bVertical ? oRange.r2 : oRange.c2);
+			let oCanPromote = oFilledRange.canPromote(false, bVertical, this.getIndex());
+			oFilledRange.promote(false, this.getVertical(), this.getIndex(), oCanPromote);
+		} else {
+			let aFilledCells = this.getFilledCells();
+			this.promoteCells(aFilledCells);
+		}
+	};
+	// Export
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].g_nVerticalTextAngle = g_nVerticalTextAngle;
 	window['AscCommonExcel'].g_nSheetNameMaxLength = g_nSheetNameMaxLength;
@@ -19420,5 +19628,6 @@
 	window['AscCommonExcel'].g_nDefNameMaxLength = g_nDefNameMaxLength;
 	window['AscCommonExcel'].changeTextCase = changeTextCase;
 	window['AscCommonExcel'].g_sNewSheetNamePattern = g_sNewSheetNamePattern;
+	window['AscCommonExcel'].CSerial = CSerial;
 
 })(window);
