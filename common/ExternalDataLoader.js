@@ -80,7 +80,9 @@
 					//url - file link
 
 					if (!bTimeout && oResult["code"] === AscCommon.c_oAscServerCommandErrors.NoError) {
+						arrData[i]["directUrl"] = oResult["url"];
 						arrData[i]["url"] = oResult["url"];
+						arrData[i]["fileType"] = "xlsx";
 						arrData[i]["token"] = null;
 					}
 					fResolve();
