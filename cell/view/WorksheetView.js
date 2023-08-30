@@ -4979,18 +4979,6 @@
 	};
 
 	WorksheetView.prototype.drawTraceArrows = function (visibleRange, offsetX, offsetY) {
-		let frozenPaneInfo, frozenRow, frozenRowCoords, frozenCol, frozenColCoords;
-		
-		if (this.topLeftFrozenCell && !visibleRange.isEqualAll(this.getVisibleRange())) {
-			return true;
-		} else if (this.topLeftFrozenCell) {
-			frozenPaneInfo = this.topLeftFrozenCell;
-			frozenCol = this.topLeftFrozenCell.getCol0();
-			frozenRow = this.topLeftFrozenCell.getRow0();
-			frozenColCoords = this._getColLeft(frozenCol - 1) + this._getColumnWidth(frozenCol - 1);
-			frozenRowCoords = this._getRowTop(frozenRow - 1) + this._getRowHeight(frozenRow - 1);
-		}
-
 		let traceManager = this.traceDependentsManager;
 		let ctx = this.overlayCtx;
 		let widthLine = 2, 
@@ -5003,6 +4991,7 @@
 		const lineColor = new CColor(78, 128, 245);
 		const externalLineColor = new CColor(68, 68, 68);
 		const whiteColor = new CColor(255, 255, 255);
+		const transparentColor = new CColor(255, 255, 255, 0);
 
 		let t = this;
 		const doDrawArrow = function (_from, _to, external, isPrecedent) {
@@ -5083,50 +5072,19 @@
 					drawDot(x1, y1, externalLineColor);
 					drawMiniTable(x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop);
 				} else {
-					if (frozenPaneInfo && (frozenColCoords >= x1 || frozenColCoords >= newX2)) {
-						let y3 = y1 + ((newY2 - y1) / (newX2 - x1)) * (frozenColCoords - x1);
-						if (frozenColCoords >= x1) {
-							// remove the drawing of the dot
-							ctx.beginPath();
-							ctx.moveTo(frozenColCoords, y3);
-							ctx.lineTo(newX2, newY2);
-							ctx.closePath().stroke();
-							drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
-						} else if (frozenColCoords >= newX2) {
-							// remove the drawing of the arrowhead
-							ctx.beginPath();
-							ctx.moveTo(x1, y1);
-							ctx.lineTo(frozenColCoords, y3);
-							ctx.closePath().stroke();
-							drawDot(x1, y1, lineColor);
-						}
-					} else if (frozenPaneInfo && (frozenRowCoords >= y1 || frozenRowCoords >= newY2)) {
-						let x3 = x1 + ((newX2 - x1) / (newY2 - y1)) * (frozenRowCoords - y1);
-						if (frozenRowCoords >= y1) {
-							// remove the drawing of the dot
-							ctx.beginPath();
-							ctx.moveTo(x3, frozenRowCoords);
-							ctx.lineTo(newX2, newY2);
-							ctx.closePath().stroke();
-							drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
-						} else if (frozenRowCoords >= newY2) {
-							// remove the drawing of the arrowhead
-							ctx.beginPath();
-							ctx.moveTo(x1, y1);
-							ctx.lineTo(x3, frozenRowCoords);
-							ctx.closePath().stroke();
-							drawDot(x1, y1, lineColor);
-						}
-					} else {
-						// normal draw without frozen panes
-						// ctx.lineDiag(x1, y1, newX2, newY2);
-						ctx.beginPath();
-						ctx.moveTo(x1, y1);
-						ctx.lineTo(newX2, newY2);
-						ctx.closePath().stroke(); 	// draw regular line
-						drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
-						drawDot(x1, y1, lineColor);
-					}
+					ctx.beginPath();
+					ctx.setStrokeStyle(transparentColor);
+					// clip by visible area
+					ctx.AddClipRect(t._getColLeft(visibleRange.c1) - offsetX, t._getRowTop(visibleRange.r1) - offsetY, Math.abs(t._getColLeft(visibleRange.c2 + 1) - t._getColLeft(visibleRange.c1)), Math.abs(t._getRowTop(visibleRange.r2 + 1) - t._getRowTop(visibleRange.r1)));
+					ctx.closePath();
+					ctx.beginPath();
+					ctx.setStrokeStyle(!external ? lineColor : externalLineColor);
+					ctx.moveTo(x1, y1);
+					ctx.lineTo(newX2, newY2);
+					ctx.closePath().stroke();
+					drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
+					drawDot(x1, y1, lineColor);
+					ctx.RemoveClipRect();
 				}
 			}
 		};
@@ -5370,7 +5328,7 @@
 		// draw area
 		drawAreaStroke(traceManager._getPrecedentsAreas());
 
-		// return true;
+		return true;
 	};
 
 	WorksheetView.prototype._drawPageBreakPreviewText = function (drawingCtx, range, leftFieldInPx, topFieldInPx) {
@@ -6474,8 +6432,6 @@
             if (0 <= cFrozen && 0 <= rFrozen) {
                 oFrozenRange = new asc_Range(0, 0, cFrozen, rFrozen);
                 res = drawFunction.call(this, oFrozenRange, this._getColLeft(0) - this.cellsLeft, this._getRowTop(0) - this.cellsTop, args);
-
-				// res = drawFunction.call(this, oFrozenRange, offsetX, offsetY, args);
                 if (!res) {
                     return;
                 }
