@@ -1744,6 +1744,10 @@ var editor;
 		if (this.wbModel.DrawingDocument) {
 			this.wbModel.DrawingDocument.CloseFile();
 		}
+
+        if(this.wb.MobileTouchManager) {
+            this.wb.MobileTouchManager.Destroy();
+        }
 	};
 
 	spreadsheet_api.prototype.openDocumentFromZip = function (wb, data) {

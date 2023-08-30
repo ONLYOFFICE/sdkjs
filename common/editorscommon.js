@@ -13207,6 +13207,9 @@
 		if (!api) {
 			return;
 		}
+		if (api.documentOpenOptions && api.documentOpenOptions["debug"]) {
+			console.log("[speed]: "+ msg);
+		}
 		api.CoAuthoringApi.sendClientLog(level, msg);
 	}
 
