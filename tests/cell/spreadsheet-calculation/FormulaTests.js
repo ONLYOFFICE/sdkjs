@@ -738,7 +738,6 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"Parse intersection\"", function (assert) {
-
 		ws.getRange2("A7").setValue("1");
 		ws.getRange2("A8").setValue("2");
 		ws.getRange2("A9").setValue("3");
@@ -8028,6 +8027,7 @@ $(function () {
 
 	QUnit.test("Test: \"WEEKDAY\"", function (assert) {
 		let array;
+
 		ws.getRange2("A2").setValue("2/14/2008");
 		
 		oParser = new parserFormula("WEEKDAY(A2)", "A1", ws);
@@ -8042,19 +8042,21 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 3);
 		
-		ws.getRange2("B1").setValue("=DATE(2023,1,1)");
-		ws.getRange2("B2").setValue("=DATE(2023,1,2)");
-		ws.getRange2("B3").setValue("=DATE(2023,1,3)");
-		ws.getRange2("B4").setValue("=DATE(2023,1,4)");
-		ws.getRange2("B5").setValue("=DATE(2023,1,5)");
-		ws.getRange2("B6").setValue("=DATE(2023,1,6)");
-		ws.getRange2("B7").setValue("=DATE(2023,1,7)");
-		ws.getRange2("B8").setValue("=DATE(2023,1,8)");
-		ws.getRange2("B9").setValue("=DATE(2023,1,9)");
-		ws.getRange2("B10").setValue("=DATE(2023,1,10)");
-		ws.getRange2("B11").setValue("=DATE(2023,1,11)");
-		ws.getRange2("B12").setValue("=DATE(2023,1,12)");
+		// ws.getRange2("B121").setValue("=DATE(2023,1,1)");
+		ws.getRange2("B1").setValue("2023/1/1");
+		ws.getRange2("B2").setValue("2023/1/2");	//44928
+		ws.getRange2("B3").setValue("2023/1/3");
+		ws.getRange2("B4").setValue("2023/1/4");
+		ws.getRange2("B5").setValue("2023/1/5");
+		ws.getRange2("B6").setValue("2023/1/6");
+		ws.getRange2("B7").setValue("2023/1/7");
+		ws.getRange2("B8").setValue("2023/1/8");
+		ws.getRange2("B9").setValue("2023/1/9");
+		ws.getRange2("B10").setValue("2023/1/10");
+		ws.getRange2("B11").setValue("2023/1/11");
+		ws.getRange2("B12").setValue("2023/1/12");
 		// ws.getRange2("B1").setValue("1904");
+		
 		oParser = new parserFormula("WEEKDAY(B1,2)>5", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "TRUE");
@@ -8373,6 +8375,8 @@ $(function () {
 
 
 		testArrayFormula2(assert, "WEEKDAY", 1, 2);
+
+		ws.getRange2("A1:Z500").cleanAll();
 	});
 
 
