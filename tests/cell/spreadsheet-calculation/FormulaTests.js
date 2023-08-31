@@ -644,9 +644,6 @@ $(function () {
 		oBinaryFileReader.Read(sData, wb);
 		ws = wb.getWorksheet(wb.getActive());
 		AscCommonExcel.getFormulasInfo();
-		console.log(wb);
-		console.log(ws);
-		console.log(api);
 	}
 
 	wb.dependencyFormulas.lockRecal();
@@ -8032,7 +8029,7 @@ $(function () {
 		let array;
 
 		// base mode
-		AscCommon.bDate1904 = false;
+		ws.workbook.setDate1904(false, true);
 		ws.getRange2("A2").setValue("2/14/2008");
 		
 		oParser = new parserFormula("WEEKDAY(A2)", "A1", ws);
@@ -8048,8 +8045,8 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 3);
 		
 		// ws.getRange2("B121").setValue("=DATE(2023,1,1)");
-		ws.getRange2("B1").setValue("2023/1/1");	//44928
-		ws.getRange2("B2").setValue("2023/1/2");	//44928
+		ws.getRange2("B1").setValue("2023/1/1");
+		ws.getRange2("B2").setValue("2023/1/2");
 		ws.getRange2("B3").setValue("2023/1/3");
 		ws.getRange2("B4").setValue("2023/1/4");
 		ws.getRange2("B5").setValue("2023/1/5");
@@ -8060,7 +8057,6 @@ $(function () {
 		ws.getRange2("B10").setValue("2023/1/10");
 		ws.getRange2("B11").setValue("2023/1/11");
 		ws.getRange2("B12").setValue("2023/1/12");
-		// ws.getRange2("B1").setValue("1904");
 		
 		oParser = new parserFormula("WEEKDAY(B1,2)>5", "A1", ws);
 		assert.ok(oParser.parse());
