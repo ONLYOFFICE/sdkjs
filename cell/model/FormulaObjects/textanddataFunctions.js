@@ -2433,7 +2433,7 @@ function (window, undefined) {
 	cTEXTBEFORE.prototype.argumentsMin = 2;
 	cTEXTBEFORE.prototype.argumentsMax = 6;
 	cTEXTBEFORE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
-	cTEXTBEFORE.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.number, argType.number, argType.any];
+	cTEXTBEFORE.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.logical, argType.logical, argType.any];
 	cTEXTBEFORE.prototype.isXLFN = true;
 	cTEXTBEFORE.prototype.arrayIndexes = {1: 1};
 	cTEXTBEFORE.prototype.Calculate = function (arg) {
@@ -2454,7 +2454,7 @@ function (window, undefined) {
 	cTEXTAFTER.prototype.argumentsMin = 2;
 	cTEXTAFTER.prototype.argumentsMax = 6;
 	cTEXTAFTER.prototype.numFormat = AscCommonExcel.cNumFormatNone;
-	cTEXTAFTER.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.number, argType.number, argType.any];
+	cTEXTAFTER.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.logical, argType.logical, argType.any];
 	cTEXTAFTER.prototype.isXLFN = true;
 	cTEXTAFTER.prototype.arrayIndexes = {1: 1};
 	cTEXTAFTER.prototype.Calculate = function (arg) {
