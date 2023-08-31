@@ -517,6 +517,8 @@
 					  }
 				  }
 				  return null;
+			  }, "showFormulas": function () {
+				  self._onShowFormulas.apply(self, arguments);
 			  },
 
 
@@ -1867,6 +1869,12 @@
            this._onUpdateWorksheet(oTargetInfo.coordX, oTargetInfo.coordY, false);
         }
     }
+  };
+
+  WorkbookView.prototype._onShowFormulas = function () {
+    let ws = this.getWorksheet();
+    let showFormulasVal = ws.model && ws.model.getShowFormulas();
+    ws.changeSheetViewSettings(AscCH.historyitem_Worksheet_SetShowFormulas, !showFormulasVal);
   };
 
   // Shapes

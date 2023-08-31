@@ -1208,6 +1208,9 @@
 							if (shiftKey) {
 								t.handlers.trigger("setCellFormat", Asc.c_oAscNumFormatType.General);
 								action = true;
+							} else {
+								t.handlers.trigger("showFormulas");
+								action = true;
 							}
 							break;
 					}
