@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 11.10.2017
- * Time: 13:47
- */
 
 /**
  *
@@ -70,9 +65,16 @@ CParagraphBookmark.prototype.GetId = function()
 {
 	return this.Id;
 };
-CParagraphBookmark.prototype.Copy = function()
+CParagraphBookmark.prototype.Copy = function(Selected, oPr, isCopyReviewPr)
 {
-	return new CParagraphBookmark(this.Start, this.BookmarkId, this.BookmarkName);
+	let sId = this.BookmarkId;
+	if (oPr && oPr.Comparison)
+	{
+		const sComparisonId = oPr.Comparison.oBookmarkManager.getId(this);
+		if (sComparisonId)
+			sId = sComparisonId;
+	}
+	return new CParagraphBookmark(this.Start, sId, this.BookmarkName);
 };
 CParagraphBookmark.prototype.GetBookmarkId = function()
 {
@@ -355,7 +357,7 @@ CBookmarksManager.prototype.HaveBookmark = function(sName)
 	for (var nIndex = 0, nCount = this.Bookmarks.length; nIndex < nCount; ++nIndex)
 	{
 		var oStart = this.Bookmarks[nIndex][0];
-		if (oStart.GetBookmarkName().toLowerCase() === sName)
+		if (oStart.GetBookmarkName().toLowerCase() === _sName)
 			return true;
 	}
 

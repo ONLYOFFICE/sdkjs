@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 27.10.2016
- * Time: 18:01
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_Paragraph_AddItem]                   = CChangesParagraphAddItem;
 AscDFH.changesFactory[AscDFH.historyitem_Paragraph_RemoveItem]                = CChangesParagraphRemoveItem;
@@ -576,12 +571,16 @@ CChangesParagraphNumbering.prototype.private_CreateObject = function()
 {
 	return new CNumPr();
 };
-CChangesParagraphNumbering.prototype.private_SetValue = function(Value)
+CChangesParagraphNumbering.prototype.private_SetValue = function(newNumPr)
 {
 	var oParagraph = this.Class;
-	oParagraph.Pr.NumPr = Value;
-
-	oParagraph.private_RefreshNumbering(oParagraph.Pr.NumPr);
+	
+	let oldNumPr   = oParagraph.Pr.NumPr;
+	oParagraph.Pr.NumPr = newNumPr;
+	
+	oParagraph.private_RefreshNumbering(oldNumPr);
+	oParagraph.private_RefreshNumbering(newNumPr);
+	
 	oParagraph.CompiledPr.NeedRecalc = true;
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
 };
@@ -1163,6 +1162,7 @@ CChangesParagraphPStyle.prototype.private_SetValue = function(Value)
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
 	oParagraph.Recalc_RunsCompiledPr();
 	oParagraph.UpdateDocumentOutline();
+	oParagraph.private_RefreshNumbering();
 	private_ParagraphChangesOnSetValue(this.Class);
 };
 CChangesParagraphPStyle.prototype.Merge = private_ParagraphChangesOnMergePr;

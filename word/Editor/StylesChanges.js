@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 08.11.2016
- * Time: 19:48
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_Style_TextPr]          = CChangesStyleTextPr;
 AscDFH.changesFactory[AscDFH.historyitem_Style_ParaPr]          = CChangesStyleParaPr;
@@ -66,6 +61,7 @@ AscDFH.changesFactory[AscDFH.historyitem_Style_SemiHidden]      = CChangesStyleS
 AscDFH.changesFactory[AscDFH.historyitem_Style_UnhideWhenUsed]  = CChangesStyleUnhideWhenUsed;
 AscDFH.changesFactory[AscDFH.historyitem_Style_Link]            = CChangesStyleLink;
 AscDFH.changesFactory[AscDFH.historyitem_Style_Custom]          = CChangesStyleCustom;
+AscDFH.changesFactory[AscDFH.historyitem_Style_StyleId]         = CChangesStyleStyleId;
 
 AscDFH.changesFactory[AscDFH.historyitem_Styles_Add]                              = CChangesStylesAdd;
 AscDFH.changesFactory[AscDFH.historyitem_Styles_Remove]                           = CChangesStylesRemove;
@@ -125,6 +121,7 @@ AscDFH.changesRelationMap[AscDFH.historyitem_Style_Hidden]          = [AscDFH.hi
 AscDFH.changesRelationMap[AscDFH.historyitem_Style_SemiHidden]      = [AscDFH.historyitem_Style_SemiHidden];
 AscDFH.changesRelationMap[AscDFH.historyitem_Style_UnhideWhenUsed]  = [AscDFH.historyitem_Style_UnhideWhenUsed];
 AscDFH.changesRelationMap[AscDFH.historyitem_Style_Link]            = [AscDFH.historyitem_Style_Link];
+AscDFH.changesRelationMap[AscDFH.historyitem_Style_StyleId]         = [AscDFH.historyitem_Style_StyleId];
 
 AscDFH.changesRelationMap[AscDFH.historyitem_Styles_Add]                 = [
 	AscDFH.historyitem_Styles_Add,
@@ -426,11 +423,23 @@ CChangesStyleParaPr.prototype.constructor = CChangesStyleParaPr;
 CChangesStyleParaPr.prototype.Type = AscDFH.historyitem_Style_ParaPr;
 CChangesStyleParaPr.prototype.private_CreateObject = function()
 {
-	return new CParaPr();
+	return new AscWord.CParaPr();
 };
-CChangesStyleParaPr.prototype.private_SetValue = function(Value)
+CChangesStyleParaPr.prototype.private_SetValue = function(paraPr)
 {
-	this.Class.ParaPr = Value;
+	let style = this.Class;
+	
+	let oldNumPr = style.ParaPr.NumPr;
+	let newNumPr = paraPr.NumPr;
+	
+	style.ParaPr = paraPr;
+	
+	if ((!oldNumPr && newNumPr)
+		|| (oldNumPr && !newNumPr)
+		|| (oldNumPr && newNumPr && !oldNumPr.IsEqual(newNumPr)))
+	{
+		style.UpdateNumberingCollection();
+	}
 };
 /**
  * @constructor
@@ -891,7 +900,21 @@ CChangesStyleLink.prototype.private_SetValue = function(Value)
 {
 	this.Class.Link = Value;
 };
-
+/**
+ * @constructor
+ * @extends {CChangesStyleBaseStringProperty}
+ */
+function CChangesStyleStyleId(Class, Old, New)
+{
+	CChangesStyleBaseStringProperty.call(this, Class, Old, New);
+}
+CChangesStyleStyleId.prototype = Object.create(CChangesStyleBaseStringProperty.prototype);
+CChangesStyleStyleId.prototype.constructor = CChangesStyleStyleId;
+CChangesStyleStyleId.prototype.Type = AscDFH.historyitem_Style_StyleId;
+CChangesStyleStyleId.prototype.private_SetValue = function(Value)
+{
+	this.Class.StyleId = Value;
+};
 /**
  * @constructor
  * @extends {CChangesStyleBaseBoolProperty}

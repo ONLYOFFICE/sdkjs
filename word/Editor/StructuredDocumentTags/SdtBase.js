@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2020
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 02.04.2020
- * Time: 15:50
- */
 
 /**
  * Базовый класс для контент контролов
@@ -164,11 +159,11 @@ CSdtBase.prototype.SetContentControlEquation = function(isEquation)
  */
 CSdtBase.prototype.ApplyContentControlEquationPr = function()
 {
-	var oTextPr = new CTextPr();
-	oTextPr.SetItalic(true);
-	oTextPr.SetFontFamily("Cambria Math");
+	let textPr = this.GetDefaultTextPr().Copy();
+	textPr.SetItalic(true);
+	textPr.SetFontFamily("Cambria Math");
 
-	this.SetDefaultTextPr(oTextPr);
+	this.SetDefaultTextPr(textPr);
 	this.SetContentControlEquation(true);
 	this.SetContentControlTemporary(true);
 
@@ -210,18 +205,81 @@ CSdtBase.prototype.IsContentControlTemporary = function()
  */
 CSdtBase.prototype.SetFormPr = function(oFormPr)
 {
+	this.private_CheckFieldMasterBeforeSet(oFormPr);
+	this.private_CheckKeyValueBeforeSet(oFormPr);
+
 	if ((!this.Pr.FormPr && oFormPr) || !this.Pr.FormPr.IsEqual(oFormPr))
 	{
-		History.Add(new CChangesSdtPrFormPr(this, this.Pr.FormPr, oFormPr));
-		this.Pr.FormPr = oFormPr;
-
-		let oLogicDocument = this.GetLogicDocument();
-		if (oLogicDocument)
-			oLogicDocument.GetFormsManager().Register(this);
+		let change = new CChangesSdtPrFormPr(this, this.Pr.FormPr, oFormPr);
+		AscCommon.History.Add(change);
+		change.Redo();
 
 		this.private_OnAddFormPr();
 	}
-}
+};
+CSdtBase.prototype.private_CheckKeyValueBeforeSet = function(formPr)
+{
+	if (!this.Pr.FormPr || !formPr)
+		return;
+
+	let newKey = formPr.GetKey();
+	if (!newKey)
+		newKey = "";
+
+	newKey = newKey.trim();
+
+	if ("" === newKey)
+		formPr.SetKey(this.Pr.FormPr.GetKey());
+	else
+		formPr.SetKey(newKey);
+};
+CSdtBase.prototype.private_CheckFieldMasterBeforeSet = function(formPr)
+{
+	if (!formPr || !formPr.GetRole())
+		return;
+	
+	let roleName = formPr.GetRole();
+	if (!roleName)
+		return;
+	
+	// Настройки formPr могут прийти в интерфейс с заполненным fieldMaster, если в интерфейсе меняется роль, значит
+	// она будет здесь выставлена и имеет больший приоритет, чем выставленный fieldMaster
+	
+	formPr.SetFieldMaster(null);
+	formPr.SetRole(null);
+	
+	let logicDocument = this.GetLogicDocument();
+	let oform;
+	
+	if (!logicDocument
+		|| !AscCommon.IsSupportOFormFeature()
+		|| !(oform = logicDocument.GetOFormDocument())
+		|| !logicDocument.IsActionStarted())
+		return;
+	
+	let role = oform.getRole(roleName);
+	let userMaster;
+	if (!role || !(userMaster = role.getUserMaster()))
+		return;
+	
+	let fieldMaster;
+	if (this.Pr.FormPr && this.Pr.FormPr.GetFieldMaster())
+		fieldMaster = this.Pr.FormPr.GetFieldMaster();
+	
+	if (!fieldMaster)
+		fieldMaster = oform.getFormat().createFieldMaster();
+	else
+		oform.getFormat().addFieldMaster(fieldMaster);
+	
+	if (1 !== fieldMaster.getUserCount() || userMaster !== fieldMaster.getUser(0))
+	{
+		fieldMaster.clearUsers();
+		fieldMaster.addUser(userMaster);
+	}
+	
+	fieldMaster.setLogicField(this);
+	formPr.SetFieldMaster(fieldMaster);
+};
 /**
  * Удаляем настройки специальных форм
  */
@@ -297,6 +355,31 @@ CSdtBase.prototype.GetFormKey = function()
 	return (this.Pr.FormPr.Key);
 };
 /**
+ * Задаем новый ключ для специальной формы
+ * @param key {string}
+ */
+CSdtBase.prototype.SetFormKey = function(key)
+{
+	if (this.GetFormKey() === key)
+		return;
+	
+	let formPr = this.GetFormPr();
+	if (!formPr)
+		return;
+	
+	formPr = formPr.Copy();
+	formPr.Key = key;
+	this.SetFormPr(formPr);
+};
+/**
+ * Проверяем, является ли данный контейнер чекбоксом
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsCheckBox = function()
+{
+	return false;
+};
+/**
  * Проверяем, является ли заданный контрол радио-кнопкой
  * @returns {boolean}
  */
@@ -322,6 +405,20 @@ CSdtBase.prototype.GetRadioButtonGroupKey = function()
 		return undefined;
 
 	return (this.Pr.CheckBox.GroupKey);
+};
+/**
+ * Задаем групповой ключ для радио кнопки
+ * @param {string }groupKey
+ */
+CSdtBase.prototype.SetRadioButtonGroupKey = function(groupKey)
+{
+	let checkBoxPr = this.Pr.CheckBox;
+	if (!this.IsRadioButton() || !checkBoxPr)
+		return;
+	
+	checkBoxPr = checkBoxPr.Copy();
+	checkBoxPr.SetGroupKey(groupKey);
+	this.SetCheckBoxPr(checkBoxPr);
 };
 /**
  * Для чекбоксов и радио-кнопок получаем состояние
@@ -388,6 +485,17 @@ CSdtBase.prototype.IsCurrent = function()
 CSdtBase.prototype.SetCurrent = function(isCurrent)
 {
 	this.Current = isCurrent;
+	
+	if (this.IsForm() && this.IsFixedForm())
+	{
+		let logicDocument   = this.GetLogicDocument();
+		let drawingDocument = logicDocument ? logicDocument.GetDrawingDocument() : null;
+		if (drawingDocument && !logicDocument.IsFillingOFormMode())
+		{
+			drawingDocument.OnDrawContentControl(null, AscCommon.ContentControlTrack.In);
+			drawingDocument.OnDrawContentControl(null, AscCommon.ContentControlTrack.Hover);
+		}
+	}
 };
 /**
  * Специальная функция, которая обновляет текстовые настройки у плейсхолдера для форм
@@ -467,6 +575,28 @@ CSdtBase.prototype.IsFormFilled = function()
 {
 	return true;
 }
+/**
+ * Проверка заполненности формы для составных форм
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsComplexFormFilled = function()
+{
+	let oMainForm = this.GetMainForm();
+	if (!oMainForm)
+		return false;
+
+	let arrForms = oMainForm.GetAllSubForms();
+	if (!arrForms.length)
+		return true;
+
+	for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
+	{
+		if (!arrForms[nIndex].IsFormFilled())
+			return false;
+	}
+
+	return true;
+};
 /**
  * Оборачиваем форму в графический контейнер
  * @returns {?ParaDrawing}
@@ -554,6 +684,10 @@ CSdtBase.prototype.GetMainForm = function()
 	let oMain = this.GetMainComplexForm();
 	return oMain ? oMain : this;
 };
+/**
+ * Данная функция возвращает все дочерние формы по отношению к данной форме
+ * @returns {CSdtBase[]}
+ */
 CSdtBase.prototype.GetAllChildForms = function()
 {
 	let arrForms    = [];
@@ -568,12 +702,63 @@ CSdtBase.prototype.GetAllChildForms = function()
 	return arrForms;
 };
 /**
+ * Получаем все простые подформы (т.е. если подформы - составное поле, то мы пробегаемся по её простым подформам)
+ * @param arrForms
+ * @returns {CSdtBase[]}
+ */
+CSdtBase.prototype.GetAllSubForms = function(arrForms)
+{
+	if (!arrForms)
+		arrForms = [];
+
+	let arrControls = this.GetAllContentControls();
+	for (let nIndex = 0, nCount = arrControls.length; nIndex < nCount; ++nIndex)
+	{
+		let oControl = arrControls[nIndex];
+		if (!oControl.IsForm())
+			continue;
+
+		if (!oControl.IsComplexForm())
+			arrForms.push(oControl);
+	}
+
+	return arrForms;
+};
+/**
+ * Получаем порядковый номер данного подполя в родительском сложном поле
+ * Если данный объект не является полем или подполем в сложном поле, то вернется -1
+ * @returns {number}
+ */
+CSdtBase.prototype.GetSubFormIndex = function()
+{
+	if (!this.IsForm())
+		return -1;
+	
+	let mainForm = this.GetMainForm();
+	if (this === mainForm)
+		return -1;
+	
+	let subForms = mainForm.GetAllSubForms();
+	for (let index = 0, count = subForms.length; index < count; ++index)
+	{
+		if (subForms[index] === this)
+			return index;
+	}
+	
+	return -1;
+};
+/**
  * Провяеряем является ли данная форма текущей, с учетом того, что она либо сама является составной формой, либо
  * лежит в составной
  * @returns {boolean}
  */
 CSdtBase.prototype.IsCurrentComplexForm = function()
 {
+	// Текущая форма есть только в режиме заполнения. В режиме редактирования не даем заполнять форму
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingFormMode())
+		return false;
+	
 	if (this.IsCurrent())
 		return true;
 
@@ -601,3 +786,284 @@ CSdtBase.prototype.IsMainForm = function()
 {
 	return (this === this.GetMainForm());
 };
+/**
+ * Возвращаем следующую простую подформу в составе сложной формы
+ * @returns {?CSdtBase}
+ */
+CSdtBase.prototype.GetNextSubForm = function()
+{
+	let oMainForm;
+	if (!this.IsForm()
+		|| this.IsComplexForm()
+		|| !(oMainForm = this.GetMainComplexForm())
+		|| oMainForm === this)
+		return null;
+
+	let arrForms = oMainForm.GetAllSubForms();
+	if (!arrForms.length)
+		return null;
+
+	let nIndex = arrForms.indexOf(this);
+	if (-1 === nIndex)
+		return arrForms[0];
+
+	return (nIndex < arrForms.length - 1 ? arrForms[nIndex + 1] : this);
+};
+/**
+ * Возвращаем предыдущую простую подформу в составе сложной формы
+ * @returns {?CSdtBase}
+ */
+CSdtBase.prototype.GetPrevSubForm = function()
+{
+	let oMainForm;
+	if (!this.IsForm()
+		|| this.IsComplexForm()
+		|| !(oMainForm = this.GetMainComplexForm())
+		|| oMainForm === this)
+		return null;
+
+	let arrForms = oMainForm.GetAllSubForms();
+	if (!arrForms.length)
+		return null;
+
+	let nIndex = arrForms.indexOf(this);
+	if (-1 === nIndex)
+		return arrForms[arrForms.length - 1];
+
+	return (nIndex > 0 ? arrForms[nIndex - 1] : this);
+};
+CSdtBase.prototype.GetSubFormFromCurrentPosition = function(isForward)
+{
+	let oMainForm;
+	if (!this.IsForm() || !(oMainForm = this.GetMainComplexForm()))
+		return null;
+
+	let arrForms = oMainForm.GetAllSubForms();
+	if (!arrForms.length)
+		return null;
+
+	if (!this.IsComplexForm())
+		return this;
+
+	let nCurPos = this.State.ContentPos;
+	if (isForward)
+	{
+		for (let nPos = nCurPos + 1, nCount = this.Content.length; nPos < nCount; ++nPos)
+		{
+			let oElement = this.GetElement(nPos);
+			if (oElement instanceof AscWord.CInlineLevelSdt && oElement.IsForm())
+			{
+				if (!oElement.IsComplexForm())
+					return oElement;
+
+				let arrSubForms = oElement.GetAllSubForms();
+				if (arrSubForms.length)
+					return arrSubForms[0];
+			}
+		}
+	}
+	else
+	{
+		for (let nPos = nCurPos - 1; nPos >= 0; --nPos)
+		{
+			let oElement = this.GetElement(nPos);
+			if (oElement instanceof AscWord.CInlineLevelSdt && oElement.IsForm())
+			{
+				if (!oElement.IsComplexForm())
+					return oElement;
+
+				let arrSubForms = oElement.GetAllSubForms();
+				if (arrSubForms.length)
+					return arrSubForms[arrSubForms.length - 1];
+			}
+		}
+	}
+
+	let oParent = this.GetParent();
+	if (this === oMainForm
+		|| !oParent
+		|| !(oParent instanceof AscWord.CInlineLevelSdt)
+		|| !oParent.IsForm())
+		return null;
+
+	return oParent.GetSubFormFromCurrentPosition(isForward);
+};
+CSdtBase.prototype.IsBuiltInTableOfContents = function()
+{
+	return (this.Pr && this.Pr.DocPartObj && this.Pr.DocPartObj.Gallery === "Table of Contents");
+};
+CSdtBase.prototype.IsBuiltInWatermark = function()
+{
+	return (this.Pr && this.Pr.DocPartObj && (this.Pr.DocPartObj.Gallery === "Watermarks" || this.Pr.DocPartObj.Gallery === "Watermark"));
+};
+CSdtBase.prototype.IsBuiltInUnique = function()
+{
+	return (this.Pr && this.Pr.DocPartObj && true === this.Pr.DocPartObj.Unique);
+};
+CSdtBase.prototype.GetBuiltInGallery = function()
+{
+	return (this.Pr && this.Pr.DocPartObj && this.Pr.DocPartObj.Gallery ? this.Pr.DocPartObj.Gallery : undefined)
+};
+CSdtBase.prototype.GetInnerText = function()
+{
+	return "";
+};
+CSdtBase.prototype.GetFormValue = function()
+{
+	if (!this.IsForm())
+		return null;
+
+	if (this.IsPlaceHolder())
+		return this.IsCheckBox() ? false : "";
+
+	if (this.IsComplexForm())
+	{
+		return this.GetInnerText();
+	}
+	else if (this.IsCheckBox())
+	{
+		return this.IsCheckBoxChecked();
+	}
+	else if (this.IsPictureForm())
+	{
+		let oImg;
+		let allDrawings = this.GetAllDrawingObjects();
+		for (let nDrawing = 0; nDrawing < allDrawings.length; ++nDrawing)
+		{
+			if (allDrawings[nDrawing].IsPicture())
+			{
+				oImg = allDrawings[nDrawing].GraphicObj;
+				break;
+			}
+		}
+
+		return oImg ? oImg.getBase64Img() : "";
+	}
+
+	return this.GetInnerText();
+};
+CSdtBase.prototype.MoveCursorOutsideForm = function(isBefore)
+{
+};
+CSdtBase.prototype.GetFieldMaster = function()
+{
+	let formPr = this.GetFormPr();
+	if (!formPr)
+		return null;
+	
+	return formPr.GetFieldMaster();
+};
+/**
+ * Получаем название роли данного поля
+ * @returns {string}
+ */
+CSdtBase.prototype.GetFormRole = function()
+{
+	let fieldMaster = this.GetFieldMaster();
+	let userMaster  = fieldMaster ? fieldMaster.getFirstUser() : null;
+	return userMaster ? userMaster.getRole() : "";
+};
+CSdtBase.prototype.SetFormRole = function(roleName)
+{
+	if (!this.IsForm() || roleName === this.GetFormRole())
+		return;
+	
+	let formPr = this.GetFormPr().Copy();
+	formPr.SetRole(roleName);
+	this.SetFormPr(formPr);
+};
+CSdtBase.prototype.SetFieldMaster = function(fieldMaster)
+{
+	if (!fieldMaster)
+		return;
+	
+	let formPr = this.GetFormPr();
+	if (!formPr)
+		return;
+	
+	let newFormPr = formPr.Copy();
+	newFormPr.Field = fieldMaster;
+	this.SetFormPr(newFormPr);
+};
+CSdtBase.prototype.GetFormShd = function()
+{
+	let formPr = this.GetFormPr();
+	if (!formPr)
+		return null;
+	
+	return formPr.GetShd();
+};
+CSdtBase.prototype.GetFormHighlightColor = function(defaultColor)
+{
+	if (undefined === defaultColor)
+	{
+		let logicDocument = this.GetLogicDocument();
+		defaultColor = logicDocument && logicDocument.GetSpecialFormsHighlight ? logicDocument.GetSpecialFormsHighlight() : null;
+	}
+	
+	let logicDocument = this.GetLogicDocument();
+	
+	if (!logicDocument || !this.IsForm())
+		return defaultColor;
+	
+	let formPr = this.GetFormPr();
+	if (!this.IsMainForm())
+	{
+		let mainForm = this.GetMainForm();
+		if (!mainForm)
+			return defaultColor;
+		
+		formPr = mainForm.GetFormPr();
+	}
+	
+	if (!formPr)
+		return defaultColor;
+	
+	let fieldMaster = formPr.GetFieldMaster();
+	let userMaster  = fieldMaster ? fieldMaster.getFirstUser() : null;
+	let userColor   = userMaster ? userMaster.getColor() : null;
+	
+	let oform         = logicDocument ? logicDocument.GetOFormDocument() : null;
+	let currentUser   = oform ? oform.getCurrentUserMaster() : null;
+	
+	if (!currentUser || currentUser === userMaster)
+		return userColor ? userColor : defaultColor;
+	
+	return new AscWord.CDocumentColor(0xF2, 0xF2, 0xF2);
+};
+CSdtBase.prototype.CheckOFormUserMaster = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument)
+		return true;
+	
+	return logicDocument.CheckOFormUserMaster(this);
+};
+/**
+ * Проверяем, можно ли ставить курсор внутрь
+ */
+CSdtBase.prototype.CanPlaceCursorInside = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	return (!this.IsPicture() && (!this.IsForm() || this.IsComplexForm() || !logicDocument || !logicDocument.IsDocumentEditor() || logicDocument.IsFillingFormMode()))
+};
+CSdtBase.prototype.SkipFillingFormModeCheck = function(isSkip)
+{
+};
+/**
+ * Нужно ли рисовать рамку вокруг контрола
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsHideContentControlTrack = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsForceHideContentControlTrack())
+		return true;
+	
+	if (this.GetBuiltInGallery()
+		&& !this.IsBuiltInTableOfContents())
+		return true;
+	
+	return Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance();
+};
+

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -45,9 +45,13 @@
     this.newChangeId = -1;
     this.colors = null;
     this.changes = null;
-	this.token = null;
-	this.isRequested = null;
-	this.serverVersion = null;
+    this.token = null;
+    this.isRequested = null;
+    this.serverVersion = null;
+    this.userId = null;
+    this.userName = null;
+    this.userColor = null;
+    this.dateOfRevision = null;
 
     if (newObj) {
       this.update(newObj);
@@ -107,6 +111,22 @@
   asc_CVersionHistory.prototype.asc_setServerVersion = function(val) {
     this.serverVersion = val;
   };
+  asc_CVersionHistory.prototype.asc_SetUserId = function(val)
+  {
+    this.userId = val;
+  }
+  asc_CVersionHistory.prototype.asc_SetUserName = function(val)
+  {
+    this.userName = val;
+  }
+  asc_CVersionHistory.prototype.asc_SetDateOfRevision = function(val)
+  {
+    this.dateOfRevision = val;
+  }
+  asc_CVersionHistory.prototype.asc_SetUserColor = function (val)
+  {
+    this.userColor = val;
+  }
 
   window["Asc"].asc_CVersionHistory = window["Asc"]["asc_CVersionHistory"] = asc_CVersionHistory;
   prot = asc_CVersionHistory.prototype;
@@ -118,4 +138,8 @@
   prot["asc_setToken"] = prot.asc_setToken;
   prot["asc_setIsRequested"] = prot.asc_setIsRequested;
   prot["asc_setServerVersion"] = prot.asc_setServerVersion;
+  prot["asc_SetUserId"] = prot.asc_SetUserId;
+  prot["asc_SetUserName"] = prot.asc_SetUserName;
+  prot["asc_SetUserColor"] = prot.asc_SetUserColor;
+  prot["asc_SetDateOfRevision"] = prot.asc_SetDateOfRevision;
 })(window);

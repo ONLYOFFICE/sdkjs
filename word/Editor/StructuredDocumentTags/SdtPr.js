@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 03.05.2017
- * Time: 12:12
- */
 
 function CSdtPr()
 {
@@ -73,6 +68,8 @@ function CSdtPr()
 	this.FormPr        = undefined;
 	this.PictureFormPr = undefined;
 	this.ComplexFormPr = undefined;
+
+	this.OForm         = undefined;
 }
 
 CSdtPr.prototype.Copy = function()
@@ -379,6 +376,10 @@ CSdtPr.prototype.IsBuiltInDocPart = function()
 
 	return false;
 };
+CSdtPr.prototype.GetDocPartGallery = function()
+{
+	return this.DocPartObj ? this.DocPartObj.Gallery : undefined;
+}
 
 function CContentControlPr(nType)
 {
@@ -389,23 +390,25 @@ function CContentControlPr(nType)
 	this.Lock       = undefined;
 	this.InternalId = undefined;
 	this.CCType     = undefined !== nType ? nType : c_oAscSdtLevelType.Inline;
-
-    // section property
+	
+	this.Temporary  = undefined;
+	
+	// section property
 	this.SectionBreak = undefined;
-	this.PageSizeW	  = undefined;
-	this.PageSizeH	  = undefined;
-	this.Orient 	  = undefined;
-
+	this.PageSizeW    = undefined;
+	this.PageSizeH    = undefined;
+	this.Orient       = undefined;
+	
 	// Margins 
-	this.MarginT	 		 = undefined;
-	this.MarginL	 		 = undefined;
-	this.MarginR	 		 = undefined;
-	this.MarginB	 		 = undefined;
+	this.MarginT = undefined;
+	this.MarginL = undefined;
+	this.MarginR = undefined;
+	this.MarginB = undefined;
 	
 	
 	this.Appearance = Asc.c_oAscSdtAppearance.Frame;
 	this.Color      = undefined;
-
+	
 	this.CheckBoxPr    = undefined;
 	this.ComboBoxPr    = undefined;
 	this.DropDownPr    = undefined;
@@ -413,9 +416,9 @@ function CContentControlPr(nType)
 	this.TextFormPr    = undefined;
 	this.PictureFormPr = undefined;
 	this.ComplexFormPr = undefined;
-
+	
 	this.PlaceholderText = undefined;
-
+	
 	this.FormPr = undefined;
 }
 CContentControlPr.prototype.GetEventObject = function()
@@ -467,6 +470,7 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	this.Alias      = oContentControl.GetAlias();
 	this.Appearance = oContentControl.GetAppearance();
 	this.Color      = oContentControl.GetColor();
+	this.Temporary  = oContentControl.IsContentControlTemporary();
 
 	if (oContentControl.IsCheckBox())
 		this.CheckBoxPr = oContentControl.GetCheckBoxPr().Copy();
@@ -475,7 +479,11 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	else if (oContentControl.IsDropDownList())
 		this.DropDownPr = oContentControl.GetDropDownListPr().Copy();
 	else if (oContentControl.IsDatePicker())
+	{
 		this.DateTimePr = oContentControl.GetDatePickerPr().Copy();
+		if (oContentControl.GetInnerText() !== this.DateTimePr.ToString())
+			this.DateTimePr.SetNullFullDate(true);
+	}
 	else if (oContentControl.IsTextForm())
 		this.TextFormPr = oContentControl.GetTextFormPr().Copy();
 	else if (oContentControl.IsPictureForm())
@@ -487,8 +495,17 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 
 	if (oContentControl.IsForm())
 	{
-		this.FormPr = oContentControl.GetFormPr().Copy();
-		this.FormPr.SetFixed(oContentControl.IsFixedForm());
+		let mainForm = oContentControl.IsMainForm() ? oContentControl : oContentControl.GetMainForm();
+		
+		this.FormPr = mainForm.GetFormPr().Copy();
+		this.FormPr.SetFixed(mainForm.IsFixedForm());
+		
+		if (mainForm !== oContentControl)
+		{
+			let subFormPr = oContentControl.GetFormPr();
+			this.FormPr.SetAscBorder(subFormPr.GetAscBorder());
+			this.FormPr.SetShd(subFormPr.GetShd());
+		}
 	}
 };
 CContentControlPr.prototype.SetToContentControl = function(oContentControl)
@@ -503,11 +520,10 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 	{
 		oContentControl.GetLogicDocument().OnChangeRadioRequired(oContentControl.GetRadioButtonGroupKey(), this.FormPr.GetRequired());
 	}
-
-
+	
 	if (undefined !== this.Tag)
 		oContentControl.SetTag(this.Tag);
-
+	
 	if (undefined !== this.Id)
 		oContentControl.SetContentControlId(this.Id);
 
@@ -528,6 +544,9 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		else
 			oContentControl.SetColor(new CDocumentColor(this.Color.r, this.Color.g, this.Color.b));
 	}
+	
+	if (undefined !== this.Temporary)
+		oContentControl.SetContentControlTemporary(this.Temporary);
 
 	if (undefined !== this.CheckBoxPr)
 	{
@@ -545,7 +564,17 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		oContentControl.SetDropDownListPr(this.DropDownPr);
 
 	if (undefined !== this.DateTimePr)
-		oContentControl.ApplyDatePickerPr(this.DateTimePr);
+	{
+		let dateTimePr = this.DateTimePr;
+		if (dateTimePr.IsNullFullDate())
+		{
+			dateTimePr = dateTimePr.Copy();
+			dateTimePr.SetNullFullDate(false);
+			dateTimePr.SetFullDate(oContentControl.GetDatePickerPr().GetFullDate());
+		}
+		
+		oContentControl.ApplyDatePickerPr(dateTimePr);
+	}
 
 	if (undefined !== this.TextFormPr && oContentControl.IsInlineLevel())
 	{
@@ -559,16 +588,20 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 
 		if (this.TextFormPr.Comb && (isCombChanged || isMaxChanged))
 			oContentControl.TrimTextForm();
+		else if (!this.TextFormPr.Comb && isCombChanged && oContentControl.IsPlaceHolder())
+			oContentControl.ReplaceContentWithPlaceHolder(false, true);
 
-		if (oContentControl.IsFixedForm() && !isCombChanged)
+		if (oContentControl.IsFixedForm() && oContentControl.IsMainForm() && !isCombChanged)
 			oContentControl.UpdateFixedFormSizeByCombWidth();
+
+		if (!this.TextFormPr.MultiLine)
+			oContentControl.CorrectSingleLineFormContent();
 	}
 
 	if (undefined !== this.PlaceholderText)
 		oContentControl.SetPlaceholderText(this.PlaceholderText);
 
-	if (undefined !== this.FormPr)
-		oContentControl.SetFormPr(this.FormPr);
+	this.SetFormPrToContentControl(oContentControl);
 
 	if (undefined !== this.PictureFormPr && oContentControl.IsInlineLevel())
 	{
@@ -578,6 +611,107 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 
 	if (undefined !== this.ComplexFormPr)
 		oContentControl.SetComplexFormPr(this.ComplexFormPr);
+};
+CContentControlPr.prototype.SetFormPrToContentControl = function(contentControl)
+{
+	if (!this.FormPr)
+		return;
+	
+	let formPr = this.FormPr;
+	
+	let newRole = formPr.GetRole();
+	if (contentControl.IsForm() && !contentControl.IsMainForm())
+	{
+		// Ключ у подформы должен сохраняться
+		let oldKey    = contentControl.GetFormKey();
+		let newFormPr = formPr.Copy();
+		newFormPr.SetKey(oldKey);
+		contentControl.SetFormPr(newFormPr);
+
+		contentControl = contentControl.GetMainForm();
+		if (!contentControl)
+			return;
+
+		formPr = contentControl.GetFormPr().Copy();
+		formPr.SetRole(newRole);
+	}
+
+	if (contentControl.IsComplexForm())
+	{
+		let subForms = contentControl.GetAllSubForms();
+		for (let index = 0, count = subForms.length; index < count; ++index)
+		{
+			subForms[index].SetFormRole(newRole);
+		}
+	}
+	
+	let newKey = formPr.GetKey();
+	let oldKey = contentControl.GetFormKey();
+	
+	let fieldMaster = contentControl.GetFieldMaster();
+	let userMaster  = fieldMaster ? fieldMaster.getFirstUser() : null;
+	let oldRole     = userMaster ? userMaster.getRole() : null;
+	
+	let isKeyChanged = newKey && newKey !== oldKey;
+	let isRoleChanged = newRole && newRole !== oldRole;
+	
+	if (isKeyChanged && isRoleChanged)
+	{
+		// Такого не должно быть, ключ и роль не должны меняться одновременно, но если все же произошло,
+		// то выставляем все как задано в настройках, не делая ничего дополнительного
+	}
+	else if (isKeyChanged)
+	{
+		this.OnSetKeyToForm(newKey, contentControl);
+	}
+	else if (isRoleChanged)
+	{
+		this.OnSetRoleToForm(newRole, contentControl);
+	}
+	
+	contentControl.SetFormPr(formPr);
+};
+CContentControlPr.prototype.OnSetKeyToForm = function(newKey, form)
+{
+	let logicDocument = form.GetLogicDocument();
+	if (!logicDocument)
+		return;
+	
+	let formManager = logicDocument.GetFormsManager();
+	let role = formManager.GetRoleByKey(newKey, form.GetSpecificType());
+	if (!role)
+		return;
+	
+	this.FormPr.SetRole(role);
+};
+CContentControlPr.prototype.OnSetRoleToForm = function(newRole, form)
+{
+	let logicDocument = form.GetLogicDocument();
+	if (!logicDocument)
+		return;
+	
+	let formManager = logicDocument.GetFormsManager();
+	
+	let formKey = form.GetFormKey();
+	if (!formKey || "" === formKey)
+		return;
+	
+	let allForms = formManager.GetAllFormsByKey(formKey, form.GetSpecificType());
+	for (let index = 0, formCount = allForms.length; index < formCount; ++index)
+	{
+		let curForm = allForms[index];
+		if (curForm !== form)
+		{
+			let formPr = curForm.GetFormPr();
+			if (!formPr)
+				continue;
+			
+			let newFormPr = formPr.Copy();
+			newFormPr.SetRole(newRole);
+			newFormPr.SetFieldMaster(null);
+			curForm.SetFormPr(newFormPr);
+		}
+	}
 };
 CContentControlPr.prototype.GetId = function()
 {
@@ -642,6 +776,14 @@ CContentControlPr.prototype.SetColor = function(r, g, b)
 		this.Color = null;
 	else
 		this.Color = new CDocumentColor(r, g, b);
+};
+CContentControlPr.prototype.GetTemporary = function()
+{
+	return this.Temporary;
+};
+CContentControlPr.prototype.SetTemporary = function(isTemporary)
+{
+	this.Temporary = isTemporary;
 };
 CContentControlPr.prototype.GetSpecificType = function()
 {
@@ -739,6 +881,17 @@ CContentControlPr.prototype.SetComplexFormPr = function(oPr)
 CContentControlPr.prototype.GetComplexFormPr = function()
 {
 	return this.ComplexFormPr;
+};
+CContentControlPr.prototype.GetNewKey = function()
+{
+	let logicDocument = editor && editor.WordControl && editor.WordControl.m_oLogicDocument;
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return "";
+
+	let formManager  = logicDocument.GetFormsManager();
+	let keyGenerator = formManager.GetKeyGenerator();
+
+	return keyGenerator.GetNewKey(this.CC);
 };
 
 /**
@@ -867,6 +1020,8 @@ CContentControlPr.prototype['get_Appearance']         = CContentControlPr.protot
 CContentControlPr.prototype['put_Appearance']         = CContentControlPr.prototype.SetAppearance;
 CContentControlPr.prototype['get_Color']              = CContentControlPr.prototype.GetColor;
 CContentControlPr.prototype['put_Color']              = CContentControlPr.prototype.SetColor;
+CContentControlPr.prototype['get_Temporary']          = CContentControlPr.prototype.GetTemporary;
+CContentControlPr.prototype['put_Temporary']          = CContentControlPr.prototype.SetTemporary;
 CContentControlPr.prototype['get_SpecificType']       = CContentControlPr.prototype.GetSpecificType;
 CContentControlPr.prototype['get_CheckBoxPr']         = CContentControlPr.prototype.GetCheckBoxPr;
 CContentControlPr.prototype['put_CheckBoxPr']         = CContentControlPr.prototype.SetCheckBoxPr;
@@ -886,3 +1041,4 @@ CContentControlPr.prototype['get_PictureFormPr']      = CContentControlPr.protot
 CContentControlPr.prototype['put_PictureFormPr']      = CContentControlPr.prototype.SetPictureFormPr;
 CContentControlPr.prototype['get_ComplexFormPr']      = CContentControlPr.prototype.GetComplexFormPr;
 CContentControlPr.prototype['put_ComplexFormPr']      = CContentControlPr.prototype.SetComplexFormPr;
+CContentControlPr.prototype['get_NewKey']             = CContentControlPr.prototype.GetNewKey;

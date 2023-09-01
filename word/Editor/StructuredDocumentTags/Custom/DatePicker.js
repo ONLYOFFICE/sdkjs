@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -44,6 +44,9 @@
 		this.LangId     = 1033;
 		this.DateFormat = "dd.MM.yyyy";
 		this.Calendar   = Asc.c_oAscCalendarType.Gregorian;
+		
+		// Специальный параметр, чтобы при выставлении значения из интерфейса, но не из календаря мы помечали, что реально дата не проставлена
+		this.NullFullDate = false;
 	}
 	CSdtDatePickerPr.prototype.Copy = function()
 	{
@@ -53,12 +56,14 @@
 		oDate.LangId     = this.LangId;
 		oDate.DateFormat = this.DateFormat;
 		oDate.Calendar   = this.Calendar;
+		
+		oDate.NullFullDate = this.NullFullDate;
 
 		return oDate;
 	};
 	CSdtDatePickerPr.prototype.IsEqual = function(oDate)
 	{
-		return (oDate && this.FullDate === oDate.FullDate && this.LangId === oDate.LangId && this.DateFormat === oDate.DateFormat && this.Calendar === oDate.Calendar);
+		return (oDate && this.FullDate === oDate.FullDate && this.LangId === oDate.LangId && this.DateFormat === oDate.DateFormat && this.Calendar === oDate.Calendar && this.NullFullDate === oDate.NullFullDate);
 	};
 	CSdtDatePickerPr.prototype.ToString = function(sFormat, sFullDate, nLangId)
 	{
@@ -79,7 +84,7 @@
 				oCultureInfo = AscCommon.g_aCultureInfos[1033];
 
 			var oDateTime = new Asc.cDate(sFullDate);
-			return oFormat.formatToChart(oDateTime.getExcelDate() + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
+			return oFormat.formatToChart(oDateTime.getExcelDate(true) + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
 		}
 
 		return sFullDate;
@@ -108,12 +113,31 @@
 	};
 	CSdtDatePickerPr.prototype.GetFullDate = function()
 	{
+		if (this.IsNullFullDate())
+			return null;
+		
 		return this.FullDate;
 	};
-	CSdtDatePickerPr.prototype.SetFullDate = function(sFullDate)
+	CSdtDatePickerPr.prototype.SetFullDate = function(fullDate)
 	{
-		var oDate = sFullDate instanceof Date ? sFullDate : new Date(sFullDate);
-		this.FullDate = oDate.toISOString().slice(0, 19) + 'Z';
+		let date;
+		if (fullDate instanceof Date)
+			date = fullDate;
+		else if (!fullDate)
+			date = new Date();
+		else
+			date = new Date(fullDate);
+		
+		this.FullDate = date.toISOString().slice(0, 19) + 'Z';
+		this.NullFullDate = false;
+	};
+	CSdtDatePickerPr.prototype.SetNullFullDate = function(isNull)
+	{
+		this.NullFullDate = isNull;
+	};
+	CSdtDatePickerPr.prototype.IsNullFullDate = function()
+	{
+		return this.NullFullDate;
 	};
 	CSdtDatePickerPr.prototype.GetLangId = function()
 	{

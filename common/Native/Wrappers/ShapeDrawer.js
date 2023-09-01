@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -804,8 +804,8 @@ CShapeDrawer.prototype =
                 var _fc = _fill.fgClr && _fill.fgClr.RGBA || {R: 0, G: 0, B: 0, A: 255};
                 var _bc = _fill.bgClr && _fill.bgClr.RGBA || {R: 255, G: 255, B: 255, A: 255};
 
-                var __fa = (null === this.UniFill.transparent) ? _fc.A : 255;
-                var __ba = (null === this.UniFill.transparent) ? _bc.A : 255;
+                var __fa = (null === this.UniFill.transparent) ? _fc.A : (this.UniFill.transparent >> 0);
+                var __ba = (null === this.UniFill.transparent) ? _bc.A : (this.UniFill.transparent >> 0);
 
                 this.NativeGraphics["PD_b_color1"](_fc.R, _fc.G, _fc.B, __fa);
                 this.NativeGraphics["PD_b_color2"](_bc.R, _bc.G, _bc.B, __ba);

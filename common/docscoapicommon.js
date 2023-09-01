@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -52,6 +52,8 @@
     this.indexUser = -1;		// Индекс пользователя (фактически равно числу заходов в документ на сервере)
     this.color = null;			// цвет пользователя
     this.view = false;			// просмотр(true), редактор(false)
+    //todo type: edit, review, fill forms, live viewer...
+    this.live = false;			// live viewer(true), offline viewer(false)
 
     this._setUser(val);
     return this;
@@ -60,7 +62,7 @@
   asc_CUser.prototype.isEqual = function(obj) {
     return this.id === obj.id && this.idOriginal === obj.idOriginal && this.userName === obj.userName &&
       this.state === obj.state && this.indexUser === obj.indexUser && this.color === obj.color &&
-      this.view === obj.view;
+      this.view === obj.view && this.live === obj.live;
   };
   asc_CUser.prototype._setUser = function(val) {
     if (val) {
@@ -70,6 +72,7 @@
       this.indexUser = val['indexUser'];
       this.color = window['AscCommon'].getUserColorById(this.idOriginal, this.userName, false, true);
       this.view = val['view'];
+      this.live = val['isLiveViewer'];
     }
   };
   asc_CUser.prototype.asc_getId = function() {
@@ -95,6 +98,9 @@
   };
   asc_CUser.prototype.asc_getView = function() {
     return this.view;
+  };
+  asc_CUser.prototype.asc_getLive = function() {
+    return this.live;
   };
   asc_CUser.prototype.setId = function(val) {
     this.id = val;

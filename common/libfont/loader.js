@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -190,11 +190,12 @@
 		this.m_oBuffer = null;
 		this.CheckSize = function(w, h)
 		{
-			if (this.width < (w + 1) || this.height < (h + 1))
+			let extra = 10; // с запасом под device pixelratio
+			if (this.width < (w + extra) || this.height < (h + extra))
 			{
-				this.width = Math.max(this.width, w + 1);
+				this.width = Math.max(this.width, w + extra);
 				this.pitch = 4 * this.width;
-				this.height = Math.max(this.height, h + 1);
+				this.height = Math.max(this.height, h + extra);
 
 				this.m_oBuffer = null;
 				this.m_oBuffer = window['AscFonts'].g_memory.ctx.createImageData(this.width, this.height);

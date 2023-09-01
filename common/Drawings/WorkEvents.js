@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -428,6 +428,7 @@
 		global_keyboardEvent.CtrlKey  = global_mouseEvent.CtrlKey;
 
 		global_mouseEvent.Type   = g_mouse_event_type_down;
+		let oldButton = global_mouseEvent.Button;
 		global_mouseEvent.Button = getMouseButton(e);
 
 		if (!global_mouseEvent.IsLocked || !global_mouseEvent.Sender)
@@ -436,14 +437,14 @@
 		if (isClicks)
 		{
 			var CurTime = new Date().getTime();
-			if (0 == global_mouseEvent.ClickCount)
+			if (0 === global_mouseEvent.ClickCount)
 			{
 				global_mouseEvent.ClickCount    = 1;
 				global_mouseEvent.LastClickTime = CurTime;
 			}
 			else
 			{
-				if (500 > CurTime - global_mouseEvent.LastClickTime)
+				if ((500 > (CurTime - global_mouseEvent.LastClickTime)) && oldButton === global_mouseEvent.Button)
 				{
 					global_mouseEvent.LastClickTime = CurTime;
 					global_mouseEvent.ClickCount++;
@@ -740,6 +741,128 @@
 		return oEvent.defaultPrevented;
 	}
 
+	function PaintMessageLoop(interval)
+	{
+		this.interval = interval || 40;
+		this.id = null;
+
+		this.requestAnimationFrame = window.requestAnimationFrame ||
+			window.webkitRequestAnimationFrame ||
+			window.mozRequestAnimationFrame ||
+			window.oRequestAnimationFrame ||
+			window.msRequestAnimationFrame || null;
+		this.cancelAnimationFrame = window.cancelRequestAnimationFrame ||
+			window.webkitCancelAnimationFrame ||
+			window.webkitCancelRequestAnimationFrame ||
+			window.mozCancelRequestAnimationFrame ||
+			window.oCancelRequestAnimationFrame ||
+			window.msCancelRequestAnimationFrame || null;
+
+		this.isUseRequestAnimationFrame = AscCommon.AscBrowser.isChrome;
+		if (this.isUseRequestAnimationFrame && !this.requestAnimationFrame)
+			this.isUseRequestAnimationFrame = false;
+
+		this.requestAnimationOldTime = -1;
+
+		this.engine = null;
+		this.step = null;
+	}
+
+	PaintMessageLoop.prototype.Start = function(engine)
+	{
+		this.engine = engine;
+		if (null !== this.id)
+			return;
+
+		if (this.isUseRequestAnimationFrame)
+		{
+			this.step = this._animation.bind(this);
+		}
+		else
+		{
+			this.step = this._timer.bind(this);
+		}
+
+		this.step();
+	};
+	PaintMessageLoop.prototype.Stop = function()
+	{
+		if (null === this.id)
+			return;
+
+		if (this.isUseRequestAnimationFrame)
+		{
+			this.cancelAnimationFrame(this.id);
+		}
+		else
+		{
+			this.clearTimeout(this.id);
+		}
+
+		this.id = null;
+	};
+
+	PaintMessageLoop.prototype._animation = function()
+	{
+		var now = Date.now();
+		if (-1 === this.requestAnimationOldTime || (now >= (this.requestAnimationOldTime + 40)) || (now < this.requestAnimationOldTime))
+		{
+			this.requestAnimationOldTime = now;
+			this.engine();
+		}
+		this.id = this.requestAnimationFrame.call(window, this.step);
+	};
+
+	PaintMessageLoop.prototype._timer = function()
+	{
+		this.engine();
+		this.id = setTimeout(this.step, this.interval);
+	};
+
+	PaintMessageLoop.prototype.delayRun = function(_this, _func)
+	{
+		if (window.requestAnimationFrame)
+		{
+			if (undefined !== _this._delayRunId)
+				window.cancelAnimationFrame(_this._delayRunId);
+
+			_this._delayRunId = window.requestAnimationFrame(function () {
+				_func.call(_this);
+				delete _this._delayRunId;
+			});
+		}
+		else
+		{
+			if (undefined !== _this._delayRunId)
+				clearTimeout(_this._delayRunId);
+
+			_this._delayRunId = setTimeout(function () {
+				_func.call(_this);
+				delete _this._delayRunId;
+			}, 40);
+		}
+	};
+
+	function isSupportDoublePx()
+	{
+		var isSupport = true;
+
+		var oTestSpan       = document.createElement("span");
+		oTestSpan.setAttribute("style", "font-size:8pt");
+		document.body.appendChild(oTestSpan);
+		var defaultView   = oTestSpan.ownerDocument.defaultView;
+		var computedStyle = defaultView.getComputedStyle(oTestSpan, null);
+		if (null != computedStyle)
+		{
+			var fontSize = computedStyle.getPropertyValue("font-size");
+			if (-1 !== fontSize.indexOf("px") && parseFloat(fontSize) === parseInt(fontSize))
+				isSupport = false;
+		}
+		document.body.removeChild(oTestSpan);
+
+		return isSupport;
+	}
+
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                          = window['AscCommon'] || {};
 	window['AscCommon'].g_mouse_event_type_down  = g_mouse_event_type_down;
@@ -764,5 +887,8 @@
 	window['AscCommon'].button_eventHandlers     = button_eventHandlers;
 	window['AscCommon'].emulateKeyDown 			 = emulateKeyDown;
     window['AscCommon'].check_MouseClickOnUp 	 = check_MouseClickOnUp;
+
+	window['AscCommon'].PaintMessageLoop 	     = PaintMessageLoop;
+	window['AscCommon'].isSupportDoublePx 	     = isSupportDoublePx;
 
 })(window);

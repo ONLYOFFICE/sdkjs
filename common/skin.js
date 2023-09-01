@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -142,17 +142,21 @@ var EditorSkins = {
 		ColorHighlighted         : "#6a6a70",
 		ColorFiltering           : "#008636",
 
-		BackgroundDark           : "#444444",
-		BackgroundDarkActive     : "#111111",
-		BackgroundDarkHighlighted: "#666666",
+		SheetViewCellBackground        : "#73bf92",
+		SheetViewCellBackgroundPressed : "#aaffcc",
+		SheetViewCellBackgroundHover   : "#97e3b7",
+		SheetViewCellTitleLabel        : "#121213",
 
 		ColorDark                : "#ffffff",
 		ColorDarkActive          : "#ffffff",
 		ColorDarkHighlighted     : "#c1c1c1",
-		ColorDarkFiltering       : "#6BEC9F",
+		ColorDarkFiltering       : "#7AFFAF",
 
 		GroupDataBorder          : "#000000",
-		EditorBorder             : "#cbcbcb"
+		EditorBorder             : "#cbcbcb",
+
+		SelectAllIcon            : "#999999",
+		SheetViewSelectAllIcon   : "#3D664E"
 	},
 	"theme-dark" : {
 		Name                      : "theme-dark",
@@ -214,9 +218,9 @@ var EditorSkins = {
 		FormsContentControlsOutlineMoverActive : "#444444",
 
 		/* presentations */
-		BackgroundColorThumbnails       : "#666666",
-		BackgroundColorThumbnailsActive : "#666666",
-		BackgroundColorThumbnailsHover  : "#666666",
+		BackgroundColorThumbnails       : "#404040",
+		BackgroundColorThumbnailsActive : "#404040",
+		BackgroundColorThumbnailsHover  : "#404040",
 		ThumbnailsPageOutlineActive     : "#848484",
 		ThumbnailsPageOutlineHover      : "#CFCFCF",
 		ThumbnailsPageNumberText        : "#FFFFFF",
@@ -228,7 +232,7 @@ var EditorSkins = {
 		THEMES_THUMBNAIL_WIDTH  : 88,
 		THEMES_THUMBNAIL_HEIGHT : 40,
 
-		BorderSplitterColor                   : "#CBCBCB",
+		BorderSplitterColor                   : "#616161",
 		SupportNotes                          : true,
 		SplitterWidthMM                       : 1,
 		ThumbnailScrollWidthNullIfNoScrolling : false,
@@ -258,17 +262,21 @@ var EditorSkins = {
 		ColorHighlighted         : "#d9d9d9",
 		ColorFiltering           : "#6BEC9F",
 
-		BackgroundDark           : "#111111",
-		BackgroundDarkActive     : "#333333",
-		BackgroundDarkHighlighted: "#000000",
+		SheetViewCellBackground        : "#73bf93",
+		SheetViewCellBackgroundPressed : "#aaffcc",
+		SheetViewCellBackgroundHover   : "#97e3b8",
+		SheetViewCellTitleLabel        : "#121214",
 
-		ColorDark                : "#ffffff",
-		ColorDarkActive          : "#ffffff",
-		ColorDarkHighlighted     : "#ffffff",
-		ColorDarkFiltering       : "#6BEC9F",
+		ColorDark                : "#333",
+		ColorDarkActive          : "#333",
+		ColorDarkHighlighted     : "#333",
+		ColorDarkFiltering       : "#ffffff",
 
 		GroupDataBorder          : "#ffffff",
-		EditorBorder             : "#2a2a2a"
+		EditorBorder             : "#2a2a2a",
+
+		SelectAllIcon            : "#888888",
+		SheetViewSelectAllIcon   : "#3D664E"
 	}
 };
 
@@ -358,20 +366,26 @@ function updateGlobalSkinColors(theme)
 		BorderActive                    : "canvas-cell-title-border-selected",
 		BorderHighlighted               : "canvas-cell-title-border-hover",
 
-		Color                           : "text-normal",
-		ColorActive                     : "text-normal",
-		ColorHighlighted                : "text-normal",
+		Color                           : "canvas-cell-title",
+		ColorActive                     : "canvas-cell-title",
+		ColorHighlighted                : "canvas-cell-title",
 
-		BackgroundDark                  : "canvas-dark-cell-title",
-		BackgroundDarkActive            : "canvas-dark-cell-title-selected",
-		BackgroundDarkHighlighted       : "canvas-dark-cell-title-hover",
+		SheetViewCellBackground         : "canvas-sheet-view-cell-background",
+		SheetViewCellBackgroundPressed  : "canvas-sheet-view-cell-background-pressed",
+		SheetViewCellBackgroundHover    : "canvas-sheet-view-cell-background-hover",
+		SheetViewCellTitleLabel         : "canvas-sheet-view-cell-title-label",
 
-		ColorDark                       : "text-contrast-background",
-		ColorDarkActive                 : "text-contrast-background",
-		ColorDarkHighlighted            : "text-contrast-background",
+		ColorDark                       : "canvas-dark-cell-title-text",
+		ColorDarkActive                 : "canvas-dark-cell-title-text",
+		ColorDarkHighlighted            : "canvas-dark-cell-title-text",
+
+		ColorDarkFiltering              : "canvas-dark-cell-title-text-filtered",
 
 		GroupDataBorder                 : "canvas-high-contrast",
-		EditorBorder                    : "border-toolbar"
+		EditorBorder                    : "border-toolbar",
+
+		SelectAllIcon                   : "canvas-select-all-icon",
+		SheetViewSelectAllIcon          : "canvas-sheet-view-select-all-icon"
 	};
 
 	// корректируем цвета для старого хрома:

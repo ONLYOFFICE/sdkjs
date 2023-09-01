@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 03.05.2017
- * Time: 14:58
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Alias]            = CChangesSdtPrAlias;
 AscDFH.changesFactory[AscDFH.historyitem_SdtPr_Id]               = CChangesSdtPrId;
@@ -670,29 +665,57 @@ CChangesSdtPrTextForm.prototype.private_CreateObject = function()
 function CChangesSdtPrFormPr(Class, Old, New)
 {
 	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New);
+	this.OformSupport = AscCommon.IsSupportOFormFeature();
 }
 CChangesSdtPrFormPr.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
 CChangesSdtPrFormPr.prototype.constructor = CChangesSdtPrFormPr;
 CChangesSdtPrFormPr.prototype.Type = AscDFH.historyitem_SdtPr_FormPr;
 CChangesSdtPrFormPr.prototype.private_SetValue = function(Value)
 {
-	this.Class.Pr.FormPr = Value;
-
-	let oLogicDocument = this.Class.GetLogicDocument();
-	if (oLogicDocument)
+	let form = this.Class;
+	if (this.OformSupport)
 	{
-		let oFormsManager = oLogicDocument.GetFormsManager();
-
-		if (Value)
-			oFormsManager.Register(this.Class);
-		else
-			oFormsManager.Unregister(this.Class);
+		let oldFieldMaster = form.Pr.FormPr ? form.Pr.FormPr.Field : undefined;
+		let newFieldMaster = Value ? Value.Field : undefined;
+		
+		if (oldFieldMaster && oldFieldMaster !== newFieldMaster)
+			oldFieldMaster.setLogicField(null);
+		
+		if (newFieldMaster && newFieldMaster !== oldFieldMaster)
+			newFieldMaster.setLogicField(form)
+		
+		form.Pr.FormPr = Value;
 	}
-
+	else
+	{
+		let fieldMaster = form.Pr.FormPr ? form.Pr.FormPr.Field : undefined;
+		form.Pr.FormPr = Value;
+		
+		if (form.Pr.FormPr)
+			form.Pr.FormPr.Field = fieldMaster;
+	}
+	
+	let logicDocument = form.GetLogicDocument();
+	let formManager   = logicDocument ? logicDocument.GetFormsManager() : null;
+	if (formManager)
+	{
+		if (Value)
+			formManager.Register(form);
+		else
+			formManager.Unregister(form);
+	}
 };
 CChangesSdtPrFormPr.prototype.private_CreateObject = function()
 {
 	return new AscWord.CSdtFormPr();
+};
+CChangesSdtPrFormPr.prototype.WriteAdditional = function(writer)
+{
+	writer.WriteBool(this.OformSupport);
+};
+CChangesSdtPrFormPr.prototype.ReadAdditional = function(reader)
+{
+	this.OformSupport = reader.GetBool();
 };
 /**
  * @constructor
@@ -731,4 +754,34 @@ CChangesSdtPrComplexFormPr.prototype.private_SetValue = function(Value)
 CChangesSdtPrComplexFormPr.prototype.private_CreateObject = function()
 {
 	return new AscWord.CSdtComplexFormPr();
+};
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesSdtPrOForm(Class, Old, New)
+{
+	let sOld = null;
+	let sNew = null;
+	if(Old)
+	{
+		sOld = Old.Get_Id();
+	}
+	if(New)
+	{
+		sNew = New.Get_Id();
+	}
+	AscDFH.CChangesBaseStringProperty.call(this, Class, sOld, sNew);
+}
+CChangesSdtPrOForm.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesSdtPrOForm.prototype.constructor = CChangesSdtPrOForm;
+CChangesSdtPrOForm.prototype.Type = AscDFH.historyitem_SdtPr_OForm;
+CChangesSdtPrOForm.prototype.private_SetValue = function(Value)
+{
+	let oValue = null;
+	if(Value)
+	{
+		oValue = AscCommon.g_oTableId.Get_ById(Value);
+	}
+	this.Class.Pr.OForm = oValue;
 };

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -31,12 +31,6 @@
  */
 
 "use strict";
-
-/**
- * User: Ilja.Kirillov
- * Date: 21.10.2016
- * Time: 12:56
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_ParaRun_AddItem]               = CChangesRunAddItem;
 AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RemoveItem]            = CChangesRunRemoveItem;
@@ -524,6 +518,7 @@ CChangesRunBold.prototype.private_SetValue = function(Value)
 
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
+	oRun.OnContentChange();
 };
 CChangesRunBold.prototype.Load = function(Color)
 {
@@ -629,7 +624,11 @@ CChangesRunFontSize.prototype.private_SetValue = function(Value)
 {
 	var oRun = this.Class;
 	oRun.Pr.FontSize = Value;
-
+	const oSmartArtShape = oRun.IsInsideSmartArtShape(true);
+	if (oSmartArtShape)
+	{
+		oSmartArtShape.resetSmartArtMaxFontSize();
+	}
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2021
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -52,86 +52,38 @@
 	 this.pivotTables = true;
 	 this.selectUnlockedCells = false;*/
 
-	var c_oSerProtectedAlgorithmNameTypes = {
-		MD2: 1,
-		MD4: 2,
-		MD5: 3,
-		RIPEMD_128: 4,
-		RIPEMD_160: 5,
-		SHA_1: 6,
-		SHA_256: 7,
-		SHA_384: 8,
-		SHA_512: 9,
-		WHIRLPOOL: 10
-	};
-
-	function fromModelAlgoritmName(alg) {
-		switch (alg) {
-			case c_oSerProtectedAlgorithmNameTypes.MD2 :
-				alg = AscCommon.HashAlgs.MD2;
-				break;
-			case c_oSerProtectedAlgorithmNameTypes.MD4 :
-				alg = AscCommon.HashAlgs.MD4;
-				break;
-			case c_oSerProtectedAlgorithmNameTypes.MD5 :
-				alg = AscCommon.HashAlgs.MD5;
-				break;
-			case c_oSerProtectedAlgorithmNameTypes.RIPEMD_160 :
-				alg = AscCommon.HashAlgs.RMD160;
-				break;
-			case c_oSerProtectedAlgorithmNameTypes.SHA_1 :
-				alg = AscCommon.HashAlgs.SHA1;
-				break;
-			case c_oSerProtectedAlgorithmNameTypes.SHA_256 :
-				alg = AscCommon.HashAlgs.SHA256;
-				break;
-			case c_oSerProtectedAlgorithmNameTypes.SHA_384 :
-				alg = AscCommon.HashAlgs.SHA384;
-				break;
-			case c_oSerProtectedAlgorithmNameTypes.SHA_512 :
-				alg = AscCommon.HashAlgs.SHA512;
-				break;
-			case c_oSerProtectedAlgorithmNameTypes.WHIRLPOOL :
-				alg = AscCommon.HashAlgs.WHIRLPOOL;
-				break;
-			default:
-				alg = AscCommon.HashAlgs.SHA256;
-		}
-		return alg;
-	}
-
 	function FromXml_ST_AlgorithmName(str) {
 		var alg = null;
 		switch (str) {
 			case "MD2" :
-				alg = c_oSerProtectedAlgorithmNameTypes.MD2;
+				alg = AscCommon.c_oSerAlgorithmNameTypes.MD2;
 				break;
 			case "MD4" :
-				alg = c_oSerProtectedAlgorithmNameTypes.MD4;
+				alg = AscCommon.c_oSerAlgorithmNameTypes.MD4;
 				break;
 			case "MD5" :
-				alg = c_oSerProtectedAlgorithmNameTypes.MD5;
+				alg = AscCommon.c_oSerAlgorithmNameTypes.MD5;
 				break;
 			case "RIPEMD-128" :
-				alg = c_oSerProtectedAlgorithmNameTypes.RIPEMD_128;
+				alg = AscCommon.c_oSerAlgorithmNameTypes.RIPEMD_128;
 				break;
 			case "RIPEMD-160" :
-				alg = c_oSerProtectedAlgorithmNameTypes.RIPEMD_160;
+				alg = AscCommon.c_oSerAlgorithmNameTypes.RIPEMD_160;
 				break;
 			case "SHA-1" :
-				alg = c_oSerProtectedAlgorithmNameTypes.SHA1;
+				alg = AscCommon.c_oSerAlgorithmNameTypes.SHA1;
 				break;
 			case "SHA-256" :
-				alg = c_oSerProtectedAlgorithmNameTypes.SHA_256;
+				alg = AscCommon.c_oSerAlgorithmNameTypes.SHA_256;
 				break;
 			case "SHA-384" :
-				alg = c_oSerProtectedAlgorithmNameTypes.SHA_384;
+				alg = AscCommon.c_oSerAlgorithmNameTypes.SHA_384;
 				break;
 			case "SHA-512" :
-				alg = c_oSerProtectedAlgorithmNameTypes.SHA_512;
+				alg = AscCommon.c_oSerAlgorithmNameTypes.SHA_512;
 				break;
 			case "WHIRLPOOL" :
-				alg = c_oSerProtectedAlgorithmNameTypes.WHIRLPOOL;
+				alg = AscCommon.c_oSerAlgorithmNameTypes.WHIRLPOOL;
 				break;
 		}
 		return alg;
@@ -140,43 +92,38 @@
 	function ToXml_ST_AlgorithmName(alg) {
 		var str = null;
 		switch (alg) {
-			case  c_oSerProtectedAlgorithmNameTypes.MD2:
+			case  AscCommon.c_oSerAlgorithmNameTypes.MD2:
 				str = "MD2";
 				break;
-			case  c_oSerProtectedAlgorithmNameTypes.MD4:
+			case  AscCommon.c_oSerAlgorithmNameTypes.MD4:
 				str = "MD4";
 				break;
-			case  c_oSerProtectedAlgorithmNameTypes.MD5:
+			case  AscCommon.c_oSerAlgorithmNameTypes.MD5:
 				str = "MD5";
 				break;
-			case  c_oSerProtectedAlgorithmNameTypes.RIPEMD_128:
+			case  AscCommon.c_oSerAlgorithmNameTypes.RIPEMD_128:
 				str = "RIPEMD-128";
 				break;
-			case  c_oSerProtectedAlgorithmNameTypes.RIPEMD_160:
+			case  AscCommon.c_oSerAlgorithmNameTypes.RIPEMD_160:
 				str = "RIPEMD-160";
 				break;
-			case  c_oSerProtectedAlgorithmNameTypes.SHA1:
+			case  AscCommon.c_oSerAlgorithmNameTypes.SHA1:
 				str = "SHA-1";
 				break;
-			case c_oSerProtectedAlgorithmNameTypes.SHA_256 :
+			case AscCommon.c_oSerAlgorithmNameTypes.SHA_256 :
 				str = "SHA-256";
 				break;
-			case c_oSerProtectedAlgorithmNameTypes.SHA_384 :
+			case AscCommon.c_oSerAlgorithmNameTypes.SHA_384 :
 				str = "SHA-384";
 				break;
-			case  c_oSerProtectedAlgorithmNameTypes.SHA_512:
+			case  AscCommon.c_oSerAlgorithmNameTypes.SHA_512:
 				str = "SHA-512";
 				break;
-			case  c_oSerProtectedAlgorithmNameTypes.WHIRLPOOL:
+			case  AscCommon.c_oSerAlgorithmNameTypes.WHIRLPOOL:
 				str = "WHIRLPOOL";
 				break;
 		}
 		return str;
-	}
-
-
-	function generateHashParams() {
-		return {spinCount: 100000, saltValue: AscCommon.randomBytes(16).base64(), algorithmName: c_oSerProtectedAlgorithmNameTypes.SHA_512};
 	}
 
 	function getPasswordHash(password, getString) {
@@ -573,10 +520,10 @@
 		//просталяю временный пароль, аспинхронная проверка пароля в asc_setProtectedSheet
 		this.setSheet(!this.sheet);
 		if (this.sheet && password) {
-			var hashParams = generateHashParams();
+			var hashParams = AscCommon.generateHashParams();
 			this.saltValue = hashParams.saltValue;
 			this.spinCount = hashParams.spinCount;
-			this.algorithmName = hashParams.algorithmName;
+			this.algorithmName =  AscCommon.c_oSerAlgorithmNameTypes.SHA_512;
 		}
 		this.temporaryPassword = password;
 		if (callback) {
@@ -877,10 +824,10 @@
 		this.setLockStructure(!this.lockStructure);
 
 		if (this.lockStructure && password) {
-			var hashParams = generateHashParams();
+			var hashParams = AscCommon.generateHashParams();
 			this.workbookSaltValue = hashParams.saltValue;
 			this.workbookSpinCount = hashParams.spinCount;
-			this.workbookAlgorithmName = hashParams.algorithmName;
+			this.workbookAlgorithmName =  AscCommon.c_oSerAlgorithmNameTypes.SHA_512;
 		}
 		this.temporaryPassword = password;
 		if (callback) {
@@ -1257,7 +1204,9 @@
 
 		if (this.sqref) {
 			this.sqref.forEach(function (item) {
-				arrResult.push(item.getAbsName());
+				if (item) {
+					arrResult.push(item.getAbsName());
+				}
 			});
 		}
 		return "=" + arrResult.join(AscCommon.FormulaSeparators.functionArgumentSeparator);
@@ -1316,10 +1265,10 @@
 	};
 	CProtectedRange.prototype.asc_setPassword = function (val) {
 		if (val) {
-			var hashParams = generateHashParams();
+			var hashParams = AscCommon.generateHashParams();
 			this.saltValue = hashParams.saltValue;
 			this.spinCount = hashParams.spinCount;
-			this.algorithmName = hashParams.algorithmName;
+			this.algorithmName =  AscCommon.c_oSerAlgorithmNameTypes.SHA_512;
 		}
 		//генерируем хэш
 		this.temporaryPassword = val;
@@ -1331,7 +1280,7 @@
 		return this.isLock;
 	};
 	CProtectedRange.prototype.asc_checkPassword = function (val, callback) {
-		var checkHash = {password: val, salt: this.saltValue, spinCount: this.spinCount, alg: fromModelAlgoritmName(this.algorithmName)};
+		var checkHash = {password: val, salt: this.saltValue, spinCount: this.spinCount, alg: AscCommon.fromModelAlgorithmName(this.algorithmName)};
 		AscCommon.calculateProtectHash([checkHash], function (hash) {
 			callback(hash && hash[0] === this.hashValue);
 		});
@@ -1345,6 +1294,161 @@
 
 	CProtectedRange.sStartLock = 'protectedRange_';
 
+
+	function CFileSharing(wb) {
+		this.algorithmName = null;
+		this.hashValue = null;
+		this.saltValue = null;
+		this.spinCount = null;
+
+		this.password = null;
+		this.userName = null;
+		this.readOnly = null;
+
+		this._wb = wb;
+		/*this.temporaryPassword = null;*/
+
+		return this;
+	}
+
+	CFileSharing.prototype.clone = function(wb) {
+		var res = new CFileSharing(wb);
+
+		res.algorithmName = this.algorithmName;
+		res.hashValue = this.hashValue;
+		res.saltValue = this.saltValue;
+		res.spinCount = this.spinCount;
+
+		res.password = this.password;
+		res.userName = this.userName;
+		res.readOnly = this.readOnly;
+
+		return res;
+	};
+
+	CFileSharing.prototype.set = function (val, addToHistory) {
+		/*this.revisionsAlgorithmName = this.checkProperty(this.revisionsAlgorithmName, val.revisionsAlgorithmName, AscCH.historyitem_Protected_SetRevisionsAlgorithmName, addToHistory);
+		this.revisionsHashValue = this.checkProperty(this.revisionsHashValue, val.revisionsHashValue, AscCH.historyitem_Protected_SetRevisionsHashValue, addToHistory);
+		this.revisionsSaltValue = this.checkProperty(this.revisionsSaltValue, val.revisionsSaltValue, AscCH.historyitem_Protected_SetRevisionsSaltValue, addToHistory);
+		this.revisionsSpinCount = this.checkProperty(this.revisionsSpinCount, val.revisionsSpinCount, AscCH.historyitem_Protected_SetRevisionsSpinCount, addToHistory);
+
+		this.workbookAlgorithmName = this.checkProperty(this.workbookAlgorithmName, val.workbookAlgorithmName, AscCH.historyitem_Protected_SetWorkbookAlgorithmName, addToHistory);
+		this.workbookHashValue = this.checkProperty(this.workbookHashValue, val.workbookHashValue, AscCH.historyitem_Protected_SetWorkbookHashValue, addToHistory);
+		this.workbookSaltValue = this.checkProperty(this.workbookSaltValue, val.workbookSaltValue, AscCH.historyitem_Protected_SetWorkbookSaltValue, addToHistory);
+		this.workbookSpinCount = this.checkProperty(this.workbookSpinCount, val.workbookSpinCount, AscCH.historyitem_Protected_SetWorkbookSpinCount, addToHistory);
+
+		this.workbookPassword = this.checkProperty(this.workbookPassword, val.workbookPassword, AscCH.historyitem_Protected_SetPassword, addToHistory);*/
+	};
+
+	CFileSharing.prototype.checkProperty = function (propOld, propNew, type, addToHistory) {
+		/*if (propOld !== propNew) {
+			if (addToHistory) {
+				History.Add(AscCommonExcel.g_oUndoRedoProtectedWorkbook, type, null, null,
+					new AscCommonExcel.UndoRedoData_ProtectedRange(null, propOld, propNew));
+			}
+			return propNew;
+		}
+		return propOld;*/
+	};
+
+	CFileSharing.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.algorithmName) {
+			w.WriteBool(true);
+			w.WriteLong(this.algorithmName);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.hashValue) {
+			w.WriteBool(true);
+			w.WriteString2(this.hashValue);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.saltValue) {
+			w.WriteBool(true);
+			w.WriteString2(this.saltValue);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.spinCount) {
+			w.WriteBool(true);
+			w.WriteLong(this.spinCount);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.password) {
+			w.WriteBool(true);
+			w.WriteString2(this.password);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.userName) {
+			w.WriteBool(true);
+			w.WriteString2(this.userName);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.readOnly) {
+			w.WriteBool(true);
+			w.WriteBool(this.readOnly);
+		} else {
+			w.WriteBool(false);
+		}
+	};
+
+	CFileSharing.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			this.algorithmName = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.hashValue = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.saltValue = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.spinCount = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.password = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.userName = r.GetString2();
+		}
+		if (r.GetBool()) {
+			this.readOnly = r.GetBool();
+		}
+	};
+	CFileSharing.prototype.asc_getAlgorithmName = function () {
+		return this.algorithmName;
+	};
+	CFileSharing.prototype.asc_getHashValue = function () {
+		return this.hashValue;
+	};
+	CFileSharing.prototype.asc_getSaltValue = function () {
+		return this.saltValue;
+	};
+	CFileSharing.prototype.asc_getSpinCount = function () {
+		return this.spinCount;
+	};
+	CFileSharing.prototype.asc_getReadOnly = function () {
+		return this.readOnly;
+	};
+	CFileSharing.prototype.asc_getSpinCount = function () {
+		return this.spinCount;
+	};
+	CFileSharing.prototype.asc_isPassword = function () {
+		return this.password != null || this.password != null;
+	};
+	CFileSharing.prototype.setPasswordXL = function (val) {
+		this.password = val;
+	};
+	CFileSharing.prototype.getPasswordXL = function () {
+		return this.password;
+	};
+	CFileSharing.prototype.isPasswordXL = function () {
+		return this.password != null;
+	};
 
 
 	//----------------------------------------------------------export----------------------------------------------------
@@ -1439,7 +1543,9 @@
 	prot["asc_checkPassword"] = prot.asc_checkPassword;
 	prot["asc_getId"] = prot.asc_getId;
 
-	window["AscCommonExcel"].fromModelAlgoritmName = fromModelAlgoritmName;
+	window["Asc"].CFileSharing = CFileSharing;
+	prot = CFileSharing.prototype;
+
 	window["AscCommonExcel"].getPasswordHash = getPasswordHash;
 	window["AscCommonExcel"].FromXml_ST_AlgorithmName = FromXml_ST_AlgorithmName;
 	window["AscCommonExcel"].ToXml_ST_AlgorithmName   = ToXml_ST_AlgorithmName;

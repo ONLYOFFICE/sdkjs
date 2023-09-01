@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -177,7 +177,7 @@
     }
     function drawHorBorder(graphics, oBorderPr, oPrevBorderPr, align, y, x, r) {
         var oLastBorderPr = null;
-        if(oBorderPr && oBorderPr.s !== AscCommon.c_oAscBorderStyles.None) {
+        if(oBorderPr && oBorderPr.s !== Asc.c_oAscBorderStyles.None) {
             graphics.drawHorLine(align, y, x, r, setGraphicsSettings(graphics, oBorderPr, oPrevBorderPr));
             oLastBorderPr = oBorderPr;
         }
@@ -185,7 +185,7 @@
     }
     function drawVerBorder(graphics, oBorderPr, oPrevBorderPr, align, x, y, b) {
         var oLastBorderPr = null;
-        if(oBorderPr && oBorderPr.s !== AscCommon.c_oAscBorderStyles.None) {
+        if(oBorderPr && oBorderPr.s !== Asc.c_oAscBorderStyles.None) {
             graphics.drawVerLine(align, x, y, b, setGraphicsSettings(graphics, oBorderPr, oPrevBorderPr));
             oLastBorderPr = oBorderPr;
         }
@@ -694,20 +694,21 @@
             g = 204;
             b = 204;
         }
-        oBorder = new AscCommonExcel.Border(null);
+        oBorder = new AscCommonExcel.Border();
+        oBorder.initDefault();
         if(nType !== STYLE_TYPE.HEADER) {
             oBorder.l = new AscCommonExcel.BorderProp();
-            oBorder.l.setStyle(AscCommon.c_oAscBorderStyles.Thin);
+            oBorder.l.setStyle(Asc.c_oAscBorderStyles.Thin);
             oBorder.l.c = AscCommonExcel.createRgbColor(r, g, b);
             oBorder.t = new AscCommonExcel.BorderProp();
-            oBorder.t.setStyle(AscCommon.c_oAscBorderStyles.Thin);
+            oBorder.t.setStyle(Asc.c_oAscBorderStyles.Thin);
             oBorder.t.c = AscCommonExcel.createRgbColor(r, g, b);
             oBorder.r = new AscCommonExcel.BorderProp();
-            oBorder.r.setStyle(AscCommon.c_oAscBorderStyles.Thin);
+            oBorder.r.setStyle(Asc.c_oAscBorderStyles.Thin);
             oBorder.r.c = AscCommonExcel.createRgbColor(r, g, b);
         }
         oBorder.b = new AscCommonExcel.BorderProp();
-        oBorder.b.setStyle(AscCommon.c_oAscBorderStyles.Thin);
+        oBorder.b.setStyle(Asc.c_oAscBorderStyles.Thin);
         oBorder.b.c = AscCommonExcel.createRgbColor(r, g, b);
         return oBorder;
     };
@@ -1195,24 +1196,6 @@
     };
     CSlicer.prototype.getAllSlicerViews = function(aSlicerView) {
         aSlicerView.push(this);
-    };
-    CSlicer.prototype.readAttrXml = function (name, reader) {
-        switch (name) {
-            case "name": {
-                this.setName(reader.GetValue());
-                break;
-            }
-        }
-    };
-    CSlicer.prototype.toXml = function (writer) {
-        //writer.WriteXmlString("<sle:slicer xmlns:sle=\"http://schemas.microsoft.com/office/drawing/2010/slicer\" name=\"" + this.name + "\"/>");
-
-
-        writer.WriteXmlNodeStart("sle:slicer");
-        writer.WriteXmlString(" xmlns:sle=\"http://schemas.microsoft.com/office/drawing/2010/slicer\"");
-        writer.WriteXmlNullableAttributeStringEncode("name", this.name);
-        writer.WriteXmlAttributesEnd(true);
-
     };
 
     function CHeader(slicer) {
@@ -2482,18 +2465,19 @@
         r = 0xCE;
         g = 0xCE;
         b = 0xCE;
-        var oBorder = new AscCommonExcel.Border(null);
+        var oBorder = new AscCommonExcel.Border();
+        oBorder.initDefault();
         oBorder.l = new AscCommonExcel.BorderProp();
-        oBorder.l.setStyle(AscCommon.c_oAscBorderStyles.Thin);
+        oBorder.l.setStyle(Asc.c_oAscBorderStyles.Thin);
         oBorder.l.c = AscCommonExcel.createRgbColor(r, g, b);
         oBorder.t = new AscCommonExcel.BorderProp();
-        oBorder.t.setStyle(AscCommon.c_oAscBorderStyles.Thin);
+        oBorder.t.setStyle(Asc.c_oAscBorderStyles.Thin);
         oBorder.t.c = AscCommonExcel.createRgbColor(r, g, b);
         oBorder.r = new AscCommonExcel.BorderProp();
-        oBorder.r.setStyle(AscCommon.c_oAscBorderStyles.Thin);
+        oBorder.r.setStyle(Asc.c_oAscBorderStyles.Thin);
         oBorder.r.c = AscCommonExcel.createRgbColor(r, g, b);
         oBorder.b = new AscCommonExcel.BorderProp();
-        oBorder.b.setStyle(AscCommon.c_oAscBorderStyles.Thin);
+        oBorder.b.setStyle(Asc.c_oAscBorderStyles.Thin);
         oBorder.b.c = AscCommonExcel.createRgbColor(r, g, b);
         return oBorder;
     };

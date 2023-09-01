@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -72,48 +72,47 @@ CShape.prototype.getDrawingObjectsController = function()
 };
 
 
-CShape.prototype.addToDrawingObjects =  function(pos)
+function editorAddToDrawingObjects(oGraphicObject, pos, type)
 {
-    if(this.parent && this.parent.cSld && this.parent.cSld.spTree)
+    if(oGraphicObject.parent && oGraphicObject.parent.cSld && oGraphicObject.parent.cSld.spTree)
     {
-        if(this.signatureLine && this.setSignature)
+        if(oGraphicObject.signatureLine && oGraphicObject.setSignature)
         {
-            this.setSignature(null);
+            oGraphicObject.setSignature(null);
         }
-        this.parent.shapeAdd(pos, this);
+        oGraphicObject.parent.shapeAdd(pos, oGraphicObject);
     }
-};
-
-
-CShape.prototype.deleteDrawingBase = function(bCheckPlaceholder)
-{
-    if(this.parent && this.parent.cSld && this.parent.cSld.spTree)
+}
+    function editorDeleteDrawingBase(oGraphicObject, bCheckPlaceholder)
     {
-        var pos = this.parent.removeFromSpTreeById(this.Id);
-        var phType = this.getPlaceholderType();
-        if(bCheckPlaceholder && this.isPlaceholder() && !this.isEmptyPlaceholder()
-            && phType !== AscFormat.phType_hdr && phType !== AscFormat.phType_ftr
-            && phType !== AscFormat.phType_sldNum && phType !== AscFormat.phType_dt )
+        let oSlide = oGraphicObject.parent;
+        if(oSlide && oSlide.cSld && oSlide.cSld.spTree)
         {
-            var hierarchy = this.getHierarchy();
-            if(hierarchy[0])
+            var pos = oSlide.removeFromSpTreeById(oGraphicObject.Id);
+            var phType = oGraphicObject.getPlaceholderType();
+            if(bCheckPlaceholder && oGraphicObject.isPlaceholder() && !oGraphicObject.isEmptyPlaceholder()
+                && phType !== AscFormat.phType_hdr && phType !== AscFormat.phType_ftr
+                && phType !== AscFormat.phType_sldNum && phType !== AscFormat.phType_dt )
             {
-                var copy = hierarchy[0].copy(undefined);
-                copy.setParent(this.parent);
-                copy.addToDrawingObjects(pos);
-                var doc_content = copy.getDocContent && copy.getDocContent();
-                if(doc_content)
+                var hierarchy = oGraphicObject.getHierarchy();
+                if(hierarchy[0])
                 {
-                    doc_content.SetApplyToAll(true);
-                    doc_content.Remove(-1);
-                    doc_content.SetApplyToAll(false);
+                    var copy = hierarchy[0].copy(undefined);
+                    copy.setParent(oSlide);
+                    copy.addToDrawingObjects(pos);
+                    var doc_content = copy.getDocContent && copy.getDocContent();
+                    if(doc_content)
+                    {
+                        doc_content.SetApplyToAll(true);
+                        doc_content.Remove(-1);
+                        doc_content.SetApplyToAll(false);
+                    }
                 }
             }
+            return pos;
         }
-        return pos;
+        return -1;
     }
-    return -1;
-};
 
 CShape.prototype.setRecalculateInfo = function()
 {
@@ -586,7 +585,7 @@ CShape.prototype.Get_Worksheet = function()
 };
 CShape.prototype.Get_Numbering =  function()
 {
-    return new CNumbering();
+    return AscWord.DEFAULT_NUMBERING;
 };
 CShape.prototype.getIsSingleBody = function(x, y)
 {
@@ -651,7 +650,7 @@ CShape.prototype.OnContentReDraw = function(){
     }
 };
 
-    CShape.prototype.Is_ThisElementCurrent = function()
+    CShape.prototype.IsThisElementCurrent = function()
     {
         if(this.parent && this.parent.graphicObjects)
         {
@@ -680,4 +679,6 @@ CShape.prototype.OnContentReDraw = function(){
 
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
+    window['AscFormat'].editorDeleteDrawingBase = editorDeleteDrawingBase;
+    window['AscFormat'].editorAddToDrawingObjects = editorAddToDrawingObjects;
 })(window);

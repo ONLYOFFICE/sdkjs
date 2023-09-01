@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -35,7 +35,6 @@
 // Import
 var hdrftr_Header = AscCommon.hdrftr_Header;
 var hdrftr_Footer = AscCommon.hdrftr_Footer;
-var g_oTableId = AscCommon.g_oTableId;
 var History = AscCommon.History;
 
 //-----------------------------------------------------------------------------------
@@ -72,7 +71,7 @@ function CHeaderFooter(Parent, oLogicDocument, DrawingDocument, Type)
 	this.PageCountElements = [];
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-    g_oTableId.Add( this, this.Id );
+    AscCommon.g_oTableId.Add( this, this.Id );
 }
 
 CHeaderFooter.prototype =
@@ -403,7 +402,7 @@ CHeaderFooter.prototype =
         }
     },
 
-    Is_ThisElementCurrent : function()
+	IsThisElementCurrent : function()
     {
         if (this === this.Parent.CurHdrFtr && docpostype_HdrFtr === this.LogicDocument.GetDocPosType())
             return true;
@@ -753,9 +752,9 @@ CHeaderFooter.prototype =
         this.Content.AddSignatureLine(oSignatureDrawing);
     },
 
-	AddOleObject : function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId)
+	AddOleObject : function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
     {
-        this.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId);
+        return this.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
     },
 
 	AddTextArt : function(nStyle)
@@ -783,9 +782,9 @@ CHeaderFooter.prototype =
 		this.Content.ClearParagraphFormatting(isClearParaPr, isClearTextPr);
 	},
 
-	PasteFormatting : function(TextPr, ParaPr, ApplyPara)
+	PasteFormatting : function(oData)
 	{
-		this.Content.PasteFormatting(TextPr, ParaPr, ApplyPara);
+		this.Content.PasteFormatting(oData);
 	},
 
     Remove : function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)
@@ -1031,16 +1030,20 @@ CHeaderFooter.prototype =
     {
         this.Set_Page( PageIndex );
 
-        if ( true === editor.isStartAddShape )
+        if (editor.isStartAddShape || editor.isInkDrawerOn())
         {
             this.Content.SetDocPosType(docpostype_DrawingObjects);
             this.Content.Selection.Use   = true;
             this.Content.Selection.Start = true;
 
-            if ( true != this.LogicDocument.DrawingObjects.isPolylineAddition() )
-                this.LogicDocument.DrawingObjects.startAddShape( editor.addShapePreset );
+			let oDrawingObjects = this.LogicDocument.DrawingObjects;
+			if(true === editor.isStartAddShape)
+			{
+				if(!oDrawingObjects.isPolylineAddition())
+					oDrawingObjects.startAddShape(editor.addShapePreset);
 
-            this.LogicDocument.DrawingObjects.OnMouseDown(MouseEvent, X, Y, PageIndex);
+			}
+	        oDrawingObjects.OnMouseDown(MouseEvent, X, Y, PageIndex);
         }
         else
 		{
@@ -1233,7 +1236,7 @@ CHeaderFooter.prototype =
 //-----------------------------------------------------------------------------------
 	AddHyperlink : function(HyperProps)
 	{
-		this.Content.AddHyperlink(HyperProps);
+		return this.Content.AddHyperlink(HyperProps);
 	},
 
 	ModifyHyperlink : function(HyperProps)
@@ -1303,7 +1306,7 @@ CHeaderFooter.prototype =
         this.Id      = Reader.GetString2();
         this.Type    = Reader.GetLong();
 
-        this.Content = g_oTableId.Get_ById( Reader.GetString2() );        
+        this.Content = AscCommon.g_oTableId.Get_ById( Reader.GetString2() );
     },
 //-----------------------------------------------------------------------------------
 // Функции для работы с комментариями
@@ -1428,7 +1431,7 @@ CHeaderFooter.prototype.FindWatermark = function()
             }
             else
             {
-                if(oCandidate.getDrawingArrayType() < oDrawing.getDrawingArrayType() || ComparisonByZIndexSimple(oDrawing, oCandidate))
+                if(oCandidate.getDrawingArrayType() < oDrawing.getDrawingArrayType() || (typeof ComparisonByZIndexSimple !== undefined && ComparisonByZIndexSimple(oDrawing, oCandidate)))
                 {
                     oCandidate = oDrawing;
                 }
@@ -1482,7 +1485,7 @@ function CHeaderFooterController(LogicDocument, DrawingDocument)
     this.Lock = new AscCommon.CLock();   
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-    g_oTableId.Add( this, this.Id );
+    AscCommon.g_oTableId.Add( this, this.Id );
 }
 
 CHeaderFooterController.prototype =
@@ -1627,18 +1630,18 @@ CHeaderFooterController.prototype =
         else
             return null;
     },
-
-    Set_CurHdrFtr_ById : function(Id)
-    {
-        var HdrFtr = g_oTableId.Get_ById( Id );
-        if ( -1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr( HdrFtr ) )
-            return false;
-        
-        this.CurHdrFtr = HdrFtr;
-        HdrFtr.Content.MoveCursorToStartPos();
-              
-        return true;
-    },
+	
+	Set_CurHdrFtr_ById : function(Id)
+	{
+		let HdrFtr = AscCommon.g_oTableId.GetById(Id);
+		if (!HdrFtr || -1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr(HdrFtr))
+			return false;
+		
+		this.CurHdrFtr = HdrFtr;
+		HdrFtr.Content.MoveCursorToStartPos();
+		
+		return true;
+	},
 //-----------------------------------------------------------------------------------
 //
 //-----------------------------------------------------------------------------------   
@@ -1978,11 +1981,8 @@ CHeaderFooterController.prototype =
 
 	IsUseInDocument : function(Id)
 	{
-		var HdrFtr = g_oTableId.Get_ById(Id);
-		if (-1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr(HdrFtr))
-			return false;
-
-		return true;
+		let hdrFtr = AscCommon.g_oTableId.GetById(Id);
+		return !(!hdrFtr || -1 === this.LogicDocument.SectionsInfo.Find_ByHdrFtr(hdrFtr));
 	},
 
     Check_Page : function(HdrFtr, PageIndex)
@@ -2048,10 +2048,10 @@ CHeaderFooterController.prototype =
             return this.CurHdrFtr.AddSignatureLine(oSignatureDrawing);
     },
 
-	AddOleObject: function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId)
+	AddOleObject: function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
     {
         if ( null != this.CurHdrFtr )
-            return this.CurHdrFtr.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId);
+            return this.CurHdrFtr.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
     },
 
 	AddTextArt : function(nStyle)
@@ -2089,10 +2089,10 @@ CHeaderFooterController.prototype =
 			return this.CurHdrFtr.ClearParagraphFormatting();
 	},
 
-	PasteFormatting : function(TextPr, ParaPr, ApplyPara)
+	PasteFormatting : function(oData)
 	{
 		if (null != this.CurHdrFtr)
-			return this.CurHdrFtr.PasteFormatting(TextPr, ParaPr, ApplyPara);
+			return this.CurHdrFtr.PasteFormatting(oData);
 	},
 
     Remove : function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)
@@ -2335,7 +2335,7 @@ CHeaderFooterController.prototype =
 
         var PageMetrics = this.LogicDocument.Get_PageContentStartPos( PageIndex );
         
-        if ( MouseEvent.ClickCount >= 2 && true != editor.isStartAddShape &&
+        if ( MouseEvent.ClickCount >= 2 && (!editor.isStartAddShape && !editor.isInkDrawerOn()) &&
             !( Y <= PageMetrics.Y      || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Header ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) ) &&
             !( Y >= PageMetrics.YLimit || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Footer ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) ) )
         {
@@ -2355,7 +2355,7 @@ CHeaderFooterController.prototype =
 
         // Проверяем попали ли мы в колонтитул, если он есть. Если мы попали в
         // область колонтитула, а его там нет, тогда добавим новый колонтитул.
-        if ( Y <= PageMetrics.Y || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Header ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) || true === editor.isStartAddShape )
+        if ( Y <= PageMetrics.Y || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Header ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) || (editor.isStartAddShape || editor.isInkDrawerOn()) )
         {
             if ( null === this.Pages[PageIndex].Header )
             {
@@ -2503,7 +2503,7 @@ CHeaderFooterController.prototype =
 
     Get_NearestPos : function(PageNum, X, Y, bAnchor, Drawing)
     {
-        var HdrFtr = (true === editor.isStartAddShape ? this.CurHdrFtr : this.Internal_GetContentByXY( X, Y, PageNum ));
+        var HdrFtr = (editor.isStartAddShape || editor.isInkDrawerOn() ? this.CurHdrFtr : this.Internal_GetContentByXY( X, Y, PageNum ));
         
         if ( null != HdrFtr )
             return HdrFtr.Get_NearestPos( X, Y, bAnchor, Drawing );
@@ -2672,7 +2672,9 @@ CHeaderFooterController.prototype =
 	AddHyperlink : function(HyperProps)
 	{
 		if (null != this.CurHdrFtr)
-			this.CurHdrFtr.AddHyperlink(HyperProps);
+			return this.CurHdrFtr.AddHyperlink(HyperProps);
+		
+		return null;
 	},
 
 	ModifyHyperlink : function(HyperProps)
@@ -2740,8 +2742,14 @@ CHeaderFooterController.prototype.GetStyleFromFormatting = function()
 };
 CHeaderFooterController.prototype.GetSimilarNumbering = function(oEngine)
 {
-	if (this.CurHdrFtr)
-		this.CurHdrFtr.Content.GetSimilarNumbering(oEngine)
+	if (!this.CurHdrFtr)
+		return null;
+	
+	let docContent = this.CurHdrFtr.GetContent();
+	if (docpostype_DrawingObjects === docContent.GetDocPosType() && this.LogicDocument)
+		return this.LogicDocument.DrawingsController.GetSimilarNumbering(oEngine);
+	else
+		return this.CurHdrFtr.Content.GetSimilarNumbering(oEngine)
 };
 CHeaderFooterController.prototype.GetPlaceHolderObject = function()
 {

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -292,7 +292,8 @@
 		Chart : 2,
 		Table : 3,
 		Video : 4,
-		Audio : 5
+		Audio : 5,
+		SmartArt: 6
 	};
 
 	var exportObj = AscCommon.PlaceholderButtonType;
@@ -303,6 +304,7 @@
 	exportObj["Table"] = exportObj.Table;
 	exportObj["Video"] = exportObj.Video;
 	exportObj["Audio"] = exportObj.Audio;
+	exportObj["SmartArt"] = exportObj.SmartArt;
 
 	AscCommon.PlaceholderButtonState = {
 		None : 0,
@@ -367,8 +369,14 @@
 	{
 		this.events = null; // Placeholders
 
+		this.buttonSize = ButtonSize1x;
+		this.buttonBetweenSize = ButtonBetweenSize1x;
+		this.buttonImageSize = ButtonImageSize1x;
+
 		// id button (parent shape id)
 		this.id = null;
+
+		this.api = Asc.editor || editor;
 
 		// list of buttons {AscCommon.PlaceholderButtonType}
 		this.buttons = [];
@@ -404,8 +412,8 @@
 	Placeholder.prototype.getButtonRects = function(pointCenter, scale, isDraw)
 	{
 		//координаты ретины - масштабируются при отрисовке
-		var ButtonSize = ButtonSize1x;//AscCommon.AscBrowser.convertToRetinaValue(ButtonSize1x, true);
-		var ButtonBetweenSize = ButtonBetweenSize1x;//AscCommon.AscBrowser.convertToRetinaValue(ButtonBetweenSize1x, true);
+		var ButtonSize = this.buttonSize;//AscCommon.AscBrowser.convertToRetinaValue(ButtonSize1x, true);
+		var ButtonBetweenSize = this.buttonBetweenSize;//AscCommon.AscBrowser.convertToRetinaValue(ButtonBetweenSize1x, true);
 
 		if (isDraw)
 		{
@@ -420,15 +428,6 @@
 
 		var sizeAllHor = (countColumn * ButtonSize + (countColumn - 1) * ButtonBetweenSize);
 		var sizeAllHor2 = (countColumn2 * ButtonSize + (countColumn2 - 1) * ButtonBetweenSize);
-		var sizeAllVer = buttonsCount > 0 ? ButtonSize : 0;
-		if (buttonsCount > countColumn)
-			sizeAllVer += (ButtonSize + ButtonBetweenSize);
-
-		var parentW = (this.anchor.rect.w * scale.x) >> 0;
-		var parentH = (this.anchor.rect.h * scale.y) >> 0;
-
-		if ((sizeAllHor + (ButtonBetweenSize << 1)) > parentW || (sizeAllVer + (ButtonBetweenSize << 1)) > parentH)
-			return [];
 
 		var xStart = pointCenter.x - (sizeAllHor >> 1);
 		var yStart = pointCenter.y - (((buttonsCount == countColumn) ? ButtonSize : (2 * ButtonSize + ButtonBetweenSize)) >> 1);
@@ -464,7 +463,7 @@
 			y : (pixelsRect.bottom - pixelsRect.top) / pageHeightMM
 		};
 		var rects = this.getButtonRects(pointCenter, scale);
-		var ButtonSize = ButtonSize1x;//AscCommon.AscBrowser.convertToRetinaValue(ButtonSize1x, true);
+		var ButtonSize = this.buttonSize;//AscCommon.AscBrowser.convertToRetinaValue(ButtonSize1x, true);
 
 		var px = (0.5 + pixelsRect.left + x * (pixelsRect.right - pixelsRect.left) / pageWidthMM) >> 0;
 		var py = (0.5 + pixelsRect.top + y * (pixelsRect.bottom - pixelsRect.top) / pageHeightMM) >> 0;
@@ -487,6 +486,31 @@
 		return -1;
 	};
 
+	Placeholder.prototype.recalculateButtonsSize = function (scale) {
+		const buttonSize = AscCommon.AscBrowser.convertToRetinaValue(ButtonSize1x, true);
+		const buttonBetweenSize = AscCommon.AscBrowser.convertToRetinaValue(ButtonBetweenSize1x, true);
+
+		const buttonsCount = this.buttons.length;
+		const countColumn = (buttonsCount < 3) ? buttonsCount : (this.buttons.length + 1) >> 1;
+
+		const sizeAllHor = (countColumn * buttonSize + (countColumn - 1) * buttonBetweenSize);
+
+		let sizeAllVer = buttonsCount > 0 ? buttonSize : 0;
+		if (buttonsCount > countColumn)
+			sizeAllVer += (buttonSize + buttonBetweenSize);
+
+		const parentW = (this.anchor.rect.w * scale.x) >> 0;
+		const parentH = (this.anchor.rect.h * scale.y) >> 0;
+
+		const widthCoefficient = parentW / (sizeAllHor + (buttonBetweenSize << 1));
+		const heightCoefficient = parentH / (sizeAllVer + (buttonBetweenSize << 1));
+		const nScaleCoefficient = Math.min(widthCoefficient, heightCoefficient, 1);
+
+		this.buttonSize = (ButtonSize1x * nScaleCoefficient) >> 0;
+		this.buttonBetweenSize = (ButtonBetweenSize1x * nScaleCoefficient) >> 0;
+		this.buttonImageSize = (ButtonImageSize1x * nScaleCoefficient) >> 0;
+	};
+
 	Placeholder.prototype.onPointerDown = function(x, y, pixelsRect, pageWidthMM, pageHeightMM)
 	{
 		var pointMenu = { x : 0, y : 0 };
@@ -498,8 +522,8 @@
 		if (this.states[indexButton] == AscCommon.PlaceholderButtonState.Active)
 		{
 			this.states[indexButton] = AscCommon.PlaceholderButtonState.Over;
-			this.events.document.m_oWordControl.OnUpdateOverlay();
-			this.events.document.m_oWordControl.EndUpdateOverlay();
+			this.events.onUpdateOverlay();
+			this.events.endUpdateOverlay();
 
 			this.events.closeCallback(this.buttons[indexButton], this);
 			return true;
@@ -513,27 +537,27 @@
 			}
 
 			this.states[indexButton] = AscCommon.PlaceholderButtonState.Active;
-			this.events.document.m_oWordControl.OnUpdateOverlay();
-			this.events.document.m_oWordControl.EndUpdateOverlay();
+			this.events.onUpdateOverlay();
+			this.events.endUpdateOverlay();
 		}
 
 		var xCoord = pointMenu.x;
 		var yCoord = pointMenu.y;
 
 		var word_control = this.events.document.m_oWordControl;
-		switch (word_control.m_oApi.editorId)
+		switch (this.api.editorId)
 		{
 			case AscCommon.c_oEditorId.Word:
-				if (true === word_control.m_oWordControl.m_bIsRuler)
+				if (true === word_control.m_bIsRuler)
 				{
-					xCoord += (5 * g_dKoef_mm_to_pix) >> 0;
-					yCoord += (7 * g_dKoef_mm_to_pix) >> 0;
+					xCoord += (5 * AscCommon.g_dKoef_mm_to_pix) >> 0;
+					yCoord += (7 * AscCommon.g_dKoef_mm_to_pix) >> 0;
 				}
 				break;
 			case AscCommon.c_oEditorId.Presentation:
-				xCoord += ((word_control.m_oMainParent.AbsolutePosition.L + word_control.m_oMainView.AbsolutePosition.L) * g_dKoef_mm_to_pix) >> 0;
-				yCoord += ((word_control.m_oMainParent.AbsolutePosition.T + word_control.m_oMainView.AbsolutePosition.T) * g_dKoef_mm_to_pix) >> 0;
-				yCoord += ButtonSize1x;
+				xCoord += ((word_control.m_oMainParent.AbsolutePosition.L + word_control.m_oMainView.AbsolutePosition.L) * AscCommon.g_dKoef_mm_to_pix) >> 0;
+				yCoord += ((word_control.m_oMainParent.AbsolutePosition.T + word_control.m_oMainView.AbsolutePosition.T) * AscCommon.g_dKoef_mm_to_pix) >> 0;
+				yCoord += this.buttonSize;
 				break;
 			default:
 				break;
@@ -570,7 +594,12 @@
 		}
 
 		checker.isNeedUpdateOverlay |= isUpdate;
-		return (-1 != indexButton);
+		if (this.buttons[indexButton] !== undefined)
+		{
+			checker.placeholderType = this.buttons[indexButton];
+			checker.page = this.anchor.page;
+		}
+		return (-1 !== indexButton);
 	};
 
 	Placeholder.prototype.onPointerUp = function(x, y, pixelsRect, pageWidthMM, pageHeightMM)
@@ -585,19 +614,20 @@
 			x : (pixelsRect.right - pixelsRect.left) / pageWidthMM,
 			y : (pixelsRect.bottom - pixelsRect.top) / pageHeightMM
 		};
+		this.recalculateButtonsSize(scale);
 		var rects = this.getButtonRects(pointCenter, scale, true);
 		if (rects.length != this.buttons.length)
 			return;
 
-		var ButtonSize = AscCommon.AscBrowser.convertToRetinaValue(ButtonSize1x, true);
-		var ButtonImageSize = AscCommon.AscBrowser.convertToRetinaValue(ButtonImageSize1x, true);
-		var offsetImage = (ButtonSize - ButtonImageSize) >> 1;
+		var buttonSize = AscCommon.AscBrowser.convertToRetinaValue(this.buttonSize, true);
+		var buttonImageSize = AscCommon.AscBrowser.convertToRetinaValue(this.buttonImageSize, true);
+		var offsetImage = (buttonSize - buttonImageSize) >> 1;
 
 		var ctx = overlay.m_oContext;
 		for (var i = 0; i < this.buttons.length; i++)
 		{
 			overlay.CheckPoint(rects[i].x, rects[i].y);
-			overlay.CheckPoint(rects[i].x + ButtonSize, rects[i].y + ButtonSize);
+			overlay.CheckPoint(rects[i].x + buttonSize, rects[i].y + buttonSize);
 
 			var img = (this.states[i] == AscCommon.PlaceholderButtonState.Active) ? this.events.icons.getActive(this.buttons[i]) : this.events.icons.get(this.buttons[i]);
 			if (img)
@@ -620,23 +650,25 @@
 				var y = rects[i].y;
 				var r = 4;
 				ctx.moveTo(x + r, y);
-				ctx.lineTo(x + ButtonSize - r, y);
-				ctx.quadraticCurveTo(x + ButtonSize, y, x + ButtonSize, y + r);
-				ctx.lineTo(x + ButtonSize, y + ButtonSize - r);
-				ctx.quadraticCurveTo(x + ButtonSize, y + ButtonSize, x + ButtonSize - r, y + ButtonSize);
-				ctx.lineTo(x + r, y + ButtonSize);
-				ctx.quadraticCurveTo(x, y + ButtonSize, x, y + ButtonSize - r);
+				ctx.lineTo(x + buttonSize - r, y);
+				ctx.quadraticCurveTo(x + buttonSize, y, x + buttonSize, y + r);
+				ctx.lineTo(x + buttonSize, y + buttonSize - r);
+				ctx.quadraticCurveTo(x + buttonSize, y + buttonSize, x + buttonSize - r, y + buttonSize);
+				ctx.lineTo(x + r, y + buttonSize);
+				ctx.quadraticCurveTo(x, y + buttonSize, x, y + buttonSize - r);
 				ctx.lineTo(x, y + r);
 				ctx.quadraticCurveTo(x, y, x + r, y);
 				ctx.fill();
 				ctx.beginPath();
 
-				ctx.drawImage(img, rects[i].x + offsetImage, rects[i].y + offsetImage, ButtonImageSize, ButtonImageSize);
+				ctx.drawImage(img, rects[i].x + offsetImage, rects[i].y + offsetImage, buttonImageSize, buttonImageSize);
 
 				ctx.globalAlpha = oldGlobalAlpha;
 			}
 		}
 	};
+
+	AscCommon.DrawingPlaceholder = Placeholder;
 
 	function Placeholders(drDocument)
 	{
@@ -645,6 +677,8 @@
 		this.callbacks = [];
 		this.objects = [];
 
+		this.api = Asc.editor || editor;
+
 		this.icons = new PlaceholderIcons();
 		this.icons.register(AscCommon.PlaceholderButtonType.Image, "image");
 		this.icons.register(AscCommon.PlaceholderButtonType.ImageUrl, "image_url");
@@ -652,11 +686,13 @@
 		this.icons.register(AscCommon.PlaceholderButtonType.Chart, "chart", true);
 		this.icons.register(AscCommon.PlaceholderButtonType.Audio, "audio");
 		this.icons.register(AscCommon.PlaceholderButtonType.Video, "video");
+		this.icons.register(AscCommon.PlaceholderButtonType.SmartArt, "smartart", true);
 
 		// типы, которые поддерживают состояние Active
 		this.mapActive = [];
 		this.mapActive[AscCommon.PlaceholderButtonType.Table] = true;
 		this.mapActive[AscCommon.PlaceholderButtonType.Chart] = true;
+		this.mapActive[AscCommon.PlaceholderButtonType.SmartArt] = true;
 	}
 
 	Placeholders.prototype.registerCallback = function(type, callback)
@@ -671,7 +707,7 @@
 
 	Placeholders.prototype.closeCallback = function(type, obj)
 	{
-		this.document.m_oWordControl.m_oApi.sendEvent("asc_onHidePlaceholderActions");
+		this.api.sendEvent("asc_onHidePlaceholderActions");
 	};
 
 	Placeholders.prototype.closeAllActive = function()
@@ -690,7 +726,7 @@
 			}
 		}
 		if (isUpdate)
-			this.document.m_oWordControl.OnUpdateOverlay();
+			this.onUpdateOverlay();
 	};
 
 	Placeholders.prototype.draw = function(overlay, page, pixelsRect, pageWidthMM, pageHeightMM)
@@ -717,31 +753,67 @@
 		return false;
 	};
 
+	Placeholders.prototype.onUpdateOverlay = function () {
+		if (this.api.editorId === AscCommon.c_oEditorId.Spreadsheet) {
+			const oController = this.api.getGraphicController();
+			oController.updateOverlay();
+		} else {
+			if (this.api.WordControl) {
+				this.api.WordControl.OnUpdateOverlay();
+			}
+		}
+	};
+
+	Placeholders.prototype.endUpdateOverlay = function () {
+		if (this.api.editorId !== AscCommon.c_oEditorId.Spreadsheet) {
+			this.api.WordControl.EndUpdateOverlay();
+		}
+	};
+
+	Placeholders.prototype.updateCursorType = function (nX, nY, nPlaceholder, nPage)
+	{
+		if (this.api.editorId !== AscCommon.c_oEditorId.Spreadsheet)
+		{
+			this.api.sync_MouseMoveStartCallback();
+			const oMouseMoveData         = new AscCommon.CMouseMoveData();
+			const oCoords         = this.api.getDrawingDocument().ConvertCoordsToCursorWR(nX, nY, nPage);
+			oMouseMoveData.X_abs       = oCoords.X;
+			oMouseMoveData.Y_abs       = oCoords.Y;
+			oMouseMoveData.Type      = Asc.c_oAscMouseMoveDataTypes.Placeholder;
+			oMouseMoveData.PlaceholderType = nPlaceholder;
+			this.document.SetCursorType("default", oMouseMoveData);
+			this.api.sync_MouseMoveEndCallback();
+		}
+	};
+
 	Placeholders.prototype.onPointerMove = function(pos, pixelsRect, pageWidthMM, pageHeightMM)
 	{
-		var checker = { isNeedUpdateOverlay : false };
-		var isButton = false;
-		for (var i = 0; i < this.objects.length; i++)
+		const oChecker = { isNeedUpdateOverlay : false, placeholderType: null, page: null };
+		for (let i = 0; i < this.objects.length; i++)
 		{
 			if (this.objects[i].anchor.page != pos.Page)
 				continue;
 
-			isButton |= this.objects[i].onPointerMove(pos.X, pos.Y, pixelsRect, pageWidthMM, pageHeightMM, checker);
+			this.objects[i].onPointerMove(pos.X, pos.Y, pixelsRect, pageWidthMM, pageHeightMM, oChecker);
 		}
+		const bIsButton = oChecker.placeholderType !== null;
 
-		if (isButton)
-			this.document.SetCursorType("default");
+		if (bIsButton)
+			this.updateCursorType(pos.X, pos.Y, oChecker.placeholderType, oChecker.page);
 
 		// обновить оверлей
-		if (checker.isNeedUpdateOverlay && this.document.m_oWordControl)
+		if (oChecker.isNeedUpdateOverlay)
 		{
-			this.document.m_oWordControl.OnUpdateOverlay();
+			this.onUpdateOverlay();
 
-			if (isButton)
-				this.document.m_oWordControl.EndUpdateOverlay();
+			if (bIsButton)
+				this.endUpdateOverlay();
 		}
-
-		return isButton;
+		if (bIsButton)
+		{
+			return {placeholderType: oChecker.placeholderType, cursor: "default"};
+		}
+		return null;
 	};
 
 	Placeholders.prototype.onPointerUp = function(pos, pixelsRect, pageWidthMM, pageHeightMM)
@@ -751,7 +823,7 @@
 
 	Placeholders.prototype.update = function(objects)
 	{
-		if (this.document.m_oWordControl.m_oApi.isViewMode || this.document.m_oWordControl.m_oApi.isRestrictionSignatures())
+		if (this.api.isViewMode || this.api.isRestrictionSignatures())
 			objects = [];
 
 		var count = this.objects.length;
@@ -765,7 +837,7 @@
 			if (this.objects[i].id != objects[i].id)
 				return this._onUpdate(objects);
 
-			if (this.objects[i].page != objects[i].page)
+			if (this.objects[i].anchor.page != objects[i].anchor.page)
 				return this._onUpdate(objects);
 
 			t1 = this.objects[i].anchor.rect;
@@ -799,7 +871,7 @@
 			this.objects[i].events = this;
 		}
 
-		this.document.m_oWordControl && this.document.m_oWordControl.OnUpdateOverlay();
+		this.onUpdateOverlay();
 	};
 
 	AscCommon.DrawingPlaceholders = Placeholders;
@@ -850,6 +922,14 @@
 		In    : 1,
 		Main  : 2
 	};
+
+	function getOutlineCC(isActive)
+	{
+		var _editor = Asc.editor || editor;
+		if (_editor && _editor.isDarkMode === true)
+			return isActive ? "rgba(255, 255, 255, 0.7)" : "rgba(255, 255, 255, 0.23)";
+		return isActive ? AscCommon.GlobalSkin.FormsContentControlsOutlineActive : AscCommon.GlobalSkin.FormsContentControlsOutlineHover;
+	}
 
 	// показ диалогов в мобильной версии должен быть только по клику
 	function _sendEventToApi(api, obj, x, y, isclick)
@@ -967,37 +1047,21 @@
 		this.isForm = this.base.IsForm();
 		this.formInfo = null;
 		this.state = state;
+
 		this.isFixedForm = this.base.IsFixedForm();
-
-		this.geom = geom;
-		this.rects = undefined;
-		this.paths = undefined;
-
-		if (undefined === geom[0].Points)
-			this.rects = geom;
-		else
-			this.paths = geom;
 
 		this.OffsetX = 0;
 		this.OffsetY = 0;
 
-		this.transform = this.base.Get_ParentTextTransform ? this.base.Get_ParentTextTransform() : null;
-		if (this.transform && this.transform.IsIdentity())
-			this.transform = null;
-		if (this.transform && this.transform.IsIdentity2())
-		{
-			this.OffsetX = this.transform.tx;
-			this.OffsetY = this.transform.ty;
-			this.transform = null;
-		}
-		this.invertTransform = this.transform ? AscCommon.global_MatrixTransformer.Invert(this.transform) : null;
+		this.transform       = null;
+		this.invertTransform = null;
+
+		this.UpdateTransform();
 
 		this.Pos = { X : 0, Y : 0, Page : 0 };
 
 		this.ComboRect = null;
 		this.Buttons = []; // header buttons
-
-		this.GetPosition();
 
 		this.Name = this.base.GetAlias();
 		if (this.base.IsBuiltInTableOfContents && this.base.IsBuiltInTableOfContents())
@@ -1016,11 +1080,52 @@
 		if (this.parent.document.m_oLogicDocument)
 			this.IsFillFormsMode = this.parent.document.m_oLogicDocument.IsFillingFormMode();
 
+		this.geom  = undefined;
+		this.rects = undefined;
+		this.paths = undefined;
+
+		this.UpdateGeom(geom);
+	}
+
+	CContentControlTrack.prototype.UpdateTransform = function()
+	{
+		this.OffsetX = 0;
+		this.OffsetY = 0;
+
+		this.isFixedForm = this.base.IsFixedForm();
+		this.transform   = this.base.Get_ParentTextTransform ? this.base.Get_ParentTextTransform() : null;
+
+		if (this.transform && this.transform.IsIdentity())
+			this.transform = null;
+		if (this.transform && this.transform.IsIdentity2())
+		{
+			this.OffsetX = this.transform.tx;
+			this.OffsetY = this.transform.ty;
+			this.transform = null;
+		}
+		this.invertTransform = this.transform ? AscCommon.global_MatrixTransformer.Invert(this.transform) : null;
+	};
+	CContentControlTrack.prototype.UpdateGeom = function(geom)
+	{
+		this.UpdateTransform();
+
+		this.geom  = geom;
+		this.rects = undefined;
+		this.paths = undefined;
+
+		if (undefined === geom[0].Points)
+			this.rects = geom;
+		else
+			this.paths = geom;
+
+		this.formInfo = null;
+		this.Pos      = { X : 0, Y : 0, Page : 0 };
+
+		this.GetPosition();
 		this.CalculateNameRect();
 		this.CalculateMoveRect();
 		this.CalculateButtons();
-	}
-
+	};
 	CContentControlTrack.prototype.IsUseMoveRect = function()
 	{
 		if (this.IsNoButtons || this.IsFillFormsMode || this.isFixedForm)
@@ -1031,6 +1136,9 @@
 	CContentControlTrack.prototype.IsNoUseButtons = function()
 	{
 		if (this.IsNoButtons)
+			return true;
+		
+		if (this.base && !this.base.CheckOFormUserMaster())
 			return true;
 
 		switch (this.type)
@@ -2204,8 +2312,14 @@
 			// всегда должен быть максимум один hover и in
 			for (var i = 0; i < this.ContentControlObjects.length; i++)
 			{
+				if (state === this.ContentControlObjects[i].state && obj === this.ContentControlObjects[i].base)
+				{
+					this.ContentControlObjects[i].UpdateGeom(geom);
+					return;
+				}
+
 				if (state == this.ContentControlObjects[i].state
-					|| (!obj && AscCommon.ContentControlTrack.In === state && AscCommon.ContentControlTrack.Main === this.ContentControlObjects[i].state))
+					|| ((!obj || !obj.IsForm() || obj.IsMainForm()) && AscCommon.ContentControlTrack.In === state && AscCommon.ContentControlTrack.Main === this.ContentControlObjects[i].state))
 				{
 					if (-2 != this.ContentControlObjects[i].ActiveButtonIndex)
 						isActiveRemove = true;
@@ -2947,7 +3061,7 @@
 			case Asc.c_oAscContentControlSpecificType.DropDownList:
 			case Asc.c_oAscContentControlSpecificType.DateTime:
 			{
-				this.isCombobox = true;
+				this.isCombobox = !(object && object.IsNoUseButtons());
 				break;
 			}
 			case Asc.c_oAscContentControlSpecificType.Picture:
@@ -3694,9 +3808,9 @@
 				if (currentIteration === countIteration)
 				{
 					if (!this.isActive)
-						ctx.strokeStyle = AscCommon.GlobalSkin.FormsContentControlsOutlineHover;
+						ctx.strokeStyle = getOutlineCC(false);
 					else
-						ctx.strokeStyle = AscCommon.GlobalSkin.FormsContentControlsOutlineActive;
+						ctx.strokeStyle = getOutlineCC(true);
 
 					ctx.lineWidth = Math.round(rPR);
 					ctx.stroke();
@@ -3968,9 +4082,9 @@
 				if (currentIteration === countIteration)
 				{
 					if (!this.isActive)
-						ctx.strokeStyle = AscCommon.GlobalSkin.FormsContentControlsOutlineHover;
+						ctx.strokeStyle = getOutlineCC(false);
 					else
-						ctx.strokeStyle = AscCommon.GlobalSkin.FormsContentControlsOutlineActive;
+						ctx.strokeStyle = getOutlineCC(true);
 
 					ctx.lineWidth = 1;
 					ctx.stroke();

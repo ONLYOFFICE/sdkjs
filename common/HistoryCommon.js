@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -31,12 +31,6 @@
  */
 
 "use strict";
-
-/**
- * User: Ilja.Kirillov
- * Date: 27.10.2016
- * Time: 12:11
- */
 
 (/**
  * @param {Window} window
@@ -1245,6 +1239,42 @@
 			case AscDFH.historydescription_Document_FillFormInPlugin:
 				sString = "Document_FillFormInPlugin";
 				break;
+			case AscDFH.historydescription_Document_AddComplexForm:
+				sString = "Document_AddComplexForm";
+				break;
+			case AscDFH.historydescription_Document_CorrectFormTextByFormat:
+				sString = "Document_CorrectFormTextByFormat";
+				break;
+			case AscDFH.historydescription_Document_CorrectEnterText:
+				sString = "Document_CorrectEnterText";
+				break;
+			case AscDFH.historydescription_Document_DocumentProtection:
+				sString = "Document_DocumentProtection";
+				break;
+			case AscDFH.historydescription_Collaborative_Undo:
+				sString = "Collaborative_Undo";
+				break;
+			case AscDFH.historydescription_Document_AddPlaceholderImages:
+				sString = "Document_AddPlaceholderImages";
+				break;
+			case AscDFH.historydescription_OForm_AddRole:
+				sString = "OForm_AddRole";
+				break;
+			case AscDFH.historydescription_OForm_RemoveRole:
+				sString = "OForm_RemoveRole";
+				break;
+			case AscDFH.historydescription_OForm_EditRole:
+				sString = "OForm_EditRole";
+				break;
+			case AscDFH.historydescription_OForm_ChangeRoleOrder:
+				sString = "OForm_ChangeRoleOrder";
+				break;
+			case AscDFH.historydescription_Document_FillContentControlPlaceholderOnBlur:
+				sString = "Document_FillContentControlPlaceholderOnBlur";
+				break;
+			case AscDFH.historydescription_Document_SetAutoHyphenation:
+				sString = "Document_SetAutoHyphenation";
+				break;
 		}
 		return sString;
 	}
@@ -1252,11 +1282,18 @@
 	{
 		return (nChangeType >> 16) & 0x0000FFFF;
 	}
+	function GetChange(base64Binary)
+	{
+		let change = new AscCommon.CCollaborativeChanges();
+		change.Set_Data(base64Binary);
+		return change.ToHistoryChange();
+	}
 
 	//------------------------------------------------------------export--------------------------------------------------
 	window['AscDFH']                                  = window['AscDFH'] || {};
 	window['AscDFH'].GetHistoryPointStringDescription = GetHistoryPointStringDescription;
 	window['AscDFH'].GetHistoryClassTypeByChangeType  = GetHistoryClassTypeByChangeType;
+	window['AscDFH'].GetChange                        = GetChange;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -1659,7 +1696,19 @@
 	window['AscDFH'].historyitem_type_VMLShapeType           = 2109 << 16;
 	window['AscDFH'].historyitem_type_VMLClientData          = 2110 << 16;
 
+	window['AscDFH'].historyitem_type_OleSizeSelection       = 2111 << 16;
+	window['AscDFH'].historyitem_type_ViewPr                 = 2112 << 16;
+	window['AscDFH'].historyitem_type_CommonViewPr           = 2113 << 16;
+	window['AscDFH'].historyitem_type_CSldViewPr             = 2114 << 16;
+	window['AscDFH'].historyitem_type_CViewPr                = 2115 << 16;
+	window['AscDFH'].historyitem_type_ViewPrScale            = 2116 << 16;
+	window['AscDFH'].historyitem_type_ViewPrGuide            = 2117 << 16;
 
+	window['AscDFH'].historyitem_type_OForm_UserMaster       = 2200 << 16;
+	window['AscDFH'].historyitem_type_OForm_User             = 2201 << 16;
+	window['AscDFH'].historyitem_type_OForm_FieldMaster      = 2202 << 16;
+	window['AscDFH'].historyitem_type_OForm_Document         = 2203 << 16;
+	window['AscDFH'].historyitem_type_OForm_FieldGroup       = 2204 << 16;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -1676,17 +1725,21 @@
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CDocument
 	//------------------------------------------------------------------------------------------------------------------
-	window['AscDFH'].historyitem_Document_AddItem                    = window['AscDFH'].historyitem_type_Document | 1;
-	window['AscDFH'].historyitem_Document_RemoveItem                 = window['AscDFH'].historyitem_type_Document | 2;
-	window['AscDFH'].historyitem_Document_DefaultTab                 = window['AscDFH'].historyitem_type_Document | 3;
-	window['AscDFH'].historyitem_Document_EvenAndOddHeaders          = window['AscDFH'].historyitem_type_Document | 4;
-	window['AscDFH'].historyitem_Document_DefaultLanguage            = window['AscDFH'].historyitem_type_Document | 5;
-	window['AscDFH'].historyitem_Document_MathSettings               = window['AscDFH'].historyitem_type_Document | 6;
-	window['AscDFH'].historyitem_Document_SdtGlobalSettings          = window['AscDFH'].historyitem_type_Document | 7;
-	window['AscDFH'].historyitem_Document_Settings_GutterAtTop       = window['AscDFH'].historyitem_type_Document | 8;
-	window['AscDFH'].historyitem_Document_Settings_MirrorMargins     = window['AscDFH'].historyitem_type_Document | 9;
-	window['AscDFH'].historyitem_Document_SpecialFormsGlobalSettings = window['AscDFH'].historyitem_type_Document | 10;
-	window['AscDFH'].historyitem_Document_Settings_TrackRevisions    = window['AscDFH'].historyitem_type_Document | 11;
+	window['AscDFH'].historyitem_Document_AddItem                         = window['AscDFH'].historyitem_type_Document | 1;
+	window['AscDFH'].historyitem_Document_RemoveItem                      = window['AscDFH'].historyitem_type_Document | 2;
+	window['AscDFH'].historyitem_Document_DefaultTab                      = window['AscDFH'].historyitem_type_Document | 3;
+	window['AscDFH'].historyitem_Document_EvenAndOddHeaders               = window['AscDFH'].historyitem_type_Document | 4;
+	window['AscDFH'].historyitem_Document_DefaultLanguage                 = window['AscDFH'].historyitem_type_Document | 5;
+	window['AscDFH'].historyitem_Document_MathSettings                    = window['AscDFH'].historyitem_type_Document | 6;
+	window['AscDFH'].historyitem_Document_SdtGlobalSettings               = window['AscDFH'].historyitem_type_Document | 7;
+	window['AscDFH'].historyitem_Document_Settings_GutterAtTop            = window['AscDFH'].historyitem_type_Document | 8;
+	window['AscDFH'].historyitem_Document_Settings_MirrorMargins          = window['AscDFH'].historyitem_type_Document | 9;
+	window['AscDFH'].historyitem_Document_SpecialFormsGlobalSettings      = window['AscDFH'].historyitem_type_Document | 10;
+	window['AscDFH'].historyitem_Document_Settings_TrackRevisions         = window['AscDFH'].historyitem_type_Document | 11;
+	window['AscDFH'].historyitem_Document_Settings_AutoHyphenation        = window['AscDFH'].historyitem_type_Document | 12;
+	window['AscDFH'].historyitem_Document_Settings_ConsecutiveHyphenLimit = window['AscDFH'].historyitem_type_Document | 13;
+	window['AscDFH'].historyitem_Document_Settings_DoNotHyphenateCaps     = window['AscDFH'].historyitem_type_Document | 14;
+	window['AscDFH'].historyitem_Document_Settings_HyphenationZone        = window['AscDFH'].historyitem_type_Document | 15;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе Paragraph
 	//------------------------------------------------------------------------------------------------------------------
@@ -1934,6 +1987,7 @@
 	window['AscDFH'].historyitem_Style_UnhideWhenUsed  = window['AscDFH'].historyitem_type_Style | 109;
 	window['AscDFH'].historyitem_Style_Link            = window['AscDFH'].historyitem_type_Style | 110;
 	window['AscDFH'].historyitem_Style_Custom          = window['AscDFH'].historyitem_type_Style | 111;
+	window['AscDFH'].historyitem_Style_StyleId         = window['AscDFH'].historyitem_type_Style | 112;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CStyles
 	//------------------------------------------------------------------------------------------------------------------
@@ -2182,6 +2236,7 @@
 	window['AscDFH'].historyitem_SdtPr_FormPr           = window['AscDFH'].historyitem_type_SdtPr | 22;
 	window['AscDFH'].historyitem_SdtPr_PictureFormPr    = window['AscDFH'].historyitem_type_SdtPr | 23;
 	window['AscDFH'].historyitem_SdtPr_ComplexFormPr    = window['AscDFH'].historyitem_type_SdtPr | 24;
+	window['AscDFH'].historyitem_SdtPr_OForm    = window['AscDFH'].historyitem_type_SdtPr | 24;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CSdtPr
 	//------------------------------------------------------------------------------------------------------------------
@@ -2217,6 +2272,7 @@
 	window['AscDFH'].historyitem_CommonChart_SetVaryColors        = window['AscDFH'].historyitem_type_CommonShape | 312;
 	window['AscDFH'].historyitem_CommonChart_AddFilteredSeries    = window['AscDFH'].historyitem_type_CommonShape | 313;
 	window['AscDFH'].historyitem_CommonChart_RemoveFilteredSeries = window['AscDFH'].historyitem_type_CommonShape | 314;
+	window['AscDFH'].historyitem_CommonChart_DataLabelsRange      = window['AscDFH'].historyitem_type_CommonShape | 315;
 
 	window['AscDFH'].historyitem_Common_AddWatermark = window['AscDFH'].historyitem_type_CommonShape | 401;
 	//------------------------------------------------------------------------------------------------------------------
@@ -2235,6 +2291,8 @@
 	window["AscDFH"].historyitem_Presentation_SetFirstSlideNum            = window["AscDFH"].historyitem_type_Presentation | 11;
 	window["AscDFH"].historyitem_Presentation_SetShowSpecialPlsOnTitleSld = window["AscDFH"].historyitem_type_Presentation | 12;
 	window['AscDFH'].historyitem_Presentation_RemoveSlideMaster           = window['AscDFH'].historyitem_type_Presentation | 13;
+	window['AscDFH'].historyitem_Presentation_ViewPr                      = window['AscDFH'].historyitem_type_Presentation | 14;
+	window['AscDFH'].historyitem_Presentation_NotesSz                     = window['AscDFH'].historyitem_type_Presentation | 15;
 
 	window['AscDFH'].historyitem_ColorMod_SetName = window['AscDFH'].historyitem_type_ColorMod | 1;
 	window['AscDFH'].historyitem_ColorMod_SetVal  = window['AscDFH'].historyitem_type_ColorMod | 2;
@@ -2418,6 +2476,7 @@
 	window['AscDFH'].historyitem_DLbl_SetTx             = window['AscDFH'].historyitem_type_DLbl | 14;
 	window['AscDFH'].historyitem_DLbl_SetTxPr           = window['AscDFH'].historyitem_type_DLbl | 15;
 	window['AscDFH'].historyitem_DLbl_SetParent         = window['AscDFH'].historyitem_type_DLbl | 16;
+	window['AscDFH'].historyitem_DLbl_SetShowDLblsRange = window['AscDFH'].historyitem_type_DLbl | 17;
 
 	window['AscDFH'].historyitem_Marker_SetSize   = window['AscDFH'].historyitem_type_Marker | 1;
 	window['AscDFH'].historyitem_Marker_SetSpPr   = window['AscDFH'].historyitem_type_Marker | 2;
@@ -2859,6 +2918,8 @@
 	window['AscDFH'].historyitem_ShapeSetClientData             = window['AscDFH'].historyitem_type_Shape | 18;
 	window['AscDFH'].historyitem_ShapeSetShapeSmartArtPointInfo = window['AscDFH'].historyitem_type_Shape | 19;
 
+	window['AscDFH'].historyitem_OleSizeSelectionSetRange = window['AscDFH'].historyitem_type_OleSizeSelection | 1;
+
 	window['AscDFH'].historyitem_DispUnitsSetBuiltInUnit  = window['AscDFH'].historyitem_type_DispUnits | 1;
 	window['AscDFH'].historyitem_DispUnitsSetCustUnit     = window['AscDFH'].historyitem_type_DispUnits | 2;
 	window['AscDFH'].historyitem_DispUnitsSetDispUnitsLbl = window['AscDFH'].historyitem_type_DispUnits | 3;
@@ -2871,20 +2932,24 @@
 	window['AscDFH'].historyitem_GroupShapeSetGroup         = window['AscDFH'].historyitem_type_GroupShape | 5;
 	window['AscDFH'].historyitem_GroupShapeRemoveFromSpTree = window['AscDFH'].historyitem_type_GroupShape | 6;
 
-	window['AscDFH'].historyitem_ImageShapeSetNvPicPr       = window['AscDFH'].historyitem_type_ImageShape | 1;
-	window['AscDFH'].historyitem_ImageShapeSetSpPr          = window['AscDFH'].historyitem_type_ImageShape | 2;
-	window['AscDFH'].historyitem_ImageShapeSetBlipFill      = window['AscDFH'].historyitem_type_ImageShape | 3;
-	window['AscDFH'].historyitem_ImageShapeSetParent        = window['AscDFH'].historyitem_type_ImageShape | 4;
-	window['AscDFH'].historyitem_ImageShapeSetGroup         = window['AscDFH'].historyitem_type_ImageShape | 5;
-	window['AscDFH'].historyitem_ImageShapeSetStyle         = window['AscDFH'].historyitem_type_ImageShape | 6;
-	window['AscDFH'].historyitem_ImageShapeSetData          = window['AscDFH'].historyitem_type_ImageShape | 7;
-	window['AscDFH'].historyitem_ImageShapeSetApplicationId = window['AscDFH'].historyitem_type_ImageShape | 8;
-	window['AscDFH'].historyitem_ImageShapeSetPixSizes      = window['AscDFH'].historyitem_type_ImageShape | 9;
-	window['AscDFH'].historyitem_ImageShapeSetObjectFile	= window['AscDFH'].historyitem_type_ImageShape | 10;
-	window['AscDFH'].historyitem_ImageShapeSetOleType   	= window['AscDFH'].historyitem_type_ImageShape | 11;
-	window['AscDFH'].historyitem_ImageShapeSetBinaryData   	= window['AscDFH'].historyitem_type_ImageShape | 12;
-	window['AscDFH'].historyitem_ImageShapeSetMathObject   	= window['AscDFH'].historyitem_type_ImageShape | 13;
-	window['AscDFH'].historyitem_ImageShapeSetDataLink   	= window['AscDFH'].historyitem_type_ImageShape | 14;
+	window['AscDFH'].historyitem_ImageShapeSetNvPicPr            = window['AscDFH'].historyitem_type_ImageShape | 1;
+	window['AscDFH'].historyitem_ImageShapeSetSpPr               = window['AscDFH'].historyitem_type_ImageShape | 2;
+	window['AscDFH'].historyitem_ImageShapeSetBlipFill           = window['AscDFH'].historyitem_type_ImageShape | 3;
+	window['AscDFH'].historyitem_ImageShapeSetParent             = window['AscDFH'].historyitem_type_ImageShape | 4;
+	window['AscDFH'].historyitem_ImageShapeSetGroup              = window['AscDFH'].historyitem_type_ImageShape | 5;
+	window['AscDFH'].historyitem_ImageShapeSetStyle              = window['AscDFH'].historyitem_type_ImageShape | 6;
+	window['AscDFH'].historyitem_ImageShapeSetData               = window['AscDFH'].historyitem_type_ImageShape | 7;
+	window['AscDFH'].historyitem_ImageShapeSetApplicationId      = window['AscDFH'].historyitem_type_ImageShape | 8;
+	window['AscDFH'].historyitem_ImageShapeSetPixSizes           = window['AscDFH'].historyitem_type_ImageShape | 9;
+	window['AscDFH'].historyitem_ImageShapeSetObjectFile	     = window['AscDFH'].historyitem_type_ImageShape | 10;
+	window['AscDFH'].historyitem_ImageShapeSetOleType   	     = window['AscDFH'].historyitem_type_ImageShape | 11;
+	window['AscDFH'].historyitem_ImageShapeSetStartBinaryData    = window['AscDFH'].historyitem_type_ImageShape | 12;
+	window['AscDFH'].historyitem_ImageShapeSetPartBinaryData     = window['AscDFH'].historyitem_type_ImageShape | 13;
+	window['AscDFH'].historyitem_ImageShapeSetEndBinaryData      = window['AscDFH'].historyitem_type_ImageShape | 14;
+	window['AscDFH'].historyitem_ImageShapeSetMathObject         = window['AscDFH'].historyitem_type_ImageShape | 15;
+	window['AscDFH'].historyitem_ImageShapeSetDataLink           = window['AscDFH'].historyitem_type_ImageShape | 16;
+	window['AscDFH'].historyitem_ImageShapeSetDrawAspect         = window['AscDFH'].historyitem_type_ImageShape | 17;
+	window['AscDFH'].historyitem_ImageShapeLoadImagesfromContent = window['AscDFH'].historyitem_type_ImageShape | 18;
 
 	window['AscDFH'].historyitem_GeometrySetParent      = window['AscDFH'].historyitem_type_Geometry | 1;
 	window['AscDFH'].historyitem_GeometryAddAdj         = window['AscDFH'].historyitem_type_Geometry | 2;
@@ -3115,6 +3180,7 @@
     window['AscDFH'].historyitem_NotesMasterSetBg          = window['AscDFH'].historyitem_type_NotesMaster | 6;
     window['AscDFH'].historyitem_NotesMasterAddToNotesLst  = window['AscDFH'].historyitem_type_NotesMaster | 7;
     window['AscDFH'].historyitem_NotesMasterSetName        = window['AscDFH'].historyitem_type_NotesMaster | 8;
+    window['AscDFH'].historyitem_NotesMasterSetClrMap      = window['AscDFH'].historyitem_type_NotesMaster | 9;
 
 
     window['AscDFH'].historyitem_NotesSetClrMap           = window['AscDFH'].historyitem_type_Notes | 1;
@@ -3148,7 +3214,7 @@
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений класса CDocumentMacros
 	//------------------------------------------------------------------------------------------------------------------
-	window['AscDFH'].historyitem_DocumentMacros_Data = window['Asc'].historyitem_type_DocumentMacros | 1;
+	window['AscDFH'].historyitem_DocumentMacros_Data = window['AscDFH'].historyitem_type_DocumentMacros | 1;
 
 
 
@@ -3891,6 +3957,27 @@
 	AscDFH.historyitem_CCommonDataClrListMeth   = AscDFH.historyitem_type_CCommonDataClrList | 4;
 
 
+	AscDFH.historyitem_ViewPrGridSpacing        = AscDFH.historyitem_type_ViewPr | 1;
+	AscDFH.historyitem_ViewPrSlideViewerPr      = AscDFH.historyitem_type_ViewPr | 2;
+	AscDFH.historyitem_ViewPrLastView           = AscDFH.historyitem_type_ViewPr | 3;
+	AscDFH.historyitem_ViewPrShowComments       = AscDFH.historyitem_type_ViewPr | 4;
+
+	AscDFH.historyitem_CommonViewPrCSldViewPr   = AscDFH.historyitem_type_CommonViewPr | 1;
+
+	AscDFH.historyitem_CSldViewPrCViewPr        = AscDFH.historyitem_type_CSldViewPr | 1;
+	AscDFH.historyitem_CSldViewPrGuideLst       = AscDFH.historyitem_type_CSldViewPr | 2;
+	AscDFH.historyitem_CSldViewPrShowGuides     = AscDFH.historyitem_type_CSldViewPr | 3;
+	AscDFH.historyitem_CSldViewPrSnapToGrid     = AscDFH.historyitem_type_CSldViewPr | 4;
+	AscDFH.historyitem_CSldViewPrSnapToObjects  = AscDFH.historyitem_type_CSldViewPr | 5;
+
+	AscDFH.historyitem_CViewPrOrigin            = AscDFH.historyitem_type_CViewPr | 1;
+	AscDFH.historyitem_CViewPrScale             = AscDFH.historyitem_type_CViewPr | 2;
+
+	AscDFH.historyitem_ViewPrScaleSx             = AscDFH.historyitem_type_ViewPrScale | 1;
+	AscDFH.historyitem_ViewPrScaleSy             = AscDFH.historyitem_type_ViewPrScale | 2;
+
+	AscDFH.historyitem_ViewPrGuideOrient         = AscDFH.historyitem_type_ViewPrGuide | 1;
+	AscDFH.historyitem_ViewPrGuidePos            = AscDFH.historyitem_type_ViewPrGuide | 2;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -4307,7 +4394,26 @@
 	window['AscDFH'].historydescription_Document_AddParagraphToTOC                  = 0x0192;
 	window['AscDFH'].historydescription_Document_FillFormsByTags                    = 0x0193;
 	window['AscDFH'].historydescription_Document_FillFormInPlugin                   = 0x0194;
-	window['AscDFH'].historydescription_Document_ConvertMathView                    = 0x0195;
+	window['AscDFH'].historydescription_Document_AddSmartArt                        = 0x0195;
+	window['AscDFH'].historydescription_Document_AddComplexForm                     = 0x0196;
+	window['AscDFH'].historydescription_Document_CorrectFormTextByFormat            = 0x0197;
+	window['AscDFH'].historydescription_Document_CorrectEnterText                   = 0x0198;
+	window['AscDFH'].historydescription_Document_ConvertMathView                    = 0x0199;
+	window['AscDFH'].historydescription_Document_DocumentProtection                 = 0x019a;
+	window['AscDFH'].historydescription_Collaborative_Undo                          = 0x019b;
+	window['AscDFH'].historydescription_Document_AddPlaceholderImages               = 0x019c;
+	window['AscDFH'].historydescription_OForm_AddRole                               = 0x019d;
+	window['AscDFH'].historydescription_OForm_RemoveRole                            = 0x019e;
+	window['AscDFH'].historydescription_OForm_EditRole                              = 0x019f;
+	window['AscDFH'].historydescription_OForm_ChangeRoleOrder                       = 0x01a0;
+	window['AscDFH'].historydescription_Document_AddAddinField                      = 0x01a1;
+	window['AscDFH'].historydescription_Document_UpdateAddinFields                  = 0x01a2;
+	window['AscDFH'].historydescription_Document_RemoveComplexFieldWrapper          = 0x01a3;
+	window['AscDFH'].historydescription_Document_MergeDocuments                     = 0x01a4;
+	window['AscDFH'].historydescription_Document_FillContentControlPlaceholderOnBlur= 0x01a5;
+	window['AscDFH'].historydescription_Document_SetAutoHyphenation                 = 0x01a6;
+	window['AscDFH'].historydescription_Document_SetConsecutiveHyphenLimit          = 0x01a7;
+	window['AscDFH'].historydescription_Document_SetHyphenateCaps                   = 0x01a8;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4565,11 +4671,11 @@
 	};
 	CChangesBaseContentChange.prototype.ConvertToSimpleActions = function()
 	{
-		var arrActions = [];
+		let arrActions = [];
 
 		if (this.UseArray)
 		{
-			for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+			for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 			{
 				arrActions.push({
 					Item : this.Items[nIndex],
@@ -4580,18 +4686,46 @@
 		}
 		else
 		{
-			var Pos = this.Pos;
-			for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+			let Pos = this.Pos;
+			if (this.Add)
 			{
-				arrActions.push({
-					Item : this.Items[nIndex],
-					Pos  : Pos + nIndex,
-					Add  : this.Add
-				});
+				for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+				{
+					arrActions.push({
+						Item : this.Items[nIndex],
+						Pos  : Pos + nIndex,
+						Add  : true
+					});
+				}
+			}
+			else
+			{
+				for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+				{
+					arrActions.push({
+						Item : this.Items[nIndex],
+						Pos  : Pos,
+						Add  : false
+					});
+				}
 			}
 		}
 
 		return arrActions;
+	};
+	CChangesBaseContentChange.prototype.ConvertToSimpleChanges = function()
+	{
+		let arrSimpleActions = this.ConvertToSimpleActions();
+		let arrChanges       = [];
+
+		for (let nIndex = 0, nCount = arrSimpleActions.length; nIndex < nCount; ++nIndex)
+		{
+			let oAction = arrSimpleActions[nIndex];
+			let oChange = new this.constructor(this.Class, oAction.Pos, [oAction.Item], oAction.Add);
+			arrChanges.push(oChange);
+		}
+
+		return arrChanges;
 	};
 	CChangesBaseContentChange.prototype.ConvertFromSimpleActions = function(arrActions)
 	{
@@ -4876,6 +5010,8 @@
 
 		if (undefined !== this.Old && this.Old.Write_ToBinary)
 			this.Old.Write_ToBinary(Writer);
+		
+		this.WriteAdditional(Writer);
 	};
 	CChangesBaseObjectProperty.prototype.ReadFromBinary = function(Reader)
 	{
@@ -4920,6 +5056,14 @@
 			if (this.Old && this.Old.Read_FromBinary)
 				this.Old.Read_FromBinary(Reader);
 		}
+		
+		this.ReadAdditional(Reader);
+	};
+	CChangesBaseObjectProperty.prototype.WriteAdditional = function(writer)
+	{
+	};
+	CChangesBaseObjectProperty.prototype.ReadAdditional = function(reader)
+	{
 	};
 	CChangesBaseObjectProperty.prototype.private_CreateObject = function()
 	{
@@ -5297,4 +5441,23 @@
 		this.Old = Reader.GetDouble();
 	};
 	window['AscDFH'].CChangesBaseDoubleValue = CChangesBaseDoubleValue;
+	//------------------------------------------------------------------------------------------------------------------
+	function DoNotRecalculate()
+	{
+		return false;
+	}
+	window['AscDFH'].InheritPropertyChange = function(changeClass, baseChange, type, setFunction, needRecalculate)
+	{
+		window['AscDFH'].changesFactory[type]   = changeClass;
+
+		changeClass.prototype                   = Object.create(baseChange.prototype);
+		changeClass.prototype.constructor       = changeClass;
+		changeClass.prototype.Type              = type;
+		changeClass.prototype.private_SetValue  = setFunction;
+
+		if (undefined !== needRecalculate && !needRecalculate)
+			changeClass.prototype.IsNeedRecalculate = DoNotRecalculate;
+
+	};
+
 })(window);

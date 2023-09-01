@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -3482,10 +3482,10 @@ CDocMeta.prototype =
         editor.WordControl.m_oDrawingDocument.EndSearch(false);
     },
 
-    findText : function(text, isMachingCase, isNext)
+    findText : function(text, isMachingCase, isWholeWords, isNext)
     {
         this.SearchResults.IsSearch = true;
-        if (text == this.SearchResults.Text && isMachingCase == this.SearchResults.MachingCase)
+        if (text == this.SearchResults.Text && isMachingCase == this.SearchResults.MachingCase && isWholeWords == this.SearchResults.WholeWords)
         {
             if (this.SearchResults.Count == 0)
             {
@@ -3587,6 +3587,7 @@ CDocMeta.prototype =
 
         this.SearchResults.Text = text;
         this.SearchResults.MachingCase = isMachingCase;
+        this.SearchResults.WholeWords = isWholeWords;
 
         for (var i = 0; i < this.PagesCount; i++)
         {

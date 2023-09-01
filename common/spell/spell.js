@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -32,42 +32,10 @@
 
 "use strict";
 
-function CSpellchecker(settings)
+window['AscCommon'] = window['AscCommon'] || {};
+window['AscCommon'].spellcheckGetLanguages = function()
 {
-	this.useWasm = false;
-	var webAsmObj = window["WebAssembly"];
-	if (typeof webAsmObj === "object")
-	{
-		if (typeof webAsmObj["Memory"] === "function")
-		{
-			if ((typeof webAsmObj["instantiateStreaming"] === "function") || (typeof webAsmObj["instantiate"] === "function"))
-				this.useWasm = true;
-		}
-	}
-
-	this.enginePath = "./spell/";
-	if (settings && settings.enginePath)
-	{
-		this.enginePath = settings.enginePath;
-		if (this.enginePath.substring(this.enginePath.length - 1) != "/")
-			this.enginePath += "/";
-	}
-
-	var dictionariesPath = "./../dictionaries";
-	if (settings && settings.dictionariesPath)
-	{
-		dictionariesPath = settings.dictionariesPath;
-		if (dictionariesPath.substring(dictionariesPath.length - 1) == "/")
-			dictionariesPath = dictionariesPath.substr(0, dictionariesPath.length - 1);
-	}
-
-	this.isUseSharedWorker = !!window.SharedWorker;
-	if (this.isUseSharedWorker && (false === settings.useShared))
-		this.isUseSharedWorker = false;
-
-	this.worker = null;
-
-	this.languages = {
+	return {
 		"1068" : "az_Latn_AZ",
 		"1026" : "bg_BG",
 		"1027" : "ca_ES",
@@ -113,9 +81,53 @@ function CSpellchecker(settings)
 		"1053" : "sv_SE",
 		"1055" : "tr_TR",
 		"1058" : "uk_UA",
+		"2115" : "uz_Cyrl_UZ",
+		"1091" : "uz_Latn_UZ",
 		"1066" : "vi_VN",
 		"2067" : "nl_NL" // nl_BE
 	};
+};
+
+function CSpellchecker(settings)
+{
+	this.useWasm = false;
+	var webAsmObj = window["WebAssembly"];
+	if (typeof webAsmObj === "object")
+	{
+		if (typeof webAsmObj["Memory"] === "function")
+		{
+			if ((typeof webAsmObj["instantiateStreaming"] === "function") || (typeof webAsmObj["instantiate"] === "function"))
+				this.useWasm = true;
+		}
+	}
+
+	this.enginePath = "./spell/";
+	if (settings && settings.enginePath)
+	{
+		this.enginePath = settings.enginePath;
+		if (this.enginePath.substring(this.enginePath.length - 1) != "/")
+			this.enginePath += "/";
+	}
+
+	var dictionariesPath = "./../dictionaries";
+	if (settings && settings.dictionariesPath)
+	{
+		dictionariesPath = settings.dictionariesPath;
+		if (dictionariesPath.substring(dictionariesPath.length - 1) == "/")
+			dictionariesPath = dictionariesPath.substr(0, dictionariesPath.length - 1);
+	}
+
+	this.isUseSharedWorker = !!window.SharedWorker;
+	if (this.isUseSharedWorker && (false === settings.useShared))
+		this.isUseSharedWorker = false;
+
+	// disable for WKWebView
+	if (this.isUseSharedWorker && (undefined !== window["webkit"]))
+		this.isUseSharedWorker = false;
+
+	this.worker = null;
+
+	this.languages = AscCommon.spellcheckGetLanguages();
 
 	this.stop = function()
 	{

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 07.11.2016
- * Time: 14:21
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_TableRow_Before]      = CChangesTableRowBefore;
 AscDFH.changesFactory[AscDFH.historyitem_TableRow_After]       = CChangesTableRowAfter;
@@ -607,10 +602,16 @@ CChangesTableRowPr.prototype.private_CreateObject = function()
 };
 CChangesTableRowPr.prototype.private_SetValue = function(Value)
 {
-	var oRow = this.Class;
-	oRow.Pr = Value;
-	oRow.Recalc_CompiledPr();
-	oRow.private_UpdateTableGrid();
+	let row = this.Class;
+
+	let trackRevisions = !!(row.Pr.PrChange || Value.PrChange);
+	
+	row.Pr = Value;
+	row.Recalc_CompiledPr();
+	row.private_UpdateTableGrid();
+	
+	if (trackRevisions)
+		row.private_UpdateTrackRevisions();
 };
 CChangesTableRowPr.prototype.Merge = function(oChange)
 {

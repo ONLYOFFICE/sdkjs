@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -42,12 +42,14 @@
     AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetBg]          = AscDFH.CChangesDrawingsObjectNoId;
     AscDFH.changesFactory[AscDFH.historyitem_NotesMasterAddToNotesLst]  = AscDFH.CChangesDrawingsContentPresentation;
     AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetName]        = AscDFH.CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_NotesMasterSetClrMap]      = AscDFH.CChangesDrawingsObject;
 
 
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetNotesTheme]  = function(oClass, value){oClass.Theme = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetHF]          = function(oClass, value){oClass.hf = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetNotesStyle]  = function(oClass, value){oClass.txStyles = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetName]        = function(oClass, value){oClass.cSld.name = value;};
+    AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetClrMap]      = function(oClass, value){oClass.clrMap = value;};
     AscDFH.drawingsChangesMap[AscDFH.historyitem_NotesMasterSetBg]          = function(oClass, value, FromLoad){
         oClass.cSld.Bg = value;
         if(FromLoad){
@@ -97,6 +99,10 @@
     CNotesMaster.prototype.setTheme = function(pr){
         History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesMasterSetNotesTheme, this.Theme, pr));
         this.Theme = pr;
+    };
+    CNotesMaster.prototype.setClrMap = function(pr){
+        History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_NotesMasterSetClrMap, this.clrMap, pr));
+        this.clrMap = pr;
     };
 
     CNotesMaster.prototype.setHF = function(pr){
@@ -178,9 +184,10 @@
         oPr.idMap = oIdMap;
         var i;
         var copy = new CNotesMaster();
-       // if(this.clrMap){
-       //     this.setClrMap(this.clrMap.createDuplicate());
-       // }
+        if(this.clrMap)
+        {
+            copy.setClrMap(this.clrMap.createDuplicate());
+        }
         if(typeof this.cSld.name === "string" && this.cSld.name.length > 0)
         {
             copy.setCSldName(this.cSld.name);
@@ -228,70 +235,6 @@
     {
     };
 
-    CNotesMaster.prototype.fromXml = function(reader, bSkipFirstNode) {
-        AscFormat.CBaseFormatObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
-        //read theme
-        var oThemePart = reader.rels.getPartByRelationshipType(AscCommon.openXml.Types.theme.relationType);
-        if(oThemePart) {
-            var oThemeContent = oThemePart.getDocumentContent();
-            let oThemeReader = new AscCommon.StaxParser(oThemeContent, oThemePart, reader.context);
-            let oTheme = new AscFormat.CTheme();
-            oTheme.fromXml(oThemeReader, true);
-            this.setTheme(oTheme, true);
-        }
-    };
-    CNotesMaster.prototype.readAttrXml = function(name, reader) {
-        switch (name) {
-            case "showMasterPhAnim": {
-                this.setShowPhAnim(reader.GetValueBool());
-                break;
-            }
-            case "showMasterSp": {
-                this.setShowMasterSp(reader.GetValueBool());
-                break;
-            }
-        }
-    };
-    CNotesMaster.prototype.readChildXml = function(name, reader) {
-        switch(name) {
-            case "cSld": {
-                let oCSld = this.cSld;
-                oCSld.fromXml(reader);
-                break;
-            }
-            case "clrMap": {
-                let oClrMap = new AscFormat.ClrMap();
-                oClrMap.fromXml(reader);
-                this.clrMap = oClrMap;
-                break;
-            }
-            case "hf": {
-                let oHF = new AscFormat.HF();
-                oHF.fromXml(reader);
-                this.setHF(oHF);
-                break;
-            }
-            case "notesStyle": {
-                let oTxStyles = new AscFormat.TextListStyle();
-                oTxStyles.fromXml(reader);
-                this.setNotesStyle(oTxStyles);
-                break;
-            }
-        }
-    };
-    CNotesMaster.prototype.toXml = function(writer) {
-        writer.WriteXmlString(AscCommonWord.g_sXmlHeader);
-        writer.WriteXmlNodeStart("p:notesMaster");
-        writer.WriteXmlAttributeString("xmlns:a", "http://schemas.openxmlformats.org/drawingml/2006/main");
-        writer.WriteXmlAttributeString("xmlns:r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
-        writer.WriteXmlAttributeString("xmlns:p", "http://schemas.openxmlformats.org/presentationml/2006/main");
-        writer.WriteXmlAttributesEnd();
-        this.cSld.toXml(writer);
-        writer.WriteXmlNullable(this.clrMap, "p:clrMap");
-        writer.WriteXmlNullable(this.hf, "p:hf");
-        writer.WriteXmlNullable(this.txStyles, "p:notesStyle");
-        writer.WriteXmlNodeEnd("p:notesMaster");
-    };
 
     function CreateNotesMaster(){
         var oNM = new CNotesMaster();

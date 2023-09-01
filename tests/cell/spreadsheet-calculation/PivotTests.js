@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -35,6 +35,13 @@ $(function() {
 	// Tests completed in 3980 milliseconds.
 	// 3322 assertions of 3355 passed, 33 failed.
 
+	// To add new test
+	// 1) Create xlsx file in Excel with data and pivot
+	// 2) Uncomment code below and put it at the end of PivotTables.js
+	// 3) Modify AscCommon.baseEditorsApi.prototype.onDocumentContentReady according to your xlsx
+	// 4) Open xlsx in editor and copy from console 'testData' and 'standards' to your new test
+	// 5) Use exiting test as template for example 'testPivotMisc'
+
 	// function getValues(ws, range) {
 	// 	var res = [];
 	// 	ws.getRange3(range.r1, range.c1, range.r2, range.c2)._foreach(function(cell, r, c, r1, c1) {
@@ -54,7 +61,7 @@ $(function() {
 	// 	if (!ws || !ws.pivotTables[0]) {
 	// 		return "";
 	// 	}
-	// 	var str = "";
+	// 	var str = "let standards = ";
 	// 	for(var i = 0; i < ws.pivotTables.length; ++i){
 	// 		var res = getReportValues(ws.pivotTables[i]);
 	// 		str += ws.pivotTables[i].asc_getName() + "\n";
@@ -88,12 +95,52 @@ $(function() {
 	// 	str += "]\n";
 	// 	return str;
 	// };
-	// baseEditorsApi.prototype.onDocumentContentReady = function() {
+	// let onDocumentContentReadyOld = AscCommon.baseEditorsApi.prototype.onDocumentContentReady;
+	// AscCommon.baseEditorsApi.prototype.onDocumentContentReady = function() {
+	// 	onDocumentContentReadyOld.call(this);
 	// 	if(this.wbModel){
-	// 		// console.log(getTestValuesMatrix(this.wbModel.aWorksheets[1], AscCommonExcel.g_oRangeCache.getAscRange("B41:H52")));
+	// 		console.log('let testData = '+getTestValuesMatrix(this.wbModel.aWorksheets[1], AscCommonExcel.g_oRangeCache.getAscRange("B2:H3")));
 	// 		console.log(getTestMatrix(this.wbModel.aWorksheets[0]));
 	// 	}
 	// };
+
+	// To reproduce test in editor
+	// 1) Open xlsx with pivot data in editor
+	// 2) Execute preparation code in console
+	// var api = Asc.editor;
+	// var wb = api.wbModel;
+	// var ws = wb.aWorksheets[0];
+	// var pivotStyle = "PivotStyleDark23";
+	// var reportRange = AscCommonExcel.g_oRangeCache.getAscRange("A3");
+	// var dataRef = "Data!B2:H3";
+	// 3) Execute part of code related to pivot in console. example fo 'testPivotMisc'
+	// var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+	// pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+	// pivot.pivotTableDefinitionX14 = new Asc.CT_pivotTableDefinitionX14();
+	// pivot.checkPivotFieldItems(0);
+	// pivot.checkPivotFieldItems(1);
+	// pivot.checkPivotFieldItems(2);
+	//
+	// var props = new Asc.CT_pivotTableDefinition();
+	// props.asc_setName("new<&>pivot name");
+	// props.asc_setTitle("Title");
+	// props.asc_setDescription("Description");
+	// pivot.asc_set(api, props);
+	//
+	// pivot.asc_addRowField(api, 0);
+	// pivot.asc_addColField(api, 1);
+	// pivot.asc_addColField(api, 2);
+	// pivot.asc_addDataField(api, 5);
+	// var props = new Asc.CT_pivotTableDefinition();
+	// props.asc_setCompact(false);
+	// props.asc_setOutline(true);
+	// props.asc_setRowGrandTotals(false);
+	// props.asc_setColGrandTotals(false);
+	// pivot.asc_set(api, props);
+	// var pivotField = pivot.asc_getPivotFields()[1];
+	// props = new Asc.CT_PivotField();
+	// props.asc_setDefaultSubtotal(false);
+	// pivotField.asc_set(api, pivot, 1, props);
 
 	Asc.spreadsheet_api.prototype._init = function() {
 		this._loadModules();
@@ -162,6 +209,8 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 		ws = api.wbModel.aWorksheets[0];
 		api.asc_insertWorksheet(["Data"]);
 		wsData = wb.getWorksheetByName(["Data"], 0);
+		api.asc_insertWorksheet(["Details"]);
+		wsDetails = wb.getWorksheetByName(["Details"], 0);
 
 		pivotStyle = "PivotStyleDark23";
 		tableName = "Table1";
@@ -398,25 +447,8 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 
 	function fillData(ws, data, range) {
-		var range = ws.getRange4(range.r1, range.c1);
-		for (var i = 0; i < data.length; ++i) {
-			var row = data[i];
-			for (var j = 0; j < row.length; ++j) {
-				range.setOffset(new AscCommon.CellBase(i, j));
-				var val = row[j];
-				if ("string" === typeof val) {
-					range.setValue(val);
-				} else {
-					if (val.value) {
-						range.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, val.value));
-					}
-					if (val.format) {
-						range.setNumFormat(val.format);
-					}
-				}
-				range.setOffset(new AscCommon.CellBase(-i, -j));
-			}
-		}
+		range = ws.getRange4(range.r1, range.c1);
+		range.fillData(data);
 	}
 	function getReportValues(pivot) {
 		var res = [];
@@ -429,7 +461,8 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 		});
 		return res;
 	}
-	function checkReportValues(assert, pivot, values, standard, message) {
+	function checkReportValues(assert, pivot, standard, message) {
+		let values = getReportValues(pivot);
 		assert.deepEqual(values, standard, message);
 
 		var isEmptyPivot = !(pivot.asc_getRowFields() || pivot.asc_getColumnFields() || pivot.asc_getDataFields() || pivot.asc_getPageFields());
@@ -513,8 +546,11 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 	}
 
 	function checkHistoryOperation(assert, pivot, standards, message, action) {
+		let undoValues = getReportValues(pivot);
+		return checkHistoryOperation2(assert, pivot, standards, message, undoValues, action, checkReportValues);
+	}
+	function checkHistoryOperation2(assert, pivot, standards, message, undoStandard, action, check, checkUndo) {
 		var wb = pivot.GetWS().workbook;
-		var undoValues = getReportValues(pivot);
 		var xmlUndo = getXml(pivot, false);
 		var pivotStart = pivot.clone();
 		pivotStart.Id = pivot.Get_Id();
@@ -524,18 +560,18 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 		action();
 		AscCommon.History.EndTransaction();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
-		checkReportValues(assert, pivot, getReportValues(pivot), standards, message);
+		check(assert, pivot, standards, message);
 		var xmlDo = getXml(pivot, true);
 		var changes = wb.SerializeHistory();
 
 		AscCommon.History.Undo();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
-		checkReportValues(assert, pivot, getReportValues(pivot), undoValues, message + "_undo");
+		check(assert, pivot, undoStandard, message + "_undo");
 		assert.strictEqual(getXml(pivot, false), xmlUndo, message + "_undo_xml");
 
 		AscCommon.History.Redo();
 		pivot = wb.getPivotTableById(pivot.Get_Id());
-		checkReportValues(assert, pivot, getReportValues(pivot), standards, message + "_redo");
+		check(assert, pivot, standards, message + "_redo");
 		assert.strictEqual(getXml(pivot, true), xmlDo, message + "_redo_xml");
 
 		AscCommon.History.Undo();
@@ -544,7 +580,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 		ws.insertPivotTable(pivot, false, false);
 		wb.DeserializeHistory(changes);
 		pivot = wb.getPivotTableById(pivot.Get_Id());
-		checkReportValues(assert, pivot, getReportValues(pivot), standards, message + "_changes");
+		check(assert, pivot, standards, message + "_changes");
 		assert.strictEqual(getXml(pivot, true), xmlDo, message + "_changes_xml");
 		return pivot;
 	}
@@ -4111,6 +4147,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 	function setPivotLayout(pivot, layout) {
 		var props = new Asc.CT_pivotTableDefinition();
+		props.ascHideValuesRow = true;
 		switch (layout) {
 			case "compact":
 				props.asc_setCompact(true);
@@ -4151,7 +4188,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 
 			AscCommon.History.Clear();
-			checkReportValues(assert, pivot, getReportValues(pivot), standards[prefix + "_0data"], "0data");
+			checkReportValues(assert, pivot, standards[prefix + "_0data"], "0data");
 
 			pivot = checkHistoryOperation(assert, pivot, standards[prefix + "_1data"], "1data", function(){
 				pivot.asc_addDataField(api, 5);
@@ -4256,7 +4293,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			pivot.asc_addDataField(api, 6);
 
 			AscCommon.History.Clear();
-			checkReportValues(assert, pivot, getReportValues(pivot), standards[layout + "_2row_2col_2data_col"], "col3");
+			checkReportValues(assert, pivot, standards[layout + "_2row_2col_2data_col"], "col3");
 
 			pivot = checkHistoryOperation(assert, pivot, standards[layout + "_2row_2col_2data_col2"], "col2", function(){
 				pivot.asc_moveColField(api, 2, 1);
@@ -4299,12 +4336,14 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(assert, pivot, standards["subtotal_" + layout + "_none"], "none", function(){
 				props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDefaultSubtotal(false);
 				pivot.asc_set(api, props);
 			});
 
 			pivot = checkHistoryOperation(assert, pivot, standards["subtotal_" + layout + "_bottom"], "bottom", function(){
 				props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDefaultSubtotal(true);
 				props.asc_setSubtotalTop(false);
 				pivot.asc_set(api, props);
@@ -4312,6 +4351,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 			pivot = checkHistoryOperation(assert, pivot, standards["subtotal_" + layout + "_top"], "top", function(){
 				props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDefaultSubtotal(true);
 				props.asc_setSubtotalTop(true);
 				pivot.asc_set(api, props);
@@ -4331,6 +4371,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			pivot.asc_addDataField(api, 5);
 			pivot.asc_addDataField(api, 6);
 			var props = new Asc.CT_pivotTableDefinition();
+			props.ascHideValuesRow = true;
 			props.asc_setInsertBlankRow(true);
 			pivot.asc_set(api, props);
 
@@ -4372,6 +4413,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 			pivot = checkHistoryOperation(assert, pivot, standards["filter_downThenOver3_2wrap"], "downThenOver3_2wrap", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setPageWrap(2);
 				pivot.asc_set(api, props);
 			});
@@ -4385,6 +4427,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 			pivot = checkHistoryOperation(assert, pivot, standards["filter_overThenDown7_2wrap"], "overThenDown7_2wrap", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setPageOverThenDown(true);
 				pivot.asc_set(api, props);
 			});
@@ -4507,36 +4550,42 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 			pivot = checkHistoryOperation(assert, pivot, standards["data_values2"], "values2", function() {
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRef2);
 				pivot.asc_set(api, props);
 			});
 
 			pivot = checkHistoryOperation(assert, pivot, standards["data_values3"], "values3", function() {
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRef3);
 				pivot.asc_set(api, props);
 			});
 
 			pivot = checkHistoryOperation(assert, pivot, standards["data_values4"], "values4", function() {
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRef4);
 				pivot.asc_set(api, props);
 			});
 
 			pivot = checkHistoryOperation(assert, pivot, standards["data_values5"], "values5", function() {
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRef5);
 				pivot.asc_set(api, props);
 			});
 
 			pivot = checkHistoryOperation(assert, pivot, standards["data_values6"], "values6", function() {
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRef6);
 				pivot.asc_set(api, props);
 			});
 
 			pivot = checkHistoryOperation(assert, pivot, standards["data_values7"], "values7", function() {
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRef7);
 				pivot.asc_set(api, props);
 			});
@@ -4548,6 +4597,9 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 	function testHeaderRename() {
 		QUnit.test("Test: header rename", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRefHeader, ws, reportRange);
+			var props = new Asc.CT_pivotTableDefinition();
+			props.ascHideValuesRow = true;
+			pivot.asc_set(api, props);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.checkPivotFieldItems(0);
 			pivot.checkPivotFieldItems(1);
@@ -4592,6 +4644,9 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 	function testPivotManipulationField() {
 		QUnit.test.skip("Test: Field Manipulation", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+			var props = new Asc.CT_pivotTableDefinition();
+			props.ascHideValuesRow = true;
+			pivot.asc_set(api, props);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.checkPivotFieldItems(0);
 			pivot.checkPivotFieldItems(1);
@@ -4673,6 +4728,9 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 	function testPivotManipulationValues() {
 		QUnit.test("Test: manipulation values", function(assert ) {
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+			var props = new Asc.CT_pivotTableDefinition();
+			props.ascHideValuesRow = true;
+			pivot.asc_set(api, props);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.asc_addRowField(api, 0);
 			pivot.asc_addRowField(api, 1);
@@ -4793,18 +4851,21 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			AscCommon.History.Clear();
 			pivot = checkHistoryOperation(assert, pivot, standards["refreshFieldSettings"], "refreshFieldSettings", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRefFieldSettings);
 				pivot.asc_set(api, props);
 			});
 
 			pivot = checkHistoryOperation(assert, pivot, standards["refreshRecords"], "refreshRecords", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRefRecords);
 				pivot.asc_set(api, props);
 			});
 
 			pivot = checkHistoryOperation(assert, pivot, standards["refreshStructure"], "refreshStructure", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRefStructure);
 				pivot.asc_set(api, props);
 			});
@@ -4829,6 +4890,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 			pivot = checkHistoryOperation(assert, pivot, standards["compact_0row_1col_1data"], "table columns", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRefTableColumn);
 				pivot.asc_set(api, props);
 				pivot.asc_removeField(api, 1);
@@ -4840,6 +4902,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 			pivot = checkHistoryOperation(assert, pivot, standards["compact_1row_1col_1data"], "def name", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRefDefName);
 				pivot.asc_set(api, props);
 				pivot.asc_removeField(api, 2);
@@ -4852,6 +4915,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 			pivot = checkHistoryOperation(assert, pivot, standards["compact_1row_1col_1data"], "def name local", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setDataRef(dataRefDefNameLocal);
 				pivot.asc_set(api, props);
 				pivot.asc_removeField(api, 0);
@@ -5164,7 +5228,25 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 	function testPivotMisc() {
 		QUnit.test("Test: misc", function(assert ) {
-			var pivot = api._asc_insertPivot(wb, dataRef1Row, ws, reportRange);
+			let testData =  [
+				["Region","Gender","Style","Ship date","Units","Price","Cost"],
+				["East","Boy","Tee","38383","12","11.04","10.42"]
+			];
+			let standards_compact_0row_0col_0data = standards["compact_0row_0col_0data"];
+			let standards_longHeader = [
+				["Sum of Price","Gender","Style"],
+				["","Boy",""],
+				["Region","Tee",""],
+				["East","11.04",""]
+			];
+			let testDataRange = new Asc.Range(0, 0, testData[0].length - 1, testData.length - 1);
+			fillData(wsData, testData, testDataRange);
+			let dataRef = wsData.getName() + "!" + testDataRange.getName();
+
+			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+			var props = new Asc.CT_pivotTableDefinition();
+			props.ascHideValuesRow = true;
+			pivot.asc_set(api, props);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.pivotTableDefinitionX14 = new Asc.CT_pivotTableDefinitionX14();
 			pivot.checkPivotFieldItems(0);
@@ -5172,20 +5254,22 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			pivot.checkPivotFieldItems(2);
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(assert, pivot, standards["compact_0row_0col_0data"], "misc", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards_compact_0row_0col_0data, "misc", function(){
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setName("new<&>pivot name");
 				props.asc_setTitle("Title");
 				props.asc_setDescription("Description");
 				pivot.asc_set(api, props);
 			});
 
-			pivot = checkHistoryOperation(assert, pivot, standards["longHeader"], "longHeader", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards_longHeader, "longHeader", function(){
 				pivot.asc_addRowField(api, 0);
 				pivot.asc_addColField(api, 1);
 				pivot.asc_addColField(api, 2);
 				pivot.asc_addDataField(api, 5);
 				var props = new Asc.CT_pivotTableDefinition();
+				props.ascHideValuesRow = true;
 				props.asc_setCompact(false);
 				props.asc_setOutline(true);
 				props.asc_setRowGrandTotals(false);
@@ -5203,7 +5287,766 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			// prot["asc_setFillDownLabelsDefault"] = prot.asc_setFillDownLabelsDefault;
 		});
 	}
+	function testPivotShowAs() {
+		QUnit.test("Test: Show as", function(assert) {
+			let testData =  [
+				["Region","Gender","Style","Ship date","Units","Price","Cost"],
+				["East","Boy","Tee","38383","12","11.04","10.42"],
+				["East","Boy","Golf","38383","12","13","12.6"],
+				["East","Boy","Fancy","38383","12","11.96","11.74"],
+				["East","Girl","Tee","38383","10","11.27","10.56"],
+				["East","Girl","Golf","38383","10","12.12","11.95"],
+				["East","Girl","Fancy","38383","10","13.74","13.33"],
+				["North","Boy","Tee","38383","16","13.08","14.06"],
+				["North","Helicopter","Tee","38383","16","5555","14.06"],
+				["West","Boy","Tee","38383","11","11.44","10.94"],
+				["West","Boy","Golf","38383","11","12.63","11.73"],
+				["West","Boy","Fancy","38383","11","12.06","11.51"],
+				["West","Girl","Tee","38383","15","13.42","13.29"],
+				["West","Girl","Golf","38383","15","11.48","10.67"]
+			];
+			let testDataRange = new Asc.Range(0, 0, testData[0].length - 1, testData.length - 1);
+			fillData(wsData, testData, testDataRange);
+			let dataRef = wsData.getName() + "!" + testDataRange.getName();
+			let percentOfTotal_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels", "Boy","Girl","Helicopter","Grand Total"],
+				["East","0.006313308","0.006511476","0","0.012824785"],
+				["Fancy","0.002097421","0.002409579","0","0.004507001"],
+				["Golf","0.002279806","0.002125481","0","0.004405286"],
+				["Tee","0.001936081","0.001976416","0","0.003912498"],
+				["North","0.002293835","0","0.974178568","0.976472404"],
+				["Tee","0.002293835","0","0.974178568","0.976472404"],
+				["West","0.006336107","0.004366705","0","0.010702812"],
+				["Fancy","0.002114958","0","0","0.002114958"],
+				["Golf","0.002214919","0.002013244","0","0.004228163"],
+				["Tee","0.002006229","0.002353461","0","0.00435969"],
+				["Grand Total","0.01494325","0.010878181","0.974178568","1"]
+			  ];
+			let differenceNext_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","22.92","37.13","-5555","-5494.95"],
+				["Fancy","-0.1","13.74","0","13.64"],
+				["Golf","0.37","0.64","0","1.01"],
+				["Tee","-2.04","11.27","-5555","-5545.77"],
+				["North","-23.05","-24.9","5555","5507.05"],
+				["Tee","1.64","-13.42","5555","5543.22"],
+				["West","","","",""],
+				["Fancy","","","",""],
+				["Golf","","","",""],
+				["Tee","","","",""],
+				["Grand Total","","","",""]
+				];
+			let differenceNext_tabular = [
+				["Sum of Price","","Gender","","",""],
+				["Region","Style","Boy","Girl","Helicopter","Grand Total"],
+				["East","Fancy","-0.1","13.74","0","13.64"],
+				["","Golf","0.37","0.64","0","1.01"],
+				["","Tee","-2.04","11.27","-5555","-5545.77"],
+				["East Total","","22.92","37.13","-5555","-5494.95"],
+				["North","Tee","1.64","-13.42","5555","5543.22"],
+				["North Total","","-23.05","-24.9","5555","5507.05"],
+				["West","Fancy","","","",""],
+				["","Golf","","","",""],
+				["","Tee","","","",""],
+				["West Total","","","","",""],
+				["Grand Total","","","","",""]
+				];
+			let differenceNext_compact2 = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","-1.13","37.13","",""],
+				["Fancy","-1.78","13.74","",""],
+				["Golf","0.88","12.12","",""],
+				["Tee","-0.23","11.27","",""],
+				["North","13.08","-5555","",""],
+				["Tee","13.08","-5555","",""],
+				["West","11.23","24.9","",""],
+				["Fancy","12.06","0","",""],
+				["Golf","1.15","11.48","",""],
+				["Tee","-1.98","13.42","",""],
+				["Grand Total","23.18","-5492.97","",""]
+				];
+			let differencePrev_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","","","",""],
+				["Fancy","","","",""],
+				["Golf","","","",""],
+				["Tee","","","",""],
+				["North","-22.92","-37.13","5555","5494.95"],
+				["Tee","2.04","-11.27","5555","5545.77"],
+				["West","23.05","24.9","-5555","-5507.05"],
+				["Fancy","0.1","-13.74","0","-13.64"],
+				["Golf","-0.37","-0.64","0","-1.01"],
+				["Tee","-1.64","13.42","-5555","-5543.22"],
+				["Grand Total","","","",""]
+				];
+			let differencePrev_compact2 = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","","1.13","-37.13",""],
+				["Fancy","","1.78","-13.74",""],
+				["Golf","","-0.88","-12.12",""],
+				["Tee","","0.23","-11.27",""],
+				["North","","-13.08","5555",""],
+				["Tee","","-13.08","5555",""],
+				["West","","-11.23","-24.9",""],
+				["Fancy","","-12.06","0",""],
+				["Golf","","-1.15","-11.48",""],
+				["Tee","","1.98","-13.42",""],
+				["Grand Total","","-23.18","5492.97",""]
+				];
+			let differenceBase_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","22.92","37.13","-5555","-5494.95"],
+				["Fancy","#N/A","#N/A","#N/A","#N/A"],
+				["Golf","#N/A","#N/A","#N/A","#N/A"],
+				["Tee","-2.04","11.27","-5555","-5545.77"],
+				["North","","","",""],
+				["Tee","","","",""],
+				["West","23.05","24.9","-5555","-5507.05"],
+				["Fancy","#N/A","#N/A","#N/A","#N/A"],
+				["Golf","#N/A","#N/A","#N/A","#N/A"],
+				["Tee","-1.64","13.42","-5555","-5543.22"],
+				["Grand Total","","","",""]
+				];
+			let differenceBase_compact2 = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","-1.13","","-37.13",""],
+				["Fancy","-1.78","","-13.74",""],
+				["Golf","0.88","","-12.12",""],
+				["Tee","-0.23","","-11.27",""],
+				["North","13.08","","5555",""],
+				["Tee","13.08","","5555",""],
+				["West","11.23","","-24.9",""],
+				["Fancy","12.06","","0",""],
+				["Golf","1.15","","-11.48",""],
+				["Tee","-1.98","","-13.42",""],
+				["Grand Total","23.18","","5492.97",""]
+				]
+			let percentOfCol_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","0.422485624","0.598581332","0","0.012824785"],
+				["Fancy","0.140359113","0.221505723","0","0.004507001"],
+				["Golf","0.152564253","0.195389328","0","0.004405286"],
+				["Tee","0.129562258","0.181686281","0","0.003912498"],
+				["North","0.15350311","0","1","0.976472404"],
+				["Tee","0.15350311","0","1","0.976472404"],
+				["West","0.424011266","0.401418668","0","0.010702812"],
+				["Fancy","0.141532684","0","0","0.002114958"],
+				["Golf","0.14822204","0.185071739","0","0.004228163"],
+				["Tee","0.134256543","0.216346929","0","0.00435969"],
+				["Grand Total","1","1","1","1"]
+				];
+			let percentOfRow_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","0.492274033","0.507725967","0","1"],
+				["Fancy","0.46536965","0.53463035","0","1"],
+				["Golf","0.517515924","0.482484076","0","1"],
+				["Tee","0.494845361","0.505154639","0","1"],
+				["North","0.002349104","0","0.997650896","1"],
+				["Tee","0.002349104","0","0.997650896","1"],
+				["West","0.592003932","0.407996068","0","1"],
+				["Fancy","1","0","0","1"],
+				["Golf","0.523849025","0.476150975","0","1"],
+				["Tee","0.460176991","0.539823009","0","1"],
+				["Grand Total","0.01494325","0.010878181","0.974178568","1"]
+				];
+			let percentOfParentRow_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","0.422485624","0.598581332","0","0.012824785"],
+				["Fancy","0.332222222","0.370051172","","0.351428962"],
+				["Golf","0.361111111","0.326420684","","0.34349788"],
+				["Tee","0.306666667","0.303528144","","0.305073157"],
+				["North","0.15350311","0","1","0.976472404"],
+				["Tee","1","","1","1"],
+				["West","0.424011266","0.401418668","0","0.010702812"],
+				["Fancy","0.333794631","0","","0.197607734"],
+				["Golf","0.349570994","0.461044177","","0.395051614"],
+				["Tee","0.316634376","0.538955823","","0.407340652"],
+				["Grand Total","1","1","1","1"]
+				];
+			let index_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","32.942902","46.67379205","0","1"],
+				["Fancy","31.14246487","49.14703479","0","1"],
+				["Golf","34.63208544","44.3533774","0","1"],
+				["Tee","33.11497489","46.43741721","0","1"],
+				["North","0.157201688","0","1.024094481","1"],
+				["Tee","0.157201688","0","1.024094481","1"],
+				["West","39.61681145","37.50590837","0","1"],
+				["Fancy","66.91984509","0","0","1"],
+				["Golf","35.05589562","43.77119352","0","1"],
+				["Tee","30.79497296","49.62438101","0","1"],
+				["Grand Total","1","1","1","1"]
+				];
+			let percentOfParentCol_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","0.492274033","0.507725967","0","1"],
+				["Fancy","0.46536965","0.53463035","0","1"],
+				["Golf","0.517515924","0.482484076","0","1"],
+				["Tee","0.494845361","0.505154639","0","1"],
+				["North","0.002349104","0","0.997650896","1"],
+				["Tee","0.002349104","0","0.997650896","1"],
+				["West","0.592003932","0.407996068","0","1"],
+				["Fancy","1","0","0","1"],
+				["Golf","0.523849025","0.476150975","0","1"],
+				["Tee","0.460176991","0.539823009","0","1"],
+				["Grand Total","0.01494325","0.010878181","0.974178568","1"]
+				];
+			let percentOfParent_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","1","1","","1"],
+				["Fancy","0.332222222","0.370051172","","0.351428962"],
+				["Golf","0.361111111","0.326420684","","0.34349788"],
+				["Tee","0.306666667","0.303528144","","0.305073157"],
+				["North","1","","1","1"],
+				["Tee","1","","1","1"],
+				["West","1","1","","1"],
+				["Fancy","0.333794631","0","","0.197607734"],
+				["Golf","0.349570994","0.461044177","","0.395051614"],
+				["Tee","0.316634376","0.538955823","","0.407340652"],
+				["Grand Total","","","",""]
+				];
+			let percentNext_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","2.752293578","","#NULL!","0.013133791"],
+				["Fancy","0.991708126","","#NULL!","2.131011609"],
+				["Golf","1.029295329","1.055749129","#NULL!","1.041891331"],
+				["Tee","0.844036697","","#NULL!","0.004006767"],
+				["North","0.362026017","#NULL!","","91.23513026"],
+				["Tee","1.143356643","#NULL!","","223.9774739"],
+				["West","1","1","","1"],
+				["Fancy","1","","","1"],
+				["Golf","1","1","","1"],
+				["Tee","1","1","","1"],
+				["Grand Total","","","",""]
+				];
+			let percentPrev_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","1","1","","1"],
+				["Fancy","1","1","","1"],
+				["Golf","1","1","","1"],
+				["Tee","1","1","","1"],
+				["North","0.363333333","#NULL!","","76.13947764"],
+				["Tee","1.184782609","#NULL!","","249.5777678"],
+				["West","2.762232416","","#NULL!","0.01096069"],
+				["Fancy","1.008361204","#NULL!","#NULL!","0.4692607"],
+				["Golf","0.971538462","0.947194719","#NULL!","0.959792994"],
+				["Tee","0.874617737","","#NULL!","0.004464735"],
+				["Grand Total","","","",""]
+				];
+			let percentBase_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","2.752293578","","#NULL!","0.013133791"],
+				["Fancy","#N/A","#N/A","#N/A","#N/A"],
+				["Golf","#N/A","#N/A","#N/A","#N/A"],
+				["Tee","0.844036697","","#NULL!","0.004006767"],
+				["North","1","","1","1"],
+				["Tee","1","","1","1"],
+				["West","2.762232416","","#NULL!","0.01096069"],
+				["Fancy","#N/A","#N/A","#N/A","#N/A"],
+				["Golf","#N/A","#N/A","#N/A","#N/A"],
+				["Tee","0.874617737","","#NULL!","0.004464735"],
+				["Grand Total","","","",""]
+				];
+			let percentDiffNext_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","1.752293578","","#NULL!","-0.986866209"],
+				["Fancy","-0.008291874","","#NULL!","1.131011609"],
+				["Golf","0.029295329","0.055749129","#NULL!","0.041891331"],
+				["Tee","-0.155963303","","#NULL!","-0.995993233"],
+				["North","-0.637973983","#NULL!","","90.23513026"],
+				["Tee","0.143356643","#NULL!","","222.9774739"],
+				["West","","","",""],
+				["Fancy","","","",""],
+				["Golf","","","",""],
+				["Tee","","","",""],
+				["Grand Total","","","",""]
+				];
+			let percentDiffPrev_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","","","",""],
+				["Fancy","","","",""],
+				["Golf","","","",""],
+				["Tee","","","",""],
+				["North","-0.636666667","#NULL!","","75.13947764"],
+				["Tee","0.184782609","#NULL!","","248.5777678"],
+				["West","1.762232416","","#NULL!","-0.98903931"],
+				["Fancy","0.008361204","#NULL!","#NULL!","-0.5307393"],
+				["Golf","-0.028461538","-0.052805281","#NULL!","-0.040207006"],
+				["Tee","-0.125382263","","#NULL!","-0.995535265"],
+				["Grand Total","","","",""]
+				];
+			let percentDiffBase_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","1.752293578","","#NULL!","-0.986866209"],
+				["Fancy","#N/A","#N/A","#N/A","#N/A"],
+				["Golf","#N/A","#N/A","#N/A","#N/A"],
+				["Tee","-0.155963303","","#NULL!","-0.995993233"],
+				["North","","","",""],
+				["Tee","","","",""],
+				["West","1.762232416","","#NULL!","-0.98903931"],
+				["Fancy","#N/A","#N/A","#N/A","#N/A"],
+				["Golf","#N/A","#N/A","#N/A","#N/A"],
+				["Tee","-0.125382263","","#NULL!","-0.995535265"],
+				["Grand Total","","","",""]
+				];
+			let runTotal_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","36","37.13","0","73.13"],
+				["Fancy","11.96","13.74","0","25.7"],
+				["Golf","13","12.12","0","25.12"],
+				["Tee","11.04","11.27","0","22.31"],
+				["North","49.08","37.13","5555","5641.21"],
+				["Tee","24.12","11.27","5555","5590.39"],
+				["West","85.21","62.03","5555","5702.24"],
+				["Fancy","24.02","13.74","0","37.76"],
+				["Golf","25.63","23.6","0","49.23"],
+				["Tee","35.56","24.69","5555","5615.25"],
+				["Grand Total","","","",""]
+				];
+			let runTotal_compact2 = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","36","73.13","73.13",""],
+				["Fancy","11.96","25.7","25.7",""],
+				["Golf","13","25.12","25.12",""],
+				["Tee","11.04","22.31","22.31",""],
+				["North","13.08","13.08","5568.08",""],
+				["Tee","13.08","13.08","5568.08",""],
+				["West","36.13","61.03","61.03",""],
+				["Fancy","12.06","12.06","12.06",""],
+				["Golf","12.63","24.11","24.11",""],
+				["Tee","11.44","24.86","24.86",""],
+				["Grand Total","85.21","147.24","5702.24",""]
+				];
+			let runTotal_stdDev_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","0.980612054","1.254843948","0","1.028132611"],
+				["Fancy","#DIV/0!","#DIV/0!","0","1.258650071"],
+				["Golf","#DIV/0!","#DIV/0!","0","0.622253967"],
+				["Tee","#DIV/0!","#DIV/0!","0","0.16263456"],
+				["North","#DIV/0!","1.254843948","#DIV/0!","3919.757345"],
+				["Tee","#DIV/0!","#DIV/0!","#DIV/0!","3918.891847"],
+				["West","#DIV/0!","2.626631103","#DIV/0!","3920.592318"],
+				["Fancy","#DIV/0!","#DIV/0!","0","#DIV/0!"],
+				["Golf","#DIV/0!","#DIV/0!","0","1.435426766"],
+				["Tee","#DIV/0!","#DIV/0!","#DIV/0!","3920.291919"],
+				["Grand Total","","","",""]
+				];
+			let runTotal_stdDev_compact2 = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","0.980612054","2.235456002","2.235456002",""],
+				["Fancy","#DIV/0!","#DIV/0!","#DIV/0!",""],
+				["Golf","#DIV/0!","#DIV/0!","#DIV/0!",""],
+				["Tee","#DIV/0!","#DIV/0!","#DIV/0!",""],
+				["North","#DIV/0!","#DIV/0!","#DIV/0!",""],
+				["Tee","#DIV/0!","#DIV/0!","#DIV/0!",""],
+				["West","0.595175044","1.9669622","1.9669622",""],
+				["Fancy","#DIV/0!","#DIV/0!","#DIV/0!",""],
+				["Golf","#DIV/0!","#DIV/0!","#DIV/0!",""],
+				["Tee","#DIV/0!","#DIV/0!","#DIV/0!",""],
+				["Grand Total","0.774009351","1.896230364","#DIV/0!",""]
+				];
+			let differenceNext_stdDev_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","#DIV/0!","1.254843948","#DIV/0!","-3917.70108"],
+				["Fancy","#DIV/0!","#DIV/0!","0","#DIV/0!"],
+				["Golf","#DIV/0!","#DIV/0!","0","-0.190918831"],
+				["Tee","#DIV/0!","#DIV/0!","#DIV/0!","-3918.566578"],
+				["North","#DIV/0!","-1.371787156","#DIV/0!","3917.89424"],
+				["Tee","#DIV/0!","#DIV/0!","#DIV/0!","3917.329141"],
+				["West","","","",""],
+				["Fancy","","","",""],
+				["Golf","","","",""],
+				["Tee","","","",""],
+				["Grand Total","","","",""]
+				];
+			let percentDiffNext_stdDev_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","","","#NULL!","-0.999737636"],
+				["Fancy","#DIV/0!","#DIV/0!","#NULL!",""],
+				["Golf","#DIV/0!","#DIV/0!","#NULL!","-0.234782609"],
+				["Tee","#DIV/0!","#DIV/0!","#NULL!","-0.999958498"],
+				["North","#DIV/0!","#NULL!","#DIV/0!","4692.240335"],
+				["Tee","#DIV/0!","#NULL!","#DIV/0!","2797.949495"],
+				["West","","","",""],
+				["Fancy","","","",""],
+				["Golf","","","",""],
+				["Tee","","","",""],
+				["Grand Total","","","",""]
+				]
+			let percentNext_stdDev_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","","","#NULL!","0.000262364"],
+				["Fancy","#DIV/0!","#DIV/0!","#NULL!",""],
+				["Golf","#DIV/0!","#DIV/0!","#NULL!","0.765217391"],
+				["Tee","#DIV/0!","#DIV/0!","#NULL!","4.15019E-05"],
+				["North","#DIV/0!","#NULL!","#DIV/0!","4693.240335"],
+				["Tee","#DIV/0!","#NULL!","#DIV/0!","2798.949495"],
+				["West","1","1","","1"],
+				["Fancy","","","",""],
+				["Golf","","","","1"],
+				["Tee","","","","1"],
+				["Grand Total","","","",""]
+				];
+			let percentRunTotal_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","0.422485624","0.598581332","0","0.012824785"],
+				["Fancy","0.497918401","1","","0.680614407"],
+				["Golf","0.507218104","0.513559322","","0.510257973"],
+				["Tee","0.310461192","0.456460105","0","0.003973109"],
+				["North","0.575988734","0.598581332","1","0.989297188"],
+				["Tee","0.678290214","0.456460105","1","0.995572771"],
+				["West","1","1","1","1"],
+				["Fancy","1","1","","1"],
+				["Golf","1","1","","1"],
+				["Tee","1","1","1","1"],
+				["Grand Total","","","",""]
+				];
+			let percentRunTotal_compact2 = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","0.492274033","1","1",""],
+				["Fancy","0.46536965","1","1",""],
+				["Golf","0.517515924","1","1",""],
+				["Tee","0.494845361","1","1",""],
+				["North","0.002349104","0.002349104","1",""],
+				["Tee","0.002349104","0.002349104","1",""],
+				["West","0.592003932","1","1",""],
+				["Fancy","1","1","1",""],
+				["Golf","0.523849025","1","1",""],
+				["Tee","0.460176991","1","1",""],
+				["Grand Total","0.01494325","0.025821432","1",""]
+				];
+			let percentRunTotal_stdDev_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","1.266925331","1.118178981","#DIV/0!","0.000668801"],
+				["Fancy","#DIV/0!","#DIV/0!","","#DIV/0!"],
+				["Golf","#DIV/0!","#DIV/0!","","0.433497537"],
+				["Tee","#DIV/0!","#DIV/0!","#DIV/0!","4.14853E-05"],
+				["North","#DIV/0!","1.118178981","#DIV/0!","2.549805584"],
+				["Tee","#DIV/0!","#DIV/0!","#DIV/0!","0.999642866"],
+				["West","#DIV/0!","2.340564893","#DIV/0!","2.550348735"],
+				["Fancy","#DIV/0!","#DIV/0!","","#DIV/0!"],
+				["Golf","#DIV/0!","#DIV/0!","","1"],
+				["Tee","#DIV/0!","#DIV/0!","#DIV/0!","1"],
+				["Grand Total","","","",""]
+				];
+			let rankAscending_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","2","2","","2"],
+				["Fancy","1","1","","2"],
+				["Golf","2","2","","2"],
+				["Tee","1","1","","1"],
+				["North","1","","1","3"],
+				["Tee","3","","1","3"],
+				["West","3","1","","1"],
+				["Fancy","2","","","1"],
+				["Golf","1","1","","1"],
+				["Tee","2","2","","2"],
+				["Grand Total","","","",""]
+				];
+			let rankAscending_compact2 = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","1","2","",""],
+				["Fancy","1","2","",""],
+				["Golf","2","1","",""],
+				["Tee","1","2","",""],
+				["North","1","","2",""],
+				["Tee","1","","2",""],
+				["West","2","1","",""],
+				["Fancy","1","","",""],
+				["Golf","2","1","",""],
+				["Tee","1","2","",""],
+				["Grand Total","2","1","3",""]
+				];
+			let rankAscending_stdDev_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","2","1","","2"],
+				["Fancy","","","","1"],
+				["Golf","","","","1"],
+				["Tee","","","","1"],
+				["North","","","","3"],
+				["Tee","","","","3"],
+				["West","1","2","","1"],
+				["Fancy","","","",""],
+				["Golf","","","","2"],
+				["Tee","","","","2"],
+				["Grand Total","","","",""]
+				];
+			let rankDescending_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","2","1","","2"],
+				["Fancy","2","1","","1"],
+				["Golf","1","1","","1"],
+				["Tee","3","2","","3"],
+				["North","3","","1","1"],
+				["Tee","1","","1","1"],
+				["West","1","2","","3"],
+				["Fancy","1","","","2"],
+				["Golf","2","2","","2"],
+				["Tee","2","1","","2"],
+				["Grand Total","","","",""]
+				];
+			let rankDescending_compact2 = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","2","1","",""],
+				["Fancy","2","1","",""],
+				["Golf","1","2","",""],
+				["Tee","2","1","",""],
+				["North","2","","1",""],
+				["Tee","2","","1",""],
+				["West","1","2","",""],
+				["Fancy","1","","",""],
+				["Golf","1","2","",""],
+				["Tee","2","1","",""],
+				["Grand Total","2","3","1",""]
+				];
+			let rankDescending_stdDev_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","1","2","","2"],
+				["Fancy","","","","1"],
+				["Golf","","","","2"],
+				["Tee","","","","3"],
+				["North","","","","1"],
+				["Tee","","","","1"],
+				["West","2","1","","3"],
+				["Fancy","","","",""],
+				["Golf","","","","1"],
+				["Tee","","","","2"],
+				["Grand Total","","","",""]
+				];
+			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addRowField(api, 0);
+			pivot.asc_addRowField(api, 2);
+			pivot.asc_addColField(api, 1);
+			pivot.asc_addDataField(api, 5);
+			function testShowAs(pivot, showAs, baseField, baseItem, subtotalType, standard, message) {
+				return checkHistoryOperation(assert, pivot, standard, message, function(){
+					var dataField = pivot.asc_getDataFields()[0];
+					let props = new Asc.CT_DataField();
+					props.setShowAs(showAs, baseField, baseItem);
+					props.asc_setSubtotal(subtotalType)
+					dataField.asc_set(api, pivot, 0, props);
+				});
+			}
+			AscCommon.History.Clear();
+			setPivotLayout(pivot, 'compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfTotal, 0, 0, c_oAscDataConsolidateFunction.Sum, percentOfTotal_compact, 'percentOfTotal_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, c_oAscDataConsolidateFunction.Sum, differenceNext_compact, 'differenceNext_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_NEXT, c_oAscDataConsolidateFunction.Sum, differenceNext_compact2, 'differenceNext_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_PREV, c_oAscDataConsolidateFunction.Sum, differencePrev_compact, 'differencePrev_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_PREV, c_oAscDataConsolidateFunction.Sum, differencePrev_compact2, 'differencePrev_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, 1, c_oAscDataConsolidateFunction.Sum, differenceBase_compact, 'differenceBase_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, 1, c_oAscDataConsolidateFunction.Sum, differenceBase_compact2, 'differenceBase_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfCol, 0, 0, c_oAscDataConsolidateFunction.Sum, percentOfCol_compact, 'percentOfCol_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfRow, 0, 0, c_oAscDataConsolidateFunction.Sum, percentOfRow_compact, 'percentOfRow_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Index, 0, 0, c_oAscDataConsolidateFunction.Sum, index_compact, 'index_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParentRow, 0, 0, c_oAscDataConsolidateFunction.Sum, percentOfParentRow_compact, 'percentOfParentRow_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParentCol, 0, 0, c_oAscDataConsolidateFunction.Sum, percentOfParentCol_compact, 'percentOfParentCol_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParent, 0, 0, c_oAscDataConsolidateFunction.Sum, percentOfParent_compact, 'percentOfParent_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Percent, 0, AscCommonExcel.st_BASE_ITEM_NEXT, c_oAscDataConsolidateFunction.Sum, percentNext_compact, 'percentNext_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Percent, 0, AscCommonExcel.st_BASE_ITEM_PREV, c_oAscDataConsolidateFunction.Sum, percentPrev_compact, 'percentPrev_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Percent, 0, 1, c_oAscDataConsolidateFunction.Sum, percentBase_compact, 'percentBase_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentDiff, 0, AscCommonExcel.st_BASE_ITEM_NEXT, c_oAscDataConsolidateFunction.Sum, percentDiffNext_compact, 'percentDiffNext_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentDiff, 0, AscCommonExcel.st_BASE_ITEM_PREV, c_oAscDataConsolidateFunction.Sum, percentDiffPrev_compact, 'percentDiffPrev_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentDiff, 0, 1, c_oAscDataConsolidateFunction.Sum, percentDiffBase_compact, 'percentDiffBase_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.RunTotal, 0, 0, c_oAscDataConsolidateFunction.Sum, runTotal_compact, 'runTotal_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.RunTotal, 1, 0, c_oAscDataConsolidateFunction.Sum, runTotal_compact2, 'runTotal_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.RunTotal, 0, 0, c_oAscDataConsolidateFunction.StdDev, runTotal_stdDev_compact, 'runTotal_stdDev_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.RunTotal, 1, 0, c_oAscDataConsolidateFunction.StdDev, runTotal_stdDev_compact2, 'runTotal_stdDev_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, c_oAscDataConsolidateFunction.StdDev, differenceNext_stdDev_compact, 'differenceNext_stdDev_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentDiff, 0, AscCommonExcel.st_BASE_ITEM_NEXT, c_oAscDataConsolidateFunction.StdDev, percentDiffNext_stdDev_compact, 'percentDiffNext_stdDev_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Percent, 0, AscCommonExcel.st_BASE_ITEM_NEXT, c_oAscDataConsolidateFunction.StdDev, percentNext_stdDev_compact, 'percentNext_stdDev_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfRunningTotal, 0, 0, c_oAscDataConsolidateFunction.Sum, percentRunTotal_compact, 'percentRunTotal_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfRunningTotal, 1, 0, c_oAscDataConsolidateFunction.Sum, percentRunTotal_compact2, 'percentRunTotal_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfRunningTotal, 0, 0, c_oAscDataConsolidateFunction.StdDev, percentRunTotal_stdDev_compact, 'percentRunTotal_stdDev_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.RankAscending, 0, 0, c_oAscDataConsolidateFunction.Sum, rankAscending_compact, 'rankAscending_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.RankAscending, 1, 0, c_oAscDataConsolidateFunction.Sum, rankAscending_compact2, 'rankAscending_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.RankAscending, 0, 0, c_oAscDataConsolidateFunction.StdDev, rankAscending_stdDev_compact, 'rankAscending_stdDev_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.RankDescending, 0, 0, c_oAscDataConsolidateFunction.Sum, rankDescending_compact, 'rankDescending_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.RankDescending, 1, 0, c_oAscDataConsolidateFunction.Sum, rankDescending_compact2, 'rankDescending_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.RankDescending, 0, 0, c_oAscDataConsolidateFunction.StdDev, rankDescending_stdDev_compact, 'rankDescending_stdDev_compact');
+			setPivotLayout(pivot, 'tabular');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, c_oAscDataConsolidateFunction.Sum, differenceNext_tabular, 'differenceNext_tabular', 0);
+			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
+		});
+	}
+	function testPivotShowDetails() {
+		QUnit.test('Test: Show Details', function (assert) {
+			const testData =  [
+				["Region","Gender","Style","Ship date","Units","Price","Cost"],
+				["East","Boy","Tee","1","12","11.04","10.42"],
+				["East","Boy","Golf","1","12","13","12.6"],
+				["East","Boy","Fancy","2","12","11.96","11.74"],
+				["East","Girl","Tee","2","10","11.27","10.56"],
+				["East","Girl","Golf","1","10","12.12","11.95"],
+				["East","Girl","Fancy","2","10","13.74","13.33"],
+				["West","Boy","Tee","1","11","11.44","10.94"],
+				["West","Boy","Golf","2","11","12.63","11.73"],
+				["West","Boy","Fancy","1","11","12.06","11.51"],
+				["West","Girl","Tee","2","15","13.42","13.29"],
+				["West","Girl","Golf","1","15","11.48","10.67"]
+			];
+			const standardNoFilterEastGT = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Boy', 'Tee', '1', '12', '11.04', '10.42'],
+				['East', 'Boy', 'Golf', '1', '12', '13', '12.6'],
+				['East', 'Boy', 'Fancy', '2', '12', '11.96', '11.74'],
+				['East', 'Girl', 'Tee', '2', '10', '11.27', '10.56'],
+				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
+				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
+			];
+			const standardNoFilterFancyGT = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Boy', 'Fancy', '2', '12', '11.96', '11.74'],
+				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
+			];
+			const standardNoFilter10GT = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
+			];
+			const standardNoFilterEastGirl = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Girl', 'Tee', '2', '10', '11.27', '10.56'],
+				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
+				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
+			];
+			const standardNoFilterFancyGirl = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
+			];
+			const standardNoFilter12Girl = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['', '', '', '', '', '', ''],
+			];
+			const standardFilterEastGT = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Boy', 'Tee', '1', '12', '11.04', '10.42'],
+				['East', 'Boy', 'Golf', '1', '12', '13', '12.6'],
+				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
+			];
+			const standardFilterGTGT = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Boy', 'Tee', '1', '12', '11.04', '10.42'],
+				['East', 'Boy', 'Golf', '1', '12', '13', '12.6'],
+				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
+				['West', 'Boy', 'Tee', '1', '11', '11.44', '10.94'],
+				['West', 'Boy', 'Fancy', '1', '11', '12.06', '11.51'],
+				['West', 'Girl', 'Golf', '1', '15', '11.48', '10.67'],
+			];
+			const standardGroupFilter = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Boy', 'Golf', '1', '12', '13', '12.6'],
+				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
+			];
+			function testPivotCellForDetails(assert, pivot, row, col, standard, message) {
+				let undoStandard = [];
+				for (let i = 0; i < standard.length; i += 1) {
+					undoStandard[i] = [];
+					undoStandard[i].length = standard[0].length;
+					undoStandard[i].fill("");
+				}
+				let res = checkHistoryOperation2(assert, pivot, standard, message, undoStandard, function () {
+					const indexes = pivot.getItemsIndexesByActiveCell(row, col);
+					const arrayItemFieldsMap = pivot.getNoFilterItemFieldsMapArray(indexes.rowItemIndex, indexes.colItemIndex)
+					pivot.showDetails(wsDetails, arrayItemFieldsMap);
+				}, function (assert, pivot, standard, message) {
+					let cells = [];
+					for (let i = 0; i < standard.length; i += 1) {
+						cells[i] = [];
+						for (let j = 0; j < standard[0].length; j += 1) {
+							cells[i][j] = wsDetails.getCell3(i, j).getValue();
+						}
+					}
+					assert.deepEqual(cells, standard, message)
+				});
+				wsDetails.removeRows(0, wsDetails.getRowsCount());
+				return res;
+			}
+			function getNewFilter(fld, index) {
+				var autoFilterObject = new Asc.AutoFiltersOptions();
+				pivot.fillAutoFiltersOptions(autoFilterObject, fld);
+				for (var i = 0; i < autoFilterObject.values.length; ++i) {
+					autoFilterObject.values[i].visible = i == index;
+				}
+				autoFilterObject.filter.type = Asc.c_oAscAutoFilterTypes.Filters;
+				return autoFilterObject;
+			};
+			let testDataRange = new Asc.Range(0, 0, testData[0].length - 1, testData.length - 1);
+			fillData(wsData, testData, testDataRange);
+			let dataRef = wsData.getName() + "!" + testDataRange.getName();
+			let pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addRowField(api, 0);
+			pivot.asc_addRowField(api, 2);
+			pivot.asc_addRowField(api, 4);
+			pivot.asc_addColField(api, 1);
+			pivot.asc_addDataField(api, 5);
 
+			AscCommon.History.Clear();
+			pivot = testPivotCellForDetails(assert, pivot, 4, 3, standardNoFilterEastGT, 'no-filter East | GT');
+			pivot = testPivotCellForDetails(assert, pivot, 5, 3, standardNoFilterFancyGT, 'no-filter East -> Fancy | GT');
+			pivot = testPivotCellForDetails(assert, pivot, 6, 3, standardNoFilter10GT, 'no-filter East -> Fancy -> 10 (Units) | GT');
+			pivot = testPivotCellForDetails(assert, pivot, 4, 2, standardNoFilterEastGirl, 'no-filter East | Girl');
+			pivot = testPivotCellForDetails(assert, pivot, 5, 2, standardNoFilterFancyGirl, 'no-filter East -> Fancy | Girl');
+			pivot = testPivotCellForDetails(assert, pivot, 5, 2, standardNoFilterFancyGirl, 'no-filter East -> Fancy | Girl');
+			pivot = testPivotCellForDetails(assert, pivot, 7, 2, standardNoFilter12Girl, 'no-filter East -> Fancy -> 12 (Units) | Girl');
+
+			pivot.asc_addPageField(api, 3);
+			pivot.filterByFieldIndex(api, getNewFilter(3, 0), 3, true);
+
+			AscCommon.History.Clear();
+			pivot = testPivotCellForDetails(assert, pivot, 4, 3, standardFilterEastGT, 'filter 1 (ship date) East | GT');
+			pivot = testPivotCellForDetails(assert, pivot, 17, 3, standardFilterGTGT, 'filter 1 (ship date) GTGT');
+
+			const group = new PivotLayoutGroup();
+			group.fld = 4;
+			group.groupMap = {
+				0: 1,
+				2: 1
+			};
+			const onRepeat = function () {
+				api._groupPivot(true, onRepeat);
+			}
+			pivot.groupPivot(api, group, false, onRepeat);
+			pivot = testPivotCellForDetails(assert, pivot, 6, 3, standardGroupFilter, 'filter 1 (ship date) Group 1 Units (10, 12)');
+			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
+		});
+	}
 	QUnit.module("Pivot");
 
 	function startTests() {
@@ -5264,5 +6107,9 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 		testNumFormat();
 
 		testPivotMisc();
+
+		testPivotShowAs();
+
+		testPivotShowDetails();
 	}
 });

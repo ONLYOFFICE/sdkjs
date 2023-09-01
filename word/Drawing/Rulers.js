@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1218,12 +1218,14 @@ function CHorRuler()
                     if (newVal > _margin_right)
                         newVal = _margin_right;
                 }
-
                 this.m_dIndentRight = _margin_right - newVal;
                 word_control.UpdateHorRulerBack();
 
                 var pos = left + (_margin_right - this.m_dIndentRight) * dKoef_mm_to_pix;
                 word_control.m_oOverlayApi.VertLine(pos);
+
+				// if (!this.SimpleChanges.IsSimple)
+				// 	this.SetPrProperties(true);
 
                 break;
             }
@@ -1796,6 +1798,10 @@ function CHorRuler()
 			word_control.m_oApi.sync_EndAddShape();
 			word_control.m_oApi.sync_StartAddShapeCallback(false);
         }
+        if (true === word_control.m_oApi.isInkDrawerOn())
+        {
+			word_control.m_oApi.stopInkDrawer();
+        }
 
         AscCommon.check_MouseDownEvent(e, true);
         global_mouseEvent.LockMouse();
@@ -2266,18 +2272,35 @@ function CHorRuler()
 		}
 	}
 
-    this.SetPrProperties = function()
+    this.SetPrProperties = function(isTemporary)
 	{
-		if (false === this.m_oWordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Properties))
+		let left      = this.m_dIndentLeft;
+		let right     = this.m_dIndentRight;
+		let firstLine = this.m_dIndentLeftFirst - this.m_dIndentLeft;
+		
+		let logicDocument = this.m_oWordControl.m_oLogicDocument;
+		if (logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Properties))
+			return;
+		
+		isTemporary = isTemporary && logicDocument.IsDocumentEditor();
+		
+		if (isTemporary)
+			logicDocument.TurnOff_InterfaceEvents();
+		
+		logicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphIndentFromRulers);
+		logicDocument.SetParagraphIndent({
+			Left      : left,
+			Right     : right,
+			FirstLine : firstLine
+		});
+		logicDocument.UpdateInterface();
+		logicDocument.Recalculate();
+		logicDocument.FinalizeAction();
+		
+		if (isTemporary)
 		{
-			this.m_oWordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphIndentFromRulers);
-			this.m_oWordControl.m_oLogicDocument.SetParagraphIndent({
-				Left      : this.m_dIndentLeft,
-				Right     : this.m_dIndentRight,
-				FirstLine : (this.m_dIndentLeftFirst - this.m_dIndentLeft)
-			});
-			this.m_oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
-			this.m_oWordControl.m_oLogicDocument.FinalizeAction();
+			AscCommon.History.SetLastPointTemporary();
+			logicDocument.TurnOn_InterfaceEvents();
 		}
 	}
     this.SetMarginProperties = function()
@@ -3515,6 +3538,10 @@ function CVerRuler()
 		{
 			word_control.m_oApi.sync_EndAddShape();
 			word_control.m_oApi.sync_StartAddShapeCallback(false);
+		}
+		if (true === word_control.m_oApi.isInkDrawerOn())
+		{
+			word_control.m_oApi.stopInkDrawer();
 		}
 
         AscCommon.check_MouseDownEvent(e, true);

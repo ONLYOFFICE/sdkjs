@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -69,7 +69,6 @@ CChartSpace.prototype.check_bounds = CShape.prototype.check_bounds;
 CChartSpace.prototype.Get_Theme = CShape.prototype.Get_Theme;
 CChartSpace.prototype.Get_ColorMap = CShape.prototype.Get_ColorMap;
 CChartSpace.prototype.Get_AbsolutePage = CShape.prototype.Get_AbsolutePage;
-CChartSpace.prototype.GetParaDrawing = CShape.prototype.GetParaDrawing;
 
 CChartSpace.prototype.handleUpdateFill = function()
 {
@@ -254,8 +253,6 @@ CChartSpace.prototype.setRecalcObject = CShape.prototype.setRecalcObject;
 
 CChartSpace.prototype.createResizeTrack = CShape.prototype.createResizeTrack;
 CChartSpace.prototype.createMoveTrack = CShape.prototype.createMoveTrack;
-CChartSpace.prototype.getRectBounds = CShape.prototype.getRectBounds;
-
 CChartSpace.prototype.recalculate = function()
 {
     if(this.bDeleted)
@@ -532,24 +529,6 @@ CChartSpace.prototype.getDrawingObjectsController = CShape.prototype.getDrawingO
 //    this.addToRecalculate();
 //};
 
-CChartSpace.prototype.IsHdrFtr = function(bool)
-{
-    if(!this.group)
-    {
-        if(isRealObject(this.parent) && isRealObject(this.parent.DocumentContent))
-            return this.parent.DocumentContent.IsHdrFtr(bool);
-    }
-    else
-    {
-        var cur_group = this.group;
-        while(cur_group.group)
-            cur_group = cur_group.group;
-        if(isRealObject(cur_group.parent) && isRealObject(cur_group.parent.DocumentContent))
-            return cur_group.parent.DocumentContent.IsHdrFtr(bool);
-    }
-    return bool ? null : false;
-};
-
 CChartSpace.prototype.Refresh_RecalcData2 = function(pageIndex, object)
 {
     this.refreshRecalcData2(pageIndex, object);
@@ -573,30 +552,3 @@ CChartSpace.prototype.Refresh_RecalcData2 = function(pageIndex, object)
         }
     }
 };
-function CreateUnifillSolidFillSchemeColor(colorId, tintOrShade)
-{
-    var unifill = new AscFormat.CUniFill();
-    unifill.setFill(new AscFormat.CSolidFill());
-    unifill.fill.setColor(new AscFormat.CUniColor());
-    unifill.fill.color.setColor(new AscFormat.CSchemeColor());
-    unifill.fill.color.color.setId(colorId);
-    return AscFormat.CreateUniFillSolidFillWidthTintOrShade(unifill, tintOrShade);
-}
-
-function CreateNoFillLine()
-{
-    var ret = new AscFormat.CLn();
-    ret.setFill(AscFormat.CreateNoFillUniFill());
-    return ret;
-}
-
-function CreateNoFillUniFill()
-{
-    var ret = new AscFormat.CUniFill();
-    ret.setFill(new AscFormat.CNoFill());
-    return ret;
-}
-
-window['AscFormat'].CreateUnifillSolidFillSchemeColor = CreateUnifillSolidFillSchemeColor;
-window['AscFormat'].CreateNoFillLine = CreateNoFillLine;
-window['AscFormat'].CreateNoFillUniFill = CreateNoFillUniFill;

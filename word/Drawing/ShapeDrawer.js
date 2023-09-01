@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -349,19 +349,23 @@ CShapeDrawer.prototype =
                 _arr[indexD] *= this.StrokeWidth;
             this.Graphics.p_dash(_arr);
         }
+        else if (this.Graphics.RENDERER_PDF_FLAG)
+        {
+            this.Graphics.p_dash(null);
+        }
     },
 
     fromShape2 : function(shape, graphics, geom)
     {
         this.fromShape(shape, graphics);
 
-        if (!geom)
+        if (!geom && !graphics.bDrawRectWithLines)
         {
             this.IsRectShape = true;
         }
         else
         {
-            if (geom.preset == "rect")
+            if (geom.preset == "rect" && !graphics.bDrawRectWithLines)
                 this.IsRectShape = true;
         }
     },
@@ -686,6 +690,21 @@ CShapeDrawer.prototype =
             this.Graphics.ArrayPoints = [];
     },
 
+    drawTransitionTextures : function(oCanvas1, dAlpha1, oCanvas2, dAlpha2)
+    {
+        const dOldGlobalAlpha = this.Graphics.m_oContext.globalAlpha;
+        const dX = this.min_x;
+        const dY = this.min_y;
+        const dW = this.max_x - this.min_x;
+        const dH = this.max_y - this.min_y;
+        this.Graphics.m_oContext.globalAlpha = dAlpha1;
+        this.Graphics.drawImage(null, dX, dY, dW, dH, undefined, null, oCanvas1);
+        this.Graphics.m_oContext.globalAlpha = dAlpha2;
+        this.Graphics.drawImage(null, dX, dY, dW, dH, undefined, null, oCanvas2);
+        this.Graphics.m_oContext.globalAlpha = dOldGlobalAlpha;
+    },
+
+
     df : function(mode)
     {
         if (mode == "none" || this.bIsNoFillAttack)
@@ -741,7 +760,11 @@ CShapeDrawer.prototype =
             {
                 if (this.IsRectShape)
                 {
-                    if ((null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
+                    if(this.UniFill.IsTransitionTextures)
+                    {
+                        this.drawTransitionTextures(this.UniFill.canvas1, this.UniFill.alpha1, this.UniFill.canvas2, this.UniFill.alpha2);
+                    }
+                    else if ((null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
                     {
                         this.Graphics.drawImage(getFullImageSrc2(this.UniFill.fill.RasterImageId), this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), undefined, this.UniFill.fill.srcRect, this.UniFill.fill.canvas);
                     }
@@ -758,7 +781,11 @@ CShapeDrawer.prototype =
                     this.Graphics.save();
                     this.Graphics.clip();
 
-                    if (this.Graphics.IsNoSupportTextDraw == true || true == this.Graphics.IsTrack || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
+                    if(this.UniFill.IsTransitionTextures)
+                    {
+                        this.drawTransitionTextures(this.UniFill.canvas1, this.UniFill.alpha1, this.UniFill.canvas2, this.UniFill.alpha2);
+                    }
+                    else if (this.Graphics.IsNoSupportTextDraw == true || true == this.Graphics.IsTrack || (null == this.UniFill.transparent) || (this.UniFill.transparent == 255))
                     {
                         this.Graphics.drawImage(getFullImageSrc2(this.UniFill.fill.RasterImageId), this.min_x, this.min_y, (this.max_x - this.min_x), (this.max_y - this.min_y), undefined, this.UniFill.fill.srcRect, this.UniFill.fill.canvas);
                     }
@@ -1002,14 +1029,32 @@ CShapeDrawer.prototype =
                     gradObj = _ctx.createLinearGradient(points.x0, points.y0, points.x1, points.y1);
                 }
 
-                for (var i = 0; i < _fill.colors.length; i++)
+                const nTransparent = this.UniFill.transparent;
+                let bUseGlobalAlpha = (null !== nTransparent && undefined !== nTransparent);
+                const aColors = _fill.colors;
+                const nClrCount = aColors.length;
+                if(_fill.path && AscCommon.AscBrowser.isMozilla && bUseGlobalAlpha)
                 {
-                    gradObj.addColorStop(_fill.colors[i].pos / 100000, _fill.colors[i].color.getCSSColor(this.UniFill.transparent));
+                    bUseGlobalAlpha = false;
+                    const dTransparent = nTransparent / 255.0;
+                    for (let nClr = 0; nClr < nClrCount; nClr++)
+                    {
+                        let oClr = aColors[nClr];
+                        gradObj.addColorStop(oClr.pos / 100000, oClr.color.getCSSWithTransparent(dTransparent));
+                    }
+                }
+                else
+                {
+                    for (let nClr = 0; nClr < nClrCount; nClr++)
+                    {
+                        let oClr = aColors[nClr];
+                        gradObj.addColorStop(oClr.pos / 100000, oClr.color.getCSSColor(nTransparent));
+                    }
                 }
 
                 _ctx.fillStyle = gradObj;
 
-                if (null !== this.UniFill.transparent && undefined !== this.UniFill.transparent)
+                if (bUseGlobalAlpha)
                 {
                     var _old_global_alpha = this.Graphics.m_oContext.globalAlpha;
                     _ctx.globalAlpha = this.UniFill.transparent / 255;
@@ -1105,10 +1150,14 @@ CShapeDrawer.prototype =
         var isArrowsPresent = (arr != null && arr.length > 1 && this.IsCurrentPathCanArrows === true) ? true : false;
 
         var rgba = this.StrokeUniColor;
-		if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null && !isArrowsPresent)
-			rgba.A = this.Ln.Fill.transparent;
+        let nAlpha = 0xFF;
+        if(!isArrowsPresent && !this.IsArrowsDrawing)
+        {
+            if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null)
+                nAlpha = this.Ln.Fill.transparent;
+        }
 
-        this.Graphics.p_color(rgba.R, rgba.G, rgba.B, rgba.A);
+        this.Graphics.p_color(rgba.R, rgba.G, rgba.B, nAlpha);
 
         if (this.IsRectShape && this.Graphics.AddSmartRect !== undefined)
         {
@@ -1244,10 +1293,15 @@ CShapeDrawer.prototype =
                 }
 
                 var rgba = this.StrokeUniColor;
-				if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null && !isArrowsPresent)
-					rgba.A = this.Ln.Fill.transparent;
+                let nAlpha = 0xFF;
+                if(!isArrowsPresent && !this.IsArrowsDrawing)
+                {
+                    if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null)
+                        nAlpha = this.Ln.Fill.transparent;
+                }
 
-                this.Graphics.p_color(rgba.R, rgba.G, rgba.B, rgba.A);
+                this.Graphics.p_color(rgba.R, rgba.G, rgba.B, nAlpha);
+
             }
 
             if (fill_mode == "none" || this.bIsNoFillAttack)
@@ -1774,7 +1828,7 @@ CShapeDrawer.prototype =
     }
 };
 
-function ShapeToImageConverter(shape, pageIndex)
+function ShapeToImageConverter(shape, pageIndex, sImageFormat)
 {
     AscCommon.IsShapeToImageConverter = true;
     var _bounds_cheker = new AscFormat.CSlideBoundsChecker();
@@ -1852,7 +1906,8 @@ function ShapeToImageConverter(shape, pageIndex)
     var _ret = { ImageNative : _canvas, ImageUrl : "" };
     try
     {
-        _ret.ImageUrl = _canvas.toDataURL("image/png");
+        const sFormat = sImageFormat || "image/png";
+        _ret.ImageUrl = _canvas.toDataURL(sFormat);
     }
     catch (err)
     {
@@ -1861,6 +1916,8 @@ function ShapeToImageConverter(shape, pageIndex)
         else
             _ret.ImageUrl = "";
     }
+    if (_canvas.isNativeGraphics === true)
+        _canvas.Destroy();
     return _ret;
 }
 

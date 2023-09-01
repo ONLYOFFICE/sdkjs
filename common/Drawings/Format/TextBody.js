@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -277,7 +277,7 @@
         return {X: 0, Y: 0, XLimit: this.contentWidth, YLimit: 20000};
     };
     CTextBody.prototype.Get_Numbering = function() {
-        return new CNumbering();
+        return AscWord.DEFAULT_NUMBERING;
     };
     CTextBody.prototype.Set_CurrentElement = function(bUpdate, pageIndex) {
         if(this.parent.Set_CurrentElement) {
@@ -318,11 +318,12 @@
     };
     CTextBody.prototype.draw = function(graphics) {
         if((!this.content || this.content.Is_Empty()) && !AscCommon.IsShapeToImageConverter && this.parent.isEmptyPlaceholder() && !this.checkCurrentPlaceholder()) {
-            if(graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && this.content2) {
+            if(graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && this.content2 && !graphics.RENDERER_PDF_FLAG) {
                 if(graphics.IsNoSupportTextDraw) {
-                    var _w2 = this.content2.XLimit;
-                    var _h2 = this.content2.GetSummaryHeight();
+                    let _w2 = this.content2.XLimit;
+                    let _h2 = this.content2.GetSummaryHeight();
                     graphics.rect(this.content2.X, this.content2.Y, _w2, _h2);
+					return;
                 }
 
                 this.content2.Set_StartPage(0);
@@ -331,14 +332,61 @@
         }
         else if(this.content) {
             if(graphics.IsNoSupportTextDraw) {
-                var bEmpty = this.content.IsEmpty();
-                var _w = bEmpty ? 0.1 : this.content.XLimit;
-                var _h = this.content.GetSummaryHeight();
+                let bEmpty = this.content.IsEmpty();
+                let _w = bEmpty ? 0.1 : this.content.XLimit;
+                let _h = this.content.GetSummaryHeight();
                 graphics.rect(this.content.X, this.content.Y, _w, _h);
+				return;
             }
             var old_start_page = this.content.StartPage;
             this.content.Set_StartPage(0);
-            this.content.Draw(0, graphics);
+            if (graphics.isSmartArtPreviewDrawer && graphics.m_oContext) {
+                const nContentHeight = this.parent.contentHeight;
+                const nLineHeight = 4 * AscCommon.g_dKoef_pix_to_mm;
+                graphics.save();
+                graphics.m_oContext.fillStyle = 'rgb(0,0,0)';
+
+                const nContentWidth = this.parent.contentWidth;
+                const nHeightStep = nContentHeight / this.content.Content.length;
+
+                for (let i = 0; i < this.content.Content.length; i += 1) {
+                    const oParagraph = this.content.Content[i];
+                    const nWidth = nContentWidth > 20 ? 20 : nContentWidth - nContentWidth * 0.3;
+                    const eJC = oParagraph.CompiledPr.Pr.ParaPr.Jc;
+                    let startX;
+                    const gap = 5;
+                    switch (eJC) {
+                        case AscCommon.align_Right: {
+                            startX = nContentWidth - (nWidth + gap);
+                            break;
+                        }
+                        case AscCommon.align_Justify:
+                        case AscCommon.align_Center: {
+                            startX = (nContentWidth - nWidth) / 2;
+                            break;
+                        }
+                        case AscCommon.align_Left:
+                        default: {
+                            startX = gap;
+                            break;
+                        }
+                    }
+
+                    const oBullet = oParagraph.PresentationPr && oParagraph.PresentationPr.Bullet;
+                    const Y = nHeightStep * i + nHeightStep / 2;
+
+                    if(oBullet && !oBullet.IsNone()) {
+                        graphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, Y, startX + nWidth / 2, startX + nWidth, nLineHeight);
+
+                        graphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, Y, startX, startX + nLineHeight, nLineHeight);
+                    } else {
+                        graphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, Y, startX, startX + nWidth, nLineHeight);
+                    }
+                }
+                graphics.restore();
+            } else {
+                this.content.Draw(0, graphics);
+            }
             this.content.Set_StartPage(old_start_page);
         }
     };
@@ -531,9 +579,9 @@
         }
         return null;
     };
-    CTextBody.prototype.Is_ThisElementCurrent = function() {
-        if(this.parent && this.parent.Is_ThisElementCurrent) {
-            return this.parent.Is_ThisElementCurrent();
+    CTextBody.prototype.IsThisElementCurrent = function() {
+        if(this.parent && this.parent.IsThisElementCurrent) {
+            return this.parent.IsThisElementCurrent();
         }
         return false;
     };
@@ -547,84 +595,6 @@
         }
         oParagraph.Set_DocumentIndex(0); //TODO: ?
         return oParagraph.Pr;
-    };
-    //CTextBody.prototype.readAttrXml = function (name, reader) {
-    //};
-    CTextBody.prototype.fromXml = function(reader, bSkipFirstNode, oCellContent) {
-        this.cellContent = oCellContent;
-        this.bEmptyCell = true;
-        CBaseFormatObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
-        this.cellContent = undefined;
-        if(!this.content) {
-            if(!this.content) {
-                let oDrawingDocument = reader.context.DrawingDocument;
-                this.setContent(new AscFormat.CDrawingDocContent(this, oDrawingDocument, 0, 0, 0, 20000));
-            }
-        }
-    };
-    CTextBody.prototype.readChildXml = function (name, reader) {
-        let oPr;
-        switch(name) {
-            case "bodyPr": {
-                oPr = new AscFormat.CBodyPr();
-                oPr.fromXml(reader);
-                this.setBodyPr(oPr);
-                break;
-            }
-            case "lstStyle": {
-                oPr = new AscFormat.TextListStyle();
-                oPr.fromXml(reader);
-                this.setLstStyle(oPr);
-                break;
-            }
-            case "p": {
-                let oDrawingDocument = reader.context.DrawingDocument;
-                let oContent;
-                if(this.cellContent) {
-                    oContent = this.cellContent;
-                    if(this.bEmptyCell) {
-                        oContent.Internal_Content_RemoveAll();
-                        this.bEmptyCell = false;
-                    }
-                }
-                else {
-                    if(!this.content) {
-                        this.setContent(new AscFormat.CDrawingDocContent(this, oDrawingDocument, 0, 0, 0, 20000));
-                        this.content.Internal_Content_RemoveAll();
-                    }
-                    oContent = this.content;
-                }
-
-	            oPr = new AscCommonWord.Paragraph(oDrawingDocument, oContent, true);
-                oPr.fromDrawingML(reader);
-                oPr.SetParent(oContent);
-                oContent.Internal_Content_Add(oContent.Content.length, oPr);
-                break;
-            }
-        }
-    };
-    CTextBody.prototype.toXml = function (writer, sName) {
-        let sName_ = sName || "a:txBody";
-        writer.WriteXmlNodeStart(sName_);
-        writer.WriteXmlAttributesEnd();
-
-        if (this.bodyPr)
-        {
-            this.bodyPr.toXml(writer, "a");
-        }
-        // if (sp3d)
-        // {
-        //     sp3d.toXml(writer);
-        // }
-        if (this.lstStyle) {
-            this.lstStyle.toXml(writer, "a:lstStyle");
-        }
-
-        let nCount = this.content.Content.length;
-        for (let i = 0; i < nCount; ++i)
-            this.content.Content[i].toDrawingML(writer);
-
-        writer.WriteXmlNodeEnd(sName_);
     };
 
     function GetContentOneStringSizes(oContent) {

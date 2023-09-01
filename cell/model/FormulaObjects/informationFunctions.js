@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -54,18 +54,17 @@
 	var argType = Asc.c_oAscFormulaArgumentType;
 
 	function getCellFormat(ws, row, col) {
-		var res = new cString("G");
-		var formatInfo, sFormat, numFormat;
+		let res = new cString("G");
+		let formatInfo, sFormat, numFormat;
 		ws.getCell3(row, col)._foreachNoEmpty(function (cell) {
 			numFormat = cell ? cell.getNumFormat() : null;
 			formatInfo = numFormat ? numFormat.getTypeInfo() : null;
 			sFormat = numFormat ? numFormat.sFormat : null;
 		});
-
 		//такие форматы как дата не поддерживаются
 		//TODO функция нуждается в доработке
 		if(formatInfo) {
-			var postfix = "";
+			let postfix = "";
 			if(numFormat && (numFormat.oNegativeFormat && numFormat.oNegativeFormat.Color !== -1)) {
 				postfix += "-";
 			}
@@ -73,7 +72,7 @@
 				postfix += "()";
 			}
 
-			var formatPart;
+			let formatPart;
 			if(formatInfo.type === Asc.c_oAscNumFormatType.Number) {
 				formatPart = "F";
 			} else if(formatInfo.type === Asc.c_oAscNumFormatType.Currency || formatInfo.type === Asc.c_oAscNumFormatType.Accounting) {
@@ -82,9 +81,56 @@
 				formatPart = "P";
 			} else if(formatInfo.type === Asc.c_oAscNumFormatType.Scientific) {
 				formatPart = "S";
+			} else if(formatInfo.type === Asc.c_oAscNumFormatType.Date || formatInfo.type === Asc.c_oAscNumFormatType.Time) {
+				formatPart = "D";
+			}
+
+			// ,0 and ,2 types
+			if(sFormat) {
+				if(sFormat === "#,##0") {
+					formatPart = ",0";
+					formatInfo.decimalPlaces = "";
+				} else if(sFormat === "#,##0.00") {
+					formatPart = ",2";
+					formatInfo.decimalPlaces = "";
+				}
 			}
 
 			if(formatPart) {
+				if(formatPart === "D") {
+					let regularD1 = /d+[\s\/-]m+[\s\/-]y+/gi, // d-mmm-yy || dd-mmm-yy
+						regularD2 = /d+(\s|-|\/)m+;/gi, // d-mmm || dd-mmm
+						regularD3 = /]m+(\s|-|\/)y+;/gi, // mmm-yy  
+						regularD4 = /m+(\s|-|\/)d+(\s|-|\/)y+/gi, // m/d/yy || m/d/yy h:mm || mm/dd/yy
+						regularD5 = /^m+(\s|-|\/)d+;/gi, // mm/dd
+						regularD6 = /h+:m+:s+\sAM\/PM/gi, // h:mm:ss AM/PM
+						regularD7 = /h+:m+\sAM\/PM/gi, // h:mm AM/PM
+						regularD8 = /(((h|\[h\]):m+:ss;)|(\[\$-F400\]h:mm:ss))/gi, // h:mm:ss
+						regularD9 = /h+:m+;/gi; // h:mm
+
+					if(regularD1.test(sFormat)) {
+						formatInfo.decimalPlaces = 1;
+					} else if (regularD2.test(sFormat)) {
+						formatInfo.decimalPlaces = 2;
+					} else if (regularD3.test(sFormat)) {
+						formatInfo.decimalPlaces = 3;
+					} else if (regularD4.test(sFormat)) {
+						formatInfo.decimalPlaces = 4;
+					} else if (regularD5.test(sFormat)) {
+						formatInfo.decimalPlaces = 5;
+					} else if (regularD6.test(sFormat)) {
+						formatInfo.decimalPlaces = 6;
+					} else if (regularD7.test(sFormat)) {
+						formatInfo.decimalPlaces = 7;
+					} else if (regularD8.test(sFormat)) {
+						formatInfo.decimalPlaces = 8;
+					} else if (regularD9.test(sFormat)) {
+						formatInfo.decimalPlaces = 9;
+					} else {
+						formatPart = "G";
+						formatInfo.decimalPlaces = "";
+					}
+				}
 				res = new cString(formatPart + formatInfo.decimalPlaces + postfix);
 			}
 		}
@@ -128,19 +174,19 @@
 		//в случае одного аргумента необходимо следить всегда за последней измененной ячейкой
 		//так же при сборке необходимо записывать данные об последней измененной ячейке
 		//нужно дли это ?
-		var arg0 = arg[0];
-		var arg1 = arg[1];
+		let arg0 = arg[0];
+		let arg1 = arg[1];
 		arg0 = arg0.tocString();
 
-		if (arg0 instanceof cError) {
+		if (cElementType.error === arg0.type) {
 			return arg0;
 		} else {
-			var str = arg0.toString().toUpperCase();
+			let str = arg0.toString().toUpperCase();
 
 			//если первый аргумент из набора тех, которые не требуют значения второго аргумента, то обрабатываем его частично
-			var needCheckVal2Arg = {"CONTENTS": 1, "TYPE": 1};
+			let needCheckVal2Arg = {"CONTENTS": 1, "TYPE": 1};
 
-			var cell, bbox;
+			let cell, bbox;
 			if(arg1) {
 				//TODO добавил заглушку, на случай если приходит массив.
 				// необходимо пересмотреть - сейчас мы рассматриваем как функции массива все дочерние элементы аргумента с типом .reference
@@ -148,10 +194,10 @@
 					arg1 = arg1.getElementRowCol(0,0);
 				}
 
-				var isRangeArg1 = cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type;
+				let isRangeArg1 = cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type;
 				if (isRangeArg1 || cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
 					if (needCheckVal2Arg[str]) {
-						var _tempValue = isRangeArg1 ? arg1.getValueByRowCol(0,0) : arg1.getValue();
+						let _tempValue = isRangeArg1 ? arg1.getValueByRowCol(0,0) : arg1.getValue();
 						if (_tempValue instanceof cError) {
 							return _tempValue;
 						}
@@ -163,7 +209,7 @@
 				}
 			}
 
-			var res, numFormat;
+			let res, numFormat;
 			switch (str) {
 				case "COL": {
 					res = new cNumber(bbox.c1 + 1);
@@ -186,10 +232,10 @@
 				}
 				case "FILENAME": {
 					//TODO без пути
-					var docInfo = window["Asc"]["editor"].DocInfo;
-					var fileName = docInfo ? docInfo.get_Title() : "";
-					var _ws = arg1.getWS();
-					var sheetName = _ws ? _ws.getName() : null;
+					let docInfo = window["Asc"]["editor"].DocInfo;
+					let fileName = docInfo ? docInfo.get_Title() : "";
+					let _ws = arg1.getWS();
+					let sheetName = _ws ? _ws.getName() : null;
 					if (sheetName) {
 						res = new cString("[" + fileName + "]" + sheetName);
 					} else {
@@ -227,12 +273,12 @@
 				case "WIDTH": {
 					//return array
 					//{width 1 column; is default}
-					var col = ws._getCol(bbox.c1);
-					var props = col ? col.getWidthProp() : null;
-					var isDefault = !props.CustomWidth;
-					var width, colWidthPx;
+					let col = ws._getCol(bbox.c1);
+					let props = col ? col.getWidthProp() : null;
+					let isDefault = !props.CustomWidth;
+					let width, colWidthPx;
 					if(isDefault) {
-						var defaultColWidthChars = ws.charCountToModelColWidth(ws.getBaseColWidth());
+						let defaultColWidthChars = ws.charCountToModelColWidth(ws.getBaseColWidth());
 						colWidthPx = ws.modelColWidthToColWidth(defaultColWidthChars);
 						colWidthPx = Asc.ceil(colWidthPx / 8) * 8;
 						width = ws.colWidthToCharCount(colWidthPx);
@@ -252,8 +298,8 @@
 				case "PREFIX": {
 					// ' = left; " = right; ^ = centered; \ =
 					cell = ws.getCell3(bbox.r1, bbox.c1);
-					var align = cell.getAlign();
-					var alignHorizontal = align.getAlignHorizontal();
+					let align = cell.getAlign();
+					let alignHorizontal = align.getAlignHorizontal();
 					if(cell.isNullTextString()) {
 						res = new cString('');
 					} else if(alignHorizontal === null || alignHorizontal === AscCommon.align_Left) {
@@ -271,9 +317,13 @@
 					break;
 				}
 				case "PROTECT": {
-					//TODO
 					//default - protect, do not support on open
-					res = new cNumber(1);
+					cell = ws.getCell3(bbox.r1, bbox.c1);
+					if(cell.getLocked()) {
+						res = new cNumber(1);
+					} else {
+						res = new cNumber(0);
+					}
 					break;
 				}
 				case "FORMAT": {

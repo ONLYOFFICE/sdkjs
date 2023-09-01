@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -237,7 +237,7 @@
 		var length = reader.GetLong();
 		for (var i = 0; i < length; ++i) {
 			var _filter = new CT_NsvFilter();
-			_filter.Read_FromBinary2(reader)
+			_filter.Read_FromBinary2(reader);
 			this.nsvFilters.push(_filter);
 		}
 
@@ -734,25 +734,25 @@
 		s._WriteString2(1, this.id);
 		s.WriteUChar(AscCommon.g_nodeAttributeEnd);
 
-		var dxfs = [];
+		var initSaveManager = new AscCommonExcel.InitSaveManager();
 		if (null !== this.filter) {
 			s.StartRecord(1);
 			s.WriteULong(1);
 			s.StartRecord(0);
 			var tmp = new AscCommon.CMemory(true);
 			s.ExportToMemory(tmp);
-			var btw = new AscCommonExcel.BinaryTableWriter(tmp, dxfs, false, {});
+			var btw = new AscCommonExcel.BinaryTableWriter(tmp, initSaveManager, false, {});
 			btw.WriteFilterColumn(this.filter);
 			s.ImportFromMemory(tmp);
 			s.EndRecord();
 			s.EndRecord();
 		}
-		if (dxfs.length > 0) {
+		if (initSaveManager && initSaveManager.aDxfs.length > 0) {
 			s.StartRecord(0);
 			var tmp = new AscCommon.CMemory(true);
 			s.ExportToMemory(tmp);
 			var bstw = new AscCommonExcel.BinaryStylesTableWriter(tmp, null, null);
-			bstw.WriteDxf(dxfs[0]);
+			bstw.WriteDxf(initSaveManager.aDxfs[0]);
 			s.ImportFromMemory(tmp);
 			s.EndRecord();
 		}
@@ -805,8 +805,9 @@
 						s.Skip2(1); // type
 						var _stream = new AscCommon.FT_Stream2();
 						_stream.FromFileStream(s);
-						var oReadResult = new AscCommonWord.DocReadResult(null);
-						var bwtr = new AscCommonExcel.Binary_TableReader(_stream, oReadResult, null, dxfs);
+						var initOpenManager = new AscCommonExcel.InitOpenManager();
+						initOpenManager.Dxfs = dxfs;
+						var bwtr = new AscCommonExcel.Binary_TableReader(_stream, initOpenManager);
 						this.filter = bwtr.ReadFilterColumnExternal();
 						_stream.ToFileStream2(s);
 					}
@@ -960,30 +961,30 @@
 		s.WriteUChar(AscCommon.g_nodeAttributeEnd);
 
 		// s.WriteRecord4(1, this.richSortCondition);
-		var dxfs = [];
+		var initSaveManager = new AscCommonExcel.InitSaveManager();
 		if (null !== this.sortCondition) {
 			s.StartRecord(2);
 			var tmp = new AscCommon.CMemory(true);
 			s.ExportToMemory(tmp);
-			var btw = new AscCommonExcel.BinaryTableWriter(tmp, dxfs, false, {});
+			var btw = new AscCommonExcel.BinaryTableWriter(tmp, initSaveManager, false, {});
 			//dxfId is absent in sortCondition
 			if (this.sortCondition.dxf) {
-				dxfs.push(this.sortCondition.dxf);
+				initSaveManager.aDxfs.push(this.sortCondition.dxf);
 				this.sortCondition.dxf = null;
 			}
 			btw.WriteSortCondition(this.sortCondition);
-			if (dxfs.length > 0) {
-				this.sortCondition.dxf = dxfs[0];
+			if (initSaveManager.aDxfs.length > 0) {
+				this.sortCondition.dxf = initSaveManager.aDxfs[0];
 			}
 			s.ImportFromMemory(tmp);
 			s.EndRecord();
 		}
-		if (dxfs.length > 0) {
+		if (initSaveManager && initSaveManager.aDxfs.length > 0) {
 			s.StartRecord(0);
 			var tmp = new AscCommon.CMemory(true);
 			s.ExportToMemory(tmp);
 			var bstw = new AscCommonExcel.BinaryStylesTableWriter(tmp, null, null);
-			bstw.WriteDxf(dxfs[0]);
+			bstw.WriteDxf(initSaveManager.aDxfs[0]);
 			s.ImportFromMemory(tmp);
 			s.EndRecord();
 		}
@@ -1038,8 +1039,9 @@
 				case 2: {
 					var _stream = new AscCommon.FT_Stream2();
 					_stream.FromFileStream(s);
-					var oReadResult = new AscCommonWord.DocReadResult(null);
-					var bwtr = new AscCommonExcel.Binary_TableReader(_stream, oReadResult, null, dxfs);
+					var initOpenManager = new AscCommonExcel.InitOpenManager();
+					initOpenManager.Dxfs = dxfs;
+					var bwtr = new AscCommonExcel.Binary_TableReader(_stream, initOpenManager);
 					this.sortCondition = bwtr.ReadSortConditionExternal();
 					//dxfId is absent in sortCondition
 					if ((Asc.ESortBy.sortbyCellColor === this.sortCondition.ConditionSortBy ||

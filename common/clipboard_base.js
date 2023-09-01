@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -247,8 +247,15 @@
 
 				//window['AscCommon'].g_clipboardBase.rtf = this.ClosureParams.getData("text/rtf");
 
+				var isDisableRawPaste = false;
+				if (true === AscCommon["isDisableRawPaste"])
+				{
+					isDisableRawPaste = true;
+					delete AscCommon["isDisableRawPaste"];
+				}
+
 				var _text_format = this.ClosureParams.getData("text/plain");
-				var _internal = this.ClosureParams.getData("text/x-custom");
+				var _internal = isDisableRawPaste ? "" : this.ClosureParams.getData("text/x-custom");
 				if (_internal && _internal != "" && _internal.indexOf("asc_internalData2;") == 0)
 				{
 					this.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal, _internal.substr("asc_internalData2;".length), null, _text_format);
@@ -256,7 +263,7 @@
 					return false;
 				}
 
-				var _html_format = this.ClosureParams.getData("text/html");
+				var _html_format = isDisableRawPaste ? "" : this.ClosureParams.getData("text/html");
 				if (_html_format && _html_format != "")
 				{
 					var nIndex = _html_format.indexOf("</html>");
@@ -275,7 +282,7 @@
 				}
 
 				var items = _clipboard.items;
-                if (null != items && 0 != items.length)
+                if (null != items && 0 != items.length && !isDisableRawPaste)
                 {
                     g_clipboardBase.PasteImagesBody = "";
                     g_clipboardBase.PasteImagesCount = items.length;
@@ -792,7 +799,7 @@
 			}
 		},
 
-		CommonIframe_PasteStart : function(_html_data, text_data)
+		CommonIframe_PasteStart : function(_html_data, text_data, getHtmlElemCallback)
 		{
 			var ifr = document.getElementById(this.CommonIframeId);
 			if (!ifr)
@@ -824,13 +831,22 @@
 				if (null != frameWindow.document && null != frameWindow.document.body)
 				{
 					ifr.style.display = "block";
-					this.pastedFrom = definePastedFrom(frameWindow.document);
-					this.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, frameWindow.document.body, ifr, text_data);
+					if (getHtmlElemCallback)
+					{
+						getHtmlElemCallback(frameWindow.document.body);
+						getHtmlElemCallback = null;
+					}
+					else
+					{
+						this.pastedFrom = definePastedFrom(frameWindow.document);
+						this.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, frameWindow.document.body, ifr, text_data);
+					}
 				}
 			}
 
 			ifr.style.width = '100px';
 
+			getHtmlElemCallback && getHtmlElemCallback(null);
 			g_clipboardBase.Paste_End();
 		},
 
@@ -1063,6 +1079,9 @@
 		return res;
 	}
 
+
+	const specialPasteElemHeight = 22;
+	const specialPasteElemWidth = 33;
 	function CSpecialPasteHelper()
 	{
 		this.Api = null;
@@ -1212,7 +1231,7 @@
 			var props = this.buttonInfo;
 			if(props && props.options)
 			{
-				if((window["Asc"] && window["Asc"]["editor"]) || props.cellCoord)
+				if((Asc["editor"] && Asc["editor"].wb) || props.cellCoord)
 				{
 					this.showSpecialPasteButton = true;
 					this.Api.asc_ShowSpecialPasteButton(props);
@@ -1331,6 +1350,9 @@
 	var g_clipboardBase = new CClipboardBase();
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].g_clipboardBase = g_clipboardBase;
+
+	window['AscCommon'].specialPasteElemHeight = specialPasteElemHeight;
+	window['AscCommon'].specialPasteElemWidth = specialPasteElemWidth;
 
 	var g_specialPasteHelper = new CSpecialPasteHelper();
 	window['AscCommon'].g_specialPasteHelper = g_specialPasteHelper;

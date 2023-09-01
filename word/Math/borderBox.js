@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -561,16 +561,15 @@ CBorderBox.prototype.Get_InterfaceProps = function()
 };
 CBorderBox.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
-	var strSymbol = String.fromCharCode(9645);
-	var strBase = this.CheckIsEmpty(this.getBase().GetTextOfElement());
+	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
 	var strStartBracet = (strBase.length > 1 || isLaTeX) ? this.GetStartBracetForGetTextContent(isLaTeX) : "";
 	var strCloseBracet = (strBase.length > 1 || isLaTeX) ? this.GetEndBracetForGetTextContent(isLaTeX) : "";
 	
-	if (true === isLaTeX) {
+	if (true === isLaTeX)
 		strTemp = '\\rect' + strStartBracet + strBase + strCloseBracet;
-	} else {
-		strTemp = strSymbol + strStartBracet + strBase + strCloseBracet;
-	}
+	else
+		strTemp = "▭" + strStartBracet + strBase + strCloseBracet;
+
 	return strTemp;
 };
 
@@ -961,23 +960,9 @@ CBox.prototype.Apply_ForcedBreak = function(Props)
 };
 CBox.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
-	var strSymbol;
+	var strSymbol = (true === isLaTeX) ? "\\box" : "□";
+	var Base = this.getBase().GetMultipleContentForGetText(isLaTeX);
 
-	if (true === isLaTeX) {
-		strSymbol = '\\rect';
-	} else {
-		strSymbol = String.fromCharCode(9633);
-	}
-	
-	var Base = this.getBase().GetTextOfElement(isLaTeX);
-
-	var strStartBracet = this.GetStartBracetForGetTextContent(isLaTeX);
-	var strCloseBracet = this.GetEndBracetForGetTextContent(isLaTeX);
-
-	if (isLaTeX) {
-		Base = strStartBracet + Base + strCloseBracet;
-	}
-	
 	strTemp =
 		strSymbol
 		+ Base
@@ -1128,12 +1113,12 @@ CBar.prototype.GetTextOfElement = function(isLaTeX) {
         strStartBracket = this.GetStartBracetForGetTextContent(isLaTeX),
         strCloseBracket = this.GetEndBracetForGetTextContent(isLaTeX);
 
-    if (!isLaTeX) {
+    if (!isLaTeX)
         strSymbol = (this.Pr.pos) ? "▁" : "¯";
-    } else {
+    else
         strSymbol = (this.Pr.pos) ? "\\underline" : "\\overline";
-    }
-	strBase = this.CheckIsEmpty(this.getBase().GetTextOfElement(isLaTeX));
+
+	strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
 	
 	strTemp =
 		strSymbol

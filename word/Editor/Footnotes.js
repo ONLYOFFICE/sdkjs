@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -729,7 +729,7 @@ CFootnotesController.prototype.IsUseInDocument = function(sFootnoteId, arrFootno
  * @param oFootnote
  * return {boolean}
  */
-CFootnotesController.prototype.Is_ThisElementCurrent = function(oFootnote)
+CFootnotesController.prototype.IsThisElementCurrent = function(oFootnote)
 {
 	if (oFootnote === this.CurFootnote && docpostype_Footnotes === this.LogicDocument.GetDocPosType())
 		return true;
@@ -989,22 +989,14 @@ CFootnotesController.prototype.EndSelection = function(X, Y, PageAbs, MouseEvent
 	//        и нового положения сносок на странице
 	if (this.Selection.Start.Footnote !== this.Selection.End.Footnote)
 	{
-		if (this.Selection.Start.Page > this.Selection.End.Page
-			|| (this.Selection.Start.Page === this.Selection.End.Page
-			&& (this.Selection.Start.Column > this.Selection.End.Column
-			|| (this.Selection.Start.Column === this.Selection.End.Column
-			&& this.Selection.Start.Index > this.Selection.End.Index))))
-		{
-			this.Selection.Start.Footnote.Selection_SetEnd(-MEASUREMENT_MAX_MM_VALUE, -MEASUREMENT_MAX_MM_VALUE, 0, MouseEvent);
-			this.Selection.End.Footnote.Selection_SetStart(MEASUREMENT_MAX_MM_VALUE, MEASUREMENT_MAX_MM_VALUE, this.Selection.End.Footnote.Pages.length - 1, MouseEvent);
-			this.Selection.Direction = -1;
-		}
-		else
-		{
-			this.Selection.Start.Footnote.Selection_SetEnd(MEASUREMENT_MAX_MM_VALUE, MEASUREMENT_MAX_MM_VALUE, this.Selection.Start.Footnote.Pages.length - 1, MouseEvent);
-			this.Selection.End.Footnote.Selection_SetStart(-MEASUREMENT_MAX_MM_VALUE, -MEASUREMENT_MAX_MM_VALUE, 0, MouseEvent);
-			this.Selection.Direction = 1;
-		}
+		this.Selection.Direction = this.private_GetSelectionDirection();
+		
+		this.Selection.Start.Footnote.SetSelectionUse(true);
+		this.Selection.Start.Footnote.SetSelectionToBeginEnd(false, this.Selection.Direction < 0);
+		
+		this.Selection.End.Footnote.SetSelectionUse(true);
+		this.Selection.End.Footnote.SetSelectionToBeginEnd(true, this.Selection.Direction > 0);
+		
 		this.Selection.End.Footnote.Selection_SetEnd(X, Y, this.Selection.End.FootnotePageIndex, MouseEvent);
 
 		var oRange = this.private_GetFootnotesRange(this.Selection.Start, this.Selection.End);
@@ -1419,6 +1411,20 @@ CFootnotesController.prototype.private_GetSelectionArray = function()
 	else
 		return this.private_GetFootnotesLogicRange(this.Selection.End.Footnote, this.Selection.Start.Footnote);
 };
+CFootnotesController.prototype.private_GetSelectionDirection = function()
+{
+	if (this.Selection.Start.Page > this.Selection.End.Page)
+		return -1;
+	else if (this.Selection.Start.Page < this.Selection.End.Page)
+		return 1;
+	
+	if (this.Selection.Start.Column > this.Selection.End.Column)
+		return -1;
+	else if (this.Selection.Start.Column < this.Selection.End.Column)
+		return 1;
+	
+	return this.Selection.Start.Index > this.Selection.End.Index ? -1 : 1;
+};
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Controller area
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1468,12 +1474,12 @@ CFootnotesController.prototype.AddSignatureLine = function(oSignatureDrawing)
 
 	return this.CurFootnote.AddSignatureLine(oSignatureDrawing);
 };
-CFootnotesController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect)
+CFootnotesController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
 	if (false === this.private_CheckFootnotesSelectionBeforeAction())
-		return false;
+		return null;
 
-	return this.CurFootnote.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect);
+	return this.CurFootnote.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
 CFootnotesController.prototype.EditChart = function(Chart)
 {
@@ -2688,11 +2694,11 @@ CFootnotesController.prototype.UpdateCursorType = function(X, Y, PageAbs, MouseE
 		oFootnote.UpdateCursorType(X, Y, oResult.FootnotePageIndex, MouseEvent);
 	}
 };
-CFootnotesController.prototype.PasteFormatting = function(TextPr, ParaPr)
+CFootnotesController.prototype.PasteFormatting = function(oData)
 {
 	for (var sId in this.Selection.Footnotes)
 	{
-		this.Selection.Footnotes[sId].PasteFormatting(TextPr, ParaPr, true);
+		this.Selection.Footnotes[sId].PasteFormatting(oData);
 	}
 };
 CFootnotesController.prototype.IsSelectionUse = function()
@@ -2993,8 +2999,10 @@ CFootnotesController.prototype.AddHyperlink = function(Props)
 {
 	if (true !== this.IsSelectionUse() || true === this.private_IsOnFootnoteSelected())
 	{
-		this.CurFootnote.AddHyperlink(Props);
+		return this.CurFootnote.AddHyperlink(Props);
 	}
+	
+	return null;
 };
 CFootnotesController.prototype.ModifyHyperlink = function(Props)
 {
@@ -3503,7 +3511,6 @@ CFootnotesController.prototype.CollectSelectedReviewChanges = function(oTrackMan
 		this.CurFootnote.CollectSelectedReviewChanges(oTrackManager);
 	}
 };
-
 
 function CFootEndnotePageColumn()
 {

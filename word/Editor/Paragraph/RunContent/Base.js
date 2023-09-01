@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -117,14 +117,6 @@
 	{
 	};
 	/**
-	 * Проверяем является ли данный элемент диакритическим символом
-	 * @returns {boolean}
-	 */
-	CRunElementBase.prototype.IsDiacriticalSymbol = function()
-	{
-		return false;
-	};
-	/**
 	 * Может ли строка начинаться с данного элемента
 	 * @returns {boolean}
 	 */
@@ -181,6 +173,14 @@
 		return false;
 	};
 	/**
+	 * Проверяем является ли элемент символом конца предложения
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.IsSentenceEndMark = function()
+	{
+		return (this.IsDot() ||this.IsQuestionMark() || this.IsExclamationMark());
+	};
+	/**
 	 * Является ли данный элемент символом дефиса
 	 * @returns {boolean}
 	 */
@@ -201,6 +201,14 @@
 	 * @returns {boolean}
 	 */
 	CRunElementBase.prototype.IsSpaceAfter = function()
+	{
+		return false;
+	};
+	/**
+	 * Нужно ли ставить дефис для автоматического переноса
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.isHyphenAfter = function()
 	{
 		return false;
 	};
@@ -290,11 +298,33 @@
 		return false;
 	};
 	/**
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.IsFieldChar = function()
+	{
+		return false;
+	};
+	/**
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.IsInstrText = function()
+	{
+		return false;
+	};
+	/**
 	 * @returns {AscWord.fontslot_Unknown}
 	 */
 	CRunElementBase.prototype.GetFontSlot = function(oTextPr)
 	{
 		return AscWord.fontslot_Unknown;
+	};
+	/**
+	 * Является ли элемент текстом из ComplexScript
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.IsCS = function()
+	{
+		return this.GetFontSlot() === AscWord.fontslot_CS;
 	};
 	/**
 	 * @returns {boolean}

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -210,8 +210,6 @@ CGroupShape.prototype.recalcSmartArtCoords = function () {
     }
 };
 
-CGroupShape.prototype.addToDrawingObjects =  CShape.prototype.addToDrawingObjects;
-CGroupShape.prototype.deleteDrawingBase = CShape.prototype.deleteDrawingBase;
 CGroupShape.prototype.addToRecalculate = CShape.prototype.addToRecalculate;
 CGroupShape.prototype.convertPixToMM = CShape.prototype.convertPixToMM;
 CGroupShape.prototype.getHierarchy = CShape.prototype.getHierarchy;
@@ -227,9 +225,9 @@ CGroupShape.prototype.handleUpdatePosition = function()
     this.addToRecalculate();
     for(var i = 0; i < this.spTree.length; ++i)
     {
-        if(this.spTree[i].recalcTransform)
+        if(this.spTree[i].handleUpdatePosition)
         {
-            this.spTree[i].recalcTransform();
+            this.spTree[i].handleUpdatePosition();
         }
     }
 };
@@ -372,7 +370,7 @@ CGroupShape.prototype.recalculateBounds = function()
     }
 
 
-    //if(!this.group)
+    if(!this.bForceGroupBounds)
     {
         var tr = this.localTransform;
         var arr_p_x = [];

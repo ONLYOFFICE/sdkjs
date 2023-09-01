@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -133,6 +133,8 @@
 		this.parent = document.getElementById(id);
 		this.thumbnails = null;
 
+		this.offsetTop = 0;
+
 		this.x = 0;
 		this.y = 0;
 		this.width 	= 0;
@@ -161,6 +163,8 @@
 
 		this.file = null;
 		this.isStarted = false;
+		this.isCMapLoading = false;
+		this.savedPassword = "";
 
 		this.scrollWidth = this.Api.isMobileVersion ? 0 : 14;
 		this.isVisibleHorScroll = false;
@@ -219,8 +223,8 @@
 
 		if (this.isXP)
 		{
-			AscCommon.g_oHtmlCursor.register("grab", "grab", "7 8", "pointer");
-			AscCommon.g_oHtmlCursor.register("grabbing", "grabbing", "6 6", "pointer");
+			AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.Grab, "7 8", "pointer");
+			AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.Grabbing, "6 6", "pointer");
 		}
 
 		var oThis = this;
@@ -257,8 +261,6 @@
 
 		this.createComponents = function()
 		{
-			this.updateSkin();
-
 			var elements = "";
 			elements += "<canvas id=\"id_viewer\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
 			elements += "<canvas id=\"id_overlay\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
@@ -277,8 +279,9 @@
 			this.overlay = new AscCommon.COverlay();
 			this.overlay.m_oControl = { HtmlElement : this.canvasOverlay };
 			this.overlay.m_bIsShow = true;
+
+			this.updateSkin();
 		};
-		this.createComponents();
 
 		this.setThumbnailsControl = function(thumbnails)
 		{
@@ -508,6 +511,7 @@
 			AscCommon.calculateCanvasSize(this.canvasOverlay);
 
 			var scrollV = document.getElementById("id_vertical_scroll");
+			scrollV.style.backgroundColor = GlobalSkin.ScrollBackgroundColor;
 			scrollV.style.display = "block";
 			scrollV.style.left = this.width + "px";
 			scrollV.style.top = "0px";
@@ -515,13 +519,14 @@
 			scrollV.style.height = this.height + "px";
 
 			var scrollH = document.getElementById("id_horizontal_scroll");
+			scrollH.style.backgroundColor = GlobalSkin.ScrollBackgroundColor;
 			scrollH.style.display = this.isVisibleHorScroll ? "block" : "none";
 			scrollH.style.left = "0px";
 			scrollH.style.top = this.height + "px";
 			scrollH.style.width = this.width + "px";
 			scrollH.style.height = this.scrollWidth + "px";
 
-			settings = this.CreateScrollSettings();
+			var settings = this.CreateScrollSettings();
 			settings.isHorizontalScroll = true;
 			settings.isVerticalScroll = false;
 			settings.contentW = this.documentWidth;
@@ -607,7 +612,7 @@
 		this.onLoadModule = function()
 		{
 			this.moduleState = ModuleState.Loaded;
-			window["AscViewer"]["InitializeFonts"]();
+			window["AscViewer"]["InitializeFonts"](this.Api.baseFontsPath !== undefined ? this.Api.baseFontsPath : undefined);
 
 			if (this._fileData != null)
 			{
@@ -685,6 +690,9 @@
 			}
 
 			this.paint();
+
+			if (this.Api && this.Api.printPreview)
+				this.Api.printPreview.update();
 		};
 
 		this.onUpdateStatistics = function(countParagraph, countWord, countSymbol, countSpace)
@@ -716,64 +724,65 @@
 			this.statistics.process = false;
 		};
 
-		this.open = function(data, password)
+		this.checkLoadCMap = function()
 		{
-			if (!this.checkModule())
+			if (false === this.isCMapLoading)
 			{
-				this._fileData = data;
-				return;
-			}
-
-			if (undefined !== password)
-			{
-				if (!this.file)
+				if (!this.file.isNeedCMap())
 				{
-					this.file = window["AscViewer"].createFile(data);
-
-					if (this.file)
-					{
-						this.SearchResults = this.file.SearchResults;
-						this.file.viewer = this;
-					}
+					this.onDocumentReady();
+					return;
 				}
 
-				if (this.file && this.file.isNeedPassword())
-				{
-					window["AscViewer"].setFilePassword(this.file, password);
-				}
+				this.isCMapLoading = true;
+
+				this.cmap_load_index = 0;
+				this.cmap_load_max = 3;
 			}
+
+			var xhr = new XMLHttpRequest();
+			let urlCmap = "../../../../sdkjs/pdf/src/engine/cmap.bin";
+			if (this.Api.isSeparateModule === true)
+				urlCmap = window["AscViewer"]["baseEngineUrl"] + "cmap.bin";
+
+			xhr.open('GET', urlCmap, true);
+			xhr.responseType = 'arraybuffer';
+
+			if (xhr.overrideMimeType)
+				xhr.overrideMimeType('text/plain; charset=x-user-defined');
 			else
-			{
-				if (this.file)
-					this.file.close();
-
-				this.file = window["AscViewer"].createFile(data);
-
-				if (this.file)
-				{
-					this.SearchResults = this.file.SearchResults;
-					this.file.viewer = this;
-				}
-			}
-
-			if (!this.file)
-			{
-				this.Api.sendEvent("asc_onError", c_oAscError.ID.ConvertationOpenError, c_oAscError.Level.Critical);
-				return;
-			}
+				xhr.setRequestHeader('Accept-Charset', 'x-user-defined');
 
 			var _t = this;
-			if (this.file.isNeedPassword())
+			xhr.onload = function()
 			{
-				// при повторном вводе пароля - проблемы в интерфейсе, если синхронно
-				setTimeout(function(){
-					_t.sendEvent("onNeedPassword");
-				}, 100);
-				return;
-			}
+				if (this.status === 200 || location.href.indexOf("file:") == 0)
+				{
+					_t.isCMapLoading = false;
+					_t.file.setCMap(new Uint8Array(this.response));
+					_t.onDocumentReady();
+				}
+			};
+			xhr.onerror = function()
+			{
+				_t.cmap_load_index++;
+				if (_t.cmap_load_index < _t.cmap_load_max)
+				{
+					_t.checkLoadCMap();
+					return;
+				}
 
-			this.pagesInfo.setCount(this.file.pages.length);
+				// error!
+				_t.isCMapLoading = false;
+				_t.onDocumentReady();
+			};
 
+			xhr.send(null);
+		};
+
+		this.onDocumentReady = function()
+		{
+			var _t = this;
 			// в интерфейсе есть проблема - нужно посылать onDocumentContentReady после setAdvancedOptions
 			setTimeout(function(){
 
@@ -809,6 +818,103 @@
 				this.thumbnails.init(this);
 
 			this.setMouseLockMode(true);
+		};
+
+		this.open = function(data, password)
+		{
+			if (!this.checkModule())
+			{
+				this._fileData = data;
+				return;
+			}
+
+			if (undefined !== password)
+			{
+				if (!this.file)
+				{
+					this.file = window["AscViewer"].createFile(data);
+
+					if (this.file)
+					{
+						this.SearchResults = this.file.SearchResults;
+						this.file.viewer = this;
+					}
+				}
+
+				if (this.file && this.file.isNeedPassword())
+				{
+					window["AscViewer"].setFilePassword(this.file, password);
+					this.Api.currentPassword = password;
+				}
+			}
+			else
+			{
+				if (this.file)
+					this.close();
+
+				this.file = window["AscViewer"].createFile(data);
+
+				if (this.file)
+				{
+					this.SearchResults = this.file.SearchResults;
+					this.file.viewer = this;
+				}
+			}
+
+			if (!this.file)
+			{
+				this.Api.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationOpenError, Asc.c_oAscError.Level.Critical);
+				return;
+			}
+
+			var _t = this;
+			if (this.file.isNeedPassword())
+			{
+				// при повторном вводе пароля - проблемы в интерфейсе, если синхронно
+				setTimeout(function(){
+					_t.sendEvent("onNeedPassword");
+				}, 100);
+				return;
+			}
+
+			if (window["AscDesktopEditor"])
+				this.savedPassword = password;
+
+			this.pagesInfo.setCount(this.file.pages.length);
+			this.checkLoadCMap();
+		};
+
+		this.close = function()
+		{
+			if (!this.file || !this.file.isValid())
+				return;
+
+			this.file.close();
+
+			this.structure = null;
+			this.currentPage = -1;
+
+			this.startVisiblePage = -1;
+			this.endVisiblePage = -1;
+			this.pagesInfo = new CDocumentPagesInfo();
+			this.drawingPages = [];
+
+			this.statistics = {
+				paragraph : 0,
+				words : 0,
+				symbols : 0,
+				spaces : 0,
+				process : false
+			};
+
+			this._paint();
+		};
+
+		this.getFileNativeBinary = function()
+		{
+			if (!this.file || !this.file.isValid())
+				return null;
+			return this.file.getFileBinary();
 		};
 
 		this.setZoom = function(value)
@@ -1037,6 +1143,13 @@
 					this.drawingPages[i].W = (this.file.pages[i].W * 96 * this.zoom / this.file.pages[i].Dpi) >> 0;
 					this.drawingPages[i].H = (this.file.pages[i].H * 96 * this.zoom / this.file.pages[i].Dpi) >> 0;
 				}
+
+				if (this.getPageRotate(i) & 1)
+				{
+					let tmp = this.drawingPages[i].W;
+					this.drawingPages[i].W = this.drawingPages[i].H;
+					this.drawingPages[i].H = tmp;
+				}
 			}
 
 			this.documentWidth = 0;
@@ -1048,7 +1161,7 @@
 			// прибавим немного
 			this.documentWidth += (4 * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
-			var curTop = this.betweenPages;
+			var curTop = this.betweenPages + this.offsetTop;
 			for (let i = 0, len = this.drawingPages.length; i < len; i++)
 			{
 				this.drawingPages[i].X = (this.documentWidth - this.drawingPages[i].W) >> 1;
@@ -1175,7 +1288,7 @@
 			else
 			{
 				if (oThis.MouseHandObject)
-					cursorType = "grabbing";
+					cursorType = AscCommon.Cursors.Grabbing;
 				else
 					cursorType = "default";
 			}
@@ -1201,7 +1314,7 @@
 					return;
 				}
 				// режим лапы. просто начинаем режим Active - зажимаем лапу
-				oThis.setCursorType("grabbing");
+				oThis.setCursorType(AscCommon.Cursors.Grabbing);
 				oThis.MouseHandObject.X = oThis.mouseDownCoords.X;
 				oThis.MouseHandObject.Y = oThis.mouseDownCoords.Y;
 				oThis.MouseHandObject.Active = true;
@@ -1272,11 +1385,11 @@
 					if (mouseUpLinkObject)
 						oThis.setCursorType("pointer");
 					else
-						oThis.setCursorType("grab");
+						oThis.setCursorType(AscCommon.Cursors.Grab);
 				}
 				else if (!oThis.isMouseMoveBetweenDownUp)
 				{
-					oThis.setCursorType("grab");
+					oThis.setCursorType(AscCommon.Cursors.Grab);
 
 					// делаем клик в логическом документе, чтобы сбросить селект, если он был
 					var pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
@@ -1285,7 +1398,7 @@
 				}
 				else
 				{
-					oThis.setCursorType("grab");
+					oThis.setCursorType(AscCommon.Cursors.Grab);
 				}
 
 				oThis.isMouseMoveBetweenDownUp = false;
@@ -1347,7 +1460,7 @@
 				if (oThis.MouseHandObject.Active)
 				{
 					// двигаем рукой
-					oThis.setCursorType("grabbing");
+					oThis.setCursorType(AscCommon.Cursors.Grabbing);
 
 					var scrollX = AscCommon.global_mouseEvent.X - oThis.MouseHandObject.X;
 					var scrollY = AscCommon.global_mouseEvent.Y - oThis.MouseHandObject.Y;
@@ -1381,7 +1494,7 @@
 						else
 						{
 							// даже если не двигали еще и ждем eps, все равно курсор меняем на зажатый
-							oThis.setCursorType("grabbing");
+							oThis.setCursorType(AscCommon.Cursors.Grabbing);
 						}
 					}
 					else
@@ -1391,7 +1504,7 @@
 						if (mouseMoveLinkObject)
 							oThis.setCursorType("pointer");
 						else
-							oThis.setCursorType("grab");
+							oThis.setCursorType(AscCommon.Cursors.Grab);
 					}
 				}
 				return;
@@ -1542,18 +1655,18 @@
 			var positionMaxY = oThis.y + oThis.height;
 
 			var scrollYVal = 0;
-			if (global_mouseEvent.Y < positionMinY)
+			if (AscCommon.global_mouseEvent.Y < positionMinY)
 			{
 				var delta = 30;
-				if (20 > (positionMinY - global_mouseEvent.Y))
+				if (20 > (positionMinY - AscCommon.global_mouseEvent.Y))
 					delta = 10;
 
 				scrollYVal = -delta;
 			}
-			else if (global_mouseEvent.Y > positionMaxY)
+			else if (AscCommon.global_mouseEvent.Y > positionMaxY)
 			{
 				var delta = 30;
-				if (20 > (global_mouseEvent.Y - positionMaxY))
+				if (20 > (AscCommon.global_mouseEvent.Y - positionMaxY))
 					delta = 10;
 
 				scrollYVal = delta;
@@ -1565,18 +1678,18 @@
 				var positionMinX = oThis.x;
 				var positionMaxX = oThis.x + oThis.width;
 
-				if (global_mouseEvent.X < positionMinX)
+				if (AscCommon.global_mouseEvent.X < positionMinX)
 				{
 					var delta = 30;
-					if (20 > (positionMinX - global_mouseEvent.X))
+					if (20 > (positionMinX - AscCommon.global_mouseEvent.X))
 						delta = 10;
 
 					scrollXVal = -delta;
 				}
-				else if (global_mouseEvent.X > positionMaxX)
+				else if (AscCommon.global_mouseEvent.X > positionMaxX)
 				{
 					var delta = 30;
-					if (20 > (global_mouseEvent.X - positionMaxX))
+					if (20 > (AscCommon.global_mouseEvent.X - positionMaxX))
 						delta = 10;
 
 					scrollXVal = delta;
@@ -1789,7 +1902,7 @@
 
 		this._paint = function()
 		{
-			if (!this.file.isValid())
+			if (!this.file || !this.file.isValid())
 				return;
 
 			this.canvas.width = this.canvas.width;
@@ -1856,16 +1969,25 @@
 				let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 				let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
+				let rotateAngle = this.getPageRotate(i);
+				let natW = w;
+				let natH = h;
+				if (rotateAngle & 1)
+				{
+					natW = h;
+					natH = w;
+				}
+
 				if (!isStretchPaint)
 				{
 					if (!this.file.cacheManager)
 					{
-						if (this.isClearPages || (page.Image && ((page.Image.requestWidth != w) || (page.Image.requestHeight != h))))
+						if (this.isClearPages || (page.Image && ((page.Image.requestWidth !== natW) || (page.Image.requestHeight !== natH))))
 							delete page.Image;
 					}
 					else
 					{
-						if (this.isClearPages || (page.Image && ((page.Image.requestWidth < w) || (page.Image.requestHeight < h))))
+						if (this.isClearPages || (page.Image && ((page.Image.requestWidth < natW) || (page.Image.requestHeight < natH))))
 						{
 							if (this.file.cacheManager)
 								this.file.cacheManager.unlock(page.Image);
@@ -1877,9 +1999,11 @@
 
 				if (!page.Image && !isStretchPaint)
 				{
-					page.Image = this.file.getPage(i, w, h, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
-					if (this.Api.watermarkDraw)
-						this.Api.watermarkDraw.Draw(page.Image.getContext("2d"), w, h);
+					page.Image = this.file.getPage(i, natW, natH, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
+
+					// нельзя кэшировать с вотермарком - так как есть поворот
+					//if (this.Api.watermarkDraw)
+					//	this.Api.watermarkDraw.Draw(page.Image.getContext("2d"), w, h);
 				}
 
 				let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
@@ -1887,7 +2011,21 @@
 
 				if (page.Image)
 				{
-					ctx.drawImage(page.Image, 0, 0, page.Image.width, page.Image.height, x, y, w, h);
+					if (0 === rotateAngle)
+					{
+						ctx.drawImage(page.Image, 0, 0, page.Image.width, page.Image.height, x, y, w, h);
+					}
+					else
+					{
+						let cx = x + 0.5 * w;
+						let cy = y + 0.5 * h;
+
+						ctx.save();
+						ctx.translate(cx, cy);
+						ctx.rotate(rotateAngle * Math.PI / 2);
+						ctx.drawImage(page.Image, -0.5 * natW, -0.5 * natH, natW, natH);
+						ctx.restore();
+					}
 					this.pagesInfo.setPainted(i);
 				}
 				else
@@ -1896,6 +2034,9 @@
 					ctx.fillRect(x, y, w, h);
 				}
 				ctx.strokeRect(x + lineW / 2, y + lineW / 2, w - lineW, h - lineW);
+
+				if (this.Api.watermarkDraw)
+					this.Api.watermarkDraw.Draw(ctx, x, y, w, h);
 
 				this.pageDetector.addPage(i, x, y, w, h);
 			}
@@ -2083,26 +2224,23 @@
 			return (text_format.Text === "") ? false : true;
 		};
 
-		this.findText = function(text, isMachingCase, isNext, callback)
+		this.findText = function(text, isMachingCase, isWholeWords, isNext, callback)
 		{
-			if (this.isFullTextMessage)
-				return bRetValue;
-
 			if (!this.isFullText)
 			{
-				this.fullTextMessageCallbackArgs = [text, isMachingCase, isNext, callback];
+				this.fullTextMessageCallbackArgs = [text, isMachingCase, isWholeWords, isNext, callback];
 				this.fullTextMessageCallback = function() {
-					this.file.findText(this.fullTextMessageCallbackArgs[0], this.fullTextMessageCallbackArgs[1], this.fullTextMessageCallbackArgs[2]);
+					this.file.findText(this.fullTextMessageCallbackArgs[0], this.fullTextMessageCallbackArgs[1], this.fullTextMessageCallbackArgs[2], this.fullTextMessageCallbackArgs[3]);
 					this.onUpdateOverlay();
 
-					if (this.fullTextMessageCallbackArgs[3])
-						this.fullTextMessageCallbackArgs[3](this.SearchResults.Count);
+					if (this.fullTextMessageCallbackArgs[4])
+						this.fullTextMessageCallbackArgs[4].call(this.Api, this.SearchResults.Current, this.SearchResults.Count);
 				};
 				this.showTextMessage();
 				return true; // async
 			}
 
-			this.file.findText(text, isMachingCase, isNext);
+			this.file.findText(text, isMachingCase, isWholeWords, isNext);
 			this.onUpdateOverlay();
 			return false;
 		};
@@ -2179,6 +2317,38 @@
 			}
 		};
 
+		this.SelectSearchElement = function(elmId)
+		{
+			var nSearchedId = 0, nPage;
+			var nMatchesCount = 0;
+			for (nPage = 0; nPage < this.SearchResults.Pages.length; nPage++)
+			{
+				for (var nMatch = 0; nMatch < this.SearchResults.Pages[nPage].length; nMatch++)
+				{
+					nMatchesCount++;
+
+					if (nMatchesCount - 1 == elmId)
+					{
+						nSearchedId = nMatch;
+						break;
+					}
+				}
+				if (nMatchesCount - 1 == elmId)
+				{
+					nSearchedId = nMatch;
+					break;
+				}
+			}
+
+			this.CurrentSearchNavi = this.SearchResults.Pages[nPage][nSearchedId];
+			this.SearchResults.CurrentPage = nPage;
+			this.SearchResults.Current = nSearchedId;
+			this.SearchResults.CurMatchIdx = elmId;
+            this.ToSearchResult();
+			this.onUpdateOverlay();
+			this.Api.sync_setSearchCurrent(elmId, this.SearchResults.Count);
+		};
+		
 		this.OnKeyDown = function(e)
 		{
 			var bRetValue = false;
@@ -2345,6 +2515,55 @@
 			}
 			return result;
 		};
+
+		this.setRotatePage = function(pageNum, angle, ismultiply)
+		{
+			if (!this.file || !this.file.isValid())
+				return;
+
+			if (undefined === pageNum)
+				pageNum = this.currentPage;
+
+			let page = this.file.pages[pageNum];
+			if (!page)
+				return;
+
+			angle = (angle / 90) >> 0;
+
+			if (page.angle && ismultiply)
+				page.angle += angle;
+			else
+				page.angle = angle;
+
+			page.angle += 4;
+			page.angle &= 0x03;
+
+			if (0 === page.angle)
+				delete page.angle;
+
+			this.resize();
+			this.thumbnails && this.thumbnails.resize();
+		};
+
+		this.getPageRotate = function(pageNum)
+		{
+			if (!this.file || !this.file.isValid())
+				return 0;
+
+			if (!this.file.pages[pageNum])
+				return 0;
+
+			let value = this.file.pages[pageNum].angle;
+			return (undefined === value) ? 0 : value;
+		};
+
+		this.setOffsetTop = function(offset)
+		{
+			this.offsetTop = offset;
+			this.resize();
+		};
+
+		this.createComponents();
 	}
 
 	function CCurrentPageDetector(w, h)

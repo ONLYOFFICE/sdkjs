@@ -1,5 +1,5 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -40,11 +40,12 @@
     RandObj.prototype.buffer = function() { return this.buf; };
     RandObj.prototype.base64 = function() { return AscCommon.Base64.encode(this.buf); };
     RandObj.prototype.hex = function() { return AscCommon.Hex.encode(this.buf); };
+    RandObj.prototype.base58 = function() { return AscCommon.Base58.encode(this.buf); };
 
     AscCommon.randomBytes = function(count)
     {
         var array = new Uint8Array(count);
-        if (window.crypto || window.crypto.getRandomValues)
+        if (window.crypto && window.crypto.getRandomValues)
             window.crypto.getRandomValues(array);
         else
         {

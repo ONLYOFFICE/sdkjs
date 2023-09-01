@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -34,7 +34,7 @@
 
 (function(window)
 {
-	const FONTSIZE        = AscFonts.MEASURE_FONTSIZE || 72;
+	const FONTSIZE        = AscFonts.MEASURE_FONTSIZE || 576;
 	const STRING_MAX_LEN  = AscFonts.GRAPHEME_STRING_MAX_LEN || 1024;
 	const COEF            = AscFonts.GRAPHEME_COEF|| 25.4 / 72 / 64 / FONTSIZE;
 	const GRAPHEME_BUFFER = new Array(STRING_MAX_LEN);
@@ -86,7 +86,7 @@
 			let nOffsetY      = oGrapheme[nPos++];
 			let arrCodePoints = oGrapheme[nPos++];
 
-			oContext.tg(nGID, nX + nOffsetX * nKoef, nY + nOffsetY * nKoef, arrCodePoints);
+			oContext.tg(nGID, nX + nOffsetX * nKoef, nY - nOffsetY * nKoef, arrCodePoints);
 			nX += nAdvanceX * nKoef;
 			nY += nAdvanceY * nKoef;
 		}

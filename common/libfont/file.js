@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1109,7 +1109,7 @@
 
 			var load_mode = this.GetCharLoadMode(nUnicodeForHintTest);
 
-			if (!isRaster || this.m_bNeedDoBold)
+			if (!isRaster || this.m_bNeedDoBold || this.m_bNeedDoItalic)
 				load_mode |= AscFonts.FT_Load_Mode.FT_LOAD_NO_BITMAP;
 			else if (this.m_bStringGID)
 			{
@@ -1221,7 +1221,11 @@
 
 			if (this.m_bNeedDoBold && this.m_bAntiAliasing && !isDisableNeedBold)
 			{
-				oSizes.oBitmap.nWidth++;
+				var extraPixels = AscCommon.AscBrowser.retinaPixelRatio >> 0;
+				if (extraPixels < 1)
+					extraPixels = 1;
+
+				oSizes.oBitmap.nWidth += extraPixels;
 
 				var _width_im = oSizes.oBitmap.nWidth;
 				var _height = oSizes.oBitmap.nHeight;
@@ -1230,24 +1234,22 @@
 				var pDstBuffer;
 
 				var _input = raster_memory.m_oBuffer.data;
-				for (nY = 0, pDstBuffer = 0; nY < _height; ++nY, pDstBuffer += (raster_memory.pitch))
-				{
-					for (nX = _width_im - 1; nX >= 0; --nX)
-					{
-						if (0 != nX) // иначе ничего не делаем
-						{
-							var _pos_x = pDstBuffer + nX * 4 + 3;
 
-							if (_width_im - 1 == nX)
-							{
-								// последний - просто копируем
-								_input[_pos_x] = _input[_pos_x - 4];
-							}
-							else
-							{
-								// сдвигаем все вправо
-								_input[_pos_x] = Math.min(255, _input[_pos_x - 4] + _input[_pos_x]);
-							}
+				while (extraPixels > 0)
+				{
+					--extraPixels;
+					for (nY = 0, pDstBuffer = 0; nY < _height; ++nY, pDstBuffer += (raster_memory.pitch))
+					{
+						var _pos_x = pDstBuffer + ((_width_im - extraPixels) << 2) - 1;
+
+						// последние - просто копируем
+						_input[_pos_x] = _input[_pos_x - 4];
+						_pos_x -= 4;
+
+						for (nX = _width_im - extraPixels - 2; nX > 0; --nX, _pos_x -= 4)
+						{
+							// сдвигаем все вправо
+							_input[_pos_x] = Math.min(255, _input[_pos_x - 4] + _input[_pos_x]);
 						}
 					}
 				}

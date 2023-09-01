@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -110,6 +110,8 @@
 	{
 		this.Manager = _manager;
 		this.Api = _manager.Api;
+
+		this.useDelayZoom = true;
 	}
 
 	CMobileDelegateSimple.prototype.Init = function()
@@ -185,6 +187,10 @@
 	{
 		return { W : 100, H : 100 };
 	};
+	CMobileDelegateSimple.prototype.GetScrollerOffset = function()
+	{
+		return { W : 0, H : 0 };
+	};
 	CMobileDelegateSimple.prototype.GetScrollPosition = function()
 	{
 		return null;
@@ -194,6 +200,10 @@
 		return;
 	};
 	CMobileDelegateSimple.prototype.ScrollEnd = function(_scroll)
+	{
+		return;
+	};
+	CMobileDelegateSimple.prototype.LockScrollStartPos = function()
 	{
 		return;
 	};
@@ -258,7 +268,12 @@
 	};
 	CMobileDelegateEditor.prototype.SetZoom = function(_value)
 	{
-		this.HtmlPage.m_oApi.zoom(_value);
+		if (!this.useDelayZoom)
+			return this.HtmlPage.m_oApi.zoom(_value);
+
+		AscCommon.PaintMessageLoop.prototype.delayRun(this, function(){
+			this.HtmlPage.m_oApi.zoom(_value);
+		});
 	};
 	CMobileDelegateEditor.prototype.GetObjectTrack = function(x, y, page, bSelected, bText)
 	{
@@ -273,9 +288,9 @@
 
 		var selectionBounds = this.LogicDocument.GetSelectionBounds();
 		var eps = 0.0001;
-		if (selectionBounds && selectionBounds.Start && selectionBounds.End &&
+		if ((selectionBounds && selectionBounds.Start && selectionBounds.End &&
 			(Math.abs(selectionBounds.Start.W) > eps) &&
-			(Math.abs(selectionBounds.End.W) > eps))
+			(Math.abs(selectionBounds.End.W) > eps)) || this.LogicDocument.IsNumberingSelection())
 		{
             _mode = AscCommon.MobileTouchContextMenuType.Select;
         }
@@ -502,6 +517,10 @@
 			return { W : this.DrawingDocument.m_oDocumentRenderer.documentWidth, H : this.DrawingDocument.m_oDocumentRenderer.documentHeight };
 		return { W : this.HtmlPage.m_dDocumentWidth, H : this.HtmlPage.m_dDocumentHeight };
 	};
+	CMobileDelegateEditor.prototype.GetScrollerOffset = function()
+	{
+		return { W : 0, H : (this.HtmlPage.offsetTop === undefined) ? 0 : this.HtmlPage.offsetTop };
+	};
 	CMobileDelegateEditor.prototype.ScrollTo = function(_scroll)
 	{
 		var isNativeViewer = this.IsNativeViewer();
@@ -540,6 +559,10 @@
 
 		this.HtmlPage.OnScroll();
 		_scroll.manager.OnScrollAnimationEnd();
+	};
+	CMobileDelegateEditor.prototype.LockScrollStartPos = function()
+	{
+		this.HtmlPage.mobileScrollStartPos = this.HtmlPage.m_dScrollY;
 	};
 	CMobileDelegateEditor.prototype.GetSelectionRectsBounds = function()
 	{
@@ -1076,19 +1099,26 @@
 	};
 
 	// изменился размер документа/экрана => нужно перескитать вспомогательный элемент для скролла
-	CMobileTouchManagerBase.prototype.Resize = function()
+	CMobileTouchManagerBase.prototype.UpdateScrolls = function()
 	{
-		this.delegate.Resize();
-		this.CheckZoomCriticalValues();
 		if (this.iScroll != null)
 		{
 			var _size = this.delegate.GetScrollerSize();
-			this.iScroll.scroller.style.width = _size.W + "px";
-			this.iScroll.scroller.style.height = _size.H + "px";
+			var _offset = this.delegate.GetScrollerOffset();
+
+			this.iScroll.scroller.style.width  = (_size.W + _offset.W) + "px";
+			this.iScroll.scroller.style.height = (_size.H + _offset.H) + "px";
 
 			var _position = this.delegate.GetScrollPosition();
 			this.iScroll.refresh(_position);
 		}
+	};
+	CMobileTouchManagerBase.prototype.Resize = function()
+	{
+		this.delegate.Resize();
+		this.CheckZoomCriticalValues();
+
+		this.UpdateScrolls();
 
 		if (this.isMobileContextMenuShowResize)
 			this.SendShowContextMenu();
@@ -2187,6 +2217,10 @@
 	};
 	CMobileTouchManagerBase.prototype.checkPointerMultiTouchRemove = function(e)
 	{
+		// на андроиде не приходит onCompositeEnd - поэтому заглушка
+		if (AscCommon.AscBrowser.isAndroid && AscCommon.g_inputContext)
+			AscCommon.g_inputContext.apiCompositeEnd();
+
 		if (!this.checkPointerEvent(e))
 			return;
 

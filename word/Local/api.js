@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -139,6 +139,11 @@ Asc['asc_docs_api'].prototype.SetDocumentModified = function(bValue)
     }
 };
 
+Asc['asc_docs_api'].prototype._saveLocalCheck = function()
+{
+	return !this.isLongAction();
+};
+
 Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs, isResaveAttack, options)
 {
 	if (!isResaveAttack && !isSaveAs && !this.asc_isDocumentCanSave())
@@ -152,7 +157,7 @@ Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs, isRes
 		this.LastUserSavedIndex = AscCommon.History.UserSavedIndex;
 	}
 
-    if (true === this.canSave && this._saveCheck())
+    if (true === this.canSave && this._saveLocalCheck())
 	{
 		var _isNaturalSave = this.IsUserSave;
 		this.canSave = false;
@@ -176,6 +181,16 @@ Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs, isRes
 			window["DesktopOfflineAppDocumentStartSave"](isSaveAs, undefined, undefined, undefined, options);
 	}
 };
+Asc['asc_docs_api'].prototype["getAdditionalSaveParams"] = function()
+{
+	return {
+		"documentLayout" : {
+			"openedAt" : this.openedAt
+		},
+		"locale" : this.asc_getLocale(),
+		"translate" : AscCommon.translateManager.mapTranslate
+	};
+};
 window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isForce, docinfo, options)
 {
 	window.doadssIsSaveAs = isSaveAs;
@@ -191,11 +206,21 @@ window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isFo
 	if (isSaveAs === true)
 		_param += "saveas=true;";
 
-	var jsonOptions = {
-		"documentLayout" : {
-			"openedAt" : editor.openedAt
-		}
-	};
+	var jsonOptions = editor["getAdditionalSaveParams"]();
+
+	if (options && options.isPdfPrint)
+		jsonOptions["isPrint"] = true;
+
+	if (options && options.advancedOptions)
+	{
+		let nativeOptions = options.advancedOptions.asc_getNativeOptions();
+		if (nativeOptions)
+		{
+			jsonOptions["isPrint"] = true;
+			jsonOptions["nativeOptions"] = nativeOptions;
+			jsonOptions["nativeOptions"]["currentPage"] = editor.getCurrentPage() + 1;
+ 		}
+	}
 
 	window["AscDesktopEditor"]["LocalFileSave"](_param, (password === undefined) ? editor.currentPassword : password, docinfo, (options && options.fileType) ? options.fileType : 0, JSON.stringify(jsonOptions));
 };
@@ -256,7 +281,7 @@ Asc['asc_docs_api'].prototype.AddImageUrl = function(urls, imgProp, token, obj)
 		var localUrl = window["AscDesktopEditor"]["LocalFileGetImageUrl"](currentValue);
 		return AscCommon.g_oDocumentUrls.getImageUrl(localUrl);
 	});
-	this._addImageUrl(_urls, imgProp, obj);
+	this._addImageUrl(_urls, obj);
 };
 Asc['asc_docs_api'].prototype.AddImage = Asc['asc_docs_api'].prototype.asc_addImage = function(obj)
 {

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -210,7 +210,7 @@ $( function () {
 		while (reader.ReadNextNode()) {
 			res += '<';
 			res += reader.GetName();
-			if(reader.MoveToNextAttribute()) {
+			while(reader.MoveToNextAttribute()) {
 				res += ' ';
 				res += reader.GetName();
 				res += '=\"';
@@ -219,7 +219,24 @@ $( function () {
 			}
 			res += '/>';
 		}
-		strictEqual( res, '<w:node1 attr0="val0"/><node2 a:attr2="val&amp;"/><node3/><node4 attr3="val&apos;"/><node5/><node6/><node2/><node3/><node4 attr3="val&gt;"/><node5/><node6/>' , 'MoveToNextAttribute');
+		strictEqual( res, '<w:node1 attr0="val0" attr1="val1"/><node2 a:attr2="val&amp;"/><node3/><node4 attr3="val&apos;"/><node5/><node6/><node2/><node3/><node4 attr3="val&gt;"/><node5/><node6/>' , 'MoveToNextAttribute');
+
+		var xml2 = '<w:node1  attr0  ="val0" attr1=  "val1" attr3  =  "val3" attr4=\'val4\' attr5 = \'val5\' />';
+		var res = ''
+		var reader = new StaxParser(xml2);
+		while (reader.ReadNextNode()) {
+			res += '<';
+			res += reader.GetName();
+			while(reader.MoveToNextAttribute()) {
+				res += ' ';
+				res += reader.GetName();
+				res += '=\"';
+				res += reader.GetValue();
+				res += '\"';
+			}
+			res += '/>';
+		}
+		strictEqual( res, '<w:node1 attr0="val0" attr1="val1" attr3="val3" attr4="val4" attr5="val5"/>' , 'MoveToNextAttribute');
 	} );
 	test( "GetDepth", function () {
 		var res = ''

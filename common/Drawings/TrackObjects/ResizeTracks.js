@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -311,7 +311,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
         this.resizedRot = originalObject.rot;
 
         this.transform = originalObject.transform.CreateDublicate();
-        this.geometry = AscFormat.ExecuteNoHistory(function(){ return originalObject.getGeom().createDuplicate();}, this, []);
+        this.geometry = AscFormat.ExecuteNoHistory(function(){ return originalObject.getTrackGeometry().createDuplicate();}, this, []);
         this.cropObject = originalObject.cropObject;
         var nObjectType = originalObject.getObjectType && originalObject.getObjectType();
         if(nObjectType === AscDFH.historyitem_type_Chart
@@ -399,7 +399,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             var _beginConnectionInfo, _endConnectionInfo;
             if(this.numberHandle === 0){
                 if(oEndShape){
-                    var oConectionObject = oEndShape.getGeom().cnxLst[oConnectorInfo.endCnxIdx];
+                    var oConectionObject = oEndShape.getTrackGeometry().cnxLst[oConnectorInfo.endCnxIdx];
                     var g_conn_info =  {idx: oConnectorInfo.endCnxIdx, ang: oConectionObject.ang, x: oConectionObject.x, y: oConectionObject.y};
                     var _flipH = oEndShape.flipH;
                     var _flipV = oEndShape.flipV;
@@ -424,7 +424,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             }
             else{
                 if(oBeginShape){
-                    var oConectionObject = oBeginShape.getGeom().cnxLst[oConnectorInfo.stCnxIdx];
+                    var oConectionObject = oBeginShape.getTrackGeometry().cnxLst[oConnectorInfo.stCnxIdx];
                     var g_conn_info =  {idx: oConnectorInfo.stCnxIdx, ang: oConectionObject.ang, x: oConectionObject.x, y: oConectionObject.y};
                     var _flipH = oBeginShape.flipH;
                     var _flipV = oBeginShape.flipV;
@@ -2192,7 +2192,7 @@ function ShapeForResizeInGroup(originalObject, parentTrack)
         this.centerDistX = this.x + this.extX*0.5 - this.parentTrack.extX*0.5;
         this.centerDistY = this.y + this.extY*0.5 - this.parentTrack.extY*0.5;
 
-        this.geometry = AscFormat.ExecuteNoHistory(function(){ return originalObject.getGeom().createDuplicate();}, this, []);
+        this.geometry = AscFormat.ExecuteNoHistory(function(){ return originalObject.getTrackGeometry().createDuplicate();}, this, []);
         if(this.geometry)
         {
             this.geometry.Recalculate(this.extX, this.extY);

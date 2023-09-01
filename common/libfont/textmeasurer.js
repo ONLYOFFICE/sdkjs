@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -112,37 +112,52 @@
 			if (!oFont)
 				return true;
 
-			return (!!oFont.GetGIDByUnicode(codePoint))
+			if (null != this.LastFontOriginInfo.Replace)
+				codePoint = g_fontApplication.GetReplaceGlyph(codePoint, this.LastFontOriginInfo.Replace);
+
+			return (!!oFont.GetGIDByUnicode(codePoint));
 		},
 
-		GetFontBySymbol : function(codePoint, oPreferredFont)
+		GetFontBySymbol : function(codePoint, oPreferredFont, isForcePreferred)
 		{
 			let oFont = this.m_oManager.m_pFont;
+
+			if (oPreferredFont && isForcePreferred)
+				oFont = oPreferredFont;
+
 			if (!oFont)
-				return null;
+				return {Font : null, CodePoint : codePoint};
+
+			if (null != this.LastFontOriginInfo.Replace)
+				codePoint = g_fontApplication.GetReplaceGlyph(codePoint, this.LastFontOriginInfo.Replace);
 
 			if (!oFont.GetGIDByUnicode(codePoint))
 			{
 				if (oPreferredFont && oPreferredFont.GetGIDByUnicode(codePoint))
-					return oPreferredFont;
+					return {Font : oPreferredFont, CodePoint : codePoint};
 
 				let _oFont = this.m_oManager.m_pFont.Picker.GetFontBySymbolWithSize(this.m_oManager.m_pFont, codePoint);
 				if (_oFont)
 					oFont = _oFont;
 			}
 
-			return oFont;
+			return {Font : oFont, CodePoint : codePoint};
+		},
+
+		GetCurrentFont : function()
+		{
+			return this.m_oManager.m_pFont;
 		},
 
 		GetGraphemeByUnicode : function(codePoint, sFontName, nFontStyle)
 		{
-			this.SetFontInternal(sFontName, 72, nFontStyle);
+			this.SetFontInternal(sFontName, AscFonts.MEASURE_FONTSIZE, nFontStyle);
 
 			let oFont = this.m_oManager.m_oFont;
 			let nGID  = oFont ? oFont.GetGIDByUnicode(codePoint) : 0;
 			if (!nGID)
 			{
-				oFont = this.GetFontBySymbol(codePoint);
+				oFont = this.GetFontBySymbol(codePoint).Font;
 				if (!oFont)
 					return AscFonts.NO_GRAPHEME;
 

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -169,11 +169,15 @@ StartAddNewShape.prototype =
                 drawing.Set_XYForAdd(shape.x, shape.y, nearest_pos, this.pageIndex);
                 drawing.AddToDocument(nearest_pos);
                 drawing.CheckWH();
-                this.drawingObjects.resetSelection();
-                shape.select(this.drawingObjects, this.pageIndex);
+				let oAPI = this.drawingObjects.getEditorApi();
+	            if(!oAPI.isDrawInkMode())
+	            {
+		            this.drawingObjects.resetSelection();
+		            shape.select(this.drawingObjects, this.pageIndex);
+	            }
                 this.drawingObjects.document.Recalculate();
 				oLogicDocument.FinalizeAction();
-                if(this.preset === "textRect")
+                if(this.preset && (this.preset.indexOf("textRect") === 0))
                 {
                     this.drawingObjects.selection.textSelection = shape;
                     shape.selectionSetStart(e, x, y, pageIndex);
@@ -214,10 +218,21 @@ NullState.prototype =
 
         this.startTargetTextObject = AscFormat.getTargetTextObject(this.drawingObjects);
         var start_target_doc_content, end_target_doc_content;
+        let nStartPage;
         if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
         {
             this.drawingObjects.setStartTrackPos(x, y, pageIndex);
             start_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
+            nStartPage = start_target_doc_content && start_target_doc_content.Get_AbsolutePage();
+        }
+        const oThis = this;
+        const fRecalculatePages = function() {
+            oThis.drawingObjects.checkChartTextSelection(true);
+            oThis.drawingObjects.drawingDocument.OnRecalculatePage( pageIndex, oThis.drawingObjects.document.Pages[pageIndex] );
+            if (AscFormat.isRealNumber(nStartPage) && pageIndex !== nStartPage) {
+                oThis.drawingObjects.drawingDocument.OnRecalculatePage(nStartPage, oThis.drawingObjects.document.Pages[nStartPage]);
+            }
+            oThis.drawingObjects.drawingDocument.OnEndRecalculate( false, true );
         }
 
         if(selection.wrapPolygonSelection)
@@ -281,9 +296,7 @@ NullState.prototype =
                     if((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
                     {
 
-                        this.drawingObjects.checkChartTextSelection(true);
-                        this.drawingObjects.drawingDocument.OnRecalculatePage( pageIndex, this.drawingObjects.document.Pages[pageIndex] );
-                        this.drawingObjects.drawingDocument.OnEndRecalculate( false, true );
+                        fRecalculatePages();
                     }
                 }
                 return ret;
@@ -299,9 +312,7 @@ NullState.prototype =
                         if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
                         {
 
-                            this.drawingObjects.checkChartTextSelection(true);
-                            this.drawingObjects.drawingDocument.OnRecalculatePage(pageIndex, this.drawingObjects.document.Pages[pageIndex]);
-                            this.drawingObjects.drawingDocument.OnEndRecalculate(false, true);
+                            fRecalculatePages();
                         }
                     }
                     return ret;
@@ -322,10 +333,7 @@ NullState.prototype =
                     end_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
                     if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
                     {
-
-                        this.drawingObjects.checkChartTextSelection(true);
-                        this.drawingObjects.drawingDocument.OnRecalculatePage(pageIndex, this.drawingObjects.document.Pages[pageIndex]);
-                        this.drawingObjects.drawingDocument.OnEndRecalculate(false, true);
+                        fRecalculatePages();
                     }
                 }
                 return ret;
@@ -343,9 +351,7 @@ NullState.prototype =
                     end_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
                     if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
                     {
-                        this.drawingObjects.checkChartTextSelection(true);
-                        this.drawingObjects.drawingDocument.OnRecalculatePage(pageIndex, this.drawingObjects.document.Pages[pageIndex]);
-                        this.drawingObjects.drawingDocument.OnEndRecalculate(false, true);
+                        fRecalculatePages();
                     }
                 }
                 return ret;
@@ -365,9 +371,7 @@ NullState.prototype =
                     end_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
                     if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
                     {
-                        this.drawingObjects.checkChartTextSelection(true);
-                        this.drawingObjects.drawingDocument.OnRecalculatePage(pageIndex, this.drawingObjects.document.Pages[pageIndex]);
-                        this.drawingObjects.drawingDocument.OnEndRecalculate(false, true);
+                        fRecalculatePages();
                     }
                 }
                 return ret;
@@ -383,9 +387,7 @@ NullState.prototype =
                         end_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
                         if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content)) {
 
-                            this.drawingObjects.checkChartTextSelection(true);
-                            this.drawingObjects.drawingDocument.OnRecalculatePage(pageIndex, this.drawingObjects.document.Pages[pageIndex]);
-                            this.drawingObjects.drawingDocument.OnEndRecalculate(false, true);
+                            fRecalculatePages();
                         }
                     }
                     return ret;
@@ -394,9 +396,7 @@ NullState.prototype =
         }
         if(start_target_doc_content)
         {
-            this.drawingObjects.checkChartTextSelection(true);
-            this.drawingObjects.drawingDocument.OnRecalculatePage(pageIndex, this.drawingObjects.document.Pages[pageIndex]);
-            this.drawingObjects.drawingDocument.OnEndRecalculate(false, true);
+            fRecalculatePages();
         }
         return null;
 
@@ -526,7 +526,8 @@ MoveInlineObject.prototype =
     onMouseUp: function(e, x,y,pageIndex)
     {
         var check_paragraphs = [];
-
+	    const bIsMac = AscCommon.AscBrowser.isMacOs;
+	    const bIsCopyKey = bIsMac ? e.AltKey : e.CtrlKey;
 		if (this.majorObject.parent.CanInsertToPos(this.InlinePos))
 		{
 			var oDstRun = null;
@@ -585,7 +586,7 @@ MoveInlineObject.prototype =
 					this.drawingObjects.document.FinalizeAction();
 				}
 			}
-			else if(!e.CtrlKey)
+			else if(!bIsCopyKey)
 			{
 				var arrCheckTypes = [];
 
@@ -749,7 +750,9 @@ RotateState.prototype =
                 {
                     var aCheckParagraphs = [], aNearestPos = [], aParentParagraphs = [], aBounds = [], aDrawings = [], bMoveState = (this instanceof MoveState), nearest_pos;
                     var i, j, page_index, para_drawing;
-                    for(i = 0; i < this.drawingObjects.arrTrackObjects.length; ++i)
+										const bIsMac = AscCommon.AscBrowser.isMacOs;
+	                const bIsCopyKey = bIsMac ? e.AltKey : e.CtrlKey;
+	                for(i = 0; i < this.drawingObjects.arrTrackObjects.length; ++i)
                     {
                         aDrawings[i] = this.drawingObjects.arrTrackObjects[i].originalObject.parent;
                         bounds = this.drawingObjects.arrTrackObjects[i].getBounds();
@@ -759,7 +762,7 @@ RotateState.prototype =
                         aNearestPos.push(nearest_pos);
                         aParentParagraphs.push(aDrawings[i].Get_ParentParagraph());
                     }
-                    if(bMoveState && e.CtrlKey && !this.drawingObjects.selection.cropSelection)
+                    if(bMoveState && bIsCopyKey && !this.drawingObjects.selection.cropSelection)
                     {
                         for(i = 0; i < aNearestPos.length; ++i)
                         {
@@ -1019,7 +1022,7 @@ ResizeState.prototype =
         var startPage = this.drawingObjects.graphicPages[this.majorObject.selectStartPage];
         var start_arr = startPage ? startPage.beforeTextObjects.concat(startPage.inlineObjects, startPage.behindDocObjects) : [];
         var resize_coef = this.majorObject.getResizeCoefficients(this.handleNum, coords.x, coords.y, start_arr);
-        this.drawingObjects.trackResizeObjects(resize_coef.kd1, resize_coef.kd2, e);
+        this.drawingObjects.trackResizeObjects(resize_coef.kd1, resize_coef.kd2, e, coords.x, coords.y);
         if(AscFormat.isRealNumber(resize_coef.snapX))
         {
             this.drawingObjects.drawingDocument.DrawVerAnchor(pageIndex, resize_coef.snapX);
@@ -1427,6 +1430,17 @@ function MoveInGroupState(drawingObjects, majorObject, group, startX, startY)
     {
         this.startPageIndex = this.group.parent.pageIndex;
     }
+	const arrTracks = this.drawingObjects.arrTrackObjects;
+	this.hasObjectInSmartArt = false;
+	for (let i = 0; i < arrTracks.length; i += 1)
+	{
+		const oGraphicObject = arrTracks[i].originalObject;
+		if (oGraphicObject.isObjectInSmartArt())
+		{
+			this.hasObjectInSmartArt = true;
+			break;
+		}
+	}
 }
 
 MoveInGroupState.prototype =
@@ -1456,7 +1470,9 @@ MoveInGroupState.prototype =
 			this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_MoveInGroup);
             var i;
             var tracks = this.drawingObjects.arrTrackObjects;
-            if(this instanceof MoveInGroupState && e.CtrlKey)
+						const bIsMac = AscCommon.AscBrowser.isMacOs;
+						const bIsCopyKey = bIsMac ? e.AltKey : e.CtrlKey;
+            if(this instanceof MoveInGroupState && bIsCopyKey && !this.hasObjectInSmartArt)
             {
                 this.group.resetSelection();
                 for(i = 0; i < tracks.length; ++i)
@@ -1493,7 +1509,20 @@ MoveInGroupState.prototype =
             else
             {
                 this.group.parent.CheckWH();
-                this.group.parent.Set_XY(this.group.posX + posX, this.group.posY + posY, parent_paragraph, this.startPageIndex, false);
+				let nPageNum;
+	            if(this.group && this.group.parent)
+				{
+		            nPageNum = this.group.parent.pageIndex;
+	            }
+				else if(AscFormat.isRealNumber(this.startPageIndex))
+				{
+		            nPageNum = this.startPageIndex;
+	            }
+				else
+	            {
+					nPageNum = 0;
+	            }
+                this.group.parent.Set_XY(this.group.posX + posX, this.group.posY + posY, parent_paragraph, nPageNum, false);
             }
             this.drawingObjects.document.Recalculate();
 			this.drawingObjects.document.FinalizeAction();
@@ -1503,7 +1532,6 @@ MoveInGroupState.prototype =
         this.drawingObjects.updateOverlay();
     }
 };
-
 
 function PreRotateInGroupState(drawingObjects, group, majorObject)
 {
@@ -1671,7 +1699,7 @@ ChangeAdjInGroupState.prototype =
     onMouseUp: MoveInGroupState.prototype.onMouseUp
 };
 
-function TextAddState(drawingObjects, majorObject)
+function TextAddState(drawingObjects, majorObject, startX, startY, button)
 {
     this.drawingObjects =drawingObjects;
     this.majorObject = majorObject;
@@ -2446,6 +2474,11 @@ PolyLineAddState2.prototype =
 
     onMouseMove: function(e, x, y, pageIndex)
     {
+	    if(!e.IsLocked)
+	    {
+		    //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
+		    return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
+	    }
         var tr_x, tr_y;
         if(pageIndex === this.drawingObjects.startTrackPos.pageIndex)
         {

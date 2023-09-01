@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -35,7 +35,7 @@
 window['AscFonts'] = window['AscFonts'] || {};
 var AscFonts = window['AscFonts'];
 
-var g_native_engine = CreateNativeTextMeasurer();
+var g_native_engine = CreateEmbedObject("CTextMeasurerEmbed");
 
 function CReturnObject()
 {
@@ -204,6 +204,28 @@ AscFonts.HB_ShapeText = function(fontFile, text, features, script, direction, la
 	g_return_obj_count.count = (len - 12) / 26;
 	g_return_obj_count.error = 0;
 	return g_return_obj_count;
+};
+
+AscFonts.Hyphen_Init = function()
+{
+	// none
+};
+AscFonts.Hyphen_Destroy = function()
+{
+	// GC
+};
+AscFonts.Hyphen_CheckDictionary = function(lang)
+{
+	return g_native_engine["Hyphen_IsDictionaryExist"](lang);
+};
+AscFonts.Hyphen_LoadDictionary = function(lang, data)
+{
+	return false;
+};
+AscFonts.Hyphen_Word = function(lang, word)
+{
+	let ret = g_native_engine["Hyphen_Word"](lang, word);
+	return ret ? ret : [];
 };
 
 AscFonts.onLoadModule();

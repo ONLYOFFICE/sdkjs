@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -75,6 +75,12 @@ CMathMatrixColumnPr.prototype.Read_FromBinary = function (Reader) {
 	this.count = Reader.GetLong();
 	this.mcJc = Reader.GetLong();
 };
+CMathMatrixColumnPr.fromObject = function(obj)
+{
+	let pr = new CMathMatrixColumnPr();
+	pr.Set_FromObject(obj);
+	return pr;
+};
 
 function CMathMatrixPr() {
 	this.row = 1;
@@ -125,8 +131,7 @@ CMathMatrixPr.prototype.Set_FromObject = function (Obj) {
 		if (0 !== nMcsCount) {
 			this.mcs.length = nMcsCount;
 			for (var nMcsIndex = 0; nMcsIndex < nMcsCount; nMcsIndex++) {
-				this.mcs[nMcsIndex] = new CMathMatrixColumnPr();
-				this.mcs[nMcsIndex].Set_FromObject(Obj.mcs[nMcsIndex]);
+				this.mcs[nMcsIndex] = CMathMatrixColumnPr.fromObject(Obj.mcs[nMcsIndex]);
 				nColumnsCount += this.mcs[nMcsIndex].count;
 			}
 		}
@@ -152,7 +157,7 @@ CMathMatrixPr.prototype.initByContent = function (mrs) {
 		colMaxMc += this.mcs[i].count;
 	}
 	if (colMaxMc < colMax) {
-		this.mcs.push({count: colMax - colMaxMc, mcJc: MCJC_CENTER});
+		this.mcs.push(CMathMatrixColumnPr.fromObject({count: colMax - colMaxMc, mcJc: MCJC_CENTER}));
 	}
 };
 CMathMatrixPr.prototype.Copy = function () {
@@ -971,7 +976,8 @@ CMathMatrix.prototype.Is_DeletedItem = function (Action) {
 CMathMatrix.prototype.Get_DeletedItemsThroughInterface = function () {
 	return [];
 };
-CMathMatrix.prototype.GetTextOfElement = function (isLaTeX, strBrackets) {
+CMathMatrix.prototype.GetTextOfElement = function (isLaTeX, strBrackets)
+{
 	var strMatrixSymbol;
 	if (isLaTeX) {
 		switch (strBrackets) {
@@ -1659,6 +1665,7 @@ CMathMenuEqArray.prototype.put_LineGap = function (Gap) {
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CEqArray = CEqArray;
 window['AscCommonWord'].CMathMatrix = CMathMatrix;
+window['AscWord'].CMathMatrixColumnPr = CMathMatrixColumnPr;
 
 window["CMathMenuEqArray"] = CMathMenuEqArray;
 CMathMenuEqArray.prototype["get_Align"] = CMathMenuEqArray.prototype.get_Align;

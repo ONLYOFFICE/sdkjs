@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -45,6 +45,9 @@
 		this.End = _end;
 		this.Name = _name;
 	}
+	CSymbolRange.prototype["getStart"] = function() { return this.Start; };
+	CSymbolRange.prototype["getEnd"] = function() { return this.End; };
+	CSymbolRange.prototype["getName"] = function() { return this.Name; };
 
 	function CFontByCharacter()
 	{
@@ -186,6 +189,8 @@
 			var oldCount = this.FontsByRangeCount;
 			for (var i = 0; i < _array.length; ++i)
 			{
+				if (32 === _array[i])
+					continue;
 				AscFonts.FontPickerByCharacter.getFontBySymbol(_array[i]);
 			}
 			return (this.FontsByRangeCount != oldCount);
@@ -328,5 +333,7 @@
 	window['AscFonts'] = window['AscFonts'] || {};
 	window['AscFonts'].IsCheckSymbols = false;
 	window['AscFonts'].FontPickerByCharacter = new CFontByCharacter();
+
+	window['AscFonts']['getSymbolRanges'] = function() { return window['AscFonts'].FontPickerByCharacter.Ranges; };
 
 })(window);

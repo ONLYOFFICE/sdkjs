@@ -1,5 +1,5 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -296,6 +296,143 @@
             result += byteToHex[input[i]];
 
         return result;
+    };
+
+    window.AscCommon["Base58"] = window.AscCommon.Base58 = {};
+
+    /**
+     * Encode data to base58 string
+     * @memberof AscCommon.Base58
+     * @alias encode
+     * @param {Array|TypedArray|string} input input data
+     * @return {string} encoded data
+     */
+    window.AscCommon.Base58.encode = function(buf)
+    {
+        if(typeof buf === "string")
+        {
+            let old = buf;
+            buf = [];
+            for (let i = 0, len = old.length; i < len; i++)
+                buf.push(old.charCodeAt(i));
+        }
+
+        const chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+        const chars_map = [
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1,  0,  1,  2,  3,  4,  5,  6,  7,  8, -1, -1, -1, -1, -1, -1,
+            -1,  9, 10, 11, 12, 13, 14, 15, 16, -1, 17, 18, 19, 20, 21, -1,
+            22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, -1, -1, -1, -1, -1,
+            -1, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, -1, 44, 45, 46,
+            47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
+        ];
+
+        let result = [];
+        for (let i = 0, len = buf.length; i < len; i++)
+        {
+            let carry = buf[i];
+            for (let j = 0; j < result.length; ++j)
+            {
+                const x = (chars_map[result[j]] << 8) + carry;
+                result[j] = chars.charCodeAt(x % 58);
+                carry = (x / 58) >> 0;
+            }
+            while (carry)
+            {
+                result.push(chars.charCodeAt(carry % 58));
+                carry = (carry / 58) >> 0;
+            }
+        }
+
+        let char1 = "1".charCodeAt(0);
+        for (let i = 0, len = buf.length; i < len; i++)
+        {
+            if (buf[i])
+                break;
+            else
+                result.push(char1);
+        }
+
+        result.reverse();
+        return String.fromCharCode.apply(null, result);
+    };
+
+    window.AscCommon["Utf8"] = window.AscCommon.Utf8 = {};
+
+    window.AscCommon.Utf8.encode = function(text, isEndNull)
+    {
+        //return new (TextEncoder()).encode(password);
+
+        var inputLen = text.length;
+        var testLen  = 6 * inputLen + 1;
+        var tmpStrings = new ArrayBuffer(testLen);
+
+        var code  = 0;
+        var index = 0;
+
+        var outputIndex = 0;
+        var outputDataTmp = new Uint8Array(tmpStrings);
+        var outputData = outputDataTmp;
+
+        while (index < inputLen)
+        {
+            code = text.charCodeAt(index++);
+            if (code >= 0xD800 && code <= 0xDFFF && index < inputLen)
+                code = 0x10000 + (((code & 0x3FF) << 10) | (0x03FF & text.charCodeAt(index++)));
+
+            if (code < 0x80)
+                outputData[outputIndex++] = code;
+            else if (code < 0x0800)
+            {
+                outputData[outputIndex++] = 0xC0 | (code >> 6);
+                outputData[outputIndex++] = 0x80 | (code & 0x3F);
+            }
+            else if (code < 0x10000)
+            {
+                outputData[outputIndex++] = 0xE0 | (code >> 12);
+                outputData[outputIndex++] = 0x80 | ((code >> 6) & 0x3F);
+                outputData[outputIndex++] = 0x80 | (code & 0x3F);
+            }
+            else if (code < 0x1FFFFF)
+            {
+                outputData[outputIndex++] = 0xF0 | (code >> 18);
+                outputData[outputIndex++] = 0x80 | ((code >> 12) & 0x3F);
+                outputData[outputIndex++] = 0x80 | ((code >> 6) & 0x3F);
+                outputData[outputIndex++] = 0x80 | (code & 0x3F);
+            }
+            else if (code < 0x3FFFFFF)
+            {
+                outputData[outputIndex++] = 0xF8 | (code >> 24);
+                outputData[outputIndex++] = 0x80 | ((code >> 18) & 0x3F);
+                outputData[outputIndex++] = 0x80 | ((code >> 12) & 0x3F);
+                outputData[outputIndex++] = 0x80 | ((code >> 6) & 0x3F);
+                outputData[outputIndex++] = 0x80 | (code & 0x3F);
+            }
+            else if (code < 0x7FFFFFFF)
+            {
+                outputData[outputIndex++] = 0xFC | (code >> 30);
+                outputData[outputIndex++] = 0x80 | ((code >> 24) & 0x3F);
+                outputData[outputIndex++] = 0x80 | ((code >> 18) & 0x3F);
+                outputData[outputIndex++] = 0x80 | ((code >> 12) & 0x3F);
+                outputData[outputIndex++] = 0x80 | ((code >> 6) & 0x3F);
+                outputData[outputIndex++] = 0x80 | (code & 0x3F);
+            }
+        }
+
+        if (isEndNull === true)
+            outputData[outputIndex++] = 0;
+
+        return new Uint8Array(tmpStrings, 0, outputIndex);
     };
 
 

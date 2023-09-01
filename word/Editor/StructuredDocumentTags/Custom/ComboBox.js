@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -74,6 +74,7 @@
 		this.ListItems = [];
 		this.LastValue = -1;
 		this.AutoFit   = false;
+		this.Format    = new AscWord.CTextFormFormat();
 	}
 	CSdtComboBoxPr.prototype.Copy = function()
 	{
@@ -88,12 +89,16 @@
 		}
 
 		oList.AutoFit = this.AutoFit;
+		oList.Format  = this.Format.Copy();
 
 		return oList;
 	};
 	CSdtComboBoxPr.prototype.IsEqual = function(oOther)
 	{
-		if (!oOther || this.LastValue !== oOther.LastValue || this.ListItems.length !== oOther.ListItems.length)
+		if (!oOther
+			|| this.LastValue !== oOther.LastValue
+			|| this.ListItems.length !== oOther.ListItems.length
+			|| !this.Format.IsEqual(oOther.Format))
 			return false;
 
 		for (var nIndex = 0, nCount = this.ListItems.length; nIndex < nCount; ++nIndex)
@@ -104,17 +109,28 @@
 
 		return true;
 	};
-	CSdtComboBoxPr.prototype.AddItem = function(sDisplay, sValue)
+	CSdtComboBoxPr.prototype.AddItem = function(sDisplay, sValue, nPosition)
 	{
 		if (null !== this.GetTextByValue(sValue))
 			return false;
-
+		
 		var oItem = new CSdtListItem();
 		oItem.DisplayText = sDisplay;
 		oItem.Value       = sValue;
-		this.ListItems.push(oItem);
-
+		
+		if (undefined === nPosition || nPosition < 0 || nPosition >= this.ListItems.length)
+			this.ListItems.push(oItem);
+		else
+			this.ListItems.splice(nPosition, 0, oItem);
+		
 		return true;
+	};
+	CSdtComboBoxPr.prototype.RemoveItem = function(nIndex)
+	{
+		if (nIndex < 0 || nIndex >= this.ListItems.length)
+			return;
+		
+		this.ListItems.splice(nIndex, 1);
 	};
 	CSdtComboBoxPr.prototype.Clear = function()
 	{
@@ -143,6 +159,7 @@
 			this.ListItems[nIndex].WriteToBinary(oWriter);
 		}
 		oWriter.WriteBool(this.AutoFit);
+		this.Format.WriteToBinary(oWriter);
 	};
 	CSdtComboBoxPr.prototype.ReadFromBinary = function(oReader)
 	{
@@ -156,6 +173,7 @@
 			this.ListItems.push(oItem);
 		}
 		this.AutoFit = oReader.GetBool();
+		this.Format.ReadFromBinary(oReader);
 	};
 	CSdtComboBoxPr.prototype.Write_ToBinary = function(oWriter)
 	{
@@ -164,6 +182,20 @@
 	CSdtComboBoxPr.prototype.Read_FromBinary = function(oReader)
 	{
 		this.ReadFromBinary(oReader);
+	};
+	CSdtComboBoxPr.prototype.Get = function(nIndex)
+	{
+		return this.ListItems[nIndex];
+	};
+	CSdtComboBoxPr.prototype.GetIndex = function(sValue)
+	{
+		for (var nIndex = 0, nCount = this.ListItems.length; nIndex < nCount; ++nIndex)
+		{
+			if (this.ListItems[nIndex].Value === sValue)
+				return nIndex;
+		}
+		
+		return -1;
 	};
 	CSdtComboBoxPr.prototype.GetItemsCount = function()
 	{
@@ -201,6 +233,10 @@
 	{
 		this.AutoFit = isAutoFit;
 	};
+	CSdtComboBoxPr.prototype.GetFormat = function()
+	{
+		return this.Format;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CSdtComboBoxPr = CSdtComboBoxPr;
@@ -215,7 +251,8 @@
 	CSdtComboBoxPr.prototype['get_ItemsCount']      = CSdtComboBoxPr.prototype.GetItemsCount;
 	CSdtComboBoxPr.prototype['get_ItemDisplayText'] = CSdtComboBoxPr.prototype.GetItemDisplayText;
 	CSdtComboBoxPr.prototype['get_ItemValue']       = CSdtComboBoxPr.prototype.GetItemValue;
-	CSdtComboBoxPr.prototype['put_AutoFit']         = CSdtComboBoxPr.prototype.GetAutoFit;
+	CSdtComboBoxPr.prototype['get_AutoFit']         = CSdtComboBoxPr.prototype.GetAutoFit;
 	CSdtComboBoxPr.prototype['put_AutoFit']         = CSdtComboBoxPr.prototype.SetAutoFit;
+
 
 })(window);

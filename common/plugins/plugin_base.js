@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -403,8 +403,89 @@
 		return _size;
 	};
 
+	function CPluginWindow()
+	{
+		this.id = window.Asc.generateGuid();
+		this.id = this.id.replace(/-/g, '');
+		this._events = {};
+
+		this._register();
+	}
+
+	CPluginWindow.prototype._register = function()
+	{
+		var plugin = window.Asc.plugin;
+		if (!plugin._windows)
+			plugin._windows = {};
+
+		plugin._windows[this.id] = this;
+	};
+	CPluginWindow.prototype._unregister = function()
+	{
+		var plugin = window.Asc.plugin;
+		if (!plugin._windows || !plugin._windows[this.id])
+			return;
+
+		delete plugin._windows[this.id];
+	};
+	CPluginWindow.prototype.show = function(settings)
+	{
+		var url = settings.url;
+		if (-1 === url.indexOf(".html?"))
+			url += "?windowID=";
+		else
+			url += "&windowID=";
+		settings.url = url + this.id;
+		window.Asc.plugin.executeMethod("ShowWindow", [this.id, settings]);
+	};
+	CPluginWindow.prototype.close = function()
+	{
+		window.Asc.plugin.executeMethod("CloseWindow", [this.id]);
+		this._unregister();
+	};
+	CPluginWindow.prototype.command = function(name, data)
+	{
+		window.Asc.plugin.executeMethod("SendToWindow", [this.id, name, data]);
+	};
+	CPluginWindow.prototype.attachEvent = function(id, action)
+	{
+		this._events[id] = action;
+	};
+	CPluginWindow.prototype.detachEvent = function(id)
+	{
+		if (this._events && this._events[id])
+			delete this._events[id];
+	};
+	CPluginWindow.prototype._oncommand = function(id, data)
+	{
+		if (this._events && this._events[id])
+			this._events[id].call(window.Asc.plugin, data);
+	};
+
 	window.Asc = window.Asc || {};
+
+	window.Asc.generateGuid = function() {
+		if (!window.crypto || !window.crypto.getRandomValues) {
+			function s4() {
+				return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+			}
+
+			return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+		} else {
+			var array = new Uint16Array(8);
+			window.crypto.getRandomValues(array);
+			var index = 0;
+
+			function s4() {
+				var value = 0x10000 + array[index++];
+				return value.toString(16).substring(1);
+			}
+
+			return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+		}
+	};
 	window.Asc.inputHelper = CIHelper;
+	window.Asc.PluginWindow = CPluginWindow;
 
 })(window, undefined);
 
@@ -463,8 +544,8 @@
 		".select2-container--default .select2-selection--single" : { "color" : "text-normal", "background-color" : "background-normal" },
 		".select2-container--default .select2-selection--single .select2-selection__rendered" : { "color" : "text-normal" },
 		".select2-results" : { "background-color" : "background-normal" },
-		".select2-container--default .select2-results__option--highlighted[aria-selected]" : { "background-color" : "border-regular-control !important"},
-		".select2-container--default .select2-results__option[aria-selected=true]" : { "background-color" : "border-regular-control !important"},
+		".select2-container--default .select2-results__option--highlighted[aria-selected]" : { "background-color" : "highlight-button-hover !important"},
+		".select2-container--default .select2-results__option[aria-selected=true]" : { "background-color" : "highlight-button-pressed !important"},
 		".select2-dropdown, .select2-container--default .select2-selection--single" : { "border-color" : "border-regular-control !important"},
 		".select2-container--default.select2-container--open .select2-selection--single" : { "border-color" : "border-control-focus !important"},
 		".select2-container--default.select2-container--focus:not(.select2-container--open) .select2-selection--single" : { "border-color" : "border-regular-control !important"},
@@ -673,10 +754,13 @@
 				case "button":
 				{
 					var _buttonId = parseInt(pluginData.button);
-					if (!window.Asc.plugin.button && -1 == _buttonId)
+					if (isNaN(_buttonId))
+						_buttonId = pluginData.button;
+
+					if (!window.Asc.plugin.button && -1 === _buttonId && undefined === pluginData.buttonWindowId)
 						window.Asc.plugin.executeCommand("close", "");
 					else
-						window.Asc.plugin.button(_buttonId);
+						window.Asc.plugin.button(_buttonId, pluginData.buttonWindowId);
 					break;
 				}
 				case "enableMouseEvent":
@@ -720,11 +804,11 @@
 				{
 					if (window.Asc.plugin.onCallCommandCallback)
 					{
-						window.Asc.plugin.onCallCommandCallback();
+						window.Asc.plugin.onCallCommandCallback(pluginData.commandReturnData);
 						window.Asc.plugin.onCallCommandCallback = null;
 					}
 					else if (window.Asc.plugin.onCommandCallback)
-						window.Asc.plugin.onCommandCallback();
+						window.Asc.plugin.onCommandCallback(pluginData.commandReturnData);
 					break;
 				}
 				case "onExternalPluginMessage":
@@ -737,6 +821,14 @@
 				{
 					if (window.Asc.plugin["event_" + pluginData.eventName])
 						window.Asc.plugin["event_" + pluginData.eventName](pluginData.eventData);
+					else if (window.Asc.plugin.onEvent)
+						window.Asc.plugin.onEvent(pluginData.eventName, pluginData.eventData);
+					break;
+				}
+				case "onWindowEvent":
+				{
+					if (window.Asc.plugin._windows && pluginData.windowID && window.Asc.plugin._windows[pluginData.windowID])
+						window.Asc.plugin._windows[pluginData.windowID]._oncommand(pluginData.eventName, pluginData.eventData);
 					break;
 				}
 				default:
@@ -823,6 +915,10 @@
 		window.Asc.plugin.executeCommand("onmouseup", JSON.stringify({ x : _x, y : _y }));
 	};
 
-	window.plugin_sendMessage(JSON.stringify({ guid : window.Asc.plugin.guid, type : "initialize_internal" }));
+	var objectInternalInit = { guid : window.Asc.plugin.guid, type : "initialize_internal" };
+	if (window.Asc.plugin.windowID)
+		objectInternalInit.windowID = window.Asc.plugin.windowID;
+
+	window.plugin_sendMessage(JSON.stringify(objectInternalInit));
 
 })(window, undefined);

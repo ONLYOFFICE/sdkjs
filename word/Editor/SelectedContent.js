@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -78,6 +78,7 @@
 		this.Select        = true;
 		this.ParaAnchorPos = null;
 		this.Run           = null;
+		this.PasteHelper   = null;
 
 		this.IsPresentationContent = false;
 	}
@@ -111,6 +112,10 @@
 	CSelectedContent.prototype.SetMoveDrawing = function(isMoveDrawing)
 	{
 		this.MoveDrawing = isMoveDrawing;
+	};
+	CSelectedContent.prototype.IsMoveDrawing = function()
+	{
+		return this.MoveDrawing;
 	};
 	CSelectedContent.prototype.SetCopyComments = function(isCopy)
 	{
@@ -155,8 +160,27 @@
 		if (((oParentShape && !oParentShape.isForm()) || true === oDocContent.IsFootnote()) && true === this.HaveShape())
 			return false;
 
-		// В заголовки диаграмм не вставляем формулы и любые DrawingObjects
-		if (oParagraph.bFromDocument === false && (this.DrawingObjects.length > 0 || this.HaveMath() || this.HaveTable()))
+		// В заголовки диаграмм не вставляем формулы
+		if(this.HaveMath())
+		{
+			if(oParagraph.bFromDocument === false)
+			{
+				let oDrawing = oDocContent.Is_DrawingShape(true);
+				if(oDrawing)
+				{
+					let nDrawingType = null;
+					if(oDrawing.getObjectType) 
+					{
+						nDrawingType = oDrawing.getObjectType();
+					}
+					if(nDrawingType !== AscDFH.historyitem_type_Shape)
+					{
+						return false;
+					}
+				}
+			}
+		}
+		if (oParagraph.bFromDocument === false && (this.DrawingObjects.length > 0 || this.HaveTable()))
 			return false;
 
 		let oParaAnchorPos = oParagraph.Get_ParaNearestPos(oAnchorPos);
@@ -165,6 +189,10 @@
 
 		let oRun = oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 1];
 		if (!oRun || !(oRun instanceof AscCommonWord.ParaRun))
+			return false;
+		
+		// Пока автофигуры не поддерживаются внутри формул, запрещаем их туда всталять
+		if (oRun.IsMathRun() && this.IsMoveDrawing())
 			return false;
 
 		return (oRun.IsMathRun() ? this.CanConvertToMath() : true);
@@ -193,6 +221,7 @@
 		this.Run           = oRun;
 		this.AnchorPos     = oAnchorPos;
 		this.Select        = !!isSelect;
+		this.PasteHelper   = oRun ? oRun.GetParagraph() : null;
 
 		let isLocalTrack = false;
 		if (oLogicDocument && oLogicDocument.IsDocumentEditor())
@@ -201,7 +230,11 @@
 			oLogicDocument.SetLocalTrackRevisions(false);
 		}
 
-		if (oRun.IsMathRun())
+		if (this.private_IsBlockLevelSdtPlaceholder())
+		{
+			this.private_InsertToBlockLevelSdtWithPlaceholder();
+		}
+		else if (oRun.IsMathRun())
 		{
 			this.private_InsertToMathRun();
 		}
@@ -225,9 +258,26 @@
 		{
 			this.private_InsertCommon();
 		}
+		
+		this.CheckTemporaryContentControl();
 
 		if (false !== isLocalTrack)
 			oLogicDocument.SetLocalTrackRevisions(isLocalTrack);
+
+		if (window.g_asc_plugins)
+		{
+			let aAllOleObjects = [];
+			let aAllOleObjectsData = [];
+			for(let nDrawing = 0; nDrawing < this.DrawingObjects.length; ++nDrawing)
+			{
+				this.DrawingObjects[nDrawing].GetAllOleObjects(null, aAllOleObjects);
+			}
+			for(let nOle = 0; nOle < aAllOleObjects.length; ++nOle)
+			{
+				aAllOleObjectsData.push(aAllOleObjects[nOle].getDataObject())
+			}
+			window.g_asc_plugins.onPluginEvent("onInsertOleObjects", aAllOleObjectsData);
+		}
 
 		return true;
 	};
@@ -254,6 +304,10 @@
 		}
 
 		oDocContent.SetThisElementCurrent();
+	};
+	CSelectedContent.prototype.GetPasteHelperElement = function()
+	{
+		return this.PasteHelper;
 	};
 	CSelectedContent.prototype.PrepareObjectsForInsert = function()
 	{
@@ -405,7 +459,7 @@
 	 */
 	CSelectedContent.prototype.ConvertToText = function()
 	{
-		var oParagraph = new Paragraph(editor.WordControl.m_oDrawingDocument, undefined, this.IsPresentationContent);
+		var oParagraph = this.private_CreateParagraph();
 
 		var sText = "";
 		for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
@@ -435,21 +489,22 @@
 	};
 	CSelectedContent.prototype.ConvertToPresentation = function(Parent)
 	{
-		var Elements = this.Elements.slice(0);
+		let Elements = this.Elements.slice(0);
 		this.Elements.length = 0;
 
-		for (var nIndex = 0, nCount = Elements.length; nIndex < nCount; ++nIndex)
+		for (let nIndex = 0, nCount = Elements.length; nIndex < nCount; ++nIndex)
 		{
-			var oElement = Elements[nIndex].Element;
+			let oSelectedElement = Elements[nIndex];
+			var oElement = oSelectedElement.Element;
 			if (oElement.IsParagraph())
 			{
-				this.Elements.push(new CSelectedElement(AscFormat.ConvertParagraphToPPTX(oElement, Parent.DrawingDocument, Parent, true, false), false))
+				this.Elements.push(new CSelectedElement(AscFormat.ConvertParagraphToPPTX(oElement, Parent.DrawingDocument, Parent, true, false), oSelectedElement.SelectedAll))
 			}
 		}
 	};
 	CSelectedContent.prototype.ConvertToInline = function()
 	{
-		var oParagraph = new Paragraph(editor.WordControl.m_oDrawingDocument, undefined, this.IsPresentationContent);
+		var oParagraph = this.private_CreateParagraph();
 
 		for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
 		{
@@ -790,13 +845,28 @@
 		let oMathContent      = oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 2];
 		let nInMathContentPos = oParaAnchorPos.NearPos.ContentPos.Data[oParaAnchorPos.Classes.length - 2];
 
-		let oInsertMath = this.ConvertToMath();
-		if (oInsertMath)
+		let paraMath = oMathContent.ParaMath;
+		let insertMath = this.ConvertToMath();
+		let paragraph = paraMath ? paraMath.GetParagraph() : null;
+		if (!insertMath || !paraMath || !paragraph)
+			return;
+		
+		if (paraMath.GetParent() instanceof AscWord.CInlineLevelSdt && paraMath.GetParent().IsContentControlEquation())
+		{
+			let contentControl = paraMath.GetParent();
+			paraMath = contentControl.ReplacePlaceholderEquation();
+			contentControl.RemoveContentControlWrapper();
+			
+			oMathContent = paraMath.Root;
+			oMathContent.AddToContent(0, new AscWord.CRun(paragraph, true));
+			oMathContent.InsertMathContent(insertMath.Root, 0, this.Select);
+		}
+		else
 		{
 			let oRun = oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 1];
 			let oNewRun = oRun.Split(oParaAnchorPos.NearPos.ContentPos, oParaAnchorPos.Classes.length - 1);
 			oMathContent.AddToContent(nInMathContentPos + 1, oNewRun);
-			oMathContent.InsertMathContent(oInsertMath.Root, nInMathContentPos + 1, this.Select);
+			oMathContent.InsertMathContent(insertMath.Root, nInMathContentPos + 1, this.Select);
 		}
 	};
 	CSelectedContent.prototype.private_InsertToPictureCC = function()
@@ -844,6 +914,12 @@
 
 		let nInLastClassPos = oParaAnchorPos.NearPos.ContentPos.Data[oParaAnchorPos.Classes.length - 1];
 
+		if (oForm.IsComplexForm())
+		{
+			this.ConvertToInline();
+			return this.private_InsertInline();
+		}
+
 		if ((!oForm.IsTextForm() && !oForm.IsComboBox()))
 			return;
 
@@ -886,31 +962,31 @@
 	CSelectedContent.prototype.private_InsertInline = function()
 	{
 		let oParaAnchorPos = this.ParaAnchorPos;
-
-		let oInlineLeveLSdt = this.Run.GetParent();
-		if (oInlineLeveLSdt instanceof CInlineLevelSdt
-			&& (oInlineLeveLSdt.IsPlaceHolder() || oInlineLeveLSdt.IsContentControlTemporary()))
+		
+		let runParent = this.Run.GetParent();
+		let inlineSdt = runParent && runParent instanceof CInlineLevelSdt ? runParent : null;
+		if (inlineSdt && inlineSdt.IsPlaceHolder())
 		{
-			if (oInlineLeveLSdt.IsContentControlTemporary())
+			if (inlineSdt.IsContentControlTemporary())
 			{
-				let oResult = oInlineLeveLSdt.RemoveContentControlWrapper();
-
+				let oResult = inlineSdt.RemoveContentControlWrapper();
+				
 				let oSdtParent = oResult.Parent;
 				let oSdtPos    = oResult.Pos;
 				let oSdtCount  = oResult.Count;
-
+				
 				if (!oSdtParent
 					|| oParaAnchorPos.Classes.length < 3
-					|| oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 2] !== oInlineLeveLSdt
+					|| oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 2] !== inlineSdt
 					|| oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 3] !== oSdtParent)
 					return;
-
+				
 				let oRun = new ParaRun(undefined, false);
-				oRun.SetPr(oInlineLeveLSdt.GetDefaultTextPr().Copy());
-
+				oRun.SetPr(inlineSdt.GetDefaultTextPr().Copy());
+				
 				oSdtParent.RemoveFromContent(oSdtPos, oSdtCount);
 				oSdtParent.AddToContent(oSdtPos, oRun);
-
+				
 				oParaAnchorPos.Classes.length--;
 				oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 1] = oRun;
 				oParaAnchorPos.NearPos.ContentPos.Update(oSdtPos, oParaAnchorPos.Classes.length - 2);
@@ -918,40 +994,39 @@
 			}
 			else
 			{
-				oInlineLeveLSdt.ReplacePlaceHolderWithContent();
-				oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 1] = oInlineLeveLSdt.GetElement(0);
+				inlineSdt.ReplacePlaceHolderWithContent();
+				oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 1] = inlineSdt.GetElement(0);
 				oParaAnchorPos.NearPos.ContentPos.Update(0, oParaAnchorPos.Classes.length - 2);
 				oParaAnchorPos.NearPos.ContentPos.Update(0, oParaAnchorPos.Classes.length - 1);
 			}
+			inlineSdt = null;
 		}
-
+		
 		let oRun    = oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 1];
 		let oNewRun = oRun.Split(oParaAnchorPos.NearPos.ContentPos, oParaAnchorPos.Classes.length - 1);
-
+		
 		let oParent      = oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 2];
 		let nInParentPos = oParaAnchorPos.NearPos.ContentPos.Data[oParaAnchorPos.Classes.length - 2];
-
+		
 		oParent.AddToContent(nInParentPos + 1, oNewRun);
-
+		
 		let oParagraph     = this.Elements[0].Element;
 		let nElementsCount = oParagraph.Content.length - 1; // Последний ран с para_End не добавляем
-
+		
 		let isSelect = this.Select && !this.MoveDrawing;
 		for (let nPos = 0; nPos < nElementsCount; ++nPos)
 		{
 			let oItem = oParagraph.GetElement(nPos);
 			oParent.AddToContent(nInParentPos + 1 + nPos, oItem);
-
+			
 			if (isSelect)
 				oItem.SelectAll();
 			else
 				oItem.RemoveSelection();
 		}
-
+		
 		if (this.MoveDrawing)
 		{
-			if (this.DrawingObjects.length)
-				this.DrawingObjects[0].SelectAsDrawing();
 		}
 		else if (isSelect)
 		{
@@ -975,13 +1050,16 @@
 				oParent.GetElement(nInParentPos + nElementsCount).MoveCursorToStartPos();
 			}
 		}
-
+		
 		if (oParent.CorrectContent)
 			oParent.CorrectContent();
-
+		
 		if (this.LogicDocument && this.LogicDocument.IsDocumentEditor())
 			this.private_AdjustSizeForInlineDrawing();
-
+		
+		if (inlineSdt && inlineSdt.IsContentControlTemporary())
+			inlineSdt.RemoveContentControlWrapper()
+		
 		this.private_CheckInsertSignatures();
 	};
 	CSelectedContent.prototype.private_OverwriteTableCells = function()
@@ -1033,6 +1111,8 @@
 			oDocContent.RemoveFromContent(nParagraphSPos + 1, 1);
 			nSelectionStart = nParagraphSPos;
 			nStartPos++;
+
+			oParagraphS = oInsertParagraph;
 		}
 
 		let nEndPos   = this.Elements.length - 1;
@@ -1057,9 +1137,14 @@
 			oDocContent.AddToContent(nInsertPos++, oElement);
 
 			if (this.Select)
+			{
 				oElement.SelectAll(1);
+			}
 			else
+			{
 				oElement.RemoveSelection();
+				oElement.MoveCursorToEndPos();
+			}
 		}
 		let nSelectionEnd = isConcatE ? oParagraphE.GetIndex() : nInsertPos - 1;
 
@@ -1073,8 +1158,11 @@
 		}
 		else
 		{
-			if (oParagraphS)
-				oParagraphE.RemoveSelection();
+			if (oParagraphS && oParagraphS !== oParagraphE)
+			{
+				oParagraphS.RemoveSelection();
+				oParagraphS.MoveCursorToEndPos();
+			}
 
 			oParagraphE.RemoveSelection();
 			oDocContent.CurPos.ContentPos = nInsertPos;
@@ -1082,6 +1170,69 @@
 		}
 
 		this.private_CheckInsertSignatures();
+
+		if (isConcatE && oParagraphE)
+			this.PasteHelper = oParagraphE;
+		else
+			this.PasteHelper = this.Elements[this.Elements.length - 1].Element;
+	};
+	CSelectedContent.prototype.private_GetDrawingDocument = function()
+	{
+		let _editor = editor;
+		if (!_editor && Asc && Asc.editor)
+			_editor = Asc.editor;
+		
+		if (!_editor)
+			return null;
+		
+		return _editor.getDrawingDocument();
+	};
+	CSelectedContent.prototype.private_CreateParagraph = function()
+	{
+		return new AscWord.CParagraph(this.private_GetDrawingDocument(), undefined, this.IsPresentationContent);
+	};
+	CSelectedContent.prototype.private_IsBlockLevelSdtPlaceholder = function()
+	{
+		let paragraph = this.Run.GetParagraph();
+		if (!paragraph)
+			return false;
+		
+		let paraIndex  = paragraph.GetIndex();
+		let docContent = paragraph.GetParent();
+		
+		if (!docContent
+			|| paragraph !== docContent.GetElement(paraIndex)
+			|| !docContent.IsBlockLevelSdtContent())
+			return false;
+		
+		let blockSdt = docContent.GetParent();
+		if (blockSdt.IsPlaceHolder())
+			return true;
+	};
+	CSelectedContent.prototype.private_InsertToBlockLevelSdtWithPlaceholder = function()
+	{
+		let blockSdt = this.Run.GetParagraph().GetParent().GetParent();
+		blockSdt.ReplacePlaceHolderWithContent();
+		let docContent = blockSdt.GetContent();
+		this.ReplaceContent(docContent, true);
+	};
+	CSelectedContent.prototype.CheckTemporaryContentControl = function()
+	{
+		let paragraph = this.Run.GetParagraph();
+		if (!paragraph)
+			return;
+		
+		let paraIndex  = paragraph.GetIndex();
+		let docContent = paragraph.GetParent();
+		
+		if (!docContent
+			|| paragraph !== docContent.GetElement(paraIndex)
+			|| !docContent.IsBlockLevelSdtContent())
+			return;
+		
+		let blockSdt = docContent.GetParent();
+		if (blockSdt.IsContentControlTemporary())
+			blockSdt.RemoveContentControlWrapper();
 	};
 
 	/**

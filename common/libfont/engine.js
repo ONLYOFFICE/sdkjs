@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -29,6 +29,8 @@
  * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
  */
+
+// THIS FILE WAS GENERATED AUTOMATICALLY. DO NOT CHANGE IT!
 
 function onLoadFontsModule(window, undefined)
 {
@@ -72,6 +74,13 @@ function onLoadFontsModule(window, undefined)
 
 	AscFonts.HB_FontFree = AscFonts["HB_FontFree"];
 	AscFonts.HB_ShapeText = AscFonts["HB_ShapeText"];
+
+	AscFonts["Hyphen_Init"]();
+	AscFonts.Hyphen_Destroy = AscFonts["Hyphen_Destroy"];
+	AscFonts.Hyphen_LoadDictionary = AscFonts["Hyphen_LoadDictionary"];
+	AscFonts.Hyphen_CheckDictionary = AscFonts["Hyphen_CheckDictionary"];
+	AscFonts.Hyphen_Word = AscFonts["Hyphen_Word"];
+
 
 	AscFonts.CreateNativeStreamByIndex = function(stream_index)
 	{
@@ -190,7 +199,7 @@ function onLoadFontsModule(window, undefined)
 		var c = READER.readInt();
 		while (c)
 		{
-			this.family_name += String.fromCharCode(c);
+			this.family_name += (c < 0x10000) ? String.fromCharCode(c) : (String.fromCharCode(0xD800 | (c >> 10)) + String.fromCharCode(0xDC00 | (c & 0x3FF)));
 			c = READER.readInt();
 		}
 
@@ -408,7 +417,7 @@ function onLoadFontsModule(window, undefined)
 		}
 	};
 
-	const FONTSIZE       = 72;
+	const FONTSIZE       = 576;
 	const STRING_MAX_LEN = 1024;
 	const COEF           = 25.4 / 72 / 64 / FONTSIZE;
 	let   STRING_POINTER = null;
@@ -422,6 +431,7 @@ function onLoadFontsModule(window, undefined)
 	AscFonts.MEASURE_FONTSIZE        = FONTSIZE;
 	AscFonts.GRAPHEME_STRING_MAX_LEN = STRING_MAX_LEN;
 	AscFonts.GRAPHEME_COEF           = COEF;
+	AscFonts.HB_STRING_MAX_LEN       = STRING_MAX_LEN;
 
 	function CCodePointsCalculator(codePointsBuffer, clusterBuffer)
 	{
@@ -664,4 +674,117 @@ function onLoadFontsModule(window, undefined)
 		retObj["free"]();
 		return glyphs;
 	};
+
+	function Hyphenation()
+	{
+		this._value = "";
+		this._lang = 0;
+		this._dictionaries = {};
+		this._mapToNames = null;
+
+		this.addCodePoint = function(codePoint)
+		{
+			this._value += String.fromCodePoint(codePoint);
+		};
+		this.clear = function()
+		{
+			this._value = "";
+		};
+		this.setLang = function(langCode, callback)
+		{
+			this._lang = langCode;
+
+			let _langKey = "" + langCode;
+			if (this._dictionaries[_langKey] !== undefined)
+				return this._dictionaries[_langKey];
+
+			if (window["NATIVE_EDITOR_ENJINE"])
+			{
+				this._dictionaries[_langKey] = AscFonts.Hyphen_CheckDictionary(this._lang);
+				return this._dictionaries[_langKey];
+			}
+			else if (callback)
+			{
+				if (!this._mapToNames)
+					this._mapToNames = AscCommon.spellcheckGetLanguages();
+
+				if (undefined !== this._mapToNames["" + langCode])
+					this.loadDictionary(langCode, callback);
+			}
+
+			return false;
+		};
+		this.hyphenate = function()
+		{
+			if ("" === this._value) 
+				return [];	
+			return AscFonts.Hyphen_Word(this._lang, this._value);
+		};
+
+		this.loadDictionary = function(lang, callback)
+		{
+			if (window["NATIVE_EDITOR_ENJINE"])
+			{
+				callback();
+				return;
+			}
+
+			if (!this._mapToNames)
+				this._mapToNames = AscCommon.spellcheckGetLanguages();
+
+			let _langKey = "" + lang;
+			let _langName = this._mapToNames[_langKey];
+			if (_langName === undefined)
+			{
+				this._dictionaries[_langKey] = false;
+				callback();
+				return;
+			}
+
+			this._loadDictionaryAttemt(_langKey, _langName, callback);
+		};
+
+		this._loadDictionaryAttemt = function(langKey, langName, callback, currentAttempt)
+		{
+			var xhr = new XMLHttpRequest();
+			let urlDictionaries = "../../../../dictionaries/";
+			let url = urlDictionaries + langName + "/hyph_" + langName + ".dic";
+
+			xhr.open('GET', url, true);
+			xhr.responseType = 'arraybuffer';
+			xhr.currentAttempt = currentAttempt || 0;
+
+			if (xhr.overrideMimeType)
+				xhr.overrideMimeType('text/plain; charset=x-user-defined');
+			else
+				xhr.setRequestHeader('Accept-Charset', 'x-user-defined');
+
+			var _t = this;
+			xhr.onload = function()
+			{
+				if (this.status === 200 || location.href.indexOf("file:") === 0)
+				{
+					_t._dictionaries[langKey] = true;
+					AscFonts.Hyphen_LoadDictionary(parseInt(langKey), this.response);
+					callback();
+				}
+			};
+			xhr.onerror = function()
+			{
+				let _currentAttempt = xhr.currentAttempt + 1;
+				if (_currentAttempt > 3)
+				{
+					_t._dictionaries[langKey] = false;
+					callback();
+					return;
+				}
+
+				_t._loadDictionaryAttemt(langKey, langName, callback, _currentAttempt);
+			};
+
+			xhr.send(null);
+		};
+	}
+
+	window["AscHyphenation"] = new Hyphenation();
 }

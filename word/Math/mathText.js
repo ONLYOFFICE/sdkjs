@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1004,9 +1004,9 @@ CMathText.prototype.Read_FromBinary = function(Reader)
 	if (AscFonts.IsCheckSymbols)
 		AscFonts.FontPickerByCharacter.getFontBySymbol(this.value);
 };
-CMathText.prototype.Is_LetterCS = function()
+CMathText.prototype.GetFontSlot = function()
 {
-    return this.FontSlot == AscWord.fontslot_CS;
+	return this.FontSlot;
 };
 CMathText.prototype.ToSearchElement = function(oProps)
 {
@@ -1021,8 +1021,10 @@ CMathText.prototype.ToSearchElement = function(oProps)
 };
 CMathText.prototype.GetTextOfElement = function(isLaTeX) {
 	var strPre = "";
+
 	if (this.Parent) {
 		var oParentMathPrp = this.Parent.MathPrp.scr;
+
 		if (1 === oParentMathPrp) {
 			strPre = '\\script';
 		} else if (2 === oParentMathPrp) {
@@ -1031,37 +1033,25 @@ CMathText.prototype.GetTextOfElement = function(isLaTeX) {
 			strPre = '\\double';
 		}
 	}
-	var strOutput = String.fromCharCode(this.value);
-	if (isLaTeX) {
-		if (strOutput === 'θ') {
-			strOutput = '\\theta'
-		}
-		if (strOutput === '→') {
-			strOutput = '\\to'
-		}
-		if (strOutput === '∞') {
-			strOutput = '\\infty'
-		}
-		if (strOutput === '…') {
-			strOutput = '\\dots'
-		}
-	}
 
-	// if (strOutput !== '{' || strOutput !== '}') {
-	// 	for (var i = 65; i <= 90; i++) {
-	// 		var obj = SymbolsForCorrect[String.fromCharCode(i)];
-	
-	// 		if (obj) {
-	// 			var oneObj = Object.entries(obj);
-	// 			for (var j = 0; j < oneObj.length; j++) {
-	// 				if (oneObj[j][1] === this.value) {
-	// 					strOutput = oneObj[j][0];
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
-	return strPre + strOutput;
+    if (isLaTeX)
+    {
+        let str = AscMath.SymbolsToLaTeX[String.fromCharCode(this.value)];
+        if (str)
+        {
+            return str + " ";
+        }
+
+    }
+
+    if (this.value && this.value !== 11034)
+        return strPre + AscCommon.encodeSurrogateChar(this.value);
+
+	return "";
+};
+CMathText.prototype.GetCodePoint = function()
+{
+    return this.value;
 };
 /*CMathText.prototype.Recalculate_Reset = function(StartRange, StartLine, PRS)
 {
@@ -1449,4 +1439,7 @@ var q_Math_BreakOperators =
     0x00D7: 1, 0x00F7:  1
 };
 
-
+//--------------------------------------------------------export----------------------------------------------------
+window['AscWord'] = window['AscWord'] || {};
+window['AscWord'].CMathText = CMathText;
+window['AscWord'].CMathAmp = CMathAmp;

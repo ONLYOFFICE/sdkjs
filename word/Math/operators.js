@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -4050,27 +4050,42 @@ CDelimiter.prototype.GetTextOfElement = function(isLaTeX) {
 	//	if end bracket doesn't show:	(...┤ => (...
 	//	else:							(...) => (...)
 	//if start and close braketets non-standart add \open, \close
-
 	var strTemp = "";
 	var strStartSymbol = this.Pr.begChr === -1 ? "" : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
-	var strEndSymbol = this.Pr.begChr === -1 ? "" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
-	var strSeparatorSymbol = isLaTeX ? "\\mid" : "∣";
-	if (strStartSymbol === "\uffff") {
-		strStartSymbol = ' '
-	}
+	var strEndSymbol = this.Pr.endChr === -1 ? "" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
 
-   strTemp += strStartSymbol;
-	for (var intCount = 0; intCount < this.Content.length; intCount++) {
-        if (isLaTeX && this.Content && this.Content.length === 1 && this.Content[0].Content.length && this.Content[0].Content[1] && this.Content[0].Content.length > 1 && this.Content[0].Content[1].Type === 51) {
-            return this.Content[0].Content[1].GetTextOfElement(isLaTeX, strStartSymbol+strEndSymbol);
-        }
-		strTemp += this.CheckIsEmpty(this.Content[intCount].GetTextOfElement(isLaTeX));
+	var strSeparatorSymbol = isLaTeX ? "\\mid " : "∣";
 
-		if (strSeparatorSymbol && this.Content.length > 1 && intCount < this.Content.length - 1) {
+    if (isLaTeX)
+    {
+        strStartSymbol = strStartSymbol === "" ? "." : strStartSymbol;
+        strTemp += "\\left" + strStartSymbol;
+    }
+    else
+    {
+        strStartSymbol = strStartSymbol === "" ? "├" : strStartSymbol;
+        strTemp += strStartSymbol;
+    }
+
+	for (let intCount = 0; intCount < this.Content.length; intCount++)
+    {
+		strTemp += this.Content[intCount].GetMultipleContentForGetText(isLaTeX, true);
+
+		if (strSeparatorSymbol && this.Content.length > 1 && intCount < this.Content.length - 1)
 			strTemp += strSeparatorSymbol;
-		}
 	}
-    strTemp += strEndSymbol;
+
+    if (isLaTeX)
+    {
+        strEndSymbol = strEndSymbol === "" ? "." : strEndSymbol;
+        strTemp += "\\right" + strEndSymbol;
+    }
+    else
+    {
+        strEndSymbol = strEndSymbol === "" ? "┤" : strEndSymbol;
+        strTemp += strEndSymbol;
+    }
+
 	return strTemp;
 }
 
@@ -4528,17 +4543,33 @@ CGroupCharacter.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
 	var intStartCode = this.Pr.chr || this.operator.Get_CodeChr();
 	var strStart = String.fromCharCode(intStartCode);
-	var Base = this.getBase().GetTextOfElement();
-	var strStartBracet = (Base.length > 1 || isLaTeX) ? this.GetStartBracetForGetTextContent(isLaTeX) : "";
-	var strCloseBracet = (Base.length > 1 || isLaTeX) ? this.GetEndBracetForGetTextContent(isLaTeX) : "";
+	var Base = this.getBase().GetMultipleContentForGetText(isLaTeX);
 
-	if (true === isLaTeX) {
-		if (intStartCode === 9182)
-			strStart = '\\overbrace';
-		else if (intStartCode === 9183)
-			strStart = '\\underbrace';
+	if (true === isLaTeX)
+    {
+        if (intStartCode === 9182 || intStartCode === 9183)
+        {
+            if (intStartCode === 9182)
+                strStart = '\\overbrace';
+            else if (intStartCode === 9183)
+                strStart = '\\underbrace';
+
+            strStart = strStart + Base;
+        }
+        else
+            strStart += this.Pr.pos === 1 ? "\\above" : "\\below";
+
+        strTemp = strStart;
+        if (Base)
+            strTemp += Base;
 	}
-	strTemp = strStart + strStartBracet + Base + strCloseBracet;
+    else
+    {
+        let pos = this.Pr.pos === 1 ? "┴" : "┬";
+        if (intStartCode !== 9182 && intStartCode !== 9183)
+            strStart += pos;
+        strTemp = strStart + Base;
+    }
 	return strTemp;
 };
 

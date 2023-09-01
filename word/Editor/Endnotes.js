@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2020
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 09.04.2020
- * Time: 13:31
- */
 
 /**
  * Класс, работающий с концевыми сносками документа
@@ -228,7 +223,7 @@ CEndnotesController.prototype.IsUseInDocument = function(sEndnoteId, arrEndnotes
  * @param oEndnote
  * return {boolean}
  */
-CEndnotesController.prototype.Is_ThisElementCurrent = function(oEndnote)
+CEndnotesController.prototype.IsThisElementCurrent = function(oEndnote)
 {
 	if (oEndnote === this.CurEndnote && docpostype_Endnotes === this.LogicDocument.GetDocPosType())
 		return true;
@@ -742,37 +737,26 @@ CEndnotesController.prototype.EndSelection = function(X, Y, nPageAbs, oMouseEven
 	var sEndId   = this.Selection.End.Endnote.GetId();
 
 	// Очищаем старый селект везде кроме начальной сноски
-	for (var sEndnoteId in this.Selection.Endnotes)
+	for (let sEndnoteId in this.Selection.Endnotes)
 	{
 		if (sEndnoteId !== sStartId)
 			this.Selection.Endnotes[sEndnoteId].RemoveSelection();
 	}
 
-	// Новый селект
 	if (this.Selection.Start.Endnote !== this.Selection.End.Endnote)
 	{
-		if (this.Selection.Start.Page > this.Selection.End.Page
-			|| (this.Selection.Start.Page === this.Selection.End.Page
-				&& (this.Selection.Start.Section > this.Selection.End.Section
-					|| (this.Selection.Start.Section === this.Selection.End.Section
-						&& (this.Selection.Start.Column > this.Selection.End.Column
-							|| (this.Selection.Start.Column === this.Selection.End.Column
-								&& this.Selection.Start.Index > this.Selection.End.Index))))))
-		{
-			this.Selection.Start.Endnote.Selection_SetEnd(-MEASUREMENT_MAX_MM_VALUE, -MEASUREMENT_MAX_MM_VALUE, 0, oMouseEvent);
-			this.Selection.End.Endnote.Selection_SetStart(MEASUREMENT_MAX_MM_VALUE, MEASUREMENT_MAX_MM_VALUE, this.Selection.End.Endnote.Pages.length - 1, oMouseEvent);
-			this.Selection.Direction = -1;
-		}
-		else
-		{
-			this.Selection.Start.Endnote.Selection_SetEnd(MEASUREMENT_MAX_MM_VALUE, MEASUREMENT_MAX_MM_VALUE, this.Selection.Start.Endnote.Pages.length - 1, oMouseEvent);
-			this.Selection.End.Endnote.Selection_SetStart(-MEASUREMENT_MAX_MM_VALUE, -MEASUREMENT_MAX_MM_VALUE, 0, oMouseEvent);
-			this.Selection.Direction = 1;
-		}
+		this.Selection.Direction = this.private_GetSelectionDirection();
+		
+		this.Selection.Start.Endnote.SetSelectionUse(true);
+		this.Selection.Start.Endnote.SetSelectionToBeginEnd(false, this.Selection.Direction < 0);
+		
+		this.Selection.End.Endnote.SetSelectionUse(true);
+		this.Selection.End.Endnote.SetSelectionToBeginEnd(true, this.Selection.Direction > 0);
+		
 		this.Selection.End.Endnote.Selection_SetEnd(X, Y, this.Selection.End.EndnotePageIndex, oMouseEvent);
-
+		
 		var oRange = this.private_GetEndnotesRange(this.Selection.Start, this.Selection.End);
-		for (var sEndnoteId in oRange)
+		for (let sEndnoteId in oRange)
 		{
 			if (sEndnoteId !== sStartId && sEndnoteId !== sEndId)
 			{
@@ -975,7 +959,7 @@ CEndnotesController.prototype.GetAllTables = function(oProps, arrTables)
 	for (var sId in this.Endnote)
 	{
 		var oEndnote = this.Endnote[sId];
-		oEndnote.GetAllTables(oProps, ParaArray);
+		oEndnote.GetAllTables(oProps, arrTables);
 	}
 
 	return arrTables;
@@ -1373,6 +1357,25 @@ CEndnotesController.prototype.private_GetSelectionArray = function()
 	else
 		return this.private_GetEndnotesLogicRange(this.Selection.End.Endnote, this.Selection.Start.Endnote);
 };
+CEndnotesController.prototype.private_GetSelectionDirection = function()
+{
+	if (this.Selection.Start.Page > this.Selection.End.Page)
+		return -1;
+	else if (this.Selection.Start.Page < this.Selection.End.Page)
+		return 1;
+	
+	if (this.Selection.Start.Section > this.Selection.End.Section)
+		return -1;
+	else if (this.Selection.Start.Section < this.Selection.End.Section)
+		return 1;
+	
+	if (this.Selection.Start.Column > this.Selection.End.Column)
+		return -1;
+	else if (this.Selection.Start.Column < this.Selection.End.Column)
+		return 1;
+	
+	return this.Selection.Start.Index > this.Selection.End.Index ? -1 : 1;
+};
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Controller area
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1474,12 +1477,12 @@ CEndnotesController.prototype.AddImages = function(aImages)
 
 	return this.CurEndnote.AddImages(aImages);
 };
-CEndnotesController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect)
+CEndnotesController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
 	if (false === this.private_CheckEndnotesSelectionBeforeAction())
-		return false;
+		return null;
 
-	return this.CurEndnote.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect);
+	return this.CurEndnote.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
 CEndnotesController.prototype.AddTextArt = function(nStyle)
 {
@@ -2673,11 +2676,11 @@ CEndnotesController.prototype.UpdateCursorType = function(X, Y, PageAbs, MouseEv
 		oEndnote.UpdateCursorType(X, Y, oResult.EndnotePageIndex, MouseEvent);
 	}
 };
-CEndnotesController.prototype.PasteFormatting = function(TextPr, ParaPr)
+CEndnotesController.prototype.PasteFormatting = function(oData)
 {
 	for (var sId in this.Selection.Endnotes)
 	{
-		this.Selection.Endnotes[sId].PasteFormatting(TextPr, ParaPr, true);
+		this.Selection.Endnotes[sId].PasteFormatting(oData);
 	}
 };
 CEndnotesController.prototype.IsSelectionUse = function()
@@ -2930,7 +2933,9 @@ CEndnotesController.prototype.SetSelectionState = function(State, StateIndex)
 CEndnotesController.prototype.AddHyperlink = function(oProps)
 {
 	if (true !== this.IsSelectionUse() || true === this.private_IsOneEndnoteSelected())
-		this.CurEndnote.AddHyperlink(oProps);
+		return this.CurEndnote.AddHyperlink(oProps);
+	
+	return null;
 };
 CEndnotesController.prototype.ModifyHyperlink = function(oProps)
 {

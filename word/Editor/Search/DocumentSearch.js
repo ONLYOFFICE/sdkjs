@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -64,6 +64,7 @@
 		this.TextAroundTimer  = null;
 		this.TextAroundUpdate = true;
 		this.ReplaceEvent     = true;
+		this.TextAroundEmpty  = true; // Флаг, что все очищено, чтобы не очищать повторно
 	}
 
 	CDocumentSearch.prototype.Reset = function()
@@ -107,6 +108,17 @@
 		this.Count++;
 		this.Elements[this.Id++] = Paragraph;
 		return (this.Id - 1);
+	};
+	CDocumentSearch.prototype.GetElementsMap = function()
+	{
+		let map = {};
+		for (let searchId in this.Elements)
+		{
+			let paraId = this.Elements[searchId].GetId();
+			if (!map[paraId])
+				map[paraId] = this.Elements[searchId];
+		}
+		return map;
 	};
 	CDocumentSearch.prototype.Select = function(nId, bUpdateStates)
 	{
@@ -401,10 +413,13 @@
 			if (!this.Elements[sId])
 				continue;
 
-			let sText = this.Elements[sId].GetTextAroundSearchResult(sId);
-			this.TextArround[sId] = sText;
-			arrResult.push([sId, sText]);
+			let textAround = this.Elements[sId].GetTextAroundSearchResult(sId);
+			this.TextArround[sId] = textAround;
+			arrResult.push([sId, textAround]);
 		}
+
+		if (arrResult.length)
+			this.TextAroundEmpty = false;
 
 		this.LogicDocument.GetApi().sync_getTextAroundSearchPack(arrResult);
 
@@ -455,9 +470,17 @@
 	};
 	CDocumentSearch.prototype.SendClearAllTextAround = function()
 	{
+		if (this.TextAroundEmpty)
+			return;
+
 		let oApi = this.LogicDocument.GetApi();
+		if (!oApi)
+			return;
+
 		oApi.sync_startTextAroundSearch();
 		oApi.sync_endTextAroundSearch();
+
+		this.TextAroundEmpty = true;
 	};
 
 	//--------------------------------------------------------export----------------------------------------------------

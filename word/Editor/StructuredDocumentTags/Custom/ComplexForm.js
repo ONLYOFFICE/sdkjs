@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -34,30 +34,50 @@
 
 (function(window)
 {
+	const ComplexFormType = {
+		Custom    : 0,
+		Telephone : 1,
+		Email     : 2,
+	};
+
 	/**
 	 *
 	 * @constructor
 	 */
 	function CSdtComplexFormPr()
 	{
-
+		this.Type = ComplexFormType.Custom;
 	}
 	CSdtComplexFormPr.prototype.Copy = function()
 	{
-		return new CSdtComplexFormPr();
+		let formPr = new CSdtComplexFormPr();
+		formPr.Type = this.Type;
+		return formPr;
 	};
-	CSdtComplexFormPr.prototype.IsEqual = function(oComplexFormPr)
+	CSdtComplexFormPr.prototype.IsEqual = function(formPr)
 	{
-		return (oComplexFormPr instanceof CSdtComplexFormPr);
+		return (formPr instanceof CSdtComplexFormPr
+			&& formPr.Type === this.Type);
+	};
+	CSdtComplexFormPr.prototype.GetType = function()
+	{
+		return this.Type;
 	};
 	CSdtComplexFormPr.prototype.WriteToBinary = function(oWriter)
 	{
+		oWriter.WriteLong(this.Type);
 	};
 	CSdtComplexFormPr.prototype.ReadFromBinary = function(oReader)
 	{
+		this.Type = oReader.GetLong();
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CSdtComplexFormPr = CSdtComplexFormPr
+
+	let exportPrototype          = window['Asc']['ComplexFormType'] = window['Asc'].ComplexFormType = ComplexFormType;
+	exportPrototype['Custom']    = exportPrototype.Custom;
+	exportPrototype['Telephone'] = exportPrototype.Telephone;
+	exportPrototype['Email']     = exportPrototype.Email;
 
 })(window);

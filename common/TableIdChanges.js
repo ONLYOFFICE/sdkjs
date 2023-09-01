@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -31,12 +31,6 @@
  */
 
 "use strict";
-
-/**
- * User: Ilja.Kirillov
- * Date: 26.10.2016
- * Time: 18:53
- */
 
 (/**
  * @param {Window} window
@@ -83,6 +77,9 @@
 	};
 	CChangesTableIdAdd.prototype.Load = function(Color)
 	{
+		if (!this.NewClass)
+			return;
+		
 		this.Class.m_aPairs[this.Id] = this.NewClass;
 	};
 	CChangesTableIdAdd.prototype.RefreshRecalcData = function()
@@ -126,7 +123,7 @@
 		this.LastPoint     = LastPoint;
 		this.SumIndex      = SumIndex;
 		this.DeletedIndex  = DeletedIndex;
-		this.VersionString = "@@Version.@@Build.@@Rev";
+		this.VersionString = AscCommon.g_cProductVersion + "." + AscCommon.g_cBuildNumber;
 	}
 
 	CChangesTableIdDescription.prototype = Object.create(AscDFH.CChangesBase.prototype);
@@ -186,15 +183,19 @@
 		this.DeletedIndex  = Reader.GetLong();
 		this.VersionString = Reader.GetString2();
 	};
+	CChangesTableIdDescription.prototype.GetBinarySize = function()
+	{
+		return (9 * 4 + 4 + ((this.VersionString.length & 0x7FFFFFFF) * 2));
+	};
 	CChangesTableIdDescription.prototype.Load = function(Color)
 	{
 		// var CollaborativeEditing = AscCommon.CollaborativeEditing;
 		// // CollaborativeEditing LOG
 		// console.log("ItemsCount2  " + CollaborativeEditing.m_nErrorLog_PointChangesCount);
 		// if (CollaborativeEditing.m_nErrorLog_PointChangesCount !== CollaborativeEditing.m_nErrorLog_SavedPCC)
-		// 	console.log("========================= BAD Changes Count in Point =============================");
+		// 	console.log("========================= BAD number of changes in the Point =====================");
 		// if (CollaborativeEditing.m_nErrorLog_CurPointIndex + 1 !== this.PointIndex && 0 !== this.PointIndex)
-		// 	console.log("========================= BAD Point index ========================================");
+		// 	console.log("========================= BAD Point number =======================================");
 		// var bBadSumIndex = false;
 		// if (0 === this.PointIndex)
 		// {

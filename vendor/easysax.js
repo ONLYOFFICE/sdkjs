@@ -220,7 +220,7 @@ function EasySAXParser(config) {
         };
 
         if (!ns || typeof root !== 'string') {
-            throw error('required args ns(string, object)');
+            throw Error('required args ns(string, object)');
         };
 
         isNamespace = !!(useNS = ns || null);
@@ -1277,17 +1277,22 @@ StaxParser.prototype.parseNode = function(indexStart) {
     return -1;
 };
 StaxParser.prototype.MoveToNextAttribute = function() {
-    var startAttrName = this.index;
     var i = this.index;
     var w = this.xml.charCodeAt(i);
     while (i < this.length) {
         if (w === 61 /* "=" */ && i + 1 < this.length) {
-            this.name = this.xml.substring(startAttrName, i);
+            this.name = this.xml.substring(this.index, i);
+            this.name = this.name.trim();
             var textStart = i + 2;
             if (this.xml.charCodeAt(textStart - 1) === 34/* "\"" */) {
                 i = this.xml.indexOf("\"", textStart);
             } else {
-                i = this.xml.indexOf('\'', textStart);
+                i = this.xml.slice(textStart - 1).search(/["']/g);
+                if (-1 !== i) {
+                    i += textStart - 1;//slice compensation
+                    textStart = i + 1;
+                    i = this.xml.indexOf(this.xml[i], textStart);
+                }
             }
             if (-1 !== i) {
                 this.text = this.xml.substring(textStart, i);
@@ -1300,7 +1305,6 @@ StaxParser.prototype.MoveToNextAttribute = function() {
         if (w === 32 || w === 9 || w === 10 || w === 11 || w === 12 || w === 13) { // \f\n\r\t\v space
             //todo spaces between name and =
             w = this.xml.charCodeAt(++i);
-            startAttrName = i;
             continue;
         }
         if (w === 62 /* ">" */) {
@@ -1498,7 +1502,7 @@ StaxParser.prototype.GetText = function () {
         if (EasySAXEvent.END_ELEMENT === type && curDepth === depth)
             break;
         if (EasySAXEvent.CHARACTERS === type) {
-            text += this.GetValueDecodeXml();
+            text += this.GetValue();
         }
     }
     return text;
@@ -1559,6 +1563,12 @@ StaxParser.prototype.GetEventType = function() {
 StaxParser.prototype.GetContext = function() {
     return this.context;
 };
+StaxParser.prototype.GetOformContext = function() {
+	if (!this.context)
+		return null;
+	
+	return this.context.getOformContext();
+};
 StaxParser.prototype.getState = function() {
     return {
         depth: this.depth,
@@ -1615,6 +1625,18 @@ function XmlParserContext(){
     this.commentDataById = {};
     this.oReadResult = new AscCommonWord.DocReadResult();
     this.maxZIndex = 0;
+
+    this.oformContext = null;
+    this.sdtPrWithFieldPath = [];
+    this.fieldMasterMap = {};
+
+    this.fieldMastersWithUserMasterPath = [];
+    this.userMasterMap = {};
+
+    this.fieldGroupsWithFieldMasterPath = [];
+    this.fieldWithFieldMastersPath = [];
+    this.userWithUserMastersPath = [];
+
     //xlsx
     this.sharedStrings = [];
     this.row = null;
@@ -1639,6 +1661,123 @@ XmlParserContext.prototype.clearSlideRelations = function() {
     this.layoutsMap = {};
     this.notesMastersMap = {};
 };
+XmlParserContext.prototype.clearFieldRelations = function() {
+    this.sdtPrWithFieldPath = [];
+    this.fieldMasterMap = {};
+};
+XmlParserContext.prototype.addSdtPrRelation = function(oSdtPr, sTarget) {
+    this.sdtPrWithFieldPath.push({sdtPr: oSdtPr, target: sTarget});
+};
+XmlParserContext.prototype.addFieldGroupRelation = function(oFieldGroup, sTarget) {
+    this.fieldGroupsWithFieldMasterPath.push({fieldGroup: oFieldGroup, target: sTarget});
+};
+XmlParserContext.prototype.addFieldMasterPath = function(oFieldMaster, sTarget) {
+    this.fieldMasterMap[sTarget] = oFieldMaster;
+};
+XmlParserContext.prototype.addFieldWithFieldMaterPath = function(oField, sTarget) {
+    this.fieldWithFieldMastersPath.push({field: oField, target: sTarget});
+};
+XmlParserContext.prototype.addUserWithUserMastersPath = function(oUser, sTarget) {
+    this.userWithUserMastersPath.push({user: oUser, target: sTarget});
+};
+XmlParserContext.prototype.assignFieldsToFieldMasters = function() {
+    for(let nFld = 0; nFld < this.fieldWithFieldMastersPath.length; ++nFld) {
+        let oPair = this.fieldWithFieldMastersPath[nFld];
+        let sTarget = oPair.target;
+        for(let sKey in this.fieldMasterMap) {
+            if(this.fieldMasterMap.hasOwnProperty(sKey)) {
+                if(sKey.indexOf(sTarget) > -1) {
+                    let oFieldMaster = this.fieldMasterMap[sKey];
+                    if(oFieldMaster) {
+                        oFieldMaster.setLogicField(oPair.field);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+};
+XmlParserContext.prototype.assignFieldsToSdt = function() {
+    for(let nSdt = 0; nSdt < this.sdtPrWithFieldPath.length; ++nSdt) {
+        let oPair = this.sdtPrWithFieldPath[nSdt];
+        let oFieldMaster = this.fieldMasterMap[oPair.target];
+        if(oFieldMaster) {
+            oPair.sdtPr.OForm = oFieldMaster;
+        }
+    }
+};
+
+XmlParserContext.prototype.addFieldMasterRelation = function(oFieldMaster, sTarget) {
+    this.fieldMastersWithUserMasterPath.push({fieldMaster: oFieldMaster, target: sTarget});
+};
+XmlParserContext.prototype.addUserMasterPath = function(oUserMaster, sTarget) {
+    this.userMasterMap[sTarget] = oUserMaster;
+};
+XmlParserContext.prototype.assignFieldsToFieldGroup = function() {
+    for(let nFldGrp = 0; nFldGrp < this.fieldGroupsWithFieldMasterPath.length; ++nFldGrp) {
+        let oPair = this.fieldGroupsWithFieldMasterPath[nFldGrp];
+        let sTarget = oPair.target;
+        for(let sKey in this.fieldMasterMap) {
+            if(this.fieldMasterMap.hasOwnProperty(sKey)) {
+                if(sKey.indexOf(sTarget) > -1) {
+                    let oFieldMaster = this.fieldMasterMap[sKey];
+                    if(oFieldMaster) {
+                        oPair.fieldGroup.addField(oFieldMaster);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+};
+XmlParserContext.prototype.assignUsersToFieldMasters = function() {
+    for(let nPair = 0; nPair < this.fieldMastersWithUserMasterPath.length; ++nPair) {
+        let oPair = this.fieldMastersWithUserMasterPath[nPair];
+        let oUserMasterMaster = this.userMasterMap[oPair.target];
+        if(oUserMasterMaster) {
+            oPair.fieldMaster.addUser(oUserMasterMaster);
+        }
+    }
+};
+XmlParserContext.prototype.assignUsersToUserMasters = function() {
+    for(let nPair = 0; nPair < this.userWithUserMastersPath.length; ++nPair) {
+        let oPair = this.userWithUserMastersPath[nPair];
+        let sTarget = oPair.target;
+        for(let sKey in this.userMasterMap) {
+            if(this.userMasterMap.hasOwnProperty(sKey)) {
+                if(sKey.indexOf(sTarget) > -1) {
+                    let oUserMaster = this.userMasterMap[sKey];
+                    if(oUserMaster) {
+                        oUserMaster.setUserId(oPair.user.Id);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+};
+XmlParserContext.prototype.assignFormLinks = function() {
+    this.assignFieldsToSdt();
+    this.assignUsersToFieldMasters();
+    this.assignFieldsToFieldGroup();
+    this.assignFieldsToFieldMasters();
+    this.assignUsersToUserMasters();
+
+    this.sdtPrWithFieldPath = [];
+    this.fieldMasterMap = {};
+    this.fieldMastersWithUserMasterPath = [];
+    this.userMasterMap = {};
+    this.fieldGroupsWithFieldMasterPath = [];
+    this.fieldWithFieldMastersPath = [];
+    this.userWithUserMastersPath = [];
+};
+XmlParserContext.prototype.getOformContext = function() {
+	return this.oformContext;
+};
+XmlParserContext.prototype.setOformContext = function(context) {
+	this.oformContext = context;
+};
+
 XmlParserContext.prototype.addTableStyle = function(sGuid, oStyle) {
     this.TableStylesMap[sGuid] = oStyle;
 };
@@ -1673,8 +1812,7 @@ XmlParserContext.prototype.loadDataLinks = function() {
             let data = this.zip.getFile(path);
             if (data) {
                 if (!window["NATIVE_EDITOR_ENJINE"]) {
-                    let mime = AscCommon.openXml.GetMimeType(AscCommon.GetFileExtension(path));
-                    let blob = new Blob([data], {type: mime});
+                    let blob = this.zip.getImageBlob(path);
                     let url = window.URL.createObjectURL(blob);
                     AscCommon.g_oDocumentUrls.addImageUrl(path, url);
                 }
@@ -1722,6 +1860,10 @@ function XmlWriterContext(editorId){
     this.paraIdIndex = 1;
     this.commentDataById = {};
     this.docSaveParams = null;
+
+    this.fieldMastersPartMap = {};
+    this.userMasterPartMap = {};
+
     //xlsx
     this.wb = null;
     this.sheetIds = [];
@@ -1760,6 +1902,12 @@ XmlWriterContext.prototype.addSlideMasterRel = function(sRel) {
 };
 XmlWriterContext.prototype.addNotesMasterRel = function(sRel) {
     this.notesMasterIdLst.push(sRel);
+};
+XmlWriterContext.prototype.addFieldMasterPart = function(oFieldMaster, oPart) {
+    this.fieldMastersPartMap[oFieldMaster.Id] = oPart;
+};
+XmlWriterContext.prototype.addUserMasterPart = function(oUserMaster, oPart) {
+    this.userMasterPartMap[oUserMaster.Id] = oPart;
 };
 XmlWriterContext.prototype.clearSlideLayoutRels = function() {
     this.sldLayoutIdLst.length = 0;
@@ -1835,12 +1983,16 @@ XmlWriterContext.prototype.getSpIdxId = function(sEditorId){
 };
 function CT_XmlNode(opt_elemReader) {
     this.attributes = {};
-    this.attributes = {};
     this.members = {};
     this.text = null;
 
     this.elemReader = opt_elemReader || function(){};
 }
+CT_XmlNode.fromReader = function(reader, opt_elemReader) {
+	let node = new CT_XmlNode(opt_elemReader);
+	node.fromXml(reader);
+	return node;
+};
 CT_XmlNode.prototype.readAttr = function(reader) {
     while (reader.MoveToNextAttribute()) {
         this.attributes[reader.GetNameNoNS()] = reader.GetValue();

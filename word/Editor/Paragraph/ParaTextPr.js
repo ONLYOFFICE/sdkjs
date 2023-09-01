@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 02.11.2016
- * Time: 16:36
- */
 
 /**
  * Класс представляющий собой настройки текста (сейчас используется как настройка текста для конца параграфа)
@@ -387,6 +382,10 @@ ParaTextPr.prototype.Set_RStyle = function(Value)
 	History.Add(new CChangesParaTextPrRStyle(this, this.Value.RStyle, Value));
 	this.Value.RStyle = Value;
 };
+ParaTextPr.prototype.SetRStyle = function(styleId)
+{
+	this.Set_RStyle(styleId);
+};
 ParaTextPr.prototype.Set_Spacing = function(Value)
 {
 	if (null === Value)
@@ -706,15 +705,15 @@ ParaTextPr.prototype.SetLigatures = function(nType)
 	oChange.Redo();
 };
 /**
- * Выставляем настройки (если какая-либо undefined, то такая настройка удаляется)
- * @param {CTextPr} oTextPr
+ * Жестко выставляем заданные настройки
+ * @param {CTextPr} textPr
  */
-ParaTextPr.prototype.SetPr = function(oTextPr)
+ParaTextPr.prototype.SetPr = function(textPr)
 {
-	if (!oTextPr)
-		oTextPr = new CTextPr();
+	if (!textPr)
+		textPr = new CTextPr();
 
-	this.Set_Value(oTextPr);
+	this.Set_Value(textPr);
 };
 ParaTextPr.prototype.IncreaseDecreaseFontSize = function(isIncrease)
 {

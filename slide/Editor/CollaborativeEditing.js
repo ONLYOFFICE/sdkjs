@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -219,8 +219,9 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
 		this.m_aNeedUnlock2.length = 0;
 	}
 
-    if (0 < aChanges.length || null !== deleteIndex) {
-        this.private_OnSendOwnChanges(aChanges2, deleteIndex);
+    if (0 < aChanges.length || null !== deleteIndex)
+	{
+		this.CoHistory.AddOwnChanges(aChanges2, deleteIndex);
         editor.CoAuthoringApi.saveChanges(aChanges, deleteIndex, AdditionalInfo, editor.canUnlockDocument2, bCollaborative);
         AscCommon.History.CanNotAddChanges = true;
     } else
@@ -295,6 +296,10 @@ CCollaborativeEditing.prototype.Release_Locks = function()
                     else if(Class === editor.WordControl.m_oLogicDocument.slideSizeLock)
                     {
                         editor.sendEvent("asc_onUnLockDocumentProps");
+                    }
+                    else if(Class === editor.WordControl.m_oLogicDocument.viewPrLock)
+                    {
+                        editor.sendEvent("asc_onUnLockViewProps");
                     }
                 }
                 if(object.getObjectType && object.getObjectType() === AscDFH.historyitem_type_Slide && object.deleteLock === Class)
@@ -490,7 +495,7 @@ CCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
         {
             // Если у нас началось редактирование диаграммы, а вернулось, что ее редактировать нельзя,
             // посылаем сообщение о закрытии редактора диаграмм.
-            if ( true === editor.isChartEditor )
+            if ( true === editor.isOpenedChartFrame )
                 editor.sync_closeChartEditor();
 
             if ( true === editor.isOleEditor )
@@ -529,9 +534,17 @@ CCollaborativeEditing.prototype.RewritePosExtChanges = function(changesArr, scal
         data.Old *= scale;
         var Binary_Writer = AscCommon.History.BinaryWriter;
         var Binary_Pos    = Binary_Writer.GetCurPosition();
-        Binary_Writer.WriteString2(changes.Class.Get_Id());
-        Binary_Writer.WriteLong(changes.Data.Type);
-        changes.Data.WriteToBinary(Binary_Writer);
+		if ((Asc.editor || editor).binaryChanges) {
+			Binary_Writer.WriteWithLen(this, function () {
+				Binary_Writer.WriteString2(changes.Class.Get_Id());
+				Binary_Writer.WriteLong(changes.Data.Type);
+				changes.Data.WriteToBinary(Binary_Writer);
+			});
+		} else {
+			Binary_Writer.WriteString2(changes.Class.Get_Id());
+			Binary_Writer.WriteLong(changes.Data.Type);
+			changes.Data.WriteToBinary(Binary_Writer);
+		}
 
         var Binary_Len = Binary_Writer.GetCurPosition() - Binary_Pos;
 
@@ -613,7 +626,7 @@ CCollaborativeEditing.prototype.Update_ForeignCursorPosition = function(UserId, 
         DrawingDocument.Collaborative_RemoveTarget(UserId);
         return;
     }
-    ParaContentPos.Update(InRunPos, ParaContentPos.Get_Depth() + 1);
+    ParaContentPos.Update(InRunPos, ParaContentPos.GetDepth() + 1);
     var XY = Paragraph.Get_XYByContentPos(ParaContentPos);
     if (XY && XY.Height > 0.001){
         var ShortId = this.m_aForeignCursorsId[UserId] ? this.m_aForeignCursorsId[UserId] : UserId;

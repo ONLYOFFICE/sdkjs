@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -39,23 +39,23 @@
 	const FLAGS_CS                          = 0x00000001; // FontSlot (не флагами, а значением
 	const FLAGS_HANSI                       = 0x00000002; // от 0 до 3)
 	const FLAGS_EASTASIA                    = 0x00000003; //
-	const FLAGS_FONTKOEF_SCRIPT             = 0x00000004; // 2 бит
-	const FLAGS_FONTKOEF_SMALLCAPS          = 0x00000008; // 3 бит
-	const FLAGS_SPACEAFTER                  = 0x00000010; // 4 бит
-	const FLAGS_CAPITALS                    = 0x00000020; // 5 бит
-	const FLAGS_LIGATURE                    = 0x00000040; // 6 бит
-	const FLAGS_LIGATURE_CONTINUE           = 0x00000080; // 7 бит
-	const FLAGS_COMBINING_MARK              = 0x00000100; // 8 бит
-	const FLAGS_TEMPORARY                   = 0x00000200; // 9 бит
-	const FLAGS_TEMPORARY_LIGATURE          = 0x00000400; // 10 бит
-	const FLAGS_TEMPORARY_LIGATURE_CONTINUE = 0x00000800; // 11 бит
-	const FLAGS_TEMPORARY_COMBINING_MARK    = 0x00001000; // 12 бит
-	const FLAGS_VISIBLE_WIDTH               = 0x00002000; // 13 бит
-	const FLAGS_GAPS                        = 0x00004000; // 14 бит
+	const FLAGS_FONTKOEF_SMALLCAPS          = 0x00000004; // 2 бит
+	const FLAGS_SPACEAFTER                  = 0x00000008; // 3 бит
+	const FLAGS_CAPITALS                    = 0x00000010; // 4 бит
+	const FLAGS_LIGATURE                    = 0x00000020; // 5 бит
+	const FLAGS_LIGATURE_CONTINUE           = 0x00000040; // 6 бит
+	const FLAGS_COMBINING_MARK              = 0x00000080; // 7 бит
+	const FLAGS_TEMPORARY                   = 0x00000100; // 8 бит
+	const FLAGS_TEMPORARY_LIGATURE          = 0x00000200; // 9 бит
+	const FLAGS_TEMPORARY_LIGATURE_CONTINUE = 0x00000400; // 10 бит
+	const FLAGS_TEMPORARY_COMBINING_MARK    = 0x00000800; // 11 бит
+	const FLAGS_VISIBLE_WIDTH               = 0x00001000; // 12 бит
+	const FLAGS_GAPS                        = 0x00002000; // 13 бит
+	const FLAGS_HYPHEN_AFTER                = 0x00004000; // 14
+	const FLAGS_TEMPORARY_HYPHEN_AFTER      = 0x00008000; // 15
 
 	// 16-31 биты зарезервированы под FontSize
 
-	const FLAGS_NON_FONTKOEF_SCRIPT             = FLAGS_MASK ^ FLAGS_FONTKOEF_SCRIPT;
 	const FLAGS_NON_FONTKOEF_SMALLCAPS          = FLAGS_MASK ^ FLAGS_FONTKOEF_SMALLCAPS;
 	const FLAGS_NON_SPACEAFTER                  = FLAGS_MASK ^ FLAGS_SPACEAFTER;
 	const FLAGS_NON_CAPITALS                    = FLAGS_MASK ^ FLAGS_CAPITALS;
@@ -68,6 +68,39 @@
 	const FLAGS_NON_VISIBLE_WIDTH               = FLAGS_MASK ^ FLAGS_VISIBLE_WIDTH;
 	const FLAGS_NON_TEMPORARY_COMBINING_MARK    = FLAGS_MASK ^ FLAGS_TEMPORARY_COMBINING_MARK;
 	const FLAGS_NON_GAPS                        = FLAGS_MASK ^ FLAGS_GAPS;
+	const FLAGS_NON_HYPHEN_AFTER                = FLAGS_MASK ^ FLAGS_HYPHEN_AFTER;
+	const FLAGS_NON_TEMPORARY_HYPHEN_AFTER      = FLAGS_MASK ^ FLAGS_TEMPORARY_HYPHEN_AFTER;
+
+	function CreateNonBreakingHyphen()
+	{
+		let t = new CRunText(0x002D);
+		t.SetSpaceAfter(false);
+		return t;
+	}
+
+	/**
+	 * Символы, которые мы в любом случае считаем комбинированными, даже если текстовый шейпер их не объединил
+	 * с предыдущим символом в один глиф
+	 * @param nCodePoint {number}
+	 * @returns {boolean}
+	 */
+	function IsCombinedMark(nCodePoint)
+	{
+		return !!((0x0300 <= nCodePoint && nCodePoint <= 0x036F)
+			|| (0x0483 <= nCodePoint && nCodePoint <= 0x0487)
+			|| (0x1AB0 <= nCodePoint && nCodePoint <= 0x1ABE)
+			|| (0x1CD0 <= nCodePoint && nCodePoint <= 0x1CE0)
+			|| (0x1CE2 <= nCodePoint && nCodePoint <= 0x1CE8)
+			|| 0x1CED === nCodePoint
+			|| 0x1CF4 === nCodePoint
+			|| 0x1CF8 === nCodePoint
+			|| 0x1CF9 === nCodePoint
+			|| (0x1DC0 <= nCodePoint && nCodePoint <= 0x1DFF)
+			|| (0x20D0 <= nCodePoint && nCodePoint <= 0x20F0)
+			|| (0xFE00 <= nCodePoint && nCodePoint <= 0xFE00)
+			|| (0xFE20 <= nCodePoint && nCodePoint <= 0xFE2D)
+		);
+	}
 
 	/**
 	 * Класс представляющий текстовый символ
@@ -84,7 +117,7 @@
 		this.Flags    = 0x00000000 | 0;
 		this.Grapheme = AscFonts.NO_GRAPHEME;
 
-		this.Set_SpaceAfter(this.private_IsSpaceAfter());
+		this.SetSpaceAfter(this.private_IsSpaceAfter());
 
 		if (AscFonts.IsCheckSymbols)
 			AscFonts.FontPickerByCharacter.getFontBySymbol(this.Value);
@@ -97,7 +130,7 @@
 	CRunText.prototype.SetCharCode = function(CharCode)
 	{
 		this.Value = CharCode;
-		this.Set_SpaceAfter(this.private_IsSpaceAfter());
+		this.SetSpaceAfter(this.private_IsSpaceAfter());
 
 		if (AscFonts.IsCheckSymbols)
 			AscFonts.FontPickerByCharacter.getFontBySymbol(this.Value);
@@ -109,6 +142,10 @@
 	CRunText.prototype.GetCodePoint = function()
 	{
 		return this.Value;
+	};
+	CRunText.prototype.GetScript = function()
+	{
+		return AscFonts.hb_get_script_by_unicode(this.GetCodePoint());
 	};
 	CRunText.prototype.SetGrapheme = function(nGrapheme)
 	{
@@ -142,7 +179,7 @@
 				nFS = FLAGS_CS;
 
 			this.Flags = (this.Flags & 0xFFFFFFFC) | nFS;
-
+			
 			if (oTextPr.Caps || oTextPr.SmallCaps)
 			{
 				this.Flags |= FLAGS_CAPITALS;
@@ -157,15 +194,12 @@
 				this.Flags &= FLAGS_NON_CAPITALS;
 				this.Flags &= FLAGS_NON_FONTKOEF_SMALLCAPS;
 			}
+			
+			let isCoeffScript = oTextPr.VertAlign !== AscCommon.vertalign_Baseline;
 
-			if (oTextPr.VertAlign !== AscCommon.vertalign_Baseline)
-				this.Flags |= FLAGS_FONTKOEF_SCRIPT;
-			else
-				this.Flags &= FLAGS_NON_FONTKOEF_SCRIPT;
-
-			if (this.Flags & FLAGS_FONTKOEF_SCRIPT && this.Flags & FLAGS_FONTKOEF_SMALLCAPS)
+			if (isCoeffScript && this.Flags & FLAGS_FONTKOEF_SMALLCAPS)
 				nFontCoef = smallcaps_and_script_koef;
-			else if (this.Flags & FLAGS_FONTKOEF_SCRIPT)
+			else if (isCoeffScript)
 				nFontCoef = AscCommon.vaKSize;
 			else if (this.Flags & FLAGS_FONTKOEF_SMALLCAPS)
 				nFontCoef = smallcaps_Koef;
@@ -255,8 +289,14 @@
 	{
 		this.TempWidth = ((nWidth * (((this.Flags >> 16) & 0xFFFF) / 64)) * AscWord.TEXTWIDTH_DIVIDER) | 0;
 	};
-	CRunText.prototype.SetWidthVisible = function(nWidth)
+	CRunText.prototype.SetWidthVisible = function(nWidth, textPr)
 	{
+		if (this.Flags & FLAGS_TEMPORARY_HYPHEN_AFTER)
+		{
+			let fontInfo = textPr.GetFontInfo(AscWord.fontslot_ASCII);
+			nWidth += AscFonts.GetGraphemeWidth(AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x002D, fontInfo.Name, fontInfo.Style)) * (((this.Flags >> 16) & 0xFFFF) / 64);
+		}
+		
 		let nW = (nWidth * AscWord.TEXTWIDTH_DIVIDER) | 0;
 
 		let isTemporary = this.IsTemporary();
@@ -281,11 +321,17 @@
 		else
 			return (this.Width / AscWord.TEXTWIDTH_DIVIDER);
 	};
-	CRunText.prototype.GetWidth = function()
+	CRunText.prototype.GetWidth = function(textPr)
 	{
 		let nWidth = (this.Flags & FLAGS_TEMPORARY ?
 			this.TempWidth / AscWord.TEXTWIDTH_DIVIDER :
 			this.Width / AscWord.TEXTWIDTH_DIVIDER);
+		
+		if (textPr && (this.Flags & FLAGS_TEMPORARY_HYPHEN_AFTER))
+		{
+			let fontInfo = textPr.GetFontInfo(AscWord.fontslot_ASCII);
+			nWidth += AscFonts.GetGraphemeWidth(AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x002D, fontInfo.Name, fontInfo.Style)) * (((this.Flags >> 16) & 0xFFFF) / 64);
+		}
 
 		if (this.Flags & FLAGS_GAPS)
 			nWidth += this.LGap + this.RGap;
@@ -302,6 +348,10 @@
 	};
 	CRunText.prototype.Draw = function(X, Y, Context, PDSE, oTextPr)
 	{
+		if (Context.m_bIsTextDrawer === true)
+		{
+			Context.CheckAddNewPath(X, Y, this.Value);
+		}
 		if (this.Flags & FLAGS_GAPS)
 		{
 			Context.SaveGrState();
@@ -312,18 +362,44 @@
 		}
 
 		let nFontSize = (((this.Flags >> 16) & 0xFFFF) / 64);
-		if (this.Flags & FLAGS_TEMPORARY)
+
+		if (this.IsNBSP())
+		{
+			this.DrawNonBreakingSpace(Context, X, Y, nFontSize);
+		}
+		else if (this.Flags & FLAGS_TEMPORARY)
 		{
 			if (AscFonts.NO_GRAPHEME !== this.TempGrapheme)
 				AscFonts.DrawGrapheme(this.TempGrapheme, Context, X, Y, nFontSize);
 		}
-		else if (AscFonts.NO_GRAPHEME !== this.Grapheme && (!this.IsNBSP() || (editor && editor.ShowParaMarks)))
+		else if (AscFonts.NO_GRAPHEME !== this.Grapheme)
 		{
 			AscFonts.DrawGrapheme(this.Grapheme, Context, X, Y, nFontSize);
 		}
+		
+		if (this.Flags & FLAGS_TEMPORARY_HYPHEN_AFTER)
+			this.DrawHyphenAfter(Context, X, Y, nFontSize, oTextPr);
 
 		if (this.Flags & FLAGS_GAPS)
 			Context.RestoreGrState();
+	};
+	CRunText.prototype.DrawNonBreakingSpace = function(Context, X, Y, nFontSize)
+	{
+		if (!editor || !editor.ShowParaMarks)
+			return;
+
+		let nbspWidth = AscFonts.GetGraphemeWidth(this.Grapheme) * nFontSize;
+		let width     = this.Width / AscWord.TEXTWIDTH_DIVIDER;
+		let shift     = (width - nbspWidth) / 2;
+
+		AscFonts.DrawGrapheme(this.Grapheme, Context, X + shift, Y, nFontSize);
+	};
+	CRunText.prototype.DrawHyphenAfter = function(context, X, Y, fontSize, textPr)
+	{
+		let fontInfo   = textPr.GetFontInfo(AscWord.fontslot_ASCII);
+		let graphemeId = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x002D, fontInfo.Name, fontInfo.Style);
+		let shift      = this.GetWidth();
+		AscFonts.DrawGrapheme(graphemeId, context, X + shift, Y, fontSize);
 	};
 	CRunText.prototype.Measure = function(oMeasurer, oTextPr)
 	{
@@ -360,7 +436,9 @@
 	};
 	CRunText.prototype.IsEqual = function(oElement)
 	{
-		return (oElement.Type === this.Type && this.Value === oElement.Value);
+		return (oElement.Type === this.Type
+			&& this.Value === oElement.Value
+			&& this.IsSpaceAfter() === oElement.IsSpaceAfter());
 	};
 	CRunText.prototype.IsNBSP = function()
 	{
@@ -377,6 +455,32 @@
 	CRunText.prototype.IsSpaceAfter = function()
 	{
 		return !!(this.Flags & FLAGS_SPACEAFTER);
+	};
+	CRunText.prototype.isHyphenAfter = function()
+	{
+		return !!(this.Flags & FLAGS_HYPHEN_AFTER);
+	};
+	CRunText.prototype.SetHyphenAfter = function(isHyphen)
+	{
+		if (isHyphen)
+			this.Flags |= FLAGS_HYPHEN_AFTER;
+		else
+			this.Flags &= FLAGS_NON_HYPHEN_AFTER;
+	};
+	CRunText.prototype.ResetTemporaryHyphenAfter = function()
+	{
+		this.Flags &= FLAGS_NON_TEMPORARY_HYPHEN_AFTER;
+	};
+	CRunText.prototype.SetTemporaryHyphenAfter = function(isHyphen)
+	{
+		if (isHyphen)
+			this.Flags |= FLAGS_TEMPORARY_HYPHEN_AFTER;
+		else
+			this.Flags &= FLAGS_NON_TEMPORARY_HYPHEN_AFTER;
+	};
+	CRunText.prototype.IsTemporaryHyphenAfter = function()
+	{
+		return !!(this.Flags & FLAGS_TEMPORARY_HYPHEN_AFTER);
 	};
 	/**
 	 * Получаем символ для проверки орфографии
@@ -397,7 +501,7 @@
 				return String.fromCharCode(this.Value);
 		}
 	};
-	CRunText.prototype.Set_SpaceAfter = function(bSpaceAfter)
+	CRunText.prototype.SetSpaceAfter = function(bSpaceAfter)
 	{
 		if (bSpaceAfter)
 			this.Flags |= FLAGS_SPACEAFTER;
@@ -412,13 +516,16 @@
 	{
 		// Long : Type
 		// Long : Value
+		// Bool : SpaceAfter
 
 		Writer.WriteLong(para_Text);
 		Writer.WriteLong(this.Value);
+		Writer.WriteBool(this.IsSpaceAfter());
 	};
 	CRunText.prototype.Read_FromBinary = function(Reader)
 	{
 		this.SetCharCode(Reader.GetLong());
+		this.SetSpaceAfter(Reader.GetBool());
 	};
 	CRunText.prototype.private_IsSpaceAfter = function()
 	{
@@ -468,10 +575,6 @@
 			return AscWord.AUTOCORRECT_FLAGS_FIRST_LETTER_SENTENCE | AscWord.AUTOCORRECT_FLAGS_HYPHEN_WITH_DASH;
 
 		return AscWord.AUTOCORRECT_FLAGS_NONE;
-	};
-	CRunText.prototype.IsDiacriticalSymbol = function()
-	{
-		return !!(0x0300 <= this.Value && this.Value <= 0x036F);
 	};
 	CRunText.prototype.IsDot = function()
 	{
@@ -526,7 +629,7 @@
 	};
 	CRunText.prototype.IsCombiningMark = function()
 	{
-		return !!(this.Flags & FLAGS_TEMPORARY ? this.Flags & FLAGS_TEMPORARY_COMBINING_MARK : this.Flags & FLAGS_COMBINING_MARK);
+		return (!!(this.Flags & FLAGS_TEMPORARY ? this.Flags & FLAGS_TEMPORARY_COMBINING_MARK : this.Flags & FLAGS_COMBINING_MARK) || IsCombinedMark(this.Value));
 	};
 	CRunText.prototype.IsLigatureContinue = function()
 	{
@@ -627,5 +730,6 @@
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CRunText = CRunText;
+	window['AscWord'].CreateNonBreakingHyphen = CreateNonBreakingHyphen;
 
 })(window);
