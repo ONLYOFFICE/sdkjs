@@ -1690,6 +1690,16 @@
 		}
 		return null;
 	};
+	CGraphicObjectBase.prototype.getMorphGeometry = function() {
+		let oGeometry = this.getGeometry();
+		if(!oGeometry) {
+			oGeometry = AscFormat.ExecuteNoHistory(function () {
+				oGeometry = AscFormat.CreateGeometry("rect");
+				oGeometry.Recalculate(this.extX, this.extY);
+			}, this, []);
+		}
+		return oGeometry;
+	};
 	CGraphicObjectBase.prototype.getTrackGeometry = function () {
 
 		const oOwnGeometry = this.getGeometry();

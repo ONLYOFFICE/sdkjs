@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 03.11.2016
- * Time: 16:43
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_Table_TableW]                = CChangesTableTableW;
 AscDFH.changesFactory[AscDFH.historyitem_Table_TableCellMar]          = CChangesTableTableCellMar;

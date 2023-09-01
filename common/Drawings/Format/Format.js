@@ -7375,6 +7375,9 @@
 				this.chExtY === xfrm.chExtY;
 		};
 		CXfrm.prototype.merge = function (xfrm) {
+			if(!xfrm) {
+				return;
+			}
 			if (xfrm.offX != null) {
 				this.offX = xfrm.offX;
 			}

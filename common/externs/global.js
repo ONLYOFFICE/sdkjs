@@ -48,6 +48,7 @@ var AscMath;
 var AscJsonConverter;
 var AscCrypto;
 var AscOForm;
+var AscHyphenation;
 
 function jq(){}
 function DE(){}

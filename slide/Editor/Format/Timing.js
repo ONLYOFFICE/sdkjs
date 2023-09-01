@@ -10015,6 +10015,9 @@
         this.y = nY;
     }
     CBaseAnimTexture.prototype.drawInRect = function(oGraphics, dAlpha, nX, nY, nW, nH) {
+        if(this.canvas.width === 0 || this.canvas.height === 0 || nW === 0 || nH === 0) {
+            return;
+        }
         oGraphics.SaveGrState();
         oGraphics.SetIntegerGrid(true);
         oGraphics.put_GlobalAlpha(true, dAlpha);
@@ -10024,6 +10027,9 @@
         oGraphics.FreeFont && oGraphics.FreeFont();
     };
     CBaseAnimTexture.prototype.draw = function (oGraphics, oTransform) {
+        if(this.canvas.width === 0 || this.canvas.height === 0) {
+            return;
+        }
         var bNoTransform = false;
         if (!oTransform) {
             bNoTransform = true;

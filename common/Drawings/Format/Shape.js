@@ -3391,9 +3391,10 @@
 						}
 					}
 				} else {
+					let oOwnXfrm = this.spPr && this.spPr.xfrm;
 					var xfrm;
-					if (this.spPr && this.spPr.xfrm && this.spPr.xfrm.isNotNull()) {
-						xfrm = this.spPr.xfrm;
+					if (oOwnXfrm && oOwnXfrm.isNotNull()) {
+						xfrm = oOwnXfrm;
 					} else {
 						if (this.isPlaceholder()) {
 							var hierarchy = this.getHierarchy();
@@ -3408,15 +3409,17 @@
 								xfrm = new AscFormat.CXfrm();
 								xfrm.offX = 0;
 								xfrm.offX = 0;
-								xfrm.extX = 5;
-								xfrm.extY = 5;
+								xfrm.extX = 0;
+								xfrm.extY = 0;
+								xfrm.merge(oOwnXfrm);
 							}
 						} else {
 							xfrm = new AscFormat.CXfrm();
 							xfrm.offX = 0;
 							xfrm.offY = 0;
-							xfrm.extX = 5;
-							xfrm.extY = 5;
+							xfrm.extX = 0;
+							xfrm.extY = 0;
+							xfrm.merge(oOwnXfrm);
 						}
 					}
 
@@ -3707,16 +3710,6 @@
 				global_MatrixTransformer.TranslateAppend(transform, this.x + hc, this.y + vc);
 				if (isRealObject(this.group)) {
 					global_MatrixTransformer.MultiplyAppend(transform, this.group.getLocalTransform());
-				}
-				if (this.parent instanceof AscFormat.CRelSizeAnchor || this.parent instanceof AscFormat.CAbsSizeAnchor) {
-					if (this.parent.parent instanceof AscFormat.CChartSpace) {
-						if (this.parent.parent.recalcInfo.recalculateTransform) {
-							this.parent.parent.recalculateTransform();
-							this.parent.parent.rectGeometry.Recalculate(this.parent.parent.extX, this.parent.parent.extY);
-							this.parent.parent.recalcInfo.recalculateTransform = false;
-						}
-						global_MatrixTransformer.MultiplyAppend(transform, this.parent.parent.localTransform);
-					}
 				}
 				if (oParaDrawing) {
 					this.m_oSectPr = null;
@@ -4452,7 +4445,7 @@
 
 		CShape.prototype.setTruthFontSizeInSmartArt = function () {
 			const arrMainContentPoints = this.getSmartArtPointContent();
-			if (!arrMainContentPoints) return;
+			if (!(arrMainContentPoints && arrMainContentPoints.length)) return;
 			const bIsFitText = arrMainContentPoints.every(function (point) {
 				return point && point.prSet && (typeof point.prSet.phldrT === "string") && !point.prSet.custT && !point.prSet.phldr;
 			});

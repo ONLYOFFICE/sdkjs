@@ -1113,7 +1113,7 @@
      */
     Api.prototype["pluginMethod_ReplaceTextSmart"] = function(arrString, sParaTab, sParaNewLine)
     {
-		let guid = window.g_asc_plugins ? window.g_asc_plugins.setPluginMethodReturnAsync() : null;
+		window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
 		this.incrementCounterLongAction();
 
 		function ReplaceTextSmart()
@@ -1134,8 +1134,7 @@
 
 			this.decrementCounterLongAction();
 
-			if (guid)
-				window.g_asc_plugins.onPluginMethodReturn(guid, true);
+			window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(true);
 		}
 
 		let sOverAll = "";
@@ -1156,7 +1155,7 @@
      */
 	Api.prototype["pluginMethod_GetFileToDownload"] = function(format)
 	{
-		let guid = window.g_asc_plugins ? window.g_asc_plugins.setPluginMethodReturnAsync() : null;
+		window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
 		let dwnldF = Asc.c_oAscFileType[format] || Asc.c_oAscFileType[this.DocInfo.Format.toUpperCase()];
 		let opts = new Asc.asc_CDownloadOptions(dwnldF);
 		let _t = this;
@@ -1164,8 +1163,7 @@
 			_t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.DownloadAs);
 			_t.fCurCallback = function(res) {
 				let data = (res.status == "ok") ? res.data : "error";
-				if (guid)
-					window.g_asc_plugins.onPluginMethodReturn(guid, data);
+				window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(data);
 			};
 		}
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, opts);
@@ -1208,7 +1206,7 @@
      */
 	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
 	{
-		let sMethodGuid = window.g_asc_plugins.setPluginMethodReturnAsync();
+		window.g_asc_plugins.setPluginMethodReturnAsync();
 		let sImgSrc = oImageData["src"];
 		this.asc_checkImageUrlAndAction(sImgSrc, function(oImage)
 		{
@@ -1221,8 +1219,7 @@
 				nHeight = oImage.Image.height;
 			}
 			this.putImageToSelection(AscCommon.g_oDocumentUrls.getImageLocal(oImage.src), nWidth, nHeight, oImageData["replaceMode"]);
-			window.g_asc_plugins.onPluginMethodReturn(sMethodGuid);
-
+			window.g_asc_plugins.onPluginMethodReturn();
 		});
 	};
 
@@ -1609,19 +1606,18 @@
 		if (!this.keychainStorage)
 			this.keychainStorage = new AscCrypto.Storage.CStorageLocalStorage();
 
-		var guidAsync = window.g_asc_plugins.setPluginMethodReturnAsync();
-
+		window.g_asc_plugins.setPluginMethodReturnAsync();
 		this.keychainStorage.command(keys, function(retObj){
-			window.g_asc_plugins.onPluginMethodReturn(guidAsync, retObj);
+			window.g_asc_plugins.onPluginMethodReturn(retObj);
 		});
 	};
 
 	Api.prototype["pluginMethod_SetKeychainStorageInfo"] = function(items)
 	{
-		var guidAsync = window.g_asc_plugins.setPluginMethodReturnAsync();
+		window.g_asc_plugins.setPluginMethodReturnAsync();
 
-		this.keychainStorage.command(items, function(retObj){
-			window.g_asc_plugins.onPluginMethodReturn(guidAsync, retObj);
+		this.keychainStorage.command(items, function(retObj) {
+			window.g_asc_plugins.onPluginMethodReturn(retObj);
 		});
 	};
 
@@ -1759,7 +1755,7 @@
 	 */
 	Api.prototype["pluginMethod_ShowWindow"] = function(frameId, variation)
 	{
-		variation["guid"] = window.g_asc_plugins.guidAsyncMethod;
+		variation["guid"] = window.g_asc_plugins.getCurrentPluginGuid();
 		this.sendEvent("asc_onPluginWindowShow", frameId, variation);
 	};
 
@@ -1804,9 +1800,9 @@
 	 */
 	Api.prototype["pluginMethod_ResizeWindow"] = function(frameId, size, minSize, maxSize)
 	{
-		let guidAsync = window.g_asc_plugins.setPluginMethodReturnAsync();
+		window.g_asc_plugins.setPluginMethodReturnAsync();
 		this.sendEvent("asc_onPluginWindowResize", frameId, size, minSize, maxSize, function(){
-			window.g_asc_plugins.onPluginMethodReturn(guidAsync, 'resize_result');
+			window.g_asc_plugins.onPluginMethodReturn("resize_result");
 		});
 	};
 

@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 27.03.2020
- * Time: 13:20
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_GlossaryDocument_AddDocPart] = CChangesGlossaryAddDocPart;
 

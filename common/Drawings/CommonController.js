@@ -4792,8 +4792,8 @@
 						drawingDocument.SelectShow();
 					}
 					let oMathTrackHandler = null;
-					if (this.drawingObjects.mathTrackHandler) {
-						oMathTrackHandler = this.drawingObjects.mathTrackHandler;
+					if (Asc.editor.wbModel && Asc.editor.wbModel.mathTrackHandler) {
+						oMathTrackHandler = Asc.editor.wbModel.mathTrackHandler;
 					} else {
 						if (this.drawingObjects.cSld) {
 							oMathTrackHandler = editor.WordControl.m_oLogicDocument.MathTrackHandler;
@@ -5870,15 +5870,20 @@
 					{
 					} else if (e.keyCode == 145) // Scroll Lock
 					{
-					} else if (e.keyCode == 187 && canEdit && true === ctrlKey) // Ctrl + Shift + +, Ctrl + = - superscript/subscript
+					} else if ((e.keyCode === 61 || e.keyCode == 187) && canEdit && true === ctrlKey) // Ctrl + Shift + +, Ctrl + = - superscript/subscript
 					{
 						var TextPr = drawingObjectsController.getParagraphTextPr();
 						if (isRealObject(TextPr)) {
 							if (true === e.shiftKey)
+							{
 								drawingObjectsController.setCellSuperscript(TextPr.VertAlign === AscCommon.vertalign_SuperScript ? false : true);
-							else
+								bRetValue = true;
+							}
+							else if (true === e.altKey)
+							{
 								drawingObjectsController.setCellSubscript(TextPr.VertAlign === AscCommon.vertalign_SubScript ? false : true);
-							bRetValue = true;
+								bRetValue = true;
+							}
 						}
 					} else if (e.keyCode == 188 && true === ctrlKey) // Ctrl + ,
 					{
@@ -5887,7 +5892,7 @@
 							drawingObjectsController.setCellSuperscript(TextPr.VertAlign === AscCommon.vertalign_SuperScript ? false : true);
 							bRetValue = true;
 						}
-					} else if (e.keyCode == 189 && canEdit) // Клавиша Num-
+					} else if ((e.keyCode == 189 || e.keyCode == 173) && canEdit && true === ctrlKey && true === e.shiftKey) // Клавиша Num-
 					{
 						if (!this.checkSelectedObjectsProtectionText()) {
 							var Item = null;
@@ -5897,10 +5902,7 @@
 								if (true === ctrlKey && true === e.shiftKey) {
 									Item = new AscWord.CRunText(0x2013);
 									Item.SpaceAfter = false;
-								} else if (true === e.shiftKey)
-									Item = new AscWord.CRunText("_".charCodeAt(0));
-								else
-									Item = new AscWord.CRunText("-".charCodeAt(0));
+								}
 								oThis.paragraphAdd(Item);
 							};
 							this.checkSelectedObjectsAndCallback(callBack, [], false, AscDFH.historydescription_Spreadsheet_AddItem, undefined, window["Asc"]["editor"].collaborativeEditing.getFast());

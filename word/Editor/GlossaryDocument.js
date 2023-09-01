@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 25.03.2020
- * Time: 16:06
- */
 
 var c_oAscDefaultPlaceholderName = {
 	Text      : "DefaultPlaceholder_TEXT",

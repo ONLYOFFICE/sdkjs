@@ -611,16 +611,12 @@
 	 * Returns an object that represents the range of the specified sheet using the maximum and minimum row/column coordinates.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiWorksheet} ws - The sheet where the specified range is represented.
-	 * @param {number} r1 - The minimum row number of the specified range.
-	 * @param {number} c1 - The minimum column number of the specified range.
-	 * @param {number} r2 - The maximum row number of the specified range.
-	 * @param {number} c2 - The maximum column number of the specified range.
-	 * @param {ApiAreas} areas - A collection of the ranges from the specified range.
+	 * @param {Range} range - The internal Range class (not a ApiRange). For more details see any new ApiRange.
+	 * @param {[Range]} areas - A collection of the ranges (not a ApiRange) from the specified range. For more details see any new ApiRange.
 	 * @returns {ApiRange}
 	 */
-	Api.prototype.GetRangeByNumber = function(ws, r1, c1, r2, c2, areas) {
-		return new ApiRange( (ws ? ws.getRange3(r1, c1, r2, c2) : null), areas);
+	Api.prototype.private_GetRange = function(range, areas) {
+		return new ApiRange(range, areas);
 	};
 
 	/**

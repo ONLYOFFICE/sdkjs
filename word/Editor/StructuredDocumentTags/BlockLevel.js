@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 04.04.2017
- * Time: 17:00
- */
 
 var type_BlockLevelSdt = 0x0003;
 

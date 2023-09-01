@@ -1548,10 +1548,13 @@ background-repeat: no-repeat;\
 			[Asc.c_oAscPresentationShortcutType.Strikethrough, 53, true, false, false],
 			[Asc.c_oAscPresentationShortcutType.PasteFormat, 86, true, false, true],
 			[Asc.c_oAscPresentationShortcutType.Superscript, 187, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.Superscript, 61, true, true, false],
 			[Asc.c_oAscPresentationShortcutType.Superscript, 188, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.Subscript, 187, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.Subscript, 187, true, false, true],
+			[Asc.c_oAscPresentationShortcutType.Subscript, 61, true, false, true],
 			[Asc.c_oAscPresentationShortcutType.Subscript, 190, true, false, false],
 			[Asc.c_oAscPresentationShortcutType.EnDash, 189, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.EnDash, 173, true, true, false],
 			[Asc.c_oAscPresentationShortcutType.DecreaseFont, 219, true, false, false],
 			[Asc.c_oAscPresentationShortcutType.IncreaseFont, 221, true, false, false]
 		];
@@ -3854,6 +3857,10 @@ background-repeat: no-repeat;\
 	/*functions for working with table*/
 	asc_docs_api.prototype.put_Table               = function(col, row, placeholder, sStyleId)
 	{
+		if(placeholder)
+		{
+			this.WordControl.m_bIsMouseLock = false;
+		}
 		this.WordControl.m_oLogicDocument.Add_FlowTable(col, row, placeholder, sStyleId);
 	};
 	asc_docs_api.prototype.addRowAbove             = function(count)
@@ -8059,6 +8066,20 @@ background-repeat: no-repeat;\
 			var dd             = this.WordControl.m_oDrawingDocument;
 			dataContainer.data = dd.ToRendererPart(oAdditionalData["nobase64"], isSelection);
 		}
+		else if (this.insertDocumentUrlsData) {
+			var last = this.insertDocumentUrlsData.documents.shift();
+			oAdditionalData['url'] = last.url;
+			oAdditionalData['format'] = last.format;
+			if (last.token) {
+				oAdditionalData['tokenDownload'] = last.token;
+				//remove to reduce message size
+				oAdditionalData['tokenSession'] = undefined;
+			}
+			oAdditionalData['outputurls']= true;
+			// ToDo select txt params
+			oAdditionalData["codepage"] = AscCommon.c_oAscCodePageUtf8;
+			dataContainer.data = last.data;
+		}
 		else if(this.isOpenOOXInBrowser && this.saveDocumentToZip)
 		{
 			var title = this.documentTitle;
@@ -8123,6 +8144,17 @@ background-repeat: no-repeat;\
             this.WordControl.OnScroll();
     };
 
+	asc_docs_api.prototype.processSavedFile             = function(url, downloadType, filetype)
+	{
+		if (this.insertDocumentUrlsData && this.insertDocumentUrlsData.convertCallback)
+		{
+			this.insertDocumentUrlsData.convertCallback(this, url);
+		}
+		else
+		{
+			AscCommon.baseEditorsApi.prototype.processSavedFile.call(this, url, downloadType, filetype);
+		}
+	};
 
 	asc_docs_api.prototype.asc_Recalculate = function(bIsUpdateInterface)
 	{

@@ -32,12 +32,6 @@
 
 "use strict";
 
-/**
- * User: Ilja.Kirillov
- * Date: 21.10.2016
- * Time: 12:56
- */
-
 AscDFH.changesFactory[AscDFH.historyitem_ParaRun_AddItem]               = CChangesRunAddItem;
 AscDFH.changesFactory[AscDFH.historyitem_ParaRun_RemoveItem]            = CChangesRunRemoveItem;
 AscDFH.changesFactory[AscDFH.historyitem_ParaRun_Bold]                  = CChangesRunBold;

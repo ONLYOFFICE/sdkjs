@@ -4804,6 +4804,7 @@
 					maxFilterRow--;
 				}
 
+				let g_cCharDelimiter = AscCommon.g_cCharDelimiter;
 				let findDateTimeFormat;
 				let individualCount = 0, count = 0;
 				let visibleCount = 0, maxVisibleCountTooltip = 100;
@@ -4836,8 +4837,10 @@
 					if (isDateTimeFormat) {
 						dataValue = AscCommon.NumFormat.prototype.parseDate(val);
 						findDateTimeFormat = true;
-						textLowerCase = dataValue.countDay + dataValue.d +  dataValue.dayWeek + dataValue.dayWeek + dataValue.hour +
-							dataValue.min + dataValue.month + dataValue.sec + dataValue.year;
+						textLowerCase =
+							dataValue.countDay + g_cCharDelimiter + dataValue.d + g_cCharDelimiter + dataValue.dayWeek + g_cCharDelimiter + dataValue.dayWeek + g_cCharDelimiter +
+							dataValue.hour + g_cCharDelimiter + dataValue.min + g_cCharDelimiter + dataValue.month + g_cCharDelimiter + dataValue.sec + g_cCharDelimiter +
+							dataValue.year;
 					}
 
 					//check duplicate value
