@@ -24550,6 +24550,100 @@ CDocument.prototype.ParseTableFormulaInstrLine = function(sInstrLine)
     return ["", ""];
 };
 
+/**
+ * Creates a Caption paragraph. Inspired from the AddCaption method.
+ * @returns {P}
+ */
+ CDocument.prototype.CreateCaptionParagraph = function (oPr) {
+   let NewParagraph = new Paragraph(this.DrawingDocument, this);
+   NewParagraph.SetParagraphStyle("Caption");
+   console.log("CCP: Creted para");
+ 
+   var NewRun;
+   var nCurPos = 0;
+   var oComplexField;
+   var oBeginChar, oSeparateChar, oEndChar;
+   var aFieldsToUpdate = [];
+   if (!oPr.get_ExcludeLabel()) {
+     var sLabel = oPr.get_Label();
+     if (typeof sLabel === "string" && sLabel.length > 0) {
+       NewRun = new ParaRun(NewParagraph, false);
+       NewRun.AddText(sLabel + " ");
+       NewParagraph.Internal_Content_Add(nCurPos++, NewRun, false);
+     }
+   }
+   if (oPr.get_IncludeChapterNumber()) {
+     var nHeadingLvl = oPr.get_HeadingLvl();
+     if (AscFormat.isRealNumber(nHeadingLvl)) {
+       oBeginChar = new ParaFieldChar(fldchartype_Begin, this);
+       oSeparateChar = new ParaFieldChar(fldchartype_Separate, this);
+       oEndChar = new ParaFieldChar(fldchartype_End, this);
+       NewRun = new ParaRun();
+       NewRun.AddToContent(-1, oBeginChar);
+ 
+       var sStyleId = this.Styles.GetDefaultHeading(nHeadingLvl - 1);
+       var oStyle = this.Styles.Get(sStyleId);
+       NewRun.AddInstrText(' STYLEREF "' + oStyle.GetName() + '" \\s');
+       NewRun.AddToContent(-1, oSeparateChar);
+       NewRun.AddToContent(-1, oEndChar);
+       oBeginChar.SetRun(NewRun);
+       oSeparateChar.SetRun(NewRun);
+       oEndChar.SetRun(NewRun);
+       NewParagraph.Internal_Content_Add(nCurPos++, NewRun, false);
+       oComplexField = oBeginChar.GetComplexField();
+       oComplexField.SetBeginChar(oBeginChar);
+       oComplexField.SetInstructionLine(
+         ' STYLEREF "' + oStyle.GetName() + '" \\s'
+       );
+       oComplexField.SetSeparateChar(oSeparateChar);
+       oComplexField.SetEndChar(oEndChar);
+       aFieldsToUpdate.push(oComplexField);
+     }
+     var sSeparator = oPr.get_Separator();
+     if (!sSeparator || sSeparator.length === 0) {
+       sSeparator = " ";
+     }
+     NewRun = new ParaRun(NewParagraph, false);
+     NewRun.AddText(sSeparator);
+     NewParagraph.Internal_Content_Add(nCurPos++, NewRun, false);
+   }
+ 
+   var sInstruction =
+     " SEQ " +
+     oPr.getLabelForInstruction() +
+     " \\* " +
+     oPr.get_FormatGeneral() +
+     " ";
+   if (AscFormat.isRealNumber(nHeadingLvl)) {
+     sInstruction += "\\s " + nHeadingLvl;
+   }
+   oBeginChar = new ParaFieldChar(fldchartype_Begin, this);
+   oSeparateChar = new ParaFieldChar(fldchartype_Separate, this);
+   oEndChar = new ParaFieldChar(fldchartype_End, this);
+   NewRun = new ParaRun();
+   NewRun.AddToContent(-1, oBeginChar);
+   NewRun.AddInstrText(sInstruction);
+   NewRun.AddToContent(-1, oSeparateChar);
+   NewRun.AddToContent(-1, oEndChar);
+   oBeginChar.SetRun(NewRun);
+   oSeparateChar.SetRun(NewRun);
+   oEndChar.SetRun(NewRun);
+   NewParagraph.Internal_Content_Add(nCurPos++, NewRun, false);
+   oComplexField = oBeginChar.GetComplexField();
+   oComplexField.SetBeginChar(oBeginChar);
+   oComplexField.SetInstructionLine(sInstruction);
+   oComplexField.SetSeparateChar(oSeparateChar);
+   oComplexField.SetEndChar(oEndChar);
+   var sAdditional = oPr.get_Additional();
+   if (typeof sAdditional === "string" && sAdditional.length > 0) {
+     NewRun = new ParaRun(NewParagraph, false);
+     NewRun.AddText(sAdditional + " ");
+     NewParagraph.Internal_Content_Add(nCurPos++, NewRun, false);
+   }
+ 
+   return NewParagraph;
+ };
+
 
 CDocument.prototype.AddCaption = function(oPr)
 {
