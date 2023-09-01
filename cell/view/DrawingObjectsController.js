@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -65,10 +65,18 @@ AscCommon.CContentChangesElement.prototype.Refresh_BinaryData = function()
         this.m_pData.Data.UseArray = true;
         this.m_pData.Data.PosArray = this.m_aPositions;
 
-        Binary_Writer.WriteString2(this.m_pData.Class.Get_Id());
-        Binary_Writer.WriteLong(this.m_pData.Data.Type);
-        this.m_pData.Data.WriteToBinary(Binary_Writer);
-		var Binary_Len = Binary_Writer.GetCurPosition() - Binary_Pos;
+        if ((Asc.editor || editor).binaryChanges) {
+            Binary_Writer.WriteWithLen(this, function() {
+                Binary_Writer.WriteString2(this.m_pData.Class.Get_Id());
+                Binary_Writer.WriteLong(this.m_pData.Data.Type);
+                this.m_pData.Data.WriteToBinary(Binary_Writer);
+            });
+        } else {
+            Binary_Writer.WriteString2(this.m_pData.Class.Get_Id());
+            Binary_Writer.WriteLong(this.m_pData.Data.Type);
+            this.m_pData.Data.WriteToBinary(Binary_Writer);
+        }
+        var Binary_Len = Binary_Writer.GetCurPosition() - Binary_Pos;
 
 		this.m_pData.Binary.Pos = Binary_Pos;
 		this.m_pData.Binary.Len = Binary_Len;
@@ -97,14 +105,17 @@ DrawingObjectsController.prototype.getDrawingArray = function()
 
 DrawingObjectsController.prototype.setTableProps = function(props)
 {
-    var by_type = this.getSelectedObjectsByTypes();
+    let by_type = this.getSelectedObjectsByTypes();
     if(by_type.tables.length === 1)
     {
-        var sCaption = props.TableCaption;
-        var sDescription = props.TableDescription;
-        var dRowHeight = props.RowHeight;
-        by_type.tables[0].setTitle(sCaption);
-        by_type.tables[0].setDescription(sDescription);
+        let sCaption = props.TableCaption;
+        let sDescription = props.TableDescription;
+        let sName = props.TableName;
+        let dRowHeight = props.RowHeight;
+        let oTable = by_type.tables[0];
+        oTable.setTitle(sCaption);
+        oTable.setDescription(sDescription);
+        oTable.setName(sName);
         props.TableCaption = undefined;
         props.TableDescription = undefined;
         var bIgnoreHeight = false;
@@ -117,22 +128,22 @@ DrawingObjectsController.prototype.setTableProps = function(props)
             bIgnoreHeight = false;
         }
         var target_text_object = AscFormat.getTargetTextObject(this);
-        if(target_text_object === by_type.tables[0])
+        if(target_text_object === oTable)
         {
-            by_type.tables[0].graphicObject.Set_Props(props);
+            oTable.graphicObject.Set_Props(props);
         }
         else
         {
-            by_type.tables[0].graphicObject.SelectAll();
-            by_type.tables[0].graphicObject.Set_Props(props);
-            by_type.tables[0].graphicObject.RemoveSelection();
+            oTable.graphicObject.SelectAll();
+            oTable.graphicObject.Set_Props(props);
+            oTable.graphicObject.RemoveSelection();
         }
         props.TableCaption = sCaption;
         props.TableDescription = sDescription;
         props.RowHeight = dRowHeight;
-        if(!by_type.tables[0].setFrameTransform(props)) 
+        if(!oTable.setFrameTransform(props))
         {
-            editor.WordControl.m_oLogicDocument.Check_GraphicFrameRowHeight(by_type.tables[0], bIgnoreHeight);
+            editor.WordControl.m_oLogicDocument.Check_GraphicFrameRowHeight(oTable, bIgnoreHeight);
         }
         
     }
@@ -154,6 +165,28 @@ DrawingObjectsController.prototype.RefreshAfterChangeColorScheme = function()
 DrawingObjectsController.prototype.updateOverlay = function()
 {
     this.drawingObjects.OnUpdateOverlay();
+};
+DrawingObjectsController.prototype.updatePlaceholders = function ()
+{
+    const oWS = Asc.editor && Asc.editor.wbModel && Asc.editor.wbModel.getActiveWs();
+    if (oWS)
+    {
+        const arrRet = [];
+        const arrDrawingObjects = oWS.Drawings;
+        for (let i = 0; i < arrDrawingObjects.length; i += 1)
+        {
+            const oGraphicObject = arrDrawingObjects[i] && arrDrawingObjects[i].graphicObject;
+            if (oGraphicObject)
+            {
+                oGraphicObject.createPlaceholderControl(arrRet);
+            }
+        }
+        const oDrawingDocument = this.getDrawingDocument();
+        if (oDrawingDocument && oDrawingDocument.placeholders)
+        {
+            oDrawingDocument.placeholders.update(arrRet);
+        }
+    }
 };
 DrawingObjectsController.prototype.recalculate = function(bAll, Point, bCheckPoint)
 {
@@ -186,6 +219,7 @@ DrawingObjectsController.prototype.recalculate2 = function(bAll)
         }
     }
     this.objectsForRecalculate = {};
+    this.updatePlaceholders();
 };
 
 
@@ -261,6 +295,8 @@ DrawingObjectsController.prototype.onMouseDown = function(e, x, y)
     e.CtrlKey = e.metaKey || e.ctrlKey;
     e.Button = e.button;
     e.Type = AscCommon.g_mouse_event_type_down;
+	e.IsLocked = e.isLocked;
+    this.checkInkState();
     var ret = this.curState.onMouseDown(e, x, y, 0);
     if(e.ClickCount < 2)
     {
@@ -284,6 +320,7 @@ DrawingObjectsController.prototype.onMouseMove = function(e, x, y)
     e.CtrlKey = e.metaKey || e.ctrlKey;
     e.Button = e.button;
     e.Type = AscCommon.g_mouse_event_type_move;
+	e.IsLocked = e.isLocked;
     this.curState.onMouseMove(e, x, y, 0);
 };
 DrawingObjectsController.prototype.OnMouseMove = DrawingObjectsController.prototype.onMouseMove;
@@ -322,6 +359,7 @@ DrawingObjectsController.prototype.createGroup = function()
         group.addToRecalculate();
         this.startRecalculate();
     }
+		return group;
 };
 DrawingObjectsController.prototype.handleChartDoubleClick = function()
 {
@@ -449,6 +487,7 @@ DrawingObjectsController.prototype.addChartDrawingObject = function(options)
 DrawingObjectsController.prototype.isPointInDrawingObjects = function(x, y, e)
 {
     this.handleEventMode = AscFormat.HANDLE_EVENT_MODE_CURSOR;
+    this.checkInkState();
     var ret = this.curState.onMouseDown(e || {}, x, y, 0);
     this.handleEventMode = AscFormat.HANDLE_EVENT_MODE_HANDLE;
     return ret;
@@ -469,9 +508,26 @@ DrawingObjectsController.prototype.addImageFromParams = function(rasterImageId, 
     this.selectObject(image, 0);
     image.addToRecalculate();
 };
+DrawingObjectsController.prototype.addImage = function(sImageUrl, nPixW, nPixH, videoUrl, audioUrl)
+{
+    let options = {
+        cell: this.drawingObjects.getWorksheetModel().selectionRange.activeCell,
+        width: nPixW,
+        height: nPixH
+    }
+    let _image = {
+        src:  sImageUrl,
+        Image: {
+          src: sImageUrl
+        }
+    };
+    this.drawingObjects.addImageObjectCallback(_image, options);
+    this.startRecalculate();
+    this.drawingObjects.getWorksheet().setSelectionShape(true);
+};
 
-DrawingObjectsController.prototype.addOleObjectFromParams = function(fPosX, fPosY, fWidth, fHeight, nWidthPix, nHeightPix, sLocalUrl, sData, sApplicationId, bSelect){
-    var oOleObject = this.createOleObject(sData, sApplicationId, sLocalUrl, fPosX, fPosY, fWidth, fHeight, nWidthPix, nHeightPix);
+DrawingObjectsController.prototype.addOleObjectFromParams = function(fPosX, fPosY, fWidth, fHeight, nWidthPix, nHeightPix, sLocalUrl, sData, sApplicationId, bSelect, arrImagesForAddToHistory){
+    var oOleObject = this.createOleObject(sData, sApplicationId, sLocalUrl, fPosX, fPosY, fWidth, fHeight, nWidthPix, nHeightPix, arrImagesForAddToHistory);
     this.resetSelection();
     oOleObject.setWorksheet(this.drawingObjects.getWorksheetModel());
     oOleObject.setDrawingObjects(this.drawingObjects);
@@ -484,8 +540,8 @@ DrawingObjectsController.prototype.addOleObjectFromParams = function(fPosX, fPos
     this.startRecalculate();
 };
 
-DrawingObjectsController.prototype.editOleObjectFromParams = function(oOleObject, sData, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight){
-    oOleObject.editExternal(sData, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight);
+DrawingObjectsController.prototype.editOleObjectFromParams = function(oOleObject, sData, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight, arrImagesForAddToHistory){
+    oOleObject.editExternal(sData, sImageUrl, fWidth, fHeight, nPixWidth, nPixHeight, arrImagesForAddToHistory);
     this.startRecalculate();
 };
 
@@ -610,7 +666,7 @@ DrawingObjectsController.prototype.onKeyPress = function(e)
     if(e.CtrlKey || e.AltKey)
         return false;
 
-    var Code;
+    let Code;
     if (null != e.Which)
         Code = e.Which;
     else if (e.KeyCode)
@@ -618,36 +674,61 @@ DrawingObjectsController.prototype.onKeyPress = function(e)
     else
         Code = 0;//special char
 
-    var bRetValue = false;
-    if(this.checkSelectedObjectsProtectionText())
-    {
-        return true;
-    }
+    let bRetValue = false;
     if ( Code >= 0x20 )
     {
-        var fCallback = function()
-        {
-            var oItem;
-            if(AscCommon.IsSpace(Code))
-            {
-                oItem = new ParaSpace(Code);
-            }
-            else
-            {
-                oItem = new ParaText(Code);
-            }
-            this.paragraphAdd(oItem, false);
-            this.checkMobileCursorPosition();
-            this.recalculateCurPos(true, true);
-        };
-        this.checkSelectedObjectsAndCallback(fCallback, [], false, AscDFH.historydescription_Spreadsheet_ParagraphAdd, undefined, window["Asc"]["editor"].collaborativeEditing.getFast());
-
-        bRetValue = true;
+        return this.enterText(Code);
     }
 
     return bRetValue;
 };
-
+    DrawingObjectsController.prototype.enterText = function (codePoints)
+    {
+        if (!this.canEdit())
+            return false;
+        if(this.checkSelectedObjectsProtectionText())
+        {
+            return true;
+        }
+        let fCallback = function()
+        {
+            let oItem;
+            let Code;
+            if(Array.isArray(codePoints))
+            {
+                for(let nIdx = 0; nIdx < codePoints.length; ++nIdx)
+                {
+                    Code = codePoints[nIdx];
+                    if(AscCommon.IsSpace(Code))
+                    {
+                        oItem = new AscWord.CRunSpace(Code);
+                    }
+                    else
+                    {
+                        oItem = new AscWord.CRunText(Code);
+                    }
+                    this.paragraphAdd(oItem, false);
+                }
+            }
+            else
+            {
+                Code = codePoints;
+                if(AscCommon.IsSpace(Code))
+                {
+                    oItem = new AscWord.CRunSpace(Code);
+                }
+                else
+                {
+                    oItem = new AscWord.CRunText(Code);
+                }
+                this.paragraphAdd(oItem, false);
+            }
+            this.checkMobileCursorPosition();
+            this.recalculateCurPos(true, true);
+        };
+        this.checkSelectedObjectsAndCallback(fCallback, [], false, AscDFH.historydescription_Spreadsheet_ParagraphAdd, undefined, window["Asc"]["editor"].collaborativeEditing.getFast());
+        return AscCommon.isRealObject(this.getTargetDocContent());
+    };
 
     DrawingObjectsController.prototype.checkSlicerCopies = function (aCopies)
     {
@@ -718,7 +799,16 @@ DrawingObjectsController.prototype.onKeyPress = function(e)
                 oThis.drawingObjects.sendGraphicObjectProps();
             });
         }
-    }
+    };
+
+    DrawingObjectsController.prototype.checkGraphicObjectPosition = function (x, y, w, h)
+    {
+        if(this.drawingObjects.checkGraphicObjectPosition)
+        {
+            return this.drawingObjects.checkGraphicObjectPosition(x, y, w, h);
+        }
+        return {x: 0, y: 0};
+    };
 //------------------------------------------------------------export---------------------------------------------------
 window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 window['AscCommonExcel'].CheckIdSatetShapeAdd = CheckIdSatetShapeAdd;

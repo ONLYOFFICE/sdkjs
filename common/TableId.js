@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -69,13 +69,13 @@
 	};
 	CTableId.prototype.Add = function(Class, Id)
 	{
-		if (false === this.m_bTurnOff)
-		{
-			Class.Id          = Id;
-			this.m_aPairs[Id] = Class;
-
-			AscCommon.History.Add(new AscCommon.CChangesTableIdAdd(this, Id, Class));
-		}
+		if (this.m_bTurnOff || !Class)
+			return;
+		
+		Class.Id          = Id;
+		this.m_aPairs[Id] = Class;
+		
+		AscCommon.History.Add(new AscCommon.CChangesTableIdAdd(this, Id, Class));
 	};
 	CTableId.prototype.TurnOff = function()
 	{
@@ -104,6 +104,17 @@
 
 		return null;
 	};
+	CTableId.prototype.GetById = function(id)
+	{
+		return this.GetClass(id);
+	}
+	CTableId.prototype.GetClass = function(id)
+	{
+		if (!id || !this.m_aPairs[id])
+			return null;
+
+		return this.m_aPairs[id];
+	};
 	/**
 	 * Получаем Id, по классу (вообще, данную функцию лучше не использовать)
 	 * @param Class
@@ -114,12 +125,16 @@
 		if (Class.Get_Id)
 			return Class.Get_Id();
 
-		if (Class.GetId())
+		if (Class.GetId)
 			return Class.GetId();
 
 		return null;
 	};
 	CTableId.prototype.Get_Id = function()
+	{
+		return this.Id;
+	};
+	CTableId.prototype.GetId = function()
 	{
 		return this.Id;
 	};
@@ -273,7 +288,7 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_RelSizeAnchor]      	 = AscFormat.CRelSizeAnchor;
 		this.m_oFactoryClass[AscDFH.historyitem_type_AbsSizeAnchor]      	 = AscFormat.CAbsSizeAnchor;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ParaRevisionMove]       = AscCommon.CParaRevisionMove;
-		this.m_oFactoryClass[AscDFH.historyitem_type_RunRevisionMove]        = AscCommon.CRunRevisionMove;
+		this.m_oFactoryClass[AscDFH.historyitem_type_RunRevisionMove]        = AscWord.CRunRevisionMove;
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocPart]                = AscCommon.CDocPart;
 		this.m_oFactoryClass[AscDFH.historyitem_type_SlicerView]             = AscFormat.CSlicer;
 		this.m_oFactoryClass[AscDFH.historyitem_type_ChartStyle]             = AscFormat.CChartStyle;
@@ -414,7 +429,6 @@
 			this.m_oFactoryClass[AscDFH.historyitem_type_CBhvr]               = AscFormat.CCBhvr;
 			this.m_oFactoryClass[AscDFH.historyitem_type_CTn]                 = AscFormat.CCTn;
 			this.m_oFactoryClass[AscDFH.historyitem_type_Cond]                = AscFormat.CCond;
-			this.m_oFactoryClass[AscDFH.historyitem_type_Rtn]                 = AscFormat.CRtn;
 			this.m_oFactoryClass[AscDFH.historyitem_type_TgtEl]               = AscFormat.CTgtEl;
 			this.m_oFactoryClass[AscDFH.historyitem_type_SndTgt]              = AscFormat.CSndTgt;
 			this.m_oFactoryClass[AscDFH.historyitem_type_SpTgt]               = AscFormat.CSpTgt;
@@ -449,14 +463,24 @@
 
 		if (window['AscCommonExcel'])
 		{
-			this.m_oFactoryClass[AscDFH.historyitem_type_Sparkline] = AscCommonExcel.sparklineGroup;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Sparkline]            = AscCommonExcel.sparklineGroup;
 			this.m_oFactoryClass[AscDFH.historyitem_type_PivotTableDefinition] = Asc.CT_pivotTableDefinition;
 			this.m_oFactoryClass[AscDFH.historyitem_type_PivotWorksheetSource] = Asc.CT_WorksheetSource;
-			this.m_oFactoryClass[AscDFH.historyitem_type_NamedSheetView] = Asc.CT_NamedSheetView;
-			this.m_oFactoryClass[AscDFH.historyitem_type_DataValidation] = AscCommonExcel.CDataValidation;
+			this.m_oFactoryClass[AscDFH.historyitem_type_NamedSheetView]       = Asc.CT_NamedSheetView;
+			this.m_oFactoryClass[AscDFH.historyitem_type_DataValidation]       = AscCommonExcel.CDataValidation;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OleSizeSelection  ]   = AscCommonExcel.OleSizeSelectionRange;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ViewPr]               = AscFormat.CViewPr;
+			this.m_oFactoryClass[AscDFH.historyitem_type_CommonViewPr]         = AscFormat.CCommonViewPr;
+			this.m_oFactoryClass[AscDFH.historyitem_type_CSldViewPr]           = AscFormat.CCSldViewPr;
+			this.m_oFactoryClass[AscDFH.historyitem_type_CViewPr]              = AscFormat.CCViewPr;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ViewPrScale]          = AscFormat.CViewPrScale;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ViewPrGuide]          = AscFormat.CViewPrGuide;
+
 		}
 
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocumentMacros] = AscCommon.CDocumentMacros;
+		
+		this.InitOFormClasses();
 	};
 	CTableId.prototype.GetClassFromFactory = function(nType)
 	{
@@ -467,6 +491,25 @@
 	};
 	CTableId.prototype.Refresh_RecalcData = function(Data)
 	{
+	};
+	CTableId.prototype.InitOFormClasses = function()
+	{
+		if (AscCommon.IsSupportOFormFeature())
+		{
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_UserMaster]  = AscOForm.CUserMaster;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_User]        = AscOForm.CUser;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldMaster] = AscOForm.CFieldMaster;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_Document]    = AscOForm.CDocument;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldGroup]  = AscOForm.CFieldGroup;
+		}
+		else
+		{
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_UserMaster];
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_User];
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldMaster];
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_Document];
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldGroup];
+		}
 	};
 	//-----------------------------------------------------------------------------------
 	// Функции для работы с совместным редактирования

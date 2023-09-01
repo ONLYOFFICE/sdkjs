@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Mocha Tests</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://unpkg.com/mocha/mocha.css" />
+    <script src="../NamesOfLiterals.js"></script>
+    <script src="../LaTeXParser.js"></script>
+</head>
+<body>
+<div id="mocha"></div>
+
+<script src="https://unpkg.com/chai/chai.js"></script>
+<script src="https://unpkg.com/mocha/mocha.js"></script>
+
+<script type="text/javascript" src="./LaTeXList/accents-tests.js"></script>
+<script type="text/javascript" src="./LaTeXList/brackets-test.js"></script>
+<script type="text/javascript" src="./LaTeXList/degree-tests.js"></script>
+<script type="text/javascript" src="./LaTeXList/fraction.js"></script>
+<script type="text/javascript" src="./LaTeXList/numericFunctions-test.js"></script>
+<script type="text/javascript" src="./LaTeXList/sqrt-tests.js"></script>
+<script type="text/javascript" src="./LaTeXList/style-test.js"></script>
+
+<script class="mocha-init">
+	mocha.setup('bdd');
+	mocha.checkLeaks();
+</script>
+
+<script type="module" class="mocha-exec">
+    const assert = chai.assert;
+	const parser = window.AscCommonWord.ConvertLaTeXToTokensList
+
+	const accent = window.AscCommonWord.accents;
+	const fraction = window.AscCommonWord.fraction;
+	const degree = window.AscCommonWord.degree;
+	const brackets = window.AscCommonWord.brackets;
+	const numericFunctions = window.AscCommonWord.numericFunctions;
+	const sqrt = window.AscCommonWord.sqrt;
+	const style = window.AscCommonWord.style;
+
+	describe("Checking the health of fractions", function () {
+		fraction(test);
+	});
+	describe("Checking the health of degrees and indexes", function () {
+		degree(test);
+	});
+	describe("Checking the health of brackets", function () {
+		brackets(test);
+	});
+	describe("Checking accents", function () {
+		accent(test);
+	});
+	describe("Checking standard numerical functions", function () {
+		numericFunctions(test);
+	});
+	describe("Checking radical functions", function () {
+		sqrt(test);
+	});
+	describe("Checking math fonts", function () {
+		style(test);
+	});
+
+	function test(program, expected, description = "Без описания") {
+		it(description, function () {
+			const ast = parser(program, undefined, true);
+			assert.deepEqual(
+				ast,
+                expected,
+                `get:\n ${JSON.stringify(ast,null, 2)}\nexpected:\n${JSON.stringify(expected,null, 2)}`
+            );
+		});
+	}
+	mocha.run();
+</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -72,6 +72,9 @@ function CSdtPr()
 
 	this.FormPr        = undefined;
 	this.PictureFormPr = undefined;
+	this.ComplexFormPr = undefined;
+
+	this.OForm         = undefined;
 }
 
 CSdtPr.prototype.Copy = function()
@@ -105,6 +108,9 @@ CSdtPr.prototype.Copy = function()
 
 	if (this.PictureFormPr)
 		oPr.PictureFormPr = this.PictureFormPr.Copy();
+
+	if (this.ComplexFormPr)
+		oPr.ComplexFormPr = this.ComplexFormPr.Copy();
 
 	oPr.TextPr = this.TextPr.Copy();
 
@@ -257,6 +263,12 @@ CSdtPr.prototype.Write_ToBinary = function(Writer)
 		Flags |= 2097152;
 	}
 
+	if (this.ComplexFormPr)
+	{
+		this.ComplexFormPr.WriteToBinary(Writer);
+		Flags |= (1 << 22);
+	}
+
 	var EndPos = Writer.GetCurPosition();
 	Writer.Seek(StartPos);
 	Writer.WriteLong(Flags);
@@ -304,7 +316,7 @@ CSdtPr.prototype.Read_FromBinary = function(Reader)
 
 	if (Flags & 1024)
 	{
-		this.CheckBox = new CSdtCheckBoxPr();
+		this.CheckBox = new AscWord.CSdtCheckBoxPr();
 		this.CheckBox.ReadFromBinary(Reader);
 	}
 
@@ -313,19 +325,19 @@ CSdtPr.prototype.Read_FromBinary = function(Reader)
 
 	if (Flags & 4096)
 	{
-		this.ComboBox = new CSdtComboBoxPr();
+		this.ComboBox = new AscWord.CSdtComboBoxPr();
 		this.ComboBox.ReadFromBinary(Reader);
 	}
 
 	if (Flags & 8192)
 	{
-		this.DropDown = new CSdtComboBoxPr();
+		this.DropDown = new AscWord.CSdtComboBoxPr();
 		this.DropDown.ReadFromBinary(Reader);
 	}
 
 	if (Flags & 16384)
 	{
-		this.Date = new CSdtDatePickerPr();
+		this.Date = new AscWord.CSdtDatePickerPr();
 		this.Date.ReadToBinary(Reader);
 	}
 
@@ -346,14 +358,20 @@ CSdtPr.prototype.Read_FromBinary = function(Reader)
 
 	if (Flags & 1048576)
 	{
-		this.TextForm = new CSdtTextFormPr();
-		this.TextForm.ReadFromBinary(oReader);
+		this.TextForm = new AscWord.CSdtTextFormPr();
+		this.TextForm.ReadFromBinary(Reader);
 	}
 
 	if (Flags & 2097152)
 	{
-		this.PictureFormPr = new CSdtPictureFormPr();
-		this.PictureFormPr.ReadFromBinary(oReader);
+		this.PictureFormPr = new AscWord.CSdtPictureFormPr();
+		this.PictureFormPr.ReadFromBinary(Reader);
+	}
+
+	if (Flags & (1 << 22))
+	{
+		this.ComplexFormPr = new AscWord.CSdtComplexFormPr();
+		this.ComplexFormPr.ReadFromBinary(Reader);
 	}
 };
 CSdtPr.prototype.IsBuiltInDocPart = function()
@@ -363,6 +381,10 @@ CSdtPr.prototype.IsBuiltInDocPart = function()
 
 	return false;
 };
+CSdtPr.prototype.GetDocPartGallery = function()
+{
+	return this.DocPartObj ? this.DocPartObj.Gallery : undefined;
+}
 
 function CContentControlPr(nType)
 {
@@ -373,34 +395,46 @@ function CContentControlPr(nType)
 	this.Lock       = undefined;
 	this.InternalId = undefined;
 	this.CCType     = undefined !== nType ? nType : c_oAscSdtLevelType.Inline;
-
-    // section property
+	
+	this.Temporary  = undefined;
+	
+	// section property
 	this.SectionBreak = undefined;
-	this.PageSizeW	  = undefined;
-	this.PageSizeH	  = undefined;
-	this.Orient 	  = undefined;
-
+	this.PageSizeW    = undefined;
+	this.PageSizeH    = undefined;
+	this.Orient       = undefined;
+	
 	// Margins 
-	this.MarginT	 		 = undefined;
-	this.MarginL	 		 = undefined;
-	this.MarginR	 		 = undefined;
-	this.MarginB	 		 = undefined;
+	this.MarginT = undefined;
+	this.MarginL = undefined;
+	this.MarginR = undefined;
+	this.MarginB = undefined;
 	
 	
 	this.Appearance = Asc.c_oAscSdtAppearance.Frame;
 	this.Color      = undefined;
-
+	
 	this.CheckBoxPr    = undefined;
 	this.ComboBoxPr    = undefined;
 	this.DropDownPr    = undefined;
 	this.DateTimePr    = undefined;
 	this.TextFormPr    = undefined;
 	this.PictureFormPr = undefined;
-
+	this.ComplexFormPr = undefined;
+	
 	this.PlaceholderText = undefined;
-
+	
 	this.FormPr = undefined;
 }
+CContentControlPr.prototype.GetEventObject = function()
+{
+	return {
+		"Tag"        : this.Tag,
+		"Id"         : this.Id,
+		"Lock"       : this.Lock,
+		"InternalId" : this.InternalId
+	};
+};
 CContentControlPr.prototype.FillFromObject = function(oPr)
 {
 	if (undefined !== oPr.Id)
@@ -441,6 +475,7 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	this.Alias      = oContentControl.GetAlias();
 	this.Appearance = oContentControl.GetAppearance();
 	this.Color      = oContentControl.GetColor();
+	this.Temporary  = oContentControl.IsContentControlTemporary();
 
 	if (oContentControl.IsCheckBox())
 		this.CheckBoxPr = oContentControl.GetCheckBoxPr().Copy();
@@ -449,18 +484,33 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	else if (oContentControl.IsDropDownList())
 		this.DropDownPr = oContentControl.GetDropDownListPr().Copy();
 	else if (oContentControl.IsDatePicker())
+	{
 		this.DateTimePr = oContentControl.GetDatePickerPr().Copy();
+		if (oContentControl.GetInnerText() !== this.DateTimePr.ToString())
+			this.DateTimePr.SetNullFullDate(true);
+	}
 	else if (oContentControl.IsTextForm())
 		this.TextFormPr = oContentControl.GetTextFormPr().Copy();
 	else if (oContentControl.IsPictureForm())
 		this.PictureFormPr = oContentControl.GetPictureFormPr().Copy();
+	else if (oContentControl.IsComplexForm())
+		this.ComplexFormPr = oContentControl.GetComplexFormPr().Copy();
 
 	this.PlaceholderText = oContentControl.GetPlaceholderText();
 
 	if (oContentControl.IsForm())
 	{
-		this.FormPr = oContentControl.GetFormPr().Copy();
-		this.FormPr.SetFixed(oContentControl.IsFixedForm());
+		let mainForm = oContentControl.IsMainForm() ? oContentControl : oContentControl.GetMainForm();
+		
+		this.FormPr = mainForm.GetFormPr().Copy();
+		this.FormPr.SetFixed(mainForm.IsFixedForm());
+		
+		if (mainForm !== oContentControl)
+		{
+			let subFormPr = oContentControl.GetFormPr();
+			this.FormPr.SetAscBorder(subFormPr.GetAscBorder());
+			this.FormPr.SetShd(subFormPr.GetShd());
+		}
 	}
 };
 CContentControlPr.prototype.SetToContentControl = function(oContentControl)
@@ -475,11 +525,10 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 	{
 		oContentControl.GetLogicDocument().OnChangeRadioRequired(oContentControl.GetRadioButtonGroupKey(), this.FormPr.GetRequired());
 	}
-
-
+	
 	if (undefined !== this.Tag)
 		oContentControl.SetTag(this.Tag);
-
+	
 	if (undefined !== this.Id)
 		oContentControl.SetContentControlId(this.Id);
 
@@ -500,6 +549,9 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		else
 			oContentControl.SetColor(new CDocumentColor(this.Color.r, this.Color.g, this.Color.b));
 	}
+	
+	if (undefined !== this.Temporary)
+		oContentControl.SetContentControlTemporary(this.Temporary);
 
 	if (undefined !== this.CheckBoxPr)
 	{
@@ -517,7 +569,17 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		oContentControl.SetDropDownListPr(this.DropDownPr);
 
 	if (undefined !== this.DateTimePr)
-		oContentControl.ApplyDatePickerPr(this.DateTimePr);
+	{
+		let dateTimePr = this.DateTimePr;
+		if (dateTimePr.IsNullFullDate())
+		{
+			dateTimePr = dateTimePr.Copy();
+			dateTimePr.SetNullFullDate(false);
+			dateTimePr.SetFullDate(oContentControl.GetDatePickerPr().GetFullDate());
+		}
+		
+		oContentControl.ApplyDatePickerPr(dateTimePr);
+	}
 
 	if (undefined !== this.TextFormPr && oContentControl.IsInlineLevel())
 	{
@@ -530,22 +592,130 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		oContentControl.SetTextFormPr(this.TextFormPr);
 
 		if (this.TextFormPr.Comb && (isCombChanged || isMaxChanged))
-			oContentControl.TrimCombForm();
+			oContentControl.TrimTextForm();
+		else if (!this.TextFormPr.Comb && isCombChanged && oContentControl.IsPlaceHolder())
+			oContentControl.ReplaceContentWithPlaceHolder(false, true);
 
-		if (oContentControl.IsFixedForm() && !isCombChanged)
+		if (oContentControl.IsFixedForm() && oContentControl.IsMainForm() && !isCombChanged)
 			oContentControl.UpdateFixedFormSizeByCombWidth();
+
+		if (!this.TextFormPr.MultiLine)
+			oContentControl.CorrectSingleLineFormContent();
 	}
 
 	if (undefined !== this.PlaceholderText)
 		oContentControl.SetPlaceholderText(this.PlaceholderText);
 
-	if (undefined !== this.FormPr)
-		oContentControl.SetFormPr(this.FormPr);
+	this.SetFormPrToContentControl(oContentControl);
 
 	if (undefined !== this.PictureFormPr && oContentControl.IsInlineLevel())
 	{
 		oContentControl.SetPictureFormPr(this.PictureFormPr);
 		oContentControl.UpdatePictureFormLayout();
+	}
+
+	if (undefined !== this.ComplexFormPr)
+		oContentControl.SetComplexFormPr(this.ComplexFormPr);
+};
+CContentControlPr.prototype.SetFormPrToContentControl = function(contentControl)
+{
+	if (!this.FormPr)
+		return;
+	
+	let formPr = this.FormPr;
+	
+	let newRole = formPr.GetRole();
+	if (contentControl.IsForm() && !contentControl.IsMainForm())
+	{
+		// Ключ у подформы должен сохраняться
+		let oldKey    = contentControl.GetFormKey();
+		let newFormPr = formPr.Copy();
+		newFormPr.SetKey(oldKey);
+		contentControl.SetFormPr(newFormPr);
+
+		contentControl = contentControl.GetMainForm();
+		if (!contentControl)
+			return;
+
+		formPr = contentControl.GetFormPr().Copy();
+		formPr.SetRole(newRole);
+	}
+
+	if (contentControl.IsComplexForm())
+	{
+		let subForms = contentControl.GetAllSubForms();
+		for (let index = 0, count = subForms.length; index < count; ++index)
+		{
+			subForms[index].SetFormRole(newRole);
+		}
+	}
+	
+	let newKey = formPr.GetKey();
+	let oldKey = contentControl.GetFormKey();
+	
+	let fieldMaster = contentControl.GetFieldMaster();
+	let userMaster  = fieldMaster ? fieldMaster.getFirstUser() : null;
+	let oldRole     = userMaster ? userMaster.getRole() : null;
+	
+	let isKeyChanged = newKey && newKey !== oldKey;
+	let isRoleChanged = newRole && newRole !== oldRole;
+	
+	if (isKeyChanged && isRoleChanged)
+	{
+		// Такого не должно быть, ключ и роль не должны меняться одновременно, но если все же произошло,
+		// то выставляем все как задано в настройках, не делая ничего дополнительного
+	}
+	else if (isKeyChanged)
+	{
+		this.OnSetKeyToForm(newKey, contentControl);
+	}
+	else if (isRoleChanged)
+	{
+		this.OnSetRoleToForm(newRole, contentControl);
+	}
+	
+	contentControl.SetFormPr(formPr);
+};
+CContentControlPr.prototype.OnSetKeyToForm = function(newKey, form)
+{
+	let logicDocument = form.GetLogicDocument();
+	if (!logicDocument)
+		return;
+	
+	let formManager = logicDocument.GetFormsManager();
+	let role = formManager.GetRoleByKey(newKey, form.GetSpecificType());
+	if (!role)
+		return;
+	
+	this.FormPr.SetRole(role);
+};
+CContentControlPr.prototype.OnSetRoleToForm = function(newRole, form)
+{
+	let logicDocument = form.GetLogicDocument();
+	if (!logicDocument)
+		return;
+	
+	let formManager = logicDocument.GetFormsManager();
+	
+	let formKey = form.GetFormKey();
+	if (!formKey || "" === formKey)
+		return;
+	
+	let allForms = formManager.GetAllFormsByKey(formKey, form.GetSpecificType());
+	for (let index = 0, formCount = allForms.length; index < formCount; ++index)
+	{
+		let curForm = allForms[index];
+		if (curForm !== form)
+		{
+			let formPr = curForm.GetFormPr();
+			if (!formPr)
+				continue;
+			
+			let newFormPr = formPr.Copy();
+			newFormPr.SetRole(newRole);
+			newFormPr.SetFieldMaster(null);
+			curForm.SetFormPr(newFormPr);
+		}
 	}
 };
 CContentControlPr.prototype.GetId = function()
@@ -611,6 +781,14 @@ CContentControlPr.prototype.SetColor = function(r, g, b)
 		this.Color = null;
 	else
 		this.Color = new CDocumentColor(r, g, b);
+};
+CContentControlPr.prototype.GetTemporary = function()
+{
+	return this.Temporary;
+};
+CContentControlPr.prototype.SetTemporary = function(isTemporary)
+{
+	this.Temporary = isTemporary;
 };
 CContentControlPr.prototype.GetSpecificType = function()
 {
@@ -700,6 +878,25 @@ CContentControlPr.prototype.SetPictureFormPr = function(oPr)
 CContentControlPr.prototype.GetPictureFormPr = function()
 {
 	return this.PictureFormPr;
+};
+CContentControlPr.prototype.SetComplexFormPr = function(oPr)
+{
+	this.ComplexFormPr = oPr;
+};
+CContentControlPr.prototype.GetComplexFormPr = function()
+{
+	return this.ComplexFormPr;
+};
+CContentControlPr.prototype.GetNewKey = function()
+{
+	let logicDocument = editor && editor.WordControl && editor.WordControl.m_oLogicDocument;
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return "";
+
+	let formManager  = logicDocument.GetFormsManager();
+	let keyGenerator = formManager.GetKeyGenerator();
+
+	return keyGenerator.GetNewKey(this.CC);
 };
 
 /**
@@ -805,948 +1002,6 @@ CSpecialFormsGlobalSettings.prototype.Read_FromBinary = function(oReader)
 	}
 };
 
-/**
- * Класс с настройками чекбокса
- * @constructor
- */
-function CSdtCheckBoxPr()
-{
-	this.Checked         = false;
-	this.CheckedSymbol   = Asc.c_oAscSdtCheckBoxDefaults.CheckedSymbol;
-	this.UncheckedSymbol = Asc.c_oAscSdtCheckBoxDefaults.UncheckedSymbol;
-	this.CheckedFont     = Asc.c_oAscSdtCheckBoxDefaults.CheckedFont;
-	this.UncheckedFont   = Asc.c_oAscSdtCheckBoxDefaults.UncheckedFont;
-	this.GroupKey        = undefined;
-}
-CSdtCheckBoxPr.prototype.Copy = function()
-{
-	var oCopy = new CSdtCheckBoxPr();
-
-	oCopy.Checked         = this.Checked;
-	oCopy.CheckedSymbol   = this.CheckedSymbol;
-	oCopy.CheckedFont     = this.CheckedFont;
-	oCopy.UncheckedSymbol = this.UncheckedSymbol;
-	oCopy.UncheckedFont   = this.UncheckedFont;
-	oCopy.GroupKey        = this.GroupKey;
-
-	return oCopy;
-};
-CSdtCheckBoxPr.prototype.IsEqual = function(oOther)
-{
-	if (!oOther
-		|| oOther.Checked !== this.Checked
-		|| oOther.CheckedSymbol !== this.CheckedSymbol
-		|| oOther.CheckedFont !== this.CheckedFont
-		|| oOther.UncheckedSymbol !== this.UncheckedSymbol
-		|| oOther.UncheckedFont !== this.UncheckedFont
-		|| oOther.GroupKey !== this.GroupKey)
-		return false;
-
-	return true;
-};
-CSdtCheckBoxPr.prototype.WriteToBinary = function(oWriter)
-{
-	oWriter.WriteBool(this.Checked);
-	oWriter.WriteString2(this.CheckedFont);
-	oWriter.WriteLong(this.CheckedSymbol);
-	oWriter.WriteString2(this.UncheckedFont);
-	oWriter.WriteLong(this.UncheckedSymbol);
-
-	if (undefined !== this.GroupKey)
-	{
-		oWriter.WriteBool(true);
-		oWriter.WriteString2(this.GroupKey);
-	}
-	else
-	{
-		oWriter.WriteBool(false);
-	}
-};
-CSdtCheckBoxPr.prototype.ReadFromBinary = function(oReader)
-{
-	this.Checked         = oReader.GetBool();
-	this.CheckedFont     = oReader.GetString2();
-	this.CheckedSymbol   = oReader.GetLong();
-	this.UncheckedFont   = oReader.GetString2();
-	this.UncheckedSymbol = oReader.GetLong();
-
-	if (oReader.GetBool())
-		this.GroupKey = oReader.GetString2();
-};
-CSdtCheckBoxPr.prototype.Write_ToBinary = function(oWriter)
-{
-	this.WriteToBinary(oWriter);
-};
-CSdtCheckBoxPr.prototype.Read_FromBinary = function(oReader)
-{
-	this.ReadFromBinary(oReader);
-};
-CSdtCheckBoxPr.prototype.SetChecked = function(isChecked)
-{
-	this.Checked = isChecked;
-};
-CSdtCheckBoxPr.prototype.GetChecked = function()
-{
-	return this.Checked;
-};
-CSdtCheckBoxPr.prototype.GetCheckedSymbol = function()
-{
-	return this.CheckedSymbol;
-};
-CSdtCheckBoxPr.prototype.SetCheckedSymbol = function(nSymbol)
-{
-	this.CheckedSymbol = nSymbol;
-};
-CSdtCheckBoxPr.prototype.GetCheckedFont = function()
-{
-	return this.CheckedFont;
-};
-CSdtCheckBoxPr.prototype.SetCheckedFont = function(sFont)
-{
-	this.CheckedFont = sFont;
-};
-CSdtCheckBoxPr.prototype.GetUncheckedSymbol = function()
-{
-	return this.UncheckedSymbol;
-};
-CSdtCheckBoxPr.prototype.SetUncheckedSymbol = function(nSymbol)
-{
-	this.UncheckedSymbol = nSymbol;
-};
-CSdtCheckBoxPr.prototype.GetUncheckedFont = function()
-{
-	return this.UncheckedFont;
-};
-CSdtCheckBoxPr.prototype.SetUncheckedFont = function(sFont)
-{
-	this.UncheckedFont = sFont;
-};
-CSdtCheckBoxPr.prototype.GetGroupKey = function()
-{
-	return this.GroupKey;
-};
-CSdtCheckBoxPr.prototype.SetGroupKey = function(sKey)
-{
-	this.GroupKey = sKey;
-};
-
-/**
- * Класс, представляющий элемент списка Combobox или DropDownList
- * @constructor
- */
-function CSdtListItem()
-{
-	this.DisplayText = "";
-	this.Value       = "";
-}
-CSdtListItem.prototype.Copy = function()
-{
-	var oItem = new CSdtListItem();
-	oItem.DisplayText = this.DisplayText;
-	oItem.Value       = this.Value;
-	return oItem;
-};
-CSdtListItem.prototype.IsEqual = function(oItem)
-{
-	return (this.DisplayText === oItem.DisplayText && this.Value === oItem.Value);
-};
-CSdtListItem.prototype.WriteToBinary = function(oWriter)
-{
-	oWriter.WriteString2(this.DisplayText);
-	oWriter.WriteString2(this.Value);
-};
-CSdtListItem.prototype.ReadFromBinary = function(oReader)
-{
-	this.DisplayText = oReader.GetString2();
-	this.Value       = oReader.GetString2();
-};
-
-/**
- * Класс с настройками для выпадающего списка
- * @constructor
- */
-function CSdtComboBoxPr()
-{
-	this.ListItems = [];
-	this.LastValue = -1;
-	this.AutoFit   = false;
-}
-CSdtComboBoxPr.prototype.Copy = function()
-{
-	var oList = new CSdtComboBoxPr();
-
-	oList.LastValue = this.LastValue;
-	oList.ListItems = [];
-
-	for (var nIndex = 0, nCount = this.ListItems.length; nIndex < nCount; ++nIndex)
-	{
-		oList.ListItems.push(this.ListItems[nIndex].Copy());
-	}
-
-	oList.AutoFit = this.AutoFit;
-
-	return oList;
-};
-CSdtComboBoxPr.prototype.IsEqual = function(oOther)
-{
-	if (!oOther || this.LastValue !== oOther.LastValue || this.ListItems.length !== oOther.ListItems.length)
-		return false;
-
-	for (var nIndex = 0, nCount = this.ListItems.length; nIndex < nCount; ++nIndex)
-	{
-		if (!this.ListItems[nIndex].IsEqual(oOther.ListItems[nIndex]))
-			return false;
-	}
-
-	return true;
-};
-CSdtComboBoxPr.prototype.AddItem = function(sDisplay, sValue)
-{
-	if (null !== this.GetTextByValue(sValue))
-		return false;
-
-	var oItem = new CSdtListItem();
-	oItem.DisplayText = sDisplay;
-	oItem.Value       = sValue;
-	this.ListItems.push(oItem);
-
-	return true;
-};
-CSdtComboBoxPr.prototype.Clear = function()
-{
-	this.ListItems = [];
-	this.LastValue = -1;
-};
-CSdtComboBoxPr.prototype.GetTextByValue = function(sValue)
-{
-	if (!sValue || "" === sValue)
-		return null;
-
-	for (var nIndex = 0, nCount = this.ListItems.length; nIndex < nCount; ++nIndex)
-	{
-		if (this.ListItems[nIndex].Value === sValue)
-			return this.ListItems[nIndex].DisplayText;
-	}
-
-	return null;
-};
-CSdtComboBoxPr.prototype.WriteToBinary = function(oWriter)
-{
-	oWriter.WriteLong(this.LastValue);
-	oWriter.WriteLong(this.ListItems.length);
-	for (var nIndex = 0, nCount = this.ListItems.length; nIndex < nCount; ++nIndex)
-	{
-		this.ListItems[nIndex].WriteToBinary(oWriter);
-	}
-	oWriter.WriteBool(this.AutoFit);
-};
-CSdtComboBoxPr.prototype.ReadFromBinary = function(oReader)
-{
-	this.LastValue = oReader.GetLong();
-
-	var nCount = oReader.GetLong();
-	for (var nIndex = 0; nIndex < nCount; ++nIndex)
-	{
-		var oItem = new CSdtListItem();
-		oItem.ReadFromBinary(oReader);
-		this.ListItems.push(oItem);
-	}
-	this.AutoFit = oReader.GetBool();
-};
-CSdtComboBoxPr.prototype.Write_ToBinary = function(oWriter)
-{
-	this.WriteToBinary(oWriter);
-};
-CSdtComboBoxPr.prototype.Read_FromBinary = function(oReader)
-{
-	this.ReadFromBinary(oReader);
-};
-CSdtComboBoxPr.prototype.GetItemsCount = function()
-{
-	return this.ListItems.length;
-};
-CSdtComboBoxPr.prototype.GetItemDisplayText = function(nIndex)
-{
-	if (!this.ListItems[nIndex])
-		return "";
-
-	return this.ListItems[nIndex].DisplayText;
-};
-CSdtComboBoxPr.prototype.GetItemValue = function(nIndex)
-{
-	if (!this.ListItems[nIndex])
-		return "";
-
-	return this.ListItems[nIndex].Value;
-};
-CSdtComboBoxPr.prototype.FindByText = function(sValue)
-{
-	for (var nIndex = 0, nCount = this.ListItems.length; nIndex < nCount; ++nIndex)
-	{
-		if (this.ListItems[nIndex].DisplayText === sValue)
-			return nIndex;
-	}
-
-	return -1;
-};
-CSdtComboBoxPr.prototype.GetAutoFit = function()
-{
-	return this.AutoFit;
-};
-CSdtComboBoxPr.prototype.SetAutoFit = function(isAutoFit)
-{
-	this.AutoFit = isAutoFit;
-};
-
-/**
- * Класс с настройками для даты
- * @constructor
- */
-function CSdtDatePickerPr()
-{
-	this.FullDate   = (new Date()).toISOString().slice(0, 19) + 'Z';
-	this.LangId     = 1033;
-	this.DateFormat = "dd.MM.yyyy";
-	this.Calendar   = Asc.c_oAscCalendarType.Gregorian;
-}
-CSdtDatePickerPr.prototype.Copy = function()
-{
-	var oDate = new CSdtDatePickerPr();
-
-	oDate.FullDate   = this.FullDate;
-	oDate.LangId     = this.LangId;
-	oDate.DateFormat = this.DateFormat;
-	oDate.Calendar   = this.Calendar;
-
-	return oDate;
-};
-CSdtDatePickerPr.prototype.IsEqual = function(oDate)
-{
-	return (oDate && this.FullDate === oDate.FullDate && this.LangId === oDate.LangId && this.DateFormat === oDate.DateFormat && this.Calendar === oDate.Calendar);
-};
-CSdtDatePickerPr.prototype.ToString = function(sFormat, sFullDate, nLangId)
-{
-	if (undefined === sFormat)
-		sFormat = this.DateFormat;
-
-	if (undefined === sFullDate)
-		sFullDate = this.FullDate;
-
-	if (undefined === nLangId)
-		nLangId = this.LangId;
-
-	var oFormat = AscCommon.oNumFormatCache.get(sFormat, AscCommon.NumFormatType.WordFieldDate);
-	if (oFormat)
-	{
-		var oCultureInfo = AscCommon.g_aCultureInfos[nLangId];
-		if (!oCultureInfo)
-			oCultureInfo = AscCommon.g_aCultureInfos[1033];
-
-		var oDateTime = new Asc.cDate(sFullDate);
-		return oFormat.formatToChart(oDateTime.getExcelDate() + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
-	}
-
-	return sFullDate;
-};
-CSdtDatePickerPr.prototype.WriteToBinary = function(oWriter)
-{
-	oWriter.WriteString2(this.FullDate);
-	oWriter.WriteLong(this.LangId);
-	oWriter.WriteString2(this.DateFormat);
-	oWriter.WriteLong(this.Calendar);
-};
-CSdtDatePickerPr.prototype.ReadFromBinary = function(oReader)
-{
-	this.FullDate   = oReader.GetString2();
-	this.LangId     = oReader.GetLong();
-	this.DateFormat = oReader.GetString2();
-	this.Calendar   = oReader.GetLong();
-};
-CSdtDatePickerPr.prototype.Write_ToBinary = function(oWriter)
-{
-	this.WriteToBinary(oWriter);
-};
-CSdtDatePickerPr.prototype.Read_FromBinary = function(oReader)
-{
-	this.ReadFromBinary(oReader);
-};
-CSdtDatePickerPr.prototype.GetFullDate = function()
-{
-	return this.FullDate;
-};
-CSdtDatePickerPr.prototype.SetFullDate = function(sFullDate)
-{
-	var oDate = sFullDate instanceof Date ? sFullDate : new Date(sFullDate);
-	this.FullDate = oDate.toISOString().slice(0, 19) + 'Z';
-};
-CSdtDatePickerPr.prototype.GetLangId = function()
-{
-	return this.LangId;
-};
-CSdtDatePickerPr.prototype.SetLangId = function(nLangId)
-{
-	this.LangId = nLangId;
-};
-CSdtDatePickerPr.prototype.GetDateFormat = function()
-{
-	return this.DateFormat;
-};
-CSdtDatePickerPr.prototype.SetDateFormat = function(sDateFormat)
-{
-	this.DateFormat = sDateFormat;
-};
-CSdtDatePickerPr.prototype.GetCalendar = function()
-{
-	return this.Calendar;
-};
-CSdtDatePickerPr.prototype.SetCalendar = function(nCalendar)
-{
-	this.Calendar = nCalendar;
-};
-CSdtDatePickerPr.prototype.GetFormatsExamples = function()
-{
-	return [
-		"MM/DD/YYYY",
-		"dddd\,\ mmmm\ dd\,\ yyyy",
-		"DD\ MMMM\ YYYY",
-		"MMMM\ DD\,\ YYYY",
-		"DD-MMM-YY",
-		"MMMM\ YY",
-		"MMM-YY",
-		"MM/DD/YYYY\ hh:mm\ AM/PM",
-		"MM/DD/YYYY\ hh:mm:ss\ AM/PM",
-		"hh:mm",
-		"hh:mm:ss",
-		"hh:mm\ AM/PM",
-		"hh:mm:ss:\ AM/PM"
-	];
-};
-
-/**
- * Клосс с настройками для текстовой формы
- * @constructor
- */
-function CSdtTextFormPr(nMax, isComb, nWidth, nSymbol, sFont, oCombBorder)
-{
-	this.MaxCharacters         = undefined !== nMax ? nMax : -1;
-	this.Comb                  = undefined !== isComb ? isComb : false;
-	this.Width                 = nWidth;
-	this.CombPlaceholderSymbol = nSymbol;
-	this.CombPlaceholderFont   = sFont;
-	this.CombBorder            = undefined !== oCombBorder ? oCombBorder.Copy() : undefined;
-	this.MultiLine             = false;
-	this.AutoFit               = false;
-}
-CSdtTextFormPr.prototype.Copy = function()
-{
-	var oText = new CSdtTextFormPr();
-
-	oText.MaxCharacters         = this.MaxCharacters;
-	oText.Comb                  = this.Comb;
-	oText.Width                 = this.Width;
-	oText.CombPlaceholderSymbol = this.CombPlaceholderSymbol;
-	oText.CombPlaceholderFont   = this.CombPlaceholderFont;
-	oText.CombBorder            = this.CombBorder ? this.CombBorder.Copy() : undefined;
-	oText.MultiLine             = this.MultiLine;
-	oText.AutoFit               = this.AutoFit;
-
-	return oText;
-};
-CSdtTextFormPr.prototype.IsEqual = function(oOther)
-{
-	return (oOther
-		&& this.MaxCharacters === oOther.MaxCharacters
-		&& this.Comb === oOther.Comb
-		&& this.Width === oOther.Width
-		&& this.CombPlaceholderSymbol === oOther.CombPlaceholderSymbol
-		&& this.CombPlaceholderFont === oOther.CombPlaceholderFont
-		&& ((!this.CombBorder && !oOther) || (this.CombBorder && this.CombBorder.IsEqual(oOther)))
-		&& this.MultiLine === oOther.MultiLine
-		&& this.AutoFit === oOther.AutoFit
-	);
-};
-CSdtTextFormPr.prototype.WriteToBinary = function(oWriter)
-{
-	oWriter.WriteLong(this.MaxCharacters);
-	oWriter.WriteBool(this.Comb);
-	oWriter.WriteLong(this.Width);
-
-	if (undefined !== this.CombPlaceholderSymbol)
-	{
-		oWriter.WriteBool(true);
-		oWriter.WriteLong(this.CombPlaceholderSymbol);
-	}
-	else
-	{
-		oWriter.WriteBool(false);
-	}
-
-	if (undefined !== this.CombPlaceholderFont)
-	{
-		oWriter.WriteBool(true);
-		oWriter.WriteString2(this.CombPlaceholderFont);
-	}
-	else
-	{
-		oWriter.WriteBool(false);
-	}
-
-	if (undefined !== this.CombBorder)
-	{
-		oWriter.WriteBool(true);
-		this.CombBorder.WriteToBinary(oWriter);
-	}
-	else
-	{
-		oWriter.WriteBool(false);
-	}
-
-	oWriter.WriteBool(this.MultiLine);
-	oWriter.WriteBool(this.AutoFit);
-};
-CSdtTextFormPr.prototype.ReadFromBinary = function(oReader)
-{
-	this.MaxCharacters = oReader.GetLong();
-	this.Comb          = oReader.GetBool();
-	this.Width         = oReader.GetLong();
-
-	if (oReader.GetBool())
-		this.CombPlaceholderSymbol = oReader.GetLong();
-
-	if (oReader.GetBool())
-		this.CombPlaceholderFont = oReader.GetString2();
-
-	if (oReader.GetBool())
-	{
-		this.CombBorder = new CDocumentBorder();
-		this.CombBorder.ReadFromBinary(oReader);
-	}
-
-	this.MultiLine = oReader.GetBool();
-	this.AutoFit   = oReader.GetBool();
-};
-CSdtTextFormPr.prototype.Write_ToBinary = function(oWriter)
-{
-	this.WriteToBinary(oWriter);
-};
-CSdtTextFormPr.prototype.Read_FromBinary = function(oReader)
-{
-	this.ReadFromBinary(oReader);
-};
-CSdtTextFormPr.prototype.GetMaxCharacters = function()
-{
-	return this.MaxCharacters;
-};
-CSdtTextFormPr.prototype.SetMaxCharacters = function(nMax)
-{
-	if (undefined === nMax || null === nMax || nMax <= 0)
-		this.MaxCharacters = -1;
-	else
-		this.MaxCharacters = nMax | 0;
-};
-CSdtTextFormPr.prototype.GetComb = function()
-{
-	return this.Comb;
-};
-CSdtTextFormPr.prototype.SetComb = function(isComb)
-{
-	this.Comb = isComb;
-};
-CSdtTextFormPr.prototype.GetWidth = function()
-{
-	return this.Width;
-};
-CSdtTextFormPr.prototype.SetWidth = function(nWidth)
-{
-	this.Width = nWidth;
-};
-CSdtTextFormPr.prototype.GetPlaceHolderSymbol = function()
-{
-	return this.CombPlaceholderSymbol;
-};
-CSdtTextFormPr.prototype.SetPlaceHolderSymbol = function(nCharCode)
-{
-	this.CombPlaceholderSymbol = nCharCode;
-};
-CSdtTextFormPr.prototype.GetPlaceHolderFont = function()
-{
-	return this.CombPlaceholderFont;
-};
-CSdtTextFormPr.prototype.SetPlaceHolderFont = function(sFont)
-{
-	this.CombPlaceholderFont = sFont;
-};
-CSdtTextFormPr.prototype.GetCombBorder = function()
-{
-	return this.CombBorder;
-};
-CSdtTextFormPr.prototype.GetAscCombBorder = function()
-{
-	if (!this.CombBorder)
-		return undefined;
-
-	return (new Asc.asc_CTextBorder(this.CombBorder));
-};
-CSdtTextFormPr.prototype.SetAscCombBorder = function(oAscBorder)
-{
-	if (!oAscBorder)
-	{
-		this.CombBorder = undefined;
-	}
-	else
-	{
-		this.CombBorder = new CDocumentBorder();
-		this.CombBorder.Set_FromObject(oAscBorder);
-	}
-};
-CSdtTextFormPr.prototype.IsComb = function()
-{
-	return !!(this.Comb && undefined !== this.MaxCharacters && this.MaxCharacters <= 1000);
-};
-CSdtTextFormPr.prototype.GetMultiLine = function()
-{
-	return (this.MultiLine && !this.IsComb());
-};
-CSdtTextFormPr.prototype.SetMultiLine = function(isMultiLine)
-{
-	this.MultiLine = isMultiLine;
-};
-CSdtTextFormPr.prototype.GetAutoFit = function()
-{
-	if (this.Comb)
-		return false;
-
-	return this.AutoFit;
-};
-CSdtTextFormPr.prototype.SetAutoFit = function(isAutoFit)
-{
-	this.AutoFit = isAutoFit;
-};
-
-function CSdtFormPr(sKey, sLabel, sHelpText, isRequired)
-{
-	this.Key      = sKey;
-	this.Label    = sLabel;
-	this.HelpText = sHelpText;
-	this.Required = isRequired;
-	this.Fixed    = false;
-	this.Border   = undefined;
-	this.Shd      = undefined;
-}
-CSdtFormPr.prototype.Copy = function()
-{
-	var oFormPr = new CSdtFormPr();
-
-	oFormPr.Key      = this.Key;
-	oFormPr.Label    = this.Label;
-	oFormPr.HelpText = this.HelpText;
-	oFormPr.Required = this.Required;
-
-	if (this.Border)
-		oFormPr.Border = this.Border.Copy();
-
-	if (this.Shd)
-		oFormPr.Shd = this.Shd.Copy();
-
-	return oFormPr;
-};
-CSdtFormPr.prototype.IsEqual = function(oOther)
-{
-	return (oOther
-		&& this.Key === oOther.Key
-		&& this.Label === oOther.Label
-		&& this.HelpText === oOther.HelpText
-		&& this.Required === oOther.Required
-		&& IsEqualStyleObjects(this.Border, oOther.Border)
-		&& IsEqualStyleObjects(this.Shd, oOther.Shd));
-};
-CSdtFormPr.prototype.WriteToBinary = function(oWriter)
-{
-	var nStartPos = oWriter.GetCurPosition();
-	oWriter.Skip(4);
-	var nFlags = 0;
-
-	if (undefined !== this.Key)
-	{
-		oWriter.WriteString2(this.Key);
-		nFlags |= 1;
-	}
-
-	if (undefined !== this.Label)
-	{
-		oWriter.WriteString2(this.Label);
-		nFlags |= 2;
-	}
-
-	if (undefined !== this.HelpText)
-	{
-		oWriter.WriteString2(this.HelpText);
-		nFlags |= 4;
-	}
-
-	if (undefined !== this.Required)
-	{
-		oWriter.WriteBool(this.Required);
-		nFlags |= 8;
-	}
-
-	if (undefined !== this.Border)
-	{
-		this.Border.WriteToBinary(oWriter);
-		nFlags |= 16;
-	}
-
-	if (undefined !== this.Shd)
-	{
-		this.Shd.WriteToBinary(oWriter)
-		nFlags |= 32;
-	}
-
-	var nEndPos = oWriter.GetCurPosition();
-	oWriter.Seek(nStartPos);
-	oWriter.WriteLong(nFlags);
-	oWriter.Seek(nEndPos);
-};
-CSdtFormPr.prototype.ReadFromBinary = function(oReader)
-{
-	var nFlags = oReader.GetLong();
-
-	if (nFlags & 1)
-		this.Key = oReader.GetString2();
-
-	if (nFlags & 2)
-		this.Label = oReader.GetString2();
-
-	if (nFlags & 4)
-		this.HelpText = oReader.GetString2();
-
-	if (nFlags & 8)
-		this.Required = oReader.GetBool();
-
-	if (nFlags & 16)
-	{
-		this.Border = new CDocumentBorder();
-		this.Border.ReadFromBinary(oReader);
-	}
-
-	if (nFlags & 32)
-	{
-		this.Shd = new CDocumentShd();
-		this.Shd.ReadFromBinary(oReader);
-	}
-};
-CSdtFormPr.prototype.Write_ToBinary = function(oWriter)
-{
-	this.WriteToBinary(oWriter);
-};
-CSdtFormPr.prototype.Read_FromBinary = function(oReader)
-{
-	this.ReadFromBinary(oReader);
-};
-CSdtFormPr.prototype.GetKey = function()
-{
-	return this.Key;
-};
-CSdtFormPr.prototype.SetKey = function(sKey)
-{
-	this.Key = sKey;
-};
-CSdtFormPr.prototype.GetLabel = function()
-{
-	return this.Label;
-};
-CSdtFormPr.prototype.SetLabel = function(sLabel)
-{
-	this.Label = sLabel;
-};
-CSdtFormPr.prototype.GetHelpText = function()
-{
-	return this.HelpText;
-};
-CSdtFormPr.prototype.SetHelpText = function(sText)
-{
-	this.HelpText = sText;
-};
-CSdtFormPr.prototype.GetRequired = function()
-{
-	return this.Required;
-};
-CSdtFormPr.prototype.SetRequired = function(isRequired)
-{
-	this.Required = isRequired;
-};
-CSdtFormPr.prototype.GetFixed = function()
-{
-	return this.Fixed;
-};
-CSdtFormPr.prototype.SetFixed = function(isFixed)
-{
-	this.Fixed = isFixed;
-};
-CSdtFormPr.prototype.GetBorder = function()
-{
-	return this.Border;
-};
-CSdtFormPr.prototype.GetAscBorder = function()
-{
-	if (!this.Border)
-		return undefined;
-
-	return (new Asc.asc_CTextBorder(this.Border));
-};
-CSdtFormPr.prototype.SetAscBorder = function(oAscBorder)
-{
-	if (!oAscBorder)
-	{
-		this.Border = undefined;
-	}
-	else
-	{
-		this.Border = new CDocumentBorder();
-		this.Border.Set_FromObject(oAscBorder);
-	}
-};
-CSdtFormPr.prototype.GetShd = function()
-{
-	return this.Shd;
-};
-CSdtFormPr.prototype.GetAscShd = function()
-{
-	if (!this.Shd)
-		return undefined;
-
-	return (new Asc.asc_CParagraphShd(this.Shd));
-};
-CSdtFormPr.prototype.SetAscShd = function(isShd, oAscColor)
-{
-	if (!isShd || !oAscColor)
-	{
-		this.Shd = undefined;
-	}
-	else
-	{
-		var oUnifill        = new AscFormat.CUniFill();
-		oUnifill.fill       = new AscFormat.CSolidFill();
-		oUnifill.fill.color = AscFormat.CorrectUniColor(oAscColor, oUnifill.fill.color, 1);
-
-		var oLogicDocument = editor.WordControl.m_oLogicDocument;
-		if (oLogicDocument && oLogicDocument.IsDocumentEditor())
-			oUnifill.check(oLogicDocument.GetTheme(), oLogicDocument.GetColorMap());
-
-		this.Shd = new CDocumentShd();
-		this.Shd.Set_FromObject({
-			Value: Asc.c_oAscShd.Clear,
-			Color: {
-				r: oAscColor.asc_getR(),
-				g: oAscColor.asc_getG(),
-				b: oAscColor.asc_getB(),
-				Auto: false
-			},
-			Fill: {
-				r: oAscColor.asc_getR(),
-				g: oAscColor.asc_getG(),
-				b: oAscColor.asc_getB(),
-				Auto: false
-			},
-			Unifill: oUnifill
-		});
-	}
-};
-
-function CSdtPictureFormPr()
-{
-	this.ScaleFlag   = Asc.c_oAscPictureFormScaleFlag.Always;
-	this.Proportions = true;
-	this.Borders     = false;
-	this.ShiftX      = 0.5; // 0..1
-	this.ShiftY      = 0.5; // 0..1
-}
-CSdtPictureFormPr.prototype.Copy = function()
-{
-	var oFormPr = new CSdtPictureFormPr();
-
-	oFormPr.ScaleFlag   = this.ScaleFlag;
-	oFormPr.Proportions = this.Proportions;
-	oFormPr.Borders     = this.Borders;
-	oFormPr.ShiftX      = this.ShiftX;
-	oFormPr.ShiftY      = this.ShiftY;
-
-	return oFormPr;
-};
-CSdtPictureFormPr.prototype.IsEqual = function(oOther)
-{
-	return (oOther
-		&& this.ScaleFlag === oOther.ScaleFlag
-		&& this.Proportions === oOther.Proportions
-		&& this.Borders === oOther.Borders
-		&& Math.abs(this.ShiftX - oOther.ShiftX) < 0.001
-		&& Math.abs(this.ShiftY - oOther.ShiftY) < 0.001);
-};
-CSdtPictureFormPr.prototype.WriteToBinary = function(oWriter)
-{
-	oWriter.WriteLong(this.ScaleFlag);
-	oWriter.WriteBool(this.Proportions);
-	oWriter.WriteBool(this.Borders);
-	oWriter.WriteDouble(this.ShiftX);
-	oWriter.WriteDouble(this.ShiftY);
-};
-CSdtPictureFormPr.prototype.ReadFromBinary = function(oReader)
-{
-	this.ScaleFlag   = oReader.GetLong();
-	this.Proportions = oReader.GetBool();
-	this.Borders     = oReader.GetBool();
-	this.ShiftX      = oReader.GetDouble();
-	this.ShiftY      = oReader.GetDouble();
-};
-CSdtPictureFormPr.prototype.Write_ToBinary = function(oWriter)
-{
-	this.WriteToBinary(oWriter);
-};
-CSdtPictureFormPr.prototype.Read_FromBinary = function(oReader)
-{
-	this.ReadFromBinary(oReader);
-};
-CSdtPictureFormPr.prototype.GetScaleFlag = function()
-{
-	return this.ScaleFlag;
-};
-CSdtPictureFormPr.prototype.SetScaleFlag = function(nFlag)
-{
-	this.ScaleFlag = nFlag;
-};
-CSdtPictureFormPr.prototype.IsConstantProportions = function()
-{
-	return this.Proportions;
-};
-CSdtPictureFormPr.prototype.SetConstantProportions = function(isConstant)
-{
-	this.Proportions = isConstant;
-};
-CSdtPictureFormPr.prototype.IsRespectBorders = function()
-{
-	return this.Borders;
-};
-CSdtPictureFormPr.prototype.SetRespectBorders = function(isRespect)
-{
-	this.Borders = isRespect;
-};
-CSdtPictureFormPr.prototype.SetShiftX = function(nX)
-{
-	this.ShiftX = nX;
-};
-CSdtPictureFormPr.prototype.GetShiftX = function()
-{
-	return this.ShiftX;
-};
-CSdtPictureFormPr.prototype.SetShiftY = function(nY)
-{
-	this.ShiftY = nY;
-};
-CSdtPictureFormPr.prototype.GetShiftY = function()
-{
-	return this.ShiftY;
-};
-
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord']        = window['AscCommonWord'] || {};
 window['AscCommonWord'].CSdtPr = CSdtPr;
@@ -1770,6 +1025,8 @@ CContentControlPr.prototype['get_Appearance']         = CContentControlPr.protot
 CContentControlPr.prototype['put_Appearance']         = CContentControlPr.prototype.SetAppearance;
 CContentControlPr.prototype['get_Color']              = CContentControlPr.prototype.GetColor;
 CContentControlPr.prototype['put_Color']              = CContentControlPr.prototype.SetColor;
+CContentControlPr.prototype['get_Temporary']          = CContentControlPr.prototype.GetTemporary;
+CContentControlPr.prototype['put_Temporary']          = CContentControlPr.prototype.SetTemporary;
 CContentControlPr.prototype['get_SpecificType']       = CContentControlPr.prototype.GetSpecificType;
 CContentControlPr.prototype['get_CheckBoxPr']         = CContentControlPr.prototype.GetCheckBoxPr;
 CContentControlPr.prototype['put_CheckBoxPr']         = CContentControlPr.prototype.SetCheckBoxPr;
@@ -1787,96 +1044,6 @@ CContentControlPr.prototype['get_FormPr']             = CContentControlPr.protot
 CContentControlPr.prototype['put_FormPr']             = CContentControlPr.prototype.SetFormPr;
 CContentControlPr.prototype['get_PictureFormPr']      = CContentControlPr.prototype.GetPictureFormPr;
 CContentControlPr.prototype['put_PictureFormPr']      = CContentControlPr.prototype.SetPictureFormPr;
-
-window['AscCommon'].CSdtCheckBoxPr    = CSdtCheckBoxPr;
-window['AscCommon']['CSdtCheckBoxPr'] = CSdtCheckBoxPr;
-
-CSdtCheckBoxPr.prototype['get_Checked']         = CSdtCheckBoxPr.prototype.GetChecked;
-CSdtCheckBoxPr.prototype['put_Checked']         = CSdtCheckBoxPr.prototype.SetChecked;
-CSdtCheckBoxPr.prototype['get_CheckedSymbol']   = CSdtCheckBoxPr.prototype.GetCheckedSymbol;
-CSdtCheckBoxPr.prototype['put_CheckedSymbol']   = CSdtCheckBoxPr.prototype.SetCheckedSymbol;
-CSdtCheckBoxPr.prototype['get_CheckedFont']     = CSdtCheckBoxPr.prototype.GetCheckedFont;
-CSdtCheckBoxPr.prototype['put_CheckedFont']     = CSdtCheckBoxPr.prototype.SetCheckedFont;
-CSdtCheckBoxPr.prototype['get_UncheckedSymbol'] = CSdtCheckBoxPr.prototype.GetUncheckedSymbol;
-CSdtCheckBoxPr.prototype['put_UncheckedSymbol'] = CSdtCheckBoxPr.prototype.SetUncheckedSymbol;
-CSdtCheckBoxPr.prototype['get_UncheckedFont']   = CSdtCheckBoxPr.prototype.GetUncheckedFont;
-CSdtCheckBoxPr.prototype['put_UncheckedFont']   = CSdtCheckBoxPr.prototype.SetUncheckedFont;
-CSdtCheckBoxPr.prototype['get_GroupKey']        = CSdtCheckBoxPr.prototype.GetGroupKey;
-CSdtCheckBoxPr.prototype['put_GroupKey']        = CSdtCheckBoxPr.prototype.SetGroupKey;
-
-window['AscCommon'].CSdtComboBoxPr    = CSdtComboBoxPr;
-window['AscCommon']['CSdtComboBoxPr'] = CSdtComboBoxPr;
-
-CSdtComboBoxPr.prototype['add_Item']            = CSdtComboBoxPr.prototype.AddItem;
-CSdtComboBoxPr.prototype['clear']               = CSdtComboBoxPr.prototype.Clear;
-CSdtComboBoxPr.prototype['get_TextByValue']     = CSdtComboBoxPr.prototype.GetTextByValue;
-CSdtComboBoxPr.prototype['get_ItemsCount']      = CSdtComboBoxPr.prototype.GetItemsCount;
-CSdtComboBoxPr.prototype['get_ItemDisplayText'] = CSdtComboBoxPr.prototype.GetItemDisplayText;
-CSdtComboBoxPr.prototype['get_ItemValue']       = CSdtComboBoxPr.prototype.GetItemValue;
-CSdtComboBoxPr.prototype['put_AutoFit']         = CSdtComboBoxPr.prototype.GetAutoFit;
-CSdtComboBoxPr.prototype['put_AutoFit']         = CSdtComboBoxPr.prototype.SetAutoFit;
-
-window['AscCommon'].CSdtDatePickerPr    = CSdtDatePickerPr;
-window['AscCommon']['CSdtDatePickerPr'] = CSdtDatePickerPr;
-
-CSdtDatePickerPr.prototype['get_FullDate']        = CSdtDatePickerPr.prototype.GetFullDate;
-CSdtDatePickerPr.prototype['put_FullDate']        = CSdtDatePickerPr.prototype.SetFullDate;
-CSdtDatePickerPr.prototype['get_LangId']          = CSdtDatePickerPr.prototype.GetLangId;
-CSdtDatePickerPr.prototype['put_LangId']          = CSdtDatePickerPr.prototype.SetLangId;
-CSdtDatePickerPr.prototype['get_DateFormat']      = CSdtDatePickerPr.prototype.GetDateFormat;
-CSdtDatePickerPr.prototype['put_DateFormat']      = CSdtDatePickerPr.prototype.SetDateFormat;
-CSdtDatePickerPr.prototype['get_Calendar']        = CSdtDatePickerPr.prototype.GetCalendar;
-CSdtDatePickerPr.prototype['put_Calendar']        = CSdtDatePickerPr.prototype.SetCalendar;
-CSdtDatePickerPr.prototype['get_FormatsExamples'] = CSdtDatePickerPr.prototype.GetFormatsExamples;
-CSdtDatePickerPr.prototype['get_String']          = CSdtDatePickerPr.prototype.ToString;
-
-window['AscCommon'].CSdtFormPr    = CSdtFormPr;
-window['AscCommon']['CSdtFormPr'] = CSdtFormPr;
-
-CSdtFormPr.prototype['get_Key']      = CSdtFormPr.prototype.GetKey;
-CSdtFormPr.prototype['put_Key']      = CSdtFormPr.prototype.SetKey;
-CSdtFormPr.prototype['get_Label']    = CSdtFormPr.prototype.GetLabel;
-CSdtFormPr.prototype['put_Label']    = CSdtFormPr.prototype.SetLabel;
-CSdtFormPr.prototype['get_HelpText'] = CSdtFormPr.prototype.GetHelpText;
-CSdtFormPr.prototype['put_HelpText'] = CSdtFormPr.prototype.SetHelpText;
-CSdtFormPr.prototype['get_Required'] = CSdtFormPr.prototype.GetRequired;
-CSdtFormPr.prototype['put_Required'] = CSdtFormPr.prototype.SetRequired;
-CSdtFormPr.prototype['get_Fixed']    = CSdtFormPr.prototype.GetFixed;
-CSdtFormPr.prototype['get_Border']   = CSdtFormPr.prototype.GetAscBorder;
-CSdtFormPr.prototype['put_Border']   = CSdtFormPr.prototype.SetAscBorder;
-CSdtFormPr.prototype['get_Shd']      = CSdtFormPr.prototype.GetAscShd;
-CSdtFormPr.prototype['put_Shd']      = CSdtFormPr.prototype.SetAscShd;
-
-window['AscCommon'].CSdtTextFormPr    = CSdtTextFormPr;
-window['AscCommon']['CSdtTextFormPr'] = CSdtTextFormPr;
-
-CSdtTextFormPr.prototype['get_MaxCharacters']     = CSdtTextFormPr.prototype.GetMaxCharacters;
-CSdtTextFormPr.prototype['put_MaxCharacters']     = CSdtTextFormPr.prototype.SetMaxCharacters;
-CSdtTextFormPr.prototype['get_Comb']              = CSdtTextFormPr.prototype.GetComb;
-CSdtTextFormPr.prototype['put_Comb']              = CSdtTextFormPr.prototype.SetComb;
-CSdtTextFormPr.prototype['get_Width']             = CSdtTextFormPr.prototype.GetWidth;
-CSdtTextFormPr.prototype['put_Width']             = CSdtTextFormPr.prototype.SetWidth;
-CSdtTextFormPr.prototype['get_PlaceHolderSymbol'] = CSdtTextFormPr.prototype.GetPlaceHolderSymbol;
-CSdtTextFormPr.prototype['put_PlaceHolderSymbol'] = CSdtTextFormPr.prototype.SetPlaceHolderSymbol;
-CSdtTextFormPr.prototype['get_PlaceHolderFont']   = CSdtTextFormPr.prototype.GetPlaceHolderFont;
-CSdtTextFormPr.prototype['put_PlaceHolderFont']   = CSdtTextFormPr.prototype.SetPlaceHolderFont;
-CSdtTextFormPr.prototype['get_CombBorder']        = CSdtTextFormPr.prototype.GetAscCombBorder;
-CSdtTextFormPr.prototype['put_CombBorder']        = CSdtTextFormPr.prototype.SetAscCombBorder;
-CSdtTextFormPr.prototype['get_MultiLine']         = CSdtTextFormPr.prototype.GetMultiLine;
-CSdtTextFormPr.prototype['put_MultiLine']         = CSdtTextFormPr.prototype.SetMultiLine;
-CSdtTextFormPr.prototype['get_AutoFit']           = CSdtTextFormPr.prototype.GetAutoFit;
-CSdtTextFormPr.prototype['put_AutoFit']           = CSdtTextFormPr.prototype.SetAutoFit;
-
-window['AscCommon'].CSdtPictureFormPr    = CSdtPictureFormPr;
-window['AscCommon']['CSdtPictureFormPr'] = CSdtPictureFormPr;
-
-CSdtPictureFormPr.prototype['get_ScaleFlag']           = CSdtPictureFormPr.prototype.GetScaleFlag;
-CSdtPictureFormPr.prototype['put_ScaleFlag']           = CSdtPictureFormPr.prototype.SetScaleFlag;
-CSdtPictureFormPr.prototype['get_ConstantProportions'] = CSdtPictureFormPr.prototype.IsConstantProportions;
-CSdtPictureFormPr.prototype['put_ConstantProportions'] = CSdtPictureFormPr.prototype.SetConstantProportions;
-CSdtPictureFormPr.prototype['get_RespectBorders']      = CSdtPictureFormPr.prototype.IsRespectBorders;
-CSdtPictureFormPr.prototype['put_RespectBorders']      = CSdtPictureFormPr.prototype.SetRespectBorders;
-CSdtPictureFormPr.prototype['put_ShiftX']              = CSdtPictureFormPr.prototype.SetShiftX;
-CSdtPictureFormPr.prototype['get_ShiftX']              = CSdtPictureFormPr.prototype.GetShiftX;
-CSdtPictureFormPr.prototype['put_ShiftY']              = CSdtPictureFormPr.prototype.SetShiftY;
-CSdtPictureFormPr.prototype['get_ShiftY']              = CSdtPictureFormPr.prototype.GetShiftY;
+CContentControlPr.prototype['get_ComplexFormPr']      = CContentControlPr.prototype.GetComplexFormPr;
+CContentControlPr.prototype['put_ComplexFormPr']      = CContentControlPr.prototype.SetComplexFormPr;
+CContentControlPr.prototype['get_NewKey']             = CContentControlPr.prototype.GetNewKey;

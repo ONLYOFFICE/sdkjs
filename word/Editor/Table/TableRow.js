@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -114,6 +114,11 @@ CTableRow.prototype =
         return this.Id;
     },
 
+	GetId : function()
+	{
+		return this.Id;
+	},
+
 	// Создаем копию данного объекта
 	Copy : function(Table, oPr)
 	{
@@ -135,12 +140,18 @@ CTableRow.prototype =
 		Row.private_UpdateTableGrid();
         if(oPr && oPr.Comparison)
         {
-            oPr.Comparison.updateReviewInfo(Row, reviewtype_Add, true);
+            if (oPr.SkipUpdateInfo) {
+                oPr.Comparison.saveReviewInfo(Row, this);
+            } else if (oPr.bSaveCustomReviewType) {
+                oPr.Comparison.saveCustomReviewInfo(Row, this, oPr.Comparison.nInsertChangesType);
+            } else {
+                oPr.Comparison.updateReviewInfo(Row, oPr.Comparison.nInsertChangesType);
+            }
         }
 		return Row;
 	},
 
-    Is_UseInDocument : function(Id)
+	IsUseInDocument : function(Id)
     {
         var bUse = false;
         if ( null != Id )
@@ -159,7 +170,7 @@ CTableRow.prototype =
             bUse = true;
 
         if ( true === bUse && null != this.Table )
-            return this.Table.Is_UseInDocument(this.Get_Id());
+            return this.Table.IsUseInDocument(this.Get_Id());
 
         return false;
     },
@@ -245,9 +256,19 @@ CTableRow.prototype =
     // Формируем конечные свойства параграфа на основе стиля и прямых настроек.
     Get_CompiledPr : function(bCopy)
     {
+		let forceCompile = false;
+		if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+		{
+			let logicDocument = this.GetLogicDocument();
+			if (logicDocument
+				&& logicDocument.IsDocumentEditor()
+				&& logicDocument.CompileStyleOnLoad)
+				forceCompile = true;
+		}
+		
         if ( true === this.CompiledPr.NeedRecalc )
         {
-            if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+            if (!forceCompile && (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead))
             {
                 this.CompiledPr.Pr         = g_oDocumentDefaultTableRowPr;
                 this.CompiledPr.NeedRecalc = true;
@@ -255,7 +276,7 @@ CTableRow.prototype =
             else
             {
                 this.CompiledPr.Pr         = this.Internal_Compile_Pr();
-                this.CompiledPr.NeedRecalc = false;
+                this.CompiledPr.NeedRecalc = forceCompile;
             }
         }
 
@@ -329,11 +350,16 @@ CTableRow.prototype =
 
 	Set_Pr : function(RowPr)
 	{
+		let isHavePrChange = this.HavePrChange();
+		
 		this.private_AddPrChange();
 		History.Add(new CChangesTableRowPr(this, this.Pr, RowPr));
 		this.Pr = RowPr;
 		this.Recalc_CompiledPr();
 		this.private_UpdateTableGrid();
+		
+		if (isHavePrChange || this.HavePrChange())
+			this.private_UpdateTrackRevisions();
 	},
 
     Get_Before : function()
@@ -594,6 +620,7 @@ CTableRow.prototype =
 
 		this.private_CheckCurCell();
 		this.private_UpdateTableGrid();
+		this.OnContentChange();
 	},
 
 	Add_Cell : function(Index, Row, Cell, bReIndexing)
@@ -631,6 +658,7 @@ CTableRow.prototype =
 
 		this.private_CheckCurCell();
 		this.private_UpdateTableGrid();
+		this.OnContentChange();
 
 		return Cell;
 	},
@@ -783,6 +811,18 @@ CTableRow.prototype =
 CTableRow.prototype.GetTable = function()
 {
 	return this.Table;
+};
+/**
+ * Доступ к главному классу документа
+ * @returns {CDocument|null}
+ */
+CTableRow.prototype.GetLogicDocument = function()
+{
+	let table = this.GetTable();
+	if (table)
+		return table.GetLogicDocument();
+	
+	return null;
 };
 /**
  * Получаем номер данной строки в родительской таблице
@@ -1148,7 +1188,24 @@ CTableRow.prototype.private_UpdateTableGrid = function()
 	if (oTable)
 		oTable.private_UpdateTableGrid();
 };
-
+CTableRow.prototype.GetAllDrawingObjects = function(drawingObjects)
+{
+	if (!drawingObjects)
+		drawingObjects = [];
+	
+	for (let curCell = 0, cellCount = this.GetCellsCount(); curCell < cellCount; ++curCell)
+	{
+		this.GetCell(curCell).GetContent().GetAllDrawingObjects(drawingObjects);
+	}
+	
+	return drawingObjects;
+};
+CTableRow.prototype.OnContentChange = function()
+{
+	let table = this.GetTable();
+	if (table)
+		table.OnContentChange();
+};
 CTableRow.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
 {
 	var nSearchStartIdx, nIdx, oResult, oContent;

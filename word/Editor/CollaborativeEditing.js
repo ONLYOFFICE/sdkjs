@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -138,7 +138,7 @@ CWordCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, Addition
 	var deleteIndex = ( null === AscCommon.History.SavedIndex ? null : SumIndex );
 	if (0 < aChanges.length || null !== deleteIndex)
 	{
-		this.private_OnSendOwnChanges(aChanges2, deleteIndex);
+		this.CoHistory.AddOwnChanges(aChanges2, deleteIndex);
 		editor.CoAuthoringApi.saveChanges(aChanges, deleteIndex, AdditionalInfo, editor.canUnlockDocument2, bCollaborative);
 		AscCommon.History.CanNotAddChanges = true;
 	}
@@ -204,6 +204,8 @@ CWordCollaborativeEditing.prototype.Release_Locks = function()
                 editor.sync_UnLockDocumentSchema();
             else if (this.m_aNeedUnlock[Index] instanceof AscCommon.CCore)
                 editor.sendEvent("asc_onLockCore", false);
+            else if (this.m_aNeedUnlock[Index] instanceof AscCommonWord.CDocProtect)
+                editor.sendEvent("asc_onLockDocumentProtection", false);
         }
         else if (AscCommon.locktype_Other3 === CurLockType)
         {
@@ -233,8 +235,12 @@ CWordCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
 	}
 
 	this.m_oLogicDocument.ResumeRecalculate();
-	this.m_oLogicDocument.RecalculateByChanges(this.m_aAllChanges, this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd, false, nPageIndex);
+	this.m_oLogicDocument.RecalculateByChanges(this.CoHistory.GetAllChanges(), this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd, false, nPageIndex);
 	this.m_oLogicDocument.UpdateTracks();
+	
+	let oform = this.m_oLogicDocument.GetOFormDocument();
+	if (oform)
+		oform.onEndLoadChanges();
 
     editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);
 };
@@ -368,10 +374,10 @@ CWordCollaborativeEditing.prototype.OnCallback_AskLock = function(result)
         {
             // Если у нас началось редактирование диаграммы, а вернулось, что ее редактировать нельзя,
             // посылаем сообщение о закрытии редактора диаграмм.
-            if (true === oEditor.isChartEditor)
+            if (oEditor.isOpenedChartFrame)
                 oEditor.sync_closeChartEditor();
 
-          if (true === oEditor.isOleEditor)
+          if (oEditor.isOleEditor)
             oEditor.sync_closeOleEditor();
 
             // Делаем откат на 1 шаг назад и удаляем из Undo/Redo эту последнюю точку
@@ -460,7 +466,7 @@ CWordCollaborativeEditing.prototype.Update_ForeignCursorPosition = function(User
         DrawingDocument.Collaborative_RemoveTarget(UserId);
         return;
     }
-    ParaContentPos.Update(InRunPos, ParaContentPos.Get_Depth() + 1);
+    ParaContentPos.Update(InRunPos, ParaContentPos.GetDepth() + 1);
 
     var XY = Paragraph.Get_XYByContentPos(ParaContentPos);
     if (XY && XY.Height > 0.001)
@@ -496,6 +502,15 @@ CWordCollaborativeEditing.prototype.OnEnd_ReadForeignChanges = function()
 
 		if (this.m_oLogicDocument && this.m_oLogicDocument.ClearListsCache)
 			this.m_oLogicDocument.ClearListsCache();
+
+		if (this.m_oLogicDocument && this.m_oLogicDocument.Settings && this.m_oLogicDocument.Settings.DocumentProtection)
+		{
+			let updateFromUser = this.m_oLogicDocument.Settings.DocumentProtection.GetNeedUpdate();
+			if (updateFromUser) {
+				oApi.asc_OnProtectionUpdate(updateFromUser);
+				this.m_oLogicDocument.Settings.DocumentProtection.SetNeedUpdate(null);
+			}
+		}
 	}
 };
 CWordCollaborativeEditing.prototype.private_RecalculateDocument = function(arrChanges)

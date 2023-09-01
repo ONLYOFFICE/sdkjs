@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -264,19 +264,18 @@
 	cIFS.prototype.constructor = cIFS;
 	cIFS.prototype.name = 'IFS';
 	cIFS.prototype.argumentsMin = 2;
+	cIFS.prototype.isXLFN = true;
 	cIFS.prototype.Calculate = function (arg) {
 		var oArguments = this._prepareArguments(arg, arguments[1], true);
 		var argClone = oArguments.args;
 
-		var argError;
-		if (argError = this._checkErrorArg(argClone)) {
-			return argError;
-		}
-
 		var res = null;
 		for (var i = 0; i < arg.length; i++) {
 			var argN = argClone[i];
-			if (cElementType.string === argN.type) {
+			if (cElementType.error === argN.type) {
+				res = argN;
+				break;
+			} else if (cElementType.string === argN.type) {
 				res = new cError(cErrorType.wrong_value_type);
 				break;
 			} else if (cElementType.number === argN.type || cElementType.bool === argN.type) {

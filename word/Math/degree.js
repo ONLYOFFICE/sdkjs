@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -183,7 +183,7 @@ CDegreeBase.prototype.GetSizeSup = function(oMeasure, Metric)
     {
         lastElem = this.baseContent.GetLastElement();
 
-        var bSameFontSize  = lastElem.Type == para_Math_Run && lastElem.Math_CompareFontSize(mgCtrPrp.FontSize, false);
+        var bSameFontSize  = lastElem.Type == para_Math_Run && (mgCtrPrp.FontSize === lastElem.Math_GetFontSize(false));
         bTextElement = bSameFontSize || (lastElem.Type !== para_Math_Run && lastElem.IsJustDraw());
     }
 
@@ -264,7 +264,7 @@ CDegreeBase.prototype.GetSizeSubScript = function(oMeasure, Metric)
     {
         var lastElem = this.baseContent.GetLastElement();
 
-        var bSameFontSize  = lastElem.Type == para_Math_Run && lastElem.Math_CompareFontSize(mgCtrPrp.FontSize, false);
+        var bSameFontSize  = lastElem.Type == para_Math_Run && (mgCtrPrp.FontSize === lastElem.Math_GetFontSize(false));
         bTextElement      = bSameFontSize || (lastElem.Type !== para_Math_Run && lastElem.IsJustDraw());
     }
 
@@ -541,6 +541,56 @@ CDegree.prototype.Can_ModifyArgSize = function()
 {
     return this.CurPos == 1 && false === this.Is_SelectInside(); // находимся в итераторе
 };
+CDegree.prototype.GetTextOfElement = function(isLaTeX) {
+	var strTemp = "";
+	var strTypeOfScript = this.Pr.type === 1 ? '^' : '_';
+	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX);
+	var strIterator = this.getIterator().GetMultipleContentForGetText(isLaTeX);
+
+	if (isLaTeX)
+    {
+		switch (strBase) {
+			case 'cos':
+			case 'sin':
+			case 'tan':
+			case 'sec':
+			case 'cot':
+			case 'csc':
+			case 'arcsin':
+			case 'arccos':
+			case 'arctan':
+			case 'arcsec':
+			case 'arccot':
+			case 'arccsc':
+			case 'sinh':
+			case 'cosh':
+			case 'tanh':
+			case 'coth':
+			case 'sech':
+			case 'csch':
+			case 'srcsinh':
+			case 'arctanh':
+			case 'arcsech':
+			case 'arccosh':
+			case 'arccoth':
+			case 'arccsch':
+			case 'log':
+			case 'lim':
+			case 'ln':
+			case 'max':
+			case 'min':
+			case 'exp': strBase = '\\'+ strBase; break;
+			default: break;
+		}
+        
+		strTemp = strBase.trim() + strTypeOfScript + strIterator;
+	}
+    else
+    {
+		strTemp = strBase + strTypeOfScript + strIterator + " ";
+	}
+	return strTemp;
+};
 
 /**
  *
@@ -780,7 +830,7 @@ CDegreeSubSupBase.prototype.GetSize = function(oMeasure, Metric)
         var bFirstItem = this.Pr.type == DEGREE_SubSup;
         var BaseItem = bFirstItem ? this.baseContent.GetLastElement() : this.baseContent.GetFirstElement();
 
-        var bSameFontSize  = BaseItem.Type == para_Math_Run && BaseItem.Math_CompareFontSize(mgCtrPrp.FontSize, bFirstItem);
+        var bSameFontSize  = BaseItem.Type == para_Math_Run && (mgCtrPrp.FontSize === BaseItem.Math_GetFontSize(bFirstItem));
         TextElement  = bSameFontSize || (BaseItem.Type !== para_Math_Run && BaseItem.IsJustDraw());
     }
 
@@ -1194,6 +1244,40 @@ CDegreeSubSup.prototype.Get_InterfaceProps = function()
 CDegreeSubSup.prototype.Can_ModifyArgSize = function()
 {
     return this.CurPos !== 0 && false === this.Is_SelectInside(); // находимся в итераторе
+};
+CDegreeSubSup.prototype.GetTextOfElement = function(isLaTeX)
+{
+	let strTemp = "";
+	let Base = this.getBase().GetMultipleContentForGetText(isLaTeX);
+	let strLower = this.getLowerIterator().GetMultipleContentForGetText(isLaTeX);
+	let strUpper = this.getUpperIterator().GetMultipleContentForGetText(isLaTeX);
+
+	let isPreScript = this.Pr.type === -1;
+	
+    if (isLaTeX)
+    {
+		if(strLower.length === 0 || strLower === '⬚')
+			strLower = '{}'
+		if(strUpper.length === 0 || strUpper === '⬚')
+			strUpper = '{}'
+
+		if (true === isPreScript)
+			strTemp = '{' + '_' + strLower + '^' + strUpper + '}' + Base;
+        else
+			strTemp = Base + '_' + strLower + '^' + strUpper;
+	}
+    else
+    {
+
+		if (true === isPreScript)
+			strTemp = '(' + '_' + strLower + '^' + strUpper + ')' + Base;
+        else {
+            strTemp = Base + '_' + strLower + '^' + strUpper;
+        }
+
+        strTemp += " ";
+	}
+	return strTemp;
 };
 
 /**

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -101,8 +101,7 @@ function (window, undefined)
 				if (true !== obj["macrosArray"][i]["autostart"])
 					continue;
 
-				var script = "(function(Api, window, alert, document, XMLHttpRequest){\n" + "\"use strict\"" + ";\n" + obj["macrosArray"][i]["value"] + "\n})(window.g_asc_plugins.api, {}, function(){}, {}," + customXMLHttpRequest.toString() + ");";
-				eval(script);
+				AscCommon.safePluginEval(obj["macrosArray"][i]["value"]);
 			}
 		}
 		catch (err)
@@ -121,8 +120,7 @@ function (window, undefined)
 			{
 				if (sGuid === obj["macrosArray"][i]["guid"])
 				{
-					var script = "(function(Api, window, alert, document, XMLHttpRequest){\n" + "\"use strict\"" + ";\n" + obj["macrosArray"][i]["value"] + "\n})(window.g_asc_plugins.api, {}, function(){}, {}," + customXMLHttpRequest.toString() + ");";
-					eval(script);
+					AscCommon.safePluginEval(obj["macrosArray"][i]["value"]);
 					break;
 				}
 			}
@@ -215,6 +213,77 @@ function (window, undefined)
         }
         return false;
     };
+
+	function VbaProject() {
+		this.filename = null;
+		this.vbaXml = null;
+		this.vbaDataXml = null;
+	}
+	VbaProject.prototype.toStream = function (s) {
+		s.WriteUChar(AscCommon.g_nodeAttributeStart);
+		s._WriteString2(0, this.filename);
+		s.WriteUChar(AscCommon.g_nodeAttributeEnd);
+
+		s.WriteRecord2(0, this.vbaXml, function(val){
+			s.WriteString2(val);
+		});
+		s.WriteRecord2(1, this.vbaDataXml, function(val){
+			s.WriteString2(val);
+		});
+	};
+	VbaProject.prototype.fromStream = function (s) {
+		var _len = s.GetULong();
+		var _start_pos = s.cur;
+		var _end_pos = _len + _start_pos;
+		var _at;
+// attributes
+		s.GetUChar();
+		while (true)
+		{
+			_at = s.GetUChar();
+			if (_at === AscCommon.g_nodeAttributeEnd)
+				break;
+			switch (_at)
+			{
+				case 0: {
+					this.filename = s.GetString2();
+					break;
+				}
+				default:
+					s.Seek2(_end_pos);
+					return;
+			}
+		}
+//members
+		var _type;
+		while (true)
+		{
+			if (s.cur >= _end_pos)
+				break;
+			_type = s.GetUChar();
+			switch (_type)
+			{
+				case 0:
+				{
+					s.GetULong();//len
+					this.vbaXml = s.GetString2();
+					break;
+				}
+				case 1:
+				{
+					s.GetULong();//len
+					this.vbaDataXml = s.GetString2();
+					break;
+				}
+				default:
+				{
+					s.SkipRecord();
+					break;
+				}
+			}
+		}
+		s.Seek2(_end_pos);
+	};
 
 	AscDFH.changesFactory[AscDFH.historyitem_DocumentMacros_Data]     = CChangesDocumentMacrosData;
 	AscDFH.changesRelationMap[AscDFH.historyitem_DocumentMacros_Data] = [AscDFH.historyitem_DocumentMacros_Data];
@@ -362,8 +431,33 @@ function (window, undefined)
 				}
 			});
 		};
-	};
+	}
 
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].CDocumentMacros = CDocumentMacros;
+	window['AscCommon'].VbaProject = VbaProject;
+
+	// TODO: Use this code with closurecompiler markers
+	/*
+	window['AscCommon'].safePluginEval = function(value) {
+
+		var closure = function(Api, window, alert, document, XMLHttpRequest) {
+
+			eval("\"use strict\";\r\n" + value);
+
+		};
+
+		closure.call({}, window.g_asc_plugins.api, {}, function(){}, {}, customXMLHttpRequest);
+
+	};
+	*/
+
+	var _safe_eval_closure = new Function("Api", "window", "alert", "document", "XMLHttpRequest", "self", "globalThis", "value", "return eval(\"\\\"use strict\\\";\\r\\n\" + value)");
+	window['AscCommon'].safePluginEval = function(value) {
+
+		return _safe_eval_closure.call({}, window.g_asc_plugins.api, {}, function(){}, {}, customXMLHttpRequest, {}, {}, value);
+
+	};
+
+
 })(window);

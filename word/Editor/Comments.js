@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -661,6 +661,15 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	{
 		this.Data && this.Data.CreateNewCommentsGuid();
 	};
+	CComment.prototype.GenerateDurableId = function()
+	{
+		if (!this.Data)
+			return -1;
+		
+		let data = this.Data.Copy();
+		data.CreateNewCommentsGuid();
+		this.SetData(data);
+	};
 	/**
 	 * Является ли текущий пользователем автором комментария
 	 * @returns {boolean}
@@ -704,7 +713,7 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 	{
 		var oMark = AscCommon.g_oTableId.Get_ById(this.RangeStart);
 
-		if (!oMark || !oMark.Is_UseInDocument())
+		if (!oMark || !oMark.IsUseInDocument())
 			return null;
 
 		return oMark.GetDocumentPositionFromObject();
@@ -1000,6 +1009,17 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 
 		return null;
 	};
+	CComments.prototype.GetByDurableId = function(durableId)
+	{
+		let _durableId = "" + durableId;
+		for (let commentId in this.m_arrCommentsById)
+		{
+			if ("" + this.m_arrCommentsById[commentId].GetDurableId() === _durableId)
+				return this.m_arrCommentsById[commentId];
+		}
+		
+		return null;
+	};
 	CComments.prototype.UpdateCommentPosition = function(oComment, oChangedComments)
 	{
 		if (!oChangedComments)
@@ -1060,7 +1080,7 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 				continue;
 			}
 
-			if (!isAdded && (!oCurComment.IsQuoted() || AscCommonWord.CompareDocumentPositions(oCommentPos, oCurComment.GetDocumentPosition()) < 0))
+			if (!isAdded && (!oCurComment.IsQuoted() || AscWord.CompareDocumentPositions(oCommentPos, oCurComment.GetDocumentPosition()) < 0))
 			{
 				this.m_arrComments.splice(nIndex, 0, oComment);
 				isAdded = true;
@@ -1117,7 +1137,9 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 			this.private_UpdateCommentPosition(this.m_arrCommentsById[sId], oChangedComments);
 		}
 
-		this.LogicDocument.GetApi().sync_ChangeCommentLogicalPosition(oChangedComments, this.GetCommentsPositionsCount());
+		let oApi = this.LogicDocument.GetApi();
+		if (oApi)
+			oApi.sync_ChangeCommentLogicalPosition(oChangedComments, this.GetCommentsPositionsCount());
 	};
 	/**
 	 * Получаем количество комментариев, у которых есть логическая позиция в документе
@@ -1191,7 +1213,11 @@ ParaComment.prototype.Copy = function(Selected, oPr)
     var sId = this.CommentId;
     if(oPr && oPr.Comparison)
     {
-        sId = oPr.Comparison.copyComment(this.CommentId);
+			const sComparisonCommentId = oPr.Comparison.copyComment(this.CommentId);
+			if (sComparisonCommentId !== null)
+			{
+				sId = sComparisonCommentId;
+			}
     }
 	return new ParaComment(this.Start, sId);
 };
@@ -1327,13 +1353,13 @@ ParaComment.prototype.SetParagraph = function(oParagraph)
 		oDocComments.AddMarkToCheck(this);
 	}
 };
-ParaComment.prototype.Is_UseInDocument = function()
+ParaComment.prototype.IsUseInDocument = function()
 {
 	var oParagraph = this.GetParagraph();
 	if (!oParagraph)
 		return false;
 
-	return oParagraph.Is_UseInDocument();
+	return oParagraph.IsUseInDocument();
 }
 ParaComment.prototype.RemoveMark = function()
 {

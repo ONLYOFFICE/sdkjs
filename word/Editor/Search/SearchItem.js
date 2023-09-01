@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -61,7 +61,7 @@
 	/**
 	 * Конвертируем данный элемент в элемент рана для вставки в документ
 	 * @param {boolean} isMathRun
-	 * @returns {?CRunElementBase}
+	 * @returns {?AscWord.CRunElementBase}
 	 */
 	CSearchTextItemBase.prototype.ToRunElement = function(isMathRun)
 	{
@@ -178,9 +178,9 @@
 		else
 		{
 			if (AscCommon.IsSpace(this.Value))
-				return new ParaSpace(this.Value);
+				return new AscWord.CRunSpace(this.Value);
 			else
-				return new ParaText(this.Value);
+				return new AscWord.CRunText(this.Value);
 		}
 	};
 	CSearchTextItemChar.prototype.IsChar = function()
@@ -204,7 +204,7 @@
 		if (isMathRun)
 			return null;
 
-		return new ParaNewLine(break_Line);
+		return new AscWord.CRunBreak(AscWord.break_Line);
 	};
 	CSearchTextSpecialLineBreak.prototype.IsNewLine = function()
 	{
@@ -228,7 +228,7 @@
 		if (isMathRun)
 			return null;
 
-		return new ParaTab();
+		return new AscWord.CRunTab();
 	};
 	CSearchTextSpecialTab.prototype.IsTab = function()
 	{
@@ -333,7 +333,7 @@
 		if (isMathRun)
 			return null;
 
-		return new ParaNewLine(break_Column);
+		return new AscWord.CRunBreak(AscWord.break_Column);
 	};
 	CSearchTextSpecialColumnBreak.prototype.IsColumnBreak = function()
 	{
@@ -426,7 +426,7 @@
 		if (isMathRun)
 			return null;
 
-		return new ParaNewLine(break_Page);
+		return new AscWord.CRunBreak(AscWord.break_Page);
 	};
 	CSearchTextSpecialPageBreak.prototype.IsPageBreak = function()
 	{
@@ -456,9 +456,7 @@
 		}
 		else
 		{
-			var oElement = new ParaText(0x2D);
-			oElement.Set_SpaceAfter(false);
-			return oElement;
+			return AscWord.CreateNonBreakingHyphen();
 		}
 	};
 	CSearchTextSpecialNonBreakingHyphen.prototype.IsNonBreakingHyphen = function()
@@ -486,7 +484,7 @@
 		if (isMathRun)
 			return null;
 
-		return new ParaText(0x00A0);
+		return new AscWord.CRunText(0x00A0);
 	};
 	CSearchTextSpecialNonBreakingSpace.prototype.IsNonBreakingSpace = function()
 	{
@@ -538,7 +536,7 @@
 		}
 		else
 		{
-			return new ParaText(0x2014);
+			return new AscWord.CRunText(0x2014);
 		}
 	};
 	CSearchTextSpecialEmDash.prototype.IsEmDash = function()
@@ -571,7 +569,7 @@
 		}
 		else
 		{
-			return new ParaText(0x2013);
+			return new AscWord.CRunText(0x2013);
 		}
 	};
 	CSearchTextSpecialEnDash.prototype.IsEnDash = function()

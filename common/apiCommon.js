@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -53,7 +53,8 @@
 	var c_oAscAxisType = Asc.c_oAscAxisType;
 	// ---------------------------------------------------------------------------------------------------------------
 
-	var c_oAscArrUserColors = [16757719, 56805, 10081791, 12884479, 16751001, 6748927, 16762931, 6865407,
+	var c_oAscArrUserColors = [10646501, 16749875, 1087211, 103817, 16760641, 16272775, 8765789, 14707685, 48336,
+		5729515, 16757719, 56805, 10081791, 12884479, 16751001, 6748927, 16762931, 6865407,
 		15650047, 16737894, 3407768, 16759142, 10852863, 6750176, 16774656, 13926655, 13815039, 3397375, 11927347, 16752947,
 		9404671, 4980531, 16744678, 3407830, 15919360, 16731553, 52479, 13330175, 16743219, 3386367, 14221056, 16737966,
 		1896960, 65484, 10970879, 16759296, 16711680, 13496832, 62072, 49906, 16734720, 10682112, 7890687, 16731610, 65406,
@@ -191,6 +192,28 @@
 		return oCanvas;
 	}
 
+	function isValidJs(str) {
+		try {
+			eval("throw 0;" + str);
+		} catch(e) {
+			if (e === 0)
+				return true;
+		}
+		return false;
+	}
+
+	function asc_menu_ReadPaddings(_params, _cursor){
+		const _paddings = new Asc.asc_CPaddings();
+		_paddings.read(_params, _cursor);
+		return _paddings;
+	}
+
+	function asc_menu_ReadColor(_params, _cursor) {
+		const _color = new Asc.asc_CColor();
+		_color.read(_params, _cursor);
+		return _color;
+	}
+
 	var c_oLicenseResult = {
 		Error         : 1,
 		Expired       : 2,
@@ -206,7 +229,8 @@
 		ConnectionsLiveOS: 12,
 		ConnectionsLive: 13,
 		UsersViewCount: 14,
-		UsersViewCountOS: 15
+		UsersViewCountOS: 15,
+		NotBefore: 16
 	};
 
 	var c_oRights = {
@@ -324,7 +348,7 @@
 		this.buildNumber = null;
 		this.liveViewerSupport = null;
 
-		this.betaVersion = '@@Beta';
+		this.betaVersion = AscCommon.g_cIsBeta;
 
 		return this;
 	}
@@ -475,6 +499,7 @@
 		this.label = null;
 		this.gridlines = null;
 		this.numFmt = null;
+		this.isRadar = false;
 	}
 	asc_ValAxisSettings.prototype.isEqual = function(oPr){
 		if(!oPr){
@@ -862,6 +887,12 @@
 
 		_stream["WriteByte"](255);
 	};
+	asc_ValAxisSettings.prototype.isRadarAxis = function() {
+		return this.isRadar;
+	};
+	asc_ValAxisSettings.prototype.putIsRadarAxis = function(v) {
+		this.isRadar = v;
+	};
 
 	/** @constructor */
 	function asc_CatAxisSettings() {
@@ -884,6 +915,7 @@
 		this.gridlines = null;
 		this.numFmt = null;
 		this.auto = false;
+		this.isRadar = false;
 	}
 	asc_CatAxisSettings.prototype.isEqual = function(oPr){
 		if(!oPr){
@@ -1243,6 +1275,12 @@
 
 		_stream["WriteByte"](255);
 	};
+	asc_CatAxisSettings.prototype.isRadarAxis = function() {
+		return this.isRadar;
+	};
+	asc_CatAxisSettings.prototype.putIsRadarAxis = function(v) {
+		this.isRadar = v;
+	};
 
 	/** @constructor */
 	function asc_ChartSettings() {
@@ -1270,6 +1308,8 @@
 		this.horizontalAxes = [];
 		this.verticalAxes = [];
 		this.depthAxes = [];
+
+		this.view3D = null;
 	}
 
 	//TODO:remove this---------------------
@@ -1384,6 +1424,28 @@
 	asc_ChartSettings.prototype.getDepthAxesProps = function() {
 		return this.depthAxes;
 	};
+	asc_ChartSettings.prototype.getView3d = function() {
+		if(this.chartSpace) {
+			return this.chartSpace.getView3d();
+		}
+		return this.view3D ? this.view3D.createDuplicate() : null;
+	};
+	asc_ChartSettings.prototype.putView3d = function(v) {
+		this.view3D = v;
+	};
+	asc_ChartSettings.prototype.setView3d = function(v) {
+		this.putView3d(v);
+		if(this.chartSpace) {
+			if(v) {
+				this.chartSpace.changeView3d(v.createDuplicate());
+			}
+			else {
+				this.chartSpace.changeView3d(null);
+			}
+			this.updateChart();
+		}
+	};
+
 	asc_ChartSettings.prototype.addHorAxesProps = function(v) {
 		this.horizontalAxes.push(v);
 	};
@@ -1470,6 +1532,12 @@
 				return false;
 			}
 		}
+		if(this.view3D && !oPr.view3D || !this.view3D && oPr.view3D) {
+			return false;
+		}
+		if(this.view3D && oPr.view3D && !this.view3D.isEqual(oPr.view3D)) {
+			return false;
+		}
 		return true;
 	};
 	asc_ChartSettings.prototype.isEmpty = function() {
@@ -1544,11 +1612,24 @@
 	};
 	asc_ChartSettings.prototype.setRange = function(sRange) {
 		if(this.chartSpace) {
+			const oDataRefs = new AscFormat.CChartDataRefs(null);
+			const nCheckResult = oDataRefs.checkDataRange(sRange, this.getInRows(), this.getType());
+			if(nCheckResult !== Asc.c_oAscError.ID.No) {
+				this.sendError(nCheckResult);
+				return;
+			}
 			this.chartSpace.setRange(sRange);
 			this.updateChart();
 		}
 	};
 	asc_ChartSettings.prototype.isValidRange = function(sRange) {
+		if(this.getRange() !== sRange) {
+			const oDataRefs = new AscFormat.CChartDataRefs(null);
+			const nCheckResult = oDataRefs.checkDataRange(sRange, this.getInRows(), this.getType());
+			if(nCheckResult === Asc.c_oAscError.ID.MaxDataPointsError) {
+				return nCheckResult;
+			}
+		}
 		return AscFormat.isValidChartRange(sRange);
 	};
 	asc_ChartSettings.prototype.getRange = function() {
@@ -1654,6 +1735,9 @@
 		return this.separator;
 	};
 	asc_ChartSettings.prototype.sendErrorOnChangeType = function(nType) {
+		this.sendError(nType);
+	};
+	asc_ChartSettings.prototype.sendError = function(nType) {
 		var oApi = Asc.editor || editor;
 		if(oApi) {
 			oApi.sendEvent("asc_onError", nType, Asc.c_oAscError.Level.NoCritical);
@@ -1797,9 +1881,12 @@
 	};
 	asc_ChartSettings.prototype.cancelEdit = function() {
 		this.bStartEdit = false;
+		const bLastPointEmpty = AscCommon.History.Is_LastPointEmpty();
 		AscCommon.History.EndTransaction();
-		AscCommon.History.Undo();
-		AscCommon.History.Clear_Redo();
+		if(!bLastPointEmpty) {
+			AscCommon.History.Undo();
+			AscCommon.History.Clear_Redo();
+		}
 		AscCommon.History._sendCanUndoRedo();
 		this.updateChart();
 		this.updateInterface();
@@ -1993,7 +2080,9 @@
 
 	};
 	asc_ChartSettings.prototype.write = function(_type, _stream) {
-		_stream["WriteByte"](_type);
+		if(_type !== undefined && _type !== null) {
+			_stream["WriteByte"](_type);
+		}
 
 		if (this.style !== undefined && this.style !== null)
 		{
@@ -2149,6 +2238,56 @@
 		}
 	};
 
+
+	const STANDART_COLORS_MAP = {};
+	STANDART_COLORS_MAP[0x000000] = "Black";
+	STANDART_COLORS_MAP[0xFFFFFF] = "White";
+	STANDART_COLORS_MAP[0xFF0000] = "Red";
+	STANDART_COLORS_MAP[0x00FF00] = "Green";
+	STANDART_COLORS_MAP[0x0000FF] = "Blue";
+	STANDART_COLORS_MAP[0xFFFF00] = "Yellow";
+	STANDART_COLORS_MAP[0xFF00FF] = "Purple";
+	STANDART_COLORS_MAP[0x00FFFF] = "Aqua";
+	STANDART_COLORS_MAP[0x800000] = "Dark Red";
+	STANDART_COLORS_MAP[0x008000] = "Dark Green";
+	STANDART_COLORS_MAP[0x000080] = "Dark Blue";
+	STANDART_COLORS_MAP[0x808000] = "Dark Yellow";
+	STANDART_COLORS_MAP[0x800080] = "Dark Purple";
+	STANDART_COLORS_MAP[0x008080] = "Dark Teal";
+	STANDART_COLORS_MAP[0xC0C0C0] = "Light Gray";
+	STANDART_COLORS_MAP[0x808080] = "Gray";
+	STANDART_COLORS_MAP[0x9999FF] = "Light Blue";
+	STANDART_COLORS_MAP[0x993366] = "Pink";
+	STANDART_COLORS_MAP[0xFFFFCC] = "Light Yellow";
+	STANDART_COLORS_MAP[0xCCFFFF] = "Sky Blue";
+	STANDART_COLORS_MAP[0x660066] = "Dark Purple";
+	STANDART_COLORS_MAP[0xFF8080] = "Rose";
+	STANDART_COLORS_MAP[0x0066CC] = "Blue";
+	STANDART_COLORS_MAP[0xCCCCFF] = "Light Blue";
+	STANDART_COLORS_MAP[0x00CCFF] = "Turquosie";
+	STANDART_COLORS_MAP[0xCCFFCC] = "Light Green";
+	STANDART_COLORS_MAP[0xFFFF99] = "Light Yellow";
+	STANDART_COLORS_MAP[0x99CCFF] = "Light Blue";
+	STANDART_COLORS_MAP[0xFF99CC] = "Pink";
+	STANDART_COLORS_MAP[0xCC99FF] = "Lavender";
+	STANDART_COLORS_MAP[0xFFCC99] = "Light Orange";
+	STANDART_COLORS_MAP[0x3366FF] = "Blue";
+	STANDART_COLORS_MAP[0x33CCCC] = "Teal";
+	STANDART_COLORS_MAP[0x99CC00] = "Green";
+	STANDART_COLORS_MAP[0xFFCC00] = "Gold";
+	STANDART_COLORS_MAP[0xFF9900] = "Orange";
+	STANDART_COLORS_MAP[0xFF6600] = "Orange";
+	STANDART_COLORS_MAP[0x666699] = "Indigo";
+	STANDART_COLORS_MAP[0x969696] = "Gray";
+	STANDART_COLORS_MAP[0x003366] = "Dark Blue";
+	STANDART_COLORS_MAP[0x339966] = "Green";
+	STANDART_COLORS_MAP[0x003300] = "Dark Green";
+	STANDART_COLORS_MAP[0x333300] = "Dark Yellow";
+	STANDART_COLORS_MAP[0x993300] = "Brown";
+	STANDART_COLORS_MAP[0x333399] = "Indigo";
+	STANDART_COLORS_MAP[0x333333] = "Dark Gray";
+
+
 	/**
 	 * Класс CColor для работы с цветами
 	 * -----------------------------------------------------------------------------
@@ -2206,6 +2345,10 @@
 
 		getVal: function () {
 			return (((this.r << 16) & 0xFF0000) + ((this.g << 8)&0xFF00)+this.b);
+		},
+
+		getColorName: function() {
+			return (new asc_CColor(this.r, this.g, this.b)).asc_getName();
 		}
 	};
 
@@ -2222,7 +2365,7 @@
 
 		this.Mods = [];
 		this.ColorSchemeId = -1;
-
+		this.EffectValue  = 0;
 		if (1 === arguments.length) {
 			this.r = arguments[0].r;
 			this.g = arguments[0].g;
@@ -2239,52 +2382,437 @@
 		}
 	}
 
-	asc_CColor.prototype = {
-		constructor: asc_CColor, asc_getR: function () {
-			return this.r
-		}, asc_putR: function (v) {
-			this.r = v;
-			this.hex = undefined;
-		}, asc_getG: function () {
-			return this.g;
-		}, asc_putG: function (v) {
-			this.g = v;
-			this.hex = undefined;
-		}, asc_getB: function () {
-			return this.b;
-		}, asc_putB: function (v) {
-			this.b = v;
-			this.hex = undefined;
-		}, asc_getA: function () {
-			return this.a;
-		}, asc_putA: function (v) {
-			this.a = v;
-			this.hex = undefined;
-		}, asc_getType: function () {
-			return this.type;
-		}, asc_putType: function (v) {
-			this.type = v;
-		}, asc_getValue: function () {
-			return this.value;
-		}, asc_putValue: function (v) {
-			this.value = v;
-		}, asc_getHex: function () {
-			if (!this.hex) {
-				var a = this.a.toString(16);
-				var r = this.r.toString(16);
-				var g = this.g.toString(16);
-				var b = this.b.toString(16);
-				this.hex = ( a.length == 1 ? "0" + a : a) + ( r.length == 1 ? "0" + r : r) + ( g.length == 1 ? "0" + g : g) +
-					( b.length == 1 ? "0" + b : b);
-			}
-			return this.hex;
-		}, asc_getColor: function () {
-			return new CColor(this.r, this.g, this.b);
-		}, asc_putAuto: function (v) {
-			this.Auto = v;
-		}, asc_getAuto: function () {
-			return this.Auto;
+	asc_CColor.prototype.constructor = asc_CColor;
+	asc_CColor.prototype.asc_getR = function () {
+		return this.r
+	};
+	asc_CColor.prototype.asc_putR = function (v) {
+		this.r = v;
+		this.hex = undefined;
+	};
+	asc_CColor.prototype.asc_getG = function () {
+		return this.g;
+	};
+	asc_CColor.prototype.asc_putG = function (v) {
+		this.g = v;
+		this.hex = undefined;
+	};
+	asc_CColor.prototype.asc_getB = function () {
+		return this.b;
+	};
+	asc_CColor.prototype.asc_putB = function (v) {
+		this.b = v;
+		this.hex = undefined;
+	};
+	asc_CColor.prototype.asc_getA = function () {
+		return this.a;
+	};
+	asc_CColor.prototype.asc_putA = function (v) {
+		this.a = v;
+		this.hex = undefined;
+	};
+	asc_CColor.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CColor.prototype.asc_putType = function (v) {
+		this.type = v;
+	};
+	asc_CColor.prototype.asc_getValue = function () {
+		return this.value;
+	};
+	asc_CColor.prototype.asc_putValue = function (v) {
+		this.value = v;
+	};
+	asc_CColor.prototype.asc_getHex = function () {
+		if (!this.hex) {
+			var a = this.a.toString(16);
+			var r = this.r.toString(16);
+			var g = this.g.toString(16);
+			var b = this.b.toString(16);
+			this.hex = ( a.length == 1 ? "0" + a : a) + ( r.length == 1 ? "0" + r : r) + ( g.length == 1 ? "0" + g : g) +
+				( b.length == 1 ? "0" + b : b);
 		}
+		return this.hex;
+	};
+	asc_CColor.prototype.asc_getColor = function () {
+		return new CColor(this.r, this.g, this.b);
+	};
+	asc_CColor.prototype.asc_putAuto = function (v) {
+		this.Auto = v;
+	};
+	asc_CColor.prototype.asc_getAuto = function () {
+		return this.Auto;
+	};
+	asc_CColor.prototype.getColorDiff = function (nC1, nC2) {
+		let nC1R = (nC1 >> 16) & 0xFF;
+		let nC1G = (nC1 >> 8) & 0xFF;
+		let nC1B = nC1 & 0xFF;
+		let nC2R = (nC2 >> 16) & 0xFF;
+		let nC2G = (nC2 >> 8) & 0xFF;
+		let nC2B = nC2 & 0xFF;
+		let lab1 = this.RGB2LAB(nC1R, nC1G, nC1B);
+		let lab2 = this.RGB2LAB(nC2R, nC2G, nC2B);
+
+		const d2r = AscCommon.deg2rad;
+
+		const L1 = lab1[0];
+		const a1 = lab1[1];
+		const b1 = lab1[2];
+
+		const L2 = lab2[0];
+		const a2 = lab2[1];
+		const b2 = lab2[2];
+
+		const k_L = 1.0, k_C = 1.0, k_H = 1.0;
+		const deg360InRad = d2r(360.0);
+		const deg180InRad = d2r(180.0);
+		const pow25To7 = 6103515625.0; /* Math.pow(25, 7) */
+
+		let C1 = Math.sqrt((a1 * a1) + (b1 * b1));
+		let C2 = Math.sqrt((a2 * a2) + (b2 * b2));
+		let barC = (C1 + C2) / 2.0;
+		let G = 0.5 * (1 - Math.sqrt(Math.pow(barC, 7) / (Math.pow(barC, 7) + pow25To7)));
+		let a1Prime = (1.0 + G) * a1;
+		let a2Prime = (1.0 + G) * a2;
+		let CPrime1 = Math.sqrt((a1Prime * a1Prime) + (b1 * b1));
+		let CPrime2 = Math.sqrt((a2Prime * a2Prime) + (b2 * b2));
+		let hPrime1;
+		const fAE = function (a, b) {
+			return Math.abs(a - b) < 1e-15;
+		};
+		if (fAE(b1, 0.0) && fAE(a1Prime, 0.0))
+			hPrime1 = 0.0;
+		else {
+			hPrime1 = Math.atan2(b1, a1Prime);
+			if (hPrime1 < 0)
+				hPrime1 += deg360InRad;
+		}
+		let hPrime2;
+		if (fAE(b2, 0.0) && fAE(a2Prime, 0.0))
+			hPrime2 = 0.0;
+		else {
+			hPrime2 = Math.atan2(b2, a2Prime);
+			if (hPrime2 < 0)
+				hPrime2 += deg360InRad;
+		}
+
+		let deltaLPrime = L2 - L1;
+		let deltaCPrime = CPrime2 - CPrime1;
+		let deltahPrime;
+		let CPrimeProduct = CPrime1 * CPrime2;
+		if (fAE(CPrimeProduct, 0.0))
+			deltahPrime = 0;
+		else {
+			deltahPrime = hPrime2 - hPrime1;
+			if (deltahPrime < -deg180InRad)
+				deltahPrime += deg360InRad;
+			else if (deltahPrime > deg180InRad)
+				deltahPrime -= deg360InRad;
+		}
+		let deltaHPrime = 2.0 * Math.sqrt(CPrimeProduct) * Math.sin(deltahPrime / 2.0);
+
+		let barLPrime = (L1 + L2) / 2.0;
+		let barCPrime = (CPrime1 + CPrime2) / 2.0;
+		let barhPrime, hPrimeSum = hPrime1 + hPrime2;
+		if (fAE(CPrime1 * CPrime2, 0.0)) {
+			barhPrime = hPrimeSum;
+		} else {
+			if (Math.abs(hPrime1 - hPrime2) <= deg180InRad)
+				barhPrime = hPrimeSum / 2.0;
+			else {
+				if (hPrimeSum < deg360InRad)
+					barhPrime = (hPrimeSum + deg360InRad) / 2.0;
+				else
+					barhPrime = (hPrimeSum - deg360InRad) / 2.0;
+			}
+		}
+		let T = 1.0 - (0.17 * Math.cos(barhPrime - d2r(30.0))) +
+			(0.24 * Math.cos(2.0 * barhPrime)) +
+			(0.32 * Math.cos((3.0 * barhPrime) + d2r(6.0))) -
+			(0.20 * Math.cos((4.0 * barhPrime) - d2r(63.0)));
+		let deltaTheta = d2r(30.0) *
+			Math.exp(-Math.pow((barhPrime - d2r(275.0)) / d2r(25.0), 2.0));
+		let R_C = 2.0 * Math.sqrt(Math.pow(barCPrime, 7.0) /
+			(Math.pow(barCPrime, 7.0) + pow25To7));
+		let S_L = 1 + ((0.015 * Math.pow(barLPrime - 50.0, 2.0)) /
+			Math.sqrt(20 + Math.pow(barLPrime - 50.0, 2.0)));
+		let S_C = 1 + (0.045 * barCPrime);
+		let S_H = 1 + (0.015 * barCPrime * T);
+		let R_T = (-Math.sin(2.0 * deltaTheta)) * R_C;
+
+		let deltaE = Math.sqrt(
+			Math.pow(deltaLPrime / (k_L * S_L), 2.0) +
+			Math.pow(deltaCPrime / (k_C * S_C), 2.0) +
+			Math.pow(deltaHPrime / (k_H * S_H), 2.0) +
+			(R_T * (deltaCPrime / (k_C * S_C)) * (deltaHPrime / (k_H * S_H))));
+
+		return deltaE;
+	};
+	asc_CColor.prototype.RGB2LAB = function (R, G, B) {
+		let r, g, b, X, Y, Z, fx, fy, fz, xr, yr, zr;
+		let Ls, as, bs;
+		let eps = 216.0 / 24389.0;
+		let k = 24389.0 / 27.0;
+
+		let Xr = 0.964221;  // reference white D50
+		let Yr = 1.0;
+		let Zr = 0.825211;
+
+		// RGB to XYZ
+		r = R / 255; //R 0..1
+		g = G / 255; //G 0..1
+		b = B / 255; //B 0..1
+
+		// assuming sRGB (D65)
+		if (r <= 0.04045)
+			r = r / 12;
+		else
+			r = Math.pow((r + 0.055) / 1.055, 2.4);
+
+		if (g <= 0.04045)
+			g = g / 12;
+		else
+			g = Math.pow((g + 0.055) / 1.055, 2.4);
+
+		if (b <= 0.04045)
+			b = b / 12;
+		else
+			b = Math.pow((b + 0.055) / 1.055, 2.4);
+
+
+		X = 0.436052025 * r + 0.385081593 * g + 0.143087414 * b;
+		Y = 0.222491598 * r + 0.71688606 * g + 0.060621486 * b;
+		Z = 0.013929122 * r + 0.097097002 * g + 0.71418547 * b;
+
+		// XYZ to Lab
+		xr = X / Xr;
+		yr = Y / Yr;
+		zr = Z / Zr;
+
+		if (xr > eps)
+			fx = Math.pow(xr, 1 / 3.);
+		else
+			fx = ((k * xr + 16.) / 116.);
+
+		if (yr > eps)
+			fy = Math.pow(yr, 1 / 3.);
+		else
+			fy = ((k * yr + 16.) / 116.);
+
+		if (zr > eps)
+			fz = Math.pow(zr, 1 / 3.);
+		else
+			fz = ((k * zr + 16.) / 116);
+
+		Ls = (116 * fy) - 16;
+		as = 500 * (fx - fy);
+		bs = 200 * (fy - fz);
+
+		let lab = [];
+		lab[0] = (2.55 * Ls + .5) >> 0;
+		lab[1] = (as + .5) >> 0;
+		lab[2] = (bs + .5) >> 0;
+		return lab;
+	};
+	asc_CColor.prototype.asc_getName = function() {
+		const nColorVal = this.getVal();
+		if(STANDART_COLORS_MAP.hasOwnProperty(nColorVal)) {
+			return STANDART_COLORS_MAP[nColorVal];
+		}
+		let dMinDistance = 1000000;
+		let sMinName = "Black";
+		for(let nCurColor in STANDART_COLORS_MAP) {
+			if(STANDART_COLORS_MAP.hasOwnProperty(nCurColor)) {
+				let dDist = this.getColorDiff(nColorVal, nCurColor);
+				if(dDist < dMinDistance) {
+					dMinDistance = dDist;
+					sMinName = STANDART_COLORS_MAP[nCurColor];
+				}
+			}
+		}
+		return sMinName;
+	};
+	asc_CColor.prototype.getVal = function () {
+		return (((this.r << 16) & 0xFF0000) + ((this.g << 8)&0xFF00)+this.b);
+	};
+	asc_CColor.prototype.asc_putEffectValue = function (v) {
+		let dVal = Math.abs(v);
+		dVal = ((dVal * 100 + 0.5) >> 0) / 100;
+		if(v < 0) {
+			dVal = -dVal;
+		}
+		this.EffectValue = dVal;
+	};
+	asc_CColor.prototype.asc_getEffectValue = function () {
+		return this.EffectValue;
+	};
+	asc_CColor.prototype.print = function() {
+		console.log("Color");
+		console.log("r: " + this.r);
+		console.log("g: " + this.g);
+		console.log("b: " + this.b);
+		console.log("effect val: " + this.asc_getEffectValue());
+		console.log("name: " + this.asc_getName());
+		console.log("name in scheme: " + this.asc_getNameInColorScheme());
+		console.log("---------------");
+	};
+	asc_CColor.prototype.asc_getNameInColorScheme = function () {
+		if(this.ColorSchemeId === -1) {
+			return null;
+		}
+		switch (this.ColorSchemeId) {
+			// bg1,tx1,bg2,tx2,accent1 - accent6
+			case 6: {
+				return "background 1";
+			}
+			case 15: {
+				return "text 1";
+			}
+			case 7: {
+				return "background 2";
+			}
+			case 16: {
+				return "text 2";
+			}
+			case 0: {
+				return "accent 1";
+			}
+			case 1: {
+				return "accent 2";
+			}
+			case 2: {
+				return "accent 3";
+			}
+			case 3: {
+				return "accent 4";
+			}
+			case 4: {
+				return "accent 5";
+			}
+			case 5: {
+				return "accent 6";
+			}
+		}
+		return null;
+	};
+	asc_CColor.prototype.setColorSchemeId = function (v) {
+		this.ColorSchemeId = v;
+		if(!AscFormat.isRealNumber(this.ColorSchemeId)) {
+			this.ColorSchemeId = -1;
+		}
+	};
+	asc_CColor.prototype.read = function (_params, _cursor) {
+		let _continue = true;
+		while (_continue) {
+			let _attr = _params[_cursor.pos++];
+			switch (_attr) {
+				case 0: {
+					this.type = _params[_cursor.pos++];
+					break;
+				}
+				case 1: {
+					this.r = _params[_cursor.pos++];
+					break;
+				}
+				case 2: {
+					this.g = _params[_cursor.pos++];
+					break;
+				}
+				case 3: {
+					this.b = _params[_cursor.pos++];
+					break;
+				}
+				case 4: {
+					this.a = _params[_cursor.pos++];
+					break;
+				}
+				case 5: {
+					this.Auto = _params[_cursor.pos++];
+					break;
+				}
+				case 6: {
+					this.value = _params[_cursor.pos++];
+					break;
+				}
+				case 7: {
+					this.ColorSchemeId = _params[_cursor.pos++];
+					break;
+				}
+				case 8: {
+					let _count = _params[_cursor.pos++];
+					for (let i = 0; i < _count; i++) {
+						let _mod = new AscFormat.CColorMod();
+						_mod.name = _params[_cursor.pos++];
+						_mod.val = _params[_cursor.pos++];
+						this.Mods.push(_mod);
+					}
+					break;
+				}
+				case 255:
+				default: {
+					_continue = false;
+					break;
+				}
+			}
+		}
+	};
+	asc_CColor.prototype.write = function (_type, _stream) {
+		_stream["WriteByte"](_type);
+		if (this.type !== undefined && this.type !== null)
+		{
+			_stream["WriteByte"](0);
+			_stream["WriteLong"](this.type);
+		}
+		if (this.r !== undefined && this.r !== null)
+		{
+			_stream["WriteByte"](1);
+			_stream["WriteByte"](this.r);
+		}
+		if (this.g !== undefined && this.g !== null)
+		{
+			_stream["WriteByte"](2);
+			_stream["WriteByte"](this.g);
+		}
+		if (this.b !== undefined && this.b !== null)
+		{
+			_stream["WriteByte"](3);
+			_stream["WriteByte"](this.b);
+		}
+		if (this.a !== undefined && this.a !== null)
+		{
+			_stream["WriteByte"](4);
+			_stream["WriteByte"](this.a);
+		}
+		if (this.Auto !== undefined && this.Auto !== null)
+		{
+			_stream["WriteByte"](5);
+			_stream["WriteBool"](this.Auto);
+		}
+		if (this.value !== undefined && this.value !== null)
+		{
+			_stream["WriteByte"](6);
+			_stream["WriteLong"](this.value);
+		}
+		if (this.ColorSchemeId !== undefined && this.ColorSchemeId !== null)
+		{
+			_stream["WriteByte"](7);
+			_stream["WriteLong"](this.ColorSchemeId);
+		}
+		if (this.Mods !== undefined && this.Mods !== null)
+		{
+			_stream["WriteByte"](8);
+
+			var _len = this.Mods.length;
+			_stream["WriteLong"](_len);
+
+			for (var i = 0; i < _len; i++)
+			{
+				_stream["WriteString1"](this.Mods[i].name);
+				_stream["WriteLong"](this.Mods[i].val);
+			}
+		}
+
+		_stream["WriteByte"](255);
 	};
 
 	/** @constructor */
@@ -2871,6 +3399,7 @@
 			if(oBullet) {
 				oBullet.FirstTextPr = obj.FirstTextPr;
 			}
+			this.Ligatures = undefined !== obj.Ligatures ? obj.Ligatures : undefined;
 
 			this.CanDeleteBlockCC  = undefined !== obj.CanDeleteBlockCC ? obj.CanDeleteBlockCC : true;
 			this.CanEditBlockCC    = undefined !== obj.CanEditBlockCC ? obj.CanEditBlockCC : true;
@@ -2922,6 +3451,7 @@
 			this.OutlineLvlStyle = false;
 			this.SuppressLineNumbers = false;
 			this.Bullet = undefined;
+			this.Ligatures = undefined;
 
 			this.CanDeleteBlockCC  = true;
 			this.CanEditBlockCC    = true;
@@ -3162,6 +3692,12 @@
 		},
 		asc_canEditInlineContentControl: function() {
 			return this.CanEditInlineCC;
+		},
+		asc_getLigatures: function(){
+			return this.Ligatures;
+		},
+		asc_putLigatures: function(v){
+			this.Ligatures = v;
 		}
 	};
 
@@ -3212,23 +3748,90 @@
 		}
 	}
 
-	asc_CPaddings.prototype = {
-		asc_getLeft: function () {
+	asc_CPaddings.prototype.asc_getLeft = function () {
 			return this.Left;
-		}, asc_putLeft: function (v) {
+		};
+	asc_CPaddings.prototype.asc_putLeft = function (v) {
 			this.Left = v;
-		}, asc_getTop: function () {
+		};
+	asc_CPaddings.prototype.asc_getTop = function () {
 			return this.Top;
-		}, asc_putTop: function (v) {
+		};
+	asc_CPaddings.prototype.asc_putTop = function (v) {
 			this.Top = v;
-		}, asc_getBottom: function () {
+		};
+	asc_CPaddings.prototype.asc_getBottom = function () {
 			return this.Bottom;
-		}, asc_putBottom: function (v) {
+		};
+	asc_CPaddings.prototype.asc_putBottom = function (v) {
 			this.Bottom = v;
-		}, asc_getRight: function () {
+		};
+	asc_CPaddings.prototype.asc_getRight = function () {
 			return this.Right;
-		}, asc_putRight: function (v) {
+		};
+	asc_CPaddings.prototype.asc_putRight = function (v) {
 			this.Right = v;
+		};
+	asc_CPaddings.prototype.write = function(_type, _stream) {
+		_stream["WriteByte"](_type);
+
+		if (this.Left !== undefined && this.Left !== null)
+		{
+			_stream["WriteByte"](0);
+			_stream["WriteDouble2"](this.Left);
+		}
+		if (this.Top !== undefined && this.Top !== null)
+		{
+			_stream["WriteByte"](1);
+			_stream["WriteDouble2"](this.Top);
+		}
+		if (this.Right !== undefined && this.Right !== null)
+		{
+			_stream["WriteByte"](2);
+			_stream["WriteDouble2"](this.Right);
+		}
+		if (this.Bottom !== undefined && this.Bottom !== null)
+		{
+			_stream["WriteByte"](3);
+			_stream["WriteDouble2"](this.Bottom);
+		}
+
+		_stream["WriteByte"](255);
+	};
+	asc_CPaddings.prototype.read = function(_params, _cursor) {
+		let _continue = true;
+		while (_continue)
+		{
+			let _attr = _params[_cursor.pos++];
+			switch (_attr)
+			{
+				case 0:
+				{
+					this.Left = _params[_cursor.pos++];
+					break;
+				}
+				case 1:
+				{
+					this.Top = _params[_cursor.pos++];
+					break;
+				}
+				case 2:
+				{
+					this.Right = _params[_cursor.pos++];
+					break;
+				}
+				case 3:
+				{
+					this.Bottom = _params[_cursor.pos++];
+					break;
+				}
+				case 255:
+				default:
+				{
+					_continue = false;
+					break;
+				}
+			}
 		}
 	};
 
@@ -3254,6 +3857,7 @@
 		this.lockAspect = null;
 		this.title = null;
 		this.description = null;
+		this.name = null;
 
         this.columnNumber = null;
         this.columnSpace = null;
@@ -3274,230 +3878,341 @@
 		this.protectionLockText = null;
 		this.protectionLocked = null;
 		this.protectionPrint = null;
+		this.isMotionPath = false;
 	}
-
-	asc_CShapeProperty.prototype = {
-		constructor: asc_CShapeProperty,
-		asc_getType: function () {
+	asc_CShapeProperty.prototype.constructor = asc_CShapeProperty;
+	asc_CShapeProperty.prototype.asc_getType = function () {
 			return this.type;
-		}, asc_putType: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putType = function (v) {
 			this.type = v;
-		}, asc_getFill: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getFill = function () {
 			return this.fill;
-		}, asc_putFill: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putFill = function (v) {
 			this.fill = v;
-		}, asc_getStroke: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getStroke = function () {
 			return this.stroke;
-		}, asc_putStroke: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putStroke = function (v) {
 			this.stroke = v;
-		}, asc_getPaddings: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getPaddings = function () {
 			return this.paddings;
-		}, asc_putPaddings: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putPaddings = function (v) {
 			this.paddings = v;
-		}, asc_getCanFill: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getCanFill = function () {
 			return this.canFill;
-		}, asc_putCanFill: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putCanFill = function (v) {
 			this.canFill = v;
-		}, asc_getCanChangeArrows: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getCanChangeArrows = function () {
 			return this.canChangeArrows;
-		}, asc_setCanChangeArrows: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_setCanChangeArrows = function (v) {
 			this.canChangeArrows = v;
-		},
-		asc_getFromChart: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getFromChart = function () {
 			return this.bFromChart;
-		},
-		asc_setFromChart: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_setFromChart = function (v) {
 			this.bFromChart = v;
-		},
-		asc_getFromSmartArt: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getFromSmartArt = function () {
 			return this.bFromSmartArt;
-		},
-		asc_setFromSmartArt: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_setFromSmartArt = function (v) {
 			this.bFromSmartArt = v;
-		},
-		asc_getFromSmartArtInternal: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getFromSmartArtInternal = function () {
 			return this.bFromSmartArtInternal;
-		},
-		asc_setFromSmartArtInternal: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_setFromSmartArtInternal = function (v) {
 			this.bFromSmartArtInternal = v;
-		},
-		asc_getFromGroup: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getFromGroup = function () {
 			return this.bFromGroup;
-		},
-		asc_setFromGroup: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_setFromGroup = function (v) {
 			this.bFromGroup = v;
-		},
-		asc_getLocked: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getLocked = function () {
 			return this.Locked;
-		}, asc_setLocked: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_setLocked = function (v) {
 			this.Locked = v;
-		},
-
-		asc_getWidth: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getWidth = function () {
 			return this.w;
-		}, asc_putWidth: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putWidth = function (v) {
 			this.w = v;
-		}, asc_getHeight: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getHeight = function () {
 			return this.h;
-		}, asc_putHeight: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putHeight = function (v) {
 			this.h = v;
-		}, asc_getVerticalTextAlign: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getVerticalTextAlign = function () {
 			return this.verticalTextAlign;
-		}, asc_putVerticalTextAlign: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putVerticalTextAlign = function (v) {
 			this.verticalTextAlign = v;
-		}, asc_getVert: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getVert = function () {
 			return this.vert;
-		}, asc_putVert: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putVert = function (v) {
 			this.vert = v;
-		}, asc_getTextArtProperties: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getTextArtProperties = function () {
 			return this.textArtProperties;
-		}, asc_putTextArtProperties: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putTextArtProperties = function (v) {
 			this.textArtProperties = v;
-		}, asc_getLockAspect: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getLockAspect = function () {
 			return this.lockAspect
-		}, asc_putLockAspect: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putLockAspect = function (v) {
 			this.lockAspect = v;
-		}, asc_getTitle: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getTitle = function () {
 			return this.title;
-		}, asc_putTitle: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putTitle = function (v) {
 			this.title = v;
-		}, asc_getDescription: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getDescription = function () {
 			return this.description;
-		}, asc_putDescription: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putDescription = function (v) {
 			this.description = v;
-		},
-
-		asc_getColumnNumber: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getName = function () {
+			return this.name;
+		};
+	asc_CShapeProperty.prototype.asc_putName = function (v) {
+			this.name = v;
+		};
+	asc_CShapeProperty.prototype.asc_getColumnNumber = function(){
 			return this.columnNumber;
-		},
-
-		asc_putColumnNumber: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putColumnNumber = function(v){
 			this.columnNumber = v;
-		},
-
-		asc_getColumnSpace: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getColumnSpace = function(){
 			return this.columnSpace;
-		},
-		asc_getTextFitType: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getTextFitType = function(){
 			return this.textFitType;
-		},
-
-		asc_getVertOverflowType: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getVertOverflowType = function(){
 			return this.vertOverflowType;
-		},
-
-		asc_putColumnSpace: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putColumnSpace = function(v){
 			this.columnSpace = v;
-		},
-
-		asc_putTextFitType: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putTextFitType = function(v){
 			this.textFitType = v;
-		},
-		asc_putVertOverflowType: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putVertOverflowType = function(v){
 			this.vertOverflowType = v;
-		},
-
-		asc_getSignatureId: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getSignatureId = function(){
 			return this.signatureId;
-		},
-
-		asc_putSignatureId: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putSignatureId = function(v){
 			this.signatureId = v;
-		},
-
-		asc_getFromImage: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getFromImage = function(){
 			return this.bFromImage;
-		},
-
-		asc_putFromImage: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putFromImage = function(v){
 			this.bFromImage = v;
-		},
-
-		asc_getRot: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getRot = function(){
 			return this.rot;
-		},
-
-		asc_putRot: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putRot = function(v){
 			this.rot = v;
-		},
-
-		asc_getRotAdd: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getRotAdd = function(){
 			return this.rotAdd;
-		},
-
-		asc_putRotAdd: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putRotAdd = function(v){
 			this.rotAdd = v;
-		},
-
-		asc_getFlipH: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getFlipH = function(){
 			return this.flipH;
-		},
-
-		asc_putFlipH: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putFlipH = function(v){
 			this.flipH = v;
-		},
-
-		asc_getFlipV: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getFlipV = function(){
 			return this.flipV;
-		},
-
-		asc_putFlipV: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putFlipV = function(v){
 			this.flipV = v;
-		},
-		asc_getFlipHInvert: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getFlipHInvert = function(){
 			return this.flipHInvert;
-		},
-
-		asc_putFlipHInvert: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putFlipHInvert = function(v){
 			this.flipHInvert = v;
-		},
-
-		asc_getFlipVInvert: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getFlipVInvert = function(){
 			return this.flipVInvert;
-		},
-
-		asc_putFlipVInvert: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putFlipVInvert = function(v){
 			this.flipVInvert = v;
-		},
-		asc_getShadow: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getShadow = function(){
 			return this.shadow;
-		},
-
-		asc_putShadow: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putShadow = function(v){
 			this.shadow = v;
-		},
-		asc_getAnchor: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getAnchor = function(){
 			return this.anchor;
-		},
-
-		asc_putAnchor: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putAnchor = function(v){
 			this.anchor = v;
-		},
-		asc_getProtectionLockText: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getProtectionLockText = function(){
 			return this.protectionLockText;
-		},
-		asc_putProtectionLockText: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putProtectionLockText = function(v){
 			this.protectionLockText = v;
-		},
-		asc_getProtectionLocked: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getProtectionLocked = function(){
 			return this.protectionLocked;
-		},
-
-		asc_putProtectionLocked: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putProtectionLocked = function(v){
 			this.protectionLocked = v;
-		},
-		asc_getProtectionPrint: function(){
+		};
+	asc_CShapeProperty.prototype.asc_getProtectionPrint = function(){
 			return this.protectionPrint;
-		},
-		asc_putProtectionPrint: function(v){
+		};
+	asc_CShapeProperty.prototype.asc_putProtectionPrint = function(v){
 			this.protectionPrint = v;
-		},
-		asc_getPosition: function () {
+		};
+	asc_CShapeProperty.prototype.asc_getPosition = function () {
 			return this.Position;
-		}, // Аргумент объект класса CPosition
-		asc_putPosition: function (v) {
+		};
+	asc_CShapeProperty.prototype.asc_putPosition = function (v) {
 			this.Position = v;
+		};
+	asc_CShapeProperty.prototype.asc_getIsMotionPath = function () {
+			return this.isMotionPath;
+		};
+	asc_CShapeProperty.prototype.write = function (_type, _stream) {
+
+		if(_type !== undefined && _type !== null) {
+			_stream["WriteByte"](_type);
 		}
+
+		if (this.type !== undefined && this.type !== null) {
+			_stream["WriteByte"](0);
+			_stream["WriteString2"](this.type);
+		}
+
+		if(this.fill) {
+			this.fill.write(1, _stream);
+		}
+		if(this.stroke) {
+			this.stroke.write(2, _stream);
+		}
+		if(this.paddings) {
+			this.paddings.write(3, _stream);
+		}
+
+		if (this.canFill !== undefined && this.canFill !== null) {
+			_stream["WriteByte"](4);
+			_stream["WriteBool"](this.canFill);
+		}
+		if (this.bFromChart !== undefined && this.bFromChart !== null) {
+			_stream["WriteByte"](5);
+			_stream["WriteBool"](this.bFromChart);
+		}
+		//6 - InsertPageNum
+		if (this.bFromGroup !== undefined && this.bFromGroup !== null) {
+			_stream["WriteByte"](7);
+			_stream["WriteBool"](this.bFromGroup);
+		}
+		if (this.shadow) {
+			this.shadow.write(8, _stream);
+		}
+
+		if(this.verticalTextAlign !== null && this.verticalTextAlign !== undefined) {
+			_stream["WriteByte"](9);
+			_stream["WriteLong"](this.verticalTextAlign);
+		}
+
+		_stream["WriteByte"](255);
+	};
+	asc_CShapeProperty.prototype.read = function (_params, _cursor) {
+		let _continue = true;
+		while (_continue) {
+			let _attr = _params[_cursor.pos++];
+			switch (_attr) {
+				case 0: {
+					this.type = _params[_cursor.pos++];
+					break;
+				}
+				case 1: {
+					this.fill = new Asc.asc_CShapeFill();
+					this.fill.read(_params, _cursor);
+					break;
+				}
+				case 2: {
+					this.stroke = new Asc.asc_CStroke();
+					this.stroke.read(_params, _cursor);
+					break;
+				}
+				case 3: {
+					this.paddings = asc_menu_ReadPaddings(_params, _cursor);
+					break;
+				}
+				case 4: {
+					this.canFill = _params[_cursor.pos++];
+					break;
+				}
+				case 5: {
+					this.bFromChart = _params[_cursor.pos++];
+					break;
+				}
+				case 6: {
+					this.InsertPageNum = _params[_cursor.pos++];
+					break;
+				}
+				case 7: {
+					this.bFromGroup = _params[_cursor.pos++];
+					break;
+				}
+				case 8: {
+					const oShadow = new Asc.asc_CShadowProperty();
+					this.shadow = oShadow.read(_params, _cursor);
+					break;
+				}
+				case 9: {
+					this.verticalTextAlign = _params[_cursor.pos++];
+					break;
+				}
+				case 255:
+				default: {
+					_continue = false;
+					break;
+				}
+			}
+		}
+
 	};
 
 	/** @constructor */
@@ -3703,6 +4418,7 @@
 
 			this.title = obj.title != undefined ? obj.title : undefined;
 			this.description = obj.description != undefined ? obj.description : undefined;
+			this.name = obj.name != undefined ? obj.name : undefined;
 
             this.columnNumber =  obj.columnNumber != undefined ? obj.columnNumber : undefined;
             this.columnSpace =  obj.columnSpace != undefined ? obj.columnSpace : undefined;
@@ -3757,6 +4473,7 @@
 
             this.title = undefined;
             this.description = undefined;
+            this.name = undefined;
 
             this.columnNumber = undefined;
             this.columnSpace =  undefined;
@@ -3989,6 +4706,13 @@
 		asc_putDescription: function(v){
 			this.description = v;
 		},
+		asc_getName: function(){
+			return this.name;
+		},
+
+		asc_putName: function(v){
+			this.name = v;
+		},
 
 		asc_getColumnNumber: function(){
 			return this.columnNumber;
@@ -4126,28 +4850,112 @@
 		this.fill = null;
 		this.transparent = null;
 	}
+	asc_CShapeFill.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CShapeFill.prototype.asc_putType = function (v) {
+		this.type = v;
+	};
+	asc_CShapeFill.prototype.asc_getFill = function () {
+		return this.fill;
+	};
+	asc_CShapeFill.prototype.asc_putFill = function (v) {
+		this.fill = v;
+	};
+	asc_CShapeFill.prototype.asc_getTransparent = function () {
+		return this.transparent;
+	};
+	asc_CShapeFill.prototype.asc_putTransparent = function (v) {
+		this.transparent = v;
+	};
+	asc_CShapeFill.prototype.asc_CheckForseSet = function () {
+		if (null != this.transparent) {
+			return true;
+		}
+		if (null != this.fill && this.fill.Positions != null) {
+			return true;
+		}
+		return false;
+	};
+	asc_CShapeFill.prototype.write = function(_type, _stream) {
 
-	asc_CShapeFill.prototype = {
-		asc_getType: function () {
-			return this.type;
-		}, asc_putType: function (v) {
-			this.type = v;
-		}, asc_getFill: function () {
-			return this.fill;
-		}, asc_putFill: function (v) {
-			this.fill = v;
-		}, asc_getTransparent: function () {
-			return this.transparent;
-		}, asc_putTransparent: function (v) {
-			this.transparent = v;
-		}, asc_CheckForseSet: function () {
-			if (null != this.transparent) {
-				return true;
+		_stream["WriteByte"](_type);
+
+		if (this.type !== undefined && this.type !== null)
+		{
+			_stream["WriteByte"](0);
+			_stream["WriteLong"](this.type);
+		}
+
+		if(this.fill) {
+			this.fill.write(1, _stream);
+		}
+
+		if (this.transparent !== undefined && this.transparent !== null)
+		{
+			_stream["WriteByte"](2);
+			_stream["WriteLong"](this.transparent);
+		}
+
+		_stream["WriteByte"](255);
+	};
+	asc_CShapeFill.prototype.read = function(_params, _cursor) {
+		let _continue = true;
+		while (_continue)
+		{
+			let _attr = _params[_cursor.pos++];
+			switch (_attr)
+			{
+				case 0:
+				{
+					this.type = _params[_cursor.pos++];
+					break;
+				}
+				case 1:
+				{
+					switch (this.type)
+					{
+						case Asc.c_oAscFill.FILL_TYPE_SOLID:
+						{
+							this.fill = new Asc.asc_CFillSolid();
+							this.fill.read(_params, _cursor);
+							break;
+						}
+						case Asc.c_oAscFill.FILL_TYPE_PATT:
+						{
+							this.fill = new Asc.asc_CFillHatch();
+							this.fill.read(_params, _cursor);
+							break;
+						}
+						case Asc.c_oAscFill.FILL_TYPE_GRAD:
+						{
+							this.fill = new Asc.asc_CFillGrad();
+							this.fill.read(_params, _cursor);
+							break;
+						}
+						case Asc.c_oAscFill.FILL_TYPE_BLIP:
+						{
+							this.fill = new Asc.asc_CFillBlip();
+							this.fill.read(_params, _cursor);
+							break;
+						}
+						default:
+							break;
+					}
+					break;
+				}
+				case 2:
+				{
+					this.transparent = _params[_cursor.pos++];
+					break;
+				}
+				case 255:
+				default:
+				{
+					_continue = false;
+					break;
+				}
 			}
-			if (null != this.fill && this.fill.Positions != null) {
-				return true;
-			}
-			return false;
 		}
 	};
 
@@ -4159,20 +4967,77 @@
 		this.texture_id = null;
 	}
 
-	asc_CFillBlip.prototype = {
-		asc_getType: function () {
+		asc_CFillBlip.prototype.asc_getType = function () {
 			return this.type
-		}, asc_putType: function (v) {
+		};
+	asc_CFillBlip.prototype.asc_putType = function (v) {
 			this.type = v;
-		}, asc_getUrl: function () {
+		};
+	asc_CFillBlip.prototype.asc_getUrl = function () {
 			return this.url;
-		}, asc_putUrl: function (v, sToken) {
+		};
+	asc_CFillBlip.prototype.asc_putUrl = function (v, sToken) {
 			this.url = v;
 			this.token = sToken;
-		}, asc_getTextureId: function () {
+		};
+	asc_CFillBlip.prototype.asc_getTextureId = function () {
 			return this.texture_id;
-		}, asc_putTextureId: function (v) {
+		};
+	asc_CFillBlip.prototype.asc_putTextureId = function (v) {
 			this.texture_id = v;
+		};
+	asc_CFillBlip.prototype.write = function(_type, _stream) {
+		_stream["WriteByte"](_type);
+
+		if (this.type !== undefined && this.type !== null)
+		{
+			_stream["WriteByte"](0);
+			_stream["WriteLong"](this.type);
+		}
+
+		if (this.url !== undefined && this.url !== null)
+		{
+			_stream["WriteByte"](1);
+			_stream["WriteString2"](this.url);
+		}
+
+		if (this.texture_id !== undefined && this.texture_id !== null)
+		{
+			_stream["WriteByte"](2);
+			_stream["WriteLong"](this.texture_id);
+		}
+
+		_stream["WriteByte"](255);
+	};
+	asc_CFillBlip.prototype.read = function(_params, _cursor) {
+		let _continue = true;
+		while (_continue)
+		{
+			let _attr = _params[_cursor.pos++];
+			switch (_attr)
+			{
+				case 0:
+				{
+					this.type = _params[_cursor.pos++];
+					break;
+				}
+				case 1:
+				{
+					this.url = _params[_cursor.pos++];
+					break;
+				}
+				case 2:
+				{
+					this.texture_id = _params[_cursor.pos++];
+					break;
+				}
+				case 255:
+				default:
+				{
+					_continue = false;
+					break;
+				}
+			}
 		}
 	};
 
@@ -4183,22 +5048,74 @@
 		this.bgClr = undefined;
 	}
 
-	asc_CFillHatch.prototype = {
-		asc_getPatternType: function () {
-			return this.PatternType;
-		}, asc_putPatternType: function (v) {
-			this.PatternType = v;
-		}, asc_getColorFg: function () {
-			return this.fgClr;
-		}, asc_putColorFg: function (v) {
-			this.fgClr = v;
-		}, asc_getColorBg: function () {
-			return this.bgClr;
-		}, asc_putColorBg: function (v) {
-			this.bgClr = v;
-		}
+	asc_CFillHatch.prototype.asc_getPatternType = function () {
+		return this.PatternType;
 	};
+	asc_CFillHatch.prototype.asc_putPatternType = function (v) {
+		this.PatternType = v;
+	};
+	asc_CFillHatch.prototype.asc_getColorFg = function () {
+		return this.fgClr;
+	};
+	asc_CFillHatch.prototype.asc_putColorFg = function (v) {
+		this.fgClr = v;
+	};
+	asc_CFillHatch.prototype.asc_getColorBg = function () {
+		return this.bgClr;
+	};
+	asc_CFillHatch.prototype.asc_putColorBg = function (v) {
+		this.bgClr = v;
+	};
+	asc_CFillHatch.prototype.write = function(_type, _stream) {
+		_stream["WriteByte"](_type);
 
+		if (this.PatternType !== undefined && this.PatternType !== null)
+		{
+			_stream["WriteByte"](0);
+			_stream["WriteLong"](this.PatternType);
+		}
+
+		if(this.bgClr) {
+			this.bgClr.write(1, _stream);
+		}
+		if(this.fgClr) {
+			this.fgClr.write(2, _stream);
+		}
+
+		_stream["WriteByte"](255);
+	};
+	asc_CFillHatch.prototype.read = function(_params, _cursor) {
+		let _continue = true;
+		while (_continue)
+		{
+			let _attr = _params[_cursor.pos++];
+			switch (_attr)
+			{
+				case 0:
+				{
+					this.PatternType = _params[_cursor.pos++];
+					break;
+				}
+				case 1:
+				{
+					this.bgClr = asc_menu_ReadColor(_params, _cursor);
+					break;
+				}
+				case 2:
+				{
+					this.fgClr = asc_menu_ReadColor(_params, _cursor);
+					break;
+				}
+				case 255:
+				default:
+				{
+					_continue = false;
+					break;
+				}
+			}
+		}
+
+	};
 	/** @constructor */
 	function asc_CFillGrad() {
 		this.Colors = undefined;
@@ -4211,31 +5128,169 @@
 		this.PathType = 0;
 	}
 
-	asc_CFillGrad.prototype = {
-		asc_getColors: function () {
+	asc_CFillGrad.prototype.asc_getColors = function () {
 			return this.Colors;
-		}, asc_putColors: function (v) {
+		};
+	asc_CFillGrad.prototype.asc_putColors = function (v) {
 			this.Colors = v;
-		}, asc_getPositions: function () {
+		};
+	asc_CFillGrad.prototype.asc_getPositions = function () {
 			return this.Positions;
-		}, asc_putPositions: function (v) {
+		};
+	asc_CFillGrad.prototype.asc_putPositions = function (v) {
 			this.Positions = v;
-		}, asc_getGradType: function () {
+		};
+	asc_CFillGrad.prototype.asc_getGradType = function () {
 			return this.GradType;
-		}, asc_putGradType: function (v) {
+		};
+	asc_CFillGrad.prototype.asc_putGradType = function (v) {
 			this.GradType = v;
-		}, asc_getLinearAngle: function () {
+		};
+	asc_CFillGrad.prototype.asc_getLinearAngle = function () {
 			return this.LinearAngle;
-		}, asc_putLinearAngle: function (v) {
+		};
+	asc_CFillGrad.prototype.asc_putLinearAngle = function (v) {
 			this.LinearAngle = v;
-		}, asc_getLinearScale: function () {
+		};
+	asc_CFillGrad.prototype.asc_getLinearScale = function () {
 			return this.LinearScale;
-		}, asc_putLinearScale: function (v) {
+		};
+	asc_CFillGrad.prototype.asc_putLinearScale = function (v) {
 			this.LinearScale = v;
-		}, asc_getPathType: function () {
+		};
+	asc_CFillGrad.prototype.asc_getPathType = function () {
 			return this.PathType;
-		}, asc_putPathType: function (v) {
+		};
+	asc_CFillGrad.prototype.asc_putPathType = function (v) {
 			this.PathType = v;
+		};
+	asc_CFillGrad.prototype.write = function(_type, _stream) {
+		_stream["WriteByte"](_type);
+
+		if (this.GradType !== undefined && this.GradType !== null)
+		{
+			_stream["WriteByte"](0);
+			_stream["WriteLong"](this.GradType);
+		}
+
+		if (this.LinearAngle !== undefined && this.LinearAngle !== null)
+		{
+			_stream["WriteByte"](1);
+			_stream["WriteDouble2"](this.LinearAngle);
+		}
+
+		if (this.LinearScale !== undefined && this.LinearScale !== null)
+		{
+			_stream["WriteByte"](2);
+			_stream["WriteBool"](this.LinearScale);
+		}
+
+		if (this.PathType !== undefined && this.PathType !== null)
+		{
+			_stream["WriteByte"](3);
+			_stream["WriteLong"](this.PathType);
+		}
+
+		if (this.Colors !== null && this.Colors !== undefined && this.Positions !== null && this.Positions !== undefined)
+		{
+			if (this.Colors.length == this.Positions.length)
+			{
+				var _count = this.Colors.length;
+				_stream["WriteByte"](4);
+				_stream["WriteLong"](_count);
+
+				for (var i = 0; i < _count; i++)
+				{
+					this.Colors[i].write(0, _stream);
+					if (this.Positions[i] !== undefined && this.Positions[i] !== null)
+					{
+						_stream["WriteByte"](1);
+						_stream["WriteLong"](this.Positions[i]);
+					}
+
+					_stream["WriteByte"](255);
+				}
+			}
+		}
+
+		_stream["WriteByte"](255);
+	};
+	asc_CFillGrad.prototype.read = function(_params, _cursor) {
+		let _continue = true;
+		while (_continue)
+		{
+			let _attr = _params[_cursor.pos++];
+			switch (_attr)
+			{
+				case 0:
+				{
+					this.GradType = _params[_cursor.pos++];
+					break;
+				}
+				case 1:
+				{
+					this.LinearAngle = _params[_cursor.pos++];
+					break;
+				}
+				case 2:
+				{
+					this.LinearScale = _params[_cursor.pos++];
+					break;
+				}
+				case 3:
+				{
+					this.PathType = _params[_cursor.pos++];
+					break;
+				}
+				case 4:
+				{
+					var _count = _params[_cursor.pos++];
+
+					if (_count > 0)
+					{
+						this.Colors = [];
+						this.Positions = [];
+					}
+					for (var i = 0; i < _count; i++)
+					{
+						this.Colors[i] = null;
+						this.Positions[i] = null;
+
+						var _continue2 = true;
+						while (_continue2)
+						{
+							var _attr2 = _params[_cursor.pos++];
+							switch (_attr2)
+							{
+								case 0:
+								{
+									this.Colors[i] = asc_menu_ReadColor(_params, _cursor);
+									break;
+								}
+								case 1:
+								{
+									this.Positions[i] = _params[_cursor.pos++];
+									break;
+								}
+								case 255:
+								default:
+								{
+									_continue2 = false;
+									break;
+								}
+							}
+						}
+					}
+					_cursor.pos++;
+					break;
+				}
+				case 255:
+				default:
+				{
+					_continue = false;
+					break;
+				}
+			}
 		}
 	};
 
@@ -4244,11 +5299,36 @@
 		this.color = new asc_CColor();
 	}
 
-	asc_CFillSolid.prototype = {
-		asc_getColor: function () {
+	asc_CFillSolid.prototype.asc_getColor = function () {
 			return this.color
-		}, asc_putColor: function (v) {
+		};
+	asc_CFillSolid.prototype.asc_putColor = function (v) {
 			this.color = v;
+		};
+	asc_CFillSolid.prototype.write = function(_type, _stream) {
+		_stream["WriteByte"](_type);
+		if(this.color) {
+			this.color.write(0, _stream);
+		}
+		_stream["WriteByte"](255);
+	};
+
+	asc_CFillSolid.prototype.read = function (_params, _cursor) {
+		let _continue = true;
+		while (_continue) {
+			let _attr = _params[_cursor.pos++];
+			switch (_attr) {
+				case 0: {
+					this.color = new Asc.asc_CColor();
+					this.color.read(_params, _cursor);
+					break;
+				}
+				case 255:
+				default: {
+					_continue = false;
+					break;
+				}
+			}
 		}
 	};
 
@@ -4269,60 +5349,202 @@
 		this.LineEndSize = null;
 
 		this.canChangeArrows = false;
+		this.transparent = null;
 	}
 
-	asc_CStroke.prototype = {
-		asc_getType: function () {
-			return this.type;
-		}, asc_putType: function (v) {
-			this.type = v;
-		}, asc_getWidth: function () {
-			return this.width;
-		}, asc_putWidth: function (v) {
-			this.width = v;
-		}, asc_getColor: function () {
-			return this.color;
-		}, asc_putColor: function (v) {
-			this.color = v;
-		},
+	asc_CStroke.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CStroke.prototype.asc_putType = function (v) {
+		this.type = v;
+	};
+	asc_CStroke.prototype.asc_getWidth = function () {
+		return this.width;
+	};
+	asc_CStroke.prototype.asc_putWidth = function (v) {
+		this.width = v;
+	};
+	asc_CStroke.prototype.asc_getColor = function () {
+		return this.color;
+	};
+	asc_CStroke.prototype.asc_putColor = function (v) {
+		this.color = v;
+	};
+	asc_CStroke.prototype.asc_getLinejoin = function () {
+		return this.LineJoin;
+	};
+	asc_CStroke.prototype.asc_putLinejoin = function (v) {
+		this.LineJoin = v;
+	};
+	asc_CStroke.prototype.asc_getLinecap = function () {
+		return this.LineCap;
+	};
+	asc_CStroke.prototype.asc_putLinecap = function (v) {
+		this.LineCap = v;
+	};
+	asc_CStroke.prototype.asc_getLinebeginstyle = function () {
+		return this.LineBeginStyle;
+	};
+	asc_CStroke.prototype.asc_putLinebeginstyle = function (v) {
+		this.LineBeginStyle = v;
+	};
+	asc_CStroke.prototype.asc_getLinebeginsize = function () {
+		return this.LineBeginSize;
+	};
+	asc_CStroke.prototype.asc_putLinebeginsize = function (v) {
+		this.LineBeginSize = v;
+	};
+	asc_CStroke.prototype.asc_getLineendstyle = function () {
+		return this.LineEndStyle;
+	};
+	asc_CStroke.prototype.asc_putLineendstyle = function (v) {
+		this.LineEndStyle = v;
+	};
+	asc_CStroke.prototype.asc_getLineendsize = function () {
+		return this.LineEndSize;
+	};
+	asc_CStroke.prototype.asc_putLineendsize = function (v) {
+		this.LineEndSize = v;
+	};
+	asc_CStroke.prototype.asc_getCanChangeArrows = function () {
+		return this.canChangeArrows;
+	};
+	asc_CStroke.prototype.asc_getTransparent = function () {
+		return this.transparent;
+	};
+	asc_CStroke.prototype.asc_putTransparent = function (v) {
+		this.transparent = v;
+	};
+	asc_CStroke.prototype.asc_putPrstDash = function (v) {
+		this.prstDash = v;
+	};
+	asc_CStroke.prototype.asc_getPrstDash = function () {
+		return this.prstDash;
+	};
+	asc_CStroke.prototype.write = function (_type, _stream) {
+		_stream["WriteByte"](_type);
 
-		asc_getLinejoin: function () {
-			return this.LineJoin;
-		}, asc_putLinejoin: function (v) {
-			this.LineJoin = v;
-		}, asc_getLinecap: function () {
-			return this.LineCap;
-		}, asc_putLinecap: function (v) {
-			this.LineCap = v;
-		},
-
-		asc_getLinebeginstyle: function () {
-			return this.LineBeginStyle;
-		}, asc_putLinebeginstyle: function (v) {
-			this.LineBeginStyle = v;
-		}, asc_getLinebeginsize: function () {
-			return this.LineBeginSize;
-		}, asc_putLinebeginsize: function (v) {
-			this.LineBeginSize = v;
-		}, asc_getLineendstyle: function () {
-			return this.LineEndStyle;
-		}, asc_putLineendstyle: function (v) {
-			this.LineEndStyle = v;
-		}, asc_getLineendsize: function () {
-			return this.LineEndSize;
-		}, asc_putLineendsize: function (v) {
-			this.LineEndSize = v;
-		},
-
-		asc_getCanChangeArrows: function () {
-			return this.canChangeArrows;
-		},
-
-		asc_putPrstDash: function (v) {
-			this.prstDash = v;
-		}, asc_getPrstDash: function () {
-			return this.prstDash;
+		if (this.type !== undefined && this.type !== null) {
+			_stream["WriteByte"](0);
+			_stream["WriteLong"](this.type);
 		}
+		if (this.width !== undefined && this.width !== null) {
+			_stream["WriteByte"](1);
+			_stream["WriteDouble2"](this.width);
+		}
+
+		if (this.color) {
+			this.color.write(2, _stream);
+		}
+
+		if (this.LineJoin !== undefined && this.LineJoin !== null) {
+			_stream["WriteByte"](3);
+			_stream["WriteByte"](this.LineJoin);
+		}
+		if (this.LineCap !== undefined && this.LineCap !== null) {
+			_stream["WriteByte"](4);
+			_stream["WriteByte"](this.LineCap);
+		}
+		if (this.LineBeginStyle !== undefined && this.LineBeginStyle !== null) {
+			_stream["WriteByte"](5);
+			_stream["WriteByte"](this.LineBeginStyle);
+		}
+		if (this.LineBeginSize !== undefined && this.LineBeginSize !== null) {
+			_stream["WriteByte"](6);
+			_stream["WriteByte"](this.LineBeginSize);
+		}
+		if (this.LineEndStyle !== undefined && this.LineEndStyle !== null) {
+			_stream["WriteByte"](7);
+			_stream["WriteByte"](this.LineEndStyle);
+		}
+		if (this.LineEndSize !== undefined && this.LineEndSize !== null) {
+			_stream["WriteByte"](8);
+			_stream["WriteByte"](this.LineEndSize);
+		}
+
+		if (this.canChangeArrows !== undefined && this.canChangeArrows !== null) {
+			_stream["WriteByte"](9);
+			_stream["WriteBool"](this.canChangeArrows);
+		}
+		if (this.prstDash !== undefined && this.prstDash !== null) {
+			_stream["WriteByte"](10);
+			_stream["WriteLong"](this.prstDash);
+		}
+
+		_stream["WriteByte"](255);
+	};
+	asc_CStroke.prototype.read = function(_params, _cursor) {
+		let _continue = true;
+		while (_continue)
+		{
+			let _attr = _params[_cursor.pos++];
+			switch (_attr)
+			{
+				case 0:
+				{
+					this.type = _params[_cursor.pos++];
+					break;
+				}
+				case 1:
+				{
+					this.width = _params[_cursor.pos++];
+					break;
+				}
+				case 2:
+				{
+					this.color = new Asc.asc_CColor();
+					this.color.read(_params, _cursor);
+					break;
+				}
+				case 3:
+				{
+					this.LineJoin = _params[_cursor.pos++];
+					break;
+				}
+				case 4:
+				{
+					this.LineCap = _params[_cursor.pos++];
+					break;
+				}
+				case 5:
+				{
+					this.LineBeginStyle = _params[_cursor.pos++];
+					break;
+				}
+				case 6:
+				{
+					this.LineBeginSize = _params[_cursor.pos++];
+					break;
+				}
+				case 7:
+				{
+					this.LineEndStyle = _params[_cursor.pos++];
+					break;
+				}
+				case 8:
+				{
+					this.LineEndSize = _params[_cursor.pos++];
+					break;
+				}
+				case 9:
+				{
+					this.canChangeArrows = _params[_cursor.pos++];
+					break;
+				}
+				case 10:
+				{
+					this.prstDash = _params[_cursor.pos++];
+					break;
+				}
+				case 255:
+				default:
+				{
+					_continue = false;
+					break;
+				}
+			}
+		}
+
 	};
 
 	// цвет. может быть трех типов:
@@ -4411,7 +5633,8 @@
 			this.Type  = ( undefined != obj.Type ) ? obj.Type : c_oAscMouseMoveDataTypes.Common;
 			this.X_abs = ( undefined != obj.X_abs ) ? obj.X_abs : 0;
 			this.Y_abs = ( undefined != obj.Y_abs ) ? obj.Y_abs : 0;
-
+			this.EyedropperColor = ( undefined != obj.EyedropperColor ) ? obj.EyedropperColor : undefined;
+			this.PlaceholderType = obj.PlaceholderType;
 			switch (this.Type)
 			{
 				case c_oAscMouseMoveDataTypes.Hyperlink :
@@ -4446,6 +5669,7 @@
 			this.Type  = c_oAscMouseMoveDataTypes.Common;
 			this.X_abs = 0;
 			this.Y_abs = 0;
+			this.EyedropperColor = undefined;
 		}
 	}
 
@@ -4485,6 +5709,14 @@
 	CMouseMoveData.prototype.get_ReviewChange = function()
 	{
 		return this.ReviewChange;
+	};
+	CMouseMoveData.prototype.get_EyedropperColor = function()
+	{
+		return this.EyedropperColor;
+	};
+	CMouseMoveData.prototype.get_PlaceholderType = function()
+	{
+		return this.PlaceholderType;
 	};
 
 
@@ -4653,6 +5885,9 @@
 		this.EncryptedInfo;
 		this.IsEnabledPlugins = true;
         this.IsEnabledMacroses = true;
+
+		//for external reference
+		this.ReferenceData = null;
 	}
 
 	prot = asc_CDocInfo.prototype;
@@ -4667,6 +5902,12 @@
 	};
 	prot.put_Url = prot.asc_putUrl = function (v) {
 		this.Url = v;
+	};
+	prot.get_DirectUrl = prot.asc_getDirectUrl = function () {
+		return this.DirectUrl;
+	};
+	prot.put_DirectUrl = prot.asc_putDirectUrl = function (v) {
+		this.DirectUrl = v;
 	};
 	prot.get_Title = prot.asc_getTitle = function () {
 		return this.Title;
@@ -4784,6 +6025,9 @@
 	};
 	prot.put_CoEditingMode = prot.asc_putCoEditingMode = function (v) {
 		this.coEditingMode = v;
+	};
+	prot.put_ReferenceData = prot.asc_putReferenceData = function (v) {
+		this.ReferenceData = v;
 	};
 
 	function COpenProgress() {
@@ -4919,7 +6163,7 @@
 			"height" : 100, // mm
 			"rotate" : -45, // degrees
 			"margins" : [ 10, 10, 10, 10 ], // text margins
-			"fill" : [255, 0, 0], // [] => none
+			"fill" : [255, 0, 0], // [] => none // "image_url"
 			"stroke-width" : 1, // mm
 			"stroke" : [0, 0, 255], // [] => none
 			"align" : 1, // vertical text align (4 - top, 1 - center, 0 - bottom)
@@ -4963,6 +6207,9 @@
 		this.imageBase64 = undefined;
 		this.width = 0;
 		this.height = 0;
+
+		this.imageBackgroundUrl = "";
+		this.imageBackground = null;
 
 		this.transparent = 0.3;
 		this.zoom = 1;
@@ -5112,15 +6359,19 @@
 				oShape.spPr.xfrm.setRot(AscFormat.normalizeRotate(obj['rotate'] ? (obj['rotate'] * Math.PI / 180) : 0));
 				oShape.spPr.setGeometry(AscFormat.CreateGeometry(obj['type']));
 				if(obj['fill'] && obj['fill'].length === 3){
-					oShape.spPr.setFill(AscFormat.CreteSolidFillRGB(obj['fill'][0], obj['fill'][1], obj['fill'][2]));
+					oShape.spPr.setFill(AscFormat.CreateSolidFillRGB(obj['fill'][0], obj['fill'][1], obj['fill'][2]));
+				}
+				else if (this.imageBackground) {
+					oApi.ImageLoader.map_image_index[this.imageBackgroundUrl] = { Image : this.imageBackground, Status : AscFonts.ImageLoadStatus.Complete };
+					oShape.spPr.setFill(AscFormat.builder_CreateBlipFill(this.imageBackgroundUrl, "stretch"));
 				}
 				if(AscFormat.isRealNumber(obj['stroke-width']) || Array.isArray(obj['stroke']) && obj['stroke'].length === 3){
 					var oUnifill;
 					if(Array.isArray(obj['stroke']) && obj['stroke'].length === 3){
-						oUnifill = AscFormat.CreteSolidFillRGB(obj['stroke'][0], obj['stroke'][1], obj['stroke'][2]);
+						oUnifill = AscFormat.CreateSolidFillRGB(obj['stroke'][0], obj['stroke'][1], obj['stroke'][2]);
 					}
 					else{
-						oUnifill = AscFormat.CreteSolidFillRGB(0, 0, 0);
+						oUnifill = AscFormat.CreateSolidFillRGB(0, 0, 0);
 					}
 					oShape.spPr.setLn(AscFormat.CreatePenFromParams(oUnifill, undefined, undefined, undefined, undefined, AscFormat.isRealNumber(obj['stroke-width']) ? obj['stroke-width'] : 12700.0/36000.0));
 				}
@@ -5140,7 +6391,7 @@
 					oShape.setPaddings({Left: obj['margins'][0], Top: obj['margins'][1], Right: obj['margins'][2], Bottom: obj['margins'][3]});
 				}
 				var oContent = oShape.getDocContent();
-				var aParagraphsS = obj['paragraphs'];
+				var aParagraphsS = obj['paragraphs'] || [];
 				if(aParagraphsS.length > 0){
                     oContent.Content.length = 0;
 				}
@@ -5170,26 +6421,26 @@
 						var oRunS = aRunsS[j];
 						var oRun = new AscCommonWord.ParaRun(oNewParagraph, false);
 						if(Array.isArray(oRunS['fill']) && oRunS['fill'].length === 3){
-							oRun.Set_Unifill(AscFormat.CreteSolidFillRGB(oRunS['fill'][0], oRunS['fill'][1], oRunS['fill'][2]));
+							oRun.Set_Unifill(AscFormat.CreateSolidFillRGB(oRunS['fill'][0], oRunS['fill'][1], oRunS['fill'][2]));
 						}
 						var fontFamilyName = oRunS['font-family'] ? oRunS['font-family'] : "Arial";
 						var fontSize = (oRunS['font-size'] != null) ? oRunS['font-size'] : 50;
 
-						oRun.Set_RFonts_Ascii({Name : fontFamilyName, Index : -1});
-						oRun.Set_RFonts_CS({Name : fontFamilyName, Index : -1});
-						oRun.Set_RFonts_EastAsia({Name : fontFamilyName, Index : -1});
-						oRun.Set_RFonts_HAnsi({Name : fontFamilyName, Index : -1});
+						oRun.SetRFontsAscii({Name : fontFamilyName, Index : -1});
+						oRun.SetRFontsCS({Name : fontFamilyName, Index : -1});
+						oRun.SetRFontsEastAsia({Name : fontFamilyName, Index : -1});
+						oRun.SetRFontsHAnsi({Name : fontFamilyName, Index : -1});
 
-						oRun.Set_FontSize(fontSize);
+						oRun.SetFontSize(fontSize);
 
-						oRun.Set_Bold(oRunS['bold'] === true);
-						oRun.Set_Italic(oRunS['italic'] === true);
-						oRun.Set_Strikeout(oRunS['strikeout'] === true);
-						oRun.Set_Underline(oRunS['underline'] === true);
+						oRun.SetBold(oRunS['bold'] === true);
+						oRun.SetItalic(oRunS['italic'] === true);
+						oRun.SetStrikeout(oRunS['strikeout'] === true);
+						oRun.SetUnderline(oRunS['underline'] === true);
 
 						var sCustomText = oRunS['text'];
 						if(sCustomText === "<%br%>"){
-							oRun.AddToContent(0, new AscCommonWord.ParaNewLine(AscCommonWord.break_Line), false);
+							oRun.AddToContent(0, new AscWord.CRunBreak(AscWord.break_Line), false);
 						}
 						else{
 							oRun.AddText(sCustomText);
@@ -5273,6 +6524,9 @@
 				if (false !== _oldTrackRevision)
 					oApi.WordControl.m_oLogicDocument.SetLocalTrackRevisions(_oldTrackRevision);
 
+				if (this.imageBackground)
+					delete oApi.ImageLoader.map_image_index[this.imageBackgroundUrl];
+
 			}, this, [obj]);
 
 		};
@@ -5330,7 +6584,7 @@
             this.CheckParams();
 
             var fonts = [];
-            var pars = this.contentObjects['paragraphs'];
+            var pars = this.contentObjects['paragraphs'] || [];
             var i, j;
             for (i = 0; i < pars.length; i++)
             {
@@ -5348,19 +6602,43 @@
                 fonts[i] = new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(fonts[i]), 0, "", 0, null);
             }
 
+			if ("string" === typeof this.contentObjects["fill"])
+				this.imageBackgroundUrl = this.contentObjects["fill"];
+
 			if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(fonts))
             {
-                this.onReady();
-                return false;
+                this.loadBackgroundImage();
+                return;
             }
 
             this.api.asyncMethodCallback = function() {
                 var oApi = Asc['editor'] || editor;
-                oApi.watermarkDraw.onReady();
+                oApi.watermarkDraw.loadBackgroundImage();
             };
 
             AscCommon.g_font_loader.LoadDocumentFonts2(fonts);
-		}
+		};
+
+		this.loadBackgroundImage = function()
+		{
+			if ("" === this.imageBackgroundUrl)
+			{
+				this.onReady();
+				return;
+			}
+
+			this.imageBackground = new Image();
+			this.imageBackground.onload = function()
+			{
+				Asc["editor"].watermarkDraw.onReady();
+			};
+			this.imageBackground.onerror = function()
+			{
+				Asc["editor"].watermarkDraw.imageBackground = null;
+				Asc["editor"].watermarkDraw.onReady();
+			};
+			this.imageBackground.src = this.imageBackgroundUrl;
+		};
 	}
 
 	// ----------------------------- plugins ------------------------------- //
@@ -5391,6 +6669,8 @@
 
 		this.size = undefined;
 		this.initOnSelectionChanged = undefined;
+
+		this.store = undefined;
 
 		this.events = [];
 		this.eventsMap = {};
@@ -5583,6 +6863,8 @@
 		_object["size"] = this.size;
 		_object["initOnSelectionChanged"] = this.initOnSelectionChanged;
 
+		_object["store"] = this.store;
+
 		return _object;
 	};
 	CPluginVariation.prototype["deserialize"] = function(_object)
@@ -5610,6 +6892,8 @@
 
 		this.buttons = (_object["buttons"] != null) ? _object["buttons"] : this.buttons;
 
+		this.store = (_object["store"] != null) ? _object["store"] : this.store;
+
 		if (_object["events"] != null) this["set_Events"](_object["events"]);
 
 		this.size = (_object["size"] != null) ? _object["size"] : this.size;
@@ -5619,20 +6903,54 @@
 	function CPlugin()
 	{
 		this.name    = "";
+		this.nameLocale = {};
 		this.guid    = "";
 		this.baseUrl = "";
 		this.minVersion = "";
+		this.version = "";
+		this.isConnector = false;
+		this.loader;
 
 		this.variations = [];
 	}
 
-	CPlugin.prototype["get_Name"]    = function()
+	CPlugin.prototype.getIntVersion = function()
 	{
+		if (!this.version)
+			return 0;
+		let arrayVersion = this.version.split(".");
+
+		while (arrayVersion.length < 3)
+			arrayVersion.push("0");
+
+		try
+		{
+			let intVer = parseInt(arrayVersion[0]) * 10000 + parseInt(arrayVersion[1]) * 100 + parseInt(arrayVersion[2]);
+			return intVer;
+		}
+		catch (e)
+		{
+		}
+		return 0;
+	};
+
+	CPlugin.prototype["get_Name"]    = function(locale)
+	{
+		if (locale && this.nameLocale && this.nameLocale[locale])
+			return this.nameLocale[locale];
 		return this.name;
 	};
 	CPlugin.prototype["set_Name"]    = function(value)
 	{
 		this.name = value;
+	};
+	CPlugin.prototype["get_NameLocale"]    = function()
+	{
+		return this.nameLocale;
+	};
+	CPlugin.prototype["set_NameLocale"]    = function(value)
+	{
+		this.nameLocale = value;
 	};
 	CPlugin.prototype["get_Guid"]    = function()
 	{
@@ -5658,6 +6976,14 @@
 	{
 		this.minVersion = value;
 	};
+	CPlugin.prototype["get_Version"] = function()
+	{
+		return this.version;
+	};
+	CPlugin.prototype["set_Version"] = function(value)
+	{
+		this.version = value;
+	};
 
 	CPlugin.prototype["get_Variations"] = function()
 	{
@@ -5668,12 +6994,34 @@
 		this.variations = value;
 	};
 
+	CPlugin.prototype["get_Loader"] = function()
+	{
+		return this.loader;
+	};
+	CPlugin.prototype["set_Loader"] = function(value)
+	{
+		this.loader = value;
+	};
+
 	CPlugin.prototype["serialize"]   = function()
 	{
 		var _object           = {};
 		_object["name"]       = this.name;
+		_object["nameLocale"] = this.nameLocale;
 		_object["guid"]       = this.guid;
+		_object["version"]    = this.version;
 		_object["baseUrl"]    = this.baseUrl;
+		_object["minVersion"] = this.minVersion;
+		_object["isConnector"] = this.isConnector;
+		_object["loader"]     = this.loader;
+
+		if (this.group)
+		{
+			_object["group"] = {};
+			_object["group"]["name"] = this.group.name;
+			_object["group"]["rank"] = this.group.rank;
+		}
+
 		_object["variations"] = [];
 		for (var i = 0; i < this.variations.length; i++)
 		{
@@ -5684,9 +7032,33 @@
 	CPlugin.prototype["deserialize"] = function(_object)
 	{
 		this.name       = (_object["name"] != null) ? _object["name"] : this.name;
+		this.nameLocale = (_object["nameLocale"] != null) ? _object["nameLocale"] : this.nameLocale;
 		this.guid       = (_object["guid"] != null) ? _object["guid"] : this.guid;
+		this.version    = (_object["version"] != null) ? _object["version"] : this.version;
 		this.baseUrl    = (_object["baseUrl"] != null) ? _object["baseUrl"] : this.baseUrl;
 		this.minVersion = (_object["minVersion"] != null) ? _object["minVersion"] : this.minVersion;
+		this.isConnector = (_object["isConnector"] != null) ? _object["isConnector"] : this.isConnector;
+		this.loader     = (_object["loader"] != null) ? _object["loader"] : this.loader;
+
+		if (true)
+		{
+			// удалим этот if, как передем на просто прокидку объекта в интерфейсе
+			if (_object["groupName"] || _object["groupRank"])
+				this.group = {};
+
+			if (_object["groupName"])
+				this.group.name = _object["groupName"];
+			if (_object["groupRank"])
+				this.group.rank = _object["groupRank"];
+		}
+
+		if (_object["group"])
+		{
+			this.group = {};
+			this.group.name = (_object["group"]["name"] != null) ? _object["group"]["name"] : "";
+			this.group.rank = (_object["group"]["rank"] != null) ? _object["group"]["rank"] : 0;
+		}
+
 		this.variations = [];
 		for (var i = 0; i < _object["variations"].length; i++)
 		{
@@ -5694,213 +7066,6 @@
 			_variation["deserialize"](_object["variations"][i]);
 			this.variations.push(_variation);
 		}
-	};
-
-
-	function CAutoCorrectOptions() 
-	{
-		this.SmartQuotes            = true;
-		this.HyphensWithDash        = true;
-		this.AutomaticBulletedLists = true;
-		this.AutomaticNumberedLists = true;
-		this.FrenchPunctuation      = true;
-		this.DoubleSpaceWithPeriod  = false;
-		this.FirstLetterOfSentences = true;
-		this.FirstLetterOfCells     = true;
-		this.Hyperlinks             = true;
-		this.FirstLetterExceptions  = {};
-		this.FirstLetterExcMaxLen   = 0;
-		this.InitDefaultFirstLetterAutoCorrectExceptions();
-	}
-	//getters
-	CAutoCorrectOptions.prototype.IsSmartQuotes  = function() 
-	{
-		return this.SmartQuotes;
-	};
-	CAutoCorrectOptions.prototype.IsHyphensWithDash = function() 
-	{
-		return this.HyphensWithDash;
-	};
-	CAutoCorrectOptions.prototype.IsAutomaticBulletedLists = function() 
-	{
-		return this.AutomaticBulletedLists;
-	};
-	CAutoCorrectOptions.prototype.IsAutomaticNumberedLists = function() 
-	{
-		return this.AutomaticNumberedLists;
-	};
-	CAutoCorrectOptions.prototype.IsFrenchPunctuation = function() 
-	{
-		return this.FrenchPunctuation;
-	};
-	CAutoCorrectOptions.prototype.IsDoubleSpaceWithPeriod = function() 
-	{
-		return this.DoubleSpaceWithPeriod;
-	};
-	CAutoCorrectOptions.prototype.IsFirstLetterOfSentences = function() 
-	{
-		return this.FirstLetterOfSentences;
-	};
-	CAutoCorrectOptions.prototype.IsFirstLetterOfCells = function() 
-	{
-		return this.FirstLetterOfCells;
-	};
-	CAutoCorrectOptions.prototype.IsHyperlinks = function() 
-	{
-		return this.Hyperlinks;
-	};
-	//setters
-	CAutoCorrectOptions.prototype.SetSmartQuotes  = function(bVal) 
-	{
-		this.SmartQuotes = bVal;
-	};
-	CAutoCorrectOptions.prototype.SetHyphensWithDash = function(bVal) 
-	{
-		this.HyphensWithDash = bVal;
-	};
-	CAutoCorrectOptions.prototype.SetAutomaticBulletedLists = function(bVal) 
-	{
-		this.AutomaticBulletedLists = bVal;
-	};
-	CAutoCorrectOptions.prototype.SetAutomaticNumberedLists = function(bVal) 
-	{
-		this.AutomaticNumberedLists = bVal;
-	};
-	CAutoCorrectOptions.prototype.SetFrenchPunctuation = function(bVal) 
-	{
-		this.FrenchPunctuation = bVal;
-	};
-	CAutoCorrectOptions.prototype.SetDoubleSpaceWithPeriod = function(bVal) 
-	{
-		this.DoubleSpaceWithPeriod = bVal;
-	};
-	CAutoCorrectOptions.prototype.SetFirstLetterOfSentences = function(bVal) 
-	{
-		this.FirstLetterOfSentences = bVal;
-	};
-	CAutoCorrectOptions.prototype.SetFirstLetterOfCells = function(bVal) 
-	{
-		this.FirstLetterOfCells = bVal;
-	};
-	CAutoCorrectOptions.prototype.SetHyperlinks = function(bVal) 
-	{
-		this.Hyperlinks = bVal;
-	};
-	CAutoCorrectOptions.prototype.SetFirstLetterAutoCorrectExceptions = function(arrExceptions)
-	{
-		this.FirstLetterExceptions = {};
-		var nMaxLen = 0;
-		for (var nIndex = 0, nCount = arrExceptions.length; nIndex < nCount; ++nIndex)
-		{
-			if (!arrExceptions[nIndex].length)
-				continue;
-
-			if (arrExceptions[nIndex].length > nMaxLen)
-				nMaxLen = arrExceptions[nIndex].length;
-
-			var nChar = arrExceptions[nIndex].charAt(0);
-
-			if (!this.FirstLetterExceptions[nChar])
-				this.FirstLetterExceptions[nChar] = [];
-
-			this.FirstLetterExceptions[nChar].push(arrExceptions[nIndex]);
-		}
-
-		this.FirstLetterExcMaxLen = nMaxLen;
-	};
-	CAutoCorrectOptions.prototype.InitDefaultFirstLetterAutoCorrectExceptions = function()
-	{
-		// Init default for Latin and Cyrillic
-		this.SetFirstLetterAutoCorrectExceptions([
-			"a", "abbr", "abs", "acct", "addn", "adj", "advt", "al", "alt", "amt", "anon", "approx", "appt", "apr", "apt", "assn", "assoc", "asst", "attn", "attrib", "aug", "aux", "ave", "avg",
-			"b", "bal", "bldg", "blvd", "bot", "bro", "bros",
-			"c", "ca", "calc", "cc", "cert", "certif", "cf", "cit", "cm", "co", "comp", "conf", "confed", "const", "cont", "contrib", "coop", "corp", "ct",
-			"d", "dbl", "dec", "decl", "def", "defn", "dept", "deriv", "diag", "diff", "div", "dm", "dr", "dup", "dupl",
-			"e", "encl", "eq", "eqn", "equip", "equiv", "esp", "esq", "est", "etc", "excl", "ext",
-			"f", "feb", "ff", "fig", "freq", "fri", "ft", "fwd",
-			"g", "gal", "gen", "gov", "govt",
-			"h", "hdqrs", "hgt", "hist", "hosp", "hq", "hr", "hrs", "ht", "hwy",
-			"i", "ib", "ibid", "illus", "in", "inc", "incl", "incr", "int", "intl", "irreg", "ital",
-			"j", "jan", "jct", "jr", "jul", "jun",
-			"k", "kg", "km", "kmh",
-			"l", "lang", "lb", "lbs", "lg", "lit", "ln", "lt",
-			"m", "mar", "masc", "max", "mfg", "mg", "mgmt", "mgr", "mgt", "mhz", "mi", "min", "misc", "mkt", "mktg", "ml", "mm", "mngr", "mon", "mph", "mr", "mrs", "msec", "msg", "mt", "mtg", "mtn", "mun",
-			"n", "na", "name", "nat", "natl", "ne", "neg", "ng", "no", "norm", "nos", "nov", "num", "nw",
-			"o", "obj", "occas", "oct", "op", "opt", "ord", "org", "orig", "oz",
-			"p", "pa", "pg", "pkg", "pl", "pls", "pos", "pp", "ppt", "pred", "pref", "prepd", "prev", "priv", "prof", "proj", "pseud", "psi", "pt", "publ",
-			"q", "qlty", "qt", "qty",
-			"r", "rd", "re", "rec", "ref", "reg", "rel", "rep", "req", "reqd", "resp", "rev",
-			"s", "sat", "sci", "se", "sec", "sect", "sep", "sept", "seq", "sig", "soln", "soph", "spec", "specif", "sq", "sr", "st", "sta", "stat", "std", "subj", "subst", "sun", "supvr", "sw",
-			"t", "tbs", "tbsp", "tech", "tel", "temp", "thur", "thurs", "tkt", "tot", "transf", "transl", "tsp", "tues",
-			"u", "univ", "util",
-			"v", "var", "veg", "vert", "viz", "vol", "vs",
-			"w", "wed", "wk", "wkly", "wt",
-			"x",
-			"y", "yd", "yr",
-			"z",
-
-			"а",
-			"б",
-			"вв",
-			"гг", "гл",
-			"д", "др",
-			"е", "ед",
-			"ё",
-			"ж",
-			"з",
-			"и",
-			"й",
-			"к", "кв", "кл", "коп", "куб",
-			"лл",
-			"м", "мл", "млн", "млрд",
-			"н", "наб", "нач",
-			"о", "обл", "обр", "ок",
-			"п", "пер", "пл", "пос", "пр",
-			"руб",
-			"сб", "св", "см", "соч", "ср", "ст", "стр",
-			"тт", "тыс",
-			"у",
-			"ф",
-			"х",
-			"ц",
-			"ш", "шт",
-			"щ",
-			"ъ",
-			"ы",
-			"ь",
-			"э", "экз",
-			"ю"]
-		);
-	};
-	CAutoCorrectOptions.prototype.GetFirstLetterAutoCorrectExceptions = function()
-	{
-		var arrResult = [];
-		for (var nChar in this.FirstLetterExceptions)
-		{
-			arrResult = arrResult.concat(this.FirstLetterExceptions[nChar]);
-		}
-		return arrResult;
-	};
-	CAutoCorrectOptions.prototype.CheckFirstLetterAutoCorrectException = function(sWord)
-	{
-		var _sWord = sWord.toLowerCase();
-
-		var nChar = _sWord.charAt(0);
-		if (!this.FirstLetterExceptions[nChar])
-			return false;
-
-		var arrExceptions = this.FirstLetterExceptions[nChar];
-		for (var nIndex = 0, nCount = arrExceptions.length; nIndex < nCount; ++nIndex)
-		{
-			if (_sWord === arrExceptions[nIndex])
-				return true;
-		}
-
-		return false;
-	};
-	CAutoCorrectOptions.prototype.GetFirstLetterAutoCorrectExceptionsMaxLen = function()
-	{ 
-		return this.FirstLetterExcMaxLen;
 	};
 	
     /*
@@ -5938,6 +7103,7 @@
 	prot['ConnectionsLive'] = prot.ConnectionsLive;
 	prot['UsersViewCount'] = prot.UsersViewCount;
 	prot['UsersViewCountOS'] = prot.UsersViewCountOS;
+	prot['NotBefore'] = prot.NotBefore;
 
 	window['Asc']['c_oRights'] = window['Asc'].c_oRights = c_oRights;
 	prot = c_oRights;
@@ -6055,6 +7221,7 @@
 	prot["getGridlines"] = prot.getGridlines;
 	prot["putNumFmt"] = prot.putNumFmt;
 	prot["getNumFmt"] = prot.getNumFmt;
+	prot["isRadarAxis"] = prot.isRadarAxis;
 
 	window["AscCommon"].asc_CatAxisSettings = asc_CatAxisSettings;
 	prot = asc_CatAxisSettings.prototype;
@@ -6097,6 +7264,7 @@
 	prot["getNumFmt"] = prot.getNumFmt;
 	prot["getAuto"] = prot.getAuto;
 	prot["putAuto"] = prot.putAuto;
+	prot["isRadarAxis"] = prot.isRadarAxis;
 
 	window["Asc"]["asc_ChartSettings"] = window["Asc"].asc_ChartSettings = asc_ChartSettings;
 	prot = asc_ChartSettings.prototype;
@@ -6171,6 +7339,10 @@
 	prot["getHorAxesProps"] = prot.getHorAxesProps;
 	prot["getVertAxesProps"] = prot.getVertAxesProps;
 	prot["getDepthAxesProps"] = prot.getDepthAxesProps;
+	prot["getView3d"] = prot.getView3d;
+	prot["putView3d"] = prot.putView3d;
+	prot["setView3d"] = prot.setView3d;
+
 
 	window["AscCommon"].asc_CRect = asc_CRect;
 	prot = asc_CRect.prototype;
@@ -6195,23 +7367,27 @@
 
 	window["Asc"]["asc_CColor"] = window["Asc"].asc_CColor = asc_CColor;
 	prot = asc_CColor.prototype;
-	prot["get_r"] = prot["asc_getR"] = prot.asc_getR;
-	prot["put_r"] = prot["asc_putR"] = prot.asc_putR;
-	prot["get_g"] = prot["asc_getG"] = prot.asc_getG;
-	prot["put_g"] = prot["asc_putG"] = prot.asc_putG;
-	prot["get_b"] = prot["asc_getB"] = prot.asc_getB;
-	prot["put_b"] = prot["asc_putB"] = prot.asc_putB;
-	prot["get_a"] = prot["asc_getA"] = prot.asc_getA;
-	prot["put_a"] = prot["asc_putA"] = prot.asc_putA;
-	prot["get_auto"] = prot["asc_getAuto"] = prot.asc_getAuto;
-	prot["put_auto"] = prot["asc_putAuto"] = prot.asc_putAuto;
-	prot["get_type"] = prot["asc_getType"] = prot.asc_getType;
-	prot["put_type"] = prot["asc_putType"] = prot.asc_putType;
-	prot["get_value"] = prot["asc_getValue"] = prot.asc_getValue;
-	prot["put_value"] = prot["asc_putValue"] = prot.asc_putValue;
-	prot["get_hex"] = prot["asc_getHex"] = prot.asc_getHex;
-	prot["get_color"] = prot["asc_getColor"] = prot.asc_getColor;
-	prot["get_hex"] = prot["asc_getHex"] = prot.asc_getHex;
+	prot["get_r"] = prot["asc_getR"] = prot.get_r = prot.asc_getR;
+	prot["put_r"] = prot["asc_putR"] = prot.put_r = prot.asc_putR;
+	prot["get_g"] = prot["asc_getG"] = prot.get_g = prot.asc_getG;
+	prot["put_g"] = prot["asc_putG"] = prot.put_g = prot.asc_putG;
+	prot["get_b"] = prot["asc_getB"] = prot.get_b = prot.asc_getB;
+	prot["put_b"] = prot["asc_putB"] = prot.put_b = prot.asc_putB;
+	prot["get_a"] = prot["asc_getA"] = prot.get_a = prot.asc_getA;
+	prot["put_a"] = prot["asc_putA"] = prot.put_a = prot.asc_putA;
+	prot["get_auto"] = prot["asc_getAuto"] = prot.get_auto = prot.asc_getAuto;
+	prot["put_auto"] = prot["asc_putAuto"] = prot.put_auto = prot.asc_putAuto;
+	prot["get_type"] = prot["asc_getType"] = prot.get_type = prot.asc_getType;
+	prot["put_type"] = prot["asc_putType"] = prot.put_type = prot.asc_putType;
+	prot["get_value"] = prot["asc_getValue"] = prot.get_value = prot.asc_getValue;
+	prot["put_value"] = prot["asc_putValue"] = prot.put_value = prot.asc_putValue;
+	prot["get_hex"] = prot["asc_getHex"] = prot.get_hex = prot.asc_getHex;
+	prot["get_color"] = prot["asc_getColor"] = prot.get_color = prot.asc_getColor;
+	prot["get_name"] = prot["asc_getName"] = prot.get_name = prot.asc_getName;
+	prot["get_effectValue"] = prot["asc_getEffectValue"] = prot.get_effectValue = prot.asc_getEffectValue;
+	prot["put_effectValue"] = prot["asc_putEffectValue"] = prot.put_effectValue = prot.asc_putEffectValue;
+	prot["get_nameInColorScheme"] = prot["asc_getNameInColorScheme"] = prot.get_nameInColorScheme = prot.asc_getNameInColorScheme;
+
 
 	window["Asc"]["asc_CTextBorder"] = window["Asc"].asc_CTextBorder = asc_CTextBorder;
 	prot = asc_CTextBorder.prototype;
@@ -6418,6 +7594,8 @@
 	prot["can_EditBlockContentControl"] = prot["asc_canEditBlockContentControl"] = prot.asc_canEditBlockContentControl;
 	prot["can_DeleteInlineContentControl"] = prot["asc_canDeleteInlineContentControl"] = prot.asc_canDeleteInlineContentControl;
 	prot["can_EditInlineContentControl"] = prot["asc_canEditInlineContentControl"] = prot.asc_canEditInlineContentControl;
+	prot["get_Ligatures"] = prot["asc_getLigatures"] = prot.asc_getLigatures;
+	prot["put_Ligatures"] = prot["asc_putLigatures"] = prot.asc_putLigatures;
 
 	window["AscCommon"].asc_CTexture = asc_CTexture;
 	prot = asc_CTexture.prototype;
@@ -6481,6 +7659,8 @@
 	prot["put_Title"] = prot["asc_putTitle"] = prot.asc_putTitle;
 	prot["get_Description"] = prot["asc_getDescription"] = prot.asc_getDescription;
 	prot["put_Description"] = prot["asc_putDescription"] = prot.asc_putDescription;
+	prot["get_Name"] = prot["asc_getName"] = prot.asc_getName;
+	prot["put_Name"] = prot["asc_putName"] = prot.asc_putName;
 	prot["get_ColumnNumber"] = prot["asc_getColumnNumber"] = prot.asc_getColumnNumber;
 	prot["put_ColumnNumber"] = prot["asc_putColumnNumber"] = prot.asc_putColumnNumber;
 	prot["get_ColumnSpace"] = prot["asc_getColumnSpace"] = prot.asc_getColumnSpace;
@@ -6515,8 +7695,9 @@
 	prot["put_ProtectionLocked"] = prot["asc_putProtectionLocked"] = prot.asc_putProtectionLocked;
 	prot["get_ProtectionPrint"] = prot["asc_getProtectionPrint"] = prot.asc_getProtectionPrint;
 	prot["put_ProtectionPrint"] = prot["asc_putProtectionPrint"] = prot.asc_putProtectionPrint;
-	prot["asc_getPosition"] = prot["asc_getPosition"] = prot.asc_getPosition;
-	prot["asc_putPosition"] = prot["asc_putPosition"] = prot.asc_putPosition;
+	prot["get_Position"] = prot["asc_getPosition"] = prot.asc_getPosition;
+	prot["put_Position"] = prot["asc_putPosition"] = prot.asc_putPosition;
+	prot["get_IsMotionPath"] = prot["asc_getIsMotionPath"] = prot.asc_getIsMotionPath;
 
 
 	window["Asc"]["asc_TextArtProperties"] = window["Asc"].asc_TextArtProperties = asc_TextArtProperties;
@@ -6640,6 +7821,8 @@
 	prot["put_Title"] = prot["asc_putTitle"] = prot.asc_putTitle;
 	prot["get_Description"] = prot["asc_getDescription"] = prot.asc_getDescription;
 	prot["put_Description"] = prot["asc_putDescription"] = prot.asc_putDescription;
+	prot["get_Name"] = prot["asc_getName"] = prot.asc_getName;
+	prot["put_Name"] = prot["asc_putName"] = prot.asc_putName;
 	prot["get_ColumnNumber"] = prot["asc_getColumnNumber"] = prot.asc_getColumnNumber;
 	prot["put_ColumnNumber"] = prot["asc_putColumnNumber"] = prot.asc_putColumnNumber;
 	prot["get_ColumnSpace"] = prot["asc_getColumnSpace"] = prot.asc_getColumnSpace;
@@ -6741,6 +7924,8 @@
 	prot["get_canChangeArrows"] = prot["asc_getCanChangeArrows"] = prot.asc_getCanChangeArrows;
 	prot["put_prstDash"] = prot["asc_putPrstDash"] = prot.asc_putPrstDash;
 	prot["get_prstDash"] = prot["asc_getPrstDash"] = prot.asc_getPrstDash;
+	prot["get_transparent"] = prot["asc_getTransparent"] = prot.asc_getTransparent;
+	prot["put_transparent"] = prot["asc_putTransparent"] = prot.asc_putTransparent;
 
 	window["AscCommon"].CAscColorScheme = CAscColorScheme;
 	prot = CAscColorScheme.prototype;
@@ -6760,6 +7945,8 @@
 	prot["get_FootnoteNumber"] = prot.get_FootnoteNumber;
 	prot["get_FormHelpText"] = prot.get_FormHelpText;
 	prot["get_ReviewChange"] = prot.get_ReviewChange;
+	prot["get_EyedropperColor"] = prot.get_EyedropperColor;
+	prot["get_PlaceholderType"] = prot.get_PlaceholderType;
 
 	window["Asc"]["asc_CUserInfo"] = window["Asc"].asc_CUserInfo = asc_CUserInfo;
 	prot = asc_CUserInfo.prototype;
@@ -6780,6 +7967,8 @@
 	prot["put_Id"] = prot["asc_putId"] = prot.asc_putId;
 	prot["get_Url"] = prot["asc_getUrl"] = prot.asc_getUrl;
 	prot["put_Url"] = prot["asc_putUrl"] = prot.asc_putUrl;
+	prot["get_DirectUrl"] = prot["asc_getDirectUrl"] = prot.asc_getDirectUrl;
+	prot["put_DirectUrl"] = prot["asc_putDirectUrl"] = prot.asc_putDirectUrl;
 	prot["get_Title"] = prot["asc_getTitle"] = prot.asc_getTitle;
 	prot["put_Title"] = prot["asc_putTitle"] = prot.asc_putTitle;
 	prot["get_Format"] = prot["asc_getFormat"] = prot.asc_getFormat;
@@ -6814,6 +8003,7 @@
     prot["put_IsEnabledMacroses"] = prot["asc_putIsEnabledMacroses"] = prot.asc_putIsEnabledMacroses;
 	prot["get_CoEditingMode"] = prot["asc_getCoEditingMode"] = prot.asc_getCoEditingMode;
 	prot["put_CoEditingMode"] = prot["asc_putCoEditingMode"] = prot.asc_putCoEditingMode;
+	prot["put_ReferenceData"] = prot["asc_putReferenceData"] = prot.asc_putReferenceData;
 
 	window["AscCommon"].COpenProgress = COpenProgress;
 	prot = COpenProgress.prototype;
@@ -6857,7 +8047,9 @@
     window["AscCommon"].CWatermarkOnDraw = CWatermarkOnDraw;
     window["AscCommon"].isFileBuild = isFileBuild;
     window["AscCommon"].checkCanvasInDiv = checkCanvasInDiv;
-    window["AscCommon"].CAutoCorrectOptions = CAutoCorrectOptions;
+    window["AscCommon"].isValidJs = isValidJs;
+    window["AscCommon"].asc_menu_ReadPaddings = asc_menu_ReadPaddings;
+    window["AscCommon"].asc_menu_ReadColor = asc_menu_ReadColor;
 
 	window["Asc"]["CPluginVariation"] = window["Asc"].CPluginVariation = CPluginVariation;
 	window["Asc"]["CPlugin"] = window["Asc"].CPlugin = CPlugin;

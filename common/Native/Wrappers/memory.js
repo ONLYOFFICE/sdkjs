@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -79,8 +79,6 @@ function FT_Memory()
     }
 }
 var g_memory = new FT_Memory();
-
-window["ftm"] = FT_Memory;
 
 function FT_Stream(data, size)
 {
@@ -702,16 +700,6 @@ window["fts"] = FT_Stream;
 window['AscFonts'].FT_Memory = FT_Memory;
 window['AscFonts'].FT_Stream = FT_Stream;
 window['AscFonts'].g_memory = g_memory;
-
-window['AscFonts'].CFontManager = function CFontManager() {
-    this.m_pFont = null;
-    this.m_oFontsCache = { Fonts : {} };
-    this.Initialize = function(){};
-    this.SetHintsProps = function(){};
-    this.LoadFont = function(){};
-    this.ClearRasterMemory = function(){};
-    this.ClearFontsRasterCache = function(){};
-};
 
 // FT_Common
 function _FT_Common() {

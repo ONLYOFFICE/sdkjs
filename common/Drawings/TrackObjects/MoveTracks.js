@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -80,7 +80,7 @@ function MoveShapeImageTrack(originalObject)
     {
         this.cropObject = this.originalObject.cropObject;
     }
-    this.overlayObject = new AscFormat.OverlayObject(originalObject.getGeom(), this.originalObject.extX, this.originalObject.extY, this.brush, this.pen, this.transform);
+    this.overlayObject = new AscFormat.OverlayObject(originalObject.getTrackGeometry(), this.originalObject.extX, this.originalObject.extY, this.brush, this.pen, this.transform);
 
     this.groupInvertMatrix = null;
     if(this.originalObject.group)
@@ -506,7 +506,7 @@ function MoveGroupTrack(originalObject)
         var gr_obj_transform_copy = arr_graphic_objects[i].transform.CreateDublicate();
         global_MatrixTransformer.MultiplyAppend(gr_obj_transform_copy, group_invert_transform);
         this.arrTransforms2[i] = gr_obj_transform_copy;
-        this.overlayObjects[i] = new AscFormat.OverlayObject(arr_graphic_objects[i].getGeom(), arr_graphic_objects[i].extX, arr_graphic_objects[i].extY,
+        this.overlayObjects[i] = new AscFormat.OverlayObject(arr_graphic_objects[i].getTrackGeometry(), arr_graphic_objects[i].extX, arr_graphic_objects[i].extY,
             arr_graphic_objects[i].brush,  arr_graphic_objects[i].pen, new CMatrix());
     }
 
@@ -749,10 +749,108 @@ function MoveChartObjectTrack(oObject, oChartSpace)
     };
 }
 
+
+    function CGuideTrack(oGuide) {
+	    this.guide = oGuide;
+	    this.x = 0;
+	    this.y = 0;
+    }
+    CGuideTrack.prototype.track = function(x, y)
+    {
+        this.bIsTracked = true;
+        let oPresentation = editor.WordControl.m_oLogicDocument;
+        this.x = Math.max(0, Math.min(x, oPresentation.GetWidthMM()));
+        this.y = Math.max(0, Math.min(y, oPresentation.GetHeightMM()));
+    };
+
+    CGuideTrack.prototype.draw = function(oAutoShapeTrack)
+    {
+        let oGraphics = oAutoShapeTrack.Graphics;
+        if(!oGraphics)
+        {
+            return;
+        }
+        let oWordControl = editor.WordControl;
+        let oDrawingDocument = oWordControl.m_oDrawingDocument;
+        let oPresentation = oWordControl.m_oLogicDocument;
+        let dZoom = oWordControl.m_nZoomValue / 100;
+        let dKoef_mm_to_pix = AscCommon.g_dKoef_mm_to_pix * dZoom;
+        // if(this.guide.isHorizontal()) {
+        //     let pos = oDrawingDocument.SlideCurrectRect.top + this.y * dKoef_mm_to_pix;
+        //     oOverlay.HorLine(pos, true);
+        // }
+        // else {
+        //     let pos = oDrawingDocument.SlideCurrectRect.left + this.x * dKoef_mm_to_pix;
+        //     oOverlay.VertLine(pos, true);
+        // }
+
+        let oOverlay = oAutoShapeTrack.m_oOverlay || oAutoShapeTrack;
+        if(oOverlay)
+        {
+            oOverlay.ClearAll = true;
+            oOverlay.CheckRect(0, 0, 5, 5);
+        }
+        oGraphics.SaveGrState();
+        oGraphics.SetIntegerGrid(true);
+        oGraphics.transform3(new AscCommon.CMatrix(), false);
+        let bOldVal = editor.isShowTableEmptyLineAttack;
+        editor.isShowTableEmptyLineAttack = true;
+        if(this.guide.isHorizontal()) {
+            oGraphics.DrawEmptyTableLine(0, this.y, oPresentation.GetWidthMM(), this.y);
+        }
+        else {
+            oGraphics.DrawEmptyTableLine(this.x, 0, this.x, oPresentation.GetHeightMM());
+        }
+        editor.isShowTableEmptyLineAttack = bOldVal;
+        oGraphics.RestoreGrState();
+    };
+	CGuideTrack.prototype.getPos = function () {
+		if(this.guide.isHorizontal()) {
+			return AscFormat.MmToGdPos(this.y);
+		}
+		else {
+			return AscFormat.MmToGdPos(this.x);
+		}
+	};
+    CGuideTrack.prototype.trackEnd = function()
+    {
+        if(!this.bIsTracked)
+        {
+            return;
+        }
+        History.Create_NewPoint(1);
+		this.guide.setPos(this.getPos());
+    };
+
+    CGuideTrack.prototype.getBounds = function ()
+    {
+        let oBoundsChecker = new  AscFormat.CSlideBoundsChecker();
+        let oPresentation = editor.WordControl.m_oLogicDocument;
+        let oBounds = oBoundsChecker.Bounds;
+        if(this.guide.isHorizontal()) {
+            oBounds.min_x = 0;
+            oBounds.max_x = oPresentation.GetWidthMM();
+            oBounds.min_y = this.y - 5;
+            oBounds.max_y = this.y + 5;
+        }
+        else {
+            oBounds.min_x = this.x - 5;
+            oBounds.max_x = this.x + 5;
+            oBounds.min_y = 0;
+            oBounds.max_y = oPresentation.GetHeightMM();
+        }
+        oBounds.posX = oBounds.min_x;
+        oBounds.posY = oBounds.min_y;
+        oBounds.extX = oBounds.max_x - oBounds.min_x;
+        oBounds.extY = oBounds.max_y - oBounds.min_y;
+        return oBounds;
+    };
+
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].MoveShapeImageTrack = MoveShapeImageTrack;
     window['AscFormat'].MoveGroupTrack = MoveGroupTrack;
     window['AscFormat'].MoveComment = MoveComment;
     window['AscFormat'].MoveChartObjectTrack = MoveChartObjectTrack;
+    window['AscFormat'].CGuideTrack = CGuideTrack;
 })(window);

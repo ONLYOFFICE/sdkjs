@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -32,1686 +32,6 @@
 
 var _internalStorage = {};
 
-function asc_menu_ReadColor(_params, _cursor) {
-    var _color = new Asc.asc_CColor();
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _color.type = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _color.r = _params[_cursor.pos++];
-                break;
-            }
-            case 2:
-            {
-                _color.g = _params[_cursor.pos++];
-                break;
-            }
-            case 3:
-            {
-                _color.b = _params[_cursor.pos++];
-                break;
-            }
-            case 4:
-            {
-                _color.a = _params[_cursor.pos++];
-                break;
-            }
-            case 5:
-            {
-                _color.Auto = _params[_cursor.pos++];
-                break;
-            }
-            case 6:
-            {
-                _color.value = _params[_cursor.pos++];
-                break;
-            }
-            case 7:
-            {
-                _color.ColorSchemeId = _params[_cursor.pos++];
-                break;
-            }
-            case 8:
-            {
-                var _count = _params[_cursor.pos++];
-                for (var i = 0; i < _count; i++)
-                {
-                    var _mod = new AscFormat.CColorMod();
-                    _mod.name = _params[_cursor.pos++];
-                    _mod.val = _params[_cursor.pos++];
-                    _color.Mods.push(_mod);
-                }
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-    return _color;
-}
-function asc_menu_WriteColor(_type, _color, _stream) {
-    if (!_color)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    if (_color.type !== undefined && _color.type !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_color.type);
-    }
-    if (_color.r !== undefined && _color.r !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteByte"](_color.r);
-    }
-    if (_color.g !== undefined && _color.g !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteByte"](_color.g);
-    }
-    if (_color.b !== undefined && _color.b !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteByte"](_color.b);
-    }
-    if (_color.a !== undefined && _color.a !== null)
-    {
-        _stream["WriteByte"](4);
-        _stream["WriteByte"](_color.a);
-    }
-    if (_color.Auto !== undefined && _color.Auto !== null)
-    {
-        _stream["WriteByte"](5);
-        _stream["WriteBool"](_color.Auto);
-    }
-    if (_color.value !== undefined && _color.value !== null)
-    {
-        _stream["WriteByte"](6);
-        _stream["WriteLong"](_color.value);
-    }
-    if (_color.ColorSchemeId !== undefined && _color.ColorSchemeId !== null)
-    {
-        _stream["WriteByte"](7);
-        _stream["WriteLong"](_color.ColorSchemeId);
-    }
-    if (_color.Mods !== undefined && _color.Mods !== null)
-    {
-        _stream["WriteByte"](8);
-        
-        var _len = _color.Mods.length;
-        _stream["WriteLong"](_len);
-        
-        for (var i = 0; i < _len; i++)
-        {
-            _stream["WriteString1"](_color.Mods[i].name);
-            _stream["WriteLong"](_color.Mods[i].val);
-        }
-    }
-    
-    _stream["WriteByte"](255);
-}
-
-// UNICOLOR
-function asc_menu_ReadUniColor(_params, _cursor) {
-    var _color = new AscFormat.CUniColor();
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _color.color = new AscFormat.CPrstColor();
-                _color.color.type = _params[_cursor.pos++];
-                _color.color.id = _params[_cursor.pos++];
-                _color.color.RGBA = {
-                    R: _params[_cursor.pos++],
-                    G: _params[_cursor.pos++],
-                    B: _params[_cursor.pos++],
-                    A: _params[_cursor.pos++],
-                    needRecalc: _params[_cursor.pos++]
-                };
-                break;
-            }
-            case 1:
-            {
-                var _count = _params[_cursor.pos++];
-                for (var i = 0; i < _count; i++)
-                {
-                    var _mod = new AscFormat.CColorMod();
-                    _mod.name = _params[_cursor.pos++];
-                    _mod.val = _params[_cursor.pos++];
-                    _color.Mods.push(_mod);
-                }
-                break;
-            }
-            case 2:
-            {
-                _color.RGBA = {
-                    R: _params[_cursor.pos++],
-                    G: _params[_cursor.pos++],
-                    B: _params[_cursor.pos++],
-                    A: _params[_cursor.pos++]
-                }
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-    return _color;
-}
-
-function asc_menu_WriteUniColor(_type, _color, _stream) {
-    if (!_color)
-        return;
-
-    _stream["WriteByte"](_type);
-
-    if (_color.color !== undefined && _color.color !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_color.color.type);
-        _stream["WriteStringA"](_color.color.id);
-        _stream["WriteByte"](_color.color.RGBA.R);
-        _stream["WriteByte"](_color.color.RGBA.G);
-        _stream["WriteByte"](_color.color.RGBA.B);
-        _stream["WriteByte"](_color.color.RGBA.A);
-        _stream["WriteBool"](_color.color.RGBA.needRecalc);
-    }
-    if (_color.Mods !== undefined && _color.Mods !== null)
-    {
-        _stream["WriteByte"](1);
-
-        var _len = _color.Mods.length;
-        _stream["WriteLong"](_len);
-
-        for (var i = 0; i < _len; i++)
-        {
-            _stream["WriteStringA"](_color.Mods[i].name);
-            _stream["WriteLong"](_color.Mods[i].val);
-        }
-    }
-    if (_color.RGBA !== undefined && _color.RGBA !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteByte"](_color.RGBA.R);
-        _stream["WriteByte"](_color.RGBA.G);
-        _stream["WriteByte"](_color.RGBA.B);
-        _stream["WriteByte"](_color.RGBA.A);
-    }
-
-    _stream["WriteByte"](255);
-}
-
-function asc_menu_WriteMath(oMath, s){
-    s["WriteLong"](oMath.Type);
-    s["WriteLong"](oMath.Action);
-    s["WriteBool"](oMath.CanIncreaseArgumentSize);
-    s["WriteBool"](oMath.CanDecreaseArgumentSize);
-    s["WriteBool"](oMath.CanInsertForcedBreak);
-    s["WriteBool"](oMath.CanDeleteForcedBreak);
-    s["WriteBool"](oMath.CanAlignToCharacter);
-}
-
-function asc_menu_ReadFontFamily(_params, _cursor){
-    var _fontfamily = { Name : undefined, Index : -1 };
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _fontfamily.Name = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _fontfamily.Index = _params[_cursor.pos++];
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-    return _fontfamily;
-}
-function asc_menu_WriteFontFamily(_type, _family, _stream) {
-    if (!_family)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    if (_family.Name !== undefined && _family.Name !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteString2"](_family.Name);
-    }
-    if (_family.Index !== undefined && _family.Index !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteLong"](_family.Index);
-    }
-    
-    _stream["WriteByte"](255);
-}
-function asc_menu_ReadAscFill_solid(_params, _cursor){
-    var _fill = new Asc.asc_CFillSolid();
-    
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _fill.color = asc_menu_ReadColor(_params, _cursor);
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-    
-    return _fill;
-}
-function asc_menu_WriteAscFill_solid(_type, _fill, _stream){
-    if (!_fill)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    asc_menu_WriteColor(0, _fill.color, _stream);
-    
-    _stream["WriteByte"](255);
-}
-function asc_menu_ReadAscFill_patt(_params, _cursor){
-    var _fill = new Asc.asc_CFillHatch();
-    
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _fill.PatternType = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _fill.bgClr = asc_menu_ReadColor(_params, _cursor);
-                break;
-            }
-            case 2:
-            {
-                _fill.fgClr = asc_menu_ReadColor(_params, _cursor);
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-    
-    return _fill;
-}
-function asc_menu_WriteAscFill_patt(_type, _fill, _stream){
-    if (!_fill)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    if (_fill.PatternType !== undefined && _fill.PatternType !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_fill.PatternType);
-    }
-    
-    asc_menu_WriteColor(1, _fill.bgClr, _stream);
-    asc_menu_WriteColor(2, _fill.fgClr, _stream);
-    
-    _stream["WriteByte"](255);
-}
-function asc_menu_ReadAscFill_grad(_params, _cursor){
-    var _fill = new Asc.asc_CFillGrad();
-    
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _fill.GradType = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _fill.LinearAngle = _params[_cursor.pos++];
-                break;
-            }
-            case 2:
-            {
-                _fill.LinearScale = _params[_cursor.pos++];
-                break;
-            }
-            case 3:
-            {
-                _fill.PathType = _params[_cursor.pos++];
-                break;
-            }
-            case 4:
-            {
-                var _count = _params[_cursor.pos++];
-                
-                if (_count > 0)
-                {
-                    _fill.Colors = [];
-                    _fill.Positions = [];
-                }
-                for (var i = 0; i < _count; i++)
-                {
-                    _fill.Colors[i] = null;
-                    _fill.Positions[i] = null;
-                    
-                    var _continue2 = true;
-                    while (_continue2)
-                    {
-                        var _attr2 = _params[_cursor.pos++];
-                        switch (_attr2)
-                        {
-                            case 0:
-                            {
-                                _fill.Colors[i] = asc_menu_ReadColor(_params, _cursor);
-                                break;
-                            }
-                            case 1:
-                            {
-                                _fill.Positions[i] = _params[_cursor.pos++];
-                                break;
-                            }
-                            case 255:
-                            default:
-                            {
-                                _continue2 = false;
-                                break;
-                            }
-                        }
-                    }
-                }
-                _cursor.pos++;
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-    
-    return _fill;
-}
-function asc_menu_WriteAscFill_grad(_type, _fill, _stream){
-    if (!_fill)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    if (_fill.GradType !== undefined && _fill.GradType !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_fill.GradType);
-    }
-    
-    if (_fill.LinearAngle !== undefined && _fill.LinearAngle !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteDouble2"](_fill.LinearAngle);
-    }
-    
-    if (_fill.LinearScale !== undefined && _fill.LinearScale !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteBool"](_fill.LinearScale);
-    }
-    
-    if (_fill.PathType !== undefined && _fill.PathType !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteLong"](_fill.PathType);
-    }
-    
-    if (_fill.Colors !== null && _fill.Colors !== undefined && _fill.Positions !== null && _fill.Positions !== undefined)
-    {
-        if (_fill.Colors.length == _fill.Positions.length)
-        {
-            var _count = _fill.Colors.length;
-            _stream["WriteByte"](4);
-            _stream["WriteLong"](_count);
-            
-            for (var i = 0; i < _count; i++)
-            {
-                asc_menu_WriteColor(0, _fill.Colors[i], _stream);
-                
-                if (_fill.Positions[i] !== undefined && _fill.Positions[i] !== null)
-                {
-                    _stream["WriteByte"](1);
-                    _stream["WriteLong"](_fill.Positions[i]);
-                }
-                
-                _stream["WriteByte"](255);
-            }
-        }
-    }
-    
-    _stream["WriteByte"](255);
-}
-function asc_menu_ReadAscFill_blip(_params, _cursor){
-    var _fill = new Asc.asc_CFillBlip();
-    
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _fill.type = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _fill.url = _params[_cursor.pos++];
-                break;
-            }
-            case 2:
-            {
-                _fill.texture_id = _params[_cursor.pos++];
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-    
-    return _fill;
-}
-function asc_menu_WriteAscFill_blip(_type, _fill, _stream){
-    if (!_fill)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    if (_fill.type !== undefined && _fill.type !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_fill.type);
-    }
-    
-    if (_fill.url !== undefined && _fill.url !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteString2"](_fill.url);
-    }
-    
-    if (_fill.texture_id !== undefined && _fill.texture_id !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteLong"](_fill.texture_id);
-    }
-    
-    _stream["WriteByte"](255);
-}
-function asc_menu_ReadAscFill(_params, _cursor){
-    var _fill = new Asc.asc_CShapeFill();
-    
-    //_fill.type = c_oAscFill.FILL_TYPE_NOFILL;
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _fill.type = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                switch (_fill.type)
-                {
-                    case Asc.c_oAscFill.FILL_TYPE_SOLID:
-                    {
-                        _fill.fill = asc_menu_ReadAscFill_solid(_params, _cursor);
-                        break;
-                    }
-                    case Asc.c_oAscFill.FILL_TYPE_PATT:
-                    {
-                        _fill.fill = asc_menu_ReadAscFill_patt(_params, _cursor);
-                        break;
-                    }
-                    case Asc.c_oAscFill.FILL_TYPE_GRAD:
-                    {
-                        _fill.fill = asc_menu_ReadAscFill_grad(_params, _cursor);
-                        break;
-                    }
-                    case Asc.c_oAscFill.FILL_TYPE_BLIP:
-                    {
-                        _fill.fill = asc_menu_ReadAscFill_blip(_params, _cursor);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                break;
-            }
-            case 2:
-            {
-                _fill.transparent = _params[_cursor.pos++];
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-    
-    return _fill;
-    
-}
-function asc_menu_WriteAscFill(_type, _fill, _stream){
-    if (!_fill)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    if (_fill.type !== undefined && _fill.type !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_fill.type);
-    }
-    
-    if (_fill.fill !== undefined && _fill.fill !== null)
-    {
-        switch (_fill.type)
-        {
-            case Asc.c_oAscFill.FILL_TYPE_SOLID:
-            {
-                _fill.fill = asc_menu_WriteAscFill_solid(1, _fill.fill, _stream);
-                break;
-            }
-            case Asc.c_oAscFill.FILL_TYPE_PATT:
-            {
-                _fill.fill = asc_menu_WriteAscFill_patt(1, _fill.fill, _stream);
-                break;
-            }
-            case Asc.c_oAscFill.FILL_TYPE_GRAD:
-            {
-                _fill.fill = asc_menu_WriteAscFill_grad(1, _fill.fill, _stream);
-                break;
-            }
-            case Asc.c_oAscFill.FILL_TYPE_BLIP:
-            {
-                _fill.fill = asc_menu_WriteAscFill_blip(1, _fill.fill, _stream);
-                break;
-            }
-            default:
-                break;
-        }
-    }
-    
-    if (_fill.transparent !== undefined && _fill.transparent !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteLong"](_fill.transparent);
-    }
-    
-    _stream["WriteByte"](255);
-}
-function asc_menu_ReadAscStroke(_params, _cursor){
-    var _stroke = new Asc.asc_CStroke();
-    
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _stroke.type = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _stroke.width = _params[_cursor.pos++];
-                break;
-            }
-            case 2:
-            {
-                _stroke.color = asc_menu_ReadColor(_params, _cursor);
-                break;
-            }
-            case 3:
-            {
-                _stroke.LineJoin = _params[_cursor.pos++];
-                break;
-            }
-            case 4:
-            {
-                _stroke.LineCap = _params[_cursor.pos++];
-                break;
-            }
-            case 5:
-            {
-                _stroke.LineBeginStyle = _params[_cursor.pos++];
-                break;
-            }
-            case 6:
-            {
-                _stroke.LineBeginSize = _params[_cursor.pos++];
-                break;
-            }
-            case 7:
-            {
-                _stroke.LineEndStyle = _params[_cursor.pos++];
-                break;
-            }
-            case 8:
-            {
-                _stroke.LineEndSize = _params[_cursor.pos++];
-                break;
-            }
-            case 9:
-            {
-                _stroke.canChangeArrows = _params[_cursor.pos++];
-                break;
-            }
-            case 10:
-            {
-                _stroke.prstDash = _params[_cursor.pos++];
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-    
-    return _stroke;
-}
-function asc_menu_WriteAscStroke(_type, _stroke, _stream){
-    if (!_stroke)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    if (_stroke.type !== undefined && _stroke.type !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_stroke.type);
-    }
-    if (_stroke.width !== undefined && _stroke.width !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteDouble2"](_stroke.width);
-    }
-    
-    asc_menu_WriteColor(2, _stroke.color, _stream);
-    
-    if (_stroke.LineJoin !== undefined && _stroke.LineJoin !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteByte"](_stroke.LineJoin);
-    }
-    if (_stroke.LineCap !== undefined && _stroke.LineCap !== null)
-    {
-        _stream["WriteByte"](4);
-        _stream["WriteByte"](_stroke.LineCap);
-    }
-    if (_stroke.LineBeginStyle !== undefined && _stroke.LineBeginStyle !== null)
-    {
-        _stream["WriteByte"](5);
-        _stream["WriteByte"](_stroke.LineBeginStyle);
-    }
-    if (_stroke.LineBeginSize !== undefined && _stroke.LineBeginSize !== null)
-    {
-        _stream["WriteByte"](6);
-        _stream["WriteByte"](_stroke.LineBeginSize);
-    }
-    if (_stroke.LineEndStyle !== undefined && _stroke.LineEndStyle !== null)
-    {
-        _stream["WriteByte"](7);
-        _stream["WriteByte"](_stroke.LineEndStyle);
-    }
-    if (_stroke.LineEndSize !== undefined && _stroke.LineEndSize !== null)
-    {
-        _stream["WriteByte"](8);
-        _stream["WriteByte"](_stroke.LineEndSize);
-    }
-    
-    if (_stroke.canChangeArrows !== undefined && _stroke.canChangeArrows !== null)
-    {
-        _stream["WriteByte"](9);
-        _stream["WriteBool"](_stroke.canChangeArrows);
-    }
-    if (_stroke.prstDash !== undefined && _stroke.prstDash !== null)
-    {
-        _stream["WriteByte"](10);
-        _stream["WriteLong"](_stroke.prstDash);
-    }
-    
-    _stream["WriteByte"](255);
-}
-
-function asc_menu_ReadAscShadow(_params, _cursor) {
-    var _shadow = new Asc.asc_CShadowProperty();
-
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-
-        switch (_attr)
-        {
-            case 0:
-            {
-                _shadow.color = asc_menu_ReadUniColor(_params, _cursor);
-                break;
-            }
-            case 1:
-            {
-                _shadow.algn = _params[_cursor.pos++];
-                break;
-            }
-            case 2:
-            {
-                _shadow.blurRad = _params[_cursor.pos++];
-                break;
-            }
-            case 3:
-            {
-                _shadow.dir = _params[_cursor.pos++];
-                break;
-            }
-            case 4:
-            {
-                _shadow.dist = _params[_cursor.pos++];
-                break;
-            }
-            case 5:
-            {
-                _shadow.rotWithShape = _params[_cursor.pos++];
-                break;
-            }
-            case 6:
-            {
-                if (!_params[_cursor.pos++]) {
-                    return null;
-                }
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-
-    return _shadow;
-}
-
-function asc_menu_WriteAscShadow(_type, _shadow, _stream) {
-    if (!_shadow)
-        return;
-
-    _stream["WriteByte"](_type);
-
-    asc_menu_WriteUniColor(0, _shadow.color, _stream);
-
-    if (_shadow.algn !== undefined && _shadow.algn !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteLong"](_shadow.algn);
-    }
-    if (_shadow.blurRad !== undefined && _shadow.blurRad !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteLong"](_shadow.blurRad);
-    }
-    if (_shadow.dir !== undefined && _shadow.dir !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteLong"](_shadow.dir);
-    }
-    if (_shadow.dist !== undefined && _shadow.dist !== null)
-    {
-        _stream["WriteByte"](4);
-        _stream["WriteLong"](_shadow.dist);
-    }
-    if (_shadow.rotWithShape !== undefined && _shadow.rotWithShape !== null)
-    {
-        _stream["WriteByte"](5);
-        _stream["WriteBool"](_shadow.dist);
-    }
-    _stream["WriteByte"](6);
-    _stream["WriteBool"](true);
-
-    _stream["WriteByte"](255);
-}
-
-function asc_menu_ReadPaddings(_params, _cursor){
-    var _paddings = new Asc.asc_CPaddings();
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _paddings.Left = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _paddings.Top = _params[_cursor.pos++];
-                break;
-            }
-            case 2:
-            {
-                _paddings.Right = _params[_cursor.pos++];
-                break;
-            }
-            case 3:
-            {
-                _paddings.Bottom = _params[_cursor.pos++];
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-    return _paddings;
-}
-function asc_menu_WritePaddings(_type, _paddings, _stream){
-    if (!_paddings)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    if (_paddings.Left !== undefined && _paddings.Left !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteDouble2"](_paddings.Left);
-    }
-    if (_paddings.Top !== undefined && _paddings.Top !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteDouble2"](_paddings.Top);
-    }
-    if (_paddings.Right !== undefined && _paddings.Right !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteDouble2"](_paddings.Right);
-    }
-    if (_paddings.Bottom !== undefined && _paddings.Bottom !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteDouble2"](_paddings.Bottom);
-    }
-    
-    _stream["WriteByte"](255);
-}
-function asc_menu_ReadPosition(_params, _cursor){
-    var _position = new Asc.CPosition();
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _position.X = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _position.Y = _params[_cursor.pos++];
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-    return _position;
-}
-function asc_menu_WritePosition(_type, _position, _stream){
-    if (!_position)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    if (_position.X !== undefined && _position.X !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteDouble2"](_position.X);
-    }
-    if (_position.Y !== undefined && _position.Y !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteDouble2"](_position.Y);
-    }
-    
-    _stream["WriteByte"](255);
-}
-function asc_menu_ReadImagePosition(_params, _cursor){
-    var _position = new Asc.CPosition();
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _position.RelativeFrom = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _position.UseAlign = _params[_cursor.pos++];
-                break;
-            }
-            case 2:
-            {
-                _position.Align = _params[_cursor.pos++];
-                break;
-            }
-            case 3:
-            {
-                _position.Value = _params[_cursor.pos++];
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-    return _position;
-}
-function asc_menu_WriteImagePosition(_type, _position, _stream){
-    if (!_position)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    if (_position.RelativeFrom !== undefined && _position.RelativeFrom !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_position.RelativeFrom);
-    }
-    if (_position.UseAlign !== undefined && _position.UseAlign !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteBool"](_position.UseAlign);
-    }
-    if (_position.Align !== undefined && _position.Align !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteLong"](_position.Align);
-    }
-    if (_position.Value !== undefined && _position.Value !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteLong"](_position.Value);
-    }
-    
-    _stream["WriteByte"](255);
-}
-function asc_menu_ReadChartPr(_params, _cursor){
-    var _settings = new Asc.asc_ChartSettings();
-    _settings.read(_params, _cursor);
-    return _settings;
-}
-function asc_menu_WriteChartPr(_type, _chartPr, _stream){
-    if (!_chartPr)
-        return;
-    _chartPr.write(_type, _stream);
-}
-function asc_menu_ReadShapePr(_params, _cursor){
-    var _settings = new Asc.asc_CShapeProperty();
-    
-    var _continue = true;
-    while (_continue)
-    {
-        var _attr = _params[_cursor.pos++];
-        switch (_attr)
-        {
-            case 0:
-            {
-                _settings.type = _params[_cursor.pos++];
-                break;
-            }
-            case 1:
-            {
-                _settings.fill = asc_menu_ReadAscFill(_params, _cursor);
-                break;
-            }
-            case 2:
-            {
-                _settings.stroke = asc_menu_ReadAscStroke(_params, _cursor);
-                break;
-            }
-            case 3:
-            {
-                _settings.paddings = asc_menu_ReadPaddings(_params, _cursor);
-                break;
-            }
-            case 4:
-            {
-                _settings.canFill = _params[_cursor.pos++];
-                break;
-            }
-            case 5:
-            {
-                _settings.bFromChart = _params[_cursor.pos++];
-                break;
-            }
-            case 6:
-            {
-                _settings.InsertPageNum = _params[_cursor.pos++];
-                break;
-            }
-            case 7:
-            {
-                _settings.bFromGroup = _params[_cursor.pos++];
-                break;
-            }
-            case 8:
-            {
-                _settings.shadow = asc_menu_ReadAscShadow(_params, _cursor);
-                break;
-            }
-            case 255:
-            default:
-            {
-                _continue = false;
-                break;
-            }
-        }
-    }
-    
-    return _settings;
-}
-function asc_menu_WriteShapePr(_type, _shapePr, _stream){
-    if (!_shapePr)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    if (_shapePr.type !== undefined && _shapePr.type !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteString2"](_shapePr.type);
-    }
-    
-    asc_menu_WriteAscFill(1, _shapePr.fill, _stream);
-    asc_menu_WriteAscStroke(2, _shapePr.stroke, _stream);
-    asc_menu_WritePaddings(3, _shapePr.paddings, _stream);
-    
-    if (_shapePr.canFill !== undefined && _shapePr.canFill !== null)
-    {
-        _stream["WriteByte"](4);
-        _stream["WriteBool"](_shapePr.canFill);
-    }
-    if (_shapePr.bFromChart !== undefined && _shapePr.bFromChart !== null)
-    {
-        _stream["WriteByte"](5);
-        _stream["WriteBool"](_shapePr.bFromChart);
-    }
-    //6-InsertPageNum
-    if (_shapePr.bFromGroup !== undefined && _shapePr.bFromGroup !== null)
-    {
-        _stream["WriteByte"](7);
-        _stream["WriteBool"](_shapePr.bFromGroup);
-    }
-    if (_shapePr.shadow !== undefined && _shapePr.shadow !== null)
-    {
-        asc_menu_WriteAscShadow(8, _shapePr.shadow, _stream);
-    }
-
-    _stream["WriteByte"](255);
-}
-
-function asc_menu_WriteImagePr(_imagePr, _stream){
-    if (_imagePr.CanBeFlow !== undefined && _imagePr.CanBeFlow !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteBool"](_imagePr.CanBeFlow);
-    }
-    if (_imagePr.Width !== undefined && _imagePr.Width !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteDouble2"](_imagePr.Width);
-    }
-    if (_imagePr.Height !== undefined && _imagePr.Height !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteDouble2"](_imagePr.Height);
-    }
-    if (_imagePr.WrappingStyle !== undefined && _imagePr.WrappingStyle !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteLong"](_imagePr.WrappingStyle);
-    }
-    
-    asc_menu_WritePaddings(4, _imagePr.Paddings, _stream);
-    asc_menu_WritePosition(5, _imagePr.Position, _stream);
-    
-    if (_imagePr.AllowOverlap !== undefined && _imagePr.AllowOverlap !== null)
-    {
-        _stream["WriteByte"](6);
-        _stream["WriteBool"](_imagePr.AllowOverlap);
-    }
-    
-    asc_menu_WriteImagePosition(7, _imagePr.PositionH, _stream);
-    asc_menu_WriteImagePosition(8, _imagePr.PositionV, _stream);
-    
-    if (_imagePr.Internal_Position !== undefined && _imagePr.Internal_Position !== null)
-    {
-        _stream["WriteByte"](9);
-        _stream["WriteLong"](_imagePr.Internal_Position);
-    }
-    
-    if (_imagePr.ImageUrl !== undefined && _imagePr.ImageUrl !== null)
-    {
-        _stream["WriteByte"](10);
-        _stream["WriteString2"](_imagePr.ImageUrl);
-    }
-    
-    if (_imagePr.Locked !== undefined && _imagePr.Locked !== null)
-    {
-        _stream["WriteByte"](11);
-        _stream["WriteBool"](_imagePr.Locked);
-    }
-    
-    asc_menu_WriteChartPr(12, _imagePr.ChartProperties, _stream);
-    asc_menu_WriteShapePr(13, _imagePr.ShapeProperties, _stream);
-    
-    if (_imagePr.ChangeLevel !== undefined && _imagePr.ChangeLevel !== null)
-    {
-        _stream["WriteByte"](14);
-        _stream["WriteLong"](_imagePr.ChangeLevel);
-    }
-    
-    if (_imagePr.Group !== undefined && _imagePr.Group !== null)
-    {
-        _stream["WriteByte"](15);
-        _stream["WriteLong"](_imagePr.Group);
-    }
-    
-    if (_imagePr.fromGroup !== undefined && _imagePr.fromGroup !== null)
-    {
-        _stream["WriteByte"](16);
-        _stream["WriteBool"](_imagePr.fromGroup);
-    }
-    if (_imagePr.severalCharts !== undefined && _imagePr.severalCharts !== null)
-    {
-        _stream["WriteByte"](17);
-        _stream["WriteBool"](_imagePr.severalCharts);
-    }
-    
-    if (_imagePr.severalChartTypes !== undefined && _imagePr.severalChartTypes !== null)
-    {
-        _stream["WriteByte"](18);
-        _stream["WriteLong"](_imagePr.severalChartTypes);
-    }
-    if (_imagePr.severalChartStyles !== undefined && _imagePr.severalChartStyles !== null)
-    {
-        _stream["WriteByte"](19);
-        _stream["WriteLong"](_imagePr.severalChartStyles);
-    }
-    if (_imagePr.verticalTextAlign !== undefined && _imagePr.verticalTextAlign !== null)
-    {
-        _stream["WriteByte"](20);
-        _stream["WriteLong"](_imagePr.verticalTextAlign);
-    }
-    
-    _stream["WriteByte"](255);
-}
-
-function asc_menu_WriteParaInd(_type, _ind, _stream){
-    if (!_ind)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    if (_ind.Left !== undefined && _ind.Left !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteDouble2"](_ind.Left);
-    }
-    if (_ind.Right !== undefined && _ind.Right !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteDouble2"](_ind.Right);
-    }
-    if (_ind.FirstLine !== undefined && _ind.FirstLine !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteDouble2"](_ind.FirstLine);
-    }
-    
-    _stream["WriteByte"](255);
-}
-function asc_menu_WriteParaSpacing(_type, _spacing, _stream){
-    if (!_spacing)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    if (_spacing.Line !== undefined && _spacing.Line !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteDouble2"](_spacing.Line);
-    }
-    if (_spacing.LineRule !== undefined && _spacing.LineRule !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteLong"](_spacing.LineRule);
-    }
-    if (_spacing.Before !== undefined && _spacing.Before !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteDouble2"](_spacing.Before);
-    }
-    if (_spacing.BeforeAutoSpacing !== undefined && _spacing.BeforeAutoSpacing !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteBool"](_spacing.BeforeAutoSpacing);
-    }
-    if (_spacing.After !== undefined && _spacing.After !== null)
-    {
-        _stream["WriteByte"](4);
-        _stream["WriteDouble2"](_spacing.After);
-    }
-    if (_spacing.AfterAutoSpacing !== undefined && _spacing.AfterAutoSpacing !== null)
-    {
-        _stream["WriteByte"](5);
-        _stream["WriteBool"](_spacing.AfterAutoSpacing);
-    }
-    
-    _stream["WriteByte"](255);
-}
-function asc_menu_WriteParaBorder(_type, _border, _stream){
-    if (!_border)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    asc_menu_WriteColor(0, _border.Color, _stream);
-    
-    if (_border.Size !== undefined && _border.Size !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteDouble2"](_border.Size);
-    }
-    if (_border.Value !== undefined && _border.Value !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteLong"](_border.Value);
-    }
-    if (_border.Space !== undefined && _border.Space !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteDouble2"](_border.Space);
-    }
-    
-    _stream["WriteByte"](255);
-}
-function asc_menu_WriteParaBorders(_type, _borders, _stream){
-    if (!_borders)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    asc_menu_WriteParaBorder(0, _borders.Left, _stream);
-    asc_menu_WriteParaBorder(1, _borders.Top, _stream);
-    asc_menu_WriteParaBorder(2, _borders.Right, _stream);
-    asc_menu_WriteParaBorder(3, _borders.Bottom, _stream);
-    asc_menu_WriteParaBorder(4, _borders.Between, _stream);
-    
-    _stream["WriteByte"](255);
-}
-function asc_menu_WriteParaShd(_type, _shd, _stream){
-    if (!_shd)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    if (_shd.Value !== undefined && _shd.Value !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_shd.Value);
-    }
-    
-    asc_menu_WriteColor(1, _shd.Color, _stream);
-    
-    _stream["WriteByte"](255);
-}
-function asc_menu_WriteParaTabs(_type, _tabs, _stream){
-    if (!_tabs)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    var _len = _tabs.Tabs.length;
-    _stream["WriteLong"](_len);
-    
-    for (var i = 0; i < _len; i++)
-    {
-        if (_tabs.Tabs[i].Pos !== undefined && _tabs.Tabs[i].Pos !== null)
-        {
-            _stream["WriteByte"](0);
-            _stream["WriteDouble2"](_tabs.Tabs[i].Pos);
-        }
-        if (_tabs.Tabs[i].Value !== undefined && _tabs.Tabs[i].Value !== null)
-        {
-            _stream["WriteByte"](1);
-            _stream["WriteLong"](_tabs.Tabs[i].Value);
-        }
-        _stream["WriteByte"](255);
-    }
-}
-function asc_menu_WriteParaFrame(_type, _frame, _stream){
-    if (!_frame)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    if (_frame.FromDropCapMenu !== undefined && _frame.FromDropCapMenu !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteBool"](_frame.FromDropCapMenu);
-    }
-    if (_frame.DropCap !== undefined && _frame.DropCap !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteLong"](_frame.DropCap);
-    }
-    if (_frame.W !== undefined && _frame.W !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteDouble2"](_frame.W);
-    }
-    if (_frame.H !== undefined && _frame.H !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteDouble2"](_frame.H);
-    }
-    if (_frame.HAlign !== undefined && _frame.HAlign !== null)
-    {
-        _stream["WriteByte"](4);
-        _stream["WriteLong"](_frame.HAlign);
-    }
-    if (_frame.HRule !== undefined && _frame.HRule !== null)
-    {
-        _stream["WriteByte"](5);
-        _stream["WriteLong"](_frame.HRule);
-    }
-    if (_frame.HSpace !== undefined && _frame.HSpace !== null)
-    {
-        _stream["WriteByte"](6);
-        _stream["WriteDouble2"](_frame.HSpace);
-    }
-    if (_frame.VAnchor !== undefined && _frame.VAnchor !== null)
-    {
-        _stream["WriteByte"](7);
-        _stream["WriteLong"](_frame.VAnchor);
-    }
-    if (_frame.VSpace !== undefined && _frame.VSpace !== null)
-    {
-        _stream["WriteByte"](8);
-        _stream["WriteDouble2"](_frame.VSpace);
-    }
-    if (_frame.X !== undefined && _frame.X !== null)
-    {
-        _stream["WriteByte"](9);
-        _stream["WriteDouble2"](_frame.X);
-    }
-    if (_frame.Y !== undefined && _frame.Y !== null)
-    {
-        _stream["WriteByte"](10);
-        _stream["WriteDouble2"](_frame.Y);
-    }
-    if (_frame.XAlign !== undefined && _frame.XAlign !== null)
-    {
-        _stream["WriteByte"](11);
-        _stream["WriteLong"](_frame.XAlign);
-    }
-    if (_frame.YAlign !== undefined && _frame.YAlign !== null)
-    {
-        _stream["WriteByte"](12);
-        _stream["WriteLong"](_frame.YAlign);
-    }
-    if (_frame.Lines !== undefined && _frame.Lines !== null)
-    {
-        _stream["WriteByte"](13);
-        _stream["WriteLong"](_frame.Lines);
-    }
-    if (_frame.Wrap !== undefined && _frame.Wrap !== null)
-    {
-        _stream["WriteByte"](14);
-        _stream["WriteLong"](_frame.Wrap);
-    }
-    
-    asc_menu_WriteParaBorders(15, _frame.Brd, _stream);
-    asc_menu_WriteParaShd(16, _frame.Shd, _stream);
-    asc_menu_WriteFontFamily(17, _frame.FontFamily, _stream);
-    
-    _stream["WriteByte"](255);
-}
-function asc_menu_WriteParaListType(_type, _list, _stream){
-    if (!_list)
-        return;
-    
-    _stream["WriteByte"](_type);
-    
-    if (_list.Type !== undefined && _list.Type !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteLong"](_list.Type);
-    }
-    if (_list.SubType !== undefined && _list.SubType !== null)
-    {
-        _stream["WriteByte"](1);
-        _stream["WriteLong"](_list.SubType);
-    }
-    
-    _stream["WriteByte"](255);
-}
-function asc_menu_WriteParagraphPr(_paraPr, _stream) {
-    if (_paraPr.ContextualSpacing !== undefined && _paraPr.ContextualSpacing !== null)
-    {
-        _stream["WriteByte"](0);
-        _stream["WriteBool"](_paraPr.ContextualSpacing);
-    }
-    asc_menu_WriteParaInd(1, _paraPr.Ind, _stream);
-    
-    if (_paraPr.KeepLines !== undefined && _paraPr.KeepLines !== null)
-    {
-        _stream["WriteByte"](2);
-        _stream["WriteBool"](_paraPr.KeepLines);
-    }
-    if (_paraPr.KeepNext !== undefined && _paraPr.KeepNext !== null)
-    {
-        _stream["WriteByte"](3);
-        _stream["WriteBool"](_paraPr.KeepNext);
-    }
-    if (_paraPr.WidowControl !== undefined && _paraPr.WidowControl !== null)
-    {
-        _stream["WriteByte"](4);
-        _stream["WriteBool"](_paraPr.WidowControl);
-    }
-    if (_paraPr.PageBreakBefore !== undefined && _paraPr.PageBreakBefore !== null)
-    {
-        _stream["WriteByte"](5);
-        _stream["WriteBool"](_paraPr.PageBreakBefore);
-    }
-    
-    asc_menu_WriteParaSpacing(6, _paraPr.Spacing, _stream);
-    asc_menu_WriteParaBorders(7, _paraPr.Brd, _stream);
-    asc_menu_WriteParaShd(8, _paraPr.Shd, _stream);
-    
-    if (_paraPr.Locked !== undefined && _paraPr.Locked !== null)
-    {
-        _stream["WriteByte"](9);
-        _stream["WriteBool"](_paraPr.Locked);
-    }
-    if (_paraPr.CanAddTable !== undefined && _paraPr.CanAddTable !== null)
-    {
-        _stream["WriteByte"](10);
-        _stream["WriteBool"](_paraPr.CanAddTable);
-    }
-    if (_paraPr.CanAddDropCap !== undefined && _paraPr.CanAddDropCap !== null)
-    {
-        _stream["WriteByte"](11);
-        _stream["WriteBool"](_paraPr.CanAddDropCap);
-    }
-    
-    if (_paraPr.DefaultTab !== undefined && _paraPr.DefaultTab !== null)
-    {
-        _stream["WriteByte"](12);
-        _stream["WriteDouble2"](_paraPr.DefaultTab);
-    }
-    
-    asc_menu_WriteParaTabs(13, _paraPr.Tabs, _stream);
-    asc_menu_WriteParaFrame(14, _paraPr.FramePr, _stream);
-    
-    if (_paraPr.Subscript !== undefined && _paraPr.Subscript !== null)
-    {
-        _stream["WriteByte"](15);
-        _stream["WriteBool"](_paraPr.Subscript);
-    }
-    if (_paraPr.Superscript !== undefined && _paraPr.Superscript !== null)
-    {
-        _stream["WriteByte"](16);
-        _stream["WriteBool"](_paraPr.Superscript);
-    }
-    if (_paraPr.SmallCaps !== undefined && _paraPr.SmallCaps !== null)
-    {
-        _stream["WriteByte"](17);
-        _stream["WriteBool"](_paraPr.SmallCaps);
-    }
-    if (_paraPr.AllCaps !== undefined && _paraPr.AllCaps !== null)
-    {
-        _stream["WriteByte"](18);
-        _stream["WriteBool"](_paraPr.AllCaps);
-    }
-    if (_paraPr.Strikeout !== undefined && _paraPr.Strikeout !== null)
-    {
-        _stream["WriteByte"](19);
-        _stream["WriteBool"](_paraPr.Strikeout);
-    }
-    if (_paraPr.DStrikeout !== undefined && _paraPr.DStrikeout !== null)
-    {
-        _stream["WriteByte"](20);
-        _stream["WriteBool"](_paraPr.DStrikeout);
-    }
-    
-    if (_paraPr.TextSpacing !== undefined && _paraPr.TextSpacing !== null)
-    {
-        _stream["WriteByte"](21);
-        _stream["WriteDouble2"](_paraPr.TextSpacing);
-    }
-    if (_paraPr.Position !== undefined && _paraPr.Position !== null)
-    {
-        _stream["WriteByte"](22);
-        _stream["WriteDouble2"](_paraPr.Position);
-    }
-    
-    asc_menu_WriteParaListType(23, _paraPr.ListType, _stream);
-    
-    if (_paraPr.StyleName !== undefined && _paraPr.StyleName !== null)
-    {
-        _stream["WriteByte"](24);
-        _stream["WriteString2"](_paraPr.StyleName);
-    }
-    
-    if (_paraPr.Jc !== undefined && _paraPr.Jc !== null)
-    {
-        _stream["WriteByte"](25);
-        _stream["WriteLong"](_paraPr.Jc);
-    }
-    
-    _stream["WriteByte"](255);
-}
-
 function asc_ReadCBorder(s, p) {
     var color = null;
     var style = null;
@@ -1727,15 +47,15 @@ function asc_ReadCBorder(s, p) {
                 if (type == "thin") {
                     style = Asc.c_oAscBorderStyles.Thin;
                 } else if (type == "medium") {
-                    style = Asc.c_oAscBorderStyles.Medium; 
+                    style = Asc.c_oAscBorderStyles.Medium;
                 } else if (type == "thick") {
-                    style = Asc.c_oAscBorderStyles.Thick; 
+                    style = Asc.c_oAscBorderStyles.Thick;
                 }
                 break;
             }
             case 1:
             {
-                color = asc_menu_ReadColor(s, p);
+                color = AscCommon.asc_menu_ReadColor(s, p);
                 break;
             }
             case 255:
@@ -2131,7 +451,7 @@ function asc_ReadAutoFiltersOptions(s, p) {
             }
             case 4:
             {
-                filter.asc_setSortColor(asc_menu_ReadColor(s, p));
+                filter.asc_setSortColor(AscCommon.asc_menu_ReadColor(s, p));
                 break;
             }
             case 5:
@@ -2581,22 +901,6 @@ function asc_CellInfoToJson(cellInfo) {
     
     return JSON.stringify(json);
 }
-function asc_WriteColorSchemes(schemas, s) {
-    
-    s["WriteLong"](schemas.length);
-    
-    for (var i = 0; i < schemas.length; ++i) {
-        s["WriteString2"](schemas[i].get_name());
-        
-        var colors = schemas[i].get_colors();
-        s["WriteLong"](colors.length);
-        
-        for (var j = 0; j < colors.length; ++j) {
-            asc_menu_WriteColor(0, colors[j], s);
-        }
-    }
-}
-AscCommon.asc_WriteColorSchemes = asc_WriteColorSchemes;
 function asc_WriteAddFormatTableOptions(c, s) {
     if (!c) return;
     
@@ -2755,8 +1059,6 @@ function OfflineEditor () {
 
         window['AscFormat'].DrawingArea.prototype.drawSelection = function(drawingDocument) {
             
-            AscCommon.g_oTextMeasurer.Flush();
-            
             var canvas = this.worksheet.objectRender.getDrawingCanvas();
             var shapeCtx = canvas.shapeCtx;
             var shapeOverlayCtx = canvas.shapeOverlayCtx;
@@ -2771,7 +1073,7 @@ function OfflineEditor () {
             this.worksheet.overlayGraphicCtx.clear();
             this.worksheet._drawCollaborativeElements(autoShapeTrack);
             
-            if (!this.worksheet.objectRender.controller.selectedObjects.length && !this.api.isStartAddShape)
+            if (!this.worksheet.objectRender.controller.selectedObjects.length && !this.api.isStartAddShape && !this.api.isInkDrawerOn())
                 this.worksheet._drawSelection();
             
             var chart;
@@ -3000,8 +1302,6 @@ function OfflineEditor () {
             
             window["native"]["SwitchMemoryLayer"]();
             
-            AscCommon.g_oTextMeasurer.Flush();
-            
             this.objectRender.showDrawingObjectsEx();
             
             this.cellsLeft = cellsLeft_Local;
@@ -3016,7 +1316,7 @@ function OfflineEditor () {
             this.visibleRange = new asc_Range(c1, r1, c2, r2);
             
             isFrozen = !!isFrozen;
-            if (window["Asc"]["editor"].isStartAddShape || this.objectRender.selectedGraphicObjectsExists()) {
+            if (window["Asc"]["editor"].isStartAddShape || window["Asc"]["editor"].isInkDrawerOn() || this.objectRender.selectedGraphicObjectsExists()) {
                 return;
             }
             
@@ -3150,7 +1450,10 @@ function OfflineEditor () {
                     this.handlers.trigger("selectionNameChanged", this.getSelectionName(/*bRangeText*/true));
                     if (!isSelectMode) {
                         this.handlers.trigger("selectionChanged");
-                        this.handlers.trigger("selectionMathInfoChanged", this.getSelectionMathInfo());
+                        let t = this;
+                        this.getSelectionMathInfo(function (info) {
+                            t.handlers.trigger("selectionMathInfoChanged", info);
+                        });
                     }
                 }
             } else {
@@ -3170,7 +1473,7 @@ function OfflineEditor () {
                 return this.__selectedCellRange(ranges, 0, 0, Asc.c_oAscSelectionType.RangeChart);
             }
             
-            if (window["Asc"]["editor"].isStartAddShape || this.objectRender.selectedGraphicObjectsExists()) {
+            if (window["Asc"]["editor"].isStartAddShape || window["Asc"]["editor"].isInkDrawerOn() || this.objectRender.selectedGraphicObjectsExists()) {
                 if (this.isChartAreaEditMode && this.oOtherRanges) {
                     return this.__selectedCellRanges(0, 0, Asc.c_oAscSelectionType.RangeChart);
                 }
@@ -3464,7 +1767,9 @@ function OfflineEditor () {
         deviceScale = window["native"]["GetDeviceScale"]();
         sdkCheck = settings["sdkCheck"];
 
-        window.g_file_path = "native_open_file";
+        // в таблицах неправильно выставляются dpi. пока фиксируем.
+        AscCommon.global_mouseEvent.AscHitToHandlesEpsilon = 18;
+
         window.NATIVE_DOCUMENT_TYPE = "";
 
         var translations = this.initSettings["translations"];
@@ -3518,6 +1823,7 @@ function OfflineEditor () {
 
              var thenCallback = function() {
 
+                _api.setDrawGroupsRestriction();
             	t.asc_WriteAllWorksheets(true);
             	t.asc_WriteCurrentCell();
             
@@ -3961,6 +2267,7 @@ function OfflineEditor () {
                                  width + region.columnOff, height + region.rowOff);
         }
         
+        worksheet.stringRender.fontNeedUpdate = true;
         worksheet.__drawCellsAndBorders(null,
                                         region.columnBeg, region.rowBeg, region.columnEnd, region.rowEnd,
                                         region.columnOff, region.rowOff, istoplayer);
@@ -4427,14 +2734,10 @@ var _s = new OfflineEditor();
 
 window["native"]["offline_of"] = function(arg) {_s.openFile(arg);}
 window["native"]["offline_stz"] = function(v) {_s.zoom = v; _api.asc_setZoom(v);}
-window["native"]["offline_ds"] = function(x, y, width, height, ratio, istoplayer) {
-    AscCommon.g_oTextMeasurer.Flush();
-    
+window["native"]["offline_ds"] = function(x, y, width, height, ratio, istoplayer) {    
     _s.drawSheet(x, y, width, height, ratio, istoplayer);
 }
 window["native"]["offline_dh"] = function(x, y, width, height, ratio, type) {
-    AscCommon.g_oTextMeasurer.Flush();
-    
     _s.drawHeader(x, y, width, height, type, ratio);
 }
 
@@ -4730,8 +3033,6 @@ window["native"]["offline_complete_cell"] = function(x, y) {return _s.getNearCel
 window["native"]["offline_keyboard_down"] = function(inputKeys) {
     var wb = _api.wb;
     var ws = _api.wb.getWorksheet();
-    
-    AscCommon.g_oTextMeasurer.Flush();
     
     var isFormulaEditMode = wb.isFormulaEditMode;
     wb.isFormulaEditMode = false;
@@ -5409,17 +3710,13 @@ window["native"]["offline_apply_event"] = function(type,params) {
             // document interface
             
         case 3: // ASC_MENU_EVENT_TYPE_UNDO
-        {
-            AscCommon.g_oTextMeasurer.Flush();
-            
+        {   
             _api.asc_Undo();
             _s.asc_WriteAllWorksheets(true);
             break;
         }
         case 4: // ASC_MENU_EVENT_TYPE_REDO
         {
-            AscCommon.g_oTextMeasurer.Flush();
-            
             _api.asc_Redo();
             _s.asc_WriteAllWorksheets(true);
             break;
@@ -5459,7 +3756,7 @@ window["native"]["offline_apply_event"] = function(type,params) {
                         }
                         case 4:
                         {
-                            _imagePr.Paddings = asc_menu_ReadPaddings(params, _current);
+                            _imagePr.Paddings = AscCommon.asc_menu_ReadPaddings(params, _current);
                             break;
                         }
                         case 5:
@@ -5834,7 +4131,7 @@ window["native"]["offline_apply_event"] = function(type,params) {
                     }
                     case 10:
                     {
-                        _api.asc_setCellTextColor(asc_menu_ReadColor(params, _current));
+                        _api.asc_setCellTextColor(AscCommon.asc_menu_ReadColor(params, _current));
                         break;
                     }
                     case 11:
@@ -5849,7 +4146,7 @@ window["native"]["offline_apply_event"] = function(type,params) {
                     }
                     case 13:
                     {
-                        var fillColor = asc_menu_ReadColor(params, _current);
+                        var fillColor = AscCommon.asc_menu_ReadColor(params, _current);
                         if (0.0 === fillColor.a) {
                             _api.asc_setCellBackgroundColor(null);
                         } else {
@@ -6063,7 +4360,7 @@ window["native"]["offline_apply_event"] = function(type,params) {
                     }
                     case 2: // color
                     {
-                        var tabColor = asc_menu_ReadColor(params, _current);
+                        var tabColor = AscCommon.asc_menu_ReadColor(params, _current);
                         _api.asc_setWorksheetTabColor(tabColor);
                         _s.asc_WriteAllWorksheets(true);
                         break;
@@ -6265,9 +4562,14 @@ window["native"]["offline_apply_event"] = function(type,params) {
             
         case 4020: // ASC_SPREADSHEETS_EVENT_TYPE_GET_FORMULAS
         {
+            if (undefined !== params) {
+                var localizeData = JSON.parse(params);
+                _api.asc_setLocalization(localizeData);
+            }
+
             _stream = global_memory_stream_menu;
             _stream["ClearNoAttack"]();
-            
+
             var info = _api.asc_getFormulasInfo();
             if (info) {
                 _stream["WriteLong"](info.length);
@@ -6285,11 +4587,6 @@ window["native"]["offline_apply_event"] = function(type,params) {
                 }
             } else {
                 _stream["WriteLong"](0);
-            }
-            
-            if (undefined !== params) {
-                var localizeData = JSON.parse(params);
-                _api.asc_setLocalization(localizeData);
             }
             
             _return = _stream;
@@ -6439,30 +4736,31 @@ window["native"]["offline_apply_event"] = function(type,params) {
             
         case 10000: // ASC_SOCKET_EVENT_TYPE_OPEN
         {
-            _api.CoAuthoringApi._CoAuthoringApi._onServerOpen();
+            _api.CoAuthoringApi._CoAuthoringApi.socketio.onMessage("connect");
             break;
         }
             
         case 10010: // ASC_SOCKET_EVENT_TYPE_ON_CLOSE
         {
-            
+            // NOT USED
             break;
         }
             
         case 10020: // ASC_SOCKET_EVENT_TYPE_MESSAGE
         {
-            _api.CoAuthoringApi._CoAuthoringApi._onServerMessage(params);
+            _api.CoAuthoringApi._CoAuthoringApi.socketio.onMessage("message", params ? JSON.parse(params) : {});
             break;
         }
             
         case 11010: // ASC_SOCKET_EVENT_TYPE_ON_DISCONNECT
         {
+            _api.CoAuthoringApi._CoAuthoringApi.socketio.onMessage("disconnect", params || "");
             break;
         }
             
         case 11020: // ASC_SOCKET_EVENT_TYPE_TRY_RECONNECT
         {
-            _api.CoAuthoringApi._CoAuthoringApi._reconnect();
+            // NOT USED
             break;
         }
             
@@ -6729,255 +5027,8 @@ window["native"]["offline_apply_event"] = function(type,params) {
     return _return;
 }
 
-// Common
+AscCommon.isApiAddCommentAsync = true;
 
-function getHexColor(r, g, b) {
-    r = r.toString(16);
-    g = g.toString(16);
-    b = b.toString(16);
-    if (r.length == 1) r = '0' + r;
-    if (g.length == 1) g = '0' + g;
-    if (b.length == 1) b = '0' + b;
-    return r + g + b;
-}
-
-function postDataAsJSONString(data, eventId) {
-    var stream = global_memory_stream_menu;
-    stream["ClearNoAttack"]();
-    if (data !== undefined && data !== null) {
-        stream["WriteString2"](JSON.stringify(data));
-    }
-    window["native"]["OnCallMenuEvent"](eventId, stream);
-}
-
-// Users
-
-function sdkUsersToJson(users) {
-    var arrUsers = [];
-
-    for (var userId in users) {
-        if (undefined !== userId) {
-            var user = users[userId];
-            if (user) {
-                arrUsers.push({
-                    id          : user.asc_getId(),
-                    idOriginal  : user.asc_getIdOriginal(),
-                    userName    : user.asc_getUserName(),
-                    online      : true,
-                    color       : user.asc_getColor(),
-                    view        : user.asc_getView()
-                });
-            }
-        }
-    }
-    return arrUsers;
-}
-
-function onApiAuthParticipantsChanged(users) {
-    var users = sdkUsersToJson(users) || [];
-    postDataAsJSONString(users, 20101); // ASC_COAUTH_EVENT_TYPE_PARTICIPANTS_CHANGED
-}
-
-function onApiParticipantsChanged(users) {
-    var users = sdkUsersToJson(users) || [];
-    postDataAsJSONString(users, 20101); // ASC_COAUTH_EVENT_TYPE_PARTICIPANTS_CHANGED
-}
-
-// Comments
-
-function stringOOToLocalDate (date) {
-    if (typeof date === 'string')
-        return parseInt(date);
-    return 0;
-}
-
-function stringUtcToLocalDate(date) {
-    if (typeof date === 'string')
-        return parseInt(date) + (new Date()).getTimezoneOffset() * 60000;
-    return 0;
-}
-
-function readSDKComment(id, data) {
-    var date = data.asc_getOnlyOfficeTime()
-            ? new Date(stringOOToLocalDate(data.asc_getOnlyOfficeTime()))
-            : (data.asc_getTime() == '') ? new Date() : new Date(stringUtcToLocalDate(data.asc_getTime())),
-        groupname = id.substr(0, id.lastIndexOf('_') + 1).match(/^(doc|sheet[0-9_]+)_/);
-
-    return {
-        id          : id,
-        guid        : data.asc_getGuid(),
-        userId      : data.asc_getUserId(),
-        userName    : data.asc_getUserName(),
-        date        : date.getTime().toString(),
-        quoteText   : data.asc_getQuoteText(),
-        text        : data.asc_getText(),
-        solved      : data.asc_getSolved(),
-        unattached  : (data.asc_getDocumentFlag === undefined) ? false : data.asc_getDocumentFlag(),
-        groupName   : (groupname && groupname.length>1) ? groupname[1] : null,
-        replies     : readSDKReplies(data)
-    };
-}
-
-function readSDKReplies (data) {
-    var i = 0,
-        replies = [],
-        date = null;
-    var repliesCount = data.asc_getRepliesCount();
-    if (repliesCount) {
-        for (i = 0; i < repliesCount; ++i) {
-            var reply = data.asc_getReply(i);
-            date = (reply.asc_getOnlyOfficeTime()) 
-                ? new Date(stringOOToLocalDate(reply.asc_getOnlyOfficeTime()))
-                : ((reply.asc_getTime() == '') ? new Date() : new Date(stringUtcToLocalDate(reply.asc_getTime())));
-            replies.push({
-                userId      : reply.asc_getUserId(),
-                userName    : reply.asc_getUserName(),
-                text        : reply.asc_getText(),
-                date        : date.getTime().toString()
-            });
-        }
-    }
-    return replies;
-}
-
-function onApiLongActionBegin(type, id) {
-    var info = {
-        "type" : type,
-        "id" : id
-    };
-    postDataAsJSONString(info, 26102); // ASC_MENU_EVENT_TYPE_LONGACTION_BEGIN
-}
-
-function onApiLongActionEnd(type, id) {
-    var info = {
-        "type" : type,
-        "id" : id
-    };
-    postDataAsJSONString(info, 26103); // ASC_MENU_EVENT_TYPE_LONGACTION_END
-}
-
-function onApiError(id, level, errData) {
-    var info = {
-        "level" : level,
-        "id" : id
-        // "errData" : JSON.prune(errData, 4)
-    };
-    postDataAsJSONString(info, 26104); // ASC_MENU_EVENT_TYPE_API_ERROR
-}
-
-function onApiAddComment(id, data) {
-    setTimeout(function () {
-        var comment = readSDKComment(id, data) || {};
-        postDataAsJSONString(comment, 23001); // ASC_MENU_EVENT_TYPE_ADD_COMMENT
-    }, 5);
-}
-
-function onApiAddComments(data) {
-    setTimeout(function() {
-        var comments = [];
-        for (var i = 0; i < data.length; ++i) {
-            comments.push(readSDKComment(data[i].asc_getId(), data[i]));
-        }
-        postDataAsJSONString(comments, 23002); // ASC_MENU_EVENT_TYPE_ADD_COMMENTS
-    }, 5);
-}
-
-function onApiRemoveComment(id) {
-    var data = {
-        "id": id
-    };
-    postDataAsJSONString(data, 23003); // ASC_MENU_EVENT_TYPE_REMOVE_COMMENT
-}
-
-function onApiChangeComments(data) {
-    var comments = [];
-    for (var i = 0; i < data.length; ++i) {
-        comments.push(readSDKComment(data[i].asc_getId(), data[i]));
-    }
-    postDataAsJSONString(comments, 23004); // ASC_MENU_EVENT_TYPE_CHANGE_COMMENTS
-}
-
-function onApiRemoveComments(data) {
-    var ids = [];
-    for (var i = 0; i < data.length; ++i) {
-        ids.push({
-            "id": data[i]
-        });
-    }
-    postDataAsJSONString(ids, 23005); // ASC_MENU_EVENT_TYPE_REMOVE_COMMENTS
-}
-
-function onApiChangeCommentData(id, data) {
-    var comment = readSDKComment(id, data) || {},
-        change = {
-            "id": id,
-            "comment": comment
-        };
-
-    postDataAsJSONString(change, 23006); // ASC_MENU_EVENT_TYPE_CHANGE_COMMENTDATA
-}
-
-function onApiLockComment(id, userId) {
-    var data = {
-        "id": id,
-        "userId": userId
-    };
-    postDataAsJSONString(data, 23007); // ASC_MENU_EVENT_TYPE_LOCK_COMMENT
-}
-
-function onApiUnLockComment(id) {
-    var data = {
-        "id": id
-    };
-    postDataAsJSONString(data, 23008); // ASC_MENU_EVENT_TYPE_UNLOCK_COMMENT
-}
-
-function onApiShowComment(uids, posX, posY, leftX, opts, hint) {
-    var data = {
-        "uids": uids,
-        "posX": posX,
-        "posY": posY,
-        "leftX": leftX,
-        "opts": opts,
-        "hint": hint
-    };
-    postDataAsJSONString(data, 23009); // ASC_MENU_EVENT_TYPE_SHOW_COMMENT
-}
-
-function onApiHideComment(hint) {
-    var data = {
-        "hint": hint
-    };
-    postDataAsJSONString(data, 23010); // ASC_MENU_EVENT_TYPE_HIDE_COMMENT
-}
-
-function onApiUpdateCommentPosition(uids, posX, posY, leftX) {
-    var data = {
-        "uids": uids,
-        "posX": posX,
-        "posY": posY,
-        "leftX": leftX
-    };
-    postDataAsJSONString(data, 23011); // ASC_MENU_EVENT_TYPE_UPDATE_COMMENT_POSITION
-}
-
-function onDocumentPlaceChanged() {
-    postDataAsJSONString(null, 23012); // ASC_MENU_EVENT_TYPE_DOCUMENT_PLACE_CHANGED
-}
-
-function onApiSendThemeColors(theme_colors, standart_colors) {
-    var colors = {
-        "themeColors": theme_colors.map(function(color) {
-            return getHexColor(color.get_r(), color.get_g(), color.get_b());
-        })
-    }
-    if (standart_colors != null) {
-        colors["standartColors"] = standart_colors.map(function(color) {
-            return getHexColor(color.get_r(), color.get_g(), color.get_b());
-        });
-    }
-    postDataAsJSONString(colors, 2417); // ASC_MENU_EVENT_TYPE_THEMECOLORS
-}
 window["Asc"]["spreadsheet_api"].prototype.asc_setDocumentPassword = function(password)
 {
     var v = {
@@ -7151,6 +5202,7 @@ window["Asc"]["spreadsheet_api"].prototype.openDocument = function(file) {
                t.wb = new AscCommonExcel.WorkbookView(t.wbModel, t.controller, t.handlers,
                                                       window["_null_object"], window["_null_object"], t,
                                                       t.collaborativeEditing, t.fontRenderingMode);
+               t.setDrawGroupsRestriction();
 
                if (!sdkCheck) {
 
@@ -7244,6 +5296,7 @@ window["Asc"]["spreadsheet_api"].prototype["asc_nativeGetCoreProps"] = function(
         coreProps["asc_getTitle"] = props.asc_getTitle();
         coreProps["asc_getSubject"] = props.asc_getSubject();
         coreProps["asc_getDescription"] = props.asc_getDescription();
+        coreProps["asc_getCreated"] = props.asc_getCreated();
 
         var authors = [];
         value = props.asc_getCreator();//"123\"\"\"\<\>,456";
@@ -7277,168 +5330,3 @@ window["AscCommon"].getFullImageSrc2 = function (src) {
     
     return src;
 }
-
-// // JSON.prune : a function to stringify any object without overflow
-// // two additional optional parameters :
-// //   - the maximal depth (default : 6)
-// //   - the maximal length of arrays (default : 50)
-// // You can also pass an "options" object.
-// // examples :
-// //   var json = JSON.prune(window)
-// //   var arr = Array.apply(0,Array(1000)); var json = JSON.prune(arr, 4, 20)
-// //   var json = JSON.prune(window.location, {inheritedProperties:true})
-// // Web site : http://dystroy.org/JSON.prune/
-// // JSON.prune on github : https://github.com/Canop/JSON.prune
-// // This was discussed here : http://stackoverflow.com/q/13861254/263525
-// // The code is based on Douglas Crockford's code : https://github.com/douglascrockford/JSON-js/blob/master/json2.js
-// // No effort was done to support old browsers. JSON.prune will fail on IE8.
-// (function () {
-// 	'use strict';
-
-// 	var DEFAULT_MAX_DEPTH = 6;
-// 	var DEFAULT_ARRAY_MAX_LENGTH = 50;
-// 	var DEFAULT_PRUNED_VALUE = '"-pruned-"';
-// 	var seen; // Same variable used for all stringifications
-// 	var iterator; // either forEachEnumerableOwnProperty, forEachEnumerableProperty or forEachProperty
-
-// 	// iterates on enumerable own properties (default behavior)
-// 	var forEachEnumerableOwnProperty = function(obj, callback) {
-// 		for (var k in obj) {
-// 			if (Object.prototype.hasOwnProperty.call(obj, k)) callback(k);
-// 		}
-// 	};
-// 	// iterates on enumerable properties
-// 	var forEachEnumerableProperty = function(obj, callback) {
-// 		for (var k in obj) callback(k);
-// 	};
-// 	// iterates on properties, even non enumerable and inherited ones
-// 	// This is dangerous
-// 	var forEachProperty = function(obj, callback, excluded) {
-// 		if (obj==null) return;
-// 		excluded = excluded || {};
-// 		Object.getOwnPropertyNames(obj).forEach(function(k){
-// 			if (!excluded[k]) {
-// 				callback(k);
-// 				excluded[k] = true;
-// 			}
-// 		});
-// 		forEachProperty(Object.getPrototypeOf(obj), callback, excluded);
-// 	};
-
-// 	Object.defineProperty(Date.prototype, "toPrunedJSON", {value:Date.prototype.toJSON});
-
-// 	var	cx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
-// 		escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
-// 		meta = {	// table of character substitutions
-// 			'\b': '\\b',
-// 			'\t': '\\t',
-// 			'\n': '\\n',
-// 			'\f': '\\f',
-// 			'\r': '\\r',
-// 			'"' : '\\"',
-// 			'\\': '\\\\'
-// 		};
-
-// 	function quote(string) {
-// 		escapable.lastIndex = 0;
-// 		return escapable.test(string) ? '"' + string.replace(escapable, function (a) {
-// 			var c = meta[a];
-// 			return typeof c === 'string'
-// 				? c
-// 				: '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
-// 		}) + '"' : '"' + string + '"';
-// 	}
-
-
-// 	var prune = function (value, depthDecr, arrayMaxLength) {
-// 		var prunedString = DEFAULT_PRUNED_VALUE;
-// 		var replacer;
-// 		if (typeof depthDecr == "object") {
-// 			var options = depthDecr;
-// 			depthDecr = options.depthDecr;
-// 			arrayMaxLength = options.arrayMaxLength;
-// 			iterator = options.iterator || forEachEnumerableOwnProperty;
-// 			if (options.allProperties) iterator = forEachProperty;
-// 			else if (options.inheritedProperties) iterator = forEachEnumerableProperty
-// 			if ("prunedString" in options) {
-// 				prunedString = options.prunedString;
-// 			}
-// 			if (options.replacer) {
-// 				replacer = options.replacer;
-// 			}
-// 		} else {
-// 			iterator = forEachEnumerableOwnProperty;
-// 		}
-// 		seen = [];
-// 		depthDecr = depthDecr || DEFAULT_MAX_DEPTH;
-// 		arrayMaxLength = arrayMaxLength || DEFAULT_ARRAY_MAX_LENGTH;
-// 		function str(key, holder, depthDecr) {
-// 			var i, k, v, length, partial, value = holder[key];
-
-// 			if (value && typeof value === 'object' && typeof value.toPrunedJSON === 'function') {
-// 				value = value.toPrunedJSON(key);
-// 			}
-// 			if (value && typeof value.toJSON === 'function') {
-// 				value = value.toJSON();
-// 			}
-
-// 			switch (typeof value) {
-// 			case 'string':
-// 				return quote(value);
-// 			case 'number':
-// 				return isFinite(value) ? String(value) : 'null';
-// 			case 'boolean':
-// 			case 'null':
-// 				return String(value);
-// 			case 'object':
-// 				if (!value) {
-// 					return 'null';
-// 				}
-// 				if (depthDecr<=0 || seen.indexOf(value)!==-1) {
-// 					if (replacer) {
-// 						var replacement = replacer(value, prunedString, true);
-// 						return replacement===undefined ? undefined : ''+replacement;
-// 					}
-// 					return prunedString;
-// 				}
-// 				seen.push(value);
-// 				partial = [];
-// 				if (Object.prototype.toString.apply(value) === '[object Array]') {
-// 					length = Math.min(value.length, arrayMaxLength);
-// 					for (i = 0; i < length; i += 1) {
-// 						partial[i] = str(i, value, depthDecr-1) || 'null';
-// 					}
-// 					v = '[' + partial.join(',') + ']';
-// 					if (replacer && value.length>arrayMaxLength) return replacer(value, v, false);
-// 					return v;
-// 				}
-// 				if (value instanceof RegExp) {
-// 					return quote(value.toString());
-// 				}
-// 				iterator(value, function(k) {
-// 					try {
-// 						v = str(k, value, depthDecr-1);
-// 						if (v) partial.push(quote(k) + ':' + v);
-// 					} catch (e) {
-// 						// this try/catch due to forbidden accessors on some objects
-// 					}
-// 				});
-// 				return '{' + partial.join(',') + '}';
-// 			case 'function':
-// 			case 'undefined':
-// 				return replacer ? replacer(value, undefined, false) : undefined;
-// 			}
-// 		}
-// 		return str('', {'': value}, depthDecr);
-// 	};
-
-// 	prune.log = function() {
-// 		console.log.apply(console, Array.prototype.map.call(arguments, function(v) {
-// 			return JSON.parse(JSON.prune(v));
-// 		}));
-// 	};
-// 	prune.forEachProperty = forEachProperty; // you might want to also assign it to Object.forEachProperty
-
-// 	if (typeof module !== "undefined") module.exports = prune;
-// 	else JSON.prune = prune;
-// }());

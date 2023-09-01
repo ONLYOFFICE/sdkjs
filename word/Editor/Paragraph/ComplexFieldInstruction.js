@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -56,6 +56,7 @@ var fieldtype_FORMULA    = 0x0010;
 var fieldtype_SEQ        = 0x0011;
 var fieldtype_STYLEREF   = 0x0012;
 var fieldtype_NOTEREF    = 0x0013;
+var fieldtype_ADDIN      = 0x0014;
 
 
 //--------------------------------------------------------export----------------------------------------------------
@@ -79,6 +80,7 @@ window['AscCommonWord'].fieldtype_FORMULA    = fieldtype_FORMULA;
 window['AscCommonWord'].fieldtype_SEQ        = fieldtype_SEQ;
 window['AscCommonWord'].fieldtype_STYLEREF   = fieldtype_STYLEREF;
 window['AscCommonWord'].fieldtype_NOTEREF    = fieldtype_NOTEREF;
+window['AscCommonWord'].fieldtype_ADDIN      = fieldtype_ADDIN;
 
 
 /**
@@ -118,6 +120,10 @@ CFieldInstructionBase.prototype.CheckInstructionLine = function(sLine)
 {
 	return (this.InstructionLine === sLine);
 };
+//--------------------------------------------------------export----------------------------------------------------
+window['AscWord'] = window['AscWord'] || {};
+window['AscWord'].CFieldInstructionBase = CFieldInstructionBase;
+
 /**
 * FORMULA field
 * @constructor
@@ -696,7 +702,7 @@ CFieldInstructionREF.prototype.ToString = function()
 {
 	var sInstruction = " REF ";
 	sInstruction += this.BookmarkName;
-	for(var nSwitch = 0; i < this.GeneralSwitches.length; ++nSwitch)
+	for(var nSwitch = 0; nSwitch < this.GeneralSwitches.length; ++nSwitch)
 	{
 		sInstruction +=  " \\* " + this.GeneralSwitches[nSwitch];
 	}
@@ -1131,6 +1137,13 @@ CFieldInstructionSEQ.prototype.SetGeneralSwitches = function (aSwitches)
 		this.NumFormat = GeneralToNumFormat(aSwitches[i]);
 	}
 };
+CFieldInstructionSEQ.prototype.CheckId = function(type)
+{
+	if (!(typeof type === "string"))
+		return type === this.Id;
+	
+	return (type.split(" ").join("_") === this.Id);
+};
 
 function GeneralToNumFormat(sFormat)
 {
@@ -1488,7 +1501,7 @@ CFieldInstructionNOTEREF.prototype.ToString = function()
 {
 	var sInstruction = " NOTEREF ";
 	sInstruction += this.BookmarkName;
-	for(var nSwitch = 0; i < this.GeneralSwitches.length; ++nSwitch)
+	for(var nSwitch = 0; nSwitch < this.GeneralSwitches.length; ++nSwitch)
 	{
 		sInstruction +=  " \\* " + this.GeneralSwitches[nSwitch];
 	}
@@ -1593,8 +1606,7 @@ CFieldInstructionParser.prototype.private_Parse = function()
 {
 	if (!this.private_ReadNext())
 		return this.private_ReadREF("");
-
-
+	
 	var sBuffer = this.Buffer.toUpperCase();
 	if("PAGE" === sBuffer)
 	{
@@ -1643,6 +1655,18 @@ CFieldInstructionParser.prototype.private_Parse = function()
 	else if ("DATE" === sBuffer)
 	{
 		this.private_ReadDATE();
+	}
+	else if ("ADDIN" === sBuffer)
+	{
+		this.private_ReadADDIN();
+	}
+	else if ("MERGEFIELD" === sBuffer)
+	{
+		this.private_ReadMERGEFIELD();
+	}
+	else if ("FORMTEXT" === sBuffer)
+	{
+		this.private_ReadFORMTEXT();
 	}
 	else if(sBuffer.indexOf("=") === 0)
 	{
@@ -1706,6 +1730,11 @@ CFieldInstructionParser.prototype.private_ReadNext = function()
 		return true;
 
 	return false;
+};
+CFieldInstructionParser.prototype.private_ReadTillEnd = function()
+{
+	this.Buffer = this.Line.substr(this.Pos).trim();
+	return !!this.Buffer;
 };
 CFieldInstructionParser.prototype.private_ReadArguments = function()
 {
@@ -2262,4 +2291,23 @@ CFieldInstructionParser.prototype.private_ReadDATE = function()
 			}
 		}
 	}
+};
+CFieldInstructionParser.prototype.private_ReadADDIN = function()
+{
+	this.Result = new AscWord.CFieldInstructionADDIN();
+	
+	if (this.private_ReadTillEnd())
+		this.Result.SetValue(this.Buffer);
+};
+CFieldInstructionParser.prototype.private_ReadMERGEFIELD = function()
+{
+	this.Result = new AscWord.CFieldInstructionMERGEFIELD();
+	
+	let arrArguments = this.private_ReadArguments();
+	if (arrArguments.length)
+		this.Result.SetName(arrArguments[0]);
+};
+CFieldInstructionParser.prototype.private_ReadFORMTEXT = function()
+{
+	this.Result = new AscWord.CFieldInstructionFORMTEXT();
 };

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -67,6 +67,8 @@ function CAbstractNum()
 		this.Lvl[nLvl].InitDefault(nLvl);
 	}
 
+	this.MultiLvlType = Asc.c_oAbstractNumMultiLvlTypes.MultiLevel;
+
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	AscCommon.g_oTableId.Add(this, this.Id);
 }
@@ -117,18 +119,29 @@ CAbstractNum.prototype.GetNumStyleLink = function()
 {
 	return this.NumStyleLink;
 };
-CAbstractNum.prototype.private_RecalculateRelatedParagraphs = function(nLvl)
+CAbstractNum.prototype.RecalculateRelatedParagraphs = function(nLvl)
 {
 	if (nLvl < 0 || nLvl > 8)
 		nLvl = undefined;
 
-	var oLogicDocument = editor.WordControl.m_oLogicDocument;
-	var arrParagraphs  = oLogicDocument.GetAllParagraphsByNumbering({NumId : this.Id, Lvl : nLvl});
-
-	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
+	let logicDocument = editor.WordControl.m_oLogicDocument;
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return;
+	
+	let numberingManager = logicDocument.GetNumbering();
+	numberingManager.GetAllNumsByAbstractNum(this).forEach(function(num)
 	{
-		arrParagraphs[nIndex].RecalcCompiledPr();
-	}
+		num.RecalculateRelatedParagraphs(nLvl);
+	});
+};
+CAbstractNum.prototype.GetMultiLvlType = function()
+{
+	return this.MultiLvlType;
+};
+
+CAbstractNum.prototype.SetMultiLvlType = function(nMultiLvlType)
+{
+	this.MultiLvlType = nMultiLvlType;
 };
 /**
  * Получаем заданный уровень
@@ -155,6 +168,7 @@ CAbstractNum.prototype.SetLvl = function(nLvl, oLvlNew)
 	var oLvlOld    = this.Lvl[nLvl];
 	this.Lvl[nLvl] = oLvlNew;
 	History.Add(new CChangesAbstractNumLvlChange(this, oLvlOld, oLvlNew, nLvl));
+	this.RecalculateRelatedParagraphs(nLvl);
 };
 /**
  * Создаем многоуровневый список с заданным пресетом
@@ -164,12 +178,10 @@ CAbstractNum.prototype.CreateDefault = function(nType)
 {
 	for (var nLvl = 0; nLvl < 9; ++nLvl)
 	{
-		var oLvlNew = new CNumberingLvl();
-		oLvlNew.InitDefault(nLvl, nType);
-
-		var oLvlOld = this.Lvl[nLvl].Copy();
-		History.Add(new CChangesAbstractNumLvlChange(this, oLvlOld, oLvlNew.Copy(), nLvl));
-		this.Lvl[nLvl] = oLvlNew;
+		let lvlOld = this.Lvl[nLvl].Copy();
+		this.Lvl[nLvl].InitDefault(nLvl, nType);
+		History.Add(new CChangesAbstractNumLvlChange(this, lvlOld, this.Lvl[nLvl].Copy(), nLvl));
+		this.RecalculateRelatedParagraphs(nLvl);
 	}
 };
 /**
@@ -187,6 +199,7 @@ CAbstractNum.prototype.SetLvlByType = function(nLvl, nType, sText, oTextPr)
 	var oLvlOld = this.Lvl[nLvl].Copy();
 	this.Lvl[nLvl].SetByType(nType, nLvl, sText, oTextPr);
 	History.Add(new CChangesAbstractNumLvlChange(this, oLvlOld, this.Lvl[nLvl].Copy(), nLvl));
+	this.RecalculateRelatedParagraphs(nLvl);
 };
 /**
  * Заполняем уровень по заданному формату
@@ -204,6 +217,22 @@ CAbstractNum.prototype.SetLvlByFormat = function(nLvl, nType, sFormatText, nAlig
 	this.Lvl[nLvl].SetByFormat(nLvl, nType, sFormatText, nAlign);
 
 	History.Add(new CChangesAbstractNumLvlChange(this, oLvlOld, this.Lvl[nLvl].Copy(), nLvl));
+	this.RecalculateRelatedParagraphs(nLvl);
+};
+/**
+ * Связываем заданный уровень с заданным стилем
+ * @param iLvl {number} 0..8
+ * @param styleId {string}
+ */
+CAbstractNum.prototype.SetLvlPStyle = function(iLvl, styleId)
+{
+	if ("number" !== typeof(iLvl) || iLvl < 0 || iLvl >= 9)
+		return;
+
+	var oLvlOld = this.Lvl[iLvl].Copy();
+
+	this.Lvl[iLvl].SetPStyle(styleId);
+	History.Add(new CChangesAbstractNumLvlChange(this, oLvlOld, this.Lvl[iLvl].Copy(), iLvl));
 };
 /**
  * Выставляем является ли данный уровень сквозным или каждый раз перестартовывать нумерацию
@@ -416,7 +445,7 @@ CAbstractNum.prototype.Recalc_CompiledPr = function(nLvl)
 	// Ищем все параграфы, который используют данную нумерацию и проставляем у них, то что их стиль
 	// нужно перекомпилировать.
 
-	this.private_RecalculateRelatedParagraphs(nLvl);
+	this.RecalculateRelatedParagraphs(nLvl);
 };
 CAbstractNum.prototype.isEqual = function(abstractNum)
 {
@@ -454,3 +483,6 @@ CAbstractNum.prototype._isEqualLvlText = function(LvlTextOld, LvlTextNew)
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CAbstractNum = CAbstractNum;
+
+window['AscWord'] = window['AscWord'] || {};
+window['AscWord'].CAbstractNum = CAbstractNum;

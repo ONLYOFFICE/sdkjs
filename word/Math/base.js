@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -932,13 +932,13 @@ CMathBase.prototype.IsPlaceholder = function()
 {
     return false;
 };
-CMathBase.prototype.IsText = function()
+CMathBase.prototype.IsMathText = function()
 {
     return false;
 };
 CMathBase.prototype.GetParent = function()
 {
-    return (this.Parent.Type !== para_Math_Composition ? this : this.Parent.GetParent());
+    return (this.Parent ? (this.Parent.Type !== para_Math_Composition ? this.Parent : this.Parent.GetParent()) : null);
 };
 CMathBase.prototype.Get_TextPr = function(ContentPos, Depth)
 {
@@ -996,7 +996,7 @@ CMathBase.prototype.Apply_TextPrToCtrPr = function(TextPr, IncFontSize, ApplyToA
 	else
 	{
 		if (undefined !== TextPr.Bold)
-			this.Set_Bold(null === TextPr.Bold ? undefined : TextPr.Bold);
+			this.SetBold(null === TextPr.Bold ? undefined : TextPr.Bold);
 
 		if (TextPr.AscFill || TextPr.AscLine || TextPr.AscUnifill)
 		{
@@ -1059,13 +1059,13 @@ CMathBase.prototype.Apply_TextPrToCtrPr = function(TextPr, IncFontSize, ApplyToA
 			this.SetHighlightColor(null === TextPr.HighlightColor ? undefined : TextPr.HighlightColor);
 
 		if (undefined !== TextPr.Underline)
-			this.Set_Underline(null === TextPr.Underline ? undefined : TextPr.Underline);
+			this.SetUnderline(null === TextPr.Underline ? undefined : TextPr.Underline);
 
 		if (undefined !== TextPr.Strikeout)
-			this.Set_Strikeout(null === TextPr.Strikeout ? undefined : TextPr.Strikeout);
+			this.SetStrikeout(null === TextPr.Strikeout ? undefined : TextPr.Strikeout);
 
 		if (undefined !== TextPr.DStrikeout)
-			this.Set_DoubleStrikeout(null === TextPr.DStrikeout ? undefined : TextPr.DStrikeout);
+			this.SetDoubleStrikeout(null === TextPr.DStrikeout ? undefined : TextPr.DStrikeout);
 
 		if (undefined !== TextPr.RFonts)
 		{
@@ -1179,7 +1179,7 @@ CMathBase.prototype.Set_Shd = function(Shd)
 		this.raw_SetShd(Shd);
 	}
 };
-CMathBase.prototype.Set_Underline = function(Value)
+CMathBase.prototype.SetUnderline = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1190,7 +1190,7 @@ CMathBase.prototype.Set_Underline = function(Value)
 		this.raw_SetUnderline(Value);
 	}
 };
-CMathBase.prototype.Set_Strikeout = function(Value)
+CMathBase.prototype.SetStrikeout = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1201,7 +1201,7 @@ CMathBase.prototype.Set_Strikeout = function(Value)
 		this.raw_SetStrikeout(Value);
 	}
 };
-CMathBase.prototype.Set_DoubleStrikeout = function(Value)
+CMathBase.prototype.SetDoubleStrikeout = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1212,7 +1212,7 @@ CMathBase.prototype.Set_DoubleStrikeout = function(Value)
 		this.raw_Set_DoubleStrikeout(Value);
 	}
 };
-CMathBase.prototype.Set_Bold = function(Value)
+CMathBase.prototype.SetBold = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1223,7 +1223,7 @@ CMathBase.prototype.Set_Bold = function(Value)
 		this.raw_SetBold(Value);
 	}
 };
-CMathBase.prototype.Set_Italic = function(Value)
+CMathBase.prototype.SetItalic = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1234,7 +1234,7 @@ CMathBase.prototype.Set_Italic = function(Value)
 		this.raw_SetItalic(Value);
 	}
 };
-CMathBase.prototype.Set_RFonts_Ascii = function(Value)
+CMathBase.prototype.SetRFontsAscii = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1245,7 +1245,7 @@ CMathBase.prototype.Set_RFonts_Ascii = function(Value)
 		this.raw_SetRFontsAscii(Value);
 	}
 };
-CMathBase.prototype.Set_RFonts_HAnsi = function(Value)
+CMathBase.prototype.SetRFontsHAnsi = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1256,7 +1256,7 @@ CMathBase.prototype.Set_RFonts_HAnsi = function(Value)
 		this.raw_SetRFontsHAnsi(Value);
 	}
 };
-CMathBase.prototype.Set_RFonts_CS = function(Value)
+CMathBase.prototype.SetRFontsCS = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1267,7 +1267,7 @@ CMathBase.prototype.Set_RFonts_CS = function(Value)
 		this.raw_SetRFontsCS(Value);
 	}
 };
-CMathBase.prototype.Set_RFonts_EastAsia = function(Value)
+CMathBase.prototype.SetRFontsEastAsia = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1278,7 +1278,7 @@ CMathBase.prototype.Set_RFonts_EastAsia = function(Value)
 		this.raw_SetRFontsEastAsia(Value);
 	}
 };
-CMathBase.prototype.Set_RFonts_Hint = function(Value)
+CMathBase.prototype.SetRFontsHint = function(Value)
 {
 	if (null === Value)
 		Value = undefined;
@@ -1365,31 +1365,31 @@ CMathBase.prototype.raw_SetHighlightColor = function(Value)
 };
 CMathBase.prototype.raw_SetRFonts = function(RFonts)
 {
-    if ( undefined != RFonts )
-    {
-        if ( undefined != RFonts.Ascii )
-            this.Set_RFonts_Ascii( RFonts.Ascii );
+	if (RFonts)
+	{
+		if (undefined !== RFonts.Ascii)
+			this.SetRFontsAscii(RFonts.Ascii);
 
-        if ( undefined != RFonts.HAnsi )
-            this.Set_RFonts_HAnsi( RFonts.HAnsi );
+		if (undefined !== RFonts.HAnsi)
+			this.SetRFontsHAnsi(RFonts.HAnsi);
 
-        if ( undefined != RFonts.CS )
-            this.Set_RFonts_CS( RFonts.CS );
+		if (undefined !== RFonts.CS)
+			this.SetRFontsCS(RFonts.CS);
 
-        if ( undefined != RFonts.EastAsia )
-            this.Set_RFonts_EastAsia( RFonts.EastAsia );
+		if (undefined !== RFonts.EastAsia)
+			this.SetRFontsEastAsia(RFonts.EastAsia);
 
-        if ( undefined != RFonts.Hint )
-            this.Set_RFonts_Hint( RFonts.Hint );
-    }
-    else
-    {
-        this.Set_RFonts_Ascii( undefined );
-        this.Set_RFonts_HAnsi( undefined );
-        this.Set_RFonts_CS( undefined );
-        this.Set_RFonts_EastAsia( undefined );
-        this.Set_RFonts_Hint( undefined );
-    }
+		if (undefined !== RFonts.Hint)
+			this.SetRFontsHint(RFonts.Hint);
+	}
+	else
+	{
+		this.SetRFontsAscii(undefined);
+		this.SetRFontsHAnsi(undefined);
+		this.SetRFontsCS(undefined);
+		this.SetRFontsEastAsia(undefined);
+		this.SetRFontsHint(undefined);
+	}
 };
 CMathBase.prototype.raw_SetRFontsAscii = function(Value)
 {
@@ -1458,23 +1458,23 @@ CMathBase.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRang
 
     if ( 0 !== PRSA.LettersSkip )
     {
-        WidthVisible = this.Bounds.Get_Width(CurLine, CurRange);
+        WidthVisible = this.Bounds.GetWidth(CurLine, CurRange);
         PRSA.LettersSkip--;
     }
     else
     {
-        WidthVisible = this.Bounds.Get_Width(CurLine, CurRange) + PRSA.JustifyWord;
+        WidthVisible = this.Bounds.GetWidth(CurLine, CurRange) + PRSA.JustifyWord;
     }
 
     PRSA.X    += WidthVisible;
     PRSA.LastW = WidthVisible;
 };
-CMathBase.prototype.Get_Width = function(_CurLine, _CurRange)
+CMathBase.prototype.GetWidth = function(_CurLine, _CurRange)
 {
     var CurLine  = _CurLine - this.StartLine,
         CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
 
-    return this.Bounds.Get_Width(CurLine, CurRange);
+    return this.Bounds.GetWidth(CurLine, CurRange);
 };
 CMathBase.prototype.SaveRecalculateObject = function(Copy)
 {
@@ -1541,7 +1541,13 @@ CMathBase.prototype.Copy = function(Selected, oPr)
     }
     if(oPr && oPr.Comparison)
     {
-        oPr.Comparison.updateReviewInfo(NewElement, reviewtype_Add);
+        if (oPr.SkipUpdateInfo) {
+            oPr.Comparison.saveReviewInfo(NewElement, this);
+        } else if (oPr.bSaveCustomReviewType) {
+            oPr.Comparison.saveCustomReviewInfo(NewElement, this, oPr.Comparison.nInsertChangesType);
+        } else {
+            oPr.Comparison.updateReviewInfo(NewElement, oPr.Comparison.nInsertChangesType);
+        }
     }
     return NewElement;
 };
@@ -1856,7 +1862,7 @@ CMathBase.prototype.Selection_DrawRange = function(_CurLine, _CurRange, Selectio
     }
     else if(SelectionDraw.FindStart == true)
     {
-        SelectionDraw.StartX += this.Bounds.Get_Width(CurLine, CurRange);
+        SelectionDraw.StartX += this.Bounds.GetWidth(CurLine, CurRange);
     }
 
 };
@@ -2704,7 +2710,7 @@ CMathBase.prototype.CheckRevisionsChanges = function(Checker, ContentPos, Depth)
 
     if (true !== Checker.Is_CheckOnlyTextPr())
     {
-        if (ReviewType !== Checker.GetAddRemoveType() || (reviewtype_Common !== ReviewType && (this.ReviewInfo.GetUserId() !== Checker.Get_AddRemoveUserId() || this.GetReviewMoveType() !== Checker.GetAddRemoveMoveType())))
+		if (Checker.IsStopAddRemoveChange(ReviewType, this.GetReviewInfo()))
         {
             Checker.FlushAddRemoveChange();
             ContentPos.Update(0, Depth);
@@ -2729,8 +2735,8 @@ CMathBase.prototype.CheckRevisionsChanges = function(Checker, ContentPos, Depth)
                 var TempContentPos = this.Paragraph.Get_PosByElement(this);
                 if (TempContentPos)
                 {
-                    var InParentPos = TempContentPos.Get(TempContentPos.Get_Depth());
-                    TempContentPos.Decrease_Depth(1);
+                    var InParentPos = TempContentPos.Get(TempContentPos.GetDepth());
+                    TempContentPos.DecreaseDepth(1);
                     var Parent = this.Paragraph.Get_ElementByPos(TempContentPos);
                     if (Parent && Parent.Content && this === Parent.Content[InParentPos] && Parent.Content[InParentPos + 1] && para_Math_Run === Parent.Content[InParentPos + 1].Type)
                     {
@@ -3008,6 +3014,23 @@ CMathBase.prototype.ConvertOperatorToStr = function(operator)
     }
     return OPERATOR_EMPTY === operator ? "" : AscCommon.convertUnicodeToUTF16([operator]);
 };
+CMathBase.prototype.GetTextOfElement = function()
+{
+	return "";
+};
+
+CMathBase.prototype.GetStartBracetForGetTextContent = function(isLaTeX) {
+	if (isLaTeX) 
+		return '{';
+	else
+		return '(';
+};
+CMathBase.prototype.GetEndBracetForGetTextContent = function(isLaTeX) {
+	if (isLaTeX) 
+		return '}';
+	else
+		return ')';
+};
 
 function CMathBasePr()
 {
@@ -3032,6 +3055,10 @@ CMathBounds.prototype.CheckLineBound = function(Line, Range)
     {
         this.Bounds[Line] = [];
     }
+    else if (undefined === this.Bounds[Line])
+    {
+        this.Bounds[Line] = [];
+    }
 
     if(this.Bounds[Line].length <= Range)
     {
@@ -3053,7 +3080,7 @@ CMathBounds.prototype.SetPage = function(Line, Range, Page)
     this.CheckLineBound(Line);
     this.Bounds[Line][Range].SetPage(Page);
 };
-CMathBounds.prototype.Get_Width = function(Line, Range)
+CMathBounds.prototype.GetWidth = function(Line, Range)
 {
     this.CheckLineBound(Line);
     return this.Bounds[Line][Range].W;

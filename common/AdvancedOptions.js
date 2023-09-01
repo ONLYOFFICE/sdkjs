@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -43,7 +43,7 @@
 			this.fileType = fileType;
 			this.isDownloadEvent = !!isDownloadEvent;
 			this.advancedOptions = null;
-			this.compatible = false;
+			this.compatible = true;
 
 			this.isNaturalDownload = false;
 			this.errorDirect = null;
@@ -91,6 +91,9 @@
 
 			this.numberDecimalSeparator = null;
 			this.numberGroupSeparator = null;
+
+			this.delimiterRows = null;
+			this.matchMode = null;
 		}
 		asc_CTextOptions.prototype.asc_getDelimiter = function(){return this.delimiter;};
 		asc_CTextOptions.prototype.asc_setDelimiter = function(v){this.delimiter = v;};
@@ -126,6 +129,9 @@
 		asc_CTextOptions.prototype.asc_getTextQualifier = function(){return this.textQualifier;};
 		asc_CTextOptions.prototype.asc_getTextQualifierArr = function () {
 			return ["\"", "'", null];
+		};
+		asc_CTextOptions.prototype.getDelimiterRows = function () {
+			return this.delimiterRows;
 		};
 
 

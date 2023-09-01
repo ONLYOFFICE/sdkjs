@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -71,7 +71,24 @@
             }, 0);
             return maxFontSizeInParagraph > pAcc ? maxFontSizeInParagraph : pAcc;
         }, 0);
-    }
+    };
+
+    CDrawingDocContent.prototype.getBulletImages = function (arrImages) {
+        var aParagraphs = this.Content;
+        var sImageId;
+        for(var nPar = 0; nPar < aParagraphs.length; ++nPar)
+        {
+            var oPr = aParagraphs[nPar].Pr;
+            if(oPr.Bullet)
+            {
+                sImageId = oPr.Bullet.getImageBulletURL();
+                if(sImageId)
+                {
+                    arrImages.push(sImageId);
+                }
+            }
+        }
+    };
 
     CDrawingDocContent.prototype.GetFieldByType = function (sType) {
         var sType_ = sType.toLowerCase();
@@ -771,17 +788,19 @@
             }
         }
     };
-    CDrawingDocContent.prototype.Is_Empty = function()
+    CDrawingDocContent.prototype.Is_Empty = function(bDefault)
     {
-        if (this.isDocumentContentInSmartArtShape()) {
-            var oShape = this.Parent.parent;
-            var contentPoints = oShape.getSmartArtPointContent();
-            if (contentPoints && contentPoints.length !== 0) {
-                var isPhldr = contentPoints.every(function (point) {
-                    return point && point.prSet && point.prSet.phldr;
-                });
-                if (isPhldr) {
-                    return true;
+        if (!bDefault) {
+            if (this.isDocumentContentInSmartArtShape()) {
+                var oShape = this.Parent.parent;
+                var contentPoints = oShape.getSmartArtPointContent();
+                if (contentPoints && contentPoints.length !== 0) {
+                    var isPhldr = contentPoints.every(function (point) {
+                        return point && point.prSet && point.prSet.phldr;
+                    });
+                    if (isPhldr) {
+                        return true;
+                    }
                 }
             }
         }
@@ -790,7 +809,17 @@
 
     CDrawingDocContent.prototype.isDocumentContentInSmartArtShape = function () {
         return this.Parent && this.Parent.parent && this.Parent.parent.isObjectInSmartArt && this.Parent.parent.isObjectInSmartArt();
-    }
+    };
+
+	CDrawingDocContent.prototype.RecalcAllFields = function() {
+		const aFields = this.AllFields;
+		for(let nField = 0; nField < aFields.length; ++nField)
+		{
+			let oField = aFields[nField];
+			oField.RecalcMeasure();
+			oField.Refresh_RecalcData2();
+		}
+	};
     // TODO: сделать по-нормальному!!!
     function CDocument_prototype_private_GetElementPageIndexByXY(ElementPos, X, Y, PageIndex)
     {
@@ -850,12 +879,6 @@
 
     	return this.private_GetElementPageIndex(ElementPos, PageIndex, ResultColumn, ColumnsCount);
     }
-    CDrawingDocContent.prototype.fromXml = function(reader) {
-
-    };
-    CDrawingDocContent.prototype.toXml = function (writer, name) {
-
-    };
 
     function fReadParagraphs(reader) {
 

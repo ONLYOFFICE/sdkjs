@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -150,7 +150,7 @@
 			this.handlers = new AscCommonExcel.asc_CHandlersList(handlers);
             this._createScrollBars();
 
-			if(Asc.editor.isOleEditor) {
+			if(Asc.editor.isEditOleMode) {
 				return;
 			}
 
@@ -317,7 +317,6 @@
 
 			if(this.targetInfo && (this.targetInfo.target === c_oTargetType.MoveResizeRange ||
 				this.targetInfo.target === c_oTargetType.MoveRange ||
-				this.targetInfo.target === c_oTargetType.FillHandle ||
 				this.targetInfo.target === c_oTargetType.FilterObject ||
 				this.targetInfo.target === c_oTargetType.TableSelectionChange))
 				return true;
@@ -692,7 +691,7 @@
 		 * @param event {MouseEvent}
 		 * @param callback {Function}
 		 */
-		asc_CEventsController.prototype._moveRangeHandle = function (event, callback) {
+		asc_CEventsController.prototype._moveRangeHandle = function (event, callback, colRowMoveProps) {
 			var t = this;
 			// Обновляемся в режиме перемещения диапазона
 			var coord = this._getCoordinates(event);
@@ -701,7 +700,7 @@
 					if (!d) return;
 					t.scroll(d);
 					asc_applyFunction(callback);
-				});
+				}, colRowMoveProps);
 		};
 
 		/**
@@ -761,9 +760,9 @@
 			this.handlers.trigger("moveRangeHandleDone", ctrlKey);
 		};
 
-		asc_CEventsController.prototype._moveResizeRangeHandleDone = function () {
+		asc_CEventsController.prototype._moveResizeRangeHandleDone = function (isPageBreakPreview) {
 			// Закончили перемещение диапазона, пересчитаем
-			this.handlers.trigger("moveResizeRangeHandleDone");
+			this.handlers.trigger("moveResizeRangeHandleDone", isPageBreakPreview);
 		};
 
 		/** @param event {jQuery.Event} */
@@ -776,6 +775,7 @@
 		/** @param event {KeyboardEvent} */
 		asc_CEventsController.prototype._onWindowKeyDown = function (event) {
 			var t = this, dc = 0, dr = 0, canEdit = this.canEdit(), action = false, enterOptions;
+			var macOs = AscCommon.AscBrowser.isMacOs;
 			var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
 			var macCmdKey = AscCommon.AscBrowser.isMacOs && event.metaKey;
 			var shiftKey = event.shiftKey;
@@ -820,12 +820,19 @@
 				return result;
 			}
 
-			t.skipKeyPress = true;
+			t._setSkipKeyPress(true);
 
 			var isNeedCheckActiveCellChanged = null;
 			var _activeCell;
 
 			switch (event.which) {
+				case 116:
+					if (canEdit && !t.getCellEditMode() && !selectionDialogMode &&
+						event.altKey && t.handlers.trigger("refreshConnections", !!event.ctrlKey)) {
+						return result;
+					}
+					t._setSkipKeyPress(false);
+					return true;
 				case 82:
 					if (ctrlKey && shiftKey) {
 						stop();
@@ -834,7 +841,7 @@
 						}
 						return result;
 					}
-					t.skipKeyPress = false;
+					t._setSkipKeyPress(false);
 					return true;
 
 				case 120: // F9
@@ -876,7 +883,7 @@
 						this.handlers.trigger("editCell", enterOptions);
 						return result;
 					}
-					t.skipKeyPress = false;
+					t._setSkipKeyPress(false);
 					return true;
 
 
@@ -951,6 +958,9 @@
 				case 27: // Esc
 					t.handlers.trigger("stopFormatPainter");
 					t.handlers.trigger("stopAddShape");
+					t.handlers.trigger("cleanCutData", true, true);
+					t.handlers.trigger("cleanCopyData", true, true);
+					t.view.Api.cancelEyedropper();
 					window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 					return result;
 
@@ -965,11 +975,17 @@
 					if (t.getCellEditMode()) {
 						return true;
 					}
-					var isSelectColumns = !AscBrowser.isMacOs && ctrlKey || AscBrowser.isMacOs && event.altKey;
+					var isSelectColumns = ctrlKey;
+					var isSelectAllMacOs = isSelectColumns && shiftKey && macOs;
 					// Обработать как обычный текст
-					if (!isSelectColumns && !shiftKey) {
-						t.skipKeyPress = false;
-						return true;
+					if ((!isSelectColumns && !shiftKey) || isSelectAllMacOs) {
+						//теперь пробел обрабатывается на WindowKeyDown
+						//вторыы аргументом передаю true, чтобы два раза пробел не добавлялся и сработало событие CellEditor.prototype._onWindowKeyDown
+						//задача функции EnterText в данном случае - либо добавить данные в графику, либо открыть редактор ячейки, чтобы потом
+						//была вызвана следующая инструкия в функции выше -> Api.onKeyDown
+						window["Asc"]["editor"].wb.EnterText(event.which, true);
+						t._setSkipKeyPress(false);
+						return false;
 					}
 					// Отключим стандартную обработку браузера нажатия
 					// Ctrl+Shift+Spacebar, Ctrl+Spacebar, Shift+Spacebar
@@ -980,6 +996,15 @@
 					if (shiftKey) {
 						t.handlers.trigger("selectRowsByRange");
 					}
+					return result;
+
+				case 110: //NumpadDecimal
+					if (!canEdit || t.getCellEditMode() || selectionDialogMode) {
+						return true;
+					}
+					window["Asc"]["editor"].wb.EnterText(this.view.Api.asc_getDecimalSeparator().charCodeAt(0), true);
+					//stop to prevent double enter
+					stop();
 					return result;
 
 				case 33: // PageUp
@@ -1102,7 +1127,7 @@
 					}
 
 					if (!ctrlKey) {
-						t.skipKeyPress = false;
+						t._setSkipKeyPress(false);
 						return true;
 					}
 
@@ -1187,25 +1212,23 @@
 					}
 
 					if (!action) {
-						t.skipKeyPress = false;
+						t._setSkipKeyPress(false);
 						return true;
 					}
 					stop();
 					return result;
-
 				case 61:  // Firefox, Opera (+/=)
 				case 187: // +/=
 					if (!canEdit || t.getCellEditMode() || selectionDialogMode) {
 						return true;
 					}
-
-					if (event.altKey) {
+					if (event.altKey && (!macOs || (macOs && event.ctrlKey))) {
 						this.handlers.trigger('addFunction',
 							AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale['SUM'] :
 								'SUM', Asc.c_oAscPopUpSelectorType.Func, true);
 						stop();
 					} else {
-						this.skipKeyPress = false;
+						t._setSkipKeyPress(false);
 					}
 					return result;
 
@@ -1217,7 +1240,7 @@
 					}
 
 				default:
-					this.skipKeyPress = false;
+					t._setSkipKeyPress(false);
 					return true;
 
 			} // end of switch
@@ -1239,11 +1262,13 @@
 			if ((dc !== 0 || dr !== 0) && false === t.handlers.trigger("isGlobalLockEditCell")) {
 				if (isChangeVisibleAreaMode) {
 				t.handlers.trigger("changeVisibleArea", !shiftKey, dc, dr, false, function (d) {
-						var wb = window["Asc"]["editor"].wb;
+						const wb = window["Asc"]["editor"].wb;
 						if (t.targetInfo) {
 							wb._onUpdateWorksheet(t.targetInfo.coordX, t.targetInfo.coordY, false);
 						}
 						t.scroll(d);
+						const oOleSize = wb.getOleSize();
+						oOleSize.addPointToLocalHistory();
 						_checkLastTab();
 					}, true);
 				} else if (selectionActivePointChanged) { // Проверка на движение в выделенной области
@@ -1292,12 +1317,55 @@
 			}
 
 			if (this.skipKeyPress || event.which < 32) {
-				this.skipKeyPress = true;
+				this._setSkipKeyPress(true);
 				return true;
 			}
 
 			if (!this.getCellEditMode()) {
 				if (this.handlers.trigger("graphicObjectWindowKeyPress", event)) {
+					return true;
+				}
+
+				// При нажатии символа, фокус не ставим и очищаем содержимое ячейки
+				var enterOptions = new AscCommonExcel.CEditorEnterOptions();
+				enterOptions.newText = '';
+				enterOptions.quickInput = true;
+				this.handlers.trigger("editCell", enterOptions);
+			}
+			return true;
+		};
+
+		asc_CEventsController.prototype.EnterText = function (codePoints) {
+			//TODO практически копия _onWindowKeyPress - после того, как будет включена функция EnterText - проверить и объединить функции
+			// Нельзя при отключенных эвентах возвращать false (это касается и ViewerMode)
+			if (!this.enableKeyEvents) {
+				return true;
+			}
+
+			// не вводим текст в режиме просмотра
+			// если в FF возвращать false, то отменяется дальнейшая обработка серии keydown -> keypress -> keyup
+			// и тогда у нас не будут обрабатываться ctrl+c и т.п. события
+			if (!this.canEdit() || this.getSelectionDialogMode() || this.view.Api.isEditVisibleAreaOleEditor) {
+				return true;
+			}
+
+			// Для таких браузеров, которые не присылают отжатие левой кнопки мыши для двойного клика, при выходе из
+			// окна редактора и отпускания кнопки, будем отрабатывать выход из окна (только Chrome присылает эвент MouseUp даже при выходе из браузера)
+			this.showCellEditorCursor();
+
+			// Не можем вводить когда селектим или когда совершаем действия с объектом
+			if (this.getCellEditMode() && !this.hasFocus || this.isSelectMode ||
+				!this.handlers.trigger('canReceiveKeyPress')) {
+				return true;
+			}
+
+			/*if (this.skipKeyPress) {
+				this._setSkipKeyPress(true);
+				return true;
+			}*/
+
+			if (!this.getCellEditMode()) {
+				if (this.handlers.trigger("graphicObjectWindowEnterText", codePoints)) {
 					return true;
 				}
 
@@ -1377,13 +1445,15 @@
 			this.isMousePressed = false;
 			// Shapes
 			if (this.isShapeAction) {
-                if(!this.isUpOnCanvas)
-                {
-                    event.isLocked = this.isMousePressed;
-                    event.ClickCount = this.clickCounter.clickCount;
-                    event.fromWindow = true;
-                    this.handlers.trigger("graphicObjectMouseUp", event, coord.x, coord.y);
-                    this._changeSelectionDone(event);
+                if(!this.isUpOnCanvas) {
+					let oDrawingsController = this.view.getWorksheet().objectRender.controller;
+					if(oDrawingsController.haveTrackedObjects()) {
+						event.isLocked = this.isMousePressed;
+						event.ClickCount = this.clickCounter.clickCount;
+						event.fromWindow = true;
+						this.handlers.trigger("graphicObjectMouseUp", event, coord.x, coord.y);
+						this._changeSelectionDone(event);
+					}
                 }
                 this.isUpOnCanvas = false;
 				return true;
@@ -1391,6 +1461,8 @@
 
 			if (this.isChangeVisibleAreaMode) {
 				this.isChangeVisibleAreaMode = false;
+				const oOleSize = this.view.getOleSize();
+				oOleSize.addPointToLocalHistory();
 			}
 
 			if (this.isSelectMode) {
@@ -1419,7 +1491,7 @@
 
 			if (this.isMoveResizeRange) {
 				this.isMoveResizeRange = false;
-				this.handlers.trigger("moveResizeRangeHandleDone");
+				this._moveResizeRangeHandleDone(this.targetInfo && this.targetInfo.isPageBreakPreview);
 			}
 			// Режим установки закреплённых областей
 			if (this.frozenAnchorMode) {
@@ -1477,6 +1549,7 @@
 			var coord = t._getCoordinates(event);
 			var button = AscCommon.getMouseButton(event);
 			event.isLocked = t.isMousePressed = true;
+			this.isShapeAction = false;
 			// Shapes
 			var graphicsInfo = t.handlers.trigger("getGraphicsInfo", coord.x, coord.y);
 			if(!graphicsInfo) {
@@ -1503,7 +1576,9 @@
 
 			AscCommon.global_mouseEvent.LockMouse();
 
-
+			if(t.view.Api.isEyedropperStarted()) {
+				return;
+			}
 			if (t.handlers.trigger("isGlobalLockEditCell")) {
 				return;
 			}
@@ -1512,32 +1587,38 @@
 				t.handlers.trigger("canvasClick");
 			}
 
-			if (asc["editor"].isStartAddShape || graphicsInfo) {
-				// При выборе диапазона не нужно выделять автофигуру
-				if (this.getSelectionDialogMode()) {
+			if (!(asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn() || this.getSelectionDialogMode() || this.getCellEditMode() && !this.handlers.trigger("stopCellEditing"))) {
+				const isPlaceholder = t.handlers.trigger("onPointerDownPlaceholder", coord.x, coord.y);
+				if (isPlaceholder) {
 					return;
 				}
-
-				if (this.getCellEditMode() && !this.handlers.trigger("stopCellEditing")) {
-					return;
-				}
-
-				t.isShapeAction = true;
-				t.isUpOnCanvas = false;
-
-
-				t.clickCounter.mouseDownEvent(coord.x, coord.y, button);
-				event.ClickCount = t.clickCounter.clickCount;
-				if (0 === event.ClickCount % 2) {
-					t.isDblClickInMouseDown = true;
-				}
-
-				t.handlers.trigger("graphicObjectMouseDown", event, coord.x, coord.y);
-				t.handlers.trigger("updateSelectionShape", /*isSelectOnShape*/true);
-				return;
 			}
 
-			this.isShapeAction = false;
+			// do not work with drawings in selection dialog mode
+			if (!this.getSelectionDialogMode()) {
+				if (asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn() || graphicsInfo) {
+
+
+					if (this.getCellEditMode() && !this.handlers.trigger("stopCellEditing")) {
+						return;
+					}
+
+					t.isShapeAction = true;
+					t.isUpOnCanvas = false;
+
+
+					t.clickCounter.mouseDownEvent(coord.x, coord.y, button);
+					event.ClickCount = t.clickCounter.clickCount;
+					if (0 === event.ClickCount % 2) {
+						t.isDblClickInMouseDown = true;
+					}
+
+					t.handlers.trigger("graphicObjectMouseDown", event, coord.x, coord.y);
+					t.handlers.trigger("updateSelectionShape", /*isSelectOnShape*/true);
+					return;
+				}
+			}
+
 
 			if (2 === event.detail) {
 				// Это означает, что это MouseDown для dblClick эвента (его обрабатывать не нужно)
@@ -1570,7 +1651,7 @@
 
 			if (!t.getCellEditMode() && !t.getSelectionDialogMode()) {
 				this.gotFocus(true);
-				if (event.shiftKey) {
+				if (event.shiftKey && !(t.targetInfo.target === c_oTargetType.ColumnRowHeaderMove && this.canEdit())) {
 					t.isSelectMode = true;
 					t._changeSelection(event);
 					return;
@@ -1595,7 +1676,7 @@
 						if (0 === button) {
 							if (t.targetInfo.isDataValidation) {
 								this.handlers.trigger('onDataValidation');
-							} else if (t.targetInfo.idPivot && Asc.CT_pivotTableDefinition.prototype.asc_filterByCell) {
+							} else if (t.targetInfo.idPivot) {
 								this.handlers.trigger("pivotFiltersClick", t.targetInfo.idPivot);
 							} else if (t.targetInfo.idPivotCollapse) {
 								this.handlers.trigger("pivotCollapseClick", t.targetInfo.idPivotCollapse);
@@ -1676,9 +1757,16 @@
 					this.isFillHandleMode = true;
 					this._changeFillHandle(event, null, t.targetInfo.tableIndex);
 				} else {
-					this.isSelectMode = true;
-					this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true,
-						ctrlKey);
+					if (this.targetInfo && this.targetInfo.target === c_oTargetType.ColumnRowHeaderMove) {
+						this.isMoveRangeMode = true;
+						t._moveRangeHandle(event, null, {ctrlKey: ctrlKey, shiftKey: event.shiftKey});
+						t.handlers.trigger("updateWorksheet", coord.x, coord.y);
+						//t.handlers.trigger("updateWorksheet", coord.x, coord.y, ctrlKey, function(info){t.targetInfo = info;});
+					} else {
+						this.isSelectMode = true;
+						this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true,
+							ctrlKey);
+					}
 				}
 			}
 		};
@@ -1690,6 +1778,8 @@
 
 			if (this.isChangeVisibleAreaMode) {
 				this.isChangeVisibleAreaMode = false;
+				const oOleSize = this.view.getOleSize();
+				oOleSize.addPointToLocalHistory();
 			}
 
 			if (2 === button) {
@@ -1699,15 +1789,21 @@
 				return true;
 			}
 
-			// Shapes
 			var coord = this._getCoordinates(event);
+			if(this.view.Api.isEyedropperStarted()) {
+				this.view.Api.finishEyedropper();
+				var t = this;
+				t.handlers.trigger("updateWorksheet", coord.x, coord.y, false, function(info){t.targetInfo = info;});
+				return true;
+			}
+			// Shapes
 			event.isLocked = this.isMousePressed = false;
 
 			if (this.isShapeAction) {
 				event.ClickCount = this.clickCounter.clickCount;
 				this.handlers.trigger("graphicObjectMouseUp", event, coord.x, coord.y);
 				this._changeSelectionDone(event);
-                if (asc["editor"].isStartAddShape)
+                if (asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn())
                 {
                     event.preventDefault && event.preventDefault();
                     event.stopPropagation && event.stopPropagation();
@@ -1743,7 +1839,7 @@
 
 			if (this.isMoveResizeRange) {
 				this.isMoveResizeRange = false;
-				this._moveResizeRangeHandleDone();
+				this._moveResizeRangeHandleDone(this.targetInfo && this.targetInfo.pageBreakSelectionType);
 				return true;
 			}
 			// Режим установки закреплённых областей
@@ -1758,6 +1854,10 @@
 				return;
 			}
 
+			if (this.targetInfo && this.targetInfo.target === c_oTargetType.ColumnHeader) {
+				this._onMouseMove(event);
+			}
+
 			// Мы можем dblClick и не отработать, если вышли из области и отпустили кнопку мыши, нужно отработать
 			this.showCellEditorCursor();
 		};
@@ -1770,6 +1870,11 @@
 
 			t.hasCursor = true;
 
+			if(t.view.Api.isEyedropperStarted()) {
+				t.view.Api.checkEyedropperColor(coord.x, coord.y);
+				t.handlers.trigger("updateWorksheet", coord.x, coord.y, ctrlKey, function(info){t.targetInfo = info;});
+				return true;
+			}
 			// Shapes
 			var graphicsInfo = t.handlers.trigger("getGraphicsInfo", coord.x, coord.y);
 			if ( graphicsInfo )
@@ -1814,7 +1919,7 @@
 				return true;
 			}
 
-			if (t.isShapeAction || graphicsInfo) {
+			if (t.isShapeAction || graphicsInfo || asc["editor"].isInkDrawerOn()) {
 				event.isLocked = t.isMousePressed;
 				t.handlers.trigger("graphicObjectMouseMove", event, coord.x, coord.y);
 				t.handlers.trigger("updateWorksheet", coord.x, coord.y, ctrlKey, function(info){t.targetInfo = info;});
@@ -1842,6 +1947,9 @@
 			}
 			if (this.isFillHandleMode) {
 				t.fillHandleModeTimerId = window.setTimeout(function(){t._changeFillHandle2(event)},0);
+			}
+			if(t.view.Api.isEyedropperStarted()) {
+				this.view.Api.sendEvent("asc_onHideEyedropper");
 			}
 			return true;
 		};
@@ -1969,6 +2077,10 @@
 			y *= AscCommon.AscBrowser.retinaPixelRatio;
 
 			return {x: x, y: y};
+		};
+
+		asc_CEventsController.prototype._setSkipKeyPress = function (val) {
+			this.skipKeyPress = val;
 		};
 
 		//------------------------------------------------------------export---------------------------------------------------

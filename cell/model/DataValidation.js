@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1484,24 +1484,20 @@
 
 	CDataValidations.prototype._containRanges = function (_ranges1, _ranges2) {
 		//проверка на то, что диапазон второго range входит в дипапазон первого
+		var res = false;
 		if (_ranges1 && _ranges2 && _ranges1.length && _ranges2.length) {
 			for (var j = 0; j < _ranges1.length; j++) {
-				var _contains = false;
-				for (var n = 0; n < _ranges2.length; n++) {
-					if (_ranges1[j].containsRange(_ranges2[n])) {
-						_contains = true;
-						break;
-					}
-				}
-				if (!_contains) {
-					return false;
+				//проверяем, вошёл ли целиком массив диапазонов второго в один из первых
+				if (_ranges1[j].containsRanges(_ranges2)) {
+					res = true;
+					break;
 				}
 			}
 		} else {
-			return false;
+			res = false;
 		}
 
-		return true;
+		return res;
 	};
 
 	CDataValidations.prototype.clear = function (ws, ranges, addToHistory) {

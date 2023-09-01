@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -479,7 +479,7 @@
 	};
 
 	CConditionalFormattingRule.prototype.setLocation = function (location, ws, addToHistory) {
-		if (addToHistory) {
+		if (addToHistory && !History.TurnOffHistory) {
 			var getUndoRedoRange = function (_ranges) {
 				var needRanges = [];
 				for (var i = 0; i < _ranges.length; i++) {
@@ -1100,11 +1100,11 @@
 	};
 	CConditionalFormattingRule.prototype.asc_getValue1 = function () {
 		var ruleElement = this.aRuleElements[0];
-		return ruleElement && ruleElement.getFormula ? "=" + ruleElement.Text : null;
+		return ruleElement && ruleElement.getFormula ? "=" + ruleElement.getFormulaStr(true) : null;
 	};
 	CConditionalFormattingRule.prototype.asc_getValue2 = function () {
 		var ruleElement = this.aRuleElements[1];
-		return ruleElement && ruleElement.getFormula ? "=" + ruleElement.Text : null;
+		return ruleElement && ruleElement.getFormula ? "=" + ruleElement.getFormulaStr(true) : null;
 	};
 	CConditionalFormattingRule.prototype.asc_getColorScaleOrDataBarOrIconSetRule = function () {
 		if ((Asc.ECfType.dataBar === this.type || Asc.ECfType.iconSet === this.type ||
@@ -1355,6 +1355,7 @@
 		//чищу всегда, поскольку от интерфейса всегда заново выставляются оба значения
 		this.aRuleElements = [];
 		val = correctFromInterface(val);
+
 
 		this.aRuleElements[0] = new CFormulaCF();
 		this.aRuleElements[0].Text = val;
@@ -2124,6 +2125,24 @@
 		//m_arrFormula[i]->isExtended() -> return (m_sNodeName == L"xm:f");
 		return true;
 	};
+	CFormulaCF.prototype.getFormulaStr = function (needBuild) {
+		var res = null;
+		if (this._f) {
+			res = this._f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
+		} else if (needBuild) {
+			var oWB = Asc.editor && Asc.editor.wbModel;
+			if(oWB) {
+				var ws = oWB.getActiveWs();
+				if (ws) {
+					var _f = new AscCommonExcel.parserFormula(this.Text, null, ws);
+					_f.parse(true, true);
+					res = _f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
+				}
+			}
+		}
+		return res ? res : this.Text;
+	};
+
 
 	function CIconSet() {
 		this.IconSet = EIconSetType.Traffic3Lights1;
@@ -2515,7 +2534,7 @@
 		return this.IconId;
 	};
 	CConditionalFormatIconSet.prototype.asc_getIndex = function () {
-		this.IconId = val;
+		return this.IconId;
 	};
 	CConditionalFormatIconSet.prototype.asc_setIconSet = function (val) {
 		this.IconSet = val;
@@ -2618,7 +2637,9 @@
 			return null;
 		};
 
+		var _parseResultArg;
 		var _doParseFormula = function (sFormula) {
+			_parseResultArg = null;
 			if(!(typeof sFormula === "string" && sFormula.length > 0)) {
 				return;
 			}
@@ -2635,7 +2656,7 @@
 			}
 
 			var _formulaParsed = new AscCommonExcel.parserFormula(sFormula, null, ws);
-			var _parseResultArg = new AscCommonExcel.ParseResult([], []);
+			_parseResultArg = new AscCommonExcel.ParseResult([], []);
 			_formulaParsed.parse(true, true, _parseResultArg, true);
 
 			return _formulaParsed;
@@ -2652,6 +2673,10 @@
 						_val = '"' + _val + '"';
 					} else {
 						fParser = _doParseFormula(_val);
+						if (_parseResultArg && _parseResultArg.error) {
+							return _parseResultArg.error;
+						}
+
 						//если внутри диапазон - проверяем его
 						_error = fParser && checkFormulaStack(fParser);
 						if (_error !== null) {
@@ -2666,6 +2691,10 @@
 						_val = '"' + _val + '"';
 					} else {
 						fParser = _doParseFormula(_val);
+						if (_parseResultArg && _parseResultArg.error) {
+							return _parseResultArg.error;
+						}
+
 						//если внутри диапазон - проверяем его
 						_error = fParser && checkFormulaStack(fParser);
 						if (_error !== null) {
@@ -2683,6 +2712,10 @@
 						_val = '"' + _val + '"';
 					} else {
 						fParser = _doParseFormula(_val);
+						if (_parseResultArg && _parseResultArg.error) {
+							return _parseResultArg.error;
+						}
+
 						//если внутри диапазон - проверяем его
 						_error = fParser && checkFormulaStack(fParser);
 						if (_error !== null) {
@@ -2712,6 +2745,10 @@
 			//для iconSet сравниваем числа для типов Number/Percent/Percentile - должны идти по убыванию, сраниваем только соседние
 
 			if (_prevNum && _isNum) {
+				if (_isNum && _prevNum) {
+					_val = parseFloat(_val);
+					_prevVal = parseFloat(_prevVal);
+				}
 				if (type === Asc.ECfType.colorScale) {
 					if (_prevType === _type && type !== AscCommonExcel.ECfvoType.Formula && _prevVal > _val) {
 						return asc_error.ValueMustBeGreaterThen;
@@ -2807,6 +2844,16 @@
 
 			if (!isFormula) {
 				val = addQuotes(val);
+			} else {
+				var oWB = Asc.editor && Asc.editor.wbModel;
+				if(oWB) {
+					var ws = oWB.getActiveWs();
+					if (ws) {
+						var _f = new AscCommonExcel.parserFormula(val, null, ws);
+						_f.parse(true, true);
+						val = _f.assemble();
+					}
+				}
 			}
 		}
 

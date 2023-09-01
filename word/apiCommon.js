@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -430,6 +430,7 @@
 			this.PercentFullWidth = tblProp.PercentFullWidth;
 			this.TableDescription = tblProp.TableDescription;
 			this.TableCaption = tblProp.TableCaption;
+			this.TableName = tblProp.TableName;
 
 			this.ColumnWidth = tblProp.ColumnWidth;
 			this.RowHeight   = tblProp.RowHeight;
@@ -758,6 +759,14 @@
 	{
 		this.TableCaption = v;
 	};
+	CTableProp.prototype.get_TableName = function ()
+	{
+		return this.TableName;
+	};
+	CTableProp.prototype.put_TableName = function (v)
+	{
+		this.TableName = v;
+	};
 	CTableProp.prototype.get_ColumnWidth = function()
 	{
 		return this.ColumnWidth;
@@ -838,6 +847,8 @@
 	CTableProp.prototype['put_TableDescription'] = CTableProp.prototype.put_TableDescription;
 	CTableProp.prototype['get_TableCaption'] = CTableProp.prototype.get_TableCaption;
 	CTableProp.prototype['put_TableCaption'] = CTableProp.prototype.put_TableCaption;
+	CTableProp.prototype['get_TableName'] = CTableProp.prototype.get_TableName;
+	CTableProp.prototype['put_TableName'] = CTableProp.prototype.put_TableName;
 	CTableProp.prototype['get_ColumnWidth'] = CTableProp.prototype.get_ColumnWidth;
 	CTableProp.prototype['put_ColumnWidth'] = CTableProp.prototype.put_ColumnWidth;
 	CTableProp.prototype['get_RowHeight'] = CTableProp.prototype.get_RowHeight;
@@ -1670,8 +1681,7 @@
 	CAscStyle.prototype['put_UIPriority']     = CAscStyle.prototype.put_UIPriority;
 	CAscStyle.prototype['get_StyleId']        = CAscStyle.prototype.get_StyleId;
 	CAscStyle.prototype['get_TranslatedName'] = CAscStyle.prototype.get_TranslatedName;
-
-
+	
 	/**
 	 * Класс для работы с настройками нумерации
 	 * @constructor
@@ -1700,10 +1710,23 @@
 
 		return this.Lvl[nLvl];
 	};
+	CAscNumbering.prototype.get_JSONNumbering = function(singleLevel)
+	{
+		return AscWord.CNumInfo.FromNum(this, singleLevel ? 0 : null).ToJson();
+	};
+	CAscNumbering.prototype.put_FromJSON = function(value)
+	{
+		let numInfo = AscWord.CNumInfo.Parse(value);
+		if (!numInfo)
+			return;
+		
+		numInfo.FillNum(this);
+	};
 	window['Asc']['CAscNumbering'] = window['Asc'].CAscNumbering = CAscNumbering;
-	CAscNumbering.prototype['get_InternalId'] = CAscNumbering.prototype.get_InternalId;
-	CAscNumbering.prototype['get_Lvl']        = CAscNumbering.prototype.get_Lvl;
-
+	CAscNumbering.prototype['get_InternalId']    = CAscNumbering.prototype.get_InternalId;
+	CAscNumbering.prototype['get_Lvl']           = CAscNumbering.prototype.get_Lvl;
+	CAscNumbering.prototype['get_JSONNumbering'] = CAscNumbering.prototype.get_JSONNumbering;
+	CAscNumbering.prototype['put_FromJSON']      = CAscNumbering.prototype.put_FromJSON;
 
 	/**
 	 * Класс для работы с текстом конкретного уровня нумерации
@@ -1754,98 +1777,247 @@
 		this.Align   = AscCommon.align_Left;
 		this.PStyle  = undefined;
 	}
-	CAscNumberingLvl.prototype.get_LvlNum = function()
+	CAscNumberingLvl.prototype.checkTextPr = function ()
 	{
-		return this.LvlNum;
+		if (!this.TextPr)
+		{
+			this.TextPr  = new AscCommonWord.CTextPr();
+		}
 	};
-	CAscNumberingLvl.prototype.get_Format = function()
+	CAscNumberingLvl.prototype.checkParaPr = function ()
 	{
-		return this.Format;
+		if (!this.ParaPr)
+		{
+			this.ParaPr  = new AscCommonWord.CParaPr();
+		}
 	};
-	CAscNumberingLvl.prototype.put_Format = function(nFormat)
+	CAscNumberingLvl.prototype.put_Format = function (nFormat)
 	{
 		this.Format = nFormat;
 	};
-	CAscNumberingLvl.prototype.get_Text = function()
-	{
-		return this.Text;
-	};
-	CAscNumberingLvl.prototype.put_Text = function(arrText)
+	CAscNumberingLvl.prototype.put_Text = function (arrText)
 	{
 		this.Text = arrText;
 	};
-	CAscNumberingLvl.prototype.get_TextPr = function()
-	{
-		return this.TextPr;
-	};
-	CAscNumberingLvl.prototype.get_ParaPr = function()
-	{
-		return this.ParaPr;
-	};
-	CAscNumberingLvl.prototype.get_Start = function()
-	{
-		return this.Start;
-	};
-	CAscNumberingLvl.prototype.put_Start = function(nStart)
+	CAscNumberingLvl.prototype.put_Start = function (nStart)
 	{
 		this.Start = nStart;
 	};
-	CAscNumberingLvl.prototype.get_Restart = function()
-	{
-		return this.Restart;
-	};
-	CAscNumberingLvl.prototype.put_Restart = function(nRestart)
+	CAscNumberingLvl.prototype.put_Restart = function (nRestart)
 	{
 		this.Restart = nRestart;
 	};
-	CAscNumberingLvl.prototype.get_Suff = function()
-	{
-		return this.Suff;
-	};
-	CAscNumberingLvl.prototype.put_Suff = function(nSuff)
+	CAscNumberingLvl.prototype.put_Suff = function (nSuff)
 	{
 		this.Suff = nSuff;
 	};
-	CAscNumberingLvl.prototype.get_Align = function()
-	{
-		return this.Align;
-	};
-	CAscNumberingLvl.prototype.put_Align = function(nAlign)
+	CAscNumberingLvl.prototype.put_Align = function (nAlign)
 	{
 		this.Align = nAlign;
 	};
-	CAscNumberingLvl.prototype.get_PStyle = function()
-	{
-		return this.PStyle;
-	};
-	CAscNumberingLvl.prototype.put_PStyle = function(sStyleId)
+	CAscNumberingLvl.prototype.put_PStyle = function (sStyleId)
 	{
 		this.PStyle = sStyleId;
 	};
-	CAscNumberingLvl.prototype.get_OLang = function()
+	CAscNumberingLvl.prototype.put_Color = function (oAscColor)
 	{
-		return this.TextPr && this.TextPr.Lang;
+		this.checkTextPr();
+		this.TextPr.put_Color(oAscColor);
 	};
-	window['Asc']['CAscNumberingLvl'] = window['Asc'].CAscNumberingLvl = CAscNumberingLvl;
-	CAscNumberingLvl.prototype['get_LvlNum']  = CAscNumberingLvl.prototype.get_LvlNum;
-	CAscNumberingLvl.prototype['get_Format']  = CAscNumberingLvl.prototype.get_Format;
-	CAscNumberingLvl.prototype['put_Format']  = CAscNumberingLvl.prototype.put_Format;
-	CAscNumberingLvl.prototype['get_Text']    = CAscNumberingLvl.prototype.get_Text;
-	CAscNumberingLvl.prototype['put_Text']    = CAscNumberingLvl.prototype.put_Text;
-	CAscNumberingLvl.prototype['get_TextPr']  = CAscNumberingLvl.prototype.get_TextPr;
-	CAscNumberingLvl.prototype['get_ParaPr']  = CAscNumberingLvl.prototype.get_ParaPr;
-	CAscNumberingLvl.prototype['get_Start']   = CAscNumberingLvl.prototype.get_Start;
-	CAscNumberingLvl.prototype['put_Start']   = CAscNumberingLvl.prototype.put_Start;
-	CAscNumberingLvl.prototype['get_Restart'] = CAscNumberingLvl.prototype.get_Restart;
-	CAscNumberingLvl.prototype['put_Restart'] = CAscNumberingLvl.prototype.put_Restart;
-	CAscNumberingLvl.prototype['get_Suff']    = CAscNumberingLvl.prototype.get_Suff;
-	CAscNumberingLvl.prototype['put_Suff']    = CAscNumberingLvl.prototype.put_Suff;
-	CAscNumberingLvl.prototype['get_Align']   = CAscNumberingLvl.prototype.get_Align;
-	CAscNumberingLvl.prototype['put_Align']   = CAscNumberingLvl.prototype.put_Align;
-	CAscNumberingLvl.prototype['get_PStyle']  = CAscNumberingLvl.prototype.get_PStyle;
-	CAscNumberingLvl.prototype['put_PStyle']  = CAscNumberingLvl.prototype.put_PStyle;
-	CAscNumberingLvl.prototype['get_OLang']   = CAscNumberingLvl.prototype.get_OLang;
+	CAscNumberingLvl.prototype.put_Bold = function (bBold)
+	{
+		this.checkTextPr();
+		this.TextPr.put_Bold(bBold);
+	};
+	CAscNumberingLvl.prototype.put_Italic = function (bItalic)
+	{
+		this.checkTextPr();
+		this.TextPr.put_Italic(bItalic);
+	};
+	CAscNumberingLvl.prototype.put_FontFamily = function (sName)
+	{
+		this.checkTextPr();
+		this.TextPr.put_FontFamily(sName);
+	};
+	CAscNumberingLvl.prototype.put_FontSize = function (nFontSize)
+	{
+		this.checkTextPr();
+		this.TextPr.put_FontSize(nFontSize);
+	};
+	CAscNumberingLvl.prototype.put_IndentSize = function (nIndentSize)
+	{
+		this.checkParaPr();
+		const nOldNumberPosition = this.get_NumberPosition();
+		this.ParaPr.put_Ind(undefined, nIndentSize, undefined);
+		this.put_NumberPosition(nOldNumberPosition);
+	};
+	CAscNumberingLvl.prototype.put_NumberPosition = function (nNumberPosition)
+	{
+		const nLeft = this.ParaPr.Ind.Left || 0;
+		this.ParaPr.put_Ind(nNumberPosition - nLeft, undefined, undefined);
+		const nStopTab = this.GetStopTab();
+		if (AscFormat.isRealNumber(nStopTab) && nStopTab < nNumberPosition)
+		{
+			this.put_StopTab(nNumberPosition);
+		}
+	};
+	CAscNumberingLvl.prototype.GetStopTab = function ()
+	{
+		const oParaPr = this.ParaPr;
+		if (oParaPr)
+		{
+			const oTabs = oParaPr.GetTabs();
+			if (oTabs)
+			{
+				if (oTabs && oTabs.GetCount() === 1)
+				{
+					return oTabs.Get(0).Pos;
+				}
+			}
+		}
+		return null;
+	};
+	CAscNumberingLvl.prototype.get_StopTab = CAscNumberingLvl.prototype.GetStopTab;
 
+	CAscNumberingLvl.prototype.SetStopTab = function (nValue)
+	{
+		let oParaPr = this.ParaPr;
+		if (!oParaPr)
+		{
+			oParaPr = new AscCommonWord.CParaPr();
+			this.ParaPr = oParaPr;
+		}
+		if (AscFormat.isRealNumber(nValue))
+		{
+			const oTabs = new AscCommonWord.CParaTabs();
+			oTabs.Add(new AscCommonWord.CParaTab(Asc.c_oAscTabType.Num, nValue));
+			oParaPr.Tabs = oTabs;
+		}
+		else
+		{
+			delete oParaPr.Tabs;
+		}
+	};
+	CAscNumberingLvl.prototype.put_StopTab = CAscNumberingLvl.prototype.SetStopTab;
+		CAscNumberingLvl.prototype.get_TextPr = function ()
+	{
+		return this.TextPr;
+	};
+	CAscNumberingLvl.prototype.GetTextPr = CAscNumberingLvl.prototype.get_TextPr;
+
+	CAscNumberingLvl.prototype.get_ParaPr = function ()
+	{
+		return this.ParaPr;
+	};
+	CAscNumberingLvl.prototype.get_Text = function ()
+	{
+		return this.Text;
+	};
+	CAscNumberingLvl.prototype.get_Start = function ()
+	{
+		return this.Start;
+	};
+	CAscNumberingLvl.prototype.get_Align = function ()
+	{
+		return this.Align;
+	};
+	CAscNumberingLvl.prototype.get_PStyle = function ()
+	{
+		return this.PStyle;
+	};
+	CAscNumberingLvl.prototype.get_OLang = function ()
+	{
+		return this.TextPr ? this.TextPr.get_Lang() : undefined;
+	};
+	CAscNumberingLvl.prototype.get_Color = function ()
+	{
+		return this.TextPr ? this.TextPr.get_Color() : undefined;
+	};
+	CAscNumberingLvl.prototype.get_Bold = function ()
+	{
+		return this.TextPr ? this.TextPr.get_Bold() : undefined;
+	};
+	CAscNumberingLvl.prototype.get_Italic = function ()
+	{
+		return this.TextPr ? this.TextPr.get_Italic() : undefined;
+	};
+	CAscNumberingLvl.prototype.get_FontFamily = function ()
+	{
+		return this.TextPr ? this.TextPr.get_FontFamily() : undefined;
+	};
+	CAscNumberingLvl.prototype.get_FontSize = function ()
+	{
+		return this.TextPr ? this.TextPr.get_FontSize() : undefined;
+	};
+	CAscNumberingLvl.prototype.get_IndentSize = function ()
+	{
+		return this.ParaPr && this.ParaPr.Ind ? this.ParaPr.Ind.Left : 0;
+	};
+	CAscNumberingLvl.prototype.GetIndentSize = CAscNumberingLvl.prototype.get_IndentSize;
+
+	CAscNumberingLvl.prototype.get_NumberPosition = function ()
+	{
+		const nLeft = this.get_IndentSize();
+		if (AscFormat.isRealNumber(this.ParaPr.Ind.FirstLine))
+		{
+			return nLeft + this.ParaPr.Ind.FirstLine;
+		}
+		return nLeft;
+	};
+	CAscNumberingLvl.prototype.GetNumberPosition = CAscNumberingLvl.prototype.get_NumberPosition;
+
+	CAscNumberingLvl.prototype.get_LvlNum = function ()
+	{
+		return this.LvlNum;
+	};
+	CAscNumberingLvl.prototype.get_Format = function ()
+	{
+		return this.Format;
+	};
+	CAscNumberingLvl.prototype.get_Restart = function ()
+	{
+		return this.Restart;
+	};
+	CAscNumberingLvl.prototype.get_Suff = function ()
+	{
+		return this.Suff;
+	};
+	window['Asc']['CAscNumberingLvl']                 = window['Asc'].CAscNumberingLvl = CAscNumberingLvl;
+	CAscNumberingLvl.prototype['get_LvlNum']          = CAscNumberingLvl.prototype.get_LvlNum;
+	CAscNumberingLvl.prototype['get_Format']          = CAscNumberingLvl.prototype.get_Format;
+	CAscNumberingLvl.prototype['put_Format']          = CAscNumberingLvl.prototype.put_Format;
+	CAscNumberingLvl.prototype['get_Text']            = CAscNumberingLvl.prototype.get_Text;
+	CAscNumberingLvl.prototype['put_Text']            = CAscNumberingLvl.prototype.put_Text;
+	CAscNumberingLvl.prototype['get_TextPr']          = CAscNumberingLvl.prototype.get_TextPr;
+	CAscNumberingLvl.prototype['get_ParaPr']          = CAscNumberingLvl.prototype.get_ParaPr;
+	CAscNumberingLvl.prototype['get_Start']           = CAscNumberingLvl.prototype.get_Start;
+	CAscNumberingLvl.prototype['put_Start']           = CAscNumberingLvl.prototype.put_Start;
+	CAscNumberingLvl.prototype['get_Restart']         = CAscNumberingLvl.prototype.get_Restart;
+	CAscNumberingLvl.prototype['put_Restart']         = CAscNumberingLvl.prototype.put_Restart;
+	CAscNumberingLvl.prototype['get_Suff']            = CAscNumberingLvl.prototype.get_Suff;
+	CAscNumberingLvl.prototype['put_Suff']            = CAscNumberingLvl.prototype.put_Suff;
+	CAscNumberingLvl.prototype['get_Align']           = CAscNumberingLvl.prototype.get_Align;
+	CAscNumberingLvl.prototype['put_Align']           = CAscNumberingLvl.prototype.put_Align;
+	CAscNumberingLvl.prototype['get_PStyle']          = CAscNumberingLvl.prototype.get_PStyle;
+	CAscNumberingLvl.prototype['put_PStyle']          = CAscNumberingLvl.prototype.put_PStyle;
+	CAscNumberingLvl.prototype['get_OLang']           = CAscNumberingLvl.prototype.get_OLang;
+	CAscNumberingLvl.prototype['put_OLang']           = CAscNumberingLvl.prototype.put_OLang;
+	CAscNumberingLvl.prototype['get_Color']           = CAscNumberingLvl.prototype.get_Color;
+	CAscNumberingLvl.prototype['put_Color']           = CAscNumberingLvl.prototype.put_Color;
+	CAscNumberingLvl.prototype['get_Bold']            = CAscNumberingLvl.prototype.get_Bold;
+	CAscNumberingLvl.prototype['put_Bold']            = CAscNumberingLvl.prototype.put_Bold;
+	CAscNumberingLvl.prototype['get_Italic']          = CAscNumberingLvl.prototype.get_Italic;
+	CAscNumberingLvl.prototype['put_Italic']          = CAscNumberingLvl.prototype.put_Italic;
+	CAscNumberingLvl.prototype['get_FontFamily']      = CAscNumberingLvl.prototype.get_FontFamily;
+	CAscNumberingLvl.prototype['put_FontFamily']      = CAscNumberingLvl.prototype.put_FontFamily;
+	CAscNumberingLvl.prototype['get_FontSize']        = CAscNumberingLvl.prototype.get_FontSize;
+	CAscNumberingLvl.prototype['put_FontSize']        = CAscNumberingLvl.prototype.put_FontSize;
+	CAscNumberingLvl.prototype['get_IndentSize']      = CAscNumberingLvl.prototype.get_IndentSize;
+	CAscNumberingLvl.prototype['put_IndentSize']      = CAscNumberingLvl.prototype.put_IndentSize;
+	CAscNumberingLvl.prototype['get_NumberPosition']  = CAscNumberingLvl.prototype.get_NumberPosition;
+	CAscNumberingLvl.prototype['put_NumberPosition']  = CAscNumberingLvl.prototype.put_NumberPosition;
+	CAscNumberingLvl.prototype['put_StopTab']         = CAscNumberingLvl.prototype.put_StopTab;
+	CAscNumberingLvl.prototype['get_StopTab']         = CAscNumberingLvl.prototype.get_StopTab;
 
 	function CAscWatermarkProperties()
 	{
@@ -1917,7 +2089,7 @@
 					_this.Api.sendEvent("asc_onWatermarkImageLoaded");
 				});
 			}
-		}, false, undefined, token);
+		}, undefined, token);
 	};
 	CAscWatermarkProperties.prototype['put_ImageUrl2'] = CAscWatermarkProperties.prototype.put_ImageUrl2 = function (sUrl) {
 		this.ImageUrl = sUrl;
@@ -2002,7 +2174,7 @@
 					_this.sendEvent("asc_onWatermarkImageLoaded");
 				});
 			}
-		}, false, undefined, token);
+		}, undefined, token);
 	};
 
 	CAscWatermarkProperties.prototype['drawTexture'] = CAscWatermarkProperties.prototype.drawTexture = function () {
@@ -2080,7 +2252,59 @@
 			oContext.beginPath();
 		}
 	};
+	CAscWatermarkProperties.prototype.isEqual = function(oPr)
+	{
+		if(!oPr)
+		{
+			return false;
+		}
+		if(this.Type !== oPr.Type)
+		{
+			return false;
+		}
+		if(this.Text !== oPr.Text)
+		{
+			return false;
+		}
 
+		if(this.TextPr && !oPr.TextPr ||
+		   !this.TextPr && oPr.TextPr)
+		{
+			return false;
+		}
+		if(this.TextPr)
+		{
+			let oCurDocTextPr = new AscWord.CTextPr();
+			let oDocTextPr = new AscWord.CTextPr();
+			oCurDocTextPr.Set_FromObject(this.TextPr);
+			oDocTextPr.Set_FromObject(oPr.TextPr);
+			if(!oCurDocTextPr.IsEqual(oDocTextPr))
+			{
+				return false;
+			}
+		}
+		if(AscFormat.isRealNumber(this.Opacity) && !AscFormat.isRealNumber(oPr.Opacity) ||
+			!AscFormat.isRealNumber(this.Opacity) && AscFormat.isRealNumber(oPr.Opacity) ||
+			AscFormat.isRealNumber(this.Opacity) && !AscFormat.fApproxEqual(this.Opacity, oPr.Opacity, 1))
+		{
+			return false;
+		}
+		if(this.IsDiagonal !== oPr.IsDiagonal)
+		{
+			return false;
+		}
+		if(this.ImageUrl !== oPr.ImageUrl)
+		{
+			return false;
+		}
+		if(AscFormat.isRealNumber(this.Scale) && !AscFormat.isRealNumber(oPr.Scale) ||
+			!AscFormat.isRealNumber(this.Scale) && AscFormat.isRealNumber(oPr.Scale) ||
+			AscFormat.isRealNumber(this.Scale) && !AscFormat.fApproxEqual(this.Scale, oPr.Scale))
+		{
+			return false;
+		}
+		return true;
+	};
 
 	function CAscCaptionProperties()
 	{
@@ -2148,7 +2372,7 @@
 				oCultureInfo = AscCommon.g_aCultureInfos[1033];
 
 			var oDateTime = sDate ? new Asc.cDate(sDate) : new Asc.cDate();
-			return oFormat.formatToWord(oDateTime.getExcelDate() + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
+			return oFormat.formatToWord(oDateTime.getExcelDate(true) + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
 		}
 
 		return sDate;
@@ -2169,18 +2393,12 @@
 	window['Asc']['CAscCaptionProperties'] = window['Asc'].CAscCaptionProperties = CAscCaptionProperties;
 	var prot = CAscCaptionProperties.prototype;
 	prot.get_Name = prot["get_Name"] = function(){return this.Name;};
-	prot.get_Label = prot["get_Label"] = function(){
-		if(typeof this.Label === "string")
-		{
-			var aSplit = this.Label.split("_");
-			var sResult = aSplit[0];
-			for(var nIdx = 1; nIdx < aSplit.length; ++nIdx)
-			{
-				sResult += (" " + aSplit[nIdx]);
-			}
-			return sResult;
-		}
-		return this.Label;
+	prot.get_Label = prot["get_Label"] = function()
+	{
+		if (!(typeof this.Label === "string"))
+			return this.Label;
+		
+		return this.Label.split("_").join(" ");
 	};
 	prot.get_Before = prot["get_Before"] = function(){return this.Before;};
 	prot.get_ExcludeLabel = prot["get_ExcludeLabel"] = function(){return this.ExcludeLabel;};
@@ -2243,17 +2461,10 @@
 	};
 	prot.getLabelForInstruction = function()
 	{
-		if(typeof this.Label === "string")
-		{
-			var aSplited = this.Label.split(" ");
-			var sResult = aSplited[0];
-			for(var nIdx = 1; nIdx < aSplited.length; ++nIdx)
-			{
-				sResult += ("_" + aSplited[nIdx]);
-			}
-			return sResult;
-		}
-		return "";
+		if (!(typeof this.Label === "string"))
+			return "";
+		
+		return this.Label.split(" ").join("_");
 	};
 	prot.getSeqInstructionLine = function()
 	{

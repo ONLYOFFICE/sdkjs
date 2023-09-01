@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -461,8 +461,9 @@ CDocumentContentElementBase.prototype.AddInlineImage = function(W, H, Img, Chart
 CDocumentContentElementBase.prototype.AddImages = function(aImages)
 {
 };
-CDocumentContentElementBase.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect)
+CDocumentContentElementBase.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
+	return null;
 };
 CDocumentContentElementBase.prototype.AddSignatureLine = function(oSignatureDrawing)
 {
@@ -566,7 +567,7 @@ CDocumentContentElementBase.prototype.SetTableProps = function(oProps)
 CDocumentContentElementBase.prototype.GetSelectedContent = function(oSelectedContent)
 {
 };
-CDocumentContentElementBase.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
+CDocumentContentElementBase.prototype.PasteFormatting = function(oData)
 {
 };
 CDocumentContentElementBase.prototype.GetCurPosXY = function()
@@ -644,6 +645,7 @@ CDocumentContentElementBase.prototype.GetTableProps = function()
 };
 CDocumentContentElementBase.prototype.AddHyperlink = function(Props)
 {
+	return null;
 };
 CDocumentContentElementBase.prototype.ModifyHyperlink = function(Props)
 {
@@ -1139,6 +1141,17 @@ CDocumentContentElementBase.prototype.GetTopElement = function()
 	return this.Parent.GetTopElement();
 };
 /**
+ * Получаем верхний DocContent, в котором лежит данный элемент
+ * @returns {?CDocumentContentBase}
+ */
+CDocumentContentElementBase.prototype.GetTopDocumentContent = function()
+{
+	if (!this.Parent)
+		return null;
+	
+	return this.Parent.GetTopDocumentContent();
+};
+/**
  * Получаем объект лока данного элемента
  * @returns {AscCommon.CLock}
  */
@@ -1164,10 +1177,6 @@ CDocumentContentElementBase.prototype.GetHdrFtr = function()
  */
 CDocumentContentElementBase.prototype.IsUseInDocument = function(sId)
 {
-	return this.Is_UseInDocument(sId);
-};
-CDocumentContentElementBase.prototype.Is_UseInDocument = function(sId)
-{
 	return false;
 };
 /**
@@ -1176,6 +1185,10 @@ CDocumentContentElementBase.prototype.Is_UseInDocument = function(sId)
  * @returns {boolean}
  */
 CDocumentContentElementBase.prototype.CheckRunContent = function(fCheck)
+{
+	return false;
+};
+CDocumentContentElementBase.prototype.CheckSelectedRunContent = function(fCheck)
 {
 	return false;
 };
@@ -1242,6 +1255,14 @@ CDocumentContentElementBase.prototype.CalculateTextToTable = function(oEngine){}
  * @param arrChanges
  */
 CDocumentContentElementBase.prototype.GetSelectedReviewChanges = function(arrChanges, oTrackChanges) {return arrChanges ? arrChanges : [];};
+/**
+ * Прокидываем наверх событие об изменении содержимого данного элемента
+ */
+CDocumentContentElementBase.prototype.OnContentChange = function()
+{
+	if (this.Parent && this.Parent.OnContentChange)
+		this.Parent.OnContentChange();
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

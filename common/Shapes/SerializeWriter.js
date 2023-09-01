@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -51,7 +51,7 @@ var c_oMainTables = {
     VmlDrawing		: 5,
     TableStyles		: 6,
     PresProps		: 7,
-	JsaProject		: 8,
+    Customs 		: 8,
 
     Themes			: 20,
     ThemeOverride	: 21,
@@ -114,7 +114,6 @@ function CBinaryFileWriter()
         this.pos = 0;
     };
 
-    this.IsWordWriter = false;
     this.ImData = null;
     this.data = null;
     this.len = 0;
@@ -606,11 +605,14 @@ function CBinaryFileWriter()
 			this.WriteCustomProperties(presentation.CustomProperties, presentation.Api);
 
         // ViewProps
-		if (presentation.ViewProps)
-			this.WriteViewProps(presentation.ViewProps);
+		if (presentation.viewPr)
+			this.WriteViewProps(presentation.viewPr);
 
         // PresProps
 		this.WritePresProps(presentation);
+
+        //Customs
+        this.WriteCustomXml(presentation);
 
         // presentation
         this.WritePresentation(presentation);
@@ -631,7 +633,7 @@ function CBinaryFileWriter()
         for (var i = 0; i < _slide_count; i++)
         {
             _dst_slides[i] = _slides[i];
-            if(_slides[i].notes && !_slides[i].notes.isEmptyBody())
+            if(_slides[i].notes)
             {
                 _dst_notes.push(_slides[i].notes);
             }
@@ -766,7 +768,11 @@ function CBinaryFileWriter()
         {
             if(oTableStyleIdMap.hasOwnProperty(key))
             {
-                this.tableStylesGuides[key] = "{" + GUID() + "}"
+                const oStyle = AscCommon.g_oTableId.Get_ById(key);
+                if (oStyle)
+                {
+                    this.tableStylesGuides[key] = oStyle.GetStyleId() || AscCommon.CreateGUID();
+                }
             }
         }
 
@@ -1050,10 +1056,11 @@ function CBinaryFileWriter()
         this.StartMainRecord(c_oMainTables.CustomProperties);
         customProperties.toStream(this, api);
     };
-    this.WriteViewProps = function(viewprops)
+    this.WriteViewProps = function(viewPr)
     {
         this.StartMainRecord(c_oMainTables.ViewProps);
         this.StartRecord(c_oMainTables.ViewProps);
+        viewPr.toPPTY(this);
         this.EndRecord();
     };
     this.WritePresProps = function(presentation)
@@ -1115,6 +1122,16 @@ function CBinaryFileWriter()
         this.EndRecord();
     };
 
+    this.WriteCustomXml = function(presentation)
+    {
+        if(!presentation.CustomXmlData)
+        {
+            return;
+        }
+        this.StartMainRecord(c_oMainTables.Customs);
+        this.WriteBuffer(presentation.CustomXmlData, 0, presentation.CustomXmlData.length);
+    };
+
     this.WritePresentation = function(presentation)
     {
         var pres = presentation.pres;
@@ -1146,6 +1163,19 @@ function CBinaryFileWriter()
 
         this.WriteRecord2(0, presentation.defaultTextStyle, this.WriteTextListStyle);
 
+        var oNotesSz = presentation.notesSz;
+        if(oNotesSz)
+        {
+            this.StartRecord(3);
+            this.WriteUChar(g_nodeAttributeStart);
+
+            this._WriteInt1(0, oNotesSz.cx);
+            this._WriteInt1(1, oNotesSz.cy);
+
+            this.WriteUChar(g_nodeAttributeEnd);
+            this.EndRecord();
+        }
+
         // 5
         var oSldSz = presentation.sldSz;
         if(oSldSz)
@@ -1160,16 +1190,6 @@ function CBinaryFileWriter()
             this.WriteUChar(g_nodeAttributeEnd);
             this.EndRecord();
         }
-
-        // 3
-        this.StartRecord(3);
-        this.WriteUChar(g_nodeAttributeStart);
-
-        this._WriteInt1(0, presentation.GetWidthEMU());
-        this._WriteInt1(1, presentation.GetHeightEMU());
-
-        this.WriteUChar(g_nodeAttributeEnd);
-        this.EndRecord();
 
         if (!this.IsUseFullUrl)
         {
@@ -1207,11 +1227,8 @@ function CBinaryFileWriter()
                 this.EndRecord();
             }
         }
-        if (presentation.Api.vbaMacros) {
-            this.StartRecord(8);
-            this.WriteBuffer(presentation.Api.vbaMacros, 0, presentation.Api.vbaMacros.length);
-            this.EndRecord();
-        }
+        this.WriteRecord4(8, presentation.Api.vbaProject);
+
 		var macros = presentation.Api.macros.GetData();
 		if (macros) {
 			this.StartRecord(9);
@@ -1404,294 +1421,17 @@ function CBinaryFileWriter()
 
             oThis.WriteUChar(g_nodeAttributeStart);
 
-            switch (_transition.TransitionType)
-            {
-                case c_oAscSlideTransitionTypes.Fade:
-                {
-                    oThis._WriteString2(0, "p:fade");
-                    switch (_transition.TransitionOption)
-                    {
-                        case c_oAscSlideTransitionParams.Fade_Smoothly:
-                        {
-                            oThis._WriteString2(1, "thruBlk");
-                            oThis._WriteString2(2, "0");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Fade_Through_Black:
-                        {
-                            oThis._WriteString2(1, "thruBlk");
-                            oThis._WriteString2(2, "1");
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-                    break;
+            let sNodeName = null, aAttrNames = [], aAttrValues = [];
+            sNodeName = _transition.fillXmlParams(aAttrNames, aAttrValues);
+            if(sNodeName) {
+                oThis._WriteString2(0, sNodeName);
+                for(let nAttr = 0; nAttr < aAttrNames.length; ++nAttr) {
+                    oThis._WriteString2(1, aAttrNames[nAttr]);
                 }
-                case c_oAscSlideTransitionTypes.Push:
-                {
-                    oThis._WriteString2(0, "p:push");
-                    switch (_transition.TransitionOption)
-                    {
-                        case c_oAscSlideTransitionParams.Param_Left:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "r");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Right:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "l");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Top:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "d");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Bottom:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "u");
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-                    break;
+                for(let nAttr = 0; nAttr < aAttrValues.length; ++nAttr) {
+                    oThis._WriteString2(2, aAttrValues[nAttr]);
                 }
-                case c_oAscSlideTransitionTypes.Wipe:
-                {
-                    switch (_transition.TransitionOption)
-                    {
-                        case c_oAscSlideTransitionParams.Param_Left:
-                        {
-                            oThis._WriteString2(0, "p:wipe");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "r");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Right:
-                        {
-                            oThis._WriteString2(0, "p:wipe");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "l");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Top:
-                        {
-                            oThis._WriteString2(0, "p:wipe");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "d");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Bottom:
-                        {
-                            oThis._WriteString2(0, "p:wipe");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "u");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_TopLeft:
-                        {
-                            oThis._WriteString2(0, "p:strips");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "rd");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_TopRight:
-                        {
-                            oThis._WriteString2(0, "p:strips");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "ld");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_BottomLeft:
-                        {
-                            oThis._WriteString2(0, "p:strips");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "ru");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_BottomRight:
-                        {
-                            oThis._WriteString2(0, "p:strips");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "lu");
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-                    break;
-                }
-                case c_oAscSlideTransitionTypes.Split:
-                {
-                    oThis._WriteString2(0, "p:split");
-                    switch (_transition.TransitionOption)
-                    {
-                        case c_oAscSlideTransitionParams.Split_HorizontalIn:
-                        {
-                            oThis._WriteString2(1, "orient");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "horz");
-                            oThis._WriteString2(2, "in");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Split_HorizontalOut:
-                        {
-                            oThis._WriteString2(1, "orient");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "horz");
-                            oThis._WriteString2(2, "out");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Split_VerticalIn:
-                        {
-                            oThis._WriteString2(1, "orient");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "vert");
-                            oThis._WriteString2(2, "in");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Split_VerticalOut:
-                        {
-                            oThis._WriteString2(1, "orient");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "vert");
-                            oThis._WriteString2(2, "out");
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-                    break;
-                }
-                case c_oAscSlideTransitionTypes.UnCover:
-                case c_oAscSlideTransitionTypes.Cover:
-                {
-                    if (_transition.TransitionType == c_oAscSlideTransitionTypes.Cover)
-                        oThis._WriteString2(0, "p:cover");
-                    else
-                        oThis._WriteString2(0, "p:pull");
-
-                    switch (_transition.TransitionOption)
-                    {
-                        case c_oAscSlideTransitionParams.Param_Left:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "r");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Right:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "l");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Top:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "d");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_Bottom:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "u");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_TopLeft:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "rd");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_TopRight:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "ld");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_BottomLeft:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "ru");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Param_BottomRight:
-                        {
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "lu");
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-                    break;
-                }
-                case c_oAscSlideTransitionTypes.Clock:
-                {
-                    switch (_transition.TransitionOption)
-                    {
-                        case c_oAscSlideTransitionParams.Clock_Clockwise:
-                        {
-                            oThis._WriteString2(0, "p:wheel");
-                            oThis._WriteString2(1, "spokes");
-                            oThis._WriteString2(2, "1");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Clock_Counterclockwise:
-                        {
-                            oThis._WriteString2(0, "p14:wheelReverse");
-                            oThis._WriteString2(1, "spokes");
-                            oThis._WriteString2(2, "1");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Clock_Wedge:
-                        {
-                            oThis._WriteString2(0, "p:wedge");
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-                    break;
-                }
-                case c_oAscSlideTransitionTypes.Zoom:
-                {
-                    switch (_transition.TransitionOption)
-                    {
-                        case c_oAscSlideTransitionParams.Zoom_In:
-                        {
-                            oThis._WriteString2(0, "p14:warp");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "in");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Zoom_Out:
-                        {
-                            oThis._WriteString2(0, "p14:warp");
-                            oThis._WriteString2(1, "dir");
-                            oThis._WriteString2(2, "out");
-                            break;
-                        }
-                        case c_oAscSlideTransitionParams.Zoom_AndRotate:
-                        {
-                            oThis._WriteString2(0, "p:newsflash");
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-                    break;
-                }
-                default:
-                    break;
             }
-
             oThis.WriteUChar(g_nodeAttributeEnd);
 
             oThis.EndRecord();
@@ -2583,7 +2323,7 @@ function CBinaryFileWriter()
         oThis._WriteLimit2(1, oEffect.type);
         oThis.WriteUChar(g_nodeAttributeEnd);
 
-        oThis.StartRecord(type);
+        oThis.StartRecord(0);
         var len__ = oEffect.effectList.length;
         oThis._WriteInt2(0, len__);
 
@@ -3138,12 +2878,12 @@ function CBinaryFileWriter()
                         var _num = (fill.srcRect.t * 1000) >> 0;
                         oThis._WriteString1(1, "" + _num);
                     }
-                    if (fill.srcRect.l != null)
+                    if (fill.srcRect.r != null)
                     {
                         var _num = ((100 - fill.srcRect.r) * 1000) >> 0;
                         oThis._WriteString1(2, "" + _num);
                     }
-                    if (fill.srcRect.l != null)
+                    if (fill.srcRect.b != null)
                     {
                         var _num = ((100 - fill.srcRect.b) * 1000) >> 0;
                         oThis._WriteString1(3, "" + _num);
@@ -3767,12 +3507,12 @@ function CBinaryFileWriter()
         oThis._WriteString2(1, ole.m_sData);
         oThis._WriteInt2(2, ratio * ole.m_nPixWidth);
         oThis._WriteInt2(3, ratio * ole.m_nPixHeight);
-        oThis._WriteUChar2(4, 0);
+        oThis._WriteUChar2(4, ole.m_nDrawAspect);
         oThis._WriteUChar2(5, 0);
         oThis._WriteString2(7, ole.m_sObjectFile);
         oThis.WriteUChar(g_nodeAttributeEnd);
 
-        if((ole.m_nOleType === 0 || ole.m_nOleType === 1 || ole.m_nOleType === 2) && ole.m_aBinaryData !== null)
+        if((ole.m_nOleType === 0 || ole.m_nOleType === 1 || ole.m_nOleType === 2) && ole.m_aBinaryData.length !== 0)
         {
             oThis.WriteRecord1(1, ole.m_nOleType, function(val){
                 oThis.WriteUChar(val);
@@ -4264,8 +4004,6 @@ function CBinaryFileWriter()
 
     this.WriteXfrm = function(xfrm)
     {
-        if (oThis.IsWordWriter === true)
-            return oThis.WriteXfrmRot(xfrm);
 
         oThis.WriteUChar(g_nodeAttributeStart);
         oThis._WriteInt4(0, xfrm.offX, c_dScalePPTXSizes);
@@ -4525,7 +4263,7 @@ function CBinaryFileWriter()
         oThis.WriteUChar(g_nodeAttributeStart);
         oThis._WriteInt1(0, cNvPr.id);
         oThis._WriteString1(1, cNvPr.name);
-		oThis._WriteBool1(2, cNvPr.isHidden);
+		oThis._WriteBool2(2, cNvPr.isHidden);
 		oThis._WriteString2(3, cNvPr.title);
 		oThis._WriteString2(4, cNvPr.descr);
 		oThis._WriteBool2(5, cNvPr.form);
@@ -5312,7 +5050,6 @@ function CBinaryFileWriter()
     {
         this.BinaryFileWriter = new AscCommon.CBinaryFileWriter();
         this.BinaryFileWriter.Init();
-        //this.BinaryFileWriter.IsWordWriter = true;
 
         this.TreeDrawingIndex = 0;
 
@@ -5670,7 +5407,7 @@ function CBinaryFileWriter()
             _writer._WriteString2(1, ole.m_sData);
 			_writer._WriteInt2(2, ratio * ole.m_nPixWidth);
 			_writer._WriteInt2(3, ratio * ole.m_nPixHeight);
-            _writer._WriteUChar2(4, 0);
+            _writer._WriteUChar2(4, ole.m_nDrawAspect);
             _writer._WriteUChar2(5, 0);
 			_writer._WriteString2(7, ole.m_sObjectFile);
             _writer.WriteUChar(g_nodeAttributeEnd);
@@ -5804,33 +5541,10 @@ function CBinaryFileWriter()
 
     function GetTableRowHeight(row)
     {
-        if (row.Pr.Height !== undefined && row.Pr.Height != null)
+        if (AscFormat.isRealNumber(row.Pr.Height.Value))
         {
-            let fMaxTopMargin = 0, fMaxBottomMargin = 0, fMaxTopBorder = 0, fMaxBottomBorder = 0;
-            for(let i = 0;  i < row.Content.length; ++i)
-            {
-                var oCell = row.Content[i];
-                var oMargins = oCell.GetMargins();
-                if(oMargins.Bottom.W > fMaxBottomMargin)
-                {
-                    fMaxBottomMargin = oMargins.Bottom.W;
-                }
-                if(oMargins.Top.W > fMaxTopMargin)
-                {
-                    fMaxTopMargin = oMargins.Top.W;
-                }
-                var oBorders = oCell.Get_Borders();
-                if(oBorders.Top.Size > fMaxTopBorder)
-                {
-                    fMaxTopBorder = oBorders.Top.Size;
-                }
-                if(oBorders.Bottom.Size > fMaxBottomBorder)
-                {
-                    fMaxBottomBorder = oBorders.Bottom.Size;
-                }
-            }
-            return (((row.Pr.Height.Value + fMaxBottomMargin + fMaxTopMargin + fMaxTopBorder/2 + fMaxBottomBorder/2) * 36000) >> 0);
-        }
+			return row.Pr.Height.Value * 36000 + 0.5 >> 0;
+		}
         return null;
     }
 

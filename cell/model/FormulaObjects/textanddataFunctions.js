@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -58,13 +58,225 @@ function (window, undefined) {
 	var argType = Asc.c_oAscFormulaArgumentType;
 
 	cFormulaFunctionGroup['TextAndData'] = cFormulaFunctionGroup['TextAndData'] || [];
-	cFormulaFunctionGroup['TextAndData'].push(cASC, cBAHTTEXT, cCHAR, cCLEAN, cCODE, cCONCATENATE, cCONCAT, cDOLLAR,
+	cFormulaFunctionGroup['TextAndData'].push(cARRAYTOTEXT, cASC, cBAHTTEXT, cCHAR, cCLEAN, cCODE, cCONCATENATE, cCONCAT, cDOLLAR,
 		cEXACT, cFIND, cFINDB, cFIXED, cJIS, cLEFT, cLEFTB, cLEN, cLENB, cLOWER, cMID, cMIDB, cNUMBERVALUE, cPHONETIC,
 		cPROPER, cREPLACE, cREPLACEB, cREPT, cRIGHT, cRIGHTB, cSEARCH, cSEARCHB, cSUBSTITUTE, cT, cTEXT, cTEXTJOIN,
-		cTRIM, cUNICHAR, cUNICODE, cUPPER, cVALUE);
+		cTRIM, cUNICHAR, cUNICODE, cUPPER, cVALUE, cTEXTBEFORE, cTEXTAFTER, cTEXTSPLIT);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
 	cFormulaFunctionGroup['NotRealised'].push(cBAHTTEXT, cJIS, cPHONETIC);
+
+	function calcBeforeAfterText(arg, arg1, isAfter) {
+		let newArgs = cBaseFunction.prototype._prepareArguments.call(this, arg, arg1, null, null, true).args;
+		let text = newArgs[0];
+		text = text.tocString();
+		if (text.type === cElementType.error) {
+			return text;
+		}
+		text = text.toString();
+
+		let delimiter;
+		if (cElementType.cellsRange === arg[1].type || cElementType.array === arg[1].type || cElementType.cellsRange3D === arg[1].type) {
+			let isError;
+			arg[1].foreach2(function (v) {
+				v = v.tocString();
+				if (v.type === cElementType.error) {
+					isError = v;
+				}
+				if (!delimiter) {
+					delimiter = [];
+				}
+				delimiter.push(v.toString());
+			});
+			if (isError) {
+				return isError;
+			}
+			if (!delimiter) {
+				delimiter = [""];
+			}
+		} else {
+			delimiter = arg[1].tocString();
+			if (delimiter.type === cElementType.error) {
+				return delimiter;
+			}
+			delimiter = [delimiter.toString()];
+		}
+
+		let doSearch = function (_text, aDelimiters) {
+			let needIndex = -1;
+			for (let j = 0; j < aDelimiters.length; j++) {
+				let nextDelimiter = match_mode ? aDelimiters[j].toLowerCase() : aDelimiters[j];
+				let nextIndex = isReverseSearch ? modifiedText.lastIndexOf(nextDelimiter, startPos) : modifiedText.indexOf(nextDelimiter, startPos);
+				if (needIndex === -1 || (((nextIndex < needIndex && !isReverseSearch) || (nextIndex > needIndex && isReverseSearch)) && nextIndex !== -1)) {
+					needIndex = nextIndex;
+					modifiedDelimiter = nextDelimiter;
+				}
+			}
+			return needIndex;
+		};
+
+		//instance_num - при отрицательном вхождении поиск с конца начинается
+		let instance_num = newArgs[2] && !(newArgs[2].type === cElementType.empty) ? newArgs[2] : new cNumber(1);
+		let match_mode = newArgs[3] && !(newArgs[3].type === cElementType.empty) ? newArgs[3] : new cBool(false);
+		let match_end = newArgs[4] && !(newArgs[4].type === cElementType.empty) ? newArgs[4] : new cBool(false);
+		if (instance_num.type === cElementType.error) {
+			return instance_num;
+		}
+		if (match_mode.type === match_mode.error) {
+			return match_mode;
+		}
+		if (match_end.type === match_end.error) {
+			return match_end;
+		}
+
+		instance_num = instance_num.toNumber ? instance_num.toNumber() : 0;
+		if (instance_num === 0 || (instance_num > text.length && newArgs[2] && newArgs[2].type !== cElementType.empty)) {
+			//Excel returns a #VALUE! error if instance_num = 0 or if instance_num is greater than the length of text.
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		match_mode = match_mode.toBool();
+		match_end = match_end.toBool();
+
+		let if_not_found = newArgs[5] ? newArgs[5] : new cError(cErrorType.not_available);
+
+		//calculate
+		let modifiedText = match_mode ? text.toLowerCase() : text;
+		let modifiedDelimiter;
+
+		let isReverseSearch = instance_num < 0;
+		let foundIndex = -1;
+		let startPos = isReverseSearch ? modifiedText.length : 0;
+		let repeatZero = 0;
+		let match_end_active = false;
+		for (let i = 0; i < Math.abs(instance_num); i++) {
+			foundIndex = doSearch(modifiedText, delimiter);
+			if (foundIndex === 0) {
+				repeatZero++;
+			}
+			if (foundIndex === -1) {
+				if (match_end && i === Math.abs(instance_num) - 1) {
+					foundIndex = isReverseSearch ? 0 : text.length;
+					match_end_active = true;
+				}
+				break;
+			}
+			startPos = isReverseSearch ? foundIndex - modifiedDelimiter.length : foundIndex + modifiedDelimiter.length;
+		}
+
+		if (foundIndex === -1) {
+			return if_not_found;
+		} else {
+			return new cString(isAfter ? text.substring(foundIndex + (((repeatZero > 1 || match_end_active) && match_end && isReverseSearch ) ? 0 : modifiedDelimiter.length), text.length) : text.substring(0, foundIndex));
+		}
+	}
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cARRAYTOTEXT() {
+	}
+
+	cARRAYTOTEXT.prototype = Object.create(cBaseFunction.prototype);
+	cARRAYTOTEXT.prototype.constructor = cARRAYTOTEXT;
+	cARRAYTOTEXT.prototype.name = 'ARRAYTOTEXT';
+	cARRAYTOTEXT.prototype.isXLFN = true;
+	cARRAYTOTEXT.prototype.argumentsMin = 1;
+	cARRAYTOTEXT.prototype.argumentsMax = 2;
+	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1, 1: 1};
+	cARRAYTOTEXT.prototype.argumentsType = [argType.reference, argType.number];
+	cARRAYTOTEXT.prototype.Calculate = function (arg) {
+		function arrayToTextGeneral (args, isRange) {
+			let array = args[0],
+				format = args[1];
+			let resStr = "", arg0Dimensions;
+
+			if (!format) {
+				format = new cNumber(0);
+			}
+
+			if (cElementType.error === format.type) {
+				return format;
+			}
+
+			format = format.tocNumber().getValue();
+
+			if (format !== 0 && format !== 1) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+			// single val check
+			if (cElementType.array !== array.type && cElementType.cellsRange !== array.type && cElementType.cellsRange3D !== array.type) {
+				let tempArr = new cArray();
+				tempArr.addElement(array);
+				array = tempArr;
+			}
+
+			arg0Dimensions = array.getDimensions();
+
+			for (let i = 0; i < arg0Dimensions.row; i++) {
+				for (let j = 0; j < arg0Dimensions.col; j++) {
+					let val = array.getValueByRowCol ? array.getValueByRowCol(i, j) : array.getElementRowCol(i, j);
+					if (!val) {
+						resStr += format === 1 ? "," : ", ";
+						continue;
+					}
+					if (cElementType.string === val.type && format === 1) {
+						val = '"' + val.getValue() + '"';
+					} else if ((cElementType.cell === val.type || cElementType.cell3D === val.type) && format === 1) {
+						let tempVal = val.getValue();
+						if (cElementType.string === tempVal.type) {
+							val = '"' + tempVal.getValue() + '"';
+						} else {
+							val = tempVal.getValue().toString();
+						}
+					} else {
+						val = val.getValue().toString();
+					}
+
+					if (arg0Dimensions.col - 1 === j && format === 1) {
+						resStr += val + ";";
+						continue;
+					} 
+					resStr += format === 1 ? val + "," : val + ", ";
+				}
+			}
+
+			return format === 1 ? new cString("{" + resStr.slice(0, -1) + "}") : new cString(resStr.slice(0, -2));
+		}
+
+		let arg0 = arg[0],
+			arg1 = arg[1] ? arg[1] : new cNumber(0),	
+			exceptions = new Map();
+
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
+
+		if (cElementType.empty === arg0.type) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			if (cElementType.empty === arg0.getValue().type) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		if (cElementType.array === arg0.type || cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			// skip checking this argument in helper function
+			exceptions.set(0, true);
+		}
+
+		if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
+			// arg1 is not array/cellsRange
+			return arrayToTextGeneral([arg0, arg1], false);
+		} else {
+			return AscCommonExcel.getArrayHelper([arg0, arg1], arrayToTextGeneral, exceptions);
+		}
+	};
+
 
 	/**
 	 * @constructor
@@ -1701,11 +1913,13 @@ function (window, undefined) {
 		}
 
 
-		var res = string2.substring(arg2.getValue() - 1).search(valueForSearching) + arg2.getValue() - 1;
+		var res = string2.substring(arg2.getValue() - 1).search(valueForSearching);
 
 		if (res < 0) {
 			return new cError(cErrorType.wrong_value_type);
 		}
+
+		res += arg2.getValue() - 1;
 
 		return new cNumber(res + 1);
 
@@ -2203,6 +2417,232 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cTEXTBEFORE() {
+	}
+
+	//***array-formula***
+	cTEXTBEFORE.prototype = Object.create(cBaseFunction.prototype);
+	cTEXTBEFORE.prototype.constructor = cTEXTBEFORE;
+	cTEXTBEFORE.prototype.name = 'TEXTBEFORE';
+	cTEXTBEFORE.prototype.argumentsMin = 2;
+	cTEXTBEFORE.prototype.argumentsMax = 6;
+	cTEXTBEFORE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cTEXTBEFORE.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.number, argType.number, argType.any];
+	cTEXTBEFORE.prototype.isXLFN = true;
+	cTEXTBEFORE.prototype.arrayIndexes = {1: 1};
+	cTEXTBEFORE.prototype.Calculate = function (arg) {
+		return calcBeforeAfterText(arg, arguments[1]);
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cTEXTAFTER() {
+	}
+
+	//***array-formula***
+	cTEXTAFTER.prototype = Object.create(cBaseFunction.prototype);
+	cTEXTAFTER.prototype.constructor = cTEXTAFTER;
+	cTEXTAFTER.prototype.name = 'TEXTAFTER';
+	cTEXTAFTER.prototype.argumentsMin = 2;
+	cTEXTAFTER.prototype.argumentsMax = 6;
+	cTEXTAFTER.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cTEXTAFTER.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.number, argType.number, argType.any];
+	cTEXTAFTER.prototype.isXLFN = true;
+	cTEXTAFTER.prototype.arrayIndexes = {1: 1};
+	cTEXTAFTER.prototype.Calculate = function (arg) {
+		return calcBeforeAfterText(arg, arguments[1], true);
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cTEXTSPLIT() {
+	}
+
+	//***array-formula***
+	cTEXTSPLIT.prototype = Object.create(cBaseFunction.prototype);
+	cTEXTSPLIT.prototype.constructor = cTEXTSPLIT;
+	cTEXTSPLIT.prototype.name = 'TEXTSPLIT';
+	cTEXTSPLIT.prototype.argumentsMin = 2;
+	cTEXTSPLIT.prototype.argumentsMax = 6;
+	cTEXTSPLIT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	//cTEXTSPLIT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cTEXTSPLIT.prototype.arrayIndexes = {1: 1, 2: 1, 4: 1, 5: 1};
+	cTEXTSPLIT.prototype.argumentsType = [argType.text, argType.text, argType.text, argType.logical, argType.logical, argType.any];
+	cTEXTSPLIT.prototype.isXLFN = true;
+	cTEXTSPLIT.prototype.Calculate = function (arg) {
+
+		//функция должна возвращать массив
+		let text = arg[0];
+		if (text.type === cElementType.error) {
+			return text;
+		}
+
+		//второй/третий аргумент тоже может быть массивом, каждый из элементов каторого может быть разделителем
+		let col_delimiter = arg[1];
+		let row_delimiter = arg[2] ? arg[2] : null;
+
+		//если оба empty или хотя бы один из разделителей - пустая строка - ошибка
+		if (col_delimiter && row_delimiter && col_delimiter.type === cElementType.empty && row_delimiter.type === cElementType.empty) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		if (col_delimiter && col_delimiter.type === cElementType.string && col_delimiter.getValue() === "") {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		if (row_delimiter && row_delimiter.type === cElementType.string && row_delimiter.getValue() === "") {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		col_delimiter = col_delimiter.toArray(true, true);
+		if (col_delimiter.type === cElementType.error) {
+			return col_delimiter;
+		}
+
+		if (row_delimiter) {
+			row_delimiter = row_delimiter.toArray(true, true);
+			if (row_delimiter.type === cElementType.error) {
+				return row_delimiter;
+			}
+		}
+
+		let ignore_empty = arg[3] ? arg[3].tocBool() : new cBool(false);
+		if (ignore_empty.type === cElementType.cellsRange3D || ignore_empty.type === cElementType.cellsRange || ignore_empty.type === cElementType.array) {
+			ignore_empty = ignore_empty.getValue2(0, 0);
+			ignore_empty = ignore_empty.tocBool();
+		}
+		if (ignore_empty.type === cElementType.error) {
+			return ignore_empty;
+		}
+		ignore_empty = ignore_empty.toBool();
+
+		let match_mode = arg[4] ? arg[4].tocBool() : new cBool(false);
+		if (match_mode.type === cElementType.cellsRange3D || match_mode.type === cElementType.cellsRange || match_mode.type === cElementType.array) {
+			match_mode = match_mode.getValue2(0, 0);
+			match_mode = match_mode.tocBool();
+		}
+		if (match_mode.type === cElementType.error) {
+			return match_mode;
+		}
+		match_mode = match_mode.toBool();
+
+		//заполняющее_значение. Значение по умолчанию: #Н/Д.
+		let pad_with = arg[5] ? arg[5] : new cError(cErrorType.not_available);
+		if (pad_with.type === cElementType.cell3D || pad_with.type === cElementType.cell) {
+			pad_with = pad_with.getValue();
+		}
+		if (pad_with.type === cElementType.cellsRange3D || pad_with.type === cElementType.cellsRange) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		let getRexExpFromArray = function (_array, _match_mode) {
+			let sRegExp = "";
+			if (Array.isArray(_array)) {
+				for (let row = 0; row < _array.length; row++) {
+					for (let col = 0; col < _array[row].length; col++) {
+						if (sRegExp !== "") {
+							sRegExp += "|";
+						}
+
+						sRegExp += AscCommon.escapeRegExp(_array[row][col] + "");
+					}
+				}
+			} else {
+				sRegExp += "[" + AscCommon.escapeRegExp(_array + "") + "]";
+			}
+
+			return _match_mode ? new RegExp(sRegExp, "i") : new RegExp(sRegExp);
+		};
+
+		let splitText = function (_text, _rowDelimiter, _colDelimiter) {
+			var res;
+
+			if (_rowDelimiter == null || _rowDelimiter === "" || _rowDelimiter && _rowDelimiter[0] === "" || _rowDelimiter && _rowDelimiter[0] && _rowDelimiter[0][0] === "") {
+				_rowDelimiter = null;
+			} else {
+				_rowDelimiter = getRexExpFromArray(_rowDelimiter, match_mode);
+			}
+			if (_colDelimiter === "" || _colDelimiter && _colDelimiter[0] === "" || _colDelimiter && _colDelimiter[0] && _colDelimiter[0][0] === "") {
+				_colDelimiter = null;
+			} else {
+				_colDelimiter = getRexExpFromArray(_colDelimiter, match_mode);
+			}
+
+			var _array = _text.split(_rowDelimiter);
+			if (_array) {
+				for (let i = 0; i < _array.length; i++) {
+					if (!res) {
+						res = [];
+					}
+					res.push(_array[i].split(_colDelimiter));
+				}
+			}
+
+			return res;
+		};
+
+		//обрабатываю первый аргумент - диапазон выше, если сюда он приходит в виже диапазона, то беру первый элемент
+		var res;
+		if (cElementType.cellsRange3D === text.type || cElementType.cellsRange === text.type) {
+			text = text.getValue2(0, 0);
+		} else if (cElementType.array === text.type) {
+			text = text.getValue2(0, 0);
+		} else if (text.type === cElementType.cell3D || text.type === cElementType.cell) {
+			text = text.getValue();
+		}
+
+		text = text.tocString();
+		if (text.type === cElementType.error) {
+			return text;
+		}
+		text = text.toString();
+		if (match_mode) {
+			text = text.toLowerCase();
+		}
+
+		//let array = AscCommon.parseText(text, options);
+		let array = splitText(text, row_delimiter, col_delimiter);
+		if (array) {
+			//проверяем массив на пустые элементы +  дополняем массив pad_with
+
+			let rowCount = array.length;
+			let colCount = 0, i, j;
+			for (i = 0; i < rowCount; i++) {
+				colCount = Math.max(colCount, array[i].length)
+			}
+
+			let newArray = [];
+			for (i = 0; i < rowCount; i++) {
+				let row = [];
+				for (j = 0; j < colCount; j++) {
+					if (("" === array[i][j] && !ignore_empty) || array[i][j]) {
+						row.push(new cString(array[i][j]));
+					}
+				}
+
+				if (row.length || (!row.length && !ignore_empty)) {
+					if (colCount > row.length) {
+						while (colCount > row.length) {
+							row.push(pad_with);
+						}
+					}
+					newArray.push(row);
+				}
+			}
+
+			res = new cArray();
+			res.fillFromArray(newArray);
+		}
+
+		return res && res.isValidArray() ? res : new cError(cErrorType.not_available);
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------

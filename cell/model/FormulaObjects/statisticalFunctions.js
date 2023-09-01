@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -61,6 +61,8 @@ function (window, undefined) {
 	var matching = AscCommonExcel.matching;
 
 	var maxGammaArgument = 171.624376956302;
+
+	var g_cCharDelimiter = AscCommon.g_cCharDelimiter;
 
 	cFormulaFunctionGroup['Statistical'] = cFormulaFunctionGroup['Statistical'] || [];
 	cFormulaFunctionGroup['Statistical'].push(cAVEDEV, cAVERAGE, cAVERAGEA, cAVERAGEIF, cAVERAGEIFS, cBETADIST,
@@ -1394,6 +1396,9 @@ function (window, undefined) {
 	function matrixClone(matrix) {
 		var cloneMatrix = [];
 		for (var i = 0; i < matrix.length; i++) {
+			if (!matrix[i]) {
+				continue;
+			}
 			for (var j = 0; j < matrix[i].length; j++) {
 				if (!cloneMatrix[i]) {
 					cloneMatrix[i] = [];
@@ -5112,62 +5117,7 @@ function (window, undefined) {
 	cCOUNTIF.prototype.arrayIndexes = {0: 1};
 	cCOUNTIF.prototype.argumentsType = [argType.reference, argType.any];
 	cCOUNTIF.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], _count = 0, matchingInfo;
-
-		if (cElementType.error === arg0.type) {
-			return arg0;
-		}
-		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
-			cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
-			arg1 = arg1.cross(arguments[1]);
-		} else if (cElementType.array === arg1.type) {
-			arg1 = arg1.getElementRowCol(0, 0);
-		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
-			arg1 = arg1.getValue();
-		}
-
-
-		var checkEmptyValue = function(res, tempVal, tempMatchingInfo) {
-			//TODO нужно протестировать на различных вариантах
-			//когда в ячейке пустое значение - сравниваем его только с пустым значением
-			//при matchingInfo отличным от пустого значения в данном случае возвращаем false
-
-			//ms excel при несовпадении типов возвращает всегда отрицательное значение
-			//в нашем случае сравниваемая величина(в tempMatchingInfo) не всегда приводится к нужному типу(например, error, empty)
-			//TODO рассмотреть добавление подобной правки, проверить все варианты + расскоментировать тесты
-			/*if ((tempVal.type === cElementType.string || tempVal.type === cElementType.number) && tempMatchingInfo.val && tempMatchingInfo.val.type !== tempVal.type) {
-				return false;
-			}*/
-
-			tempVal = undefined !== tempVal.value ? tempVal.value : tempVal;
-			var matchingValue = tempMatchingInfo.val && tempMatchingInfo.val.value.toString ? tempMatchingInfo.val.value.toString() : null;
-			if(tempVal === "" && matchingValue && "" !== matchingValue.replace(/\*|\?/g, '')) {
-				return false;
-			}
-			return res;
-		};
-
-		var val;
-		matchingInfo = AscCommonExcel.matchingValue(arg1);
-		if (cElementType.cellsRange === arg0.type) {
-			arg0.foreach2(function (_val) {
-				_count += checkEmptyValue(matching(_val, matchingInfo, true), _val, matchingInfo);
-			})
-		} else if (cElementType.cellsRange3D === arg0.type) {
-			val = arg0.getValue();
-			for (var i = 0; i < val.length; i++) {
-				_count += checkEmptyValue(matching(val[i], matchingInfo, true), val[i], matchingInfo);
-			}
-		} else {
-			val = arg0.getValue();
-			_count += checkEmptyValue(matching(val, matchingInfo, true), val, matchingInfo);
-		}
-
-		return new cNumber(_count);
+		return g_oCountIfCache.calculate(arg, arguments[1]);
 	};
 
 	/**
@@ -5189,8 +5139,8 @@ function (window, undefined) {
 	cCOUNTIFS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.area_to_ref;
 	cCOUNTIFS.prototype.argumentsType = [[argType.reference, argType.any]];
 	cCOUNTIFS.prototype.Calculate = function (arg) {
-		var i, j, arg0, arg1, matchingInfo, arg0Matrix, arg1Matrix, _count = 0, argBaseDimension, argNextDimension;
-		for (var k = 0; k < arg.length; k += 2) {
+		let i, j, arg0, arg1, matchingInfo, arg0Matrix, arg1Matrix, _count = 0, argBaseDimension, argNextDimension;
+		for (let k = 0; k < arg.length; k += 2) {
 			arg0 = arg[k];
 			arg1 = arg[k + 1];
 			if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
@@ -5212,12 +5162,21 @@ function (window, undefined) {
 
 			argNextDimension = arg0.getDimensions();
 			matchingInfo = AscCommonExcel.matchingValue(arg1);
-			arg1Matrix = arg0.getMatrixNoEmpty ? arg0.getMatrixNoEmpty() : arg0.getMatrix();
+
+			if (arg1.value === "") {
+				arg1Matrix = arg0.getMatrix();
+			} else {
+				if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+					arg1Matrix = g_oFormulaRangesCache.get(arg0);
+				} else {
+					arg1Matrix = arg0.getMatrixNoEmpty ? arg0.getMatrixNoEmpty() : arg0.getMatrix();
+				}
+			}
 			if (cElementType.cellsRange3D === arg0.type) {
 				arg1Matrix = arg1Matrix[0];
 			}
 			if (!arg0Matrix) {
-				arg0Matrix = arg1Matrix;
+				arg0Matrix = matrixClone(arg1Matrix);
 				argBaseDimension = argNextDimension;
 			}
 			if (argNextDimension.row !== argBaseDimension.row || argNextDimension.col !== argBaseDimension.col) {
@@ -5229,7 +5188,7 @@ function (window, undefined) {
 					continue;
 				}
 				for (j = 0; j < arg1Matrix[i].length; ++j) {
-					if (arg0Matrix[i] && arg0Matrix[i][j] && !matching(arg1Matrix[i][j], matchingInfo)) {
+					if (arg0Matrix[i] && arg0Matrix[i][j] && !matching(arg1Matrix[i][j], matchingInfo, true, true)) {
 						arg0Matrix[i][j] = null;
 					}
 				}
@@ -6537,11 +6496,14 @@ function (window, undefined) {
 
 			var C = [[]], k = 0;
 			for (i = 1; i < tB.length; i++, k++) {
-				C[0][k] = new cNumber(0);
+				if (!C[k]) {
+					C[k] = [];
+				}
+				C[k][0] = new cNumber(0);
 				for (j = 0; j < tA.length; j++) {
 					if (tA[j] > tB[i - 1] && tA[j] <= tB[i]) {
-						var a = C[0][k].getValue();
-						C[0][k] = new cNumber(++a);
+						var a = C[k][0].getValue();
+						C[k][0] = new cNumber(++a);
 					}
 				}
 			}
@@ -6615,6 +6577,7 @@ function (window, undefined) {
 
 	cF_TEST.prototype = Object.create(cFTEST.prototype);
 	cF_TEST.prototype.constructor = cF_TEST;
+	cF_TEST.prototype.isXLFN = true;
 	cF_TEST.prototype.name = 'F.TEST';
 
 	/**
@@ -8465,7 +8428,6 @@ function (window, undefined) {
 	cMODE.prototype.inheritFormat = true;
 	cMODE.prototype.argumentsType = [[argType.array]];
 	cMODE.prototype.Calculate = function (arg) {
-
 		function mode(x) {
 
 			var medArr = [], t, i;
@@ -8501,7 +8463,7 @@ function (window, undefined) {
 					nMaxIndex = i - 1;
 				}
 				if (nMax == 1 && nCount == 1) {
-					return new cError(cErrorType.wrong_value_type);
+					return new cError(cErrorType.not_available);
 				} else if (nMax == 1) {
 					return new cNumber(nOldVal);
 				} else {
@@ -8509,56 +8471,115 @@ function (window, undefined) {
 				}
 			}
 		}
+		
+		let arr0 = [];
 
-		var arr0 = [];
+		for (let j = 0; j < arg.length; j++) {
 
-		for (var j = 0; j < arg.length; j++) {
-
-			if (arg[j] instanceof cArea || arg[j] instanceof cArea3D) {
+			if (cElementType.cellsRange === arg[j].type || cElementType.cellsRange3D === arg[j].type) {
 				arg[j].foreach2(function (elem) {
-					if (elem instanceof cNumber) {
+					if (cElementType.number === elem.type) {
 						arr0.push(elem);
 					}
 				});
-			} else if (arg[j] instanceof cRef || arg[j] instanceof cRef3D) {
-				var a = arg[j].getValue();
-				if (a instanceof cNumber) {
+			} else if (cElementType.cell === arg[j].type || cElementType.cell3D === arg[j].type) {
+				let a = arg[j].getValue();
+				if (cElementType.number === a.type) {
 					arr0.push(a);
 				}
-			} else if (arg[j] instanceof cArray) {
+			} else if (cElementType.array === arg[j].type) {
 				arg[j].foreach(function (elem) {
-					if (elem instanceof cNumber) {
+					if (cElementType.number === elem.type) {
 						arr0.push(elem);
 					}
 				});
-			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool) {
+			} else if (cElementType.number === arg[j].type) {
 				arr0.push(arg[j].tocNumber());
-			} else if (arg[j] instanceof cString) {
+			} else if (cElementType.string === arg[j].type) {
 				continue;
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}
 
 		}
-		return mode(arr0);
 
+		return mode(arr0);
 	};
 
 	/**
 	 * @constructor
 	 * @extends {cPERCENTILE}
 	 */
-	//TODO разницы в работе функций cMODE_MULT и cMODE не нашёл, но в LO обработки немного разные. проверить!
 	function cMODE_MULT() {
 	}
 
 	//***array-formula***
 	//TODO другое поведение для формул массива!!!
-	cMODE_MULT.prototype = Object.create(cMODE.prototype);
+	cMODE_MULT.prototype = Object.create(cBaseFunction.prototype);
 	cMODE_MULT.prototype.constructor = cMODE_MULT;
 	cMODE_MULT.prototype.name = 'MODE.MULT';
 	cMODE_MULT.prototype.isXLFN = true;
+	cMODE_MULT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cMODE_MULT.prototype.argumentsType = [[argType.array]];
+	cMODE_MULT.prototype.Calculate = function (arg) {
+		function modeMult(numArray) {
+			if (numArray.length < 1) {
+				return new cError(cErrorType.wrong_value_type);
+			} else {
+				let res = new cArray(), i, maxEntry = 0;
+				let elemMap = new Map();
+				for (i = 0; i < numArray.length; i++) {
+					let key = numArray[i];
+					let _elemIndex = elemMap.get(key);
+					let index = !_elemIndex ? 1 : _elemIndex + 1;
+					elemMap.set(key, index);
+					maxEntry = Math.max(maxEntry, index);
+				}
+
+				if(maxEntry === 1) {
+					return new cError(cErrorType.not_available);
+				} else {
+					elemMap.forEach(function (_val, _key) {
+						if(!(_val < maxEntry)) {
+							res.addRow();
+							res.addElement(new cNumber(_key));
+						}
+					});
+					return res;
+				}
+			}
+		}
+
+		let arr0 = [];
+		for (let j = 0; j < arg.length; j++) {
+			if (cElementType.cellsRange === arg[j].type || cElementType.cellsRange3D === arg[j].type) {
+				arg[j].foreach2(function (elem) {
+					if (cElementType.number === elem.type) {
+						arr0.push(elem.toNumber());
+					}
+				});
+			} else if (cElementType.cell === arg[j].type || cElementType.cell3D === arg[j].type) {
+				let a = arg[j].getValue();
+				if (cElementType.number === a.type) {
+					arr0.push(a.toNumber());
+				}
+			} else if (cElementType.array === arg[j].type) {
+				arg[j].foreach(function (elem) {
+					if (cElementType.number === elem.type) {
+						arr0.push(elem.toNumber());
+					}
+				});
+			} else if (cElementType.number === arg[j].type) {
+				arr0.push(arg[j].toNumber());
+			} else if (cElementType.string === arg[j].type) {
+				continue;
+			} else {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		return modeMult(arr0);
+	}
 
 	/**
 	 * @constructor
@@ -9938,6 +9959,7 @@ function (window, undefined) {
 	cSKEW.prototype.argumentsMin = 1;
 	cSKEW.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSKEW.prototype.argumentsType = [[argType.number]];
+	cSKEW.prototype.isXLFN = true;
 	cSKEW.prototype.Calculate = function (arg) {
 
 		var arr0 = [];
@@ -11813,6 +11835,170 @@ function (window, undefined) {
 	cZ_TEST.prototype.isXLFN = true;
 	cZ_TEST.prototype.argumentsType = [argType.number, argType.number, argType.number];
 
+	/**
+	 * @constructor
+	 */
+	function FormulaRangesCache() {
+		this.cacheRanges = {};
+		this.cacheId = {};
+	}
+	FormulaRangesCache.prototype.get = function (area) {
+		let range = area.getRange();
+		let wsId = range.getWorksheet().getId();
+
+		let sRangeName;
+		AscCommonExcel.executeInR1C1Mode(false, function () {
+			sRangeName = wsId + g_cCharDelimiter + range.getName();
+		});
+
+		let cacheElem = this.cacheId[sRangeName];
+		if (!cacheElem) {
+			cacheElem = area.getMatrixNoEmpty ? area.getMatrixNoEmpty() : area.getMatrix();
+			this.cacheId[sRangeName] = cacheElem;
+			let cacheRange = this.cacheRanges[wsId];
+			if (!cacheRange) {
+				cacheRange = new AscCommonExcel.RangeDataManager(null);
+				this.cacheRanges[wsId] = cacheRange;
+			}
+			cacheRange.add(range.getBBox0(), cacheElem);
+		}
+
+		return cacheElem;
+	};
+	FormulaRangesCache.prototype.clean = function () {
+		this.cacheRanges = {};
+	};
+
+	FormulaRangesCache.prototype.remove = function () {
+	};
+
+	/**
+	 * @constructor
+	 */
+	function CountIfCache() {
+		this.cacheId = {};
+		this.cacheRanges = {};
+	}
+
+	CountIfCache.prototype.constructor = CountIfCache;
+	CountIfCache.prototype.calculate = function (arg, _arg1) {
+		let arg0 = arg[0], arg1 = arg[1];
+
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type &&
+			cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type && cElementType.array !== arg0.type) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
+			arg1 = arg1.cross(_arg1);
+		} else if (cElementType.array === arg1.type) {
+			arg1 = arg1.getElementRowCol(0, 0);
+		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
+			arg1 = arg1.getValue();
+		}
+
+		if (cElementType.array === arg0.type) {
+			let arr = [];
+			arg0.foreach(function(_val) {
+				arr.push(_val);
+			});
+			return this._calculate(arr, arg1);
+		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			return this._calculate([arg0.getValue()], arg1);
+		} else if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			return this._get(arg0, arg1);
+		} else {
+			return new cError(cErrorType.wrong_value_type);
+		}
+	};
+	CountIfCache.prototype._get = function (range, arg1) {
+		let res, wsId = range.getWS().getId(),
+			sRangeName = wsId + g_cCharDelimiter + range.getBBox0().getName(), cacheElem = this.cacheId[sRangeName],
+			valueForSearching = arg1.getValue();
+
+		if (!cacheElem) {
+			cacheElem = {elements: [], results: {}};
+
+			if (cElementType.cellsRange3D === range.type) {
+				cacheElem.elements = range.getValue();
+			} else {
+				range.foreach2(function (cell) {
+					cacheElem.elements.push(cell);
+				});
+			}
+
+			this.cacheId[sRangeName] = cacheElem;
+			let cacheRange = this.cacheRanges[wsId];
+			if (!cacheRange) {
+				cacheRange = new AscCommonExcel.RangeDataManager(null);
+				this.cacheRanges[wsId] = cacheRange;
+			}
+			cacheRange.add(range.getBBox0(), cacheElem);
+		}
+		let sInputKey = valueForSearching;
+		res = cacheElem.results[sInputKey];
+
+		if (!res) {
+			cacheElem.results[sInputKey] = res = this._calculate(cacheElem.elements, arg1);
+		}
+		return res;
+	};
+	CountIfCache.prototype._calculate = function (arr, arg1) {
+
+		let checkEmptyValue = function(res, tempVal, tempMatchingInfo) {
+			//TODO нужно протестировать на различных вариантах
+			//когда в ячейке пустое значение - сравниваем его только с пустым значением
+			//при matchingInfo отличным от пустого значения в данном случае возвращаем false
+
+			//ms excel при несовпадении типов возвращает всегда отрицательное значение
+			//в нашем случае сравниваемая величина(в tempMatchingInfo) не всегда приводится к нужному типу(например, error, empty)
+			//TODO рассмотреть добавление подобной правки, проверить все варианты + расскоментировать тесты
+			/*if ((tempVal.type === cElementType.string || tempVal.type === cElementType.number) && tempMatchingInfo.val && tempMatchingInfo.val.type !== tempVal.type) {
+				return false;
+			}*/
+
+			tempVal = undefined !== tempVal.value ? tempVal.value : tempVal;
+			let matchingValue = tempMatchingInfo.val && tempMatchingInfo.val.value.toString ? tempMatchingInfo.val.value.toString() : null;
+			if(tempVal === "" && matchingValue && "" !== matchingValue.replace(/\*|\?/g, '')) {
+				return false;
+			}
+			return res;
+		};
+
+		let _count = 0;
+		let val;
+		let matchingInfo = AscCommonExcel.matchingValue(arg1);
+
+		for (let i = 0; i < arr.length; i++) {
+			_count += checkEmptyValue(matching(arr[i], matchingInfo, true, true), arr[i], matchingInfo);
+		}
+
+		return new cNumber(_count);
+	};
+	CountIfCache.prototype.remove = function (cell) {
+		var wsId = cell.ws.getId();
+		var cacheRange = this.cacheRanges[wsId];
+		if (cacheRange) {
+			var oGetRes = cacheRange.get(new Asc.Range(cell.nCol, cell.nRow, cell.nCol, cell.nRow));
+			for (var i = 0, length = oGetRes.all.length; i < length; ++i) {
+				var elem = oGetRes.all[i];
+				elem.data.results = {};
+			}
+		}
+	};
+	CountIfCache.prototype.clean = function () {
+		this.cacheId = {};
+		this.cacheRanges = {};
+	};
+
+
+	let g_oFormulaRangesCache = new FormulaRangesCache();
+	let g_oCountIfCache = new CountIfCache();
+
+
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].phi = phi;
@@ -11841,5 +12027,8 @@ function (window, undefined) {
 	window['AscCommonExcel'].cQUARTILE_INC = cQUARTILE_INC;
 	window['AscCommonExcel'].cPERCENTILE_EXC = cPERCENTILE_EXC;
 	window['AscCommonExcel'].cQUARTILE_EXC = cQUARTILE_EXC;
+
+	window['AscCommonExcel'].g_oFormulaRangesCache = g_oFormulaRangesCache;
+	window['AscCommonExcel'].g_oCountIfCache = g_oCountIfCache;
 
 })(window);

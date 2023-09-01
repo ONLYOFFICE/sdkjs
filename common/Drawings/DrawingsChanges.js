@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -363,21 +363,6 @@
         return true;
     };
 
-    function CChangesDrawingsContentBool(Class, Type, Pos, Items, isAdd) {
-        this.Type = Type;
-        AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, isAdd);
-    }
-    CChangesDrawingsContentBool.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
-    CChangesDrawingsContentBool.prototype.constructor = CChangesDrawingsContentBool;
-    window['AscDFH'].CChangesDrawingsContentBool = CChangesDrawingsContentBool;
-
-    CChangesDrawingsContentBool.prototype.private_WriteItem = function (Writer, Item) {
-        Writer.WriteBool(Item);
-    };
-    // CChangesDrawingsContentBool.prototype.private_ReadItem = function (Reader) {
-    //     return Reader.GetULong();
-    // };
-
     function CChangesDrawingsContent(Class, Type, Pos, Items, isAdd) {
         this.Type = Type;
 		AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, isAdd);
@@ -519,14 +504,26 @@
     CChangesDrawingsContent.prototype.Copy = function()
     {
         var oChanges = new this.constructor(this.Class, this.Type, this.Pos, this.Items, this.Add);
+
         oChanges.UseArray = this.UseArray;
-        oChanges.Pos = this.Pos;
+
         for (var nIndex = 0, nCount = this.PosArray.length; nIndex < nCount; ++nIndex)
             oChanges.PosArray[nIndex] = this.PosArray[nIndex];
 
         return oChanges;
     };
-
+    CChangesDrawingsContent.prototype.ConvertToSimpleChanges = function()
+    {
+        let arrSimpleActions = this.ConvertToSimpleActions();
+        let arrChanges       = [];
+        for (let nIndex = 0, nCount = arrSimpleActions.length; nIndex < nCount; ++nIndex)
+        {
+            let oAction = arrSimpleActions[nIndex];
+            let oChange = new this.constructor(this.Class, this.Type, oAction.Pos, [oAction.Item], oAction.Add);
+            arrChanges.push(oChange);
+        }
+        return arrChanges;
+    };
     CChangesDrawingsContent.prototype.CreateReverseChange = function(){
         var oRet = this.private_CreateReverseChange(this.constructor);
         oRet.Type = this.Type;
@@ -647,6 +644,23 @@
         return Reader.GetLong();
     };
     window['AscDFH'].CChangesDrawingsContentLong = CChangesDrawingsContentLong;
+
+
+
+    function CChangesDrawingsContentBool(Class, Type, Pos, Items, isAdd) {
+        this.Type = Type;
+        AscDFH.CChangesDrawingsContent.call(this, Class, Type, Pos, Items, isAdd);
+    }
+    CChangesDrawingsContentBool.prototype = Object.create(AscDFH.CChangesDrawingsContent.prototype);
+    CChangesDrawingsContentBool.prototype.constructor = CChangesDrawingsContentBool;
+    CChangesDrawingsContentBool.prototype.private_WriteItem = function (Writer, Item) {
+        Writer.WriteBool(Item);
+    };
+    CChangesDrawingsContentBool.prototype.private_ReadItem = function (Reader) {
+        return Reader.GetBool();
+    };
+    window['AscDFH'].CChangesDrawingsContentBool = CChangesDrawingsContentBool;
+
 
 
     function CChangesDrawingsContentLongMap(Class, Type, Pos, Items, isAdd){

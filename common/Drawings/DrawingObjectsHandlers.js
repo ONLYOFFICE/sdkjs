@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -148,7 +148,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
     {
         if(selected_objects.length === 1)
         {
-            if(window["IS_NATIVE_EDITOR"] && e.ClickCount > 1)
+            if(window["IS_NATIVE_EDITOR"] && AscFormat.isLeftButtonDoubleClick(e))
             {
                 if(selected_objects[0].getObjectType() === AscDFH.historyitem_type_Shape)
                 {
@@ -210,7 +210,7 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
                 if(hit_to_handles > -1 && !oGeometryEditSelection)
                 {
 
-                    if(window["IS_NATIVE_EDITOR"] && e.ClickCount > 1)
+                    if(window["IS_NATIVE_EDITOR"] && AscFormat.isLeftButtonDoubleClick(e))
                     {
                         if(selected_objects[i].getObjectType() === AscDFH.historyitem_type_Shape)
                         {
@@ -440,7 +440,7 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
     {
         if(drawing.getObjectType() === AscDFH.historyitem_type_Shape && drawing.getDocContent && drawing.getDocContent())
         {
-            if(e.ClickCount > 1 && !e.ShiftKey && !e.CtrlKey && ((drawingObjectsController.selection.groupSelection && drawingObjectsController.selection.groupSelection.selectedObjects.length === 1) || drawingObjectsController.selectedObjects.length === 1))
+            if(AscFormat.isLeftButtonDoubleClick(e) && !e.ShiftKey && !e.CtrlKey && ((drawingObjectsController.selection.groupSelection && drawingObjectsController.selection.groupSelection.selectedObjects.length === 1) || drawingObjectsController.selectedObjects.length === 1))
             {
                 if(!hit_in_text_rect && (hit_in_inner_area || hit_in_path))
                 {
@@ -476,7 +476,7 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
         if(bWord/* && (!drawing.txWarpStruct || drawingObjectsController.curState.startTargetTextObject === drawing || drawing.haveSelectedDrawingInContent && drawing.haveSelectedDrawingInContent())*/)
         {
             if(drawing.getObjectType() === AscDFH.historyitem_type_Shape &&
-                drawing.isForm() && drawing.getInnerForm() && drawing.getInnerForm().IsPicture())
+                drawing.isForm() && drawing.getInnerForm() && !drawing.getInnerForm().CanPlaceCursorInside())
             {
                 return drawingObjectsController.handleMoveHit(drawing, e, x, y, group, false, pageIndex, bWord);
             }
@@ -656,7 +656,7 @@ function handleGroup(drawing, drawingObjectsController, e, x, y, group, pageInde
                                     cur_grouped_object.selectTitle(title, pageIndex);
                                     cur_grouped_object.selection.textSelection = title;
                                     title.selectionSetStart(e, x, y, pageIndex);
-                                    drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, title, x, y));
+                                    drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, title, x, y, e.Button));
                                     if(e.ClickCount <= 1)
                                     {
                                         drawingObjectsController.updateSelectionState();
@@ -1185,14 +1185,14 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
         if(!bSeries)
         {
 			j = 0;
-			if(Array.isArray(t.catAxisChart))
+			if(Array.isArray(t.axesChart))
 			{
-				for(j = 0; j < t.catAxisChart.length; ++j)
+				for(j = 0; j < t.axesChart.length; ++j)
 				{
-					var oAxObj = t.catAxisChart[j];
+					var oAxObj = t.axesChart[j];
 					if(oAxObj && oAxObj.paths)
 					{
-						if(oAxObj.catAx && oAxObj.catAx.compiledMajorGridLines && oAxObj.catAx.compiledMajorGridLines.isVisible()
+						if(oAxObj.axis && oAxObj.axis.compiledMajorGridLines && oAxObj.axis.compiledMajorGridLines.isVisible()
 							&& AscFormat.isRealNumber(oAxObj.paths.gridLines))//TODo Date Ax vehicle log book1.xlsx
 						{
 							var oPath = drawing.pathMemory.GetPath(oAxObj.paths.gridLines);
@@ -1202,12 +1202,12 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
 								selector.resetSelection();
 								selector.selectObject(drawing, pageIndex);
 								selector.selection.chartSelection = drawing;
-								drawing.selection.axis = oAxObj.catAx;
+								drawing.selection.axis = oAxObj.axis;
 								drawing.selection.majorGridlines = true;
 								break;
 							}
 						}
-						if(!bSeries && oAxObj.catAx && oAxObj.catAx.compiledMinorGridLines && oAxObj.catAx.compiledMinorGridLines.isVisible()
+						if(!bSeries && oAxObj.axis && oAxObj.axis.compiledMinorGridLines && oAxObj.axis.compiledMinorGridLines.isVisible()
 							&& AscFormat.isRealNumber(oAxObj.paths.minorGridLines))
 						{
 							var oPath = drawing.pathMemory.GetPath(oAxObj.paths.minorGridLines);
@@ -1217,7 +1217,7 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
 								selector.resetSelection();
 								selector.selectObject(drawing, pageIndex);
 								selector.selection.chartSelection = drawing;
-								drawing.selection.axis = oAxObj.catAx;
+								drawing.selection.axis = oAxObj.axis;
 								drawing.selection.minorGridlines = true;
 								break;
 							}
@@ -1225,49 +1225,6 @@ function handleChartElements(drawing, drawingObjectsController, e, dTx, dTy, gro
 					}
 				}
 			}
-            if(!Array.isArray(t.catAxisChart) || j ===  t.catAxisChart.length)
-            {
-				if(Array.isArray(t.valAxisChart))
-				{
-					for(j = 0; j < t.valAxisChart.length; ++j)
-					{
-						var oAxObj = t.valAxisChart[j];
-						if(oAxObj && oAxObj.paths)
-						{
-							if(oAxObj.valAx.compiledMajorGridLines && oAxObj.valAx.compiledMajorGridLines.isVisible() &&
-								AscFormat.isRealNumber(oAxObj.paths.gridLines))
-							{
-								var oPath = drawing.pathMemory.GetPath(oAxObj.paths.gridLines);
-								if(oPath.hitInPath(oCanvas, dTx, dTy))
-								{
-									bSeries = true;
-									selector.resetSelection();
-									selector.selectObject(drawing, pageIndex);
-									selector.selection.chartSelection = drawing;
-									drawing.selection.axis = oAxObj.valAx;
-									drawing.selection.majorGridlines = true;
-									break;
-								}
-							}
-							if(!bSeries && oAxObj.valAx.compiledMinorGridLines && oAxObj.valAx.compiledMinorGridLines.isVisible() &&
-								AscFormat.isRealNumber(oAxObj.paths.minorGridLines))
-							{
-								var oPath = drawing.pathMemory.GetPath(oAxObj.paths.minorGridLines);
-								if(oPath.hitInPath(oCanvas, dTx, dTy))
-								{
-									bSeries = true;
-									selector.resetSelection();
-									selector.selectObject(drawing, pageIndex);
-									selector.selection.chartSelection = drawing;
-									drawing.selection.axis = oAxObj.valAx;
-									drawing.selection.minorGridlines = true;
-									break;
-								}
-							}
-						}
-					}
-				}
-            }
         }
     }
     return bSeries;
@@ -1520,7 +1477,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                                             drawing.selection.dataLbl = j;
                                             drawing.selection.textSelection = oDLbl;
                                             oDLbl.selectionSetStart(e, x, y, pageIndex);
-                                            drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, oDLbl, x, y));
+                                            drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, oDLbl, x, y, e.Button));
                                             if(e.ClickCount <= 1)
                                             {
                                                 drawingObjectsController.updateSelectionState();
@@ -1647,7 +1604,7 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                         drawing.selection.textSelection = title;
                     }
                     title.selectionSetStart(e, x, y, pageIndex);
-                    drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, title, x, y));
+                    drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, title, x, y, e.Button));
                     if(e.ClickCount <= 1)
                     {
                         drawingObjectsController.updateSelectionState();
@@ -1886,7 +1843,7 @@ function handleInlineShapeImage(drawing, drawingObjectsController, e, x, y, page
         if(drawing.bWordShape /*&& (!drawing.txWarpStruct || drawingObjectsController.curState.startTargetTextObject === drawing || drawing.haveSelectedDrawingInContent && drawing.haveSelectedDrawingInContent())*/)
         {
             if(drawing.getObjectType() === AscDFH.historyitem_type_Shape &&
-                drawing.isForm() && drawing.getInnerForm() && drawing.getInnerForm().IsPicture())
+                drawing.isForm() && drawing.getInnerForm() && !drawing.getInnerForm().CanPlaceCursorInside())
             {
                 return handleInlineHitNoText(drawing, drawingObjectsController, e, x, y, pageIndex, false);
             }
@@ -1923,29 +1880,42 @@ function handleInlineHitNoText(drawing, drawingObjects, e, x, y, pageIndex, bInS
     {
         if(drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
         {
-            var bIsSelected = drawing.selected;
+            let bIsSelected = drawing.selected;
             drawingObjects.checkChartTextSelection();
             drawingObjects.resetSelection();
             drawing.select(drawingObjects, pageIndex);
-            drawingObjects.changeCurrentState(new AscFormat.PreMoveInlineObject(drawingObjects, drawing, bIsSelected, !bInSelect, pageIndex, x, y));
-            if(e.ClickCount > 1 && !e.ShiftKey && !e.CtrlKey && ((drawingObjects.selection.groupSelection && drawingObjects.selection.groupSelection.selectedObjects.length === 1) || drawingObjects.selectedObjects.length === 1))
+            let bHandleDblClick = false;
+            if(AscFormat.isLeftButtonDoubleClick(e) && !e.ShiftKey && !e.CtrlKey && ((drawingObjects.selection.groupSelection && drawingObjects.selection.groupSelection.selectedObjects.length === 1) || drawingObjects.selectedObjects.length === 1))
             {
                 if (drawing.getObjectType() === AscDFH.historyitem_type_ChartSpace && drawingObjects.handleChartDoubleClick)
+                {
+                    bHandleDblClick = true;
                     drawingObjects.handleChartDoubleClick(drawing.parent, drawing, e, x, y, pageIndex);
-                else if (drawing.getObjectType() === AscDFH.historyitem_type_OleObject && drawingObjects.handleOleObjectDoubleClick){
+                }
+                else if (drawing.getObjectType() === AscDFH.historyitem_type_OleObject && drawingObjects.handleOleObjectDoubleClick)
+                {
+                    bHandleDblClick = true;
                     drawingObjects.handleOleObjectDoubleClick(drawing.parent, drawing, e, x, y, pageIndex);
                 }
-                else if (drawing.signatureLine && drawingObjects.handleSignatureDblClick){
+                else if (drawing.signatureLine && drawingObjects.handleSignatureDblClick)
+                {
+                    bHandleDblClick = true;
                     drawingObjects.handleSignatureDblClick(drawing.signatureLine.id, drawing.extX, drawing.extY);
                 }
                 else if (2 === e.ClickCount && drawing.parent instanceof AscCommonWord.ParaDrawing && drawing.parent.IsMathEquation())
                 {
+                    bHandleDblClick = true;
                     drawingObjects.handleMathDrawingDoubleClick(drawing.parent, e, x, y, pageIndex);
                 }
                 else if(drawing.getObjectType() === AscDFH.historyitem_type_Shape)
                 {
+                    bHandleDblClick = true;
                     drawingObjects.handleDblClickEmptyShape(drawing);
                 }
+            }
+            if(!bHandleDblClick)
+            {
+                drawingObjects.changeCurrentState(new AscFormat.PreMoveInlineObject(drawingObjects, drawing, bIsSelected, !bInSelect, pageIndex, x, y));
             }
             drawingObjects.updateOverlay();
             return true;
@@ -2015,7 +1985,8 @@ function handleMouseUpPreMoveState(drawingObjects, e, x, y, pageIndex, bWord)
     state.drawingObjects.clearPreTrackObjects();
     state.drawingObjects.changeCurrentState(new AscFormat.NullState(state.drawingObjects));
     var bHandle = false;
-    if(!state.shift && /*!state.ctrl &&*/ state.bInside && state.majorObjectIsSelected && e.Button !== AscCommon.g_mouse_button_right)
+    const bRightButton = (e.Button === AscCommon.g_mouse_button_right);
+    if(!state.shift && /*!state.ctrl &&*/ state.bInside && state.majorObjectIsSelected && !bRightButton)
     {
         switch (state.majorObject.getObjectType())
         {
@@ -2046,7 +2017,7 @@ function handleMouseUpPreMoveState(drawingObjects, e, x, y, pageIndex, bWord)
     }
     if(!bHandle)
     {
-        if(!state.shift && !state.ctrl && state.bInside && state.majorObject.getObjectType() === AscDFH.historyitem_type_ImageShape)
+        if(!bRightButton && !state.shift && !state.ctrl && state.bInside && state.majorObject.getObjectType() === AscDFH.historyitem_type_ImageShape)
         {
             var sMediaName = state.majorObject.getMediaFileName();
             if(sMediaName)
@@ -2113,7 +2084,7 @@ function handleFloatTable(drawing, drawingObjectsController, e, x, y, group, pag
                     drawingObjectsController.selectObject(group, pageIndex);
                     drawingObjectsController.selection.groupSelection = group;
                 }
-                drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, drawing, x, y));
+                drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, drawing, x, y, e.Button));
                 return true;
             }
             else

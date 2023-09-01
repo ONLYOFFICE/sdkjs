@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -654,78 +654,12 @@ CShape.prototype.GetAllTables = function(oProps, arrTables)
 	var oContent = this.getDocContent();
 	return oContent ? oContent.GetAllTables(oProps, arrTables) : [];
 };
-
-
 CShape.prototype.getArrayWrapIntervals = function(x0,y0, x1, y1, Y0Sp, Y1Sp, LeftField, RightField, arr_intervals, bMathWrap)
 {
     return this.parent.getArrayWrapIntervals(x0,y0, x1, y1, Y0Sp, Y1Sp, LeftField, RightField, arr_intervals, bMathWrap);
 };
-CShape.prototype.updateTransformMatrix = function()
-{
-    var oParentTransform = null;
-    if(this.parent && this.parent.Get_ParentParagraph)
-    {
-        var oParagraph = this.parent.Get_ParentParagraph();
-        if(oParagraph)
-        {
-            oParentTransform = oParagraph.Get_ParentTextTransform();
-        }
-    }
-    this.transform = this.localTransform.CreateDublicate();
-    global_MatrixTransformer.TranslateAppend(this.transform, this.posX, this.posY);
-    if(oParentTransform)
-    {
-        global_MatrixTransformer.MultiplyAppend(this.transform, oParentTransform);
-    }
-    this.invertTransform = global_MatrixTransformer.Invert(this.transform);
 
-    if(this.localTransformText)
-    {
-        this.transformText = this.localTransformText.CreateDublicate();
-        global_MatrixTransformer.TranslateAppend(this.transformText, this.posX, this.posY);
-        if(oParentTransform)
-        {
-            global_MatrixTransformer.MultiplyAppend(this.transformText, oParentTransform);
-        }
-        this.invertTransformText = global_MatrixTransformer.Invert(this.transformText);
-    }
-    if(this.localTransformTextWordArt)
-    {
-        this.transformTextWordArt = this.localTransformTextWordArt.CreateDublicate();
-        global_MatrixTransformer.TranslateAppend(this.transformTextWordArt, this.posX, this.posY);
-        if(oParentTransform)
-        {
-            global_MatrixTransformer.MultiplyAppend(this.transformTextWordArt, oParentTransform);
-        }
-        this.invertTransformTextWordArt = global_MatrixTransformer.Invert(this.transformTextWordArt);
-    }
-    if(this.localTransformText2)
-    {
 
-        this.transformText2 = this.localTransformText2.CreateDublicate();
-        global_MatrixTransformer.TranslateAppend(this.transformText2, this.posX, this.posY);
-        if(oParentTransform)
-        {
-            global_MatrixTransformer.MultiplyAppend(this.transformText2, oParentTransform);
-        }
-        this.invertTransformText2 = global_MatrixTransformer.Invert(this.transformText2);
-    }
-
-    this.checkShapeChildTransform();
-    this.checkContentDrawings();
-};
-
-CShape.prototype.checkContentDrawings = function()
-{
-    if(this.textBoxContent)
-    {
-        var all_drawings = this.textBoxContent.GetAllDrawingObjects([]);
-        for(var i = 0; i < all_drawings.length; ++i)
-        {
-            all_drawings[i].GraphicObj.updateTransformMatrix();
-        }
-    }
-};
 
 CShape.prototype.applyParentTransform = function(transform)
 {
@@ -883,7 +817,7 @@ CShape.prototype.Get_Numbering = function()
     {
         return oLogicDoc.Numbering;
     }
-    return new CNumbering();
+    return AscWord.DEFAULT_NUMBERING;
 };
 CShape.prototype.IsCell = function(isReturnCell)
 {
@@ -898,7 +832,7 @@ CShape.prototype.hitInTextRect = function(x, y)
     return this.hitInTextRectWord(x, y);
 };
 
-CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
+CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex, bNoTextSelection)
 {
     var oLogicDoc = this.getLogicDocument();
     if(!oLogicDoc)
@@ -906,14 +840,18 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
         return;
     }
 	var para_drawing;
+    var main_group;
+    let oSelector;
 	if (this.group)
 	{
-		var main_group = this.group.getMainGroup();
+		main_group = this.group.getMainGroup();
 		para_drawing   = main_group.parent;
+        oSelector = main_group;
 	}
 	else
 	{
 		para_drawing = this.parent;
+        oSelector = oLogicDoc.DrawingObjects;
 	}
 
 	let oDocumentContent = para_drawing ? para_drawing.GetDocumentContent() : null;
@@ -922,7 +860,21 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
         var nPageIndex = AscFormat.isRealNumber(pageIndex) ? pageIndex : para_drawing.PageNum;
 		var drawing_objects = oLogicDoc.DrawingObjects;
 
-        this.SetControllerTextSelection(drawing_objects, nPageIndex);
+        if(bNoTextSelection !== true) 
+		{
+            this.SetControllerTextSelection(drawing_objects, nPageIndex);
+        }
+        else 
+		{
+            oSelector.resetSelection();
+			if(oSelector !== oLogicDoc.DrawingObjects)
+			{
+				oLogicDoc.DrawingObjects.resetSelection();
+				oLogicDoc.DrawingObjects.selection.groupSelection = oSelector;
+				oLogicDoc.DrawingObjects.selectObject(oSelector, nPageIndex);
+			}
+            oSelector.selectObject(this, nPageIndex);
+        }
 
 		var hdr_ftr = oDocumentContent.IsHdrFtr(true);
 		if (hdr_ftr)
@@ -952,57 +904,29 @@ CShape.prototype.Set_CurrentElement = function(bUpdate, pageIndex)
 	}
 };
 
-CShape.prototype.GetParaDrawing = function()
-{
-    if(this.group)
-    {
-        var cur_group = this.group;
-        while(cur_group.group)
-        {
-            cur_group = cur_group.group;
-        }
-        if(cur_group.parent)
-        {
-            return cur_group.parent;
-        }
-    }
-    else
-    {
-        if(this.parent)
-        {
-            return this.parent;
-        }
-    }
-    return null;
-};
-
-
 CShape.prototype.Get_StartPage_Relative = function()
 {
     return 0;
 };
 CShape.prototype.CheckTableCoincidence = function(table)
 {
-    var para_drawing = this.GetParaDrawing();
-    if(para_drawing && para_drawing.DocumentContent)
+    const oParaDrawing = this.GetParaDrawing();
+    if(oParaDrawing)
     {
-        return para_drawing.DocumentContent.CheckTableCoincidence(table);
+        const oDocContent = oParaDrawing.GetDocumentContent();
+        if(oDocContent)
+        {
+            return oDocContent.CheckTableCoincidence(table);
+        }
     }
     return false;
 };
 
 CShape.prototype.GetPrevElementEndInfo = function(CurElement)
 {
-    var para_drawing = this.GetParaDrawing();
-    if(isRealObject(para_drawing) && isRealObject(para_drawing.DocumentContent) && (para_drawing.DocumentContent.GetPrevElementEndInfo) )
-    {
-        var parent_paragraph = para_drawing.Get_ParentParagraph();
-        if(parent_paragraph)
-            return para_drawing.DocumentContent.GetPrevElementEndInfo(parent_paragraph);
-    }
-    return null;
+	return null;
 };
-CShape.prototype.Is_ThisElementCurrent = function(CurElement)
+CShape.prototype.IsThisElementCurrent = function(CurElement)
 {
     var oLogicDoc = this.getLogicDocument();
     if(!oLogicDoc)
@@ -1011,7 +935,7 @@ CShape.prototype.Is_ThisElementCurrent = function(CurElement)
     }
     return oLogicDoc.DrawingObjects.getTargetDocContent() === this.getDocContent();
 };
-CShape.prototype.Is_UseInDocument = function()
+CShape.prototype.IsUseInDocument = function()
 {
     if(this.group)
     {
@@ -1020,50 +944,16 @@ CShape.prototype.Is_UseInDocument = function()
         {
             if(aSpTree[i] === this)
             {
-                return this.group.Is_UseInDocument();
+                return this.group.IsUseInDocument();
             }
         }
         return false;
     }
-    if(this.parent && this.parent.Is_UseInDocument && this.parent.GraphicObj === this)
+    if(this.parent && this.parent.IsUseInDocument && this.parent.GraphicObj === this)
     {
-        return this.parent.Is_UseInDocument();
+        return this.parent.IsUseInDocument();
     }
     return false;
-};
-CShape.prototype.IsHdrFtr = function(bool)
-{
-    if(!this.group)
-    {
-        if(isRealObject(this.parent) && isRealObject(this.parent.DocumentContent))
-            return this.parent.DocumentContent.IsHdrFtr(bool);
-    }
-    else
-    {
-        var cur_group = this.group;
-        while(cur_group.group)
-            cur_group = cur_group.group;
-        if(isRealObject(cur_group.parent) && isRealObject(cur_group.parent.DocumentContent))
-            return cur_group.parent.DocumentContent.IsHdrFtr(bool);
-    }
-    return bool ? null : false;
-};
-CShape.prototype.IsFootnote = function(bReturnFootnote)
-{
-	if(!this.group)
-	{
-		if(isRealObject(this.parent) && isRealObject(this.parent.DocumentContent))
-			return this.parent.DocumentContent.IsFootnote(bReturnFootnote);
-	}
-	else
-	{
-		var cur_group = this.group;
-		while(cur_group.group)
-			cur_group = cur_group.group;
-		if(isRealObject(cur_group.parent) && isRealObject(cur_group.parent.DocumentContent))
-			return cur_group.parent.DocumentContent.IsFootnote(bReturnFootnote);
-	}
-	return bReturnFootnote ? null : false;
 };
 CShape.prototype.OnContentReDraw = function()
 {
@@ -1115,13 +1005,13 @@ CShape.prototype.checkPosTransformText = function()
         }
     }
 };
-CShape.prototype.getNearestPos = function(x, y, pageIndex)
+CShape.prototype.getNearestPos = function(x, y, pageIndex, drawing)
 {
     if(isRealObject(this.textBoxContent) && this.invertTransformText)
     {
         var t_x = this.invertTransformText.TransformPointX(x, y);
         var t_y = this.invertTransformText.TransformPointY(x, y);
-        var nearest_pos = this.textBoxContent.Get_NearestPos(0, t_x, t_y, false);
+        var nearest_pos = this.textBoxContent.Get_NearestPos(0, t_x, t_y, false, drawing);
         return nearest_pos;
     }
     return null;
@@ -1211,34 +1101,7 @@ CShape.prototype.Get_ColorMap = function()
     {
         return oLogicDoc.Get_ColorMap();
     }
-    return AscFormat.DEFAULT_COLOR_MAP;
-};
-
-CShape.prototype.Is_TopDocument = function(bReturn)
-{
-    if(!bReturn)
-    {
-        return false;
-    }
-    else
-    {
-        var para_drawing;
-        if (this.group)
-        {
-            var main_group = this.group.getMainGroup();
-            para_drawing   = main_group.parent;
-        }
-        else
-        {
-            para_drawing = this.parent;
-        }
-
-        if (para_drawing && para_drawing.DocumentContent)
-        {
-            return para_drawing.DocumentContent.Is_TopDocument(bReturn);
-        }
-        return null;
-    }
+    return AscFormat.GetDefaultColorMap();
 };
 
 CShape.prototype.recalcText = function(bResetRecalcCache)

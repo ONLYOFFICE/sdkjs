@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -83,9 +83,10 @@ CDocContentStructure.prototype.Recalculate = function(oTheme, oColorMap, dWidth,
 };
 CDocContentStructure.prototype.CheckContentStructs = function(aContentStructs)
 {
-    for(var i = 0; i < this.m_aContent.length; ++i)
+    for(let nElement = 0; nElement < this.m_aContent.length; ++nElement)
     {
-        this.m_aContent[i].CheckContentStructs(aContentStructs);
+        let oElement = this.m_aContent[nElement];
+        oElement.CheckContentStructs(aContentStructs);
     }
 };
 CDocContentStructure.prototype.draw = function(graphics, transform, oTheme, oColorMap)
@@ -565,7 +566,9 @@ CDocContentStructure.prototype.checkUnionPaths = function(aWarpedObjects)
     this.m_aBorders.length = 0;
     this.getAllBackgroundsBorders(this.m_aParagraphBackgrounds, this.m_aBackgrounds, this.m_aBorders, this.m_aComments);
 };
-
+    CDocContentStructure.prototype.getParagraphStructures = function () {
+        return this.m_aContent;
+    };
 
 
 
@@ -573,6 +576,11 @@ function CParagraphStructure()
 {
     this.m_nType = DRAW_COMMAND_PARAGRAPH;
     this.m_aContent = [];
+    this.m_aWords = [];
+    this.n_oLastWordStart = {
+        line: 0,
+        posInLine: -1
+    };
 }
 
 CParagraphStructure.prototype.Recalculate = function(oTheme, oColorMap, dWidth, dHeight, oShape)
@@ -609,7 +617,38 @@ CParagraphStructure.prototype.getAllBackgroundsBorders = function(aParaBackgroun
         this.m_aContent[i].getAllBackgroundsBorders(aParaBackgrounds, aBackgrounds, aBorders, aComments);
     }
 };
-
+CParagraphStructure.prototype.getTextStructures = function() {
+    const aTextStructures = [];
+    for(let nContent = 0; nContent < this.m_aContent.length; ++nContent) {
+        this.m_aContent[nContent].getTextStructures(aTextStructures);
+    }
+    return aTextStructures;
+};
+CParagraphStructure.prototype.checkWord = function() {
+    const oWordPos = this.n_oLastWordStart;
+    let aWord = [];
+    for(let nLine = oWordPos.line; nLine < this.m_aContent.length; ++nLine) {
+        let oLine = this.m_aContent[nLine];
+        let aContent = oLine.m_aContent;
+        if(aContent.length === 0) {
+            break;
+        }
+        if(oWordPos.line < nLine) {
+            oWordPos.posInLine = -1;
+        }
+        for(let nPosInLine = oWordPos.posInLine + 1; nPosInLine < aContent.length; ++nPosInLine) {
+            let oObjectToDraw = aContent[nPosInLine];
+            if(oObjectToDraw.Code !== undefined) {
+                aWord.push(aContent[nPosInLine]);
+            }
+            oWordPos.posInLine = nPosInLine;
+        }
+        oWordPos.line = nLine;
+    }
+    if(aWord.length > 0) {
+        this.m_aWords.push(aWord);
+    }
+};
 
 function CTableStructure()
 {
@@ -702,11 +741,20 @@ CLineStructure.prototype.Recalculate = function(oTheme, oColorMap, dWidth, dHeig
 
 CLineStructure.prototype.CheckContentStructs = function(aContentStructs)
 {
-    var i;
-    for(i = 0; i < this.m_aContent.length; ++i)
+    const isN = AscFormat.isRealNumber;
+    for(let nElement = 0; nElement < this.m_aContent.length; ++nElement)
     {
-        aContentStructs.push(this.m_aContent[i]);
+        let oElement = this.m_aContent[nElement];
+        if(isN(oElement.Code))
+        {
+            aContentStructs.push(oElement);
+        }
     }
+};
+
+CLineStructure.prototype.getTextStructures = function(aTextStructures)
+{
+    return this.CheckContentStructs(aTextStructures);
 };
 CLineStructure.prototype.GetAllWarped = function(aWarpedObjects)
 {
@@ -908,7 +956,7 @@ function CTextDrawer(dWidth, dHeight, bDivByLInes, oTheme, bDivGlyphs)
     this.m_bDivGlyphs  = bDivGlyphs === true;
     this.m_aByLines = null;
     this.m_nCurLineIndex = -1;
-    this.m_aStackLineIndex = null;
+    this.m_aStackLineIndex = [];
     this.m_aStackCurRowMaxIndex = null;
     this.m_aByParagraphs = null;
 
@@ -922,7 +970,6 @@ function CTextDrawer(dWidth, dHeight, bDivByLInes, oTheme, bDivGlyphs)
     if(this.m_bDivByLines)
     {
         this.m_aByLines = [];
-        this.m_aStackLineIndex = [];
         this.m_aStackCurRowMaxIndex = [];
     }
     else
@@ -1231,15 +1278,16 @@ CTextDrawer.prototype =
                     this.m_aByParagraphs = [];
                     this.m_aDrawings = [];
                 }
-                if(this.m_bDivByLines)
-                {
-                    this.m_nCurLineIndex = this.m_aStackLineIndex.pop();
-                }
+                this.m_nCurLineIndex = this.m_aStackLineIndex.pop();
                 break;
             }
             case DRAW_COMMAND_PARAGRAPH:
             {
-                this.m_aStack.pop();
+                let oParaStruct = this.m_aStack.pop();
+                if(oParaStruct && oParaStruct.checkWord)
+                {
+                    oParaStruct.checkWord();
+                }
                 break;
             }
             case DRAW_COMMAND_LINE:
@@ -1268,7 +1316,7 @@ CTextDrawer.prototype =
         }
     },
 
-    Get_PathToDraw : function(bStart, bStart2, x, y)
+    Get_PathToDraw : function(bStart, bStart2, x, y, Code)
     {
         var oPath = null;
         var oLastCommand = this.m_aStack[this.m_aStack.length - 1];
@@ -1285,19 +1333,19 @@ CTextDrawer.prototype =
                         {
                             if(oLastCommand.m_aContent.length === 0)
                             {
-                                oLastCommand.m_aContent.push(new ObjectToDraw(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), this.Width, this.Height, new Geometry(), this.m_oTransform, x, y, this.m_oCurComment));
+                                oLastCommand.m_aContent.push(new ObjectToDraw(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), this.Width, this.Height, new Geometry(), this.m_oTransform, x, y, this.m_oCurComment, Code));
                             }
                             oLastObjectToDraw = oLastCommand.m_aContent[oLastCommand.m_aContent.length - 1];
 
                             if(bStart2)
                             {
-                                if(oLastObjectToDraw.geometry.pathLst.length === 0 || (oLastObjectToDraw.geometry.pathLst.length === 1 && oLastObjectToDraw.geometry.pathLst[0].isEmpty()))
+                                if(oLastObjectToDraw.geometry.isEmpty())
                                 {
-                                    oLastObjectToDraw.resetBrushPen(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), x, y)
+                                    oLastObjectToDraw.resetBrushPen(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), x, y, Code)
                                 }
                                 else
                                 {
-                                    oLastCommand.m_aContent.push(new ObjectToDraw(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), this.Width, this.Height, new Geometry(), this.m_oTransform, x, y));
+                                    oLastCommand.m_aContent.push(new ObjectToDraw(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), this.Width, this.Height, new Geometry(), this.m_oTransform, x, y, null, Code));
                                     oLastObjectToDraw = oLastCommand.m_aContent[oLastCommand.m_aContent.length - 1];
                                 }
                             }
@@ -1313,7 +1361,7 @@ CTextDrawer.prototype =
 
                             if(bStart2)
                             {
-                                if(oLastObjectToDraw.geometry.pathLst.length === 0 || (oLastObjectToDraw.geometry.pathLst.length === 1 && oLastObjectToDraw.geometry.pathLst[0].isEmpty()))
+                                if(oLastObjectToDraw.geometry.isEmpty())
                                 {
                                     oLastObjectToDraw.resetBrushPen(this.m_oFill, this.m_oLine, x, y);
                                 }
@@ -1335,7 +1383,7 @@ CTextDrawer.prototype =
 
                             if(bStart2)
                             {
-                                if(oLastObjectToDraw.geometry.pathLst.length === 0 || (oLastObjectToDraw.geometry.pathLst.length === 1 && oLastObjectToDraw.geometry.pathLst[0].isEmpty()))
+                                if(oLastObjectToDraw.geometry.isEmpty())
                                 {
                                     oLastObjectToDraw.resetBrushPen(this.m_oFill, this.m_oLine, x, y);
                                 }
@@ -1359,7 +1407,7 @@ CTextDrawer.prototype =
 
                             if(bStart2)
                             {
-                                if(oLastObjectToDraw.geometry.pathLst.length === 0 || (oLastObjectToDraw.geometry.pathLst.length === 1 && oLastObjectToDraw.geometry.pathLst[0].isEmpty()))
+                                if(oLastObjectToDraw.geometry.isEmpty())
                                 {
                                     oLastObjectToDraw.resetBrushPen(this.GetFillFromTextPr(this.m_oTextPr), this.GetPenFromTextPr(this.m_oTextPr), x, y);
                                 }
@@ -1381,7 +1429,7 @@ CTextDrawer.prototype =
 
                             if(bStart2)
                             {
-                                if(oLastObjectToDraw.geometry.pathLst.length === 0 || (oLastObjectToDraw.geometry.pathLst.length === 1 && oLastObjectToDraw.geometry.pathLst[0].isEmpty()))
+                                if(oLastObjectToDraw.geometry.isEmpty())
                                 {
                                     oLastObjectToDraw.resetBrushPen(this.m_oFill, this.m_oLine, x, y);
                                 }
@@ -1408,7 +1456,7 @@ CTextDrawer.prototype =
 
                     if(bStart2)
                     {
-                        if(oLastObjectToDraw.geometry.pathLst.length === 0 || (oLastObjectToDraw.geometry.pathLst.length === 1 && oLastObjectToDraw.geometry.pathLst[0].isEmpty()))
+                        if(oLastObjectToDraw.geometry.isEmpty())
                         {
                             oLastObjectToDraw.resetBrushPen(this.m_oFill, this.m_oLine, x, y);
                         }
@@ -1617,6 +1665,25 @@ CTextDrawer.prototype =
     {
         this.FillTextCode(x, y, text.charCodeAt(0));
     },
+
+    CheckAddNewPath : function(x, y, Code)
+    {
+
+        if(this.m_bDivGlyphs === true)
+        {
+            this.Get_PathToDraw(false, true, x, y, Code);
+        }
+    },
+
+    CheckSpaceDraw : function()
+    {
+        for(let nPos = 0; nPos < this.m_aStack.length; ++nPos) {
+            if(this.m_aStack[nPos] instanceof CParagraphStructure) {
+                this.m_aStack[nPos].checkWord();
+            }
+        }
+    },
+
     FillTextCode : function(x,y,code)
     {
         //var _is_face_index_no_0 = (_font_info.faceIndexR <= 0 && _font_info.faceIndexI <= 0 && _font_info.faceIndexB <= 0 && _font_info.faceIndexBI <= 0);
@@ -1624,10 +1691,7 @@ CTextDrawer.prototype =
         //if (code < 0xFFFF && (_is_face_index_no_0 || window["native"] !== undefined))
         //    return;
 
-        if(this.m_bDivGlyphs === true)
-        {
-            this.Get_PathToDraw(false, true, x, y);
-        }
+        this.CheckAddNewPath(x, y);
         AscCommon.g_oTextMeasurer.SetFontInternal(this.m_oFont.Name, this.m_oFont.FontSize, Math.max(this.m_oFont.Style, 0));
 
         if (null != this.LastFontOriginInfo.Replace)
@@ -1662,6 +1726,23 @@ CTextDrawer.prototype =
     },
     put_TextureBoundsEnabled : function(bIsEnabled)
     {
+    },
+
+    SetFontInternal : function(name, size, style)
+    {
+        var fontinfo = g_fontApplication.GetFontInfo(name, style);
+        if (this.m_oFont.Name !== fontinfo.Name)
+        {
+            this.m_oFont.Name = fontinfo.Name;
+        }
+        if (this.m_oFont.FontSize !== size)
+        {
+            this.m_oFont.FontSize = size;
+        }
+        if (this.m_oFont.Style != style)
+        {
+            this.m_oFont.Style = style;
+        }
     },
 
     SetFontSlot : function(slot, fontSizeKoef)
@@ -2237,7 +2318,7 @@ CTextDrawer.prototype =
                 var oColor = oTextPr.Color;
                 if(oColor.Auto && oTextPr.FontRef && oTextPr.FontRef.Color && this.m_oTheme)
                 {
-                    var oColorMap = AscFormat.DEFAULT_COLOR_MAP;
+                    var oColorMap = AscFormat.GetDefaultColorMap();
                     var oApi = window && window.editor;
                     if(oApi)
                     {

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -43,12 +43,13 @@ var fldchartype_End      = 2;
 
 function ParaFieldChar(Type, LogicDocument)
 {
-	CRunElementBase.call(this);
+	AscWord.CRunElementBase.call(this);
 
 	this.LogicDocument = LogicDocument;
 	this.Use           = true;
 	this.CharType      = undefined === Type ? fldchartype_Begin : Type;
 	this.ComplexField  = (this.CharType === fldchartype_Begin) ? new CComplexField(LogicDocument) : null;
+	this.fldData   = null;
 	this.Run           = null;
 	this.X             = 0;
 	this.Y             = 0;
@@ -60,9 +61,13 @@ function ParaFieldChar(Type, LogicDocument)
 	this.String        = "";
 	this.NumValue      = null;
 }
-ParaFieldChar.prototype = Object.create(CRunElementBase.prototype);
+ParaFieldChar.prototype = Object.create(AscWord.CRunElementBase.prototype);
 ParaFieldChar.prototype.constructor = ParaFieldChar;
 ParaFieldChar.prototype.Type = para_FieldChar;
+ParaFieldChar.prototype.IsFieldChar = function()
+{
+	return true;
+};
 ParaFieldChar.prototype.Init = function(Type, LogicDocument)
 {
 	this.CharType = Type;
@@ -80,6 +85,7 @@ ParaFieldChar.prototype.Copy = function()
 		oChar.SetComplexField(oComplexField);
 		oComplexField.ReplaceChar(oChar);
 	}
+	//todo fldData
 
 	return oChar;
 };
@@ -88,7 +94,7 @@ ParaFieldChar.prototype.Measure = function(Context, TextPr)
 	if (this.IsSeparate())
 	{
 		this.FontKoef = TextPr.Get_FontKoef();
-		Context.SetFontSlot(fontslot_ASCII, this.FontKoef);
+		Context.SetFontSlot(AscWord.fontslot_ASCII, this.FontKoef);
 
 		for (var Index = 0; Index < 10; Index++)
 		{
@@ -107,7 +113,7 @@ ParaFieldChar.prototype.Draw = function(X, Y, Context)
 		var _X = X;
 		var _Y = Y;
 
-		Context.SetFontSlot(fontslot_ASCII, this.FontKoef);
+		Context.SetFontSlot(AscWord.fontslot_ASCII, this.FontKoef);
 		for (var Index = 0; Index < Len; Index++)
 		{
 			var Char = this.String.charAt(Index);
@@ -150,11 +156,13 @@ ParaFieldChar.prototype.Write_ToBinary = function(Writer)
 	// Long : CharType
 	Writer.WriteLong(this.Type);
 	Writer.WriteLong(this.CharType);
+	//todo fldData
 };
 ParaFieldChar.prototype.Read_FromBinary = function(Reader)
 {
 	// Long : CharType
 	this.Init(Reader.GetLong(), editor.WordControl.m_oLogicDocument);
+	//todo fldData
 };
 ParaFieldChar.prototype.SetParent = function(oParent)
 {
@@ -221,7 +229,7 @@ ParaFieldChar.prototype.private_UpdateWidth = function()
 		RealWidth += this.NumWidths[Char];
 	}
 
-	RealWidth = (RealWidth * TEXTWIDTH_DIVIDER) | 0;
+	RealWidth = (RealWidth * AscWord.TEXTWIDTH_DIVIDER) | 0;
 
 	this.Width        = RealWidth;
 	this.WidthVisible = RealWidth;
@@ -236,7 +244,7 @@ ParaFieldChar.prototype.IsNeedSaveRecalculateObject = function()
 };
 ParaFieldChar.prototype.SaveRecalculateObject = function(Copy)
 {
-	return new CPageNumRecalculateObject(this.Type, this.Widths, this.String, this.Width, Copy);
+	return new AscWord.CPageNumRecalculateObject(this.Type, this.Widths, this.String, this.Width, Copy);
 };
 ParaFieldChar.prototype.LoadRecalculateObject = function(RecalcObj)
 {
@@ -276,7 +284,7 @@ ParaFieldChar.prototype.PreDelete = function()
  */
 function ParaInstrText(nCharCode)
 {
-	CRunElementBase.call(this);
+	AscWord.CRunElementBase.call(this);
 
 	this.Value        = (undefined !== nCharCode ? nCharCode : 0x00);
 	this.Width        = 0x00000000 | 0;
@@ -284,9 +292,13 @@ function ParaInstrText(nCharCode)
 	this.Run          = null;
 	this.Replacement  = null; // Используется, когда InstrText идет в неположенном месте и должно восприниматься как обычный текст
 }
-ParaInstrText.prototype = Object.create(CRunElementBase.prototype);
+ParaInstrText.prototype = Object.create(AscWord.CRunElementBase.prototype);
 ParaInstrText.prototype.constructor = ParaInstrText;
 ParaInstrText.prototype.Type = para_InstrText;
+ParaInstrText.prototype.IsInstrText = function()
+{
+	return true;
+};
 ParaInstrText.prototype.Copy = function()
 {
 	return new ParaInstrText(this.Value);
@@ -325,7 +337,7 @@ ParaInstrText.prototype.GetValue = function()
 {
 	return String.fromCharCode(this.Value);
 };
-ParaInstrText.prototype.Set_CharCode = function(CharCode)
+ParaInstrText.prototype.SetCharCode = function(CharCode)
 {
 	this.Value = CharCode;
 };
@@ -338,22 +350,26 @@ ParaInstrText.prototype.GetReplacementItem = function()
 	return this.Replacement;
 };
 
-function CComplexField(oLogicDocument)
+function CComplexField(logicDocument)
 {
-	this.LogicDocument   = oLogicDocument;
+	this.LogicDocument   = logicDocument;
 	this.Current         = false;
 	this.BeginChar       = null;
 	this.EndChar         = null;
 	this.SeparateChar    = null;
 	this.InstructionLine = "";
 	this.Instruction     = null;
-	this.Id              = null;
+	this.FieldId         = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetFieldsManager().GetNewComplexFieldId() : null;
 
 	this.InstructionLineSrc = "";
 	this.InstructionCF      = [];
 
 	this.StartUpdate = false;
 }
+CComplexField.prototype.GetFieldId = function()
+{
+	return this.FieldId;
+};
 CComplexField.prototype.SetCurrent = function(isCurrent)
 {
 	this.Current = isCurrent;
@@ -364,7 +380,16 @@ CComplexField.prototype.IsCurrent = function()
 };
 CComplexField.prototype.IsUpdate = function()
 {
-	return this.StartUpdate;
+	return (this.StartUpdate > 0);
+};
+CComplexField.prototype.StartCharsUpdate = function()
+{
+	++this.StartUpdate;
+};
+CComplexField.prototype.FinishCharsUpdate = function()
+{
+	if (this.StartUpdate > 0)
+		--this.StartUpdate;
 };
 CComplexField.prototype.SetInstruction = function(oParaInstr)
 {
@@ -434,7 +459,7 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 	this.private_CheckNestedComplexFields();
 	this.private_UpdateInstruction();
 
-	if (!this.Instruction || !this.BeginChar || !this.EndChar || !this.SeparateChar)
+	if (!this.Instruction || !this.IsValid())
 		return;
 
 	this.SelectFieldValue();
@@ -447,7 +472,7 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 		this.LogicDocument.StartAction();
 	}
 
-	this.StartUpdate = true;
+	this.StartCharsUpdate();
 	switch (this.Instruction.GetType())
 	{
 		case fieldtype_PAGE:
@@ -483,8 +508,10 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 		case fieldtype_NOTEREF:
 			this.private_UpdateNOTEREF();
 			break;
+		case fieldtype_ADDIN:
+			break;
 	}
-	this.StartUpdate = false;
+	this.FinishCharsUpdate();
 
 	if (false !== isNeedRecalculate)
 		this.LogicDocument.Recalculate();
@@ -537,6 +564,9 @@ CComplexField.prototype.CalculateValue = function()
 			break;
 		case fieldtype_NOTEREF:
 			sResult = this.private_CalculateNOTEREF();
+			break;
+		case fieldtype_ADDIN:
+			sResult = "";
 			break;
 
 	}
@@ -854,7 +884,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 				nContainerPos = oPara.Content.length - 1;
 			}
 
-			var isAddTabForNumbering = false;
+			let numTabPos = null;
 			if (oSrcParagraph.HaveNumbering() && oSrcParagraph.GetParent())
 			{
 				var oNumPr     = oSrcParagraph.GetNumPr();
@@ -879,14 +909,22 @@ CComplexField.prototype.private_UpdateTOC = function()
 
 				if (Asc.c_oAscNumberingSuff.Space === nNumSuff)
 				{
-					oNumTabRun.Add_ToContent(0, new ParaSpace());
+					oNumTabRun.Add_ToContent(0, new AscWord.CRunSpace());
 					oContainer.Add_ToContent(1, oNumTabRun);
 					nContainerPos++;
 				}
 				else if (Asc.c_oAscNumberingSuff.Tab === nNumSuff)
 				{
-					oNumTabRun.Add_ToContent(0, new ParaTab());
-					isAddTabForNumbering = true;
+					// Выставление родительского класса нужно для правильного расчета ширины рана с учетом того,
+					// что используемые шрифты могут быть заданы в темах
+					oPara.SetParent(oSrcParagraph.GetParent());
+					
+					numTabPos = 0;
+					AscWord.ParagraphTextShaper.ShapeRun(oNumberingRun);
+					for (let runItemIndex = 0; runItemIndex < oNumberingRun.GetElementsCount(); ++runItemIndex)
+						numTabPos += oNumberingRun.GetElement(runItemIndex).GetWidth();
+					
+					oNumTabRun.Add_ToContent(0, new AscWord.CRunTab());
 					oContainer.Add_ToContent(1, oNumTabRun);
 					nContainerPos++;
 				}
@@ -896,11 +934,8 @@ CComplexField.prototype.private_UpdateTOC = function()
 			oTabs = new CParaTabs();
 			oTabs.Add(oTab);
 
-			if ((!isPreserveTabs && oPara.RemoveTabsForTOC()) || isAddTabForNumbering)
+			if ((!isPreserveTabs && oPara.RemoveTabsForTOC()) || null !== numTabPos)
 			{
-				// TODO: Табы для нумерации как-то зависят от самой нумерации и не совсем такие, как без нумерации
-
-
 				// В данной ситуации ворд делает следующим образом: он пробегает по параграфу и смотрит, если там есть
 				// табы (в контенте, а не в свойствах), тогда он первый таб оставляет, а остальные заменяет на пробелы,
 				// при этом в список табов добавляется новый левый таб без заполнителя, отступающий на 1,16 см от левого
@@ -910,10 +945,13 @@ CComplexField.prototype.private_UpdateTOC = function()
 				var sTOCStyleId  = this.LogicDocument.GetStyles().GetDefaultTOC(arrOutline[nIndex].Lvl);
 				if (sTOCStyleId)
 				{
-					var oParaPr  = this.LogicDocument.GetStyles().Get_Pr(sTOCStyleId, styletype_Paragraph, null, null).ParaPr;
-					nFirstTabPos = 11.6 + (oParaPr.Ind.Left + oParaPr.Ind.FirstLine);
+					let paraPr = this.LogicDocument.GetStyles().Get_Pr(sTOCStyleId, styletype_Paragraph, null, null).ParaPr;
+					if (null !== numTabPos)
+						nFirstTabPos = Math.trunc((paraPr.Ind.Left + paraPr.Ind.FirstLine + numTabPos + 4.9) / 5 + 1) * 5;
+					else
+						nFirstTabPos = 1.6 + (paraPr.Ind.Left + paraPr.Ind.FirstLine);
 				}
-
+				
 				oTabs.Add(new CParaTab(tab_Left, nFirstTabPos, Asc.c_oAscTabLeader.None));
 			}
 
@@ -923,7 +961,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 			{
 				var oSeparatorRun = new ParaRun(oPara, false);
 				if (!sSeparator || "" === sSeparator)
-					oSeparatorRun.AddToContent(0, new ParaTab());
+					oSeparatorRun.AddToContent(0, new AscWord.CRunTab());
 				else
 					oSeparatorRun.AddText(sSeparator.charAt(0));
 
@@ -945,24 +983,24 @@ CComplexField.prototype.private_UpdateTOC = function()
 	else
 	{
 		var sReplacementText;
-		if(bTOF)
+		if (bTOF)
 		{
 			sReplacementText = AscCommon.translateManager.getValue("No table of figures entries found.");
 		}
 		else
 		{
 			sReplacementText = AscCommon.translateManager.getValue("No table of contents entries found.");
+
+			let oApi = this.LogicDocument.GetApi();
+			oApi.sendEvent("asc_onError", c_oAscError.ID.ComplexFieldEmptyTOC, c_oAscError.Level.NoCritical);
 		}
 
 		oPara = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.LogicDocument, false);
 		oRun  = new ParaRun(oPara, false);
-		oRun.Set_Bold(true);
+		oRun.SetBold(true);
 		oRun.AddText(sReplacementText);
 		oPara.AddToContent(0, oRun);
 		oSelectedContent.Add(new AscCommonWord.CSelectedElement(oPara, true));
-
-		let oApi = this.LogicDocument.GetApi();
-		oApi.sendEvent("asc_onError", c_oAscError.ID.ComplexFieldEmptyTOC, c_oAscError.Level.NoCritical);
 	}
 
 	this.SelectFieldValue();
@@ -1063,13 +1101,13 @@ CComplexField.prototype.private_CalculateTIME = function(ms)
 		if (undefined !== ms)
 		{
 			var oDateTime = new Asc.cDate(ms);
-			sDate         = oFormat.formatToWord(oDateTime.getExcelDate() + (oDateTime.getUTCHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
+			sDate         = oFormat.formatToWord(oDateTime.getExcelDate(true) + (oDateTime.getUTCHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
 
 		}
 		else
 		{
 			let oDateTime = new Asc.cDate();
-			sDate         = oFormat.formatToWord(oDateTime.getExcelDate() + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
+			sDate         = oFormat.formatToWord(oDateTime.getExcelDate(true) + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
 		}
 	}
 
@@ -1186,7 +1224,8 @@ CComplexField.prototype.private_GetBookmarkContent = function(sBookmarkName)
 			SkipFootnoteReference : true,
 			SkipComplexFields     : true,
 			SkipComments          : true,
-			SkipBookmarks         : true
+			SkipBookmarks         : true,
+			SkipFldSimple         : true
 		});
 	}
 	return oSelectedContent;
@@ -1431,10 +1470,12 @@ CComplexField.prototype.SelectField = function()
 };
 CComplexField.prototype.GetFieldValueText = function()
 {
+	let logicDocument = this.LogicDocument;
 	var oDocument = this.GetTopDocumentContent();
 	if (!oDocument)
 		return;
-
+	
+	let state = logicDocument ? logicDocument.SaveDocumentState() : null;
 	oDocument.RemoveSelection();
 
 	var oRun = this.SeparateChar.GetRun();
@@ -1448,8 +1489,12 @@ CComplexField.prototype.GetFieldValueText = function()
 	var oEndPos = oDocument.GetContentPosition(false);
 
 	oDocument.SetSelectionByContentPositions(oStartPos, oEndPos);
-
-	return oDocument.GetSelectedText();
+	let result = oDocument.GetSelectedText();
+	
+	if (state)
+		logicDocument.LoadDocumentState(state);
+	
+	return result;
 };
 CComplexField.prototype.GetTopDocumentContent = function()
 {
@@ -1676,6 +1721,24 @@ CComplexField.prototype.ChangeInstruction = function(sNewInstruction)
 	this.InstructionCF      = [];
 	this.private_UpdateInstruction();
 };
+CComplexField.prototype.CheckType = function(type)
+{
+	if (!this.IsValid())
+		return false;
+	
+	let instruction = this.GetInstruction();
+	if (!instruction)
+		return false;
+	
+	return instruction.GetType() === type;
+};
+CComplexField.prototype.IsAddin = function()
+{
+	return this.CheckType(fieldtype_ADDIN);
+};
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CComplexField = CComplexField;
+
+window['AscWord'] = window['AscWord'] || {};
+window['AscWord'].CComplexField = CComplexField;

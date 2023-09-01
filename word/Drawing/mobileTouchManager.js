@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -78,6 +78,11 @@
 
 		if (this.TableTrackEnabled)
 			this.LoadMobileImages();
+	};
+
+	CMobileTouchManager.prototype.isViewMode = function()
+	{
+		return (this.Api.isViewMode || this.Api.isRestrictionView()) ? true : false;
 	};
 
 	CMobileTouchManager.prototype.onTouchStart = function(e)
@@ -174,6 +179,7 @@
 				this.DownPointOriginal.X = global_mouseEvent.X;
 				this.DownPointOriginal.Y = global_mouseEvent.Y;
 
+				this.delegate.LockScrollStartPos();
 				this.iScroll._start(e);
 
 				break;
@@ -185,6 +191,7 @@
 				this.DownPointOriginal.X = global_mouseEvent.X;
 				this.DownPointOriginal.Y = global_mouseEvent.Y;
 
+				this.delegate.LockScrollStartPos();
 				this.iScroll._start(e);
 
 				break;
@@ -282,7 +289,7 @@
 		if (AscCommon.AscBrowser.isAndroid && !AscCommon.AscBrowser.isSailfish)
 			isPreventDefault = false;
 
-		if (this.Api.isViewMode || isPreventDefault)
+		if (this.isViewMode() || isPreventDefault)
 			AscCommon.stopEvent(e);
 
 		return false;
@@ -658,7 +665,7 @@
 
 		this.checkPointerMultiTouchRemove(e);
 
-		if (this.Api.isViewMode || isPreventDefault && !this.Api.getHandlerOnClick())
+		if (this.isViewMode() || isPreventDefault && !this.Api.getHandlerOnClick())
 			AscCommon.stopEvent(e);//AscCommon.g_inputContext.preventVirtualKeyboard(e);
 
 		if (true !== this.iScroll.isAnimating)

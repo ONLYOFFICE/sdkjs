@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -956,7 +956,7 @@ CDrawingStream.prototype =
             oFontStyle = AscFonts.FontStyle.FontStyleBoldItalic;
 
         var _fontinfo = AscFonts.g_fontApplication.GetFontInfo(font.FontFamily.Name, oFontStyle, this.LastFontOriginInfo);
-        var _info = GetLoadInfoForMeasurer(_fontinfo, oFontStyle);
+        var _info = AscCommon.GetLoadInfoForMeasurer(_fontinfo, oFontStyle);
 
         var flag = 0;
         if (_info.NeedBold)     flag |= 0x01;
@@ -981,6 +981,31 @@ CDrawingStream.prototype =
     GetTextPr : function()
     {
         return this.m_oTextPr;
+    },
+
+    SetFontInternal : function(name, size, style)
+    {
+        var _lastFont = this.IsUseFonts2 ? this.m_oLastFont2 : this.m_oLastFont;
+        _lastFont.Name = name;
+        _lastFont.Size = size;
+
+        if (_lastFont.Name != _lastFont.SetUpName || _lastFont.Size != _lastFont.SetUpSize || style != _lastFont.SetUpStyle)
+        {
+            _lastFont.SetUpName = _lastFont.Name;
+            _lastFont.SetUpSize = _lastFont.Size;
+            _lastFont.SetUpStyle = style;
+
+            var _fontinfo = AscFonts.g_fontApplication.GetFontInfo(_lastFont.SetUpName, _lastFont.SetUpStyle, this.LastFontOriginInfo);
+            var _info = AscCommon.GetLoadInfoForMeasurer(_fontinfo, _lastFont.SetUpStyle);
+
+            var flag = 0;
+            if (_info.NeedBold)     flag |= 0x01;
+            if (_info.NeedItalic)   flag |= 0x02;
+            if (_info.SrcBold)      flag |= 0x04;
+            if (_info.SrcItalic)    flag |= 0x08;
+
+            this.Native["PD_LoadFont"](_info.Path, _info.FaceIndex, _lastFont.SetUpSize, flag);
+        }
     },
 
     SetFontSlot : function(slot, fontSizeKoef)
@@ -1045,7 +1070,7 @@ CDrawingStream.prototype =
             _lastFont.SetUpStyle = _style;
 
             var _fontinfo = AscFonts.g_fontApplication.GetFontInfo(_lastFont.SetUpName, _lastFont.SetUpStyle, this.LastFontOriginInfo);
-            var _info = GetLoadInfoForMeasurer(_fontinfo, _lastFont.SetUpStyle);
+            var _info = AscCommon.GetLoadInfoForMeasurer(_fontinfo, _lastFont.SetUpStyle);
 
             var flag = 0;
             if (_info.NeedBold)     flag |= 0x01;
