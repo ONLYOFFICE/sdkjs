@@ -1428,14 +1428,14 @@
                         this.handlers.trigger("asc_onHideComment");
                         this.Api._asc_setWorksheetRange(ct.hyperlink);
                         break;
-					case Asc.c_oAscHyperlinkType.FileLink:
-						//нужно открыть файл через диалоговое окно
-						this.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmFileOpen, function (can) {
-							if (can) {
-								t.handlers.trigger("asc_onFileOpenClick", ct.hyperlink.asc_getHyperlinkUrl());
-							}
-						});
-						break;
+                    case Asc.c_oAscHyperlinkType.FileLink:
+                        //нужно открыть файл через диалоговое окно
+                        this.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmFileOpen, function (can) {
+                            if (can) {
+                                t.handlers.trigger("asc_onFileOpenClick", ct.hyperlink.asc_getHyperlinkUrl());
+                            }
+                        });
+                        break;
                 }
             }
         }
