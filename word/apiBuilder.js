@@ -4121,6 +4121,102 @@
 	{
 		return new ApiParagraph(new Paragraph(private_GetDrawingDocument(), private_GetLogicDocument()));
 	};
+
+	 
+
+	/**
+	 * Create a caption paragraph that can be later added to the document
+ 	 * @param {string} sAdditional - The additional text.
+	 * @param {CaptionLabel | String} [sLabel="Table"] - The caption label.
+	 * @param {boolean} [bExludeLabel=false] - Specifies whether to exclude the label from the caption.
+	 * @param {CaptionNumberingFormat} [sNumberingFormat="Arabic"] - The possible caption numbering format.
+	 * @param {boolean} [bBefore=false] - Specifies whether to insert the caption before the current table (true) or after (false) (after/before the shape if it is placed in the shape).
+	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number).
+  	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
+	 * @param {CaptionSep} [sCaptionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
+  	 * return {ApiParagraph}
+	 */
+    	Api.prototype.CreateCaptionParagraph = function (
+	     sAdditional,
+	     sLabel,
+	     bExludeLabel,
+	     sNumberingFormat,
+	     bBefore,
+	     nHeadingLvl,
+	     sCaptionSep
+	   ) {
+	     if (typeof sAdditional !== "string" || sAdditional.trim() === "") {
+	       sAdditional = "";
+	     }
+	     if (typeof bExludeLabel !== "boolean") {
+	       bExludeLabel = false;
+	     }
+	     if (typeof bBefore !== "boolean") {
+	       bBefore = false;
+	     }
+	     if (typeof sLabel !== "string" || sLabel.trim() === "") {
+	       sLabel = "Table";
+	     }
+	 
+	     let oCapPr = new Asc.CAscCaptionProperties();
+	     let oDoc = private_GetLogicDocument();
+	 
+	     let nNumFormat;
+	     switch (sNumberingFormat) {
+	       case "ALPHABETIC":
+	         nNumFormat = Asc.c_oAscNumberingFormat.UpperLetter;
+	         break;
+	       case "alphabetic":
+	         nNumFormat = Asc.c_oAscNumberingFormat.LowerLetter;
+	         break;
+	       case "Roman":
+	         nNumFormat = Asc.c_oAscNumberingFormat.UpperRoman;
+	         break;
+	       case "roman":
+	         nNumFormat = Asc.c_oAscNumberingFormat.LowerRoman;
+	         break;
+	       default:
+	         nNumFormat = Asc.c_oAscNumberingFormat.Decimal;
+	         break;
+	     }
+	     switch (sCaptionSep) {
+	       case "hyphen":
+	         sCaptionSep = "-";
+	         break;
+	       case "period":
+	         sCaptionSep = ".";
+	         break;
+	       case "colon":
+	         sCaptionSep = ":";
+	         break;
+	       case "longDash":
+	         sCaptionSep = "—";
+	         break;
+	       case "dash":
+	         sCaptionSep = "-";
+	         break;
+	       default:
+	         sCaptionSep = "-";
+	         break;
+	     }
+	 
+	     oCapPr.Label = sLabel;
+	     oCapPr.Before = bBefore;
+	     oCapPr.ExcludeLabel = bExludeLabel;
+	     oCapPr.NumFormat = nNumFormat;
+	     oCapPr.Separator = sCaptionSep;
+	     oCapPr.Additional = sAdditional;
+	 
+	     if (nHeadingLvl >= 0 && nHeadingLvl <= 8) {
+	       oCapPr.HeadingLvl = nHeadingLvl;
+	       oCapPr.IncludeChapterNumber = true;
+	     } else {
+	       oCapPr.HeadingLvl = 0;
+	     }
+	 
+	     return new ApiParagraph(oDoc.CreateCaptionParagraph(oCapPr));
+   	};
+ 	
 	/**
 	 * Creates an element range.
 	 * If you do not specify the start and end positions, the range will be taken from the entire element.
