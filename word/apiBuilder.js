@@ -6642,6 +6642,27 @@
 	};
 
 	/**
+     	* Returns all sequences fields for a given type. The main usage is to trigger an update on thoses fields
+     	* @memberof ApiDocument
+	* @typeofeditors ["CDE"]
+     	* @returns {ParaField[] | CComplexField[]}
+        */
+	ApiDocument.prototype.GetAllSeqFieldsByType = function (label) {
+	    let aFields = [];
+	    this.Document.GetAllSeqFieldsByType(label, aFields);
+	    let fields = [];
+	    for (const oField of aFields) {
+	      if (oField instanceof CComplexField) {
+	        fields.push(oField);
+	      } else if (oField instanceof ParaField) {
+	        fields.push(oField);
+	      }
+	    }
+	
+	    return fields;
+	};
+
+	/**
      * Returns all the selected drawings in the current document.
      * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
