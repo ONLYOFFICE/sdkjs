@@ -5211,6 +5211,7 @@
 			let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
 			const doUpdateData = function (_arrAfterPromise) {
 				if (!_arrAfterPromise.length) {
+					callback && callback(true);
 					t.model.handlers.trigger("asc_onStartUpdateExternalReference", false);
 					return;
 				}
@@ -5309,6 +5310,7 @@
 				let ws = t.getWorksheet();
 				ws.draw();
 
+				callback && callback(true);
 				t.model.handlers.trigger("asc_onStartUpdateExternalReference", false);
 			};
 
@@ -5319,8 +5321,8 @@
 		}
 	};
 
-	WorkbookView.prototype.updateExternalReferences = function (arr) {
-		this.doUpdateExternalReference(arr);
+	WorkbookView.prototype.updateExternalReferences = function (arr, callback) {
+		this.doUpdateExternalReference(arr, callback);
 	};
 
 	//*****user range protect*****
