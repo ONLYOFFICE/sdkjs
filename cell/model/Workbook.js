@@ -19455,7 +19455,7 @@
 				if (sType === 'AutoFill') {
 					nRow = nRow0;
 					nCol = nCol0;
-				} else { // for other modes uses only first filled cell in range
+				} else { // for other modes use only first filled cell in range
 					nRow = nRow0;
 					nCol = nCol0;
 					return true; // break loop
@@ -19493,10 +19493,12 @@
 				}
 				if (oDirectCondition[bVertical] && nType === CellValueType.Number) {
 					oCSerial.initToRange();
+					let oToRange = oCSerial.getToRange();
+					bVertical ? oToRange.bbox.c1 = nCol : oToRange.bbox.r1 = nRow;
 					aFilledCells.push({
 						'nValue': oCell.getNumberValue(),
-						'oToRange': oCSerial.getToRange(),
-						'oCell': oCell
+						'oToRange': oToRange,
+						'oCell': oCell.duplicate()
 					});
 				}
 			}
@@ -19504,10 +19506,63 @@
 
 		return aFilledCells;
 	};
+	CSerial.prototype.initHistoryPoint = function() {
+		let oFromRange = this.getFromRange();
+		let nIndex = this.getIndex();
+		let bVertical = this.getVertical();
+		let oBBox = oFromRange.bbox;
+		let nWidth = oBBox.c2 - oBBox.c1 + 1;
+		let nHeight = oBBox.r2 - oBBox.r1 + 1;
+
+		History.Create_NewPoint();
+		let oSelection = History.GetSelection();
+		if(null != oSelection)
+		{
+			oSelection = oSelection.clone();
+			oSelection.assign(oBBox.c1, oBBox.r1, oBBox.c2, oBBox.r2);
+			History.SetSelection(oSelection);
+		}
+		let oSelectionRedo = History.GetSelectionRedo();
+		if(null != oSelectionRedo)
+		{
+			oSelectionRedo = oSelectionRedo.clone();
+			if(0 === nIndex)
+				oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c2, oBBox.r2);
+			else
+			{
+				if(bVertical)
+				{
+					if(nIndex > 0)
+					{
+						if(nIndex >= nHeight)
+							oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c2, oBBox.r1 + nIndex);
+						else
+							oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c2, oBBox.r1 + nIndex - 1);
+					}
+					else
+						oSelectionRedo.assign(oBBox.c1, oBBox.r1 + nIndex, oBBox.c2, oBBox.r2);
+				}
+				else
+				{
+					if(nIndex > 0)
+					{
+						if(nIndex >= nWidth)
+							oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c1 + nIndex, oBBox.r2);
+						else
+							oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c1 + nIndex - 1, oBBox.r2);
+					}
+					else
+						oSelectionRedo.assign(oBBox.c1 + nIndex, oBBox.r1, oBBox.c2, oBBox.r2);
+				}
+			}
+			History.SetSelectionRedo(oSelectionRedo);
+		}
+	}
 	CSerial.prototype.promoteCells = function(aFilledCells) {
+		History.StartTransaction();
 		let bReverse = this.getIndex() < 0;
 		let nStep = this.getTrend() ? 1 : Number(this.getStep());
-		let nStopValue = this.getStopValue() != null ? Number(this.getStopValue()) : null;
+		let nStopValue = this.getStopValue() ? Number(this.getStopValue()) : null;
 		let sType = this.getType();
 
 		for (let i = 0, length = aFilledCells.length; i < length; i++) {
@@ -19530,7 +19585,7 @@
 				} else {
 					nStartIndex = oTo.r1;
 					nEndIndex = oTo.r2 + 1;
-					nIterStep = 1
+					nIterStep = 1;
 				}
 			} else {
 				if (bReverse) {
@@ -19540,7 +19595,7 @@
 				} else {
 					nStartIndex = oTo.c1;
 					nEndIndex = oTo.c2 + 1;
-					nIterStep = 1
+					nIterStep = 1;
 				}
 			}
 			// Fill range cells for i row or col
@@ -19565,10 +19620,9 @@
 						oCellValue.number = nCurrentValue;
 						nPrevValue = nCurrentValue;
 						oCopyCell.setValueData(new UndoRedoData_CellValueData(null, oCellValue));
-
+						// Add styles from firstCell
 						if (null != oFromCell) {
 							oCopyCell.setStyle(oFromCell.getStyle());
-							oCopyCell.setType(oFromCell.getType());
 						}
 					}
 				});
@@ -19577,6 +19631,7 @@
 				}
 			}
 		}
+		History.EndTransaction();
 	};
 	CSerial.prototype.exec = function() {
 		let oFromRange = this.getFromRange();
@@ -19591,6 +19646,7 @@
 			oFilledRange.promote(false, this.getVertical(), this.getIndex(), oCanPromote);
 		} else {
 			let aFilledCells = this.getFilledCells();
+			this.initHistoryPoint();
 			this.promoteCells(aFilledCells);
 		}
 	};

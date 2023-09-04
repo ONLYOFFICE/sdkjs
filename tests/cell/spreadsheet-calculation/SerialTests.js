@@ -156,8 +156,9 @@ $(function () {
             }
         }
     };
-    const getFilledData = function(c1, r1, c2, r2, testData) {
-        let oFromRange = ws.getRange4(0, 0);
+    const getFilledData = function(c1, r1, c2, r2, testData, oStartRange) {
+        let [row, col] = oStartRange;
+        let oFromRange = ws.getRange4(row, col);
         oFromRange.fillData(testData);
         oFromRange.worksheet.selectionRange.ranges = [getRange(c1, r1, c2, r2)];
         oFromRange.bbox = getRange(c1, r1, c2, r2);
@@ -166,14 +167,14 @@ $(function () {
     }
 
     QUnit.module('Serial');
-    QUnit.test('Autofill linear progression', function (assert) {
+    QUnit.test('Autofill linear progression - one filled row/column', function (assert) {
         // Fill data
         const testData = [
           ['1']
         ];
-        oFromRange = getFilledData(0, 0, 5, 0, testData);
+        oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
         settings = {
-            'step': '1',
+            'step': '2',
             'seriesIn': 'Row',
             'type': 'Linear',
             'stopValue': '',
@@ -183,31 +184,70 @@ $(function () {
         cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
         autofillRange = getRange(1, 0, 5, 0);
-        autofillData(assert, autofillRange, [['2', '3', '4', '5', '6']], 'Autofill one Row');
+        autofillData(assert, autofillRange, [['3', '5', '7', '9', '11']], 'Autofill one Row');
         clearData(0, 0, 5, 0);
         // Select vertical oFromRange
         // Fill data
-        oFromRange = getFilledData(0, 0, 0, 5, testData);
+        oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
         settings.seriesIn = 'Columns';
 
-        cSerial = new CSerial (settings, oFromRange);
+        cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
         autofillRange = getRange(0, 1, 0, 5);
-        autofillData(assert, autofillRange, [['2'], ['3'], ['4'], ['5'], ['6']], 'Autofill one Column');
+        autofillData(assert, autofillRange, [['3'], ['5'], ['7'], ['9'], ['11']], 'Autofill one Column');
+        clearData(0, 0, 0, 5);
+        // Select horizontal oFromRange with stopValue
+        oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
+        settings.stopValue = '7';
+        settings.seriesIn = 'Rows';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 0);
+        autofillData(assert, autofillRange, [['3', '5', '7', '', '']], 'Autofill one Row with stopValue = 7');
+        clearData(0, 0, 5, 0);
+        // Select vertical oFromRange with stopValue
+        oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
+        settings.stopValue = '7';
+        settings.seriesIn = 'Columns';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 0, 5);
+        autofillData(assert, autofillRange, [['3'], ['5'], ['7'], [''], ['']], 'Autofill one Column with stopValue = 7');
+        clearData(0, 0, 0, 5);
+        // Select horizontal oFromRange with trend step
+        oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
+        settings.trend = true;
+        settings.seriesIn = 'Rows';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 0);
+        autofillData(assert, autofillRange, [['2', '3', '4', '5', '6']], 'Autofill one Row with trend step');
+        clearData(0, 0, 5, 0);
+        // Select vertical oFromRange with trend step
+        oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
+        settings.seriesIn = 'Columns';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 0, 5);
+        autofillData(assert, autofillRange, [['2'], ['3'], ['4'], ['5'], ['6']], 'Autofill one Column with trend step');
         clearData(0, 0, 0, 5);
     });
-    QUnit.test('Autofill growth progression', function (assert) {
+    QUnit.test('Autofill growth progression - one filled row/column', function (assert) {
         const testData = [
             ['1']
         ];
-        oFromRange = getFilledData(0, 0, 5, 0, testData);
+        oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
         settings = {
             'step': '2',
             'seriesIn': 'Row',
             'type': 'Growth',
             'stopValue': '',
             'trend': false
-        }
+        };
 
         cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
@@ -215,30 +255,59 @@ $(function () {
         autofillData(assert, autofillRange, [['2', '4', '8', '16', '32']], 'Autofill one Row');
         clearData(0, 0, 5, 5);
         // Select vertical oFromRange
-        oFromRange = getFilledData(0, 0, 0, 5, testData);
+        oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
         oFromRange = ws.getRange4(0,0);
         settings.seriesIn = 'Columns';
 
-        cSerial = new CSerial (settings, oFromRange);
+        cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
         autofillRange = getRange(0, 1, 0, 5);
         autofillData(assert, autofillRange, [['2'], ['4'], ['8'], ['16'], ['32']], 'Autofill one Column');
         clearData(0, 0, 5, 5);
         // Select vertical oFromRange with stopValue
-        oFromRange = getFilledData(0, 0, 0, 5, testData);
+        oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
         settings.stopValue = '10';
 
-        cSerial = new CSerial (settings, oFromRange);
+        cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
         autofillRange = getRange(0, 1, 0, 5);
         autofillData(assert, autofillRange, [['2'], ['4'], ['8'], [''], ['']], 'Autofill one Column with stopValue = 10');
         clearData(0, 0, 5, 5);
+        // Select horizontal oFromRange with stopValue
+        oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
+        settings.stopValue = '10';
+        settings.seriesIn = 'Rows';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 0);
+        autofillData(assert, autofillRange, [['2', '4', '8', '', '']], 'Autofill one Row with stopValue = 10');
+        clearData(0, 0, 5, 0);
+        // Select horizontal oFromRange with trend step
+        oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
+        settings.trend = true;
+        settings.seriesIn = 'Rows';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 0);
+        autofillData(assert, autofillRange, [['1', '1', '1', '1', '1']], 'Autofill one Row with trend step');
+        clearData(0, 0, 5, 0);
+        // Select vertical oFromRange with trend step
+        oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
+        settings.seriesIn = 'Columns';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 0, 5);
+        autofillData(assert, autofillRange, [['1'], ['1'], ['1'], ['1'], ['1']], 'Autofill one Column with trend step');
+        clearData(0, 0, 0, 5);
     });
     QUnit.test('Autofill default mode', function (assert) {
         let testData = [
             ['1', '2']
         ];
-        oFromRange = getFilledData(0, 0, 5, 0, testData);
+        oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
         settings = {
             'step': '',
             'seriesIn': 'Row',
@@ -257,10 +326,10 @@ $(function () {
             ['1'],
             ['2']
         ];
-        oFromRange = getFilledData(0, 0, 0, 5, testData);
+        oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
         settings.seriesIn = 'Columns';
 
-        cSerial = new CSerial (settings, oFromRange);
+        cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
         autofillRange = getRange(0, 2, 0, 5);
         autofillData(assert, autofillRange, [['3'], ['4'], ['5'], ['6']], 'Autofill one Column');
@@ -270,7 +339,7 @@ $(function () {
         const testData = [
            ['']
         ];
-        oFromRange = getFilledData(0, 0, 5, 0, testData);
+        oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
         settings = {
             'step': '1',
             'seriesIn': 'Row',
@@ -285,56 +354,56 @@ $(function () {
         autofillData(assert, autoFillRange, [['', '', '', '', '']], 'Autofill Linear progression - one Row');
         clearData(0, 0, 5, 0);
         // Select vertical oFromRange
-        oFromRange = getFilledData(0, 0, 0, 5, testData);
+        oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
         settings.seriesIn = 'Columns';
 
-        cSerial = new CSerial (settings, oFromRange);
+        cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
         autoFillRange = getRange(0, 1, 0, 5);
         autofillData(assert, autoFillRange, [[''], [''], [''], [''], ['']], 'Autofill Linear progression - one Column');
         clearData(0, 0, 0, 5);
         // Select horizontal oFromRange Growth
-        oFromRange = getFilledData(0, 0, 5, 0, testData);
+        oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
         settings.seriesIn = 'Rows';
         settings.type = 'Growth';
 
-        cSerial = new CSerial (settings, oFromRange);
+        cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
         autoFillRange = getRange(1, 0, 5, 0);
         autofillData(assert, autoFillRange, [['', '', '', '', '']], 'Autofill Growth progression - one Row');
         clearData(0, 0, 5, 0);
         // Select vertical oFromRange Growth
-        oFromRange = getFilledData(0, 0, 0, 5, testData);
+        oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
         settings.seriesIn = 'Columns';
         settings.type = 'Growth';
 
-        cSerial = new CSerial (settings, oFromRange);
+        cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
         autoFillRange = getRange(0, 1, 0, 5);
         autofillData(assert, autoFillRange, [[''], [''], [''], [''], ['']], 'Autofill Growth progression - one Column');
         clearData(0, 0, 0, 5);
         // Select horizontal oFromRange autofill default mode
-        oFromRange = getFilledData(0, 0, 5, 0, testData);
+        oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
         settings.seriesIn = 'Rows';
         settings.type = 'AutoFill';
 
-        cSerial = new CSerial (settings, oFromRange);
+        cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
         autoFillRange = getRange(1, 0, 5, 0);
         autofillData(assert, autoFillRange, [['', '', '', '', '']], 'Autofill default mode - one Row');
         clearData(0, 0, 5, 0);
         // Select vertical oFromRange autofill default mode
-        oFromRange = getFilledData(0, 0, 0, 5, testData);
+        oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
         settings.seriesIn = 'Columns';
         settings.type = 'AutoFill';
 
-        cSerial = new CSerial (settings, oFromRange);
+        cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
         autoFillRange = getRange(0, 1, 0, 5);
         autofillData(assert, autoFillRange, [[''], [''], [''], [''], ['']], 'Autofill default mode - one Column');
         clearData(0, 0, 0, 5);
     });
-    QUnit.test('Autofill horizontal progression multiple cells', function (assert) {
+    QUnit.test('Autofill horizontal progression - multiple filled cells', function (assert) {
         const testData = [
             ['1'],
             ['2'],
@@ -343,8 +412,7 @@ $(function () {
             ['5'],
             ['6']
         ];
-        console.log('Autofill horizontal progression - multiple cells');
-        oFromRange = getFilledData(0, 0, 5, 5, testData);
+        oFromRange = getFilledData(0, 0, 5, 5, testData, [0, 0]);
         settings = {
             'step': '1',
             'seriesIn': 'Rows',
@@ -352,15 +420,118 @@ $(function () {
             'stopValue': '',
             'trend': false
         };
-        let cSerial = new CSerial(settings, oFromRange);
+
+        cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 5);
+        let expectedData = [
+            ['2', '3', '4', '5', '6'],
+            ['3', '4', '5', '6', '7'],
+            ['4', '5', '6', '7', '8'],
+            ['5', '6', '7', '8', '9'],
+            ['6', '7', '8', '9', '10'],
+            ['7', '8', '9', '10', '11']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Linear progression');
+        clearData(0, 0, 5, 5);
+        // Growth progression
+        oFromRange = getFilledData(0, 0, 5, 5, testData, [0, 0]);
+        settings.type = 'Growth';
+        settings.step = '2';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 5);
+        expectedData = [
+            ['2', '4', '8', '16', '32'],
+            ['4', '8', '16', '32', '64'],
+            ['6', '12', '24', '48', '96'],
+            ['8', '16', '32', '64', '128'],
+            ['10', '20', '40', '80', '160'],
+            ['12', '24', '48', '96', '192']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression');
+        clearData(0, 0, 5, 5);
+        // Linear progression with stop value
+        oFromRange = getFilledData(0, 0, 5, 5, testData, [0, 0]);
+        settings.stopValue = '7';
+        settings.step = '2';
+        settings.type = 'Linear';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 5);
+        expectedData = [
+            ['3', '5', '7', '', ''],
+            ['4', '6', '', '', ''],
+            ['5', '7', '', '', ''],
+            ['6', '', '', '', ''],
+            ['7', '', '', '', ''],
+            ['', '', '', '', '']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Linear progression with stop value');
+        clearData(0, 0, 5, 5);
+        // Growth progression with stop value
+        oFromRange = getFilledData(0, 0, 5, 5, testData, [0, 0]);
+        settings.stopValue = '16';
+        settings.type = 'Growth';
+        settings.step = '2';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 5);
+        expectedData = [
+            ['2', '4', '8', '16', ''],
+            ['4', '8', '16', '', ''],
+            ['6', '12', '', '', ''],
+            ['8', '16', '', '', ''],
+            ['10', '', '', '', ''],
+            ['12', '', '', '', '']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression with stop value');
+        clearData(0, 0, 5, 5);
+        // Linear progression with trend
+        oFromRange = getFilledData(0, 0, 5, 5, testData, [0, 0]);
+        settings.trend = true;
+        settings.type = 'Linear';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 5);
+        expectedData = [
+            ['2', '3', '4', '5', '6'],
+            ['3', '4', '5', '6', '7'],
+            ['4', '5', '6', '7', '8'],
+            ['5', '6', '7', '8', '9'],
+            ['6', '7', '8', '9', '10'],
+            ['7', '8', '9', '10', '11']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Linear progression with trend');
+        clearData(0, 0, 5, 5);
+        // Growth progression with trend
+        oFromRange = getFilledData(0, 0, 5, 5, testData, [0, 0]);
+        settings.trend = true;
+        settings.type = 'Growth';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 5);
+        expectedData = [
+            ['1', '1', '1', '1', '1'],
+            ['2', '2', '2', '2', '2'],
+            ['3', '3', '3', '3', '3'],
+            ['4', '4', '4', '4', '4'],
+            ['5', '5', '5', '5', '5'],
+            ['6', '6', '6', '6', '6']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression with trend');
+        clearData(0, 0, 5, 5);
     });
-    QUnit.test('Autofill vertical progression multiple cells', function (assert) {
+    QUnit.test('Autofill vertical progression - multiple filled cells', function (assert) {
         const testData = [
             ['1', '2', '3', '4', '5', '6']
         ];
-        console.log('Autofill vertical progression - multiple cells');
-        oFromRange = getFilledData(0, 0, 5, 5, testData);
+        oFromRange = getFilledData(0, 0, 5, 5, testData, [0, 0]);
         settings = {
             'step': '1',
             'seriesIn': 'Columns',
@@ -368,7 +539,104 @@ $(function () {
             'stopValue': '',
             'trend': false
         };
-        let cSerial = new CSerial(settings, oFromRange);
+
+        cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
+        autofillRange = getRange(0, 1, 5, 5);
+        let expectedData = [
+            ['2', '3', '4', '5', '6', '7'],
+            ['3', '4', '5', '6', '7', '8'],
+            ['4', '5', '6', '7', '8', '9'],
+            ['5', '6', '7', '8', '9', '10'],
+            ['6', '7', '8', '9', '10', '11']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Linear progression');
+        clearData(0, 0, 5, 5);
+        // Growth progression
+        oFromRange = getFilledData(0, 0, 5, 5, testData, [0, 0]);
+        settings.type = 'Growth';
+        settings.step = '2';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 5, 5);
+        expectedData = [
+            ['2', '4', '6', '8', '10', '12'],
+            ['4', '8', '12', '16', '20', '24'],
+            ['8', '16', '24', '32', '40', '48'],
+            ['16', '32', '48', '64', '80', '96'],
+            ['32', '64', '96', '128', '160', '192']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth progression');
+        clearData(0, 0, 5, 5);
+        // Linear progression with stop value
+        oFromRange = getFilledData(0, 0, 5, 5, testData, [0, 0]);
+        settings.stopValue = '10';
+        settings.step = '2';
+        settings.type = 'Linear';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 5, 5);
+        expectedData = [
+            ['3', '4', '5', '6', '7', '8'],
+            ['5', '6', '7', '8', '9', '10'],
+            ['7', '8', '9', '10', '', ''],
+            ['9', '10', '', '', '', ''],
+            ['', '', '', '', '', '']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Linear progression with stop value');
+        clearData(0, 0, 5, 5);
+        // Growth progression with stop value
+        oFromRange = getFilledData(0, 0, 5, 5, testData, [0, 0]);
+        settings.stopValue = '32';
+        settings.type = 'Growth';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 5, 5);
+        expectedData = [
+            ['2', '4', '6', '8', '10', '12'],
+            ['4', '8', '12', '16', '20', '24'],
+            ['8', '16', '24', '32', '', ''],
+            ['16', '32', '', '', '', ''],
+            ['32', '', '', '', '', '']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth progression with stop value');
+        clearData(0, 0, 5, 5);
+        // Linear progression with trend
+        oFromRange = getFilledData(0, 0, 5, 5, testData, [0, 0]);
+        settings.trend = true;
+        settings.type = 'Linear';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 5, 5);
+        expectedData = [
+            ['2', '3', '4', '5', '6', '7'],
+            ['3', '4', '5', '6', '7', '8'],
+            ['4', '5', '6', '7', '8', '9'],
+            ['5', '6', '7', '8', '9', '10'],
+            ['6', '7', '8', '9', '10', '11']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Linear progression with trend');
+        clearData(0, 0, 5, 5);
+        // Growth progression with trend
+        oFromRange = getFilledData(0, 0, 5, 5, testData, [0, 0]);
+        settings.trend = true;
+        settings.type = 'Growth';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 5, 5);
+        expectedData = [
+            ['1', '2', '3', '4', '5', '6'],
+            ['1', '2', '3', '4', '5', '6'],
+            ['1', '2', '3', '4', '5', '6'],
+            ['1', '2', '3', '4', '5', '6'],
+            ['1', '2', '3', '4', '5', '6']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth progression with trend');
+        clearData(0, 0, 5, 5);
     });
 });
