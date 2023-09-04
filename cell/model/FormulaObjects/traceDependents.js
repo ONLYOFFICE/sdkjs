@@ -837,10 +837,7 @@ function (window, undefined) {
 				// go through the values and check precedents for each
 				for (let index of areaIndexes) {
 					let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
-					// if (!ws.getCell3(cellAddress.row, cellAddress.col).isFormula()) {
-					// 	continue;
-					// }
-					this.calculatePrecedents(cellAddress.row, cellAddress.col, null, true);
+					this.calculatePrecedents(cellAddress.row, cellAddress.col, true, true);
 				}
 			}
 		} else if (formulaParsed) {
