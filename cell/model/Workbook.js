@@ -19560,7 +19560,6 @@
 	}
 	CSerial.prototype.promoteCells = function(aFilledCells) {
 		History.StartTransaction();
-		let bReverse = this.getIndex() < 0;
 		let nStep = this.getTrend() ? 1 : Number(this.getStep());
 		let nStopValue = this.getStopValue() ? Number(this.getStopValue()) : null;
 		let sType = this.getType();
@@ -19576,30 +19575,10 @@
 			// Clean exist data in autofill range
 			oToRange.cleanText();
 			// Init variables for filling cells
-			let nStartIndex, nEndIndex, nIterStep;
-			if (this.getVertical()) {
-				if (bReverse) {
-					nStartIndex = oTo.r2;
-					nEndIndex = oTo.r1 - 1;
-					nIterStep = -1;
-				} else {
-					nStartIndex = oTo.r1;
-					nEndIndex = oTo.r2 + 1;
-					nIterStep = 1;
-				}
-			} else {
-				if (bReverse) {
-					nStartIndex = oTo.c2;
-					nEndIndex = oTo.c1 - 1;
-					nIterStep = -1;
-				} else {
-					nStartIndex = oTo.c1;
-					nEndIndex = oTo.c2 + 1;
-					nIterStep = 1;
-				}
-			}
+			let nStartIndex = this.getVertical() ? oTo.r1 : oTo.c1;
+			let nEndIndex = this.getVertical() ?  oTo.r2 : oTo.c2;
 			// Fill range cells for i row or col
-			for (let j = nStartIndex; j !== nEndIndex; j += nIterStep) {
+			for (let j = nStartIndex; j <= nEndIndex; j++) {
 				let nRow = this.getVertical() ? j : i;
 				let nCol = this.getVertical() ? i : j;
 				let bStopLoop = false;
