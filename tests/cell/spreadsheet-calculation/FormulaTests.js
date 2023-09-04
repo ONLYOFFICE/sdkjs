@@ -8027,22 +8027,677 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"WEEKDAY\"", function (assert) {
+		let array;
 
+		// base mode
+		ws.workbook.setDate1904(false, true);
 		ws.getRange2("A2").setValue("2/14/2008");
-
+		
 		oParser = new parserFormula("WEEKDAY(A2)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 5);
-
+		
 		oParser = new parserFormula("WEEKDAY(A2, 2)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 4);
-
+		
 		oParser = new parserFormula("WEEKDAY(A2, 3)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 3);
+		
+		// ws.getRange2("B1").setValue("=DATE(2023,1,1)");
+		ws.getRange2("B1").setValue("2023/1/1");
+		ws.getRange2("B2").setValue("2023/1/2");
+		ws.getRange2("B3").setValue("2023/1/3");
+		ws.getRange2("B4").setValue("2023/1/4");
+		ws.getRange2("B5").setValue("2023/1/5");
+		ws.getRange2("B6").setValue("2023/1/6");
+		ws.getRange2("B7").setValue("2023/1/7");
+		ws.getRange2("B8").setValue("2023/1/8");
+		ws.getRange2("B9").setValue("2023/1/9");
+		ws.getRange2("B10").setValue("2023/1/10");
+		ws.getRange2("B11").setValue("2023/1/11");
+		ws.getRange2("B12").setValue("2023/1/12");
+		
+		oParser = new parserFormula("WEEKDAY(B1,2)>5", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "TRUE");
+
+		oParser = new parserFormula("WEEKDAY(B1,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,1),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 7, "Result of WEEKDAY(DATE(2023,1,1),2)");
+
+		oParser = new parserFormula("WEEKDAY(B2,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,2),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of WEEKDAY(DATE(2023,1,2),2)");
+
+		oParser = new parserFormula("WEEKDAY(B3,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,3),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result of WEEKDAY(DATE(2023,1,3),2)");
+
+		oParser = new parserFormula("WEEKDAY(B4,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,4),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 3, "Result of WEEKDAY(DATE(2023,1,4),2)");
+
+		oParser = new parserFormula("WEEKDAY(B5,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,5),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of WEEKDAY(DATE(2023,1,5),2)");
+
+		oParser = new parserFormula("WEEKDAY(B6,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,6),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 5, "Result of WEEKDAY(DATE(2023,1,6),2)");
+
+		oParser = new parserFormula("WEEKDAY(B7,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,7),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 6, "Result of WEEKDAY(DATE(2023,1,7),2)");
+
+		oParser = new parserFormula("WEEKDAY(B8,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,8),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 7, "Result of WEEKDAY(DATE(2023,1,8),2)");
+
+		oParser = new parserFormula("WEEKDAY(B9,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,9),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of WEEKDAY(DATE(2023,1,9),2)");
+
+		oParser = new parserFormula("WEEKDAY(B10,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,10),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result of WEEKDAY(DATE(2023,1,10),2)");
+
+		oParser = new parserFormula("WEEKDAY(B11,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,11),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 3, "Result of WEEKDAY(DATE(2023,1,11),2)");
+
+		oParser = new parserFormula("WEEKDAY(B12,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,12),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of WEEKDAY(DATE(2023,1,12),2)");
+
+		// strings
+		oParser = new parserFormula('WEEKDAY("44927",2)', "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,1),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 7, 'Result of WEEKDAY("44927",2)');
+
+		oParser = new parserFormula('WEEKDAY("44927","2")', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(DATE(2023,1,1),"2")');
+		assert.strictEqual(oParser.calculate().getValue(), 7, 'Result of WEEKDAY("44927","2")');
+
+		oParser = new parserFormula('WEEKDAY("44927+1","2")', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY("44927+1","2")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of WEEKDAY("44927+1","2")');
+
+		oParser = new parserFormula('WEEKDAY("44927s","2")', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY("44927s","2")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of WEEKDAY("44927s","2")');
+
+		oParser = new parserFormula('WEEKDAY("44927","2+1")', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(DATE(2023,1,1),"2+1")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of WEEKDAY("44927","2+1")');
+
+		oParser = new parserFormula('WEEKDAY("44927","2s")', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(DATE(2023,1,1),"2s")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of WEEKDAY("44927","2s")');
+
+		// bools
+		oParser = new parserFormula('WEEKDAY(44927,FALSE)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(DATE(2023,1,1),FALSE)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(44927,FALSE)');
+
+		oParser = new parserFormula('WEEKDAY(44927,TRUE)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(DATE(2023,1,1),TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of WEEKDAY(44927,TRUE)');
+
+		oParser = new parserFormula('WEEKDAY(TRUE,TRUE)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(TRUE,TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of WEEKDAY(TRUE,TRUE)');
+
+		oParser = new parserFormula('WEEKDAY(FALSE,TRUE)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(FALSE,TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), 7, 'Result of WEEKDAY(FALSE,TRUE)');
+
+		// arrays
+		oParser = new parserFormula('WEEKDAY({1,2,3},2)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY({1,2,3},2)');
+		assert.strictEqual(oParser.calculate().getValue(), 7, 'Result of WEEKDAY({1,2,3},2)');
+
+		oParser = new parserFormula('WEEKDAY({1,2,3},2)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("F106:I109").bbox);
+		assert.ok(oParser.parse(), 'WEEKDAY({1,2,3},2)');
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 7, "Result of WEEKDAY({1,2,3},2).[0,0]");
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, "Result of WEEKDAY({1,2,3},2).[0,1]");
+			assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 2, "Result of WEEKDAY({1,2,3},2).[0,2]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Result of WEEKDAY({1,2,3},2).[1,0]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of WEEKDAY({1,2,3},2).[1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#N/A", "Result of WEEKDAY({1,2,3},2).[2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#N/A", "Result of WEEKDAY({1,2,3},2).[3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#N/A", "Result of WEEKDAY({1,2,3},2).[4,0]");
+		}
+
+		oParser = new parserFormula('WEEKDAY(1,{1,2,3})', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(1,{1,2,3})');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of WEEKDAY(1,{1,2,3})');
+
+		oParser = new parserFormula('WEEKDAY(1,{1,2,3})', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("F106:I109").bbox);
+		assert.ok(oParser.parse(), 'WEEKDAY(1,{1,2,3})');
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of WEEKDAY(1,{1,2,3}).[0,0]");
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 7, "Result of WEEKDAY(1,{1,2,3}).[0,1]");
+			assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 6, "Result of WEEKDAY(1,{1,2,3}).[0,2]");
+			assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "", "Result of WEEKDAY(1,{1,2,3}).[0,3]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Result of WEEKDAY(1,{1,2,3}).[1,0]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of WEEKDAY(1,{1,2,3}).[1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#N/A", "Result of WEEKDAY(1,{1,2,3}).[2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#N/A", "Result of WEEKDAY(1,{1,2,3}).[3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#N/A", "Result of WEEKDAY(1,{1,2,3}).[4,0]");
+		}
+
+		oParser = new parserFormula('WEEKDAY({1,2,3},{1,2,3})', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY({1,2,3},{1,2,3})');
+		oParser.setArrayFormulaRef(ws.getRange2("F106:I109").bbox);
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of WEEKDAY({1,2,3},{1,2,3}).[0,0]");
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, "Result of WEEKDAY({1,2,3},{1,2,3}).[0,1]");
+			assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 1, "Result of WEEKDAY({1,2,3},{1,2,3}).[0,2]");
+			assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "#N/A", "Result of WEEKDAY({1,2,3},{1,2,3}).[0,3]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, "Result of WEEKDAY({1,2,3},{1,2,3}).[1,0]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, "Result of WEEKDAY({1,2,3},{1,2,3}).[1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 1, "Result of WEEKDAY({1,2,3},{1,2,3}).[2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 1, "Result of WEEKDAY({1,2,3},{1,2,3}).[3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "", "Result of WEEKDAY({1,2,3},{1,2,3}).[4,0]");
+		}
+
+		// cellsRange
+		ws.getRange2("C101").setValue("1");
+		ws.getRange2("C102").setValue("2");
+		ws.getRange2("C103").setValue("3");
+		ws.getRange2("C104").setValue("4");
+
+		oParser = new parserFormula("WEEKDAY(C101:C103,2)", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:E109").bbox);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 7, "Result of WEEKDAY(C101:C103,2).[0,0]");
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of WEEKDAY(C101:C103,2).[0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, "Result of WEEKDAY(C101:C103,2).[1,0]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of WEEKDAY(C101:C103,2).[1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 2, "Result of WEEKDAY(C101:C103,2).[2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "", "Result of WEEKDAY(C101:C103,2).[3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#N/A", "Result of WEEKDAY(C101:C103,2).[4,0]");
+		}
+
+		oParser = new parserFormula('WEEKDAY(C101:C103,C101:C103)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(C101:C103,C101:C103)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of WEEKDAY(C101:C103,C101:C103)');
+
+		oParser = new parserFormula("WEEKDAY(C101:C103,C101:C103)", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:E109").bbox);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of WEEKDAY(C101:C103,C101:C103).[0,0]");
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of WEEKDAY(C101:C103,C101:C103).[0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, "Result of WEEKDAY(C101:C103,C101:C103).[1,0]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of WEEKDAY(C101:C103,C101:C103).[1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 1, "Result of WEEKDAY(C101:C103,C101:C103).[2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "", "Result of WEEKDAY(C101:C103,C101:C103).[3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#N/A", "Result of WEEKDAY(C101:C103,C101:C103).[4,0]");
+		}
+
+		oParser = new parserFormula('WEEKDAY(1,C101:C103)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(1,C101:C103)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of WEEKDAY(1,C101:C103)');
+
+		oParser = new parserFormula("WEEKDAY(1,C101:C103)", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:E109").bbox);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of WEEKDAY(1,C101:C103).[0,0]");
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of WEEKDAY(1,C101:C103).[0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 7, "Result of WEEKDAY(1,C101:C103).[1,0]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of WEEKDAY(1,C101:C103).[1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 6, "Result of WEEKDAY(1,C101:C103).[2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "", "Result of WEEKDAY(1,C101:C103).[3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#N/A", "Result of WEEKDAY(1,C101:C103).[4,0]");
+		}
+
+		// errors
+		oParser = new parserFormula('WEEKDAY(#N/A,2)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(#N/A,2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of WEEKDAY(#N/A,2)');
+
+		oParser = new parserFormula('WEEKDAY(#NUM!,#N/A)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(#NUM!,#N/A)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(#NUM!,#N/A)');
+
+		oParser = new parserFormula('WEEKDAY(#DIV/0!,#N/A)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(#DIV/0!,#N/A)');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of WEEKDAY(#DIV/0!,#N/A)');
+
+		// other
+		oParser = new parserFormula('WEEKDAY(44927,)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(DATE(2023,1,1),)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(44927,)');
+
+		oParser = new parserFormula('WEEKDAY(44927)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(DATE(2023,1,1))');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of WEEKDAY(44927)');
+
+		oParser = new parserFormula('WEEKDAY(,)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,)');
+
+		oParser = new parserFormula('WEEKDAY(,1)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 7, 'Result of WEEKDAY(,1)');
+
+		oParser = new parserFormula('WEEKDAY(,2)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,2)');
+		assert.strictEqual(oParser.calculate().getValue(), 6, 'Result of WEEKDAY(,2)');
+
+		oParser = new parserFormula('WEEKDAY(,3)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,3)');
+		assert.strictEqual(oParser.calculate().getValue(), 5, 'Result of WEEKDAY(,3)');
+
+		oParser = new parserFormula('WEEKDAY(,4)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,4)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,4)');
+
+		oParser = new parserFormula('WEEKDAY(,5)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,5)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,5)');
+
+		oParser = new parserFormula('WEEKDAY(,6)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,6)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,6)');
+
+		oParser = new parserFormula('WEEKDAY(,7)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,7)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,7)');
+
+		oParser = new parserFormula('WEEKDAY(,8)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,8)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,8)');
+
+		oParser = new parserFormula('WEEKDAY(,9)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,9)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,9)');
+
+		oParser = new parserFormula('WEEKDAY(,10)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,10)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,10)');
+
+		oParser = new parserFormula('WEEKDAY(,11)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,11)');
+		assert.strictEqual(oParser.calculate().getValue(), 6, 'Result of WEEKDAY(,11)');
+
+		oParser = new parserFormula('WEEKDAY(,12)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,12)');
+		assert.strictEqual(oParser.calculate().getValue(), 5, 'Result of WEEKDAY(,12)');
+
+		oParser = new parserFormula('WEEKDAY(,13)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,13)');
+		assert.strictEqual(oParser.calculate().getValue(), 4, 'Result of WEEKDAY(,13)');
+
+		oParser = new parserFormula('WEEKDAY(,14)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,14)');
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of WEEKDAY(,14)');
+
+		oParser = new parserFormula('WEEKDAY(,15)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,15)');
+		assert.strictEqual(oParser.calculate().getValue(), 2, 'Result of WEEKDAY(,15)');
+
+		oParser = new parserFormula('WEEKDAY(,16)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,16)');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of WEEKDAY(,16)');
+
+		oParser = new parserFormula('WEEKDAY(,17)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,17)');
+		assert.strictEqual(oParser.calculate().getValue(), 7, 'Result of WEEKDAY(,17)');
+
+		oParser = new parserFormula('WEEKDAY(,20)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,20)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,20)');
+
+		oParser = new parserFormula('WEEKDAY(,999999999999999999)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,999999999999999999)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,999999999999999999)');
+
+		oParser = new parserFormula('WEEKDAY(,0)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,0)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,0)');
+
+		oParser = new parserFormula('WEEKDAY(,-1)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,-1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,-1)');
+
 
 		testArrayFormula2(assert, "WEEKDAY", 1, 2);
+
+		// set 1904 mode
+		ws.workbook.setDate1904(true, true);
+
+		oParser = new parserFormula("WEEKDAY(B1,2)>5", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "TRUE");
+
+		oParser = new parserFormula("WEEKDAY(B1,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(B1,2)");
+		assert.strictEqual(oParser.calculate().getValue(), 6, "Result of WEEKDAY(B1,2)");
+
+		oParser = new parserFormula("WEEKDAY(B2,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,2),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 7, "Result of WEEKDAY(DATE(2023,1,2),2)");
+
+		oParser = new parserFormula("WEEKDAY(B3,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,3),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of WEEKDAY(DATE(2023,1,3),2)");
+
+		oParser = new parserFormula("WEEKDAY(B4,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,4),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result of WEEKDAY(DATE(2023,1,4),2)");
+
+		oParser = new parserFormula("WEEKDAY(B5,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,5),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 3, "Result of WEEKDAY(DATE(2023,1,5),2)");
+
+		oParser = new parserFormula("WEEKDAY(B6,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,6),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 4, "Result of WEEKDAY(DATE(2023,1,6),2)");
+
+		oParser = new parserFormula("WEEKDAY(B7,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,7),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 5, "Result of WEEKDAY(DATE(2023,1,7),2)");
+
+		oParser = new parserFormula("WEEKDAY(B8,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,8),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 6, "Result of WEEKDAY(DATE(2023,1,8),2)");
+
+		oParser = new parserFormula("WEEKDAY(B9,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,9),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 7, "Result of WEEKDAY(DATE(2023,1,9),2)");
+
+		oParser = new parserFormula("WEEKDAY(B10,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,10),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of WEEKDAY(DATE(2023,1,10),2)");
+
+		oParser = new parserFormula("WEEKDAY(B11,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,11),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result of WEEKDAY(DATE(2023,1,11),2)");
+
+		oParser = new parserFormula("WEEKDAY(B12,2)", "A1", ws);
+		assert.ok(oParser.parse(), "WEEKDAY(DATE(2023,1,12),2)");
+		assert.strictEqual(oParser.calculate().getValue(), 3, "Result of WEEKDAY(DATE(2023,1,12),2)");
+
+		// other
+		oParser = new parserFormula('WEEKDAY(44927,)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(DATE(2023,1,1),)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(44927,)');
+
+		oParser = new parserFormula('WEEKDAY(44927)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(44927)');
+		assert.strictEqual(oParser.calculate().getValue(), 7, 'Result of WEEKDAY(44927)');
+
+		oParser = new parserFormula('WEEKDAY(,)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,)');
+
+		oParser = new parserFormula('WEEKDAY(,1)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 6, 'Result of WEEKDAY(,1)');
+
+		oParser = new parserFormula('WEEKDAY(,2)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,2)');
+		assert.strictEqual(oParser.calculate().getValue(), 5, 'Result of WEEKDAY(,2)');
+
+		oParser = new parserFormula('WEEKDAY(,3)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,3)');
+		assert.strictEqual(oParser.calculate().getValue(), 4, 'Result of WEEKDAY(,3)');
+
+		oParser = new parserFormula('WEEKDAY(,4)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,4)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,4)');
+
+		oParser = new parserFormula('WEEKDAY(,5)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,5)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,5)');
+
+		oParser = new parserFormula('WEEKDAY(,6)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,6)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,6)');
+
+		oParser = new parserFormula('WEEKDAY(,7)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,7)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,7)');
+
+		oParser = new parserFormula('WEEKDAY(,8)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,8)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,8)');
+
+		oParser = new parserFormula('WEEKDAY(,9)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,9)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,9)');
+
+		oParser = new parserFormula('WEEKDAY(,10)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,10)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,10)');
+
+		oParser = new parserFormula('WEEKDAY(,11)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,11)');
+		assert.strictEqual(oParser.calculate().getValue(), 5, 'Result of WEEKDAY(,11)');
+
+		oParser = new parserFormula('WEEKDAY(,12)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,12)');
+		assert.strictEqual(oParser.calculate().getValue(), 4, 'Result of WEEKDAY(,12)');
+
+		oParser = new parserFormula('WEEKDAY(,13)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,13)');
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of WEEKDAY(,13)');
+
+		oParser = new parserFormula('WEEKDAY(,14)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,14)');
+		assert.strictEqual(oParser.calculate().getValue(), 2, 'Result of WEEKDAY(,14)');
+
+		oParser = new parserFormula('WEEKDAY(,15)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,15)');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of WEEKDAY(,15)');
+
+		oParser = new parserFormula('WEEKDAY(,16)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,16)');
+		assert.strictEqual(oParser.calculate().getValue(), 7, 'Result of WEEKDAY(,16)');
+
+		oParser = new parserFormula('WEEKDAY(,17)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,17)');
+		assert.strictEqual(oParser.calculate().getValue(), 6, 'Result of WEEKDAY(,17)');
+
+		oParser = new parserFormula('WEEKDAY(,20)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,20)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,20)');
+
+		oParser = new parserFormula('WEEKDAY(,999999999999999999)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,999999999999999999)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,999999999999999999)');
+
+		oParser = new parserFormula('WEEKDAY(,0)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,0)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,0)');
+
+		oParser = new parserFormula('WEEKDAY(,-1)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(,-1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of WEEKDAY(,-1)');
+
+		// arrays
+		oParser = new parserFormula('WEEKDAY({1,2,3},2)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY({1,2,3},2)');
+		assert.strictEqual(oParser.calculate().getValue(), 6, 'Result of WEEKDAY({1,2,3},2)');
+
+		oParser = new parserFormula('WEEKDAY({1,2,3},2)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("F106:I109").bbox);
+		assert.ok(oParser.parse(), 'WEEKDAY({1,2,3},2)');
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 6, "Result of WEEKDAY({1,2,3},2).[0,0]");
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 7, "Result of WEEKDAY({1,2,3},2).[0,1]");
+			assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 1, "Result of WEEKDAY({1,2,3},2).[0,2]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Result of WEEKDAY({1,2,3},2).[1,0]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of WEEKDAY({1,2,3},2).[1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#N/A", "Result of WEEKDAY({1,2,3},2).[2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#N/A", "Result of WEEKDAY({1,2,3},2).[3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#N/A", "Result of WEEKDAY({1,2,3},2).[4,0]");
+		}
+
+		oParser = new parserFormula('WEEKDAY(1,{1,2,3})', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(1,{1,2,3})');
+		assert.strictEqual(oParser.calculate().getValue(), 7, 'Result of WEEKDAY(1,{1,2,3})');
+
+		oParser = new parserFormula('WEEKDAY(1,{1,2,3})', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("F106:I109").bbox);
+		assert.ok(oParser.parse(), 'WEEKDAY(1,{1,2,3})');
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 7, "Result of WEEKDAY(1,{1,2,3}).[0,0]");
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 6, "Result of WEEKDAY(1,{1,2,3}).[0,1]");
+			assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 5, "Result of WEEKDAY(1,{1,2,3}).[0,2]");
+			assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "", "Result of WEEKDAY(1,{1,2,3}).[0,3]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Result of WEEKDAY(1,{1,2,3}).[1,0]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of WEEKDAY(1,{1,2,3}).[1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#N/A", "Result of WEEKDAY(1,{1,2,3}).[2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#N/A", "Result of WEEKDAY(1,{1,2,3}).[3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#N/A", "Result of WEEKDAY(1,{1,2,3}).[4,0]");
+		}
+
+		oParser = new parserFormula('WEEKDAY({1,2,3},{1,2,3})', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY({1,2,3},{1,2,3})');
+		oParser.setArrayFormulaRef(ws.getRange2("F106:I109").bbox);
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 7, "Result of WEEKDAY({1,2,3},{1,2,3}).[0,0]");
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 7, "Result of WEEKDAY({1,2,3},{1,2,3}).[0,1]");
+			assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 0, "Result of WEEKDAY({1,2,3},{1,2,3}).[0,2]");
+			assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "#N/A", "Result of WEEKDAY({1,2,3},{1,2,3}).[0,3]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 7, "Result of WEEKDAY({1,2,3},{1,2,3}).[1,0]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 7, "Result of WEEKDAY({1,2,3},{1,2,3}).[1,1]");
+			assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 0, "Result of WEEKDAY({1,2,3},{1,2,3}).[1,2]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 7, "Result of WEEKDAY({1,2,3},{1,2,3}).[2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 7, "Result of WEEKDAY({1,2,3},{1,2,3}).[3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "", "Result of WEEKDAY({1,2,3},{1,2,3}).[4,0]");
+		}
+
+		// cellsRange with new values
+		ws.getRange2("E201").setValue("1");
+		ws.getRange2("E202").setValue("2");
+		ws.getRange2("E203").setValue("3");
+		ws.getRange2("E204").setValue("4");
+
+		oParser = new parserFormula("WEEKDAY(E201:E203,2)", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:E109").bbox);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 6, "Result of WEEKDAY(E201:E203,2).[0,0]");	
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of WEEKDAY(E201:E203,2).[0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 7, "Result of WEEKDAY(E201:E203,2).[1,0]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of WEEKDAY(E201:E203,2).[1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 1, "Result of WEEKDAY(E201:E203,2).[2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "", "Result of WEEKDAY(E201:E203,2).[3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#N/A", "Result of WEEKDAY(E201:E203,2).[4,0]");
+		}
+
+		oParser = new parserFormula("WEEKDAY(E201:E203,E201:E203)", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:E109").bbox);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 7, "Result of WEEKDAY(E201:E203,E201:E203).[0,0]");
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of WEEKDAY(E201:E203,E201:E203).[0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 7, "Result of WEEKDAY(E201:E203,E201:E203).[1,0]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of WEEKDAY(E201:E203,E201:E203).[1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 0, "Result of WEEKDAY(E201:E203,E201:E203).[2,0]");	
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "", "Result of WEEKDAY(E201:E203,E201:E203).[3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#N/A", "Result of WEEKDAY(E201:E203,E201:E203).[4,0]");
+		}
+
+		oParser = new parserFormula('WEEKDAY(1,E201:E203)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(1,E201:E203)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of WEEKDAY(1,E201:E203)');
+
+		oParser = new parserFormula("WEEKDAY(1,E201:E203)", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:E109").bbox);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 7, "Result of WEEKDAY(1,E201:E203).[0,0]");
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of WEEKDAY(1,E201:E203).[0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 6, "Result of WEEKDAY(1,E201:E203).[1,0]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of WEEKDAY(1,E201:E203).[1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 5, "Result of WEEKDAY(1,E201:E203).[2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "", "Result of WEEKDAY(1,E201:E203).[3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#N/A", "Result of WEEKDAY(1,E201:E203).[4,0]");
+		}
+
+		// cellsRange with old values
+		// ?? if don't redefine the values ​​in these cells after changing the mode to 1904, then the results in some arrays may be different
+		// ws.getRange2("C101").setValue("1");
+		// ws.getRange2("C102").setValue("2");
+		// ws.getRange2("C103").setValue("3");
+		// ws.getRange2("C104").setValue("4");
+
+		oParser = new parserFormula("WEEKDAY(C101:C103,2)", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:E109").bbox);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 3, "Result of WEEKDAY(C101:C103,2).[0,0]");		//6
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of WEEKDAY(C101:C103,2).[0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 7, "Result of WEEKDAY(C101:C103,2).[1,0]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of WEEKDAY(C101:C103,2).[1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 1, "Result of WEEKDAY(C101:C103,2).[2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "", "Result of WEEKDAY(C101:C103,2).[3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#N/A", "Result of WEEKDAY(C101:C103,2).[4,0]");
+		}
+
+		oParser = new parserFormula('WEEKDAY(C101:C103,C101:C103)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(C101:C103,C101:C103)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of WEEKDAY(C101:C103,C101:C103)');
+
+		oParser = new parserFormula("WEEKDAY(C101:C103,C101:C103)", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:E109").bbox);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#NUM!", "Result of WEEKDAY(C101:C103,C101:C103).[0,0]");		// 7
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of WEEKDAY(C101:C103,C101:C103).[0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 7, "Result of WEEKDAY(C101:C103,C101:C103).[1,0]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of WEEKDAY(C101:C103,C101:C103).[1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 0, "Result of WEEKDAY(C101:C103,C101:C103).[2,0]");	
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "", "Result of WEEKDAY(C101:C103,C101:C103).[3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#N/A", "Result of WEEKDAY(C101:C103,C101:C103).[4,0]");
+		}
+
+		oParser = new parserFormula('WEEKDAY(1,C101:C103)', "A1", ws);
+		assert.ok(oParser.parse(), 'WEEKDAY(1,C101:C103)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of WEEKDAY(1,C101:C103)');
+
+		oParser = new parserFormula("WEEKDAY(1,C101:C103)", "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:E109").bbox);
+		assert.ok(oParser.parse());
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#NUM!", "Result of WEEKDAY(1,C101:C103).[0,0]");		// 7
+			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of WEEKDAY(1,C101:C103).[0,1]");
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 6, "Result of WEEKDAY(1,C101:C103).[1,0]");
+			assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of WEEKDAY(1,C101:C103).[1,1]");
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 5, "Result of WEEKDAY(1,C101:C103).[2,0]");
+			assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "", "Result of WEEKDAY(1,C101:C103).[3,0]");
+			assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#N/A", "Result of WEEKDAY(1,C101:C103).[4,0]");
+		}
+
+		ws.getRange2("A1:Z500").cleanAll();
+		ws.workbook.setDate1904(false, true);
 	});
 
 
