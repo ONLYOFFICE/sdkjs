@@ -857,8 +857,10 @@
 			{
 				getLogicDocumentWithParagraphs([''], true);
 				const oInlineSdt = createComplexForm();
+				setFillingFormsMode(true);
 				onKeyDown(oEvent);
 				oAssert.strictEqual(oInlineSdt.Lines[0], 2);
+				setFillingFormsMode(false);
 			}, oTestTypes.addBreakLineInlineLvlSdt);
 		});
 

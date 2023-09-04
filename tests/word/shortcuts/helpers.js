@@ -745,7 +745,8 @@
 	}
 	function createComplexForm()
 	{
-		const oComplexForm = oGlobalLogicDocument.AddComplexForm();
+		const oComplexForm = oGlobalLogicDocument.AddContentControlTextForm();
+		oComplexForm.SetFormPr(new AscWord.CSdtFormPr());
 		var props = new AscCommon.CContentControlPr();
 		var formTextPr = new AscCommon.CSdtTextFormPr();
 		formTextPr.put_MultiLine(true);
