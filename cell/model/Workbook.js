@@ -11917,6 +11917,25 @@
 		this.workbook.handlers.trigger("onChangePageSetupProps", this.getId());
 	};
 
+	Worksheet.prototype.isBreak = function (index, range, byCol) {
+		let min = null;
+		let max = !byCol ? gc_nMaxCol0 : gc_nMaxRow0;
+
+		let printArea = this.workbook.getDefinesNames("Print_Area", this.getId());
+		if (printArea && range) {
+			if (byCol) {
+				min = range.r1;
+				max = range.r2;
+			} else {
+				min = range.c1;
+				max = range.c2;
+			}
+		}
+
+		let rowColBreaks = !byCol ? this.rowBreaks : this.colBreaks;
+		return rowColBreaks && rowColBreaks.isBreak(index, min, max);
+	};
+
 	Worksheet.prototype.resetAllPageBreaks = function () {
 		let t = this;
 
