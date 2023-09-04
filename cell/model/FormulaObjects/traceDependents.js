@@ -494,6 +494,11 @@ function (window, undefined) {
 							isDefName
 						};
 
+						if (parent && parent.Id && parent.toXml && parent instanceof CT_WorksheetSource) {
+							// if the listener is a pivot table, skip the iteration
+							continue;
+						}
+
 						if (isDefName) {
 							// TODO check external table ref
 							setDefNameIndexes(parent.name, isTable);
@@ -522,8 +527,8 @@ function (window, undefined) {
 								continue;
 							}
 						}
-						let parentCellIndex = getParentIndex(parent);
 
+						let parentCellIndex = getParentIndex(parent);
 						if (parentCellIndex === null || (typeof(parentCellIndex) === "number" && isNaN(parentCellIndex))) {
 							continue;
 						}
@@ -543,14 +548,13 @@ function (window, undefined) {
 				let isUpdated = false;
 				for (let i in cellListeners) {
 					if (cellListeners.hasOwnProperty(i)) {
-						let parent = cellListeners[i].parent,
-							elemCellIndex = cellListeners[i].shared !== null ? currentIndex : getParentIndex(parent),
-							formula = cellListeners[i].Formula;
-
-						if (parent.name) {
+						let parent = cellListeners[i].parent;
+						if (parent && (parent.name || (parent.Id && parent.toXml && parent instanceof CT_WorksheetSource))) {
+							// if the listener is a pivot table, skip the iteration
 							continue;
 						}
 
+						let	elemCellIndex = cellListeners[i].shared !== null ? currentIndex : getParentIndex(parent), formula = cellListeners[i].Formula;
 						if (formula.includes(":") && !cellListeners[i].is3D) {
 							// call getAllAreaIndexes which return cellIndexes of each element(this will be parentCellIndex)
 							let areaIndexes = getAllAreaIndexes(cellListeners[i]);
