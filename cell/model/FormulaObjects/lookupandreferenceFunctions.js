@@ -2058,17 +2058,14 @@ function (window, undefined) {
 
 					if (cElementType.error === byColVal.type || (isFirstValRecieved && isSecondValRecieved)) {
 						resArr.addElement(errVal);
-						continue;
 					} else if (!isFirstValRecieved) {
 						let fValue = sortArray(array, null, sort_order, byColVal.toBool(), sort_index).getFirstElement();
 						resArr.addElement(fValue);
 						isFirstValRecieved = true;
-						continue;
 					} else if (!isSecondValRecieved) {
 						let sValue = new cNumber(0);
 						resArr.addElement(sValue);
 						isSecondValRecieved = true;
-						continue;
 					}
 				}
 			}
@@ -2435,14 +2432,14 @@ function (window, undefined) {
 					return sort_order;
 				} else if (!isSortOrderArray) {
 					sort_order = Math.floor(sort_order.getValue());
+					if (sort_order !== 1 && sort_order !== -1) {
+						return new cError(cErrorType.wrong_value_type);
+					}
+					sort_order = new cNumber(sort_order);
 				}
 
 				// check sort_order value
-				if ((sort_order !== 1 && sort_order !== -1) && !isSortOrderArray) {
-					return new cError(cErrorType.wrong_value_type);
-				} else {
-					args[i] = sort_order;
-				}
+				args[i] = sort_order;
 			}
 		}
 
@@ -2459,8 +2456,7 @@ function (window, undefined) {
 					if (maxRows === 1 && byArrDimensions.row === 1) {
 						// area to array
 						if (cElementType.cellsRange === array.type || cElementType.cellsRange3D === array.type) {
-							let arr = array.getFullArray();
-							return arr;
+							return array.getFullArray();
 						}
 						return array;
 					} 
