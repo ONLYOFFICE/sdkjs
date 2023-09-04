@@ -1672,7 +1672,7 @@ function (window, undefined) {
 	CHeaderFooterEditor.prototype.addPictureField = function () {
 		let t = this;
 		let showFileDialog = function (needPushField) {
-			t.api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncActionType.UploadImage);
+			t.api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 			t.api.asc_addImage({
 				callback: function (oImage) {
 					if (oImage) {
@@ -1687,7 +1687,7 @@ function (window, undefined) {
 							}
 						}
 					}
-					t.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncActionType.UploadImage);
+					t.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 				}
 			});
 		};
