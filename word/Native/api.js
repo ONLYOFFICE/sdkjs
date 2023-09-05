@@ -4462,6 +4462,33 @@ Asc["asc_docs_api"].prototype["asc_nativeSetContentControlDatePickerDate"] = fun
     _api.asc_SetContentControlDatePickerPr(oPr, sId, true);
 }
 
+/**
+ * one - 0
+ * two - 1
+ * three - 2
+ * left - 3
+ * right - 4 
+ * @param {*} sId 
+ * @returns 
+ */
+Asc["asc_docs_api"].prototype["asc_nativeSetColumnsSettings"] = function(sId) {
+    var props = new Asc.CDocumentColumnsProps(),
+                        cols = sId,
+                        def_space = 12.5;
+                    props.put_EqualWidth(cols<3);
+    if (cols<3) {
+        props.put_Num(cols+1);
+        props.put_Space(def_space);
+    } else {
+        var total = _api.asc_GetColumnsProps().get_TotalWidth(),
+            left = (total - def_space*2)/3,
+            right = total - def_space - left;
+        props.put_ColByValue(0, (cols == 3) ? left : right, def_space);
+        props.put_ColByValue(1, (cols == 3) ? right : left, 0);
+    }
+    _api.asc_SetColumnsProps(props);
+}
+
 Asc["asc_docs_api"].prototype["asc_nativeAddText"] = function(text, wrapWithSpaces) {
     var settings = new AscCommon.CAddTextSettings();
 
