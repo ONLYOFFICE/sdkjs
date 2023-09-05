@@ -2288,22 +2288,18 @@ function (window, undefined) {
 				resArr.addRow();
 				for (let j = 0; j < resCol; j++) {
 					let elem;
-
 					for (let k = 0; k < sortOrderArr.length; k++) {
 						elem = sortOrderArr[k].getElementRowCol ? sortOrderArr[k].getElementRowCol(i, j) : sortOrderArr[k].getValueByRowCol(i, j);
-
 						// check element
 						if (!elem) {
 							elem = new cError(cErrorType.not_available);
-						} else if (elem.type === cElementType.error) {
-							// if any error break the cycle
-							break;
-						}
-
-						if (elem.type !== cElementType.number) {
+						} else if (elem.type !== cElementType.number) {
 							elem = elem.tocNumber();
 						}
-						
+						// if any error break the cycle
+						if (elem.type === cElementType.error) {
+							break;
+						}
 						if (elem.type === cElementType.number) {
 							// matching number check
 							let value = Math.floor(elem.getValue());
@@ -2313,8 +2309,12 @@ function (window, undefined) {
 								elem = new cNumber(value);
 							}
 						}
-
 						sort_order1 = k === 0 ? elem : sort_order1;
+
+						// if any error break the cycle
+						if (sort_order1.type === cElementType.error) {
+							break;
+						}
 					}
 
 					// if elem is "truthy", do sort and get first element from sorted array
@@ -2323,13 +2323,17 @@ function (window, undefined) {
 							elem = new cNumber(0);
 							resArr.addElement(elem);
 						} 
-						// TODO need more research
+						// TODO need more research: 
+						// ?If single col and many rows -> return only first correct element and errors
+						// ?If single row and many cols -> return not only the first correct element, but also subsequent
+
 						// else if (isFirstElemReceived && args.length > 3) {
 						// 	elem = new cError(cErrorType.wrong_value_type);
 						// 	resArr.addElement(elem);
 						// }
 						else {
-							let firstElem;
+							let firstElem, byArrDimensions = by_array1.getDimensions();
+							isByCol = byArrDimensions.row === 1 ? true : false;
 							firstElem = sortArray(arr, by_array1, sort_order1.getValue(), isByCol).getFirstElement();
 							resArr.addElement(firstElem);
 							isFirstElemReceived = true;
@@ -2446,20 +2450,26 @@ function (window, undefined) {
 		if (isSortOrderArray) {
 			return arrayHelper(array, args);
 		} else {
-			// dimensions check
+			// dimensions check: 
+			// check on errors first, then check on truthy dimensions and do things with it
 			for (let i = 1; i < args.length; i += 2) {
 				let byArrDimensions = args[i].getDimensions();
 
-				// TODO if the main array have single row, return the main array
-				if (maxRows === 1 || maxCols === 1) {
-					// single row/col with elements
+				// TODO if there is a match on the single row, but not on the col - return the original array
+				if (maxRows === 1) {
+					// single row with elements
 					if (maxRows === 1 && byArrDimensions.row === 1) {
-						// area to array
-						if (cElementType.cellsRange === array.type || cElementType.cellsRange3D === array.type) {
-							return array.getFullArray();
-						}
-						return array;
-					} 
+						if (maxCols !== byArrDimensions.col) {
+							// area to array
+							if (cElementType.cellsRange === array.type || cElementType.cellsRange3D === array.type) {
+								return array.getFullArray();
+							}
+							return array;
+						} 
+						// else {
+						// 	// return sorted array
+						// }
+					}
 				}
 
 				// isByCol or not determined by the first byarray arg
