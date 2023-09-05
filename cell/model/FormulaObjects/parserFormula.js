@@ -5675,6 +5675,10 @@ function parserFormula( formula, parent, _ws ) {
 		} else if (AscCommon.c_oNotifyType.Prepare === data.type) {
 			this.removeDependencies();
 			this.processNotifyPrepare(data);
+		} else if (AscCommon.c_oNotifyType.ChangeExternalLink === data.type) {
+			this._changeExternalLink(data);
+			this.Formula = this.assemble(true);
+			this.buildDependencies();
 		} else {
 			this.removeDependencies();
 			var needAssemble = true;
@@ -5691,6 +5695,16 @@ function parserFormula( formula, parent, _ws ) {
 			}
 			this.Formula = eventData.assemble;
 			this.buildDependencies();
+		}
+	};
+	parserFormula.prototype._changeExternalLink = function(data) {
+		for (var i = 0; i < this.outStack.length; i++) {
+			var doOffset = true;
+			if (this.outStack[i].type === cElementType.cell3D || this.outStack[i].type === cElementType.cellsRange3D || this.outStack[i].type === cElementType.name3D) {
+				if (this.outStack[i].externalLink === data.data.from) {
+					this.outStack[i].externalLink = data.data.to;
+				}
+			}
 		}
 	};
 	parserFormula.prototype.processNotifyPrepare = function(data) {

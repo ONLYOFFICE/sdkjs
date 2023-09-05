@@ -2497,6 +2497,7 @@ function (window, undefined) {
 			} else if (!from && to) { //добавление
 				externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
 				if (externalReferenceIndex !== null) {
+					wb._removeExternalReference(externalReferenceIndex - 1);
 					wb.externalReferences.splice(externalReferenceIndex - 1, 1);
 				}
 			} else if (from && to) { //изменение

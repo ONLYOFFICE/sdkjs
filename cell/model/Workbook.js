@@ -836,6 +836,12 @@
 				prepared.listeners[listenerId].notify(notifyData);
 			}
 		},
+		changeExternalLink: function(prepared) {
+			var notifyData = {type: c_oNotifyType.ChangeExternalLink, data: prepared.data, preparedData: prepared.preparedData};
+			for (var listenerId in prepared.listeners) {
+				prepared.listeners[listenerId].notify(notifyData);
+			}
+		},
 		prepareRemoveSheet: function(sheetId, tableNames) {
 			var t = this;
 			//cells
@@ -4575,11 +4581,25 @@
 		if (index != null) {
 			var from = this.externalReferences[index - 1];
 			//this.reIndexExternalReferencesLinks(index - 1);
-			this.externalReferences.splice(index - 1, 1);
+			this._removeExternalReference(index - 1);
 			if (addToHistory) {
 				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
 					null, null, new UndoRedoData_FromTo(from, null));
 			}
+		}
+	};
+
+	Workbook.prototype._removeExternalReference = function (index) {
+		if (index != null) {
+			//need offset last references
+			for (let i = index + 1; i < this.externalReferences.length; i++) {
+				for (let j in this.externalReferences[i].worksheets) {
+					var prepared = this.dependencyFormulas.prepareChangeSheet(this.externalReferences[i].worksheets[j].getId(), {from: i + 1, to: i});
+					this.dependencyFormulas.changeExternalLink(prepared);
+				}
+			}
+
+			this.externalReferences.splice(index, 1);
 		}
 	};
 
