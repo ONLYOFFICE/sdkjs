@@ -21538,7 +21538,7 @@
 		return this._isLockedLayoutOptions(callback);
 	};
 
-	WorksheetView.prototype.changePageMargins = function (oMargins, hCentered, vCentered, nHeader, nFooter) {
+	WorksheetView.prototype.changePageMargins = function (oMargins, bHorCentered, bVerCentered, nHeader, nFooter) {
 		var t = this;
 		var pageOptions = t.model.PagePrintOptions;
 		var pageMargins = pageOptions.asc_getPageMargins();
@@ -21558,8 +21558,12 @@
 				pageMargins.asc_setBottom(oMargins.asc_getBottom());
 			}
 
-			pageOptions.asc_setHorizontalCentered(hCentered);
-			pageOptions.asc_setVerticalCentered(vCentered);
+			if (hCentered != null) {
+				pageOptions.asc_setHorizontalCentered(hCentered);
+			}
+			if (vCentered != null) {
+				pageOptions.asc_setVerticalCentered(vCentered);
+			}
 
 			History.EndTransaction();
 

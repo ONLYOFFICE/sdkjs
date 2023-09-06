@@ -1243,13 +1243,13 @@ var editor;
     ws.changeDocSize(width, height);
   };
 
-  spreadsheet_api.prototype.asc_changePageMargins = function (oMargins, hCentered, vCentered, nHeader, nFooter, index) {
+  spreadsheet_api.prototype.asc_changePageMargins = function (oMargins, bHorCentered, bVerCentered, nHeader, nFooter, index) {
 	  if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 		  return false;
 	  }
 	  var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
       var ws = this.wb.getWorksheet(sheetIndex);
-      ws.changePageMargins(oMargins, hCentered, vCentered, nHeader, nFooter);
+      ws.changePageMargins(oMargins, bHorCentered, bVerCentered, nHeader, nFooter);
   };
 
   spreadsheet_api.prototype.asc_changePageOrient = function (isPortrait, index) {
