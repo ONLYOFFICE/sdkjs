@@ -5098,6 +5098,7 @@
 
 	/**
 	 * Subscribes to the specified event and calls the callback function when the event fires.
+	 * @function
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {string} eventName - The event name.
@@ -5107,6 +5108,7 @@
 
 	/**
 	 * Unsubscribes from the specified event.
+	 * @function
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {string} eventName - The event name.
