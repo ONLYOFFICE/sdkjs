@@ -899,15 +899,18 @@ function (window, undefined) {
 	CHeaderFooterEditorSection.prototype.getStringPortion = function () {
 		let sPortion = null;
 		switch (this.portion) {
-			case c_oPortionPosition.left: {
+			case c_nPortionLeftHeader:
+			case c_nPortionLeftFooter: {
 				sPortion = "L";
 				break;
 			}
-			case c_oPortionPosition.center: {
+			case c_nPortionCenterHeader:
+			case c_nPortionCenterFooter: {
 				sPortion = "C";
 				break;
 			}
-			case c_oPortionPosition.right: {
+			case c_nPortionRightHeader:
+			case c_nPortionRightFooter: {
 				sPortion = "R";
 				break;
 			}
