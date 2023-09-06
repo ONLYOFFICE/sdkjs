@@ -305,7 +305,7 @@ function (window, undefined) {
 							}
 						}
 						let parentCellIndex = getParentIndex(elem.parent);
-						if (!parentCellIndex) {
+						if (parentCellIndex === null) {
 							continue;
 						}
 
@@ -375,11 +375,12 @@ function (window, undefined) {
 			return indexes;
 		};
 		const getParentIndex = function (_parent) {
+			if (!_parent || _parent.nCol == null ||  _parent.nRow == null) {
+				return null;
+			}
 			let _parentCellIndex = AscCommonExcel.getCellIndex(_parent.nRow, _parent.nCol);
-			//parent -> cell/defname
-			if (_parent.parsedRef/*parent instanceof AscCommonExcel.DefName*/) {
-				_parentCellIndex = null;
-			} else if (_parent.ws !== t.ws.model) {
+			//parent -> cell
+			if (_parent.ws !== t.ws.model) {
 				_parentCellIndex += ";" + _parent.ws.index;
 			}
 			return _parentCellIndex;
@@ -494,7 +495,8 @@ function (window, undefined) {
 							isDefName
 						};
 
-						if (parent && parent.Id && parent.toXml && parent instanceof CT_WorksheetSource) {
+						//todo slow operation. parent not have type
+						if (parent instanceof Asc.CT_WorksheetSource) {
 							// if the listener is a pivot table, skip the iteration
 							continue;
 						}
@@ -529,7 +531,8 @@ function (window, undefined) {
 						}
 
 						let parentCellIndex = getParentIndex(parent);
-						if (parentCellIndex === null || (typeof(parentCellIndex) === "number" && isNaN(parentCellIndex))) {
+						if (parentCellIndex === null) {
+						//if (parentCellIndex === null || (typeof(parentCellIndex) === "number" && isNaN(parentCellIndex))) {
 							continue;
 						}
 						this._setDependents(cellIndex, parentCellIndex);
@@ -549,7 +552,8 @@ function (window, undefined) {
 				for (let i in cellListeners) {
 					if (cellListeners.hasOwnProperty(i)) {
 						let parent = cellListeners[i].parent;
-						if (parent && (parent.name || (parent.Id && parent.toXml && parent instanceof CT_WorksheetSource))) {
+						//todo slow operation. parent not have type
+						if (parent instanceof AscCommonExcel.DefName || parent instanceof Asc.CT_WorksheetSource) {
 							// if the listener is a pivot table, skip the iteration
 							continue;
 						}
