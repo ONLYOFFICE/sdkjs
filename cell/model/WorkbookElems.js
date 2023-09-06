@@ -13689,26 +13689,32 @@ QueryTableField.prototype.clone = function() {
 
 		if (val["evenFooter"]) {
 			this.evenFooter = new CHeaderFooterData();
+			this.evenFooter.setType(Asc.c_oAscPageHFType.evenFooter);
 			this.evenFooter.setStr(val["evenFooter"]);
 		}
 		if (val["evenHeader"]) {
 			this.evenHeader = new CHeaderFooterData();
+			this.evenHeader.setType(Asc.c_oAscPageHFType.evenHeader);
 			this.evenHeader.setStr(val["evenHeader"]);
 		}
 		if (val["firstFooter"]) {
 			this.firstFooter = new CHeaderFooterData();
+			this.firstFooter.setType(Asc.c_oAscPageHFType.firstFooter);
 			this.firstFooter.setStr(val["firstFooter"]);
 		}
 		if (val["firstHeader"]) {
 			this.firstHeader = new CHeaderFooterData();
+			this.firstHeader.setType(Asc.c_oAscPageHFType.firstHeader);
 			this.firstHeader.setStr(val["firstHeader"]);
 		}
 		if (val["oddFooter"]) {
 			this.oddFooter = new CHeaderFooterData();
+			this.oddFooter.setType(Asc.c_oAscPageHFType.oddFooter);
 			this.oddFooter.setStr(val["oddFooter"]);
 		}
 		if (val["oddHeader"]) {
 			this.oddHeader = new CHeaderFooterData();
+			this.oddHeader.setType(Asc.c_oAscPageHFType.oddHeader);
 			this.oddHeader.setStr(val["oddHeader"]);
 		}
 
