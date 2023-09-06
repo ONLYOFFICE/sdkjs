@@ -5699,9 +5699,8 @@ function parserFormula( formula, parent, _ws ) {
 	};
 	parserFormula.prototype._changeExternalLink = function(data) {
 		for (var i = 0; i < this.outStack.length; i++) {
-			var doOffset = true;
 			if (this.outStack[i].type === cElementType.cell3D || this.outStack[i].type === cElementType.cellsRange3D || this.outStack[i].type === cElementType.name3D) {
-				if (this.outStack[i].externalLink === data.data.from) {
+				if (this.outStack[i].externalLink == data.data.from) {
 					this.outStack[i].externalLink = data.data.to;
 				}
 			}

@@ -18364,7 +18364,7 @@
 
 					let afterExternalReferences = t.getExternalReferencesByCell(c, true, true);
 					if (afterExternalReferences && !_compare(afterExternalReferences, beforeExternalReferences)) {
-						t.model.workbook.handlers.trigger("asc_onNeedUpdateExternalReference");
+						//t.model.workbook.handlers.trigger("asc_onNeedUpdateExternalReference");
 						t.updateExternalReferenceByCell(c, true);
 					}
 
