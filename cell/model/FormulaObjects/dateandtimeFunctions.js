@@ -231,13 +231,14 @@
 		return (bNeg ? -nRet : nRet) / c_msPerDay / (av ? 1 : pOptDaysIn1stYear);
 	}
 
-	function days360(date1, date2, flag) {
-		var sign;
+	function days360(date1, date2, flag, isAccrint) {
+		// special modifying a function to call from ACCRINT formula
+		let sign;
 
-		var nY1 = date1.getUTCFullYear(), nM1 = date1.getUTCMonth() + 1, nD1 = date1.getUTCDate(),
+		let nY1 = date1.getUTCFullYear(), nM1 = date1.getUTCMonth() + 1, nD1 = date1.getUTCDate(),
 			nY2 = date2.getUTCFullYear(), nM2 = date2.getUTCMonth() + 1, nD2 = date2.getUTCDate();
 
-		if (flag && (date2 < date1)) {
+		if (flag && !isAccrint && (date2 < date1)) {
 			sign = date1;
 			date1 = date2;
 			date2 = sign;
@@ -1957,7 +1958,7 @@
 		}
 
 		return new cNumber(
-			weekday[new cDate((arg0.getValue() - (AscCommonExcel.c_DateCorrectConst + 1)) * c_msPerDay).getUTCDay()]);
+			weekday[new cDate((arg0.getValue() - (AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1))) * c_msPerDay).getUTCDay()]);
 	};
 
 	/**

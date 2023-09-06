@@ -9369,7 +9369,7 @@
 				|| 0x2611 === nUnicode
 				|| 0x2610 === nUnicode));
 	}
-
+	
 	function ExecuteNoHistory(f, oLogicDocument, oThis, args)
 	{
 		// TODO: Надо перевести все редакторы на StartNoHistoryMode/EndNoHistoryMode
@@ -9404,6 +9404,12 @@
 		}
 
 		return result;
+	}
+	
+	function AddAndExecuteChange(change)
+	{
+		AscCommon.History.Add(change);
+		change.Redo();
 	}
 
 	/**
@@ -12559,6 +12565,9 @@
 			} else if (-1 !== value.indexOf("pc")) {
 				oType = "pc";
 				oVal *= AscCommonWord.g_dKoef_pc_to_mm;
+			} else if (-1 !== value.indexOf("em")) {
+				oType = "em";
+				oVal *= AscCommonWord.g_dKoef_em_to_mm;
 			} else {
 				oType = "none";
 			}
@@ -13201,6 +13210,9 @@
 		if (!api) {
 			return;
 		}
+		if (api.documentOpenOptions && api.documentOpenOptions["debug"]) {
+			console.log("[speed]: "+ msg);
+		}
 		api.CoAuthoringApi.sendClientLog(level, msg);
 	}
 
@@ -13397,6 +13409,7 @@
 	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
 	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
+	window["AscCommon"].AddAndExecuteChange = AddAndExecuteChange;
 	window["AscCommon"].CompareStrings = CompareStrings;
 	window["AscCommon"].IsSupportAscFeature = IsSupportAscFeature;
 	window["AscCommon"].IsSupportOFormFeature = IsSupportOFormFeature;

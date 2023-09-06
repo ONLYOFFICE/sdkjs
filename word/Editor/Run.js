@@ -3820,11 +3820,14 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                 {
                     // Отмечаем, что началось слово
                     StartWord = true;
-
+					
 					if (para_ContinuationSeparator === ItemType || para_Separator === ItemType)
 						Item.UpdateWidth(PRS);
 					else if (para_Text === ItemType)
+					{
 						Item.ResetTemporaryGrapheme();
+						Item.ResetTemporaryHyphenAfter();
+					}
 
 					if (true !== PRS.IsFastRecalculate())
 					{
@@ -3957,10 +3960,11 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 								{
 									NewRange    = true;
 									RangeEndPos = Pos;
+									PRS.CheckLastAutoHyphen(X + SpaceLen, XEnd);
 								}
 							}
 						}
-
+						
 						if (true !== NewRange)
 						{
 							// Если с данного элемента не может начинаться строка, тогда считает все пробелы идущие
@@ -3978,10 +3982,14 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 							else if (Item.CanBeAtBeginOfLine())
 							{
 								PRS.Set_LineBreakPos(Pos, FirstItemOnLine);
+								PRS.CheckLastAutoHyphen(X + SpaceLen, XEnd);
 							}
 
 							// Если текущий символ с переносом, например, дефис, тогда на нем заканчивается слово
-							if (Item.IsSpaceAfter())
+							if (Item.IsSpaceAfter()
+								|| (PRS.canPlaceAutoHyphenAfter(Item)
+									&& X + SpaceLen + LetterLen + PRS.getAutoHyphenWidth(Item, this) <= XEnd
+									&& (FirstItemOnLine || PRS.checkHyphenationZone(X + SpaceLen))))
 							{
 								// Добавляем длину пробелов до слова и ширину самого слова.
 								X += SpaceLen + LetterLen;
@@ -4002,9 +4010,13 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     }
                     else
                     {
-						if (X + SpaceLen + WordLen + GraphemeLen > XEnd
-							&& !FirstItemOnLine
-							&& !PRS.TryCondenseSpaces(SpaceLen + WordLen + GraphemeLen, WordLen + GraphemeLen, X, XEnd))
+						
+						let autoHyphenWidth = PRS.getAutoHyphenWidth(Item, this);
+						
+						let fitOnLine = (X + SpaceLen + WordLen + GraphemeLen + autoHyphenWidth <= XEnd
+							|| PRS.TryCondenseSpaces(SpaceLen + WordLen + GraphemeLen + autoHyphenWidth, WordLen + GraphemeLen + autoHyphenWidth, X, XEnd));
+						
+						if (!fitOnLine && !FirstItemOnLine)
 						{
 							MoveToLBP = true;
 							NewRange  = true;
@@ -4015,7 +4027,10 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                             // Мы убираемся в пределах данной строки. Прибавляем ширину буквы к ширине слова
                             WordLen += LetterLen;
 
-							if (Item.IsSpaceAfter())
+							if (Item.IsSpaceAfter()
+								|| (PRS.canPlaceAutoHyphenAfter(Item)
+									&& fitOnLine
+									&& (FirstItemOnLine || PRS.checkHyphenationZone(X + SpaceLen))))
                             {
                                 // Добавляем длину пробелов до слова и ширину самого слова.
                                 X += SpaceLen + WordLen;
@@ -4706,6 +4721,8 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 
                     NewRange = true;
                     End      = true;
+	
+					PRS.OnEndRecalculateLineRanges();
 
                     RangeEndPos = Pos + 1;
 
@@ -4828,7 +4845,10 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
             }
 
             if (para_Space !== ItemType)
-            	PRS.LastItem = Item;
+			{
+				PRS.LastItem    = Item;
+				PRS.LastItemRun = this;
+			}
 
             if (true === NewRange)
                 break;
@@ -5091,6 +5111,8 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
 
     var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
     var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
+	
+	let textPr = this.Get_CompiledPr(false);
 
 	// TODO: Сделать возможность показывать инструкцию
 	var isHiddenCFPart = PRSC.ComplexFields.IsComplexFieldCode();
@@ -5124,7 +5146,7 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
                     PRSC.Words++;
                 }
 
-                PRSC.Range.W += Item.GetWidth();
+                PRSC.Range.W += Item.GetWidth(textPr);
                 PRSC.Range.W += PRSC.SpaceLen;
 
                 PRSC.SpaceLen = 0;
@@ -5343,7 +5365,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                 else
                     WidthVisible = Item.GetWidth() + PRSA.JustifyWord;
 
-                Item.SetWidthVisible(WidthVisible);
+                Item.SetWidthVisible(WidthVisible, this.Get_CompiledPr(false));
 
 				if (para_FootnoteReference === ItemType || para_EndnoteReference === ItemType)
 				{
@@ -8719,7 +8741,10 @@ ParaRun.prototype.Recalc_RunsCompiledPr = function()
 {
     this.Recalc_CompiledPr(true);
 };
-
+/**
+ * @param bCopy {boolean} return a duplicate or reference to the compiled  textPr object
+ * @returns {CTextPr}
+ */
 ParaRun.prototype.Get_CompiledPr = function(bCopy)
 {
 	if (this.IsStyleHyperlink() && this.IsInHyperlinkInTOC())
@@ -13862,3 +13887,4 @@ window['AscCommonWord'].CanUpdatePosition = CanUpdatePosition;
 window['AscWord'] = window['AscWord'] || {};
 window['AscWord'].ParaRun = ParaRun;
 window['AscWord'].CRun = ParaRun;
+window['AscWord'].Run = ParaRun;

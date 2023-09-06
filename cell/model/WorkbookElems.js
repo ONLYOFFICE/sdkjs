@@ -6123,6 +6123,18 @@ StyleManager.prototype =
 	};
 	Hyperlink.prototype.getHyperlinkType = function () {
 		return null !== this.Hyperlink ? Asc.c_oAscHyperlinkType.WebLink : Asc.c_oAscHyperlinkType.RangeLink;
+
+		//for local file
+		/*var res = null;
+		if (null !== this.Hyperlink) {
+			//либо гиперссылка, либо ссылка на локальный файл(отдельное поле не стал заводить, все будет в Hyperlink)
+			if (XRegExp.exec(this.Hyperlink, new XRegExp("([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?"))) {
+				res = Asc.c_oAscHyperlinkType.FileLink;
+			} else {
+				res = Asc.c_oAscHyperlinkType.WebLink;
+			}
+		}
+		return null !== res ? res : Asc.c_oAscHyperlinkType.RangeLink;*/
 	};
 	Hyperlink.prototype.getType = function () {
 		return UndoRedoDataTypes.Hyperlink;
@@ -14821,6 +14833,15 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
+	ExternalReference.prototype.putToChangedCells = function () {
+		for (let i in this.SheetDataSet) {
+			if (this.SheetDataSet.hasOwnProperty(i)) {
+				let sheetName = this.SheetNames && this.SheetNames[this.SheetDataSet[i].SheetId];
+				this.SheetDataSet[i].putToChangedCells(this.worksheets && this.worksheets[sheetName]);
+			}
+		}
+	};
+
 	//TODO внешние источники данных, как в файле из бага https://bugzilla.onlyoffice.com/show_bug.cgi?id=38646
 
 	ExternalReference.prototype.getAscLink = function () {
@@ -15225,6 +15246,30 @@ QueryTableField.prototype.clone = function() {
 			}
 		}
 		return isChanged;
+	};
+
+	ExternalSheetDataSet.prototype.putToChangedCells = function(sheet) {
+		if (!sheet) {
+			return;
+		}
+		for (var i = 0; i < this.Row.length; i++) {
+			var row = this.Row[i];
+			if (!row) {
+				continue;
+			}
+			for (var j = 0; j < this.Row[i].Cell.length; j++) {
+				var externalCell = this.Row[i].Cell[j];
+				if (!externalCell) {
+					continue;
+				}
+				var range = sheet.getRange2(externalCell.Ref);
+				range._foreach(function (cell) {
+					var api_sheet = Asc['editor'];
+					var wb = api_sheet.wbModel;
+					wb.dependencyFormulas.addToChangedCell(cell);
+				});
+			}
+		}
 	};
 
 	ExternalSheetDataSet.prototype.getRow = function(index, needGenerateRow) {

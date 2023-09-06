@@ -535,7 +535,7 @@
 			oEvent = createEvent(188, true, false, false, false, false);
 			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Superscript, 'Check getting superscript shortcut action');
 
-			oEvent = createEvent(187, true, false, false, false, false);
+			oEvent = createEvent(187, true, false, true, false, false);
 			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Subscript, 'Check getting subscript shortcut action');
 
 			oEvent = createEvent(190, true, false, false, false, false);

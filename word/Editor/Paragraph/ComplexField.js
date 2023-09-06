@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 15.08.2017
- * Time: 12:52
- */
 
 var fldchartype_Begin    = 0;
 var fldchartype_Separate = 1;

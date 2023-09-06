@@ -506,6 +506,8 @@
 
 		this.asyncOperations = null;
 
+		this.traceDependentsManager = new AscCommonExcel.TraceDependentsManager(this);
+
         this._init();
 
         return this;
@@ -4992,6 +4994,365 @@
 		}
 	};
 
+	WorksheetView.prototype.drawTraceDependents = function () {
+		let traceManager = this.traceDependentsManager;
+		if(traceManager && (traceManager.isHaveDependents() || traceManager.isHavePrecedents())) {
+			this._drawElements(this.drawTraceArrows);
+		}
+	};
+
+	WorksheetView.prototype.drawTraceArrows = function (visibleRange, offsetX, offsetY) {
+		let traceManager = this.traceDependentsManager;
+		let ctx = this.overlayCtx;
+		let widthLine = 2, 
+			customScale = AscBrowser.retinaPixelRatio,
+			zoom = this.getZoom();
+
+		widthLine = customScale * widthLine * zoom;
+		ctx.setLineWidth(widthLine);
+
+		const lineColor = new CColor(78, 128, 245);
+		const externalLineColor = new CColor(68, 68, 68);
+		const whiteColor = new CColor(255, 255, 255);
+
+		let t = this;
+
+		// clip by visible area
+		ctx.AddClipRect(t._getColLeft(visibleRange.c1) - offsetX, t._getRowTop(visibleRange.r1) - offsetY, Math.abs(t._getColLeft(visibleRange.c2 + 1) - t._getColLeft(visibleRange.c1)), Math.abs(t._getRowTop(visibleRange.r2 + 1) - t._getRowTop(visibleRange.r1)));
+		
+		const doDrawArrow = function (_from, _to, external, isPrecedent) {
+			// drawing line, arrow, dot, minitable as part of a whole dependency line
+			ctx.beginPath();
+			ctx.setStrokeStyle(!external ? lineColor : externalLineColor);
+			ctx.setLineDash([]);
+			if (isPrecedent && external) {
+				drawExternalPrecedentLine(_from);
+			} else {
+				drawDependentLine(_from, _to, external);
+			}
+		};
+
+		const drawDependentLine = function (from, to, external) {
+			let x1 = t._getColLeft(from.col) - offsetX + t._getColumnWidth(from.col) / 4;
+			let y1 = t._getRowTop(from.row) - offsetY + t._getRowHeight(from.row) / 2;
+			let arrowSize = 7 * zoom * customScale;
+
+			let x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop;
+			if (external) {
+				if (from.col < 2 && from.row < 3) {
+					// 1) Right down (+1r, +1c)
+					x2 = t._getColLeft(from.col + 1) - offsetX + t._getColumnWidth(from.col + 1);
+					y2 = t._getRowTop(from.row + 1) - offsetY + t._getRowHeight(from.row + 1);
+					miniTableCol = from.col + 2;
+					miniTableRow = from.row + 1;
+				} else if (from.col < 2 && from.row >= 3) {
+					// 2) Right up(-1r,+1c)
+					x2 = t._getColLeft(from.col + 1) - offsetX + t._getColumnWidth(from.col + 1);
+					y2 = t._getRowTop(from.row - 1) - offsetY;
+					miniTableCol = from.col + 2;
+					miniTableRow = from.row - 2;
+					isTableTop = true;
+				} else if (from.col >= 2 && from.row < 3) {
+					// 3) Left down(+1r,-1c)
+					x2 = t._getColLeft(from.col - 1) - offsetX;
+					y2 = t._getRowTop(from.row + 1) - offsetY + t._getRowHeight(from.row + 1);
+					miniTableCol = from.col - 2;
+					miniTableRow = from.row + 1;
+					isTableLeft = true;
+				} else {
+					// 4) Left up(-1r,-1c)
+					x2 = t._getColLeft(from.col - 1) - offsetX;
+					y2 = t._getRowTop(from.row - 1) - offsetY;
+					miniTableCol = from.col - 2;
+					miniTableRow = from.row - 2;
+					isTableLeft = true;
+					isTableTop = true;
+				}
+			} else {
+				x2 = t._getColLeft(to.col) - offsetX + t._getColumnWidth(to.col) / 4;
+				y2 = t._getRowTop(to.row) - offsetY + t._getRowHeight(to.row) / 2;
+			}
+			
+			// Angle and size for arrowhead
+			let angle = Math.atan2(y2 - y1, x2 - x1);
+
+			// Draw the line and subtract the padding to draw the arrowhead correctly
+			let extLength = Math.sqrt(Math.pow((x2 - x1), 2) + Math.pow((y2 - y1), 2));
+			if (extLength === 0 && angle === 0) {
+				// temporary exception
+				ctx.lineDiag(x1, y1, x2, y2);
+				ctx.closePath().stroke();
+
+				!external ? drawDot(x1, y1, lineColor) : drawDot(x1, y1, externalLineColor);
+			} else {
+				let dx = (x2 - x1) / extLength;
+				let dy = (y2 - y1) / extLength;
+				let newX2 = x2 - dx * arrowSize;
+				let newY2 = y2 - dy * arrowSize;
+
+				arrowSize = zoom <= 0.5 ? arrowSize * 1.25 : arrowSize;
+
+				if (external) {
+					drawDottedLine(x1, y1, newX2, newY2);
+					drawArrowHead(x2, y2, arrowSize, angle, externalLineColor);
+					drawDot(x1, y1, externalLineColor);
+					drawMiniTable(x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop);
+				} else {
+					ctx.beginPath();
+					ctx.setStrokeStyle(!external ? lineColor : externalLineColor);
+					ctx.moveTo(x1, y1);
+					ctx.lineTo(newX2, newY2);
+					ctx.closePath().stroke();
+					drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
+					drawDot(x1, y1, lineColor);
+				}
+			}
+		};
+		const drawExternalPrecedentLine = function (from) {
+			// make x1 the end of line and x2 is start
+			let x1 = t._getColLeft(from.col) - offsetX + t._getColumnWidth(from.col) / 4;
+			let y1 = t._getRowTop(from.row) - offsetY + t._getRowHeight(from.row) / 2;
+			let arrowSize = 7 * zoom * customScale;
+
+			let x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop;
+			// reverse the line
+			x2 = x1;
+			y2 = y1;
+			if (from.col < 2 && from.row < 3) {
+				// 1) Right down (+1r, +1c)
+				x1 = t._getColLeft(from.col + 1) - offsetX + t._getColumnWidth(from.col + 1);
+				y1 = t._getRowTop(from.row + 1) - offsetY + t._getRowHeight(from.row + 1);
+				miniTableCol = from.col + 2;
+				miniTableRow = from.row + 1;
+			} else if (from.col < 2 && from.row >= 3) {
+				// 2) Right up(-1r,+1c)
+				x1 = t._getColLeft(from.col + 1) - offsetX + t._getColumnWidth(from.col + 1);
+				y1 = t._getRowTop(from.row - 1) - offsetY;
+				miniTableCol = from.col + 2;
+				miniTableRow = from.row - 2;
+				isTableTop = true;
+			} else if (from.col >= 2 && from.row < 3) {
+				// 3) Left down(+1r,-1c)
+				x1 = t._getColLeft(from.col - 1) - offsetX;
+				y1 = t._getRowTop(from.row + 1) - offsetY + t._getRowHeight(from.row + 1);
+				miniTableCol = from.col - 2;
+				miniTableRow = from.row + 1;
+				isTableLeft = true;
+			} else {
+				// 4) Left up(-1r,-1c)
+				x1 = t._getColLeft(from.col - 1) - offsetX;
+				y1 = t._getRowTop(from.row - 1) - offsetY;
+				miniTableCol = from.col - 2;
+				miniTableRow = from.row - 2;
+				isTableLeft = true;
+				isTableTop = true
+			}
+			
+			// Angle and size for arrowhead
+			let angle = Math.atan2(y2 - y1, x2 - x1);
+
+			// Draw the line and subtract the padding to draw the arrowhead correctly
+			let extLength = Math.sqrt(Math.pow((x2 - x1), 2) + Math.pow((y2 - y1), 2));
+			
+			let dx = (x2 - x1) / extLength;
+			let dy = (y2 - y1) / extLength;
+			let newX2 = x2 - dx * arrowSize;
+			let newY2 = y2 - dy * arrowSize;
+
+			arrowSize = zoom <= 0.5 ? arrowSize * 1.25 : arrowSize;
+
+			// draw dotted line 
+			drawDottedLine(x1, y1, newX2, newY2);
+			// draw arrowhead
+			drawArrowHead(newX2, newY2, arrowSize, angle, externalLineColor);
+			// draw dot
+			drawDot(x1, y1, externalLineColor);
+			// draw mini table
+			drawMiniTable(x1, y1, miniTableCol, miniTableRow, isTableLeft, isTableTop);
+		};
+
+		const drawDottedLine = function (x1, y1, x2, y2) {
+			const dashLength = 8 * zoom;
+			const dashSpace = 2 * zoom;
+			const dx = x2 - x1;
+			const dy = y2 - y1;
+			const distance = Math.sqrt(dx * dx + dy * dy);
+			const dashCount = Math.floor(distance / (dashLength + dashSpace));
+
+			const xStep = dx / (dashCount);
+			const yStep = dy / (dashCount);
+
+			ctx.setLineWidth(widthLine);
+			ctx.beginPath();
+			ctx.setStrokeStyle(externalLineColor);
+			ctx.lineDiag(x1, y1, x2, y2);
+			ctx.stroke();
+			ctx.closePath();
+
+			ctx.setStrokeStyle(whiteColor);
+			for (let i = 0; i < dashCount; i++) {
+				ctx.beginPath();
+				ctx.lineDiag(x1, y1, x1 - xStep * 0.2, y1 - yStep * 0.2);
+				ctx.stroke();
+				x1 += xStep;
+				y1 += yStep;
+				ctx.closePath();
+			}
+		};
+		const drawArrowHead = function (x2, y2, arrowSize, angle, color) {
+			function checkArrowSize (size) {
+				if (Number.isInteger(size)) {
+					return size % 2 !== 0 ? ++size : size;
+				} else {
+					let intPart = parseInt(size, 10),
+						decimalPart = +(size+"").split(".")[1] ? +(size+"").split(".")[1][0] : null;
+
+					if (decimalPart && intPart % 2 === 0) {
+						return intPart;
+					} else {
+						return Math.ceil(size);
+					}
+				}
+			}
+
+			arrowSize = checkArrowSize(arrowSize);
+
+			ctx.setFillStyle(color);
+
+			let lineDeg = angle * 180 / Math.PI,
+				lineDeg1 = 90 + angle * 180 / Math.PI,
+				lineDeg2 = -90 + angle * 180 / Math.PI;
+
+			ctx.beginPath();
+			ctx.moveTo(x2, y2);
+			ctx.lineTo(x2 + Math.cos(lineDeg1 * Math.PI / 180) * arrowSize / 2, y2 + Math.sin(lineDeg1 * Math.PI / 180) * arrowSize / 2);
+			ctx.lineTo(x2 + Math.cos(lineDeg * Math.PI / 180) * arrowSize, y2 + Math.sin(lineDeg * Math.PI / 180) * arrowSize);
+			ctx.lineTo(x2 + Math.cos(lineDeg2 * Math.PI / 180) * arrowSize / 2, y2 + Math.sin(lineDeg2 * Math.PI / 180) * arrowSize / 2);
+			ctx.closePath().fill();
+		};
+		const drawDot = function (x, y, color) {
+			const dotRadius = 2.75 * zoom * customScale;
+			ctx.beginPath();
+			ctx.arc(x, y, dotRadius, 0, 2 * Math.PI);
+			ctx.setFillStyle(color);
+			ctx.closePath().fill();
+		};
+		const drawMiniTable = function (x, y, destCol, destRow, isTableLeft, isTableTop) {
+			const paddingX = 8 * zoom * customScale;
+			const paddingY = 4 * zoom * customScale;
+			const tableWidth = 15 * zoom * customScale;
+			const tableHeight = 9 * zoom * customScale;
+			const cellWidth = tableWidth / 3;
+			const cellHeight = tableHeight / 3;
+			const lineWidth = 1 * zoom * customScale;
+			const cellStrokesColor = new CColor(0, 0, 0);
+
+			// Padding for a table inside the cell
+			const x1 = isTableLeft ? x - tableWidth - paddingX : x + paddingX;
+			const y1 = isTableTop ? y - tableHeight - (paddingY * 2) : y + paddingY;
+
+			// draw white canvas behind the table
+			ctx.setFillStyle(whiteColor);
+			ctx.beginPath();
+			ctx.fillRect(x1, y1 - lineWidth, tableWidth, tableHeight + (lineWidth * 2));
+			ctx.closePath().stroke();
+
+			ctx.setLineWidth(lineWidth);
+			ctx.setFillStyle(cellStrokesColor);
+			ctx.setStrokeStyle(cellStrokesColor);
+
+			// draw main rectangle
+			ctx.beginPath();
+			ctx.strokeRect(x1, y1, tableWidth, tableHeight);
+			ctx.stroke();
+
+			ctx.beginPath();
+			let multiplier = zoom < 3 ? 1.5 : 1.2;
+			if (zoom > 1.8) {
+				ctx.fillRect(x1 - 0.5, y1 - lineWidth, tableWidth + (lineWidth * 0.5), lineWidth * multiplier);
+			} else {
+				ctx.fillRect(x1, y1 - lineWidth, tableWidth + 0.5, lineWidth * multiplier);
+			}
+			ctx.strokeRect(x1, y1 - lineWidth, tableWidth, tableHeight + lineWidth);
+			ctx.stroke();
+			ctx.closePath().fill();
+
+			// Vertical lines
+			for (let i = 1; i < 3; i++) {
+				let x2 = i * cellWidth;
+				ctx.beginPath();
+				ctx.lineVer(x2 + x1, y1, y1 + tableHeight);
+				ctx.stroke();
+			}
+
+			// Horizontal lines
+			for (let j = 1; j < 3; j++) {
+				let y2 = j * cellHeight;
+				ctx.beginPath();
+				ctx.lineHor(x1, y1 + y2, x1 + tableWidth);
+				ctx.stroke();
+			}
+		};
+
+		// draw stroke for precedent cArea
+		const drawAreaStroke = function (areas) {
+			for (const area in areas) {
+				const range = areas[area].range,
+					// write top left and bottom right cell coords to draw a rectangle around the range
+					topLeftCoords = {row: range.r1, col: range.c1},
+					bottomRightCoords = {row: range.r2, col: range.c2};
+
+				let x1 = t._getColLeft(topLeftCoords.col) - offsetX,
+					y1 = t._getRowTop(topLeftCoords.row) - offsetY,
+					x2 = t._getColLeft(bottomRightCoords.col) + t._getColumnWidth(bottomRightCoords.col) - offsetX,
+					y2 = t._getRowTop(bottomRightCoords.row) + t._getRowHeight(bottomRightCoords.row) - offsetY;
+
+				// draw rectangle
+				ctx.beginPath();
+				ctx.setStrokeStyle(lineColor);
+				ctx.setLineWidth(1);
+				ctx.strokeRect(x1, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
+				ctx.closePath().stroke();
+				// then go to the next area
+			}
+		};
+
+		let otherSheetMap = {};
+		traceManager.forEachDependents(function (from, to, isPrecedent) {
+			if (from && to) {
+				for (let i in to) {
+					let cellFrom = AscCommonExcel.getFromCellIndex(from, true);
+					if (-1 !== i.indexOf(";")) {
+						if (visibleRange.contains2(cellFrom) && !otherSheetMap[from]) {
+							doDrawArrow(cellFrom, null, true, false);
+						}
+					} else {
+						let cellTo = AscCommonExcel.getFromCellIndex(i, true);
+						if (visibleRange.contains2(cellFrom) || visibleRange.contains2(cellTo)) {
+							doDrawArrow(cellFrom, cellTo, false, isPrecedent);
+						}
+					}
+				}
+			}
+		});
+		// draw external line for precedents
+		traceManager.forEachExternalPrecedent(function (from) {
+			if (from) {
+				let cellFrom = AscCommonExcel.getFromCellIndex(from, true);
+				// check if cellIndex exist in precedentExternal array
+				if (traceManager.checkPrecedentExternal(+from) && visibleRange.contains2(cellFrom)) {
+					doDrawArrow(cellFrom, null, true, true);
+				}
+			}
+		});
+		// draw area
+		drawAreaStroke(traceManager._getPrecedentsAreas());
+		// remove clip range
+		ctx.RemoveClipRect();
+
+		return true;
+	};
+
 	WorksheetView.prototype._drawPageBreakPreviewText = function (drawingCtx, range, leftFieldInPx, topFieldInPx) {
 
 		if(!this.isPageBreakPreview(true)) {
@@ -6087,7 +6448,6 @@
             rFrozen = this.topLeftFrozenCell.getRow0();
             offsetX -= this._getColLeft(cFrozen) - this._getColLeft(0);
             offsetY -= this._getRowTop(rFrozen) - this._getRowTop(0);
-
             var oFrozenRange;
             cFrozen -= 1;
             rFrozen -= 1;
@@ -6129,6 +6489,10 @@
         }
 
 		if (this.model.getSheetProtection(Asc.c_oAscSheetProtectType.selectUnlockedCells)) {
+			return;
+		}
+
+		if (!this.overlayCtx) {
 			return;
 		}
 
@@ -6241,6 +6605,8 @@
                 this._drawElements(this.drawOverlayButtons);
             }
         }
+
+        this.drawTraceDependents();
 
         // restore canvas' original clipping range
         ctx.restore();
@@ -6448,8 +6814,12 @@
 	};
 
     WorksheetView.prototype.cleanSelection = function (range, isFrozen) {
-		var api = window["Asc"]["editor"];
-		if (window['IS_NATIVE_EDITOR']) {
+        var api = window["Asc"]["editor"];
+        if (window['IS_NATIVE_EDITOR']) {
+            return;
+        }
+
+        if (!this.overlayCtx) {
             return;
         }
 
@@ -6595,7 +6965,8 @@
 
 		//TODO пересмотреть! возможно стоит очищать частями в зависимости от print_area
 		//print lines view
-		if(this.viewPrintLines || this.copyCutRange || (this.isPageBreakPreview(true) && this.pagesModeData)) {
+		let isTraceDependents = this.traceDependentsManager.isHaveData();
+		if(this.viewPrintLines || this.copyCutRange || (this.isPageBreakPreview(true) && this.pagesModeData) || isTraceDependents) {
 			this.overlayCtx.clear();
 		}
 
@@ -13590,6 +13961,12 @@
 			//TODO пока для закрытия транзации выставляю флаг. пересмотреть!
 			window['AscCommon'].g_specialPasteHelper.bIsEndTransaction = true;
 			AscCommonExcel.g_clipboardExcel.pasteData(t, specialPasteData._format, specialPasteData.data1, specialPasteData.data2, specialPasteData.text_data);
+
+			const cPasteProps = Asc.c_oSpecialPasteProps;
+			const pasteProp = props && props.property;
+			if (cPasteProps.none !== pasteProp && cPasteProps.link !== pasteProp && cPasteProps.picture !== pasteProp && cPasteProps.linkedPicture !== pasteProp) {
+				t.traceDependentsManager && t.traceDependentsManager.clearAll(true);
+			}
 		};
 
 		if (specialPasteData.activeRange && !isIntoShape) {
@@ -17548,6 +17925,7 @@
 
 				if (defName) {
 					this._isLockedDefNames(null, defName.getNodeId());
+					this.traceDependentsManager && this.traceDependentsManager.clearAll(true);
 				} else {
 					this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.InvalidReferenceOrName,
 						c_oAscError.Level.NoCritical);
@@ -18310,6 +18688,10 @@
 					c_oAscError.Level.NoCritical);
 				t.handlers.trigger("selectionChanged");
 				return;
+			}
+
+			if (addFormatTableOptionsObj) {
+				t.traceDependentsManager && t.traceDependentsManager.clearAll();
 			}
 
 			var addFilterCallBack;
@@ -25586,6 +25968,30 @@
 	WorksheetView.prototype.getRetinaPixelRatio = function () {
 		return AscBrowser.retinaPixelRatio;
 	};
+	//cell trace dependents/precedents
+	WorksheetView.prototype.tracePrecedents = function () {
+		if (this.traceDependentsManager) {
+			this.traceDependentsManager.calculatePrecedents();
+			this.updateSelection();
+		}
+	};
+
+
+	WorksheetView.prototype.traceDependents = function () {
+		if (this.traceDependentsManager) {
+			this.traceDependentsManager.calculateDependents();
+			this.updateSelection();
+		}
+	};
+
+	WorksheetView.prototype.removeTraceArrows = function (type) {
+		if (this.traceDependentsManager && this.traceDependentsManager.isHaveData()) {
+			this.cleanSelection();
+			this.traceDependentsManager.clear(type);
+			this.updateSelection();
+		}
+	};
+
 
 	WorksheetView.prototype.changeLegacyDrawingHFPictures = function (picturesMap) {
 		//lock?

@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 07.11.2016
- * Time: 16:57
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_TableCell_GridSpan]      = CChangesTableCellGridSpan;
 AscDFH.changesFactory[AscDFH.historyitem_TableCell_Margins]       = CChangesTableCellMargins;

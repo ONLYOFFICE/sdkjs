@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 08.11.2016
- * Time: 19:48
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_Style_TextPr]          = CChangesStyleTextPr;
 AscDFH.changesFactory[AscDFH.historyitem_Style_ParaPr]          = CChangesStyleParaPr;

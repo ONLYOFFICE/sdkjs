@@ -3308,7 +3308,12 @@ CPresentation.prototype.collectHFProps = function (oSlide) {
 					if (oDateTimeFieldsMap[oField.FieldType]) {
 						sFieldType = oField.FieldType;
 					} else {
-						sFieldType = "datetime";
+						if(oField.FieldType === "datetimeFigureOut") {
+							sFieldType = "datetime1";
+						}
+						else {
+							sFieldType = "datetime";
+						}
 					}
 					oDateTime.put_DateTime(sFieldType);
 
@@ -3990,7 +3995,7 @@ CPresentation.prototype.setHFProperties = function (oProps, bAll) {
 								if (sDateTime) {
 									sCustomDateTime = oDateTime.get_DateTimeExamples()[sDateTime];
 								}
-								oSp = oMaster.getMatchingShape(AscFormat.phType_dt, null, false, {});
+								oSp = oNotesMaster.getMatchingShape(AscFormat.phType_dt, null, false, {});
 								if (oSp) {
 									oContent = oSp.getDocContent && oSp.getDocContent();
 									if (oContent) {
@@ -6529,7 +6534,7 @@ CPresentation.prototype.GetAddedTextOnKeyDown = function (e) {
 	{
 		if (e.AltKey) // Ctrl + Alt + E - добавляем знак евро €
 			return [0x20AC];
-	} else if (e.KeyCode === 189) // Клавиша Num-
+	} else if ((e.KeyCode === 189 || e.KeyCode === 173)) // Клавиша Num-
 	{
 		if (e.CtrlKey && e.ShiftKey)
 			return [0x2013];

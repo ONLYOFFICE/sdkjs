@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 08.05.2018
- * Time: 15:52
- */
 
 // Import
 var g_oTextMeasurer = AscCommon.g_oTextMeasurer;
@@ -595,6 +590,10 @@ CPresentationBullet.prototype.Draw = function(X, Y, Context, PDSE)
 		for (var iter = sT.getUnicodeIterator(); iter.check(); iter.next())
 		{
 			var charCode = iter.value();
+			if (Context.m_bIsTextDrawer === true)
+			{
+				Context.CheckAddNewPath(X, Y, charCode);
+			}
 			Context.FillTextCode( X, Y, charCode );
 			X += g_oTextMeasurer.MeasureCode(charCode).Width;
 		}

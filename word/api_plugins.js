@@ -963,12 +963,8 @@
 					oDrawing.editExternal(oData["Data"], oData["ImageData"], oData["Width"], oData["Height"], oData["WidthPix"], oData["HeightPix"]);
 					oImagesMap[oData["ImageData"]] = oData["ImageData"];
 				}
-				let oApi = this;
-				let sGuid;
-				if(window.g_asc_plugins)
-				{
-					sGuid = window.g_asc_plugins.setPluginMethodReturnAsync();
-				}
+
+				window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
 				AscCommon.Check_LoadingDataBeforePrepaste(this, {}, oImagesMap, function() {
 					oLogicDocument.Reassign_ImageUrls(oImagesMap);
 					oLogicDocument.Recalculate();
@@ -976,10 +972,8 @@
 					oLogicDocument.LoadDocumentState(oStartState);
 					oLogicDocument.UpdateSelection();
 					oLogicDocument.FinalizeAction();
-					if(window.g_asc_plugins)
-					{
-						window.g_asc_plugins.onPluginMethodReturn(sGuid);
-					}
+
+					window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn();
 				});
 			}
 			else

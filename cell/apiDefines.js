@@ -119,7 +119,8 @@ var c_oAscScrollType = {
 
 var c_oAscHyperlinkType = {
   WebLink: 1,
-  RangeLink: 2
+  RangeLink: 2,
+  FileLink: 3
 };
 
 var c_oAscMouseMoveType = {
@@ -581,6 +582,12 @@ var c_oAscPopUpSelectorType = {
   };
 
 
+  var c_oAscRemoveArrowsType = {
+    all: 0,
+    precedent: 1,
+    dependent: 2
+  };
+
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window['AscCommonExcel'].c_oAscDrawDepOptions = c_oAscDrawDepOptions;
@@ -681,6 +688,7 @@ var c_oAscPopUpSelectorType = {
   prot = c_oAscHyperlinkType;
   prot['WebLink'] = prot.WebLink;
   prot['RangeLink'] = prot.RangeLink;
+  prot['FileLink'] = prot.FileLink;
   window['Asc']['c_oAscMouseMoveType'] = window['Asc'].c_oAscMouseMoveType = c_oAscMouseMoveType;
   prot = c_oAscMouseMoveType;
   prot['None'] = prot.None;
@@ -983,6 +991,11 @@ var c_oAscPopUpSelectorType = {
   prot['all'] = prot.all;
   prot['insertRemove'] = prot.insertRemove;
   prot['reset'] = prot.reset;
+  window['Asc']['c_oAscRemoveArrowsType'] = window['Asc'].c_oAscRemoveArrowsType = c_oAscRemoveArrowsType;
+  prot = c_oAscRemoveArrowsType;
+  prot['all'] = prot.all;
+  prot['precedent'] = prot.precedent;
+  prot['dependent'] = prot.dependent;
 
 
 })(window);

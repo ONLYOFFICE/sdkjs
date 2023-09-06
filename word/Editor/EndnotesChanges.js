@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 09.04.2020
- * Time: 14:19
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_Endnotes_AddEndnote]    = CChangesEndnotesAddEndnote;
 AscDFH.changesFactory[AscDFH.historyitem_Endnotes_RemoveEndnote] = CChangesEndnotesRemoveEndnote;

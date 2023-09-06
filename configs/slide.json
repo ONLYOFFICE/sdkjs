@@ -114,6 +114,9 @@
 			"common/Drawings/DrawingObjectsHandlers.js",
 			"common/Drawings/TextDrawer.js",
 
+			"common/PromiseIterators.js",
+			"common/ExternalDataLoader.js",
+
 			"common/Drawings/Externals.js",
 			"common/GlobalLoaders.js",
 			"common/Controls.js",
@@ -221,6 +224,7 @@
 			"word/Editor/Paragraph/DisplayStyleCalculator.js",
 			"word/Editor/Paragraph/ParaRevisionMove.js",
 			"word/Editor/Paragraph/GraphemesCounter.js",
+			"word/Editor/Paragraph/TextHyphenator.js",
 			"word/Editor/Paragraph/TextShaper.js",
 			"word/Editor/Hyperlink.js",
 			"word/Editor/HyperlinkChanges.js",

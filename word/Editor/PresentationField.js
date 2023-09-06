@@ -60,6 +60,7 @@
 
     var oDateTimeFormats = {};
     oDateTimeFormats["datetime1"] = "MM/DD/YYYY";
+    oDateTimeFormats["datetimeFigureOut"] = oDateTimeFormats["datetime1"];
     oDateTimeFormats["datetime2"] = "dddd\\,\\ mmmm\\ dd\\,\\ yyyy";
     oDateTimeFormats["datetime3"] = "DD\\ MMMM\\ YYYY";
     oDateTimeFormats["datetime4"] = "MMMM\\ DD\\,\\ YYYY";
@@ -295,6 +296,7 @@
                 //match field type to index in Asc.c_oAscDateTimeFormat[nLang]
                 switch (sResultFiledType)
                 {
+                    case "datetimeFigureOut": nIdx = 0; break;//"MM/DD/YYYY";
                     case "datetime1": nIdx = 0; break;//"MM/DD/YYYY";
                     case "datetime2": nIdx = 1; break;//"dddd\\,\\ mmmm\\ dd\\,\\ yyyy";
                     case "datetime3": nIdx = 8; break;//"DD\\ MMMM\\ YYYY";

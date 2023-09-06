@@ -216,6 +216,11 @@
 			this.isLock = oRule.isLock;
 		}
 	};
+	CConditionalFormattingRule.prototype.recalcInterfaceFormula = function (ws, toInterface) {
+		for (var i = 0; i < this.aRuleElements.length; i++) {
+			this.aRuleElements[i].recalcFormula(ws, toInterface);
+		}
+	};
 	CConditionalFormattingRule.prototype.Write_ToBinary2 = function (writer) {
 		//for wrapper
 		//writer.WriteLong(this.getObjectType());
@@ -2090,6 +2095,12 @@
 			}
 		}
 	};
+	CFormulaCF.prototype.recalcFormula = function (ws, toInterface) {
+		var f = new AscCommonExcel.parserFormula(this.Text, null, ws);
+		if (f.parse(!toInterface)) {
+			this.Text = toInterface ? f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true) : f.assemble();
+		}
+	};
 	CFormulaCF.prototype.getFormula = function (ws, opt_parent) {
 		this.init(ws, opt_parent);
 		return this._f;
@@ -2813,10 +2824,10 @@
 	}
 
 	function correctFromInterface(val) {
-		var _isNumeric = isNumeric(val);
+		let _isNumeric = isNumeric(val);
 		if (!_isNumeric) {
-			var isDate;
-			var isFormula;
+			let isDate;
+			let isFormula;
 
 			if (val[0] === "=") {
 				val = val.slice(1);
@@ -2834,13 +2845,13 @@
 			if (!isFormula) {
 				val = addQuotes(val);
 			} else {
-				var oWB = Asc.editor && Asc.editor.wbModel;
+				let oWB = Asc.editor && Asc.editor.wbModel;
 				if(oWB) {
-					var ws = oWB.getActiveWs();
+					let ws = oWB.getActiveWs();
 					if (ws) {
-						var _f = new AscCommonExcel.parserFormula(val, null, ws);
+						let _f = new AscCommonExcel.parserFormula(val, null, ws);
 						_f.parse(true, true);
-						val = _f.assemble();
+						val = _f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
 					}
 				}
 			}

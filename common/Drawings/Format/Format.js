@@ -4022,24 +4022,97 @@
 			return oCopy;
 		};
 
+		const RECT_ALIGN_B = 0;
+		const RECT_ALIGN_BL = 1;
+		const RECT_ALIGN_BR = 2;
+		const RECT_ALIGN_CTR = 3;
+		const RECT_ALIGN_L = 4;
+		const RECT_ALIGN_R = 5;
+		const RECT_ALIGN_T = 6;
+		const RECT_ALIGN_TL = 7;
+		const RECT_ALIGN_TR = 8;
 		function asc_CShadowProperty() {
 			COuterShdw.call(this);
+			this.setDefault();
+		}
+
+		InitClass(asc_CShadowProperty, COuterShdw, 0);
+		asc_CShadowProperty.prototype.setDefault = function() {
 			this.algn = 7;
 			this.blurRad = 50800;
 			this.color = new CUniColor();
 			this.color.color = new CPrstColor();
 			this.color.color.id = "black";
-			this.color.Mods = new CColorModifiers();
-			var oMod = new CColorMod();
-			oMod.name = "alpha";
-			oMod.val = 40000;
-			this.color.Mods.Mods.push(oMod);
+			this.putTransparency(60);
 			this.dir = 2700000;
 			this.dist = 38100;
 			this.rotWithShape = false;
-		}
-
-		InitClass(asc_CShadowProperty, COuterShdw, 0);
+		};
+		asc_CShadowProperty.prototype.putPreset = function (sAlgn) {
+			this.setDefault();
+			switch (sAlgn) {
+				case "l": {
+					this.algn = RECT_ALIGN_L;
+					this.dir = null;
+					break;
+				}
+				case "t": {
+					this.algn = RECT_ALIGN_T;
+					this.dir = 5400000;
+					break;
+				}
+				case "r": {
+					this.algn = RECT_ALIGN_R;
+					this.dir = 10800000;
+					break;
+				}
+				case "b": {
+					this.algn = null;
+					this.dir = 16200000;
+					break;
+				}
+				case "tl": {
+					this.algn = RECT_ALIGN_TL;
+					this.dir = 2700000;
+					break;
+				}
+				case "tr": {
+					this.algn = RECT_ALIGN_TR;
+					this.dir = 8100000;
+					break;
+				}
+				case "bl": {
+					this.algn = RECT_ALIGN_BL;
+					this.dir = 18900000;
+					break;
+				}
+				case "br": {
+					this.algn = RECT_ALIGN_BR;
+					this.dir = 13500000;
+					break;
+				}
+				case "ctr": {
+					this.algn = RECT_ALIGN_CTR;
+					this.dir = null;
+					this.sx = 102000;
+					this.sy = 102000;
+					this.dist = null;
+					break;
+				}
+			}
+		};
+		asc_CShadowProperty.prototype.getPreset = function() {
+			const aPresets = ["l", "t", "r", "b", "tl", "tr", "bl", "br", "ctr"];
+			for(let nPrst = 0; nPrst < aPresets.length; ++nPrst) {
+				let oShd = new asc_CShadowProperty();
+				let sPrst = aPresets[nPrst];
+				oShd.changePreset(sPrst);
+				if(this.IsIdentical(oShd)) {
+					return sPrst;
+				}
+			}
+			return null;
+		};
 		asc_CShadowProperty.prototype.write = function (_type, _stream) {
 			_stream["WriteByte"](_type);
 
@@ -4118,12 +4191,84 @@
 			}
 			return this;
 		};
-
 		asc_CShadowProperty.prototype.createDuplicate = function () {
 			var oCopy = new asc_CShadowProperty();
 			this.fillObject(oCopy);
 			return oCopy;
 		};
+		asc_CShadowProperty.prototype.getTransparency = function() {
+			if(!this.color) {
+				return 0;
+			}
+			let nAlphaVal = this.color.getModValue("alpha");
+			if(nAlphaVal === null) {
+				return 0;
+			}
+			return (100000 - nAlphaVal) / 1000;
+		};
+		asc_CShadowProperty.prototype.putTransparency = function(nVal) {
+			if(!this.color) {
+				return;
+			}
+			this.color.Mods = new CColorModifiers();
+			const oMod = new CColorMod();
+			oMod.name = "alpha";
+			oMod.val = (100 - nVal) * 1000 + 0.5 >> 0;
+			this.color.Mods.Mods.push(oMod);
+		};
+		asc_CShadowProperty.prototype.getSize = function() {
+			let nSX = this.sx !== null ? this.sx : 100000;
+			let nSY = this.sy !== null ? this.sy : 100000;
+			return Math.max(nSX, nSY) / 1000;
+		};
+		asc_CShadowProperty.prototype.putSize = function(nVal) {
+			this.sx = nVal * 1000 + 0.5 >> 0;
+			this.sy = this.sx;
+		};
+
+		asc_CShadowProperty.prototype.getAngle = function() {
+			let nAngle = this.dir || 0;
+			return nAngle / 60000;
+		};
+		asc_CShadowProperty.prototype.putAngle = function(nVal) {
+			this.dir = nVal * 60000 + 0.5 >> 0;
+		};
+		asc_CShadowProperty.prototype.getDistance = function() {
+			let nDist = this.dist || 0;
+			return nDist / 36000;
+		};
+		asc_CShadowProperty.prototype.putDistance = function(nVal) {
+			this.dist = nVal * 36000 + 0.5 >> 0;
+		};
+		asc_CShadowProperty.prototype.getColor = function() {
+			return AscFormat.CreateAscColor(this.color);
+		};
+		asc_CShadowProperty.prototype.putColor = function(oAscColor) {
+			let nTransparency = this.getTransparency();
+			let nFlag;
+			if(Asc.editor.editorId === AscCommon.c_oEditorId.Word) {
+				nFlag = 1;
+			}
+			else {
+				nFlag = 0;
+			}
+			this.color = AscFormat.CorrectUniColor(oAscColor, this.color, nFlag);
+			this.putTransparency(nTransparency);
+		};
+
+
+		asc_CShadowProperty.prototype["getTransparency"] = asc_CShadowProperty.prototype.getTransparency;
+		asc_CShadowProperty.prototype["putTransparency"] = asc_CShadowProperty.prototype.putTransparency;
+		asc_CShadowProperty.prototype["getSize"] = asc_CShadowProperty.prototype.getSize;
+		asc_CShadowProperty.prototype["putSize"] = asc_CShadowProperty.prototype.putSize;
+		asc_CShadowProperty.prototype["getAngle"] = asc_CShadowProperty.prototype.getAngle;
+		asc_CShadowProperty.prototype["putAngle"] = asc_CShadowProperty.prototype.putAngle;
+		asc_CShadowProperty.prototype["getDistance"] = asc_CShadowProperty.prototype.getDistance;
+		asc_CShadowProperty.prototype["putDistance"] = asc_CShadowProperty.prototype.putDistance;
+		asc_CShadowProperty.prototype["getColor"] = asc_CShadowProperty.prototype.getColor;
+		asc_CShadowProperty.prototype["putColor"] = asc_CShadowProperty.prototype.putColor;
+		asc_CShadowProperty.prototype["putPreset"] = asc_CShadowProperty.prototype.putPreset;
+		asc_CShadowProperty.prototype["getPreset"] = asc_CShadowProperty.prototype.getPreset;
 
 
 		window['Asc'] = window['Asc'] || {};
@@ -7230,6 +7375,9 @@
 				this.chExtY === xfrm.chExtY;
 		};
 		CXfrm.prototype.merge = function (xfrm) {
+			if(!xfrm) {
+				return;
+			}
 			if (xfrm.offX != null) {
 				this.offX = xfrm.offX;
 			}
