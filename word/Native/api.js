@@ -4485,8 +4485,42 @@ Asc["asc_docs_api"].prototype["asc_nativeSetColumnsSettings"] = function(sId) {
             right = total - def_space - left;
         props.put_ColByValue(0, (cols == 3) ? left : right, def_space);
         props.put_ColByValue(1, (cols == 3) ? right : left, 0);
+        props.colbyva
     }
     _api.asc_SetColumnsProps(props);
+    
+}
+
+/**
+ * one - 0
+ * two - 1
+ * three - 2
+ * left - 3
+ * right - 4 
+ * @returns (-1, 0, 1, 2, 3, 4)
+ */
+Asc["asc_docs_api"].prototype["asc_getNativeSetColumnsSettings"] = function() {
+    var props = _api.asc_GetColumnsProps();
+    var equal = props.get_EqualWidth(),
+        num = (equal) ? props.get_Num() : props.get_ColsCount(),
+        def_space = 12.5,
+        index = -1;
+    if (equal && num<4 && (num==1 ||  Math.abs(props.get_Space() - def_space)<0.1))
+        index = (num-1);
+    else if (!equal && num==2) {
+        var left = props.get_Col(0).get_W(),
+            space = props.get_Col(0).get_Space(),
+            right = props.get_Col(1).get_W(),
+            total = props.get_TotalWidth();
+        if (Math.abs(space - def_space)<0.1) {
+            var width = (total - space*2)/3;
+            if ( left<right && Math.abs(left - width)<0.1 )
+                index = 3;
+            else if (left>right && Math.abs(right - width)<0.1)
+                index = 4;
+        }
+    }
+    return index;
 }
 
 Asc["asc_docs_api"].prototype["asc_nativeAddText"] = function(text, wrapWithSpaces) {
