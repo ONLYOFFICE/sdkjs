@@ -2263,9 +2263,9 @@ function (window, undefined) {
 					sortOrder = args[i+1];
 
 				by_array1 = i === 1 ? by_array : by_array1;
-
+				// TODO can be array with single item and can be just single item
 				if (sortOrder.type === cElementType.array || sortOrder.type === cElementType.cellsRange || sortOrder.type === cElementType.cellsRange3D) {
-					// if single element in array, fill array with it element?
+					// if single element in array, fill array with it element
 					let resDimensoins = sortOrder.getDimensions();
 					if (resRow < resDimensoins.row) {
 						resRow = resDimensoins.row;
@@ -2274,72 +2274,78 @@ function (window, undefined) {
 						resCol = resDimensoins.col;
 					}
 				} else {
-					// create array with single element
-					let tempArr = new cArray();
-					tempArr.addElement(sortOrder);
-					sortOrder = tempArr;
+					// create array with single element and fill it
+					let resArr = new cArray();
+					for (let i = 0; i < by_array1.getDimensions().row; i++) {
+						resArr.addRow();
+						for (let k = 0; k < by_array1.getDimensions().col; k++) {
+							resArr.addElement(sortOrder);
+						}
+					}
+					sortOrder = resArr;
 				}
-				
 				sortOrderArr.push(sortOrder);
 			}
-
 			// fill resArr, go through sortOrderArr
 			for (let i = 0; i < resRow; i++) {
 				resArr.addRow();
 				for (let j = 0; j < resCol; j++) {
-					let elem;
+					let overallSortOrder;
 					for (let k = 0; k < sortOrderArr.length; k++) {
-						elem = sortOrderArr[k].getElementRowCol ? sortOrderArr[k].getElementRowCol(i, j) : sortOrderArr[k].getValueByRowCol(i, j);
+						overallSortOrder = sortOrderArr[k].getElementRowCol ? sortOrderArr[k].getElementRowCol(i, j) : sortOrderArr[k].getValueByRowCol(i, j);
 						// check element
-						if (!elem) {
-							elem = new cError(cErrorType.not_available);
-						} else if (elem.type !== cElementType.number) {
-							elem = elem.tocNumber();
+						if (!overallSortOrder) {
+							overallSortOrder = new cError(cErrorType.not_available);
+						} else if (overallSortOrder.type !== cElementType.number) {
+							overallSortOrder = overallSortOrder.tocNumber();
 						}
 						// if any error break the cycle
-						if (elem.type === cElementType.error) {
+						if (overallSortOrder.type === cElementType.error) {
 							break;
 						}
-						if (elem.type === cElementType.number) {
+						if (overallSortOrder.type === cElementType.number) {
 							// matching number check
-							let value = Math.floor(elem.getValue());
+							let value = Math.floor(overallSortOrder.getValue());
 							if (value !== -1 && value !== 1) {
-								elem = new cError(cErrorType.wrong_value_type);
+								overallSortOrder = new cError(cErrorType.wrong_value_type);
 							} else {
-								elem = new cNumber(value);
+								overallSortOrder = new cNumber(value);
 							}
 						}
-						sort_order1 = k === 0 ? elem : sort_order1;
 
+						sort_order1 = k === 0 ? overallSortOrder : sort_order1;
 						// if any error break the cycle
 						if (sort_order1.type === cElementType.error) {
 							break;
 						}
 					}
-
-					// if elem is "truthy", do sort and get first element from sorted array
-					if (elem.type !== cElementType.error) {
+					// if elem is correct, do sort and get first element from sorted array
+					if (overallSortOrder.type !== cElementType.error) {
+						let byArrDimensions = by_array1.getDimensions();
+						isByCol = byArrDimensions.row === 1 ? true : false;
 						if (isFirstElemReceived) {
-							elem = new cNumber(0);
-							resArr.addElement(elem);
-						} 
+							if (isByCol) {
+								overallSortOrder = new cNumber(0);
+								resArr.addElement(overallSortOrder);
+							} else {
+								overallSortOrder = new cError(cErrorType.wrong_value_type);
+								resArr.addElement(overallSortOrder);
+							}
+						}
 						// TODO need more research: 
 						// ?If single col and many rows -> return only first correct element and errors
 						// ?If single row and many cols -> return not only the first correct element, but also subsequent
-
 						// else if (isFirstElemReceived && args.length > 3) {
 						// 	elem = new cError(cErrorType.wrong_value_type);
 						// 	resArr.addElement(elem);
 						// }
 						else {
-							let firstElem, byArrDimensions = by_array1.getDimensions();
-							isByCol = byArrDimensions.row === 1 ? true : false;
-							firstElem = sortArray(arr, by_array1, sort_order1.getValue(), isByCol).getFirstElement();
+							let firstElem = sortArray(arr, by_array1, sort_order1.getValue(), isByCol).getFirstElement();
 							resArr.addElement(firstElem);
 							isFirstElemReceived = true;
 						}
 					} else {
-						resArr.addElement(elem);
+						resArr.addElement(overallSortOrder);
 					}
 				}
 			}
