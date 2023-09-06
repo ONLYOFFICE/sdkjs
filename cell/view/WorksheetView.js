@@ -21558,11 +21558,11 @@
 				pageMargins.asc_setBottom(oMargins.asc_getBottom());
 			}
 
-			if (hCentered != null) {
-				pageOptions.asc_setHorizontalCentered(hCentered);
+			if (bHorCentered != null) {
+				pageOptions.asc_setHorizontalCentered(bHorCentered);
 			}
-			if (vCentered != null) {
-				pageOptions.asc_setVerticalCentered(vCentered);
+			if (bVerCentered != null) {
+				pageOptions.asc_setVerticalCentered(bVerCentered);
 			}
 
 			History.EndTransaction();
