@@ -3945,9 +3945,9 @@
                 oParagraph.MoveCursorToStartPos();
                 oParagraph.Set_Align(nAlign);
 
-				let legacyDrawingId = AscCommonExcel.CHeaderFooterEditorSection.prototype.getStringName(index, headerFooterData.type);
-				let oDrawing = t.model.legacyDrawingHF && t.model.legacyDrawingHF.getDrawingById(legacyDrawingId);
-				let oImage = oDrawing && oDrawing.obj && oDrawing.obj.graphicObject;
+                let legacyDrawingId = AscCommonExcel.CHeaderFooterEditorSection.prototype.getStringName(index, headerFooterData.type);
+                let oDrawing = t.model.legacyDrawingHF && t.model.legacyDrawingHF.getDrawingById(legacyDrawingId);
+                let oImage = oDrawing && oDrawing.obj && oDrawing.obj.graphicObject;
 
                 for(let nFragment = 0; nFragment < aFragments.length; ++nFragment) {
                     let oFragment = aFragments[nFragment];
