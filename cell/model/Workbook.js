@@ -19323,7 +19323,6 @@
 		this.aTimePeriods = aTimePeriods;
 		this.oSequence = null;
 		this.nCurValue = null;
-
 	}
 	cDataRow.prototype.getCol = function() {
 		return this.nCol;
@@ -19392,7 +19391,7 @@
 	function CSerial (settings, range) {
 		this.bVertical = settings.seriesIn === 'Columns';
 		this.sType = settings.type;
-		this.sDateUnit = settings.date;
+		this.sDateUnit = settings.dateUnit;
 		this.sStep = settings.step;
 		this.sStopValue = settings.stopValue;
 		this.bTrend = settings.trend;
@@ -19490,7 +19489,7 @@
 				let oDirectCondition = {
 					true: nRow === nRowStart,
 					false: nCol === nColStart
-				}
+				};
 				if (oDirectCondition[bVertical] && nType === CellValueType.Number) {
 					oCSerial.initToRange();
 					let oToRange = oCSerial.getToRange();
@@ -19507,62 +19506,78 @@
 		return aFilledCells;
 	};
 	CSerial.prototype.initHistoryPoint = function() {
-		let oFromRange = this.getFromRange();
 		let nIndex = this.getIndex();
-		let bVertical = this.getVertical();
-		let oBBox = oFromRange.bbox;
+		let oBBox = this.getFromRange().bbox;
 		let nWidth = oBBox.c2 - oBBox.c1 + 1;
 		let nHeight = oBBox.r2 - oBBox.r1 + 1;
 
 		History.Create_NewPoint();
 		let oSelection = History.GetSelection();
-		if(null != oSelection)
-		{
+		if (null != oSelection) {
 			oSelection = oSelection.clone();
 			oSelection.assign(oBBox.c1, oBBox.r1, oBBox.c2, oBBox.r2);
 			History.SetSelection(oSelection);
 		}
 		let oSelectionRedo = History.GetSelectionRedo();
-		if(null != oSelectionRedo)
-		{
+		if (null != oSelectionRedo) {
 			oSelectionRedo = oSelectionRedo.clone();
-			if(0 === nIndex)
-				oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c2, oBBox.r2);
-			else
-			{
-				if(bVertical)
-				{
-					if(nIndex > 0)
-					{
-						if(nIndex >= nHeight)
-							oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c2, oBBox.r1 + nIndex);
-						else
-							oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c2, oBBox.r1 + nIndex - 1);
-					}
-					else
-						oSelectionRedo.assign(oBBox.c1, oBBox.r1 + nIndex, oBBox.c2, oBBox.r2);
+			if (this.getVertical()) {
+				if (nIndex >= nHeight) {
+					oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c2, oBBox.r1 + nIndex);
+				} else {
+					oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c2, oBBox.r1 + nIndex - 1);
 				}
-				else
-				{
-					if(nIndex > 0)
-					{
-						if(nIndex >= nWidth)
-							oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c1 + nIndex, oBBox.r2);
-						else
-							oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c1 + nIndex - 1, oBBox.r2);
-					}
-					else
-						oSelectionRedo.assign(oBBox.c1 + nIndex, oBBox.r1, oBBox.c2, oBBox.r2);
+			} else {
+				if (nIndex >= nWidth) {
+					oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c1 + nIndex, oBBox.r2);
+				} else {
+					oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c1 + nIndex - 1, oBBox.r2);
 				}
 			}
 			History.SetSelectionRedo(oSelectionRedo);
 		}
-	}
+	};
+	/**
+	 * Fill current value for Date type
+	 * @param {number} nPrevVal Previous cell value
+	 * @param {number} nStep Step value
+	 * @param {string} sDateUnit Date unit
+	 * @returns {number} Current value in ExcelDate format
+	 */
+	function _fillExcelDate(nPrevVal, nStep, sDateUnit) {
+		// Convert number to cDate object
+		let oPrevValDate = new cDate().getDateFromExcel(nPrevVal);
+
+		switch (sDateUnit) {
+			case 'Day':
+				oPrevValDate.addDays(nStep);
+				break;
+			case 'Weekday':
+				let aWeekdays = [1, 2, 3, 4, 5];
+                oPrevValDate.addDays(nStep);
+				while (true) {
+					if (aWeekdays.includes(oPrevValDate.getDay())) {
+						break;
+					} else {
+                        oPrevValDate.addDays(1);
+                    }
+				}
+				break;
+			case 'Month':
+				oPrevValDate.addMonths(nStep);
+				break;
+			case 'Year':
+				oPrevValDate.addYears(nStep);
+				break;
+		}
+
+		return oPrevValDate.getExcelDate();
+	};
 	CSerial.prototype.promoteCells = function(aFilledCells) {
 		History.StartTransaction();
+		let oCSerial = this;
 		let nStep = this.getTrend() ? 1 : Number(this.getStep());
 		let nStopValue = this.getStopValue() ? Number(this.getStopValue()) : null;
-		let sType = this.getType();
 
 		for (let i = 0, length = aFilledCells.length; i < length; i++) {
 			let oFilledCell = aFilledCells[i];
@@ -19583,14 +19598,15 @@
 				let nCol = this.getVertical() ? i : j;
 				let bStopLoop = false;
 				let oProgression = {
-					'Linear': nPrevValue + nStep,
-					'Growth': nPrevValue * nStep
+					'Linear': function() { return nPrevValue + nStep; },
+					'Growth': function() { return nPrevValue * nStep; },
+					'Date': function() { return _fillExcelDate(nPrevValue, nStep, oCSerial.getDateUnit()); }
 				};
 
 				oWsTo._getCell(nRow, nCol, function(oCopyCell) {
 					if (nPrevValue) {
 						let oCellValue = new AscCommonExcel.CCellValue();
-						let nCurrentValue = oProgression[sType];
+						let nCurrentValue = oProgression[oCSerial.getType()]();
 						if (nStopValue && nCurrentValue > nStopValue) {
 							bStopLoop = true;
 							return;
@@ -19605,9 +19621,7 @@
 						}
 					}
 				});
-				if (bStopLoop) {
-					break;
-				}
+				if (bStopLoop) break;
 			}
 		}
 		History.EndTransaction();

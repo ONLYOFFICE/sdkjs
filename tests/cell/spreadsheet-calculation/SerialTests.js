@@ -129,7 +129,7 @@ $(function () {
     // Initialize global variables and functions for tests
     let ws = api.wbModel.aWorksheets[0];
     const CSerial = window['AscCommonExcel'].CSerial;
-    let settings, cSerial, autofillRange, oFromRange;
+    let settings, cSerial, autofillRange, oFromRange, expectedData;
     const getRange = function(c1, r1, c2, r2) {
         return new window["Asc"].Range(c1, r1, c2, r2);
     };
@@ -144,15 +144,6 @@ $(function () {
                 let fromRangeToVal = ws.getCell3(i, j);
                 let dataVal = expectedData[i - fromRangeTo.r1][j - fromRangeTo.c1];
                 assert.strictEqual(fromRangeToVal.getValue(), dataVal, `${description} Cell: ${fromRangeToVal.getName()}, Value: ${dataVal}`);
-            }
-        }
-    };
-    const reverseAutofillData = function(assert, rangeTo, expectedData, description) {
-        for (let i = rangeTo.r1; i >= rangeTo.r2; i--) {
-            for (let j = rangeTo.c1; j >= rangeTo.c2; j--) {
-                let rangeToVal = ws.getCell3(i, j);
-                let dataVal = expectedData[Math.abs(i - rangeTo.r1)][Math.abs(j - rangeTo.c1)];
-                assert.strictEqual(rangeToVal.getValue(), dataVal, `${description} Cell: ${rangeToVal.getName()}, Value: ${dataVal}`);
             }
         }
     };
@@ -175,7 +166,7 @@ $(function () {
         oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
         settings = {
             'step': '2',
-            'seriesIn': 'Row',
+            'seriesIn': 'Rows',
             'type': 'Linear',
             'stopValue': '',
             'trend': false
@@ -243,7 +234,7 @@ $(function () {
         oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
         settings = {
             'step': '2',
-            'seriesIn': 'Row',
+            'seriesIn': 'Rows',
             'type': 'Growth',
             'stopValue': '',
             'trend': false
@@ -310,7 +301,7 @@ $(function () {
         oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
         settings = {
             'step': '',
-            'seriesIn': 'Row',
+            'seriesIn': 'Rows',
             'type': 'AutoFill',
             'stopValue': '',
             'trend': false
@@ -342,7 +333,7 @@ $(function () {
         oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
         settings = {
             'step': '1',
-            'seriesIn': 'Row',
+            'seriesIn': 'Rows',
             'type': 'Linear',
             'stopValue': '',
             'trend': false
@@ -424,7 +415,7 @@ $(function () {
         cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
         autofillRange = getRange(1, 0, 5, 5);
-        let expectedData = [
+        expectedData = [
             ['2', '3', '4', '5', '6'],
             ['3', '4', '5', '6', '7'],
             ['4', '5', '6', '7', '8'],
@@ -543,7 +534,7 @@ $(function () {
         cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
         autofillRange = getRange(0, 1, 5, 5);
-        let expectedData = [
+        expectedData = [
             ['2', '3', '4', '5', '6', '7'],
             ['3', '4', '5', '6', '7', '8'],
             ['4', '5', '6', '7', '8', '9'],
@@ -638,5 +629,267 @@ $(function () {
         ];
         autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth progression with trend');
         clearData(0, 0, 5, 5);
+    });
+    QUnit.test('Autofill Date type - one filled row/column', function (assert) {
+        const testData = [
+            ['09/04/2023']
+        ];
+        // Horizontal dateUnit - Day
+        oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
+        settings = {
+            'step': '1',
+            'seriesIn': 'Rows',
+            'type': 'Date',
+            'dateUnit': 'Day',
+            'stopValue': '',
+            'trend': false
+        };
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 0);
+        autofillData(assert, autofillRange, [['45174', '45175', '45176', '45177', '45178']], 'Autofill Row. Date progression - Day');
+        clearData(0, 0, 5, 0);
+        // Horizontal dateUnit - Weekday
+        oFromRange = getFilledData(0, 0, 7, 0, testData, [0, 0]);
+        settings.dateUnit = 'Weekday';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 7, 0);
+        autofillData(assert, autofillRange, [['45174', '45175', '45176', '45177', '45180', '45181', '45182']], 'Autofill Row. Date progression - Weekday');
+        clearData(0, 0, 7, 0);
+        // Horizontal dateUnit - Month, Step - 2
+        oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
+        settings.dateUnit = 'Month';
+        settings.step = '2';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 0);
+        autofillData(assert, autofillRange, [['45234', '45295', '45355', '45416', '45477']], 'Autofill Row. Date progression - Month, Step - 2');
+        clearData(0, 0, 5, 0);
+        // Horizontal dateUnit - Year, Step - 1
+        oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
+        settings.dateUnit = 'Year';
+        settings.step = '1';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 0);
+        autofillData(assert, autofillRange, [['45539', '45904', '46269', '46634', '47000']], 'Autofill Row. Date progression - Year, Step - 1');
+        clearData(0, 0, 5, 0);
+        // Vertical dateUnit - Day
+        oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
+        settings.dateUnit = 'Day';
+        settings.seriesIn = 'Columns';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 0, 5);
+        autofillData(assert, autofillRange, [['45174'], ['45175'], ['45176'], ['45177'], ['45178']], 'Autofill Column. Date progression - Day');
+        clearData(0, 0, 0, 5);
+        // Vertical dateUnit - Weekday
+        oFromRange = getFilledData(0, 0, 0, 7, testData, [0, 0]);
+        settings.dateUnit = 'Weekday';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 0, 7);
+        autofillData(assert, autofillRange, [['45174'], ['45175'], ['45176'], ['45177'], ['45180'], ['45181'], ['45182']], 'Autofill Column. Date progression - Weekday');
+        clearData(0, 0, 0, 7);
+        // Vertical dateUnit - Month, Step - 2
+        oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
+        settings.dateUnit = 'Month';
+        settings.step = '2';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 0, 5);
+        autofillData(assert, autofillRange, [['45234'], ['45295'], ['45355'], ['45416'], ['45477']], 'Autofill Column. Date progression - Month, Step - 2');
+        clearData(0, 0, 0, 5);
+        // Vertical dateUnit - Year, Step - 1
+        oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
+        settings.dateUnit = 'Year';
+        settings.step = '1';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 0, 5);
+        autofillData(assert, autofillRange, [['45539'], ['45904'], ['46269'], ['46634'], ['47000']], 'Autofill Column. Date progression - Year, Step - 1');
+        clearData(0, 0, 0, 5);
+        // Horizontal dateUnit - Day, Stop value - 45176
+        oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
+        settings.dateUnit = 'Day';
+        settings.stopValue = '45176';
+        settings.seriesIn = 'Rows';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 0);
+        autofillData(assert, autofillRange, [['45174', '45175', '45176', '', '']], 'Autofill Row. Date progression - Day, Stop value - 45176');
+        clearData(0, 0, 5, 0);
+        // Vertical dateUnit - Day, Stop value - 45176
+        oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
+        settings.dateUnit = 'Day';
+        settings.stopValue = '45176';
+        settings.seriesIn = 'Columns';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 0, 5);
+        autofillData(assert, autofillRange, [['45174'], ['45175'], ['45176'], [''], ['']], 'Autofill Column. Date progression - Day, Stop value - 45176');
+    });
+    QUnit.test('Autofill Date type - Horizontal multiple cells', function (assert) {
+        const testData = [
+            ['01/01/2023'],
+            ['09/04/2023'],
+            ['01/12/2023'],
+            ['12/12/2023']
+        ];
+        // DateUnit - Day. Step - 3
+        oFromRange = getFilledData(0, 0, 5, 3, testData, [0, 0]);
+        settings = {
+            'step': '3',
+            'seriesIn': 'Rows',
+            'type': 'Date',
+            'dateUnit': 'Day',
+            'stopValue': '',
+            'trend': false
+        };
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 3);
+        expectedData = [
+           ['44930', '44933', '44936', '44939', '44942', '44945'],
+           ['45176', '45179', '45182', '45185', '45188', '45191'],
+           ['44941', '44944', '44947', '44950', '44953', '44956'],
+           ['45275', '45278', '45281', '45284', '45287', '45290']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Date progression - Day, Step - 3');
+        clearData(0, 0, 5, 3);
+        // DateUnit - Weekday
+        oFromRange = getFilledData(0, 0, 5, 3, testData, [0, 0]);
+        settings.dateUnit = 'Weekday';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 3);
+        expectedData = [
+           ['44930', '44935', '44938', '44942', '44945'],
+           ['45176', '45180', '45183', '45187', '45190'],
+           ['44942', '44945', '44949', '44952', '44956'],
+           ['45275', '45278', '45281', '45285', '45288']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Date progression - Weekday, Step - 3');
+        clearData(0, 0, 5, 3);
+        // DateUnit - Month
+        oFromRange = getFilledData(0, 0, 5, 3, testData, [0, 0]);
+        settings.dateUnit = 'Month';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 3);
+        expectedData = [
+           ['45017', '45108', '45200', '45292', '45383'],
+           ['45264', '45355', '45447', '45539', '45630'],
+           ['45028', '45119', '45211', '45303', '45394'],
+           ['45363', '45455', '45547', '45638', '45728']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Date progression - Month, Step - 3');
+        clearData(0, 0, 5, 3);
+        // DateUnit - Year
+        oFromRange = getFilledData(0, 0, 5, 3, testData, [0, 0]);
+        settings.dateUnit = 'Year';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 3);
+        expectedData = [
+            ['46023', '47119', '48214', '49310', '50406'],
+            ['46269', '47365', '48461', '49556', '50652'],
+            ['46034', '47130', '48225', '49321', '50417'],
+            ['46368', '47464', '48560', '49655', '50751']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Date progression - Year, Step - 3');
+        clearData(0, 0, 5, 3);
+    });
+    QUnit.test('Autofill Date type - Vertical multiple cells', function (assert) {
+       const testData = [
+           ['01/01/2023', '09/04/2023', '01/12/2023', '12/12/2023']
+       ];
+       // DateUnit - Day. Step - 3
+        oFromRange = getFilledData(0, 0, 3, 5, testData, [0, 0]);
+        settings = {
+            'step': '3',
+            'seriesIn': 'Columns',
+            'type': 'Date',
+            'dateUnit': 'Day',
+            'stopValue': '',
+            'trend': false
+        };
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 3, 5);
+        expectedData = [
+            ['44930', '45176', '44941', '45275'],
+            ['44933', '45179', '44944', '45278'],
+            ['44936', '45182', '44947', '45281'],
+            ['44939', '45185', '44950', '45284'],
+            ['44942', '45188', '44953', '45287'],
+            ['44945', '45191', '44956', '45290']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Date progression - Day, Step - 3');
+        clearData(0, 0, 3, 5);
+        // DateUnit - Weekday
+        oFromRange = getFilledData(0, 0, 3, 5, testData, [0, 0]);
+        settings.dateUnit = 'Weekday';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 3, 5);
+        expectedData = [
+            ['44930', '45176', '44942', '45275'],
+            ['44935', '45180', '44945', '45278'],
+            ['44938', '45183', '44949', '45281'],
+            ['44942', '45187', '44952', '45285'],
+            ['44945', '45190', '44956', '45288']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Date progression - Weekday, Step - 3');
+        clearData(0, 0, 3, 5);
+        // DateUnit - Month
+        oFromRange = getFilledData(0, 0, 3, 5, testData, [0, 0]);
+        settings.dateUnit = 'Month';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 3, 5);
+        expectedData = [
+            ['45017', '45264', '45028', '45363'],
+            ['45108', '45355', '45119', '45455'],
+            ['45200', '45447', '45211', '45547'],
+            ['45292', '45539', '45303', '45638'],
+            ['45383', '45630', '45394', '45728']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Date progression - Month, Step - 3');
+        clearData(0, 0, 3, 5);
+        // DateUnit - Year
+        oFromRange = getFilledData(0, 0, 3, 5, testData, [0, 0]);
+        settings.dateUnit = 'Year';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 3, 5);
+        expectedData = [
+            ['46023', '46269', '46034', '46368'],
+            ['47119', '47365', '47130', '47464'],
+            ['48214', '48461', '48225', '48560'],
+            ['49310', '49556', '49321', '49655'],
+            ['50406', '50652', '50417', '50751']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Date progression - Year, Step - 3');
+        clearData(0, 0, 3, 5);
     });
 });
