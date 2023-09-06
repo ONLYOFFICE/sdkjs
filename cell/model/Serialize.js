@@ -4775,14 +4775,14 @@
             //HorizontalCentered
             let bHorizontalCentered = oPrintOptions.asc_getHorizontalCentered();
             if (null != bHorizontalCentered) {
-                this.memory.WriteByte(c_oSer_PrintOptions.Headings);
+                this.memory.WriteByte(c_oSer_PrintOptions.HorizontalCentered);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteBool(bHorizontalCentered);
             }
             //VerticalCentered
             let bVerticalCentered = oPrintOptions.asc_getVerticalCentered();
             if (null != bVerticalCentered) {
-                this.memory.WriteByte(c_oSer_PrintOptions.Headings);
+                this.memory.WriteByte(c_oSer_PrintOptions.VerticalCentered);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteBool(bVerticalCentered);
             }
