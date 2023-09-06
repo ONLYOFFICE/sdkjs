@@ -885,10 +885,10 @@ function (window, undefined) {
 	CHeaderFooterEditorSection.prototype.getPictures = function () {
 		return this.pictures;
 	};
-	CHeaderFooterEditorSection.prototype.getStringName = function () {
-		let sPortionPrefix = this.getStringPortion();
+	CHeaderFooterEditorSection.prototype.getStringName = function (portion, type) {
+		let sPortionPrefix = this.getStringPortion(portion);
 		if (sPortionPrefix) {
-			let sType = this.getStringType();
+			let sType = this.getStringType(type);
 			if (sType) {
 				return sPortionPrefix + sType;
 			}
@@ -896,9 +896,12 @@ function (window, undefined) {
 		return null;
 	};
 
-	CHeaderFooterEditorSection.prototype.getStringPortion = function () {
+	CHeaderFooterEditorSection.prototype.getStringPortion = function (portion) {
 		let sPortion = null;
-		switch (this.portion) {
+		if (portion == null) {
+			portion = this.portion;
+		}
+		switch (portion) {
 			case c_nPortionLeftHeader:
 			case c_nPortionLeftFooter: {
 				sPortion = "L";
@@ -919,10 +922,13 @@ function (window, undefined) {
 		return sPortion;
 	};
 
-	CHeaderFooterEditorSection.prototype.getStringType = function () {
+	CHeaderFooterEditorSection.prototype.getStringType = function (type) {
 		//"LH", "CH", "RH", "LF", "CF", "RF", "LHEVEN",..., "LHFIRST"
 		let sType = null;
-		switch (this.type) {
+		if (type == null) {
+			type = this.type;
+		}
+		switch (type) {
 			case asc.c_oAscPageHFType.oddFooter: {
 				sType = "F";
 				break;

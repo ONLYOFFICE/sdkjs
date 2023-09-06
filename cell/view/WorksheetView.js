@@ -3837,7 +3837,7 @@
 			curHeader.parser.calculateTokens(this, indexPrintPage, countPrintPages);
 
 			//get current tokens -> curHeader.parser -> getTokensByPosition(AscCommomExcel.c_oPortionPosition)
-			this._drawHeaderFooterText(drawingCtx, printPagesData, curHeader.parser, indexPrintPage, countPrintPages, false, opt_headerFooter);
+			this._drawHeaderFooterText(drawingCtx, printPagesData, curHeader, indexPrintPage, countPrintPages, false, opt_headerFooter);
 		}
 
 		//FOOTER
@@ -3857,13 +3857,13 @@
 			}
 			curFooter.parser.calculateTokens(this, indexPrintPage, countPrintPages);
 			//get current tokens -> curHeader.parser -> getTokensByPosition(AscCommomExcel.c_oPortionPosition)
-			this._drawHeaderFooterText(drawingCtx, printPagesData, curFooter.parser, indexPrintPage, countPrintPages, true, opt_headerFooter);
+			this._drawHeaderFooterText(drawingCtx, printPagesData, curFooter, indexPrintPage, countPrintPages, true, opt_headerFooter);
 		}
 	};
 
 
 	/** Рисует текст ячейки */
-	WorksheetView.prototype._drawHeaderFooterText = function (drawingCtx, printPagesData, headerFooterParser, indexPrintPage, countPrintPages, bFooter, opt_headerFooter) {
+	WorksheetView.prototype._drawHeaderFooterText = function (drawingCtx, printPagesData, headerFooterData, indexPrintPage, countPrintPages, bFooter, opt_headerFooter) {
 		const t = this;
 		const _printScale = printPagesData ? printPagesData.scale : this.getPrintScale();
 		const hF = opt_headerFooter ? opt_headerFooter : this.model.headerFooter;
@@ -3871,6 +3871,7 @@
 		scaleWithDoc =  scaleWithDoc === null || scaleWithDoc === true;
 		let printScale = scaleWithDoc ? _printScale : 1;
 
+		const headerFooterParser = headerFooterData && headerFooterData.parser;
 
 		const margins = this.model.PagePrintOptions.asc_getPageMargins();
 		const width = printPagesData.pageWidth;
@@ -3943,10 +3944,11 @@
                 oParagraph.LogicDocument = oMockLogicDoc;
                 oParagraph.MoveCursorToStartPos();
                 oParagraph.Set_Align(nAlign);
-                let oImage;
-                if(t.model.legacyDrawingHF && t.model.legacyDrawingHF.drawings[0]) {
-                    oImage = t.model.legacyDrawingHF.drawings[0].graphicObject;
-                }
+
+				let legacyDrawingId = AscCommonExcel.CHeaderFooterEditorSection.prototype.getStringName(index, headerFooterData.type);
+				let oDrawing = t.model.legacyDrawingHF && t.model.legacyDrawingHF.getDrawingById(legacyDrawingId);
+				let oImage = oDrawing && oDrawing.obj && oDrawing.obj.graphicObject;
+
                 for(let nFragment = 0; nFragment < aFragments.length; ++nFragment) {
                     let oFragment = aFragments[nFragment];
                     let sText = oFragment._calculatedText;
