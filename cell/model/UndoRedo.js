@@ -2291,10 +2291,10 @@ function (window, undefined) {
 				this.min = value;
 				break;
 			case this.Properties.max:
-				this.min = value;
+				this.max = value;
 				break;
 			case this.Properties.man:
-				this.min = value;
+				this.man = value;
 				break;
 			case this.Properties.pt:
 				this.pt = value;
