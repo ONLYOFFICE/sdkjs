@@ -197,9 +197,7 @@
 		if (!oCanvas)
 		{
 			oCanvas = document.createElement('canvas');
-			oCanvas.style.cssText = "padding:0;margin:0;user-select:none;";
-			oCanvas.style.width = nWidth_px + "px";
-			oCanvas.style.height = nHeight_px + "px";
+			oCanvas.style.cssText = "padding:0;margin:0;user-select:none;width:100%;height:100%;";
 			if (nWidth_px > 0 && nHeight_px > 0)
 			{
 				oDivElement.appendChild(oCanvas);
