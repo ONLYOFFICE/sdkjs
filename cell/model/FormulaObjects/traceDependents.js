@@ -296,14 +296,13 @@ function (window, undefined) {
 						let isIntersect;
 						if (isArea && !is3D && !isCurrentCellHeader) {
 							if (defNameRange) {
+								let defBBox = defNameRange.getBBox0();
 								// check clicked cell for entry into dependent areas
 								// if the cell is not included, then the dependency will not be drawn
-								let colShift = defNameRange.bbox.c1 - elem.ref.c1,
-									rowShift = defNameRange.bbox.r1 - elem.ref.r1,
-									tempArea = elem.ref.clone();	// create temp area and check if range contain cell
+								let colShift = defBBox.c1 - elem.ref.c1,
+									rowShift = defBBox.r1 - elem.ref.r1;
 
-								tempArea.setOffset({col: colShift, row: rowShift});
-								isIntersect = tempArea.contains(cellAddress.col, cellAddress.row);
+								isIntersect = elem.ref.contains(cellAddress.col - colShift, cellAddress.row - rowShift);
 							}
 							if (isIntersect) {
 								// decompose all elements into dependencies
