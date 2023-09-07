@@ -283,7 +283,7 @@ function (window, undefined) {
 
 			return {col: table.Ref.c1, row: table.Ref.r1};
 		};
-		const setDefNameIndexes = function (defName, isTable) {
+		const setDefNameIndexes = function (defName, isTable, defNameRange) {
 			let tableHeader = isTable ? getTableHeader(ws.getTableByName(defName)) : false;
 			let isCurrentCellHeader = isTable ? checkIfHeader(tableHeader) : false;
 			for (const i in allDefNamesListeners) {
@@ -291,19 +291,33 @@ function (window, undefined) {
 					for (const listener in allDefNamesListeners[i].listeners) {
 						// TODO возможно стоить добавить все слушатели сразу в curListener
 						let elem = allDefNamesListeners[i].listeners[listener];
-						let isArea = elem.ref ? !elem.ref.isOneCell() : false;
+						let isArea = elem.ref ? true : false;
 						let is3D = elem.ws.Id ? elem.ws.Id !== ws.Id : false;
+						let isIntersect;
 						if (isArea && !is3D && !isCurrentCellHeader) {
-							// decompose all elements into dependencies
-							let areaIndexes = getAllAreaIndexes(elem);
-							if (areaIndexes) {
-								for (let index of areaIndexes) {
-									t._setDependents(cellIndex, index);
-									t._setPrecedents(index, cellIndex);
+							if (defNameRange) {
+								// check clicked cell for entry into dependent areas
+								// if the cell is not included, then the dependency will not be drawn
+								let colShift = defNameRange.bbox.c1 - elem.ref.c1,
+									rowShift = defNameRange.bbox.r1 - elem.ref.r1,
+									tempArea = elem.ref.clone();	// create temp area and check if range contain cell
+
+								tempArea.setOffset({col: colShift, row: rowShift});
+								isIntersect = tempArea.contains(cellAddress.col, cellAddress.row);
+							}
+							if (isIntersect) {
+								// decompose all elements into dependencies
+								let areaIndexes = getAllAreaIndexes(elem);
+								if (areaIndexes) {
+									for (let index of areaIndexes) {
+										t._setDependents(cellIndex, index);
+										t._setPrecedents(index, cellIndex);
+									}
+									continue;
 								}
-								continue;
 							}
 						}
+
 						let parentCellIndex = getParentIndex(elem.parent);
 						if (parentCellIndex === null) {
 							continue;
@@ -350,9 +364,6 @@ function (window, undefined) {
 								setSharedTableIntersection(ws.getTableByName(defName).getRangeWithoutHeaderFooter(), currentCellRange, elem.shared);
 								continue;
 							}
-							t._setDependents(cellIndex, parentCellIndex);
-							t._setPrecedents(parentCellIndex, cellIndex);
-						} else {
 							t._setDependents(cellIndex, parentCellIndex);
 							t._setPrecedents(parentCellIndex, cellIndex);
 						}
@@ -502,8 +513,12 @@ function (window, undefined) {
 						}
 
 						if (isDefName) {
+							let parentInnerElementType = parent.parsedRef.outStack[0] ? parent.parsedRef.outStack[0].type : false, defNameRange;
+							if (parentInnerElementType === cElementType.cellsRange || parentInnerElementType === cElementType.cellsRange3D || parentInnerElementType === cElementType.cell3D) {
+								defNameRange = parent.parsedRef.outStack[0].getRange();
+							}
 							// TODO check external table ref
-							setDefNameIndexes(parent.name, isTable);
+							setDefNameIndexes(parent.name, isTable, defNameRange);
 							continue;
 						} else if (cellListeners[i].is3D) {
 							is3D = true;
