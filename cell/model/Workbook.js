@@ -5251,6 +5251,13 @@
 			}
 		}
 
+		if(wsFrom.colBreaks) {
+			this.colBreaks = wsFrom.colBreaks.clone(this);
+		}
+		if(wsFrom.rowBreaks) {
+			this.rowBreaks = wsFrom.rowBreaks.clone(this);
+		}
+
 		return renameParams;
 	};
 
