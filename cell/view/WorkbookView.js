@@ -576,6 +576,10 @@
 				  }
 			  },
 
+			  "onShowFilterOptionsActiveCell": function () {
+				  return self.getWorksheet().showAutoFilterOptionsFromActiveCell();
+			  },
+
 			  // FormatPainter
 			  'isFormatPainter': function () {
 				  return self.Api.getFormatPainterState();

@@ -13370,8 +13370,9 @@
 						expansionTableRange = range.bbox;
                         break;
                     case "totalRowFunc":
-                        var _table = t.model.autoFilters.getTableByActiveCell();
-                        if (_table) {
+                        const _tableInfo = t.model.autoFilters.getTableByActiveCell();
+                        if (_tableInfo) {
+                            const _table = _tableInfo.table;
                             var _tF = t.model.autoFilters._changeTotalsRowData(_table, range.bbox, {totalFunction: val});
                             if (_tF) {
                                 range.setValue(_tF[0]);
@@ -16169,7 +16170,8 @@
 			breakRange = new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0);
 		} else {
 			//проверяем, попала ли активная ячейка в ф/т с примененным а/ф и в зависимости от этого составляем список скрытых внутри строк
-			var table = this.model.autoFilters.getTableByActiveCell();
+			const tableInfo = this.model.autoFilters.getTableByActiveCell();
+			const table = tableInfo && tableInfo.table;
 			if (table && table.isApplyAutoFilter()) {
 				breakRange = table.Ref;
 			}
@@ -20262,6 +20264,49 @@
 		}
 
 		return result;
+	};
+	WorksheetView.prototype.showAutoFilterOptionsFromActiveCell = function () {
+		const oWorksheet = this.model;
+		const oActiveCell = this.model.getSelection().activeCell;
+		const oIdFilter = {colId: 0, id: null};
+		const oFilter = oWorksheet.AutoFilter;
+		if (oFilter) {
+			const mergedCell = oWorksheet.getMergedByCell(oActiveCell.row, oActiveCell.col);
+			if (mergedCell) {
+				if (oFilter.Ref.containsCol(mergedCell.c1) && (oFilter.Ref.r1 === mergedCell.r1)) {
+					oIdFilter.colId = mergedCell.c1 - oFilter.Ref.c1;
+					this.af_setDialogProp(oIdFilter);
+					return true;
+				}
+			} else if (oFilter.Ref.containsCol(oActiveCell.col) && (oFilter.Ref.r1 === oActiveCell.row)) {
+				oIdFilter.colId = oActiveCell.col - oFilter.Ref.c1;
+				this.af_setDialogProp(oIdFilter);
+				return true;
+			}
+		}
+
+		const oFilters = oWorksheet.autoFilters;
+		const oTableInfo = oFilters && oFilters.getTableByActiveCell();
+		if (oTableInfo) {
+			const oTable = oTableInfo.table;
+			if (!oTable.isHeaderRow()) {
+				return false;
+			}
+
+			const oTableFilter = oTable.AutoFilter;
+			if (oTableFilter && oTableFilter.Ref.containsCol(oActiveCell.col) && (oTableFilter.Ref.r1 === oActiveCell.row)) {
+				const nColId = oActiveCell.col - oTableFilter.Ref.c1;
+				if (oTableFilter.isHideButton(nColId)) {
+					return false;
+				}
+				const nTableId = oTableInfo.id;
+				oIdFilter.colId = nColId;
+				oIdFilter.id = nTableId;
+				this.af_setDialogProp(oIdFilter);
+				return true;
+			}
+		}
+		return false;
 	};
 	WorksheetView.prototype.pivot_setDialogProp = function (idPivot) {
 		if (!idPivot) {
@@ -24777,8 +24822,9 @@
 
 	WorksheetView.prototype.beforeInsertSlicer = function () {
 		//чтобы лишний раз не проверять - может быть взять информацию из cellinfo?
-		var table = this.model.autoFilters.getTableByActiveCell();
-		if (table) {
+		const tableInfo = this.model.autoFilters.getTableByActiveCell();
+		if (tableInfo) {
+			const table = tableInfo.table;
 			var res = [];
 			for (var j = 0; j < table.TableColumns.length; j++) {
 				res.push(table.TableColumns[j].Name);
@@ -24822,12 +24868,13 @@
 		History.StartTransaction();
 
 		//чтобы лишний раз не проверять - может быть взять информацию из cellinfo?
-		var obj = this.model.autoFilters.getTableByActiveCell();
+		const tableInfo = this.model.autoFilters.getTableByActiveCell();
 		var lockRanges = [], colRange, needAddFilter, pivotLockInfos = [];
-		if (obj) {
+		if (tableInfo) {
+			const table = tableInfo.table;
 			type = window['AscCommonExcel'].insertSlicerType.table;
-			name = obj.DisplayName;
-			if (!obj.AutoFilter) {
+			name = table.DisplayName;
+			if (!table.AutoFilter) {
 				needAddFilter = true;
 			}
 			for (var k = 0; k < arr.length; k++) {

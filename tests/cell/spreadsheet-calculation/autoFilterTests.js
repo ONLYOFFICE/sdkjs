@@ -2119,6 +2119,172 @@ $(function () {
 		//Checking work of filter
 		//checkHiddenRows(assert, testData, {"1": 1}, " combine filter apply 1");
 		ws.autoFilters.isApplyAutoFilterInCell(range, true);
+
+		clearData(0, 0, 0, 13);
+	});
+
+	QUnit.test('Test: "Open filter options"', function (assert) {
+		const fOld_af_setDialogProp = wsView.af_setDialogProp;
+		let oCurrentAnswer;
+		wsView.af_setDialogProp = function (filterProp, tooltipPreview)
+		{
+			assert.deepEqual(filterProp, oCurrentAnswer, 'Check filter properties');
+		}
+
+		function select(activeR, activeC, r1, c1, r2, c2)
+		{
+			ws.selectionRange.ranges = [getRange(r1, c1, r2, c2)];
+			ws.selectionRange.activeCell = new AscCommon.CellBase(activeR, activeC);
+		}
+		let testData = [
+			["test1", "test2", "test3", "test4", "test5"],
+			['1', '1', '1', '1', '1'],
+			['1', '1', '1', '1', '1'],
+			['1', '1', '1', '1', '1'],
+			['1', '1', '1', '1', '1']
+		];
+
+		let range = ws.getRange4(1, 1);
+		range.fillData(testData);
+		ws.autoFilters.addAutoFilter(null, getRange(1, 1, 5, 1));
+
+		select(2, 1, 2, 1, 2, 1);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), false, 'Check non-opening filter options');
+
+		select(2, 2, 2, 2, 2, 2);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), false, 'Check non-opening filter options');
+
+		select(2, 1, 1, 1, 2, 3);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), false, 'Check non-opening filter options');
+
+		oCurrentAnswer = {id: null, colId: 0};
+		select(1, 1, 1, 1, 2, 3);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), true, 'Check open filter options');
+
+		oCurrentAnswer = {id: null, colId: 1};
+		select(1, 2, 1, 1, 2, 5);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), true, 'Check open filter options');
+
+		oCurrentAnswer = {id: null, colId: 2};
+		select(1, 3, 1, 1, 2, 5);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), true, 'Check open filter options');
+		
+		select(2, 3, 1, 1, 2, 5);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), false, 'Check non-opening filter options');
+
+		ws.getRange3(1, 0, 1, 1).merge();
+		select(1, 1, 1, 0, 2, 5);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), false, 'Check non-opening filter options');
+		ws.getRange3(1, 0, 1, 1).unmerge();
+		
+		ws.getRange3(1, 4, 1, 5).merge();
+		oCurrentAnswer = {id: null, colId: 3};
+		select(1, 4, 1, 4, 1, 5);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), true, 'Check open filter options');
+		ws.getRange3(1, 4, 1, 5).unmerge();
+
+		ws.getRange3(1, 5, 1, 6).merge();
+		oCurrentAnswer = {id: null, colId: 4};
+		select(1, 6, 1, 5, 1, 6);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), true, 'Check open filter options');
+		ws.getRange3(1, 5, 1, 6).unmerge();
+
+		ws.getRange3(0, 0, 1, 1).merge();
+		select(1, 1, 0, 0, 1, 5);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), false, 'Check non-opening filter options');
+		ws.getRange3(0, 0, 1, 1).unmerge();
+
+		ws.AutoFilter.showButton(false);
+		ws.AutoFilter.getFilterColumn(0).ShowButton = true;
+		ws.AutoFilter.getFilterColumn(4).ShowButton = true;
+
+		oCurrentAnswer = {id: null, colId: 1};
+		select(1, 2, 0, 0, 6, 6);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), true, 'Check open filter options');
+
+		ws.getRange3(1, 2, 1, 3).merge();
+		oCurrentAnswer = {id: null, colId: 1};
+		select(1, 2, 0, 0, 6, 6);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), true, 'Check open filter options');
+		ws.getRange3(1, 2, 1, 3).unmerge();
+
+		clearData(0, 0, 5, 5);
+
+		range = ws.getRange4(1, 1);
+		range.fillData(testData);
+		ws.autoFilters.addAutoFilter('TableStyleLight9', getRange(1, 1, 5, 5));
+
+		select(2, 1, 2, 1, 2, 1);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), false, 'Check non-opening filter options');
+
+		select(2, 2, 2, 2, 2, 2);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), false, 'Check non-opening filter options');
+
+		select(2, 1, 1, 1, 2, 3);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), false, 'Check non-opening filter options');
+
+		oCurrentAnswer = {id: 0, colId: 0};
+		select(1, 1, 1, 1, 2, 3);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), true, 'Check open filter options');
+
+		oCurrentAnswer = {id: 0, colId: 1};
+		select(1, 2, 1, 1, 2, 5);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), true, 'Check open filter options');
+
+		oCurrentAnswer = {id: 0, colId: 2};
+		select(1, 3, 1, 1, 2, 5);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), true, 'Check open filter options');
+
+		select(2, 3, 1, 1, 2, 5);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), false, 'Check non-opening filter options');
+
+		ws.TableParts[0].AutoFilter.showButton(false);
+		ws.TableParts[0].AutoFilter.getFilterColumn(0).ShowButton = true;
+		ws.TableParts[0].AutoFilter.getFilterColumn(4).ShowButton = true;
+
+		select(1, 2, 0, 0, 6, 6);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), false, 'Check non-opening filter options');
+
+		select(1, 3, 0, 0, 6, 6);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), false, 'Check non-opening filter options');
+
+		oCurrentAnswer = {id: 0, colId: 0};
+		select(1, 1, 0, 0, 6, 6);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), true, 'Check open filter options');
+
+		ws.TableParts[0].AutoFilter.showButton(true);
+		ws.autoFilters.changeFormatTableInfo(ws.TableParts[0].DisplayName, Asc.c_oAscChangeTableStyleInfo.rowHeader, false);
+
+		select(1, 1, 0, 0, 6, 6);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), false, 'Check non-opening filter options');
+
+		select(1, 2, 0, 0, 6, 6);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), false, 'Check non-opening filter options');
+
+		select(2, 1, 0, 0, 6, 6);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), false, 'Check non-opening filter options');
+
+		select(2, 2, 0, 0, 6, 6);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), false, 'Check non-opening filter options');
+
+		ws.autoFilters.changeFormatTableInfo(ws.TableParts[0].DisplayName, Asc.c_oAscChangeTableStyleInfo.rowHeader, true);
+
+		range = ws.getRange4(1, 8);
+		range.fillData(testData);
+		ws.autoFilters.addAutoFilter('TableStyleLight9', getRange(8, 1, 12, 5));
+
+		oCurrentAnswer = {id: 1, colId: 0};
+		select(1, 8, 1, 8, 2, 10);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), true, 'Check open filter options');
+
+		oCurrentAnswer = {id: 1, colId: 1};
+		select(1, 9, 1, 8, 2, 12);
+		assert.strictEqual(wsView.showAutoFilterOptionsFromActiveCell(), true, 'Check open filter options');
+
+		clearData(1, 1, 5, 5);
+		clearData(8, 1, 12, 5);
+
+		wsView.af_setDialogProp = fOld_af_setDialogProp;
 	});
 
 	QUnit.module("Filters");

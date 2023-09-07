@@ -1065,6 +1065,9 @@
 					stop();                          // Отключим стандартную обработку браузера нажатия down
 					// Обработка Alt + down
 					if (canEdit && !t.getCellEditMode() && !selectionDialogMode && event.altKey) {
+						if (t.handlers.trigger("onShowFilterOptionsActiveCell")) {
+							return result;
+						}
 						if (t.handlers.trigger("onDataValidation")) {
 							return result;
 						}
