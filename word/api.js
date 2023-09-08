@@ -1406,7 +1406,6 @@ background-repeat: no-repeat;\
 			[c_oAscDocumentShortcutType.Superscript, 188, true, false, false],
 			[c_oAscDocumentShortcutType.NonBreakingHyphen, 189, true, true, false],
 			[c_oAscDocumentShortcutType.NonBreakingHyphen, 173, true, true, false],
-			[c_oAscDocumentShortcutType.HorizontalEllipsis, 190, true, false, true],
 			[c_oAscDocumentShortcutType.Subscript, 190, true, false, false],
 			[c_oAscDocumentShortcutType.IncreaseFontSize, 221, true, false, false],
 			[c_oAscDocumentShortcutType.DecreaseFontSize, 219, true, false, false]
@@ -1424,7 +1423,8 @@ background-repeat: no-repeat;\
 			[c_oAscDocumentShortcutType.InsertEquation, 187, false, false, true],
 			[c_oAscDocumentShortcutType.InsertEquation, 61, false, false, true],
 			[c_oAscDocumentShortcutType.SoftHyphen, 189, false, false, true],
-			[c_oAscDocumentShortcutType.SoftHyphen, 173, false, false, true]
+			[c_oAscDocumentShortcutType.SoftHyphen, 173, false, false, true],
+			[c_oAscDocumentShortcutType.HorizontalEllipsis, 190, true, false, true]
 		]);
 	}
 

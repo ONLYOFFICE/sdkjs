@@ -561,7 +561,6 @@
 			oAssert.strictEqual(editor.getShortcut(createEvent(120, false, false, false, false, false, false)), c_oAscDocumentShortcutType.UpdateFields, 'Check getting c_oAscDocumentShortcutType.UpdateFields action');
 			oAssert.strictEqual(editor.getShortcut(createEvent(188, true, false, false, false, false, false)), c_oAscDocumentShortcutType.Superscript, 'Check getting c_oAscDocumentShortcutType.Superscript action');
 			oAssert.strictEqual(editor.getShortcut(createEvent(189, true, true, false, false, false, false)), c_oAscDocumentShortcutType.NonBreakingHyphen, 'Check getting c_oAscDocumentShortcutType.NonBreakingHyphen action');
-			oAssert.strictEqual(editor.getShortcut(createEvent(190, true, false, true, false, false, false)), c_oAscDocumentShortcutType.HorizontalEllipsis, 'Check getting c_oAscDocumentShortcutType.HorizontalEllipsis action');
 			oAssert.strictEqual(editor.getShortcut(createEvent(190, true, false, false, false, false, false)), c_oAscDocumentShortcutType.Subscript, 'Check getting c_oAscDocumentShortcutType.Subscript action');
 			oAssert.strictEqual(editor.getShortcut(createEvent(219, true, false, false, false, false, false)), c_oAscDocumentShortcutType.DecreaseFontSize, 'Check getting c_oAscDocumentShortcutType.DecreaseFontSize action');
 			oAssert.strictEqual(editor.getShortcut(createEvent(221, true, false, false, false, false, false)), c_oAscDocumentShortcutType.IncreaseFontSize, 'Check getting c_oAscDocumentShortcutType.IncreaseFontSize action');
@@ -571,6 +570,7 @@
 		QUnit.test("Test getting windows desired action by event", (oAssert) =>
 		{
 			editor.initDefaultShortcuts();
+			oAssert.strictEqual(editor.getShortcut(createEvent(190, true, false, true, false, false, false)), c_oAscDocumentShortcutType.HorizontalEllipsis, 'Check getting c_oAscDocumentShortcutType.HorizontalEllipsis action');
 			oAssert.strictEqual(editor.getShortcut(createEvent(49, false, false, true, false, false, false)), c_oAscDocumentShortcutType.ApplyHeading1, 'Check getting c_oAscDocumentShortcutType.ApplyHeading1 shortcut type');
 			oAssert.strictEqual(editor.getShortcut(createEvent(50, false, false, true, false, false, false)), c_oAscDocumentShortcutType.ApplyHeading2, 'Check getting c_oAscDocumentShortcutType.ApplyHeading2 shortcut type');
 			oAssert.strictEqual(editor.getShortcut(createEvent(51, false, false, true, false, false, false)), c_oAscDocumentShortcutType.ApplyHeading3, 'Check getting c_oAscDocumentShortcutType.ApplyHeading3 shortcut type');
