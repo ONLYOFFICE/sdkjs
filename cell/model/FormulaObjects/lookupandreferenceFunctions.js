@@ -2167,7 +2167,11 @@ function (window, undefined) {
 			if (arg1Dimensions.row > maxRows || arg1Dimensions.col > maxCols) {
 				return new cError(cErrorType.wrong_value_type);
 			} else {
-				sort_index = arg1.getFirstElement().tocNumber();
+				let firstElement = arg1.getFirstElement();
+				if (!firstElement) {
+					firstElement = new cEmpty();
+				}
+				sort_index = firstElement.tocNumber();
 			}
 		}
 

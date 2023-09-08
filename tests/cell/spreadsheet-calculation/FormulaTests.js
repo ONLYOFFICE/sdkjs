@@ -25504,6 +25504,12 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "", 'Result of SORT(B101:C105,1,1,TRUE)[4,0]');
 		assert.strictEqual(array.getElementRowCol(4, 1).getValue(), "", 'Result of SORT(B101:C105,1,1,TRUE)[4,1]');
 
+		ws.getRange2("B1:C2").cleanAll();
+
+		oParser = new parserFormula('SORT(B1:B2,C1:C2)', 'A2', ws);
+		assert.ok(oParser.parse(), 'SORT(B1:B2,C1:C2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of SORT(B1:B2,C1:C2)');
+
 	});
 
 	QUnit.test("Test: \"SORTBY\"", function (assert) {
