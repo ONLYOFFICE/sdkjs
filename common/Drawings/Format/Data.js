@@ -10275,19 +10275,32 @@ Because of this, the display is sometimes not correct.
       return this;
     }
 
-    SmartArt.prototype.fitToPageSize = function () {
-      const oApi = Asc.editor || editor;
-      if (oApi) {
-        const bFromWord = oApi.isDocumentEditor;
-        if (bFromWord) {
-          const logicDocument = oApi.getLogicDocument();
-          const curPage = logicDocument.Pages[logicDocument.controller_GetCurPage()];
-          const heightPage = curPage.Height - curPage.Margins.Top - (curPage.Height - curPage.Margins.Bottom);
-          const widthPage = curPage.Width - curPage.Margins.Left - (curPage.Width - curPage.Margins.Right);
-					this.fitForSizes(heightPage, widthPage);
-        }
-      }
-    };
+	  SmartArt.prototype.fitToPageSize = function ()
+	  {
+		  const oApi = Asc.editor || editor;
+		  if (oApi)
+		  {
+			  const bFromWord = oApi.isDocumentEditor;
+			  if (bFromWord)
+			  {
+				  let W;
+				  let H;
+				  const logicDocument = oApi.getLogicDocument();
+				  const oColumnSize = logicDocument.GetColumnSize();
+				  if (oColumnSize)
+				  {
+					  W = oColumnSize.W;
+					  H = oColumnSize.H;
+				  }
+				  else
+				  {
+					  W = AscCommon.Page_Width - (AscCommon.X_Left_Margin + AscCommon.X_Right_Margin);
+					  H = AscCommon.Page_Height - (AscCommon.Y_Top_Margin + AscCommon.Y_Bottom_Margin);
+				  }
+				  this.fitForSizes(H, W);
+			  }
+		  }
+	  };
 	  SmartArt.prototype.fitForSizes = function (nFitHeight, nFitWidth) {
 		  const cH = nFitWidth / this.extX;
 		  const cW = nFitHeight / this.extY;

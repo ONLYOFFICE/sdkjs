@@ -1663,19 +1663,19 @@ CGraphicObjects.prototype =
         this.document.OnMouseUp(e, x, y, pageIndex);
     },
 
-    addInlineImage: function( W, H, Img, Chart, bFlow )
+    addInlineImage: function( W, H, Img, GraphicObject, bFlow )
     {
         var content = this.getTargetDocContent();
         if(content)
         {
             if(!content.bPresentation){
-                content.AddInlineImage(W, H, Img, Chart, bFlow );
+                content.AddInlineImage(W, H, Img, GraphicObject, bFlow );
             }
             else{
                 if(this.selectedObjects.length > 0)
                 {
                     this.resetSelection2();
-                    this.document.AddInlineImage(W, H, Img, Chart, bFlow );
+                    this.document.AddInlineImage(W, H, Img, GraphicObject, bFlow );
                 }
             }
         }
@@ -1684,7 +1684,7 @@ CGraphicObjects.prototype =
             if(this.selectedObjects.length > 0)
             {
                 this.resetSelection2();
-                this.document.AddInlineImage(W, H, Img, Chart, bFlow );
+                this.document.AddInlineImage(W, H, Img, GraphicObject, bFlow );
             }
         }
     },

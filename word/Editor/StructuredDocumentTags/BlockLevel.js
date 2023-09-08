@@ -502,10 +502,10 @@ CBlockLevelSdt.prototype.GetNumberingInfo = function(oNumberingEngine)
 {
 	return this.Content.GetNumberingInfo(oNumberingEngine);
 };
-CBlockLevelSdt.prototype.AddInlineImage = function(W, H, Img, Chart, bFlow)
+CBlockLevelSdt.prototype.AddInlineImage = function(W, H, Img, GraphicObject, bFlow)
 {
 	this.private_ReplacePlaceHolderWithContent();
-	this.Content.AddInlineImage(W, H, Img, Chart, bFlow);
+	this.Content.AddInlineImage(W, H, Img, GraphicObject, bFlow);
 };
 CBlockLevelSdt.prototype.AddImages = function(aImages)
 {

@@ -1463,12 +1463,12 @@ CEndnotesController.prototype.AddNewParagraph = function(bRecalculate, bForceAdd
 
 	return this.CurEndnote.AddNewParagraph(bRecalculate, bForceAdd);
 };
-CEndnotesController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
+CEndnotesController.prototype.AddInlineImage = function(nW, nH, oImage, oGraphicObject, bFlow)
 {
 	if (false === this.private_CheckEndnotesSelectionBeforeAction())
 		return false;
 
-	return this.CurEndnote.AddInlineImage(nW, nH, oImage, oChart, bFlow);
+	return this.CurEndnote.AddInlineImage(nW, nH, oImage, oGraphicObject, bFlow);
 };
 CEndnotesController.prototype.AddImages = function(aImages)
 {

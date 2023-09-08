@@ -1453,12 +1453,12 @@ CFootnotesController.prototype.AddNewParagraph = function(bRecalculate, bForceAd
 
 	return this.CurFootnote.AddNewParagraph(bRecalculate, bForceAdd);
 };
-CFootnotesController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
+CFootnotesController.prototype.AddInlineImage = function(nW, nH, oImage, oGraphicObject, bFlow)
 {
 	if (false === this.private_CheckFootnotesSelectionBeforeAction())
 		return false;
 
-	return this.CurFootnote.AddInlineImage(nW, nH, oImage, oChart, bFlow);
+	return this.CurFootnote.AddInlineImage(nW, nH, oImage, oGraphicObject, bFlow);
 };
 CFootnotesController.prototype.AddImages = function(aImages)
 {

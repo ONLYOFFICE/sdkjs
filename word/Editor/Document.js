@@ -5961,14 +5961,14 @@ CDocument.prototype.CanUnGroup = function()
 {
 	return this.DrawingObjects.canUnGroup();
 };
-CDocument.prototype.AddInlineImage = function(W, H, Img, Chart, bFlow)
+CDocument.prototype.AddInlineImage = function(W, H, Img, GraphicObject, bFlow)
 {
 	if (undefined === bFlow)
 		bFlow = false;
 
 
     this.TurnOff_InterfaceEvents();
-    this.Controller.AddInlineImage(W, H, Img, Chart, bFlow);
+    this.Controller.AddInlineImage(W, H, Img, GraphicObject, bFlow);
     this.TurnOn_InterfaceEvents(true);
 };
 
@@ -18861,7 +18861,7 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 		}
 	}
 };
-CDocument.prototype.controller_AddInlineImage = function(W, H, Img, Chart, bFlow)
+CDocument.prototype.controller_AddInlineImage = function(W, H, Img, GraphicObject, bFlow)
 {
 	if (true == this.Selection.Use)
 		this.Remove(1, true);
@@ -18870,17 +18870,24 @@ CDocument.prototype.controller_AddInlineImage = function(W, H, Img, Chart, bFlow
 	if (type_Paragraph == Item.GetType())
 	{
 		var Drawing;
-		if (!AscCommon.isRealObject(Chart))
+		if (!AscCommon.isRealObject(GraphicObject))
 		{
 			Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
 			var Image = this.DrawingObjects.createImage(Img, 0, 0, W, H);
 			Image.setParent(Drawing);
 			Drawing.Set_GraphicObject(Image);
 		}
+		else if (GraphicObject.isSmartArtObject && GraphicObject.isSmartArtObject())
+		{
+			Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
+			GraphicObject.setParent(Drawing);
+			Drawing.Set_GraphicObject(GraphicObject);
+			Drawing.setExtent(GraphicObject.spPr.xfrm.extX, GraphicObject.spPr.xfrm.extY);
+		}
 		else
 		{
 			Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
-			var Image = this.DrawingObjects.getChartSpace2(Chart, null);
+			var Image = this.DrawingObjects.getChartSpace2(GraphicObject, null);
 			Image.setParent(Drawing);
 			Drawing.Set_GraphicObject(Image);
 			Drawing.setExtent(Image.spPr.xfrm.extX, Image.spPr.xfrm.extY);
@@ -18899,7 +18906,7 @@ CDocument.prototype.controller_AddInlineImage = function(W, H, Img, Chart, bFlow
 	}
 	else
 	{
-		Item.AddInlineImage(W, H, Img, Chart, bFlow);
+		Item.AddInlineImage(W, H, Img, GraphicObject, bFlow);
 	}
 };
 CDocument.prototype.AddPlaceholderImages = function (aImages, oPlaceholder)

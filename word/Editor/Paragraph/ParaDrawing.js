@@ -2852,10 +2852,10 @@ ParaDrawing.prototype.updatePosition2 = function(x, y)
 		this.GraphicObj.updatePosition2(x, y);
 	}
 };
-ParaDrawing.prototype.addInlineImage = function(W, H, Img, chart, bFlow)
+ParaDrawing.prototype.addInlineImage = function(W, H, Img, GraphicObject, bFlow)
 {
 	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.addInlineImage === "function")
-		this.GraphicObj.addInlineImage(W, H, Img, chart, bFlow);
+		this.GraphicObj.addInlineImage(W, H, Img, GraphicObject, bFlow);
 };
 ParaDrawing.prototype.addSignatureLine = function(oSignatureDrawing)
 {
