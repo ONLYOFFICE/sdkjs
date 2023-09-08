@@ -182,6 +182,7 @@
 		// Обработчик кликов
 		this.clickCounter = new AscFormat.ClickCounter();
 
+		this.speechController = new cellEditorSpeechController(this);
 		this._init();
 
 		return this;
@@ -1691,6 +1692,7 @@
 		this.newTextFormat = null;
 		var t = this;
 		this.sAutoComplete = null;
+		this.speechController.start(kind);
 		switch (kind) {
 			case kPrevChar:
 				t.cursorPos = t.textRender.getPrevChar(t.cursorPos);
@@ -1737,6 +1739,8 @@
 		}
 		t._updateCursorPosition();
 		t._updateCursor();
+		this.speechController.end();
+		//t._doSpeech(kind);
 	};
 
 	CellEditor.prototype._findCursorPosition = function ( coord ) {
@@ -2902,6 +2906,7 @@
 			return this.handlers.trigger('onMouseDown', event);
 		}
 
+		this.speechController.start();
 		AscCommon.global_mouseEvent.LockMouse();
 
 		var pos;
@@ -2956,6 +2961,7 @@
 			this.cleanSelectRange();
 		}
 		this.isSelectMode = c_oAscCellEditorSelectState.no;
+		this.speechController.end();
 		return true;
 	};
 
@@ -3121,7 +3127,190 @@
 		}
 		return res;
 	};
+	CellEditor.prototype._doSpeech = function (kind) {
+		/*if(!AscCommon.SpeechWorker.isEnabled) {
+			return;
+		}*/
 
+		let type, text;
+		switch (kind) {
+			case kPrevChar:
+			case kNextChar:
+				//type = AscCommon.SpeechWorkerCommands.Text;
+				text = this.getText(this.cursorPos, 1);
+				break;
+			case kPrevWord:
+				//t.cursorPos = t.textRender.getPrevWord(t.cursorPos);
+				break;
+			case kNextWord:
+				//t.cursorPos = t.textRender.getNextWord(t.cursorPos);
+				break;
+			case kBeginOfLine:
+				//t.cursorPos = t.textRender.getBeginOfLine(t.cursorPos);
+				break;
+			case kEndOfLine:
+				//t.cursorPos = t.textRender.getEndOfLine(t.cursorPos);
+				break;
+			case kBeginOfText:
+				//t.cursorPos = t.textRender.getBeginOfText(t.cursorPos);
+				break;
+			case kEndOfText:
+				//t.cursorPos = t.textRender.getEndOfText(t.cursorPos);
+				break;
+			case kPrevLine:
+				//t.cursorPos = t.textRender.getPrevLine(t.cursorPos);
+				break;
+			case kNextLine:
+				//t.cursorPos = t.textRender.getNextLine(t.cursorPos);
+				break;
+			case kPosition:
+				//t.cursorPos = pos;
+				break;
+			case kPositionLength:
+				//t.cursorPos += pos;
+				break;
+			default:
+				return;
+		}
+
+		console.log("text: " + text + " kind: " + kind + " isSelectMode: " + this.isSelectMode)
+	};
+
+	function cellEditorSpeechController(cellEditor) {
+		this.cellEditor = cellEditor;
+
+		this.lastSelectionBegin = null;
+		this.lastSelectionEnd = null;
+		this.action = null;
+
+		this.isStart = null;
+	}
+
+	cellEditorSpeechController.prototype.start = function (action) {
+		AscCommon.SpeechWorker.isEnabled = true;
+		if(!AscCommon.SpeechWorker.isEnabled) {
+			return;
+		}
+
+		if (this.isStart) {
+			return;
+		}
+		this.isStart = true;
+
+		this.lastSelectionBegin = this.cellEditor.selectionBegin;
+		this.lastSelectionEnd = this.cellEditor.selectionEnd;
+		this.action = action;
+	};
+
+	cellEditorSpeechController.prototype.end = function () {
+		if(!AscCommon.SpeechWorker.isEnabled) {
+			return;
+		}
+		if (this.cellEditor.isSelectMode !== c_oAscCellEditorSelectState.no) {
+			return;
+		}
+		this.isStart = null;
+
+		let t = this;
+		let isPreviousSelection = this.lastSelectionBegin !== this.lastSelectionEnd;
+		let isNowSelection = this.cellEditor.selectionBegin !== this.cellEditor.selectionEnd;
+
+		let doCompareSelection = function () {
+			let _start, _len;
+			if (t.cellEditor.selectionEnd < t.lastSelectionBegin || t.lastSelectionEnd < t.cellEditor.selectionBegin) {
+				//no intersection
+				//speech new select
+				_start = t.cellEditor.selectionBegin;
+				_len = t.cellEditor.selectionEnd - t.cellEditor.selectionBegin;
+				type = AscCommon.SpeechWorkerCommands.Text;
+			} else {
+				if (t.cellEditor.selectionEnd !== t.lastSelectionEnd) {
+					//changed end of text
+					if (t.cellEditor.selectionEnd > t.lastSelectionEnd) {
+						//added by select
+						_start = t.lastSelectionEnd;
+						_len = t.cellEditor.selectionEnd - t.lastSelectionEnd;
+						type = AscCommon.SpeechWorkerCommands.TextSelected;
+					} else {
+						//deleted from select
+						_start = t.cellEditor.selectionEnd;
+						_len = t.lastSelectionEnd - t.cellEditor.selectionEnd;
+						type = AscCommon.SpeechWorkerCommands.TextUnselected;
+					}
+				} else {
+					if (t.cellEditor.selectionBegin < t.lastSelectionBegin) {
+						//added by select
+						_start = t.cellEditor.selectionBegin;
+						_len = t.lastSelectionBegin - t.cellEditor.selectionBegin;
+						type = AscCommon.SpeechWorkerCommands.TextSelected;
+					} else {
+						//deleted from select
+						_start = t.lastSelectionBegin;
+						_len = t.cellEditor.selectionBegin - t.lastSelectionBegin;
+						type = AscCommon.SpeechWorkerCommands.TextUnselected;
+					}
+				}
+			}
+
+			text = t.cellEditor.getText(_start, _len);
+		};
+
+		let type, text = null;
+		if (isNowSelection) {
+			doCompareSelection();
+			console.log(text)
+			return;
+		}
+
+		switch (this.action) {
+			case kPrevChar:
+			case kNextChar:
+			case kBeginOfLine:
+			case kEndOfLine:
+			case kBeginOfText:
+			case kEndOfText:
+			case kPrevLine:
+			case kNextLine:
+				if (isPreviousSelection) {
+					doCompareSelection();
+				} else {
+					text = this.cellEditor.getText(this.cellEditor.cursorPos, 1);
+					type = AscCommon.SpeechWorkerCommands.Text;
+				}
+				break;
+			case kPrevWord:
+			case kNextWord:
+				if (isPreviousSelection) {
+					doCompareSelection();
+				} else {
+					text = this.cellEditor.getText(this.cellEditor.cursorPos, 1);
+					type = AscCommon.SpeechWorkerCommands.Text;
+				}
+				break;
+			case kPosition:
+				if (isPreviousSelection) {
+					doCompareSelection();
+				} else {
+					text = this.cellEditor.getText(this.cellEditor.cursorPos, 1);
+					type = AscCommon.SpeechWorkerCommands.Text;
+				}
+				break;
+			case kPositionLength:
+				if (isPreviousSelection) {
+					doCompareSelection();
+				} else {
+					text = this.cellEditor.getText(this.cellEditor.cursorPos, 1);
+					type = AscCommon.SpeechWorkerCommands.Text;
+				}
+				break;
+			default:
+				//mouse change selection
+				doCompareSelection();
+
+		}
+
+		console.log(text)
+	};
 
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
