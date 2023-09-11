@@ -365,6 +365,8 @@ function RotateTrackShapeImage(originalObject)
     this.bIsTracked = false;
     this.originalObject = originalObject;
     this.transform = new CMatrix();
+
+		this.smartArtParent = this.originalObject.isObjectInSmartArt() ? this.originalObject.group.group.parent : null;
     var brush;
     if(originalObject.blipFill)
     {
@@ -430,6 +432,14 @@ function RotateTrackShapeImage(originalObject)
         {
             global_MatrixTransformer.MultiplyAppend(this.transform, this.originalObject.group.transform);
         }
+	    if (this.smartArtParent)
+	    {
+		    var parent_transform = this.smartArtParent.Get_ParentTextTransform && this.smartArtParent.Get_ParentTextTransform();
+		    if(parent_transform)
+		    {
+			    global_MatrixTransformer.MultiplyAppend(this.transform, parent_transform);
+		    }
+	    }
         if(this.originalObject.parent)
         {
             var parent_transform = this.originalObject.parent.Get_ParentTextTransform && this.originalObject.parent.Get_ParentTextTransform();
@@ -610,6 +620,14 @@ function RotateTrackGroup(originalObject)
             global_MatrixTransformer.ScaleAppend(this.transform, 1, -1);
         global_MatrixTransformer.RotateRadAppend(this.transform, -this.angle);
         global_MatrixTransformer.TranslateAppend(this.transform, this.originalObject.x + hc, this.originalObject.y + vc);
+	    if(this.originalObject.parent)
+	    {
+		    var parent_transform = this.originalObject.parent.Get_ParentTextTransform && this.originalObject.parent.Get_ParentTextTransform();
+		    if(parent_transform)
+		    {
+			    global_MatrixTransformer.MultiplyAppend(this.transform, parent_transform);
+		    }
+	    }
         for(var i = 0; i < this.overlayObjects.length; ++i)
         {
             var new_transform = this.arrTransforms2[i].CreateDublicate();

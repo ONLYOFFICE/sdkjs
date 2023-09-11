@@ -9027,6 +9027,13 @@ Because of this, the display is sometimes not correct.
     Drawing.prototype.getName = function () {
       return 'Drawing';
     }
+	  Drawing.prototype.Get_ParentParagraph = function ()
+	  {
+			if (this.group)
+			{
+				return this.group.parent && this.group.parent.Get_ParentParagraph && this.group.parent.Get_ParentParagraph();
+			}
+	  };
     Drawing.prototype.updateCoordinatesAfterInternalResize = function () {
 
     }

@@ -1289,9 +1289,10 @@
 	CGraphicObjectBase.prototype.updateTransformMatrix = function()
 	{
 		var oParentTransform = null;
-		if(this.parent && this.parent.Get_ParentParagraph)
+		let oParent = (this.parent || this.group);
+		if(oParent && oParent.Get_ParentParagraph)
 		{
-			var oParagraph = this.parent.Get_ParentParagraph();
+			var oParagraph = oParent.Get_ParentParagraph();
 			if(oParagraph)
 			{
 				oParentTransform = oParagraph.Get_ParentTextTransform();

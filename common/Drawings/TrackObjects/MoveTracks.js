@@ -49,6 +49,8 @@ function MoveShapeImageTrack(originalObject)
     this.lastDx = 0;
     this.lastDy = 0;
 
+		this.smartArtParent = this.originalObject.isObjectInSmartArt() ? this.originalObject.group.group.parent : null;
+
     var nObjectType = originalObject.getObjectType && originalObject.getObjectType();
     if(nObjectType === AscDFH.historyitem_type_ChartSpace
     || nObjectType === AscDFH.historyitem_type_GraphicFrame
@@ -125,6 +127,14 @@ function MoveShapeImageTrack(originalObject)
         {
             global_MatrixTransformer.MultiplyAppend(this.transform, this.originalObject.group.transform);
         }
+	    if (this.smartArtParent)
+	    {
+		    var parent_transform = this.smartArtParent.Get_ParentTextTransform && this.smartArtParent.Get_ParentTextTransform();
+		    if(parent_transform)
+		    {
+			    global_MatrixTransformer.MultiplyAppend(this.transform, parent_transform);
+		    }
+	    }
         if(AscFormat.isRealNumber(pageIndex))
             this.pageIndex = pageIndex;
 
