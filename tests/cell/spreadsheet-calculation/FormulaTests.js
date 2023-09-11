@@ -764,6 +764,46 @@ $(function () {
 
 	});
 
+	QUnit.test("Test: \"Formula parse\"", function (assert) {
+
+		oParser = new parserFormula('SUMA2', 'A2', ws);
+		assert.ok(oParser.parse(), 'SUMA2');
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'SUMA2');
+
+		oParser = new parserFormula('SUMA2:1', 'A2', ws);
+		assert.ok(oParser.parse(), 'SUMA2:1');
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'SUMA2:1');
+
+		oParser = new parserFormula('SUMA2:A3', 'A2', ws);
+		assert.ok(oParser.parse(), 'SUMA2:A3');
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'SUMA2:A3');
+
+		oParser = new parserFormula('SECB2', 'A2', ws);
+		assert.ok(oParser.parse(), 'SECB2');
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'SECB2');
+		
+		oParser = new parserFormula('SECB2:1', 'A2', ws);
+		assert.ok(oParser.parse(), 'SECB2:1');
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'SECB2:1');
+
+		oParser = new parserFormula('SECB2:B3', 'A2', ws);
+		assert.ok(oParser.parse(), 'SECB2:B3');
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'SECB2:B3');
+
+		oParser = new parserFormula('RANDC2', 'A2', ws);
+		assert.ok(oParser.parse(), 'RANDC2');
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'RANDC2');
+		
+		oParser = new parserFormula('RANDC2:1', 'A2', ws);
+		assert.ok(oParser.parse(), 'RANDC2:1');
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'RANDC2:1');
+
+		oParser = new parserFormula('RANDC2:C3', 'A2', ws);
+		assert.ok(oParser.parse(), 'RANDC2:C3');
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'RANDC2:C3');
+
+		ws.getRange2("A1:Z100").cleanAll();
+	});
 
 	QUnit.test("Test: \"Arithmetical operations\"", function (assert) {
 		let array;
