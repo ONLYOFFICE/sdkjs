@@ -2047,6 +2047,7 @@
 		var t = this;
 		var begPos, endPos;
 
+		this.speechController.start(kind);
 		this.sAutoComplete = null;
 		begPos = t.selectionBegin === t.selectionEnd ? t.cursorPos : t.selectionBegin;
 		t._moveCursor(kind, pos);
@@ -2054,6 +2055,7 @@
 
 		t.selectionBegin = begPos;
 		t.selectionEnd = endPos;
+		this.speechController.end();
 		t._drawSelection();
 		if (t.isTopLineActive && !t.skipTLUpdate) {
 			t._updateTopLineCurPos();
@@ -3183,7 +3185,7 @@
 		this.lastSelectionEnd = null;
 		this.action = null;
 
-		this.isStart = null;
+		this.startIndex = 0;
 	}
 
 	cellEditorSpeechController.prototype.start = function (action) {
@@ -3192,13 +3194,15 @@
 			return;
 		}
 
-		if (this.isStart) {
+		if (this.startIndex) {
+			this.startIndex++;
 			return;
 		}
-		this.isStart = true;
+		this.startIndex++;
 
-		this.lastSelectionBegin = this.cellEditor.selectionBegin;
-		this.lastSelectionEnd = this.cellEditor.selectionEnd;
+		this.lastSelectionBegin = Math.min(this.cellEditor.selectionBegin, this.cellEditor.selectionEnd);
+		this.lastSelectionEnd = Math.max(this.cellEditor.selectionBegin, this.cellEditor.selectionEnd);
+
 		this.action = action;
 	};
 
@@ -3206,47 +3210,56 @@
 		if(!AscCommon.SpeechWorker.isEnabled) {
 			return;
 		}
-		if (this.cellEditor.isSelectMode !== c_oAscCellEditorSelectState.no) {
+
+		this.startIndex--;
+		if (this.startIndex !== 0) {
 			return;
 		}
-		this.isStart = null;
 
 		let t = this;
 		let isPreviousSelection = this.lastSelectionBegin !== this.lastSelectionEnd;
 		let isNowSelection = this.cellEditor.selectionBegin !== this.cellEditor.selectionEnd;
 
 		let doCompareSelection = function () {
+			let _begin = Math.min(t.cellEditor.selectionBegin, t.cellEditor.selectionEnd);
+			let _end = Math.max(t.cellEditor.selectionBegin, t.cellEditor.selectionEnd);
 			let _start, _len;
-			if (t.cellEditor.selectionEnd < t.lastSelectionBegin || t.lastSelectionEnd < t.cellEditor.selectionBegin) {
+			if (_end === -1 && _begin === -1) {
+				text = t.cellEditor.getText(t.cellEditor.cursorPos, 1);
+				type = AscCommon.SpeechWorkerCommands.Text;
+				return;
+			}
+
+			if (_end < t.lastSelectionBegin || t.lastSelectionEnd < _begin) {
 				//no intersection
 				//speech new select
-				_start = t.cellEditor.selectionBegin;
-				_len = t.cellEditor.selectionEnd - t.cellEditor.selectionBegin;
+				_start = _begin;
+				_len = _end - _begin;
 				type = AscCommon.SpeechWorkerCommands.Text;
 			} else {
-				if (t.cellEditor.selectionEnd !== t.lastSelectionEnd) {
+				if (_end !== t.lastSelectionEnd) {
 					//changed end of text
-					if (t.cellEditor.selectionEnd > t.lastSelectionEnd) {
+					if (_end > t.lastSelectionEnd) {
 						//added by select
 						_start = t.lastSelectionEnd;
-						_len = t.cellEditor.selectionEnd - t.lastSelectionEnd;
+						_len = _end - t.lastSelectionEnd;
 						type = AscCommon.SpeechWorkerCommands.TextSelected;
 					} else {
 						//deleted from select
-						_start = t.cellEditor.selectionEnd;
-						_len = t.lastSelectionEnd - t.cellEditor.selectionEnd;
+						_start = _end;
+						_len = t.lastSelectionEnd - _end;
 						type = AscCommon.SpeechWorkerCommands.TextUnselected;
 					}
 				} else {
-					if (t.cellEditor.selectionBegin < t.lastSelectionBegin) {
+					if (_begin < t.lastSelectionBegin) {
 						//added by select
-						_start = t.cellEditor.selectionBegin;
-						_len = t.lastSelectionBegin - t.cellEditor.selectionBegin;
+						_start = _begin;
+						_len = t.lastSelectionBegin - _begin;
 						type = AscCommon.SpeechWorkerCommands.TextSelected;
 					} else {
 						//deleted from select
 						_start = t.lastSelectionBegin;
-						_len = t.cellEditor.selectionBegin - t.lastSelectionBegin;
+						_len = _begin - t.lastSelectionBegin;
 						type = AscCommon.SpeechWorkerCommands.TextUnselected;
 					}
 				}
@@ -3256,9 +3269,9 @@
 		};
 
 		let type, text = null;
-		if (isNowSelection) {
+		if (isNowSelection && this.action != null) {
 			doCompareSelection();
-			console.log(text)
+			console.log("text: " + text + " type: " + t.action + " compare ")
 			return;
 		}
 
@@ -3305,11 +3318,19 @@
 				break;
 			default:
 				//mouse change selection
-				doCompareSelection();
-
+				let _begin = Math.min(t.cellEditor.selectionBegin, t.cellEditor.selectionEnd);
+				let _end = Math.max(t.cellEditor.selectionBegin, t.cellEditor.selectionEnd);
+				if (_end === _begin) {
+					text = this.cellEditor.getText(this.cellEditor.cursorPos, 1);
+					type = AscCommon.SpeechWorkerCommands.Text;
+				} else {
+					type = AscCommon.SpeechWorkerCommands.TextSelected;
+					text = t.cellEditor.getText(_begin, _end - _begin);
+				}
 		}
 
-		console.log(text)
+		//AscCommon.SpeechWorker.speech(type, text);
+		console.log("text: " + text + " type: " + t.action)
 	};
 
 	//------------------------------------------------------------export---------------------------------------------------
