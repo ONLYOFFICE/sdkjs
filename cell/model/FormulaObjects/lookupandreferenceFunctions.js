@@ -2358,7 +2358,7 @@ function (window, undefined) {
 		}
 
 		let args = arg.slice();
-		let array, by_array, sort_order, maxRows, maxCols, arrayDimensions, isByCol, isSortOrderArray;
+		let array, by_array, sort_order, maxRows, maxCols, arrayDimensions, isByCol, isSortOrderArray, isByArrayNotArray;
 
 		// check arg0
 		if (cElementType.error === args[0].type) {
@@ -2368,7 +2368,6 @@ function (window, undefined) {
 				return args[0];
 			}
 		}
-
 		if (cElementType.array !== args[0].type && cElementType.cellsRange !== args[0].type && cElementType.cellsRange3D !== args[0].type) {
 			let elem;
 			if (cElementType.cell === args[0].type || cElementType.cell3D === args[0].type) {
@@ -2378,10 +2377,12 @@ function (window, undefined) {
 			}
 			array = new cArray();
 			array.addElement(elem);
+		} else if (cElementType.cellsRange === args[0].type || cElementType.cellsRange3D === args[0].type) {
+			array = new cArray();
+			array.fillFromArray(args[0].toArray());
 		} else {
 			array = args[0];
 		}
-
 		arrayDimensions = array.getDimensions();
 		maxRows = arrayDimensions.row;
 		maxCols = arrayDimensions.col;
@@ -2402,11 +2403,10 @@ function (window, undefined) {
 				}
 			}
 
-			// check by_arrays and make single values arrays
+			// check by_array arguments
 			if (i % 2 !== 0) {
 				if (cElementType.array !== args[i].type && cElementType.cellsRange !== args[i].type && cElementType.cellsRange3D !== args[i].type) {
-					let elem;
-					
+					let elem;	
 					if (cElementType.cell === args[i].type || cElementType.cell3D === args[i].type) {
 						elem = args[i].getValue();
 					} else {
@@ -2417,10 +2417,11 @@ function (window, undefined) {
 					by_array.addElement(elem);
 
 					args[i] = by_array;
+					isByArrayNotArray = i === 1 ? true : isByArrayNotArray;
 				}
 			}
 
-			// check sort_orders
+			// check sort_order arguments
 			if (i % 2 === 0) {
 				// empty check
 				if (cElementType.empty === args[i].type && (i % 2 === 0)) {
@@ -2455,6 +2456,11 @@ function (window, undefined) {
 				// check sort_order value
 				args[i] = sort_order;
 			}
+		}
+
+		// if the first of the by_array arguments is not an array/area - return initial array(arg0)
+		if (isByArrayNotArray && !isSortOrderArray) {
+			return array;
 		}
 
 		if (isSortOrderArray) {

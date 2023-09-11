@@ -26552,6 +26552,116 @@ $(function () {
 			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#N/A", "Result of SORTBY(V1:Y1,V2:Y2,-1)[2,0]");
 		}
 
+		// For bug 64072
+		ws.getRange2("A1:Z100").cleanAll();
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("A3").setValue("3");
+
+		oParser = new parserFormula('SORTBY(A1:A3,)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C201:I210").bbox);	
+		assert.ok(oParser.parse(), 'SORTBY(A1:A3,)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SORTBY(A1:A3,)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of SORTBY(A1:A3,)[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, "Result of SORTBY(A1:A3,)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of SORTBY(A1:A3,)[1,1]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 3, "Result of SORTBY(A1:A3,)[2,0]");
+
+		oParser = new parserFormula('SORTBY(A1:A3,1)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C201:I210").bbox);	
+		assert.ok(oParser.parse(), 'SORTBY(A1:A3,1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of SORTBY(A1:A3,1)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Result of SORTBY(A1:A3,1)[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, "Result of SORTBY(A1:A3,1)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Result of SORTBY(A1:A3,1)[1,1]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 3, "Result of SORTBY(A1:A3,1)[2,0]");
+
+		oParser = new parserFormula('SORTBY(A1:A3,"str")', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C201:I210").bbox);	
+		assert.ok(oParser.parse(), 'SORTBY(A1:A3,"str")');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SORTBY(A1:A3,"str")[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of SORTBY(A1:A3,"str")[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, 'Result of SORTBY(A1:A3,"str")[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of SORTBY(A1:A3,"str")[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 3, 'Result of SORTBY(A1:A3,"str")[2,0]');
+
+		oParser = new parserFormula('SORTBY(A1:A3,#DIV/0!)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C201:I210").bbox);	
+		assert.ok(oParser.parse(), 'SORTBY(A1:A3,#DIV/0!)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#DIV/0!", 'Result of SORTBY(A1:A3,#DIV/0!)');
+
+		oParser = new parserFormula('SORTBY(A1:A3,,)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C201:I210").bbox);	
+		assert.ok(oParser.parse(), 'SORTBY(A1:A3,,)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SORTBY(A1:A3,,)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of SORTBY(A1:A3,,)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, 'Result of SORTBY(A1:A3,,)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of SORTBY(A1:A3,,)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 3, 'Result of SORTBY(A1:A3,,)[2,0]');
+		
+		oParser = new parserFormula('SORTBY(A1:A3,A2:A3)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C201:I210").bbox);	
+		assert.ok(oParser.parse(), 'SORTBY(A1:A3,A2:A3)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of SORTBY(A1:A3,A2:A3)');
+
+		oParser = new parserFormula('SORTBY(A1:A3,{1,2,3})', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C201:I210").bbox);	
+		assert.ok(oParser.parse(), 'SORTBY(A1:A3,{1,2,3})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of SORTBY(A1:A3,{1,2,3})');
+
+		oParser = new parserFormula('SORTBY(A1:A3,,1,2,1)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C201:I210").bbox);	
+		assert.ok(oParser.parse(), 'SORTBY(A1:A3,,1,2,1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SORTBY(A1:A3,,1,2,1)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of SORTBY(A1:A3,,1,2,1)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, 'Result of SORTBY(A1:A3,,1,2,1)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of SORTBY(A1:A3,,1,2,1)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 3, 'Result of SORTBY(A1:A3,,1,2,1)[2,0]');
+
+		oParser = new parserFormula('SORTBY(A1:A3,,1,"str",1)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C201:I210").bbox);	
+		assert.ok(oParser.parse(), 'SORTBY(A1:A3,,1,"str",1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SORTBY(A1:A3,,1,"str",1)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of SORTBY(A1:A3,,1,"str",1)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, 'Result of SORTBY(A1:A3,,1,"str",1)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of SORTBY(A1:A3,,1,"str",1)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 3, 'Result of SORTBY(A1:A3,,1,"str",1)[2,0]');
+
+		oParser = new parserFormula('SORTBY(A1:A3,,1,{2;3;1},1)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C201:I210").bbox);	
+		assert.ok(oParser.parse(), 'SORTBY(A1:A3,,1,{2;3;1},1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SORTBY(A1:A3,,1,{2;3;1},1)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of SORTBY(A1:A3,,1,{2;3;1},1)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, 'Result of SORTBY(A1:A3,,1,{2;3;1},1)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of SORTBY(A1:A3,,1,{2;3;1},1)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 3, 'Result of SORTBY(A1:A3,,1,{2;3;1},1)[2,0]');
+
+		oParser = new parserFormula('SORTBY(A1:A3,1,1,{3;2;1},1)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C201:I210").bbox);	
+		assert.ok(oParser.parse(), 'SORTBY(A1:A3,1,1,{3;2;1},1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SORTBY(A1:A3,1,1,{3;2;1},1)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of SORTBY(A1:A3,1,1,{3;2;1},1)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, 'Result of SORTBY(A1:A3,1,1,{3;2;1},1)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of SORTBY(A1:A3,1,1,{3;2;1},1)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 3, 'Result of SORTBY(A1:A3,1,1,{3;2;1},1)[2,0]');
+
+		oParser = new parserFormula('SORTBY(A1:A3,{3;2;1},1,1,1)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C201:I210").bbox);	
+		assert.ok(oParser.parse(), 'SORTBY(A1:A3,{3;2;1},1,1,1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of SORTBY(A1:A3,{3;2;1},1,1,1)');
+
 		// oParser = new parserFormula('SORTBY(C4:D6,C4:D4,{1,1;1,1},C5:D5,1,C6:D6,1)', 'A2', ws);
 		// assert.ok(oParser.parse(), 'SORTBY(C4:D6,C4:D4,{1,1;1,1},C5:D5,1,C6:D6,1)');
 		// array = oParser.calculate();
