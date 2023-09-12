@@ -5910,15 +5910,10 @@
 						var TextPr = drawingObjectsController.getParagraphTextPr();
 						if (isRealObject(TextPr)) {
 							if (true === e.shiftKey)
-							{
 								drawingObjectsController.setCellSuperscript(TextPr.VertAlign === AscCommon.vertalign_SuperScript ? false : true);
-								bRetValue = true;
-							}
-							else if (true === e.altKey)
-							{
+							else
 								drawingObjectsController.setCellSubscript(TextPr.VertAlign === AscCommon.vertalign_SubScript ? false : true);
-								bRetValue = true;
-							}
+							bRetValue = true;
 						}
 					} else if (e.keyCode == 188 && true === ctrlKey) // Ctrl + ,
 					{
@@ -5927,7 +5922,7 @@
 							drawingObjectsController.setCellSuperscript(TextPr.VertAlign === AscCommon.vertalign_SuperScript ? false : true);
 							bRetValue = true;
 						}
-					} else if ((e.keyCode == 189 || e.keyCode == 173) && canEdit && true === ctrlKey && true === e.shiftKey) // Клавиша Num-
+					} else if ((e.keyCode == 189 || e.keyCode == 173) && canEdit) // Клавиша Num-
 					{
 						if (!this.checkSelectedObjectsProtectionText()) {
 							var Item = null;
@@ -5937,7 +5932,10 @@
 								if (true === ctrlKey && true === e.shiftKey) {
 									Item = new AscWord.CRunText(0x2013);
 									Item.SpaceAfter = false;
-								}
+								} else if (true === e.shiftKey)
+									Item = new AscWord.CRunText("_".charCodeAt(0));
+								else
+									Item = new AscWord.CRunText("-".charCodeAt(0));
 								oThis.paragraphAdd(Item);
 							};
 							this.checkSelectedObjectsAndCallback(callBack, [], false, AscDFH.historydescription_Spreadsheet_AddItem, undefined, window["Asc"]["editor"].collaborativeEditing.getFast());

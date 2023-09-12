@@ -185,6 +185,8 @@
 		superscriptAndSubscript         : 56,
 		superscript                     : 57,
 		enDash                          : 58,
+		hyphen                          : 59,
+		underscore                      : 60,
 		subscript                       : 61,
 		increaseFontSize                : 62,
 		decreaseFontSize                : 63
@@ -438,9 +440,17 @@
 		new CTestEvent(createEvent(oKeyCode.Minus, true, true, false, false, false))
 
 	];
+	oGraphicTestEvents[oGraphicTypes.hyphen] = [
+		new CTestEvent(createEvent(oKeyCode.Minus, true, false, false, false, false))
+
+	];
+	oGraphicTestEvents[oGraphicTypes.underscore] = [
+		new CTestEvent(createEvent(oKeyCode.Minus, false, true, false, false, false))
+
+	];
 	oGraphicTestEvents[oGraphicTypes.subscript] = [
-		new CTestEvent(createEvent(oKeyCode.Equal, true, false, true, false, false)),
-		new CTestEvent(createEvent(oKeyCode.EqualFirefox, true, false, true, false, false)),
+		new CTestEvent(createEvent(oKeyCode.Equal, true, false, false, false, false)),
+		new CTestEvent(createEvent(oKeyCode.EqualFirefox, true, false, false, false, false)),
 		new CTestEvent(createEvent(oKeyCode.Period, true, false, false, false, false))
 
 	];
