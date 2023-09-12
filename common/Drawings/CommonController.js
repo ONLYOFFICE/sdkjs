@@ -9007,9 +9007,10 @@
 					if (aSelectedObjects.length < 1) {
 						return null;
 					}
-					let sSrc = aSelectedObjects[0].getBase64Img(bForceAsDraw, sImageFormat);
-					let nWidth = aSelectedObjects[0].cachedPixW || 50;
-					let nHeight = aSelectedObjects[0].cachedPixH || 50;
+					let oFirstSelectedObject = aSelectedObjects[0].isObjectInSmartArt() ? aSelectedObjects[0].group.group : aSelectedObjects[0];
+					let sSrc = oFirstSelectedObject.getBase64Img(bForceAsDraw, sImageFormat);
+					let nWidth = oFirstSelectedObject.cachedPixW || 50;
+					let nHeight = oFirstSelectedObject.cachedPixH || 50;
 					return {
 						"src": sSrc,
 						"width": nWidth,
@@ -9024,6 +9025,10 @@
 					let oController = this;
 					if (selectedObjects.length > 0) {
 						let oFirstSelectedObject = selectedObjects[0];
+						if (oFirstSelectedObject.isObjectInSmartArt())
+						{
+							oFirstSelectedObject = oFirstSelectedObject.group.group;
+						}
 						if(!oFirstSelectedObject) {
 							return;
 						}
@@ -9037,8 +9042,6 @@
 
 							let _w = nWidth * AscCommon.g_dKoef_pix_to_mm;
 							let _h = nHeight * AscCommon.g_dKoef_pix_to_mm;
-							let oImage = oController.createImage(sImageUrl, 0, 0, _w, _h);
-
 							for (let nSp = 0; nSp < spTree.length; ++nSp) {
 								let oSp = spTree[nSp];
 								if (oSp === oFirstSelectedObject) {
@@ -9052,6 +9055,14 @@
 											oController.selectObject(oSp, 0);
 										}
 									} else {
+										const oImage = oController.createImage(sImageUrl, 0, 0, _w, _h);
+										if (oController.drawingObjects.cSld) {
+											oImage.setParent(oController.drawingObjects);
+										} else {
+											if (oController.drawingObjects.getWorksheetModel) {
+												oImage.setWorksheet(oController.drawingObjects.getWorksheetModel());
+											}
+										}
 										let _xfrm = oSp.spPr && oSp.spPr.xfrm;
 										let _xfrm2 = oImage.spPr.xfrm;
 										if (_xfrm) {
@@ -9069,17 +9080,11 @@
 											_group.addToSpTree(nSp, oImage);
 											oImage.setGroup(_group);
 											oController.selection.groupSelection.resetInternalSelection();
+											oController.selection.groupSelection.resetSelection();
 											_group.selectObject(oImage, nPageIndex);
 										} else {
 											let nPos = oFirstSelectedObject.deleteDrawingBase(false);
 											if (nPos > -1) {
-												if (oController.drawingObjects.cSld) {
-													oImage.setParent(oController.drawingObjects);
-												} else {
-													if (oController.drawingObjects.getWorksheetModel) {
-														oImage.setWorksheet(oController.drawingObjects.getWorksheetModel());
-													}
-												}
 												oImage.addToDrawingObjects(nPos, AscCommon.c_oAscCellAnchorType.cellanchorOneCell);
 												oImage.checkDrawingBaseCoords();
 												oController.resetSelection();
