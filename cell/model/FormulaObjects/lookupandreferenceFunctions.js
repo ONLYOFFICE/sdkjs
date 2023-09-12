@@ -2379,7 +2379,7 @@ function (window, undefined) {
 			array.addElement(elem);
 		} else if (cElementType.cellsRange === args[0].type || cElementType.cellsRange3D === args[0].type) {
 			array = new cArray();
-			array.fillFromArray(args[0].toArray());
+			array.fillFromArray(args[0].getMatrix());
 		} else {
 			array = args[0];
 		}
