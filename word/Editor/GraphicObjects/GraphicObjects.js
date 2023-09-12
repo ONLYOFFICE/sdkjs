@@ -127,12 +127,12 @@ CGraphicObjects.prototype =
     startEditGeometry: DrawingObjectsController.prototype.startEditGeometry,
     haveTrackedObjects: DrawingObjectsController.prototype.haveTrackedObjects,
 
-    checkSelectedObjectsAndCallback: function(callback, args, bNoSendProps, nHistoryPointType, aAdditionaObjects)
+    checkSelectedObjectsAndCallback: function(callback, args, bNoSendProps, nHistoryPointType, aAdditionaObjects, bNoCheckLock)
     {
     	var oLogicDocument = editor.WordControl.m_oLogicDocument;
 
         var check_type = AscCommon.changestype_Drawing_Props;
-        if(oLogicDocument.Document_Is_SelectionLocked(check_type, null, false, false) === false)
+        if(bNoCheckLock || oLogicDocument.Document_Is_SelectionLocked(check_type, null, false, false) === false)
         {
             var nPointType = AscFormat.isRealNumber(nHistoryPointType) ? nHistoryPointType : AscDFH.historydescription_CommonControllerCheckSelected;
 			oLogicDocument.StartAction(nPointType);

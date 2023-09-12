@@ -4818,7 +4818,7 @@
 							return;
 						}
 					}
-					this.checkSelectedObjectsAndCallback(this.removeCallback, [dir, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord, undefined], false, AscDFH.historydescription_Spreadsheet_Remove);
+					this.checkSelectedObjectsAndCallback(this.removeCallback, [dir, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord, undefined], false, AscDFH.historydescription_Spreadsheet_Remove, undefined, !!(oTargetContent && AscCommon.CollaborativeEditing.Is_Fast()));
 				},
 
 				removeCallback: function (dir, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord, bNoCheck) {
@@ -6987,8 +6987,9 @@
 							}
 						} else {
 							for (var i = 0; i < oDrawingSelectionState.selection.length; ++i) {
-								var oSp = oDrawingSelectionState.selection[i].object;
-								if (oSp.IsUseInDocument() && !oSp.group
+								const oSp = oDrawingSelectionState.selection[i].object;
+								const oMainGroup = oSp.group ? oSp.group.getMainGroup() : null;
+								if (oSp.IsUseInDocument() && (!oMainGroup || oMainGroup === this)
 									&& (!bSlide || oSp.parent === this.drawingObjects)) {
 									this.selectObject(oSp, bDocument ? (oSp.parent ? oSp.parent.PageNum : nPageIndex) : nPageIndex);
 								}
