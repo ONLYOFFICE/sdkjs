@@ -764,43 +764,138 @@ $(function () {
 
 	});
 
-	QUnit.test("Test: \"Formula parse\"", function (assert) {
+	QUnit.test("Test: \"Range union operator tests\"", function (assert) {
+		let array;
 
-		oParser = new parserFormula('SUMA2', 'A2', ws);
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("A3").setValue("3");
+		ws.getRange2("A4").setValue("99");
+		ws.getRange2("B1").setValue("1");
+		ws.getRange2("B2").setValue("2");
+		ws.getRange2("B3").setValue("3");
+		ws.getRange2("C1").setValue("1");
+		ws.getRange2("C2").setValue("2");
+		ws.getRange2("C3").setValue("3");
+		ws.getRange2("F1").setValue("#NUM!");
+		ws.getRange2("F2").setValue("#DIV/0!");
+		ws.getRange2("F3").setValue("#N/A");
+
+		oParser = new parserFormula('SUMA2', 'A10', ws);
 		assert.ok(oParser.parse(), 'SUMA2');
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'SUMA2');
 
-		oParser = new parserFormula('SUMA2:1', 'A2', ws);
+		oParser = new parserFormula('SUMA2:1', 'A10', ws);
 		assert.ok(oParser.parse(), 'SUMA2:1');
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'SUMA2:1');
 
-		oParser = new parserFormula('SUMA2:A3', 'A2', ws);
+		oParser = new parserFormula('SUMA2:A3', 'A10', ws);
 		assert.ok(oParser.parse(), 'SUMA2:A3');
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'SUMA2:A3');
 
-		oParser = new parserFormula('SECB2', 'A2', ws);
+		oParser = new parserFormula('SECB2', 'A10', ws);
 		assert.ok(oParser.parse(), 'SECB2');
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'SECB2');
 		
-		oParser = new parserFormula('SECB2:1', 'A2', ws);
+		oParser = new parserFormula('SECB2:1', 'A10', ws);
 		assert.ok(oParser.parse(), 'SECB2:1');
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'SECB2:1');
 
-		oParser = new parserFormula('SECB2:B3', 'A2', ws);
+		oParser = new parserFormula('SECB2:B3', 'A10', ws);
 		assert.ok(oParser.parse(), 'SECB2:B3');
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'SECB2:B3');
 
-		oParser = new parserFormula('RANDC2', 'A2', ws);
+		oParser = new parserFormula('RANDC2', 'A10', ws);
 		assert.ok(oParser.parse(), 'RANDC2');
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'RANDC2');
 		
-		oParser = new parserFormula('RANDC2:1', 'A2', ws);
+		oParser = new parserFormula('RANDC2:1', 'A10', ws);
 		assert.ok(oParser.parse(), 'RANDC2:1');
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'RANDC2:1');
 
-		oParser = new parserFormula('RANDC2:C3', 'A2', ws);
+		oParser = new parserFormula('RANDC2:C3', 'A10', ws);
 		assert.ok(oParser.parse(), 'RANDC2:C3');
 		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", 'RANDC2:C3');
+
+		oParser = new parserFormula('C1:C3', 'A10', ws);
+		assert.ok(oParser.parse(), 'C1:C3');
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.cellsRange === array.type || AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 0).getValue() : array.getElementRowCol(0, 0).getValue(), 1, "Result of C1:C3[0,0]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(1, 0).getValue() : array.getElementRowCol(1, 0).getValue(), 2, "Result of C1:C3[1,0]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(2, 0).getValue() : array.getElementRowCol(2, 0).getValue(), 3, "Result of C1:C3[2,0]");
+		}
+
+		oParser = new parserFormula('C2:C3:C2', 'A10', ws);
+		assert.ok(oParser.parse(), 'C2:C3:C2');
+		array = oParser.calculate();
+		debugger
+		if (AscCommonExcel.cElementType.cellsRange === array.type || AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 0).getValue() : array.getElementRowCol(0, 0).getValue(), 2, "Result of C2:C3:C2[0,0]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(1, 0).getValue() : array.getElementRowCol(1, 0).getValue(), 3, "Result of C2:C3:C2[1,0]");
+		}
+		
+		oParser = new parserFormula('(A1:A3):F1', 'A10', ws);
+		assert.ok(oParser.parse(), '(A1:A3):F1');
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.cellsRange === array.type || AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 0).getValue() : array.getElementRowCol(0, 0).getValue(), 1, "Result of (A1:A3):F1[0,0]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 1).getValue() : array.getElementRowCol(0, 1).getValue(), 1, "Result of (A1:A3):F1[0,1]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 2).getValue() : array.getElementRowCol(0, 2).getValue(), 1, "Result of (A1:A3):F1[0,2]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 5).getValue() : array.getElementRowCol(0, 5).getValue(), "#NUM!", "Result of (A1:A3):F1[0,5]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(1, 0).getValue() : array.getElementRowCol(1, 0).getValue(), 2, "Result of (A1:A3):F1[1,0]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(2, 0).getValue() : array.getElementRowCol(2, 0).getValue(), 3, "Result of (A1:A3):F1[2,0]");
+		}
+
+		oParser = new parserFormula('F1:(A1:A3)', 'A10', ws);
+		assert.ok(oParser.parse(), 'F1:(A1:A3)');
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.cellsRange === array.type || AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 0).getValue() : array.getElementRowCol(0, 0).getValue(), 1, "Result of F1:(A1:A3)[0,0]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 1).getValue() : array.getElementRowCol(0, 1).getValue(), 1, "Result of F1:(A1:A3)[0,1]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 2).getValue() : array.getElementRowCol(0, 2).getValue(), 1, "Result of F1:(A1:A3)[0,2]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 5).getValue() : array.getElementRowCol(0, 5).getValue(), "#NUM!", "Result of F1:(A1:A3)[0,5]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(1, 0).getValue() : array.getElementRowCol(1, 0).getValue(), 2, "Result of F1:(A1:A3)[1,0]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(2, 0).getValue() : array.getElementRowCol(2, 0).getValue(), 3, "Result of F1:(A1:A3)[2,0]");
+		}
+
+		oParser = new parserFormula('F2:(A2)', 'A10', ws);
+		assert.ok(oParser.parse(), 'F2:(A2)');
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.cellsRange === array.type || AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 0).getValue() : array.getElementRowCol(0, 0).getValue(), 2, "Result of F2:(A2)[0,0]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 1).getValue() : array.getElementRowCol(0, 1).getValue(), 2, "Result of F2:(A2)[0,1]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 2).getValue() : array.getElementRowCol(0, 2).getValue(), 2, "Result of F2:(A2)[0,2]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 5).getValue() : array.getElementRowCol(0, 5).getValue(), "#DIV/0!", "Result of F2:(A2)[0,5]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(1, 0).getValue() : array.getElementRowCol(1, 0).getValue(), 3, "Result of F2:(A2)[1,0]");
+		}
+
+		oParser = new parserFormula('(A2):F2', 'A10', ws);
+		assert.ok(oParser.parse(), '(A2):F2');
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.cellsRange === array.type || AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 0).getValue() : array.getElementRowCol(0, 0).getValue(), 2, "Result of (A2):F2[0,0]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 1).getValue() : array.getElementRowCol(0, 1).getValue(), 2, "Result of (A2):F2[0,1]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 2).getValue() : array.getElementRowCol(0, 2).getValue(), 2, "Result of (A2):F2[0,2]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 5).getValue() : array.getElementRowCol(0, 5).getValue(), "#DIV/0!", "Result of (A2):F2[0,5]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(1, 0).getValue() : array.getElementRowCol(1, 0).getValue(), 3, "Result of (A2):F2[1,0]");
+		}
+
+		oParser = new parserFormula('F2:(E1):A1:F2:F3:(A4)', 'A10', ws);
+		assert.ok(oParser.parse(), 'F2:(E1):A1:F2:F3:(A4)');
+		array = oParser.calculate();
+		if (AscCommonExcel.cElementType.cellsRange === array.type || AscCommonExcel.cElementType.array === array.type) {
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 0).getValue() : array.getElementRowCol(0, 0).getValue(), 1, "Result of F2:(E1):A1:F2:F3:(A4)[0,0]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(1, 0).getValue() : array.getElementRowCol(1, 0).getValue(), 2, "Result of F2:(E1):A1:F2:F3:(A4)[1,0]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(2, 0).getValue() : array.getElementRowCol(2, 0).getValue(), 3, "Result of F2:(E1):A1:F2:F3:(A4)[2,0]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(3, 0).getValue() : array.getElementRowCol(3, 0).getValue(), 99, "Result of F2:(E1):A1:F2:F3:(A4)[3,0]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 1).getValue() : array.getElementRowCol(0, 1).getValue(), 1, "Result of F2:(E1):A1:F2:F3:(A4)[0,1]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 2).getValue() : array.getElementRowCol(0, 2).getValue(), 1, "Result of F2:(E1):A1:F2:F3:(A4)[0,2]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 5).getValue() : array.getElementRowCol(0, 5).getValue(), "#NUM!", "Result of F2:(E1):A1:F2:F3:(A4)[0,5]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(1, 5).getValue() : array.getElementRowCol(1, 5).getValue(), "#DIV/0!", "Result of F2:(E1):A1:F2:F3:(A4)[1,5]");
+			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(2, 5).getValue() : array.getElementRowCol(2, 5).getValue(), "#N/A", "Result of F2:(E1):A1:F2:F3:(A4)[2,5]");
+		}
+		
 
 		ws.getRange2("A1:Z100").cleanAll();
 	});
