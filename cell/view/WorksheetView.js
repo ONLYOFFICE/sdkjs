@@ -4260,6 +4260,11 @@
 		//draw after other
 		//this._drawPageBreakPreviewLines(drawingCtx, range, offsetXForDraw, offsetYForDraw);
 
+		let isPrint = this.usePrintScale;
+		if (isPrint) {
+			this.drawTraceArrows(range, offsetX, offsetY, [drawingCtx]);
+		}
+
 		if (!drawingCtx && !window['IS_NATIVE_EDITOR']) {
 			// restore canvas' original clipping range
 			this.drawingCtx.restore();
@@ -4980,9 +4985,9 @@
 		}
 	};
 
-	WorksheetView.prototype.drawTraceArrows = function (visibleRange, offsetX, offsetY) {
+	WorksheetView.prototype.drawTraceArrows = function (visibleRange, offsetX, offsetY, args) {
 		let traceManager = this.traceDependentsManager;
-		let ctx = this.overlayCtx;
+		let ctx = args[0] ? args[0] : this.overlayCtx;
 		let widthLine = 2, 
 			customScale = AscBrowser.retinaPixelRatio,
 			zoom = this.getZoom();
