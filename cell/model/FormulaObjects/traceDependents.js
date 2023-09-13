@@ -555,6 +555,7 @@ function (window, undefined) {
 				}
 				if (Object.keys(this.dependents[cellIndex]).length === 0) {
 					delete this.dependents[cellIndex];
+					this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TraceDependentsNoFormulas, c_oAscError.Level.NoCritical);
 				}
 			} else {
 				if (this.checkCircularReference(cellIndex, true)) {
