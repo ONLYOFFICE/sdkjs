@@ -828,8 +828,7 @@ $(function () {
 
 		oParser = new parserFormula('C2:C3:C2', 'A10', ws);
 		assert.ok(oParser.parse(), 'C2:C3:C2');
-		array = oParser.calculate();
-		debugger
+		array = oParser.calculate();	
 		if (AscCommonExcel.cElementType.cellsRange === array.type || AscCommonExcel.cElementType.array === array.type) {
 			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(0, 0).getValue() : array.getElementRowCol(0, 0).getValue(), 2, "Result of C2:C3:C2[0,0]");
 			assert.strictEqual(array.getValueByRowCol ? array.getValueByRowCol(1, 0).getValue() : array.getElementRowCol(1, 0).getValue(), 3, "Result of C2:C3:C2[1,0]");
