@@ -815,10 +815,6 @@ function (window, undefined) {
 			}
 
 			let area = areas[areaName];
-			// if (area.isCalculated) {
-			// 	return indexes;
-			// }
-
 			for (let i = area.range.r1; i <= area.range.r2; i++) {
 				for (let j = area.range.c1; j <= area.range.c2; j++) {
 					// ??? check parserFormula and return indexes only with it
@@ -999,10 +995,13 @@ function (window, undefined) {
 
 						if (is3D) {
 							// TODO другой механизм отрисовки для внешних precedents
-							elemCellIndex += ";" + (elem.wsTo ? elem.wsTo.index : elem.ws.index);
+							let elemIndex = elem.wsTo ? elem.wsTo.index : elem.ws.index;
+							if (currentWsIndex !== elemIndex) {
+								elemCellIndex += ";" + elemIndex;
+								this.setPrecedentExternal(currentCellIndex);
+							}
 							this._setDependents(elemCellIndex, currentCellIndex);
 							this._setPrecedents(currentCellIndex, elemCellIndex);
-							this.setPrecedentExternal(currentCellIndex);
 						} else {
 							this._setPrecedents(currentCellIndex, elemCellIndex, false, false);
 							this._setDependents(elemCellIndex, currentCellIndex);

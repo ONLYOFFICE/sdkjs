@@ -277,17 +277,36 @@ $(function() {
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 		});
 		QUnit.test("Test: \"Precedents\"", function (assert) {
-			ws.getRange2("A1:J20").cleanAll();
+			let wsName = ws.getName();
+			ws.getRange2("A1:J100").cleanAll();
 
-			ws.getRange2("A1").setValue("=Sheet2!A10:A11+I5:J6+C1+A10:A11+Sheet2!C3");
-			ws.getRange2("C1").setValue("=Sheet2!A10:A11+Sheet2!C3");
 			let A1Index = AscCommonExcel.getCellIndex(ws.getRange2("A1").bbox.r1, ws.getRange2("A1").bbox.c1),
+				A2Index = AscCommonExcel.getCellIndex(ws.getRange2("A2").bbox.r1, ws.getRange2("A2").bbox.c1),
+				A3Index = AscCommonExcel.getCellIndex(ws.getRange2("A3").bbox.r1, ws.getRange2("A3").bbox.c1);
 				C1Index = AscCommonExcel.getCellIndex(ws.getRange2("C1").bbox.r1, ws.getRange2("C1").bbox.c1),
 				I5Index = AscCommonExcel.getCellIndex(ws.getRange2("I5").bbox.r1, ws.getRange2("I5").bbox.c1),
 				A10Index = AscCommonExcel.getCellIndex(ws.getRange2("A10").bbox.r1, ws.getRange2("A10").bbox.c1),
 				A10ExternalIndex = AscCommonExcel.getCellIndex(ws2.getRange2("A10").bbox.r1, ws2.getRange2("A10").bbox.c1) + ";0",
 				C3ExternalIndex = AscCommonExcel.getCellIndex(ws2.getRange2("C3").bbox.r1, ws2.getRange2("C3").bbox.c1) + ";0";
 
+			if (wsName) {
+				ws.getRange2("A3").setValue("=SUM(" + wsName + "!A1," + wsName + "!A2)");
+				
+				ws.selectionRange.ranges = [ws.getRange2("A3").getBBox0()];
+				ws.selectionRange.setActiveCell(ws.getRange2("A3").getBBox0().r1, ws.getRange2("A3").getBBox0().c1);
+	
+				assert.ok(1, "Trace precedents from A3");
+				api.asc_TracePrecedents();
+				assert.strictEqual(traceManager._getPrecedents(A3Index, A1Index), 1, "A3<-A1");
+				assert.strictEqual(traceManager._getPrecedents(A3Index, A2Index), 1, "A3<-A2");
+		
+				// clear traces
+				api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+			}
+
+
+			ws.getRange2("A1").setValue("=Sheet2!A10:A11+I5:J6+C1+A10:A11+Sheet2!C3");
+			ws.getRange2("C1").setValue("=Sheet2!A10:A11+Sheet2!C3");
 			
 			ws.selectionRange.ranges = [ws.getRange2("A1").getBBox0()];
 			ws.selectionRange.setActiveCell(ws.getRange2("A1").getBBox0().r1, ws.getRange2("A1").getBBox0().c1);
