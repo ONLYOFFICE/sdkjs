@@ -5302,7 +5302,7 @@
 				for (let i in to) {
 					let cellFrom = AscCommonExcel.getFromCellIndex(from, true);
 					if (-1 !== i.indexOf(";")) {
-						if (visibleRange.contains2(cellFrom) && !otherSheetMap[from]) {
+						if (!otherSheetMap[from]) {
 							doDrawArrow(cellFrom, null, true, false);
 						}
 					} else {
