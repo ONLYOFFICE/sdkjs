@@ -5307,7 +5307,10 @@
 						}
 					} else {
 						let cellTo = AscCommonExcel.getFromCellIndex(i, true);
-						if (visibleRange.contains2(cellFrom) || visibleRange.contains2(cellTo) || (cellFrom.row !== cellTo.row && cellFrom.col !== cellTo.col)) {
+						let range = new Asc.Range(cellFrom.col, cellFrom.row, cellTo.col, cellTo.row);
+						range.normalize();
+
+						if (visibleRange.contains2(cellFrom) || visibleRange.contains2(cellTo) || visibleRange.isIntersect(range)) {
 							doDrawArrow(cellFrom, cellTo, false, isPrecedent);
 						}
 					}
