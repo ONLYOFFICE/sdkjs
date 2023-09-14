@@ -5307,11 +5307,14 @@
 						}
 					} else {
 						let cellTo = AscCommonExcel.getFromCellIndex(i, true);
-						let range = new Asc.Range(cellFrom.col, cellFrom.row, cellTo.col, cellTo.row);
-						range.normalize();
-
-						if (visibleRange.contains2(cellFrom) || visibleRange.contains2(cellTo) || visibleRange.isIntersect(range)) {
+						if (visibleRange.contains2(cellFrom) || visibleRange.contains2(cellTo)) {
 							doDrawArrow(cellFrom, cellTo, false, isPrecedent);
+						} else {
+							let range = new Asc.Range(cellFrom.col, cellFrom.row, cellTo.col, cellTo.row);
+							range.normalize();
+							if (visibleRange.isIntersect(range)) {
+								doDrawArrow(cellFrom, cellTo, false, isPrecedent);
+							}
 						}
 					}
 				}
