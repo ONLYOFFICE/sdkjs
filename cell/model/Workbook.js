@@ -19443,15 +19443,21 @@
 	CSerial.prototype.getIndex = function() {
 		return this.nIndex;
 	};
+	/**
+	 * Creates and returns range with filled cells
+	 * @memberof CSerial
+	 * @returns {CSerial.oFromRange}
+	 */
 	CSerial.prototype.getFilledRange = function() {
 		let oFromRange = this.getFromRange();
 		let nRow = 0;
 		let nCol = 0;
 		let sType = this.getType();
+		let bTrend = this.getTrend();
 
 		oFromRange._foreachNoEmpty(function(oCell, nRow0, nCol0) {
 			if (oCell && oCell.getValueWithoutFormat()) {
-				if (sType === 'AutoFill') {
+				if (sType === 'AutoFill' || bTrend) {
 					nRow = nRow0;
 					nCol = nCol0;
 				} else { // for other modes use only first filled cell in range
@@ -19468,6 +19474,10 @@
 
 		return oFromRange;
 	};
+	/**
+	 * Creates a range to be filled
+	 * @memberof CSerial
+	 */
 	CSerial.prototype.initToRange = function() {
 		let ws = this.getWs();
 		let oFilledRange = this.getFilledRange();
@@ -19476,8 +19486,13 @@
 		let oTo = oFilledRange.canPromote(false, this.getVertical(), this.getIndex()).to;
 		this.setToRange(ws.getRange3(oTo.r1, oTo.c1, oTo.r2, oTo.c2));
 	};
+	/**
+	 * Returns an array of Objects that contains: the value of first cell, the range to fill and object of the cell
+	 * @memberof CSerial
+	 * @returns {Object[]}
+	 */
 	CSerial.prototype.getFilledCells = function() {
-		let oCSerial = this;
+		let oSerial = this;
 		let oFromRange = this.getFromRange();
 		let bVertical = this.getVertical();
 		let sType = this.getType();
@@ -19491,8 +19506,8 @@
 					false: nCol === nColStart
 				};
 				if (oDirectCondition[bVertical] && nType === CellValueType.Number) {
-					oCSerial.initToRange();
-					let oToRange = oCSerial.getToRange();
+					oSerial.initToRange();
+					let oToRange = oSerial.getToRange();
 					bVertical ? oToRange.bbox.c1 = nCol : oToRange.bbox.r1 = nRow;
 					aFilledCells.push({
 						'nValue': oCell.getNumberValue(),
@@ -19505,6 +19520,10 @@
 
 		return aFilledCells;
 	};
+	/**
+	 * Creates history point for "Serial" feature
+	 * @memberof CSerial
+	 */
 	CSerial.prototype.initHistoryPoint = function() {
 		let nIndex = this.getIndex();
 		let oBBox = this.getFromRange().bbox;
@@ -19538,7 +19557,7 @@
 		}
 	};
 	/**
-	 * Fill current value for Date type
+	 * Fills current value for Date type
 	 * @param {number} nPrevVal Previous cell value
 	 * @param {number} nStep Step value
 	 * @param {string} sDateUnit Date unit
@@ -19572,15 +19591,22 @@
 		}
 
 		return oPrevValDate.getExcelDate();
-	};
+	}
+
+	/**
+	 * Fills cells in Linear and Growth regression except Trend mode
+	 * @memberof CSerial
+	 * @param {Object[]} aFilledCells
+	 */
 	CSerial.prototype.promoteCells = function(aFilledCells) {
-		History.StartTransaction();
-		let oCSerial = this;
+		let oSerial = this;
 		let nStep = this.getTrend() ? 1 : Number(this.getStep());
 		let nStopValue = this.getStopValue() ? Number(this.getStopValue()) : null;
+		let nIndexFilledLine = null;
 
 		for (let i = 0, length = aFilledCells.length; i < length; i++) {
 			let oFilledCell = aFilledCells[i];
+			nIndexFilledLine = this.getVertical() ? oFilledCell.oCell.nRow + i : aFilledCells[i].oCell.nCol + i;
 			let oTo = oFilledCell.oToRange.bbox;
 			let oToRange = oFilledCell.oToRange;
 			let oWsTo = oFilledCell.oToRange.worksheet;
@@ -19594,19 +19620,19 @@
 			let nEndIndex = this.getVertical() ?  oTo.r2 : oTo.c2;
 			// Fill range cells for i row or col
 			for (let j = nStartIndex; j <= nEndIndex; j++) {
-				let nRow = this.getVertical() ? j : i;
-				let nCol = this.getVertical() ? i : j;
+				let nRow = this.getVertical() ? j : nIndexFilledLine;
+				let nCol = this.getVertical() ? nIndexFilledLine : j;
 				let bStopLoop = false;
 				let oProgression = {
 					'Linear': function() { return nPrevValue + nStep; },
 					'Growth': function() { return nPrevValue * nStep; },
-					'Date': function() { return _fillExcelDate(nPrevValue, nStep, oCSerial.getDateUnit()); }
+					'Date': function() { return _fillExcelDate(nPrevValue, nStep, oSerial.getDateUnit()); }
 				};
 
 				oWsTo._getCell(nRow, nCol, function(oCopyCell) {
 					if (nPrevValue) {
 						let oCellValue = new AscCommonExcel.CCellValue();
-						let nCurrentValue = oProgression[oCSerial.getType()]();
+						let nCurrentValue = oProgression[oSerial.getType()]();
 						if (nStopValue && nCurrentValue > nStopValue) {
 							bStopLoop = true;
 							return;
@@ -19624,8 +19650,101 @@
 				if (bStopLoop) break;
 			}
 		}
-		History.EndTransaction();
 	};
+	/**
+	 * Gets value and index filled cell in loop for calculate sum in fAction. Uses for linear regression
+	 * in promoteCellsWithTrend method
+	 * @memberof CSerial
+	 * @param {number} nStartIndex Index for start loop
+	 * @param {number} nEndIndex Index for finish loop
+	 * @param {number} nFilledCellIter Iteration of filled cell. Uses for define nRow or nCol at getting cell
+	 * @param fAction Callback function for calculate sum with parameters: nValue, nIndexCell
+	 */
+	CSerial.prototype._calcSum = function(nStartIndex, nEndIndex, nFilledCellIter, fAction) {
+		if (fAction) {
+			let oSerial = this;
+			let oWsFrom = this.getFromRange().worksheet;
+			let oRes = null;
+			for (let i = nStartIndex; i < nEndIndex; i++) {
+				let nRow = this.getVertical() ? i : nFilledCellIter;
+				let nCol = this.getVertical() ? nFilledCellIter : i;
+				oWsFrom._getCell(nRow, nCol, function(oCell) {
+					let nValue = oCell.getNumberValue();
+					if (nValue !== null) {
+						// For Growth type take ln from value
+						if (oSerial.getType() === 'Growth') {
+							nValue = Math.log(nValue);
+						}
+						oRes = fAction(nValue, i);
+					}
+				});
+				if (oRes != null) return oRes;
+			}
+		}
+	};
+	/**
+	 * Fills cells in Trend mode. For fill cells Trend mode uses linear regression formula - y = a + bx, when:
+	 * a - intercept,
+	 * b - slop,
+	 * x - index of cell who must be fill
+	 * @memberof CSerial
+	 * @param {object[]} aFilledCells
+	 * @param {number} nLastIndexFilledCell
+	 */
+	CSerial.prototype.promoteCellsWithTrend = function (aFilledCells, nLastIndexFilledCell) {
+		let oSerial = this;
+		let oFromRange = this.getFromRange();
+		let nIndexFilledCellLine = null;
+
+		for (let i = 0, length = aFilledCells.length; i < length; i++) {
+			nIndexFilledCellLine = this.getVertical() ? aFilledCells[i].oCell.nRow + i : aFilledCells[i].oCell.nCol + i;
+			let nStartIndex = this.getVertical() ? oFromRange.bbox.r1 : oFromRange.bbox.c1;
+			let nFilledCellLength = nLastIndexFilledCell + 1;
+			// Define variables for calculate linear regression
+			let nSumX = 0;
+			let nSumY = 0;
+			let nNumeratorOfSlope = 0;
+			let nDenominatorOfSlope = 0;
+			// Getting filled cells and calculating sum of index cell (x) and Values (y) for calculate intercept and slop
+			// for linear regression formula: y = intercept + slop * x
+			this._calcSum(nStartIndex, nFilledCellLength, nIndexFilledCellLine, function(nValue, nCellIndex) {
+				nSumX += nCellIndex;
+				nSumY += nValue;
+			});
+			let nXAvg = nSumX / nFilledCellLength;
+			let nYAvg = nSumY / nFilledCellLength;
+			this._calcSum(nStartIndex, nFilledCellLength, nIndexFilledCellLine, function(nValue, nCellIndex){
+				nNumeratorOfSlope += (nCellIndex - nXAvg) * (nValue - nYAvg);
+				nDenominatorOfSlope += Math.pow((nCellIndex - nXAvg), 2);
+			});
+			let nSlope = nNumeratorOfSlope / nDenominatorOfSlope;
+			let nIntercept = nYAvg - nSlope * nXAvg;
+
+			// Fill cells in selection range
+			let nEndIndex = this.getIndex();
+			let oFromCell = aFilledCells[i].oCell;
+			let oWsTo = aFilledCells[i].oToRange.worksheet;
+			for (let x = nStartIndex; x <= nEndIndex; x++) {
+				let nRow = this.getVertical() ? x : nIndexFilledCellLine;
+				let nCol = this.getVertical() ? nIndexFilledCellLine : x;
+				oWsTo._getCell(nRow, nCol, function(oCopyCell) {
+					oCopyCell.cleanText();
+					let oCellValue = new AscCommonExcel.CCellValue();
+					let nCellValue = nIntercept + nSlope * x;
+					if (oSerial.getType() === 'Growth') nCellValue = Math.exp(nCellValue);
+					oCellValue.type = CellValueType.Number;
+					oCellValue.number = nCellValue;
+					oCopyCell.setValueData(new UndoRedoData_CellValueData(null, oCellValue));
+					// Add styles from firstCell
+					if (null != oFromCell) oCopyCell.setStyle(oFromCell.getStyle());
+				});
+			}
+		}
+	};
+	/**
+	 * Main method runs "Serial" feature according to the specified parameters
+	 * @memberof CSerial
+	 */
 	CSerial.prototype.exec = function() {
 		let oFromRange = this.getFromRange();
 		let bVertical = this.getVertical();
@@ -19639,8 +19758,18 @@
 			oFilledRange.promote(false, this.getVertical(), this.getIndex(), oCanPromote);
 		} else {
 			let aFilledCells = this.getFilledCells();
-			this.initHistoryPoint();
-			this.promoteCells(aFilledCells);
+			if (aFilledCells.length) {
+				let oFilledRange = this.getFilledRange();
+				let nLastFilledCellIndex = bVertical ? oFilledRange.bbox.r2 : oFilledRange.bbox.c2;
+				this.initHistoryPoint();
+				History.StartTransaction();
+				if (this.getTrend() && nLastFilledCellIndex > 0) {
+					this.promoteCellsWithTrend(aFilledCells, nLastFilledCellIndex);
+                } else {
+					this.promoteCells(aFilledCells);
+				}
+				History.EndTransaction();
+			}
 		}
 	};
 	// Export

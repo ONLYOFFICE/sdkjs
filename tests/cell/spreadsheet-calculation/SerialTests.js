@@ -892,4 +892,47 @@ $(function () {
         autofillData(assert, autofillRange, expectedData, 'Date progression - Year, Step - 3');
         clearData(0, 0, 3, 5);
     });
+    QUnit.test('Fill -> Serial. Trend. Horizontal - Multiple cells', function (assert) {
+        let testData = [
+          ['4', '2', '0']
+        ];
+        // Linear type with trend mode
+        oFromRange = getFilledData(0, 0, 6, 0, testData, [0, 0]);
+        settings = {
+            'type': 'Linear',
+            'step': '',
+            'seriesIn': 'Rows',
+            'stopValue': '',
+            'trend': true
+        };
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(3, 0, 6, 0);
+        autofillData(assert, autofillRange, [['-2', '-4', '-6', '-8']], 'Autofill Rows. Linear type with trend mode');
+        clearData(0,0,6,0);
+
+    });
+    QUnit.test('Fill -> Serial. Trend. Vertical - Multiple cells', function (assert) {
+        let testData = [
+            ['4'],
+            ['2'],
+            ['0']
+        ];
+        // Linear type with trend mode
+        oFromRange = getFilledData(0, 0, 0, 6, testData, [0, 0]);
+        settings = {
+            'type': 'Linear',
+            'step': '',
+            'seriesIn': 'Columns',
+            'stopValue': '',
+            'trend': true
+        };
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 3, 0, 6);
+        autofillData(assert, autofillRange, [['-2'], ['-4'], ['-6'], ['-8']], 'Autofill Columns. Linear type with trend mode');
+        clearData(0,0,0,6);
+    });
 });
