@@ -5080,8 +5080,10 @@
 				if (external) {
 					drawDottedLine(x1, y1, newX2, newY2);
 					drawArrowHead(x2, y2, arrowSize, angle, externalLineColor);
-					drawDot(x1, y1, externalLineColor);
-					drawMiniTable(x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop);
+					// drawDot(x1, y1, externalLineColor);
+					drawDot2(x1, y1, externalLineColor);
+					// drawMiniTable(x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop);
+					drawMiniTable2(x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop);
 				} else {
 					ctx.beginPath();
 					ctx.setStrokeStyle(!external ? lineColor : externalLineColor);
@@ -5089,8 +5091,8 @@
 					ctx.lineTo(newX2, newY2);
 					ctx.closePath().stroke();
 					drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
-					drawDot(x1, y1, lineColor);
-					// drawDot2(x1, y1, lineColor);
+					// drawDot(x1, y1, lineColor);
+					drawDot2(x1, y1, lineColor);
 				}
 			}
 		};
@@ -5147,15 +5149,12 @@
 
 			arrowSize = zoom <= 0.5 ? arrowSize * 1.25 : arrowSize;
 
-			// draw dotted line 
 			drawDottedLine(x1, y1, newX2, newY2);
-			// draw arrowhead
 			drawArrowHead(newX2, newY2, arrowSize, angle, externalLineColor);
-			// draw dot
-			drawDot(x1, y1, externalLineColor);
-			// draw mini table
-			drawMiniTable(x1, y1, miniTableCol, miniTableRow, isTableLeft, isTableTop);
-			// drawMiniTable2(x1, y1, miniTableCol, miniTableRow, isTableLeft, isTableTop);
+			// drawDot(x1, y1, externalLineColor);
+			drawDot2(x1, y1, externalLineColor);
+			// drawMiniTable(x1, y1, miniTableCol, miniTableRow, isTableLeft, isTableTop);
+			drawMiniTable2(x1, y1, miniTableCol, miniTableRow, isTableLeft, isTableTop);
 		};
 
 		const drawDottedLine = function (x1, y1, x2, y2) {
@@ -5226,18 +5225,19 @@
 		};
 		const drawDot2 = function (x, y, color) {
 			const dotRadius = 2.75 * zoom * customScale;
+			const k = 0.552284749831;
+
 			ctx.beginPath();
 			ctx.moveTo(x + dotRadius, y);
-			for (let i = 0; i < 270; i++) {
-				let radians = i * (Math.PI / 180);
-				let x1 = x + dotRadius * Math.cos(radians);
-				let y1 = y + dotRadius * Math.sin(radians);
-				ctx.lineTo(x1, y1);
-			}
-			// ctx.arc(x, y, dotRadius, 0, 2 * Math.PI);
+			ctx.bezierCurveTo(x + dotRadius, y - k * dotRadius, x + k * dotRadius, y - dotRadius, x, y - dotRadius);
+			ctx.bezierCurveTo(x - k * dotRadius, y - dotRadius, x - dotRadius, y - k * dotRadius, x - dotRadius, y);
+			ctx.bezierCurveTo(x - dotRadius, y + k * dotRadius, x - k * dotRadius, y + dotRadius, x, y + dotRadius);
+			ctx.bezierCurveTo(x + k * dotRadius, y + dotRadius, x + dotRadius, y + k * dotRadius, x + dotRadius, y);
+
 			ctx.setFillStyle(color);
 			ctx.closePath().fill();
 		};
+
 		const drawMiniTable = function (x, y, destCol, destRow, isTableLeft, isTableTop) {
 			const paddingX = 8 * zoom * customScale;
 			const paddingY = 4 * zoom * customScale;
