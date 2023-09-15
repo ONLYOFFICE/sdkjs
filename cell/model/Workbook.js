@@ -11485,7 +11485,7 @@
 
 		let _getLocked = function (_xfs) {
 			let _res = null;
-			if (_xfs && _xfs.applyProtection) {
+			if (_xfs/* && _xfs.applyProtection*/) {
 				_res = true;//null/true
 				if (_xfs.getLocked() === false) {
 					_res = false;
