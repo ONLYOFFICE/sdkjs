@@ -2460,6 +2460,7 @@
 			this._paintForms();
 			this._paintFormsHighlight();
 			this._paintComboboxesMarkers();
+			oDoc.UpdateUndoRedo();
 		};
 		this.Get_PageLimits = function() {
 			let W = this.width;
