@@ -67,8 +67,11 @@ CChangesPDFDocumentAddItem.prototype.Undo = function()
 			oViewer.pagesInfo.pages[nPage].annots.splice(this.PosInPage, 1);
 			if (oItem.IsComment())
 				editor.sync_RemoveComment(oItem.GetId());
+			
 		}
 	}
+
+	oDocument.mouseDownAnnot = null;
 };
 CChangesPDFDocumentAddItem.prototype.Redo = function()
 {
@@ -92,6 +95,7 @@ CChangesPDFDocumentAddItem.prototype.Redo = function()
 			oItem.SetHidden(oDocument.IsAnnotsHidden());
 		}
 	}
+	oDocument.mouseDownAnnot = null;
 };
 
 /**
@@ -130,6 +134,8 @@ CChangesPDFDocumentRemoveItem.prototype.Undo = function()
 			oItem.SetHidden(oDocument.IsAnnotsHidden());
 		}
 	}
+
+	oDocument.mouseDownAnnot = null;
 };
 CChangesPDFDocumentRemoveItem.prototype.Redo = function()
 {
@@ -153,4 +159,6 @@ CChangesPDFDocumentRemoveItem.prototype.Redo = function()
 				editor.sync_RemoveComment(oItem.GetId());
 		}
 	}
+	
+	oDocument.mouseDownAnnot = null;
 };
