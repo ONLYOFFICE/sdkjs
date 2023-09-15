@@ -816,19 +816,28 @@
 
 			function ExtractActions(oPanentAction) {
 				let aActions = [];
-				  
 				const propToRemove = 'Next';
-
-				aActions.push(Object.assign({}, ...Object.keys(oPanentAction)
-				.filter(key => key !== propToRemove)
-				.map(key => ({ [key]: oPanentAction[key] }))
-				));
-
-				if (oPanentAction["Next"])
-					return aActions = aActions.concat(ExtractActions(oPanentAction["Next"]));
-
+			  
+				const keys = Object.keys(oPanentAction).filter(function(key) {
+				  return key !== propToRemove;
+				});
+			  
+				const tempObject = {};
+			  
+				for (const key of keys) {
+				  tempObject[key] = oPanentAction[key];
+				}
+			  
+				aActions.push(tempObject);
+			  
+				if (oPanentAction["Next"]) {
+				  const nextActions = ExtractActions(oPanentAction["Next"]);
+				  aActions = aActions.concat(nextActions);
+				}
+			  
 				return aActions;
 			}
+			
 			let aActionsToCorrect = []; // параметры поля в actions указаны как ссылки на ap, после того, как все формы будут созданы, заменим их на ссылки на сами поля. 
 			let aFormsInfo = this.file.nativeFile["getInteractiveFormsInfo"]();
 			
@@ -1595,7 +1604,10 @@
 						// у draw аннотаций ищем по path
 						else if (oAnnot.IsInk())
 						{
-							let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+							let oPos	= oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+							let X       = oPos.X;
+        					let Y       = oPos.Y;
+
 							if (oAnnot.hitInPath(X, Y))
 								return oAnnot;
 						}

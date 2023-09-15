@@ -213,7 +213,9 @@
         let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
 
         oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
 
