@@ -213,7 +213,7 @@
         }
         
         for (let i = 0; i < oPageInfo.annotsAPInfo.info.length; i++) {
-            if (oPageInfo.annotsAPInfo.info[i].i == this._apIdx)
+            if (oPageInfo.annotsAPInfo.info[i]["i"] == this._apIdx)
                 return oPageInfo.annotsAPInfo.info[i];
         }
 
