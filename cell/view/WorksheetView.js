@@ -13103,6 +13103,11 @@
                 // Очищаем выделение
                 wsTo.cleanSelection();
 
+				// clear traces
+				if (t.traceDependentsManager) {
+					t.traceDependentsManager.clearAll();
+				}
+
                 //ToDo t.cleanDepCells();
                 History.Create_NewPoint();
                 if(opt_wsTo === undefined) {
@@ -13112,7 +13117,6 @@
                 History.StartTransaction();
 
                 t.model.autoFilters._preMoveAutoFilters(arnFrom, arnTo, copyRange, opt_wsTo);
-
                 t.model._moveRange(arnFrom, arnTo, copyRange, opt_wsTo && opt_wsTo.model);
                 t.cellCommentator.moveRangeComments(arnFrom, arnTo, copyRange, opt_wsTo);
 				t.moveCellWatches(arnFrom, arnTo, copyRange, opt_wsTo);
