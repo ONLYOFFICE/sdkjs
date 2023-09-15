@@ -286,9 +286,9 @@ function (window, undefined) {
 		const setDefNameIndexes = function (defName, isTable, defNameRange) {
 			let tableHeader = isTable ? getTableHeader(ws.getTableByName(defName)) : false;
 			let isCurrentCellHeader = isTable ? checkIfHeader(tableHeader) : false;
-			for (const i in allDefNamesListeners) {
+			for (let i in allDefNamesListeners) {
 				if (allDefNamesListeners.hasOwnProperty(i) && i.toLowerCase() === defName.toLowerCase()) {
-					for (const listener in allDefNamesListeners[i].listeners) {
+					for (let listener in allDefNamesListeners[i].listeners) {
 						// TODO возможно стоить добавить все слушатели сразу в curListener
 						let elem = allDefNamesListeners[i].listeners[listener];
 						let isArea = elem.ref ? true : false;
@@ -308,9 +308,11 @@ function (window, undefined) {
 								// decompose all elements into dependencies
 								let areaIndexes = getAllAreaIndexes(elem);
 								if (areaIndexes) {
-									for (let index of areaIndexes) {
-										t._setDependents(cellIndex, index);
-										t._setPrecedents(index, cellIndex);
+									for (let index in areaIndexes) {
+										if (areaIndexes.hasOwnProperty(index)) {
+											t._setDependents(cellIndex, areaIndexes[index]);
+											t._setPrecedents(areaIndexes[index], cellIndex);
+										}
 									}
 									continue;
 								}
@@ -472,9 +474,11 @@ function (window, undefined) {
 							}
 						}
 						if (indexes.length > 0) {
-							for (let index of indexes) {
-								t._setDependents(cellIndex, index);
-								t._setPrecedents(index, cellIndex);
+							for (let index in indexes) {
+								if (indexes.hasOwnProperty(index)) {
+									t._setDependents(cellIndex, indexes[index]);
+									t._setPrecedents(indexes[index], cellIndex);
+								}
 							}
 						}
 					}
@@ -498,12 +502,6 @@ function (window, undefined) {
 						let isDefName = !!parent.name;
 						let formula = cellListeners[i].Formula;
 						let is3D = false;
-						const parentInfo = {
-							parent,
-							parentWsId,
-							isTable,
-							isDefName
-						};
 
 						//todo slow operation. parent not have type
 						if (parent instanceof Asc.CT_WorksheetSource) {
@@ -536,9 +534,11 @@ function (window, undefined) {
 							// go through the values and set dependents for each
 							let areaIndexes = getAllAreaIndexes(cellListeners[i]);
 							if (areaIndexes) {
-								for (let index of areaIndexes) {
-									this._setDependents(cellIndex, index);
-									this._setPrecedents(index, cellIndex);
+								for (let index in areaIndexes) {
+									if (areaIndexes.hasOwnProperty(index)) {
+										this._setDependents(cellIndex, areaIndexes[index]);
+										this._setPrecedents(areaIndexes[index], cellIndex);
+									}
 								}
 								continue;
 							}
@@ -579,8 +579,10 @@ function (window, undefined) {
 							let areaIndexes = getAllAreaIndexes(cellListeners[i]);
 							if (areaIndexes) {
 								// go through the values and set dependents for each
-								for (let index of areaIndexes) {
-									this._setDependents(cellIndex, index);
+								for (let index in areaIndexes) {
+									if (areaIndexes.hasOwnProperty(index)) {
+										this._setDependents(cellIndex, areaIndexes[index]);
+									}
 								}
 								continue;
 							}
@@ -710,16 +712,19 @@ function (window, undefined) {
 				if (areaIndexes.length > 0) {
 					fork = true;
 					interLevel = t.data.recLevel;
-					for (let index of areaIndexes) {
-						let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
-						if (index === currentCellIndex) {
-							t.data.lastHeaderIndex = index;
+					for (let index in areaIndexes) {
+						if (areaIndexes.hasOwnProperty(index)) {
+							let _index = areaIndexes[index];
+							let cellAddress = AscCommonExcel.getFromCellIndex(_index, true);
+							if (_index === currentCellIndex) {
+								t.data.lastHeaderIndex = _index;
+							}
+							if (!t.precedents[_index] && _index !== currentCellIndex) {
+								continue;
+							}
+							findMaxNesting(cellAddress.row, cellAddress.col, true);
+							t.data.recLevel = fork ? interLevel : t.data.recLevel;
 						}
-						if (!t.precedents[index] && index !== currentCellIndex) {
-							continue;
-						}
-						findMaxNesting(cellAddress.row, cellAddress.col, true);
-						t.data.recLevel = fork ? interLevel : t.data.recLevel;
 					}
 				}
 			} else if (t.precedents[currentCellIndex]) {
@@ -854,9 +859,11 @@ function (window, undefined) {
 			if (!this.currentCalculatedPrecedentAreas[areaName]) {
 				this.currentCalculatedPrecedentAreas[areaName] = {};
 				// go through the values and check precedents for each
-				for (let index of areaIndexes) {
-					let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
-					this.calculatePrecedents(cellAddress.row, cellAddress.col, true, true);
+				for (let index in areaIndexes) {
+					if (areaIndexes.hasOwnProperty(index)) {
+						let cellAddress = AscCommonExcel.getFromCellIndex(areaIndexes[index], true);
+						this.calculatePrecedents(cellAddress.row, cellAddress.col, true, true);
+					}
 				}
 			}
 		} else if (formulaParsed) {
@@ -886,7 +893,12 @@ function (window, undefined) {
 				let currentWsIndex = formulaParsed.ws.index;
 				let ref = formulaParsed.ref;
 				// iterate and find all reference
-				for (const elem of formulaParsed.outStack) {
+				for (let index in formulaParsed.outStack) {
+					if (!formulaParsed.outStack.hasOwnProperty(index)) {
+						continue;
+					}
+
+					let elem = formulaParsed.outStack[index];
 					let elemType = elem.type ? elem.type : null;
 
 					let is3D = elemType === cElementType.cell3D || elemType === cElementType.cellsRange3D || elemType === cElementType.name3D,
@@ -1045,7 +1057,11 @@ function (window, undefined) {
 				base = shared.base;
 			}
 
-			for (const elem of formulaParsed.outStack) {
+			for (let index in formulaParsed.outStack) {
+				if (!formulaParsed.outStack.hasOwnProperty(index)) {
+					continue;
+				}
+				let elem = formulaParsed.outStack[index];
 				let elemType = elem.type ? elem.type : null;
 
 				let is3D = elemType === cElementType.cell3D || elemType === cElementType.cellsRange3D || elemType === cElementType.name3D,

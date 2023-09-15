@@ -5275,7 +5275,7 @@
 
 		// draw stroke for precedent cArea
 		const drawAreaStroke = function (areas) {
-			for (const area in areas) {
+			for (let area in areas) {
 				const range = areas[area].range,
 					// write top left and bottom right cell coords to draw a rectangle around the range
 					topLeftCoords = {row: range.r1, col: range.c1},
