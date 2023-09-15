@@ -803,11 +803,12 @@
 	};
 
     CTextField.prototype.DoFormatAction = function() {
+        let oViewer             = editor.getDocumentRenderer();
         let oDoc                = this.GetDocument();
         let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
         let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
         
-        let isCanFormat = this.DoKeystrokeAction(null, false, true);
+        let isCanFormat = oViewer.isOnUndoRedo == false ? this.DoKeystrokeAction(null, false, true) : true;
         if (!isCanFormat) {
             editor.sendEvent("asc_onFormatErrorPdfForm", oDoc.GetWarningInfo());
             return false;
@@ -1016,6 +1017,7 @@
         this.CreateNewHistoryPoint(true);
 
         if (this.DoKeystrokeAction(null, true, false) == false) {
+            AscCommon.History.Remove_LastPoint();
             return false;
         }
         

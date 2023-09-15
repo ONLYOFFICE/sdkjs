@@ -1167,6 +1167,10 @@ var CPresentation = CPresentation || function(){};
             oViewer.isOnUndoRedo = false;
         }
     };
+    CPDFDoc.prototype.UpdateUndoRedo = function() {
+		editor.sync_CanUndoCallback(this.History.Can_Undo());
+		editor.sync_CanRedoCallback(this.History.Can_Redo());
+    };
     CPDFDoc.prototype.SetEvent = function(oEventPr) {
         if (oEventPr["target"] != null && oEventPr["target"] != this.event["target"])
             this.event["target"] = oEventPr["target"];
