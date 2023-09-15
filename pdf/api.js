@@ -520,12 +520,12 @@
 		let oDoc			= oViewer.getPDFDoc();
 
 		if (!pageObject) {
-			let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(10, 10, nPage, true);
+			let oPos = AscPDF.GetGlobalCoordsByPageCoords(10, 10, nPage, true);
 			oDoc.anchorPositionToAdd = {
 				x: 10,
 				y: 10
 			};
-			return new AscCommon.asc_CRect(X + nCommentWidth, Y + nCommentHeight / 2, 0, 0);
+			return new AscCommon.asc_CRect(oPos["X"] + nCommentWidth, oPos["Y"] + nCommentHeight / 2, 0, 0);
 		}
 
 		oDoc.anchorPositionToAdd = {
@@ -535,8 +535,8 @@
 
 		if (oDoc.mouseDownAnnot) {
 			let aRect = oDoc.mouseDownAnnot.GetRect();
-			let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(aRect[2], aRect[1] + (aRect[3] - aRect[1]) / 2, nPage, true);
-			return new AscCommon.asc_CRect(X, Y, 0, 0);
+			let oPos = AscPDF.GetGlobalCoordsByPageCoords(aRect[2], aRect[1] + (aRect[3] - aRect[1]) / 2, nPage, true);
+			return new AscCommon.asc_CRect(oPos["X"], oPos["Y"], 0, 0);
 		}
 		
 		return new AscCommon.asc_CRect(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y, 0, 0);
