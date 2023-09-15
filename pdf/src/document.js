@@ -733,7 +733,10 @@ var CPresentation = CPresentation || function(){};
         }
 
         // если курсор меняется на resize, то клик по нему выходит за область поля или аннотации, отслеживаем этот момент и не убираем поле/аннотацию из активных
-        let {X, Y}  = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
+
         let bInRect = oDrawingObjects.updateCursorType(oViewer.currentPage, X, Y, e, false);
         
         if (IsOnDrawer == false && false == IsOnEraser) {
@@ -807,8 +810,10 @@ var CPresentation = CPresentation || function(){};
         let oDrDoc          = this.GetDrawingDocument();
         let oAPI            = oViewer.Api;
         
-        let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
+
         if (oViewer.isMouseDown)
         {
             if (oAPI.isEraseInkMode()) {
@@ -948,7 +953,10 @@ var CPresentation = CPresentation || function(){};
         let oMouseUpField = oViewer.getPageFieldByMouse();
 		let oMouseUpAnnot = oViewer.getPageAnnotByMouse();
         
-        let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
+
         // если рисование, то просто заканчиваем его
         if (oViewer.Api.isDrawInkMode()) {
             oDrawingObjects.OnMouseUp(e, X, Y, oViewer.currentPage);
@@ -1594,8 +1602,7 @@ var CPresentation = CPresentation || function(){};
     }
     CPDFDoc.prototype.ShowComment = function(arrId)
     {
-        var CommentsX     = null;
-        var CommentsY     = null;
+        let oPos;
         var arrCommentsId = [];
 
         for (var nIndex = 0, nCount = arrId.length; nIndex < nCount; ++nIndex)
@@ -1603,9 +1610,9 @@ var CPresentation = CPresentation || function(){};
             var Comment = this.GetCommentById(arrId[nIndex]);
             if (Comment)
             {
-                if (null === CommentsX || null === CommentsY)
+                if (null == oPos)
                 {
-                    ({CommentsX, CommentsY} = AscPDF.GetGlobalCoordsByPageCoords(Comment._pagePos.x + Comment._pagePos.w, Comment._pagePos.y + Comment._pagePos.h / 2, Comment.GetPage(), true));
+                    oPos = AscPDF.GetGlobalCoordsByPageCoords(Comment._pagePos.x + Comment._pagePos.w, Comment._pagePos.y + Comment._pagePos.h / 2, Comment.GetPage(), true);
                 }
 
                 arrCommentsId.push(Comment.GetId());
@@ -1613,9 +1620,9 @@ var CPresentation = CPresentation || function(){};
 
         }
 
-        if (null !== CommentsX && null !== CommentsY && arrCommentsId.length > 0)
+        if (null != oPos && arrCommentsId.length > 0)
         {
-            editor.sync_ShowComment(arrCommentsId, CommentsX, CommentsY);
+            editor.sync_ShowComment(arrCommentsId, oPos["X"], oPos["Y"]);
         }
         else
         {

@@ -414,8 +414,10 @@
             if (this._options.length == 0)
                 return;
             
-            let {X, Y} = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
-            
+            let oPos    = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
+            let X       = oPos["X"];
+            let Y       = oPos["Y"];
+
             editor.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
             editor.WordControl.m_oDrawingDocument.m_lCurrentPage = 0;
 
@@ -531,12 +533,12 @@
             oScrollDocElm = document.createElement('div');
             document.getElementById('editor_sdk').appendChild(oScrollDocElm);
             oScrollDocElm.id = "formScroll_" + oViewer.scrollCount;
-            oScrollDocElm.style.top         = Math.round(oGlobalCoords1.Y) + 'px';
-            oScrollDocElm.style.left        = Math.round(oGlobalCoords2.X) + 'px';
+            oScrollDocElm.style.top         = Math.round(oGlobalCoords1["Y"]) + 'px';
+            oScrollDocElm.style.left        = Math.round(oGlobalCoords2["X"]) + 'px';
             oScrollDocElm.style.position    = "absolute";
             oScrollDocElm.style.display     = "block";
 			oScrollDocElm.style.width       = "14px";
-			oScrollDocElm.style.height      = Math.round(oGlobalCoords2.Y) - Math.round(oGlobalCoords1.Y) + "px";
+			oScrollDocElm.style.height      = Math.round(oGlobalCoords2["Y"]) - Math.round(oGlobalCoords1["Y"]) + "px";
             oScrollDocElm.style.zIndex      = 0;
 
             let nMaxShiftY = oContentRect.H - nContentH;
@@ -579,7 +581,7 @@
         }
         else if (this._scrollInfo) {
             let nMaxShiftY = oContentRect.H - nContentH;
-            let needUpdatePos = this._scrollInfo.oldZoom != oViewer.zoom || oGlobalCoords1.Y - oBorderWidth.top != this._scrollInfo.baseYPos;
+            let needUpdatePos = this._scrollInfo.oldZoom != oViewer.zoom || oGlobalCoords1["Y"] - oBorderWidth.top != this._scrollInfo.baseYPos;
 
             if (needUpdatePos) {
                 oScrollSettings = editor.WordControl.CreateScrollSettings();
@@ -593,9 +595,9 @@
                 let nScrollCoeff = this.content.ShiftViewY / nMaxShiftY;
                 this._scrollInfo.scrollCoeff = nScrollCoeff;
 
-                this._scrollInfo.docElem.style.top      = Math.round(oGlobalCoords1.Y) + 'px';
-                this._scrollInfo.docElem.style.left     = Math.round(oGlobalCoords2.X) + 'px';
-                this._scrollInfo.docElem.style.height   = Math.round(oGlobalCoords2.Y) - Math.round(oGlobalCoords1.Y) + "px";
+                this._scrollInfo.docElem.style.top      = Math.round(oGlobalCoords1["Y"]) + 'px';
+                this._scrollInfo.docElem.style.left     = Math.round(oGlobalCoords2["X"]) + 'px';
+                this._scrollInfo.docElem.style.height   = Math.round(oGlobalCoords2["Y"]) - Math.round(oGlobalCoords1["Y"]) + "px";
             
                 this._scrollInfo.oldZoom = oViewer.zoom;
                 this._scrollInfo.baseYPos = parseInt(this._scrollInfo.docElem.style.top);
