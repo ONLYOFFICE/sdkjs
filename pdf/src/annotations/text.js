@@ -225,7 +225,10 @@
         let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
+
         oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
     };
     CAnnotationText.prototype.createMoveTrack = function() {
@@ -235,8 +238,8 @@
     CAnnotationText.prototype.onMouseUp = function() {
         let oViewer = editor.getDocumentRenderer();
 
-        let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w / oViewer.zoom, this._pagePos.y + this._pagePos.h / (2 * oViewer.zoom), this.GetPage(), true);
-        editor.sync_ShowComment([this.GetId()], X, Y)
+        let oPos = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w / oViewer.zoom, this._pagePos.y + this._pagePos.h / (2 * oViewer.zoom), this.GetPage(), true);
+        editor.sync_ShowComment([this.GetId()], oPos["X"], oPos["Y"])
     };
 
     CAnnotationText.prototype.GetAscCommentData = function() {

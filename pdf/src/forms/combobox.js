@@ -221,7 +221,10 @@
         let oActionsQueue   = oDoc.GetActionsQueue();
 
         function callbackAfterFocus(x, y, e) {
-            let {X, Y} = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
+            let oPos = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
+            let X       = oPos["X"];
+            let Y       = oPos["Y"];
+
             var pageObject = oViewer.getPageByCoords(x - oViewer.x, y - oViewer.y);
 
             editor.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
