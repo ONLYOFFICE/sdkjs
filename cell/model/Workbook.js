@@ -16746,9 +16746,6 @@
 		if(false == this.worksheet.workbook.bUndoChanges && false == this.worksheet.workbook.bRedoChanges)
 			this.worksheet.mergeManager.add(this.bbox, 1);
 
-		// if (this.ws.workbook.handlers) {
-			// this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this, null, this.ws.getId());
-		// }
 		//сбрасываем dataValidation кроме 1 ячейки
 		var dataValidationRanges = Asc.Range(this.bbox.c1, this.bbox.r1, this.bbox.c1, this.bbox.r1).difference(this.bbox);
 		if (dataValidationRanges) {
