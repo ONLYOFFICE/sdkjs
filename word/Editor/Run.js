@@ -5698,11 +5698,11 @@ ParaRun.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
 		}
 	}
 };
-ParaRun.prototype.RecalculateEndInfo = function(oPRSI)
+ParaRun.prototype.RecalculateEndInfo = function(PRSI)
 {
 	var isRemovedInReview = (reviewtype_Remove === this.GetReviewType());
 
-	if (this.Paragraph && (this.Paragraph.m_oPRSW.IsFastRecalculate() || this.Paragraph.bFromDocument === false))
+	if (PRSI.isFast() || (this.Paragraph && this.Paragraph.bFromDocument === false))
 		return;
 
 	for (var nCurPos = 0, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
@@ -5710,11 +5710,11 @@ ParaRun.prototype.RecalculateEndInfo = function(oPRSI)
 		var oItem = this.Content[nCurPos];
 		if (para_FieldChar === oItem.Type)
 		{
-			oPRSI.ProcessFieldCharAndCollectComplexField(oItem);
+			PRSI.ProcessFieldCharAndCollectComplexField(oItem);
 		}
 		else if (para_InstrText === oItem.Type && !isRemovedInReview)
 		{
-			oPRSI.ProcessInstruction(oItem);
+			PRSI.ProcessInstruction(oItem);
 		}
 	}
 };

@@ -173,11 +173,11 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 
     this.Content[0] = EndRun;
 
-    this.m_oPRSW = g_PRSW;//new CParagraphRecalculateStateWrap(this);
-    this.m_oPRSC = g_PRSC;//new CParagraphRecalculateStateCounter();
-    this.m_oPRSA = g_PRSA;//new CParagraphRecalculateStateAlign();
-    this.m_oPRSI = g_PRSI;//new CParagraphRecalculateStateInfo();
+    this.m_oPRSW = null;//g_PRSW;//new CParagraphRecalculateStateWrap(this);
+    this.m_oPRSC = null;//g_PRSC;//new CParagraphRecalculateStateCounter();
+    this.m_oPRSA = null;//g_PRSA;//new CParagraphRecalculateStateAlign();
     this.m_oPDSE = g_PDSE;//new CParagraphDrawStateElements();
+	
     this.StartState = null;
 
     this.CollPrChange = false;
@@ -1449,7 +1449,7 @@ Paragraph.prototype.CheckNotInlineObject = function(nMathPos, nDirection)
 
 	return true;
 };
-Paragraph.prototype.RecalculateEndInfo = function()
+Paragraph.prototype.RecalculateEndInfo = function(isFast)
 {
 	let logicDocument = this.GetLogicDocument();
 	if (!logicDocument || !logicDocument.GetRecalcId)
@@ -1463,8 +1463,9 @@ Paragraph.prototype.RecalculateEndInfo = function()
 	if (prevEndInfo && !prevEndInfo.CheckRecalcId(recalcId))
 		return;
 	
-	let prsi = this.m_oPRSI;
+	let prsi = AscWord.ParagraphRecalculateStateManager.getEndInfo();
 	prsi.Reset(prevEndInfo);
+	prsi.setFast(!!isFast);
 	
 	for (let pos = 0, count = this.Content.length; pos < count; ++pos)
 	{
@@ -1473,6 +1474,8 @@ Paragraph.prototype.RecalculateEndInfo = function()
 	
 	this.EndInfo.SetFromPRSI(prsi);
 	this.EndInfo.SetRecalcId(recalcId);
+	
+	AscWord.ParagraphRecalculateStateManager.release(prsi);
 };
 /**
  * Данная функция вызывается, когда с данным элементом, и с элементами до него не произошло никаких изменений и мы
@@ -1502,7 +1505,7 @@ Paragraph.prototype.Recalculate_PageEndInfo = function(PRSW, CurPage)
 {
 	var PrevInfo = ( 0 === CurPage ? this.Parent.GetPrevElementEndInfo(this) : this.Pages[CurPage - 1].EndInfo.Copy() );
 
-	var PRSI = this.m_oPRSI;
+	var PRSI = AscWord.ParagraphRecalculateStateManager.getEndInfo();
 
 	PRSI.Reset(PrevInfo);
 
@@ -1527,6 +1530,8 @@ Paragraph.prototype.Recalculate_PageEndInfo = function(PRSW, CurPage)
 
 	if (PRSW)
 		this.Pages[CurPage].EndInfo.RunRecalcInfo = PRSW.RunRecalcInfoBreak;
+	
+	AscWord.ParagraphRecalculateStateManager.release(PRSI)
 };
 Paragraph.prototype.UpdateEndInfo = function()
 {
