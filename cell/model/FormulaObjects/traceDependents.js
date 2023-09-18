@@ -126,6 +126,11 @@ function (window, undefined) {
 			let activeCell = selection.activeCell;
 			row = activeCell.row;
 			col = activeCell.col;
+			let mergedRange = ws.getMergedByCell(row, col);
+			if (mergedRange) {
+				row = mergedRange.r1;
+				col = mergedRange.c1;
+			}
 		}
 
 		const findMaxNesting = function (row, col) {
@@ -582,6 +587,7 @@ function (window, undefined) {
 								for (let index in areaIndexes) {
 									if (areaIndexes.hasOwnProperty(index)) {
 										this._setDependents(cellIndex, areaIndexes[index]);
+										this._setPrecedents(areaIndexes[index], cellIndex, true);
 									}
 								}
 								continue;
@@ -591,6 +597,7 @@ function (window, undefined) {
 						// if the child cell does not yet have a dependency with listeners, create it
 						if (!this._getDependents(cellIndex, elemCellIndex)) {
 							this._setDependents(cellIndex, elemCellIndex);
+							this._setPrecedents(elemCellIndex, cellIndex, true);
 							isUpdated = true;
 						}
 					}
@@ -640,13 +647,16 @@ function (window, undefined) {
 		}
 
 		const t = this;
-
-		// TODO merged range
 		if (row == null || col == null) {
 			let selection = ws.getSelection();
 			let activeCell = selection.activeCell;
 			row = activeCell.row;
 			col = activeCell.col;
+			let mergedRange = ws.getMergedByCell(row, col);
+			if (mergedRange) {
+				row = mergedRange.r1;
+				col = mergedRange.c1;
+			}
 		}
 
 		const checkCircularReference = function (index) {
