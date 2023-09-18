@@ -1548,6 +1548,89 @@ $(function() {
 			// clear all
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 		});
+		QUnit.test("Test: \"Merged cells tests\"", function (assert) {
+			ws.getRange2("A1:Z100").cleanAll();
+			let bbox;
+			// ------------------- do merge when cell already have formula ------------------- //
+			ws.getRange2("A1").setValue("=E1");
+			ws.getRange2("A2").setValue("=E2");
+			ws.getRange2("B1").setValue("=F1");
+			ws.getRange2("B2").setValue("=F2");
+			ws.getRange2("E1").setValue("=H1");
+			ws.getRange2("E2").setValue("=H2");
+			ws.getRange2("F1").setValue("=I1");
+			ws.getRange2("F2").setValue("=I2");
+
+			let A1Index = AscCommonExcel.getCellIndex(ws.getRange2("A1").bbox.r1, ws.getRange2("A1").bbox.c1),
+				A2Index = AscCommonExcel.getCellIndex(ws.getRange2("A2").bbox.r1, ws.getRange2("A2").bbox.c1),
+				B1Index = AscCommonExcel.getCellIndex(ws.getRange2("B1").bbox.r1, ws.getRange2("B1").bbox.c1),
+				B2Index = AscCommonExcel.getCellIndex(ws.getRange2("B2").bbox.r1, ws.getRange2("B2").bbox.c1),
+				E1Index = AscCommonExcel.getCellIndex(ws.getRange2("E1").bbox.r1, ws.getRange2("E1").bbox.c1),
+				E2Index = AscCommonExcel.getCellIndex(ws.getRange2("E2").bbox.r1, ws.getRange2("E2").bbox.c1),
+				F1Index = AscCommonExcel.getCellIndex(ws.getRange2("F1").bbox.r1, ws.getRange2("F1").bbox.c1),
+				F2Index = AscCommonExcel.getCellIndex(ws.getRange2("F2").bbox.r1, ws.getRange2("F2").bbox.c1),
+				H1Index = AscCommonExcel.getCellIndex(ws.getRange2("H1").bbox.r1, ws.getRange2("H1").bbox.c1),
+				H2Index = AscCommonExcel.getCellIndex(ws.getRange2("H2").bbox.r1, ws.getRange2("H2").bbox.c1),
+				I1Index = AscCommonExcel.getCellIndex(ws.getRange2("I1").bbox.r1, ws.getRange2("I1").bbox.c1),
+				I2Index = AscCommonExcel.getCellIndex(ws.getRange2("I2").bbox.r1, ws.getRange2("I2").bbox.c1);
+
+
+			ws.selectionRange.ranges = [ws.getRange2("A1").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("A1").getBBox0().r1, ws.getRange2("A1").getBBox0().c1);
+			assert.ok(1, "Trace precedents from A1");
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+
+			ws.selectionRange.ranges = [ws.getRange2("A2").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("A2").getBBox0().r1, ws.getRange2("A2").getBBox0().c1);
+			assert.ok(1, "Trace precedents from A2");
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+
+			ws.selectionRange.ranges = [ws.getRange2("B1").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("B1").getBBox0().r1, ws.getRange2("B1").getBBox0().c1);
+			assert.ok(1, "Trace precedents from B1");
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+
+			ws.selectionRange.ranges = [ws.getRange2("B2").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("B2").getBBox0().r1, ws.getRange2("B2").getBBox0().c1);
+			assert.ok(1, "Trace precedents from B2");
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+
+			assert.strictEqual(traceManager._getPrecedents(A1Index, E1Index), 1, "A1<-E1");
+			assert.strictEqual(traceManager._getDependents(E1Index, A1Index), 1, "E1->A1");
+			assert.strictEqual(traceManager._getPrecedents(E1Index, H1Index), 1, "E1<-H1");
+			assert.strictEqual(traceManager._getPrecedents(A2Index, E2Index), 1, "A2<-E2");
+			assert.strictEqual(traceManager._getDependents(E2Index, A2Index), 1, "E2->A2");
+			assert.strictEqual(traceManager._getPrecedents(E2Index, H2Index), 1, "E2<-H2");
+			assert.strictEqual(traceManager._getPrecedents(B1Index, F1Index), 1, "B1<-F1");
+			assert.strictEqual(traceManager._getDependents(F1Index, B1Index), 1, "F1->B1");
+			assert.strictEqual(traceManager._getPrecedents(F1Index, I1Index), 1, "F1<-I1");
+			assert.strictEqual(traceManager._getPrecedents(B2Index, F2Index), 1, "B2<-F2");
+			assert.strictEqual(traceManager._getDependents(F2Index, B2Index), 1, "F2->B2");
+			assert.strictEqual(traceManager._getPrecedents(F2Index, I2Index), 1, "F2<-I2");
+
+			// TODO все связанные зависимости с merged диапазоном должны удаляться, кроме ссылки на верхнюю левую ячейку диапазона
+			ws.getRange2("A1:B2").merge(2);		// center merge
+
+			assert.strictEqual(traceManager._getPrecedents(A1Index, E1Index), 1, "A1<-E1");
+			assert.strictEqual(traceManager._getDependents(E1Index, A1Index), 1, "E1->A1");
+			assert.strictEqual(traceManager._getPrecedents(E1Index, H1Index), 1, "E1<-H1");
+			assert.strictEqual(traceManager._getPrecedents(A2Index, E2Index), undefined, "A2<-E2 === undefined");
+			assert.strictEqual(traceManager._getDependents(E2Index, A2Index), undefined, "E2->A2 === undefined");
+			assert.strictEqual(traceManager._getPrecedents(E2Index, H2Index), 1, "E2<-H2");
+			assert.strictEqual(traceManager._getPrecedents(B1Index, F1Index), undefined, "B1<-F1 === undefined");
+			assert.strictEqual(traceManager._getDependents(F1Index, B1Index), undefined, "F1->B1 === undefined");
+			assert.strictEqual(traceManager._getPrecedents(F1Index, I1Index), 1, "F1<-I1");
+			assert.strictEqual(traceManager._getPrecedents(B2Index, F2Index), undefined, "B2<-F2 === undefined");
+			assert.strictEqual(traceManager._getDependents(F2Index, B2Index), undefined, "F2->B2 === undefined");
+			assert.strictEqual(traceManager._getPrecedents(F2Index, I2Index), 1, "F2<-I2");
+
+			// clear all
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+		});
 		// QUnit.test("Test: \"Circular reference tests\"", function (assert) {
 		// 	// TODO checking for cycling dependency will be changed. Change tests after this
 		// 	ws.getRange2("A1:J20").cleanAll();
