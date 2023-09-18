@@ -3022,6 +3022,11 @@ function (window, undefined) {
 
 			worksheetView.model.autoFilters.reDrawFilter(to);
 			worksheetView.model.autoFilters.reDrawFilter(from);
+
+			// clear traces
+			if (worksheetView.traceDependentsManager) {
+				worksheetView.traceDependentsManager.clearAll();
+			}
 		} else if (AscCH.historyitem_Worksheet_Rename == Type) {
 			if (bUndo) {
 				ws.setName(Data.from);
