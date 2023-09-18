@@ -5794,7 +5794,8 @@
 					} else if (e.keyCode == 46 && canEdit) // Delete
 					{
 						if (!e.shiftKey) {
-							drawingObjectsController.remove(1, undefined, undefined, undefined, ctrlKey);
+							const bIsWord = bIsMacOs ? e.altKey : ctrlKey;
+							drawingObjectsController.remove(1, undefined, undefined, undefined, bIsWord);
 							bRetValue = true;
 						}
 					} else if (e.keyCode == 65 && true === ctrlKey) // Ctrl + A - выделяем все

@@ -207,7 +207,7 @@
 	oMainEvents[oMainShortcutTypes.checkMoveShapeLeft] = [new CTestEvent(createNativeEvent(37, false, false, false, false, false, false))];
 	oMainEvents[oMainShortcutTypes.checkLittleMoveShapeLeft] = [new CTestEvent(createNativeEvent(37, true, false, false, false, false, false))];
 	oMainEvents[oMainShortcutTypes.checkDeleteFront] = [new CTestEvent(createNativeEvent(46, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkDeleteWordFront] = [new CTestEvent(createNativeEvent(46, true, false, false, false, false, false))];
+	oMainEvents[oMainShortcutTypes.checkDeleteWordFront] = [new CTestEvent(createNativeEvent(46, true, false, false, false, false, false), testWindows), new CTestEvent(createNativeEvent(46, false, false, true, false, false, false), testMacOs)];
 	oMainEvents[oMainShortcutTypes.checkIncreaseIndent] = [new CTestEvent(createNativeEvent(77, true, false, false, false, false, false))];
 	oMainEvents[oMainShortcutTypes.checkDecreaseIndent] = [new CTestEvent(createNativeEvent(77, true, true, false, false, false, false))];
 	oMainEvents[oMainShortcutTypes.checkNumLock] = [new CTestEvent(createNativeEvent(144, false, false, false, false, false, false))];

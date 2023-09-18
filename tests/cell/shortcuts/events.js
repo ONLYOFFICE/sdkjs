@@ -378,7 +378,8 @@
 
 	];
 	oGraphicTestEvents[oGraphicTypes.removeFrontWord] = [
-		new CTestEvent(createEvent(oKeyCode.Delete, true, false, false, false, false))
+		new CTestEvent(createEvent(oKeyCode.Delete, true, false, false, false, false), testWindows),
+		new CTestEvent(createEvent(oKeyCode.Delete, false, false, true, false, false), testMacOs)
 
 	];
 	oGraphicTestEvents[oGraphicTypes.removeFrontChar] = [
@@ -885,7 +886,8 @@
 		new CTestEvent(createEvent(46, false, false, false, false, false))
 	];
 	oCellEditorEvents[oCellEditorTypes.deleteFrontWord] = [
-		new CTestEvent(createEvent(46, true, false, false, false, false))
+		new CTestEvent(createEvent(46, true, false, false, false, false), testWindows),
+		new CTestEvent(createEvent(46, false, false, true, false, false), testMacOs)
 	];
 	oCellEditorEvents[oCellEditorTypes.setStrikethrough] = [
 		new CTestEvent(createEvent(53, true, false, false, false, false))

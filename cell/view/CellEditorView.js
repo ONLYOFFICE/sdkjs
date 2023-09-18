@@ -2408,6 +2408,7 @@
 		var t = this, kind = undefined, hieroglyph = false;
 		var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
 		const bIsMacOs = AscCommon.AscBrowser.isMacOs;
+		const bIsWordRemove = bIsMacOs ? event.altKey : ctrlKey;
 
 		if (this.handlers.trigger('getWizard') || !t.isOpened || (!isInput && !t.enableKeyEvents && event.emulated !== true)) {
 			return true;
@@ -2484,8 +2485,7 @@
 						t._syncEditors();
 					}
 				}
-				const bIsWord = bIsMacOs ? event.altKey : ctrlKey;
-				t._removeChars(bIsWord ? kPrevWord : kPrevChar);
+				t._removeChars(bIsWordRemove ? kPrevWord : kPrevChar);
 				return false;
 
 			case 32:  // "space"
@@ -2630,7 +2630,7 @@
 				}
 				event.stopPropagation();
 				event.preventDefault();
-				t._removeChars(ctrlKey ? kNextWord : kNextChar);
+				t._removeChars(bIsWordRemove ? kNextWord : kNextChar);
 				return true;
 
 			case 53: // 5
