@@ -1291,11 +1291,13 @@ function (window, undefined) {
 					this._lockChangeDocument = null;
 					let t = this;
 					if (arg2) {
-						arg2._foreachNoEmpty(function (cell) {
-							if (!(arg2.bbox.c1 === cell.nCol && arg2.bbox.r1 === cell.nRow)) {
-								t.clearCellTraces(cell.nRow, cell.nCol);
+						for (let col = arg2.c1; col <= arg2.c2; col++) {
+							for (let row = arg2.r1; row <= arg2.r2; row++) {
+								if (!(arg2.c1 === col && arg2.r1 === row)) {
+									t.clearCellTraces(row, col);
+								}
 							}
-						});
+						}
 					}
 				}
 				break;
