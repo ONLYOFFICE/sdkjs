@@ -258,6 +258,8 @@
     CBaseField.prototype.GetKids = function() {
         return this._kids;
     };
+
+    CBaseField.prototype.Recalculate = function() {};
     /**
 	 * Removes field from kids.
 	 * @memberof CBaseField
@@ -1084,13 +1086,16 @@
         let oViewer = editor.getDocumentRenderer();
 
         if (oViewer.IsOpenFormsInProgress == false) {
-            this._wasChanged            = isChanged;
-            this._originView.normal     = null;
-            this._originView.mouseDown  = null;
-            this._originView.rollover   = null;
+            this._wasChanged = isChanged;
+            this.ClearCache();
             
             this.SetDrawFromStream(!isChanged);
         }
+    };
+    CBaseField.prototype.ClearCache = function() {
+        this._originView.normal     = null;
+        this._originView.mouseDown  = null;
+        this._originView.rollover   = null;
     };
     CBaseField.prototype.IsChanged = function() {
         return this._wasChanged;  
@@ -1453,6 +1458,7 @@
                 break;
         }
 
+        oSavedView = null;
         if (oSavedView && oSavedView.width == oApearanceInfo["w"] && oSavedView.height == oApearanceInfo["h"])
             return oSavedView;
         
@@ -1555,19 +1561,10 @@
             return;
             
         let originView      = this.GetOriginView(this.IsHovered && this.IsHovered() ? AscPDF.APPEARANCE_TYPE.rollover : undefined);
-        let aOrigRect       = this.GetOrigRect();
         let nGrScale        = oGraphicsPDF.GetScale();
 
-        let X       = aOrigRect[0];
-        let Y       = aOrigRect[1];
-        let nWidth  = aOrigRect[2] - aOrigRect[0];
-        let nHeight = aOrigRect[3] - aOrigRect[1];
-        
         if (originView) {
-            oGraphicsPDF.ClearRect(X, Y, nWidth, nHeight);
-            
             oGraphicsPDF.DrawImage(originView, 0, 0, originView.width / nGrScale, originView.height / nGrScale, originView.x / nGrScale, originView.y / nGrScale, originView.width / nGrScale, originView.height / nGrScale);
-            // oGraphicsPDF.DrawImage(originView, 0, 0, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale, X - 1 / nGrScale, Y - 1 / nGrScale, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale);
         }
     };
     CBaseField.prototype.GetParent = function() {

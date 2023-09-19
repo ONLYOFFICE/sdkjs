@@ -100,6 +100,7 @@
     };
     CBaseCheckBoxField.prototype.SetPressed = function(bValue) {
         this._pressed = bValue;
+        this.AddToRedraw();
     };
     CBaseCheckBoxField.prototype.IsPressed = function() {
         return this._pressed;
@@ -395,52 +396,14 @@
 
         return canvas;
     };
-    CBaseCheckBoxField.prototype.onMouseDown = function(bSkipAction) {
-        let oDoc    = this.GetDocument();
-        let nPage   = this.GetPage();
-        let oViewer = editor.getDocumentRenderer();
-        let page    = oViewer.drawingPages[nPage];
-        this.SetPressed(true);
+    CBaseCheckBoxField.prototype.onMouseDown = function() {
+        let oDoc = this.GetDocument();
+        this.DrawPressed();
 
-        let xCenter = oViewer.width >> 1;
-		let yPos    = oViewer.scrollY >> 0;
-        let nScale  = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
-		if (oViewer.documentWidth > oViewer.width)
-		{
-			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
-		}
-
-        let canvasOverlay   = document.getElementById("id_overlay");
-        let ctxOverlay      = canvasOverlay.getContext("2d");
-
-        let tmpCanvas       = document.createElement('canvas');
-        let tmpCanvasCtx    = tmpCanvas.getContext('2d');
-        let w               = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let h               = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        tmpCanvas.width     = w;
-        tmpCanvas.height    = h;
-        let widthPx         = oViewer.canvas.width;
-        let heightPx        = oViewer.canvas.height;
-
-        let oGraphicsPDF = new AscPDF.CPDFGraphics();
-        oGraphicsPDF.Init(tmpCanvasCtx, widthPx * nScale, heightPx * nScale);
-        oGraphicsPDF.SetCurPage(this.GetPage());
-
-        this.DrawPressed(oGraphicsPDF);
-        
-        let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
-        let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-
-        ctxOverlay.globalAlpha = 1;
-        ctxOverlay.drawImage(oGraphicsPDF.context.canvas, 0, 0, tmpCanvas.width, tmpCanvas.height, x, y, w, h);
-        
-        // bSkipAction используется только для случая, когда форма зажата и мы выходим-заходим в неё, т.е. происходит отжатие-нажатие
-        if (bSkipAction !== true) {
-            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
-            if (oDoc.activeForm != this)
-                this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
-            oDoc.activeForm = this;
-        }
+        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
+        if (oDoc.activeForm != this)
+            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+        oDoc.activeForm = this;
     };
     CBaseCheckBoxField.prototype.onMouseEnter = function() {
         this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter);
@@ -452,17 +415,13 @@
 
         this.SetHovered(false);
     };
-    CBaseCheckBoxField.prototype.DrawPressed = function(oGraphicsPDF) {
-        this.Draw(oGraphicsPDF);
+    CBaseCheckBoxField.prototype.DrawPressed = function() {
+        this.SetPressed(true);
+        editor.getDocumentRenderer()._paint();
     };
-    CBaseCheckBoxField.prototype.OnEndPressed = function() {
-        let oViewer         = editor.getDocumentRenderer();
-        let oOverlay        = oViewer.overlay;
-        oOverlay.max_x      = 0;
-        oOverlay.max_y      = 0;
-        oOverlay.ClearAll   = true;
-        
-        oViewer.onUpdateOverlay();
+    CBaseCheckBoxField.prototype.DrawUnpressed = function() {
+        this.SetPressed(false);
+        editor.getDocumentRenderer()._paint();
     };
     CBaseCheckBoxField.prototype.onMouseUp = function() {
         this.CreateNewHistoryPoint();
@@ -477,8 +436,7 @@
             this.SetApiValue(this.GetExportValue());
         }
         
-        this.SetPressed(false);
-        this.AddToRedraw();
+        this.DrawUnpressed();
 
         if (AscCommon.History.Is_LastPointEmpty())
             AscCommon.History.Remove_LastPoint();
