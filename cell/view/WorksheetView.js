@@ -5093,6 +5093,7 @@
 					drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
 					// drawDot(x1, y1, lineColor);
 					drawDot2(x1, y1, lineColor);
+					// drawDot3(x1, y1, lineColor);
 				}
 			}
 		};
@@ -5225,14 +5226,16 @@
 		};
 		const drawDot2 = function (x, y, color) {
 			const dotRadius = 2.75 * zoom * customScale;
-			const k = 0.552284749831;
+			const k = 0.552284749831;	// standard circle approximation value = 4/3*(Math.sqrt(2) - 1)
 
 			ctx.beginPath();
-			ctx.moveTo(x + dotRadius, y);
-			ctx.bezierCurveTo(x + dotRadius, y - k * dotRadius, x + k * dotRadius, y - dotRadius, x, y - dotRadius);
-			ctx.bezierCurveTo(x - k * dotRadius, y - dotRadius, x - dotRadius, y - k * dotRadius, x - dotRadius, y);
-			ctx.bezierCurveTo(x - dotRadius, y + k * dotRadius, x - k * dotRadius, y + dotRadius, x, y + dotRadius);
-			ctx.bezierCurveTo(x + k * dotRadius, y + dotRadius, x + dotRadius, y + k * dotRadius, x + dotRadius, y);
+			let dx = Math.round(x);
+			let dy = Math.round(y);
+			ctx.moveTo(dx + dotRadius, dy);
+			ctx.bezierCurveTo(dx + dotRadius, dy - k * dotRadius, dx + k * dotRadius, dy - dotRadius, dx, dy - dotRadius);
+			ctx.bezierCurveTo(dx - k * dotRadius, dy - dotRadius, dx - dotRadius, dy - k * dotRadius, dx - dotRadius, dy);
+			ctx.bezierCurveTo(dx - dotRadius, dy + k * dotRadius, dx - k * dotRadius, dy + dotRadius, dx, dy + dotRadius);
+			ctx.bezierCurveTo(dx + k * dotRadius, dy + dotRadius, dx + dotRadius, dy + k * dotRadius, dx + dotRadius, dy);
 
 			ctx.setFillStyle(color);
 			ctx.closePath().fill();
