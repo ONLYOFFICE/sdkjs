@@ -322,7 +322,8 @@
         if (this.IsWidget()) {
             let aIndexes = [];
             if (Array.isArray(value)) {
-                for (let sVal of value) {
+                for (let i = 0; i < value.length; i++) {
+                    let sVal = value[i];
                     let isFound = false;
                     for (let i = 0; i < this._options.length; i++) {
                         if (this._options[i][1] && this._options[i][1] == sVal) {
@@ -375,12 +376,12 @@
                 }
             });
 
-            for (let idx of aIndexes) {
+            for (let i = 0; i < aIndexes.length; i++) {
                 if (this._multipleSelection) {
-                    this.SelectOption(idx, false);
+                    this.SelectOption(aIndexes[i], false);
                 }
                 else
-                    this.SelectOption(idx, true);
+                    this.SelectOption(aIndexes[i], true);
             }
 
             if (editor.getDocumentRenderer().IsOpenFormsInProgress)
@@ -669,8 +670,10 @@
 	 */
     CListBoxField.prototype.UpdateSelection = function() {
         if (Array.isArray(this._currentValueIndices)) {
-            for (let idx of this._currentValueIndices)
-                this.SelectOption(idx, false);
+            for (let i = 0; i < this._currentValueIndices.length; i++) {
+                let nIdx = this._currentValueIndices[i];
+                this.SelectOption(nIdx, false);
+            }
         }
         else
             this.SelectOption(this._currentValueIndices, true);

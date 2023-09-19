@@ -2302,6 +2302,7 @@
 			let lStartPage = -1;
 			let lEndPage = -1; 
 			
+			let oDoc = this.getPDFDoc();
 			let lPagesCount = this.drawingPages.length;
 			for (let i = 0; i < lPagesCount; i++)
 			{
@@ -2328,13 +2329,14 @@
 						delete page.Image;
 						delete page.ImageForms;
 						delete page.ImageAnnots;
+						// oDoc.ClearCache(i);
 					}
 				}
 			}
 
 			this.pageDetector = new CCurrentPageDetector(this.canvas.width, this.canvas.height);
 
-			let oDrDoc = this.getPDFDoc().GetDrawingDocument();
+			let oDrDoc = oDoc.GetDrawingDocument();
 			oDrDoc.m_lDrawingFirst = lStartPage;
 			oDrDoc.m_lDrawingEnd = lEndPage;
 			this.startVisiblePage = lStartPage;
@@ -2456,7 +2458,6 @@
 			this.isClearPages = false;
 			this.updateCurrentPage(this.pageDetector.getCurrentPage(this.currentPage));
 			
-			let oDoc = this.getPDFDoc();
 			// выход из формы если вышли со страницы, где находится активная форма.
 			if (oDoc.activeForm && this.pageDetector.pages.map(function(item) {
 				return item.num;
@@ -3287,7 +3288,10 @@
 				
 				if (this.pagesInfo.pages[i].fields != null) {
 					this.pagesInfo.pages[i].fields.forEach(function(field) {
-						field.Draw(oGraphicsPDF, oGraphicsWord);
+						if (field.IsNeedDrawFromStream() == false)
+							field.Draw(oGraphicsPDF, oGraphicsWord);
+						else
+							field.Recalculate();
 					});
 				}
 				if (this.pagesInfo.pages[i].fields != null) {
