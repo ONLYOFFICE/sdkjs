@@ -102,6 +102,7 @@
 
         if (oViewer.IsOpenAnnotsInProgress == false) {
             this._wasChanged = isChanged;
+            this.ClearCache();
         }
     };
     CAnnotationBase.prototype.DrawFromStream = function(oGraphicsPDF) {
@@ -218,6 +219,9 @@
         }
 
         return null;
+    };
+    CAnnotationBase.prototype.ClearCache = function() {
+        this._originView.normal = null;
     };
     CAnnotationBase.prototype.SetPosition = function(x, y) {
         let oViewer = editor.getDocumentRenderer();

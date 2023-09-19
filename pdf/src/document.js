@@ -325,6 +325,21 @@ var CPresentation = CPresentation || function(){};
         this.ClearFieldsToCommit();
         this.skipHistoryOnCommit = false;
     };
+    CPDFDoc.prototype.ClearCache = function(nPageIndex) {
+        let oViewer = editor.getDocumentRenderer();
+
+        if (oViewer.pagesInfo.pages[nPageIndex].fields != null) {
+            oViewer.pagesInfo.pages[nPageIndex].fields.forEach(function(field) {
+                field.ClearCache();
+            });
+        }
+        if (oViewer.pagesInfo.pages[nPageIndex].annots != null) {
+            oViewer.pagesInfo.pages[nPageIndex].annots.forEach(function(annot) {
+                annot.ClearCache();
+            });
+        }
+
+    };
     CPDFDoc.prototype.IsNeedSkipHistory = function() {
         return !!this.skipHistoryOnCommit;
     };
@@ -845,6 +860,7 @@ var CPresentation = CPresentation || function(){};
             }
             else if (this.activeForm)
             {
+                // селект текста внутри формы
                 if (this.activeForm.GetType() == AscPDF.FIELD_TYPES.text || this.activeForm.GetType() == AscPDF.FIELD_TYPES.combobox)
                 {
                     this.activeForm.SelectionSetEnd(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
@@ -858,15 +874,16 @@ var CPresentation = CPresentation || function(){};
                     
                     oViewer.onUpdateOverlay();
                 }
-                else if ([AscPDF.FIELD_TYPES.button, AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(this.activeForm.GetType()) && this.activeForm.IsPressed()) {
+                // отрисовка нажатого/отжатого состояния кнопок/чекбоксов
+                else if ([AscPDF.FIELD_TYPES.button, AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(this.activeForm.GetType())) {
                     let mouseMoveFieldObject = oViewer.getPageFieldByMouse();
                     if (mouseMoveFieldObject != this.activeForm && this.activeForm.IsHovered()) {
                         this.activeForm.SetHovered(false);
-                        this.activeForm.OnEndPressed();
+                        this.activeForm.DrawUnpressed();
                     }
                     else if (mouseMoveFieldObject == this.activeForm && this.activeForm.IsHovered() == false) {
                         this.activeForm.SetHovered(true);
-                        this.activeForm.onMouseDown(true);
+                        this.activeForm.DrawPressed();
                     }
                 }
             }
