@@ -16352,6 +16352,12 @@ CTable.prototype.GetRowsCount = function()
 {
 	return this.Content.length;
 };
+
+
+CTable.prototype.GetColsCount = function()
+{
+	return this.TableGrid.length;
+};
 /**
  * Получаем строку с заданным номером
  * @param {number} nIndex

@@ -551,11 +551,18 @@
         if(!this.geometry1 || !this.geometry2) {
             return;
         }
+        if(this.pen1 && this.pen2) {
+            const nDash1 = this.pen1.prstDash !== 0 ? this.pen1.prstDash : 6;
+            const nDash2 = this.pen2.prstDash !== 0 ? this.pen2.prstDash : 6;
+            if(nDash1 !== nDash2) {
+                return;
+            }
+        }
         if(this.geometry1.isEqualForMorph(this.geometry2)) {
 
-            let oXfrm1 =  this.geometry1.parent && this.geometry1.parent.xfrm;
-            let oXfrm2 =  this.geometry2.parent && this.geometry2.parent.xfrm;
-            if(oXfrm1 && oXfrm2 && oXfrm1.flipH === oXfrm2.flipH && oXfrm1.flipV === oXfrm2.flipV) {
+            let oParent1 =  this.geometry1.parent && this.geometry1.parent.parent;
+            let oParent2 =  this.geometry2.parent && this.geometry2.parent.parent;
+            if(oParent1 && oParent2 && oParent1.flipH === oParent2.flipH && oParent1.flipV === oParent2.flipV) {
                 this.geometry = AscFormat.ExecuteNoHistory(function() {return this.geometry1.createDuplicate();}, this, []);
                 this.drawObject = new AscFormat.ObjectToDraw(new AscFormat.CUniFill(), new AscFormat.CLn(), 100, 100, this.geometry, new AscCommon.CMatrix(), 0, 0, null, null);
                 this.textureShape1 = CGeometryTextureMorph.prototype.createShape.call(this, AscFormat.ExecuteNoHistory(function () { return new AscFormat.CreateGeometry("rect");}, this, []),
@@ -609,25 +616,25 @@
             let oXfrm;
             AscFormat.ExecuteNoHistory(function() {
                 oXfrm = new AscFormat.CXfrm();
-                let oXfrm1 = this.geometry1.parent.xfrm;
-                let oXfrm2 = this.geometry2.parent.xfrm;
+                let oParent1 = this.geometry1.parent && this.geometry1.parent.parent;
+                let oParent2 = this.geometry2.parent && this.geometry2.parent.parent;
                 let iN = AscFormat.isRealNumber;
-                if(iN(oXfrm1.offX) && iN(oXfrm2.offX)) {
-                    oXfrm.offX = this.getValBetween(oXfrm1.offX, oXfrm2.offX);
+                if(iN(oParent1.x) && iN(oParent2.x)) {
+                    oXfrm.offX = this.getValBetween(oParent1.x, oParent2.x);
                 }
-                if(iN(oXfrm1.offY) && iN(oXfrm2.offY)) {
-                    oXfrm.offY = this.getValBetween(oXfrm1.offY, oXfrm2.offY);
+                if(iN(oParent1.y) && iN(oParent2.y)) {
+                    oXfrm.offY = this.getValBetween(oParent1.y, oParent2.y);
                 }
-                if(iN(oXfrm1.extX) && iN(oXfrm2.extX)) {
-                    oXfrm.extX = this.getValBetween(oXfrm1.extX, oXfrm2.extX);
+                if(iN(oParent1.extX) && iN(oParent2.extX)) {
+                    oXfrm.extX = this.getValBetween(oParent1.extX, oParent2.extX);
                 }
-                if(iN(oXfrm1.extY) && iN(oXfrm2.extY)) {
-                    oXfrm.extY = this.getValBetween(oXfrm1.extY, oXfrm2.extY);
+                if(iN(oParent1.extY) && iN(oParent2.extY)) {
+                    oXfrm.extY = this.getValBetween(oParent1.extY, oParent2.extY);
                 }
-                oXfrm.flipH = oXfrm1.flipH;
-                oXfrm.flipV = oXfrm1.flipV;
-                let nRot1 = AscFormat.normalizeRotate(oXfrm1.rot || 0);
-                let nRot2 = AscFormat.normalizeRotate(oXfrm2.rot || 0);
+                oXfrm.flipH = oParent1.flipH;
+                oXfrm.flipV = oParent1.flipV;
+                let nRot1 = AscFormat.normalizeRotate(oParent1.rot || 0);
+                let nRot2 = AscFormat.normalizeRotate(oParent2.rot || 0);
                 let nAbsDiff1 = Math.abs(nRot2 - nRot1);
                 if(nAbsDiff1 <= Math.PI) {
                     oXfrm.rot = this.getValBetween(nRot1, nRot2);
@@ -654,6 +661,19 @@
                 AscCommon. global_MatrixTransformer.ScaleAppend(oT, 1, -1);
             AscCommon.global_MatrixTransformer.RotateRadAppend(oT, -oXfrm.rot);
             AscCommon.global_MatrixTransformer.TranslateAppend(oT, oXfrm.offX + hc, oXfrm.offY + vc);
+
+            const oAvLst = this.geometry1.avLst;
+            const oGdLst1 = this.geometry1.gdLst;
+            const oGdLst2 = this.geometry2.gdLst;
+            for(let sKey in oAvLst) {
+                if(oAvLst.hasOwnProperty(sKey)) {
+                    let nVal1 = parseInt(oGdLst1[sKey]);
+                    let nVal2 = parseInt(oGdLst2[sKey]);
+                    if(AscFormat.isRealNumber(nVal1) && AscFormat.isRealNumber(nVal2)) {
+                        this.drawObject.geometry.setAdjValue(sKey, this.getValBetween(nVal1, nVal2) + 0.5 >> 0);
+                    }
+                }
+            }
             this.drawObject.geometry.Recalculate(oXfrm.extX, oXfrm.extY, false);
             this.drawObject.extX = oXfrm.extX;
             this.drawObject.extY = oXfrm.extY;
@@ -1403,6 +1423,7 @@
         }
         switch (nType1) {
             case AscDFH.historyitem_type_Shape:
+            case AscDFH.historyitem_type_Cnx:
             case AscDFH.historyitem_type_ImageShape: {
                 this.addShapeMorphs(oDrawing1, nRelH1, oDrawing2, nRelH2, bNoText)
                 break;

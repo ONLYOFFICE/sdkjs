@@ -9326,6 +9326,76 @@ function(window, undefined) {
 		}
 	};
 
+	CChartSpace.prototype.getTrackGeometry = function() {
+		return AscFormat.ExecuteNoHistory(
+			function () {
+				const oGeometry = AscFormat.CreateGeometry("rect");
+				oGeometry.Recalculate(this.extX, this.extY);
+				return oGeometry;
+			}, this, []
+		);
+	};
+
+	CChartSpace.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate, oMapPaired) {
+		if(!oDrawingToCheck) {
+			return oCurCandidate;
+		}
+		const nOwnType = this.getObjectType();
+		const nCheckType = oDrawingToCheck.getObjectType();
+		if(nOwnType !== nCheckType) {
+			return oCurCandidate;
+		}
+		const sName = this.getOwnName();
+		const nChartType = this.getChartType();
+		if(sName && sName.startsWith(AscFormat.OBJECT_MORPH_MARKER)) {
+			const sCheckName = oDrawingToCheck.getOwnName();
+			if(sName !== sCheckName) {
+				return oCurCandidate;
+			}
+		}
+		else {
+			if(oDrawingToCheck.getChartType() !== nChartType) {
+				return oCurCandidate;
+			}
+		}
+		if(!oMapPaired || !oMapPaired[oDrawingToCheck.Id]) {
+			if(!oCurCandidate) {
+				if(oMapPaired && oMapPaired[oDrawingToCheck.Id]) {
+					let oParedDrawing = oMapPaired[oDrawingToCheck.Id].drawing;
+					if(oParedDrawing.getOwnName() === oDrawingToCheck.getOwnName()) {
+						return oCurCandidate;
+					}
+				}
+				return oDrawingToCheck;
+			}
+			const dDistCheck = this.getDistanceL1(oDrawingToCheck);
+			const dDistCur = this.getDistanceL1(oCurCandidate);
+			let dSizeMCandidate = Math.abs(oCurCandidate.extX - this.extX) + Math.abs(oCurCandidate.extY - this.extY);
+			let dSizeMCheck = Math.abs(oDrawingToCheck.extX - this.extX) + Math.abs(oDrawingToCheck.extY - this.extY);
+			if(dSizeMCandidate < dSizeMCheck) {
+				return  oCurCandidate;
+			}
+			else {
+				if(dDistCur < dDistCheck) {
+					return  oCurCandidate;
+				}
+			}
+			if(!oMapPaired || !oMapPaired[oDrawingToCheck.Id]) {
+				return oDrawingToCheck;
+			}
+			else {
+				let oParedDrawing = oMapPaired[oDrawingToCheck.Id].drawing;
+				if(oParedDrawing.getOwnName() === oDrawingToCheck.getOwnName()) {
+					return oCurCandidate;
+				}
+				else {
+					return oDrawingToCheck;
+				}
+			}
+		}
+		return  oCurCandidate;
+	};
+
 	function CAdditionalStyleData() {
 		this.dLbls = null;
 		this.catAx = null;

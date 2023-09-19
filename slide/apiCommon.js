@@ -832,7 +832,10 @@ CAscDateTime.prototype['get_DateTimeExamples'] = CAscDateTime.prototype.get_Date
         for(var key in oMap) {
             if(oMap.hasOwnProperty(key)) {
                 oParaField.FieldType = key;
-                oMap[key] = oParaField.private_GetString();
+                 let sVal = oParaField.private_GetString();
+                 if(sVal) {
+                     oMap[key] = sVal;
+                 }
             }
         }
     }, this, []);

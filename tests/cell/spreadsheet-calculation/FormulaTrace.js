@@ -44,6 +44,13 @@ $(function() {
 	AscCommonExcel.WorkbookView.prototype._calcMaxDigitWidth = function() {
 	};
 	AscCommonExcel.WorkbookView.prototype._init = function() {
+		var self = this;
+		this.model.handlers.add("changeDocument", function(prop, arg1, arg2, wsId) {
+			let ws = wsId && self.getWorksheetById(wsId, true);
+			if (ws) {
+				ws.traceDependentsManager.changeDocument(prop, arg1, arg2);
+			}
+		});
 	};
 	AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged = function() {
 	};
@@ -96,8 +103,6 @@ $(function() {
 		api._openDocument(AscCommon.getEmpty());	// this func set api.wbModel
 		// api._openOnClient();
 		api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
-		api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
-			api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 		wb = api.wbModel;
 
 		AscCommonExcel.g_oUndoRedoCell = new AscCommonExcel.UndoRedoCell(wb);
@@ -1544,6 +1549,199 @@ $(function() {
 			assert.strictEqual(traceManager._getDependents(A7Index, A8Index), undefined, "A7->A8 === undefined");
 			assert.strictEqual(traceManager._getDependents(A7Index, C7Index), undefined, "A7->C7 === undefined");
 			assert.strictEqual(traceManager._getDependents(A8Index, C7Index), undefined, "A8->C7 === undefined");
+
+			// clear all
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+		});
+		QUnit.test("Test: \"Merged cells tests\"", function (assert) {
+			ws.getRange2("A1:Z100").cleanAll();
+			let bbox;
+			// ------------------- do merge when cell already have formula ------------------- //
+			ws.getRange2("A1").setValue("=E1");
+			ws.getRange2("A2").setValue("=E2");
+			ws.getRange2("B1").setValue("=F1");
+			ws.getRange2("B2").setValue("=F2");
+			ws.getRange2("E1").setValue("=H1");
+			ws.getRange2("E2").setValue("=H2");
+			ws.getRange2("F1").setValue("=I1");
+			ws.getRange2("F2").setValue("=I2");
+
+			let A1Index = AscCommonExcel.getCellIndex(ws.getRange2("A1").bbox.r1, ws.getRange2("A1").bbox.c1),
+				A2Index = AscCommonExcel.getCellIndex(ws.getRange2("A2").bbox.r1, ws.getRange2("A2").bbox.c1),
+				B1Index = AscCommonExcel.getCellIndex(ws.getRange2("B1").bbox.r1, ws.getRange2("B1").bbox.c1),
+				B2Index = AscCommonExcel.getCellIndex(ws.getRange2("B2").bbox.r1, ws.getRange2("B2").bbox.c1),
+				E1Index = AscCommonExcel.getCellIndex(ws.getRange2("E1").bbox.r1, ws.getRange2("E1").bbox.c1),
+				E2Index = AscCommonExcel.getCellIndex(ws.getRange2("E2").bbox.r1, ws.getRange2("E2").bbox.c1),
+				F1Index = AscCommonExcel.getCellIndex(ws.getRange2("F1").bbox.r1, ws.getRange2("F1").bbox.c1),
+				F2Index = AscCommonExcel.getCellIndex(ws.getRange2("F2").bbox.r1, ws.getRange2("F2").bbox.c1),
+				H1Index = AscCommonExcel.getCellIndex(ws.getRange2("H1").bbox.r1, ws.getRange2("H1").bbox.c1),
+				H2Index = AscCommonExcel.getCellIndex(ws.getRange2("H2").bbox.r1, ws.getRange2("H2").bbox.c1),
+				I1Index = AscCommonExcel.getCellIndex(ws.getRange2("I1").bbox.r1, ws.getRange2("I1").bbox.c1),
+				I2Index = AscCommonExcel.getCellIndex(ws.getRange2("I2").bbox.r1, ws.getRange2("I2").bbox.c1);
+
+			ws.selectionRange.ranges = [ws.getRange2("A1").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("A1").getBBox0().r1, ws.getRange2("A1").getBBox0().c1);
+			assert.ok(1, "Trace precedents from A1");
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+
+			ws.selectionRange.ranges = [ws.getRange2("A2").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("A2").getBBox0().r1, ws.getRange2("A2").getBBox0().c1);
+			assert.ok(1, "Trace precedents from A2");
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+
+			ws.selectionRange.ranges = [ws.getRange2("B1").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("B1").getBBox0().r1, ws.getRange2("B1").getBBox0().c1);
+			assert.ok(1, "Trace precedents from B1");
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+
+			ws.selectionRange.ranges = [ws.getRange2("B2").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("B2").getBBox0().r1, ws.getRange2("B2").getBBox0().c1);
+			assert.ok(1, "Trace precedents from B2");
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+
+			assert.strictEqual(traceManager._getPrecedents(A1Index, E1Index), 1, "A1<-E1");
+			assert.strictEqual(traceManager._getDependents(E1Index, A1Index), 1, "E1->A1");
+			assert.strictEqual(traceManager._getPrecedents(E1Index, H1Index), 1, "E1<-H1");
+			assert.strictEqual(traceManager._getPrecedents(A2Index, E2Index), 1, "A2<-E2");
+			assert.strictEqual(traceManager._getDependents(E2Index, A2Index), 1, "E2->A2");
+			assert.strictEqual(traceManager._getPrecedents(E2Index, H2Index), 1, "E2<-H2");
+			assert.strictEqual(traceManager._getPrecedents(B1Index, F1Index), 1, "B1<-F1");
+			assert.strictEqual(traceManager._getDependents(F1Index, B1Index), 1, "F1->B1");
+			assert.strictEqual(traceManager._getPrecedents(F1Index, I1Index), 1, "F1<-I1");
+			assert.strictEqual(traceManager._getPrecedents(B2Index, F2Index), 1, "B2<-F2");
+			assert.strictEqual(traceManager._getDependents(F2Index, B2Index), 1, "F2->B2");
+			assert.strictEqual(traceManager._getPrecedents(F2Index, I2Index), 1, "F2<-I2");
+
+			ws.getRange2("A1:B2").merge(2);		// center merge
+			assert.strictEqual(traceManager._getPrecedents(A1Index, E1Index), 1, "A1<-E1");
+			assert.strictEqual(traceManager._getDependents(E1Index, A1Index), 1, "E1->A1");
+			assert.strictEqual(traceManager._getPrecedents(E1Index, H1Index), 1, "E1<-H1");
+			assert.strictEqual(traceManager._getPrecedents(A2Index, E2Index), undefined, "A2<-E2 === undefined");
+			assert.strictEqual(traceManager._getDependents(E2Index, A2Index), undefined, "E2->A2 === undefined");
+			assert.strictEqual(traceManager._getPrecedents(E2Index, H2Index), 1, "E2<-H2");
+			assert.strictEqual(traceManager._getPrecedents(B1Index, F1Index), undefined, "B1<-F1 === undefined");
+			assert.strictEqual(traceManager._getDependents(F1Index, B1Index), undefined, "F1->B1 === undefined");
+			assert.strictEqual(traceManager._getPrecedents(F1Index, I1Index), 1, "F1<-I1");
+			assert.strictEqual(traceManager._getPrecedents(B2Index, F2Index), undefined, "B2<-F2 === undefined");
+			assert.strictEqual(traceManager._getDependents(F2Index, B2Index), undefined, "F2->B2 === undefined");
+			assert.strictEqual(traceManager._getPrecedents(F2Index, I2Index), 1, "F2<-I2");
+
+			// clear all
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+
+			ws.getRange2("A6").setValue("=A1");
+			ws.getRange2("A7").setValue("=A2");
+			ws.getRange2("B6").setValue("=B1");
+			ws.getRange2("B7").setValue("=B2");
+			ws.getRange2("A9").setValue("=A6");
+			ws.getRange2("B9").setValue("=B6");
+
+			let A6Index = AscCommonExcel.getCellIndex(ws.getRange2("A6").bbox.r1, ws.getRange2("A6").bbox.c1),
+				A7Index = AscCommonExcel.getCellIndex(ws.getRange2("A7").bbox.r1, ws.getRange2("A7").bbox.c1),
+				A9Index = AscCommonExcel.getCellIndex(ws.getRange2("A9").bbox.r1, ws.getRange2("A9").bbox.c1),
+				B6Index = AscCommonExcel.getCellIndex(ws.getRange2("B6").bbox.r1, ws.getRange2("B6").bbox.c1),
+				B7Index = AscCommonExcel.getCellIndex(ws.getRange2("B7").bbox.r1, ws.getRange2("B7").bbox.c1),
+				B9Index = AscCommonExcel.getCellIndex(ws.getRange2("B9").bbox.r1, ws.getRange2("B9").bbox.c1);
+
+			ws.selectionRange.ranges = [ws.getRange2("A9").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("A9").getBBox0().r1, ws.getRange2("A9").getBBox0().c1);
+			assert.ok(1, "Trace precedents from A9, six times");
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(A9Index, A6Index), 1, "A9<-A6");
+			assert.strictEqual(traceManager._getPrecedents(A6Index, A1Index), 1, "A6<-A1");
+			assert.strictEqual(traceManager._getPrecedents(A1Index, E1Index), 1, "A1<-E1");
+			assert.strictEqual(traceManager._getDependents(E1Index, A1Index), 1, "E1->A1");
+			assert.strictEqual(traceManager._getPrecedents(E1Index, H1Index), 1, "E1<-H1");
+			assert.strictEqual(traceManager._getPrecedents(A2Index, E2Index), undefined, "A2<-E2 === undefined");
+			assert.strictEqual(traceManager._getPrecedents(E2Index, H2Index), undefined, "E2<-H2 === undefined");
+			assert.strictEqual(traceManager._getPrecedents(B1Index, F1Index), undefined, "B1<-F1 === undefined");
+			assert.strictEqual(traceManager._getPrecedents(F1Index, I1Index), undefined, "F1<-I1 === undefined");
+			assert.strictEqual(traceManager._getPrecedents(B2Index, F2Index), undefined, "B2<-F2 === undefined");
+			assert.strictEqual(traceManager._getPrecedents(F2Index, I2Index), undefined, "F2<-I2 === undefined");
+
+			// clear all
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+
+			ws.selectionRange.ranges = [ws.getRange2("B9").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("B9").getBBox0().r1, ws.getRange2("B9").getBBox0().c1);
+			assert.ok(1, "Trace precedents from B9, six times");
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(B9Index, B6Index), 1, "B9<-B6");
+			assert.strictEqual(traceManager._getPrecedents(B6Index, B1Index), 1, "B6<-B1");
+			assert.strictEqual(traceManager._getPrecedents(B1Index, F1Index), undefined, "B1<-F1");
+			assert.strictEqual(traceManager._getDependents(F1Index, B1Index), undefined, "F1->B1");
+			
+			// clear all
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+
+			ws.selectionRange.ranges = [ws.getRange2("A7").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("A7").getBBox0().r1, ws.getRange2("A7").getBBox0().c1);
+			assert.ok(1, "Trace precedents from A7, six times");
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(A7Index, A2Index), 1, "A7<-A2");
+			assert.strictEqual(traceManager._getPrecedents(A2Index, E2Index), undefined, "A2<-E2");
+
+			ws.selectionRange.ranges = [ws.getRange2("B7").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("B7").getBBox0().r1, ws.getRange2("B7").getBBox0().c1);
+			assert.ok(1, "Trace precedents from B7, six times");
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(B7Index, B2Index), 1, "B7<-B2");
+			assert.strictEqual(traceManager._getPrecedents(B2Index, F2Index), undefined, "B2<-F2");
+
+			// clear all
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+
+			// trace dependents/precedents from merged range
+			ws.selectionRange.ranges = [ws.getRange2("B2").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("B2").getBBox0().r1, ws.getRange2("B2").getBBox0().c1);
+			assert.ok(1, "Trace precedents from merged range(A1:B2), three times");
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			api.asc_TracePrecedents();
+			assert.ok(1, "Trace dependents from merged range(A1:B2), three times");
+			api.asc_TraceDependents();
+			api.asc_TraceDependents();
+			api.asc_TraceDependents();
+			assert.strictEqual(traceManager._getPrecedents(A1Index, E1Index), 1, "A1<-E1");
+			assert.strictEqual(traceManager._getDependents(E1Index, A1Index), 1, "E1->A1");
+			assert.strictEqual(traceManager._getPrecedents(E1Index, H1Index), 1, "E1<-H1");
+			assert.strictEqual(traceManager._getPrecedents(A2Index, E2Index), undefined, "A2<-E2");
+			assert.strictEqual(traceManager._getPrecedents(E2Index, H2Index), undefined, "E2<-H2");
+			assert.strictEqual(traceManager._getPrecedents(B1Index, F1Index), undefined, "B1<-F1");
+			assert.strictEqual(traceManager._getPrecedents(F1Index, I1Index), undefined, "F1<-I1");
+			assert.strictEqual(traceManager._getPrecedents(B2Index, F2Index), undefined, "B2<-F2");
+			assert.strictEqual(traceManager._getPrecedents(F2Index, I2Index), undefined, "F2<-I2");
+			assert.strictEqual(traceManager._getPrecedents(A9Index, A6Index), 1, "A9<-A6");
+			assert.strictEqual(traceManager._getDependents(A6Index, A9Index), 1, "A6->A9");
+			assert.strictEqual(traceManager._getPrecedents(A6Index, A1Index), 1, "A6<-A1");
+			assert.strictEqual(traceManager._getDependents(A1Index, A6Index), 1, "A1->A6");
+			assert.strictEqual(traceManager._getPrecedents(A7Index, A2Index), undefined, "A7<-A2");
+			assert.strictEqual(traceManager._getPrecedents(B6Index, B1Index), undefined, "B6<-B1");
+			assert.strictEqual(traceManager._getPrecedents(B7Index, B2Index), undefined, "B7<-B2");
 
 			// clear all
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);

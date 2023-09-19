@@ -151,18 +151,18 @@
     CPresentationField.prototype.private_CalculateContent = function()
     {
         AscFormat.ExecuteNoHistory(function(){
-            const bSelectionUse = this.IsSelectionUse();
-            const oSelection = this.State.Selection;
-            const nDirection = oSelection.EndPos - oSelection.StartPos;
-            this.Content.length = 0;
             var sStr = this.private_GetString();
             if(typeof sStr === 'string')
             {
+                const bSelectionUse = this.IsSelectionUse();
+                const oSelection = this.State.Selection;
+                const nDirection = oSelection.EndPos - oSelection.StartPos;
+                this.Content.length = 0;
                 this.AddText(sStr, -1);
-            }
-            if(bSelectionUse)
-            {
-                this.SelectAll(nDirection);
+                if(bSelectionUse)
+                {
+                    this.SelectAll(nDirection);
+                }
             }
         }, this, []);
     };
@@ -185,7 +185,7 @@
         if(typeof this.FieldType === 'string')
         {
             var sFieldType = this.FieldType.toLowerCase();
-            sStr = sFieldType;
+            sStr = null;
             if("slidenum" === sFieldType)
             {
                 if(this.Paragraph && this.Paragraph.Parent)
@@ -234,7 +234,7 @@
                 if(this.Paragraph && this.Paragraph.Parent)
                 {
                     oStylesObject = this.Paragraph.Parent.Get_Styles();
-                    if(oStylesObject.shape && oStylesObject.shape.getValueString())
+                    if(oStylesObject.shape && oStylesObject.shape.getValueString && oStylesObject.shape.getValueString())
                     {
                         sStr = oStylesObject.shape.getValueString();
                     }

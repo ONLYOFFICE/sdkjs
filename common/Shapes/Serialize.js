@@ -10064,7 +10064,9 @@ function BinaryPPTYLoader()
                                 }
                                 if(f_text)
                                 {
+                                    Fld.CanAddToContent = true;
                                     Fld.AddText(f_text);
+                                    Fld.CanAddToContent = false;
                                 }
                                 if(_rPr)
                                 {

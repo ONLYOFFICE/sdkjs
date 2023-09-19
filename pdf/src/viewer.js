@@ -3228,16 +3228,16 @@
 		
 		for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 		{
+			let page = this.drawingPages[i];
+			if (!page)
+				break;
+
 			let aForms = this.pagesInfo.pages[i].fields != null ? this.pagesInfo.pages[i].fields : null;
 			if (this.pagesInfo.pages[i].graphics == null)
 				this.pagesInfo.pages[i].graphics = {};
 			
 			if (!aForms)
 				continue;
-			
-			let page = this.drawingPages[i];
-			if (!page)
-				break;
 
 			
 			let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
@@ -3313,19 +3313,19 @@
 			xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
 		}
 		
-		let time1 = performance.now();
+		//let time1 = performance.now();
 		for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 		{
+			let page = this.drawingPages[i];
+			if (!page)
+				break;
+
 			let aAnnots = this.pagesInfo.pages[i].annots != null ? this.pagesInfo.pages[i].annots : null;
 			if (this.pagesInfo.pages[i].graphics == null)
 				this.pagesInfo.pages[i].graphics = {};
 			
 			if (!aAnnots)
 				continue;
-			
-			let page = this.drawingPages[i];
-			if (!page)
-				break;
 
 			// рисуем на отдельном канвасе, кешируем
 			let tmpCanvas = page.ImageAnnots ? page.ImageAnnots : document.createElement('canvas');
@@ -3404,7 +3404,7 @@
 			// let hCropped = page.ImageAnnots.maxRect.yMax - page.ImageAnnots.maxRect.yMin;
 
 			// ctx.drawImage(page.ImageAnnots, page.ImageAnnots.maxRect.xMin, page.ImageAnnots.maxRect.yMin, wCropped, hCropped, x, y, wCropped, hCropped);
-			let time2 = performance.now();
+			//let time2 = performance.now();
 			// console.log("time: " + (time2 - time1));
 		}
 		
@@ -3478,14 +3478,14 @@
 		let oCtx = this.canvasForms.getContext("2d");
 		for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 		{
+			let page = this.drawingPages[i];
+			if (!page)
+				break;
+
 			let aForms = this.pagesInfo.pages[i].fields != null ? this.pagesInfo.pages[i].fields : null;
 			
 			if (!aForms)
 				continue;
-			
-			let page = this.drawingPages[i];
-			if (!page)
-				break;
 			
 			if (this.pagesInfo.pages[i].fields != null) {
 				this.pagesInfo.pages[i].fields.forEach(function(field) {
@@ -3500,14 +3500,14 @@
 		let oCtx = this.canvasForms.getContext("2d");
 		for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 		{
+			let page = this.drawingPages[i];
+			if (!page)
+				break;
+
 			let aForms = this.pagesInfo.pages[i].fields != null ? this.pagesInfo.pages[i].fields : null;
 			
 			if (!aForms)
 				continue;
-			
-			let page = this.drawingPages[i];
-			if (!page)
-				break;
 			
 			if (this.pagesInfo.pages[i].fields != null) {
 				this.pagesInfo.pages[i].fields.forEach(function(field) {

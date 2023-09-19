@@ -376,6 +376,10 @@
 	{
 		return false;
 	};
+	baseEditorsApi.prototype.isDocumentRenderer = function()
+	{
+		return false;
+	};
 	baseEditorsApi.prototype.getEditorErrorInfo = function()
 	{
 		return "";

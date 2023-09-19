@@ -1651,6 +1651,9 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
         if(this.preset !== oGeom.preset) {
             return false;
         }
+        if(typeof this.preset === "string" && this.preset.length > 0 && this.preset === oGeom.preset) {
+            return true;
+        }
         if(oGeom.pathLst.length !== this.pathLst.length) {
             return false;
         }
