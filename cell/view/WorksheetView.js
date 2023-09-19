@@ -5240,7 +5240,6 @@
 			ctx.setFillStyle(whiteColor);
 			ctx.beginPath();
 			ctx.fillRect(x1, y1 - lineWidth, tableWidth, tableHeight + (lineWidth * 2));
-			ctx.fill();
 
 			ctx.setLineWidth(lineWidth);
 			ctx.setFillStyle(cellStrokesColor);
