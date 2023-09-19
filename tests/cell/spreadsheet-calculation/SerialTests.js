@@ -328,7 +328,8 @@ $(function () {
     });
     QUnit.test('Negative cases', function (assert) {
         const testData = [
-           ['']
+           [''],
+           ['Test1']
         ];
         oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
         settings = {
@@ -351,7 +352,7 @@ $(function () {
         cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
         autoFillRange = getRange(0, 1, 0, 5);
-        autofillData(assert, autoFillRange, [[''], [''], [''], [''], ['']], 'Autofill Linear progression - one Column');
+        autofillData(assert, autoFillRange, [['Test1'], [''], [''], [''], ['']], 'Autofill Linear progression - one Column');
         clearData(0, 0, 0, 5);
         // Select horizontal oFromRange Growth
         oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
@@ -371,7 +372,7 @@ $(function () {
         cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
         autoFillRange = getRange(0, 1, 0, 5);
-        autofillData(assert, autoFillRange, [[''], [''], [''], [''], ['']], 'Autofill Growth progression - one Column');
+        autofillData(assert, autoFillRange, [['Test1'], [''], [''], [''], ['']], 'Autofill Growth progression - one Column');
         clearData(0, 0, 0, 5);
         // Select horizontal oFromRange autofill default mode
         oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
@@ -393,9 +394,18 @@ $(function () {
         autoFillRange = getRange(0, 1, 0, 5);
         autofillData(assert, autoFillRange, [[''], [''], [''], [''], ['']], 'Autofill default mode - one Column');
         clearData(0, 0, 0, 5);
+        // Select horizontal oFromRange linear progression. String test
+        oFromRange = getFilledData(0, 1, 5, 1, testData, [0, 0]);
+        settings.seriesIn = 'Rows';
+        settings.type = 'Linear';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autoFillRange = getRange(1, 0, 5, 0);
+        autofillData(assert, autoFillRange, [['', '', '', '', '']], 'Autofill linear progression - one Row');
     });
     QUnit.test('Autofill horizontal progression - multiple filled cells', function (assert) {
-        const testData = [
+        let testData = [
             ['1'],
             ['2'],
             ['3'],
@@ -517,9 +527,37 @@ $(function () {
         ];
         autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression with trend');
         clearData(0, 0, 5, 5);
+        // Growth progression all cells filled. Step = 0.5
+        testData = [
+            ['1', '2', '3', '4', '5', '6'],
+            ['2', '3', '4', '5', '6', '7'],
+            ['3', '4', '5', '6', '7', '8'],
+            ['4', '5', '6', '7', '8', '9'],
+            ['5', '6', '7', '8', '9', '10'],
+            ['6', '7', '8', '9', '10', '11']
+        ];
+        oFromRange = getFilledData(0, 0, 5, 5, testData, [0, 0]);
+        settings.type = 'Growth';
+        settings.step = '0.5';
+        settings.trend = false;
+        settings.stopValue = '';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 5, 5);
+        expectedData = [
+            ['0.5', '0.25', '0.125', '0.0625', '0.03125'],
+            ['1', '0.5', '0.25', '0.125', '0.0625'],
+            ['1.5', '0.75', '0.375', '0.1875', '0.09375'],
+            ['2', '1', '0.5', '0.25', '0.125'],
+            ['2.5', '1.25', '0.625', '0.3125', '0.15625'],
+            ['3', '1.5', '0.75', '0.375', '0.1875']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression all cells filled. Step = 0.5');
+        clearData(0, 0, 5, 5);
     });
     QUnit.test('Autofill vertical progression - multiple filled cells', function (assert) {
-        const testData = [
+        let testData = [
             ['1', '2', '3', '4', '5', '6']
         ];
         oFromRange = getFilledData(0, 0, 5, 5, testData, [0, 0]);
@@ -628,6 +666,33 @@ $(function () {
             ['1', '2', '3', '4', '5', '6']
         ];
         autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth progression with trend');
+        clearData(0, 0, 5, 5);
+        // Linear progression all cells filled. Step = -1.
+        testData = [
+            ['1', '2', '3', '4', '5', '6'],
+            ['1', '2', '3', '4', '5', '6'],
+            ['1', '2', '3', '4', '5', '6'],
+            ['1', '2', '3', '4', '5', '6'],
+            ['1', '2', '3', '4', '5', '6'],
+            ['1', '2', '3', '4', '5', '6']
+        ];
+        oFromRange = getFilledData(0, 0, 5, 5, testData, [0, 0]);
+        settings.step = '-1';
+        settings.type = 'Linear';
+        settings.trend = false;
+        settings.stopValue = '';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 5, 5);
+        expectedData = [
+            ['0', '1', '2', '3', '4', '5'],
+            ['-1', '0', '1', '2', '3', '4'],
+            ['-2', '-1', '0', '1', '2', '3'],
+            ['-3', '-2', '-1', '0', '1', '2'],
+            ['-4', '-3', '-2', '-1', '0', '1']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Linear progression all cells filled. Step = -1.');
         clearData(0, 0, 5, 5);
     });
     QUnit.test('Autofill Date type - one filled row/column', function (assert) {
@@ -911,7 +976,101 @@ $(function () {
         autofillRange = getRange(3, 0, 6, 0);
         autofillData(assert, autofillRange, [['-2', '-4', '-6', '-8']], 'Autofill Rows. Linear type with trend mode');
         clearData(0,0,6,0);
+        // Growth type with trend mode
+        testData = [
+            ['16', '8', '4']
+        ];
+        oFromRange = getFilledData(0, 0, 6, 0, testData, [0, 0]);
+        settings.type = 'Growth';
 
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(3, 0, 6, 0);
+        // In UI results: 0.49999999999999994 and 0.25000000000000006 will be round to 0.5 and 0.25. Need's UI test it
+        autofillData(assert, autofillRange, [['2', '1', '0.49999999999999994', '0.25000000000000006']], 'Autofill Rows. Growth type with trend mode');
+        clearData(0,0,6,0);
+        // Linear multiple lines with trend mode
+        testData = [
+            ['4', '2', '0'],
+            ['16', '8', '4'],
+            ['2', '4', '8'],
+            ['1', '2'],
+            ['1']
+        ];
+        oFromRange = getFilledData(0, 0, 6, 4, testData, [0, 0]);
+        settings.type = 'Linear';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 0, 6, 4);
+        expectedData = [
+            ['4', '2', '0', '-2', '-4', '-6', '-8'],
+            ['15.333333333333334', '9.333333333333334', '3.333333333333334', '-2.666666666666666', '-8.666666666666666', '-14.666666666666666', '-20.666666666666664'],
+            ['1.666666666666667', '4.666666666666667', '7.666666666666667', '10.666666666666668', '13.666666666666668',	'16.666666666666668', '19.666666666666668'],
+            ['1', '2', '3', '4', '5', '6', '7'],
+            ['1', '2', '3', '4', '5', '6', '7']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Linear multiple lines with trend mode');
+        clearData(0,0,6,4);
+        // Growth multiple lines with trend mode
+        console.log('Autofill Rows. Growth multiple lines with trend mode');
+        oFromRange = getFilledData(0, 0, 6, 4, testData, [0, 0]);
+        settings.type = 'Growth';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 0, 6, 4);
+        // In UI results: Numbers like 0.49999999999999994 and 0.25000000000000006 will be round to 0.5 and 0.25. Need's UI test it.
+        expectedData = [
+            ['4', '2', '0', '', '', '', ''],
+            ['15.999999999999998', '7.999999999999998', '4', '2', '1', '0.49999999999999994', '0.25000000000000006'],
+            ['2', '4', '7.999999999999998', '15.999999999999991', '31.999999999999986', '63.99999999999998', '127.99999999999986'],
+            ['1', '2', '4', '7.999999999999998', '15.999999999999998', '32', '63.99999999999998'],
+            ['1', '1', '1', '1', '1', '1', '1']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth multiple lines with trend mode');
+        clearData(0, 0, 6, 4);
+        // Linear multiple Rows with trend mode. With indentation
+        oFromRange = getFilledData(1, 0, 7, 4, testData, [0, 1]);
+        settings.type = 'Linear';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 7, 4);
+        expectedData = [
+            ['4', '2', '0', '-2', '-4', '-6', '-8'],
+            ['15.333333333333336', '9.333333333333336', '3.3333333333333357', '-2.6666666666666643', '-8.666666666666664', '-14.666666666666664', '-20.666666666666664'],
+            ['1.666666666666667', '4.666666666666667', '7.666666666666667', '10.666666666666668', '13.666666666666668',	'16.666666666666668', '19.666666666666668'],
+            ['1', '2', '3', '4', '5', '6', '7'],
+            ['1', '2', '3', '4', '5', '6', '7']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Linear multiple Rows with trend mode. With indentation');
+        clearData(0, 0, 7, 4);
+        // Growth multiple Rows with trend mode. With indentation
+        oFromRange = getFilledData(1, 0, 7, 4, testData, [0, 1]);
+        settings.type = 'Growth';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 0, 7, 4);
+        expectedData = [
+            ['4', '2', '0', '', '', '', ''],
+            ['15.999999999999991', '7.999999999999995', '3.999999999999999', '1.9999999999999993', '0.9999999999999996', '0.49999999999999994', '0.24999999999999994'],
+            ['2', '4', '7.999999999999995', '15.999999999999991', '31.999999999999986', '63.99999999999992', '127.99999999999986'],
+            ['1', '2', '4', '8.000000000000002', '16.000000000000007', '31.999999999999986', '63.99999999999998'],
+            ['1', '1', '1', '1', '1', '1', '1']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth multiple Rows with trend mode. With indentation');
+        clearData(0, 0, 7, 4);
+        // Growth multiple Rows with trend mode. With indentation row and col
+        oFromRange = getFilledData(1, 1, 7, 5, testData, [1, 1]);
+        settings.type = 'Growth';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 1, 7, 5);
+        autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth multiple Rows with trend mode. With indentation row and col');
+        clearData(0, 0, 7, 5);
     });
     QUnit.test('Fill -> Serial. Trend. Vertical - Multiple cells', function (assert) {
         let testData = [
@@ -934,5 +1093,107 @@ $(function () {
         autofillRange = getRange(0, 3, 0, 6);
         autofillData(assert, autofillRange, [['-2'], ['-4'], ['-6'], ['-8']], 'Autofill Columns. Linear type with trend mode');
         clearData(0,0,0,6);
+        //Growth type with trend mode
+        testData = [
+            ['16'],
+            ['8'],
+            ['4']
+        ];
+        oFromRange = getFilledData(0, 0, 0, 6, testData, [0, 0]);
+        settings.type = 'Growth';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 3, 0, 6);
+        // In UI results: 0.49999999999999994 and 0.25000000000000006 will be round to 0.5 and 0.25. Need's UI test it
+        autofillData(assert, autofillRange, [['2'], ['1'], ['0.49999999999999994'], ['0.25000000000000006']], 'Autofill Columns. Growth type with trend mode');
+        clearData(0,0,0,6);
+        // Linear multiple lines with trend mode
+        testData = [
+            ['4', '16', '2', '1', '1'],
+            ['2', '8', '4', '2'],
+            ['0', '4', '8']
+        ];
+        oFromRange = getFilledData(0, 0, 4, 6, testData, [0, 0]);
+        settings.type = 'Linear';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 0, 4, 6);
+        expectedData = [
+            ['4', '15.333333333333334', '1.666666666666667', '1', '1'],
+            ['2', '9.333333333333334', '4.666666666666667', '2', '2'],
+            ['0', '3.333333333333334', '7.666666666666667', '3', '3'],
+            ['-2', '-2.666666666666666', '10.666666666666668', '4', '4'],
+            ['-4', '-8.666666666666666', '13.666666666666668', '5', '5'],
+            ['-6', '-14.666666666666666', '16.666666666666668', '6', '6'],
+            ['-8', '-20.666666666666664', '19.666666666666668', '7', '7']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Linear multiple lines with trend mode');
+        clearData(0, 0, 4, 6);
+        // Growth multiple lines with trend mode
+        oFromRange = getFilledData(0, 0, 4, 6, testData, [0, 0]);
+        settings.type = 'Growth';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 0, 4, 6);
+        // In UI results: Numbers like 0.49999999999999994 and 0.25000000000000006 will be round to 0.5 and 0.25. Need's UI test it.
+        expectedData = [
+            ['4', '15.999999999999998', '2', '1', '1'],
+            ['2', '7.999999999999998', '4', '2', '1'],
+            ['0', '4', '7.999999999999998', '4', '1'],
+            ['', '2', '15.999999999999991', '7.999999999999998', '1'],
+            ['', '1', '31.999999999999986', '15.999999999999998', '1'],
+            ['', '0.49999999999999994', '63.99999999999998', '32', '1'],
+            ['', '0.25000000000000006', '127.99999999999986', '63.99999999999998', '1']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth multiple lines with trend mode');
+        clearData(0, 0, 4, 6);
+        // Linear multiple Rows with trend mode. With indentation
+        oFromRange = getFilledData(0, 1, 4, 7, testData, [1, 0]);
+        settings.type = 'Linear';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 4, 7);
+        expectedData = [
+            ['4', '15.333333333333336', '1.666666666666667', '1', '1'],
+            ['2', '9.333333333333336', '4.666666666666667', '2', '2'],
+            ['0', '3.3333333333333357', '7.666666666666667', '3', '3'],
+            ['-2', '-2.6666666666666643', '10.666666666666668', '4', '4'],
+            ['-4', '-8.666666666666664', '13.666666666666668', '5', '5'],
+            ['-6', '-14.666666666666664', '16.666666666666668', '6', '6'],
+            ['-8', '-20.666666666666664', '19.666666666666668', '7', '7']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Linear multiple Rows with trend mode. With indentation');
+        clearData(0, 0, 4, 7);
+        // Growth multiple Rows with trend mode. With indentation
+        oFromRange = getFilledData(0, 1, 4, 7, testData, [1, 0]);
+        settings.type = 'Growth';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 1, 4, 7);
+        expectedData = [
+            ['4', '15.999999999999991', '2', '1', '1'],
+            ['2', '7.999999999999995', '4', '2', '1'],
+            ['0', '3.999999999999999', '7.999999999999995', '4', '1'],
+            ['', '1.9999999999999993', '15.999999999999991', '8.000000000000002', '1'],
+            ['', '0.9999999999999996', '31.999999999999986', '16.000000000000007', '1'],
+            ['', '0.49999999999999994', '63.99999999999992', '31.999999999999986', '1'],
+            ['', '0.24999999999999994', '127.99999999999986', '63.99999999999998', '1']
+        ];
+        autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth multiple Rows with trend mode. With indentation');
+        clearData(0, 0, 4, 7);
+        // Growth multiple Columns with trend mode. With indentation row and col
+        oFromRange = getFilledData(1, 1, 5, 7, testData, [1, 1]);
+        settings.type = 'Growth';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 1, 5, 7);
+        autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth multiple Columns with trend mode. With indentation row and col');
+        clearData(0, 0, 5, 7);
     });
 });
