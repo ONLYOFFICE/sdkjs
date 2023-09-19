@@ -5240,7 +5240,6 @@
 			ctx.setFillStyle(whiteColor);
 			ctx.beginPath();
 			ctx.fillRect(x1, y1 - lineWidth, tableWidth, tableHeight + (lineWidth * 2));
-			ctx.stroke();
 			ctx.fill();
 
 			ctx.setLineWidth(lineWidth);
@@ -5250,12 +5249,11 @@
 			// draw main rectangle
 			ctx.beginPath();
 			ctx.strokeRect(x1, y1, tableWidth, tableHeight);
-			ctx.stroke();
 
+			let isEven = lineWidth % 2 !== 0 ? 0.5 : 0;
 			ctx.beginPath();
-			ctx.fillRect(x1, y1 - lineWidth, tableWidth + 0.5, lineWidth);
+			ctx.fillRect(x1, y1 - lineWidth, tableWidth + isEven, lineWidth + isEven);
 			ctx.strokeRect(x1, y1 - lineWidth, tableWidth, tableHeight + lineWidth);
-			ctx.stroke();
 
 			// Vertical lines
 			for (let i = 1; i < 3; i++) {
@@ -5292,7 +5290,6 @@
 				ctx.setStrokeStyle(lineColor);
 				ctx.setLineWidth(1);
 				ctx.strokeRect(x1, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
-				ctx.closePath().stroke();
 				// then go to the next area
 			}
 		};
