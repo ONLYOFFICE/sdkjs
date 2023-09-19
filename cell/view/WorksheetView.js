@@ -5066,7 +5066,7 @@
 			if (extLength === 0 && angle === 0) {
 				// temporary exception
 				ctx.lineDiag(x1, y1, x2, y2);
-				ctx.closePath().stroke();
+				ctx.stroke();
 
 				!external ? drawDot(x1, y1, lineColor) : drawDot(x1, y1, externalLineColor);
 			} else {
@@ -5080,20 +5080,16 @@
 				if (external) {
 					drawDottedLine(x1, y1, newX2, newY2);
 					drawArrowHead(x2, y2, arrowSize, angle, externalLineColor);
-					// drawDot(x1, y1, externalLineColor);
-					drawDot2(x1, y1, externalLineColor);
-					// drawMiniTable(x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop);
-					drawMiniTable2(x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop);
+					drawDot(x1, y1, externalLineColor);
+					drawMiniTable(x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop);
 				} else {
 					ctx.beginPath();
 					ctx.setStrokeStyle(!external ? lineColor : externalLineColor);
 					ctx.moveTo(x1, y1);
 					ctx.lineTo(newX2, newY2);
-					ctx.closePath().stroke();
+					ctx.stroke();
 					drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
-					// drawDot(x1, y1, lineColor);
-					drawDot2(x1, y1, lineColor);
-					// drawDot3(x1, y1, lineColor);
+					drawDot(x1, y1, lineColor);
 				}
 			}
 		};
@@ -5152,10 +5148,8 @@
 
 			drawDottedLine(x1, y1, newX2, newY2);
 			drawArrowHead(newX2, newY2, arrowSize, angle, externalLineColor);
-			// drawDot(x1, y1, externalLineColor);
-			drawDot2(x1, y1, externalLineColor);
-			// drawMiniTable(x1, y1, miniTableCol, miniTableRow, isTableLeft, isTableTop);
-			drawMiniTable2(x1, y1, miniTableCol, miniTableRow, isTableLeft, isTableTop);
+			drawDot(x1, y1, externalLineColor);
+			drawMiniTable(x1, y1, miniTableCol, miniTableRow, isTableLeft, isTableTop);
 		};
 
 		const drawDottedLine = function (x1, y1, x2, y2) {
@@ -5174,7 +5168,6 @@
 			ctx.setStrokeStyle(externalLineColor);
 			ctx.lineDiag(x1, y1, x2, y2);
 			ctx.stroke();
-			ctx.closePath();
 
 			ctx.setStrokeStyle(whiteColor);
 			for (let i = 0; i < dashCount; i++) {
@@ -5183,7 +5176,6 @@
 				ctx.stroke();
 				x1 += xStep;
 				y1 += yStep;
-				ctx.closePath();
 			}
 		};
 		const drawArrowHead = function (x2, y2, arrowSize, angle, color) {
@@ -5219,26 +5211,15 @@
 		};
 		const drawDot = function (x, y, color) {
 			const dotRadius = 2.75 * zoom * customScale;
-			ctx.beginPath();
-			ctx.arc(x, y, dotRadius, 0, 2 * Math.PI);
-			ctx.setFillStyle(color);
-			ctx.closePath().fill();
-		};
-		const drawDot2 = function (x, y, color) {
-			const dotRadius = 2.75 * zoom * customScale;
-			const k = 0.552284749831;	// standard circle approximation value = 4/3*(Math.sqrt(2) - 1)
 
 			ctx.beginPath();
 			let dx = Math.round(x);
 			let dy = Math.round(y);
-			ctx.moveTo(dx + dotRadius, dy);
-			ctx.bezierCurveTo(dx + dotRadius, dy - k * dotRadius, dx + k * dotRadius, dy - dotRadius, dx, dy - dotRadius);
-			ctx.bezierCurveTo(dx - k * dotRadius, dy - dotRadius, dx - dotRadius, dy - k * dotRadius, dx - dotRadius, dy);
-			ctx.bezierCurveTo(dx - dotRadius, dy + k * dotRadius, dx - k * dotRadius, dy + dotRadius, dx, dy + dotRadius);
-			ctx.bezierCurveTo(dx + k * dotRadius, dy + dotRadius, dx + dotRadius, dy + k * dotRadius, dx + dotRadius, dy);
+
+			window['AscFormat'].EllipseOnCanvas(ctx, dx, dy, dotRadius, dotRadius);
 
 			ctx.setFillStyle(color);
-			ctx.closePath().fill();
+			ctx.fill();
 		};
 
 		const drawMiniTable = function (x, y, destCol, destRow, isTableLeft, isTableTop) {
@@ -5259,65 +5240,8 @@
 			ctx.setFillStyle(whiteColor);
 			ctx.beginPath();
 			ctx.fillRect(x1, y1 - lineWidth, tableWidth, tableHeight + (lineWidth * 2));
-			ctx.closePath().stroke();
-
-			ctx.setLineWidth(lineWidth);
-			ctx.setFillStyle(cellStrokesColor);
-			ctx.setStrokeStyle(cellStrokesColor);
-
-			// draw main rectangle
-			ctx.beginPath();
-			ctx.strokeRect(x1, y1, tableWidth, tableHeight);
-			ctx.stroke();
-
-			ctx.beginPath();
-			let multiplier = zoom < 3 ? 1.5 : 1.2;
-			if (zoom > 1.8) {
-				ctx.fillRect(x1 - 0.5, y1 - lineWidth, tableWidth + (lineWidth * 0.5), lineWidth * multiplier);
-			} else {
-				ctx.fillRect(x1, y1 - lineWidth, tableWidth + 0.5, lineWidth * multiplier);
-			}
-			ctx.strokeRect(x1, y1 - lineWidth, tableWidth, tableHeight + lineWidth);
-			ctx.stroke();
-			ctx.closePath().fill();
-
-			// Vertical lines
-			for (let i = 1; i < 3; i++) {
-				let x2 = i * cellWidth;
-				ctx.beginPath();
-				ctx.lineVer(x2 + x1, y1, y1 + tableHeight);
-				ctx.stroke();
-			}
-
-			// Horizontal lines
-			for (let j = 1; j < 3; j++) {
-				let y2 = j * cellHeight;
-				ctx.beginPath();
-				ctx.lineHor(x1, y1 + y2, x1 + tableWidth);
-				ctx.stroke();
-			}
-		};
-		const drawMiniTable2 = function (x, y, destCol, destRow, isTableLeft, isTableTop) {
-			const paddingX = 8 * zoom * customScale;
-			const paddingY = 4 * zoom * customScale;
-			const tableWidth = 15 * zoom * customScale;
-			const tableHeight = 9 * zoom * customScale;
-			const cellWidth = tableWidth / 3;
-			const cellHeight = tableHeight / 3;
-			const lineWidth = 1 * zoom * customScale;
-			const cellStrokesColor = new CColor(0, 0, 0);
-
-			// Padding for a table inside the cell
-			const x1 = isTableLeft ? x - tableWidth - paddingX : x + paddingX;
-			const y1 = isTableTop ? y - tableHeight - (paddingY * 2) : y + paddingY;
-
-			// draw white canvas behind the table
-			ctx.setFillStyle(whiteColor);
-			ctx.beginPath();
-			ctx.fillRect(x1, y1 - lineWidth, tableWidth, tableHeight + (lineWidth * 2));
 			ctx.stroke();
 			ctx.fill();
-			ctx.closePath();
 
 			ctx.setLineWidth(lineWidth);
 			ctx.setFillStyle(cellStrokesColor);
@@ -5326,33 +5250,19 @@
 			// draw main rectangle
 			ctx.beginPath();
 			ctx.strokeRect(x1, y1, tableWidth, tableHeight);
-			ctx.stroke().closePath();;
-
-			/* ??? Trouble with the additional line above the main rectangle
-			// ctx.beginPath();
-			// let multiplier = zoom < 3 ? 1.5 : 1.2;
-			// if (zoom > 1.8) {
-			// 	ctx.fillRect(x1 - 0.5, y1 - lineWidth, tableWidth + (lineWidth * 0.5), lineWidth * multiplier);
-			// } else {
-			// 	ctx.fillRect(x1, y1 - lineWidth, tableWidth + 0.5, lineWidth * multiplier);
-			// }
-			// ctx.strokeRect(x1, y1 - lineWidth, tableWidth, tableHeight + lineWidth);
-			// ctx.stroke();
-			// ctx.closePath().fill();
-			*/
+			ctx.stroke();
 
 			ctx.beginPath();
 			ctx.fillRect(x1, y1 - lineWidth, tableWidth + 0.5, lineWidth);
 			ctx.strokeRect(x1, y1 - lineWidth, tableWidth, tableHeight + lineWidth);
 			ctx.stroke();
-			ctx.closePath();
 
 			// Vertical lines
 			for (let i = 1; i < 3; i++) {
 				let x2 = i * cellWidth;
 				ctx.beginPath();
 				ctx.lineVer(x2 + x1, y1, y1 + tableHeight);
-				ctx.stroke().closePath();
+				ctx.stroke();
 			}
 
 			// Horizontal lines
@@ -5360,7 +5270,7 @@
 				let y2 = j * cellHeight;
 				ctx.beginPath();
 				ctx.lineHor(x1, y1 + y2, x1 + tableWidth);
-				ctx.stroke().closePath();
+				ctx.stroke();
 			}
 		};
 
