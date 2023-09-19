@@ -8876,6 +8876,18 @@ var editor;
 		return ws.removeTraceArrows(type);
 	};
 
+	/** Returns array of function info
+	 * @param {number} pos - cursor position
+	 * @param {string} s - cell text
+	 * @returns {asc_CCompleteMenu[]}
+	 */
+	spreadsheet_api.prototype.asc_GetEditableFunctions = function(pos, s) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.getEditableFunctions(pos, s);
+	};
 
 
   /*
@@ -9449,7 +9461,7 @@ var editor;
   prot["asc_ResetAllPageBreaks"]      = prot.asc_ResetAllPageBreaks;
   prot["asc_GetPageBreaksDisableType"]= prot.asc_GetPageBreaksDisableType;
 
-
+  prot["asc_GetEditableFunctions"]= prot.asc_GetEditableFunctions;
 
 
 
