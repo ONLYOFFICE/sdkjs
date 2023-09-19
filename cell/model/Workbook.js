@@ -16444,6 +16444,9 @@
 				return;
 			}
 		}
+
+		this.worksheet.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.mergeRange, true, this, this.worksheet.getId());
+
 		//пробегаемся по границе диапазона, чтобы посмотреть какие границы нужно оставлять
 		var oLeftBorder = null;
 		var oTopBorder = null;
@@ -16526,9 +16529,6 @@
 		var oFirstCellHyperlink = null;
 		this._setPropertyNoEmpty(null,null,
 								 function(cell, nRow0, nCol0, nRowStart, nColStart){
-									 if (!bFirst) {
-										 cell.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, cell, null, cell.ws.getId());
-									 }
 									 if(bFirst && false == cell.isNullText())
 									 {
 										 bFirst = false;
@@ -16751,6 +16751,7 @@
 		if (dataValidationRanges) {
 			this.worksheet.clearDataValidation(dataValidationRanges, true);
 		}
+		this.worksheet.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.mergeRange, null, this, this.worksheet.getId());
 
 		History.EndTransaction();
 	};

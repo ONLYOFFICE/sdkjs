@@ -44,6 +44,13 @@ $(function() {
 	AscCommonExcel.WorkbookView.prototype._calcMaxDigitWidth = function() {
 	};
 	AscCommonExcel.WorkbookView.prototype._init = function() {
+		var self = this;
+		this.model.handlers.add("changeDocument", function(prop, arg1, arg2, wsId) {
+			let ws = wsId && self.getWorksheetById(wsId, true);
+			if (ws) {
+				ws.traceDependentsManager.changeDocument(prop, arg1, arg2);
+			}
+		});
 	};
 	AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged = function() {
 	};
@@ -96,8 +103,6 @@ $(function() {
 		api._openDocument(AscCommon.getEmpty());	// this func set api.wbModel
 		// api._openOnClient();
 		api.collaborativeEditing = new AscCommonExcel.CCollaborativeEditing({});
-		api.wb = new AscCommonExcel.WorkbookView(api.wbModel, api.controller, api.handlers, api.HtmlElement,
-			api.topLineEditorElement, api, api.collaborativeEditing, api.fontRenderingMode);
 		wb = api.wbModel;
 
 		AscCommonExcel.g_oUndoRedoCell = new AscCommonExcel.UndoRedoCell(wb);

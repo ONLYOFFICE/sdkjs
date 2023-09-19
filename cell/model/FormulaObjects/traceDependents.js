@@ -72,6 +72,8 @@ function (window, undefined) {
 			// isCalculated: null
 			// }
 		};
+
+		this._lockChangeDocument = null;
 	}
 
 	TraceDependentsManager.prototype.setPrecedentsCall = function () {
@@ -1259,6 +1261,9 @@ function (window, undefined) {
 	TraceDependentsManager.prototype.changeDocument = function (prop, arg1, arg2) {
 		switch (prop) {
 			case AscCommonExcel.docChangedType.cellValue:
+				if (this._lockChangeDocument) {
+					return;
+				}
 				if (arg1) {
 					this.clearCellTraces(arg1.nRow, arg1.nCol);
 				}
@@ -1266,6 +1271,9 @@ function (window, undefined) {
 			case AscCommonExcel.docChangedType.rangeValues:
 				break;
 			case AscCommonExcel.docChangedType.sheetContent:
+				if (this._lockChangeDocument) {
+					return;
+				}
 				this.clearAll();
 				break;
 			case AscCommonExcel.docChangedType.sheetRemove:
@@ -1275,6 +1283,21 @@ function (window, undefined) {
 			case AscCommonExcel.docChangedType.sheetChangeIndex:
 				break;
 			case AscCommonExcel.docChangedType.markModifiedSearch:
+				break;
+			case AscCommonExcel.docChangedType.mergeRange:
+				if (arg1 === true) {
+					this._lockChangeDocument = true;
+				} else {
+					this._lockChangeDocument = null;
+					let t = this;
+					if (arg2) {
+						arg2._foreachNoEmpty(function (cell) {
+							if (!(arg2.bbox.c1 === cell.nCol && arg2.bbox.r1 === cell.nRow)) {
+								t.clearCellTraces(cell.nRow, cell.nCol);
+							}
+						});
+					}
+				}
 				break;
 		}
 	};
