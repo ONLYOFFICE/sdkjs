@@ -72,10 +72,10 @@
         oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
         oContentToDraw.Draw(0, oGraphicsWord);
         // redraw target cursor if field is selected
-        if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && oViewer.fieldFillingMode)
+        if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsEditable())
             oContentToDraw.RecalculateCurPos();
         
-        oGraphicsWord.RemoveClip();
+        oGraphicsWord.RemoveLastClip();
         this.DrawBorders(oGraphicsPDF);
     };
     CComboBoxField.prototype.Recalculate = function() {

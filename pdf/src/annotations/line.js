@@ -69,7 +69,7 @@
         oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
 
         this.content.Draw(0, oGraphicsWord);
-        oGraphicsWord.RemoveClip();
+        oGraphicsWord.RemoveLastClip();
     };
     CAnnotationLine.prototype.Recalculate = function() {
         // if (this.IsNeedRecalc() == false)

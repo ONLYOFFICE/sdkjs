@@ -94,9 +94,6 @@
 	PDFEditorApi.prototype.getLogicDocument = function() {
 		return this.getPDFDoc();
 	};
-	PDFEditorApi.prototype.isFieldFillingMode = function() {
-		return this.DocumentRenderer ? this.DocumentRenderer.fieldFillingMode : false;
-	};
 	PDFEditorApi.prototype.getDocumentRenderer = function() {
 		return this.DocumentRenderer;
 	};
@@ -349,7 +346,7 @@
 		let oDoc	= viewer.getPDFDoc();
 		if (!viewer
 			|| !oDoc.activeForm
-			|| !viewer.fieldFillingMode) {
+			|| !oDoc.activeForm.IsEditable()) {
 			
 			return false;
 		}

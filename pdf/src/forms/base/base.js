@@ -204,6 +204,14 @@
         this.GetDocument().AddFieldToChildsMap(this, nIdx);
     };
     /**
+	 * Can or not enter text into form.
+	 * @memberof CBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    CBaseField.prototype.IsEditable = function() {
+        return false;
+    };
+    /**
 	 * Invokes only on open forms.
 	 * @memberof CBaseField
 	 * @typeofeditors ["PDF"]
@@ -297,8 +305,13 @@
         var arrRects    = [];
         var oBounds     = this.getFormRelRect();
 
-        let nPageIndX = oViewer.pageDetector.pages[0].x / AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_pix_to_mm;
-        let nPageIndY = oViewer.pageDetector.pages[0].y / AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_pix_to_mm;
+        let nPage = this.GetPage();
+        let oPage = oViewer.pageDetector.pages.find(function(page) {
+            return page.num == nPage;
+        });
+        
+        let nPageIndX = oPage.x / AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_pix_to_mm;
+        let nPageIndY = oPage.y / AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_pix_to_mm;
 
         var nLeft   = Math.max(X, oBounds.X) + nPageIndX / oViewer.zoom;
         var nRight  = Math.min(X + W, oBounds.X + oBounds.W) + nPageIndX / oViewer.zoom;

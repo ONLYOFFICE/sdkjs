@@ -853,13 +853,13 @@
 				oRect		= oFormInfo["rect"];
 
 				oForm = this.doc.AddField(oFormInfo["name"], oFormInfo["type"], oFormInfo["page"], [oRect["x1"], oRect["y1"], oRect["x2"], oRect["y2"]]);
-
-				oForm.SetOriginPage(oFormInfo["page"]);
 				
 				if (!oForm) {
 					console.log(Error("Error while reading form, index " + i));
 					continue;
 				}
+
+				oForm.SetOriginPage(oFormInfo["page"]);
 
 				if (oFormInfo["Parent"] != null)
 				{
@@ -1839,7 +1839,7 @@
 
 			if (oThis.MouseHandObject)
 			{
-				if (oThis.MouseHandObject.Active && !oThis.fieldFillingMode && !oDoc.mouseDownAnnot && !oThis.Api.isInkDrawerOn())
+				if (oThis.MouseHandObject.Active && !oDoc.mouseDownAnnot && !oThis.Api.isInkDrawerOn())
 				{
 					// двигаем рукой
 					oThis.setCursorType(AscCommon.Cursors.Grabbing);
@@ -2807,7 +2807,7 @@
 
 			if (e.KeyCode === 8) // BackSpace
 			{
-				if (oDoc.activeForm && this.fieldFillingMode)
+				if (oDoc.activeForm && oDoc.activeForm.IsEditable())
 				{
 					oDoc.activeForm.Remove(-1, e.CtrlKey == true);
 					if (oDoc.activeForm.IsNeedRecalc())
@@ -2881,7 +2881,7 @@
 			}
 			else if ( e.KeyCode == 37 ) // Left Arrow
 			{
-				if (oDoc.activeForm && (this.fieldFillingMode || oDoc.activeForm.GetType() == AscPDF.FIELD_TYPES.combobox))
+				if (oDoc.activeForm && (oDoc.activeForm.IsEditable() || oDoc.activeForm.GetType() == AscPDF.FIELD_TYPES.combobox))
 				{
 					// сбрасываем счетчик до появления курсора
 					if (true !== e.ShiftKey)
@@ -2969,7 +2969,7 @@
 			}
 			else if ( e.KeyCode == 39 ) // Right Arrow
 			{	
-				if (oDoc.activeForm && (this.fieldFillingMode || oDoc.activeForm.GetType() == AscPDF.FIELD_TYPES.combobox))
+				if (oDoc.activeForm && (oDoc.activeForm.IsEditable() || oDoc.activeForm.GetType() == AscPDF.FIELD_TYPES.combobox))
 				{
 					// сбрасываем счетчик до появления курсора
 					if (true !== e.ShiftKey)
@@ -3064,7 +3064,7 @@
 			{
 				let oDoc = this.getPDFDoc();
 
-				if (oDoc.activeForm && this.fieldFillingMode)
+				if (oDoc.activeForm && oDoc.activeForm.IsEditable())
 				{
 					oDoc.activeForm.Remove(1, e.CtrlKey == true);
 					if (oDoc.activeForm._needRecalc)

@@ -543,7 +543,7 @@
         }
 
         this.content.Draw(0, oGraphicsWord);
-        oGraphicsWord.RemoveClip();
+        oGraphicsWord.RemoveLastClip();
 
         if (false == this.IsPressed()) {
             this.GetButtonFitBounds() == false && this.DrawBorders(oGraphicsPDF);

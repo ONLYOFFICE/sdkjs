@@ -299,8 +299,11 @@
         this.DrawBorders(oGraphicsPDF);
 
         // redraw target cursor if field is selected
-        if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && oViewer.fieldFillingMode)
+        if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsEditable())
             oContentToDraw.RecalculateCurPos();
+    };
+    CTextField.prototype.IsEditable = function() {
+        return true;
     };
     CTextField.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)

@@ -420,7 +420,6 @@ var CPresentation = CPresentation || function(){};
             switch (oNextForm.GetType()) {
                 case AscPDF.FIELD_TYPES.text:
                 case AscPDF.FIELD_TYPES.combobox:
-                    oViewer.fieldFillingMode = true;
                     oViewer.Api.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
                     oViewer.Api.WordControl.m_oDrawingDocument.m_lCurrentPage = 0;
                     oViewer.Api.WordControl.m_oDrawingDocument.m_lPagesCount = oViewer.file.pages.length;
@@ -435,7 +434,6 @@ var CPresentation = CPresentation || function(){};
                     break;
                 default:
                     oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
-                    oViewer.fieldFillingMode = false;
                     break;
             }
         };
@@ -497,7 +495,6 @@ var CPresentation = CPresentation || function(){};
             switch (oNextForm.GetType()) {
                 case AscPDF.FIELD_TYPES.text:
                 case AscPDF.FIELD_TYPES.combobox:
-                    oViewer.fieldFillingMode = true;
                     oViewer.Api.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
                     oViewer.Api.WordControl.m_oDrawingDocument.m_lCurrentPage = 0;
                     oViewer.Api.WordControl.m_oDrawingDocument.m_lPagesCount = oViewer.file.pages.length;
@@ -512,7 +509,6 @@ var CPresentation = CPresentation || function(){};
                     break;
                 default:
                     oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
-                    oViewer.fieldFillingMode = false;
                     break;
             }
         };
@@ -566,8 +562,6 @@ var CPresentation = CPresentation || function(){};
             }
 
             if (oField.IsNeedCommit()) {
-                oViewer.fieldFillingMode = false;
-
                 let isValid = true;
                 if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oField.GetType())) {
                     isValid = oField.DoValidateAction(oField.GetValue());
@@ -680,7 +674,7 @@ var CPresentation = CPresentation || function(){};
             oViewer._paint();
         }
 
-        if (oActiveForm && oActiveForm.content && oActiveForm.content.IsSelectionEmpty()) {
+        if (oActiveForm && oActiveForm.content && oActiveForm.content.IsSelectionUse()) {
             oActiveForm.content.RemoveSelection();
             oViewer.onUpdateOverlay();
         }
@@ -698,7 +692,6 @@ var CPresentation = CPresentation || function(){};
                     
                 oViewer.onUpdateOverlay();
                 if (oField.IsEditable() != false)
-                    oViewer.fieldFillingMode = true;
                 break;
             case AscPDF.FIELD_TYPES.listbox:
                 oField.SetDrawHighlight(false);
@@ -1075,7 +1068,6 @@ var CPresentation = CPresentation || function(){};
                     oViewer._paint();
                 }
                 let cursorType = "pointer";
-                oViewer.fieldFillingMode = false;
                 break;
             default:
                 oField.onMouseUp();
