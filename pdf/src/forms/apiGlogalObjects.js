@@ -258,6 +258,7 @@
         return ["T"];
     };
 
+    color["convert"] = color.convert;
     window["AscPDF"].Api.Objects = {
         border,
         position,
