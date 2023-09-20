@@ -1013,7 +1013,6 @@ $(function () {
         autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Linear multiple lines with trend mode');
         clearData(0,0,6,4);
         // Growth multiple lines with trend mode
-        console.log('Autofill Rows. Growth multiple lines with trend mode');
         oFromRange = getFilledData(0, 0, 6, 4, testData, [0, 0]);
         settings.type = 'Growth';
 
@@ -1195,5 +1194,59 @@ $(function () {
         autofillRange = getRange(1, 1, 5, 7);
         autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth multiple Columns with trend mode. With indentation row and col');
         clearData(0, 0, 5, 7);
+    });
+    QUnit.test('Autofill Serial. StopValue out of range', function (assert) {
+        const testData = [
+            ['1']
+        ];
+        oFromRange = getFilledData(0, 0, 0, 0, testData, [0, 0]);
+        settings = {
+            'type': 'Linear',
+            'step': '1',
+            'seriesIn': 'Rows',
+            'stopValue': '10',
+            'trend': false
+        };
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 0, 10, 0);
+        autofillData(assert, autofillRange, [['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '']], 'Autofill Rows. Linear. StopValue out of range. Step 1. StopValue 10');
+        clearData(0, 0, 9, 0);
+        // Growth. Step 2. StopValue 20
+        oFromRange = getFilledData(0, 0, 0, 0, testData, [0, 0]);
+        settings.type = 'Growth';
+        settings.step = '2';
+        settings.stopValue = '20';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 0, 9, 0);
+        autofillData(assert, autofillRange, [['1', '2', '4', '8', '16', '', '', '', '', '']], 'Autofill Rows. Growth. Step 2. StopValue 20');
+        clearData(0, 0, 9, 0);
+        // Columns. Linear. Step 2. StopValue 15
+        oFromRange = getFilledData(0, 0, 0, 0, testData, [0, 0]);
+        settings.type = 'Linear';
+        settings.step = '2';
+        settings.stopValue = '15';
+        settings.seriesIn = 'Columns';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 0, 0, 9);
+        autofillData(assert, autofillRange, [['1'], ['3'], ['5'], ['7'], ['9'], ['11'], ['13'], ['15'], [''], ['']], 'Autofill Columns. Linear. Step 2. StopValue 15');
+        clearData(0, 0, 0, 9);
+        // Columns. Growth. Step 3. StopValue 100
+        oFromRange = getFilledData(0, 0, 0, 0, testData, [0, 0]);
+        settings.type = 'Growth';
+        settings.step = '3';
+        settings.stopValue = '100';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 0, 0, 9);
+        autofillData(assert, autofillRange, [['1'], ['3'], ['9'], ['27'], ['81'], [''], [''], [''], [''], ['']], 'Autofill Columns. Growth. Step 3. StopValue 100');
+        clearData(0, 0, 0, 9);
+
     });
 });

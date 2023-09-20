@@ -19388,7 +19388,7 @@
 	/**
 	 * Class representing a Serial feature
 	 * @param {object} settings - Data from dialog window
-	 * @param {object} range - Range of cells
+	 * @param {Range} range - Range of cells
 	 * @constructor
 	 */
 	function CSerial (settings, range) {
@@ -19404,7 +19404,6 @@
 		this.nPrevValue = null;
 		this.nIndex = null;
 	}
-
 	/**
 	 * Returns the range direction flag. Vertical or horizontal direction
 	 * @memberof CSerial
@@ -19456,7 +19455,7 @@
 	/**
 	 * Returns range of selected cells
 	 * @memberof CSerial
-	 * @returns {Object}
+	 * @returns {Range}
 	 */
 	CSerial.prototype.getFromRange = function() {
 		return this.oFromRange;
@@ -19464,7 +19463,7 @@
 	/**
 	 * Sets range of cells who will be fill
 	 * @memberof CSerial
-	 * @param {object} oRange
+	 * @param {Range} oRange
 	 */
 	CSerial.prototype.setToRange = function(oRange) {
 		this.oToRange = oRange;
@@ -19472,7 +19471,7 @@
 	/**
 	 * Returns range of cells who will be fill
 	 * @memberof CSerial
-	 * @returns {object}
+	 * @returns {Range}
 	 */
 	CSerial.prototype.getToRange = function() {
 		return this.oToRange;
@@ -19480,7 +19479,7 @@
 	/**
 	 * Returns worksheet
 	 * @memberof CSerial
-	 * @returns {object}
+	 * @returns {Worksheet}
 	 */
 	CSerial.prototype.getWs = function() {
 		return this.ws;
@@ -19560,13 +19559,18 @@
 	/**
 	 * Creates a range to be filled
 	 * @memberof CSerial
-	 * @param {Object} oFilledRange - Range of filled line of cells.
+	 * @param {Range} oFilledRange - Range of filled line of cells.
 	 */
 	CSerial.prototype.initToRange = function(oFilledRange) {
 		let ws = this.getWs();
 		let oRange = ws.selectionRange.getLast();
+		let oTo = null;
 		this.setIndex(this.getVertical() ? oRange.r2 - oRange.r1 : oRange.c2 - oRange.c1);
-		let oTo = oFilledRange.canPromote(false, this.getVertical(), this.getIndex()).to;
+		if (this.getIndex() === 0) {
+			oTo = oFilledRange.canPromote(false, this.getVertical(), 1).to;
+		} else {
+			oTo = oFilledRange.canPromote(false, this.getVertical(), this.getIndex()).to;
+		}
 		this.setToRange(ws.getRange3(oTo.r1, oTo.c1, oTo.r2, oTo.c2));
 	};
 	/**
@@ -19682,6 +19686,30 @@
 	 * @param {Object} oFilledLine - Line of filled cells
 	 */
 	CSerial.prototype.promoteCells = function(oFilledLine) {
+		function fillCell (nRow, nCol) {
+			let bStopLoop = false
+			oWsTo._getCell(nRow, nCol, function(oCopyCell) {
+				if (oSerial.getPrevValue() != null) {
+					let oCellValue = new AscCommonExcel.CCellValue();
+					let nCurrentValue = oProgressionCalc[oSerial.getType()]();
+					if ((nStopValue && nCurrentValue > nStopValue) || (nRow === gc_nMaxRow0 || nCol === gc_nMaxCol0)) {
+						bStopLoop = true;
+						return;
+					}
+					oCellValue.type = CellValueType.Number;
+					oCellValue.number = nCurrentValue;
+					oSerial.setPrevValue(nCurrentValue);
+					oCopyCell.setValueData(new UndoRedoData_CellValueData(null, oCellValue));
+					// Add styles from firstCell
+					if (null != oFromCell) {
+						oCopyCell.setStyle(oFromCell.getStyle());
+					}
+				}
+			});
+
+			return bStopLoop;
+		}
+
 		let oSerial = this;
 		let nStep = this.getTrend() ? 1 : Number(this.getStep());
 		let nStopValue = this.getStopValue() ? Number(this.getStopValue()) : null;
@@ -19691,41 +19719,33 @@
 		let oWsTo = oFilledLine.oToRange.worksheet;
 		let oFromCell = oFilledLine.oCell;
 		this.setPrevValue(oFilledLine.nValue);
-		let nPrevValue = this.getPrevValue();
 		// Clean exist data in autofill range
 		oToRange.cleanText();
 		// Init variables for filling cells
 		let nStartIndex = this.getVertical() ? oTo.r1 : oTo.c1;
 		let nEndIndex = this.getVertical() ?  oTo.r2 : oTo.c2;
 		// Fill range cells for i row or col
-		for (let j = nStartIndex; j <= nEndIndex; j++) {
-			let nRow = this.getVertical() ? j : nIndexFilledLine;
-			let nCol = this.getVertical() ? nIndexFilledLine : j;
-			let bStopLoop = false;
-			let oProgression = {
-				'Linear': function() { return nPrevValue + nStep; },
-				'Growth': function() { return nPrevValue * nStep; },
-				'Date': function() { return _fillExcelDate(nPrevValue, nStep, oSerial.getDateUnit()); }
-			};
-			oWsTo._getCell(nRow, nCol, function(oCopyCell) {
-				if (nPrevValue != null) {
-					let oCellValue = new AscCommonExcel.CCellValue();
-					let nCurrentValue = oProgression[oSerial.getType()]();
-					if (nStopValue && nCurrentValue > nStopValue) {
-						bStopLoop = true;
-						return;
-					}
-					oCellValue.type = CellValueType.Number;
-					oCellValue.number = nCurrentValue;
-					nPrevValue = nCurrentValue;
-					oCopyCell.setValueData(new UndoRedoData_CellValueData(null, oCellValue));
-					// Add styles from firstCell
-					if (null != oFromCell) {
-						oCopyCell.setStyle(oFromCell.getStyle());
-					}
-				}
-			});
-			if (bStopLoop) break;
+		let oProgressionCalc = {
+			'Linear': function() { return oSerial.getPrevValue() + nStep; },
+			'Growth': function() { return oSerial.getPrevValue() * nStep; },
+			'Date': function() { return _fillExcelDate(oSerial.getPrevValue(), nStep, oSerial.getDateUnit()); }
+		};
+		let bStopLoop = false;
+		if (nStopValue !== null &&  nStartIndex === nEndIndex) {
+			let nIndex = nStartIndex;
+			do {
+				let nRow = this.getVertical() ? nIndex : nIndexFilledLine;
+				let nCol = this.getVertical() ? nIndexFilledLine : nIndex;
+				bStopLoop = fillCell(nRow, nCol);
+				nIndex++;
+			} while (!bStopLoop);
+		} else {
+			for (let j = nStartIndex; j <= nEndIndex; j++) {
+				let nRow = this.getVertical() ? j : nIndexFilledLine;
+				let nCol = this.getVertical() ? nIndexFilledLine : j;
+				bStopLoop = fillCell(nRow, nCol);
+				if (bStopLoop) break;
+			}
 		}
 	};
 	/**
