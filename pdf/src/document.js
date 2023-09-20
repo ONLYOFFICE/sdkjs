@@ -339,6 +339,8 @@ var CPresentation = CPresentation || function(){};
             });
         }
 
+        oViewer.pagesInfo.pages[nPageIndex].fieldsAPInfo = null;
+        oViewer.pagesInfo.pages[nPageIndex].annotsAPInfo = null;
     };
     CPDFDoc.prototype.IsNeedSkipHistory = function() {
         return !!this.skipHistoryOnCommit;
