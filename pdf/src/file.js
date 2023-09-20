@@ -1079,11 +1079,11 @@ void main() {\n\
     CFile.prototype.getSelectionQuads = function() {
         let pageIndex = this.viewer.currentPage;
 
+        let aQuads = [];
         var stream = this.getPageTextStream(pageIndex);
         if (!stream)
-            return;
+            return aQuads;
 
-        let aQuads = [];
         var sel = this.Selection;
         var Page1 = 0;
         var Page2 = 0;
@@ -1158,7 +1158,7 @@ void main() {\n\
         }
 
         if (Page1 > pageIndex || Page2 < pageIndex)
-            return;
+            return aQuads;
 
         if (Page1 < pageIndex)
         {
