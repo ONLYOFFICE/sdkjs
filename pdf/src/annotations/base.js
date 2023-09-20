@@ -102,7 +102,6 @@
 
         if (oViewer.IsOpenAnnotsInProgress == false) {
             this._wasChanged = isChanged;
-            this.ClearCache();
         }
     };
     CAnnotationBase.prototype.DrawFromStream = function(oGraphicsPDF) {

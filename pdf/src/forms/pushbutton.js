@@ -669,7 +669,7 @@
 
             if (sDefaultCaption && sTargetCaption) {
                 oCaptionRun.ClearContent();
-                oCaptionRun.AddText(sDefaultCaption);
+                oCaptionRun.AddText(sTargetCaption);
             }
 
             this.SetNeedRecalc(true);

@@ -2329,7 +2329,7 @@
 						delete page.Image;
 						delete page.ImageForms;
 						delete page.ImageAnnots;
-						oDoc.ClearCache(i);
+						// oDoc.ClearCache(i);
 					}
 				}
 			}

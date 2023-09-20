@@ -1087,8 +1087,6 @@
 
         if (oViewer.IsOpenFormsInProgress == false) {
             this._wasChanged = isChanged;
-            this.ClearCache();
-            
             this.SetDrawFromStream(!isChanged);
         }
     };
@@ -1171,7 +1169,7 @@
         this._display = nType;
     };
     CBaseField.prototype.GetDisplay = function() {
-        return this._display;''
+        return this._display;
     };
     CBaseField.prototype.GetDefaultValue = function() {
         if (this._defaultValue == null && this.GetParent())
