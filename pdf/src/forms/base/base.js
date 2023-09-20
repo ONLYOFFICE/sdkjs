@@ -1458,7 +1458,6 @@
                 break;
         }
 
-        oSavedView = null;
         if (oSavedView && oSavedView.width == oApearanceInfo["w"] && oSavedView.height == oApearanceInfo["h"])
             return oSavedView;
         
