@@ -173,11 +173,6 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 
     this.Content[0] = EndRun;
 
-    this.m_oPRSW = null;//g_PRSW;//new CParagraphRecalculateStateWrap(this);
-    this.m_oPRSC = null;//g_PRSC;//new CParagraphRecalculateStateCounter();
-    this.m_oPRSA = null;//g_PRSA;//new CParagraphRecalculateStateAlign();
-    this.m_oPDSE = g_PDSE;//new CParagraphDrawStateElements();
-	
     this.StartState = null;
 
     this.CollPrChange = false;
@@ -1463,7 +1458,7 @@ Paragraph.prototype.RecalculateEndInfo = function(isFast)
 	if (prevEndInfo && !prevEndInfo.CheckRecalcId(recalcId))
 		return;
 	
-	let prsi = AscWord.ParagraphRecalculateStateManager.getEndInfo();
+	let prsi = AscWord.ParagraphRecalculateStateManager.getEndInfoState();
 	prsi.Reset(prevEndInfo);
 	prsi.setFast(!!isFast);
 	
@@ -1505,7 +1500,7 @@ Paragraph.prototype.Recalculate_PageEndInfo = function(PRSW, CurPage)
 {
 	var PrevInfo = ( 0 === CurPage ? this.Parent.GetPrevElementEndInfo(this) : this.Pages[CurPage - 1].EndInfo.Copy() );
 
-	var PRSI = AscWord.ParagraphRecalculateStateManager.getEndInfo();
+	var PRSI = AscWord.ParagraphRecalculateStateManager.getEndInfoState();
 
 	PRSI.Reset(PrevInfo);
 
@@ -2106,7 +2101,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 	if (true === bDrawBorders && 0 === CurPage && true === this.private_IsEmptyPageWithBreak(CurPage))
 		bDrawBorders = false;
 
-	var PDSH = g_oPDSH;
+	var PDSH = g_PDSH;
 
 	PDSH.ComplexFields.ResetPage(this, CurPage);
 
@@ -2823,7 +2818,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 };
 Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, Theme, ColorMap)
 {
-	var PDSE = this.m_oPDSE;
+	var PDSE = g_PDSE;
 	PDSE.Reset(this, pGraphics, BgColor, Theme, ColorMap);
 	PDSE.ComplexFields.ResetPage(this, CurPage);
 
@@ -3129,7 +3124,7 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, 
 };
 Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 {
-	var PDSL = g_oPDSL;
+	var PDSL = g_PDSL;
 	PDSL.Reset(this, pGraphics, BgColor);
 	PDSL.ComplexFields.ResetPage(this, CurPage);
 
@@ -19545,8 +19540,6 @@ CParagraphDrawStateElements.prototype =
     }
 };
 
-let g_PDSE = new CParagraphDrawStateElements();
-
 function CParagraphDrawStateLines()
 {
     this.Paragraph = undefined;
@@ -19662,9 +19655,9 @@ CParagraphDrawStateLines.prototype.IsUnderlineTrailSpace = function()
 	return this.UlTrailSpace;
 };
 
-var g_oPDSH = new CParagraphDrawStateHighlights();
-//var g_oPDSE = new CParagraphDrawStateElements();
-var g_oPDSL = new CParagraphDrawStateLines();
+let g_PDSH = new CParagraphDrawStateHighlights();
+let g_PDSE = new CParagraphDrawStateElements();
+let g_PDSL = new CParagraphDrawStateLines();
 
 //----------------------------------------------------------------------------------------------------------------------
 // Классы для работы с курсором

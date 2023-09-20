@@ -529,11 +529,10 @@ Paragraph.prototype.StartFromNewPage = function()
  */
 Paragraph.prototype.recalculateRangeFast = function(iRange, iLine)
 {
-	this.m_oPRSW = AscWord.ParagraphRecalculateStateManager.getWrap();
-	
-	let result = this.private_RecalculateFastRange(this.m_oPRSW, iRange, iLine);
-	
-	AscWord.ParagraphRecalculateStateManager.release(this.m_oPRSW);
+	let wrapState = AscWord.ParagraphRecalculateStateManager.getWrapState();
+	wrapState.SetFast(true);
+	let result = this.private_RecalculateFastRange(wrapState, iRange, iLine);
+	AscWord.ParagraphRecalculateStateManager.release(wrapState);
 	return result;
 };
 Paragraph.prototype.private_RecalculateFastRange       = function(PRS, CurRange, CurLine)
@@ -661,26 +660,15 @@ Paragraph.prototype.private_RecalculateFastRange       = function(PRS, CurRange,
 };
 Paragraph.prototype.private_RecalculatePage = function(CurPage, isFast)
 {
-	this.m_oPRSW = AscWord.ParagraphRecalculateStateManager.getWrap();
-	this.m_oPRSC = AscWord.ParagraphRecalculateStateManager.getCounter();
-	this.m_oPRSA = AscWord.ParagraphRecalculateStateManager.getAlign();
-	
-	this.m_oPRSW.SetFast(isFast);
-	
-	let result = this.private_RecalculatePageInternal(this.m_oPRSW, CurPage, true);
-	
-	AscWord.ParagraphRecalculateStateManager.release(this.m_oPRSW);
-	AscWord.ParagraphRecalculateStateManager.release(this.m_oPRSC);
-	AscWord.ParagraphRecalculateStateManager.release(this.m_oPRSA);
+	let wrapState = AscWord.ParagraphRecalculateStateManager.getWrapState();
+	wrapState.SetFast(isFast);
+	let result = this.private_RecalculatePageInternal(wrapState, CurPage, true);
+	AscWord.ParagraphRecalculateStateManager.release(wrapState);
 	return result;
 };
 Paragraph.prototype.private_RecalculatePageInternal = function(PRS, CurPage, bFirstRecalculate)
 {
 	PRS.Reset_Page(this, CurPage);
-	
-	this.m_oPRSW.ComplexFields.ResetPage(this, CurPage);
-	this.m_oPRSC.ComplexFields.ResetPage(this, CurPage);
-	this.m_oPRSA.ComplexFields.ResetPage(this, CurPage);
 
     var Pr     = this.Get_CompiledPr();
     var ParaPr = Pr.ParaPr;
@@ -1913,8 +1901,8 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
     //        промежутке, увеличиваем их на столько, чтобы правая граница последнего
     //        слова совпала с правой границей промежутка
     var PRSW = PRS;
-    var PRSC = this.m_oPRSC;
-    var PRSA = this.m_oPRSA;
+    var PRSC = PRS.getCounterState();
+    var PRSA = PRS.getAlignState();
     PRSA.Paragraph    = this;
     PRSA.LastW        = 0;
     PRSA.RecalcFast   = Fast;
@@ -2259,10 +2247,8 @@ Paragraph.prototype.private_RecalculateRangeEndPos     = function(PRS, PRP, Dept
     this.Lines[CurLine].Set_RangeEndPos( CurRange, CurPos );
 };
 
-Paragraph.prototype.private_RecalculateGetTabPos = function(X, ParaPr, CurPage, NumTab)
+Paragraph.prototype.private_RecalculateGetTabPos = function(PRS, X, ParaPr, CurPage, NumTab)
 {
-    var PRS = this.m_oPRSW;
-
     var PageStart = this.Parent.Get_PageContentStartPos2(this.PageNum, this.ColumnNum, CurPage, this.Index);
     if ( undefined != this.Get_FramePr() )
         PageStart.X = 0;
@@ -3168,8 +3154,6 @@ ParagraphRecalculateStateBase.prototype.unlock = function()
 function ParagraphRecalculateStateManager()
 {
 	this.wrap    = [];
-	this.counter = [];
-	this.align   = [];
 	this.endInfo = [];
 }
 ParagraphRecalculateStateManager.prototype.getInstance = function(pool, className)
@@ -3197,19 +3181,11 @@ ParagraphRecalculateStateManager.prototype.release = function(instance)
 {
 	instance.unlock();
 };
-ParagraphRecalculateStateManager.prototype.getWrap = function()
+ParagraphRecalculateStateManager.prototype.getWrapState = function()
 {
 	return this.getInstance(this.wrap, CParagraphRecalculateStateWrap);
 };
-ParagraphRecalculateStateManager.prototype.getCounter = function()
-{
-	return this.getInstance(this.counter, CParagraphRecalculateStateCounter);
-};
-ParagraphRecalculateStateManager.prototype.getAlign = function()
-{
-	return this.getInstance(this.align, CParagraphRecalculateStateAlign);
-};
-ParagraphRecalculateStateManager.prototype.getEndInfo = function()
+ParagraphRecalculateStateManager.prototype.getEndInfoState = function()
 {
 	return this.getInstance(this.endInfo, CParagraphRecalculateStateInfo);
 };
@@ -3232,6 +3208,9 @@ function CParagraphRecalculateStateWrap()
 	this.BalanceSBDB     = false; // BalanceSingleByteDoubleByteWidth
 
 	this.Fast            = false; // Быстрый ли пересчет
+	
+	this.alignState   = new CParagraphRecalculateStateAlign(this);
+	this.counterState = new CParagraphRecalculateStateCounter(this);
 
     //
     this.Page            = 0;
@@ -3356,6 +3335,14 @@ function CParagraphRecalculateStateWrap()
 CParagraphRecalculateStateWrap.prototype = Object.create(ParagraphRecalculateStateBase.prototype);
 CParagraphRecalculateStateWrap.prototype.constructor = CParagraphRecalculateStateWrap;
 
+CParagraphRecalculateStateWrap.prototype.getAlignState = function()
+{
+	return this.alignState;
+};
+CParagraphRecalculateStateWrap.prototype.getCounterState = function()
+{
+	return this.counterState;
+};
 CParagraphRecalculateStateWrap.prototype.Reset_Page = function(Paragraph, CurPage)
 {
 	this.Paragraph   = Paragraph;
@@ -3372,6 +3359,10 @@ CParagraphRecalculateStateWrap.prototype.Reset_Page = function(Paragraph, CurPag
 	this.Page               = CurPage;
 	this.RunRecalcInfoLast  = (0 === CurPage ? null : Paragraph.Pages[CurPage - 1].EndInfo.RunRecalcInfo);
 	this.RunRecalcInfoBreak = this.RunRecalcInfoLast;
+	
+	this.ComplexFields.ResetPage(Paragraph, CurPage);
+	this.alignState.ComplexFields.ResetPage(Paragraph, CurPage);
+	this.counterState.ComplexFields.ResetPage(Paragraph, CurPage);
 };
 CParagraphRecalculateStateWrap.prototype.Reset_Line = function()
 {
@@ -3721,7 +3712,7 @@ CParagraphRecalculateStateWrap.prototype.Recalculate_Numbering = function(Item, 
 					}
 					case Asc.c_oAscNumberingSuff.Tab:
 					{
-						var NewX = Para.private_RecalculateGetTabPos(X, ParaPr, CurPage, true).NewX;
+						var NewX = Para.private_RecalculateGetTabPos(this, X, ParaPr, CurPage, true).NewX;
 						
 						NumberingItem.WidthSuff = NewX - X;
 						
@@ -3859,6 +3850,10 @@ CParagraphRecalculateStateWrap.prototype.SetFast = function(bValue)
 	this.Fast = bValue;
 };
 CParagraphRecalculateStateWrap.prototype.IsFastRecalculate = function()
+{
+	return this.Fast;
+};
+CParagraphRecalculateStateWrap.prototype.isFastRecalculation = function()
 {
 	return this.Fast;
 };
@@ -4070,13 +4065,9 @@ CParagraphRecalculateStateWrap.prototype.IsLastElementInWord = function(oRun, nP
 	return (!oNextItem || !oNextItem.IsText());
 };
 
-
-const g_PRSW = new CParagraphRecalculateStateWrap();
-
-function CParagraphRecalculateStateCounter()
+function CParagraphRecalculateStateCounter(wrapState)
 {
-	ParagraphRecalculateStateBase.call(this);
-	
+	this.wrapState   = wrapState;
     this.Paragraph   = undefined;
     this.Range       = undefined;
     this.Word        = false;
@@ -4091,9 +4082,6 @@ function CParagraphRecalculateStateCounter()
 
     this.ComplexFields = new CParagraphComplexFieldsInfo();
 }
-CParagraphRecalculateStateCounter.prototype = Object.create(ParagraphRecalculateStateBase.prototype);
-CParagraphRecalculateStateCounter.prototype.constructor = CParagraphRecalculateStateCounter;
-
 CParagraphRecalculateStateCounter.prototype.Reset = function(Paragraph, Range)
 {
 	this.Paragraph   = Paragraph;
@@ -4108,12 +4096,14 @@ CParagraphRecalculateStateCounter.prototype.Reset = function(Paragraph, Range)
 	this.SpacesSkip  = 0;
 	this.LettersSkip = 0;
 };
-
-const g_PRSC = new CParagraphRecalculateStateCounter();
-
-function CParagraphRecalculateStateAlign()
+CParagraphRecalculateStateCounter.prototype.isFastRecalculation = function()
 {
-	ParagraphRecalculateStateBase.call(this);
+	return this.wrapState.isFastRecalculation();
+};
+
+function CParagraphRecalculateStateAlign(wrapState)
+{
+	this.wrapState     = wrapState;
     this.X             = 0; // Текущая позиция по горизонтали
     this.Y             = 0; // Текущая позиция по вертикали
     this.XEnd          = 0; // Предельная позиция по горизонтали
@@ -4138,15 +4128,10 @@ function CParagraphRecalculateStateAlign()
 
 	this.ComplexFields = new CParagraphComplexFieldsInfo();
 }
-CParagraphRecalculateStateAlign.prototype = Object.create(ParagraphRecalculateStateBase.prototype);
-CParagraphRecalculateStateAlign.prototype.constructor = CParagraphRecalculateStateAlign;
 CParagraphRecalculateStateAlign.prototype.IsFastRangeRecalc = function()
 {
 	return this.RecalcFast;
 };
-
-
-const g_PRSA = new CParagraphRecalculateStateAlign();
 
 function CParagraphRecalculateStateInfo()
 {
@@ -4161,7 +4146,7 @@ CParagraphRecalculateStateInfo.prototype.setFast = function(isFast)
 {
 	this.fast = isFast;
 };
-CParagraphRecalculateStateInfo.prototype.isFast = function()
+CParagraphRecalculateStateInfo.prototype.isFastRecalculation = function()
 {
 	return this.fast;
 };
