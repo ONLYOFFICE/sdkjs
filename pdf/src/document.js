@@ -575,8 +575,16 @@ var CPresentation = CPresentation || function(){};
             }
             else if (oField.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) && oField.GetValue() != "") {
                 oField.AddToRedraw();
+
+                if (oField.IsChanged() == false)
+                    oField.SetDrawFromStream(true);
             }
             
+            if (oField && oField.content && oField.content.IsSelectionUse()) {
+                oField.content.RemoveSelection();
+                oViewer.onUpdateOverlay();
+            }
+
             oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd(); // убираем курсор
         }
 
@@ -1001,6 +1009,7 @@ var CPresentation = CPresentation || function(){};
         }
         
         e.IsLocked = false;
+        this.UpdateCopyCutState();
     };
 
     CPDFDoc.prototype.OnMouseUpField = function(oField, event) {
@@ -1617,6 +1626,28 @@ var CPresentation = CPresentation || function(){};
         {
             editor.sync_HideComment();
         }
+    };
+    CPDFDoc.prototype.UpdateCopyCutState = function() {
+        editor.sync_CanCopyCutCallback(this.CanCopyCut());
+    };
+    CPDFDoc.prototype.CanCopyCut = function() {
+        let oViewer = editor.getDocumentRenderer();
+
+        let isHasSelect = false;
+
+        let oSelection = oViewer.file.Selection;
+        if (oSelection.Glyph1 != oSelection.Glyph2 || oSelection.Line1 != oSelection.Line2 ||
+            oSelection.Page1 != oSelection.Page2) {
+                isHasSelect = true;
+            }
+        
+
+        if (this.activeForm && this.activeForm.content && this.activeForm.content.IsSelectionUse() && 
+            this.activeForm.content.IsSelectionEmpty() == false) {
+                isHasSelect = true;
+            }
+
+        return isHasSelect;
     };
     CPDFDoc.prototype.RemoveComment = function(Id) {
         let oViewer = editor.getDocumentRenderer();

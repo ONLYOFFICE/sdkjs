@@ -181,6 +181,7 @@
 				this.DocumentRenderer.onUpdateOverlay();
 				this.WordControl.m_oDrawingDocument.TargetStart();
 				this.WordControl.m_oDrawingDocument.showTarget(true);
+				oDoc.UpdateCopyCutState();
 			}
 		}
 	};
@@ -205,6 +206,7 @@
 			this.WordControl.m_oDrawingDocument.TargetStart();
 			this.DocumentRenderer._paint();
 			this.DocumentRenderer.onUpdateOverlay();
+			oDoc.UpdateCopyCutState();
 		}
 	};
 	PDFEditorApi.prototype.asc_setAdvancedOptions = function(idOption, option) {
@@ -556,6 +558,14 @@
 		var CommentData = new AscCommon.CCommentData();
 		CommentData.Read_FromAscCommentData(AscCommentData);
 		oDoc.EditComment(Id, CommentData);
+	};
+	PDFEditorApi.prototype.asc_EditSelectAll = function()
+	{
+		let oViewer = this.getDocumentRenderer();
+		let oDoc = oViewer.getPDFDoc();
+
+		oViewer.file.selectAll();
+		oDoc.UpdateCopyCutState();
 	};
 	PDFEditorApi.prototype.asc_showComment = function(Id)
 	{

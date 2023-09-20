@@ -3082,20 +3082,19 @@
 				else
 				{
 					bRetValue = true;
-					if (this.isFullTextMessage)
-						return bRetValue;
-
-					if (!this.isFullText)
-					{
-						this.fullTextMessageCallbackArgs = [];
-						this.fullTextMessageCallback = function() {
+					if (!this.isFullTextMessage) {
+						if (!this.isFullText)
+						{
+							this.fullTextMessageCallbackArgs = [];
+							this.fullTextMessageCallback = function() {
+								this.file.selectAll();
+							};
+							this.showTextMessage();
+						}
+						else
+						{
 							this.file.selectAll();
-						};
-						this.showTextMessage();
-					}
-					else
-					{
-						this.file.selectAll();
+						}
 					}
 				} 
 			}
@@ -3120,6 +3119,7 @@
 				bRetValue = true;
 			}
 
+			oDoc.UpdateCopyCutState();
 			return bRetValue;
 		};
 		this.showTextMessage = function()
