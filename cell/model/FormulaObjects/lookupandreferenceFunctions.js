@@ -2378,11 +2378,7 @@ function (window, undefined) {
 			array = new cArray();
 			array.addElement(elem);
 		} else if (cElementType.cellsRange === args[0].type || cElementType.cellsRange3D === args[0].type) {
-			array = new cArray();
-			array.fillFromArray(args[0].getMatrix());
-			if (array.rowCount === 0 || array.countElement === 0) {
-				array = args[0].getFullArray();
-			}
+			array = args[0].getFullArray();
 		} else {
 			array = args[0];
 		}
