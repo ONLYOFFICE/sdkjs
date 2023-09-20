@@ -1241,6 +1241,7 @@ function (window, undefined) {
 		}
 	};
 	TraceDependentsManager.prototype.clearAll = function (needDraw) {
+		this.ws.cleanSelection();
 		this.precedents = null;
 		this.precedentsExternal = null;
 		this.dependents = null;
