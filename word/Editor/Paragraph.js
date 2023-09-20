@@ -3917,6 +3917,7 @@ Paragraph.prototype.Shift = function(CurPage, Dx, Dy)
  */
 Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlySelection, bOnAddText, isWord)
 {
+	debugger
 	var Direction = nCount;
 	var Result    = true;
 
@@ -3991,8 +3992,13 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 				{
 					this.CurPos.ContentPos = StartPos;
 				}
-				
-				if (this.LogicDocument && true === this.LogicDocument.IsTrackRevisions() && this.IsSelectionUse())
+
+				var oInfo = new CSelectedElementsInfo();
+				this.GetSelectedElementsInfo(oInfo);
+				let oMath  = oInfo.GetMath();
+
+				// не используем если формула т.к. иначе происходит дублирование формулы при вставке в режиме TrackRevisions
+				if (this.LogicDocument && true === this.LogicDocument.IsTrackRevisions() && this.IsSelectionUse() && !oMath)
 				{
 					// TODO: Используем данные функции для сброса селекта, по-хорошему надо сделать для
 					//       этого отдельные методы
