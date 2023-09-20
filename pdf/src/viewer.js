@@ -3452,10 +3452,11 @@
 			oGraphicsPDF.Init(ctx, widthPx * nScale, heightPx * nScale);
 
 			if (false == this.bCachedMarkupAnnnots) {
+				ctx.save();
 				ctx.beginPath();
 				ctx.rect(indLeft, indTop, w, h);
 				ctx.clip();
-				oGraphicsPDF.Transform(1, 0, 0, 1, indLeft, indTop);
+				ctx.setTransform(1, 0, 0, 1, indLeft, indTop);
 			}
 				
 			
@@ -3470,6 +3471,7 @@
 				});
 			}
 			
+			ctx.restore();
 			this.pagesInfo.pages[pageIndex].needRedrawHighlights = false;
 		}
 	};
