@@ -26662,6 +26662,15 @@ $(function () {
 		array = oParser.calculate();
 		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of SORTBY(A1:A3,{3;2;1},1,1,1)');
 
+		ws.getRange2("A1:C3").cleanAll();
+		oParser = new parserFormula('SORTBY(C1:C3,C1:C3)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("A1:A3").bbox);	
+		assert.ok(oParser.parse(), 'SORTBY(C1:C3,C1:C3)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "", 'Result of SORTBY(C1:C3,C1:C3)[0,0]');	// cEmpty
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", 'Result of SORTBY(C1:C3,C1:C3)[1,0]');	// cEmpty
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", 'Result of SORTBY(C1:C3,C1:C3)[2,0]');	// cEmpty
+
 		// oParser = new parserFormula('SORTBY(C4:D6,C4:D4,{1,1;1,1},C5:D5,1,C6:D6,1)', 'A2', ws);
 		// assert.ok(oParser.parse(), 'SORTBY(C4:D6,C4:D4,{1,1;1,1},C5:D5,1,C6:D6,1)');
 		// array = oParser.calculate();
