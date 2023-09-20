@@ -3471,7 +3471,10 @@
 				});
 			}
 			
-			ctx.restore();
+			if (false == this.bCachedMarkupAnnnots) {
+				ctx.restore();
+			}
+
 			this.pagesInfo.pages[pageIndex].needRedrawHighlights = false;
 		}
 	};
