@@ -1131,6 +1131,8 @@
 				if (oAnnotInfo["Type"] == AscPDF.ANNOTATIONS_TYPES.Popup)
 					continue;
 
+				console.log(oAnnotInfo);
+				
 				aRect = [oAnnotInfo["rect"]["x1"], oAnnotInfo["rect"]["y1"], oAnnotInfo["rect"]["x2"], oAnnotInfo["rect"]["y2"]];
 
 				if (oAnnotInfo["RefTo"] == null) {
