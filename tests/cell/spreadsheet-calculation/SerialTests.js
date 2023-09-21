@@ -555,6 +555,22 @@ $(function () {
         ];
         autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression all cells filled. Step = 0.5');
         clearData(0, 0, 5, 5);
+        // Growth progression. Step = 0.5. With indentation row and column
+        testData = [
+            ['1'],
+            ['2'],
+            ['3'],
+            ['4'],
+            ['5'],
+            ['6']
+        ];
+        oFromRange = getFilledData(2, 1, 7, 6, testData, [1, 2]);
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(3, 1, 7, 6);
+        autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression. Step = 0.5. With indentation row and column');
+        clearData(0, 0, 7, 6);
     });
     QUnit.test('Autofill vertical progression - multiple filled cells', function (assert) {
         let testData = [
@@ -694,6 +710,17 @@ $(function () {
         ];
         autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Linear progression all cells filled. Step = -1.');
         clearData(0, 0, 5, 5);
+        // Linear. Step -1. With indentation row and column
+        testData = [
+            ['1', '2', '3', '4', '5', '6']
+        ];
+        oFromRange = getFilledData(1, 1, 6, 6, testData, [1, 1]);
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(1, 2, 6, 6);
+        autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Linear progression. Step = -1. With indentation row and column');
+        clearData(0, 0, 6, 6);
     });
     QUnit.test('Autofill Date type - one filled row/column', function (assert) {
         const testData = [
@@ -794,16 +821,16 @@ $(function () {
         autofillRange = getRange(1, 0, 5, 0);
         autofillData(assert, autofillRange, [['45174', '45175', '45176', '', '']], 'Autofill Row. Date progression - Day, Stop value - 45176');
         clearData(0, 0, 5, 0);
-        // Vertical dateUnit - Day, Stop value - 45176
-        oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
+        // Vertical dateUnit - Day, Stop value - 45176. With indentation row and column
+        oFromRange = getFilledData(1, 1, 1, 6, testData, [1, 1]);
         settings.dateUnit = 'Day';
         settings.stopValue = '45176';
         settings.seriesIn = 'Columns';
 
         cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
-        autofillRange = getRange(0, 1, 0, 5);
-        autofillData(assert, autofillRange, [['45174'], ['45175'], ['45176'], [''], ['']], 'Autofill Column. Date progression - Day, Stop value - 45176');
+        autofillRange = getRange(1, 2, 1, 6);
+        autofillData(assert, autofillRange, [['45174'], ['45175'], ['45176'], [''], ['']], 'Autofill Column. Date progression - Day, Stop value - 45176. With indentation row and column');
     });
     QUnit.test('Autofill Date type - Horizontal multiple cells', function (assert) {
         const testData = [
@@ -1247,6 +1274,29 @@ $(function () {
         autofillRange = getRange(0, 0, 0, 9);
         autofillData(assert, autofillRange, [['1'], ['3'], ['9'], ['27'], ['81'], [''], [''], [''], [''], ['']], 'Autofill Columns. Growth. Step 3. StopValue 100');
         clearData(0, 0, 0, 9);
+        // Rows. Linear. Step 0.5. StopValue 10. With indentation rows and columns
+        oFromRange = getFilledData(5, 2, 5, 2, testData, [2, 5]);
+        settings.type = 'Linear';
+        settings.step = '0.5';
+        settings.stopValue = '6';
+        settings.seriesIn = 'Rows';
 
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(5, 2, 16, 2);
+        autofillData(assert, autofillRange, [['1', '1.5', '2', '2.5', '3', '3.5', '4', '4.5', '5', '5.5', '6', '']], 'Autofill Rows. Linear. Step 0.5. StopValue 10. With indentation rows and columns');
+        clearData(5, 2, 14, 2);
+        // Columns. Growth. Step 10. StopValue 10000. With indentation rows and columns
+        oFromRange = getFilledData(5, 2, 5, 2, testData, [2, 5]);
+        settings.type = 'Growth';
+        settings.step = '10';
+        settings.stopValue = '10000';
+        settings.seriesIn = 'Columns';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(5, 2, 5, 7);
+        autofillData(assert, autofillRange, [['1'], ['10'], ['100'], ['1000'], ['10000'], ['']], 'Autofill Columns. Growth. Step 10. StopValue 10000. With indentation rows and columns');
+        clearData(5, 2, 5, 7);
     });
 });

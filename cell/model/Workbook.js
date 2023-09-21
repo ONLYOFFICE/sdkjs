@@ -19388,6 +19388,12 @@
 	/**
 	 * Class representing a Serial feature
 	 * @param {object} settings - Data from dialog window
+	 * @param {string} settings.seriesIn - Series in. Contains: Rows, Columns
+	 * @param {string} settings.type - Type. Contains:  Linear, Growth, Date, AutoFill
+	 * @param {string} settings.dateUnit - Date Unit. Contains: Day, Weekday, Month, Year
+	 * @param {string} settings.step - Step value
+	 * @param {string} settings.stopValue - Stop value
+	 * @param {boolean} settings.trend - Trend
 	 * @param {Range} range - Range of cells
 	 * @constructor
 	 */
@@ -19437,7 +19443,7 @@
 		return this.sStep;
 	};
 	/**
-	 * Returns a stop value. Fills a progression to specified value
+	 * Returns a stop value. Fills a progression to value inputted in "Stop value"
 	 * @memberof CSerial
 	 * @returns {string}
 	 */
@@ -19445,7 +19451,7 @@
 		return this.sStopValue;
 	};
 	/**
-	 * Returns flag of trend mode
+	 * Returns a flag of trend mode. true - Fills cells in trend mode. Step defines automatically. false - Fills cells according step value
 	 * @memberof CSerial
 	 * @returns {boolean}
 	 */
@@ -19453,7 +19459,7 @@
 		return this.bTrend;
 	};
 	/**
-	 * Returns range of selected cells
+	 * Returns a range of selected cells
 	 * @memberof CSerial
 	 * @returns {Range}
 	 */
@@ -19461,7 +19467,7 @@
 		return this.oFromRange;
 	};
 	/**
-	 * Sets range of cells who will be fill
+	 * Sets a range of cells who will be fill
 	 * @memberof CSerial
 	 * @param {Range} oRange
 	 */
@@ -19469,7 +19475,7 @@
 		this.oToRange = oRange;
 	};
 	/**
-	 * Returns range of cells who will be fill
+	 * Returns a range of cells who will be fill
 	 * @memberof CSerial
 	 * @returns {Range}
 	 */
@@ -19477,7 +19483,7 @@
 		return this.oToRange;
 	};
 	/**
-	 * Returns worksheet
+	 * Returns a worksheet of selected range
 	 * @memberof CSerial
 	 * @returns {Worksheet}
 	 */
@@ -19516,7 +19522,7 @@
 		return this.nIndex;
 	};
 	/**
-	 * Creates and returns range with filled cells
+	 * Creates and returns a range with filled cells
 	 * @memberof CSerial
 	 * @param {number} [nIndexLine] - Line index of filled cells. Not required param
 	 * @returns {Range}
@@ -19574,7 +19580,7 @@
 		this.setToRange(ws.getRange3(oTo.r1, oTo.c1, oTo.r2, oTo.c2));
 	};
 	/**
-	 * Returns an array of Objects that contains: the value of first cell, the range to fill and object of the cell
+	 * Returns an array of Objects that contains: the value of first cell, the range which will be fill data and object of the cell
 	 * @memberof CSerial
 	 * @returns {Object[]}
 	 */
@@ -19608,7 +19614,7 @@
 		return aFilledCells;
 	};
 	/**
-	 * Creates history point for "Serial" feature
+	 * Creates a history point for "Serial" feature
 	 * @memberof CSerial
 	 */
 	CSerial.prototype.initHistoryPoint = function() {
@@ -19645,9 +19651,9 @@
 	};
 	/**
 	 * Fills current value for Date type
-	 * @param {number} nPrevVal Previous cell value
-	 * @param {number} nStep Step value
-	 * @param {string} sDateUnit Date unit
+	 * @param {number} nPrevVal - Previous cell value
+	 * @param {number} nStep - Step value
+	 * @param {string} sDateUnit - Date unit
 	 * @returns {number} Current value in ExcelDate format
 	 */
 	function _fillExcelDate(nPrevVal, nStep, sDateUnit) {
@@ -19681,9 +19687,15 @@
 	}
 
 	/**
-	 * Fills cells in Linear and Growth regression except Trend mode
+	 * Fills cells in Linear and Growth regression except Trend mode. Works with:
+	 * - Type: Linear, Growth, Date.
+	 * - Stop value
+	 * - Step value
 	 * @memberof CSerial
-	 * @param {Object} oFilledLine - Line of filled cells
+	 * @param {Object} oFilledLine - Line of cells which need to fill and first filled cell
+	 * @param {number} oFilledLine.nValue - Value of first cell in line
+	 * @param {Range} oFilledLine.oToRange - Range of cells which will be fill
+	 * @param {Cell} oFilledLine.oCell - First cell of line
 	 */
 	CSerial.prototype.promoteCells = function(oFilledLine) {
 		function fillCell (nRow, nCol) {
@@ -19711,8 +19723,8 @@
 		}
 
 		let oSerial = this;
-		let nStep = this.getTrend() ? 1 : Number(this.getStep());
-		let nStopValue = this.getStopValue() ? Number(this.getStopValue()) : null;
+		let nStep = this.getTrend() ? 1 : this.getStep() - 0;
+		let nStopValue = this.getStopValue() ? this.getStopValue() - 0 : null;
         let nIndexFilledLine = this.getVertical() ? oFilledLine.oCell.nCol : oFilledLine.oCell.nRow ;
 		let oTo = oFilledLine.oToRange.bbox;
 		let oToRange = oFilledLine.oToRange;
@@ -19731,13 +19743,13 @@
 			'Date': function() { return _fillExcelDate(oSerial.getPrevValue(), nStep, oSerial.getDateUnit()); }
 		};
 		let bStopLoop = false;
-		if (nStopValue !== null &&  nStartIndex === nEndIndex) {
+		if (nStopValue != null &&  nStartIndex === nEndIndex) {
 			let nIndex = nStartIndex;
 			do {
 				let nRow = this.getVertical() ? nIndex : nIndexFilledLine;
 				let nCol = this.getVertical() ? nIndexFilledLine : nIndex;
 				bStopLoop = fillCell(nRow, nCol);
-				nIndex++;
+				nIndex += 1;
 			} while (!bStopLoop);
 		} else {
 			for (let j = nStartIndex; j <= nEndIndex; j++) {
@@ -19749,8 +19761,8 @@
 		}
 	};
 	/**
-	 * Gets value and index filled cell in loop for calculate sum in fAction. Uses for linear regression
-	 * in promoteCellsWithTrend method
+	 * Gets value and index filled cell in loop for calculate sum in fAction. Uses for linear regression formula
+	 * in promoteCellsWithTrend method. Trend mode
 	 * @memberof CSerial
 	 * @param {number} nStartIndex - Index for start loop
 	 * @param {number} nEndIndex - Index for finish loop
@@ -19760,7 +19772,7 @@
 	CSerial.prototype._calcSum = function(nStartIndex, nEndIndex, nFilledCellIter, fAction) {
 		if (fAction) {
 			let oSerial = this;
-			let oWsFrom = this.getFromRange().worksheet;
+			let oWsFrom = this.getWs();
 			let oRes = null;
 			for (let i = nStartIndex; i < nEndIndex; i++) {
 				let nRow = this.getVertical() ? i : nFilledCellIter;
@@ -19783,9 +19795,13 @@
 	 * Fills cells in Trend mode. For fill cells Trend mode uses linear regression formula - y = a + bx, when:
 	 * a - intercept,
 	 * b - slop,
-	 * x - index of cell who must be fill
+	 * x - index of cell who must be fill.
+	 * Works only for Linear and Growth types and without "Step value" and "Stop value" data.
 	 * @memberof CSerial
-	 * @param {Object} oFilledLine - Line of filled cells
+	 * @param {Object} oFilledLine - Line of filled cells and cells which need to fill
+	 * @param {number} oFilledLine.nValue - Value of first cell in line
+	 * @param {Range} oFilledLine.oToRange - Range of cells which will be fill
+	 * @param {Cell} oFilledLine.oCell - First cell of line
 	 * @param {number} nFilledLineLength - Length line of filled cells
 	 */
 	CSerial.prototype.promoteCellsWithTrend = function (oFilledLine, nFilledLineLength) {
@@ -19814,7 +19830,7 @@
 		});
 		let nSlope = nNumeratorOfSlope / nDenominatorOfSlope;
 		let nIntercept = nYAvg - nSlope * nXAvg;
-        if (Number.isNaN(nSlope) || Number.isNaN(nIntercept)) return;
+        if (isNaN(nSlope) || isNaN(nIntercept)) return;
 		// Fill cells in selection range
 		let nEndIndex = this.getIndex() + nStartIndex;
 		let oFromCell = oFilledLine.oCell;
