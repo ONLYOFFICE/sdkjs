@@ -2467,7 +2467,7 @@ function (window, undefined) {
 					wb.handlers.trigger("asc_onEditDefName", oldName, newName);
 				}
 				// clear traces
-				wb.oApi.asc_RemoveTraceArrows(0);
+				wb.oApi.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 			}
 		} else if(AscCH.historyitem_Workbook_Calculate === Type) {
 			if (!bUndo) {
@@ -2629,7 +2629,7 @@ function (window, undefined) {
 				if (bUndo || AscCH.historyitem_Cell_ChangeValueUndo !== Type) {
 					cell.setValueData(Val);
 					// clear traces
-					t.wb.oApi.asc_RemoveTraceArrows(0);
+					t.wb.oApi.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 				}
 			} else if (AscCH.historyitem_Cell_SetStyle == Type) {
 				if (null != Val) {

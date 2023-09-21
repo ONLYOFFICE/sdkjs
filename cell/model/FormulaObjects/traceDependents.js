@@ -1241,7 +1241,10 @@ function (window, undefined) {
 		}
 	};
 	TraceDependentsManager.prototype.clearAll = function (needDraw) {
-		this.ws.cleanSelection();
+		if (needDraw && this.ws) {
+			// нужно вызывать cleanSelection до того как будут удалены данные из traceManager, потому что иначе isHaveData внутри cleanSelection вернет false и очистки не произойдет
+			this.ws.cleanSelection();
+		}
 		this.precedents = null;
 		this.precedentsExternal = null;
 		this.dependents = null;
@@ -1255,6 +1258,7 @@ function (window, undefined) {
 
 		if (needDraw) {
 			if (this.ws && this.ws.overlayCtx) {
+				// drawSelection в свою очередь нужно вызывать после удаления данных из traceManager т.к. внутри есть вызов отрисовки зависимостей
 				this.ws._drawSelection();
 			}
 		}

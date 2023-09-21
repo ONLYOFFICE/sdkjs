@@ -12134,9 +12134,9 @@
                           c_oAscError.Level.NoCritical);
                         t.model.selectionRange.assign2(range.bbox);
 
-						// Сбрасываем параметры автозаполнения
-						t.activeFillHandle = null;
-						t.fillHandleDirection = -1;
+                        // Сбрасываем параметры автозаполнения
+                        t.activeFillHandle = null;
+                        t.fillHandleDirection = -1;	
 
                         t.updateSelection();
                     }
