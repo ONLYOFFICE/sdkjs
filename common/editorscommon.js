@@ -2043,14 +2043,14 @@
 				}
 				else
 				{
-					if (editor.isPdfEditor() && e.canceled == true)
+					if (editor && editor.isPdfEditor() && e.canceled == true)
 						callback(e);
 					else
 						callback(Asc.c_oAscError.ID.Unknown);
 				}
 			});
 
-			if (editor.isPdfEditor()) {
+			if (editor && editor.isPdfEditor()) {
 				let oViewer = editor.getDocumentRenderer();
 				let oDoc = oViewer.doc;
 				let oActionsQueue = oDoc.GetActionsQueue();
