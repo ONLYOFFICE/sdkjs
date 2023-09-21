@@ -2628,8 +2628,6 @@ function (window, undefined) {
 			} else if (AscCH.historyitem_Cell_ChangeValue === Type || AscCH.historyitem_Cell_ChangeValueUndo === Type) {
 				if (bUndo || AscCH.historyitem_Cell_ChangeValueUndo !== Type) {
 					cell.setValueData(Val);
-					// clear traces
-					t.wb.oApi.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 				}
 			} else if (AscCH.historyitem_Cell_SetStyle == Type) {
 				if (null != Val) {
