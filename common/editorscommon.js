@@ -2043,19 +2043,19 @@
 				}
 				else
 				{
-					if (editor && editor.isPdfEditor() && e.canceled == true)
+					if (Asc.editor.isPdfEditor() && e.canceled == true)
 						callback(e);
 					else
 						callback(Asc.c_oAscError.ID.Unknown);
 				}
 			});
 
-			if (editor && editor.isPdfEditor()) {
-				let oViewer = editor.getDocumentRenderer();
+			if (Asc.editor.isPdfEditor()) {
+				let oViewer = Asc.editor.getDocumentRenderer();
 				let oDoc = oViewer.doc;
 				let oActionsQueue = oDoc.GetActionsQueue();
 				if (oActionsQueue.IsInProgress()) {
-					editor.sendEvent("asc_onOpenFilePdfForm", fileName.click.bind(fileName), oActionsQueue.Continue.bind(oActionsQueue));
+					Asc.editor.sendEvent("asc_onOpenFilePdfForm", fileName.click.bind(fileName), oActionsQueue.Continue.bind(oActionsQueue));
 				}
 				else 
 					fileName.click();
