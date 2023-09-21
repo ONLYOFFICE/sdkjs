@@ -2466,6 +2466,8 @@ function (window, undefined) {
 					wb.editDefinesNamesUndoRedo(oldName, newName);
 					wb.handlers.trigger("asc_onEditDefName", oldName, newName);
 				}
+				// clear traces
+				wb.oApi.asc_RemoveTraceArrows(0);
 			}
 		} else if(AscCH.historyitem_Workbook_Calculate === Type) {
 			if (!bUndo) {
@@ -2561,7 +2563,7 @@ function (window, undefined) {
 		this.UndoRedo(Type, Data, nSheetId, false);
 	};
 	UndoRedoCell.prototype.UndoRedo = function (Type, Data, nSheetId, bUndo) {
-		var ws = this.wb.getWorksheetById(nSheetId);
+		let ws = this.wb.getWorksheetById(nSheetId), t = this;
 		if (null == ws) {
 			return;
 		}
@@ -2626,6 +2628,8 @@ function (window, undefined) {
 			} else if (AscCH.historyitem_Cell_ChangeValue === Type || AscCH.historyitem_Cell_ChangeValueUndo === Type) {
 				if (bUndo || AscCH.historyitem_Cell_ChangeValueUndo !== Type) {
 					cell.setValueData(Val);
+					// clear traces
+					t.wb.oApi.asc_RemoveTraceArrows(0);
 				}
 			} else if (AscCH.historyitem_Cell_SetStyle == Type) {
 				if (null != Val) {

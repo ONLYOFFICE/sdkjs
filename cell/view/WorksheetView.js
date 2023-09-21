@@ -12122,7 +12122,10 @@
 							History.SetSelectionRedo(oCanPromote.to.clone());
 							History.EndTransaction();
 						});
-
+						// clear traces
+						if (t.traceDependentsManager) {
+							t.traceDependentsManager.clearAll();
+						}
 						// Обновляем выделенные ячейки
 						t._updateRange(arn);
 						!opt_doNotDraw && t.draw();
@@ -12131,9 +12134,9 @@
                           c_oAscError.Level.NoCritical);
                         t.model.selectionRange.assign2(range.bbox);
 
-                // Сбрасываем параметры автозаполнения
-                t.activeFillHandle = null;
-                t.fillHandleDirection = -1;
+						// Сбрасываем параметры автозаполнения
+						t.activeFillHandle = null;
+						t.fillHandleDirection = -1;
 
                         t.updateSelection();
                     }
