@@ -158,6 +158,9 @@ var CPresentation = CPresentation || function(){};
 
         for (let i = 0; i < aParentsInfo.length; i++) {
             let nIdx = aParentsInfo[i]["i"];
+            if (!oChilds[nIdx])
+                continue;
+
             let sType = oChilds[nIdx][0].GetType();
 
             let oParent = private_createField(aParentsInfo[i]["name"], sType, undefined, undefined, this);
@@ -599,6 +602,10 @@ var CPresentation = CPresentation || function(){};
             oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd(); // убираем курсор
         }
 
+        // суть в том, что мы рисуем background только когда форма активна, если неактивна - рисуем highlight вместо него.
+        if (oField.GetBackgroundColor())
+            oField.AddToRedraw();
+
         oViewer._paint();
     };
     CPDFDoc.prototype.OnExitFieldByClick = function() {
@@ -608,6 +615,10 @@ var CPresentation = CPresentation || function(){};
 
         oActiveForm.UpdateScroll && oActiveForm.UpdateScroll(false); // убираем скрол
         oActiveForm.SetDrawHighlight(true);
+
+        // суть в том, что мы рисуем background только когда форма активна, если неактивна - рисуем highlight вместо него.
+        if (oActiveForm.GetBackgroundColor())
+            oActiveForm.AddToRedraw();
 
         // если чекбокс то выходим сразу
         if ([AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(oActiveForm.GetType())) {
@@ -670,7 +681,7 @@ var CPresentation = CPresentation || function(){};
         
         oActiveForm.Blur();
         oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
-        if (oActionsQueue.IsInProgress() == false) {
+        if (oActionsQueue.IsInProgress() == false && this.mouseDownField == null) {
             oViewer._paint();
         }
 
@@ -683,22 +694,22 @@ var CPresentation = CPresentation || function(){};
         let oViewer         = editor.getDocumentRenderer();
         let oActionsQueue   = this.GetActionsQueue();
 
+        // суть в том, что мы рисуем background только когда форма активна, если неактивна - рисуем highlight вместо него.
+        if (oField.GetBackgroundColor())
+            oField.AddToRedraw();
+
         switch (oField.GetType())
         {
             case AscPDF.FIELD_TYPES.text:
             case AscPDF.FIELD_TYPES.combobox:
                 oField.SetDrawHighlight(false);
                 oField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, event);
-                    
-                oViewer.onUpdateOverlay();
-                if (oField.IsEditable() != false)
                 break;
             case AscPDF.FIELD_TYPES.listbox:
                 oField.SetDrawHighlight(false);
                 oField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, event);
                 
                 oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
-                oViewer.onUpdateOverlay();
                 break;
             case AscPDF.FIELD_TYPES.button:
             case AscPDF.FIELD_TYPES.radiobutton:
@@ -1046,11 +1057,6 @@ var CPresentation = CPresentation || function(){};
 
             oViewer.onUpdateOverlay();
         }
-        // else if (!oViewer.isMouseMoveBetweenDownUp && oField.content && oField.content.IsSelectionUse())
-        // {
-        //     oField.content.RemoveSelection();
-        //     oViewer.onUpdateOverlay();
-        // }
 
         switch (oField.GetType())
         {
@@ -1064,10 +1070,7 @@ var CPresentation = CPresentation || function(){};
                     let oDoc = oField.GetDocument();
                     oDoc.DoCalculateFields();
                     oDoc.CommitFields();
-                    
-                    oViewer._paint();
                 }
-                let cursorType = "pointer";
                 break;
             default:
                 oField.onMouseUp();
@@ -1354,6 +1357,9 @@ var CPresentation = CPresentation || function(){};
             return null;
         
         let oField = private_createField(cName, cFieldType, nPageNum, aScaledCoords, this);
+        if (!oField)
+            return null;
+
         oField._origRect = aCoords;
 
         this.widgets.push(oField);
