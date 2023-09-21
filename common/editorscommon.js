@@ -2567,7 +2567,7 @@
 		}
 		document.body.appendChild(input);
 
-		input.addEventListener('click', () => {
+		input.addEventListener('click', function () {
 			document.body.onfocus = checkCanceled;
 		});
 

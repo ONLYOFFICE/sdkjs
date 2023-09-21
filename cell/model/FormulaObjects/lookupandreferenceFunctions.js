@@ -3637,7 +3637,7 @@ function (window, undefined) {
 		if (a3Value === 1 || a3Value === -1) {
 			if (isArray) {
 				// make array universal
-				tempArr = tempArr.map((item, index) => {
+				tempArr = tempArr.map(function (item, index) {
 					return {
 						v: item,
 						i: index,

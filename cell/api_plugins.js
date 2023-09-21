@@ -113,8 +113,14 @@
 	 */
 	Api.prototype["pluginMethod_RemoveComments"] = function(arrIds)
 	{
-		for (let comm of arrIds)
-			this.asc_removeComment(comm);
+		for (let comm in arrIds)
+		{
+			if (arrIds.hasOwnProperty(comm))
+			{
+				this.asc_removeComment(arrIds[comm]);
+			}
+		}
+
 	};
 
 })(window);
