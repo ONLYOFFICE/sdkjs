@@ -298,12 +298,42 @@ CMathBase.prototype.SetPlaceholder = function()
 		}
 	}
 };
-CMathBase.prototype.CheckRunContent = function(fCheck)
+CMathBase.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward)
 {
-    for(var i = 0; i < this.Content.length; ++i)
-    {
-        this.Content[i].CheckRunContent(fCheck);
-    }
+	if (undefined === isForward)
+		isForward = true;
+
+	let nStartPos = oStartPos && oStartPos.GetDepth() >= nDepth ? oStartPos.Get(nDepth) : 0;
+	let nEndPos   = oEndPos && oEndPos.GetDepth() >= nDepth ? oEndPos.Get(nDepth) : this.Content.length - 1;
+
+	if (isForward)
+	{
+		for (let nPos = nStartPos; nPos <= nEndPos; ++nPos)
+		{
+			let _s = oStartPos && nPos === nStartPos ? oStartPos : null;
+			let _e = oEndPos && nPos === nEndPos ? oEndPos : null;
+
+			if (oCurrentPos)
+				oCurrentPos.Update(nPos, nDepth);
+
+			if (this.Content[nPos].CheckRunContent(fCheck, _s, _e, nDepth + 1, oCurrentPos, isForward))
+				return true;
+		}
+	}
+	else
+	{
+		for (let nPos = nEndPos; nPos >= nStartPos; --nPos)
+		{
+			let _s = oStartPos && nPos === nStartPos ? oStartPos : null;
+			let _e = oEndPos && nPos === nEndPos ? oEndPos : null;
+
+			if (oCurrentPos)
+				oCurrentPos.Update(nPos, nDepth);
+
+			if (this.Content[nPos].CheckRunContent(fCheck, _s, _e, nDepth + 1, oCurrentPos, isForward))
+				return true;
+		}
+	}
 };
 CMathBase.prototype.addMCToContent = function(elements)
 {
@@ -1022,6 +1052,11 @@ CMathBase.prototype.Apply_TextPrToCtrPr = function(TextPr, IncFontSize, ApplyToA
 		if (undefined !== TextPr.Shd)
 			this.Set_Shd(null === TextPr.Shd ? undefined : TextPr.Shd);
 
+		if (undefined !== TextPr.Italic)
+		{
+			this.SetItalic(null === TextPr.Italic ? undefined : TextPr.Italic);
+		}
+
 		if (undefined !== TextPr.Unifill)
 		{
 			this.Set_Unifill(null === TextPr.Unifill ? undefined : TextPr.Unifill.createDuplicate());
@@ -1035,6 +1070,9 @@ CMathBase.prototype.Apply_TextPrToCtrPr = function(TextPr, IncFontSize, ApplyToA
 					this.Set_TextFill(undefined);
 			}
 		}
+
+		if (undefined !== TextPr.Color)
+			this.Set_Color(TextPr.Color);
 
 		if (undefined !== TextPr.TextOutline)
 			this.Set_TextOutline(null === TextPr.TextOutline ? undefined : TextPr.TextOutline);

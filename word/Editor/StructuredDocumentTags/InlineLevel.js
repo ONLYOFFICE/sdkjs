@@ -1289,6 +1289,7 @@ CInlineLevelSdt.prototype.RemoveContentControlWrapper = function()
 		oParent.Selection.EndPos = nParentSelectionEndPos + nCount - 1;
 
 	this.Remove_FromContent(0, this.Content.length);
+	oParent.Apply_TextPr(this.Pr.TextPr);
 
 	return {Parent : oParent, Pos : nElementPos, Count : nCount};
 };
@@ -1445,15 +1446,14 @@ CInlineLevelSdt.prototype.ReplacePlaceholderEquation = function()
 	this.RemoveSelection();
 	this.MoveCursorToStartPos();
 	
-	let textPr = this.GetDefaultTextPr();
+	let textPr = this.Pr.TextPr;
 	
 	let paraMath = new ParaMath();
-	paraMath.Root.Load_FromMenu(c_oAscMathType.Default_Text, this.GetParagraph(), textPr.Copy());
+	paraMath.Root.Load_FromMenu(c_oAscMathType.Default_Text, this.GetParagraph(), this.GetDefaultTextPr());
 	paraMath.Root.Correct_Content(true);
-	paraMath.ApplyTextPr(textPr.Copy(), undefined, true);
+	paraMath.Root.Set_ParaMath(paraMath);
 	this.RemoveFromContent(0, this.GetElementsCount());
 	this.AddToContent(0, paraMath);
-	
 	return paraMath;
 };
 CInlineLevelSdt.prototype.private_ReplaceContentWithPlaceHolder = function(isSelect, isForceUpdate)

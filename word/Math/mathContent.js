@@ -1574,12 +1574,19 @@ CMathContent.prototype.SetParent = function(Parent, ParaMath)
     this.Parent   = Parent;
     this.ParaMath = ParaMath;
 };
-CMathContent.prototype.CheckRunContent = function(fCheck)
+CMathContent.prototype.oCurrentContent = function(fCheck)
 {
 	for (var i = 0; i < this.Content.length; ++i)
 	{
-		if (para_Math_Run === this.Content[i].Type)
-			fCheck(this.Content[i]);
+		let oCurrentContent = this.Content[i];
+		if (para_Math_Run === oCurrentContent.Type)
+		{
+			fCheck(oCurrentContent, 0, oCurrentContent.GetElementsCount());
+		}
+		else if (oCurrentContent instanceof CMathBase)
+		{
+			oCurrentContent.oCurrentContent(fCheck);
+		}
 	}
 };
 

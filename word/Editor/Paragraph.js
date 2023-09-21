@@ -3917,7 +3917,6 @@ Paragraph.prototype.Shift = function(CurPage, Dx, Dy)
  */
 Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlySelection, bOnAddText, isWord)
 {
-	debugger
 	var Direction = nCount;
 	var Result    = true;
 
