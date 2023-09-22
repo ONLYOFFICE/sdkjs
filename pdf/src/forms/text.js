@@ -833,10 +833,11 @@
 
         return true;
     };
-    CTextField.prototype.DoKeystrokeAction = function(aChars, isOnRemove, isOnCommit) {
+    CTextField.prototype.DoKeystrokeAction = function(aChars, nRemoveType, isOnCommit) {
         if (!aChars)
             aChars = [];
 
+        
         let oKeystrokeTrigger = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
         let oActionRunScript = oKeystrokeTrigger ? oKeystrokeTrigger.GetActions()[0] : null;
         let oDoc = this.GetDocument();
@@ -864,11 +865,11 @@
         let nSelStart   = oSelRange.nSelStart;
         let nSelEnd     = oSelRange.nSelEnd;
 
-        if (isOnRemove && nSelStart == nSelEnd) {
-            if (nSelStart > 1) {
+        if (nRemoveType && nSelStart == nSelEnd) {
+            if (nRemoveType == -1) {
                 nSelStart--;
             }
-            else {
+            else if (nRemoveType == 1) {
                 nSelEnd++;
             }
         }
@@ -1034,7 +1035,7 @@
 
         this.CreateNewHistoryPoint(true);
 
-        if (this.DoKeystrokeAction(null, true, false) == false) {
+        if (this.DoKeystrokeAction(null, nDirection, false) == false) {
             AscCommon.History.Remove_LastPoint();
             return false;
         }
