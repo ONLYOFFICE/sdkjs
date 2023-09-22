@@ -42,9 +42,84 @@
         AscPDF.CBaseField.call(this, sName, AscPDF.FIELD_TYPES.signature, nPage, aRect, oDoc);
     };
 
-    if (!window["AscPDF"])
-	    window["AscPDF"] = {};
-        
+    CSignatureField.prototype = Object.create(AscPDF.CBaseField.prototype);
+    CSignatureField.prototype.constructor = CSignatureField;
+    
+    CSignatureField.prototype.SetValue = function() {
+        return;
+    };
+    CSignatureField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
+        return;
+    };
+    CSignatureField.prototype.DrawPressed = function() {
+        return;
+    };
+    CSignatureField.prototype.DrawUnpressed = function() {
+        return;
+    };
+    CSignatureField.prototype.Recalculate = function() {
+    };
+
+    CSignatureField.prototype.SetPressed = function(bValue) {
+        this._pressed = bValue;
+    };
+    CSignatureField.prototype.IsPressed = function() {
+        return this._pressed;
+    };
+    CSignatureField.prototype.IsHovered = function() {
+        return this._hovered;
+    };
+    CSignatureField.prototype.SetHovered = function(bValue) {
+        this._hovered = bValue;
+    };
+
+    CSignatureField.prototype.onMouseDown = function() {
+    };
+    CSignatureField.prototype.onMouseUp = function() {
+    };
+
+    /**
+     * Synchronizes this field with fields with the same name.
+     * @memberof CSignatureField
+     * @typeofeditors ["PDF"]
+     */
+    CSignatureField.prototype.SyncField = function() {
+    };
+    /**
+     * Applies value of this field to all field with the same name.
+     * @memberof CSignatureField
+     * @typeofeditors ["PDF"]
+     */
+    CSignatureField.prototype.Commit = function() {
+    };
+
+    CSignatureField.prototype.Reset = function() {
+    };
+	
+    function MakeColorMoreGray(rgbColor, nPower) {
+        // Получаем значения компонентов цвета
+        const r = rgbColor.r;
+        const g = rgbColor.g;
+        const b = rgbColor.b;
+      
+        // Вычисляем новые значения компонентов с учетом затемнения (уменьшения интенсивности)
+        const grayR = Math.max(0, r - nPower);
+        const grayG = Math.max(0, g - nPower);
+        const grayB = Math.max(0, b - nPower);
+      
+        // Возвращаем новый серый цвет
+        return {
+            r: grayR,
+            g: grayG,
+            b: grayB
+        };
+    }
+
+    function TurnOffHistory() {
+        if (AscCommon.History.IsOn() == true)
+            AscCommon.History.TurnOff();
+    }
+
 	window["AscPDF"].CSignatureField = CSignatureField;
 })();
 

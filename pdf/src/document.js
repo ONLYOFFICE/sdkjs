@@ -2167,7 +2167,7 @@ var CPresentation = CPresentation || function(){};
                 oField = new AscPDF.CRadioButtonField(cName, nPageNum, oCoords, oPdfDoc);
                 break;
             case AscPDF.FIELD_TYPES.signature:
-                oField = null;
+                oField = new AscPDF.CSignatureField(cName, nPageNum, oCoords, oPdfDoc);;
                 break;
             case AscPDF.FIELD_TYPES.text:
                 oField = new AscPDF.CTextField(cName, nPageNum, oCoords, oPdfDoc);

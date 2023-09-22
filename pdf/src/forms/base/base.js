@@ -1287,6 +1287,8 @@
             case AscPDF.FIELD_TYPES.button:
                 return new AscPDF.ApiPushButtonField(this);
         }
+
+        return null;
     };
 
     // pdf api methods
