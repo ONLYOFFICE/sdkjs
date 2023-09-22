@@ -1204,7 +1204,11 @@
 							action = true;
 							break;
 						case 90:
-							t.handlers.trigger("undo");
+							if (event.altKey) {
+								AscCommon.EditorActionSpeaker.isLanched ? AscCommon.EditorActionSpeaker.stop() : AscCommon.EditorActionSpeaker.run();
+							} else {
+								t.handlers.trigger("undo");
+							}
 							action = true;
 							break;
 						case 192:
