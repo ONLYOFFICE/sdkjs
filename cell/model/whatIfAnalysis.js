@@ -40,6 +40,11 @@ function (window, undefined) {
 	// Import
 	const oCNumberType = AscCommonExcel.cNumber;
 	/**
+	 * Class representing a goal seek feature
+	 * @param {parserFormula} oParsedFormula - Formula object.
+	 * For a goal seek uses methods: parse - for update values in formula, calculate - for calculate formula result.
+	 * @param {number} nExpectedVal - Expected value.
+	 * @param {Cell} oChangingCell - Changing cell.
 	 * @constructor
 	 */
 	function CGoalSeek(oParsedFormula, nExpectedVal, oChangingCell) {
@@ -52,6 +57,12 @@ function (window, undefined) {
 		this.sRegNumDecimalSeparator = AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator
 	}
 
+	/**
+	 * Main method calculating goal seek.
+	 * Takes "Changing cell" and its change according to expected value until result of formula be equal to expected value.
+	 * For calculate uses exponent step and Ridder method.
+	 * @memberof CGoalSeek
+	 */
 	CGoalSeek.prototype.calculate = function () {
 		let sRegNumDecimalSeparator = this.getRegNumDecimalSeparator();
 		let oParsedFormula = this.getParsedFormula();
@@ -138,6 +149,10 @@ function (window, undefined) {
 			}
 		}
 	};
+	/**
+	 * Initialize step direction. Reverse direction (-1) or forward direction (+1).
+	 * @memberof CGoalSeek
+	 */
 	CGoalSeek.prototype.initStepDirection = function () {
 		let oChangingCell = this.getChangingCell();
 		let sChangingVal = this.getChangingCell().getValue();
@@ -178,39 +193,94 @@ function (window, undefined) {
 			this.setStepDirection(1);
 		}
 	};
+	/**
+	 * Returns a step direction.
+	 * @memberof CGoalSeek
+	 * @returns {number}
+	 */
 	CGoalSeek.prototype.getStepDirection = function () {
 		return this.nStepDirection;
 	};
+	/**
+	 * Sets a step direction.
+	 * @memberof CGoalSeek
+	 * @param {number} nStepDirection
+	 */
 	CGoalSeek.prototype.setStepDirection = function (nStepDirection) {
 		this.nStepDirection = nStepDirection;
 	};
+	/**
+	 * Returns a formula object.
+	 * @memberof CGoalSeek
+	 * @returns {parserFormula}
+	 */
 	CGoalSeek.prototype.getParsedFormula = function () {
 		return this.oParsedFormula;
 	};
+	/**
+	 * Returns expected value.
+	 * @memberof CGoalSeek
+	 * @returns {number}
+	 */
 	CGoalSeek.prototype.getExpectedVal = function () {
 		return this.nExpectedVal;
 	};
+	/**
+	 * Returns changing cell.
+	 * @memberof CGoalSeek
+	 * @returns {Cell}
+	 */
 	CGoalSeek.prototype.getChangingCell = function () {
 		return this.oChangingCell
 	};
+	/**
+	 * Sets changing cell.
+	 * @memberof CGoalSeek
+	 * @param {Cell} oChangingCell
+	 */
 	CGoalSeek.prototype.setChangingCell = function (oChangingCell) {
 		this.oChangingCell = oChangingCell;
 	};
+	/**
+	 * Returns relative error.
+	 * @memberof CGoalSeek
+	 * @returns {number}
+	 */
 	CGoalSeek.prototype.getRelativeError = function () {
 		return this.nRelativeError;
 	};
+	/**
+	 * Sets relative error.
+	 * @memberof CGoalSeek
+	 * @param {number} nRelativeError
+	 */
 	CGoalSeek.prototype.setRelativeError = function (nRelativeError) {
 		this.nRelativeError = nRelativeError;
 	};
+	/**
+	 * Returns max iterations.
+	 * @memberof CGoalSeek
+	 * @returns {number}
+	 */
 	CGoalSeek.prototype.getMaxIterations = function () {
 		return this.nMaxIterations;
 	};
+	/**
+	 * Sets max iterations.
+	 * @memberof CGoalSeek
+	 * @param {number} nMaxIterations
+	 */
 	CGoalSeek.prototype.setMaxIterations = function (nMaxIterations) {
 		this.nMaxIterations = nMaxIterations;
 	};
+	/**
+	 * Returns number decimal separator according chosen region. It may be "." or ",".
+	 * @memberof CGoalSeek
+	 * @returns {string}
+	 */
 	CGoalSeek.prototype.getRegNumDecimalSeparator = function () {
 		return this.sRegNumDecimalSeparator;
-	}
+	};
 
 	// Export
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
