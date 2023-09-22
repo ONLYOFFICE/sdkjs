@@ -45,6 +45,7 @@ function (window, undefined) {
 	var CellAddress = AscCommon.CellAddress;
 
 	var cElementType = AscCommonExcel.cElementType;
+	var cElementTypeWeight = AscCommonExcel.cElementTypeWeight;
 	var cErrorType = AscCommonExcel.cErrorType;
 	var cNumber = AscCommonExcel.cNumber;
 	var cString = AscCommonExcel.cString;
@@ -1729,6 +1730,9 @@ function (window, undefined) {
 				if(index === undefined) {
 					index = _func.binarySearchByRange(arg0, arg1);
 
+					// let testIndex = _func.binarySearchByRangeNew(arg0, arg1);
+					// index = testIndex ? testIndex : index;
+
 					if (index === undefined || index < 0) {
 						return new cError(cErrorType.not_available);
 					}
@@ -1751,7 +1755,6 @@ function (window, undefined) {
 
 
 			let ws = cElementType.cellsRange3D === arg1.type && arg1.isSingleSheet() ? arg1.getWS() : arg1.ws;
-
 			if (cElementType.cellsRange3D === arg1.type) {
 				if (arg1.isSingleSheet()) {
 					ws = arg1.getWS();

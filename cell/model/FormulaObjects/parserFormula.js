@@ -467,8 +467,17 @@ var cErrorType = {
 		not_available       : 7,
 		getting_data        : 8
   };
-
-
+/** @enum */
+var cElementTypeWeight = {
+		number      : 0,
+		empty       : 0,	// ?
+		string      : 1,
+		bool        : 2,
+		error       : 3,
+		// name        : 10,
+		// table       : 14,
+		// name3D      : 15,
+  };
 //добавляю константу cReturnFormulaType для корректной обработки формул массива
 // value - функция умеет возвращать только значение(не массив)
 // в этом случае данная функция вызывается множество раз для каждого элемента внутренних массивов
@@ -650,6 +659,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cNumber.prototype = Object.create(cBaseType.prototype);
 	cNumber.prototype.constructor = cNumber;
 	cNumber.prototype.type = cElementType.number;
+	cNumber.prototype.typeWeight = cElementTypeWeight.number;
 	cNumber.prototype.tocString = function () {
 		return new cString(("" + this.value).replace(FormulaSeparators.digitSeparatorDef,
 			FormulaSeparators.digitSeparator));
@@ -683,6 +693,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cString.prototype = Object.create(cBaseType.prototype);
 	cString.prototype.constructor = cString;
 	cString.prototype.type = cElementType.string;
+	cString.prototype.typeWeight = cElementTypeWeight.string;
 	cString.prototype.tocNumber = function (doNotParseNum) {
 		var res, m = this.value;
 		if (this.value === "") {
@@ -742,6 +753,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBool.prototype = Object.create(cBaseType.prototype);
 	cBool.prototype.constructor = cBool;
 	cBool.prototype.type = cElementType.bool;
+	cBool.prototype.typeWeight = cElementTypeWeight.bool;
 	cBool.prototype.toString = function () {
 		return this.value.toString().toUpperCase();
 	};
@@ -845,6 +857,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cError.prototype = Object.create(cBaseType.prototype);
 	cError.prototype.constructor = cError;
 	cError.prototype.type = cElementType.error;
+	cError.prototype.typeWeight = cElementTypeWeight.error;
 	cError.prototype.tocNumber = cError.prototype.tocString = cError.prototype.tocBool = function () {
 		return this;
 	};
@@ -1949,6 +1962,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cEmpty.prototype = Object.create(cBaseType.prototype);
 	cEmpty.prototype.constructor = cEmpty;
 	cEmpty.prototype.type = cElementType.empty;
+	cEmpty.prototype.typeWeight = cElementTypeWeight.empty;
 	cEmpty.prototype.tocNumber = function () {
 		return new cNumber(0);
 	};
@@ -5154,21 +5168,40 @@ _func.binarySearch = function ( sElem, arrTagert, regExp ) {
 		}
 	}
 
+	// comparing the lengths of arrays and the first and last element
 	if (arrTagert.length === 0) {
 		return -1;
 		/* массив пуст */
 	} else if (arrTagert[0].value > sElem.value) {
+		// ???
 		return -2;
 	} else if (arrTagert[arrTagert.length - 1].value < sElem.value) {
 		return arrTagert.length - 1;
 	}
 
+	// согласно сортировке в ms, сравнение будет такое: cError > cBool > cText > (cNumber == cEmpty)
 	while (first < last) {
 		mid = Math.floor(first + (last - first) / 2);
-		if (sElem.value <= arrTagert[mid].value || ( regExp && regExp.test(arrTagert[mid].value) )) {
-			last = mid;
+		if (sElem.type !== arrTagert[mid].type) {
+			if (sElem.type === cElementType.empty || arrTagert[mid].type === cElementType.empty) {
+				if (sElem.value <= arrTagert[mid].value) {
+					// cEmpty.tocNumber() ?
+					last = mid;
+				}
+			} else {
+				if (sElem.typeWeight < arrTagert[mid].typeWeight) {
+					last = mid;
+				} else {
+					first = mid + 1;
+				}
+			}
 		} else {
-			first = mid + 1;
+			// if cError && cError ?
+			if (sElem.value < arrTagert[mid].value || ( regExp && regExp.test(arrTagert[mid].value) )) {
+				last = mid;
+			} else {
+				first = mid + 1;
+			}
 		}
 	}
 
@@ -5222,6 +5255,7 @@ _func.binarySearchByRange = function ( sElem, area, regExp ) {
 		return -1;
 		/* массив пуст */
 	} else if (noEmptyValues[0].value > sElem.value) {
+		// ???
 		return -2;
 	} else if (noEmptyValues[last].value < sElem.value) {
 		return last;
@@ -5231,6 +5265,7 @@ _func.binarySearchByRange = function ( sElem, area, regExp ) {
 	while (first < last) {
 		mid = Math.floor(first + (last - first) / 2);
 		tempValue = noEmptyValues[mid];
+		// ???
 		if (sElem.value <= tempValue.value || ( regExp && regExp.test(tempValue.value) )) {
 			last = mid;
 		} else {
@@ -5247,6 +5282,104 @@ _func.binarySearchByRange = function ( sElem, area, regExp ) {
 		/* Искомый элемент не найден. Но если вам вдруг надо его вставить со сдвигом, то его место - last.    */
 	}
 
+};
+
+_func.binarySearchByRangeNew = function ( sElem, area, regExp ) {
+	let bbox, ws;
+	if (cElementType.cellsRange3D === area.type) {
+		bbox = area.bbox;
+		ws = area.getWS();
+	} else if (cElementType.cellsRange === area.type) {
+		bbox = area.range.bbox;
+		ws = area.ws;
+	}
+	let bVertical = bbox.r2 - bbox.r1 >= bbox.c2 - bbox.c1;
+	let first = 0, // номер первого элемента в массиве 
+		last = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1,
+		mid;
+
+	const getValuesNoEmpty = function () {
+		let _r1 = bbox.r1,
+			_r2 = bVertical ? bbox.r2 : bbox.r1,
+			_c1 = bbox.c1,
+			_c2 = bVertical ? bbox.c1 : bbox.c2,
+			_val = [];
+		ws.getRange3(_r1, _c1, _r2, _c2)._foreachNoEmpty(function(cell) {
+			let checkTypeVal = checkTypeCell(cell);
+			if (checkTypeVal.type !== cElementType.empty) {
+				_val.push(checkTypeVal);
+				mapEmptyFullValues[_val.length - 1] = bVertical ? cell.nRow - bbox.r1 : cell.nCol - bbox.c1;
+			}
+		});
+		return _val;
+	};
+
+	let mapEmptyFullValues = [],
+		noEmptyValues = getValuesNoEmpty();
+
+	last = noEmptyValues.length - 1;
+
+	if (noEmptyValues.length === 0) {
+		return -1;
+	} else if (noEmptyValues[0].value > sElem.value) {
+		return -2;
+	} else if (noEmptyValues[last].value < sElem.value) {
+		return last;
+	}
+
+	let tempValue, cacheIndex = -1;
+	while (first < last) {
+		mid = Math.floor(first + (last - first) / 2);
+		tempValue = noEmptyValues[mid];
+		// TODO общую функцию или добавить сравнение типов
+		if (sElem.value === tempValue.value) {
+			// exact match. Find the last item with the same value and return his index
+			last = _func.getLastMatch(mid, tempValue, noEmptyValues);
+			break;
+		}
+
+		if (tempValue.type !== cElementType.error) {
+			cacheIndex = mid;
+		}
+
+		if (Math.abs(first - last) === 1) {
+			// first and last items are next to each other.
+			if (sElem.value < tempValue.value) {
+				last = mid;
+			} else if (tempValue.type === cElementType.error) {
+				last = cacheIndex === -1 ? mid : cacheIndex;
+			} else {
+				last = mid;
+			}
+			break;
+		}
+
+		if (sElem.value < tempValue.value || ( regExp && regExp.test(tempValue.value) )) {
+			last = mid;
+		} else {
+			// first = mid + 1;
+			first = mid;
+		}
+	}
+
+	if (noEmptyValues[last].value === sElem.value) {
+		return mapEmptyFullValues[last];	
+	} else {
+		return mapEmptyFullValues[last];
+	}
+
+};
+
+_func.getLastMatch = function (index, value, array) {
+	let resIndex = index;
+	for (let i = index; i < array.length; i++) {
+		if (array[i].type === value.type && array[i].value === value.value) {
+			resIndex = i;
+		} else {
+			break;
+		}
+	}
+	return resIndex;
 };
 
 _func[cElementType.number][cElementType.cell] = function ( arg0, arg1, what, bbox ) {
@@ -8791,6 +8924,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].cElementType = cElementType;
 	window['AscCommonExcel'].cErrorType = cErrorType;
+	window['AscCommonExcel'].cElementTypeWeight = cElementTypeWeight;
 	window['AscCommonExcel'].cExcelSignificantDigits = cExcelSignificantDigits;
 	window['AscCommonExcel'].cExcelMaxExponent = cExcelMaxExponent;
 	window['AscCommonExcel'].cExcelMinExponent = cExcelMinExponent;
