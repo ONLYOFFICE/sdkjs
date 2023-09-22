@@ -377,7 +377,11 @@
 	PDFEditorApi.prototype.SetMarkerFormat          = function(nType, value, opacity, r, g, b)
 	{
 		this.isMarkerFormat	= value;
-		this.curMarkerType = nType;
+		this.curMarkerType	= nType;
+		let oDoc			= this.getPDFDoc();
+		
+		if (value == true && oDoc.activeForm)
+			oDoc.OnExitFieldByClick();
 
 		if (this.isMarkerFormat) {
 			switch (this.curMarkerType) {

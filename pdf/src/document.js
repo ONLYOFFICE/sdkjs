@@ -795,7 +795,7 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
-        if (IsOnDrawer == true) {
+        if (IsOnDrawer == true || oViewer.Api.isMarkerFormat) {
             this.mouseDownAnnot = null;
             this.mouseDownField = null
             oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
@@ -1435,6 +1435,7 @@ var CPresentation = CPresentation || function(){};
         let oViewer         = editor.getDocumentRenderer();
         let oFile           = oViewer.file;
         let aSelQuads       = oFile.getSelectionQuads();
+
         if (aSelQuads.length == 0)
             return;
 
