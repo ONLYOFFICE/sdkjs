@@ -833,7 +833,7 @@
 
         return true;
     };
-    CTextField.prototype.DoKeystrokeAction = function(aChars, isOnRemove, isOnCommit) {
+    CTextField.prototype.DoKeystrokeAction = function(aChars, nRemoveType, isOnCommit) {
         if (!aChars)
             aChars = [];
 
@@ -864,9 +864,14 @@
         let nSelStart   = oSelRange.nSelStart;
         let nSelEnd     = oSelRange.nSelEnd;
 
-        // флаг что удаление
-        if (isOnRemove && nSelStart && nSelEnd) {
-            nSelStart--;
+        let nCharsCount = this.content.GetElement(0).GetText({ParaEndToSpace: false}).length;
+        if (nRemoveType && nSelStart == nSelEnd) {
+            if (nRemoveType == -1 && nSelStart != 0) {
+                nSelStart--;
+            }
+            else if (nRemoveType == 1 && nSelEnd != nCharsCount) {
+                nSelEnd++;
+            }
         }
 
         this.GetDocument().SetEvent({
@@ -1030,7 +1035,7 @@
 
         this.CreateNewHistoryPoint(true);
 
-        if (this.DoKeystrokeAction(null, true, false) == false) {
+        if (this.DoKeystrokeAction(null, nDirection, false) == false) {
             AscCommon.History.Remove_LastPoint();
             return false;
         }
