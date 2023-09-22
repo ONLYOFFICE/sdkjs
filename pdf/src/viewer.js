@@ -2831,10 +2831,21 @@
 				else
 					this.SelectNextField();
 			}
-			else if (e.KeyCode === 13) // Enter
+			else if (e.KeyCode === 13 && e.ShiftKey == false) // Enter
 			{
 				window.event.stopPropagation();
-				this.doc.EnterDownActiveField(oDoc.activeForm);
+				if (this.doc.activeForm && this.doc.activeForm.IsEditable() && this.doc.activeForm.IsMultiline && this.doc.activeForm.IsMultiline())
+					this.Api.asc_enterText([13]);
+				else
+					this.doc.EnterDownActiveField(oDoc.activeForm);
+			}
+			else if (e.KeyCode === 13 && e.ShiftKey == true) // Enter
+			{
+				window.event.stopPropagation();
+				if (this.doc.activeForm && this.doc.activeForm.IsEditable() && this.doc.activeForm.IsMultiline && this.doc.activeForm.IsMultiline())
+					this.Api.asc_enterText([13]);
+				else
+					this.doc.EnterDownActiveField(oDoc.activeForm);
 			}
 			else if (e.KeyCode === 27) // Esc
 			{

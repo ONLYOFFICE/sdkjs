@@ -1311,6 +1311,8 @@
             let nMaxShiftY                  = this._scrollInfo.scroll.maxScrollY;
             this._scrollInfo.scrollCoeff    = Math.abs(this._curShiftView.y / nMaxShiftY);
         }
+
+        this.AddToRedraw();
     };
     CBaseField.prototype.IsWidget = function() {
         return this._isWidget;

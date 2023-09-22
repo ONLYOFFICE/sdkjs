@@ -554,7 +554,7 @@
         this._editable = bValue;
     };
     CComboBoxField.prototype.IsEditable = function() {
-        return this._editable;
+        return this._editable && this.IsNeedDrawHighlight() == false;
     };
     CComboBoxField.prototype.SetOptions = function(aOpt) {
         let aOptToPush = [];

@@ -552,6 +552,9 @@ var CPresentation = CPresentation || function(){};
         let oViewer = editor.getDocumentRenderer();
         let oField = this.activeForm;
 
+        if (oField.IsNeedDrawHighlight())
+            return;
+
         if ([AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(oField.GetType())) {
             oField.onMouseUp();
         }
@@ -561,7 +564,6 @@ var CPresentation = CPresentation || function(){};
 
             if (oField.IsNeedRevertShiftView()) {
                 oField.RevertContentViewToOriginal();
-                oField.AddToRedraw();
             }
 
             if (oField.IsNeedCommit()) {
@@ -635,6 +637,10 @@ var CPresentation = CPresentation || function(){};
         }
         
         if (oActiveForm.IsNeedCommit()) {
+            if (oActiveForm.IsNeedRevertShiftView()) {
+                oActiveForm.RevertContentViewToOriginal();
+            }
+
             let isValid = true;
             if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oActiveForm.GetType())) {
                 isValid = oActiveForm.DoValidateAction(oActiveForm.GetValue());
@@ -662,10 +668,6 @@ var CPresentation = CPresentation || function(){};
             if (oActiveForm.IsChanged() == false) {
                 oActiveForm.SetDrawFromStream(true);
                 oActiveForm.AddToRedraw();
-
-                if (oActiveForm.IsNeedRevertShiftView()) {
-                    oActiveForm.RevertContentViewToOriginal();
-                }
             }
 
             if (oActiveForm.IsNeedRevertShiftView()) {
@@ -685,7 +687,7 @@ var CPresentation = CPresentation || function(){};
             oViewer._paint();
         }
 
-        if (oActiveForm && oActiveForm.content && oActiveForm.content.IsSelectionUse()) {
+        if (oActiveForm && oActiveForm.content && oActiveForm.content.IsSelectionUse() && this.mouseDownField == null) {
             oActiveForm.content.RemoveSelection();
             oViewer.onUpdateOverlay();
         }
@@ -704,6 +706,7 @@ var CPresentation = CPresentation || function(){};
             case AscPDF.FIELD_TYPES.combobox:
                 oField.SetDrawHighlight(false);
                 oField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, event);
+                oViewer.onUpdateOverlay();
                 break;
             case AscPDF.FIELD_TYPES.listbox:
                 oField.SetDrawHighlight(false);
