@@ -865,8 +865,13 @@
         let nSelEnd     = oSelRange.nSelEnd;
 
         // флаг что удаление
-        if (isOnRemove && nSelStart && nSelEnd) {
-            nSelStart--;
+        if (isOnRemove && nSelStart == nSelEnd) {
+            if (nSelStart > 1) {
+                nSelStart--;
+            }
+            else {
+                nSelEnd++;
+            }
         }
 
         this.GetDocument().SetEvent({
