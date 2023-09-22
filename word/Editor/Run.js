@@ -3963,7 +3963,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 								{
 									NewRange    = true;
 									RangeEndPos = Pos;
-									PRS.CheckLastAutoHyphen(X + SpaceLen, XEnd);
+									PRS.checkLastAutoHyphen();
 								}
 							}
 						}
@@ -3985,7 +3985,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 							else if (Item.CanBeAtBeginOfLine())
 							{
 								PRS.Set_LineBreakPos(Pos, FirstItemOnLine);
-								PRS.CheckLastAutoHyphen(X + SpaceLen, XEnd);
+								PRS.checkLastAutoHyphen();
 							}
 
 							// Если текущий символ с переносом, например, дефис, тогда на нем заканчивается слово
@@ -3994,6 +3994,9 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 									&& X + SpaceLen + LetterLen + PRS.getAutoHyphenWidth(Item, this) <= XEnd
 									&& (FirstItemOnLine || PRS.checkHyphenationZone(X + SpaceLen))))
 							{
+								if (!Item.IsSpaceAfter())
+									PRS.lastAutoHyphen = Item;
+
 								// Добавляем длину пробелов до слова и ширину самого слова.
 								X += SpaceLen + LetterLen;
 
@@ -4015,10 +4018,8 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     {
 						
 						let autoHyphenWidth = PRS.getAutoHyphenWidth(Item, this);
-						
-						let fitOnLine = (X + SpaceLen + WordLen + GraphemeLen + autoHyphenWidth <= XEnd
-							|| PRS.TryCondenseSpaces(SpaceLen + WordLen + GraphemeLen + autoHyphenWidth, WordLen + GraphemeLen + autoHyphenWidth, X, XEnd));
-						
+	
+						let fitOnLine = PRS.isFitOnLine(X, SpaceLen + WordLen + GraphemeLen + autoHyphenWidth);
 						if (!fitOnLine && !FirstItemOnLine)
 						{
 							MoveToLBP = true;
@@ -4035,6 +4036,9 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 									&& fitOnLine
 									&& (FirstItemOnLine || PRS.checkHyphenationZone(X + SpaceLen))))
                             {
+								if (!Item.IsSpaceAfter())
+									PRS.lastAutoHyphen = Item;
+								
                                 // Добавляем длину пробелов до слова и ширину самого слова.
                                 X += SpaceLen + WordLen;
 

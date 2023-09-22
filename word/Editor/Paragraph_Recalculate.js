@@ -3304,10 +3304,11 @@ function CParagraphRecalculateStateWrap()
 	// Последняя позиция в которой можно будет добавить разрыв отрезка или строки, если что-то не умещается (например,
 	// если у нас не убирается слово, то разрыв ставим перед ним)
 	this.LineBreakPos   = new AscWord.CParagraphContentPos();
-
+	
 	this.LastItem        = null; // Последний непробельный элемент
 	this.LastItemRun     = null; // Run, в котором лежит последний элемент LastItem
 	this.LastHyphenItem  = null;
+	this.lastAutoHyphen  = null; // Последний элемент с переносом, который убирался в отрезке вместо с дефисом
 	this.autoHyphenLimit = 0;
 	this.hyphenationZone = 0;
 
@@ -3475,6 +3476,7 @@ CParagraphRecalculateStateWrap.prototype.Reset_Range = function(X, XEnd)
 	this.LastItemRun    = null;
 	this.UpdateLBP      = true;
 	this.LastHyphenItem = null;
+	this.lastAutoHyphen = null;
 	
 	// for ParaMath
 	this.bMath_OneLine    = false;
@@ -3501,6 +3503,12 @@ CParagraphRecalculateStateWrap.prototype.Set_LineBreakPos = function(PosObj, isF
 	this.LineBreakFirst = isFirstItemOnLine;
 	this.ResetLastAutoHyphen();
 };
+CParagraphRecalculateStateWrap.prototype.getXLimit = function()
+{
+	// TODO: Когда перенесем весь расчет в данный класс (из Run.Recalculate_Range), то
+	//       при изменении XEnd сразу расчитывать это значение и заменить вызов на простой this.XEnd
+	return this.Paragraph.IsUseXLimit() ? this.XEnd : MEASUREMENT_MAX_MM_VALUE * 10;
+};
 CParagraphRecalculateStateWrap.prototype.ResetLastAutoHyphen = function()
 {
 	if (!this.LastHyphenItem)
@@ -3509,27 +3517,21 @@ CParagraphRecalculateStateWrap.prototype.ResetLastAutoHyphen = function()
 	this.LastHyphenItem.SetTemporaryHyphenAfter(false);
 	this.LastHyphenItem = null;
 };
-CParagraphRecalculateStateWrap.prototype.CheckLastAutoHyphen = function(X, XEnd)
+CParagraphRecalculateStateWrap.prototype.checkLastAutoHyphen = function()
 {
 	if (!this.isAutoHyphenation())
 		return;
 	
 	this.ResetLastAutoHyphen();
-	let item = this.LastItem;
-	let run  = this.LastItemRun;
-	
-	if (!item || !item.IsText() || !item.isHyphenAfter())
-		return;
-	
-	let hyphenWidth = this.getAutoHyphenWidth(item, run);
-	if (X + hyphenWidth > XEnd)
+	let lastItem = this.LastItem;
+	if (!lastItem || lastItem !== this.lastAutoHyphen)
 		return;
 	
 	if (this.isExceedConsecutiveAutoHyphenLimit())
 		return;
 	
-	this.LastHyphenItem = item;
-	item.SetTemporaryHyphenAfter(true);
+	this.LastHyphenItem = lastItem;
+	lastItem.SetTemporaryHyphenAfter(true);
 };
 CParagraphRecalculateStateWrap.prototype.Set_NumberingPos = function(PosObj, Item)
 {
@@ -4054,19 +4056,32 @@ CParagraphRecalculateStateWrap.prototype.AddCondensedSpaceToRange = function(oSp
 	oSpace.ResetCondensedWidth();
 };
 /**
- * Пытаемся ужать пробелы по
- * @param nWidth1
- * @param nWidth2
- * @param nX
- * @param nXLimit
+ * Проверяем убирается ли в заданном отрезке заданная ширина содержимого
+ * @param x {number} - текущая позиция
+ * @param width {number} - ширина проверяемого промежутка
  * @returns {boolean}
  */
-CParagraphRecalculateStateWrap.prototype.TryCondenseSpaces = function(nWidth1, nWidth2, nX, nXLimit)
+CParagraphRecalculateStateWrap.prototype.isFitOnLine = function(x, width)
+{
+	let xLimit = this.getXLimit();
+	if (x + width <= xLimit)
+		return true;
+	
+	return this.tryCondenseSpaces(x, xLimit, width);
+};
+/**
+ * Пытаемся ужать пробелы по
+ * @param x {number} - текущая позиция
+ * @param xLimit {number} - предельная позиция
+ * @param width {number} - ширина проверяемого промежутка
+ * @returns {boolean}
+ */
+CParagraphRecalculateStateWrap.prototype.tryCondenseSpaces = function(x, xLimit, width)
 {
 	if (!this.CondensedSpaces)
 		return false;
-
-	var nKoef = 1 - 0.25 * (Math.min(12.5, nWidth1) / 12.5);
+	
+	var nKoef = 1 - 0.25 * (Math.min(12.5, width) / 12.5);
 
 	var nSumSpaces = 0;
 	for (var nIndex = 0, nCount = this.RangeSpaces.length; nIndex < nCount; ++nIndex)
@@ -4075,7 +4090,7 @@ CParagraphRecalculateStateWrap.prototype.TryCondenseSpaces = function(nWidth1, n
 	}
 
 	var nSpace = nSumSpaces * (1 - nKoef);
-	if (nX - nSpace + nWidth1 < nXLimit)
+	if (x - nSpace + width < xLimit)
 	{
 		for (var nIndex = 0, nCount = this.RangeSpaces.length; nIndex < nCount; ++nIndex)
 		{
