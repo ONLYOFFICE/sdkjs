@@ -1122,6 +1122,11 @@
 					if (!(canEdit || t.handlers.trigger('isRestrictionComments'))|| selectionDialogMode) {
 						return true;
 					}
+					//TODO temporary fix for speaker. in the future need to switch to a common scheme
+					if (event.altKey && (event.metaKey || event.ctrlKey)) {
+						ctrlKey = true;
+					}
+
 					isNeedCheckActiveCellChanged = true;
 
 				case 65: // select all      Ctrl + a
