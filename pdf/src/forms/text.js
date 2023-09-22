@@ -93,7 +93,7 @@
         return this._comb;
     };
     CTextField.prototype.IsEditable = function() {
-        return true;
+        return this.IsNeedDrawHighlight() == false;
     };
     CTextField.prototype.SetCharLimit = function(nChars) {
         let oViewer = editor.getDocumentRenderer();
@@ -302,9 +302,6 @@
         if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsEditable())
             oContentToDraw.RecalculateCurPos();
     };
-    CTextField.prototype.IsEditable = function() {
-        return true;
-    };
     CTextField.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;
@@ -420,13 +417,15 @@
     };
       
     CTextField.prototype.ScrollVertical = function(scrollY, maxYscroll) {
+        let oViewer = editor.getDocumentRenderer();
         this._bAutoShiftContentView = false;
 
         let nScrollCoeff                = scrollY / maxYscroll;
         this._curShiftView.y            = -nScrollCoeff * maxYscroll;
         this._scrollInfo.scrollCoeff    = nScrollCoeff;
         this.AddToRedraw();
-        editor.getDocumentRenderer()._paint();
+        oViewer._paint();
+        oViewer.onUpdateOverlay();
     };
     CTextField.prototype.ScrollVerticalEnd = function() {
         let nHeightPerPara  = this.content.GetElement(1).Y - this.content.GetElement(0).Y;
@@ -458,7 +457,7 @@
 
         if (nContentH < oContentRect.H || this._doNotScroll) {
             
-            if (bShow == false && this._scrollInfo)
+            if (this._scrollInfo)
                 this._scrollInfo.scroll.canvas.style.display = "none";
             return;
         }
@@ -480,6 +479,7 @@
             oScrollDocElm.style.display     = "block";
 			oScrollDocElm.style.width       = "14px";
 			oScrollDocElm.style.height      = Math.round(oGlobalCoords2["Y"]) - Math.round(oGlobalCoords1["Y"]) + "px";
+            oScrollDocElm.style.zIndex      = 0;
 
             let nMaxShiftY = oContentRect.H - nContentH;
 
@@ -845,7 +845,7 @@
 
         function GetSelectionRange(p)
         {
-            let selectedText = p.GetSelectedText();
+            let selectedText = p.GetSelectedText(undefined, {NewLine: true});
             let state = p.SaveSelectionState();
 
             let selStart = p.Get_ParaContentPos(p.IsSelectionUse(), p.GetSelectDirection() > 0);
@@ -853,7 +853,7 @@
             p.RemoveSelection();
             p.StartSelectionFromCurPos();
             p.SetSelectionContentPos(p.GetStartPos(), selStart);
-            let preText = p.GetSelectedText();
+            let preText = p.GetSelectedText(undefined, {NewLine: true});
 
             p.LoadSelectionState(state);
 

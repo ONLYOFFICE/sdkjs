@@ -518,7 +518,7 @@
 
         if (nContentH < oContentRect.H || this._doNotScroll) {
             
-            if (bShow == false && this._scrollInfo)
+            if (this._scrollInfo)
                 this._scrollInfo.scroll.canvas.style.display = "none";
             return;
         }
