@@ -820,7 +820,7 @@
         let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
         let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
         
-        let isCanFormat = oViewer.isOnUndoRedo == false ? this.DoKeystrokeAction(null, false, true) : true;
+        let isCanFormat = oViewer.isOnUndoRedo != true ? this.DoKeystrokeAction(null, false, true) : true;
         if (!isCanFormat) {
             editor.sendEvent("asc_onFormatErrorPdfForm", oDoc.GetWarningInfo());
             return false;
