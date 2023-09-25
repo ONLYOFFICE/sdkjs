@@ -2036,10 +2036,10 @@
 		{
 			var fileName = GetUploadInput(accept, allowMultiple, function (e)
 			{
-				if (e && e.targetElm && e.targetElm.files)
+				if (e && e.target && e.target.files)
 				{
-					var nError = fValidate(e.targetElm.files);
-					callback(mapAscServerErrorToAscError(nError), e.targetElm.files);
+					var nError = fValidate(e.target.files);
+					callback(mapAscServerErrorToAscError(nError), e.target.files);
 				}
 				else
 				{
@@ -2587,7 +2587,7 @@
 			};
 			var onFocus = function() {
 				cleanup();
-				shedule(1000); // change the value to bigger if needed
+				shedule(1000);
 			};
 			var onBlur = function() {
 				cleanup();
@@ -2604,12 +2604,6 @@
 			input.addEventListener('change', onChange);
 			window.addEventListener('focus', onFocus);
 			window.addEventListener('blur', onBlur);
-			return function() {
-				input.removeEventListener('click', onClick);
-				input.removeEventListener('change', onChange);
-				window.removeEventListener('focus', onFocus);
-				window.removeEventListener('blur', onBlur);
-			};
 		}
 
 		addDialogClosedListener(input, checkCanceled);
@@ -2620,7 +2614,7 @@
 				e.canceled = true;
 			}
 			else {
-				e.targetElm = input;
+				e.target = input;
 			}
 
 			onchange(e);
