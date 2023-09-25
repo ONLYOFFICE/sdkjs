@@ -178,6 +178,8 @@
 		let arg1 = arg[1];
 		arg0 = arg0.tocString();
 
+		window["AscCommon"].cCellFunctionLocal;
+
 		if (cElementType.error === arg0.type) {
 			return arg0;
 		} else {

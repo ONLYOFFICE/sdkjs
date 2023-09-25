@@ -1521,12 +1521,14 @@
 		"uf": "#UNSUPPORTED_FUNCTION!"
 	};
 	var cErrorLocal = {};
+	let cCellFunctionLocal = {};
 
 	function build_local_rx(data)
 	{
 		rx_table_local = build_rx_table(data ? data["StructureTables"] : null);
 		rx_bool_local = build_rx_bool((data && data["CONST_TRUE_FALSE"]) || cBoolOrigin);
 		rx_error_local = build_rx_error(data ? data["CONST_ERROR"] : null);
+		rx_cell_func_local = build_rx_cell_func(data ? data["CELL_FUNCTION_INFO_TYPE"] : null);
 	}
 
 	function build_rx_table(local)
@@ -1612,6 +1614,50 @@
 			cErrorLocal["na"] + "|" +
 			cErrorLocal["getdata"] + "|" +
 			cErrorLocal["uf"] + ")", "i");
+	}
+
+	function build_rx_cell_func(local)
+	{
+		// ToDo переделать на более правильную реализацию. Не особо правильное копирование
+		local = local ? local : {
+			"address": "address",
+			"col": "col",
+			"color": "color",
+			"contents": "contents",
+			"filename": "filename",
+			"format": "format",
+			"parentheses": "parentheses",
+			"prefix": "prefix",
+			"protect": "protect",
+			"row": "row",
+			"type": "type",
+			"width": "width"
+		};
+		cCellFunctionLocal['address'] = local['address'];
+		cCellFunctionLocal['col'] = local['col'];
+		cCellFunctionLocal['color'] = local['color'];
+		cCellFunctionLocal['contents'] = local['contents'];
+		cCellFunctionLocal['filename'] = local['filename'];
+		cCellFunctionLocal['format'] = local['format'];
+		cCellFunctionLocal['parentheses'] = local['parentheses'];
+		cCellFunctionLocal['prefix'] = local['prefix'];
+		cCellFunctionLocal['protect'] = local['protect'];
+		cCellFunctionLocal['row'] = local['row'];
+		cCellFunctionLocal['type'] = local['type'];
+		cCellFunctionLocal['width'] = local['width'];
+
+		return new RegExp("^(" + cCellFunctionLocal["address"] + "|" +
+			cCellFunctionLocal["col"] + "|" +
+			cCellFunctionLocal["color"] + "|" +
+			cCellFunctionLocal["contents"] + "|" +
+			cCellFunctionLocal["filename"] + "|" +
+			cCellFunctionLocal["format"] + "|" +
+			cCellFunctionLocal["parentheses"] + "|" +
+			cCellFunctionLocal["prefix"] + "|" +
+			cCellFunctionLocal["protect"] +
+			cCellFunctionLocal["row"] +
+			cCellFunctionLocal["type"] +
+			cCellFunctionLocal["width"] + ")", "i");
 	}
 
 	var PostMessageType = {
@@ -2605,6 +2651,7 @@
 
 		rx_error              = build_rx_error(null),
 		rx_error_local        = build_rx_error(null),
+		rx_cell_func_local    = build_rx_cell_func(null),
 
 		rx_bool               = build_rx_bool(cBoolOrigin),
 		rx_bool_local         = rx_bool,
@@ -13436,6 +13483,7 @@
 	window["AscCommon"].cBoolLocal = cBoolLocal;
 	window["AscCommon"].cErrorOrigin = cErrorOrigin;
 	window["AscCommon"].cErrorLocal = cErrorLocal;
+	window["AscCommon"].cCellFunctionLocal = cCellFunctionLocal;
 	window["AscCommon"].FormulaSeparators = FormulaSeparators;
 	window["AscCommon"].rx_space_g = rx_space_g;
 	window["AscCommon"].rx_space = rx_space;
