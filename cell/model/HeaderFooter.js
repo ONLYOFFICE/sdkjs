@@ -1558,13 +1558,12 @@ function (window, undefined) {
 
 		//save pictures
 		if (ws && ws.changeLegacyDrawingHFPictures && this.needAddPicturesMap) {
-			ws.changeLegacyDrawingHFPictures(this.needAddPicturesMap)
+			ws.changeLegacyDrawingHFPictures(this.needAddPicturesMap);
 		} else if (opt_headerFooter && this.needAddPicturesMap) {
 			if (!opt_headerFooter.legacyDrawingHF) {
 				opt_headerFooter.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF();
 			}
 			opt_headerFooter.legacyDrawingHF.addPictures(this.needAddPicturesMap, true);
-
 		}
 
 		if (isAddHistory) {
