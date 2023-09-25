@@ -411,10 +411,22 @@ function (window, undefined) {
 				for (let j in curListener.areaMap) {
 					if (curListener.areaMap.hasOwnProperty(j)) {
 						if (curListener.areaMap[j] && curListener.areaMap[j].bbox.contains(cellAddress.col, cellAddress.row)) {
-							let res = curListener.areaMap[j].bbox.getSharedIntersect(shared.ref, currentRange.bbox);
+							let isNotSharedRange;
+							for (let listener in curListener.areaMap[j].listeners) {
+								if (curListener.areaMap[j].listeners[listener].shared === null) {
+									isNotSharedRange = true;
+								}
+								break;
+							}
+							let res = isNotSharedRange ? null : curListener.areaMap[j].bbox.getSharedIntersect(shared.ref, currentRange.bbox);
 							// draw dependents to coords from res
-							if (res && (res.r1 === res.r2 && res.c1 === res.c2)) {
+							if (res) {
 								let index = AscCommonExcel.getCellIndex(res.r1, res.c1);
+								if (res.r1 === res.r2 && res.c1 !== res.c2) {
+									index = res.containsCol(currentRange.bbox.c1) ? AscCommonExcel.getCellIndex(res.r1, currentRange.bbox.c1) : AscCommonExcel.getCellIndex(res.r1, res.c1);
+								} else if (res.c1 === res.c2 && res.r1 !== res.r2) {
+									index = res.containsRow(currentRange.bbox.r1) ? AscCommonExcel.getCellIndex(currentRange.bbox.r1, res.c1) : AscCommonExcel.getCellIndex(res.r1, res.c1);
+								}
 								t._setDependents(cellIndex, index);
 								t._setPrecedents(index, cellIndex);
 							}
