@@ -2036,15 +2036,18 @@
 		{
 			var fileName = GetUploadInput(accept, allowMultiple, function (e)
 			{
-				if (e && e.target && e.target.files)
+				if (e && e.targetElm && e.targetElm.files)
 				{
-					var nError = fValidate(e.target.files);
-					callback(mapAscServerErrorToAscError(nError), e.target.files);
+					var nError = fValidate(e.targetElm.files);
+					callback(mapAscServerErrorToAscError(nError), e.targetElm.files);
 				}
 				else
 				{
-					if (Asc.editor.isPdfEditor() && e.canceled == true)
-						callback(e);
+					if (e.canceled == true)
+					{
+						if (Asc.editor.isPdfEditor())
+							callback(e);
+					}
 					else
 						callback(Asc.c_oAscError.ID.Unknown);
 				}
@@ -2567,21 +2570,62 @@
 		}
 		document.body.appendChild(input);
 
-		input.addEventListener('click', function () {
-			document.body.onfocus = checkCanceled;
-		});
+		function addDialogClosedListener(input, callback) {
+			var id = null;
+			var active = false;
+			var wrapper = function() {
+				if (active) {
+					active = false;
+					callback(input);
+				}
+			};
+			var cleanup = function() {
+				clearTimeout(id);
+			};
+			var shedule = function(delay) {
+				id = setTimeout(wrapper, delay);
+			};
+			var onFocus = function() {
+				cleanup();
+				shedule(1000); // change the value to bigger if needed
+			};
+			var onBlur = function() {
+				cleanup();
+			};
+			var onClick = function() {
+				cleanup();
+				active = true;
+			};
+			var onChange = function() {
+				cleanup();
+				shedule(0);
+			};
+			input.addEventListener('click', onClick);
+			input.addEventListener('change', onChange);
+			window.addEventListener('focus', onFocus);
+			window.addEventListener('blur', onBlur);
+			return function() {
+				input.removeEventListener('click', onClick);
+				input.removeEventListener('change', onChange);
+				window.removeEventListener('focus', onFocus);
+				window.removeEventListener('blur', onBlur);
+			};
+		}
 
-		function checkCanceled() {
+		addDialogClosedListener(input, checkCanceled);
+
+		function checkCanceled(input) {
+			let e = {};
 			if (input.files.length === 0) {
-				onchange({canceled: true});
+				e.canceled = true;
 			}
-			document.body.onfocus = null;
-		}    
-	
-		input.addEventListener('change', function(e) {
-			onchange(e);
-		});
+			else {
+				e.targetElm = input;
+			}
 
+			onchange(e);
+		}
+	
 		return input;
 	}
 
