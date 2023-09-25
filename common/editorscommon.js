@@ -2616,8 +2616,10 @@
 			else {
 				e.target = input;
 			}
-
 			onchange(e);
+
+			window.removeEventListener('focus', onFocus);
+			window.removeEventListener('blur', onBlur);
 		}
 	
 		return input;
