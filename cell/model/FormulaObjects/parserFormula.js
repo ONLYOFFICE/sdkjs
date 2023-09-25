@@ -467,17 +467,6 @@ var cErrorType = {
 		not_available       : 7,
 		getting_data        : 8
   };
-/** @enum */
-var cElementTypeWeight = {
-		number      : 0,
-		empty       : 0,	// ?
-		string      : 1,
-		bool        : 2,
-		error       : 3,
-		// name        : 10,
-		// table       : 14,
-		// name3D      : 15,
-  };
 //добавляю константу cReturnFormulaType для корректной обработки формул массива
 // value - функция умеет возвращать только значение(не массив)
 // в этом случае данная функция вызывается множество раз для каждого элемента внутренних массивов
@@ -514,6 +503,13 @@ var cNumFormatNull = -3;
 var g_nFormulaStringMaxLength = 255;
 
 
+// set type weitgh of base types
+let cElementTypeWeight =  new Map();
+	cElementTypeWeight.set(cElementType.number, 0);
+	cElementTypeWeight.set(cElementType.empty, 0);
+	cElementTypeWeight.set(cElementType.string, 1);
+	cElementTypeWeight.set(cElementType.bool, 2);
+	cElementTypeWeight.set(cElementType.error, 3);
 
 
 
@@ -659,7 +655,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cNumber.prototype = Object.create(cBaseType.prototype);
 	cNumber.prototype.constructor = cNumber;
 	cNumber.prototype.type = cElementType.number;
-	cNumber.prototype.typeWeight = cElementTypeWeight.number;
 	cNumber.prototype.tocString = function () {
 		return new cString(("" + this.value).replace(FormulaSeparators.digitSeparatorDef,
 			FormulaSeparators.digitSeparator));
@@ -693,7 +688,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cString.prototype = Object.create(cBaseType.prototype);
 	cString.prototype.constructor = cString;
 	cString.prototype.type = cElementType.string;
-	cString.prototype.typeWeight = cElementTypeWeight.string;
 	cString.prototype.tocNumber = function (doNotParseNum) {
 		var res, m = this.value;
 		if (this.value === "") {
@@ -753,7 +747,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBool.prototype = Object.create(cBaseType.prototype);
 	cBool.prototype.constructor = cBool;
 	cBool.prototype.type = cElementType.bool;
-	cBool.prototype.typeWeight = cElementTypeWeight.bool;
 	cBool.prototype.toString = function () {
 		return this.value.toString().toUpperCase();
 	};
@@ -857,7 +850,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cError.prototype = Object.create(cBaseType.prototype);
 	cError.prototype.constructor = cError;
 	cError.prototype.type = cElementType.error;
-	cError.prototype.typeWeight = cElementTypeWeight.error;
 	cError.prototype.tocNumber = cError.prototype.tocString = cError.prototype.tocBool = function () {
 		return this;
 	};
@@ -1962,7 +1954,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cEmpty.prototype = Object.create(cBaseType.prototype);
 	cEmpty.prototype.constructor = cEmpty;
 	cEmpty.prototype.type = cElementType.empty;
-	cEmpty.prototype.typeWeight = cElementTypeWeight.empty;
 	cEmpty.prototype.tocNumber = function () {
 		return new cNumber(0);
 	};
@@ -5173,7 +5164,6 @@ _func.binarySearch = function ( sElem, arrTagert, regExp ) {
 		return -1;
 		/* массив пуст */
 	} else if (arrTagert[0].value > sElem.value) {
-		// ???
 		return -2;
 	} else if (arrTagert[arrTagert.length - 1].value < sElem.value) {
 		return arrTagert.length - 1;
@@ -5189,7 +5179,7 @@ _func.binarySearch = function ( sElem, arrTagert, regExp ) {
 					last = mid;
 				}
 			} else {
-				if (sElem.typeWeight < arrTagert[mid].typeWeight) {
+				if (cElementTypeWeight.get(sElem.type) < cElementTypeWeight.get(arrTagert[mid].type)) {
 					last = mid;
 				} else {
 					first = mid + 1;
