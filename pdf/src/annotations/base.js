@@ -220,6 +220,7 @@
 
         return null;
     };
+    
     CAnnotationBase.prototype.ClearCache = function() {
         this._originView.normal = null;
     };
@@ -381,7 +382,7 @@
         let oReply = new AscPDF.CAnnotationText(oReplyInfo["UniqueName"], this.GetPage(), [], this.GetDocument());
 
         oReply.SetContents(oReplyInfo["Contents"]);
-        oReply.SetModDate((new Date().getTime()).toString());
+        oReply.SetModDate(AscPDF.ParsePDFDate(oReplyInfo["LastModified"]).getTime());
         oReply.SetAuthor(oReplyInfo["User"]);
         oReply.SetHidden(false);
 
@@ -407,7 +408,7 @@
             let oTextAnnot = new AscPDF.CAnnotationText(this.GetName(), this.GetPage(), [], this.GetDocument());
         
             oTextAnnot.SetContents(contents);
-            oTextAnnot.SetModDate((new Date().getTime()).toString());
+            oTextAnnot.SetModDate(this.GetModDate());
             oTextAnnot.SetAuthor(this.GetAuthor());
             oTextAnnot.SetHidden(false);
 
@@ -569,8 +570,41 @@
     function ConvertPx2Pt(px) {
         return px / (96 / 72);
     }
+
+    function ParsePDFDate(sDate) {
+        // Регулярное выражение для извлечения компонентов даты
+        var regex = /D:(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})\+(\d{2})'(\d{2})'/;
+
+        // Используем регулярное выражение для извлечения компонентов даты
+        var match = sDate.match(regex);
+
+        if (match) {
+            // Извлекаем компоненты даты из совпадения
+            var year                    = parseInt(match[1]);
+            var month                   = parseInt(match[2]);
+            var day                     = parseInt(match[3]);
+            var hour                    = parseInt(match[4]);
+            var minute                  = parseInt(match[5]);
+            var second                  = parseInt(match[6]);
+            var timeZoneOffsetHours     = parseInt(match[7]);
+            var timeZoneOffsetMinutes   = parseInt(match[8]);
+
+            // Создаем объект Date с извлеченными компонентами даты
+            var date = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+
+            // Учитываем смещение времени
+            date.setHours(date.getHours() - timeZoneOffsetHours);
+            date.setMinutes(date.getMinutes() - timeZoneOffsetMinutes);
+
+            return date;
+        }
+
+        return null;
+    }
+
 	window["AscPDF"].CAnnotationBase    = CAnnotationBase;
 	window["AscPDF"].ConvertPt2Px       = ConvertPt2Px;
 	window["AscPDF"].ConvertPx2Pt       = ConvertPx2Pt;
+    window["AscPDF"].ParsePDFDate       = ParsePDFDate;
 })();
 

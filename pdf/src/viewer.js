@@ -1137,8 +1137,8 @@
 					oAnnot = oDoc.AddAnnot({
 						page:			oAnnotInfo["page"],
 						name:			oAnnotInfo["UniqueName"], 
-						creationDate:	oAnnotInfo["CreationDate"],
-						modDate:		oAnnotInfo["LastModified"],
+						creationDate:	oAnnotInfo["CreationDate"] ? AscPDF.ParsePDFDate(oAnnotInfo["CreationDate"]).getTime() : undefined,
+						modDate:		oAnnotInfo["LastModified"] ? AscPDF.ParsePDFDate(oAnnotInfo["LastModified"]).getTime() : undefined,
 						contents:		oAnnotInfo["Contents"],
 						author:			oAnnotInfo["User"],
 						rect:			aRect,

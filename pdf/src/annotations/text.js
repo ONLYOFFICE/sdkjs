@@ -247,7 +247,7 @@
     CAnnotationText.prototype.GetAscCommentData = function() {
         let oAscCommData = new Asc["asc_CCommentDataWord"](null);
         oAscCommData.asc_putText(this.GetContents());
-        oAscCommData.asc_putOnlyOfficeTime(this.GetModDate());
+        oAscCommData.asc_putOnlyOfficeTime(this.GetModDate().toString());
         oAscCommData.asc_putUserId(editor.documentUserId);
         oAscCommData.asc_putUserName(this.GetAuthor());
         oAscCommData.asc_putSolved(false);
