@@ -5892,10 +5892,9 @@ CDocumentContent.prototype.GetCalculatedParaPr = function()
 		return Result_ParaPr;
 	}
 };
-CDocumentContent.prototype.GetCalculatedTextPr = function()
+CDocumentContent.prototype.GetCalculatedTextPr = function(skipFontCalculator)
 {
-	var Result_TextPr = null;
-
+	let textPr = null;
 	if (true === this.ApplyToAll)
 	{
 		var VisTextPr;
@@ -5911,14 +5910,13 @@ CDocumentContent.prototype.GetCalculatedTextPr = function()
 			VisTextPr = VisTextPr.Compare(CurPr);
 			this.Content[Index].SetApplyToAll(false);
 		}
-
-		Result_TextPr = VisTextPr;
-
-		return Result_TextPr;
+		
+		textPr = VisTextPr;
 	}
-
-	if (docpostype_DrawingObjects === this.CurPos.Type)
-		return this.LogicDocument.DrawingObjects.getParagraphTextPr();
+	else if (docpostype_DrawingObjects === this.CurPos.Type)
+	{
+		textPr = this.LogicDocument.DrawingObjects.getParagraphTextPr();
+	}
 	else //if ( docpostype_Content === this.CurPos.Type )
 	{
 		if (true === this.Selection.Use)
@@ -5956,16 +5954,25 @@ CDocumentContent.prototype.GetCalculatedTextPr = function()
 					break;
 				}
 			}
-
-			Result_TextPr = VisTextPr;
+			
+			textPr = VisTextPr;
 		}
 		else
 		{
-			Result_TextPr = this.Content[this.CurPos.ContentPos].GetCalculatedTextPr();
+			textPr = this.Content[this.CurPos.ContentPos].GetCalculatedTextPr();
 		}
-
-		return Result_TextPr;
 	}
+	
+	if (true !== skipFontCalculator && textPr)
+	{
+		AscWord.FontCalculator.Calculate(this, textPr);
+		
+		let theme = this.GetTheme();
+		if (theme)
+			textPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
+	}
+	
+	return textPr;
 };
 CDocumentContent.prototype.GetDirectTextPr = function()
 {

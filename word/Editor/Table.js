@@ -8137,7 +8137,7 @@ CTable.prototype.GetCalculatedTextPr = function()
 		var Cell = Row.Get_Cell(0);
 
 		Cell.Content.SetApplyToAll(true);
-		var Result_TextPr = Cell.Content.GetCalculatedTextPr();
+		var Result_TextPr = Cell.Content.GetCalculatedTextPr(true);
 		Cell.Content.SetApplyToAll(false);
 
 		for (var CurRow = 0; CurRow < this.Content.length; CurRow++)
@@ -8150,7 +8150,7 @@ CTable.prototype.GetCalculatedTextPr = function()
 			{
 				Cell = Row.Get_Cell(CurCell);
 				Cell.Content.SetApplyToAll(true);
-				var CurPr = Cell.Content.GetCalculatedTextPr();
+				var CurPr = Cell.Content.GetCalculatedTextPr(true);
 				Cell.Content.SetApplyToAll(false);
 
 				Result_TextPr = Result_TextPr.Compare(CurPr);
@@ -8167,7 +8167,7 @@ CTable.prototype.GetCalculatedTextPr = function()
 		var Cell = Row.Get_Cell(Pos.Cell);
 
 		Cell.Content.SetApplyToAll(true);
-		var Result_TextPr = Cell.Content.GetCalculatedTextPr();
+		var Result_TextPr = Cell.Content.GetCalculatedTextPr(true);
 		Cell.Content.SetApplyToAll(false);
 
 		for (var Index = 1; Index < this.Selection.Data.length; Index++)
@@ -8177,7 +8177,7 @@ CTable.prototype.GetCalculatedTextPr = function()
 			Cell = Row.Get_Cell(Pos.Cell);
 
 			Cell.Content.SetApplyToAll(true);
-			var CurPr = Cell.Content.GetCalculatedTextPr();
+			var CurPr = Cell.Content.GetCalculatedTextPr(true);
 			Cell.Content.SetApplyToAll(false);
 
 			Result_TextPr = Result_TextPr.Compare(CurPr);
@@ -8186,7 +8186,7 @@ CTable.prototype.GetCalculatedTextPr = function()
 		return Result_TextPr;
 	}
 
-	return this.CurCell.Content.GetCalculatedTextPr();
+	return this.CurCell.Content.GetCalculatedTextPr(true);
 };
 CTable.prototype.GetDirectTextPr = function()
 {

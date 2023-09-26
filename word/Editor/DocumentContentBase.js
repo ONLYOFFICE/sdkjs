@@ -2379,12 +2379,9 @@ CDocumentContentBase.prototype.UpdateInterfaceTextPr = function()
 	if (!oApi)
 		return;
 
-	let oTextPr = this.GetCalculatedTextPr();
-	if (oTextPr)
-	{
-		AscWord.FontCalculator.Calculate(this, oTextPr);
-		oApi.UpdateTextPr(oTextPr);
-	}
+	let textPr = this.GetCalculatedTextPr();
+	if (textPr)
+		oApi.UpdateTextPr(textPr);
 };
 CDocumentContentBase.prototype.UpdateInterfaceParaPr = function()
 {

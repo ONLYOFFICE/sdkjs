@@ -2495,13 +2495,13 @@ CEndnotesController.prototype.GetCalculatedParaPr = function()
 };
 CEndnotesController.prototype.GetCalculatedTextPr = function()
 {
-	var oStartPr = this.CurEndnote.GetCalculatedTextPr();
+	var oStartPr = this.CurEndnote.GetCalculatedTextPr(true);
 	var oPr      = oStartPr.Copy();
 
 	for (var sId in this.Selection.Endnotes)
 	{
 		var oEndnote = this.Selection.Endnotes[sId];
-		var oTempPr  = oEndnote.GetCalculatedTextPr();
+		var oTempPr  = oEndnote.GetCalculatedTextPr(true);
 		oPr          = oPr.Compare(oTempPr);
 	}
 

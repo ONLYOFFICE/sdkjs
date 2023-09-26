@@ -975,7 +975,7 @@ CHeaderFooter.prototype =
 
 	GetCalculatedTextPr : function()
 	{
-		return this.Content.GetCalculatedTextPr();
+		return this.Content.GetCalculatedTextPr(true);
 	},
 
 	GetDirectTextPr : function()

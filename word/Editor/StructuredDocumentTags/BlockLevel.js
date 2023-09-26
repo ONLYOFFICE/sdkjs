@@ -319,7 +319,7 @@ CBlockLevelSdt.prototype.SelectAll = function(nDirection)
 };
 CBlockLevelSdt.prototype.GetCalculatedTextPr = function()
 {
-	return this.Content.GetCalculatedTextPr();
+	return this.Content.GetCalculatedTextPr(true);
 };
 CBlockLevelSdt.prototype.GetCalculatedParaPr = function()
 {

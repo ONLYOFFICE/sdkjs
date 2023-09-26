@@ -2478,13 +2478,13 @@ CFootnotesController.prototype.GetCalculatedParaPr = function()
 };
 CFootnotesController.prototype.GetCalculatedTextPr = function()
 {
-	var StartPr = this.CurFootnote.GetCalculatedTextPr();
+	var StartPr = this.CurFootnote.GetCalculatedTextPr(true);
 	var Pr = StartPr.Copy();
 
 	for (var sId in this.Selection.Footnotes)
 	{
 		var oFootnote = this.Selection.Footnotes[sId];
-		var TempPr = oFootnote.GetCalculatedTextPr();
+		var TempPr = oFootnote.GetCalculatedTextPr(true);
 		Pr = Pr.Compare(TempPr);
 	}
 

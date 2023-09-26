@@ -7037,16 +7037,16 @@ CDocument.prototype.GetCalculatedParaPr = function()
  */
 CDocument.prototype.GetCalculatedTextPr = function()
 {
-	var ret = this.Controller.GetCalculatedTextPr();
-    if(ret)
-    {
-        var oTheme = this.Get_Theme();
-        if(oTheme)
-        {
-            ret.ReplaceThemeFonts(oTheme.themeElements.fontScheme);
-        }
-        return ret;
-    }
+	let textPr = this.Controller.GetCalculatedTextPr();
+	
+	if (textPr)
+		AscWord.FontCalculator.Calculate(this, textPr);
+	
+	let theme = this.GetTheme();
+	if (textPr && theme)
+		textPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
+	
+	return textPr;
 };
 /**
  * Получаем прямые настройки параграфа, т.е. которые выставлены непосредственно у параграфа, без учета стилей
