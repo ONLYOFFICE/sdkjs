@@ -1648,14 +1648,25 @@ CDocumentContentBase.prototype.GetAllParagraphs = function(oProps, arrParagraphs
 /**
  * Получаем массив всех параграфов с заданной нумерацией
  * @param oNumPr {CNumPr | CNumPr[]}
+ * @param [bSortParagraphsByIndex] {boolean}
  * @returns {Paragraph[]}
  */
-CDocumentContentBase.prototype.GetAllParagraphsByNumbering = function(oNumPr)
+CDocumentContentBase.prototype.GetAllParagraphsByNumbering = function(oNumPr, bSortParagraphsByIndex)
 {
 	let logicDocument = this.GetLogicDocument();
 	let numberingCollection = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetNumberingCollection() : null;
 	if (numberingCollection)
-		return numberingCollection.GetAllParagraphsByNumbering(oNumPr);
+	{
+		let paragraphs = numberingCollection.GetAllParagraphsByNumbering(oNumPr);
+		if (bSortParagraphsByIndex)
+		{
+			paragraphs.sort(function (firstParagraph, secondParagraph)
+			{
+				return firstParagraph.Index - secondParagraph.Index;
+			});
+		}
+		return paragraphs;
+	}
 	
 	return this.GetAllParagraphs({Numbering : true, NumPr : oNumPr});
 };

@@ -24080,7 +24080,7 @@ CDocument.prototype.ContinueNumbering = function()
 		return false;
 
 	var bFind                 = false;
-	var arrParagraphs         = this.GetAllParagraphsByNumbering(new CNumPr(oNumPr.NumId, null));
+	var arrParagraphs         = this.GetAllParagraphsByNumbering(new CNumPr(oNumPr.NumId, null), true);
 	var arrParagraphsToChange = [];
 
 	var isRelated = this.GetNumbering().GetNum(oNumPr.NumId).IsHaveRelatedLvlText();
@@ -24155,7 +24155,7 @@ CDocument.prototype.RestartNumbering = function(nRestartValue)
 	var bFind                 = false;
 	var nPrevLvl              = null;
 	var isFirstParaOnLvl      = false;
-	var arrParagraphs         = this.GetAllParagraphsByNumbering(new CNumPr(oNumPr.NumId, null));
+	var arrParagraphs         = this.GetAllParagraphsByNumbering(new CNumPr(oNumPr.NumId, null), true);
 	var arrParagraphsToChange = [];
 	var isRelated             = this.Numbering.GetNum(oNumPr.NumId).IsHaveRelatedLvlText();
 
