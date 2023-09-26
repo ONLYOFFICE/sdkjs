@@ -8910,7 +8910,30 @@ CDocument.prototype.OnKeyDown = function(e)
 			var oSelectedInfo = this.GetSelectedElementsInfo();
 			var oMath         = oSelectedInfo.GetMath();
 			if (null === oMath)
+			{
 				this.Api.asc_AddMath();
+			}
+			else if (oMath.Parent instanceof CInlineLevelSdt && oMath.Parent.IsShowingPlcHdr())
+			{
+				this.StartAction(AscDFH.historyitem_Paragraph_RemoveItem);
+				oMath.Paragraph.RemoveElement(oMath.Parent);
+				this.UpdateInterface();
+				this.Recalculate();
+				this.FinalizeAction();
+			}
+			else
+			{
+				if (oMath.Cursor_Is_Start())
+				{
+					oMath.MoveCursorToStartPos();
+					oMath.Parent.MoveCursorLeft();
+				}
+				else
+				{
+					oMath.MoveCursorToEndPos();
+					oMath.Parent.MoveCursorRight();
+				}
+			}
 
 			bRetValue = keydownresult_PreventAll;
 			break;
