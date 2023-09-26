@@ -4200,9 +4200,18 @@ CMathContent.prototype.RemoveSelection = function()
 };
 CMathContent.prototype.SelectAll = function(Direction)
 {
-    this.Selection.Use   = true;
-    this.Selection.StartPos = 0;
-    this.Selection.EndPos   = this.Content.length - 1;
+	this.Selection.Use = true;
+	
+	if (Direction < 0)
+	{
+		this.Selection.StartPos = this.Content.length - 1;
+		this.Selection.EndPos   = 0;
+	}
+	else
+	{
+		this.Selection.StartPos = 0;
+		this.Selection.EndPos   = this.Content.length - 1;
+	}
 
     for (var nPos = 0, nCount = this.Content.length; nPos < nCount; nPos++)
     {
