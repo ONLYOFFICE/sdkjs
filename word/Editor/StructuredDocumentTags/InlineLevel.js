@@ -1380,6 +1380,13 @@ CInlineLevelSdt.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAl
 	else
 		CParagraphContentWithParagraphLikeContent.prototype.Apply_TextPr.call(this, TextPr, IncFontSize, ApplyToAll);
 };
+CInlineLevelSdt.prototype.GetDirectTextPr = function()
+{
+	if (this.IsPlaceHolder())
+		return this.GetDefaultTextPr();
+	
+	return CParagraphContentWithParagraphLikeContent.prototype.GetDirectTextPr.call(this);
+};
 CInlineLevelSdt.prototype.CanAddDropCap = function()
 {
 	if (!this.CanBeEdited() || this.IsPlaceHolder())

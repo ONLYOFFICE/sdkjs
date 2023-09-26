@@ -1864,6 +1864,57 @@ CMathContent.prototype.Get_TextPr = function(ContentPos, Depth)
 
     return TextPr;
 };
+CMathContent.prototype.GetDirectTextPr = function()
+{
+	let textPr = null;
+	
+	if (this.IsPlaceholder())
+	{
+		// ничего не делаем
+	}
+	else if (this.Selection.Use)
+	{
+		let startPos = this.Selection.StartPos;
+		let endPos   = this.Selection.EndPos;
+		if (startPos > endPos)
+		{
+			startPos = this.Selection.EndPos;
+			endPos   = this.Selection.StartPos;
+		}
+		
+		for (let pos = startPos; pos <= endPos; ++pos)
+		{
+			let curTextPr = this.Content[pos].GetDirectTextPr(false);
+			if (!curTextPr)
+				continue;
+			
+			if (!textPr)
+				textPr = curTextPr.Copy();
+			else
+				textPr = textPr.Compare(curTextPr);
+		}
+		
+		if (!textPr)
+			textPr = this.Parent.Get_CtrPrp();
+	}
+	else
+	{
+		let pos = this.CurPos;
+		
+		if (0 <= pos && pos < this.Content.length)
+			textPr = this.Content[pos].GetDirectTextPr();
+	}
+	
+	if (this.Parent)
+	{
+		if (!textPr)
+			textPr = this.Parent.Get_CtrPrp();
+		else
+			textPr = this.Parent.Get_CtrPrp().Copy().Compare(textPr);
+	}
+	
+	return textPr;
+};
 CMathContent.prototype.Get_ParentCtrRunPr = function(bCopy)
 {
     return this.Parent.Get_CtrPrp(bCopy);

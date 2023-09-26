@@ -1183,6 +1183,11 @@ ParaMath.prototype.GetCompiledDefaultTextPr = function()
 	oTextPr.Merge(this.DefaultTextPr);
 	return oTextPr;
 };
+ParaMath.prototype.GetDirectTextPr = function()
+{
+	let mathContent = this.GetSelectContent().Content;
+	return mathContent.GetDirectTextPr();
+};
 /**
  * Добавляем элемент в текущую позицию (с учетом возможной глубины)
  * @param Item
@@ -1254,6 +1259,9 @@ ParaMath.prototype.Add = function(Item)
             this.Get_ParaContentPos(false, false, ContentPos);
 
         var TextPr = this.Root.GetMathTextPrForMenu(ContentPos, 0);
+		if (Item.TextPr)
+			TextPr.Merge(Item.TextPr);
+		
         var bPlh = oContent.IsPlaceholder();
 
         // Нам нужно разделить данный Run на 2 части
