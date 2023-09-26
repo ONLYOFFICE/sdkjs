@@ -1578,8 +1578,7 @@ CMathContent.prototype.CheckRunContent = function(fCheck)
 {
 	for (var i = 0; i < this.Content.length; ++i)
 	{
-		if (para_Math_Run === this.Content[i].Type)
-			fCheck(this.Content[i]);
+		this.Content[i].CheckRunContent(fCheck);
 	}
 };
 
