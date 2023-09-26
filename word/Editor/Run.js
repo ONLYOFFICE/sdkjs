@@ -8609,7 +8609,7 @@ ParaRun.prototype.IsSelectionEmpty = function(CheckEnd)
         return ( EndPos > StartPos ? false : true );
     else if(this.Type == para_Math_Run && this.Is_Empty())
     {
-        return true;
+        return false;
     }
     else
     {
