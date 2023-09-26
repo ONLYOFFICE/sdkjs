@@ -1706,6 +1706,9 @@ function (window, undefined) {
 
 				let length = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1;
 				let lastValue = _getValue(length);
+				// TODO
+				// в описании к формуле написано что функция проверяет первый и последний элемент, но на практике работает по-другому(возможно нужно делать эту проверку после бинарного поиска)
+				// в бинарном поиске есть такая же проверка
 				if(lastValue && lastValue.value < arg0.value) {
 					//в этом случае фукнция бинарного поиска одаст последний элемент. для конкретного случая это неверно
 					//Если функции не удается найти искомое_значение, то в просматриваемом_векторе выбирается наибольшее значение, которое меньше искомого_значения или равно ему.
@@ -1730,14 +1733,12 @@ function (window, undefined) {
 				if(index === undefined) {
 					index = _func.binarySearchByRange(arg0, arg1);
 
-					// let testIndex = _func.binarySearchByRangeNew(arg0, arg1);
-					// index = testIndex ? testIndex : index;
-
 					if (index === undefined || index < 0) {
 						return new cError(cErrorType.not_available);
 					}
 				}
-			} /*else {
+			} 
+			/*else {
 				var arg2RowsLength;
 
 				if (cElementType.cellsRange3D === arg2.type) {

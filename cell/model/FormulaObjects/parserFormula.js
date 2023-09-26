@@ -503,7 +503,7 @@ var cNumFormatNull = -3;
 var g_nFormulaStringMaxLength = 255;
 
 
-// set type weitgh of base types
+// set type weight of base types
 let cElementTypeWeight =  new Map();
 	cElementTypeWeight.set(cElementType.number, 0);
 	cElementTypeWeight.set(cElementType.empty, 0);
@@ -5245,7 +5245,6 @@ _func.binarySearchByRange = function ( sElem, area, regExp ) {
 		return -1;
 		/* массив пуст */
 	} else if (noEmptyValues[0].value > sElem.value) {
-		// ???
 		return -2;
 	} else if (noEmptyValues[last].value < sElem.value) {
 		return last;
@@ -5274,91 +5273,6 @@ _func.binarySearchByRange = function ( sElem, area, regExp ) {
 
 };
 
-_func.binarySearchByRangeNew = function ( sElem, area, regExp ) {
-	let bbox, ws;
-	if (cElementType.cellsRange3D === area.type) {
-		bbox = area.bbox;
-		ws = area.getWS();
-	} else if (cElementType.cellsRange === area.type) {
-		bbox = area.range.bbox;
-		ws = area.ws;
-	}
-	let bVertical = bbox.r2 - bbox.r1 >= bbox.c2 - bbox.c1;
-	let first = 0, // номер первого элемента в массиве 
-		last = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1,
-		mid;
-
-	const getValuesNoEmpty = function () {
-		let _r1 = bbox.r1,
-			_r2 = bVertical ? bbox.r2 : bbox.r1,
-			_c1 = bbox.c1,
-			_c2 = bVertical ? bbox.c1 : bbox.c2,
-			_val = [];
-		ws.getRange3(_r1, _c1, _r2, _c2)._foreachNoEmpty(function(cell) {
-			let checkTypeVal = checkTypeCell(cell);
-			if (checkTypeVal.type !== cElementType.empty) {
-				_val.push(checkTypeVal);
-				mapEmptyFullValues[_val.length - 1] = bVertical ? cell.nRow - bbox.r1 : cell.nCol - bbox.c1;
-			}
-		});
-		return _val;
-	};
-
-	let mapEmptyFullValues = [],
-		noEmptyValues = getValuesNoEmpty();
-
-	last = noEmptyValues.length - 1;
-
-	if (noEmptyValues.length === 0) {
-		return -1;
-	} else if (noEmptyValues[0].value > sElem.value) {
-		return -2;
-	} else if (noEmptyValues[last].value < sElem.value) {
-		return last;
-	}
-
-	let tempValue, cacheIndex = -1;
-	while (first < last) {
-		mid = Math.floor(first + (last - first) / 2);
-		tempValue = noEmptyValues[mid];
-		// TODO общую функцию или добавить сравнение типов
-		if (sElem.value === tempValue.value) {
-			// exact match. Find the last item with the same value and return his index
-			last = _func.getLastMatch(mid, tempValue, noEmptyValues);
-			break;
-		}
-
-		if (tempValue.type !== cElementType.error) {
-			cacheIndex = mid;
-		}
-
-		if (Math.abs(first - last) === 1) {
-			// first and last items are next to each other.
-			if (sElem.value < tempValue.value) {
-				last = mid;
-			} else if (tempValue.type === cElementType.error) {
-				last = cacheIndex === -1 ? mid : cacheIndex;
-			} else {
-				last = mid;
-			}
-			break;
-		}
-
-		if (sElem.value < tempValue.value || ( regExp && regExp.test(tempValue.value) )) {
-			last = mid;
-		} else {
-			// first = mid + 1;
-			first = mid;
-		}
-	}
-
-	if (noEmptyValues[last].value === sElem.value) {
-		return mapEmptyFullValues[last];	
-	} else {
-		return mapEmptyFullValues[last];
-	}
-
-};
 
 _func.getLastMatch = function (index, value, array) {
 	let resIndex = index;
