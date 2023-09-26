@@ -1563,8 +1563,9 @@
 	 */
     CBaseField.prototype.GetOriginViewInfo = function() {
         let oViewer     = editor.getDocumentRenderer();
-        let oPageInfo   = oViewer.pagesInfo.pages[this.GetPage()];
-        let oPage       = oViewer.drawingPages[this.GetPage()];
+        let nPage       = this.GetOriginPage();
+        let oPageInfo   = oViewer.pagesInfo.pages[nPage];
+        let oPage       = oViewer.drawingPages[nPage];
 
         let w = (oPage.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         let h = (oPage.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
@@ -1573,7 +1574,7 @@
             let oFile   = oViewer.file;
            
             oPageInfo.fieldsAPInfo = {
-                info: oFile.nativeFile["getInteractiveFormsAP"](this.GetOriginPage(), w, h),
+                info: oFile.nativeFile["getInteractiveFormsAP"](nPage, w, h),
                 size: {
                     w: w,
                     h: h
