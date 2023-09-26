@@ -193,13 +193,13 @@ StartAddNewShape.prototype =
             else
             {
                 let oViewer = editor.getDocumentRenderer();
-                if (oLogicDocument.currInkInDrawingProcess) {
+                if (oLogicDocument.currInkInDrawingProcess && oLogicDocument.currInkInDrawingProcess.GetPage() == this.pageIndex) {
                     oLogicDocument.currInkInDrawingProcess.AddPath(oTrack.arrPoint);
                     oViewer._paint();
                 }
                 else {
-                    let nScaleY = oViewer.drawingPages[oViewer.currentPage].H / oViewer.file.pages[oViewer.currentPage].H / oViewer.zoom;
-                    let nScaleX = oViewer.drawingPages[oViewer.currentPage].W / oViewer.file.pages[oViewer.currentPage].W / oViewer.zoom;
+                    let nScaleY = oViewer.drawingPages[this.pageIndex].H / oViewer.file.pages[this.pageIndex].H / oViewer.zoom;
+                    let nScaleX = oViewer.drawingPages[this.pageIndex].W / oViewer.file.pages[this.pageIndex].W / oViewer.zoom;
 
                     var bounds  = oTrack.getBounds();
                     
@@ -208,7 +208,7 @@ StartAddNewShape.prototype =
 
                     let oInkAnnot = oLogicDocument.AddAnnot({
                         rect:       aRect,
-                        page:       oViewer.currentPage,
+                        page:       this.pageIndex,
                         contents:   null,
                         type:       AscPDF.ANNOTATIONS_TYPES.Ink
                     });

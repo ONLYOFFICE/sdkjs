@@ -229,7 +229,9 @@
         let X       = oPos.X;
         let Y       = oPos.Y;
 
-        oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
+        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
     CAnnotationText.prototype.createMoveTrack = function() {
         return new AscFormat.MoveAnnotationTrack(this);

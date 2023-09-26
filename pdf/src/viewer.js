@@ -1866,7 +1866,8 @@
 				}
 				else
 				{
-					oDoc.OnMouseMove(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+					if (false == editor.isEmbedVersion)
+						oDoc.OnMouseMove(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 				}
 				return;
 			}
@@ -1899,7 +1900,8 @@
 					}
 					else
 					{
-						oDoc.OnMouseMove(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+						if (false == editor.isEmbedVersion)
+							oDoc.OnMouseMove(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 					}
 				}
 				else
@@ -2247,6 +2249,7 @@
 				for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 				{
 					var pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
+					ctx.beginPath();
 					this.file.drawSelection(i, this.overlay, pageCoords.x, pageCoords.y, pageCoords.w, pageCoords.h);
 					ctx.fill();
 					ctx.closePath();
@@ -2623,6 +2626,30 @@
 				x : this.file.pages[pageIndex].W * pixToMM * (x * AscCommon.AscBrowser.retinaPixelRatio - pageCoords.x) / pageCoords.w,
 				y : this.file.pages[pageIndex].H * pixToMM * (y * AscCommon.AscBrowser.retinaPixelRatio - pageCoords.y) / pageCoords.h
 			};
+		};
+		this.getPageByCoords3 = function(xInp, yInp)
+		{
+			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
+				return null;
+
+			var x = xInp * AscCommon.AscBrowser.retinaPixelRatio;
+			var y = yInp * AscCommon.AscBrowser.retinaPixelRatio;
+			for (var i = this.startVisiblePage; i <= this.endVisiblePage; i++)
+			{
+				var pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
+				if (!pageCoords)
+					continue;
+				
+				if (pageCoords.y + pageCoords.h + this.betweenPages * AscCommon.AscBrowser.retinaPixelRatio > y)
+				{
+					return {
+						index : i,
+						x : this.file.pages[i].W * (x - pageCoords.x) / pageCoords.w,
+						y : this.file.pages[i].H * (y - pageCoords.y) / pageCoords.h
+					};
+				}
+			}
+			return null;
 		};
 
 		this.ConvertCoordsToCursor = function(x, y, pageIndex)
@@ -3333,6 +3360,7 @@
 	{
 		const ctx = this.canvasForms.getContext('2d');
 		ctx.clearRect(0, 0, this.canvasForms.width, this.canvasForms.height);
+		ctx.globalAlpha = 1;
 		
 		let xCenter = this.width >> 1;
 		let yPos = this.scrollY >> 0;

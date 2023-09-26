@@ -247,7 +247,26 @@
         return this.needCommit;
     };
     CBaseField.prototype.SetPage = function(nPage) {
-        this._page = nPage;
+        let nCurPage = this.GetPage();
+        if (nPage == nCurPage)
+            return;
+
+
+        let oViewer = editor.getDocumentRenderer();
+        let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage].fields ? oViewer.pagesInfo.pages[nCurPage].fields.indexOf(this) : -1;
+        if (oViewer.pagesInfo.pages[nPage]) {
+            if (oViewer.pagesInfo.pages[nPage].fields == null) {
+                oViewer.pagesInfo.pages[nPage].fields = [];
+            }
+
+            if (nCurIdxOnPage != -1)
+                oViewer.pagesInfo.pages[nCurPage].fields.splice(nCurIdxOnPage, 1);
+
+            oViewer.pagesInfo.pages[nPage].fields.push(this);
+
+            this._page = nPage;
+            this.selectStartPage = nPage;
+        }
     };
     CBaseField.prototype.GetPage = function() {
         return this._page;

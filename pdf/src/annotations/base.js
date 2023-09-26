@@ -329,8 +329,35 @@
         return this.type;
     };
     CAnnotationBase.prototype.SetPage = function(nPage) {
-        this._page = nPage;
-        this.selectStartPage = nPage;
+        let nCurPage = this.GetPage();
+        if (nPage == nCurPage)
+            return;
+
+        let oViewer = editor.getDocumentRenderer();
+        let oDoc    = this.GetDocument();
+        
+        let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage].annots ? oViewer.pagesInfo.pages[nCurPage].annots.indexOf(this) : -1;
+        if (oViewer.pagesInfo.pages[nPage]) {
+            if (oDoc.annots.indexOf(this) != -1) {
+                if (oViewer.pagesInfo.pages[nPage].annots == null) {
+                    oViewer.pagesInfo.pages[nPage].annots = [];
+                }
+    
+                if (nCurIdxOnPage != -1)
+                    oViewer.pagesInfo.pages[nCurPage].annots.splice(nCurIdxOnPage, 1);
+    
+                oViewer.pagesInfo.pages[nPage].annots.push(this);
+
+                oDoc.History.Add(new CChangesPDFAnnotPage(this, nCurPage, nPage));
+
+                // добавляем в перерисовку исходную страницу
+                this.AddToRedraw();
+            }
+
+            this._page = nPage;
+            this.selectStartPage = nPage;
+            this.AddToRedraw();
+        }
     };
     CAnnotationBase.prototype.GetPage = function() {
         return this._page;

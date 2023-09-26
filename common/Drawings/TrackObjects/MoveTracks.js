@@ -669,28 +669,36 @@ function MoveAnnotationTrack(originalObject)
     this.y              = originalObject._pagePos.y;
     this.viewer         = editor.getDocumentRenderer();
     this.objectToDraw   = originalObject.Copy();
+    this.pageIndex      = originalObject.GetPage();
 
-    this.track = function(dx, dy)
+    this.track = function(dx, dy, pageIndex)
     {
         this.bIsTracked = true;
         this.x = this.originalObject._pagePos.x + dx * AscCommon.g_dKoef_mm_to_pix;
         this.y = this.originalObject._pagePos.y + dy * AscCommon.g_dKoef_mm_to_pix;
+        this.pageIndex = pageIndex;
+
+        this.initCanvas();
     };
-    this.initCanvas = function() {
-        let nPage   = this.originalObject.GetPage();
+    this.initCanvas = function(bStart) {
+        let nPage   = this.pageIndex;
 
-        let page = this.viewer.drawingPages[nPage];
-        let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        if (bStart || nPage != this.objectToDraw.GetPage()) {
+            let page = this.viewer.drawingPages[nPage];
+            let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+            let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
-        this.tmpCanvas = document.createElement('canvas');
-        this.tmpCanvas.width = w;
-        this.tmpCanvas.height = h;
+            this.tmpCanvas = document.createElement('canvas');
+            this.tmpCanvas.width = w;
+            this.tmpCanvas.height = h;
+        }
     };
 
     this.draw = function(oDrawer)
     {
         // рисуем на отдельном канвасе
+        this.objectToDraw.SetPage(this.pageIndex);
+
         let page = this.viewer.drawingPages[this.objectToDraw.GetPage()];
         if (!page)
             return;
@@ -768,6 +776,7 @@ function MoveAnnotationTrack(originalObject)
         let oDoc = this.viewer.getPDFDoc();
         oDoc.CreateNewHistoryPoint();
         this.originalObject.SetPosition(X, Y);
+        this.originalObject.SetPage(this.pageIndex);
         oDoc.TurnOffHistory();
     };
 
@@ -775,8 +784,8 @@ function MoveAnnotationTrack(originalObject)
     {
         return {x: this.x, y: this.y};
     };
-
-    this.initCanvas();
+    
+    this.initCanvas(true);
 }
 
 

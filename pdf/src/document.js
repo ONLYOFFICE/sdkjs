@@ -758,6 +758,8 @@ var CPresentation = CPresentation || function(){};
         let oMouseDownField         = oViewer.getPageFieldByMouse();
         let oMouseDownAnnot         = oViewer.getPageAnnotByMouse();
 
+        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+
         if (IsOnEraser) {
             if (oMouseDownAnnot && oMouseDownAnnot.IsInk())
                 this.EraseInk(oMouseDownAnnot);
@@ -769,7 +771,7 @@ var CPresentation = CPresentation || function(){};
         let X       = oPos.X;
         let Y       = oPos.Y;
 
-        let bInRect = oDrawingObjects.updateCursorType(oViewer.currentPage, X, Y, e, false);
+        let bInRect = oDrawingObjects.updateCursorType(pageObject.index, X, Y, e, false);
         
         if (IsOnDrawer == false && false == IsOnEraser) {
             if (bInRect) {
@@ -801,7 +803,7 @@ var CPresentation = CPresentation || function(){};
         if (IsOnDrawer == true || oViewer.Api.isMarkerFormat) {
             this.mouseDownAnnot = null;
             this.mouseDownField = null
-            oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
+            oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
             return;
         }
         
@@ -815,7 +817,7 @@ var CPresentation = CPresentation || function(){};
         else if (this.mouseDownAnnot)
             this.mouseDownAnnot.onMouseDown(e);
         else
-            oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
+            oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
 
         if (!oViewer.MouseHandObject && (!oViewer.mouseDownLinkObject))
         {
@@ -846,6 +848,8 @@ var CPresentation = CPresentation || function(){};
         let X       = oPos.X;
         let Y       = oPos.Y;
 
+        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+
         if (oViewer.isMouseDown)
         {
             if (oAPI.isEraseInkMode()) {
@@ -863,9 +867,9 @@ var CPresentation = CPresentation || function(){};
                 
 
                 if (oDrawingObjects.arrTrackObjects.length != 0 && this.mouseDownAnnot && this.mouseDownAnnot.IsInk() == true)
-                    oDrawingObjects.updateCursorType(oViewer.currentPage, X, Y, e, false);
+                    oDrawingObjects.updateCursorType(pageObject.index, X, Y, e, false);
 
-                oDrawingObjects.OnMouseMove(e, X, Y, oViewer.currentPage);
+                oDrawingObjects.OnMouseMove(e, X, Y, pageObject.index);
             }
             else if (this.activeForm)
             {
@@ -947,7 +951,6 @@ var CPresentation = CPresentation || function(){};
                         cursorType = "text";
                         break;
                     case AscPDF.FIELD_TYPES.combobox:
-                        var pageObject = oViewer.getPageByCoords(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
                         if (!pageObject)
                             return null;
 
@@ -968,7 +971,7 @@ var CPresentation = CPresentation || function(){};
             oViewer.setCursorType(cursorType);
 
             if (!mouseMoveAnnotObject || mouseMoveAnnotObject.IsInk() == true)
-                oDrawingObjects.updateCursorType(oViewer.currentPage, X, Y, e, false);
+                oDrawingObjects.updateCursorType(pageObject.index, X, Y, e, false);
         }
     };
     CPDFDoc.prototype.OnMouseUp = function(e) {
@@ -991,9 +994,11 @@ var CPresentation = CPresentation || function(){};
         let X       = oPos.X;
         let Y       = oPos.Y;
 
+        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+
         // если рисование, то просто заканчиваем его
         if (oViewer.Api.isDrawInkMode()) {
-            oDrawingObjects.OnMouseUp(e, X, Y, oViewer.currentPage);
+            oDrawingObjects.OnMouseUp(e, X, Y, pageObject.index);
             if (true == bUpdateOverlay) {
                 oViewer.overlay.ClearAll = true;
                 oViewer.overlay.max_x = 0;
@@ -1011,7 +1016,7 @@ var CPresentation = CPresentation || function(){};
             oViewer.mouseDownLinkObject = null;
         }
 
-        oDrawingObjects.OnMouseUp(e, X, Y, oViewer.currentPage);
+        oDrawingObjects.OnMouseUp(e, X, Y, pageObject.index);
         
         if (this.mouseDownField)
         {
@@ -1037,7 +1042,7 @@ var CPresentation = CPresentation || function(){};
             oViewer.setCursorType(AscCommon.Cursors.Grab);
 
             // делаем клик в логическом документе, чтобы сбросить селект, если он был
-            var pageObjectLogic = oViewer.getPageByCoords2(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+            let pageObjectLogic = oViewer.getPageByCoords2(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
             oViewer.file.onMouseDown(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
             oViewer.file.onMouseUp(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
         }
@@ -1453,9 +1458,11 @@ var CPresentation = CPresentation || function(){};
         let MaxX = aMinRect[2];
         let MaxY = aMinRect[3];
 
+        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+
         let oProps = {
             rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
-            page:       oViewer.currentPage,
+            page:       pageObject.index,
             name:       AscCommon.CreateGUID(),
             type:       AscPDF.ANNOTATIONS_TYPES.Highlight,
             hidden:     false
@@ -1494,9 +1501,11 @@ var CPresentation = CPresentation || function(){};
         let MaxX = aMinRect[2];
         let MaxY = aMinRect[3];
 
+        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+
         let oProps = {
             rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
-            page:       oViewer.currentPage,
+            page:       pageObject.index,
             name:       AscCommon.CreateGUID(),
             type:       AscPDF.ANNOTATIONS_TYPES.Underline,
             hidden:     false
@@ -1535,9 +1544,11 @@ var CPresentation = CPresentation || function(){};
         let MaxX = aMinRect[2];
         let MaxY = aMinRect[3];
 
+        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+
         let oProps = {
             rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
-            page:       oViewer.currentPage,
+            page:       pageObject.index,
             name:       AscCommon.CreateGUID(),
             type:       AscPDF.ANNOTATIONS_TYPES.Strikeout,
             hidden:     false
@@ -1564,16 +1575,17 @@ var CPresentation = CPresentation || function(){};
         return null;
     };
     CPDFDoc.prototype.AddComment = function(AscCommentData) {
-        let oViewer = editor.getDocumentRenderer();
-        let nGrScale = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[oViewer.currentPage].Dpi);
-        let posToAdd = this.anchorPositionToAdd ? this.anchorPositionToAdd : {x: 10, y: 10};
+        let oViewer     = editor.getDocumentRenderer();
+        let pageObject  = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+        let nGrScale    = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[pageObject.index].Dpi);
+        let posToAdd    = this.anchorPositionToAdd ? this.anchorPositionToAdd : {x: 10, y: 10};
         
         let X2 = posToAdd.x + 40 / nGrScale;
         let Y2 = posToAdd.y + 40 / nGrScale;
 
         let oProps = {
             rect:       [posToAdd.x, posToAdd.y, X2, Y2],
-            page:       oViewer.currentPage,
+            page:       pageObject.index,
             name:       AscCommon.CreateGUID(),
             type:       AscPDF.ANNOTATIONS_TYPES.Text,
             author:     AscCommentData.m_sUserName,
