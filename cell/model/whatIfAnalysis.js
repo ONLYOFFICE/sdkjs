@@ -282,6 +282,50 @@ function (window, undefined) {
 		return this.sRegNumDecimalSeparator;
 	};
 
+	/**
+	 * Returns error type
+	 * @memberof CGoalSeek
+	 * @param {AscCommonExcel.Worksheet} ws - checked sheet.
+	 * @param {Asc.Range} range - checked range.
+	 * @param {Asc.c_oAscSelectionDialogType} type - dialog type.
+	 * @returns {Asc.c_oAscError}
+	 */
+	CGoalSeek.prototype.isValidDataRef = function (ws, range, type) {
+		let res = Asc.c_oAscError.ID.No;
+		if (range === null) {
+			//error text: the formula is missing a range...
+			return Asc.c_oAscError.ID.DataRangeError;
+		}
+		if (!range.isOneCell()) {
+			//error text: reference must be to a single cell...
+			//TODO check def names
+			res = Asc.c_oAscError.ID.MustSingleCell;
+		}
+
+		switch (type) {
+			case Asc.c_oAscSelectionDialogType.GoalSeek_Cell: {
+				//check formula contains
+				let isFormula = false;
+				ws && ws._getCellNoEmpty(range.r1, range.c1, function (cell) {
+					if (cell && cell.isFormula()) {
+						isFormula = true;
+					}
+				});
+				if (!isFormula) {
+					res = Asc.c_oAscError.ID.MustContainFormula;
+				}
+
+				break;
+			}
+			case Asc.c_oAscSelectionDialogType.GoalSeek_ChangingCell: {
+
+				break;
+			}
+		}
+
+		return res;
+	};
+
 	// Export
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].CGoalSeek = CGoalSeek;

@@ -118,6 +118,9 @@
 			CannotMoveRange  : -74,
 			DataRangeError   : -75,
 
+			MustSingleCell     : -76,
+			MustContainFormula : -77,
+
 			MaxDataSeriesError : -80,
 			CannotFillRange    : -81,
 
@@ -303,6 +306,8 @@
 	prot['PasteMultiSelectError']            = prot.PasteMultiSelectError;
 	prot['CanNotPasteImage']                 = prot.CanNotPasteImage;
 	prot['DataRangeError']                   = prot.DataRangeError;
+	prot['MustSingleCell']                   = prot.MustSingleCell;
+	prot['MustContainFormula']               = prot.MustContainFormula;
 	prot['NoValues']                         = prot.NoValues;
 	prot['NoSingleRowCol']                   = prot.NoSingleRowCol;
 	prot['InvalidReference']                 = prot.InvalidReference;

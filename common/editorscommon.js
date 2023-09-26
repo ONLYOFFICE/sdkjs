@@ -3532,8 +3532,9 @@
 	 */
 	parserHelper.prototype.checkDataRange = function (model, wb, dialogType, dataRange, fullCheck, isRows, subType)
 	{
-		var result, range, sheetModel, checkChangeRange;
-		if (Asc.c_oAscSelectionDialogType.Chart === dialogType)
+		let result, range, sheetModel, checkChangeRange;
+		let cDialogType = Asc.c_oAscSelectionDialogType;
+		if (cDialogType.Chart === dialogType)
 		{
 			if(dataRange)
 			{
@@ -3543,7 +3544,7 @@
 				}
 			}
 		}
-		else if(Asc.c_oAscSelectionDialogType.PivotTableData === dialogType || Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType)
+		else if(cDialogType.PivotTableData === dialogType || cDialogType.PivotTableReport === dialogType || cDialogType.ImportXml === dialogType)
 		{
 			result = parserHelp.parse3DRef(dataRange);
 			if (result)
@@ -3553,7 +3554,7 @@
 				{
 					range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
 				}
-			} else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType) {
+			} else if (cDialogType.PivotTableReport === dialogType || cDialogType.ImportXml === dialogType) {
 				range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
 			}
 			if (!range) {
@@ -3563,7 +3564,7 @@
 				range = parserHelp.isTable(dataRange, 0, true);
 			}
 		}
-		else if(Asc.c_oAscSelectionDialogType.PrintTitles === dialogType)
+		else if(cDialogType.PrintTitles === dialogType)
 		{
 			if(dataRange === "")
 			{
@@ -3574,7 +3575,7 @@
 				range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
 			}
 		}
-		else if (Asc.c_oAscSelectionDialogType.DataValidation === dialogType)
+		else if (cDialogType.DataValidation === dialogType)
 		{
 			if (dataRange === null || dataRange === "") {
 				return Asc.c_oAscError.ID.DataValidateMustEnterValue;
@@ -3595,19 +3596,20 @@
 			range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
 		}
 
-		if (!range && Asc.c_oAscSelectionDialogType.DataValidation !== dialogType && Asc.c_oAscSelectionDialogType.ConditionalFormattingRule !== dialogType)
+		if (!range && cDialogType.DataValidation !== dialogType && cDialogType.ConditionalFormattingRule !== dialogType && cDialogType.GoalSeek_Cell !== dialogType &&
+			cDialogType.GoalSeek_ChangingCell !== dialogType)
 		{
 			return Asc.c_oAscError.ID.DataRangeError;
 		}
 
 		if (fullCheck)
 		{
-			if (Asc.c_oAscSelectionDialogType.Chart === dialogType)
+			if (cDialogType.Chart === dialogType)
 			{
 				var oDataRefs = new AscFormat.CChartDataRefs(null);
 				return oDataRefs.checkDataRange(dataRange, isRows, subType);
 			}
-			else if (Asc.c_oAscSelectionDialogType.FormatTable === dialogType)
+			else if (cDialogType.FormatTable === dialogType)
 			{
 				// ToDo убрать эту проверку, заменить на более грамотную после правки функции _searchFilters
 				if (true === wb.getWorksheet().model.autoFilters.isRangeIntersectionTableOrFilter(range)) {
@@ -3618,26 +3620,26 @@
 					return Asc.c_oAscError.ID.LargeRangeWarning;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.FormatTableChangeRange === dialogType)
+			else if (cDialogType.FormatTableChangeRange === dialogType)
 			{
 				// ToDo убрать эту проверку, заменить на более грамотную после правки функции _searchFilters
 				checkChangeRange = wb.getWorksheet().af_checkChangeRange(range);
 				if (null !== checkChangeRange)
 					return checkChangeRange;
 			}
-			else if(Asc.c_oAscSelectionDialogType.CustomSort === dialogType)
+			else if(cDialogType.CustomSort === dialogType)
 			{
 				checkChangeRange = wb.getWorksheet().checkCustomSortRange(range, isRows);
 				if (null !== checkChangeRange)
 					return checkChangeRange;
 			}
-			else if (Asc.c_oAscSelectionDialogType.PivotTableData === dialogType)
+			else if (cDialogType.PivotTableData === dialogType)
 			{
 				if (!Asc.CT_pivotTableDefinition.prototype.isValidDataRef(dataRange)) {
 					return Asc.c_oAscError.ID.PivotLabledColumns;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType)
+			else if (cDialogType.PivotTableReport === dialogType || cDialogType.ImportXml === dialogType)
 			{
 				var location = Asc.CT_pivotTableDefinition.prototype.parseDataRef(dataRange);
 				if (location) {
@@ -3645,7 +3647,7 @@
 					if (!sheetModel) {
 						sheetModel = model.getActiveWs();
 					}
-					if (Asc.c_oAscSelectionDialogType.ImportXml === dialogType) {
+					if (cDialogType.ImportXml === dialogType) {
 						return sheetModel.checkImportXmlLocationForError([location.bbox]);
 					} else {
 						var newRange = new Asc.Range(location.bbox.c1, location.bbox.r1, location.bbox.c1 + AscCommonExcel.NEW_PIVOT_LAST_COL_OFFSET, location.bbox.r1 + AscCommonExcel.NEW_PIVOT_LAST_ROW_OFFSET);
@@ -3655,7 +3657,7 @@
 					return Asc.c_oAscError.ID.DataRangeError;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.DataValidation === dialogType)
+			else if (cDialogType.DataValidation === dialogType)
 			{
 				var dataValidaionTest = AscCommonExcel.CDataValidation.prototype.isValidDataRef(model.getActiveWs(), dataRange, subType);
 				if (null !== dataValidaionTest)
@@ -3663,7 +3665,7 @@
 					return dataValidaionTest;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.ConditionalFormattingRule === dialogType)
+			else if (cDialogType.ConditionalFormattingRule === dialogType)
 			{
 
 				if (dataRange === null || dataRange === "")
@@ -3690,6 +3692,23 @@
 					}
 				}
 			}
+		}
+		else if (cDialogType.GoalSeek_Cell === dialogType || cDialogType.GoalSeek_Cell === dialogType)
+		{
+			result = parserHelp.parse3DRef(dataRange);
+			if (result)
+			{
+				sheetModel = model.getWorksheetByName(result.sheet);
+				if (sheetModel)
+				{
+					range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
+				}
+			}
+
+			if (!sheetModel) {
+				sheetModel = model.getActiveWs();
+			}
+			return AscCommonExcel.CGoalSeek.prototype.isValidDataRef(sheetModel, range, dialogType);
 		}
 		return Asc.c_oAscError.ID.No;
 	};
