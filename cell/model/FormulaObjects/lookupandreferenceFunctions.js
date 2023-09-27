@@ -1550,12 +1550,12 @@ function (window, undefined) {
 
 		function arrFinder(arr) {
 			if (arr.getRowCount() > arr.getCountElementInRow()) {
-				//ищем в первом столбце
+				// searching in the first column
 				resC = arr.getCountElementInRow() > 1 ? 1 : 0;
 				let arrCol = arr.getCol(0);
 				resR = _func.binarySearch(arg0, arrCol);
 			} else {
-				//ищем в первой строке
+				// searching in the first row
 				resR = arr.getRowCount() > 1 ? 1 : 0;
 				let arrRow = arr.getRow(0);
 				resC = _func.binarySearch(arg0, arrRow);
@@ -1707,11 +1707,11 @@ function (window, undefined) {
 				let length = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1;
 				let lastValue = _getValue(length);
 				// TODO
-				// в описании к формуле написано что функция проверяет первый и последний элемент, но на практике работает по-другому(возможно нужно делать эту проверку после бинарного поиска)
-				// в бинарном поиске есть такая же проверка
+				// In the formula description, it is written that the function checks the first and last elements, but in practice, it works differently (perhaps this check should be done after the binary search).
+				// The binary search has the same check.
 				if(lastValue && lastValue.value < arg0.value) {
-					//в этом случае фукнция бинарного поиска одаст последний элемент. для конкретного случая это неверно
-					//Если функции не удается найти искомое_значение, то в просматриваемом_векторе выбирается наибольшее значение, которое меньше искомого_значения или равно ему.
+					// In this case, the binary search function will return the last element. This is incorrect for this specific case
+					// If the function cannot find the desired_value, it selects the largest value in the viewed_vector that is less than or equal to the desired_value.
 					let diff = null;
 					let endNumber;
 					for(let i = 0; i <= length; i++) {
