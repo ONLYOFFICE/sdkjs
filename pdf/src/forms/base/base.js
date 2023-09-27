@@ -272,7 +272,8 @@
             if (nCurIdxOnPage != -1)
                 oViewer.pagesInfo.pages[nCurPage].fields.splice(nCurIdxOnPage, 1);
 
-            oViewer.pagesInfo.pages[nPage].fields.push(this);
+            if (oViewer.pagesInfo.pages[nPage].fields.indexOf(this) == -1)
+                oViewer.pagesInfo.pages[nPage].fields.push(this);
 
             this._page = nPage;
             this.selectStartPage = nPage;
@@ -638,8 +639,6 @@
 
         if (null == aBgColor)
             oCtx.globalAlpha = 0.8;
-        else
-            oCtx.globalAlpha = 1;
 
         oCtx.globalCompositeOperation = "destination-over";
         if (this.IsNeedDrawFromStream())
@@ -1573,17 +1572,17 @@
 	 */
     CBaseField.prototype.GetOriginViewInfo = function() {
         let oViewer     = editor.getDocumentRenderer();
+        let oFile       = oViewer.file;
         let nPage       = this.GetOriginPage();
-        let oPageInfo   = oViewer.pagesInfo.pages[nPage];
-        let oPage       = oViewer.drawingPages[nPage];
+        let oOriginPage = oFile.pages.find(function(page) {
+            return page.originIndex == nPage;
+        });
 
-        let w = (oPage.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let h = (oPage.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let w = ((oOriginPage.W * 96 / oOriginPage.Dpi) >> 0) * AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom >> 0;
+        let h = ((oOriginPage.H * 96 / oOriginPage.Dpi) >> 0) * AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom >> 0;
 
-        if (oPageInfo.fieldsAPInfo == null || oPageInfo.fieldsAPInfo.size.w != w || oPageInfo.fieldsAPInfo.size.h != h) {
-            let oFile   = oViewer.file;
-           
-            oPageInfo.fieldsAPInfo = {
+        if (oOriginPage.fieldsAPInfo == null || oOriginPage.fieldsAPInfo.size.w != w || oOriginPage.fieldsAPInfo.size.h != h) {
+            oOriginPage.fieldsAPInfo = {
                 info: oFile.nativeFile["getInteractiveFormsAP"](nPage, w, h),
                 size: {
                     w: w,
@@ -1592,9 +1591,9 @@
             }
         }
         
-        for (let i = 0; i < oPageInfo.fieldsAPInfo.info.length; i++) {
-            if (oPageInfo.fieldsAPInfo.info[i]["i"] == this._apIdx)
-                return oPageInfo.fieldsAPInfo.info[i];
+        for (let i = 0; i < oOriginPage.fieldsAPInfo.info.length; i++) {
+            if (oOriginPage.fieldsAPInfo.info[i]["i"] == this._apIdx)
+                return oOriginPage.fieldsAPInfo.info[i];
         }
 
         return null;

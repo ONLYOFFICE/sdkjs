@@ -194,17 +194,17 @@
 	 */
     CAnnotationBase.prototype.GetOriginViewInfo = function() {
         let oViewer     = editor.getDocumentRenderer();
+        let oFile       = oViewer.file;
         let nPage       = this.GetOriginPage();
-        let oPageInfo   = oViewer.pagesInfo.pages[nPage];
-        let oPage       = oViewer.drawingPages[nPage];
+        let oOriginPage = oFile.pages.find(function(page) {
+            return page.originIndex == nPage;
+        });
 
-        let w = (oPage.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let h = (oPage.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let w = ((oOriginPage.W * 96 / oOriginPage.Dpi) >> 0) * AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom >> 0;
+        let h = ((oOriginPage.H * 96 / oOriginPage.Dpi) >> 0) * AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom >> 0;
 
-        if (oPageInfo.annotsAPInfo == null || oPageInfo.annotsAPInfo.size.w != w || oPageInfo.annotsAPInfo.size.h != h) {
-            let oFile   = oViewer.file;
-           
-            oPageInfo.annotsAPInfo = {
+        if (oOriginPage.annotsAPInfo == null || oOriginPage.annotsAPInfo.size.w != w || oOriginPage.annotsAPInfo.size.h != h) {
+            oOriginPage.annotsAPInfo = {
                 info: oFile.nativeFile["getAnnotationsAP"](nPage, w, h),
                 size: {
                     w: w,
@@ -213,9 +213,9 @@
             }
         }
         
-        for (let i = 0; i < oPageInfo.annotsAPInfo.info.length; i++) {
-            if (oPageInfo.annotsAPInfo.info[i]["i"] == this._apIdx)
-                return oPageInfo.annotsAPInfo.info[i];
+        for (let i = 0; i < oOriginPage.annotsAPInfo.info.length; i++) {
+            if (oOriginPage.annotsAPInfo.info[i]["i"] == this._apIdx)
+                return oOriginPage.annotsAPInfo.info[i];
         }
 
         return null;
@@ -348,7 +348,8 @@
                 if (nCurIdxOnPage != -1)
                     oViewer.pagesInfo.pages[nCurPage].annots.splice(nCurIdxOnPage, 1);
     
-                oViewer.pagesInfo.pages[nPage].annots.push(this);
+                if (oViewer.pagesInfo.pages[nPage].annots.indexOf(this) == -1)
+                    oViewer.pagesInfo.pages[nPage].annots.push(this);
 
                 oDoc.History.Add(new CChangesPDFAnnotPage(this, nCurPage, nPage));
 

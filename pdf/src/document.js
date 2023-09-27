@@ -345,9 +345,9 @@ var CPresentation = CPresentation || function(){};
                 annot.ClearCache();
             });
         }
-
-        oViewer.pagesInfo.pages[nPageIndex].fieldsAPInfo = null;
-        oViewer.pagesInfo.pages[nPageIndex].annotsAPInfo = null;
+        
+        oViewer.file.pages[nPageIndex].fieldsAPInfo = null;
+        oViewer.file.pages[nPageIndex].annotsAPInfo = null;
     };
     CPDFDoc.prototype.IsNeedSkipHistory = function() {
         return !!this.skipHistoryOnCommit;
@@ -1325,10 +1325,17 @@ var CPresentation = CPresentation || function(){};
         else
             oViewer.pagesInfo.pages.splice(nPos, 0, new AscPDF.CPageInfo());
 
-        if (oViewer.pagesInfo.pages[nPos + 1] && oViewer.pagesInfo.pages[nPos + 1].fields) {
-            oViewer.pagesInfo.pages[nPos + 1].fields.forEach(function(field) {
-                field.SetPage(nPos + 1);
-            });
+        for (let nPage = nPos + 1; nPage < oViewer.pagesInfo.pages.length; nPage++) {
+            if (oViewer.pagesInfo.pages[nPage].fields) {
+                oViewer.pagesInfo.pages[nPage].fields.forEach(function(field) {
+                    field.SetPage(nPage);
+                });
+            }
+            if (oViewer.pagesInfo.pages[nPage].annots) {
+                oViewer.pagesInfo.pages[nPage].annots.forEach(function(annot) {
+                    annot.SetPage(nPage);
+                });
+            }
         }
             
         oViewer.resize();
