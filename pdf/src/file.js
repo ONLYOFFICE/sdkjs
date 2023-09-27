@@ -1077,304 +1077,311 @@ void main() {\n\
         this.onUpdateOverlay();
     };
     CFile.prototype.getSelectionQuads = function() {
-        let pageIndex = this.viewer.currentPage;
+        let aInfo = [];
 
-        let aQuads = [];
-        var stream = this.getPageTextStream(pageIndex);
-        if (!stream)
-            return aQuads;
+        for (let i = this.Selection.Page1; i <= this.Selection.Page2; i++) {
+            var stream = this.getPageTextStream(i);
+            if (!stream)
+                continue;
 
-        var sel = this.Selection;
-        var Page1 = 0;
-        var Page2 = 0;
-        var Line1 = 0;
-        var Line2 = 0;
-        var Glyph1 = 0;
-        var Glyph2 = 0;
+            let oInfo = {
+                page: i,
+                quads: []
+            }
+            aInfo.push(oInfo);
 
-        if (sel.Page2 > sel.Page1)
-        {
-            Page1 = sel.Page1;
-            Page2 = sel.Page2;
-            Line1 = sel.Line1;
-            Line2 = sel.Line2;
-            Glyph1 = sel.Glyph1;
-            Glyph2 = sel.Glyph2;
-        }
-        else if (sel.Page2 < sel.Page1)
-        {
-            Page1 = sel.Page2;
-            Page2 = sel.Page1;
-            Line1 = sel.Line2;
-            Line2 = sel.Line1;
-            Glyph1 = sel.Glyph2;
-            Glyph2 = sel.Glyph1;
-        }
-        else if (sel.Page1 === sel.Page2)
-        {
-            Page1 = sel.Page1;
-            Page2 = sel.Page2;
+            var sel = this.Selection;
+            var Page1 = 0;
+            var Page2 = 0;
+            var Line1 = 0;
+            var Line2 = 0;
+            var Glyph1 = 0;
+            var Glyph2 = 0;
 
-            if (sel.Line1 < sel.Line2)
+            if (sel.Page2 > sel.Page1)
             {
+                Page1 = sel.Page1;
+                Page2 = sel.Page2;
                 Line1 = sel.Line1;
                 Line2 = sel.Line2;
                 Glyph1 = sel.Glyph1;
                 Glyph2 = sel.Glyph2;
             }
-            else if (sel.Line2 < sel.Line1)
+            else if (sel.Page2 < sel.Page1)
             {
+                Page1 = sel.Page2;
+                Page2 = sel.Page1;
                 Line1 = sel.Line2;
                 Line2 = sel.Line1;
                 Glyph1 = sel.Glyph2;
                 Glyph2 = sel.Glyph1;
             }
-            else
+            else if (sel.Page1 === sel.Page2)
             {
-                Line1 = sel.Line1;
-                Line2 = sel.Line2;
+                Page1 = sel.Page1;
+                Page2 = sel.Page2;
 
-                if (-1 === sel.Glyph1)
+                if (sel.Line1 < sel.Line2)
                 {
+                    Line1 = sel.Line1;
+                    Line2 = sel.Line2;
+                    Glyph1 = sel.Glyph1;
+                    Glyph2 = sel.Glyph2;
+                }
+                else if (sel.Line2 < sel.Line1)
+                {
+                    Line1 = sel.Line2;
+                    Line2 = sel.Line1;
                     Glyph1 = sel.Glyph2;
                     Glyph2 = sel.Glyph1;
-                }
-                else if (-1 === sel.Glyph2)
-                {
-                    Glyph1 = sel.Glyph1;
-                    Glyph2 = sel.Glyph2;
-                }
-                else if (sel.Glyph1 < sel.Glyph2)
-                {
-                    Glyph1 = sel.Glyph1;
-                    Glyph2 = sel.Glyph2;
                 }
                 else
                 {
-                    Glyph1 = sel.Glyph2;
-                    Glyph2 = sel.Glyph1;
+                    Line1 = sel.Line1;
+                    Line2 = sel.Line2;
+
+                    if (-1 === sel.Glyph1)
+                    {
+                        Glyph1 = sel.Glyph2;
+                        Glyph2 = sel.Glyph1;
+                    }
+                    else if (-1 === sel.Glyph2)
+                    {
+                        Glyph1 = sel.Glyph1;
+                        Glyph2 = sel.Glyph2;
+                    }
+                    else if (sel.Glyph1 < sel.Glyph2)
+                    {
+                        Glyph1 = sel.Glyph1;
+                        Glyph2 = sel.Glyph2;
+                    }
+                    else
+                    {
+                        Glyph1 = sel.Glyph2;
+                        Glyph2 = sel.Glyph1;
+                    }
                 }
             }
-        }
 
-        if (Page1 > pageIndex || Page2 < pageIndex)
-            return aQuads;
+            if (Page1 > i || Page2 < i)
+                continue;
 
-        if (Page1 < pageIndex)
-        {
-            Page1 = pageIndex;
-            Line1 = 0;
-            Glyph1 = -2;
-        }
-        var bIsFillToEnd = false;
-        if (Page2 > pageIndex)
-            bIsFillToEnd = true;
-
-        // textline parameters
-        var _lineX = 0;
-        var _lineY = 0;
-        var _lineEx = 0;
-        var _lineEy = 0;
-        var _lineAscent = 0;
-        var _lineDescent = 0;
-        var _lineWidth = 0;
-        var _lineGidExist = false;
-        var _linePrevCharX = 0;
-        var _lineCharCount = 0;
-        var _lineLastGlyphWidth = 0;
-        var _arrayGlyphOffsets = [];
-
-        var _numLine = -1;
-
-        let dKoefX = (this.pages[pageIndex].Dpi / 25.4);
-        let dKoefY = (this.pages[pageIndex].Dpi / 25.4);
-
-        while (stream.pos < stream.size)
-        {
-            var command = stream.GetUChar();
-
-            switch (command)
+            if (Page1 < i)
             {
-                case 41:
-                {
-                    stream.Skip(12);
-                    break;
-                }
-                case 22:
-                {
-                    stream.Skip(4);
-                    break;
-                }
-                case 80:
-                {
-                    if (0 != _lineCharCount)
-                        _linePrevCharX += stream.GetDouble2();
+                Page1 = i;
+                Line1 = 0;
+                Glyph1 = -2;
+            }
+            var bIsFillToEnd = false;
+            if (Page2 > i)
+                bIsFillToEnd = true;
 
-                    _arrayGlyphOffsets[_lineCharCount] = _linePrevCharX;
+            // textline parameters
+            var _lineX = 0;
+            var _lineY = 0;
+            var _lineEx = 0;
+            var _lineEy = 0;
+            var _lineAscent = 0;
+            var _lineDescent = 0;
+            var _lineWidth = 0;
+            var _lineGidExist = false;
+            var _linePrevCharX = 0;
+            var _lineCharCount = 0;
+            var _lineLastGlyphWidth = 0;
+            var _arrayGlyphOffsets = [];
 
-                    _lineCharCount++;
+            var _numLine = -1;
 
-                    if (_lineGidExist)
+            let dKoefX = (this.pages[i].Dpi / 25.4);
+            let dKoefY = (this.pages[i].Dpi / 25.4);
+
+            while (stream.pos < stream.size)
+            {
+                var command = stream.GetUChar();
+
+                switch (command)
+                {
+                    case 41:
+                    {
+                        stream.Skip(12);
+                        break;
+                    }
+                    case 22:
+                    {
                         stream.Skip(4);
-                    else
-                        stream.Skip(2);
-
-                    if (0 == _lineWidth)
-                        _lineLastGlyphWidth = stream.GetDouble2();
-                    else
-                        stream.Skip(2);
-
-                    break;
-                }
-                case 160:
-                {
-                    // textline
-                    _linePrevCharX = 0;
-                    _lineCharCount = 0;
-                    _lineWidth = 0;
-
-                    _arrayGlyphOffsets.splice(0, _arrayGlyphOffsets.length);
-
-                    ++_numLine;
-
-                    var mask = stream.GetUChar();
-                    _lineX = stream.GetDouble();
-                    _lineY = stream.GetDouble();
-
-                    if ((mask & 0x01) != 0)
-                    {
-                        _lineEx = 1;
-                        _lineEy = 0;
-                    }
-                    else
-                    {
-                        _lineEx = stream.GetDouble();
-                        _lineEy = stream.GetDouble();
-                    }
-
-                    _lineAscent = stream.GetDouble();
-                    _lineDescent = stream.GetDouble();
-
-                    if ((mask & 0x04) != 0)
-                        _lineWidth = stream.GetDouble();
-
-                    if ((mask & 0x02) != 0)
-                        _lineGidExist = true;
-                    else
-                        _lineGidExist = false;
-
-                    break;
-                }
-                case 162:
-                {
-                    // textline end
-                    var off1 = 0;
-                    var off2 = 0;
-
-                    if (_numLine < Line1)
-                        break;
-                    if (_numLine > Line2 && !bIsFillToEnd) {
-                        stream.pos = stream.size;
                         break;
                     }
-
-                    // все подсчитано
-                    if (0 == _lineWidth)
-                        _lineWidth = _linePrevCharX + _lineLastGlyphWidth;
-
-                    if (Line1 == _numLine)
+                    case 80:
                     {
-                        if (-2 == Glyph1)
-                            off1 = 0;
-                        else if (-1 == Glyph1)
-                            off1 = _lineWidth;
+                        if (0 != _lineCharCount)
+                            _linePrevCharX += stream.GetDouble2();
+
+                        _arrayGlyphOffsets[_lineCharCount] = _linePrevCharX;
+
+                        _lineCharCount++;
+
+                        if (_lineGidExist)
+                            stream.Skip(4);
                         else
-                            off1 = _arrayGlyphOffsets[Glyph1];
+                            stream.Skip(2);
+
+                        if (0 == _lineWidth)
+                            _lineLastGlyphWidth = stream.GetDouble2();
+                        else
+                            stream.Skip(2);
+
+                        break;
                     }
-                    if (bIsFillToEnd || Line2 != _numLine)
-                        off2 = _lineWidth;
-                    else
+                    case 160:
                     {
-                        if (Glyph2 == -2)
-                            off2 = 0;
-                        else if (Glyph2 == -1)
+                        // textline
+                        _linePrevCharX = 0;
+                        _lineCharCount = 0;
+                        _lineWidth = 0;
+
+                        _arrayGlyphOffsets.splice(0, _arrayGlyphOffsets.length);
+
+                        ++_numLine;
+
+                        var mask = stream.GetUChar();
+                        _lineX = stream.GetDouble();
+                        _lineY = stream.GetDouble();
+
+                        if ((mask & 0x01) != 0)
+                        {
+                            _lineEx = 1;
+                            _lineEy = 0;
+                        }
+                        else
+                        {
+                            _lineEx = stream.GetDouble();
+                            _lineEy = stream.GetDouble();
+                        }
+
+                        _lineAscent = stream.GetDouble();
+                        _lineDescent = stream.GetDouble();
+
+                        if ((mask & 0x04) != 0)
+                            _lineWidth = stream.GetDouble();
+
+                        if ((mask & 0x02) != 0)
+                            _lineGidExist = true;
+                        else
+                            _lineGidExist = false;
+
+                        break;
+                    }
+                    case 162:
+                    {
+                        // textline end
+                        var off1 = 0;
+                        var off2 = 0;
+
+                        if (_numLine < Line1)
+                            break;
+                        if (_numLine > Line2 && !bIsFillToEnd) {
+                            stream.pos = stream.size;
+                            break;
+                        }
+
+                        // все подсчитано
+                        if (0 == _lineWidth)
+                            _lineWidth = _linePrevCharX + _lineLastGlyphWidth;
+
+                        if (Line1 == _numLine)
+                        {
+                            if (-2 == Glyph1)
+                                off1 = 0;
+                            else if (-1 == Glyph1)
+                                off1 = _lineWidth;
+                            else
+                                off1 = _arrayGlyphOffsets[Glyph1];
+                        }
+                        if (bIsFillToEnd || Line2 != _numLine)
                             off2 = _lineWidth;
                         else
                         {
-                            off2 = _arrayGlyphOffsets[Glyph2];
-                            /*
-                            if (Glyph2 >= (_arrayGlyphOffsets.length - 1))
+                            if (Glyph2 == -2)
+                                off2 = 0;
+                            else if (Glyph2 == -1)
                                 off2 = _lineWidth;
                             else
-                                off2 = _arrayGlyphOffsets[Glyph2 + 1];
-                            */
+                            {
+                                off2 = _arrayGlyphOffsets[Glyph2];
+                                /*
+                                if (Glyph2 >= (_arrayGlyphOffsets.length - 1))
+                                    off2 = _lineWidth;
+                                else
+                                    off2 = _arrayGlyphOffsets[Glyph2 + 1];
+                                */
+                            }
+                        }
+
+                        if (off2 <= off1)
+                            break;
+
+                        // в принципе код один и тот же. Но почти всегда линии горизонтальные.
+                        // а для горизонтальной линии все можно пооптимизировать
+                        if (_lineEx == 1 && _lineEy == 0)
+                        {
+                            var _x = (dKoefX * (_lineX + off1));
+                            var _r = (dKoefX * (_lineX + off2));
+                            var _y = (dKoefY * (_lineY - _lineAscent));
+                            var _b = (dKoefY * (_lineY + _lineDescent));
+
+                            oInfo.quads.push([_x,_y,_r,_y,_x,_b,_r,_b]);
+                            break;
+                        }
+                        else
+                        {
+                            // определяем точки descent линии
+                            var ortX = -_lineEy;
+                            var ortY = _lineEx;
+
+                            var _dx = _lineX + ortX * _lineDescent;
+                            var _dy = _lineY + ortY * _lineDescent;
+
+                            var _x1 = _dx + off1 * _lineEx;
+                            var _y1 = _dy + off1 * _lineEy;
+
+                            var _x2 = _x1 - ortX * (_lineAscent + _lineDescent);
+                            var _y2 = _y1 - ortY * (_lineAscent + _lineDescent);
+
+                            var _x3 = _x2 + (off2 - off1) * _lineEx;
+                            var _y3 = _y2 + (off2 - off1) * _lineEy;
+
+                            var _x4 = _x3 + ortX * (_lineAscent + _lineDescent);
+                            var _y4 = _y3 + ortY * (_lineAscent + _lineDescent);
+
+                            _x1 = (dKoefX * _x1);
+                            _x2 = (dKoefX * _x2);
+                            _x3 = (dKoefX * _x3);
+                            _x4 = (dKoefX * _x4);
+
+                            _y1 = (dKoefY * _y1);
+                            _y2 = (dKoefY * _y2);
+                            _y3 = (dKoefY * _y3);
+                            _y4 = (dKoefY * _y4);
+
+                            oInfo.quads.push([_x2,_y2, _x3,_y3, _x1,_y1, _x4,_y4]);
+                            break;
                         }
                     }
-
-                    if (off2 <= off1)
-                        break;
-
-                    // в принципе код один и тот же. Но почти всегда линии горизонтальные.
-                    // а для горизонтальной линии все можно пооптимизировать
-                    if (_lineEx == 1 && _lineEy == 0)
+                    case 161:
                     {
-                        var _x = (dKoefX * (_lineX + off1));
-                        var _r = (dKoefX * (_lineX + off2));
-                        var _y = (dKoefY * (_lineY - _lineAscent));
-                        var _b = (dKoefY * (_lineY + _lineDescent));
-
-                        aQuads.push([_x,_y,_r,_y,_x,_b,_r,_b]);
+                        // text transform
+                        stream.Skip(16);
                         break;
                     }
-                    else
+                    default:
                     {
-                        // определяем точки descent линии
-                        var ortX = -_lineEy;
-                        var ortY = _lineEx;
-
-                        var _dx = _lineX + ortX * _lineDescent;
-                        var _dy = _lineY + ortY * _lineDescent;
-
-                        var _x1 = _dx + off1 * _lineEx;
-                        var _y1 = _dy + off1 * _lineEy;
-
-                        var _x2 = _x1 - ortX * (_lineAscent + _lineDescent);
-                        var _y2 = _y1 - ortY * (_lineAscent + _lineDescent);
-
-                        var _x3 = _x2 + (off2 - off1) * _lineEx;
-                        var _y3 = _y2 + (off2 - off1) * _lineEy;
-
-                        var _x4 = _x3 + ortX * (_lineAscent + _lineDescent);
-                        var _y4 = _y3 + ortY * (_lineAscent + _lineDescent);
-
-                        _x1 = (dKoefX * _x1);
-                        _x2 = (dKoefX * _x2);
-                        _x3 = (dKoefX * _x3);
-                        _x4 = (dKoefX * _x4);
-
-                        _y1 = (dKoefY * _y1);
-                        _y2 = (dKoefY * _y2);
-                        _y3 = (dKoefY * _y3);
-                        _y4 = (dKoefY * _y4);
-
-                        aQuads.push([_x2,_y2, _x3,_y3, _x1,_y1, _x4,_y4]);
-                        break;
+                        stream.pos = stream.size;
                     }
-                }
-                case 161:
-                {
-                    // text transform
-                    stream.Skip(16);
-                    break;
-                }
-                default:
-                {
-                    stream.pos = stream.size;
                 }
             }
         }
-
-        return aQuads;
+        
+        return aInfo;
     };
     CFile.prototype.drawSelection = function(pageIndex, overlay, x, y, width, height)
     {
