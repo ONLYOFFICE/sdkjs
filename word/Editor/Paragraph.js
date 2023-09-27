@@ -4007,8 +4007,13 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 				{
 					this.CurPos.ContentPos = StartPos;
 				}
-				
-				if (this.LogicDocument && true === this.LogicDocument.IsTrackRevisions() && this.IsSelectionUse())
+
+				let oInfo = new CSelectedElementsInfo();
+				this.GetSelectedElementsInfo(oInfo);
+				let oMath  = oInfo.GetMath();
+
+				// Не используем если формула т.к. иначе происходит смещение контента для вставки, что приводит либо к дублированию, либо к неправильно вставке контента
+				if (this.LogicDocument && true === this.LogicDocument.IsTrackRevisions() && this.IsSelectionUse() && !oMath)
 				{
 					// TODO: Используем данные функции для сброса селекта, по-хорошему надо сделать для
 					//       этого отдельные методы
