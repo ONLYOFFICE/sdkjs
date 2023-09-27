@@ -8497,6 +8497,9 @@ $(function () {
 
 	QUnit.test("Test: \"ISOWEEKNUM\"", function (assert) {
 
+		// base mode
+		ws.workbook.setDate1904(false, true);
+
 		ws.getRange2("A2").setValue("3/9/2012");
 
 		oParser = new parserFormula("ISOWEEKNUM(A2)", "A1", ws);
@@ -8523,7 +8526,101 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 16);
 
+		oParser = new parserFormula("ISOWEEKNUM(43466)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(01.01.2019)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of ISOWEEKNUM(01.01.2019)");
+
+		oParser = new parserFormula("ISOWEEKNUM(43831)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(01.01.2020)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of ISOWEEKNUM(01.01.2020)");
+
+		oParser = new parserFormula("ISOWEEKNUM(44197)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(01.01.2021)");
+		assert.strictEqual(oParser.calculate().getValue(), 53, "Result of ISOWEEKNUM(01.01.2021)");
+
+		oParser = new parserFormula("ISOWEEKNUM(44562)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(01.01.2022)");
+		assert.strictEqual(oParser.calculate().getValue(), 52, "Result of ISOWEEKNUM(01.01.2022)");
+
+		oParser = new parserFormula("ISOWEEKNUM(44563)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(02.01.2022)");
+		assert.strictEqual(oParser.calculate().getValue(), 52, "Result of ISOWEEKNUM(02.01.2022)");
+
+		oParser = new parserFormula("ISOWEEKNUM(44564)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(03.01.2022)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of ISOWEEKNUM(03.01.2022)");
+
+		oParser = new parserFormula("ISOWEEKNUM(44927)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(01.01.2023)");
+		assert.strictEqual(oParser.calculate().getValue(), 52, "Result of ISOWEEKNUM(01.01.2023)");
+
+		oParser = new parserFormula("ISOWEEKNUM(44928)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(02.01.2023)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of ISOWEEKNUM(02.01.2023)");
+
+		oParser = new parserFormula("ISOWEEKNUM(44929)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(03.01.2023)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of ISOWEEKNUM(03.01.2023)");
+		
+		oParser = new parserFormula("ISOWEEKNUM(1)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(01.01.1900)");
+		assert.strictEqual(oParser.calculate().getValue(), 52, "Result of ISOWEEKNUM(01.01.1900)");
+
+		oParser = new parserFormula("ISOWEEKNUM(2)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(02.01.1900)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of ISOWEEKNUM(02.01.1900)");
+
+		// set 1904 mode
+		ws.workbook.setDate1904(true, true);
+
+		oParser = new parserFormula("ISOWEEKNUM(43466)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(01.01.2019)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of ISOWEEKNUM(01.01.2019)");
+
+		oParser = new parserFormula("ISOWEEKNUM(43831)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(01.01.2020)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of ISOWEEKNUM(01.01.2020)");
+
+		oParser = new parserFormula("ISOWEEKNUM(44197)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(01.01.2021)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of ISOWEEKNUM(01.01.2021)");
+
+		oParser = new parserFormula("ISOWEEKNUM(44562)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(01.01.2022)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of ISOWEEKNUM(01.01.2022)");
+
+		oParser = new parserFormula("ISOWEEKNUM(44563)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(02.01.2022)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of ISOWEEKNUM(02.01.2022)");
+
+		oParser = new parserFormula("ISOWEEKNUM(44564)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(03.01.2022)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of ISOWEEKNUM(03.01.2022)");
+
+		oParser = new parserFormula("ISOWEEKNUM(44927)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(01.01.2023)");
+		assert.strictEqual(oParser.calculate().getValue(), 53, "Result of ISOWEEKNUM(01.01.2023)");
+
+		oParser = new parserFormula("ISOWEEKNUM(44928)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(02.01.2023)");
+		assert.strictEqual(oParser.calculate().getValue(), 53, "Result of ISOWEEKNUM(02.01.2023)");
+
+		oParser = new parserFormula("ISOWEEKNUM(44929)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(03.01.2023)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of ISOWEEKNUM(03.01.2023)");
+		
+		oParser = new parserFormula("ISOWEEKNUM(1)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(01.01.1900)");
+		assert.strictEqual(oParser.calculate().getValue(), 53, "Result of ISOWEEKNUM(01.01.1900)");
+
+		oParser = new parserFormula("ISOWEEKNUM(2)", "A1", ws);
+		assert.ok(oParser.parse(), "ISOWEEKNUM(02.01.1900)");
+		assert.strictEqual(oParser.calculate().getValue(), 53, "Result of ISOWEEKNUM(02.01.1900)");
+
 		testArrayFormula2(assert, "ISOWEEKNUM", 1, 1);
+
+		// return to base mode
+		ws.workbook.setDate1904(false, true);
 	});
 
 	QUnit.test("Test: \"WEEKDAY\"", function (assert) {

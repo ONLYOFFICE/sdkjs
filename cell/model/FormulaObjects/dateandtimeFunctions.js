@@ -1257,23 +1257,24 @@
 	cISOWEEKNUM.prototype.isXLFN = true;
 	cISOWEEKNUM.prototype.argumentsType = [argType.number];
 	cISOWEEKNUM.prototype.Calculate = function (arg) {
-		//TODO есть различия в результатах с формулой ISOWEEKNUM(1)
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
+		let oArguments = this._prepareArguments(arg, arguments[1], true);
+		let argClone = oArguments.args;
 
 		argClone[0] = argClone[0].tocNumber();
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var arg0 = argClone[0];
+		let arg0 = argClone[0];
 		if (arg0.getValue() < 0) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		return new cNumber(weekNumber(cDate.prototype.getDateFromExcel(arg0.getValue())));
+		let weekdayStartDay = [6, 7, 8, 9, 10, 4, 5], type = 1;
+
+		return new cNumber(weekNumber(cDate.prototype.getDateFromExcel(arg0.getValue()), weekdayStartDay, type));
 	};
 
 	/**
