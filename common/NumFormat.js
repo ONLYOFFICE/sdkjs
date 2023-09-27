@@ -2564,84 +2564,8 @@ function CellFormat(format, formatType, useLocaleFormat)
 		aParsedFormats.push(oNewFormat);
 	}
   var nFormatsLength = aParsedFormats.length;
-	var bComporationOperator = false;
-	if(nFormatsLength > 0)
-	{
-		var oFirstFormat = aParsedFormats[0];
-		if(null != oFirstFormat.ComporationOperator)
-		{
-			bComporationOperator = true;
-			//проверяем можно ли привести к стандартному формату
-			//todo сохранять измененный формат в файл
-			if(3 == nFormatsLength)
-			{
-				var oPositive = null;
-				var oNegative = null;
-				var oNull = null;
-				for(var i = 0; i < nFormatsLength; ++i)
-				{
-					var oCurFormat = aParsedFormats[i];
-					if(null == oCurFormat.ComporationOperator)
-					{
-						if(null == oPositive)
-							oPositive = oCurFormat;
-						else if(null == oNegative)
-							oNegative = oCurFormat;
-						else if(null == oNull)
-							oNull = oCurFormat;
-					}
-					else
-					{
-						var oComporationOperator = oCurFormat.ComporationOperator;
-						if(0 == oComporationOperator.operatorValue)
-						{
-							switch(oComporationOperator.operator)
-							{
-								case NumComporationOperators.greater: oPositive = oCurFormat;break;
-								case NumComporationOperators.less: oNegative = oCurFormat;break;
-								case NumComporationOperators.equal: oNull = oCurFormat;break;
-							}
-						}
-						else
-						{
-							//невозможно привести
-							oPositive = oNegative = oNull = null;
-							break;
-						}
-					}
-				}
-			}
-			this.oTextFormat = new NumFormat(false);
-			this.oTextFormat.setFormat("@", undefined, undefined, useLocaleFormat);
-			if(null == oPositive || null == oNegative || null == oNull)
-			{
-				//по результатам опытов, если оператор сравнения проходит через 0, то надо добавлять знак минус в зависимости от значения
-				//пример [<100] надо добавлять знак, [<-100] знак добавлять не надо
-				for(var i = 0, length = aParsedFormats.length; i < length; ++i)
-				{
-					var oCurFormat = aParsedFormats[i];
-					if(null == oCurFormat.ComporationOperator)
-						oCurFormat.bAddMinusIfNes = true;
-					else
-					{
-						var oComporationOperator = oCurFormat.ComporationOperator;
-						if(0 < oComporationOperator.operatorValue && (oComporationOperator.operator == NumComporationOperators.less || oComporationOperator.operator == NumComporationOperators.lessorequal))
-							oCurFormat.bAddMinusIfNes = true;
-						else if(0 > oComporationOperator.operatorValue && (oComporationOperator.operator == NumComporationOperators.greater || oComporationOperator.operator == NumComporationOperators.greaterorequal))
-							oCurFormat.bAddMinusIfNes = true;
-					}
-				}
-				this.aComporationFormats = aParsedFormats;
-			}
-			else
-			{
-				this.oPositiveFormat = oPositive;
-				this.oNegativeFormat = oNegative;
-				this.oNullFormat = oNull;
-			}
-		}
-	}
-	if(false == bComporationOperator)
+	var noComparisonn = aParsedFormats.every(function(format) {return !format.ComporationOperator});
+	if(noComparisonn)
 	{
 		if(4 <= nFormatsLength)
 		{
@@ -2659,8 +2583,8 @@ function CellFormat(format, formatType, useLocaleFormat)
 			this.oNullFormat = aParsedFormats[2];
 			this.oTextFormat = this.oPositiveFormat;
 			if (this.oNullFormat.bTextFormat) {
-			    this.oTextFormat = this.oNullFormat;
-			    this.oNullFormat = this.oPositiveFormat;
+				this.oTextFormat = this.oNullFormat;
+				this.oNullFormat = this.oPositiveFormat;
 			}
 		}
 		else if(2 == nFormatsLength)
@@ -2670,8 +2594,8 @@ function CellFormat(format, formatType, useLocaleFormat)
 			this.oNullFormat = this.oPositiveFormat;
 			this.oTextFormat = this.oPositiveFormat;
 			if (this.oNegativeFormat.bTextFormat) {
-			    this.oTextFormat = this.oNegativeFormat;
-			    this.oNegativeFormat = this.oPositiveFormat;
+				this.oTextFormat = this.oNegativeFormat;
+				this.oNegativeFormat = this.oPositiveFormat;
 				this.oPositiveFormat.bAddMinusIfNes = true;
 			}
 		}
@@ -2683,6 +2607,28 @@ function CellFormat(format, formatType, useLocaleFormat)
 			this.oNullFormat = this.oPositiveFormat;
 			this.oTextFormat = this.oPositiveFormat;
 		}
+	}
+	else
+	{
+		this.oTextFormat = new NumFormat(false);
+		this.oTextFormat.setFormat("@", undefined, undefined, useLocaleFormat);
+		//по результатам опытов, если оператор сравнения проходит через 0, то надо добавлять знак минус в зависимости от значения
+		//пример [<100] надо добавлять знак, [<-100] знак добавлять не надо
+		for (let i = 0; i < aParsedFormats.length && i < 2; ++i) {
+			let oCurFormat = aParsedFormats[i];
+			if (oCurFormat.ComporationOperator) {
+				let operator = oCurFormat.ComporationOperator.operator;
+				let operatorValue = oCurFormat.ComporationOperator.operatorValue;
+				if (0 < operatorValue && (operator === NumComporationOperators.less || operator === NumComporationOperators.lessorequal))
+					oCurFormat.bAddMinusIfNes = true;
+				else if (0 > operatorValue && (operator === NumComporationOperators.greater || operator === NumComporationOperators.greaterorequal))
+					oCurFormat.bAddMinusIfNes = true;
+			}
+		}
+		if (aParsedFormats.length > 2) {
+			aParsedFormats[2].bAddMinusIfNes = true;
+		}
+		this.aComporationFormats = aParsedFormats.slice(0, 3);
 	}
     this.formatCache = {};
 }
@@ -2743,32 +2689,30 @@ CellFormat.prototype =
 		else
 		{
 			//ищем совпадение
-			var nLength = this.aComporationFormats.length;
-			var oDefaultComporationFormat = null;
-			for(var i = 0, length = nLength; i < length ; ++i)
+			for (let i = 0; i < this.aComporationFormats.length && i < 2; ++i)
 			{
-				var oCurFormat = this.aComporationFormats[i];
-				if(null != oCurFormat.ComporationOperator)
-				{
-					var bOperationResult = false;
-					var oOperationValue = oCurFormat.ComporationOperator.operatorValue;
-					switch(oCurFormat.ComporationOperator.operator)
-					{
-						case NumComporationOperators.equal: bOperationResult = (dNumber == oOperationValue);break;
-						case NumComporationOperators.greater: bOperationResult = (dNumber > oOperationValue);break;
-						case NumComporationOperators.less: bOperationResult = (dNumber < oOperationValue);break;
-						case NumComporationOperators.greaterorequal: bOperationResult = (dNumber >= oOperationValue);break;
-						case NumComporationOperators.lessorequal: bOperationResult = (dNumber <= oOperationValue);break;
-						case NumComporationOperators.notequal: bOperationResult = (dNumber != oOperationValue);break;
-					}
-					if(true == bOperationResult)
-						oRes = oCurFormat;
+				let oCurFormat = this.aComporationFormats[i];
+				let oOperationValue, operator;
+				if (null != oCurFormat.ComporationOperator) {
+					operator = oCurFormat.ComporationOperator.operator;
+					oOperationValue = oCurFormat.ComporationOperator.operatorValue;
+				} else {
+					oOperationValue = 0;
+					operator = 0 === i ? NumComporationOperators.greater : NumComporationOperators.less;
 				}
-				else if(null == oDefaultComporationFormat)
-					oDefaultComporationFormat = oCurFormat;
+				let isMatch = (operator === NumComporationOperators.equal && dNumber === oOperationValue) ||
+					(operator === NumComporationOperators.greater && dNumber > oOperationValue) ||
+					(operator === NumComporationOperators.less && dNumber < oOperationValue) ||
+					(operator === NumComporationOperators.greaterorequal && dNumber >= oOperationValue) ||
+					(operator === NumComporationOperators.lessorequal && dNumber <= oOperationValue) ||
+					(operator === NumComporationOperators.notequal && dNumber !== oOperationValue);
+				if (isMatch) {
+					oRes = oCurFormat;
+					break;
+				}
 			}
-			if(null == oRes && null != oDefaultComporationFormat)
-				oRes = oDefaultComporationFormat;
+			if (null == oRes && null != this.aComporationFormats.length > 2)
+				oRes = this.aComporationFormats[2];
 		}
 		return oRes;
 	},
