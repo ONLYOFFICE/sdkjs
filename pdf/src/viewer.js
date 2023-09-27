@@ -2876,7 +2876,11 @@
 			}
 			else if (e.KeyCode === 27) // Esc
 			{
-				if (oDoc.activeForm)
+				if (this.Api.isInkDrawerOn())
+				{
+					this.Api.stopInkDrawer();
+				}
+				else if (oDoc.activeForm)
 				{
 					// to do отмена ввода
 				}

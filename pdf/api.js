@@ -577,8 +577,9 @@
 	};
 	// drawing pen
 	PDFEditorApi.prototype.onInkDrawerChangeState = function() {
-		let oViewer = this.getDocumentRenderer();
-		const oDoc = this.getDocumentRenderer().getPDFDoc();
+		const oViewer	= this.getDocumentRenderer();
+		const oDoc		= this.getDocumentRenderer().getPDFDoc();
+
 		if(!oDoc)
 			return;
 
@@ -597,6 +598,15 @@
 		oViewer.onUpdateOverlay();
 		oViewer.DrawingObjects.onInkDrawerChangeState();
 		oDoc.currInkInDrawingProcess = null;
+
+		if (false == this.isInkDrawerOn()) {
+			if (oViewer.MouseHandObject) {
+				oViewer.setCursorType("pointer");
+			}
+			else {
+				oViewer.setCursorType("default");
+			}
+		}
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
