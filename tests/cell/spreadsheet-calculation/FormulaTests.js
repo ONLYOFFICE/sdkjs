@@ -5541,7 +5541,7 @@ $(function () {
 
 		oParser = new parserFormula('YEAR(A10)', "A2", ws);
 		assert.ok(oParser.parse(), "YEAR(A10)");
-		assert.strictEqual(oParser.calculate().getValue(), 1903, "Result of YEAR(A10)");		// 1904
+		assert.strictEqual(oParser.calculate().getValue(), 1904, "Result of YEAR(A10)");
 
 		oParser = new parserFormula('YEAR(A11)', "A2", ws);
 		assert.ok(oParser.parse(), "YEAR(A11)");
@@ -5553,7 +5553,7 @@ $(function () {
 
 		oParser = new parserFormula('YEAR(A13)', "A2", ws);
 		assert.ok(oParser.parse(), "YEAR(A13)");
-		assert.strictEqual(oParser.calculate().getValue(), 1903, "Result of YEAR(A13)");		// 1904
+		assert.strictEqual(oParser.calculate().getValue(), 1904, "Result of YEAR(A13)");
 
 		oParser = new parserFormula('YEAR(A14)', "A2", ws);
 		assert.ok(oParser.parse(), "YEAR(A14)");
@@ -5561,7 +5561,7 @@ $(function () {
 
 		oParser = new parserFormula('YEAR(A15)', "A2", ws);
 		assert.ok(oParser.parse(), "YEAR(A15)");
-		assert.strictEqual(oParser.calculate().getValue(), 1903, "Result of YEAR(A15)");		// 1904
+		assert.strictEqual(oParser.calculate().getValue(), 1904, "Result of YEAR(A15)");
 
 		// return to base mode
 		ws.workbook.setDate1904(false, true);

@@ -2280,6 +2280,9 @@
 			if (val < 0) {
 				return t.setCalcValue(new cError(cErrorType.not_numeric), 0);
 			} else {
+				if (AscCommon.bDate1904 && val === 0) {
+					val += 1;
+				}
 				return t.setCalcValue(new cNumber((new cDate((val - (AscCommonExcel.c_DateCorrectConst + 1)) * c_msPerDay)).getUTCFullYear()), 0);
 			}
 		};
