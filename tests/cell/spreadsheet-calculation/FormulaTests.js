@@ -5152,6 +5152,7 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"MONTH\"", function (assert) {
+		ws.getRange2("A1:A15").cleanAll();
 
 		// base mode
 		ws.workbook.setDate1904(false, true);
@@ -5361,6 +5362,7 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"YEAR\"", function (assert) {
+		ws.getRange2("A1:A15").cleanAll();
 
 		// base mode
 		ws.workbook.setDate1904(false, true);
