@@ -1857,9 +1857,9 @@ ParaMath.prototype.Set_MenuProps = function(Props)
         this.Root.Set_MenuProps(Props);
 };
 
-ParaMath.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, isCurrentPos, isForward)
+ParaMath.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward)
 {
-    this.Root.CheckRunContent(fCheck, oStartPos, oEndPos, isCurrentPos, isForward);
+	this.Root.CheckRunContent(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward);
 };
 
 //-----------------------------------------------------------------------------------
