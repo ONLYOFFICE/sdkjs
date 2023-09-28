@@ -2237,34 +2237,17 @@
 
 		let calculateFunc = function(curArg) {
 			let val;
+			if (curArg.type === cElementType.cell || curArg.type === cElementType.cell3D) {
+				curArg = curArg.getValue();
+			}
+			
 			if (curArg.type === cElementType.error) {
 				return curArg;
 			} else if (curArg.type === cElementType.number || curArg.type === cElementType.bool || curArg.type === cElementType.empty) {
 				val = curArg.tocNumber().getValue();
 			} else if (curArg.type === cElementType.cellsRange || curArg.type === cElementType.cellsRange3D) {
 				return new cError(cErrorType.wrong_value_type);
- 			} else if (curArg.type === cElementType.cell || curArg.type === cElementType.cell3D) {
-				val = curArg.getValue();
-				if (val.type === cElementType.error) {
-					return val;
-				} else if (val.type === cElementType.number || val.type === cElementType.bool || val.type === cElementType.empty) {
-					val = curArg.tocNumber().getValue();
-				} else if (val.type === cElementType.string) {
-					val = curArg.tocNumber();
-					if (val.type === cElementType.error || val.type === cElementType.empty) {
-						let d = new cDate(curArg.getValue());
-						if (isNaN(d)) {
-							return new cError(cErrorType.wrong_value_type);
-						} else {
-							val = Math.floor(( d.getTime() / 1000 - d.getTimezoneOffset() * 60 ) / c_sPerDay + ( AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1) ));
-						}
-					} else {
-						val = curArg.tocNumber().getValue();
-					}
-				} else {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			} else if (curArg.type === cElementType.string) {
+ 			} else if (curArg.type === cElementType.string) {
 				val = curArg.tocNumber();
 				if (val.type === cElementType.error || val.type === cElementType.empty) {
 					let d = new cDate(curArg.getValue());
@@ -2277,6 +2260,7 @@
 					val = curArg.tocNumber().getValue();
 				}
 			}
+
 			if (val < 0) {
 				return t.setCalcValue(new cError(cErrorType.not_numeric), 0);
 			} else {

@@ -5291,6 +5291,26 @@ $(function () {
 		oParser = new parserFormula('MONTH(A15)', "A2", ws);
 		assert.ok(oParser.parse(), "MONTH('')");
 		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of MONTH('')");
+
+		oParser = new parserFormula('MONTH(A1:A4)', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C1:C5").bbox);
+		assert.ok(oParser.parse(), "MONTH(A1:A4)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 9, "Result of MONTH(A1:A4)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 12, "Result of MONTH(A1:A4)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 12, "Result of MONTH(A1:A4)[2,0]");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 11, "Result of MONTH(A1:A4)[3,0]");
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "", "Result of MONTH(A1:A4)[4,0]");
+
+		oParser = new parserFormula('MONTH({1,100,1000,10000})', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("D1:H1").bbox);
+		assert.ok(oParser.parse(), "MONTH({1,100,1000,10000})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of MONTH({1,100,1000,10000})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 4, "Result of MONTH({1,100,1000,10000})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 9, "Result of MONTH({1,100,1000,10000})[0,2]");
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), 5, "Result of MONTH({1,100,1000,10000})[0,3]");
+		assert.strictEqual(array.getElementRowCol(0, 4).getValue(), "#N/A", "Result of MONTH({1,100,1000,10000})[0,4]");
 		
 		// set 1904 mode
 		ws.workbook.setDate1904(true, true);
@@ -5355,6 +5375,26 @@ $(function () {
 		assert.ok(oParser.parse(), "MONTH('')");
 		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of MONTH('')");
 
+		oParser = new parserFormula('MONTH(A1:A4)', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C1:C5").bbox);
+		assert.ok(oParser.parse(), "MONTH(A1:A4)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 10, "Result of MONTH(A1:A4)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 12, "Result of MONTH(A1:A4)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 1, "Result of MONTH(A1:A4)[2,0]");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 11, "Result of MONTH(A1:A4)[3,0]");
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "", "Result of MONTH(A1:A4)[4,0]");
+
+		oParser = new parserFormula('MONTH({1,100,1000,10000})', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("D1:H1").bbox);
+		assert.ok(oParser.parse(), "MONTH({1,100,1000,10000})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Result of MONTH({1,100,1000,10000})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 4, "Result of MONTH({1,100,1000,10000})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 9, "Result of MONTH({1,100,1000,10000})[0,2]");
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), 5, "Result of MONTH({1,100,1000,10000})[0,3]");
+		assert.strictEqual(array.getElementRowCol(0, 4).getValue(), "#N/A", "Result of MONTH({1,100,1000,10000})[0,4]");
+
 		// return to base mode
 		ws.workbook.setDate1904(false, true);
 
@@ -5362,6 +5402,7 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"YEAR\"", function (assert) {
+		let array;
 		ws.getRange2("A1:A15").cleanAll();
 
 		// base mode
@@ -5502,6 +5543,26 @@ $(function () {
 		assert.ok(oParser.parse(), "YEAR('')");
 		assert.strictEqual(oParser.calculate().getValue(), 1900, "Result of YEAR('')");
 
+		oParser = new parserFormula('YEAR(A1:A4)', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C1:C5").bbox);
+		assert.ok(oParser.parse(), "YEAR(A1:A4)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2021, "Result of YEAR(A1:A4)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2021, "Result of YEAR(A1:A4)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 2021, "Result of YEAR(A1:A4)[2,0]");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 2021, "Result of YEAR(A1:A4)[3,0]");
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "", "Result of YEAR(A1:A4)[4,0]");
+
+		oParser = new parserFormula('YEAR({1,100,1000,10000})', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("D1:H1").bbox);
+		assert.ok(oParser.parse(), "YEAR({1,100,1000,10000})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1900, "Result of YEAR({1,100,1000,10000})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1900, "Result of YEAR({1,100,1000,10000})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 1902, "Result of YEAR({1,100,1000,10000})[0,2]");
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), 1927, "Result of YEAR({1,100,1000,10000})[0,3]");
+		assert.strictEqual(array.getElementRowCol(0, 4).getValue(), "#N/A", "Result of YEAR({1,100,1000,10000})[0,4]");
+
 		// set 1904 mode
 		ws.workbook.setDate1904(true, true);
 
@@ -5564,6 +5625,16 @@ $(function () {
 		oParser = new parserFormula('YEAR(A15)', "A2", ws);
 		assert.ok(oParser.parse(), "YEAR(A15)");
 		assert.strictEqual(oParser.calculate().getValue(), 1904, "Result of YEAR(A15)");
+
+		oParser = new parserFormula('YEAR({1,100,1000,10000})', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("D1:H1").bbox);
+		assert.ok(oParser.parse(), "YEAR({1,100,1000,10000})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1904, "Result of YEAR({1,100,1000,10000})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1904, "Result of YEAR({1,100,1000,10000})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 1906, "Result of YEAR({1,100,1000,10000})[0,2]");
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), 1931, "Result of YEAR({1,100,1000,10000})[0,3]");
+		assert.strictEqual(array.getElementRowCol(0, 4).getValue(), "#N/A", "Result of YEAR({1,100,1000,10000})[0,4]");
 
 		// return to base mode
 		ws.workbook.setDate1904(false, true);
