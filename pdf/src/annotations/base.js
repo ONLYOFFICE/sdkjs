@@ -574,28 +574,36 @@
 
     function ParsePDFDate(sDate) {
         // Регулярное выражение для извлечения компонентов даты
-        var regex = /D:(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})\+(\d{2})'(\d{2})'/;
+        let regex = /D:(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})([Z\+\-])(\d{2})'(\d{2})/;
 
         // Используем регулярное выражение для извлечения компонентов даты
-        var match = sDate.match(regex);
+        let match = sDate.match(regex);
 
         if (match) {
             // Извлекаем компоненты даты из совпадения
-            var year                    = parseInt(match[1]);
-            var month                   = parseInt(match[2]);
-            var day                     = parseInt(match[3]);
-            var hour                    = parseInt(match[4]);
-            var minute                  = parseInt(match[5]);
-            var second                  = parseInt(match[6]);
-            var timeZoneOffsetHours     = parseInt(match[7]);
-            var timeZoneOffsetMinutes   = parseInt(match[8]);
+            let year = parseInt(match[1]);
+            let month = parseInt(match[2]);
+            let day = parseInt(match[3]);
+            let hour = parseInt(match[4]);
+            let minute = parseInt(match[5]);
+            let second = parseInt(match[6]);
+            let timeZoneSign = match[7];
+            let timeZoneOffsetHours = parseInt(match[8]);
+            let timeZoneOffsetMinutes = parseInt(match[9]);
 
             // Создаем объект Date с извлеченными компонентами даты
-            var date = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+            let date = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
 
             // Учитываем смещение времени
-            date.setHours(date.getHours() - timeZoneOffsetHours);
-            date.setMinutes(date.getMinutes() - timeZoneOffsetMinutes);
+            if (timeZoneSign === 'Z') {
+                // Если указано "Z", это означает UTC
+            } else if (timeZoneSign === '+') {
+                date.setHours(date.getHours() - timeZoneOffsetHours);
+                date.setMinutes(date.getMinutes() - timeZoneOffsetMinutes);
+            } else if (timeZoneSign === '-') {
+                date.setHours(date.getHours() + timeZoneOffsetHours);
+                date.setMinutes(date.getMinutes() + timeZoneOffsetMinutes);
+            }
 
             return date;
         }

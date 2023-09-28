@@ -2285,7 +2285,7 @@
 
 		this._paint = function()
 		{
-			if (!this.file || !this.file.isValid())
+			if (!this.file || !this.file.isValid() || !this.canvas)
 				return;
 
 			this.canvas.width = this.canvas.width;

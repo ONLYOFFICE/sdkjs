@@ -47,6 +47,7 @@ $(function ()
 		let chars = text.codePointsArray();
 		AscTest.Editor.DocumentRenderer.getPDFDoc().activeForm = form;
 		form.EnterText(chars);
+		form.SetDrawHighlight(false);
 		pdfDoc.EnterDownActiveField();
 	}
 	function AddJsAction(form, trigger, script)
