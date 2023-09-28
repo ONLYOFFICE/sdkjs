@@ -5151,6 +5151,424 @@ $(function () {
 		testArrayFormula2(assert, "EOMONTH", 2, 2, true, null);
 	});
 
+	QUnit.test("Test: \"MONTH\"", function (assert) {
+
+		// base mode
+		ws.workbook.setDate1904(false, true);
+
+		// inline
+		oParser = new parserFormula("MONTH(44469)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(30.09.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 9, "Result of MONTH(30.09.21)");
+
+		oParser = new parserFormula("MONTH(44560)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(30.12.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 12, "Result of MONTH(30.12.21)");
+
+		oParser = new parserFormula("MONTH(44561)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(31.12.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 12, "Result of MONTH(31.12.21)");
+
+		oParser = new parserFormula("MONTH(44510)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(10.11.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 11, "Result of MONTH(10.11.21)");
+
+		oParser = new parserFormula('MONTH("2021-10-01")', "A2", ws);
+		assert.ok(oParser.parse(), 'MONTH("2021-10-01")');
+		assert.strictEqual(oParser.calculate().getValue(), 10, 'Result of MONTH("2021-10-01")');
+
+		oParser = new parserFormula('MONTH("2021-12-31")', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('2021-12-31')");
+		assert.strictEqual(oParser.calculate().getValue(), 12, "Result of MONTH('2021-12-31')");
+
+		oParser = new parserFormula('MONTH("2021-09-30")', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('2021-09-30')");
+		assert.strictEqual(oParser.calculate().getValue(), 9, "Result of MONTH('2021-09-30')");
+
+		oParser = new parserFormula('MONTH("2021-10-31")', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('2021-10-31')");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "Result of MONTH('2021-10-31')");
+
+		oParser = new parserFormula('MONTH("2021-12-29")', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('2021-12-29')");
+		assert.strictEqual(oParser.calculate().getValue(), 12, "Result of MONTH('2021-12-29')");
+
+		oParser = new parserFormula('MONTH(0)', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(0)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of MONTH(0)");
+
+		oParser = new parserFormula('MONTH("1s")', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('1s')");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of MONTH('1s')");
+
+		oParser = new parserFormula('MONTH(TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(TRUE)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of MONTH(TRUE)");
+
+		oParser = new parserFormula('MONTH(FALSE)', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(FALSE)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of MONTH(FALSE)");
+
+		oParser = new parserFormula('MONTH(#DIV/0!)', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(#DIV/0!)");
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", "Result of MONTH(#DIV/0!)");
+
+		// cell
+		ws.getRange2("A1").setValue("44469");
+		ws.getRange2("A2").setValue("44560");
+		ws.getRange2("A3").setValue("44561");
+		ws.getRange2("A4").setValue("44510");
+		ws.getRange2("A5").setValue("2021-10-01");
+		ws.getRange2("A6").setValue("2021-12-31");
+		ws.getRange2("A7").setValue("2021-09-30");
+		ws.getRange2("A8").setValue("2021-10-31");
+		ws.getRange2("A9").setValue("2021-12-29");
+
+		ws.getRange2("A10").setValue("0");
+		ws.getRange2("A11").setValue("1s");
+		ws.getRange2("A12").setValue("TRUE");
+		ws.getRange2("A13").setValue("FALSE");
+		ws.getRange2("A14").setValue("#DIV/0!");
+		ws.getRange2("A15").setValue("");
+
+		oParser = new parserFormula("MONTH(A1)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(30.09.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 9, "Result of MONTH(30.09.21)");
+
+		oParser = new parserFormula("MONTH(A2)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(30.12.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 12, "Result of MONTH(30.12.21)");
+
+		oParser = new parserFormula("MONTH(A3)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(31.12.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 12, "Result of MONTH(31.12.21)");
+
+		oParser = new parserFormula("MONTH(A4)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(10.11.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 11, "Result of MONTH(10.11.21)");
+
+		oParser = new parserFormula("MONTH(A5)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('2021-10-01')");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "Result of MONTH('2021-10-01')");
+
+		oParser = new parserFormula("MONTH(A6)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('2021-12-31')");
+		assert.strictEqual(oParser.calculate().getValue(), 12, "Result of MONTH('2021-12-31')");
+
+		oParser = new parserFormula("MONTH(A7)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('2021-09-30')");
+		assert.strictEqual(oParser.calculate().getValue(), 9, "Result of MONTH('2021-09-30')");
+
+		oParser = new parserFormula("MONTH(A8)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('2021-10-31')");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "Result of MONTH('2021-10-31')");
+
+		oParser = new parserFormula("MONTH(A9)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('2021-12-29')");
+		assert.strictEqual(oParser.calculate().getValue(), 12, "Result of MONTH('2021-12-29')");
+
+		oParser = new parserFormula('MONTH(A10)', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(0)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of MONTH(0)");
+
+		oParser = new parserFormula('MONTH(A11)', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('1s')");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of MONTH('1s')");
+
+		oParser = new parserFormula('MONTH(A12)', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(TRUE)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of MONTH(TRUE)");
+
+		oParser = new parserFormula('MONTH(A13)', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(FALSE)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of MONTH(FALSE)");
+
+		oParser = new parserFormula('MONTH(A14)', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(#DIV/0!)");
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", "Result of MONTH(#DIV/0!)");
+
+		oParser = new parserFormula('MONTH(A15)', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('')");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of MONTH('')");
+		
+		// set 1904 mode
+		ws.workbook.setDate1904(true, true);
+
+		oParser = new parserFormula("MONTH(A1)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(30.09.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "Result of MONTH(30.09.21)");
+
+		oParser = new parserFormula("MONTH(A2)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(30.12.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 12, "Result of MONTH(30.12.21)");
+
+		oParser = new parserFormula("MONTH(A3)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(31.12.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of MONTH(31.12.21)");
+
+		oParser = new parserFormula("MONTH(A4)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(10.11.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 11, "Result of MONTH(10.11.21)");
+
+		oParser = new parserFormula("MONTH(A5)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('2021-10-01')");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "Result of MONTH('2021-10-01')");
+
+		oParser = new parserFormula("MONTH(A6)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('2021-12-31')");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of MONTH('2021-12-31')");
+
+		oParser = new parserFormula("MONTH(A7)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('2021-09-30')");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "Result of MONTH('2021-09-30')");
+
+		oParser = new parserFormula("MONTH(A8)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('2021-10-31')");
+		assert.strictEqual(oParser.calculate().getValue(), 11, "Result of MONTH('2021-10-31')");
+
+		oParser = new parserFormula("MONTH(A9)", "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('2021-12-29')");
+		assert.strictEqual(oParser.calculate().getValue(), 12, "Result of MONTH('2021-12-29')");
+
+		oParser = new parserFormula('MONTH(A10)', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(0)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of MONTH(0)");
+
+		oParser = new parserFormula('MONTH(A11)', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('1s')");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of MONTH('1s')");
+
+		oParser = new parserFormula('MONTH(A12)', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(TRUE)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of MONTH(TRUE)");
+
+		oParser = new parserFormula('MONTH(A13)', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(FALSE)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of MONTH(FALSE)");
+
+		oParser = new parserFormula('MONTH(A14)', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH(#DIV/0!)");
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", "Result of MONTH(#DIV/0!)");
+
+		oParser = new parserFormula('MONTH(A15)', "A2", ws);
+		assert.ok(oParser.parse(), "MONTH('')");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of MONTH('')");
+
+		// return to base mode
+		ws.workbook.setDate1904(false, true);
+
+		testArrayFormula2(assert, "MONTH");
+	});
+
+	QUnit.test("Test: \"YEAR\"", function (assert) {
+
+		// base mode
+		ws.workbook.setDate1904(false, true);
+
+		// inline
+		oParser = new parserFormula("YEAR(44469)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(30.09.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 2021, "Result of YEAR(30.09.21)");
+
+		oParser = new parserFormula("YEAR(44560)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(30.12.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 2021, "Result of YEAR(30.12.21)");
+
+		oParser = new parserFormula("YEAR(44561)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(31.12.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 2021, "Result of YEAR(31.12.21)");
+
+		oParser = new parserFormula("YEAR(44510)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(10.11.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 2021, "Result of YEAR(10.11.21)");
+
+		oParser = new parserFormula('YEAR("2021-10-01")', "A2", ws);
+		assert.ok(oParser.parse(), 'YEAR("2021-10-01")');
+		assert.strictEqual(oParser.calculate().getValue(), 2021, 'Result of YEAR("2021-10-01")');
+
+		oParser = new parserFormula('YEAR("2021-12-31")', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR('2021-12-31')");
+		assert.strictEqual(oParser.calculate().getValue(), 2021, "Result of YEAR('2021-12-31')");
+
+		oParser = new parserFormula('YEAR("2021-09-30")', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR('2021-09-30')");
+		assert.strictEqual(oParser.calculate().getValue(), 2021, "Result of YEAR('2021-09-30')");
+
+		oParser = new parserFormula('YEAR("2021-10-31")', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR('2021-10-31')");
+		assert.strictEqual(oParser.calculate().getValue(), 2021, "Result of YEAR('2021-10-31')");
+
+		oParser = new parserFormula('YEAR("2021-12-29")', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR('2021-12-29')");
+		assert.strictEqual(oParser.calculate().getValue(), 2021, "Result of YEAR('2021-12-29')");
+
+		oParser = new parserFormula('YEAR(0)', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(0)");
+		assert.strictEqual(oParser.calculate().getValue(), 1900, "Result of YEAR(0)");
+
+		oParser = new parserFormula('YEAR("1s")', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR('1s')");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of YEAR('1s')");
+
+		oParser = new parserFormula('YEAR(TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(TRUE)");
+		assert.strictEqual(oParser.calculate().getValue(), 1900, "Result of YEAR(TRUE)");
+
+		oParser = new parserFormula('YEAR(FALSE)', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(FALSE)");
+		assert.strictEqual(oParser.calculate().getValue(), 1900, "Result of YEAR(FALSE)");
+
+		oParser = new parserFormula('YEAR(#DIV/0!)', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(#DIV/0!)");
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", "Result of YEAR(#DIV/0!)");
+
+		// cell
+		ws.getRange2("A1").setValue("44469");
+		ws.getRange2("A2").setValue("44560");
+		ws.getRange2("A3").setValue("44561");
+		ws.getRange2("A4").setValue("44510");
+		ws.getRange2("A5").setValue("2021-10-01");
+		ws.getRange2("A6").setValue("2021-12-31");
+		ws.getRange2("A7").setValue("2021-09-30");
+		ws.getRange2("A8").setValue("2021-10-31");
+		ws.getRange2("A9").setValue("2021-12-29");
+
+		ws.getRange2("A10").setValue("0");
+		ws.getRange2("A11").setValue("1s");
+		ws.getRange2("A12").setValue("TRUE");
+		ws.getRange2("A13").setValue("FALSE");
+		ws.getRange2("A14").setValue("#DIV/0!");
+		ws.getRange2("A15").setValue("");
+
+		oParser = new parserFormula("YEAR(A1)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(30.09.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 2021, "Result of YEAR(30.09.21)");
+
+		oParser = new parserFormula("YEAR(A2)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(30.12.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 2021, "Result of YEAR(30.12.21)");
+
+		oParser = new parserFormula("YEAR(A3)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(31.12.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 2021, "Result of YEAR(31.12.21)");
+
+		oParser = new parserFormula("YEAR(A4)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(10.11.21)");
+		assert.strictEqual(oParser.calculate().getValue(), 2021, "Result of YEAR(10.11.21)");
+
+		oParser = new parserFormula("YEAR(A5)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR('2021-10-01')");
+		assert.strictEqual(oParser.calculate().getValue(), 2021, "Result of YEAR('2021-10-01')");
+
+		oParser = new parserFormula("YEAR(A6)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR('2021-12-31')");
+		assert.strictEqual(oParser.calculate().getValue(), 2021, "Result of YEAR('2021-12-31')");
+
+		oParser = new parserFormula("YEAR(A7)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR('2021-09-30')");
+		assert.strictEqual(oParser.calculate().getValue(), 2021, "Result of YEAR('2021-09-30')");
+
+		oParser = new parserFormula("YEAR(A8)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR('2021-10-31')");
+		assert.strictEqual(oParser.calculate().getValue(), 2021, "Result of YEAR('2021-10-31')");
+
+		oParser = new parserFormula("YEAR(A9)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR('2021-12-29')");
+		assert.strictEqual(oParser.calculate().getValue(), 2021, "Result of YEAR('2021-12-29')");
+
+		oParser = new parserFormula('YEAR(A10)', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(0)");
+		assert.strictEqual(oParser.calculate().getValue(), 1900, "Result of YEAR(0)");
+
+		oParser = new parserFormula('YEAR(A11)', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR('1s')");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of YEAR('1s')");
+
+		oParser = new parserFormula('YEAR(A12)', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(TRUE)");
+		assert.strictEqual(oParser.calculate().getValue(), 1900, "Result of YEAR(TRUE)");
+
+		oParser = new parserFormula('YEAR(A13)', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(FALSE)");
+		assert.strictEqual(oParser.calculate().getValue(), 1900, "Result of YEAR(FALSE)");
+
+		oParser = new parserFormula('YEAR(A14)', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(#DIV/0!)");
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", "Result of YEAR(#DIV/0!)");
+
+		oParser = new parserFormula('YEAR(A15)', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR('')");
+		assert.strictEqual(oParser.calculate().getValue(), 1900, "Result of YEAR('')");
+
+		// set 1904 mode
+		ws.workbook.setDate1904(true, true);
+
+		oParser = new parserFormula("YEAR(A1)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(A1)");
+		assert.strictEqual(oParser.calculate().getValue(), 2025, "Result of YEAR(A1)");
+
+		oParser = new parserFormula("YEAR(A2)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(A2)");
+		assert.strictEqual(oParser.calculate().getValue(), 2025, "Result of YEAR(A2)");
+
+		oParser = new parserFormula("YEAR(A3)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(A3)");
+		assert.strictEqual(oParser.calculate().getValue(), 2025, "Result of YEAR(A3)");
+
+		oParser = new parserFormula("YEAR(A4)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(A4)");
+		assert.strictEqual(oParser.calculate().getValue(), 2025, "Result of YEAR(A4)");
+
+		oParser = new parserFormula("YEAR(A5)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(A5)");
+		assert.strictEqual(oParser.calculate().getValue(), 2025, "Result of YEAR(A5)");
+
+		oParser = new parserFormula("YEAR(A6)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(A6)");
+		assert.strictEqual(oParser.calculate().getValue(), 2025, "Result of YEAR(A6)");
+
+		oParser = new parserFormula("YEAR(A7)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(A7)");
+		assert.strictEqual(oParser.calculate().getValue(), 2025, "Result of YEAR(A7)");
+
+		oParser = new parserFormula("YEAR(A8)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(A8)");
+		assert.strictEqual(oParser.calculate().getValue(), 2025, "Result of YEAR(A8)");
+
+		oParser = new parserFormula("YEAR(A9)", "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(A9)");
+		assert.strictEqual(oParser.calculate().getValue(), 2025, "Result of YEAR(A9)");
+
+		oParser = new parserFormula('YEAR(A10)', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(A10)");
+		assert.strictEqual(oParser.calculate().getValue(), 1903, "Result of YEAR(A10)");		// 1904
+
+		oParser = new parserFormula('YEAR(A11)', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(A11)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of YEAR(A11)");
+
+		oParser = new parserFormula('YEAR(A12)', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(A12)");
+		assert.strictEqual(oParser.calculate().getValue(), 1904, "Result of YEAR(A12)");
+
+		oParser = new parserFormula('YEAR(A13)', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(A13)");
+		assert.strictEqual(oParser.calculate().getValue(), 1903, "Result of YEAR(A13)");		// 1904
+
+		oParser = new parserFormula('YEAR(A14)', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(A14)");
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", "Result of YEAR(A14)");
+
+		oParser = new parserFormula('YEAR(A15)', "A2", ws);
+		assert.ok(oParser.parse(), "YEAR(A15)");
+		assert.strictEqual(oParser.calculate().getValue(), 1903, "Result of YEAR(A15)");		// 1904
+
+		// return to base mode
+		ws.workbook.setDate1904(false, true);
+
+		testArrayFormula2(assert, "YEAR");
+	});
+
 	QUnit.test("Test: \"EVEN\"", function (assert) {
 
 		oParser = new parserFormula("EVEN(1.5)", "A2", ws);
