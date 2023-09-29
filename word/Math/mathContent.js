@@ -2538,7 +2538,7 @@ CMathContent.prototype.Refresh_RecalcData = function()
     if(this.ParaMath !== null)
         this.ParaMath.Refresh_RecalcData(); // Refresh_RecalcData сообщает родительскому классу, что у него произошли изменения, нужно пересчитать
 };
-CMathContent.prototype.InsertMathContent = function(oMathContent, nPos, isSelect)
+CMathContent.prototype.InsertMathContent = function(oMathContent, nPos, isSelect, isMoveCursor)
 {
 	if (!this.ParaMath || !this.ParaMath.Paragraph)
 		isSelect = false;
@@ -2556,6 +2556,9 @@ CMathContent.prototype.InsertMathContent = function(oMathContent, nPos, isSelect
 			oElement.SelectAll(1);
 		else
 			oElement.RemoveSelection();
+
+		if (isMoveCursor && nIndex === nCount - 1)
+			oElement.MoveCursorToEndPos();
 	}
 
 	this.CurPos = nPos + nCount;
