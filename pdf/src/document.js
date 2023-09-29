@@ -783,7 +783,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         // если курсор меняется на resize, то клик по нему выходит за область поля или аннотации, отслеживаем этот момент и не убираем поле/аннотацию из активных
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
         let X       = oPos.X;
         let Y       = oPos.Y;
 
@@ -844,7 +844,6 @@ var CPresentation = CPresentation || function(){};
         else if (this.mouseDownAnnot) {
             oViewer.onUpdateOverlay();
         }
-
         
         if (false == oDrawingObjects.selectedObjects.includes(this.mouseDownAnnot)) {
             oDrawingObjects.resetSelection();
@@ -980,7 +979,7 @@ var CPresentation = CPresentation || function(){};
                         cursorType = "pointer";
                 }
             }
-            else if (mouseMoveAnnotObject && mouseMoveAnnotObject.GetType() == AscPDF.ANNOTATIONS_TYPES.Text) {
+            else if (mouseMoveAnnotObject && (mouseMoveAnnotObject.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink && mouseMoveAnnotObject.IsTextMarkup() == false)) {
             	cursorType = "move";
             }
 
@@ -1006,7 +1005,7 @@ var CPresentation = CPresentation || function(){};
         let oMouseUpField = oViewer.getPageFieldByMouse();
 		let oMouseUpAnnot = oViewer.getPageAnnotByMouse();
         
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.X);
         let X       = oPos.X;
         let Y       = oPos.Y;
 
@@ -1432,7 +1431,7 @@ var CPresentation = CPresentation || function(){};
         this.annots.push(oAnnot);
         oAnnot.SetNeedRecalc && oAnnot.SetNeedRecalc(true);
 
-        oAnnot.SetHidden(this.IsAnnotsHidden());
+        oAnnot.SetDisplay(this.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
 
         if (oPagesInfo.pages[nPageNum].annots == null) {
             oPagesInfo.pages[nPageNum].annots = [];
@@ -1979,7 +1978,7 @@ var CPresentation = CPresentation || function(){};
 	 */
     CPDFDoc.prototype.HideShowAnnots = function(bHidden) {
         this.annots.forEach(function(annot) {
-            annot.SetHidden(bHidden);
+            annot.SetDisplay(bHidden ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
             annot.AddToRedraw();
         });
 
@@ -2289,11 +2288,35 @@ var CPresentation = CPresentation || function(){};
             case AscPDF.ANNOTATIONS_TYPES.Strikeout:
                 oAnnot = new AscPDF.CAnnotationStrikeout(sName, nPageNum, aScaledCoords, oPdfDoc);
                 break;
+            case AscPDF.ANNOTATIONS_TYPES.Squiggly:
+                oAnnot = new AscPDF.CAnnotationSquiggly(sName, nPageNum, aScaledCoords, oPdfDoc);
+                break;
+            case AscPDF.ANNOTATIONS_TYPES.Line:
+                oAnnot = new AscPDF.CAnnotationLine(sName, nPageNum, aScaledCoords, oPdfDoc);
+                break;
+            case AscPDF.ANNOTATIONS_TYPES.Square:
+                oAnnot = new AscPDF.CAnnotationSquare(sName, nPageNum, aScaledCoords, oPdfDoc);
+                break;
+            case AscPDF.ANNOTATIONS_TYPES.Circle:
+                oAnnot = new AscPDF.CAnnotationCircle(sName, nPageNum, aScaledCoords, oPdfDoc);
+                break;
+            case AscPDF.ANNOTATIONS_TYPES.Polygon:
+                oAnnot = new AscPDF.CAnnotationPolygon(sName, nPageNum, aScaledCoords, oPdfDoc);
+                break;
+            case AscPDF.ANNOTATIONS_TYPES.PolyLine:
+                oAnnot = new AscPDF.CAnnotationPolyLine(sName, nPageNum, aScaledCoords, oPdfDoc);
+                break;
+            case AscPDF.ANNOTATIONS_TYPES.FreeText:
+                oAnnot = new AscPDF.CAnnotationFreeText(sName, nPageNum, aScaledCoords, oPdfDoc);
+                break;
+            default:
+                oAnnot = new AscPDF.CAnnotationBase(sName, nAnnotType, nPageNum, aScaledCoords, oPdfDoc);
+                break;
         }
 
         oAnnot.SetModDate(sDate);
         oAnnot.SetAuthor(sAuthor);
-        oAnnot.SetHidden(isHidden);
+        oAnnot.SetDisplay(isHidden ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
         oAnnot.SetContents(sText);
 
         oAnnot._origRect = aRect;

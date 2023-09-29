@@ -668,7 +668,7 @@ function MoveAnnotationTrack(originalObject)
     this.x              = originalObject._pagePos.x;
     this.y              = originalObject._pagePos.y;
     this.viewer         = editor.getDocumentRenderer();
-    this.objectToDraw   = originalObject.Copy();
+    this.objectToDraw   = originalObject.LazyCopy();
     this.pageIndex      = originalObject.GetPage();
 
     this.track = function(dx, dy, pageIndex)
@@ -747,7 +747,10 @@ function MoveAnnotationTrack(originalObject)
         oDrawer.m_oContext.globalAlpha = 0.5;
 
         this.objectToDraw.SetPosition(this.x, this.y, true);
-        this.objectToDraw.Draw(oGraphicsPDF, oGraphicsWord);
+        if (this.originalObject.IsNeedDrawFromStream())
+            this.objectToDraw.DrawFromStream(oGraphicsPDF, oGraphicsWord);
+        else
+            this.objectToDraw.Draw(oGraphicsPDF, oGraphicsWord);
 
         oDrawer.m_oContext.drawImage(this.tmpCanvas, 0, 0, w, h, x, y, w, h);
     };

@@ -92,7 +92,7 @@ CChangesPDFDocumentAddItem.prototype.Redo = function()
 			if (oItem.IsComment())
 				editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
 
-			oItem.SetHidden(oDocument.IsAnnotsHidden());
+			oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
 		}
 	}
 	oDocument.mouseDownAnnot = null;
@@ -131,7 +131,7 @@ CChangesPDFDocumentRemoveItem.prototype.Undo = function()
 			if (oItem.IsComment())
 				editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
 
-			oItem.SetHidden(oDocument.IsAnnotsHidden());
+			oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
 		}
 	}
 

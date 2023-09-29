@@ -171,7 +171,7 @@
     */
     function CAnnotationHighlight(sName, nPage, aRect, oDoc)
     {
-        CAnnotationTextMarkup.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Ink, nPage, aRect, oDoc);
+        CAnnotationTextMarkup.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Highlight, nPage, aRect, oDoc);
     }
     CAnnotationHighlight.prototype = Object.create(CAnnotationTextMarkup.prototype);
 	CAnnotationHighlight.prototype.constructor = CAnnotationHighlight;
@@ -248,7 +248,7 @@
     */
     function CAnnotationUnderline(sName, nPage, aRect, oDoc)
     {
-        CAnnotationTextMarkup.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Ink, nPage, aRect, oDoc);
+        CAnnotationTextMarkup.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Underline, nPage, aRect, oDoc);
     }
     CAnnotationUnderline.prototype = Object.create(CAnnotationTextMarkup.prototype);
 	CAnnotationUnderline.prototype.constructor = CAnnotationUnderline;
@@ -328,7 +328,7 @@
     */
     function CAnnotationStrikeout(sName, nPage, aRect, oDoc)
     {
-        CAnnotationTextMarkup.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Ink, nPage, aRect, oDoc);
+        CAnnotationTextMarkup.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Strikeout, nPage, aRect, oDoc);
     }
     CAnnotationStrikeout.prototype = Object.create(CAnnotationTextMarkup.prototype);
 	CAnnotationStrikeout.prototype.constructor = CAnnotationStrikeout;
@@ -390,6 +390,86 @@
 
                 oGraphicsPDF.MoveTo(X1, Y1);
                 oGraphicsPDF.LineTo(X2, Y2);
+            }
+            
+            oGraphicsPDF.Stroke();
+        }
+    };
+
+    /**
+	 * Class representing a squiggly annotation.
+	 * @constructor
+    */
+    function CAnnotationSquiggly(sName, nPage, aRect, oDoc)
+    {
+        CAnnotationTextMarkup.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Squiggly, nPage, aRect, oDoc);
+    }
+    CAnnotationSquiggly.prototype = Object.create(CAnnotationTextMarkup.prototype);
+	CAnnotationSquiggly.prototype.constructor = CAnnotationSquiggly;
+
+    CAnnotationSquiggly.prototype.Draw = function(oGraphicsPDF) {
+        if (this.IsHidden() == true)
+            return;
+
+        let aQuads      = this.GetQuads();
+        let oRGBFill    = this.GetRGBColor(this.GetStrokeColor());
+        
+        for (let i = 0; i < aQuads.length; i++) {
+            let aPoints     = aQuads[i];
+            
+            oGraphicsPDF.SetStrokeStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
+            oGraphicsPDF.BeginPath();
+
+            let oPoint1 = {
+                x: aPoints[0],
+                y: aPoints[1]
+            }
+            let oPoint2 = {
+                x: aPoints[2],
+                y: aPoints[3]
+            }
+            let oPoint3 = {
+                x: aPoints[4],
+                y: aPoints[5]
+            }
+            let oPoint4 = {
+                x: aPoints[6],
+                y: aPoints[7]
+            }
+
+            let X1 = oPoint3.x
+            let Y1 = oPoint3.y;
+            let X2 = oPoint4.x;
+            let Y2 = oPoint4.y;
+
+            let dx1 = oPoint2.x - oPoint1.x;
+            let dy1 = oPoint2.y - oPoint1.y;
+            let dx2 = oPoint4.x - oPoint3.x;
+            let dy2 = oPoint4.y - oPoint3.y;
+            let angle1          = Math.atan2(dy1, dx1);
+            let angle2          = Math.atan2(dy2, dx2);
+            let rotationAngle   = angle1;
+
+            let nSide;
+            if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {
+                nSide = Math.abs(oPoint3.y - oPoint1.y);
+                oGraphicsPDF.SetLineWidth(Math.max(1, nSide * 0.1 >> 0));
+            }
+            else {
+                nSide = findMaxSideWithRotation(oPoint1.x, oPoint1.y, oPoint2.x, oPoint2.y, oPoint3.x, oPoint3.y, oPoint4.x, oPoint4.y);
+                oGraphicsPDF.SetLineWidth(Math.max(1, nSide * 0.1 >> 0));
+            }
+
+            let nLineW      = oGraphicsPDF.GetLineWidth();
+            let nIndentX    = Math.sin(rotationAngle) * nLineW * 1.5;
+            let nIndentY    = Math.cos(rotationAngle) * nLineW * 1.5;
+
+            if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {
+                oGraphicsPDF.HorLine(X1, X2, Y2 - nIndentY);
+            }
+            else {
+                oGraphicsPDF.MoveTo(X1 + nIndentX, Y1 - nIndentY);
+                oGraphicsPDF.LineTo(X2 + nIndentX, Y2 - nIndentY);
             }
             
             oGraphicsPDF.Stroke();
@@ -514,5 +594,6 @@
     window["AscPDF"].CAnnotationHighlight   = CAnnotationHighlight;
     window["AscPDF"].CAnnotationUnderline   = CAnnotationUnderline;
     window["AscPDF"].CAnnotationStrikeout   = CAnnotationStrikeout;
+    window["AscPDF"].CAnnotationSquiggly    = CAnnotationSquiggly;
 })();
 

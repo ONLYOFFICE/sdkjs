@@ -48,6 +48,7 @@
         this._state         = undefined;
         this._stateModel    = undefined;
         this._width         = undefined;
+        this._rectDiff      = undefined;
 
         // internal
         TurnOffHistory();
@@ -121,31 +122,12 @@
         //     this.content.Recalculate_Page(0, false);
         // }
     };
-    CAnnotationSquare.prototype.onMouseDown = function(e) {
-        let oViewer = editor.getDocumentRenderer();
-        let oDrawingObjects = oViewer.DrawingObjects;
-
-        oDrawingObjects.arrPreTrackObjects.push(this.CreateMoveTrack());
-        oDrawingObjects.selectedObjects.push(this);
-        
-        this.selectStartPage = this.GetPage();
-        oDrawingObjects.OnMouseDown(e, e.clientX, e.clientY, oViewer.currentPage);
-    };
-    CAnnotationSquare.prototype.CreateMoveTrack = function() {
-        return new AscFormat.MoveAnnotationTrack(this);
-    };
+    
     CAnnotationSquare.prototype.SetDrawing = function(oDrawing) {
         let oRun = this.content.GetElement(0).GetElement(0);
         oRun.Add_ToContent(oRun.Content.length, oDrawing);
     };
     
-    CAnnotationSquare.prototype.onMouseUp = function() {
-        let oViewer = editor.getDocumentRenderer();
-
-        let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w / oViewer.zoom, this._pagePos.y + this._pagePos.h / (2 * oViewer.zoom), this.GetPage(), true);
-        editor.sync_ShowComment([this.GetId()], X, Y)
-    };
-
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();

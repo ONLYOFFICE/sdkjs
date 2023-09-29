@@ -1135,7 +1135,7 @@
 				
 				aRect = [oAnnotInfo["rect"]["x1"], oAnnotInfo["rect"]["y1"], oAnnotInfo["rect"]["x2"], oAnnotInfo["rect"]["y2"]];
 
-				if (oAnnotInfo["RefTo"] == null) {
+				if (oAnnotInfo["RefTo"] == null || oAnnotInfo["Type"] != AscPDF.ANNOTATIONS_TYPES.Text) {
 					oAnnot = oDoc.AddAnnot({
 						page:			oAnnotInfo["page"],
 						name:			oAnnotInfo["UniqueName"], 
@@ -1153,9 +1153,67 @@
 
 					oAnnotsMap[oAnnotInfo["AP"]["i"]] = oAnnot;
 
-					if (oAnnotInfo["Type"] == AscPDF.ANNOTATIONS_TYPES.Ink) {
+					if (oAnnotInfo["InkList"]) {
 						oAnnot.SetInkPoints(oAnnotInfo["InkList"]);
 					}
+					else if (oAnnotInfo["L"]) {
+						oAnnot.SetLinePoints(oAnnotInfo["L"]);
+					}
+					else if (oAnnotInfo["Vertices"]) {
+						oAnnot.SetVertices(oAnnotInfo["Vertices"]);
+					}
+
+					if (oAnnotInfo["LE"] != null) {
+						if (Array.isArray(oAnnotInfo["LE"])) {
+							oAnnot.SetLineStart(oAnnotInfo["LE"][0]);
+							oAnnot.SetLineEnd(oAnnotInfo["LE"][1]);
+						}
+						else
+							oAnnot.SetLineEnd(oAnnotInfo["LE"]);
+					}
+
+					if (oAnnotInfo["Subj"])
+						oAnnot.SetSubject(oAnnotInfo["Subj"]);
+					if (oAnnotInfo["CL"])
+						oAnnot.SetCallout(oAnnotInfo["CL"]);
+					if (oAnnotInfo["RC"])
+						oAnnot.SetRichContents(oAnnotInfo["RC"]);
+					if (oAnnotInfo["RD"])
+						oAnnot.SetReqtangleDiff(oAnnotInfo["RD"]);
+					if (oAnnotInfo["display"])
+						oAnnot.SetDisplay(oAnnotInfo["display"]);
+					if (oAnnotInfo["locked"] != null)
+						oAnnot.SetLock(Boolean(oAnnotInfo["locked"]));
+					if (oAnnotInfo["lockedC"] != null)
+						oAnnot.SetLockContent(Boolean(oAnnotInfo["lockedC"]));
+					if (oAnnotInfo["IC"] != null)
+						oAnnot.SetFillColor(oAnnotInfo["IC"]);
+					if (oAnnotInfo["dashed"] != null)
+						oAnnot.SetDash(oAnnotInfo["dashed"]);
+					if (oAnnotInfo["border"] != null)
+						oAnnot.SetBorder(oAnnotInfo["border"]);
+
+					if (oAnnotInfo["noRotate"] != null)
+						oAnnot.SetNoRotate(Boolean(oAnnotInfo["noRotate"]));
+					if (oAnnotInfo["noZoom"] != null)
+						oAnnot.SetNoZoom(Boolean(oAnnotInfo["noZoom"]));
+
+					// FreeText/Redact
+					if (oAnnotInfo["alignment"] != null)
+						oAnnot.SetAlign(oAnnotInfo["alignment"]);
+
+					// FreeText
+					if (oAnnotInfo["defaultStyle"] != null)
+						oAnnot.SetDefaultStyle(oAnnotInfo["defaultStyle"]);
+					
+					// border effect
+					if (oAnnotInfo["BE"] != null) {
+						if (oAnnotInfo["BE"]["I"] != null)
+							oAnnot.SetBorderEffectIntensity(oAnnotInfo["BE"]["I"]);
+						if (oAnnotInfo["BE"]["S"] != null)
+							oAnnot.SetBorderEffectStyle(oAnnotInfo["BE"]["S"]);
+					}
+						
 					if (oAnnotInfo["C"] != null) {
 						oAnnot.SetStrokeColor(oAnnotInfo["C"]);
 					}
@@ -2262,13 +2320,16 @@
 						this.DrawingObjects.drawOnOverlay(this.DrawingObjects.drawingDocument.AutoShapesTrack);
 						this.DrawingObjects.drawingDocument.AutoShapesTrack.CorrectOverlayBounds();
 					}
-					else {
-						if (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsTextMarkup()) {
+					else if (oDoc.mouseDownAnnot) {
+						if (oDoc.mouseDownAnnot.IsTextMarkup()) {
 							oDoc.mouseDownAnnot.DrawSelected(this.overlay);
 						}
-						else if (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsComment() == false) {
+						else if (oDoc.mouseDownAnnot.IsInk() == true) {
 							this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = i;
 							this.DrawingObjects.drawSelect(i);
+						}
+						else if (oDoc.mouseDownAnnot.IsComment() == false) {
+							oDoc.mouseDownAnnot.DrawSelected(this.overlay);
 						}
 					}
 				}

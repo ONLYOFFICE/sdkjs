@@ -32,21 +32,20 @@
 
 (function(){
 
-    let POLYLINE_INTENT_TYPE = {
-        PolygonCloud:       0,
-        PolyLineDimension:  1,
-        PolygonDimension:   2
+    let FREE_TEXT_INTENT_TYPE = {
+        FreeText:           0,
+        FreeTextCallout:    1,
+        FreeTextTypeWriter: 2
     }
 
     /**
 	 * Class representing a Ink annotation.
 	 * @constructor
     */
-    function CAnnotationPolyLine(sName, nPage, aRect, oDoc)
+    function CAnnotationFreeText(sName, nPage, aRect, oDoc)
     {
-        AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.PolyLine, nPage, aRect, oDoc);
+        AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Line, nPage, aRect, oDoc);
 
-        this._point         = undefined;
         this._popupOpen     = false;
         this._popupRect     = undefined;
         this._richContents  = undefined;
@@ -54,18 +53,33 @@
         this._state         = undefined;
         this._stateModel    = undefined;
         this._width         = undefined;
-        this._lineStart     = undefined;
+        this._points        = undefined;
+        this._intent        = undefined;
         this._lineEnd       = undefined;
-        this._vertices      = undefined;
+        this._callout       = undefined;
+        this._alignment     = undefined;
+        this._defaultStyle  = undefined;
 
         // internal
         TurnOffHistory();
         this.content        = new AscPDF.CTextBoxContent(this, oDoc);
     }
-    CAnnotationPolyLine.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
-	CAnnotationPolyLine.prototype.constructor = CAnnotationPolyLine;
+    CAnnotationFreeText.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
+	CAnnotationFreeText.prototype.constructor = CAnnotationFreeText;
 
-    CAnnotationPolyLine.prototype.Draw = function(oGraphics) {
+    CAnnotationFreeText.prototype.SetDefaultStyle = function(sStyle) {
+        this._defaultStyle = sStyle;
+    };
+    CAnnotationFreeText.prototype.SetAlign = function(nType) {
+        this._alignment = nType;
+    }
+    CAnnotationFreeText.prototype.SetLineEnd = function(nType) {
+        this._lineEnd = nType;
+    };
+    CAnnotationFreeText.prototype.SetCallout = function(aCallout) {
+        this._callout = aCallout;
+    };
+    CAnnotationFreeText.prototype.Draw = function(oGraphics) {
         if (this.IsHidden() == true)
             return;
 
@@ -73,14 +87,13 @@
         let oGraphicsWord = oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
         
         this.Recalculate();
-        //this.DrawBackground();
 
         oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
 
         this.content.Draw(0, oGraphicsWord);
         oGraphicsWord.RemoveClip();
     };
-    CAnnotationPolyLine.prototype.Recalculate = function() {
+    CAnnotationFreeText.prototype.Recalculate = function() {
         // if (this.IsNeedRecalc() == false)
         //     return;
 
@@ -102,11 +115,6 @@
         contentXLimit = (X + nWidth) * g_dKoef_pix_to_mm;
         contentYLimit = (Y + nHeight) * g_dKoef_pix_to_mm;
 
-        // this._formRect.X = X * g_dKoef_pix_to_mm;
-        // this._formRect.Y = Y * g_dKoef_pix_to_mm;
-        // this._formRect.W = nWidth * g_dKoef_pix_to_mm;
-        // this._formRect.H = nHeight * g_dKoef_pix_to_mm;
-        
         if (!this.contentRect)
             this.contentRect = {};
 
@@ -126,25 +134,13 @@
             this.content.YLimit = this._oldContentPos.YLimit   = 20000;
             this.content.Recalculate_Page(0, true);
         }
-        // else if (this.IsNeedRecalc()) {
-        //     this.content.Recalculate_Page(0, false);
-        // }
     };
-    
-    CAnnotationPolyLine.prototype.SetVertices = function(aVertices) {
-        this._vertices = aVertices;
-    };
-    CAnnotationPolyLine.prototype.SetLineStart = function(nType) {
-        this._lineStart = nType;
-    };
-    CAnnotationPolyLine.prototype.SetLineEnd = function(nType) {
-        this._lineEnd = nType;
-    };
+
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();
     }
 
-    window["AscPDF"].CAnnotationPolyLine = CAnnotationPolyLine;
+    window["AscPDF"].CAnnotationFreeText = CAnnotationFreeText;
 })();
 

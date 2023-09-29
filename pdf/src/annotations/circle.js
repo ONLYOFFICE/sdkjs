@@ -64,13 +64,13 @@
         let oGraphicsWord = oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
         
         this.Recalculate();
-        //this.DrawBackground();
 
         oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
 
         this.content.Draw(0, oGraphicsWord);
         oGraphicsWord.RemoveClip();
     };
+    
     CAnnotationCircle.prototype.Recalculate = function() {
         // if (this.IsNeedRecalc() == false)
         //     return;
@@ -93,11 +93,6 @@
         contentXLimit = (X + nWidth) * g_dKoef_pix_to_mm;
         contentYLimit = (Y + nHeight) * g_dKoef_pix_to_mm;
 
-        // this._formRect.X = X * g_dKoef_pix_to_mm;
-        // this._formRect.Y = Y * g_dKoef_pix_to_mm;
-        // this._formRect.W = nWidth * g_dKoef_pix_to_mm;
-        // this._formRect.H = nHeight * g_dKoef_pix_to_mm;
-        
         if (!this.contentRect)
             this.contentRect = {};
 
@@ -117,35 +112,9 @@
             this.content.YLimit = this._oldContentPos.YLimit   = 20000;
             this.content.Recalculate_Page(0, true);
         }
-        // else if (this.IsNeedRecalc()) {
-        //     this.content.Recalculate_Page(0, false);
-        // }
-    };
-    CAnnotationCircle.prototype.onMouseDown = function(e) {
-        let oViewer = editor.getDocumentRenderer();
-        let oDrawingObjects = oViewer.DrawingObjects;
-
-        oDrawingObjects.arrPreTrackObjects.push(this.CreateMoveTrack());
-        oDrawingObjects.selectedObjects.push(this);
-        
-        this.selectStartPage = this.GetPage();
-        oDrawingObjects.OnMouseDown(e, e.clientX, e.clientY, oViewer.currentPage);
-    };
-    CAnnotationCircle.prototype.CreateMoveTrack = function() {
-        return new AscFormat.MoveAnnotationTrack(this);
-    };
-    CAnnotationCircle.prototype.SetDrawing = function(oDrawing) {
-        let oRun = this.content.GetElement(0).GetElement(0);
-        oRun.Add_ToContent(oRun.Content.length, oDrawing);
     };
     
-    CAnnotationCircle.prototype.onMouseUp = function() {
-        let oViewer = editor.getDocumentRenderer();
-
-        let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w / oViewer.zoom, this._pagePos.y + this._pagePos.h / (2 * oViewer.zoom), this.GetPage(), true);
-        editor.sync_ShowComment([this.GetId()], X, Y)
-    };
-
+    
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();

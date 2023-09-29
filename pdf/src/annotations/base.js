@@ -32,6 +32,10 @@
 
 (function(){
 
+    let BORDER_EFFECT_STYLES = {
+        None:   0,
+        Cloud:  1
+    }
 	/**
 	 * Class representing a base annotation.
 	 * @constructor
@@ -47,24 +51,28 @@
         this._creationDate          = undefined;
         this._delay                 = false; // пока не используется
         this._doc                   = oDoc;
-        this._hidden                = undefined;
         this._inReplyTo             = undefined;
         this._intent                = undefined;
         this._lock                  = undefined;
+        this._lockContent           = undefined;
         this._modDate               = undefined;
         this._name                  = sName;
-        this._noView                = undefined;
         this._opacity               = 1;
         this._page                  = nPage;
-        this._print                 = undefined;
         this._rect                  = aRect;
-        this._readOnly              = undefined;
         this._refType               = undefined;
         this._seqNum                = undefined;
         this._strokeColor           = undefined;
         this._style                 = undefined;
         this._subject               = undefined;
         this._toggleNoView          = undefined;
+        this._richContents          = undefined;
+        this._display               = undefined;
+        this._noRotate              = undefined;
+        this._noZoom                = undefined;
+        this._fillColor             = undefined;
+        this._dash                  = undefined;
+        this._rectDiff              = undefined;
 
         // internal
         this._bDrawFromStream   = false; // нужно ли рисовать из стрима
@@ -76,6 +84,87 @@
         }
         this._wasChanged            = false;
     }
+    CAnnotationBase.prototype.SetReqtangleDiff = function(aDiff) {
+        this._rectDiff = aDiff;
+    };
+    CAnnotationBase.prototype.SetNoRotate = function(bValue) {
+        this._noRotate = bValue;
+    };
+    CAnnotationBase.prototype.SetNoZoom = function(bValue) {
+        this._noZoom = bValue;
+    };
+    CAnnotationBase.prototype.SetDash = function(aDash) {
+        this._dash = aDash;
+    };
+    CAnnotationBase.prototype.SetFillColor = function(aColor) {
+        this._fillColor = aColor;
+    };
+    CAnnotationBase.prototype.SetWidth = function(nWidth) {
+        this._width = nWidth;
+    };
+    CAnnotationBase.prototype.SetRichContents = function(sText) {
+        this._richContents = sText;
+    };
+    CAnnotationBase.prototype.SetIntent = function(nType) {
+        this._intent = nType;
+    };
+    CAnnotationBase.prototype.SetLock = function(bValue) {
+        this._lock = bValue;
+    };
+    CAnnotationBase.prototype.SetLockContent = function(bValue) {
+        this._lockContent = bValue;
+    };
+    CAnnotationBase.prototype.SetBorder = function(nType) {
+        this._border = nType;
+    };
+    CAnnotationBase.prototype.SetBorderEffectIntensity = function(nValue) {
+        this._borderEffectIntensity = nValue;
+    };
+    CAnnotationBase.prototype.SetBorderEffectStyle = function(nStyle) {
+        this._borderEffectIntensity = nStyle;
+    };
+
+    CAnnotationBase.prototype.DrawSelected = function(overlay) {
+        let rPR         = AscCommon.AscBrowser.retinaPixelRatio;
+        let style_blue  = "#939393";
+        let indent      = 0.5 * Math.round(rPR);
+
+        let nPage       = this.GetPage();
+        let oViewer     = editor.getDocumentRenderer();
+        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[nPage].Dpi);
+        let aOrigRect   = this.GetOrigRect();
+
+        let xCenter = oViewer.width >> 1;
+        if (oViewer.documentWidth > oViewer.width)
+		{
+			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
+		}
+		let yPos    = oViewer.scrollY >> 0;
+        let page    = oViewer.drawingPages[nPage];
+        let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
+        let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+
+        
+        let x1 = Math.round(indLeft + aOrigRect[0] * nScale);
+        let y1 = Math.round(indTop + aOrigRect[1] * nScale);
+        let x2 = Math.round(indLeft + aOrigRect[2] * nScale + 0.5);
+        let y2 = Math.round(indTop + aOrigRect[3] * nScale + 0.5);
+
+        overlay.m_oContext.lineWidth    = Math.round(rPR);
+        overlay.m_oContext.globalAlpha  = 1;
+        overlay.m_oContext.strokeStyle  = style_blue;
+        overlay.m_oContext.beginPath();
+
+        overlay.CheckPoint1(x1, y1);
+        overlay.CheckPoint1(x2, y2);
+        overlay.CheckPoint2(x1, y1);
+        overlay.CheckPoint2(x2, y2);
+        
+        overlay.m_oContext.rect(x1 + indent, y1 + indent, x2 - x1, y2 - y1);
+        overlay.m_oContext.stroke();
+    };
     CAnnotationBase.prototype.GetName = function() {
         return this._name;
     };
@@ -104,26 +193,32 @@
             this._wasChanged = isChanged;
         }
     };
+    
     CAnnotationBase.prototype.DrawFromStream = function(oGraphicsPDF) {
         if (this.IsHidden() == true)
             return;
             
         let originView      = this.GetOriginView();
-        let aOrigRect       = this.GetOrigRect();
         let nGrScale        = oGraphicsPDF.GetScale();
 
-        let X       = aOrigRect[0];
-        let Y       = aOrigRect[1];
-        let nWidth  = aOrigRect[2] - aOrigRect[0];
-        let nHeight = aOrigRect[3] - aOrigRect[1];
-        
         if (originView) {
+            let aOrigRect       = this.GetOrigRect();
+            
+            let X       = this.IsTextMarkup() ? originView.x / nGrScale : aOrigRect[0];
+            let Y       = this.IsTextMarkup() ? originView.y / nGrScale : aOrigRect[1];
+            let nWidth  = originView.width / nGrScale;
+            let nHeight = originView.height / nGrScale;
+
             if (this.IsHighlight())
                 oGraphicsPDF.context.globalCompositeOperation = "multiply";
             
-            oGraphicsPDF.DrawImage(originView, 0, 0, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale, X - 1 / nGrScale, Y - 1 / nGrScale, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale);
+            oGraphicsPDF.DrawImage(originView, 0, 0, nWidth, nHeight, X, Y, nWidth, nHeight);
             oGraphicsPDF.context.globalCompositeOperation = "source-over";
         }
+    };
+    // CAnnotationBase.prototype.SetCaptionPositioning
+    CAnnotationBase.prototype.SetSubject = function(sSubject) {
+        this._subject = sSubject;
     };
     /**
      * Returns a canvas with origin view (from appearance stream) of current annot.
@@ -146,8 +241,12 @@
         oApInfoTmp = oApearanceInfo["N"];
         oSavedView = this._originView.normal;
 
-        if (oSavedView && oSavedView.width == oApearanceInfo["w"] && oSavedView.height == oApearanceInfo["h"])
-            return oSavedView;
+        if (oSavedView) {
+            // sticky note всегда одинаковый при зуме
+            if (this.IsComment() || oSavedView.width == oApearanceInfo["w"] && oSavedView.height == oApearanceInfo["h"]) {
+                return oSavedView;
+            }
+        }
         
         let canvas  = document.createElement("canvas");
         let nWidth  = oApearanceInfo["w"];
@@ -348,7 +447,7 @@
                 if (nCurIdxOnPage != -1)
                     oViewer.pagesInfo.pages[nCurPage].annots.splice(nCurIdxOnPage, 1);
     
-                if (oViewer.pagesInfo.pages[nPage].annots.indexOf(this) == -1)
+                if (this.IsInDocument() && oViewer.pagesInfo.pages[nPage].annots.indexOf(this) == -1)
                     oViewer.pagesInfo.pages[nPage].annots.push(this);
 
                 oDoc.History.Add(new CChangesPDFAnnotPage(this, nCurPage, nPage));
@@ -369,11 +468,17 @@
         return this._doc;
     };
     CAnnotationBase.prototype.IsHidden = function() {
-        return this._hidden;
+        let nType = this.GetDisplay();
+        if (nType == window["AscPDF"].Api.Objects.display["hidden"] || nType == window["AscPDF"].Api.Objects.display["noView"])
+            return true;
+
+        return false;
     };
-    CAnnotationBase.prototype.SetHidden = function(bHidden) {
-        this._hidden = bHidden;
-        this.SetWasChanged(true);
+    CAnnotationBase.prototype.SetDisplay = function(nType) {
+        this._display = nType;
+    };
+    CAnnotationBase.prototype.GetDisplay = function() {
+        return this._display;
     };
     CAnnotationBase.prototype.onMouseUp = function() {
         let oPos = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w, this._pagePos.y + this._pagePos.h / 2, this.GetPage(), true);
@@ -385,7 +490,7 @@
         oReply.SetContents(oReplyInfo["Contents"]);
         oReply.SetModDate(AscPDF.ParsePDFDate(oReplyInfo["LastModified"]).getTime());
         oReply.SetAuthor(oReplyInfo["User"]);
-        oReply.SetHidden(false);
+        oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
 
         if (this.IsComment())
             this._replies.push(oReply);
@@ -411,7 +516,7 @@
             oTextAnnot.SetContents(contents);
             oTextAnnot.SetModDate(this.GetModDate());
             oTextAnnot.SetAuthor(this.GetAuthor());
-            oTextAnnot.SetHidden(false);
+            oTextAnnot.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
 
             this._contents  = oTextAnnot;
             oNewContents    = oTextAnnot;
@@ -521,10 +626,57 @@
 
         return oColor;
     };
-    CAnnotationBase.prototype.onMouseDown = function() {
-        return;
+    CAnnotationBase.prototype.LazyCopy = function() {
+        let oDoc = this.GetDocument();
+        oDoc.TurnOffHistory();
+
+        let oNewAnnot = new CAnnotationBase(AscCommon.CreateGUID(), this.type, this.GetPage(), this.GetRect().slice(), oDoc);
+
+        if (this._pagePos) {
+            oNewAnnot._pagePos = {
+                x: this._pagePos.x,
+                y: this._pagePos.y,
+                w: this._pagePos.w,
+                h: this._pagePos.h
+            }
+        }
+
+        if (this._origRect)
+            oNewAnnot._origRect = this._origRect.slice();
+
+        oNewAnnot._originView = this._originView;
+        oNewAnnot._apIdx = this._apIdx;
+        oNewAnnot.SetOriginPage(this.GetOriginPage());
+        oNewAnnot.SetAuthor(this.GetAuthor());
+        oNewAnnot.SetModDate(this.GetModDate());
+        oNewAnnot.SetCreationDate(this.GetCreationDate());
+        oNewAnnot.SetContents(this.GetContents());
+
+        return oNewAnnot;
     };
-    
+    CAnnotationBase.prototype.Draw = function(oGraphics) {
+        this.DrawFromStream(oGraphics);
+    };
+
+    CAnnotationBase.prototype.onMouseDown = function(e) {
+        let oViewer         = editor.getDocumentRenderer();
+        let oDrawingObjects = oViewer.DrawingObjects;
+        let oDoc            = this.GetDocument();
+        let oDrDoc          = oDoc.GetDrawingDocument();
+
+        this.selectStartPage = this.GetPage();
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
+
+        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
+    };
+    CAnnotationBase.prototype.createMoveTrack = function() {
+        return new AscFormat.MoveAnnotationTrack(this);
+    };
+
     CAnnotationBase.prototype.SetStrokeColor = function(aColor) {
         let oViewer = editor.getDocumentRenderer();
 
@@ -553,7 +705,9 @@
     CAnnotationBase.prototype.getMediaFileName = function() {
         return false;
     };
-
+    CAnnotationBase.prototype.canEdit = function() {
+        return false;
+    };
     // // заглушки для трекинга
     // CAnnotationBase.prototype.canChangeAdjustments = function() {
     //     return true;

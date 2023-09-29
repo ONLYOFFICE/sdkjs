@@ -193,7 +193,7 @@
         let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
         let X       = oPos.X;
         let Y       = oPos.Y;
 
@@ -590,7 +590,7 @@
 
         return geometry;
     };
-    CAnnotationInk.prototype.Copy = function() {
+    CAnnotationInk.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
         oDoc.TurnOffHistory();
 
@@ -609,6 +609,9 @@
         oGraphicObjCopy.pen = new AscFormat.CLn();
         oDrawingCopy.CheckWH();
 
+        oNewInk._apIdx = this._apIdx;
+        oNewInk._originView = this._originView;
+        oNewInk.SetOriginPage(this.GetOriginPage());
         oNewInk.SetAuthor(this.GetAuthor());
         oNewInk.SetModDate(this.GetModDate());
         oNewInk.SetCreationDate(this.GetCreationDate());
@@ -682,7 +685,7 @@
         return false; // to сделать вращение
     };
     CAnnotationInk.prototype.canEdit = function() {
-        true;
+        return true;
     };
     CAnnotationInk.prototype.canChangeAdjustments = function() {
         return this.GetDrawing().GraphicObj.canChangeAdjustments();
