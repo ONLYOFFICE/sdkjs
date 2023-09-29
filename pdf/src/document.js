@@ -954,7 +954,7 @@ var CPresentation = CPresentation || function(){};
 
             let cursorType = "default";
             if (oViewer.MouseHandObject)
-                cursorType = "grab";
+                cursorType = AscCommon.Cursors.Grab;
 
             if (mouseMoveLinkObject)
                 cursorType = "pointer";
