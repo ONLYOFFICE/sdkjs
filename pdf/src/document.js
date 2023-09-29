@@ -954,7 +954,7 @@ var CPresentation = CPresentation || function(){};
 
             let cursorType = "default";
             if (oViewer.MouseHandObject)
-                cursorType = "pointer";
+                cursorType = "grab";
 
             if (mouseMoveLinkObject)
                 cursorType = "pointer";
@@ -981,6 +981,9 @@ var CPresentation = CPresentation || function(){};
             }
             else if (mouseMoveAnnotObject && (mouseMoveAnnotObject.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink && mouseMoveAnnotObject.IsTextMarkup() == false)) {
             	cursorType = "move";
+            }
+            else if (mouseMoveAnnotObject && mouseMoveAnnotObject.IsTextMarkup()) {
+            	cursorType = "default";
             }
 
             oViewer.setCursorType(cursorType);
