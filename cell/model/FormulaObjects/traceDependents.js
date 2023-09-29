@@ -904,25 +904,24 @@ function (window, undefined) {
 		let t = this;
 		let currentCellIndex = AscCommonExcel.getCellIndex(row, col);
 		let isHaveUnrecorded = this.isCellHaveUnrecordedTraces(currentCellIndex, formulaParsed);
+		let newOutStack = this.createNewOutStack(formulaParsed);
 
 		if (isHaveUnrecorded) {
-			// if (!this.precedents[currentCellIndex]) {
 			let shared, base;
 			if (formulaParsed.shared !== null) {
 				shared = formulaParsed.getShared();
 				base = shared.base;		// base index - where shared formula start
 			}
 
-			if (formulaParsed.outStack) {
+			if (newOutStack) {
 				let currentWsIndex = formulaParsed.ws.index;
 				let ref = formulaParsed.ref;
-				// iterate and find all reference
-				for (let index in formulaParsed.outStack) {
-					if (!formulaParsed.outStack.hasOwnProperty(index)) {
+				// iterate through the elements and find all reference
+				for (let index in newOutStack) {
+					if (!newOutStack.hasOwnProperty(index)) {
 						continue;
 					}
-
-					let elem = formulaParsed.outStack[index];
+					let elem = newOutStack[index];
 					let elemType = elem.type ? elem.type : null;
 
 					let is3D = elemType === cElementType.cell3D || elemType === cElementType.cellsRange3D || elemType === cElementType.name3D,
@@ -930,13 +929,14 @@ function (window, undefined) {
 						isDefName = elemType === cElementType.name || elemType === cElementType.name3D,
 						isTable = elemType === cElementType.table, areaName;
 
-					if (elemType === cElementType.cell || isArea || is3D || isTable) {
-
+					if (elemType === cElementType.cell || is3D || isArea || isDefName || isTable) {
 						let cellRange = new asc_Range(col, row, col, row), elemRange, elemCellIndex;
-
 						if (isDefName) {
 							let elemDefName = elem.getDefName();
 							let elemValue = elem.getValue();
+							if (!elemDefName) {
+								continue
+							}
 							let defNameParentWsIndex = elemDefName.parsedRef.outStack[0].wsFrom ? elemDefName.parsedRef.outStack[0].wsFrom.index : (elemDefName.parsedRef.outStack[0].ws ? elemDefName.parsedRef.outStack[0].ws.index : null);
 							elemRange = elemValue.range.bbox ? elemValue.range.bbox : elemValue.bbox;
 
@@ -954,7 +954,6 @@ function (window, undefined) {
 							is3D = currentWsId !== elemWsId;
 							elemRange = elem.area.bbox ? elem.area.bbox : (elem.area.range ? elem.area.range.bbox : null);
 							isArea = ref ? true : !elemRange.isOneCell();
-
 						} else {
 							elemRange = elem.range.bbox ? elem.range.bbox : elem.bbox;
 						}
@@ -990,8 +989,9 @@ function (window, undefined) {
 							elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1, elemRange.c1);
 						}
 
-						// cross check for cell
-						if (isArea && !ref && !is3D) {
+						// cross check for element:
+						// if element isArea and does not reference to another sheet and element not in the function and formula is not CSE - do cross check
+						if (isArea && !ref && !is3D && !elem.inFormulaRef) {
 							if (elemRange.getWidth() > 1 && elemRange.getHeight() <= 1) {
 								// check cols
 								if (elemRange.containsCol(col)) {
@@ -1069,6 +1069,36 @@ function (window, undefined) {
 			this.setPrecedentsLoop(false);
 		}
 	};
+	TraceDependentsManager.prototype.createNewOutStack = function (formulaParsed) {
+		const newOutStack = [];
+		if (formulaParsed && formulaParsed.outStack) {
+			let length = formulaParsed.outStack.length, elem, isPartOfFunc, numberOfArgs, funcReturnArr;
+			for (let i = length - 1; i >= 0; i--) {
+				elem = formulaParsed.outStack[i];
+				if (isPartOfFunc && numberOfArgs > 0 && funcReturnArr) {
+					if (cElementType.cellsRange === elem.type || cElementType.name === elem.type) {
+						// range refers to formula, add property inFormulaRef = true
+						elem.inFormulaRef = true;
+						numberOfArgs--;
+					}
+				}
+
+				if (elem.type === cElementType.func) {
+					isPartOfFunc = true;
+					numberOfArgs = formulaParsed.outStack[i - 1];
+					funcReturnArr = elem.returnValueType === 2 ? true : false;
+				}
+
+				if (elem.type === cElementType.cell3D || elem.type === cElementType.cellsRange3D || elem.type === cElementType.name3D 
+					|| elem.type === cElementType.cell || elem.type === cElementType.cellsRange || elem.type === cElementType.name || elem.type === cElementType.table) {
+					newOutStack.push(elem);
+				}
+			}
+			return newOutStack;
+		} else {
+			return false;
+		}
+	};
 	TraceDependentsManager.prototype.isCellHaveUnrecordedTraces = function (cellIndex, formulaParsed) {
 		if (formulaParsed && formulaParsed.outStack) {
 			let currentWsIndex = formulaParsed.ws.index,
@@ -1093,7 +1123,7 @@ function (window, undefined) {
 					isDefName = elemType === cElementType.name || elemType === cElementType.name3D,
 					isTable = elemType === cElementType.table;
 
-				if (elemType === cElementType.cell || isArea || is3D || isTable) {
+				if (elemType === cElementType.cell || isArea || is3D || isDefName || isTable) {
 					let elemRange, elemCellIndex;
 
 					if (isDefName) {
