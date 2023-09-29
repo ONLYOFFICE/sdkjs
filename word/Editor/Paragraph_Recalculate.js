@@ -3502,7 +3502,7 @@ CParagraphRecalculateStateWrap.prototype.getDocumentSettings = function()
 	if (logicDocument && logicDocument.IsDocumentEditor())
 		return logicDocument.getDocumentSettings();
 	
-	return new DocumentSettings(null);
+	return new AscWord.DocumentSettings(null);
 };
 CParagraphRecalculateStateWrap.prototype.getCompatibilityMode = function()
 {
