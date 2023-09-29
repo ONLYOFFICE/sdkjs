@@ -67,8 +67,8 @@ const AscHyphenation = {};
 			return [1];
 		else if ("abbbb" === checkString)
 			return [1];
-		else if ("aaabbb" === checkString)
-			return [3];
+		else if ("aaaaabbb" === checkString)
+			return [5];
 		else if ("testtest" === checkString)
 			return [4];
 		else if ("aabbbcccdddd" === checkString)

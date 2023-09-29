@@ -3503,6 +3503,14 @@ CParagraphRecalculateStateWrap.prototype.Set_LineBreakPos = function(PosObj, isF
 	this.LineBreakFirst = isFirstItemOnLine;
 	this.ResetLastAutoHyphen();
 };
+CParagraphRecalculateStateWrap.prototype.getCompatibilityMode = function()
+{
+	let logicDocument = this.Paragraph.GetLogicDocument();
+	if (!logicDocument || !logicDocument.GetCompatibilityMode)
+		return AscCommon.document_compatibility_mode_Word12;
+	
+	return logicDocument.GetCompatibilityMode();
+};
 CParagraphRecalculateStateWrap.prototype.getXLimit = function()
 {
 	// TODO: Когда перенесем весь расчет в данный класс (из Run.Recalculate_Range), то

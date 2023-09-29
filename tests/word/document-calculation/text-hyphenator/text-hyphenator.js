@@ -57,11 +57,12 @@ $(function ()
 		run.AddText(text);
 	}
 	
-	let autoHyphenation = false;
-	let hyphenateCaps   = true;
-	let hyphenLimit     = 0;
-	let hyphenationZone = 0;
-	let condensedSpaces = false;
+	let autoHyphenation   = false;
+	let hyphenateCaps     = true;
+	let hyphenLimit       = 0;
+	let hyphenationZone   = 0;
+	let condensedSpaces   = false;
+	let compatibilityMode = AscCommon.document_compatibility_mode_Word12;
 	
 	AscWord.Paragraph.prototype.isAutoHyphenation = function()
 	{
@@ -87,6 +88,10 @@ $(function ()
 	{
 		return condensedSpaces;
 	};
+	AscWord.ParagraphRecalculationWrapState.prototype.getCompatibilityMode = function()
+	{
+		return compatibilityMode;
+	};
 	
 	function setAutoHyphenation(isAuto)
 	{
@@ -107,6 +112,10 @@ $(function ()
 	function setCondensedSpaces(isCondensed)
 	{
 		condensedSpaces = isCondensed;
+	}
+	function setCompatibilityMode(mode)
+	{
+		compatibilityMode = mode;
 	}
 	
 	function checkLines(assert, isAutoHyphenation, contentWidth, textLines)
@@ -487,6 +496,26 @@ $(function ()
 		// 	"abcd ",
 		// 	"aabbbcccdddd"
 		// ]);
+		
+		
+		// Начиная с 15-ой версии параметр hyphenationZone не учитывается, и всегда предполагается, что он
+		// равен стандартному значению
+		setText("abcd aaaaabbb");
+		setHyphenationZone(7.5 * charWidth);
+		
+		setCompatibilityMode(AscCommon.document_compatibility_mode_Word15);
+		
+		checkLines(assert, true, charWidth * 12.5, [
+			"abcd aaaaa-",
+			"bbb",
+		]);
+		
+		setCompatibilityMode(AscCommon.document_compatibility_mode_Word12);
+		
+		checkLines(assert, true, charWidth * 12.5, [
+			"abcd ",
+			"aaaaabbb",
+		]);
 		
 	});
 	
