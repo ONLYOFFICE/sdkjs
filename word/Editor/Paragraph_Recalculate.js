@@ -3383,20 +3383,13 @@ CParagraphRecalculateStateWrap.prototype.Reset_Page = function(Paragraph, CurPag
 	this.CondensedSpaces = Paragraph.IsCondensedSpaces();
 	this.BalanceSBDB     = Paragraph.IsBalanceSingleByteDoubleByteWidth();
 	
-	let logicDocument = Paragraph.GetLogicDocument();
-	if (logicDocument && logicDocument.IsDocumentEditor())
-	{
-		let settings = logicDocument.GetDocumentSettings();
-		this.autoHyphenation = settings.isAutoHyphenation();
-		this.autoHyphenLimit = settings.getConsecutiveHyphenLimit();
-		this.hyphenationZone = AscCommon.TwipsToMM(settings.getHyphenationZone());
-	}
-	else
-	{
-		this.autoHyphenation = false;
-		this.autoHyphenLimit = 0;
-		this.hyphenationZone = 0;
-	}
+	let settings = this.getDocumentSettings();
+	this.autoHyphenation = settings.isAutoHyphenation();
+	this.autoHyphenLimit = settings.getConsecutiveHyphenLimit();
+	this.hyphenationZone = AscCommon.TwipsToMM(settings.getHyphenationZone());
+	
+	if (settings.getCompatibilityMode() >= AscCommon.document_compatibility_mode_Word15)
+		this.hyphenationZone = AscCommon.TwipsToMM(AscWord.DEFAULT_HYPHENATION_ZONE);
 	
 	this.Page               = CurPage;
 	this.RunRecalcInfoLast  = (0 === CurPage ? null : Paragraph.Pages[CurPage - 1].EndInfo.RunRecalcInfo);
@@ -3503,13 +3496,17 @@ CParagraphRecalculateStateWrap.prototype.Set_LineBreakPos = function(PosObj, isF
 	this.LineBreakFirst = isFirstItemOnLine;
 	this.ResetLastAutoHyphen();
 };
-CParagraphRecalculateStateWrap.prototype.getCompatibilityMode = function()
+CParagraphRecalculateStateWrap.prototype.getDocumentSettings = function()
 {
 	let logicDocument = this.Paragraph.GetLogicDocument();
-	if (!logicDocument || !logicDocument.GetCompatibilityMode)
-		return AscCommon.document_compatibility_mode_Word12;
+	if (logicDocument && logicDocument.IsDocumentEditor())
+		return logicDocument.getDocumentSettings();
 	
-	return logicDocument.GetCompatibilityMode();
+	return new DocumentSettings(null);
+};
+CParagraphRecalculateStateWrap.prototype.getCompatibilityMode = function()
+{
+	return this.getDocumentSettings().getCompatibilityMode();
 };
 CParagraphRecalculateStateWrap.prototype.getXLimit = function()
 {

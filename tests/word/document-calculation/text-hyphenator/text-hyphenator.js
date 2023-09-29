@@ -57,57 +57,73 @@ $(function ()
 		run.AddText(text);
 	}
 	
-	let autoHyphenation   = false;
-	let hyphenateCaps     = true;
-	let hyphenLimit       = 0;
-	let hyphenationZone   = 0;
-	let condensedSpaces   = false;
-	let compatibilityMode = AscCommon.document_compatibility_mode_Word12;
+	/**
+	 * @constructor
+	 */
+	function DocumentSettingsFake()
+	{
+		this.autoHyphenation   = false;
+		this.hyphenateCaps     = true;
+		this.hyphenLimit       = 0;
+		this.hyphenationZone   = 0;
+		this.compatibilityMode = AscCommon.document_compatibility_mode_Word12;
+	}
+	DocumentSettingsFake.prototype.getCompatibilityMode = function()
+	{
+		return this.compatibilityMode;
+	};
+	DocumentSettingsFake.prototype.getHyphenationZone = function()
+	{
+		return this.hyphenationZone;
+	};
+	DocumentSettingsFake.prototype.isAutoHyphenation = function()
+	{
+		return this.autoHyphenation;
+	};
+	DocumentSettingsFake.prototype.isHyphenateCaps = function()
+	{
+		return this.hyphenateCaps;
+	};
+	DocumentSettingsFake.prototype.getConsecutiveHyphenLimit = function()
+	{
+		return this.hyphenLimit;
+	};
 	
+	let settings        = new DocumentSettingsFake();
+	let condensedSpaces = false;
+	
+	AscWord.ParagraphRecalculationWrapState.prototype.getDocumentSettings = function()
+	{
+		return settings;
+	};
 	AscWord.Paragraph.prototype.isAutoHyphenation = function()
 	{
-		return autoHyphenation;
-	};
-	AscWord.ParagraphRecalculationWrapState.prototype.isAutoHyphenation = function()
-	{
-		return autoHyphenation;
-	};
-	AscWord.ParagraphRecalculationWrapState.prototype.getAutoHyphenLimit = function()
-	{
-		return hyphenLimit;
-	};
-	AscWord.ParagraphRecalculationWrapState.prototype.getHyphenationZone = function()
-	{
-		return hyphenationZone;
+		return settings.isAutoHyphenation();
 	};
 	AscWord.TextHyphenator.prototype.isHyphenateCaps = function()
 	{
-		return hyphenateCaps;
+		return settings.isHyphenateCaps();
 	};
 	AscWord.Paragraph.prototype.IsCondensedSpaces = function()
 	{
 		return condensedSpaces;
 	};
-	AscWord.ParagraphRecalculationWrapState.prototype.getCompatibilityMode = function()
-	{
-		return compatibilityMode;
-	};
 	
 	function setAutoHyphenation(isAuto)
 	{
-		autoHyphenation = isAuto;
+		settings.autoHyphenation = isAuto;
 	}
 	function setHyphenateCaps(isHyphenate)
 	{
-		hyphenateCaps = isHyphenate;
+		settings.hyphenateCaps = isHyphenate;
 	}
 	function setHyphenLimit(limit)
 	{
-		hyphenLimit = limit;
+		settings.hyphenLimit = limit;
 	}
 	function setHyphenationZone(zone)
 	{
-		hyphenationZone = zone;
+		settings.hyphenationZone = AscCommon.MMToTwips(zone);
 	}
 	function setCondensedSpaces(isCondensed)
 	{
@@ -115,7 +131,7 @@ $(function ()
 	}
 	function setCompatibilityMode(mode)
 	{
-		compatibilityMode = mode;
+		settings.compatibilityMode = mode;
 	}
 	
 	function checkLines(assert, isAutoHyphenation, contentWidth, textLines)
@@ -162,6 +178,7 @@ $(function ()
 			setAutoHyphenation(false);
 			setHyphenateCaps(true);
 			setHyphenLimit(0);
+			setCompatibilityMode(AscCommon.document_compatibility_mode_Word12);
 		}
 	});
 	

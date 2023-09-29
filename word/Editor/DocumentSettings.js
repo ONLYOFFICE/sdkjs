@@ -72,6 +72,10 @@
 		this.UlTrailSpace                     = false;
 		this.UseFELayout                      = false;
 	}
+	DocumentSettings.prototype.getCompatibilityMode = function()
+	{
+		return this.CompatibilityMode;
+	};
 	DocumentSettings.prototype.isAutoHyphenation = function()
 	{
 		return !!this.autoHyphenation;
@@ -121,6 +125,7 @@
 		AscCommon.AddAndExecuteChange(new CChangesDocumentSettingsHyphenationZone(this.LogicDocument, this.hyphenationZone, zone));
 	};
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscWord'].DocumentSettings = DocumentSettings;
+	window['AscWord'].DocumentSettings         = DocumentSettings;
+	window['AscWord'].DEFAULT_HYPHENATION_ZONE = DEFAULT_HYPHENATION_ZONE;
 
 })(window);
