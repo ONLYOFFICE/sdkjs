@@ -138,6 +138,10 @@
 	{
 		return this.ReadTokensWhileEnd(oLiteralNames.charLiteral)
 	};
+	CLaTeXParser.prototype.GetOtherLiteral = function ()
+	{
+		return this.ReadTokensWhileEnd(oLiteralNames.otherLiteral)
+	};
 	CLaTeXParser.prototype.GetSpaceLiteral = function ()
 	{
 		//todo LaTex skip all normal spaces
@@ -329,6 +333,7 @@
 			this.IsFractionLiteral() ||
 			this.oLookahead.class === oLiteralNames.numberLiteral[0] ||
 			this.oLookahead.class === oLiteralNames.charLiteral[0] ||
+			this.oLookahead.class === oLiteralNames.otherLiteral[0] ||
 			this.oLookahead.class === oLiteralNames.spaceLiteral[0] ||
 			this.IsSqrtLiteral() ||
 			this.IsExpBracket() ||
@@ -383,6 +388,10 @@
 		else if (this.oLookahead.class === oLiteralNames.charLiteral[0])
 		{
 			return this.GetCharLiteral();
+		}
+		else if (this.oLookahead.class === oLiteralNames.otherLiteral[0])
+		{
+			return this.GetOtherLiteral();
 		}
 		else if (this.oLookahead.class === oLiteralNames.opDecimal[0])
 		{
@@ -485,7 +494,7 @@
 		this.EatToken(this.oLookahead.class);
 		let oContent = this.GetArguments(1);
 
-		if(base && base.type === oLiteralNames.functionLiteral[num])
+		if(base && base.type === oLiteralNames.functionLiteral[num] || base.type === oLiteralNames.functionWithLimitLiteral[num])
 		{
 			this.SkipFreeSpace();
 			let third = this.GetArguments(1);

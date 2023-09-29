@@ -3744,7 +3744,10 @@ ParaMath.prototype.CalculateTextToTable = function(oEngine)
 };
 ParaMath.prototype.ConvertFromLaTeX = function()
 {
+	AscMath.SetIsLaTeXGetParaRun(false);
 	var strLaTeX = this.GetText(true);
+	AscMath.SetIsLaTeXGetParaRun(true);
+
     this.Root.Remove_Content(0, this.Root.Content.length);
     this.Root.Correct_Content(true);
     AscMath.ConvertLaTeXToTokensList(strLaTeX, this.Root);

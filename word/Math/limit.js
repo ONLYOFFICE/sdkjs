@@ -332,7 +332,6 @@ CLimit.prototype.GetTextOfElement = function(isLaTeX) {
 			strFuncName === 'min' ||
 			strFuncName === 'ln')
         {
-            strLimitSymbol = (this.Pr.type == 1) ? "^" : "_";
             strFuncName = '\\' + strFuncName;
 		}
 	}

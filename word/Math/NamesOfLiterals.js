@@ -622,8 +622,18 @@
 		["Β"],
 		["□", oNamesOfLiterals.boxLiteral[0]],
 		["\\Bmatrix", oNamesOfLiterals.matrixLiteral[0]],
+
 		["\\left", true],
+		["\\leftrightarrow", oNamesOfLiterals.charLiteral[0]],
+		["\\Leftrightarrow", oNamesOfLiterals.charLiteral[0]],
+		["\\leftarrow",  oNamesOfLiterals.charLiteral[0]],
+		["\\Leftarrow", oNamesOfLiterals.charLiteral[0]],
+
+		["\\gets",  oNamesOfLiterals.charLiteral[0]],
+
 		["\\right", true],
+		["\\rightarrow", oNamesOfLiterals.charLiteral[0]],
+		["\\Rightarrow", oNamesOfLiterals.charLiteral[0]],
 		["⇔", oNamesOfLiterals.operatorLiteral[0]],
 		["⟫", oNamesOfLiterals.opCloseBracket[0]],
 		["⟧", oNamesOfLiterals.opCloseBracket[0]],
@@ -890,7 +900,7 @@
 		[" ", oNamesOfLiterals.spaceLiteral[0]],
 		["̃", MathLiterals.accent.id],
 		["×", oNamesOfLiterals.operatorLiteral[0]],
-		["→"],
+		//["→", oNamesOfLiterals.groupLiteral[0]],
 		["⊤", oNamesOfLiterals.operatorLiteral[0]],
 		["⃡", MathLiterals.accent.id],
 		["̲", MathLiterals.accent.id], //check
@@ -2103,6 +2113,24 @@
 		return code;
 	}
 
+	function GetLaTeXFromValue(value)
+	{
+		if (!isGetLaTeX)
+			return undefined;
+
+		let arrValue = Object.keys(AutoCorrection).filter(key => AutoCorrection[key] === value);
+
+		for (let i = 0; i < arrValue.length; i++)
+		{
+			let currentValue = arrValue[i];
+			if (currentValue[0] === "\\")
+			{
+				return currentValue;
+			}
+		}
+		return undefined;
+	}
+
 	let AutoCorrection = {
 		"\\above": "┴",
 		"\\acute": "́",
@@ -3222,6 +3250,18 @@
 			: AscMath.ConvertLaTeXToTokensList(strConversionData, oContext);
 	}
 
+	let isGetLaTeX = false;
+
+	function SetIsLaTeXGetParaRun(isConvert)
+	{
+		isGetLaTeX = isConvert;
+	}
+
+	function GetIsLaTeXGetParaRun()
+	{
+		return isGetLaTeX;
+	}
+
 	//--------------------------------------------------------export----------------------------------------------------
 	window["AscMath"] = window["AscMath"] || {};
 	window["AscMath"].oNamesOfLiterals 				= oNamesOfLiterals;
@@ -3243,4 +3283,7 @@
 	window["AscMath"].SymbolsToLaTeX 				= SymbolsToLaTeX;
 	window["AscMath"].UpdateAutoCorrection 			= UpdateAutoCorrection;
 	window["AscMath"].UpdateFuncCorrection 			= UpdateFuncCorrection;
+	window["AscMath"].GetLaTeXFromValue 			= GetLaTeXFromValue;
+	window["AscMath"].SetIsLaTeXGetParaRun 			= SetIsLaTeXGetParaRun;
+
 })(window);

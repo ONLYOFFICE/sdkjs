@@ -532,10 +532,28 @@ ParaRun.prototype.GetText = function(oText)
 
 ParaRun.prototype.GetTextOfElement = function(isLaTeX)
 {
-    var str = "";
-	for (var i = 0; i < this.Content.length; i++) {
-		if (this.Content[i]) {
-			str += this.Content[i].GetTextOfElement(isLaTeX);
+    let str = "";
+	for (let i = 0; i < this.Content.length; i++)
+	{
+		if (this.Content[i])
+		{
+			let strTemp = this.Content[i].GetTextOfElement(isLaTeX);
+
+			if (isLaTeX)
+			{
+				let value = AscMath.GetLaTeXFromValue(strTemp);
+				if (value)
+				{
+					str += value;
+				}
+				else
+				{
+					str += strTemp;
+				}
+			}
+			else{
+				str += strTemp;
+			}
 		}
 	}
 	return str;
