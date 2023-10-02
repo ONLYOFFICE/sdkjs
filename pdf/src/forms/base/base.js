@@ -1599,15 +1599,17 @@
         return null;
     };
 	
-	CBaseField.prototype.DrawOnPage = function(pdfGraphics, textBoxGraphics, pageIndex) {
-		if (this.IsHidden())
-			return;
+    CBaseField.prototype.DrawOnPage = function(pdfGraphics, textBoxGraphics, pageIndex) {
+        if (this.IsHidden())
+            return;
 		
-		if (this.IsNeedDrawFromStream())
-			this.DrawFromStream(pdfGraphics);
-		else
-			this.DrawFromTextBox(pdfGraphics, textBoxGraphics, pageIndex);
-	};
+        if (this.IsNeedDrawFromStream()) {
+            this.Recalculate();
+            this.DrawFromStream(pdfGraphics);
+        }
+        else
+            this.DrawFromTextBox(pdfGraphics, textBoxGraphics, pageIndex);
+    };
 
     CBaseField.prototype.DrawFromStream = function(oGraphicsPDF) {
         let originView      = this.GetOriginView(this.IsHovered && this.IsHovered() ? AscPDF.APPEARANCE_TYPE.rollover : undefined);
