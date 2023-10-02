@@ -3693,7 +3693,7 @@
 				}
 			}
 		}
-		else if (cDialogType.GoalSeek_Cell === dialogType || cDialogType.GoalSeek_Cell === dialogType)
+		else if (cDialogType.GoalSeek_Cell === dialogType || cDialogType.GoalSeek_ChangingCell === dialogType)
 		{
 			result = parserHelp.parse3DRef(dataRange);
 			if (result)
