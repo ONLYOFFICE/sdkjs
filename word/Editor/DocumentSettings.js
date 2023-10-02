@@ -48,8 +48,8 @@
 		this.View                 = Asc.DocumentView.None;
 		this.MathSettings         = new AscWord.MathSettings();
 		this.CompatibilityMode    = AscCommon.document_compatibility_mode_Current;
-		this.SdtSettings          = new CSdtGlobalSettings();
-		this.SpecialFormsSettings = new CSpecialFormsGlobalSettings();
+		this.SdtSettings          = new AscWord.SdtGlobalSettings();
+		this.SpecialFormsSettings = new AscWord.SpecialFormsGlobalSettings();
 		this.WriteProtection      = undefined;
 		this.DocumentProtection   = undefined !== AscCommonWord.CDocProtect && logicDocument ? new AscCommonWord.CDocProtect() : null;
 		// TODO: Переделать AscCommonWord.CDocProtect. Класс с Id внутри класса без Id - очень плохо

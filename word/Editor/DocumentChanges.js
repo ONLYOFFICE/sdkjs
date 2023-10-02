@@ -567,7 +567,7 @@ CChangesDocumentSdtGlobalSettings.prototype.private_SetValue = function(Value)
 };
 CChangesDocumentSdtGlobalSettings.prototype.private_CreateObject = function()
 {
-	return new CSdtGlobalSettings();
+	return new AscWord.SdtGlobalSettings();
 };
 CChangesDocumentSdtGlobalSettings.prototype.private_IsCreateEmptyObject = function()
 {
@@ -624,7 +624,7 @@ CChangesDocumentSpecialFormsGlobalSettings.prototype.private_SetValue = function
 };
 CChangesDocumentSpecialFormsGlobalSettings.prototype.private_CreateObject = function()
 {
-	return new CSpecialFormsGlobalSettings();
+	return new AscWord.SpecialFormsGlobalSettings();
 };
 CChangesDocumentSpecialFormsGlobalSettings.prototype.private_IsCreateEmptyObject = function()
 {
