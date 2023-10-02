@@ -1611,7 +1611,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.AddComment = function(AscCommentData) {
         let oViewer     = editor.getDocumentRenderer();
         let pageObject  = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
-        let nGrScale    = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[pageObject.index].Dpi);
+        let nGrScale    = AscCommon.AscBrowser.retinaPixelRatio * (96 / oViewer.file.pages[pageObject.index].Dpi);
         let posToAdd    = this.anchorPositionToAdd ? this.anchorPositionToAdd : {x: 10, y: 10};
         
         let X2 = posToAdd.x + 40 / nGrScale;

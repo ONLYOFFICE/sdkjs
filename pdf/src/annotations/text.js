@@ -182,8 +182,8 @@
 
         let nScaleX = nWidth / imgW;
         let nScaleY = nHeight / imgH;
-        let wScaled = imgW * nScaleX ;
-        let hScaled = imgH * nScaleY ;
+        let wScaled = imgW * nScaleX + 0.5 >> 0;
+        let hScaled = imgH * nScaleY + 0.5 >> 0;
 
         var canvas = document.createElement('canvas');
         var context = canvas.getContext('2d');
@@ -193,7 +193,7 @@
         canvas.height = hScaled;
 
         // Draw the image onto the canvas
-        context.drawImage(ICON_TO_DRAW, 0, 0, imgW, imgH, 0, 0, wScaled >> 0, hScaled >> 0);
+        context.drawImage(ICON_TO_DRAW, 0, 0, imgW, imgH, 0, 0, wScaled, hScaled);
 
         // Get the pixel data of the canvas
         var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
@@ -220,7 +220,7 @@
 
         // Draw the comment note
         // oGraphics.DrawImage(canvas, 0, 0, wScaled, hScaled, x, y, wScaled, hScaled);
-        oGraphics.DrawImage(canvas, 0, 0,  canvas.width, canvas.height, aOrigRect[0], aOrigRect[1], canvas.width, canvas.height);
+        oGraphics.DrawImage(canvas, 0, 0,  canvas.width / oViewer.zoom, canvas.height / oViewer.zoom, aOrigRect[0], aOrigRect[1], canvas.width / oViewer.zoom, canvas.height / oViewer.zoom);
     };
         
     CAnnotationText.prototype.onMouseUp = function() {
