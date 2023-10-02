@@ -1603,8 +1603,10 @@
 		if (this.IsHidden())
 			return;
 		
-		if (this.IsNeedDrawFromStream())
-			this.DrawFromStream(pdfGraphics);
+		if (this.IsNeedDrawFromStream()) {
+            this.Recalculate();
+            this.DrawFromStream(pdfGraphics);
+        }
 		else
 			this.DrawFromTextBox(pdfGraphics, textBoxGraphics, pageIndex);
 	};
