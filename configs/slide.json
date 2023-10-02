@@ -69,8 +69,6 @@
 			"common/libfont/textmeasurer.js",
 			"common/Drawings/WorkEvents.js",
 			
-			"word/Math/mathTypes.js",
-			"word/Editor/StructuredDocumentTags/SdtPr.js",
 			"word/Editor/History.js",
 
 			"common/Shapes/EditorSettings.js",
@@ -141,7 +139,12 @@
 			"cell/model/Serialize.js",
 			"cell/model/CellInfo.js",
 			"cell/view/DrawingObjectsController.js",
-
+			
+			"word/Math/mathTypes.js",
+			"word/Math/math-settings.js",
+			"word/Editor/StructuredDocumentTags/SdtPr.js",
+			"word/Editor/DocumentSettings.js",
+			
 			"word/Editor/Paragraph/Run/FontClassification.js",
 			"word/Editor/Paragraph/Run/FontCalculator.js",
 			"word/Editor/Paragraph/Run/RunAutoCorrect.js",
@@ -262,7 +265,6 @@
 			"word/Editor/Layout/ReadView.js",
 			"word/Editor/DocumentContentBase.js",
 			"word/Editor/Document.js",
-			"word/Editor/DocumentSettings.js",
 			"word/Editor/ChangeCase.js",
 			"word/Editor/SelectedContent.js",
 			"word/Editor/DocumentOutline.js",

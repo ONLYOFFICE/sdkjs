@@ -72,8 +72,6 @@
 			"common/libfont/textmeasurer.js",
 			"common/Drawings/WorkEvents.js",
 			
-			"word/Math/mathTypes.js",
-			"word/Editor/StructuredDocumentTags/SdtPr.js",
 			"cell/model/History.js",
 
 			"common/Shapes/EditorSettings.js",
@@ -189,7 +187,12 @@
 			"common/Drawings/Format/LockedCanvas.js",
 			"common/Drawings/Format/SlicerView.js",
 			"cell/model/PivotTables.js",
-
+			
+			"word/Math/mathTypes.js",
+			"word/Math/math-settings.js",
+			"word/Editor/StructuredDocumentTags/SdtPr.js",
+			"word/Editor/DocumentSettings.js",
+			
 			"word/Editor/Paragraph/Run/FontClassification.js",
 			"word/Editor/Paragraph/Run/FontCalculator.js",
 			"word/Editor/Paragraph/Run/RunAutoCorrect.js",
@@ -265,7 +268,6 @@
 			"word/Editor/Layout/ReadView.js",
 			"word/Editor/DocumentContentBase.js",
 			"word/Editor/Document.js",
-			"word/Editor/DocumentSettings.js",
 			"word/Editor/ChangeCase.js",
 			"word/Editor/SelectedContent.js",
 			"word/Editor/DocumentOutline.js",

@@ -46,7 +46,7 @@
 		this.LogicDocument = logicDocument;
 		
 		this.View                 = Asc.DocumentView.None;
-		this.MathSettings         = undefined !== CMathSettings ? new CMathSettings() : {};
+		this.MathSettings         = new AscWord.MathSettings();
 		this.CompatibilityMode    = AscCommon.document_compatibility_mode_Current;
 		this.SdtSettings          = new CSdtGlobalSettings();
 		this.SpecialFormsSettings = new CSpecialFormsGlobalSettings();

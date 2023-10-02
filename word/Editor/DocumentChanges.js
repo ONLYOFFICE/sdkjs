@@ -537,9 +537,9 @@ CChangesDocumentMathSettings.prototype.ReadFromBinary = function(Reader)
 {
 	// Variable : New
 	// Variable : Old
-	this.New = new CMathSettings();
+	this.New = new AscWord.MathSettings();
 	this.New.Read_FromBinary(Reader);
-	this.Old = new CMathSettings();
+	this.Old = new AscWord.MathSettings();
 	this.Old.Read_FromBinary(Reader);
 };
 CChangesDocumentMathSettings.prototype.CreateReverseChange = function()
