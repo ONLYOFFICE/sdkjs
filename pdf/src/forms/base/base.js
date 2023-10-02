@@ -201,6 +201,7 @@
 
         this._partialName = sName;
         this.api = this.GetFormApi();
+        this["api"] = this.api;
     }
     
     CBaseField.prototype.AddToChildsMap = function(nIdx) {
