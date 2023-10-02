@@ -1600,15 +1600,15 @@
     };
 	
 	CBaseField.prototype.DrawOnPage = function(pdfGraphics, textBoxGraphics, pageIndex) {
-		if (this.IsHidden())
-			return;
+        if (this.IsHidden())
+            return;
 		
-		if (this.IsNeedDrawFromStream()) {
+        if (this.IsNeedDrawFromStream()) {
             this.Recalculate();
             this.DrawFromStream(pdfGraphics);
         }
-		else
-			this.DrawFromTextBox(pdfGraphics, textBoxGraphics, pageIndex);
+        else
+            this.DrawFromTextBox(pdfGraphics, textBoxGraphics, pageIndex);
 	};
 
     CBaseField.prototype.DrawFromStream = function(oGraphicsPDF) {
