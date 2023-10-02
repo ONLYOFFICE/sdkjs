@@ -220,7 +220,9 @@
 
         // Draw the comment note
         // oGraphics.DrawImage(canvas, 0, 0, wScaled, hScaled, x, y, wScaled, hScaled);
+        oGraphics.SetIntegerGrid(true);
         oGraphics.DrawImage(canvas, 0, 0,  canvas.width / oViewer.zoom, canvas.height / oViewer.zoom, aOrigRect[0], aOrigRect[1], canvas.width / oViewer.zoom, canvas.height / oViewer.zoom);
+        oGraphics.SetIntegerGrid(false);
     };
         
     CAnnotationText.prototype.onMouseUp = function() {
