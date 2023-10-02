@@ -2714,6 +2714,7 @@
 
 		//'path/[name]Sheet1'!A1
 		var path, name, startLink, i;
+		url = url && url.split(FormulaSeparators.functionArgumentSeparator)[0];
 		if (url && url[0] === "'"/*url.match(/('[^\[]*\[[^\]]+\]([^'])+'!)/g)*/) {
 			for (i = url.length - 1; i >= 0; i--) {
 				if (url[i] === "!" && url[i - 1] === "'") {
