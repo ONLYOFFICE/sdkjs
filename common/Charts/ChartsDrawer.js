@@ -114,6 +114,7 @@ function CChartsDrawer()
 	this.backWall3DChart = null;
 
 	this.errBars = new CErrBarsDraw(this);
+	this.line = new horizontalLine(this)
 
 	this.changeAxisMap = null;
 
@@ -195,6 +196,8 @@ CChartsDrawer.prototype =
 		if (!chartSpace.bEmptySeries) {
 			this.errBars.recalculate(this.charts);
 		}
+
+		this.line.recalculate(this);
 
 		//for test
 		//this._testChartsPaths();
@@ -282,7 +285,6 @@ CChartsDrawer.prototype =
 		//отрисовываем без пересчёта
 		this.areaChart.draw(this);
 
-
 		var drawCharts = function(bBeforeAxes) {
 			//рисуем 3d диаграммы только до отрисовки сетки
 			if(!bBeforeAxes && t.nDimensionCount === 3) {
@@ -331,15 +333,15 @@ CChartsDrawer.prototype =
 					this.sideWall3DChart.draw(this);
 					this.backWall3DChart.draw(this);
 				}
-				//GRID
+				// GRID
 				for(i = 0; i < this.axesChart.length; i++) {
 					this.axesChart[i].draw(this, true);
 				}
 				this.plotAreaChart.draw(this, null, true);
 			}
 
-			//DRAW 3D CHARTS
-			//рисуем оси поверх 3d-диаграмм и линейных/точечных
+			// DRAW 3D CHARTS
+			// рисуем оси поверх 3d-диаграмм и линейных/точечных
 			drawCharts(true);
 
 			for(i = 0; i < this.axesChart.length; i++) {
@@ -351,6 +353,8 @@ CChartsDrawer.prototype =
 
 			//err bars
 			this.errBars.draw();
+
+			this.line.draw();
 		}
 	},
 
@@ -4410,6 +4414,7 @@ CChartsDrawer.prototype =
 				if (!gridLines) {
 					gridLines = pathId;
 				}
+
 				this._calculateGridLine(posX, posY, posX + widthLine, posY, path);
 
 				if (crossDiff && i === points.length - 1) {
@@ -5821,8 +5826,10 @@ drawBarChart.prototype = {
 	},
 
 	_recalculateBars: function (/*isSkip*/) {
+
 		var xPoints = this.catAx.xPoints;
 		var yPoints = this.valAx.yPoints;
+
 
 		var scaleAxis = this.valAx.scale;
 		var axisMin = scaleAxis[0] < scaleAxis[scaleAxis.length - 1] ? scaleAxis[0] :scaleAxis[scaleAxis.length - 1];
@@ -14137,7 +14144,7 @@ axisChart.prototype = {
 		this.chartProp = chartsDrawer.calcProp;
 		this.cChartSpace = chartsDrawer.cChartSpace;
 		this.cChartDrawer = chartsDrawer;
-
+		
 		if(isDrawGrid) {
 			this._drawGridLines();
 		} else {
@@ -14718,14 +14725,12 @@ axisChart.prototype = {
 	_drawGridLines: function () {
 		var pen;
 		var path;
-
 		if (!this.paths.gridLines) {
 			return;
 		}
 		if(!this.axis.compiledMajorGridLines && !this.axis.compiledMinorGridLines) {
 			return;
 		}
-
 		this.cChartDrawer.cShapeDrawer.bDrawSmartAttack = true;
 		if (this.paths.minorGridLines) {
 			path = this.paths.minorGridLines;
@@ -16071,6 +16076,53 @@ CColorObj.prototype =
 
 		return { x: x, y: y };
 	};
+
+	function horizontalLine(){
+		this.chartProp = null;
+		this.cChartSpace = null;
+		this.cChartDrawer = null;
+		
+		this.paths = null;
+	}
+
+	horizontalLine.prototype = {
+
+        constructor: horizontalLine,
+	
+		draw: function(){
+			
+			// pen for border, and brush for inside?
+			// create Pen instance,
+			// create Brush instance,
+			var pen = this.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines;
+			this.cChartDrawer.drawPath(this.paths, pen);
+		},
+		
+		recalculate: function(chartsDrawer){
+			this.chartProp = chartsDrawer.calcProp;
+			this.cChartSpace = chartsDrawer.cChartSpace;
+			this.cChartDrawer = chartsDrawer;
+			this.paths = null;
+			this._calculateLine();
+		},
+
+		_calculateLine: function(){
+			var pathId = this.cChartSpace.AllocPath();
+			var path  = this.cChartSpace.GetPath(pathId);
+			var pathH = this.chartProp.pathH;
+			var pathW = this.chartProp.pathW;
+			var x1 = this.chartProp.chartGutter._left;
+			var pxToMm = this.chartProp.pxToMM;
+			var y = this.chartProp.heightCanvas/2
+			var lineWidth = this.chartProp.widthCanvas - (this.chartProp.chartGutter._left + this.chartProp.chartGutter._right);
+
+			path.moveTo(x1 / pxToMm * pathW, y/ pxToMm * pathH);
+			path.lnTo((x1 +lineWidth) / pxToMm * pathW, y/ pxToMm * pathH);
+
+
+			this.paths = pathId;
+		},
+ }
 
 
 	//----------------------------------------------------------export----------------------------------------------------
