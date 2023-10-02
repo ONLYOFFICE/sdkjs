@@ -819,20 +819,21 @@
 				const propToRemove = 'Next';
 			  
 				const keys = Object.keys(oPanentAction).filter(function(key) {
-				  return key !== propToRemove;
+					return key !== propToRemove;
 				});
 			  
 				const tempObject = {};
 			  
-				for (const key of keys) {
-				  tempObject[key] = oPanentAction[key];
+				for (let i = 0; i < keys.length; i++) {
+					const key = keys[i];
+					tempObject[key] = oPanentAction[key];
 				}
 			  
 				aActions.push(tempObject);
 			  
 				if (oPanentAction["Next"]) {
-				  const nextActions = ExtractActions(oPanentAction["Next"]);
-				  aActions = aActions.concat(nextActions);
+					const nextActions = ExtractActions(oPanentAction["Next"]);
+					aActions = aActions.concat(nextActions);
 				}
 			  
 				return aActions;
