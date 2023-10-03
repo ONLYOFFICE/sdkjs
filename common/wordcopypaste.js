@@ -1430,7 +1430,7 @@ CopyProcessor.prototype =
 
 			pptx_content_writer.Start_UseFullUrl();
 			for (var i = 0; i < elements.length; ++i) {
-				if (!(elements[i].Drawing instanceof CGraphicFrame)) {
+				if (!elements[i].Drawing.isTable()) {
 					oThis.oPresentationWriter.WriteBool(true);
 
 					oThis.CopyGraphicObject(oDomTarget, elements[i].Drawing, elements[i]);
@@ -1897,7 +1897,7 @@ CopyProcessor.prototype =
 			this.CopyTable(oDomTarget, Item, aSelectedRows);
 		}
 		History.TurnOff();
-		var graphic_frame = new CGraphicFrame(graphicFrame.parent);
+		var graphic_frame = new AscFormat.CGraphicFrame(graphicFrame.parent);
 		var grid = [];
 
 		for (var i = nMinGrid; i <= nMaxGrid; ++i) {
@@ -4079,7 +4079,7 @@ PasteProcessor.prototype =
 					//TODO переделать количество строк и ширину
 					var W = 100;
 					var Rows = 3;
-					var graphic_frame = new CGraphicFrame();
+					var graphic_frame = new AscFormat.CGraphicFrame();
 					graphic_frame.setSpPr(new AscFormat.CSpPr());
 					graphic_frame.spPr.setParent(graphic_frame);
 					graphic_frame.spPr.setXfrm(new AscFormat.CXfrm());
@@ -4274,7 +4274,7 @@ PasteProcessor.prototype =
 					var W = oThis.oDocument.GetWidthMM() / 1.45;
 					var Rows = element.GetRowsCount();
 					var H = Rows * 7.478268771701388;
-					var graphic_frame = new CGraphicFrame();
+					var graphic_frame = new AscFormat.CGraphicFrame();
 					graphic_frame.setSpPr(new AscFormat.CSpPr());
 					graphic_frame.spPr.setParent(graphic_frame);
 					graphic_frame.spPr.setXfrm(new AscFormat.CXfrm());
@@ -4328,7 +4328,7 @@ PasteProcessor.prototype =
 				//для таблиц необходимо рассчитать их размер, чтобы разместить в центре
 				var slide = presentation.Slides[0];
 				for (var i = 0; i < presentationSelectedContent.Drawings.length; i++) {
-					if (presentationSelectedContent.Drawings[i].Drawing instanceof CGraphicFrame) {
+					if (presentationSelectedContent.Drawings[i].Drawing instanceof AscFormat.CGraphicFrame) {
 						var drawing = presentationSelectedContent.Drawings[i].Drawing;
 						var oldParent = drawing.parent;
 						var bDeleted = drawing.bDeleted;
@@ -4380,7 +4380,7 @@ PasteProcessor.prototype =
 				ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
 				//ковертим изображения в презентационный формат
 				for (var i = 0; i < presentationSelectedContent.Drawings.length; i++) {
-					if (!(presentationSelectedContent.Drawings[i].Drawing instanceof CGraphicFrame)) {
+					if (!(presentationSelectedContent.Drawings[i].Drawing instanceof AscFormat.CGraphicFrame)) {
 						AscFormat.ExecuteNoHistory(function () {
 							if (presentationSelectedContent.Drawings[i].Drawing.setBDeleted2) {
 								presentationSelectedContent.Drawings[i].Drawing.setBDeleted2(true);
@@ -4398,7 +4398,7 @@ PasteProcessor.prototype =
 		} else {
 			//ковертим изображения в презентационный формат
 			for (var i = 0; i < presentationSelectedContent.Drawings.length; i++) {
-				if (!(presentationSelectedContent.Drawings[i].Drawing instanceof CGraphicFrame)) {
+				if (!(presentationSelectedContent.Drawings[i].Drawing instanceof AscFormat.CGraphicFrame)) {
 					presentationSelectedContent.Drawings[i].Drawing = presentationSelectedContent.Drawings[i].Drawing.convertToPPTX(oThis.oDocument.DrawingDocument, undefined, true);
 					AscFormat.checkBlipFillRasterImages(presentationSelectedContent.Drawings[i].Drawing);
 				}
@@ -4492,7 +4492,7 @@ PasteProcessor.prototype =
 			//если несколько графических объектов, то собираем base64 у таблиц(graphicFrame)
 			if (arr_shapes.length > 1) {
 				for (var i = 0; i < arr_shapes.length; i++) {
-					if (typeof CGraphicFrame !== "undefined" && arr_shapes[i].Drawing instanceof CGraphicFrame) {
+					if (arr_shapes[i].Drawing && arr_shapes[i].Drawing.isTable()) {
 						arrImages.push(new AscCommon.CBuilderImages(null, arr_shapes[i].base64, arr_shapes[i], null, null));
 					}
 				}
