@@ -143,6 +143,22 @@
 			"H": 25.4 * page.H / page.Dpi
 		}
 	};
+	PDFEditorApi.prototype.Undo           = function()
+	{
+		var oDoc = this.getPDFDoc();
+		if (!oDoc)
+			return;
+
+		oDoc.DoUndo();
+	};
+	PDFEditorApi.prototype.Redo           = function()
+	{
+		var oDoc = this.getPDFDoc();
+		if (!oDoc)
+			return;
+
+		oDoc.DoRedo();
+	};
 	PDFEditorApi.prototype.asc_CheckCopy = function(_clipboard /* CClipboardData */, _formats) {
 		if (!this.DocumentRenderer)
 			return;
