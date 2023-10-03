@@ -54,7 +54,16 @@ function (window, undefined) {
 		this.nRelativeError = 1e-4; // relative error of goal seek. Default value is 1e-4
 		this.nMaxIterations = 100; // max iterations of goal seek. Default value is 100
 		this.nStepDirection = null;
-		this.sRegNumDecimalSeparator = AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator
+		this.sRegNumDecimalSeparator = AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator;
+		this.nCurAttempt = 0;
+		this.nPrevValue = null;
+		this.nPrevFactValue = null;
+		this.nFirstFormulaResult = null;
+		this.sFirstChangingCell = null;
+		this.nIntervalId = null;
+		this.bIsPause = false;
+		this.bIsSingleStep = false;
+		this.bEnabledRidder = false;
 	}
 
 	/**
@@ -64,31 +73,45 @@ function (window, undefined) {
 	 * @memberof CGoalSeek
 	 */
 	CGoalSeek.prototype.calculate = function () {
+		let oGoalSeek = this;
 		let sRegNumDecimalSeparator = this.getRegNumDecimalSeparator();
 		let oParsedFormula = this.getParsedFormula();
 		let oChangingCell = this.getChangingCell();
 		let nExpectedVal = this.getExpectedVal();
-		let sChangingVal = this.getChangingCell().getValue();
+		let sChangingVal = oChangingCell.getValue();
+		let sFirstChangingCell = this.getFirstChangingCell();
+		if (sFirstChangingCell == null) {
+			sFirstChangingCell = sChangingVal;
+			this.setFirstChangingCell(sChangingVal);
+		}
 		let nChangingVal = sChangingVal ? Number(sChangingVal) : 0;
-		let nStartChangingVal = nChangingVal;
-		let nCurAttempt = 0;
-		let nPrevValue = null;
-		let nPrevFactValue = null;
+		let nCurAttempt = this.getCurrentAttempt();
+		let nPrevValue = this.getPrevValue();
+		let nPrevFactValue = this.getPrevFactValue();
 		let bReverseCompare = false;
-		this.initStepDirection();
+		if (this.getStepDirection() == null) {
+			this.initStepDirection();
+		}
 		let nStepDirection = this.getStepDirection();
-		oChangingCell.setValue(String(nChangingVal).replace('.', sRegNumDecimalSeparator));
-		oParsedFormula.parse();
-		let nFirstFormulaResult = oParsedFormula.calculate().getValue();
+		let nFirstFormulaResult = this.getFirstFormulaResult();
+		let nStartChangingVal = sFirstChangingCell ? Number(sFirstChangingCell) : 0;
+		if (nFirstFormulaResult == null) {
+			oChangingCell.setValue(String(nChangingVal).replace('.', sRegNumDecimalSeparator));
+			oParsedFormula.parse();
+			nFirstFormulaResult = oParsedFormula.calculate().getValue();
+			this.setFirstFormulaResult(nFirstFormulaResult);
+		}
 		if (nFirstFormulaResult > nExpectedVal) {
 			bReverseCompare = true;
 		}
+
 		/* That algorithm works for most formulas who can solve with help linear or non-linear equations.
 		 * Exception is engineering formula like DEC2BIN, DEC2HEX etc. Those formulas can't be solved with that way because
 		 * they are not linear or non-linear equations.
 		 */
-		while (true) {
-			nCurAttempt++;
+		this.nIntervalId = setInterval(function () {
+			if (!oGoalSeek.getEnabledRidder()) nCurAttempt++;
+			//.sendEvent("update", nExpectedVal, nChangingVal, nCurAttempt); - update event
 			let sChangingValue = String(nChangingVal).replace('.', sRegNumDecimalSeparator);
 			oChangingCell.setValue(sChangingValue);
 			oParsedFormula.parse();
@@ -97,15 +120,26 @@ function (window, undefined) {
 				nFactValue = nFactValue.toNumber();
 			}
 			let nDiff = Math.abs(nFactValue - nExpectedVal);
-			if (nDiff < this.getRelativeError() || nCurAttempt === this.getMaxIterations() || isNaN(nDiff)) {
-				return;
-			} else if ((!bReverseCompare && (nFactValue > nExpectedVal || (nPrevFactValue && nFactValue < nPrevFactValue))) || (bReverseCompare && (nFactValue < nExpectedVal || (nPrevFactValue && nFactValue > nPrevFactValue)))) {
+			if (nDiff < oGoalSeek.getRelativeError()) {
+				//.sendEvent("stop", true); - stop event. true/false - isSuccess;
+				clearInterval(oGoalSeek.getIntervalId());
+			} else if (nCurAttempt === oGoalSeek.getMaxIterations() || isNaN(nDiff)) {
+				//.sendEvent("stop", false); - stop event. true/false - isSuccess;
+				clearInterval(oGoalSeek.getIntervalId());
+			} else if (oGoalSeek.getIsPause()) {
+				oGoalSeek.setCurrentAttempt(nCurAttempt);
+				oGoalSeek.setPrevValue(nPrevValue);
+				oGoalSeek.setPrevFactValue(nPrevFactValue);
+				clearInterval(oGoalSeek.getIntervalId());
+			} else if (oGoalSeek.getEnabledRidder() || ((!bReverseCompare && (nFactValue > nExpectedVal || (nPrevFactValue && nFactValue < nPrevFactValue))) || (bReverseCompare && (nFactValue < nExpectedVal || (nPrevFactValue && nFactValue > nPrevFactValue))))) {
 				//If nFactValue > nExpectedVal, then we use Ridder method for calculate final changing value
 				// in interval [nPrevValue, nChangingVal]
+				clearInterval(oGoalSeek.getIntervalId());
 				let nLow = nPrevValue;
 				let nHigh = nChangingVal;
-				while (true) {
+				oGoalSeek.nIntervalId = setInterval(function () {
 					nCurAttempt++;
+					//.sendEvent("update", nExpectedVal, nChangingVal, nCurAttempt); - update event
 					// Search f(low_value) and f(high_value)
 					oChangingCell.setValue(String(nLow).replace('.', sRegNumDecimalSeparator));
 					oParsedFormula.parse();
@@ -127,8 +161,17 @@ function (window, undefined) {
 					oChangingCell.setValue(String(nChangingVal).replace('.', sRegNumDecimalSeparator));
 					oParsedFormula.parse();
 					nDiff = oParsedFormula.calculate().getValue() - nExpectedVal;
-					if (Math.abs(nDiff) < this.getRelativeError() || nCurAttempt === this.getMaxIterations()) {
-						return;
+					if (Math.abs(nDiff) < oGoalSeek.getRelativeError()) {
+						//.sendEvent("stop", true); - stop event. true/false - isSuccess;
+						clearInterval(oGoalSeek.getIntervalId());
+					} else if (nCurAttempt === oGoalSeek.getMaxIterations()) {
+						//.sendEvent("stop", false); - stop event. true/false - isSuccess;
+						clearInterval(oGoalSeek.getIntervalId());
+					} else if (oGoalSeek.getIsPause()) {
+						oGoalSeek.setCurrentAttempt(nCurAttempt);
+						oGoalSeek.setPrevValue(nLow);
+						if (!oGoalSeek.getEnabledRidder()) oGoalSeek.setEnabledRidder(true);
+						clearInterval(oGoalSeek.getIntervalId());
 					} else if (nMedianFx < 0 !== nDiff < 0) {
 						nLow = nMedianVal;
 						nHigh = nChangingVal;
@@ -137,7 +180,15 @@ function (window, undefined) {
 					} else {
 						nLow = nChangingVal;
 					}
-				}
+					if (oGoalSeek.getIsSingleStep()) {
+						oGoalSeek.setCurrentAttempt(nCurAttempt);
+						oGoalSeek.setPrevValue(nLow);
+						if (!oGoalSeek.getEnabledRidder()) oGoalSeek.setEnabledRidder(true);
+						oGoalSeek.setIsPause(true);
+						oGoalSeek.setIsSingleStep(false);
+						clearInterval(oGoalSeek.getIntervalId());
+					}
+				});
 			} else {
 				nPrevValue = nChangingVal;
 				nPrevFactValue = nFactValue;
@@ -146,8 +197,16 @@ function (window, undefined) {
 				} else {
 					nChangingVal = nStartChangingVal + (nStartChangingVal / 100 * nStepDirection) + (Math.pow(2, nCurAttempt - 1) - 1) * (nStartChangingVal / 10 * nStepDirection);
 				}
+				if (oGoalSeek.getIsSingleStep()) {
+					oGoalSeek.setCurrentAttempt(nCurAttempt);
+					oGoalSeek.setPrevValue(nPrevValue);
+					oGoalSeek.setPrevFactValue(nPrevFactValue);
+					oGoalSeek.setIsPause(true);
+					oGoalSeek.setIsSingleStep(false);
+					clearInterval(oGoalSeek.getIntervalId());
+				}
 			}
-		}
+		}, 50);
 	};
 	/**
 	 * Initialize step direction. Reverse direction (-1) or forward direction (+1).
@@ -281,7 +340,134 @@ function (window, undefined) {
 	CGoalSeek.prototype.getRegNumDecimalSeparator = function () {
 		return this.sRegNumDecimalSeparator;
 	};
-
+	/**
+	 * Returns number of the current attempt goal seek.
+	 * @memberof CGoalSeek
+	 * @returns {number}
+	 */
+	CGoalSeek.prototype.getCurrentAttempt = function () {
+		return this.nCurAttempt;
+	}
+	/**
+	 * Sets number of the current attempt goal seek.
+	 * @memberof CGoalSeek
+	 * @param {number} nCurAttempt
+	 */
+	CGoalSeek.prototype.setCurrentAttempt = function (nCurAttempt) {
+		this.nCurAttempt = nCurAttempt;
+	}
+	/**
+	 * Returns previous value of changing cell.
+	 * @memberof CGoalSeek
+	 * @returns {number}
+	 */
+	CGoalSeek.prototype.getPrevValue = function () {
+		return this.nPrevValue;
+	}
+	/**
+	 * Sets previous value of changing cell.
+	 * @memberof CGoalSeek
+	 * @param {number} nPrevValue
+	 */
+	CGoalSeek.prototype.setPrevValue = function (nPrevValue) {
+		this.nPrevValue = nPrevValue;
+	}
+	/**
+	 * Returns previous value of formula result.
+	 * @returns {number}
+	 */
+	CGoalSeek.prototype.getPrevFactValue = function () {
+		return this.nPrevFactValue;
+	}
+	/**
+	 * Sets previous value of formula result.
+	 * @param {number} nPrevFactValue
+	 */
+	CGoalSeek.prototype.setPrevFactValue = function (nPrevFactValue) {
+		this.nPrevFactValue = nPrevFactValue;
+	}
+	/**
+	 * Returns first formula result.
+	 * @returns {number}
+	 */
+	CGoalSeek.prototype.getFirstFormulaResult = function () {
+		return this.nFirstFormulaResult
+	}
+	/**
+	 * Sets first formula result.
+	 * @param {number} nFirstFormulaResult
+	 */
+	CGoalSeek.prototype.setFirstFormulaResult = function (nFirstFormulaResult) {
+		this.nFirstFormulaResult = nFirstFormulaResult
+	}
+	/**
+	 * Returns first changing cell value. Uses for cancel goal seek result.
+	 * @returns {string}
+	 */
+	CGoalSeek.prototype.getFirstChangingCell = function () {
+		return this.sFirstChangingCell;
+	}
+	/**
+	 * Sets first changing cell value. Uses for cancel goal seek result.
+	 * @param {string} oFirstChangingCell
+	 */
+	CGoalSeek.prototype.setFirstChangingCell = function (oFirstChangingCell) {
+		this.oFirstChangingCell = oFirstChangingCell
+	}
+	/**
+	 * Returns an interval id. Uses for clear interval.
+	 * @memberof CGoalSeek
+	 * @returns {number}
+	 */
+	CGoalSeek.prototype.getIntervalId = function() {
+		return this.nIntervalId;
+	};
+	/**
+	 * Returns a flag calculating is pause or not? Uses for "pause" and "continue" methods.
+	 * @memberof CGoalSeek
+	 * @returns {boolean}
+	 */
+	CGoalSeek.prototype.getIsPause = function() {
+		return this.bIsPause;
+	};
+	/**
+	 * Sets a flag calculating is pause.
+	 * @memberof CGoalSeek
+	 * @param {boolean} bIsPause
+	 */
+	CGoalSeek.prototype.setIsPause = function(bIsPause) {
+		this.bIsPause = bIsPause;
+	};
+	/**
+	 * Returns a flag is single step. Uses for "step" method.
+	 * @memberof CGoalSeek
+	 * @returns {boolean}
+	 */
+	CGoalSeek.prototype.getIsSingleStep = function() {
+		return this.bIsSingleStep;
+	};
+	/**
+	 * Sets a flag is single step.
+	 * @memberof CGoalSeek
+	 * @param bIsSingleStep
+	 */
+	CGoalSeek.prototype.setIsSingleStep = function(bIsSingleStep) {
+		this.bIsSingleStep = bIsSingleStep;
+	};
+	/**
+	 * Returns flag is already used Ridder method or not
+	 * @returns {boolean}
+	 */
+	CGoalSeek.prototype.getEnabledRidder = function() {
+		return this.bEnabledRidder
+	}
+	/**
+	 * Sets flag is already used Ridder method or not
+	 * @param {boolean} bEnabledRidder
+	 */
+	CGoalSeek.prototype.setEnabledRidder = function(bEnabledRidder) {
+		this.bEnabledRidder = bEnabledRidder
+	}
 	/**
 	 * Returns error type
 	 * @memberof CGoalSeek
@@ -324,6 +510,30 @@ function (window, undefined) {
 		}
 
 		return res;
+	};
+	/**
+	 * Pauses a goal seek calculation.
+	 * @memberof CGoalSeek
+	 */
+	CGoalSeek.prototype.pause = function() {
+		this.setIsPause(true);
+	};
+	/**
+	 * Resumes a goal seek calculation.
+	 * @memberof CGoalSeek
+	 */
+	CGoalSeek.prototype.resume = function() {
+		this.setIsPause(false);
+		this.calculate();
+	};
+	/**
+	 * Resumes goal calculation by one step than pause it again.
+	 * @memberof CGoalSeek
+	 */
+	CGoalSeek.prototype.step = function() {
+		this.setIsPause(false);
+		this.setIsSingleStep(true);
+		this.calculate();
 	};
 
 	// Export
