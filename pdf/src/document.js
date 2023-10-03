@@ -774,8 +774,6 @@ var CPresentation = CPresentation || function(){};
         let oMouseDownField         = oViewer.getPageFieldByMouse();
         let oMouseDownAnnot         = oViewer.getPageAnnotByMouse();
 
-        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
-
         if (IsOnEraser) {
             if (oMouseDownAnnot && oMouseDownAnnot.IsInk())
                 this.EraseInk(oMouseDownAnnot);
@@ -787,7 +785,7 @@ var CPresentation = CPresentation || function(){};
         let X       = oPos.X;
         let Y       = oPos.Y;
 
-        let bInRect = oDrawingObjects.updateCursorType(pageObject.index, X, Y, e, false);
+        let bInRect = oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
         
         if (IsOnDrawer == false && false == IsOnEraser) {
             if (bInRect) {
@@ -819,7 +817,7 @@ var CPresentation = CPresentation || function(){};
         if (IsOnDrawer == true || oViewer.Api.isMarkerFormat) {
             this.mouseDownAnnot = null;
             this.mouseDownField = null
-            oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
+            oDrawingObjects.OnMouseDown(e, X, Y, oPos.DrawPage);
             return;
         }
         
@@ -833,7 +831,7 @@ var CPresentation = CPresentation || function(){};
         else if (this.mouseDownAnnot)
             this.mouseDownAnnot.onMouseDown(e);
         else
-            oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
+            oDrawingObjects.OnMouseDown(e, X, Y, oPos.DrawPage);
 
         if (!oViewer.MouseHandObject && (!oViewer.mouseDownLinkObject))
         {
@@ -864,7 +862,8 @@ var CPresentation = CPresentation || function(){};
         let Y       = oPos.Y;
 
         let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
-
+        console.log(pageObject);
+        
         if (oViewer.isMouseDown)
         {
             if (oAPI.isEraseInkMode()) {
@@ -882,9 +881,9 @@ var CPresentation = CPresentation || function(){};
                 
 
                 if (oDrawingObjects.arrTrackObjects.length != 0 && this.mouseDownAnnot && this.mouseDownAnnot.IsInk() == true)
-                    oDrawingObjects.updateCursorType(pageObject.index, X, Y, e, false);
+                    oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
 
-                oDrawingObjects.OnMouseMove(e, X, Y, pageObject.index);
+                oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
             }
             else if (this.activeForm)
             {
@@ -989,7 +988,7 @@ var CPresentation = CPresentation || function(){};
             oViewer.setCursorType(cursorType);
 
             if (!mouseMoveAnnotObject || mouseMoveAnnotObject.IsInk() == true)
-                oDrawingObjects.updateCursorType(pageObject.index, X, Y, e, false);
+                oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
         }
     };
     CPDFDoc.prototype.OnMouseUp = function(e) {
