@@ -5835,7 +5835,7 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
         this.ConvertContentInLastBracketBlock(nInputType);
 
     // convert word near cursor (\int, \sqrt, \alpha...)
-    if (oElement.value === 32 || this.IsLastElement(AscMath.MathLiterals.operators))
+    if (oElement.value === 32 || this.IsLastElement(AscMath.MathLiterals.operators) || lastElement === '(' || lastElement === ")")
     {
         if (oElement.value === 32)
         {
@@ -6151,9 +6151,12 @@ CMathContent.prototype.ConvertContentInLastBracketBlock = function(nInputType)
             let pair = Brackets.BracketsPair[0][0];
             const Result = [pair[2], pair[0] + 1];
 
-            if (Result.length === 2)
+			let oFirstSymbol = this.Content[Result[0]].Content[Result[1]];
+			let str = oFirstSymbol ? String.fromCharCode(oFirstSymbol.value) : "";
+
+            if (Result.length === 2 && str !== "^" && str !== "_")
             {
-                Result[0]++;
+               // Result[0]++;
                 this.CutConvertAndPaste(Result, nInputType);
                 Brackets.isConvert = true;
             }
@@ -6193,6 +6196,11 @@ function ProceedBrackets(arrDataOfBrackets)
                 this.AnalyseData(intCurrentData);
         }
     }
+}
+ProceedBrackets.prototype.GetLastBracketStartPos = function ()
+{
+	let arrBrack = this.BracketsPair[this.BracketsPair.length - 1][0][0];
+	return arrBrack;
 }
 ProceedBrackets.prototype.PushData = function (intContent)
 {
@@ -6603,6 +6611,9 @@ ContentIterator.prototype.CheckRules = function ()
         ["∛", true],
         ["∜", true],
         ["▭", true],
+        ["□", true],
+        ["¯", true],
+        ["▁", true],
         ["/", true],
         [true, "/"],
 
@@ -6786,7 +6797,8 @@ CMathContent.prototype.CheckAutoCorrectionBrackets = function(nInputType)
     {
         if (arrPosition.length === 2 && Brackets.intCounter === 0)
         {
-            this.CutConvertAndPaste(arrPosition, nInputType);
+			arrPosition[1] += 1;
+            this.CutConvertAndPaste(arrPosition, nInputType, true);
             Brackets.isConvert = true;
             if (this.GetLastTextElement() === " ")
                 this.DeleteEndSpace();
@@ -6795,7 +6807,7 @@ CMathContent.prototype.CheckAutoCorrectionBrackets = function(nInputType)
 
     return Brackets;
 };
-CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType, isNotCorrect)
+CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType, isNotWrap)
 {
     if (arrPos.length === 0)
         arrPos = [0, 0];
@@ -6813,7 +6825,7 @@ CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType, isNotCo
 
         if (i === arrPos[0] && CurrentContent instanceof ParaRun)
         {
-            for (let j = CurrentContent.Content.length - 1; j >= arrPos[1] && j >= arrPos[1]; j--)
+            for (let j = CurrentContent.Content.length - 1; j >= arrPos[1]; j--)
             {
                 strContent = CurrentContent.Content[j].GetTextOfElement(nInputType === 1) + strContent;
                 CurrentContent.Remove_FromContent(j, 1);
@@ -6821,11 +6833,13 @@ CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType, isNotCo
         }
         else
         {
-            if (CurrentContent.Type !== 49) {
+            if (CurrentContent.Type !== 49)
+			{
                 strContent = "〖" + CurrentContent.GetTextOfElement(nInputType === 1).trim() + "〗" + strContent;
                 strContent = strContent.trim();
             }
-            else {
+            else
+			{
                 strContent = CurrentContent.GetTextOfElement(nInputType === 1).trim() + strContent;
                 strContent = strContent.trim();
             }
@@ -6852,13 +6866,8 @@ CMathContent.prototype.DeleteEndSpace = function()
 };
 CMathContent.prototype.IsStartAutoCorrection = function(nInputType, intCode)
 {
-    return  AscMath.IsStartAutoCorrection(nInputType, intCode) &&
-        !(
-            this.IsLastElement(AscMath.MathLiterals.lBrackets)
-            || this.IsLastElement(AscMath.MathLiterals.lrBrackets)
-            || this.IsLastElement(AscMath.MathLiterals.radical)
-            || this.IsLastElement(AscMath.MathLiterals.nary)
-        )
+    return  AscMath.IsStartAutoCorrection(nInputType, intCode)
+	    && !(this.IsLastElement(AscMath.MathLiterals.radical) || this.IsLastElement(AscMath.MathLiterals.nary))
 };
 CMathContent.prototype.Clear_ContentChanges = function()
 {
@@ -6990,19 +6999,14 @@ CMathContent.prototype.GetTextContent = function(bSelectedText, isLaTeX)
 	}
 
 	for (let i = StartPos; i <= EndPos; i++)
-    {
+	{
 		if (this.Content[i] !== undefined)
-        {
-            if (i < EndPos && i > 0 && this.Content[i - 1].Type !== this.Content[i].Type && str !== "")
-            {
-                str += " " + this.Content[i].GetTextOfElement(isLaTeX);
-            }
-            else
-            {
-                str += this.Content[i].GetTextOfElement(isLaTeX);
-            }
-
-        }
+		{
+			if (i < EndPos && i > 0 && this.Content[i - 1].Type !== this.Content[i].Type && str !== "")
+				str += " " + this.Content[i].GetTextOfElement(isLaTeX);
+			else
+				str += this.Content[i].GetTextOfElement(isLaTeX);
+		}
 	}
 
 	return {str: str};

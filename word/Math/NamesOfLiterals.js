@@ -1537,20 +1537,21 @@
 						null,
 						null
 					);
-					ConvertTokens(
+					UnicodeArgument(
 						oTokens.value,
+						oNamesOfLiterals.bracketBlockLiteral[num],
 						oPreSubSup.getBase()
 					);
 					UnicodeArgument(
 						oTokens.up,
 						oNamesOfLiterals.bracketBlockLiteral[num],
 						oPreSubSup.getUpperIterator()
-					)
+					);
 					UnicodeArgument(
 						oTokens.down,
 						oNamesOfLiterals.bracketBlockLiteral[num],
 						oPreSubSup.getLowerIterator()
-					)
+					);
 					break;
 				case MathLiterals.accent.id:
 					let oAccent = oContext.Add_Accent(
@@ -2923,7 +2924,7 @@
 		"ⅉ" 		:"\\jj"			,
 		"ȷ" 		:"\\jmath"		,
 		"∂" 		:"\\partial"	,
-		"R" 		:"\\Re"			,
+		//"R" 		:"\\Re"			,
 		"℘" 		:"\\wp"			,
 		"ℵ" 		:"\\aleph"		,
 		"ℶ" 		:"\\bet"		,
@@ -3052,11 +3053,12 @@
 	{
 		let isConvert 		= false;
 		let isSkipFirst 	= isSkipFirstLetter === true;
-		let isLastOperator 			= oCMathContent.IsLastElement(AscMath.MathLiterals.operators);
+		let strLast = oCMathContent.GetLastTextElement();
+		let isLastOperator 	= oCMathContent.IsLastElement(AscMath.MathLiterals.operators) || strLast === "(" || strLast === ")";
 		let oContent= new CMathContentIterator(oCMathContent);
 		let oLastOperator;
 
-		if (oCMathContent.GetLastTextElement() === " " || isLastOperator)
+		if (strLast === " ")
 			isSkipFirst = true;
 
 		let str = "";
