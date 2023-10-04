@@ -6465,11 +6465,7 @@
 			let bbox = tempRange.range.bbox;
 			let r = bbox.r2 < AscCommon.gc_nMaxRow0 ? bbox.r2 + 1 : bbox.r2;
 			let c = bbox.c2 < AscCommon.gc_nMaxCol0 ? bbox.c2 + 1 : bbox.c2;
-			let cell = new ApiRange(this.ws.getRange3(r, c, r, c));
-			let selection = this.ws.selectionRange.clone();
-			cell.Select();
-			api.FreezePanes('cell');
-			selection.Select();
+			api.asc_freezePane(null, c, r);
 		} else {
 			throw(new Error('Invalid parametr "frozenRange".'));
 		}
