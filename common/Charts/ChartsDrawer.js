@@ -114,7 +114,7 @@ function CChartsDrawer()
 	this.backWall3DChart = null;
 
 	this.errBars = new CErrBarsDraw(this);
-	this.line = new horizontalLine(this)
+	this.trendline = new Ctrendline(this)
 
 	this.changeAxisMap = null;
 
@@ -197,8 +197,9 @@ CChartsDrawer.prototype =
 			this.errBars.recalculate(this.charts);
 		}
 
-		this.line.recalculate(this);
-
+		if(!chartSpace.bEmptySeries){
+			this.trendline.recalculate();
+		}
 		//for test
 		//this._testChartsPaths();
 	},
@@ -354,7 +355,8 @@ CChartsDrawer.prototype =
 			//err bars
 			this.errBars.draw();
 
-			this.line.draw();
+			//draw trendline
+			this.trendline.draw();
 		}
 	},
 
@@ -6009,12 +6011,17 @@ drawBarChart.prototype = {
 				}
 				this.paths.series[serIdx][idx] = paths;
 
-				if (this.chart.series[i].errBars) {
+				if (this.chart.series[i].errBars || this.chart.series[i].trendline) {
 					var _pointX = (startX + individualBarWidth / 2) / this.chartProp.pxToMM;
 					var pointY = (startY + height) / this.chartProp.pxToMM;
 					var _pointVal = this.cChartDrawer.getValWithStacked(i, idx, this.chart);
-					//var _pointVal = this.subType === "stacked" || this.subType === "stackedPer" ? this._getStackedValue(this.chart.series, i, j, val) : val;
-					this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
+					// var _pointVal = this.subType === "stacked" || this.subType === "stackedPer" ? this._getStackedValue(this.chart.series, i, j, val) : val;
+					if(this.chart.series[i].errBars){
+						this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
+					}
+					if(this.chart.series[i].trendline){
+						this.cChartDrawer.trendline.addCoordinate(_pointX, height/ this.chartProp.pxToMM, j+1, _pointVal, i)
+					}
 				}
 			}
 
@@ -16077,52 +16084,137 @@ CColorObj.prototype =
 		return { x: x, y: y };
 	};
 
-	function horizontalLine(){
-		this.chartProp = null;
-		this.cChartSpace = null;
-		this.cChartDrawer = null;
+	function Ctrendline(chartsDrawer){
+		this.cChartDrawer = chartsDrawer;
+	  
+		this.coordinates = [[]];
+		this.predicted = [];
+		this.variables = []
+		this.means = []
 		
-		this.paths = null;
+		this.paths = [];
 	}
 
-	horizontalLine.prototype = {
+	Ctrendline.prototype = {
 
-        constructor: horizontalLine,
-	
-		draw: function(){
-			
-			// pen for border, and brush for inside?
-			// create Pen instance,
-			// create Brush instance,
-			var pen = this.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines;
-			this.cChartDrawer.drawPath(this.paths, pen);
+        constructor: Ctrendline,
+
+		addCoordinate: function (x, y, xVal, yVal, idx){
+			var _n = this.coordinates.length;
+			if(idx != _n-1){
+				this.coordinates.push([])
+				_n+=1
+			}
+			var coordinate = {x: x, y: y, xVal: xVal, yVal: yVal}
+			this.coordinates[_n-1].push(coordinate)
 		},
 		
-		recalculate: function(chartsDrawer){
-			this.chartProp = chartsDrawer.calcProp;
-			this.cChartSpace = chartsDrawer.cChartSpace;
-			this.cChartDrawer = chartsDrawer;
-			this.paths = null;
-			this._calculateLine();
+		recalculate: function(){
+			// steps: Find support variables, predict new y's, create line
+			if(this.coordinates[0].length>1){
+				this._findSuppVariables()
+				this._predictY()
+				this._calculateLine();
+			}
+		},
+
+		_findSuppVariables:function(){
+			// m = Sxy/Sxx where Sxy = ∑(x-meanX)(y-meanY) and Sxx = ∑(x-meanX)^2
+			// b = meanY - (meanX * m)
+			var _findMeans = function(coordinates, means){
+				var _n = coordinates.length;
+				for(var i=0; i<_n; i++){
+					var _n2 = coordinates[i].length;
+					var _meanY = 0;
+					var _meanX = 0;
+					for(var j=0; j<_n2; j++){
+						_meanX += coordinates[i][j].xVal;
+						_meanY += coordinates[i][j].yVal;4
+					}
+					means.push([_meanX/_n2, _meanY/_n2])
+				}
+			};
+
+			var _calculateM = function (coordinates, variables, means){
+				var _n = coordinates.length;
+				for(var i=0; i<_n; i++){
+					var _n2 = coordinates[i].length;
+					var Sxx = 0;
+					var Sxy = 0;
+					for(var j=0; j<_n2; j++){
+						Sxx += (coordinates[i][j].xVal-means[i][0])*(coordinates[i][j].xVal-means[i][0]);
+						Sxy += (coordinates[i][j].xVal-means[i][0])*(coordinates[i][j].yVal-means[i][1]);
+					}
+					variables.push([Sxy/Sxx]);
+				}
+			};
+
+			var _calculateB = function (variables, means){
+				var _n = variables.length;
+				for(var i=0; i<_n; i++){
+					variables[i].push(means[i][1] - (means[i][0] * variables[i][0]))
+				}
+			};
+
+			_findMeans(this.coordinates, this.means);
+			_calculateM(this.coordinates, this.variables, this.means);
+			_calculateB(this.variables, this.means);
+		},
+
+		_predictY(m, b){
+			// var findMaxLength = function(coordinates){
+			// 	var maxLen = 0;
+			// 	var _n = coordinates.length;
+			// 	for(var i=0; i<_n; i++){
+			// 		maxLen = (coordinates[i].length>maxLen)?coordinates[i].length:maxLen
+			// 	}
+			// 	return maxLen
+			// }
+			
+			var _n = this.coordinates.length
+			for(var i=0; i<_n; i++){
+				var _n2 = this.coordinates[i].length
+				this.predicted.push([])
+				for(var j =0; j<_n2; j++){
+					var newYVal = (this.coordinates[i][j].xVal*this.variables[i][0])+this.variables[i][1];
+					var newY = (newYVal * this.coordinates[i][j].y)/ this.coordinates[i][j].yVal
+					this.predicted[i].push({x:this.coordinates[i][j].x, y:newY, xVal:this.coordinates[i][j].xVal, yVal:newYVal})
+				}
+			}
 		},
 
 		_calculateLine: function(){
-			var pathId = this.cChartSpace.AllocPath();
-			var path  = this.cChartSpace.GetPath(pathId);
-			var pathH = this.chartProp.pathH;
-			var pathW = this.chartProp.pathW;
-			var x1 = this.chartProp.chartGutter._left;
-			var pxToMm = this.chartProp.pxToMM;
-			var y = this.chartProp.heightCanvas/2
-			var lineWidth = this.chartProp.widthCanvas - (this.chartProp.chartGutter._left + this.chartProp.chartGutter._right);
+			var _n = this.predicted.length
+			var pathH = this.cChartDrawer.calcProp.pathH;
+			var pathW = this.cChartDrawer.calcProp.pathW;
+			var pxToMm = this.cChartDrawer.calcProp.pxToMM;
+			var height = (this.cChartDrawer.calcProp.heightCanvas - this.cChartDrawer.calcProp.chartGutter._bottom)/pxToMm;
+		
+			for( var i=0; i<_n; i++){
+				var pathId = this.cChartDrawer.cChartSpace.AllocPath();
+				var path  = this.cChartDrawer.cChartSpace.GetPath(pathId);
+				var _n2 = this.predicted[i].length
+				
+				path.moveTo(this.predicted[i][0].x * pathW, (height-this.predicted[i][0].y) * pathH);
+				for(var j=1; j<_n2; j++){
+					path.lnTo(this.predicted[i][j].x * pathW, (height-this.predicted[i][j].y) * pathH);
+				}
 
-			path.moveTo(x1 / pxToMm * pathW, y/ pxToMm * pathH);
-			path.lnTo((x1 +lineWidth) / pxToMm * pathW, y/ pxToMm * pathH);
-
-
-			this.paths = pathId;
+				this.paths.push(pathId);
+			}
 		},
- }
+
+		draw: function(){
+			var _n = this.predicted.length
+			for(var i =0; i<_n; i++){
+				var pen = this.cChartDrawer.cChartSpace.chart.plotArea.charts[0].series[i].trendline && this.cChartDrawer.cChartSpace.chart.plotArea.charts[0].series[i].trendline.spPr.ln;
+				// var pen = this.cChartDrawer.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines;
+				if(pen && this.paths[i]){
+					this.cChartDrawer.drawPath(this.paths[i], pen);
+				}
+			}
+		}
+ 	}
 
 
 	//----------------------------------------------------------export----------------------------------------------------
