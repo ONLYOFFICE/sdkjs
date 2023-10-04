@@ -82,6 +82,7 @@
 	 * @property {boolean} PrintGridlines - Returns or sets the page PrintGridlines property.
 	 * @property {Array} Defnames - Returns an array of the ApiName objects.
 	 * @property {Array} Comments - Returns an array of the ApiComment objects.
+	 * @property {ApiFreezePanes} FreezePanes - Returns a freezePanes for a current worsheet.
 	 */
 	function ApiWorksheet(worksheet) {
 		this.worksheet = worksheet;
@@ -353,6 +354,14 @@
 	 */
 	function ApiFont(object) {
 		this._object = object;
+	}
+
+	/**
+	 * Class representing a freeze Panes.
+	 * @constructor
+	 */
+	function ApiFreezePanes(ws) {
+		this.ws = ws;
 	}
 
 	/**
@@ -896,6 +905,61 @@
 			return this.GetComments();
 		}
 	});
+
+	/**
+	 * Specifies the cell border position.
+	 * @typedef {("row" | "column" | "cell" | null )} FreezePaneType
+	 */
+
+	/**
+	 * Freeze and unfeeze Panes.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {FreezePaneType} FreezePaneType - The type of freezing ('null' to unfreeze).
+	 * @since 7.5.1
+	 */
+	Api.prototype.FreezePanes = function(FreezePaneType) {
+		if (typeof FreezePaneType === 'string' || FreezePaneType === null) {
+			let cell = this.wb.getWorksheet().topLeftFrozenCell;
+			//detect current freeze type
+			let curType = 0;
+			if (cell) {
+				let c = cell.getCol0();
+				let r = cell.getRow0();
+				if (c == 0) {
+					// hole row
+					curType = 1;
+				} else if (r == 0) {
+					// whole column
+					curType = 2;
+				} else {
+					// cell
+					curType = 3;
+				}
+			}
+
+			let type = null;
+			if (FreezePaneType === 'cell' && ( ( curType && curType !== 3 ) || ( !curType ) ) ) {
+				// make unfreeze and freeze then
+				if (curType)
+					this.asc_freezePane(undefined);
+
+				type = undefined;
+			} else if (FreezePaneType === null && curType) {
+				type = undefined;
+			} else if (FreezePaneType === 'row' && curType !== 1) {
+				type = 1;
+			} else if (FreezePaneType === 'column' && curType !== 2) {
+				type = 2;
+			}
+			
+			if (type !== null)
+				this.asc_freezePane(type);
+
+		} else {
+			throw(new Error('Invalid parametr "FreezePaneType".'));
+		}
+	};
 
 	/**
 	 * Returns the state of sheet visibility.
@@ -1887,6 +1951,23 @@
 			this.worksheet.workbook.oApi.asc_moveWorksheet( newIndex, [curIndex] );
 		}
 	};
+
+	/**
+	 * Returns a freezePanes for a current worsheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiFreezePanes}
+	*/
+	ApiWorksheet.prototype.GetFreezePanes = function() {
+		return new ApiFreezePanes(this.worksheet);
+	};
+
+	Object.defineProperty(ApiWorksheet.prototype, "FreezePanes", {
+		get: function () {
+			return this.GetFreezePanes();
+		}
+	});
+
 
 	/**
 	 * Specifies the cell border position.
@@ -3087,7 +3168,14 @@
 	ApiRange.prototype.Select = function () {
 		if (this.range.worksheet.getId() === this.range.worksheet.workbook.getActiveWs().getId()) {
 			var newSelection = new AscCommonExcel.SelectionRange(this.range.worksheet);
-			newSelection.assign2(this.range.bbox);
+			let bbox = this.range.bbox;
+			newSelection.assign2(bbox);
+			if (this.areas) {
+				this.areas.forEach(function(el){
+					if (!bbox.isEqual(el.bbox))
+						newSelection.ranges.push(el.bbox);
+				})
+			}
 			newSelection.Select();
 		}
 	};
@@ -6355,6 +6443,114 @@
 		}
 	});
 
+	
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiFreezePanes
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Sets the frozen cells in the active worksheet view. The range provided corresponds to cells that will be frozen in the top- and left-most pane.
+	 * @memberof ApiFreezePanes
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange | String} frozenRange - A range that represents the cells to be frozen panes.
+	 * @since 7.5.1
+	 */
+	ApiFreezePanes.prototype.FreezeAt = function(frozenRange) {
+		let api = this.ws.workbook.oApi;
+		let tempRange = (typeof frozenRange === 'string') ? api.GetRange(frozenRange) : frozenRange;
+
+		if (tempRange.range && tempRange.range !== null) {
+			let bbox = tempRange.range.bbox;
+			let r = bbox.r2 < AscCommon.gc_nMaxRow0 ? bbox.r2 + 1 : bbox.r2;
+			let c = bbox.c2 < AscCommon.gc_nMaxCol0 ? bbox.c2 + 1 : bbox.c2;
+			let cell = new ApiRange(this.ws.getRange3(r, c, r, c));
+			let selection = this.ws.selectionRange.clone();
+			cell.Select();
+			api.FreezePanes('cell');
+			selection.Select();
+		} else {
+			throw(new Error('Invalid parametr "frozenRange".'));
+		}
+	};
+
+	/**
+	 * Freeze the first column or columns of the worksheet in place.
+	 * @memberof ApiFreezePanes
+	 * @typeofeditors ["CSE"]
+	 * @param {Number?} [count=0] - Optional number of columns to freeze, or zero to unfreeze all columns.
+	 * @since 7.5.1
+	 */
+	ApiFreezePanes.prototype.FreezeColumns = function(count) {
+		let api = this.ws.workbook.oApi;
+		if (typeof count === 'number' && count > 0 && count <= AscCommon.gc_nMaxCol0) {
+			api.asc_freezePane(null, count, 0);
+		} else if (!!api.wb.getWorksheet().topLeftFrozenCell) {
+			api.asc_freezePane(undefined);
+		}
+	};
+
+	/**
+	 * Freeze the top row or rows of the worksheet in place.
+	 * @memberof ApiFreezePanes
+	 * @typeofeditors ["CSE"]
+	 * @param {Number?} [count=0] - Optional number of rows to freeze, or zero to unfreeze all rows.
+	 * @since 7.5.1
+	 */
+	ApiFreezePanes.prototype.FreezeRows = function(count) {
+		let api = this.ws.workbook.oApi;
+		if (typeof count === 'number' && count > 0 && count <= AscCommon.gc_nMaxRow0) {
+			api.asc_freezePane(null, 0, count);
+		} else if (!!api.wb.getWorksheet().topLeftFrozenCell) {
+			api.asc_freezePane(undefined);
+		}
+	};
+
+	/**
+	 * Freeze the top row or rows of the worksheet in place.
+	 * @memberof ApiFreezePanes
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange | null} - Returns null if there is no frozen pane.
+	 * @since 7.5.1
+	 */
+	ApiFreezePanes.prototype.GetLocation = function() {
+		let result = null;
+		let api = this.ws.workbook.oApi;
+		let cell = api.wb.getWorksheet().topLeftFrozenCell;
+		if (cell) {
+			let c = cell.getCol0();
+			let r = cell.getRow0();
+			if (c == 0) {
+				// hole row
+				r--;
+				c = AscCommon.gc_nMaxCol0;
+			} else if (r == 0) {
+				// whole column
+				c--;
+				r = AscCommon.gc_nMaxRow0;
+			} else {
+				// cell
+				r--;
+				c--;
+			}
+			result = new ApiRange(this.ws.getRange3(0, 0, r, c));
+		}
+		return result;
+	};
+
+	/**
+	 * Removes all frozen panes in the worksheet.
+	 * @memberof ApiFreezePanes
+	 * @typeofeditors ["CSE"]
+	 * @since 7.5.1
+	 */
+	ApiFreezePanes.prototype.Unfreeze = function() {
+		if (!!this.ws.workbook.oApi.wb.getWorksheet().topLeftFrozenCell)
+			this.ws.workbook.oApi.asc_freezePane(undefined);
+	};
+
+
 	Api.prototype["Format"]                = Api.prototype.Format;
 	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
 	Api.prototype["GetSheets"]             = Api.prototype.GetSheets;
@@ -6380,6 +6576,7 @@
 	Api.prototype["AddComment"]  = Api.prototype.AddComment;
 	Api.prototype["GetComments"] = Api.prototype.GetComments;
 	Api.prototype["GetCommentById"] = Api.prototype.GetCommentById;
+	Api.prototype["FreezePanes"] = Api.prototype.FreezePanes;
 
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
@@ -6432,6 +6629,7 @@
 	ApiWorksheet.prototype["GetAllCharts"] = ApiWorksheet.prototype.GetAllCharts;
 	ApiWorksheet.prototype["GetAllOleObjects"] = ApiWorksheet.prototype.GetAllOleObjects;
 	ApiWorksheet.prototype["Move"] = ApiWorksheet.prototype.Move;
+	ApiWorksheet.prototype["GetFreezePanes"] = ApiWorksheet.prototype.GetFreezePanes;
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
@@ -6645,6 +6843,13 @@
 	ApiFont.prototype["SetName"]                 = ApiFont.prototype.SetName;
 	ApiFont.prototype["GetColor"]                = ApiFont.prototype.GetColor;
 	ApiFont.prototype["SetColor"]                = ApiFont.prototype.SetColor;
+
+	ApiFreezePanes.prototype["FreezeAt"]         = ApiFreezePanes.prototype.FreezeAt;
+	ApiFreezePanes.prototype["FreezeColumns"]    = ApiFreezePanes.prototype.FreezeColumns;
+	ApiFreezePanes.prototype["FreezeRows"]       = ApiFreezePanes.prototype.FreezeRows;
+	ApiFreezePanes.prototype["GetLocation"]      = ApiFreezePanes.prototype.GetLocation;
+	ApiFreezePanes.prototype["Unfreeze"]         = ApiFreezePanes.prototype.Unfreeze;
+
 
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset,  nFromRow, nRowOffset, pos){
 		oDrawing.x = 0;

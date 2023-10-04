@@ -5689,9 +5689,9 @@ var editor;
   };
 
   // Frozen pane
-  spreadsheet_api.prototype.asc_freezePane = function (type) {
+  spreadsheet_api.prototype.asc_freezePane = function (type, col, row) {
     if (this.canEdit()) {
-      this.wb.getWorksheet().freezePane(type);
+      this.wb.getWorksheet().freezePane(type, col, row);
     }
   };
 
