@@ -3784,6 +3784,10 @@ ParaMath.prototype.ConvertToUnicodeMath = function()
 };
 ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 {
+	AscCommon.executeNoRevisions(this._convertView, this.GetLogicDocument(), this, arguments);
+};
+ParaMath.prototype._convertView = function(isToLinear, nInputType)
+{
 	if (undefined === nInputType)
 	{
 		let oApi = Asc.editor || editor;
@@ -3819,6 +3823,10 @@ ParaMath.prototype.SplitSelectedContent = function()
     oContent.SplitSelectedContent();
 };
 ParaMath.prototype.ConvertViewBySelection = function(isToLinear, nInputType)
+{
+	AscCommon.executeNoRevisions(this._convertViewBySelection, this.GetLogicDocument(), this, arguments);
+};
+ParaMath.prototype._convertViewBySelection = function(isToLinear, nInputType)
 {
     this.SplitSelectedContent();
 

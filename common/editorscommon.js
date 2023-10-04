@@ -9479,6 +9479,21 @@
 		return result;
 	}
 	
+	function executeNoRevisions(f, logicDocument, t, args)
+	{
+		if (!logicDocument
+			|| !logicDocument.IsDocumentEditor
+			|| !logicDocument.IsDocumentEditor()
+			|| !logicDocument.IsTrackRevisions())
+			return f.apply(t, args);
+		
+		let localFlag = logicDocument.GetLocalTrackRevisions();
+		logicDocument.SetLocalTrackRevisions(false);
+		let result = f.apply(t, args);
+		logicDocument.SetLocalTrackRevisions(localFlag);
+		return result;
+	}
+	
 	function AddAndExecuteChange(change)
 	{
 		AscCommon.History.Add(change);
@@ -13450,6 +13465,7 @@
 	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
 	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
+	window["AscCommon"].executeNoRevisions = executeNoRevisions;
 	window["AscCommon"].AddAndExecuteChange = AddAndExecuteChange;
 	window["AscCommon"].CompareStrings = CompareStrings;
 	window["AscCommon"].IsSupportAscFeature = IsSupportAscFeature;
