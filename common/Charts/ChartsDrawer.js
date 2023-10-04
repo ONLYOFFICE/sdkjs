@@ -16102,7 +16102,6 @@ CColorObj.prototype =
 		
 		recalculate: function(){
 			if (this._checkEmpty(['coordinates'])) return
-			// this.check()
 			this._predict();
 			this._calculateLine();
 		},
@@ -16169,6 +16168,7 @@ CColorObj.prototype =
 			var pxToMm = this.cChartDrawer.calcProp.pxToMM;
 			var height = (this.cChartDrawer.calcProp.heightCanvas - this.cChartDrawer.calcProp.chartGutter._bottom)/pxToMm;
 			var x1 = this.cChartDrawer.calcProp.chartGutter._left;
+			var _n = this.predicted.length
 			
 			path.moveTo(this.predicted[0].x * pathW, (height-this.predicted[0].y) * pathH);
 			for(let i=1; i<this.predicted.length; i++){
@@ -16179,7 +16179,7 @@ CColorObj.prototype =
 		},
 
 		draw: function(){
-			var pen = this.cChartDrawer.cChartSpace.chart.plotArea.charts[0].series[0].trendline.spPr.ln;
+			var pen = this.cChartDrawer.cChartSpace.chart.plotArea.charts[0].series[0].trendline && this.cChartDrawer.cChartSpace.chart.plotArea.charts[0].series[0].trendline.spPr.ln;
 			// var pen = this.cChartDrawer.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines;
 			this._drawTrendLine(pen)
 		  },
