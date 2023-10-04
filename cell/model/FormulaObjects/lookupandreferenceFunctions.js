@@ -3441,7 +3441,11 @@ function (window, undefined) {
 
 		let a2Value;
 		if (cElementType.array === arg2.type || cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
-			a2Value = arg2.getFirstElement().tocNumber();
+			a2Value = arg2.getFirstElement();
+			if (!a2Value) {
+				a2Value = new cEmpty();
+			}
+			a2Value = a2Value.tocNumber();
 		} else if (cElementType.error === arg2.type) {
 			return arg2;
 		} else {
@@ -3462,7 +3466,11 @@ function (window, undefined) {
 		
 		let a3Value;
 		if (cElementType.array === arg3.type || cElementType.cellsRange === arg3.type || cElementType.cellsRange3D === arg3.type) {
-			a3Value = arg3.getFirstElement().tocNumber();
+			a3Value = arg3.getFirstElement();
+			if (!a3Value) {
+				a3Value = new cEmpty();
+			}
+			a3Value = a3Value.tocNumber();
 		} else if (cElementType.error === arg3.type) {
 			return arg3;
 		} else {
@@ -4400,7 +4408,7 @@ function (window, undefined) {
 	};
 
 	function wrapRowsCols(arg, argument1, toCol) {
-		var argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
+		let argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
 		if (argError) {
 			return argError;
 		}
@@ -4409,7 +4417,7 @@ function (window, undefined) {
 		if (arg1.type === cElementType.empty) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		var arg0Dimensions = arg1.getDimensions();
+		let arg0Dimensions = arg1.getDimensions();
 		if (arg0Dimensions.col > 1 && arg0Dimensions.row > 1) {
 			return new cError(cErrorType.wrong_value_type);
 		}
@@ -4422,6 +4430,10 @@ function (window, undefined) {
 		} else if (arg2.type === cElementType.empty) {
 			return new cError(cErrorType.not_numeric);
 		}
+		if (!arg2) {
+			arg2 = new cEmpty();
+		}
+
 		arg2 = arg2.tocNumber();
 		if (arg2.type === cElementType.error) {
 			return arg2;
