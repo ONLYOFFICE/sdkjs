@@ -185,19 +185,40 @@
 		}
 		else
 		{
-			strAccent = this.EatToken(this.oLookahead.class).data;
+			strAccent = this.oLookahead.data;
+			this.EatToken(this.oLookahead.class);
 
 			if (MathLiterals.accent.toSymbols[strAccent])
 				strAccent = MathLiterals.accent.toSymbols[strAccent];
 
+			if (this.IsGetBelowAboveLiteral())
+			{
+				return this.GetBelowAboveLiteral({
+					type: oLiteralNames.charLiteral[num],
+					value: strAccent,
+				})
+			}
+
 			oBase = this.GetArguments(1);
 			oBase = this.GetContentOfLiteral(oBase);
 
-			oResultAccent = {
-				type: MathLiterals.accent.id,
-				base: oBase,
-				value: strAccent,
-			};
+			// \bar{\bar{}}
+			if (oBase.type === MathLiterals.accent.id && oBase.value === "̅" && strAccent === "̅")
+			{
+				oResultAccent = {
+					type: MathLiterals.accent.id,
+					base: oBase.base,
+					value: "̿",
+				}
+			}
+			else
+			{
+				oResultAccent = {
+					type: MathLiterals.accent.id,
+					base: oBase,
+					value: strAccent,
+				};
+			}
 		}
 
 		return oResultAccent;
@@ -491,10 +512,16 @@
 		if (this.oLookahead.data === "\\above")
 			isBelow = false;
 
+		let strBaseContent = AscMath.AutoCorrection[base.value];
+		if (strBaseContent)
+		{
+			base.value = strBaseContent;
+		}
+
 		this.EatToken(this.oLookahead.class);
 		let oContent = this.GetArguments(1);
 
-		if(base && base.type === oLiteralNames.functionLiteral[num] || base.type === oLiteralNames.functionWithLimitLiteral[num])
+		if(base && (base.type === oLiteralNames.functionLiteral[num] || base.type === oLiteralNames.functionWithLimitLiteral[num]))
 		{
 			this.SkipFreeSpace();
 			let third = this.GetArguments(1);
@@ -648,20 +675,40 @@
 	}
 	CLaTeXParser.prototype.IsHBracket = function ()
 	{
-		return this.oLookahead.class === oLiteralNames.hBracketLiteral[0]
+		return this.oLookahead.class === oLiteralNames.hBracketLiteral[0];
 	};
 	CLaTeXParser.prototype.GetHBracketLiteral = function ()
 	{
 		let oDown, oUp;
-		let hBrack = this.EatToken(this.oLookahead.class).data;
+		let hBrack = this.oLookahead.data;
+		this.EatToken(this.oLookahead.class);
+
+		switch (hBrack)
+		{
+			case "\\overbar": hBrack = "¯"; break;
+			case "\\overbrace": hBrack = "⏞"; break;
+			case "\\overbracket": hBrack = "⎴"; break;
+			case "\\overline": hBrack = "¯"; break;
+			case "\\underline": hBrack = "▁"; break;
+			case "\\overparen": hBrack = "⏜"; break;
+			case "\\overshell": hBrack = "⏠"; break;
+			case "\\underparen": hBrack = "⏝"; break;
+			case "\\underbrace": hBrack = "⏟"; break;
+			case "\\undershell": hBrack = "⏡"; break;
+			case "\\underbracket": hBrack = "⎵"; break;
+		}
+
 		let oContent = this.GetArguments(1);
 		this.SkipFreeSpace();
-		if (this.oLookahead.data === "_" || this.oLookahead.data === "^") {
-			if (this.oLookahead.class === "_") {
+		if (this.oLookahead.data === "_" || this.oLookahead.data === "^")
+		{
+			if (this.oLookahead.class === "_")
+			{
 				this.EatToken(this.oLookahead.class);
 				oDown = this.GetArguments(1);
 			}
-			else {
+			else
+			{
 				this.EatToken(this.oLookahead.class);
 				oUp = this.GetArguments(1);
 			}
@@ -1064,7 +1111,8 @@
 			arrRayContent = this.GetElementOfMatrix();
 		}
 
-		if (this.oLookahead.data === "\\\\") {
+		if (this.oLookahead.data === "\\\\")
+		{
 			this.EatToken(this.oLookahead.class)
 		}
 
@@ -1082,20 +1130,25 @@
 		while (this.IsElementLiteral() || this.oLookahead.class === "&") {
 			let intCopyOfLength = intLength;
 
-			if (this.oLookahead.class !== "&") {
+			if (this.oLookahead.class !== "&")
+			{
 				arrRow.push(this.GetExpressionLiteral("&"));
 				intLength++;
 				isAlredyGetContent = true;
 				this.SkipFreeSpace();
 			}
-			else {
+			else
+			{
 				this.EatToken("&");
 
-				if (isAlredyGetContent === false) {
+				if (isAlredyGetContent === false)
+				{
 					arrRow.push({});
 					intCount++;
 					intLength++;
-				} else if (intCopyOfLength === intLength) {
+				}
+				else if (intCopyOfLength === intLength)
+				{
 					intCount++;
 				}
 
@@ -1104,8 +1157,10 @@
 
 		}
 
-		if (intLength !== intCount + 1) {
-			for (let j = intLength; j <= intCount; j++) {
+		if (intLength !== intCount + 1)
+		{
+			for (let j = intLength; j <= intCount; j++)
+			{
 				arrRow.push({});
 			}
 		}

@@ -4546,22 +4546,19 @@ CGroupCharacter.prototype.GetTextOfElement = function(isLaTeX) {
 	var Base = this.getBase().GetMultipleContentForGetText(isLaTeX);
 
 	if (true === isLaTeX)
-    {
-        if (intStartCode === 9182 || intStartCode === 9183)
-        {
-            if (intStartCode === 9182)
-                strStart = '\\overbrace';
-            else if (intStartCode === 9183)
-                strStart = '\\underbrace';
+	{
+		let strTempSymbol = AscMath.GetLaTeXFromValue(strStart);
+		if (strTempSymbol)
+			strStart = strTempSymbol;
 
-            strStart = strStart + Base;
-        }
-        else
-            strStart += this.Pr.pos === 1 ? "\\above" : "\\below";
+		if (!(intStartCode === 9182 || intStartCode === 9183))
+		{
+			strStart += this.Pr.pos === 1 ? "\\above" : "\\below";
+		}
 
-        strTemp = strStart;
-        if (Base)
-            strTemp += Base;
+		strTemp = strStart;
+		if (Base)
+			strTemp += Base;
 	}
     else
     {

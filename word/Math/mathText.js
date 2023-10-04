@@ -1034,7 +1034,8 @@ CMathText.prototype.GetTextOfElement = function(isLaTeX) {
 		}
 	}
 
-    if (isLaTeX)
+
+    if (isLaTeX && AscMath.GetIsLaTeXGetParaRun())
     {
         let str = AscMath.SymbolsToLaTeX[String.fromCharCode(this.value)];
         if (str)
