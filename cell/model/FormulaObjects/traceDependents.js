@@ -1080,7 +1080,7 @@ function (window, undefined) {
 				ref = formulaParsed.ref,
 				coords = AscCommonExcel.getFromCellIndex(cellIndex, true),
 				row = coords.row, col = coords.col, shared, base,
-				length = formulaParsed.outStack.length, isPartOfFunc, numberOfArgs, funcReturnArr;
+				length = formulaParsed.outStack.length, isPartOfFunc, numberOfArgs, funcReturnType, funcArrayIndexes;
 
 			if (formulaParsed.shared !== null) {
 				shared = formulaParsed.getShared();
@@ -1091,21 +1091,34 @@ function (window, undefined) {
 				if (!formulaParsed.outStack.hasOwnProperty(i)) {
 					continue;
 				}
+				if (numberOfArgs <= 0) {
+					funcArrayIndexes = null;
+					isPartOfFunc = null;
+				}
 
 				let elem = formulaParsed.outStack[i];
-				let elemType = elem.type ? elem.type : null;
-				let inFormulaRef;
-				if (isPartOfFunc && numberOfArgs > 0 && funcReturnArr) {
+				let elemTypeExist = elem.type !== undefined ? true : false;
+				let elemType = elem.type, inFormulaRef;
+				if (isPartOfFunc && numberOfArgs > 0 && elemTypeExist) {
 					if (cElementType.cellsRange === elemType || cElementType.name === elemType) {
-						// range refers to formula, add property inFormulaRef = true
-						inFormulaRef = true;
-						numberOfArgs--;
+						if (funcReturnType) {
+							// range refers to formula, add property inFormulaRef = true
+							inFormulaRef = true;
+						} else if (funcArrayIndexes) {
+							// if have no returnType check for arrayIndexes and if element pass in raw form(as array, range) to argument
+							let elemIndexInFormula = numberOfArgs - 1;
+							if (funcArrayIndexes[elemIndexInFormula]) {
+								inFormulaRef = true;
+							}
+						}
 					}
+					numberOfArgs--;
 				}
 				if (elemType === cElementType.func) {
 					isPartOfFunc = true;
 					numberOfArgs = formulaParsed.outStack[i - 1];
-					funcReturnArr = elem.returnValueType === AscCommonExcel.cReturnFormulaType.array ? true : false;
+					funcReturnType = elem.returnValueType;
+					funcArrayIndexes = elem.arrayIndexes;
 				}
 
 				let is3D = elemType === cElementType.cell3D || elemType === cElementType.cellsRange3D || elemType === cElementType.name3D,
