@@ -16131,7 +16131,7 @@ CColorObj.prototype =
 
 			//initiateStartPoint
 			this.initiateBoundaries( linesCount, margin, barWidth, false, 'start', 1 )
-			//initiatEndPoint
+			//initiateEndPoint
 			this.initiateBoundaries( linesCount, -margin, -barWidth, true, 'end', this.points)
 		},
 
