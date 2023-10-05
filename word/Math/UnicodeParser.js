@@ -1473,7 +1473,8 @@
 		return this.oLookahead.data === isNoSubSup || (
 			!isNoSubSup && this.IsScriptStandardContentLiteral() ||
 			!isNoSubSup && this.IsScriptBelowOrAboveContent() ||
-			!isNoSubSup && this.IsSpecialContent()
+			!isNoSubSup && this.IsSpecialContent() ||
+			!isNoSubSup && this.IsDoubleIteratorDegree()
 		)
 	}
 	CUnicodeParser.prototype.GetOperandLiteral = function (isNoSubSup)
@@ -1513,6 +1514,10 @@
 					else if (this.oLookahead.data === isNoSubSup || !isNoSubSup && this.IsSpecialContent()) {
 						oContent = this.GetScriptSpecialContent(oContent);
 					}
+					else if (this.oLookahead.data === isNoSubSup || !isNoSubSup && this.IsDoubleIteratorDegree())
+					{
+						oContent = this.GetDoubleIteratorDegree(oContent);
+					}
 				}
 				arrFactorList[arrFactorList.length - 1] = oContent;
 			}
@@ -1520,6 +1525,29 @@
 
 		return this.GetContentOfLiteral(arrFactorList);
 	};
+	CUnicodeParser.prototype.IsDoubleIteratorDegree = function ()
+	{
+		return this.oLookahead.data === "′"
+		|| this.oLookahead.data === "″"
+		|| this.oLookahead.data === "‴"
+		|| this.oLookahead.data === "⁗"
+	}
+	CUnicodeParser.prototype.GetDoubleIteratorDegree = function (oBase)
+	{
+		let strIterator = this.oLookahead.data;
+		this.EatToken(this.oLookahead.class);
+
+		return {
+			type: oLiteralNames.subSupLiteral[num],
+			value: oBase,
+			down: undefined,
+			up: {
+				type: oLiteralNames.charLiteral[num],
+				value: strIterator,
+			},
+			//third: oThirdSoOperand,
+		};
+	}
 	CUnicodeParser.prototype.IsOperandLiteral = function ()
 	{
 		return this.IsFactorLiteral();

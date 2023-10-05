@@ -903,12 +903,13 @@
 		["π"],
 		["±"],
 		["⒨", oNamesOfLiterals.matrixLiteral[0]],
-		["⁗", MathLiterals.accent.id],
-		["‴", MathLiterals.accent.id],
-		["″", MathLiterals.accent.id],
+		["⁗", oNamesOfLiterals.operatorLiteral[0]],
+		["‴", oNamesOfLiterals.operatorLiteral[0]],
+		["″", oNamesOfLiterals.operatorLiteral[0]],
+		["′", oNamesOfLiterals.operatorLiteral[0]],
 		["≺", oNamesOfLiterals.operatorLiteral[0]],
 		["≼", oNamesOfLiterals.operatorLiteral[0]],
-		["′", MathLiterals.accent.id],
+
 		["∏", oNamesOfLiterals.opNaryLiteral[0]], //oNamesOfLiterals.functionLiteral[0]
 		["∝", oNamesOfLiterals.operatorLiteral[0]],
 		["ψ"],
