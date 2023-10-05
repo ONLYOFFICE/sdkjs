@@ -859,14 +859,14 @@
 			
 			oMathContent = paraMath.Root;
 			oMathContent.AddToContent(0, new AscWord.CRun(paragraph, true));
-			oMathContent.InsertMathContent(insertMath.Root, 0, this.Select, true);
+			oMathContent.InsertMathContent(insertMath.Root, 0, this.Select);
 		}
 		else
 		{
 			let oRun = oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 1];
 			let oNewRun = oRun.Split(oParaAnchorPos.NearPos.ContentPos, oParaAnchorPos.Classes.length - 1);
 			oMathContent.AddToContent(nInMathContentPos + 1, oNewRun);
-			oMathContent.InsertMathContent(insertMath.Root, nInMathContentPos + 1, this.Select, true);
+			oMathContent.InsertMathContent(insertMath.Root, nInMathContentPos + 1, this.Select);
 		}
 	};
 	CSelectedContent.prototype.private_InsertToPictureCC = function()

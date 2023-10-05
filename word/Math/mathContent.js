@@ -2499,14 +2499,17 @@ CMathContent.prototype.Refresh_RecalcData = function()
     if(this.ParaMath !== null)
         this.ParaMath.Refresh_RecalcData(); // Refresh_RecalcData сообщает родительскому классу, что у него произошли изменения, нужно пересчитать
 };
-CMathContent.prototype.InsertMathContent = function(oMathContent, nPos, isSelect, isMoveCursor)
+CMathContent.prototype.InsertMathContent = function(oMathContent, nPos, isSelect)
 {
+	if (!oMathContent || !oMathContent.Content)
+		return;
+	
 	if (!this.ParaMath || !this.ParaMath.Paragraph)
 		isSelect = false;
 
 	if (undefined === nPos)
 		nPos = this.CurPos;
-
+	
 	let nCount = oMathContent.Content.length;
 	for (let nIndex = 0; nIndex < nCount; ++nIndex)
 	{
@@ -2517,18 +2520,20 @@ CMathContent.prototype.InsertMathContent = function(oMathContent, nPos, isSelect
 			oElement.SelectAll(1);
 		else
 			oElement.RemoveSelection();
-
-		if (isMoveCursor && nIndex === nCount - 1)
-			oElement.MoveCursorToEndPos();
 	}
-
-	this.CurPos = nPos + nCount;
-
+	
+	let newPos = nPos + nCount + 1;
+	if (this.Content[newPos])
+		this.Content[newPos].MoveCursorToStartPos();
+	else
+		this.Content[--newPos].MoveCursorToEndPos();
+	
 	if (isSelect)
 	{
 		this.Selection.Use      = true;
 		this.Selection.StartPos = nPos;
 		this.Selection.EndPos   = nPos + nCount - 1;
+		this.CurPos             = newPos;
 
 		if (!this.bRoot)
 			this.ParentElement.Select_MathContent(this);
@@ -2541,14 +2546,13 @@ CMathContent.prototype.InsertMathContent = function(oMathContent, nPos, isSelect
 	{
 		this.ParaMath.SetThisElementCurrent();
 		this.RemoveSelection();
-
+		
 		if (!this.bRoot)
 			this.ParentElement.SetCurrentMathContent(this);
-
-		if (this.Content[this.CurPos])
-            this.CurPos += nCount;
+		
+		this.CurPos = newPos;
 	}
-    this.Correct_Content(true);
+	this.Correct_Content(true);
 	this.Correct_ContentPos(-1);
 };
 CMathContent.prototype.Set_ParaMath = function(ParaMath, Parent)
