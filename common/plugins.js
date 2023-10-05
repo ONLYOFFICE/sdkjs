@@ -181,8 +181,8 @@
 				{
 					if (guid === currentArray[i].guid)
 					{
-						currentArray.splice(i, 1);
-						return currentArray[i];
+						let removed = currentArray.splice(i, 1);
+						return removed[0];
 					}
 				}
 			}
