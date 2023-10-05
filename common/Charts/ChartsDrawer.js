@@ -6030,7 +6030,7 @@ drawBarChart.prototype = {
 					if(this.chart.series[i].errBars){
 						this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
 					}
-					if(this.chart.series[i].trendline && this.cChartDrawer.trendline.points){
+					if(this.chart.series[i].trendline && this.cChartDrawer.trendline.points && seria.length>1){
 						this.cChartDrawer.trendline.addCoordinate(_pointX, height/ this.chartProp.pxToMM, idx+1, _pointVal, i, individualBarWidth/ this.chartProp.pxToMM)
 					}
 				}
@@ -16098,12 +16098,11 @@ CColorObj.prototype =
 	function Ctrendline(chartsDrawer) {
 		this.cChartDrawer = chartsDrawer;
 	  
-		this.coordinates = [[]];
-		this.predicted = {start:[], end:[]};
+		this.observations = {coord:[], last:-1};
+		this.predicted = {start:null, end:null};
 		this.variables = [];
 		this.means = [];
-		this.relativeness = [];
-		this.shift = 0;		
+		this.relativeness = [];	
 		this.paths = [];
 		this.points = null;
 	}
@@ -16137,6 +16136,8 @@ CColorObj.prototype =
 
 		initiateBoundaries: function(linesCount, margin, barWidth, graph, element, value) {
 
+			// find trueX, trueXVal to find shiftedX and shiftedXval
+
 			var leftPadding = this.cChartDrawer.calcProp.chartGutter._left
 			var rightPadding = this.cChartDrawer.calcProp.chartGutter._right
 			var graphWidth = graph ? this.cChartDrawer.calcProp.widthCanvas - rightPadding - leftPadding : 0;
@@ -16146,36 +16147,23 @@ CColorObj.prototype =
 			var _trueXval = value;
 			var _x = (graphWidth + margin + barWidth)/pxToMm;
 			var _xVal = (_trueXval*_x)/_trueX;
-			this.predicted[element].push({x:_x+(leftPadding/pxToMm), y:null, xVal:_xVal, yVal: null})
+			this.predicted[element] = {x:_x+(leftPadding/pxToMm), y:[], xVal:_xVal, yVal: []}
 		},
 
 		addCoordinate: function (x, y, xVal, yVal, lineId) {
-			var _n = this.coordinates.length;
-			if(lineId-this.shift != _n-1) {
-				// check if previous array had more that 2 coordinates, if not erase it 
-				// if yes, push new array inside coordinates
-				if(this.coordinates[_n-1].length<2) {
-					this.coordinates[_n-1] = [];
-					this.shift ++; 
-				}else {
-					// for each successfully created array of coordinates push its start and end position
-					var _start = this.predicted.start[0]
-					var _end = this.predicted.end[0]
-					this.predicted.start.push({x:_start.x, y:null, xVal:_start.xVal, yVal: null, trueVal: _start.trueVal})
-					this.predicted.end.push({x:_end.x, y:null, xVal:_end.xVal, yVal: null, trueVal: _end.trueVal})
-
-					// create new coordinate array
-					this.coordinates.push([])
-					_n+=1
-				}
+			//add new array for each new line 
+			//append element to last array in coordinates
+			if(lineId != this.observations.last) {
+				this.observations.coord.push([])
+				this.observations.last = lineId
 			}
-			var coordinate = {x: x, y: y, xVal: xVal, yVal: yVal}
-			this.coordinates[_n-1].push(coordinate)
+			var _n = this.observations.coord.length;
+			var coordinate = {x: x, y: y, xVal: xVal, yVal: yVal};
+			this.observations.coord[_n-1].push(coordinate);
 		},
 		
 		recalculate: function() {
-			this._checkCoordinates()
-			if(this.coordinates.length>0) {
+			if(this.observations.coord.length>0) {
 				this._findRelativeness();
 				this._findSuppVariables();
 				this._predictY();
@@ -16201,22 +16189,12 @@ CColorObj.prototype =
 			}
 		},
 
-		_checkCoordinates: function() {
-			// if length of last array in coordinates arrays is <2, drop it
-			var _n = this.coordinates.length;
-			if (this.coordinates[_n-1].length<2) {
-				this.coordinates.pop();
-				this.predicted.start.pop();
-				this.predicted.end.pop();
-			}
-		},
-
 		_findRelativeness: function() {
 			// for each array of coordinates find the coeficient, which will
 			// adjust yVal position on graph, needs only one point from each array
-			var _n = this.coordinates.length;
+			var _n = this.observations.coord.length;
 			for(var i = 0; i< _n; i++) {
-				this.relativeness.push(this.coordinates[i][0].y/this.coordinates[i][0].yVal)
+				this.relativeness.push(this.observations.coord[i][0].y/this.observations.coord[i][0].yVal)
 			}
 		},
 
@@ -16261,8 +16239,8 @@ CColorObj.prototype =
 				}
 			};
 
-			_findMeans(this.coordinates, this.means);
-			_calculateM(this.coordinates, this.variables, this.means);
+			_findMeans(this.observations.coord, this.means);
+			_calculateM(this.observations.coord, this.variables, this.means);
 			_calculateB(this.variables, this.means);
 		},
 
@@ -16272,21 +16250,21 @@ CColorObj.prototype =
 			var _predictPoint = function(obj, m, b, relativeness) {
 					var yVal = m*obj.xVal + b
 					var y = yVal * relativeness
-					obj.yVal = yVal;
-					obj.y = y;
+					obj.yVal.push(yVal);
+					obj.y .push(y);
 				}
 
-			var _n = this.coordinates.length
+			var _n = this.observations.coord.length
 			for(var i=0; i<_n; i++) {
-				_predictPoint(this.predicted.start[i], this.variables[i][0], this.variables[i][1], this.relativeness[i])
-				_predictPoint(this.predicted.end[i], this.variables[i][0], this.variables[i][1], this.relativeness[i])
+				_predictPoint(this.predicted.start, this.variables[i][0], this.variables[i][1], this.relativeness[i])
+				_predictPoint(this.predicted.end, this.variables[i][0], this.variables[i][1], this.relativeness[i])
 			}
 		},
 
 		_calculateLine: function() {
 			//create paths
 
-			var _n = this.coordinates.length
+			var _n = this.observations.coord.length
 			var pathH = this.cChartDrawer.calcProp.pathH;
 			var pathW = this.cChartDrawer.calcProp.pathW;
 			var pxToMm = this.cChartDrawer.calcProp.pxToMM;
@@ -16296,8 +16274,8 @@ CColorObj.prototype =
 				var pathId = this.cChartDrawer.cChartSpace.AllocPath();
 				var path  = this.cChartDrawer.cChartSpace.GetPath(pathId);
 				
-				path.moveTo(this.predicted.start[i].x * pathW, (height-this.predicted.start[i].y) * pathH);
-				path.lnTo(this.predicted.end[i].x * pathW, (height-this.predicted.end[i].y) * pathH);
+				path.moveTo(this.predicted.start.x * pathW, (height-this.predicted.start.y[i]) * pathH);
+				path.lnTo(this.predicted.end.x * pathW, (height-this.predicted.end.y[i]) * pathH);
 
 				this.paths.push(pathId);
 			}
@@ -16308,7 +16286,7 @@ CColorObj.prototype =
 			var _n = this.paths.length
 			for(var i =0; i<_n; i++) {
 				var pen = this.cChartDrawer.cChartSpace.chart.plotArea.charts[0].series[i].trendline && this.cChartDrawer.cChartSpace.chart.plotArea.charts[0].series[i].trendline.spPr.ln;
-				/*is pen is not provided take it from gridLines, for debugging only*/
+				/*if pen is not provided take it from gridLines, for debugging only*/
 				// var pen = this.cChartDrawer.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines; 
 				if(pen && this.paths[i]) {
 					this.cChartDrawer.drawPath(this.paths[i], pen);
