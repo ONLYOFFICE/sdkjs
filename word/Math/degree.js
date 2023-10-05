@@ -544,7 +544,7 @@ CDegree.prototype.Can_ModifyArgSize = function()
 CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
 	var strTypeOfScript = this.Pr.type === 1 ? '^' : '_';
-	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX);
+	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
 	var strIterator = this.getIterator().GetMultipleContentForGetText(isLaTeX);
 
 	if (isLaTeX)

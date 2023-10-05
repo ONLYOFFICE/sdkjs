@@ -6954,7 +6954,7 @@ CMathContent.prototype.GetMultipleContentForGetText = function(isLaTeX, isNotBra
         else
         {
             str = this.GetTextOfElement(isLaTeX);
-            if (!AscMath.functionNames.includes(str) && !(str[0] === "\"" && str[str.length-1] === "\""))
+            if (!AscMath.functionNames.includes(str) && !(str[0] === "\"" && str[str.length-1] === "\"") && str[0] !== "(")
             {
                 str = (isLaTeX === true)
                     ?  "{" + this.GetTextOfElement(isLaTeX) + "}"

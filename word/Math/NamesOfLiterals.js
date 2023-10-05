@@ -1723,21 +1723,20 @@
 							null,
 							null
 						);
-						UnicodeArgument(
+						ConvertTokens(
 							oTokens.value,
-							oNamesOfLiterals.bracketBlockLiteral[num],
 							SubSup.getBase()
-						)
+						);
 						UnicodeArgument(
 							oTokens.up,
 							oNamesOfLiterals.bracketBlockLiteral[num],
 							SubSup.getUpperIterator()
-						)
+						);
 						UnicodeArgument(
 							oTokens.down,
 							oNamesOfLiterals.bracketBlockLiteral[num],
 							SubSup.getLowerIterator()
-						)
+						);
 					}
 					break;
 				case oNamesOfLiterals.functionWithLimitLiteral[num]:
@@ -1882,11 +1881,10 @@
 				case oNamesOfLiterals.functionLiteral[num]:
 					let oFunc = oContext.Add_Function({}, null, null);
 					oFunc.getFName().Add_Text(oTokens.value, Paragraph, STY_PLAIN);
-					UnicodeArgument(
+					ConvertTokens(
 						oTokens.third,
-						oNamesOfLiterals.bracketBlockLiteral[num],
 						oFunc.getArgument()
-					)
+					);
 					break;
 				case oNamesOfLiterals.mathFontLiteral[num]:
 					ConvertTokens(
