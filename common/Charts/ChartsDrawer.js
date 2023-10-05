@@ -5870,7 +5870,7 @@ drawBarChart.prototype = {
 				linesCount++;
 			}
 		}
-		this.cChartDrawer.trendline.prepareInformation(linesCount, points, hmargin, individualBarWidth/2)
+		this.cChartDrawer.trendline.prepareInformation(linesCount, points, hmargin, individualBarWidth)
 		/* -----TrendLine preparation section */
 
 		for (var i = 0; i < this.chart.series.length; i++) {
@@ -16123,36 +16123,36 @@ CColorObj.prototype =
 			}
 
 			this.points = points;
-			this.initiateBoundaries( linesCount, margin, barWidth)
-		},
 
-		initiateBoundaries: function(linesCount, margin, barWidth) {
-
-			// Xval = x1Val*x1/ truex
-			var leftPadding = this.cChartDrawer.calcProp.chartGutter._left
-			var rightPadding = this.cChartDrawer.calcProp.chartGutter._right
-			var graphWidth = this.cChartDrawer.calcProp.widthCanvas - rightPadding - leftPadding;
-			var pxToMm = this.cChartDrawer.calcProp.pxToMM;
-			var trueX1 = (margin + barWidth)/pxToMm;
-			var trueX2 = (graphWidth - margin - barWidth)/pxToMm;
-			var trueX1Val = 1;
-			var trueX2Val = this.points;
-			if(linesCount != 1) {
-				barWidth*=2;
+			//whenever chart plots only one line, start from center, x_beginning = 0 x_center= barWidth/2 x_end = barWidth
+			if(linesCount == 1) {
+				barWidth/=2;
 			}
 
-			var x1 = (margin + barWidth)/pxToMm;
-			var x2 = (graphWidth - margin - barWidth)/pxToMm;
-			var x1Val = (trueX1Val*x1)/trueX1;
-			var x2Val = (trueX2Val*x2)/trueX2;
-			this.predicted.start.push({x:x1+(leftPadding/pxToMm), y:null, xVal:x1Val, yVal: null, trueVal: trueX1Val})
-			this.predicted.end.push({x:x2+(leftPadding/pxToMm), y:null, xVal:x2Val, yVal: null, trueVal: trueX2Val})
+			//initiateStartPoint
+			this.initiateBoundaries( linesCount, margin, barWidth, false, 'start', 1 )
+			//initiatEndPoint
+			this.initiateBoundaries( linesCount, -margin, -barWidth, true, 'end', this.points)
+		},
+
+		initiateBoundaries: function(linesCount, margin, barWidth, graph, element, value) {
+
+			var leftPadding = this.cChartDrawer.calcProp.chartGutter._left
+			var rightPadding = this.cChartDrawer.calcProp.chartGutter._right
+			var graphWidth = graph ? this.cChartDrawer.calcProp.widthCanvas - rightPadding - leftPadding : 0;
+			var pxToMm = this.cChartDrawer.calcProp.pxToMM;
+
+			var _trueX = (graphWidth + margin + barWidth)/pxToMm;
+			var _trueXval = value;
+			var _x = (graphWidth + margin + barWidth)/pxToMm;
+			var _xVal = (_trueXval*_x)/_trueX;
+			this.predicted[element].push({x:_x+(leftPadding/pxToMm), y:null, xVal:_xVal, yVal: null})
 		},
 
 		addCoordinate: function (x, y, xVal, yVal, lineId) {
 			var _n = this.coordinates.length;
 			if(lineId-this.shift != _n-1) {
-				// check if previous line had more that 2 coordinates, if not erase it 
+				// check if previous array had more that 2 coordinates, if not erase it 
 				// if yes, push new array inside coordinates
 				if(this.coordinates[_n-1].length<2) {
 					this.coordinates[_n-1] = [];
@@ -16174,17 +16174,18 @@ CColorObj.prototype =
 		},
 		
 		recalculate: function() {
-			// steps: Find support variables, predict new y's, create line
-			this.checkCoordinates()
+			this._checkCoordinates()
 			if(this.coordinates.length>0) {
-				this._findRelativness();
+				this._findRelativeness();
 				this._findSuppVariables();
 				this._predictY();
+				/*use this function to see variables in proper format for better debugging experience*/
+				//_showPredicted();
 				this._calculateLine();
 			}
 		},
 
-		//use this function to see variables in proper format for better debugging experience
+		
 		_showPredicted: function() {
 			console.log(this.predicted)
 			var _n = this.coordinates.length;
@@ -16200,7 +16201,8 @@ CColorObj.prototype =
 			}
 		},
 
-		checkCoordinates: function() {
+		_checkCoordinates: function() {
+			// if length of last array in coordinates arrays is <2, drop it
 			var _n = this.coordinates.length;
 			if (this.coordinates[_n-1].length<2) {
 				this.coordinates.pop();
@@ -16209,7 +16211,9 @@ CColorObj.prototype =
 			}
 		},
 
-		_findRelativness: function() {
+		_findRelativeness: function() {
+			// for each array of coordinates find the coeficient, which will
+			// adjust yVal position on graph, needs only one point from each array
 			var _n = this.coordinates.length;
 			for(var i = 0; i< _n; i++) {
 				this.relativeness.push(this.coordinates[i][0].y/this.coordinates[i][0].yVal)
@@ -16217,8 +16221,11 @@ CColorObj.prototype =
 		},
 
 		_findSuppVariables: function() {
+
+			// meanX = ∑x/n and meanY = ∑y/n
 			// m = Sxy/Sxx where Sxy = ∑(x-meanX)(y-meanY) and Sxx = ∑(x-meanX)^2
 			// b = meanY - (meanX * m)
+
 			var _findMeans = function(coordinates, means) {
 				var _n = coordinates.length;
 				for(var i=0; i<_n; i++) {
@@ -16260,6 +16267,7 @@ CColorObj.prototype =
 		},
 
 		_predictY: function() {
+			// predict yVal and y for start and end positions 
 
 			var _predictPoint = function(obj, m, b, relativeness) {
 					var yVal = m*obj.xVal + b
@@ -16276,6 +16284,8 @@ CColorObj.prototype =
 		},
 
 		_calculateLine: function() {
+			//create paths
+
 			var _n = this.coordinates.length
 			var pathH = this.cChartDrawer.calcProp.pathH;
 			var pathW = this.cChartDrawer.calcProp.pathW;
@@ -16294,10 +16304,12 @@ CColorObj.prototype =
 		},
 
 		draw: function() {
+			// draw paths
 			var _n = this.paths.length
 			for(var i =0; i<_n; i++) {
 				var pen = this.cChartDrawer.cChartSpace.chart.plotArea.charts[0].series[i].trendline && this.cChartDrawer.cChartSpace.chart.plotArea.charts[0].series[i].trendline.spPr.ln;
-				// var pen = this.cChartDrawer.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines;
+				/*is pen is not provided take it from gridLines, for debugging only*/
+				// var pen = this.cChartDrawer.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines; 
 				if(pen && this.paths[i]) {
 					this.cChartDrawer.drawPath(this.paths[i], pen);
 				}
