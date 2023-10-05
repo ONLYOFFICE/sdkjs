@@ -570,6 +570,12 @@
 		}
 		return oFunctionContent;
 	};
+	CUnicodeParser.prototype.IsFuncApplySymbol = function ()
+	{
+		return	this.oLookahead.data &&
+				this.oLookahead.data.length === 1 &&
+				this.oLookahead.data.charCodeAt(0) === 8289; //funcapply symbol ⁡
+	}
 	CUnicodeParser.prototype.IsGetNameOfFunction = function ()
 	{
 		return this.oLookahead.class === oLiteralNames.functionLiteral[0]
@@ -584,9 +590,9 @@
 
 		this.EatOneSpace();
 
-		if (!this.IsExpSubSupLiteral() || this.oLookahead.data  === '⁡')
+		if (!this.IsExpSubSupLiteral() || this.IsFuncApplySymbol())
 		{
-			if (this.oLookahead.data  === '⁡')
+			if (this.IsFuncApplySymbol())
 				this.EatToken(this.oLookahead.class);
 
 			oThird = this.GetOperandLiteral();
@@ -647,15 +653,6 @@
 				strClose = this.GetOpCloseLiteral();
 			else
 				strClose = ".";
-
-			// if (strOpen === "〖" && strClose === "〗")
-			// {
-			// 	if (oExp.length === 1)
-			// 	{
-			// 		return oExp[0];
-			// 	}
-			// 	return oExp;
-			// }
 
 			return {
 				type: oLiteralNames.bracketBlockLiteral[num],
