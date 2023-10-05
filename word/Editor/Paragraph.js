@@ -6792,6 +6792,37 @@ Paragraph.prototype.RemoveRunElement = function(oParaPos)
 
 	return false;
 };
+/**
+ * Получаем либо текущую формулу, либо формулу, находяющуюся слева или справа от курсора
+ * @returns {ParaMath|null}
+ */
+Paragraph.prototype.getAdjacentMath = function()
+{
+	let math = this.GetSelectedElementsInfo().GetMath();
+	if (math)
+		return math;
+	
+	let state = this.SaveSelectionState();
+	this.MoveCursorLeft(false, false);
+	math = this.GetSelectedElementsInfo().GetMath();
+	this.LoadSelectionState(state);
+	if (math)
+	{
+		math.MoveCursorToEndPos();
+		return math;
+	}
+	
+	this.MoveCursorRight(false, false);
+	math = this.GetSelectedElementsInfo().GetMath();
+	this.LoadSelectionState(state);
+	if (math)
+	{
+		math.MoveCursorToStartPos();
+		return math;
+	}
+	
+	return null;
+};
 Paragraph.prototype.MoveCursorUp = function(AddToSelect)
 {
 	var Result = true;
@@ -7413,6 +7444,9 @@ Paragraph.prototype.Correct_Content = function(_StartPos, _EndPos, bDoNotDeleteE
 
 	for (var CurPos = EndPos; CurPos >= StartPos; CurPos--)
 	{
+		if (CurPos === this.CurPos.ContentPos)
+			continue;
+		
 		var CurElement = this.Content[CurPos];
 
 		if (CurElement.CorrectContent)
@@ -9224,6 +9258,9 @@ Paragraph.prototype.GetSelectedText = function(bClearText, oPr)
 };
 Paragraph.prototype.GetSelectedElementsInfo = function(oInfo, ContentPos, Depth)
 {
+	if (!oInfo)
+		oInfo = new CSelectedElementsInfo();
+		
 	oInfo.SetParagraph(this);
 
 	if (ContentPos)
@@ -9283,6 +9320,8 @@ Paragraph.prototype.GetSelectedElementsInfo = function(oInfo, ContentPos, Depth)
 	var arrComplexFields = this.GetComplexFieldsByPos(ContentPos ? ContentPos : (this.Selection.Use === true ? this.Get_ParaContentPos(false, false) : this.Get_ParaContentPos(false)), false);
 	if (arrComplexFields.length > 0)
 		oInfo.SetComplexFields(arrComplexFields);
+	
+	return oInfo;
 };
 Paragraph.prototype.GetElementsInfoByXY = function(oInfo, X, Y, CurPage)
 {

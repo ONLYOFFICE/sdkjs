@@ -3133,7 +3133,14 @@ ParaMath.prototype.IsCursorPlaceable = function()
 {
     return true;
 };
-
+ParaMath.prototype.IsCursorAtEnd = function()
+{
+	return this.Cursor_Is_End();
+};
+ParaMath.prototype.IsCursorAtBegin = function()
+{
+	return this.Cursor_Is_Start();
+};
 ParaMath.prototype.Cursor_Is_Start = function()
 {
     // TODO: ParaMath.Cursor_Is_Start
@@ -3876,6 +3883,14 @@ ParaMath.prototype.GetSearchElementId = function(bNext, bUseContentPos, ContentP
 	return this.Root.GetSearchElementId(bNext, bUseContentPos, ContentPos, Depth);
 };
 //----------------------------------------------------------------------------------------------------------------------
+ParaMath.prototype.IsContentControlEquation = function()
+{
+	let parent = this.GetParent();
+	return (parent
+		&& parent instanceof AscWord.CInlineLevelSdt
+		&& parent.IsContentControlEquation()
+		&& parent.IsPlaceHolder());
+};
 
 
 function MatGetKoeffArgSize(FontSize, ArgSize)

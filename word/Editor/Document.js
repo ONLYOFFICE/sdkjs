@@ -8913,33 +8913,33 @@ CDocument.prototype.OnKeyDown = function(e)
 		}
 		case Asc.c_oAscDocumentShortcutType.InsertEquation:
 		{
-			var oSelectedInfo = this.GetSelectedElementsInfo();
-			var oMath         = oSelectedInfo.GetMath();
-			if (null === oMath)
+			let math = this.GetSelectedElementsInfo().GetMath();
+			if (!math)
 			{
-				let oCurParagraph = this.GetCurrentParagraph();
-				this.Api.asc_AddMath();
-			}
-			else if (oMath.Parent instanceof CInlineLevelSdt && oMath.Parent.IsShowingPlcHdr())
-			{
-				this.StartAction(AscDFH.historyitem_Paragraph_RemoveItem);
-				oMath.Parent.MoveCursorOutsideForm();
-				oMath.Paragraph.RemoveElement(oMath.Parent);
-				this.UpdateInterface();
-				this.Recalculate();
-				this.FinalizeAction();
+				let paragraph = this.GetCurrentParagraph();
+				let adjMath = paragraph && paragraph.getAdjacentMath();
+				if (adjMath)
+					adjMath.SetThisElementCurrentInParagraph();
+				else
+					this.Api.asc_AddMath();
 			}
 			else
 			{
-				if (oMath.Cursor_Is_Start())
+				if (math.IsContentControlEquation())
 				{
-					oMath.MoveCursorToStartPos();
-					oMath.Parent.MoveCursorLeft();
+					if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+					{
+						this.StartAction(AscDFH.historydescription_Document_RemoveMathShortcut);
+						math.GetParent().RemoveThisFromParent();
+						this.UpdateInterface();
+						this.Recalculate();
+						this.FinalizeAction();
+					}
 				}
 				else
 				{
-					oMath.MoveCursorToEndPos();
-					oMath.Parent.MoveCursorRight();
+					math.MoveCursorOutsideElement(math.IsCursorAtBegin());
+					// TODO: Когда курсор ни в начале, ни в конце надо сделать временное действие - разбивка формулу
 				}
 			}
 

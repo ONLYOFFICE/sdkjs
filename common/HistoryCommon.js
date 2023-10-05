@@ -1275,6 +1275,15 @@
 			case AscDFH.historydescription_Document_SetAutoHyphenation:
 				sString = "Document_SetAutoHyphenation";
 				break;
+			case AscDFH.historydescription_Document_SetConsecutiveHyphenLimit:
+				sString = "Document_SetConsecutiveHyphenLimit";
+				break;
+			case AscDFH.historydescription_Document_SetHyphenateCaps:
+				sString = "Document_SetHyphenateCaps";
+				break;
+			case AscDFH.historydescription_Document_RemoveMathShortcut:
+				sString = "Document_RemoveMathShortcut";
+				break;
 		}
 		return sString;
 	}
@@ -4454,6 +4463,7 @@
 	window['AscDFH'].historydescription_Document_SetAutoHyphenation                 = 0x01a6;
 	window['AscDFH'].historydescription_Document_SetConsecutiveHyphenLimit          = 0x01a7;
 	window['AscDFH'].historydescription_Document_SetHyphenateCaps                   = 0x01a8;
+	window['AscDFH'].historydescription_Document_RemoveMathShortcut                 = 0x01a9;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

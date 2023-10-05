@@ -291,7 +291,7 @@ CParagraphContentBase.prototype.RemoveThisFromParent = function(updatePosition)
 	if (parent && -1 !== posInParent)
 		parent.RemoveFromContent(posInParent, 1);
 	
-	if (updatePosition)
+	if (false !== updatePosition)
 	{
 		if (posInParent < parent.GetElementsCount() && parent.GetElement(posInParent).IsCursorPlaceable())
 		{
