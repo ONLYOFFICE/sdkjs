@@ -824,6 +824,7 @@
 				oBaseContent.type === oLiteralNames.opNaryLiteral[num] ||
 				oBaseContent.type === oLiteralNames.functionWithLimitLiteral[num])
 		) {
+			this.SkipFreeSpace();
 			oThirdContent = this.GetArguments(1);
 		}
 
