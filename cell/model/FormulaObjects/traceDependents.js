@@ -1101,7 +1101,7 @@ function (window, undefined) {
 				let elemType = elem.type, inFormulaRef;
 				if (isPartOfFunc && numberOfArgs > 0 && elemTypeExist) {
 					if (cElementType.cellsRange === elemType || cElementType.name === elemType) {
-						if (funcReturnType) {
+						if (funcReturnType === AscCommonExcel.cReturnFormulaType.array) {
 							// range refers to formula, add property inFormulaRef = true
 							inFormulaRef = true;
 						} else if (funcArrayIndexes) {

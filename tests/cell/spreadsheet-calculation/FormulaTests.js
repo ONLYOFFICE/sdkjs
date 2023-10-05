@@ -17947,6 +17947,12 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue().getValue(), 45);
 
+		ws.getRange2("A100:A102").cleanAll();
+
+		oParser = new parserFormula("INDIRECT(A100:A102)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#REF!");
+
 		/*oParser = new parserFormula( "INDIRECT(A24)", "A2", ws );
 		assert.ok( oParser.parse() );
 		assert.strictEqual( oParser.calculate().getValue().getValue(), 10 );*/
