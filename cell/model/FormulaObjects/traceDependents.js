@@ -1088,7 +1088,8 @@ function (window, undefined) {
 			}
 			
 			for (let i = length - 1; i >= 0; i--) {
-				if (!formulaParsed.outStack.hasOwnProperty(i)) {
+				let elem = formulaParsed.outStack[i];
+				if (!elem) {
 					continue;
 				}
 				if (numberOfArgs <= 0) {
@@ -1096,8 +1097,7 @@ function (window, undefined) {
 					isPartOfFunc = null;
 				}
 
-				let elem = formulaParsed.outStack[i];
-				let elemTypeExist = elem.type !== undefined ? true : false;
+				let elemTypeExist = elem.type !== undefined;
 				let elemType = elem.type, inFormulaRef;
 				if (isPartOfFunc && numberOfArgs > 0 && elemTypeExist) {
 					if (cElementType.cellsRange === elemType || cElementType.name === elemType) {
@@ -1106,8 +1106,7 @@ function (window, undefined) {
 							inFormulaRef = true;
 						} else if (funcArrayIndexes) {
 							// if have no returnType check for arrayIndexes and if element pass in raw form(as array, range) to argument
-							let elemIndexInFormula = numberOfArgs - 1;
-							if (funcArrayIndexes[elemIndexInFormula]) {
+							if (funcArrayIndexes[ numberOfArgs - 1]) {
 								inFormulaRef = true;
 							}
 						}

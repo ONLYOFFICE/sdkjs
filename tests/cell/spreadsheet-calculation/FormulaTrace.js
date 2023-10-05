@@ -2125,8 +2125,8 @@ $(function() {
 		// 		A50Index = AscCommonExcel.getCellIndex(ws.getRange2("A50").bbox.r1, ws.getRange2("A50").bbox.c1),
 		// 		AA500Index = AscCommonExcel.getCellIndex(ws.getRange2("AA500").bbox.r1, ws.getRange2("AA500").bbox.c1);
 
-		// 	// TODO пройтись по всем формулам, записать их в строку в соответствии с кол-вом аргументов и вызвать формулы. 
-		// 	// Также, можно поделить формулы на имеющие возвращаемый тип и нет
+		// // / / // TODO check all the formulas, write them in a string according to the number of arguments and call the formulas.
+		// // Also, you can divide formulas into having a return type and not
 
 		// 	// console.log(AscCommonExcel.cFormulaFunctionGroup);
 		// 	// console.log(AscCommonExcel.cReturnFormulaType);
@@ -2143,7 +2143,7 @@ $(function() {
 		// 		retType = [], str = "";
 
 		// 	console.log(AscCommonExcel.cFormulaFunctionGroup);
-		// 	// TODO протестировать функцию из каждого типа
+		// 	// TODO test all type functions
 		// 	for (let index in AscCommonExcel.cFormulaFunctionGroup) {
 		// 		let array = AscCommonExcel.cFormulaFunctionGroup[index];
 		// 		for (let i = 0; i < array.length; i++) {
