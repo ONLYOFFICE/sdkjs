@@ -1158,13 +1158,16 @@
 	];
 
 	let functionNames = [
-		"tan", "tanh", "sup", "sinh", "sin", "sec", "ker", "hom",
-		"arg", "arctan", "arcsin", "arcsec", "arccsc", "arccot", "arccos",
-		"inf", "gcd", "exp", "dim", "det", "deg", "csc", "coth", "cot",
-		"cosh", "cos", "Pr", "lg", "ln", "log", "sgn", "sech"
+		'cos', 'acos', 'acosh', 'sin', 'tan', 'asin', 'asinh', 'sec',
+		'acsc', 'atan', 'atanh', 'acsch', 'arcsinh', 'cot', 'acot', 'def',
+		'arg', 'deg', 'det', 'dim', 'erf', 'acoth', 'csc', 'arcsin',
+		'gcd', 'inf', 'asec', 'ker', 'asech', 'arccos', 'hom', 'lg',
+		'arctan', 'sup', 'arcsec', 'arccot', 'arccsc', 'sinh', 'cosh',
+		'tanh', 'coth', 'sech', 'csch', 'srcsinh', 'arctanh', 'arcsech', 'arccosh',
+		'arccoth', 'arccsch', 'Pr', 'lin', 'exp', "sgn",
 	];
 	const limitFunctions = [
-		"lim", "min", "max",
+		"lim", "min", "max", "log", "ln"
 	];
 	const UnicodeSpecialScript = {
 		"⁰": "0",
@@ -1880,6 +1883,10 @@
 					break;
 				case oNamesOfLiterals.functionLiteral[num]:
 					let oFunc = oContext.Add_Function({}, null, null);
+
+					if (oTokens.value[0] === "\\") {
+						oTokens.value = oTokens.value.slice(1);
+					}
 					oFunc.getFName().Add_Text(oTokens.value, Paragraph, STY_PLAIN);
 					ConvertTokens(
 						oTokens.third,

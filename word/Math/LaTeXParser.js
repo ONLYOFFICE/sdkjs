@@ -591,7 +591,7 @@
 			? this.GetArguments(1)
 			: undefined;
 
-		let name = oFuncContent.data.slice(1)
+		let name = oFuncContent.data[0] === "\\" ? oFuncContent.data.slice(1) : oFuncContent.data;
 		if (LimitFunctions.includes(name)) {
 			oOutput = {
 				type: oLiteralNames.functionWithLimitLiteral[num],
