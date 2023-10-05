@@ -5861,6 +5861,18 @@ drawBarChart.prototype = {
 
 		var height, startX, startY, val, paths, seriesHeight = [], tempValues = [], seria, startYColumnPosition, startXPosition, prevVal, idx, seriesCounter = 0;
 		var cubeCount = 0, k;
+
+		/* TrendLine preparation section----- */
+		var points = numCache ? numCache.ptCount : 0;
+		var linesCount = 0;
+		for(var i = 0; i < this.chart.series.length; i++){
+			if(this.chart.series[i].trendline){
+				linesCount++;
+			}
+		}
+		this.cChartDrawer.trendline.prepareInformation(linesCount, points, hmargin, individualBarWidth/2)
+		/* -----TrendLine preparation section */
+
 		for (var i = 0; i < this.chart.series.length; i++) {
 			numCache = this.cChartDrawer.getNumCache(this.chart.series[i].val);
 			seria = numCache ? numCache.pts : [];
@@ -5929,7 +5941,6 @@ drawBarChart.prototype = {
 						startXPosition = xPoints[0].pos + Math.abs(xPoints[0].pos - this.valAx.posX);
 					}
 				}
-
 
 				if (this.catAx.scaling.orientation === ORIENTATION_MIN_MAX) {
 					if (seriesCounter === 0) {
@@ -6019,8 +6030,8 @@ drawBarChart.prototype = {
 					if(this.chart.series[i].errBars){
 						this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
 					}
-					if(this.chart.series[i].trendline){
-						this.cChartDrawer.trendline.addCoordinate(_pointX, height/ this.chartProp.pxToMM, j+1, _pointVal, i)
+					if(this.chart.series[i].trendline && this.cChartDrawer.trendline.points){
+						this.cChartDrawer.trendline.addCoordinate(_pointX, height/ this.chartProp.pxToMM, idx+1, _pointVal, i, individualBarWidth/ this.chartProp.pxToMM)
 					}
 				}
 			}
@@ -16088,22 +16099,75 @@ CColorObj.prototype =
 		this.cChartDrawer = chartsDrawer;
 	  
 		this.coordinates = [[]];
-		this.predicted = [];
-		this.variables = []
-		this.means = []
-		
+		this.predicted = {start:[], end:[]};
+		this.variables = [];
+		this.means = [];
+		this.relativeness = [];
+		this.shift = 0;		
 		this.paths = [];
+		this.points = null;
 	}
 
 	Ctrendline.prototype = {
 
         constructor: Ctrendline,
 
-		addCoordinate: function (x, y, xVal, yVal, idx){
+		prepareInformation: function(linesCount, points, margin, barWidth){
+			if(linesCount == 0 ){
+				console.log("no need to create trendLines, number of lines == 0");
+				return
+			}
+			if(points <2 ){
+				console.log("no need to create trendLines, number of maxPoints < 2");
+				return
+			}
+
+			this.points = points;
+			this.initiateBoundaries( linesCount, margin, barWidth)
+		},
+
+		initiateBoundaries: function(linesCount, margin, barWidth){
+
+			// Xval = x1Val*x1/ truex
+			var leftPadding = this.cChartDrawer.calcProp.chartGutter._left
+			var rightPadding = this.cChartDrawer.calcProp.chartGutter._right
+			var graphWidth = this.cChartDrawer.calcProp.widthCanvas - rightPadding - leftPadding;
+			var pxToMm = this.cChartDrawer.calcProp.pxToMM;
+			var trueX1 = (margin + barWidth)/pxToMm;
+			var trueX2 = (graphWidth - margin - barWidth)/pxToMm;
+			var trueX1Val = 1;
+			var trueX2Val = this.points;
+			if(linesCount != 1){
+				barWidth*=2;
+			}
+
+			var x1 = (margin + barWidth)/pxToMm;
+			var x2 = (graphWidth - margin - barWidth)/pxToMm;
+			var x1Val = (trueX1Val*x1)/trueX1;
+			var x2Val = (trueX2Val*x2)/trueX2;
+			this.predicted.start.push({x:x1+(leftPadding/pxToMm), y:null, xVal:x1Val, yVal: null, trueVal: trueX1Val})
+			this.predicted.end.push({x:x2+(leftPadding/pxToMm), y:null, xVal:x2Val, yVal: null, trueVal: trueX2Val})
+		},
+
+		addCoordinate: function (x, y, xVal, yVal, lineId){
 			var _n = this.coordinates.length;
-			if(idx != _n-1){
-				this.coordinates.push([])
-				_n+=1
+			if(lineId-this.shift != _n-1){
+				// check if previous line had more that 2 coordinates, if not erase it 
+				// if yes, push new array inside coordinates
+				if(this.coordinates[_n-1].length<2){
+					this.coordinates[_n-1] = [];
+					this.shift ++; 
+				}else{
+					// for each successfully created array of coordinates push its start and end position
+					var _start = this.predicted.start[0]
+					var _end = this.predicted.end[0]
+					this.predicted.start.push({x:_start.x, y:null, xVal:_start.xVal, yVal: null, trueVal: _start.trueVal})
+					this.predicted.end.push({x:_end.x, y:null, xVal:_end.xVal, yVal: null, trueVal: _end.trueVal})
+
+					// create new coordinate array
+					this.coordinates.push([])
+					_n+=1
+				}
 			}
 			var coordinate = {x: x, y: y, xVal: xVal, yVal: yVal}
 			this.coordinates[_n-1].push(coordinate)
@@ -16111,10 +16175,44 @@ CColorObj.prototype =
 		
 		recalculate: function(){
 			// steps: Find support variables, predict new y's, create line
-			if(this.coordinates[0].length>1){
-				this._findSuppVariables()
-				this._predictY()
+			this.checkCoordinates()
+			if(this.coordinates.length>0){
+				this._findRelativness();
+				this._findSuppVariables();
+				this._predictY();
 				this._calculateLine();
+			}
+		},
+
+		//use this function to see variables in proper format for better debugging experience
+		_showPredicted: function(){
+			console.log(this.predicted)
+			var _n = this.coordinates.length;
+			for(var i =0; i<_n; i++){
+				console.log('start')
+				console.log(this.variables[i][0], this.variables[i][1])
+				console.log(this.predicted.start[i].yVal, this.predicted.start[i].xVal);
+				var _n2 = this.predicted.mid[i].length;
+				for(var j =0; j<_n2; j++){
+					console.log(this.predicted.mid[i][j].yVal, this.predicted.mid[i][j].xVal);
+				}
+				console.log(this.predicted.end[i].yVal, this.predicted.end[i].xVal);
+			}
+		},
+
+		checkCoordinates: function(){
+			var _n = this.coordinates.length;
+			if (this.coordinates[_n-1].length<2){
+				this.coordinates.pop();
+				this.predicted.start.pop();
+				this.predicted.end.pop();
+			}
+		},
+
+		_findRelativness(){
+			var _n = this.coordinates.length;
+			for(var i = 0; i< _n; i++){
+				this.relativeness.push(this.coordinates[i][0].y/this.coordinates[i][0].yVal)
 			}
 		},
 
@@ -16129,12 +16227,12 @@ CColorObj.prototype =
 					var _meanX = 0;
 					for(var j=0; j<_n2; j++){
 						_meanX += coordinates[i][j].xVal;
-						_meanY += coordinates[i][j].yVal;4
+						_meanY += coordinates[i][j].yVal;
 					}
 					means.push([_meanX/_n2, _meanY/_n2])
 				}
 			};
-
+			
 			var _calculateM = function (coordinates, variables, means){
 				var _n = coordinates.length;
 				for(var i=0; i<_n; i++){
@@ -16161,30 +16259,24 @@ CColorObj.prototype =
 			_calculateB(this.variables, this.means);
 		},
 
-		_predictY(m, b){
-			// var findMaxLength = function(coordinates){
-			// 	var maxLen = 0;
-			// 	var _n = coordinates.length;
-			// 	for(var i=0; i<_n; i++){
-			// 		maxLen = (coordinates[i].length>maxLen)?coordinates[i].length:maxLen
-			// 	}
-			// 	return maxLen
-			// }
-			
+		_predictY: function(){
+
+			var _predictPoint = function(obj, m, b, relativeness){
+					var yVal = m*obj.xVal + b
+					var y = yVal * relativeness
+					obj.yVal = yVal;
+					obj.y = y;
+				}
+
 			var _n = this.coordinates.length
 			for(var i=0; i<_n; i++){
-				var _n2 = this.coordinates[i].length
-				this.predicted.push([])
-				for(var j =0; j<_n2; j++){
-					var newYVal = (this.coordinates[i][j].xVal*this.variables[i][0])+this.variables[i][1];
-					var newY = (newYVal * this.coordinates[i][j].y)/ this.coordinates[i][j].yVal
-					this.predicted[i].push({x:this.coordinates[i][j].x, y:newY, xVal:this.coordinates[i][j].xVal, yVal:newYVal})
-				}
+				_predictPoint(this.predicted.start[i], this.variables[i][0], this.variables[i][1], this.relativeness[i])
+				_predictPoint(this.predicted.end[i], this.variables[i][0], this.variables[i][1], this.relativeness[i])
 			}
 		},
 
 		_calculateLine: function(){
-			var _n = this.predicted.length
+			var _n = this.coordinates.length
 			var pathH = this.cChartDrawer.calcProp.pathH;
 			var pathW = this.cChartDrawer.calcProp.pathW;
 			var pxToMm = this.cChartDrawer.calcProp.pxToMM;
@@ -16193,19 +16285,16 @@ CColorObj.prototype =
 			for( var i=0; i<_n; i++){
 				var pathId = this.cChartDrawer.cChartSpace.AllocPath();
 				var path  = this.cChartDrawer.cChartSpace.GetPath(pathId);
-				var _n2 = this.predicted[i].length
 				
-				path.moveTo(this.predicted[i][0].x * pathW, (height-this.predicted[i][0].y) * pathH);
-				for(var j=1; j<_n2; j++){
-					path.lnTo(this.predicted[i][j].x * pathW, (height-this.predicted[i][j].y) * pathH);
-				}
+				path.moveTo(this.predicted.start[i].x * pathW, (height-this.predicted.start[i].y) * pathH);
+				path.lnTo(this.predicted.end[i].x * pathW, (height-this.predicted.end[i].y) * pathH);
 
 				this.paths.push(pathId);
 			}
 		},
 
 		draw: function(){
-			var _n = this.predicted.length
+			var _n = this.paths.length
 			for(var i =0; i<_n; i++){
 				var pen = this.cChartDrawer.cChartSpace.chart.plotArea.charts[0].series[i].trendline && this.cChartDrawer.cChartSpace.chart.plotArea.charts[0].series[i].trendline.spPr.ln;
 				// var pen = this.cChartDrawer.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines;
