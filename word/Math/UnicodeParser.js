@@ -577,13 +577,18 @@
 	CUnicodeParser.prototype.GetNameOfFunction = function ()
 	{
 		let oContent,
-			oName = this.EatToken(this.oLookahead.class).data,
+			oName = this.oLookahead.data,
 			oThird;
+
+		this.EatToken(this.oLookahead.class)
 
 		this.EatOneSpace();
 
-		if (!this.IsExpSubSupLiteral())
+		if (!this.IsExpSubSupLiteral() || this.oLookahead.data  === '⁡')
 		{
+			if (this.oLookahead.data  === '⁡')
+				this.EatToken(this.oLookahead.class);
+
 			oThird = this.GetOperandLiteral();
 			this.EatOneSpace()
 		}
@@ -643,14 +648,14 @@
 			else
 				strClose = ".";
 
-			if (strOpen === "〖" && strClose === "〗")
-			{
-				if (oExp.length === 1)
-				{
-					return oExp[0];
-				}
-				return oExp;
-			}
+			// if (strOpen === "〖" && strClose === "〗")
+			// {
+			// 	if (oExp.length === 1)
+			// 	{
+			// 		return oExp[0];
+			// 	}
+			// 	return oExp;
+			// }
 
 			return {
 				type: oLiteralNames.bracketBlockLiteral[num],
