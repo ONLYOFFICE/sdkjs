@@ -6357,7 +6357,7 @@
 				oShape.spPr.xfrm.setExtX(obj['width']);
 				oShape.spPr.xfrm.setExtY(obj['height']);
 				oShape.spPr.xfrm.setRot(AscFormat.normalizeRotate(obj['rotate'] ? (obj['rotate'] * Math.PI / 180) : 0));
-				oShape.spPr.setGeometry(AscFormat.CreateGeometry(obj['type']));
+				oShape.spPr.setGeometry(AscFormat.CreateGeometry(obj['type'] || "rect"));
 				if(obj['fill'] && obj['fill'].length === 3){
 					oShape.spPr.setFill(AscFormat.CreateSolidFillRGB(obj['fill'][0], obj['fill'][1], obj['fill'][2]));
 				}

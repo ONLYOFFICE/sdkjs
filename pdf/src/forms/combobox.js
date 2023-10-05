@@ -72,10 +72,10 @@
         oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
         oContentToDraw.Draw(0, oGraphicsWord);
         // redraw target cursor if field is selected
-        if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && oViewer.fieldFillingMode)
+        if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsEditable())
             oContentToDraw.RecalculateCurPos();
         
-        oGraphicsWord.RemoveClip();
+        oGraphicsWord.RemoveLastClip();
         this.DrawBorders(oGraphicsPDF);
     };
     CComboBoxField.prototype.Recalculate = function() {
@@ -221,7 +221,10 @@
         let oActionsQueue   = oDoc.GetActionsQueue();
 
         function callbackAfterFocus(x, y, e) {
-            let {X, Y} = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
+            let oPos = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
+            let X       = oPos["X"];
+            let Y       = oPos["Y"];
+
             var pageObject = oViewer.getPageByCoords(x - oViewer.x, y - oViewer.y);
 
             editor.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
@@ -551,7 +554,7 @@
         this._editable = bValue;
     };
     CComboBoxField.prototype.IsEditable = function() {
-        return this._editable;
+        return this._editable && this.IsNeedDrawHighlight() == false;
     };
     CComboBoxField.prototype.SetOptions = function(aOpt) {
         let aOptToPush = [];

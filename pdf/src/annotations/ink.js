@@ -135,26 +135,6 @@
         if (oDrawing)
             oDrawing.GraphicObj.draw(oGraphicsWord);
     };
-    CAnnotationInk.prototype.DrawBackground = function() {
-        let oViewer = editor.getDocumentRenderer();
-        let oGraphicsPDF = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
-        let oBgRGBColor = {r: 255, g: 255, b: 150};
-
-        let aRect = this.GetRect();
-        if (oBgRGBColor) {
-            let nScale  = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
-
-            let X = aRect[0] * nScale;
-            let Y = aRect[1] * nScale;
-            let nWidth = (aRect[2] - aRect[0]) * nScale;
-            let nHeight = (aRect[3] - aRect[1]) * nScale;
-            
-            oGraphicsPDF.SetGlobalAlpha(1);
-
-            oGraphicsPDF.SetFillStyle(oBgRGBColor.r, oBgRGBColor.g, oBgRGBColor.b);
-            oGraphicsPDF.FillRect(X, Y, nWidth, nHeight);
-        }
-    };
     CAnnotationInk.prototype.GetDrawing = function() {
         return this.content.GetAllDrawingObjects()[0];
     };
@@ -213,9 +193,13 @@
         let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
 
-        oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
+        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
 
         if (this.IsSelected()) {
             oDrawingObjects.handleEventMode = HANDLE_EVENT_MODE_CURSOR;
@@ -224,7 +208,7 @@
             oDrawingObjects.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
         }
 
-        oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
     CAnnotationInk.prototype.SetInkPoints = function(aSourcePaths) {
         let oViewer         = editor.getDocumentRenderer();

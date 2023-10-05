@@ -194,8 +194,9 @@
 	 */
     CAnnotationBase.prototype.GetOriginViewInfo = function() {
         let oViewer     = editor.getDocumentRenderer();
-        let oPageInfo   = oViewer.pagesInfo.pages[this.GetPage()];
-        let oPage       = oViewer.drawingPages[this.GetPage()];
+        let nPage       = this.GetOriginPage();
+        let oPageInfo   = oViewer.pagesInfo.pages[nPage];
+        let oPage       = oViewer.drawingPages[nPage];
 
         let w = (oPage.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         let h = (oPage.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
@@ -204,7 +205,7 @@
             let oFile   = oViewer.file;
            
             oPageInfo.annotsAPInfo = {
-                info: oFile.nativeFile["getAnnotationsAP"](this.GetOriginPage(), w, h),
+                info: oFile.nativeFile["getAnnotationsAP"](nPage, w, h),
                 size: {
                     w: w,
                     h: h
@@ -218,6 +219,10 @@
         }
 
         return null;
+    };
+    
+    CAnnotationBase.prototype.ClearCache = function() {
+        this._originView.normal = null;
     };
     CAnnotationBase.prototype.SetPosition = function(x, y) {
         let oViewer = editor.getDocumentRenderer();
@@ -326,8 +331,35 @@
         return this.type;
     };
     CAnnotationBase.prototype.SetPage = function(nPage) {
-        this._page = nPage;
-        this.selectStartPage = nPage;
+        let nCurPage = this.GetPage();
+        if (nPage == nCurPage)
+            return;
+
+        let oViewer = editor.getDocumentRenderer();
+        let oDoc    = this.GetDocument();
+        
+        let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage].annots ? oViewer.pagesInfo.pages[nCurPage].annots.indexOf(this) : -1;
+        if (oViewer.pagesInfo.pages[nPage]) {
+            if (oDoc.annots.indexOf(this) != -1) {
+                if (oViewer.pagesInfo.pages[nPage].annots == null) {
+                    oViewer.pagesInfo.pages[nPage].annots = [];
+                }
+    
+                if (nCurIdxOnPage != -1)
+                    oViewer.pagesInfo.pages[nCurPage].annots.splice(nCurIdxOnPage, 1);
+    
+                oViewer.pagesInfo.pages[nPage].annots.push(this);
+
+                oDoc.History.Add(new CChangesPDFAnnotPage(this, nCurPage, nPage));
+
+                // добавляем в перерисовку исходную страницу
+                this.AddToRedraw();
+            }
+
+            this._page = nPage;
+            this.selectStartPage = nPage;
+            this.AddToRedraw();
+        }
     };
     CAnnotationBase.prototype.GetPage = function() {
         return this._page;
@@ -343,16 +375,14 @@
         this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.onMouseUp = function() {
-        let oViewer = editor.getDocumentRenderer();
-        // oViewer.onUpdateOverlay();
-        let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w, this._pagePos.y + this._pagePos.h / 2, this.GetPage(), true);
-        editor.sync_ShowComment([this.GetId()], X, Y)
+        let oPos = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w, this._pagePos.y + this._pagePos.h / 2, this.GetPage(), true);
+        editor.sync_ShowComment([this.GetId()], oPos["X"], oPos["Y"])
     };
     CAnnotationBase.prototype._AddReplyOnOpen = function(oReplyInfo) {
         let oReply = new AscPDF.CAnnotationText(oReplyInfo["UniqueName"], this.GetPage(), [], this.GetDocument());
 
         oReply.SetContents(oReplyInfo["Contents"]);
-        oReply.SetModDate((new Date().getTime()).toString());
+        oReply.SetModDate(AscPDF.ParsePDFDate(oReplyInfo["LastModified"]).getTime());
         oReply.SetAuthor(oReplyInfo["User"]);
         oReply.SetHidden(false);
 
@@ -378,7 +408,7 @@
             let oTextAnnot = new AscPDF.CAnnotationText(this.GetName(), this.GetPage(), [], this.GetDocument());
         
             oTextAnnot.SetContents(contents);
-            oTextAnnot.SetModDate((new Date().getTime()).toString());
+            oTextAnnot.SetModDate(this.GetModDate());
             oTextAnnot.SetAuthor(this.GetAuthor());
             oTextAnnot.SetHidden(false);
 
@@ -540,8 +570,41 @@
     function ConvertPx2Pt(px) {
         return px / (96 / 72);
     }
+
+    function ParsePDFDate(sDate) {
+        // Регулярное выражение для извлечения компонентов даты
+        var regex = /D:(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})\+(\d{2})'(\d{2})'/;
+
+        // Используем регулярное выражение для извлечения компонентов даты
+        var match = sDate.match(regex);
+
+        if (match) {
+            // Извлекаем компоненты даты из совпадения
+            var year                    = parseInt(match[1]);
+            var month                   = parseInt(match[2]);
+            var day                     = parseInt(match[3]);
+            var hour                    = parseInt(match[4]);
+            var minute                  = parseInt(match[5]);
+            var second                  = parseInt(match[6]);
+            var timeZoneOffsetHours     = parseInt(match[7]);
+            var timeZoneOffsetMinutes   = parseInt(match[8]);
+
+            // Создаем объект Date с извлеченными компонентами даты
+            var date = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+
+            // Учитываем смещение времени
+            date.setHours(date.getHours() - timeZoneOffsetHours);
+            date.setMinutes(date.getMinutes() - timeZoneOffsetMinutes);
+
+            return date;
+        }
+
+        return null;
+    }
+
 	window["AscPDF"].CAnnotationBase    = CAnnotationBase;
 	window["AscPDF"].ConvertPt2Px       = ConvertPt2Px;
 	window["AscPDF"].ConvertPx2Pt       = ConvertPx2Pt;
+    window["AscPDF"].ParsePDFDate       = ParsePDFDate;
 })();
 

@@ -155,7 +155,7 @@
 	{
 		this.word = true;
 		this.buffer.push(textItem);
-		AscHyphenation.addCodePoint(textItem.GetCodePoint());
+		AscHyphenation.addCodePoint(String.fromCodePoint(textItem.GetCodePoint()).toLowerCase().codePointAt(0));
 		textItem.SetHyphenAfter(false);
 	};
 	TextHyphenator.prototype.flushWord = function()

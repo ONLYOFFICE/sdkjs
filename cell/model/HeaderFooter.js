@@ -1436,6 +1436,8 @@ function (window, undefined) {
 		this.differentFirst = props.differentFirst;
 		this.differentOddEven = props.differentOddEven;
 		this.scaleWithDoc = props.scaleWithDoc;
+
+		this.needAddPicturesMap = props.needAddPicturesMap;
 	};
 
 	CHeaderFooterEditor.prototype.getPropsToInterface = function (savedHeaderFooter) {
@@ -1462,6 +1464,7 @@ function (window, undefined) {
 		res.differentFirst = this.differentFirst;
 		res.differentOddEven = this.differentOddEven;
 		res.scaleWithDoc = this.scaleWithDoc;
+		res.needAddPicturesMap = this.needAddPicturesMap;
 
 		return res;
 	};
@@ -1555,7 +1558,12 @@ function (window, undefined) {
 
 		//save pictures
 		if (ws && ws.changeLegacyDrawingHFPictures && this.needAddPicturesMap) {
-			ws.changeLegacyDrawingHFPictures(this.needAddPicturesMap)
+			ws.changeLegacyDrawingHFPictures(this.needAddPicturesMap);
+		} else if (opt_headerFooter && this.needAddPicturesMap) {
+			if (!opt_headerFooter.legacyDrawingHF) {
+				opt_headerFooter.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF();
+			}
+			opt_headerFooter.legacyDrawingHF.addPictures(this.needAddPicturesMap, true);
 		}
 
 		if (isAddHistory) {
@@ -2308,7 +2316,7 @@ function (window, undefined) {
 
 	};
 
-	CLegacyDrawingHF.prototype.addPictures = function (picturesMap) {
+	CLegacyDrawingHF.prototype.addPictures = function (picturesMap, notDeletePictures) {
 		let t = this;
 		let api = window["Asc"]["editor"];
 
@@ -2330,7 +2338,9 @@ function (window, undefined) {
 				newHFDrawing.graphicObject = ws.objectRender.controller.createImage(url, 0, 0, __w, __h);
 				t.changePicture(oldHFDrawing && oldHFDrawing.obj, newHFDrawing, true);
 
-				delete picturesMap[i];
+				if (!notDeletePictures) {
+					delete picturesMap[i];
+				}
 			}
 		}
 	};
@@ -2355,7 +2365,7 @@ function (window, undefined) {
 			this.addPicture(to, addToHistory);
 		}
 
-		if ((from || to) && addToHistory) {
+		if ((from || to) && addToHistory && this.ws) {
 			let fromData = from && new AscCommonExcel.UndoRedoData_LegacyDrawingHFDrawing(from.id, from.graphicObject.Id);
 			let toData = to && new AscCommonExcel.UndoRedoData_LegacyDrawingHFDrawing(to.id, to.graphicObject.Id);
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ChangeLegacyDrawingHFDrawing, this.ws.getId(),

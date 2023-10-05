@@ -64,10 +64,6 @@
 	AscCommon.CGraphics.prototype.SetFontSlot = function () {};
 	AscCommon.CGraphics.prototype.SetFont = function () {};
 	AscCommon.CGraphics.prototype.SetFontInternal = function () {};
-	AscCommon.loadSmartArtBinary = function ()
-	{
-
-	};
 
 	Asc.asc_docs_api.prototype._loadModules = function () {};
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {

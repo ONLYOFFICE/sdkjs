@@ -7429,6 +7429,9 @@ CDocumentContent.prototype.SetSelectionState = function(State, StateIndex)
 
 	if (State.length <= 0)
 		return;
+	
+	if (undefined === StateIndex)
+		StateIndex = State.length - 1;
 
 	var DocState = State[StateIndex];
 

@@ -359,7 +359,8 @@
             let numFormat_Month = 13;
             let numFormat_Day = 16;
 
-            for (let obj of aRawFormat) {
+            for (let i = 0; i < aRawFormat.length; i++) {
+                let obj = aRawFormat[i];
                 switch (obj.type) {
                     case numFormat_Day:
                         if (dayDone == false) {
@@ -457,7 +458,8 @@
             let numFormat_Month = 13;
             let numFormat_Day = 16;
 
-            for (let obj of aRawFormat) {
+            for (let i = 0; i < aRawFormat.length; i++) {
+                let obj = aRawFormat[i];
                 switch (obj.type) {
                     case numFormat_Day:
                         if (dayDone == false) {

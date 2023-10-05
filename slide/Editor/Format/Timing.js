@@ -11638,6 +11638,19 @@
         return this.animationDrawer.isDrawingHidden(sId);
     };
 
+    CAnimationPlayer.prototype.goToEnd = function () {
+        this.start();
+        let nCount = 0;
+        const nMaxCount = 100;
+        while (this.onNextSlide()) {
+            ++nCount;
+            if(nCount >= nMaxCount) {
+                this.start();
+                break;
+            }
+        }
+    };
+
 
     function CDemoAnimPlayer(oSlide) {
         CAnimationPlayer.call(this, oSlide, null);
@@ -12025,11 +12038,31 @@
         //console.log(oAttributes);
     };
     CAnimSandwich.prototype.drawObject = function (oGraphics, oDrawing, oTextureCache, oAttributesMap) {
+
+        //this.print();
+        //console.log(oAttributesMap);
+        const oTextureData = this.getTextureData(oDrawing, oTextureCache, oAttributesMap, oGraphics.m_oCoordTransform.sx);
+        if(!oTextureData) {
+            return;
+        }
+
+        const fOpacity = oTextureData.opacity;
+        const oTransform = oTextureData.transform;
+        const oTexture = oTextureData.texture;
+        if (fOpacity !== undefined) {
+            oGraphics.put_GlobalAlpha(true, 1 - fOpacity);
+        }
+        oTexture.draw(oGraphics, oTransform);
+        if (fOpacity !== undefined) {
+            oGraphics.put_GlobalAlpha(false, 1);
+        }
+    };
+    CAnimSandwich.prototype.getTextureData = function (oDrawing, oTextureCache, oAttributesMap, fScale) {
         //this.print();
         //console.log(oAttributesMap);
         var sVisibility = oAttributesMap["style.visibility"];
         if (sVisibility === "hidden") {
-            return;
+            return null;
         }
         var oFillColor = oAttributesMap["fillcolor"] || oAttributesMap["style.color"];
         var sFillType = oAttributesMap["fill.type"];
@@ -12039,12 +12072,11 @@
         var oStrokeColor = oAttributesMap["stroke.color"];
         var bStrokeOn = oAttributesMap["stroke.on"];
 
-        var fScale = oGraphics.m_oCoordTransform.sx;
         var sId = oDrawing.Get_Id();
         var oTexture = oTextureCache.checkTexture(sId, fScale);
-		if(!oTexture) {
-			return;
-		}
+        if(!oTexture) {
+            return;
+        }
         if (oFillColor || sFillType || bFillOn !== undefined || oStrokeColor || bStrokeOn !== undefined) {
             var oOldBrush = oDrawing.brush;
             var oOldPen = oDrawing.pen;
@@ -12142,13 +12174,7 @@
 
         oTexture = oTexture.createEffectTexture(oAttributesMap["effect"]);
 
-        if (fOpacity !== undefined) {
-            oGraphics.put_GlobalAlpha(true, 1 - fOpacity);
-        }
-        oTexture.draw(oGraphics, oTransform);
-        if (fOpacity !== undefined) {
-            oGraphics.put_GlobalAlpha(false, 1);
-        }
+        return {texture: oTexture, opacity: fOpacity, transform: oTransform};
     };
     CAnimSandwich.prototype.isEqualResultAttributes = function (oOtherSandwich) {
         var oAttributes = this.getAttributesMap();

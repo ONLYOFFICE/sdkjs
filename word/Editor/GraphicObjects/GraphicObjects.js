@@ -1400,6 +1400,10 @@ CGraphicObjects.prototype =
         //console.log("down " + this.curState.id);
         this.checkInkState();
         this.curState.onMouseDown(e, x, y, pageIndex);
+        if(this.arrTrackObjects.length === 0)
+        {
+            this.document.GetApi().sendEvent("asc_onSelectionEnd");
+        }
     },
 
     OnMouseMove: function(e, x, y, pageIndex)
@@ -2071,9 +2075,27 @@ CGraphicObjects.prototype =
         }
     },
 
-    setSelectionState: DrawingObjectsController.prototype.setSelectionState,
+    setSelectionState: function (state, stateIndex)
+    {
+        DrawingObjectsController.prototype.setSelectionState.call(this, state, stateIndex);
+        let oState = state[stateIndex];
+        if(!oState)
+        {
+            oState = state[state.length - 1];
+        }
+        if(oState)
+        {
+            if(oState.curState)
+                this.curState = oState.curState;
+            if(Array.isArray(oState.arrPreTrackObjects))
+                this.arrPreTrackObjects = oState.arrPreTrackObjects;
+            if(Array.isArray(oState.arrTrackObjects))
+                this.arrTrackObjects = oState.arrTrackObjects;
+        }
+    },
 
     getSelectionState: DrawingObjectsController.prototype.getSelectionState,
+    resetTrackState: DrawingObjectsController.prototype.resetTrackState,
     applyPropsToChartSpace: DrawingObjectsController.prototype.applyPropsToChartSpace,
 
     documentUpdateSelectionState: function()

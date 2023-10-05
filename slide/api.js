@@ -1489,7 +1489,8 @@ background-repeat: no-repeat;\
 			[Asc.c_oAscPresentationShortcutType.EnDash, 189, true, true, false],
 			[Asc.c_oAscPresentationShortcutType.EnDash, 173, true, true, false],
 			[Asc.c_oAscPresentationShortcutType.DecreaseFont, 219, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.IncreaseFont, 221, true, false, false]
+			[Asc.c_oAscPresentationShortcutType.IncreaseFont, 221, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.SpeechWorker, 90, true, false, true]
 		];
 		this.initShortcuts(aShortcuts, false)
 	};
@@ -8782,6 +8783,24 @@ background-repeat: no-repeat;\
 		oCtx.drawImage(oViewerCanvas, 0, 0);
 		oCtx.drawImage(oOverlayCanvas, 0, 0);
 		return oCtx.getImageData(0, 0, oCanvas.width, oCanvas.height);
+	};
+	asc_docs_api.prototype.getSelectionState = function()
+	{
+		const oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+		{
+			return null;
+		}
+		return oLogicDocument.GetSelectionState();
+	};
+	asc_docs_api.prototype.getSpeechDescription = function(prevState, action)
+	{
+		const oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+		{
+			return null;
+		}
+		return oLogicDocument.GetSpeechDescription(prevState, action);
 	};
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};

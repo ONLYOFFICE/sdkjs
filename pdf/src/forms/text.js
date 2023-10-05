@@ -93,7 +93,7 @@
         return this._comb;
     };
     CTextField.prototype.IsEditable = function() {
-        return true;
+        return this.IsNeedDrawHighlight() == false;
     };
     CTextField.prototype.SetCharLimit = function(nChars) {
         let oViewer = editor.getDocumentRenderer();
@@ -299,7 +299,7 @@
         this.DrawBorders(oGraphicsPDF);
 
         // redraw target cursor if field is selected
-        if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && oViewer.fieldFillingMode)
+        if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsEditable())
             oContentToDraw.RecalculateCurPos();
     };
     CTextField.prototype.Recalculate = function() {
@@ -378,7 +378,9 @@
 
         function callbackAfterFocus(x, y, e) {
             
-            let {X, Y} = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
+            let oPos    = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
+            let X       = oPos["X"];
+            let Y       = oPos["Y"];
 
             editor.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
             editor.WordControl.m_oDrawingDocument.m_lCurrentPage = 0;
@@ -415,13 +417,15 @@
     };
       
     CTextField.prototype.ScrollVertical = function(scrollY, maxYscroll) {
+        let oViewer = editor.getDocumentRenderer();
         this._bAutoShiftContentView = false;
 
         let nScrollCoeff                = scrollY / maxYscroll;
         this._curShiftView.y            = -nScrollCoeff * maxYscroll;
         this._scrollInfo.scrollCoeff    = nScrollCoeff;
         this.AddToRedraw();
-        editor.getDocumentRenderer()._paint();
+        oViewer._paint();
+        oViewer.onUpdateOverlay();
     };
     CTextField.prototype.ScrollVerticalEnd = function() {
         let nHeightPerPara  = this.content.GetElement(1).Y - this.content.GetElement(0).Y;
@@ -453,7 +457,7 @@
 
         if (nContentH < oContentRect.H || this._doNotScroll) {
             
-            if (bShow == false && this._scrollInfo)
+            if (this._scrollInfo)
                 this._scrollInfo.scroll.canvas.style.display = "none";
             return;
         }
@@ -469,12 +473,13 @@
             oScrollDocElm = document.createElement('div');
             document.getElementById('editor_sdk').appendChild(oScrollDocElm);
             oScrollDocElm.id = "formScroll_" + oViewer.scrollCount;
-            oScrollDocElm.style.top         = Math.round(oGlobalCoords1.Y) + 'px';
-            oScrollDocElm.style.left        = Math.round(oGlobalCoords2.X) + 'px';
+            oScrollDocElm.style.top         = Math.round(oGlobalCoords1["Y"]) + 'px';
+            oScrollDocElm.style.left        = Math.round(oGlobalCoords2["X"]) + 'px';
             oScrollDocElm.style.position    = "absolute";
             oScrollDocElm.style.display     = "block";
 			oScrollDocElm.style.width       = "14px";
-			oScrollDocElm.style.height      = Math.round(oGlobalCoords2.Y) - Math.round(oGlobalCoords1.Y) + "px";
+			oScrollDocElm.style.height      = Math.round(oGlobalCoords2["Y"]) - Math.round(oGlobalCoords1["Y"]) + "px";
+            oScrollDocElm.style.zIndex      = 0;
 
             let nMaxShiftY = oContentRect.H - nContentH;
 
@@ -516,7 +521,7 @@
         }
         else if (this._scrollInfo) {
             let nMaxShiftY = oContentRect.H - nContentH;
-            let needUpdatePos = this._scrollInfo.oldZoom != oViewer.zoom || oGlobalCoords1.Y - oBorderWidth.top != this._scrollInfo.baseYPos;
+            let needUpdatePos = this._scrollInfo.oldZoom != oViewer.zoom || oGlobalCoords1["Y"] - oBorderWidth.top != this._scrollInfo.baseYPos;
 
             if (needUpdatePos) {
                 oScrollSettings = editor.WordControl.CreateScrollSettings();
@@ -530,9 +535,9 @@
                 let nScrollCoeff = this.content.ShiftViewY / nMaxShiftY;
                 this._scrollInfo.scrollCoeff = nScrollCoeff;
 
-                this._scrollInfo.docElem.style.top      = Math.round(oGlobalCoords1.Y) + 'px';
-                this._scrollInfo.docElem.style.left     = Math.round(oGlobalCoords2.X) + 'px';
-                this._scrollInfo.docElem.style.height   = Math.round(oGlobalCoords2.Y) - Math.round(oGlobalCoords1.Y) + "px";
+                this._scrollInfo.docElem.style.top      = Math.round(oGlobalCoords1["Y"]) + 'px';
+                this._scrollInfo.docElem.style.left     = Math.round(oGlobalCoords2["X"]) + 'px';
+                this._scrollInfo.docElem.style.height   = Math.round(oGlobalCoords2["Y"]) - Math.round(oGlobalCoords1["Y"]) + "px";
             
                 this._scrollInfo.oldZoom = oViewer.zoom;
                 this._scrollInfo.baseYPos = parseInt(this._scrollInfo.docElem.style.top);
@@ -546,11 +551,15 @@
     };
 
     CTextField.prototype.SelectionSetStart = function(x, y, e) {
-        let {X, Y} = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
+        let oPos    = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
+        let X       = oPos["X"];
+        let Y       = oPos["Y"];
         this.content.Selection_SetStart(X, Y, 0, e);
     };
     CTextField.prototype.SelectionSetEnd = function(x, y, e) {
-        let {X, Y} = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
+        let oPos    = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
+        let X       = oPos["X"];
+        let Y       = oPos["Y"];
         this.content.Selection_SetEnd(X, Y, 0, e);
     };
     CTextField.prototype.MoveCursorLeft = function(isShiftKey, isCtrlKey)
@@ -613,7 +622,10 @@
         if (this.content.IsSelectionUse())
             this.content.RemoveSelection();
 
-        let { startPos, endPos } = this.CalcDocPos(nSelStart, nSelEnd);
+        let oDocPos     = this.CalcDocPos(nSelStart, nSelEnd);
+        let startPos    = oDocPos.startPos;
+        let endPos      = oDocPos.endPos;
+        
         if (nSelStart == nSelEnd) {
             this.content.SetContentPosition(startPos, 0, 0);
             this.content.RecalculateCurPos();
@@ -803,11 +815,12 @@
 	};
 
     CTextField.prototype.DoFormatAction = function() {
+        let oViewer             = editor.getDocumentRenderer();
         let oDoc                = this.GetDocument();
         let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
         let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
         
-        let isCanFormat = this.DoKeystrokeAction(null, false, true);
+        let isCanFormat = oViewer.isOnUndoRedo != true ? this.DoKeystrokeAction(null, false, true) : true;
         if (!isCanFormat) {
             editor.sendEvent("asc_onFormatErrorPdfForm", oDoc.GetWarningInfo());
             return false;
@@ -820,7 +833,7 @@
 
         return true;
     };
-    CTextField.prototype.DoKeystrokeAction = function(aChars, isOnRemove, isOnCommit) {
+    CTextField.prototype.DoKeystrokeAction = function(aChars, nRemoveType, isOnCommit) {
         if (!aChars)
             aChars = [];
 
@@ -832,7 +845,7 @@
 
         function GetSelectionRange(p)
         {
-            let selectedText = p.GetSelectedText();
+            let selectedText = p.GetSelectedText(undefined, {NewLine: true});
             let state = p.SaveSelectionState();
 
             let selStart = p.Get_ParaContentPos(p.IsSelectionUse(), p.GetSelectDirection() > 0);
@@ -840,18 +853,25 @@
             p.RemoveSelection();
             p.StartSelectionFromCurPos();
             p.SetSelectionContentPos(p.GetStartPos(), selStart);
-            let preText = p.GetSelectedText();
+            let preText = p.GetSelectedText(undefined, {NewLine: true});
 
             p.LoadSelectionState(state);
 
             return {nSelStart : preText.length, nSelEnd : preText.length + selectedText.length};
         }
 
-        let {nSelStart, nSelEnd} = GetSelectionRange(this.content.GetElement(0));
-        
-        // флаг что удаление
-        if (isOnRemove && nSelStart && nSelEnd) {
-            nSelStart--;
+        let oSelRange   = GetSelectionRange(this.content.GetElement(0));
+        let nSelStart   = oSelRange.nSelStart;
+        let nSelEnd     = oSelRange.nSelEnd;
+
+        let nCharsCount = this.content.GetElement(0).GetText({ParaEndToSpace: false}).length;
+        if (nRemoveType && nSelStart == nSelEnd) {
+            if (nRemoveType == -1 && nSelStart != 0) {
+                nSelStart--;
+            }
+            else if (nRemoveType == 1 && nSelEnd != nCharsCount) {
+                nSelEnd++;
+            }
         }
 
         this.GetDocument().SetEvent({
@@ -1015,7 +1035,8 @@
 
         this.CreateNewHistoryPoint(true);
 
-        if (this.DoKeystrokeAction(null, true, false) == false) {
+        if (this.DoKeystrokeAction(null, nDirection, false) == false) {
+            AscCommon.History.Remove_LastPoint();
             return false;
         }
         
@@ -1025,7 +1046,10 @@
         if (this.content.IsSelectionUse())
             this.content.RemoveSelection();
 
-        let { startPos, endPos } = this.CalcDocPos(nSelStart, nSelEnd);
+        let oDocPos     = this.CalcDocPos(nSelStart, nSelEnd);
+        let startPos    = oDocPos.startPos;
+        let endPos      = oDocPos.endPos;
+
         if (nSelStart == nSelEnd) {
             this.content.SetContentPosition(startPos, 0, 0);
             this.content.RecalculateCurPos();

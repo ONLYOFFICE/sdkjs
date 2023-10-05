@@ -210,7 +210,10 @@
 	oTestEvents[oTestTypes.selectDown] = [new CTestEvent(createNativeEvent(40, false, true, false, false))];
 	oTestEvents[oTestTypes.nextOptionComboBox] = [new CTestEvent(createNativeEvent(40, false, false, false, false, false))];
 	oTestEvents[oTestTypes.removeFrontSymbol] = [new CTestEvent(createNativeEvent(46, false, false, false, false))];
-	oTestEvents[oTestTypes.removeFrontWord] = [new CTestEvent(createNativeEvent(46, true, false, false, false))];
+	oTestEvents[oTestTypes.removeFrontWord] = [
+		new CTestEvent(createNativeEvent(46, true, false, false, false), testWindows),
+		new CTestEvent(createNativeEvent(46, false, false, true, false), testMacOs)
+	];
 	oTestEvents[oTestTypes.unicodeToChar] = [
 		new CTestEvent(createNativeEvent(88, false, false, true, false), testWindows),
 		new CTestEvent(createNativeEvent(88, true, false, true, false), testMacOs)

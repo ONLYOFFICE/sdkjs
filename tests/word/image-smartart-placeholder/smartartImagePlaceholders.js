@@ -197,10 +197,18 @@ $(function () {
 	}
 
 	AscTest.CreateLogicDocument();
-	AscCommon.loadSmartArtBinary(function ()
+	AscCommon.g_oBinarySmartArts.checkLoadDrawing().then(function ()
+	{
+		const arrPromises = [];
+		for (let sSmartArtType in Asc.c_oAscSmartArtTypes)
+		{
+			arrPromises.push(AscCommon.g_oBinarySmartArts.checkLoadData(Asc.c_oAscSmartArtTypes[sSmartArtType]));
+		}
+		return Promise.all(arrPromises);
+	}).then(function ()
 	{
 		startTests();
-	}, function () {});
+	});
 
 	QUnit.module("Test truth smart art image placeholders");
 

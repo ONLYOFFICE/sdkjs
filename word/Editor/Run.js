@@ -3963,7 +3963,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 								{
 									NewRange    = true;
 									RangeEndPos = Pos;
-									PRS.CheckLastAutoHyphen(X + SpaceLen, XEnd);
+									PRS.checkLastAutoHyphen();
 								}
 							}
 						}
@@ -3985,7 +3985,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 							else if (Item.CanBeAtBeginOfLine())
 							{
 								PRS.Set_LineBreakPos(Pos, FirstItemOnLine);
-								PRS.CheckLastAutoHyphen(X + SpaceLen, XEnd);
+								PRS.checkLastAutoHyphen();
 							}
 
 							// Если текущий символ с переносом, например, дефис, тогда на нем заканчивается слово
@@ -3994,6 +3994,9 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 									&& X + SpaceLen + LetterLen + PRS.getAutoHyphenWidth(Item, this) <= XEnd
 									&& (FirstItemOnLine || PRS.checkHyphenationZone(X + SpaceLen))))
 							{
+								if (!Item.IsSpaceAfter())
+									PRS.lastAutoHyphen = Item;
+
 								// Добавляем длину пробелов до слова и ширину самого слова.
 								X += SpaceLen + LetterLen;
 
@@ -4015,10 +4018,8 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     {
 						
 						let autoHyphenWidth = PRS.getAutoHyphenWidth(Item, this);
-						
-						let fitOnLine = (X + SpaceLen + WordLen + GraphemeLen + autoHyphenWidth <= XEnd
-							|| PRS.TryCondenseSpaces(SpaceLen + WordLen + GraphemeLen + autoHyphenWidth, WordLen + GraphemeLen + autoHyphenWidth, X, XEnd));
-						
+	
+						let fitOnLine = PRS.isFitOnLine(X, SpaceLen + WordLen + GraphemeLen + autoHyphenWidth);
 						if (!fitOnLine && !FirstItemOnLine)
 						{
 							MoveToLBP = true;
@@ -4035,6 +4036,9 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 									&& fitOnLine
 									&& (FirstItemOnLine || PRS.checkHyphenationZone(X + SpaceLen))))
                             {
+								if (!Item.IsSpaceAfter())
+									PRS.lastAutoHyphen = Item;
+								
                                 // Добавляем длину пробелов до слова и ширину самого слова.
                                 X += SpaceLen + WordLen;
 
@@ -4546,7 +4550,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     SpaceLen = 0;
                     WordLen = 0;
 
-                    var TabPos   = Para.private_RecalculateGetTabPos(X, ParaPr, PRS.Page, false);
+                    var TabPos   = Para.private_RecalculateGetTabPos(PRS, X, ParaPr, PRS.Page, false);
                     var NewX     = TabPos.NewX;
                     var TabValue = TabPos.TabValue;
 
@@ -4695,7 +4699,8 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						if (true === PRS.MathNotInline)
 							PRS.ForceNewLine = true;
 					}
-
+	
+					PRS.onEndRecalculateLineRange();
                     RangeEndPos = Pos + 1;
 
                     break;
@@ -4723,8 +4728,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     NewRange = true;
                     End      = true;
 	
-					PRS.OnEndRecalculateLineRanges();
-
+					PRS.onEndRecalculateLineRange();
                     RangeEndPos = Pos + 1;
 
                     break;
@@ -5296,7 +5300,7 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
             }
 			case para_FieldChar:
 			{
-				if (this.Paragraph && this.Paragraph.m_oPRSW.IsFastRecalculate())
+				if (PRSC.isFastRecalculation())
 					PRSC.ComplexFields.ProcessFieldChar(Item);
 				else
 					PRSC.ComplexFields.ProcessFieldCharAndCollectComplexField(Item);
@@ -5324,14 +5328,11 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
 			}
 			case para_InstrText:
 			{
-				if (this.Paragraph && this.Paragraph.m_oPRSW.IsFastRecalculate())
-					break;
-
-				if (reviewtype_Remove === this.GetReviewType())
+				if (PRSC.isFastRecalculation()
+					|| reviewtype_Remove === this.GetReviewType())
 					break;
 
 				PRSC.ComplexFields.ProcessInstruction(Item);
-
 				break;
 			}
         }
@@ -5752,11 +5753,11 @@ ParaRun.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
 		}
 	}
 };
-ParaRun.prototype.RecalculateEndInfo = function(oPRSI)
+ParaRun.prototype.RecalculateEndInfo = function(PRSI)
 {
 	var isRemovedInReview = (reviewtype_Remove === this.GetReviewType());
 
-	if (this.Paragraph && (this.Paragraph.m_oPRSW.IsFastRecalculate() || this.Paragraph.bFromDocument === false))
+	if (PRSI.isFastRecalculation() || (this.Paragraph && this.Paragraph.bFromDocument === false))
 		return;
 
 	for (var nCurPos = 0, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
@@ -5764,11 +5765,11 @@ ParaRun.prototype.RecalculateEndInfo = function(oPRSI)
 		var oItem = this.Content[nCurPos];
 		if (para_FieldChar === oItem.Type)
 		{
-			oPRSI.ProcessFieldCharAndCollectComplexField(oItem);
+			PRSI.ProcessFieldCharAndCollectComplexField(oItem);
 		}
 		else if (para_InstrText === oItem.Type && !isRemovedInReview)
 		{
-			oPRSI.ProcessInstruction(oItem);
+			PRSI.ProcessInstruction(oItem);
 		}
 	}
 };

@@ -3909,7 +3909,7 @@ function(window, undefined) {
 		}
 		return null;
 	};
-	CChartSpace.prototype.calculatePosByLayout = function (fPos, nLayoutMode, fLayoutValue, fSize, fChartSize) {
+	CChartSpace.prototype.calculatePosByLayout = function (fPos, nLayoutMode, fLayoutValue, fSize, fChartSize, bYPos) {
 		if (!AscFormat.isRealNumber(fLayoutValue)) {
 			return fPos;
 		}
@@ -3917,7 +3917,12 @@ function(window, undefined) {
 		if (nLayoutMode === AscFormat.LAYOUT_MODE_EDGE) {
 			fRetPos = fChartSize * fLayoutValue;
 		} else {
-			fRetPos = fPos + fChartSize * fLayoutValue;
+			if(bYPos) {
+				fRetPos = fPos - fChartSize * fLayoutValue;
+			}
+			else {
+				fRetPos = fPos + fChartSize * fLayoutValue;
+			}
 		}
 		if (fRetPos + fSize > fChartSize) {
 			fRetPos -= (fRetPos + fSize - fChartSize);
@@ -3972,10 +3977,10 @@ function(window, undefined) {
 						if (oLbl.layout) {
 							layout = oLbl.layout;
 							if (AscFormat.isRealNumber(layout.x)) {
-								pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, this.recalcInfo.dataLbls[i].extX, this.extX);
+								pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, this.recalcInfo.dataLbls[i].extX, this.extX, false);
 							}
 							if (AscFormat.isRealNumber(layout.y)) {
-								pos.y = this.calculatePosByLayout(pos.y, layout.yMode, layout.y, this.recalcInfo.dataLbls[i].extY, this.extY);
+								pos.y = this.calculatePosByLayout(pos.y, layout.yMode, layout.y, this.recalcInfo.dataLbls[i].extY, this.extY, true);
 							}
 						}
 						if (pos.x + oLbl.extX > this.extX) {
@@ -4004,10 +4009,10 @@ function(window, undefined) {
 				if (this.chart.title.layout) {
 					layout = this.chart.title.layout;
 					if (AscFormat.isRealNumber(layout.x)) {
-						pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, this.chart.title.extX, this.extX);
+						pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, this.chart.title.extX, this.extX, false);
 					}
 					if (AscFormat.isRealNumber(layout.y)) {
-						pos.y = this.calculatePosByLayout(pos.y, layout.yMode, layout.y, this.chart.title.extY, this.extY);
+						pos.y = this.calculatePosByLayout(pos.y, layout.yMode, layout.y, this.chart.title.extY, this.extY, true);
 					}
 				}
 				this.chart.title.setPosition(pos.x, pos.y);
@@ -4023,10 +4028,10 @@ function(window, undefined) {
 						if (oAxis.title.layout) {
 							layout = oAxis.title.layout;
 							if (AscFormat.isRealNumber(layout.x)) {
-								pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, oAxis.title.extX, this.extX);
+								pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, oAxis.title.extX, this.extX, false);
 							}
 							if (AscFormat.isRealNumber(layout.y)) {
-								pos.y = this.calculatePosByLayout(pos.y, layout.yMode, layout.y, oAxis.title.extY, this.extY);
+								pos.y = this.calculatePosByLayout(pos.y, layout.yMode, layout.y, oAxis.title.extY, this.extY, true);
 							}
 						}
 						oAxis.title.setPosition(pos.x, pos.y);
@@ -4047,10 +4052,10 @@ function(window, undefined) {
 			if (this.chart.legend.layout) {
 				layout = this.chart.legend.layout;
 				if (AscFormat.isRealNumber(layout.x)) {
-					pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, this.chart.legend.extX, this.extX);
+					pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, this.chart.legend.extX, this.extX, false);
 				}
 				if (AscFormat.isRealNumber(layout.y)) {
-					pos.y = this.calculatePosByLayout(pos.y, layout.yMode, layout.y, this.chart.legend.extY, this.extY);
+					pos.y = this.calculatePosByLayout(pos.y, layout.yMode, layout.y, this.chart.legend.extY, this.extY, true);
 				}
 			}
 			this.chart.legend.setPosition(pos.x, pos.y);
@@ -5727,10 +5732,10 @@ function(window, undefined) {
 					var pos = this.chartObj.recalculatePositionText(this.chart.legend);
 					if (this.chart.legend.layout) {
 						if (AscFormat.isRealNumber(legend.layout.x)) {
-							pos.x = this.calculatePosByLayout(pos.x, legend.layout.xMode, legend.layout.x, this.chart.legend.extX, this.extX);
+							pos.x = this.calculatePosByLayout(pos.x, legend.layout.xMode, legend.layout.x, this.chart.legend.extX, this.extX, false);
 						}
 						if (AscFormat.isRealNumber(legend.layout.y)) {
-							pos.y = this.calculatePosByLayout(pos.y, legend.layout.yMode, legend.layout.y, this.chart.legend.extY, this.extY);
+							pos.y = this.calculatePosByLayout(pos.y, legend.layout.yMode, legend.layout.y, this.chart.legend.extY, this.extY, true);
 						}
 					}
 					if (bResetLegendPos) {
@@ -6677,16 +6682,16 @@ function(window, undefined) {
 		var oLayout = this.chart.plotArea.layout;
 		if (oLayout) {
 
-			oChartSize.startX = this.calculatePosByLayout(oChartSize.startX, oLayout.xMode, oLayout.x, oChartSize.w, this.extX);
-			oChartSize.startY = this.calculatePosByLayout(oChartSize.startY, oLayout.yMode, oLayout.y, oChartSize.h, this.extY);
+			oChartSize.startX = this.calculatePosByLayout(oChartSize.startX, oLayout.xMode, oLayout.x, oChartSize.w, this.extX, false);
+			oChartSize.startY = this.calculatePosByLayout(oChartSize.startY, oLayout.yMode, oLayout.y, oChartSize.h, this.extY, true);
 			var fSize = this.calculateSizeByLayout(oChartSize.startX, this.extX, oLayout.w, oLayout.wMode);
 			if (AscFormat.isRealNumber(fSize) && fSize > 0) {
 				var fSize2 = this.calculateSizeByLayout(oChartSize.startY, this.extY, oLayout.h, oLayout.hMode);
 				if (AscFormat.isRealNumber(fSize2) && fSize2 > 0) {
 					oChartSize.w = fSize;
 					oChartSize.h = fSize2;
-					oChartSize.startX = this.calculatePosByLayout(oChartSize.startX, oLayout.xMode, oLayout.x, oChartSize.w, this.extX);
-					oChartSize.startY = this.calculatePosByLayout(oChartSize.startY, oLayout.yMode, oLayout.y, oChartSize.h, this.extY);
+					oChartSize.startX = this.calculatePosByLayout(oChartSize.startX, oLayout.xMode, oLayout.x, oChartSize.w, this.extX, false);
+					oChartSize.startY = this.calculatePosByLayout(oChartSize.startY, oLayout.yMode, oLayout.y, oChartSize.h, this.extY, true);
 					var aCharts = this.chart.plotArea.charts;
 					for (var i = 0; i < aCharts.length; ++i) {
 						var nChartType = aCharts[i].getObjectType();
@@ -9324,6 +9329,16 @@ function(window, undefined) {
 			let fTableMethod = AscCommonWord.CTable.prototype.PasteFormatting;
 			oTitle.applyTextFunction(fDocContentMethod, fTableMethod, [oFormatData]);
 		}
+	};
+
+	CChartSpace.prototype.getTrackGeometry = function() {
+		return AscFormat.ExecuteNoHistory(
+			function () {
+				const oGeometry = AscFormat.CreateGeometry("rect");
+				oGeometry.Recalculate(this.extX, this.extY);
+				return oGeometry;
+			}, this, []
+		);
 	};
 
 	CChartSpace.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate, oMapPaired) {

@@ -10248,21 +10248,28 @@ Because of this, the display is sometimes not correct.
 
     SmartArt.prototype.fillByPreset = function (nSmartArtType, bLoadOnlyDrawing) {
       const oApi = Asc.editor || editor;
-      if (oApi && AscCommon.g_oBinarySmartArts) {
-        const nShift = AscCommon.g_oBinarySmartArts.shifts[nSmartArtType];
+			const drawingInfo = AscCommon.g_oBinarySmartArts.getDrawingInfo(nSmartArtType);
+			const dataBin = AscCommon.g_oBinarySmartArts.getDataBinary(nSmartArtType);
+      if (oApi && drawingInfo && (bLoadOnlyDrawing || dataBin)) {
         const oDrawingDocument = oApi.getDrawingDocument();
         const oLogicDocument = oApi.getLogicDocument();
 
         const pReader = new AscCommon.BinaryPPTYLoader();
-        pReader.stream = new AscCommon.FileStream(AscCommon.g_oBinarySmartArts.stream, AscCommon.g_oBinarySmartArts.stream.length);
-        pReader.stream.cur = nShift;
+	      pReader.presentation = oLogicDocument;
+	      pReader.DrawingDocument = oDrawingDocument;
 
-        pReader.presentation = oLogicDocument;
-        pReader.DrawingDocument = oDrawingDocument;
+        pReader.stream = new AscCommon.FileStream(drawingInfo.bin, drawingInfo.bin.length);
+        pReader.stream.cur = drawingInfo.pos;
+        this.readChild(pReader.stream.GetUChar(), pReader);
 
-        pReader.loadOnlyDrawingSmartArt = bLoadOnlyDrawing;
-        pReader.stream.GetUChar();
-        this.fromPPTY(pReader);
+	      if (!bLoadOnlyDrawing)
+	      {
+		      pReader.stream = new AscCommon.FileStream(dataBin, dataBin.length);
+		      this.readChild(pReader.stream.GetUChar(), pReader);
+		      this.readChild(pReader.stream.GetUChar(), pReader);
+		      this.readChild(pReader.stream.GetUChar(), pReader);
+		      this.checkNodePointsAfterRead(true);
+	      }
         this.setSpPr(new AscFormat.CSpPr());
         this.spPr.setParent(this);
         const smXfrm = new AscFormat.CXfrm();
@@ -10274,10 +10281,6 @@ Because of this, the display is sometimes not correct.
         this.extX = smXfrm.extX;
         this.extY = smXfrm.extY;
         this.drawing.setXfrmByParent();
-
-        if (!bLoadOnlyDrawing) {
-          this.checkNodePointsAfterRead(true);
-        }
       }
       return this;
     }
@@ -11547,38 +11550,22 @@ Because of this, the display is sometimes not correct.
           break;
         }
         case 1: {
-          if (pReader.loadOnlyDrawingSmartArt) {
-            s.SkipRecord();
-            break;
-          }
           this.setDataModel(new DiagramData());
           this.dataModel.fromPPTY(pReader);
           this.setConnections2();
           break;
         }
         case 2: {
-          if (pReader.loadOnlyDrawingSmartArt) {
-            s.SkipRecord();
-            break;
-          }
           this.setColorsDef(new ColorsDef());
           this.colorsDef.fromPPTY(pReader);
           break;
         }
         case 3: {
-          if (pReader.loadOnlyDrawingSmartArt) {
-            s.SkipRecord();
-            break;
-          }
           this.setLayoutDef(new LayoutDef());
           this.layoutDef.fromPPTY(pReader);
           break;
         }
         case 4: {
-          if (pReader.loadOnlyDrawingSmartArt) {
-            s.SkipRecord();
-            break;
-          }
           this.setStyleDef(new StyleDef());
           this.styleDef.fromPPTY(pReader);
           break;

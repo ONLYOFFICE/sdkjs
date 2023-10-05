@@ -71,7 +71,7 @@
 
         oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
         this.content.Draw(0, oGraphicsWord);
-        oGraphicsWord.RemoveClip();
+        oGraphicsWord.RemoveLastClip();
 
         this.DrawBorders(oGraphicsPDF);
     };
@@ -322,7 +322,8 @@
         if (this.IsWidget()) {
             let aIndexes = [];
             if (Array.isArray(value)) {
-                for (let sVal of value) {
+                for (let i = 0; i < value.length; i++) {
+                    let sVal = value[i];
                     let isFound = false;
                     for (let i = 0; i < this._options.length; i++) {
                         if (this._options[i][1] && this._options[i][1] == sVal) {
@@ -375,12 +376,12 @@
                 }
             });
 
-            for (let idx of aIndexes) {
+            for (let i = 0; i < aIndexes.length; i++) {
                 if (this._multipleSelection) {
-                    this.SelectOption(idx, false);
+                    this.SelectOption(aIndexes[i], false);
                 }
                 else
-                    this.SelectOption(idx, true);
+                    this.SelectOption(aIndexes[i], true);
             }
 
             if (editor.getDocumentRenderer().IsOpenFormsInProgress)
@@ -414,8 +415,10 @@
             if (this._options.length == 0)
                 return;
             
-            let {X, Y} = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
-            
+            let oPos    = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
+            let X       = oPos["X"];
+            let Y       = oPos["Y"];
+
             editor.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
             editor.WordControl.m_oDrawingDocument.m_lCurrentPage = 0;
 
@@ -515,7 +518,7 @@
 
         if (nContentH < oContentRect.H || this._doNotScroll) {
             
-            if (bShow == false && this._scrollInfo)
+            if (this._scrollInfo)
                 this._scrollInfo.scroll.canvas.style.display = "none";
             return;
         }
@@ -531,12 +534,12 @@
             oScrollDocElm = document.createElement('div');
             document.getElementById('editor_sdk').appendChild(oScrollDocElm);
             oScrollDocElm.id = "formScroll_" + oViewer.scrollCount;
-            oScrollDocElm.style.top         = Math.round(oGlobalCoords1.Y) + 'px';
-            oScrollDocElm.style.left        = Math.round(oGlobalCoords2.X) + 'px';
+            oScrollDocElm.style.top         = Math.round(oGlobalCoords1["Y"]) + 'px';
+            oScrollDocElm.style.left        = Math.round(oGlobalCoords2["X"]) + 'px';
             oScrollDocElm.style.position    = "absolute";
             oScrollDocElm.style.display     = "block";
 			oScrollDocElm.style.width       = "14px";
-			oScrollDocElm.style.height      = Math.round(oGlobalCoords2.Y) - Math.round(oGlobalCoords1.Y) + "px";
+			oScrollDocElm.style.height      = Math.round(oGlobalCoords2["Y"]) - Math.round(oGlobalCoords1["Y"]) + "px";
             oScrollDocElm.style.zIndex      = 0;
 
             let nMaxShiftY = oContentRect.H - nContentH;
@@ -579,7 +582,7 @@
         }
         else if (this._scrollInfo) {
             let nMaxShiftY = oContentRect.H - nContentH;
-            let needUpdatePos = this._scrollInfo.oldZoom != oViewer.zoom || oGlobalCoords1.Y - oBorderWidth.top != this._scrollInfo.baseYPos;
+            let needUpdatePos = this._scrollInfo.oldZoom != oViewer.zoom || oGlobalCoords1["Y"] - oBorderWidth.top != this._scrollInfo.baseYPos;
 
             if (needUpdatePos) {
                 oScrollSettings = editor.WordControl.CreateScrollSettings();
@@ -593,9 +596,9 @@
                 let nScrollCoeff = this.content.ShiftViewY / nMaxShiftY;
                 this._scrollInfo.scrollCoeff = nScrollCoeff;
 
-                this._scrollInfo.docElem.style.top      = Math.round(oGlobalCoords1.Y) + 'px';
-                this._scrollInfo.docElem.style.left     = Math.round(oGlobalCoords2.X) + 'px';
-                this._scrollInfo.docElem.style.height   = Math.round(oGlobalCoords2.Y) - Math.round(oGlobalCoords1.Y) + "px";
+                this._scrollInfo.docElem.style.top      = Math.round(oGlobalCoords1["Y"]) + 'px';
+                this._scrollInfo.docElem.style.left     = Math.round(oGlobalCoords2["X"]) + 'px';
+                this._scrollInfo.docElem.style.height   = Math.round(oGlobalCoords2["Y"]) - Math.round(oGlobalCoords1["Y"]) + "px";
             
                 this._scrollInfo.oldZoom = oViewer.zoom;
                 this._scrollInfo.baseYPos = parseInt(this._scrollInfo.docElem.style.top);
@@ -667,8 +670,10 @@
 	 */
     CListBoxField.prototype.UpdateSelection = function() {
         if (Array.isArray(this._currentValueIndices)) {
-            for (let idx of this._currentValueIndices)
-                this.SelectOption(idx, false);
+            for (let i = 0; i < this._currentValueIndices.length; i++) {
+                let nIdx = this._currentValueIndices[i];
+                this.SelectOption(nIdx, false);
+            }
         }
         else
             this.SelectOption(this._currentValueIndices, true);

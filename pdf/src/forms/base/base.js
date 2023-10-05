@@ -204,6 +204,14 @@
         this.GetDocument().AddFieldToChildsMap(this, nIdx);
     };
     /**
+	 * Can or not enter text into form.
+	 * @memberof CBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    CBaseField.prototype.IsEditable = function() {
+        return false;
+    };
+    /**
 	 * Invokes only on open forms.
 	 * @memberof CBaseField
 	 * @typeofeditors ["PDF"]
@@ -239,7 +247,26 @@
         return this.needCommit;
     };
     CBaseField.prototype.SetPage = function(nPage) {
-        this._page = nPage;
+        let nCurPage = this.GetPage();
+        if (nPage == nCurPage)
+            return;
+
+
+        let oViewer = editor.getDocumentRenderer();
+        let nCurIdxOnPage = oViewer.pagesInfo.pages[nCurPage].fields ? oViewer.pagesInfo.pages[nCurPage].fields.indexOf(this) : -1;
+        if (oViewer.pagesInfo.pages[nPage]) {
+            if (oViewer.pagesInfo.pages[nPage].fields == null) {
+                oViewer.pagesInfo.pages[nPage].fields = [];
+            }
+
+            if (nCurIdxOnPage != -1)
+                oViewer.pagesInfo.pages[nCurPage].fields.splice(nCurIdxOnPage, 1);
+
+            oViewer.pagesInfo.pages[nPage].fields.push(this);
+
+            this._page = nPage;
+            this.selectStartPage = nPage;
+        }
     };
     CBaseField.prototype.GetPage = function() {
         return this._page;
@@ -258,6 +285,8 @@
     CBaseField.prototype.GetKids = function() {
         return this._kids;
     };
+
+    CBaseField.prototype.Recalculate = function() {};
     /**
 	 * Removes field from kids.
 	 * @memberof CBaseField
@@ -295,8 +324,13 @@
         var arrRects    = [];
         var oBounds     = this.getFormRelRect();
 
-        let nPageIndX = oViewer.pageDetector.pages[0].x / AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_pix_to_mm;
-        let nPageIndY = oViewer.pageDetector.pages[0].y / AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_pix_to_mm;
+        let nPage = this.GetPage();
+        let oPage = oViewer.pageDetector.pages.find(function(page) {
+            return page.num == nPage;
+        });
+        
+        let nPageIndX = oPage.x / AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_pix_to_mm;
+        let nPageIndY = oPage.y / AscCommon.AscBrowser.retinaPixelRatio * g_dKoef_pix_to_mm;
 
         var nLeft   = Math.max(X, oBounds.X) + nPageIndX / oViewer.zoom;
         var nRight  = Math.min(X + W, oBounds.X + oBounds.W) + nPageIndX / oViewer.zoom;
@@ -1084,13 +1118,14 @@
         let oViewer = editor.getDocumentRenderer();
 
         if (oViewer.IsOpenFormsInProgress == false) {
-            this._wasChanged            = isChanged;
-            this._originView.normal     = null;
-            this._originView.mouseDown  = null;
-            this._originView.rollover   = null;
-            
+            this._wasChanged = isChanged;
             this.SetDrawFromStream(!isChanged);
         }
+    };
+    CBaseField.prototype.ClearCache = function() {
+        this._originView.normal     = null;
+        this._originView.mouseDown  = null;
+        this._originView.rollover   = null;
     };
     CBaseField.prototype.IsChanged = function() {
         return this._wasChanged;  
@@ -1166,7 +1201,7 @@
         this._display = nType;
     };
     CBaseField.prototype.GetDisplay = function() {
-        return this._display;''
+        return this._display;
     };
     CBaseField.prototype.GetDefaultValue = function() {
         if (this._defaultValue == null && this.GetParent())
@@ -1271,6 +1306,8 @@
             case AscPDF.FIELD_TYPES.button:
                 return new AscPDF.ApiPushButtonField(this);
         }
+
+        return null;
     };
 
     // pdf api methods
@@ -1293,6 +1330,8 @@
             let nMaxShiftY                  = this._scrollInfo.scroll.maxScrollY;
             this._scrollInfo.scrollCoeff    = Math.abs(this._curShiftView.y / nMaxShiftY);
         }
+
+        this.AddToRedraw();
     };
     CBaseField.prototype.IsWidget = function() {
         return this._isWidget;
@@ -1524,8 +1563,9 @@
 	 */
     CBaseField.prototype.GetOriginViewInfo = function() {
         let oViewer     = editor.getDocumentRenderer();
-        let oPageInfo   = oViewer.pagesInfo.pages[this.GetPage()];
-        let oPage       = oViewer.drawingPages[this.GetPage()];
+        let nPage       = this.GetOriginPage();
+        let oPageInfo   = oViewer.pagesInfo.pages[nPage];
+        let oPage       = oViewer.drawingPages[nPage];
 
         let w = (oPage.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         let h = (oPage.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
@@ -1534,7 +1574,7 @@
             let oFile   = oViewer.file;
            
             oPageInfo.fieldsAPInfo = {
-                info: oFile.nativeFile["getInteractiveFormsAP"](this.GetOriginPage(), w, h),
+                info: oFile.nativeFile["getInteractiveFormsAP"](nPage, w, h),
                 size: {
                     w: w,
                     h: h
@@ -1555,19 +1595,10 @@
             return;
             
         let originView      = this.GetOriginView(this.IsHovered && this.IsHovered() ? AscPDF.APPEARANCE_TYPE.rollover : undefined);
-        let aOrigRect       = this.GetOrigRect();
         let nGrScale        = oGraphicsPDF.GetScale();
 
-        let X       = aOrigRect[0];
-        let Y       = aOrigRect[1];
-        let nWidth  = aOrigRect[2] - aOrigRect[0];
-        let nHeight = aOrigRect[3] - aOrigRect[1];
-        
         if (originView) {
-            oGraphicsPDF.ClearRect(X, Y, nWidth, nHeight);
-            
             oGraphicsPDF.DrawImage(originView, 0, 0, originView.width / nGrScale, originView.height / nGrScale, originView.x / nGrScale, originView.y / nGrScale, originView.width / nGrScale, originView.height / nGrScale);
-            // oGraphicsPDF.DrawImage(originView, 0, 0, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale, X - 1 / nGrScale, Y - 1 / nGrScale, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale);
         }
     };
     CBaseField.prototype.GetParent = function() {
@@ -1609,6 +1640,9 @@
 
         let oApiColor   = color.convert(oRGB, aColor[0]);
         this._textColor = oApiColor.slice(1);
+
+        this.SetWasChanged(true);
+        this.AddToRedraw();
     };
     
     CBaseField.prototype.SetTextColor = function(aColor) {
@@ -1629,6 +1663,9 @@
             oApiPara.SetColor(oRGB.r, oRGB.g, oRGB.b, false);
             oPara.RecalcCompiledPr(true);
         }
+        
+        this.SetWasChanged(true);
+        this.AddToRedraw();
     };
     CBaseField.prototype.GetTextColor = function() {
         return this._textColor;

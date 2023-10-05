@@ -2378,8 +2378,7 @@ function (window, undefined) {
 			array = new cArray();
 			array.addElement(elem);
 		} else if (cElementType.cellsRange === args[0].type || cElementType.cellsRange3D === args[0].type) {
-			array = new cArray();
-			array.fillFromArray(args[0].getMatrix());
+			array = args[0].getFullArray();
 		} else {
 			array = args[0];
 		}
@@ -3638,7 +3637,7 @@ function (window, undefined) {
 		if (a3Value === 1 || a3Value === -1) {
 			if (isArray) {
 				// make array universal
-				tempArr = tempArr.map((item, index) => {
+				tempArr = tempArr.map(function (item, index) {
 					return {
 						v: item,
 						i: index,

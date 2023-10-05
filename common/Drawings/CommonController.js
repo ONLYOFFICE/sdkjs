@@ -3468,7 +3468,7 @@
 							this.selection.groupSelection = main_group;
 							main_group.selectObject(this.chartForProps, 0);
 						} else {
-							this.selectObject(this.chartForProps);
+							this.selectObject(this.chartForProps, 0);
 						}
 						this.chartForProps = null;
 
@@ -5086,12 +5086,25 @@
 								}
 							}
 						}
-						this.updateOverlay();
-						if (this.drawingObjects && this.drawingObjects.sendGraphicObjectProps) {
-							this.drawingObjects.sendGraphicObjectProps();
-						} else if (this.document && this.document.Document_UpdateInterfaceState) {
-							this.document.Document_UpdateInterfaceState();
+					}
+					else {
+						if(this.drawingObjects && this.drawingObjects.cSld) {
+							let aDrawings = this.drawingObjects.getDrawingObjects();
+							if(aDrawings.length > 0) {
+								if(direction > 0) {
+									this.selectObject(aDrawings[0], 0);
+								}
+								else {
+									this.selectObject(aDrawings[aDrawings.length - 1], 0);
+								}
+							}
 						}
+					}
+					this.updateOverlay();
+					if (this.drawingObjects && this.drawingObjects.sendGraphicObjectProps) {
+						this.drawingObjects.sendGraphicObjectProps();
+					} else if (this.document && this.document.Document_UpdateInterfaceState) {
+						this.document.Document_UpdateInterfaceState();
 					}
 				},
 
@@ -5794,7 +5807,8 @@
 					} else if (e.keyCode == 46 && canEdit) // Delete
 					{
 						if (!e.shiftKey) {
-							drawingObjectsController.remove(1, undefined, undefined, undefined, ctrlKey);
+							const bIsWord = bIsMacOs ? e.altKey : ctrlKey;
+							drawingObjectsController.remove(1, undefined, undefined, undefined, bIsWord);
 							bRetValue = true;
 						}
 					} else if (e.keyCode == 65 && true === ctrlKey) // Ctrl + A - выделяем все
@@ -6643,9 +6657,7 @@
 				},
 
 				resetTracking: function () {
-					this.changeCurrentState(new AscFormat.NullState(this));
-					this.clearTrackObjects();
-					this.clearPreTrackObjects();
+					this.resetTrackState();
 					this.updateOverlay();
 				},
 
@@ -6840,7 +6852,16 @@
 					if (oTiming) {
 						selection_state.timingSelection = oTiming.getSelectionState();
 					}
+					selection_state.curState = this.curState;
+					selection_state.arrPreTrackObjects = [].concat(this.arrPreTrackObjects);
+					selection_state.arrTrackObjects = [].concat(this.arrTrackObjects);
 					return [selection_state];
+				},
+
+				resetTrackState: function () {
+					this.clearTrackObjects();
+					this.clearPreTrackObjects();
+					this.changeCurrentState(new AscFormat.NullState(this));
 				},
 
 				Save_DocumentStateBeforeLoadChanges: function (oState) {
@@ -11016,6 +11037,154 @@
 			return false;
 		}
 
+		function getSpeechDescription(aSelectionState1, aSelectionState2, action) {
+			let aSelectionState1_ = aSelectionState1;
+			let aSelectionState2_ = aSelectionState2;
+			if(aSelectionState1_ && !Array.isArray(aSelectionState1_)) {
+				aSelectionState1_ = [{}];
+			}
+			if(!Array.isArray(aSelectionState1_) || !Array.isArray(aSelectionState2_)) {
+				return null;
+			}
+			const oSelectionState1 = aSelectionState1_[0];
+			const oSelectionState2 = aSelectionState2_[0];
+			if(!oSelectionState1 || !oSelectionState2) {
+				return null;
+			}
+			function getTextObj(sText) {
+				return {
+					type: AscCommon.SpeechWorkerCommands.Text,
+					obj: {text: sText}
+				};
+			}
+			if(oSelectionState2.textSelection) {
+				if(oSelectionState1.textObject !== oSelectionState2.textObject) {
+					return getTextObj(AscCommon.translateManager.getValue("entered text selection"));
+				}
+				else {
+					let oTextObject = oSelectionState1.textObject;
+					if(oTextObject) {
+						if(oTextObject instanceof AscFormat.CGraphicFrame) {
+							if(oTextObject.graphicObject) {
+								//TODO
+							}
+						}
+						else {
+							let oContent = oTextObject.getDocContent && oTextObject.getDocContent();
+							if(oContent) {
+								return oContent.getSpeechDescription(oSelectionState1.textSelection, action);
+							}
+							return null;
+						}
+					}
+					return null;
+				}
+				return;
+			}
+			if(oSelectionState2.groupSelection) {
+				if(oSelectionState1.groupObject !== oSelectionState2.groupObject) {
+					return getSpeechDescription([oSelectionState1], [oSelectionState2.groupSelection])
+				}
+				else {
+					return getSpeechDescription([oSelectionState1.groupSelection], [oSelectionState2.groupSelection])
+				}
+			}
+			if (oSelectionState2.chartSelection) {
+				if(oSelectionState1.chartObject !== oSelectionState2.chartObject) {
+					return getTextObj(oSelectionState2.chartObject.getSpeechDescription() + " " + AscCommon.translateManager.getValue("selected"));
+				}
+				else {
+					return null;
+				}
+			}
+
+			if (oSelectionState2.wrapObject) {
+				if(oSelectionState1.wrapObject !== oSelectionState2.wrapObject) {
+					return getTextObj(oSelectionState2.wrapObject.getSpeechDescription() + " " + AscCommon.translateManager.getValue("selected"));
+				}
+				else {
+					return null;
+				}
+			}
+			if (oSelectionState2.cropObject) {
+				if(oSelectionState1.cropObject !== oSelectionState2.cropObject) {
+					return getTextObj(oSelectionState2.cropObject.getSpeechDescription() + " " + AscCommon.translateManager.getValue("selected"));
+				}
+				else {
+					return null;
+				}
+			}
+			if (oSelectionState2.geometryObject) {
+				if(oSelectionState1.geometryObject !== oSelectionState2.geometryObject) {
+					return getTextObj(oSelectionState2.geometryObject.getSpeechDescription() + " " + AscCommon.translateManager.getValue("selected"));
+				}
+				else {
+					return null;
+				}
+			}
+			if(Array.isArray(oSelectionState2.selection)) {
+				if(oSelectionState2.selection.length === 0 && (oSelectionState1.textSelection || oSelectionState1.groupSelection && oSelectionState1.groupSelection.textSelection)) {
+					return getTextObj(AscCommon.translateManager.getValue("exited text selection"));
+				}
+				const aObjects1 = [];
+				const aObjects2 = [];
+				if(Array.isArray(oSelectionState1.selection)) {
+					for(let nIdx = 0; nIdx < oSelectionState1.selection.length; ++nIdx) {
+						aObjects1.push(oSelectionState1.selection[nIdx].object);
+					}
+				}
+				for(let nIdx = 0; nIdx < oSelectionState2.selection.length; ++nIdx) {
+					aObjects2.push(oSelectionState2.selection[nIdx].object);
+				}
+				if(aObjects2.length === 1 && aObjects1[0] !== aObjects2[0]) {
+					return getTextObj(aObjects2[0].getSpeechDescription() + " " + AscCommon.translateManager.getValue("selected"));
+				}
+				if(aObjects1.length < aObjects2.length) {
+					let aObjects = AscCommon.getArrayElementsDiff(aObjects1, aObjects2);
+					if(aObjects.length > 0) {
+						if(aObjects.length === 1) {
+							return getTextObj(aObjects[0].getSpeechDescription() + " " + AscCommon.translateManager.getValue("selected"));
+						}
+						else {
+							return getTextObj(aObjects.length + " " + AscCommon.translateManager.getValue("objects selected"));
+						}
+					}
+				}
+				else {
+					let aObjects = AscCommon.getArrayElementsDiff(aObjects2, aObjects1);
+					if(aObjects.length > 0) {
+						if(aObjects.length === 1) {
+							return getTextObj(aObjects[0].getSpeechDescription() + " " + AscCommon.translateManager.getValue("unselected"));
+						}
+						else {
+							return getTextObj(aObjects.length + " " + AscCommon.translateManager.getValue("objects unselected"));
+						}
+					}
+				}
+			}
+			return null;
+		}
+
+		const getArrayElementsDiff = function(aElements1, aElements2) {
+			let aDiff = [];
+			if(aElements1.length < aElements2.length) {
+				for(let nEndIdx = 0; nEndIdx < aElements2.length; ++nEndIdx) {
+					let nEndSlideIdx = aElements2[nEndIdx];
+					let nStartIdx = 0;
+					for(; nStartIdx < aElements1.length; ++nStartIdx) {
+						let nStartSlideIdx = aElements1[nStartIdx];
+						if(nEndSlideIdx === nStartSlideIdx) {
+							break;
+						}
+					}
+					if(nStartIdx === aElements1.length) {
+						aDiff.push(nEndSlideIdx);
+					}
+				}
+			}
+			return aDiff;
+		};
+
 		//--------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};
 		window['AscFormat'].HANDLE_EVENT_MODE_HANDLE = HANDLE_EVENT_MODE_HANDLE;
@@ -11103,4 +11272,6 @@
 		window['AscCommon'] = window['AscCommon'] || {};
 		window["AscCommon"].CDrawTask = CDrawTask;
 		window["AscCommon"].CDrawingControllerStateBase = CDrawingControllerStateBase;
+		window["AscCommon"].getSpeechDescription = getSpeechDescription;
+		window["AscCommon"].getArrayElementsDiff = getArrayElementsDiff;
 	})(window);

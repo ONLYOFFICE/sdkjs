@@ -79,6 +79,8 @@
 			"common/Drawings/ArcTo.js",
 			"common/Drawings/ColorArray.js",
 
+			"common/SmartArts/SmartArtCache.js",
+
 			"common/Drawings/CommonController.js",
 			"common/Drawings/States.js",
 			"common/Drawings/DrawingsChanges.js",

@@ -1122,6 +1122,11 @@
 					if (!(canEdit || t.handlers.trigger('isRestrictionComments'))|| selectionDialogMode) {
 						return true;
 					}
+					//TODO temporary fix for speaker. in the future need to switch to a common scheme
+					if (event.altKey && (event.metaKey || event.ctrlKey)) {
+						ctrlKey = true;
+					}
+
 					isNeedCheckActiveCellChanged = true;
 
 				case 65: // select all      Ctrl + a
@@ -1204,7 +1209,11 @@
 							action = true;
 							break;
 						case 90:
-							t.handlers.trigger("undo");
+							if (event.altKey) {
+								AscCommon.EditorActionSpeaker.isLanched ? AscCommon.EditorActionSpeaker.stop() : AscCommon.EditorActionSpeaker.run();
+							} else {
+								t.handlers.trigger("undo");
+							}
 							action = true;
 							break;
 						case 192:

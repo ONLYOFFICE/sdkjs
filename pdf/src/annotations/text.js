@@ -225,8 +225,13 @@
         let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
-        let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
-        oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
+
+        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
     CAnnotationText.prototype.createMoveTrack = function() {
         return new AscFormat.MoveAnnotationTrack(this);
@@ -235,14 +240,14 @@
     CAnnotationText.prototype.onMouseUp = function() {
         let oViewer = editor.getDocumentRenderer();
 
-        let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w / oViewer.zoom, this._pagePos.y + this._pagePos.h / (2 * oViewer.zoom), this.GetPage(), true);
-        editor.sync_ShowComment([this.GetId()], X, Y)
+        let oPos = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w / oViewer.zoom, this._pagePos.y + this._pagePos.h / (2 * oViewer.zoom), this.GetPage(), true);
+        editor.sync_ShowComment([this.GetId()], oPos["X"], oPos["Y"])
     };
 
     CAnnotationText.prototype.GetAscCommentData = function() {
         let oAscCommData = new Asc["asc_CCommentDataWord"](null);
         oAscCommData.asc_putText(this.GetContents());
-        oAscCommData.asc_putOnlyOfficeTime(this.GetModDate());
+        oAscCommData.asc_putOnlyOfficeTime(this.GetModDate().toString());
         oAscCommData.asc_putUserId(editor.documentUserId);
         oAscCommData.asc_putUserName(this.GetAuthor());
         oAscCommData.asc_putSolved(false);

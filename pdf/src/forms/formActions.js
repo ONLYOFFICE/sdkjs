@@ -460,7 +460,7 @@
             "Promise",
             "console"
         ];
-
+    
         let oApiConsole = {
             "println"(value) {
                 console.log("\n");
@@ -477,7 +477,7 @@
             }
         };
         Object.freeze(oApiConsole);
-
+    
         let oApiObjects = AscPDF.Api.Objects;
         let aArgsNamesPdfApi = [
             "event",
@@ -500,7 +500,8 @@
             "AFSpecial_KeystrokeEx",
             "AFSimple_Calculate",
             "AFRange_Validate",
-        ]
+        ];
+    
         let oApiFunc = AscPDF.Api.Functions;
         let aArgsPdfApi = [
             oParentDoc.event,
@@ -523,11 +524,14 @@
             oApiFunc.AFSpecial_KeystrokeEx,
             oApiFunc.AFSimple_Calculate,
             oApiFunc.AFRange_Validate
-        ]
-        
-        let func = new Function(...aArgsNamesToDelete, ...aArgsNamesPdfApi, str);
-        func.bind(oParentDoc.GetDocumentApi(), ...Array(aArgsNamesToDelete.length - 1), oApiConsole, ...aArgsPdfApi)();
-    };
+        ];
+    
+        let funcArgs = aArgsNamesToDelete.concat(aArgsNamesPdfApi);
+        funcArgs.push(str);
+    
+        let func = Function.apply(null, funcArgs);
+        func.bind(oParentDoc.GetDocumentApi()).apply(null, new Array(aArgsNamesToDelete.length - 1).concat(oApiConsole, aArgsPdfApi));
+    }
     
 
     if (!window["AscPDF"])
@@ -542,7 +546,7 @@
     window["AscPDF"].CActionReset       = CActionReset;
     window["AscPDF"].CActionRunScript   = CActionRunScript;
     
-    window["AscPDF"].ACTIONS_TYPES   = ACTIONS_TYPES;
+    window["AscPDF"].ACTIONS_TYPES          = ACTIONS_TYPES;
     window["AscPDF"].FORMS_TRIGGERS_TYPES   = FORMS_TRIGGERS_TYPES;
 
 })();

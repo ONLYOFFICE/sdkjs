@@ -69,7 +69,7 @@
         oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
 
         this.content.Draw(0, oGraphicsWord);
-        oGraphicsWord.RemoveClip();
+        oGraphicsWord.RemoveLastClip();
     };
     CAnnotationLine.prototype.Recalculate = function() {
         // if (this.IsNeedRecalc() == false)
@@ -142,8 +142,8 @@
     CAnnotationLine.prototype.onMouseUp = function() {
         let oViewer = editor.getDocumentRenderer();
 
-        let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w / oViewer.zoom, this._pagePos.y + this._pagePos.h / (2 * oViewer.zoom), this.GetPage(), true);
-        editor.sync_ShowComment([this.GetId()], X, Y)
+        let oPos = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w / oViewer.zoom, this._pagePos.y + this._pagePos.h / (2 * oViewer.zoom), this.GetPage(), true);
+        editor.sync_ShowComment([this.GetId()], oPos["X"], oPos["Y"])
     };
 
     function TurnOffHistory() {

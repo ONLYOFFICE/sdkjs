@@ -291,7 +291,6 @@
 		this.fKeyMouseMove = function () {
 			return t._onWindowMouseMove.apply(t, arguments);
 		};
-
 		t.addEventListeners();
 	};
 
@@ -477,6 +476,8 @@
 		if (this.isFormula()) {
 			return;
 		}
+		this.startAction();
+
 		var t = this, opt = t.options, begin, end, i, first, last;
 
 		if (t.selectionBegin !== t.selectionEnd) {
@@ -526,6 +527,7 @@
 				t._update();
 			}
 		}
+		this.endAction();
 	};
 
 	CellEditor.prototype.changeTextCase = function (val) {
@@ -547,6 +549,7 @@
 
 	CellEditor.prototype._changeFragments = function (fragmentsMap) {
 		let opt = this.options;
+		this.startAction();
 		if (fragmentsMap) {
 			let _undoFragments = {};
 			for (let i in fragmentsMap) {
@@ -566,6 +569,7 @@
 			this._cleanSelection();
 			this._drawSelection();
 		}
+		this.endAction();
 	};
 
 	CellEditor.prototype.empty = function ( options ) {
@@ -583,7 +587,9 @@
 		if (api && !api.canUndoRedoByRestrictions()) {
 			return;
 		}
+		api.sendEvent("asc_onBeforeUndoRedo");
 		this._performAction( this.undoList, this.redoList );
+		api.sendEvent("asc_onUndoRedo");
 	};
 
 	CellEditor.prototype.redo = function () {
@@ -591,7 +597,9 @@
 		if (api && !api.canUndoRedoByRestrictions()) {
 			return;
 		}
+		api.sendEvent("asc_onBeforeUndoRedo");
 		this._performAction( this.redoList, this.undoList );
+		api.sendEvent("asc_onUndoRedo");
 	};
 
 	CellEditor.prototype.getZoom = function () {
@@ -780,6 +788,7 @@
 		if (!(fragments.length > 0)) {
 			return;
 		}
+		this.startAction();
 
 		var noUpdateMode = this.noUpdateMode;
 		this.noUpdateMode = true;
@@ -813,6 +822,7 @@
 		if (undefined !== cursorPos) {
 			this._moveCursor(kPosition, cursorPos);
 		}
+		this.endAction();
 	};
 
 	/** @param flag {Boolean} */
@@ -1890,6 +1900,7 @@
 		if (!isRange) {
 			this.cleanSelectRange();
 		}
+		this.startAction();
 
 		var opt = this.options, f, l, s;
 
@@ -1959,7 +1970,7 @@
 		if (!this.noUpdateMode) {
 			this._update();
 		}
-
+		this.endAction();
 		return length;
 	};
 
@@ -2012,6 +2023,8 @@
 			return;
 		}
 
+		this.startAction();
+
 		// search for begin and end positions
 		first = t._findFragment(b);
 		last = t._findFragment(e - 1);
@@ -2047,6 +2060,7 @@
 		if (!t.noUpdateMode) {
 			t._update();
 		}
+		this.endAction();
 	};
 
 	CellEditor.prototype._selectChars = function (kind, pos) {
@@ -2418,6 +2432,7 @@
 		var t = this, kind = undefined, hieroglyph = false;
 		var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
 		const bIsMacOs = AscCommon.AscBrowser.isMacOs;
+		const bIsWordRemove = bIsMacOs ? event.altKey : ctrlKey;
 
 		if (this.handlers.trigger('getWizard') || !t.isOpened || (!isInput && !t.enableKeyEvents && event.emulated !== true)) {
 			return true;
@@ -2436,6 +2451,7 @@
 			hieroglyph = true;
 		}
 
+		let api = window["Asc"]["editor"];
 		switch (event.which) {
 
 			case 27:  // "esc"
@@ -2494,8 +2510,7 @@
 						t._syncEditors();
 					}
 				}
-				const bIsWord = bIsMacOs ? event.altKey : ctrlKey;
-				t._removeChars(bIsWord ? kPrevWord : kPrevChar);
+				t._removeChars(bIsWordRemove ? kPrevWord : kPrevChar);
 				return false;
 
 			case 32:  // "space"
@@ -2640,7 +2655,7 @@
 				}
 				event.stopPropagation();
 				event.preventDefault();
-				t._removeChars(ctrlKey ? kNextWord : kNextChar);
+				t._removeChars(bIsWordRemove ? kNextWord : kNextChar);
 				return true;
 
 			case 53: // 5
@@ -2747,7 +2762,6 @@
 				break;
 
 			case 110: //NumpadDecimal
-				var api = window["Asc"]["editor"];
 				t._addChars(api.asc_getDecimalSeparator());
 				event.stopPropagation();
 				event.preventDefault();
@@ -2775,7 +2789,6 @@
 			case 59:
 			case 186: // ctrl + (shift) + ;
 				if (ctrlKey) {
-					var api = window["Asc"]["editor"];
 					var oDate = new Asc.cDate();
 					t._addChars(event.shiftKey ? oDate.getTimeString(api) : oDate.getDateString(api));
 					event.stopPropagation();
@@ -3130,6 +3143,162 @@
 			}
 		}
 		return res;
+	};
+
+	CellEditor.prototype.getSelectionState = function () {
+		return {start: this.selectionBegin, end: this.selectionEnd, cursor: this.cursorPos};
+	};
+
+	CellEditor.prototype.getSpeechDescription = function (prevState, curState, action) {
+		if (curState.start === prevState.start && curState.end === prevState.end && prevState.cursor === curState.cursor) {
+			return null;
+		}
+
+		let type = null, text = null, t = this;
+
+		let compareSelection = function () {
+			let _begin = Math.min(curState.start, curState.end);
+			let _end = Math.max(curState.start, curState.end);
+			let _start, _len;
+			if (_end === _begin) {
+				text = t.getText(t.cursorPos, 1);
+				type = AscCommon.SpeechWorkerCommands.Text;
+				return;
+			}
+
+			if (_end < prevState.start || prevState.end < _begin) {
+				//no intersection
+				//speech new select
+				_start = _begin;
+				_len = _end - _begin;
+				type = AscCommon.SpeechWorkerCommands.Text;
+			} else {
+				if (_end !== prevState.end) {
+					//changed end of text
+					if (_end > prevState.end) {
+						//added by select
+						_start = prevState.end;
+						_len = _end - prevState.end;
+						type = AscCommon.SpeechWorkerCommands.TextSelected;
+					} else {
+						//deleted from select
+						_start = _end;
+						_len = prevState.end - _end;
+						type = AscCommon.SpeechWorkerCommands.TextUnselected;
+					}
+				} else {
+					if (_begin < prevState.start) {
+						//added by select
+						_start = _begin;
+						_len = prevState.start - _begin;
+						type = AscCommon.SpeechWorkerCommands.TextSelected;
+					} else {
+						//deleted from select
+						_start = prevState.start;
+						_len = _begin - prevState.start;
+						type = AscCommon.SpeechWorkerCommands.TextUnselected;
+					}
+				}
+			}
+
+			text = t.getText(_start, _len);
+		};
+
+		let getWord = function () {
+			let _cursorPos = t.cursorPos;
+			type = AscCommon.SpeechWorkerCommands.Text;
+
+			let _cursorPosNextWord = t.textRender.getNextWord(_cursorPos);
+			text = t.getText(_cursorPos, _cursorPosNextWord - _cursorPos);
+		};
+
+		if (action) {
+			let bWord = false;
+			if (action.type !== AscCommon.SpeakerActionType.keyDown || action.event.keyCode < 35 || action.event.keyCode > 40) {
+				return null;
+			}
+
+			if (!this.enableKeyEvents || !t.hasFocus) {
+				return null;
+			}
+
+			let event = action.event;
+			let isWizard = this.handlers.trigger('getWizard');
+			if (!action.event || isWizard || !t.isOpened || (!t.enableKeyEvents && event.emulated !== true)) {
+				return null;
+			}
+
+			var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
+			const bIsMacOs = AscCommon.AscBrowser.isMacOs;
+
+			switch (event.keyCode) {
+				case 8:   // "backspace"
+					/*const bIsWord = bIsMacOs ? event.altKey : ctrlKey;
+					t._removeChars(bIsWord ? kPrevWord : kPrevChar);*/
+					break;
+				case 35:  // "end"
+					/*kind = ctrlKey ? kEndOfText : kEndOfLine;
+					event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);
+					return false;*/
+					break;
+				case 36:  // "home"
+					/*kind = ctrlKey ? kBeginOfText : kBeginOfLine;
+					event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);*/
+					break;
+				case 37:  // "left"
+					if (bIsMacOs && ctrlKey) {
+						//event.shiftKey ? t._selectChars(kBeginOfLine) : t._moveCursor(kBeginOfLine);
+					} else {
+						bWord = bIsMacOs ? event.altKey : ctrlKey;
+						/*kind = bWord ? kPrevWord : kPrevChar;
+						event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);*/
+					}
+
+					break;
+				case 38:  // "up"
+					//event.shiftKey ? t._selectChars(kPrevLine) : t._moveCursor(kPrevLine);
+					break;
+				case 39:  // "right"
+					if (bIsMacOs && ctrlKey) {
+						//event.shiftKey ? t._selectChars(kEndOfLine) : t._moveCursor(kEndOfLine);
+					} else {
+						bWord = bIsMacOs ? event.altKey : ctrlKey;
+						/*kind = bWord ? kNextWord : kNextChar;
+						event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);*/
+					}
+					break;
+
+				case 40:  // "down"
+					//event.shiftKey ? t._selectChars(kNextLine) : t._moveCursor(kNextLine);
+					break;
+			}
+
+			if (bWord) {
+				getWord();
+			} else {
+				compareSelection();
+			}
+		} else {
+			compareSelection();
+		}
+
+		return type !== null ? {type: type, obj: {text: text}} : null;
+	};
+
+	CellEditor.prototype.startAction = function () {
+		var api = window["Asc"]["editor"];
+		if (!api) {
+			return;
+		}
+		api.sendEvent('asc_onUserActionStart');
+	};
+
+	CellEditor.prototype.endAction = function () {
+		var api = window["Asc"]["editor"];
+		if (!api) {
+			return;
+		}
+		api.sendEvent('asc_onUserActionEnd');
 	};
 
 

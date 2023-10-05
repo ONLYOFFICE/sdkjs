@@ -99,6 +99,7 @@
 
 		g.IsNoDrawingEmptyPlaceholderText = true;
 		g.IsNoDrawingEmptyPlaceholder = true;
+		g.isPrintMode = true;
 
 		return g;
 	};

@@ -12305,6 +12305,17 @@
 		return this.legacyDrawingHF.getDrawingById(val);
 	};
 
+	Worksheet.prototype.getCountNoEmptyCells = function() {
+		if (this.nRowsCount === 0 || this.nColsCount === 0) {
+			return 0;
+		}
+		let count = 0;
+		let range = this.getRange3(0, 0, this.nRowsCount - 1, this.nColsCount - 1);
+		range._foreachNoEmptyByCol(function () {
+			count++;
+		});
+		return count;
+	};
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
@@ -16444,6 +16455,9 @@
 				return;
 			}
 		}
+
+		this.worksheet.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.mergeRange, true, this.bbox, this.worksheet.getId());
+
 		//пробегаемся по границе диапазона, чтобы посмотреть какие границы нужно оставлять
 		var oLeftBorder = null;
 		var oTopBorder = null;
@@ -16536,7 +16550,7 @@
 
 									 }
 									 if(nRow0 == nRowStart && nCol0 == nColStart)
-										 oLeftTopCellStyle = cell.getStyle();
+										 oLeftTopCellStyle = cell.getStyle();									
 								 });
 		//правила работы с гиперссылками во время merge(отличются от Excel в случаем областей, например hyperlink: C3:D3 мержим C2:C3)
 		// 1)оставляем все ссылки, которые не полностью лежат в merge области
@@ -16748,6 +16762,7 @@
 		if (dataValidationRanges) {
 			this.worksheet.clearDataValidation(dataValidationRanges, true);
 		}
+		this.worksheet.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.mergeRange, null, this.bbox, this.worksheet.getId());
 
 		History.EndTransaction();
 	};

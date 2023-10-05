@@ -393,6 +393,15 @@
         oSp.txBody.setBodyPr(oBodyPr);
         oTxLstStyle = new AscFormat.TextListStyle();
         oSp.txBody.setLstStyle(oTxLstStyle);
+        const oContent = oSp.getDocContent();
+        if(oContent) {
+            oContent.ClearContent(true);
+            const oParagraph = oContent.Content[0];
+            const oFld = new AscCommonWord.CPresentationField(oParagraph);
+            oFld.SetGuid(AscCommon.CreateGUID());
+            oFld.SetFieldType("slidenum");
+            oParagraph.Internal_Content_Add(0, oFld);
+        }
         oSp.setParent(oN);
         oN.addToSpTreeToPos(2, oSp);
         return oN;

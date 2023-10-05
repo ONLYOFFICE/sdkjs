@@ -4639,7 +4639,9 @@ function CDrawingDocument()
 			return {X: 0, Y: 0, Error: true};
 		}
 
-		let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(x, y, pageIndex);
+		let oPos	= AscPDF.GetGlobalCoordsByPageCoords(x, y, pageIndex);
+		let X		= oPos["X"];
+		let Y		= oPos["Y"];
 
 		if (true !== isNoRound)
 		{

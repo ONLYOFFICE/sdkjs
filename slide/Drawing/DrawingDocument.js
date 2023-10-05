@@ -3743,8 +3743,18 @@ function CThumbnailsManager()
 			// кто-то зажал мышку. кто-то другой
 			return false;
 		}
+
 		AscCommon.check_MouseDownEvent(e);
 		global_mouseEvent.LockMouse();
+		const oPresentation = oThis.m_oWordControl.m_oLogicDocument;
+		let nStartHistoryIndex = oPresentation.History.Index;
+		function checkSelectionEnd()
+		{
+			if(nStartHistoryIndex === oPresentation.History.Index)
+			{
+				Asc.editor.sendEvent("asc_onSelectionEnd");
+			}
+		}
 
 		oThis.m_oWordControl.m_oApi.sync_EndAddShape();
 		if (global_mouseEvent.Sender != control)
@@ -3771,6 +3781,7 @@ function CThumbnailsManager()
 				_data.IsSlideHidden = oThis.IsSlideHidden(oThis.GetSelectedArray());
 				oThis.m_oWordControl.m_oApi.sync_ContextMenuCallback(_data);
 			}
+			checkSelectionEnd();
 			return false;
 		}
 
@@ -3829,7 +3840,7 @@ function CThumbnailsManager()
 
 			oThis.OnUpdateOverlay();
 			oThis.ShowPage(pos.Page);
-			oThis.m_oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
+			oPresentation.Document_UpdateInterfaceState();
 		} else if (0 == global_mouseEvent.Button || 2 == global_mouseEvent.Button)
 		{
 			
@@ -3884,7 +3895,7 @@ function CThumbnailsManager()
 					_data.Y_abs = global_mouseEvent.Y - ((oThis.m_oWordControl.m_oThumbnails.AbsolutePosition.T * g_dKoef_mm_to_pix) >> 0) - oThis.m_oWordControl.Y;
 					oThis.m_oWordControl.m_oApi.sync_ContextMenuCallback(_data);
 				}
-
+				checkSelectionEnd();
 				return false;
 			}
 
@@ -3927,7 +3938,7 @@ function CThumbnailsManager()
 			_data.Y_abs = global_mouseEvent.Y - ((oThis.m_oWordControl.m_oThumbnails.AbsolutePosition.T * g_dKoef_mm_to_pix) >> 0) - oThis.m_oWordControl.Y;
 			oThis.m_oWordControl.m_oApi.sync_ContextMenuCallback(_data);
 		}
-
+		checkSelectionEnd();
 		return false;
 	};
 
@@ -4155,6 +4166,7 @@ function CThumbnailsManager()
 		var nShortCutAction = oApi.getShortcut(oEvent);
 		var bReturnValue = false, bPreventDefault = true;
 		var sSelectedIdx;
+		let nStartHistoryIndex = oPresentation.History.Index;
 		switch (nShortCutAction)
 		{
 			case Asc.c_oAscPresentationShortcutType.EditSelectAll:
@@ -4376,6 +4388,10 @@ function CThumbnailsManager()
 		if (bPreventDefault)
 		{
 			e.preventDefault();
+		}
+		if(nStartHistoryIndex === oPresentation.History.Index)
+		{
+			oApi.sendEvent("asc_onSelectionEnd");
 		}
 		return bReturnValue;
 	};

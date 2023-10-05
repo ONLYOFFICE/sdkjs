@@ -61,6 +61,7 @@ $(function ()
 	let hyphenateCaps   = true;
 	let hyphenLimit     = 0;
 	let hyphenationZone = 0;
+	let condensedSpaces = false;
 	
 	AscWord.Paragraph.prototype.isAutoHyphenation = function()
 	{
@@ -82,6 +83,10 @@ $(function ()
 	{
 		return hyphenateCaps;
 	};
+	AscWord.Paragraph.prototype.IsCondensedSpaces = function()
+	{
+		return condensedSpaces;
+	};
 	
 	function setAutoHyphenation(isAuto)
 	{
@@ -98,6 +103,10 @@ $(function ()
 	function setHyphenationZone(zone)
 	{
 		hyphenationZone = zone;
+	}
+	function setCondensedSpaces(isCondensed)
+	{
+		condensedSpaces = isCondensed;
 	}
 	
 	function checkLines(assert, isAutoHyphenation, contentWidth, textLines)
@@ -235,6 +244,16 @@ $(function ()
 			"½w",
 			"ww"
 		]);
+		
+		// Специальная ситуация, когда во время прилегания влево не убирается знак переноса, но при прилегании
+		// по ширине перенос начинает убираться
+		setCondensedSpaces(true);
+		setText("a b c d aabbb");
+		checkLines(assert, true, charWidth * 10.5, [
+			"a b c d aa-",
+			"bbb"
+		]);
+		setCondensedSpaces(false);
 		
 		// TODO: Разобрать случай, когда перенос слова происходит в двух (или более местах) и следующее место переноса
 		//       надо начинать считать с последнего места переноса, а не с начала слова

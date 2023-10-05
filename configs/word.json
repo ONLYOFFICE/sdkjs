@@ -83,6 +83,8 @@
 			"common/Drawings/ArcTo.js",
 			"common/Drawings/ColorArray.js",
 
+			"common/SmartArts/SmartArtCache.js",
+
 			"common/Drawings/CommonController.js",
 			"word/Editor/GraphicObjects/DrawingStates.js",
 			"common/Drawings/DrawingsChanges.js",
@@ -310,6 +312,7 @@
 			"pdf/src/forms/text.js",
 			"pdf/src/forms/checkbox.js",
 			"pdf/src/forms/radiobutton.js",
+			"pdf/src/forms/signature.js",
 			"pdf/src/forms/pushbutton.js",
 			"pdf/src/forms/combobox.js",
 			"pdf/src/forms/textBoxContent.js",

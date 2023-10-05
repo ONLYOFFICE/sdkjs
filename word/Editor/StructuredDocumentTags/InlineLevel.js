@@ -3409,7 +3409,7 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function(isFastRecalc)
 		else if (AscCommon.align_Left !== oParagraph.GetParagraphAlign())
 		{
 			oRun.SetFontSize(nNewFontSize);
-			oParagraph.private_RecalculateFastRange(0, 0);
+			oParagraph.recalculateRangeFast(0, 0);
 		}
 	}
 	// Восстанавливаем старое значение, чтобы в историю все правильно записалось

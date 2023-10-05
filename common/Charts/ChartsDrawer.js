@@ -1018,8 +1018,8 @@ CChartsDrawer.prototype =
 		if(pieChart && plotArea.charts.length === 1) {
 			if (plotArea.layout) {
 				var oLayout = plotArea.layout;
-				pxLeft = chartSpace.calculatePosByLayout(pxLeft / pxToMM, oLayout.xMode, oLayout.x, (pxRight - pxLeft) / pxToMM, chartSpace.extX) * pxToMM;
-				pxTop = chartSpace.calculatePosByLayout(pxTop / pxToMM, oLayout.yMode, oLayout.y, (pxBottom - pxTop) / pxToMM, chartSpace.extY) * pxToMM;
+				pxLeft = chartSpace.calculatePosByLayout(pxLeft / pxToMM, oLayout.xMode, oLayout.x, (pxRight - pxLeft) / pxToMM, chartSpace.extX, false) * pxToMM;
+				pxTop = chartSpace.calculatePosByLayout(pxTop / pxToMM, oLayout.yMode, oLayout.y, (pxBottom - pxTop) / pxToMM, chartSpace.extY, true) * pxToMM;
 
 				var fWidthPlotArea = chartSpace.calculateSizeByLayout(pxLeft / pxToMM, chartSpace.extX, oLayout.w, oLayout.wMode);
 				if (fWidthPlotArea > 0) {
@@ -15120,9 +15120,20 @@ areaChart.prototype =
 	
 	_drawArea: function()
 	{
-		var pen = this.cChartSpace.pen;
-		var brush = this.cChartSpace.brush;
+		const pen = this.cChartSpace.pen;
+		const brush = this.cChartSpace.brush;
+		const oShapeDrawer = this.cChartDrawer.cShapeDrawer;
+		let bNoSmartAttackVal;
+		if(oShapeDrawer)
+		{
+			bNoSmartAttackVal = oShapeDrawer.bIsNoSmartAttack;
+			oShapeDrawer.bIsNoSmartAttack = true;
+		}
 		this.cChartDrawer.drawPath(this.paths, pen, brush);
+		if(oShapeDrawer)
+		{
+			oShapeDrawer.bIsNoSmartAttack = bNoSmartAttackVal;
+		}
 	}
 };
 

@@ -2043,19 +2043,22 @@
 				}
 				else
 				{
-					if (editor.isPdfEditor() && e.canceled == true)
-						callback(e);
+					if (e.canceled == true)
+					{
+						if (Asc.editor.isPdfEditor())
+							callback(e);
+					}
 					else
 						callback(Asc.c_oAscError.ID.Unknown);
 				}
 			});
 
-			if (editor.isPdfEditor()) {
-				let oViewer = editor.getDocumentRenderer();
+			if (Asc.editor.isPdfEditor()) {
+				let oViewer = Asc.editor.getDocumentRenderer();
 				let oDoc = oViewer.doc;
 				let oActionsQueue = oDoc.GetActionsQueue();
 				if (oActionsQueue.IsInProgress()) {
-					editor.sendEvent("asc_onOpenFilePdfForm", fileName.click.bind(fileName), oActionsQueue.Continue.bind(oActionsQueue));
+					Asc.editor.sendEvent("asc_onOpenFilePdfForm", fileName.click.bind(fileName), oActionsQueue.Continue.bind(oActionsQueue));
 				}
 				else 
 					fileName.click();
@@ -2567,21 +2570,60 @@
 		}
 		document.body.appendChild(input);
 
-		input.addEventListener('click', () => {
-			document.body.onfocus = checkCanceled;
-		});
+		function addDialogClosedListener(input, callback) {
+			var id = null;
+			var active = false;
+			var wrapper = function() {
+				if (active) {
+					active = false;
+					callback(input);
 
-		function checkCanceled() {
+					// remove handlers
+					window.removeEventListener('focus', onFocus);
+					window.removeEventListener('blur', onBlur);
+				}
+			};
+			var cleanup = function() {
+				clearTimeout(id);
+			};
+			var shedule = function(delay) {
+				id = setTimeout(wrapper, delay);
+			};
+			var onFocus = function() {
+				cleanup();
+				shedule(1000);
+			};
+			var onBlur = function() {
+				cleanup();
+			};
+			var onClick = function() {
+				window.addEventListener('focus', onFocus);
+				window.addEventListener('blur', onBlur);
+
+				cleanup();
+				active = true;
+			};
+			var onChange = function() {
+				cleanup();
+				shedule(0);
+			};
+			input.addEventListener('click', onClick);
+			input.addEventListener('change', onChange);
+		}
+
+		addDialogClosedListener(input, checkCanceled);
+
+		function checkCanceled(input) {
+			let e = {};
 			if (input.files.length === 0) {
-				onchange({canceled: true});
+				e.canceled = true;
 			}
-			document.body.onfocus = null;
-		}    
-	
-		input.addEventListener('change', function(e) {
+			else {
+				e.target = input;
+			}
 			onchange(e);
-		});
-
+		}
+	
 		return input;
 	}
 
@@ -10001,35 +10043,6 @@
 		loadScript('../../../../sdkjs/common/Charts/ChartStyles.js', onSuccess, onError);
 	}
 
-	function loadSmartArtBinary(fOnSuccess, fOnError) {
-		if (window["NATIVE_EDITOR_ENJINE"]) {
-			return;
-		}
-		loadFileContent('../../../../sdkjs/common/SmartArts/SmartArts.bin', function (httpRequest) {
-			if (httpRequest && httpRequest.response) {
-				const arrStream = AscCommon.initStreamFromResponse(httpRequest);
-
-				AscCommon.g_oBinarySmartArts = {
-					shifts: {},
-					stream: arrStream
-				}
-
-				const oFileStream = new AscCommon.FileStream(arrStream, arrStream.length);
-				oFileStream.GetUChar();
-				const nLength = oFileStream.GetULong();
-				while (nLength + 4 > oFileStream.cur) {
-					const nType = oFileStream.GetUChar();
-					const nPosition = oFileStream.GetULong();
-					AscCommon.g_oBinarySmartArts.shifts[nType] = nPosition;
-				}
-				fOnSuccess && fOnSuccess();
-			} else {
-				fOnError(httpRequest);
-			}
-
-		}, 'arraybuffer');
-	}
-
 	function getAltGr(e)
 	{
 		if (true === e["altGraphKey"])
@@ -13445,7 +13458,6 @@
 	window["AscCommon"].loadSdk = loadSdk;
     window["AscCommon"].loadScript = loadScript;
     window["AscCommon"].loadChartStyles = loadChartStyles;
-	window["AscCommon"].loadSmartArtBinary = loadSmartArtBinary;
 	window["AscCommon"].getAltGr = getAltGr;
 	window["AscCommon"].getColorSchemeByName = getColorSchemeByName;
 	window["AscCommon"].getColorSchemeByIdx = getColorSchemeByIdx;
