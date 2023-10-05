@@ -82,7 +82,7 @@
 	 * @property {boolean} PrintGridlines - Returns or sets the page PrintGridlines property.
 	 * @property {Array} Defnames - Returns an array of the ApiName objects.
 	 * @property {Array} Comments - Returns an array of the ApiComment objects.
-	 * @property {ApiFreezePanes} FreezePanes - Returns a freezePanes for a current worsheet.
+	 * @property {ApiFreezePanes} FreezePanes - Returns a freeze Panes for a current worsheet.
 	 */
 	function ApiWorksheet(worksheet) {
 		this.worksheet = worksheet;
@@ -907,7 +907,7 @@
 	});
 
 	/**
-	 * Specifies the cell border position.
+	 * Specifies freeze panes type.
 	 * @typedef {("row" | "column" | "cell" | null )} FreezePaneType
 	 */
 
@@ -6480,10 +6480,13 @@
 	 */
 	ApiFreezePanes.prototype.FreezeColumns = function(count) {
 		let api = this.ws.workbook.oApi;
+		if (count == undefined) count = 0;
 		if (typeof count === 'number' && count > 0 && count <= AscCommon.gc_nMaxCol0) {
 			api.asc_freezePane(null, count, 0);
-		} else if (!!api.wb.getWorksheet().topLeftFrozenCell) {
+		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
 			api.asc_freezePane(undefined);
+		} else {
+			throw(new Error('Invalid parameter "count".'))
 		}
 	};
 
@@ -6496,15 +6499,18 @@
 	 */
 	ApiFreezePanes.prototype.FreezeRows = function(count) {
 		let api = this.ws.workbook.oApi;
+		if (count == undefined) count = 0;
 		if (typeof count === 'number' && count > 0 && count <= AscCommon.gc_nMaxRow0) {
 			api.asc_freezePane(null, 0, count);
-		} else if (!!api.wb.getWorksheet().topLeftFrozenCell) {
+		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
 			api.asc_freezePane(undefined);
+		} else {
+			throw(new Error('Invalid parameter "count".'))
 		}
 	};
 
 	/**
-	 * Freeze the top row or rows of the worksheet in place.
+	 * Gets a range that describes the frozen cells in the active worksheet view.
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange | null} - Returns null if there is no frozen pane.
