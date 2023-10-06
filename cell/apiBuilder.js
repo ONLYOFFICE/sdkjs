@@ -917,7 +917,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {FreezePaneType} FreezePaneType - The type of freezing ('null' to unfreeze).
-	 * @since 7.5.1
+	 * @since 7.6.0
 	 */
 	Api.prototype.SetFreezePanesType = function(FreezePaneType) {
 		if (typeof FreezePaneType === 'string' || FreezePaneType === null) {
@@ -952,7 +952,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {FreezePaneType} FreezePaneType - The type of freezing ('null' - if there is no frozen pane).
-	 * @since 7.5.1
+	 * @since 7.6.0
 	 */
 	Api.prototype.GetFreezePanesType = function() {
 		let cell = this.wb.getWorksheet().topLeftFrozenCell;
@@ -6478,7 +6478,7 @@
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange | String} frozenRange - A range that represents the cells to be frozen panes.
-	 * @since 7.5.1
+	 * @since 7.6.0
 	 */
 	ApiFreezePanes.prototype.FreezeAt = function(frozenRange) {
 		let api = this.ws.workbook.oApi;
@@ -6499,7 +6499,7 @@
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
 	 * @param {Number?} [count=0] - Optional number of columns to freeze, or zero to unfreeze all columns.
-	 * @since 7.5.1
+	 * @since 7.6.0
 	 */
 	ApiFreezePanes.prototype.FreezeColumns = function(count) {
 		let api = this.ws.workbook.oApi;
@@ -6518,7 +6518,7 @@
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
 	 * @param {Number?} [count=0] - Optional number of rows to freeze, or zero to unfreeze all rows.
-	 * @since 7.5.1
+	 * @since 7.6.0
 	 */
 	ApiFreezePanes.prototype.FreezeRows = function(count) {
 		let api = this.ws.workbook.oApi;
@@ -6537,7 +6537,7 @@
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange | null} - Returns null if there is no frozen pane.
-	 * @since 7.5.1
+	 * @since 7.6.0
 	 */
 	ApiFreezePanes.prototype.GetLocation = function() {
 		let result = null;
@@ -6568,7 +6568,7 @@
 	 * Removes all frozen panes in the worksheet.
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
-	 * @since 7.5.1
+	 * @since 7.6.0
 	 */
 	ApiFreezePanes.prototype.Unfreeze = function() {
 		if (!!this.ws.workbook.oApi.wb.getWorksheet().topLeftFrozenCell)
