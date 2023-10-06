@@ -12340,8 +12340,8 @@
 		// Run goal seek
 		oGoalSeek.init();
 		oGoalSeek.setIntervalId(setInterval(function () {
-			let bResult = oGoalSeek.calculate();
-			if (bResult) {
+			let bIsFinish = oGoalSeek.calculate();
+			if (bIsFinish) {
 				clearInterval(oGoalSeek.getIntervalId());
 			}
 		}, 50));

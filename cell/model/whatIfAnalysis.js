@@ -101,13 +101,12 @@ function (window, undefined) {
 		let nPrevFactValue = this.getPrevFactValue();
 		let nFactValue, nDiff, nMedianFx, nMedianVal, nLowFx;
 
-		this.increaseCurrentAttempt();
 		//.sendEvent("update", nExpectedVal, nChangingVal, this.getCurrentAttempt()); - update event
 		// Exponent step mode
 		if (!this.getEnabledRidder()) {
 			nFactValue = this.calculateFormula(nChangingVal);
 			nDiff = nFactValue - nExpectedVal;
-			// Checking should it switch to Ridder algorithm.
+			// Checks should it switch to Ridder algorithm.
 			if (this.getReverseCompare()) {
 				this.setEnabledRidder(!!(nFactValue < nExpectedVal || (nPrevFactValue && nFactValue > nPrevFactValue)));
 			} else {
@@ -136,15 +135,22 @@ function (window, undefined) {
 			nDiff = this.calculateFormula(nChangingVal) - nExpectedVal;
 		}
 
+		// Check: Need pause a loop or finish calculate
 		if (Math.abs(nDiff) < this.getRelativeError()) {
 			//.sendEvent("stop", true); - stop event. true/false - isSuccess;
 			return true;
-		} else if (this.getCurrentAttempt() >= this.getMaxIterations() || isNaN(nDiff)) {
+		}
+		if (this.getCurrentAttempt() >= this.getMaxIterations() || isNaN(nDiff)) {
 			//.sendEvent("stop", false); - stop event. true/false - isSuccess;
 			return true;
-		} else if (this.getIsPause()) {
+		}
+		if (this.getIsPause()) {
 			return true;
-		} else if (this.getEnabledRidder()) {
+		}
+
+		//Calculates next changing value
+		this.increaseCurrentAttempt();
+		if (this.getEnabledRidder()) {
 			if (nMedianFx < 0 !== nDiff < 0) {
 				this.setLowBorder(nMedianVal);
 				this.setHighBorder(nChangingVal);
@@ -153,6 +159,7 @@ function (window, undefined) {
 			} else {
 				this.setLowBorder(nChangingVal);
 			}
+			this.setChangingValue(nChangingVal);
 		} else { // Exponent step logic
 			let nCurAttempt = this.getCurrentAttempt();
 			let nFirstChangingVal = this.getNumberFirstChangingValue();
@@ -596,8 +603,8 @@ function (window, undefined) {
 
 		this.setIsPause(false);
 		this.setIntervalId(setInterval(function() {
-			let bResult = oGoalSeek.calculate();
-			if (bResult) {
+			let bIsFinish = oGoalSeek.calculate();
+			if (bIsFinish) {
 				clearInterval(oGoalSeek.getIntervalId());
 			}
 		}, 50));
@@ -612,8 +619,8 @@ function (window, undefined) {
 		this.setIsPause(false);
 		this.setIsSingleStep(true);
 		this.setIntervalId(setInterval(function() {
-			let bResult = oGoalSeek.calculate();
-			if (bResult) {
+			let bIsFinish = oGoalSeek.calculate();
+			if (bIsFinish) {
 				clearInterval(oGoalSeek.getIntervalId());
 			}
 		}, 50));

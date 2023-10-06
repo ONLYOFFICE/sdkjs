@@ -68,6 +68,15 @@ $(function () {
         AscCommonExcel.getFormulasInfo();
     }
     wb.dependencyFormulas.lockRecal();
+    CGoalSeek.prototype.resume = function() {
+        this.setIsPause(false);
+        while (true) {
+            let bIsFinish = this.calculate();
+            if (bIsFinish) {
+                break;
+            }
+        }
+    }
 
     const getRange = function (c1, r1, c2, r2) {
         return new window["Asc"].Range(c1, r1, c2, r2);
@@ -85,8 +94,8 @@ $(function () {
         oGoalSeek.init();
         // Run goal seek
         while (true) {
-            let bResult = oGoalSeek.calculate();
-            if (bResult) {
+            let bIsFinish = oGoalSeek.calculate();
+            if (bIsFinish) {
                 break;
             }
         }
@@ -884,5 +893,38 @@ $(function () {
        assert.strictEqual(Number(nChangingVal.toFixed(1)), 1.5, `Case: Try to find parameter with 3 as changed value for BESSELI formula. Result ChangingVal: ${nChangingVal}`);
        // Clear data
        clearData(0, 0, 2, 2);
+    });
+    QUnit.test('Test: pause, resume, step methods', function(assert) {
+        const testData = [
+            ['', '180', '100000']
+        ];
+        // Fill data
+        let oRange = ws.getRange4(0, 0);
+        oRange.fillData(testData);
+        // Method pause test on PMT formula find "Interest Rate"
+        nExpectedVal = -900;
+        // Init objects ParserFormula and GoalSeek
+        oParserFormula = new CParserFormula('PMT(A1/12,B1,C1)', 'D1', ws);
+        oGoalSeek = new CGoalSeek(oParserFormula, nExpectedVal, ws.getRange4(0, 0));
+        oGoalSeek.init();
+        // Run goal seek
+        while (true) {
+            let bIsFinish = oGoalSeek.calculate();
+            oGoalSeek.pause();
+            if (bIsFinish) {
+                break;
+            }
+        }
+        assert.strictEqual(oGoalSeek.getIsPause(), true, `Case: Test pause method. Attribute bIsPause is ${oGoalSeek.getIsPause()}`);
+        assert.strictEqual(oGoalSeek.getCurrentAttempt(), 1, `Goal seek is paused. Iteration: ${oGoalSeek.getCurrentAttempt()}, changing val: ${oGoalSeek.getChangingValue()}`);
+        // Method resume test on PMT formula find "Interest Rate"
+        oGoalSeek.resume();
+        oParserFormula.parse()
+        nResult = Number(oParserFormula.calculate().getValue());
+        nChangingVal = Number(oGoalSeek.getChangingCell().getValue());
+        assert.strictEqual(Math.round(nResult), nExpectedVal, `Case: Test resume method. Result PMT: ${nResult}`);
+        assert.strictEqual(Number(nChangingVal.toFixed(4)), 0.0702, `Case: Test resume method. Result ChangingVal: ${nChangingVal}`);
+        // Clear data
+        clearData(0, 0, 0, 0);
     });
 });
