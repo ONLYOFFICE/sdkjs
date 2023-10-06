@@ -6482,11 +6482,12 @@
 
         var isPagePreview = AscCommonExcel.selectionLineType.ResizeRange & selectionLineType;
 		//меняю толщину линии для селекта(только в случае сплошной линии) и масштаба 200%
-		var isRetina = (!isDashLine || isAllowRetina) && this.getRetinaPixelRatio() === 2;
+		var isRetina = (!isDashLine || isAllowRetina) && this.getRetinaPixelRatio() >= 2;
 		var widthLine = isDashLine ? 1 : 2;
 
+		//TODO for scale > 200% use a multiplier of 2 . revise the rendering for scales over 200%
 		if (isRetina) {
-			widthLine = AscCommon.AscBrowser.convertToRetinaValue(widthLine, true);
+			widthLine = ((widthLine * 2) + 0.5) >> 0//AscCommon.AscBrowser.convertToRetinaValue(widthLine, true);
 		}
 		var thinLineDiff = 0;
 		if (isPagePreview) {
