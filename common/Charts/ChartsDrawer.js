@@ -5862,17 +5862,6 @@ drawBarChart.prototype = {
 		var height, startX, startY, val, paths, seriesHeight = [], tempValues = [], seria, startYColumnPosition, startXPosition, prevVal, idx, seriesCounter = 0;
 		var cubeCount = 0, k;
 
-		/* TrendLine preparation section----- */
-		var points = numCache ? numCache.ptCount : 0;
-		var linesCount = 0;
-		for(var i = 0; i < this.chart.series.length; i++){
-			if(this.chart.series[i].trendline){
-				linesCount++;
-			}
-		}
-		this.cChartDrawer.trendline.prepareInformation(linesCount, points, hmargin, individualBarWidth)
-		/* -----TrendLine preparation section */
-
 		for (var i = 0; i < this.chart.series.length; i++) {
 			numCache = this.cChartDrawer.getNumCache(this.chart.series[i].val);
 			seria = numCache ? numCache.pts : [];
@@ -6030,8 +6019,8 @@ drawBarChart.prototype = {
 					if(this.chart.series[i].errBars){
 						this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
 					}
-					if(this.chart.series[i].trendline && this.cChartDrawer.trendline.points && seria.length>1){
-						this.cChartDrawer.trendline.addCoordinate(_pointX, height/ this.chartProp.pxToMM, idx+1, _pointVal, i, individualBarWidth/ this.chartProp.pxToMM)
+					if(this.chart.series[i].trendline && seria.length>1){
+						this.cChartDrawer.trendline.addCoordinate(idx+1, _pointVal, i)
 					}
 				}
 			}
@@ -16101,78 +16090,60 @@ CColorObj.prototype =
 		this.observations = {coord:[], last:-1};
 		this.predicted = {start:null, end:null};
 		this.variables = [];
-		this.means = [];
-		this.relativeness = [];	
+
+		this.yScale = null
 		this.paths = [];
-		this.points = null;
+
 	}
 
 	Ctrendline.prototype = {
 
         constructor: Ctrendline,
 
-		prepareInformation: function(linesCount, points, margin, barWidth) {
-			if(linesCount == 0 ) {
-				console.log("no need to create trendLines, number of lines == 0");
-				return
-			}
-			if(points <2 ) {
-				console.log("no need to create trendLines, number of maxPoints < 2");
-				return
-			}
-
-			this.points = points;
-
-			//whenever chart plots only one line, start from center, x_beginning = 0 x_center= barWidth/2 x_end = barWidth
-			if(linesCount == 1) {
-				barWidth/=2;
-			}
-
-			//initiateStartPoint
-			this.initiateBoundaries( linesCount, margin, barWidth, false, 'start', 1 )
-			//initiateEndPoint
-			this.initiateBoundaries( linesCount, -margin, -barWidth, true, 'end', this.points)
-		},
-
-		initiateBoundaries: function(linesCount, margin, barWidth, graph, element, value) {
-
-			// find trueX, trueXVal to find shiftedX and shiftedXval
-
-			var leftPadding = this.cChartDrawer.calcProp.chartGutter._left
-			var rightPadding = this.cChartDrawer.calcProp.chartGutter._right
-			var graphWidth = graph ? this.cChartDrawer.calcProp.widthCanvas - rightPadding - leftPadding : 0;
-			var pxToMm = this.cChartDrawer.calcProp.pxToMM;
-
-			var _trueX = (graphWidth + margin + barWidth)/pxToMm;
-			var _trueXval = value;
-			var _x = (graphWidth + margin + barWidth)/pxToMm;
-			var _xVal = (_trueXval*_x)/_trueX;
-			this.predicted[element] = {x:_x+(leftPadding/pxToMm), y:[], xVal:_xVal, yVal: []}
-		},
-
-		addCoordinate: function (x, y, xVal, yVal, lineId) {
+		addCoordinate: function (xVal, yVal, lineId) {
 			//add new array for each new line 
 			//append element to last array in coordinates
 			if(lineId != this.observations.last) {
 				this.observations.coord.push([])
 				this.observations.last = lineId
 			}
+
+			var coordinate = {xVal: xVal, yVal: yVal};
 			var _n = this.observations.coord.length;
-			var coordinate = {x: x, y: y, xVal: xVal, yVal: yVal};
 			this.observations.coord[_n-1].push(coordinate);
 		},
 		
 		recalculate: function() {
 			if(this.observations.coord.length>0) {
-				this._findRelativeness();
+				this._prepareInformation();
 				this._findSuppVariables();
 				this._predictY();
+				this._calculateLine();
 				/*use this function to see variables in proper format for better debugging experience*/
 				//_showPredicted();
-				this._calculateLine();
 			}
 		},
 
+		_prepareInformation: function() {
+				// find scalses, initiate starting and ending x values
+				const chart =  this.cChartDrawer.cChartSpace.chart.plotArea.charts[0].axId
+				const xAxis = this.cChartDrawer.getAxisFromAxId(chart, AscDFH.historyitem_type_CatAx)
+				const yAxis = this.cChartDrawer.getAxisFromAxId(chart, AscDFH.historyitem_type_ValAx)
+
+				let pxToMm = this.cChartDrawer.calcProp.pxToMM;
+				let height = this.cChartDrawer.calcProp.heightCanvas - this.cChartDrawer.calcProp.chartGutter._bottom
+				let _nY = yAxis.yPoints.length;
+				for(let i=0; i<_nY; i++) {
+					if( yAxis.yPoints[i].val !=0) {
+						this.yScale = ((height)/pxToMm - yAxis.yPoints[i].pos)/yAxis.yPoints[i].val
+					}
+				}
+				
+				let _nX = xAxis.xPoints.length
+				this.predicted.start = {xVal:xAxis.xPoints[0].val, yVal: [], x:xAxis.xPoints[0].pos, y:[]}
+				this.predicted.end = {xVal:xAxis.xPoints[_nX-1].val, yVal: [], x:xAxis.xPoints[_nX-1].pos, y:[]}
+
+		},
 		
 		_showPredicted: function() {
 			console.log(this.predicted)
@@ -16189,75 +16160,69 @@ CColorObj.prototype =
 			}
 		},
 
-		_findRelativeness: function() {
-			// for each array of coordinates find the coeficient, which will
-			// adjust yVal position on graph, needs only one point from each array
-			var _n = this.observations.coord.length;
-			for(var i = 0; i< _n; i++) {
-				this.relativeness.push(this.observations.coord[i][0].y/this.observations.coord[i][0].yVal)
-			}
-		},
-
 		_findSuppVariables: function() {
 
 			// meanX = ∑x/n and meanY = ∑y/n
 			// m = Sxy/Sxx where Sxy = ∑(x-meanX)(y-meanY) and Sxx = ∑(x-meanX)^2
 			// b = meanY - (meanX * m)
 
-			var _findMeans = function(coordinates, means) {
-				var _n = coordinates.length;
-				for(var i=0; i<_n; i++) {
-					var _n2 = coordinates[i].length;
-					var _meanY = 0;
-					var _meanX = 0;
-					for(var j=0; j<_n2; j++) {
+			const _findMeans = function(coordinates) {
+				let means = []
+				const _n = coordinates.length;
+				for(let i=0; i<_n; i++) {
+					const _n2 = coordinates[i].length;
+					let _meanY = 0;
+					let _meanX = 0;
+					for(let j=0; j<_n2; j++) {
 						_meanX += coordinates[i][j].xVal;
 						_meanY += coordinates[i][j].yVal;
 					}
 					means.push([_meanX/_n2, _meanY/_n2])
 				}
+				return means
 			};
 			
-			var _calculateM = function (coordinates, variables, means) {
-				var _n = coordinates.length;
-				for(var i=0; i<_n; i++){
-					var _n2 = coordinates[i].length;
-					var Sxx = 0;
-					var Sxy = 0;
-					for(var j=0; j<_n2; j++) {
+			const _calculateM = function (coordinates, variables, means) {
+				const _n = coordinates.length;
+				for(let i=0; i<_n; i++){
+					const _n2 = coordinates[i].length;
+					let Sxx = 0;
+					let Sxy = 0;
+					for(let j=0; j<_n2; j++) {
 						Sxx += (coordinates[i][j].xVal-means[i][0])*(coordinates[i][j].xVal-means[i][0]);
 						Sxy += (coordinates[i][j].xVal-means[i][0])*(coordinates[i][j].yVal-means[i][1]);
 					}
 					variables.push([Sxy/Sxx]);
 				}
+				return variables
 			};
 
-			var _calculateB = function (variables, means) {
-				var _n = variables.length;
-				for(var i=0; i<_n; i++) {
+			const _calculateB = function (variables, means) {
+				const _n = variables.length;
+				for(let i=0; i<_n; i++) {
 					variables[i].push(means[i][1] - (means[i][0] * variables[i][0]))
 				}
 			};
 
-			_findMeans(this.observations.coord, this.means);
-			_calculateM(this.observations.coord, this.variables, this.means);
-			_calculateB(this.variables, this.means);
+			const means = _findMeans(this.observations.coord, this.means);
+			_calculateM(this.observations.coord, this.variables, means);
+			_calculateB(this.variables, means);
 		},
 
 		_predictY: function() {
 			// predict yVal and y for start and end positions 
 
-			var _predictPoint = function(obj, m, b, relativeness) {
-					var yVal = m*obj.xVal + b
-					var y = yVal * relativeness
+			const _predictPoint = function(obj, variable, scale) {
+					const yVal = variable[0]*obj.xVal + variable[1];
+					const y = yVal * scale;
 					obj.yVal.push(yVal);
-					obj.y .push(y);
+					obj.y.push(y);
 				}
 
-			var _n = this.observations.coord.length
-			for(var i=0; i<_n; i++) {
-				_predictPoint(this.predicted.start, this.variables[i][0], this.variables[i][1], this.relativeness[i])
-				_predictPoint(this.predicted.end, this.variables[i][0], this.variables[i][1], this.relativeness[i])
+			const _n = this.observations.coord.length
+			for(let i=0; i<_n; i++) {
+				_predictPoint(this.predicted.start, this.variables[i], this.yScale)
+				_predictPoint(this.predicted.end, this.variables[i], this.yScale)
 			}
 		},
 
