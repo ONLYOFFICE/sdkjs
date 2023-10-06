@@ -2865,6 +2865,13 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_DownloadOrigin = function(bIsDownloadEvent)
 	{
+		let changes;// = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+		if (changes) {
+			let options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.PDF);
+			options.pdfChanges = changes;
+			this.asc_DownloadAs(options);
+			return;
+		}
 		//скачивание оригинального pdf, djvu, xps
 		var downloadType = bIsDownloadEvent ? DownloadType.Download : DownloadType.None;
 		var rData        = {
@@ -8911,6 +8918,7 @@ background-repeat: no-repeat;\
 		if ('savefromorigin' === oAdditionalData["c"])
 		{
 			oAdditionalData["format"] = this.documentFormat;
+			dataContainer.data = options.pdfChanges;
 		}
 		else if (null == options.oDocumentMailMerge && (c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType))
 		{
