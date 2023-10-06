@@ -50,6 +50,7 @@
 	 * @property {ApiWorksheet} ActiveSheet - Returns an object that represents the active sheet.
 	 * @property {ApiRange} Selection - Returns an object that represents the selected range.
 	 * @property {ApiComment[]} Comments - Returns an array of ApiComment objects.
+	 * @property {FreezePaneType} FreezePanes - Returns or sets a freeze panes type.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
@@ -912,34 +913,19 @@
 	 */
 
 	/**
-	 * Freeze and unfeeze Panes.
+	 * Sets freeze panes type.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {FreezePaneType} FreezePaneType - The type of freezing ('null' to unfreeze).
 	 * @since 7.5.1
 	 */
-	Api.prototype.FreezePanes = function(FreezePaneType) {
+	Api.prototype.SetFreezePanesType = function(FreezePaneType) {
 		if (typeof FreezePaneType === 'string' || FreezePaneType === null) {
-			let cell = this.wb.getWorksheet().topLeftFrozenCell;
 			//detect current freeze type
-			let curType = 0;
-			if (cell) {
-				let c = cell.getCol0();
-				let r = cell.getRow0();
-				if (c == 0) {
-					// hole row
-					curType = 1;
-				} else if (r == 0) {
-					// whole column
-					curType = 2;
-				} else {
-					// cell
-					curType = 3;
-				}
-			}
+			let curType = this.GetFreezePanesType();
 
 			let type = null;
-			if (FreezePaneType === 'cell' && ( ( curType && curType !== 3 ) || ( !curType ) ) ) {
+			if (FreezePaneType === 'cell' && ( ( curType && curType !== 'cell' ) || ( !curType ) ) ) {
 				// make unfreeze and freeze then
 				if (curType)
 					this.asc_freezePane(undefined);
@@ -947,9 +933,9 @@
 				type = undefined;
 			} else if (FreezePaneType === null && curType) {
 				type = undefined;
-			} else if (FreezePaneType === 'row' && curType !== 1) {
+			} else if (FreezePaneType === 'row' && curType !== 'row') {
 				type = 1;
-			} else if (FreezePaneType === 'column' && curType !== 2) {
+			} else if (FreezePaneType === 'column' && curType !== 'column') {
 				type = 2;
 			}
 			
@@ -960,6 +946,43 @@
 			throw(new Error('Invalid parametr "FreezePaneType".'));
 		}
 	};
+
+	/**
+	 * Rerutns freeze panes type.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {FreezePaneType} FreezePaneType - The type of freezing ('null' - if there is no frozen pane).
+	 * @since 7.5.1
+	 */
+	Api.prototype.GetFreezePanesType = function() {
+		let cell = this.wb.getWorksheet().topLeftFrozenCell;
+		//detect current freeze type
+		let curType = null;
+		if (cell) {
+			let c = cell.getCol0();
+			let r = cell.getRow0();
+			if (c == 0) {
+				// hole row
+				curType = 'row';
+			} else if (r == 0) {
+				// whole column
+				curType = 'column';
+			} else {
+				// cell
+				curType = 'cell';
+			}
+		}
+		return curType;
+	};
+
+	Object.defineProperty(Api.prototype, "FreezePanes", {
+		get: function () {
+			return this.GetFreezePanesType();
+		},
+		set: function(FreezePaneType) {
+			this.SetFreezePanesType(FreezePaneType);
+		}
+	});
 
 	/**
 	 * Returns the state of sheet visibility.
@@ -6461,7 +6484,7 @@
 		let api = this.ws.workbook.oApi;
 		let tempRange = (typeof frozenRange === 'string') ? api.GetRange(frozenRange) : frozenRange;
 
-		if (tempRange.range && tempRange.range !== null) {
+		if (tempRange.range) {
 			let bbox = tempRange.range.bbox;
 			let r = bbox.r2 < AscCommon.gc_nMaxRow0 ? bbox.r2 + 1 : bbox.r2;
 			let c = bbox.c2 < AscCommon.gc_nMaxCol0 ? bbox.c2 + 1 : bbox.c2;
@@ -6578,7 +6601,8 @@
 	Api.prototype["AddComment"]  = Api.prototype.AddComment;
 	Api.prototype["GetComments"] = Api.prototype.GetComments;
 	Api.prototype["GetCommentById"] = Api.prototype.GetCommentById;
-	Api.prototype["FreezePanes"] = Api.prototype.FreezePanes;
+	Api.prototype["SetFreezePanesType"] = Api.prototype.SetFreezePanesType;
+	Api.prototype["GetFreezePanesType"] = Api.prototype.GetFreezePanesType;
 
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
