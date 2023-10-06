@@ -12338,7 +12338,13 @@
 		wb.setGoalSeek(new AscCommonExcel.CGoalSeek(oParserFormula, Number(sExpectedValue), ws.getRange2(sChangingCell)));
 		let oGoalSeek = wb.getGoalSeek();
 		// Run goal seek
-		oGoalSeek.calculate();
+		oGoalSeek.init();
+		oGoalSeek.setIntervalId(setInterval(function () {
+			let bResult = oGoalSeek.calculate();
+			if (bResult) {
+				clearInterval(oGoalSeek.getIntervalId());
+			}
+		}, 50));
 	};
 
 //-------------------------------------------------------------------------------------------------

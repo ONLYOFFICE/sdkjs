@@ -82,8 +82,14 @@ $(function () {
         // Init objects ParserFormula and GoalSeek
         oParserFormula = new CParserFormula(sFormula, sFormulaCell, ws);
         oGoalSeek = new CGoalSeek(oParserFormula, nExpectedVal, oChangingCell);
+        oGoalSeek.init();
         // Run goal seek
-        oGoalSeek.calculate();
+        while (true) {
+            let bResult = oGoalSeek.calculate();
+            if (bResult) {
+                break;
+            }
+        }
         // Update data for formula
         oParserFormula.parse();
         // Get results and changing value
