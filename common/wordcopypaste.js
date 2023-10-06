@@ -8465,6 +8465,8 @@ PasteProcessor.prototype =
 		var oDocument = this.oDocument;
 		var tableNode = node, newNode, headNode;
 		var bPresentation = !PasteElementsId.g_bIsDocumentCopyPaste;
+		var bPercentWidth = node.style.width.indexOf('%') !== -1 || node.width.indexOf('%') !== -1;
+       	 	var nPercentWidth = bPercentWidth ? parseInt(node.style.width || node.width) : 0;
 
 		//Ищем если есть tbody
 		var i, length, j, length2;
@@ -8678,7 +8680,10 @@ PasteProcessor.prototype =
 			//набиваем content
 			this._ExecuteTable(tableNode, node, table, aSumGrid, nMaxColCount !== nMinColCount ? aColsCountByRow : null, pPr, bUseScaleKoef, dScaleKoef, arrShapes, arrImages, arrTables);
 			table.MoveCursorToStartPos();
-
+			
+	            	if (bPercentWidth) {
+	                	table.SetTableProps({TableWidth:-nPercentWidth});
+	            	}
 			if (!bPresentation) {
 				this.aContent.push(table);
 			}
