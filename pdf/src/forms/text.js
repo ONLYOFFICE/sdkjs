@@ -1060,6 +1060,10 @@
         if (nSelStart != nSelEnd)
             this.content.Remove(nDirection, true, false, false, bWord);
         
+        let oPara = this.content.GetElement(0);
+        if (oPara.GetElementsCount() == 0)
+            oPara.CorrectContent();
+
         // скрипт keystroke мог поменять change значение, поэтому
         this.InsertChars(AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"].toString()));
 
