@@ -924,7 +924,7 @@
 			AscCommon.stopEvent(e);
 			const nOffsetBase = 10;
 			const nLineWidth = 4;
-			const nHeight = parseInt(this.style.height, 10);
+			const nHeight = oThis.m_oCanvas.clientHeight;
 			const nLineDistance = Math.floor(((nHeight - (nOffsetBase << 1)) - nLineWidth * 10) / 9);
 			const nOffset = (nHeight - (nLineWidth * 10 + nLineDistance * 9)) >> 1;
 			const nCurrentLvl = oThis.m_nCurrentLvl;
