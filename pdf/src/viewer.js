@@ -3034,7 +3034,7 @@
 			}
 			else if ( e.KeyCode == 38 ) // Top Arrow
 			{
-				if (oDoc.activeForm)
+				if (oDoc.activeForm && !oDoc.activeForm.IsNeedDrawHighlight())
 				{
 					switch (oDoc.activeForm.GetType())
 					{
@@ -3122,7 +3122,7 @@
 			}
 			else if ( e.KeyCode == 40 ) // Bottom Arrow
 			{
-				if (oDoc.activeForm)
+				if (oDoc.activeForm && !oDoc.activeForm.IsNeedDrawHighlight())
 				{
 					switch (oDoc.activeForm.GetType())
 					{
@@ -3419,8 +3419,13 @@
 		}
 		
 		let oDoc = this.getPDFDoc();
-		if (oDoc.activeForm && oDoc.activeForm.UpdateScroll)
-			oDoc.activeForm.UpdateScroll(true);
+		if (oDoc.activeForm && oDoc.activeForm.UpdateScroll) {
+			if (oDoc.activeForm.IsNeedDrawHighlight())
+				oDoc.activeForm.UpdateScroll(false);
+			else
+				oDoc.activeForm.UpdateScroll(true);
+		}
+			
 		if (oDoc.activeForm && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oDoc.activeForm.GetType()))
 			oDoc.activeForm.content.RecalculateCurPos();
 	};

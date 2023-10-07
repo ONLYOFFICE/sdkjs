@@ -594,20 +594,19 @@ var CPresentation = CPresentation || function(){};
                 }
                 else {
                     oField.UndoNotAppliedChanges();
-                    if (oField.IsChanged() == false) {
-                        oField.SetDrawFromStream(true);
-                    }
                 }
 
                 oField.SetNeedCommit(false);
             }
             else if (oField.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) && oField.GetValue() != "") {
                 oField.AddToRedraw();
-
-                if (oField.IsChanged() == false)
-                    oField.SetDrawFromStream(true);
             }
             
+            if (oField.IsChanged() == false) {
+                oField.SetDrawFromStream(true);
+                oField.AddToRedraw();
+            }
+
             if (oField && oField.content && oField.content.IsSelectionUse()) {
                 oField.content.RemoveSelection();
                 oViewer.onUpdateOverlay();
@@ -722,20 +721,16 @@ var CPresentation = CPresentation || function(){};
         {
             case AscPDF.FIELD_TYPES.text:
             case AscPDF.FIELD_TYPES.combobox:
-                oField.SetDrawHighlight(false);
                 oField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, event);
                 oViewer.onUpdateOverlay();
                 break;
             case AscPDF.FIELD_TYPES.listbox:
-                oField.SetDrawHighlight(false);
                 oField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, event);
-                
                 oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
                 break;
             case AscPDF.FIELD_TYPES.button:
             case AscPDF.FIELD_TYPES.radiobutton:
             case AscPDF.FIELD_TYPES.checkbox:
-                oField.SetDrawHighlight(false);
                 oField.onMouseDown(event);
                 break;
         }

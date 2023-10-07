@@ -230,8 +230,7 @@
 
             let oFieldBounds = field.getFormRelRect();
             if (Math.abs(oFieldBounds.H - oThisBounds.H) > 0.001) {
-                field.CheckFormViewWindow();
-                field.RevertContentViewToOriginal();
+                field._bAutoShiftContentView = true;
             }
             else {
                 field._curShiftView.x = oThis._curShiftView.x;
@@ -414,7 +413,10 @@
         function callbackAfterFocus(x, y, e) {
             if (this._options.length == 0)
                 return;
-            
+
+            let bHighlight = this.IsNeedDrawHighlight();
+            this.SetDrawHighlight(false);
+
             let oPos    = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
             let X       = oPos["X"];
             let Y       = oPos["Y"];
@@ -429,6 +431,9 @@
             this.UpdateScroll(true);
             if (this.IsNeedDrawFromStream() == true) {
                 this.SetDrawFromStream(false);
+                this.AddToRedraw();
+            }
+            else if (bHighlight) {
                 this.AddToRedraw();
             }
 
