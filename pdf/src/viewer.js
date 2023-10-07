@@ -977,6 +977,12 @@
 					oForm.SetStyle(oFormInfo["style"]);
 				}
 
+				// signature
+				if (oFormInfo["Sig"] != null)
+				{
+					oForm.SetFilled(Boolean(oFormInfo["Sig"]));
+				}
+
 				// common
 				if (oFormInfo["alignment"] != null && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oFormInfo["type"]))
 				{

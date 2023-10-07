@@ -71,14 +71,14 @@
     asc["ANNOTATIONS_TYPES"] = asc.ANNOTATIONS_TYPES = ANNOTATIONS_TYPES;
 
     let FIELD_TYPES = {
-        unknown:        0,
-        button:         1,
-        radiobutton:    2,
-        checkbox:       3,
-        text:           4,
-        combobox:       5,
-        listbox:        6,
-        signature:      7
+        unknown:        26,
+        button:         27,
+        radiobutton:    28,
+        checkbox:       29,
+        text:           30,
+        combobox:       31,
+        listbox:        32,
+        signature:      33
     };
 
     FIELD_TYPES["unknown"]      = FIELD_TYPES.unknown;

@@ -705,6 +705,9 @@ var CPresentation = CPresentation || function(){};
         }
     };
     CPDFDoc.prototype.OnMouseDownField = function(oField, event) {
+        if (oField.GetType() == AscPDF.FIELD_TYPES.signature)
+            return;
+        
         let oViewer         = editor.getDocumentRenderer();
         let oActionsQueue   = this.GetActionsQueue();
 		
