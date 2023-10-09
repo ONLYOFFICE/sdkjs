@@ -1314,7 +1314,8 @@
 
 		while (this.IsDiacriticsLiteral())
 		{
-			arrDiacriticList.push(this.EatToken(MathLiteral.accent.id).data);
+			arrDiacriticList.push(this.oLookahead.data);
+			this.EatToken(MathLiteral.accent.id);
 		}
 
 		return this.GetContentOfLiteral(arrDiacriticList);
@@ -1440,6 +1441,10 @@
 						up: oDiacritic,
 					}
 				}
+				else if (oDiacritic === "̅" && this.IsGetOneBarLiteral(oEntity))
+				{
+					return this.GetOneBarLiteral(oEntity, oDiacritic);
+				}
 
 				return {
 					type: MathLiteral.accent.id,
@@ -1465,6 +1470,32 @@
 	CUnicodeParser.prototype.IsFactorLiteral = function ()
 	{
 		return this.IsEntityLiteral() || this.IsFunctionLiteral() || this.IsDiacriticsLiteral() || this.IsArrayLiteral() || this.IsEqArrayLiteral()
+	};
+	CUnicodeParser.prototype.IsGetOneBarLiteral = function (oEntity)
+	{
+		return oEntity && oEntity.value.length > 0 &&
+			(oEntity.type === oLiteralNames.charLiteral[num] || oEntity.type === oLiteralNames.numberLiteral[num])
+	}
+	CUnicodeParser.prototype.GetOneBarLiteral = function (oEntity, oDiacritic)
+	{
+		let newStr = oEntity.value[oEntity.value.length - 1];
+		let str = oEntity.value.slice(0, -1);
+
+		return [
+			{
+				type: oLiteralNames.charLiteral[num],
+				value: str,
+			},
+			{
+				type: MathLiteral.accent.id,
+				base: {
+					type: oLiteralNames.charLiteral[num],
+					value: newStr,
+				},
+				value: oDiacritic,
+			}
+		];
+
 	};
 	CUnicodeParser.prototype.IsSpecial = function (isNoSubSup)
 	{
