@@ -16127,7 +16127,6 @@ CColorObj.prototype =
 				this._findSuppVariables();
 				this._predictY();
 				this._calculateLine();
-				console.log(this.predicted)
 				/*use this function to see variables in proper format for better debugging experience*/
 				//_showPredicted();
 			}
@@ -16148,7 +16147,6 @@ CColorObj.prototype =
 				this.chartInfo.boundaryEnd = {y:height-yAxis.yPoints[_nY-1].pos, yVal: yAxis.yPoints[_nY-1].val, x:xAxis.xPoints[_nX-1].pos-xAxis.xPoints[0].pos, xVal:xAxis.xPoints[_nX-1].val};
 				this.chartInfo.yAxis.scale = (yAxis.yPoints[0].pos- yAxis.yPoints[_nY-1].pos)/(yAxis.yPoints[_nY-1].val-yAxis.yPoints[0].val);
 				this.chartInfo.yAxis.start = height;
-				//Have stopped here, I need to check last x position and predicted last x position
 				this.chartInfo.xAxis.scale = (xAxis.xPoints[_nX-1].pos- xAxis.xPoints[0].pos)/(xAxis.xPoints[_nX-1].val-xAxis.xPoints[0].val);
 				this.chartInfo.xAxis.start = xAxis.xPoints[0].pos;
 		},
@@ -16160,10 +16158,10 @@ CColorObj.prototype =
 				console.log('start')
 				console.log(this.variables[i][0], this.variables[i][1])
 				console.log(this.predicted.start[i].yVal, this.predicted.start[i].xVal);
-				var _n2 = this.predicted.mid[i].length;
-				for(var j =0; j<_n2; j++){
-					console.log(this.predicted.mid[i][j].yVal, this.predicted.mid[i][j].xVal);
-				}
+				// var _n2 = this.predicted.mid[i].length;
+				// for(var j =0; j<_n2; j++){
+				// 	console.log(this.predicted.mid[i][j].yVal, this.predicted.mid[i][j].xVal);
+				// }
 				console.log(this.predicted.end[i].yVal, this.predicted.end[i].xVal);
 			}
 		},
