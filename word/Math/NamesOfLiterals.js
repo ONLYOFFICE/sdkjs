@@ -1046,6 +1046,7 @@
 
 		["\"",  oNamesOfLiterals.charLiteral[0]],
 		["\'",  oNamesOfLiterals.charLiteral[0]],
+		["\ ",  oNamesOfLiterals.spaceLiteral[0]],
 
 		["\\quad", oNamesOfLiterals.spaceLiteral[0]], // 1 em (nominally, the height of the font)
 		// ["\\qquad", [8193, 8193], oNamesOfLiterals.spaceLiteral[0]], // 2em
@@ -1832,6 +1833,15 @@
 
 					break;
 				case oNamesOfLiterals.bracketBlockLiteral[num]:
+
+					if (oTokens.counter === 1 && oTokens.left === "〖" && oTokens.right === "〗")
+					{
+						ConvertTokens(
+							oTokens.value,
+							oContext
+						);
+						break;
+					}
 
 					let arr = [null]
 					if (oTokens.counter > 1 && oTokens.value.length < oTokens.counter)

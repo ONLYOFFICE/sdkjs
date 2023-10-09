@@ -145,7 +145,7 @@
 	CLaTeXParser.prototype.GetSpaceLiteral = function ()
 	{
 		//todo LaTex skip all normal spaces
-		this.ReadTokensWhileEnd(oLiteralNames.spaceLiteral);
+		return this.ReadTokensWhileEnd(oLiteralNames.spaceLiteral);
 	};
 	CLaTeXParser.prototype.GetNumberLiteral = function ()
 	{
@@ -203,7 +203,7 @@
 			oBase = this.GetContentOfLiteral(oBase);
 
 			// \bar{\bar{}}
-			if (oBase.type === MathLiterals.accent.id && oBase.value === "̅" && strAccent === "̅")
+			if (oBase && oBase.type === MathLiterals.accent.id && oBase.value === "̅" && strAccent === "̅")
 			{
 				oResultAccent = {
 					type: MathLiterals.accent.id,

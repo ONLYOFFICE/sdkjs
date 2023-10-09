@@ -999,11 +999,12 @@
 	};
 	CUnicodeParser.prototype.EatOneSpace = function()
 	{
-		if (this.oLookahead.class === oLiteralNames.spaceLiteral[0])
-		{
-			this.EatToken(this.oLookahead.class);
-		}
+		// Word doesn't skip spaces, for now disable
 
+		// if (this.oLookahead.class === oLiteralNames.spaceLiteral[0])
+		// {
+		// 	this.EatToken(this.oLookahead.class);
+		// }
 	}
 	CUnicodeParser.prototype.GetScriptStandardContentLiteral = function (oBase)
 	{

@@ -587,7 +587,7 @@ CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 	}
     else
     {
-		strTemp = strBase + strTypeOfScript + strIterator + " ";
+		strTemp = strBase + strTypeOfScript + strIterator;
 	}
 	return strTemp;
 };
@@ -1254,8 +1254,8 @@ CDegreeSubSup.prototype.GetTextOfElement = function(isLaTeX)
 
 	let isPreScript = this.Pr.type === -1;
 	
-    if (isLaTeX)
-    {
+	if (isLaTeX)
+	{
 		if(strLower.length === 0 || strLower === '⬚')
 			strLower = '{}'
 		if(strUpper.length === 0 || strUpper === '⬚')
@@ -1263,19 +1263,19 @@ CDegreeSubSup.prototype.GetTextOfElement = function(isLaTeX)
 
 		if (true === isPreScript)
 			strTemp = '{' + '_' + strLower + '^' + strUpper + '}' + Base;
-        else
+		else
 			strTemp = Base + '_' + strLower + '^' + strUpper;
 	}
-    else
-    {
-
+	else
+	{
 		if (true === isPreScript)
+		{
 			strTemp = '(' + '_' + strLower + '^' + strUpper + ')' + Base;
-        else {
-            strTemp = Base + '_' + strLower + '^' + strUpper;
-        }
-
-        strTemp += " ";
+		}
+		else
+		{
+			strTemp = Base + '_' + strLower + '^' + strUpper;
+		}
 	}
 	return strTemp;
 };
