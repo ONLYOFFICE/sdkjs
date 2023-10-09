@@ -76,7 +76,17 @@ $(function () {
                 break;
             }
         }
-    }
+    };
+    CGoalSeek.prototype.step = function() {
+        this.setIsPause(false);
+        this.setIsSingleStep(true);
+        while (true) {
+            let bIsFinish = this.calculate();
+            if (bIsFinish) {
+                break;
+            }
+        }
+    };
 
     const getRange = function (c1, r1, c2, r2) {
         return new window["Asc"].Range(c1, r1, c2, r2);
@@ -102,6 +112,32 @@ $(function () {
         // Update data for formula
         oParserFormula.parse();
         // Get results and changing value
+        nResult = Number(oParserFormula.calculate().getValue());
+        nChangingVal = Number(oGoalSeek.getChangingCell().getValue());
+
+        return [nResult, nChangingVal];
+    };
+    const pauseGoalSeek = function (nExpectedVal, oChangingCell, sFormula, sFormulaCell) {
+        let oParserFormula, oGoalSeek;
+        // Init objects ParserFormula and GoalSeek
+        oParserFormula = new CParserFormula(sFormula, sFormulaCell, ws);
+        oGoalSeek = new CGoalSeek(oParserFormula, nExpectedVal, ws.getRange4(0, 0));
+        oGoalSeek.init();
+        // Run goal seek
+        while (true) {
+            let bIsFinish = oGoalSeek.calculate();
+            oGoalSeek.pause();
+            if (bIsFinish) {
+                break;
+            }
+        }
+
+        return [oParserFormula, oGoalSeek];
+    };
+    const getResultOutOfLoop = function(oParserFormula, oGoalSeek) {
+        let nResult, nChangingVal;
+
+        oParserFormula.parse()
         nResult = Number(oParserFormula.calculate().getValue());
         nChangingVal = Number(oGoalSeek.getChangingCell().getValue());
 
@@ -903,28 +939,47 @@ $(function () {
         oRange.fillData(testData);
         // Method pause test on PMT formula find "Interest Rate"
         nExpectedVal = -900;
-        // Init objects ParserFormula and GoalSeek
-        oParserFormula = new CParserFormula('PMT(A1/12,B1,C1)', 'D1', ws);
-        oGoalSeek = new CGoalSeek(oParserFormula, nExpectedVal, ws.getRange4(0, 0));
-        oGoalSeek.init();
-        // Run goal seek
-        while (true) {
-            let bIsFinish = oGoalSeek.calculate();
-            oGoalSeek.pause();
-            if (bIsFinish) {
-                break;
-            }
-        }
+        [oParserFormula, oGoalSeek] = pauseGoalSeek(nExpectedVal, ws.getRange4(0, 0), 'PMT(A1/12,B1,C1)', 'D1');
+        [nResult, nChangingVal] = getResultOutOfLoop(oParserFormula, oGoalSeek);
         assert.strictEqual(oGoalSeek.getIsPause(), true, `Case: Test pause method. Attribute bIsPause is ${oGoalSeek.getIsPause()}`);
-        assert.strictEqual(oGoalSeek.getCurrentAttempt(), 1, `Goal seek is paused. Iteration: ${oGoalSeek.getCurrentAttempt()}, changing val: ${oGoalSeek.getChangingValue()}`);
+        assert.strictEqual(oGoalSeek.getCurrentAttempt(), 2, `Case: Test pause method. Goal seek is paused. Iteration: ${oGoalSeek.getCurrentAttempt()}, Formula result: ${nResult}, changing val: ${nChangingVal}`);
         // Method resume test on PMT formula find "Interest Rate"
         oGoalSeek.resume();
-        oParserFormula.parse()
-        nResult = Number(oParserFormula.calculate().getValue());
-        nChangingVal = Number(oGoalSeek.getChangingCell().getValue());
+        [nResult, nChangingVal] = getResultOutOfLoop(oParserFormula, oGoalSeek);
         assert.strictEqual(Math.round(nResult), nExpectedVal, `Case: Test resume method. Result PMT: ${nResult}`);
         assert.strictEqual(Number(nChangingVal.toFixed(4)), 0.0702, `Case: Test resume method. Result ChangingVal: ${nChangingVal}`);
         // Clear data
-        clearData(0, 0, 0, 0);
+        clearData(0, 0, 3, 0);
+        // Method step test on PMT formula find "Interest Rate"
+        //Fill data
+        oRange.fillData(testData);
+        // Pause goal seek
+        [oParserFormula, oGoalSeek] = pauseGoalSeek(nExpectedVal, ws.getRange4(0, 0), 'PMT(A1/12,B1,C1)', 'D1');
+        // Run goal seek step by step until goal is reached
+        oGoalSeek.step();
+        assert.strictEqual(oGoalSeek.getIsPause(), true, `Case: Test step method. Attribute bIsPause is ${oGoalSeek.getIsPause()}`);
+        [nResult, nChangingVal] = getResultOutOfLoop(oParserFormula, oGoalSeek);
+        assert.strictEqual(oGoalSeek.getCurrentAttempt(), 3, `Case: Test step method. Goal seek is paused. Iteration: ${oGoalSeek.getCurrentAttempt()}, Formula result: ${nResult}, changing val: ${nChangingVal}`);
+        oGoalSeek.step();
+        assert.strictEqual(oGoalSeek.getIsPause(), true, `Case: Test step method. Attribute bIsPause is ${oGoalSeek.getIsPause()}`);
+        [nResult, nChangingVal] = getResultOutOfLoop(oParserFormula, oGoalSeek);
+        assert.strictEqual(oGoalSeek.getCurrentAttempt(), 4, `Case: Test step method. Goal seek is paused. Iteration: ${oGoalSeek.getCurrentAttempt()}, Formula result: ${nResult}, changing val: ${nChangingVal}`);
+        oGoalSeek.step();
+        assert.strictEqual(oGoalSeek.getIsPause(), true, `Case: Test step method. Attribute bIsPause is ${oGoalSeek.getIsPause()}`);
+        [nResult, nChangingVal] = getResultOutOfLoop(oParserFormula, oGoalSeek);
+        assert.strictEqual(oGoalSeek.getCurrentAttempt(), 5, `Case: Test step method. Goal seek is paused. Iteration: ${oGoalSeek.getCurrentAttempt()}, Formula result: ${nResult}, changing val: ${nChangingVal}`);
+        oGoalSeek.step();
+        assert.strictEqual(oGoalSeek.getIsPause(), true, `Case: Test step method. Attribute bIsPause is ${oGoalSeek.getIsPause()}`);
+        [nResult, nChangingVal] = getResultOutOfLoop(oParserFormula, oGoalSeek);
+        assert.strictEqual(oGoalSeek.getCurrentAttempt(), 6, `Case: Test step method. Goal seek is paused. Iteration: ${oGoalSeek.getCurrentAttempt()}, Formula result: ${nResult}, changing val: ${nChangingVal}`);
+        // Final step
+        oGoalSeek.step();
+        assert.strictEqual(oGoalSeek.getIsPause(), false, `Case: Test step method. Attribute bIsPause is ${oGoalSeek.getIsPause()}`);
+        [nResult, nChangingVal] = getResultOutOfLoop(oParserFormula, oGoalSeek);
+        assert.strictEqual(oGoalSeek.getCurrentAttempt(), 7, `Case: Test step method. Goal seek is paused. Iteration: ${oGoalSeek.getCurrentAttempt()}, Formula result: ${nResult}, changing val: ${nChangingVal}`);
+        assert.strictEqual(Math.round(nResult), nExpectedVal, `Case: Test step method. Result PMT: ${nResult}`);
+        assert.strictEqual(Number(nChangingVal.toFixed(4)), 0.0702, `Case: Test step method. Result ChangingVal: ${nChangingVal}`);
+        // Clear data
+        clearData(0, 0, 3, 0);
     });
 });

@@ -101,7 +101,7 @@ function (window, undefined) {
 		let nPrevFactValue = this.getPrevFactValue();
 		let nFactValue, nDiff, nMedianFx, nMedianVal, nLowFx;
 
-		//.sendEvent("update", nExpectedVal, nChangingVal, this.getCurrentAttempt()); - update event
+		this.increaseCurrentAttempt();
 		// Exponent step mode
 		if (!this.getEnabledRidder()) {
 			nFactValue = this.calculateFormula(nChangingVal);
@@ -132,9 +132,12 @@ function (window, undefined) {
 			if (isNaN(nChangingVal)) {
 				nChangingVal = nMedianVal;
 			}
-			nDiff = this.calculateFormula(nChangingVal) - nExpectedVal;
+			nFactValue = this.calculateFormula(nChangingVal);
+			nDiff = nFactValue - nExpectedVal;
+			this.setChangingValue(nChangingVal);
 		}
 
+		//.sendEvent("update", nExpectedVal, nFactValue, this.getCurrentAttempt()); - update event. true/false - isSuccess;
 		// Check: Need pause a loop or finish calculate
 		if (Math.abs(nDiff) < this.getRelativeError()) {
 			//.sendEvent("stop", true); - stop event. true/false - isSuccess;
@@ -149,7 +152,6 @@ function (window, undefined) {
 		}
 
 		//Calculates next changing value
-		this.increaseCurrentAttempt();
 		if (this.getEnabledRidder()) {
 			if (nMedianFx < 0 !== nDiff < 0) {
 				this.setLowBorder(nMedianVal);
@@ -159,7 +161,6 @@ function (window, undefined) {
 			} else {
 				this.setLowBorder(nChangingVal);
 			}
-			this.setChangingValue(nChangingVal);
 		} else { // Exponent step logic
 			let nCurAttempt = this.getCurrentAttempt();
 			let nFirstChangingVal = this.getNumberFirstChangingValue();
