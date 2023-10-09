@@ -1650,7 +1650,7 @@ var CPresentation = CPresentation || function(){};
             oAnnot = CreateAnnotByProps(oProps, this);
             oAnnot.SetApIdx(this.GetMaxApIdx() + 2);
 
-            if (this.mouseDownAnnot.GetContents()) {
+            if (this.mouseDownAnnot.GetReply()) {
                 let newCommentData = new AscCommon.CCommentData();
                 newCommentData.Read_FromAscCommentData(AscCommentData);
 
