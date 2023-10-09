@@ -69,6 +69,7 @@
         this._state         = undefined;
         this._stateModel    = undefined;
         this._width         = undefined;
+        this._strokeColor   = [1, 0.81, 0];
 
         // internal
         TurnOffHistory();
@@ -88,7 +89,7 @@
         oReply.SetModDate(CommentData.m_sOOTime);
         oReply.SetAuthor(CommentData.m_sUserName);
         oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
-        oReply.SetReplyTo(this);
+        oReply.SetReplyTo(this.GetReplyTo() || this);
 
         oReply.SetApIdx(this.GetDocument().GetMaxApIdx() + 2);
 
@@ -323,13 +324,13 @@
             memory.WriteByte(this.GetIconType());
         }
         
-        // state model
-        memory.annotFlags |= (1 << 17);
-        memory.WriteByte(1);
+        // // state model
+        // memory.annotFlags |= (1 << 17);
+        // memory.WriteByte(1);
 
-        // state
-        memory.annotFlags |= (1 << 18);
-        memory.WriteByte(6);
+        // // state
+        // memory.annotFlags |= (1 << 18);
+        // memory.WriteByte(6);
 
         let nEndPos = memory.GetCurPosition();
         memory.Seek(memory.posForFlags);

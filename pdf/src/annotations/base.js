@@ -556,8 +556,12 @@
         
         if (this.IsComment())
             this._replies.push(oReply);
-        else
-            this._contents._replies.push(oReply);
+        else {
+            if (this._reply == null)
+                this._reply = oReply;
+            else
+                this._reply._replies.push(oReply);
+        }
     };
     CAnnotationBase.prototype._OnAfterSetReply = function() {
         let oAscCommData = this.IsComment() ? this.GetAscCommentData() : this._reply.GetAscCommentData();
@@ -583,6 +587,7 @@
     };
     CAnnotationBase.prototype.AddReply = function(oReply) {
         this._reply = oReply;
+        oReply.SetReplyTo(this);
         this._OnAfterSetReply();
     };
     CAnnotationBase.prototype.GetReply = function() {

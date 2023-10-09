@@ -891,7 +891,7 @@
 
 				if (oFormInfo["AP"] != null) {
 					oForm._apIdx = oFormInfo["AP"]["i"];
-					oForm.SetDrawFromStream(true);
+					oForm.SetDrawFromStream(Boolean(oFormInfo["AP"]["have"]));
 				}
 
 				// text form
@@ -1132,6 +1132,8 @@
 			let oAnnotsMap = {};
 			let oDoc = this.getPDFDoc();
 			let aAnnotsInfo = this.file.nativeFile["getAnnotationsInfo"]();
+			let nMaxIdx		= this.file.nativeFile["getStartID"]();
+
 			this.IsOpenAnnotsInProgress = true;
 
 			let oAnnotInfo, oAnnot, aRect;
@@ -1157,7 +1159,7 @@
 						apIdx:			oAnnotInfo["AP"]["i"]
 					});
 	
-					oAnnot.SetDrawFromStream(true);
+					oAnnot.SetDrawFromStream(Boolean(oAnnotInfo["AP"]["have"]));
 					oAnnot.SetOriginPage(oAnnotInfo["page"]);
 
 					if (oAnnotInfo["RefTo"] == null)
@@ -1259,10 +1261,12 @@
 			}
 
 			for (let apIdx in oAnnotsMap) {
-				if (oAnnotsMap[apIdx] instanceof AscPDF.CAnnotationText || oAnnotsMap[apIdx]._contents instanceof AscPDF.CAnnotationText)
+				if (oAnnotsMap[apIdx] instanceof AscPDF.CAnnotationText || oAnnotsMap[apIdx].GetReply() instanceof AscPDF.CAnnotationText)
 					oAnnotsMap[apIdx]._OnAfterSetReply();
 			}
 			this.IsOpenAnnotsInProgress = false;
+
+			oDoc.UpdateApIdx(nMaxIdx);
 		};
 		this.setZoom = function(value, isDisablePaint)
 		{
