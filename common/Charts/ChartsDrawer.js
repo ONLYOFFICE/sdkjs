@@ -6032,10 +6032,10 @@ drawBarChart.prototype = {
 					var pointY = (startY + height) / this.chartProp.pxToMM;
 					var _pointVal = this.cChartDrawer.getValWithStacked(i, idx, this.chart);
 					// var _pointVal = this.subType === "stacked" || this.subType === "stackedPer" ? this._getStackedValue(this.chart.series, i, j, val) : val;
-					if(this.chart.series[i].errBars){
+					if (this.chart.series[i].errBars) {
 						this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
 					}
-					if(this.chart.series[i].trendline && seria.length>1){
+					if (this.chart.series[i].trendline && this.subType === "normal" && seria.length>1) {
 						this.cChartDrawer.trendline.addCoordinate(idx, _pointVal, this.chart.series[i])
 					}
 				}
@@ -9319,6 +9319,7 @@ drawHBarChart.prototype = {
 					var _pointVal = this.cChartDrawer.getValWithStacked(i, idx, this.chart);
 					this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
 				}
+
 			}
 
 			//if (seria.length) {
@@ -16190,7 +16191,7 @@ CColorObj.prototype =
 
 			let chartletiables = letiables;
 			if (chartletiables) {
-				
+
 				const lineCoordinate = function (xIndex, cChartDrawer) {
 					const result = {xPos:null, yPos:null};
 					const xVal = xAxis.xPoints[xIndex].val;
