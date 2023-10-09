@@ -1987,7 +1987,7 @@
 					break;
 				case oNamesOfLiterals.belowAboveLiteral[num]:
 					let LIMIT_TYPE = (oTokens.isBelow === false) ? VJUST_BOT : VJUST_TOP;
-					if (oTokens.base && oTokens.base.type === oNamesOfLiterals.charLiteral[num] && oTokens.base.value.length === 1)
+					if (oTokens.base && oTokens.base.type === oNamesOfLiterals.charLiteral[num] && oTokens.base.value.length === 1 && IsArrow(oTokens.base.value))
 					{
 
 						let Pr;
