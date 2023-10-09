@@ -198,7 +198,7 @@ CChartsDrawer.prototype =
 		}
 
 		if(!chartSpace.bEmptySeries){
-			this.trendline.recalculate();
+			this.trendline.recalculate(this.charts);
 		}
 		//for test
 		//this._testChartsPaths();
@@ -537,6 +537,22 @@ CChartsDrawer.prototype =
 		}
 
     	return res;
+	},
+
+	_getSeriesById: function(oChart, id) {
+		var res = null;
+
+		var series = oChart.series;
+		if(series) {
+			for(var i = 0; i < series.length; i ++) {
+				if(id === series[i].Id) {
+					res = series[i];
+					break;
+				}
+			}
+		}
+
+		return res;
 	},
 
 	_getChartModelIdBySerIdx: function(plotArea, idx) {
@@ -6020,7 +6036,7 @@ drawBarChart.prototype = {
 						this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
 					}
 					if(this.chart.series[i].trendline && seria.length>1){
-						this.cChartDrawer.trendline.addCoordinate(idx+1, _pointVal, i)
+						this.cChartDrawer.trendline.addCoordinate(idx, _pointVal, this.chart.series[i])
 					}
 				}
 			}
@@ -16086,196 +16102,151 @@ CColorObj.prototype =
 
 	function Ctrendline(chartsDrawer) {
 		this.cChartDrawer = chartsDrawer;
-	  
-		this.observations = {coord:[], last:-1};
-		this.predicted = {
-			start:[], 
-			end:[] 
-		};
-		this.variables = [];
-
-		this.paths = [];
-		this.chartInfo = {
-			boundaryStart: null,
-			boundaryEnd: null,
-			yAxis: {scale:null, start:null},
-			xAxis: {scale:null, start:null},
-		}
-
+		//[chartId][seriesId]
+		this.coordinates = {};
 	}
 
 	Ctrendline.prototype = {
 
-        constructor: Ctrendline,
+		constructor: Ctrendline,
 
-		addCoordinate: function (xVal, yVal, lineId) {
-			//add new array for each new line 
-			//append element to last array in coordinates
-			if(lineId != this.observations.last) {
-				this.observations.coord.push([])
-				this.observations.last = lineId
+		addCoordinate: function (xVal, yVal, oSeries) {
+			if (!oSeries || !oSeries.parent) {
+				return;
+			}
+			if (!this.coordinates[oSeries.parent.Id]) {
+				this.coordinates[oSeries.parent.Id] = {};
+			}
+			if (!this.coordinates[oSeries.parent.Id][oSeries.Id]) {
+				this.coordinates[oSeries.parent.Id][oSeries.Id] = {coords: [], path: null};
 			}
 
-			var coordinate = {xVal: xVal, yVal: yVal};
-			var _n = this.observations.coord.length;
-			this.observations.coord[_n-1].push(coordinate);
-		},
-		
-		recalculate: function() {
-			if(this.observations.coord.length>0) {
-				this._prepareInformation();
-				this._findSuppVariables();
-				this._predictY();
-				this._calculateLine();
-				/*use this function to see variables in proper format for better debugging experience*/
-				//_showPredicted();
-			}
+			this.coordinates[oSeries.parent.Id][oSeries.Id].coords.push({xVal: xVal + 1, yVal: yVal});
 		},
 
-		_prepareInformation: function() {
-				// find scalses, initiate starting and ending x values
-				const chart =  this.cChartDrawer.cChartSpace.chart.plotArea.charts[0].axId
-				const xAxis = this.cChartDrawer.getAxisFromAxId(chart, AscDFH.historyitem_type_CatAx)
-				const yAxis = this.cChartDrawer.getAxisFromAxId(chart, AscDFH.historyitem_type_ValAx)
-
-				let pxToMm = this.cChartDrawer.calcProp.pxToMM;
-				let height = (this.cChartDrawer.calcProp.heightCanvas - this.cChartDrawer.calcProp.chartGutter._bottom)/ pxToMm;
-				let _nY = yAxis.yPoints.length;
-				let _nX = xAxis.xPoints.length;
-
-				this.chartInfo.boundaryStart = {y:height-yAxis.yPoints[0].pos, yVal: yAxis.yPoints[0].val, x:0, xVal:xAxis.xPoints[0].val};
-				this.chartInfo.boundaryEnd = {y:height-yAxis.yPoints[_nY-1].pos, yVal: yAxis.yPoints[_nY-1].val, x:xAxis.xPoints[_nX-1].pos-xAxis.xPoints[0].pos, xVal:xAxis.xPoints[_nX-1].val};
-				this.chartInfo.yAxis.scale = (yAxis.yPoints[0].pos- yAxis.yPoints[_nY-1].pos)/(yAxis.yPoints[_nY-1].val-yAxis.yPoints[0].val);
-				this.chartInfo.yAxis.start = height;
-				this.chartInfo.xAxis.scale = (xAxis.xPoints[_nX-1].pos- xAxis.xPoints[0].pos)/(xAxis.xPoints[_nX-1].val-xAxis.xPoints[0].val);
-				this.chartInfo.xAxis.start = xAxis.xPoints[0].pos;
-		},
-		
-		_showPredicted: function() {
-			console.log(this.predicted)
-			var _n = this.coordinates.length;
-			for(var i =0; i<_n; i++) {
-				console.log('start')
-				console.log(this.variables[i][0], this.variables[i][1])
-				console.log(this.predicted.start[i].yVal, this.predicted.start[i].xVal);
-				// var _n2 = this.predicted.mid[i].length;
-				// for(var j =0; j<_n2; j++){
-				// 	console.log(this.predicted.mid[i][j].yVal, this.predicted.mid[i][j].xVal);
-				// }
-				console.log(this.predicted.end[i].yVal, this.predicted.end[i].xVal);
+		recalculate: function (charts) {
+			for (let i in charts) {
+				if (!this.coordinates[i]) {
+					continue;
+				}
+				for (let j in charts[i].chart.series) {
+					if (!this.coordinates[i][charts[i].chart.series[j].Id]) {
+						continue;
+					}
+					this._calculateLine(charts[i].chart.series[j], this.coordinates[i][charts[i].chart.series[j].Id]);
+				}
 			}
 		},
 
-		_findSuppVariables: function() {
-
+		_findSuppletiables: function (coordinates) {
 			// meanX = ∑x/n and meanY = ∑y/n
 			// m = Sxy/Sxx where Sxy = ∑(x-meanX)(y-meanY) and Sxx = ∑(x-meanX)^2
 			// b = meanY - (meanX * m)
 
-			const _findMeans = function(coordinates) {
-				let means = []
-				const _n = coordinates.length;
-				for(let i=0; i<_n; i++) {
-					const _n2 = coordinates[i].length;
-					let _meanY = 0;
-					let _meanX = 0;
-					for(let j=0; j<_n2; j++) {
-						_meanX += coordinates[i][j].xVal;
-						_meanY += coordinates[i][j].yVal;
-					}
-					means.push([_meanX/_n2, _meanY/_n2])
+			const _findMeans = function (coordinates) {
+				let _meanY = 0;
+				let _meanX = 0;
+				const _n2 = coordinates.coords.length;
+				for (let j = 0; j < _n2; j++) {
+					_meanX += coordinates.coords[j].xVal;
+					_meanY += coordinates.coords[j].yVal;
 				}
-				return means
-			};
-			
-			const _calculateM = function (coordinates, variables, means) {
-				const _n = coordinates.length;
-				for(let i=0; i<_n; i++){
-					const _n2 = coordinates[i].length;
-					let Sxx = 0;
-					let Sxy = 0;
-					for(let j=0; j<_n2; j++) {
-						Sxx += (coordinates[i][j].xVal-means[i][0])*(coordinates[i][j].xVal-means[i][0]);
-						Sxy += (coordinates[i][j].xVal-means[i][0])*(coordinates[i][j].yVal-means[i][1]);
-					}
-					variables.push([Sxy/Sxx]);
-				}
-				return variables
+				return [_meanX / _n2, _meanY / _n2];
 			};
 
-			const _calculateB = function (variables, means) {
-				const _n = variables.length;
-				for(let i=0; i<_n; i++) {
-					variables[i].push(means[i][1] - (means[i][0] * variables[i][0]))
+			const _calculateM = function (coordinates, means) {
+				const _n2 = coordinates.coords.length;
+				let Sxx = 0;
+				let Sxy = 0;
+				for (let j = 0; j < _n2; j++) {
+					Sxx += (coordinates.coords[j].xVal - means[0]) * (coordinates.coords[j].xVal - means[0]);
+					Sxy += (coordinates.coords[j].xVal - means[0]) * (coordinates.coords[j].yVal - means[1]);
 				}
+				return [Sxy / Sxx];
+
 			};
 
-			const means = _findMeans(this.observations.coord, this.means);
-			_calculateM(this.observations.coord, this.variables, means);
-			_calculateB(this.variables, means);
+			const _calculateB = function (letiables, means) {
+				letiables.push(means[1] - (means[0] * letiables[0]))
+			};
+
+
+			let means = _findMeans(coordinates);
+			let letiables = _calculateM(coordinates, means);
+			_calculateB(letiables, means);
+
+			return letiables;
 		},
 
-		_predictY: function() {
-			// predict yVal and y for start and end positions 
+		_calculateLine: function (oSeries, coordinates) {
+			let letiables = this._findSuppletiables(coordinates);
 
-			const _predictPoint = function(obj, variable, chartInfo, pos) {
-					const boundaryPos = 'boundary' + pos;
-					const point = {x:chartInfo[boundaryPos].x,xVal:chartInfo[boundaryPos].xVal, y:null, yVal:null}
-					point.yVal = variable[0]*point.xVal + variable[1];
-					if(point.yVal<chartInfo.boundaryStart.yVal){
-						point.y = chartInfo.boundaryStart.y
-						point.yVal = chartInfo.boundaryStart.yVal
-						point.xVal = (point.yVal - variable[1]) / variable[0];
-						point.x = (point.xVal-chartInfo.boundaryStart.xVal) * chartInfo.xAxis.scale;
-					}else if(point.yVal>chartInfo.boundaryEnd.yVal){
-						point.y = chartInfo.boundaryEnd.y
-						point.yVal = chartInfo.boundaryEnd.yVal
-						point.xVal = (point.yVal - variable[1]) / variable[0];
-						point.x = (point.xVal-chartInfo.boundaryStart.xVal) * chartInfo.xAxis.scale;
-					}else{
-						point.y = (point.yVal-chartInfo.boundaryStart.yVal) * chartInfo.yAxis.scale;
-					}
-					obj.push(point)
-				}
+			const oChart = oSeries.parent;
+			const xAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_CatAx);
+			const yAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_ValAx);
 
-			const _n = this.observations.coord.length
-			for(let i=0; i<_n; i++) {
-				_predictPoint(this.predicted.start, this.variables[i], this.chartInfo, 'Start')
-				_predictPoint(this.predicted.end, this.variables[i], this.chartInfo, 'End')
-			}
-		},
+			let pathH = this.cChartDrawer.calcProp.pathH;
+			let pathW = this.cChartDrawer.calcProp.pathW;
 
-		_calculateLine: function() {
-			//create paths
-
-			var _n = this.observations.coord.length
-			var pathH = this.cChartDrawer.calcProp.pathH;
-			var pathW = this.cChartDrawer.calcProp.pathW;
-		
-			for( var i=0; i<_n; i++) {
-				var pathId = this.cChartDrawer.cChartSpace.AllocPath();
-				var path  = this.cChartDrawer.cChartSpace.GetPath(pathId);
+			let chartletiables = letiables;
+			if (chartletiables) {
 				
-				path.moveTo((this.chartInfo.xAxis.start + this.predicted.start[i].x) * pathW, (this.chartInfo.yAxis.start-this.predicted.start[i].y) * pathH);
-				path.lnTo((this.chartInfo.xAxis.start +this.predicted.end[i].x) * pathW, (this.chartInfo.yAxis.start-this.predicted.end[i].y) * pathH);
+				const lineCoordinate = function (xIndex, cChartDrawer) {
+					const result = {xPos:null, yPos:null};
+					const xVal = xAxis.xPoints[xIndex].val;
+					const yVal = chartletiables[0] * xVal + chartletiables[1];
+					const yIndex = yAxis.yPoints.length - 1;
+					if (yVal < yAxis.yPoints[0].val) {
+						const newXVal = (yAxis.yPoints[0].val - chartletiables[1]) / chartletiables[0];
+						result.xPos = cChartDrawer.getYPosition(newXVal, xAxis);
+						result.yPos = yAxis.yPoints[0].pos
+					} else if (yVal > yAxis.yPoints[yIndex].val) {
+						const newXVal = (yAxis.yPoints[yIndex].val - chartletiables[1]) / chartletiables[0];
+						result.xPos = cChartDrawer.getYPosition(newXVal, xAxis);
+						result.yPos = yAxis.yPoints[yIndex].pos
+					} else {
+						result.xPos = xAxis.xPoints[xIndex].pos;
+						result.yPos = cChartDrawer.getYPosition(yVal, yAxis);
+					}
+					return result
+				}
 
-				this.paths.push(pathId);
+				const start = lineCoordinate(0, this.cChartDrawer)
+				const end = lineCoordinate(xAxis.xPoints.length - 1, this.cChartDrawer)
+
+				let pathId = this.cChartDrawer.cChartSpace.AllocPath();
+				let path = this.cChartDrawer.cChartSpace.GetPath(pathId);
+				
+				path.moveTo(start.xPos * pathW, start.yPos * pathH);
+				path.lnTo(end.xPos * pathW, end.yPos * pathH);
+
+				coordinates.path = pathId;
 			}
 		},
 
-		draw: function() {
+		draw: function () {
 			// draw paths
-			var _n = this.paths.length
-			for(var i =0; i<_n; i++) {
-				var pen = this.cChartDrawer.cChartSpace.chart.plotArea.charts[0].series[i].trendline && this.cChartDrawer.cChartSpace.chart.plotArea.charts[0].series[i].trendline.spPr.ln;
-				/*if pen is not provided take it from gridLines, for debugging only*/
-				// var pen = this.cChartDrawer.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines; 
-				if(pen && this.paths[i]) {
-					this.cChartDrawer.drawPath(this.paths[i], pen);
+			let plotArea = this.cChartDrawer.cChartSpace.chart.plotArea;
+			if (this.coordinates) {
+				for (let i in this.coordinates) {
+					let oChart = this.cChartDrawer._getChartModelById(plotArea, i);
+					if (!oChart || !this.coordinates[i]) {
+						continue;
+					}
+					for (let j in this.coordinates[i]) {
+						let oSeries = this.cChartDrawer._getSeriesById(oChart, j);
+						if (!oSeries || !this.coordinates[i][j]) {
+							continue;
+						}
+						let pen = oSeries.trendline.spPr.ln;
+						if (pen && this.coordinates[i][j].path) {
+							this.cChartDrawer.drawPath(this.coordinates[i][j].path, pen);
+						}
+					}
 				}
 			}
 		}
- 	}
+	}
 
 
 	//----------------------------------------------------------export----------------------------------------------------
