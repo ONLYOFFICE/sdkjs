@@ -16088,11 +16088,19 @@ CColorObj.prototype =
 		this.cChartDrawer = chartsDrawer;
 	  
 		this.observations = {coord:[], last:-1};
-		this.predicted = {start:null, end:null};
+		this.predicted = {
+			start:{x:[], xVal:[], y:[], yVal:[]}, 
+			end:{x:[], xVal:[], y:[], yVal:[]} 
+		};
 		this.variables = [];
 
-		this.yScale = null
 		this.paths = [];
+		this.chartInfo = {
+			boundaryStart: null,
+			boundaryEnd: null,
+			yAxis: {scale:null, start:null},
+			xAxis: {scale:null, start:null},
+		}
 
 	}
 
@@ -16131,18 +16139,17 @@ CColorObj.prototype =
 				const yAxis = this.cChartDrawer.getAxisFromAxId(chart, AscDFH.historyitem_type_ValAx)
 
 				let pxToMm = this.cChartDrawer.calcProp.pxToMM;
-				let height = this.cChartDrawer.calcProp.heightCanvas - this.cChartDrawer.calcProp.chartGutter._bottom
+				let height = (this.cChartDrawer.calcProp.heightCanvas - this.cChartDrawer.calcProp.chartGutter._bottom)/ pxToMm;
 				let _nY = yAxis.yPoints.length;
-				for(let i=0; i<_nY; i++) {
-					if( yAxis.yPoints[i].val !=0) {
-						this.yScale = ((height)/pxToMm - yAxis.yPoints[i].pos)/yAxis.yPoints[i].val
-					}
-				}
-				
-				let _nX = xAxis.xPoints.length
-				this.predicted.start = {xVal:xAxis.xPoints[0].val, yVal: [], x:xAxis.xPoints[0].pos, y:[]}
-				this.predicted.end = {xVal:xAxis.xPoints[_nX-1].val, yVal: [], x:xAxis.xPoints[_nX-1].pos, y:[]}
+				let _nX = xAxis.xPoints.length;
 
+				this.chartInfo.boundaryStart = {y:height-yAxis.yPoints[0].pos, yVal: yAxis.yPoints[0].val, x:0, xVal:xAxis.xPoints[0].val};
+				this.chartInfo.boundaryEnd = {y:height-yAxis.yPoints[_nY-1].pos, yVal: yAxis.yPoints[_nY-1].val, x:xAxis.xPoints[_nX-1].pos-xAxis.xPoints[0].pos, xVal:xAxis.xPoints[_nX-1].val};
+				this.chartInfo.yAxis.scale = (yAxis.yPoints[0].pos- yAxis.yPoints[_nY-1].pos)/(yAxis.yPoints[_nY-1].val-yAxis.yPoints[0].val);
+				this.chartInfo.yAxis.start = height;
+				//Have stopped here, I need to check last x position and predicted last x position
+				this.chartInfo.xAxis.scale = (xAxis.xPoints[_nX-1].pos- xAxis.xPoints[0].pos)/(xAxis.xPoints[_nX-1].val-xAxis.xPoints[0].val);
+				this.chartInfo.xAxis.start = xAxis.xPoints[0].pos;
 		},
 		
 		_showPredicted: function() {
@@ -16212,17 +16219,30 @@ CColorObj.prototype =
 		_predictY: function() {
 			// predict yVal and y for start and end positions 
 
-			const _predictPoint = function(obj, variable, scale) {
-					const yVal = variable[0]*obj.xVal + variable[1];
-					const y = yVal * scale;
-					obj.yVal.push(yVal);
-					obj.y.push(y);
+			const _predictPoint = function(obj, variable, chartInfo, pos) {
+					const boundaryPos = 'boundary' + pos;
+					const yVal = variable[0]*chartInfo[boundaryPos].xVal + variable[1];
+					if(yVal>= chartInfo.boundaryStart.yVal && yVal<=chartInfo.boundaryEnd.yVal){
+						const y = (yVal-chartInfo.boundaryStart.yVal) * chartInfo.yAxis.scale;
+						obj.yVal.push(yVal); obj.y.push(y); obj.xVal.push(chartInfo[boundaryPos].xVal); obj.x.push(chartInfo[boundaryPos].x);
+					}
+					else{
+						if(yVal<chartInfo.boundaryStart.yVal){
+							const xVal = (chartInfo.boundaryStart.yVal - variable[1]) / variable[0];
+							const x = (xVal-chartInfo.boundaryStart.xVal) * chartInfo.xAxis.scale;
+							obj.yVal.push(chartInfo.boundaryStart.yVal); obj.y.push(chartInfo.boundaryStart.y); obj.xVal.push(xVal); obj.x.push(x);
+						}else{
+							const xVal = (chartInfo.boundaryEnd.yVal - variable[1]) / variable[0];
+							const x = (xVal-chartInfo.boundaryStart.xVal) * chartInfo.xAxis.scale;
+							obj.yVal.push(chartInfo.boundaryEnd.yVal); obj.y.push(chartInfo.boundaryEnd.y); obj.xVal.push(xVal); obj.x.push(x);
+						}
+					}
 				}
 
 			const _n = this.observations.coord.length
 			for(let i=0; i<_n; i++) {
-				_predictPoint(this.predicted.start, this.variables[i], this.yScale)
-				_predictPoint(this.predicted.end, this.variables[i], this.yScale)
+				_predictPoint(this.predicted.start, this.variables[i], this.chartInfo, 'Start')
+				_predictPoint(this.predicted.end, this.variables[i], this.chartInfo, 'End')
 			}
 		},
 
@@ -16232,15 +16252,13 @@ CColorObj.prototype =
 			var _n = this.observations.coord.length
 			var pathH = this.cChartDrawer.calcProp.pathH;
 			var pathW = this.cChartDrawer.calcProp.pathW;
-			var pxToMm = this.cChartDrawer.calcProp.pxToMM;
-			var height = (this.cChartDrawer.calcProp.heightCanvas - this.cChartDrawer.calcProp.chartGutter._bottom)/pxToMm;
 		
 			for( var i=0; i<_n; i++) {
 				var pathId = this.cChartDrawer.cChartSpace.AllocPath();
 				var path  = this.cChartDrawer.cChartSpace.GetPath(pathId);
 				
-				path.moveTo(this.predicted.start.x * pathW, (height-this.predicted.start.y[i]) * pathH);
-				path.lnTo(this.predicted.end.x * pathW, (height-this.predicted.end.y[i]) * pathH);
+				path.moveTo((this.chartInfo.xAxis.start + this.predicted.start.x[i]) * pathW, (this.chartInfo.yAxis.start-this.predicted.start.y[i]) * pathH);
+				path.lnTo((this.chartInfo.xAxis.start +this.predicted.end.x[i]) * pathW, (this.chartInfo.yAxis.start-this.predicted.end.y[i]) * pathH);
 
 				this.paths.push(pathId);
 			}
