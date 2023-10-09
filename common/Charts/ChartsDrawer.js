@@ -16089,8 +16089,8 @@ CColorObj.prototype =
 	  
 		this.observations = {coord:[], last:-1};
 		this.predicted = {
-			start:{x:[], xVal:[], y:[], yVal:[]}, 
-			end:{x:[], xVal:[], y:[], yVal:[]} 
+			start:[], 
+			end:[] 
 		};
 		this.variables = [];
 
@@ -16127,6 +16127,7 @@ CColorObj.prototype =
 				this._findSuppVariables();
 				this._predictY();
 				this._calculateLine();
+				console.log(this.predicted)
 				/*use this function to see variables in proper format for better debugging experience*/
 				//_showPredicted();
 			}
@@ -16221,22 +16222,22 @@ CColorObj.prototype =
 
 			const _predictPoint = function(obj, variable, chartInfo, pos) {
 					const boundaryPos = 'boundary' + pos;
-					const yVal = variable[0]*chartInfo[boundaryPos].xVal + variable[1];
-					if(yVal>= chartInfo.boundaryStart.yVal && yVal<=chartInfo.boundaryEnd.yVal){
-						const y = (yVal-chartInfo.boundaryStart.yVal) * chartInfo.yAxis.scale;
-						obj.yVal.push(yVal); obj.y.push(y); obj.xVal.push(chartInfo[boundaryPos].xVal); obj.x.push(chartInfo[boundaryPos].x);
+					const point = {x:chartInfo[boundaryPos].x,xVal:chartInfo[boundaryPos].xVal, y:null, yVal:null}
+					point.yVal = variable[0]*point.xVal + variable[1];
+					if(point.yVal<chartInfo.boundaryStart.yVal){
+						point.y = chartInfo.boundaryStart.y
+						point.yVal = chartInfo.boundaryStart.yVal
+						point.xVal = (point.yVal - variable[1]) / variable[0];
+						point.x = (point.xVal-chartInfo.boundaryStart.xVal) * chartInfo.xAxis.scale;
+					}else if(point.yVal>chartInfo.boundaryEnd.yVal){
+						point.y = chartInfo.boundaryEnd.y
+						point.yVal = chartInfo.boundaryEnd.yVal
+						point.xVal = (point.yVal - variable[1]) / variable[0];
+						point.x = (point.xVal-chartInfo.boundaryStart.xVal) * chartInfo.xAxis.scale;
+					}else{
+						point.y = (point.yVal-chartInfo.boundaryStart.yVal) * chartInfo.yAxis.scale;
 					}
-					else{
-						if(yVal<chartInfo.boundaryStart.yVal){
-							const xVal = (chartInfo.boundaryStart.yVal - variable[1]) / variable[0];
-							const x = (xVal-chartInfo.boundaryStart.xVal) * chartInfo.xAxis.scale;
-							obj.yVal.push(chartInfo.boundaryStart.yVal); obj.y.push(chartInfo.boundaryStart.y); obj.xVal.push(xVal); obj.x.push(x);
-						}else{
-							const xVal = (chartInfo.boundaryEnd.yVal - variable[1]) / variable[0];
-							const x = (xVal-chartInfo.boundaryStart.xVal) * chartInfo.xAxis.scale;
-							obj.yVal.push(chartInfo.boundaryEnd.yVal); obj.y.push(chartInfo.boundaryEnd.y); obj.xVal.push(xVal); obj.x.push(x);
-						}
-					}
+					obj.push(point)
 				}
 
 			const _n = this.observations.coord.length
@@ -16257,8 +16258,8 @@ CColorObj.prototype =
 				var pathId = this.cChartDrawer.cChartSpace.AllocPath();
 				var path  = this.cChartDrawer.cChartSpace.GetPath(pathId);
 				
-				path.moveTo((this.chartInfo.xAxis.start + this.predicted.start.x[i]) * pathW, (this.chartInfo.yAxis.start-this.predicted.start.y[i]) * pathH);
-				path.lnTo((this.chartInfo.xAxis.start +this.predicted.end.x[i]) * pathW, (this.chartInfo.yAxis.start-this.predicted.end.y[i]) * pathH);
+				path.moveTo((this.chartInfo.xAxis.start + this.predicted.start[i].x) * pathW, (this.chartInfo.yAxis.start-this.predicted.start[i].y) * pathH);
+				path.lnTo((this.chartInfo.xAxis.start +this.predicted.end[i].x) * pathW, (this.chartInfo.yAxis.start-this.predicted.end[i].y) * pathH);
 
 				this.paths.push(pathId);
 			}
