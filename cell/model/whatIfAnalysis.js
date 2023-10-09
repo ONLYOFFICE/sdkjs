@@ -96,6 +96,10 @@ function (window, undefined) {
 	 * @return {boolean} The flag who recognizes end a loop of calculation goal seek. True - stop a loop, false - continue a loop.
 	 */
 	CGoalSeek.prototype.calculate = function() {
+		if (this.getIsPause()) {
+			return true;
+		}
+
 		let nChangingVal = this.getChangingValue();
 		let nExpectedVal = this.getExpectedVal();
 		let nPrevFactValue = this.getPrevFactValue();
@@ -138,16 +142,13 @@ function (window, undefined) {
 		}
 
 		//.sendEvent("update", nExpectedVal, nFactValue, this.getCurrentAttempt()); - update event. true/false - isSuccess;
-		// Check: Need pause a loop or finish calculate
+		// Check: Need a finish calculate
 		if (Math.abs(nDiff) < this.getRelativeError()) {
 			//.sendEvent("stop", true); - stop event. true/false - isSuccess;
 			return true;
 		}
 		if (this.getCurrentAttempt() >= this.getMaxIterations() || isNaN(nDiff)) {
 			//.sendEvent("stop", false); - stop event. true/false - isSuccess;
-			return true;
-		}
-		if (this.getIsPause()) {
 			return true;
 		}
 

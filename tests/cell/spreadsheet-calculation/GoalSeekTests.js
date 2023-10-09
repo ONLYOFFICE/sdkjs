@@ -942,7 +942,7 @@ $(function () {
         [oParserFormula, oGoalSeek] = pauseGoalSeek(nExpectedVal, ws.getRange4(0, 0), 'PMT(A1/12,B1,C1)', 'D1');
         [nResult, nChangingVal] = getResultOutOfLoop(oParserFormula, oGoalSeek);
         assert.strictEqual(oGoalSeek.getIsPause(), true, `Case: Test pause method. Attribute bIsPause is ${oGoalSeek.getIsPause()}`);
-        assert.strictEqual(oGoalSeek.getCurrentAttempt(), 2, `Case: Test pause method. Goal seek is paused. Iteration: ${oGoalSeek.getCurrentAttempt()}, Formula result: ${nResult}, changing val: ${nChangingVal}`);
+        assert.strictEqual(oGoalSeek.getCurrentAttempt(), 1, `Case: Test pause method. Goal seek is paused. Iteration: ${oGoalSeek.getCurrentAttempt()}, Formula result: ${nResult}, changing val: ${nChangingVal}`);
         // Method resume test on PMT formula find "Interest Rate"
         oGoalSeek.resume();
         [nResult, nChangingVal] = getResultOutOfLoop(oParserFormula, oGoalSeek);
@@ -959,24 +959,16 @@ $(function () {
         oGoalSeek.step();
         assert.strictEqual(oGoalSeek.getIsPause(), true, `Case: Test step method. Attribute bIsPause is ${oGoalSeek.getIsPause()}`);
         [nResult, nChangingVal] = getResultOutOfLoop(oParserFormula, oGoalSeek);
+        assert.strictEqual(oGoalSeek.getCurrentAttempt(), 2, `Case: Test step method. Goal seek is paused. Iteration: ${oGoalSeek.getCurrentAttempt()}, Formula result: ${nResult}, changing val: ${nChangingVal}`);
+        oGoalSeek.step();
+        assert.strictEqual(oGoalSeek.getIsPause(), true, `Case: Test step method. Attribute bIsPause is ${oGoalSeek.getIsPause()}`);
+        [nResult, nChangingVal] = getResultOutOfLoop(oParserFormula, oGoalSeek);
         assert.strictEqual(oGoalSeek.getCurrentAttempt(), 3, `Case: Test step method. Goal seek is paused. Iteration: ${oGoalSeek.getCurrentAttempt()}, Formula result: ${nResult}, changing val: ${nChangingVal}`);
-        oGoalSeek.step();
-        assert.strictEqual(oGoalSeek.getIsPause(), true, `Case: Test step method. Attribute bIsPause is ${oGoalSeek.getIsPause()}`);
-        [nResult, nChangingVal] = getResultOutOfLoop(oParserFormula, oGoalSeek);
-        assert.strictEqual(oGoalSeek.getCurrentAttempt(), 4, `Case: Test step method. Goal seek is paused. Iteration: ${oGoalSeek.getCurrentAttempt()}, Formula result: ${nResult}, changing val: ${nChangingVal}`);
-        oGoalSeek.step();
-        assert.strictEqual(oGoalSeek.getIsPause(), true, `Case: Test step method. Attribute bIsPause is ${oGoalSeek.getIsPause()}`);
-        [nResult, nChangingVal] = getResultOutOfLoop(oParserFormula, oGoalSeek);
-        assert.strictEqual(oGoalSeek.getCurrentAttempt(), 5, `Case: Test step method. Goal seek is paused. Iteration: ${oGoalSeek.getCurrentAttempt()}, Formula result: ${nResult}, changing val: ${nChangingVal}`);
-        oGoalSeek.step();
-        assert.strictEqual(oGoalSeek.getIsPause(), true, `Case: Test step method. Attribute bIsPause is ${oGoalSeek.getIsPause()}`);
-        [nResult, nChangingVal] = getResultOutOfLoop(oParserFormula, oGoalSeek);
-        assert.strictEqual(oGoalSeek.getCurrentAttempt(), 6, `Case: Test step method. Goal seek is paused. Iteration: ${oGoalSeek.getCurrentAttempt()}, Formula result: ${nResult}, changing val: ${nChangingVal}`);
         // Final step
         oGoalSeek.step();
-        assert.strictEqual(oGoalSeek.getIsPause(), false, `Case: Test step method. Attribute bIsPause is ${oGoalSeek.getIsPause()}`);
+        assert.strictEqual(oGoalSeek.getIsPause(), false, `Case: Test step method. Final step. Attribute bIsPause is ${oGoalSeek.getIsPause()}`);
         [nResult, nChangingVal] = getResultOutOfLoop(oParserFormula, oGoalSeek);
-        assert.strictEqual(oGoalSeek.getCurrentAttempt(), 7, `Case: Test step method. Goal seek is paused. Iteration: ${oGoalSeek.getCurrentAttempt()}, Formula result: ${nResult}, changing val: ${nChangingVal}`);
+        assert.strictEqual(oGoalSeek.getCurrentAttempt(), 4, `Case: Test step method. Final step. Goal seek is paused. Iteration: ${oGoalSeek.getCurrentAttempt()}, Formula result: ${nResult}, changing val: ${nChangingVal}`);
         assert.strictEqual(Math.round(nResult), nExpectedVal, `Case: Test step method. Result PMT: ${nResult}`);
         assert.strictEqual(Number(nChangingVal.toFixed(4)), 0.0702, `Case: Test step method. Result ChangingVal: ${nChangingVal}`);
         // Clear data
