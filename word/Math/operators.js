@@ -4053,7 +4053,7 @@ CDelimiter.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
 	var strStartSymbol = this.Pr.begChr === -1 ? "" : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
 	var strEndSymbol = this.Pr.endChr === -1 ? "" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
-	var strSeparatorSymbol = isLaTeX ? "\\mid " : "∣";
+	var strSeparatorSymbol = isLaTeX ? "\\mid" : "∣";
 
 	if ((!AscMath.MathLiterals.lBrackets.IsIncludes(strStartSymbol) && !AscMath.MathLiterals.lrBrackets.IsIncludes(strStartSymbol)) || isLaTeX)
 	{
