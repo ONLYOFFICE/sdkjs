@@ -1515,9 +1515,6 @@ var CPresentation = CPresentation || function(){};
             oAnnot.SetQuads(aQuads);
             oAnnot.SetStrokeColor([r/255, g/255, b/255]);
         }
-
-        editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Highlight, false);
-        editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Highlight, false);
     };
     CPDFDoc.prototype.SetUnderline = function(r, g, b, opacity) {
         this.UnderlineColor = {
@@ -1561,9 +1558,6 @@ var CPresentation = CPresentation || function(){};
             oAnnot.SetQuads(aQuads);
             oAnnot.SetStrokeColor([r/255, g/255, b/255]);
         }
-
-        editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Underline, false);
-        editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Underline, false);
     };
     CPDFDoc.prototype.SetStrikeout = function(r, g, b, opacity) {
         this.StrikeoutColor = {
@@ -1607,9 +1601,6 @@ var CPresentation = CPresentation || function(){};
             oAnnot.SetQuads(aQuads);
             oAnnot.SetStrokeColor([r/255, g/255, b/255]);
         }
-
-        editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
-        editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
     };
     CPDFDoc.prototype.GetMarkerColor = function(nType) {
         switch (nType) {
