@@ -117,7 +117,7 @@
 
 	function OpenBrackets()
 	{
-		this.data = ["(", "{", "〖",  "⟨", "["];
+		this.data = ["(", "{", "〖",  "⟨", "[", "⌊", "⌈", "⟦"];
 		this.fromSymbols = {};
 		this.toSymbols = {};
 		this.Init();
@@ -129,7 +129,7 @@
 	{
 		this.data = [
 			")", "}", "⟫", //	"\\"
-			"⟧", "〗", "⟩", "]",
+			"⟧", "〗", "⟩", "]", "⌋", "⌉", "⟧"
 		];
 		this.fromSymbols = {};
 		this.toSymbols = {};
@@ -1373,6 +1373,9 @@
 			"⟩": 10217,
 
 		}
+		if (code === undefined)
+			return -1;
+
 		if (code) {
 			let strBracket = oBrackets[code];
 			if (strBracket) {
@@ -1922,6 +1925,9 @@
 					}
 					let rows = oTokens.value.length;
 					let cols = oTokens.value[0].length;
+
+					if (cols === 0)
+						cols++;
 					if (strEndBracket && strStartBracket) {
 						let Delimiter = oContext.Add_DelimiterEx(new CTextPr(), 1, [null], strStartBracket, strEndBracket);
 						oContext = Delimiter.getElementMathContent(0);
@@ -1939,7 +1945,7 @@
 					}
 					break;
 				case oNamesOfLiterals.arrayLiteral[num]:
-					let intCountOfRows = oTokens.value.length
+					let intCountOfRows = oTokens.value.length + 1;
 					let oEqArray = oContext.Add_EqArray({
 						ctrPrp: new CTextPr(),
 						row: intCountOfRows

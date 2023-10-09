@@ -254,28 +254,34 @@
 		return (
 			this.oLookahead.class === oLiteralNames.opOpenBracket[0] ||
 			this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0] ||
-			this.oLookahead.data === "├" ||
 			this.oLookahead.data === "\\left"
 		);
 	};
+	CLaTeXParser.prototype.IsBracketLiteral = function ()
+	{
+		return this.oLookahead.class === oLiteralNames.opOpenBracket[0] ||
+			this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0] ||
+			this.oLookahead.class === oLiteralNames.opCloseBracket[0];
+	}
 	CLaTeXParser.prototype.GetBracketLiteral = function ()
 	{
-		let arrBracketContent, strLeftSymbol, strRightSymbol;
+		let arrBracketContent,
+			strLeftSymbol,
+			strRightSymbol;
 
-		if (this.oLookahead.data === "├" || this.oLookahead.data === "\\left")
+		if (this.oLookahead.data === "\\left")
 		{
 			this.EatToken(this.oLookahead.class);
 
-			if (this.oLookahead.class === oLiteralNames.opOpenBracket[0] || this.oLookahead.data === "." || this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0]) {
+			if (this.IsBracketLiteral() ||  this.oLookahead.data === ".")
 				strLeftSymbol = this.EatToken(this.oLookahead.class).data;
-			}
 
 			arrBracketContent = this.GetContentOfBracket();
 
-			if (this.oLookahead.data === "┤" || this.oLookahead.data === "\\right")
+			if (this.oLookahead.data === "\\right")
 			{
 				this.EatToken(this.oLookahead.class);
-				if (this.oLookahead.class === oLiteralNames.opCloseBracket[0] || this.oLookahead.data === "." || this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0]) {
+				if (this.IsBracketLiteral() || this.oLookahead.data === ".") {
 					strRightSymbol = this.EatToken(this.oLookahead.class).data;
 				}
 			}
@@ -1063,9 +1069,21 @@
 
 		let arrMatrixContent = [];
 
+		let nCounter = 0;
 		while (this.oLookahead.data !== "}" && this.oLookahead.class !== "endOfMatrix")
 		{
-			arrMatrixContent.push(this.GetRayOfMatrixLiteral());
+			let oContent = this.GetRayOfMatrixLiteral();
+			if (oContent === undefined)
+			{
+				oContent = [];
+				nCounter++;
+			}
+			arrMatrixContent.push(oContent);
+		}
+
+		while(arrMatrixContent.length < nCounter + 1)
+		{
+			arrMatrixContent.push([]);
 		}
 
 		let intMaxLengthOfMatrixRow = -Infinity;
@@ -1074,6 +1092,10 @@
 		for (let i = 0; i < arrMatrixContent.length; i++)
 		{
 			let arrContent = arrMatrixContent[i];
+			if (arrContent === undefined)
+			{
+				arrMatrixContent[i] = arrContent = [];
+			}
 			intMaxLengthOfMatrixRow = arrContent.length;
 			intIndexOfMaxMatrixRow = i;
 		}
@@ -1114,12 +1136,12 @@
 
 		if (this.oLookahead.data === "\\\\")
 		{
-			this.EatToken(this.oLookahead.class)
+			this.EatToken(this.oLookahead.class);
 		}
 
 		this.SkipFreeSpace();
 
-		return arrRayContent
+		return arrRayContent;
 	};
 	CLaTeXParser.prototype.GetElementOfMatrix = function ()
 	{

@@ -605,6 +605,12 @@
 			third: oThird,
 		}
 	};
+	CUnicodeParser.prototype.IsBracketLiteral = function ()
+	{
+		return AscMath.MathLiterals.rBrackets.IsIncludes(this.oLookahead.data)
+		|| AscMath.MathLiterals.lBrackets.IsIncludes(this.oLookahead.data)
+		|| AscMath.MathLiterals.lrBrackets.IsIncludes(this.oLookahead.data)
+	}
 	CUnicodeParser.prototype.IsExpBracketLiteral = function ()
 	{
 		return (
@@ -623,14 +629,27 @@
 			strClose,
 			oExp;
 
-		if (this.oLookahead.class === oLiteralNames.opOpenBracket[0] || this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0])
+		if (this.oLookahead.class === oLiteralNames.opOpenBracket[0] || this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0] || this.oLookahead.class === "├")
 		{
-			strOpen = this.GetOpOpenLiteral();
+			if (this.oLookahead.data === "├")
+			{
+				this.EatToken("├");
+				if (this.IsBracketLiteral())
+				{
+					strOpen = this.oLookahead.data;
+					this.EatToken(this.oLookahead.class);
+				}
+			}
+			else if (this.IsBracketLiteral())
+			{
+				strOpen = this.GetOpOpenLiteral();
+			}
 
 			if (strOpen === "|" || strOpen === "‖")
 				this.strBreakSymbol.push(strOpen);
 
-			if (this.IsPreScriptLiteral() && strOpen === "(") {
+			if (this.IsPreScriptLiteral() && strOpen === "(")
+			{
 				return this.GetPreScriptLiteral(strOpen);
 			}
 
@@ -638,21 +657,28 @@
 			oExp = arrContent[0];
 			let counter = arrContent[1];
 
-			if (oExp.length === 0 && !this.IsOpCloserLiteral()) {
+			if (oExp.length === 0 && !this.IsOpCloserLiteral())
+			{
 				return {
 					type: oLiteralNames.charLiteral[num],
 					value: strOpen,
 				}
 			}
 
-			if (this.oLookahead.class === "┤")
+			if (this.oLookahead.data === "┤")
+			{
 				this.EatToken("┤");
-
-
-			if (this.oLookahead.class === oLiteralNames.opOpenCloseBracket[0] || this.oLookahead.class === oLiteralNames.opCloseBracket[0])
-				strClose = this.GetOpCloseLiteral();
+				if (this.IsBracketLiteral())
+				{
+					strClose = this.oLookahead.data;
+					this.EatToken(this.oLookahead.class);
+				}
+			}
 			else
-				strClose = ".";
+			{
+				if (this.IsBracketLiteral())
+					strClose = this.GetOpCloseLiteral();
+			}
 
 			return {
 				type: oLiteralNames.bracketBlockLiteral[num],
@@ -1631,14 +1657,23 @@
 	CUnicodeParser.prototype.GetRowsLiteral = function ()
 	{
 		let arrRows = [];
-
+		let nCount = 0;
 		while (this.IsRowLiteral() || this.oLookahead.class === "@")
 		{
 			if (this.oLookahead.class === "@") {
 				this.EatToken("@");
+				nCount++;
 			}
 			else {
 				arrRows.push(this.GetRowLiteral());
+			}
+		}
+
+		if (arrRows.length !== nCount + 1)
+		{
+			while (arrRows.length != nCount + 1)
+			{
+				arrRows.push([]);
 			}
 		}
 		return arrRows
@@ -1730,7 +1765,11 @@
 	};
 	CUnicodeParser.prototype.IsExpLiteral = function ()
 	{
-		return this.IsElementLiteral() || this.oLookahead.class === oLiteralNames.operatorLiteral[0] || this.oLookahead.data === "/" || this.IsPreScriptLiteral();
+		return this.IsElementLiteral() ||
+			this.oLookahead.class === oLiteralNames.operatorLiteral[0] ||
+			this.oLookahead.data === "/" ||
+			this.oLookahead.data === "¦" ||
+			this.IsPreScriptLiteral();
 	};
 	CUnicodeParser.prototype.GetExpLiteral = function (arrCorrectSymbols)
 	{
@@ -1741,21 +1780,26 @@
 
 		while (this.IsExpLiteral() || arrCorrectSymbols.includes(this.oLookahead.data))
 		{
-			if (this.oLookahead.data === "/")
+			if (this.oLookahead.data === "/" || this.oLookahead.data === "¦" || this.oLookahead.data === "⒞")
 			{
-					let down;
-					this.EatToken(this.oLookahead.class)
-					if (this.oLookahead.class)
-					{
-						down = this.GetElementLiteral()
-					}
+				let type = oLiteralNames.fractionLiteral[num];
 
-					oExpLiteral.push({
-						type: oLiteralNames.fractionLiteral[num],
-						up: null,
-						down: down,
-						fracType: null,
-					})
+				if (this.oLookahead.data === "¦")
+					type = oLiteralNames.binomLiteral[num];
+
+				let down;
+				let intTypeFraction = this.GetFractionType(this.oLookahead.data);
+				this.EatToken(this.oLookahead.class)
+
+				if (this.oLookahead.class)
+					down = this.GetElementLiteral();
+
+				oExpLiteral.push({
+					type: type,
+					up: null,
+					down: down,
+					fracType: intTypeFraction,
+				})
 			}
 			
 			else if (this.IsElementLiteral())
