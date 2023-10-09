@@ -215,6 +215,10 @@ ParaNumbering.prototype.GetCalculatedNumberingLvl = function()
 {
 	return this.Internal.FinalNumLvl;
 };
+ParaNumbering.prototype.GetCalculatedNumId = function()
+{
+	return this.Internal.FinalNumId;
+};
 /**
  * Нужно ли отрисовывать исходную нумерацию
  * @returns {boolean}
