@@ -147,6 +147,72 @@
             this.content.Recalculate_Page(0, true);
         }
     };
+    CAnnotationFreeText.prototype.AddReply = function(oReply) {
+        oReply.SetReplyTo(this);
+
+        let aNewReplies = [].concat(this._replies);
+        aNewReplies.push(oReply);
+        this.SetReplies(aNewReplies);
+    };
+    CAnnotationFreeText.prototype.RemoveComment = function() {
+        let oDoc = this.GetDocument();
+
+        oDoc.CreateNewHistoryPoint();
+        this.SetReplies([]);
+        oDoc.TurnOffHistory();
+    };
+    CAnnotationFreeText.prototype.SetContents = function(contents) {
+        if (this.GetContents() == contents)
+            return;
+
+        let oViewer         = editor.getDocumentRenderer();
+        let oDoc            = this.GetDocument();
+        let oCurContents    = this.GetContents();
+
+        this._contents  = contents;
+        
+        if (oDoc.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
+            oDoc.History.Add(new CChangesPDFAnnotContents(this, oCurContents, contents));
+        }
+        
+        this.SetWasChanged(true);
+    };
+    CAnnotationFreeText.prototype.SetReplies = function(aReplies) {
+        let oDoc = this.GetDocument();
+        let oViewer = editor.getDocumentRenderer();
+
+        if (oDoc.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
+            oDoc.History.Add(new CChangesPDFAnnotReplies(this, this._replies, aReplies));
+        }
+        this._replies = aReplies;
+        if (aReplies.length != 0)
+            this._OnAfterSetReply();
+        else
+            editor.sync_RemoveComment(this.GetId());
+    };
+    CAnnotationFreeText.prototype.GetAscCommentData = function() {
+        let oAscCommData = new Asc["asc_CCommentDataWord"](null);
+        if (this._replies.length == 0)
+            return oAscCommData;
+
+        let oMainComm = this._replies[0];
+        oAscCommData.asc_putText(oMainComm.GetContents());
+        oAscCommData.asc_putOnlyOfficeTime(oMainComm.GetModDate().toString());
+        oAscCommData.asc_putUserId(editor.documentUserId);
+        oAscCommData.asc_putUserName(oMainComm.GetAuthor());
+        oAscCommData.asc_putSolved(false);
+        oAscCommData.asc_putQuoteText("");
+        oAscCommData.m_sUserData = oMainComm.GetApIdx();
+
+        this._replies.forEach(function(reply, index) {
+            if (index == 0)
+                return;
+            
+            oAscCommData.m_aReplies.push(reply.GetAscCommentData());
+        });
+
+        return oAscCommData;
+    };
     CAnnotationFreeText.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
@@ -208,9 +274,9 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
 
-        let oReply = this.GetReply();
-        if (oReply)
-            oReply.WriteToBinary(memory);
+        this._replies.forEach(function(reply) {
+            reply.WriteToBinary(memory); 
+        });
     };
 
     function TurnOffHistory() {

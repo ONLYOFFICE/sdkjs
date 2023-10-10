@@ -118,9 +118,6 @@
             this.content.YLimit = this._oldContentPos.YLimit   = 20000;
             this.content.Recalculate_Page(0, true);
         }
-        // else if (this.IsNeedRecalc()) {
-        //     this.content.Recalculate_Page(0, false);
-        // }
     };
     
     CAnnotationSquare.prototype.SetDrawing = function(oDrawing) {
@@ -163,9 +160,9 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
 
-        let oReply = this.GetReply();
-        if (oReply)
-            oReply.WriteToBinary(memory);
+        this._replies.forEach(function(reply) {
+            reply.WriteToBinary(memory); 
+        });
     };
 
     function TurnOffHistory() {

@@ -92,6 +92,7 @@
         oReply.SetReplyTo(this.GetReplyTo() || this);
 
         oReply.SetApIdx(this.GetDocument().GetMaxApIdx() + 2);
+        CommentData.m_sUserData = oReply.GetApIdx();
 
         this._replies.push(oReply);
     };
@@ -257,57 +258,41 @@
         editor.sync_ShowComment([this.GetId()], oPos["X"], oPos["Y"])
     };
 
-    CAnnotationText.prototype.GetAscCommentData = function() {
-        let oAscCommData = new Asc["asc_CCommentDataWord"](null);
-        oAscCommData.asc_putText(this.GetContents());
-        oAscCommData.asc_putOnlyOfficeTime(this.GetModDate().toString());
-        oAscCommData.asc_putUserId(editor.documentUserId);
-        oAscCommData.asc_putUserName(this.GetAuthor());
-        oAscCommData.asc_putSolved(false);
-        oAscCommData.asc_putQuoteText("");
-        oAscCommData.m_sUserData = this.GetApIdx();
-
-        this._replies.forEach(function(reply) {
-            oAscCommData.m_aReplies.push(reply.GetAscCommentData());
-        });
-
-        return oAscCommData;
-    };
     CAnnotationText.prototype.IsComment = function() {
         return true;
     };
-    CAnnotationText.prototype.EditCommentData = function(oCommentData) {
-        this.SetContents(oCommentData.m_sText);
-        this.SetModDate(oCommentData.m_sOOTime);
+    // CAnnotationText.prototype.EditCommentData = function(oCommentData) {
+    //     this.SetContents(oCommentData.m_sText);
+    //     this.SetModDate(oCommentData.m_sOOTime);
 
-        let aReplyToDel = [];
-        let oReply, oReplyCommentData;
-        for (let i = 0; i < this._replies.length; i++) {
-            oReply = this._replies[i];
+    //     let aReplyToDel = [];
+    //     let oReply, oReplyCommentData;
+    //     for (let i = 0; i < this._replies.length; i++) {
+    //         oReply = this._replies[i];
             
-            oReplyCommentData = oCommentData.m_aReplies.find(function(item) {
-                return item.m_sUserData == oReply.GetApIdx(); 
-            });
+    //         oReplyCommentData = oCommentData.m_aReplies.find(function(item) {
+    //             return item.m_sUserData == oReply.GetApIdx(); 
+    //         });
 
-            if (oReplyCommentData) {
-                oReply.EditCommentData(oReplyCommentData);
-            }
-            else {
-                aReplyToDel.push(oReply);
-            }
-        }
+    //         if (oReplyCommentData) {
+    //             oReply.EditCommentData(oReplyCommentData);
+    //         }
+    //         else {
+    //             aReplyToDel.push(oReply);
+    //         }
+    //     }
 
-        for (let i = aReplyToDel.length - 1; i > 0; i--) {
-            this._replies.splice(this._replies.indexOf(aReplyToDel[i]), 1);
-        }
+    //     for (let i = aReplyToDel.length - 1; i > 0; i--) {
+    //         this._replies.splice(this._replies.indexOf(aReplyToDel[i]), 1);
+    //     }
 
-        for (let i = 0; i < oCommentData.m_aReplies.length; i++) {
-            oReplyCommentData = oCommentData.m_aReplies[i];
-            if (!oReplyCommentData.m_sUserData) {
-                this.AddReply(oReplyCommentData);
-            }
-        }
-    };
+    //     for (let i = 0; i < oCommentData.m_aReplies.length; i++) {
+    //         oReplyCommentData = oCommentData.m_aReplies[i];
+    //         if (!oReplyCommentData.m_sUserData) {
+    //             this.AddReply(oReplyCommentData);
+    //         }
+    //     }
+    // };
     CAnnotationText.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 

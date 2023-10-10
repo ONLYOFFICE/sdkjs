@@ -854,9 +854,9 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
 
-        let oReply = this.GetReply();
-        if (oReply)
-            oReply.WriteToBinary(memory);
+        this._replies.forEach(function(reply) {
+            reply.WriteToBinary(memory); 
+        });
     };
 
     function generateShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {

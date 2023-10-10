@@ -1261,7 +1261,7 @@
 			}
 
 			for (let apIdx in oAnnotsMap) {
-				if (oAnnotsMap[apIdx] instanceof AscPDF.CAnnotationText || oAnnotsMap[apIdx].GetReply() instanceof AscPDF.CAnnotationText)
+				if (oAnnotsMap[apIdx] instanceof AscPDF.CAnnotationText || oAnnotsMap[apIdx].GetReply(0) instanceof AscPDF.CAnnotationText)
 					oAnnotsMap[apIdx]._OnAfterSetReply();
 			}
 			this.IsOpenAnnotsInProgress = false;

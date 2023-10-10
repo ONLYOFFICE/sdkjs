@@ -81,7 +81,7 @@
         this._rectDiff              = undefined;
         this._popupIdx              = undefined;
 
-        this._reply                 = undefined; // тут будут храниться ответы (text аннотация)
+        this._replies               = []; // тут будут храниться ответы (text аннотации)
 
         // internal
         this._bDrawFromStream   = false; // нужно ли рисовать из стрима
@@ -466,6 +466,7 @@
 
         return true;
     };
+
     
     CAnnotationBase.prototype.GetRect = function() {
         return this._rect;
@@ -554,18 +555,13 @@
         oReply.SetReplyTo(this);
         oReply.SetApIdx(this.GetDocument().GetMaxApIdx() + 2);
         
-        if (this.IsComment())
-            this._replies.push(oReply);
-        else {
-            if (this._reply == null)
-                this._reply = oReply;
-            else
-                this._reply._replies.push(oReply);
-        }
+        this._replies.push(oReply);
     };
     CAnnotationBase.prototype._OnAfterSetReply = function() {
-        let oAscCommData = this.IsComment() ? this.GetAscCommentData() : this._reply.GetAscCommentData();
-        editor.sendEvent("asc_onAddComment", this.GetId(), oAscCommData);
+        if (this.IsInDocument()) {
+            let oAscCommData = this.GetAscCommentData();
+            editor.sendEvent("asc_onAddComment", this.GetId(), oAscCommData);
+        }
     };
     CAnnotationBase.prototype.SetContents = function(contents) {
         if (this.GetContents() == contents)
@@ -578,30 +574,111 @@
         this._contents  = contents;
         
         if (oDoc.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
-            oDoc.CreateNewHistoryPoint();
             oDoc.History.Add(new CChangesPDFAnnotContents(this, oCurContents, contents));
-            oDoc.TurnOffHistory();
         }
         
         this.SetWasChanged(true);
+        if (contents != null)
+            this._OnAfterSetReply();
+        else if (this.IsInDocument())
+            editor.sync_RemoveComment(this.GetId());
     };
     CAnnotationBase.prototype.AddReply = function(oReply) {
-        this._reply = oReply;
-        oReply.SetReplyTo(this);
-        this._OnAfterSetReply();
+        let oDoc = this.GetDocument();
+
+        oDoc.CreateNewHistoryPoint();
+        if (this._replies.length == 0) {
+            this.SetContents(oReply.GetContents());
+        }
+        else {
+            oReply.SetReplyTo(this);
+            let aNewReplies = [].concat(this._replies);
+            aNewReplies.push(oReply);
+            this.SetReplies(aNewReplies);
+        }
+        
+        oDoc.TurnOffHistory();
     };
-    CAnnotationBase.prototype.GetReply = function() {
-        return this._reply;
+    CAnnotationBase.prototype.SetReplies = function(aReplies) {
+        let oDoc = this.GetDocument();
+        let oViewer = editor.getDocumentRenderer();
+
+        if (oDoc.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
+            oDoc.History.Add(new CChangesPDFAnnotReplies(this, this._replies, aReplies));
+        }
+        this._replies = aReplies;
+    };
+    CAnnotationBase.prototype.GetReply = function(nPos) {
+        return this._replies[nPos];
+    };
+    CAnnotationBase.prototype.RemoveComment = function() {
+        let oDoc = this.GetDocument();
+
+        oDoc.CreateNewHistoryPoint();
+        this.SetContents(null);
+        this.SetReplies([]);
+        oDoc.TurnOffHistory();
+    };
+    CAnnotationBase.prototype.EditCommentData = function(oCommentData) {
+        let oFirstCommToEdit;
+        if (this.GetApIdx() == oCommentData.m_sUserData)
+            oFirstCommToEdit = this;
+        else {
+            oFirstCommToEdit = this._replies.find(function(oReply) {
+                return oCommentData.m_sUserData == oReply.GetApIdx(); 
+            });
+        }
+        
+        oFirstCommToEdit.SetContents(oCommentData.m_sText);
+        oFirstCommToEdit.SetModDate(oCommentData.m_sOOTime);
+
+        let aReplyToDel = [];
+        let oReply, oReplyCommentData;
+        for (let i = 0; i < this._replies.length; i++) {
+            oReply = this._replies[i];
+            if (oFirstCommToEdit == oReply)
+                continue;
+            
+            oReplyCommentData = oCommentData.m_aReplies.find(function(item) {
+                return item.m_sUserData == oReply.GetApIdx(); 
+            });
+
+            if (oReplyCommentData) {
+                oReply.EditCommentData(oReplyCommentData);
+            }
+            else {
+                aReplyToDel.push(oReply);
+            }
+        }
+
+        for (let i = aReplyToDel.length - 1; i >= 0; i--) {
+            this._replies.splice(this._replies.indexOf(aReplyToDel[i]), 1);
+        }
+
+        for (let i = 0; i < oCommentData.m_aReplies.length; i++) {
+            oReplyCommentData = oCommentData.m_aReplies[i];
+            if (!this._replies.find(function(reply) {
+                return oReplyCommentData.m_sUserData == reply.GetApIdx();
+            })) {
+                AscPDF.CAnnotationText.prototype.AddReply.call(this, oReplyCommentData);
+            }
+        }
     };
     CAnnotationBase.prototype.GetAscCommentData = function() {
-        if (this._reply)
-            return this._reply.GetAscCommentData();
+        let oAscCommData = new Asc["asc_CCommentDataWord"](null);
+        oAscCommData.asc_putText(this.GetContents());
+        oAscCommData.asc_putOnlyOfficeTime(this.GetModDate().toString());
+        oAscCommData.asc_putUserId(editor.documentUserId);
+        oAscCommData.asc_putUserName(this.GetAuthor());
+        oAscCommData.asc_putSolved(false);
+        oAscCommData.asc_putQuoteText("");
+        oAscCommData.m_sUserData = this.GetApIdx();
 
-        return null;
-    };
-    CAnnotationBase.prototype.EditCommentData = function(CommentData) {
-        if (this._reply)
-            this._reply.EditCommentData(CommentData);
+        this._replies.forEach(function(reply) {
+            oAscCommData.m_aReplies.push(reply.GetAscCommentData());
+        });
+
+        return oAscCommData;
     };
     CAnnotationBase.prototype.GetContents = function() {
         return this._contents;
