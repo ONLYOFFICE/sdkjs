@@ -2497,12 +2497,16 @@ function (window, undefined) {
 			} else if (!from && to) { //добавление
 				externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
 				if (externalReferenceIndex !== null) {
-					wb.externalReferences.splice(externalReferenceIndex - 1, 1);
+					wb._removeExternalReference(externalReferenceIndex - 1);
 				}
 			} else if (from && to) { //изменение
 				//TODO нужно сохранить ссылки на текущий лист
 				externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
+
 				if (externalReferenceIndex !== null) {
+					from.worksheets = wb.externalReferences[externalReferenceIndex - 1].worksheets;
+					from.initWorksheetsFromSheetDataSet();
+					from.putToChangedCells();
 					wb.externalReferences[externalReferenceIndex - 1] = from;
 				}
 			}
@@ -3241,7 +3245,7 @@ function (window, undefined) {
 				pivot.replaceSlicersPivotCacheDefinition(oldPivot.cacheDefinition, pivot.cacheDefinition);
 			}
 			ws.deletePivotTable(Data.pivot);
-			ws.insertPivotTable(pivot, false, true);
+			ws.insertPivotTable(pivot, false, false);
 		} else if (AscCH.historyitem_Worksheet_PivotReplaceKeepRecords === Type) {
 			var data = bUndo ? Data.from : Data.to;
 			var pivot = data.getData();
@@ -3866,6 +3870,12 @@ function (window, undefined) {
 				break;
 			case AscCH.historyitem_Layout_FirstPageNumber:
 				pageSetup.asc_setFirstPageNumber(value);
+				break;
+			case AscCH.historyitem_Layout_HorizontalCentered:
+				pageOptions.asc_setHorizontalCentered(value);
+				break;
+			case AscCH.historyitem_Layout_VerticalCentered:
+				pageOptions.asc_setVerticalCentered(value);
 				break;
 		}
 

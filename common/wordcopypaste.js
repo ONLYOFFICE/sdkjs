@@ -5196,6 +5196,12 @@ PasteProcessor.prototype =
 					}
 					oPasteHelper.Paste_Process_End();
 				}
+
+				if (false === oThis.bNested) {
+					if (oThis.pasteCallback) {
+						oThis.pasteCallback();
+					}
+				}
 			};
 			if (oPresentation.GetSlidesCount() === 0) {
 				oPresentation.addNextSlide();

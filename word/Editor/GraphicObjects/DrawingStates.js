@@ -526,7 +526,8 @@ MoveInlineObject.prototype =
     onMouseUp: function(e, x,y,pageIndex)
     {
         var check_paragraphs = [];
-
+	    const bIsMac = AscCommon.AscBrowser.isMacOs;
+	    const bIsCopyKey = bIsMac ? e.AltKey : e.CtrlKey;
 		if (this.majorObject.parent.CanInsertToPos(this.InlinePos))
 		{
 			var oDstRun = null;
@@ -585,7 +586,7 @@ MoveInlineObject.prototype =
 					this.drawingObjects.document.FinalizeAction();
 				}
 			}
-			else if(!e.CtrlKey)
+			else if(!bIsCopyKey)
 			{
 				var arrCheckTypes = [];
 
@@ -749,7 +750,9 @@ RotateState.prototype =
                 {
                     var aCheckParagraphs = [], aNearestPos = [], aParentParagraphs = [], aBounds = [], aDrawings = [], bMoveState = (this instanceof MoveState), nearest_pos;
                     var i, j, page_index, para_drawing;
-                    for(i = 0; i < this.drawingObjects.arrTrackObjects.length; ++i)
+										const bIsMac = AscCommon.AscBrowser.isMacOs;
+	                const bIsCopyKey = bIsMac ? e.AltKey : e.CtrlKey;
+	                for(i = 0; i < this.drawingObjects.arrTrackObjects.length; ++i)
                     {
                         aDrawings[i] = this.drawingObjects.arrTrackObjects[i].originalObject.parent;
                         bounds = this.drawingObjects.arrTrackObjects[i].getBounds();
@@ -759,7 +762,7 @@ RotateState.prototype =
                         aNearestPos.push(nearest_pos);
                         aParentParagraphs.push(aDrawings[i].Get_ParentParagraph());
                     }
-                    if(bMoveState && e.CtrlKey && !this.drawingObjects.selection.cropSelection)
+                    if(bMoveState && bIsCopyKey && !this.drawingObjects.selection.cropSelection)
                     {
                         for(i = 0; i < aNearestPos.length; ++i)
                         {
@@ -1467,7 +1470,9 @@ MoveInGroupState.prototype =
 			this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_MoveInGroup);
             var i;
             var tracks = this.drawingObjects.arrTrackObjects;
-            if(this instanceof MoveInGroupState && e.CtrlKey && !this.hasObjectInSmartArt)
+						const bIsMac = AscCommon.AscBrowser.isMacOs;
+						const bIsCopyKey = bIsMac ? e.AltKey : e.CtrlKey;
+            if(this instanceof MoveInGroupState && bIsCopyKey && !this.hasObjectInSmartArt)
             {
                 this.group.resetSelection();
                 for(i = 0; i < tracks.length; ++i)

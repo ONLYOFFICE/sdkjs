@@ -6123,6 +6123,18 @@ StyleManager.prototype =
 	};
 	Hyperlink.prototype.getHyperlinkType = function () {
 		return null !== this.Hyperlink ? Asc.c_oAscHyperlinkType.WebLink : Asc.c_oAscHyperlinkType.RangeLink;
+
+		//for local file
+		/*var res = null;
+		if (null !== this.Hyperlink) {
+			//либо гиперссылка, либо ссылка на локальный файл(отдельное поле не стал заводить, все будет в Hyperlink)
+			if (XRegExp.exec(this.Hyperlink, new XRegExp("([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?"))) {
+				res = Asc.c_oAscHyperlinkType.FileLink;
+			} else {
+				res = Asc.c_oAscHyperlinkType.WebLink;
+			}
+		}
+		return null !== res ? res : Asc.c_oAscHyperlinkType.RangeLink;*/
 	};
 	Hyperlink.prototype.getType = function () {
 		return UndoRedoDataTypes.Hyperlink;
@@ -12674,37 +12686,6 @@ QueryTableField.prototype.clone = function() {
 	return res;
 };
 
-
-	if (typeof Map === 'undefined') {
-		(function() {
-			var Map = function() {
-				this.storage = {};
-			};
-			Map.prototype = {
-				set: function(key, value) {
-					this.storage[key] = value;
-				},
-				get: function(key) {
-					return this.storage[key];
-				},
-				delete: function(key) {
-					delete this.storage[key];
-				},
-				has: function(key) {
-					return !!this.storage[key];
-				},
-				forEach: function(callback, context) {
-					for (var i in this.storage) {
-						if (this.storage.hasOwnProperty(i)) {
-							callback.call(context, this.storage[i], i, this);
-						}
-					}
-				}
-			};
-
-			window.Map = Map;
-		})();
-	}
 	/**
 	 * @constructor
 	 * @memberOf AscCommonExcel
@@ -13150,6 +13131,10 @@ QueryTableField.prototype.clone = function() {
 		this.pageSetup = new asc_CPageSetup(ws);
 		this.gridLines = null;
 		this.headings = null;
+		this.gridLinesSet = null;
+		this.horizontalCentered = null;
+		this.verticalCentered = null;
+
 		this.ws = ws;
 
 		//только для передачи из интефейса
@@ -13167,10 +13152,13 @@ QueryTableField.prototype.clone = function() {
 			this.headings = c_oAscPrintDefaultSettings.PageHeadings;
 	};
 	asc_CPageOptions.prototype.getJson = function (ws) {
-		var res = {};
+		let res = {};
 
 		res["gridLines"] = this.gridLines;
 		res["headings"] = this.headings;
+		res["gridLinesSet"] = this.gridLinesSet;
+		res["horizontalCentered"] = this.horizontalCentered;
+		res["verticalCentered"] = this.verticalCentered;
 		res["pageMargins"] = {};
 		res["pageMargins"]["bottom"] = this.pageMargins.bottom;
 		res["pageMargins"]["footer"] = this.pageMargins.footer;
@@ -13224,6 +13212,10 @@ QueryTableField.prototype.clone = function() {
 	asc_CPageOptions.prototype.setJson = function (props) {
 		this.gridLines = props["gridLines"];
 		this.headings = props["headings"];
+		this.gridLinesSet = props["gridLinesSet"];
+		this.horizontalCentered = props["horizontalCentered"];
+		this.horizontalCentered = props["horizontalCentered"];
+		this.verticalCentered = props["verticalCentered"];
 
 		this.pageMargins.bottom = props["pageMargins"]["bottom"];
 		this.pageMargins.footer = props["pageMargins"]["footer"];
@@ -13279,17 +13271,17 @@ QueryTableField.prototype.clone = function() {
 		this.printTitlesWidth = null;
 		this.printTitlesHeight = null;
 
-		var printTitles = this.ws.workbook.getDefinesNames("Print_Titles", this.ws.getId());
-		var c1, c2, r1, r2;
-		var t = this;
+		let printTitles = this.ws.workbook.getDefinesNames("Print_Titles", this.ws.getId());
+		let c1, c2, r1, r2;
+		let t = this;
 		if (printTitles) {
-			var printTitleRefs;
+			let printTitleRefs;
 			AscCommonExcel.executeInR1C1Mode(false, function () {
 				printTitleRefs = AscCommonExcel.getRangeByRef(printTitles.ref, t.ws, true, true)
 			});
 			if (printTitleRefs && printTitleRefs.length) {
-				for (var i = 0; i < printTitleRefs.length; i++) {
-					var bbox = printTitleRefs[i].bbox;
+				for (let i = 0; i < printTitleRefs.length; i++) {
+					let bbox = printTitleRefs[i].bbox;
 					if (bbox) {
 						if (Asc.c_oAscSelectionType.RangeCol === bbox.getType()) {
 							c1 = bbox.c1;
@@ -13310,12 +13302,15 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 	asc_CPageOptions.prototype.clone = function (ws) {
-		var res = new asc_CPageOptions(ws);
+		let res = new asc_CPageOptions(ws);
 
 		res.pageMargins = this.pageMargins.clone(ws);
 		res.pageSetup = this.pageSetup.clone(ws);
 		res.gridLines = this.gridLines;
 		res.headings = this.headings;
+		res.gridLinesSet = this.gridLinesSet;
+		res.horizontalCentered = this.horizontalCentered;
+		res.verticalCentered = this.verticalCentered;
 
 		return res;
 	};
@@ -13323,12 +13318,15 @@ QueryTableField.prototype.clone = function() {
 	asc_CPageOptions.prototype.asc_getPageSetup = function () { return this.pageSetup; };
 	asc_CPageOptions.prototype.asc_getGridLines = function () { return this.gridLines; };
 	asc_CPageOptions.prototype.asc_getHeadings = function () { return this.headings; };
+	asc_CPageOptions.prototype.asc_getGridLinesSet = function () { return this.gridLinesSet; };
+	asc_CPageOptions.prototype.asc_getHorizontalCentered = function () { return this.horizontalCentered; };
+	asc_CPageOptions.prototype.asc_getVerticalCentered = function () { return this.verticalCentered; };
 	//методы только для меню, без добавляем в историю
 	asc_CPageOptions.prototype.asc_setPageMargins = function (val) { this.pageMargins = val; };
 	asc_CPageOptions.prototype.asc_setPageSetup = function (val) { this.pageSetup = val; };
 
 	asc_CPageOptions.prototype.asc_setGridLines = function (newVal) {
-		var oldVal = this.gridLines;
+		let oldVal = this.gridLines;
 		this.gridLines = newVal;
 		if (this.ws && History.Is_On() && oldVal !== this.gridLines) {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_GridLines, this.ws.getId(),
@@ -13336,21 +13334,57 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 	asc_CPageOptions.prototype.asc_setHeadings = function (newVal) {
-		var oldVal = this.headings;
+		let oldVal = this.headings;
 		this.headings = newVal;
 		if (this.ws && History.Is_On() && oldVal !== this.headings) {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Headings, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
 	};
+	asc_CPageOptions.prototype.asc_setHorizontalCentered = function (newVal) {
+		let oldVal = this.horizontalCentered;
+		this.horizontalCentered = newVal;
+		if (this.ws && History.Is_On() && oldVal !== this.horizontalCentered) {
+			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_HorizontalCentered, this.ws.getId(),
+				null, new UndoRedoData_Layout(oldVal, newVal));
+		}
+	};
+	asc_CPageOptions.prototype.asc_setVerticalCentered = function (newVal) {
+		let oldVal = this.verticalCentered;
+		this.verticalCentered = newVal;
+		if (this.ws && History.Is_On() && oldVal !== this.verticalCentered) {
+			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_VerticalCentered, this.ws.getId(),
+				null, new UndoRedoData_Layout(oldVal, newVal));
+		}
+	};
+	asc_CPageOptions.prototype.asc_setGridLinesSet = function (newVal) {
+		/*let oldVal = this.verticalCentered;
+		this.verticalCentered = newVal;
+		if (this.ws && History.Is_On() && oldVal !== this.verticalCentered) {
+			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_VerticalCentered, this.ws.getId(),
+				null, new UndoRedoData_Layout(oldVal, newVal));
+		}*/
+	};
 	asc_CPageOptions.prototype.asc_setOptions = function (obj) {
-		var gridLines = obj.asc_getGridLines();
+		let gridLines = obj.asc_getGridLines();
 		if(gridLines !== this.asc_getGridLines()) {
 			this.asc_setGridLines(gridLines);
 		}
-		var heading = obj.asc_getHeadings();
+		let heading = obj.asc_getHeadings();
 		if(heading !== this.asc_getHeadings()) {
 			this.asc_setHeadings(heading);
+		}
+		let gridLinesSet = obj.asc_getGridLinesSet();
+		if(gridLinesSet !== this.asc_getGridLinesSet()) {
+			this.asc_setGridLinesSet(gridLinesSet);
+		}
+		let horizontalCentered = obj.asc_getHorizontalCentered();
+		if(horizontalCentered !== this.asc_getHorizontalCentered()) {
+			this.asc_setHorizontalCentered(horizontalCentered);
+		}
+		let verticalCentered = obj.asc_getVerticalCentered();
+		if(verticalCentered !== this.asc_getVerticalCentered()) {
+			this.asc_setVerticalCentered(verticalCentered);
 		}
 
 		this.asc_getPageMargins().asc_setOptions(obj.asc_getPageMargins());
@@ -14768,6 +14802,15 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
+	ExternalReference.prototype.putToChangedCells = function () {
+		for (let i in this.SheetDataSet) {
+			if (this.SheetDataSet.hasOwnProperty(i)) {
+				let sheetName = this.SheetNames && this.SheetNames[this.SheetDataSet[i].SheetId];
+				this.SheetDataSet[i].putToChangedCells(this.worksheets && this.worksheets[sheetName]);
+			}
+		}
+	};
+
 	//TODO внешние источники данных, как в файле из бага https://bugzilla.onlyoffice.com/show_bug.cgi?id=38646
 
 	ExternalReference.prototype.getAscLink = function () {
@@ -15172,6 +15215,30 @@ QueryTableField.prototype.clone = function() {
 			}
 		}
 		return isChanged;
+	};
+
+	ExternalSheetDataSet.prototype.putToChangedCells = function(sheet) {
+		if (!sheet) {
+			return;
+		}
+		for (var i = 0; i < this.Row.length; i++) {
+			var row = this.Row[i];
+			if (!row) {
+				continue;
+			}
+			for (var j = 0; j < this.Row[i].Cell.length; j++) {
+				var externalCell = this.Row[i].Cell[j];
+				if (!externalCell) {
+					continue;
+				}
+				var range = sheet.getRange2(externalCell.Ref);
+				range._foreach(function (cell) {
+					var api_sheet = Asc['editor'];
+					var wb = api_sheet.wbModel;
+					wb.dependencyFormulas.addToChangedCell(cell);
+				});
+			}
+		}
 	};
 
 	ExternalSheetDataSet.prototype.getRow = function(index, needGenerateRow) {

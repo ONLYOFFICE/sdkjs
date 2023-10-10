@@ -279,11 +279,34 @@
 	/**
 	 * Class representing a comment.
 	 * @constructor
-	 * @property {string} Text - Returns the text from the first cell in range.
+	 * @property {string} Text - Returns or sets the comment text.
+	 * @property {string} Id - Returns the current comment ID.
+	 * @property {string} AuthorName - Returns or sets the comment author's name.
+	 * @property {string} UserId - Returns or sets the user ID of the comment author.
+	 * @property {boolean} Solved - Checks if a comment is solved or not or marks a comment as solved.
+	 * @property {number | string} TimeUTC - Returns or sets the timestamp of the comment creation in UTC format.
+	 * @property {number | string} Time - Returns or sets the timestamp of the comment creation in the current time zone format.
+	 * @property {string} QuoteText - Returns the quote text of the current comment.
+	 * @property {Number} RepliesCount - Returns a number of the comment replies.
 	 */
 	function ApiComment(comment, wb) {
-		this.Comment = comment;
+		this.Comment = comment.clone();
 		this.WB = wb;
+	}
+
+	/**
+	 * Class representing a comment reply.
+	 * @constructor
+	 * @property {string} Text - Returns or sets the comment reply text.
+	 * @property {string} AuthorName - Returns or sets the comment reply author's name.
+	 * @property {string} UserId - Returns or sets the user ID of the comment reply author.
+	 * @property {number | string} TimeUTC - Returns or sets the timestamp of the comment reply creation in UTC format.
+	 * @property {number | string} Time - Returns or sets the timestamp of the comment reply creation in the current time zone format.
+	 */
+	function ApiCommentReply(oParentComm, oCommentReply)
+	{
+		this.Comment = oParentComm;
+		this.Data = oCommentReply;
 	}
 
 	/**
@@ -588,16 +611,12 @@
 	 * Returns an object that represents the range of the specified sheet using the maximum and minimum row/column coordinates.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiWorksheet} ws - The sheet where the specified range is represented.
-	 * @param {number} r1 - The minimum row number of the specified range.
-	 * @param {number} c1 - The minimum column number of the specified range.
-	 * @param {number} r2 - The maximum row number of the specified range.
-	 * @param {number} c2 - The maximum column number of the specified range.
-	 * @param {ApiAreas} areas - A collection of the ranges from the specified range.
+	 * @param {Range} range - The internal Range class (not a ApiRange). For more details see any new ApiRange.
+	 * @param {[Range]} areas - A collection of the ranges (not a ApiRange) from the specified range. For more details see any new ApiRange.
 	 * @returns {ApiRange}
 	 */
-	Api.prototype.GetRangeByNumber = function(ws, r1, c1, r2, c2, areas) {
-		return new ApiRange( (ws ? ws.getRange3(r1, c1, r2, c2) : null), areas);
+	Api.prototype.private_GetRange = function(range, areas) {
+		return new ApiRange(range, areas);
 	};
 
 	/**
@@ -821,6 +840,48 @@
 	 * Returns an array of ApiComment objects.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
+	 * @param {string} sText - The comment text.
+	 * @param {string} sAuthor - The author's name (optional).
+	 * @returns {ApiComment | null}
+	 * @since 7.5.0
+	 */
+	Api.prototype.AddComment = function(sText, sAuthor) {
+		let result = null;
+		let isValidData = typeof(sText) === 'string' && sText.trim() !== '';
+		if (isValidData) {
+			var comment = new Asc.asc_CCommentData();
+			comment.asc_putText(sText);
+			let author = ( (typeof(sAuthor) === 'string' && sAuthor.trim() !== '') ? sAuthor : Asc['editor'].User.asc_getUserName());
+			comment.asc_putUserName(author);
+			// todo проверить как в документа добавлются (надо ли выставлять этот параметр)
+			// comment.asc_putUserId(Asc['editor'].User.asc_getId());
+			comment.asc_putDocumentFlag(true);
+			this.asc_addComment(comment);
+			result = new ApiComment(comment, Asc['editor'].wb);
+		}
+
+		return result;
+	};
+
+	/**
+	 * Returns a comment from the current document by its ID.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sId - The comment ID.
+	 * @returns {?ApiComment}
+	 */
+	Api.prototype.GetCommentById = function(sId) {
+		let comment = this.asc_findComment(sId);
+		if (!comment)
+			comment = this.wb.cellCommentator.findComment(sId);
+
+		return comment ? new ApiComment(comment, Asc['editor'].wb) : null;
+	};
+
+	/**
+	 * Returns an array of ApiComment objects.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
 	 * @returns {ApiComment[]}
 	 */
 	Api.prototype.GetComments = function () {
@@ -885,8 +946,12 @@
 	 * @returns {ApiRange}
 	 */
 	ApiWorksheet.prototype.GetActiveCell = function () {
-		var cell = this.worksheet.selectionRange.activeCell;
-		return new ApiRange(this.worksheet.getCell3(cell.row, cell.col));
+		let cell = this.worksheet.getCell3(this.worksheet.selectionRange.activeCell.row, this.worksheet.selectionRange.activeCell.col);
+		let merged = cell.hasMerged();
+		if (merged)
+			cell = this.worksheet.getCell3(merged.r1, merged.c1);
+
+		return new ApiRange(cell);
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "ActiveCell", {
 		get: function () {
@@ -1065,12 +1130,14 @@
 	 * @param {string} sName - The name which will be displayed for the current sheet at the sheet tab.
 	 */
 	ApiWorksheet.prototype.SetName = function (sName) {
-		var sOldName = this.worksheet.getName();
+		let sOldName = this.worksheet.getName();
 		this.worksheet.setName(sName);
-		var oWorkbook = this.worksheet.workbook;
-		if(oWorkbook) {
-			oWorkbook.handleChartsOnChangeSheetName(this.worksheet, sOldName, sName)
-		}
+		// let oWorkbookView = this.worksheet.workbook.oApi.wb;
+		// it's temporary solution (we should use oWorkbookView instead of oWorkbook)
+		let oWorkbook = this.worksheet.workbook;
+		oWorkbook.oApi.sheetsChanged();
+		if(oWorkbook)
+			oWorkbook.handleChartsOnChangeSheetName(this.worksheet, sOldName, sName);
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "Name", {
 		get: function () {
@@ -1450,7 +1517,7 @@
 	 * @returns {boolean} - returns false if sName or sRef are invalid.
 	 */
 	ApiWorksheet.prototype.AddDefName = function (sName, sRef, isHidden) {
-		return private_AddDefName(this.worksheet.workbook, sName, sRef, this.worksheet.getId(), isHidden);
+		return private_AddDefName(this.worksheet.workbook, sName, sRef, this.worksheet.getIndex(), isHidden);
 	};
 
 	Object.defineProperty(ApiWorksheet.prototype, "DefNames", {
@@ -2239,6 +2306,10 @@
 								value = AscCommon.cErrorLocal["na"];
 
 							let cell = this.range.worksheet.getRange3( (bbox.r1 + indR), (bbox.c1 + indC), (bbox.r1 + indR), (bbox.c1 + indC) );
+							let merged = cell.hasMerged();
+							if (merged)
+								cell = this.range.worksheet.getRange3(merged.r1, merged.c1, merged.r1, merged.c1);
+
 							value = checkFormat(value.toString());
 							cell.setValue(value.toString());
 							if (value.type === AscCommonExcel.cElementType.number)
@@ -2252,12 +2323,17 @@
 			}
 		}
 		data = checkFormat(data || 0);
-		this.range.setValue(data.toString());
-		if (data.type === AscCommonExcel.cElementType.number)
-			this.SetNumberFormat(AscCommon.getShortDateFormat());
+		let range = this.range;
+		let merged = range.hasMerged();
+		if (merged)
+			range = this.range.worksheet.getRange3(merged.r1, merged.c1, merged.r1, merged.c1);
 
-		worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [this.range.bbox], true);
-		worksheet.workbook.oApi.onWorksheetChange(this.range.bbox);
+		range.setValue(data.toString());
+		if (data.type === AscCommonExcel.cElementType.number)
+			range.setNumFormat(AscCommon.getShortDateFormat());
+
+		worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [range.bbox], true);
+		worksheet.workbook.oApi.onWorksheetChange(range.bbox);
 		return true;
 	};
 
@@ -2921,22 +2997,29 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sText - The comment text.
-	 * @returns {boolean} - returns false if comment can't be added.
+	 * @param {string} sAuthor - The author's name (optional).
+	 * @returns {ApiComment | null} - returns false if comment can't be added.
 	 */
-	ApiRange.prototype.AddComment = function (sText) {
-		var ws = Asc['editor'].wb.getWorksheet(this.range.getWorksheet().getIndex());
-		if (ws) {
+	ApiRange.prototype.AddComment = function (sText, sAuthor) {
+		let result = null;
+		let ws = Asc['editor'].wb.getWorksheet(this.range.getWorksheet().getIndex());
+		let isValidData = typeof(sText) === 'string' && sText.trim() !== '';
+		if (ws && isValidData) {
 			var comment = new Asc.asc_CCommentData();
-			comment.sText = sText;
-			comment.nCol = this.range.bbox.c1;
-			comment.nRow = this.range.bbox.r1;
-			comment.bDocument = false;
+			comment.asc_putText(sText);
+			let author = ( (typeof(sAuthor) === 'string' && sAuthor.trim() !== '') ? sAuthor : Asc['editor'].User.asc_getUserName());
+			comment.asc_putUserName(author);
+			// todo проверить как в документа добавлются (надо ли выставлять этот параметр)
+			// comment.asc_putUserId(Asc['editor'].User.asc_getId());
+			comment.asc_putCol(this.range.bbox.c1);
+			comment.asc_putRow(this.range.bbox.r1);
+			comment.asc_putDocumentFlag(false);
 			ws.cellCommentator.addComment(comment, true);
-
-			return true;
+			// Asc['editor'].wb.Api.asc_addComment(comment);
+			result = new ApiComment(comment, Asc['editor'].wb);
 		}
 
-		return false;
+		return result;
 	};
 
 	/**
@@ -4637,37 +4720,566 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
+	 * Returns a type of the ApiComment class.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {"comment"}
+	*/
+	ApiComment.prototype.GetClassType = function() {
+		return "comment";
+	};
+
+	/**
 	 * Returns the comment text.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
 	 */
-	ApiComment.prototype.GetText = function () {
+	ApiComment.prototype.GetText = function() {
 		return this.Comment.asc_getText();
 	};
+	
+	/**
+	 * Sets the comment text.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {string} text - New text for comment.
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.SetText = function(text) {
+		if (typeof text === 'string' && text.trim() !== '') {
+			this.Comment.asc_putText(text);
+			this.private_OnChange();
+		}
+	};
+
 	Object.defineProperty(ApiComment.prototype, "Text", {
-		get: function () {
+		get: function() {
 			return this.GetText();
+		},
+		set: function(text) {
+			return this.SetText(text);
 		}
 	});
+
+	/**
+	 * Returns the current comment ID.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.GetId = function() {		
+		return this.Comment.asc_getId();
+	};
+
+	Object.defineProperty(ApiComment.prototype, "Id", {
+		get: function() {
+			return this.GetId();
+		}
+	});
+
+	/**
+	 * Returns the comment author's name.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.GetAuthorName = function() {
+		return this.Comment.asc_getUserName();
+	};
+
+	/**
+	 * Sets the comment author's name.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sAuthorName - The comment author's name.
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.SetAuthorName = function(sAuthorName) {
+		this.Comment.asc_putUserName(sAuthorName);
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiComment.prototype, "AuthorName", {
+		get: function() {
+			return this.GetAuthorName();
+		},
+		set: function(sAuthorName) {
+			return this.SetAuthorName(sAuthorName);
+		}
+	});
+
+	/**
+	 * Returns the user ID of the comment author.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.GetUserId = function() {
+		return this.Comment.asc_getUserId();
+	};
+
+	/**
+	 * Sets the user ID to the comment author.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sUserId - The user ID of the comment author.
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.SetUserId = function(sUserId) {
+		this.Comment.asc_putUserId(sUserId);
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiComment.prototype, "UserId", {
+		get: function() {
+			return this.GetUserId();
+		},
+		set: function(sUserId) {
+			return this.SetUserId(sUserId);
+		}
+	});
+
+	/**
+	 * Checks if a comment is solved or not.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.IsSolved = function() {
+		return this.Comment.getSolved();
+	};
+
+	/**
+	 * Marks a comment as solved.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} bSolved - Specifies if a comment is solved or not.
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.SetSolved = function(bSolved) {
+		this.Comment.setSolved(bSolved);
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiComment.prototype, "Solved", {
+		get: function() {
+			return this.IsSolved();
+		},
+		set: function(bSolved) {
+			return this.SetSolved(bSolved);
+		}
+	});
+
+	/**
+	 * Returns the timestamp of the comment creation in UTC format.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {Number}
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.GetTimeUTC = function() {
+		let nTime = parseInt(this.Comment.asc_getOnlyOfficeTime());
+		if (isNaN(nTime))
+			return 0;
+		return nTime;
+	};
+
+	/**
+	 * Sets the timestamp of the comment creation in UTC format.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {Number | String} nTimeStamp - The timestamp of the comment creation in UTC format.
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.SetTimeUTC = function(timeStamp) {
+		let nTime = parseInt(timeStamp);
+		if (isNaN(nTime))
+			this.Comment.asc_putOnlyOfficeTime("0");
+		else
+			this.Comment.asc_putOnlyOfficeTime(String(nTime));
+
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiComment.prototype, "TimeUTC", {
+		get: function() {
+			return this.GetTimeUTC();
+		},
+		set: function(timeStamp) {
+			return this.SetTimeUTC(timeStamp);
+		}
+	});
+
+	/**
+	 * Returns the timestamp of the comment creation in the current time zone format.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {Number}
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.GetTime = function() {
+		let nTime = parseInt(this.Comment.asc_getTime());
+		if (isNaN(nTime))
+			return 0;
+		return nTime;
+	};
+
+	/**
+	 * Sets the timestamp of the comment creation in the current time zone format.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {Number | String} nTimeStamp - The timestamp of the comment creation in the current time zone format.
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.SetTime = function(timeStamp) {
+		let nTime = parseInt(timeStamp);
+		if (isNaN(nTime))
+			this.Comment.asc_putTime("0");
+		else
+			this.Comment.asc_putTime(String(nTime));
+		
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiComment.prototype, "Time", {
+		get: function() {
+			return this.GetTime();
+		},
+		set: function(timeStamp) {
+			return this.SetTime(timeStamp);
+		}
+	});
+
+	/**
+	 * Returns the quote text of the current comment.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {String | null}
+	 * @since 7.5.0
+	*/
+	ApiComment.prototype.GetQuoteText = function() {
+		let text = null;
+		let ws = this.WB.getWorksheetById(this.Comment.wsId);
+		if (!this.Comment.asc_getDocumentFlag() && ws)
+			text = ws._getRange(this.Comment.nCol, this.Comment.nRow, this.Comment.nCol, this.Comment.nRow).getValue();
+		
+		return text;
+	};
+
+	Object.defineProperty(ApiComment.prototype, "QuoteText", {
+		get: function () {
+			return this.GetQuoteText();
+		}
+	});
+
+	/**
+	 * Returns a number of the comment replies.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {Number?}
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.GetRepliesCount = function() {
+		return this.Comment.asc_getRepliesCount()
+	};
+
+	Object.defineProperty(ApiComment.prototype, "RepliesCount", {
+		get: function () {
+			return this.GetRepliesCount();
+		}
+	});
+
+	/**
+	 * Returns the specified comment reply.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {Number} [nIndex = 0] - The comment reply index.
+	 * @returns {ApiCommentReply?}
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.GetReply = function(nIndex) {
+		if (typeof(nIndex) != "number" || nIndex < 0 || nIndex >= this.GetRepliesCount())
+			nIndex = 0;
+			
+		let oReply = this.Comment.asc_getReply(nIndex);
+		if (!oReply)
+			return null;
+
+		return new ApiCommentReply(this, oReply);
+	};
+
+	/**
+	 * Adds a reply to a comment.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {String} sText - The comment reply text (required).
+	 * @param {String} sAuthorName - The name of the comment reply author (optional).
+	 * @param {String} sUserId - The user ID of the comment reply author (optional).
+	 * @param {Number} [nPos=this.GetRepliesCount()] - The comment reply position.
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.AddReply = function(sText, sAuthorName, sUserId, nPos) {
+		if (typeof(sText) !== "string" || sText.trim() === "")
+			return null;
+		
+		if (typeof(nPos) !== "number" || nPos < 0 || nPos > this.GetRepliesCount())
+			nPos = this.GetRepliesCount();
+
+		let oReply = new Asc.asc_CCommentData();
+		oReply.asc_putText(sText);
+
+		if (typeof(sAuthorName) === "string" && sAuthorName !== "")
+			oReply.asc_putUserName(sAuthorName);
+
+		if (sUserId != undefined && typeof(sUserId) === "string" && sUserId.trim() !== "")
+			oReply.asc_putUserId(sUserId);
+
+		this.Comment.aReplies.splice(nPos, 0, oReply);
+		this.private_OnChange();
+	};
+
+	/**
+	 * Removes the specified comment replies.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {Number} [nPos = 0] - The position of the first comment reply to remove.
+	 * @param {Number} [nCount = 1] - A number of comment replies to remove.
+	 * @param {boolean} [bRemoveAll = false] - Specifies whether to remove all comment replies or not.
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.RemoveReplies = function(nPos, nCount, bRemoveAll) {
+		if (typeof(nPos) !== "number" || nPos < 0 || nPos > this.GetRepliesCount())
+			nPos = 0;
+
+		if (typeof(nCount) !== "number" || nCount < 0)
+			nCount = 1;
+
+		if (typeof(bRemoveAll) !== "boolean")
+			bRemoveAll = false;
+
+		if (bRemoveAll) {
+			nPos = 0
+			nCount = this.GetRepliesCount();
+		}
+
+		this.Comment.aReplies.splice(nPos, nCount);
+		this.private_OnChange();
+	};
 
 	/**
 	 * Deletes the ApiComment object.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CSE"]
 	 */
-	ApiComment.prototype.Delete = function () {
-		this.WB.removeComment(this.Comment.asc_getId());
+	ApiComment.prototype.Delete = function() {
+		this.WB.Api.asc_removeComment(this.Comment.asc_getId());
+	};
+
+	ApiComment.prototype.private_OnChange = function() {
+		this.WB.Api.asc_changeComment(this.Comment.asc_getId(), this.Comment);
+	};
+	
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiCommentReply
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns a type of the ApiCommentReply class.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @returns {"commentReply"}
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.GetClassType = function() {
+		return "commentReply";
 	};
 
 	/**
-	 * Returns a type of the ApiComment class.
-	 * @memberof ApiComment
+	 * Returns the comment reply text.
+	 * @memberof ApiCommentReply
 	 * @typeofeditors ["CSE"]
-	 * @returns {"comment"}
+	 * @returns {string}
+	 * @since 7.5.0
 	 */
-	 ApiComment.prototype.GetClassType = function () {
-		return "comment";
+	ApiCommentReply.prototype.GetText = function() {
+		return this.Data.asc_getText();
+	};
+
+	/**
+	 * Sets the comment reply text.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sText - The comment reply text.
+	 * @since 7.5.0
+	*/
+	ApiCommentReply.prototype.SetText = function(sText) {
+		this.Data.asc_putText(sText);
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiCommentReply.prototype, "Text", {
+		get: function() {
+			return this.GetText();
+		},
+		set: function(sText) {
+			return this.SetText(sText);
+		}
+	});
+
+	/**
+	 * Returns the comment reply author's name.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.GetAuthorName = function() {
+		return this.Data.asc_getUserName();
+	};
+
+	/**
+	 * Sets the comment reply author's name.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sAuthorName - The comment reply author's name.
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.SetAuthorName = function(sAuthorName) {
+		this.Data.asc_putUserName(sAuthorName);
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiCommentReply.prototype, "AuthorName", {
+		get: function() {
+			return this.GetAuthorName();
+		},
+		set: function(sAuthorName) {
+			return this.SetAuthorName(sAuthorName);
+		}
+	});
+
+	/**
+	 * Returns the user ID of the comment reply author.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.GetUserId = function() {
+		return this.Data.asc_getUserId();
+	};
+
+	/**
+	 * Sets the user ID to the comment reply author.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sUserId - The user ID of the comment reply author.
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.SetUserId = function(sUserId) {
+		this.Data.asc_putUserId(sUserId);
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiCommentReply.prototype, "UserId", {
+		get: function() {
+			return this.GetUserId();
+		},
+		set: function(sUserId) {
+			return this.SetUserId(sUserId);
+		}
+	});
+
+	/**
+	 * Returns the timestamp of the comment reply creation in UTC format.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @returns {Number}
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.GetTimeUTC = function() {
+		let nTime = parseInt(this.Data.asc_getOnlyOfficeTime());
+		if (isNaN(nTime))
+			return 0;
+		return nTime;
+	};
+
+	/**
+	 * Sets the timestamp of the comment reply creation in UTC format.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @param {Number | String} nTimeStamp - The timestamp of the comment reply creation in UTC format.
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.SetTimeUTC = function(timeStamp) {
+		let nTime = parseInt(timeStamp);
+		if (isNaN(nTime))
+			this.Data.asc_putOnlyOfficeTime("0");
+		else
+			this.Data.asc_putOnlyOfficeTime(String(nTime));
+
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiCommentReply.prototype, "TimeUTC", {
+		get: function() {
+			return this.GetTimeUTC();
+		},
+		set: function(timeStamp) {
+			return this.SetTimeUTC(timeStamp);
+		}
+	});
+
+	/**
+	 * Returns the timestamp of the comment reply creation in the current time zone format.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @returns {Number}
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.GetTime = function() {
+		let nTime = parseInt(this.Data.asc_getTime());
+		if (isNaN(nTime))
+			return 0;
+		return nTime;
+	};
+
+	/**
+	 * Sets the timestamp of the comment reply creation in the current time zone format.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @param {Number | String} nTimeStamp - The timestamp of the comment reply creation in the current time zone format.
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.SetTime = function(timeStamp) {
+		let nTime = parseInt(timeStamp);
+		if (isNaN(nTime))
+			this.Data.asc_putTime("0");
+		else
+			this.Data.asc_putTime(String(nTime));
+		
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiCommentReply.prototype, "Time", {
+		get: function() {
+			return this.GetTime();
+		},
+		set: function(timeStamp) {
+			return this.SetTime(timeStamp);
+		}
+	});
+
+	ApiCommentReply.prototype.private_OnChange = function() {
+		this.Comment.private_OnChange();
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -5765,7 +6377,9 @@
 	Api.prototype["GetRange"] = Api.prototype.GetRange;
 
 	Api.prototype["RecalculateAllFormulas"] = Api.prototype.RecalculateAllFormulas;
+	Api.prototype["AddComment"]  = Api.prototype.AddComment;
 	Api.prototype["GetComments"] = Api.prototype.GetComments;
+	Api.prototype["GetCommentById"] = Api.prototype.GetCommentById;
 
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
@@ -5961,10 +6575,40 @@
 	ApiName.prototype["GetRefersToRange"]        =  ApiName.prototype.GetRefersToRange;
 
 
-	ApiComment.prototype["GetText"]              =  ApiComment.prototype.GetText;
-	ApiComment.prototype["Delete"]               =  ApiComment.prototype.Delete;
 	ApiComment.prototype["GetClassType"]         =  ApiComment.prototype.GetClassType;
-	
+	ApiComment.prototype["GetText"]              =  ApiComment.prototype.GetText;
+	ApiComment.prototype["SetText"]              =  ApiComment.prototype.SetText;
+	ApiComment.prototype["GetId"]                =  ApiComment.prototype.GetId;
+	ApiComment.prototype["GetAuthorName"]        =  ApiComment.prototype.GetAuthorName;
+	ApiComment.prototype["SetAuthorName"]        =  ApiComment.prototype.SetAuthorName;
+	ApiComment.prototype["GetUserId"]            =  ApiComment.prototype.GetUserId;
+	ApiComment.prototype["SetUserId"]            =  ApiComment.prototype.SetUserId;
+	ApiComment.prototype["IsSolved"]             =  ApiComment.prototype.IsSolved;
+	ApiComment.prototype["SetSolved"]            =  ApiComment.prototype.SetSolved;
+	ApiComment.prototype["GetTimeUTC"]           =  ApiComment.prototype.GetTimeUTC;
+	ApiComment.prototype["SetTimeUTC"]           =  ApiComment.prototype.SetTimeUTC;
+	ApiComment.prototype["GetTime"]              =  ApiComment.prototype.GetTime;
+	ApiComment.prototype["SetTime"]              =  ApiComment.prototype.SetTime;
+	ApiComment.prototype["GetQuoteText"]         =  ApiComment.prototype.GetQuoteText;
+	ApiComment.prototype["GetRepliesCount"]      =  ApiComment.prototype.GetRepliesCount;
+	ApiComment.prototype["GetReply"]             =  ApiComment.prototype.GetReply;
+	ApiComment.prototype["AddReply"]             =  ApiComment.prototype.AddReply;
+	ApiComment.prototype["RemoveReplies"]        =  ApiComment.prototype.RemoveReplies;
+	ApiComment.prototype["Delete"]               =  ApiComment.prototype.Delete;
+
+
+	ApiCommentReply.prototype["GetClassType"]         =  ApiCommentReply.prototype.GetClassType;
+	ApiCommentReply.prototype["GetText"]              =  ApiCommentReply.prototype.GetText;
+	ApiCommentReply.prototype["SetTextGetAuthorName"] =  ApiCommentReply.prototype.SetTextGetAuthorName;
+	ApiCommentReply.prototype["GetAuthorName"]        =  ApiCommentReply.prototype.GetAuthorName;
+	ApiCommentReply.prototype["SetAuthorName"]        =  ApiCommentReply.prototype.SetAuthorName;
+	ApiCommentReply.prototype["GetUserId"]            =  ApiCommentReply.prototype.GetUserId;
+	ApiCommentReply.prototype["SetUserId"]            =  ApiCommentReply.prototype.SetUserId;
+	ApiCommentReply.prototype["GetTimeUTC"]           =  ApiCommentReply.prototype.GetTimeUTC;
+	ApiCommentReply.prototype["SetTimeUTC"]           =  ApiCommentReply.prototype.SetTimeUTC;
+	ApiCommentReply.prototype["GetTime"]              =  ApiCommentReply.prototype.GetTime;
+	ApiCommentReply.prototype["SetTime"]              =  ApiCommentReply.prototype.SetTime;
+
 
 	ApiAreas.prototype["GetCount"]               = ApiAreas.prototype.GetCount;
 	ApiAreas.prototype["GetItem"]                = ApiAreas.prototype.GetItem;
@@ -6072,8 +6716,8 @@
 		return border;
 	}
 
-	function private_AddDefName(wb, name, ref, sheetId, hidden) {
-		var res = wb.checkDefName(name);
+	function private_AddDefName(wb, name, ref, sheetInd, hidden) {
+		let res = wb.checkDefName(name);
 		if (!res.status) {
 			console.error(new Error('Invalid name.'));
 			return false;
@@ -6083,10 +6727,11 @@
 			console.error(new Error('Invalid range.'));
 			return false;
 		}
-		if (sheetId) {
-			sheetId = (wb.getWorksheetById(sheetId)) ? sheetId : undefined;
+		if (sheetInd) {
+			sheetInd = (wb.getWorksheet(sheetInd)) ? sheetInd : undefined;
 		}
-		wb.addDefName(name, ref, sheetId, hidden, false)
+		let defName = new Asc.asc_CDefName(name, ref, sheetInd, undefined, hidden, undefined, undefined, true);
+		wb.oApi.asc_setDefinedNames(defName);
 
 		return true;
 	}

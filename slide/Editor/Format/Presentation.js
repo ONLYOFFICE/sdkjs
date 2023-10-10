@@ -3308,7 +3308,12 @@ CPresentation.prototype.collectHFProps = function (oSlide) {
 					if (oDateTimeFieldsMap[oField.FieldType]) {
 						sFieldType = oField.FieldType;
 					} else {
-						sFieldType = "datetime";
+						if(oField.FieldType === "datetimeFigureOut") {
+							sFieldType = "datetime1";
+						}
+						else {
+							sFieldType = "datetime";
+						}
 					}
 					oDateTime.put_DateTime(sFieldType);
 
@@ -3990,7 +3995,7 @@ CPresentation.prototype.setHFProperties = function (oProps, bAll) {
 								if (sDateTime) {
 									sCustomDateTime = oDateTime.get_DateTimeExamples()[sDateTime];
 								}
-								oSp = oMaster.getMatchingShape(AscFormat.phType_dt, null, false, {});
+								oSp = oNotesMaster.getMatchingShape(AscFormat.phType_dt, null, false, {});
 								if (oSp) {
 									oContent = oSp.getDocContent && oSp.getDocContent();
 									if (oContent) {
@@ -6529,7 +6534,7 @@ CPresentation.prototype.GetAddedTextOnKeyDown = function (e) {
 	{
 		if (e.AltKey) // Ctrl + Alt + E - добавляем знак евро €
 			return [0x20AC];
-	} else if (e.KeyCode === 189) // Клавиша Num-
+	} else if ((e.KeyCode === 189 || e.KeyCode === 173)) // Клавиша Num-
 	{
 		if (e.CtrlKey && e.ShiftKey)
 			return [0x2013];
@@ -11787,7 +11792,7 @@ CPresentation.prototype.AddToLayout = function () {
 	}, [], false, AscDFH.historydescription_Presentation_AddToLayout);
 };
 
-CPresentation.prototype.AddAnimation = function (nPresetClass, nPresetId, nPresetSubtype, bReplace, bPreview) {
+CPresentation.prototype.AddAnimation = function (nPresetClass, nPresetId, nPresetSubtype, oColor, bReplace, bPreview) {
 	var oSlide = this.GetCurrentSlide();
 	if (oSlide) {
 		if (nPresetClass === AscFormat.PRESET_CLASS_PATH && nPresetId === AscFormat.MOTION_CUSTOM_PATH) {
@@ -11804,7 +11809,7 @@ CPresentation.prototype.AddAnimation = function (nPresetClass, nPresetId, nPrese
 		}
 		if (this.IsSelectionLocked(AscCommon.changestype_Timing) === false) {
 			this.StartAction(0);
-			var aAddedEffects = oSlide.addAnimation(nPresetClass, nPresetId, nPresetSubtype, bReplace);
+			var aAddedEffects = oSlide.addAnimation(nPresetClass, nPresetId, nPresetSubtype, oColor, bReplace);
 			this.FinalizeAction();
 			this.Document_UpdateInterfaceState();
 			if (bPreview && aAddedEffects.length > 0) {
@@ -12213,9 +12218,12 @@ CPresentation.prototype.StartAction = function (nDescription) {
 	this.Create_NewHistoryPoint(nDescription);
 	this.StopAnimationPreview();
 };
-CPresentation.prototype.FinalizeAction = function () {
+CPresentation.prototype.FinalizeAction = function (isCheckEmptyAction) {
 	this.Recalculate();
 	this.Api.checkChangesSize();
+	if (true === isCheckEmptyAction && AscCommon.History.Is_LastPointEmpty()) {
+		AscCommon.History.RemoveLastPoint();
+	}
 };
 
 CPresentation.prototype.IsSplitPageBreakAndParaMark = function () {

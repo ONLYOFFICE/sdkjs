@@ -2814,7 +2814,7 @@
 			return this;
 		}
 		CPagePrint.prototype.clone = function () {
-			var res = new CPagePrint();
+			let res = new CPagePrint();
 			res.pageWidth = this.pageWidth;
 			res.pageHeight = this.pageHeight;
 			res.pageClipRectLeft = this.pageClipRectLeft;
@@ -2844,6 +2844,15 @@
 
 			return res;
 		};
+		CPagePrint.prototype.recalculate = function (pageOptions) {
+			const horizontalCentered = pageOptions && pageOptions.asc_getHorizontalCentered();
+			const verticalCentered = pageOptions && pageOptions.asc_getVerticalCentered();
+			if (horizontalCentered) {
+				let widthOffset = this.pageWidth - (this.pageClipRectLeft + this.pageClipRectRight);
+				this.pageClipRectLeft = this.pageClipRectWidth
+			}
+		};
+
 		function CPrintPagesData () {
 			this.arrPages = [];
 			this.currentIndex = 0;

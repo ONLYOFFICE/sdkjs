@@ -76,6 +76,7 @@ var numFormat_DigitDrop = 104;
 var numFormat_Plus = 105;
 var numFormat_Minus = 106;
 var numFormat_ThousandText = 107;
+var numFormat_DayOfWeek = 110;
 
 var FormatStates = {Decimal: 1, Frac: 2, Scientific: 3, Slash: 4, SlashFrac: 5};
 var SignType = {Negative: 1, Null:2, Positive: 3};
@@ -255,7 +256,8 @@ function FormatObjBracket(sData)
                 else if("yellow" == sLowerColor)
                     this.color = 0xffff00;
                 else if("y" == first || "m" == first || "d" == first || "h" == first || "s" == first ||
-                    "Y" == first || "M" == first || "D" == first || "H" == first || "S" == first)
+                    "Y" == first || "M" == first || "D" == first || "H" == first || "S" == first ||
+					"a" == first)
                 {
                     var bSame = true;
                     var nCount = 1;
@@ -282,6 +284,7 @@ function FormatObjBracket(sData)
                             case "h": this.dataObj = new FormatObjDateVal(numFormat_Hour, nCount, true);break;
                             case "S":
                             case "s": this.dataObj = new FormatObjDateVal(numFormat_Second, nCount, true);break;
+                            case "a": this.dataObj = new FormatObjDateVal(numFormat_DayOfWeek, nCount, true);break;
                         }
                     }
                 }
@@ -304,6 +307,7 @@ function ParseLocalFormatSymbol(Name)
 	LocaleFormatSymbol['minute'] = 'm';
 	LocaleFormatSymbol['S'] = 'S';
 	LocaleFormatSymbol['s'] = 's';
+	LocaleFormatSymbol['a'] = 'a';
 	LocaleFormatSymbol['general'] = 'General';
 	switch (Name) {
 //___________________________________________________fi________________________________________________________________
@@ -357,6 +361,7 @@ function ParseLocalFormatSymbol(Name)
 		case("ca-ES-valencia"): {
 			LocaleFormatSymbol['Y'] = 'A';
 			LocaleFormatSymbol['y'] = 'a';
+			LocaleFormatSymbol['a'] = 'o';
 			LocaleFormatSymbol['general'] = 'Estándar';
 			break;
 		}
@@ -364,6 +369,7 @@ function ParseLocalFormatSymbol(Name)
 		case("es-BR"): {
 			LocaleFormatSymbol['Y'] = 'A';
 			LocaleFormatSymbol['y'] = 'a';
+			LocaleFormatSymbol['a'] = 'o';
 			LocaleFormatSymbol['general'] = 'Geral';
 			break;
 		}
@@ -371,6 +377,7 @@ function ParseLocalFormatSymbol(Name)
 		case("pt-PT"): {
 			LocaleFormatSymbol['Y'] = 'A';
 			LocaleFormatSymbol['y'] = 'a';
+			LocaleFormatSymbol['a'] = 'o';
 			LocaleFormatSymbol['general'] = 'Éstandar';
 			break;
 		}
@@ -432,6 +439,7 @@ function ParseLocalFormatSymbol(Name)
 			LocaleFormatSymbol['y'] = 'a';
 			LocaleFormatSymbol['D'] = 'J';
 			LocaleFormatSymbol['d'] = 'j';
+			LocaleFormatSymbol['a'] = 'o';
 			LocaleFormatSymbol['general'] = 'Standard';
 			break;
 		}
@@ -474,6 +482,7 @@ function ParseLocalFormatSymbol(Name)
 			LocaleFormatSymbol['y'] = 'a';
 			LocaleFormatSymbol['D'] = 'G';
 			LocaleFormatSymbol['d'] = 'g';
+			LocaleFormatSymbol['a'] = 'o';
 			LocaleFormatSymbol['general'] = 'Standard';
 			break;
 		}
@@ -579,6 +588,7 @@ function ParseLocalFormatSymbol(Name)
 			LocaleFormatSymbol['minute'] = 'd';
 			LocaleFormatSymbol['S'] = 'N';
 			LocaleFormatSymbol['s'] = 'n';
+			LocaleFormatSymbol['a'] = 'o';
 			LocaleFormatSymbol['general'] = 'Genel';
 			break;
 		}
@@ -773,6 +783,7 @@ NumFormat.prototype =
         var minute;
         var Second;
         var second;
+		var dayOfWeek;
 		if (useLocaleFormat) {
 			sGeneral = LocaleFormatSymbol['general'].toLowerCase();
 			DecimalSeparator = g_oDefaultCultureInfo.NumberDecimalSeparator;
@@ -790,6 +801,7 @@ NumFormat.prototype =
 			minute = LocaleFormatSymbol['minute'];
 			Second = LocaleFormatSymbol['S'];
 			second = LocaleFormatSymbol['s'];
+			dayOfWeek = LocaleFormatSymbol['a'];
 		} else {
 			sGeneral = AscCommon.g_cGeneralFormat.toLowerCase();
 			DecimalSeparator = gc_sFormatDecimalPoint;
@@ -807,6 +819,7 @@ NumFormat.prototype =
 			minute = 'm';
 			Second = 'S';
 			second = 's';
+			dayOfWeek = 'a';
 		}
         var sGeneralFirst = sGeneral[0];
         this.bGeneralChart = true;
@@ -916,6 +929,10 @@ NumFormat.prototype =
             {
                 this._addToFormat2(new FormatObjDateVal(numFormat_Second, 1, false));
             }
+			else if (dayOfWeek == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_DayOfWeek, 1, false));
+			}
             else if ("A" == next || "a" == next) {
                 this._ReadAmPm(next);
             } else {
@@ -955,6 +972,10 @@ NumFormat.prototype =
 			else if("S" == next || "s" == next)
 			{
 				this._addToFormat2(new FormatObjDateVal(numFormat_Second, 1, false));
+			}
+			else if ("a" == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_DayOfWeek, 1, false));
 			}
 			else if ("A" == next || "a" == next) {
 				this._ReadAmPm(next);
@@ -1042,7 +1063,8 @@ NumFormat.prototype =
                     }
                 }
             }
-            else if(numFormat_Year == item.type || numFormat_MonthMinute == item.type || numFormat_Month == item.type || numFormat_Day == item.type || numFormat_Hour == item.type || numFormat_Minute == item.type || numFormat_Second == item.type || numFormat_Thousand == item.type)
+            else if(numFormat_Year == item.type || numFormat_MonthMinute == item.type || numFormat_Month == item.type || numFormat_Day == item.type || numFormat_Hour == item.type || numFormat_Minute == item.type || numFormat_Second == item.type || numFormat_Thousand == item.type ||
+				numFormat_DayOfWeek == item.type)
             {
                 //Собираем в одно целое последовательности hhh
                 var nStartType = item.type;
@@ -2082,6 +2104,21 @@ NumFormat.prototype =
                 {
                     oCurText.text += cultureInfo.TimeSeparator;
 				}
+				else if(numFormat_DayOfWeek == item.type)
+				{
+					if (item.val === 3)
+					{
+						oCurText.text += cultureInfoLCID.AbbreviatedDayNames[oParsedNumber.date.dayWeek];
+					}
+					else if (item.val > 3)
+					{
+						oCurText.text += cultureInfoLCID.DayNames[oParsedNumber.date.dayWeek];
+					}
+					else
+					{
+						oCurText.text += 'a'.repeat(item.val);
+					}
+				}
                 else if(numFormat_Year == item.type)
                 {
                   if (item.val > 0) {
@@ -2260,6 +2297,7 @@ NumFormat.prototype =
 		var hour;
 		var minute;
 		var second;
+		var dayOfWeek;
 		if (useLocaleFormat) {
 			sGeneral = LocaleFormatSymbol['general'];
 			DecimalSeparator = g_oDefaultCultureInfo.NumberDecimalSeparator;
@@ -2277,6 +2315,7 @@ NumFormat.prototype =
 			hour = LocaleFormatSymbol['h'];
 			minute = LocaleFormatSymbol['minute'];
 			second = LocaleFormatSymbol['s'];
+			dayOfWeek = LocaleFormatSymbol['a'];
 		} else {
 			sGeneral = AscCommon.g_cGeneralFormat;
 			DecimalSeparator = gc_sFormatDecimalPoint;
@@ -2288,6 +2327,7 @@ NumFormat.prototype =
 			hour = 'h';
 			minute = 'm';
 			second = 's';
+			dayOfWeek = 'a';
 		}
         var nDecLength = this.aDecFormat.length;
         var nDecIndex = 0;
@@ -2482,6 +2522,12 @@ NumFormat.prototype =
                 for(var j = 0; j < item.val; ++j)
                     res += second;
             }
+			else if(numFormat_DayOfWeek == item.type)
+			{
+				var nIndex = (item.val > 3) ? 3 : item.val;
+				for(var j = 0; j < nIndex; ++j)
+					res += dayOfWeek;
+			}
             else if(numFormat_AmPm == item.type)
                 res += "AM/PM";
             else if(numFormat_Milliseconds == item.type)
@@ -2564,84 +2610,8 @@ function CellFormat(format, formatType, useLocaleFormat)
 		aParsedFormats.push(oNewFormat);
 	}
   var nFormatsLength = aParsedFormats.length;
-	var bComporationOperator = false;
-	if(nFormatsLength > 0)
-	{
-		var oFirstFormat = aParsedFormats[0];
-		if(null != oFirstFormat.ComporationOperator)
-		{
-			bComporationOperator = true;
-			//проверяем можно ли привести к стандартному формату
-			//todo сохранять измененный формат в файл
-			if(3 == nFormatsLength)
-			{
-				var oPositive = null;
-				var oNegative = null;
-				var oNull = null;
-				for(var i = 0; i < nFormatsLength; ++i)
-				{
-					var oCurFormat = aParsedFormats[i];
-					if(null == oCurFormat.ComporationOperator)
-					{
-						if(null == oPositive)
-							oPositive = oCurFormat;
-						else if(null == oNegative)
-							oNegative = oCurFormat;
-						else if(null == oNull)
-							oNull = oCurFormat;
-					}
-					else
-					{
-						var oComporationOperator = oCurFormat.ComporationOperator;
-						if(0 == oComporationOperator.operatorValue)
-						{
-							switch(oComporationOperator.operator)
-							{
-								case NumComporationOperators.greater: oPositive = oCurFormat;break;
-								case NumComporationOperators.less: oNegative = oCurFormat;break;
-								case NumComporationOperators.equal: oNull = oCurFormat;break;
-							}
-						}
-						else
-						{
-							//невозможно привести
-							oPositive = oNegative = oNull = null;
-							break;
-						}
-					}
-				}
-			}
-			this.oTextFormat = new NumFormat(false);
-			this.oTextFormat.setFormat("@", undefined, undefined, useLocaleFormat);
-			if(null == oPositive || null == oNegative || null == oNull)
-			{
-				//по результатам опытов, если оператор сравнения проходит через 0, то надо добавлять знак минус в зависимости от значения
-				//пример [<100] надо добавлять знак, [<-100] знак добавлять не надо
-				for(var i = 0, length = aParsedFormats.length; i < length; ++i)
-				{
-					var oCurFormat = aParsedFormats[i];
-					if(null == oCurFormat.ComporationOperator)
-						oCurFormat.bAddMinusIfNes = true;
-					else
-					{
-						var oComporationOperator = oCurFormat.ComporationOperator;
-						if(0 < oComporationOperator.operatorValue && (oComporationOperator.operator == NumComporationOperators.less || oComporationOperator.operator == NumComporationOperators.lessorequal))
-							oCurFormat.bAddMinusIfNes = true;
-						else if(0 > oComporationOperator.operatorValue && (oComporationOperator.operator == NumComporationOperators.greater || oComporationOperator.operator == NumComporationOperators.greaterorequal))
-							oCurFormat.bAddMinusIfNes = true;
-					}
-				}
-				this.aComporationFormats = aParsedFormats;
-			}
-			else
-			{
-				this.oPositiveFormat = oPositive;
-				this.oNegativeFormat = oNegative;
-				this.oNullFormat = oNull;
-			}
-		}
-	}
-	if(false == bComporationOperator)
+	var noComparisonn = aParsedFormats.every(function(format) {return !format.ComporationOperator});
+	if(noComparisonn)
 	{
 		if(4 <= nFormatsLength)
 		{
@@ -2659,8 +2629,8 @@ function CellFormat(format, formatType, useLocaleFormat)
 			this.oNullFormat = aParsedFormats[2];
 			this.oTextFormat = this.oPositiveFormat;
 			if (this.oNullFormat.bTextFormat) {
-			    this.oTextFormat = this.oNullFormat;
-			    this.oNullFormat = this.oPositiveFormat;
+				this.oTextFormat = this.oNullFormat;
+				this.oNullFormat = this.oPositiveFormat;
 			}
 		}
 		else if(2 == nFormatsLength)
@@ -2670,8 +2640,8 @@ function CellFormat(format, formatType, useLocaleFormat)
 			this.oNullFormat = this.oPositiveFormat;
 			this.oTextFormat = this.oPositiveFormat;
 			if (this.oNegativeFormat.bTextFormat) {
-			    this.oTextFormat = this.oNegativeFormat;
-			    this.oNegativeFormat = this.oPositiveFormat;
+				this.oTextFormat = this.oNegativeFormat;
+				this.oNegativeFormat = this.oPositiveFormat;
 				this.oPositiveFormat.bAddMinusIfNes = true;
 			}
 		}
@@ -2683,6 +2653,28 @@ function CellFormat(format, formatType, useLocaleFormat)
 			this.oNullFormat = this.oPositiveFormat;
 			this.oTextFormat = this.oPositiveFormat;
 		}
+	}
+	else
+	{
+		this.oTextFormat = new NumFormat(false);
+		this.oTextFormat.setFormat("@", undefined, undefined, useLocaleFormat);
+		//по результатам опытов, если оператор сравнения проходит через 0, то надо добавлять знак минус в зависимости от значения
+		//пример [<100] надо добавлять знак, [<-100] знак добавлять не надо
+		for (let i = 0; i < aParsedFormats.length && i < 2; ++i) {
+			let oCurFormat = aParsedFormats[i];
+			if (oCurFormat.ComporationOperator) {
+				let operator = oCurFormat.ComporationOperator.operator;
+				let operatorValue = oCurFormat.ComporationOperator.operatorValue;
+				if (0 < operatorValue && (operator === NumComporationOperators.less || operator === NumComporationOperators.lessorequal))
+					oCurFormat.bAddMinusIfNes = true;
+				else if (0 > operatorValue && (operator === NumComporationOperators.greater || operator === NumComporationOperators.greaterorequal))
+					oCurFormat.bAddMinusIfNes = true;
+			}
+		}
+		if (aParsedFormats.length > 2) {
+			aParsedFormats[2].bAddMinusIfNes = true;
+		}
+		this.aComporationFormats = aParsedFormats.slice(0, 3);
 	}
     this.formatCache = {};
 }
@@ -2743,32 +2735,30 @@ CellFormat.prototype =
 		else
 		{
 			//ищем совпадение
-			var nLength = this.aComporationFormats.length;
-			var oDefaultComporationFormat = null;
-			for(var i = 0, length = nLength; i < length ; ++i)
+			for (let i = 0; i < this.aComporationFormats.length && i < 2; ++i)
 			{
-				var oCurFormat = this.aComporationFormats[i];
-				if(null != oCurFormat.ComporationOperator)
-				{
-					var bOperationResult = false;
-					var oOperationValue = oCurFormat.ComporationOperator.operatorValue;
-					switch(oCurFormat.ComporationOperator.operator)
-					{
-						case NumComporationOperators.equal: bOperationResult = (dNumber == oOperationValue);break;
-						case NumComporationOperators.greater: bOperationResult = (dNumber > oOperationValue);break;
-						case NumComporationOperators.less: bOperationResult = (dNumber < oOperationValue);break;
-						case NumComporationOperators.greaterorequal: bOperationResult = (dNumber >= oOperationValue);break;
-						case NumComporationOperators.lessorequal: bOperationResult = (dNumber <= oOperationValue);break;
-						case NumComporationOperators.notequal: bOperationResult = (dNumber != oOperationValue);break;
-					}
-					if(true == bOperationResult)
-						oRes = oCurFormat;
+				let oCurFormat = this.aComporationFormats[i];
+				let oOperationValue, operator;
+				if (null != oCurFormat.ComporationOperator) {
+					operator = oCurFormat.ComporationOperator.operator;
+					oOperationValue = oCurFormat.ComporationOperator.operatorValue;
+				} else {
+					oOperationValue = 0;
+					operator = 0 === i ? NumComporationOperators.greater : NumComporationOperators.less;
 				}
-				else if(null == oDefaultComporationFormat)
-					oDefaultComporationFormat = oCurFormat;
+				let isMatch = (operator === NumComporationOperators.equal && dNumber === oOperationValue) ||
+					(operator === NumComporationOperators.greater && dNumber > oOperationValue) ||
+					(operator === NumComporationOperators.less && dNumber < oOperationValue) ||
+					(operator === NumComporationOperators.greaterorequal && dNumber >= oOperationValue) ||
+					(operator === NumComporationOperators.lessorequal && dNumber <= oOperationValue) ||
+					(operator === NumComporationOperators.notequal && dNumber !== oOperationValue);
+				if (isMatch) {
+					oRes = oCurFormat;
+					break;
+				}
 			}
-			if(null == oRes && null != oDefaultComporationFormat)
-				oRes = oDefaultComporationFormat;
+			if (null == oRes && null != this.aComporationFormats.length > 2)
+				oRes = this.aComporationFormats[2];
 		}
 		return oRes;
 	},

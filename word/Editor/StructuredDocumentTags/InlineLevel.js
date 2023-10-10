@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 11.05.2017
- * Time: 16:48
- */
 
 /**
  * @constructor

@@ -6642,6 +6642,18 @@
 	}
 
 	// ----------------------------- plugins ------------------------------- //
+	var PluginType = {
+		System     : 0, // Системный, неотключаемый плагин.
+		Background : 1, // Фоновый плагин. Тоже самое, что и системный, но отключаемый.
+		Window     : 2, // Окно
+		Panel      : 3  // Панель
+	};
+
+	PluginType["System"] = PluginType.System;
+	PluginType["Background"] = PluginType.Background;
+	PluginType["Window"] = PluginType.Window;
+	PluginType["Panel"] = PluginType.Panel;
+
 	function CPluginVariation()
 	{
 		this.description = "";
@@ -6654,11 +6666,10 @@
 		this.isViewer       = false;
 		this.EditorsSupport = ["word", "cell", "slide"];
 
-		this.isSystem	  = false;
-		this.isVisual     = false;      // визуальный ли
-		this.isModal      = false;      // модальное ли окно (используется только для визуального)
-		this.isInsideMode = false;      // отрисовка не в окне а внутри редактора (в панели) (используется только для визуального немодального)
-		this.isCustomWindow = false;	// ued only if this.isModal == true
+		this.type = PluginType.Background;
+
+		this.isCustomWindow = false;	// используется только если this.type === PluginType.Window
+		this.isModal        = true;     // используется только если this.type === PluginType.Window
 
 		this.initDataType = EPluginDataType.none;
 		this.initData     = "";
@@ -6680,143 +6691,59 @@
 	{
 		return this.description;
 	};
-	CPluginVariation.prototype["set_Description"] = function(value)
-	{
-		this.description = value;
-	};
 	CPluginVariation.prototype["get_Url"]         = function()
 	{
 		return this.url;
 	};
-	CPluginVariation.prototype["set_Url"]         = function(value)
-	{
-		this.url = value;
-	};
 	CPluginVariation.prototype["get_Help"]         = function()
 	{
 		return this.help;
-	};
-	CPluginVariation.prototype["set_Help"]         = function(value)
-	{
-		this.help = value;
 	};
 
 	CPluginVariation.prototype["get_Icons"] = function()
 	{
 		return this.icons;
 	};
-	CPluginVariation.prototype["set_Icons"] = function(value)
+
+	CPluginVariation.prototype["get_Type"]         = function()
 	{
-		this.icons = value;
+		return this.type;
 	};
 
-	CPluginVariation.prototype["get_System"]         = function()
+	CPluginVariation.prototype["get_Visual"] = function()
 	{
-		return this.isSystem;
+		return (this.type === PluginType.Window || this.type === PluginType.Panel) ? true : false;
 	};
-	CPluginVariation.prototype["set_System"]         = function(value)
-	{
-		this.isSystem = value;
-	};
+
 	CPluginVariation.prototype["get_Viewer"]         = function()
 	{
 		return this.isViewer;
-	};
-	CPluginVariation.prototype["set_Viewer"]         = function(value)
-	{
-		this.isViewer = value;
 	};
 	CPluginVariation.prototype["get_EditorsSupport"] = function()
 	{
 		return this.EditorsSupport;
 	};
-	CPluginVariation.prototype["set_EditorsSupport"] = function(value)
-	{
-		this.EditorsSupport = value;
-	};
 
-
-	CPluginVariation.prototype["get_Visual"]     = function()
-	{
-		return this.isVisual;
-	};
-	CPluginVariation.prototype["set_Visual"]     = function(value)
-	{
-		this.isVisual = value;
-	};
-	CPluginVariation.prototype["get_Modal"]      = function()
+	CPluginVariation.prototype["get_Modal"] = function()
 	{
 		return this.isModal;
 	};
-	CPluginVariation.prototype["set_Modal"]      = function(value)
-	{
-		this.isModal = value;
-	};
 	CPluginVariation.prototype["get_InsideMode"] = function()
 	{
-		return this.isInsideMode;
-	};
-	CPluginVariation.prototype["set_InsideMode"] = function(value)
-	{
-		this.isInsideMode = value;
+		return (this.type === PluginType.Panel) ? true : false;
 	};
 	CPluginVariation.prototype["get_CustomWindow"] = function()
 	{
 		return this.isCustomWindow;
 	};
-	CPluginVariation.prototype["set_CustomWindow"] = function(value)
-	{
-		this.isCustomWindow = value;
-	};
 
-	CPluginVariation.prototype["get_InitDataType"] = function()
-	{
-		return this.initDataType;
-	};
-	CPluginVariation.prototype["set_InitDataType"] = function(value)
-	{
-		this.initDataType = value;
-	};
-	CPluginVariation.prototype["get_InitData"]     = function()
-	{
-		return this.initData;
-	};
-	CPluginVariation.prototype["set_InitData"]     = function(value)
-	{
-		this.initData = value;
-	};
-
-	CPluginVariation.prototype["get_UpdateOleOnResize"] = function()
-	{
-		return this.isUpdateOleOnResize;
-	};
-	CPluginVariation.prototype["set_UpdateOleOnResize"] = function(value)
-	{
-		this.isUpdateOleOnResize = value;
-	};
 	CPluginVariation.prototype["get_Buttons"]           = function()
 	{
 		return this.buttons;
 	};
-	CPluginVariation.prototype["set_Buttons"]           = function(value)
-	{
-		this.buttons = value;
-	};
 	CPluginVariation.prototype["get_Size"]           = function()
 	{
 		return this.size;
-	};
-	CPluginVariation.prototype["set_Size"]           = function(value)
-	{
-		this.size = value;
-	};
-	CPluginVariation.prototype["get_InitOnSelectionChanged"]           = function()
-	{
-		return this.initOnSelectionChanged;
-	};
-	CPluginVariation.prototype["set_InitOnSelectionChanged"]           = function(value)
-	{
-		this.initOnSelectionChanged = value;
 	};
     CPluginVariation.prototype["get_Events"]           = function()
     {
@@ -6847,11 +6774,10 @@
 		_object["isViewer"]       = this.isViewer;
 		_object["EditorsSupport"] = this.EditorsSupport;
 
-		_object["isSystem"]     = this.isSystem;
-		_object["isVisual"]     = this.isVisual;
-		_object["isModal"]      = this.isModal;
-		_object["isInsideMode"] = this.isInsideMode;
+		_object["type"]           = this.type;
+
 		_object["isCustomWindow"] = this.isCustomWindow;
+		_object["isModal"]        = this.isModal;
 
 		_object["initDataType"] = this.initDataType;
 		_object["initData"]     = this.initData;
@@ -6879,11 +6805,29 @@
 		this.isViewer       = (_object["isViewer"] != null) ? _object["isViewer"] : this.isViewer;
 		this.EditorsSupport = (_object["EditorsSupport"] != null) ? _object["EditorsSupport"] : this.EditorsSupport;
 
-		this.isVisual     = (_object["isVisual"] != null) ? _object["isVisual"] : this.isVisual;
-		this.isModal      = (_object["isModal"] != null) ? _object["isModal"] : this.isModal;
-		this.isSystem     = (_object["isSystem"] != null) ? _object["isSystem"] : this.isSystem;
-		this.isInsideMode = (_object["isInsideMode"] != null) ? _object["isInsideMode"] : this.isInsideMode;
+		// default: background
+		this.type = PluginType.Background;
+
+		let _type = _object["type"];
+		if (undefined !== _type)
+		{
+			if ("system" === _type)
+				this.type = PluginType.System;
+			if ("window" === _type)
+				this.type = PluginType.Window;
+			if ("panel" === _type)
+				this.type = PluginType.Panel;
+		}
+		else
+		{
+			if (true === _object["isSystem"])
+				this.type = PluginType.System;
+			if (true === _object["isVisual"])
+				this.type = (true === _object["isInsideMode"]) ? PluginType.Panel : PluginType.Window;
+		}
+
 		this.isCustomWindow = (_object["isCustomWindow"] != null) ? _object["isCustomWindow"] : this.isCustomWindow;
+		this.isModal        = (_object["isModal"] != null) ? _object["isModal"] : this.isModal;
 
 		this.initDataType = (_object["initDataType"] != null) ? _object["initDataType"] : this.initDataType;
 		this.initData     = (_object["initData"] != null) ? _object["initData"] : this.initData;
@@ -6913,26 +6857,6 @@
 
 		this.variations = [];
 	}
-
-	CPlugin.prototype.getIntVersion = function()
-	{
-		if (!this.version)
-			return 0;
-		let arrayVersion = this.version.split(".");
-
-		while (arrayVersion.length < 3)
-			arrayVersion.push("0");
-
-		try
-		{
-			let intVer = parseInt(arrayVersion[0]) * 10000 + parseInt(arrayVersion[1]) * 100 + parseInt(arrayVersion[2]);
-			return intVer;
-		}
-		catch (e)
-		{
-		}
-		return 0;
-	};
 
 	CPlugin.prototype["get_Name"]    = function(locale)
 	{
@@ -7066,6 +6990,41 @@
 			_variation["deserialize"](_object["variations"][i]);
 			this.variations.push(_variation);
 		}
+	};
+
+	// no export
+	CPlugin.prototype.isType = function(type)
+	{
+		if (this.variations && this.variations[0] && this.variations[0].type === type)
+			return true;
+		return false;
+	};
+	CPlugin.prototype.isSystem = function()
+	{
+		return this.isType(PluginType.System);
+	};
+	CPlugin.prototype.isBackground = function()
+	{
+		return this.isType(PluginType.Background);
+	};
+	CPlugin.prototype.getIntVersion = function()
+	{
+		if (!this.version)
+			return 0;
+		let arrayVersion = this.version.split(".");
+
+		while (arrayVersion.length < 3)
+			arrayVersion.push("0");
+
+		try
+		{
+			let intVer = parseInt(arrayVersion[0]) * 10000 + parseInt(arrayVersion[1]) * 100 + parseInt(arrayVersion[2]);
+			return intVer;
+		}
+		catch (e)
+		{
+		}
+		return 0;
 	};
 	
     /*
@@ -8051,6 +8010,7 @@
     window["AscCommon"].asc_menu_ReadPaddings = asc_menu_ReadPaddings;
     window["AscCommon"].asc_menu_ReadColor = asc_menu_ReadColor;
 
+	window["Asc"]["PluginType"] = window["Asc"].PluginType = PluginType;
 	window["Asc"]["CPluginVariation"] = window["Asc"].CPluginVariation = CPluginVariation;
 	window["Asc"]["CPlugin"] = window["Asc"].CPlugin = CPlugin;
 

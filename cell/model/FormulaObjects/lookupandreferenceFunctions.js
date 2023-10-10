@@ -45,6 +45,7 @@ function (window, undefined) {
 	var CellAddress = AscCommon.CellAddress;
 
 	var cElementType = AscCommonExcel.cElementType;
+	var cElementTypeWeight = AscCommonExcel.cElementTypeWeight;
 	var cErrorType = AscCommonExcel.cErrorType;
 	var cNumber = AscCommonExcel.cNumber;
 	var cString = AscCommonExcel.cString;
@@ -1549,12 +1550,12 @@ function (window, undefined) {
 
 		function arrFinder(arr) {
 			if (arr.getRowCount() > arr.getCountElementInRow()) {
-				//ищем в первом столбце
+				// searching in the first column
 				resC = arr.getCountElementInRow() > 1 ? 1 : 0;
 				let arrCol = arr.getCol(0);
 				resR = _func.binarySearch(arg0, arrCol);
 			} else {
-				//ищем в первой строке
+				// searching in the first row
 				resR = arr.getRowCount() > 1 ? 1 : 0;
 				let arrRow = arr.getRow(0);
 				resC = _func.binarySearch(arg0, arrRow);
@@ -1592,7 +1593,7 @@ function (window, undefined) {
 
 			let BBox = _arg2.getBBox0();
 
-			if (_arg1.getRowCount() !== (BBox.r2 - BBox.r1) && _arg1.getCountElementInRow() !== (BBox.c2 - BBox.c1)) {
+			if (_arg1.getRowCount() !== (BBox.r2 - BBox.r1) + 1 && _arg1.getCountElementInRow() !== (BBox.c2 - BBox.c1) + 1) {
 				return new cError(cErrorType.not_available);
 			}
 
@@ -1705,9 +1706,12 @@ function (window, undefined) {
 
 				let length = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1;
 				let lastValue = _getValue(length);
+				// TODO
+				// In the formula description, it is written that the function checks the first and last elements, but in practice, it works differently (perhaps this check should be done after the binary search).
+				// The binary search has the same check.
 				if(lastValue && lastValue.value < arg0.value) {
-					//в этом случае фукнция бинарного поиска одаст последний элемент. для конкретного случая это неверно
-					//Если функции не удается найти искомое_значение, то в просматриваемом_векторе выбирается наибольшее значение, которое меньше искомого_значения или равно ему.
+					// In this case, the binary search function will return the last element. This is incorrect for this specific case
+					// If the function cannot find the desired_value, it selects the largest value in the viewed_vector that is less than or equal to the desired_value.
 					let diff = null;
 					let endNumber;
 					for(let i = 0; i <= length; i++) {
@@ -1733,7 +1737,8 @@ function (window, undefined) {
 						return new cError(cErrorType.not_available);
 					}
 				}
-			} /*else {
+			} 
+			/*else {
 				var arg2RowsLength;
 
 				if (cElementType.cellsRange3D === arg2.type) {
@@ -1751,7 +1756,6 @@ function (window, undefined) {
 
 
 			let ws = cElementType.cellsRange3D === arg1.type && arg1.isSingleSheet() ? arg1.getWS() : arg1.ws;
-
 			if (cElementType.cellsRange3D === arg1.type) {
 				if (arg1.isSingleSheet()) {
 					ws = arg1.getWS();

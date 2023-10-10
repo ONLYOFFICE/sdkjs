@@ -520,7 +520,10 @@
     var  c_oSer_PrintOptions =
     {
         GridLines: 0,
-        Headings: 1
+        Headings: 1,
+        GridLinesSet: 2,
+        HorizontalCentered: 3,
+        VerticalCentered: 4
     };
     /** @enum */
     var c_oSer_TablePart =
@@ -4747,23 +4750,41 @@
                 this.memory.WriteLong(oPageSetup.verticalDpi);
             }
         };
-        this.WritePrintOptions = function(oPrintOptions)
-        {
+        this.WritePrintOptions = function (oPrintOptions) {
             //GridLines
-            var bGridLines = oPrintOptions.asc_getGridLines();
-            if(null != bGridLines)
-            {
+            let bGridLines = oPrintOptions.asc_getGridLines();
+            if (null != bGridLines) {
                 this.memory.WriteByte(c_oSer_PrintOptions.GridLines);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteBool(bGridLines);
             }
             //Headings
-            var bHeadings = oPrintOptions.asc_getHeadings();
-            if(null != bHeadings)
-            {
+            let bHeadings = oPrintOptions.asc_getHeadings();
+            if (null != bHeadings) {
                 this.memory.WriteByte(c_oSer_PrintOptions.Headings);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
                 this.memory.WriteBool(bHeadings);
+            }
+            //GridLinesSet
+            let bGridLinesSet = oPrintOptions.asc_getGridLinesSet();
+            if (null != bGridLinesSet) {
+                this.memory.WriteByte(c_oSer_PrintOptions.GridLinesSet);
+                this.memory.WriteByte(c_oSerPropLenType.Byte);
+                this.memory.WriteBool(bGridLinesSet);
+            }
+            //HorizontalCentered
+            let bHorizontalCentered = oPrintOptions.asc_getHorizontalCentered();
+            if (null != bHorizontalCentered) {
+                this.memory.WriteByte(c_oSer_PrintOptions.HorizontalCentered);
+                this.memory.WriteByte(c_oSerPropLenType.Byte);
+                this.memory.WriteBool(bHorizontalCentered);
+            }
+            //VerticalCentered
+            let bVerticalCentered = oPrintOptions.asc_getVerticalCentered();
+            if (null != bVerticalCentered) {
+                this.memory.WriteByte(c_oSer_PrintOptions.VerticalCentered);
+                this.memory.WriteByte(c_oSerPropLenType.Byte);
+                this.memory.WriteBool(bVerticalCentered);
             }
         };
         this.WriteHyperlinks = function(ws)
@@ -8823,15 +8844,21 @@
                 res = c_oSerConstants.ReadUnknown;
             return res;
         };
-        this.ReadPrintOptions = function(type, length, oPrintOptions)
-        {
+        this.ReadPrintOptions = function (type, length, oPrintOptions) {
             var res = c_oSerConstants.ReadOk;
-            if ( c_oSer_PrintOptions.GridLines == type )
+            if (c_oSer_PrintOptions.GridLines === type) {
                 oPrintOptions.asc_setGridLines(this.stream.GetBool());
-            else if ( c_oSer_PrintOptions.Headings == type )
+            } else if (c_oSer_PrintOptions.Headings === type) {
                 oPrintOptions.asc_setHeadings(this.stream.GetBool());
-            else
+            } else if (c_oSer_PrintOptions.GridLinesSet === type) {
+                oPrintOptions.asc_setGridLinesSet(this.stream.GetBool());
+            } else if (c_oSer_PrintOptions.HorizontalCentered === type) {
+                oPrintOptions.asc_setHorizontalCentered(this.stream.GetBool());
+            } else if (c_oSer_PrintOptions.VerticalCentered === type) {
+                oPrintOptions.asc_setVerticalCentered(this.stream.GetBool());
+            } else {
                 res = c_oSerConstants.ReadUnknown;
+            }
             return res;
         };
         this.ReadHyperlinks = function(type, length, ws)
@@ -11591,6 +11618,10 @@
                 //при открытии подобных формул ms удаляет префикс
                 //TODO так же он проставляет флаг ca - рассмотреть стоит ли его нам доблавлять
                 formula.v = formula.v.replace("_xludf.", "");
+            }
+            if (formula.v.startsWith("=")) {
+                //LO write "=" to file
+                formula.v = formula.v.replace("=", "");
             }
 
             var offsetRow;

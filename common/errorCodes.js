@@ -237,7 +237,10 @@
 
 			FillAllRowsWarning: 1040,
 
-			ProtectedRangeByOtherUser: 1050
+			ProtectedRangeByOtherUser: 1050,
+
+			TraceDependentsNoFormulas: 1060,
+			TracePrecedentsNoValidReference: 1061
 		}
 	};
 
@@ -398,5 +401,8 @@
 	prot['FillAllRowsWarning']               = prot.FillAllRowsWarning;
 	prot['CannotUseCommandProtectedSheet']   = prot.CannotUseCommandProtectedSheet;
 	prot['ProtectedRangeByOtherUser']        = prot.ProtectedRangeByOtherUser;
+	prot['TraceDependentsNoFormulas']        = prot.TraceDependentsNoFormulas;
+	prot['TracePrecedentsNoValidReference']  = prot.TracePrecedentsNoValidReference;
+
 
 })(window);

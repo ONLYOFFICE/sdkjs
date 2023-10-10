@@ -42,6 +42,7 @@
 			"common/api/tableStylesPreviewGenerator.js",
 			"common/api/spellCheckSettings.js",
 			"common/api/addTextSettings.js",
+			"common/api/auto-hyphenation-settings.js",
 			"common/api/autoCorrectSettings.js",
 			"common/api/firstLetterExceptions.js",
 			"common/api/restrictionSettings.js",
@@ -111,6 +112,9 @@
 			"common/Drawings/TrackObjects/ConnectorTrack.js",
 			"common/Drawings/DrawingObjectsHandlers.js",
 			"common/Drawings/TextDrawer.js",
+
+			"common/PromiseIterators.js",
+			"common/ExternalDataLoader.js",
 
 			"common/Drawings/Externals.js",
 			"common/GlobalLoaders.js",
@@ -186,6 +190,7 @@
 			"word/Editor/Paragraph/FormulaParser.js",
 			"word/Editor/Paragraph/ParaRevisionMove.js",
 			"word/Editor/Paragraph/GraphemesCounter.js",
+			"word/Editor/Paragraph/TextHyphenator.js",
 			"word/Editor/Paragraph/TextShaper.js",
 			"word/Editor/Hyperlink.js",
 			"word/Editor/HyperlinkChanges.js",

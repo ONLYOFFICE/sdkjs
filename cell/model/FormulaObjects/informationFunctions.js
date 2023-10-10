@@ -181,10 +181,10 @@
 		if (cElementType.error === arg0.type) {
 			return arg0;
 		} else {
-			let str = arg0.toString().toUpperCase();
+			let str = arg0.toString().toLowerCase();
 
 			//если первый аргумент из набора тех, которые не требуют значения второго аргумента, то обрабатываем его частично
-			let needCheckVal2Arg = {"CONTENTS": 1, "TYPE": 1};
+			let needCheckVal2Arg = {"contents": 1, "type": 1};
 
 			let cell, bbox;
 			if(arg1) {
@@ -208,29 +208,30 @@
 					return new cError(cErrorType.wrong_name);
 				}
 			}
-
+			
+			let _cCellFunctionLocal = window["AscCommon"].cCellFunctionLocal;
 			let res, numFormat;
 			switch (str) {
-				case "COL": {
+				case _cCellFunctionLocal["col"]: {
 					res = new cNumber(bbox.c1 + 1);
 					break;
 				}
-				case "ROW": {
+				case _cCellFunctionLocal["row"]: {
 					res = new cNumber(bbox.r1 + 1);
 					break;
 				}
-				case "SHEET": {
+				case _cCellFunctionLocal["sheet"]: {
 					//нет в офф. документации
 					//ms excel returns 1?
 					res = new cNumber(1);
 					break;
 				}
-				case "ADDRESS": {
+				case _cCellFunctionLocal["address"]: {
 					res = new Asc.Range(bbox.c1, bbox.r1, bbox.c1, bbox.r1);
 					res = new cString(res.getAbsName());
 					break;
 				}
-				case "FILENAME": {
+				case _cCellFunctionLocal["filename"]: {
 					//TODO без пути
 					let docInfo = window["Asc"]["editor"].DocInfo;
 					let fileName = docInfo ? docInfo.get_Title() : "";
@@ -243,11 +244,11 @@
 					}
 					break;
 				}
-				case "COORD": {
+				case _cCellFunctionLocal["coord"]: {
 					//нет в офф. документации
 					break;
 				}
-				case "CONTENTS": {
+				case _cCellFunctionLocal["contents"]: {
 					if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type){
 						res = arg1.getValue();
 					} else {
@@ -258,7 +259,7 @@
 					}
 					break;
 				}
-				case "TYPE": {
+				case _cCellFunctionLocal["type"]: {
 					// b = blank; l = string (label); v = otherwise (value)
 					res = arg1.getValue();
 					if(res.type === cElementType.empty) {
@@ -270,7 +271,7 @@
 					}
 					break;
 				}
-				case "WIDTH": {
+				case _cCellFunctionLocal["width"]: {
 					//return array
 					//{width 1 column; is default}
 					let col = ws._getCol(bbox.c1);
@@ -295,7 +296,7 @@
 
 					break;
 				}
-				case "PREFIX": {
+				case _cCellFunctionLocal["prefix"]: {
 					// ' = left; " = right; ^ = centered; \ =
 					cell = ws.getCell3(bbox.r1, bbox.c1);
 					let align = cell.getAlign();
@@ -316,7 +317,7 @@
 
 					break;
 				}
-				case "PROTECT": {
+				case _cCellFunctionLocal["protect"]: {
 					//default - protect, do not support on open
 					cell = ws.getCell3(bbox.r1, bbox.c1);
 					if(cell.getLocked()) {
@@ -326,11 +327,11 @@
 					}
 					break;
 				}
-				case "FORMAT": {
+				case _cCellFunctionLocal["format"]: {
 					res = getCellFormat(ws, bbox.r1, bbox.c1);
 					break
 				}
-				case "COLOR": {
+				case _cCellFunctionLocal["color"]: {
 					numFormat = getNumFormat(ws, bbox.r1, bbox.c1);
 					if(numFormat && (numFormat.oNegativeFormat && numFormat.oNegativeFormat.Color !== -1)) {
 						res = new cNumber(1);
@@ -339,7 +340,7 @@
 					}
 					break
 				}
-				case "PARENTHESES": {
+				case _cCellFunctionLocal["parentheses"]: {
 					numFormat = getNumFormat(ws, bbox.r1, bbox.c1);
 					if(numFormat && numFormat.oPositiveFormat && numFormat.oPositiveFormat.formatString.indexOf('(') != -1) {
 						res = new cNumber(1);

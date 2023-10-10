@@ -1,5 +1,6 @@
 .idea/
 build/node_modules
+build/deserializer/cache
 build/$weak$.js
 build/maps
 common/AllFonts.js

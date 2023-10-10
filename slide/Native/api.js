@@ -374,6 +374,7 @@ function NativeOpenFileP(_params, documentInfo){
     });
 
     _api.asc_registerCallback("asc_onSendThemeColors", onApiSendThemeColors);
+    _api.asc_registerCallback("asc_onPresentationSize", onApiPresentationSize);
 
     _api.asc_registerCallback("asc_onUpdateThemeIndex", function(nIndex) {
         var stream = global_memory_stream_menu;
@@ -494,6 +495,14 @@ function onApiCanIncreaseIndent(value) {
 function onApiCanDecreaseIndent(value) {
     var data = { "result": value };
     postDataAsJSONString(data, 8128); // ASC_PRESENTATIONS_EVENT_CANDECREASEINDENT
+}
+
+function onApiPresentationSize(width, height, type) {
+    var size = {
+        "width" : width,
+        "height" : height,
+    };
+    postDataAsJSONString(size, 8129); // ASC_PRESENTATIONS_EVENT_TYPE_SLIDE_SIZE_CHANGE
 }
 
 Asc['asc_docs_api'].prototype.UpdateTextPr = function(TextPr)

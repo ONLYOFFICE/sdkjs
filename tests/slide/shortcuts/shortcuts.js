@@ -535,7 +535,7 @@
 			oEvent = createEvent(188, true, false, false, false, false);
 			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Superscript, 'Check getting superscript shortcut action');
 
-			oEvent = createEvent(187, true, false, false, false, false);
+			oEvent = createEvent(187, true, false, true, false, false);
 			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Subscript, 'Check getting subscript shortcut action');
 
 			oEvent = createEvent(190, true, false, false, false, false);
@@ -852,7 +852,7 @@
 			{
 				const {oShape} = getShapeWithParagraphHelper('', true);
 				selectOnlyObjects([oShape]);
-				oGlobalLogicDocument.AddAnimation(1, 1, 0, false, false);
+				oGlobalLogicDocument.AddAnimation(1, 1, 0, null, false, false);
 
 				onKeyDown(oEvent);
 				const oTiming = oGlobalLogicDocument.GetCurTiming();

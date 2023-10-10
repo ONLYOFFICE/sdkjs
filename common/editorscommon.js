@@ -1521,12 +1521,14 @@
 		"uf": "#UNSUPPORTED_FUNCTION!"
 	};
 	var cErrorLocal = {};
+	let cCellFunctionLocal = {};
 
 	function build_local_rx(data)
 	{
 		rx_table_local = build_rx_table(data ? data["StructureTables"] : null);
 		rx_bool_local = build_rx_bool((data && data["CONST_TRUE_FALSE"]) || cBoolOrigin);
 		rx_error_local = build_rx_error(data ? data["CONST_ERROR"] : null);
+		rx_cell_func_local = build_rx_cell_func(data ? data["CELL_FUNCTION_INFO_TYPE"] : null);
 	}
 
 	function build_rx_table(local)
@@ -1612,6 +1614,50 @@
 			cErrorLocal["na"] + "|" +
 			cErrorLocal["getdata"] + "|" +
 			cErrorLocal["uf"] + ")", "i");
+	}
+
+	function build_rx_cell_func(local)
+	{
+		// ToDo переделать на более правильную реализацию. Не особо правильное копирование
+		local = local ? local : {
+			"address": "address",
+			"col": "col",
+			"color": "color",
+			"contents": "contents",
+			"filename": "filename",
+			"format": "format",
+			"parentheses": "parentheses",
+			"prefix": "prefix",
+			"protect": "protect",
+			"row": "row",
+			"type": "type",
+			"width": "width"
+		};
+		cCellFunctionLocal['address'] = local['address'];
+		cCellFunctionLocal['col'] = local['col'];
+		cCellFunctionLocal['color'] = local['color'];
+		cCellFunctionLocal['contents'] = local['contents'];
+		cCellFunctionLocal['filename'] = local['filename'];
+		cCellFunctionLocal['format'] = local['format'];
+		cCellFunctionLocal['parentheses'] = local['parentheses'];
+		cCellFunctionLocal['prefix'] = local['prefix'];
+		cCellFunctionLocal['protect'] = local['protect'];
+		cCellFunctionLocal['row'] = local['row'];
+		cCellFunctionLocal['type'] = local['type'];
+		cCellFunctionLocal['width'] = local['width'];
+
+		return new RegExp("^(" + cCellFunctionLocal["address"] + "|" +
+			cCellFunctionLocal["col"] + "|" +
+			cCellFunctionLocal["color"] + "|" +
+			cCellFunctionLocal["contents"] + "|" +
+			cCellFunctionLocal["filename"] + "|" +
+			cCellFunctionLocal["format"] + "|" +
+			cCellFunctionLocal["parentheses"] + "|" +
+			cCellFunctionLocal["prefix"] + "|" +
+			cCellFunctionLocal["protect"] +
+			cCellFunctionLocal["row"] +
+			cCellFunctionLocal["type"] +
+			cCellFunctionLocal["width"] + ")", "i");
 	}
 
 	var PostMessageType = {
@@ -2605,6 +2651,7 @@
 
 		rx_error              = build_rx_error(null),
 		rx_error_local        = build_rx_error(null),
+		rx_cell_func_local    = build_rx_cell_func(null),
 
 		rx_bool               = build_rx_bool(cBoolOrigin),
 		rx_bool_local         = rx_bool,
@@ -4366,6 +4413,44 @@
 		}
 
 		return (nFirstCharCode - 64) + 26 * (nLen - 1);
+	}
+
+	function RussianNumberingToInt(sLetters)
+	{
+		sLetters = sLetters.toUpperCase();
+
+		if (sLetters.length <= 0)
+			return NaN;
+
+		const nLen = sLetters.length;
+		const nFirstCharCode = sLetters[0].charCodeAt(0);
+		let nSub;
+		if (1040 <= nFirstCharCode && nFirstCharCode <= 1048)
+		{
+			nSub = 1039;
+		}
+		else if (1050 <= nFirstCharCode && nFirstCharCode <= 1065)
+		{
+			nSub = 1040;
+		}
+		else if (1069 <= nFirstCharCode && nFirstCharCode <= 1071)
+		{
+			nSub = 1042;
+		}
+		else if (nFirstCharCode === 1067)
+		{
+			nSub = 1041;
+		}
+
+		if (!nSub)
+			return NaN;
+
+		for (let nPos = 1; nPos < nLen; ++nPos)
+		{
+			if (sLetters.charCodeAt(nPos) !== nFirstCharCode)
+				return NaN;
+		}
+		return nFirstCharCode - nSub + 29 * (nLen - 1);
 	}
 
 	function repeatNumberingLvl(num, nLastTrueSymbol)
@@ -9388,7 +9473,7 @@
 				|| 0x2611 === nUnicode
 				|| 0x2610 === nUnicode));
 	}
-
+	
 	function ExecuteNoHistory(f, oLogicDocument, oThis, args)
 	{
 		// TODO: Надо перевести все редакторы на StartNoHistoryMode/EndNoHistoryMode
@@ -9423,6 +9508,12 @@
 		}
 
 		return result;
+	}
+	
+	function AddAndExecuteChange(change)
+	{
+		AscCommon.History.Add(change);
+		change.Redo();
 	}
 
 	/**
@@ -12578,6 +12669,9 @@
 			} else if (-1 !== value.indexOf("pc")) {
 				oType = "pc";
 				oVal *= AscCommonWord.g_dKoef_pc_to_mm;
+			} else if (-1 !== value.indexOf("em")) {
+				oType = "em";
+				oVal *= AscCommonWord.g_dKoef_em_to_mm;
 			} else {
 				oType = "none";
 			}
@@ -13220,6 +13314,9 @@
 		if (!api) {
 			return;
 		}
+		if (api.documentOpenOptions && api.documentOpenOptions["debug"]) {
+			console.log("[speed]: "+ msg);
+		}
 		api.CoAuthoringApi.sendClientLog(level, msg);
 	}
 
@@ -13400,9 +13497,10 @@
 	window["AscCommon"].CorrectMMToTwips = CorrectMMToTwips;
 	window["AscCommon"].TwipsToMM = TwipsToMM;
 	window["AscCommon"].MMToTwips = MMToTwips;
-	window["AscCommon"].RomanToInt = RomanToInt;
-	window["AscCommon"].LatinNumberingToInt = LatinNumberingToInt;
-	window["Asc"]["IntToNumberFormat"] = window["AscCommon"]["IntToNumberFormat"] = window["AscCommon"].IntToNumberFormat = IntToNumberFormat;
+	window["AscCommon"]["RomanToInt"] = window["AscCommon"].RomanToInt = RomanToInt;
+	window["AscCommon"]["LatinNumberingToInt"] = window["AscCommon"].LatinNumberingToInt = LatinNumberingToInt;
+	window["AscCommon"]["RussianNumberingToInt"] = window["AscCommon"].RussianNumberingToInt = RussianNumberingToInt;
+	window["AscCommon"]["IntToNumberFormat"] = window["AscCommon"].IntToNumberFormat = IntToNumberFormat;
 	window["AscCommon"].IsSpace = IsSpace;
 	window["AscCommon"].IntToHex = IntToHex;
 	window["AscCommon"].Int32ToHex = Int32ToHex;
@@ -13416,6 +13514,7 @@
 	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
 	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
+	window["AscCommon"].AddAndExecuteChange = AddAndExecuteChange;
 	window["AscCommon"].CompareStrings = CompareStrings;
 	window["AscCommon"].IsSupportAscFeature = IsSupportAscFeature;
 	window["AscCommon"].IsSupportOFormFeature = IsSupportOFormFeature;
@@ -13442,6 +13541,7 @@
 	window["AscCommon"].cBoolLocal = cBoolLocal;
 	window["AscCommon"].cErrorOrigin = cErrorOrigin;
 	window["AscCommon"].cErrorLocal = cErrorLocal;
+	window["AscCommon"].cCellFunctionLocal = cCellFunctionLocal;
 	window["AscCommon"].FormulaSeparators = FormulaSeparators;
 	window["AscCommon"].rx_space_g = rx_space_g;
 	window["AscCommon"].rx_space = rx_space;

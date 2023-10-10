@@ -34,12 +34,17 @@
 
 (function(window)
 {
+	const DEFAULT_HYPHENATION_ZONE = 360;
+	
 	/**
 	 * Класс с глобальными настройками для документа
+	 * @param {AscWord.CDocument} logicDocument
 	 * @constructor
 	 */
-	function CDocumentSettings()
+	function DocumentSettings(logicDocument)
 	{
+		this.LogicDocument = logicDocument;
+		
 		this.View                 = Asc.DocumentView.None;
 		this.MathSettings         = undefined !== CMathSettings ? new CMathSettings() : {};
 		this.CompatibilityMode    = AscCommon.document_compatibility_mode_Current;
@@ -47,12 +52,18 @@
 		this.SpecialFormsSettings = new CSpecialFormsGlobalSettings();
 		this.WriteProtection      = undefined;
 		this.DocumentProtection   = undefined !== AscCommonWord.CDocProtect ? new AscCommonWord.CDocProtect() : null;
-
-		this.ListSeparator  = undefined;
-		this.DecimalSymbol  = undefined;
-		this.GutterAtTop    = false;
-		this.MirrorMargins  = false;
-		this.TrackRevisions = false; // Флаг рецензирования, который записан в самом файле
+		
+		// Параметры, связанные с автоматической расстановкой переносов
+		this.autoHyphenation        = undefined;
+		this.hyphenationZone        = undefined;
+		this.consecutiveHyphenLimit = undefined;
+		this.doNotHyphenateCaps     = undefined;
+		
+		this.ListSeparator   = undefined;
+		this.DecimalSymbol   = undefined;
+		this.GutterAtTop     = false;
+		this.MirrorMargins   = false;
+		this.TrackRevisions  = false; // Флаг рецензирования, который записан в самом файле
 
 		// Compatibility
 		this.SplitPageBreakAndParaMark        = false;
@@ -61,7 +72,55 @@
 		this.UlTrailSpace                     = false;
 		this.UseFELayout                      = false;
 	}
+	DocumentSettings.prototype.isAutoHyphenation = function()
+	{
+		return !!this.autoHyphenation;
+	};
+	DocumentSettings.prototype.setAutoHyphenation = function(isAuto)
+	{
+		if (this.autoHyphenation === isAuto
+			|| (!isAuto && undefined === this.autoHyphenation))
+			return;
+		
+		AscCommon.AddAndExecuteChange(new CChangesDocumentSettingsAutoHyphenation(this.LogicDocument, this.autoHyphenation, isAuto));
+	};
+	DocumentSettings.prototype.isHyphenateCaps = function()
+	{
+		return (true !== this.doNotHyphenateCaps);
+	};
+	DocumentSettings.prototype.setHyphenateCaps = function(isHyphenate)
+	{
+		if (this.doNotHyphenateCaps === !isHyphenate
+			|| (isHyphenate && undefined === this.doNotHyphenateCaps))
+			return;
+		
+		AscCommon.AddAndExecuteChange(new CChangesDocumentSettingsDoNotHyphenateCaps(this.LogicDocument, this.doNotHyphenateCaps, !isHyphenate));
+	};
+	DocumentSettings.prototype.getConsecutiveHyphenLimit = function()
+	{
+		return !this.consecutiveHyphenLimit ? 0 : this.consecutiveHyphenLimit;
+	};
+	DocumentSettings.prototype.setConsecutiveHyphenLimit = function(limit)
+	{
+		if (this.consecutiveHyphenLimit === limit
+			|| (undefined === this.consecutiveHyphenLimit && !limit))
+			return;
+		
+		AscCommon.AddAndExecuteChange(new CChangesDocumentSettingsConsecutiveHyphenLimit(this.LogicDocument, this.consecutiveHyphenLimit, limit));
+	};
+	DocumentSettings.prototype.getHyphenationZone = function()
+	{
+		return undefined === this.hyphenationZone ? DEFAULT_HYPHENATION_ZONE : this.hyphenationZone;
+	};
+	DocumentSettings.prototype.setHyphenationZone = function(zone)
+	{
+		if (this.hyphenationZone === zone
+			|| (undefined === this.hyphenationZone && DEFAULT_HYPHENATION_ZONE === zone))
+			return;
+		
+		AscCommon.AddAndExecuteChange(new CChangesDocumentSettingsHyphenationZone(this.LogicDocument, this.hyphenationZone, zone));
+	};
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscWord'].CDocumentSettings = CDocumentSettings;
+	window['AscWord'].DocumentSettings = DocumentSettings;
 
 })(window);

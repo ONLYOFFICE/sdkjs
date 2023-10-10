@@ -3152,7 +3152,7 @@
 	prot['Ascending'] = prot.Ascending;
 	prot['Descending'] = prot.Descending;
 
-	window['Asc']['ST_slicerCacheCrossFilter'] = window['AscCommonExcel'].ST_slicerCacheCrossFilter = ST_slicerCacheCrossFilter;
+	window['Asc']['ST_slicerCacheCrossFilter'] = window['Asc'].ST_slicerCacheCrossFilter = ST_slicerCacheCrossFilter;
 	prot = ST_slicerCacheCrossFilter;
 	prot['None'] = prot.None;
 	prot['ShowItemsWithDataAtTop'] = prot.ShowItemsWithDataAtTop;

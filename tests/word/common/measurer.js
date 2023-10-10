@@ -53,6 +53,17 @@
 	const GraphemeCombining_xyz = 40;
 	const GraphemeCombining_xy  = 45;
 
+	function GetCharWidth(codePoint)
+	{
+		if (0x00BC === codePoint) // ¼
+			return 0.25 * CharWidth;
+		else if (0x00BD === codePoint) // ½
+			return 0.5 * CharWidth;
+		else if (0x00BE === codePoint) // ¾
+			return 0.75 * CharWidth;
+		
+		return CharWidth;
+	}
 
 	let HB_String                            = [];
 	AscFonts.HB_StartString                  = function()
@@ -66,6 +77,10 @@
 	AscFonts.HB_AppendToString               = function(u)
 	{
 		HB_String.push(u);
+	};
+	AscFonts.GetGraphemeWidth = function()
+	{
+		return CharWidth;
 	};
 	AscFonts.CTextShaper.prototype.FlushWord = function()
 	{
@@ -112,7 +127,7 @@
 			}
 			else
 			{
-				this.FlushGrapheme(GraphemeNormal, CharWidth, 1, false);
+				this.FlushGrapheme(GraphemeNormal, GetCharWidth(HB_String[nIndex]), 1, false);
 			}
 		}
 
@@ -143,17 +158,17 @@
 	{
 		return FontDescent;
 	};
-	g_oTextMeasurer.MeasureCode     = function()
+	g_oTextMeasurer.MeasureCode     = function(codePoint)
 	{
-		return {Width : CharWidth * FontSize};
+		return {Width : GetCharWidth(codePoint) * FontSize};
 	};
 	g_oTextMeasurer.Measure2Code     = function()
 	{
 		return {Width : CharWidth * FontSize};
 	};
-	g_oTextMeasurer.Measure         = function()
+	g_oTextMeasurer.Measure         = function(char)
 	{
-		return {Width : CharWidth * FontSize};
+		return g_oTextMeasurer.MeasureCode(char ? char.codePointAt(0) : 0x0020);
 	};
 	AscCommon.g_fontApplication = AscCommon.g_fontApplication || window.g_fontApplication || {};
 	AscCommon.g_fontApplication.LoadFont = function () {

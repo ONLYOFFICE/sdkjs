@@ -9078,3 +9078,4 @@ CDocumentRecalculateObject.prototype =
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CDocumentContent = CDocumentContent;
 window['AscWord'].CDocumentContent = CDocumentContent;
+window['AscWord'].DocumentContent = CDocumentContent;
