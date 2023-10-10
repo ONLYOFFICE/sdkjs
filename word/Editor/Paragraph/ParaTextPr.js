@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 02.11.2016
- * Time: 16:36
- */
 
 /**
  * Класс представляющий собой настройки текста (сейчас используется как настройка текста для конца параграфа)
@@ -791,3 +786,4 @@ ParaTextPr.prototype.Read_FromBinary2 = function(Reader)
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].ParaTextPr = ParaTextPr;
+window['AscWord'].ParaTextPr = ParaTextPr;

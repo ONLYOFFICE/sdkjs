@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 11.05.2017
- * Time: 16:48
- */
 
 /**
  * @constructor
@@ -1384,6 +1379,13 @@ CInlineLevelSdt.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAl
 		CParagraphContentWithParagraphLikeContent.prototype.Apply_TextPr.call(this, TextPr, IncFontSize, true);
 	else
 		CParagraphContentWithParagraphLikeContent.prototype.Apply_TextPr.call(this, TextPr, IncFontSize, ApplyToAll);
+};
+CInlineLevelSdt.prototype.GetDirectTextPr = function()
+{
+	if (this.IsPlaceHolder())
+		return this.GetDefaultTextPr();
+	
+	return CParagraphContentWithParagraphLikeContent.prototype.GetDirectTextPr.call(this);
 };
 CInlineLevelSdt.prototype.CanAddDropCap = function()
 {
@@ -3414,7 +3416,7 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function(isFastRecalc)
 		else if (AscCommon.align_Left !== oParagraph.GetParagraphAlign())
 		{
 			oRun.SetFontSize(nNewFontSize);
-			oParagraph.private_RecalculateFastRange(0, 0);
+			oParagraph.recalculateRangeFast(0, 0);
 		}
 	}
 	// Восстанавливаем старое значение, чтобы в историю все правильно записалось

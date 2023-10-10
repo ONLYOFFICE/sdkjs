@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 05.04.2017
- * Time: 11:42
- */
 
 var type_Unknown = 0x00;
 
@@ -455,7 +450,7 @@ CDocumentContentElementBase.prototype.SetContentPosition = function(DocPos, Dept
 CDocumentContentElementBase.prototype.GetNumberingInfo = function(oNumberingEngine)
 {
 };
-CDocumentContentElementBase.prototype.AddInlineImage = function(W, H, Img, Chart, bFlow)
+CDocumentContentElementBase.prototype.AddInlineImage = function(W, H, Img, GraphicObject, bFlow)
 {
 };
 CDocumentContentElementBase.prototype.AddImages = function(aImages)

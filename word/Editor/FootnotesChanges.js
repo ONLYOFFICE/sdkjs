@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 10.11.2016
- * Time: 19:35
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_Footnotes_AddFootnote]              = CChangesFootnotesAddFootnote;
 AscDFH.changesFactory[AscDFH.historyitem_Footnotes_SetSeparator]             = CChangesFootnotesSetSeparator;

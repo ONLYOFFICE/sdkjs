@@ -4053,39 +4053,41 @@ CDelimiter.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
 	var strStartSymbol = this.Pr.begChr === -1 ? "" : String.fromCharCode((this.begOper.code || this.Pr.begChr) || 40);
 	var strEndSymbol = this.Pr.endChr === -1 ? "" : String.fromCharCode((this.endOper.code || this.Pr.endChr) || 41);
+	var strSeparatorSymbol = isLaTeX ? "\\mid" : "∣";
 
-	var strSeparatorSymbol = isLaTeX ? "\\mid " : "∣";
-
-    if (isLaTeX)
-    {
-        strStartSymbol = strStartSymbol === "" ? "." : strStartSymbol;
-        strTemp += "\\left" + strStartSymbol;
-    }
-    else
-    {
-        strStartSymbol = strStartSymbol === "" ? "├" : strStartSymbol;
-        strTemp += strStartSymbol;
-    }
+	if ((!AscMath.MathLiterals.lBrackets.IsIncludes(strStartSymbol) && !AscMath.MathLiterals.lrBrackets.IsIncludes(strStartSymbol)) || isLaTeX)
+	{
+		strTemp += isLaTeX ? "\\left" : "├";
+		strTemp += strStartSymbol;
+	}
+	else
+	{
+		strTemp += strStartSymbol;
+	}
 
 	for (let intCount = 0; intCount < this.Content.length; intCount++)
-    {
+	{
 		strTemp += this.Content[intCount].GetMultipleContentForGetText(isLaTeX, true);
-
 		if (strSeparatorSymbol && this.Content.length > 1 && intCount < this.Content.length - 1)
 			strTemp += strSeparatorSymbol;
 	}
 
-    if (isLaTeX)
-    {
-        strEndSymbol = strEndSymbol === "" ? "." : strEndSymbol;
-        strTemp += "\\right" + strEndSymbol;
-    }
-    else
-    {
-        strEndSymbol = strEndSymbol === "" ? "┤" : strEndSymbol;
-        strTemp += strEndSymbol;
-    }
-
+	if ((!AscMath.MathLiterals.lrBrackets.IsIncludes(strEndSymbol) && !AscMath.MathLiterals.rBrackets.IsIncludes(strEndSymbol)) || isLaTeX)
+	{
+		strTemp += isLaTeX ? "\\right" : "┤";
+		strTemp += strEndSymbol;
+	}
+	else
+	{
+		if ("├" === strTemp)
+		{
+			strTemp += "┤" + strEndSymbol;
+		}
+		else
+		{
+			strTemp += strEndSymbol;
+		}
+	}
 	return strTemp;
 }
 
@@ -4546,22 +4548,19 @@ CGroupCharacter.prototype.GetTextOfElement = function(isLaTeX) {
 	var Base = this.getBase().GetMultipleContentForGetText(isLaTeX);
 
 	if (true === isLaTeX)
-    {
-        if (intStartCode === 9182 || intStartCode === 9183)
-        {
-            if (intStartCode === 9182)
-                strStart = '\\overbrace';
-            else if (intStartCode === 9183)
-                strStart = '\\underbrace';
+	{
+		let strTempSymbol = AscMath.GetLaTeXFromValue(strStart);
+		if (strTempSymbol)
+			strStart = strTempSymbol;
 
-            strStart = strStart + Base;
-        }
-        else
-            strStart += this.Pr.pos === 1 ? "\\above" : "\\below";
+		if (!(intStartCode === 9182 || intStartCode === 9183))
+		{
+			strStart += this.Pr.pos === 1 ? "\\above" : "\\below";
+		}
 
-        strTemp = strStart;
-        if (Base)
-            strTemp += Base;
+		strTemp = strStart;
+		if (Base)
+			strTemp += Base;
 	}
     else
     {

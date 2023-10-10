@@ -205,6 +205,14 @@
 		return false;
 	};
 	/**
+	 * Нужно ли ставить дефис для автоматического переноса
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.isHyphenAfter = function()
+	{
+		return false;
+	};
+	/**
 	 * Является ли данный элемент буквой (не цифрой, не знаком пунктуации и т.д.)
 	 * @returns {boolean}
 	 */

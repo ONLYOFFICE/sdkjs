@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 03.05.2017
- * Time: 12:12
- */
 
 function CSdtPr()
 {
@@ -683,6 +678,17 @@ CContentControlPr.prototype.OnSetKeyToForm = function(newKey, form)
 		return;
 	
 	let formManager = logicDocument.GetFormsManager();
+	let allForms = formManager.GetAllFormsByKey(newKey, form.GetSpecificType());
+	for (let iForm = 0, nForms = allForms.length; iForm < nForms; ++iForm)
+	{
+		if (allForms[iForm] === form)
+			continue;
+		
+		// Напрямую у formManager не вызываем, т.к. еще может быть не выставлен ключ у текущей формы
+		logicDocument.OnChangeForm(allForms[iForm]);
+		break;
+	}
+	
 	let role = formManager.GetRoleByKey(newKey, form.GetSpecificType());
 	if (!role)
 		return;
@@ -897,109 +903,6 @@ CContentControlPr.prototype.GetNewKey = function()
 	let keyGenerator = formManager.GetKeyGenerator();
 
 	return keyGenerator.GetNewKey(this.CC);
-};
-
-/**
- * Класс с глобальными настройками для всех контейнеров
- * @constructor
- */
-function CSdtGlobalSettings()
-{
-	this.Color         = new AscCommonWord.CDocumentColor(220, 220, 220);
-	this.ShowHighlight = false;
-}
-/**
- * Проверяем все ли параметры выставлены по умолчанию
- * @returns {boolean}
- */
-CSdtGlobalSettings.prototype.IsDefault = function()
-{
-	if (!this.Color
-		|| 220 !== this.Color.r
-		|| 220 !== this.Color.g
-		|| 220 !== this.Color.b
-		|| false !== this.ShowHighlight)
-		return false;
-
-	return true;
-};
-CSdtGlobalSettings.prototype.Copy = function()
-{
-	var oSettings = new CSdtGlobalSettings();
-
-	oSettings.Color         = this.Color.Copy();
-	oSettings.ShowHighlight = this.ShowHighlight;
-
-	return oSettings;
-};
-CSdtGlobalSettings.prototype.Write_ToBinary = function(oWriter)
-{
-	// CDocumentColor : Color
-	// Bool           : ShowHighlight
-
-	this.Color.WriteToBinary(oWriter);
-	oWriter.WriteBool(this.ShowHighlight);
-};
-CSdtGlobalSettings.prototype.Read_FromBinary = function(oReader)
-{
-	this.Color.ReadFromBinary(oReader);
-	this.ShowHighlight = oReader.GetBool();
-};
-
-/**
- * Класс с глобальными настройками для всех специальных форм
- */
-function CSpecialFormsGlobalSettings()
-{
-	this.Highlight = new AscCommonWord.CDocumentColor(201, 200, 255);
-}
-CSpecialFormsGlobalSettings.prototype.Copy = function()
-{
-	var oSettings = new CSpecialFormsGlobalSettings();
-
-	if (this.Highlight)
-		oSettings.Highlight = this.Highlight.Copy();
-
-	return oSettings;
-};
-/**
- * Проверяем все ли параметры выставлены по умолчанию
- * @returns {boolean}
- */
-CSpecialFormsGlobalSettings.prototype.IsDefault = function()
-{
-	return (undefined === this.Highlight || (!this.Highlight.IsAuto() && this.Highlight.IsEqualRGB({r : 201, g: 200, b : 255})));
-};
-CSpecialFormsGlobalSettings.prototype.Write_ToBinary = function(oWriter)
-{
-	var nStartPos = oWriter.GetCurPosition();
-	oWriter.Skip(4);
-	var nFlags = 0;
-
-	if (undefined !== this.Highlight)
-	{
-		this.Highlight.WriteToBinary(oWriter);
-		nFlags |= 1;
-	}
-
-	var nEndPos = oWriter.GetCurPosition();
-	oWriter.Seek(nStartPos);
-	oWriter.WriteLong(nFlags);
-	oWriter.Seek(nEndPos);
-};
-CSpecialFormsGlobalSettings.prototype.Read_FromBinary = function(oReader)
-{
-	var nFlags = oReader.GetLong();
-
-	if (nFlags & 1)
-	{
-		this.Highlight = new AscCommonWord.CDocumentColor();
-		this.Highlight.ReadFromBinary(oReader);
-	}
-	else
-	{
-		this.Highlight = undefined;
-	}
 };
 
 //--------------------------------------------------------export--------------------------------------------------------

@@ -754,6 +754,14 @@
 			return this.r1 === this.r2 && this.c1 === this.c2;
 		};
 
+		Range.prototype.isOneCol = function () {
+			return this.c1 === this.c2;
+		};
+
+		Range.prototype.isOneRow = function () {
+			return this.r1 === this.r2;
+		};
+
 		Range.prototype.isOnTheEdge = function (c, r) {
 			return this.r1 === r || this.r2 === r || this.c1 === c || this.c2 === c;
 		};

@@ -2002,7 +2002,7 @@ function OfflineEditor () {
                                   var stream = global_memory_stream_menu;
                                   stream["ClearNoAttack"]();
                                   stream["WriteBool"](locked);
-                                  window["native"]["OnCallMenuEvent"](20104, stream); // ASC_COAUTH_EVENT_TYPE_WORKBOOK_LOCKED
+                                  window["native"]["OnCallMenuEvent"](30104, stream); // ASC_COAUTH_EVENT_TYPE_WORKBOOK_LOCKED
                                   });
         
         _api.asc_registerCallback("asc_onWorksheetLocked", function(index, locked) {
@@ -2010,7 +2010,7 @@ function OfflineEditor () {
                                   stream["ClearNoAttack"]();
                                   stream["WriteLong"](index);
                                   stream["WriteBool"](locked);
-                                  window["native"]["OnCallMenuEvent"](20105, stream); // ASC_COAUTH_EVENT_TYPE_WORKSHEET_LOCKED
+                                  window["native"]["OnCallMenuEvent"](30105, stream); // ASC_COAUTH_EVENT_TYPE_WORKSHEET_LOCKED
                                   });
         
         _api.asc_registerCallback("asc_onGetEditorPermissions", function(state) {
@@ -5215,6 +5215,7 @@ window["Asc"]["spreadsheet_api"].prototype.openDocument = function(file) {
 
                _s.asc_WriteAllWorksheets(true);
                _s.asc_WriteCurrentCell();
+               t.asc_setZoom(_s.zoom);
 
                return;
                }
@@ -5259,6 +5260,10 @@ window["Asc"]["spreadsheet_api"].prototype.openDocument = function(file) {
 
                           _s.asc_WriteAllWorksheets(true);
                           _s.asc_WriteCurrentCell();
+
+                          // до этого зум если вызывался - то не применился (см. реализацию asc_setZoom)
+                          // но нужно ПОСЛЕ onEndLoadingFile (headersWidth & headersHeight должны прийти без зума)
+                          t.asc_setZoom(_s.zoom);
 
                           setInterval(function() {
 

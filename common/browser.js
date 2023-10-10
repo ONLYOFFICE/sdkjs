@@ -40,6 +40,7 @@ function (window, undefined) {
 var AscBrowser = {
     userAgent : "",
     isIE : false,
+	isWindows : false,
     isMacOs : false,
     isSafariMacOs : false,
     isAppleDevices : false,
@@ -73,6 +74,8 @@ AscBrowser.isIE =  (AscBrowser.userAgent.indexOf("msie") > -1 ||
                     AscBrowser.userAgent.indexOf("edge") > -1);
 
 AscBrowser.isIeEdge = (AscBrowser.userAgent.indexOf("edge/") > -1);
+
+AscBrowser.isWindows = (AscBrowser.userAgent.indexOf("windows") > -1);
 
 AscBrowser.isIE9 =  (AscBrowser.userAgent.indexOf("msie9") > -1 || AscBrowser.userAgent.indexOf("msie 9") > -1);
 AscBrowser.isIE10 =  (AscBrowser.userAgent.indexOf("msie10") > -1 || AscBrowser.userAgent.indexOf("msie 10") > -1);

@@ -5210,10 +5210,12 @@
 				resArr[i] = [[arg[i]]];
 			}
 
-			row = Math.max(resArr[0].length, row);
-			col = resArr[0][0] ? Math.max(resArr[0][0].length, col) : 0;
+			let matrixSize = arg[i].getDimensions();
 
-			if (row != resArr[i].length || (resArr[i][0] && col != resArr[i][0].length)) {
+			row = Math.max(matrixSize.row, row);
+			col = Math.max(matrixSize.col, col);
+
+			if (row !== matrixSize.row || col !== matrixSize.col) {
 				return new cError(cErrorType.not_numeric);
 			}
 
@@ -5222,11 +5224,15 @@
 			}
 		}
 
+		let emptyVal = new cEmpty();
 		for (let iRow = 0; iRow < row; iRow++) {
 			for (let iCol = 0; iCol < col; iCol++) {
 				res = 1;
 				for (let iRes = 0; iRes < resArr.length; iRes++) {
-					arg0 = resArr[iRes][iRow][iCol];
+					arg0 = resArr[iRes] && resArr[iRes][iRow] && resArr[iRes][iRow][iCol];
+					if (!arg0) {
+						arg0 = emptyVal;
+					}
 					if (cElementType.error === arg0.type) {
 						return arg0;
 					} else if (cElementType.string === arg0.type) {

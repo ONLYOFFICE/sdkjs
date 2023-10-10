@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 09.04.2020
- * Time: 13:31
- */
 
 /**
  * Класс, работающий с концевыми сносками документа
@@ -1468,12 +1463,12 @@ CEndnotesController.prototype.AddNewParagraph = function(bRecalculate, bForceAdd
 
 	return this.CurEndnote.AddNewParagraph(bRecalculate, bForceAdd);
 };
-CEndnotesController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
+CEndnotesController.prototype.AddInlineImage = function(nW, nH, oImage, oGraphicObject, bFlow)
 {
 	if (false === this.private_CheckEndnotesSelectionBeforeAction())
 		return false;
 
-	return this.CurEndnote.AddInlineImage(nW, nH, oImage, oChart, bFlow);
+	return this.CurEndnote.AddInlineImage(nW, nH, oImage, oGraphicObject, bFlow);
 };
 CEndnotesController.prototype.AddImages = function(aImages)
 {
@@ -2500,13 +2495,13 @@ CEndnotesController.prototype.GetCalculatedParaPr = function()
 };
 CEndnotesController.prototype.GetCalculatedTextPr = function()
 {
-	var oStartPr = this.CurEndnote.GetCalculatedTextPr();
+	var oStartPr = this.CurEndnote.GetCalculatedTextPr(true);
 	var oPr      = oStartPr.Copy();
 
 	for (var sId in this.Selection.Endnotes)
 	{
 		var oEndnote = this.Selection.Endnotes[sId];
-		var oTempPr  = oEndnote.GetCalculatedTextPr();
+		var oTempPr  = oEndnote.GetCalculatedTextPr(true);
 		oPr          = oPr.Compare(oTempPr);
 	}
 

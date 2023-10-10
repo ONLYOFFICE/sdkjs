@@ -80,7 +80,9 @@
 					//url - file link
 
 					if (!bTimeout && oResult["code"] === AscCommon.c_oAscServerCommandErrors.NoError) {
+						arrData[i]["directUrl"] = oResult["url"];
 						arrData[i]["url"] = oResult["url"];
+						arrData[i]["fileType"] = "xlsx";
 						arrData[i]["token"] = null;
 					}
 					fResolve();
@@ -174,10 +176,6 @@
 		}
 		return this.externalReference;
 	};
-	CExternalDataPromiseGetter.prototype.isXlsx = function () {
-		const p = /^.*\.(xlsx)$/i;
-		return this.fileUrl.match(p);
-	};
 	CExternalDataPromiseGetter.prototype.isSupportOOXML = function () {
 		return this.api["asc_isSupportFeature"]("ooxml");
 	};
@@ -208,14 +206,15 @@
 	CExternalDataPromiseGetter.prototype.getSDKPromise = function () {
 		const oThis = this;
 		return new Promise(function (fResolve) {
-			const bIsXLSX = oThis.isXlsx();
-			const nOutputFormat = oThis.isSupportOOXML() ? Asc.c_oAscFileType.XLSX : Asc.c_oAscFileType.XLSY;
+			const isSupportOOXML = oThis.isSupportOOXML();
+			const nOutputFormat = isSupportOOXML ? Asc.c_oAscFileType.XLSX : Asc.c_oAscFileType.XLSY;
 			const sFileUrl = oThis.getFileUrl();
 			const sFileType = oThis.data["fileType"];
 			const sToken = oThis.data["token"];
 			const sDirectUrl = oThis.data["directUrl"];
+			const bIsXLSX = sFileType === "xlsx";
 
-			if ((sFileUrl && !bIsXLSX) || !oThis.isSupportOOXML()) {
+			if ((sFileUrl && !bIsXLSX) || !isSupportOOXML) {
 				let bLoad = false;
 				oThis.api.getConvertedXLSXFileFromUrl(sFileUrl, sFileType, sToken, nOutputFormat,
 					function (sFileUrlAfterConvert) {

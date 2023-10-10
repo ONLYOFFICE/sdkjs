@@ -248,17 +248,6 @@ DrawingObjectsController.prototype.getDrawingObjects = function()
     }
     return ret;
 };
-DrawingObjectsController.prototype.checkSelectedObjectsForMove = function(group)
-{
-    var selected_object = group ? group.selectedObjects : this.selectedObjects;
-    for(var i = 0; i < selected_object.length; ++i)
-    {
-        if(selected_object[i].canMove())
-        {
-            this.arrPreTrackObjects.push(selected_object[i].createMoveTrack());
-        }
-    }
-};
 
 DrawingObjectsController.prototype.checkSelectedObjectsAndFireCallback = function(callback, args)
 {

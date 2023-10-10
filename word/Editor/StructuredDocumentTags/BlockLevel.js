@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 04.04.2017
- * Time: 17:00
- */
 
 var type_BlockLevelSdt = 0x0003;
 
@@ -324,7 +319,7 @@ CBlockLevelSdt.prototype.SelectAll = function(nDirection)
 };
 CBlockLevelSdt.prototype.GetCalculatedTextPr = function()
 {
-	return this.Content.GetCalculatedTextPr();
+	return this.Content.GetCalculatedTextPr(true);
 };
 CBlockLevelSdt.prototype.GetCalculatedParaPr = function()
 {
@@ -507,10 +502,10 @@ CBlockLevelSdt.prototype.GetNumberingInfo = function(oNumberingEngine)
 {
 	return this.Content.GetNumberingInfo(oNumberingEngine);
 };
-CBlockLevelSdt.prototype.AddInlineImage = function(W, H, Img, Chart, bFlow)
+CBlockLevelSdt.prototype.AddInlineImage = function(W, H, Img, GraphicObject, bFlow)
 {
 	this.private_ReplacePlaceHolderWithContent();
-	this.Content.AddInlineImage(W, H, Img, Chart, bFlow);
+	this.Content.AddInlineImage(W, H, Img, GraphicObject, bFlow);
 };
 CBlockLevelSdt.prototype.AddImages = function(aImages)
 {

@@ -197,9 +197,7 @@
 		if (!oCanvas)
 		{
 			oCanvas = document.createElement('canvas');
-			oCanvas.style.cssText = "padding:0;margin:0;user-select:none;";
-			oCanvas.style.width = nWidth_px + "px";
-			oCanvas.style.height = nHeight_px + "px";
+			oCanvas.style.cssText = "padding:0;margin:0;user-select:none;width:100%;height:100%;";
 			if (nWidth_px > 0 && nHeight_px > 0)
 			{
 				oDivElement.appendChild(oCanvas);
@@ -413,7 +411,7 @@
 		const arrFonts = [];
 		for (let sFamilyName in oFontsDict)
 		{
-			arrFonts.push(new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(sFamilyName), 0, "", 0, null));
+			arrFonts.push(new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(sFamilyName)));
 		}
 		AscFonts.FontPickerByCharacter.extendFonts(arrFonts);
 
@@ -926,7 +924,7 @@
 			AscCommon.stopEvent(e);
 			const nOffsetBase = 10;
 			const nLineWidth = 4;
-			const nHeight = parseInt(this.style.height, 10);
+			const nHeight = oThis.m_oCanvas.clientHeight;
 			const nLineDistance = Math.floor(((nHeight - (nOffsetBase << 1)) - nLineWidth * 10) / 9);
 			const nOffset = (nHeight - (nLineWidth * 10 + nLineDistance * 9)) >> 1;
 			const nCurrentLvl = oThis.m_nCurrentLvl;
@@ -974,11 +972,10 @@
 	};
 	CBulletPreviewDrawerAdvancedOptions.prototype.getNumberingValue = function (nNumberIndex, nDrawingLvl, oLvl)
 	{
-		if (nDrawingLvl <= this.m_nCalcNumberingLvl && this.m_arrCalcNumberingInfo && this.m_arrCalcNumberingInfo[nDrawingLvl])
+		if (nDrawingLvl <= this.m_nCalcNumberingLvl && this.m_arrCalcNumberingInfo && AscFormat.isRealNumber(this.m_arrCalcNumberingInfo[nDrawingLvl]) && AscFormat.isRealNumber(this.m_nSourceStart))
 		{
 			const nCalcValue = this.m_arrCalcNumberingInfo[nDrawingLvl];
-			const nStart = oLvl.GetStart();
-			return nCalcValue - nStart + nNumberIndex;
+			return nCalcValue - this.m_nSourceStart + nNumberIndex;
 		}
 		return nNumberIndex;
 	};
@@ -1069,7 +1066,7 @@
 	};
 	CBulletPreviewDrawerAdvancedOptions.prototype.initNumberingInfo = function ()
 	{
-		var oParagraph = this.m_oLogicDocument.GetCurrentParagraph(true);
+		const oParagraph = this.m_oLogicDocument.GetCurrentParagraph(true);
 		if (!oParagraph)
 			return;
 
@@ -1078,6 +1075,12 @@
 		{
 			this.m_arrCalcNumberingInfo = oNumbering.GetCalculatedNumInfo();
 			this.m_nCalcNumberingLvl = oNumbering.GetCalculatedNumberingLvl();
+			const oNum = this.m_oLogicDocument.GetNumbering().GetNum(oNumbering.GetCalculatedNumId());
+			if (oNum)
+			{
+				const oLvl = oNum.GetLvl(this.m_nCalcNumberingLvl);
+				this.m_nSourceStart = oLvl ? oLvl.GetStart() : null;
+			}
 		}
 	};
 	CBulletPreviewDrawerAdvancedOptions.prototype.drawSingleLvlAdvancedOptions = function ()

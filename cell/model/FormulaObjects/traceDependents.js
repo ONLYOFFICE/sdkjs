@@ -50,14 +50,14 @@ function (window, undefined) {
 		this.ws = ws;
 		this.precedents = null;
 		this.precedentsExternal = null;
-		this.currentPrecedents = null;
 		this.dependents = null;
 		this.isDependetsCall = null;
 		this.inLoop = null;
 		this.isPrecedentsCall = null;
 		this.precedentsAreas = null;
-		this.precedentsAreasHeaders = null,
+		this.precedentsAreasHeaders = null;
 		this.data = {
+			referenceMaxLevel: Math.pow(100, 10),
 			lastHeaderIndex: -1,
 			prevIndex: -1,
 			recLevel: 0,
@@ -66,14 +66,14 @@ function (window, undefined) {
 				// cellIndex[From]: cellIndex[To]: recLevel
 			}
 		};
-		this.currentPrecedentsAreas = null;
 		this.currentCalculatedPrecedentAreas = {
 			// rangeName: {
 			// inProgress: null,
 			// isCalculated: null
 			// }
-
 		};
+
+		this._lockChangeDocument = null;
 	}
 
 	TraceDependentsManager.prototype.setPrecedentsCall = function () {
@@ -128,6 +128,11 @@ function (window, undefined) {
 			let activeCell = selection.activeCell;
 			row = activeCell.row;
 			col = activeCell.col;
+			let mergedRange = ws.getMergedByCell(row, col);
+			if (mergedRange) {
+				row = mergedRange.r1;
+				col = mergedRange.c1;
+			}
 		}
 
 		const findMaxNesting = function (row, col) {
@@ -174,7 +179,7 @@ function (window, undefined) {
 			for (let i in t.dependents[index]) {
 				if (t._getDependents(index, i) && t._getDependents(i, index)) {
 					let related = index + "|" + i;
-					t.data.recLevel = Math.pow(10, 10);
+					t.data.recLevel = t.data.referenceMaxLevel;
 					t.data.maxRecLevel = t.data.recLevel;
 					t.data.indices[related] = t.data.recLevel;
 					return true;
@@ -187,9 +192,9 @@ function (window, undefined) {
 		if (maxLevel === 0) {
 			this._setDefaultData();
 			return;
-		} else if (maxLevel === Math.pow(10, 10)) {
+		} else if (maxLevel === t.data.referenceMaxLevel) {
 			// TODO improve check of cyclic references
-			// temporary solution
+			// temporary solution: now, when finding cyclic dependencies, the maximum nesting number(100^10) is set for them and only they are will be initially removed
 			for (let i in this.data.indices) {
 				if (this.data.indices[i] === maxLevel) {
 					let val = i.split("|");
@@ -222,6 +227,11 @@ function (window, undefined) {
 			let activeCell = selection.activeCell;
 			row = activeCell.row;
 			col = activeCell.col;
+			let mergedRange = ws.getMergedByCell(row, col);
+			if (mergedRange) {
+				row = mergedRange.r1;
+				col = mergedRange.c1;
+			}
 		}
 
 		let depFormulas = ws.workbook.dependencyFormulas;
@@ -237,14 +247,13 @@ function (window, undefined) {
 			this.setDependentsCall();
 		}
 	};
-	TraceDependentsManager.prototype._calculateDependents = function (cellIndex, curListener) {
+	TraceDependentsManager.prototype._calculateDependents = function (cellIndex, curListener, isSecondCall) {
 		let t = this;
 		let ws = this.ws.model;
 		let wb = this.ws.model.workbook;
 		let dependencyFormulas = wb.dependencyFormulas;
 		let allDefNamesListeners = dependencyFormulas.defNameListeners;
 		let cellAddress = AscCommonExcel.getFromCellIndex(cellIndex, true);
-		const currentCellInfo = {};
 
 		const findCellListeners = function () {
 			const listeners = {};
@@ -281,29 +290,44 @@ function (window, undefined) {
 
 			return {col: table.Ref.c1, row: table.Ref.r1};
 		};
-		const setDefNameIndexes = function (defName, isTable) {
+		const setDefNameIndexes = function (defName, isTable, defNameRange) {
 			let tableHeader = isTable ? getTableHeader(ws.getTableByName(defName)) : false;
 			let isCurrentCellHeader = isTable ? checkIfHeader(tableHeader) : false;
-			for (const i in allDefNamesListeners) {
+			for (let i in allDefNamesListeners) {
 				if (allDefNamesListeners.hasOwnProperty(i) && i.toLowerCase() === defName.toLowerCase()) {
-					for (const listener in allDefNamesListeners[i].listeners) {
+					for (let listener in allDefNamesListeners[i].listeners) {
 						// TODO возможно стоить добавить все слушатели сразу в curListener
 						let elem = allDefNamesListeners[i].listeners[listener];
-						let isArea = elem.ref ? !elem.ref.isOneCell() : false;
+						let isArea = elem.ref ? true : false;
 						let is3D = elem.ws.Id ? elem.ws.Id !== ws.Id : false;
+						let isIntersect;
 						if (isArea && !is3D && !isCurrentCellHeader) {
-							// decompose all elements into dependencies
-							let areaIndexes = getAllAreaIndexes(elem);
-							if (areaIndexes) {
-								for (let index of areaIndexes) {
-									t._setDependents(cellIndex, index);
-									t._setPrecedents(index, cellIndex);
+							if (defNameRange) {
+								let defBBox = defNameRange.getBBox0();
+								// check clicked cell for entry into dependent areas
+								// if the cell is not included, then the dependency will not be drawn
+								let colShift = defBBox.c1 - elem.ref.c1,
+									rowShift = defBBox.r1 - elem.ref.r1;
+
+								isIntersect = elem.ref.contains(cellAddress.col - colShift, cellAddress.row - rowShift);
+							}
+							if (isIntersect) {
+								// decompose all elements into dependencies
+								let areaIndexes = getAllAreaIndexes(elem);
+								if (areaIndexes) {
+									for (let index in areaIndexes) {
+										if (areaIndexes.hasOwnProperty(index)) {
+											t._setDependents(cellIndex, areaIndexes[index]);
+											t._setPrecedents(areaIndexes[index], cellIndex);
+										}
+									}
+									continue;
 								}
-								continue;
 							}
 						}
+
 						let parentCellIndex = getParentIndex(elem.parent);
-						if (!parentCellIndex) {
+						if (parentCellIndex === null) {
 							continue;
 						}
 
@@ -350,10 +374,6 @@ function (window, undefined) {
 							}
 							t._setDependents(cellIndex, parentCellIndex);
 							t._setPrecedents(parentCellIndex, cellIndex);
-							continue;
-						} else {
-							t._setDependents(cellIndex, parentCellIndex);
-							t._setPrecedents(parentCellIndex, cellIndex);
 						}
 					}
 				}
@@ -374,11 +394,12 @@ function (window, undefined) {
 			return indexes;
 		};
 		const getParentIndex = function (_parent) {
+			if (!_parent || _parent.nCol == null ||  _parent.nRow == null) {
+				return null;
+			}
 			let _parentCellIndex = AscCommonExcel.getCellIndex(_parent.nRow, _parent.nCol);
-			//parent -> cell/defname
-			if (_parent.parsedRef/*parent instanceof AscCommonExcel.DefName*/) {
-				_parentCellIndex = null;
-			} else if (_parent.ws !== t.ws.model) {
+			//parent -> cell
+			if (_parent.ws !== t.ws.model) {
 				_parentCellIndex += ";" + _parent.ws.index;
 			}
 			return _parentCellIndex;
@@ -390,10 +411,22 @@ function (window, undefined) {
 				for (let j in curListener.areaMap) {
 					if (curListener.areaMap.hasOwnProperty(j)) {
 						if (curListener.areaMap[j] && curListener.areaMap[j].bbox.contains(cellAddress.col, cellAddress.row)) {
-							let res = curListener.areaMap[j].bbox.getSharedIntersect(shared.ref, currentRange.bbox);
+							let isNotSharedRange;
+							for (let listener in curListener.areaMap[j].listeners) {
+								if (curListener.areaMap[j].listeners[listener].shared === null) {
+									isNotSharedRange = true;
+								}
+								break;
+							}
+							let res = isNotSharedRange ? null : curListener.areaMap[j].bbox.getSharedIntersect(shared.ref, currentRange.bbox);
 							// draw dependents to coords from res
-							if (res && (res.r1 === res.r2 && res.c1 === res.c2)) {
+							if (res) {
 								let index = AscCommonExcel.getCellIndex(res.r1, res.c1);
+								if (res.r1 === res.r2 && res.c1 !== res.c2) {
+									index = res.containsCol(currentRange.bbox.c1) ? AscCommonExcel.getCellIndex(res.r1, currentRange.bbox.c1) : AscCommonExcel.getCellIndex(res.r1, res.c1);
+								} else if (res.c1 === res.c2 && res.r1 !== res.r2) {
+									index = res.containsRow(currentRange.bbox.r1) ? AscCommonExcel.getCellIndex(currentRange.bbox.r1, res.c1) : AscCommonExcel.getCellIndex(res.r1, res.c1);
+								}
 								t._setDependents(cellIndex, index);
 								t._setPrecedents(index, cellIndex);
 							}
@@ -460,9 +493,11 @@ function (window, undefined) {
 							}
 						}
 						if (indexes.length > 0) {
-							for (let index of indexes) {
-								t._setDependents(cellIndex, index);
-								t._setPrecedents(index, cellIndex);
+							for (let index in indexes) {
+								if (indexes.hasOwnProperty(index)) {
+									t._setDependents(cellIndex, indexes[index]);
+									t._setPrecedents(indexes[index], cellIndex);
+								}
 							}
 						}
 					}
@@ -483,19 +518,23 @@ function (window, undefined) {
 						let parent = cellListeners[i].parent;
 						let parentWsId = parent.ws ? parent.ws.Id : null;
 						let isTable = parent.parsedRef ? parent.parsedRef.isTable : false;
-						let isDefName = parent.name ? true : false;
+						let isDefName = !!parent.name;
 						let formula = cellListeners[i].Formula;
 						let is3D = false;
-						const parentInfo = {
-							parent,
-							parentWsId,
-							isTable,
-							isDefName
-						};
+
+						//todo slow operation. parent not have type
+						if (parent instanceof Asc.CT_WorksheetSource) {
+							// if the listener is a pivot table, skip the iteration
+							continue;
+						}
 
 						if (isDefName) {
+							let parentInnerElementType = parent.parsedRef.outStack[0] ? parent.parsedRef.outStack[0].type : false, defNameRange;
+							if (parentInnerElementType === cElementType.cellsRange || parentInnerElementType === cElementType.cellsRange3D || parentInnerElementType === cElementType.cell3D) {
+								defNameRange = parent.parsedRef.outStack[0].getRange();
+							}
 							// TODO check external table ref
-							setDefNameIndexes(parent.name, isTable);
+							setDefNameIndexes(parent.name, isTable, defNameRange);
 							continue;
 						} else if (cellListeners[i].is3D) {
 							is3D = true;
@@ -514,16 +553,19 @@ function (window, undefined) {
 							// go through the values and set dependents for each
 							let areaIndexes = getAllAreaIndexes(cellListeners[i]);
 							if (areaIndexes) {
-								for (let index of areaIndexes) {
-									this._setDependents(cellIndex, index);
-									this._setPrecedents(index, cellIndex);
+								for (let index in areaIndexes) {
+									if (areaIndexes.hasOwnProperty(index)) {
+										this._setDependents(cellIndex, areaIndexes[index]);
+										this._setPrecedents(areaIndexes[index], cellIndex);
+									}
 								}
 								continue;
 							}
 						}
-						let parentCellIndex = getParentIndex(parent);
 
+						let parentCellIndex = getParentIndex(parent);
 						if (parentCellIndex === null) {
+						//if (parentCellIndex === null || (typeof(parentCellIndex) === "number" && isNaN(parentCellIndex))) {
 							continue;
 						}
 						this._setDependents(cellIndex, parentCellIndex);
@@ -532,6 +574,7 @@ function (window, undefined) {
 				}
 				if (Object.keys(this.dependents[cellIndex]).length === 0) {
 					delete this.dependents[cellIndex];
+					this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TraceDependentsNoFormulas, c_oAscError.Level.NoCritical);
 				}
 			} else {
 				if (this.checkCircularReference(cellIndex, true)) {
@@ -542,21 +585,24 @@ function (window, undefined) {
 				let isUpdated = false;
 				for (let i in cellListeners) {
 					if (cellListeners.hasOwnProperty(i)) {
-						let parent = cellListeners[i].parent,
-							elemCellIndex = cellListeners[i].shared !== null ? currentIndex : getParentIndex(parent),
-							formula = cellListeners[i].Formula;
-
-						if (parent.name) {
+						let parent = cellListeners[i].parent;
+						//todo slow operation. parent not have type
+						if (parent instanceof AscCommonExcel.DefName || parent instanceof Asc.CT_WorksheetSource) {
+							// if the listener is a pivot table, skip the iteration
 							continue;
 						}
 
+						let	elemCellIndex = cellListeners[i].shared !== null ? currentIndex : getParentIndex(parent), formula = cellListeners[i].Formula;
 						if (formula.includes(":") && !cellListeners[i].is3D) {
 							// call getAllAreaIndexes which return cellIndexes of each element(this will be parentCellIndex)
 							let areaIndexes = getAllAreaIndexes(cellListeners[i]);
 							if (areaIndexes) {
 								// go through the values and set dependents for each
-								for (let index of areaIndexes) {
-									this._setDependents(cellIndex, index);
+								for (let index in areaIndexes) {
+									if (areaIndexes.hasOwnProperty(index)) {
+										this._setDependents(cellIndex, areaIndexes[index]);
+										this._setPrecedents(areaIndexes[index], cellIndex, true);
+									}
 								}
 								continue;
 							}
@@ -565,6 +611,7 @@ function (window, undefined) {
 						// if the child cell does not yet have a dependency with listeners, create it
 						if (!this._getDependents(cellIndex, elemCellIndex)) {
 							this._setDependents(cellIndex, elemCellIndex);
+							this._setPrecedents(elemCellIndex, cellIndex, true);
 							isUpdated = true;
 						}
 					}
@@ -573,11 +620,13 @@ function (window, undefined) {
 				if (!isUpdated) {
 					for (let i in this.dependents[cellIndex]) {
 						if (this.dependents[cellIndex].hasOwnProperty(i)) {
-							this._calculateDependents(i, curListener);
+							this._calculateDependents(i, curListener, true);
 						}
 					}
 				}
 			}
+		} else if (!isSecondCall) {
+			this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TraceDependentsNoFormulas, c_oAscError.Level.NoCritical);
 		}
 	};
 	TraceDependentsManager.prototype._getDependents = function (from, to) {
@@ -594,6 +643,7 @@ function (window, undefined) {
 	};
 	TraceDependentsManager.prototype._setDefaultData = function () {
 		this.data = {
+			referenceMaxLevel: Math.pow(100, 10),
 			recLevel: 0,
 			maxRecLevel: 0,
 			lastHeaderIndex: -1,
@@ -611,19 +661,23 @@ function (window, undefined) {
 		}
 
 		const t = this;
-
 		if (row == null || col == null) {
 			let selection = ws.getSelection();
 			let activeCell = selection.activeCell;
 			row = activeCell.row;
 			col = activeCell.col;
+			let mergedRange = ws.getMergedByCell(row, col);
+			if (mergedRange) {
+				row = mergedRange.r1;
+				col = mergedRange.c1;
+			}
 		}
 
 		const checkCircularReference = function (index) {
 			for (let i in t.precedents[index]) {
 				if (t._getPrecedents(index, i) && t._getPrecedents(i, index)) {
 					let related = index + "|" + i;
-					t.data.recLevel = Math.pow(10, 10);
+					t.data.recLevel = t.data.referenceMaxLevel;
 					t.data.maxRecLevel = t.data.recLevel;
 					t.data.indices[related] = t.data.recLevel;
 					return true;
@@ -631,35 +685,29 @@ function (window, undefined) {
 			}
 		};
 		const checkIfHeader = function (cellIndex) {
-			// TODO можно ускорить алгоритм поиска если при расчете precedents записывать в качестве значения ячейки массив с именами таблиц, заголовками которого является данная ячейка
-			if (!t.precedentsAreas) {
+			if (!t.precedentsAreas || !t.precedentsAreasHeaders) {
 				return;
 			}
-			for (let area in t.precedentsAreas) {
-				if (t.precedentsAreas[area].areaHeader === cellIndex) {
-					return true;
-				}
+			if (t.precedentsAreasHeaders[cellIndex]) {
+				return true;
 			}
 		};
-		const getAllAreaIndexes = function (areas, currentCellIndex) {
+		const getAllAreaIndexes = function (areas, areaName) {
 			const indexes = [];
 			if (!areas) {
 				return;
 			}
-			for (const area in areas) {
-				if (areas[area].areaHeader != currentCellIndex) {
-					continue;
-				}
-				for (let i = areas[area].range.r1; i <= areas[area].range.r2; i++) {
-					for (let j = areas[area].range.c1; j <= areas[area].range.c2; j++) {
-						let index = AscCommonExcel.getCellIndex(i, j);
-						indexes.push(index);
-					}
+
+			let area = areas[areaName];
+			for (let i = area.range.r1; i <= area.range.r2; i++) {
+				for (let j = area.range.c1; j <= area.range.c2; j++) {
+					let index = AscCommonExcel.getCellIndex(i, j);
+					indexes.push(index);
 				}
 			}
 			return indexes;
 		};
-		const findMaxNesting = function (row, col) {
+		const findMaxNesting = function (row, col, callFromArea) {
 			let currentCellIndex = AscCommonExcel.getCellIndex(row, col);
 			if (t.data.indices[currentCellIndex] && t.data.indices[currentCellIndex][t.data.prevIndex]) {
 				t.data.indices[currentCellIndex][t.data.prevIndex] = t.data.recLevel;
@@ -668,8 +716,8 @@ function (window, undefined) {
 
 			let ifHeader, interLevel, fork;
 			if (t.data.recLevel > 0 && t.data.lastHeaderIndex !== currentCellIndex) {
-				// check area header
-				ifHeader = checkIfHeader(currentCellIndex);
+				// checking if a cell is a table header
+				ifHeader = callFromArea ? false : checkIfHeader(currentCellIndex);
 
 				if (!t.precedents[currentCellIndex] && !ifHeader) {
 					if (!t.data.indices[t.data.prevIndex]) {
@@ -682,21 +730,25 @@ function (window, undefined) {
 
 			if (ifHeader) {
 				// go through area
-				let areaIndexes = getAllAreaIndexes(t.precedentsAreas, currentCellIndex);
+				let areaName = t.precedentsAreasHeaders[currentCellIndex];
+				let areaIndexes = getAllAreaIndexes(t.precedentsAreas, areaName);
 
 				if (areaIndexes.length > 0) {
 					fork = true;
 					interLevel = t.data.recLevel;
-					for (let index of areaIndexes) {
-						let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
-						if (index === currentCellIndex) {
-							t.data.lastHeaderIndex = index;
+					for (let index in areaIndexes) {
+						if (areaIndexes.hasOwnProperty(index)) {
+							let _index = areaIndexes[index];
+							let cellAddress = AscCommonExcel.getFromCellIndex(_index, true);
+							if (_index === currentCellIndex) {
+								t.data.lastHeaderIndex = _index;
+							}
+							if (!t.precedents[_index] && _index !== currentCellIndex) {
+								continue;
+							}
+							findMaxNesting(cellAddress.row, cellAddress.col, true);
+							t.data.recLevel = fork ? interLevel : t.data.recLevel;
 						}
-						if (!t.precedents[index] && index !== currentCellIndex) {
-							continue;
-						}
-						findMaxNesting(cellAddress.row, cellAddress.col);
-						t.data.recLevel = fork ? interLevel : t.data.recLevel;
 					}
 				}
 			} else if (t.precedents[currentCellIndex]) {
@@ -732,7 +784,6 @@ function (window, undefined) {
 				t.data.indices[t.data.prevIndex][currentCellIndex] = t.data.recLevel;
 			}
 		};
-
 		findMaxNesting(row, col);
 		const maxLevel = this.data.maxRecLevel;
 		if (maxLevel === 0) {
@@ -740,8 +791,8 @@ function (window, undefined) {
 			return;
 		}
 		// TODO improve check of cyclic references
-		// temporary solution
-		else if (maxLevel === Math.pow(10, 10)) {
+		// temporary solution: now, when finding cyclic dependencies, the maximum nesting number(100^10) is set for them and only they are will be initially removed
+		else if (maxLevel === t.data.referenceMaxLevel) {
 			for (let i in this.data.indices) {
 				if (this.data.indices[i] === maxLevel) {
 					let val = i.split("|");
@@ -765,10 +816,6 @@ function (window, undefined) {
 		this._setDefaultData();
 	};
 	TraceDependentsManager.prototype.calculatePrecedents = function (row, col, isSecondCall, callFromArea) {
-		if (arguments.length === 0) {
-			this.currentCalculatedPrecedentAreas = {};
-		}
-
 		//depend from row/col cell
 		let ws = this.ws && this.ws.model;
 		if (!ws) {
@@ -776,10 +823,18 @@ function (window, undefined) {
 		}
 		const t = this;
 		if (row == null || col == null) {
+			// if first call, create/clear object with calculated areas 
+			this.currentCalculatedPrecedentAreas = {};
+
 			let selection = ws.getSelection();
 			let activeCell = selection.activeCell;
 			row = activeCell.row;
 			col = activeCell.col;
+			let mergedRange = ws.getMergedByCell(row, col);
+			if (mergedRange) {
+				row = mergedRange.r1;
+				col = mergedRange.c1;
+			}
 		}
 
 		const cellIndex = AscCommonExcel.getCellIndex(row, col);
@@ -790,10 +845,6 @@ function (window, undefined) {
 			}
 
 			let area = areas[areaName];
-			// if (area.isCalculated) {
-			// 	return indexes;
-			// }
-
 			for (let i = area.range.r1; i <= area.range.r2; i++) {
 				for (let j = area.range.c1; j <= area.range.c2; j++) {
 					// ??? check parserFormula and return indexes only with it
@@ -809,7 +860,7 @@ function (window, undefined) {
 			return indexes;
 		};
 		const isCellAreaHeader = function (cellIndex) {
-			if (!t.currentPrecedentsAreas || !t.precedentsAreasHeaders) {
+			if (!t.precedentsAreas || !t.precedentsAreasHeaders) {
 				return;
 			}
 			if (t.precedentsAreasHeaders[cellIndex]) {
@@ -824,25 +875,26 @@ function (window, undefined) {
 
 		// TODO another way to check table
 		let isAreaHeader = callFromArea ? false : isCellAreaHeader(cellIndex);
-		if (this.currentPrecedentsAreas && isSecondCall && isAreaHeader) {
+		if (this.precedentsAreas && isSecondCall && isAreaHeader) {
 			// calculate all precedents in areas
 			let areaName = this.precedentsAreasHeaders[cellIndex];
-			let areaIndexes = getAllAreaIndexesWithFormula(this.currentPrecedentsAreas, areaName);
+			let areaIndexes = getAllAreaIndexesWithFormula(this.precedentsAreas, areaName);
 
 			if (!this.currentCalculatedPrecedentAreas[areaName]) {
 				this.currentCalculatedPrecedentAreas[areaName] = {};
 				// go through the values and check precedents for each
-				for (let index of areaIndexes) {
-					let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
-					// if (!ws.getCell3(cellAddress.row, cellAddress.col).isFormula()) {
-					// 	continue;
-					// }
-					this.calculatePrecedents(cellAddress.row, cellAddress.col, null, true);
+				for (let index in areaIndexes) {
+					if (areaIndexes.hasOwnProperty(index)) {
+						let cellAddress = AscCommonExcel.getFromCellIndex(areaIndexes[index], true);
+						this.calculatePrecedents(cellAddress.row, cellAddress.col, true, true);
+					}
 				}
 			}
 		} else if (formulaParsed) {
 			this._calculatePrecedents(formulaParsed, row, col, isSecondCall);
 			this.setPrecedentsCall();
+		} else if (!isSecondCall) {
+			this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TracePrecedentsNoValidReference, c_oAscError.Level.NoCritical);
 		}
 	};
 	TraceDependentsManager.prototype._calculatePrecedents = function (formulaParsed, row, col, isSecondCall) {
@@ -851,21 +903,29 @@ function (window, undefined) {
 		}
 		let t = this;
 		let currentCellIndex = AscCommonExcel.getCellIndex(row, col);
-		let isHaveUnrecorded = this.isCellHaveUnrecordedTraces(currentCellIndex, formulaParsed);
+		let formulaInfoObject = this.checkUnrecordedAndFormNewStack(currentCellIndex, formulaParsed), isHaveUnrecorded, newOutStack;
+
+		if (formulaInfoObject) {
+			isHaveUnrecorded = formulaInfoObject.isHaveUnrecorded;
+			newOutStack = formulaInfoObject.newOutStack;
+		}
 
 		if (isHaveUnrecorded) {
-			// if (!this.precedents[currentCellIndex]) {
 			let shared, base;
 			if (formulaParsed.shared !== null) {
 				shared = formulaParsed.getShared();
 				base = shared.base;		// base index - where shared formula start
 			}
 
-			if (formulaParsed.outStack) {
+			if (newOutStack) {
 				let currentWsIndex = formulaParsed.ws.index;
 				let ref = formulaParsed.ref;
-				// iterate and find all reference
-				for (const elem of formulaParsed.outStack) {
+				// iterate through the elements and find all reference
+				for (let index in newOutStack) {
+					if (!newOutStack.hasOwnProperty(index)) {
+						continue;
+					}
+					let elem = newOutStack[index].element;
 					let elemType = elem.type ? elem.type : null;
 
 					let is3D = elemType === cElementType.cell3D || elemType === cElementType.cellsRange3D || elemType === cElementType.name3D,
@@ -873,13 +933,14 @@ function (window, undefined) {
 						isDefName = elemType === cElementType.name || elemType === cElementType.name3D,
 						isTable = elemType === cElementType.table, areaName;
 
-					if (elemType === cElementType.cell || isArea || is3D || isTable) {
-
+					if (elemType === cElementType.cell || is3D || isArea || isDefName || isTable) {
 						let cellRange = new asc_Range(col, row, col, row), elemRange, elemCellIndex;
-
 						if (isDefName) {
 							let elemDefName = elem.getDefName();
 							let elemValue = elem.getValue();
+							if (!elemDefName) {
+								continue
+							}
 							let defNameParentWsIndex = elemDefName.parsedRef.outStack[0].wsFrom ? elemDefName.parsedRef.outStack[0].wsFrom.index : (elemDefName.parsedRef.outStack[0].ws ? elemDefName.parsedRef.outStack[0].ws.index : null);
 							elemRange = elemValue.range.bbox ? elemValue.range.bbox : elemValue.bbox;
 
@@ -897,13 +958,12 @@ function (window, undefined) {
 							is3D = currentWsId !== elemWsId;
 							elemRange = elem.area.bbox ? elem.area.bbox : (elem.area.range ? elem.area.range.bbox : null);
 							isArea = ref ? true : !elemRange.isOneCell();
-
 						} else {
 							elemRange = elem.range.bbox ? elem.range.bbox : elem.bbox;
 						}
 
 						if (!elemRange) {
-							return;
+							continue;
 						}
 
 						if (shared) {
@@ -933,8 +993,9 @@ function (window, undefined) {
 							elemCellIndex = AscCommonExcel.getCellIndex(elemRange.r1, elemRange.c1);
 						}
 
-						// cross check for cell
-						if (isArea && !ref && !is3D) {
+						// cross check for element:
+						// if element isArea and does not reference to another sheet and element not in the function and formula is not CSE - do cross check
+						if (isArea && !ref && !is3D && !newOutStack[index].inFormulaRef) {
 							if (elemRange.getWidth() > 1 && elemRange.getHeight() <= 1) {
 								// check cols
 								if (elemRange.containsCol(col)) {
@@ -975,10 +1036,13 @@ function (window, undefined) {
 
 						if (is3D) {
 							// TODO другой механизм отрисовки для внешних precedents
-							elemCellIndex += ";" + (elem.wsTo ? elem.wsTo.index : elem.ws.index);
+							let elemIndex = elem.wsTo ? elem.wsTo.index : elem.ws.index;
+							if (currentWsIndex !== elemIndex) {
+								elemCellIndex += ";" + elemIndex;
+								this.setPrecedentExternal(currentCellIndex);
+							}
 							this._setDependents(elemCellIndex, currentCellIndex);
 							this._setPrecedents(currentCellIndex, elemCellIndex);
-							this.setPrecedentExternal(currentCellIndex);
 						} else {
 							this._setPrecedents(currentCellIndex, elemCellIndex, false, false);
 							this._setDependents(elemCellIndex, currentCellIndex);
@@ -993,46 +1057,92 @@ function (window, undefined) {
 			if (this.checkCircularReference(currentCellIndex, false)) {
 				return;
 			}
-			this.currentPrecedents = Object.assign({}, this.precedents);
-			this.currentPrecedentsAreas = Object.assign({}, this._getPrecedentsAreas());
 			this.setPrecedentsLoop(true);
+			let isHavePrecedents = false;
 			// check first level, then if function return false, check second, third and so on
-			for (let i in this.currentPrecedents[currentCellIndex]) {
+			for (let i in this.precedents[currentCellIndex]) {
 				let coords = AscCommonExcel.getFromCellIndex(i, true);
 				this.calculatePrecedents(coords.row, coords.col, true);
+				isHavePrecedents = true;
+			}
+
+			if (!isHavePrecedents && !isSecondCall) {
+				this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TracePrecedentsNoValidReference, c_oAscError.Level.NoCritical);
 			}
 
 			this.setPrecedentsLoop(false);
 		}
 	};
-	TraceDependentsManager.prototype.isCellHaveUnrecordedTraces = function (cellIndex, formulaParsed) {
+	TraceDependentsManager.prototype.checkUnrecordedAndFormNewStack = function (cellIndex, formulaParsed) {
+		let newOutStack = [], isHaveUnrecorded;
 		if (formulaParsed && formulaParsed.outStack) {
 			let currentWsIndex = formulaParsed.ws.index,
 				ref = formulaParsed.ref,
 				coords = AscCommonExcel.getFromCellIndex(cellIndex, true),
-				row = coords.row, col = coords.col, shared, base;
+				row = coords.row, col = coords.col, shared, base,
+				length = formulaParsed.outStack.length, isPartOfFunc, numberOfArgs, funcReturnType, funcArrayIndexes;
 
 			if (formulaParsed.shared !== null) {
 				shared = formulaParsed.getShared();
 				base = shared.base;
 			}
+			
+			for (let i = length - 1; i >= 0; i--) {
+				let elem = formulaParsed.outStack[i];
+				if (!elem) {
+					continue;
+				}
+				if (numberOfArgs <= 0) {
+					funcArrayIndexes = null;
+					isPartOfFunc = null;
+				}
 
-			for (const elem of formulaParsed.outStack) {
-				let elemType = elem.type ? elem.type : null;
+				let elemTypeExist = elem.type !== undefined;
+				let elemType = elem.type, inFormulaRef;
+				if (isPartOfFunc && numberOfArgs > 0 && elemTypeExist) {
+					if (cElementType.cellsRange === elemType || cElementType.name === elemType) {
+						if (funcReturnType === AscCommonExcel.cReturnFormulaType.array) {
+							// range refers to formula, add property inFormulaRef = true
+							inFormulaRef = true;
+						} else if (funcArrayIndexes) {
+							// if have no returnType check for arrayIndexes and if element pass in raw form(as array, range) to argument
+							if (funcArrayIndexes[ numberOfArgs - 1]) {
+								inFormulaRef = true;
+							}
+						}
+					}
+					numberOfArgs--;
+				}
+				if (elemType === cElementType.func) {
+					isPartOfFunc = true;
+					numberOfArgs = formulaParsed.outStack[i - 1];
+					funcReturnType = elem.returnValueType;
+					funcArrayIndexes = elem.arrayIndexes;
+				}
 
 				let is3D = elemType === cElementType.cell3D || elemType === cElementType.cellsRange3D || elemType === cElementType.name3D,
 					isArea = elemType === cElementType.cellsRange || elemType === cElementType.name,
 					isDefName = elemType === cElementType.name || elemType === cElementType.name3D,
 					isTable = elemType === cElementType.table;
 
-				if (elemType === cElementType.cell || isArea || is3D || isTable) {
-					let elemRange, elemCellIndex;
+				if (elemType === cElementType.cell || isArea || is3D || isDefName || isTable) {
+					// in any case, add the element to the array
+					newOutStack.push({element: elem, inFormulaRef: inFormulaRef});
 
+					// if already know about unrealized entries, skip all checks
+					if (isHaveUnrecorded) {
+						continue
+					}
+
+					let elemRange, elemCellIndex;
 					if (isDefName) {
 						let elemDefName = elem.getDefName(),
-							elemValue = elem.getValue(),
-							defNameParentWsIndex = elemDefName.parsedRef.outStack[0].wsFrom ? elemDefName.parsedRef.outStack[0].wsFrom.index : (elemDefName.parsedRef.outStack[0].ws ? elemDefName.parsedRef.outStack[0].ws.index : null);
+							elemValue = elem.getValue();
+						if (!elemDefName) {
+							continue
+						}
 
+						let	defNameParentWsIndex = elemDefName.parsedRef.outStack[0].wsFrom ? elemDefName.parsedRef.outStack[0].wsFrom.index : (elemDefName.parsedRef.outStack[0].ws ? elemDefName.parsedRef.outStack[0].ws.index : null);
 						elemRange = elemValue.range.bbox ? elemValue.range.bbox : elemValue.bbox;
 
 						if (defNameParentWsIndex && defNameParentWsIndex !== currentWsIndex) {
@@ -1051,7 +1161,7 @@ function (window, undefined) {
 					}
 
 					if (!elemRange) {
-						return;
+						continue;
 					}
 
 					if (shared) {
@@ -1081,14 +1191,19 @@ function (window, undefined) {
 
 					if (is3D) {
 						elemCellIndex += ";" + (elem.wsTo ? elem.wsTo.index : elem.ws.index);
-
 					}
 					if (!this._getPrecedents(cellIndex, elemCellIndex)) {
-						return true;
+						isHaveUnrecorded = true;
 					}
 				}
 			}
+
+			return {
+				isHaveUnrecorded: isHaveUnrecorded,
+				newOutStack: newOutStack
+			};
 		}
+		return false;
 	};
 	TraceDependentsManager.prototype.setPrecedentsLoop = function (inLoop) {
 		this.inLoop = inLoop;
@@ -1184,19 +1299,73 @@ function (window, undefined) {
 			this.clearLastPrecedent();
 		}
 	};
-	TraceDependentsManager.prototype.clearAll = function () {
+	TraceDependentsManager.prototype.clearAll = function (needDraw) {
+		if (needDraw && this.ws) {
+			// need to call cleanSelection before any data is removed from the traceManager, because otherwise, isHaveData inside cleanSelection will return false, and the cleaning won't occur
+			this.ws.cleanSelection();
+		}
 		this.precedents = null;
 		this.precedentsExternal = null;
-		this.currentPrecedents = null;
 		this.dependents = null;
 		this.isDependetsCall = null;
 		this.inLoop = null;
 		this.isPrecedentsCall = null;
 		this.precedentsAreas = null;
-		this.currentPrecedentsAreas = null;
 		this.currentCalculatedPrecedentAreas = null;
-		this.precedentsAreasHeaders = null,
+		this.precedentsAreasHeaders = null;
 		this._setDefaultData();
+
+		if (needDraw) {
+			if (this.ws && this.ws.overlayCtx) {
+				// on the other hand, drawSelection should be called after removing data from traceManager because there is a dependency drawing call inside it
+				this.ws._drawSelection();
+			}
+		}
+	};
+	TraceDependentsManager.prototype.changeDocument = function (prop, arg1, arg2) {
+		switch (prop) {
+			case AscCommonExcel.docChangedType.cellValue:
+				if (this._lockChangeDocument) {
+					return;
+				}
+				if (arg1) {
+					this.clearCellTraces(arg1.nRow, arg1.nCol);
+				}
+				break;
+			case AscCommonExcel.docChangedType.rangeValues:
+				break;
+			case AscCommonExcel.docChangedType.sheetContent:
+				if (this._lockChangeDocument) {
+					return;
+				}
+				this.clearAll();
+				break;
+			case AscCommonExcel.docChangedType.sheetRemove:
+				break;
+			case AscCommonExcel.docChangedType.sheetRename:
+				break;
+			case AscCommonExcel.docChangedType.sheetChangeIndex:
+				break;
+			case AscCommonExcel.docChangedType.markModifiedSearch:
+				break;
+			case AscCommonExcel.docChangedType.mergeRange:
+				if (arg1 === true) {
+					this._lockChangeDocument = true;
+				} else {
+					this._lockChangeDocument = null;
+					let t = this;
+					if (arg2) {
+						for (let col = arg2.c1; col <= arg2.c2; col++) {
+							for (let row = arg2.r1; row <= arg2.r2; row++) {
+								if (!(arg2.c1 === col && arg2.r1 === row)) {
+									t.clearCellTraces(row, col);
+								}
+							}
+						}
+					}
+				}
+				break;
+		}
 	};
 	TraceDependentsManager.prototype.clearCellTraces = function (row, col) {
 		let ws = this.ws && this.ws.model;
@@ -1223,6 +1392,7 @@ function (window, undefined) {
 			let areaHeader = this.precedentsAreas[i].areaHeader;
 			if (!this.dependents[areaHeader]) {
 				delete this.precedentsAreas[i];
+				delete this.precedentsAreasHeaders[areaHeader];
 			}
 		}
 	};

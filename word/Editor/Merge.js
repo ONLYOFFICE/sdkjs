@@ -1005,7 +1005,7 @@
             const aFonts = [];
             for (let i in oFonts) {
                 if (oFonts.hasOwnProperty(i)) {
-                    aFonts[aFonts.length] = new AscFonts.CFont(i, 0, "", 0, null);
+                    aFonts[aFonts.length] = new AscFonts.CFont(i);
                 }
             }
             oApi.pre_Paste(aFonts, oImageMap, function () {

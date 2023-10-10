@@ -1286,6 +1286,27 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         return this.showMasterSp !== false;
     };
 
+    Slide.prototype.isEqualBgMasterAndLayout = function(oSlide) {
+        if(!(this.backgroundFill === oSlide.backgroundFill ||
+            this.backgroundFill && this.backgroundFill.isEqual(oSlide.backgroundFill))) {
+            return false;
+        }
+        if(this.needMasterSpDraw() && !oSlide.needMasterSpDraw() || oSlide.needMasterSpDraw() && !this.needMasterSpDraw()) {
+            return false;
+        }
+        if(this.needMasterSpDraw()) {
+            if(this.Layout.Master !== oSlide.Layout.Master) {
+               return false;
+            }
+        }
+        if(this.needLayoutSpDraw()) {
+            if(this.Layout !== oSlide.Layout) {
+                return false;
+            }
+        }
+        return true;
+    };
+
     Slide.prototype.drawBgMasterAndLayout = function(graphics, bClipBySlide, bCheckBounds) {
         let _bounds;
         DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);

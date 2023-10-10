@@ -15120,9 +15120,20 @@ areaChart.prototype =
 	
 	_drawArea: function()
 	{
-		var pen = this.cChartSpace.pen;
-		var brush = this.cChartSpace.brush;
+		const pen = this.cChartSpace.pen;
+		const brush = this.cChartSpace.brush;
+		const oShapeDrawer = this.cChartDrawer.cShapeDrawer;
+		let bNoSmartAttackVal;
+		if(oShapeDrawer)
+		{
+			bNoSmartAttackVal = oShapeDrawer.bIsNoSmartAttack;
+			oShapeDrawer.bIsNoSmartAttack = true;
+		}
 		this.cChartDrawer.drawPath(this.paths, pen, brush);
+		if(oShapeDrawer)
+		{
+			oShapeDrawer.bIsNoSmartAttack = bNoSmartAttackVal;
+		}
 	}
 };
 

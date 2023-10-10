@@ -615,6 +615,10 @@ function (window, undefined) {
         }
     };
 
+    COleObject.prototype.getTypeName = function () {
+        return AscCommon.translateManager.getValue("Object");
+    };
+
     function asc_putBinaryDataToFrameFromTableOleObject(oOleObject)
     {
         if (oOleObject instanceof AscFormat.COleObject) {

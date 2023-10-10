@@ -44,507 +44,6 @@ var History = AscCommon.History;
 var g_dMathArgSizeKoeff_1 = 0.76;
 var g_dMathArgSizeKoeff_2 = 0.6498; // 0.76 * 0.855
 
-function CMathPropertiesSettings()
-{
-    this.brkBin     = null;
-
-    this.defJc      = null;
-    this.dispDef    = null;  // свойство: применять/ не применять paragraph settings (в тч defJc)
-
-    this.intLim     = null;
-    this.naryLim    = null;
-
-    this.lMargin    = null;
-    this.rMargin    = null;
-    this.wrapIndent = null;
-    this.wrapRight  = null;
-
-    this.smallFrac  = null;
-
-    //   не реализовано    //
-
-    // for minus operator
-    // when brkBin is set to repeat
-    this.brkBinSub  = null;
-
-    //***** WORD IGNORES followings parameters *****//
-
-    // mathFont: в качестве font поддерживается только Cambria Math
-    // остальные шрифты  возможно будут поддержаны MS Word в будущем
-
-    this.mathFont   = null;
-
-    // Default font for math zones
-    // Gives a drop-down list of math fonts that can be used as the default math font to be used in the document.
-    // Currently only Cambria Math has thorough math support, but others such as the STIX fonts are coming soon.
-
-    // http://blogs.msdn.com/b/murrays/archive/2008/10/27/default-document-math-properties.aspx
-
-
-    // http://msdn.microsoft.com/en-us/library/ff529906(v=office.12).aspx
-    // Word ignores the interSp attribute and fails to write it back out.
-    this.interSp    = null;
-    // http://msdn.microsoft.com/en-us/library/ff529301(v=office.12).aspx
-    // Word does not implement this feature and does not write the intraSp element.
-    this.intraSp    = null;
-
-    // http://msdn.microsoft.com/en-us/library/ff533406(v=office.12).aspx
-    this.postSp     = null;
-    this.preSp      = null;
-
-    // RichEdit Hot Keys
-    // http://blogs.msdn.com/b/murrays/archive/2013/10/30/richedit-hot-keys.aspx
-
-    //*********************//
-}
-CMathPropertiesSettings.prototype.SetDefaultPr = function()
-{
-    this.brkBin     = BREAK_BEFORE;
-    this.defJc      = align_Justify;
-    this.dispDef    = true;
-    this.intLim     = NARY_SubSup;
-    this.mathFont   = {Name  : "Cambria Math", Index : -1 };
-    this.lMargin    = 0;
-    this.naryLim    = NARY_UndOvr;
-    this.rMargin    = 0;
-    this.smallFrac  = false;
-    this.wrapIndent = 25; // mm
-    this.wrapRight  = false;
-};
-CMathPropertiesSettings.prototype.Merge = function(Pr)
-{
-    if(Pr.wrapIndent !== null && Pr.wrapIndent !== undefined)
-        this.wrapIndent = Pr.wrapIndent;
-
-    if(Pr.lMargin !== null && Pr.lMargin !== undefined)
-        this.lMargin = Pr.lMargin;
-
-    if(Pr.rMargin !== null && Pr.rMargin !== undefined)
-        this.rMargin = Pr.rMargin;
-
-    if(Pr.intLim !== null && Pr.intLim !== undefined)
-        this.intLim = Pr.intLim;
-
-    if(Pr.naryLim !== null && Pr.naryLim !== undefined)
-        this.naryLim = Pr.naryLim;
-
-    if(Pr.defJc !== null && Pr.defJc !== undefined)
-        this.defJc = Pr.defJc;
-
-    if(Pr.brkBin !== null && Pr.brkBin !== undefined)
-        this.brkBin = Pr.brkBin;
-
-    if(Pr.brkBinSub !== null && Pr.brkBinSub !== undefined)
-        this.brkBinSub = Pr.brkBinSub;
-
-    if(Pr.dispDef !== null && Pr.dispDef !== undefined)
-        this.dispDef = Pr.dispDef;
-	
-    if(Pr.mathFont !== null && Pr.mathFont !== undefined)
-        this.mathFont = Pr.mathFont;
-
-    if(Pr.wrapRight !== null && Pr.wrapRight !== undefined)
-        this.wrapRight = Pr.wrapRight;
-
-    if(Pr.smallFrac !== null && Pr.smallFrac !== undefined)
-        this.smallFrac = Pr.smallFrac;
-};
-CMathPropertiesSettings.prototype.Copy = function()
-{
-    var NewPr = new CMathPropertiesSettings();
-
-    NewPr.brkBin     = this.brkBin;
-    NewPr.defJc      = this.defJc;
-    NewPr.dispDef    = this.dispDef;
-    NewPr.intLim     = this.intLim;
-    NewPr.lMargin    = this.lMargin;
-    NewPr.naryLim    = this.naryLim;
-    NewPr.rMargin    = this.rMargin;
-    NewPr.wrapIndent = this.wrapIndent;
-    NewPr.brkBinSub  = this.brkBinSub;
-    NewPr.interSp    = this.interSp;
-    NewPr.intraSp    = this.intraSp;
-    NewPr.mathFont   = this.mathFont;
-    NewPr.postSp     = this.postSp;
-    NewPr.preSp      = this.preSp;
-    NewPr.smallFrac  = this.smallFrac;
-    NewPr.wrapRight  = this.wrapRight;
-
-    return NewPr;
-};
-CMathPropertiesSettings.prototype.Write_ToBinary = function(Writer)
-{
-    var StartPos = Writer.GetCurPosition();
-    Writer.Skip(4);
-    var Flags = 0;
-
-    if(undefined !== this.brkBin)
-    {
-        Writer.WriteLong( this.brkBin );
-        Flags |= 1;
-    }
-
-    if(undefined !== this.brkBinSub)
-    {
-        Writer.WriteLong( this.brkBinSub );
-        Flags |= 2;
-    }
-
-    if(undefined !== this.defJc)
-    {
-        Writer.WriteLong( this.defJc );
-        Flags |= 4;
-    }
-
-    if(undefined !== this.dispDef)
-    {
-        Writer.WriteBool( this.dispDef );
-        Flags |= 8;
-    }
-
-    if(undefined !== this.interSp)
-    {
-        Writer.WriteLong( this.interSp );
-        Flags |= 16;
-    }
-
-    if(undefined !== this.intLim)
-    {
-        Writer.WriteLong( this.intLim );
-        Flags |= 32;
-    }
-
-    if(undefined !== this.intraSp)
-    {
-        Writer.WriteLong( this.intraSp );
-        Flags |= 64;
-    }
-
-    if(undefined !== this.lMargin)
-    {
-        Writer.WriteLong( this.lMargin );
-        Flags |= 128;
-    }
-
-    if(undefined !== this.mathFont)
-    {
-        Writer.WriteString2( this.mathFont.Name );
-        Flags |= 256;
-    }
-
-    if(undefined !== this.naryLim)
-    {
-        Writer.WriteLong( this.naryLim );
-        Flags |= 512;
-    }
-
-    if(undefined !== this.postSp)
-    {
-        Writer.WriteLong( this.postSp );
-        Flags |= 1024;
-    }
-
-    if(undefined !== this.preSp)
-    {
-        Writer.WriteLong( this.preSp );
-        Flags |= 2048;
-    }
-
-    if(undefined !== this.rMargin)
-    {
-        Writer.WriteLong( this.rMargin );
-        Flags |= 4096;
-    }
-
-    if(undefined !== this.smallFrac)
-    {
-        Writer.WriteBool( this.smallFrac );
-        Flags |= 8192;
-    }
-
-    if(undefined !== this.wrapIndent)
-    {
-        Writer.WriteLong( this.wrapIndent );
-        Flags |= 16384;
-    }
-
-    if(undefined !== this.wrapRight)
-    {
-        Writer.WriteBool( this.wrapRight );
-        Flags |= 32768;
-    }
-
-    var EndPos = Writer.GetCurPosition();
-    Writer.Seek( StartPos );
-    Writer.WriteLong( Flags );
-    Writer.Seek( EndPos );
-};
-CMathPropertiesSettings.prototype.Read_FromBinary = function(Reader)
-{
-    var Flags = Reader.GetLong();
-
-    if ( Flags & 1 )
-        this.brkBin = Reader.GetLong();
-
-    if( Flags & 2 )
-        this.brkBinSub = Reader.GetLong();
-
-    if( Flags & 4 )
-        this.defJc = Reader.GetLong();
-
-    if( Flags & 8 )
-        this.dispDef = Reader.GetBool();
-
-    if( Flags & 16 )
-        this.interSp = Reader.GetLong();
-
-    if( Flags & 32 )
-        this.intLim = Reader.GetLong();
-
-    if( Flags & 64 )
-        this.intraSp = Reader.GetLong();
-
-    if( Flags & 128 )
-        this.lMargin = Reader.GetLong();
-
-    if( Flags & 256 )
-    {
-        this.mathFont =
-        {
-            Name  : Reader.GetString2(),
-            Index : -1
-        };
-    }
-
-    if( Flags & 512 )
-        this.naryLim = Reader.GetLong();
-
-    if( Flags & 1024 )
-        this.postSp = Reader.GetLong();
-
-    if( Flags & 2048 )
-        this.preSp = Reader.GetLong();
-
-    if( Flags & 4096 )
-        this.rMargin = Reader.GetLong();
-
-    if( Flags & 8192 )
-        this.smallFrac = Reader.GetBool();
-
-    if( Flags & 16384 )
-        this.wrapIndent = Reader.GetLong();
-
-    if( Flags & 32768 )
-        this.wrapRight = Reader.GetBool();
-
-
-};
-
-function CMathSettings()
-{
-    this.Pr         = new CMathPropertiesSettings();
-    this.CompiledPr = new CMathPropertiesSettings();
-    this.DefaultPr  = new CMathPropertiesSettings();
-
-    this.DefaultPr.SetDefaultPr();
-
-    this.bNeedCompile = true;
-}
-CMathSettings.prototype.SetPr = function(Pr)
-{
-    this.bNeedCompile = true;
-    this.Pr.Merge(Pr);
-    this.SetCompiledPr();
-};
-CMathSettings.prototype.GetPr = function()
-{
-    return this.Pr;
-};
-CMathSettings.prototype.SetCompiledPr = function()
-{
-    if(this.bNeedCompile)
-    {
-        this.CompiledPr.Merge(this.DefaultPr);
-        this.CompiledPr.Merge(this.Pr);
-
-        this.bNeedCompile = false;
-    }
-};
-CMathSettings.prototype.GetPrDispDef = function()
-{
-    var Pr;
-    if(this.CompiledPr.dispDef ==  false)
-        Pr = this.DefaultPr;
-    else
-        Pr = this.CompiledPr;
-
-    return Pr;
-};
-CMathSettings.prototype.Get_WrapIndent = function(WrapState)
-{
-    this.SetCompiledPr();
-
-    var wrapIndent = 0;
-    if(this.wrapRight == false && (WrapState == ALIGN_MARGIN_WRAP || WrapState == ALIGN_WRAP))
-        wrapIndent = this.GetPrDispDef().wrapIndent;
-
-    return wrapIndent;
-};
-CMathSettings.prototype.Get_LeftMargin = function(WrapState)
-{
-    this.SetCompiledPr();
-
-    var lMargin = 0;
-    if(WrapState == ALIGN_MARGIN_WRAP || WrapState == ALIGN_MARGIN)
-        lMargin = this.GetPrDispDef().lMargin;
-
-    return lMargin;
-};
-CMathSettings.prototype.Get_RightMargin = function(WrapState)
-{
-    this.SetCompiledPr();
-    var rMargin    =  0;
-    if(WrapState == ALIGN_MARGIN_WRAP || WrapState == ALIGN_MARGIN)
-        rMargin = this.GetPrDispDef().rMargin;
-
-    return rMargin;
-};
-CMathSettings.prototype.Get_IntLim = function()
-{
-    this.SetCompiledPr();
-    return this.CompiledPr.intLim;
-};
-CMathSettings.prototype.Get_NaryLim = function()
-{
-    this.SetCompiledPr();
-    return this.CompiledPr.naryLim;
-};
-CMathSettings.prototype.Get_DefJc = function()
-{
-    this.SetCompiledPr();
-    return this.GetPrDispDef().defJc;
-};
-CMathSettings.prototype.Get_DispDef = function()
-{
-    this.SetCompiledPr();
-    return this.CompiledPr.dispDef;
-};
-CMathSettings.prototype.Get_BrkBin = function()
-{
-    this.SetCompiledPr();
-    return this.CompiledPr.brkBin;
-};
-CMathSettings.prototype.Get_WrapRight = function()
-{
-    this.SetCompiledPr();
-    return this.CompiledPr.wrapRight;
-};
-CMathSettings.prototype.Get_SmallFrac = function()
-{
-    this.SetCompiledPr();
-    return this.CompiledPr.smallFrac;
-};
-CMathSettings.prototype.Get_MenuProps = function()
-{
-    return new CMathMenuSettings(this.CompiledPr);
-};
-CMathSettings.prototype.Set_MenuProps = function(Props)
-{
-    if(Props.BrkBin !== undefined)
-    {
-        this.Pr.brkBin = Props.BrkBin == c_oAscMathInterfaceSettingsBrkBin.BreakAfter ? BREAK_AFTER : BREAK_BEFORE;
-    }
-
-    if(Props.Justification !== undefined)
-    {
-        switch(Props.Justification)
-        {
-            case c_oAscMathInterfaceSettingsAlign.Justify:
-            {
-                this.Pr.defJc = align_Justify;
-                break;
-            }
-            case c_oAscMathInterfaceSettingsAlign.Center:
-            {
-                this.Pr.defJc = align_Center;
-                break;
-            }
-            case c_oAscMathInterfaceSettingsAlign.Left:
-            {
-                this.Pr.defJc = align_Left;
-                break;
-            }
-            case c_oAscMathInterfaceSettingsAlign.Right:
-            {
-                this.Pr.defJc = align_Right;
-                break;
-            }
-        }
-    }
-
-    if(Props.UseSettings !== undefined)
-    {
-        this.Pr.dispDef = Props.UseSettings;
-    }
-
-    if(Props.IntLim !== undefined)
-    {
-        if(Props.IntLim == Asc.c_oAscMathInterfaceNaryLimitLocation.SubSup)
-        {
-            this.Pr.intLim = NARY_SubSup;
-        }
-        else if(Props.IntLim == Asc.c_oAscMathInterfaceNaryLimitLocation.UndOvr)
-        {
-            this.Pr.intLim = NARY_UndOvr;
-        }
-    }
-
-    if(Props.NaryLim !== undefined)
-    {
-        if(Props.NaryLim == Asc.c_oAscMathInterfaceNaryLimitLocation.SubSup)
-        {
-            this.Pr.naryLim = NARY_SubSup;
-        }
-        else if(Props.NaryLim == Asc.c_oAscMathInterfaceNaryLimitLocation.UndOvr)
-        {
-            this.Pr.naryLim = NARY_UndOvr;
-        }
-    }
-
-    if(Props.LeftMargin !== undefined && Props.LeftMargin == Props.LeftMargin + 0)
-    {
-        this.Pr.lMargin = Props.LeftMargin;
-    }
-
-    if(Props.RightMargin !== undefined && Props.RightMargin == Props.RightMargin + 0)
-    {
-        this.Pr.rMargin = Props.RightMargin;
-    }
-
-    if(Props.WrapIndent !== undefined && Props.WrapIndent == Props.WrapIndent + 0)
-    {
-        this.Pr.wrapIndent = Props.WrapIndent;
-    }
-
-    if(Props.WrapRight !== undefined && Props.WrapRight !== null)
-    {
-        this.Pr.wrapRight = Props.WrapRight;
-    }
-
-    this.bNeedCompile = true;
-
-};
-CMathSettings.prototype.Write_ToBinary = function(Writer)
-{
-    this.Pr.Write_ToBinary(Writer);
-};
-CMathSettings.prototype.Read_FromBinary = function(Reader)
-{
-    this.Pr.Read_FromBinary(Reader);
-    this.bNeedCompile = true;
-};
-
-
 function CMathMenuSettings(oMathPr)
 {
     if(oMathPr)
@@ -652,7 +151,7 @@ CMathMenuSettings.prototype["put_SmallFraction"]   = CMathMenuSettings.prototype
 function Get_WordDocumentDefaultMathSettings()
 {
     if (!editor || !editor.WordControl.m_oLogicDocument || !editor.WordControl.m_oLogicDocument.Settings)
-        return new CMathSettings();
+        return new AscWord.MathSettings();
 
     return editor.WordControl.m_oLogicDocument.Settings.MathSettings;
 }
@@ -1183,6 +682,11 @@ ParaMath.prototype.GetCompiledDefaultTextPr = function()
 	oTextPr.Merge(this.DefaultTextPr);
 	return oTextPr;
 };
+ParaMath.prototype.GetDirectTextPr = function()
+{
+	let mathContent = this.GetSelectContent().Content;
+	return mathContent.GetDirectTextPr();
+};
 /**
  * Добавляем элемент в текущую позицию (с учетом возможной глубины)
  * @param Item
@@ -1254,6 +758,9 @@ ParaMath.prototype.Add = function(Item)
             this.Get_ParaContentPos(false, false, ContentPos);
 
         var TextPr = this.Root.GetMathTextPrForMenu(ContentPos, 0);
+		if (Item.TextPr)
+			TextPr.Merge(Item.TextPr);
+		
         var bPlh = oContent.IsPlaceholder();
 
         // Нам нужно разделить данный Run на 2 части
@@ -1849,9 +1356,9 @@ ParaMath.prototype.Set_MenuProps = function(Props)
         this.Root.Set_MenuProps(Props);
 };
 
-ParaMath.prototype.CheckRunContent = function(fCheck)
+ParaMath.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward)
 {
-    this.Root.CheckRunContent(fCheck);
+	this.Root.CheckRunContent(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward);
 };
 
 //-----------------------------------------------------------------------------------
@@ -2313,9 +1820,9 @@ ParaMath.prototype.private_RecalculateRoot = function(PRS, ParaPr, Depth)
 };
 ParaMath.prototype.private_SetRestartRecalcInfo = function(PRS)
 {
-	var Page = this.Paragraph == null ? 0 : this.Paragraph.GetAbsolutePage(PRS.Page);
-	var Line = this.PageInfo.Get_FirstLineOnPage(Page);
-	PRS.SetMathRecalcInfo(Line, this, PRS.Ranges, PRS.RangesCount);
+	let absPage   = PRS.Paragraph.GetAbsolutePage(PRS.Page);
+	let firstLine = this.PageInfo.Get_FirstLineOnPage(absPage);
+	PRS.SetMathRecalcInfo(firstLine, this);
 	PRS.RecalcResult = recalcresult_ParaMath;
 	PRS.NewRange     = true;
 };
@@ -3125,7 +2632,14 @@ ParaMath.prototype.IsCursorPlaceable = function()
 {
     return true;
 };
-
+ParaMath.prototype.IsCursorAtEnd = function()
+{
+	return this.Cursor_Is_End();
+};
+ParaMath.prototype.IsCursorAtBegin = function()
+{
+	return this.Cursor_Is_Start();
+};
 ParaMath.prototype.Cursor_Is_Start = function()
 {
     // TODO: ParaMath.Cursor_Is_Start
@@ -3736,7 +3250,10 @@ ParaMath.prototype.CalculateTextToTable = function(oEngine)
 };
 ParaMath.prototype.ConvertFromLaTeX = function()
 {
+	AscMath.SetIsLaTeXGetParaRun(false);
 	var strLaTeX = this.GetText(true);
+	AscMath.SetIsLaTeXGetParaRun(true);
+
     this.Root.Remove_Content(0, this.Root.Content.length);
     this.Root.Correct_Content(true);
     AscMath.ConvertLaTeXToTokensList(strLaTeX, this.Root);
@@ -3773,11 +3290,18 @@ ParaMath.prototype.ConvertToUnicodeMath = function()
 };
 ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 {
+	AscCommon.executeNoRevisions(this._convertView, this.GetLogicDocument(), this, arguments);
+};
+ParaMath.prototype._convertView = function(isToLinear, nInputType)
+{
 	if (undefined === nInputType)
 	{
 		let oApi = Asc.editor || editor;
 		nInputType = oApi ? oApi.getMathInputType() : Asc.c_oAscMathInputType.Unicode;
 	}
+
+	if (this.IsEmpty())
+		return;
 
 	if (isToLinear)
 	{
@@ -3805,6 +3329,10 @@ ParaMath.prototype.SplitSelectedContent = function()
     oContent.SplitSelectedContent();
 };
 ParaMath.prototype.ConvertViewBySelection = function(isToLinear, nInputType)
+{
+	AscCommon.executeNoRevisions(this._convertViewBySelection, this.GetLogicDocument(), this, arguments);
+};
+ParaMath.prototype._convertViewBySelection = function(isToLinear, nInputType)
 {
     this.SplitSelectedContent();
 
@@ -3854,6 +3382,14 @@ ParaMath.prototype.GetSearchElementId = function(bNext, bUseContentPos, ContentP
 	return this.Root.GetSearchElementId(bNext, bUseContentPos, ContentPos, Depth);
 };
 //----------------------------------------------------------------------------------------------------------------------
+ParaMath.prototype.IsContentControlEquation = function()
+{
+	let parent = this.GetParent();
+	return (parent
+		&& parent instanceof AscWord.CInlineLevelSdt
+		&& parent.IsContentControlEquation()
+		&& parent.IsPlaceHolder());
+};
 
 
 function MatGetKoeffArgSize(FontSize, ArgSize)

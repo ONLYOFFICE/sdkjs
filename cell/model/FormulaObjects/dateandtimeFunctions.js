@@ -1957,7 +1957,7 @@
 		}
 
 		return new cNumber(
-			weekday[new cDate((arg0.getValue() - (AscCommonExcel.c_DateCorrectConst + 1)) * c_msPerDay).getUTCDay()]);
+			weekday[new cDate((arg0.getValue() - (AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1))) * c_msPerDay).getUTCDay()]);
 	};
 
 	/**

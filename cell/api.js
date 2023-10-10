@@ -1696,7 +1696,7 @@ var editor;
     this.asyncMethodCallback = callback;
     var arrLoadFonts = [];
     for (var i in fonts)
-      arrLoadFonts.push(new AscFonts.CFont(i, 0, "", 0));
+      arrLoadFonts.push(new AscFonts.CFont(i));
     AscFonts.FontPickerByCharacter.extendFonts(arrLoadFonts);
     this.FontLoader.LoadDocumentFonts2(arrLoadFonts);
   };
@@ -1744,6 +1744,10 @@ var editor;
 		if (this.wbModel.DrawingDocument) {
 			this.wbModel.DrawingDocument.CloseFile();
 		}
+
+        if(this.wb.MobileTouchManager) {
+            this.wb.MobileTouchManager.Destroy();
+        }
 	};
 
 	spreadsheet_api.prototype.openDocumentFromZip = function (wb, data) {
@@ -4005,9 +4009,6 @@ var editor;
     return res;
   };
 
-  spreadsheet_api.prototype.asc_searchEnabled = function(bIsEnabled) {
-  };
-
   spreadsheet_api.prototype.asc_findText = function(options, callback) {
     var result = null;
 
@@ -4067,22 +4068,6 @@ var editor;
   };
 
 	//***searchEngine
-  spreadsheet_api.prototype.sync_setSearchCurrent = function (nCurrent, nOverallCount) {
-    this.sendEvent("asc_onSetSearchCurrent", nCurrent, nOverallCount);
-  };
-
-	spreadsheet_api.prototype.sync_startTextAroundSearch = function () {
-		this.sendEvent("asc_onStartTextAroundSearch");
-	};
-	spreadsheet_api.prototype.sync_endTextAroundSearch = function () {
-		this.sendEvent("asc_onEndTextAroundSearch");
-	};
-	spreadsheet_api.prototype.sync_getTextAroundSearchPack = function (arrElements) {
-		this.sendEvent("asc_onGetTextAroundSearchPack", arrElements);
-	};
-	spreadsheet_api.prototype.sync_removeTextAroundSearch = function (sId) {
-		this.sendEvent("asc_onRemoveTextAroundSearch", [sId]);
-	};
 	spreadsheet_api.prototype.sync_SearchEndCallback = function () {
 		this.sendEvent("asc_onSearchEnd");
 	};
@@ -6652,6 +6637,8 @@ var editor;
 	};
 
   spreadsheet_api.prototype.asc_nativePrint = function (_printer, _page, _options) {
+    //calc to fix case where file has formulas with no cache values and no changes
+    this.wbModel.dependencyFormulas.calcTree();
     var _adjustPrint = (window.AscDesktopEditor_PrintOptions && window.AscDesktopEditor_PrintOptions.advancedOptions) || new Asc.asc_CAdjustPrint();
     window.AscDesktopEditor_PrintOptions = undefined;
 
@@ -8059,9 +8046,7 @@ var editor;
 		return true;
 	};
 
-  spreadsheet_api.prototype.asc_setSkin = function (theme) {
-    AscCommon.updateGlobalSkin(theme);
-
+  spreadsheet_api.prototype.updateSkin = function () {
     var elem = document.getElementById("ws-v-scrollbar");
     if (elem) {
       elem.style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
@@ -8888,11 +8873,36 @@ var editor;
 			return;
 		}
 		let ws = wb.getWorksheet();
-		//c_oAscRemoveArrowsType
 		return ws.removeTraceArrows(type);
 	};
 
+	/** Returns array of function info
+	 * @param {number} pos - cursor position
+	 * @param {string} s - cell text
+	 * @returns {asc_CCompleteMenu[]}
+	 */
+	spreadsheet_api.prototype.asc_GetEditableFunctions = function(pos, s) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.getEditableFunctions(pos, s);
+	};
+	spreadsheet_api.prototype.getSelectionState = function() {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
 
+		return wb.getSelectionState();
+	};
+	spreadsheet_api.prototype.getSpeechDescription = function(prevState, action) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.getSpeechDescription(prevState, wb.getSelectionState(), action);
+	};
 
   /*
    * Export
@@ -9015,7 +9025,6 @@ var editor;
   prot["asc_getZoom"] = prot.asc_getZoom;
   prot["asc_setZoom"] = prot.asc_setZoom;
   prot["asc_enableKeyEvents"] = prot.asc_enableKeyEvents;
-  prot["asc_searchEnabled"] = prot.asc_searchEnabled;
   prot["asc_findText"] = prot.asc_findText;
   prot["asc_replaceText"] = prot.asc_replaceText;
   prot["asc_endFindText"] = prot.asc_endFindText;
@@ -9398,8 +9407,6 @@ var editor;
   prot["asc_setDataValidation"] = prot.asc_setDataValidation;
   prot["asc_getDataValidationProps"] = prot.asc_getDataValidationProps;
 
-  prot["asc_setSkin"] = prot.asc_setSkin;
-
   prot["asc_getEscapeSheetName"] = prot.asc_getEscapeSheetName;
 
 
@@ -9468,7 +9475,7 @@ var editor;
   prot["asc_ResetAllPageBreaks"]      = prot.asc_ResetAllPageBreaks;
   prot["asc_GetPageBreaksDisableType"]= prot.asc_GetPageBreaksDisableType;
 
-
+  prot["asc_GetEditableFunctions"]= prot.asc_GetEditableFunctions;
 
 
 

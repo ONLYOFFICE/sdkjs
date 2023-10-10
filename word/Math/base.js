@@ -218,6 +218,10 @@ CMathBase.prototype.setDimension = function(countRow, countCol)
     }
 
 };
+CMathBase.prototype.SetParent = function(parent)
+{
+	this.Parent = parent;
+};
 CMathBase.prototype.NeedBreakContent = function(Number)
 {
     this.bCanBreak       = true;
@@ -297,13 +301,6 @@ CMathBase.prototype.SetPlaceholder = function()
 				this.elements[i][j].SetPlaceholder();
 		}
 	}
-};
-CMathBase.prototype.CheckRunContent = function(fCheck)
-{
-    for(var i = 0; i < this.Content.length; ++i)
-    {
-        this.Content[i].CheckRunContent(fCheck);
-    }
 };
 CMathBase.prototype.addMCToContent = function(elements)
 {
@@ -998,6 +995,9 @@ CMathBase.prototype.Apply_TextPrToCtrPr = function(TextPr, IncFontSize, ApplyToA
 		if (undefined !== TextPr.Bold)
 			this.SetBold(null === TextPr.Bold ? undefined : TextPr.Bold);
 
+		if (undefined !== TextPr.Italic)
+			this.SetItalic(null === TextPr.Italic ? undefined : TextPr.Italic);
+
 		if (TextPr.AscFill || TextPr.AscLine || TextPr.AscUnifill)
 		{
 			var oCompiledPr = this.Get_CompiledCtrPrp();
@@ -1035,6 +1035,9 @@ CMathBase.prototype.Apply_TextPrToCtrPr = function(TextPr, IncFontSize, ApplyToA
 					this.Set_TextFill(undefined);
 			}
 		}
+
+		if (undefined !== TextPr.Color)
+			this.Set_Color(TextPr.Color);
 
 		if (undefined !== TextPr.TextOutline)
 			this.Set_TextOutline(null === TextPr.TextOutline ? undefined : TextPr.TextOutline);
@@ -2355,10 +2358,6 @@ CMathBase.prototype.RecalculateMinMaxContentWidth = function(MinMax)
                 if(Item.IsJustDraw()) // для Just-Draw элементов надо выставить Font
                 {
                     this.MeasureJustDraw(Item);
-                }
-                else
-                {
-                    Item.RecalculateMinMaxContentWidth(MinMax);
                 }
             }
         }

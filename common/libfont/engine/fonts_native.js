@@ -206,6 +206,28 @@ AscFonts.HB_ShapeText = function(fontFile, text, features, script, direction, la
 	return g_return_obj_count;
 };
 
+AscFonts.Hyphen_Init = function()
+{
+	// none
+};
+AscFonts.Hyphen_Destroy = function()
+{
+	// GC
+};
+AscFonts.Hyphen_CheckDictionary = function(lang)
+{
+	return g_native_engine["Hyphen_IsDictionaryExist"](lang);
+};
+AscFonts.Hyphen_LoadDictionary = function(lang, data)
+{
+	return false;
+};
+AscFonts.Hyphen_Word = function(lang, word)
+{
+	let ret = g_native_engine["Hyphen_Word"](lang, word);
+	return ret ? ret : [];
+};
+
 AscFonts.onLoadModule();
 AscFonts.onLoadModule();
 

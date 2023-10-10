@@ -49,6 +49,7 @@ jobs:
           node-qunit-puppeteer tests/word/document-calculation/table/flowTablePosition.html
           node-qunit-puppeteer tests/word/document-calculation/table/pageBreak.html
           node-qunit-puppeteer tests/word/document-calculation/textShaper/textShaper.html
+          node-qunit-puppeteer tests/word/document-calculation/text-hyphenator/text-hyphenator.html
           node-qunit-puppeteer tests/word/forms/forms.html
           node-qunit-puppeteer tests/word/forms/complexForm.html
           node-qunit-puppeteer tests/word/numbering/numberingApplicator.html

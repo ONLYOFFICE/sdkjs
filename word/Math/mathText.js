@@ -1034,18 +1034,15 @@ CMathText.prototype.GetTextOfElement = function(isLaTeX) {
 		}
 	}
 
-    if (isLaTeX)
-    {
-        let str = AscMath.SymbolsToLaTeX[String.fromCharCode(this.value)];
-        if (str)
-        {
-            return str + " ";
-        }
+	if (isLaTeX && AscMath.GetIsLaTeXGetParaRun())
+	{
+		let str = AscMath.SymbolsToLaTeX[String.fromCharCode(this.value)];
+		if (str)
+			return str;
+	}
 
-    }
-
-    if (this.value && this.value !== 11034)
-        return strPre + AscCommon.encodeSurrogateChar(this.value);
+	if (this.value && this.value !== 11034)
+		return strPre + AscCommon.encodeSurrogateChar(this.value);
 
 	return "";
 };

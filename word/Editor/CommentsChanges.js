@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 08.11.2016
- * Time: 15:59
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_Comment_Change]     = CChangesCommentChange;
 AscDFH.changesFactory[AscDFH.historyitem_Comment_TypeInfo]   = CChangesCommentTypeInfo;

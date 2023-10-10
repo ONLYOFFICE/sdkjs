@@ -32,12 +32,6 @@
 
 "use strict";
 
-/**
- * User: Ilja.Kirillov
- * Date: 27.10.2016
- * Time: 12:11
- */
-
 (/**
  * @param {Window} window
  * @param {undefined} undefined
@@ -1278,6 +1272,18 @@
 			case AscDFH.historydescription_Document_FillContentControlPlaceholderOnBlur:
 				sString = "Document_FillContentControlPlaceholderOnBlur";
 				break;
+			case AscDFH.historydescription_Document_SetAutoHyphenation:
+				sString = "Document_SetAutoHyphenation";
+				break;
+			case AscDFH.historydescription_Document_SetConsecutiveHyphenLimit:
+				sString = "Document_SetConsecutiveHyphenLimit";
+				break;
+			case AscDFH.historydescription_Document_SetHyphenateCaps:
+				sString = "Document_SetHyphenateCaps";
+				break;
+			case AscDFH.historydescription_Document_RemoveMathShortcut:
+				sString = "Document_RemoveMathShortcut";
+				break;
 		}
 		return sString;
 	}
@@ -1712,6 +1718,15 @@
 	window['AscDFH'].historyitem_type_OForm_FieldMaster      = 2202 << 16;
 	window['AscDFH'].historyitem_type_OForm_Document         = 2203 << 16;
 	window['AscDFH'].historyitem_type_OForm_FieldGroup       = 2204 << 16;
+	
+	window['AscDFH'].historyitem_type_PDF_Document			= 2210 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Form				= 2211 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Comment			= 2212 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Ink				= 2213 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot				= 2213 << 16;
+
+	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -1728,17 +1743,21 @@
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CDocument
 	//------------------------------------------------------------------------------------------------------------------
-	window['AscDFH'].historyitem_Document_AddItem                    = window['AscDFH'].historyitem_type_Document | 1;
-	window['AscDFH'].historyitem_Document_RemoveItem                 = window['AscDFH'].historyitem_type_Document | 2;
-	window['AscDFH'].historyitem_Document_DefaultTab                 = window['AscDFH'].historyitem_type_Document | 3;
-	window['AscDFH'].historyitem_Document_EvenAndOddHeaders          = window['AscDFH'].historyitem_type_Document | 4;
-	window['AscDFH'].historyitem_Document_DefaultLanguage            = window['AscDFH'].historyitem_type_Document | 5;
-	window['AscDFH'].historyitem_Document_MathSettings               = window['AscDFH'].historyitem_type_Document | 6;
-	window['AscDFH'].historyitem_Document_SdtGlobalSettings          = window['AscDFH'].historyitem_type_Document | 7;
-	window['AscDFH'].historyitem_Document_Settings_GutterAtTop       = window['AscDFH'].historyitem_type_Document | 8;
-	window['AscDFH'].historyitem_Document_Settings_MirrorMargins     = window['AscDFH'].historyitem_type_Document | 9;
-	window['AscDFH'].historyitem_Document_SpecialFormsGlobalSettings = window['AscDFH'].historyitem_type_Document | 10;
-	window['AscDFH'].historyitem_Document_Settings_TrackRevisions    = window['AscDFH'].historyitem_type_Document | 11;
+	window['AscDFH'].historyitem_Document_AddItem                         = window['AscDFH'].historyitem_type_Document | 1;
+	window['AscDFH'].historyitem_Document_RemoveItem                      = window['AscDFH'].historyitem_type_Document | 2;
+	window['AscDFH'].historyitem_Document_DefaultTab                      = window['AscDFH'].historyitem_type_Document | 3;
+	window['AscDFH'].historyitem_Document_EvenAndOddHeaders               = window['AscDFH'].historyitem_type_Document | 4;
+	window['AscDFH'].historyitem_Document_DefaultLanguage                 = window['AscDFH'].historyitem_type_Document | 5;
+	window['AscDFH'].historyitem_Document_MathSettings                    = window['AscDFH'].historyitem_type_Document | 6;
+	window['AscDFH'].historyitem_Document_SdtGlobalSettings               = window['AscDFH'].historyitem_type_Document | 7;
+	window['AscDFH'].historyitem_Document_Settings_GutterAtTop            = window['AscDFH'].historyitem_type_Document | 8;
+	window['AscDFH'].historyitem_Document_Settings_MirrorMargins          = window['AscDFH'].historyitem_type_Document | 9;
+	window['AscDFH'].historyitem_Document_SpecialFormsGlobalSettings      = window['AscDFH'].historyitem_type_Document | 10;
+	window['AscDFH'].historyitem_Document_Settings_TrackRevisions         = window['AscDFH'].historyitem_type_Document | 11;
+	window['AscDFH'].historyitem_Document_Settings_AutoHyphenation        = window['AscDFH'].historyitem_type_Document | 12;
+	window['AscDFH'].historyitem_Document_Settings_ConsecutiveHyphenLimit = window['AscDFH'].historyitem_type_Document | 13;
+	window['AscDFH'].historyitem_Document_Settings_DoNotHyphenateCaps     = window['AscDFH'].historyitem_type_Document | 14;
+	window['AscDFH'].historyitem_Document_Settings_HyphenationZone        = window['AscDFH'].historyitem_type_Document | 15;
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе Paragraph
 	//------------------------------------------------------------------------------------------------------------------
@@ -3977,6 +3996,37 @@
 
 	AscDFH.historyitem_ViewPrGuideOrient         = AscDFH.historyitem_type_ViewPrGuide | 1;
 	AscDFH.historyitem_ViewPrGuidePos            = AscDFH.historyitem_type_ViewPrGuide | 2;
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Типы изменений в PDF Forms 
+	//------------------------------------------------------------------------------------------------------------------
+
+	AscDFH.historyitem_Pdf_Form_Value			= AscDFH.historyitem_type_Pdf_Form | 1;
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Типы изменений в PDF Annots 
+	//------------------------------------------------------------------------------------------------------------------
+
+	// Common
+	AscDFH.historyitem_Pdf_Annot_Rect				= AscDFH.historyitem_type_Pdf_Annot | 1;
+	AscDFH.historyitem_Pdf_Annot_Pos				= AscDFH.historyitem_type_Pdf_Annot | 2;
+	AscDFH.historyitem_Pdf_Annot_Contents			= AscDFH.historyitem_type_Pdf_Annot | 3;
+	AscDFH.historyitem_Pdf_Annot_Page				= AscDFH.historyitem_type_Pdf_Annot | 4;
+
+	// Comment
+	AscDFH.historyitem_Pdf_Comment_Data			= AscDFH.historyitem_type_Pdf_Comment | 1;
+
+	// Ink
+	AscDFH.historyitem_Pdf_Ink_Points			= AscDFH.historyitem_type_Pdf_Ink | 1;
+	AscDFH.historyitem_Pdf_Ink_FlipV			= AscDFH.historyitem_type_Pdf_Ink | 2;
+	AscDFH.historyitem_Pdf_Ink_FlipH			= AscDFH.historyitem_type_Pdf_Ink | 3;
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Типы изменений в классе CPDFDoc
+	//------------------------------------------------------------------------------------------------------------------
+	window['AscDFH'].historyitem_PDF_Document_AddItem                    = window['AscDFH'].historyitem_type_PDF_Document | 1;
+	window['AscDFH'].historyitem_PDF_Document_RemoveItem                 = window['AscDFH'].historyitem_type_PDF_Document | 2;
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -4410,6 +4460,10 @@
 	window['AscDFH'].historydescription_Document_RemoveComplexFieldWrapper          = 0x01a3;
 	window['AscDFH'].historydescription_Document_MergeDocuments                     = 0x01a4;
 	window['AscDFH'].historydescription_Document_FillContentControlPlaceholderOnBlur= 0x01a5;
+	window['AscDFH'].historydescription_Document_SetAutoHyphenation                 = 0x01a6;
+	window['AscDFH'].historydescription_Document_SetConsecutiveHyphenLimit          = 0x01a7;
+	window['AscDFH'].historydescription_Document_SetHyphenateCaps                   = 0x01a8;
+	window['AscDFH'].historydescription_Document_RemoveMathShortcut                 = 0x01a9;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
