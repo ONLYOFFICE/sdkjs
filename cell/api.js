@@ -8879,15 +8879,40 @@ var editor;
 		return res;
 	};
 
-	spreadsheet_api.prototype.asc_FormulaGoalSeek = function (sFormulaCell, nExpectedValue, sChangingCell) {
+	//goal seek
+	spreadsheet_api.prototype.asc_StartGoalSeek = function (sFormulaCell, nExpectedValue, sChangingCell) {
 		if (!this.wbModel) {
 			return;
 		}
+		return this.wbModel.startGoalSeek(sFormulaCell, nExpectedValue, sChangingCell);
+	};
 
-		let sheetIndex = this.wbModel.getActive();
-		let ws = this.wbModel.getWorksheet(sheetIndex);
+	spreadsheet_api.prototype.asc_CloseGoalClose = function (bSave) {
+		if (!this.wbModel) {
+			return;
+		}
+		return bSave ? this.wbModel.saveGoalSeek() : this.wbModel.closeGoalSeek();
+	};
 
-		return ws && ws.formulaGoalSeek(sFormulaCell, nExpectedValue, sChangingCell);
+	spreadsheet_api.prototype.asc_PauseGoalSeek = function () {
+		if (!this.wbModel) {
+			return;
+		}
+		return this.wbModel.pauseGoalSeek();
+	};
+
+	spreadsheet_api.prototype.asc_ContinueGoalSeek = function () {
+		if (!this.wbModel) {
+			return;
+		}
+		return this.wbModel.continueGoalSeek();
+	};
+
+	spreadsheet_api.prototype.asc_StepGoalSeek = function () {
+		if (!this.wbModel) {
+			return;
+		}
+		return this.wbModel.stepGoalSeek();
 	};
 
 	spreadsheet_api.prototype.asc_TracePrecedents = function() {
@@ -9503,7 +9528,11 @@ var editor;
   prot["asc_ResetAllPageBreaks"]      = prot.asc_ResetAllPageBreaks;
   prot["asc_GetPageBreaksDisableType"]= prot.asc_GetPageBreaksDisableType;
 
-  prot["asc_FormulaGoalSeek"]= prot.asc_FormulaGoalSeek;
+  prot["asc_StartGoalSeek"]= prot.asc_StartGoalSeek;
+  prot["asc_CloseGoalClose"]= prot.asc_CloseGoalClose;
+  prot["asc_PauseGoalSeek"]= prot.asc_PauseGoalSeek;
+  prot["asc_ContinueGoalSeek"]= prot.asc_ContinueGoalSeek;
+  prot["asc_StepGoalSeek"]= prot.asc_StepGoalSeek;
 
 
 

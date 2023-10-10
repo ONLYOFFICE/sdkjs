@@ -141,14 +141,16 @@ function (window, undefined) {
 			this.setChangingValue(nChangingVal);
 		}
 
-		//.sendEvent("update", nExpectedVal, nFactValue, this.getCurrentAttempt()); - update event. true/false - isSuccess;
+		var oApi = Asc.editor;
+		oApi.sendEvent("asc_onGoalSeekUpdate", nExpectedVal, nFactValue, this.getCurrentAttempt());
+
 		// Check: Need a finish calculate
 		if (Math.abs(nDiff) < this.getRelativeError()) {
-			//.sendEvent("stop", true); - stop event. true/false - isSuccess;
+			oApi.sendEvent("asc_onGoalSeekStop", true);
 			return true;
 		}
 		if (this.getCurrentAttempt() >= this.getMaxIterations() || isNaN(nDiff)) {
-			//.sendEvent("stop", false); - stop event. true/false - isSuccess;
+			oApi.sendEvent("asc_onGoalSeekStop", false);
 			return true;
 		}
 

@@ -4699,6 +4699,54 @@
 
 		return res;
 	};
+
+	/******GOAL SEEK******
+	/**
+	 * Initializes and starts goal seek calculation.
+	 * @param {string} sFormulaCell
+	 * @param {string} sExpectedValue
+	 * @param {string} sChangingCell
+	 */
+	Workbook.prototype.startGoalSeek = function(sFormulaCell, sExpectedValue, sChangingCell) {
+		let oParserFormula;
+		let sSheetName;
+		let ws = this.getActiveWs();
+
+		if (~sFormulaCell.indexOf(",")) {
+			sFormulaCell = sFormulaCell.slice(0, sFormulaCell.indexOf(","));
+		}
+		if (~sFormulaCell.indexOf("!")) {
+			sSheetName = sFormulaCell.split("!")[0];
+			sFormulaCell = sFormulaCell.split("!")[1];
+			if (sSheetName !== ws.getName()) {
+				ws = this.getWorksheetByName(sSheetName);
+			}
+		}
+		let oFormulaCell = ws.getCell2(sFormulaCell);
+		ws._getCell(oFormulaCell.bbox.r1, oFormulaCell.bbox.c1, function (cell) {
+			oParserFormula = cell.getFormulaParsed();
+		});
+
+		if (~sChangingCell.indexOf(",")) {
+			sChangingCell = sChangingCell.slice(0, sChangingCell.indexOf(","));
+		}
+		sSheetName = sChangingCell.split("!")[0];
+		sChangingCell = sChangingCell.split("!")[1];
+		if (sSheetName !== ws.getName()) {
+			ws = this.getWorksheetByName(sSheetName);
+		}
+
+		this.setGoalSeek(new AscCommonExcel.CGoalSeek(oParserFormula, Number(sExpectedValue), ws.getRange2(sChangingCell)));
+		let oGoalSeek = this.getGoalSeek();
+		// Run goal seek
+		oGoalSeek.init();
+		oGoalSeek.setIntervalId(setInterval(function () {
+			let bIsFinish = oGoalSeek.calculate();
+			if (bIsFinish) {
+				clearInterval(oGoalSeek.getIntervalId());
+			}
+		}, 50));
+	};
 	/**
 	 * Returns object with goal seek result
 	 * @returns {CGoalSeek}
@@ -4731,6 +4779,19 @@
 		oChangedCell._updateCellValue();
 		this.setGoalSeek(null);
 	};
+
+	Workbook.prototype.pauseGoalSeek = function() {
+		this.oGoalSeek && this.oGoalSeek.pause();
+	};
+
+	Workbook.prototype.continueGoalSeek = function() {
+		this.oGoalSeek && this.oGoalSeek.resume();
+	};
+
+	Workbook.prototype.stepGoalSeek = function() {
+		this.oGoalSeek && this.oGoalSeek.step();
+	};
+
 
 
 //-------------------------------------------------------------------------------------------------
@@ -12340,53 +12401,6 @@
 			return null;
 		}
 		return this.legacyDrawingHF.getDrawingById(val);
-	};
-	/**
-	 * Initializes and starts goal seek calculation.
-	 * @param {string} sFormulaCell
-	 * @param {string} sExpectedValue
-	 * @param {string} sChangingCell
-	 */
-	Worksheet.prototype.formulaGoalSeek = function(sFormulaCell, sExpectedValue, sChangingCell) {
-		let oParserFormula;
-		let sSheetName;
-		let ws = this;
-
-		if (~sFormulaCell.indexOf(",")) {
-			sFormulaCell = sFormulaCell.slice(0, sFormulaCell.indexOf(","));
-		}
-		if (~sFormulaCell.indexOf("!")) {
-			sSheetName = sFormulaCell.split("!")[0];
-			sFormulaCell = sFormulaCell.split("!")[1];
-			if (sSheetName !== ws.getName()) {
-				ws = this.workbook.getWorksheetByName(sSheetName);
-			}
-		}
-		let oFormulaCell = ws.getCell2(sFormulaCell);
-		ws._getCell(oFormulaCell.bbox.r1, oFormulaCell.bbox.c1, function (cell) {
-			oParserFormula = cell.getFormulaParsed();
-		});
-
-		if (~sChangingCell.indexOf(",")) {
-			sChangingCell = sChangingCell.slice(0, sChangingCell.indexOf(","));
-		}
-		sSheetName = sChangingCell.split("!")[0];
-		sChangingCell = sChangingCell.split("!")[1];
-		if (sSheetName !== ws.getName()) {
-			ws = this.workbook.getWorksheetByName(sSheetName);
-		}
-
-		let wb = ws.workbook;
-		wb.setGoalSeek(new AscCommonExcel.CGoalSeek(oParserFormula, Number(sExpectedValue), ws.getRange2(sChangingCell)));
-		let oGoalSeek = wb.getGoalSeek();
-		// Run goal seek
-		oGoalSeek.init();
-		oGoalSeek.setIntervalId(setInterval(function () {
-			let bIsFinish = oGoalSeek.calculate();
-			if (bIsFinish) {
-				clearInterval(oGoalSeek.getIntervalId());
-			}
-		}, 50));
 	};
 
 //-------------------------------------------------------------------------------------------------
