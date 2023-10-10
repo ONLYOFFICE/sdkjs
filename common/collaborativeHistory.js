@@ -210,7 +210,29 @@
 		}
 		return changes;
 	};
-
+	/**
+	 * Проверяем, что последнее изменение в документе - это ввод заданного символа
+	 * @param {AscWord.CRun} run
+	 * @param {number} inRunPos
+	 * @param {?number} codePoint
+	 * @returns {boolean}
+	 */
+	CCollaborativeHistory.prototype.checkAsYouTypeEnterText = function(run, inRunPos, codePoint)
+	{
+		if (!this.Changes.length || !this.OwnRanges.length)
+			return false;
+		
+		let lastOwnRange = this.OwnRanges[this.OwnRanges.length - 1];
+		if (this.Changes.length !== lastOwnRange.Position + lastOwnRange.Length)
+			return false;
+		
+		let lastChange = this.Changes[this.Changes.length - 1];
+		return (AscDFH.historyitem_ParaRun_AddItem === lastChange.Type
+			&& lastChange.Class === run
+			&& lastChange.Pos === inRunPos - 1
+			&& lastChange.Items.length
+			&& (undefined === codePoint || lastChange.Items[0].GetCodePoint() === codePoint));
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

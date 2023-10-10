@@ -7928,7 +7928,7 @@ CPresentation.prototype.CorrectEnterText = function (oldValue, newValue) {
 	if (!run)
 		return false;
 
-	if (!this.History.CheckAsYouTypeEnterText(run, inRunPos, oldCodePoints[oldCodePoints.length - 1]))
+	if (!this.History.checkAsYouTypeEnterText(run, inRunPos, oldCodePoints[oldCodePoints.length - 1]))
 		return false;
 
 	if (undefined === newCodePoints || null === newCodePoints)

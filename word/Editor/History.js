@@ -1440,6 +1440,14 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		this.Points.length = 0;
 	};
 	/**
+	 * Пустая ли история
+	 * @returns {boolean}
+	 */
+	CHistory.prototype.isEmpty = function()
+	{
+		return !this.Points.length;
+	};
+	/**
 	 * Получаем массив изменений, которые еще не были пересчитаны
 	 * @returns {[]}
 	 */
@@ -1583,7 +1591,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 	 * @param codePoint {?number}
 	 * @returns {boolean}
 	 */
-	CHistory.prototype.CheckAsYouTypeEnterText = function(run, inRunPos, codePoint)
+	CHistory.prototype.checkAsYouTypeEnterText = function(run, inRunPos, codePoint)
 	{
 		this.CheckUnionLastPoints();
 
@@ -1609,6 +1617,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		return (AscDFH.historyitem_ParaRun_AddItem === lastChange.Type
 			&& lastChange.Class === run
 			&& lastChange.Pos === inRunPos - 1
+			&& lastChange.Items.length
 			&& (undefined === codePoint || lastChange.Items[0].GetCodePoint() === codePoint));
 	};
 	/**
