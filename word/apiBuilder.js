@@ -3531,7 +3531,7 @@
 	ApiImage.prototype.constructor = ApiImage;
 
 	/**
-	 * Class representing an Ole-object.
+	 * Class representing an Ole object.
 	 * @constructor
 	 */
 	function ApiOleObject(OleObject)
@@ -3703,7 +3703,7 @@
 	}
 
 	/**
-	 * Class representing settings which are used for creating a watermark.
+	 * Class representing the settings which are used to create a watermark.
 	 * @constructor
 	 */
 	function ApiWatermarkSettings(oSettings)
@@ -4137,13 +4137,13 @@
 	 * */
 
 	/**
-	 * The type of the watermark in the document.
+	 * The watermark type.
 	 * @returns {("none" | "text" | "image")} WatermarkType
 	 * @constructor
 	 */
 
 	/**
-	 * The direction of the watermark in the document.
+	 * The watermark direction.
 	 * @returns {("horizontal" | "clockwise45" | "counterclockwise45")} WatermarkDirection
 	 * @constructor
 	 */
@@ -6304,7 +6304,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {?string} [sText="WATERMARK"] - Watermark text.
 	 * @param {?boolean} [bIsDiagonal=true] - Specifies if the watermark is placed diagonally (true) or horizontally (false).
-	 * @returns {?ApiDrawing} - The object which represents inserted watermark. null if the type of Settings is "none".
+	 * @returns {?ApiDrawing} - The object which represents the inserted watermark. Returns null if the watermark type is "none".
 	 */
 	ApiDocument.prototype.InsertWatermark = function(sText, bIsDiagonal){
 		var oSectPrMap = {};
@@ -6348,10 +6348,10 @@
 
 
 	/**
-	 * Returns the current settings of watermark in the document.
+	 * Returns the watermark settings in the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @returns {ApiWatermarkSettings} - The object which represents the watermark settings
+	 * @returns {ApiWatermarkSettings} - The object which represents the watermark settings.
 	 */
 	ApiDocument.prototype.GetWatermarkSettings = function()
 	{
@@ -6360,11 +6360,11 @@
 
 
 	/**
-	 * Sets the settings of watermark in the document.
+	 * Sets the watermark settings in the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiWatermarkSettings} Settings - The object which represents the watermark settings.
-	 * @returns {?ApiDrawing} - The object which represents the watermark drawing if the type of Settings is not equal "none".
+	 * @returns {?ApiDrawing} - The object which represents the watermark drawing if the watermark type in Settings is not "none".
 	 */
 	ApiDocument.prototype.SetWatermarkSettings = function(Settings)
 	{
@@ -6386,7 +6386,7 @@
 	};
 
 	/**
-	 * Removes the watermark in the document.
+	 * Removes a watermark from the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 */
@@ -19319,7 +19319,7 @@
 	 * Sets the type of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @param {WatermarkType} sType - The type of watermark.
+	 * @param {WatermarkType} sType - The watermark type.
 	 */
 	ApiWatermarkSettings.prototype.SetType = function (sType)
 	{
@@ -19363,7 +19363,7 @@
 	 * Sets the text of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - The text of watermark.
+	 * @param {string} sText - The watermark text.
 	 */
 	ApiWatermarkSettings.prototype.SetText = function (sText)
 	{
@@ -19385,7 +19385,7 @@
 	 * Sets the text properties of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiTextPr} oTextPr - The text properties of watermark.
+	 * @param {ApiTextPr} oTextPr - The watermark text properties.
 	 */
 	ApiWatermarkSettings.prototype.SetTextPr = function (oTextPr)
 	{
@@ -19417,7 +19417,7 @@
 	 * Sets the opacity of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @param {number} nOpacity - The value of opacity of the watermark. Value must be from 0 to 255.
+	 * @param {number} nOpacity - The watermark opacity. This value must be from 0 to 255.
 	 */
 	ApiWatermarkSettings.prototype.SetOpacity = function (nOpacity)
 	{
@@ -19429,7 +19429,7 @@
 	 * Returns the opacity of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @returns {number} - The value of opacity of the watermark. The value is between 0 and 255.
+	 * @returns {number} - The watermark opacity. This value must be from 0 to 255.
 	 */
 	ApiWatermarkSettings.prototype.GetOpacity = function ()
 	{
@@ -19439,10 +19439,10 @@
 
 
 	/**
-	 * Sets the direction of the watermark.
+	 * Sets the direction of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @param {WatermarkDirection} sDirection - The direction of the watermark.
+	 * @param {WatermarkDirection} sDirection - The watermark direction.
 	 */
 	ApiWatermarkSettings.prototype.SetDirection = function (sDirection)
 	{
@@ -19466,10 +19466,10 @@
 		}
 	};
 	/**
-	 * Returns the direction of the watermark.
+	 * Returns the direction of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @returns {?WatermarkDirection} - The direction of the watermark.
+	 * @returns {?WatermarkDirection} - The watermark direction.
 	 */
 	ApiWatermarkSettings.prototype.GetDirection = function ()
 	{
@@ -19490,10 +19490,10 @@
 	};
 
 	/**
-	 * Sets the image URL of the watermark.
+	 * Sets the image URL of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sURL - The image URL of the watermark.
+	 * @param {string} sURL - The watermark image URL.
 	 */
 	ApiWatermarkSettings.prototype.SetImageURL = function (sURL)
 	{
@@ -19501,7 +19501,7 @@
 	};
 
 	/**
-	 * Returns the image URL of the watermark.
+	 * Returns the image URL of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
 	 * @returns {string | null} - The watermark image URL.
@@ -19512,20 +19512,20 @@
 	};
 
 	/**
-	 * Returns the width of the image watermark.
+	 * Returns the width of the watermark image in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @returns {EMU | null} - The image with in EMU.
+	 * @returns {EMU | null} - The watermark image width in EMU.
 	 */
 	ApiWatermarkSettings.prototype.GetImageWidth = function ()
 	{
 		return this.Settings.get_ImageWidth();
 	};
 	/**
-	 * Returns the height of the image watermark.
+	 * Returns the height of the watermark image in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @returns {EMU | null} - The image height in EMU.
+	 * @returns {EMU | null} - The watermark image height in EMU.
 	 */
 	ApiWatermarkSettings.prototype.GetImageHeight = function ()
 	{
@@ -19534,11 +19534,11 @@
 
 
 	/**
-	 * Sets the size of the image.
+	 * Sets the size (width and height) of the watermark image in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @param {EMU} nWidth - The width of the image
-	 * @param {EMU} nHeight - The width of the image
+	 * @param {EMU} nWidth - The watermark image width.
+	 * @param {EMU} nHeight - The watermark image height.
 	 */
 	ApiWatermarkSettings.prototype.SetImageSize = function (nWidth, nHeight)
 	{
