@@ -548,7 +548,7 @@ CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 	var strIterator = this.getIterator().GetMultipleContentForGetText(isLaTeX);
 
 	if (isLaTeX)
-    {
+	{
 		switch (strBase) {
 			case 'cos':
 			case 'sin':
@@ -582,11 +582,10 @@ CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 			case 'exp': strBase = '\\'+ strBase; break;
 			default: break;
 		}
-        
-		strTemp = strBase.trim() + strTypeOfScript + strIterator;
+		strTemp = strBase + strTypeOfScript + strIterator;
 	}
-    else
-    {
+	else
+	{
 		strTemp = strBase + strTypeOfScript + strIterator;
 	}
 	return strTemp;

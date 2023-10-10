@@ -529,7 +529,6 @@
 
 		if(base && (base.type === oLiteralNames.functionLiteral[num] || base.type === oLiteralNames.functionWithLimitLiteral[num]))
 		{
-			this.SkipFreeSpace();
 			let third = this.GetArguments(1);
 			return {
 				type: oLiteralNames.functionWithLimitLiteral[num],
@@ -705,7 +704,6 @@
 		}
 
 		let oContent = this.GetArguments(1);
-		this.SkipFreeSpace();
 		if (this.oLookahead.data === "_" || this.oLookahead.data === "^")
 		{
 			if (this.oLookahead.class === "_")
@@ -830,7 +828,6 @@
 				oBaseContent.type === oLiteralNames.opNaryLiteral[num] ||
 				oBaseContent.type === oLiteralNames.functionWithLimitLiteral[num])
 		) {
-			this.SkipFreeSpace();
 			oThirdContent = this.GetArguments(1);
 		}
 
@@ -895,7 +892,6 @@
 			this.EatToken(this.oLookahead.class)
 		}
 
-		this.SkipFreeSpace();
 		oBaseContent = this.GetElementLiteral();
 
 		oOutput = {
@@ -1060,8 +1056,6 @@
 		//TODO align
 		let align = this.IsAlignBlockForArray();
 
-		this.SkipFreeSpace();
-
 		while (this.oLookahead.data === "[")
 		{
 			this.GetArguments(1);
@@ -1139,8 +1133,6 @@
 			this.EatToken(this.oLookahead.class);
 		}
 
-		this.SkipFreeSpace();
-
 		return arrRayContent;
 	};
 	CLaTeXParser.prototype.GetElementOfMatrix = function ()
@@ -1158,7 +1150,6 @@
 				arrRow.push(this.GetExpressionLiteral("&"));
 				intLength++;
 				isAlredyGetContent = true;
-				this.SkipFreeSpace();
 			}
 			else
 			{
@@ -1174,10 +1165,7 @@
 				{
 					intCount++;
 				}
-
-				this.SkipFreeSpace();
 			}
-
 		}
 
 		if (intLength !== intCount + 1)
