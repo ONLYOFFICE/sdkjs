@@ -6303,7 +6303,7 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {?string} [sText="WATERMARK"] - Watermark text.
-	 * @param {?boolean} [bIsDiagonal=true] - Specifies if the watermark is placed diagonally (true) or horizontally (false).
+	 * @param {?boolean} [bIsDiagonal=false] - Specifies if the watermark is placed diagonally (true) or horizontally (false).
 	 * @returns {?ApiDrawing} - The object which represents the inserted watermark. Returns null if the watermark type is "none".
 	 */
 	ApiDocument.prototype.InsertWatermark = function(sText, bIsDiagonal){
