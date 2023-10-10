@@ -33,8 +33,13 @@
 "use strict";
 
 (function (window, undefined) {
-
-function CHistory(Document)
+	
+	/**
+	 * Класс локальной истории изменений
+	 * @param {AscWord.CDocument} Document
+	 * @constructor
+	 */
+	function CHistory(Document)
 {
     this.Index      = -1;
     this.SavedIndex = null;        // Номер точки отката, на которой произошло последнее сохранение
@@ -1422,6 +1427,17 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		}
 
 		this.SavedIndex = null;
+	};
+	/**
+	 * Удаляем все точки
+	 */
+	CHistory.prototype.RemoveAllPoints = function()
+	{
+		this.Index         = -1;
+		this.SavedIndex    = null;
+		this.ForceSave     = false;
+		this.RecIndex      = -1;
+		this.Points.length = 0;
 	};
 	/**
 	 * Получаем массив изменений, которые еще не были пересчитаны

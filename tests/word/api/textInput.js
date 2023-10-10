@@ -36,14 +36,7 @@ $(function () {
 
 	QUnit.module("Check text input in the document editor");
 
-	function GetParagraphText(paragraph)
-	{
-		let state = paragraph.SaveSelectionState();
-		paragraph.SelectAll();
-		let result = paragraph.GetSelectedText(false);
-		paragraph.LoadSelectionState(state);
-		return result;
-	}
+	let GetParagraphText = AscTest.GetParagraphText;
 
 	QUnit.test("EnterText/CorrectEnterText/CompositeInput", function (assert)
 	{
@@ -91,10 +84,25 @@ $(function () {
 		AscTest.ReplaceCompositeInput("123");
 		AscTest.EndCompositeInput();
 		assert.strictEqual(GetParagraphText(p), "He123ABCDDllo World!?123", "Add text '123' with composite input");
-
+		
 		AscTest.EnterTextCompositeInput("Zzz");
 		AscTest.CorrectEnterText("3Zzz", "$");
 		assert.strictEqual(GetParagraphText(p), "He123ABCDDllo World!?12$", "Add text 'Zzz' with composite input and correct it from '3Zzz' to '$'");
+		
+		
+		AscTest.ClearParagraph(p);
+		assert.strictEqual(GetParagraphText(p), "", "");
+		
+		AscTest.StartCollaboration();
+		AscTest.EnterText("ABC");
+		assert.strictEqual(GetParagraphText(p), "ABC", "Add text 'ABC' in collaboration");
+		AscTest.MoveCursorLeft();
+		AscTest.EnterText("111");
+		AscTest.SyncCollaboration();
+		AscTest.CorrectEnterText("11", "23");
+		AscTest.SyncCollaboration();
+		assert.strictEqual(GetParagraphText(p), "AB123C", "Add text '111' and correct it with '123' in collaboration");
+		AscTest.EndCollaboration();
 	});
 
 	QUnit.test("Test 'complex script' property on input", function (assert)

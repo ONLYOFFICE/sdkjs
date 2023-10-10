@@ -264,7 +264,7 @@
 	{
 		if (!logicDocument)
 			return;
-
+		
 		logicDocument.EnterText(text);
 	}
 	function CorrectEnterText(oldText, newText)
@@ -375,6 +375,25 @@
 		
 		logicDocument.Settings.CompatibilityMode = mode;
 	}
+	function StartCollaboration()
+	{
+		AscCommon.CollaborativeEditing.Start_CollaborationEditing();
+		if (logicDocument)
+			logicDocument.StartCollaborationEditing();
+		
+		SyncCollaboration();
+	}
+	function SyncCollaboration()
+	{
+		AscCommon.CollaborativeEditing.Send_Changes();
+		
+	}
+	function EndCollaboration()
+	{
+		AscCommon.CollaborativeEditing.End_CollaborationEditing();
+	}
+	
+	
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.CreateLogicDocument      = CreateLogicDocument;
 	AscTest.CreateParagraph          = CreateParagraph;
@@ -409,6 +428,9 @@
 	AscTest.SelectDocumentRange      = SelectDocumentRange;
 	AscTest.GetFinalSection          = GetFinalSection;
 	AscTest.SetCompatibilityMode     = SetCompatibilityMode;
+	AscTest.StartCollaboration       = StartCollaboration;
+	AscTest.SyncCollaboration        = SyncCollaboration;
+	AscTest.EndCollaboration         = EndCollaboration;
 
 })(window);
 
