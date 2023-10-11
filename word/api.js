@@ -2870,7 +2870,7 @@ background-repeat: no-repeat;\
 			changes = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Save();
 
 		if (changes) {
-			let options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.PDF);
+			let options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.PDF, bIsDownloadEvent);
 			options.pdfChanges = changes;
 			this.asc_DownloadAs(options);
 			return;
