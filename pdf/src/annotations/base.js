@@ -378,12 +378,29 @@
     CAnnotationBase.prototype.SetPosition = function(x, y) {
         let oViewer = editor.getDocumentRenderer();
         let oDoc    = this.GetDocument();
-        let nPage = this.GetPage();
+        let nPage   = this.GetPage();
 
-        oDoc.History.Add(new CChangesPDFAnnotPos(this, [this._rect[0], this._rect[1]], [x, y]));
+        let nOldX = this._rect[0];
+        let nOldY = this._rect[1];
+
+        let nDeltaX = x - nOldX;
+        let nDeltaY = y - nOldY;
 
         let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
         let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        if (this.IsNeedDrawFromStream() && this.IsInk()) {
+            let aPath;
+            for (let i = 0; i < this._gestures.length; i++) {
+                aPath = this._gestures[i];
+                for (let j = 0; j < aPath.length; j++) {
+                    aPath[j].x += nDeltaX * g_dKoef_pix_to_mm;
+                    aPath[j].y += nDeltaY * g_dKoef_pix_to_mm;
+                }
+            }
+        }
+
+        oDoc.History.Add(new CChangesPDFAnnotPos(this, [this._rect[0], this._rect[1]], [x, y]));
 
         let nWidth  = this._pagePos.w;
         let nHeight = this._pagePos.h;
@@ -609,7 +626,7 @@
             oDoc.History.Add(new CChangesPDFAnnotReplies(this, this._replies, aReplies));
         }
         this.SetWasChanged(true);
-        
+
         this._replies = aReplies;
     };
     CAnnotationBase.prototype.GetReply = function(nPos) {

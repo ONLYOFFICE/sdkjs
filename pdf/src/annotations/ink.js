@@ -736,8 +736,7 @@
 		}
 		if (i === selected_objects.length)
 			selected_objects.push(this);
-
-
+        
 		if (drawingObjectsController) {
 			drawingObjectsController.onChangeDrawingsSelection();
 		}
@@ -814,26 +813,51 @@
         let nLineW          = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
         let aBounds         = this.GetOrigRect();
 
-        let xMin = aBounds[0] + nLineW;
-        let yMin = aBounds[1] + nLineW;
-        let xMax = aBounds[2] - nLineW;
-        let yMax = aBounds[3] - nLineW;
+        let xMin;
+        let yMin;
+        let xMax;
+        let yMax;
+        if (this.IsNeedDrawFromStream() == false) {
+            xMin = aBounds[0] + nLineW * 0.75;
+            yMin = aBounds[1] + nLineW * 0.75;
+            xMax = aBounds[2] - nLineW * 0.75;
+            yMax = aBounds[3] - nLineW * 0.75;
 
-        let nWidthMM    = (xMax - xMin);
-        let nHeightMM   = (yMax - yMin);
+            let nWidthMM    = (xMax - xMin);
+            let nHeightMM   = (yMax - yMin);
 
-        for (let nPath = 0; nPath < aRelPointsPos.length; nPath++) {
-            let aPath       = aRelPointsPos[nPath];
-            let aShapePath  = [];
+            for (let nPath = 0; nPath < aRelPointsPos.length; nPath++) {
+                let aPath       = aRelPointsPos[nPath];
+                let aShapePath  = [];
 
-            for (let nPoint = 0; nPoint < aPath.length; nPoint++) {
-                aShapePath.push({
-                    x: (nWidthMM) * aPath[nPoint].relX + xMin,
-                    y: (nHeightMM) * aPath[nPoint].relY + yMin
-                });
+                for (let nPoint = 0; nPoint < aPath.length; nPoint++) {
+                    aShapePath.push({
+                        x: (nWidthMM) * aPath[nPoint].relX + xMin,
+                        y: (nHeightMM) * aPath[nPoint].relY + yMin
+                    });
+                }
+                
+                aShapePaths.push(aShapePath);
             }
-            
-            aShapePaths.push(aShapePath);
+        }
+        else {
+            let oViewer = editor.getDocumentRenderer();
+            let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom;
+            let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom;
+
+            for (let nPath = 0; nPath < this._gestures.length; nPath++) {
+                let aPath       = this._gestures[nPath];
+                let aShapePath  = [];
+
+                for (let nPoint = 0; nPoint < aPath.length; nPoint++) {
+                    aShapePath.push({
+                        x: aPath[nPoint].x * g_dKoef_mm_to_pix / nScaleX,
+                        y: aPath[nPoint].y * g_dKoef_mm_to_pix / nScaleY
+                    });
+                }
+                
+                aShapePaths.push(aShapePath);
+            }
         }
 
         memory.WriteLong(aShapePaths.length);
