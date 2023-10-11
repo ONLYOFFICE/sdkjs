@@ -12218,9 +12218,12 @@ CPresentation.prototype.StartAction = function (nDescription) {
 	this.Create_NewHistoryPoint(nDescription);
 	this.StopAnimationPreview();
 };
-CPresentation.prototype.FinalizeAction = function () {
+CPresentation.prototype.FinalizeAction = function (isCheckEmptyAction) {
 	this.Recalculate();
 	this.Api.checkChangesSize();
+	if (true === isCheckEmptyAction && AscCommon.History.Is_LastPointEmpty()) {
+		AscCommon.History.RemoveLastPoint();
+	}
 };
 
 CPresentation.prototype.IsSplitPageBreakAndParaMark = function () {

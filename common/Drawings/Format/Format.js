@@ -4106,7 +4106,7 @@
 			for(let nPrst = 0; nPrst < aPresets.length; ++nPrst) {
 				let oShd = new asc_CShadowProperty();
 				let sPrst = aPresets[nPrst];
-				oShd.changePreset(sPrst);
+				oShd.putPreset(sPrst);
 				if(this.IsIdentical(oShd)) {
 					return sPrst;
 				}

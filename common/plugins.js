@@ -1264,7 +1264,7 @@
 
 					AscFonts.IsCheckSymbols = false;
 
-					if (task.recalculate === true)
+					if (task.recalculate === true && !AscCommon.History.Is_LastPointEmpty())
 					{
 						this.api._afterEvalCommand(function() {
 							window.g_asc_plugins.shiftCommand(commandReturnValue);
@@ -1278,7 +1278,7 @@
 							case AscCommon.c_oEditorId.Word:
 							case AscCommon.c_oEditorId.Presentation:
 							{
-								this.api.WordControl.m_oLogicDocument.FinalizeAction();
+								this.api.WordControl.m_oLogicDocument.FinalizeAction(true);
 								break;
 							}
 							case AscCommon.c_oEditorId.Spreadsheet:

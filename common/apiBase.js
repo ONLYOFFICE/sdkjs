@@ -3724,6 +3724,10 @@
 		if (!this.macros)
 			return true;
 
+		// we shouldn't create a history point and update it if macros haven't been changed
+		if (this.macros.Data && this.macros.Data === sData)
+			return true;
+
 		if (true === AscCommon.CollaborativeEditing.Get_GlobalLock())
 			return true;
 

@@ -528,9 +528,24 @@ function (window, undefined) {
 			var res = [];
 			var hasImag = this.img != 0, hasReal = !hasImag || (this.real != 0);
 
+			let toLocalString = function (val) {
+				let _res = val;
+				if (val != null) {
+					val = val.toString();
+					if (val) {
+						val = val.replace(AscCommon.FormulaSeparators.digitSeparatorDef, AscCommon.FormulaSeparators.digitSeparator);
+
+						if (val) {
+							_res = val;
+						}
+					}
+				}
+				return _res;
+			};
+
 			if (hasReal) {
 
-				res.push(this.real);
+				res.push(toLocalString(this.real));
 			}
 			if (hasImag) {
 				if (this.img == 1) {
@@ -540,7 +555,7 @@ function (window, undefined) {
 				} else if (this.img == -1) {
 					res.push("-");
 				} else {
-					this.img > 0 && hasReal ? res.push("+" + this.img) : res.push(this.img);
+					this.img > 0 && hasReal ? res.push("+" + (toLocalString(this.img))) : res.push(toLocalString(this.img));
 				}
 				res.push(this.suffix ? this.suffix : "i");
 			}
