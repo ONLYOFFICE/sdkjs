@@ -498,7 +498,8 @@ var c_oAscPresentationShortcutType = {
 	DecreaseFont    : 28,
 	IncreaseFont    : 29,
 	PasteFormat     : 30,
-	UnGroup         : 31
+	UnGroup         : 31,
+	SpeechWorker    : 32
 };
 
 var TABLE_STYLE_WIDTH_PIX  = 72;
@@ -602,6 +603,7 @@ prot['DecreaseFont']                  = c_oAscPresentationShortcutType.DecreaseF
 prot['IncreaseFont']                  = c_oAscPresentationShortcutType.IncreaseFont;
 prot['PasteFormat']                   = c_oAscPresentationShortcutType.PasteFormat;
 prot['UnGroup']                       = c_oAscPresentationShortcutType.UnGroup;
+prot['SpeechWorker']                  = c_oAscPresentationShortcutType.SpeechWorker;
 
 prot = window['Asc']['c_oAscPresetShadowVal'] = window['Asc'].c_oAscPresetShadowVal = c_oAscPresetShadowVal;
 

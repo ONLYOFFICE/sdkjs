@@ -176,7 +176,7 @@ DrawingObjectsController.prototype.handleOleObjectDoubleClick = function(drawing
     oPresentation.OnMouseUp(e, x, y, pageIndex);
 };
 
-DrawingObjectsController.prototype.checkSelectedObjectsAndCallback = function(callback, args, bNoSendProps, nHistoryPointType, aAdditionaObjects)
+DrawingObjectsController.prototype.checkSelectedObjectsAndCallback = function(callback, args, bNoSendProps, nHistoryPointType, aAdditionaObjects, bNoCheckLock)
 {
     var check_type = AscCommon.changestype_Drawing_Props, comment;
     var aCommentData = undefined;
@@ -195,7 +195,7 @@ DrawingObjectsController.prototype.checkSelectedObjectsAndCallback = function(ca
         }
     }
 	let oPresentation = this.getPresentation();
-    if(oPresentation.Document_Is_SelectionLocked(check_type, aCommentData, undefined, aAdditionaObjects) === false)
+    if(bNoCheckLock || oPresentation.Document_Is_SelectionLocked(check_type, aCommentData, undefined, aAdditionaObjects) === false)
     {
         var nPointType = AscFormat.isRealNumber(nHistoryPointType) ? nHistoryPointType : AscDFH.historydescription_CommonControllerCheckSelected;
         oPresentation.StartAction(nPointType)

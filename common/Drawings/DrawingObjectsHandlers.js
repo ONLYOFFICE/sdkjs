@@ -56,6 +56,9 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
         return false;
     }
     var selected_objects = group ? group.selectedObjects : drawingObjectsController.getSelectedObjects();
+    if (selected_objects[0] && selected_objects[0].IsComment && selected_objects[0].IsComment()) {
+        return false;
+    }
     var oCropSelection = drawingObjectsController.selection.cropSelection ? drawingObjectsController.selection.cropSelection : null;
     var oGeometryEditSelection = drawingObjectsController.selection.geometrySelection ? drawingObjectsController.selection.geometrySelection : null;
     var tx, ty, t, hit_to_handles;
@@ -308,6 +311,20 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
     for(var i = drawingArr.length-1; i > -1; --i)
     {
         drawing = drawingArr[i];
+
+        if (drawing.IsAnnot && drawing.IsAnnot()) {
+            if (drawing.IsHidden()) {
+                ret = false;
+                continue;
+            }
+
+            if (drawing.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink) {
+                ret = handleBaseAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex);
+            }
+            else {
+                ret = false;
+            }
+        }
         switch(drawing.getObjectType())
         {
 
@@ -365,7 +382,21 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
     }
     return ret;
 }
+
+function handleBaseAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex) {
+    //var hit_in_inner_area = drawing.hitInInnerArea && drawing.hitInInnerArea(x, y);
+    //var hit_in_path = drawing.hitInPath && drawing.hitInPath(x, y);
+    var hit_in_text_rect = drawing.hitInTextRect && drawing.hitInTextRect(x, y);
+
+    if (drawing.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink && drawing.IsTextMarkup() == false && hit_in_text_rect) {
+        drawingObjectsController.arrPreTrackObjects.push(drawing.createMoveTrack());
+        drawingObjectsController.changeCurrentState(new AscFormat.PreMoveState(drawingObjectsController, x, y, e.ShiftKey, e.CtrlKey, drawing, true, false, false));
+        return true;
+    }
     
+    return false;
+}
+
     function handleSlicer(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord)
     {
         if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)

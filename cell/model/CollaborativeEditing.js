@@ -275,13 +275,16 @@
 		CCollaborativeEditing.prototype.applyChanges = function () {
 			var t = this;
 			var length = this.m_arrChanges.length;
+			var oApi = Asc.editor;
 			// Принимаем изменения
 			if (0 < length) {
 				//splice to prevent double apply other changes in case of load fonts
+				oApi.sendEvent("asc_onBeforeApplyChanges");
 				var changes = t.m_arrChanges.splice(0, length);
 				this.handlers.trigger("applyChanges", changes, function () {
 					t.handlers.trigger("updateAfterApplyChanges");
 				});
+				oApi.sendEvent("asc_onApplyChanges");
 
 				return false;
 			}

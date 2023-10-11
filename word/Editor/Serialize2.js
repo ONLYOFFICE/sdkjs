@@ -8660,7 +8660,7 @@ function BinaryFileReader(doc, openParams)
 		AscFormat.checkThemeFonts(AllFonts, fontScheme);
 
         for (var i in AllFonts)
-            aPrepeareFonts.push(new AscFonts.CFont(i, 0, "", 0));
+            aPrepeareFonts.push(new AscFonts.CFont(i));
         //создаем список используемых картинок
         var oPastedImagesUnique = {};
         var aPastedImages = pptx_content_loader.End_UseFullUrl();
@@ -16315,7 +16315,7 @@ function Binary_SettingsTableReader(doc, oReadResult, stream)
 		}
 		else if ( c_oSer_SettingsType.MathPr === type )
         {			
-			var props = new CMathPropertiesSettings();
+			var props = new AscWord.MathPr();
             res = this.bcr.Read1(length, function(t, l){
                 return oThis.ReadMathPr(t,l,props);
             });
@@ -17244,7 +17244,7 @@ CFontsCharMap.prototype =
                 _find.Name = family;
                 _find.Id = _id.id;
                 _find.FaceIndex = _id.faceIndex;
-                _find.IsEmbedded = (font_info.type == AscFonts.FONT_TYPE_EMBEDDED);
+                _find.IsEmbedded = false;
 
                 this.CurrentFontInfo = _find;
                 this.map_fonts[_find_index] = _find;

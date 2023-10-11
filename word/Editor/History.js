@@ -74,7 +74,8 @@ function CHistory(Document)
 	this.RegisterClasses = 0;
     this.MinorChanges    = false; // Данный параметр нужен, чтобы определить влияют ли добавленные изменения на пересчет
 
-    this.BinaryWriter = new AscCommon.CMemory();
+    this.BinaryWriter = new AscCommon.CMemory(true);
+	this.BinaryWriter.Init(1024*1024*1);
 
     this.FileCheckSum = 0;
     this.FileSize     = 0;
@@ -238,10 +239,11 @@ CHistory.prototype =
 		this.UndoRedoInProgress = true;
 
         // Запоминаем самое последнее состояние документа для Redo
-        if ( this.Index === this.Points.length - 1 )
+        if ( this.Index === this.Points.length - 1 && this.Document)
             this.LastState = this.Document.GetSelectionState();
         
-        this.Document.RemoveSelection(true);
+        if (this.Document)
+			this.Document.RemoveSelection(true);
 
         var Point = null;
         if (undefined !== Options && null !== Options && true === Options.All)
@@ -258,7 +260,7 @@ CHistory.prototype =
             this.private_UndoPoint(Point, arrChanges);
         }
 
-        if (null != Point)
+        if (null != Point && this.Document)
             this.Document.SetSelectionState( Point.State );
 
 		if(!window['AscCommon'].g_specialPasteHelper.specialPasteStart)
@@ -279,19 +281,23 @@ CHistory.prototype =
 
 		this.UndoRedoInProgress = true;
 
-        this.Document.RemoveSelection(true);
+		if (this.Document)
+        	this.Document.RemoveSelection(true);
         
         var Point = this.Points[++this.Index];
 		this.private_RedoPoint(Point, arrChanges);
 
         // Восстанавливаем состояние на следующую точку
         var State = null;
-        if ( this.Index === this.Points.length - 1 )
-            State = this.LastState;
-        else
-            State = this.Points[this.Index + 1].State;
+		if (this.Document)
+		{
+			if ( this.Index === this.Points.length - 1)
+				State = this.LastState;
+			else
+				State = this.Points[this.Index + 1].State;
 
-        this.Document.SetSelectionState( State );
+			this.Document.SetSelectionState( State );
+		}
 		
 		if(!window['AscCommon'].g_specialPasteHelper.pasteStart)
 		{
@@ -328,7 +334,7 @@ CHistory.prototype =
 
         this.CheckUnionLastPoints();
         
-        var State = oSelectionState ? oSelectionState : this.Document.GetSelectionState();
+        var State = oSelectionState ? oSelectionState : this.Document ? this.Document.GetSelectionState() : undefined;
         var Items = [];
         var Time  = new Date().getTime();
 
@@ -699,7 +705,7 @@ CHistory.prototype =
     {
         // Не объединяем точки в истории, когда отключается пересчет.
         // TODO: Неправильно изменяется RecalcIndex
-        if (true !== this.Document.Is_OnRecalculate())
+        if (this.Document && true !== this.Document.Is_OnRecalculate())
             return false;
 
         // Не объединяем точки во время Undo/Redo
@@ -1106,7 +1112,7 @@ CHistory.prototype =
 	};
 	CHistory.prototype.RemoveLastTemporaryPoint = function()
 	{
-		if (this.Index < 0
+		if (!this.Document || this.Index < 0
 			|| !this.Document.IsDocumentEditor()
 			|| !this.Points[this.Index].Temporary)
 			return;
@@ -1126,7 +1132,11 @@ CHistory.prototype.ClearAdditional = function()
 		//       надо переназвать функции по-нормальному
 
 		let form = this.GetLastPointFormFilling();
+		let isCanUnion = this.Points[this.Index].Additional && this.Points[this.Index].Additional.CanUnion === false ? false : true;
+
 		this.Points[this.Index].Additional = {};
+		if (isCanUnion == false)
+			this.Points[this.Index].Additional.CanUnion = false;
 
 		if (form)
 			this.SetAdditionalFormFilling(form);
@@ -1166,7 +1176,8 @@ CHistory.prototype.private_UpdateContentChangesOnRedo = function(Item)
 
 		var ContentChanges = new AscCommon.CContentChangesElement(( bAdd == true ? AscCommon.contentchanges_Add : AscCommon.contentchanges_Remove ), Item.Data.Pos, Count, Item);
 		Item.Class.Add_ContentChanges(ContentChanges);
-		this.CollaborativeEditing.Add_NewDC(Item.Class);
+		if (this.CollaborativeEditing)
+			this.CollaborativeEditing.Add_NewDC(Item.Class);
 	}
 };
 CHistory.prototype.private_IsContentChange = function(Class, Data)
@@ -1675,8 +1686,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 				point.Items.push(items[index]);
 			}
 		}
-	};
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	};	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	CHistory.prototype.private_UndoPoint = function(point, changes)

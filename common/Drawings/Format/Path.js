@@ -1229,6 +1229,115 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
         }
         oPath.recalculate({}, true);
     };
+    Path.prototype.isEqual = function(oPath) {
+        if(!oPath) {
+            return false;
+        }
+        if(this.stroke !== oPath.stroke) {
+            return false;
+        }
+        if(this.extrusionOk !== oPath.extrusionOk) {
+            return false;
+        }
+        if(this.fill !== oPath.fill) {
+            return false;
+        }
+        if(this.pathH !== oPath.pathH) {
+            return false;
+        }
+        if(this.pathW !== oPath.pathW) {
+            return false;
+        }
+        if(this.ArrPathCommandInfo.length !== oPath.ArrPathCommandInfo.length) {
+            return false;
+        }
+        for(let nCmd = 0; nCmd < this.ArrPathCommandInfo.length; ++nCmd) {
+            let oCmd1 = this.ArrPathCommandInfo[nCmd];
+            let oCmd2 = oPath.ArrPathCommandInfo[nCmd];
+            if(oCmd1.id !== oCmd2.id) {
+                return false;
+            }
+            switch(oCmd1.id)
+            {
+                case moveTo:
+                case lineTo:
+                {
+                    if(oCmd1.X !== oCmd2.X) {
+                        return false;
+                    }
+                    if(oCmd1.Y !== oCmd2.Y) {
+                        return false;
+                    }
+                    break;
+                }
+                case bezier3:
+                {
+                    if(oCmd1.X0 !== oCmd2.X0) {
+                        return false;
+                    }
+                    if(oCmd1.X1 !== oCmd2.X1) {
+                        return false;
+                    }
+                    if(oCmd1.Y0 !== oCmd2.Y0) {
+                        return false;
+                    }
+                    if(oCmd1.Y1 !== oCmd2.Y1) {
+                        return false;
+                    }
+                    break;
+                }
+                case bezier4:
+                {
+
+                    if(oCmd1.X0 !== oCmd2.X0) {
+                        return false;
+                    }
+                    if(oCmd1.X1 !== oCmd2.X1) {
+                        return false;
+                    }
+                    if(oCmd1.X2 !== oCmd2.X2) {
+                        return false;
+                    }
+                    if(oCmd1.Y0 !== oCmd2.Y0) {
+                        return false;
+                    }
+                    if(oCmd1.Y1 !== oCmd2.Y1) {
+                        return false;
+                    }
+                    if(oCmd1.Y2 !== oCmd2.Y2) {
+                        return false;
+                    }
+                    break;
+                }
+                case arcTo:
+                {
+
+                    if(oCmd1.wR !== oCmd2.wR) {
+                        return false;
+                    }
+                    if(oCmd1.hR !== oCmd2.hR) {
+                        return false;
+                    }
+                    if(oCmd1.stAng !== oCmd2.stAng) {
+                        return false;
+                    }
+                    if(oCmd1.swAng !== oCmd2.swAng) {
+                        return false;
+                    }
+                    break;
+                }
+                case close:
+                {
+                    break;
+                }
+                default:
+                {
+                    break;
+                }
+            }
+        }
+        return true;
+    };
     function CPathCmd() {
         AscFormat.CBaseNoIdObject.call(this);
         this.pts = [];

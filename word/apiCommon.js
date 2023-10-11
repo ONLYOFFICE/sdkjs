@@ -2026,10 +2026,14 @@
 		this.Text = null;
 		this.TextPr = null;
 		this.Opacity = null;
-		this.IsDiagonal = null;
+		this.Angle = 0;
+		this.BackgroundColor = null;
+		this.Outline = null;
 
 		this.ImageUrl = null;
 		this.Scale = null;
+		this.ImageW = null;
+		this.ImageH = null;
 
 		this.DivId = null;
 		this.Api = null;
@@ -2066,10 +2070,45 @@
 		return this.Opacity;
 	};
 	CAscWatermarkProperties.prototype['put_IsDiagonal'] = CAscWatermarkProperties.prototype.put_IsDiagonal = function (v) {
-		this.IsDiagonal = v;
+		if(v) {
+			this.Angle = 45;
+		}
+		else {
+			this.Angle = 0;
+		}
 	};
 	CAscWatermarkProperties.prototype['get_IsDiagonal'] = CAscWatermarkProperties.prototype.get_IsDiagonal = function () {
-		return this.IsDiagonal;
+		if(AscFormat.fApproxEqual(this.Angle, 0)) {
+			return false;
+		}
+		return true;
+	};
+	CAscWatermarkProperties.prototype['get_Angle'] = CAscWatermarkProperties.prototype.get_Angle = function () {
+		return this.Angle;
+	};
+	CAscWatermarkProperties.prototype['put_Angle'] = CAscWatermarkProperties.prototype.put_Angle = function (v) {
+		if(!AscFormat.isRealNumber(v)) {
+			return;
+		}
+		let dValue = v;
+		while (dValue < 0) {
+			dValue += 360;
+		}
+		while (dValue >= 360) {
+			dValue -= 360;
+		}
+		this.Angle = dValue;
+	};
+	CAscWatermarkProperties.prototype.getXfrmRot = function () {
+		if(this.Angle > 0) {
+			return Math.PI * (360 - this.Angle) / 180;
+		}
+		return 0;
+	};
+	CAscWatermarkProperties.prototype.setXfrmRot = function (dRot) {
+		if(AscFormat.isRealNumber(dRot) && dRot > 0) {
+			this.Angle = (360 - 180 * (dRot / Math.PI)) + 0.5 >> 0;
+		}
 	};
 
 	CAscWatermarkProperties.prototype['put_ImageUrl'] = CAscWatermarkProperties.prototype.put_ImageUrl = function (sUrl, token) {
@@ -2102,6 +2141,29 @@
 	};
 	CAscWatermarkProperties.prototype['get_Scale'] = CAscWatermarkProperties.prototype.get_Scale = function () {
 		return this.Scale;
+	};
+	CAscWatermarkProperties.prototype['put_ImageSize'] = CAscWatermarkProperties.prototype.put_ImageSize = function (w, h) {
+		this.ImageW = w;
+		this.ImageH = h;
+		this.Scale = -1;
+	};
+	CAscWatermarkProperties.prototype['get_ImageWidth'] = CAscWatermarkProperties.prototype.get_ImageWidth = function () {
+		return this.ImageW;
+	};
+	CAscWatermarkProperties.prototype['get_ImageHeight'] = CAscWatermarkProperties.prototype.get_ImageHeight = function () {
+		return this.ImageH;
+	};
+	CAscWatermarkProperties.prototype['put_BackgroundColor'] = CAscWatermarkProperties.prototype.put_BackgroundColor = function (v) {
+		this.BackgroundColor = v;
+	};
+	CAscWatermarkProperties.prototype['get_BackgroundColor'] = CAscWatermarkProperties.prototype.get_BackgroundColor = function () {
+		return this.BackgroundColor;
+	};
+	CAscWatermarkProperties.prototype['put_Outline'] = CAscWatermarkProperties.prototype.put_Outline = function (v) {
+		this.Outline = v;
+	};
+	CAscWatermarkProperties.prototype['get_Outline'] = CAscWatermarkProperties.prototype.get_Outline = function () {
+		return this.Outline;
 	};
 	CAscWatermarkProperties.prototype['put_DivId'] = CAscWatermarkProperties.prototype.put_DivId = function (v) {
 		this.DivId = v;
@@ -2289,7 +2351,7 @@
 		{
 			return false;
 		}
-		if(this.IsDiagonal !== oPr.IsDiagonal)
+		if(!AscFormat.fApproxEqual(this.Angle, oPr.Angle))
 		{
 			return false;
 		}

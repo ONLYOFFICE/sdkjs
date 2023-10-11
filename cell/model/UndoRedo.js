@@ -2291,10 +2291,10 @@ function (window, undefined) {
 				this.min = value;
 				break;
 			case this.Properties.max:
-				this.min = value;
+				this.max = value;
 				break;
 			case this.Properties.man:
-				this.min = value;
+				this.man = value;
 				break;
 			case this.Properties.pt:
 				this.pt = value;
@@ -2466,6 +2466,8 @@ function (window, undefined) {
 					wb.editDefinesNamesUndoRedo(oldName, newName);
 					wb.handlers.trigger("asc_onEditDefName", oldName, newName);
 				}
+				// clear traces
+				wb.oApi.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 			}
 		} else if(AscCH.historyitem_Workbook_Calculate === Type) {
 			if (!bUndo) {
@@ -2561,7 +2563,7 @@ function (window, undefined) {
 		this.UndoRedo(Type, Data, nSheetId, false);
 	};
 	UndoRedoCell.prototype.UndoRedo = function (Type, Data, nSheetId, bUndo) {
-		var ws = this.wb.getWorksheetById(nSheetId);
+		let ws = this.wb.getWorksheetById(nSheetId), t = this;
 		if (null == ws) {
 			return;
 		}
@@ -3022,6 +3024,11 @@ function (window, undefined) {
 
 			worksheetView.model.autoFilters.reDrawFilter(to);
 			worksheetView.model.autoFilters.reDrawFilter(from);
+
+			// clear traces
+			if (worksheetView.traceDependentsManager) {
+				worksheetView.traceDependentsManager.clearAll();
+			}
 		} else if (AscCH.historyitem_Worksheet_Rename == Type) {
 			if (bUndo) {
 				ws.setName(Data.from);
@@ -3079,6 +3086,7 @@ function (window, undefined) {
 			data = 1;
 			if (null != to) {
 				ws.mergeManager.add(to, data);
+				ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.mergeRange, null, to, ws.getId());
 			}
 		} else if (AscCH.historyitem_Worksheet_ChangeHyperlink === Type) {
 			from = null;

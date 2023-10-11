@@ -786,3 +786,4 @@ ParaTextPr.prototype.Read_FromBinary2 = function(Reader)
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].ParaTextPr = ParaTextPr;
+window['AscWord'].ParaTextPr = ParaTextPr;

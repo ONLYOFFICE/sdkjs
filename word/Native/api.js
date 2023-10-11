@@ -69,7 +69,12 @@ function asc_menu_WriteHeaderFooterPr(_hdrftrPr, _stream)
     if (_hdrftrPr.Locked !== undefined && _hdrftrPr.Locked !== null)
     {
         _stream["WriteByte"](5);
-        _stream["WriteBool"](_hdrftrPr.DifferentFirst);
+        _stream["WriteBool"](_hdrftrPr.Locked);
+    }
+    if (_hdrftrPr.StartPageNumber !== undefined && _hdrftrPr.StartPageNumber !== null)
+    {
+        _stream["WriteByte"](6);
+        _stream["WriteLong"](_hdrftrPr.StartPageNumber);
     }
 
     _stream["WriteByte"](255);
@@ -773,6 +778,11 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
                         break;
                     }
                     case 5:
+                    {
+                        _current.pos++;
+                        break;
+                    }
+                    case 6:
                     {
                         _current.pos++;
                         break;
@@ -2560,24 +2570,38 @@ Asc['asc_docs_api'].prototype.ImgApply = function(obj)
         else
         {
             ImagePr.ImageUrl = null;
-
-
-            if(!this.noCreatePoint || this.exucuteHistory)
+            if (!this.noCreatePoint || this.exucuteHistory)
             {
-                if( !this.noCreatePoint && !this.exucuteHistory && this.exucuteHistoryEnd)
+                if (!this.noCreatePoint && !this.exucuteHistory && this.exucuteHistoryEnd)
                 {
-                    this.WordControl.m_oLogicDocument.SetImageProps( ImagePr );
-                    this.exucuteHistoryEnd = false;
+                    if (-1 !== this.nCurPointItemsLength)
+                    {
+                        History.UndoLastPoint();
+                    }
+                    else
+                    {
+                        this.WordControl.m_oLogicDocument.Create_NewHistoryPoint(AscDFH.historydescription_Document_ApplyImagePr);
+                    }
+                    this.WordControl.m_oLogicDocument.SetImageProps(ImagePr);
+                    this.exucuteHistoryEnd    = false;
+                    this.nCurPointItemsLength = -1;
                 }
                 else
                 {
-                    this.WordControl.m_oLogicDocument.StartAction();
-                    this.WordControl.m_oLogicDocument.SetImageProps( ImagePr );
-					this.WordControl.m_oLogicDocument.FinalizeAction();
+                    this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_ApplyImagePr);
+                    this.WordControl.m_oLogicDocument.SetImageProps(ImagePr);
+                    this.WordControl.m_oLogicDocument.UpdateInterface();
+                    this.WordControl.m_oLogicDocument.UpdateSelection();
+                    this.WordControl.m_oLogicDocument.FinalizeAction();
                 }
-                if(this.exucuteHistory)
+                if (this.exucuteHistory)
                 {
                     this.exucuteHistory = false;
+                    var oPoint          = History.Points[History.Index];
+                    if (oPoint)
+                    {
+                        this.nCurPointItemsLength = oPoint.Items.length;
+                    }
                 }
                 if(this.exucuteHistoryEnd)
                 {
@@ -2586,12 +2610,27 @@ Asc['asc_docs_api'].prototype.ImgApply = function(obj)
             }
             else
             {
-                AscFormat.ExecuteNoHistory(function(){
-                                           this.WordControl.m_oLogicDocument.SetImageProps( ImagePr );
-                                           }, this, []);
+                var bNeedCheckChangesCount = false;
+                if (-1 !== this.nCurPointItemsLength)
+                {
+                    History.UndoLastPoint();
+                }
+                else
+                {
+                    bNeedCheckChangesCount = true;
+                    this.WordControl.m_oLogicDocument.Create_NewHistoryPoint(AscDFH.historydescription_Document_ApplyImagePr);
+                }
+                this.WordControl.m_oLogicDocument.SetImageProps(ImagePr);
+                if (bNeedCheckChangesCount)
+                {
+                    var oPoint = History.Points[History.Index];
+                    if (oPoint)
+                    {
+                        this.nCurPointItemsLength = oPoint.Items.length;
+                    }
+                }
             }
-
-            this.WordControl.m_oLogicDocument.SetImageProps( ImagePr );
+            this.exucuteHistoryEnd = false;
         }
     }
 };
@@ -4460,6 +4499,67 @@ Asc["asc_docs_api"].prototype["asc_nativeSetContentControlDatePickerDate"] = fun
     oPr.put_FullDate(new  Date(textDate));
 
     _api.asc_SetContentControlDatePickerPr(oPr, sId, true);
+}
+
+/**
+ * one - 0
+ * two - 1
+ * three - 2
+ * left - 3
+ * right - 4 
+ * @param {*} sId 
+ * @returns 
+ */
+Asc["asc_docs_api"].prototype["asc_nativeSetColumnsSettings"] = function(sId) {
+    var props = new Asc.CDocumentColumnsProps(),
+                        cols = sId,
+                        def_space = 12.5;
+                    props.put_EqualWidth(cols<3);
+    if (cols<3) {
+        props.put_Num(cols+1);
+        props.put_Space(def_space);
+    } else {
+        var total = _api.asc_GetColumnsProps().get_TotalWidth(),
+            left = (total - def_space*2)/3,
+            right = total - def_space - left;
+        props.put_ColByValue(0, (cols == 3) ? left : right, def_space);
+        props.put_ColByValue(1, (cols == 3) ? right : left, 0);
+        props.colbyva
+    }
+    _api.asc_SetColumnsProps(props);
+    
+}
+
+/**
+ * one - 0
+ * two - 1
+ * three - 2
+ * left - 3
+ * right - 4 
+ * @returns (-1, 0, 1, 2, 3, 4)
+ */
+Asc["asc_docs_api"].prototype["asc_getNativeSetColumnsSettings"] = function() {
+    var props = _api.asc_GetColumnsProps();
+    var equal = props.get_EqualWidth(),
+        num = (equal) ? props.get_Num() : props.get_ColsCount(),
+        def_space = 12.5,
+        index = -1;
+    if (equal && num<4 && (num==1 ||  Math.abs(props.get_Space() - def_space)<0.1))
+        index = (num-1);
+    else if (!equal && num==2) {
+        var left = props.get_Col(0).get_W(),
+            space = props.get_Col(0).get_Space(),
+            right = props.get_Col(1).get_W(),
+            total = props.get_TotalWidth();
+        if (Math.abs(space - def_space)<0.1) {
+            var width = (total - space*2)/3;
+            if ( left<right && Math.abs(left - width)<0.1 )
+                index = 3;
+            else if (left>right && Math.abs(right - width)<0.1)
+                index = 4;
+        }
+    }
+    return index;
 }
 
 Asc["asc_docs_api"].prototype["asc_nativeAddText"] = function(text, wrapWithSpaces) {

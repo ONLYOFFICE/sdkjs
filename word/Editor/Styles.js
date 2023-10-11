@@ -33,6 +33,10 @@
 "use strict";
 
 // Import
+
+window['AscWord'] = window['AscWord'] || {};
+
+
 var align_Left = AscCommon.align_Left;
 var align_Right = AscCommon.align_Right;
 var History = AscCommon.History;

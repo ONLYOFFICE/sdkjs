@@ -5723,7 +5723,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['ConfirmAddCellWatches'] = prot.ConfirmAddCellWatches;
 	prot['ConfirmReplaceHeaderFooterPicture'] = prot.ConfirmReplaceHeaderFooterPicture;
 
-	window['Asc'].c_oAscSmartArtSections = c_oAscSmartArtSections;
+	window['Asc']['c_oAscSmartArtSections'] = window['Asc'].c_oAscSmartArtSections = c_oAscSmartArtSections;
 
 
 

@@ -248,17 +248,6 @@ DrawingObjectsController.prototype.getDrawingObjects = function()
     }
     return ret;
 };
-DrawingObjectsController.prototype.checkSelectedObjectsForMove = function(group)
-{
-    var selected_object = group ? group.selectedObjects : this.selectedObjects;
-    for(var i = 0; i < selected_object.length; ++i)
-    {
-        if(selected_object[i].canMove())
-        {
-            this.arrPreTrackObjects.push(selected_object[i].createMoveTrack());
-        }
-    }
-};
 
 DrawingObjectsController.prototype.checkSelectedObjectsAndFireCallback = function(callback, args)
 {
@@ -293,7 +282,6 @@ DrawingObjectsController.prototype.onMouseDown = function(e, x, y)
 {
     e.ShiftKey = e.shiftKey;
     e.CtrlKey = e.metaKey || e.ctrlKey;
-    e.AltKey = e.altKey;
     e.Button = e.button;
     e.Type = AscCommon.g_mouse_event_type_down;
 	e.IsLocked = e.isLocked;
@@ -319,7 +307,6 @@ DrawingObjectsController.prototype.onMouseMove = function(e, x, y)
 {
     e.ShiftKey = e.shiftKey;
     e.CtrlKey = e.metaKey || e.ctrlKey;
-	e.AltKey = e.altKey;
     e.Button = e.button;
     e.Type = AscCommon.g_mouse_event_type_move;
 	e.IsLocked = e.isLocked;
@@ -332,7 +319,6 @@ DrawingObjectsController.prototype.onMouseUp = function(e, x, y)
 {
     e.ShiftKey = e.shiftKey;
     e.CtrlKey = e.metaKey || e.ctrlKey;
-	e.AltKey = e.altKey;
     e.Button = e.button;
     e.Type = AscCommon.g_mouse_event_type_up;
     this.curState.onMouseUp(e, x, y, 0);

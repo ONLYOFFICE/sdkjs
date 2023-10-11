@@ -981,8 +981,6 @@ RotateState.prototype =
     {
         if(this.drawingObjects.canEdit() && this.bSamePos !== true)
         {
-					const bIsMac = AscCommon.AscBrowser.isMacOs;
-	        const bCopyKey = bIsMac ? e.AltKey : e.CtrlKey;
             var tracks = [].concat(this.drawingObjects.arrTrackObjects);
             var group = this.group;
             var drawingObjects = this.drawingObjects;
@@ -990,8 +988,8 @@ RotateState.prototype =
             var bIsMoveState = (this instanceof MoveState);
             var bIsChartFrame = Asc["editor"] && Asc["editor"].isChartEditor === true;
             var bIsTrackInChart = (tracks.length > 0 && (tracks[0] instanceof AscFormat.MoveChartObjectTrack));
-            var bCopyOnMove = bCopyKey && bIsMoveState && !bIsChartFrame && !bIsTrackInChart;
-            var bCopyOnMoveInGroup = (bCopyKey && oThis instanceof MoveInGroupState && !oThis.hasObjectInSmartArt);
+            var bCopyOnMove = e.CtrlKey && bIsMoveState && !bIsChartFrame && !bIsTrackInChart;
+            var bCopyOnMoveInGroup = (e.CtrlKey && oThis instanceof MoveInGroupState && !oThis.hasObjectInSmartArt);
             var i, j;
             var copy;
             if(bCopyOnMove)

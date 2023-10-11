@@ -450,7 +450,7 @@ CDocumentContentElementBase.prototype.SetContentPosition = function(DocPos, Dept
 CDocumentContentElementBase.prototype.GetNumberingInfo = function(oNumberingEngine)
 {
 };
-CDocumentContentElementBase.prototype.AddInlineImage = function(W, H, Img, Chart, bFlow)
+CDocumentContentElementBase.prototype.AddInlineImage = function(W, H, Img, GraphicObject, bFlow)
 {
 };
 CDocumentContentElementBase.prototype.AddImages = function(aImages)

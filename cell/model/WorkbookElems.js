@@ -13466,6 +13466,7 @@ QueryTableField.prototype.clone = function() {
 			} else {
 				this.evenFooter = new Asc.CHeaderFooterData();
 				this.evenFooter.setStr(newVal);
+				this.evenFooter.setType(Asc.c_oAscPageHFType.evenFooter);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13483,6 +13484,7 @@ QueryTableField.prototype.clone = function() {
 			} else {
 				this.evenHeader = new Asc.CHeaderFooterData();
 				this.evenHeader.setStr(newVal);
+				this.evenHeader.setType(Asc.c_oAscPageHFType.evenHeader);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13500,6 +13502,7 @@ QueryTableField.prototype.clone = function() {
 			} else {
 				this.firstFooter = new Asc.CHeaderFooterData();
 				this.firstFooter.setStr(newVal);
+				this.firstFooter.setType(Asc.c_oAscPageHFType.firstFooter);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13517,6 +13520,7 @@ QueryTableField.prototype.clone = function() {
 			} else {
 				this.firstHeader = new Asc.CHeaderFooterData();
 				this.firstHeader.setStr(newVal);
+				this.firstHeader.setType(Asc.c_oAscPageHFType.firstHeader);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13534,6 +13538,7 @@ QueryTableField.prototype.clone = function() {
 			} else {
 				this.oddFooter = new Asc.CHeaderFooterData();
 				this.oddFooter.setStr(newVal);
+				this.oddFooter.setType(Asc.c_oAscPageHFType.oddFooter);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13551,6 +13556,7 @@ QueryTableField.prototype.clone = function() {
 			} else {
 				this.oddHeader = new Asc.CHeaderFooterData();
 				this.oddHeader.setStr(newVal);
+				this.oddHeader.setType(Asc.c_oAscPageHFType.oddHeader);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13717,26 +13723,32 @@ QueryTableField.prototype.clone = function() {
 
 		if (val["evenFooter"]) {
 			this.evenFooter = new CHeaderFooterData();
+			this.evenFooter.setType(Asc.c_oAscPageHFType.evenFooter);
 			this.evenFooter.setStr(val["evenFooter"]);
 		}
 		if (val["evenHeader"]) {
 			this.evenHeader = new CHeaderFooterData();
+			this.evenHeader.setType(Asc.c_oAscPageHFType.evenHeader);
 			this.evenHeader.setStr(val["evenHeader"]);
 		}
 		if (val["firstFooter"]) {
 			this.firstFooter = new CHeaderFooterData();
+			this.firstFooter.setType(Asc.c_oAscPageHFType.firstFooter);
 			this.firstFooter.setStr(val["firstFooter"]);
 		}
 		if (val["firstHeader"]) {
 			this.firstHeader = new CHeaderFooterData();
+			this.firstHeader.setType(Asc.c_oAscPageHFType.firstHeader);
 			this.firstHeader.setStr(val["firstHeader"]);
 		}
 		if (val["oddFooter"]) {
 			this.oddFooter = new CHeaderFooterData();
+			this.oddFooter.setType(Asc.c_oAscPageHFType.oddFooter);
 			this.oddFooter.setStr(val["oddFooter"]);
 		}
 		if (val["oddHeader"]) {
 			this.oddHeader = new CHeaderFooterData();
+			this.oddHeader.setType(Asc.c_oAscPageHFType.oddHeader);
 			this.oddHeader.setStr(val["oddHeader"]);
 		}
 
@@ -13763,6 +13775,7 @@ QueryTableField.prototype.clone = function() {
 	function CHeaderFooterData(str) {
 		this.str = str;
 		this.parser = null;
+		this.type = null;
 
 		return this;
 	}
@@ -13770,6 +13783,7 @@ QueryTableField.prototype.clone = function() {
 	CHeaderFooterData.prototype.clone = function () {
 		var oRes = new CHeaderFooterData();
 		oRes.str = this.str;
+		oRes.type = this.type;
 		return oRes;
 	};
 	CHeaderFooterData.prototype.getStr = function () {
@@ -13777,6 +13791,9 @@ QueryTableField.prototype.clone = function() {
 	};
 	CHeaderFooterData.prototype.setStr = function (val) {
 		this.str = val;
+	};
+	CHeaderFooterData.prototype.setType = function (val) {
+		this.type = val;
 	};
 	CHeaderFooterData.prototype.parse = function () {
 		var parser = new window["AscCommonExcel"].HeaderFooterParser();

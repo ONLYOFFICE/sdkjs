@@ -77,12 +77,11 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 	this.DocumentContent = DocumentContent;
 	this.DrawingDocument = DrawingDocument;
 	this.Parent          = Parent;
-	this.LogicDocument = DrawingDocument ? DrawingDocument.m_oLogicDocument : null;
-	if(!this.LogicDocument)
-	{
-		this.LogicDocument = Asc.editor && Asc.editor.WordControl && Asc.editor.WordControl.m_oLogicDocument || null;
-	}
-
+	this.LogicDocument   = DrawingDocument ? DrawingDocument.m_oLogicDocument : null;
+	
+	if (!this.LogicDocument && Asc.editor)
+		this.LogicDocument = Asc.editor.getLogicDocument();
+	
 	// Расстояние до окружающего текста
 	this.Distance = {
 		T : 0,
@@ -165,7 +164,8 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 
 	this.document        = this.LogicDocument;
 	this.drawingDocument = DrawingDocument;
-	this.graphicObjects  = this.LogicDocument ? this.LogicDocument.DrawingObjects : null;
+	this.graphicObjects  = this.LogicDocument ? this.LogicDocument.getDrawingObjects() : null;
+	
 	this.selected        = false;
 
 	this.behindDoc    = false;
@@ -1354,7 +1354,7 @@ ParaDrawing.prototype.CanAddNumbering = function()
 };
 ParaDrawing.prototype.Copy = function(oPr)
 {
-	var c = new ParaDrawing(this.Extent.W, this.Extent.H, null, editor.WordControl.m_oLogicDocument.DrawingDocument, null, null);
+	let c = new ParaDrawing(this.Extent.W, this.Extent.H, null, this.DrawingDocument, null, null);
 	c.Set_DrawingType(this.DrawingType);
 	if (AscCommon.isRealObject(this.GraphicObj))
 	{
@@ -1451,8 +1451,8 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.DocumentContent   = oDocumentContent;
 	let PageNum            = ParaLayout.PageNum;
 
-	var OtherFlowObjects = this.graphicObjects ? this.graphicObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent) : [];
-	var bInline          = this.Is_Inline();
+	let floatObjectsOnPage = this.graphicObjects ? this.graphicObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent) : [];
+	var bInline            = this.Is_Inline();
 	this.Internal_Position.SetScaleFactor(this.GetScaleCoefficient());
 	this.Internal_Position.Set(this.GraphicObj.extX, this.GraphicObj.extY, this.getXfrmRot(), this.EffectExtent, this.YOffset, ParaLayout, PageLimits);
 	this.Internal_Position.Calculate_X(bInline, this.PositionH.RelativeFrom, this.PositionH.Align, this.PositionH.Value, this.PositionH.Percent);
@@ -1468,7 +1468,7 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	{
 		bCorrect = true;
 	}
-	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), OtherFlowObjects, bCorrect);
+	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), floatObjectsOnPage, bCorrect);
 	this.GraphicObj.bounds.l = this.GraphicObj.bounds.x + this.Internal_Position.CalcX;
 	this.GraphicObj.bounds.r =  this.GraphicObj.bounds.x  + this.GraphicObj.bounds.w + this.Internal_Position.CalcX;
 	this.GraphicObj.bounds.t = this.GraphicObj.bounds.y + this.Internal_Position.CalcY;
@@ -2852,10 +2852,10 @@ ParaDrawing.prototype.updatePosition2 = function(x, y)
 		this.GraphicObj.updatePosition2(x, y);
 	}
 };
-ParaDrawing.prototype.addInlineImage = function(W, H, Img, chart, bFlow)
+ParaDrawing.prototype.addInlineImage = function(W, H, Img, GraphicObject, bFlow)
 {
 	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.addInlineImage === "function")
-		this.GraphicObj.addInlineImage(W, H, Img, chart, bFlow);
+		this.GraphicObj.addInlineImage(W, H, Img, GraphicObject, bFlow);
 };
 ParaDrawing.prototype.addSignatureLine = function(oSignatureDrawing)
 {

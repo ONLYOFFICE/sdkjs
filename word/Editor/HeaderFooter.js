@@ -739,9 +739,9 @@ CHeaderFooter.prototype =
 		this.Content.AddNewParagraph();
 	},
 
-	AddInlineImage : function(W, H, Img, Chart, bFlow)
+	AddInlineImage : function(W, H, Img, GraphicObject, bFlow)
     {
-        this.Content.AddInlineImage(W,H,Img, Chart, bFlow);
+        this.Content.AddInlineImage(W,H,Img, GraphicObject, bFlow);
     },
 	AddImages : function(aImages)
     {
@@ -975,7 +975,7 @@ CHeaderFooter.prototype =
 
 	GetCalculatedTextPr : function()
 	{
-		return this.Content.GetCalculatedTextPr();
+		return this.Content.GetCalculatedTextPr(true);
 	},
 
 	GetDirectTextPr : function()
@@ -2032,10 +2032,10 @@ CHeaderFooterController.prototype =
 			return this.CurHdrFtr.AddNewParagraph();
 	},
 
-	AddInlineImage : function(W, H, Img, Chart, bFlow)
+	AddInlineImage : function(W, H, Img, GraphicObject, bFlow)
     {
         if ( null != this.CurHdrFtr )
-            return this.CurHdrFtr.AddInlineImage(W,H,Img, Chart, bFlow);
+            return this.CurHdrFtr.AddInlineImage(W,H,Img, GraphicObject, bFlow);
     },
 	AddImages : function(aImages)
     {

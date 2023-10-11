@@ -191,7 +191,7 @@ function NewShapeTrack(presetGeom, startX, startY, theme, master, layout, slide,
         {
             style = AscFormat.CreateDefaultTextRectStyle();
         }
-        var brush = theme.getFillStyle(style.fillRef.idx);
+        var brush = theme ? theme.getFillStyle(style.fillRef.idx) : AscFormat.CreateNoFillUniFill();
         style.fillRef.Color.Calculate(theme, slide, layout, master, {R:0, G: 0, B:0, A:255});
         var RGBA = style.fillRef.Color.RGBA;
         if (style.fillRef.Color.color)

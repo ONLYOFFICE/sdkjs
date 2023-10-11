@@ -517,6 +517,8 @@
 					  }
 				  }
 				  return null;
+			  }, "showFormulas": function () {
+				  self._onShowFormulas.apply(self, arguments);
 			  },
 
 
@@ -572,6 +574,10 @@
 					  }
 					  return !!list;
 				  }
+			  },
+
+			  "onShowFilterOptionsActiveCell": function () {
+				  return self.getWorksheet().showAutoFilterOptionsFromActiveCell();
 			  },
 
 			  // FormatPainter
@@ -646,10 +652,12 @@
 			}
 
       this.Api.onKeyDown = function (event) {
+        self.Api.sendEvent("asc_onBeforeKeyDown", event);
         self.controller._onWindowKeyDown(event);
         if (self.isCellEditMode) {
           self.cellEditor._onWindowKeyDown(event, false);
         }
+        self.Api.sendEvent("asc_onKeyDown", event);
       };
       this.Api.onKeyPress = function (event) {
         self.controller._onWindowKeyPress(event);
@@ -1878,6 +1886,12 @@
     }
   };
 
+  WorkbookView.prototype._onShowFormulas = function () {
+    let ws = this.getWorksheet();
+    let showFormulasVal = ws.model && ws.model.getShowFormulas();
+    ws.changeSheetViewSettings(AscCH.historyitem_Worksheet_SetShowFormulas, !showFormulasVal);
+  };
+
   // Shapes
   WorkbookView.prototype._onGraphicObjectMouseDown = function(e, x, y) {
     var ws = this.getWorksheet();
@@ -2830,7 +2844,7 @@
             if (-1 !== this.lastFPos) {
                 if (-1 === this.arrExcludeFormulas.indexOf(name) && !isNotFunction) {
                     //если следующий символ скобка - не добавляем ещё одну
-                    if('(' !== this.cellEditor.textRender.getChars(this.cellEditor.cursorPos, 1)) {
+                    if('(' !== this.cellEditor.getText(this.cellEditor.cursorPos, 1)) {
                         name += '('; // ToDo сделать проверки при добавлении, чтобы не вызывать постоянно окно
                     }
                 } else {
@@ -3145,6 +3159,7 @@
 	};
 
   WorkbookView.prototype.undo = function(Options) {
+    this.Api.sendEvent("asc_onBeforeUndoRedo");
     var oFormulaLocaleInfo = AscCommonExcel.oFormulaLocaleInfo;
     oFormulaLocaleInfo.Parse = false;
     oFormulaLocaleInfo.DigitSep = false;
@@ -3160,9 +3175,11 @@
     }
     oFormulaLocaleInfo.Parse = true;
     oFormulaLocaleInfo.DigitSep = true;
+    this.Api.sendEvent("asc_onUndoRedo");
   };
 
   WorkbookView.prototype.redo = function() {
+	  this.Api.sendEvent("asc_onBeforeUndoRedo");
 	  if (this.Api.isEditVisibleAreaOleEditor) {
 		  const oOleSize = this.getOleSize();
 		  oOleSize.redo();
@@ -3171,6 +3188,7 @@
 	  } else {
 		  this.cellEditor.redo();
 	  }
+	  this.Api.sendEvent("asc_onUndoRedo");
   };
 
   WorkbookView.prototype.setFontAttributes = function(prop, val) {
@@ -5483,6 +5501,36 @@
 			let ws = this.wsViews[i];
 			ws && ws._cleanCache(new Asc.Range(0, 0, ws.cols.length - 1, ws.rows.length - 1));
 		}
+	};
+
+	WorkbookView.prototype.getSelectionState = function() {
+		let res = null;
+		let ws = this.getWorksheet();
+		if (ws.objectRender.selectedGraphicObjectsExists()) {
+			res = ws.objectRender.controller.getSelectionState();
+		} else {
+			if (!this.getCellEditMode()) {
+				res = ws && ws.getSelectionState();
+			} else {
+				res = this.cellEditor.getSelectionState();
+			}
+		}
+		return res;
+	};
+
+	WorkbookView.prototype.getSpeechDescription = function(prevState, curState, action) {
+		let res = null;
+		let ws = this.getWorksheet();
+		if (ws.objectRender.selectedGraphicObjectsExists()) {
+			return AscCommon.getSpeechDescription(prevState, curState, action);
+		} else {
+			if (!this.getCellEditMode()) {
+				res = ws && ws.getSpeechDescription(prevState, curState, action);
+			} else {
+				res = this.cellEditor.getSpeechDescription(prevState, curState, action);
+			}
+		}
+		return res;
 	};
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch

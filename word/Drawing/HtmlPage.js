@@ -742,7 +742,7 @@ function CEditorPage(api)
 
 	this.UpdateHorRuler = function()
 	{
-		if (!this.m_bIsRuler)
+		if (!this.m_bIsRuler || this.m_oApi.isDocumentRenderer())
 			return;
 
 		var _left = 0;
@@ -755,11 +755,12 @@ function CEditorPage(api)
 		{
 			_left = this.m_oDrawingDocument.m_arrPages[this.m_oDrawingDocument.m_lPagesCount - 1].drawingPage.left;
 		}
+
 		this.m_oHorRuler.BlitToMain(_left, 0, this.m_oTopRuler_horRuler.HtmlElement);
 	};
 	this.UpdateVerRuler = function()
 	{
-		if (!this.m_bIsRuler)
+		if (!this.m_bIsRuler || this.m_oApi.isDocumentRenderer())
 			return;
 
 		var _top  = 0;
@@ -772,6 +773,7 @@ function CEditorPage(api)
 		{
 			_top = this.m_oDrawingDocument.m_arrPages[this.m_oDrawingDocument.m_lPagesCount - 1].drawingPage.top;
 		}
+
 		this.m_oVerRuler.BlitToMain(0, _top, this.m_oLeftRuler_vertRuler.HtmlElement);
 	};
 
@@ -2885,7 +2887,7 @@ function CEditorPage(api)
 			delete canvas.fullRepaint;
 		}
 
-		if (this.m_oDrawingDocument.m_lDrawingFirst < 0 || this.m_oDrawingDocument.m_lDrawingEnd < 0)
+		if (this.m_oApi.isDocumentRenderer() || this.m_oDrawingDocument.m_lDrawingFirst < 0 || this.m_oDrawingDocument.m_lDrawingEnd < 0)
 			return;
 
 		// сначала посморим, изменились ли ректы страниц
@@ -3486,59 +3488,8 @@ function CEditorPage(api)
 		}
 		else
 		{
-			ctx.globalAlpha = 0.2;
-
-			if (drDoc.m_oDocumentRenderer.SearchResults.IsSearch)
-			{
-				this.m_oOverlayApi.Show();
-
-				if (drDoc.m_oDocumentRenderer.SearchResults.Show)
-				{
-					ctx.globalAlpha = 0.5;
-					ctx.fillStyle   = "rgba(255,200,0,1)";
-					ctx.beginPath();
-					for (var i = drDoc.m_lDrawingFirst; i <= drDoc.m_lDrawingEnd; i++)
-					{
-						var _searching = drDoc.m_oDocumentRenderer.SearchResults.Pages[i];
-
-						if (0 != _searching.length)
-						{
-							var drawPage = drDoc.m_arrPages[i].drawingPage;
-							drDoc.m_arrPages[i].DrawSearch2(overlay, drawPage.left, drawPage.top, drawPage.right - drawPage.left, drawPage.bottom - drawPage.top, _searching);
-						}
-					}
-					ctx.fill();
-					ctx.globalAlpha = 0.2;
-				}
-				ctx.beginPath();
-
-				if (drDoc.CurrentSearchNavi && drDoc.m_oDocumentRenderer.SearchResults.Show)
-				{
-					var _pageNum  = drDoc.CurrentSearchNavi[0].PageNum;
-					ctx.fillStyle = "rgba(51,102,204,255)";
-					if (_pageNum >= drDoc.m_lDrawingFirst && _pageNum <= drDoc.m_lDrawingEnd)
-					{
-						var drawPage = drDoc.m_arrPages[_pageNum].drawingPage;
-						drDoc.m_arrPages[_pageNum].DrawSearchCur(overlay, drawPage.left, drawPage.top, drawPage.right - drawPage.left, drawPage.bottom - drawPage.top, drDoc.CurrentSearchNavi);
-					}
-				}
-			}
-
-			ctx.fillStyle = "rgba(51,102,204,255)";
-			ctx.beginPath();
-
-			for (var i = drDoc.m_lDrawingFirst; i <= drDoc.m_lDrawingEnd; i++)
-			{
-				var drawPage = drDoc.m_arrPages[i].drawingPage;
-				drDoc.m_oDocumentRenderer.DrawSelection(i, overlay, drawPage.left, drawPage.top, drawPage.right - drawPage.left, drawPage.bottom - drawPage.top);
-			}
-
-			ctx.fill();
-			ctx.beginPath();
-			ctx.globalAlpha = 1.0;
+			drDoc.m_oDocumentRenderer.onUpdateOverlay();
 		}
-
-		return true;
 	};
 
 	this.OnScroll       = function(isFromLA)
@@ -3733,25 +3684,6 @@ function CEditorPage(api)
 			return;
 
 		this.CalculateDocumentSize();
-
-		if (window["AscDesktopEditor"] && this.m_oDrawingDocument.m_oDocumentRenderer)
-		{
-			var _new_value = this.calculate_zoom_FitToWidth();
-			if (_new_value < this.m_nZoomValue)
-			{
-				// сначала добавим нужные параметры зума
-				var _newValues = [];
-				_new_value     = ((_new_value / 10) >> 0) * 10 - 1;
-				for (var _test_param = 10; _test_param < this.zoom_values[0]; _test_param += 10)
-				{
-					if (_new_value < _test_param)
-						_newValues.push(_test_param);
-				}
-				this.zoom_values = [].concat(_newValues, this.zoom_values);
-
-				this.zoom_FitToWidth();
-			}
-		}
 
 		if (!this.m_oApi.isOnlyReaderMode)
 			this.StartMainTimer();

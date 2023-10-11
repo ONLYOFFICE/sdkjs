@@ -121,11 +121,6 @@ var AscTestShortcut = AscTestShortcut || {};
 		return {ascender: 15, descender: 4, lineGap: 1, nat_scale: 1000, nat_y1: 1000, nat_y2: -1000};
 	};
 
-	AscCommon.loadSmartArtBinary = function ()
-	{
-
-	};
-
 	function initEditor()
 	{
 		const editor = new Asc.spreadsheet_api({'id-view': 'editor_sdk', 'id-input': 'ce-cell-content'});

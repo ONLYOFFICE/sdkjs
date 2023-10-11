@@ -75,7 +75,6 @@ $(function() {
 		this.ImageLoader = AscCommon.g_image_loader;
 		this.FontLoader.put_Api(this);
 		this.ImageLoader.put_Api(this);
-		this.FontLoader.SetStandartFonts();
 	};
 
 

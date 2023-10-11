@@ -1034,9 +1034,13 @@
 	CGraphicObjectBase.prototype.getOuterShdwAsc = function () {
 		const oShdw = this.getOuterShdw();
 		if(!oShdw) {
-			return oShdw;
+			return null;
 		}
-		return oShdw.getAscShdw();
+		let oAscShdw = oShdw.getAscShdw();
+		if(oAscShdw) {
+			oAscShdw.checkColor(this.Get_Theme(), this.Get_ColorMap());
+		}
+		return oAscShdw;
 	};
 	CGraphicObjectBase.prototype.recalculateShdw = function () {
 
@@ -1289,9 +1293,10 @@
 	CGraphicObjectBase.prototype.updateTransformMatrix = function()
 	{
 		var oParentTransform = null;
-		if(this.parent && this.parent.Get_ParentParagraph)
+		let oParent = (this.parent || this.group);
+		if(oParent && oParent.Get_ParentParagraph)
 		{
-			var oParagraph = this.parent.Get_ParentParagraph();
+			var oParagraph = oParent.Get_ParentParagraph();
 			if(oParagraph)
 			{
 				oParentTransform = oParagraph.Get_ParentTextTransform();
@@ -2993,6 +2998,9 @@
 	CGraphicObjectBase.prototype.getAnimTexture = function (scale, bMorph) {
 		const oBounds = this.getBoundsByDrawing(bMorph);
 		const oCanvas = oBounds.createCanvas(scale);
+		if(!oCanvas) {
+			return null;
+		}
 		const oGraphics = oBounds.createGraphicsFromCanvas(oCanvas, scale)
 		const nX = oBounds.x * oGraphics.m_oCoordTransform.sx;
 		const nY = oBounds.y * oGraphics.m_oCoordTransform.sy;
@@ -3178,7 +3186,7 @@
 			}
 		}
 	};
-	CGraphicObjectBase.prototype.compareForMorph = function(oDrawingToCheck, oCandidate) {
+	CGraphicObjectBase.prototype.compareForMorph = function(oDrawingToCheck, oCandidate, oMapPaired) {
 		if(oCandidate) {
 			return oCandidate;
 		}
@@ -3432,6 +3440,25 @@
 		}
 	};
 
+	CGraphicObjectBase.prototype.getContentText = function () {
+		return "";
+	};
+	CGraphicObjectBase.prototype.getSpeechDescription = function () {
+		let sResult = this.getTypeName();
+		let sText = this.getContentText();
+		let sTitle = (this.getTitle() || "");
+		let sDescription = (this.getDescription() || "");
+		if(sText && sText.length > 0) {
+			sResult += (" " + sText)
+		}
+		if(sTitle && sTitle.length > 0) {
+			sResult += (" " + sTitle)
+		}
+		if(sDescription && sDescription.length > 0) {
+			sResult += (" " + sDescription)
+		}
+		return sResult;
+	};
 	var ANIM_LABEL_WIDTH_PIX = 22;
 	var ANIM_LABEL_HEIGHT_PIX = 17;
 

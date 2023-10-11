@@ -3703,6 +3703,16 @@
 	}
 
 	/**
+	 * Class representing settings which are used for creating a watermark.
+	 * @constructor
+	 */
+	function ApiWatermarkSettings(oSettings)
+	{
+		this.Settings = oSettings;
+	}
+
+
+	/**
 	 * Twentieths of a point (equivalent to 1/1440th of an inch).
 	 * @typedef {number} twips
 	 */
@@ -4127,11 +4137,24 @@
 	 * */
 
 	/**
+	 * The type of the watermark in the document.
+	 * @returns {("none" | "text" | "image")} WatermarkType
+	 * @constructor
+	 */
+
+	/**
+	 * The direction of the watermark in the document.
+	 * @returns {("horizontal" | "clockwise45" | "counterclockwise45")} WatermarkDirection
+	 * @constructor
+	 */
+
+	/**
 	 * Returns the main document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiDocument}
 	 */
+
 	Api.prototype.GetDocument = function()
 	{
 		return new ApiDocument(this.WordControl.m_oLogicDocument);
@@ -6279,6 +6302,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {?string} [sText="WATERMARK"] - Watermark text.
 	 * @param {?boolean} [bIsDiagonal=true] - Specifies if the watermark is placed diagonally (true) or horizontally (false).
+	 * @returns {?ApiDrawing} - The object which represents inserted watermark. null if the type of Settings is "none".
 	 */
 	ApiDocument.prototype.InsertWatermark = function(sText, bIsDiagonal){
 		var oSectPrMap = {};
@@ -6318,6 +6342,57 @@
 				privateInsertWatermarkToContent(this.Document.Api, oHeadersMap[sId], sText, bIsDiagonal);
 			}
 		}
+	};
+
+
+	/**
+	 * Returns the current settings of watermark in the document.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiWatermarkSettings} - The object which represents the watermark settings
+	 */
+	ApiDocument.prototype.GetWatermarkSettings = function()
+	{
+		return new ApiWatermarkSettings(this.Document.GetWatermarkProps());
+	};
+
+
+	/**
+	 * Sets the settings of watermark in the document.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @param {ApiWatermarkSettings} Settings - The object which represents the watermark settings.
+	 * @returns {?ApiDrawing} - The object which represents the watermark drawing if the type of Settings is not equal "none".
+	 */
+	ApiDocument.prototype.SetWatermarkSettings = function(Settings)
+	{
+		let oDrawing = this.Document.SetWatermarkPropsAction(Settings.Settings);
+		if(oDrawing && oDrawing.GraphicObj)
+		{
+			const oGraphic = oDrawing.GraphicObj;
+			if(oGraphic.isImage())
+			{
+				return new ApiImage(oGraphic);
+			}
+			else if(oGraphic.isShape())
+			{
+				return new ApiShape(oGraphic);
+			}
+
+		}
+		return null;
+	};
+
+	/**
+	 * Removes the watermark in the document.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiDocument.prototype.RemoveWatermark = function()
+	{
+		let Settings = new Asc.CAscWatermarkProperties();
+		Settings.put_Type(Asc.c_oAscWatermarkType.None);
+		this.Document.SetWatermarkPropsAction(Settings);
 	};
 
 	/**
@@ -19233,6 +19308,250 @@
 		return this;
 	};
 
+
+	/**
+	 * Returns a type of the ApiWatermarkSettings class.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {"watermarkSettings"}
+	 */
+	ApiWatermarkSettings.prototype.GetClassType = function()
+	{
+		return "watermarkSettings";
+	};
+
+	/**
+	 * Sets the type of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @param {WatermarkType} sType - The type of watermark.
+	 */
+	ApiWatermarkSettings.prototype.SetType = function (sType)
+	{
+		let nType;
+		if(sType === "text")
+		{
+			nType = Asc.c_oAscWatermarkType.Text;
+		}
+		else if(sType === "image")
+		{
+			nType = Asc.c_oAscWatermarkType.Image;
+		}
+		else
+		{
+			nType = Asc.c_oAscWatermarkType.None;
+		}
+		this.Settings.put_Type(nType);
+	};
+
+	/**
+	 * Returns the type of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {WatermarkType}
+	 */
+	ApiWatermarkSettings.prototype.GetType = function ()
+	{
+		const nType = this.Settings.get_Type();
+		if(nType === Asc.c_oAscWatermarkType.Text)
+		{
+			return "text";
+		}
+		if(nType === Asc.c_oAscWatermarkType.Image)
+		{
+			return "image";
+		}
+		return "none";
+	};
+
+	/**
+	 * Sets the text of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sText - The text of watermark.
+	 */
+	ApiWatermarkSettings.prototype.SetText = function (sText)
+	{
+		this.Settings.put_Text(sText);
+	};
+
+	/**
+	 * Returns the text of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {string | null}
+	 */
+	ApiWatermarkSettings.prototype.GetText = function ()
+	{
+		return this.Settings.get_Text();
+	};
+
+	/**
+	 * Sets the text properties of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @param {ApiTextPr} oTextPr - The text properties of watermark.
+	 */
+	ApiWatermarkSettings.prototype.SetTextPr = function (oTextPr)
+	{
+		this.Settings.put_TextPr(new Asc.CTextProp(oTextPr.TextPr));
+	};
+
+	/**
+	 * Returns the text properties of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTextPr}
+	 */
+	ApiWatermarkSettings.prototype.GetTextPr = function ()
+	{
+		const oTextPr = new CTextPr();
+		const oSettingsTextPr = this.Settings.get_TextPr();
+		if(oSettingsTextPr)
+		{
+			oTextPr.Set_FromObject(oSettingsTextPr);
+		}
+		else
+		{
+			oTextPr.Set_FromObject(new AscWord.CTextPr());
+		}
+		return private_GetLogicDocument().GetApi().private_CreateApiTextPr(oTextPr);
+	};
+
+	/**
+	 * Sets the opacity of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @param {number} nOpacity - The value of opacity of the watermark. Value must be from 0 to 255.
+	 */
+	ApiWatermarkSettings.prototype.SetOpacity = function (nOpacity)
+	{
+		let nOpacityVal = Math.min(255, Math.max(0, nOpacity));
+		this.Settings.put_Opacity(nOpacityVal);
+	};
+
+	/**
+	 * Returns the opacity of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {number} - The value of opacity of the watermark. The value is between 0 and 255.
+	 */
+	ApiWatermarkSettings.prototype.GetOpacity = function ()
+	{
+		return this.Settings.get_Opacity();
+	};
+
+
+
+	/**
+	 * Sets the direction of the watermark.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @param {WatermarkDirection} sDirection - The direction of the watermark.
+	 */
+	ApiWatermarkSettings.prototype.SetDirection = function (sDirection)
+	{
+		switch (sDirection)
+		{
+			case "horizontal":
+			{
+				this.Settings.put_Angle(0);
+				break;
+			}
+			case "clockwise45":
+			{
+				this.Settings.put_Angle(45);
+				break;
+			}
+			case "counterclockwise45":
+			{
+				this.Settings.put_Angle(-45);
+				break;
+			}
+		}
+	};
+	/**
+	 * Returns the direction of the watermark.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {?WatermarkDirection} - The direction of the watermark.
+	 */
+	ApiWatermarkSettings.prototype.GetDirection = function ()
+	{
+		const nAngle = this.Settings.get_Angle();
+		if(AscFormat.fApproxEqual(0.0, nAngle))
+		{
+			return "horizontal";
+		}
+		else if(AscFormat.fApproxEqual(45.0, nAngle))
+		{
+			return "clockwise45";
+		}
+		else if(AscFormat.fApproxEqual(315, nAngle))
+		{
+			return "counterclockwise45";
+		}
+		return null;
+	};
+
+	/**
+	 * Sets the image URL of the watermark.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sURL - The image URL of the watermark.
+	 */
+	ApiWatermarkSettings.prototype.SetImageURL = function (sURL)
+	{
+		this.Settings.put_ImageUrl2(sURL);
+	};
+
+	/**
+	 * Returns the image URL of the watermark.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {string | null} - The watermark image URL.
+	 */
+	ApiWatermarkSettings.prototype.GetImageURL = function ()
+	{
+		return this.Settings.get_ImageUrl();
+	};
+
+	/**
+	 * Returns the width of the image watermark.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {EMU | null} - The image with in EMU.
+	 */
+	ApiWatermarkSettings.prototype.GetImageWidth = function ()
+	{
+		return this.Settings.get_ImageWidth();
+	};
+	/**
+	 * Returns the height of the image watermark.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {EMU | null} - The image height in EMU.
+	 */
+	ApiWatermarkSettings.prototype.GetImageHeight = function ()
+	{
+		return this.Settings.get_ImageHeight();
+	};
+
+
+	/**
+	 * Sets the size of the image.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @param {EMU} nWidth - The width of the image
+	 * @param {EMU} nHeight - The width of the image
+	 */
+	ApiWatermarkSettings.prototype.SetImageSize = function (nWidth, nHeight)
+	{
+		this.Settings.put_ImageSize(nWidth, nHeight);
+	};
+
+
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19344,6 +19663,9 @@
 	ApiDocument.prototype["GetCommentsReport"]           = ApiDocument.prototype.GetCommentsReport;
 	ApiDocument.prototype["GetReviewReport"]             = ApiDocument.prototype.GetReviewReport;
 	ApiDocument.prototype["InsertWatermark"]             = ApiDocument.prototype.InsertWatermark;
+	ApiDocument.prototype["GetWatermarkSettings"]        = ApiDocument.prototype.GetWatermarkSettings;
+	ApiDocument.prototype["SetWatermarkSettings"]        = ApiDocument.prototype.SetWatermarkSettings;
+	ApiDocument.prototype["RemoveWatermark"]             = ApiDocument.prototype.RemoveWatermark;
 	ApiDocument.prototype["SearchAndReplace"]            = ApiDocument.prototype.SearchAndReplace;
 	ApiDocument.prototype["GetAllContentControls"]       = ApiDocument.prototype.GetAllContentControls;
 	ApiDocument.prototype["GetTagsOfAllContentControls"] = ApiDocument.prototype.GetTagsOfAllContentControls;
@@ -20070,6 +20392,25 @@
 	ApiCommentReply.prototype["SetAutorName"]	= ApiCommentReply.prototype.SetAuthorName;
 	ApiCommentReply.prototype["GetUserId"]		= ApiCommentReply.prototype.GetUserId;
 	ApiCommentReply.prototype["SetUserId"]		= ApiCommentReply.prototype.SetUserId;
+
+	ApiWatermarkSettings.prototype["GetClassType"]   =  ApiWatermarkSettings.prototype.GetClassType;
+	ApiWatermarkSettings.prototype["SetType"]        =  ApiWatermarkSettings.prototype.SetType;
+	ApiWatermarkSettings.prototype["GetType"]        =  ApiWatermarkSettings.prototype.GetType;
+	ApiWatermarkSettings.prototype["SetText"]        =  ApiWatermarkSettings.prototype.SetText;
+	ApiWatermarkSettings.prototype["GetText"]        =  ApiWatermarkSettings.prototype.GetText;
+	ApiWatermarkSettings.prototype["SetTextPr"]      =  ApiWatermarkSettings.prototype.SetTextPr;
+	ApiWatermarkSettings.prototype["GetTextPr"]      =  ApiWatermarkSettings.prototype.GetTextPr;
+	ApiWatermarkSettings.prototype["SetOpacity"]     =  ApiWatermarkSettings.prototype.SetOpacity;
+	ApiWatermarkSettings.prototype["GetOpacity"]     =  ApiWatermarkSettings.prototype.GetOpacity;
+	ApiWatermarkSettings.prototype["SetDirection"]   =  ApiWatermarkSettings.prototype.SetDirection;
+	ApiWatermarkSettings.prototype["GetDirection"]   =  ApiWatermarkSettings.prototype.GetDirection;
+	ApiWatermarkSettings.prototype["SetImageURL"]    =  ApiWatermarkSettings.prototype.SetImageURL;
+	ApiWatermarkSettings.prototype["GetImageURL"]    =  ApiWatermarkSettings.prototype.GetImageURL;
+	ApiWatermarkSettings.prototype["GetImageWidth"]  =  ApiWatermarkSettings.prototype.GetImageWidth;
+	ApiWatermarkSettings.prototype["GetImageHeight"] =  ApiWatermarkSettings.prototype.GetImageHeight;
+	ApiWatermarkSettings.prototype["SetImageSize"]   =  ApiWatermarkSettings.prototype.SetImageSize;
+
+
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export for internal usage
