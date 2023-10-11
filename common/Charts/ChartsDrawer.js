@@ -16349,7 +16349,7 @@ CColorObj.prototype =
 						if (!oSeries || !this.coordinates[i][j]) {
 							continue;
 						}
-						let pen = oSeries.trendline.spPr.ln;
+						let pen = oSeries.trendline.pen;
 						if (pen && this.coordinates[i][j].path) {
 							this.cChartDrawer.drawPath(this.coordinates[i][j].path, pen);
 						}
