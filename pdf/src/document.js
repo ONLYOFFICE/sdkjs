@@ -1746,7 +1746,6 @@ var CPresentation = CPresentation || function(){};
         return isHasSelect;
     };
     CPDFDoc.prototype.RemoveComment = function(Id) {
-        let oViewer = editor.getDocumentRenderer();
         let oAnnot = this.annots.find(function(annot) {
             return annot.GetId() === Id;
         });
@@ -1755,12 +1754,7 @@ var CPresentation = CPresentation || function(){};
             return;
 
         if (oAnnot.IsComment()) {
-            let nPage = oAnnot.GetPage();
-            oAnnot.AddToRedraw();
-            this.annots.splice(this.annots.indexOf(oAnnot), 1);
-            oViewer.pagesInfo.pages[nPage].annots.splice(oViewer.pagesInfo.pages[nPage].annots.indexOf(oAnnot), 1);
-            editor.sync_RemoveComment(Id);
-            oViewer._paint();
+            this.RemoveAnnot(oAnnot.GetId());
         }
         else {
             oAnnot.RemoveComment();
@@ -1774,9 +1768,6 @@ var CPresentation = CPresentation || function(){};
 
         if (!oAnnot)
             return;
-
-        if (oAnnot.IsComment())
-            return this.RemoveComment(Id);
 
         let nPage = oAnnot.GetPage();
         oAnnot.AddToRedraw();

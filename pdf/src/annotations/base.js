@@ -241,7 +241,9 @@
             this._wasChanged = isChanged;
         }
     };
-    
+    CAnnotationBase.prototype.IsChanged = function() {
+        return this._wasChanged;  
+    };
     CAnnotationBase.prototype.DrawFromStream = function(oGraphicsPDF) {
         if (this.IsHidden() == true)
             return;
@@ -638,7 +640,7 @@
             oReply = this._replies[i];
             if (oFirstCommToEdit == oReply)
                 continue;
-            
+
             oReplyCommentData = oCommentData.m_aReplies.find(function(item) {
                 return item.m_sUserData == oReply.GetApIdx(); 
             });
@@ -910,8 +912,10 @@
 
         if (sName != null)
             Flags |= (1 << 0);
-        if (sContents != null)
-            Flags |= (1 << 1);
+
+        // contents
+        Flags |= (1 << 1);
+        
         if (BES != null || BEI != null)
             Flags |= (1 << 2);
         if (aStrokeColor != null)
@@ -933,6 +937,9 @@
                 sContents = sContents.GetContents();
 
             memory.WriteString(sContents);
+        }
+        else {
+            memory.WriteString("");
         }
 
         // border effect

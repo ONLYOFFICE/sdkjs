@@ -3869,9 +3869,29 @@
 		let oMemory	= null;
 		let aPages	= this.pagesInfo.pages;
 
+		// по информации аннотаций определим какие были удалены
+		let oDoc		= this.getPDFDoc();
+		let aAnnotsInfo	= this.file.nativeFile["getAnnotationsInfo"]();
+		let aDeleted	= [];
+		aAnnotsInfo.forEach(function(oInfo) {
+			let isInDoc = oDoc.annots.find(function(annot) {
+				return annot.GetApIdx() == oInfo["AP"]["i"] || annot._replies.find(function(reply) {
+					return reply.GetApIdx() == oInfo["AP"]["i"];
+				});
+			});
+
+			if (!isInDoc) {
+				if (aDeleted[oInfo["page"]] == null) {
+					aDeleted[oInfo["page"]] = [];
+				}
+
+				aDeleted[oInfo["page"]].push(oInfo["AP"]["i"]);
+			}
+		});
+
 		for (let i = 0; i < aPages.length; i++)
 		{
-			if (aPages[i].annots == null || aPages[i].annots.length === 0)
+			if (aPages[i].annots == null || aPages[i].annots.length === 0 && !aDeleted[i])
 				continue;
 
 			if (!oMemory)
@@ -3886,7 +3906,15 @@
 			oMemory.WriteLong(i);
 			
 			for (let nAnnot = 0; nAnnot < aPages[i].annots.length; nAnnot++) {
-				aPages[i].annots[nAnnot].WriteToBinary && aPages[i].annots[nAnnot].WriteToBinary(oMemory);
+				aPages[i].annots[nAnnot].WriteToBinary && aPages[i].annots[nAnnot].IsChanged() && aPages[i].annots[nAnnot].WriteToBinary(oMemory);
+			}
+
+			if (aDeleted[i]) {
+				for (let j = 0; j < aDeleted[i].length; j++) {
+					oMemory.WriteByte(AscCommon.CommandType.ctAnnotFieldDelete);
+					oMemory.WriteLong(8);
+					oMemory.WriteLong(aDeleted[i][j]);
+				}
 			}
 
 			let nEndPos = oMemory.GetCurPosition();
