@@ -6807,7 +6807,14 @@ CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType, isNotWr
         {
             if (CurrentContent.Type !== 49)
 			{
-                strContent = "〖" + CurrentContent.GetTextOfElement(nInputType === 1).trim() + "〗" + strContent;
+				if (CurrentContent instanceof CDelimiter)
+				{
+					strContent = CurrentContent.GetTextOfElement(nInputType === 1).trim() + strContent;
+				}
+				else
+				{
+					strContent = "〖" + CurrentContent.GetTextOfElement(nInputType === 1).trim() + "〗" + strContent;
+				}
                 strContent = strContent.trim();
             }
             else
@@ -6937,6 +6944,41 @@ CMathContent.prototype.GetMultipleContentForGetText = function(isLaTeX, isNotBra
     }
 
     return this.CheckIsEmpty(str);
+};
+CMathContent.prototype.CheckIsNotOnlyRuns = function()
+{
+	let nParaRun = 0;
+	let isOperator = false;
+	let isNormalText = false;
+	let isCustomContent = false;
+
+	for (let i = 0; i < this.Content.length; i++)
+	{
+		let oCurrentContent = this.Content[i];
+		if (oCurrentContent instanceof ParaRun)
+		{
+			nParaRun++;
+			if (oCurrentContent.IsContainMathOperators())
+				isOperator = true;
+			if (oCurrentContent.IsContainMathNormalText())
+				isNormalText = true;
+		}
+		else
+		{
+			if (oCurrentContent instanceof CFraction ||
+				oCurrentContent instanceof CDegree ||
+				oCurrentContent instanceof  CDegreeSubSup
+			)
+				isOperator = true;
+
+			isCustomContent = true;
+		}
+
+		if ((isOperator && isNormalText) || (isCustomContent && isNormalText) || (isCustomContent && isOperator))
+			return true;
+	}
+
+	return false;
 };
 CMathContent.prototype.CheckIsEmpty = function(strAtom)
 {

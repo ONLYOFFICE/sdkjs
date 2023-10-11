@@ -269,7 +269,9 @@ CMathText.prototype.private_getCode = function()
     // Mathematical Alphanumeric Characters
     // http://www.w3.org/TR/2014/REC-xml-entity-names-20140410/Overview.html#alphabets
 
-    if(code == 0x2A)      // "*"
+	if (code == 0x2061) // \funcapply ⁡
+        code = 8196;
+    else if(code == 0x2A)      // "*"
         code = 0x2217;
     else if(code == 0x2D) // "-"
         code = 0x2212;
@@ -771,12 +773,12 @@ CMathText.prototype.Measure = function(oMeasure, TextPr, InfoMathText)
 
         ascent  =  metricsA.Height;
     }
-    else if(this.RecalcInfo.bSpaceSpecial)
-    {
-        width = 0;
-        height = 0;
-        ascent = 0;
-    }
+    // else if(this.RecalcInfo.bSpaceSpecial) // show funcapply
+    // {
+    //     width = 0;
+    //     height = 0;
+    //     ascent = 0;
+    // }
     else
     {
         //  смещения
@@ -935,6 +937,10 @@ CMathText.prototype.IsAlignPoint = function()
 CMathText.prototype.IsMathText = function()
 {
     return true;
+};
+CMathText.prototype.IsBreakOperator = function ()
+{
+	return this.private_Is_BreakOperator(this.value);
 };
 CMathText.prototype.private_Is_BreakOperator = function(val)
 {

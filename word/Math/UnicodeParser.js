@@ -1114,6 +1114,10 @@
 
 		if(base.type === oLiteralNames.functionLiteral[num])
 		{
+			if (this.oLookahead.data.charCodeAt(0) === 8289) //funcapply symbol ⁡)
+			{
+				this.EatToken(this.oLookahead.class);
+			}
 			let third = this.GetOperandLiteral();
 			return {
 				type: oLiteralNames.functionWithLimitLiteral[num],
@@ -1691,7 +1695,7 @@
 	};
 	CUnicodeParser.prototype.IsArrayLiteral = function ()
 	{
-		return this.oLookahead.class === oLiteralNames.matrixLiteral[0];
+		return this.oLookahead.class === oLiteralNames.matrixLiteral[0] || this.oLookahead.class === "█";
 	};
 	CUnicodeParser.prototype.IsElementLiteral = function ()
 	{
@@ -1823,7 +1827,8 @@
 			}
 			else
 			{
-				strLiteral += this.EatToken(arrTypeOfLiteral[0]).data;
+				strLiteral += this.oLookahead.data;
+				this.EatToken(arrTypeOfLiteral[0]);
 			}
 		}
 

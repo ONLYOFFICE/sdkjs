@@ -586,6 +586,9 @@ CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 	}
 	else
 	{
+		let oBase = this.getBase();
+		if (oBase.CheckIsNotOnlyRuns())
+			strBase = "〖" + strBase + "〗";
 		strTemp = strBase + strTypeOfScript + strIterator;
 	}
 	return strTemp;
@@ -1247,7 +1250,7 @@ CDegreeSubSup.prototype.Can_ModifyArgSize = function()
 CDegreeSubSup.prototype.GetTextOfElement = function(isLaTeX)
 {
 	let strTemp = "";
-	let Base = this.getBase().GetMultipleContentForGetText(isLaTeX);
+	let Base = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
 	let strLower = this.getLowerIterator().GetMultipleContentForGetText(isLaTeX);
 	let strUpper = this.getUpperIterator().GetMultipleContentForGetText(isLaTeX);
 
@@ -1273,6 +1276,9 @@ CDegreeSubSup.prototype.GetTextOfElement = function(isLaTeX)
 		}
 		else
 		{
+			let oBase = this.getBase();
+			if (oBase.CheckIsNotOnlyRuns())
+				Base = "〖" + Base + "〗";
 			strTemp = Base + '_' + strLower + '^' + strUpper;
 		}
 	}

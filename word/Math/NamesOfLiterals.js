@@ -621,6 +621,7 @@
 		["=", oNamesOfLiterals.operatorLiteral[0]],
 		["≶", oNamesOfLiterals.operatorLiteral[0]],
 		["≷", oNamesOfLiterals.operatorLiteral[0]],
+		["∩", oNamesOfLiterals.operatorLiteral[0]],
 
 		["\\", oNamesOfLiterals.opCloseBracket[0]],
 
@@ -899,6 +900,7 @@
 		["∥"], //check
 		["∂"],
 		["⊥", oNamesOfLiterals.operatorLiteral[0]],
+		["\\cap", oNamesOfLiterals.operatorLiteral[0]],
 		["ϕ"],
 		["π"],
 		["±"],
@@ -2458,7 +2460,7 @@
 		"\\frakturz": "𝔷",
 		"\\frakturZ": "ℨ",
 		"\\frown": "⌑",
-		"\\funcapply": "⁡⁡⁡",
+		"\\funcapply": "⁡",
 
 		"\\G": "Γ",
 		"\\gamma": "γ",
