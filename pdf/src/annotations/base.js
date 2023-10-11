@@ -608,6 +608,8 @@
         if (oDoc.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
             oDoc.History.Add(new CChangesPDFAnnotReplies(this, this._replies, aReplies));
         }
+        this.SetWasChanged(true);
+        
         this._replies = aReplies;
     };
     CAnnotationBase.prototype.GetReply = function(nPos) {

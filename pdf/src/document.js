@@ -1646,11 +1646,12 @@ var CPresentation = CPresentation || function(){};
         this.anchorPositionToAdd = null;
 
         let oAnnot;
-        if (this.mouseDownAnnot && this.mouseDownAnnot.IsComment() == false) {
+        if (this.mouseDownAnnot) {
             oAnnot = CreateAnnotByProps(oProps, this);
             oAnnot.SetApIdx(this.GetMaxApIdx() + 2);
 
-            if (this.mouseDownAnnot.GetReply()) {
+            if ((this.mouseDownAnnot.GetContents() && this.mouseDownAnnot.GetType() != AscPDF.ANNOTATIONS_TYPES.FreeText) ||
+            this.mouseDownAnnot.GetReply(0) != null) {
                 let newCommentData = new AscCommon.CCommentData();
                 newCommentData.Read_FromAscCommentData(AscCommentData);
 

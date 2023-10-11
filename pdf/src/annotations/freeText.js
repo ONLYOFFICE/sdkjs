@@ -44,7 +44,7 @@
     */
     function CAnnotationFreeText(sName, nPage, aRect, oDoc)
     {
-        AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Line, nPage, aRect, oDoc);
+        AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.FreeText, nPage, aRect, oDoc);
 
         this._popupOpen     = false;
         this._popupRect     = undefined;
@@ -148,11 +148,16 @@
         }
     };
     CAnnotationFreeText.prototype.AddReply = function(oReply) {
+        let oDoc = this.GetDocument();
+        oDoc.CreateNewHistoryPoint();
+
         oReply.SetReplyTo(this);
 
         let aNewReplies = [].concat(this._replies);
         aNewReplies.push(oReply);
         this.SetReplies(aNewReplies);
+
+        oDoc.TurnOffHistory();
     };
     CAnnotationFreeText.prototype.RemoveComment = function() {
         let oDoc = this.GetDocument();
@@ -189,6 +194,8 @@
             this._OnAfterSetReply();
         else
             editor.sync_RemoveComment(this.GetId());
+
+        this.SetWasChanged(true);   
     };
     CAnnotationFreeText.prototype.GetAscCommentData = function() {
         let oAscCommData = new Asc["asc_CCommentDataWord"](null);
