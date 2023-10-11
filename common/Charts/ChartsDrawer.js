@@ -2891,7 +2891,7 @@ CChartsDrawer.prototype =
 		var logVal = Math.log(val) / Math.log(logBase);
 
 		var temp = 0;
-		if (logVal > 0) {
+		if (logVal > 0 && logVal < 1) {
 			for (var l = 0; l < logVal; l++) {
 				if (l !== 0) {
 					temp += Math.pow(logBase, l);
@@ -5904,9 +5904,9 @@ drawBarChart.prototype = {
 				//стартовая позиция колонки Y(+ высота с учётом поправок на накопительные диаграммы)
 				val = parseFloat(seria[j].val);
 				idx = seria[j].idx != null ? seria[j].idx : j;
-				if (this.valAx && this.valAx.scaling.logBase) {
+				/*if (this.valAx && this.valAx.scaling.logBase) {
 					val = this.cChartDrawer.getLogarithmicValue(val, this.valAx.scaling.logBase);
-				}
+				}*/
 				prevVal = 0;
 				if (this.subType === "stacked" || this.subType === "stackedPer") {
 					for (k = 0; k < tempValues.length; k++) {
