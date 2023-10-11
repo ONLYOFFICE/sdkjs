@@ -6947,7 +6947,6 @@ CMathContent.prototype.GetMultipleContentForGetText = function(isLaTeX, isNotBra
 };
 CMathContent.prototype.CheckIsNotOnlyRuns = function()
 {
-	let nParaRun = 0;
 	let isOperator = false;
 	let isNormalText = false;
 	let isCustomContent = false;
@@ -6957,10 +6956,9 @@ CMathContent.prototype.CheckIsNotOnlyRuns = function()
 		let oCurrentContent = this.Content[i];
 		if (oCurrentContent instanceof ParaRun)
 		{
-			nParaRun++;
 			if (oCurrentContent.IsContainMathOperators())
 				isOperator = true;
-			if (oCurrentContent.IsContainMathNormalText())
+			if (!oCurrentContent.IsContainMathOperators())
 				isNormalText = true;
 		}
 		else

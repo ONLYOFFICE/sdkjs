@@ -10619,18 +10619,6 @@ ParaRun.prototype.IsContainMathOperators = function ()
 	}
 	return false;
 };
-ParaRun.prototype.IsContainMathNormalText = function ()
-{
-	for (let i = 0; i < this.Content.length; i++)
-	{
-		let oCurrentMathText = this.Content[i];
-		if (!oCurrentMathText.IsBreakOperator())
-		{
-			return true;
-		}
-	}
-	return false;
-};
 ParaRun.prototype.private_RecalcCtrPrp = function()
 {
     if (para_Math_Run === this.Type && undefined !== this.Parent && null !== this.Parent && null !== this.Parent.ParaMath)
