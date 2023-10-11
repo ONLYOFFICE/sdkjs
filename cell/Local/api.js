@@ -192,15 +192,12 @@ var c_oAscError = Asc.c_oAscError;
 		return printOptionsObj;
 	};
 
-	spreadsheet_api.prototype["updateSourceFromFile"] = function()
+	spreadsheet_api.prototype["asc_changeExternalReference"] = function(eR)
 	{
-		let isSavedFile = window["AscDesktopEditor"]["LocalFileGetSaved"]();
-		if (!isSavedFile)
-		{
-			// file not saved
-			return false;
+		let wb = this.wb;
+		if (!wb) {
+			return;
 		}
-
 		window["AscDesktopEditor"]["OpenFilenameDialog"]("cell", false, function(_file) {
 			let file = _file;
 			if (Array.isArray(file))
@@ -208,10 +205,14 @@ var c_oAscError = Asc.c_oAscError;
 			if (!file)
 				return;
 
-			let relativePath = window["AscDesktopEditor"]["LocalFileGetRelativePath"](file);
+			//if not saved - put absolute path
+			let isSavedFile = window["AscDesktopEditor"]["LocalFileGetSaved"]();
+			let relativePath = isSavedFile && window["AscDesktopEditor"]["LocalFileGetRelativePath"](file);
 
-			// TODO:
-			console.log(relativePath);
+			let obj = {};
+			obj["path"] = relativePath;
+			obj["filePath"] = file;
+			wb.changeExternalReference(eR, obj);
 		});
 	};
 
