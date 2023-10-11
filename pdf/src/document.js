@@ -275,23 +275,26 @@ var CPresentation = CPresentation || function(){};
                 return info.src;
             }), function() {
 
-                oViewer.IsOpenFormsInProgress = true;
-                for (let nField = 0; nField < aIconsInfo["MK"].length; nField++) {
-                    let oField = oDoc.GetFieldBySourceIdx(aIconsInfo["MK"][nField]["i"]);
+                if (!oDoc.checkDefaultFieldFonts(function(){
+                    oViewer.IsOpenFormsInProgress = true;
+                    for (let nField = 0; nField < aIconsInfo["MK"].length; nField++) {
+                        let oField = oDoc.GetFieldBySourceIdx(aIconsInfo["MK"][nField]["i"]);
 
-                    oField.Recalculate();
-                    if (aIconsInfo["MK"][nField]["I"]) {
-                        oField.AddImage(aIconsInfo["MK"][nField]["I"]);
+                        oField.Recalculate();
+                        if (aIconsInfo["MK"][nField]["I"]) {
+                            oField.AddImage(aIconsInfo["MK"][nField]["I"]);
+                        }
+                        if (aIconsInfo["MK"][nField]["RI"]) {
+                            oField.AddImage(aIconsInfo["MK"][nField]["RI"], AscPDF.APPEARANCE_TYPE.rollover);
+                        }
+                        if (aIconsInfo["MK"][nField]["IX"]) {
+                            oField.AddImage(aIconsInfo["MK"][nField]["IX"], AscPDF.APPEARANCE_TYPE.mouseDown);
+                        }
                     }
-                    if (aIconsInfo["MK"][nField]["RI"]) {
-                        oField.AddImage(aIconsInfo["MK"][nField]["RI"], AscPDF.APPEARANCE_TYPE.rollover);
-                    }
-                    if (aIconsInfo["MK"][nField]["IX"]) {
-                        oField.AddImage(aIconsInfo["MK"][nField]["IX"], AscPDF.APPEARANCE_TYPE.mouseDown);
-                    }
-                }
 
-                oViewer.IsOpenFormsInProgress = false;
+                    oViewer.IsOpenFormsInProgress = false;
+                }))
+                    return;
             });
         }
     };
