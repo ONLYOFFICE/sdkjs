@@ -2315,6 +2315,9 @@ CMathContent.prototype.ConcatToContent = function(Pos, NewItems)
 };
 CMathContent.prototype.Remove_FromContent = function(Pos, Count)
 {
+	if (Count <= 0)
+		return;
+	
 	var DeletedItems = this.Content.splice(Pos, Count);
 	History.Add(new CChangesMathContentRemoveItem(this, Pos, DeletedItems));
 
@@ -2329,17 +2332,7 @@ CMathContent.prototype.Remove_FromContent = function(Pos, Count)
 };
 CMathContent.prototype.Remove_Content = function(Pos, Count)
 {
-	var DeletedItems = this.Content.splice(Pos, Count);
-	History.Add(new CChangesMathContentRemoveItem(this, Pos, DeletedItems));
-
-	// Обновим текущую позицию
-	if (this.CurPos > Pos + Count) {
-		this.CurPos -= Count;
-    } else if (this.CurPos > Pos) {
-        this.CurPos = Pos;
-    } else if (this.CurPos > (this.Content.length - 1)) { // подправить условие
-        this.CurPos = this.Content.length - 1;
-    }
+	this.Remove_FromContent(Pos, Count);
 };
 CMathContent.prototype.private_UpdatePosOnRemove = function(Pos, Count)
 {
@@ -3318,16 +3311,15 @@ CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle)
 {
 	if (!text)
 		return;
-
+	
 	if (this.IsAddTextInLastParaRun(mathStyle))
 	{
 		this.Add_ToPrevParaRun(text);
 		return;
 	}
-
-	this.Paragraph = paragraph;
-	var oMathRun = new AscWord.CRun(this.Paragraph, true);
-
+	
+	var oMathRun = new AscWord.CRun(undefined, true);
+	
 	AscWord.TextToMathRunElements(text, function(item)
 	{
 		oMathRun.Add(item, true);
@@ -5785,7 +5777,7 @@ CMathContent.prototype.SplitContentByContentPos = function()
         arrContent.push(this.Content[i].Copy());
     }
 
-    this.Remove_FromContent(this.CurPos + 1, this.Content.length - this.CurPos);
+    this.Remove_FromContent(this.CurPos + 1, this.Content.length - this.CurPos - 1);
 
     return arrContent;
 };
