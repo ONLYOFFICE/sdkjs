@@ -3342,14 +3342,12 @@ CMathContent.prototype.Add_ToPrevParaRun = function(text)
 		run.Add(item, true);
 	});
 }
-CMathContent.prototype.Add_TextOnPos = function(nPos, sText, Paragraph, MathStyle)
+CMathContent.prototype.Add_TextOnPos = function(nPos, sText, MathStyle)
 {
-	this.Paragraph = Paragraph;
-
 	if (!sText)
 		return;
 
-	let oMathRun = new ParaRun(this.Paragraph, true);
+	let oMathRun = new AscWord.CRun(undefined, true);
 
 	AscWord.TextToMathRunElements(sText, function(item)
 	{
@@ -6937,11 +6935,11 @@ CMathContent.prototype.GetMultipleContentForGetText = function(isLaTeX, isNotBra
 
     return this.CheckIsEmpty(str);
 };
-CMathContent.prototype.CheckIsNotOnlyRuns = function()
+CMathContent.prototype.haveMixedContent = function()
 {
-	let isOperator = false;
-	let isNormalText = false;
-	let isCustomContent = false;
+	let isOperator = 0;
+	let isNormalText = 0;
+	let isCustomContent = 0;
 
 	for (let i = 0; i < this.Content.length; i++)
 	{
@@ -6949,22 +6947,23 @@ CMathContent.prototype.CheckIsNotOnlyRuns = function()
 		if (oCurrentContent instanceof ParaRun)
 		{
 			if (oCurrentContent.IsContainMathOperators())
-				isOperator = true;
+				isOperator = 1;
+			
 			if (!oCurrentContent.IsContainMathOperators())
-				isNormalText = true;
+				isNormalText = 1;
 		}
 		else
 		{
-			if (oCurrentContent instanceof CFraction ||
-				oCurrentContent instanceof CDegree ||
-				oCurrentContent instanceof  CDegreeSubSup
-			)
-				isOperator = true;
-
-			isCustomContent = true;
+			if (isCustomContent
+				|| oCurrentContent instanceof CFraction
+				|| oCurrentContent instanceof CDegree
+				|| oCurrentContent instanceof CDegreeSubSup)
+				return true;
+			
+			isCustomContent = 1;
 		}
-
-		if ((isOperator && isNormalText) || (isCustomContent && isNormalText) || (isCustomContent && isOperator))
+		
+		if (isOperator + isNormalText + isCustomContent > 1)
 			return true;
 	}
 

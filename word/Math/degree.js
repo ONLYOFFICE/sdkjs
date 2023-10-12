@@ -587,7 +587,7 @@ CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 	else
 	{
 		let oBase = this.getBase();
-		if (oBase.CheckIsNotOnlyRuns())
+		if (oBase.haveMixedContent())
 			strBase = "〖" + strBase + "〗";
 		strTemp = strBase + strTypeOfScript + strIterator;
 	}
@@ -1277,7 +1277,7 @@ CDegreeSubSup.prototype.GetTextOfElement = function(isLaTeX)
 		else
 		{
 			let oBase = this.getBase();
-			if (oBase.CheckIsNotOnlyRuns())
+			if (oBase.haveMixedContent())
 				Base = "〖" + Base + "〗";
 			strTemp = Base + '_' + strLower + '^' + strUpper;
 		}
