@@ -53,6 +53,7 @@ function (window, undefined) {
 		this.oChangingCell = oChangingCell;
 		this.nRelativeError = 1e-4; // relative error of goal seek. Default value is 1e-4
 		this.nMaxIterations = 100; // max iterations of goal seek. Default value is 100
+		this.sFormulaCellName = null;
 		this.nStepDirection = null;
 		this.sRegNumDecimalSeparator = AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator;
 		this.sFirstChangingVal = null;
@@ -80,6 +81,7 @@ function (window, undefined) {
 
 		this.setFirstChangingValue(sChangingVal);
 		this.convertFirstChangingVal();
+		this.setFormulaCellName(this.getParsedFormula());
 		this.initStepDirection();
 		this.initReverseCompare();
 		this.setChangingValue(sChangingVal ? Number(sChangingVal) : 0);
@@ -142,7 +144,7 @@ function (window, undefined) {
 		}
 
 		var oApi = Asc.editor;
-		oApi.sendEvent("asc_onGoalSeekUpdate", nExpectedVal, nFactValue, this.getCurrentAttempt());
+		oApi.sendEvent("asc_onGoalSeekUpdate", nExpectedVal, nFactValue, this.getCurrentAttempt(), this.getFormulaCellName());
 
 		// Check: Need a finish calculate
 		if (Math.abs(nDiff) < this.getRelativeError()) {
@@ -316,6 +318,23 @@ function (window, undefined) {
 	CGoalSeek.prototype.setMaxIterations = function(nMaxIterations) {
 		this.nMaxIterations = nMaxIterations;
 	};
+	/**
+	 * Returns formula cell name.
+	 * @returns {string}
+	 */
+	CGoalSeek.prototype.getFormulaCellName = function() {
+		return this.sFormulaCellName;
+	}
+	/**
+	 * Sets formula cell name.
+	 * @param {parserFormula} oParsedFormula
+	 */
+	CGoalSeek.prototype.setFormulaCellName = function(oParsedFormula) {
+		let oCellWithFormula = oParsedFormula.getParent();
+		let ws = oParsedFormula.getWs();
+
+		this.sFormulaCellName = ws.getRange4(oCellWithFormula.nRow, oCellWithFormula.nCol).getName();
+	}
 	/**
 	 * Returns a number decimal separator according chosen region. It may be "." or ",".
 	 * @memberof CGoalSeek
