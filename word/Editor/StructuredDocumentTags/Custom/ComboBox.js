@@ -109,17 +109,28 @@
 
 		return true;
 	};
-	CSdtComboBoxPr.prototype.AddItem = function(sDisplay, sValue)
+	CSdtComboBoxPr.prototype.AddItem = function(sDisplay, sValue, nPosition)
 	{
 		if (null !== this.GetTextByValue(sValue))
 			return false;
-
+		
 		var oItem = new CSdtListItem();
 		oItem.DisplayText = sDisplay;
 		oItem.Value       = sValue;
-		this.ListItems.push(oItem);
-
+		
+		if (undefined === nPosition || nPosition < 0 || nPosition >= this.ListItems.length)
+			this.ListItems.push(oItem);
+		else
+			this.ListItems.splice(nPosition, 0, oItem);
+		
 		return true;
+	};
+	CSdtComboBoxPr.prototype.RemoveItem = function(nIndex)
+	{
+		if (nIndex < 0 || nIndex >= this.ListItems.length)
+			return;
+		
+		this.ListItems.splice(nIndex, 1);
 	};
 	CSdtComboBoxPr.prototype.Clear = function()
 	{
@@ -171,6 +182,20 @@
 	CSdtComboBoxPr.prototype.Read_FromBinary = function(oReader)
 	{
 		this.ReadFromBinary(oReader);
+	};
+	CSdtComboBoxPr.prototype.Get = function(nIndex)
+	{
+		return this.ListItems[nIndex];
+	};
+	CSdtComboBoxPr.prototype.GetIndex = function(sValue)
+	{
+		for (var nIndex = 0, nCount = this.ListItems.length; nIndex < nCount; ++nIndex)
+		{
+			if (this.ListItems[nIndex].Value === sValue)
+				return nIndex;
+		}
+		
+		return -1;
 	};
 	CSdtComboBoxPr.prototype.GetItemsCount = function()
 	{
@@ -226,7 +251,7 @@
 	CSdtComboBoxPr.prototype['get_ItemsCount']      = CSdtComboBoxPr.prototype.GetItemsCount;
 	CSdtComboBoxPr.prototype['get_ItemDisplayText'] = CSdtComboBoxPr.prototype.GetItemDisplayText;
 	CSdtComboBoxPr.prototype['get_ItemValue']       = CSdtComboBoxPr.prototype.GetItemValue;
-	CSdtComboBoxPr.prototype['put_AutoFit']         = CSdtComboBoxPr.prototype.GetAutoFit;
+	CSdtComboBoxPr.prototype['get_AutoFit']         = CSdtComboBoxPr.prototype.GetAutoFit;
 	CSdtComboBoxPr.prototype['put_AutoFit']         = CSdtComboBoxPr.prototype.SetAutoFit;
 
 

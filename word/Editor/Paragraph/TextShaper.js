@@ -107,7 +107,7 @@
 		let oThis = this;
 		oParagraph.CheckRunContent(function(oRun, nStartPos, nEndPos)
 		{
-			oThis.ShapeRun(oRun, nStartPos, nEndPos);
+			oThis.HandleRun(oRun, nStartPos, nEndPos);
 		});
 		this.FlushWord();
 	};
@@ -117,11 +117,17 @@
 		let oThis = this;
 		oParagraph.CheckRunContent(function(oRun, nStartPos, nEndPos)
 		{
-			oThis.ShapeRun(oRun, nStartPos, nEndPos);
+			oThis.HandleRun(oRun, nStartPos, nEndPos);
 		}, oStart, oEnd);
 		this.FlushWord();
 	};
-	CParagraphTextShaper.prototype.ShapeRun = function(oRun, nStartPos, nEndPos)
+	CParagraphTextShaper.prototype.ShapeRun = function(run)
+	{
+		this.Init(false);
+		this.HandleRun(run, 0, run.GetElementsCount());
+		this.FlushWord();
+	};
+	CParagraphTextShaper.prototype.HandleRun = function(oRun, nStartPos, nEndPos)
 	{
 		this.private_CheckRun(oRun);
 

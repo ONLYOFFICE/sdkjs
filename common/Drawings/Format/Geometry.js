@@ -1647,6 +1647,23 @@ function CChangesGeometryAddAdj(Class, Name, OldValue, NewValue, OldAvValue, bRe
             aPathLst[i].transform(oTransform, dKoeff);
         }
     };
+    Geometry.prototype.isEqualForMorph = function(oGeom) {
+        if(this.preset !== oGeom.preset) {
+            return false;
+        }
+        if(typeof this.preset === "string" && this.preset.length > 0 && this.preset === oGeom.preset) {
+            return true;
+        }
+        if(oGeom.pathLst.length !== this.pathLst.length) {
+            return false;
+        }
+        for(let nPath = 0; nPath < this.pathLst.length; ++nPath) {
+            if(!this.pathLst[nPath].isEqual(oGeom.pathLst[nPath])) {
+                return false;
+            }
+        }
+        return true;
+    };
 
 
     function CAvLst(oGeometry, bAdjustments) {
@@ -1818,12 +1835,6 @@ function GetArrayPolygonsByPaths(dEpsilon, aPathLst)
     }
     return aByPaths;
 }
-
-function ComparisonEdgeByTopPoint(graphEdge1, graphEdge2)
-{
-    return Math.min(graphEdge1.point1.y, graphEdge1.point2.y) - Math.min(graphEdge2.point1.y, graphEdge2.point2.y);
-}
-
 
 
     //--------------------------------------------------------export----------------------------------------------------

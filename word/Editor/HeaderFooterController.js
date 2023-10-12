@@ -75,9 +75,9 @@ CHdrFtrController.prototype.AddSignatureLine = function(oSignatureDrawing)
 {
 	this.HdrFtr.AddSignatureLine(oSignatureDrawing);
 };
-CHdrFtrController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
+CHdrFtrController.prototype.AddInlineImage = function(nW, nH, oImage, oGraphicObject, bFlow)
 {
-	this.HdrFtr.AddInlineImage(nW, nH, oImage, oChart, bFlow);
+	this.HdrFtr.AddInlineImage(nW, nH, oImage, oGraphicObject, bFlow);
 };
 CHdrFtrController.prototype.AddImages = function(aImages)
 {
@@ -402,7 +402,7 @@ CHdrFtrController.prototype.SetSelectionState = function(State, StateIndex)
 };
 CHdrFtrController.prototype.AddHyperlink = function(Props)
 {
-	this.HdrFtr.AddHyperlink(Props);
+	return this.HdrFtr.AddHyperlink(Props);
 };
 CHdrFtrController.prototype.ModifyHyperlink = function(Props)
 {

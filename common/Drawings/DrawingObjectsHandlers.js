@@ -56,6 +56,9 @@ function handleSelectedObjects(drawingObjectsController, e, x, y, group, pageInd
         return false;
     }
     var selected_objects = group ? group.selectedObjects : drawingObjectsController.getSelectedObjects();
+    if (selected_objects[0] && selected_objects[0].IsComment && selected_objects[0].IsComment()) {
+        return false;
+    }
     var oCropSelection = drawingObjectsController.selection.cropSelection ? drawingObjectsController.selection.cropSelection : null;
     var oGeometryEditSelection = drawingObjectsController.selection.geometrySelection ? drawingObjectsController.selection.geometrySelection : null;
     var tx, ty, t, hit_to_handles;
@@ -308,6 +311,20 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
     for(var i = drawingArr.length-1; i > -1; --i)
     {
         drawing = drawingArr[i];
+
+        if (drawing.IsAnnot && drawing.IsAnnot()) {
+            if (drawing.IsHidden()) {
+                ret = false;
+                continue;
+            }
+
+            if (drawing.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink) {
+                ret = handleBaseAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex);
+            }
+            else {
+                ret = false;
+            }
+        }
         switch(drawing.getObjectType())
         {
 
@@ -365,7 +382,21 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
     }
     return ret;
 }
+
+function handleBaseAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex) {
+    //var hit_in_inner_area = drawing.hitInInnerArea && drawing.hitInInnerArea(x, y);
+    //var hit_in_path = drawing.hitInPath && drawing.hitInPath(x, y);
+    var hit_in_text_rect = drawing.hitInTextRect && drawing.hitInTextRect(x, y);
+
+    if (drawing.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink && drawing.IsTextMarkup() == false && hit_in_text_rect) {
+        drawingObjectsController.arrPreTrackObjects.push(drawing.createMoveTrack());
+        drawingObjectsController.changeCurrentState(new AscFormat.PreMoveState(drawingObjectsController, x, y, e.ShiftKey, e.CtrlKey, drawing, true, false, false));
+        return true;
+    }
     
+    return false;
+}
+
     function handleSlicer(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord)
     {
         if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
@@ -1880,29 +1911,42 @@ function handleInlineHitNoText(drawing, drawingObjects, e, x, y, pageIndex, bInS
     {
         if(drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
         {
-            var bIsSelected = drawing.selected;
+            let bIsSelected = drawing.selected;
             drawingObjects.checkChartTextSelection();
             drawingObjects.resetSelection();
             drawing.select(drawingObjects, pageIndex);
-            drawingObjects.changeCurrentState(new AscFormat.PreMoveInlineObject(drawingObjects, drawing, bIsSelected, !bInSelect, pageIndex, x, y));
+            let bHandleDblClick = false;
             if(AscFormat.isLeftButtonDoubleClick(e) && !e.ShiftKey && !e.CtrlKey && ((drawingObjects.selection.groupSelection && drawingObjects.selection.groupSelection.selectedObjects.length === 1) || drawingObjects.selectedObjects.length === 1))
             {
                 if (drawing.getObjectType() === AscDFH.historyitem_type_ChartSpace && drawingObjects.handleChartDoubleClick)
+                {
+                    bHandleDblClick = true;
                     drawingObjects.handleChartDoubleClick(drawing.parent, drawing, e, x, y, pageIndex);
-                else if (drawing.getObjectType() === AscDFH.historyitem_type_OleObject && drawingObjects.handleOleObjectDoubleClick){
+                }
+                else if (drawing.getObjectType() === AscDFH.historyitem_type_OleObject && drawingObjects.handleOleObjectDoubleClick)
+                {
+                    bHandleDblClick = true;
                     drawingObjects.handleOleObjectDoubleClick(drawing.parent, drawing, e, x, y, pageIndex);
                 }
-                else if (drawing.signatureLine && drawingObjects.handleSignatureDblClick){
+                else if (drawing.signatureLine && drawingObjects.handleSignatureDblClick)
+                {
+                    bHandleDblClick = true;
                     drawingObjects.handleSignatureDblClick(drawing.signatureLine.id, drawing.extX, drawing.extY);
                 }
                 else if (2 === e.ClickCount && drawing.parent instanceof AscCommonWord.ParaDrawing && drawing.parent.IsMathEquation())
                 {
+                    bHandleDblClick = true;
                     drawingObjects.handleMathDrawingDoubleClick(drawing.parent, e, x, y, pageIndex);
                 }
                 else if(drawing.getObjectType() === AscDFH.historyitem_type_Shape)
                 {
+                    bHandleDblClick = true;
                     drawingObjects.handleDblClickEmptyShape(drawing);
                 }
+            }
+            if(!bHandleDblClick)
+            {
+                drawingObjects.changeCurrentState(new AscFormat.PreMoveInlineObject(drawingObjects, drawing, bIsSelected, !bInSelect, pageIndex, x, y));
             }
             drawingObjects.updateOverlay();
             return true;
@@ -1972,7 +2016,8 @@ function handleMouseUpPreMoveState(drawingObjects, e, x, y, pageIndex, bWord)
     state.drawingObjects.clearPreTrackObjects();
     state.drawingObjects.changeCurrentState(new AscFormat.NullState(state.drawingObjects));
     var bHandle = false;
-    if(!state.shift && /*!state.ctrl &&*/ state.bInside && state.majorObjectIsSelected && e.Button !== AscCommon.g_mouse_button_right)
+    const bRightButton = (e.Button === AscCommon.g_mouse_button_right);
+    if(!state.shift && /*!state.ctrl &&*/ state.bInside && state.majorObjectIsSelected && !bRightButton)
     {
         switch (state.majorObject.getObjectType())
         {
@@ -2003,7 +2048,7 @@ function handleMouseUpPreMoveState(drawingObjects, e, x, y, pageIndex, bWord)
     }
     if(!bHandle)
     {
-        if(!state.shift && !state.ctrl && state.bInside && state.majorObject.getObjectType() === AscDFH.historyitem_type_ImageShape)
+        if(!bRightButton && !state.shift && !state.ctrl && state.bInside && state.majorObject.getObjectType() === AscDFH.historyitem_type_ImageShape)
         {
             var sMediaName = state.majorObject.getMediaFileName();
             if(sMediaName)

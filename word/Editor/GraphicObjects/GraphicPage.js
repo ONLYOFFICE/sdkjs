@@ -262,8 +262,8 @@ CGraphicPage.prototype =
             var b_is_top_doc = docContent.Is_TopDocument();
             for(var i = drawingArray.length-1; i > -1; --i)
             {
-                if(!drawingArray[i].parent || drawingArray[i].parent.DocumentContent === docContent
-                    || (b_is_top_doc && drawingArray[i].parent.DocumentContent.Is_TopDocument(true) === docContent))
+                if(!drawingArray[i].parent || drawingArray[i].parent.GetDocumentContent() === docContent
+                    || (b_is_top_doc && drawingArray[i].parent.isInTopDocument(true) === docContent))
                     drawingArray.splice(i, 1);
             }
         }
@@ -403,7 +403,7 @@ CGraphicPage.prototype =
         for(var _object_index = 0; _object_index < this.behindDocObjects.length; ++_object_index)
         {
             drawing = this.behindDocObjects[_object_index];
-            if(drawing.parent && drawing.parent.DocumentContent && drawing.parent.DocumentContent === content)
+            if(drawing.parent && drawing.parent.GetDocumentContent() === content)
             {
                 drawing.draw(graphics);
             }
@@ -417,7 +417,7 @@ CGraphicPage.prototype =
         for(var _object_index = 0; _object_index < this.beforeTextObjects.length; ++_object_index)
         {
             drawing = this.beforeTextObjects[_object_index];
-            if(drawing.parent && drawing.parent.DocumentContent && drawing.parent.DocumentContent === content)
+            if(drawing.parent && drawing.parent.GetDocumentContent() === content)
             {
                 drawing.draw(graphics);
             }

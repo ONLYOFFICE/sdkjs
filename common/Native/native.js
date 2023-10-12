@@ -31,10 +31,9 @@
  */
 
 var editor = undefined;
-var window = ("undefined" === typeof window) ? {} : window;
 var navigator = {};
 navigator.userAgent = "chrome";
-window.navigator = navigator;
+
 window.location = {};
 
 window.location.protocol = "";
@@ -48,46 +47,20 @@ window.NATIVE_EDITOR_ENJINE = true;
 window.NATIVE_EDITOR_ENJINE_SYNC_RECALC = true;
 
 var document = {};
-window.document = document;
 
-window["Asc"] = {};
-var Asc = window["Asc"];
-
-window["AscFonts"] = {};
-var AscFonts = window["AscFonts"];
-
-window["AscCommon"] = {};
-var AscCommon = window["AscCommon"];
-
-window["AscFormat"] = {};
-var AscFormat = window["AscFormat"];
-
-window["AscDFH"] = {};
-var AscDFH = window["AscDFH"];
-
-window["AscCH"] = {};
-var AscCH = window["AscCH"];
-
-window["AscCommonExcel"] = {};
-var AscCommonExcel = window["AscCommonExcel"];
-
-window["AscCommonWord"] = {};
-var AscCommonWord = window["AscCommonWord"];
-
-window["AscMath"] = {};
-var AscMath = window["AscMath"];
-
-window["AscCommonSlide"] = {};
-var AscCommonSlide = window["AscCommonSlide"];
-
-window["AscBuilder"] = {};
-var AscBuilder = window["AscBuilder"];
-
-window["AscWord"] = {};
-var AscWord = window["AscWord"];
-
-window["AscJsonConverter"] = {};
-var AscJsonConverter = window["AscJsonConverter"];
+var Asc = {};
+var AscFonts = {};
+var AscCommon = {};
+var AscFormat = {};
+var AscDFH = {};
+var AscCH = {};
+var AscCommonExcel = {};
+var AscCommonWord = {};
+var AscMath = {};
+var AscCommonSlide = {};
+var AscBuilder = {};
+var AscWord = {};
+var AscJsonConverter = {};
 
 function Image()
 {
@@ -240,9 +213,7 @@ _null_object.val = function () { return this; };
 _null_object.remove = function () {};
 _null_object.getComputedStyle = function () { return null; };
 _null_object.getContext = function (type) { return (type == "2d") ? new native_context2d(this) : null; };
-_null_object.getBoundingClientRect = function() { return { left : 0, top : 0, right : this.width(), bottom : this.height() }; };
-
-window._null_object = _null_object;
+_null_object.getBoundingClientRect = function() { return { left : 0, top : 0, right : 0, bottom : 0 }; };
 
 document.createElement = function (type)
 {
@@ -269,15 +240,6 @@ document.documentElement = _null_object;
 document.body = _null_object;
 
 // NATIVE OBJECT
-var native = (typeof native === undefined) ? undefined : native;
-if (!native)
-{
-	if (typeof NativeEngine === "undefined")
-		native = CreateNativeEngine();
-	else
-		native = NativeEngine;
-}
-
 window.native = native;
 function GetNativeEngine() { return window.native; }
 
@@ -341,43 +303,3 @@ var performance = window.performance = (function(){
 		now : function() { return Date.now() - basePerformanceOffset; }
 	};
 })();
-
-(function(window, undefined){
-	function ZLib()
-	{
-		/** @suppress {checkVars} */
-		this.engine = CreateNativeZip();
-		this.files = {};
-	}
-	ZLib.prototype.isModuleInit = true;
-	ZLib.prototype.open = function(buf)
-	{
-		return this.engine.open((undefined !== buf.byteLength) ? new Uint8Array(buf) : buf);
-	};
-	ZLib.prototype.create = function()
-	{
-		return this.engine.create();
-	};
-	ZLib.prototype.save = function()
-	{
-		return this.engine.save();
-	};
-	ZLib.prototype.getFile = function(path)
-	{
-		return this.engine.getFile(path);
-	};
-	ZLib.prototype.addFile = function(path, data)
-	{
-		return this.engine.addFile(path, (undefined !== data.byteLength) ? new Uint8Array(data) : data);
-	};
-	ZLib.prototype.removeFile = function(path)
-	{
-		return this.engine.removeFile(path);
-	};
-	ZLib.prototype.close = function()
-	{
-		return this.engine.close();
-	};
-
-	window.nativeZlibEngine = new ZLib();
-})(window, undefined);

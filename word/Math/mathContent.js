@@ -1578,8 +1578,7 @@ CMathContent.prototype.CheckRunContent = function(fCheck)
 {
 	for (var i = 0; i < this.Content.length; ++i)
 	{
-		if (para_Math_Run === this.Content[i].Type)
-			fCheck(this.Content[i]);
+		this.Content[i].CheckRunContent(fCheck);
 	}
 };
 
@@ -1864,6 +1863,57 @@ CMathContent.prototype.Get_TextPr = function(ContentPos, Depth)
         TextPr = this.Content[pos].Get_TextPr(ContentPos, Depth + 1);
 
     return TextPr;
+};
+CMathContent.prototype.GetDirectTextPr = function()
+{
+	let textPr = null;
+	
+	if (this.IsPlaceholder())
+	{
+		// ничего не делаем
+	}
+	else if (this.Selection.Use)
+	{
+		let startPos = this.Selection.StartPos;
+		let endPos   = this.Selection.EndPos;
+		if (startPos > endPos)
+		{
+			startPos = this.Selection.EndPos;
+			endPos   = this.Selection.StartPos;
+		}
+		
+		for (let pos = startPos; pos <= endPos; ++pos)
+		{
+			let curTextPr = this.Content[pos].GetDirectTextPr(false);
+			if (!curTextPr)
+				continue;
+			
+			if (!textPr)
+				textPr = curTextPr.Copy();
+			else
+				textPr = textPr.Compare(curTextPr);
+		}
+		
+		if (!textPr)
+			textPr = this.Parent.Get_CtrPrp();
+	}
+	else
+	{
+		let pos = this.CurPos;
+		
+		if (0 <= pos && pos < this.Content.length)
+			textPr = this.Content[pos].GetDirectTextPr();
+	}
+	
+	if (this.Parent)
+	{
+		if (!textPr)
+			textPr = this.Parent.Get_CtrPrp();
+		else
+			textPr = this.Parent.Get_CtrPrp().Copy().Compare(textPr);
+	}
+	
+	return textPr;
 };
 CMathContent.prototype.Get_ParentCtrRunPr = function(bCopy)
 {
@@ -4200,9 +4250,18 @@ CMathContent.prototype.RemoveSelection = function()
 };
 CMathContent.prototype.SelectAll = function(Direction)
 {
-    this.Selection.Use   = true;
-    this.Selection.StartPos = 0;
-    this.Selection.EndPos   = this.Content.length - 1;
+	this.Selection.Use = true;
+	
+	if (Direction < 0)
+	{
+		this.Selection.StartPos = this.Content.length - 1;
+		this.Selection.EndPos   = 0;
+	}
+	else
+	{
+		this.Selection.StartPos = 0;
+		this.Selection.EndPos   = this.Content.length - 1;
+	}
 
     for (var nPos = 0, nCount = this.Content.length; nPos < nCount; nPos++)
     {
@@ -5706,7 +5765,13 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
     if (arrNextContent === false)
         return;
 
-    this.CorrectSpecialWordOnCursor(nInputType);
+    if (this.CorrectSpecialWordOnCursor(nInputType))
+    {
+        if (arrNextContent)
+            this.ConcatToContent(this.Content.length, arrNextContent);
+
+        return;
+    }
 
     // convert content of bracket block, near cursor for Unicode (1/2) -> ( CFraction )
     if (nInputType === 0)
@@ -5727,8 +5792,13 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
         }
         else
         {
-            if (this.CorrectWordOnCursor(nInputType === 1, 2))
+            if (this.CorrectWordOnCursor(nInputType === 1, true))
+            {
+                if (arrNextContent)
+                    this.ConcatToContent(this.Content.length, arrNextContent);
+
                 return;
+            }
         }
     }
 
@@ -6459,7 +6529,7 @@ ContentIterator.prototype.CheckRules = function ()
         [true, "┬", true],
         [true, "┴", true],
 
-        ["s","i","n"],["t","a","n"],["t","a","n","h"],["s","u","p"],["s","i","n","h"],["s","e","c"],["k"],
+        ["s","i","n"],["t","a","n"],["t","a","n","h"],["s","u","p"],["s","i","n","h"],["s","e","c"],
         ["h","o","m"],["a","r","g"],["a","r","c","y","a","n"],["a","r","c","s","i","n"],["a","r","c","s","e","c"],
         ["a","r","c","c","s","c"],["a","r","c","c","o","t"],["a","r","c","c","o","s"],["i","n","f"],["g","c","d"],
         ["e","x","p"],["d","i","m"],["d","e","t"],["d","e","g"],["c","s","c"],["c","o","t","h"],["c","o","t"],

@@ -157,7 +157,7 @@ $(function () {
 	function testCreate() {
 		QUnit.test("Test: create", function (assert) {
 			//ADD
-			create("B2:B5", "test", ["user3"]);
+			create("B2:B5", "test", [{id: "user3"}]);
 
 			AscCommon.History.Undo();
 			assert.strictEqual(ws.userProtectedRanges.length, 0, "undo add test");
@@ -165,7 +165,7 @@ $(function () {
 			assert.strictEqual(ws.userProtectedRanges[0].asc_getName(), "test", "name compare");
 			assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", "ref compare");
 
-			create("D2:E5", "test2", ["user3"]);
+			create("D2:E5", "test2", [{id: "user3"}]);
 			assert.strictEqual(ws.userProtectedRanges.length, 2, "add test");
 			assert.strictEqual(ws.userProtectedRanges[1].asc_getName(), "test2", "name compare");
 			assert.strictEqual(ws.userProtectedRanges[1].asc_getRef(), "=Sheet1!$D$2:$E$5", "ref compare");
@@ -199,7 +199,7 @@ $(function () {
 
 	function testChange() {
 		QUnit.test("Test: change", function (assert) {
-			create("B2:B5", "test1", ["user3"]);
+			create("B2:B5", "test1", [{id: "user3"}]);
 
 			let obj = ws.userProtectedRanges[0].clone(ws);
 			obj.asc_setRef("B2:B10");
@@ -236,8 +236,8 @@ $(function () {
 
 	function testManipulationRange() {
 		QUnit.test("Test: change", function (assert) {
-			create("B2:B5", "test1", ["user3"]);
-			create("D2:E5", "test2", ["user3"]);
+			create("B2:B5", "test1", [{id: "user3"}]);
+			create("D2:E5", "test2", [{id: "user3"}]);
 
 			let beforeFunc = function(desc) {
 				assert.strictEqual(ws.userProtectedRanges[0].asc_getRef(), "=Sheet1!$B$2:$B$5", desc + "_val_1");

@@ -1178,10 +1178,9 @@
 		if (!AscCommon.rx_defName.test(name)) {
 			name = name.replace(/[^a-zA-ZА-Яа-яЁё0-9]/gi,"_")
 		}
-
-		//TODO перевод - проверить на другом языке?
+		
 		var index = 1;
-		name = "Slicer_" + name;
+		name = AscCommon.translateManager.getValue("Slicer") + "_" + name;
 		var newName = name;
 		while (checkAlreadyAdd(newName)) {
 			newName = name + index;
@@ -3153,7 +3152,7 @@
 	prot['Ascending'] = prot.Ascending;
 	prot['Descending'] = prot.Descending;
 
-	window['Asc']['ST_slicerCacheCrossFilter'] = window['AscCommonExcel'].ST_slicerCacheCrossFilter = ST_slicerCacheCrossFilter;
+	window['Asc']['ST_slicerCacheCrossFilter'] = window['Asc'].ST_slicerCacheCrossFilter = ST_slicerCacheCrossFilter;
 	prot = ST_slicerCacheCrossFilter;
 	prot['None'] = prot.None;
 	prot['ShowItemsWithDataAtTop'] = prot.ShowItemsWithDataAtTop;

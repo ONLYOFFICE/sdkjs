@@ -32,25 +32,10 @@
 
 window.IS_NATIVE_EDITOR = true;
 
-var native_renderer = null;
-
-function NativeCalculateFile()
-{
-	window["API"].asc_nativeCalculateFile();
-}
-
-window.memory1 = null;
-window.memory2 = null;
-
-function GetNativePageMeta(pageIndex)
-{
-	return window["API"].GetNativePageMeta(pageIndex);
-}
-
 window.NativeSupportTimeouts = true;
 window.NativeTimeoutObject = {};
 
-clearTimeout = window.clearTimeout = function(id) {
+var clearTimeout = function(id) {
     if (!window.NativeSupportTimeouts)
         return;
 
@@ -58,7 +43,7 @@ clearTimeout = window.clearTimeout = function(id) {
     window["native"]["ClearTimeout"](id);
 }
 
-setTimeout = window.setTimeout = function(func, interval) {
+var setTimeout = function(func, interval) {
     if (!window.NativeSupportTimeouts)
         return;
 
@@ -68,7 +53,7 @@ setTimeout = window.setTimeout = function(func, interval) {
     return id;
 }
 
-clearInterval = window.clearInterval = function(id) {
+var clearInterval = function(id) {
     if (!window.NativeSupportTimeouts)
         return;
     
@@ -77,7 +62,7 @@ clearInterval = window.clearInterval = function(id) {
     window["native"]["ClearTimeout"](id);
 }
 
-setInterval = window.setInterval = function(func, interval) {
+var setInterval = function(func, interval) {
     if (!window.NativeSupportTimeouts)
         return;
 
@@ -115,22 +100,14 @@ window.native.Call_TimeoutFire = function(id) {
     func = null;
 };
 
-window.clearTimeout = clearTimeout;
-window.setTimeout = setTimeout;
-window.clearInterval = clearInterval;
-window.setInterval = setInterval;
+function offline_timeoutFire(id) {
+	return window.native.Call_TimeoutFire(id);
+}
 
 var console = {
-	log: function (param)
-	{
-		window.native.ConsoleLog(param);
-	},
-	time: function (param)
-	{
-	},
-	timeEnd: function (param)
-	{
-	}
+	log : function(param) { window["native"]["ConsoleLog"](param); },
+	time : function (param) {},
+	timeEnd : function (param) {}
 };
 
 window["NativeCorrectImageUrlOnPaste"] = function (url)
@@ -142,102 +119,51 @@ window["NativeCorrectImageUrlOnCopy"] = function (url)
 	return window["native"]["CorrectImageUrlOnCopy"](url);
 };
 
-var global_memory_stream_menu = CreateNativeMemoryStream();
+window.NativeCalculateFile = function()
+{
+    Asc.editor.asc_nativeCalculateFile();
+}
 
-// HTML page interface
-window.native.Call_OnUpdateOverlay = function (param)
+window.native.Call_OnUpdateOverlay = function(param)
 {
-	return window["API"].Call_OnUpdateOverlay(param);
-};
-
-window.native.Call_OnMouseDown = function (e)
-{
-	return window["API"].Call_OnMouseDown(e);
-};
-window.native.Call_OnMouseUp = function (e)
-{
-	return window["API"].Call_OnMouseUp(e);
-};
-window.native.Call_OnMouseMove = function (e)
-{
-	return window["API"].Call_OnMouseMove(e);
-};
-window.native.Call_OnCheckMouseDown = function (e)
-{
-	return window["API"].Call_OnCheckMouseDown(e);
+    return window["API"].Call_OnUpdateOverlay(param);
 };
 
-window.native.Call_OnKeyDown = function (e)
+window.native.Call_OnMouseDown = function(e)
 {
-	return window["API"].Call_OnKeyDown(e);
+    return window["API"].Call_OnMouseDown(e);
 };
-window.native.Call_OnKeyPress = function (e)
+window.native.Call_OnMouseUp = function(e)
 {
-	return window["API"].Call_OnKeyPress(e);
+    return window["API"].Call_OnMouseUp(e);
 };
-window.native.Call_OnKeyUp = function (e)
+window.native.Call_OnMouseMove = function(e)
 {
-	return window["API"].Call_OnKeyUp(e);
+    return window["API"].Call_OnMouseMove(e);
 };
-window.native.Call_OnKeyboardEvent = function (e)
+window.native.Call_OnCheckMouseDown = function(e)
 {
-	return window["API"].Call_OnKeyboardEvent(e);
-};
-
-window.native.Call_CalculateResume = function ()
-{
-	return window["API"].Call_CalculateResume();
+    return window["API"].Call_OnCheckMouseDown(e);
 };
 
-window.native.Call_TurnOffRecalculate = function ()
+window.native.Call_OnKeyDown = function(e)
 {
-	return window["API"].Call_TurnOffRecalculate();
+    return window["API"].Call_OnKeyDown(e);
 };
-window.native.Call_TurnOnRecalculate = function ()
+window.native.Call_OnKeyPress = function(e)
 {
-	return window["API"].Call_TurnOnRecalculate();
+    return window["API"].Call_OnKeyPress(e);
 };
-
-window.native.Call_CheckTargetUpdate = function ()
+window.native.Call_OnKeyUp = function(e)
 {
-	return window["API"].Call_CheckTargetUpdate();
+    return window["API"].Call_OnKeyUp(e);
 };
-window.native.Call_Common = function (type, param)
+window.native.Call_OnKeyboardEvent = function(e)
 {
-	return window["API"].Call_Common(type, param);
-};
-
-window.native.Call_HR_Tabs = function (arrT, arrP)
-{
-	return window["API"].Call_HR_Tabs(arrT, arrP);
-};
-window.native.Call_HR_Pr = function (_indent_left, _indent_right, _indent_first)
-{
-	return window["API"].Call_HR_Pr(_indent_left, _indent_right, _indent_first);
-};
-window.native.Call_HR_Margins = function (_margin_left, _margin_right)
-{
-	return window["API"].Call_HR_Margins(_margin_left, _margin_right);
-};
-window.native.Call_HR_Table = function (_params, _cols, _margins, _rows)
-{
-	return window["API"].Call_HR_Table(_params, _cols, _margins, _rows);
-};
-
-window.native.Call_VR_Margins = function (_top, _bottom)
-{
-	return window["API"].Call_VR_Margins(_top, _bottom);
-};
-window.native.Call_VR_Header = function (_header_top, _header_bottom)
-{
-	return window["API"].Call_VR_Header(_header_top, _header_bottom);
-};
-window.native.Call_VR_Table = function (_params, _cols, _margins, _rows)
-{
-	return window["API"].Call_VR_Table(_params, _cols, _margins, _rows);
+    return window["API"].Call_OnKeyboardEvent(e);
 };
 
 window.native.Call_Menu_Event = function (type, _params)
 {
-	return window["API"].Call_Menu_Event(type, _params);
+    return window["API"].Call_Menu_Event(type, _params);
 };

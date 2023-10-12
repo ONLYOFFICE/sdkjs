@@ -263,87 +263,78 @@
         AscCommon.g_inputContext.keyPressInput = "";
     };
 
-    /**
-     * Pastes text in the HTML format into the document.
-     * @memberof Api
-     * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @alias PasteHtml
-     * @param {string} htmlText - A string value that specifies the text in the *HTML* format to be pasted into the document.
-     */
-    Api.prototype["pluginMethod_PasteHtml"] = function(htmlText)
-    {
-        if (!AscCommon.g_clipboardBase)
-            return null;
+	/**
+	 * Pastes text in the HTML format into the document.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias PasteHtml
+	 * @param {string} htmlText - A string value that specifies the text in the *HTML* format to be pasted into the document.
+	 */
+	Api.prototype["pluginMethod_PasteHtml"] = function (htmlText) {
+		if (!AscCommon.g_clipboardBase)
+			return null;
 
 		if (this.isViewMode)
 			return null;
 
-        var _elem = document.getElementById("pmpastehtml");
-        if (_elem)
-            return;
+		let _elem = document.getElementById("pmpastehtml");
+		if (_elem)
+			return;
 
-        _elem = document.createElement("div");
-        _elem.id = "pmpastehtml";
+		window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
+		_elem = document.createElement("div");
+		_elem.id = "pmpastehtml";
+		_elem.style.color = "rgb(0,0,0)";
 
-        if (this.editorId == AscCommon.c_oEditorId.Word || this.editorId == AscCommon.c_oEditorId.Presentation)
-        {
-            var textPr = this.get_TextProps();
-            if (textPr)
-            {
-                if (undefined !== textPr.TextPr.FontSize)
-                    _elem.style.fontSize = textPr.TextPr.FontSize + "pt";
+		if (this.editorId === AscCommon.c_oEditorId.Word || this.editorId === AscCommon.c_oEditorId.Presentation) {
+			let textPr = this.get_TextProps();
+			if (textPr) {
+				if (undefined !== textPr.TextPr.FontSize)
+					_elem.style.fontSize = textPr.TextPr.FontSize + "pt";
 
-                _elem.style.fontWeight = (true === textPr.TextPr.Bold) ? "bold" : "normal";
-                _elem.style.fontStyle = (true === textPr.TextPr.Italic) ? "italic" : "normal";
+				_elem.style.fontWeight = (true === textPr.TextPr.Bold) ? "bold" : "normal";
+				_elem.style.fontStyle = (true === textPr.TextPr.Italic) ? "italic" : "normal";
 
-                var _color = textPr.TextPr.Color;
-                if (_color)
-                    _elem.style.color = "rgb(" + _color.r + "," + _color.g + "," + _color.b + ")";
-                else
-                    _elem.style.color = "rgb(0,0,0)";
-            }
-        }
-        else if (this.editorId == AscCommon.c_oEditorId.Spreadsheet)
-        {
-            var props = this.asc_getCellInfo();
+				let _color = textPr.TextPr.Color;
+				if (_color)
+					_elem.style.color = "rgb(" + _color.r + "," + _color.g + "," + _color.b + ")";
+				else
+					_elem.style.color = "rgb(0,0,0)";
+			}
+		} else if (this.editorId === AscCommon.c_oEditorId.Spreadsheet) {
+			let props = this.asc_getCellInfo();
 
-            if (props && props.font)
-            {
-                if (undefined != props.font.size)
-                    _elem.style.fontSize = props.font.size + "pt";
+			if (props && props.font) {
+				if (undefined != props.font.size)
+					_elem.style.fontSize = props.font.size + "pt";
 
-                _elem.style.fontWeight = (true === props.font.bold) ? "bold" : "normal";
-                _elem.style.fontStyle = (true === props.font.italic) ? "italic" : "normal";
-            }
-        }
+				_elem.style.fontWeight = (true === props.font.bold) ? "bold" : "normal";
+				_elem.style.fontStyle = (true === props.font.italic) ? "italic" : "normal";
+			}
+		}
 
-        _elem.innerHTML = htmlText;
-        document.body.appendChild(_elem);
-        this.incrementCounterLongAction();
-        var b_old_save_format = AscCommon.g_clipboardBase.bSaveFormat;
-        AscCommon.g_clipboardBase.bSaveFormat = true;
-        this.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, _elem);
-        this.decrementCounterLongAction();
+		_elem.innerHTML = htmlText;
+		document.body.appendChild(_elem);
+		this.incrementCounterLongAction();
+		let b_old_save_format = AscCommon.g_clipboardBase.bSaveFormat;
+		AscCommon.g_clipboardBase.bSaveFormat = false;
+		let _t = this;
+		this.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, _elem, undefined, undefined, undefined,
+			function () {
+				_t.decrementCounterLongAction();
 
-        if (true)
-        {
-            var fCallback = function ()
-            {
-                document.body.removeChild(_elem);
-                _elem = null;
-                AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
-            };
-            if(this.checkLongActionCallback(fCallback, null)){
-                fCallback();
-            }
-        }
-        else
-        {
-            document.body.removeChild(_elem);
-            _elem = null;
-            AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
-        }
-    };
+				let fCallback = function () {
+					document.body.removeChild(_elem);
+					_elem = null;
+					AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
+				};
+				if (_t.checkLongActionCallback(fCallback, null)) {
+					fCallback();
+				}
+				window.g_asc_plugins &&	window.g_asc_plugins.onPluginMethodReturn(true);
+			}
+		);
+	};
 
     /**
      * Pastes text into the document.
@@ -422,8 +413,9 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias EndAction
-     * @param {number} type - A value which defines an action type which can take <b>0</b> if this is the *Information* action or <b>1</b> if this is the *BlockInteraction* action.
+     * @param {number} type - A value which defines an action type which can take <b>"Block"</b> if this is the *BlockInteraction* action or <b>"Information</b> if this is the *Information* action.
      * @param {string} description - A string value that specifies the description text for the operation end action.
+	 * @param {string} status - The error status code. If no error occurs, then an empty string is passed.
      */
     Api.prototype["pluginMethod_EndAction"] = function(type, description, status)
     {
@@ -479,7 +471,6 @@
      * @param {string} obj.type - The type of encrypting operation:
      * * <b>generatePassword</b> - generates a password for the document,
      * * <b>getPasswordByFile</b> - sends the password when opening the document,
-     * * <b>setPasswordByFile</b> - sets a password to the document,
      * * <b>encryptData</b> - encrypts changes when co-editing,
      * * <b>decryptData</b> - decrypts changes when co-editing.
      * @param {string} obj.password - A string value specifying the password to access the document.
@@ -558,7 +549,7 @@
 	 * @property {number} height The watermark height measured in millimeters.
 	 * @property {number} rotate The watermark rotation angle measured in degrees.
 	 * @property {Array.<number>} margins The text margins measured in millimeters in the watermark shape.
-	 * @property {Array.<number>} fill The watermark fill color in the RGB format. The empty array [] means that the watermark has no fill.
+	 * @property {(Array.<number>,string)} fill The watermark fill color in the RGB format, or url to image (base64 support: data:image/png;...). The empty array [] means that the watermark has no fill.
      * @property {number} stroke-width The watermark stroke width measured in millimeters.
 	 * @property {Array.<number>} stroke The watermark stroke color in the RGB format. The empty array [] means that the watermark stroke has no fill.
 	 * @property {number} align The vertical text align in the watermark shape: <b>0</b> - bottom, <b>1</b> - center, <b>4</b> - top.
@@ -1120,7 +1111,7 @@
      */
     Api.prototype["pluginMethod_ReplaceTextSmart"] = function(arrString, sParaTab, sParaNewLine)
     {
-		let guid = window.g_asc_plugins ? window.g_asc_plugins.setPluginMethodReturnAsync() : null;
+		window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
 		this.incrementCounterLongAction();
 
 		function ReplaceTextSmart()
@@ -1141,8 +1132,7 @@
 
 			this.decrementCounterLongAction();
 
-			if (guid)
-				window.g_asc_plugins.onPluginMethodReturn(guid, true);
+			window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(true);
 		}
 
 		let sOverAll = "";
@@ -1163,7 +1153,7 @@
      */
 	Api.prototype["pluginMethod_GetFileToDownload"] = function(format)
 	{
-		let guid = window.g_asc_plugins ? window.g_asc_plugins.setPluginMethodReturnAsync() : null;
+		window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
 		let dwnldF = Asc.c_oAscFileType[format] || Asc.c_oAscFileType[this.DocInfo.Format.toUpperCase()];
 		let opts = new Asc.asc_CDownloadOptions(dwnldF);
 		let _t = this;
@@ -1171,8 +1161,7 @@
 			_t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.DownloadAs);
 			_t.fCurCallback = function(res) {
 				let data = (res.status == "ok") ? res.data : "error";
-				if (guid)
-					window.g_asc_plugins.onPluginMethodReturn(guid, data);
+				window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(data);
 			};
 		}
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, opts);
@@ -1215,7 +1204,11 @@
      */
 	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
 	{
-		let sMethodGuid = window.g_asc_plugins.setPluginMethodReturnAsync();
+		if(this.isViewMode || this.isPdfEditor())
+		{
+			return;
+		}
+		window.g_asc_plugins.setPluginMethodReturnAsync();
 		let sImgSrc = oImageData["src"];
 		this.asc_checkImageUrlAndAction(sImgSrc, function(oImage)
 		{
@@ -1228,8 +1221,7 @@
 				nHeight = oImage.Image.height;
 			}
 			this.putImageToSelection(AscCommon.g_oDocumentUrls.getImageLocal(oImage.src), nWidth, nHeight, oImageData["replaceMode"]);
-			window.g_asc_plugins.onPluginMethodReturn(sMethodGuid);
-
+			window.g_asc_plugins.onPluginMethodReturn();
 		});
 	};
 
@@ -1477,8 +1469,8 @@
     * Removes a plugin with the specified GUID.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} [guid] - The plugin identifier. It must be of the *asc.{UUID}* type.
-	 * @param {string} [backup] - The plugin backup. This parameter is used when working with the desktop editors.
+     * @param {string} guid - The plugin identifier. It must be of the *asc.{UUID}* type.
+	 * @param {string} backup - The plugin backup. This parameter is used when working with the desktop editors.
      * @alias RemovePlugin
      * @returns {object} - An object with the result information.
      * @since 7.2.0
@@ -1593,18 +1585,19 @@
 	};
 
 	/**
-    * Shows or hides buttons in the header.
-     * @memberof Api
-     * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @param {string} [id] - The button ID.
-     * @param {boolean} [bShow] - The flag specifies whether the button is shown (**true**) or hidden (**false**).
-     * @alias ShowButton 
-     * @since 7.2.0
-     */
-	Api.prototype["pluginMethod_ShowButton"] = function(id, bShow)
+	* Shows or hides buttons in the header.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} id - The button ID.
+	 * @param {boolean} bShow - The flag specifies whether the button is shown (**true**) or hidden (**false**).
+	 * @param {string} align - The parameter indicates whether the button will be displayed on the right side of the window or on the left (*left* by default).
+	 * @alias ShowButton 
+	 * @since 7.2.0
+	 */
+	Api.prototype["pluginMethod_ShowButton"] = function(id, bShow, align)
 	{
 		if (bShow) {
-			this.sendEvent("asc_onPluginShowButton", id);
+			this.sendEvent("asc_onPluginShowButton", id, (align === 'right'));
 		} else {
 			this.sendEvent("asc_onPluginHideButton", id);
 		}
@@ -1615,19 +1608,18 @@
 		if (!this.keychainStorage)
 			this.keychainStorage = new AscCrypto.Storage.CStorageLocalStorage();
 
-		var guidAsync = window.g_asc_plugins.setPluginMethodReturnAsync();
-
+		window.g_asc_plugins.setPluginMethodReturnAsync();
 		this.keychainStorage.command(keys, function(retObj){
-			window.g_asc_plugins.onPluginMethodReturn(guidAsync, retObj);
+			window.g_asc_plugins.onPluginMethodReturn(retObj);
 		});
 	};
 
 	Api.prototype["pluginMethod_SetKeychainStorageInfo"] = function(items)
 	{
-		var guidAsync = window.g_asc_plugins.setPluginMethodReturnAsync();
+		window.g_asc_plugins.setPluginMethodReturnAsync();
 
-		this.keychainStorage.command(items, function(retObj){
-			window.g_asc_plugins.onPluginMethodReturn(guidAsync, retObj);
+		this.keychainStorage.command(items, function(retObj) {
+			window.g_asc_plugins.onPluginMethodReturn(retObj);
 		});
 	};
 
@@ -1765,7 +1757,7 @@
 	 */
 	Api.prototype["pluginMethod_ShowWindow"] = function(frameId, variation)
 	{
-		variation["guid"] = window.g_asc_plugins.guidAsyncMethod;
+		variation["guid"] = window.g_asc_plugins.getCurrentPluginGuid();
 		this.sendEvent("asc_onPluginWindowShow", frameId, variation);
 	};
 
@@ -1788,7 +1780,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} windowID - The frame ID.
 	 * @param {string} name - The event name.
-	 * @param {object} data - The even data.
+	 * @param {object} data - The event data.
 	 * @alias SendToWindow
 	 * @since 7.4.0
 	 */
@@ -1801,28 +1793,28 @@
 	 * Resizes the plugin modal window.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} [frameId] - The frame ID.
-	 * @param {number} [size] - The frame size.
-	 * @param {number} [minSize] - The frame minimum size.
-	 * @param {number} [maxSize] - The frame maximum size.
+	 * @param {string} frameId - The frame ID.
+	 * @param {number} size - The frame size.
+	 * @param {number} minSize - The frame minimum size.
+	 * @param {number} maxSize - The frame maximum size.
 	 * @alias ResizeWindow
 	 * @since 7.4.0
 	 */
 	Api.prototype["pluginMethod_ResizeWindow"] = function(frameId, size, minSize, maxSize)
 	{
-		let guidAsync = window.g_asc_plugins.setPluginMethodReturnAsync();
+		window.g_asc_plugins.setPluginMethodReturnAsync();
 		this.sendEvent("asc_onPluginWindowResize", frameId, size, minSize, maxSize, function(){
-			window.g_asc_plugins.onPluginMethodReturn(guidAsync, 'resize_result');
+			window.g_asc_plugins.onPluginMethodReturn("resize_result");
 		});
 	};
 
 	/**
-	 * Send an event to the plugin when the mouse button is released inside the plugin iframe.
+	 * Sends an event to the plugin when the mouse button is released inside the plugin iframe.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} [frameId] - The frame ID.
-	 * @param {number} [x] - The X coordinate.
-	 * @param {number} [y] - The Y coordinate.
+	 * @param {string} frameId - The frame ID.
+	 * @param {number} x - The X coordinate.
+	 * @param {number} y - The Y coordinate.
 	 * @alias MouseUpWindow
 	 * @since 7.4.0
 	 */
@@ -1832,12 +1824,12 @@
 	};
 
 	/**
-	 * Send an event to the plugin when the mouse button is moved inside the plugin iframe.
+	 * Sends an event to the plugin when the mouse button is moved inside the plugin iframe.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} [frameId] - The frame ID.
- 	 * @param {number} [x] - The X coordinate.
-	 * @param {number} [y] - The Y coordinate.
+	 * @param {string} frameId - The frame ID.
+ 	 * @param {number} x - The X coordinate.
+	 * @param {number} y - The Y coordinate.
 	 * @alias MouseMoveWindow
 	 * @since 7.4.0
 	 */

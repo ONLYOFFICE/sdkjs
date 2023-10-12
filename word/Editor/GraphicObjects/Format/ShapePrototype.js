@@ -658,72 +658,8 @@ CShape.prototype.getArrayWrapIntervals = function(x0,y0, x1, y1, Y0Sp, Y1Sp, Lef
 {
     return this.parent.getArrayWrapIntervals(x0,y0, x1, y1, Y0Sp, Y1Sp, LeftField, RightField, arr_intervals, bMathWrap);
 };
-CShape.prototype.updateTransformMatrix = function()
-{
-    var oParentTransform = null;
-    if(this.parent && this.parent.Get_ParentParagraph)
-    {
-        var oParagraph = this.parent.Get_ParentParagraph();
-        if(oParagraph)
-        {
-            oParentTransform = oParagraph.Get_ParentTextTransform();
-        }
-    }
-    this.transform = this.localTransform.CreateDublicate();
-    global_MatrixTransformer.TranslateAppend(this.transform, this.posX, this.posY);
-    if(oParentTransform)
-    {
-        global_MatrixTransformer.MultiplyAppend(this.transform, oParentTransform);
-    }
-    this.invertTransform = global_MatrixTransformer.Invert(this.transform);
 
-    if(this.localTransformText)
-    {
-        this.transformText = this.localTransformText.CreateDublicate();
-        global_MatrixTransformer.TranslateAppend(this.transformText, this.posX, this.posY);
-        if(oParentTransform)
-        {
-            global_MatrixTransformer.MultiplyAppend(this.transformText, oParentTransform);
-        }
-        this.invertTransformText = global_MatrixTransformer.Invert(this.transformText);
-    }
-    if(this.localTransformTextWordArt)
-    {
-        this.transformTextWordArt = this.localTransformTextWordArt.CreateDublicate();
-        global_MatrixTransformer.TranslateAppend(this.transformTextWordArt, this.posX, this.posY);
-        if(oParentTransform)
-        {
-            global_MatrixTransformer.MultiplyAppend(this.transformTextWordArt, oParentTransform);
-        }
-        this.invertTransformTextWordArt = global_MatrixTransformer.Invert(this.transformTextWordArt);
-    }
-    if(this.localTransformText2)
-    {
 
-        this.transformText2 = this.localTransformText2.CreateDublicate();
-        global_MatrixTransformer.TranslateAppend(this.transformText2, this.posX, this.posY);
-        if(oParentTransform)
-        {
-            global_MatrixTransformer.MultiplyAppend(this.transformText2, oParentTransform);
-        }
-        this.invertTransformText2 = global_MatrixTransformer.Invert(this.transformText2);
-    }
-
-    this.checkShapeChildTransform();
-    this.checkContentDrawings();
-};
-
-CShape.prototype.checkContentDrawings = function()
-{
-    if(this.textBoxContent)
-    {
-        var all_drawings = this.textBoxContent.GetAllDrawingObjects([]);
-        for(var i = 0; i < all_drawings.length; ++i)
-        {
-            all_drawings[i].GraphicObj.updateTransformMatrix();
-        }
-    }
-};
 
 CShape.prototype.applyParentTransform = function(transform)
 {
@@ -974,24 +910,21 @@ CShape.prototype.Get_StartPage_Relative = function()
 };
 CShape.prototype.CheckTableCoincidence = function(table)
 {
-    var para_drawing = this.GetParaDrawing();
-    if(para_drawing && para_drawing.DocumentContent)
+    const oParaDrawing = this.GetParaDrawing();
+    if(oParaDrawing)
     {
-        return para_drawing.DocumentContent.CheckTableCoincidence(table);
+        const oDocContent = oParaDrawing.GetDocumentContent();
+        if(oDocContent)
+        {
+            return oDocContent.CheckTableCoincidence(table);
+        }
     }
     return false;
 };
 
 CShape.prototype.GetPrevElementEndInfo = function(CurElement)
 {
-    var para_drawing = this.GetParaDrawing();
-    if(isRealObject(para_drawing) && isRealObject(para_drawing.DocumentContent) && (para_drawing.DocumentContent.GetPrevElementEndInfo) )
-    {
-        var parent_paragraph = para_drawing.Get_ParentParagraph();
-        if(parent_paragraph)
-            return para_drawing.DocumentContent.GetPrevElementEndInfo(parent_paragraph);
-    }
-    return null;
+	return null;
 };
 CShape.prototype.IsThisElementCurrent = function(CurElement)
 {
@@ -1021,40 +954,6 @@ CShape.prototype.IsUseInDocument = function()
         return this.parent.IsUseInDocument();
     }
     return false;
-};
-CShape.prototype.IsHdrFtr = function(bool)
-{
-    if(!this.group)
-    {
-        if(isRealObject(this.parent) && isRealObject(this.parent.DocumentContent))
-            return this.parent.DocumentContent.IsHdrFtr(bool);
-    }
-    else
-    {
-        var cur_group = this.group;
-        while(cur_group.group)
-            cur_group = cur_group.group;
-        if(isRealObject(cur_group.parent) && isRealObject(cur_group.parent.DocumentContent))
-            return cur_group.parent.DocumentContent.IsHdrFtr(bool);
-    }
-    return bool ? null : false;
-};
-CShape.prototype.IsFootnote = function(bReturnFootnote)
-{
-	if(!this.group)
-	{
-		if(isRealObject(this.parent) && isRealObject(this.parent.DocumentContent))
-			return this.parent.DocumentContent.IsFootnote(bReturnFootnote);
-	}
-	else
-	{
-		var cur_group = this.group;
-		while(cur_group.group)
-			cur_group = cur_group.group;
-		if(isRealObject(cur_group.parent) && isRealObject(cur_group.parent.DocumentContent))
-			return cur_group.parent.DocumentContent.IsFootnote(bReturnFootnote);
-	}
-	return bReturnFootnote ? null : false;
 };
 CShape.prototype.OnContentReDraw = function()
 {
@@ -1203,33 +1102,6 @@ CShape.prototype.Get_ColorMap = function()
         return oLogicDoc.Get_ColorMap();
     }
     return AscFormat.GetDefaultColorMap();
-};
-
-CShape.prototype.Is_TopDocument = function(bReturn)
-{
-    if(!bReturn)
-    {
-        return false;
-    }
-    else
-    {
-        var para_drawing;
-        if (this.group)
-        {
-            var main_group = this.group.getMainGroup();
-            para_drawing   = main_group.parent;
-        }
-        else
-        {
-            para_drawing = this.parent;
-        }
-
-        if (para_drawing && para_drawing.DocumentContent)
-        {
-            return para_drawing.DocumentContent.Is_TopDocument(bReturn);
-        }
-        return null;
-    }
 };
 
 CShape.prototype.recalcText = function(bResetRecalcCache)

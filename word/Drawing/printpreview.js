@@ -99,6 +99,7 @@
 
 		g.IsNoDrawingEmptyPlaceholderText = true;
 		g.IsNoDrawingEmptyPlaceholder = true;
+		g.isPrintMode = true;
 
 		return g;
 	};
@@ -130,7 +131,7 @@
 		{
 			case AscCommon.c_oEditorId.Word:
 			{
-				let isPdf = this.api.isDocumentRenderer();
+				let isPdf = this.api.isPdfEditor();
 				if (!isPdf)
 				{
 					if (this.api.WordControl.m_oDrawingDocument.IsFreezePage(this.page))
@@ -143,12 +144,18 @@
 					let g = this.checkGraphics(width, height, w_mm, h_mm);
 
 					let oldViewMode = this.api.isViewMode;
-					let oldShowMarks = this.api.isViewMode;
+					let oldShowMarks = this.api.ShowParaMarks;
 
 					this.api.isViewMode = true;
 					this.api.ShowParaMarks = false;
 
+					this.api.WordControl.m_oLogicDocument.SetupBeforeNativePrint({
+						"drawPlaceHolders" : false,
+						"drawFormHighlight" : false,
+						"isPrint" : true
+					}, g);
 					this.api.WordControl.m_oLogicDocument.DrawPage(this.page, g);
+					this.api.WordControl.m_oLogicDocument.RestoreAfterNativePrint();
 
 					this.api.isViewMode = oldViewMode;
 					this.api.ShowParaMarks = oldShowMarks;

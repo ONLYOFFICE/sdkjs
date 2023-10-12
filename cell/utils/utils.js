@@ -570,6 +570,19 @@
 			return bRes;
 		};
 
+		Range.prototype.isIntersectForInsertColRow = function (range, isInsertCol) {
+			var bRes = true;
+			if (range.r2 < this.r1 || this.r2 < range.r1)
+				bRes = false;
+			else if (range.c2 < this.c1 || this.c2 < range.c1) 
+				bRes = false;
+			else if (isInsertCol && (this.c1 >= range.c1))
+				bRes = false;
+			else if (!isInsertCol && (this.r1 >= range.r1))
+				bRes = false;
+			return bRes;
+		};
+
 		Range.prototype.isIntersectWithRanges = function (ranges, exceptionIndex) {
 			if (ranges) {
 				for (var i = 0; i < ranges.length; i++) {
@@ -739,6 +752,14 @@
 
 		Range.prototype.isOneCell = function () {
 			return this.r1 === this.r2 && this.c1 === this.c2;
+		};
+
+		Range.prototype.isOneCol = function () {
+			return this.c1 === this.c2;
+		};
+
+		Range.prototype.isOneRow = function () {
+			return this.r1 === this.r2;
 		};
 
 		Range.prototype.isOnTheEdge = function (c, r) {
@@ -1996,7 +2017,7 @@
 
 		function trim(val)
 		{
-			if(!String.prototype.trim)
+			if(String.prototype.trim)
 				return val.trim();
 			else
 				return val.replace(/^\s+|\s+$/g,'');
@@ -2682,6 +2703,8 @@
 				this.tooltip = obj.tooltip;
 
 				this.color = obj.color;
+
+				this.placeholderType = obj.placeholderType;
 			}
 
 			return this;
@@ -2700,7 +2723,8 @@
 			asc_getSizePx: function () { return this.sizePx; },
 			asc_getFilter: function () { return this.filter; },
 			asc_getTooltip: function () { return this.tooltip; },
-			asc_getColor: function () { return this.color; }
+			asc_getColor: function () { return this.color; },
+			asc_getPlaceholderType: function () { return this.placeholderType; }
 		};
 
 		// Гиперссылка
@@ -2798,7 +2822,7 @@
 			return this;
 		}
 		CPagePrint.prototype.clone = function () {
-			var res = new CPagePrint();
+			let res = new CPagePrint();
 			res.pageWidth = this.pageWidth;
 			res.pageHeight = this.pageHeight;
 			res.pageClipRectLeft = this.pageClipRectLeft;
@@ -2828,6 +2852,15 @@
 
 			return res;
 		};
+		CPagePrint.prototype.recalculate = function (pageOptions) {
+			const horizontalCentered = pageOptions && pageOptions.asc_getHorizontalCentered();
+			const verticalCentered = pageOptions && pageOptions.asc_getVerticalCentered();
+			if (horizontalCentered) {
+				let widthOffset = this.pageWidth - (this.pageClipRectLeft + this.pageClipRectRight);
+				this.pageClipRectLeft = this.pageClipRectWidth
+			}
+		};
+
 		function CPrintPagesData () {
 			this.arrPages = [];
 			this.currentIndex = 0;
@@ -2896,6 +2929,7 @@
 			this.zoomScale = 100;
 
 			this.showZeros = null;
+			this.showFormulas = null;
 
 			this.topLeftCell = null;
 			this.view = null;
@@ -2915,6 +2949,7 @@
 				}
 				result.showZeros = this.showZeros;
 				result.topLeftCell = this.topLeftCell;
+				result.showFormulas = this.showFormulas;
 				return result;
 			},
 			isEqual: function (settings) {
@@ -2927,10 +2962,12 @@
 			asc_getZoomScale: function () { return this.zoomScale; },
 			asc_getIsFreezePane: function () { return null !== this.pane && this.pane.isInit(); },
 			asc_getShowZeros: function () { return false !== this.showZeros; },
+			asc_getShowFormulas: function () { return false !== this.showFormulas; },
 			asc_setShowGridLines: function (val) { this.showGridLines = val; },
 			asc_setShowRowColHeaders: function (val) { this.showRowColHeaders = val; },
 			asc_setZoomScale: function (val) { this.zoomScale = val; },
-			asc_setShowZeros: function (val) { this.showZeros = val; }
+			asc_setShowZeros: function (val) { this.showZeros = val; },
+			asc_setShowFormulas: function (val) { this.showFormulas = val; }
 		};
 
 		/** @constructor */
@@ -3409,6 +3446,10 @@
 			var y = this.getUTCFullYear();
 			return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
 		};
+		cDate.prototype.isLeapYear1900 = function () {
+			var y = this.getUTCFullYear();
+			return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0 || 1900 === y;
+		};
 
 		cDate.prototype.getDaysInMonth = function () {
 //    return arguments.callee[this.isLeapYear() ? 'L' : 'R'][this.getMonth()];
@@ -3421,11 +3462,21 @@
 		cDate.prototype.getDaysInMonth.L = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
 		cDate.prototype.getDayOfYear = function () {
-			//https://stackoverflow.com/a/8619946
-			var start = new Date(this.getFullYear(), 0, 0);
-			var diff = (this - start) + ((start.getTimezoneOffset() - this.getTimezoneOffset()) * 60 * 1000);
-			var oneDay = 1000 * 60 * 60 * 24;
-			return Math.floor(diff / oneDay);
+			let year = Date.prototype.getUTCFullYear.call(this);
+			let month = Date.prototype.getUTCMonth.call(this);
+			let date = Date.prototype.getUTCDate.call(this);
+			if (1899 === year && 11 === month && 30 === date) {
+				return 0;
+			} else if (1899 === year && 11 === month && 31 === date) {
+				return 1;
+			}
+			let dayCount = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+			let dayOfYear = dayCount[month] + date;
+			if (month > 1 && this.isLeapYear1900()) dayOfYear++;
+			if (1900 === year && month <= 1) {
+				dayOfYear++;
+			}
+			return dayOfYear;
 		};
 
 		cDate.prototype.truncate = function () {
@@ -3560,6 +3611,9 @@
 				return new cDate(dateStr + "Z");
 			}
 		};
+		cDate.prototype.getCurrentDate = function () {
+			return this;
+		}
 
 		function getIconsForLoad() {
 			return AscCommonExcel.getCFIconsForLoad().concat(AscCommonExcel.getSlicerIconsForLoad()).concat(AscCommonExcel.getPivotButtonsForLoad());
@@ -3575,7 +3629,6 @@
 		window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 		window['AscCommonExcel'].g_ActiveCell = null; // Active Cell for calculate (in R1C1 mode for relative cell)
 		window['AscCommonExcel'].g_R1C1Mode = false; // No calculate in R1C1 mode
-		window['AscCommonExcel'].kCurCells = "se-cells";
 		window["AscCommonExcel"].recalcType = recalcType;
 		window["AscCommonExcel"].sizePxinPt = sizePxinPt;
 		window['AscCommonExcel'].c_sPerDay = c_sPerDay;
@@ -3664,6 +3717,7 @@
 		prot["asc_getFilter"] = prot.asc_getFilter;
 		prot["asc_getTooltip"] = prot.asc_getTooltip;
 		prot["asc_getColor"] = prot.asc_getColor;
+		prot["asc_getPlaceholderType"] = prot.asc_getPlaceholderType;
 
 		window["Asc"]["asc_CHyperlink"] = window["Asc"].asc_CHyperlink = asc_CHyperlink;
 		prot = asc_CHyperlink.prototype;
@@ -3712,9 +3766,11 @@
 		prot["asc_getShowRowColHeaders"] = prot.asc_getShowRowColHeaders;
 		prot["asc_getIsFreezePane"] = prot.asc_getIsFreezePane;
 		prot["asc_getShowZeros"] = prot.asc_getShowZeros;
+		prot["asc_getShowFormulas"] = prot.asc_getShowFormulas;
 		prot["asc_setShowGridLines"] = prot.asc_setShowGridLines;
 		prot["asc_setShowRowColHeaders"] = prot.asc_setShowRowColHeaders;
 		prot["asc_setShowZeros"] = prot.asc_setShowZeros;
+		prot["asc_setShowFormulas"] = prot.asc_setShowFormulas;
 
 		window["AscCommonExcel"].asc_CPane = asc_CPane;
 		window["AscCommonExcel"].asc_CSheetPr = asc_CSheetPr;

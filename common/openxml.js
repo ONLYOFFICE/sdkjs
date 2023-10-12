@@ -494,7 +494,7 @@
 	openXml.OpenXmlPart.prototype.getRelationshipsByRelationshipType = function(relationshipType) {
 		var rels = this.getRelationships();
 		return rels.filter(function (rel) {
-			return rel.relationshipType === relationshipType;
+			return openXml.IsEqualRelationshipType(rel.relationshipType, relationshipType);
 		});
 	}
 
@@ -793,7 +793,18 @@
 		internal: "Internal",
 		external: "External"
 	};
+	openXml.IsEqualRelationshipType = function(relationshipType1, relationshipType2) {
+		//https://github.com/ONLYOFFICE/core/blob/7a822494aabb1edce441a12e44aa05c3a6501766/OOXML/DocxFormat/FileType.h#L95
+		//RelationType
+		//http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument
+		//http://purl.oclc.org/ooxml/officeDocument/relationships/officeDocument
+		//is valid and equal so compare tail
 
+		//docs: If either or both of the arguments are negative or NaN, the substring() method treats them as if they were 0.
+		const tail1 = relationshipType1.substring(relationshipType1.lastIndexOf("/") + 1);
+		const tail2 = relationshipType2.substring(relationshipType2.lastIndexOf("/") + 1);
+		return tail1 === tail2;
+	};
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
 	window['AscCommon'] = window['AscCommon'] || {};

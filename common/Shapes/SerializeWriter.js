@@ -108,13 +108,12 @@ function CBinaryFileWriter()
     {
         var _canvas = document.createElement('canvas');
         var _ctx = _canvas.getContext('2d');
-        this.len = 1024*1024*5;
+        this.len = 1024*1024*2;
         this.ImData = _ctx.createImageData(this.len / 4, 1);
         this.data = this.ImData.data;
         this.pos = 0;
     };
 
-    this.IsWordWriter = false;
     this.ImData = null;
     this.data = null;
     this.len = 0;
@@ -634,7 +633,7 @@ function CBinaryFileWriter()
         for (var i = 0; i < _slide_count; i++)
         {
             _dst_slides[i] = _slides[i];
-            if(_slides[i].notes && !_slides[i].notes.isEmptyBody())
+            if(_slides[i].notes)
             {
                 _dst_notes.push(_slides[i].notes);
             }
@@ -1164,6 +1163,19 @@ function CBinaryFileWriter()
 
         this.WriteRecord2(0, presentation.defaultTextStyle, this.WriteTextListStyle);
 
+        var oNotesSz = presentation.notesSz;
+        if(oNotesSz)
+        {
+            this.StartRecord(3);
+            this.WriteUChar(g_nodeAttributeStart);
+
+            this._WriteInt1(0, oNotesSz.cx);
+            this._WriteInt1(1, oNotesSz.cy);
+
+            this.WriteUChar(g_nodeAttributeEnd);
+            this.EndRecord();
+        }
+
         // 5
         var oSldSz = presentation.sldSz;
         if(oSldSz)
@@ -1178,16 +1190,6 @@ function CBinaryFileWriter()
             this.WriteUChar(g_nodeAttributeEnd);
             this.EndRecord();
         }
-
-        // 3
-        this.StartRecord(3);
-        this.WriteUChar(g_nodeAttributeStart);
-
-        this._WriteInt1(0, presentation.GetWidthEMU());
-        this._WriteInt1(1, presentation.GetHeightEMU());
-
-        this.WriteUChar(g_nodeAttributeEnd);
-        this.EndRecord();
 
         if (!this.IsUseFullUrl)
         {
@@ -3476,21 +3478,12 @@ function CBinaryFileWriter()
 
         image.spPr.WriteXfrm = image.spPr.xfrm;
 
-        var bSetGeometry = false;
-        if (image.spPr.geometry === undefined || image.spPr.geometry == null)
-        {
-            // powerpoint!
-            bSetGeometry = true;
-            image.spPr.geometry = AscFormat.ExecuteNoHistory(function(){return AscFormat.CreateGeometry("rect");}, this, []);
-        }
+
 
         var unifill = new AscFormat.CUniFill();
         unifill.fill = image.blipFill;
         oThis.WriteRecord1(1, unifill, oThis.WriteUniFill);
         oThis.WriteRecord1(2, image.spPr, oThis.WriteSpPr);
-        if(bSetGeometry){
-            image.spPr.geometry = null;
-        }
         oThis.WriteRecord2(3, image.style, oThis.WriteShapeStyle);
         image.writeMacro(oThis);
         image.spPr.WriteXfrm = null;
@@ -4002,8 +3995,6 @@ function CBinaryFileWriter()
 
     this.WriteXfrm = function(xfrm)
     {
-        if (oThis.IsWordWriter === true)
-            return oThis.WriteXfrmRot(xfrm);
 
         oThis.WriteUChar(g_nodeAttributeStart);
         oThis._WriteInt4(0, xfrm.offX, c_dScalePPTXSizes);
@@ -5050,7 +5041,6 @@ function CBinaryFileWriter()
     {
         this.BinaryFileWriter = new AscCommon.CBinaryFileWriter();
         this.BinaryFileWriter.Init();
-        //this.BinaryFileWriter.IsWordWriter = true;
 
         this.TreeDrawingIndex = 0;
 

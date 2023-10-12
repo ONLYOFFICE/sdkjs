@@ -1127,8 +1127,8 @@
   DocsCoApi.prototype._onRefreshToken = function(jwt) {
     this.jwtOpen = undefined;
     if (this.socketio) {
-      if (this.socketio.auth) {
-        this.socketio.auth.token = this.jwtOpen;
+      if (this.socketio["auth"]) {
+        this.socketio["auth"]["token"] = this.jwtOpen;
       }
       if (this.socketio.io && this.socketio.io.setOpenToken) {
         this.socketio.io.setOpenToken(this.jwtOpen);
@@ -1137,8 +1137,8 @@
     if (jwt) {
       this.jwtSession = jwt;
       if (this.socketio) {
-        if (this.socketio.auth) {
-          this.socketio.auth.session = this.jwtSession;
+        if (this.socketio["auth"]) {
+          this.socketio["auth"]["session"] = this.jwtSession;
         }
         if (this.socketio.io && this.socketio.io.setSessionToken) {
           this.socketio.io.setSessionToken(this.jwtSession);

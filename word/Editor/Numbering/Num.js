@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 08.05.2018
- * Time: 15:08
- */
 
 /**
  * Класс представляющий нумерацию параграфов в документах
@@ -931,6 +926,25 @@ CNum.prototype.IsSimilar = function(oNum)
 	{
 		var oLvl = this.GetLvl(nLvl);
 		if (!oLvl.IsSimilar(oNum.GetLvl(nLvl)))
+			return false;
+	}
+
+	return true;
+};
+/**
+ * Проверяем, одинаковы ли две заданные нумерации
+ * @param oNum {CNum}
+ * @returns {boolean}
+ */
+CNum.prototype.IsEqual = function(oNum)
+{
+	if (!oNum)
+		return false;
+
+	for (var nLvl = 0; nLvl < 9; ++nLvl)
+	{
+		var oLvl = this.GetLvl(nLvl);
+		if (!oLvl.IsEqual(oNum.GetLvl(nLvl)))
 			return false;
 	}
 

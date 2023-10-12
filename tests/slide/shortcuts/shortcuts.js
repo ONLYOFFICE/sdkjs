@@ -529,14 +529,8 @@
 			oEvent = createEvent(86, true, false, true, false, false);
 			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.PasteFormat, 'Check getting paste format shortcut action');
 
-			oEvent = createEvent(187, true, true, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Superscript, 'Check getting superscript shortcut action');
-
 			oEvent = createEvent(188, true, false, false, false, false);
 			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Superscript, 'Check getting superscript shortcut action');
-
-			oEvent = createEvent(187, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Subscript, 'Check getting subscript shortcut action');
 
 			oEvent = createEvent(190, true, false, false, false, false);
 			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Subscript, 'Check getting subscript shortcut action');
@@ -665,20 +659,32 @@
 			addPropertyToDocument({Bold: true, Italic: true, Underline: true});
 
 			onKeyDown(oMockEvent);
-
-			oAssert.deepEqual(editor.getFormatPainterData().TextPr, getCopyParagraphPrTest(), 'Check copy format shortcut');
+			const oTextPr = editor.getFormatPainterData().TextPr;
+			oAssert.strictEqual(oTextPr.Get_Bold(), true, 'Check copy format shortcut');
+			oAssert.strictEqual(oTextPr.Get_Italic(), true, 'Check copy format shortcut');
+			oAssert.strictEqual(oTextPr.Get_Underline(), true, 'Check copy format shortcut');
 		});
 
 		QUnit.test('Test paste format', (oAssert) =>
 		{
+			let oParagraph;
+			oParagraph = getShapeWithParagraphHelper('Hello World').oParagraph;
+			oParagraph.SetThisElementCurrent();
+			oGlobalLogicDocument.SelectAll();
+			addPropertyToDocument({Bold: true, Italic: true, Underline: true});
+			oGlobalLogicDocument.Document_Format_Copy();
+			
+			
 			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.PasteFormat;};
-			const {oParagraph} = getShapeWithParagraphHelper('Hello World');
+			oParagraph = getShapeWithParagraphHelper('Hello World').oParagraph;
 			oParagraph.SetThisElementCurrent();
 			oGlobalLogicDocument.SelectAll();
 
 			onKeyDown(oMockEvent);
 			const oDirectTextPr = oParagraph.GetDirectTextPr();
-			oAssert.deepEqual(oDirectTextPr, getCopyParagraphPrTest(), 'check paste format shortcut');
+			oAssert.strictEqual(oDirectTextPr.Get_Bold(), true, 'Check copy format shortcut');
+			oAssert.strictEqual(oDirectTextPr.Get_Italic(), true, 'Check copy format shortcut');
+			oAssert.strictEqual(oDirectTextPr.Get_Underline(), true, 'Check copy format shortcut');
 		});
 
 		QUnit.test('Test center align', (oAssert) =>
@@ -840,7 +846,7 @@
 			{
 				const {oShape} = getShapeWithParagraphHelper('', true);
 				selectOnlyObjects([oShape]);
-				oGlobalLogicDocument.AddAnimation(1, 1, 0, false, false);
+				oGlobalLogicDocument.AddAnimation(1, 1, 0, null, false, false);
 
 				onKeyDown(oEvent);
 				const oTiming = oGlobalLogicDocument.GetCurTiming();

@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 02.11.2016
- * Time: 16:36
- */
 
 /**
  * Класс представляющий собой настройки текста (сейчас используется как настройка текста для конца параграфа)
@@ -387,6 +382,10 @@ ParaTextPr.prototype.Set_RStyle = function(Value)
 	History.Add(new CChangesParaTextPrRStyle(this, this.Value.RStyle, Value));
 	this.Value.RStyle = Value;
 };
+ParaTextPr.prototype.SetRStyle = function(styleId)
+{
+	this.Set_RStyle(styleId);
+};
 ParaTextPr.prototype.Set_Spacing = function(Value)
 {
 	if (null === Value)
@@ -706,15 +705,15 @@ ParaTextPr.prototype.SetLigatures = function(nType)
 	oChange.Redo();
 };
 /**
- * Выставляем настройки (если какая-либо undefined, то такая настройка удаляется)
- * @param {CTextPr} oTextPr
+ * Жестко выставляем заданные настройки
+ * @param {CTextPr} textPr
  */
-ParaTextPr.prototype.SetPr = function(oTextPr)
+ParaTextPr.prototype.SetPr = function(textPr)
 {
-	if (!oTextPr)
-		oTextPr = new CTextPr();
+	if (!textPr)
+		textPr = new CTextPr();
 
-	this.Set_Value(oTextPr);
+	this.Set_Value(textPr);
 };
 ParaTextPr.prototype.IncreaseDecreaseFontSize = function(isIncrease)
 {
@@ -787,3 +786,4 @@ ParaTextPr.prototype.Read_FromBinary2 = function(Reader)
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].ParaTextPr = ParaTextPr;
+window['AscWord'].ParaTextPr = ParaTextPr;

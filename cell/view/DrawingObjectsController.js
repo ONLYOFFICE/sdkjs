@@ -105,14 +105,17 @@ DrawingObjectsController.prototype.getDrawingArray = function()
 
 DrawingObjectsController.prototype.setTableProps = function(props)
 {
-    var by_type = this.getSelectedObjectsByTypes();
+    let by_type = this.getSelectedObjectsByTypes();
     if(by_type.tables.length === 1)
     {
-        var sCaption = props.TableCaption;
-        var sDescription = props.TableDescription;
-        var dRowHeight = props.RowHeight;
-        by_type.tables[0].setTitle(sCaption);
-        by_type.tables[0].setDescription(sDescription);
+        let sCaption = props.TableCaption;
+        let sDescription = props.TableDescription;
+        let sName = props.TableName;
+        let dRowHeight = props.RowHeight;
+        let oTable = by_type.tables[0];
+        oTable.setTitle(sCaption);
+        oTable.setDescription(sDescription);
+        oTable.setName(sName);
         props.TableCaption = undefined;
         props.TableDescription = undefined;
         var bIgnoreHeight = false;
@@ -125,22 +128,22 @@ DrawingObjectsController.prototype.setTableProps = function(props)
             bIgnoreHeight = false;
         }
         var target_text_object = AscFormat.getTargetTextObject(this);
-        if(target_text_object === by_type.tables[0])
+        if(target_text_object === oTable)
         {
-            by_type.tables[0].graphicObject.Set_Props(props);
+            oTable.graphicObject.Set_Props(props);
         }
         else
         {
-            by_type.tables[0].graphicObject.SelectAll();
-            by_type.tables[0].graphicObject.Set_Props(props);
-            by_type.tables[0].graphicObject.RemoveSelection();
+            oTable.graphicObject.SelectAll();
+            oTable.graphicObject.Set_Props(props);
+            oTable.graphicObject.RemoveSelection();
         }
         props.TableCaption = sCaption;
         props.TableDescription = sDescription;
         props.RowHeight = dRowHeight;
-        if(!by_type.tables[0].setFrameTransform(props)) 
+        if(!oTable.setFrameTransform(props))
         {
-            editor.WordControl.m_oLogicDocument.Check_GraphicFrameRowHeight(by_type.tables[0], bIgnoreHeight);
+            editor.WordControl.m_oLogicDocument.Check_GraphicFrameRowHeight(oTable, bIgnoreHeight);
         }
         
     }
@@ -244,17 +247,6 @@ DrawingObjectsController.prototype.getDrawingObjects = function()
         ret.push(drawing_bases[i].graphicObject);
     }
     return ret;
-};
-DrawingObjectsController.prototype.checkSelectedObjectsForMove = function(group)
-{
-    var selected_object = group ? group.selectedObjects : this.selectedObjects;
-    for(var i = 0; i < selected_object.length; ++i)
-    {
-        if(selected_object[i].canMove())
-        {
-            this.arrPreTrackObjects.push(selected_object[i].createMoveTrack());
-        }
-    }
 };
 
 DrawingObjectsController.prototype.checkSelectedObjectsAndFireCallback = function(callback, args)

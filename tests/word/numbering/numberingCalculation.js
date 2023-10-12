@@ -151,5 +151,87 @@ $(function ()
 		CheckParagraph(1, "2.");
 		CheckParagraph(2, "3.");
 	});
+	
+	// TODO: Добавить больше тестов и вынести в отдельный файл
+	QUnit.test("Test numbering collection", function (assert)
+	{
+		function AddParagraph(text)
+		{
+			let p = AscTest.CreateParagraph();
+			logicDocument.PushToContent(p);
+			
+			let run = new AscWord.CRun();
+			p.AddToContent(0, run);
+			run.AddText(text);
+			return p;
+		}
+		
+		
+		AscTest.ClearDocument();
+		let p1 = AddParagraph("Paragraph 1");
+		let p2 = AddParagraph("Paragraph 2");
+		let p3 = AddParagraph("Paragraph 3");
+		let p4 = AddParagraph("Paragraph 4");
+
+		let style = CreateStyle();
+		p2.SetParagraphStyle(style.GetName());
+		
+		let num = CreateNum();
+		let numPr = new AscWord.CNumPr(num.GetId(), 0);
+		let collection = logicDocument.GetNumberingCollection();
+		let paraArray = collection.GetAllParagraphsByNumbering(numPr);
+		
+		assert.strictEqual(paraArray.length, 0, "Check paragraphs for just created numbering");
+		
+		p1.SetNumPr(numPr.NumId, numPr.Lvl);
+		paraArray = collection.GetAllParagraphsByNumbering(numPr);
+		assert.strictEqual(paraArray.length, 1, "Add numbering direct to paragraph and check numbering collection");
+		assert.ok(-1 !== paraArray.indexOf(p1), "Check paragraph in collection");
+		assert.strictEqual(p1.GetNumberingText(false), "1.", "Check numbering text for paragraph " + 0);
+
+		num.GetLvl(0).SetPStyle(style.GetId());
+		style.SetNumPr(num.GetId(), 0);
+		paraArray = collection.GetAllParagraphsByNumbering(numPr);
+		assert.strictEqual(paraArray.length, 2, "Add numbering to a style. We have a predefined paragraph with that style. Check numbering collection");
+		assert.ok(-1 !== paraArray.indexOf(p2), "Check paragraph in collection");
+		assert.strictEqual(p2.GetNumberingText(false), "2.", "Check numbering text for paragraph " + 1);
+		
+		p3.SetParagraphStyle(style.GetName());
+		paraArray = collection.GetAllParagraphsByNumbering(numPr);
+		assert.strictEqual(paraArray.length, 3, "Add style with numbering to paragraph and check numbering collection");
+		assert.ok(-1 !== paraArray.indexOf(p3), "Check paragraph in collection");
+		assert.strictEqual(p3.GetNumberingText(false), "3.", "Check numbering text for paragraph " + 2);
+		
+		p4.SetParagraphStyle(style.GetName());
+		paraArray = collection.GetAllParagraphsByNumbering(numPr);
+		assert.strictEqual(paraArray.length, 4, "Add style with numbering to paragraph and check numbering collection");
+		assert.ok(-1 !== paraArray.indexOf(p4), "Check paragraph in collection");
+		assert.strictEqual(p4.GetNumberingText(false), "4.", "Check numbering text for paragraph " + 3);
+		
+		p4.SetNumPr(0, 0);
+		paraArray = collection.GetAllParagraphsByNumbering(numPr);
+		assert.strictEqual(paraArray.length, 3, "Cancel numbering by direct paragraph properties and check numbering collection");
+		assert.ok(-1 === paraArray.indexOf(p4), "Check paragraph is not in the collection");
+		assert.strictEqual(p4.GetNumberingText(false), "", "Check that there is no numbering text for paragraph " + 3);
+		
+		p3.SetParagraphStyleById(styleManager.GetDefaultParagraph());
+		paraArray = collection.GetAllParagraphsByNumbering(numPr);
+		assert.strictEqual(paraArray.length, 2, "Cancel numbering by removing style from paragraph. Check numbering collection");
+		assert.ok(-1 === paraArray.indexOf(p3), "Check paragraph is not in the collection");
+		assert.strictEqual(p3.GetNumberingText(false), "", "Check that there is no numbering text for paragraph " + 2);
+		
+		num.GetLvl(0).SetPStyle(undefined);
+		style.SetNumPr(undefined);
+		paraArray = collection.GetAllParagraphsByNumbering(numPr);
+		assert.strictEqual(paraArray.length, 1, "Remove numbering link from style and check numbering collection");
+		assert.ok(-1 === paraArray.indexOf(p2), "Check that paragraph with this style is not in the collection");
+		assert.strictEqual(p2.GetNumberingText(false), "", "Check that there is no numbering text for paragraph " + 1);
+		
+		logicDocument.RemoveFromContent(0, 1);
+		assert.strictEqual(p1.IsUseInDocument(), false, "Remove first paragraph and check if it is not present in the document");
+		paraArray = collection.GetAllParagraphsByNumbering(numPr);
+		assert.strictEqual(paraArray.length, 0, "Remove first paragraph and check numbering collection");
+		assert.ok(-1 === paraArray.indexOf(p1), "Check that removed paragraph is not in the collection");
+	});
 
 });

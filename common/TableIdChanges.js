@@ -32,12 +32,6 @@
 
 "use strict";
 
-/**
- * User: Ilja.Kirillov
- * Date: 26.10.2016
- * Time: 18:53
- */
-
 (/**
  * @param {Window} window
  * @param {undefined} undefined

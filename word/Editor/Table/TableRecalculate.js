@@ -2420,6 +2420,11 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         var BeforeInfo  = Row.Get_Before();
         var AfterInfo   = Row.Get_After();
         var CurGridCol  = BeforeInfo.GridBefore;
+		
+		// Данная ширина используется для проверки влезает ли строка на страницу, т.к. если данная строка последняя
+		// и нужно нарисовать границу у данной строки, то мы можем не убраться именно из-за толщины нижней границы
+		// MaxBotBorder - это расчитанная ширина нижней границы строки, если не учитывать разбивку на страницы
+		let rowMaxBotBorder = 0;
 
         var nMaxTopBorder = MaxTopBorder[CurRow];
         if (CurRow === FirstRow && nHeaderMaxTopBorder > 0)
@@ -2630,6 +2635,13 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
                 CurGridCol += GridSpan;
                 continue;
             }
+			
+			if (null === CellSpacing)
+			{
+				let bottomBorder = this.private_ResolveBordersConflict(Cell.GetBottomBorder(), TableBorders.Bottom, false, true);
+				if (!bottomBorder.IsNone() && rowMaxBotBorder < bottomBorder.GetSize())
+					rowMaxBotBorder = bottomBorder.GetSize();
+			}
 
             bAllCellsVertical = false;
 
@@ -2754,9 +2766,12 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
         // Если в строке все ячейки с вертикальным выравниванием
         if (bAllCellsVertical && Asc.linerule_Auto === RowH.HRule)
             this.TableRowsBottom[CurRow][CurPage] = Y + 4.5 + this.MaxBotMargin[CurRow] + MaxTopMargin;
-
-        if ((Asc.linerule_AtLeast === RowH.HRule || Asc.linerule_Exact == RowH.HRule) && Y + RowHValue > Y_content_end && ((0 === CurRow && 0 === CurPage && null !== this.Get_DocumentPrev() && !this.Parent.IsFirstElementOnPage(this.private_GetRelativePageIndex(CurPage), this.GetIndex())) || CurRow != FirstRow))
-        {
+		
+		if ((Asc.linerule_AtLeast === RowH.HRule || Asc.linerule_Exact === RowH.HRule)
+			&& AscCommon.MMToTwips(Y + RowHValue + rowMaxBotBorder, 1) >= AscCommon.MMToTwips(Y_content_end, -1)
+			&& ((0 === CurRow && 0 === CurPage && null !== this.Get_DocumentPrev() && !this.Parent.IsFirstElementOnPage(this.private_GetRelativePageIndex(CurPage), this.GetIndex()))
+				|| CurRow !== FirstRow))
+		{
             bNextPage = true;
 
             for ( var CurCell = 0; CurCell < CellsCount; CurCell++ )
@@ -3021,7 +3036,10 @@ CTable.prototype.private_RecalculatePage = function(CurPage)
 
 		// TODO: улучшить проверку на высоту строки (для строк разбитых на страницы)
 		// Условие Y + RowHValue < Y_content_end добавлено из-за сносок.
-		if (false === bNextPage && (Asc.linerule_AtLeast === RowH.HRule || Asc.linerule_Exact === RowH.HRule) && CellHeight < RowHValue && (nFootnotesHeight < 0.001 || Y + RowHValue < Y_content_end))
+		if (false === bNextPage
+			&& (Asc.linerule_AtLeast === RowH.HRule || Asc.linerule_Exact === RowH.HRule)
+			&& CellHeight < RowHValue
+			&& (nFootnotesHeight < 0.001 || Y + RowHValue + rowMaxBotBorder < Y_content_end))
 		{
 			CellHeight                            = RowHValue;
 			this.TableRowsBottom[CurRow][CurPage] = Y + CellHeight;
@@ -3545,6 +3563,14 @@ CTablePage.prototype.Shift = function(Dx, Dy)
     this.XLimit += Dx;
     this.YLimit += Dy;
     this.Bounds.Shift(Dx, Dy);
+};
+CTablePage.prototype.GetFirstRow = function()
+{
+	return this.FirstRow;
+};
+CTablePage.prototype.GetLastRow = function()
+{
+	return this.LastRow;
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Класс CTableRecalcInfo

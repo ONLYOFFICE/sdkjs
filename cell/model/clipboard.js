@@ -409,7 +409,7 @@
 			}
 		};
 
-		Clipboard.prototype.pasteData = function (ws, _format, data1, data2, text_data, bIsSpecialPaste, doNotShowButton, isPasteAll) {
+		Clipboard.prototype.pasteData = function (ws, _format, data1, data2, text_data, bIsSpecialPaste, doNotShowButton, isPasteAll, callback) {
 			var t = this;
 			var wb = window["Asc"]["editor"].wb;
 			//if open range dialog - return
@@ -460,7 +460,7 @@
 							this._pasteTextInCellEditor(text_data || data1.innerText);
 						}
 					} else {
-						t.pasteProcessor.editorPasteExec(ws, data1);
+						t.pasteProcessor.editorPasteExec(ws, data1, null, callback);
 					}
 
 					break;
@@ -1607,6 +1607,7 @@
 			this.fontsNew = {};
 			this.oImages = {};
 			this.multipleSettings = null;
+			this.pasteCallBack = null;
 		}
 		
 		PasteProcessorExcel.prototype = {
@@ -1777,26 +1778,24 @@
 			},
 
 			_readExcelBinary: function(base64, tempWorkbook, selectAllSheet) {
-				var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
+				let oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
 				oBinaryFileReader.InitOpenManager.copyPasteObj.selectAllSheet = selectAllSheet;
-				var t = this;
-				var aPastedImages;
+				let t = this;
+				let aPastedImages;
 
 				AscFormat.ExecuteNoHistory(function(){
 					pptx_content_loader.Start_UseFullUrl();
 					pptx_content_loader.Reader.ClearConnectedObjects();
 					oBinaryFileReader.Read(base64, tempWorkbook);
 
-					//вставка мультиселекта
-					//TODO если вставляем мультиселект в мультиселект - нужно выдать ошибку
-					if (tempWorkbook.aWorksheets[0].selectionRange.ranges.length > 1) {
-						//поскольку вставка должна быть только с равным количество строк/столбцов
-						//и между диапазонами должны быть только стоки/столбцу, то -> удаляем лишние строки/столбцы
-						var pastedWorksheet = tempWorkbook.aWorksheets[0];
-						var _ranges = pastedWorksheet.selectionRange.ranges;
-						var byCol = null;
-						
-						
+					//paste multiselect
+					//TODO if paste multiselect into multiselect - we must show error
+					let pastedWorksheet = tempWorkbook.aWorksheets && tempWorkbook.aWorksheets[0];
+					let _ranges = pastedWorksheet && pastedWorksheet.selectionRange && pastedWorksheet.selectionRange.ranges;
+					if (_ranges && _ranges.length > 1) {
+						//paste - should only be with an equal number of rows/columns
+						//there should be only rows/columns between the ranges, then -> delete the extra rows/columns
+						let byCol = null;
 						if (_ranges[0].r1 === _ranges[1].r1 && _ranges[0].r2 === _ranges[1].r2) {
 							byCol = false;
 						} else if (_ranges[0].c1 === _ranges[1].c1 && _ranges[0].c2 === _ranges[1].c2) {
@@ -1805,15 +1804,15 @@
 
 						_ranges.sort(function sortArr(a, b) {
 							if (byCol) {
-								a.c1 > b.c1 ? -1 : 1;
+								return a.c1 > b.c1 ? -1 : 1;
 							} else {
-								a.r1 > b.r1 ? -1 : 1;
+								return a.r1 > b.r1 ? -1 : 1;
 							}
 						});
 						
 						
-						var diff = 0;
-						for (var i = 1; i < _ranges.length; i++) {
+						let diff = 0;
+						for (let i = 1; i < _ranges.length; i++) {
 							if (byCol) {
 								if (_ranges[i - 1].r2 + 1 !== _ranges[i].r1) {
 									pastedWorksheet.removeRows(_ranges[i - 1].r2 + 1 - diff, _ranges[i].r1 - 1 - diff);
@@ -1829,7 +1828,7 @@
 						
 						if (diff !== 0) {
 							AscCommonExcel.executeInR1C1Mode(false, function () {
-								var pasteRange = AscCommonExcel.g_oRangeCache.getAscRange(oBinaryFileReader.InitOpenManager.copyPasteObj.activeRange);
+								let pasteRange = AscCommonExcel.g_oRangeCache.getAscRange(oBinaryFileReader.InitOpenManager.copyPasteObj.activeRange);
 								if (pasteRange) {
 									pasteRange = pasteRange.clone();
 									if (byCol) {
@@ -2118,7 +2117,7 @@
 
 					//перебираем шрифты
 					for (var i in oThis.oFonts) {
-						fonts.push(new AscFonts.CFont(i, 0, "", 0));
+						fonts.push(new AscFonts.CFont(i));
 					}
 				};
 
@@ -2136,7 +2135,7 @@
 					}
 
 					for (i in font_map) {
-						fonts.push(new AscFonts.CFont(i, 0, "", 0));
+						fonts.push(new AscFonts.CFont(i));
 					}
 
 					arr_Images = objects.arrImages;
@@ -2731,7 +2730,7 @@
 				oPasteFromBinaryWord._paste(ws, {content: [drawingObject.graphicObject.graphicObject]});
 			},
 
-			editorPasteExec: function (worksheet, node, isText) {
+			editorPasteExec: function (worksheet, node, isText, cb) {
 				if (node === undefined) {
 					return;
 				}
@@ -2765,6 +2764,8 @@
 						node = binaryResult;
 					}
 				}
+
+				this.pasteCallBack = cb;
 
 				this.activeRange = worksheet.model.selectionRange.getLast().clone();
 				worksheet.workbook.handlers.trigger("cleanCopyData", true);
@@ -4039,9 +4040,12 @@
 				paragraph.elem.CompiledPr.NeedRecalc = true;
 				var paraPr = paragraph.elem.Get_CompiledPr();
 
-				var firstLine = paraPr && paraPr.ParaPr && paraPr.ParaPr.Ind && paraPr.ParaPr.Ind.FirstLine;
+				var firstLine = paraPr && paraPr.ParaPr && paraPr.ParaPr.Ind && paraPr.ParaPr.Ind.Left;
 				if (firstLine) {
 					oNewItem.indent = parseInt(firstLine / AscCommon.koef_mm_to_indent);
+					if (oNewItem.indent < 0) {
+						oNewItem.indent = null;
+					}
 				}
 
 				//горизонтальное выравнивание

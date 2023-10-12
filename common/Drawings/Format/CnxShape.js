@@ -565,7 +565,7 @@
         if(AscFormat.isRealNumber(oPr.stCnxId)){
             oStartSp = oObjectsMap[oPr.stCnxId];
             if(AscCommon.isRealObject(oStartSp)){
-                aCnx = oStartSp.getGeom().cnxLstInfo;
+                aCnx = oStartSp.getTrackGeometry().cnxLstInfo;
                 if(aCnx) {
                     oCnx = aCnx[oPr.stCnxIdx];
                 }
@@ -585,7 +585,7 @@
         if(AscFormat.isRealNumber(oPr.endCnxId)){
             oEndSp = oObjectsMap[oPr.endCnxId];
             if(AscCommon.isRealObject(oEndSp)){
-                aCnx = oEndSp.getGeom().cnxLstInfo;
+                aCnx = oEndSp.getTrackGeometry().cnxLstInfo;
                 if(aCnx) {
                     oCnx = aCnx[oPr.endCnxIdx];
                 }
@@ -683,7 +683,7 @@
                 var _oCnxInfo;
                 var _groupTransform;
                 if(oBeginDrawing){
-                    _oCnxInfo = oBeginDrawing.getGeom().cnxLst[this.getStCxnIdx()];
+                    _oCnxInfo = oBeginDrawing.getTrackGeometry().cnxLst[this.getStCxnIdx()];
                     if(_oCnxInfo){
                         _spX = oBeginDrawing.transform.TransformPointX(_oCnxInfo.x, _oCnxInfo.y);
                         _spY = oBeginDrawing.transform.TransformPointY(_oCnxInfo.x, _oCnxInfo.y);
@@ -693,7 +693,7 @@
                     }
                 }
                 else {
-                    _oCnxInfo = oEndDrawing.getGeom().cnxLst[this.getEndCxnIdx()];
+                    _oCnxInfo = oEndDrawing.getTrackGeometry().cnxLst[this.getEndCxnIdx()];
                     if(_oCnxInfo){
                         _spX = oEndDrawing.transform.TransformPointX(_oCnxInfo.x, _oCnxInfo.y);
                         _spY = oEndDrawing.transform.TransformPointY(_oCnxInfo.x, _oCnxInfo.y);

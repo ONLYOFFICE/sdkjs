@@ -193,8 +193,10 @@
 		CImageShape.prototype.getWatermarkProps = function () {
 			var oProps = new Asc.CAscWatermarkProperties();
 			oProps.put_Type(Asc.c_oAscWatermarkType.Image);
+			oProps.setXfrmRot(AscFormat.normalizeRotate(this.getXfrmRot() || 0));
 			oProps.put_ImageUrl2(this.blipFill.RasterImageId);
 			oProps.put_Scale(-1);
+			oProps.put_ImageSize(this.getXfrmExtX() * 36000 + 0.5 >> 0, this.getXfrmExtY() * 36000 + 0.5 >> 0);
 			var oApi;
 			if (window["Asc"] && window["Asc"]["editor"]) {
 				oApi = window["Asc"]["editor"];
@@ -279,6 +281,7 @@
 		CImageShape.prototype.convertToWord = function (document) {
 			this.setBDeleted(true);
 			var oCopy = this.copy(undefined);
+			oCopy.removePlaceholder();
 			oCopy.setBDeleted(false);
 			return oCopy;
 		};
@@ -591,7 +594,6 @@
 			}
 			graphics.reset();
 			graphics.SetIntegerGrid(true);
-			this.drawAnimLabels && this.drawAnimLabels(graphics);
 		};
 
 
@@ -833,15 +835,18 @@
 				}
 			}
 		};
-
-
 		CImageShape.prototype.pasteFormatting = function (oFormatData) {
 			if (!oFormatData) {
 				return;
 			}
 			this.pasteDrawingFormatting(oFormatData.Drawing);
 		};
-
+		CImageShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate, oMapPaired) {
+			return AscFormat.CShape.prototype.compareForMorph.call(this, oDrawingToCheck, oCurCandidate, oMapPaired);
+		};
+		CImageShape.prototype.getText = function() {
+			return null;
+		};
 		function CreateBrushFromBlipFill(oBlipFill) {
 			if (!oBlipFill) {
 				return null;

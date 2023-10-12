@@ -183,6 +183,15 @@ var c_oAscError = Asc.c_oAscError;
 	spreadsheet_api.prototype["asc_isOffline"] = spreadsheet_api.prototype.asc_isOffline;
 	spreadsheet_api.prototype["asc_addImage"] = spreadsheet_api.prototype.asc_addImage;
 
+	spreadsheet_api.prototype["getAdditionalSaveParams"] = function()
+	{
+		var printOptionsObj = asc["editor"].getPrintOptionsJson();
+		printOptionsObj["documentLayout"] = { "openedAt" : asc["editor"].openedAt };
+		printOptionsObj["locale"] = asc["editor"].asc_getLocale();
+		printOptionsObj["translate"] = AscCommon.translateManager.mapTranslate;
+		return printOptionsObj;
+	};
+
 	/////////////////////////////////////////////////////////
 	//////////////        CHANGES       /////////////////////
 	/////////////////////////////////////////////////////////
@@ -247,10 +256,14 @@ var c_oAscError = Asc.c_oAscError;
 		{
 			try
 			{
-				var printOptionsObj = asc["editor"].getPrintOptionsJson();
-				printOptionsObj["documentLayout"] = { "openedAt" : asc["editor"].openedAt };
-				printOptionsObj["locale"] = asc["editor"].asc_getLocale();
-				printOptionsObj["translate"] = AscCommon.translateManager.mapTranslate;
+				var printOptionsObj = asc["editor"]["getAdditionalSaveParams"]();
+
+				if (options && options.advancedOptions)
+				{
+					let nativeOptions = options.advancedOptions.asc_getNativeOptions();
+					if (nativeOptions)
+						printOptionsObj["nativeOptions"] = nativeOptions;
+				}
 
 				printOptions = JSON.stringify(printOptionsObj);
 			}

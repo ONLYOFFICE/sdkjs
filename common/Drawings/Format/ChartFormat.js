@@ -2329,6 +2329,13 @@
     CBaseChartObject.prototype.isObjectInSmartArt = function() {
         return false;
     };
+    CBaseChartObject.prototype.getParentObjects = function() {
+        let oChartSpace = this.getChartSpace();
+        if(oChartSpace) {
+            return oChartSpace.getParentObjects();
+        }
+        return null;
+    };
 
     function getMinMaxFromArrPoints(aPoints) {
         if(Array.isArray(aPoints) && aPoints.length > 0) {
@@ -2615,6 +2622,7 @@
     };
     CDLbl.prototype.hitInPath = CShape.prototype.hitInPath;
     CDLbl.prototype.hitInInnerArea = CShape.prototype.hitInInnerArea;
+    CDLbl.prototype.getGeometry = CShape.prototype.getGeometry;
     CDLbl.prototype.hitInBoundingRect = CShape.prototype.hitInBoundingRect;
     CDLbl.prototype.hitInTextRect = function(x, y) {
         var content = this.getDocContent && this.getDocContent();
@@ -4245,7 +4253,11 @@
         if(!this.parent) {
             return false;
         }
-        return this.parent.varyColors === true;
+        if(this.getObjectType() === AscDFH.historyitem_type_RadarSeries) {
+            return false;
+        }
+        const bVaryFlag = (this.parent.varyColors === true);
+        return bVaryFlag;
     };
     CSeriesBase.prototype.getDataStyleEntry = function(oChartStyle) {
         return oChartStyle.getDataEntry(this);
@@ -4404,6 +4416,12 @@
 	CSeriesBase.prototype.checkSeriesAfterChangeType = function() {
 
 	};
+    CSeriesBase.prototype.recalculateTrendline = function() {
+        let oTrendline = this.trendline;
+        if(oTrendline) {
+            oTrendline.recalculate();
+        }
+    };
     CSeriesBase.prototype.asc_getName = function() {
         var oThis = this;
         return AscFormat.ExecuteNoHistory(function() {
@@ -5154,7 +5172,8 @@
     CPlotArea.prototype.getFullFlipH = CShape.prototype.getFullFlipH;
     CPlotArea.prototype.getFullFlipV = CShape.prototype.getFullFlipV;
     CPlotArea.prototype.getAspect = CShape.prototype.getAspect;
-    CPlotArea.prototype.getGeom = CShape.prototype.getGeom;
+    CPlotArea.prototype.getGeometry = CShape.prototype.getGeometry;
+    CPlotArea.prototype.getTrackGeometry = CShape.prototype.getTrackGeometry;
     CPlotArea.prototype.convertPixToMM = function(pix) {
         var oChartSpace = this.getChartSpace();
         if(oChartSpace) {
@@ -5164,6 +5183,7 @@
     };
     CPlotArea.prototype.hitInBoundingRect = CShape.prototype.hitInBoundingRect;
     CPlotArea.prototype.hitInInnerArea = CShape.prototype.hitInInnerArea;
+    CPlotArea.prototype.getGeometry = CShape.prototype.getGeometry;
     CPlotArea.prototype.hitInPath = CShape.prototype.hitInPath;
     CPlotArea.prototype.checkHitToBounds = function(x, y) {
         CDLbl.prototype.checkHitToBounds.call(this, x, y);
@@ -8366,8 +8386,8 @@
 
     InitClass(CDateAx, CAxisBase, AscDFH.historyitem_type_DateAx);
     CDateAx.prototype.getMenuProps = function() {
-        var oProps = CCatAx.prototype.getMenuProps.call(this);
-        oProps.putAxisType(c_oAscAxisType.date);
+        const oProps = CCatAx.prototype.getMenuProps.call(this);
+        //oProps.putAxisType(c_oAscAxisType.date);
         return oProps;
     };
     CDateAx.prototype.setMenuProps = CCatAx.prototype.setMenuProps;
@@ -10100,9 +10120,11 @@
     CLegend.prototype.getFullFlipH = CShape.prototype.getFullFlipH;
     CLegend.prototype.getFullFlipV = CShape.prototype.getFullFlipV;
     CLegend.prototype.getAspect = CShape.prototype.getAspect;
-    CLegend.prototype.getGeom = CShape.prototype.getGeom;
+    CLegend.prototype.getGeometry = CShape.prototype.getGeometry;
+    CLegend.prototype.getTrackGeometry = CShape.prototype.getTrackGeometry;
     CLegend.prototype.hitInBoundingRect = CShape.prototype.hitInBoundingRect;
     CLegend.prototype.hitInInnerArea = CShape.prototype.hitInInnerArea;
+    CLegend.prototype.getGeometry = CShape.prototype.getGeometry;
     CLegend.prototype.hitInPath = CShape.prototype.hitInPath;
     CLegend.prototype.Refresh_RecalcData = function() {
         this.Refresh_RecalcData2();
@@ -11272,9 +11294,9 @@
         oDataRefs.setRef(this);
         return oDataRefs;
     };
-    CChartRefBase.prototype.handleOnMoveRange = function(oRangeFrom, oRangeTo) {
+    CChartRefBase.prototype.handleOnMoveRange = function(oRangeFrom, oRangeTo, isResize) {
         var oDataRefs = this.getDataRefs();
-        oDataRefs.move(oRangeFrom, oRangeTo);
+        oDataRefs.move(oRangeFrom, oRangeTo, isResize);
         var sFormula = oDataRefs.getFormula();
         if(typeof sFormula === "string" && sFormula.length > 0) {
             this.setF(sFormula);
@@ -13573,6 +13595,7 @@
     InitClass(CTitle, CBaseChartObject, AscDFH.historyitem_type_Title);
     CTitle.prototype.hitInPath = CShape.prototype.hitInPath;
     CTitle.prototype.hitInInnerArea = CShape.prototype.hitInInnerArea;
+    CTitle.prototype.getGeometry = CShape.prototype.getGeometry;
     CTitle.prototype.hitInBoundingRect = CShape.prototype.hitInBoundingRect;
     CTitle.prototype.hitInTextRect = CDLbl.prototype.hitInTextRect;
     CTitle.prototype.recalculateGeometry = CShape.prototype.recalculateGeometry;
@@ -13703,7 +13726,7 @@
                 }
                 if(bDocument && para_drawing instanceof AscCommonWord.ParaDrawing) {
 
-                    var hdr_ftr = para_drawing.DocumentContent.IsHdrFtr(true);
+                    var hdr_ftr = para_drawing.isHdrFtrChild(true);
                     if(hdr_ftr) {
                         hdr_ftr.Content.SetDocPosType(docpostype_DrawingObjects);
                         hdr_ftr.Set_CurrentElement(bUpdate);
@@ -14104,6 +14127,16 @@
             return;
         }
         this.applyStyleEntry(oChartStyle.trendline, oColors.generateColors(1), 0, bReset);
+    };
+    CTrendLine.prototype.recalculate = function() {
+        this.pen = null;
+        if(this.spPr && this.spPr.ln && this.spPr.ln.Fill) {
+            let oChartSpace = this.getChartSpace();
+            if(oChartSpace) {
+                this.pen = this.spPr.ln.createDuplicate();
+                this.pen.Fill.check(oChartSpace.Get_Theme(), oChartSpace.Get_ColorMap())
+            }
+        }
     };
 
     function CUpDownBars() {
@@ -15673,6 +15706,7 @@
     }
 
     CalcLegendEntry.prototype.updatePosition = CShape.prototype.updatePosition;
+    CalcLegendEntry.prototype.getGeometry = CShape.prototype.getGeometry;
     CalcLegendEntry.prototype.getChartSpace = function() {
         return this.chart;
     };
@@ -15762,6 +15796,7 @@
     }
 
     CompiledMarker.prototype.draw = CShape.prototype.draw;
+    CompiledMarker.prototype.getGeometry = CShape.prototype.getGeometry;
     CompiledMarker.prototype.check_bounds = CShape.prototype.check_bounds;
     CompiledMarker.prototype.isEmptyPlaceholder = function() {
         return false;
@@ -16713,6 +16748,17 @@
         }
         return false;
     };
+    CDataRefs.prototype.hasIntersectionForInsertColRow = function(oRange, isInsertCol) {
+        if(this.aRefs.length === 0) {
+            return false;
+        }
+        for(var nRange = 0; nRange < this.aRefs.length; ++nRange) {
+            if(!this.aRefs[nRange].isIntersectForInsertColRow(oRange, isInsertCol)) {
+                return false;
+            }
+        }
+        return true;
+    };
     CDataRefs.prototype.isInside = function(oRange) {
         if(this.aRefs.length === 0) {
             return false;
@@ -16742,16 +16788,23 @@
             }
         }
     };
-    CDataRefs.prototype.move = function(oRangeFrom, oRangeTo) {
+    CDataRefs.prototype.move = function(oRangeFrom, oRangeTo, isResize) {
         var nDiffR = oRangeTo.bbox.r1 - oRangeFrom.bbox.r1;
         var nDiffC = oRangeTo.bbox.c1 - oRangeFrom.bbox.c1;
+        var nDIffCRange = oRangeTo.bbox.c2 - oRangeTo.bbox.c1;
+        var nDIffRRange = oRangeTo.bbox.r2 - oRangeTo.bbox.r1;
         for(var nRef = 0; nRef < this.aRefs.length; ++nRef) {
             var oRef = this.aRefs[nRef];
             if(oRef.worksheet === oRangeFrom.worksheet) {
-                oRef.bbox.r1 += nDiffR;
                 oRef.bbox.r2 += nDiffR;
-                oRef.bbox.c1 += nDiffC;
                 oRef.bbox.c2 += nDiffC;
+                if (isResize) {
+                    oRef.bbox.r1 += nDiffR - nDIffRRange;
+                    oRef.bbox.c1 += nDiffC - nDIffCRange;
+                } else {
+                    oRef.bbox.r1 += nDiffR;
+                    oRef.bbox.c1 += nDiffC;
+                }
             }
         }
     };
@@ -16768,6 +16821,13 @@
     CDataRefs.prototype.collectRefsInsideRange = function(oRange, aRefs) {
         if(this.ref) {
             if(this.isInside(oRange)) {
+                aRefs.push(this.ref);
+            }
+        }
+    };
+    CDataRefs.prototype.collectRefsIntersectsForInsertColRow = function(oRange, aRefs, isInsertCol) {
+        if(this.ref) {
+            if(this.hasIntersectionForInsertColRow(oRange, isInsertCol)) {
                 aRefs.push(this.ref);
             }
         }
@@ -16974,6 +17034,9 @@
         this.tx.collectIntersectionRefs(aRanges, aCollectedRefs);
         this.errBarsMinus.collectIntersectionRefs(aRanges, aCollectedRefs);
         this.errBarsPlus.collectIntersectionRefs(aRanges, aCollectedRefs);
+    };
+    CSeriesDataRefs.prototype.collectIntersectionRefsForInsertColRow = function(oRange, aCollectedRefs, isInsertCol) {
+        this.val.collectRefsIntersectsForInsertColRow(oRange, aCollectedRefs, isInsertCol);
     };
     CSeriesDataRefs.prototype.getAscSeries = function() {
         var oSeria = new AscFormat.asc_CChartSeria();
@@ -17787,6 +17850,11 @@
         }
         for(var nLblRef = 0; nLblRef < this.labelsRefs.length; ++nLblRef) {
             this.labelsRefs[nLblRef].collectRefsInsideRange(oRange, aRefs);
+        }
+    };
+    CChartDataRefs.prototype.collectRefsInsideRangeForInsertColRow = function(oRange, aRefs, isInsertCol) {
+        for(var nSeries = 0; nSeries < this.seriesRefs.length; ++nSeries) {
+            this.seriesRefs[nSeries].collectIntersectionRefsForInsertColRow(oRange, aRefs, isInsertCol);
         }
     };
     CChartDataRefs.prototype.collectIntersectionRefs = function(aRanges, aCollectedRefs) {

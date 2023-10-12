@@ -54,6 +54,8 @@ var UndoRedoData_Layout = AscCommonExcel.UndoRedoData_Layout;
 var c_oAscCustomAutoFilter = Asc.c_oAscCustomAutoFilter;
 var c_oAscAutoFilterTypes = Asc.c_oAscAutoFilterTypes;
 
+let cDate = Asc.cDate;
+
 var c_maxOutlineLevel = 7;
 
 var g_oColorManager = null;
@@ -6121,6 +6123,18 @@ StyleManager.prototype =
 	};
 	Hyperlink.prototype.getHyperlinkType = function () {
 		return null !== this.Hyperlink ? Asc.c_oAscHyperlinkType.WebLink : Asc.c_oAscHyperlinkType.RangeLink;
+
+		//for local file
+		/*var res = null;
+		if (null !== this.Hyperlink) {
+			//либо гиперссылка, либо ссылка на локальный файл(отдельное поле не стал заводить, все будет в Hyperlink)
+			if (XRegExp.exec(this.Hyperlink, new XRegExp("([a-zA-Z]:)?(\\\\[a-zA-Z0-9_.-]+)+\\\\?"))) {
+				res = Asc.c_oAscHyperlinkType.FileLink;
+			} else {
+				res = Asc.c_oAscHyperlinkType.WebLink;
+			}
+		}
+		return null !== res ? res : Asc.c_oAscHyperlinkType.RangeLink;*/
 	};
 	Hyperlink.prototype.getType = function () {
 		return UndoRedoDataTypes.Hyperlink;
@@ -9227,22 +9241,22 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	AutoFilter.prototype.hiddenByAnotherFilter = function (worksheet, cellId, row, col, opt_columnsFilter) {
-		var result = false;
+		let result = false;
 
-		var filterColumns = opt_columnsFilter ? opt_columnsFilter : this.FilterColumns;
+		let filterColumns = opt_columnsFilter ? opt_columnsFilter : this.FilterColumns;
 		if (filterColumns) {
-			for (var j = 0; j < filterColumns.length; j++) {
-				var filterColumn = opt_columnsFilter ? filterColumns[j].filter : filterColumns[j];
-				var colId = filterColumn.ColId;
+			for (let j = 0; j < filterColumns.length; j++) {
+				let filterColumn = opt_columnsFilter ? filterColumns[j].filter : filterColumns[j];
+				let colId = filterColumn.ColId;
 				if (colId !== cellId) {
-					var cell = worksheet.getCell3(row, colId + col);
-					var isDateTimeFormat = cell.getType() === window["AscCommon"].CellValueType.Number && cell.getNumFormat().isDateTimeFormat();
-					if (isDateTimeFormat) {
-						isDateTimeFormat = cell.getNumFormat().getType() === Asc.c_oAscNumFormatType.Data;
-					}
+					let cell = worksheet.getCell3(row, colId + col);
+					let cellFormat = cell.getNumFormat();
+					let isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() &&
+						cell.getType() === window["AscCommon"].CellValueType.Number &&
+						cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
 
-					var isNumberFilter = filterColumn.isApplyCustomFilter();
-					var val = (isDateTimeFormat || isNumberFilter) ? cell.getValueWithoutFormat() : cell.getValueWithFormat();
+					let isNumberFilter = filterColumn.isApplyCustomFilter();
+					let val = (isDateTimeFormat || isNumberFilter) ? cell.getValueWithoutFormat() : cell.getValueWithFormat();
 					if (filterColumn.isHideValue(val, isDateTimeFormat, null, cell)) {
 						result = true;
 						break;
@@ -9279,14 +9293,13 @@ function RangeDataManagerElem(bbox, data)
 			} else {
 				if (!isHidden) {
 					var cell = worksheet.getCell3(i, colId + this.Ref.c1);
-					var isDateTimeFormat = cell.getType() === window["AscCommon"].CellValueType.Number && cell.getNumFormat().isDateTimeFormat();
+					let cellFormat = cell.getNumFormat();
+					let isDateTimeFormat = cellFormat && cellFormat.isDateTimeFormat() &&
+						cell.getType() === window["AscCommon"].CellValueType.Number &&
+						cellFormat.getType() !== Asc.c_oAscNumFormatType.Time;
 					var isNumberFilter = false;
 					if (newFilterColumn.CustomFiltersObj || newFilterColumn.Top10 || newFilterColumn.DynamicFilter) {
 						isNumberFilter = true;
-					}
-
-					if (isDateTimeFormat) {
-						isDateTimeFormat = cell.getNumFormat().getType() === Asc.c_oAscNumFormatType.Data;
 					}
 
 					var currentValue = (isDateTimeFormat || isNumberFilter) ? cell.getValueWithoutFormat() : cell.getValueWithFormat();
@@ -10022,7 +10035,7 @@ function RangeDataManagerElem(bbox, data)
 			this.Filters._initLowerCaseValues();
 			res = this.Filters.isHideValue(val.toLowerCase(), isDateTimeFormat);
 		} else if (this.CustomFiltersObj) {
-			res = this.CustomFiltersObj.isHideValue(val, isLabelFilter);
+			res = this.CustomFiltersObj.isHideValue(val, isLabelFilter, cell);
 		} else if (this.Top10) {
 			res = this.Top10.isHideValue(val, top10Length);
 		} else if (this.ColorFilter) {
@@ -10042,6 +10055,37 @@ function RangeDataManagerElem(bbox, data)
 	};
 	FilterColumn.prototype.createFilter = function (obj) {
 
+
+		//распознаем формат
+		/*var res = AscCommon.g_oFormatParser.parse(val);
+		if(null != res)
+		{
+			//Сравниваем с текущим форматом, если типы совпадают - меняем только значение ячейки
+			var nFormatType = oNumFormat.getType();
+			if(!((c_oAscNumFormatType.Percent == nFormatType && res.bPercent) ||
+				(c_oAscNumFormatType.Currency == nFormatType && res.bCurrency) ||
+				(c_oAscNumFormatType.Date == nFormatType && res.bDate) ||
+				(c_oAscNumFormatType.Time == nFormatType && res.bTime)) && res.format != oNumFormat.sFormat) {
+				this.setNumFormat(res.format);
+			}
+			this.setTypeInternal(CellValueType.Number);
+			this.setValueNumberInternal(res.value);
+		}
+		else
+		{
+			this.setTypeInternal(CellValueType.String);
+			//проверяем QuotePrefix
+			if(val.length > 0 && "'" == val[0])
+			{
+				this.setQuotePrefix(true);
+				val = val.substring(1);
+			}
+			this.setValueTextInternal(val);
+		}*/
+
+
+
+
 		var allFilterOpenElements = false;
 		var newFilter;
 
@@ -10052,6 +10096,7 @@ function RangeDataManagerElem(bbox, data)
 			}
 			case c_oAscAutoFilterTypes.CustomFilters: {
 				obj.filter.filter.check();
+				obj.filter.filter.correctFromInterface();
 				this.CustomFiltersObj = obj.filter.filter.clone();
 				break;
 			}
@@ -10376,7 +10421,7 @@ function RangeDataManagerElem(bbox, data)
 						this.Blank = true;
 					} else {
 						var dateGroupItem = new DateGroupItem();
-						var autoFilterDateElem = new AutoFilterDateElem(obj.values[i].val, obj.values[i].val, 1);
+						var autoFilterDateElem = new AutoFilterDateElem(obj.values[i].val, obj.values[i].val, obj.values[i].dateTimeGrouping);
 						dateGroupItem.convertRangeToDateGroupItem(autoFilterDateElem);
 						autoFilterDateElem.convertDateGroupItemToRange(dateGroupItem);
 
@@ -10563,21 +10608,21 @@ DateGroupItem.prototype.convertRangeToDateGroupItem = function(range) {
 	var month = startUtcDate.month + 1;
 	var day = startUtcDate.d;
 	var hour = startUtcDate.hour;
-	var minute = startUtcDate.minute;
-	var second = startUtcDate.second;
+	var minute = startUtcDate.min;
+	var second = startUtcDate.sec;
 
 	this.DateTimeGrouping = range.dateTimeGrouping;
 
 	switch(this.DateTimeGrouping)
 	{
-		case 1://day
+		case Asc.EDateTimeGroup.datetimegroupDay://day
 		{
 			this.Year = year;
 			this.Month = month;
 			this.Day = day;
 			break;
 		}
-		case 2://hour
+		case Asc.EDateTimeGroup.datetimegroupHour://hour
 		{
 			this.Year = year;
 			this.Month = month;
@@ -10585,7 +10630,7 @@ DateGroupItem.prototype.convertRangeToDateGroupItem = function(range) {
 			this.Hour = hour;
 			break;
 		}
-		case 3://minute
+		case Asc.EDateTimeGroup.datetimegroupMinute://minute
 		{
 			this.Year = year;
 			this.Month = month;
@@ -10594,13 +10639,13 @@ DateGroupItem.prototype.convertRangeToDateGroupItem = function(range) {
 			this.Minute = minute;
 			break;
 		}
-		case 4://month
+		case Asc.EDateTimeGroup.datetimegroupMonth://month
 		{
 			this.Year = year;
 			this.Month = month;
 			break;
 		}
-		case 5://second
+		case Asc.EDateTimeGroup.datetimegroupSecond://second
 		{
 			this.Year = year;
 			this.Month = month;
@@ -10610,7 +10655,7 @@ DateGroupItem.prototype.convertRangeToDateGroupItem = function(range) {
 			this.Second = second;
 			break;
 		}
-		case 6://year
+		case Asc.EDateTimeGroup.datetimegroupYear://year
 		{
 			this.Year = year;
 			break;
@@ -10738,16 +10783,16 @@ CustomFilters.prototype.init = function(obj) {
 	this.And = !obj.isChecked;
 	this.CustomFilters = [];
 
-	if(obj.filter1 != undefined)
+	if(obj.filter1 != null)
 		this.CustomFilters[0] = new CustomFilter(obj.filter1, obj.valFilter1);
-	if(obj.filter2 != undefined)
+	if(obj.filter2 != null)
 		this.CustomFilters[1] = new CustomFilter(obj.filter2, obj.valFilter2);
 };
-CustomFilters.prototype.isHideValue = function(val, isLabelFilter){
+CustomFilters.prototype.isHideValue = function(val, isLabelFilter, cell){
 
 	var res = false;
-	var filterRes1 = this.CustomFilters[0] ? this.CustomFilters[0].isHideValue(val, isLabelFilter) : null;
-	var filterRes2 = this.CustomFilters[1] ? this.CustomFilters[1].isHideValue(val, isLabelFilter) : null;
+	var filterRes1 = this.CustomFilters[0] ? this.CustomFilters[0].isHideValue(val, isLabelFilter, cell) : null;
+	var filterRes2 = this.CustomFilters[1] ? this.CustomFilters[1].isHideValue(val, isLabelFilter, cell) : null;
 
 	if(!this.And && ((filterRes1 === null && filterRes2 === true || filterRes1 === true && filterRes2 === null || filterRes1 === true && filterRes2 === true)))
 		res = true;
@@ -10766,6 +10811,13 @@ CustomFilters.prototype.check = function () {
 	if(this.CustomFilters) {
 		for(var i = 0; i < this.CustomFilters.length; i++) {
 			this.CustomFilters[i].check();
+		}
+	}
+};
+CustomFilters.prototype.correctFromInterface = function () {
+	if(this.CustomFilters) {
+		for(var i = 0; i < this.CustomFilters.length; i++) {
+			this.CustomFilters[i].correctFromInterface();
 		}
 	}
 };
@@ -10822,11 +10874,11 @@ CustomFilters.prototype.toXml = function (writer, name, ns, childns) {
 
 	writer.WriteXmlNodeEnd(ns + name);
 };
-CustomFilters.prototype.changeForInterface = function () {
+CustomFilters.prototype.changeForInterface = function (filterTypes) {
 	var res = this.clone();
 	if(res.CustomFilters) {
 		for(var i = 0; i < res.CustomFilters.length; i++) {
-			res.CustomFilters[i].changeForInterface();
+			res.CustomFilters[i].changeForInterface(filterTypes);
 		}
 	}
 	return res;
@@ -10874,7 +10926,7 @@ CustomFilter.prototype.init = function(operator, val) {
 	this.Operator = operator;
 	this.Val = val;
 };
-CustomFilter.prototype.isHideValue = function (val, isLabelFilter) {
+CustomFilter.prototype.isHideValue = function (val, isLabelFilter, cell) {
 
 	var result = false;
 	var isDigitValue = !isNaN(val);
@@ -10913,6 +10965,10 @@ CustomFilter.prototype.isHideValue = function (val, isLabelFilter) {
 			}
 		} else {
 			filterVal = isNaN(this.Val) ? this.Val.toLowerCase() : this.Val;
+		}
+
+		if (cell && c_oAscCustomAutoFilter.equals === this.Operator) {
+			val = cell.getValueWithFormat();
 		}
 
 		var trimVal = "string" === typeof(val) ? window["Asc"].trim(val) : val;
@@ -11055,7 +11111,12 @@ CustomFilter.prototype.asc_getOperator = function () { return this.Operator; };
 CustomFilter.prototype.asc_getVal = function () { return this.Val; };
 
 CustomFilter.prototype.asc_setOperator = function (val) { this.Operator = val; };
-CustomFilter.prototype.asc_setVal = function (val) { this.Val = val; };
+CustomFilter.prototype.asc_setVal = function (val) {
+
+
+
+	this.Val = val;
+};
 
 CustomFilter.prototype.check = function () {
 	if(c_oAscCustomAutoFilter.doesNotEqual === this.Operator) {
@@ -11084,7 +11145,27 @@ CustomFilter.prototype.check = function () {
 		this.Val = "*" + this.Val + "*";
 	}
 };
-
+CustomFilter.prototype.correctFromInterface = function () {
+	if (this.isNumberCustomFilterType()) {
+		if (!AscCommon.g_oFormatParser.isLocaleNumber(this.Val)) {
+			//try parse format and save without format
+			let resParse = AscCommon.g_oFormatParser.parse(this.Val);
+			if (resParse) {
+				this.Val = resParse.value + "";
+			}
+		}
+	}
+};
+CustomFilter.prototype.isNumberCustomFilterType = function () {
+	if (this.Operator === c_oAscCustomAutoFilter.isGreaterThan ||
+		this.Operator === c_oAscCustomAutoFilter.isGreaterThanOrEqualTo ||
+		this.Operator === c_oAscCustomAutoFilter.isLessThan ||
+		this.Operator === c_oAscCustomAutoFilter.isLessThanOrEqualTo ||
+		this.Operator === c_oAscCustomAutoFilter.doesNotEqual) {
+		return true;
+	}
+	return false;
+};
 CustomFilter.prototype._generateEmptyValueFilter = function () {
 	this.Operator = c_oAscCustomAutoFilter.doesNotEqual;
 	this.Val = " ";
@@ -11141,7 +11222,7 @@ CustomFilter.prototype.Read_FromBinary2 = function(reader) {
 		this.Val = reader.GetString2();
 	}
 };
-CustomFilter.prototype.changeForInterface = function() {
+CustomFilter.prototype.changeForInterface = function(filterTypes) {
 	if (!this.Val || this.Val.length <= 1) {
 		return;
 	}
@@ -11174,6 +11255,17 @@ CustomFilter.prototype.changeForInterface = function() {
 			}
 		}
 	}
+
+	//filterTypes
+	/*autoFilterObject.asc_setIsTextFilter(filterTypes.text);
+	autoFilterObject.asc_setIsDateFilter(filterTypes.date);
+	autoFilterObject.asc_setColorsFill(filterTypes.colors);
+	autoFilterObject.asc_setColorsFont(filterTypes.fontColors);*/
+	if (filterTypes && filterTypes.date && AscCommon.g_oFormatParser.isLocaleNumber(this.Val + "")) {
+		let api = Asc.editor || editor;
+		this.Val = api.asc_getLocaleExample("m/d/yyyy", this.Val);
+	}
+
 };
 
 var g_oDynamicFilter = {
@@ -11198,9 +11290,9 @@ DynamicFilter.prototype.getProperties = function() {
 };
 DynamicFilter.prototype.getProperty = function(nType) {
 	switch (nType) {
-		case this.Properties.Type: return this.Type; break;
-		case this.Properties.Val: return this.Val; break;
-		case this.Properties.MaxVal: return this.MaxVal; break;
+		case this.Properties.Type: return this.Type;
+		case this.Properties.Val: return this.Val;
+		case this.Properties.MaxVal: return this.MaxVal;
 	}
 	return null;
 };
@@ -11220,50 +11312,334 @@ DynamicFilter.prototype.clone = function() {
 };
 
 DynamicFilter.prototype.init = function(range) {
-	var res = null;
+	let val = null, maxVal;
 
-	switch(this.Type)
-	{
+	/*if (range) {
+		for (let i in Asc.c_oAscDynamicAutoFilter) {
+			if (i !== "aboveAverage" && i !== "belowAverage") {
+				this.Type = Asc.c_oAscDynamicAutoFilter[i];
+				this.init();
+			}
+		}
+	}*/
+
+	//by test:
+	//today -> 45049
+	let referenceValues = {};
+	referenceValues[Asc.c_oAscDynamicAutoFilter.lastMonth] = [45017, 45047];
+	referenceValues[Asc.c_oAscDynamicAutoFilter.lastQuarter] = [44927, 45017];
+	referenceValues[Asc.c_oAscDynamicAutoFilter.lastWeek] = [45039, 45046];
+	referenceValues[Asc.c_oAscDynamicAutoFilter.lastYear] = [44562, 44927];
+
+	referenceValues[Asc.c_oAscDynamicAutoFilter.nextMonth] = [45078, 45108];
+	referenceValues[Asc.c_oAscDynamicAutoFilter.nextQuarter] = [45108, 45200];
+	referenceValues[Asc.c_oAscDynamicAutoFilter.nextWeek] = [45053, 45060];
+	referenceValues[Asc.c_oAscDynamicAutoFilter.nextYear] = [45292, 45658];
+
+	referenceValues[Asc.c_oAscDynamicAutoFilter.thisMonth] = [45047, 45078];
+	referenceValues[Asc.c_oAscDynamicAutoFilter.thisQuarter] = [45017, 45108];
+	referenceValues[Asc.c_oAscDynamicAutoFilter.thisWeek] = [45046, 45053];
+	referenceValues[Asc.c_oAscDynamicAutoFilter.thisYear] = [44927, 45292];
+
+	referenceValues[Asc.c_oAscDynamicAutoFilter.today] = [45049, 45050];
+	referenceValues[Asc.c_oAscDynamicAutoFilter.tomorrow] = [45050, 45051];
+	referenceValues[Asc.c_oAscDynamicAutoFilter.yearToDate] = [44927, 45050];
+	referenceValues[Asc.c_oAscDynamicAutoFilter.yesterday] = [45048, 45049];
+
+
+	let _calcDateInterval = function (_diff) {
+		let today = new cDate().getCurrentDate();
+		let start, end;
+
+		if (isSimpleWeek) {
+			start = new cDate(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - today.getUTCDay() + _diff * 7);
+			//+1 -> ms excel
+			end = new cDate(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate() + 7 + 1);
+		} else if (isSimpleMonth) {
+			start = new cDate(today.getUTCFullYear(), today.getUTCMonth() + _diff, 1);
+			//+1 -> ms excel
+			end = new cDate(start.getUTCFullYear(), start.getUTCMonth() + 1 + 1, 1);
+		} else if (isSimpleQuarter) {
+			let quarter = Math.floor((today.getUTCMonth() / 3));
+			start = new cDate(today.getUTCFullYear(), quarter * 3 + _diff * 3, 1);
+			end = new cDate(start.getUTCFullYear(), start.getUTCMonth() + 3 + 1, 1);
+		} else if (isSimpleYear) {
+			start = new cDate(today.getUTCFullYear() + _diff, 0, 1);
+			//+1 -> ms excel
+			end = new cDate(start.getUTCFullYear() + 1, 11, 31 + 1);
+		}
+
+		val = start.getExcelDate(true);
+		maxVal = end.getExcelDate(true);
+	};
+
+	let oTypes = Asc.c_oAscDynamicAutoFilter;
+	let isSimpleWeek = this.Type === oTypes.lastWeek || this.Type === oTypes.nextWeek || this.Type === oTypes.thisWeek;
+	let isSimpleMonth = this.Type === oTypes.lastMonth || this.Type === oTypes.nextMonth || this.Type === oTypes.thisMonth;
+	let isSimpleQuarter = this.Type === oTypes.lastQuarter || this.Type === oTypes.nextQuarter || this.Type === oTypes.thisQuarter;
+	let isSimpleYear = this.Type === oTypes.lastYear || this.Type === oTypes.nextYear || this.Type === oTypes.thisYear;
+
+	switch (this.Type) {
 		case Asc.c_oAscDynamicAutoFilter.aboveAverage:
-		case Asc.c_oAscDynamicAutoFilter.belowAverage:
-		{
-			var summ = 0;
-			var counter = 0;
+		case Asc.c_oAscDynamicAutoFilter.belowAverage: {
+			let sum = 0;
+			let counter = 0;
 
-			range._foreachNoEmpty(function(cell){
-				var val = parseFloat(cell.getValueWithoutFormat());
+			range._foreachNoEmpty(function (cell) {
+				let cellVal = parseFloat(cell.getValueWithoutFormat());
 
-				if(!isNaN(val))
-				{
-					summ += parseFloat(val);
+				if (!isNaN(cellVal)) {
+					sum += parseFloat(cellVal);
 					counter++;
 				}
 
 			});
-			res = summ / counter;
+			val = sum / counter;
 
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.lastMonth:
+		case Asc.c_oAscDynamicAutoFilter.lastQuarter:
+		case Asc.c_oAscDynamicAutoFilter.lastWeek:
+		case Asc.c_oAscDynamicAutoFilter.lastYear: {
+			_calcDateInterval(-1);
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.nextMonth:
+		case Asc.c_oAscDynamicAutoFilter.nextQuarter:
+		case Asc.c_oAscDynamicAutoFilter.nextWeek:
+		case Asc.c_oAscDynamicAutoFilter.nextYear: {
+			_calcDateInterval(1);
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.thisMonth:
+		case Asc.c_oAscDynamicAutoFilter.thisQuarter:
+		case Asc.c_oAscDynamicAutoFilter.thisWeek:
+		case Asc.c_oAscDynamicAutoFilter.thisYear: {
+			_calcDateInterval(0);
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.nullType: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.today: {
+			let today = new cDate().getCurrentDate();
+			val = today.getExcelDate(true);
+			today.addDays(1);
+			maxVal = today.getExcelDate(true);
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.tomorrow: {
+			let today = new cDate().getCurrentDate();
+			today.addDays(1);
+			val = today.getExcelDate(true);
+			today.addDays(1);
+			maxVal = today.getExcelDate(true);
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.yearToDate: {
+			let today = new cDate().getCurrentDate();
+			val = new cDate(today.getUTCFullYear(), 0, 1).getExcelDate(true);
+			today.addDays(1);
+			maxVal = today.getExcelDate(true);
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.yesterday: {
+			let today = new cDate().getCurrentDate();
+			maxVal = today.getExcelDate(true);
+			today.addDays(-1);
+			val = today.getExcelDate(true);
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m1: {
+			//<dynamicFilter type="m1"/>
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m10: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m11: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m12: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m2: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m3: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m4: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m5: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m6: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m7: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m8: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m9: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.q1: {
+			//<dynamicFilter type="Q2"/>
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.q2: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.q3: {
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.q4: {
 			break;
 		}
 	}
 
-	this.Val = res;
+	/*if (val != undefined && referenceValues[this.Type] && (val !== referenceValues[this.Type][0] || maxVal !== referenceValues[this.Type][1])) {
+		console.log(this.Type);
+	}*/
+
+
+	this.Val = val;
+	this.MaxVal = maxVal;
 };
 
-DynamicFilter.prototype.isHideValue = function(val) {
-	var res = false;
+DynamicFilter.prototype.isHideValue = function (val) {
+	let res = false;
+	let minMonth, maxMonth;
+	switch (this.Type) {
+		case Asc.c_oAscDynamicAutoFilter.aboveAverage: {
+			res = !(val > this.Val);
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.belowAverage: {
+			res = !(val < this.Val);
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.lastMonth:
+		case Asc.c_oAscDynamicAutoFilter.lastQuarter:
+		case Asc.c_oAscDynamicAutoFilter.lastWeek:
+		case Asc.c_oAscDynamicAutoFilter.lastYear:
+		case Asc.c_oAscDynamicAutoFilter.nextMonth:
+		case Asc.c_oAscDynamicAutoFilter.nextQuarter:
+		case Asc.c_oAscDynamicAutoFilter.nextWeek:
+		case Asc.c_oAscDynamicAutoFilter.nextYear:
+		case Asc.c_oAscDynamicAutoFilter.thisMonth:
+		case Asc.c_oAscDynamicAutoFilter.thisQuarter:
+		case Asc.c_oAscDynamicAutoFilter.thisWeek:
+		case Asc.c_oAscDynamicAutoFilter.today:
+		case Asc.c_oAscDynamicAutoFilter.tomorrow:
+		case Asc.c_oAscDynamicAutoFilter.yearToDate:
+		case Asc.c_oAscDynamicAutoFilter.yesterday:
+		case Asc.c_oAscDynamicAutoFilter.thisYear: {
+			res = !(val >= this.Val && val < this.MaxVal);
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.nullType: {
+			break;
+		}
 
-	switch(this.Type)
-	{
-		case Asc.c_oAscDynamicAutoFilter.aboveAverage:
-		{
-			res = val > this.Val ? false : true;
+		case Asc.c_oAscDynamicAutoFilter.m1: {
+			//<dynamicFilter type="m1"/>
+			//Shows the dates that are in January, regardless of year
+			minMonth = maxMonth = 0;
+
 			break;
 		}
-		case Asc.c_oAscDynamicAutoFilter.belowAverage:
-		{
-			res = val < this.Val ? false : true;
+		case Asc.c_oAscDynamicAutoFilter.m10: {
+			//Shows the dates that are in October, regardless of year
+			minMonth = maxMonth = 9;
 			break;
 		}
+		case Asc.c_oAscDynamicAutoFilter.m11: {
+			//Shows the dates that are in November, regardless of year
+			minMonth = maxMonth = 10;
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m12: {
+			//Shows the dates that are in December, regardless of year
+			minMonth = maxMonth = 11;
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m2: {
+			//Shows the dates that are in Februray, regardless of year
+			minMonth = maxMonth = 1;
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m3: {
+			//Shows the dates that are in March, regardless of year
+			minMonth = maxMonth = 2;
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m4: {
+			//Shows the dates that are in April, regardless of year
+			minMonth = maxMonth = 3;
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m5: {
+			//Shows the dates that are in May, regardless of year
+			minMonth = maxMonth = 4;
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m6: {
+			//Shows the dates that are in June, regardless of year
+			minMonth = maxMonth = 5;
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m7: {
+			//Shows the dates that are in July, regardless of year
+			minMonth = maxMonth = 6;
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m8: {
+			//Shows the dates that are in August, regardless of year
+			minMonth = maxMonth = 7;
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.m9: {
+			//Shows the dates that are in September, regardless of year
+			minMonth = maxMonth = 8;
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.q1: {
+			//<dynamicFilter type="Q2"/>
+			//Shows the dates that are in the 1st quarter, regardless of year
+			minMonth = 0;
+			maxMonth = 2;
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.q2: {
+			//Shows the dates that are in the 2st quarter, regardless of year
+			minMonth = 3;
+			maxMonth = 5;
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.q3: {
+			//Shows the dates that are in the 3st quarter, regardless of year
+			minMonth = 6;
+			maxMonth = 8;
+			break;
+		}
+		case Asc.c_oAscDynamicAutoFilter.q4: {
+			//Shows the dates that are in the 4st quarter, regardless of year
+			minMonth = 9;
+			maxMonth = 11;
+			break;
+		}
+	}
+
+	if (minMonth !== undefined) {
+		let valToDate = new cDate().getDateFromExcel(val);
+		let valMonth = valToDate.getUTCMonth();
+		res = !(valMonth >= minMonth && valMonth <= maxMonth);
 	}
 
 	return res;
@@ -11273,7 +11649,8 @@ DynamicFilter.prototype.asc_getType = function () { return this.Type; };
 DynamicFilter.prototype.asc_getVal = function () { return this.Val; };
 DynamicFilter.prototype.asc_getMaxVal = function () { return this.MaxVal; };
 
-DynamicFilter.prototype.asc_setType = function (val) { this.Type = val; };
+DynamicFilter.prototype.asc_setType = function (val) {
+	this.Type = val; };
 DynamicFilter.prototype.asc_setVal = function (val) { this.Val = val; };
 DynamicFilter.prototype.asc_setMaxVal = function (val) { this.MaxVal = val; };
 DynamicFilter.prototype.readAttributes = function(attr, uq) {
@@ -12045,9 +12422,10 @@ AutoFilterDateElem.prototype.clone = function() {
 };
 AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupItem) {
 	var startDate, endDate, date;
+
 	switch(oDateGroupItem.DateTimeGrouping)
 	{
-		case 1://day
+		case Asc.EDateTimeGroup.datetimegroupDay://day
 		{
 			date = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day));
 			startDate = date.getExcelDateWithTime();
@@ -12055,19 +12433,19 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 			endDate = date.getExcelDateWithTime();
 			break;
 		}
-		case 2://hour
+		case Asc.EDateTimeGroup.datetimegroupHour://hour
 		{
 			startDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, 1)).getExcelDateWithTime();
 			endDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, 59)).getExcelDateWithTime();
 			break;
 		}
-		case 3://minute
+		case Asc.EDateTimeGroup.datetimegroupMinute://minute
 		{
-			startDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Minute, 1)).getExcelDateWithTime();
+			startDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Minute, 0)).getExcelDateWithTime();
 			endDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Minute, 59)).getExcelDateWithTime();
 			break;
 		}
-		case 4://month
+		case Asc.EDateTimeGroup.datetimegroupMonth://month
 		{
 			date = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, 1));
 			startDate = date.getExcelDateWithTime();
@@ -12075,13 +12453,13 @@ AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupIt
 			endDate = date.getExcelDateWithTime();
 			break;
 		}
-		case 5://second
+		case Asc.EDateTimeGroup.datetimegroupSecond://second
 		{
 			startDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Second)).getExcelDateWithTime();
 			endDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Second )).getExcelDateWithTime();
 			break;
 		}
-		case 6://year
+		case Asc.EDateTimeGroup.datetimegroupYear://year
 		{
 			date = new Asc.cDate(Date.UTC( oDateGroupItem.Year, 0));
 			startDate = date.getExcelDateWithTime();
@@ -12308,37 +12686,6 @@ QueryTableField.prototype.clone = function() {
 	return res;
 };
 
-
-	if (typeof Map === 'undefined') {
-		(function() {
-			var Map = function() {
-				this.storage = {};
-			};
-			Map.prototype = {
-				set: function(key, value) {
-					this.storage[key] = value;
-				},
-				get: function(key) {
-					return this.storage[key];
-				},
-				delete: function(key) {
-					delete this.storage[key];
-				},
-				has: function(key) {
-					return !!this.storage[key];
-				},
-				forEach: function(callback, context) {
-					for (var i in this.storage) {
-						if (this.storage.hasOwnProperty(i)) {
-							callback.call(context, this.storage[i], i, this);
-						}
-					}
-				}
-			};
-
-			window.Map = Map;
-		})();
-	}
 	/**
 	 * @constructor
 	 * @memberOf AscCommonExcel
@@ -12784,6 +13131,10 @@ QueryTableField.prototype.clone = function() {
 		this.pageSetup = new asc_CPageSetup(ws);
 		this.gridLines = null;
 		this.headings = null;
+		this.gridLinesSet = null;
+		this.horizontalCentered = null;
+		this.verticalCentered = null;
+
 		this.ws = ws;
 
 		//только для передачи из интефейса
@@ -12801,10 +13152,13 @@ QueryTableField.prototype.clone = function() {
 			this.headings = c_oAscPrintDefaultSettings.PageHeadings;
 	};
 	asc_CPageOptions.prototype.getJson = function (ws) {
-		var res = {};
+		let res = {};
 
 		res["gridLines"] = this.gridLines;
 		res["headings"] = this.headings;
+		res["gridLinesSet"] = this.gridLinesSet;
+		res["horizontalCentered"] = this.horizontalCentered;
+		res["verticalCentered"] = this.verticalCentered;
 		res["pageMargins"] = {};
 		res["pageMargins"]["bottom"] = this.pageMargins.bottom;
 		res["pageMargins"]["footer"] = this.pageMargins.footer;
@@ -12858,6 +13212,10 @@ QueryTableField.prototype.clone = function() {
 	asc_CPageOptions.prototype.setJson = function (props) {
 		this.gridLines = props["gridLines"];
 		this.headings = props["headings"];
+		this.gridLinesSet = props["gridLinesSet"];
+		this.horizontalCentered = props["horizontalCentered"];
+		this.horizontalCentered = props["horizontalCentered"];
+		this.verticalCentered = props["verticalCentered"];
 
 		this.pageMargins.bottom = props["pageMargins"]["bottom"];
 		this.pageMargins.footer = props["pageMargins"]["footer"];
@@ -12913,17 +13271,17 @@ QueryTableField.prototype.clone = function() {
 		this.printTitlesWidth = null;
 		this.printTitlesHeight = null;
 
-		var printTitles = this.ws.workbook.getDefinesNames("Print_Titles", this.ws.getId());
-		var c1, c2, r1, r2;
-		var t = this;
+		let printTitles = this.ws.workbook.getDefinesNames("Print_Titles", this.ws.getId());
+		let c1, c2, r1, r2;
+		let t = this;
 		if (printTitles) {
-			var printTitleRefs;
+			let printTitleRefs;
 			AscCommonExcel.executeInR1C1Mode(false, function () {
 				printTitleRefs = AscCommonExcel.getRangeByRef(printTitles.ref, t.ws, true, true)
 			});
 			if (printTitleRefs && printTitleRefs.length) {
-				for (var i = 0; i < printTitleRefs.length; i++) {
-					var bbox = printTitleRefs[i].bbox;
+				for (let i = 0; i < printTitleRefs.length; i++) {
+					let bbox = printTitleRefs[i].bbox;
 					if (bbox) {
 						if (Asc.c_oAscSelectionType.RangeCol === bbox.getType()) {
 							c1 = bbox.c1;
@@ -12944,12 +13302,15 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 	asc_CPageOptions.prototype.clone = function (ws) {
-		var res = new asc_CPageOptions(ws);
+		let res = new asc_CPageOptions(ws);
 
 		res.pageMargins = this.pageMargins.clone(ws);
 		res.pageSetup = this.pageSetup.clone(ws);
 		res.gridLines = this.gridLines;
 		res.headings = this.headings;
+		res.gridLinesSet = this.gridLinesSet;
+		res.horizontalCentered = this.horizontalCentered;
+		res.verticalCentered = this.verticalCentered;
 
 		return res;
 	};
@@ -12957,12 +13318,15 @@ QueryTableField.prototype.clone = function() {
 	asc_CPageOptions.prototype.asc_getPageSetup = function () { return this.pageSetup; };
 	asc_CPageOptions.prototype.asc_getGridLines = function () { return this.gridLines; };
 	asc_CPageOptions.prototype.asc_getHeadings = function () { return this.headings; };
+	asc_CPageOptions.prototype.asc_getGridLinesSet = function () { return this.gridLinesSet; };
+	asc_CPageOptions.prototype.asc_getHorizontalCentered = function () { return this.horizontalCentered; };
+	asc_CPageOptions.prototype.asc_getVerticalCentered = function () { return this.verticalCentered; };
 	//методы только для меню, без добавляем в историю
 	asc_CPageOptions.prototype.asc_setPageMargins = function (val) { this.pageMargins = val; };
 	asc_CPageOptions.prototype.asc_setPageSetup = function (val) { this.pageSetup = val; };
 
 	asc_CPageOptions.prototype.asc_setGridLines = function (newVal) {
-		var oldVal = this.gridLines;
+		let oldVal = this.gridLines;
 		this.gridLines = newVal;
 		if (this.ws && History.Is_On() && oldVal !== this.gridLines) {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_GridLines, this.ws.getId(),
@@ -12970,21 +13334,57 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 	asc_CPageOptions.prototype.asc_setHeadings = function (newVal) {
-		var oldVal = this.headings;
+		let oldVal = this.headings;
 		this.headings = newVal;
 		if (this.ws && History.Is_On() && oldVal !== this.headings) {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Headings, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
 	};
+	asc_CPageOptions.prototype.asc_setHorizontalCentered = function (newVal) {
+		let oldVal = this.horizontalCentered;
+		this.horizontalCentered = newVal;
+		if (this.ws && History.Is_On() && oldVal !== this.horizontalCentered) {
+			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_HorizontalCentered, this.ws.getId(),
+				null, new UndoRedoData_Layout(oldVal, newVal));
+		}
+	};
+	asc_CPageOptions.prototype.asc_setVerticalCentered = function (newVal) {
+		let oldVal = this.verticalCentered;
+		this.verticalCentered = newVal;
+		if (this.ws && History.Is_On() && oldVal !== this.verticalCentered) {
+			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_VerticalCentered, this.ws.getId(),
+				null, new UndoRedoData_Layout(oldVal, newVal));
+		}
+	};
+	asc_CPageOptions.prototype.asc_setGridLinesSet = function (newVal) {
+		/*let oldVal = this.verticalCentered;
+		this.verticalCentered = newVal;
+		if (this.ws && History.Is_On() && oldVal !== this.verticalCentered) {
+			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_VerticalCentered, this.ws.getId(),
+				null, new UndoRedoData_Layout(oldVal, newVal));
+		}*/
+	};
 	asc_CPageOptions.prototype.asc_setOptions = function (obj) {
-		var gridLines = obj.asc_getGridLines();
+		let gridLines = obj.asc_getGridLines();
 		if(gridLines !== this.asc_getGridLines()) {
 			this.asc_setGridLines(gridLines);
 		}
-		var heading = obj.asc_getHeadings();
+		let heading = obj.asc_getHeadings();
 		if(heading !== this.asc_getHeadings()) {
 			this.asc_setHeadings(heading);
+		}
+		let gridLinesSet = obj.asc_getGridLinesSet();
+		if(gridLinesSet !== this.asc_getGridLinesSet()) {
+			this.asc_setGridLinesSet(gridLinesSet);
+		}
+		let horizontalCentered = obj.asc_getHorizontalCentered();
+		if(horizontalCentered !== this.asc_getHorizontalCentered()) {
+			this.asc_setHorizontalCentered(horizontalCentered);
+		}
+		let verticalCentered = obj.asc_getVerticalCentered();
+		if(verticalCentered !== this.asc_getVerticalCentered()) {
+			this.asc_setVerticalCentered(verticalCentered);
 		}
 
 		this.asc_getPageMargins().asc_setOptions(obj.asc_getPageMargins());
@@ -13014,7 +13414,7 @@ QueryTableField.prototype.clone = function() {
 		this.alignWithMargins = null;
 		this.differentFirst = null;
 		this.differentOddEven = null;
-		this.scaleWithDoc = null;
+		this.scaleWithDoc = true;
 		this.evenFooter = null;
 		this.evenHeader = null;
 		this.firstFooter = null;
@@ -13042,7 +13442,7 @@ QueryTableField.prototype.clone = function() {
 		return oRes;
 	};
 
-	CHeaderFooter.prototype.getAlignWithMargins = function () { return this.alignWithMargins; };
+	CHeaderFooter.prototype.getAlignWithMargins = function () { return true === this.alignWithMargins || null === this.alignWithMargins; };
 	CHeaderFooter.prototype.getDifferentFirst = function () { return this.differentFirst; };
 	CHeaderFooter.prototype.getDifferentOddEven = function () { return this.differentOddEven; };
 	CHeaderFooter.prototype.getScaleWithDoc = function () { return this.scaleWithDoc; };
@@ -13066,6 +13466,7 @@ QueryTableField.prototype.clone = function() {
 			} else {
 				this.evenFooter = new Asc.CHeaderFooterData();
 				this.evenFooter.setStr(newVal);
+				this.evenFooter.setType(Asc.c_oAscPageHFType.evenFooter);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13083,6 +13484,7 @@ QueryTableField.prototype.clone = function() {
 			} else {
 				this.evenHeader = new Asc.CHeaderFooterData();
 				this.evenHeader.setStr(newVal);
+				this.evenHeader.setType(Asc.c_oAscPageHFType.evenHeader);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13100,6 +13502,7 @@ QueryTableField.prototype.clone = function() {
 			} else {
 				this.firstFooter = new Asc.CHeaderFooterData();
 				this.firstFooter.setStr(newVal);
+				this.firstFooter.setType(Asc.c_oAscPageHFType.firstFooter);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13117,6 +13520,7 @@ QueryTableField.prototype.clone = function() {
 			} else {
 				this.firstHeader = new Asc.CHeaderFooterData();
 				this.firstHeader.setStr(newVal);
+				this.firstHeader.setType(Asc.c_oAscPageHFType.firstHeader);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13134,6 +13538,7 @@ QueryTableField.prototype.clone = function() {
 			} else {
 				this.oddFooter = new Asc.CHeaderFooterData();
 				this.oddFooter.setStr(newVal);
+				this.oddFooter.setType(Asc.c_oAscPageHFType.oddFooter);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13151,6 +13556,7 @@ QueryTableField.prototype.clone = function() {
 			} else {
 				this.oddHeader = new Asc.CHeaderFooterData();
 				this.oddHeader.setStr(newVal);
+				this.oddHeader.setType(Asc.c_oAscPageHFType.oddHeader);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13176,9 +13582,8 @@ QueryTableField.prototype.clone = function() {
 
 	CHeaderFooter.prototype.setScaleWithDoc = function (newVal) {
 		var oldVal = this.scaleWithDoc;
-		var defaultVal = null === oldVal && (newVal === 1 || newVal === true);
 
-		if(!compareValues(oldVal, newVal) && !defaultVal) {
+		if(!compareValues(oldVal, newVal)) {
 			this.scaleWithDoc = newVal;
 
 			if (this.ws && History.Is_On()) {
@@ -13318,36 +13723,59 @@ QueryTableField.prototype.clone = function() {
 
 		if (val["evenFooter"]) {
 			this.evenFooter = new CHeaderFooterData();
+			this.evenFooter.setType(Asc.c_oAscPageHFType.evenFooter);
 			this.evenFooter.setStr(val["evenFooter"]);
 		}
 		if (val["evenHeader"]) {
 			this.evenHeader = new CHeaderFooterData();
+			this.evenHeader.setType(Asc.c_oAscPageHFType.evenHeader);
 			this.evenHeader.setStr(val["evenHeader"]);
 		}
 		if (val["firstFooter"]) {
 			this.firstFooter = new CHeaderFooterData();
+			this.firstFooter.setType(Asc.c_oAscPageHFType.firstFooter);
 			this.firstFooter.setStr(val["firstFooter"]);
 		}
 		if (val["firstHeader"]) {
 			this.firstHeader = new CHeaderFooterData();
+			this.firstHeader.setType(Asc.c_oAscPageHFType.firstHeader);
 			this.firstHeader.setStr(val["firstHeader"]);
 		}
 		if (val["oddFooter"]) {
 			this.oddFooter = new CHeaderFooterData();
+			this.oddFooter.setType(Asc.c_oAscPageHFType.oddFooter);
 			this.oddFooter.setStr(val["oddFooter"]);
 		}
 		if (val["oddHeader"]) {
 			this.oddHeader = new CHeaderFooterData();
+			this.oddHeader.setType(Asc.c_oAscPageHFType.oddHeader);
 			this.oddHeader.setStr(val["oddHeader"]);
 		}
 
 		this.init();
 	};
 
+	CHeaderFooter.prototype.isEmpty = function () {
+		if (this.alignWithMargins === null &&
+			this.differentFirst === null &&
+			this.differentOddEven === null &&
+			this.scaleWithDoc === null &&
+			this.evenFooter === null &&
+			this.evenHeader === null &&
+			this.firstFooter === null &&
+			this.firstHeader === null &&
+			this.oddFooter === null &&
+			this.oddHeader === null) {
+			return true;
+		}
+		return false;
+	};
+
 
 	function CHeaderFooterData(str) {
 		this.str = str;
 		this.parser = null;
+		this.type = null;
 
 		return this;
 	}
@@ -13355,6 +13783,7 @@ QueryTableField.prototype.clone = function() {
 	CHeaderFooterData.prototype.clone = function () {
 		var oRes = new CHeaderFooterData();
 		oRes.str = this.str;
+		oRes.type = this.type;
 		return oRes;
 	};
 	CHeaderFooterData.prototype.getStr = function () {
@@ -13362,6 +13791,9 @@ QueryTableField.prototype.clone = function() {
 	};
 	CHeaderFooterData.prototype.setStr = function (val) {
 		this.str = val;
+	};
+	CHeaderFooterData.prototype.setType = function (val) {
+		this.type = val;
 	};
 	CHeaderFooterData.prototype.parse = function () {
 		var parser = new window["AscCommonExcel"].HeaderFooterParser();
@@ -13542,6 +13974,7 @@ QueryTableField.prototype.clone = function() {
 			levelInfo.colorsFont = rangeInfo.fontColors;
 
 			levelInfo.isText = rangeInfo.text;
+			levelInfo.isDate = rangeInfo.date;
 		}
 
 		return levelInfo;
@@ -13607,6 +14040,7 @@ QueryTableField.prototype.clone = function() {
 		this.colorsFont = null;
 
 		this.isText = null;
+		this.isDate = null;
 
 		return this;
 	}
@@ -13619,6 +14053,9 @@ QueryTableField.prototype.clone = function() {
 	};
 	CSortLevelInfo.prototype.asc_getIsTextData = function () {
 		return this.isText;
+	};
+	CSortLevelInfo.prototype.asc_getIsDate = function () {
+		return this.isDate;
 	};
 
 	function CRemoveDuplicatesProps(ws) {
@@ -14293,7 +14730,7 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
-	ExternalReference.prototype.clone = function () {
+	ExternalReference.prototype.clone = function (needCloneSheets) {
 		var newObj = new ExternalReference();
 
 		if (this.DefinedNames) {
@@ -14317,6 +14754,15 @@ QueryTableField.prototype.clone = function() {
 			newObj.referenceData = {};
 			newObj.referenceData["fileKey"] = this.referenceData["fileKey"];
 			newObj.referenceData["instanceId"] = this.referenceData["instanceId"];
+		}
+
+		if (needCloneSheets) {
+			for (let i = 0; i < this.SheetNames.length; i++) {
+				newObj.SheetNames.push(this.SheetNames[i]);
+			}
+			for (let i in this.worksheets) {
+				newObj.worksheets[i] = this.worksheets[i];
+			}
 		}
 
 		return newObj;
@@ -14370,6 +14816,15 @@ QueryTableField.prototype.clone = function() {
 		if (isChanged && History.Is_On()) {
 			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
 				null, null, new AscCommonExcel.UndoRedoData_FromTo(cloneER, this));
+		}
+	};
+
+	ExternalReference.prototype.putToChangedCells = function () {
+		for (let i in this.SheetDataSet) {
+			if (this.SheetDataSet.hasOwnProperty(i)) {
+				let sheetName = this.SheetNames && this.SheetNames[this.SheetDataSet[i].SheetId];
+				this.SheetDataSet[i].putToChangedCells(this.worksheets && this.worksheets[sheetName]);
+			}
 		}
 	};
 
@@ -14601,6 +15056,23 @@ QueryTableField.prototype.clone = function() {
 		this.Id = id;
 	};
 
+	ExternalReference.prototype.initFromObj = function (obj) {
+		//directUrl:
+		//fileType:
+		//token:
+		//url
+		//path
+		//referenceData
+		if (obj["path"] !== this.Id) {
+			this.setId(obj["path"]);
+		}
+
+		if (obj["referenceData"] && (!this.referenceData || this.referenceData["instanceId"] !== obj["referenceData"]["instanceId"] ||
+			this.referenceData["instanceId"] !== obj["referenceData"]["fileKey"])) {
+			this.setReferenceData(obj["referenceData"]["fileKey"], obj["referenceData"]["instanceId"]);
+		}
+	};
+
 
 	function asc_CExternalReference() {
 		this.type = null;
@@ -14760,6 +15232,30 @@ QueryTableField.prototype.clone = function() {
 			}
 		}
 		return isChanged;
+	};
+
+	ExternalSheetDataSet.prototype.putToChangedCells = function(sheet) {
+		if (!sheet) {
+			return;
+		}
+		for (var i = 0; i < this.Row.length; i++) {
+			var row = this.Row[i];
+			if (!row) {
+				continue;
+			}
+			for (var j = 0; j < this.Row[i].Cell.length; j++) {
+				var externalCell = this.Row[i].Cell[j];
+				if (!externalCell) {
+					continue;
+				}
+				var range = sheet.getRange2(externalCell.Ref);
+				range._foreach(function (cell) {
+					var api_sheet = Asc['editor'];
+					var wb = api_sheet.wbModel;
+					wb.dependencyFormulas.addToChangedCell(cell);
+				});
+			}
+		}
 	};
 
 	ExternalSheetDataSet.prototype.getRow = function(index, needGenerateRow) {
@@ -15111,6 +15607,227 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
+	function CRowColBreaks(/*ws*/) {
+		this.count = null;
+		this.manualBreakCount = null;
+		this.breaks = [];
+
+		return this;
+	}
+	CRowColBreaks.prototype.clone = function () {
+		var res = new CRowColBreaks();
+		res.count = this.count;
+		res.manualBreakCount = this.count;
+
+		for (let i = 0 ; i < this.breaks.length; i++) {
+			res.breaks.push(this.breaks[i].clone());
+		}
+
+		return res;
+	};
+	CRowColBreaks.prototype.setCount = function (val) {
+		this.count = val;
+	};
+	CRowColBreaks.prototype.setManualBreakCount = function (val) {
+		this.manualBreakCount = val;
+	};
+	CRowColBreaks.prototype.pushBreak = function (val) {
+		this.breaks.push(val);
+	};
+	CRowColBreaks.prototype.getCount = function () {
+		return this.count;
+	};
+	CRowColBreaks.prototype.getManualBreakCount = function () {
+		return this.manualBreakCount;
+	};
+	CRowColBreaks.prototype.getBreaks = function () {
+		return this.breaks;
+	};
+	CRowColBreaks.prototype.isBreak = function (index, opt_min, opt_max) {
+		if (this.count > 0) {
+			for (let i = 0; i < this.breaks.length; i++) {
+				if (this.breaks[i].isBreak(index, opt_min, opt_max)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	};
+	CRowColBreaks.prototype.forEach = function (callback) {
+		for (var i = 0, l = this.breaks.length; i < l; ++i) {
+			if (callback(this.breaks[i], i)) {
+				break;
+			}
+		}
+	};
+	CRowColBreaks.prototype.containsBreak = function (id, min, max) {
+		let res = false;
+		this.forEach(function (breaksElem) {
+			if (breaksElem.id === id) {
+				res = true;
+				return true;
+			}
+		});
+		return res;
+	};
+	CRowColBreaks.prototype.getBreak = function (id) {
+		let res = null;
+		this.forEach(function (breaksElem) {
+			if (breaksElem.id === id) {
+				res = breaksElem;
+				return true;
+			}
+		});
+		return res;
+	};
+
+	CRowColBreaks.prototype.changeBreak = function (idFrom, idTo, min, max, man, pt) {
+		let breakElem = this.getBreak(idFrom);
+		if (breakElem) {
+			let res = breakElem.set(idTo, min, max, man, pt);
+			this.reSortingBreaks();
+			return res;
+		}
+	};
+
+	CRowColBreaks.prototype.addBreak = function (id, min, max, man, pt) {
+		if (!id) {
+			return false;
+		}
+		let newBreak = new CBreak();
+		newBreak.set(id, min, max, man, pt);
+
+		let res = this._addBreak(newBreak);
+		this.reSortingBreaks();
+		return res;
+	};
+
+	CRowColBreaks.prototype._addBreak = function (newBreak) {
+		this.breaks.push(newBreak);
+		if (this.manualBreakCount === null) {
+			this.manualBreakCount = 0;
+		}
+		if (this.count === null) {
+			this.count = 0;
+		}
+		this.manualBreakCount++;
+		this.count++;
+		return true;
+	};
+
+	CRowColBreaks.prototype.removeBreak = function (id, min, max) {
+		let isDeleted = false;
+		for (let i = 0; i < this.breaks.length; i++) {
+			if (this.breaks[i].isBreak(id, min, max)) {
+				this.breaks.splice(i, 1);
+				isDeleted = true;
+				this.manualBreakCount--;
+				this.count--;
+				break;
+			}
+		}
+		this.reSortingBreaks();
+		return isDeleted;
+	};
+
+	CRowColBreaks.prototype.reSortingBreaks = function () {
+		this.breaks.sort(function sortArr(a, b) {
+			return a.id - b.id;
+		});
+	};
+
+
+	function CBreak(/*ws*/) {
+		this.id = null;
+		this.min = null;
+		this.max = null;
+
+		this.man = null;
+		this.pt = null;
+
+		return this;
+	}
+	CBreak.prototype.clone = function () {
+		var res = new CBreak();
+		res.id = this.id;
+
+		res.min = this.min;
+		res.max = this.max;
+
+		res.man = this.man;
+		res.pt = this.pt;
+
+		return res;
+	};
+	CBreak.prototype.setId = function (val) {
+		this.id = val;
+	};
+	CBreak.prototype.setMan = function (val) {
+		this.man = val;
+	};
+	CBreak.prototype.setMax = function (val) {
+		this.max = val;
+	};
+	CBreak.prototype.setMin = function (val) {
+		this.min = val;
+	};
+	CBreak.prototype.setPt = function (val) {
+		this.pt = val;
+	};
+	CBreak.prototype.getId = function () {
+		return this.id;
+	};
+	CBreak.prototype.getMan = function () {
+		return this.man;
+	};
+	CBreak.prototype.getMax = function () {
+		return this.max;
+	};
+	CBreak.prototype.getMin = function () {
+		return this.min;
+	};
+	CBreak.prototype.getPt = function () {
+		return this.pt;
+	};
+	CBreak.prototype.isBreak = function (index, opt_min, opt_max) {
+		let res = this.id === index;
+		if (res) {
+			if (opt_min != null && opt_max != null) {
+				if (this.min == null && this.max == null) {
+					res = false;
+				} else {
+					if (this.min > opt_max || this.max < opt_min) {
+						res = false;
+					}
+				}
+			}
+		}
+		return res;
+	};
+	CBreak.prototype.set = function (id, min, max, man, pt) {
+		let isChanged = false;
+		if (id !== this.getId()) {
+			this.setId(id);
+			isChanged = true;
+		}
+		if (min !== this.getMin()) {
+			this.setMin(min);
+			isChanged = true;
+		}
+		if (max !== this.getMax()) {
+			this.setMax(max);
+			isChanged = true;
+		}
+		if (man !== this.getMan()) {
+			this.setMan(man);
+			isChanged = true;
+		}
+		if (pt !== this.getPt()) {
+			this.setPt(pt);
+			isChanged = true;
+		}
+		return isChanged ? this : null;
+	};
 
 
 
@@ -15456,6 +16173,7 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_getColorsFill"] = prot.asc_getColorsFill;
 	prot["asc_getColorsFont"] = prot.asc_getColorsFont;
 	prot["asc_getIsTextData"] = prot.asc_getIsTextData;
+	prot["asc_getIsDate"]     = prot.asc_getIsDate;
 
 	window["Asc"]["CRemoveDuplicatesProps"] = window["Asc"].CRemoveDuplicatesProps = CRemoveDuplicatesProps;
 	prot = CRemoveDuplicatesProps.prototype;
@@ -15583,6 +16301,9 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_getCell"] = prot.asc_getCell;
 	prot["asc_getValue"] = prot.asc_getValue;
 	prot["asc_getFormula"] = prot.asc_getFormula;
+
+	window["AscCommonExcel"].CRowColBreaks = CRowColBreaks;
+	window["AscCommonExcel"].CBreak = CBreak;
 
 
 })(window);

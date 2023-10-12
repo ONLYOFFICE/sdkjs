@@ -237,6 +237,31 @@
 			}
 		}
 
+		// ios копирование и вырезка через клавиатуру внешнюю - требует селекта в фокусном textarea
+		// но если селектить - его видно. да и куча проблем. попробуем сэмулировать
+		if (this.Api.isMobileVersion && AscCommon.AscBrowser.isAppleDevices)
+		{
+			if (e.metaKey)
+			{
+				if (e.keyCode === 67)
+				{
+					AscCommon.g_clipboardBase.Button_Copy();
+					return;
+				}
+				else if (e.keyCode === 88)
+				{
+					AscCommon.g_clipboardBase.Button_Cut();
+					return;
+				}
+			}
+			else if (e.ctrlKey)
+			{
+				// safari send code 13 on ctrl + c. disable it
+				if (e.keyCode === 13 && e.code === "KeyC")
+					return;
+			}
+		}
+
 		let ret = undefined;
 		if (!isSpaceAsText)
 			ret = this.Api.onKeyDown(e);
@@ -901,7 +926,16 @@
 		this.HtmlArea.setAttribute("spellcheck", false);
 
 		this.HtmlArea.setAttribute("autocapitalize", "none");
-		this.HtmlArea.setAttribute("autocomplete", "off");
+		if(AscCommon.AscBrowser.isChrome)
+		{
+			//Bug in Chrome. Autofill does not respect autocomplete="off"
+			//https://bugs.chromium.org/p/chromium/issues/detail?id=914451
+			this.HtmlArea.setAttribute("autocomplete", "extremely_off");
+		}
+		else
+		{
+			this.HtmlArea.setAttribute("autocomplete", "off");
+		}
 		this.HtmlArea.setAttribute("autocorrect", "off");
 
 		this.HtmlDiv.appendChild(this.HtmlArea);

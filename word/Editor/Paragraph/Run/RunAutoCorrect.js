@@ -87,7 +87,7 @@
 			return;
 
 		let oDocument = this.Paragraph.GetLogicDocument();
-		if (!oDocument || !(oDocument instanceof CDocument) && !(oDocument instanceof CPresentation))
+		if (!oDocument || (!oDocument.IsDocumentEditor() && !oDocument.IsPresentationEditor()))
 			return;
 
 		this.Document = oDocument;
@@ -1076,9 +1076,12 @@
 					{
 						var oNum = oDocument.GetNumbering().CreateNum();
 						oNum.CreateDefault(c_oAscMultiLevelNumbering.Numbered);
-						for (var nIndex = 0, nCount = arrResult.length; nIndex < nCount; ++nIndex)
+						for (var iLvl = 0, nCount = arrResult.length; iLvl < nCount; ++iLvl)
 						{
-							oNum.SetLvl(arrResult[nIndex].Lvl, nIndex);
+							let oldLvl = oNum.GetLvl(iLvl);
+							let newLvl = arrResult[iLvl].Lvl;
+							newLvl.SetParaPr(oldLvl.GetParaPr());
+							oNum.SetLvl(newLvl, iLvl);
 						}
 
 						oNumPr = new CNumPr(oNum.GetId(), arrResult.length - 1);

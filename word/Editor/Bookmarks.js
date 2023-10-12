@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 11.10.2017
- * Time: 13:47
- */
 
 /**
  *
@@ -70,9 +65,16 @@ CParagraphBookmark.prototype.GetId = function()
 {
 	return this.Id;
 };
-CParagraphBookmark.prototype.Copy = function()
+CParagraphBookmark.prototype.Copy = function(Selected, oPr, isCopyReviewPr)
 {
-	return new CParagraphBookmark(this.Start, this.BookmarkId, this.BookmarkName);
+	let sId = this.BookmarkId;
+	if (oPr && oPr.Comparison)
+	{
+		const sComparisonId = oPr.Comparison.oBookmarkManager.getId(this);
+		if (sComparisonId)
+			sId = sComparisonId;
+	}
+	return new CParagraphBookmark(this.Start, sId, this.BookmarkName);
 };
 CParagraphBookmark.prototype.GetBookmarkId = function()
 {
@@ -355,7 +357,7 @@ CBookmarksManager.prototype.HaveBookmark = function(sName)
 	for (var nIndex = 0, nCount = this.Bookmarks.length; nIndex < nCount; ++nIndex)
 	{
 		var oStart = this.Bookmarks[nIndex][0];
-		if (oStart.GetBookmarkName().toLowerCase() === sName)
+		if (oStart.GetBookmarkName().toLowerCase() === _sName)
 			return true;
 	}
 

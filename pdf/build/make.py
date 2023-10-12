@@ -37,7 +37,6 @@ externals = [
     "./../../common/externs/global.js",
     "./../../common/externs/jquery-3.2.js",
     "./../../common/externs/xregexp-3.0.0.js",
-    "./../../common/externs/sockjs.js",
     "./../../common/externs/socket.io.js",
     "./../../common/externs/word.js",
     "./../../common/externs/cell.js",

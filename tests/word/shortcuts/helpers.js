@@ -64,10 +64,6 @@
 	AscCommon.CGraphics.prototype.SetFontSlot = function () {};
 	AscCommon.CGraphics.prototype.SetFont = function () {};
 	AscCommon.CGraphics.prototype.SetFontInternal = function () {};
-	AscCommon.loadSmartArtBinary = function ()
-	{
-
-	};
 
 	Asc.asc_docs_api.prototype._loadModules = function () {};
 	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {
@@ -678,6 +674,7 @@
 			x: round(nX * AscCommon.g_dKoef_pix_to_mm, 13),
 			y: round(nY * AscCommon.g_dKoef_pix_to_mm, 13)
 		});
+		drawingObjects().resetSelection()
 	}
 
 	function drawingContentPosition()
@@ -744,7 +741,8 @@
 	}
 	function createComplexForm()
 	{
-		const oComplexForm = oGlobalLogicDocument.AddComplexForm();
+		const oComplexForm = oGlobalLogicDocument.AddContentControlTextForm();
+		oComplexForm.SetFormPr(new AscWord.CSdtFormPr());
 		var props = new AscCommon.CContentControlPr();
 		var formTextPr = new AscCommon.CSdtTextFormPr();
 		formTextPr.put_MultiLine(true);

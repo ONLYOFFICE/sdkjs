@@ -135,8 +135,8 @@ function MasterSlide(presentation, theme)
     {
         recalculateBackground: true,
         recalculateSpTree: true,
-        recalculateBounds: true
-
+        recalculateBounds: true,
+        recalculateSlideLayouts: true
     };
 
 
@@ -243,9 +243,12 @@ MasterSlide.prototype.handleAllContents = Slide.prototype.handleAllContents;
 MasterSlide.prototype.getMatchingShape = Slide.prototype.getMatchingShape;
 MasterSlide.prototype.recalculate = function () {
     var _shapes = this.cSld.spTree;
-    var _shape_index;
+    var _shape_index, _slideLayout_index;
     var _shape_count = _shapes.length;
     var bRecalculateBounds = this.recalcInfo.recalculateBounds;
+    var bRecalculateSlideLayouts = this.recalcInfo.recalculateSlideLayouts;
+    var bRecalculateBackground = this.recalcInfo.recalculateBackground;
+    var bRecalculateSpTree = this.recalcInfo.recalculateSpTree;
     if (bRecalculateBounds) {
         this.bounds.reset(this.Width + 100.0, this.Height + 100.0, -100.0, -100.0);
     }
@@ -268,8 +271,17 @@ MasterSlide.prototype.recalculate = function () {
         }
         this.recalcInfo.recalculateBounds = false;
     }
-
-
+    if (bRecalculateSlideLayouts || bRecalculateBackground || bRecalculateSpTree) {
+        for (_slideLayout_index = 0; _slideLayout_index < this.sldLayoutLst.length; _slideLayout_index++) {
+            if (!this.sldLayoutLst[_slideLayout_index].cSld.Bg) {
+                this.sldLayoutLst[_slideLayout_index].ImageBase64 = "";
+                this.sldLayoutLst[_slideLayout_index].recalculate();
+            }
+        }
+        this.recalcInfo.recalculateSlideLayouts = false;
+        this.recalcInfo.recalculateSpTree = false;
+        this.recalcInfo.recalculateBackground = false;
+    }
 };
 MasterSlide.prototype.checkSlideSize = Slide.prototype.checkSlideSize
 MasterSlide.prototype.checkDrawingUniNvPr = Slide.prototype.checkDrawingUniNvPr
@@ -287,7 +299,8 @@ MasterSlide.prototype.needRecalc = function(){
     var recalcInfo = this.recalcInfo;
     return recalcInfo.recalculateBackground ||
         recalcInfo.recalculateSpTree ||
-        recalcInfo.recalculateBounds;
+        recalcInfo.recalculateBounds ||
+        recalcInfo.recalculateSlideLayouts;
 };
 MasterSlide.prototype.setSlideSize = function (w, h) {
     History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideMasterSetSize, new AscFormat.CDrawingBaseCoordsWritable(this.Width, this.Height), new AscFormat.CDrawingBaseCoordsWritable(w, h)));
@@ -341,6 +354,7 @@ MasterSlide.prototype.shapeAdd = function (pos, item) {
     History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideMasterAddToSpTree, pos, [item], true));
     this.cSld.spTree.splice(pos, 0, item);
     item.setParent2(this);
+    this.recalcInfo.recalculateSpTree = true;
 };
 MasterSlide.prototype.addToSpTreeToPos = function(pos, obj)
 {
@@ -353,6 +367,7 @@ MasterSlide.prototype.shapeRemove = function (pos, count) {
 MasterSlide.prototype.changeBackground = function (bg) {
     History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideMasterSetBg, this.cSld.Bg, bg));
     this.cSld.Bg = bg;
+    this.recalcInfo.recalculateBackground = true;
 };
 MasterSlide.prototype.setHF = function(pr) {
     History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_SlideMasterSetHF, this.hf, pr));
@@ -374,6 +389,7 @@ MasterSlide.prototype.addToSldLayoutLstToPos = function (pos, obj) {
     History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideMasterAddLayout, pos, [obj], true));
     this.sldLayoutLst.splice(pos, 0, obj);
     obj.setMaster(this);
+    this.recalcInfo.recalculateSlideLayouts = true;
 };
 MasterSlide.prototype.removeFromSldLayoutLstByPos = function (pos, count) {
     History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideMasterRemoveLayout, pos, this.sldLayoutLst.slice(pos, pos + count), false));
@@ -402,7 +418,33 @@ MasterSlide.prototype.getAllImages = function (images) {
         }
     }
 };
-MasterSlide.prototype.Refresh_RecalcData = function () {
+MasterSlide.prototype.addToRecalculate = function()
+{
+    History.RecalcData_Add({Type: AscDFH.historyitem_recalctype_Drawing, Object: this});
+};
+MasterSlide.prototype.Refresh_RecalcData = function (data) {
+    if(data)
+    {
+        switch(data.Type)
+        {
+            case AscDFH.historyitem_SlideMasterSetBg:
+            {
+                this.recalcInfo.recalculateBackground = true;
+                for (var _slideLayout_index = 0; _slideLayout_index < this.sldLayoutLst.length; _slideLayout_index++) {
+                    this.sldLayoutLst[_slideLayout_index].addToRecalculate();
+                }
+                this.addToRecalculate();
+                break;
+            }
+            case AscDFH.historyitem_SlideMasterAddToSpTree:
+                this.recalcInfo.recalculateSpTree = true;
+                for (var _slideLayout_index = 0; _slideLayout_index < this.sldLayoutLst.length; _slideLayout_index++) {
+                    this.sldLayoutLst[_slideLayout_index].addToRecalculate();
+                }
+                this.addToRecalculate();
+                break;
+        }
+    }
 };
 MasterSlide.prototype.getAllFonts = function (fonts) {
     var i;
@@ -554,20 +596,12 @@ function CMasterThumbnailDrawer()
     {
         var aPhTypes = [AscFormat.phType_ctrTitle, AscFormat.phType_title];
         var oTextPr = this.GetPlaceholderTextProperties(_master, _layout, aPhTypes);
-        if(!oTextPr)
-        {
-            oTextPr = this.GetDefaultRunPr(_master, true)
-        }
         return this.GetTextColor(oTextPr, _master);
     };
     this.GetBodyTextColor = function (_master, _layout)
     {
         var aPhTypes = [AscFormat.phType_body, AscFormat.phType_subTitle, AscFormat.phType_obj];
         var oTextPr = this.GetPlaceholderTextProperties(_master, _layout, aPhTypes);
-        if(!oTextPr)
-        {
-            oTextPr = this.GetDefaultRunPr(_master, false)
-        }
         return this.GetTextColor(oTextPr, _master);
     };
     this.GetTextColor = function(oTextPr, _master)
@@ -576,49 +610,18 @@ function CMasterThumbnailDrawer()
         var oFormatColor;
         var _theme = _master.Theme;
         var RGBA = {R:0, G:0, B:0, A:255};
-        if(oTextPr && oTextPr.Unifill && oTextPr.Unifill.fill)
+        if(!oTextPr || !oTextPr.Unifill || !oTextPr.Unifill.fill)
         {
-            oTextPr.Unifill.calculate(_theme, null, null, _master, RGBA, null);
-            oFormatColor = oTextPr.Unifill.getRGBAColor();
-            oColor = new CDocumentColor(oFormatColor.R, oFormatColor.G, oFormatColor.B);
+            oTextPr = {}
+            oTextPr.Unifill = new AscFormat.CUniFill();
+            oTextPr.Unifill.fill = new AscFormat.CSolidFill();
+            oTextPr.Unifill.fill.color = AscFormat.builder_CreateSchemeColor('tx1');
         }
-        else
-        {
-            var _color = new AscFormat.CSchemeColor();
-            _color.id = 15;
-            _color.Calculate(_theme, null, null, _master, RGBA);
-            oColor = new CDocumentColor(_color.RGBA.R, _color.RGBA.G, _color.RGBA.B);
-        }
+        oTextPr.Unifill.calculate(_theme, null, null, _master, RGBA, null);
+        oFormatColor = oTextPr.Unifill.getRGBAColor();
+        oColor = new CDocumentColor(oFormatColor.R, oFormatColor.G, oFormatColor.B);
         return oColor;
     };
-    this.GetDefaultRunPr = function (_master, bTitle)
-    {
-        var oTxStyles = _master.txStyles;
-        var oTitleRunPr, oBodyRunPr;
-        if(oTxStyles)
-        {
-            if(bTitle)
-            {
-                var oTitleStyle = oTxStyles.titleStyle;
-                if(oTitleStyle && oTitleStyle.levels[0])
-                {
-                    oTitleRunPr = oTitleStyle.levels[0].DefaultRunPr;
-                    return oTitleRunPr;
-                }
-            }
-            else
-            {
-                var oBodyStyle = oTxStyles.bodyStyle;
-                if(oBodyStyle && oBodyStyle.levels[0])
-                {
-                    oBodyRunPr = oBodyStyle.levels[0].DefaultRunPr;
-                    return oBodyRunPr;
-                }
-            }
-        }
-        return null;
-    };
-
     this.Draw2 = function(g, _master, use_background, use_master_shapes, params) {
         var w_px = this.WidthPx;
         var h_px = this.HeightPx;

@@ -430,6 +430,7 @@
 			this.PercentFullWidth = tblProp.PercentFullWidth;
 			this.TableDescription = tblProp.TableDescription;
 			this.TableCaption = tblProp.TableCaption;
+			this.TableName = tblProp.TableName;
 
 			this.ColumnWidth = tblProp.ColumnWidth;
 			this.RowHeight   = tblProp.RowHeight;
@@ -758,6 +759,14 @@
 	{
 		this.TableCaption = v;
 	};
+	CTableProp.prototype.get_TableName = function ()
+	{
+		return this.TableName;
+	};
+	CTableProp.prototype.put_TableName = function (v)
+	{
+		this.TableName = v;
+	};
 	CTableProp.prototype.get_ColumnWidth = function()
 	{
 		return this.ColumnWidth;
@@ -838,6 +847,8 @@
 	CTableProp.prototype['put_TableDescription'] = CTableProp.prototype.put_TableDescription;
 	CTableProp.prototype['get_TableCaption'] = CTableProp.prototype.get_TableCaption;
 	CTableProp.prototype['put_TableCaption'] = CTableProp.prototype.put_TableCaption;
+	CTableProp.prototype['get_TableName'] = CTableProp.prototype.get_TableName;
+	CTableProp.prototype['put_TableName'] = CTableProp.prototype.put_TableName;
 	CTableProp.prototype['get_ColumnWidth'] = CTableProp.prototype.get_ColumnWidth;
 	CTableProp.prototype['put_ColumnWidth'] = CTableProp.prototype.put_ColumnWidth;
 	CTableProp.prototype['get_RowHeight'] = CTableProp.prototype.get_RowHeight;
@@ -2015,10 +2026,14 @@
 		this.Text = null;
 		this.TextPr = null;
 		this.Opacity = null;
-		this.IsDiagonal = null;
+		this.Angle = 0;
+		this.BackgroundColor = null;
+		this.Outline = null;
 
 		this.ImageUrl = null;
 		this.Scale = null;
+		this.ImageW = null;
+		this.ImageH = null;
 
 		this.DivId = null;
 		this.Api = null;
@@ -2055,10 +2070,45 @@
 		return this.Opacity;
 	};
 	CAscWatermarkProperties.prototype['put_IsDiagonal'] = CAscWatermarkProperties.prototype.put_IsDiagonal = function (v) {
-		this.IsDiagonal = v;
+		if(v) {
+			this.Angle = 45;
+		}
+		else {
+			this.Angle = 0;
+		}
 	};
 	CAscWatermarkProperties.prototype['get_IsDiagonal'] = CAscWatermarkProperties.prototype.get_IsDiagonal = function () {
-		return this.IsDiagonal;
+		if(AscFormat.fApproxEqual(this.Angle, 0)) {
+			return false;
+		}
+		return true;
+	};
+	CAscWatermarkProperties.prototype['get_Angle'] = CAscWatermarkProperties.prototype.get_Angle = function () {
+		return this.Angle;
+	};
+	CAscWatermarkProperties.prototype['put_Angle'] = CAscWatermarkProperties.prototype.put_Angle = function (v) {
+		if(!AscFormat.isRealNumber(v)) {
+			return;
+		}
+		let dValue = v;
+		while (dValue < 0) {
+			dValue += 360;
+		}
+		while (dValue >= 360) {
+			dValue -= 360;
+		}
+		this.Angle = dValue;
+	};
+	CAscWatermarkProperties.prototype.getXfrmRot = function () {
+		if(this.Angle > 0) {
+			return Math.PI * (360 - this.Angle) / 180;
+		}
+		return 0;
+	};
+	CAscWatermarkProperties.prototype.setXfrmRot = function (dRot) {
+		if(AscFormat.isRealNumber(dRot) && dRot > 0) {
+			this.Angle = (360 - 180 * (dRot / Math.PI)) + 0.5 >> 0;
+		}
 	};
 
 	CAscWatermarkProperties.prototype['put_ImageUrl'] = CAscWatermarkProperties.prototype.put_ImageUrl = function (sUrl, token) {
@@ -2091,6 +2141,29 @@
 	};
 	CAscWatermarkProperties.prototype['get_Scale'] = CAscWatermarkProperties.prototype.get_Scale = function () {
 		return this.Scale;
+	};
+	CAscWatermarkProperties.prototype['put_ImageSize'] = CAscWatermarkProperties.prototype.put_ImageSize = function (w, h) {
+		this.ImageW = w;
+		this.ImageH = h;
+		this.Scale = -1;
+	};
+	CAscWatermarkProperties.prototype['get_ImageWidth'] = CAscWatermarkProperties.prototype.get_ImageWidth = function () {
+		return this.ImageW;
+	};
+	CAscWatermarkProperties.prototype['get_ImageHeight'] = CAscWatermarkProperties.prototype.get_ImageHeight = function () {
+		return this.ImageH;
+	};
+	CAscWatermarkProperties.prototype['put_BackgroundColor'] = CAscWatermarkProperties.prototype.put_BackgroundColor = function (v) {
+		this.BackgroundColor = v;
+	};
+	CAscWatermarkProperties.prototype['get_BackgroundColor'] = CAscWatermarkProperties.prototype.get_BackgroundColor = function () {
+		return this.BackgroundColor;
+	};
+	CAscWatermarkProperties.prototype['put_Outline'] = CAscWatermarkProperties.prototype.put_Outline = function (v) {
+		this.Outline = v;
+	};
+	CAscWatermarkProperties.prototype['get_Outline'] = CAscWatermarkProperties.prototype.get_Outline = function () {
+		return this.Outline;
 	};
 	CAscWatermarkProperties.prototype['put_DivId'] = CAscWatermarkProperties.prototype.put_DivId = function (v) {
 		this.DivId = v;
@@ -2278,7 +2351,7 @@
 		{
 			return false;
 		}
-		if(this.IsDiagonal !== oPr.IsDiagonal)
+		if(!AscFormat.fApproxEqual(this.Angle, oPr.Angle))
 		{
 			return false;
 		}
@@ -2382,18 +2455,12 @@
 	window['Asc']['CAscCaptionProperties'] = window['Asc'].CAscCaptionProperties = CAscCaptionProperties;
 	var prot = CAscCaptionProperties.prototype;
 	prot.get_Name = prot["get_Name"] = function(){return this.Name;};
-	prot.get_Label = prot["get_Label"] = function(){
-		if(typeof this.Label === "string")
-		{
-			var aSplit = this.Label.split("_");
-			var sResult = aSplit[0];
-			for(var nIdx = 1; nIdx < aSplit.length; ++nIdx)
-			{
-				sResult += (" " + aSplit[nIdx]);
-			}
-			return sResult;
-		}
-		return this.Label;
+	prot.get_Label = prot["get_Label"] = function()
+	{
+		if (!(typeof this.Label === "string"))
+			return this.Label;
+		
+		return this.Label.split("_").join(" ");
 	};
 	prot.get_Before = prot["get_Before"] = function(){return this.Before;};
 	prot.get_ExcludeLabel = prot["get_ExcludeLabel"] = function(){return this.ExcludeLabel;};
@@ -2456,17 +2523,10 @@
 	};
 	prot.getLabelForInstruction = function()
 	{
-		if(typeof this.Label === "string")
-		{
-			var aSplited = this.Label.split(" ");
-			var sResult = aSplited[0];
-			for(var nIdx = 1; nIdx < aSplited.length; ++nIdx)
-			{
-				sResult += ("_" + aSplited[nIdx]);
-			}
-			return sResult;
-		}
-		return "";
+		if (!(typeof this.Label === "string"))
+			return "";
+		
+		return this.Label.split(" ").join("_");
 	};
 	prot.getSeqInstructionLine = function()
 	{

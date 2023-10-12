@@ -1213,7 +1213,11 @@ ParaComment.prototype.Copy = function(Selected, oPr)
     var sId = this.CommentId;
     if(oPr && oPr.Comparison)
     {
-        sId = oPr.Comparison.copyComment(this.CommentId);
+			const sComparisonCommentId = oPr.Comparison.copyComment(this.CommentId);
+			if (sComparisonCommentId !== null)
+			{
+				sId = sComparisonCommentId;
+			}
     }
 	return new ParaComment(this.Start, sId);
 };

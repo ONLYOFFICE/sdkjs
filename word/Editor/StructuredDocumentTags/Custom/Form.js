@@ -253,6 +253,13 @@
 	{
 		return this.Shd;
 	};
+	CSdtFormPr.prototype.SetShd = function(shd)
+	{
+		if (!shd)
+			this.Shd = undefined;
+		else
+			this.Shd = AscWord.CShd.FromObject(shd);
+	};
 	CSdtFormPr.prototype.GetAscShd = function()
 	{
 		if (!this.Shd)

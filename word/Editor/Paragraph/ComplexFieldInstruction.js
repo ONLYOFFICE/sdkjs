@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 20.10.2017
- * Time: 15:46
- */
 
 var fieldtype_UNKNOWN    = 0x0000;
 var fieldtype_MERGEFIELD = 0x0001;
@@ -1136,6 +1131,13 @@ CFieldInstructionSEQ.prototype.SetGeneralSwitches = function (aSwitches)
 	{
 		this.NumFormat = GeneralToNumFormat(aSwitches[i]);
 	}
+};
+CFieldInstructionSEQ.prototype.CheckId = function(type)
+{
+	if (!(typeof type === "string"))
+		return type === this.Id;
+	
+	return (type.split(" ").join("_") === this.Id);
 };
 
 function GeneralToNumFormat(sFormat)

@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 11.05.2017
- * Time: 16:48
- */
 
 /**
  * @constructor
@@ -155,6 +150,9 @@ CInlineLevelSdt.prototype.Add = function(Item)
 		oNextForm.SetThisElementCurrentInParagraph();
 		oNextForm.MoveCursorToStartPos();
 	}
+	
+	if (!this.IsForm() && this.IsContentControlTemporary())
+		this.RemoveContentControlWrapper();
 };
 CInlineLevelSdt.prototype.Copy = function(isUseSelection, oPr)
 {
@@ -335,6 +333,14 @@ CInlineLevelSdt.prototype.GetSelectedElementsInfo = function(Info)
 	Info.SetInlineLevelSdt(this);
 	CParagraphContentWithParagraphLikeContent.prototype.GetSelectedElementsInfo.apply(this, arguments);
 };
+CInlineLevelSdt.prototype.IsSolid = function()
+{
+	// В обычном режиме редактирования мы не даем редактировать форму (кроме составных)
+	return !!(this.Paragraph
+		&& !this.Paragraph.LogicDocument.IsFillingFormMode()
+		&& this.IsForm()
+		&& !this.IsComplexForm());
+};
 CInlineLevelSdt.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 {
 	History.Add(new CChangesParaFieldAddItem(this, Pos, [Item]));
@@ -498,6 +504,7 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 				break;
 			}
 		}
+		let controlBounds = oBounds;
 
 		if (this.IsFixedForm() && this.IsMainForm())
 		{
@@ -543,18 +550,22 @@ CInlineLevelSdt.prototype.Draw_HighLights = function(PDSH)
 			var nBaseLine  = nTextAscent;
 
 			if ((this.IsTextForm() || this.IsDropDownList() || this.IsComboBox())
-				&& (!this.IsFixedForm() || !this.IsMultiLineForm()))
+				&& !this.IsMultiLineForm())
 			{
 				var oLimits = g_oTextMeasurer.GetLimitsY();
 
 				var nMidPoint = ((nBaseLine - oLimits.min) + (nBaseLine - oLimits.max)) / 2;
 
-				var nDiff = nH / 2 - nMidPoint;
+				let nControlH = controlBounds ? controlBounds.H : nH;
+				var nDiff = nControlH / 2 - nMidPoint;
 				if (Math.abs(nDiff) > 0.001)
 				{
 					Y  -= nDiff;
 					nBaseLine += nDiff;
 				}
+				
+				if (this.IsFixedForm() && oBounds.H > nControlH)
+					nBaseLine += (oBounds.H - nControlH) / 2;
 			}
 
 			oGraphics.AddFormField(X, Y, nW, nH, nBaseLine, this);
@@ -832,27 +843,61 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 		if (!this.CanBeDeleted() && !bOnAddText)
 			return true;
 
-		if (bOnAddText || !this.Paragraph.LogicDocument.IsFillingFormMode())
+		if (!bOnAddText && !this.IsSelectionUse())
+		{
+			this.SelectAll(1);
+			this.SelectThisElement();
+			return true;
+		}
+		else if (bOnAddText || !this.Paragraph.LogicDocument.IsFillingFormMode())
+		{
 			this.private_ReplacePlaceHolderWithContent();
-
+		}
+		
+		return true;
+	}
+	
+	if ((this.IsCheckBox() || this.IsDropDownList() || this.IsPicture())
+		&& this.IsSelectedOnlyThis()
+		&& !bOnAddText)
+	{
+		this.RemoveThisFromParent(true);
 		return true;
 	}
 
-	let bResult = CParagraphContentWithParagraphLikeContent.prototype.Remove.call(this, nDirection, bOnAddText);
-
-	let oLogicDocument = this.GetLogicDocument();
-	if (this.Is_Empty()
-		&& oLogicDocument
+	let result = CParagraphContentWithParagraphLikeContent.prototype.Remove.call(this, nDirection, bOnAddText);
+	
+	let logicDocument = this.GetLogicDocument();
+	if (!result
+		&& this.IsEmpty()
+		&& !this.IsPlaceHolder()
+		&& logicDocument
+		&& this.CanBeDeleted()
+		&& this !== logicDocument.CheckInlineSdtOnDelete
+		&& !bOnAddText
+		&& !logicDocument.IsFillingFormMode())
+	{
+		this.RemoveThisFromParent(true);
+		result = true;
+	}
+	else if (result
+		&& !this.IsForm()
+		&& this.IsContentControlTemporary())
+	{
+		this.RemoveContentControlWrapper();
+	}
+	else if (this.Is_Empty()
+		&& logicDocument
 		&& this.CanBeEdited()
 		&& ((!bOnAddText
-		&& true === oLogicDocument.IsFillingFormMode())
-		|| (this === oLogicDocument.CheckInlineSdtOnDelete)))
+		&& true === logicDocument.IsFillingFormMode())
+		|| (this === logicDocument.CheckInlineSdtOnDelete)))
 	{
 		this.private_ReplaceContentWithPlaceHolder();
-		bResult = true;
+		result = true;
 	}
 
-	return bResult;
+	return result;
 };
 CInlineLevelSdt.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 {
@@ -1040,13 +1085,15 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 {
 	if (!this.Paragraph && this.Paragraph.LogicDocument)
 		return;
-
-	var oLogicDocument = this.Paragraph.LogicDocument;
-
-	if (this.IsContentControlEquation())
-		return;
 	
+	var oLogicDocument   = this.Paragraph.LogicDocument;
 	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
+	
+	if (this.IsContentControlEquation())
+	{
+		oDrawingDocument.OnDrawContentControl(null, nType);
+		return;
+	}
 
 	// Не рисуем трек для фиксед форм, т.к. он уже есть от рамки автофигуры
 	if (this.IsFixedForm() && this.IsCurrent() && oLogicDocument.IsDocumentEditor() && !oLogicDocument.IsFillingOFormMode())
@@ -1116,7 +1163,7 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 		return;
 	}
 
-	if (Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance() || this.Paragraph.LogicDocument.IsForceHideContentControlTrack())
+	if (this.IsHideContentControlTrack())
 	{
 		oDrawingDocument.OnDrawContentControl(null, nType);
 		return;
@@ -1333,6 +1380,13 @@ CInlineLevelSdt.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAl
 	else
 		CParagraphContentWithParagraphLikeContent.prototype.Apply_TextPr.call(this, TextPr, IncFontSize, ApplyToAll);
 };
+CInlineLevelSdt.prototype.GetDirectTextPr = function()
+{
+	if (this.IsPlaceHolder())
+		return this.GetDefaultTextPr();
+	
+	return CParagraphContentWithParagraphLikeContent.prototype.GetDirectTextPr.call(this);
+};
 CInlineLevelSdt.prototype.CanAddDropCap = function()
 {
 	if (!this.CanBeEdited() || this.IsPlaceHolder())
@@ -1375,13 +1429,7 @@ CInlineLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(bMath
 
 	if (this.IsContentControlEquation())
 	{
-		let textPr = this.GetDefaultTextPr();
-		
-		var oParaMath = new ParaMath();
-		oParaMath.Root.Load_FromMenu(c_oAscMathType.Default_Text, this.GetParagraph(), textPr.Copy());
-		oParaMath.Root.Correct_Content(true);
-		oParaMath.ApplyTextPr(textPr.Copy(), undefined, true);
-		this.AddToContent(0, oParaMath);
+		this.ReplacePlaceholderEquation();
 	}
 	else
 	{
@@ -1398,6 +1446,22 @@ CInlineLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(bMath
 
 	if (this.IsContentControlTemporary())
 		this.RemoveContentControlWrapper();
+};
+CInlineLevelSdt.prototype.ReplacePlaceholderEquation = function()
+{
+	this.RemoveSelection();
+	this.MoveCursorToStartPos();
+	
+	let textPr = this.GetDefaultTextPr();
+	
+	let paraMath = new ParaMath();
+	paraMath.Root.Load_FromMenu(c_oAscMathType.Default_Text, this.GetParagraph(), textPr.Copy());
+	paraMath.Root.Correct_Content(true);
+	paraMath.ApplyTextPr(textPr.Copy(), undefined, true);
+	this.RemoveFromContent(0, this.GetElementsCount());
+	this.AddToContent(0, paraMath);
+	
+	return paraMath;
 };
 CInlineLevelSdt.prototype.private_ReplaceContentWithPlaceHolder = function(isSelect, isForceUpdate)
 {
@@ -2992,12 +3056,16 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 		|| oParagraph.IsInFixedForm())
 		return null;
 
-	let oParaDrawing = this.private_ConvertFormToFixed(nW, nH);
-	oParaDrawing.Set_PositionH(Asc.c_oAscRelativeFromH.Page, false, X, false);
-	oParaDrawing.Set_PositionV(Asc.c_oAscRelativeFromV.Page, false, Y, false);
+	let drawing = this.private_ConvertFormToFixed(nW, nH);
+	drawing.Set_PositionH(Asc.c_oAscRelativeFromH.Page, false, X, false);
+	drawing.Set_PositionV(Asc.c_oAscRelativeFromV.Page, false, Y, false);
+	drawing.Set_Distance(0, 0, 0, 0);
+	drawing.Set_DrawingType(drawing_Anchor);
+	drawing.Set_WrappingType(WRAPPING_TYPE_SQUARE);
+	drawing.Set_BehindDoc(false);
 	
 	var oRun = new ParaRun(oParagraph, false);
-	oRun.AddToContent(0, oParaDrawing);
+	oRun.AddToContent(0, drawing);
 
 	// Этот код выравнивает позицию рана по вертикали, чтобы после конвертации типа формы текст внутри автофигуры
 	// визуально оставался на месте, но сама настройка позиции по вертикали вызывает много непонятных ситуаций у
@@ -3032,7 +3100,7 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 		this.SetTextFormPr(oNewPr);
 	}
 
-	return oParaDrawing;
+	return drawing;
 };
 CInlineLevelSdt.prototype.private_ConvertFormToFixed = function(nW, nH)
 {
@@ -3348,7 +3416,7 @@ CInlineLevelSdt.prototype.ProcessAutoFitContent = function(isFastRecalc)
 		else if (AscCommon.align_Left !== oParagraph.GetParagraphAlign())
 		{
 			oRun.SetFontSize(nNewFontSize);
-			oParagraph.private_RecalculateFastRange(0, 0);
+			oParagraph.recalculateRangeFast(0, 0);
 		}
 	}
 	// Восстанавливаем старое значение, чтобы в историю все правильно записалось

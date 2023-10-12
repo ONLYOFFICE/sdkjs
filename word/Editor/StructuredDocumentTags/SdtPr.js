@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 03.05.2017
- * Time: 12:12
- */
 
 function CSdtPr()
 {
@@ -381,6 +376,10 @@ CSdtPr.prototype.IsBuiltInDocPart = function()
 
 	return false;
 };
+CSdtPr.prototype.GetDocPartGallery = function()
+{
+	return this.DocPartObj ? this.DocPartObj.Gallery : undefined;
+}
 
 function CContentControlPr(nType)
 {
@@ -391,23 +390,25 @@ function CContentControlPr(nType)
 	this.Lock       = undefined;
 	this.InternalId = undefined;
 	this.CCType     = undefined !== nType ? nType : c_oAscSdtLevelType.Inline;
-
-    // section property
+	
+	this.Temporary  = undefined;
+	
+	// section property
 	this.SectionBreak = undefined;
-	this.PageSizeW	  = undefined;
-	this.PageSizeH	  = undefined;
-	this.Orient 	  = undefined;
-
+	this.PageSizeW    = undefined;
+	this.PageSizeH    = undefined;
+	this.Orient       = undefined;
+	
 	// Margins 
-	this.MarginT	 		 = undefined;
-	this.MarginL	 		 = undefined;
-	this.MarginR	 		 = undefined;
-	this.MarginB	 		 = undefined;
+	this.MarginT = undefined;
+	this.MarginL = undefined;
+	this.MarginR = undefined;
+	this.MarginB = undefined;
 	
 	
 	this.Appearance = Asc.c_oAscSdtAppearance.Frame;
 	this.Color      = undefined;
-
+	
 	this.CheckBoxPr    = undefined;
 	this.ComboBoxPr    = undefined;
 	this.DropDownPr    = undefined;
@@ -415,9 +416,9 @@ function CContentControlPr(nType)
 	this.TextFormPr    = undefined;
 	this.PictureFormPr = undefined;
 	this.ComplexFormPr = undefined;
-
+	
 	this.PlaceholderText = undefined;
-
+	
 	this.FormPr = undefined;
 }
 CContentControlPr.prototype.GetEventObject = function()
@@ -469,6 +470,7 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	this.Alias      = oContentControl.GetAlias();
 	this.Appearance = oContentControl.GetAppearance();
 	this.Color      = oContentControl.GetColor();
+	this.Temporary  = oContentControl.IsContentControlTemporary();
 
 	if (oContentControl.IsCheckBox())
 		this.CheckBoxPr = oContentControl.GetCheckBoxPr().Copy();
@@ -499,7 +501,11 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 		this.FormPr.SetFixed(mainForm.IsFixedForm());
 		
 		if (mainForm !== oContentControl)
-			this.FormPr.SetAscBorder(oContentControl.GetFormPr().GetAscBorder());
+		{
+			let subFormPr = oContentControl.GetFormPr();
+			this.FormPr.SetAscBorder(subFormPr.GetAscBorder());
+			this.FormPr.SetShd(subFormPr.GetShd());
+		}
 	}
 };
 CContentControlPr.prototype.SetToContentControl = function(oContentControl)
@@ -514,11 +520,10 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 	{
 		oContentControl.GetLogicDocument().OnChangeRadioRequired(oContentControl.GetRadioButtonGroupKey(), this.FormPr.GetRequired());
 	}
-
-
+	
 	if (undefined !== this.Tag)
 		oContentControl.SetTag(this.Tag);
-
+	
 	if (undefined !== this.Id)
 		oContentControl.SetContentControlId(this.Id);
 
@@ -539,6 +544,9 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		else
 			oContentControl.SetColor(new CDocumentColor(this.Color.r, this.Color.g, this.Color.b));
 	}
+	
+	if (undefined !== this.Temporary)
+		oContentControl.SetContentControlTemporary(this.Temporary);
 
 	if (undefined !== this.CheckBoxPr)
 	{
@@ -769,6 +777,14 @@ CContentControlPr.prototype.SetColor = function(r, g, b)
 	else
 		this.Color = new CDocumentColor(r, g, b);
 };
+CContentControlPr.prototype.GetTemporary = function()
+{
+	return this.Temporary;
+};
+CContentControlPr.prototype.SetTemporary = function(isTemporary)
+{
+	this.Temporary = isTemporary;
+};
 CContentControlPr.prototype.GetSpecificType = function()
 {
 	if (this.CC)
@@ -878,109 +894,6 @@ CContentControlPr.prototype.GetNewKey = function()
 	return keyGenerator.GetNewKey(this.CC);
 };
 
-/**
- * Класс с глобальными настройками для всех контейнеров
- * @constructor
- */
-function CSdtGlobalSettings()
-{
-	this.Color         = new AscCommonWord.CDocumentColor(220, 220, 220);
-	this.ShowHighlight = false;
-}
-/**
- * Проверяем все ли параметры выставлены по умолчанию
- * @returns {boolean}
- */
-CSdtGlobalSettings.prototype.IsDefault = function()
-{
-	if (!this.Color
-		|| 220 !== this.Color.r
-		|| 220 !== this.Color.g
-		|| 220 !== this.Color.b
-		|| false !== this.ShowHighlight)
-		return false;
-
-	return true;
-};
-CSdtGlobalSettings.prototype.Copy = function()
-{
-	var oSettings = new CSdtGlobalSettings();
-
-	oSettings.Color         = this.Color.Copy();
-	oSettings.ShowHighlight = this.ShowHighlight;
-
-	return oSettings;
-};
-CSdtGlobalSettings.prototype.Write_ToBinary = function(oWriter)
-{
-	// CDocumentColor : Color
-	// Bool           : ShowHighlight
-
-	this.Color.WriteToBinary(oWriter);
-	oWriter.WriteBool(this.ShowHighlight);
-};
-CSdtGlobalSettings.prototype.Read_FromBinary = function(oReader)
-{
-	this.Color.ReadFromBinary(oReader);
-	this.ShowHighlight = oReader.GetBool();
-};
-
-/**
- * Класс с глобальными настройками для всех специальных форм
- */
-function CSpecialFormsGlobalSettings()
-{
-	this.Highlight = new AscCommonWord.CDocumentColor(201, 200, 255);
-}
-CSpecialFormsGlobalSettings.prototype.Copy = function()
-{
-	var oSettings = new CSpecialFormsGlobalSettings();
-
-	if (this.Highlight)
-		oSettings.Highlight = this.Highlight.Copy();
-
-	return oSettings;
-};
-/**
- * Проверяем все ли параметры выставлены по умолчанию
- * @returns {boolean}
- */
-CSpecialFormsGlobalSettings.prototype.IsDefault = function()
-{
-	return (undefined === this.Highlight || (!this.Highlight.IsAuto() && this.Highlight.IsEqualRGB({r : 201, g: 200, b : 255})));
-};
-CSpecialFormsGlobalSettings.prototype.Write_ToBinary = function(oWriter)
-{
-	var nStartPos = oWriter.GetCurPosition();
-	oWriter.Skip(4);
-	var nFlags = 0;
-
-	if (undefined !== this.Highlight)
-	{
-		this.Highlight.WriteToBinary(oWriter);
-		nFlags |= 1;
-	}
-
-	var nEndPos = oWriter.GetCurPosition();
-	oWriter.Seek(nStartPos);
-	oWriter.WriteLong(nFlags);
-	oWriter.Seek(nEndPos);
-};
-CSpecialFormsGlobalSettings.prototype.Read_FromBinary = function(oReader)
-{
-	var nFlags = oReader.GetLong();
-
-	if (nFlags & 1)
-	{
-		this.Highlight = new AscCommonWord.CDocumentColor();
-		this.Highlight.ReadFromBinary(oReader);
-	}
-	else
-	{
-		this.Highlight = undefined;
-	}
-};
-
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord']        = window['AscCommonWord'] || {};
 window['AscCommonWord'].CSdtPr = CSdtPr;
@@ -1004,6 +917,8 @@ CContentControlPr.prototype['get_Appearance']         = CContentControlPr.protot
 CContentControlPr.prototype['put_Appearance']         = CContentControlPr.prototype.SetAppearance;
 CContentControlPr.prototype['get_Color']              = CContentControlPr.prototype.GetColor;
 CContentControlPr.prototype['put_Color']              = CContentControlPr.prototype.SetColor;
+CContentControlPr.prototype['get_Temporary']          = CContentControlPr.prototype.GetTemporary;
+CContentControlPr.prototype['put_Temporary']          = CContentControlPr.prototype.SetTemporary;
 CContentControlPr.prototype['get_SpecificType']       = CContentControlPr.prototype.GetSpecificType;
 CContentControlPr.prototype['get_CheckBoxPr']         = CContentControlPr.prototype.GetCheckBoxPr;
 CContentControlPr.prototype['put_CheckBoxPr']         = CContentControlPr.prototype.SetCheckBoxPr;

@@ -593,7 +593,7 @@ function BinaryPPTYLoader()
 
                 var f_name = s.GetString2();
 
-                this.presentation.Fonts[this.presentation.Fonts.length] = new AscFonts.CFont(f_name, 0, "", 0, 0x0F);
+                this.presentation.Fonts[this.presentation.Fonts.length] = new AscFonts.CFont(f_name);
             }
         }
 
@@ -3128,7 +3128,20 @@ function BinaryPPTYLoader()
                     }
 
                     if (this.ImageMapChecker != null)
-                        this.ImageMapChecker[sReadPath] = true;
+                    {
+                        let bAddToMap = true;
+                        if(oImageShape && oImageShape instanceof AscFormat.COleObject)
+                        {
+                            if(sReadPath.indexOf(".") === -1)
+                            {
+                                bAddToMap = false;
+                            }
+                        }
+                        if(bAddToMap)
+                        {
+                            this.ImageMapChecker[sReadPath] = true;
+                        }
+                    }
 
                     if (this.IsUseFullUrl)
                         this.RebuildImages.push(new CBuilderImages(uni_fill.fill, sReadPath, oImageShape, oSpPr, oLn, undefined, undefined, undefined, oParagraph, oBullet));
@@ -7946,7 +7959,7 @@ function BinaryPPTYLoader()
                 case 3:
                 {
                     var bIsHMerge = s.GetBool();
-                    if (bIsHMerge)
+                    if (bIsHMerge && cell.Index > 0)
                     {
                         s.Seek2(_end_rec);
                         return false;
@@ -8508,9 +8521,12 @@ function BinaryPPTYLoader()
                 case 10:
                 {
                     var lang = s.GetString2();
-                    var nLcid = Asc.g_oLcidNameToIdMap[lang];
-                    if(nLcid)
-                        rPr.Lang.Val = nLcid;
+                    if(!this.IsThemeLoader)
+                    {
+                        var nLcid = Asc.g_oLcidNameToIdMap[lang];
+                        if(nLcid)
+                            rPr.Lang.Val = nLcid;
+                    }
                     break;
                 }
                 case 11:
@@ -10048,7 +10064,9 @@ function BinaryPPTYLoader()
                                 }
                                 if(f_text)
                                 {
+                                    Fld.CanAddToContent = true;
                                     Fld.AddText(f_text);
+                                    Fld.CanAddToContent = false;
                                 }
                                 if(_rPr)
                                 {

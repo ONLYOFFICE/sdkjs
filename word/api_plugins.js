@@ -106,9 +106,9 @@
 	/**
 	 * @typedef {("entirely" | "beforeCursor" | "afterCursor")} TextPartType
 	 * Specifies if the whole text or only its part will be returned or replaced:
-	 * * <b>entirely</b> - replaces the whole text with the specified one,
-	 * * <b>beforeCursor</b> - replaces only the part of the text before the cursor,
-	 * * <b>afterCursor</b> - replaces only the part of the text after the cursor.
+	 * * <b>entirely</b> - replaces/returns the whole text,
+	 * * <b>beforeCursor</b> - replaces/returns only the part of the text before the cursor,
+	 * * <b>afterCursor</b> - replaces/returns only the part of the text after the cursor.
 	 */
 
     var Api = window["asc_docs_api"];
@@ -787,7 +787,10 @@
 	window["asc_docs_api"].prototype["pluginMethod_GetAllOleObjects"] = function (sPluginId)
 	{
 		let aDataObjects = [];
-		let aOleObjects = this.WordControl.m_oLogicDocument.GetAllOleObjects(sPluginId, []);
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+			return aDataObjects;
+		let aOleObjects = oLogicDocument.GetAllOleObjects(sPluginId, []);
 		for(let nObj = 0; nObj < aOleObjects.length; ++nObj)
 		{
 			aDataObjects.push(aOleObjects[nObj].getDataObject());
@@ -805,7 +808,12 @@
 	 * */
 	window["asc_docs_api"].prototype["pluginMethod_RemoveOleObject"] = function (sInternalId)
 	{
-		this.WordControl.m_oLogicDocument.RemoveDrawingObjectById(sInternalId);
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+		{
+			return;
+		}
+		oLogicDocument.RemoveDrawingObjectById(sInternalId);
 	};
 
 	/**
@@ -820,12 +828,18 @@
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_RemoveOleObjects"] = function (arrObjects)
 	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+		{
+			return;
+		}
 		var arrIds = [];
 		for(var nIdx = 0; nIdx < arrObjects.length; ++nIdx)
 		{
-			arrIds.push(arrObjects[nIdx].InternalId);
+			let oOleObject = arrObjects[nIdx];
+			arrIds.push(oOleObject["InternalId"]);
 		}
-		this.WordControl.m_oLogicDocument.RemoveDrawingObjects(arrIds);
+		oLogicDocument.RemoveDrawingObjects(arrIds);
 	};
 
 	/**
@@ -911,41 +925,31 @@
 		let aParaDrawings = [];
 		let oDataMap = {};
 		let oData;
-		for(nDrawing = 0; nDrawing < arrObjectData.length; ++nDrawing)
+		for (nDrawing = 0; nDrawing < arrObjectData.length; ++nDrawing)
 		{
 			oData = arrObjectData[nDrawing];
-			oDrawing = AscCommon.g_oTableId.Get_ById(oData.InternalId);
-			oDataMap[oData.InternalId] = oData;
-			if(oDrawing
+			oDrawing = AscCommon.g_oTableId.Get_ById(oData["InternalId"]);
+			oDataMap[oData["InternalId"]] = oData;
+			if (oDrawing
 				&& oDrawing.getObjectType
-				&& oDrawing.getObjectType() === AscDFH.historyitem_type_OleObject)
+				&& oDrawing.getObjectType() === AscDFH.historyitem_type_OleObject
+				&& oDrawing.IsUseInDocument())
 			{
-				if(oDrawing.IsUseInDocument())
-				{
-					aDrawings.push(oDrawing);
-				}
+				aDrawings.push(oDrawing);
 			}
 		}
-		for(nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing)
+		for (nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing)
 		{
 			oDrawing = aDrawings[nDrawing];
-			if(oDrawing.group)
+			if (oDrawing.group)
 			{
 				oMainGroup = oDrawing.getMainGroup();
-				if(oMainGroup)
-				{
-					if(oMainGroup.parent)
-					{
-						oParaDrawingsMap[oMainGroup.parent.Id] = oMainGroup.parent;
-					}
-				}
+				if (oMainGroup && oMainGroup.parent)
+					oParaDrawingsMap[oMainGroup.parent.Id] = oMainGroup.parent;
 			}
-			else
+			else if (oDrawing.parent)
 			{
-				if(oDrawing.parent)
-				{
-					oParaDrawingsMap[oDrawing.parent.Id] = oDrawing.parent;
-				}
+				oParaDrawingsMap[oDrawing.parent.Id] = oDrawing.parent;
 			}
 		}
 		for(let sId in oParaDrawingsMap)
@@ -972,12 +976,8 @@
 					oDrawing.editExternal(oData["Data"], oData["ImageData"], oData["Width"], oData["Height"], oData["WidthPix"], oData["HeightPix"]);
 					oImagesMap[oData["ImageData"]] = oData["ImageData"];
 				}
-				let oApi = this;
-				let sGuid;
-				if(window.g_asc_plugins)
-				{
-					sGuid = window.g_asc_plugins.setPluginMethodReturnAsync();
-				}
+
+				window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
 				AscCommon.Check_LoadingDataBeforePrepaste(this, {}, oImagesMap, function() {
 					oLogicDocument.Reassign_ImageUrls(oImagesMap);
 					oLogicDocument.Recalculate();
@@ -985,10 +985,8 @@
 					oLogicDocument.LoadDocumentState(oStartState);
 					oLogicDocument.UpdateSelection();
 					oLogicDocument.FinalizeAction();
-					if(window.g_asc_plugins)
-					{
-						window.g_asc_plugins.onPluginMethodReturn(sGuid);
-					}
+
+					window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn();
 				});
 			}
 			else

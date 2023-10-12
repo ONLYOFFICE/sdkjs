@@ -60,6 +60,7 @@
 
     var oDateTimeFormats = {};
     oDateTimeFormats["datetime1"] = "MM/DD/YYYY";
+    oDateTimeFormats["datetimeFigureOut"] = oDateTimeFormats["datetime1"];
     oDateTimeFormats["datetime2"] = "dddd\\,\\ mmmm\\ dd\\,\\ yyyy";
     oDateTimeFormats["datetime3"] = "DD\\ MMMM\\ YYYY";
     oDateTimeFormats["datetime4"] = "MMMM\\ DD\\,\\ YYYY";
@@ -150,11 +151,18 @@
     CPresentationField.prototype.private_CalculateContent = function()
     {
         AscFormat.ExecuteNoHistory(function(){
-            this.Content.length = 0;
             var sStr = this.private_GetString();
             if(typeof sStr === 'string')
             {
+                const bSelectionUse = this.IsSelectionUse();
+                const oSelection = this.State.Selection;
+                const nDirection = oSelection.EndPos - oSelection.StartPos;
+                this.Content.length = 0;
                 this.AddText(sStr, -1);
+                if(bSelectionUse)
+                {
+                    this.SelectAll(nDirection);
+                }
             }
         }, this, []);
     };
@@ -177,7 +185,7 @@
         if(typeof this.FieldType === 'string')
         {
             var sFieldType = this.FieldType.toLowerCase();
-            sStr = sFieldType;
+            sStr = null;
             if("slidenum" === sFieldType)
             {
                 if(this.Paragraph && this.Paragraph.Parent)
@@ -186,10 +194,7 @@
                     var nFirstSlideNum = 1;
                     if(oStylesObject.presentation)
                     {
-                        if(AscFormat.isRealNumber(oStylesObject.presentation.firstSlideNum))
-                        {
-                            nFirstSlideNum = oStylesObject.presentation.firstSlideNum;
-                        }
+                        nFirstSlideNum = oStylesObject.presentation.getFirstSlideNumber();
                     }
                     if(oStylesObject.slide)
                     {
@@ -229,7 +234,7 @@
                 if(this.Paragraph && this.Paragraph.Parent)
                 {
                     oStylesObject = this.Paragraph.Parent.Get_Styles();
-                    if(oStylesObject.shape && oStylesObject.shape.getValueString())
+                    if(oStylesObject.shape && oStylesObject.shape.getValueString && oStylesObject.shape.getValueString())
                     {
                         sStr = oStylesObject.shape.getValueString();
                     }
@@ -252,7 +257,7 @@
                 if(oFormat)
                 {
                     oDateTime = new Asc.cDate();
-                    sStr =  oFormat.formatToChart(oDateTime.getExcelDate(true) + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
+                    sStr =  oFormat.formatToWord(oDateTime.getExcelDate(true) + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
                 }
                 else
                 {
@@ -269,22 +274,49 @@
 
     CPresentationField.prototype.private_GetDateTimeFormat = function(sFieldType)
     {
-        var oFormat = null;
-        if(oDateTimeFormats[sFieldType])
+        let sResultFiledType = sFieldType;
+        let oFormat = null;
+        const nLang = this.Get_CompiledPr().Lang.Val;
+        let sFormat = oDateTimeFormats[sResultFiledType] || AscCommonWord.oDefaultDateTimeFormat[nLang];
+        if(!sFormat)
         {
-            oFormat = AscCommon.oNumFormatCache.get(oDateTimeFormats[sFieldType]);
+            sResultFiledType = "datetime1";
+            sFormat = oDateTimeFormats[sResultFiledType]
         }
-        else
+        if(sFormat)
         {
-            var sFormat = AscCommonWord.oDefaultDateTimeFormat[this.Get_CompiledPr().Lang.Val];
-            if(sFormat && oDateTimeFormats[sFormat])
+            let aFormat = Asc.c_oAscDateTimeFormat[nLang];
+            if(!Array.isArray(aFormat))
             {
-                oFormat = AscCommon.oNumFormatCache.get(oDateTimeFormats[sFormat]);
+                aFormat = Asc.c_oAscDateTimeFormat[lcid_enUS];
             }
-            else
+            if(Array.isArray(aFormat))
             {
-                oFormat = AscCommon.oNumFormatCache.get(oDateTimeFormats["datetime1"]);
+                let nIdx = 0;
+                //match field type to index in Asc.c_oAscDateTimeFormat[nLang]
+                switch (sResultFiledType)
+                {
+                    case "datetimeFigureOut": nIdx = 0; break;//"MM/DD/YYYY";
+                    case "datetime1": nIdx = 0; break;//"MM/DD/YYYY";
+                    case "datetime2": nIdx = 1; break;//"dddd\\,\\ mmmm\\ dd\\,\\ yyyy";
+                    case "datetime3": nIdx = 8; break;//"DD\\ MMMM\\ YYYY";
+                    case "datetime4": nIdx = 2; break;//"MMMM\\ DD\\,\\ YYYY";
+                    case "datetime5": nIdx = 5; break;//"DD-MMM-YY";
+                    case "datetime6": nIdx = 9; break;//"MMMM\\ YY";
+                    case "datetime7": nIdx = 10; break;//"MMM-YY";
+                    case "datetime8": nIdx = 11; break;//"MM/DD/YYYY\\ hh:mm\\ AM/PM";
+                    case "datetime9": nIdx = 12; break;//"MM/DD/YYYY\\ hh:mm:ss\\ AM/PM";
+                    case "datetime10": nIdx = 15; break;//"hh:mm";
+                    case "datetime11": nIdx = 16; break;//"hh:mm:ss";
+                    case "datetime12": nIdx = 13; break;//"hh:mm\\ AM/PM";
+                    case "datetime13": nIdx = 14; break;//"hh:mm:ss:\\ AM/PM";
+                }
+                if(aFormat[nIdx])
+                {
+                    sFormat = aFormat[nIdx]
+                }
             }
+            oFormat = AscCommon.oNumFormatCache.get(sFormat, AscCommon.NumFormatType.WordFieldDate);
         }
         return oFormat;
     };

@@ -237,7 +237,7 @@
 		var length = reader.GetLong();
 		for (var i = 0; i < length; ++i) {
 			var _filter = new CT_NsvFilter();
-			_filter.Read_FromBinary2(reader)
+			_filter.Read_FromBinary2(reader);
 			this.nsvFilters.push(_filter);
 		}
 

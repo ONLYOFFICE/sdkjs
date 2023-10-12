@@ -110,6 +110,8 @@
 	{
 		this.Manager = _manager;
 		this.Api = _manager.Api;
+
+		this.useDelayZoom = true;
 	}
 
 	CMobileDelegateSimple.prototype.Init = function()
@@ -266,7 +268,12 @@
 	};
 	CMobileDelegateEditor.prototype.SetZoom = function(_value)
 	{
-		this.HtmlPage.m_oApi.zoom(_value);
+		if (!this.useDelayZoom)
+			return this.HtmlPage.m_oApi.zoom(_value);
+
+		AscCommon.PaintMessageLoop.prototype.delayRun(this, function(){
+			this.HtmlPage.m_oApi.zoom(_value);
+		});
 	};
 	CMobileDelegateEditor.prototype.GetObjectTrack = function(x, y, page, bSelected, bText)
 	{

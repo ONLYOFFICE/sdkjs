@@ -100,9 +100,8 @@ function CArrowDrawer( settings ) {
     this.SizeNaturalW = this.SizeW;
     this.SizeNaturalH = this.SizeH;
 
-    this.IsRetina = false;
-
     this.ColorGradStart  = {R: _HEXTORGB_(settings.arrowColor).R, G: _HEXTORGB_(settings.arrowColor).G, B: _HEXTORGB_(settings.arrowColor).B};
+	this.InstalledColorGradStart = null;
 
     // вот такие мега настройки для кастомизации)
     this.IsDrawBorderInNoneMode = false;
@@ -124,13 +123,25 @@ CArrowDrawer.prototype.checkSettings = function ( settings )
 	this.ColorGradStart  = {R: _HEXTORGB_(settings.arrowColor).R, G: _HEXTORGB_(settings.arrowColor).G, B: _HEXTORGB_(settings.arrowColor).B};
 }
 
-CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
-  /*  if ( ( sizeH == this.SizeH || sizeW == this.SizeW ) && is_retina == this.IsRetina && null != this.ImageLeft )
-        return;*/
+CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH )
+{
+	if (this.ImageLeft)
+	{
+		if (sizeH === this.SizeH && sizeW === this.SizeW)
+		{
+			if (this.InstalledColorGradStart &&
+				this.InstalledColorGradStart.R === this.ColorGradStart.R &&
+				this.InstalledColorGradStart.G === this.ColorGradStart.G &&
+				this.InstalledColorGradStart.B === this.ColorGradStart.B)
+			{
+				return;
+			}
+		}
+	}
+
 	var dPR = AscBrowser.retinaPixelRatio;
     this.SizeW = Math.max( sizeW, 1 );
     this.SizeH = Math.max( sizeH, 1 );
-    this.IsRetina = is_retina;
 
     this.SizeNaturalW = this.SizeW;
     this.SizeNaturalH = this.SizeH;
@@ -160,6 +171,14 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 	r = this.ColorGradStart.R;
 	g = this.ColorGradStart.G;
 	b = this.ColorGradStart.B;
+
+	// запоминаем цвет, чтобы перерисоваться при смене темы
+	if (!this.InstalledColorGradStart)
+		this.InstalledColorGradStart = { R : 0, G : 0, B : 0 };
+	this.InstalledColorGradStart.R = r;
+	this.InstalledColorGradStart.G = g;
+	this.InstalledColorGradStart.B = b;
+
 	this.ImageTop.width = this.SizeW;
 	this.ImageTop.height = this.SizeH;
     this.ImageBottom.width = this.SizeW;
@@ -369,7 +388,6 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 
 		this.eventListeners = [];
 
-		this.IsRetina = false;
 		this.canvasW = 1;
 		this.canvasH = 1;
 		this.canvasOriginalW = 1;
@@ -385,8 +403,6 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 
         this.fadeTimeoutScroll = null;
         this.fadeTimeoutArrows = null;
-
-		this.IsRetina = AscBrowser.isRetina;
 
 		this.disableCurrentScroll = false;
         this._initPiperImg();
@@ -620,7 +636,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 		if (this.settings.showArrows) {
 			this.settings.arrowSizeW = Math.round(13 * dPR);
 			this.settings.arrowSizeH = Math.round(13 * dPR);
-			this.ArrowDrawer.InitSize(this.settings.arrowSizeH, this.settings.arrowSizeW, this.IsRetina);
+			this.ArrowDrawer.InitSize(this.settings.arrowSizeH, this.settings.arrowSizeW);
 		}
 
 		if (bIsVerAttack)
@@ -1546,7 +1562,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 				this.settings.arrowSizeW = this.settings.arrowSizeH = this.scroller.w;
 			}
 			if ( this.settings.showArrows )
-				this.ArrowDrawer.InitSize( this.settings.arrowSizeW, this.settings.arrowSizeH, this.IsRetina );
+				this.ArrowDrawer.InitSize( this.settings.arrowSizeW, this.settings.arrowSizeH );
 		}
 		else if ( this.settings.isHorizontalScroll ) {
 			this.scroller.y = this._roundForScale(dPR);
@@ -1555,7 +1571,7 @@ CArrowDrawer.prototype.InitSize = function ( sizeW, sizeH, is_retina ) {
 				this.settings.arrowSizeH = this.settings.arrowSizeW = this.scroller.h;
 			}
 			if ( this.settings.showArrows )
-				this.ArrowDrawer.InitSize( this.settings.arrowSizeH, this.settings.arrowSizeW, this.IsRetina );
+				this.ArrowDrawer.InitSize( this.settings.arrowSizeH, this.settings.arrowSizeW );
 		}
 	};
 	ScrollObject.prototype._MouseHoverOnScroller = function ( mp ) {

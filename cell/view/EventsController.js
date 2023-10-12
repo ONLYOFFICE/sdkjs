@@ -691,7 +691,7 @@
 		 * @param event {MouseEvent}
 		 * @param callback {Function}
 		 */
-		asc_CEventsController.prototype._moveRangeHandle = function (event, callback) {
+		asc_CEventsController.prototype._moveRangeHandle = function (event, callback, colRowMoveProps) {
 			var t = this;
 			// Обновляемся в режиме перемещения диапазона
 			var coord = this._getCoordinates(event);
@@ -700,7 +700,7 @@
 					if (!d) return;
 					t.scroll(d);
 					asc_applyFunction(callback);
-				});
+				}, colRowMoveProps);
 		};
 
 		/**
@@ -871,6 +871,7 @@
 					t.handlers.trigger("editCell", enterOptions);
 					return result;
 
+				case 59:
 				case 186: // add current date or time Ctrl + (Shift) + ;
 					if (!canEdit || t.getCellEditMode() || selectionDialogMode) {
 						return true;
@@ -1064,6 +1065,9 @@
 					stop();                          // Отключим стандартную обработку браузера нажатия down
 					// Обработка Alt + down
 					if (canEdit && !t.getCellEditMode() && !selectionDialogMode && event.altKey) {
+						if (t.handlers.trigger("onShowFilterOptionsActiveCell")) {
+							return result;
+						}
 						if (t.handlers.trigger("onDataValidation")) {
 							return result;
 						}
@@ -1118,6 +1122,11 @@
 					if (!(canEdit || t.handlers.trigger('isRestrictionComments'))|| selectionDialogMode) {
 						return true;
 					}
+					//TODO temporary fix for speaker. in the future need to switch to a common scheme
+					if (event.altKey && (event.metaKey || event.ctrlKey)) {
+						ctrlKey = true;
+					}
+
 					isNeedCheckActiveCellChanged = true;
 
 				case 65: // select all      Ctrl + a
@@ -1200,12 +1209,19 @@
 							action = true;
 							break;
 						case 90:
-							t.handlers.trigger("undo");
+							if (event.altKey) {
+								AscCommon.EditorActionSpeaker.toggle();
+							} else {
+								t.handlers.trigger("undo");
+							}
 							action = true;
 							break;
 						case 192:
 							if (shiftKey) {
 								t.handlers.trigger("setCellFormat", Asc.c_oAscNumFormatType.General);
+								action = true;
+							} else {
+								t.handlers.trigger("showFormulas");
 								action = true;
 							}
 							break;
@@ -1651,7 +1667,7 @@
 
 			if (!t.getCellEditMode() && !t.getSelectionDialogMode()) {
 				this.gotFocus(true);
-				if (event.shiftKey) {
+				if (event.shiftKey && !(t.targetInfo.target === c_oTargetType.ColumnRowHeaderMove && this.canEdit())) {
 					t.isSelectMode = true;
 					t._changeSelection(event);
 					return;
@@ -1757,9 +1773,16 @@
 					this.isFillHandleMode = true;
 					this._changeFillHandle(event, null, t.targetInfo.tableIndex);
 				} else {
-					this.isSelectMode = true;
-					this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true,
-						ctrlKey);
+					if (this.targetInfo && this.targetInfo.target === c_oTargetType.ColumnRowHeaderMove) {
+						this.isMoveRangeMode = true;
+						t._moveRangeHandle(event, null, {ctrlKey: ctrlKey, shiftKey: event.shiftKey});
+						t.handlers.trigger("updateWorksheet", coord.x, coord.y);
+						//t.handlers.trigger("updateWorksheet", coord.x, coord.y, ctrlKey, function(info){t.targetInfo = info;});
+					} else {
+						this.isSelectMode = true;
+						this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true,
+							ctrlKey);
+					}
 				}
 			}
 		};
@@ -1832,7 +1855,7 @@
 
 			if (this.isMoveResizeRange) {
 				this.isMoveResizeRange = false;
-				this._moveResizeRangeHandleDone(this.targetInfo && this.targetInfo.isPageBreakPreview);
+				this._moveResizeRangeHandleDone(this.targetInfo && this.targetInfo.pageBreakSelectionType);
 				return true;
 			}
 			// Режим установки закреплённых областей
@@ -1845,6 +1868,10 @@
 				this._groupRowClick(event, this.targetInfo);
 				this.isRowGroup = false;
 				return;
+			}
+
+			if (this.targetInfo && this.targetInfo.target === c_oTargetType.ColumnHeader) {
+				this._onMouseMove(event);
 			}
 
 			// Мы можем dblClick и не отработать, если вышли из области и отпустили кнопку мыши, нужно отработать

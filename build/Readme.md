@@ -6,5 +6,5 @@ This document describes the steps needed to build SDK.
 	
 2. SDK build:
 	- npm install -g grunt-cli
-	- npm install
+	- npm ci
 	- grunt

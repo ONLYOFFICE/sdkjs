@@ -114,6 +114,12 @@ function (window, undefined) {
 
 	window['AscCH'].historyitem_Worksheet_SetSheetViewType = 61;
 
+	window['AscCH'].historyitem_Worksheet_SetShowFormulas = 62;
+
+	window['AscCH'].historyitem_Worksheet_ChangeRowColBreaks = 63;
+
+	window['AscCH'].historyitem_Worksheet_ChangeLegacyDrawingHFDrawing = 64;
+
 	window['AscCH'].historyitem_RowCol_Fontname = 1;
 	window['AscCH'].historyitem_RowCol_Fontsize = 2;
 	window['AscCH'].historyitem_RowCol_Fontcolor = 3;
@@ -249,6 +255,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_PivotTable_DataFieldSetBaseField = 58;
 	window['AscCH'].historyitem_PivotTable_DataFieldSetBaseItem = 59;
 	window['AscCH'].historyitem_PivotTable_DataFieldSetNumFormat = 60;
+	window['AscCH'].historyitem_PivotTable_PivotFieldSetNumFormat = 61;
 
 	window['AscCH'].historyitem_SharedFormula_ChangeFormula = 1;
 	window['AscCH'].historyitem_SharedFormula_ChangeShared = 2;
@@ -266,6 +273,9 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Layout_Orientation = 11;
 	window['AscCH'].historyitem_Layout_Scale = 12;
 	window['AscCH'].historyitem_Layout_FirstPageNumber = 13;
+	window['AscCH'].historyitem_Layout_HorizontalCentered = 14;
+	window['AscCH'].historyitem_Layout_VerticalCentered = 15;
+
 	
 	window['AscCH'].historyitem_ArrayFromula_AddFormula = 1;
 	window['AscCH'].historyitem_ArrayFromula_DeleteFormula = 2;
@@ -1168,6 +1178,7 @@ CHistory.prototype.StartTransaction = function()
 {
 	if (this.IsEndTransaction() && this.workbook) {
 		this.workbook.dependencyFormulas.lockRecal();
+		this.workbook.oApi.sendEvent("asc_onUserActionStart");
 	}
 	this.Transaction++;
 };
@@ -1187,6 +1198,7 @@ CHistory.prototype.EndTransaction = function()
 	if (this.IsEndTransaction() && this.workbook) {
 		this.workbook.dependencyFormulas.unlockRecal();
 		this.workbook.handlers.trigger("updateCellWatches");
+		this.workbook.oApi.sendEvent("asc_onUserActionEnd");
 
 		if (this.Is_LastPointEmpty()) {
 			this.Remove_LastPoint();

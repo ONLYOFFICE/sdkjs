@@ -180,6 +180,105 @@
 		return (v - v % 1)   ||   (!isFinite(v) || v === 0 ? v : v < 0 ? -0 : 0);
 	};
 
+	// https://tc39.github.io/ecma262/#sec-array.prototype.includes
+	if (!Array.prototype.includes) {
+		Object.defineProperty(Array.prototype, 'includes', {
+			value: function(searchElement, fromIndex) {
+
+				if (this == null) {
+					throw new TypeError('"this" is null or not defined');
+				}
+
+				// 1. Let O be ? ToObject(this value).
+				var o = Object(this);
+
+				// 2. Let len be ? ToLength(? Get(O, "length")).
+				var len = o.length >>> 0;
+
+				// 3. If len is 0, return false.
+				if (len === 0) {
+					return false;
+				}
+
+				// 4. Let n be ? ToInteger(fromIndex).
+				//    (If fromIndex is undefined, this step produces the value 0.)
+				var n = fromIndex | 0;
+
+				// 5. If n ≥ 0, then
+				//  a. Let k be n.
+				// 6. Else n < 0,
+				//  a. Let k be len + n.
+				//  b. If k < 0, let k be 0.
+				var k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
+
+				function sameValueZero(x, y) {
+					return x === y || (typeof x === 'number' && typeof y === 'number' && isNaN(x) && isNaN(y));
+				}
+
+				// 7. Repeat, while k < len
+				while (k < len) {
+					// a. Let elementK be the result of ? Get(O, ! ToString(k)).
+					// b. If SameValueZero(searchElement, elementK) is true, return true.
+					if (sameValueZero(o[k], searchElement)) {
+						return true;
+					}
+					// c. Increase k by 1.
+					k++;
+				}
+
+				// 8. Return false
+				return false;
+			}
+		});
+	}
+
+	// https://tc39.github.io/ecma262/#sec-array.prototype.find
+	if (!Array.prototype.find) {
+		Object.defineProperty(Array.prototype, 'find', {
+			value: function(predicate) {
+				// 1. Let O be ? ToObject(this value).
+				if (this == null) {
+					throw new TypeError('"this" is null or not defined');
+				}
+
+				var o = Object(this);
+
+				// 2. Let len be ? ToLength(? Get(O, "length")).
+				var len = o.length >>> 0;
+
+				// 3. If IsCallable(predicate) is false, throw a TypeError exception.
+				if (typeof predicate !== 'function') {
+					throw new TypeError('predicate must be a function');
+				}
+
+				// 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
+				var thisArg = arguments[1];
+
+				// 5. Let k be 0.
+				var k = 0;
+
+				// 6. Repeat, while k < len
+				while (k < len) {
+					// a. Let Pk be ! ToString(k).
+					// b. Let kValue be ? Get(O, Pk).
+					// c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
+					// d. If testResult is true, return kValue.
+					var kValue = o[k];
+					if (predicate.call(thisArg, kValue, k, o)) {
+						return kValue;
+					}
+					// e. Increase k by 1.
+					k++;
+				}
+
+				// 7. Return undefined.
+				return undefined;
+			},
+			configurable: true,
+			writable: true
+		});
+	}
+
 	if (typeof require === 'function' && !window['XRegExp'])
 	{
 		window['XRegExp'] = require('xregexp');
@@ -393,45 +492,223 @@
 	};
 	var g_oDocumentUrls = new DocumentUrls();
 
+	function CHTMLCursorItemBase(_name, _hotspot, _default)
+	{
+		this.name = _name;
+		this.hotspot = _hotspot;
+		this.default = _default;
+	}
+	CHTMLCursorItemBase.prototype.baseUrl = "../../../../sdkjs/common/Images/cursors/";
+	CHTMLCursorItemBase.prototype.getValue = function() { return this.default; };
+
+	/**
+	 * @extends {CHTMLCursorItemBase}
+	 */
+	function CHTMLCursorCur()
+	{
+		CHTMLCursorItemBase.apply(this, arguments);
+	}
+	CHTMLCursorCur.prototype = Object.create(CHTMLCursorItemBase.prototype);
+	CHTMLCursorCur.prototype.getValue = function(globalCursors)
+	{
+		if (AscCommon.AscBrowser.isCustomScalingAbove2())
+			return "url(" + this.baseUrl + this.name + "_2x.cur), " + this.default;
+		return "url(" + this.baseUrl + this.name + ".cur), " + this.default;
+	}
+
+	/**
+	 * @extends {CHTMLCursorItemBase}
+	 */
+	function CHTMLCursorSvgExternal()
+	{
+		CHTMLCursorItemBase.apply(this, arguments);
+	}
+	CHTMLCursorSvgExternal.prototype = Object.create(CHTMLCursorItemBase.prototype);
+	CHTMLCursorSvgExternal.prototype.getValue = function(globalCursors)
+	{
+		return "url(" + this.baseUrl + this.name + ".svg) " + this.hotspot + ", " + this.default;
+	}
+
+	/**
+	 * @extends {CHTMLCursorItemBase}
+	 */
+	function CHTMLCursorPng()
+	{
+		CHTMLCursorItemBase.apply(this, arguments);
+	}
+	CHTMLCursorPng.prototype = Object.create(CHTMLCursorItemBase.prototype);
+	CHTMLCursorPng.prototype.getValue = function(globalCursors)
+	{
+		return "-webkit-image-set(url(" + this.baseUrl + this.name + ".png) 1x," + " url(" + this.baseUrl + this.name + "_2x.png) 2x) " + this.hotspot + ", " + this.default;
+	}
+
+	/**
+	 * @extends {CHTMLCursorItemBase}
+	 */
+	function CHTMLCursorModern()
+	{
+		CHTMLCursorItemBase.apply(this, arguments);
+	}
+	CHTMLCursorModern.prototype = Object.create(CHTMLCursorItemBase.prototype);
+	CHTMLCursorModern.prototype.getValue = function(globalCursors)
+	{
+		if (1.2 > AscCommon.AscBrowser.retinaPixelRatio)
+			return "url(" + this.baseUrl + this.name + ".png) " + this.hotspot + ", " + this.default;
+
+		if (globalCursors.mapSvg && globalCursors.mapSvg[this.name])
+		{
+			return "url(\"data:image/svg+xml;utf8," + globalCursors.mapSvg[this.name] + "\") " + this.hotspot + ", " + this.default;
+		}
+
+		if (!AscCommon.AscBrowser.isChrome && !AscCommon.AscBrowser.isSafari)
+		{
+			return "url(" + this.baseUrl + this.name + ".svg) " + this.hotspot + ", " + "url(" + this.baseUrl + this.name + ".png) " + this.hotspot + ", " + this.default;
+		}
+
+		return "-webkit-image-set(url(" + this.baseUrl + this.name + ".png) 1x," + " url(" + this.baseUrl + this.name + "_2x.png) 2x) " + this.hotspot + ", " + this.default;
+	}
+
+	var Cursors = {
+		MarkerFormat        : "marker-format",
+
+		SelectTableRow      : "select-table-row",
+		SelectTableColumn   : "select-table-column",
+		SelectTableCell     : "select-table-cell",
+		SelectTableContent  : "select-table-content",
+
+		TableEraser         : "table-eraser",
+		TablePen            : "table-pen",
+
+		Grab                : "grab",
+		Grabbing            : "grabbing",
+
+		MoveBorderHor       : "move-border-horizontally",
+		MoveBorderVer       : "move-border-vertically",
+
+		CellCur             : "plus",
+		CellFormatPainter   : "plus-copy",
+
+		TextCopy            : "text-copy",
+		ShapeCopy           : "shape-copy",
+		Eyedropper          : "eyedropper"
+	};
+
 	function CHTMLCursor()
 	{
-		this.map = {};
-		this.mapRetina = {};
+		this.cursors = {};
+		this.mapSvg = null;
 
 		this.value = function(param)
 		{
-			var ret = this.map[param];
-			if (AscCommon.AscBrowser.isCustomScalingAbove2() && this.mapRetina[param])
-				ret = this.mapRetina[param];
-			return ret ? ret : param;
+			if (this.cursors[param])
+				return this.cursors[param].getValue(this);
+			return param;
 		};
 
-		this.register = function(type, name, target, default_css_value)
+		this.register = function(type, target, default_css_value)
 		{
 			if (AscBrowser.isIE || AscBrowser.isIeEdge)
 			{
-				this.map[type] = ("url(../../../../sdkjs/common/Images/cursors/" + name + ".cur), " + default_css_value);
-				this.mapRetina[type] = ("url(../../../../sdkjs/common/Images/cursors/" + name + "_2x.cur), " + default_css_value);
+				this.cursors[type] = new CHTMLCursorCur(type, target, default_css_value);
 			}
 			else if (window.opera)
 			{
-				this.map[type] = default_css_value;
+				this.cursors[type] = new CHTMLCursorItemBase(type, target, default_css_value);
 			}
 			else
 			{
-				if (!AscCommon.AscBrowser.isChrome && !AscCommon.AscBrowser.isSafari)
-				{
-					this.map[type] = "url('../../../../sdkjs/common/Images/cursors/" + name + ".svg') " + target +
-						", url('../../../../sdkjs/common/Images/cursors/" + name + ".png') " + target + ", " + default_css_value;
-				}
-				else
-				{
-					this.map[type] = "-webkit-image-set(url(../../../../sdkjs/common/Images/cursors/" + name + ".png) 1x," +
-						" url(../../../../sdkjs/common/Images/cursors/" + name + "_2x.png) 2x) " + target + ", " + default_css_value;
-				}
+				this.cursors[type] = new CHTMLCursorModern(type, target, default_css_value);
 			}
 		};
+
+		this.loadAllSvg = function()
+		{
+			try
+			{
+				var xhr = new XMLHttpRequest();
+				xhr.open("GET", "../../../../sdkjs/common/Images/cursors/svg.json", true);
+				var t = this;
+				xhr.onload = function()
+				{
+					if (this.status === 200 || location.href.indexOf("file:") === 0)
+					{
+						try
+						{
+							t.mapSvg = JSON.parse(this.responseText);
+						}
+						catch (err) {}
+					}
+				};
+				xhr.send('');
+			}
+			catch (e) {}
+		};
+
+		this.getDrawCursor = function(ln)
+		{
+			if (!ln.Fill)
+				return "default";
+			let color = ln.Fill.fill.color.RGBA;
+			let w = (ln.w == null) ? 12700 : ln.w;
+
+			var scale = 1;
+			switch (Asc.editor.editorId)
+			{
+				case AscCommon.c_oEditorId.Word:
+				case AscCommon.c_oEditorId.Presentation:
+				{
+					scale = Asc.editor.WordControl.m_nZoomValue / 100;
+					break;
+				}
+				case AscCommon.c_oEditorId.Spreadsheet:
+				{
+					scale = Asc.editor.asc_getZoom();
+					break;
+				}
+				default:
+					break;
+			}
+
+			w = (scale * w / 9525) >> 0;
+			if (w < 4) w = 4;
+			if (w & 0x01) w += 1;
+
+			if (ln && ln.Fill && ln.Fill.transparent !== null)
+				color.A = ln.Fill.transparent;
+
+			let isRect = (254 < color.A) ? false : true;
+			let h = w;
+
+			if (isRect)
+				w = 10;
+
+			let url = "<svg width='" + w + "' height='" + h + "' viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'>";
+			if (!isRect)
+			{
+				url = url + "<circle cx='5' cy='5' r='5' stroke='none' fill='rgb(" +
+					color.R + "," + color.G + "," + color.B + ")'/></svg>";
+			}
+			else
+			{
+				url = url + "<rect x='0' y='0' width='10' height='10' stroke='none' fill='rgb(" +
+					color.R + "," + color.G + "," + color.B + ")'/></svg>";
+			}
+			//console.log(url);
+
+			return "url(\"data:image/svg+xml;utf8," + url + "\") " + (w >> 1) + " " + (h >> 1) + ", default";
+		}
+
+		this.loadAllSvg();
 	}
+
+	var g_oHtmlCursor = new CHTMLCursor();
+
+	AscCommon.g_oHtmlCursor = g_oHtmlCursor;
+	AscCommon.Cursors = Cursors;
+
+	g_oHtmlCursor.register(AscCommon.Cursors.TextCopy, "2 2", "pointer");
+	g_oHtmlCursor.register(AscCommon.Cursors.ShapeCopy, "1 1", "pointer");
+	g_oHtmlCursor.register(AscCommon.Cursors.Eyedropper, "1 17", "pointer");
 
 	function OpenFileResult()
 	{
@@ -1244,12 +1521,14 @@
 		"uf": "#UNSUPPORTED_FUNCTION!"
 	};
 	var cErrorLocal = {};
+	let cCellFunctionLocal = {};
 
 	function build_local_rx(data)
 	{
 		rx_table_local = build_rx_table(data ? data["StructureTables"] : null);
 		rx_bool_local = build_rx_bool((data && data["CONST_TRUE_FALSE"]) || cBoolOrigin);
 		rx_error_local = build_rx_error(data ? data["CONST_ERROR"] : null);
+		rx_cell_func_local = build_rx_cell_func(data ? data["CELL_FUNCTION_INFO_TYPE"] : null);
 	}
 
 	function build_rx_table(local)
@@ -1337,6 +1616,50 @@
 			cErrorLocal["uf"] + ")", "i");
 	}
 
+	function build_rx_cell_func(local)
+	{
+		// ToDo переделать на более правильную реализацию. Не особо правильное копирование
+		local = local ? local : {
+			"address": "address",
+			"col": "col",
+			"color": "color",
+			"contents": "contents",
+			"filename": "filename",
+			"format": "format",
+			"parentheses": "parentheses",
+			"prefix": "prefix",
+			"protect": "protect",
+			"row": "row",
+			"type": "type",
+			"width": "width"
+		};
+		cCellFunctionLocal['address'] = local['address'];
+		cCellFunctionLocal['col'] = local['col'];
+		cCellFunctionLocal['color'] = local['color'];
+		cCellFunctionLocal['contents'] = local['contents'];
+		cCellFunctionLocal['filename'] = local['filename'];
+		cCellFunctionLocal['format'] = local['format'];
+		cCellFunctionLocal['parentheses'] = local['parentheses'];
+		cCellFunctionLocal['prefix'] = local['prefix'];
+		cCellFunctionLocal['protect'] = local['protect'];
+		cCellFunctionLocal['row'] = local['row'];
+		cCellFunctionLocal['type'] = local['type'];
+		cCellFunctionLocal['width'] = local['width'];
+
+		return new RegExp("^(" + cCellFunctionLocal["address"] + "|" +
+			cCellFunctionLocal["col"] + "|" +
+			cCellFunctionLocal["color"] + "|" +
+			cCellFunctionLocal["contents"] + "|" +
+			cCellFunctionLocal["filename"] + "|" +
+			cCellFunctionLocal["format"] + "|" +
+			cCellFunctionLocal["parentheses"] + "|" +
+			cCellFunctionLocal["prefix"] + "|" +
+			cCellFunctionLocal["protect"] +
+			cCellFunctionLocal["row"] +
+			cCellFunctionLocal["type"] +
+			cCellFunctionLocal["width"] + ")", "i");
+	}
+
 	var PostMessageType = {
 		UploadImage:    0,
 		ExtensionExist: 1
@@ -1396,7 +1719,7 @@
 	//todo get from server config
 	var c_oAscImageUploadProp = {//Не все браузеры позволяют получить информацию о файле до загрузки(например ie9), меняя параметры здесь надо поменять аналогичные параметры в web.common
 		MaxFileSize:      25000000, //25 mb
-		SupportedFormats: ["jpg", "jpeg", "jpe", "png", "gif", "bmp"]
+		SupportedFormats: ["jpg", "jpeg", "jpe", "png", "gif", "bmp", "svg"]
 	};
 
 	var c_oAscDocumentUploadProp = {
@@ -1690,21 +2013,6 @@
 							if (!window.g_asc_plugins.api.licenseResult || !window.g_asc_plugins.api.licenseResult['advancedApi'])
 								return;
 
-							if (data["subType"] === "internalCommand")
-							{
-								// такие команды перечисляем здесь и считаем их функционалом
-								switch (data.data.type)
-								{
-									case "onbeforedrop":
-									case "ondrop":
-									{
-										window.g_asc_plugins.api["plugin_Method_OnDropEvent"](data.data);
-										return;
-									}
-									default:
-										break;
-								}
-							}
 							if (data["subType"] === "connector")
 							{
 								window.g_asc_plugins.externalConnectorMessage(data["data"]);
@@ -1781,10 +2089,28 @@
 				}
 				else
 				{
-					callback(Asc.c_oAscError.ID.Unknown);
+					if (e.canceled == true)
+					{
+						if (Asc.editor.isPdfEditor())
+							callback(e);
+					}
+					else
+						callback(Asc.c_oAscError.ID.Unknown);
 				}
 			});
-			fileName.click();
+
+			if (Asc.editor.isPdfEditor()) {
+				let oViewer = Asc.editor.getDocumentRenderer();
+				let oDoc = oViewer.doc;
+				let oActionsQueue = oDoc.GetActionsQueue();
+				if (oActionsQueue.IsInProgress()) {
+					Asc.editor.sendEvent("asc_onOpenFilePdfForm", fileName.click.bind(fileName), oActionsQueue.Continue.bind(oActionsQueue));
+				}
+				else 
+					fileName.click();
+			}
+			else
+				fileName.click();
 		}
 		else
 		{
@@ -2047,9 +2373,12 @@
                             xhr.onreadystatechange = fOnReadyChnageState;
                             xhr.send(file);
                         }
-                    }
-                    else if(this.status === 403){
+                    } else if(this.status === 403) {
 						callback(Asc.c_oAscError.ID.VKeyEncrypt);
+					} else if(this.status === 413) {
+						callback(Asc.c_oAscError.ID.UplImageSize);
+					} else if(this.status === 415) {
+						callback(Asc.c_oAscError.ID.UplImageExt);
 					} else {
 						callback(Asc.c_oAscError.ID.UplImageUrl);
 					}
@@ -2281,11 +2610,66 @@
 		input.setAttribute('type', 'file');
 		input.setAttribute('accept', accept);
 		input.setAttribute('style', 'position:absolute;left:-2px;top:-2px;width:1px;height:1px;z-index:-1000;cursor:pointer;');
+		
 		if (allowMultiple) {
 			input.setAttribute('multiple', true);
 		}
-		input.onchange = onchange;
 		document.body.appendChild(input);
+
+		function addDialogClosedListener(input, callback) {
+			var id = null;
+			var active = false;
+			var wrapper = function() {
+				if (active) {
+					active = false;
+					callback(input);
+
+					// remove handlers
+					window.removeEventListener('focus', onFocus);
+					window.removeEventListener('blur', onBlur);
+				}
+			};
+			var cleanup = function() {
+				clearTimeout(id);
+			};
+			var shedule = function(delay) {
+				id = setTimeout(wrapper, delay);
+			};
+			var onFocus = function() {
+				cleanup();
+				shedule(1000);
+			};
+			var onBlur = function() {
+				cleanup();
+			};
+			var onClick = function() {
+				window.addEventListener('focus', onFocus);
+				window.addEventListener('blur', onBlur);
+
+				cleanup();
+				active = true;
+			};
+			var onChange = function() {
+				cleanup();
+				shedule(0);
+			};
+			input.addEventListener('click', onClick);
+			input.addEventListener('change', onChange);
+		}
+
+		addDialogClosedListener(input, checkCanceled);
+
+		function checkCanceled(input) {
+			let e = {};
+			if (input.files.length === 0) {
+				e.canceled = true;
+			}
+			else {
+				e.target = input;
+			}
+			onchange(e);
+		}
+	
 		return input;
 	}
 
@@ -2340,6 +2724,7 @@
 
 		rx_error              = build_rx_error(null),
 		rx_error_local        = build_rx_error(null),
+		rx_cell_func_local    = build_rx_cell_func(null),
 
 		rx_bool               = build_rx_bool(cBoolOrigin),
 		rx_bool_local         = rx_bool,
@@ -2376,6 +2761,7 @@
 
 		//'path/[name]Sheet1'!A1
 		var path, name, startLink, i;
+		url = url && url.split(FormulaSeparators.functionArgumentSeparator)[0];
 		if (url && url[0] === "'"/*url.match(/('[^\[]*\[[^\]]+\]([^'])+'!)/g)*/) {
 			for (i = url.length - 1; i >= 0; i--) {
 				if (url[i] === "!" && url[i - 1] === "'") {
@@ -3534,14 +3920,6 @@
 
 	var parserHelp = new parserHelper();
 
-	var g_oHtmlCursor = new CHTMLCursor();
-	var kCurFormatPainterWord = 'de-formatpainter';
-	g_oHtmlCursor.register(kCurFormatPainterWord, "text_copy", "2 11", "pointer");
-	var kCurFormatPainterDrawing = 'drawing-formatpainter';
-	g_oHtmlCursor.register(kCurFormatPainterDrawing, "shape_copy", "0 3", "pointer");
-	var kCurEyedropper = 'eyedropper';
-	g_oHtmlCursor.register(kCurEyedropper, "eyedropper", "1 17", "pointer");
-
 	function asc_ajax(obj)
 	{
 		var url                                       = "", type                            = "GET",
@@ -4012,11 +4390,17 @@
 	/**
 	 * Конвертируем миллиметры в ближайшее целое значение твипсов
 	 * @param mm - значение в миллиметрах
+	 * @param [mode=0]
 	 * @returns {number}
 	 */
-	function MMToTwips(mm)
+	function MMToTwips(mm, mode)
 	{
-		return (((mm * 20 * 72 / 25.4) + 0.5) | 0);
+		if (!mode)
+			return Math.trunc((mm * 20 * 72 / 25.4) + 0.5);
+		else if (-1 === mode)
+			return Math.floor((mm * 20 * 72 / 25.4) + 0.5);
+		else
+			return Math.ceil((mm * 20 * 72 / 25.4) + 0.5);
 	}
 
 	/**
@@ -4084,6 +4468,44 @@
 		}
 
 		return (nFirstCharCode - 64) + 26 * (nLen - 1);
+	}
+
+	function RussianNumberingToInt(sLetters)
+	{
+		sLetters = sLetters.toUpperCase();
+
+		if (sLetters.length <= 0)
+			return NaN;
+
+		const nLen = sLetters.length;
+		const nFirstCharCode = sLetters[0].charCodeAt(0);
+		let nSub;
+		if (1040 <= nFirstCharCode && nFirstCharCode <= 1048)
+		{
+			nSub = 1039;
+		}
+		else if (1050 <= nFirstCharCode && nFirstCharCode <= 1065)
+		{
+			nSub = 1040;
+		}
+		else if (1069 <= nFirstCharCode && nFirstCharCode <= 1071)
+		{
+			nSub = 1042;
+		}
+		else if (nFirstCharCode === 1067)
+		{
+			nSub = 1041;
+		}
+
+		if (!nSub)
+			return NaN;
+
+		for (let nPos = 1; nPos < nLen; ++nPos)
+		{
+			if (sLetters.charCodeAt(nPos) !== nFirstCharCode)
+				return NaN;
+		}
+		return nFirstCharCode - nSub + 29 * (nLen - 1);
 	}
 
 	function repeatNumberingLvl(num, nLastTrueSymbol)
@@ -9106,7 +9528,7 @@
 				|| 0x2611 === nUnicode
 				|| 0x2610 === nUnicode));
 	}
-
+	
 	function ExecuteNoHistory(f, oLogicDocument, oThis, args)
 	{
 		// TODO: Надо перевести все редакторы на StartNoHistoryMode/EndNoHistoryMode
@@ -9141,6 +9563,12 @@
 		}
 
 		return result;
+	}
+	
+	function AddAndExecuteChange(change)
+	{
+		AscCommon.History.Add(change);
+		change.Redo();
 	}
 
 	/**
@@ -9699,34 +10127,6 @@
 
 	function loadChartStyles(onSuccess, onError) {
 		loadScript('../../../../sdkjs/common/Charts/ChartStyles.js', onSuccess, onError);
-	}
-
-	function loadSmartArtBinary(fOnError) {
-		if (window["NATIVE_EDITOR_ENJINE"]) {
-			return;
-		}
-		loadFileContent('../../../../sdkjs/common/SmartArts/SmartArts.bin', function (httpRequest) {
-			if (httpRequest && httpRequest.response) {
-				const arrStream = AscCommon.initStreamFromResponse(httpRequest);
-
-				AscCommon.g_oBinarySmartArts = {
-					shifts: {},
-					stream: arrStream
-				}
-
-				const oFileStream = new AscCommon.FileStream(arrStream, arrStream.length);
-				oFileStream.GetUChar();
-				const nLength = oFileStream.GetULong();
-				while (nLength + 4 > oFileStream.cur) {
-					const nType = oFileStream.GetUChar();
-					const nPosition = oFileStream.GetULong();
-					AscCommon.g_oBinarySmartArts.shifts[nType] = nPosition;
-				}
-			} else {
-				fOnError(httpRequest);
-			}
-
-		}, 'arraybuffer');
 	}
 
 	function getAltGr(e)
@@ -11885,6 +12285,9 @@
 	CFormatPainter.prototype.isOff = function() {
 		return this.state === AscCommon.c_oAscFormatPainterState.kOff;
 	};
+	CFormatPainter.prototype.isMultiple = function() {
+		return this.state === AscCommon.c_oAscFormatPainterState.kMultiple;
+	};
 	CFormatPainter.prototype.toggle = function() {
 		if(this.isOn()) {
 			this.changeState(AscCommon.c_oAscFormatPainterState.kOff);
@@ -12023,7 +12426,10 @@
 	};
 	CEyedropper.prototype.clearImageData = function()
 	{
-		this.imgData = null;
+		if(this.imgData !== null)
+		{
+			this.imgData = null;
+		}
 	};
 	CEyedropper.prototype.finish = function()
 	{
@@ -12088,12 +12494,13 @@
 	};
 	CInkDrawer.prototype.startDraw = function(oAscPen) {
 		this.pen = AscFormat.CorrectUniStroke(oAscPen);
-		if(!this.pen) {
+		if(!this.pen || !this.pen.Fill || !this.pen.Fill) {
 			this.pen = new AscFormat.CLn();
 			this.pen.w = 180000;
 			this.pen.Fill = AscFormat.CreateSolidFillRGB(255, 255, 0);
 			this.pen.Fill.transparent = 127;
 		}
+		this.pen.Fill.check(AscFormat.GetDefaultTheme(), AscFormat.GetDefaultColorMap());
 		this.setState(INK_DRAWER_STATE_DRAW);
 	};
 	CInkDrawer.prototype.startErase = function() {
@@ -12142,6 +12549,17 @@
 		this.state = oState.state;
 		this.pen = oState.pen;
 		this.silentMode = oState.silentMode;
+	};
+	CInkDrawer.prototype.getCursorType = function() {
+		if(this.isOn()) {
+			if(this.isDraw()) {
+				return AscCommon.g_oHtmlCursor.getDrawCursor(this.getPen());
+			}
+			else if(this.isErase()) {
+				return "table-eraser";
+			}
+		}
+		return null;
 	};
 
 	//------------------------------------------------------------fill polyfill--------------------------------------------
@@ -12277,6 +12695,9 @@
 			} else if (-1 !== value.indexOf("pc")) {
 				oType = "pc";
 				oVal *= AscCommonWord.g_dKoef_pc_to_mm;
+			} else if (-1 !== value.indexOf("em")) {
+				oType = "em";
+				oVal *= AscCommonWord.g_dKoef_em_to_mm;
 			} else {
 				oType = "none";
 			}
@@ -12919,6 +13340,9 @@
 		if (!api) {
 			return;
 		}
+		if (api.documentOpenOptions && api.documentOpenOptions["debug"]) {
+			console.log("[speed]: "+ msg);
+		}
 		api.CoAuthoringApi.sendClientLog(level, msg);
 	}
 
@@ -13018,6 +13442,17 @@
 			this["guid"] = sOlePluginGuid;
 		}
 	}
+
+
+	function deg2rad(deg)
+	{
+		return deg * Math.PI / 180.0;
+	}
+
+	function rad2deg(rad)
+	{
+		return rad * 180.0 / Math.PI;
+	}
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -13088,9 +13523,10 @@
 	window["AscCommon"].CorrectMMToTwips = CorrectMMToTwips;
 	window["AscCommon"].TwipsToMM = TwipsToMM;
 	window["AscCommon"].MMToTwips = MMToTwips;
-	window["AscCommon"].RomanToInt = RomanToInt;
-	window["AscCommon"].LatinNumberingToInt = LatinNumberingToInt;
-	window["Asc"]["IntToNumberFormat"] = window["AscCommon"]["IntToNumberFormat"] = window["AscCommon"].IntToNumberFormat = IntToNumberFormat;
+	window["AscCommon"]["RomanToInt"] = window["AscCommon"].RomanToInt = RomanToInt;
+	window["AscCommon"]["LatinNumberingToInt"] = window["AscCommon"].LatinNumberingToInt = LatinNumberingToInt;
+	window["AscCommon"]["RussianNumberingToInt"] = window["AscCommon"].RussianNumberingToInt = RussianNumberingToInt;
+	window["AscCommon"]["IntToNumberFormat"] = window["AscCommon"].IntToNumberFormat = IntToNumberFormat;
 	window["AscCommon"].IsSpace = IsSpace;
 	window["AscCommon"].IntToHex = IntToHex;
 	window["AscCommon"].Int32ToHex = Int32ToHex;
@@ -13104,6 +13540,7 @@
 	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
 	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
+	window["AscCommon"].AddAndExecuteChange = AddAndExecuteChange;
 	window["AscCommon"].CompareStrings = CompareStrings;
 	window["AscCommon"].IsSupportAscFeature = IsSupportAscFeature;
 	window["AscCommon"].IsSupportOFormFeature = IsSupportOFormFeature;
@@ -13111,7 +13548,6 @@
 	window["AscCommon"].loadSdk = loadSdk;
     window["AscCommon"].loadScript = loadScript;
     window["AscCommon"].loadChartStyles = loadChartStyles;
-	window["AscCommon"].loadSmartArtBinary = loadSmartArtBinary;
 	window["AscCommon"].getAltGr = getAltGr;
 	window["AscCommon"].getColorSchemeByName = getColorSchemeByName;
 	window["AscCommon"].getColorSchemeByIdx = getColorSchemeByIdx;
@@ -13130,6 +13566,7 @@
 	window["AscCommon"].cBoolLocal = cBoolLocal;
 	window["AscCommon"].cErrorOrigin = cErrorOrigin;
 	window["AscCommon"].cErrorLocal = cErrorLocal;
+	window["AscCommon"].cCellFunctionLocal = cCellFunctionLocal;
 	window["AscCommon"].FormulaSeparators = FormulaSeparators;
 	window["AscCommon"].rx_space_g = rx_space_g;
 	window["AscCommon"].rx_space = rx_space;
@@ -13138,13 +13575,8 @@
 	window["AscCommon"].rx_r1c1DefError = rx_r1c1DefError;
 	window["AscCommon"].rx_allowedProtocols = rx_allowedProtocols;
 
-	window["AscCommon"].kCurFormatPainterWord = kCurFormatPainterWord;
-	window["AscCommon"].kCurFormatPainterDrawing = kCurFormatPainterDrawing;
-	window["AscCommon"].kCurEyedropper = kCurEyedropper;
 	window["AscCommon"].parserHelp = parserHelp;
 	window["AscCommon"].g_oIdCounter = g_oIdCounter;
-
-	window["AscCommon"].g_oHtmlCursor = g_oHtmlCursor;
 
 	window["AscCommon"].g_oBackoffDefaults = g_oBackoffDefaults;
 	window["AscCommon"].Backoff = Backoff;
@@ -13237,7 +13669,9 @@
 	window["AscCommon"].CEyedropper = CEyedropper;
 	window["AscCommon"].CInkDrawer = CInkDrawer;
 	window["AscCommon"].CPluginCtxMenuInfo = CPluginCtxMenuInfo;
-
+	window['AscCommon'].deg2rad = deg2rad;
+	window['AscCommon'].rad2deg = rad2deg;
+	window["AscCommon"].c_oAscImageUploadProp = c_oAscImageUploadProp;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)

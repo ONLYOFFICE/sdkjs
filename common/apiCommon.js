@@ -1881,9 +1881,12 @@
 	};
 	asc_ChartSettings.prototype.cancelEdit = function() {
 		this.bStartEdit = false;
+		const bLastPointEmpty = AscCommon.History.Is_LastPointEmpty();
 		AscCommon.History.EndTransaction();
-		AscCommon.History.Undo();
-		AscCommon.History.Clear_Redo();
+		if(!bLastPointEmpty) {
+			AscCommon.History.Undo();
+			AscCommon.History.Clear_Redo();
+		}
 		AscCommon.History._sendCanUndoRedo();
 		this.updateChart();
 		this.updateInterface();
@@ -2284,8 +2287,6 @@
 	STANDART_COLORS_MAP[0x333399] = "Indigo";
 	STANDART_COLORS_MAP[0x333333] = "Dark Gray";
 
-	const REVERSE_COLORS_MAP = {};
-
 
 	/**
 	 * Класс CColor для работы с цветами
@@ -2451,7 +2452,101 @@
 		let nC2B = nC2 & 0xFF;
 		let lab1 = this.RGB2LAB(nC1R, nC1G, nC1B);
 		let lab2 = this.RGB2LAB(nC2R, nC2G, nC2B);
-		return Math.abs(lab2[0] - lab1[0]) + Math.abs(lab2[1] - lab1[1]) + Math.abs(lab2[2] - lab1[2]);
+
+		const d2r = AscCommon.deg2rad;
+
+		const L1 = lab1[0];
+		const a1 = lab1[1];
+		const b1 = lab1[2];
+
+		const L2 = lab2[0];
+		const a2 = lab2[1];
+		const b2 = lab2[2];
+
+		const k_L = 1.0, k_C = 1.0, k_H = 1.0;
+		const deg360InRad = d2r(360.0);
+		const deg180InRad = d2r(180.0);
+		const pow25To7 = 6103515625.0; /* Math.pow(25, 7) */
+
+		let C1 = Math.sqrt((a1 * a1) + (b1 * b1));
+		let C2 = Math.sqrt((a2 * a2) + (b2 * b2));
+		let barC = (C1 + C2) / 2.0;
+		let G = 0.5 * (1 - Math.sqrt(Math.pow(barC, 7) / (Math.pow(barC, 7) + pow25To7)));
+		let a1Prime = (1.0 + G) * a1;
+		let a2Prime = (1.0 + G) * a2;
+		let CPrime1 = Math.sqrt((a1Prime * a1Prime) + (b1 * b1));
+		let CPrime2 = Math.sqrt((a2Prime * a2Prime) + (b2 * b2));
+		let hPrime1;
+		const fAE = function (a, b) {
+			return Math.abs(a - b) < 1e-15;
+		};
+		if (fAE(b1, 0.0) && fAE(a1Prime, 0.0))
+			hPrime1 = 0.0;
+		else {
+			hPrime1 = Math.atan2(b1, a1Prime);
+			if (hPrime1 < 0)
+				hPrime1 += deg360InRad;
+		}
+		let hPrime2;
+		if (fAE(b2, 0.0) && fAE(a2Prime, 0.0))
+			hPrime2 = 0.0;
+		else {
+			hPrime2 = Math.atan2(b2, a2Prime);
+			if (hPrime2 < 0)
+				hPrime2 += deg360InRad;
+		}
+
+		let deltaLPrime = L2 - L1;
+		let deltaCPrime = CPrime2 - CPrime1;
+		let deltahPrime;
+		let CPrimeProduct = CPrime1 * CPrime2;
+		if (fAE(CPrimeProduct, 0.0))
+			deltahPrime = 0;
+		else {
+			deltahPrime = hPrime2 - hPrime1;
+			if (deltahPrime < -deg180InRad)
+				deltahPrime += deg360InRad;
+			else if (deltahPrime > deg180InRad)
+				deltahPrime -= deg360InRad;
+		}
+		let deltaHPrime = 2.0 * Math.sqrt(CPrimeProduct) * Math.sin(deltahPrime / 2.0);
+
+		let barLPrime = (L1 + L2) / 2.0;
+		let barCPrime = (CPrime1 + CPrime2) / 2.0;
+		let barhPrime, hPrimeSum = hPrime1 + hPrime2;
+		if (fAE(CPrime1 * CPrime2, 0.0)) {
+			barhPrime = hPrimeSum;
+		} else {
+			if (Math.abs(hPrime1 - hPrime2) <= deg180InRad)
+				barhPrime = hPrimeSum / 2.0;
+			else {
+				if (hPrimeSum < deg360InRad)
+					barhPrime = (hPrimeSum + deg360InRad) / 2.0;
+				else
+					barhPrime = (hPrimeSum - deg360InRad) / 2.0;
+			}
+		}
+		let T = 1.0 - (0.17 * Math.cos(barhPrime - d2r(30.0))) +
+			(0.24 * Math.cos(2.0 * barhPrime)) +
+			(0.32 * Math.cos((3.0 * barhPrime) + d2r(6.0))) -
+			(0.20 * Math.cos((4.0 * barhPrime) - d2r(63.0)));
+		let deltaTheta = d2r(30.0) *
+			Math.exp(-Math.pow((barhPrime - d2r(275.0)) / d2r(25.0), 2.0));
+		let R_C = 2.0 * Math.sqrt(Math.pow(barCPrime, 7.0) /
+			(Math.pow(barCPrime, 7.0) + pow25To7));
+		let S_L = 1 + ((0.015 * Math.pow(barLPrime - 50.0, 2.0)) /
+			Math.sqrt(20 + Math.pow(barLPrime - 50.0, 2.0)));
+		let S_C = 1 + (0.045 * barCPrime);
+		let S_H = 1 + (0.015 * barCPrime * T);
+		let R_T = (-Math.sin(2.0 * deltaTheta)) * R_C;
+
+		let deltaE = Math.sqrt(
+			Math.pow(deltaLPrime / (k_L * S_L), 2.0) +
+			Math.pow(deltaCPrime / (k_C * S_C), 2.0) +
+			Math.pow(deltaHPrime / (k_H * S_H), 2.0) +
+			(R_T * (deltaCPrime / (k_C * S_C)) * (deltaHPrime / (k_H * S_H))));
+
+		return deltaE;
 	};
 	asc_CColor.prototype.RGB2LAB = function (R, G, B) {
 		let r, g, b, X, Y, Z, fx, fy, fz, xr, yr, zr;
@@ -2521,12 +2616,8 @@
 	};
 	asc_CColor.prototype.asc_getName = function() {
 		const nColorVal = this.getVal();
-		for(let nCurColor in STANDART_COLORS_MAP) {
-			if(STANDART_COLORS_MAP.hasOwnProperty(nCurColor)) {
-				if(nCurColor === nColorVal) {
-					return STANDART_COLORS_MAP[nCurColor];
-				}
-			}
+		if(STANDART_COLORS_MAP.hasOwnProperty(nColorVal)) {
+			return STANDART_COLORS_MAP[nColorVal];
 		}
 		let dMinDistance = 1000000;
 		let sMinName = "Black";
@@ -3766,6 +3857,7 @@
 		this.lockAspect = null;
 		this.title = null;
 		this.description = null;
+		this.name = null;
 
         this.columnNumber = null;
         this.columnSpace = null;
@@ -3902,6 +3994,12 @@
 		};
 	asc_CShapeProperty.prototype.asc_putDescription = function (v) {
 			this.description = v;
+		};
+	asc_CShapeProperty.prototype.asc_getName = function () {
+			return this.name;
+		};
+	asc_CShapeProperty.prototype.asc_putName = function (v) {
+			this.name = v;
 		};
 	asc_CShapeProperty.prototype.asc_getColumnNumber = function(){
 			return this.columnNumber;
@@ -4320,6 +4418,7 @@
 
 			this.title = obj.title != undefined ? obj.title : undefined;
 			this.description = obj.description != undefined ? obj.description : undefined;
+			this.name = obj.name != undefined ? obj.name : undefined;
 
             this.columnNumber =  obj.columnNumber != undefined ? obj.columnNumber : undefined;
             this.columnSpace =  obj.columnSpace != undefined ? obj.columnSpace : undefined;
@@ -4374,6 +4473,7 @@
 
             this.title = undefined;
             this.description = undefined;
+            this.name = undefined;
 
             this.columnNumber = undefined;
             this.columnSpace =  undefined;
@@ -4605,6 +4705,13 @@
 
 		asc_putDescription: function(v){
 			this.description = v;
+		},
+		asc_getName: function(){
+			return this.name;
+		},
+
+		asc_putName: function(v){
+			this.name = v;
 		},
 
 		asc_getColumnNumber: function(){
@@ -5527,6 +5634,7 @@
 			this.X_abs = ( undefined != obj.X_abs ) ? obj.X_abs : 0;
 			this.Y_abs = ( undefined != obj.Y_abs ) ? obj.Y_abs : 0;
 			this.EyedropperColor = ( undefined != obj.EyedropperColor ) ? obj.EyedropperColor : undefined;
+			this.PlaceholderType = obj.PlaceholderType;
 			switch (this.Type)
 			{
 				case c_oAscMouseMoveDataTypes.Hyperlink :
@@ -5605,6 +5713,10 @@
 	CMouseMoveData.prototype.get_EyedropperColor = function()
 	{
 		return this.EyedropperColor;
+	};
+	CMouseMoveData.prototype.get_PlaceholderType = function()
+	{
+		return this.PlaceholderType;
 	};
 
 
@@ -6051,7 +6163,7 @@
 			"height" : 100, // mm
 			"rotate" : -45, // degrees
 			"margins" : [ 10, 10, 10, 10 ], // text margins
-			"fill" : [255, 0, 0], // [] => none
+			"fill" : [255, 0, 0], // [] => none // "image_url"
 			"stroke-width" : 1, // mm
 			"stroke" : [0, 0, 255], // [] => none
 			"align" : 1, // vertical text align (4 - top, 1 - center, 0 - bottom)
@@ -6095,6 +6207,9 @@
 		this.imageBase64 = undefined;
 		this.width = 0;
 		this.height = 0;
+
+		this.imageBackgroundUrl = "";
+		this.imageBackground = null;
 
 		this.transparent = 0.3;
 		this.zoom = 1;
@@ -6242,9 +6357,13 @@
 				oShape.spPr.xfrm.setExtX(obj['width']);
 				oShape.spPr.xfrm.setExtY(obj['height']);
 				oShape.spPr.xfrm.setRot(AscFormat.normalizeRotate(obj['rotate'] ? (obj['rotate'] * Math.PI / 180) : 0));
-				oShape.spPr.setGeometry(AscFormat.CreateGeometry(obj['type']));
+				oShape.spPr.setGeometry(AscFormat.CreateGeometry(obj['type'] || "rect"));
 				if(obj['fill'] && obj['fill'].length === 3){
 					oShape.spPr.setFill(AscFormat.CreateSolidFillRGB(obj['fill'][0], obj['fill'][1], obj['fill'][2]));
+				}
+				else if (this.imageBackground) {
+					oApi.ImageLoader.map_image_index[this.imageBackgroundUrl] = { Image : this.imageBackground, Status : AscFonts.ImageLoadStatus.Complete };
+					oShape.spPr.setFill(AscFormat.builder_CreateBlipFill(this.imageBackgroundUrl, "stretch"));
 				}
 				if(AscFormat.isRealNumber(obj['stroke-width']) || Array.isArray(obj['stroke']) && obj['stroke'].length === 3){
 					var oUnifill;
@@ -6272,7 +6391,7 @@
 					oShape.setPaddings({Left: obj['margins'][0], Top: obj['margins'][1], Right: obj['margins'][2], Bottom: obj['margins'][3]});
 				}
 				var oContent = oShape.getDocContent();
-				var aParagraphsS = obj['paragraphs'];
+				var aParagraphsS = obj['paragraphs'] || [];
 				if(aParagraphsS.length > 0){
                     oContent.Content.length = 0;
 				}
@@ -6405,6 +6524,9 @@
 				if (false !== _oldTrackRevision)
 					oApi.WordControl.m_oLogicDocument.SetLocalTrackRevisions(_oldTrackRevision);
 
+				if (this.imageBackground)
+					delete oApi.ImageLoader.map_image_index[this.imageBackgroundUrl];
+
 			}, this, [obj]);
 
 		};
@@ -6462,7 +6584,7 @@
             this.CheckParams();
 
             var fonts = [];
-            var pars = this.contentObjects['paragraphs'];
+            var pars = this.contentObjects['paragraphs'] || [];
             var i, j;
             for (i = 0; i < pars.length; i++)
             {
@@ -6477,25 +6599,61 @@
 
             for (i = 0; i < fonts.length; i++)
             {
-                fonts[i] = new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(fonts[i]), 0, "", 0, null);
+                fonts[i] = new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(fonts[i]));
             }
+
+			if ("string" === typeof this.contentObjects["fill"])
+				this.imageBackgroundUrl = this.contentObjects["fill"];
 
 			if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(fonts))
             {
-                this.onReady();
-                return false;
+                this.loadBackgroundImage();
+                return;
             }
 
             this.api.asyncMethodCallback = function() {
                 var oApi = Asc['editor'] || editor;
-                oApi.watermarkDraw.onReady();
+                oApi.watermarkDraw.loadBackgroundImage();
             };
 
             AscCommon.g_font_loader.LoadDocumentFonts2(fonts);
-		}
+		};
+
+		this.loadBackgroundImage = function()
+		{
+			if ("" === this.imageBackgroundUrl)
+			{
+				this.onReady();
+				return;
+			}
+
+			this.imageBackground = new Image();
+			this.imageBackground.onload = function()
+			{
+				Asc["editor"].watermarkDraw.onReady();
+			};
+			this.imageBackground.onerror = function()
+			{
+				Asc["editor"].watermarkDraw.imageBackground = null;
+				Asc["editor"].watermarkDraw.onReady();
+			};
+			this.imageBackground.src = this.imageBackgroundUrl;
+		};
 	}
 
 	// ----------------------------- plugins ------------------------------- //
+	var PluginType = {
+		System     : 0, // Системный, неотключаемый плагин.
+		Background : 1, // Фоновый плагин. Тоже самое, что и системный, но отключаемый.
+		Window     : 2, // Окно
+		Panel      : 3  // Панель
+	};
+
+	PluginType["System"] = PluginType.System;
+	PluginType["Background"] = PluginType.Background;
+	PluginType["Window"] = PluginType.Window;
+	PluginType["Panel"] = PluginType.Panel;
+
 	function CPluginVariation()
 	{
 		this.description = "";
@@ -6508,11 +6666,10 @@
 		this.isViewer       = false;
 		this.EditorsSupport = ["word", "cell", "slide"];
 
-		this.isSystem	  = false;
-		this.isVisual     = false;      // визуальный ли
-		this.isModal      = false;      // модальное ли окно (используется только для визуального)
-		this.isInsideMode = false;      // отрисовка не в окне а внутри редактора (в панели) (используется только для визуального немодального)
-		this.isCustomWindow = false;	// ued only if this.isModal == true
+		this.type = PluginType.Background;
+
+		this.isCustomWindow = false;	// используется только если this.type === PluginType.Window
+		this.isModal        = true;     // используется только если this.type === PluginType.Window
 
 		this.initDataType = EPluginDataType.none;
 		this.initData     = "";
@@ -6534,143 +6691,59 @@
 	{
 		return this.description;
 	};
-	CPluginVariation.prototype["set_Description"] = function(value)
-	{
-		this.description = value;
-	};
 	CPluginVariation.prototype["get_Url"]         = function()
 	{
 		return this.url;
 	};
-	CPluginVariation.prototype["set_Url"]         = function(value)
-	{
-		this.url = value;
-	};
 	CPluginVariation.prototype["get_Help"]         = function()
 	{
 		return this.help;
-	};
-	CPluginVariation.prototype["set_Help"]         = function(value)
-	{
-		this.help = value;
 	};
 
 	CPluginVariation.prototype["get_Icons"] = function()
 	{
 		return this.icons;
 	};
-	CPluginVariation.prototype["set_Icons"] = function(value)
+
+	CPluginVariation.prototype["get_Type"]         = function()
 	{
-		this.icons = value;
+		return this.type;
 	};
 
-	CPluginVariation.prototype["get_System"]         = function()
+	CPluginVariation.prototype["get_Visual"] = function()
 	{
-		return this.isSystem;
+		return (this.type === PluginType.Window || this.type === PluginType.Panel) ? true : false;
 	};
-	CPluginVariation.prototype["set_System"]         = function(value)
-	{
-		this.isSystem = value;
-	};
+
 	CPluginVariation.prototype["get_Viewer"]         = function()
 	{
 		return this.isViewer;
-	};
-	CPluginVariation.prototype["set_Viewer"]         = function(value)
-	{
-		this.isViewer = value;
 	};
 	CPluginVariation.prototype["get_EditorsSupport"] = function()
 	{
 		return this.EditorsSupport;
 	};
-	CPluginVariation.prototype["set_EditorsSupport"] = function(value)
-	{
-		this.EditorsSupport = value;
-	};
 
-
-	CPluginVariation.prototype["get_Visual"]     = function()
-	{
-		return this.isVisual;
-	};
-	CPluginVariation.prototype["set_Visual"]     = function(value)
-	{
-		this.isVisual = value;
-	};
-	CPluginVariation.prototype["get_Modal"]      = function()
+	CPluginVariation.prototype["get_Modal"] = function()
 	{
 		return this.isModal;
 	};
-	CPluginVariation.prototype["set_Modal"]      = function(value)
-	{
-		this.isModal = value;
-	};
 	CPluginVariation.prototype["get_InsideMode"] = function()
 	{
-		return this.isInsideMode;
-	};
-	CPluginVariation.prototype["set_InsideMode"] = function(value)
-	{
-		this.isInsideMode = value;
+		return (this.type === PluginType.Panel) ? true : false;
 	};
 	CPluginVariation.prototype["get_CustomWindow"] = function()
 	{
 		return this.isCustomWindow;
 	};
-	CPluginVariation.prototype["set_CustomWindow"] = function(value)
-	{
-		this.isCustomWindow = value;
-	};
 
-	CPluginVariation.prototype["get_InitDataType"] = function()
-	{
-		return this.initDataType;
-	};
-	CPluginVariation.prototype["set_InitDataType"] = function(value)
-	{
-		this.initDataType = value;
-	};
-	CPluginVariation.prototype["get_InitData"]     = function()
-	{
-		return this.initData;
-	};
-	CPluginVariation.prototype["set_InitData"]     = function(value)
-	{
-		this.initData = value;
-	};
-
-	CPluginVariation.prototype["get_UpdateOleOnResize"] = function()
-	{
-		return this.isUpdateOleOnResize;
-	};
-	CPluginVariation.prototype["set_UpdateOleOnResize"] = function(value)
-	{
-		this.isUpdateOleOnResize = value;
-	};
 	CPluginVariation.prototype["get_Buttons"]           = function()
 	{
 		return this.buttons;
 	};
-	CPluginVariation.prototype["set_Buttons"]           = function(value)
-	{
-		this.buttons = value;
-	};
 	CPluginVariation.prototype["get_Size"]           = function()
 	{
 		return this.size;
-	};
-	CPluginVariation.prototype["set_Size"]           = function(value)
-	{
-		this.size = value;
-	};
-	CPluginVariation.prototype["get_InitOnSelectionChanged"]           = function()
-	{
-		return this.initOnSelectionChanged;
-	};
-	CPluginVariation.prototype["set_InitOnSelectionChanged"]           = function(value)
-	{
-		this.initOnSelectionChanged = value;
 	};
     CPluginVariation.prototype["get_Events"]           = function()
     {
@@ -6701,11 +6774,10 @@
 		_object["isViewer"]       = this.isViewer;
 		_object["EditorsSupport"] = this.EditorsSupport;
 
-		_object["isSystem"]     = this.isSystem;
-		_object["isVisual"]     = this.isVisual;
-		_object["isModal"]      = this.isModal;
-		_object["isInsideMode"] = this.isInsideMode;
+		_object["type"]           = this.type;
+
 		_object["isCustomWindow"] = this.isCustomWindow;
+		_object["isModal"]        = this.isModal;
 
 		_object["initDataType"] = this.initDataType;
 		_object["initData"]     = this.initData;
@@ -6733,11 +6805,29 @@
 		this.isViewer       = (_object["isViewer"] != null) ? _object["isViewer"] : this.isViewer;
 		this.EditorsSupport = (_object["EditorsSupport"] != null) ? _object["EditorsSupport"] : this.EditorsSupport;
 
-		this.isVisual     = (_object["isVisual"] != null) ? _object["isVisual"] : this.isVisual;
-		this.isModal      = (_object["isModal"] != null) ? _object["isModal"] : this.isModal;
-		this.isSystem     = (_object["isSystem"] != null) ? _object["isSystem"] : this.isSystem;
-		this.isInsideMode = (_object["isInsideMode"] != null) ? _object["isInsideMode"] : this.isInsideMode;
+		// default: background
+		this.type = PluginType.Background;
+
+		let _type = _object["type"];
+		if (undefined !== _type)
+		{
+			if ("system" === _type)
+				this.type = PluginType.System;
+			if ("window" === _type)
+				this.type = PluginType.Window;
+			if ("panel" === _type)
+				this.type = PluginType.Panel;
+		}
+		else
+		{
+			if (true === _object["isSystem"])
+				this.type = PluginType.System;
+			if (true === _object["isVisual"])
+				this.type = (true === _object["isInsideMode"]) ? PluginType.Panel : PluginType.Window;
+		}
+
 		this.isCustomWindow = (_object["isCustomWindow"] != null) ? _object["isCustomWindow"] : this.isCustomWindow;
+		this.isModal        = (_object["isModal"] != null) ? _object["isModal"] : this.isModal;
 
 		this.initDataType = (_object["initDataType"] != null) ? _object["initDataType"] : this.initDataType;
 		this.initData     = (_object["initData"] != null) ? _object["initData"] : this.initData;
@@ -6767,26 +6857,6 @@
 
 		this.variations = [];
 	}
-
-	CPlugin.prototype.getIntVersion = function()
-	{
-		if (!this.version)
-			return 0;
-		let arrayVersion = this.version.split(".");
-
-		while (arrayVersion.length < 3)
-			arrayVersion.push("0");
-
-		try
-		{
-			let intVer = parseInt(arrayVersion[0]) * 10000 + parseInt(arrayVersion[1]) * 100 + parseInt(arrayVersion[2]);
-			return intVer;
-		}
-		catch (e)
-		{
-		}
-		return 0;
-	};
 
 	CPlugin.prototype["get_Name"]    = function(locale)
 	{
@@ -6920,6 +6990,104 @@
 			_variation["deserialize"](_object["variations"][i]);
 			this.variations.push(_variation);
 		}
+	};
+
+	// no export
+	CPlugin.prototype.isType = function(type)
+	{
+		if (this.variations && this.variations[0] && this.variations[0].type === type)
+			return true;
+		return false;
+	};
+	CPlugin.prototype.isSystem = function()
+	{
+		return this.isType(PluginType.System);
+	};
+	CPlugin.prototype.isBackground = function()
+	{
+		return this.isType(PluginType.Background);
+	};
+	CPlugin.prototype.getIntVersion = function()
+	{
+		if (!this.version)
+			return 0;
+		let arrayVersion = this.version.split(".");
+
+		while (arrayVersion.length < 3)
+			arrayVersion.push("0");
+
+		try
+		{
+			let intVer = parseInt(arrayVersion[0]) * 10000 + parseInt(arrayVersion[1]) * 100 + parseInt(arrayVersion[2]);
+			return intVer;
+		}
+		catch (e)
+		{
+		}
+		return 0;
+	};
+	
+	/**
+	 * @constructor
+	 */
+	function CDocInfoProp(obj)
+	{
+		if (obj)
+		{
+			this.PageCount      = obj.PageCount;
+			this.WordsCount     = obj.WordsCount;
+			this.ParagraphCount = obj.ParagraphCount;
+			this.SymbolsCount   = obj.SymbolsCount;
+			this.SymbolsWSCount = obj.SymbolsWSCount;
+		}
+		else
+		{
+			this.PageCount      = -1;
+			this.WordsCount     = -1;
+			this.ParagraphCount = -1;
+			this.SymbolsCount   = -1;
+			this.SymbolsWSCount = -1;
+		}
+	}
+	CDocInfoProp.prototype.get_PageCount      = function()
+	{
+		return this.PageCount;
+	};
+	CDocInfoProp.prototype.put_PageCount      = function(v)
+	{
+		this.PageCount = v;
+	};
+	CDocInfoProp.prototype.get_WordsCount     = function()
+	{
+		return this.WordsCount;
+	};
+	CDocInfoProp.prototype.put_WordsCount     = function(v)
+	{
+		this.WordsCount = v;
+	};
+	CDocInfoProp.prototype.get_ParagraphCount = function()
+	{
+		return this.ParagraphCount;
+	};
+	CDocInfoProp.prototype.put_ParagraphCount = function(v)
+	{
+		this.ParagraphCount = v;
+	};
+	CDocInfoProp.prototype.get_SymbolsCount   = function()
+	{
+		return this.SymbolsCount;
+	};
+	CDocInfoProp.prototype.put_SymbolsCount   = function(v)
+	{
+		this.SymbolsCount = v;
+	};
+	CDocInfoProp.prototype.get_SymbolsWSCount = function()
+	{
+		return this.SymbolsWSCount;
+	};
+	CDocInfoProp.prototype.put_SymbolsWSCount = function(v)
+	{
+		this.SymbolsWSCount = v;
 	};
 	
     /*
@@ -7513,6 +7681,8 @@
 	prot["put_Title"] = prot["asc_putTitle"] = prot.asc_putTitle;
 	prot["get_Description"] = prot["asc_getDescription"] = prot.asc_getDescription;
 	prot["put_Description"] = prot["asc_putDescription"] = prot.asc_putDescription;
+	prot["get_Name"] = prot["asc_getName"] = prot.asc_getName;
+	prot["put_Name"] = prot["asc_putName"] = prot.asc_putName;
 	prot["get_ColumnNumber"] = prot["asc_getColumnNumber"] = prot.asc_getColumnNumber;
 	prot["put_ColumnNumber"] = prot["asc_putColumnNumber"] = prot.asc_putColumnNumber;
 	prot["get_ColumnSpace"] = prot["asc_getColumnSpace"] = prot.asc_getColumnSpace;
@@ -7673,6 +7843,8 @@
 	prot["put_Title"] = prot["asc_putTitle"] = prot.asc_putTitle;
 	prot["get_Description"] = prot["asc_getDescription"] = prot.asc_getDescription;
 	prot["put_Description"] = prot["asc_putDescription"] = prot.asc_putDescription;
+	prot["get_Name"] = prot["asc_getName"] = prot.asc_getName;
+	prot["put_Name"] = prot["asc_putName"] = prot.asc_putName;
 	prot["get_ColumnNumber"] = prot["asc_getColumnNumber"] = prot.asc_getColumnNumber;
 	prot["put_ColumnNumber"] = prot["asc_putColumnNumber"] = prot.asc_putColumnNumber;
 	prot["get_ColumnSpace"] = prot["asc_getColumnSpace"] = prot.asc_getColumnSpace;
@@ -7796,6 +7968,7 @@
 	prot["get_FormHelpText"] = prot.get_FormHelpText;
 	prot["get_ReviewChange"] = prot.get_ReviewChange;
 	prot["get_EyedropperColor"] = prot.get_EyedropperColor;
+	prot["get_PlaceholderType"] = prot.get_PlaceholderType;
 
 	window["Asc"]["asc_CUserInfo"] = window["Asc"].asc_CUserInfo = asc_CUserInfo;
 	prot = asc_CUserInfo.prototype;
@@ -7900,7 +8073,20 @@
     window["AscCommon"].asc_menu_ReadPaddings = asc_menu_ReadPaddings;
     window["AscCommon"].asc_menu_ReadColor = asc_menu_ReadColor;
 
+	window["Asc"]["PluginType"] = window["Asc"].PluginType = PluginType;
 	window["Asc"]["CPluginVariation"] = window["Asc"].CPluginVariation = CPluginVariation;
 	window["Asc"]["CPlugin"] = window["Asc"].CPlugin = CPlugin;
-
+	
+	window["AscCommon"].CDocInfoProp = CDocInfoProp;
+	CDocInfoProp.prototype['get_PageCount']      = CDocInfoProp.prototype.get_PageCount;
+	CDocInfoProp.prototype['put_PageCount']      = CDocInfoProp.prototype.put_PageCount;
+	CDocInfoProp.prototype['get_WordsCount']     = CDocInfoProp.prototype.get_WordsCount;
+	CDocInfoProp.prototype['put_WordsCount']     = CDocInfoProp.prototype.put_WordsCount;
+	CDocInfoProp.prototype['get_ParagraphCount'] = CDocInfoProp.prototype.get_ParagraphCount;
+	CDocInfoProp.prototype['put_ParagraphCount'] = CDocInfoProp.prototype.put_ParagraphCount;
+	CDocInfoProp.prototype['get_SymbolsCount']   = CDocInfoProp.prototype.get_SymbolsCount;
+	CDocInfoProp.prototype['put_SymbolsCount']   = CDocInfoProp.prototype.put_SymbolsCount;
+	CDocInfoProp.prototype['get_SymbolsWSCount'] = CDocInfoProp.prototype.get_SymbolsWSCount;
+	CDocInfoProp.prototype['put_SymbolsWSCount'] = CDocInfoProp.prototype.put_SymbolsWSCount;
+	
 })(window);
