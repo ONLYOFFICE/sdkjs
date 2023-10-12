@@ -16151,24 +16151,110 @@ CColorObj.prototype =
 		},
 
 		_calculateLine: function (oSeries, coordinates) {
+			const oChart = oSeries.parent;
+			const xAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_CatAx);
+			const yAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_ValAx);
 			let type = oSeries.trendline.trendlineType;
 			switch (type) {
 				case AscFormat.TRENDLINE_TYPE_LINEAR:
-					this._calculateLinear(oSeries, coordinates);
+					if(yAxis.scaling.logBase){
+						this._calculateLinearWithLog(xAxis, yAxis, coordinates);
+					}else{
+						this._calculateLinear(xAxis, yAxis, coordinates);
+					}
 					break;
 				case AscFormat.TRENDLINE_TYPE_LOG:
-					this._calculateLogarithmic(oSeries, coordinates);
+					this._calculateLogarithmic(xAxis, yAxis, coordinates);
 					break;
 			}
 		},
 
-		_calculateLinear: function (oSeries, coordinates) {
+		_calculateLinearWithLog: function (xAxis, yAxis, coordinates){
+			//find variables
+			//find start and ned points
+			//find central point
 			let letiables = this._findSuppletiables(coordinates);
+			
+			let pathH = this.cChartDrawer.calcProp.pathH;
+			let pathW = this.cChartDrawer.calcProp.pathW;
 
-			const oChart = oSeries.parent;
-			const xAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_CatAx);
-			const yAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_ValAx);
+			let chartletiables = letiables;
+			if (chartletiables) {
 
+				const lineCoordinate = function (xIndex, cChartDrawer) {
+					const result = {xPos:null, yPos:null};
+					const xVal = xAxis.xPoints[xIndex].val;
+					const yVal = chartletiables[0] * xVal + chartletiables[1];
+					const yIndex = yAxis.yPoints.length - 1;
+					if (yVal < yAxis.yPoints[0].val) {
+						const newXVal = (yAxis.yPoints[0].val - chartletiables[1]) / chartletiables[0];
+						result.xVal = newXVal;
+						result.yVal = yAxis.yPoints[0].val;
+						result.xPos = cChartDrawer.getYPosition(newXVal, xAxis);
+						result.yPos = yAxis.yPoints[0].pos
+					} else if (yVal > yAxis.yPoints[yIndex].val) {
+						const newXVal = (yAxis.yPoints[yIndex].val - chartletiables[1]) / chartletiables[0];
+						result.xVal = newXVal;
+						result.yVal = yAxis.yPoints[yIndex].val;
+						result.xPos = cChartDrawer.getYPosition(newXVal, xAxis);
+						result.yPos = yAxis.yPoints[yIndex].pos
+					} else {
+						result.xVal = xVal;
+						result.yVal = yVal;
+						result.xPos = xAxis.xPoints[xIndex].pos;
+						result.yPos = cChartDrawer.getYPosition(yVal, yAxis);
+					}
+					return result
+				}
+
+				const _findCentralPoint = function (start, end, chartletiables, cChartDrawer) {
+					// find startTangentLine, endTangentLine, 
+					// find intersection of those tangentLines
+
+					const result = {xPos: null, yPos:null}
+
+					const _findLine = function (xVal, yVal) {
+						// derivative of y=mx+b => m/(ln(10)*(mx+b); which will become a slope 
+						// b = (y-(slope*x))
+						
+						const m = chartletiables[0] / (Math.log(10) * (chartletiables[0] * xVal + chartletiables[1]))
+						const b = Math.log10(yVal) - (m * xVal)
+
+						return [m, b]
+					}
+
+					const line1Letiables = _findLine(start.xVal, start.yVal);
+					const line2Letiables = _findLine(end.xVal, end.yVal);
+
+					// to find newY = (b2-((m2/m1)b1))/(1-(m2/m1))
+					// to find newX = (y-b1)/m1
+
+					const yVal = (line2Letiables[1] - ((line2Letiables[0]/line1Letiables[0]) * line1Letiables[1])) / (1 - (line2Letiables[0]/line1Letiables[0]))
+					const xVal = (yVal - line1Letiables[1]) / line1Letiables[0]
+
+					result.yPos = cChartDrawer.getYPosition(Math.pow(10, yVal), yAxis);
+					result.xPos = cChartDrawer.getYPosition(xVal, xAxis);
+					console.log(Math.pow(10, yVal), xVal)
+					return result
+				};
+
+				const start = lineCoordinate(0, this.cChartDrawer)
+				const end = lineCoordinate(xAxis.xPoints.length - 1, this.cChartDrawer)
+				const mid = _findCentralPoint(start, end, chartletiables, this.cChartDrawer);
+
+				let pathId = this.cChartDrawer.cChartSpace.AllocPath();
+				let path = this.cChartDrawer.cChartSpace.GetPath(pathId);
+
+				path.moveTo(start.xPos * pathW, start.yPos * pathH);
+				path.quadBezTo(mid.xPos * pathW, mid.yPos * pathH, end.xPos * pathW, end.yPos * pathH);
+
+				coordinates.path = pathId;
+			}
+		},
+
+		_calculateLinear: function (xAxis, yAxis, coordinates) {
+			let letiables = this._findSuppletiables(coordinates);
+			
 			let pathH = this.cChartDrawer.calcProp.pathH;
 			let pathW = this.cChartDrawer.calcProp.pathW;
 
@@ -16208,14 +16294,12 @@ CColorObj.prototype =
 			}
 		},
 
-		_calculateLogarithmic: function (oSeries, coordinates) {
+		_calculateLogarithmic: function (xAxis, yAxis, coordinates) {
 			for (let i = 0; i < coordinates.coords.length; i++){
 				coordinates.coords[i].xVal = Math.log(coordinates.coords[i].xVal)
 			}
 			let letiables = this._findSuppletiables(coordinates);
-			const oChart = oSeries.parent;
-			const xAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_CatAx);
-			const yAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_ValAx);
+
 
 			let pathH = this.cChartDrawer.calcProp.pathH;
 			let pathW = this.cChartDrawer.calcProp.pathW;
@@ -16284,11 +16368,8 @@ CColorObj.prototype =
 
 				let pathId = this.cChartDrawer.cChartSpace.AllocPath();
 				let path = this.cChartDrawer.cChartSpace.GetPath(pathId);
-				console.log(path)
+
 				path.moveTo(start.xPos * pathW, start.yPos * pathH);
-				// for (let i = 0; i<midPointsNum; i++) {
-				// 	path.lnTo(mid[i].xPos * pathW, mid[i].yPos * pathH);
-				// }
 				path.quadBezTo(mid.xPos * pathW, mid.yPos * pathH, end.xPos * pathW, end.yPos * pathH);
 
 				coordinates.path = pathId;
