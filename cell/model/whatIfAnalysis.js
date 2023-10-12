@@ -44,7 +44,7 @@ function (window, undefined) {
 	 * @param {parserFormula} oParsedFormula - Formula object.
 	 * For a goal seek uses methods: parse - for update values in formula, calculate - for calculate formula result.
 	 * @param {number} nExpectedVal - Expected value.
-	 * @param {Cell} oChangingCell - Changing cell.
+	 * @param {Range} oChangingCell - Changing cell.
 	 * @constructor
 	 */
 	function CGoalSeek(oParsedFormula, nExpectedVal, oChangingCell) {
@@ -271,7 +271,7 @@ function (window, undefined) {
 	/**
 	 * Returns changing cell.
 	 * @memberof CGoalSeek
-	 * @returns {Cell}
+	 * @returns {Range}
 	 */
 	CGoalSeek.prototype.getChangingCell = function() {
 		return this.oChangingCell
@@ -279,7 +279,7 @@ function (window, undefined) {
 	/**
 	 * Sets changing cell.
 	 * @memberof CGoalSeek
-	 * @param {Cell} oChangingCell
+	 * @param {Range} oChangingCell
 	 */
 	CGoalSeek.prototype.setChangingCell = function(oChangingCell) {
 		this.oChangingCell = oChangingCell;

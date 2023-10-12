@@ -4766,17 +4766,18 @@
 	 */
 	Workbook.prototype.closeGoalSeek = function() {
 		let oGoalSeek = this.getGoalSeek();
+		if (!oGoalSeek) return;
 		let oChangedCell = oGoalSeek.getChangingCell();
-		oChangedCell.setValue(oGoalSeek.getFirstChangingCell());
-		oChangedCell._updateCellValue();
+		oChangedCell.setValue(oGoalSeek.getFirstChangingValue());
+		//TODO  update cell to new value for canvas
 		this.setGoalSeek(null);
 	};
 	/**
 	 * Saves goal seek result for "Changing cell"
 	 */
 	Workbook.prototype.saveGoalSeek = function() {
-		let oChangedCell = this.getGoalSeek().getChangingCell();
-		oChangedCell._updateCellValue();
+		//let oChangedCell = this.getGoalSeek().getChangingCell();
+		//TODO  update cell to new value for canvas
 		this.setGoalSeek(null);
 	};
 
