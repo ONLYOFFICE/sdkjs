@@ -6800,7 +6800,7 @@
         let searchSpecificRange = this.handlers.trigger('selectSearchingResults') && this.workbook.SearchEngine && this.workbook.SearchEngine.getSpecificRange();
 		if (searchSpecificRange) {
 			this._drawElements(this._drawSelectionElement, searchSpecificRange,
-				AscCommonExcel.selectionLineType.DashThick, new CColor(12, 15, 17));
+				AscCommonExcel.selectionLineType.DashThick,  window['AscCommonExcel'].c_oAscVisibleAreaOleEditorBorderColor);
 		}
 
         this.drawTraceDependents();
@@ -7163,7 +7163,6 @@
 		//TODO пересмотреть! возможно стоит очищать частями в зависимости от print_area
 		//print lines view
 		let isTraceDependents = this.traceDependentsManager.isHaveData();
-		if(this.viewPrintLines || this.copyCutRange || (this.isPageBreakPreview(true) && this.pagesModeData) || isTraceDependents) {
 		let searchSpecificRange = this.handlers.trigger('selectSearchingResults') && this.workbook.SearchEngine && this.workbook.SearchEngine.isSpecificRange();
 		if(this.viewPrintLines || this.copyCutRange || (this.isPageBreakPreview(true) && this.pagesModeData) || searchSpecificRange || isTraceDependents) {
 			this.overlayCtx.clear();
