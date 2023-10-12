@@ -2327,6 +2327,7 @@
 				}
 			}
 
+			let oDoc = this.getPDFDoc();
 			//if (!this.MouseHandObject)
 			{
 				ctx.fillStyle = "rgba(51,102,204,255)";
@@ -2338,29 +2339,32 @@
 					ctx.beginPath();
 					this.file.drawSelection(i, this.overlay, pageCoords.x, pageCoords.y, pageCoords.w, pageCoords.h);
 					ctx.fill();
-					ctx.closePath();
-					let oDoc = this.getPDFDoc();
-					if (this.DrawingObjects.needUpdateOverlay())
+				}
+
+				if (this.DrawingObjects.needUpdateOverlay())
+				{
+					this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = -1;
+					this.DrawingObjects.drawOnOverlay(this.DrawingObjects.drawingDocument.AutoShapesTrack);
+					this.DrawingObjects.drawingDocument.AutoShapesTrack.CorrectOverlayBounds();
+				}
+				else if (oDoc.mouseDownAnnot)
+				{
+					if (oDoc.mouseDownAnnot.IsTextMarkup())
 					{
-						this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = -1;
-						this.DrawingObjects.drawOnOverlay(this.DrawingObjects.drawingDocument.AutoShapesTrack);
-						this.DrawingObjects.drawingDocument.AutoShapesTrack.CorrectOverlayBounds();
+						oDoc.mouseDownAnnot.DrawSelected(this.overlay);
 					}
-					else if (oDoc.mouseDownAnnot) {
-						if (oDoc.mouseDownAnnot.IsTextMarkup()) {
-							oDoc.mouseDownAnnot.DrawSelected(this.overlay);
-						}
-						else if (oDoc.mouseDownAnnot.IsInk() == true) {
-							this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = i;
-							this.DrawingObjects.drawSelect(i);
-						}
-						else if (oDoc.mouseDownAnnot.IsComment() == false) {
-							oDoc.mouseDownAnnot.DrawSelected(this.overlay);
-						}
+					else if (oDoc.mouseDownAnnot.IsInk() == true)
+					{
+						let nPage = oDoc.mouseDownAnnot.GetPage();
+						this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = nPage;
+						this.DrawingObjects.drawSelect(nPage);
+					}
+					else if (oDoc.mouseDownAnnot.IsComment() == false)
+					{
+						oDoc.mouseDownAnnot.DrawSelected(this.overlay);
 					}
 				}
 			}
-			let oDoc = this.getPDFDoc();
 			if (oDoc.activeForm && oDoc.activeForm.content && oDoc.activeForm.content.IsSelectionUse() && oDoc.activeForm.content.IsSelectionEmpty() == false)
 			{
 				ctx.beginPath();
