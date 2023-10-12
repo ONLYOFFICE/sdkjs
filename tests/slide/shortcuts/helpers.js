@@ -58,10 +58,7 @@
 	{
 		callback({'saveLock': false});
 	};
-	AscCommon.loadSmartArtBinary = function ()
-	{
 
-	};
 	let oGlobalShape
 	const oGlobalLogicDocument = AscTest.CreateLogicDocument()
 	editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState = function ()

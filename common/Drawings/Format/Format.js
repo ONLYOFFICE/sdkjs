@@ -4241,7 +4241,7 @@
 			this.dist = nVal * 36000 + 0.5 >> 0;
 		};
 		asc_CShadowProperty.prototype.getColor = function() {
-			return AscFormat.CreateAscColor(this.color);
+			return AscCommon.CreateAscColor(this.color);
 		};
 		asc_CShadowProperty.prototype.putColor = function(oAscColor) {
 			let nTransparency = this.getTransparency();
@@ -4254,6 +4254,13 @@
 			}
 			this.color = AscFormat.CorrectUniColor(oAscColor, this.color, nFlag);
 			this.putTransparency(nTransparency);
+		};
+		asc_CShadowProperty.prototype.checkColor = function(oTheme, oColorMap) {
+			if(this.color) {
+				if(oTheme && oColorMap) {
+					this.color.check(oTheme, oColorMap);
+				}
+			}
 		};
 
 

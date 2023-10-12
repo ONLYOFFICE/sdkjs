@@ -61,9 +61,9 @@ CLogicDocumentController.prototype.AddNewParagraph = function(bRecalculate, bFor
 {
 	return this.LogicDocument.controller_AddNewParagraph(bRecalculate, bForceAdd);
 };
-CLogicDocumentController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
+CLogicDocumentController.prototype.AddInlineImage = function(nW, nH, oImage, oGraphicObject, bFlow)
 {
-	this.LogicDocument.controller_AddInlineImage(nW, nH, oImage, oChart, bFlow);
+	this.LogicDocument.controller_AddInlineImage(nW, nH, oImage, oGraphicObject, bFlow);
 };
 CLogicDocumentController.prototype.AddImages = function(aImages)
 {

@@ -57,47 +57,81 @@ $(function ()
 		run.AddText(text);
 	}
 	
-	let autoHyphenation = false;
-	let hyphenateCaps   = true;
-	let hyphenLimit     = 0;
-	let hyphenationZone = 0;
+	/**
+	 * @constructor
+	 */
+	function DocumentSettingsFake()
+	{
+		this.autoHyphenation   = false;
+		this.hyphenateCaps     = true;
+		this.hyphenLimit       = 0;
+		this.hyphenationZone   = 0;
+		this.compatibilityMode = AscCommon.document_compatibility_mode_Word12;
+	}
+	DocumentSettingsFake.prototype.getCompatibilityMode = function()
+	{
+		return this.compatibilityMode;
+	};
+	DocumentSettingsFake.prototype.getHyphenationZone = function()
+	{
+		return this.hyphenationZone;
+	};
+	DocumentSettingsFake.prototype.isAutoHyphenation = function()
+	{
+		return this.autoHyphenation;
+	};
+	DocumentSettingsFake.prototype.isHyphenateCaps = function()
+	{
+		return this.hyphenateCaps;
+	};
+	DocumentSettingsFake.prototype.getConsecutiveHyphenLimit = function()
+	{
+		return this.hyphenLimit;
+	};
 	
+	let settings        = new DocumentSettingsFake();
+	let condensedSpaces = false;
+	
+	AscWord.ParagraphRecalculationWrapState.prototype.getDocumentSettings = function()
+	{
+		return settings;
+	};
 	AscWord.Paragraph.prototype.isAutoHyphenation = function()
 	{
-		return autoHyphenation;
-	};
-	AscWord.ParagraphRecalculationWrapState.prototype.isAutoHyphenation = function()
-	{
-		return autoHyphenation;
-	};
-	AscWord.ParagraphRecalculationWrapState.prototype.getAutoHyphenLimit = function()
-	{
-		return hyphenLimit;
-	};
-	AscWord.ParagraphRecalculationWrapState.prototype.getHyphenationZone = function()
-	{
-		return hyphenationZone;
+		return settings.isAutoHyphenation();
 	};
 	AscWord.TextHyphenator.prototype.isHyphenateCaps = function()
 	{
-		return hyphenateCaps;
+		return settings.isHyphenateCaps();
+	};
+	AscWord.Paragraph.prototype.IsCondensedSpaces = function()
+	{
+		return condensedSpaces;
 	};
 	
 	function setAutoHyphenation(isAuto)
 	{
-		autoHyphenation = isAuto;
+		settings.autoHyphenation = isAuto;
 	}
 	function setHyphenateCaps(isHyphenate)
 	{
-		hyphenateCaps = isHyphenate;
+		settings.hyphenateCaps = isHyphenate;
 	}
 	function setHyphenLimit(limit)
 	{
-		hyphenLimit = limit;
+		settings.hyphenLimit = limit;
 	}
 	function setHyphenationZone(zone)
 	{
-		hyphenationZone = zone;
+		settings.hyphenationZone = AscCommon.MMToTwips(zone);
+	}
+	function setCondensedSpaces(isCondensed)
+	{
+		condensedSpaces = isCondensed;
+	}
+	function setCompatibilityMode(mode)
+	{
+		settings.compatibilityMode = mode;
 	}
 	
 	function checkLines(assert, isAutoHyphenation, contentWidth, textLines)
@@ -144,6 +178,7 @@ $(function ()
 			setAutoHyphenation(false);
 			setHyphenateCaps(true);
 			setHyphenLimit(0);
+			setCompatibilityMode(AscCommon.document_compatibility_mode_Word12);
 		}
 	});
 	
@@ -235,6 +270,16 @@ $(function ()
 			"½w",
 			"ww"
 		]);
+		
+		// Специальная ситуация, когда во время прилегания влево не убирается знак переноса, но при прилегании
+		// по ширине перенос начинает убираться
+		setCondensedSpaces(true);
+		setText("a b c d aabbb");
+		checkLines(assert, true, charWidth * 10.5, [
+			"a b c d aa-",
+			"bbb"
+		]);
+		setCondensedSpaces(false);
 		
 		// TODO: Разобрать случай, когда перенос слова происходит в двух (или более местах) и следующее место переноса
 		//       надо начинать считать с последнего места переноса, а не с начала слова
@@ -468,6 +513,26 @@ $(function ()
 		// 	"abcd ",
 		// 	"aabbbcccdddd"
 		// ]);
+		
+		
+		// Начиная с 15-ой версии параметр hyphenationZone не учитывается, и всегда предполагается, что он
+		// равен стандартному значению
+		setText("abcd aaaaabbb");
+		setHyphenationZone(7.5 * charWidth);
+		
+		setCompatibilityMode(AscCommon.document_compatibility_mode_Word15);
+		
+		checkLines(assert, true, charWidth * 12.5, [
+			"abcd aaaaa-",
+			"bbb",
+		]);
+		
+		setCompatibilityMode(AscCommon.document_compatibility_mode_Word12);
+		
+		checkLines(assert, true, charWidth * 12.5, [
+			"abcd ",
+			"aaaaabbb",
+		]);
 		
 	});
 	

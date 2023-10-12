@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src="./../geometry.js"></script>
+		<script src="./code.js"></script>
+	</head>
+<body>
+
+	<select id="id_mode" onchange="javascript: onchangemode(this.value);">
+		<option>union</option>
+		<option>intersect</option>
+		<option>xor</option>
+		<option>difference</option>
+		<option>differenceRev</option>
+	</select>
+
+	<canvas id="sources" style="position: absolute; left: 0px; top: 50px; width: 500px; height: 500px;" width="500" height="500" style="background:#000000;"></canvas>
+	<canvas id="result" style="position: absolute; left: 600px; top: 50px; width: 500px; height: 500px;" width="500" height="500" style="background:#000000;"></canvas>
+
+</body>
+</html>
+

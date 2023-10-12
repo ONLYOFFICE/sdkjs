@@ -155,7 +155,7 @@
 	{
 		this.word = true;
 		this.buffer.push(textItem);
-		AscHyphenation.addCodePoint(textItem.GetCodePoint());
+		AscHyphenation.addCodePoint(String.fromCodePoint(textItem.GetCodePoint()).toLowerCase().codePointAt(0));
 		textItem.SetHyphenAfter(false);
 	};
 	TextHyphenator.prototype.flushWord = function()
@@ -209,15 +209,18 @@
 	TextHyphenator.prototype.checkLangAvailability = function()
 	{
 		if (this.waitingLangs[this.lang])
+		{
+			this.waitingLangs[this.lang][this.paragraph.GetId()] = this.paragraph;
 			return false;
+		}
 		
 		if (AscHyphenation.setLang(this.lang, getWaitingLangCallback(this.lang, this)))
 			return true;
 		
 		if (!this.waitingLangs[this.lang])
-			this.waitingLangs[this.lang] = [];
+			this.waitingLangs[this.lang] = {};
 		
-		this.waitingLangs[this.lang].push(this.paragraph);
+		this.waitingLangs[this.lang][this.paragraph.GetId()] = this.paragraph;
 		return false;
 	};
 	TextHyphenator.prototype.onLoadLang = function(lang)
@@ -225,19 +228,20 @@
 		if (!this.waitingLangs[lang])
 			return;
 		
-		this.waitingLangs[lang].forEach(function(paragraph)
+		let paragraphs = [];
+		for (let paraId in this.waitingLangs[lang])
 		{
-			paragraph.NeedHyphenateText();
-		});
+			this.waitingLangs[lang][paraId].NeedHyphenateText();
+			paragraphs.push(this.waitingLangs[lang][paraId]);
+		}
+		delete this.waitingLangs[lang];
 		
 		if (this.document)
 		{
 			let history    = this.document.GetHistory();
-			let recalcData = history.getRecalcDataByElements(this.waitingLangs[lang]);
+			let recalcData = history.getRecalcDataByElements(paragraphs);
 			this.document.RecalculateWithParams(recalcData);
 		}
-		
-		delete this.waitingLangs[lang];
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].TextHyphenator = TextHyphenator;

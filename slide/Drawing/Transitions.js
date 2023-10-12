@@ -2734,6 +2734,8 @@ function CDemonstrationManager(htmlpage)
     this.TmpSlideVisible = -1;
     this.LastMoveTime = null;
 
+		this.GoToSlideShortcutStack = [];
+
     var oThis = this;
 
     this.CacheSlide = function(slide_num, slide_index)
@@ -2946,6 +2948,7 @@ function CDemonstrationManager(htmlpage)
         this.SlideIndexes[0] = -1;
         this.SlideIndexes[1] = -1;
 
+				this.GoToSlideShortcutStack = [];
         this.StartSlide(true, true);
     };
 
@@ -3638,9 +3641,23 @@ function CDemonstrationManager(htmlpage)
     // manipulators
     this.onKeyDownCode = function(code)
     {
+			let bDropGoToSlideStack = !!this.GoToSlideShortcutStack.length;
 		switch (code)
 		{
 			case 13:    // enter
+			{
+				if (this.GoToSlideShortcutStack.length)
+				{
+					const nStackNumber = parseInt(this.GoToSlideShortcutStack.join(''), 10);
+					const nSlide = Math.max(1, Math.min(nStackNumber, this.SlidesCount)) - 1;
+					oThis.GoToSlide(nSlide);
+				}
+				else
+				{
+					oThis.OnNextSlide();
+				}
+				break;
+			}
 			case 32:    // space
 			case 34:    // PgDn
 			case 39:    // right arrow
@@ -3671,8 +3688,38 @@ function CDemonstrationManager(htmlpage)
 				oThis.End();
 				break;
 			}
+			case 48: // 0
+			case 49: // 1
+			case 50: // 2
+			case 51: // 3
+			case 52: // 4
+			case 53: // 5
+			case 54: // 6
+			case 55: // 7
+			case 56: // 8
+			case 57: // 9
+				bDropGoToSlideStack = false;
+				this.GoToSlideShortcutStack.push(code - 48);
+				break;
+			case 96: // numpad0
+			case 97: // numpad1
+			case 98: // numpad2
+			case 99: // numpad3
+			case 100: // numpad4
+			case 101: // numpad5
+			case 102: // numpad6
+			case 103: // numpad7
+			case 104: // numpad8
+			case 105: // numpad9
+				bDropGoToSlideStack = false;
+				this.GoToSlideShortcutStack.push(code - 96);
+				break;
 			default:
 				break;
+		}
+		if (bDropGoToSlideStack)
+		{
+			this.GoToSlideShortcutStack = [];
 		}
     };
 

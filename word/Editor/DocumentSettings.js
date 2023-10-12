@@ -46,12 +46,13 @@
 		this.LogicDocument = logicDocument;
 		
 		this.View                 = Asc.DocumentView.None;
-		this.MathSettings         = undefined !== CMathSettings ? new CMathSettings() : {};
+		this.MathSettings         = new AscWord.MathSettings();
 		this.CompatibilityMode    = AscCommon.document_compatibility_mode_Current;
-		this.SdtSettings          = new CSdtGlobalSettings();
-		this.SpecialFormsSettings = new CSpecialFormsGlobalSettings();
+		this.SdtSettings          = new AscWord.SdtGlobalSettings();
+		this.SpecialFormsSettings = new AscWord.SpecialFormsGlobalSettings();
 		this.WriteProtection      = undefined;
-		this.DocumentProtection   = undefined !== AscCommonWord.CDocProtect ? new AscCommonWord.CDocProtect() : null;
+		this.DocumentProtection   = undefined !== AscCommonWord.CDocProtect && logicDocument ? new AscCommonWord.CDocProtect() : null;
+		// TODO: Переделать AscCommonWord.CDocProtect. Класс с Id внутри класса без Id - очень плохо
 		
 		// Параметры, связанные с автоматической расстановкой переносов
 		this.autoHyphenation        = undefined;
@@ -72,6 +73,10 @@
 		this.UlTrailSpace                     = false;
 		this.UseFELayout                      = false;
 	}
+	DocumentSettings.prototype.getCompatibilityMode = function()
+	{
+		return this.CompatibilityMode;
+	};
 	DocumentSettings.prototype.isAutoHyphenation = function()
 	{
 		return !!this.autoHyphenation;
@@ -121,6 +126,8 @@
 		AscCommon.AddAndExecuteChange(new CChangesDocumentSettingsHyphenationZone(this.LogicDocument, this.hyphenationZone, zone));
 	};
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscWord'].DocumentSettings = DocumentSettings;
+	window['AscWord'].DocumentSettings          = DocumentSettings;
+	window['AscWord'].DEFAULT_DOCUMENT_SETTINGS = new DocumentSettings(null);
+	window['AscWord'].DEFAULT_HYPHENATION_ZONE  = DEFAULT_HYPHENATION_ZONE;
 
 })(window);

@@ -6049,11 +6049,11 @@ CTable.prototype.AddNewParagraph = function()
 {
 	this.CurCell.Content.AddNewParagraph();
 };
-CTable.prototype.AddInlineImage = function(W, H, Img, Chart, bFlow)
+CTable.prototype.AddInlineImage = function(W, H, Img, GraphicObject, bFlow)
 {
 	this.Selection.Use  = true;
 	this.Selection.Type = table_Selection_Text;
-	this.CurCell.Content.AddInlineImage(W, H, Img, Chart, bFlow);
+	this.CurCell.Content.AddInlineImage(W, H, Img, GraphicObject, bFlow);
 };
 CTable.prototype.AddImages = function(aImages)
 {
@@ -8137,7 +8137,7 @@ CTable.prototype.GetCalculatedTextPr = function()
 		var Cell = Row.Get_Cell(0);
 
 		Cell.Content.SetApplyToAll(true);
-		var Result_TextPr = Cell.Content.GetCalculatedTextPr();
+		var Result_TextPr = Cell.Content.GetCalculatedTextPr(true);
 		Cell.Content.SetApplyToAll(false);
 
 		for (var CurRow = 0; CurRow < this.Content.length; CurRow++)
@@ -8150,7 +8150,7 @@ CTable.prototype.GetCalculatedTextPr = function()
 			{
 				Cell = Row.Get_Cell(CurCell);
 				Cell.Content.SetApplyToAll(true);
-				var CurPr = Cell.Content.GetCalculatedTextPr();
+				var CurPr = Cell.Content.GetCalculatedTextPr(true);
 				Cell.Content.SetApplyToAll(false);
 
 				Result_TextPr = Result_TextPr.Compare(CurPr);
@@ -8167,7 +8167,7 @@ CTable.prototype.GetCalculatedTextPr = function()
 		var Cell = Row.Get_Cell(Pos.Cell);
 
 		Cell.Content.SetApplyToAll(true);
-		var Result_TextPr = Cell.Content.GetCalculatedTextPr();
+		var Result_TextPr = Cell.Content.GetCalculatedTextPr(true);
 		Cell.Content.SetApplyToAll(false);
 
 		for (var Index = 1; Index < this.Selection.Data.length; Index++)
@@ -8177,7 +8177,7 @@ CTable.prototype.GetCalculatedTextPr = function()
 			Cell = Row.Get_Cell(Pos.Cell);
 
 			Cell.Content.SetApplyToAll(true);
-			var CurPr = Cell.Content.GetCalculatedTextPr();
+			var CurPr = Cell.Content.GetCalculatedTextPr(true);
 			Cell.Content.SetApplyToAll(false);
 
 			Result_TextPr = Result_TextPr.Compare(CurPr);
@@ -8186,7 +8186,7 @@ CTable.prototype.GetCalculatedTextPr = function()
 		return Result_TextPr;
 	}
 
-	return this.CurCell.Content.GetCalculatedTextPr();
+	return this.CurCell.Content.GetCalculatedTextPr(true);
 };
 CTable.prototype.GetDirectTextPr = function()
 {
@@ -16352,6 +16352,12 @@ CTable.prototype.GetRowsCount = function()
 {
 	return this.Content.length;
 };
+
+
+CTable.prototype.GetColsCount = function()
+{
+	return this.TableGrid.length;
+};
 /**
  * Получаем строку с заданным номером
  * @param {number} nIndex
@@ -16531,7 +16537,9 @@ CTable.prototype.AcceptRevisionChanges = function(nType, bAll)
 	if (this.GetRowsCount() <= 0)
 		return;
 	
-	this.RemoveSelection();
+	if (isCellSelection)
+		this.RemoveSelection();
+	
 	if (arrSelectionArray.length <= 0)
 	{
 		var nCurRow = nFirstRow < this.GetRowsCount() ? nFirstRow : this.GetRowsCount() - 1;
@@ -16644,7 +16652,9 @@ CTable.prototype.RejectRevisionChanges = function(nType, bAll)
 	if (this.GetRowsCount() <= 0)
 		return;
 	
-	this.RemoveSelection();
+	if (isCellSelection)
+		this.RemoveSelection();
+	
 	if (arrSelectionArray.length <= 0)
 	{
 		var nCurRow = nFirstRow < this.GetRowsCount() ? nFirstRow : this.GetRowsCount() - 1;

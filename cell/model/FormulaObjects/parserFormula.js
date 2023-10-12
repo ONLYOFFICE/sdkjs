@@ -6692,6 +6692,11 @@ function parserFormula( formula, parent, _ws ) {
 
 				var wsF, wsT;
 				var externalLink = _3DRefTmp[3];
+				//check on add to this document
+				let thisTitle = externalLink && window["Asc"]["editor"] && window["Asc"]["editor"].DocInfo && window["Asc"]["editor"].DocInfo.get_Title();
+				if (thisTitle === externalLink) {
+					externalLink = null;
+				}
 				if (externalLink) {
 					if (local) {
 						externalLink = t.wb.getExternalLinkIndexByName(externalLink);

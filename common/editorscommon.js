@@ -2089,10 +2089,28 @@
 				}
 				else
 				{
-					callback(Asc.c_oAscError.ID.Unknown);
+					if (e.canceled == true)
+					{
+						if (Asc.editor.isPdfEditor())
+							callback(e);
+					}
+					else
+						callback(Asc.c_oAscError.ID.Unknown);
 				}
 			});
-			fileName.click();
+
+			if (Asc.editor.isPdfEditor()) {
+				let oViewer = Asc.editor.getDocumentRenderer();
+				let oDoc = oViewer.doc;
+				let oActionsQueue = oDoc.GetActionsQueue();
+				if (oActionsQueue.IsInProgress()) {
+					Asc.editor.sendEvent("asc_onOpenFilePdfForm", fileName.click.bind(fileName), oActionsQueue.Continue.bind(oActionsQueue));
+				}
+				else 
+					fileName.click();
+			}
+			else
+				fileName.click();
 		}
 		else
 		{
@@ -2592,11 +2610,66 @@
 		input.setAttribute('type', 'file');
 		input.setAttribute('accept', accept);
 		input.setAttribute('style', 'position:absolute;left:-2px;top:-2px;width:1px;height:1px;z-index:-1000;cursor:pointer;');
+		
 		if (allowMultiple) {
 			input.setAttribute('multiple', true);
 		}
-		input.onchange = onchange;
 		document.body.appendChild(input);
+
+		function addDialogClosedListener(input, callback) {
+			var id = null;
+			var active = false;
+			var wrapper = function() {
+				if (active) {
+					active = false;
+					callback(input);
+
+					// remove handlers
+					window.removeEventListener('focus', onFocus);
+					window.removeEventListener('blur', onBlur);
+				}
+			};
+			var cleanup = function() {
+				clearTimeout(id);
+			};
+			var shedule = function(delay) {
+				id = setTimeout(wrapper, delay);
+			};
+			var onFocus = function() {
+				cleanup();
+				shedule(1000);
+			};
+			var onBlur = function() {
+				cleanup();
+			};
+			var onClick = function() {
+				window.addEventListener('focus', onFocus);
+				window.addEventListener('blur', onBlur);
+
+				cleanup();
+				active = true;
+			};
+			var onChange = function() {
+				cleanup();
+				shedule(0);
+			};
+			input.addEventListener('click', onClick);
+			input.addEventListener('change', onChange);
+		}
+
+		addDialogClosedListener(input, checkCanceled);
+
+		function checkCanceled(input) {
+			let e = {};
+			if (input.files.length === 0) {
+				e.canceled = true;
+			}
+			else {
+				e.target = input;
+			}
+			onchange(e);
+		}
+	
 		return input;
 	}
 
@@ -2688,6 +2761,7 @@
 
 		//'path/[name]Sheet1'!A1
 		var path, name, startLink, i;
+		url = url && url.split(FormulaSeparators.functionArgumentSeparator)[0];
 		if (url && url[0] === "'"/*url.match(/('[^\[]*\[[^\]]+\]([^'])+'!)/g)*/) {
 			for (i = url.length - 1; i >= 0; i--) {
 				if (url[i] === "!" && url[i - 1] === "'") {
@@ -10075,35 +10149,6 @@
 		loadScript('../../../../sdkjs/common/Charts/ChartStyles.js', onSuccess, onError);
 	}
 
-	function loadSmartArtBinary(fOnSuccess, fOnError) {
-		if (window["NATIVE_EDITOR_ENJINE"]) {
-			return;
-		}
-		loadFileContent('../../../../sdkjs/common/SmartArts/SmartArts.bin', function (httpRequest) {
-			if (httpRequest && httpRequest.response) {
-				const arrStream = AscCommon.initStreamFromResponse(httpRequest);
-
-				AscCommon.g_oBinarySmartArts = {
-					shifts: {},
-					stream: arrStream
-				}
-
-				const oFileStream = new AscCommon.FileStream(arrStream, arrStream.length);
-				oFileStream.GetUChar();
-				const nLength = oFileStream.GetULong();
-				while (nLength + 4 > oFileStream.cur) {
-					const nType = oFileStream.GetUChar();
-					const nPosition = oFileStream.GetULong();
-					AscCommon.g_oBinarySmartArts.shifts[nType] = nPosition;
-				}
-				fOnSuccess && fOnSuccess();
-			} else {
-				fOnError(httpRequest);
-			}
-
-		}, 'arraybuffer');
-	}
-
 	function getAltGr(e)
 	{
 		if (true === e["altGraphKey"])
@@ -13523,7 +13568,6 @@
 	window["AscCommon"].loadSdk = loadSdk;
     window["AscCommon"].loadScript = loadScript;
     window["AscCommon"].loadChartStyles = loadChartStyles;
-	window["AscCommon"].loadSmartArtBinary = loadSmartArtBinary;
 	window["AscCommon"].getAltGr = getAltGr;
 	window["AscCommon"].getColorSchemeByName = getColorSchemeByName;
 	window["AscCommon"].getColorSchemeByIdx = getColorSchemeByIdx;

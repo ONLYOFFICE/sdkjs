@@ -2117,7 +2117,7 @@
 
 					//перебираем шрифты
 					for (var i in oThis.oFonts) {
-						fonts.push(new AscFonts.CFont(i, 0, "", 0));
+						fonts.push(new AscFonts.CFont(i));
 					}
 				};
 
@@ -2135,7 +2135,7 @@
 					}
 
 					for (i in font_map) {
-						fonts.push(new AscFonts.CFont(i, 0, "", 0));
+						fonts.push(new AscFonts.CFont(i));
 					}
 
 					arr_Images = objects.arrImages;

@@ -100,6 +100,10 @@
 				"usrLang"     : arrLangs
 			});
 		}
+		else
+		{
+			this.private_ClearMarksForCorrectWords();
+		}
 
 		return (arrWords.length || isFirst);
 	};
@@ -153,7 +157,7 @@
 			}
 		}
 	};
-	CParagraphSpellChecker.prototype.Add = function(StartPos, EndPos, Word, Lang, Prefix, Ending)
+	CParagraphSpellChecker.prototype.Add = function(startRun, startInRunPos, endRun, endInRunPos, Word, Lang, Prefix, Ending)
 	{
 		if (Word.length > 0)
 		{
@@ -163,8 +167,12 @@
 				Word = Word.substr(1);
 		}
 
-		let oElement = new AscCommonWord.CParagraphSpellCheckerElement(StartPos, EndPos, Word, Lang, Prefix, Ending);
-		this.Paragraph.AddSpellCheckerElement(oElement);
+		if (!this.HaveDictionary(Lang) || !this.IsNeedCheckWord(Word))
+			return;
+		
+		let oElement = new AscCommonWord.CParagraphSpellCheckerElement(startRun, startInRunPos, endRun, endInRunPos, Word, Lang, Prefix, Ending);
+		startRun.AddSpellCheckerElement(new AscWord.SpellMarkStart(oElement));
+		endRun.AddSpellCheckerElement(new AscWord.SpellMarkEnd(oElement));
 		this.Elements.push(oElement);
 	};
 	CParagraphSpellChecker.prototype.SpellCheckResponse = function(nRecalcId, usrCorrect)
@@ -493,9 +501,9 @@
 			}
 		}
 
-		this.private_ClearMarksForRightWords();
+		this.private_ClearMarksForCorrectWords();
 	};
-	CParagraphSpellChecker.prototype.private_ClearMarksForRightWords = function()
+	CParagraphSpellChecker.prototype.private_ClearMarksForCorrectWords = function()
 	{
 		for (let nCount = this.Elements.length, nIndex = nCount - 1; nIndex >= 0; --nIndex)
 		{

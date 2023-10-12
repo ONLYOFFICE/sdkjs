@@ -609,11 +609,25 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 		}
 		return fHandle ? null : arrElements;
 	}
+	function sortByDocumentPosition(elements)
+	{
+		let docPos = {};
+		elements.forEach(function(element)
+		{
+			docPos[element.GetId()] = element.GetDocumentPositionFromObject();
+		});
+		
+		elements.sort(function(l, r)
+		{
+			return CompareDocumentPositions(docPos[l.GetId()], docPos[r.GetId()]);
+		});
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CompareDocumentPositions = CompareDocumentPositions;
 	window['AscWord'].AlignFontSize            = AlignFontSize;
 	window['AscWord'].TextToRunElements        = TextToRunElements;
 	window['AscWord'].TextToMathRunElements    = TextToMathRunElements;
+	window['AscWord'].sortByDocumentPosition   = sortByDocumentPosition;
 
 })(window);

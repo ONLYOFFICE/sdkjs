@@ -2198,7 +2198,7 @@ function CDrawingDocument()
 				y += this.TextMatrix.ty;
 			}
 
-			var pos = this.ConvertCoordsToCursor4(x, y, this.m_lCurrentPage, true);
+			var pos = this.m_oDocumentRenderer == null ? this.ConvertCoordsToCursor4(x, y, this.m_lCurrentPage, true) :  this.ConvertCoordsToCursor5(x, y, this.m_lCurrentPage, true);
 			this.TargetHtmlElementLeft = pos.X >> 0;
 			this.TargetHtmlElementTop = (pos.Y + 0.5) >> 0;
 
@@ -2271,7 +2271,8 @@ function CDrawingDocument()
 		if (this.m_oWordControl)
 			this.m_oWordControl.m_oApi.checkLastWork();
 
-		this.m_oWordControl.m_oLogicDocument.Set_TargetPos(x, y, pageIndex);
+		if (this.m_oWordControl.m_oLogicDocument)
+			this.m_oWordControl.m_oLogicDocument.Set_TargetPos(x, y, pageIndex);
 
 		if(window["NATIVE_EDITOR_ENJINE"])
 			return;
@@ -2298,7 +2299,7 @@ function CDrawingDocument()
 			this.m_lTimerUpdateTargetID = -1;
 		}
 
-		if (pageIndex >= this.m_arrPages.length)
+		if (this.m_oWordControl.m_oLogicDocument && pageIndex >= this.m_arrPages.length)
 			return;
 
 		var bIsPageChanged = false;
@@ -2313,15 +2314,21 @@ function CDrawingDocument()
 		var targetSizePx = (this.m_dTargetSize * this.m_oWordControl.m_nZoomValue * g_dKoef_mm_to_pix / 100) >> 0;
 
 		var pos = null;
-		if (!this.TextMatrix)
+		if (this.m_oWordControl.m_oLogicDocument)
 		{
-			pos = this.ConvertCoordsToCursor2(x, y, this.m_lCurrentPage);
+			if (!this.TextMatrix)
+			{
+				pos = this.ConvertCoordsToCursor2(x, y, this.m_lCurrentPage);
+			}
+			else
+			{
+				pos = this.ConvertCoordsToCursor2(this.TextMatrix.TransformPointX(x, y),
+					this.TextMatrix.TransformPointY(x, y), this.m_lCurrentPage);
+			}
 		}
+		// pdf
 		else
-		{
-			pos = this.ConvertCoordsToCursor2(this.TextMatrix.TransformPointX(x, y),
-				this.TextMatrix.TransformPointY(x, y), this.m_lCurrentPage);
-		}
+			pos = this.ConvertCoordsToCursor5(x, y, this.m_lCurrentPage);
 
 		if (true == pos.Error && (false == bIsPageChanged))
 			return;
@@ -4623,6 +4630,27 @@ function CDrawingDocument()
 			return this.private_ConvertCoordsToCursor(x, y, pageIndex, true, 0.5, 0.5);
 		return this.private_ConvertCoordsToCursor(x, y, pageIndex, false);
 	};
+	// for pdf viewer
+	this.ConvertCoordsToCursor5 = function (x, y, pageIndex, isNoRound)
+	{
+		// теперь крутить всякие циклы нет смысла
+		if (pageIndex < 0 || pageIndex >= this.m_lPagesCount)
+		{
+			return {X: 0, Y: 0, Error: true};
+		}
+
+		let oPos	= AscPDF.GetGlobalCoordsByPageCoords(x, y, pageIndex);
+		let X		= oPos["X"];
+		let Y		= oPos["Y"];
+
+		if (true !== isNoRound)
+		{
+			X = (X + 0.5) >> 0;
+			Y = (Y + 0.5) >> 0;
+		}
+
+		return {X: X, Y: Y, Error: false};
+	};
 	this.ConvertCoordsToCursorWR = function (x, y, pageIndex, transform, id_ruler_no_use)
 	{
 		var _x = 0;
@@ -4741,7 +4769,29 @@ function CDrawingDocument()
 		this.IsTextMatrixUse = ((null != this.TextMatrix) && !global_MatrixTransformer.IsIdentity(this.TextMatrix));
 		var rPR = AscCommon.AscBrowser.retinaPixelRatio;
 		var page = this.m_arrPages[pageIndex];
-		var drawPage = page.drawingPage;
+		var drawPage;
+		if (!this.m_oDocumentRenderer)
+		{
+			drawPage = page.drawingPage;
+		}
+		else
+		{
+			let oViewer = this.m_oDocumentRenderer;
+			let oPdfDoc = oViewer.getPDFDoc();
+			let nPage	= oPdfDoc.activeForm.GetPage();
+
+			page = {
+				width_mm: this.m_oDocumentRenderer.drawingPages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm,
+				height_mm: this.m_oDocumentRenderer.drawingPages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm
+			}
+			drawPage = {
+				left:	0,
+				right:	this.m_oDocumentRenderer.drawingPages[nPage].W,
+				top:	0,
+				bottom:	this.m_oDocumentRenderer.drawingPages[nPage].H
+			}
+			this.Overlay = this.m_oDocumentRenderer.overlay;
+		}
 
 		var dKoefX = (drawPage.right - drawPage.left) / page.width_mm;
 		var dKoefY = (drawPage.bottom - drawPage.top) / page.height_mm;
@@ -5973,11 +6023,7 @@ function CDrawingDocument()
 		this.InlineTextTrackEnabled = false;
 
 		if (true !== isOnlyMoveTarget)
-		{
-			const bIsMac = AscCommon.AscBrowser.isMacOs;
-			const bCopy = bIsMac ? AscCommon.global_keyboardEvent.AltKey : AscCommon.global_keyboardEvent.CtrlKey;
-			this.m_oWordControl.m_oLogicDocument.OnEndTextDrag(this.InlineTextTrack, bCopy);
-		}
+			this.m_oWordControl.m_oLogicDocument.OnEndTextDrag(this.InlineTextTrack, AscCommon.global_keyboardEvent.CtrlKey);
 		else if (this.InlineTextTrack)
 		{
 			var Paragraph = this.InlineTextTrack.Paragraph;
@@ -6620,6 +6666,9 @@ function CDrawingDocument()
 
 	this.ClearCachePages = function ()
 	{
+		if (this.m_oWordControl.m_oApi.isDocumentRenderer())
+			return;
+			
 		for (var i = 0; i < this.m_lPagesCount; i++)
 		{
 			var page = this.m_arrPages[i];
@@ -6732,16 +6781,26 @@ function CDrawingDocument()
 	// при загрузке документа - нужно понять какие шрифты используются
 	this.CheckFontNeeds = function()
 	{
-		var map_keys = this.m_oWordControl.m_oLogicDocument.Document_Get_AllFontNames();
+		var map_keys;
+		if (this.m_oWordControl.m_oLogicDocument)
+			map_keys = this.m_oWordControl.m_oLogicDocument.Document_Get_AllFontNames();
+		else if (this.m_oDocumentRenderer)
+			map_keys = this.m_oDocumentRenderer.Get_AllFontNames();
+
 		var dstfonts = [];
 		for (var i in map_keys)
 		{
-			dstfonts[dstfonts.length] = new AscFonts.CFont(i, 0, "", 0, null);
+			dstfonts[dstfonts.length] = new AscFonts.CFont(i);
 		}
-		AscFonts.FontPickerByCharacter.getFontsByString(AscCommon.translateManager.getValue("Heading" + " 123"));
-        AscFonts.FontPickerByCharacter.extendFonts(dstfonts);
-		this.m_oWordControl.m_oLogicDocument.Fonts = dstfonts;
-		return;
+
+		if (this.m_oWordControl.m_oLogicDocument)
+		{
+			AscFonts.FontPickerByCharacter.getFontsByString(AscCommon.translateManager.getValue("Heading" + " 123"));
+			AscFonts.FontPickerByCharacter.extendFonts(dstfonts);
+			this.m_oWordControl.m_oLogicDocument.Fonts = dstfonts;
+		}
+
+		return dstfonts;
 
 		/*
 		 var map_used = this.m_oWordControl.m_oLogicDocument.Document_CreateFontMap();

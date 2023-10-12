@@ -1065,6 +1065,9 @@
 					stop();                          // Отключим стандартную обработку браузера нажатия down
 					// Обработка Alt + down
 					if (canEdit && !t.getCellEditMode() && !selectionDialogMode && event.altKey) {
+						if (t.handlers.trigger("onShowFilterOptionsActiveCell")) {
+							return result;
+						}
 						if (t.handlers.trigger("onDataValidation")) {
 							return result;
 						}
@@ -1119,6 +1122,11 @@
 					if (!(canEdit || t.handlers.trigger('isRestrictionComments'))|| selectionDialogMode) {
 						return true;
 					}
+					//TODO temporary fix for speaker. in the future need to switch to a common scheme
+					if (event.altKey && (event.metaKey || event.ctrlKey)) {
+						ctrlKey = true;
+					}
+
 					isNeedCheckActiveCellChanged = true;
 
 				case 65: // select all      Ctrl + a
@@ -1201,12 +1209,19 @@
 							action = true;
 							break;
 						case 90:
-							t.handlers.trigger("undo");
+							if (event.altKey) {
+								AscCommon.EditorActionSpeaker.toggle();
+							} else {
+								t.handlers.trigger("undo");
+							}
 							action = true;
 							break;
 						case 192:
 							if (shiftKey) {
 								t.handlers.trigger("setCellFormat", Asc.c_oAscNumFormatType.General);
+								action = true;
+							} else {
+								t.handlers.trigger("showFormulas");
 								action = true;
 							}
 							break;

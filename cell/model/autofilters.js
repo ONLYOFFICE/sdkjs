@@ -5580,7 +5580,7 @@
 					for (var i = 0; i < this.worksheet.TableParts.length; i++) {
 						var table = this.worksheet.TableParts[i];
 						if (table && table.Ref.contains(activeCell.col, activeCell.row)) {
-							res = table;
+							res = {table: table, id: i};
 							break;
 						}
 					}

@@ -537,9 +537,9 @@ CChangesDocumentMathSettings.prototype.ReadFromBinary = function(Reader)
 {
 	// Variable : New
 	// Variable : Old
-	this.New = new CMathSettings();
+	this.New = new AscWord.MathSettings();
 	this.New.Read_FromBinary(Reader);
-	this.Old = new CMathSettings();
+	this.Old = new AscWord.MathSettings();
 	this.Old.Read_FromBinary(Reader);
 };
 CChangesDocumentMathSettings.prototype.CreateReverseChange = function()
@@ -567,7 +567,7 @@ CChangesDocumentSdtGlobalSettings.prototype.private_SetValue = function(Value)
 };
 CChangesDocumentSdtGlobalSettings.prototype.private_CreateObject = function()
 {
-	return new CSdtGlobalSettings();
+	return new AscWord.SdtGlobalSettings();
 };
 CChangesDocumentSdtGlobalSettings.prototype.private_IsCreateEmptyObject = function()
 {
@@ -624,7 +624,7 @@ CChangesDocumentSpecialFormsGlobalSettings.prototype.private_SetValue = function
 };
 CChangesDocumentSpecialFormsGlobalSettings.prototype.private_CreateObject = function()
 {
-	return new CSpecialFormsGlobalSettings();
+	return new AscWord.SpecialFormsGlobalSettings();
 };
 CChangesDocumentSpecialFormsGlobalSettings.prototype.private_IsCreateEmptyObject = function()
 {

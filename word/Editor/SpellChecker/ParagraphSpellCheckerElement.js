@@ -32,24 +32,24 @@
 
 "use strict";
 
-(function(window, undefined)
+(function(window)
 {
 	/**
 	 * Отдельный элемент проверки орфографии внутри параграфа
 	 * @constructor
 	 */
-	function CParagraphSpellCheckerElement(StartPos, EndPos, Word, Lang, Prefix, Ending)
+	function CParagraphSpellCheckerElement(startRun, startInRunPos, endRun, endInRunPos,  Word, Lang, Prefix, Ending)
 	{
-		this.StartPos = StartPos;
-		this.EndPos   = EndPos;
+		this.startRun      = startRun;
+		this.startInRunPos = startInRunPos;
+		this.endRun        = endRun;
+		this.endInRunPos   = endInRunPos;
+		
 		this.Word     = Word;
 		this.Lang     = Lang;
 		this.Checked  = null; // null - неизвестно, true - правильное слово, false - неправильное слово
 		this.CurPos   = false;
 		this.Variants = null;
-
-		this.StartRun = null;
-		this.EndRun   = null;
 
 		// В некоторых языках слова идут вместе со знаками пунктуации до или после, например,
 		// -abwicklung и bwz. (в немецком языке)
@@ -58,11 +58,11 @@
 	}
 	CParagraphSpellCheckerElement.prototype.GetStartPos = function()
 	{
-		return this.StartPos;
+		return this.getStartParaPos();
 	};
 	CParagraphSpellCheckerElement.prototype.GetEndPos = function()
 	{
-		return this.EndPos;
+		return this.getEndParaPos();
 	};
 	CParagraphSpellCheckerElement.prototype.GetPrefix = function()
 	{
@@ -90,11 +90,19 @@
 	};
 	CParagraphSpellCheckerElement.prototype.GetStartRun = function()
 	{
-		return this.StartRun;
+		return this.startRun;
+	};
+	CParagraphSpellCheckerElement.prototype.GetStartInRunPos = function()
+	{
+		return this.startInRunPos;
 	};
 	CParagraphSpellCheckerElement.prototype.GetEndRun = function()
 	{
-		return this.EndRun;
+		return this.endRun;
+	};
+	CParagraphSpellCheckerElement.prototype.GetEndInRunPos = function()
+	{
+		return this.endInRunPos;
 	};
 	CParagraphSpellCheckerElement.prototype.GetWord = function()
 	{
@@ -138,29 +146,67 @@
 	};
 	CParagraphSpellCheckerElement.prototype.ClearSpellingMarks = function()
 	{
-		if (this.StartRun !== this.EndRun)
+		if (this.startRun !== this.endRun)
 		{
-			if (this.StartRun)
-				this.StartRun.ClearSpellingMarks();
+			if (this.startRun)
+				this.startRun.ClearSpellingMarks();
 
-			if (this.EndRun)
-				this.EndRun.ClearSpellingMarks();
+			if (this.endRun)
+				this.endRun.ClearSpellingMarks();
 		}
 		else
 		{
-			if (this.EndRun)
-				this.EndRun.ClearSpellingMarks();
+			if (this.endRun)
+				this.endRun.ClearSpellingMarks();
 		}
 	};
-	CParagraphSpellCheckerElement.prototype.CheckPositionInside = function(oPos)
+	CParagraphSpellCheckerElement.prototype.CheckPositionInside = function(pos)
 	{
-		return (oPos && this.EndPos.Compare(oPos) >= 0 && this.StartPos.Compare(oPos) <= 0);
+		if (!pos)
+			return false;
+		
+		let elementStartPos = this.getStartParaPos();
+		let elementEndPos   = this.getEndParaPos();
+		return (elementStartPos.Compare(pos) <= 0 && elementEndPos.Compare(pos) >= 0);
 	};
-	CParagraphSpellCheckerElement.prototype.CheckIntersection = function(oStartPos, oEndPos)
+	CParagraphSpellCheckerElement.prototype.CheckIntersection = function(startPos, endPos)
 	{
-		return (oStartPos && oEndPos && this.StartPos.Compare(oEndPos) <= 0 && this.EndPos.Compare(oStartPos) >= 0);
+		if (!startPos || !endPos)
+			return false;
+		
+		let elementStartPos = this.getStartParaPos();
+		let elementEndPos   = this.getEndParaPos();
+		return (elementStartPos.Compare(endPos) <= 0 && elementEndPos.Compare(startPos) >= 0);
 	};
-
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Private area
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	CParagraphSpellCheckerElement.prototype.getParagraph = function()
+	{
+		return this.startRun ? this.startRun.GetParagraph() : null;
+	};
+	CParagraphSpellCheckerElement.prototype.getStartParaPos = function()
+	{
+		let paragraph = this.getParagraph();
+		let paraPos   = paragraph ? paragraph.GetPosByElement(this.startRun) : null;
+		if (!paraPos)
+			return new AscWord.CParagraphContentPos();
+		
+		paraPos.Update(this.startInRunPos, paraPos.GetDepth() + 1);
+		return paraPos;
+	};
+	CParagraphSpellCheckerElement.prototype.getEndParaPos = function()
+	{
+		let paragraph = this.getParagraph();
+		let paraPos   = paragraph ? paragraph.GetPosByElement(this.endRun) : null;
+		if (!paraPos)
+			return new AscWord.CParagraphContentPos();
+		
+		paraPos.Update(this.endInRunPos, paraPos.GetDepth() + 1);
+		return paraPos;
+	};
+	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommonWord'] = window['AscCommonWord'] || {};
 	window['AscCommonWord'].CParagraphSpellCheckerElement = CParagraphSpellCheckerElement;

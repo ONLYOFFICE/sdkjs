@@ -36,7 +36,6 @@
 			"cell/api.js",
 			"cell/api_plugins.js",
 			"common/spell/spell.js",
-			"common/zlib/zlib.js",
 			"word/Editor/Table/TableLook.js"
 		],
 		"common": [
@@ -64,6 +63,7 @@
 			"common/libfont/manager.js",
 
 			"common/stringserialize.js",
+			"common/digest/sha256.js",
 			"common/random.js",
 			"common/hash/hash.js",
 			"common/keychainstorage.js",
@@ -71,7 +71,7 @@
 			"common/Drawings/Metafile.js",
 			"common/libfont/textmeasurer.js",
 			"common/Drawings/WorkEvents.js",
-
+			
 			"cell/model/History.js",
 
 			"common/Shapes/EditorSettings.js",
@@ -81,6 +81,8 @@
 			"common/Drawings/Hit.js",
 			"common/Drawings/ArcTo.js",
 			"common/Drawings/ColorArray.js",
+
+			"common/SmartArts/SmartArtCache.js",
 
 			"common/Drawings/CommonController.js",
 			"common/Drawings/States.js",
@@ -186,7 +188,13 @@
 			"common/Drawings/Format/LockedCanvas.js",
 			"common/Drawings/Format/SlicerView.js",
 			"cell/model/PivotTables.js",
-
+			
+			"word/Math/mathTypes.js",
+			"word/Editor/Styles.js",
+			"word/Math/math-settings.js",
+			"word/Editor/StructuredDocumentTags/sdt-settings.js",
+			"word/Editor/DocumentSettings.js",
+			
 			"word/Editor/Paragraph/Run/FontClassification.js",
 			"word/Editor/Paragraph/Run/FontCalculator.js",
 			"word/Editor/Paragraph/Run/RunAutoCorrect.js",
@@ -195,7 +203,6 @@
 			"word/Editor/Bookmarks.js",
 			"word/Editor/Comments.js",
 			"word/Editor/CommentsChanges.js",
-			"word/Editor/Styles.js",
 			"word/Editor/StylesChanges.js",
 			"word/Editor/RevisionsChange.js",
 			"word/Editor/FlowObjects.js",
@@ -262,7 +269,6 @@
 			"word/Editor/Layout/ReadView.js",
 			"word/Editor/DocumentContentBase.js",
 			"word/Editor/Document.js",
-			"word/Editor/DocumentSettings.js",
 			"word/Editor/ChangeCase.js",
 			"word/Editor/SelectedContent.js",
 			"word/Editor/DocumentOutline.js",
@@ -315,7 +321,6 @@
 			"word/Math/NamesOfLiterals.js",
 			"word/Math/LaTeXParser.js",
 			"word/Math/UnicodeParser.js",
-			"word/Math/mathTypes.js",
 			"word/Math/mathText.js",
 			"word/Math/mathContent.js",
 			"word/Math/base.js",
@@ -329,6 +334,7 @@
 			"word/Math/accent.js",
 			"word/Math/borderBox.js",
 			"word/Math/mathTrackHandler.js",
+			"word/Editor/Styles/style-cache.js",
 			"word/Editor/Styles/FixedFormDefaults.js",
 			"word/Editor/Revisions/TrackRevisionsManager.js",
 
@@ -341,6 +347,7 @@
 			"common/versionHistory.js",
 			"common/clipboard_base.js",
 			"common/text_input2.js",
+			"common/workerspeech.js",
 			"common/Drawings/Format/OleObject.js",
 			"common/Drawings/Format/DrawingContent.js",
 			"common/plugins.js",

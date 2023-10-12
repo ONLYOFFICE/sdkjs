@@ -680,26 +680,33 @@ ChartPreviewManager.prototype.getChartPreviews = function(chartType, arrId, bEmp
 		this.SMARTART_PREVIEW_SIZE_MM = 8128000 * AscCommonWord.g_dKoef_emu_to_mm;
 		this.CANVAS_SIZE = 70;
 		this.canvas = null;
-		this.imageType = "image/jpeg";
+		this.imageType = "image/png";
 		this.imageBuffer = [];
 		this.index = 0;
 		this.cache = {};
 		this.queue = [];
+		this.typeOfSectionLoad = null;
 	}
 	SmartArtPreviewDrawer.prototype = Object.create(AscCommon.CActionOnTimerBase.prototype);
 	SmartArtPreviewDrawer.prototype.constructor = SmartArtPreviewDrawer;
 
 	SmartArtPreviewDrawer.prototype.Begin = function (nTypeOfSectionLoad) {
+
 		const oApi = Asc.editor || editor;
-		if (oApi && AscCommon.g_oBinarySmartArts) {
+		if(!oApi) {
+			return;
+		}
+		const oThis = this;
+		AscCommon.g_oBinarySmartArts.checkLoadDrawing().then(function ()
+		{
 			if (AscFormat.isRealNumber(nTypeOfSectionLoad)) {
 				const arrPreviewObjects = Asc.c_oAscSmartArtSections[nTypeOfSectionLoad].map(function (nTypeOfSmartArt) {
 					return new CSmartArtPreviewInfo(nTypeOfSmartArt, nTypeOfSectionLoad);
 				});
-				this.queue = this.queue.concat(arrPreviewObjects);
-				AscCommon.CActionOnTimerBase.prototype.Begin.call(this);
+				oThis.queue = oThis.queue.concat(arrPreviewObjects);
+				AscCommon.CActionOnTimerBase.prototype.Begin.call(oThis);
 			}
-		}
+		});
 	};
 	SmartArtPreviewDrawer.prototype.OnBegin = function () {
 		const oApi = Asc.editor || editor;

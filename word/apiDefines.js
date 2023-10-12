@@ -254,7 +254,8 @@ var c_oAscDocumentShortcutType = {
 	HorizontalEllipsis   : 43,
 	Subscript            : 44,
 	IncreaseFontSize     : 45,
-	DecreaseFontSize     : 46
+	DecreaseFontSize     : 46,
+	SpeechWorker		 : 47
 };
 
 var c_oAscDocumentRefenceToType = {
@@ -448,6 +449,7 @@ prot['HorizontalEllipsis']   = prot.HorizontalEllipsis;
 prot['Subscript']            = prot.Subscript;
 prot['IncreaseFontSize']     = prot.IncreaseFontSize;
 prot['DecreaseFontSize']     = prot.DecreaseFontSize;
+prot['SpeechWorker']         = prot.SpeechWorker;
 
 prot = window['Asc']['c_oAscDocumentRefenceToType'] = window['Asc'].c_oAscDocumentRefenceToType = c_oAscDocumentRefenceToType;
 prot['Text']               = prot.Text;

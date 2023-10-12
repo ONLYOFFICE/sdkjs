@@ -1438,7 +1438,7 @@ CDocumentContent.prototype.Draw                           = function(nPageIndex,
         pGraphics.Start_Command(AscFormat.DRAW_COMMAND_CONTENT);
     }
 
-	var nPixelError = this.DrawingDocument.GetMMPerDot(1);
+	var nPixelError = this.DrawingDocument && this.DrawingDocument.GetMMPerDot(1);
 
 	var ClipInfo = this.ClipInfo[CurPage];
     if (ClipInfo)
@@ -2210,14 +2210,19 @@ CDocumentContent.prototype.Document_CreateFontCharMap = function(FontCharMap)
 		Element.Document_CreateFontCharMap(FontCharMap);
 	}
 };
-CDocumentContent.prototype.Document_Get_AllFontNames = function(AllFonts)
+CDocumentContent.prototype.Document_Get_AllFontNames = function(fontNames)
 {
+	if (!fontNames)
+		fontNames = [];
+		
 	var Count = this.Content.length;
 	for (var Index = 0; Index < Count; Index++)
 	{
 		var Element = this.Content[Index];
-		Element.Document_Get_AllFontNames(AllFonts);
+		Element.Document_Get_AllFontNames(fontNames);
 	}
+	
+	return fontNames;
 };
 CDocumentContent.prototype.Document_UpdateInterfaceState = function()
 {
@@ -2931,11 +2936,11 @@ CDocumentContent.prototype.Extend_ToPos                       = function(X, Y)
     this.LogicDocument.Recalculate();
     this.LogicDocument.FinalizeAction();
 };
-CDocumentContent.prototype.AddInlineImage = function(W, H, Img, Chart, bFlow)
+CDocumentContent.prototype.AddInlineImage = function(W, H, Img, GraphicObject, bFlow)
 {
 	if (docpostype_DrawingObjects === this.CurPos.Type)
 	{
-		return this.DrawingObjects.addInlineImage(W, H, Img, Chart, bFlow);
+		return this.DrawingObjects.addInlineImage(W, H, Img, GraphicObject, bFlow);
 	}
 	else //if ( docpostype_Content === this.CurPos.Type )
 	{
@@ -2946,17 +2951,24 @@ CDocumentContent.prototype.AddInlineImage = function(W, H, Img, Chart, bFlow)
 		if (type_Paragraph == Item.GetType())
 		{
 			var Drawing;
-			if (!AscCommon.isRealObject(Chart))
+			if (!AscCommon.isRealObject(GraphicObject))
 			{
 				Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
 				var Image = this.DrawingObjects.createImage(Img, 0, 0, W, H);
 				Image.setParent(Drawing);
 				Drawing.Set_GraphicObject(Image);
 			}
+			else if (GraphicObject.isSmartArtObject && GraphicObject.isSmartArtObject())
+			{
+				Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
+				GraphicObject.setParent(Drawing);
+				Drawing.Set_GraphicObject(GraphicObject);
+				Drawing.setExtent(GraphicObject.spPr.xfrm.extX, GraphicObject.spPr.xfrm.extY);
+			}
 			else
 			{
 				Drawing   = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
-				var Image = this.DrawingObjects.getChartSpace2(Chart, null);
+				var Image = this.DrawingObjects.getChartSpace2(GraphicObject, null);
 				Image.setParent(Drawing);
 				Drawing.Set_GraphicObject(Image);
 				Drawing.setExtent(Image.spPr.xfrm.extX, Image.spPr.xfrm.extY);
@@ -2975,7 +2987,7 @@ CDocumentContent.prototype.AddInlineImage = function(W, H, Img, Chart, bFlow)
 		}
 		else
 		{
-			Item.AddInlineImage(W, H, Img, Chart, bFlow);
+			Item.AddInlineImage(W, H, Img, GraphicObject, bFlow);
 		}
 	}
 };
@@ -5885,10 +5897,9 @@ CDocumentContent.prototype.GetCalculatedParaPr = function()
 		return Result_ParaPr;
 	}
 };
-CDocumentContent.prototype.GetCalculatedTextPr = function()
+CDocumentContent.prototype.GetCalculatedTextPr = function(skipFontCalculator)
 {
-	var Result_TextPr = null;
-
+	let textPr = null;
 	if (true === this.ApplyToAll)
 	{
 		var VisTextPr;
@@ -5904,14 +5915,13 @@ CDocumentContent.prototype.GetCalculatedTextPr = function()
 			VisTextPr = VisTextPr.Compare(CurPr);
 			this.Content[Index].SetApplyToAll(false);
 		}
-
-		Result_TextPr = VisTextPr;
-
-		return Result_TextPr;
+		
+		textPr = VisTextPr;
 	}
-
-	if (docpostype_DrawingObjects === this.CurPos.Type)
-		return this.LogicDocument.DrawingObjects.getParagraphTextPr();
+	else if (docpostype_DrawingObjects === this.CurPos.Type)
+	{
+		textPr = this.LogicDocument.DrawingObjects.getParagraphTextPr();
+	}
 	else //if ( docpostype_Content === this.CurPos.Type )
 	{
 		if (true === this.Selection.Use)
@@ -5949,16 +5959,25 @@ CDocumentContent.prototype.GetCalculatedTextPr = function()
 					break;
 				}
 			}
-
-			Result_TextPr = VisTextPr;
+			
+			textPr = VisTextPr;
 		}
 		else
 		{
-			Result_TextPr = this.Content[this.CurPos.ContentPos].GetCalculatedTextPr();
+			textPr = this.Content[this.CurPos.ContentPos].GetCalculatedTextPr();
 		}
-
-		return Result_TextPr;
 	}
+	
+	if (true !== skipFontCalculator && textPr)
+	{
+		AscWord.FontCalculator.Calculate(this, textPr);
+		
+		let theme = this.GetTheme();
+		if (theme)
+			textPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
+	}
+	
+	return textPr;
 };
 CDocumentContent.prototype.GetDirectTextPr = function()
 {
@@ -7422,6 +7441,9 @@ CDocumentContent.prototype.SetSelectionState = function(State, StateIndex)
 
 	if (State.length <= 0)
 		return;
+	
+	if (undefined === StateIndex)
+		StateIndex = State.length - 1;
 
 	var DocState = State[StateIndex];
 

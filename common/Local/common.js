@@ -108,23 +108,16 @@
 /////////////////////////////////////////////////////////
 //////////////       FONTS       ////////////////////////
 /////////////////////////////////////////////////////////
-AscFonts.CFontFileLoader.prototype.LoadFontAsync = function(basePath, _callback, isEmbed)
+AscFonts.CFontFileLoader.prototype.LoadFontAsync = function(basePath, callback)
 {
-	this.callback = _callback;
-    if (-1 != this.Status)
+	this.callback = callback;
+    if (-1 !== this.Status)
         return true;
 		
-	var oThis = this;
 	this.Status = 2;
-	if (window["AscDesktopEditor"] !== undefined && !this.CanUseOriginalFormat)
-	{
-		this.callback = null;		
-		window["AscDesktopEditor"]["LoadFontBase64"](this.Id);
-		this._callback_font_load();
-		return;
-	}
 
 	var xhr = new XMLHttpRequest();
+	xhr.fontFile = this;
 	xhr.open('GET', "ascdesktop://fonts/" + this.Id, true);
 	xhr.responseType = 'arraybuffer';
 
@@ -135,30 +128,32 @@ AscFonts.CFontFileLoader.prototype.LoadFontAsync = function(basePath, _callback,
 
 	xhr.onload = function()
 	{
-		if (this.status != 200)
+		if (this.status !== 200)
 		{
-			oThis.Status = 1;
+			xhr.fontFile.Status = 1;
 			return;
 		}
 
-		oThis.Status = 0;
+		this.fontFile.Status = 0;
 
-		var fontStreams = AscFonts.g_fonts_streams;
-		var __font_data_idx = fontStreams.length;
+		let fontStreams = AscFonts.g_fonts_streams;
+		let streamIndex = fontStreams.length;
 		if (this.response)
 		{
-			var _uintData = new Uint8Array(this.response);
-			fontStreams[__font_data_idx] = new AscFonts.FontStream(_uintData, _uintData.length);
+			let data = new Uint8Array(this.response);
+			fontStreams[streamIndex] = new AscFonts.FontStream(data, data.length);
 		}
 		else
 		{
-			fontStreams[__font_data_idx] = AscFonts.CreateFontData3(this.responseText);
+			fontStreams[streamIndex] = AscFonts.CreateFontData3(this.responseText);
 		}
 
-		oThis.SetStreamIndex(__font_data_idx);
+		this.fontFile.SetStreamIndex(streamIndex);
 
-		if (null != oThis.callback)
-			oThis.callback();
+		if (null != this.fontFile.callback)
+			this.fontFile.callback();
+		if (this.fontFile["externalCallback"])
+			this.fontFile["externalCallback"]();
 	};
 
 	xhr.send(null);
