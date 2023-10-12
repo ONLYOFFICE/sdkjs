@@ -118,8 +118,10 @@
 			CannotMoveRange  : -74,
 			DataRangeError   : -75,
 
-			MustSingleCell     : -76,
-			MustContainFormula : -77,
+			MustSingleCell          : -76,
+			MustContainFormula      : -77,
+			MustFormulaResultNumber : -78,
+			MustContainValue        : -79,
 
 			MaxDataSeriesError : -80,
 			CannotFillRange    : -81,
@@ -311,6 +313,8 @@
 	prot['DataRangeError']                   = prot.DataRangeError;
 	prot['MustSingleCell']                   = prot.MustSingleCell;
 	prot['MustContainFormula']               = prot.MustContainFormula;
+	prot['MustFormulaResultNumber']          = prot.MustFormulaResultNumber;
+	prot['MustContainValue']                 = prot.MustContainValue;
 	prot['NoValues']                         = prot.NoValues;
 	prot['NoSingleRowCol']                   = prot.NoSingleRowCol;
 	prot['InvalidReference']                 = prot.InvalidReference;

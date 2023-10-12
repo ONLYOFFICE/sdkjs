@@ -591,19 +591,34 @@ function (window, undefined) {
 			case Asc.c_oAscSelectionDialogType.GoalSeek_Cell: {
 				//check formula contains
 				let isFormula = false;
+				let isNumberResult = true;
+				//MustFormulaResultNumber
 				ws && ws._getCellNoEmpty(range.r1, range.c1, function (cell) {
 					if (cell && cell.isFormula()) {
 						isFormula = true;
+						if (cell.number == null) {
+							isNumberResult = false;
+						}
 					}
 				});
 				if (!isFormula) {
 					res = Asc.c_oAscError.ID.MustContainFormula;
+				} else if (!isNumberResult) {
+					res = Asc.c_oAscError.ID.MustFormulaResultNumber;
 				}
 
 				break;
 			}
 			case Asc.c_oAscSelectionDialogType.GoalSeek_ChangingCell: {
-
+				let isValue = true;
+				ws && ws._getCellNoEmpty(range.r1, range.c1, function (cell) {
+					if (cell && cell.isFormula()) {
+						isValue = false;
+					}
+				});
+				if (!isValue) {
+					res = Asc.c_oAscError.ID.MustContainValue;
+				}
 				break;
 			}
 		}

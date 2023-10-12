@@ -4736,6 +4736,10 @@
 			ws = this.getWorksheetByName(sSheetName);
 		}
 
+		//open history point
+		History.Create_NewPoint();
+		History.StartTransaction();
+
 		this.setGoalSeek(new AscCommonExcel.CGoalSeek(oParserFormula, Number(sExpectedValue), ws.getRange2(sChangingCell)));
 		let oGoalSeek = this.getGoalSeek();
 		// Run goal seek
@@ -4770,7 +4774,11 @@
 		let oChangedCell = oGoalSeek.getChangingCell();
 		oChangedCell.setValue(oGoalSeek.getFirstChangingValue());
 		//TODO  update cell to new value for canvas
+
 		this.setGoalSeek(null);
+
+		//close history point
+		History.EndTransaction();
 	};
 	/**
 	 * Saves goal seek result for "Changing cell"
@@ -4779,6 +4787,9 @@
 		//let oChangedCell = this.getGoalSeek().getChangingCell();
 		//TODO  update cell to new value for canvas
 		this.setGoalSeek(null);
+
+		//close history point
+		History.EndTransaction();
 	};
 
 	Workbook.prototype.pauseGoalSeek = function() {
