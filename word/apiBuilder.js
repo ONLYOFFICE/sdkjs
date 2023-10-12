@@ -4138,14 +4138,12 @@
 
 	/**
 	 * The watermark type.
-	 * @returns {("none" | "text" | "image")} WatermarkType
-	 * @constructor
+	 * @typedef {("none" | "text" | "image")} WatermarkType
 	 */
 
 	/**
 	 * The watermark direction.
-	 * @returns {("horizontal" | "clockwise45" | "counterclockwise45")} WatermarkDirection
-	 * @constructor
+	 * @typedef {("horizontal" | "clockwise45" | "counterclockwise45")} WatermarkDirection
 	 */
 
 	/**
