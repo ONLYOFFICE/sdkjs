@@ -1477,9 +1477,9 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.SetHighlight = function(r, g, b, opacity) {
         this.HighlightColor = {
-            r: r,
-            g: g,
-            b: b,
+            r: r || 0,
+            g: g || 0,
+            b: b || 0,
             a: opacity
         };
 
@@ -1517,6 +1517,7 @@ var CPresentation = CPresentation || function(){};
 
             oAnnot.SetQuads(aQuads);
             oAnnot.SetStrokeColor([r/255, g/255, b/255]);
+            oAnnot.SetOpacity(opacity);
         }
 
         editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Highlight, false);
@@ -1524,9 +1525,9 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.SetUnderline = function(r, g, b, opacity) {
         this.UnderlineColor = {
-            r: r,
-            g: g,
-            b: b,
+            r: r || 0,
+            g: g || 0,
+            b: b || 0,
             a: opacity
         };
 
@@ -1563,6 +1564,7 @@ var CPresentation = CPresentation || function(){};
 
             oAnnot.SetQuads(aQuads);
             oAnnot.SetStrokeColor([r/255, g/255, b/255]);
+            oAnnot.SetOpacity(opacity);
         }
 
         editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Underline, false);
@@ -1570,9 +1572,9 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.SetStrikeout = function(r, g, b, opacity) {
         this.StrikeoutColor = {
-            r: r,
-            g: g,
-            b: b,
+            r: r || 0,
+            g: g || 0,
+            b: b || 0,
             a: opacity
         };
 
@@ -1609,6 +1611,7 @@ var CPresentation = CPresentation || function(){};
 
             oAnnot.SetQuads(aQuads);
             oAnnot.SetStrokeColor([r/255, g/255, b/255]);
+            oAnnot.SetOpacity(opacity);
         }
 
         editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
