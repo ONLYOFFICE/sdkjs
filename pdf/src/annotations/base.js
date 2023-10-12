@@ -909,6 +909,10 @@
         memory.WriteLong(annotFlags);
 
         // page
+        let nPage = this.GetOriginPage();
+        if (nPage == undefined)
+            nPage = this.GetPage();
+
         memory.WriteLong(this.GetOriginPage());
 
         // rect
