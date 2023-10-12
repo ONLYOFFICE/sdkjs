@@ -3739,24 +3739,25 @@
 					}
 				}
 			}
-		}
-		else if (cDialogType.GoalSeek_Cell === dialogType || cDialogType.GoalSeek_ChangingCell === dialogType)
-		{
-			result = parserHelp.parse3DRef(dataRange);
-			if (result)
+			else if (cDialogType.GoalSeek_Cell === dialogType || cDialogType.GoalSeek_ChangingCell === dialogType)
 			{
-				sheetModel = model.getWorksheetByName(result.sheet);
-				if (sheetModel)
+				result = parserHelp.parse3DRef(dataRange);
+				if (result)
 				{
-					range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
+					sheetModel = model.getWorksheetByName(result.sheet);
+					if (sheetModel)
+					{
+						range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
+					}
 				}
-			}
 
-			if (!sheetModel) {
-				sheetModel = model.getActiveWs();
+				if (!sheetModel) {
+					sheetModel = model.getActiveWs();
+				}
+				return AscCommonExcel.CGoalSeek.prototype.isValidDataRef(sheetModel, range, dialogType);
 			}
-			return AscCommonExcel.CGoalSeek.prototype.isValidDataRef(sheetModel, range, dialogType);
 		}
+
 		return Asc.c_oAscError.ID.No;
 	};
 	parserHelper.prototype.setDigitSeparator = function (sep)
