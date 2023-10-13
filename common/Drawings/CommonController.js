@@ -11216,6 +11216,22 @@
 			return aDiff;
 		};
 
+		function GetSelectedDrawings() {
+			const nEditorId = Asc.editor.getEditorId()
+			switch (nEditorId) {
+				case AscCommon.c_oEditorId.Word: {
+					return Asc.editor.getLogicDocument().DrawingObjects.selectedObjects;
+				}
+				case AscCommon.c_oEditorId.Spreadsheet: {
+					return Asc.editor.wb.getWorksheet().objectRender.controller.selectedObjects;
+				}
+				case AscCommon.c_oEditorId.Presentation: {
+					return Asc.editor.WordControl.m_oLogicDocument.GetCurrentController().selectedObjects;
+				}
+			}
+			return [];
+		}
+
 		//--------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};
 		window['AscFormat'].HANDLE_EVENT_MODE_HANDLE = HANDLE_EVENT_MODE_HANDLE;
@@ -11305,4 +11321,5 @@
 		window["AscCommon"].CDrawingControllerStateBase = CDrawingControllerStateBase;
 		window["AscCommon"].getSpeechDescription = getSpeechDescription;
 		window["AscCommon"].getArrayElementsDiff = getArrayElementsDiff;
+		window["AscCommon"].GetSelectedDrawings = GetSelectedDrawings;
 	})(window);

@@ -330,6 +330,17 @@
     CNotes.prototype.Refresh_ContentChanges = function()
     {
     };
+    CNotes.prototype.getColorMap = function()
+    {
+        if(this.Master)
+        {
+            if(this.Master.clrMap)
+            {
+                return this.Master.clrMap;
+            }
+        }
+        return AscFormat.GetDefaultColorMap();
+    };
 
     function CreateNotes(){
         var oN = new CNotes();
