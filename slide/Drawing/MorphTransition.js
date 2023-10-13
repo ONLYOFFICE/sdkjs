@@ -1048,12 +1048,18 @@
                 const aParStructs2 = oDocStruct2.getParagraphStructures();
                 if(aParStructs1.length === aParStructs2.length) {
                     let nPar;
+                    let nStructuresCount = 0;
+                    let nMaxCount = 200;
                     for(nPar = 0; nPar < aParStructs1.length; ++nPar) {
                         let oParStruct1 = aParStructs1[nPar];
                         let oParStruct2 = aParStructs2[nPar];
                         let aTextStructs1 = oParStruct1.getTextStructures();
                         let aTextStructs2 = oParStruct2.getTextStructures();
                         if(aTextStructs1.length !== aTextStructs2.length) {
+                            break;
+                        }
+                        nStructuresCount += aTextStructs1.length;
+                        if(nStructuresCount > nMaxCount) {
                             break;
                         }
                         let nText;
@@ -1068,7 +1074,7 @@
                             break;
                         }
                     }
-                    if(nPar === aParStructs1.length) {
+                    if(nPar === aParStructs1.length && nStructuresCount < nMaxCount) {
                         bTexture = false;
 
 
