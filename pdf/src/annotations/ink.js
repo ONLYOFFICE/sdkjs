@@ -619,10 +619,7 @@
         oNewInk.SetStrokeColor(this.GetStrokeColor().slice());
         oNewInk._relativePaths = this.GetRelativePaths().slice();
         oNewInk._gestures = this._gestures.slice();
-
-        let oContents = this.GetContents();
-        if (oContents)
-            oNewInk.SetContents(oContents.Copy());
+        oNewInk.SetContents(this.GetContents());
 
         return oNewInk;
     };

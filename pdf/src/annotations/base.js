@@ -294,8 +294,7 @@
         oSavedView = this._originView.normal;
 
         if (oSavedView) {
-            // sticky note всегда одинаковый при зуме
-            if (this.IsComment() || oSavedView.width == oApearanceInfo["w"] && oSavedView.height == oApearanceInfo["h"]) {
+            if (oSavedView.width == oApearanceInfo["w"] && oSavedView.height == oApearanceInfo["h"]) {
                 return oSavedView;
             }
         }
@@ -682,6 +681,24 @@
                 return oReplyCommentData.m_sUserData == reply.GetApIdx();
             })) {
                 AscPDF.CAnnotationText.prototype.AddReply.call(this, oReplyCommentData);
+            }
+        }
+
+        if (this.IsComment()) {
+            if (oCommentData.m_bSolved) {
+                this.SetState(AscPDF.TEXT_ANNOT_STATE.Accepted);
+            }
+            else {
+                this.SetState(AscPDF.TEXT_ANNOT_STATE.Unknown);
+            }
+        }
+
+        for (let i = 0; i < this._replies.length; i++) {
+            if (oCommentData.m_bSolved) {
+                this._replies[i].SetState(AscPDF.TEXT_ANNOT_STATE.Accepted);
+            }
+            else {
+                this._replies[i].SetState(AscPDF.TEXT_ANNOT_STATE.Unknown);
             }
         }
     };

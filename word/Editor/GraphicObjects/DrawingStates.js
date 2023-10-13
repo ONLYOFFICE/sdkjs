@@ -210,7 +210,9 @@ StartAddNewShape.prototype =
                         rect:       aRect,
                         page:       this.pageIndex,
                         contents:   null,
-                        type:       AscPDF.ANNOTATIONS_TYPES.Ink
+                        type:       AscPDF.ANNOTATIONS_TYPES.Ink,
+                        creationDate:   (new Date().getTime()).toString(),
+                        modDate:        (new Date().getTime()).toString()
                     });
 
                     oInkAnnot.SetWidth(oTrack.pen.w / (36000  * g_dKoef_pt_to_mm));

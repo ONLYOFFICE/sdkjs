@@ -1801,6 +1801,7 @@ var CPresentation = CPresentation || function(){};
             this.TurnOffHistory();
         }
 
+        editor.sync_RemoveComment(Id);
         oViewer._paint();
         oViewer.onUpdateOverlay();
     };

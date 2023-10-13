@@ -32,6 +32,23 @@
 
 (function(){
 
+    let TEXT_ANNOT_STATE = {
+        Marked:     0,
+        Unmarked:   1,
+        Accepted:   2,
+        Rejected:   3,
+        Cancelled:  4,
+        Completed:  5,
+        None:       6,
+        Unknown:    7
+    }
+
+    let TEXT_ANNOT_STATE_MODEL = {
+        Marked:     0,
+        Review:     1,
+        Unknown:    2
+    }
+
     let NOTE_ICONS_TYPES = {
         Check1:         0,
         Check2:         1,
@@ -78,6 +95,18 @@
     CAnnotationText.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationText.prototype.constructor = CAnnotationText;
 
+    CAnnotationText.prototype.SetState = function(nType) {
+        this._state = nType;
+    };
+    CAnnotationText.prototype.GetState = function() {
+        return this._state;
+    };
+    CAnnotationText.prototype.SetStateModel = function(nType) {
+        this._stateModel = nType;
+    };
+    CAnnotationText.prototype.GetStateModel = function() {
+        return this._stateModel;
+    };
     CAnnotationText.prototype.ClearReplies = function() {
         this._replies = [];
     };
@@ -95,6 +124,27 @@
         CommentData.m_sUserData = oReply.GetApIdx();
 
         this._replies.push(oReply);
+    };
+    CAnnotationText.prototype.GetAscCommentData = function() {
+        let oAscCommData = new Asc["asc_CCommentDataWord"](null);
+        oAscCommData.asc_putText(this.GetContents());
+        oAscCommData.asc_putOnlyOfficeTime(this.GetModDate().toString());
+        oAscCommData.asc_putUserId(editor.documentUserId);
+        oAscCommData.asc_putUserName(this.GetAuthor());
+        
+        let nState = this.GetState();
+        let bSolved;
+        if (nState == TEXT_ANNOT_STATE.Accepted || nState == TEXT_ANNOT_STATE.Completed)
+            bSolved = true;
+        oAscCommData.asc_putSolved(bSolved);
+        oAscCommData.asc_putQuoteText("");
+        oAscCommData.m_sUserData = this.GetApIdx();
+
+        this._replies.forEach(function(reply) {
+            oAscCommData.m_aReplies.push(reply.GetAscCommentData());
+        });
+
+        return oAscCommData;
     };
 
     CAnnotationText.prototype.GetIconType = function() {
@@ -236,6 +286,9 @@
         oGraphics.DrawImage(canvas, 0, 0,  canvas.width / oViewer.zoom, canvas.height / oViewer.zoom, aOrigRect[0], aOrigRect[1], canvas.width / oViewer.zoom, canvas.height / oViewer.zoom);
         oGraphics.SetIntegerGrid(false);
     };
+    CAnnotationText.prototype.IsNeedDrawFromStream = function() {
+        return false;
+    };
     CAnnotationText.prototype.onMouseDown = function(e) {
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
@@ -261,38 +314,7 @@
     CAnnotationText.prototype.IsComment = function() {
         return true;
     };
-    // CAnnotationText.prototype.EditCommentData = function(oCommentData) {
-    //     this.SetContents(oCommentData.m_sText);
-    //     this.SetModDate(oCommentData.m_sOOTime);
-
-    //     let aReplyToDel = [];
-    //     let oReply, oReplyCommentData;
-    //     for (let i = 0; i < this._replies.length; i++) {
-    //         oReply = this._replies[i];
-            
-    //         oReplyCommentData = oCommentData.m_aReplies.find(function(item) {
-    //             return item.m_sUserData == oReply.GetApIdx(); 
-    //         });
-
-    //         if (oReplyCommentData) {
-    //             oReply.EditCommentData(oReplyCommentData);
-    //         }
-    //         else {
-    //             aReplyToDel.push(oReply);
-    //         }
-    //     }
-
-    //     for (let i = aReplyToDel.length - 1; i > 0; i--) {
-    //         this._replies.splice(this._replies.indexOf(aReplyToDel[i]), 1);
-    //     }
-
-    //     for (let i = 0; i < oCommentData.m_aReplies.length; i++) {
-    //         oReplyCommentData = oCommentData.m_aReplies[i];
-    //         if (!oReplyCommentData.m_sUserData) {
-    //             this.AddReply(oReplyCommentData);
-    //         }
-    //     }
-    // };
+    
     CAnnotationText.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
@@ -309,13 +331,19 @@
             memory.WriteByte(this.GetIconType());
         }
         
-        // // state model
-        // memory.annotFlags |= (1 << 17);
-        // memory.WriteByte(1);
+        // state model
+        let nStateModel = this.GetStateModel();
+        if (nStateModel != null) {
+            memory.annotFlags |= (1 << 17);
+            memory.WriteByte(nStateModel);
+        }
 
-        // // state
-        // memory.annotFlags |= (1 << 18);
-        // memory.WriteByte(6);
+        // state
+        let nState = this.GetState();
+        if (nState != null) {
+            memory.annotFlags |= (1 << 18);
+            memory.WriteByte(nState);
+        }
 
         let nEndPos = memory.GetCurPosition();
         memory.Seek(memory.posForFlags);
@@ -329,13 +357,14 @@
             reply.WriteToBinary(memory); 
         });
     };
-
+    // CAnnotationText.prototype.ClearCache = function() {};
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();
     }
 
     window["AscPDF"].CAnnotationText = CAnnotationText;
+    window["AscPDF"].TEXT_ANNOT_STATE = TEXT_ANNOT_STATE;
 
     let SVG_ICON_CHECK = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M5.2381 8.8L4 11.8L7.71429 16C12.0476 9.4 13.2857 8.2 17 4C14.5238 4 9.77778 8.8 7.71429 11.8L5.2381 8.8Z" fill="black"/>

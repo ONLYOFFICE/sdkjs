@@ -1256,7 +1256,8 @@
 					}
 				}
 				else {
-					oAnnotsMap[oAnnotInfo["RefTo"]]._AddReplyOnOpen(oAnnotInfo);
+					if (oAnnotsMap[oAnnotInfo["RefTo"]] && oAnnotsMap[oAnnotInfo["RefTo"]]._AddReplyOnOpen)
+						oAnnotsMap[oAnnotInfo["RefTo"]]._AddReplyOnOpen(oAnnotInfo);
 				}
 			}
 

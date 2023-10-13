@@ -128,7 +128,7 @@ CChangesPDFDocumentRemoveItem.prototype.Undo = function()
 
 			oDocument.annots.splice(nPos, 0, oItem);
 			oViewer.pagesInfo.pages[nPage].annots.splice(nPosInPage, 0, oItem);
-			if (oItem.IsComment())
+			if (oItem.GetReply(0) != null || oItem.GetType() != AscPDF.ANNOTATIONS_TYPES.FreeText && oItem.GetContents())
 				editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
 
 			oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
@@ -155,7 +155,7 @@ CChangesPDFDocumentRemoveItem.prototype.Redo = function()
 
 			oDocument.annots.splice(nPos, 1);
 			oViewer.pagesInfo.pages[nPage].annots.splice(nPosInPage, 1);
-			if (oItem.IsComment())
+			if (oItem.GetReply(0) != null || oItem.GetType() != AscPDF.ANNOTATIONS_TYPES.FreeText && oItem.GetContents())
 				editor.sync_RemoveComment(oItem.GetId());
 		}
 	}
