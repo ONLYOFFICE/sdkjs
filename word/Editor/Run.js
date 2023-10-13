@@ -6152,16 +6152,19 @@ ParaRun.prototype.RecalculateMinMaxContentWidth = function(MinMax)
             }
             case para_Math_BreakOperator:
             {
-                if ( true === bWord )
-                {
-                    if ( nMinWidth < nWordLen )
-                        nMinWidth = nWordLen;
+				let itemWidth = Item.GetWidth() / AscWord.TEXTWIDTH_DIVIDER;
+				if (!bWord)
+					nWordLen = itemWidth;
+				else
+					nWordLen += itemWidth;
+	
+				if (nMinWidth < nWordLen)
+					nMinWidth = nWordLen;
+	
+				bWord    = false;
+				nWordLen = 0;
 
-                    bWord    = false;
-                    nWordLen = 0;
-                }
-
-                nCurMaxWidth += Item.GetWidth() / AscWord.TEXTWIDTH_DIVIDER;
+                nCurMaxWidth += itemWidth;
                 bCheckTextHeight = true;
                 break;
             }
@@ -10609,7 +10612,16 @@ ParaRun.prototype.RemoveTrackMoveMarks = function(oTrackManager)
 		}
 	}
 };
-
+ParaRun.prototype.IsContainMathOperators = function ()
+{
+	for (let i = 0; i < this.Content.length; i++)
+	{
+		let oCurrentMathText = this.Content[i];
+		if (oCurrentMathText.IsBreakOperator())
+			return true;
+	}
+	return false;
+};
 ParaRun.prototype.private_RecalcCtrPrp = function()
 {
     if (para_Math_Run === this.Type && undefined !== this.Parent && null !== this.Parent && null !== this.Parent.ParaMath)

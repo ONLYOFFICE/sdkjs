@@ -192,6 +192,30 @@ var c_oAscError = Asc.c_oAscError;
 		return printOptionsObj;
 	};
 
+	spreadsheet_api.prototype["asc_changeExternalReference"] = function(eR)
+	{
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		window["AscDesktopEditor"]["OpenFilenameDialog"]("cell", false, function(_file) {
+			let file = _file;
+			if (Array.isArray(file))
+				file = file[0];
+			if (!file)
+				return;
+
+			//if not saved - put absolute path
+			let isSavedFile = window["AscDesktopEditor"]["LocalFileGetSaved"]();
+			let relativePath = isSavedFile && window["AscDesktopEditor"]["LocalFileGetRelativePath"](file);
+
+			let obj = {};
+			obj["path"] = relativePath;
+			obj["filePath"] = file;
+			wb.changeExternalReference(eR, obj);
+		});
+	};
+
 	/////////////////////////////////////////////////////////
 	//////////////        CHANGES       /////////////////////
 	/////////////////////////////////////////////////////////

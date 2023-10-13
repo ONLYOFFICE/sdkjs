@@ -113,7 +113,45 @@
             this.content.Recalculate_Page(0, true);
         }
     };
-    
+    CAnnotationCircle.prototype.WriteToBinary = function(memory) {
+        memory.WriteByte(AscCommon.CommandType.ctAnnotField);
+
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.WriteToBinaryBase(memory);
+        this.WriteToBinaryBase2(memory);
+        
+        // rectangle diff
+        let aRD = this.GetReqtangleDiff();
+        if (aRD) {
+            memory.annotFlags |= (1 << 15);
+            for (let i = 0; i < 4; i++) {
+                memory.WriteDouble(aRD[i]);
+            }
+        }
+        
+        // fill
+        let aFill = this.GetFillColor();
+        if (aFill != null) {
+            memory.annotFlags |= (1 << 16);
+            memory.WriteLong(aFill.length);
+            for (let i = 0; i < aFill.length; i++)
+                memory.WriteDouble(aFill[i]);
+        }
+
+        let nEndPos = memory.GetCurPosition();
+        memory.Seek(memory.posForFlags);
+        memory.WriteLong(memory.annotFlags);
+        
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+
+        this._replies.forEach(function(reply) {
+            reply.WriteToBinary(memory); 
+        });
+    };
     
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)

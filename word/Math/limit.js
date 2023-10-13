@@ -454,10 +454,11 @@ CMathFunc.prototype.GetTextOfElement = function(isLaTeX) {
 
 	if (!isLaTeX)
 	{
-		if (!this.getArgument().IsOneElementInContentForGetText())
-			strArgument =  " 〖" + strArgument + "〗";
+		let strFuncApply = String.fromCharCode(8289);
+		if (this.getArgument().haveMixedContent())
+			strArgument = strFuncApply + "〖" + strArgument + "〗";
 		else
-			strArgument = " " + strArgument;
+			strArgument = strFuncApply + strArgument;
 	}
 	if (isLaTeX)
 	{

@@ -40,6 +40,7 @@
     function CSignatureField(sName, nPage, aRect, oDoc)
     {
         AscPDF.CBaseField.call(this, sName, AscPDF.FIELD_TYPES.signature, nPage, aRect, oDoc);
+        this._filled = false;
     };
 
     CSignatureField.prototype = Object.create(AscPDF.CBaseField.prototype);
@@ -78,6 +79,10 @@
     CSignatureField.prototype.onMouseUp = function() {
     };
 
+    CSignatureField.prototype.SetFilled = function(bValue) {
+        this._filled = bValue;
+        this.SetDrawHighlight(!bValue);
+    };
     /**
      * Synchronizes this field with fields with the same name.
      * @memberof CSignatureField

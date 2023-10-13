@@ -82,7 +82,6 @@ function onLoadFontsModule(window, undefined)
 	AscFonts.Hyphen_CheckDictionary = AscFonts["Hyphen_CheckDictionary"];
 	AscFonts.Hyphen_Word = AscFonts["Hyphen_Word"];
 
-
 	AscFonts.CreateNativeStreamByIndex = function(stream_index)
 	{
 		let stream = AscFonts.g_fonts_streams[stream_index];
@@ -764,7 +763,7 @@ function onLoadFontsModule(window, undefined)
 	};
 
 	AscCommon.ZLib = ZLib;
-	
+
 	if (AscCommon["CZLibEngineJS"])
 		AscCommon["CZLibEngineJS"].prototype["isModuleInit"] = true;
 
@@ -849,7 +848,7 @@ function onLoadFontsModule(window, undefined)
 				if ("" !== urlDesktop)
 					urlDictionaries = urlDesktop;
 			}
-
+			
 			let url = urlDictionaries + langName + "/hyph_" + langName + ".dic";
 
 			xhr.open('GET', url, true);

@@ -1820,9 +1820,9 @@ ParaMath.prototype.private_RecalculateRoot = function(PRS, ParaPr, Depth)
 };
 ParaMath.prototype.private_SetRestartRecalcInfo = function(PRS)
 {
-	var Page = this.Paragraph == null ? 0 : this.Paragraph.GetAbsolutePage(PRS.Page);
-	var Line = this.PageInfo.Get_FirstLineOnPage(Page);
-	PRS.SetMathRecalcInfo(Line, this, PRS.Ranges, PRS.RangesCount);
+	let absPage   = PRS.Paragraph.GetAbsolutePage(PRS.Page);
+	let firstLine = this.PageInfo.Get_FirstLineOnPage(absPage);
+	PRS.SetMathRecalcInfo(firstLine, this);
 	PRS.RecalcResult = recalcresult_ParaMath;
 	PRS.NewRange     = true;
 };
@@ -2073,6 +2073,7 @@ ParaMath.prototype.RecalculateMinMaxContentWidth = function(MinMax)
     RPI.MergeMathInfo(this.ParaMathRPI);
 
     this.Root.PreRecalc(null, this, new CMathArgSize(), RPI);
+	this.Root.recalculateAllSize(AscCommon.g_oTextMeasurer);
     this.Root.RecalculateMinMaxContentWidth(MinMax);
 };
 

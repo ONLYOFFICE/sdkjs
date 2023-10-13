@@ -36,67 +36,85 @@ $(function () {
 
 	QUnit.module("Check text input in the document editor");
 
-	function GetParagraphText(paragraph)
-	{
-		let state = paragraph.SaveSelectionState();
-		paragraph.SelectAll();
-		let result = paragraph.GetSelectedText(false);
-		paragraph.LoadSelectionState(state);
-		return result;
-	}
+	let GetParagraphText = AscTest.GetParagraphText;
 
 	QUnit.test("EnterText/CorrectEnterText/CompositeInput", function (assert)
 	{
 		AscTest.ClearDocument();
-
+		
 		let p = new AscWord.CParagraph(AscTest.DrawingDocument);
 		logicDocument.AddToContent(0, p);
-
+		
 		logicDocument.SelectAll();
 		assert.strictEqual(logicDocument.GetSelectedText(), "", "Check empty selection");
-
+		
 		logicDocument.AddTextWithPr("Hello World!");
-
+		
 		logicDocument.SelectAll();
 		assert.strictEqual(logicDocument.GetSelectedText(false, {NewLineParagraph : true}), "Hello World!\r\n", "Add text 'Hello World!'");
-
+		
 		logicDocument.MoveCursorToStartPos();
 		logicDocument.MoveCursorRight();
 		logicDocument.MoveCursorRight();
-
+		
 		AscTest.EnterText("123");
 		assert.strictEqual(GetParagraphText(p), "He123llo World!", "Add text '123'");
-
+		
 		AscTest.EnterText("AA");
 		assert.strictEqual(GetParagraphText(p), "He123AAllo World!", "Add text 'AA'");
-
+		
 		AscTest.CorrectEnterText("AB", "ABC");
 		assert.strictEqual(GetParagraphText(p), "He123AAllo World!", "Check wrong correction AB to ABC");
-
+		
 		AscTest.CorrectEnterText("AA", "ABC");
 		assert.strictEqual(GetParagraphText(p), "He123ABCllo World!", "Check correction AA to ABC");
-
+		
 		AscTest.EnterText("DD");
 		logicDocument.MoveCursorLeft();
 		AscTest.CorrectEnterText("DD", "CC");
 		assert.strictEqual(GetParagraphText(p), "He123ABCDDllo World!", "Add text DD move left and check wrong correction");
-
+		
 		logicDocument.MoveCursorToEndPos();
 		AscTest.EnterText("qq");
 		AscTest.CorrectEnterText("!qq", "!?");
 		assert.strictEqual(GetParagraphText(p), "He123ABCDDllo World!?", "Move to the end, add qq and correct !qq to !?");
-
+		
 		AscTest.BeginCompositeInput();
 		AscTest.ReplaceCompositeInput("WWW");
 		AscTest.ReplaceCompositeInput("123");
 		AscTest.EndCompositeInput();
 		assert.strictEqual(GetParagraphText(p), "He123ABCDDllo World!?123", "Add text '123' with composite input");
-
+		
 		AscTest.EnterTextCompositeInput("Zzz");
 		AscTest.CorrectEnterText("3Zzz", "$");
 		assert.strictEqual(GetParagraphText(p), "He123ABCDDllo World!?12$", "Add text 'Zzz' with composite input and correct it from '3Zzz' to '$'");
+		
 	});
-
+	QUnit.test("EnterText/CorrectEnterText/CompositeInput in collaboration", function (assert)
+	{
+		AscTest.StartCollaboration();
+		
+		AscTest.ClearDocument();
+		let p = new AscWord.CParagraph(AscTest.DrawingDocument);
+		logicDocument.AddToContent(0, p);
+		
+		AscTest.EnterText("ABC");
+		assert.strictEqual(GetParagraphText(p), "ABC", "Add text 'ABC' in collaboration");
+		
+		AscTest.MoveCursorLeft();
+		AscTest.EnterText("111");
+		AscTest.SyncCollaboration();
+		AscTest.CorrectEnterText("11", "23");
+		AscTest.SyncCollaboration();
+		assert.strictEqual(GetParagraphText(p), "AB123C", "Add text '111' and correct it with '123' in collaboration (sync between actions)");
+		
+		AscTest.EnterText("QQQ");
+		AscTest.CorrectEnterText("QQ", "RS");
+		AscTest.SyncCollaboration();
+		assert.strictEqual(GetParagraphText(p), "AB123QRSC", "Add text '111' and correct it with '123' in collaboration (no sync between actions)");
+		
+		AscTest.EndCollaboration();
+	});
 	QUnit.test("Test 'complex script' property on input", function (assert)
 	{
 		function CheckParagraphSplit(p, text, runCS, runText)

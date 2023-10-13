@@ -870,5 +870,8 @@
 	PDFEditorApi.prototype['asc_setSkin']                  = PDFEditorApi.prototype.asc_setSkin;
 	PDFEditorApi.prototype['asc_getAnchorPosition']        = PDFEditorApi.prototype.asc_getAnchorPosition;
 	PDFEditorApi.prototype['SetMarkerFormat']              = PDFEditorApi.prototype.SetMarkerFormat;
+	PDFEditorApi.prototype['asc_EditSelectAll']            = PDFEditorApi.prototype.asc_EditSelectAll;
+	PDFEditorApi.prototype['Undo']                         = PDFEditorApi.prototype.Undo;
+	PDFEditorApi.prototype['Redo']                         = PDFEditorApi.prototype.Redo;
 
 })(window, window.document);

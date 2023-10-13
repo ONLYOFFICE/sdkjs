@@ -117,7 +117,7 @@
 
 	function OpenBrackets()
 	{
-		this.data = ["(", "{", "〖",  "⟨", "["];
+		this.data = ["(", "{", "〖",  "⟨", "[", "⌊", "⌈", "⟦"];
 		this.fromSymbols = {};
 		this.toSymbols = {};
 		this.Init();
@@ -129,7 +129,7 @@
 	{
 		this.data = [
 			")", "}", "⟫", //	"\\"
-			"⟧", "〗", "⟩", "]",
+			"⟧", "〗", "⟩", "]", "⌋", "⌉", "⟧"
 		];
 		this.fromSymbols = {};
 		this.toSymbols = {};
@@ -621,6 +621,7 @@
 		["=", oNamesOfLiterals.operatorLiteral[0]],
 		["≶", oNamesOfLiterals.operatorLiteral[0]],
 		["≷", oNamesOfLiterals.operatorLiteral[0]],
+		["∩", oNamesOfLiterals.operatorLiteral[0]],
 
 		["\\", oNamesOfLiterals.opCloseBracket[0]],
 
@@ -899,6 +900,7 @@
 		["∥"], //check
 		["∂"],
 		["⊥", oNamesOfLiterals.operatorLiteral[0]],
+		["\\cap", oNamesOfLiterals.operatorLiteral[0]],
 		["ϕ"],
 		["π"],
 		["±"],
@@ -1004,8 +1006,8 @@
 		["\\mathbf", oNamesOfLiterals.mathFontLiteral[0]],
 		["\\mathbb", oNamesOfLiterals.mathFontLiteral[0]],
 		["\\it", oNamesOfLiterals.mathFontLiteral[0]],
-		["\\fraktur", oNamesOfLiterals.mathFontLiteral[0]],
 		["\\frak", oNamesOfLiterals.mathFontLiteral[0]],
+		["\\fraktur", oNamesOfLiterals.mathFontLiteral[0]],
 		["\\double", oNamesOfLiterals.mathFontLiteral[0]],
 		["\\sfrac", true],
 		["\\text", true],
@@ -1046,6 +1048,7 @@
 
 		["\"",  oNamesOfLiterals.charLiteral[0]],
 		["\'",  oNamesOfLiterals.charLiteral[0]],
+		["\ ",  oNamesOfLiterals.spaceLiteral[0]],
 
 		["\\quad", oNamesOfLiterals.spaceLiteral[0]], // 1 em (nominally, the height of the font)
 		// ["\\qquad", [8193, 8193], oNamesOfLiterals.spaceLiteral[0]], // 2em
@@ -1372,6 +1375,9 @@
 			"⟩": 10217,
 
 		}
+		if (code === undefined)
+			return -1;
+
 		if (code) {
 			let strBracket = oBrackets[code];
 			if (strBracket) {
@@ -1833,6 +1839,15 @@
 					break;
 				case oNamesOfLiterals.bracketBlockLiteral[num]:
 
+					if (oTokens.counter === 1 && oTokens.left === "〖" && oTokens.right === "〗")
+					{
+						ConvertTokens(
+							oTokens.value,
+							oContext
+						);
+						break;
+					}
+
 					let arr = [null]
 					if (oTokens.counter > 1 && oTokens.value.length < oTokens.counter)
 					{
@@ -1912,6 +1927,9 @@
 					}
 					let rows = oTokens.value.length;
 					let cols = oTokens.value[0].length;
+
+					if (cols === 0)
+						cols++;
 					if (strEndBracket && strStartBracket) {
 						let Delimiter = oContext.Add_DelimiterEx(new CTextPr(), 1, [null], strStartBracket, strEndBracket);
 						oContext = Delimiter.getElementMathContent(0);
@@ -1929,7 +1947,7 @@
 					}
 					break;
 				case oNamesOfLiterals.arrayLiteral[num]:
-					let intCountOfRows = oTokens.value.length
+					let intCountOfRows = oTokens.value.length + 1;
 					let oEqArray = oContext.Add_EqArray({
 						ctrPrp: new CTextPr(),
 						row: intCountOfRows
@@ -1977,7 +1995,7 @@
 					break;
 				case oNamesOfLiterals.belowAboveLiteral[num]:
 					let LIMIT_TYPE = (oTokens.isBelow === false) ? VJUST_BOT : VJUST_TOP;
-					if (oTokens.base && oTokens.base.type === oNamesOfLiterals.charLiteral[num] && oTokens.base.value.length === 1)
+					if (oTokens.base && oTokens.base.type === oNamesOfLiterals.charLiteral[num] && oTokens.base.value.length === 1 && IsArrow(oTokens.base.value))
 					{
 
 						let Pr;
@@ -2442,7 +2460,7 @@
 		"\\frakturz": "𝔷",
 		"\\frakturZ": "ℨ",
 		"\\frown": "⌑",
-		"\\funcapply": "⁡⁡⁡",
+		"\\funcapply": "⁡",
 
 		"\\G": "Γ",
 		"\\gamma": "γ",
@@ -2930,7 +2948,7 @@
 		"ⅉ" 		:"\\jj"			,
 		"ȷ" 		:"\\jmath"		,
 		"∂" 		:"\\partial"	,
-		//"R" 		:"\\Re"			,
+		"ℜ" 		:"\\Re"			,
 		"℘" 		:"\\wp"			,
 		"ℵ" 		:"\\aleph"		,
 		"ℶ" 		:"\\bet"		,

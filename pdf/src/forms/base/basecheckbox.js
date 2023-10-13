@@ -399,6 +399,12 @@
     CBaseCheckBoxField.prototype.onMouseDown = function() {
         let oDoc = this.GetDocument();
         this.DrawPressed();
+                
+        let bHighlight = this.IsNeedDrawHighlight();
+        this.SetDrawHighlight(false);
+
+        if (bHighlight)
+            this.AddToRedraw();
 
         this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
         if (oDoc.activeForm != this)

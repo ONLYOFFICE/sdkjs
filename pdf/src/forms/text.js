@@ -376,6 +376,8 @@
         let oDoc            = this.GetDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
+        let bHighlight = this.IsNeedDrawHighlight();
+        
         function callbackAfterFocus(x, y, e) {
             
             let oPos    = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
@@ -394,11 +396,12 @@
             if (this._doNotScroll == false && this.IsMultiline())
                 this.UpdateScroll(true);
 
+            this.SetDrawHighlight(false);
             if (this.IsNeedDrawFromStream() == true) {
                 this.SetDrawFromStream(false);
                 this.AddToRedraw();
             }
-            else if (this.curContent === this.contentFormat) {
+            else if (this.curContent === this.contentFormat || bHighlight) {
                 this.AddToRedraw();
             }
         }
@@ -1059,10 +1062,6 @@
 
         if (nSelStart != nSelEnd)
             this.content.Remove(nDirection, true, false, false, bWord);
-        
-        let oPara = this.content.GetElement(0);
-        if (oPara.GetElementsCount() == 0)
-            oPara.CorrectContent();
 
         // скрипт keystroke мог поменять change значение, поэтому
         this.InsertChars(AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"].toString()));

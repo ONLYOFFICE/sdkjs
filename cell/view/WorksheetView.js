@@ -9751,6 +9751,7 @@
 			};
 		}
 
+		let isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
 		var epsChangeSize = 3 * AscCommon.global_mouseEvent.KoefPixToMM;
 		if (x <= this.cellsLeft && y >= this.cellsTop && x >= this.headersLeft) {
 			r = this._findRowUnderCursor(y, true);
@@ -9763,11 +9764,12 @@
 
 
 			let _target = c_oTargetType.RowHeader;
-			if (!f) {
+			if (!f && !isMobileVersion) {
 				let selection = this._getSelection();
 				if (selection && selection.ranges) {
 					for (let i = 0 ; i < selection.ranges.length; i++) {
 						let curSelection = selection.ranges[i];
+						//move cols/rows was planned only for full version
 						if (curSelection.getType() === Asc.c_oAscSelectionType.RangeRow && curSelection.r1 <= r.row && curSelection.r2 >= r.row) {
 							_target = c_oTargetType.ColumnRowHeaderMove;
 						}
@@ -9801,11 +9803,12 @@
 			// ToDo В Excel зависимость epsilon от размера ячейки (у нас фиксированный 3)
 
 			let _target = c_oTargetType.ColumnHeader;
-			if (!f) {
+			if (!f && !isMobileVersion) {
 				let selection = this._getSelection();
 				if (selection && selection.ranges) {
 					for (let i = 0 ; i < selection.ranges.length; i++) {
 						let curSelection = selection.ranges[i];
+						//move cols/rows was planned only for full version
 						if (curSelection.getType() === Asc.c_oAscSelectionType.RangeCol && curSelection.c1 <= c.col && curSelection.c2 >= c.col) {
 							_target = c_oTargetType.ColumnRowHeaderMove;
 						}

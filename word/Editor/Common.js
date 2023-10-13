@@ -622,6 +622,16 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 			return CompareDocumentPositions(docPos[l.GetId()], docPos[r.GetId()]);
 		});
 	}
+	function checkAsYouTypeEnterText(run, inRunPos, codePoint)
+	{
+		let localHistory = AscCommon.History;
+		if (!localHistory.isEmpty())
+			return AscCommon.History.checkAsYouTypeEnterText(run, inRunPos, codePoint);
+		else (AscCommon.CollaborativeEditing.Is_Fast() && !AscCommon.CollaborativeEditing.Is_SingleUser())
+			return AscCommon.CollaborativeEditing.getCoHistory().checkAsYouTypeEnterText(run, inRunPos, codePoint);
+		
+		return false;
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CompareDocumentPositions = CompareDocumentPositions;
@@ -629,5 +639,6 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 	window['AscWord'].TextToRunElements        = TextToRunElements;
 	window['AscWord'].TextToMathRunElements    = TextToMathRunElements;
 	window['AscWord'].sortByDocumentPosition   = sortByDocumentPosition;
+	window['AscWord'].checkAsYouTypeEnterText  = checkAsYouTypeEnterText;
 
 })(window);

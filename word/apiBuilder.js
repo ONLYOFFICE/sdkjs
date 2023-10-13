@@ -3531,7 +3531,7 @@
 	ApiImage.prototype.constructor = ApiImage;
 
 	/**
-	 * Class representing an Ole-object.
+	 * Class representing an Ole object.
 	 * @constructor
 	 */
 	function ApiOleObject(OleObject)
@@ -3672,7 +3672,7 @@
 	}
 
 	/**
-	 * Class representing a list values of combobox/dropdown list content control.
+	 * Class representing a list of values of the combo box / dropdown list content control.
 	 * @constructor
 	 */
 	function ApiContentControlList(Parent)
@@ -3682,7 +3682,7 @@
 	}
 
 	/**
-	 * Class representing an entry of a list values of combobox/dropdown list content control.
+	 * Class representing an entry of the combo box / dropdown list content control.
 	 * @constructor
 	 */
 	function ApiContentControlListEntry(Sdt, Parent, Text, Value)
@@ -3703,7 +3703,7 @@
 	}
 
 	/**
-	 * Class representing settings which are used for creating a watermark.
+	 * Class representing the settings which are used to create a watermark.
 	 * @constructor
 	 */
 	function ApiWatermarkSettings(oSettings)
@@ -4137,15 +4137,13 @@
 	 * */
 
 	/**
-	 * The type of the watermark in the document.
-	 * @returns {("none" | "text" | "image")} WatermarkType
-	 * @constructor
+	 * The watermark type.
+	 * @typedef {("none" | "text" | "image")} WatermarkType
 	 */
 
 	/**
-	 * The direction of the watermark in the document.
-	 * @returns {("horizontal" | "clockwise45" | "counterclockwise45")} WatermarkDirection
-	 * @constructor
+	 * The watermark direction.
+	 * @typedef {("horizontal" | "clockwise45" | "counterclockwise45")} WatermarkDirection
 	 */
 
 	/**
@@ -5121,6 +5119,7 @@
 
 	/**
 	 * Subscribes to the specified event and calls the callback function when the event fires.
+	 * @function
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {string} eventName - The event name.
@@ -5130,6 +5129,7 @@
 
 	/**
 	 * Unsubscribes from the specified event.
+	 * @function
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {string} eventName - The event name.
@@ -6301,8 +6301,8 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {?string} [sText="WATERMARK"] - Watermark text.
-	 * @param {?boolean} [bIsDiagonal=true] - Specifies if the watermark is placed diagonally (true) or horizontally (false).
-	 * @returns {?ApiDrawing} - The object which represents inserted watermark. null if the type of Settings is "none".
+	 * @param {?boolean} [bIsDiagonal=false] - Specifies if the watermark is placed diagonally (true) or horizontally (false).
+	 * @returns {?ApiDrawing} - The object which represents the inserted watermark. Returns null if the watermark type is "none".
 	 */
 	ApiDocument.prototype.InsertWatermark = function(sText, bIsDiagonal){
 		var oSectPrMap = {};
@@ -6346,10 +6346,10 @@
 
 
 	/**
-	 * Returns the current settings of watermark in the document.
+	 * Returns the watermark settings in the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @returns {ApiWatermarkSettings} - The object which represents the watermark settings
+	 * @returns {ApiWatermarkSettings} - The object which represents the watermark settings.
 	 */
 	ApiDocument.prototype.GetWatermarkSettings = function()
 	{
@@ -6358,11 +6358,11 @@
 
 
 	/**
-	 * Sets the settings of watermark in the document.
+	 * Sets the watermark settings in the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiWatermarkSettings} Settings - The object which represents the watermark settings.
-	 * @returns {?ApiDrawing} - The object which represents the watermark drawing if the type of Settings is not equal "none".
+	 * @returns {?ApiDrawing} - The object which represents the watermark drawing if the watermark type in Settings is not "none".
 	 */
 	ApiDocument.prototype.SetWatermarkSettings = function(Settings)
 	{
@@ -6384,7 +6384,7 @@
 	};
 
 	/**
-	 * Removes the watermark in the document.
+	 * Removes a watermark from the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 */
@@ -16342,7 +16342,7 @@
 	};
 
 	/**
-	 * Checks if the content control is a form.
+	 * Returns a list of values of the combo box / dropdown list content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiContentControlList}
@@ -16373,7 +16373,7 @@
 	};
 
 	/**
-	 * Returns a collection of the ApiContentControlListEntry of a list.
+	 * Returns a collection of items (the ApiContentControlListEntry objects) of the combo box / dropdown list content control.
 	 * @memberof ApiContentControlList
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiContentControlListEntry[]}
@@ -16392,7 +16392,7 @@
 	};
 
 	/**
-	 * Gets items count of the list of values of combobox/listbox.
+	 * Returns a number of items of the combo box / dropdown list content control.
 	 * @memberof ApiContentControlList
 	 * @typeofeditors ["CDE"]
 	 * @returns {number}
@@ -16403,7 +16403,7 @@
 	};
 
 	/**
-	 * Gets parent content control.
+	 * Returns a parent of the combo box / dropdown list content control.
 	 * @memberof ApiContentControlList
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiInlineLvlSdt | ApiBlockLvlSdt}
@@ -16414,11 +16414,11 @@
 	};
 
 	/**
-	 * Adds the new value to list of values of combobox/dropdown list.
+	 * Adds a new value to the combo box / dropdown list content control.
 	 * @memberof ApiContentControlList
-	 * @param {string} sText - Specifies the display text for the list item..
-	 * @param {string} [sValue=sText] - Specifies the value of the list item.
-	 * @param {number} [nIndex=this.GetElementsCount()] - position to add.
+	 * @param {string} sText - The display text for the list item.
+	 * @param {string} [sValue=sText] - The list item value.
+	 * @param {number} [nIndex=this.GetElementsCount()] - A position where a new value will be added.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -16444,7 +16444,7 @@
 	};
 
 	/**
-	 * Clears the list of values of combobox/dropdown list.
+	 * Clears a list of values of the combo box / dropdown list content control.
 	 * @memberof ApiContentControlList
 	 * @typeofeditors ["CDE"]
 	 */
@@ -16457,9 +16457,9 @@
 	};
 
 	/**
-	 * Gets the item of values of combobox/dropdown list.
+	 * Returns an item of the combo box / dropdown list content control by the position specified in the request.
 	 * @memberof ApiContentControlList
-	 * @param {number} nIndex
+	 * @param {number} nIndex - Item position.
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiContentControlListEntry}
 	 */
@@ -16494,7 +16494,7 @@
 	};
 
 	/**
-	 * Returns the parent of a content control list item in the collection of list items.
+	 * Returns a parent of the content control list item in the combo box / dropdown list content control.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiContentControlList}
@@ -16508,7 +16508,7 @@
 	};
 
 	/**
-	 * Selects the list entry in a drop-down list or combo box content control and sets the text of the content control to the value of the item.
+	 * Selects the list entry in the combo box / dropdown list content control and sets the text of the content control to the selected item value.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -16523,7 +16523,7 @@
 	};
 
 	/**
-	 * Moves the current item in the parent drop-down list or combo box content control up one element.
+	 * Moves the current item in the parent combo box / dropdown list content control up one element.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -16538,7 +16538,7 @@
 	};
 
 	/**
-	 * Moves an item in a drop-down list or combo box content control down one item, so that it is after the item that originally followed it.
+	 * Moves the current item in the parent combo box / dropdown list content control down one element, so that it is after the item that originally followed it.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -16554,7 +16554,7 @@
 	};
 
 	/**
-	 * Returns the index of a content control list item in the collection of list items.
+	 * Returns an index of the content control list item in the combo box / dropdown list content control.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @returns {number}
@@ -16566,9 +16566,9 @@
 	};
 
 	/**
-	 * Sets the index of a content control list item in the collection of list items.
+	 * Sets an index to the content control list item in the combo box / dropdown list content control.
 	 * @memberof ApiContentControlListEntry
-	 * @param {number} nIndex
+	 * @param {number} nIndex - An index of the content control list item.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -16589,7 +16589,7 @@
 	};
 
 	/**
-	 * Deletes the specified item in a combo box or drop-down list content control..
+	 * Deletes the specified item in the combo box / dropdown list content control.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -16618,7 +16618,7 @@
 	};
 
 	/**
-	 * Returns a String that represents the display text of a list item for a drop-down list or combo box content control.
+	 * Returns a String that represents the display text of a list item for the combo box / dropdown list content control.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -16629,10 +16629,10 @@
 	};
 
 	/**
-	 * Sets a String that represents the display text of a list item for a drop-down list or combo box content control.
+	 * Sets a String that represents the display text of a list item for the combo box / dropdown list content control.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText
+	 * @param {string} sText - The display text of a list item.
 	 * @returns {boolean}
 	 */
 	ApiContentControlListEntry.prototype.SetText = function(sText)
@@ -16656,7 +16656,7 @@
 	};
 
 	/**
-	 * Returns a String that represents the value of a list item for a drop-down list or combo box content control.
+	 * Returns a String that represents the value of a list item for the combo box / dropdown list content control.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -16667,10 +16667,10 @@
 	};
 
 	/**
-	 * Sets a String that represents the value of a list item for a drop-down list or combo box content control.
+	 * Sets a String that represents the value of a list item for the combo box / dropdown list content control.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sValue
+	 * @param {string} sValue - The value of a list item.
 	 * @returns {boolean}
 	 */
 	ApiContentControlListEntry.prototype.SetValue = function(sValue)
@@ -17422,7 +17422,7 @@
 	};
 	
 	/**
-	 * Checks if the content control is a form.
+	 * Returns a list of values of the combo box / dropdown list content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiContentControlList}
@@ -19317,7 +19317,7 @@
 	 * Sets the type of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @param {WatermarkType} sType - The type of watermark.
+	 * @param {WatermarkType} sType - The watermark type.
 	 */
 	ApiWatermarkSettings.prototype.SetType = function (sType)
 	{
@@ -19361,7 +19361,7 @@
 	 * Sets the text of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText - The text of watermark.
+	 * @param {string} sText - The watermark text.
 	 */
 	ApiWatermarkSettings.prototype.SetText = function (sText)
 	{
@@ -19383,7 +19383,7 @@
 	 * Sets the text properties of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiTextPr} oTextPr - The text properties of watermark.
+	 * @param {ApiTextPr} oTextPr - The watermark text properties.
 	 */
 	ApiWatermarkSettings.prototype.SetTextPr = function (oTextPr)
 	{
@@ -19415,7 +19415,7 @@
 	 * Sets the opacity of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @param {number} nOpacity - The value of opacity of the watermark. Value must be from 0 to 255.
+	 * @param {number} nOpacity - The watermark opacity. This value must be from 0 to 255.
 	 */
 	ApiWatermarkSettings.prototype.SetOpacity = function (nOpacity)
 	{
@@ -19427,7 +19427,7 @@
 	 * Returns the opacity of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @returns {number} - The value of opacity of the watermark. The value is between 0 and 255.
+	 * @returns {number} - The watermark opacity. This value must be from 0 to 255.
 	 */
 	ApiWatermarkSettings.prototype.GetOpacity = function ()
 	{
@@ -19437,10 +19437,10 @@
 
 
 	/**
-	 * Sets the direction of the watermark.
+	 * Sets the direction of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @param {WatermarkDirection} sDirection - The direction of the watermark.
+	 * @param {WatermarkDirection} sDirection - The watermark direction.
 	 */
 	ApiWatermarkSettings.prototype.SetDirection = function (sDirection)
 	{
@@ -19464,10 +19464,10 @@
 		}
 	};
 	/**
-	 * Returns the direction of the watermark.
+	 * Returns the direction of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @returns {?WatermarkDirection} - The direction of the watermark.
+	 * @returns {?WatermarkDirection} - The watermark direction.
 	 */
 	ApiWatermarkSettings.prototype.GetDirection = function ()
 	{
@@ -19488,10 +19488,10 @@
 	};
 
 	/**
-	 * Sets the image URL of the watermark.
+	 * Sets the image URL of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sURL - The image URL of the watermark.
+	 * @param {string} sURL - The watermark image URL.
 	 */
 	ApiWatermarkSettings.prototype.SetImageURL = function (sURL)
 	{
@@ -19499,7 +19499,7 @@
 	};
 
 	/**
-	 * Returns the image URL of the watermark.
+	 * Returns the image URL of the watermark in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
 	 * @returns {string | null} - The watermark image URL.
@@ -19510,20 +19510,20 @@
 	};
 
 	/**
-	 * Returns the width of the image watermark.
+	 * Returns the width of the watermark image in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @returns {EMU | null} - The image with in EMU.
+	 * @returns {EMU | null} - The watermark image width in EMU.
 	 */
 	ApiWatermarkSettings.prototype.GetImageWidth = function ()
 	{
 		return this.Settings.get_ImageWidth();
 	};
 	/**
-	 * Returns the height of the image watermark.
+	 * Returns the height of the watermark image in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @returns {EMU | null} - The image height in EMU.
+	 * @returns {EMU | null} - The watermark image height in EMU.
 	 */
 	ApiWatermarkSettings.prototype.GetImageHeight = function ()
 	{
@@ -19532,11 +19532,11 @@
 
 
 	/**
-	 * Sets the size of the image.
+	 * Sets the size (width and height) of the watermark image in the document.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @param {EMU} nWidth - The width of the image
-	 * @param {EMU} nHeight - The width of the image
+	 * @param {EMU} nWidth - The watermark image width.
+	 * @param {EMU} nHeight - The watermark image height.
 	 */
 	ApiWatermarkSettings.prototype.SetImageSize = function (nWidth, nHeight)
 	{

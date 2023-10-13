@@ -283,6 +283,10 @@
     {
         return (1 === this.m_nUseType);
     };
+	CCollaborativeEditingBase.prototype.getCoHistory = function()
+	{
+		return this.CoHistory;
+	};
     CCollaborativeEditingBase.prototype.getCollaborativeEditing = function()
     {
         return !this.Is_SingleUser();

@@ -559,7 +559,7 @@
 	 * @property {number} height The watermark height measured in millimeters.
 	 * @property {number} rotate The watermark rotation angle measured in degrees.
 	 * @property {Array.<number>} margins The text margins measured in millimeters in the watermark shape.
-	 * @property {(Array.<number>,string)} fill The watermark fill color in the RGB format, or url to image (base64 support: data:image/png;...). The empty array [] means that the watermark has no fill.
+	 * @property {Array.<number> | string} fill The watermark fill color in the RGB format, or the URL to image (base64 support: data:image/png;...). The empty array [] means that the watermark has no fill.
      * @property {number} stroke-width The watermark stroke width measured in millimeters.
 	 * @property {Array.<number>} stroke The watermark stroke color in the RGB format. The empty array [] means that the watermark stroke has no fill.
 	 * @property {number} align The vertical text align in the watermark shape: <b>0</b> - bottom, <b>1</b> - center, <b>4</b> - top.
@@ -1600,7 +1600,7 @@
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @param {string} id - The button ID.
 	 * @param {boolean} bShow - The flag specifies whether the button is shown (**true**) or hidden (**false**).
-	 * @param {string} align - The parameter indicates whether the button will be displayed on the right side of the window or on the left (*left* by default).
+	 * @param {string} align - The parameter indicates whether the button will be displayed on the right side of the window or on the left. The default value is "left".
 	 * @alias ShowButton 
 	 * @since 7.2.0
 	 */

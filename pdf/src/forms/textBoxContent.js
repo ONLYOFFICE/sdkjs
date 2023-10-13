@@ -37,10 +37,10 @@
 	let STYLES = new AscWord.CStyles(false);
 	STYLES.Default.TextPr.Merge({
 		RFonts : {
-			Ascii : AscPDF.DEFAULT_FIELD_FONT,
-			EastAsia : AscPDF.DEFAULT_FIELD_FONT,
-			HAnsi : AscPDF.DEFAULT_FIELD_FONT,
-			CS : AscPDF.DEFAULT_FIELD_FONT
+			Ascii : {Name : AscPDF.DEFAULT_FIELD_FONT, Index : -1},
+			EastAsia : {Name : AscPDF.DEFAULT_FIELD_FONT, Index : -1},
+			HAnsi : {Name : AscPDF.DEFAULT_FIELD_FONT, Index : -1},
+			CS : {Name : AscPDF.DEFAULT_FIELD_FONT, Index : -1}
 		}
 	});
 	

@@ -731,13 +731,12 @@ Paragraph.prototype.private_RecalculatePageInternal = function(PRS, CurPage, bFi
 			PRS.Reset_RunRecalcInfo();
 			PRS.Reset_MathRecalcInfo();
 		}
-        else if (RecalcResult & recalcresult_ParaMath)
-        {
-        	// В эту ветку попадаем, если нужно заново пересчитать неинлайновую формулу с начала
-			CurLine = PRS.GetMathRecalcInfoLine();
-
+		else if (RecalcResult & recalcresult_ParaMath)
+		{
+			// В эту ветку попадаем, если нужно заново пересчитать неинлайновую формулу с начала
+			CurLine = PRS.resetToMathFirstLine();
 			PRS.Reset_RunRecalcInfo();
-        }
+		}
         else if (RecalcResult & recalcresult_CurLine)
         {
             // В эту ветку мы попадаем, если нам необходимо заново пересчитать данную строку. Такое случается
@@ -3238,6 +3237,8 @@ function CParagraphRecalculateStateWrap()
 
     this.Ranges          = [];
     this.RangesCount     = 0;
+	
+	this.LineY = [];
 
     this.FirstItemOnLine = true;
 	this.PrevItemFirst   = false;
@@ -3316,13 +3317,13 @@ function CParagraphRecalculateStateWrap()
     this.BaseLineOffset = 0;
 
     this.RecalcResult = 0x00;//recalcresult_NextElement;
-
-    // Управляющий объект для пересчета неинлайновой формулы
-    this.MathRecalcInfo = {
-    	Line        : 0,    // Номер строки, с которой начинается формула на текущей странице
-		Math        : null  // Сам объект формулы
+	
+	// Управляющий объект для пересчета неинлайновой формулы
+	this.MathRecalcInfo = {
+		Line : 0,    // Номер строки, с которой начинается формула на текущей странице
+		Math : null  // Сам объект формулы
 	};
-
+	
     this.Footnotes                  = [];
 	this.FootnotesRecalculateObject = null;
 
@@ -3442,6 +3443,10 @@ CParagraphRecalculateStateWrap.prototype.Reset_Line = function()
 	this.bBreakPosInLWord    = true;
 	
 	this.MathNotInline = null;
+	
+	this.LineY.length = this.Line + 1;
+	if (this.Line >= 0)
+		this.LineY[this.Line] = this.Y;
 };
 CParagraphRecalculateStateWrap.prototype.Reset_Range = function(X, XEnd)
 {
@@ -3994,10 +3999,16 @@ CParagraphRecalculateStateWrap.prototype.ResetMathRecalcInfo = function()
 	this.MathRecalcInfo.Line = 0;
 	this.MathRecalcInfo.Math = null;
 };
-CParagraphRecalculateStateWrap.prototype.SetMathRecalcInfo = function(nLine, oMath)
+CParagraphRecalculateStateWrap.prototype.SetMathRecalcInfo = function(math)
 {
-	this.MathRecalcInfo.Line = nLine;
-	this.MathRecalcInfo.Math = oMath;
+	this.MathRecalcInfo.Line = this.Line;
+	this.MathRecalcInfo.Math = math;
+};
+CParagraphRecalculateStateWrap.prototype.resetToMathFirstLine = function()
+{
+	this.Line = this.MathRecalcInfo.Line;
+	this.Y    = this.LineY[this.Line];
+	return this.Line;
 };
 CParagraphRecalculateStateWrap.prototype.GetMathRecalcInfoObject = function()
 {
@@ -4006,14 +4017,6 @@ CParagraphRecalculateStateWrap.prototype.GetMathRecalcInfoObject = function()
 CParagraphRecalculateStateWrap.prototype.SetMathRecalcInfoObject = function(oMath)
 {
 	this.MathRecalcInfo.Math = oMath;
-};
-CParagraphRecalculateStateWrap.prototype.GetMathRecalcInfoLine = function()
-{
-	return this.MathRecalcInfo.Line;
-};
-CParagraphRecalculateStateWrap.prototype.SetMathRecalcInfoLine = function(nLine)
-{
-	this.MathRecalcInfo.Line = nLine;
 };
 CParagraphRecalculateStateWrap.prototype.IsCondensedSpaces = function()
 {

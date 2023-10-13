@@ -1537,16 +1537,21 @@
 		this.ctCommandDouble2 = 154;
 		this.ctCommandString2 = 155;
 
-		this.ctHyperlink = 160;
-		this.ctLink      = 161;
-		this.ctFormField = 162;
-		this.ctDocInfo   = 163;
+		this.ctHyperlink		= 160;
+		this.ctLink				= 161;
+		this.ctFormField		= 162;
+		this.ctDocInfo			= 163;
+		this.ctAnnotField		= 164;
+		this.ctAnnotFieldDelete	= 165;
 
 		this.ctPageWidth  = 200;
 		this.ctPageHeight = 201;
 
-		this.ctPageStart = 202;
-		this.ctPageEnd   = 203;
+		this.ctPageStart		= 202;
+		this.ctPageEnd			= 203;
+		this.ctDocumentEdit		= 204;
+		this.ctDocumentClose	= 205;
+		this.ctPageEdit			= 206;
 
 		this.ctError = 255;
 	}
