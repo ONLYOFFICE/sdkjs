@@ -51,12 +51,9 @@ function (window, undefined) {
 		this.oParsedFormula = oParsedFormula;
 		this.nExpectedVal = nExpectedVal;
 		this.oChangingCell = oChangingCell;
-		this.nRelativeError = 1e-4; // relative error of goal seek. Default value is 1e-4
-		this.nMaxIterations = 100; // max iterations of goal seek. Default value is 100
 		this.sFormulaCellName = null;
 		this.nStepDirection = null;
 		this.sRegNumDecimalSeparator = AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator;
-		this.sFirstChangingVal = null;
 		this.nFirstChangingVal = null;
 		this.nIntervalId = null;
 		this.nCurAttempt = 0;
@@ -69,6 +66,10 @@ function (window, undefined) {
 		this.nLow = null;
 		this.nHigh = null;
 		this.bIsSingleStep = false;
+
+		this.nRelativeError = 1e-4; // relative error of goal seek. Default value is 1e-4
+		this.nMaxIterations = 100; // max iterations of goal seek. Default value is 100
+		this.nDelay = 70; // in ms for interval.
 	}
 
 	/**
@@ -80,7 +81,6 @@ function (window, undefined) {
 		let sChangingVal = oChangingCell.getValue();
 
 		this.setFirstChangingValue(sChangingVal);
-		this.convertFirstChangingVal();
 		this.setFormulaCellName(this.getParsedFormula());
 		this.initStepDirection();
 		this.initReverseCompare();
@@ -168,11 +168,11 @@ function (window, undefined) {
 			}
 		} else { // Exponent step logic
 			let nCurAttempt = this.getCurrentAttempt();
-			let nFirstChangingVal = this.getNumberFirstChangingValue();
+			let nFirstChangingVal = this.getFirstChangingValue();
 			let nStepDirection = this.getStepDirection();
 			this.setPrevValue(nChangingVal);
 			this.setPrevFactValue(nFactValue);
-			if (nFirstChangingVal === 0) {
+			if (nFirstChangingVal == null) {
 				this.setChangingValue((1 / 100 * nStepDirection) + (Math.pow(2, nCurAttempt - 1) - 1) * (1 / 10 * nStepDirection));
 			} else {
 				this.setChangingValue(nFirstChangingVal + (nFirstChangingVal / 100 * nStepDirection) + (Math.pow(2, nCurAttempt - 1) - 1) * (nFirstChangingVal / 10 * nStepDirection));
@@ -344,48 +344,27 @@ function (window, undefined) {
 		return this.sRegNumDecimalSeparator;
 	};
 	/**
-	 * Returns first changing cell value. Uses for cancel goal seek result.
-	 * @memberof CGoalSeek
-	 * @returns {string}
-	 */
-	CGoalSeek.prototype.getFirstChangingValue = function() {
-		return this.sFirstChangingVal;
-	};
-	/**
-	 * Sets first changing cell value. Uses for cancel goal seek result.
-	 * @memberof CGoalSeek
-	 * @param {string} sFirstChangingVal
-	 */
-	CGoalSeek.prototype.setFirstChangingValue = function(sFirstChangingVal) {
-		this.sFirstChangingVal = sFirstChangingVal;
-	};
-	/**
-	 * Returns first changing cell value in number type for work in calculate method.
+	 * Returns first changing cell value in number type.
 	 * @memberof CGoalSeek
 	 * @returns {number}
 	 */
-	CGoalSeek.prototype.getNumberFirstChangingValue = function() {
+	CGoalSeek.prototype.getFirstChangingValue = function() {
 		return this.nFirstChangingVal;
 	}
 	/**
-	 * Sets first changing cell value in number type for work in calculate method.
-	 * @param {number} nFirstChangingVal
+	 * Sets first changing cell value in number type.
+	 * @memberof CGoalSeek
+	 * @param {string} sChangingVal
 	 */
-	CGoalSeek.prototype.setNumberFirstChangingValue = function (nFirstChangingVal) {
-		this.nFirstChangingVal = nFirstChangingVal;
+	CGoalSeek.prototype.setFirstChangingValue = function(sChangingVal) {
+		this.nFirstChangingVal = sChangingVal ? Number(sChangingVal) : null;
 	};
 	/**
-	 * Converts first changing cell value to number type for work in calculate method.
-	 * @memberof CGoalSeek
+	 * Returns a delay in ms. Using for interval in UI.
+	 * @returns {number}
 	 */
-	CGoalSeek.prototype.convertFirstChangingVal = function() {
-		let sFirstChangingVal = this.getFirstChangingValue();
-
-		if (sFirstChangingVal) {
-			this.setNumberFirstChangingValue(Number(sFirstChangingVal));
-		} else {
-			this.setNumberFirstChangingValue(0);
-		}
+	CGoalSeek.prototype.getDelay = function() {
+		return this.nDelay;
 	};
 	/**
 	 * Returns an id of interval. Uses for clear interval in UI.
@@ -645,7 +624,7 @@ function (window, undefined) {
 			if (bIsFinish) {
 				clearInterval(oGoalSeek.getIntervalId());
 			}
-		}, 50));
+		}, this.getDelay()));
 	};
 	/**
 	 * Resumes goal calculation by one step than pause it again.
@@ -661,7 +640,7 @@ function (window, undefined) {
 			if (bIsFinish) {
 				clearInterval(oGoalSeek.getIntervalId());
 			}
-		}, 50));
+		}, this.getDelay()));
 	};
 
 	// Export

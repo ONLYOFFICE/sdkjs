@@ -4707,7 +4707,7 @@
 	 * @param {string} sExpectedValue
 	 * @param {string} sChangingCell
 	 * @param {Worksheet} wsFormula
-	 *  @param {Worksheet} wsChangingCell
+	 * @param {Worksheet} wsChangingCell
 	 */
 	Workbook.prototype.startGoalSeek = function(sFormulaCell, sExpectedValue, sChangingCell, wsFormula, wsChangingCell) {
 		let oParserFormula;
@@ -4725,7 +4725,7 @@
 			if (bIsFinish) {
 				clearInterval(oGoalSeek.getIntervalId());
 			}
-		}, 50));
+		}, oGoalSeek.getDelay()));
 	};
 	/**
 	 * Returns object with goal seek result
@@ -4750,7 +4750,8 @@
 			return;
 		}
 		let oChangedCell = oGoalSeek.getChangingCell();
-		oChangedCell.setValue(oGoalSeek.getFirstChangingValue());
+		let nFirstChangingVal = oGoalSeek.getFirstChangingValue();
+		oChangedCell.setValue(nFirstChangingVal == null ? "" : nFirstChangingVal + "");
 		this.setGoalSeek(null);
 	};
 	/**

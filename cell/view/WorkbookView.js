@@ -5543,7 +5543,7 @@
 			sFormulaCell = sFormulaCell.slice(0, sFormulaCell.indexOf(","));
 		}
 		if (~sFormulaCell.indexOf("!")) {
-			sSheetName = sFormulaCell.split("!")[0];
+			sSheetName = sFormulaCell.split("!")[0].replace(/'/g, "");
 			sFormulaCell = sFormulaCell.split("!")[1];
 			if (sSheetName !== ws.getName()) {
 				wsFormula = this.model.getWorksheetByName(sSheetName);
@@ -5552,7 +5552,7 @@
 		if (~sChangingCell.indexOf(",")) {
 			sChangingCell = sChangingCell.slice(0, sChangingCell.indexOf(","));
 		}
-		sSheetName = sChangingCell.split("!")[0];
+		sSheetName = sChangingCell.split("!")[0].replace(/'/g, "");
 		sChangingCell = sChangingCell.split("!")[1];
 		if (sSheetName !== wsChangingCell.getName()) {
 			wsChangingCell = this.model.getWorksheetByName(sSheetName);
