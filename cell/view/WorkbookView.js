@@ -5561,6 +5561,7 @@
 		let t = this;
 		let callback = function (isSuccess) {
 			if (!isSuccess) {
+				t.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellGoalSeek, c_oAscError.Level.NoCritical);
 				return;
 			}
 			//open history point
