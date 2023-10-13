@@ -1214,6 +1214,12 @@
     CBaseField.prototype.GetBackgroundColor = function() {
         return this._fillColor;
     };
+    CBaseField.prototype.SetHighlight = function(nType) {
+        this._highlight = nType;
+    };
+    CBaseField.prototype.GetHighlight = function() {
+        return this._highlight;
+    };
     CBaseField.prototype.IsHidden = function() {
         let nType = this.GetDisplay();
         if (nType == window["AscPDF"].Api.Objects.display["hidden"] || nType == window["AscPDF"].Api.Objects.display["noView"])
