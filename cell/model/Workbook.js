@@ -4706,6 +4706,8 @@
 	 * @param {string} sFormulaCell
 	 * @param {string} sExpectedValue
 	 * @param {string} sChangingCell
+	 * @param {Worksheet} wsFormula
+	 *  @param {Worksheet} wsChangingCell
 	 */
 	Workbook.prototype.startGoalSeek = function(sFormulaCell, sExpectedValue, sChangingCell, wsFormula, wsChangingCell) {
 		let oParserFormula;
@@ -4749,29 +4751,12 @@
 		}
 		let oChangedCell = oGoalSeek.getChangingCell();
 		oChangedCell.setValue(oGoalSeek.getFirstChangingValue());
-		this._closeGoalSeek();
+		this.setGoalSeek(null);
 	};
 	/**
 	 * Saves goal seek result for "Changing cell"
 	 */
 	Workbook.prototype.saveGoalSeek = function() {
-		this._closeGoalSeek();
-	};
-
-	Workbook.prototype._closeGoalSeek = function() {
-		let oGoalSeek = this.getGoalSeek();
-		let oChangedCell = oGoalSeek && oGoalSeek.getChangingCell();
-		if (oChangedCell) {
-			/*this._updateRange(bbox);
-			if (bbox && (bbox.getType() === c_oAscSelectionType.RangeMax || bbox.getType() === c_oAscSelectionType.RangeCol)) {
-				this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
-				if (bbox.getType() === c_oAscSelectionType.RangeMax) {
-					this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
-				}
-			}
-			this.canChangeColWidth = c_oAscCanChangeColWidth.none;
-			this.draw(lockDraw);*/
-		}
 		this.setGoalSeek(null);
 	};
 
