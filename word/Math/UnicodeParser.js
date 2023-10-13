@@ -385,6 +385,27 @@
 
 		return this.WriteSavedTokens();
 	};
+	//Custom horizontal (1+2)\underbrace2
+	CUnicodeParser.prototype.GetSpecialHBracket = function (oBase)
+	{
+		let strHBracket = this.EatToken(oLiteralNames.hBracketLiteral[0]).data;
+		let oPos = AscMath.GetHBracket(strHBracket);
+		let oOperand = this.GetOperandLiteral("custom");
+		let oUp, oDown;
+
+		if (oPos === VJUST_BOT)
+			oDown = oOperand;
+		else
+			oUp = oOperand;
+
+		return {
+			type: oLiteralNames.hBracketLiteral[num],
+			hBrack: strHBracket,
+			value: oBase,
+			up: oUp,
+			down: oDown,
+		};
+	};
 	CUnicodeParser.prototype.GetHBracketLiteral = function ()
 	{
 		this.SaveTokensWhileReturn();
@@ -1730,6 +1751,10 @@
 				let frac = this.GetFractionLiteral(oOperandLiteral.pop());
 				oOperandLiteral.push(frac);
 			}
+		}
+		else if (this.IsHBracketLiteral() && oOperandLiteral)
+		{
+			return this.GetSpecialHBracket(oOperandLiteral);
 		}
 
 		return oOperandLiteral;
