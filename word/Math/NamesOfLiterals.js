@@ -3406,5 +3406,6 @@
 	window["AscMath"].GetLaTeXFromValue 			= GetLaTeXFromValue;
 	window["AscMath"].SetIsLaTeXGetParaRun 			= SetIsLaTeXGetParaRun;
 	window["AscMath"].GetIsLaTeXGetParaRun 			= GetIsLaTeXGetParaRun;
+	window["AscMath"].GetHBracket 					= GetHBracket;
 
 })(window);
