@@ -6592,6 +6592,15 @@ ContentIterator.prototype.CheckRules = function ()
         [true, "″" ],
         [true, "‴" ],
         [true, "⁗" ],
+	    [true, "′", true ],
+	    [true, "″", true ],
+	    [true, "‴", true ],
+	    [true, "⁗", true ],
+
+	    ["′" ],
+		["″" ],
+		["‴" ],
+		["⁗" ],
         [true],
     ];
 
@@ -6679,6 +6688,13 @@ CMathContent.prototype.CheckAutoCorrectionRules = function(nInputType)
         for (let i = 0; i < this.Content.length; i++) {
             prev.push([this.Content[i].constructor.name, this.Content[i].Content ? this.Content[i].Content.length : 0]);
         }
+
+		// if we have only space - doesn't convert
+		if (prev.length === 1 && prev[0][0] === 'ParaRun' && this.Content[0].GetTextOfElement().length === 0)
+		{
+			this.Add_Text(' ');
+			return;
+		}
     }
 
     oRuleIterator.CheckRules();
