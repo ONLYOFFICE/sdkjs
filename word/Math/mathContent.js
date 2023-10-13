@@ -6522,124 +6522,124 @@ ContentIterator.prototype.ResetParaRunCursor = function()
 };
 ContentIterator.prototype.CheckRules = function ()
 {
-    // TODO it is better to search for sequences by what is, and not vice versa; incredibly inefficient!!!
-    const rules = [
-        //true обозначает обычный текст или блоки контента (CFraction, CLimit, CDegree...);
-        // ["_"],
-        // ["^"],
-        [true, "^", true, "_", true, "▒", true],
-        [true, "_", true, "^", true, "▒", true],
+	// TODO it is better to search for sequences by what is, and not vice versa; incredibly inefficient!!!
+	const rules = [
+		//true обозначает обычный текст или блоки контента (CFraction, CLimit, CDegree...);
+		// ["_"],
+		// ["^"],
+		[true, "^", true, "_", true, "▒", true],
+		[true, "_", true, "^", true, "▒", true],
 
-        [true, "^", true, "_", true, true],
-        [true, "_", true, "^", true, true],
+		[true, "^", true, "_", true, true],
+		[true, "_", true, "^", true, true],
 
-        [true, "┬", true, true],
-        [true, "┴", true, true],
+		[true, "┬", true, true],
+		[true, "┴", true, true],
 
-	    ["⏟", true, "┬", true],
-	    ["⏟", true, "┴", true],
-	    ["⏞", true, "┬", true],
-	    ["⏞", true, "┴", true],
+		["⏟", true, "┬", true],
+		["⏟", true, "┴", true],
+		["⏞", true, "┬", true],
+		["⏞", true, "┴", true],
 
 
-        [true, "_", true, "^", true],
-        [true, "^", true, "_", true],
+		[true, "_", true, "^", true],
+		[true, "^", true, "_", true],
 
-        [true, "^", true, "▒", true],
-        [true, "_", true, "▒", true],
-        [true, "▒", true],
+		[true, "^", true, "▒", true],
+		[true, "_", true, "▒", true],
+		[true, "▒", true],
 
-        [true, "┬", true],
-        [true, "┴", true],
+		[true, "┬", true],
+		[true, "┴", true],
 
-	    [true, "⏟", true],
-	    [true, "⏞", true],
+		[true, "⏟", true],
+		[true, "⏞", true],
 
-        ["s","i","n"],["t","a","n"],["t","a","n","h"],["s","u","p"],["s","i","n","h"],["s","e","c"],
-        ["h","o","m"],["a","r","g"],["a","r","c","y","a","n"],["a","r","c","s","i","n"],["a","r","c","s","e","c"],
-        ["a","r","c","c","s","c"],["a","r","c","c","o","t"],["a","r","c","c","o","s"],["i","n","f"],["g","c","d"],
-        ["e","x","p"],["d","i","m"],["d","e","t"],["d","e","g"],["c","s","c"],["c","o","t","h"],["c","o","t"],
-        ["c","o","s","h"],["c","o","s"],["P","r"],["l","g"],["l","n"],["l","o","g"],["s","g","n"],["s","e","c","h"],
-        ["l","i","m"],["m","i","n"],["m","a","x"],
+		["s","i","n"],["t","a","n"],["t","a","n","h"],["s","u","p"],["s","i","n","h"],["s","e","c"],
+		["h","o","m"],["a","r","g"],["a","r","c","y","a","n"],["a","r","c","s","i","n"],["a","r","c","s","e","c"],
+		["a","r","c","c","s","c"],["a","r","c","c","o","t"],["a","r","c","c","o","s"],["i","n","f"],["g","c","d"],
+		["e","x","p"],["d","i","m"],["d","e","t"],["d","e","g"],["c","s","c"],["c","o","t","h"],["c","o","t"],
+		["c","o","s","h"],["c","o","s"],["P","r"],["l","g"],["l","n"],["l","o","g"],["s","g","n"],["s","e","c","h"],
+		["l","i","m"],["m","i","n"],["m","a","x"],
 
-        [true, "/", true],
-        [true, "^", true],
-        [true, "_", true],
+		[true, "/", true],
+		[true, "^", true],
+		[true, "_", true],
 
-        ['\\frac', true, true],
+		['\\frac', true, true],
 
-        ["√", true],
-        ["∛", true],
-        ["∜", true],
-        ["▭", true],
-        ["□", true],
-        ["¯", true],
-        ["▁", true],
-        ["/", true],
-        ["⏟", true],
-        ["⏞", true],
-        [true, "/"],
+		["√", true],
+		["∛", true],
+		["∜", true],
+		["▭", true],
+		["□", true],
+		["¯", true],
+		["▁", true],
+		["/", true],
+		["⏟", true],
+		["⏞", true],
+		[true, "/"],
 
-        [true, "┬"],
-        [true, "┴"],
-        ["/"],
+		[true, "┬"],
+		[true, "┴"],
+		["/"],
 
-        [true, "́" ],
-        [true, "̂" ],
-        [true, "̌" ],
-        [true, "̃" ],
-        [true, "̀" ],
-        [true, "̇" ],
-        [true, "̈" ],
-        [true, "⃛" ],
-        [true, "̄" ],
-        [true, "⃗" ],
-        [true, "′" ],
-        [true, "″" ],
-        [true, "‴" ],
-        [true, "⁗" ],
-	    [true, "′", true ],
-	    [true, "″", true ],
-	    [true, "‴", true ],
-	    [true, "⁗", true ],
+		[true, "́" ],
+		[true, "̂" ],
+		[true, "̌" ],
+		[true, "̃" ],
+		[true, "̀" ],
+		[true, "̇" ],
+		[true, "̈" ],
+		[true, "⃛" ],
+		[true, "̄" ],
+		[true, "⃗" ],
+		[true, "′" ],
+		[true, "″" ],
+		[true, "‴" ],
+		[true, "⁗" ],
+		[true, "′", true ],
+		[true, "″", true ],
+		[true, "‴", true ],
+		[true, "⁗", true ],
 
-	    ["′" ],
+		["′" ],
 		["″" ],
 		["‴" ],
 		["⁗" ],
-        [true],
-    ];
+		[true],
+	];
 
-    for (let j = 0; j < rules.length; j++)
-    {
-        this.cursor = this.Content.length - 1;
-        let arrCurrentRule = rules[j];
-        let intRuleCounter = 0;
+	for (let j = 0; j < rules.length; j++)
+	{
+		this.cursor = this.Content.length - 1;
+		let arrCurrentRule = rules[j];
+		let intRuleCounter = 0;
 
-        for (let i = arrCurrentRule.length - 1; i >= 0 && this.IsHasContent(); i--)
-        {
-            this.CurrentRule = arrCurrentRule[i];
-            const intCharCode = this.GetNext(arrCurrentRule[i - 1]);
+		for (let i = arrCurrentRule.length - 1; i >= 0 && this.IsHasContent(); i--)
+		{
+			this.CurrentRule = arrCurrentRule[i];
+			const intCharCode = this.GetNext(arrCurrentRule[i - 1]);
 
-            if (arrCurrentRule[i] === true && intCharCode)
-                intRuleCounter++;
-            else if (arrCurrentRule[i] !== true && String.fromCharCode(intCharCode) === arrCurrentRule[i])
-                intRuleCounter++;
-            else
-                break;
-        }
+			if (arrCurrentRule[i] === true && intCharCode)
+				intRuleCounter++;
+			else if (arrCurrentRule[i] !== true && String.fromCharCode(intCharCode) === arrCurrentRule[i])
+				intRuleCounter++;
+			else
+				break;
+		}
 
-        if (intRuleCounter === arrCurrentRule.length)
-        {
-            this.RulePosition[0] = this.cursor;
-            this.RulePosition[1] = this.CurrentElement instanceof ParaRunIterator && this.CurrentElement.Cursor >= 0 ? this.CurrentElement.Cursor + 1: 0;
-            break;
-        }
-        else
-            this.ResetParaRunCursor();
-    }
+		if (intRuleCounter === arrCurrentRule.length)
+		{
+			this.RulePosition[0] = this.cursor;
+			this.RulePosition[1] = this.CurrentElement instanceof ParaRunIterator && this.CurrentElement.Cursor >= 0 ? this.CurrentElement.Cursor + 1: 0;
+			break;
+		}
+		else
+			this.ResetParaRunCursor();
+	}
 
-    return;
+	return;
 };
 ContentIterator.prototype.WriteBracketPosition = function (intGlobalPos, intParaRunPos)
 {
