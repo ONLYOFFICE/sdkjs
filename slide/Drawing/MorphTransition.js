@@ -1097,7 +1097,7 @@
                             }
                             let aContent2 = oParStruct2.m_aContent;
                             for(let nIdx = 0; nIdx < aContent2.length; ++nIdx) {
-                                let oLine = aContent1[nIdx];
+                                let oLine = aContent2[nIdx];
                                 let aBg = oLine.m_aBackgrounds;
                                 let aBorders = oLine.m_aBorders;
                                 let aPBg = oLine.m_aParagraphBackgrounds;
@@ -1736,6 +1736,7 @@
         this.player2.stop();
         this.clearWrappers();
         this.texturesCache.clear();
+        this.morphObjects.length = 0;
     };
     CSlideMorphEffect.prototype.registerWrapperObject = function(oWrapper) {
         if(!oWrapper) {
