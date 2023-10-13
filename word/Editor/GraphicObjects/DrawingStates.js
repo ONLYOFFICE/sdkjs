@@ -214,6 +214,7 @@ StartAddNewShape.prototype =
                     });
 
                     oInkAnnot.SetWidth(oTrack.pen.w / (36000  * g_dKoef_pt_to_mm));
+                    oInkAnnot.SetOpacity(oTrack.pen.Fill.transparent / 255);
                     var shape = oInkAnnot.AddShapeByPoints(oTrack.arrPoint, oTrack.pen);
 
                     oInkAnnot.AddToRedraw();
