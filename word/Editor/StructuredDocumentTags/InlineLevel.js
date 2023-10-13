@@ -1457,9 +1457,9 @@ CInlineLevelSdt.prototype.ReplacePlaceholderEquation = function()
 	let paraMath = new ParaMath();
 	paraMath.Root.Load_FromMenu(c_oAscMathType.Default_Text, this.GetParagraph(), textPr.Copy());
 	paraMath.Root.Correct_Content(true);
-	paraMath.ApplyTextPr(textPr.Copy(), undefined, true);
 	this.RemoveFromContent(0, this.GetElementsCount());
 	this.AddToContent(0, paraMath);
+	paraMath.Apply_TextPr(textPr);
 	
 	return paraMath;
 };
