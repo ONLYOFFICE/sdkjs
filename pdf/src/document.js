@@ -1506,11 +1506,13 @@ var CPresentation = CPresentation || function(){};
             let MaxY = aMinRect[3];
 
             let oProps = {
-                rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
-                page:       nPage,
-                name:       AscCommon.CreateGUID(),
-                type:       AscPDF.ANNOTATIONS_TYPES.Highlight,
-                hidden:     false
+                rect:           [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
+                page:           nPage,
+                name:           AscCommon.CreateGUID(),
+                type:           AscPDF.ANNOTATIONS_TYPES.Highlight,
+                creationDate:   (new Date().getTime()).toString(),
+                modDate:        (new Date().getTime()).toString(),
+                hidden:         false
             }
 
             let oAnnot = this.AddAnnot(oProps);
@@ -1553,11 +1555,13 @@ var CPresentation = CPresentation || function(){};
             let MaxY = aMinRect[3];
 
             let oProps = {
-                rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
-                page:       nPage,
-                name:       AscCommon.CreateGUID(),
-                type:       AscPDF.ANNOTATIONS_TYPES.Underline,
-                hidden:     false
+                rect:           [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
+                page:           nPage,
+                name:           AscCommon.CreateGUID(),
+                type:           AscPDF.ANNOTATIONS_TYPES.Underline,
+                creationDate:   (new Date().getTime()).toString(),
+                modDate:        (new Date().getTime()).toString(),
+                hidden:         false
             }
 
             let oAnnot = this.AddAnnot(oProps);
@@ -1600,11 +1604,13 @@ var CPresentation = CPresentation || function(){};
             let MaxY = aMinRect[3];
 
             let oProps = {
-                rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
-                page:       nPage,
-                name:       AscCommon.CreateGUID(),
-                type:       AscPDF.ANNOTATIONS_TYPES.Strikeout,
-                hidden:     false
+                rect:           [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
+                page:           nPage,
+                name:           AscCommon.CreateGUID(),
+                type:           AscPDF.ANNOTATIONS_TYPES.Strikeout,
+                creationDate:   (new Date().getTime()).toString(),
+                modDate:        (new Date().getTime()).toString(),
+                hidden:         false
             }
 
             let oAnnot = this.AddAnnot(oProps);
@@ -1639,14 +1645,15 @@ var CPresentation = CPresentation || function(){};
         let Y2 = posToAdd.y + 40 / nGrScale;
 
         let oProps = {
-            rect:       [posToAdd.x, posToAdd.y, X2, Y2],
-            page:       pageObject.index,
-            name:       AscCommon.CreateGUID(),
-            type:       AscPDF.ANNOTATIONS_TYPES.Text,
-            author:     AscCommentData.m_sUserName,
-            modDate:    AscCommentData.m_sOOTime,
-            contents:   AscCommentData.m_sText,
-            hidden:     false
+            rect:           [posToAdd.x, posToAdd.y, X2, Y2],
+            page:           pageObject.index,
+            name:           AscCommon.CreateGUID(),
+            type:           AscPDF.ANNOTATIONS_TYPES.Text,
+            author:         AscCommentData.m_sUserName,
+            modDate:        AscCommentData.m_sOOTime,
+            creationDate:   AscCommentData.m_sOOTime,
+            contents:       AscCommentData.m_sText,
+            hidden:         false
         }
 
         this.anchorPositionToAdd = null;
@@ -2280,8 +2287,8 @@ var CPresentation = CPresentation || function(){};
         let sName       = oProps.name ? oProps.name : AscCommon.CreateGUID();
         let nAnnotType  = oProps.type;
         let sAuthor     = oProps.author ? oProps.author : AscCommon.UserInfoParser.getCurrentName();
-        let sCrDate     = oProps.creationDate ? oProps.creationDate : (new Date().getTime()).toString();
-        let sModDate    = oProps.modDate ? oProps.modDate : (new Date().getTime()).toString();
+        let sCrDate     = oProps.creationDate;
+        let sModDate    = oProps.modDate;
         let sText       = oProps.contents;
         let isHidden    = !!oProps.hidden;
         
