@@ -269,6 +269,15 @@
 			let one = this.GetOperandLiteral(isSubSup);
 			return one;
 		}
+		else if (this.IsDoubleIteratorDegree())
+		{
+			let data = this.oLookahead.data;
+			this.EatToken(this.oLookahead.class);
+			return {
+				type: oLiteralNames.charLiteral[num],
+				value: data,
+			}
+		}
 
 		switch (this.oLookahead.data) {
 			case "-":
@@ -306,7 +315,8 @@
 		return this.IsOperandLiteral() ||
 			this.oLookahead.data === "-" ||
 			this.oLookahead.data === "-∞" ||
-			this.oLookahead.data === "∞"
+			this.oLookahead.data === "∞" ||
+			this.IsDoubleIteratorDegree();
 	};
 	CUnicodeParser.prototype.IsTextLiteral = function ()
 	{
@@ -1561,6 +1571,11 @@
 		let strIterator = this.oLookahead.data;
 		this.EatToken(this.oLookahead.class);
 
+		if (oBase && oBase.type === oLiteralNames.spaceLiteral[num])
+		{
+			oBase = {};
+		}
+
 		return {
 			type: oLiteralNames.subSupLiteral[num],
 			value: oBase,
@@ -1782,7 +1797,11 @@
 			{
 				oExpLiteral.push(this.GetPreScriptLiteral());
 			}
-			
+			else if (this.IsDoubleIteratorDegree())
+			{
+				oExpLiteral.push(this.GetDoubleIteratorDegree());
+			}
+
 			if (this.oLookahead.class === oLiteralNames.operatorLiteral[0])
 			{
 				oExpLiteral.push(this.GetOperatorLiteral())
