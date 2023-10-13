@@ -5558,11 +5558,33 @@
 			wsChangingCell = this.model.getWorksheetByName(sSheetName);
 		}
 
+		let t = this;
+		let callback = function (isSuccess) {
+			if (!isSuccess) {
+				return;
+			}
+			//open history point
+			History.Create_NewPoint();
+			History.StartTransaction();
+			t.model.startGoalSeek(sFormulaCell, sExpectedValue, sChangingCell, wsFormula, wsChangingCell);
+		};
+
 		//need lock
-		//open history point
-		History.Create_NewPoint();
-		History.StartTransaction();
-		this.model.startGoalSeek(sFormulaCell, sExpectedValue, sChangingCell, wsFormula, wsChangingCell);
+		let aLocksInfo = [];
+		//cells locks info
+		let oChangingCell = wsChangingCell && wsChangingCell.getRange2(sChangingCell);
+		if (oChangingCell) {
+			aLocksInfo.push(this.collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Range, null, wsChangingCell.getId(),
+				new AscCommonExcel.asc_CCollaborativeRange(oChangingCell.bbox.c1, oChangingCell.bbox.r1, oChangingCell.bbox.c2, oChangingCell.bbox.r2)));
+		}
+
+		let oFormulaCell = wsFormula && wsFormula.getRange2(sFormulaCell);
+		if (oFormulaCell) {
+			aLocksInfo.push(this.collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Range, null, wsFormula.getId(),
+				new AscCommonExcel.asc_CCollaborativeRange(oFormulaCell.bbox.c1, oFormulaCell.bbox.r1, oFormulaCell.bbox.c2, oFormulaCell.bbox.r2)));
+		}
+
+		this.collaborativeEditing.lock(aLocksInfo, callback);
 	};
 
 	WorkbookView.prototype.closeGoalSeek = function (bSave) {
@@ -5575,7 +5597,7 @@
 
 		if (oChangedCell) {
 			//update
-			let ws = this.getWorksheetById(oChangedCell.ws.id);
+			let ws = this.getWorksheetById(oChangedCell.worksheet.Id);
 			ws._updateRange(oChangedCell.bbox);
 			ws.draw();
 		}
