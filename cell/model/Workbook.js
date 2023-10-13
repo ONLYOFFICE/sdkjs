@@ -4707,40 +4707,14 @@
 	 * @param {string} sExpectedValue
 	 * @param {string} sChangingCell
 	 */
-	Workbook.prototype.startGoalSeek = function(sFormulaCell, sExpectedValue, sChangingCell) {
+	Workbook.prototype.startGoalSeek = function(sFormulaCell, sExpectedValue, sChangingCell, wsFormula, wsChangingCell) {
 		let oParserFormula;
-		let sSheetName;
-		let ws = this.getActiveWs();
-
-		if (~sFormulaCell.indexOf(",")) {
-			sFormulaCell = sFormulaCell.slice(0, sFormulaCell.indexOf(","));
-		}
-		if (~sFormulaCell.indexOf("!")) {
-			sSheetName = sFormulaCell.split("!")[0];
-			sFormulaCell = sFormulaCell.split("!")[1];
-			if (sSheetName !== ws.getName()) {
-				ws = this.getWorksheetByName(sSheetName);
-			}
-		}
-		let oFormulaCell = ws.getCell2(sFormulaCell);
-		ws._getCell(oFormulaCell.bbox.r1, oFormulaCell.bbox.c1, function (cell) {
+		let oFormulaCell = wsFormula.getCell2(sFormulaCell);
+		wsFormula._getCell(oFormulaCell.bbox.r1, oFormulaCell.bbox.c1, function (cell) {
 			oParserFormula = cell.getFormulaParsed();
 		});
 
-		if (~sChangingCell.indexOf(",")) {
-			sChangingCell = sChangingCell.slice(0, sChangingCell.indexOf(","));
-		}
-		sSheetName = sChangingCell.split("!")[0];
-		sChangingCell = sChangingCell.split("!")[1];
-		if (sSheetName !== ws.getName()) {
-			ws = this.getWorksheetByName(sSheetName);
-		}
-
-		//open history point
-		History.Create_NewPoint();
-		History.StartTransaction();
-
-		this.setGoalSeek(new AscCommonExcel.CGoalSeek(oParserFormula, Number(sExpectedValue), ws.getRange2(sChangingCell)));
+		this.setGoalSeek(new AscCommonExcel.CGoalSeek(oParserFormula, Number(sExpectedValue), wsChangingCell.getRange2(sChangingCell)));
 		let oGoalSeek = this.getGoalSeek();
 		// Run goal seek
 		oGoalSeek.init();
@@ -4768,28 +4742,37 @@
 	/**
 	 * Discards goal seek result for "Changing cell" to original
 	 */
-	Workbook.prototype.closeGoalSeek = function() {
+	Workbook.prototype.closeGoalSeek = function () {
 		let oGoalSeek = this.getGoalSeek();
-		if (!oGoalSeek) return;
+		if (!oGoalSeek) {
+			return;
+		}
 		let oChangedCell = oGoalSeek.getChangingCell();
 		oChangedCell.setValue(oGoalSeek.getFirstChangingValue());
-		//TODO  update cell to new value for canvas
-
-		this.setGoalSeek(null);
-
-		//close history point
-		History.EndTransaction();
+		this._closeGoalSeek();
 	};
 	/**
 	 * Saves goal seek result for "Changing cell"
 	 */
 	Workbook.prototype.saveGoalSeek = function() {
-		//let oChangedCell = this.getGoalSeek().getChangingCell();
-		//TODO  update cell to new value for canvas
-		this.setGoalSeek(null);
+		this._closeGoalSeek();
+	};
 
-		//close history point
-		History.EndTransaction();
+	Workbook.prototype._closeGoalSeek = function() {
+		let oGoalSeek = this.getGoalSeek();
+		let oChangedCell = oGoalSeek && oGoalSeek.getChangingCell();
+		if (oChangedCell) {
+			/*this._updateRange(bbox);
+			if (bbox && (bbox.getType() === c_oAscSelectionType.RangeMax || bbox.getType() === c_oAscSelectionType.RangeCol)) {
+				this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
+				if (bbox.getType() === c_oAscSelectionType.RangeMax) {
+					this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
+				}
+			}
+			this.canChangeColWidth = c_oAscCanChangeColWidth.none;
+			this.draw(lockDraw);*/
+		}
+		this.setGoalSeek(null);
 	};
 
 	Workbook.prototype.pauseGoalSeek = function() {

@@ -8860,38 +8860,38 @@ var editor;
 
 	//goal seek
 	spreadsheet_api.prototype.asc_StartGoalSeek = function (sFormulaCell, nExpectedValue, sChangingCell) {
-		if (!this.wbModel) {
+		if (!this.wb) {
 			return;
 		}
-		return this.wbModel.startGoalSeek(sFormulaCell, nExpectedValue, sChangingCell);
+		return this.wb.startGoalSeek(sFormulaCell, nExpectedValue, sChangingCell);
 	};
 
 	spreadsheet_api.prototype.asc_CloseGoalClose = function (bSave) {
-		if (!this.wbModel) {
+		if (!this.wb) {
 			return;
 		}
-		return bSave ? this.wbModel.saveGoalSeek() : this.wbModel.closeGoalSeek();
+		return this.wb.closeGoalSeek(bSave);
 	};
 
 	spreadsheet_api.prototype.asc_PauseGoalSeek = function () {
-		if (!this.wbModel) {
+		if (!this.wb) {
 			return;
 		}
-		return this.wbModel.pauseGoalSeek();
+		return this.wb.pauseGoalSeek();
 	};
 
 	spreadsheet_api.prototype.asc_ContinueGoalSeek = function () {
-		if (!this.wbModel) {
+		if (!this.wb) {
 			return;
 		}
-		return this.wbModel.continueGoalSeek();
+		return this.wb.continueGoalSeek();
 	};
 
 	spreadsheet_api.prototype.asc_StepGoalSeek = function () {
-		if (!this.wbModel) {
+		if (!this.wb) {
 			return;
 		}
-		return this.wbModel.stepGoalSeek();
+		return this.wb.stepGoalSeek();
 	};
 
 	spreadsheet_api.prototype.asc_TracePrecedents = function() {

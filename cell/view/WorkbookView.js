@@ -3680,7 +3680,7 @@
     page.scale = 1;
     return page;
   };
-  
+
   WorkbookView.prototype.printForOleObject = function (ws, oRange) {
     var sizes = ws.getRangePosition(oRange);
     var page = this.getSimulatePageForOleObject(sizes, oRange);
@@ -5469,7 +5469,7 @@
 
 		//lock only ranges by id
 		this._isLockedUserProtectedRange(doEdit, aLockInfo);
-		
+
 	};
 
 	WorkbookView.prototype.unlockUserProtectedRanges = function() {
@@ -5532,6 +5532,67 @@
 		}
 		return res;
 	};
+
+	//******GOAL SEEK******
+	WorkbookView.prototype.startGoalSeek = function(sFormulaCell, sExpectedValue, sChangingCell) {
+		let sSheetName;
+		let wsFormula = this.model.getActiveWs();
+		let wsChangingCell = wsFormula;
+
+		if (~sFormulaCell.indexOf(",")) {
+			sFormulaCell = sFormulaCell.slice(0, sFormulaCell.indexOf(","));
+		}
+		if (~sFormulaCell.indexOf("!")) {
+			sSheetName = sFormulaCell.split("!")[0];
+			sFormulaCell = sFormulaCell.split("!")[1];
+			if (sSheetName !== ws.getName()) {
+				wsFormula = this.model.getWorksheetByName(sSheetName);
+			}
+		}
+		if (~sChangingCell.indexOf(",")) {
+			sChangingCell = sChangingCell.slice(0, sChangingCell.indexOf(","));
+		}
+		sSheetName = sChangingCell.split("!")[0];
+		sChangingCell = sChangingCell.split("!")[1];
+		if (sSheetName !== wsChangingCell.getName()) {
+			wsChangingCell = this.model.getWorksheetByName(sSheetName);
+		}
+
+		//need lock
+		//open history point
+		History.Create_NewPoint();
+		History.StartTransaction();
+		this.model.startGoalSeek(sFormulaCell, sExpectedValue, sChangingCell, wsFormula, wsChangingCell);
+	};
+
+	WorkbookView.prototype.closeGoalSeek = function (bSave) {
+		let oGoalSeek = this.model.getGoalSeek();
+		let oChangedCell = oGoalSeek && oGoalSeek.getChangingCell();
+
+		bSave ? this.model.saveGoalSeek() : this.model.closeGoalSeek();
+		//close history point
+		History.EndTransaction();
+
+		if (oChangedCell) {
+			//update
+			let ws = this.getWorksheetById(oChangedCell.ws.id);
+			ws._updateRange(oChangedCell.bbox);
+			ws.draw();
+		}
+	};
+
+	WorkbookView.prototype.pauseGoalSeek = function() {
+		this.model.pauseGoalSeek();
+	};
+
+	WorkbookView.prototype.continueGoalSeek = function() {
+		this.model.continueGoalSeek();
+	};
+
+	WorkbookView.prototype.stepGoalSeek = function() {
+		this.model.stepGoalSeek();
+	};
+
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
 	function CDocumentSearchExcel(wb) {
