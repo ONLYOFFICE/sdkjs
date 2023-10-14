@@ -2982,6 +2982,10 @@
 				{
 					this.Api.stopInkDrawer();
 				}
+				else if (this.Api.isMarkerFormat)
+				{
+					this.Api.sync_MarkerFormatCallback(false);
+				}
 				else if (oDoc.activeForm)
 				{
 					// to do отмена ввода
