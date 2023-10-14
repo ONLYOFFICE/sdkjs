@@ -257,7 +257,7 @@
         // Draw the image onto the canvas
         context.drawImage(ICON_TO_DRAW, 0, 0, imgW, imgH, 0, 0, wScaled, hScaled);
 
-        if (oRGB.r != 255 && oRGB.g != 209 && oRGB.b != 0) {
+        if (oRGB.r != 255 || oRGB.g != 209 || oRGB.b != 0) {
             // Get the pixel data of the canvas
             let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
             let data = imageData.data;
