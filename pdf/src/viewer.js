@@ -3094,7 +3094,7 @@
 							break;
 					}
 				}
-				else if (!this.isFocusOnThumbnails)
+				else if (!this.isFocusOnThumbnails && e.AltKey == false)
 				{
 					this.m_oScrollVerApi.scrollByY(-40);
 				}
@@ -3182,7 +3182,7 @@
 					}
 					
 				}
-				else if (!this.isFocusOnThumbnails)
+				else if (!this.isFocusOnThumbnails && e.AltKey == false)
 				{
 					this.m_oScrollVerApi.scrollByY(40);
 				}
