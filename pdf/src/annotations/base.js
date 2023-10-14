@@ -775,18 +775,25 @@
     CAnnotationBase.prototype.GetRGBColor = function(aInternalColor) {
         let oColor = {};
 
+        if (!aInternalColor)
+            return {
+                r: 255,
+                g: 255,
+                b: 255
+        }
+        
         if (aInternalColor.length == 1) {
             oColor = {
-                r: aInternalColor[0] * 255,
-                g: aInternalColor[0] * 255,
-                b: aInternalColor[0] * 255
+                r: Math.round(aInternalColor[0] * 255),
+                g: Math.round(aInternalColor[0] * 255),
+                b: Math.round(aInternalColor[0] * 255)
             }
         }
         else if (aInternalColor.length == 3) {
             oColor = {
-                r: aInternalColor[0] * 255,
-                g: aInternalColor[1] * 255,
-                b: aInternalColor[2] * 255
+                r: Math.round(aInternalColor[0] * 255),
+                g: Math.round(aInternalColor[1] * 255),
+                b: Math.round(aInternalColor[2] * 255)
             }
         }
         else if (aInternalColor.length == 4) {

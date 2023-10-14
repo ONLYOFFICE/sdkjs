@@ -86,7 +86,7 @@
         this._state         = undefined;
         this._stateModel    = undefined;
         this._width         = undefined;
-        this._strokeColor   = [1, 0.81, 0];
+        this._strokeColor   = [1, 0.82, 0];
 
         // internal
         TurnOffHistory();
@@ -212,6 +212,7 @@
 
         oNewAnnot._originView = this._originView;
         oNewAnnot._apIdx = this._apIdx;
+        oNewAnnot.SetStrokeColor(this.GetStrokeColor());
         oNewAnnot.SetOriginPage(this.GetOriginPage());
         oNewAnnot.SetAuthor(this.GetAuthor());
         oNewAnnot.SetModDate(this.GetModDate());
@@ -229,8 +230,7 @@
         if (!this.graphicObjects)
             this.graphicObjects = new AscFormat.DrawingObjectsController(this);
 
-        // let oRGB            = this.GetRGBColor(this._textColor);
-        let oRGB            = {r: 255, g: 255, b: 255};
+        let oRGB            = this.GetRGBColor(this.GetStrokeColor());
         let ICON_TO_DRAW    = this.GetIconImg();
 
         let aRect       = this.GetRect();
@@ -247,8 +247,8 @@
         let wScaled = imgW * nScaleX + 0.5 >> 0;
         let hScaled = imgH * nScaleY + 0.5 >> 0;
 
-        var canvas = document.createElement('canvas');
-        var context = canvas.getContext('2d');
+        let canvas = document.createElement('canvas');
+        let context = canvas.getContext('2d');
 
         // Set the canvas dimensions to match the image
         canvas.width = wScaled;
@@ -257,28 +257,30 @@
         // Draw the image onto the canvas
         context.drawImage(ICON_TO_DRAW, 0, 0, imgW, imgH, 0, 0, wScaled, hScaled);
 
-        // Get the pixel data of the canvas
-        var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        var data = imageData.data;
+        if (oRGB.r != 255 && oRGB.g != 209 && oRGB.b != 0) {
+            // Get the pixel data of the canvas
+            let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+            let data = imageData.data;
 
-        // Loop through each pixel
-        for (let i = 0; i < data.length; i += 4) {
-            const red = data[i];
-            const green = data[i + 1];
-            const blue = data[i + 2];
+            // Loop through each pixel
+            for (let i = 0; i < data.length; i += 4) {
+                const red = data[i];
+                const green = data[i + 1];
+                const blue = data[i + 2];
 
-            // Check if the pixel is black (R = 0, G = 0, B = 0)
-            if (red === 0 && green === 0 && blue === 0) {
-                // Change the pixel color to red (R = 255, G = 0, B = 0)
-                data[i] = oRGB.r; // Red
-                data[i + 1] = oRGB.g; // Green
-                data[i + 2] = oRGB.b; // Blue
-                // Note: The alpha channel (transparency) remains unchanged
+                // Check if the pixel is black (R = 0, G = 0, B = 0)
+                if (red === 255 && green === 209 && blue === 0) {
+                    // Change the pixel color to red (R = 255, G = 0, B = 0)
+                    data[i] = oRGB.r; // Red
+                    data[i + 1] = oRGB.g; // Green
+                    data[i + 2] = oRGB.b; // Blue
+                    // Note: The alpha channel (transparency) remains unchanged
+                }
             }
-        }
 
-        // Put the modified pixel data back onto the canvas
-        context.putImageData(imageData, 0, 0);
+            // Put the modified pixel data back onto the canvas
+            context.putImageData(imageData, 0, 0);
+        }
 
         // Draw the comment note
         // oGraphics.DrawImage(canvas, 0, 0, wScaled, hScaled, x, y, wScaled, hScaled);

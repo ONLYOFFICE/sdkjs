@@ -1238,9 +1238,8 @@
 							oAnnot.SetBorderEffectStyle(oAnnotInfo["BE"]["S"]);
 					}
 						
-					if (oAnnotInfo["C"] != null) {
-						oAnnot.SetStrokeColor(oAnnotInfo["C"]);
-					}
+					oAnnot.SetStrokeColor(oAnnotInfo["C"]);
+					
 					if (oAnnotInfo["CA"] != null) {
 						oAnnot.SetOpacity(oAnnotInfo["CA"]);
 					}

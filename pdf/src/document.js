@@ -1680,6 +1680,7 @@ var CPresentation = CPresentation || function(){};
         else {
             oAnnot = this.AddAnnot(oProps);
             AscCommentData.m_sUserData = oAnnot.GetApIdx();
+            AscCommentData.m_sQuoteText = "";
             editor.sendEvent("asc_onAddComment", oAnnot.GetId(), AscCommentData);    
         }
         
