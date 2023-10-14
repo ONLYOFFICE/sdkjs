@@ -2990,6 +2990,8 @@
 				{
 					// to do отмена ввода
 				}
+
+				editor.sync_HideComment();
 			}
 			else if (e.KeyCode === 32) // Space
 			{
