@@ -705,7 +705,9 @@
     CAnnotationBase.prototype.GetAscCommentData = function() {
         let oAscCommData = new Asc["asc_CCommentDataWord"](null);
         oAscCommData.asc_putText(this.GetContents());
-        oAscCommData.asc_putOnlyOfficeTime(this.GetModDate().toString());
+        let sModDate = this.GetModDate();
+        if (sModDate)
+            oAscCommData.asc_putOnlyOfficeTime(sModDate.toString());
         oAscCommData.asc_putUserId(editor.documentUserId);
         oAscCommData.asc_putUserName(this.GetAuthor());
         oAscCommData.asc_putSolved(false);
@@ -726,6 +728,9 @@
         this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.GetModDate = function(bPDF) {
+        if (this._modDate == undefined)
+            return this._modDate;
+
         if (bPDF) {
             return formatTimestampToPDF(this._modDate); 
         }
@@ -737,6 +742,9 @@
         this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.GetCreationDate = function(bPDF) {
+        if (this._creationDate == undefined)
+            return this._creationDate;
+
         if (bPDF) {
             return formatTimestampToPDF(this._creationDate); 
         }
