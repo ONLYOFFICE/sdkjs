@@ -249,7 +249,7 @@
             let angle2          = Math.atan2(dy2, dx2);
             let rotationAngle   = angle1;
 
-            oGraphicsPDF.context.globalCompositeOperation = "multiply";
+            AscPDF.startMultiplyMode(oGraphicsPDF.context);
 
             oGraphicsPDF.BeginPath();
             oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
@@ -271,7 +271,7 @@
             }
 
             oGraphicsPDF.Fill();
-            oGraphicsPDF.context.globalCompositeOperation = "source-over";
+            AscPDF.endMultiplyMode(oGraphicsPDF.context);
         }
     };
         

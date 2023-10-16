@@ -260,10 +260,10 @@
             let nHeight = originView.height / nGrScale;
 
             if (this.IsHighlight())
-                oGraphicsPDF.context.globalCompositeOperation = "multiply";
+                AscPDF.startMultiplyMode(oGraphicsPDF.context);
             
             oGraphicsPDF.DrawImage(originView, 0, 0, nWidth, nHeight, X, Y, nWidth, nHeight);
-            oGraphicsPDF.context.globalCompositeOperation = "source-over";
+            AscPDF.endMultiplyMode(oGraphicsPDF.context);
         }
     };
     CAnnotationBase.prototype.SetSubject = function(sSubject) {
@@ -1172,5 +1172,27 @@
 	window["AscPDF"].ConvertPt2Px       = ConvertPt2Px;
 	window["AscPDF"].ConvertPx2Pt       = ConvertPx2Pt;
     window["AscPDF"].ParsePDFDate       = ParsePDFDate;
+
+    window["AscPDF"].startMultiplyMode = function(ctx)
+    {
+        if (!AscCommon.AscBrowser.isIE)
+            ctx.globalCompositeOperation = "multiply";
+        else
+        {
+            ctx._multiplyGlobalAlpha = ctx.globalAlpha;
+            ctx.globalAlpha = 0.3 * ctx._multiplyGlobalAlpha;
+        }
+    };
+    window["AscPDF"].endMultiplyMode = function(ctx)
+    {
+        if (!AscCommon.AscBrowser.isIE)
+            ctx.globalCompositeOperation = "source-over";
+        else
+        {
+            ctx.globalAlpha = ctx._multiplyGlobalAlpha;
+            delete ctx._multiplyGlobalAlpha;
+        }
+    };
+
 })();
 

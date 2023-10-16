@@ -648,7 +648,7 @@
 
         oCtx.globalCompositeOperation = "destination-over";
         if (this.IsNeedDrawFromStream())
-            oCtx.globalCompositeOperation = "multiply";
+            AscPDF.startMultiplyMode(oCtx);
         
         if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
             oCtx.beginPath();
@@ -673,7 +673,7 @@
             oCtx.fillRect(X, Y, W, H);
             oCtx.closePath();
         }
-        oCtx.globalCompositeOperation = "source-over";
+        AscPDF.endMultiplyMode(oCtx);
     };
     CBaseField.prototype.DrawBorders = function(oGraphicsPDF) {
         let oViewer     = editor.getDocumentRenderer();

@@ -3379,7 +3379,8 @@
 		{
 			this.offsetTop = offset;
 			this.resize();
-		};		this.createComponents();
+		};
+		this.createComponents();
 	};
 	CHtmlPage.prototype.getPDFDoc = function()
 	{
