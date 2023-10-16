@@ -5575,9 +5575,9 @@
 
 		// Очищаем предыдущие элементы поиска
 		if (index != null) {
-			for (var Id in this.Elements) {
+			for (let Id in this.Elements) {
 				if (this.Elements[Id].index === index) {
-					var key = this.Elements[Id].index + "-" + this.Elements[Id].col + "-" + this.Elements[Id].row;
+					let key = this.Elements[Id].index + "-" + this.Elements[Id].col + "-" + this.Elements[Id].row;
 					delete this.mapFindCells[key];
 					delete this.Elements[Id];
 				}
@@ -5612,9 +5612,9 @@
 	};
 	CDocumentSearchExcel.prototype.Add = function (r, c, cell, container, options) {
 
-		var byCols = options && !options.scanByRows;
-		var dN = new Asc.Range(byCols ? r : c, byCols ? c : r, byCols ? r : c, byCols ? c : r, true);
-		var defName = cell.ws ? AscCommon.parserHelp.get3DRef(cell.ws.getName(), dN.getAbsName()) : null;
+		let byCols = options && !options.scanByRows;
+		let dN = new Asc.Range(byCols ? r : c, byCols ? c : r, byCols ? r : c, byCols ? c : r, true);
+		let defName = cell.ws ? AscCommon.parserHelp.get3DRef(cell.ws.getName(), dN.getAbsName()) : null;
 		defName = defName && cell.ws ? cell.ws.workbook.findDefinesNames(defName, cell.ws.getId(), true) : null;
 
 		if (container) {
@@ -5626,7 +5626,7 @@
 			this.Elements[this.Id++] =
 				cell.ws ? {sheet: cell.ws.sName, name: defName ? defName : null, cell: dN.getName(), text: cell.getValue(), formula: cell.getFormula(), col: c, row: r, index: cell.ws.index} :
 					cell;
-			var key = this.Elements[this.Id - 1].index + "-" + c + "-" + r;
+			let key = this.Elements[this.Id - 1].index + "-" + c + "-" + r;
 			this.mapFindCells[key] = this.Id - 1;
 
 			return (this.Id - 1);
@@ -5635,11 +5635,11 @@
 	CDocumentSearchExcel.prototype.endAdd = function (findResult) {
 		//использую findResult для случая, если нужно искать по столбцам, а не по строкам. в дальнейшем можно избавиться от findResult и использовать временный объект
 		if (findResult && findResult.values) {
-			for (var i in findResult.values) {
+			for (let i in findResult.values) {
 				if (!findResult.values[i]) {
 					continue;
 				}
-				for (var j in findResult.values[i]) {
+				for (let j in findResult.values[i]) {
 					this.Add(j, i, findResult.values[i][j]);
 				}
 			}
@@ -5713,7 +5713,7 @@
 	};
 	CDocumentSearchExcel.prototype.forEachElementsBySheet = function (index, callback) {
 		if (this.Elements) {
-			for (var i in this.Elements) {
+			for (let i in this.Elements) {
 				if (this.Elements[i].index === index) {
 					callback(this.Elements[i]);
 				}
@@ -5721,7 +5721,7 @@
 		}
 	};
 	CDocumentSearchExcel.prototype.GetNextElement = function () {
-		var id;
+		let id;
 
 		if (this.props.lastSearchElem) {
 			//временно переставляем селект на данный элемент и ставим CurId - 1
@@ -5738,13 +5738,13 @@
 
 		this.changedSelection = null;
 
-		var needElem = this.Elements[id];
+		let needElem = this.Elements[id];
 		if (!needElem && this.Count) {
 			//лиюо следующий, либо первый
 			//нужно вернуться к первому, если такой есть
-			var i;
+			let i;
 			if (this.Direction) {
-				var firstElem, firstElemId;
+				let firstElem, firstElemId;
 				for (i = 0; i < this.ReplacedId.length + this.Count; i++) {
 					if (this.Elements[i]) {
 						if (!firstElem) {
@@ -5763,7 +5763,7 @@
 					id = firstElemId;
 				}
 			} else {
-				var lastElem, lastElemId;
+				let lastElem, lastElemId;
 				for (i = this.ReplacedId.length + this.Count; i >= 0; i--) {
 					if (this.Elements[i]) {
 						if (!lastElem) {
@@ -5788,27 +5788,27 @@
 		return needElem ? id : null;
 	};
 	CDocumentSearchExcel.prototype.findNearestElement = function () {
-		var t = this;
+		let t = this;
 		if (-1 !== this.CurId) {
 			return this.Direction ? this.CurId + 1 : this.CurId - 1;
 		} else {
-			var ws = this.wb.getActiveWS();
-			var selectionRange = (this.props && this.props.selectionRange) || ws.selectionRange || ws.copySelection;
+			let ws = this.wb.getActiveWS();
+			let selectionRange = (this.props && this.props.selectionRange) || ws.selectionRange || ws.copySelection;
 
-			var activeCell = this.props.activeCell ? this.props.activeCell : selectionRange.activeCell;
+			let activeCell = this.props.activeCell ? this.props.activeCell : selectionRange.activeCell;
 			if (this.props && this.props.lastSearchElem) {
-				var cell = this.props.lastSearchElem[3];
+				let cell = this.props.lastSearchElem[3];
 				if (cell) {
-					var range = AscCommonExcel.g_oRangeCache.getAscRange(cell);
+					let range = AscCommonExcel.g_oRangeCache.getAscRange(cell);
 					activeCell = {row: range.r1, col: range.c1};
 				}
 			}
 
-			var bReverse = !t.Direction;
+			let bReverse = !t.Direction;
 
 			//получаем массив из индексов
-			var i;
-			var indexArr = [];
+			let i;
+			let indexArr = [];
 			for (i in this.Elements) {
 				if (this.Elements.hasOwnProperty(i)) {
 					indexArr.push(parseInt(i));
@@ -5816,7 +5816,7 @@
 			}
 
 			//чтобе не делать разные ветки для получения row/col
-			var getRowCol = function (obj, changeColOnRow) {
+			let getRowCol = function (obj, changeColOnRow) {
 				if (!obj) {
 					return;
 				}
@@ -5827,18 +5827,18 @@
 				}
 			};
 
-			var sheetArr = [];
-			var checkElem = function (indexElem, index) {
+			let sheetArr = [];
+			let checkElem = function (indexElem, index) {
 				//нужный нам лист
 				if (ws.sName === t.Elements[indexElem].sheet) {
 
-					var prevNextI = bReverse ? indexArr[index - 1] : indexArr[index + 1];
-					var prevNextElemRowCol = getRowCol(t.Elements[prevNextI]);
+					let prevNextI = bReverse ? indexArr[index - 1] : indexArr[index + 1];
+					let prevNextElemRowCol = getRowCol(t.Elements[prevNextI]);
 
-					var elemRowCol = getRowCol(t.Elements[indexElem]);
-					var activeCellRowCol = getRowCol(activeCell);
-					var elemColRow = getRowCol(t.Elements[indexElem], true);
-					var activeCellColRow = getRowCol(activeCell, true);
+					let elemRowCol = getRowCol(t.Elements[indexElem]);
+					let activeCellRowCol = getRowCol(activeCell);
+					let elemColRow = getRowCol(t.Elements[indexElem], true);
+					let activeCellColRow = getRowCol(activeCell, true);
 
 					if (elemRowCol === activeCellRowCol) {
 						//если это данная строка, нужно найти колонку/строку с равным индексом или большим/меньшим, если таких нет, то берём следующий/предыдущий элемент
@@ -5872,8 +5872,8 @@
 				return null;
 			};
 
-			var res;
-			for (var j = bReverse ? indexArr.length - 1 : 0; bReverse ? j >= 0 : j < indexArr.length; bReverse ? j-- : j++) {
+			let res;
+			for (let j = bReverse ? indexArr.length - 1 : 0; bReverse ? j >= 0 : j < indexArr.length; bReverse ? j-- : j++) {
 				i = indexArr[j];
 				res = checkElem(i, j);
 				if (res !== null) {
@@ -5881,10 +5881,10 @@
 				}
 			}
 
-			var start = this.wb.model.nActive;
-			var end = this.wb.model.aWorksheets.length + start;
+			let start = this.wb.model.nActive;
+			let end = this.wb.model.aWorksheets.length + start;
 			for (i = bReverse ? end - 1 : start; bReverse ?  i >= start : i < end; bReverse ? i-- : ++i) {
-				var index = i >= this.wb.model.aWorksheets.length - 1 ? i - this.wb.model.nActive : i;
+				let index = i >= this.wb.model.aWorksheets.length - 1 ? i - this.wb.model.nActive : i;
 
 				if (this.wb.model.aWorksheets[index] && null != sheetArr[this.wb.model.aWorksheets[index].sName]) {
 					return sheetArr[this.wb.model.aWorksheets[index].sName];
@@ -5924,9 +5924,9 @@
 	};
 	CDocumentSearchExcel.prototype.changeCellValue = function (cell) {
 		if (this.wb.Api.selectSearchingResults && this.props) {
-			var key = cell.ws.index + "-" + cell.nCol + "-" + cell.nRow;
+			let key = cell.ws.index + "-" + cell.nCol + "-" + cell.nRow;
 			if (null != this.mapFindCells[key]) {
-				var id = this.mapFindCells[key];
+				let id = this.mapFindCells[key];
 				if (!cell.isEqual(this.props)) {
 					this._removeFromSearchElems(key, id);
 				}
@@ -5938,7 +5938,7 @@
 	};
 	CDocumentSearchExcel.prototype.changeRangeValue = function (bbox, ws) {
 		if (this.wb.Api.selectSearchingResults && bbox) {
-			var t = this;
+			let t = this;
 			ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2)._foreachNoEmpty(function(cell) {
 				t.changeCellValue(cell);
 			});
@@ -5947,7 +5947,7 @@
 	CDocumentSearchExcel.prototype.changeSheetContent = function (ws) {
 		if (this.wb.Api.selectSearchingResults && ws && this.props) {
 			if (this.isNotEmpty()) {
-				for (var i in this.Elements) {
+				for (let i in this.Elements) {
 					if (this.Elements[i] && ws.index === this.Elements[i].index) {
 						this.wb.handlers.trigger("asc_onModifiedDocument");
 						this.setModifiedDocument(true);
@@ -5961,9 +5961,9 @@
 	CDocumentSearchExcel.prototype.removeSheet = function (index) {
 		//TODO так же сделать события для изменения названия листа + индекса листа
 		if (this.isNotEmpty()) {
-			for (var i in this.Elements) {
+			for (let i in this.Elements) {
 				if (this.Elements[i] && index === this.Elements[i].index) {
-					var key = index + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
+					let key = index + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
 					if (null != this.mapFindCells[key]) {
 						this._removeFromSearchElems(key, this.mapFindCells[key]);
 					}
@@ -5972,9 +5972,9 @@
 		}
 	};
 	CDocumentSearchExcel.prototype.renameSheet = function (index, val) {
-		var arrResult = [];
+		let arrResult = [];
 		if (this.isNotEmpty()) {
-			for (var i in this.Elements) {
+			for (let i in this.Elements) {
 				if (this.Elements[i] && index === this.Elements[i].index) {
 					this.Elements[i].sheet = val
 					arrResult.push([parseInt(i), this.Elements[i].sheet, this.Elements[i].name, this.Elements[i].cell, this.Elements[i].text, this.Elements[i].formula]);
@@ -5982,7 +5982,7 @@
 			}
 		}
 		if (arrResult.length) {
-			var oApi = window["Asc"]["editor"];
+			let oApi = window["Asc"]["editor"];
 			oApi.sync_changedElements(arrResult);
 		}
 	};
@@ -5991,12 +5991,12 @@
 			return;
 		}
 		if (this.isNotEmpty()) {
-			for (var i in this.Elements) {
+			for (let i in this.Elements) {
 				if (this.Elements[i] && from === this.Elements[i].index) {
 					this.Elements[i].index = to;
-					var keyOld = from + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
-					var keyNew = to + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
-					var oldId = this.mapFindCells[keyOld];
+					let keyOld = from + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
+					let keyNew = to + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
+					let oldId = this.mapFindCells[keyOld];
 					delete this.mapFindCells[keyOld];
 					this.mapFindCells[keyNew] = oldId;
 				}
@@ -6006,24 +6006,24 @@
 	/*CDocumentSearchExcel.prototype.updateMapFindCells = function () {
 		if (this.isNotEmpty()) {
 			this.mapFindCells = {};
-			for (var i in this.Elements) {
+			for (let i in this.Elements) {
 				if (this.Elements[i]) {
-					var key = this.Elements[i].index + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
+					let key = this.Elements[i].index + "-" + this.Elements[i].col + "-" + this.Elements[i].row;
 					this.mapFindCells[key] = i - 1;
 				}
 			}
 		}
 	};*/
 	CDocumentSearchExcel.prototype.removeFromSearchElems = function (col, row, ws) {
-		var key = ws.index + "-" + col + "-" + row;
+		let key = ws.index + "-" + col + "-" + row;
 		if (null != this.mapFindCells[key]) {
-			var id = this.mapFindCells[key];
+			let id = this.mapFindCells[key];
 			this._removeFromSearchElems(key, id);
 		}
 	};
 	CDocumentSearchExcel.prototype._removeFromSearchElems = function (key, id) {
 		if (this.Elements[id]) {
-			var oApi = window["Asc"]["editor"];
+			let oApi = window["Asc"]["editor"];
 			oApi.sync_removeTextAroundSearch(id);
 			delete this.Elements[id];
 		}
@@ -6055,7 +6055,7 @@
 		}
 	};
 	CDocumentSearchExcel.prototype.inFindResults = function (ws, row, col) {
-		var key = ws.model.index + "-" + col + "-" + row;
+		let key = ws.model.index + "-" + col + "-" + row;
 		return this.mapFindCells && this.mapFindCells[key];
 	};
 

@@ -6796,7 +6796,6 @@
             }
         }
 
-        //TODO COLOR!!!
         let searchSpecificRange = this.handlers.trigger('selectSearchingResults') && this.workbook.SearchEngine && this.workbook.SearchEngine.getSpecificRange();
 		if (searchSpecificRange) {
 			this._drawElements(this._drawSelectionElement, searchSpecificRange,
