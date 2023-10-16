@@ -6797,10 +6797,10 @@
         }
 
         let searchSpecificRange = this.handlers.trigger('selectSearchingResults') && this.workbook.SearchEngine && this.workbook.SearchEngine.getSpecificRange();
-		if (searchSpecificRange) {
-			this._drawElements(this._drawSelectionElement, searchSpecificRange,
-				AscCommonExcel.selectionLineType.DashThick,  window['AscCommonExcel'].c_oAscVisibleAreaOleEditorBorderColor);
-		}
+        if (searchSpecificRange) {
+            this._drawElements(this._drawSelectionElement, searchSpecificRange,
+                AscCommonExcel.selectionLineType.DashThick,  window['AscCommonExcel'].c_oAscVisibleAreaOleEditorBorderColor);
+        }
 
         this.drawTraceDependents();
 
