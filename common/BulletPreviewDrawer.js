@@ -229,7 +229,7 @@
 		oGraphics.SetIntegerGrid(true);
 		oGraphics.transform(1, 0, 0, 1, 0, 0);
 
-		if (this.m_oApi && this.m_oApi.isDarkMode)
+		if (this.m_oApi && this.m_oApi.isDarkMode && oGraphics.darkModeOverride3)
 		{
 			oGraphics.darkModeOverride3();
 		}
