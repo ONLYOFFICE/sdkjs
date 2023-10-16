@@ -6341,7 +6341,7 @@
                     oApi.WordControl.m_oLogicDocument.SetLocalTrackRevisions(false);
 
                 var bRemoveDocument = false;
-                if(oApi.WordControl && !oApi.WordControl.m_oLogicDocument)
+                if(oApi.WordControl && !oApi.WordControl.m_oLogicDocument && oApi.isPdfEditor() != true)
 				{
 					bRemoveDocument = true;
 					oApi.WordControl.m_oLogicDocument = new AscCommonWord.CDocument();
