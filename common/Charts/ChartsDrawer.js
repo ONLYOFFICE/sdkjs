@@ -16392,8 +16392,8 @@ CColorObj.prototype =
 					const secondPoint = findPoint(0.7)
 
 					//find first central point
-					const xPoints = getControlPoints(0.1, 0.6, firstPoint.xVal, secondPoint.xVal, start.xVal, end.xVal)
-					const yPoints = getControlPoints(0.1, 0.6, firstPoint.yVal, secondPoint.yVal, start.yVal, end.yVal)
+					const xPoints = getControlPoints(0.3, 0.7, firstPoint.xVal, secondPoint.xVal, start.xVal, end.xVal)
+					const yPoints = getControlPoints(0.3, 0.7, firstPoint.yVal, secondPoint.yVal, start.yVal, end.yVal)
 					//find second central point
 					cPoints.first.yPos = cChartDrawer.getYPosition(yPoints[0], yAxis);
 					cPoints.first.xPos = cChartDrawer.getYPosition(xPoints[0], xAxis);
