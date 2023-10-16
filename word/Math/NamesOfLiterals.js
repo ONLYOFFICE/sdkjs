@@ -2236,7 +2236,9 @@
 		if (!isGetLaTeX || value === "{" || value === "}")
 			return undefined;
 
-		let arrValue = Object.keys(AutoCorrection).filter(key => AutoCorrection[key] === value);
+		let arrValue = Object.keys(AutoCorrection).filter(function(key) {
+			return AutoCorrection[key] === value;
+		});
 
 		for (let i = 0; i < arrValue.length; i++)
 		{

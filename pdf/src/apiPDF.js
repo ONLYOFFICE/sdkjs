@@ -152,7 +152,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiBaseField.prototype, "borderStyle", {
-        set(sValue) {
+        set: function(sValue) {
             if (Object.values(AscPDF.BORDER_TYPES).includes(sValue)) {
                 if (this.field.IsWidget()) {
                     let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
@@ -167,7 +167,7 @@
                 }
             }
         },
-        get() {
+        get: function() {
             if (this.IsWidget())
                 return private_GetStrBorderStyle(this.field.GetBorderStyle());
             else
@@ -184,7 +184,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiBaseField.prototype, "defaultValue", {
-        set(bValue) {
+        set: function(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
             if (aFields[0] && aFields[0].IsWidget()) {
@@ -196,7 +196,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.GetDefaultValue();
@@ -214,7 +214,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiBaseField.prototype, "display", {
-        set(nType) {
+        set: function(nType) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
             if (aFields[0] && aFields[0].IsWidget()) {
@@ -226,7 +226,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.GetType();
@@ -244,7 +244,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiBaseField.prototype, "hidden", {
-        set(bValue) {
+        set: function(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
             if (aFields[0] && aFields[0].IsWidget()) {
@@ -256,7 +256,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.GetDisplay() == window["AscPDF"].Api.Objects.display["hidden"];
@@ -277,7 +277,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiBaseField.prototype, "fillColor", {
-        set(value) {
+        set: function(value) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
             if (aFields[0] && aFields[0].IsWidget()) {
@@ -290,7 +290,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return private_getApiColor(oField.GetBackgroundColor());
@@ -311,7 +311,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiBaseField.prototype, "bgColor", {
-        set(value) {
+        set: function(value) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
             if (aFields[0] && aFields[0].IsWidget()) {
@@ -324,7 +324,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return private_getApiColor(oField.GetBackgroundColor());
@@ -341,7 +341,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiBaseField.prototype, "doc", {
-        get() {
+        get: function() {
             return this.field.GetDocument().GetDocumentApi();
         }
 	});
@@ -374,16 +374,16 @@
 
         
         "delay": {
-            set(bValue) {
+            set: function(bValue) {
                 if (typeof(bValue) == "boolean")
                     this._delay = bValue;
             },
-            get() {
+            get: function() {
                 return this._delay;
             }
         },
         "lineWidth": {
-            set(nValue) {
+            set: function(nValue) {
                 nValue = parseInt(nValue);
                 if (Object.values(LINE_WIDTH).includes(nValue)) {
                     let aFields = this._doc.GetFields(this.name);
@@ -396,39 +396,39 @@
                     });
                 }
             },
-            get() {
+            get: function() {
                 return this._lineWidth;
             }
         },
         "borderWidth": {
-            set(nValue) {
+            set: function(nValue) {
                 this.lineWidth = nValue;
             },
-            get() {
+            get: function() {
                 return this.lineWidth;
             }
         },
         "name": {
-            get() {
+            get: function() {
                 return this.field.GetFullName();
             }
         },
         "page": {
-            get() {
+            get: function() {
                 return this.GetPage();
             }
         },
         "print": {
-            set(bValue) {
+            set: function(bValue) {
                 if (typeof(bValue) == "boolean")
                     this._print = bValue;
             },
-            get() {
+            get: function() {
                 return this._print;
             }
         },
         "readonly": {
-            set(bValue) {
+            set: function(bValue) {
                 if (typeof(bValue) == "boolean") {
                     let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
@@ -437,12 +437,12 @@
                 }
                     
             },
-            get() {
+            get: function() {
                 return this._readonly;
             }
         },
         "rect": {
-            set(aRect) {
+            set: function(aRect) {
                 if (Array.isArray(aRect)) {
                     let isValidRect = true;
                     for (let i = 0; i < 4; i++) {
@@ -456,12 +456,12 @@
                         this._rect = aRect;
                 }
             },
-            get() {
+            get: function() {
                 return this._rect;
             }
         },
         "required": {
-            set(bValue) {
+            set: function(bValue) {
                 if (typeof(bValue) == "boolean" && this.GetType() != AscPDF.FIELD_TYPES.button) {
                     let aFields = this._doc.GetFields(this.name);
 
@@ -470,7 +470,7 @@
                     })
                 }
             },
-            get() {
+            get: function() {
                 if (this.GetType() != AscPDF.FIELD_TYPES.button)
                     return this._required;
 
@@ -478,43 +478,43 @@
             }
         },
         "rotation": {
-            set(nValue) {
+            set: function(nValue) {
                 if (AscPDF.VALID_ROTATIONS.includes(nValue))
                     this._rotation = nValue;
             },
-            get() {
+            get: function() {
                 return this._rotation;
             }
         },
         "strokeColor": {
-            set(aColor) {
+            set: function(aColor) {
                 if (Array.isArray(aColor))
                     this._strokeColor = aColor;
             },
-            get() {
+            get: function() {
                 return this._strokeColor;
             }
         },
         "borderColor": {
-            set(aColor) {
+            set: function(aColor) {
                 if (Array.isArray(aColor))
                     this._borderColor = aColor;
             },
-            get() {
+            get: function() {
                 return this._borderColor;
             }
         },
         "submitName": {
-            set(sValue) {
+            set: function(sValue) {
                 if (typeof(sValue) == "string")
                     this._submitName = sValue;
             },
-            get() {
+            get: function() {
                 return this._submitName;
             }
         },
         "textColor": {
-            set (aColor) {
+            set: function(aColor) {
                 if (Array.isArray(aColor)) {
                     let aFields = this.field.GetDocument().GetFields(this.name);
                     aFields.forEach(function(field) {
@@ -522,21 +522,21 @@
                     });
                 }
             },
-            get () {
+            get: function() {
                 return private_getApiColor(this.field.GetTextColor());
             }
         },
         "fgColor": {
-            set (aColor) {
+            set: function(aColor) {
                 if (Array.isArray(aColor))
                     this._fgColor = aColor;
             },
-            get () {
+            get: function() {
                 return this._fgColor;
             }
         },
         "textSize": {
-            set(nValue) {
+            set: function(nValue) {
                 if (typeof(nValue) == "number" && nValue >= 0 && nValue < AscPDF.MAX_TEXT_SIZE) {
                     let aFields = this._doc.GetFields(this.name);
                     let oField;
@@ -555,16 +555,16 @@
                 }
                     
             },
-            get() {
+            get: function() {
                 return 
             }
         },
         "userName": {
-            set(sValue) {
+            set: function(sValue) {
                 if (typeof(sValue) == "string")
                     this._userName = sValue;
             },
-            get() {
+            get: function() {
                 return this._userName;
             }
         }
@@ -636,7 +636,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiPushButtonField.prototype, "buttonAlignX", {
-        set(nValue) {
+        set: function(nValue) {
             if (typeof(nValue) == "number") {
                 nValue = Math.round(nValue);
                 let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
@@ -654,7 +654,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.GetIconPosition().X;
@@ -672,7 +672,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiPushButtonField.prototype, "buttonAlignY", {
-        set(nValue) {
+        set: function(nValue) {
             if (typeof(nValue) == "number") {
                 nValue = Math.round(nValue);
                 let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
@@ -690,7 +690,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.GetIconPosition().Y;
@@ -708,7 +708,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiPushButtonField.prototype, "buttonFitBounds", {
-        set(bValue) {
+        set: function(bValue) {
             if (typeof(bValue) == "boolean") {
                 let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
@@ -725,7 +725,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.GetButtonFitBounds();
@@ -743,7 +743,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiPushButtonField.prototype, "buttonPosition", {
-        set(bValue) {
+        set: function(bValue) {
             if (typeof(bValue) == "boolean") {
                 let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
@@ -760,7 +760,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.GetButtonPosition();
@@ -781,7 +781,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiPushButtonField.prototype, "buttonScaleHow", {
-        set(nType) {
+        set: function(nType) {
             if (typeof(nType) == "number") {
                 nType = Math.round(nType);
                 let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
@@ -799,7 +799,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.GetScaleHow();
@@ -822,7 +822,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiPushButtonField.prototype, "buttonScaleWhen", {
-        set(nType) {
+        set: function(nType) {
             if (typeof(nType) == "number") {
                 nType = Math.round(nType);
                 let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
@@ -840,7 +840,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.GetScaleWhen();
@@ -866,7 +866,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiPushButtonField.prototype, "highlight", {
-        set(sType) {
+        set: function(sType) {
             if (typeof(sType) == "string" && highlight.includes(sType)) {
                 sType = Math.round(sType);
                 let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
@@ -884,7 +884,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return private_GetStrHighlight(oField.GetHighlight());
@@ -897,16 +897,16 @@
 
     Object.defineProperties(ApiPushButtonField.prototype, {
         "textFont": {
-            set(sValue) {
+            set: function(sValue) {
                 if (typeof(sValue) == "string" && sValue !== "")
                     this._textFont = sValue;
             },
-            get() {
+            get: function() {
                 return this.textFont;
             }
         },
         "value": {
-            get() {
+            get: function() {
                 return undefined;
             }
         }
@@ -933,7 +933,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiBaseCheckBoxField.prototype, "exportValues", {
-        set(arrValues) {
+        set: function(arrValues) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
             if (aFields[0] && aFields[0].IsWidget()) {
@@ -956,7 +956,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
             if (aFields[0] && aFields[0].IsWidget()) {
                 let aExpValues = [];
@@ -974,11 +974,11 @@
 
     Object.defineProperties(ApiBaseCheckBoxField.prototype, {
         "style": {
-            set(sStyle) {
+            set: function(sStyle) {
                 if (Object.values(style).includes(sStyle))
                     this._style = sStyle;
             },
-            get() {
+            get: function() {
                 return this._style;
             }
         }
@@ -1021,7 +1021,7 @@
 	ApiCheckBoxField.prototype.constructor = ApiCheckBoxField;
     Object.defineProperties(ApiCheckBoxField.prototype, {
         "value": {
-            set(sValue) {
+            set: function(sValue) {
                 let oDoc = this.field.GetDocument();
                 let oCalcInfo = oDoc.GetCalculateInfo();
                 let oSourceField = oCalcInfo.GetSourceField();
@@ -1049,7 +1049,7 @@
                     oDoc.CommitFields();
                 }
             },
-            get() {
+            get: function() {
                 return this.field._value;
             }
         }
@@ -1063,7 +1063,7 @@
 	ApiRadioButtonField.prototype.constructor = ApiRadioButtonField;
     Object.defineProperties(ApiRadioButtonField.prototype, {
         "radiosInUnison": {
-            set(bValue) {
+            set: function(bValue) {
                 if (typeof(bValue) == "boolean") {
                     let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
@@ -1071,12 +1071,12 @@
                     });
                 }
             },
-            get() {
+            get: function() {
                 return this._radiosInUnison;
             }
         },
         "value": {
-            set(sValue) {
+            set: function(sValue) {
                 let oDoc = this.field.GetDocument();
                 let oCalcInfo = oDoc.GetCalculateInfo();
                 let oSourceField = oCalcInfo.GetSourceField();
@@ -1104,7 +1104,7 @@
                     oDoc.CommitFields();
                 }
             },
-            get() {
+            get: function() {
                 let aFields = this.field.GetDocument().GetFields(this.name);
                 for (let i = 0; i < aFields.length; i++) {
                     if (aFields[i]._value != "Off" && aFields[i].IsNeedCommit()) {
@@ -1134,7 +1134,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiTextField.prototype, "alignment", {
-        set(sValue) {
+        set: function(sValue) {
             if (Object.values(ALIGN_TYPE).includes(sValue) == false)
                 return;
 
@@ -1150,7 +1150,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return private_GetStrAlign(oField.GetAlign());
@@ -1170,7 +1170,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiTextField.prototype, "calcOrderIndex", {
-        set(nValue) {
+        set: function(nValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
             if (aFields[0] && aFields[0].IsWidget()) {
@@ -1180,7 +1180,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.GetCalcOrderIndex();
@@ -1197,7 +1197,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiTextField.prototype, "charLimit", {
-        set(nValue) {
+        set: function(nValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
             if (aFields[0] && aFields[0].IsWidget()) {
@@ -1209,7 +1209,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.GetCharLimit();
@@ -1230,7 +1230,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiTextField.prototype, "comb", {
-        set(bValue) {
+        set: function(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
             if (aFields[0] && aFields[0].IsWidget()) {
@@ -1242,7 +1242,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.IsComb();
@@ -1261,7 +1261,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiTextField.prototype, "doNotScroll", {
-        set(bValue) {
+        set: function(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
             if (aFields[0] && aFields[0].IsWidget()) {
@@ -1280,7 +1280,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.GetDoNotScroll();
@@ -1298,7 +1298,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiTextField.prototype, "doNotSpellCheck", {
-        set(bValue) {
+        set: function(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
             if (aFields[0] && aFields[0].IsWidget()) {
@@ -1310,7 +1310,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.IsDoNotSpellCheck();
@@ -1335,7 +1335,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiTextField.prototype, "fileSelect", {
-        set(bValue) {
+        set: function(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
             if (aFields[0] && aFields[0].IsWidget()) {
@@ -1347,7 +1347,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.GetFileSelect();
@@ -1360,7 +1360,7 @@
 
     Object.defineProperties(ApiTextField.prototype, {
         "multiline": {
-            set(bValue) {
+            set: function(bValue) {
                 if (typeof(bValue) != "boolean")
                     return;
 
@@ -1369,12 +1369,12 @@
                     field.SetMultiline(bValue);
                 });
             },
-            get() {
+            get: function() {
                 return this._multiline;
             }
         },
         "password": {
-            set (bValue) {
+            set: function(bValue) {
                 if (typeof(bValue) != "boolean")
                     return;
 
@@ -1383,12 +1383,12 @@
                     field.SetPassword(bValue);
                 });
             },
-            get() {
+            get: function() {
                 return this._password;
             }
         },
         "richText": {
-            set(bValue) {
+            set: function(bValue) {
                 if (typeof(bValue) == "boolean") {
                     let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
@@ -1396,12 +1396,12 @@
                     });
                 }
             },
-            get() {
+            get: function() {
                 return this._richText;
             }
         },
         "richValue": {
-            set(aSpans) {
+            set: function(aSpans) {
                 if (Array.isArray(aSpans)) {
                     let aCorrectVals = aSpans.filter(function(item) {
                         if (Array.isArray(item) == false && typeof(item) == "object" && item != null)
@@ -1414,12 +1414,12 @@
                     });
                 }
             },
-            get() {
+            get: function() {
                 return this._richValue;
             }
         },
         "textFont": {
-            set(sValue) {
+            set: function(sValue) {
                 if (typeof(sValue) == "string" && sValue !== "") {
                     let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
@@ -1427,12 +1427,12 @@
                     });
                 }
             },
-            get() {
+            get: function() {
                 return this.textFont;
             }
         },
         "value": {
-            set(value) {
+            set: function(value) {
                 let oDoc = this.field.GetDocument();
                 let oCalcInfo = oDoc.GetCalculateInfo();
                 let oSourceField = oCalcInfo.GetSourceField();
@@ -1467,7 +1467,7 @@
                     }
                 }
             },
-            get() {
+            get: function() {
                 let value = this.field.GetApiValue();
                 let isNumber = !isNaN(value) && isFinite(value) && value != "";
                 return isNumber ? parseFloat(value) : value;
@@ -1491,7 +1491,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiBaseListField.prototype, "commitOnSelChange", {
-        set(bValue) {
+        set: function(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
             if (aFields[0] && aFields[0].IsWidget()) {
@@ -1503,7 +1503,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.GetCommitOnSelChange();
@@ -1516,16 +1516,16 @@
 
     Object.defineProperties(ApiBaseListField.prototype, {
         "numItems": {
-            get() {
+            get: function() {
                 return this._options.length;
             }
         },
         "textFont": {
-            set(sValue) {
+            set: function(sValue) {
                 if (typeof(sValue) == "string" && sValue !== "")
                     this._textFont = sValue;
             },
-            get() {
+            get: function() {
                 return this.textFont;
             }
         }
@@ -1571,7 +1571,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiComboBoxField.prototype, "calcOrderIndex", {
-        set(nValue) {
+        set: function(nValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
             if (aFields[0] && aFields[0].IsWidget()) {
@@ -1581,7 +1581,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.GetCalcOrderIndex();
@@ -1598,7 +1598,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiComboBoxField.prototype, "currentValueIndices", {
-        set(nValue) {
+        set: function(nValue) {
             if (typeof(nValue) !== "number" || this.getItemAt(nValue, false) == undefined)
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
 
@@ -1619,7 +1619,7 @@
                 oDoc.CommitFields();
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.GetCurIdxs(true);
@@ -1637,7 +1637,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiComboBoxField.prototype, "editable", {
-        set(bValue) {
+        set: function(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
             if (aFields[0] && aFields[0].IsWidget()) {
@@ -1647,7 +1647,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.IsEditable();
@@ -1660,7 +1660,7 @@
 
     Object.defineProperties(ApiComboBoxField.prototype, {
         "value": {
-            set(value) {
+            set: function(value) {
                 let oDoc = this.field.GetDocument();
                 let oCalcInfo = oDoc.GetCalculateInfo();
                 let oSourceField = oCalcInfo.GetSourceField();
@@ -1695,7 +1695,7 @@
                     }
                 }
             },
-            get() {
+            get: function() {
                 let value = this.field.GetApiValue();
                 let isNumber = !isNaN(value) && isFinite(value) && value != "";
                 return isNumber ? parseFloat(value) : value;
@@ -1710,7 +1710,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiComboBoxField.prototype, "doNotSpellCheck", {
-        set(bValue) {
+        set: function(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
             if (aFields[0] && aFields[0].IsWidget()) {
@@ -1722,7 +1722,7 @@
                 throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.IsDoNotSpellCheck();
@@ -1787,7 +1787,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiListBoxField.prototype, "currentValueIndices", {
-        set(value) {
+        set: function(value) {
             let oDoc = this.field.GetDocument();
             let oCalcInfo = oDoc.GetCalculateInfo();
             let oSourceField = oCalcInfo.GetSourceField();
@@ -1839,7 +1839,7 @@
                 oDoc.CommitFields();
             }
         },
-        get() {
+        get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
                 return oField.GetCurIdxs(true);
@@ -1852,7 +1852,7 @@
 
     Object.defineProperties(ApiListBoxField.prototype, {
         "multipleSelection": {
-            set(bValue) {
+            set: function(bValue) {
                 if (typeof(bValue) == "boolean") {
                     if (bValue == this.multipleSelection)
                         return;
@@ -1863,12 +1863,12 @@
                     });
                 }
             },
-            get() {
+            get: function() {
                 return this._multipleSelection;
             }
         },
         "value": {
-            set(value) {
+            set: function(value) {
                 let oDoc = this.field.GetDocument();
                 let oCalcInfo = oDoc.GetCalculateInfo();
                 let oSourceField = oCalcInfo.GetSourceField();
@@ -1893,7 +1893,7 @@
                     oDoc.CommitFields();
                 }
             },
-            get() {
+            get: function() {
                 let value = this.field.GetApiValue();
                 let isNumber = !isNaN(value) && isFinite(value) && value != "";
                 return isNumber ? parseFloat(value) : value;
@@ -1998,16 +1998,16 @@
 
         Object.defineProperties(this, {
             "alignment": {
-                set(sValue) {
+                set: function(sValue) {
                     if (Object.values(ALIGN_TYPE).includes(sValue))
                         this._alignment = sValue;
                 },
-                get() {
+                get: function() {
                     return this._alignment;
                 }
             },
             "fontFamily": {
-                set(arrValue) {
+                set: function(arrValue) {
                     if (Array.isArray(arrValue))
                     {
                         let aCorrectFonts = [];
@@ -2022,56 +2022,56 @@
                 }
             },
             "fontStretch": {
-                set(sValue) {
+                set: function(sValue) {
                     if (AscPDF.FONT_STRETCH.includes(sValue))
                         this._fontStretch = sValue;
                 },
-                get() {
+                get: function() {
                     return this._fontStretch;
                 }
             },
             "fontStyle": {
-                set(sValue) {
+                set: function(sValue) {
                     if (Object.values(AscPDF.FONT_STYLE).includes(sValue))
                         this._fontStyle = sValue;
                 },
-                get() {
+                get: function() {
                     return this._fontStyle;
                 }
             },
             "fontWeight": {
-                set(nValue) {
+                set: function(nValue) {
                     if (AscPDF.FONT_WEIGHT.includes(nValue))
                         this._fontWeight = nValue;
                 },
-                get() {
+                get: function() {
                     return this._fontWeight;
                 }
             },
             "strikethrough": {
-                set(bValue) {
+                set: function(bValue) {
                     if (typeof(bValue) == "boolean")
                         this._strikethrough = bValue;
                 },
-                get() {
+                get: function() {
                     return this._strikethrough;
                 }
             },
             "subscript": {
-                set(bValue) {
+                set: function(bValue) {
                     if (typeof(bValue) == "boolean")
                         this._subscript = bValue;
                 },
-                get() {
+                get: function() {
                     return this._subscript;
                 }
             },
             "superscript": {
-                set(bValue) {
+                set: function(bValue) {
                     if (typeof(bValue) == "boolean")
                         this._superscript = bValue;
                 },
-                get() {
+                get: function() {
                     return this._superscript;
                 }
             },

@@ -370,7 +370,7 @@
         if (this._parent)
         {
             if (this._partialName != undefined)
-                return `${this._parent.GetFullName()}.${this._partialName}`
+                return this._parent.GetFullName() + "." + this._partialName;
             else
                 return this._parent.GetFullName();
         }
@@ -653,9 +653,9 @@
         if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
             oCtx.beginPath();
             if (this.IsRequired())
-                oCtx.fillStyle = `rgb(${FIELDS_HIGHLIGHT_REQ.r}, ${FIELDS_HIGHLIGHT_REQ.g}, ${FIELDS_HIGHLIGHT_REQ.b})`;
+                oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT_REQ.r + ', ' + FIELDS_HIGHLIGHT_REQ.g + ', ' + FIELDS_HIGHLIGHT_REQ.b + ')';
             else 
-                oCtx.fillStyle = `rgb(${FIELDS_HIGHLIGHT.r}, ${FIELDS_HIGHLIGHT.g}, ${FIELDS_HIGHLIGHT.b})`;
+                oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT.r + ', ' + FIELDS_HIGHLIGHT.g + ', ' + FIELDS_HIGHLIGHT.b + ')';
             // выставляем в центр круга
             let centerX = X + W / 2;
             let centerY = Y + H / 2;
@@ -667,9 +667,9 @@
         else if (this.GetType() != AscPDF.FIELD_TYPES.button){
             oCtx.beginPath();
             if (this.IsRequired())
-                oCtx.fillStyle = `rgb(${FIELDS_HIGHLIGHT_REQ.r}, ${FIELDS_HIGHLIGHT_REQ.g}, ${FIELDS_HIGHLIGHT_REQ.b})`;
+                oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT_REQ.r + ', ' + FIELDS_HIGHLIGHT_REQ.g + ', ' + FIELDS_HIGHLIGHT_REQ.b + ')';
             else 
-                oCtx.fillStyle = `rgb(${FIELDS_HIGHLIGHT.r}, ${FIELDS_HIGHLIGHT.g}, ${FIELDS_HIGHLIGHT.b})`;
+                oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT.r + ', ' + FIELDS_HIGHLIGHT.g + ', ' + FIELDS_HIGHLIGHT.b + ')';
             oCtx.fillRect(X, Y, W, H);
             oCtx.closePath();
         }

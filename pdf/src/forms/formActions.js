@@ -462,17 +462,17 @@
         ];
     
         let oApiConsole = {
-            "println"(value) {
+            "println": function(value) {
                 console.log("\n");
                 console.log(value);
             },
-            "clear"() {
+            "clear": function() {
                 console.clear();
             },
-            "hide"() {
+            "hide": function() {
                 return false;
             },
-            "show"() {
+            "show": function() {
                 return false;
             }
         };

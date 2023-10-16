@@ -110,11 +110,11 @@ var CPresentation = CPresentation || function(){};
         this.AutoCorrectSettings = new AscCommon.CAutoCorrectSettings();
         Object.defineProperties(this.event, {
             "change": {
-                set(value) {
+                set: function(value) {
                     if (value != null && value.toString)
                         this._change = value.toString();
                 },
-                get() {
+                get: function() {
                     return this._change;
                 }
             }

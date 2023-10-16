@@ -1030,7 +1030,7 @@
                     let nFracCurr = nParsedNumber.toString().split('.')[1] ? nParsedNumber.toString().split('.')[1].length : 0;
                     let nMaxFrac = Math.max(nFracSum, nFracCurr);
                     
-                    return Math.round((sum + nParsedNumber) * (10**nMaxFrac)) / (10**nMaxFrac); // исправляем беды с дробной частью
+                    return Math.round((sum + nParsedNumber) * (Math.pow(10, nMaxFrac))) / (Math.pow(10, nMaxFrac)); // исправляем беды с дробной частью
                 }, 0);
                 break;
             case "PRD":
@@ -1040,7 +1040,7 @@
                     let nFracCurr = nParsedNumber.toString().split('.')[1] ? nParsedNumber.toString().split('.')[1].length : 0;
                     let nMaxFrac = Math.max(nFracSum, nFracCurr);
                     
-                    return Math.round((sum * nParsedNumber) * (10**nMaxFrac)) / (10**nMaxFrac); // исправляем беды с дробной частью
+                    return Math.round((sum * nParsedNumber) * (Math.pow(10, nMaxFrac))) / (Math.pow(10, nMaxFrac)); // исправляем беды с дробной частью
                 }, 1);
                 break;
             case "AVG":
@@ -1050,7 +1050,7 @@
                     let nFracCurr = nParsedNumber.toString().split('.')[1] ? nParsedNumber.toString().split('.')[1].length : 0;
                     let nMaxFrac = Math.max(nFracSum, nFracCurr);
 
-                    return Math.round((sum + nParsedNumber) * (10**nMaxFrac)) / (10**nMaxFrac); // исправляем беды с дробной частью
+                    return Math.round((sum + nParsedNumber) * (Math.pow(10, nMaxFrac))) / (Math.pow(10, nMaxFrac)); // исправляем беды с дробной частью
                 }, 0);
                 nResult = nResult / aValues.length;
                 break;
@@ -1127,24 +1127,24 @@
     
     window["AscPDF"].Api = {
         Functions: {
-            AFNumber_Format,
-            AFNumber_Keystroke,
-            AFPercent_Format,
-            AFPercent_Keystroke,
-            AFDate_Format,
-            AFDate_Keystroke,
-            AFDate_FormatEx,
-            AFDate_KeystrokeEx,
-            AFTime_Format,
-            AFTime_Keystroke,
-            AFTime_FormatEx,
-            AFTime_KeystrokeEx,
-            AFSpecial_Format,
-            AFSpecial_Keystroke,
-            AFSpecial_KeystrokeEx,
-            AFSimple_Calculate,
-            AFRange_Validate,
-            }
+            AFNumber_Format:        AFNumber_Format,
+            AFNumber_Keystroke:     AFNumber_Keystroke,
+            AFPercent_Format:       AFPercent_Format,
+            AFPercent_Keystroke:    AFPercent_Keystroke,
+            AFDate_Format:          AFDate_Format,
+            AFDate_Keystroke:       AFDate_Keystroke,
+            AFDate_FormatEx:        AFDate_FormatEx,
+            AFDate_KeystrokeEx:     AFDate_KeystrokeEx,
+            AFTime_Format:          AFTime_Format,
+            AFTime_Keystroke:       AFTime_Keystroke,
+            AFTime_FormatEx:        AFTime_FormatEx,
+            AFTime_KeystrokeEx:     AFTime_KeystrokeEx,
+            AFSpecial_Format:       AFSpecial_Format,
+            AFSpecial_Keystroke:    AFSpecial_Keystroke,
+            AFSpecial_KeystrokeEx:  AFSpecial_KeystrokeEx,
+            AFSimple_Calculate:     AFSimple_Calculate,
+            AFRange_Validate:       AFRange_Validate,
+        }
     }
 })();
 

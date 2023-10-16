@@ -57,62 +57,62 @@
 	CAnnotationInk.prototype.constructor = CAnnotationInk;
     Object.defineProperties(CAnnotationInk.prototype, {
         extX: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.extX;
             }
         },
         extY: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.extY;
             }
         },
         transform: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.transform;
             }
         },
         spPr: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.spPr;
             }
         },
         rot: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.rot;
             }
         },
         x: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.x;
             }
         },
         y: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.y;
             }
         },
         brush: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.brush;
             }
         },
         pen: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.pen;
             }
         },
         txXfrm: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.txXfrm;
             }
         },
         flipV: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.flipV;
             }
         },
         flipH: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.flipH;
             }
         },

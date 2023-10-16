@@ -1163,7 +1163,7 @@
         else
             timezoneOffsetMinutesLeft = timezoneOffsetMinutesLeft.toString();
 
-        const formattedTimestamp = `D:${year}${month}${day}${hours}${minutes}${seconds}${timezoneOffsetSign}${timezoneOffsetHours}'${timezoneOffsetMinutesLeft}'`;
+        const formattedTimestamp = 'D:' + year + month + day + hours + minutes + seconds + timezoneOffsetSign + timezoneOffsetHours + "'" + timezoneOffsetMinutesLeft + "'";
         
         return formattedTimestamp;
     }

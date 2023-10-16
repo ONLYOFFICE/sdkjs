@@ -85,7 +85,7 @@ CPDFGraphics.prototype.GetIntegerGrid = function() {
 
 CPDFGraphics.prototype.SetStrokeStyle = function(r,g,b) {
     if (this.context)
-        this.context.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+        this.context.strokeStyle = "rgb(" + r + "," + g + "," + b + ")";
 
     this.strokeStyle = {
         r: r,
@@ -95,7 +95,7 @@ CPDFGraphics.prototype.SetStrokeStyle = function(r,g,b) {
 };
 CPDFGraphics.prototype.SetFillStyle = function(r,g,b) {
     if (this.context)
-        this.context.fillStyle = `rgb(${r}, ${g}, ${b})`;
+        this.context.fillStyle = "rgb(" + r + "," + g + "," + b + ")";
 
     this.fillStyle = {
         r: r,

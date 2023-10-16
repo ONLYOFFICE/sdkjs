@@ -41,12 +41,12 @@
         square:     5
     }
     
-    let CHECK_SVG = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M5.2381 8.8L4 11.8L7.71429 16C12.0476 9.4 13.2857 8.2 17 4C14.5238 4 9.77778 8.8 7.71429 11.8L5.2381 8.8Z" fill="black"/>
-    </svg>`;
+    let CHECK_SVG = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
+    <path d='M5.2381 8.8L4 11.8L7.71429 16C12.0476 9.4 13.2857 8.2 17 4C14.5238 4 9.77778 8.8 7.71429 11.8L5.2381 8.8Z' fill='black'/>\
+    </svg>";
 
     const CHECKED_ICON = new Image();
-    CHECKED_ICON.src = `data:image/svg+xml;utf8,${encodeURIComponent(CHECK_SVG)}`;
+    CHECKED_ICON.src = "data:image/svg+xml;utf8," + encodeURIComponent(CHECK_SVG);
     
     /**
 	 * Class representing a base checkbox class.

@@ -103,40 +103,40 @@
     let color = {};
     Object.defineProperties(color, {
         "transparent":  {
-            get() { return [ "T" ] }
+            get: function() { return [ "T" ] }
         },
         "black": {
-            get() { return [ "G", 0 ] }
+            get: function() { return [ "G", 0 ] }
         },
         "white": {
-            get() { return [ "G", 1 ] }
+            get: function() { return [ "G", 1 ] }
         },
         "red": {
-            get() { return [ "RGB", 1,0,0 ] }
+            get: function() { return [ "RGB", 1,0,0 ] }
         },  
         "green": {
-            get() { return [ "RGB", 0,1,0 ] }
+            get: function() { return [ "RGB", 0,1,0 ] }
         },
         "blue": {
-            get() { return [ "RGB", 0, 0, 1 ] }
+            get: function() { return [ "RGB", 0, 0, 1 ] }
         }, 
         "cyan": {
-            get() { return [ "CMYK", 1,0,0,0 ] }
+            get: function() { return [ "CMYK", 1,0,0,0 ] }
         }, 
         "magenta": {
-            get() { return [ "CMYK", 0,1,0,0 ] }
+            get: function() { return [ "CMYK", 0,1,0,0 ] }
         },      
         "yellow": {
-            get() { return [ "CMYK", 0,0,1,0 ] }
+            get: function() { return [ "CMYK", 0,0,1,0 ] }
         },       
         "dkGray": {
-            get() { return [ "G", 0.25 ] }  // version 4. }
+            get: function() { return [ "G", 0.25 ] }  // version 4. }
         },       
         "gray": {
-            get() { return [ "G", 0.5 ] }   // version 4. }
+            get: function() { return [ "G", 0.5 ] }   // version 4. }
         }, 
         "ltGray": {
-            get() { return [ "G", 0.75 ] }   // version 4. }
+            get: function() { return [ "G", 0.75 ] }   // version 4. }
         }
     });
 
@@ -260,14 +260,14 @@
 
     color["convert"] = color.convert;
     window["AscPDF"].Api.Objects = {
-        border,
-        position,
-        scaleHow,
-        scaleWhen,
-        display,
-        style,
-        highlight,
-        color
+        border:     border,
+        position:   position,
+        scaleHow:   scaleHow,
+        scaleWhen:  scaleWhen,
+        display:    display,
+        style:      style,
+        highlight:  highlight,
+        color:      color
     };
 })();
 
