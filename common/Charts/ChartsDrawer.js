@@ -16130,7 +16130,7 @@ CColorObj.prototype =
 				this.coordinates[oSeries.parent.Id] = {};
 			}
 			if (!this.coordinates[oSeries.parent.Id][oSeries.Id]) {
-				this.coordinates[oSeries.parent.Id][oSeries.Id] = {coords: [], path: []};
+				this.coordinates[oSeries.parent.Id][oSeries.Id] = {coords: [], path: null};
 			}
 
 			this.coordinates[oSeries.parent.Id][oSeries.Id].coords.push({xVal: xVal + 1, yVal: yVal});
@@ -16166,10 +16166,8 @@ CColorObj.prototype =
 				case AscFormat.TRENDLINE_TYPE_LOG:
 					if(yAxis.scaling.logBase){
 						this._calculateLogarithmicWithLog(xAxis, yAxis, coordinates);
-						this._calculateLogarithmicWithPoints(xAxis, yAxis, coordinates);
 					}else{
 						this._calculateLogarithmic(xAxis, yAxis, coordinates);
-						this._calculateLogarithmicWithPoints(xAxis, yAxis, coordinates);
 					}
 					break;
 			}
@@ -16253,7 +16251,7 @@ CColorObj.prototype =
 				path.moveTo(start.xPos * pathW, start.yPos * pathH);
 				path.quadBezTo(mid.xPos * pathW, mid.yPos * pathH, end.xPos * pathW, end.yPos * pathH);
 
-				coordinates.path.push(pathId);
+				coordinates.path = pathId;
 			}
 		},
 
@@ -16295,7 +16293,7 @@ CColorObj.prototype =
 				path.moveTo(start.xPos * pathW, start.yPos * pathH);
 				path.lnTo(end.xPos * pathW, end.yPos * pathH);
 
-				coordinates.path.push(pathId);
+				coordinates.path = pathId;
 			}
 		},
 
@@ -16303,125 +16301,6 @@ CColorObj.prototype =
 			for (let i = 0; i < coordinates.coords.length; i++){
 				coordinates.coords[i].xVal = Math.log(coordinates.coords[i].xVal)
 			}
-			let letiables = this._findSuppletiables(coordinates);
-
-
-			let pathH = this.cChartDrawer.calcProp.pathH;
-			let pathW = this.cChartDrawer.calcProp.pathW;
-
-			let chartletiables = letiables;
-			if (chartletiables) {
-
-				const _lineCoordinate = function (xIndex, cChartDrawer) {
-					const result = {xPos:null, yPos:null, xVal:null};
-					let xVal = Math.log(xAxis.xPoints[xIndex].val);
-					const yVal = chartletiables[0] * xVal + chartletiables[1];
-					const yIndex = yAxis.yPoints.length - 1;
-					if (yVal < yAxis.yPoints[0].val) {
-						const newXVal = (yAxis.yPoints[0].val - chartletiables[1]) / chartletiables[0];
-						result.xVal = Math.exp(newXVal);
-						result.yVal = yAxis.yPoints[0].val;
-						result.xPos = cChartDrawer.getYPosition(Math.exp(newXVal), xAxis);
-						result.yPos = yAxis.yPoints[0].pos;
-					} else if (yVal > yAxis.yPoints[yIndex].val) {
-						const newXVal = (yAxis.yPoints[yIndex].val - chartletiables[1]) / chartletiables[0];
-						result.xVal = Math.exp(newXVal);
-						result.yVal = yAxis.yPoints[yIndex].val;
-						result.xPos = cChartDrawer.getYPosition(Math.exp(newXVal), xAxis);
-						result.yPos = yAxis.yPoints[yIndex].pos
-					} else {
-						result.xVal = Math.exp(xVal);
-						result.yVal = yVal;
-						result.xPos = xAxis.xPoints[xIndex].pos;
-						result.yPos = cChartDrawer.getYPosition(yVal, yAxis);
-					}
-					return result
-				};
-		
-				const _findCentralPoint = function (start, end, chartletiables, cChartDrawer) {
-					//return coordinates of two control points
-					const cPoints = { 
-						first: {yPos:null, xPos:null}, 
-						second: {yPos:null, xPos:null}
-					}
-					
-					//find log interpolation of x
-					//find y = mx + b
-					const findPoint = function (scale) {
-						const result = {xVal:null, yVal:null}
-						result.xVal = Math.pow(end.xVal, scale) * Math.pow(start.xVal, 1 - scale)
-						result.yVal = (chartletiables[0] * Math.log(result.xVal)) + chartletiables[1]
-						return result
-					} 
-
-					const getControlPoints = function (s1, s2, B1, B2, P0, P3) {
-						//B1 = ( 1 - s1**3)P0 + 3((1-s1)**2)tP1 + 3(1-s1)s1**2P2 + s1***3P3
-						//B2 = ( 1 - s2**3)P0 + 3((1-s2)**2)tP1 + 3(1-s2)s2**2P2 + s2***3P3
-						//two equations to find P1 and P2
-						//to make computation easier to understand I will create 4 variables for each equation, to bring equation in form
-						// B = v1 + v2P1 + v3P2 + v4
-						const a_v1 = (1 - Math.pow(s1, 3)) * P0;
-						const a_v2 = 3 * Math.pow((1 - s1), 2) * s1;
-						const a_v3 = 3 * (1 - s1) * Math.pow(s1, 2);
-						const a_v4 = Math.pow(s1, 3) * P3;
-						const b_v1 = (1 - Math.pow(s2, 3)) * P0;
-						const b_v2 = 3 * Math.pow((1 - s2), 2) * s2;
-						const b_v3 = 3 * (1 - s2) * Math.pow(s2, 2);
-						const b_v4 = Math.pow(s2, 3) * P3;
-						
-						// P2 = (B1 - a_v1 - a_v2P1 - a_v4) / a_v3 => a_const1 - a_const2P1
-						const a_const1 = (B1 - a_v1 - a_v4) / a_v3
-						const a_const2 = a_v2 / a_v3
-
-						// P1 = (B2 - b_v1 - b_v3P2 - b_v4) / b_v2 => (B2 - b_v1 - b_v3(a_const1 - a_const2P1) - b_v4) / b_v2 => (B2 - b_v1 - b_const1 + b_const2P1 - b_v4) / b_v2
-						const b_const1 = b_v3 * a_const1
-						const b_const2 = b_v3 * a_const2
-
-						// P1 => c_const1 + c_const2P1 => c_const1 / (1 -c_const2)
-						const c_const1 = (B2 - b_v1 - b_const1 - b_v4) / b_v2;
-						const c_const2 = b_const2 / b_v2;
-						const P1 = c_const1 / (1 - c_const2);
-						const P2 = a_const1 - (a_const2 * P1);
-						console.log(P0, P1, P2, P3)
-
-						return [P1, P2]
-					}
-
-					//find two points on the equation at a, b distances from start
-					const firstPoint = findPoint(0.3)
-					const secondPoint = findPoint(0.7)
-
-					//find first central point
-					const xPoints = getControlPoints(0.3, 0.7, firstPoint.xVal, secondPoint.xVal, start.xVal, end.xVal)
-					const yPoints = getControlPoints(0.3, 0.7, firstPoint.yVal, secondPoint.yVal, start.yVal, end.yVal)
-					//find second central point
-					cPoints.first.yPos = cChartDrawer.getYPosition(yPoints[0], yAxis);
-					cPoints.first.xPos = cChartDrawer.getYPosition(xPoints[0], xAxis);
-					cPoints.second.yPos = cChartDrawer.getYPosition(yPoints[1], yAxis);
-					cPoints.second.xPos = cChartDrawer.getYPosition(xPoints[1], xAxis);
-					return cPoints
-				};
-
-				const start = _lineCoordinate(0, this.cChartDrawer);
-				const end = _lineCoordinate(xAxis.xPoints.length - 1, this.cChartDrawer);
-				const cPoints = _findCentralPoint(start, end, chartletiables, this.cChartDrawer);
-				
-				let pathId = this.cChartDrawer.cChartSpace.AllocPath();
-				let path = this.cChartDrawer.cChartSpace.GetPath(pathId);
-
-				path.moveTo(start.xPos * pathW, start.yPos * pathH);
-				// path.lnTo(cPoints.first.xPos * pathW, cPoints.first.yPos * pathH)
-				// path.lnTo(cPoints.second.xPos * pathW, cPoints.second.yPos * pathH)
-				path.cubicBezTo(cPoints.first.xPos * pathW, cPoints.first.yPos * pathH, cPoints.second.xPos * pathW, cPoints.second.yPos * pathH, end.xPos * pathW, end.yPos * pathH);
-
-				coordinates.path.push(pathId);
-			}
-		},
-
-		_calculateLogarithmicWithPoints: function (xAxis, yAxis, coordinates) {
-			// for (let i = 0; i < coordinates.coords.length; i++){
-			// 	coordinates.coords[i].xVal = Math.log(coordinates.coords[i].xVal)
-			// }
 			let letiables = this._findSuppletiables(coordinates);
 
 			let pathH = this.cChartDrawer.calcProp.pathH;
@@ -16480,7 +16359,7 @@ CColorObj.prototype =
 				}
 				path.lnTo(end.xPos * pathW, end.yPos * pathH);
 
-				coordinates.path.push(pathId);
+				coordinates.path = pathId;
 			}
 		},
 
@@ -16561,7 +16440,7 @@ CColorObj.prototype =
 				path.moveTo(start.xPos * pathW, start.yPos * pathH);
 				path.quadBezTo(mid.xPos * pathW, mid.yPos * pathH, end.xPos * pathW, end.yPos * pathH);
 
-				coordinates.path.push(pathId);
+				coordinates.path = pathId;
 			}
 		},
 
@@ -16621,14 +16500,7 @@ CColorObj.prototype =
 						}
 						let pen = oSeries.trendline.pen;
 						if (pen && this.coordinates[i][j].path) {
-							for(let k = 0; k<this.coordinates[i][j].path.length; k++){
-								if(k!=0){
-									pen.Fill.fill.color.RGBA.R = 255
-									pen.Fill.fill.color.RGBA.G = 0
-									pen.Fill.fill.color.RGBA.B = 0
-								}
-								this.cChartDrawer.drawPath(this.coordinates[i][j].path[k], pen);
-							}
+							this.cChartDrawer.drawPath(this.coordinates[i][j].path, pen);
 						}
 					}
 				}
