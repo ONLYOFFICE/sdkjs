@@ -589,6 +589,10 @@
         let oDoc            = this.GetDocument();
         let oCurContents    = this.GetContents();
 
+        let bSendAddCommentEvent = false;
+        if (this._contents == null && contents != null)
+            bSendAddCommentEvent = true;
+        
         this._contents  = contents;
         
         if (oDoc.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
@@ -596,9 +600,10 @@
         }
         
         this.SetWasChanged(true);
-        if (contents != null)
+        if (bSendAddCommentEvent)
             this._OnAfterSetReply();
-        else if (this.IsInDocument())
+        
+        if (this._contents == null && this.IsInDocument())
             editor.sync_RemoveComment(this.GetId());
     };
     CAnnotationBase.prototype.AddReply = function(oReply) {
