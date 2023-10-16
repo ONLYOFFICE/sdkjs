@@ -1477,10 +1477,10 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.SetHighlight = function(r, g, b, opacity) {
         this.HighlightColor = {
-            r: r || 0,
-            g: g || 0,
-            b: b || 0,
-            a: opacity
+            r: r != undefined ? r : 0,
+            g: g != undefined ? g : 0,
+            b: b != undefined ? b : 0,
+            a: opacity / 100
         };
 
         let oViewer         = editor.getDocumentRenderer();
@@ -1527,10 +1527,10 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.SetUnderline = function(r, g, b, opacity) {
         this.UnderlineColor = {
-            r: r || 0,
-            g: g || 0,
-            b: b || 0,
-            a: opacity
+            r: r != undefined ? r : 0,
+            g: g != undefined ? g : 0,
+            b: b != undefined ? b : 0,
+            a: opacity / 100
         };
 
         let oViewer         = editor.getDocumentRenderer();
@@ -1576,10 +1576,10 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.SetStrikeout = function(r, g, b, opacity) {
         this.StrikeoutColor = {
-            r: r || 0,
-            g: g || 0,
-            b: b || 0,
-            a: opacity
+            r: r != undefined ? r : 0,
+            g: g != undefined ? g : 0,
+            b: b != undefined ? b : 0,
+            a: opacity / 100
         };
 
         let oViewer         = editor.getDocumentRenderer();
