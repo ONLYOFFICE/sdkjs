@@ -5646,18 +5646,25 @@
 		}
 	};
 	CDocumentSearchExcel.prototype.Select = function (nId) {
-		var elem = this.Elements[nId];
+		let elem = this.Elements[nId];
 		if (elem) {
-			var ws = this.wb.getWorksheet();
+			let ws = this.wb.getWorksheet();
 			if (elem.index !== ws.model.index) {
 				this.wb.model.handlers.trigger('undoRedoHideSheet', elem.index);
 				ws = this.wb.getWorksheet(elem.index);
 			}
 
 			if (ws) {
-				var range = new Asc.Range(elem.col, elem.row, elem.col, elem.row);
+				let range = new Asc.Range(elem.col, elem.row, elem.col, elem.row);
+				let selection = ws.model.getSelection();
+				let ar = selection.getLast();
 				//options.findInSelection ? ws.setActiveCell(result) : ws.setSelection(range);
-				ws.setSelection(range);
+				if (ar.contains(elem.col, elem.row)) {
+					let activeCell =  new AscCommon.CellBase(elem.row, elem.col);
+					ws.setActiveCell(activeCell);
+				} else {
+					ws.setSelection(range);
+				}
 
 				this.SetCurrent(nId);
 			}
