@@ -389,6 +389,9 @@
 	CUnicodeParser.prototype.GetSpecialHBracket = function (oBase)
 	{
 		let strHBracket = this.EatToken(oLiteralNames.hBracketLiteral[0]).data;
+		if (strHBracket[0] === "\\")
+			strHBracket = AscMath.AutoCorrection[strHBracket];
+
 		let oPos = AscMath.GetHBracket(strHBracket);
 		let oOperand = this.GetOperandLiteral("custom");
 		let oUp, oDown;
@@ -539,7 +542,6 @@
 			this.IsNthrtLiteral() ||
 			this.IsBoxLiteral() ||
 			this.isRectLiteral() ||
-			this.IsHBracketLiteral() ||
 			this.IsGetNameOfFunction() ||
 			this.oLookahead.class === "▁" || this.oLookahead.class === "¯"
 		);
@@ -576,9 +578,6 @@
 					value: oOperand,
 				};
 			}
-		}
-		else if (this.IsHBracketLiteral()) {
-			oFunctionContent = this.GetHBracketLiteral();
 		}
 		else if (this.IsGetNameOfFunction()) {
 			oFunctionContent = this.GetNameOfFunction()
@@ -1391,6 +1390,9 @@
 		else if (this.IsOpNaryLiteral()) {
 			return this.GetOpNaryLiteral();
 		}
+		else if (this.IsHBracketLiteral()) {
+			return this.GetHBracketLiteral();
+		}
 
 	};
 	CUnicodeParser.prototype.IsEntityLiteral = function ()
@@ -1400,7 +1402,8 @@
 			this.IsExpBracketLiteral() ||
 			this.IsNumberLiteral() ||
 			this.IsOpNaryLiteral() ||
-			this.IsTextLiteral()
+			this.IsTextLiteral() ||
+			this.IsHBracketLiteral()
 		);
 	};
 	CUnicodeParser.prototype.IsEqArrayLiteral = function ()
@@ -1477,6 +1480,10 @@
 					base: oEntity,
 					value: oDiacritic,
 				};
+			}
+			else if (this.IsHBracketLiteral())
+			{
+				return this.GetSpecialHBracket(oEntity);
 			}
 			return oEntity;
 		}
@@ -1752,10 +1759,6 @@
 				let frac = this.GetFractionLiteral(oOperandLiteral.pop());
 				oOperandLiteral.push(frac);
 			}
-		}
-		else if (this.IsHBracketLiteral() && oOperandLiteral)
-		{
-			return this.GetSpecialHBracket(oOperandLiteral);
 		}
 
 		return oOperandLiteral;
