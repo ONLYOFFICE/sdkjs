@@ -6384,7 +6384,7 @@ ContentIterator.prototype.GetNextFromCurrentElement = function (nextRule)
             let intCurrent = intCode = this.CurrentElement.GetNext();
             let strCurrent = String.fromCharCode(intCode);
 
-            if (strCurrent === "\"" || strCurrent === "\'")
+            if (this.CurrentRule !== "\"" && strCurrent === "\"")
             {
                 return this.CheckTextLiteral(strCurrent);
             }
@@ -6568,6 +6568,12 @@ ContentIterator.prototype.CheckRules = function ()
 
 		['\\frac', true, true],
 
+		[true, "'", true ],
+		[true, "′", true ],
+		[true, "″", true ],
+		[true, "‴", true ],
+		[true, "⁗", true ],
+
 		["√", true],
 		["∛", true],
 		["∜", true],
@@ -6594,19 +6600,18 @@ ContentIterator.prototype.CheckRules = function ()
 		[true, "⃛" ],
 		[true, "̄" ],
 		[true, "⃗" ],
+
 		[true, "′" ],
+		[true, "'" ],
 		[true, "″" ],
 		[true, "‴" ],
 		[true, "⁗" ],
-		[true, "′", true ],
-		[true, "″", true ],
-		[true, "‴", true ],
-		[true, "⁗", true ],
 
-		["′" ],
-		["″" ],
-		["‴" ],
-		["⁗" ],
+		["'"],
+		["′"],
+		["″"],
+		["‴"],
+		["⁗"],
 		[true],
 	];
 

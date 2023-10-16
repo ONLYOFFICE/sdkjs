@@ -320,18 +320,18 @@
 	};
 	CUnicodeParser.prototype.IsTextLiteral = function ()
 	{
-		return (this.oLookahead.data === "\"" || this.oLookahead.data === "\'") && !this.isTextLiteral
+		return (this.oLookahead.data === "\"") && !this.isTextLiteral
 	}
 	CUnicodeParser.prototype.GetTextLiteral = function ()
 	{
 		let strSymbol = this.EatToken(this.oLookahead.class);
 		let strExp = "";
 
-		while (this.oLookahead.data !== "\"" && this.oLookahead.data !== "\'" && this.oLookahead.class !== undefined) {
+		while (this.oLookahead.data !== "\"" && this.oLookahead.class !== undefined) {
 			strExp += this.EatToken(this.oLookahead.class).data;
 		}
 
-		if (this.oLookahead.data === "\"" || this.oLookahead.data === "\'" )
+		if (this.oLookahead.data === "\"")
 		{
 			this.EatToken(this.oLookahead.class);
 		}
@@ -1583,6 +1583,7 @@
 	CUnicodeParser.prototype.IsDoubleIteratorDegree = function ()
 	{
 		return this.oLookahead.data === "′"
+		|| this.oLookahead.data === "'"
 		|| this.oLookahead.data === "″"
 		|| this.oLookahead.data === "‴"
 		|| this.oLookahead.data === "⁗"

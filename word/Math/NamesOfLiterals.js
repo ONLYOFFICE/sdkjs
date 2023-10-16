@@ -604,8 +604,8 @@
 		["₎", oNamesOfLiterals.specialIndexBracketLiteral[0]],
 
 		["/", oNamesOfLiterals.overLiteral[0]], // opOpen
-		["'", MathLiterals.accent.id],
-		["''", MathLiterals.accent.id],
+		["'", MathLiterals.operators.id],
+		["''", MathLiterals.operators.id],
 		["|", oNamesOfLiterals.opOpenCloseBracket[0]],
 		["\\|", oNamesOfLiterals.opOpenCloseBracket[0]],
 
@@ -1047,7 +1047,6 @@
 		["\\bar", MathLiterals.accent.id],
 
 		["\"",  oNamesOfLiterals.charLiteral[0]],
-		["\'",  oNamesOfLiterals.charLiteral[0]],
 		["\ ",  oNamesOfLiterals.spaceLiteral[0]],
 
 		["\\quad", oNamesOfLiterals.spaceLiteral[0]], // 1 em (nominally, the height of the font)
