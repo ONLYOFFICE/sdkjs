@@ -210,6 +210,24 @@ CPDFGraphics.prototype.FillRect = function(x, y, w, h) {
     this.context.beginPath();
     this.context.fillRect(x * nScale, y * nScale, w * nScale, h * nScale);
 };
+	CPDFGraphics.prototype.DrawImageXY = function(image, dx, dy) {
+		
+		let scale       = this.GetScale();
+		let integerGrid = this.GetIntegerGrid();
+		
+		this.CheckPoint(dx, dy);
+		this.CheckPoint(dx + image.width, dy + image.height);
+		
+		dx *= scale;
+		if (integerGrid)
+			dx = dx + 0.5 >> 0;
+		
+		dy *= scale;
+		if (integerGrid)
+			dy = dy + 0.5 >> 0;
+		
+		this.context.drawImage(image, dx, dy);
+	};
 CPDFGraphics.prototype.DrawImage = function(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
     let nScale          = this.GetScale();
     let bIntegerGrid    = this.GetIntegerGrid();
