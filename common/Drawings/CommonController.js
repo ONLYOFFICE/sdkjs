@@ -1543,13 +1543,13 @@
 							}
 						}
 
-						var bStartMedia = !!(window["AscDesktopEditor"] && object.getMediaFileName());
-						if (object.canMove() || bStartMedia) {
-							if (this.isSlideShow()) {
-								if (!bStartMedia) {
-									return null;
-								}
+						let bStartMedia = !!(window["AscDesktopEditor"] && object.getMediaFileName());
+						if (this.isSlideShow()) {
+							if (!bStartMedia) {
+								return null;
 							}
+						}
+						if (object.canMove() || bStartMedia) {
 							this.checkSelectedObjectsForMove(pageIndex);
 							if (!isRealObject(group)) {
 								var bGroupSelection = AscCommon.isRealObject(this.selection.groupSelection);
