@@ -365,8 +365,9 @@
             AscCommon.History.TurnOff();
     }
 
-    window["AscPDF"].CAnnotationText = CAnnotationText;
-    window["AscPDF"].TEXT_ANNOT_STATE = TEXT_ANNOT_STATE;
+    window["AscPDF"].CAnnotationText            = CAnnotationText;
+    window["AscPDF"].TEXT_ANNOT_STATE           = TEXT_ANNOT_STATE;
+    window["AscPDF"].TEXT_ANNOT_STATE_MODEL     = TEXT_ANNOT_STATE_MODEL;
 	
 	function toBase64(str) {
 		return window.btoa(unescape(encodeURIComponent(str)));
@@ -477,5 +478,6 @@
 		UpArrow:        getSvgImage(SVG_ICON_UP_ARROW),
 		UpLeftArrow:    getSvgImage(SVG_ICON_UP_LEFT_ARROW)
 	}
+    
 })();
 
