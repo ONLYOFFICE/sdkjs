@@ -1697,15 +1697,36 @@
         return langName;
     };
 
-	function correctItemsWithData(items)
+	function correctItemsWithData(items, baseUrl)
 	{
 		for (let i = 0, itemsLen = items.length; i < itemsLen; i++)
 		{
 			if (undefined !== items[i]["id"] && undefined !== items[i]["data"])
 				items[i]["id"] = items[i]["id"] + "_oo_sep_" + items[i]["data"];
 
+			if (items[i].icons && Array.isArray(items[i].icons)) {
+				let icons = items[i].icons;
+				if (typeof icons[0] === 'string') {
+					for (let index = 0; index < icons.length; index++) {
+						icons[index] = baseUrl + icons[index];
+					}
+				} else if (typeof icons[0] === 'object') {
+					let arr = ['100%', '125%', '150%', '175%', '200%'];
+					for (let index = 0; index < icons.length; index++) {
+						let tmp = icons[index];
+						for (let j = 0; j < arr.length; j++) {
+							let icon = tmp[ arr[j] ]
+							if (icon && icon.normal) {
+								icon.normal = baseUrl + icon.normal;
+							}
+						}
+					}
+				}
+			}
+
+
 			if (items[i]["items"])
-				correctItemsWithData(items[i]["items"]);
+				correctItemsWithData(items[i]["items"], baseUrl);
 		}
 	}
 
@@ -1728,7 +1749,8 @@
 	 */
 	Api.prototype["pluginMethod_AddContextMenuItem"] = function(items)
 	{
-		if (items["items"]) correctItemsWithData(items["items"]);
+		let baseUrl = this.pluginsManager.pluginsMap[items.guid].baseUrl;
+		if (items["items"]) correctItemsWithData(items["items"], baseUrl);
 		this.onPluginAddContextMenuItem(items);
 	};
 
