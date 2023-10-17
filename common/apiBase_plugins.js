@@ -1269,8 +1269,9 @@
 			};
 		}
 		
-		const isDesktop = window["AscDesktopEditor"] !== undefined;
-		if (isDesktop)
+		// desktop detecting (it's necessary when we work with clouds into desktop)
+		const isLocal = ( (window["AscDesktopEditor"] !== undefined) && (window.location.protocol.indexOf('file') !== -1) );
+		if (isLocal)
 		{
 			// Отдаём весь конфиг, внутри вычислим путь к deploy
 			// TODO: отслеживать возможные ошибки при +/- плагинов: из ++кода отправлять статус операции и на основе его отправлять в менеджер плагинов корректный ответ.
@@ -1312,8 +1313,8 @@
 		if (this.disableCheckInstalledPlugins)
 			return;
 
-		const isDesktop = window["AscDesktopEditor"] !== undefined;
-		if (isDesktop) {
+		const isLocal = ( (window["AscDesktopEditor"] !== undefined) && (window.location.protocol.indexOf('file') !== -1) );
+		if (isLocal) {
 			// В случае Desktop не работаем с localStorage и extensions, этот метод может быть вызван из интерфейса
 			// если по какой-то причине (неактуальный cache) у пользователя есть asc_plugins_installed, asc_plugins_removed, то их нужно игнорировать/удалить
 			return;
@@ -1406,14 +1407,14 @@
 			}
 		*/
 
-		const isDesktop = window["AscDesktopEditor"] !== undefined;
+		const isLocal = ( (window["AscDesktopEditor"] !== undefined) && (window.location.protocol.indexOf('file') !== -1) );
 
 		// В случае Desktop нужно проверить какие плагины нельзя удалять. В UpdateInstallPlugins работаем с двумя типами папок.
 		// Пока проверка тут, но грамотнее будет сделать и использовать доп.свойство isSystemInstall класса CPlugin
 		// т.к. не будем лишний раз парсить папки, только при +/- плагинов.
 		let protectedPlugins = [];
 
-		if (isDesktop) {
+		if (isLocal) {
 			var _pluginsTmp = JSON.parse(window["AscDesktopEditor"]["GetInstallPlugins"]());
 
 			var len = _pluginsTmp[0]["pluginsData"].length;
@@ -1450,7 +1451,7 @@
 			});
 		}
 
-		if (isDesktop)
+		if (isLocal)
 			return returnArray;
 
 		// нужно послать и удаленные. так как удаленный может не быть в сторе. тогда его никак не установить обратно
@@ -1488,9 +1489,9 @@
 	Api.prototype["pluginMethod_RemovePlugin"] = function(guid, backup)
 	{
 		let removedPlugin = window.g_asc_plugins.unregister(guid);
-		const isDesktop = window["AscDesktopEditor"] !== undefined;
+		const isLocal = ( (window["AscDesktopEditor"] !== undefined) && (window.location.protocol.indexOf('file') !== -1) );
 
-		if (isDesktop)
+		if (isLocal)
 		{
 			// Вызываем только этот ++код, никаких дополнительных действий типа:
 			// window.g_asc_plugins.unregister(guid), window["UpdateInstallPlugins"](), this.sendEvent("asc_onPluginsReset"), window.g_asc_plugins.updateInterface()
