@@ -149,6 +149,7 @@
 			
 			"word/Editor/Paragraph/Run/FontClassification.js",
 			"word/Editor/Paragraph/Run/FontCalculator.js",
+			"word/Editor/Paragraph/Run/run-composite-input.js",
 			"word/Editor/Paragraph/Run/RunAutoCorrect.js",
 			"word/Drawing/translations.js",
 			"word/Editor/GraphicObjects/Format/ShapePrototype.js",
