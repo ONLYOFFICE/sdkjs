@@ -199,6 +199,36 @@ $(function() {
 				}
 			}
 		});
+	};
+
+	function testTrendLines(){
+		QUnit.test("Test: Trend lines slope", function(assert ) {
+
+			const chartD = new AscFormat.CChartsDrawer
+			
+			const coords = {
+				coords:
+					[
+						{xVal: 1, yVal: 2}, 
+						{xVal: 2, yVal: 3},
+						{xVal: 3, yVal: 6}, 
+						{xVal: 4, yVal: 8},
+						{xVal: 5, yVal: 10}, 
+						{xVal: 6, yVal: 12},
+					],
+				m:2.085714286,
+				b:-0.466666667
+			}
+			const results = chartD.trendline._findSuppletiables(coords)
+
+			const isEqual = function(a, b){
+				const tollerance = 0.00005;
+				return Math.abs(a - b) < tollerance;
+			}
+
+			assert.ok( isEqual(results[0], coords.m), "Passed");
+			assert.ok( isEqual(results[1], coords.b), "Passed");
+		})
 	}
 
 
@@ -208,5 +238,6 @@ $(function() {
 		QUnit.start();
 
 		testChartBaseTypes();
+		testTrendLines();
 	}
 });
