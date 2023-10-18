@@ -8593,10 +8593,14 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_openExternalReference = function(externalReference) {
+		let t = this;
 		let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
 		if (isLocalDesktop) {
 			window["AscDesktopEditor"]["openExternalReference"](externalReference.externalReference.Id, function(error) {
 				// error
+				if (Asc.c_oAscError.ID.No !== error) {
+					t.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+				}
 			});
 			return null;
 		} else {
