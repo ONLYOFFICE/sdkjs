@@ -8597,9 +8597,14 @@ var editor;
 		let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
 		if (isLocalDesktop) {
 			window["AscDesktopEditor"]["openExternalReference"](externalReference.externalReference.Id, function(error) {
-				// error
-				if (Asc.c_oAscError.ID.No !== error) {
-					t.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+				let internalError = Asc.c_oAscError.ID.No;
+				switch (error) {
+					case 0: internalError = Asc.c_oAscError.ID.ConvertationOpenError; break;
+					default: break;
+				}
+
+				if (Asc.c_oAscError.ID.No !== internalError) {
+					t.sendEvent("asc_onError", internalError, c_oAscError.Level.NoCritical);
 				}
 			});
 			return null;
