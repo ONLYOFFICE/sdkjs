@@ -8595,7 +8595,9 @@ var editor;
 	spreadsheet_api.prototype.asc_openExternalReference = function(externalReference) {
 		let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
 		if (isLocalDesktop) {
-			alert("NEED SUPPORT LOCAL OPEN FILE");
+			window["AscDesktopEditor"]["openExternalReference"](externalReference.externalReference.Id, function(error) {
+				// error
+			});
 			return null;
 		} else {
 			return externalReference;
