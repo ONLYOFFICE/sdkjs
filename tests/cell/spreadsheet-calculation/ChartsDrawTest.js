@@ -30,53 +30,53 @@
  *
  */
 QUnit.config.autostart = false;
-$(function() {
+$(function () {
 
-	Asc.spreadsheet_api.prototype._init = function() {
+	Asc.spreadsheet_api.prototype._init = function () {
 		this._loadModules();
 	};
-	Asc.spreadsheet_api.prototype._loadFonts = function(fonts, callback) {
+	Asc.spreadsheet_api.prototype._loadFonts = function (fonts, callback) {
 		callback();
 	};
-	Asc.spreadsheet_api.prototype.onEndLoadFile = function(fonts, callback) {
+	Asc.spreadsheet_api.prototype.onEndLoadFile = function (fonts, callback) {
 		openDocument();
 	};
-	AscCommonExcel.WorkbookView.prototype._calcMaxDigitWidth = function() {
+	AscCommonExcel.WorkbookView.prototype._calcMaxDigitWidth = function () {
 	};
-	AscCommonExcel.WorkbookView.prototype._canResize = function() {
-	};
-
-	AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged = function() {
-	};
-	AscCommonExcel.WorkbookView.prototype.showWorksheet = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype._init = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype.updateRanges = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype._autoFitColumnsWidth = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype.setSelection = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype.draw = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype.getZoom = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype._getPPIY = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype._getPPIX = function() {
+	AscCommonExcel.WorkbookView.prototype._canResize = function () {
 	};
 
-	AscCommonExcel.asc_CEventsController.prototype.init = function() {
+	AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged = function () {
+	};
+	AscCommonExcel.WorkbookView.prototype.showWorksheet = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._init = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype.updateRanges = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._autoFitColumnsWidth = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype.setSelection = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype.draw = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype.getZoom = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._getPPIY = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._getPPIX = function () {
+	};
+
+	AscCommonExcel.asc_CEventsController.prototype.init = function () {
 	};
 
 	AscCommon.InitBrowserInputContext = function () {
 
 	};
 
-	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {
+	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {
 		this.ImageLoader = AscCommon.g_image_loader;
 	};
 
@@ -84,7 +84,7 @@ $(function() {
 		'id-view': 'editor_sdk'
 	});
 	api.FontLoader = {
-		LoadDocumentFonts: function() {
+		LoadDocumentFonts: function () {
 			setTimeout(startTests, 0)
 		}
 	};
@@ -155,7 +155,7 @@ $(function() {
 	};
 
 	function testChartBaseTypes(doGeneratePaths) {
-		QUnit.test("Test: Base Charts Draw ", function(assert ) {
+		QUnit.test("Test: Base Charts Draw ", function (assert) {
 			let testData = [["", "2014", "2015", "2016"], ["Projected Revenue", "200", "240", "280"], ["Estimated Costs", "250", "260"]];
 			let testDataRange = new Asc.Range(0, 0, testData[0].length - 1, testData.length - 1);
 			fillData(wsData, testData, testDataRange);
@@ -201,33 +201,171 @@ $(function() {
 		});
 	};
 
-	function testTrendLines(){
-		QUnit.test("Test: Trend lines slope", function(assert ) {
+	function testTrendLines() {
+		QUnit.test("Test: Trend lines slope", function (assert) {
 
-			const chartD = new AscFormat.CChartsDrawer
-			
-			const coords = {
-				coords:
-					[
-						{xVal: 1, yVal: 2}, 
-						{xVal: 2, yVal: 3},
-						{xVal: 3, yVal: 6}, 
-						{xVal: 4, yVal: 8},
-						{xVal: 5, yVal: 10}, 
-						{xVal: 6, yVal: 12},
-					],
-				m:2.085714286,
-				b:-0.466666667
+			const trendline = AscFormat.CTrendline
+
+			const coords = [
+				{
+					coords:
+						[
+							{ xVal: 1, yVal: 4 },
+							{ xVal: 2, yVal: 6 },
+							{ xVal: 3, yVal: 3 },
+							{ xVal: 4, yVal: 7 },
+							{ xVal: 5, yVal: 8 },
+							{ xVal: 6, yVal: 9 },
+						],
+					m: 1,
+					b: 2.6667
+				},
+				{
+					coords:
+						[
+							{ xVal: 1, yVal: 5 },
+							{ xVal: 2, yVal: 15 },
+						],
+					m: 10,
+					b: -5
+				},
+				{
+					coords:
+						[
+							{ xVal: 1, yVal: -1 },
+							{ xVal: 2, yVal: -2 },
+							{ xVal: 3, yVal: -3 },
+							{ xVal: 4, yVal: -4 },
+							{ xVal: 5, yVal: -5 },
+							{ xVal: 6, yVal: -6 },
+						],
+					m: -1,
+					b: 0
+				},
+				{
+					coords:
+						[
+							{ xVal: 1, yVal: -3 },
+							{ xVal: 2, yVal: 6 },
+							{ xVal: 3, yVal: -9 },
+							{ xVal: 4, yVal: 12 },
+							{ xVal: 5, yVal: -15 },
+							{ xVal: 6, yVal: 18 },
+						],
+					m: 1.8,
+					b: -4.8
+				},
+				{
+					coords:
+						[
+							{ xVal: 1, yVal: 2 },
+							{ xVal: 2, yVal: 3 },
+							{ xVal: 3, yVal: 6 },
+							{ xVal: 4, yVal: 8 },
+							{ xVal: 5, yVal: 10 },
+							{ xVal: 6, yVal: 12 },
+						],
+					m: 2.0857,
+					b: -0.4667
+				},
+				{
+					coords:
+						[
+							{ xVal: 1, yVal: 0 },
+							{ xVal: 2, yVal: 2 },
+							{ xVal: 3, yVal: -3 },
+							{ xVal: 4, yVal: 6 },
+							{ xVal: 5, yVal: 8 },
+							{ xVal: 6, yVal: 9 },
+						],
+					m: 2.0571,
+					b: -3.5333
+				},
+				{
+					coords:
+						[
+							{ xVal: 1, yVal: 0 },
+							{ xVal: 2, yVal: 1 },
+							{ xVal: 3, yVal: 0 },
+							{ xVal: 4, yVal: 2 },
+							{ xVal: 5, yVal: 0 },
+							{ xVal: 6, yVal: 3 },
+						],
+					m: 0.4,
+					b: -0.4
+				},
+				{
+					coords:
+						[
+							{ xVal: 1, yVal: -9 },
+							{ xVal: 2, yVal: -7 },
+							{ xVal: 3, yVal: -6 },
+							{ xVal: 4, yVal: -5 },
+							{ xVal: 5, yVal: -4 },
+							{ xVal: 6, yVal: -2 },
+						],
+					m: 1.2857,
+					b: -10
+				},
+				{
+					coords:
+						[
+							{ xVal: 1, yVal: 0.1 },
+							{ xVal: 2, yVal: 0.3 },
+							{ xVal: 3, yVal: 0.2 },
+							{ xVal: 4, yVal: 0.5 },
+							{ xVal: 5, yVal: 0.7 },
+							{ xVal: 6, yVal: 0.9 },
+						],
+					m: 0.1571,
+					b: -0.1
+				},
+				{
+					coords:
+						[
+							{ xVal: 1, yVal: -0.5 },
+							{ xVal: 2, yVal: -0.4 },
+							{ xVal: 3, yVal: -0.2 },
+							{ xVal: 4, yVal: -0.1 },
+							{ xVal: 5, yVal: 0.6 },
+							{ xVal: 6, yVal: 0.9 },
+						],
+					m: 0.2886,
+					b: -0.96
+				},
+			]
+			for (let i = 0; i < coords.length; i++) {
+				const results = trendline.prototype._findSuppletiables(coords[i])
+
+				const isEqual = function (a, b) {
+
+					const first = a + ''
+					const second = b + ''
+
+					const firstLength = first.indexOf('.') == -1 ? 0 : first.length - (1 + first.indexOf('.'))
+					const secondLength = second.indexOf('.') == -1 ? 0 : second.length - (1 + second.indexOf('.'))
+
+					const min = Math.min(firstLength, secondLength)
+
+					if (firstLength != min) {
+						const num = Math.pow(10, min)
+						a = Math.round((a + Number.EPSILON) * num) / num
+					}
+
+					if (secondLength != min) {
+						const num = Math.pow(10, min)
+						b = Math.round((b + Number.EPSILON) * num) / num
+					}
+
+					//Math.round((num + Number.EPSILON) * 100) / 100
+					const tollerance = 0.00001;
+					return Math.abs(a - b) < tollerance;
+				}
+
+				assert.ok(isEqual(results[0], coords[i].m), "Problems here: " + i);
+				assert.ok(isEqual(results[1], coords[i].b), "Problems here: " + i);
+
 			}
-			const results = chartD.trendline._findSuppletiables(coords)
-
-			const isEqual = function(a, b){
-				const tollerance = 0.00005;
-				return Math.abs(a - b) < tollerance;
-			}
-
-			assert.ok( isEqual(results[0], coords.m), "Passed");
-			assert.ok( isEqual(results[1], coords.b), "Passed");
 		})
 	}
 
@@ -241,3 +379,5 @@ $(function() {
 		testTrendLines();
 	}
 });
+
+
