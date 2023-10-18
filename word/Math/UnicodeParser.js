@@ -57,7 +57,7 @@
 	CUnicodeParser.prototype.GetSpaceExitFunction = function (oFunc, oArg)
 	{
 		this.isSpaceExit = true;
-		let oContent = oFunc(oArg);
+		let oContent = oFunc.bind(this)(oArg);
 		this.isSpaceExit = false;
 
 		return oContent;
