@@ -156,6 +156,37 @@
 	{
 		return this.run;
 	};
+	RunCompositeInput.prototype.updateOnAdd = function(pos)
+	{
+		if (pos <= this.pos)
+			++this.pos;
+		else if (pos < this.pos + this.length)
+			++this.length;
+	};
+	RunCompositeInput.prototype.updateOnRemove = function(pos, count)
+	{
+		if (pos + count <= this.pos)
+		{
+			this.pos -= count;
+		}
+		else if (pos < this.pos)
+		{
+			this.pos    = pos;
+			this.length = Math.max(0, this.length - (count - (this.pos - pos)));
+		}
+		else if (pos + count < this.pos + this.length)
+		{
+			this.length = Math.max(0, this.length - count);
+		}
+		else if (pos < this.pos + this.length)
+		{
+			this.length = Math.max(0, pos - this.pos);
+		}
+	};
+	RunCompositeInput.prototype.isInside = function(pos)
+	{
+		return (pos >= this.pos && pos < this.pos + this.length);
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,6 +207,53 @@
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.RunCompositeInput = RunCompositeInput;
+	
+	/**
+	 * Old class for composite input inside run. Added to support obsolete code
+	 * @param run
+	 * @constructor
+	 */
+	function RunCompositeInput_Old(run)
+	{
+		this.Run     = run;
+		this.Pos     = run.State.ContentPos;
+		this.Length  = 0;
+		this.CanUndo = true;
+		this.Check   = true;
+	}
+	
+	RunCompositeInput_Old.prototype.updateOnAdd = function(Pos)
+	{
+		if (Pos <= this.Pos)
+			++this.Pos;
+		else if (Pos < this.Pos + this.Length)
+			++this.Length;
+	};
+	RunCompositeInput_Old.prototype.updateOnRemove = function(Pos, Count)
+	{
+		if (Pos + Count <= this.Pos)
+		{
+			this.Pos -= Count;
+		}
+		else if (Pos < this.Pos)
+		{
+			this.Pos    = Pos;
+			this.Length = Math.max(0, this.Length - (Count - (this.Pos - Pos)));
+		}
+		else if (Pos + Count < this.Pos + this.Length)
+		{
+			this.Length = Math.max(0, this.Length - Count);
+		}
+		else if (Pos < this.Pos + this.Length)
+		{
+			this.Length = Math.max(0, Pos - this.Pos);
+		}
+	};
+	RunCompositeInput_Old.prototype.isInside = function(Pos)
+	{
+		return Pos >= this.Pos && Pos < this.Pos + this.Length;
+	};
+	AscWord.RunCompositeInput_Old = RunCompositeInput_Old;
 	
 })(window);
 

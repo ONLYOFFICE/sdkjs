@@ -4463,14 +4463,7 @@ CPresentation.prototype.Begin_CompositeInput = function () {
 			return false;
 		}
 
-		this.CompositeInput = {
-			Run: oRun,
-			Pos: oRun.State.ContentPos,
-			Length: 0,
-			CanUndo: true,
-			Check: true
-		};
-
+		this.CompositeInput = new AscWord.RunCompositeInput_Old(oRun);
 		oRun.Set_CompositeInput(this.CompositeInput);
 
 		return true;

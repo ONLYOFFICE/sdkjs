@@ -12082,51 +12082,67 @@ background-repeat: no-repeat;\
 	// input
 	asc_docs_api.prototype.Begin_CompositeInput = function()
 	{
-		if (this.WordControl.m_oLogicDocument)
-			return this.WordControl.m_oLogicDocument.Begin_CompositeInput();
-		return null;
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return false;
+		
+		return logicDocument.getCompositeInput().begin();
 	};
 	asc_docs_api.prototype.Add_CompositeText = function(nCharCode)
 	{
-		if (this.WordControl.m_oLogicDocument)
-			return this.WordControl.m_oLogicDocument.Add_CompositeText(nCharCode);
-		return null;
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		return logicDocument.getCompositeInput().add(nCharCode);
 	};
 	asc_docs_api.prototype.Remove_CompositeText = function(nCount)
 	{
-		if (this.WordControl.m_oLogicDocument)
-			return this.WordControl.m_oLogicDocument.Remove_CompositeText(nCount);
-		return null;
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		return logicDocument.getCompositeInput().remove(nCount);
 	};
 	asc_docs_api.prototype.Replace_CompositeText = function(arrCharCodes)
 	{
-		if (this.WordControl.m_oLogicDocument)
-			return this.WordControl.m_oLogicDocument.Replace_CompositeText(arrCharCodes);
-		return null;
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		return logicDocument.getCompositeInput().replace(arrCharCodes);
 	};
 	asc_docs_api.prototype.Set_CursorPosInCompositeText = function(nPos)
 	{
-		if (this.WordControl.m_oLogicDocument)
-			return this.WordControl.m_oLogicDocument.Set_CursorPosInCompositeText(nPos);
-		return null;
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		return logicDocument.getCompositeInput().setPos(nPos);
 	};
 	asc_docs_api.prototype.Get_CursorPosInCompositeText = function()
 	{
-		if (this.WordControl.m_oLogicDocument)
-			return this.WordControl.m_oLogicDocument.Get_CursorPosInCompositeText();
-		return 0;
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return 0;
+		
+		return logicDocument.getCompositeInput().getPos();
 	};
 	asc_docs_api.prototype.End_CompositeInput = function()
 	{
-		if (this.WordControl.m_oLogicDocument)
-			return this.WordControl.m_oLogicDocument.End_CompositeInput();
-		return null;
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+
+		return logicDocument.getCompositeInput().end();
 	};
 	asc_docs_api.prototype.Get_MaxCursorPosInCompositeText = function()
 	{
-		if (this.WordControl.m_oLogicDocument)
-			return this.WordControl.m_oLogicDocument.Get_MaxCursorPosInCompositeText();
-		return 0;
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return 0;
+		
+		return logicDocument.getCompositeInput().getMaxPos();
 	};
 	asc_docs_api.prototype.Input_UpdatePos = function()
 	{
