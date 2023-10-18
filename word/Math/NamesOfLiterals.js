@@ -1540,7 +1540,7 @@
 					break;
 				case oNamesOfLiterals.preScriptLiteral[num]:
 					let oPreSubSup = oContext.Add_Script(
-						oTokens.up && oTokens.down,
+						true,
 						{ctrPrp: new CTextPr(), type: DEGREE_PreSubSup},
 						null,
 						null,
@@ -2047,7 +2047,7 @@
 	// Trow content and may skip bracket block
 	function UnicodeArgument (oInput, oComparison, oContext)
 	{
-		if (oInput && type === 0 && oInput.type === oComparison && oInput.left === "(" && oInput.right === ")")
+		if (oInput && type === 0 && oInput.type === oComparison && oInput.left === "(" && oInput.right === ")" && oInput.counter === 1)
 		{
 			ConvertTokens(
 				oInput.value,
