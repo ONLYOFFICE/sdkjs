@@ -1656,7 +1656,7 @@ NumFormat.prototype =
 				year = 1900;
 				dayWeek = 3;
 			}
-			else if(numberAbs === 0)
+			else if(numberAbs === 0 || (numberAbs > 0 && numberAbs < 1))
 			{
 				//TODO необходимо использовать cDate везде
 				stDate = new Asc.cDate(Date.UTC(1899,11,31,0,0,0));
@@ -1669,6 +1669,7 @@ NumFormat.prototype =
 			{
 				stDate = new Date(Date.UTC(1899,11,31,0,0,0));
 				if(d.val)
+				// setUTCDate doesn't consider the transition from 1899 to 1900 when adding d.val
 					stDate.setUTCDate( stDate.getUTCDate() + d.val );
 				day = stDate.getUTCDate();
 				dayWeek = ( stDate.getUTCDay() > 0) ? stDate.getUTCDay() - 1 : 6;

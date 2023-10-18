@@ -4181,6 +4181,7 @@ $(function () {
 	});
 
 	QUnit.test("Test: DAYS", function (assert) {
+		let array;
 		ws.getRange2("A2").setValue("12/31/2011");
 		ws.getRange2("A3").setValue("1/1/2011");
 
@@ -4204,6 +4205,171 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), -2);
 
+		ws.getRange2("B3").setValue("44229.4673611111");
+		ws.getRange2("B4").setValue("44229.46875");
+		ws.getRange2("B5").setValue("1");
+		ws.getRange2("B6").setValue("1.9");
+		ws.getRange2("B7").setValue("2.1");
+		ws.getRange2("B8").setValue("10");
+
+		oParser = new parserFormula('DAYS(B4,B3)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(B4,B3)');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Result of DAYS(B4,B3)');
+
+		oParser = new parserFormula('DAYS(B5,B8)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(B5,B8)');
+		assert.strictEqual(oParser.calculate().getValue(), -9, 'Result of DAYS(B5,B8)');
+
+		oParser = new parserFormula('DAYS(1,10)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(1,10)');
+		assert.strictEqual(oParser.calculate().getValue(), -9, 'Result of DAYS(1,10)');
+
+		oParser = new parserFormula('DAYS(B6,B8)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(B6,B8)');
+		assert.strictEqual(oParser.calculate().getValue(), -9, 'Result of DAYS(B6,B8)');
+
+		oParser = new parserFormula('DAYS(1.9,10)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(1.9,10)');
+		assert.strictEqual(oParser.calculate().getValue(), -9, 'Result of DAYS(1.9,10)');
+
+		oParser = new parserFormula('DAYS(B7,B8)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(B7,B8)');
+		assert.strictEqual(oParser.calculate().getValue(), -8, 'Result of DAYS(B7,B8)');
+
+		oParser = new parserFormula('DAYS(2.1,10)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(2.1,10)');
+		assert.strictEqual(oParser.calculate().getValue(), -8, 'Result of DAYS(2.1,10)');
+
+		oParser = new parserFormula('DAYS(2.1,10.1)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(2.1,10.1)');
+		assert.strictEqual(oParser.calculate().getValue(), -8, 'Result of DAYS(2.1,10.1)');
+
+		oParser = new parserFormula('DAYS(2.1,10.9)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(2.1,10.9)');
+		assert.strictEqual(oParser.calculate().getValue(), -8, 'Result of DAYS(2.1,10.9)');
+
+		oParser = new parserFormula('DAYS(2.1,-10.9)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(2.1,-10.9)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of DAYS(2.1,-10.9)');
+
+		oParser = new parserFormula('DAYS(-2.1,10.9)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(-2.1,10.9)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of DAYS(2.1,10.9)');
+
+		oParser = new parserFormula('DAYS(-2.1,-10.9)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(-2.1,-10.9)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of DAYS(-2.1,-10.9)');
+
+		oParser = new parserFormula('DAYS(,10.9)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(,10.9)');
+		assert.strictEqual(oParser.calculate().getValue(), -10, 'Result of DAYS(,10.9)');
+
+		oParser = new parserFormula('DAYS(2.1,)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(2.1,)');
+		assert.strictEqual(oParser.calculate().getValue(), 2, 'Result of DAYS(2.1,)');
+
+		oParser = new parserFormula('DAYS(,)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(,)');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Result of DAYS(,)');
+
+		// string
+		oParser = new parserFormula('DAYS("1","10")', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS("1","10")');
+		assert.strictEqual(oParser.calculate().getValue(), -9, 'Result of DAYS("1","10")');
+
+		oParser = new parserFormula('DAYS("1s","10")', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS("1s","10")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of DAYS("1s","10")');
+
+		oParser = new parserFormula('DAYS("1","10s")', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS("1","10s")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of DAYS("1","10s")');
+
+		// bool
+		oParser = new parserFormula('DAYS(TRUE,10)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(TRUE,10)');
+		assert.strictEqual(oParser.calculate().getValue(), -9, 'Result of DAYS(TRUE,10)');
+
+		oParser = new parserFormula('DAYS(FALSE,10)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(FALSE,10)');
+		assert.strictEqual(oParser.calculate().getValue(), -10, 'Result of DAYS(FALSE,10)');
+
+		oParser = new parserFormula('DAYS(1,TRUE)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(1,TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Result of DAYS(1,TRUE)');
+
+		oParser = new parserFormula('DAYS(1,FALSE)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(1,FALSE)');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of DAYS(1,FALSE)');
+
+		oParser = new parserFormula('DAYS(TRUE,TRUE)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(TRUE,TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), 0, 'Result of DAYS(TRUE,TRUE)');
+
+		// errors
+		ws.getRange2("B100").setValue("#N/A");
+		ws.getRange2("B101").setValue("#NUM!");
+
+		oParser = new parserFormula('DAYS(#N/A,10)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(#N/A,10)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of DAYS(#N/A,10)');
+
+		oParser = new parserFormula('DAYS(B100,10)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(B100,10)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of DAYS(B100,10)');
+
+		oParser = new parserFormula('DAYS(#N/A,#NUM!)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(#N/A,#NUM!)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of DAYS(#N/A,#NUM!)');
+
+		oParser = new parserFormula('DAYS(B100,B101)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(B100,B101)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of DAYS(B100,B101)');
+
+		oParser = new parserFormula('DAYS(#NUM!,#N/A)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(#NUM!,#N/A)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of DAYS(#NUM!,#N/A)');
+
+		oParser = new parserFormula('DAYS(B101,B100)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS(B101,B100)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of DAYS(B101,B100)');
+
+		// array
+		oParser = new parserFormula('DAYS({1;2;3},10)', "A1", ws);
+		assert.ok(oParser.parse(), 'DAYS({1;2;3},10)');
+		assert.strictEqual(oParser.calculate().getValue(), -9, 'Result of DAYS({1;2;3},10)');
+
+		oParser = new parserFormula('DAYS({1;2;3},10)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("F106:I109").bbox);
+		assert.ok(oParser.parse(), 'DAYS({1;2;3},10)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), -9, 'Result of DAYS({1;2;3},10)[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), -8, 'Result of DAYS({1;2;3},10)[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), -7, 'Result of DAYS({1;2;3},10)[2,0]');
+
+		oParser = new parserFormula('DAYS({1;2;3},{10;9;8})', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("F106:I109").bbox);
+		assert.ok(oParser.parse(), 'DAYS({1;2;3},{10;9;8})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), -9, 'Result of DAYS({1;2;3},{10;9;8})[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), -7, 'Result of DAYS({1;2;3},{10;9;8})[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), -5, 'Result of DAYS({1;2;3},{10;9;8})[2,0]');
+
+		// range
+		ws.getRange2("A25").setValue("1");
+		ws.getRange2("A26").setValue("2");
+		ws.getRange2("A27").setValue("3");
+		ws.getRange2("B25").setValue("10");
+		ws.getRange2("B26").setValue("9");
+		ws.getRange2("B27").setValue("8");
+
+		oParser = new parserFormula('DAYS(A25:A27,B25:B27)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("F106:I109").bbox);
+		assert.ok(oParser.parse(), 'DAYS(A25:A27,B25:B27)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), -9, "Result of DAYS(A25:A27,B25:B27)[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), -7, "Result of DAYS(A25:A27,B25:B27)[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), -5, "Result of DAYS(A25:A27,B25:B27)[2,0]");
 
 		testArrayFormula2(assert, "DAYS", 2, 2);
 	});

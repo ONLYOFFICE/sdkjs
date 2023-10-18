@@ -898,33 +898,29 @@
 	cDAYS.prototype.isXLFN = true;
 	cDAYS.prototype.argumentsType = [argType.number, argType.number];
 	cDAYS.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
+		let oArguments = this._prepareArguments(arg, arguments[1], true);
+		let argClone = oArguments.args;
 
-		var calulateDay = function(curArg) {
-			var val;
-			if (curArg instanceof cArray) {
+		const calulateDay = function(curArg) {
+			let val;
+			if (curArg.type === cElementType.cell || curArg.type === cElementType.cell3D) {
+				curArg = curArg.getValue();
+			} else if (curArg.type === cElementType.array) {
 				curArg = curArg.getElement(0);
-			} else if (curArg instanceof cArea || curArg instanceof cArea3D) {
-				curArg = curArg.cross(arguments[1]).tocNumber();
-				val = curArg.tocNumber().getValue();
+			} else if (curArg.type === cElementType.cellsRange || curArg.type === cElementType.cellsRange3D) {
+				curArg = curArg.cross(arguments[1]);
 			}
 
-			if (curArg instanceof cError) {
-				return curArg;
-			} else if (curArg instanceof cNumber || curArg instanceof cBool || curArg instanceof cEmpty) {
-				val = curArg.tocNumber().getValue();
-			} else if (curArg instanceof cRef || curArg instanceof cRef3D) {
-				val = curArg.getValue().tocNumber();
-				if (val instanceof cNumber || val instanceof cBool || curArg instanceof cEmpty) {
-					val = curArg.tocNumber().getValue();
-				} else {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			} else if (curArg instanceof cString) {
-				val = curArg.tocNumber();
-				if (val instanceof cError || val instanceof cEmpty) {
-					var d = new cDate(curArg.getValue());
+			val = curArg ? curArg : new cNumber(0);
+			
+			if (val.type === cElementType.error) {
+				return val;
+			} else if (val.type === cElementType.number || val.type === cElementType.bool || val.type === cElementType.empty) {
+				val = val.tocNumber().getValue();
+			} else if (val.type === cElementType.string) {
+				val = val.tocNumber();
+				if (val.type === cElementType.error || val.type === cElementType.empty) {
+					let d = new cDate(val.getValue());
 					if (isNaN(d)) {
 						return new cError(cErrorType.wrong_value_type);
 					} else {
@@ -932,24 +928,29 @@
 							( AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1) ));
 					}
 				} else {
-					val = curArg.tocNumber().getValue();
+					val = val.tocNumber().getValue();
 				}
 			}
 
 			return val;
 		};
 
-		var calulateDays = function (argArray) {
-			var val = calulateDay(argArray[0]);
-			var val1 = calulateDay(argArray[1]);
-			if(val instanceof cError) {
-				return val;
-			} else if(val1 instanceof cError) {
-				return val1;
-			} else if (val < 0 || val1 < 0) {
+		const calulateDays = function (argArray) {
+			let end_date = calulateDay(argArray[0]);
+			let start_date = calulateDay(argArray[1]);
+			if (end_date.type === cElementType.error) {
+				return end_date;
+			} else if (start_date.type === cElementType.error) {
+				return start_date;
+			}
+
+			if (end_date < 0 || start_date < 0) {
 				return new cError(cErrorType.not_numeric);
 			} else {
-				return new cNumber(val - val1);
+				let endInteger = Math.floor(end_date);
+				let startInteger = Math.floor(start_date);
+				return new cNumber(endInteger - startInteger);
+				
 			}
 		};
 
