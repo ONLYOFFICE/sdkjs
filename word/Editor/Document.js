@@ -2162,6 +2162,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
 	// Объект для составного ввода текста
 	this.CompositeInput = null;
+	this.compositeInput = null;
 
 	// Нужно ли проверять тип лока у ContentControl при проверке залоченности выделенных объектов
 	this.CheckContentControlsLock = true;
@@ -17906,6 +17907,13 @@ CDocument.prototype.HaveRevisionChanges = function(isCheckOwnChanges)
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы с составным вводом
 //----------------------------------------------------------------------------------------------------------------------
+CDocument.prototype.getCompositeInput = function()
+{
+	if (!this.compositeInput)
+		this.compositeInput = new AscWord.DocumentCompositeInput(this);
+	
+	return this.compositeInput;
+};
 /**
  * Сообщаем о начале составного ввода текста.
  * @returns {boolean} Начался или нет составной ввод.
@@ -28713,6 +28721,7 @@ window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 window['AscWord'] = window['AscWord'] || {};
 
 window['AscWord'].CDocument = CDocument;
+window['AscWord'].Document = CDocument;
 window['AscCommonWord'].CDocument = CDocument;
 window['AscCommonWord'].docpostype_Content        = docpostype_Content;
 window['AscCommonWord'].docpostype_HdrFtr         = docpostype_HdrFtr;

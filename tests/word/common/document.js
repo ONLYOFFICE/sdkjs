@@ -279,21 +279,21 @@
 		if (!logicDocument)
 			return;
 
-		logicDocument.Begin_CompositeInput();
+		logicDocument.getCompositeInput().begin();
 	}
 	function ReplaceCompositeInput(text)
 	{
 		if (!logicDocument)
 			return;
 
-		logicDocument.Replace_CompositeText(text);
+		logicDocument.getCompositeInput().replace(text);
 	}
 	function EndCompositeInput()
 	{
 		if (!logicDocument)
 			return;
 
-		logicDocument.End_CompositeInput();
+		logicDocument.getCompositeInput().end();
 	}
 	function EnterTextCompositeInput(text)
 	{

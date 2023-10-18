@@ -52,7 +52,7 @@
 		this.checkCS = false;
 	}
 	
-	RunCompositeInput.prototype.start = function(run)
+	RunCompositeInput.prototype.begin = function(run)
 	{
 		let newRun = null;
 		let checkCS = false;
@@ -125,6 +125,23 @@
 			}
 		}
 	};
+	RunCompositeInput.prototype.remove = function(count)
+	{
+		let pos = this.pos + this.length;
+		
+		count = Math.max(0, Math.min(count, this.length, this.run.GetElementsCount(), pos));
+		if (!count)
+			return;
+		
+		this.run.RemoveFromContent(pos - count, count, true);
+		this.length -= count;
+	};
+	RunCompositeInput.prototype.add = function(codePoint)
+	{
+		let runElement = AscWord.codePointToRunElement(codePoint, this.run.IsMathRun());
+		this.run.AddToContent(this.pos + this.length, runElement, true);
+		++this.length;
+	};
 	RunCompositeInput.prototype.setPos = function(pos)
 	{
 		pos = Math.max(0, Math.min(pos, this.length, this.run.GetElementsCount() - this.pos));
@@ -134,6 +151,10 @@
 	{
 		let inRunPos = this.run.State.ContentPos;
 		return Math.min(this.length, Math.max(0, inRunPos - this.pos));
+	};
+	RunCompositeInput.prototype.getRun = function()
+	{
+		return this.run;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
@@ -152,23 +173,6 @@
 		}
 		
 		this.checkCS = false;
-	};
-	RunCompositeInput.prototype.remove = function(count)
-	{
-		let pos = this.pos + this.length;
-		
-		count = Math.max(0, Math.min(count, this.length, this.run.GetElementsCount(), pos));
-		if (!count)
-			return;
-		
-		this.run.RemoveFromContent(pos - count, count, true);
-		this.length -= count;
-	};
-	RunCompositeInput.prototype.add = function(codePoint)
-	{
-		let runElement = AscWord.codePointToRunElement(codePoint, this.run.IsMathRun());
-		this.run.AddToContent(this.pos + this.length, runElement, true);
-		++this.length;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.RunCompositeInput = RunCompositeInput;
