@@ -46,7 +46,6 @@
 		this.run     = null;
 		this.pos     = 0;
 		this.length  = 0;
-		this.canUndo = true;
 		
 		this.prevRun = null;
 		this.checkCS = false;
@@ -75,7 +74,6 @@
 		this.run     = run;
 		this.pos     = run.State.ContentPos;
 		this.length  = 0;
-		this.canUndo = true;
 		this.checkCS = checkCS;
 		this.prevRun = prevRun;
 		
@@ -87,8 +85,11 @@
 			return;
 		
 		this.run.Set_CompositeInput(null);
-		this.run = null;
-		this.length = 0;
+		this.run     = null;
+		this.length  = 0;
+		this.pos     = 0;
+		this.prevRun = null;
+		this.checkCS = false;
 	};
 	RunCompositeInput.prototype.getLength = function()
 	{
