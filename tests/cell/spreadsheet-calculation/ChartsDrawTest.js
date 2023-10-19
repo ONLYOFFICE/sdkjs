@@ -201,170 +201,101 @@ $(function () {
 		});
 	};
 
+	const mappings = [
+		{
+
+		},
+		{
+
+		},
+		{
+			xVal: function (val) { return Math.log(val) },
+			yVal: function (val) { return val }
+		},
+		{
+
+		},
+		{
+
+		},
+		{
+			xVal: function (val) { return Math.log(val) },
+			yVal: function (val) { return Math.log(val) },
+			1: function (val) { return Math.exp(val) }
+		}
+	]
+
+	const data = {
+		size: 15,
+		xVals: [[1, 2, 3, 4, 5, 6], [1, 2], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6]],
+		yVals: [[4, 6, 3, 7, 8, 9], [5, 15], [-1, -2, -3, -4, -5, -6], [-3, 6, -9, 12, -15, 18], [2, 3, 6, 8, 10, 12], [0, 2, -3, 6, 8, 9], [0, 1, 0, 2, 0, 3,], [-9, -7, -6, -5, -4, -2,], [0.1, 0.3, 0.2, 0.5, 0.7, 0.9], [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9], [2, 1, 4, 3, 6, 5], [2, 8, 16, 50], [4, -6, 3, -7, 8, 10,], [5, 50, 500, 5000, 50000, 500000], [0, 2, 3, 4, 5, 0]],
+		results: [
+			[],
+			[[1, 2.6667], [10, -5], [-1, 0], [1.8, -4.8], [2.0857, -0.4667], [2.0571, -3.5333], [0.4, -0.4], [1.2857, -10], [0.1571, -0.1], [0.2886, -0.96], [0.8286, 0.6], [15.2, -19], [1.7714, -4.2], [75838, -172840], [0.2857, 1.3333]],
+			[[2.5453, 3.3757], [14.427, 5], [-2.732, -0.5044], [4.1668, -3.0691], [5.6474, 0.6407], [5.1404, -1.97], [1.0302, -0.1296], [3.5479, -9.3905], [0.4096, 0.0008], [0.735, -0.756], [2.202, 1.0854], [29.565, -4.4898], [3.2191, -1.5299], [170659, -94542], [1.3313, 0.8735]],
+			[],
+			[],
+			[[0.4178, 3.6391], [1.585, 5], [], [], [1.0529, 1.799], [], [], [], [1.1616, 0.0984], [], [0.7283, 1.347], [2.2106, 1.8367], [], [6.2903, 1.5974], []],
+		]
+	}
 	function testTrendLines() {
 		QUnit.test("Test: Trend lines slope", function (assert) {
 
 			const trendline = AscFormat.CTrendline
 
-			const coords = [
-				{
-					coords:
-						[
-							{ xVal: 1, yVal: 4 },
-							{ xVal: 2, yVal: 6 },
-							{ xVal: 3, yVal: 3 },
-							{ xVal: 4, yVal: 7 },
-							{ xVal: 5, yVal: 8 },
-							{ xVal: 6, yVal: 9 },
-						],
-					m: 1,
-					b: 2.6667
-				},
-				{
-					coords:
-						[
-							{ xVal: 1, yVal: 5 },
-							{ xVal: 2, yVal: 15 },
-						],
-					m: 10,
-					b: -5
-				},
-				{
-					coords:
-						[
-							{ xVal: 1, yVal: -1 },
-							{ xVal: 2, yVal: -2 },
-							{ xVal: 3, yVal: -3 },
-							{ xVal: 4, yVal: -4 },
-							{ xVal: 5, yVal: -5 },
-							{ xVal: 6, yVal: -6 },
-						],
-					m: -1,
-					b: 0
-				},
-				{
-					coords:
-						[
-							{ xVal: 1, yVal: -3 },
-							{ xVal: 2, yVal: 6 },
-							{ xVal: 3, yVal: -9 },
-							{ xVal: 4, yVal: 12 },
-							{ xVal: 5, yVal: -15 },
-							{ xVal: 6, yVal: 18 },
-						],
-					m: 1.8,
-					b: -4.8
-				},
-				{
-					coords:
-						[
-							{ xVal: 1, yVal: 2 },
-							{ xVal: 2, yVal: 3 },
-							{ xVal: 3, yVal: 6 },
-							{ xVal: 4, yVal: 8 },
-							{ xVal: 5, yVal: 10 },
-							{ xVal: 6, yVal: 12 },
-						],
-					m: 2.0857,
-					b: -0.4667
-				},
-				{
-					coords:
-						[
-							{ xVal: 1, yVal: 0 },
-							{ xVal: 2, yVal: 2 },
-							{ xVal: 3, yVal: -3 },
-							{ xVal: 4, yVal: 6 },
-							{ xVal: 5, yVal: 8 },
-							{ xVal: 6, yVal: 9 },
-						],
-					m: 2.0571,
-					b: -3.5333
-				},
-				{
-					coords:
-						[
-							{ xVal: 1, yVal: 0 },
-							{ xVal: 2, yVal: 1 },
-							{ xVal: 3, yVal: 0 },
-							{ xVal: 4, yVal: 2 },
-							{ xVal: 5, yVal: 0 },
-							{ xVal: 6, yVal: 3 },
-						],
-					m: 0.4,
-					b: -0.4
-				},
-				{
-					coords:
-						[
-							{ xVal: 1, yVal: -9 },
-							{ xVal: 2, yVal: -7 },
-							{ xVal: 3, yVal: -6 },
-							{ xVal: 4, yVal: -5 },
-							{ xVal: 5, yVal: -4 },
-							{ xVal: 6, yVal: -2 },
-						],
-					m: 1.2857,
-					b: -10
-				},
-				{
-					coords:
-						[
-							{ xVal: 1, yVal: 0.1 },
-							{ xVal: 2, yVal: 0.3 },
-							{ xVal: 3, yVal: 0.2 },
-							{ xVal: 4, yVal: 0.5 },
-							{ xVal: 5, yVal: 0.7 },
-							{ xVal: 6, yVal: 0.9 },
-						],
-					m: 0.1571,
-					b: -0.1
-				},
-				{
-					coords:
-						[
-							{ xVal: 1, yVal: -0.5 },
-							{ xVal: 2, yVal: -0.4 },
-							{ xVal: 3, yVal: -0.2 },
-							{ xVal: 4, yVal: -0.1 },
-							{ xVal: 5, yVal: 0.6 },
-							{ xVal: 6, yVal: 0.9 },
-						],
-					m: 0.2886,
-					b: -0.96
-				},
-			]
-			for (let i = 0; i < coords.length; i++) {
-				const results = trendline.prototype._findSuppletiables(coords[i])
+			assert.ok(data.xVals.length, data.size, "xVals are inconsistent")
+			assert.ok(data.yVals.length, data.size, "yVals are inconsistent")
+			assert.ok(data.results[1].length, data.size, "Linear trendline results are inconsistent")
+			assert.ok(data.results[2].length, data.size, "Logarithmic trendline results are inconsistent")
+			assert.ok(data.results[5].length, data.size, "Power trendline results are inconsistent")
 
-				const isEqual = function (a, b) {
+			const copyArr = function (arr, size) {
+				const result = []
+				for (let i = 0; i < size; i++) {
+					result.push(arr[i]);
+				}
+				return result
+			}
 
-					const first = a + ''
-					const second = b + ''
+			const isEqual = function (a, b) {
 
-					const firstLength = first.indexOf('.') == -1 ? 0 : first.length - (1 + first.indexOf('.'))
-					const secondLength = second.indexOf('.') == -1 ? 0 : second.length - (1 + second.indexOf('.'))
+				const first = a + ''
+				const second = b + ''
 
-					const min = Math.min(firstLength, secondLength)
+				const firstLength = first.indexOf('.') == -1 ? 0 : first.length - (1 + first.indexOf('.'))
+				const secondLength = second.indexOf('.') == -1 ? 0 : second.length - (1 + second.indexOf('.'))
 
-					if (firstLength != min) {
-						const num = Math.pow(10, min)
-						a = Math.round((a + Number.EPSILON) * num) / num
-					}
+				const min = Math.min(firstLength, secondLength)
 
-					if (secondLength != min) {
-						const num = Math.pow(10, min)
-						b = Math.round((b + Number.EPSILON) * num) / num
-					}
-
-					//Math.round((num + Number.EPSILON) * 100) / 100
-					const tollerance = 0.00001;
-					return Math.abs(a - b) < tollerance;
+				if (firstLength != min) {
+					const num = Math.pow(10, min)
+					a = Math.round((a + Number.EPSILON) * num) / num
 				}
 
-				assert.ok(isEqual(results[0], coords[i].m), "Problems here: " + i);
-				assert.ok(isEqual(results[1], coords[i].b), "Problems here: " + i);
+				if (secondLength != min) {
+					const num = Math.pow(10, min)
+					b = Math.round((b + Number.EPSILON) * num) / num
+				}
 
+				//Math.round((num + Number.EPSILON) * 100) / 100
+				const tollerance = 0.00001;
+				return Math.abs(a - b) < tollerance;
+			}
+
+			for (let i = 0; i < data.size; i++) {
+				for (let j = 0; j < mappings.length; j++) {
+
+					if (data.results[j].length == 0 || data.results[j][i].length == 0) {
+						continue;
+					}
+					const size = data.xVals[i].length;
+					const xVals = copyArr(data.xVals[i], size);
+					const yVals = copyArr(data.yVals[i], size);
+					const results = trendline.prototype._findSuppletiables(size, xVals, yVals, mappings[j])
+
+					assert.ok(isEqual(results[0], data.results[j][i][0]), "The data results at " + j + " / " + i + " / " + 0 + " after mapping at " + j + " is not equal to the expected results" + "/ expected slope:" + results[0] + ', got:' + data.results[j][i][0]);
+					assert.ok(isEqual(results[1], data.results[j][i][1]), "The data results at " + j + " / " + i + " / " + 1 + " after mapping at " + j + " is not equal to the expected results" + "/ expected b:" + results[1] + ', got:' + data.results[j][i][1]);
+				}
 			}
 		})
 	}

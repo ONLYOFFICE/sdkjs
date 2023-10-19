@@ -16130,10 +16130,11 @@ CColorObj.prototype =
 				this.coordinates[oSeries.parent.Id] = {};
 			}
 			if (!this.coordinates[oSeries.parent.Id][oSeries.Id]) {
-				this.coordinates[oSeries.parent.Id][oSeries.Id] = { coords: [], path: [] };
+				this.coordinates[oSeries.parent.Id][oSeries.Id] = { coords: {xVals:[], yVals:[]}, path: [] };
 			}
-	
-			this.coordinates[oSeries.parent.Id][oSeries.Id].coords.push({ xVal: xVal + 1, yVal: yVal });
+			
+			this.coordinates[oSeries.parent.Id][oSeries.Id].coords.xVals.push(xVal + 1);
+			this.coordinates[oSeries.parent.Id][oSeries.Id].coords.yVals.push(yVal);
 		},
 	
 		recalculate: function (charts) {
@@ -16169,12 +16170,18 @@ CColorObj.prototype =
 			return types[type]
 		},
 	
-		_findSuppletiables: function (coordinates, mapping) {
+		_findSuppletiables: function (size, xVals, yVals, mapping) {
+
+			const _mapper = function(prop, obj, index){
+				if(mapping.hasOwnProperty(prop)){
+					obj[index] = mapping[prop](obj[index])
+				}
+			}
 
 			const _mapCoordinates = function(){
-				for(let i=0; i<coordinates.coords.length; i++){
-					coordinates.coords[i].xVal = mapping.x(coordinates.coords[i].xVal)
-					coordinates.coords[i].yVal = mapping.y(coordinates.coords[i].yVal)
+				for(let i=0; i<size; i++){
+					_mapper('xVal', xVals, i)
+					_mapper('yVal', yVals, i)
 				}
 			}
 
@@ -16184,24 +16191,21 @@ CColorObj.prototype =
 			const _findMeans = function () {
 				let _meanY = 0;
 				let _meanX = 0;
-				const _n2 = coordinates.coords.length;
-				for (let j = 0; j < _n2; j++) {
-					_meanX += coordinates.coords[j].xVal;
-					_meanY += coordinates.coords[j].yVal;
+				for (let i = 0; i < size; i++) {
+					_meanX += xVals[i];
+					_meanY += yVals[i];
 				}
-				return [_meanX / _n2, _meanY / _n2];
+				return [_meanX / size, _meanY / size];
 			};
 	
 			const _calculateM = function (means) {
-				const _n2 = coordinates.coords.length;
 				let Sxx = 0;
 				let Sxy = 0;
-				for (let j = 0; j < _n2; j++) {
-					Sxx += (coordinates.coords[j].xVal - means[0]) * (coordinates.coords[j].xVal - means[0]);
-					Sxy += (coordinates.coords[j].xVal - means[0]) * (coordinates.coords[j].yVal - means[1]);
+				for (let i = 0; i < size; i++) {
+					Sxx += (xVals[i] - means[0]) * (xVals[i] - means[0]);
+					Sxy += (xVals[i] - means[0]) * (yVals[i] - means[1]);
 				}
 				return [Sxy / Sxx];
-	
 			};
 	
 			const _calculateB = function (letiables, means) {
@@ -16212,7 +16216,10 @@ CColorObj.prototype =
 			let means = _findMeans();
 			let letiables = _calculateM(means);
 			_calculateB(letiables, means);
-	
+			
+			_mapper(0, letiables, 0)
+			_mapper(1, letiables, 1)
+
 			return letiables;
 		},
 	
@@ -16266,11 +16273,7 @@ CColorObj.prototype =
 		},
 	
 		calculateNormal: function (coordinates, cChartDrawer, xAxis, yAxis, _findSuppletiables) {
-			const mapping = {
-				x: function (val) { return val }, 
-				y: function (val) { return val }
-			}
-			let chartletiables = _findSuppletiables(coordinates, mapping);
+			let chartletiables = _findSuppletiables(coordinates.coords.xVals.length, coordinates.coords.xVals, coordinates.coords.yVals, {});
 	
 			let pathH = cChartDrawer.calcProp.pathH;
 			let pathW = cChartDrawer.calcProp.pathW;
@@ -16310,11 +16313,7 @@ CColorObj.prototype =
 		},
 	
 		calculateLog: function (coordinates, cChartDrawer, xAxis, yAxis, _findSuppletiables) {
-			const mapping = {
-				x: function (val) { return val }, 
-				y: function (val) { return val }
-			}
-			let chartletiables = _findSuppletiables(coordinates, mapping);
+			let chartletiables = _findSuppletiables(coordinates.coords.xVals.length, coordinates.coords.xVals, coordinates.coords.yVals, {});
 			let pathH = cChartDrawer.calcProp.pathH;
 			let pathW = cChartDrawer.calcProp.pathW;
 	
@@ -16406,10 +16405,10 @@ CColorObj.prototype =
 	
 		calculateNormal: function (coordinates, cChartDrawer, xAxis, yAxis, _findSuppletiables) {
 			const mapping = {
-				x: function (val) { return Math.log(val) }, 
-				y: function (val) { return val }
+				xVal: function (val) { return Math.log(val) }, 
+				yVal: function (val) { return val }
 			}
-			let chartletiables = _findSuppletiables(coordinates, mapping);
+			let chartletiables = _findSuppletiables(coordinates.coords.xVals.length, coordinates.coords.xVals, coordinates.coords.yVals, mapping);
 			let pathH = cChartDrawer.calcProp.pathH;
 			let pathW = cChartDrawer.calcProp.pathW;
 	
@@ -16481,10 +16480,10 @@ CColorObj.prototype =
 		calculateLog: function (coordinates, cChartDrawer, xAxis, yAxis, _findSuppletiables) {
 			const mapping = {
 				// if dot is used, change mapping!
-				x: function (val) { return Math.log(val) }, 
-				y: function (val) { return val }
+				xVal: function (val) { return Math.log(val) }, 
+				yVal: function (val) { return val }
 			}
-			let chartletiables = _findSuppletiables(coordinates, mapping);
+			let chartletiables = _findSuppletiables(coordinates.coords.xVals.length, coordinates.coords.xVals, coordinates.coords.yVals, mapping);
 			let pathH = cChartDrawer.calcProp.pathH;
 			let pathW = cChartDrawer.calcProp.pathW;
 	
@@ -16601,10 +16600,10 @@ CColorObj.prototype =
 	
 		calculateDotted: function (coordinates, cChartDrawer, xAxis, yAxis, _findSuppletiables) {
 			const mapping = {
-				x: function (val) { return Math.log(val) }, 
-				y: function (val) { return val }
+				xVal: function (val) { return Math.log(val) }, 
+				yVal: function (val) { return val }
 			}
-			let chartletiables = _findSuppletiables(coordinates, mapping);
+			let chartletiables = _findSuppletiables(coordinates.coords.xVals.length, coordinates.coords.xVals, coordinates.coords.yVals, mapping);
 			let pathH = cChartDrawer.calcProp.pathH;
 			let pathW = cChartDrawer.calcProp.pathW;
 	
@@ -16684,10 +16683,10 @@ CColorObj.prototype =
 	
 		calculateNormal: function (coordinates, cChartDrawer, xAxis, yAxis, _findSuppletiables) {
 			const mapping = {
-				x: function (val) { return Math.log(val) }, 
-				y: function (val) { return Math.log(val) }
+				xVal: function (val) { return Math.log(val) }, 
+				yVal: function (val) { return Math.log(val) }
 			}
-			let chartletiables = _findSuppletiables(coordinates, mapping);
+			let chartletiables = _findSuppletiables(coordinates.coords.xVals.length, coordinates.coords.xVals, coordinates.coords.yVals, mapping);
 
 			let pathH = cChartDrawer.calcProp.pathH;
 			let pathW = cChartDrawer.calcProp.pathW;
@@ -16762,10 +16761,10 @@ CColorObj.prototype =
 	
 		calculateDotted: function (coordinates, cChartDrawer, xAxis, yAxis, _findSuppletiables) {
 			const mapping = {
-				x: function (val) { return Math.log(val) }, 
-				y: function (val) { return Math.log(val) }
+				xVal: function (val) { return Math.log(val) }, 
+				yVal: function (val) { return Math.log(val) },
 			}
-			let chartletiables = _findSuppletiables(coordinates, mapping);
+			let chartletiables = _findSuppletiables(coordinates.coords.xVals.length, coordinates.coords.xVals, coordinates.coords.yVals, mapping);
 			let pathH = cChartDrawer.calcProp.pathH;
 			let pathW = cChartDrawer.calcProp.pathW;
 	
