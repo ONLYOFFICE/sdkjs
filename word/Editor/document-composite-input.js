@@ -120,8 +120,7 @@
 		this.document.private_UpdateCursorXY(true, true);
 		
 		// TODO: In some cases underline of composite input isn't automatically cleared
-		this.DrawingDocument.ClearCachePages();
-		this.DrawingDocument.FirePaint();
+		this.document.Redraw();
 		
 		this.inUse = false;
 	};
