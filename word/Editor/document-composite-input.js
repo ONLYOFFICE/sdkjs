@@ -46,6 +46,10 @@
 		this.inUse          = false;
 	}
 	
+	DocumentCompositeInput.prototype.isInProgress = function()
+	{
+		return this.inUse;
+	};
 	DocumentCompositeInput.prototype.begin = function()
 	{
 		if (this.inUse)
@@ -59,10 +63,6 @@
 		
 		if (document.IsDrawingSelected())
 			document.GetDrawingObjects.CreateDocContent();
-		
-		// Надо ли ?
-		// this.DrawingDocument.TargetStart();
-		// this.DrawingDocument.TargetShow();
 		
 		document.RemoveBeforePaste();
 		let paragraph = document.GetCurrentParagraph();
@@ -90,7 +90,7 @@
 			result = false;
 		}
 		
-		//document.UpdateSelection();
+		document.UpdateSelection();
 		document.FinalizeAction(false);
 		return this.inUse = result;
 	};
@@ -102,7 +102,7 @@
 		this.validateInput();
 		this.compositeInput.end();
 		
-		// Зачем это тут?
+		// Why is this here?
 		// var oController = this.DrawingObjects;
 		// if(oController)
 		// {
@@ -114,13 +114,15 @@
 		// 	}
 		// }
 		
-		// Обновление интерфейса здесь обязательно, т.к. на нем должно сработать Api.CheckChangedDocument
+		// UpdateInterface is necessary here since we need to fire the Api.CheckChangedDocument event
+		// This event was blocked util the end of the composite input
 		this.document.UpdateInterface();
 		this.document.private_UpdateCursorXY(true, true);
 		
-		// Нужно ли?
-		// this.DrawingDocument.ClearCachePages();
-		// this.DrawingDocument.FirePaint();
+		// TODO: In some cases underline of composite input isn't automatically cleared
+		this.DrawingDocument.ClearCachePages();
+		this.DrawingDocument.FirePaint();
+		
 		this.inUse = false;
 	};
 	DocumentCompositeInput.prototype.replace = function(codePoints)
@@ -167,6 +169,15 @@
 			return 0;
 		
 		return this.compositeInput.getLength();
+	};
+	DocumentCompositeInput.prototype.checkState = function()
+	{
+		if (!this.inUse)
+			return;
+		
+		let run = this.compositeInput.getRun();
+		if (!run.IsUseInDocument())
+			AscCommon.g_inputContext.externalEndCompositeInput();
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
