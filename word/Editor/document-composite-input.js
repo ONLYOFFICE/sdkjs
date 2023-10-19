@@ -62,7 +62,7 @@
 		document.StartAction(AscDFH.historydescription_Document_CompositeInput);
 		
 		if (document.IsDrawingSelected())
-			document.GetDrawingObjects.CreateDocContent();
+			document.GetDrawingObjects().CreateDocContent();
 		
 		document.RemoveBeforePaste();
 		let paragraph = document.GetCurrentParagraph();
@@ -101,18 +101,6 @@
 		
 		this.validateInput();
 		this.compositeInput.end();
-		
-		// Why is this here?
-		// var oController = this.DrawingObjects;
-		// if(oController)
-		// {
-		// 	var oTargetTextObject = AscFormat.getTargetTextObject(oController);
-		// 	if(oTargetTextObject && oTargetTextObject.txWarpStructNoTransform)
-		// 	{
-		// 		oTargetTextObject.recalcInfo.recalculateTxBoxContent = true;
-		// 		oTargetTextObject.recalculateText();
-		// 	}
-		// }
 		
 		// UpdateInterface is necessary here since we need to fire the Api.CheckChangedDocument event
 		// This event was blocked util the end of the composite input
@@ -206,8 +194,6 @@
 		
 		actionFunc();
 		
-		// Зачем это тут?
-		document.CheckCurrentTextObjectExtends();
 		document.Recalculate();
 		document.UpdateSelection();
 		document.UpdateUndoRedo();

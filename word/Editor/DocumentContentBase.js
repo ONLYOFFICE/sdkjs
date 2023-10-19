@@ -2473,6 +2473,14 @@ CDocumentContentBase.prototype.OnContentChange = function()
 {
 	if (this.Parent && this.Parent.OnContentChange)
 		this.Parent.OnContentChange();
+	
+	let shape = this.Is_DrawingShape(true);
+	if (shape
+		&& this.GetLogicDocument()
+		&& this.GetLogicDocument().IsDocumentEditor())
+	{
+		this.GetLogicDocument().CheckShapeAutoFit(shape);
+	}
 };
 
 CDocumentContentBase.prototype.GetCalculatedTextPr = function()

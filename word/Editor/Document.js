@@ -2779,7 +2779,9 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 
 			if (this.Action.Additional.FormAutoFit)
 				this.private_FinalizeFormAutoFit(nRecalcResult & document_recalcresult_FastFlag);
-
+			
+			if (this.Action.Additional.ShapeAutoFit)
+				this.private_FinalizeShapeAutoFit();
 		}
 		else if (undefined !== this.Action.Redraw.Start && undefined !== this.Action.Redraw.End)
 		{
@@ -3047,6 +3049,11 @@ CDocument.prototype.private_FinalizeFormAutoFit = function(isFastRecalc)
 
 	if (this.Action.Additional.FormAutoFit.length)
 		this.Action.Recalculate = true;
+};
+CDocument.prototype.private_FinalizeShapeAutoFit = function()
+{
+	this.CheckCurrentTextObjectExtends();
+	this.Action.Recalculate = true
 };
 CDocument.prototype.private_FinalizeRadioRequired = function()
 {
@@ -24873,6 +24880,14 @@ CDocument.prototype.CheckFormAutoFit = function(oForm)
 		this.Action.Additional.FormAutoFit = [];
 
 	this.Action.Additional.FormAutoFit.push(oForm);
+};
+/**
+ * Сообщаем, что в конце действия нужно будет проверить размер текущей автофигуры
+ */
+CDocument.prototype.CheckShapeAutoFit = function(shape)
+{
+	if (!this.Action.Additional.ShapeAutoFit)
+		this.Action.Additional.ShapeAutoFit = true;
 };
 /**
  * Выставляем настройку выделять знак параграфа, когда выделено все его содержимое
