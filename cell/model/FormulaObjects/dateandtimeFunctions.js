@@ -1078,19 +1078,18 @@
 			return arg1;
 		}
 
-		let addedMonths = arg1.getValue();
-		if (addedMonths === 0) {
-			return arg0;
-		}
-		let val = arg0.getValue(), date, _date;
+		let val = arg0.getValue(), addedMonths = arg1.getValue(), date, _date;
 		let now = new cDate();
+
+		let offsetInMinutes = now.getTimezoneOffset();
+		let offsetInHours = (offsetInMinutes / 60) * -1;
+		let UTCshift = offsetInHours >= 0 ? 1 : 0;
 
 		if (val < 0) {
 			return new cError(cErrorType.not_numeric);
+		} else if (addedMonths === 0) {
+			return arg0;
 		} else if (!AscCommon.bDate1904) {
-			let offsetInMinutes = now.getTimezoneOffset();
-			let offsetInHours = (offsetInMinutes / 60) * -1;
-			let UTCshift = offsetInHours >= 0 ? 1 : 0;
 			if (val < 60) {
 				val = new cDate((Math.floor(val) - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
 			} else if (val === 60) {
@@ -1136,6 +1135,10 @@
 		let res = Math.floor(( val.getTime() / 1000 - val.getTimezoneOffset() * 60 ) / c_sPerDay + (AscCommonExcel.c_DateCorrectConst + 1));
 		if (res < 0) {
 			return new cError(cErrorType.not_numeric);
+		}
+		// shift for 1904 mode
+		if (AscCommon.bDate1904) {
+			res -= 1;
 		}
 
 		return new cNumber(res);
