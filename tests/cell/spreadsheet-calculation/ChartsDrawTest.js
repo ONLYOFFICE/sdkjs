@@ -618,6 +618,84 @@ $(function () {
 		})
 	}
 
+	function testExponentialTrendLineEquation() {
+		QUnit.test("Test: Exponential trendlines slope", function (assert) {
+
+			const trendline = AscFormat.CTrendline
+
+			let size = 6;
+			let xVals = [1, 2, 3, 4, 5, 6];
+			let yVals = [4, 6, 3, 7, 8, 9];
+			let m = 0.1647;
+			let b = 3.2329;
+			let results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP)
+
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 2;
+			xVals = [1, 2];
+			yVals = [5, 15];
+			m = 1.0986;
+			b = 1.6667;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP)
+
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [2, 3, 6, 8, 10, 12];
+			m = 0.3674;
+			b = 1.5776;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP)
+
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
+			m = 0.4127;
+			b = 0.0829;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP)
+
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [2, 1, 4, 3, 6, 5];
+			m = 0.2763;
+			b = 1.1384;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP)
+
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 4;
+			xVals = [1, 2, 3, 4];
+			yVals = [2, 8, 16, 50];
+			m = 1.035;
+			b = 0.8;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP)
+
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [5, 50, 500, 5000, 50000, 500000];
+			m = 2.3026;
+			b = 0.5;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP)
+
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+		})
+	}
+
 
 	QUnit.module("ChartsDraw");
 
@@ -628,5 +706,6 @@ $(function () {
 		testLinearTrendLineEquation();
 		testLogarithmicTrendLineEquation();
 		testPowerTrendLineEquation();
+		testExponentialTrendLineEquation();
 	}
 });
