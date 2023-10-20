@@ -673,6 +673,9 @@
 		if (!this.compositeInput)
 			return;
 		
+		// TODO: As a result, we have two history points here if the text was selected before input
+		//       To avoid this, we need to fix the issue with restoring a selection on undo or we should save the
+		//       selection positions when composite input begins
 		let codePoints = this.compositeInput.getCodePoints();
 		this.compositeInput.end();
 		this.compositeInput = null;
@@ -684,6 +687,26 @@
 		
 		this.EnterText(codePoints);
 	};
+	CTextField.prototype.addCompositeText = function(codePoint) {
+		if (!this.compositeInput)
+			return;
+		
+		this.CreateNewHistoryPoint(true);
+		this.compositeReplaceCount++;
+		this.compositeInput.add(codePoint);
+		this.SetNeedRecalc(true);
+		this.AddToRedraw();
+	};
+	CTextField.prototype.removeCompositeText = function(count) {
+		if (!this.compositeInput)
+			return;
+		
+		this.CreateNewHistoryPoint(true);
+		this.compositeReplaceCount++;
+		this.compositeInput.remove(count);
+		this.SetNeedRecalc(true);
+		this.AddToRedraw();
+	};
 	CTextField.prototype.replaceCompositeText = function(codePoints) {
 		if (!this.compositeInput)
 			return;
@@ -693,6 +716,22 @@
 		this.compositeInput.replace(codePoints);
 		this.SetNeedRecalc(true);
 		this.AddToRedraw();
+	};
+	CTextField.prototype.setPosInCompositeInput = function(pos) {
+		if (this.compositeInput)
+			this.compositeInput.setPos(pos);
+	};
+	CTextField.prototype.getPosInCompositeInput = function(pos) {
+		if (this.compositeInput)
+			return this.compositeInput.getPos(pos);
+		
+		return 0;
+	};
+	CTextField.prototype.getMaxPosInCompositeInput = function() {
+		if (this.compositeInput)
+			return this.compositeInput.getLength();
+		
+		return 0;
 	};
     /**
 	 * Checks is text in form is out of form bounds.

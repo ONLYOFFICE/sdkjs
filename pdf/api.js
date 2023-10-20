@@ -503,29 +503,63 @@
 		begin();
 		return true;
 	};
-	PDFEditorApi.prototype.Replace_CompositeText = function(codePoints)
-	{
-		let viewer = this.DocumentRenderer;
-		if (!viewer)
+	PDFEditorApi.prototype.Add_CompositeText = function(codePoint) {
+		let form = this._getActiveForm();
+		if (!form || !form.IsEditable())
 			return;
 		
-		let pdfDoc = viewer.getPDFDoc();
-		if (!pdfDoc.activeForm || !pdfDoc.activeForm.IsEditable())
+		form.addCompositeText(codePoint);
+	};
+	PDFEditorApi.prototype.Remove_CompositeText = function(count) {
+		let form = this._getActiveForm();
+		if (!form || !form.IsEditable())
 			return;
 		
-		pdfDoc.activeForm.replaceCompositeText(codePoints);
+		form.removeCompositeText(count);
+	};
+	PDFEditorApi.prototype.Replace_CompositeText = function(codePoints) {
+		let form = this._getActiveForm();
+		if (!form || !form.IsEditable())
+			return;
+		
+		form.replaceCompositeText(codePoints);
 	};
 	PDFEditorApi.prototype.End_CompositeInput = function()
 	{
+		let form = this._getActiveForm();
+		if (!form || !form.IsEditable())
+			return;
+		
+		form.endCompositeInput();
+	};
+	PDFEditorApi.prototype.Set_CursorPosInCompositeText = function(pos) {
+		let form = this._getActiveForm();
+		if (!form || !form.IsEditable())
+			return;
+		
+		form.setPosInCompositeInput(pos);
+	};
+	PDFEditorApi.prototype.Get_CursorPosInCompositeText = function() {
+		let form = this._getActiveForm();
+		if (!form || !form.IsEditable())
+			return 0;
+		
+		return form.getPosInCompositeInput();
+	};
+	PDFEditorApi.prototype.Get_MaxCursorPosInCompositeText = function() {
+		let form = this._getActiveForm();
+		if (!form || !form.IsEditable())
+			return 0;
+		
+		return form.getMaxPosInCompositeInput();
+	};
+	PDFEditorApi.prototype._getActiveForm = function() {
 		let viewer = this.DocumentRenderer;
 		if (!viewer)
-			return;
+			return null;
 		
 		let pdfDoc = viewer.getPDFDoc();
-		if (!pdfDoc.activeForm || !pdfDoc.activeForm.IsEditable())
-			return;
-		
-		pdfDoc.activeForm.endCompositeInput();
+		return pdfDoc.activeForm;
 	};
 
 
