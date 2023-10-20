@@ -371,10 +371,6 @@
 		}
 		
 		oDoc.activeForm.EnterText(text);
-		if (viewer.pagesInfo.pages[oDoc.activeForm._page].needRedrawForms) {
-			viewer._paint();
-			viewer.onUpdateOverlay();
-		}
 		
 		this.WordControl.m_oDrawingDocument.TargetStart();
 		// Чтобы при зажатой клавише курсор не пропадал
@@ -486,7 +482,52 @@
 		if (!bIsFreeze)
 			this.WordControl.OnScroll();
 	};
-	
+	// composite input
+	PDFEditorApi.prototype.Begin_CompositeInput = function()
+	{
+		let viewer = this.DocumentRenderer;
+		if (!viewer)
+			return false;
+		
+		let pdfDoc = viewer.getPDFDoc();
+		if (!pdfDoc.activeForm || !pdfDoc.activeForm.IsEditable())
+			return false;
+		
+		function begin() {
+			pdfDoc.activeForm.beginCompositeInput();
+		}
+		
+		if (!pdfDoc.checkDefaultFieldFonts(begin))
+			return true;
+		
+		begin();
+		return true;
+	};
+	PDFEditorApi.prototype.Replace_CompositeText = function(codePoints)
+	{
+		let viewer = this.DocumentRenderer;
+		if (!viewer)
+			return;
+		
+		let pdfDoc = viewer.getPDFDoc();
+		if (!pdfDoc.activeForm || !pdfDoc.activeForm.IsEditable())
+			return;
+		
+		pdfDoc.activeForm.replaceCompositeText(codePoints);
+	};
+	PDFEditorApi.prototype.End_CompositeInput = function()
+	{
+		let viewer = this.DocumentRenderer;
+		if (!viewer)
+			return;
+		
+		let pdfDoc = viewer.getPDFDoc();
+		if (!pdfDoc.activeForm || !pdfDoc.activeForm.IsEditable())
+			return;
+		
+		pdfDoc.activeForm.endCompositeInput();
+	};
+
 
 	// for comments
 	PDFEditorApi.prototype.can_AddQuotedComment = function()
