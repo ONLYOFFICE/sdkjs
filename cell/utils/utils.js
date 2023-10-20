@@ -3456,6 +3456,10 @@
 			return this.isLeapYear() ? this.getDaysInMonth.L[this.getUTCMonth()] : this.getDaysInMonth.R[this.getUTCMonth()];
 		};
 
+		cDate.prototype.getLocalDaysInMonth = function () {
+			return this.isLeapYear() ? this.getDaysInMonth.L[this.getMonth()] : this.getDaysInMonth.R[this.getMonth()];
+		}
+
 		// durations of months for the regular year
 		cDate.prototype.getDaysInMonth.R = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 		// durations of months for the leap year

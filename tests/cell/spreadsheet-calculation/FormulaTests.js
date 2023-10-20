@@ -5236,24 +5236,210 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"EDATE\"", function (assert) {
+		let array;
 
 		if (!AscCommon.bDate1904) {
 			oParser = new parserFormula("EDATE(DATE(2006,1,31),5)", "A2", ws);
-			assert.ok(oParser.parse());
-			assert.strictEqual(oParser.calculate().getValue(), 38898);
+			assert.ok(oParser.parse(), 'EDATE(DATE(2006,1,31),5)');
+			assert.strictEqual(oParser.calculate().getValue(), 38898, 'Result of EDATE(DATE(2006,1,31),5)');
 
 			oParser = new parserFormula("EDATE(DATE(2004,2,29),12)", "A2", ws);
-			assert.ok(oParser.parse());
-			assert.strictEqual(oParser.calculate().getValue(), 38411);
+			assert.ok(oParser.parse(), 'EDATE(DATE(2004,2,29),12)');
+			assert.strictEqual(oParser.calculate().getValue(), 38411, 'Result of EDATE(DATE(2004,2,29),12)');
 
 			ws.getRange2("A7").setValue("02-28-2004");
 			oParser = new parserFormula("EDATE(A7,12)", "A2", ws);
-			assert.ok(oParser.parse());
-			assert.strictEqual(oParser.calculate().getValue(), 38411);
+			assert.ok(oParser.parse(), 'EDATE(A7,12)');
+			assert.strictEqual(oParser.calculate().getValue(), 38411, 'Result of EDATE(A7,12)');
 
 			oParser = new parserFormula("EDATE(DATE(2004,1,15),-23)", "A2", ws);
-			assert.ok(oParser.parse());
-			assert.strictEqual(oParser.calculate().getValue(), 37302);
+			assert.ok(oParser.parse(), 'EDATE(DATE(2004,1,15),-23)');
+			assert.strictEqual(oParser.calculate().getValue(), 37302, 'Result of EDATE(DATE(2004,1,15),-23)');
+
+			oParser = new parserFormula("EDATE(DATE(2000,1,30),1)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(DATE(2000,1,30),1)');
+			assert.strictEqual(oParser.calculate().getValue(), 36585, 'Result of EDATE(DATE(2000,1,30),1)');
+
+			oParser = new parserFormula("EDATE(DATE(2001,1,30),1)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(DATE(2001,1,30),1)');
+			assert.strictEqual(oParser.calculate().getValue(), 36950, 'Result of EDATE(DATE(2001,1,30),1)');
+
+			oParser = new parserFormula("EDATE(DATE(2002,1,30),1)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(DATE(2002,1,30),1)');
+			assert.strictEqual(oParser.calculate().getValue(), 37315, 'Result of EDATE(DATE(2002,1,30),1)');
+
+			oParser = new parserFormula("EDATE(DATE(2003,1,30),1)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(DATE(2003,1,30),1)');
+			assert.strictEqual(oParser.calculate().getValue(), 37680, 'Result of EDATE(DATE(2003,1,30),1)');
+
+			oParser = new parserFormula("EDATE(DATE(2004,1,30),1)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(DATE(2004,1,30),1)');
+			assert.strictEqual(oParser.calculate().getValue(), 38046, 'Result of EDATE(DATE(2004,1,30),1)');
+
+			oParser = new parserFormula("EDATE(0,0)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(0,0)');
+			assert.strictEqual(oParser.calculate().getValue(), 0, 'Result of EDATE(0,0)');
+
+			oParser = new parserFormula("EDATE(0,1)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(0,1)');
+			assert.strictEqual(oParser.calculate().getValue(), 32, 'Result of EDATE(0,1)');			// 31
+
+			oParser = new parserFormula("EDATE(1,1)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(1,1)');
+			assert.strictEqual(oParser.calculate().getValue(), 33, 'Result of EDATE(1,1)');			// 32
+
+			oParser = new parserFormula("EDATE(2,1)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(2,1)');
+			assert.strictEqual(oParser.calculate().getValue(), 34, 'Result of EDATE(2,1)');			// 33
+
+			oParser = new parserFormula("EDATE(10,1)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(10,1)');
+			assert.strictEqual(oParser.calculate().getValue(), 42, 'Result of EDATE(10,1)');		// 41
+
+			oParser = new parserFormula("EDATE(30,1)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(30,1)');
+			assert.strictEqual(oParser.calculate().getValue(), 60, 'Result of EDATE(30,1)');		// 59
+
+			oParser = new parserFormula("EDATE(59,1)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(59,1)');
+			assert.strictEqual(oParser.calculate().getValue(), 88, 'Result of EDATE(59,1)');
+
+			oParser = new parserFormula("EDATE(60,1)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(60,1)');
+			assert.strictEqual(oParser.calculate().getValue(), 92, 'Result of EDATE(60,1)');		// 89
+
+			oParser = new parserFormula("EDATE(61,1)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(61,1)');
+			assert.strictEqual(oParser.calculate().getValue(), 92, 'Result of EDATE(61,1)');		// 92
+
+			oParser = new parserFormula("EDATE(0,-1)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(0,-1)');
+			assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of EDATE(0,-1)');
+
+			oParser = new parserFormula("EDATE(0,-2)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(0,-2)');
+			assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of EDATE(0,-2)');
+
+			oParser = new parserFormula("EDATE(-1,1)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(-1,1)');
+			assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of EDATE(-1,1)');
+
+			oParser = new parserFormula("EDATE(100,)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(100,)');
+			assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of EDATE(100,)');
+
+			oParser = new parserFormula("EDATE(,100)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(,100)');
+			assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of EDATE(,100)');
+
+			oParser = new parserFormula("EDATE(0,10)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(0,10)');
+			assert.strictEqual(oParser.calculate().getValue(), 305, 'Result of EDATE(0,10)');
+
+			oParser = new parserFormula("EDATE(1,10)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(1,10)');
+			assert.strictEqual(oParser.calculate().getValue(), 306, 'Result of EDATE(1,10)');
+			
+			// strings
+			oParser = new parserFormula('EDATE("100",1)', "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE("100",1)');
+			assert.strictEqual(oParser.calculate().getValue(), 130, 'Result of EDATE("100",1)');
+
+			oParser = new parserFormula('EDATE("100s",1)', "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE("100s",1)');
+			assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of EDATE("100s",1)');
+
+			oParser = new parserFormula('EDATE("100","1")', "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE("100","1")');
+			assert.strictEqual(oParser.calculate().getValue(), 130, 'Result of EDATE("100","1")');
+
+			oParser = new parserFormula('EDATE("100","1s")', "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE("100","1s")');
+			assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of EDATE("100","1s")');
+
+			// bool
+			oParser = new parserFormula("EDATE(TRUE,1)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(TRUE,1)');
+			assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of EDATE(TRUE,1)');
+
+			oParser = new parserFormula("EDATE(FALSE,1)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(FALSE,1)');
+			assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of EDATE(FALSE,1)');
+
+			oParser = new parserFormula("EDATE(1,TRUE)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(1,TRUE)');
+			assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of EDATE(1,TRUE)');
+
+			oParser = new parserFormula("EDATE(1,FALSE)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(1,FALSE)');
+			assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of EDATE(1,FALSE)');
+
+			oParser = new parserFormula("EDATE(TRUE,TRUE)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(TRUE,TRUE)');
+			assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of EDATE(TRUE,TRUE)');
+
+			// err
+			oParser = new parserFormula("EDATE(#N/A,#NUM!)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(#N/A,#NUM!)');
+			assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of EDATE(#N/A,#NUM!)');
+
+			oParser = new parserFormula("EDATE(#DIV/0!,#NUM!)", "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(#DIV/0!,#NUM!)');
+			assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of EDATE(#DIV/0!,#NUM!)');
+
+			// arr
+			oParser = new parserFormula('EDATE({100;101;102},1)', "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE({100;101;102},1)');
+			assert.strictEqual(oParser.calculate().getValue(), 130, 'Result of EDATE({100;101;102},1)');
+
+			oParser = new parserFormula('EDATE(100,{1;2;3})', "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(100,{1;2;3})');
+			assert.strictEqual(oParser.calculate().getValue(), 130, 'Result of EDATE(100,{1;2;3})');
+
+			oParser = new parserFormula('EDATE({100;100;100},{1;2;3})', "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE({100;100;100},{1;2;3})');
+			assert.strictEqual(oParser.calculate().getValue(), 130, 'Result of EDATE({100;100;100},{1;2;3})');
+
+			oParser = new parserFormula('EDATE({100;101;102},1)', "A2", ws);
+			oParser.setArrayFormulaRef(ws.getRange2("F106:I109").bbox);
+			assert.ok(oParser.parse(), 'EDATE({100;101;102},1)');
+			array = oParser.calculate();
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 130, 'Result of EDATE({100;101;102},1)[0,0]');
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 131, 'Result of EDATE({100;101;102},1)[1,0]');
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 132, 'Result of EDATE({100;101;102},1)[2,0]');
+
+			oParser = new parserFormula('EDATE({100;100;100},{1;2;3})', "A2", ws);
+			oParser.setArrayFormulaRef(ws.getRange2("F106:I109").bbox);
+			assert.ok(oParser.parse(), 'EDATE({100;100;100},{1;2;3})');
+			array = oParser.calculate();
+			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 130, 'Result of EDATE({100;100;100},{1;2;3})[0,0]');
+			assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 161, 'Result of EDATE({100;100;100},{1;2;3})[1,0]');
+			assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 191, 'Result of EDATE({100;100;100},{1;2;3})[2,0]');
+
+			// range
+			ws.getRange2("A100").setValue("100");
+			ws.getRange2("A101").setValue("101");
+			ws.getRange2("A102").setValue("102");
+			ws.getRange2("B100").setValue("1");
+			ws.getRange2("B101").setValue("2");
+			ws.getRange2("B102").setValue("3");
+
+			oParser = new parserFormula('EDATE(A100:A100,1)', "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(A100:A100,1)');
+			assert.strictEqual(oParser.calculate().getValue(), 130, 'Result of EDATE(A100:A100,1)');
+
+			oParser = new parserFormula('EDATE(A100:A102,1)', "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(A100:A102,1)');
+			assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of EDATE(A100:A102,1)');
+
+			oParser = new parserFormula('EDATE(A100,B100:B100)', "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(A100,B100:B100)');
+			assert.strictEqual(oParser.calculate().getValue(), 130, 'Result of EDATE(A100,B100:B100)');
+
+			oParser = new parserFormula('EDATE(A100,B100:B102)', "A2", ws);
+			assert.ok(oParser.parse(), 'EDATE(A100,B100:B102)');
+			assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of EDATE(A100,B100:B102)');
+
 		} else {
 			oParser = new parserFormula("EDATE(DATE(2006,1,31),5)", "A2", ws);
 			assert.ok(oParser.parse());

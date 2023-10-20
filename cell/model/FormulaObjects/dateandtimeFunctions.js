@@ -1038,61 +1038,107 @@
 	cEDATE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cEDATE.prototype.argumentsType = [argType.any, argType.any];
 	cEDATE.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1];
+		let arg0 = arg[0], arg1 = arg[1];
 
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
-			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
+			let dimensions = arg0.getDimensions();
+			if (dimensions.row > 1 || dimensions.col > 1) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+			arg0 = arg0.getFirstElement();
+		} else if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElementRowCol(0, 0);
+		} else if (arg0.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
-			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cArray) {
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
+			let dimensions = arg1.getDimensions();
+			if (dimensions.row > 1 || dimensions.col > 1) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+			arg1 = arg1.getFirstElement();
+		} else if (arg1.type === cElementType.array) {
 			arg1 = arg1.getElementRowCol(0, 0);
+		} else if (arg1.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		if (arg0.type === cElementType.empty || arg1.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
 		arg0 = arg0.tocNumber();
 		arg1 = arg1.tocNumber();
 
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (arg1.type === cElementType.error) {
 			return arg1;
 		}
 
-		var val = arg0.getValue(), date, _date;
+		let addedMonths = arg1.getValue();
+		if (addedMonths === 0) {
+			return arg0;
+		}
+		let val = arg0.getValue(), date, _date;
+		let now = new cDate();
 
 		if (val < 0) {
 			return new cError(cErrorType.not_numeric);
 		} else if (!AscCommon.bDate1904) {
+			let offsetInMinutes = now.getTimezoneOffset();
+			let offsetInHours = (offsetInMinutes / 60) * -1;
+			let UTCshift = offsetInHours >= 0 ? 1 : 0;
 			if (val < 60) {
-				val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
-			} else if (val == 60) {
-				val = new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay);
+				val = new cDate((Math.floor(val) - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
+			} else if (val === 60) {
+				// 29 february 1900 - exception - this date doesn't exist in js
+				// val = new cDate(Date.UTC( 1900, 1, 29 ));
+				val = new cDate((Math.floor(val) - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
 			} else {
-				val = new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay);
+				val = new cDate((Math.floor(val) - AscCommonExcel.c_DateCorrectConst - UTCshift) * c_msPerDay);
 			}
 		} else {
-			val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
+			val = new cDate((Math.floor(val) - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
 		}
 
 		date = new cDate(val);
 
-		if (0 <= date.getUTCDate() && 28 >= date.getUTCDate()) {
-			val = new cDate(val.setUTCMonth(val.getUTCMonth() + arg1.getValue()))
-		} else if (29 <= date.getUTCDate() && 31 >= date.getUTCDate()) {
-			date.setUTCDate(1);
-			date.setUTCMonth(date.getUTCMonth() + arg1.getValue());
-			if (val.getUTCDate() > (_date = date.getDaysInMonth())) {
-				val.setUTCDate(_date);
+		let localDay = date.getDate(),
+			localMonth = date.getMonth(),
+			isLeap = date.isLeapYear();
+
+		if (0 <= localDay && 28 >= localDay) {
+			val = new cDate(val.setUTCMonth(val.getUTCMonth() + addedMonths))
+		} else if (29 <= localDay && 31 >= localDay) {
+			// Add the month separately. If the target month is February, the year is a leap year, and the day is greater than 28, return 28 or 29.
+			// It should not depend on UTC since we are working with an isolated date.
+			let newDay = localDay;
+			if (localMonth + addedMonths == 1) {
+				// set day to the last day of february
+				newDay = isLeap ? 29 : 28;
 			}
-			val = new cDate(val.setUTCMonth(val.getUTCMonth() + arg1.getValue()));
+			date.setDate(1);
+			date.setMonth(localMonth + addedMonths);
+
+			// get and compare last day of month
+			if (newDay > (_date = date.getLocalDaysInMonth())) {
+				date.setDate(_date)
+			} else {
+				date.setDate(newDay);
+			}
+
+			val = new cDate(date);
 		}
 
-		return new cNumber(Math.floor(( val.getTime() / 1000 - val.getTimezoneOffset() * 60 ) / c_sPerDay +
-			(AscCommonExcel.c_DateCorrectConst + 1)))
+		let res = Math.floor(( val.getTime() / 1000 - val.getTimezoneOffset() * 60 ) / c_sPerDay + (AscCommonExcel.c_DateCorrectConst + 1));
+		if (res < 0) {
+			return new cError(cErrorType.not_numeric);
+		}
+
+		return new cNumber(res);
 	};
 
 	/**
