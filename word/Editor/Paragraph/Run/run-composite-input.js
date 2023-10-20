@@ -188,6 +188,32 @@
 	{
 		return (pos >= this.pos && pos < this.pos + this.length);
 	};
+	RunCompositeInput.prototype.getText = function()
+	{
+		let text   = "";
+		let run    = this.run;
+		let endPos = Math.min(run.GetElementsCount(), this.pos + this.length);
+		for (let pos = this.pos; pos < endPos; ++pos)
+		{
+			let runElement = run.GetElement(pos);
+			if (runElement.IsText() || runElement.IsSpace())
+				text += String.fromCodePoint(runElement.GetCodePoint());
+		}
+		return text;
+	};
+	RunCompositeInput.prototype.getCodePoints = function()
+	{
+		let result = [];
+		let run    = this.run;
+		let endPos = Math.min(run.GetElementsCount(), this.pos + this.length);
+		for (let pos = this.pos; pos < endPos; ++pos)
+		{
+			let runElement = run.GetElement(pos);
+			if (runElement.IsText() || runElement.IsSpace())
+				result.push(runElement.GetCodePoint());
+		}
+		return result;
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
