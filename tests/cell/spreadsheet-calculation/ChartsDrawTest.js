@@ -201,102 +201,420 @@ $(function () {
 		});
 	};
 
-	const mappings = [
-		{
+	const isEqual = function (a, b) {
 
-		},
-		{
+		const first = a + ''
+		const second = b + ''
 
-		},
-		{
-			xVal: function (val) { return Math.log(val) },
-			yVal: function (val) { return val }
-		},
-		{
+		const firstLength = first.indexOf('.') == -1 ? 0 : first.length - (1 + first.indexOf('.'))
+		const secondLength = second.indexOf('.') == -1 ? 0 : second.length - (1 + second.indexOf('.'))
 
-		},
-		{
+		const min = Math.min(firstLength, secondLength)
 
-		},
-		{
-			xVal: function (val) { return Math.log(val) },
-			yVal: function (val) { return Math.log(val) },
-			1: function (val) { return Math.exp(val) }
+		if (firstLength != min) {
+			const num = Math.pow(10, min)
+			a = Math.round((a + Number.EPSILON) * num) / num
 		}
-	]
 
-	const data = {
-		size: 15,
-		xVals: [[1, 2, 3, 4, 5, 6], [1, 2], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6]],
-		yVals: [[4, 6, 3, 7, 8, 9], [5, 15], [-1, -2, -3, -4, -5, -6], [-3, 6, -9, 12, -15, 18], [2, 3, 6, 8, 10, 12], [0, 2, -3, 6, 8, 9], [0, 1, 0, 2, 0, 3,], [-9, -7, -6, -5, -4, -2,], [0.1, 0.3, 0.2, 0.5, 0.7, 0.9], [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9], [2, 1, 4, 3, 6, 5], [2, 8, 16, 50], [4, -6, 3, -7, 8, 10,], [5, 50, 500, 5000, 50000, 500000], [0, 2, 3, 4, 5, 0]],
-		results: [
-			[],
-			[[1, 2.6667], [10, -5], [-1, 0], [1.8, -4.8], [2.0857, -0.4667], [2.0571, -3.5333], [0.4, -0.4], [1.2857, -10], [0.1571, -0.1], [0.2886, -0.96], [0.8286, 0.6], [15.2, -19], [1.7714, -4.2], [75838, -172840], [0.2857, 1.3333]],
-			[[2.5453, 3.3757], [14.427, 5], [-2.732, -0.5044], [4.1668, -3.0691], [5.6474, 0.6407], [5.1404, -1.97], [1.0302, -0.1296], [3.5479, -9.3905], [0.4096, 0.0008], [0.735, -0.756], [2.202, 1.0854], [29.565, -4.4898], [3.2191, -1.5299], [170659, -94542], [1.3313, 0.8735]],
-			[],
-			[],
-			[[0.4178, 3.6391], [1.585, 5], [], [], [1.0529, 1.799], [], [], [], [1.1616, 0.0984], [], [0.7283, 1.347], [2.2106, 1.8367], [], [6.2903, 1.5974], []],
-		]
+		if (secondLength != min) {
+			const num = Math.pow(10, min)
+			b = Math.round((b + Number.EPSILON) * num) / num
+		}
+
+		//Math.round((num + Number.EPSILON) * 100) / 100
+		const tollerance = 0.00001;
+		return Math.abs(a - b) < tollerance;
 	}
-	function testTrendLines() {
-		QUnit.test("Test: Trend lines slope", function (assert) {
+
+	function testLinearTrendLineEquation() {
+		QUnit.test("Test: Linear trendlines slope", function (assert) {
 
 			const trendline = AscFormat.CTrendline
 
-			assert.ok(data.xVals.length, data.size, "xVals are inconsistent")
-			assert.ok(data.yVals.length, data.size, "yVals are inconsistent")
-			assert.ok(data.results[1].length, data.size, "Linear trendline results are inconsistent")
-			assert.ok(data.results[2].length, data.size, "Logarithmic trendline results are inconsistent")
-			assert.ok(data.results[5].length, data.size, "Power trendline results are inconsistent")
+			let size = 6;
+			let xVals = [1, 2, 3, 4, 5, 6];
+			let yVals = [4, 6, 3, 7, 8, 9];
+			let m = 1;
+			let b = 2.6667;
+			let results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR)
 
-			const copyArr = function (arr, size) {
-				const result = []
-				for (let i = 0; i < size; i++) {
-					result.push(arr[i]);
-				}
-				return result
-			}
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
-			const isEqual = function (a, b) {
+			size = 2;
+			xVals = [1, 2];
+			yVals = [5, 15];
+			m = 10;
+			b = -5;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR)
 
-				const first = a + ''
-				const second = b + ''
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
-				const firstLength = first.indexOf('.') == -1 ? 0 : first.length - (1 + first.indexOf('.'))
-				const secondLength = second.indexOf('.') == -1 ? 0 : second.length - (1 + second.indexOf('.'))
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [-1, -2, -3, -4, -5, -6];
+			m = -1;
+			b = 0;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR)
 
-				const min = Math.min(firstLength, secondLength)
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
-				if (firstLength != min) {
-					const num = Math.pow(10, min)
-					a = Math.round((a + Number.EPSILON) * num) / num
-				}
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [-3, 6, -9, 12, -15, 18];
+			m = 1.8;
+			b = -4.8;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR)
 
-				if (secondLength != min) {
-					const num = Math.pow(10, min)
-					b = Math.round((b + Number.EPSILON) * num) / num
-				}
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
-				//Math.round((num + Number.EPSILON) * 100) / 100
-				const tollerance = 0.00001;
-				return Math.abs(a - b) < tollerance;
-			}
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [2, 3, 6, 8, 10, 12];
+			m = 2.0857;
+			b = -0.4667;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR)
 
-			for (let i = 0; i < data.size; i++) {
-				for (let j = 0; j < mappings.length; j++) {
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
-					if (data.results[j].length == 0 || data.results[j][i].length == 0) {
-						continue;
-					}
-					const size = data.xVals[i].length;
-					const xVals = copyArr(data.xVals[i], size);
-					const yVals = copyArr(data.yVals[i], size);
-					const results = trendline.prototype._findSuppletiables(size, xVals, yVals, mappings[j])
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0, 2, -3, 6, 8, 9];
+			m = 2.0571;
+			b = -3.5333;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR)
 
-					assert.ok(isEqual(results[0], data.results[j][i][0]), "The data results at " + j + " / " + i + " / " + 0 + " after mapping at " + j + " is not equal to the expected results" + "/ expected slope:" + results[0] + ', got:' + data.results[j][i][0]);
-					assert.ok(isEqual(results[1], data.results[j][i][1]), "The data results at " + j + " / " + i + " / " + 1 + " after mapping at " + j + " is not equal to the expected results" + "/ expected b:" + results[1] + ', got:' + data.results[j][i][1]);
-				}
-			}
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0, 1, 0, 2, 0, 3];
+			m = 0.4;
+			b = -0.4;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [-9, -7, -6, -5, -4, -2];
+			m = 1.2857;
+			b = -10;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
+			m = 0.1571;
+			b = -0.1;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
+			m = 0.2886;
+			b = -0.96;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [2, 1, 4, 3, 6, 5];
+			m = 0.8286;
+			b = 0.6;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 4;
+			xVals = [1, 2, 3, 4];
+			yVals = [2, 8, 16, 50];
+			m = 15.2;
+			b = -19;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [4, -6, 3, -7, 8, 10];
+			m = 1.7714;
+			b = -4.2;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [5, 50, 500, 5000, 50000, 500000];
+			m = 75838;
+			b = -172840;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0, 2, 3, 4, 5, 0];
+			m = 0.2857;
+			b = 1.3333;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+		})
+	}
+
+	function testLogarithmicTrendLineEquation() {
+		QUnit.test("Test: Logarithmic trendlines slope", function (assert) {
+
+			const trendline = AscFormat.CTrendline
+
+			let size = 6;
+			let xVals = [1, 2, 3, 4, 5, 6];
+			let yVals = [4, 6, 3, 7, 8, 9];
+			let m = 2.5453;
+			let b = 3.3757;
+			let results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 2;
+			xVals = [1, 2];
+			yVals = [5, 15];
+			m = 14.427;
+			b = 5;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [-1, -2, -3, -4, -5, -6];
+			m = -2.732;
+			b = -0.5044;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [-3, 6, -9, 12, -15, 18];
+			m = 4.1668;
+			b = -3.0691;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [2, 3, 6, 8, 10, 12];
+			m = 5.6474;
+			b = 0.6407;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0, 2, -3, 6, 8, 9];
+			m = 5.1404;
+			b = -1.97;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0, 1, 0, 2, 0, 3];
+			m = 1.0302;
+			b = -0.1296;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [-9, -7, -6, -5, -4, -2];
+			m = 3.5479;
+			b = -9.3905;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
+			m = 0.4096;
+			b = 0.0008;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
+			m = 0.735;
+			b = -0.756;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [2, 1, 4, 3, 6, 5];
+			m = 2.202;
+			b = 1.0854;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 4;
+			xVals = [1, 2, 3, 4];
+			yVals = [2, 8, 16, 50];
+			m = 29.565;
+			b = -4.4898;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [4, -6, 3, -7, 8, 10];
+			m = 3.2191;
+			b = -1.5299;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [5, 50, 500, 5000, 50000, 500000];
+			m = 170659;
+			b = -94542;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0, 2, 3, 4, 5, 0];
+			m = 1.3313;
+			b = 0.8735;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+		})
+	}
+
+	function testPowerTrendLineEquation() {
+		QUnit.test("Test: Power trendlines slope", function (assert) {
+
+			const trendline = AscFormat.CTrendline
+
+			let size = 6;
+			let xVals = [1, 2, 3, 4, 5, 6];
+			let yVals = [4, 6, 3, 7, 8, 9];
+			let m = 0.4178;
+			let b = 3.6391;
+			let results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_POWER)
+
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 2;
+			xVals = [1, 2];
+			yVals = [5, 15];
+			m = 1.585;
+			b = 5;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_POWER)
+
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [2, 3, 6, 8, 10, 12];
+			m = 1.0529;
+			b = 1.799;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_POWER)
+
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
+			m = 1.1616;
+			b = 0.0984;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_POWER)
+
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [2, 1, 4, 3, 6, 5];
+			m = 0.7283;
+			b = 1.347;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_POWER)
+
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 4;
+			xVals = [1, 2, 3, 4];
+			yVals = [2, 8, 16, 50];
+			m = 2.2106;
+			b = 1.8367;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_POWER)
+
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [5, 50, 500, 5000, 50000, 500000];
+			m = 6.2903;
+			b = 1.5974;
+			results = trendline.prototype._findSuppletiables(size, xVals, yVals, AscFormat.TRENDLINE_TYPE_POWER)
+
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
 		})
 	}
 
@@ -307,8 +625,8 @@ $(function () {
 		QUnit.start();
 
 		testChartBaseTypes();
-		testTrendLines();
+		testLinearTrendLineEquation();
+		testLogarithmicTrendLineEquation();
+		testPowerTrendLineEquation();
 	}
 });
-
-
