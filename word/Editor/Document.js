@@ -24886,6 +24886,9 @@ CDocument.prototype.CheckFormAutoFit = function(oForm)
  */
 CDocument.prototype.CheckShapeAutoFit = function(shape)
 {
+	if (!this.Action.Start)
+		return;
+	
 	if (!this.Action.Additional.ShapeAutoFit)
 		this.Action.Additional.ShapeAutoFit = true;
 };
