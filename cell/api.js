@@ -8973,6 +8973,14 @@ var editor;
 		return wb.getSpeechDescription(prevState, wb.getSelectionState(), action);
 	};
 
+	spreadsheet_api.prototype.addCustomFunction = function(func) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.addCustomFunction(func);
+	};
+
   /*
    * Export
    * -----------------------------------------------------------------------------

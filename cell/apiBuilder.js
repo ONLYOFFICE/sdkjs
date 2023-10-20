@@ -378,6 +378,66 @@
 			.getValue();
 	};
 
+	Api.prototype.AddCustomFunction = function (func) {
+
+		//1. jsdoc example, js excel api
+		/**
+		 * Calculates the sum of the specified numbers
+		 * @customfunction
+		 * @param {number} first First number.
+		 * @param {number} second Second number.
+		 * @param {number} [third] Third number to add. If omitted, third = 0.
+		 * @returns {number} The sum of the numbers.
+		 */
+		/*function add(first, second, third) {
+			if (third === null) {
+				third = 0;
+			}
+			return first + second + third;
+		}*/
+
+		//2. create base function and add params
+		/*(function()
+		{
+			function ABS1() {
+			}
+
+			//***array-formula***
+			ABS1.prototype = Object.create(AscCommonExcel.cBaseFunction.prototype);
+			ABS1.prototype.constructor = ABS1;
+			ABS1.prototype.name = 'ABS1';
+			ABS1.prototype.argumentsMin = 1;
+			ABS1.prototype.argumentsMax = 1;
+			ABS1.prototype.argumentsType = [Asc.c_oAscFormulaArgumentType.number];
+			ABS1.prototype.Calculate = function (arg) {
+				return new AscCommonExcel.cNumber(arg[0].getValue());
+			};
+			Api.AddCustomFunction(ABS1);
+		})();*/
+
+		/*AscCommonExcel.cFormulaFunctionGroup['custom'] = AscCommonExcel.cFormulaFunctionGroup['custom'] || [];
+		AscCommonExcel.cFormulaFunctionGroup["custom"].push(function1);
+		window['AscCommonExcel'].getFormulasInfo();*/
+
+		//3. test variant
+		/*
+		(function()
+{
+		/*
+			function add(first, second, third) {
+				if (third === null) {
+					third = 0;
+				}
+				return first + second + third;
+			}
+			Api.AddCustomFunction(add);
+		})();
+
+		*/
+
+		this.addCustomFunction(func);
+	};
+
 	/**
 	 * Creates a new worksheet. The new worksheet becomes the active sheet.
 	 * @memberof Api

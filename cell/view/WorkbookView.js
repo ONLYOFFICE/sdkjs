@@ -5651,6 +5651,38 @@
 		this.model.stepGoalSeek();
 	};
 
+	WorkbookView.prototype.addCustomFunction = function(func) {
+
+		/**
+		 * @constructor
+		 * @extends {AscCommonExcel.cBaseFunction}
+		 */
+		function newFunc() {
+		}
+
+		//***array-formula***
+		newFunc.prototype = Object.create(AscCommonExcel.cBaseFunction.prototype);
+		newFunc.prototype.constructor = newFunc;
+		newFunc.prototype.name = func.name.toUpperCase();
+		newFunc.prototype.argumentsMin = 3;
+		newFunc.prototype.argumentsMax = 3;
+		//newFunc.prototype.argumentsType = [argType.number];
+		newFunc.prototype.Calculate = function (arg) {
+			//prepare arguments
+
+			let res = func(arg);
+
+			//prepare result
+
+			return new AscCommonExcel.cNumber(res);
+		};
+
+
+		AscCommonExcel.cFormulaFunctionGroup['custom'] = AscCommonExcel.cFormulaFunctionGroup['custom'] || [];
+		AscCommonExcel.cFormulaFunctionGroup["custom"].push(newFunc);
+		window['AscCommonExcel'].getFormulasInfo();
+	};
+
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
 	function CDocumentSearchExcel(wb) {
