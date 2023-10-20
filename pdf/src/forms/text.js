@@ -63,6 +63,9 @@
 		this.contentFormat = new AscPDF.CTextBoxContent(this, oDoc);
 
         this._scrollInfo = null;
+		
+		this.compositeInput = null;
+		this.compositeReplaceCount = 0;
     }
     CTextField.prototype = Object.create(AscPDF.CBaseField.prototype);
 	CTextField.prototype.constructor = CTextField;
@@ -617,29 +620,9 @@
             AscCommon.History.Remove_LastPoint();
             return false;
         }
-
-        let nSelStart = oDoc.event["selStart"];
-        let nSelEnd = oDoc.event["selEnd"];
-
-        // убираем селект, выставляем из nSelStart/nSelEnd
-        if (this.content.IsSelectionUse())
-            this.content.RemoveSelection();
-
-        let oDocPos     = this.CalcDocPos(nSelStart, nSelEnd);
-        let startPos    = oDocPos.startPos;
-        let endPos      = oDocPos.endPos;
-        
-        if (nSelStart == nSelEnd) {
-            this.content.SetContentPosition(startPos, 0, 0);
-            this.content.RecalculateCurPos();
-        }
-        else
-            this.content.SetSelectionByContentPositions(startPos, endPos);
-
-        if (nSelStart != nSelEnd)
-            this.content.Remove(-1, true, false, false, false);
-
-        this.SetNeedRecalc(true);
+		
+		this.removeBeforePaste();
+		
         aChars = AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"]);
         if (aChars.length == 0) {
             return false;
@@ -660,21 +643,57 @@
 
         return true;
     };
-    CTextField.prototype.InsertChars = function(aChars) {
-        let oPara = this.content.GetElement(0);
-
-        for (let index = 0; index < aChars.length; ++index) {
-            let codePoint = aChars[index];
-            if (9 === codePoint) // \t
-				oPara.AddToParagraph(new AscWord.CRunTab(), true);
-			else if (10 === codePoint || 13 === codePoint) // \n \r
-				oPara.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line), true);
-			else if (AscCommon.IsSpace(codePoint)) // space
-				oPara.AddToParagraph(new AscWord.CRunSpace(codePoint), true);
-			else
-				oPara.AddToParagraph(new AscWord.CRunText(codePoint), true);
-        }
-    };
+	CTextField.prototype.InsertChars = function(aChars) {
+		let paragraph = this.getParagraph();
+		for (let index = 0; index < aChars.length; ++index) {
+			let runElement = AscWord.codePointToRunElement(aChars[index]);
+			if (runElement)
+				paragraph.AddToParagraph(runElement, true);
+		}
+	};
+	CTextField.prototype.beginCompositeInput = function() {
+		if (this.compositeInput)
+			return;
+		
+		this.CreateNewHistoryPoint(true);
+		this.DoKeystrokeAction();
+		this.removeBeforePaste();
+		let run = this.content.getCurrentRun();
+		if (!run) {
+			// TODO: Cancel composite input
+			AscCommon.History.Undo();
+			return;
+		}
+		
+		this.compositeReplaceCount = 0;
+		this.compositeInput = new AscWord.RunCompositeInput(false);
+		this.compositeInput.begin(run);
+	};
+	CTextField.prototype.endCompositeInput = function() {
+		if (!this.compositeInput)
+			return;
+		
+		let codePoints = this.compositeInput.getCodePoints();
+		this.compositeInput.end();
+		this.compositeInput = null;
+		while (this.compositeReplaceCount > 0)
+		{
+			AscCommon.History.Undo();
+			--this.compositeReplaceCount;
+		}
+		
+		this.EnterText(codePoints);
+	};
+	CTextField.prototype.replaceCompositeText = function(codePoints) {
+		if (!this.compositeInput)
+			return;
+		
+		this.CreateNewHistoryPoint(true);
+		this.compositeReplaceCount++;
+		this.compositeInput.replace(codePoints);
+		this.SetNeedRecalc(true);
+		this.AddToRedraw();
+	};
     /**
 	 * Checks is text in form is out of form bounds.
      * Note: in vertical case one line always be valid even if form is very short.
@@ -1287,6 +1306,30 @@
 
         return { startPos: StartPos, endPos: EndPos }
     };
+	//------------------------------------------------------------------------------------------------------------------
+	CTextField.prototype.getParagraph = function() {
+		return this.content.GetElement(0);
+	};
+	CTextField.prototype.removeBeforePaste = function() {
+		let pdfDoc = this.GetDocument();
+		
+		let selStart = pdfDoc.event["selStart"];
+		let selEnd   = pdfDoc.event["selEnd"];
+		
+		this.content.RemoveSelection();
+		
+		let docPos = this.CalcDocPos(selStart, selEnd);
+		
+		if (selStart === selEnd) {
+			this.content.SetContentPosition(docPos.startPos, 0, 0);
+		}
+		else {
+			this.content.SetSelectionByContentPositions(docPos.startPos, docPos.endPos);
+			this.content.Remove(-1, true, false, false, false);
+		}
+		
+		this.SetNeedRecalc(true);
+	};
 	
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)

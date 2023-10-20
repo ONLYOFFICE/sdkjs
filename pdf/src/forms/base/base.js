@@ -1166,6 +1166,7 @@
 
     CBaseField.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
+        oViewer.paint();
         if (oViewer.pagesInfo.pages[this.GetPage()])
             oViewer.pagesInfo.pages[this.GetPage()].needRedrawForms = true;
     };

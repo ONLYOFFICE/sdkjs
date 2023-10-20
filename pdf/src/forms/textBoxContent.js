@@ -119,6 +119,18 @@
 		this.AddToParagraph(new AscWord.ParaTextPr({FontSize : fontSize}));
 		this.SetApplyToAll(false);
 	};
+	CTextBoxContent.prototype.getCurrentRun = function() {
+		let paragraph = this.GetElement(0);
+		if (!paragraph || !paragraph.IsParagraph())
+			return null;
+		
+		let paraPos = paragraph.Get_ParaContentPos(false);
+		let run = paragraph.GetElementByPos(paraPos);
+		if (!run || !(run instanceof AscWord.CRun))
+			return null;
+		
+		return run;
+	};
 	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscPDF'] = window['AscPDF'] || {};
