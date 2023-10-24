@@ -1131,7 +1131,10 @@ function (window, undefined) {
 			prevField.canvasObj.canvas.style.display = "block";
 
 			this.cellEditor.close();
-			document.getElementById(this.editorElemId).remove();
+			let elem = document.getElementById(this.editorElemId);
+			if (elem) {
+				elem.parentNode.removeChild(elem);
+			}
 		}
 
 		this.curParentFocusId = null;
