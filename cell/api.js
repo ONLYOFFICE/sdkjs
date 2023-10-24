@@ -8973,12 +8973,12 @@ var editor;
 		return wb.getSpeechDescription(prevState, wb.getSelectionState(), action);
 	};
 
-	spreadsheet_api.prototype.addCustomFunction = function(func) {
+	spreadsheet_api.prototype.addCustomFunction = function(func, options) {
 		let wb = this.wb;
 		if (!wb) {
 			return;
 		}
-		return wb.addCustomFunction(func);
+		return wb.addCustomFunction(func, options);
 	};
 
   /*

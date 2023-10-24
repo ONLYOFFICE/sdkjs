@@ -5651,7 +5651,59 @@
 		this.model.stepGoalSeek();
 	};
 
-	WorkbookView.prototype.addCustomFunction = function(func) {
+	WorkbookView.prototype.addCustomFunction = function(func, options) {
+
+		//options ->
+		/*{"params":
+		[
+			{
+				"defaultValue": ""
+				"description": "First number. *"
+				"name": "first"
+				"optional": false
+				"parentName": ""
+				"type": "number"
+			},
+			{
+				"defaultValue": ""
+				"description": "Second number. *"
+				"name": "second"
+				"optional": true
+				"parentName": ""
+				"type": "string"
+			}
+		]
+		*/
+
+		let getType = function (_type) {
+			let res =  AscCommonExcel.cElementType.number;
+			switch (_type) {
+				case "number":
+					res = AscCommonExcel.cElementType.number;
+					break;
+				case "string":
+					res = AscCommonExcel.cElementType.string;
+					break;
+			}
+			return res;
+		};
+
+		let funcName = func.name.toUpperCase();
+		let argumentsMin = 0;
+		let argumentsMax = 255;
+		let argumentsType = [];
+		let params = options["params"];
+		if (params) {
+			argumentsMax = 0;
+			for (let i = 0; i < params.length; i++) {
+				if (false === params[i]["optional"]) {
+					argumentsMin++;
+				}
+				argumentsMax++;
+				let type = params[i]["type"];
+				argumentsType.push(getType(type));
+			}
+		}
 
 		/**
 		 * @constructor
@@ -5663,14 +5715,24 @@
 		//***array-formula***
 		newFunc.prototype = Object.create(AscCommonExcel.cBaseFunction.prototype);
 		newFunc.prototype.constructor = newFunc;
-		newFunc.prototype.name = func.name.toUpperCase();
-		newFunc.prototype.argumentsMin = 3;
-		newFunc.prototype.argumentsMax = 3;
-		//newFunc.prototype.argumentsType = [argType.number];
+		newFunc.prototype.name = funcName;
+		newFunc.prototype.argumentsMin = argumentsMin;
+		newFunc.prototype.argumentsMax = argumentsMax;
+		//argumentsType - other arguments type, need convert
+		//newFunc.prototype.argumentsType = argumentsType;
 		newFunc.prototype.Calculate = function (arg) {
 			//prepare arguments
+			let args = [];
+			for (let i in argumentsType) {
+				if (arg[i] && arg[i].type === AscCommonExcel.cElementType.error && argumentsType[i] === AscCommonExcel.cElementType.error) {
+					args.push(arg[i].toString());
+				} else {
+					let elem = getElement(arg[i], argumentsType);
+					args.push(elem);
+				}
+			}
 
-			let res = func(arg);
+			let res = func.apply(this, args);
 
 			//prepare result
 

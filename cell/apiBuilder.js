@@ -378,7 +378,7 @@
 			.getValue();
 	};
 
-	Api.prototype.AddCustomFunction = function (func) {
+	Api.prototype.AddCustomFunction = function (func, options) {
 
 		//1. jsdoc example, js excel api
 		/**
@@ -435,7 +435,29 @@
 
 		*/
 
-		this.addCustomFunction(func);
+		//options ->
+			/*{"params":
+			[
+				{
+					"defaultValue": ""
+					"description": "First number. *"
+					"name": "first"
+					"optional": false
+					"parentName": ""
+					"type": "number"
+				},
+				{
+					"defaultValue": ""
+					"description": "Second number. *"
+					"name": "second"
+					"optional": true
+					"parentName": ""
+					"type": "string"
+				}
+			]
+		*/
+
+		this.addCustomFunction(func, options);
 	};
 
 	/**
