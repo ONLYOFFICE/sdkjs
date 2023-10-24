@@ -799,6 +799,11 @@
 					listeners[listenerId] = sheetContainer.defName3d[listenerId];
 				}
 			}
+			if (this.volatileListeners) {
+				for (var listenerId in this.volatileListeners) {
+					listeners[listenerId] = this.volatileListeners[listenerId];
+				}
+			}
 			if(tableNamesMap){
 				for (var tableName in tableNamesMap) {
 					var nameIndex = getDefNameIndex(tableName);
