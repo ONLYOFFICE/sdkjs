@@ -5688,10 +5688,34 @@
 			return res;
 		};
 
+
+		let getElement = function (_elem, _type, _defaultValue) {
+			if (!_elem) {
+				return _defaultValue;
+			}
+
+			let res = null;
+			switch (_type) {
+				case AscCommonExcel.cElementType.number:
+					res = _elem.tocNumber();
+					if (res.type !== AscCommonExcel.cElementType.error) {
+						res = res.toNumber();
+					}
+					break;
+				case AscCommonExcel.cElementType.string:
+					res = _elem.tocString();
+					if (res.type !== AscCommonExcel.cElementType.error) {
+						res = res.toString();
+					}
+					break;
+			}
+			return res;
+		};
+
 		let funcName = func.name.toUpperCase();
 		let argumentsMin = 0;
 		let argumentsMax = 255;
-		let argumentsType = [];
+		//let argumentsType = [];
 		let params = options["params"];
 		if (params) {
 			argumentsMax = 0;
@@ -5700,8 +5724,8 @@
 					argumentsMin++;
 				}
 				argumentsMax++;
-				let type = params[i]["type"];
-				argumentsType.push(getType(type));
+				//let type = params[i]["type"];
+				//argumentsType.push(getType(type));
 			}
 		}
 
@@ -5723,11 +5747,21 @@
 		newFunc.prototype.Calculate = function (arg) {
 			//prepare arguments
 			let args = [];
-			for (let i in argumentsType) {
-				if (arg[i] && arg[i].type === AscCommonExcel.cElementType.error && argumentsType[i] === AscCommonExcel.cElementType.error) {
+			for (let i = 0; i < params.length; i++) {
+				let type = getType(params[i]["type"]);
+				let defaultValue = params[i]["defaultValue"];
+				if (arg[i] && arg[i].type === AscCommonExcel.cElementType.error && type === AscCommonExcel.cElementType.error) {
 					args.push(arg[i].toString());
 				} else {
-					let elem = getElement(arg[i], argumentsType);
+					if (arg[i].type === AscCommonExcel.cElementType.error) {
+						return arg[i];
+					}
+
+					let elem = getElement(arg[i], type, defaultValue);
+					if (elem && elem.type === AscCommonExcel.cElementType.error) {
+						return elem;
+					}
+
 					args.push(elem);
 				}
 			}

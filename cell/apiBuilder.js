@@ -421,16 +421,45 @@
 
 		//3. test variant
 		/*
+
 		(function()
-{
-		/*
-			function add(first, second, third) {
+		{
+    		function add(first, second, third) {
 				if (third === null) {
 					third = 0;
 				}
 				return first + second + third;
 			}
-			Api.AddCustomFunction(add);
+			Api.AddCustomFunction(add,
+				{
+					"params":[
+						{
+							 "defaultValue": "",
+							 "description": "First number. *",
+							 "name": "first",
+							 "optional": false,
+							 "parentName": "",
+							 "type": "number" // "string", "bool"
+						 },
+						 {
+							 "defaultValue": "",
+							 "description": "Second number. *",
+							 "name": "second",
+							 "optional": false,
+							 "parentName": "",
+							 "type": "number"
+						 },
+						 {
+							 "defaultValue": "",
+							 "description": "Second number. *",
+							 "name": "second",
+							 "optional": true,
+							 "parentName": "",
+							 "type": "number"
+						 }
+					 ]
+				}
+			);
 		})();
 
 		*/
@@ -439,20 +468,28 @@
 			/*{"params":
 			[
 				{
-					"defaultValue": ""
-					"description": "First number. *"
-					"name": "first"
-					"optional": false
-					"parentName": ""
+					"defaultValue": "",
+					"description": "First number. *",
+					"name": "first",
+					"optional": false,
+					"parentName": "",
+					"type": "number" // "string", "bool"
+				},
+				{
+					"defaultValue": "",
+					"description": "Second number. *",
+					"name": "second",
+					"optional": false,
+					"parentName": "",
 					"type": "number"
 				},
 				{
-					"defaultValue": ""
-					"description": "Second number. *"
-					"name": "second"
-					"optional": true
-					"parentName": ""
-					"type": "string"
+					"defaultValue": "",
+					"description": "Second number. *",
+					"name": "second",
+					"optional": true,
+					"parentName": "",
+					"type": "number"
 				}
 			]
 		*/
