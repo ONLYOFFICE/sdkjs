@@ -53,6 +53,7 @@
         this._textFont          = AscPDF.DEFAULT_FIELD_FONT;
         this._fileSelect        = false;
         this._value             = undefined;
+		this._displayValue      = "";
 
         // internal
         TurnOffHistory();
@@ -178,27 +179,38 @@
     };
 	CTextField.prototype.SetValue = function(sValue) {
 		if (this.IsWidget()) {
-            let args = arguments; // args[1] == true -> флаг, что вызывается на открытии
-			let _t = this;
-			new Promise(function(resolve) {
-				AscFonts.FontPickerByCharacter.checkText(sValue, _t, resolve);
-			}).then(function() {
-				_t.content.replaceAllText(sValue);
-				
-				_t.SetNeedRecalc(true);
-                
-                if (args[1] != true)
-				    _t.SetWasChanged(true);
-				
-				if (args[1] == true && !_t.GetParent())
-					_t.SetApiValue(sValue);
-			});
+			let args = arguments; // args[1] == true -> флаг, что вызывается на открытии
+			
+			if (args[1] != true)
+				this.SetWasChanged(true);
+			
+			if (args[1] == true && !this.GetParent())
+				this.SetApiValue(sValue);
+			
+			this.UpdateDisplayValue(sValue);
 		}
 		else {
 			this.SetApiValue(sValue);
 		}
 	};
-    
+	CTextField.prototype.UpdateDisplayValue = function(displayValue) {
+		if (displayValue === this._displayValue)
+			return;
+		
+		this._displayValue = displayValue;
+		
+		let _t = this;
+		
+		this._displayPromise = new Promise(function(resolve) {
+			AscFonts.FontPickerByCharacter.checkText(displayValue, _t, resolve);
+		}).then(function() {
+			if (_t._displayValue !== displayValue)
+				return;
+			
+			_t.content.replaceAllText(displayValue);
+			_t.SetNeedRecalc(true);
+		});
+	};
     CTextField.prototype.GetCalcOrderIndex = function() {
         return this.field.GetDocument().GetCalculateInfo().names.indexOf(this.field.GetFullName());
     };
@@ -244,22 +256,19 @@
     //             oField.SetValueToKids(sValue);
     //     }
     // };
-
-    /**
+	
+	/**
 	 * Gets the value of current form (can be not commited).
 	 * @memberof CTextField
 	 * @typeofeditors ["PDF"]
-     * @returns {string | Array} - can be array of rich value
+	 * @returns {string | Array} - can be array of rich value
 	 */
-    CTextField.prototype.GetValue = function() {
-        // to do обработать rich value
-        let oPara = this.content.GetElement(0);
-        oPara.SetApplyToAll(true);
-        let sValue = oPara.GetSelectedText(true, {NewLine: true});
-        oPara.SetApplyToAll(false);
-
-        return sValue;
-    };
+	CTextField.prototype.GetValue = function() {
+		if (this.GetDocument().activeForm !== this)
+			return this._displayValue;
+	
+		return this.content.getAllText();
+	};
         
     CTextField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)
@@ -794,7 +803,8 @@
             this.SetNeedRecalc(true);
             this.AddToRedraw();
         }
-
+		
+		let fieldValue = this.GetValue();
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i].IsChanged() == false)
                 aFields[i].SetWasChanged(true); // фиксируем, что форма была изменена
@@ -811,20 +821,8 @@
             if (aFields[i] == this)
                 continue;
 
-            aFields[i].SetApiValue(this.GetApiValue());
-
-            let oFieldPara = aFields[i].content.GetElement(0);
-            let oThisRun, oFieldRun;
-            for (let nItem = 0; nItem < oThisPara.Content.length - 1; nItem++) {
-                oThisRun = oThisPara.Content[nItem];
-                oFieldRun = oFieldPara.Content[nItem];
-                oFieldRun.ClearContent();
-
-                for (let nRunPos = 0; nRunPos < oThisRun.Content.length; nRunPos++) {
-                    oFieldRun.AddToContent(nRunPos, oThisRun.Content[nRunPos].Copy());
-                }
-            }
-
+            aFields[i].SetApiValue(fieldValue);
+			aFields[i].UpdateDisplayValue(fieldValue);
             aFields[i].SetNeedRecalc(true);
         }
 

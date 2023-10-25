@@ -152,6 +152,16 @@
 		}
 		this.MoveCursorToEndPos();
 	};
+	CTextBoxContent.prototype.getAllText = function() {
+		let paragraph = this.GetElement(0);
+		if (!paragraph || !paragraph.IsParagraph())
+			return "";
+		
+		paragraph.SetApplyToAll(true);
+		let text = paragraph.GetSelectedText(true, {NewLine: true});
+		paragraph.SetApplyToAll(false);
+		return text;
+	};
 	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscPDF'] = window['AscPDF'] || {};
