@@ -1,4 +1,4 @@
-﻿/*
+/*
  * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
@@ -4020,12 +4020,16 @@ var editor;
 		this.wb.SelectSearchElement(Id);
 	}
 
-	if (window["NATIVE_EDITOR_ENJINE"]) {
-		var ws = this.wb.getWorksheet();
-		var activeCell = this.wbModel.getActiveWs().selectionRange.activeCell;
-		result = [ws.getCellLeftRelative(activeCell.col, 0), ws.getCellTopRelative(activeCell.row, 0)];
+    if (window["NATIVE_EDITOR_ENJINE"]) {
+         if(SearchEngine.Count > 0){
+            var ws = this.wb.getWorksheet();
+            var activeCell = this.wbModel.getActiveWs().selectionRange.activeCell;
+            result = [ws.getCellLeftRelative(activeCell.col, 0), ws.getCellTopRelative(activeCell.row, 0)];
+         } else {
+           result = null;
+         }
 	} else {
-		result = SearchEngine.Count;
+        result = SearchEngine.Count;
 	}
 
     if (callback)
