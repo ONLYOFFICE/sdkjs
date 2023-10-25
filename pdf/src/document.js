@@ -196,7 +196,7 @@ var CPresentation = CPresentation || function(){};
                 if (value != null && value.toString)
                     value = value.toString();
 
-                oField.SetValue(value);
+                oField.SetValue(value, true);
             }
         }
     };

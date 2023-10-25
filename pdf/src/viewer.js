@@ -1028,7 +1028,7 @@
 				}
 				if (oFormInfo["value"] != null && oForm.GetType() != AscPDF.FIELD_TYPES.button)
 				{
-					oForm.SetValue(oFormInfo["value"]);
+					oForm.SetValue(oFormInfo["value"], true);
 				}
 				if (oFormInfo["display"])
 				{

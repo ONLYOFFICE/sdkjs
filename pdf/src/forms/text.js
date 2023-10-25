@@ -178,6 +178,7 @@
     };
 	CTextField.prototype.SetValue = function(sValue) {
 		if (this.IsWidget()) {
+            let args = arguments; // args[1] == true -> флаг, что вызывается на открытии
 			let _t = this;
 			new Promise(function(resolve) {
 				AscFonts.FontPickerByCharacter.checkText(sValue, _t, resolve);
@@ -185,9 +186,11 @@
 				_t.content.replaceAllText(sValue);
 				
 				_t.SetNeedRecalc(true);
-				_t.SetWasChanged(true);
+                
+                if (args[1] != true)
+				    _t.SetWasChanged(true);
 				
-				if (editor.getDocumentRenderer().IsOpenFormsInProgress && !_t.GetParent())
+				if (args[1] == true && !_t.GetParent())
 					_t.SetApiValue(sValue);
 			});
 		}
