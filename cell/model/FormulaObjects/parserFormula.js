@@ -5099,7 +5099,6 @@ _func[cElementType.cellsRange][cElementType.cellsRange] = function ( arg0, arg1,
 
 _func[cElementType.array][cElementType.array] = function ( arg0, arg1, what, bbox, bIsSpecialFunction ) {
 	if (bIsSpecialFunction) {
-		// ?
 		let specialArray = specialFuncArrayToArray(arg0, arg1, what);
 		if(null !== specialArray){
 			return specialArray;
@@ -8764,7 +8763,6 @@ function parserFormula( formula, parent, _ws ) {
 	}
 
 	function specialFuncArrayToArray(arg0, arg1, what) {
-		// ?
 		let retArr = null, _arg0, _arg1;
 		let iRow, iCol;
 		if (arg0.getRowCount() === arg1.getRowCount() && 1 === arg0.getCountElementInRow()) {

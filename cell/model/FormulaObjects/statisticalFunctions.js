@@ -7217,10 +7217,10 @@ function (window, undefined) {
 	cINTERCEPT.prototype.name = 'INTERCEPT';
 	cINTERCEPT.prototype.argumentsMin = 2;
 	cINTERCEPT.prototype.argumentsMax = 2;
+	cINTERCEPT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cINTERCEPT.prototype.arrayIndexes = {0: 1, 1: 1};
 	cINTERCEPT.prototype.argumentsType = [argType.array, argType.array];
 	cINTERCEPT.prototype.Calculate = function (arg) {
-
 		function intercept(y, x) {
 
 			var fSumDeltaXDeltaY = 0, fSumSqrDeltaX = 0, _x = 0, _y = 0, xLength = 0, i;
