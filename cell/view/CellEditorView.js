@@ -3092,9 +3092,13 @@
 	CellEditor.prototype.End_CompositeInput = function () {
 		var tmpBegin = this.selectionBegin, tmpEnd = this.selectionEnd;
 
-		this.selectionBegin = this.beginCompositePos;
-		this.selectionEnd = this.beginCompositePos + this.compositeLength;
-		this.setTextStyle('u', Asc.EUnderline.underlineNone);
+		//TODO linux(popOs + portuguese lang.) composite input - doesn't come Replace_CompositeText on remove chars
+		let checkFragments = this._findFragment(this.beginCompositePos) && this._findFragment(this.beginCompositePos + this.compositeLength);
+		if (checkFragments) {
+			this.selectionBegin = this.beginCompositePos;
+			this.selectionEnd = this.beginCompositePos + this.compositeLength;
+			this.setTextStyle('u', Asc.EUnderline.underlineNone);
+		}
 
 		this.beginCompositePos = -1;
 		this.compositeLength = 0;
