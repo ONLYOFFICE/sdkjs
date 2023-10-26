@@ -1251,7 +1251,9 @@ var CPresentation = CPresentation || function(){};
         this.calculateInfo.SetSourceField(oSourceField);
         this.calculateInfo.names.forEach(function(name) {
             let oField = oThis.GetField(name);
-
+            if (!oField)
+                return;
+            
             let oFormatTrigger = oField.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Calculate);
             let oActionRunScript = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
 
