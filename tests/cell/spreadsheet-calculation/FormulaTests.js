@@ -3393,7 +3393,264 @@ $(function () {
 
 	});
 
+	QUnit.test("Test: \"Pow operator tests\"", function (assert) {
+		let array;
+
+		ws.getRange2("A100").setValue("2");
+		ws.getRange2("A101").setValue("3");
+		ws.getRange2("A102").setValue("4");
+		ws.getRange2("B100").setValue("1");
+		ws.getRange2("B101").setValue("2");
+		ws.getRange2("B102").setValue("#DIV/0!");
+		ws.getRange2("D100").setValue("2");
+		ws.getRange2("D101").setValue("3");
+		ws.getRange2("E100").setValue("3");
+		ws.getRange2("E101").setValue("");
+
+		oParser = new parserFormula("A100:B102^2", "A1", ws);
+		assert.ok(oParser.parse(), 'A100:B102^2');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of A100:B102^2[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 9, 'Result of A100:B102^2[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 16, 'Result of A100:B102^2[2,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of A100:B102^2[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, 'Result of A100:B102^2[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#DIV/0!", 'Result of A100:B102^2[2,1]');
+
+		oParser = new parserFormula("A100:B102^A100", "A1", ws);
+		assert.ok(oParser.parse(), 'A100:B102^A100');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of A100:B102^A100[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 9, 'Result of A100:B102^A100[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 16, 'Result of A100:B102^A100[2,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of A100:B102^A100[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, 'Result of A100:B102^A100[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#DIV/0!", 'Result of A100:B102^A100[2,1]');
+
+		oParser = new parserFormula("A100:B102^A100:A100", "A1", ws);
+		assert.ok(oParser.parse(), 'A100:B102^A100:A100');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of A100:B102^A100:A100[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 9, 'Result of A100:B102^A100:A100[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 16, 'Result of A100:B102^A100:A100[2,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of A100:B102^A100:A100[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, 'Result of A100:B102^A100:A100[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#DIV/0!", 'Result of A100:B102^A100:A100[2,1]');
+
+		oParser = new parserFormula("2^A100:B102", "A1", ws);
+		assert.ok(oParser.parse(), '2^A100:B102');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of 2^A100:B102[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 8, 'Result of 2^A100:B102[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 16, 'Result of 2^A100:B102[2,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, 'Result of 2^A100:B102[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, 'Result of 2^A100:B102[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#DIV/0!", 'Result of 2^A100:B102[2,1]');
+
+		oParser = new parserFormula("A100^A100:B102", "A1", ws);
+		assert.ok(oParser.parse(), 'A100^A100:B102');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of A100^A100:B102[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 8, 'Result of A100^A100:B102[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 16, 'Result of A100^A100:B102[2,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, 'Result of A100^A100:B102[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, 'Result of A100^A100:B102[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#DIV/0!", 'Result of A100^A100:B102[2,1]');
+
+		oParser = new parserFormula("A100:A100^A100:B102", "A1", ws);
+		assert.ok(oParser.parse(), 'A100:A100^A100:B102');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of A100:A100^A100:B102[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 8, 'Result of A100:A100^A100:B102[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 16, 'Result of A100:A100^A100:B102[2,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, 'Result of A100:A100^A100:B102[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, 'Result of A100:A100^A100:B102[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#DIV/0!", 'Result of A100:A100^A100:B102[2,1]');
+		
+		oParser = new parserFormula("A100:B102^D100:E101", "A1", ws);
+		assert.ok(oParser.parse(), 'A100:B102^D100:E101');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of A100:B102^D100:E101[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 27, 'Result of A100:B102^D100:E101[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#N/A", 'Result of A100:B102^D100:E101[2,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of A100:B102^D100:E101[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, 'Result of A100:B102^D100:E101[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#N/A", 'Result of A100:B102^D100:E101[2,1]');
+
+		ws.getRange2("G100").setValue("a");
+		ws.getRange2("G101").setValue("b");
+		ws.getRange2("H100").setValue("c");
+		ws.getRange2("H101").setValue("d");
+
+		oParser = new parserFormula("G100:H101^2", "A1", ws);
+		assert.ok(oParser.parse(), 'G100:H101^2');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of G100:H101^2[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of G100:H101^2[1,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of G100:H101^2[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of G100:H101^2[1,1]');
+
+		oParser = new parserFormula("2^G100:H101", "A1", ws);
+		assert.ok(oParser.parse(), '2^G100:H101');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of 2^G100:H101[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of 2^G100:H101[1,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of 2^G100:H101[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of 2^G100:H101[1,1]');
+
+		oParser = new parserFormula("G100:H101^G100:H101", "A1", ws);
+		assert.ok(oParser.parse(), 'G100:H101^G100:H101');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of G100:H101^G100:H101[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of G100:H101^G100:H101[1,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of G100:H101^G100:H101[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of G100:H101^G100:H101[1,1]');
+
+		ws.getRange2("I100").setValue("#N/A");
+		ws.getRange2("I101").setValue("#DIV/0!");
+		ws.getRange2("J100").setValue("#NUM!");
+		ws.getRange2("J101").setValue("0");
+
+		oParser = new parserFormula("I100:J101^2", "A1", ws);
+		assert.ok(oParser.parse(), 'I100:J101^2');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#N/A", 'Result of I100:J101^2[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#DIV/0!", 'Result of I100:J101^2[1,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#NUM!", 'Result of I100:J101^2[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 0, 'Result of I100:J101^2[1,1]');
+
+	});
+
 	QUnit.test("Test: \"POWER\"", function (assert) {
+		let array;
+
+		// ------------------------- same tests as in Pow operator tests ------------------------- //
+		ws.getRange2("A100").setValue("2");
+		ws.getRange2("A101").setValue("3");
+		ws.getRange2("A102").setValue("4");
+		ws.getRange2("B100").setValue("1");
+		ws.getRange2("B101").setValue("2");
+		ws.getRange2("B102").setValue("#DIV/0!");
+		ws.getRange2("D100").setValue("2");
+		ws.getRange2("D101").setValue("3");
+		ws.getRange2("E100").setValue("3");
+		ws.getRange2("E101").setValue("");
+
+		oParser = new parserFormula("POWER(A100:B102,2)", "A1", ws);
+		assert.ok(oParser.parse(), 'POWER(A100:B102,2)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of A100:B102^2[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 9, 'Result of A100:B102^2[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 16, 'Result of A100:B102^2[2,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of A100:B102^2[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, 'Result of A100:B102^2[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#DIV/0!", 'Result of A100:B102^2[2,1]');
+
+		oParser = new parserFormula("POWER(A100:B102,A100)", "A1", ws);
+		assert.ok(oParser.parse(), 'POWER(A100:B102,A100)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of A100:B102^A100[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 9, 'Result of A100:B102^A100[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 16, 'Result of A100:B102^A100[2,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of A100:B102^A100[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, 'Result of A100:B102^A100[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#DIV/0!", 'Result of A100:B102^A100[2,1]');
+
+		oParser = new parserFormula("POWER(A100:B102,A100:A100)", "A1", ws);
+		assert.ok(oParser.parse(), 'POWER(A100:B102,A100:A100)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of A100:B102^A100:A100[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 9, 'Result of A100:B102^A100:A100[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 16, 'Result of A100:B102^A100:A100[2,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of A100:B102^A100:A100[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, 'Result of A100:B102^A100:A100[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#DIV/0!", 'Result of A100:B102^A100:A100[2,1]');
+
+		oParser = new parserFormula("POWER(2,A100:B102)", "A1", ws);
+		assert.ok(oParser.parse(), 'POWER(2,A100:B102)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of 2^A100:B102[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 8, 'Result of 2^A100:B102[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 16, 'Result of 2^A100:B102[2,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, 'Result of 2^A100:B102[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, 'Result of 2^A100:B102[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#DIV/0!", 'Result of 2^A100:B102[2,1]');
+
+		oParser = new parserFormula("POWER(A100,A100:B102)", "A1", ws);
+		assert.ok(oParser.parse(), 'POWER(A100,A100:B102)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of A100^A100:B102[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 8, 'Result of A100^A100:B102[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 16, 'Result of A100^A100:B102[2,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, 'Result of A100^A100:B102[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, 'Result of A100^A100:B102[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#DIV/0!", 'Result of A100^A100:B102[2,1]');
+
+		oParser = new parserFormula("POWER(A100:A100,A100:B102)", "A1", ws);
+		assert.ok(oParser.parse(), 'POWER(A100:A100,A100:B102)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of A100:A100^A100:B102[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 8, 'Result of A100:A100^A100:B102[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 16, 'Result of A100:A100^A100:B102[2,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, 'Result of A100:A100^A100:B102[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, 'Result of A100:A100^A100:B102[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#DIV/0!", 'Result of A100:A100^A100:B102[2,1]');
+		
+		oParser = new parserFormula("POWER(A100:B102,D100:E101)", "A1", ws);
+		assert.ok(oParser.parse(), 'POWER(A100:B102,D100:E101)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, 'Result of A100:B102^D100:E101[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 27, 'Result of A100:B102^D100:E101[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#N/A", 'Result of A100:B102^D100:E101[2,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of A100:B102^D100:E101[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, 'Result of A100:B102^D100:E101[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#N/A", 'Result of A100:B102^D100:E101[2,1]');
+
+		ws.getRange2("G100").setValue("a");
+		ws.getRange2("G101").setValue("b");
+		ws.getRange2("H100").setValue("c");
+		ws.getRange2("H101").setValue("d");
+
+		oParser = new parserFormula("POWER(G100:H101,2)", "A1", ws);
+		assert.ok(oParser.parse(), 'POWER(G100:H101,2)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of G100:H101^2[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of G100:H101^2[1,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of G100:H101^2[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of G100:H101^2[1,1]');
+
+		oParser = new parserFormula("POWER(2,G100:H101)", "A1", ws);
+		assert.ok(oParser.parse(), 'POWER(2,G100:H101)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of 2^G100:H101[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of 2^G100:H101[1,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of 2^G100:H101[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of 2^G100:H101[1,1]');
+
+		oParser = new parserFormula("POWER(G100:H101,G100:H101)", "A1", ws);
+		assert.ok(oParser.parse(), 'POWER(G100:H101,G100:H101)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of G100:H101^G100:H101[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of G100:H101^G100:H101[1,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of G100:H101^G100:H101[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of G100:H101^G100:H101[1,1]');
+
+		ws.getRange2("I100").setValue("#N/A");
+		ws.getRange2("I101").setValue("#DIV/0!");
+		ws.getRange2("J100").setValue("#NUM!");
+		ws.getRange2("J101").setValue("0");
+
+		oParser = new parserFormula("POWER(I100:J101,2)", "A1", ws);
+		assert.ok(oParser.parse(), 'POWER(I100:J101,2)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#N/A", 'Result of POWER(I100:J101,2)[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#DIV/0!", 'Result of POWER(I100:J101,2)[1,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#NUM!", 'Result of POWER(I100:J101,2)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 0, 'Result of POWER(I100:J101,2)[1,1]');
+
+		// ------------------------- same tests as in Pow operator tests ------------------------- //
+
+
 		oParser = new parserFormula("POWER(0,0)", "A1", ws);
 		assert.ok(oParser.parse(), "POWER(0,0)");
 		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of POWER(0,0)");	// ms - #NUM!, js - 1, LO - 1, gs - 1
