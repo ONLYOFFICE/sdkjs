@@ -54,6 +54,7 @@
         this._fileSelect        = false;
         this._value             = undefined;
 		this._displayValue      = "";
+		this._useDisplayValue   = true;
 
         // internal
         TurnOffHistory();
@@ -198,6 +199,7 @@
 			return;
 		
 		this._displayValue = displayValue;
+		this._useDisplayValue = true;
 		
 		let _t = this;
 		
@@ -264,10 +266,10 @@
 	 * @returns {string | Array} - can be array of rich value
 	 */
 	CTextField.prototype.GetValue = function() {
-		if (this.GetDocument().activeForm !== this)
-			return this._displayValue;
-	
-		return this.content.getAllText();
+		return (this._useDisplayValue ? this._displayValue : this.content.getAllText());
+	};
+	CTextField.prototype.OnContentChange = function() {
+		this._useDisplayValue = false;
 	};
         
     CTextField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {

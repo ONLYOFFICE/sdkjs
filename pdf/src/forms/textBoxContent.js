@@ -162,6 +162,10 @@
 		paragraph.SetApplyToAll(false);
 		return text;
 	};
+	CTextBoxContent.prototype.OnContentChange = function() {
+		if (this.ParentPDF && this.ParentPDF.OnContentChange)
+			this.ParentPDF.OnContentChange();
+	};
 	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscPDF'] = window['AscPDF'] || {};
