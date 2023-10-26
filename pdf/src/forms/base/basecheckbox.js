@@ -243,31 +243,9 @@
 
                 // Draw the image onto the canvas
                 context.drawImage(CHECKED_ICON, 0, 0, imgW, imgH, 0, 0, canvas.width, canvas.height);
-
-                if (!AscCommon.AscBrowser.isIE || AscCommon.AscBrowser.isIeEdge) {
-                    // Get the pixel data of the canvas
-                    var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                    var data = imageData.data;
-
-                    // Loop through each pixel
-                    for (let i = 0; i < data.length; i += 4) {
-                        const red = data[i];
-                        const green = data[i + 1];
-                        const blue = data[i + 2];
-
-                        // Check if the pixel is black (R = 0, G = 0, B = 0)
-                        if (red === 0 && green === 0 && blue === 0) {
-                            // Change the pixel color to red (R = 255, G = 0, B = 0)
-                            data[i] = oRGB.r; // Red
-                            data[i + 1] = oRGB.g; // Green
-                            data[i + 2] = oRGB.b; // Blue
-                            // Note: The alpha channel (transparency) remains unchanged
-                        }
-                    }
-
-                    // Put the modified pixel data back onto the canvas
-                    context.putImageData(imageData, 0, 0);
-                }
+                context.globalCompositeOperation = "source-atop";
+                context.fillStyle = "rgb(" + oRGB.r + "," + oRGB.g + "," + oRGB.b + ")";
+                context.fillRect(0, 0, canvas.width, canvas.height);
 
                 oGraphicsPDF.SetIntegerGrid(true);
                 oGraphicsPDF.DrawImageXY(canvas, x, y);
