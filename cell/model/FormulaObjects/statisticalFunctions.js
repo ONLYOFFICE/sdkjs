@@ -5166,11 +5166,7 @@ function (window, undefined) {
 			if (arg1.value === "") {
 				arg1Matrix = arg0.getMatrix();
 			} else {
-				if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-					arg1Matrix = g_oFormulaRangesCache.get(arg0);
-				} else {
-					arg1Matrix = arg0.getMatrixNoEmpty ? arg0.getMatrixNoEmpty() : arg0.getMatrix();
-				}
+				arg1Matrix = arg0.getMatrixNoEmpty ? arg0.getMatrixNoEmpty() : arg0.getMatrix();
 			}
 			if (cElementType.cellsRange3D === arg0.type) {
 				arg1Matrix = arg1Matrix[0];
