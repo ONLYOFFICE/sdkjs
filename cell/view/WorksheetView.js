@@ -6972,8 +6972,8 @@
 		fVerLine = ctx.lineVerPrevPx;
 
 
-		if (AscBrowser.retinaPixelRatio === 2) {
-			widthLine = AscCommon.AscBrowser.convertToRetinaValue(widthLine, true);
+		if (AscBrowser.retinaPixelRatio >= 2) {
+			widthLine = ((widthLine * 2) + 0.5) >> 0
 		}
 
 		if (col != null) {
@@ -7070,7 +7070,7 @@
 
         this._activateOverlayCtx();
         var t = this;
-		var isRetinaWidth = AscCommon.AscBrowser.convertToRetinaValue(1, true) === 2;
+		var isRetinaWidth = this.getRetinaPixelRatio() >= 2;
         var selectionRange = this.model.getSelection();
         selectionRange.ranges.forEach(function (item, index) {
             var arnIntersection = item.intersectionSimple(range);
