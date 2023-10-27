@@ -7200,7 +7200,8 @@
 		if (null !== this.activeMoveRange) {
 			let activeMoveRange = this.activeMoveRange;
 			let colRowMoveProps = this.startCellMoveRange && this.startCellMoveRange.colRowMoveProps;
-			if (colRowMoveProps && colRowMoveProps.shiftKey) {
+			let bInsertBetweenRowCol = !!(colRowMoveProps && colRowMoveProps.shiftKey);
+			if (bInsertBetweenRowCol) {
 				if (colRowMoveProps.colByX != null) {
 					activeMoveRange = new Asc.Range(colRowMoveProps.colByX, activeMoveRange.r1, colRowMoveProps.colByX + 1, activeMoveRange.r2);
 				} else if (colRowMoveProps.rowByY != null) {
@@ -7211,9 +7212,9 @@
 			arnIntersection = activeMoveRange.intersectionSimple(range);
 			if (arnIntersection) {
 				// Координаты для перемещения диапазона
-				_x1 = this._getColLeft(arnIntersection.c1) - offsetX - 2;
+				_x1 = this._getColLeft(arnIntersection.c1) - offsetX - 2 - 1*isRetinaWidth*bInsertBetweenRowCol;
 				_x2 = this._getColLeft(arnIntersection.c2 + 1) - offsetX + 1 + 2;
-				_y1 = this._getRowTop(arnIntersection.r1) - offsetY - 2;
+				_y1 = this._getRowTop(arnIntersection.r1) - offsetY - 2 - 1*isRetinaWidth*bInsertBetweenRowCol;
 				_y2 = this._getRowTop(arnIntersection.r2 + 1) - offsetY + 1 + 2;
 
 				// Выбираем наибольший range для очистки
