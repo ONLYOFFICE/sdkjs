@@ -989,7 +989,7 @@ CChartsDrawer.prototype =
 		if(!is3dChart && null !== pieChart) {
 			//вычисляем истинную(первоначальную) ширину и высоту диаграммы
 			left = this._getStandartMargin(left, leftKey, leftTextLabels, 0) + leftKey + leftTextLabels;
-			bottom = this._getStandartMargin(bottosuppsottomKey, bottomTextLabels, 0) + bottomKey + bottomTextLabels;
+			bottom = this._getStandartMargin(bottom, bottomKey, bottomTextLabels, 0) + bottomKey + bottomTextLabels;
 			top = this._getStandartMargin(top, topKey, topTextLabels, topMainTitle) + topKey + topTextLabels + topMainTitle;
 			right = this._getStandartMargin(right, rightKey, rightTextLabels, 0) + rightKey + rightTextLabels;
 
@@ -16152,99 +16152,148 @@ CColorObj.prototype =
 		},
 
 		_calculateLine: function (oSeries, coordinates) {
-
-			const oChart = oSeries.parent;
 			let type = oSeries.trendline.trendlineType;
-			const order = oSeries.trendline.order?oSeries.trendline.order + 1:2;
-			let chartletiables = this._findSuppletiables(coordinates.coords.xVals.length, coordinates.coords.xVals, coordinates.coords.yVals, type, order);
-			const equationStorage = this._obtainEquationStorage(type)
-
-			if (chartletiables && equationStorage.hasOwnProperty('calcYVal')) {
-
-				const xAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_CatAx);
-				const yAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_ValAx);
-
-				let pathH = this.cChartDrawer.calcProp.pathH;
-				let pathW = this.cChartDrawer.calcProp.pathW;
-
-				const _lineCoordinate = function (xIndex, cChartDrawer) {
-					const result = {xVal: null, yVal: null, xPos: null, yPos: null};
-					result.xVal = xAxis.xPoints[xIndex].val;
-					result.yVal = equationStorage.calcYVal(result.xVal, chartletiables);
-					result.xPos = cChartDrawer.getYPosition(result.xVal, xAxis);
-					result.yPos = cChartDrawer.getYPosition(result.yVal, yAxis);
-					return result
+			const oChart = oSeries.parent;
+			const xAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_CatAx);
+			const yAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_ValAx);
+			let pathH = this.cChartDrawer.calcProp.pathH;
+			let pathW = this.cChartDrawer.calcProp.pathW;
+			if(type == AscFormat.TRENDLINE_TYPE_MOVING_AVG){
+				const period = oSeries.trendline.period
+				if(coordinates.coords.yVals.length>period){
+					const newCoords = this._getMAline(coordinates.coords.xVals, coordinates.coords.yVals, period)
+					const result = []
+					for(let i=0; i<newCoords.xVals.length; i++){
+						const xPos = this.cChartDrawer.getYPosition(newCoords.xVals[i], xAxis);
+						const yPos = this.cChartDrawer.getYPosition(newCoords.yVals[i], yAxis);
+						result.push({xPos: xPos, yPos: yPos})
+					}
+					let pathId = this.cChartDrawer.cChartSpace.AllocPath();
+					let path = this.cChartDrawer.cChartSpace.GetPath(pathId);
+					path.moveTo(result[0].xPos * pathW, result[0].yPos * pathH);
+					for (let i = 1; i < result.length; i++) {
+						path.lnTo(result[i].xPos * pathW, result[i].yPos * pathH);
+					}
+					coordinates.path.push(pathId);
 				}
 
-				const _findMidCoordinates = function (pointsNumber, xValStart, xValEnd, cChartDrawer) {
-					const mid = []
-					const xNet = xValEnd - xValStart;
-					for (let i = 1; i <= pointsNumber; i++) {
-						const xVal = (xNet / (pointsNumber + 1)) * i + xValStart;
-						const yVal = equationStorage.calcYVal(xVal, chartletiables)
-						const yPos = cChartDrawer.getYPosition(yVal, yAxis);
-						const xPos = cChartDrawer.getYPosition(xVal, xAxis);
-						mid.push({xPos: xPos, yPos: yPos})
+			}else{
+				const order = oSeries.trendline.order?oSeries.trendline.order + 1:2;
+				let chartletiables = this._findSuppletiables(coordinates.coords.xVals.length, coordinates.coords.xVals, coordinates.coords.yVals, type, order);
+				const equationStorage = this._obtainEquationStorage(type)
+				if (chartletiables && equationStorage.hasOwnProperty('calcYVal')) {
+					const _lineCoordinate = function (xIndex, cChartDrawer) {
+						const result = {xVal: null, yVal: null, xPos: null, yPos: null};
+						result.xVal = xAxis.xPoints[xIndex].val;
+						result.yVal = equationStorage.calcYVal(result.xVal, chartletiables);
+						result.xPos = cChartDrawer.getYPosition(result.xVal, xAxis);
+						result.yPos = cChartDrawer.getYPosition(result.yVal, yAxis);
+						return result
 					}
-					return mid
-				}
-
-				const _findCentralPoint = function (start, end, chartletiables, cChartDrawer) {
-					// find startTangentLine, endTangentLine,
-					// find intersection of those tangentLines
-
-					const result = {xPos: null, yPos: null}
-
-					const _findLine = function (xVal, yVal) {
-						// derivative of y=mx+b => m/x; which will become a slope
-						// b = (y-(slope*x))
-						const m = equationStorage.slope(xVal, chartletiables)
-						const b = yVal - (m * xVal)
-						return [m, b]
+	
+					const _findMidCoordinates = function (pointsNumber, xValStart, xValEnd, cChartDrawer, cond) {
+						const mid = []
+						const xNet = xValEnd - xValStart;
+						for (let i = 1; i <= pointsNumber; i++) {
+							const xVal = (xNet / (pointsNumber + 1)) * i + xValStart;
+							const yVal = equationStorage.calcYVal(xVal, chartletiables)
+							const yPos = cChartDrawer.getYPosition(yVal, yAxis);
+							const xPos = cChartDrawer.getYPosition(xVal, xAxis);
+							if(cond && yVal<=0){
+								continue
+							}
+	
+							mid.push({xPos: xPos, yPos: yPos})
+						}
+						return mid
 					}
-
-					const line1Letiables = _findLine(start.xVal, start.yVal);
-					const line2Letiables = _findLine(end.xVal, end.yVal);
-
-					// to find newX = (b2-b1)(m1-m2)
-					// to find newY = m1x + b
-					const xVal = (line2Letiables[1] - line1Letiables[1]) / (line1Letiables[0] - line2Letiables[0])
-					const yVal = (xVal * line1Letiables[0]) + line1Letiables[1]
-
-					result.xPos = cChartDrawer.getYPosition(xVal, xAxis);
-					result.yPos = cChartDrawer.getYPosition(yVal, yAxis);
-
-					return result
-				};
-
-				const start = _lineCoordinate(0, this.cChartDrawer)
-				const end = _lineCoordinate(xAxis.xPoints.length - 1, this.cChartDrawer)
-
-				let pathId = this.cChartDrawer.cChartSpace.AllocPath();
-				let path = this.cChartDrawer.cChartSpace.GetPath(pathId);
-				path.moveTo(start.xPos * pathW, start.yPos * pathH);
-
-				if (type == 4 || yAxis.scaling.logBase) {
-
-					const midPointsNum = 100
-					const mid = _findMidCoordinates(midPointsNum, start.xVal, end.xVal, this.cChartDrawer);
-					for (let i = 0; i < midPointsNum; i++) {
-						path.lnTo(mid[i].xPos * pathW, mid[i].yPos * pathH);
-					}
-					path.lnTo(end.xPos * pathW, end.yPos * pathH);
-				} else {
-					if (equationStorage.hasOwnProperty('slope')) {
-						const mid = _findCentralPoint(start, end, chartletiables, this.cChartDrawer);
-						path.quadBezTo(mid.xPos * pathW, mid.yPos * pathH, end.xPos * pathW, end.yPos * pathH);
-					} else {
+	
+					const _findCentralPoint = function (start, end, chartletiables, cChartDrawer) {
+						// find startTangentLine, endTangentLine,
+						// find intersection of those tangentLines
+	
+						const result = {xPos: null, yPos: null}
+	
+						const _findLine = function (xVal, yVal) {
+							// derivative of y=mx+b => m/x; which will become a slope
+							// b = (y-(slope*x))
+							const m = equationStorage.slope(xVal, chartletiables)
+							const b = yVal - (m * xVal)
+							return [m, b]
+						}
+	
+						const line1Letiables = _findLine(start.xVal, start.yVal);
+						const line2Letiables = _findLine(end.xVal, end.yVal);
+	
+						// to find newX = (b2-b1)(m1-m2)
+						// to find newY = m1x + b
+						const xVal = (line2Letiables[1] - line1Letiables[1]) / (line1Letiables[0] - line2Letiables[0])
+						const yVal = (xVal * line1Letiables[0]) + line1Letiables[1]
+	
+						result.xPos = cChartDrawer.getYPosition(xVal, xAxis);
+						result.yPos = cChartDrawer.getYPosition(yVal, yAxis);
+	
+						return result
+					};
+	
+					const start = _lineCoordinate(0, this.cChartDrawer)
+					const end = _lineCoordinate(xAxis.xPoints.length - 1, this.cChartDrawer)
+	
+					let pathId = this.cChartDrawer.cChartSpace.AllocPath();
+					let path = this.cChartDrawer.cChartSpace.GetPath(pathId);
+	
+					if (type == 4 || yAxis.scaling.logBase) {
+						const midPointsNum = 100
+						const mid = _findMidCoordinates(midPointsNum, start.xVal, end.xVal, this.cChartDrawer, yAxis.scaling.logBase);
+	
+						let starting = 0;
+						if(yAxis.scaling.logBase){
+							path.moveTo(mid[0].xPos * pathW, mid[0].yPos * pathH);
+							starting = 1;
+						}else{
+							path.moveTo(start.xPos * pathW, start.yPos * pathH);
+						}
+						for (let i = starting; i < mid.length; i++) {
+							path.lnTo(mid[i].xPos * pathW, mid[i].yPos * pathH);
+						}
 						path.lnTo(end.xPos * pathW, end.yPos * pathH);
+	
+					} else {
+						path.moveTo(start.xPos * pathW, start.yPos * pathH);
+						if (equationStorage.hasOwnProperty('slope')) {
+							const mid = _findCentralPoint(start, end, chartletiables, this.cChartDrawer);
+							path.quadBezTo(mid.xPos * pathW, mid.yPos * pathH, end.xPos * pathW, end.yPos * pathH);
+						} else {
+							path.lnTo(end.xPos * pathW, end.yPos * pathH);
+						}
 					}
+	
+	
+					coordinates.path.push(pathId);
 				}
-
-
-				coordinates.path.push(pathId);
 			}
+		},
 
+		_getMAline : function(xVals, yVals, period){
+			console.log(xVals, yVals)
+			const result = {xVals:[], yVals:[]}
+			if(yVals.length > period){
+				let sum = 0;
+				for(let i=0; i< period; i++){
+					sum+=yVals[i]
+				}
+				let yVal = sum / period;
+				result.yVals.push(yVal);
+				result.xVals.push(xVals[period-1]);
+				for(let i=period; i<yVals.length; i++){
+					sum+=yVals[i]
+					sum-=yVals[i-period]
+					let yVal = sum / period;
+					result.yVals.push(yVal);
+					result.xVals.push(xVals[i]);
+				}
+			}
+			return result
 		},
 
 		_obtainEquationStorage: function (type) {
@@ -16287,10 +16336,8 @@ CColorObj.prototype =
 		},
 
 		_findSuppletiables: function (size, xVals, yVals, type, pow) {
-
-			const mappingStorage = this._obtainMappingStorage(type)
-
-			if (mappingStorage) {
+			if(xVals.length == size && yVals.length == size){
+				pow = size < pow ? size : pow
 
 				const _mapCoordinates = function () {
 					for (let i = 0; i < size; i++) {
@@ -16300,179 +16347,185 @@ CColorObj.prototype =
 						if (mappingStorage.hasOwnProperty('yVal')) {
 							yVals[i] = mappingStorage['yVal'](yVals[i])
 						}
-					}
-				}
-
-				/*
-				X = createMatrix(coordsX)
-				X_T = findTranspose(X)
-				P = matMul(X, X_T)
-				P_I = findInv(M)
-				S = matMul(X_T, Y)
-				result = matMul(P_I, S)
-				*/
-
-				const _createMatrix = function(arr, size, starting){
-					let result = []
-					for(let i=0; i< arr.length; i++){
-						let power = starting;
-						let row = []
-						for(let j=0; j<size; j++){
-							row.push(Math.pow(arr[i], power));
-							power++;
+						if(isNaN(xVals[i]) || isNaN(yVals[i])){
+							return false
 						}
-						result.push(row)
 					}
-					return result
+					return true
 				}
-
-				const _findTranspose = function(A, N, M){
-					const B = Array(N); 
-					for(let i=0;i<N;i++){
-						B[i] = Array(M).fill(1); 
+	
+				const mappingStorage = this._obtainMappingStorage(type)
+				const mapped = _mapCoordinates()
+	
+				if (mappingStorage && mapped) {
+	
+					/*
+					X = createMatrix(coordsX)
+					X_T = findTranspose(X)
+					P = matMul(X, X_T)
+					P_I = findInv(M)
+					S = matMul(X_T, Y)
+					result = matMul(P_I, S)
+					*/
+	
+					const _createMatrix = function(arr, size, starting){
+						let result = []
+						for(let i=0; i< arr.length; i++){
+							let power = starting;
+							let row = []
+							for(let j=0; j<size; j++){
+								row.push(Math.pow(arr[i], power));
+								power++;
+							}
+							result.push(row)
+						}
+						return result
 					}
-
-					for (let i = 1; i < N; i++) 
-						for (let j = 0; j < M; j++) 
-							B[i][j] = A[j][i];
-					return B
-				}
-
-				const _matMul = function(A, B, R, C, D){
-					const rslt = Array(R); 
-					for(let i=0;i<R;i++){
-						rslt[i] = Array(C).fill(0); 
+	
+					const _findTranspose = function(A, N, M){
+						const B = Array(N); 
+						for(let i=0;i<N;i++){
+							B[i] = Array(M).fill(1); 
+						}
+	
+						for (let i = 1; i < N; i++) 
+							for (let j = 0; j < M; j++) 
+								B[i][j] = A[j][i];
+						return B
 					}
-
-					for (let i = 0; i < R; i++) { 
-						for (let j = 0; j < C; j++) { 
-							for (let k = 0; k < D; k++) { 
-								rslt[i][j] += A[i][k] * B[k][j]; 
+	
+					const _matMul = function(A, B, R, C, D){
+						const rslt = Array(R); 
+						for(let i=0;i<R;i++){
+							rslt[i] = Array(C).fill(0); 
+						}
+	
+						for (let i = 0; i < R; i++) { 
+							for (let j = 0; j < C; j++) { 
+								for (let k = 0; k < D; k++) { 
+									rslt[i][j] += A[i][k] * B[k][j]; 
+								} 
 							} 
 						} 
-					} 
-
-					return rslt
-				}
-
-				const _findInverse = function(M){
-					// I use Guassian Elimination to calculate the inverse:
-					// (1) 'augment' the matrix (left) by the identity (on the right)
-					// (2) Turn the matrix on the left into the identity by elemetry row ops
-					// (3) The matrix on the right is the inverse (was the identity matrix)
-					// There are 3 elemtary row ops: (I combine b and c in my code)
-					// (a) Swap 2 rows
-					// (b) Multiply a row by a scalar
-					// (c) Add 2 rows
-					
-					//if the matrix isn't square: exit (error)
-					if(M.length !== M[0].length){return;}
-					
-					//create the identity matrix (I), and a copy (C) of the original
-					let i=0, ii=0, j=0, dim=M.length, e=0, t=0;
-					let I = [], C = [];
-					for(let i=0; i<dim; i+=1){
-						// Create the row
-						I[I.length]=[];
-						C[C.length]=[];
-						for(let j=0; j<dim; j+=1){
-							
-							//if we're on the diagonal, put a 1 (for identity)
-							if(i==j){ I[i][j] = 1; }
-							else{ I[i][j] = 0; }
-							
-							// Also, make the copy of the original
-							C[i][j] = M[i][j];
-						}
+	
+						return rslt
 					}
-					
-					// Perform elementary row operations
-					for(let i=0; i<dim; i+=1){
-						// get the element e on the diagonal
-						e = C[i][i];
+	
+					const _findInverse = function(M){
+						// I use Guassian Elimination to calculate the inverse:
+						// (1) 'augment' the matrix (left) by the identity (on the right)
+						// (2) Turn the matrix on the left into the identity by elemetry row ops
+						// (3) The matrix on the right is the inverse (was the identity matrix)
+						// There are 3 elemtary row ops: (I combine b and c in my code)
+						// (a) Swap 2 rows
+						// (b) Multiply a row by a scalar
+						// (c) Add 2 rows
 						
-						// if we have a 0 on the diagonal (we'll need to swap with a lower row)
-						if(e==0){
-							//look through every row below the i'th row
-							for(ii=i+1; ii<dim; ii+=1){
-								//if the ii'th row has a non-0 in the i'th col
-								if(C[ii][i] != 0){
-									//it would make the diagonal have a non-0 so swap it
-									for(let j=0; j<dim; j++){
-										e = C[i][j];       //temp store i'th row
-										C[i][j] = C[ii][j];//replace i'th row by ii'th
-										C[ii][j] = e;      //repace ii'th by temp
-										e = I[i][j];       //temp store i'th row
-										I[i][j] = I[ii][j];//replace i'th row by ii'th
-										I[ii][j] = e;      //repace ii'th by temp
+						//if the matrix isn't square: exit (error)
+						if(M.length !== M[0].length){return;}
+						
+						//create the identity matrix (I), and a copy (C) of the original
+						let i=0, ii=0, j=0, dim=M.length, e=0, t=0;
+						let I = [], C = [];
+						for(let i=0; i<dim; i+=1){
+							// Create the row
+							I[I.length]=[];
+							C[C.length]=[];
+							for(let j=0; j<dim; j+=1){
+								
+								//if we're on the diagonal, put a 1 (for identity)
+								if(i==j){ I[i][j] = 1; }
+								else{ I[i][j] = 0; }
+								
+								// Also, make the copy of the original
+								C[i][j] = M[i][j];
+							}
+						}
+						
+						// Perform elementary row operations
+						for(let i=0; i<dim; i+=1){
+							// get the element e on the diagonal
+							e = C[i][i];
+							
+							// if we have a 0 on the diagonal (we'll need to swap with a lower row)
+							if(e==0){
+								//look through every row below the i'th row
+								for(ii=i+1; ii<dim; ii+=1){
+									//if the ii'th row has a non-0 in the i'th col
+									if(C[ii][i] != 0){
+										//it would make the diagonal have a non-0 so swap it
+										for(let j=0; j<dim; j++){
+											e = C[i][j];       //temp store i'th row
+											C[i][j] = C[ii][j];//replace i'th row by ii'th
+											C[ii][j] = e;      //repace ii'th by temp
+											e = I[i][j];       //temp store i'th row
+											I[i][j] = I[ii][j];//replace i'th row by ii'th
+											I[ii][j] = e;      //repace ii'th by temp
+										}
+										//don't bother checking other rows since we've swapped
+										break;
 									}
-									//don't bother checking other rows since we've swapped
-									break;
+								}
+								//get the new diagonal
+								e = C[i][i];
+								//if it's still 0, not invertable (error)
+								if(e==0){return}
+							}
+							
+							// Scale this row down by e (so we have a 1 on the diagonal)
+							for(let j=0; j<dim; j++){
+								C[i][j] = C[i][j]/e; //apply to original matrix
+								I[i][j] = I[i][j]/e; //apply to identity
+							}
+							
+							// Subtract this row (scaled appropriately for each row) from ALL of
+							// the other rows so that there will be 0's in this column in the
+							// rows above and below this one
+							for(let ii=0; ii<dim; ii++){
+								// Only apply to other rows (we want a 1 on the diagonal)
+								if(ii==i){continue;}
+								
+								// We want to change this element to 0
+								e = C[ii][i];
+								
+								// Subtract (the row above(or below) scaled by e) from (the
+								// current row) but start at the i'th column and assume all the
+								// stuff left of diagonal is 0 (which it should be if we made this
+								// algorithm correctly)
+								for(let j=0; j<dim; j++){
+									C[ii][j] -= e*C[i][j]; //apply to original matrix
+									I[ii][j] -= e*I[i][j]; //apply to identity
 								}
 							}
-							//get the new diagonal
-							e = C[i][i];
-							//if it's still 0, not invertable (error)
-							if(e==0){return}
 						}
 						
-						// Scale this row down by e (so we have a 1 on the diagonal)
-						for(let j=0; j<dim; j++){
-							C[i][j] = C[i][j]/e; //apply to original matrix
-							I[i][j] = I[i][j]/e; //apply to identity
-						}
-						
-						// Subtract this row (scaled appropriately for each row) from ALL of
-						// the other rows so that there will be 0's in this column in the
-						// rows above and below this one
-						for(let ii=0; ii<dim; ii++){
-							// Only apply to other rows (we want a 1 on the diagonal)
-							if(ii==i){continue;}
-							
-							// We want to change this element to 0
-							e = C[ii][i];
-							
-							// Subtract (the row above(or below) scaled by e) from (the
-							// current row) but start at the i'th column and assume all the
-							// stuff left of diagonal is 0 (which it should be if we made this
-							// algorithm correctly)
-							for(let j=0; j<dim; j++){
-								C[ii][j] -= e*C[i][j]; //apply to original matrix
-								I[ii][j] -= e*I[i][j]; //apply to identity
+						//we've done all operations, C should be the identity
+						//matrix I should be the inverse:
+						return I;
+					}
+	
+					const flatten = function(arr){
+						for(let i=0; i< arr.length; i++){
+							arr[i] = arr[i][0]
+							if (i == 0 && mappingStorage.hasOwnProperty('bVal')) {
+								arr[0] = mappingStorage['bVal'](arr[0])
 							}
 						}
 					}
-					
-					//we've done all operations, C should be the identity
-					//matrix I should be the inverse:
-					return I;
-				}
-
-				const flatten = function(arr){
-					for(let i=0; i< arr.length; i++){
-						arr[i] = arr[i][0]
-						if (i == 0 && mappingStorage.hasOwnProperty('bVal')) {
-							arr[0] = mappingStorage['bVal'](arr[0])
-						}
+	
+					// Letiables = ((X_T@X)^-1)@X_T@Y
+					const X = _createMatrix(xVals, pow, 0)
+					const X_T = _findTranspose(X, pow, xVals.length)
+					const P = _matMul(X_T, X, pow, pow, xVals.length)
+					const P_I = _findInverse(P)
+					if(P_I){
+						const Y = _createMatrix( yVals, 1, 1)
+						const S = _matMul(X_T, Y, pow, 1, xVals.length)
+						const letiables = _matMul(P_I, S, pow, 1, pow)
+						flatten(letiables)
+						return letiables
 					}
 				}
-
-				// Letiables = ((X_T@X)^-1)@X_T@Y
-				_mapCoordinates()
-				const X = _createMatrix(xVals, pow, 0)
-				const X_T = _findTranspose(X, pow, xVals.length)
-				const P = _matMul(X_T, X, pow, pow, xVals.length)
-				const P_I = _findInverse(P)
-				if(P_I){
-					const Y = _createMatrix( yVals, 1, 1)
-					const S = _matMul(X_T, Y, pow, 1, xVals.length)
-					const letiables = _matMul(P_I, S, pow, 1, pow)
-					flatten(letiables)
-					return letiables;
-				}else{
-					return []
-				}
-
 			}
 		},
 
