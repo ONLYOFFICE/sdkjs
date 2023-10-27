@@ -6036,7 +6036,7 @@ drawBarChart.prototype = {
 						this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
 					}
 					if (this.chart.series[i].trendline && this.subType === "normal" && seria.length>1) {
-						this.cChartDrawer.trendline.addCoordinate(idx, _pointVal, this.chart.series[i])
+						this.cChartDrawer.trendline.addCoordinate(idx, _pointVal, this.chart.series[i], numCache.ptCount)
 					}
 				}
 			}
@@ -16116,13 +16116,14 @@ CColorObj.prototype =
 		this.cChartDrawer = chartsDrawer;
 		//[chartId][seriesId]
 		this.coordinates = {};
+		this.points = {}
 	}
 
 	CTrendline.prototype = {
 
 		constructor: CTrendline,
 
-		addCoordinate: function (xVal, yVal, oSeries) {
+		addCoordinate: function (xVal, yVal, oSeries, ptCount) {
 			if (!oSeries || !oSeries.parent) {
 				return;
 			}
@@ -16130,9 +16131,10 @@ CColorObj.prototype =
 				this.coordinates[oSeries.parent.Id] = {};
 			}
 			if (!this.coordinates[oSeries.parent.Id][oSeries.Id]) {
-				this.coordinates[oSeries.parent.Id][oSeries.Id] = {coords: {xVals: [], yVals: []}, path: []};
+				this.coordinates[oSeries.parent.Id][oSeries.Id] = {coords: {xVals: [], yVals: []}, path: [], ptCount : null};
 			}
 
+			this.coordinates[oSeries.parent.Id][oSeries.Id].ptCount = ptCount;
 			this.coordinates[oSeries.parent.Id][oSeries.Id].coords.xVals.push(xVal + 1);
 			this.coordinates[oSeries.parent.Id][oSeries.Id].coords.yVals.push(yVal);
 		},
@@ -16160,22 +16162,20 @@ CColorObj.prototype =
 			let pathW = this.cChartDrawer.calcProp.pathW;
 			if(type == AscFormat.TRENDLINE_TYPE_MOVING_AVG){
 				const period = oSeries.trendline.period
-				if(coordinates.coords.yVals.length>period){
-					const newCoords = this._getMAline(coordinates.coords.xVals, coordinates.coords.yVals, period)
-					const result = []
-					for(let i=0; i<newCoords.xVals.length; i++){
-						const xPos = this.cChartDrawer.getYPosition(newCoords.xVals[i], xAxis);
-						const yPos = this.cChartDrawer.getYPosition(newCoords.yVals[i], yAxis);
-						result.push({xPos: xPos, yPos: yPos})
-					}
-					let pathId = this.cChartDrawer.cChartSpace.AllocPath();
-					let path = this.cChartDrawer.cChartSpace.GetPath(pathId);
-					path.moveTo(result[0].xPos * pathW, result[0].yPos * pathH);
-					for (let i = 1; i < result.length; i++) {
-						path.lnTo(result[i].xPos * pathW, result[i].yPos * pathH);
-					}
-					coordinates.path.push(pathId);
+				const newCoords = this._getMAline(coordinates.coords.xVals, coordinates.coords.yVals, coordinates.ptCount, period)
+				const result = []
+				for(let i=0; i<newCoords.xVals.length; i++){
+					const xPos = this.cChartDrawer.getYPosition(newCoords.xVals[i], xAxis);
+					const yPos = this.cChartDrawer.getYPosition(newCoords.yVals[i], yAxis);
+					result.push({xPos: xPos, yPos: yPos})
 				}
+				let pathId = this.cChartDrawer.cChartSpace.AllocPath();
+				let path = this.cChartDrawer.cChartSpace.GetPath(pathId);
+				path.moveTo(result[0].xPos * pathW, result[0].yPos * pathH);
+				for (let i = 1; i < result.length; i++) {
+					path.lnTo(result[i].xPos * pathW, result[i].yPos * pathH);
+				}
+				coordinates.path.push(pathId);
 
 			}else{
 				const order = oSeries.trendline.order?oSeries.trendline.order + 1:2;
@@ -16274,23 +16274,31 @@ CColorObj.prototype =
 			}
 		},
 
-		_getMAline : function(xVals, yVals, period){
-			console.log(xVals, yVals)
+		_getMAline : function(xVals, yVals, ptCount, period){
 			const result = {xVals:[], yVals:[]}
-			if(yVals.length > period){
+			if(ptCount > period){
 				let sum = 0;
-				for(let i=0; i< period; i++){
-					sum+=yVals[i]
-				}
-				let yVal = sum / period;
-				result.yVals.push(yVal);
-				result.xVals.push(xVals[period-1]);
-				for(let i=period; i<yVals.length; i++){
-					sum+=yVals[i]
-					sum-=yVals[i-period]
-					let yVal = sum / period;
-					result.yVals.push(yVal);
-					result.xVals.push(xVals[i]);
+				let counter = 0;
+				let j = 0;
+				console.log(xVals, yVals)
+				for(let i=0; i<ptCount; i++){
+					//check if past existed and remove it
+					if(i>= period && xVals[j - counter] == i + 1 - period){
+						sum-= yVals[j-counter]
+						counter--; 
+					}
+					//check if next exists and add it
+					if(xVals[j] == i + 1){
+						sum+=yVals[j]
+						counter++;
+						j++;
+					}
+					//sum/counter after sliding window will be created
+					if(i>= (period - 1) && counter != 0){
+						let yVal = sum / counter;
+						result.yVals.push(yVal);
+						result.xVals.push(i+1);
+					}
 				}
 			}
 			return result
