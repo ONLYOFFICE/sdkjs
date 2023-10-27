@@ -1594,167 +1594,255 @@ $(function () {
 				return true
 			}
 
-			let size = 6;
+			let ptCount = 6;
 			let xVals = [1, 2, 3, 4, 5, 6];
 			let yVals = [4, 6, 3, 7, 8, 9];
 			let xValResults = [2, 3, 4, 5, 6];
 			let yValResults = [5, 4.5, 5, 7.5, 8.5];
 			let period = 2;
-			let results = trendline.prototype._getMAline(xVals, yVals, period)
+			let results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
 
 			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
 			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
 
-			size = 2;
+			ptCount = 2;
 			xVals = [1, 2];
 			yVals = [5, 15];
 			xValResults = [];
 			yValResults = [];
 			period = 3;
-			results = trendline.prototype._getMAline(xVals, yVals, period)
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
 
 			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
 			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
 
-			size = 6;
+			ptCount = 6;
 			xVals = [1, 2, 3, 4, 5, 6];
 			yVals = [-1, -2, -3, -4, -5, -6];
 			xValResults = [4, 5, 6];
 			yValResults = [-2.5, -3.5, -4.5];
 			period = 4;
-			results = trendline.prototype._getMAline(xVals, yVals, period)
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
 
 			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
 			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
 
-			size = 6;
+			ptCount = 6;
 			xVals = [1, 2, 3, 4, 5, 6];
 			yVals = [-3, 6, -9, 12, -15, 18];
 			xValResults = [5, 6];
 			yValResults = [-1.8, 2.4];
 			period = 5;
-			results = trendline.prototype._getMAline(xVals, yVals, period)
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
 
 			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
 			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
 
-			size = 6;
+			ptCount = 6;
 			xVals = [1, 2, 3, 4, 5, 6];
 			yVals = [2, 3, 6, 8, 10, 12];
 			xValResults = [];
 			yValResults = [];
 			period = 6;
-			results = trendline.prototype._getMAline(xVals, yVals, period)
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
 
 			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
 			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
 
-			size = 6;
+			ptCount = 6;
 			xVals = [1, 2, 3, 4, 5, 6];
 			yVals = [0, 2, -3, 6, 8, 9];
 			xValResults = [2, 3, 4, 5, 6];
 			yValResults = [1, -0.5, 1.5, 7, 8.5];
 			period = 2;
-			results = trendline.prototype._getMAline(xVals, yVals, period)
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
 
 			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
 			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
 
-			size = 6;
+			ptCount = 6;
 			xVals = [1, 2, 3, 4, 5, 6];
 			yVals = [0, 1, 0, 2, 0, 3];
 			xValResults = [3, 4, 5, 6];
 			yValResults = [0.333333, 1, 0.666667, 1.666667];
 			period = 3;
-			results = trendline.prototype._getMAline(xVals, yVals, period)
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
 
 			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
 			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
 
-			size = 6;
+			ptCount = 6;
 			xVals = [1, 2, 3, 4, 5, 6];
 			yVals = [-9, -7, -6, -5, -4, -2];
 			xValResults = [4, 5, 6];
 			yValResults = [-6.75, -5.5, -4.25];
 			period = 4;
-			results = trendline.prototype._getMAline(xVals, yVals, period)
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
 
 			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
 			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
 
-			size = 6;
+			ptCount = 6;
 			xVals = [1, 2, 3, 4, 5, 6];
 			yVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
 			xValResults = [5, 6];
 			yValResults = [0.36, 0.52];
 			period = 5;
-			results = trendline.prototype._getMAline(xVals, yVals, period)
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
 
 			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
 			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
 
-			size = 6;
+			ptCount = 6;
 			xVals = [1, 2, 3, 4, 5, 6];
 			yVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
 			xValResults = [2, 3, 4, 5, 6];
 			yValResults = [-0.45, -0.3, -0.15, 0.25, 0.75];
 			period = 2;
-			results = trendline.prototype._getMAline(xVals, yVals, period)
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
 
 			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
 			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
 
-			size = 6;
+			ptCount = 6;
 			xVals = [1, 2, 3, 4, 5, 6];
 			yVals = [2, 1, 4, 3, 6, 5];
 			xValResults = [3, 4, 5, 6];
 			yValResults = [2.333333, 2.666667, 4.333333, 4.666667];
 			period = 3;
-			results = trendline.prototype._getMAline(xVals, yVals, period)
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
 
 			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
 			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
 
-			size = 4;
+			ptCount = 4;
 			xVals = [1, 2, 3, 4];
 			yVals = [2, 8, 16, 50];
 			xValResults = [3, 4];
 			yValResults = [8.666667, 24.666667];
 			period = 3;
-			results = trendline.prototype._getMAline(xVals, yVals, period)
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
 
 			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
 			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
 
-			size = 6;
+			ptCount = 6;
 			xVals = [1, 2, 3, 4, 5, 6];
 			yVals = [4, -6, 3, -7, 8, 10];
 			xValResults = [4, 5, 6];
 			yValResults = [-1.5, -0.5, 3.5];
 			period = 4;
-			results = trendline.prototype._getMAline(xVals, yVals, period)
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
 
 			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
 			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
 
-			size = 6;
+			ptCount = 6;
 			xVals = [1, 2, 3, 4, 5, 6];
 			yVals = [5, 50, 500, 5000, 50000, 500000];
 			xValResults = [5, 6];
 			yValResults = [11111, 111110];
 			period = 5;
-			results = trendline.prototype._getMAline(xVals, yVals, period)
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
 
 			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
 			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
 
-			size = 6;
+			ptCount = 6;
 			xVals = [1, 2, 3, 4, 5, 6];
 			yVals = [0, 2, 3, 4, 5, 0];
 			xValResults = [2, 3, 4, 5, 6];
 			yValResults = [1, 2.5, 3.5, 4.5, 2.5];
 			period = 2;
-			results = trendline.prototype._getMAline(xVals, yVals, period)
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+
+			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
+			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+
+			ptCount = 6;
+			xVals = [1, 2, 6];
+			yVals = [4, 6, 10];
+			xValResults = [2, 3, 6];
+			yValResults = [5, 6, 10];
+			period = 2;
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+
+			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
+			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+
+			ptCount = 3;
+			xVals = [1, 2];
+			yVals = [4, 6];
+			xValResults = [2, 3];
+			yValResults = [5, 6];
+			period = 2;
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+
+			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
+			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+
+			ptCount = 7;
+			xVals = [1, 2, 6, 7];
+			yVals = [4, 6, 10, 13];
+			xValResults = [2, 3, 6, 7];
+			yValResults = [5, 6, 10, 11.5];
+			period = 2;
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+
+			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
+			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+
+			ptCount = 7;
+			xVals = [1, 4, 6, 7];
+			yVals = [4, 5, 10, 13];
+			xValResults = [2, 4, 5, 6, 7];
+			yValResults = [4, 5, 5, 10, 11.5];
+			period = 2;
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+
+			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
+			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+
+			ptCount = 7;
+			xVals = [4, 6, 7];
+			yVals = [5, 10, 13];
+			xValResults = [4, 5, 6, 7];
+			yValResults = [5, 5, 10, 11.5];
+			period = 2;
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+
+			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
+			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+
+			ptCount = 7;
+			xVals = [1, 2, 3, 4, 6];
+			yVals = [4, 6, 3, 7, 10];
+			xValResults = [3, 4, 5, 6, 7];
+			yValResults = [4.333333, 5.333333, 5, 8.5, 10];
+			period = 3;
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+
+			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
+			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+
+			ptCount = 7;
+			xVals = [1, 2, 3, 6];
+			yVals = [4, 6, 3, 10];
+			xValResults = [3, 4, 5, 6, 7];
+			yValResults = [4.333333, 4.5, 3, 10, 10];
+			period = 3;
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+
+			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
+			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+
+			ptCount = 7;
+			xVals = [4, 6];
+			yVals = [5, 10];
+			xValResults = [4, 5, 6, 7];
+			yValResults = [5, 5, 10, 10];
+			period = 2;
+			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
 
 			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
 			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
@@ -1775,5 +1863,10 @@ $(function () {
 		testExponentialTrendLineEquation();
 		testPolynomialTrendLineEquation();
 		testMovingAverageTrendLineResuts();
+
+		/* tests that I need to add
+			negative valuse for exp and poly trendlines 
+			null value containing arrays for trendlines coordinates
+			 */
 	}
 });
