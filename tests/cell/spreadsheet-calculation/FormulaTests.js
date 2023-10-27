@@ -12514,6 +12514,7 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getElementRowCol(3,0).getValue(), 2, 'Result of COUNTIFS(A101:A104,A101:A104&"")[3,0]');
 
 		// for bug 64880
+		ws.getRange2("B:B").cleanAll();
 		ws.getRange2("B101").setValue("22");
 		ws.getRange2("B102").setValue("35");
 		ws.getRange2("B103").setValue("1");
@@ -12521,6 +12522,7 @@ $(function () {
 		ws.getRange2("B105").setValue("1");
 		ws.getRange2("B106").setValue("10");
 
+		ws.getRange2("C:C").cleanAll();
 		ws.getRange2("C101").setValue("3");
 		ws.getRange2("C102").setValue("0");
 		ws.getRange2("C103").setValue("6");
@@ -12532,10 +12534,18 @@ $(function () {
 		assert.ok(oParser.parse(), 'COUNTIFS(B101:B106,">0",C101:C106,"=0")');
 		assert.strictEqual(oParser.calculate().getValue(), 1);
 
+		oParser = new parserFormula('COUNTIFS(B:B,">0",C:C,"=0")', "E1", ws);
+		assert.ok(oParser.parse(), 'COUNTIFS(B:B,">0",C:C,"=0")');
+		assert.strictEqual(oParser.calculate().getValue(), 1);
+
 		ws.getRange2("C106").setValue("0");
 
 		oParser = new parserFormula('COUNTIFS(B101:B106,">0",C101:C106,"=0")', "E1", ws);
 		assert.ok(oParser.parse(), 'COUNTIFS(B101:B106,">0",C101:C106,"=0")');
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula('COUNTIFS(B:B,">0",C:C,"=0")', "E1", ws);
+		assert.ok(oParser.parse(), 'COUNTIFS(B:B,">0",C:C,"=0")');
 		assert.strictEqual(oParser.calculate().getValue(), 2);
 
 	});
