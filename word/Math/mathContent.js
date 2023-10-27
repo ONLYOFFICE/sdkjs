@@ -7002,7 +7002,7 @@ CMathContent.prototype.haveMixedContent = function()
 			if (oCurrentContent.IsContainMathOperators())
 				isOperator = 1;
 			
-			if (!oCurrentContent.IsContainMathOperators())
+			if (oCurrentContent.IsContainNormalText())
 				isNormalText = 1;
 		}
 		else

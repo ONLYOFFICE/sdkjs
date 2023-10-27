@@ -1254,7 +1254,10 @@
 			intTypeFraction = this.GetFractionType(strOpOver);
 
 			if (this.IsOperandLiteral())
-				oOperand = this.GetFractionLiteral();
+				oOperand = this.GetSpaceExitFunction(this.GetFractionLiteral);
+
+			if (this.oLookahead.class === oLiteralNames.spaceLiteral[0])
+				this.EatToken(this.oLookahead.class);
 
 			return {
 				type: strLiteralType,
