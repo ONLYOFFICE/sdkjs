@@ -16347,13 +16347,15 @@ CColorObj.prototype =
 				}
 			}
 	
-			return storage.hasOwnProperty(type) ? storage[type] : null
+			return storage.hasOwnProperty(type) ? storage[type] : {}
 		},
 	
 		_findSuppletiables: function (size, xVals, yVals, type, pow) {
 			if (xVals.length == size && yVals.length == size) {
 				pow = size < pow ? size : pow
 	
+				const mappingStorage = this._obtainMappingStorage(type)
+
 				const _mapCoordinates = function () {
 					for (let i = 0; i < size; i++) {
 						if (mappingStorage.hasOwnProperty('xVal')) {
@@ -16368,8 +16370,7 @@ CColorObj.prototype =
 					}
 					return true
 				}
-	
-				const mappingStorage = this._obtainMappingStorage(type)
+
 				const mapped = _mapCoordinates()
 	
 				if (mappingStorage && mapped) {
@@ -16566,7 +16567,7 @@ CColorObj.prototype =
 					}
 				}
 			}
-			return storage.hasOwnProperty(type) ? storage[type] : null
+			return storage.hasOwnProperty(type) ? storage[type] : {}
 		},
 	
 		draw: function () {
@@ -16610,7 +16611,6 @@ CColorObj.prototype =
 					}
 				}
 			}
-	
 		}
 	}
 	
