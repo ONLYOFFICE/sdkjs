@@ -135,6 +135,7 @@ $(function () {
     };
     const clearData = function(c1, r1, c2, r2) {
         ws.autoFilters.deleteAutoFilter(getRange(0, 0, 0, 0));
+        wsView.activeFillHandle = null;
         ws.removeRows(r1, r2, false);
         ws.removeCols(c1, c2);
     };
@@ -144,6 +145,15 @@ $(function () {
                 let fromRangeToVal = ws.getCell3(i, j);
                 let dataVal = expectedData[i - fromRangeTo.r1][j - fromRangeTo.c1];
                 assert.strictEqual(fromRangeToVal.getValue(), dataVal, `${description} Cell: ${fromRangeToVal.getName()}, Value: ${dataVal}`);
+            }
+        }
+    };
+    const reverseAutofillData = function (assert, fromRangeTo, expectedData, description) {
+        for (let i = fromRangeTo.r1; i >= fromRangeTo.r2; i--) {
+            for (let j = fromRangeTo.c1; j >= fromRangeTo.c2; j--) {
+                let rangeToVal = ws.getCell3(i, j);
+                let dataVal = expectedData[Math.abs(i - fromRangeTo.r1)][Math.abs(j - fromRangeTo.c1)];
+                assert.strictEqual(rangeToVal.getValue(), dataVal, `${description} Cell: ${rangeToVal.getName()}, Value: ${dataVal}`);
             }
         }
     };
@@ -1299,4 +1309,25 @@ $(function () {
         autofillData(assert, autofillRange, [['1'], ['10'], ['100'], ['1000'], ['10000'], ['']], 'Autofill Columns. Growth. Step 10. StopValue 10000. With indentation rows and columns');
         clearData(5, 2, 5, 7);
     });
+    QUnit.test('Autofill Serial. Context menu. Horizontal', function (assert) {
+        let testData = [
+            ['4', '2', '0']
+        ];
+        // Context menu - Linear Trend
+        oFromRange = getFilledData(0, 0, 2, 0, testData, [0, 0]);
+        wsView.activeFillHandle = getRange(0, 0, 5, 0);
+        settings = {
+            'type': 'Linear',
+            'step': '',
+            'seriesIn': 'Rows',
+            'stopValue': '',
+            'trend': true
+        };
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(3, 0, 5, 0);
+        autofillData(assert, autofillRange, [['-2', '-4', '-6', '-8']], 'Autofill Rows. Linear type with trend mode');
+        clearData(0,0,6,0);
+    })
 });
