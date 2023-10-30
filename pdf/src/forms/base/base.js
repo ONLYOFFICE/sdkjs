@@ -678,7 +678,12 @@
     CBaseField.prototype.DrawBorders = function(oGraphicsPDF) {
         let oViewer     = editor.getDocumentRenderer();
         let aOringRect  = this.GetOrigRect();
-        let aBgColor    = this.IsNeedDrawHighlight() == false ? (this.GetBackgroundColor() || [1]) : [1];
+        let aBgColor;
+        if (this.GetType() == AscPDF.FIELD_TYPES.button)
+            aBgColor = this.GetBackgroundColor() || [1];
+        else
+            aBgColor = this.IsNeedDrawHighlight() == false ? (this.GetBackgroundColor() || [1]) : [1];
+
         let oBgRGBColor = this.GetRGBColor(aBgColor);
 
         if (aBgColor && aBgColor.length != 0)
