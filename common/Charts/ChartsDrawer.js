@@ -16148,25 +16148,24 @@ CColorObj.prototype =
 					if (!this.coordinates[i][charts[i].chart.series[j].Id]) {
 						continue;
 					}
-					this._calculateLine(charts[i].chart.series[j], this.coordinates[i][charts[i].chart.series[j].Id]);
+					this._calculateLine(charts[i].chart.series[j].parent, this.coordinates[i][charts[i].chart.series[j].Id], charts[i].chart.series[j].trendline);
 				}
 			}
 		},
 	
-		_calculateLine: function (oSeries, coordinates) {
-			let type = oSeries.trendline.trendlineType;
-			const oChart = oSeries.parent;
+		_calculateLine: function (oChart, coordinates, atributes) {
+			let type = atributes.trendlineType;
 			const xAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_CatAx);
 			const yAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_ValAx);
 	
-			let results = { valls: null, cond: true };
+			let results = { vals: null, cond: true };
 	
 			if (type == AscFormat.TRENDLINE_TYPE_MOVING_AVG) {
-				const period = oSeries.trendline.period
-				results.valls = this._getMAline(coordinates.coords.xVals, coordinates.coords.yVals, coordinates.ptCount, period)
+				const period = atributes.period
+				results.vals = this._getMAline(coordinates.coords.xVals, coordinates.coords.yVals, coordinates.ptCount, period)
 			} else {
-				const order = oSeries.trendline.order ? oSeries.trendline.order + 1 : 2;
-				let chartletiables = this._findSuppletiables(coordinates.coords.xVals.length, coordinates.coords.xVals, coordinates.coords.yVals, type, order);
+				const order = atributes.order ? atributes.order + 1 : 2;
+				let chartletiables = this._getEquationCoefficients(coordinates.coords.xVals, coordinates.coords.yVals, type, order);
 				const equationStorage = this._obtainEquationStorage(type)
 	
 				if (chartletiables.length != 0 && equationStorage.hasOwnProperty('calcYVal')) {
@@ -16235,23 +16234,23 @@ CColorObj.prototype =
 	
 					if (type == AscFormat.TRENDLINE_TYPE_POLY || yAxis.scaling.logBase) {
 						const midPointsNum = 100
-						results.valls = _findMidCoordinates(midPointsNum, this.cChartDrawer, !yAxis.scaling.logBase);
+						results.vals = _findMidCoordinates(midPointsNum, this.cChartDrawer, !yAxis.scaling.logBase);
 					} else {
-						results.valls = _findCentralPoint(chartletiables, this.cChartDrawer);
+						results.vals = _findCentralPoint(chartletiables, this.cChartDrawer);
 						results.cond = (type == AscFormat.TRENDLINE_TYPE_LINEAR) ? true : false
 					}
 				}
 			}
 	
 			// At this point we should have an array of xVals and yVals
-			if (results.valls) {
+			if (results.vals) {
 	
 				let pathH = this.cChartDrawer.calcProp.pathH;
 				let pathW = this.cChartDrawer.calcProp.pathW;
 				let pathId = this.cChartDrawer.cChartSpace.AllocPath();
 				let path = this.cChartDrawer.cChartSpace.GetPath(pathId);
 	
-				const vallsToPos = function (arr, cChartDrawer) {
+				const valsToPos = function (arr, cChartDrawer) {
 					const posArr = { xPos: [], yPos: [] }
 					for (let i = 0; i < arr.xVals.length; i++) {
 						const xPos = cChartDrawer.getYPosition(arr.xVals[i], xAxis);
@@ -16262,7 +16261,7 @@ CColorObj.prototype =
 					return posArr
 				}
 	
-				const positions = vallsToPos(results.valls, this.cChartDrawer)
+				const positions = valsToPos(results.vals, this.cChartDrawer)
 	
 				path.moveTo(positions.xPos[0] * pathW, positions.yPos[0] * pathH);
 	
@@ -16350,8 +16349,9 @@ CColorObj.prototype =
 			return storage.hasOwnProperty(type) ? storage[type] : {}
 		},
 	
-		_findSuppletiables: function (size, xVals, yVals, type, pow) {
-			if (xVals.length == size && yVals.length == size) {
+		_getEquationCoefficients: function (xVals, yVals, type, pow) {
+			if (xVals.length == yVals.length) {
+				const size = xVals.length
 				pow = size < pow ? size : pow
 	
 				const mappingStorage = this._obtainMappingStorage(type)
