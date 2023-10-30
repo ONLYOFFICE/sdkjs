@@ -148,15 +148,6 @@ $(function () {
             }
         }
     };
-    const reverseAutofillData = function (assert, fromRangeTo, expectedData, description) {
-        for (let i = fromRangeTo.r1; i >= fromRangeTo.r2; i--) {
-            for (let j = fromRangeTo.c1; j >= fromRangeTo.c2; j--) {
-                let rangeToVal = ws.getCell3(i, j);
-                let dataVal = expectedData[Math.abs(i - fromRangeTo.r1)][Math.abs(j - fromRangeTo.c1)];
-                assert.strictEqual(rangeToVal.getValue(), dataVal, `${description} Cell: ${rangeToVal.getName()}, Value: ${dataVal}`);
-            }
-        }
-    };
     const getFilledData = function(c1, r1, c2, r2, testData, oStartRange) {
         let [row, col] = oStartRange;
         let oFromRange = ws.getRange4(row, col);
@@ -1327,7 +1318,94 @@ $(function () {
         cSerial = new CSerial(settings, oFromRange);
         cSerial.exec();
         autofillRange = getRange(3, 0, 5, 0);
-        autofillData(assert, autofillRange, [['-2', '-4', '-6', '-8']], 'Autofill Rows. Linear type with trend mode');
-        clearData(0,0,6,0);
-    })
+        autofillData(assert, autofillRange, [['-2', '-4', '-6']], 'Autofill Rows. Context menu - Linear Trend');
+        clearData(0,0,5,0);
+        // Context menu, reverse - Linear Trend
+        oFromRange = getFilledData(3, 0, 5, 0, testData, [0, 3]);
+        wsView.activeFillHandle = getRange(5, 0, 0, 0);
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 0, 2, 0);
+        autofillData(assert, autofillRange, [['10', '8', '6']], 'Autofill Rows. Context menu, reverse - Linear Trend');
+        clearData(0,0,5,0);
+        // Context menu - Growth Trend
+        testData = [
+            ['2', '4', '8']
+        ];
+        oFromRange = getFilledData(0, 0, 2, 0, testData, [0, 0]);
+        wsView.activeFillHandle = getRange(0, 0, 5, 0);
+        settings.type = 'Growth';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(3, 0, 5, 0);
+        autofillData(assert, autofillRange, [['15.999999999999991', '31.999999999999986', '63.99999999999998']], 'Autofill Rows. Context menu - Growth Trend');
+        clearData(0,0,5,0);
+        // Context menu, reverse - Growth Trend
+        oFromRange = getFilledData(3, 0, 5, 0, testData, [0, 3]);
+        wsView.activeFillHandle = getRange(5, 0, 0, 0);
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 0, 2, 0);
+        autofillData(assert, autofillRange, [['0.2500000000000001', '0.5000000000000002', '1.0000000000000002']], 'Autofill Rows. Context menu, reverse - Growth Trend');
+        clearData(0,0,5,0);
+    });
+    QUnit.test('Autofill Serial. Context menu. Vertical', function (assert) {
+        let testData = [
+            ['4'],
+            ['2'],
+            ['0']
+        ];
+        // Context menu - Linear Trend
+        oFromRange = getFilledData(0, 0, 0, 2, testData, [0, 0]);
+        wsView.activeFillHandle = getRange(0, 0, 0, 5);
+        settings = {
+            'type': 'Linear',
+            'step': '',
+            'seriesIn': 'Columns',
+            'stopValue': '',
+            'trend': true
+        };
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 3, 0, 5);
+        autofillData(assert, autofillRange, [['-2'], ['-4'], ['-6']], 'Autofill Columns. Context menu - Linear Trend');
+        clearData(0,0,0,5);
+        // Context menu, reverse - Linear Trend
+        oFromRange = getFilledData(0, 3, 0, 5, testData, [3, 0]);
+        wsView.activeFillHandle = getRange(0, 5, 0, 0);
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 0, 0, 2);
+        autofillData(assert, autofillRange, [['10'], ['8'], ['6']], 'Autofill Columns. Context menu, reverse - Linear Trend');
+        clearData(0,0,0,5);
+        // Context menu - Growth Trend
+        testData = [
+            ['2'],
+            ['4'],
+            ['8']
+        ];
+        oFromRange = getFilledData(0, 0, 0, 2, testData, [0, 0]);
+        wsView.activeFillHandle = getRange(0, 0, 0, 5);
+        settings.type = 'Growth';
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 3, 0, 5);
+        autofillData(assert, autofillRange, [['15.999999999999991'], ['31.999999999999986'], ['63.99999999999998']], 'Autofill Columns. Context menu - Growth Trend');
+        clearData(0,0,0,5);
+        // Context menu, reverse - Growth Trend
+        oFromRange = getFilledData(0, 3, 0, 5, testData, [3, 0]);
+        wsView.activeFillHandle = getRange(0, 5, 0, 0);
+
+        cSerial = new CSerial(settings, oFromRange);
+        cSerial.exec();
+        autofillRange = getRange(0, 0, 0, 2);
+        autofillData(assert, autofillRange, [['0.2500000000000001'], ['0.5000000000000002'], ['1.0000000000000002']], 'Autofill Columns. Context menu, reverse - Growth Trend');
+        clearData(0,0,0,5);
+    });
 });
