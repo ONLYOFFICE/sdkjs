@@ -259,7 +259,7 @@
         context.drawImage(ICON_TO_DRAW, 0, 0, imgW, imgH, 0, 0, wScaled, hScaled);
 
         if (!AscCommon.AscBrowser.isIE || AscCommon.AscBrowser.isIeEdge) {
-			if (oRGB.r != 255 || oRGB.g != 209 || oRGB.b != 0) {
+            if (oRGB.r != 255 || oRGB.g != 209 || oRGB.b != 0) {
                 // Get the pixel data of the canvas
                 let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
                 let data = imageData.data;
@@ -283,7 +283,7 @@
                 // Put the modified pixel data back onto the canvas
                 context.putImageData(imageData, 0, 0);
             }
-		}
+        }
 
         // Draw the comment note
         oGraphics.SetIntegerGrid(true);
