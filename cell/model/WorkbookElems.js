@@ -15798,9 +15798,73 @@ QueryTableField.prototype.clone = function() {
 		return isChanged ? this : null;
 	};
 
+	function asc_CSeriesOptions() {
+		this.seriesIn = null;
+		this.type = null;
+		this.dateUnit = null;
+
+		this.trend = null;
+
+		this.stepValue = null;
+		this.stopValue = null;
+
+		return this;
+	}
+	asc_CSeriesOptions.prototype.clone = function () {
+		let res = new asc_CSeriesOptions();
+		res.seriesIn = this.seriesIn;
+		res.type = this.type;
+		res.dateUnit = this.dateUnit;
+
+		res.trend = this.trend;
+
+		res.stepValue = this.stepValue;
+		res.stopValue = this.stopValue;
+
+		return res;
+	};
+
+	asc_CSeriesOptions.prototype.asc_getSeriesIn = function () {
+		return this.seriesIn;
+	};
+	asc_CSeriesOptions.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CSeriesOptions.prototype.asc_getDateUnit = function () {
+		return this.dateUnit;
+	};
+	asc_CSeriesOptions.prototype.asc_getTrend = function () {
+		return this.trend;
+	};
+	asc_CSeriesOptions.prototype.asc_getStepValue = function () {
+		return this.stepValue;
+	};
+	asc_CSeriesOptions.prototype.asc_getStopValue = function () {
+		return this.stopValue;
+	};
+
+	asc_CSeriesOptions.prototype.asc_setSeriesIn = function (val) {
+		this.seriesIn = val;
+	};
+	asc_CSeriesOptions.prototype.asc_getType = function (val) {
+		this.type = val;
+	};
+	asc_CSeriesOptions.prototype.asc_setDateUnit = function (val) {
+		this.dateUnit = val;
+	};
+	asc_CSeriesOptions.prototype.asc_setTrend = function (val) {
+		this.trend = val;
+	};
+	asc_CSeriesOptions.prototype.asc_setStepValue = function (val) {
+		this.stepValue = val;
+	};
+	asc_CSeriesOptions.prototype.asc_setStopValue = function (val) {
+		this.stopValue = val;
+	};
 
 
-	//----------------------------------------------------------export----------------------------------------------------
+
+//----------------------------------------------------------export----------------------------------------------------
 	var prot;
 	window['Asc'] = window['Asc'] || {};
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
@@ -16273,6 +16337,22 @@ QueryTableField.prototype.clone = function() {
 
 	window["AscCommonExcel"].CRowColBreaks = CRowColBreaks;
 	window["AscCommonExcel"].CBreak = CBreak;
+
+	window["Asc"]["asc_CSeriesOptions"] = window["Asc"].asc_CSeriesOptions = asc_CSeriesOptions;
+	prot = asc_CSeriesOptions.prototype;
+	prot["asc_getSeriesIn"] = prot.asc_getSeriesIn;
+	prot["asc_getType"] = prot.asc_getType;
+	prot["asc_getDateInit"] = prot.asc_getDateUnit;
+	prot["asc_getTrend"] = prot.asc_getTrend;
+	prot["asc_getStepValue"] = prot.asc_getStepValue;
+	prot["asc_getStopValue"] = prot.asc_getStopValue;
+
+	prot["asc_setSeriesIn"] = prot.asc_setSeriesIn;
+	prot["asc_setType"] = prot.asc_setType;
+	prot["asc_setDateInit"] = prot.asc_setDateUnit;
+	prot["asc_setTrend"] = prot.asc_setTrend;
+	prot["asc_setStepValue"] = prot.asc_setStepValue;
+	prot["asc_setStopValue"] = prot.asc_setStopValue;
 
 
 })(window);

@@ -8889,6 +8889,31 @@ var editor;
 		return res;
 	};
 
+	spreadsheet_api.prototype.asc_GetSeriesOptions = function() {
+		let res = new Asc.asc_CSeriesOptions();
+
+/*spreadsheet_api.prototype.asc_getActiveRange = function() {
+		var ws = this.wb && this.wb.getWorksheet();
+		var res = null;
+
+		if (ws) {
+			let wsModel = ws.model;
+			if (wsModel) {
+				let selection = wsModel && wsModel.getSelection();
+				let selectionRanges = selection && selection.ranges;
+				res = selectionRanges && selectionRanges[0];
+			}
+		}
+
+		return res;
+	};*/
+
+		return res;
+	};
+
+	spreadsheet_api.prototype.asc_SetSeriesOptions = function() {
+
+	};
 
   /*
    * Export
@@ -9251,6 +9276,8 @@ var editor;
   prot["asc_showAutoComplete"] = prot.asc_showAutoComplete;
   prot["asc_getHeaderFooterMode"] = prot.asc_getHeaderFooterMode;
   prot["asc_getActiveRangeStr"] = prot.asc_getActiveRangeStr;
+  prot["asc_getActiveRange"] = prot.asc_getActiveRange;
+
 
 
   prot["asc_onMouseUp"] = prot.asc_onMouseUp;

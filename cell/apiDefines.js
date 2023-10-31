@@ -580,6 +580,25 @@ var c_oAscPopUpSelectorType = {
     reset: 3
   };
 
+  var c_oAscSeriesInType = {
+    rows: 0,
+    columns: 1
+  };
+
+  var c_oAscSeriesType = {
+    linear: 0,
+    growth: 1,
+    date: 2,
+    autoFill: 3
+  };
+
+  var c_oAscDateUnitType = {
+    day: 0,
+    weekend: 1,
+    month: 2,
+    year: 3
+  };
+
 
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
@@ -984,5 +1003,23 @@ var c_oAscPopUpSelectorType = {
   prot['insertRemove'] = prot.insertRemove;
   prot['reset'] = prot.reset;
 
+  window['Asc']['c_oAscSeriesInType'] = window['Asc'].c_oAscSeriesInType = c_oAscSeriesInType;
+  prot = c_oAscSeriesInType;
+  prot['rows'] = prot.rows;
+  prot['columns'] = prot.columns;
+
+  window['Asc']['c_oAscSeriesType'] = window['Asc'].c_oAscSeriesType = c_oAscSeriesType;
+  prot = c_oAscSeriesInType;
+  prot['linear'] = prot.linear;
+  prot['growth'] = prot.growth;
+  prot['date'] = prot.date;
+  prot['autoFill'] = prot.autoFill;
+
+  window['Asc']['c_oAscDateUnitType'] = window['Asc'].c_oAscDateUnitType = c_oAscDateUnitType;
+  prot = c_oAscDateUnitType;
+  prot['day'] = prot.day;
+  prot['weekend'] = prot.weekend;
+  prot['month'] = prot.month;
+  prot['year'] = prot.year;
 
 })(window);
