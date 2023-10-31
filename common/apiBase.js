@@ -2312,6 +2312,7 @@
 		if (c_oAscError.ID.No !== error)
 		{
 			this.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+			obj && obj.fErrorCallback && obj.fErrorCallback(error);
 		}
 		else
 		{
@@ -2325,6 +2326,7 @@
 				if (c_oAscError.ID.No !== error)
 				{
 					t.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+					obj && obj.fErrorCallback && obj.fErrorCallback(error);
 				}
 				else
 				{
