@@ -25603,6 +25603,10 @@
 		this.model.removeLegacyDrawingHFPictures(aPictures);
 	};
 
+	WorksheetView.prototype.applySeriesSettings = function (settings) {
+
+	};
+
 
 	function cAsyncAction() {
 		this.timer = null;

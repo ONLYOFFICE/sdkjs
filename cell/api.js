@@ -8889,30 +8889,26 @@ var editor;
 		return res;
 	};
 
-	spreadsheet_api.prototype.asc_GetSeriesOptions = function() {
-		let res = new Asc.asc_CSeriesOptions();
+	spreadsheet_api.prototype.asc_GetSeriesSettings = function() {
+		let res = new Asc.asc_CSeriesSettings();
 
-/*spreadsheet_api.prototype.asc_getActiveRange = function() {
-		var ws = this.wb && this.wb.getWorksheet();
-		var res = null;
-
-		if (ws) {
-			let wsModel = ws.model;
-			if (wsModel) {
-				let selection = wsModel && wsModel.getSelection();
-				let selectionRanges = selection && selection.ranges;
-				res = selectionRanges && selectionRanges[0];
-			}
-		}
-
-		return res;
-	};*/
+		let ws = this.wb && this.wb.getWorksheet();
+		res.init(ws && ws.model);
 
 		return res;
 	};
 
-	spreadsheet_api.prototype.asc_SetSeriesOptions = function() {
+	spreadsheet_api.prototype.asc_ApplySeriesSettings = function(settings) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
 
+		var ws = this.wb.getWorksheet();
+		return ws.applySeriesSettings(settings);
 	};
 
   /*

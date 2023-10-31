@@ -15798,7 +15798,7 @@ QueryTableField.prototype.clone = function() {
 		return isChanged ? this : null;
 	};
 
-	function asc_CSeriesOptions() {
+	function asc_CSeriesSettings() {
 		this.seriesIn = null;
 		this.type = null;
 		this.dateUnit = null;
@@ -15810,8 +15810,9 @@ QueryTableField.prototype.clone = function() {
 
 		return this;
 	}
-	asc_CSeriesOptions.prototype.clone = function () {
-		let res = new asc_CSeriesOptions();
+	asc_CSeriesSettings.prototype.clone = function () {
+		let res = new asc_CSeriesSettings();
+
 		res.seriesIn = this.seriesIn;
 		res.type = this.type;
 		res.dateUnit = this.dateUnit;
@@ -15824,41 +15825,65 @@ QueryTableField.prototype.clone = function() {
 		return res;
 	};
 
-	asc_CSeriesOptions.prototype.asc_getSeriesIn = function () {
+	asc_CSeriesSettings.prototype.init = function (ws) {
+		if (!ws) {
+			return;
+		}
+
+		//remove all comments after realization
+		/*asc_getSeriesIn/asc_setSeriesIn; -> Asc.c_oAscSeriesInType
+		asc_getType/asc_setType; ->  Asc.c_oAscSeriesType
+		asc_getDateUnit/asc_setDateUnit; -> Asc.c_oAscDateUnitType
+		asc_getTrend/asc_setTrend; //bool
+		asc_getStepValue/asc_setStepValue; //number
+		asc_getStopValue/asc_setStopValue; //number*/
+
+		//TODO!!!
+		//analyze sheet selection
+		//this.dateUnit
+		//seriesIn
+		//type
+
+		/*let selection = ws && ws.getSelection();
+		let selectionRanges = selection && selection.ranges;
+		res = selectionRanges && selectionRanges[0];*/
+	};
+
+	asc_CSeriesSettings.prototype.asc_getSeriesIn = function () {
 		return this.seriesIn;
 	};
-	asc_CSeriesOptions.prototype.asc_getType = function () {
+	asc_CSeriesSettings.prototype.asc_getType = function () {
 		return this.type;
 	};
-	asc_CSeriesOptions.prototype.asc_getDateUnit = function () {
+	asc_CSeriesSettings.prototype.asc_getDateUnit = function () {
 		return this.dateUnit;
 	};
-	asc_CSeriesOptions.prototype.asc_getTrend = function () {
+	asc_CSeriesSettings.prototype.asc_getTrend = function () {
 		return this.trend;
 	};
-	asc_CSeriesOptions.prototype.asc_getStepValue = function () {
+	asc_CSeriesSettings.prototype.asc_getStepValue = function () {
 		return this.stepValue;
 	};
-	asc_CSeriesOptions.prototype.asc_getStopValue = function () {
+	asc_CSeriesSettings.prototype.asc_getStopValue = function () {
 		return this.stopValue;
 	};
 
-	asc_CSeriesOptions.prototype.asc_setSeriesIn = function (val) {
+	asc_CSeriesSettings.prototype.asc_setSeriesIn = function (val) {
 		this.seriesIn = val;
 	};
-	asc_CSeriesOptions.prototype.asc_getType = function (val) {
+	asc_CSeriesSettings.prototype.asc_getType = function (val) {
 		this.type = val;
 	};
-	asc_CSeriesOptions.prototype.asc_setDateUnit = function (val) {
+	asc_CSeriesSettings.prototype.asc_setDateUnit = function (val) {
 		this.dateUnit = val;
 	};
-	asc_CSeriesOptions.prototype.asc_setTrend = function (val) {
+	asc_CSeriesSettings.prototype.asc_setTrend = function (val) {
 		this.trend = val;
 	};
-	asc_CSeriesOptions.prototype.asc_setStepValue = function (val) {
+	asc_CSeriesSettings.prototype.asc_setStepValue = function (val) {
 		this.stepValue = val;
 	};
-	asc_CSeriesOptions.prototype.asc_setStopValue = function (val) {
+	asc_CSeriesSettings.prototype.asc_setStopValue = function (val) {
 		this.stopValue = val;
 	};
 
@@ -16338,8 +16363,8 @@ QueryTableField.prototype.clone = function() {
 	window["AscCommonExcel"].CRowColBreaks = CRowColBreaks;
 	window["AscCommonExcel"].CBreak = CBreak;
 
-	window["Asc"]["asc_CSeriesOptions"] = window["Asc"].asc_CSeriesOptions = asc_CSeriesOptions;
-	prot = asc_CSeriesOptions.prototype;
+	window["Asc"]["asc_CSeriesSettings"] = window["Asc"].asc_CSeriesSettings = asc_CSeriesSettings;
+	prot = asc_CSeriesSettings.prototype;
 	prot["asc_getSeriesIn"] = prot.asc_getSeriesIn;
 	prot["asc_getType"] = prot.asc_getType;
 	prot["asc_getDateInit"] = prot.asc_getDateUnit;
