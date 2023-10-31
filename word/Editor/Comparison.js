@@ -2545,7 +2545,7 @@
             {
                 if(oFonts.hasOwnProperty(i))
                 {
-                    aFonts[aFonts.length] = new AscFonts.CFont(i, 0, "", 0, null);
+                    aFonts[aFonts.length] = new AscFonts.CFont(i);
                 }
             }
             oApi.pre_Paste(aFonts, oImageMap, function()
@@ -3066,16 +3066,13 @@
         oReviewInfo.PrevInfo = null;
         oReviewInfo.UserName = this.getUserName();
         const oCore = this.revisedDocument.Core;
-        if(oCore)
+        if(oCore && (oCore.modified instanceof Date))
         {
-            if(oCore.modified instanceof Date)
-            {
-                oReviewInfo.DateTime = oCore.modified.getTime();
-            }
+            oReviewInfo.DateTime = oCore.modified.getTime();
         }
         else
         {
-            oReviewInfo.DateTime = "Unknown";
+            oReviewInfo.DateTime = (new Date()).getTime();
         }
     };
     CDocumentComparison.prototype.getElementsForSetReviewType = function (oObject) {

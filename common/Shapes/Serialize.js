@@ -593,7 +593,7 @@ function BinaryPPTYLoader()
 
                 var f_name = s.GetString2();
 
-                this.presentation.Fonts[this.presentation.Fonts.length] = new AscFonts.CFont(f_name, 0, "", 0, 0x0F);
+                this.presentation.Fonts[this.presentation.Fonts.length] = new AscFonts.CFont(f_name);
             }
         }
 
@@ -7959,7 +7959,7 @@ function BinaryPPTYLoader()
                 case 3:
                 {
                     var bIsHMerge = s.GetBool();
-                    if (bIsHMerge)
+                    if (bIsHMerge && cell.Index > 0)
                     {
                         s.Seek2(_end_rec);
                         return false;
@@ -10064,7 +10064,9 @@ function BinaryPPTYLoader()
                                 }
                                 if(f_text)
                                 {
+                                    Fld.CanAddToContent = true;
                                     Fld.AddText(f_text);
+                                    Fld.CanAddToContent = false;
                                 }
                                 if(_rPr)
                                 {

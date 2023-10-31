@@ -1289,9 +1289,9 @@
 		map_prst_color["yellow"] = 0xFFFF00;
 		map_prst_color["yellowGreen"] = 0x9ACD32;
 
-		function CColorMod() {
-			this.name = "";
-			this.val = 0;
+		function CColorMod(sName, nVal) {
+			this.name = sName ? sName : "";
+			this.val = AscFormat.isRealNumber(nVal) ? nVal : 0;
 		}
 
 		CColorMod.prototype.setName = function (name) {
@@ -1321,10 +1321,18 @@
 
 		CColorModifiers.prototype.isUsePow = (!AscCommon.AscBrowser.isSailfish || !AscCommon.AscBrowser.isEmulateDevicePixelRatio);
 		CColorModifiers.prototype.getModValue = function (sName) {
+			let oMod = this.getMod(sName);
+			if(oMod) {
+				return oMod.val;
+			}
+			return null;
+		};
+		CColorModifiers.prototype.getMod = function (sName) {
 			if (Array.isArray(this.Mods)) {
-				for (var i = 0; i < this.Mods.length; ++i) {
-					if (this.Mods[i] && this.Mods[i].name === sName) {
-						return this.Mods[i].val;
+				for (let nMod = 0; nMod < this.Mods.length; ++nMod) {
+					let oMod = this.Mods[nMod];
+					if (oMod && oMod.name === sName) {
+						return oMod;
 					}
 				}
 			}
@@ -1347,7 +1355,20 @@
 			}
 		};
 		CColorModifiers.prototype.addMod = function (mod) {
-			this.Mods.push(mod);
+			let oModForAdd;
+			if(arguments.length === 1) {
+				if(arguments[0] instanceof CColorMod) {
+					oModForAdd = arguments[0];
+				}
+			}
+			else if(arguments.length === 2) {
+				if(typeof arguments[0] === "string" && AscFormat.isRealNumber(arguments[1])) {
+					oModForAdd = new CColorMod(arguments[0], arguments[1]);
+				}
+			}
+			if(oModForAdd) {
+				this.Mods.push(oModForAdd);
+			}
 		};
 		CColorModifiers.prototype.removeMod = function (pos) {
 			this.Mods.splice(pos, 1)[0];
@@ -2420,22 +2441,14 @@
 			if (this.checkWordMods()) {
 				var val_, mod_;
 				if (this.Mods.Mods[0].name === "wordShade") {
-					mod_ = new CColorMod();
-					mod_.setName("lumMod");
-					mod_.setVal(((this.Mods.Mods[0].val / 255) * 100000) >> 0);
+					mod_ = new CColorMod("lumMod", ((this.Mods.Mods[0].val / 255) * 100000) >> 0);
 					this.Mods.Mods.splice(0, this.Mods.Mods.length);
 					this.Mods.Mods.push(mod_);
 				} else {
 					val_ = ((this.Mods.Mods[0].val / 255) * 100000) >> 0;
 					this.Mods.Mods.splice(0, this.Mods.Mods.length);
-					mod_ = new CColorMod();
-					mod_.setName("lumMod");
-					mod_.setVal(val_);
-					this.Mods.Mods.push(mod_);
-					mod_ = new CColorMod();
-					mod_.setName("lumOff");
-					mod_.setVal(100000 - val_);
-					this.Mods.Mods.push(mod_);
+					this.Mods.addMod("lumMod", val_);
+					this.Mods.addMod("lumOff", 100000 - val_);
 				}
 			}
 		};
@@ -4106,7 +4119,7 @@
 			for(let nPrst = 0; nPrst < aPresets.length; ++nPrst) {
 				let oShd = new asc_CShadowProperty();
 				let sPrst = aPresets[nPrst];
-				oShd.changePreset(sPrst);
+				oShd.putPreset(sPrst);
 				if(this.IsIdentical(oShd)) {
 					return sPrst;
 				}
@@ -4210,11 +4223,17 @@
 			if(!this.color) {
 				return;
 			}
-			this.color.Mods = new CColorModifiers();
-			const oMod = new CColorMod();
-			oMod.name = "alpha";
-			oMod.val = (100 - nVal) * 1000 + 0.5 >> 0;
-			this.color.Mods.Mods.push(oMod);
+			if(!this.color.Mods) {
+				this.color.Mods = new CColorModifiers();
+			}
+			let oMod = this.color.Mods.getMod("alpha");
+			if(!oMod) {
+				oMod = new CColorMod("alpha", (100 - nVal) * 1000 + 0.5 >> 0);
+				this.color.Mods.addMod(oMod);
+			}
+			else {
+				oMod.setVal((100 - nVal) * 1000 + 0.5 >> 0);
+			}
 		};
 		asc_CShadowProperty.prototype.getSize = function() {
 			let nSX = this.sx !== null ? this.sx : 100000;
@@ -4241,7 +4260,7 @@
 			this.dist = nVal * 36000 + 0.5 >> 0;
 		};
 		asc_CShadowProperty.prototype.getColor = function() {
-			return AscFormat.CreateAscColor(this.color);
+			return AscCommon.CreateAscColor(this.color);
 		};
 		asc_CShadowProperty.prototype.putColor = function(oAscColor) {
 			let nTransparency = this.getTransparency();
@@ -4254,6 +4273,13 @@
 			}
 			this.color = AscFormat.CorrectUniColor(oAscColor, this.color, nFlag);
 			this.putTransparency(nTransparency);
+		};
+		asc_CShadowProperty.prototype.checkColor = function(oTheme, oColorMap) {
+			if(this.color) {
+				if(oTheme && oColorMap) {
+					this.color.check(oTheme, oColorMap);
+				}
+			}
 		};
 
 
@@ -7278,11 +7304,8 @@
 			unicolor = new CUniColor();
 			unicolor.setColor(new CSchemeColor());
 			unicolor.color.setId(g_clr_accent1);
-			var mod = new CColorMod();
-			mod.setName("shade");
-			mod.setVal(50000);
 			unicolor.setMods(new CColorModifiers());
-			unicolor.Mods.addMod(mod);
+			unicolor.Mods.addMod("shade", 50000);
 			lnRef.setColor(unicolor);
 
 			style.setLnRef(lnRef);
@@ -7375,6 +7398,9 @@
 				this.chExtY === xfrm.chExtY;
 		};
 		CXfrm.prototype.merge = function (xfrm) {
+			if(!xfrm) {
+				return;
+			}
 			if (xfrm.offX != null) {
 				this.offX = xfrm.offX;
 			}
@@ -9988,6 +10014,15 @@
 			this.tIns = 45720 / 36000;
 			this.lIns = 91440 / 36000;
 			this.rIns = 91440 / 36000;
+		};
+		CBodyPr.prototype.setInsets = function(l, t, r, b) {
+			this.lIns = l;
+			this.tIns = t;
+			this.rIns = r;
+			this.bIns = b;
+		};
+		CBodyPr.prototype.resetInsets = function() {
+			this.setInsets(0, 0, 0, 0);
 		};
 		CBodyPr.prototype.setDefault = function () {
 			this.setDefaultInsets();
@@ -13745,9 +13780,7 @@
 			oColor.color.id = id;
 			for(let nMod = 0; nMod < aMods.length; ++nMod) {
 				let oModObject = aMods[nMod];
-				let oMod = new CColorMod();
-				oMod.name = oModObject.name;
-				oMod.val = oModObject.val;
+				let oMod = new CColorMod(oModObject.name, oModObject.val);
 				oColor.addColorMod(oMod);
 			}
 			return oColor;
@@ -13875,14 +13908,8 @@
 				pen.Fill.fill.color.color.setId(phClr);
 				pen.Fill.fill.color.setMods(new CColorModifiers());
 
-				var mod = new CColorMod();
-				mod.setName("shade");
-				mod.setVal(95000);
-				pen.Fill.fill.color.Mods.addMod(mod);
-				mod = new CColorMod();
-				mod.setName("satMod");
-				mod.setVal(105000);
-				pen.Fill.fill.color.Mods.addMod(mod);
+				pen.Fill.fill.color.Mods.addMod("shade", 95000);
+				pen.Fill.fill.color.Mods.addMod("satMod", 105000);
 				theme.themeElements.fmtScheme.lnStyleLst.push(pen);
 
 				pen = new CLn();
@@ -13949,11 +13976,8 @@
 
 			unicolor.setColor(new CSchemeColor());
 			unicolor.color.setId(g_clr_accent1);
-			var mod = new CColorMod();
-			mod.setName("shade");
-			mod.setVal(50000);
 			unicolor.setMods(new CColorModifiers());
-			unicolor.Mods.addMod(mod);
+			unicolor.Mods.addMod("shade", 50000);
 			lnRef.setColor(unicolor);
 			style.setLnRef(lnRef);
 

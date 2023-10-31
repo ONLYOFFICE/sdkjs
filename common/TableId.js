@@ -32,12 +32,6 @@
 
 "use strict";
 
-/**
- * User: Ilja.Kirillov
- * Date: 26.10.2016
- * Time: 18:45
- */
-
 (/**
  * @param {Window} window
  * @param {undefined} undefined
@@ -144,6 +138,12 @@
 		this.m_bTurnOff = false;
 		this.Id         = AscCommon.g_oIdCounter.Get_NewId();
 		this.Add(this, this.Id);
+	};
+	CTableId.prototype.Delete = function(sId)
+	{
+		if(this.m_aPairs.hasOwnProperty(sId)) {
+			delete this.m_aPairs[sId];
+		}
 	};
 	CTableId.prototype.private_InitFactoryClass = function()
 	{

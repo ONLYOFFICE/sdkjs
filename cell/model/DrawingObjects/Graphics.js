@@ -478,6 +478,15 @@ CGraphics.prototype =
         this.m_oLastFont2   = null;
     },
 
+    isVectorImage : function(img)
+    {
+        if (img.isVectorImage !== undefined)
+            return img.isVectorImage;
+        let fileName = AscCommon.g_oDocumentUrls.getImageLocal(img.src);
+        img.isVectorImage = (fileName && fileName.endsWith(".svg")) ? true : false;
+        return img.isVectorImage;
+    },
+
     // images
     drawImage2 : function(img,x,y,w,h,alpha,srcRect)
     {
@@ -494,7 +503,8 @@ CGraphics.prototype =
             if (!srcRect)
             {
                 // тут нужно проверить, можно ли нарисовать точно. т.е. может картинка ровно такая, какая нужна.
-                if (!global_MatrixTransformer.IsIdentity2(this.m_oTransform))
+                if (!global_MatrixTransformer.IsIdentity2(this.m_oTransform) ||
+                    this.isVectorImage(img))
                 {
                     this.m_oContext.drawImage(img,x,y,w,h);
                 }
@@ -605,7 +615,8 @@ CGraphics.prototype =
             if (!srcRect)
             {
                 // тут нужно проверить, можно ли нарисовать точно. т.е. может картинка ровно такая, какая нужна.
-                if (!global_MatrixTransformer.IsIdentity2(this.m_oTransform))
+                if (!global_MatrixTransformer.IsIdentity2(this.m_oTransform) ||
+                    this.isVectorImage(img))
                 {
                     this.m_oContext.drawImage(img,_x1,_y1,w,h);
                 }

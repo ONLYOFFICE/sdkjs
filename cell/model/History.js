@@ -1178,6 +1178,7 @@ CHistory.prototype.StartTransaction = function()
 {
 	if (this.IsEndTransaction() && this.workbook) {
 		this.workbook.dependencyFormulas.lockRecal();
+		this.workbook.oApi.sendEvent("asc_onUserActionStart");
 	}
 	this.Transaction++;
 };
@@ -1197,6 +1198,7 @@ CHistory.prototype.EndTransaction = function()
 	if (this.IsEndTransaction() && this.workbook) {
 		this.workbook.dependencyFormulas.unlockRecal();
 		this.workbook.handlers.trigger("updateCellWatches");
+		this.workbook.oApi.sendEvent("asc_onUserActionEnd");
 
 		if (this.Is_LastPointEmpty()) {
 			this.Remove_LastPoint();

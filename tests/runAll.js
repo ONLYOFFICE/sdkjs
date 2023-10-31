@@ -46,6 +46,7 @@ const allTests = [
 	'word/document-calculation/table/flowTablePosition.html',
 	'word/document-calculation/table/pageBreak.html',
 	'word/document-calculation/textShaper/textShaper.html',
+	'word/document-calculation/text-hyphenator/text-hyphenator.html',
 	'word/forms/forms.html',
 	'word/forms/complexForm.html',
 	'word/numbering/numberingApplicator.html',
@@ -94,6 +95,7 @@ const {
 			.then(result =>
 			{
 				count++;
+				console.log("\n" + allTests[nIndex].yellow.bold);
 				printResultSummary(result, console);
 
 				if (result.stats.failed > 0)

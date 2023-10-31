@@ -220,7 +220,7 @@
 				}
 
 				if (!isFound)
-					fonts[fonts.length] = new AscFonts.CFont(this.FontsByRange[i], 0, "", 0, null);
+					fonts[fonts.length] = new AscFonts.CFont(this.FontsByRange[i]);
 			}
 
 			if (true !== isNoRealExtend)

@@ -754,6 +754,14 @@
 			return this.r1 === this.r2 && this.c1 === this.c2;
 		};
 
+		Range.prototype.isOneCol = function () {
+			return this.c1 === this.c2;
+		};
+
+		Range.prototype.isOneRow = function () {
+			return this.r1 === this.r2;
+		};
+
 		Range.prototype.isOnTheEdge = function (c, r) {
 			return this.r1 === r || this.r2 === r || this.c1 === c || this.c2 === c;
 		};
@@ -3447,6 +3455,10 @@
 //    return arguments.callee[this.isLeapYear() ? 'L' : 'R'][this.getMonth()];
 			return this.isLeapYear() ? this.getDaysInMonth.L[this.getUTCMonth()] : this.getDaysInMonth.R[this.getUTCMonth()];
 		};
+
+		cDate.prototype.getLocalDaysInMonth = function () {
+			return this.isLeapYear() ? this.getDaysInMonth.L[this.getMonth()] : this.getDaysInMonth.R[this.getMonth()];
+		}
 
 		// durations of months for the regular year
 		cDate.prototype.getDaysInMonth.R = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];

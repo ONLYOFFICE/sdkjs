@@ -5964,16 +5964,139 @@ CT_pivotTableDefinition.prototype._removePageField = function(fld) {
 		return deleteIndex;
 	}
 };
-CT_pivotTableDefinition.prototype.asc_setVisibleFieldItemByCell = function (api, visible) {
-	var activeCell = api.wbModel.getActiveWs().selectionRange.activeCell;
-	var t = this;
-	var layout = t.getLayoutByCell(activeCell.row, activeCell.col);
-	var cellLayout = layout && layout.getGroupCellLayout();
-	if (cellLayout && st_VALUES !== cellLayout.fld) {
-		this.setVisibleFieldItem(api, visible, cellLayout.fld, cellLayout.v);
+/**
+ * @param {spreadsheet_api} api
+ * @param {boolean} isAll expand/collapse all
+ * @param {boolean} visible true to expand,false to collapse
+ */
+CT_pivotTableDefinition.prototype.asc_setExpandCollapseByActiveCell = function (api, isAll, visible) {
+	let ws = api.wbModel.getActiveWs();
+	let activeCell = ws.selectionRange.activeCell;
+	let layout = this.getLayoutByCell(activeCell.row, activeCell.col);
+	if (!layout || st_VALUES === layout.fld || !layout.canExpandCollapse()) {
+		return;
+	}
+	let cellLayout = layout && layout.getGroupCellLayout();
+	if (!cellLayout) {
+		return;
+	}
+	if (isAll) {
+		this.setVisibleField(api, visible, cellLayout.fld);
+	} else {
+		this.setVisibleFieldItem(api, visible, cellLayout.fld, cellLayout.v, layout);
 	}
 };
-CT_pivotTableDefinition.prototype.setVisibleFieldItem = function (api, visible, fld, index) {
+/**
+ * @param {spreadsheet_api} api
+ * @param {number} row index of cell
+ * @param {number} col index of cell
+ * @param {number} isAll expand/collapse all
+ */
+CT_pivotTableDefinition.prototype.toggleExpandCollapseByActiveCell = function (api, row, col, isAll) {
+	let ws = api.wbModel.getActiveWs();
+	let activeCell = ws.selectionRange.activeCell;
+	let layout = this.getLayoutByCell(activeCell.row, activeCell.col);
+	if (!layout || st_VALUES === layout.fld || !layout.canExpandCollapse()) {
+		return;
+	}
+	let cellLayout = layout && layout.getGroupCellLayout();
+	if (!cellLayout) {
+		return;
+	}
+	var pivotField = this.asc_getPivotFields()[cellLayout.fld];
+	if (!pivotField) {
+		return;
+	}
+	let visible;
+	//Last fields are always visible regardless of flags
+	if ((this.rowFields && this.rowFields.find(cellLayout.fld) === this.rowFields.getCount() - 1) ||
+		(this.colFields && this.colFields.find(cellLayout.fld) === this.colFields.getCount() - 1)) {
+		visible = true;
+	} else {
+		visible = !pivotField.asc_getVisible(cellLayout.v);
+	}
+
+	if (isAll) {
+		this.setVisibleField(api, visible, cellLayout.fld);
+	} else {
+		this.setVisibleFieldItem(api, visible, cellLayout.fld, cellLayout.v, layout);
+	}
+};
+/**
+ * @param {spreadsheet_api} api
+ * @param {number} fld pivotFields index
+ * @param {number} isAll expand/collapse all
+ * @return {boolean} true if dialog was shown
+ */
+CT_pivotTableDefinition.prototype.checkHeaderDetailsDialog = function (api, fld, isAll) {
+	const showRowDialog = this.rowFields && this.rowFields.find(fld) === this.rowFields.getCount() - 1 &&
+		this.rowFields.getCount() !== this.asc_getPivotFields().length;
+	const showColDialog = this.colFields && this.colFields.find(fld) === this.colFields.getCount() - 1 &&
+		this.colFields.getCount() !== this.asc_getPivotFields().length;
+	if (showRowDialog) {
+		api.handlers.trigger("asc_onShowPivotHeaderDetailsDialog", true, isAll);
+		return true;
+	} else if (showColDialog) {
+		api.handlers.trigger("asc_onShowPivotHeaderDetailsDialog", false, isAll);
+		return true;
+	}
+	return false;
+}
+/**
+ * @param {number} fld pivotFields index
+ * @param {number} opt_index cache field index {CT_PivotField}.x
+ * @param {PivotLayout} opt_layout 
+ * @return {Object}
+ */
+CT_pivotTableDefinition.prototype.modifyLastCollapseField = function (fld, opt_index, opt_layout) {
+	let pivotFields = this.asc_getPivotFields();
+	let rowsCount = this.rowFields ? this.rowFields.getCount() : 0;
+	let colsCount = this.colFields ? this.colFields.getCount() : 0;
+	let insertIndexRow = this.rowFields ? this.rowFields.find(fld) : -1;
+	let insertIndexCol = this.colFields ? this.colFields.find(fld) : -1;
+	if (insertIndexRow > 0 && rowsCount > 1 ) {
+		if (undefined !== opt_index && undefined !== opt_layout) {
+			if (opt_layout.rows[insertIndexRow - 1] && (insertIndexRow === rowsCount - 1 || !pivotFields[fld].asc_getVisible(opt_index))) {
+				fld = this.rowFields.get(insertIndexRow - 1).asc_getIndex();
+				opt_index = opt_layout.rows[insertIndexRow - 1].v;
+			}
+		} else {
+			if (insertIndexRow === rowsCount - 1 || pivotFields[fld].asc_isAllHidden()) {
+				fld = this.rowFields.get(insertIndexRow - 1).asc_getIndex();
+			}
+		}
+
+	} else if (insertIndexCol > 0 && colsCount > 1) {
+		if (undefined !== opt_index && undefined !== opt_layout) {
+			if (opt_layout.cols[insertIndexCol - 1] && (insertIndexCol === colsCount - 1 || !pivotFields[fld].asc_getVisible(opt_index))) {
+				fld = this.colFields.get(insertIndexCol - 1).asc_getIndex();
+				opt_index = opt_layout.cols[insertIndexCol - 1].v;
+			}
+		} else {
+			if (insertIndexCol === colsCount - 1 || pivotFields[fld].asc_isAllHidden()) {
+				fld = this.colFields.get(insertIndexCol - 1).asc_getIndex();
+			}
+		}
+	}
+	return {fld: fld, index: opt_index};
+}
+/**
+ * @param {spreadsheet_api} api
+ * @param {boolean} visible true to expand,false to collapse
+ * @param {number} fld pivotFields index
+ * @param {number} index cache field index {CT_PivotField}.x
+ * @param {PivotLayout} layout
+ */
+CT_pivotTableDefinition.prototype.setVisibleFieldItem = function (api, visible, fld, index, layout) {
+	if (visible) {
+		if (this.checkHeaderDetailsDialog(api, fld, false)) {
+			return;
+		}
+	} else {
+		let mod = this.modifyLastCollapseField(fld, index, layout);
+		fld = mod.fld;
+		index = mod.index;
+	}
 	api._changePivotWithLock(this, function (ws, pivot) {
 		pivot._setVisibleFieldItem(visible, fld, index);
 	});
@@ -5981,7 +6104,31 @@ CT_pivotTableDefinition.prototype.setVisibleFieldItem = function (api, visible, 
 CT_pivotTableDefinition.prototype._setVisibleFieldItem = function (visible, fld, index) {
 	var pivotField = this.asc_getPivotFields()[fld];
 	if (pivotField) {
-		pivotField.asc_setVisible(visible, this, fld, index, true);
+		pivotField.asc_setVisibleItem(visible, this, fld, index, true);
+	}
+};
+/**
+ * @param {spreadsheet_api} api
+ * @param {boolean} visible true to expand,false to collapse
+ * @param {number} fld pivotFields index
+ */
+CT_pivotTableDefinition.prototype.setVisibleField = function (api, visible, fld) {
+	if (visible) {
+		if (this.checkHeaderDetailsDialog(api, fld, true)) {
+			return;
+		}
+	} else {
+		let mod = this.modifyLastCollapseField(fld);
+		fld = mod.fld;
+	}
+	api._changePivotWithLock(this, function (ws, pivot) {
+		pivot._setVisibleField(visible, fld);
+	});
+};
+CT_pivotTableDefinition.prototype._setVisibleField = function (visible, fld) {
+	var pivotField = this.asc_getPivotFields()[fld];
+	if (pivotField) {
+		pivotField.asc_setVisible(visible, this, fld, true);
 	}
 };
 CT_pivotTableDefinition.prototype._canSortByCell = function(row, col) {
@@ -7096,6 +7243,45 @@ CT_pivotTableDefinition.prototype.getShowDetailsSheetName = function(arrayFieldI
 	}
 	return result;
 }
+/**
+ * @param {spreadsheet_api} api
+ * @param {number} row index of cell
+ * @param {number} col index of cell
+ * @param {number} fld pivotFields index
+ * @param {boolean} isAll expand/collapse all
+ */
+CT_pivotTableDefinition.prototype.showDetailsHeaderByCell = function(api, row, col, fld, isAll) {
+	let layout = this.getLayoutByCell(row, col);
+	if (st_VALUES === layout.fld || !layout.canExpandCollapse()) {
+		return;
+	}
+	let cellLayout = layout && layout.getGroupCellLayout();
+	if (!cellLayout) {
+		return;
+	}
+	var pivotField = this.asc_getPivotFields()[cellLayout.fld];
+	if (!pivotField) {
+		return;
+	}
+	let insertIndexRow = this.rowFields ? this.rowFields.find(cellLayout.fld) : -1;
+	let insertIndexCol = this.colFields ? this.colFields.find(cellLayout.fld) : -1;
+	if (-1 === insertIndexRow && -1 === insertIndexCol) {
+		return;
+	}
+	api._changePivotWithLock(this, function(ws, pivot) {
+		pivot.removeNoDataField(fld, true);
+		if (-1 !== insertIndexRow) {
+			pivot.addRowField(fld, insertIndexRow + 1, true);
+		} else if (-1 !== insertIndexCol) {
+			pivot.addColField(fld, insertIndexCol + 1, true);
+		}
+		if (!isAll) {
+			pivot._setVisibleField(false, cellLayout.fld);
+			pivot._setVisibleFieldItem(true, cellLayout.fld, cellLayout.v);
+		}
+	});
+};
+
 CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {
 	let indexes = this.getItemsIndexesByActiveCell(row, col);
 	if (indexes === null) {
@@ -7110,6 +7296,24 @@ CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {
 		return false;
 	}
 	return true;
+};
+/**
+ * @param {spreadsheet_api} api
+ * @return {boolean}
+ */
+CT_pivotTableDefinition.prototype.asc_canExpandCollapseByActiveCell = function(api) {
+	let ws = api.wbModel.getActiveWs();
+	let activeCell = ws.selectionRange.activeCell;
+	return this.canExpandCollapse(activeCell.row, activeCell.col);
+};
+/**
+ * @param {number} row index of cell
+ * @param {number} col index of cell
+ * @return {boolean}
+ */
+CT_pivotTableDefinition.prototype.canExpandCollapse = function(row, col) {
+	let layout = this.getLayoutByCell(row, col);
+	return layout && layout.canExpandCollapse() || false;
 };
 
 function CT_pivotTableDefinitionX14() {
@@ -8787,6 +8991,9 @@ CT_RowFields.prototype.remove = function (index) {
 CT_RowFields.prototype.find = function (index) {
 	return findFieldBase(index, this.field);
 };
+CT_RowFields.prototype.get = function (index) {
+	return this.field[index];
+};
 CT_RowFields.prototype.getCount = function () {
 	return this.field.length;
 };
@@ -8903,6 +9110,9 @@ CT_ColFields.prototype.remove = function (index) {
 CT_ColFields.prototype.find = function (index) {
 	return findFieldBase(index, this.field);
 };
+CT_ColFields.prototype.get = function (index) {
+	return this.field[index];
+};
 CT_ColFields.prototype.getCount = function () {
 	return this.field.length;
 };
@@ -8984,6 +9194,9 @@ CT_PageFields.prototype.remove = function (index) {
 CT_PageFields.prototype.find = function (index) {
 	return findFieldBase(index, this.pageField);
 };
+CT_PageFields.prototype.get = function (index) {
+	return this.pageField[index];
+};
 CT_PageFields.prototype.getCount = function () {
 	return this.pageField.length;
 };
@@ -9037,6 +9250,9 @@ CT_DataFields.prototype.remove = function(index, dataIndex) {
 };
 CT_DataFields.prototype.find = function (index) {
 	return findFieldBase(index, this.dataField);
+};
+CT_DataFields.prototype.get = function (index) {
+	return this.dataField[index];
 };
 CT_DataFields.prototype.getCount = function () {
 	return this.dataField.length;
@@ -11631,6 +11847,15 @@ CT_PivotField.prototype.asc_getVisible = function (index) {
 	}
 	return false;
 };
+CT_PivotField.prototype.asc_isAllHidden = function () {
+	var items = this.getItems();
+	if (!items) {
+		return true;
+	}
+	return items.every(function(item) {
+		return !item.sd;
+	});
+};
 CT_PivotField.prototype.asc_getSubtotals = function(withDefault) {
 	var res = [];
 	if (this.defaultSubtotal) {
@@ -11992,12 +12217,21 @@ CT_PivotField.prototype.asc_setShowAll = function (newVal, pivot, index, addToHi
 	setFieldProperty(pivot, index, this.showAll, newVal, addToHistory, AscCH.historyitem_PivotTable_PivotFieldSetShowAll, true);
 	this.showAll = newVal;
 };
-CT_PivotField.prototype.asc_setVisible = function (newVal, pivot, fld, index, addToHistory) {
+CT_PivotField.prototype.asc_setVisibleItem = function (newVal, pivot, fld, index, addToHistory) {
 	var items = this.getItems();
 	if (items && index < items.length) {
 		var oldVal = items[index].sd;
 		setFieldProperty(pivot, new AscCommonExcel.UndoRedoData_FromTo(fld, index), oldVal, newVal, addToHistory, AscCH.historyitem_PivotTable_PivotFieldVisible, true);
 		items[index].sd = newVal;
+	}
+};
+CT_PivotField.prototype.asc_setVisible = function (newVal, pivot, fld, addToHistory) {
+	let items = this.getItems();
+	if (!items) {
+		return;
+	}
+	for (let i = 0; i < items.length; ++i) {
+		this.asc_setVisibleItem(newVal, pivot, fld, i, addToHistory);
 	}
 };
 CT_PivotField.prototype.asc_setSubtotals = function (newVals) {
@@ -16276,6 +16510,9 @@ PivotContextMenu.prototype.asc_canGroup = function() {
 PivotContextMenu.prototype.asc_showDetails = function() {
 	return this.showDetails;
 };
+PivotContextMenu.prototype.asc_canExpandCollapse = function() {
+	return this.layout && this.layout.canExpandCollapse() || false;
+};
 
 function PivotLayoutGroup(){
 	this.fld = null;
@@ -16412,6 +16649,18 @@ PivotLayout.prototype.getGroupCellLayout = function() {
 		return this.getHeaderCellLayout();
 	}
 	return null;
+};
+PivotLayout.prototype.canExpandCollapse = function() {
+	if (PivotLayoutType.rowField !== this.type && PivotLayoutType.colField !== this.type) {
+		return false;
+	}
+	if (this.rows && this.rows.length > 0 && this.rows[this.rows.length - 1].t !== Asc.c_oAscItemType.Data) {
+		return false;
+	}
+	if (this.cols && this.cols.length > 0 && this.cols[this.cols.length - 1].t !== Asc.c_oAscItemType.Data) {
+		return false;
+	}
+	return true;
 };
 
 function DataRowTraversal(pivotFields, dataFields, rowItems, colItems, rowFields, colFields) {
@@ -18134,8 +18383,9 @@ prot["asc_moveRowField"] = prot.asc_moveRowField;
 prot["asc_moveColField"] = prot.asc_moveColField;
 prot["asc_moveDataField"] = prot.asc_moveDataField;
 prot["asc_refresh"] = prot.asc_refresh;
-prot["asc_setVisibleFieldItemByCell"] = prot.asc_setVisibleFieldItemByCell;
 prot["asc_getFieldGroupType"] = prot.asc_getFieldGroupType;
+prot["asc_canExpandCollapseByActiveCell"] = prot.asc_canExpandCollapseByActiveCell;
+prot["asc_setExpandCollapseByActiveCell"] = prot.asc_setExpandCollapseByActiveCell;
 
 window["Asc"]["CT_PivotTableStyle"] = window['Asc'].CT_PivotTableStyle = CT_PivotTableStyle;
 prot = CT_PivotTableStyle.prototype;
@@ -18164,6 +18414,8 @@ prot["asc_getInsertBlankRow"] = prot.asc_getInsertBlankRow;
 prot["asc_getDefaultSubtotal"] = prot.asc_getDefaultSubtotal;
 prot["asc_getSubtotalTop"] = prot.asc_getSubtotalTop;
 prot["asc_getShowAll"] = prot.asc_getShowAll;
+prot["asc_getVisible"] = prot.asc_getVisible;
+prot["asc_isAllHidden"] = prot.asc_isAllHidden;
 prot["asc_getSubtotals"] = prot.asc_getSubtotals;
 prot["asc_set"] = prot.asc_set;
 prot["asc_setName"] = prot.asc_setName;
@@ -18179,6 +18431,8 @@ prot["asc_getBaseItemObject"] = prot.asc_getBaseItemObject;
 prot["asc_getNumFormat"] = prot.asc_getNumFormat;
 prot["asc_getNumFormatInfo"] = prot.asc_getNumFormatInfo;
 prot["asc_setNumFormat"] = prot.asc_setNumFormat;
+prot["asc_setVisibleItem"] = prot.asc_setVisibleItem;
+prot["asc_setVisible"] = prot.asc_setVisible;
 
 prot = CT_Field.prototype;
 prot["asc_getIndex"] = prot.asc_getIndex;
@@ -18242,6 +18496,7 @@ prot["asc_getRowGrandTotals"] = prot.asc_getRowGrandTotals;
 prot["asc_getColGrandTotals"] = prot.asc_getColGrandTotals;
 prot["asc_canGroup"] = prot.asc_canGroup;
 prot["asc_showDetails"] = prot.asc_showDetails;
+prot["asc_canExpandCollapse"] = prot.asc_canExpandCollapse;
 
 window["Asc"]["CT_PivotFilter"] = window['Asc'].CT_PivotFilter = CT_PivotFilter;
 window["Asc"]["CT_WorksheetSource"] = window['Asc'].CT_WorksheetSource = CT_WorksheetSource;

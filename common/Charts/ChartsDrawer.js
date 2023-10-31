@@ -2126,6 +2126,9 @@ CChartsDrawer.prototype =
 					break;
 				}
 				result[step] = temp;
+				if (manualMax === temp) {
+					break;
+				}
 				pow++;
 				step++;
 			}
@@ -2145,6 +2148,9 @@ CChartsDrawer.prototype =
 					break;
 				}
 				result[step] = temp;
+				if (manualMax === temp) {
+					break;
+				}
 				pow++;
 				step++;
 			}
@@ -2821,43 +2827,77 @@ CChartsDrawer.prototype =
 		if (yPoints.length < 2) {
 			return parseFloat("0." + logVal.toString().split(".")[1]) * yPoints[0].pos;
 		}
+
+		parseVal = logVal.toString().split(".");
 		if (logVal < 0) {
-			parseVal = logVal.toString().split(".");
 			maxVal = Math.pow(logBase, parseVal[0]);
 			minVal = Math.pow(logBase, parseFloat(parseVal[0]) - 1);
-			for (var i = 0; i < yPoints.length; i++) {
-				if (yPoints[i].val < maxVal && yPoints[i].val >= minVal) {
-					if(yPoints[i + 1]) {
-						startPos = yPoints[i + 1].pos;
-						diffPos = yPoints[i].pos - yPoints[i + 1].pos;
-					} else {
-						startPos = yPoints[i].pos;
-						diffPos = yPoints[i - 1].pos - yPoints[i].pos;
-					}
-
-					break;
-				}
-			}
-			result = startPos + parseFloat("0." + parseVal[1]) * diffPos;
 		} else {
-			parseVal = logVal.toString().split(".");
 			minVal = Math.pow(logBase, parseVal[0]);
 			maxVal = Math.pow(logBase, parseFloat(parseVal[0]) + 1);
-			for (var i = 0; i < yPoints.length; i++) {
-				if (yPoints[i].val < maxVal && yPoints[i].val >= minVal) {
-					if(yPoints[i + 1]) {
-						startPos = yPoints[i].pos;
-						diffPos = yPoints[i].pos - yPoints[i + 1].pos;
-					} else {
-						startPos = yPoints[i].pos;
-						diffPos = yPoints[i - 1].pos - yPoints[i].pos;
-					}
-					break;
-				}
-			}
-			result = startPos - parseFloat("0." + parseVal[1]) * diffPos;
 		}
 
+		for (var i = 0; i < yPoints.length; i++) {
+			if (yPoints[i].val < maxVal && yPoints[i].val >= minVal) {
+				if(yPoints[i + 1]) {
+					startPos = logVal < 0 ? yPoints[i + 1].pos : yPoints[i].pos;
+					diffPos = yPoints[i].pos - yPoints[i + 1].pos;
+				} else {
+					startPos = yPoints[i].pos;
+					diffPos = yPoints[i - 1].pos - yPoints[i].pos;
+				}
+				break;
+			}
+		}
+
+		if (diffPos == null) {
+			let maxIteration = 100;
+			if (maxVal > yPoints[yPoints.length - 1].val) {
+				diffPos = Math.abs(yPoints[1].pos - yPoints[0].pos);
+				let pow = Math.log(yPoints[yPoints.length - 1].val) / Math.log(logBase);
+
+				let _startPos = yPoints[yPoints.length - 1].pos;
+				let _endPos = _startPos - diffPos;
+				while (true) {
+					let start = Math.pow(logBase, pow);
+					let end = Math.pow(logBase, pow + 1);
+					_startPos -= diffPos;
+					_endPos -= diffPos;
+
+					if (start <= maxVal && end >= minVal) {
+						startPos = logVal < 0 ? _endPos : _startPos;
+						break;
+					}
+					pow++;
+					if (pow > maxIteration) {
+						break;
+					}
+				}
+			} else if (minVal < yPoints[0].val) {
+				diffPos = Math.abs(yPoints[1].pos - yPoints[0].pos);
+				let pow = Math.log(yPoints[0].val) / Math.log(logBase);
+
+				let _startPos = yPoints[0].pos;
+				let _endPos = _startPos + diffPos;
+				while (true) {
+					let start = Math.pow(logBase, pow);
+					let end = Math.pow(logBase, pow - 1);
+					_startPos += diffPos;
+					_endPos += diffPos;
+
+					if (start <= maxVal && end >= minVal) {
+						startPos = logVal < 0 ? _endPos : _startPos;
+						break;
+					}
+					pow--;
+					if (Math.abs(pow) > maxIteration) {
+						break;
+					}
+				}
+			}
+		}
+
+		result = logVal < 0 ? (startPos + parseFloat("0." + parseVal[1]) * diffPos) : (startPos - parseFloat("0." + parseVal[1]) * diffPos);
 		return result;
 	},
 
@@ -10146,10 +10186,7 @@ drawHBarChart.prototype = {
 	_applyColorModeByBrush: function (brushFill, val) {
 		var props = this.cChartSpace.getParentObjects();
 		var duplicateBrush = brushFill.createDuplicate();
-		var cColorMod = new AscFormat.CColorMod;
-		cColorMod.val = val;
-
-		cColorMod.name = "shade";
+		var cColorMod = new AscFormat.CColorMod("shade", val);
 		duplicateBrush.addColorMod(cColorMod);
 		duplicateBrush.calculate(props.theme, props.slide, props.layout, props.master, new AscFormat.CUniColor().RGBA, this.cChartSpace.clrMapOvr);
 
@@ -11310,11 +11347,7 @@ drawPieChart.prototype = {
 				if (brush) {
 					var props = t.cChartSpace.getParentObjects();
 					var duplicateBrush = brush.createDuplicate();
-					var cColorMod = new AscFormat.CColorMod;
-
-					cColorMod.val = shadeValue;
-					cColorMod.name = shade;
-
+					var cColorMod = new AscFormat.CColorMod(shade, shadeValue);
 					if (duplicateBrush) {
 						duplicateBrush.addColorMod(cColorMod);
 						duplicateBrush.calculate(props.theme, props.slide, props.layout, props.master, new AscFormat.CUniColor().RGBA, t.cChartSpace.clrMapOvr);
@@ -11905,10 +11938,7 @@ drawPieChart.prototype = {
 				var duplicateBrush = brush;
 				if (n !== this.paths.series.length - 1) {
 					duplicateBrush = brush.createDuplicate();
-					var cColorMod = new AscFormat.CColorMod;
-
-					cColorMod.val = 35000;
-					cColorMod.name = "shade";
+					var cColorMod = new AscFormat.CColorMod("shade", 35000);
 
 					duplicateBrush.addColorMod(cColorMod);
 					duplicateBrush.calculate(props.theme, props.slide, props.layout, props.master, new AscFormat.CUniColor().RGBA, this.cChartSpace.clrMapOvr);
@@ -15120,9 +15150,20 @@ areaChart.prototype =
 	
 	_drawArea: function()
 	{
-		var pen = this.cChartSpace.pen;
-		var brush = this.cChartSpace.brush;
+		const pen = this.cChartSpace.pen;
+		const brush = this.cChartSpace.brush;
+		const oShapeDrawer = this.cChartDrawer.cShapeDrawer;
+		let bNoSmartAttackVal;
+		if(oShapeDrawer)
+		{
+			bNoSmartAttackVal = oShapeDrawer.bIsNoSmartAttack;
+			oShapeDrawer.bIsNoSmartAttack = true;
+		}
 		this.cChartDrawer.drawPath(this.paths, pen, brush);
+		if(oShapeDrawer)
+		{
+			oShapeDrawer.bIsNoSmartAttack = bNoSmartAttackVal;
+		}
 	}
 };
 

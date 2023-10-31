@@ -108,7 +108,7 @@ function CBinaryFileWriter()
     {
         var _canvas = document.createElement('canvas');
         var _ctx = _canvas.getContext('2d');
-        this.len = 1024*1024*5;
+        this.len = 1024*1024*2;
         this.ImData = _ctx.createImageData(this.len / 4, 1);
         this.data = this.ImData.data;
         this.pos = 0;
@@ -2308,9 +2308,7 @@ function CBinaryFileWriter()
                 mods.splice(nIndex, 1);
             }
 
-            mods[_len] = new AscFormat.CColorMod();
-            mods[_len].name = "alpha";
-            mods[_len].val = (trans * 100000 / 255) >> 0;
+            mods[_len] = new AscFormat.CColorMod("alpha", (trans * 100000 / 255) >> 0);
         }
     };
 
@@ -3478,21 +3476,12 @@ function CBinaryFileWriter()
 
         image.spPr.WriteXfrm = image.spPr.xfrm;
 
-        var bSetGeometry = false;
-        if (image.spPr.geometry === undefined || image.spPr.geometry == null)
-        {
-            // powerpoint!
-            bSetGeometry = true;
-            image.spPr.geometry = AscFormat.ExecuteNoHistory(function(){return AscFormat.CreateGeometry("rect");}, this, []);
-        }
+
 
         var unifill = new AscFormat.CUniFill();
         unifill.fill = image.blipFill;
         oThis.WriteRecord1(1, unifill, oThis.WriteUniFill);
         oThis.WriteRecord1(2, image.spPr, oThis.WriteSpPr);
-        if(bSetGeometry){
-            image.spPr.geometry = null;
-        }
         oThis.WriteRecord2(3, image.style, oThis.WriteShapeStyle);
         image.writeMacro(oThis);
         image.spPr.WriteXfrm = null;

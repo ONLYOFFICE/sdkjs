@@ -1907,7 +1907,8 @@ window.AscCommon.g_cIsBeta = "false";
 		ChangeDefName: 5,
 		ChangeSheet: 6,
 		DelColumnTable: 7,
-		Prepare: 8
+		Prepare: 8,
+		ChangeExternalLink: 9
 	};
 
 	var c_oNotifyParentType = {
@@ -5722,7 +5723,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['ConfirmAddCellWatches'] = prot.ConfirmAddCellWatches;
 	prot['ConfirmReplaceHeaderFooterPicture'] = prot.ConfirmReplaceHeaderFooterPicture;
 
-	window['Asc'].c_oAscSmartArtSections = c_oAscSmartArtSections;
+	window['Asc']['c_oAscSmartArtSections'] = window['Asc'].c_oAscSmartArtSections = c_oAscSmartArtSections;
 
 
 

@@ -565,9 +565,10 @@
 
 	var g_FCI = {row: null, col: null};
 
-	function getFromCellIndex(cellIndex) {
+	function getFromCellIndex(cellIndex, returnDuplicate) {
 		g_FCI.row = Math.floor(cellIndex / AscCommon.gc_nMaxCol);
 		g_FCI.col = cellIndex % AscCommon.gc_nMaxCol;
+		return returnDuplicate ? {row: g_FCI.row, col: g_FCI.col} : null;
 	}
 
 	function getVertexIndex(bbox) {
@@ -798,6 +799,11 @@
 					listeners[listenerId] = sheetContainer.defName3d[listenerId];
 				}
 			}
+			if (this.volatileListeners) {
+				for (var listenerId in this.volatileListeners) {
+					listeners[listenerId] = this.volatileListeners[listenerId];
+				}
+			}
 			if(tableNamesMap){
 				for (var tableName in tableNamesMap) {
 					var nameIndex = getDefNameIndex(tableName);
@@ -831,6 +837,12 @@
 		},
 		changeSheet: function(prepared) {
 			var notifyData = {type: c_oNotifyType.ChangeSheet, data: prepared.data, preparedData: prepared.preparedData};
+			for (var listenerId in prepared.listeners) {
+				prepared.listeners[listenerId].notify(notifyData);
+			}
+		},
+		changeExternalLink: function(prepared) {
+			var notifyData = {type: c_oNotifyType.ChangeExternalLink, data: prepared.data, preparedData: prepared.preparedData};
 			for (var listenerId in prepared.listeners) {
 				prepared.listeners[listenerId].notify(notifyData);
 			}
@@ -2280,6 +2292,7 @@
 		this.workbookFormulas = new AscCommonExcel.CWorkbookFormulas();
 		this.loadCells = [];//to return one object when nested _getCell calls
 		this.DrawingDocument = new AscCommon.CDrawingDocument();
+		this.mathTrackHandler = new AscWord.CMathTrackHandler(this.DrawingDocument, oApi);
 
 		this.aComments = [];	// Комментарии к документу
 		this.aWorksheets = [];
@@ -2320,6 +2333,7 @@
 		this.fileSharing = null;
 
 		this.customXmls = null;//[]
+		this.oGoalSeek = null;
 	}
 	Workbook.prototype.init=function(tableCustomFunc, tableIds, sheetIds, bNoBuildDep, bSnapshot){
 		if(this.nActive < 0)
@@ -2461,7 +2475,7 @@
 	};
 	Workbook.prototype.isChartOleObject = function () {
 		return this.aWorksheets.length === 2;
-	}
+	};
 	Workbook.prototype.setCommonIndexObjectsFrom = function(wb) {
 		this.oStyleManager = wb.oStyleManager;
 		this.sharedStrings = wb.sharedStrings;
@@ -2903,7 +2917,7 @@
 
 		var aRes = [];
 		for(var i in oFontMap)
-			aRes.push(new AscFonts.CFont(i, 0, "", 0));
+			aRes.push(new AscFonts.CFont(i));
 		AscFonts.FontPickerByCharacter.extendFonts(aRes);
 		return aRes;
 	};
@@ -4197,6 +4211,7 @@
 							_rule = _rule.clone();
 							_rule.id = _id;
 							_rule.isLock = isLocked;
+							_rule.recalcInterfaceFormula(sheet, true);
 						}
 						rules.push(_rule);
 					}
@@ -4216,6 +4231,7 @@
 						_rule = _rule.clone();
 						_rule.id = _id;
 						_rule.isLock = isLocked;
+						_rule.recalcInterfaceFormula(sheet, true);
 					}
 					rules.push(_rule);
 				}
@@ -4571,11 +4587,25 @@
 		if (index != null) {
 			var from = this.externalReferences[index - 1];
 			//this.reIndexExternalReferencesLinks(index - 1);
-			this.externalReferences.splice(index - 1, 1);
+			this._removeExternalReference(index - 1);
 			if (addToHistory) {
 				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
 					null, null, new UndoRedoData_FromTo(from, null));
 			}
+		}
+	};
+
+	Workbook.prototype._removeExternalReference = function (index) {
+		if (index != null) {
+			//need offset last references
+			for (let i = index + 1; i < this.externalReferences.length; i++) {
+				for (let j in this.externalReferences[i].worksheets) {
+					var prepared = this.dependencyFormulas.prepareChangeSheet(this.externalReferences[i].worksheets[j].getId(), {from: i + 1, to: i});
+					this.dependencyFormulas.changeExternalLink(prepared);
+				}
+			}
+
+			this.externalReferences.splice(index, 1);
 		}
 	};
 
@@ -4674,6 +4704,80 @@
 
 		return res;
 	};
+
+	/******GOAL SEEK******
+	/**
+	 * Initializes and starts goal seek calculation.
+	 * @param {string} sFormulaCell
+	 * @param {string} sExpectedValue
+	 * @param {string} sChangingCell
+	 * @param {Worksheet} wsFormula
+	 * @param {Worksheet} wsChangingCell
+	 */
+	Workbook.prototype.startGoalSeek = function(sFormulaCell, sExpectedValue, sChangingCell, wsFormula, wsChangingCell) {
+		let oParserFormula;
+		let oFormulaCell = wsFormula.getCell2(sFormulaCell);
+		wsFormula._getCell(oFormulaCell.bbox.r1, oFormulaCell.bbox.c1, function (cell) {
+			oParserFormula = cell.getFormulaParsed();
+		});
+
+		this.setGoalSeek(new AscCommonExcel.CGoalSeek(oParserFormula, Number(sExpectedValue), wsChangingCell.getRange2(sChangingCell)));
+		let oGoalSeek = this.getGoalSeek();
+		// Run goal seek
+		oGoalSeek.init();
+		oGoalSeek.setIntervalId(setInterval(function () {
+			let bIsFinish = oGoalSeek.calculate();
+			if (bIsFinish) {
+				clearInterval(oGoalSeek.getIntervalId());
+			}
+		}, oGoalSeek.getDelay()));
+	};
+	/**
+	 * Returns object with goal seek result
+	 * @returns {CGoalSeek}
+	 */
+	Workbook.prototype.getGoalSeek = function() {
+		return this.oGoalSeek;
+	};
+	/**
+	 * Sets object with goal seek result
+	 * @param {CGoalSeek} oGoalSeek
+	 */
+	Workbook.prototype.setGoalSeek = function(oGoalSeek) {
+		this.oGoalSeek = oGoalSeek;
+	};
+	/**
+	 * Discards goal seek result for "Changing cell" to original
+	 */
+	Workbook.prototype.closeGoalSeek = function () {
+		let oGoalSeek = this.getGoalSeek();
+		if (!oGoalSeek) {
+			return;
+		}
+		let oChangedCell = oGoalSeek.getChangingCell();
+		let nFirstChangingVal = oGoalSeek.getFirstChangingValue();
+		oChangedCell.setValue(nFirstChangingVal == null ? "" : nFirstChangingVal + "");
+		this.setGoalSeek(null);
+	};
+	/**
+	 * Saves goal seek result for "Changing cell"
+	 */
+	Workbook.prototype.saveGoalSeek = function() {
+		this.setGoalSeek(null);
+	};
+
+	Workbook.prototype.pauseGoalSeek = function() {
+		this.oGoalSeek && this.oGoalSeek.pause();
+	};
+
+	Workbook.prototype.continueGoalSeek = function() {
+		this.oGoalSeek && this.oGoalSeek.resume();
+	};
+
+	Workbook.prototype.stepGoalSeek = function() {
+		this.oGoalSeek && this.oGoalSeek.step();
+	};
+
 
 
 //-------------------------------------------------------------------------------------------------
@@ -5247,6 +5351,13 @@
 				}
 				this.aProtectedRanges.push(wsFrom.aProtectedRanges[i].clone(this));
 			}
+		}
+
+		if(wsFrom.colBreaks) {
+			this.colBreaks = wsFrom.colBreaks.clone(this);
+		}
+		if(wsFrom.rowBreaks) {
+			this.rowBreaks = wsFrom.rowBreaks.clone(this);
 		}
 
 		return renameParams;
@@ -5891,7 +6002,7 @@
 				this.workbook.handlers && this.workbook.handlers.trigger("updateCellWatches");
 			}
 			if (this.workbook.handlers) {
-				this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetRename, this.index, name);
+				this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetRename, this.index, name, this.getId());
 			}
 		} else {
 			console.log(new Error('The sheet name must be less than 31 characters.'));
@@ -6001,10 +6112,9 @@
 				this.getId(), new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0), new UndoRedoData_FromTo(view.showFormulas, value));
 			view.showFormulas = value;
 
-			//TODO
 			this.workbook.handlers.trigger("changeSheetViewSettings", this.getId(), AscCH.historyitem_Worksheet_SetShowFormulas);
-			if (!this.workbook.bUndoChanges && !this.workbook.bRedoChanges) {
-				this.workbook.handlers.trigger("asc_onUpdateSheetViewSettings");
+			if (!this.workbook.bCollaborativeChanges) {
+				this.workbook.handlers.trigger("asc_onUpdateFormulasViewSettings");
 			}
 		}
 	};
@@ -6194,7 +6304,7 @@
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
 
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, null, this.getId());
 		}
 
 		this.workbook.dependencyFormulas.unlockRecal();
@@ -6285,7 +6395,7 @@
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, null, this.getId());
 		}
 
 		this.workbook.dependencyFormulas.unlockRecal();
@@ -6376,7 +6486,7 @@
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, null, this.getId());
 		}
 
 		this.workbook.dependencyFormulas.unlockRecal();
@@ -6466,7 +6576,7 @@
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, null, this.getId());
 		}
 
 		this.workbook.dependencyFormulas.unlockRecal();
@@ -7743,7 +7853,7 @@
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, null, this.getId());
 		}
 		//todo проверить не уменьшились ли границы таблицы
 	};
@@ -7786,7 +7896,7 @@
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, null, this.getId());
 		}
 		//todo проверить не уменьшились ли границы таблицы
 	};
@@ -7851,7 +7961,7 @@
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, null, this.getId());
 		}
 	};
 	Worksheet.prototype._shiftCellsBottom=function(oBBox, displayNameFormatTable){
@@ -7926,13 +8036,13 @@
 		{
 			this.autoFilters.redrawStylesTables(redrawTablesArr);
 			if (this.workbook.handlers) {
-				this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
+				this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, null, this.getId());
 			}
 		}
 	};
 	Worksheet.prototype._setIndex=function(ind){
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetChangeIndex, this.index, ind);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetChangeIndex, this.index, ind, this.getId());
 		}
 		this.index = ind;
 	};
@@ -10860,6 +10970,7 @@
 			this.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(updateRange));
 		}
 
+		to.recalcInterfaceFormula(this);
 		from.set(to, addToHistory, this);
 	};
 
@@ -10875,6 +10986,8 @@
 			}
 		}
 
+
+		val.recalcInterfaceFormula(this);
 		this.aConditionalFormattingRules.push(val);
 		this.cleanConditionalFormattingRangeIterator();
 		if (addToHistory) {
@@ -11476,55 +11589,66 @@
 	};
 
 	Worksheet.prototype.isLockedRange = function (range) {
-		var rangeType = range.getType();
-		var oRange = this.getRange3(range.r1, range.c1, range.r2, range.c2);
-		var res = true;
-		var unLockedRowIndex = range.r1 - 1;
+		let oRange = this.getRange3(range.r1, range.c1, range.r2, range.c2);
+		let res = true;
+
+		let _getLocked = function (_xfs) {
+			let _res = null;
+			if (_xfs/* && _xfs.applyProtection*/) {
+				_res = true;//null/true
+				if (_xfs.getLocked() === false) {
+					_res = false;
+				}
+			}
+			return _res;
+		};
+
+		//1. init default value
+		//all cells
+		if (null != this.oAllCol && this.oAllCol.xfs && this.oAllCol.xfs.locked != null) {
+			res = _getLocked(this.oAllCol.xfs);
+		}
+
+		//all selected rows
+		let unLockedRowIndex = range.r1 - 1;
 		oRange._foreachRowNoEmpty(function(row){
-			if(null != row && row.xfs && false === row.xfs.getLocked()) {
+			if(null != row && row.xfs && !res === _getLocked(row.xfs)) {
 				if (unLockedRowIndex + 1 === row.index) {
 					unLockedRowIndex++;
 				}
 			}
 		});
 		if (unLockedRowIndex === range.r2) {
-			//если все строки разлочены, далее можно не проверять
-			return false;
-		} else if (rangeType === Asc.c_oAscSelectionType.RangeMax || rangeType === Asc.c_oAscSelectionType.RangeRow) {
-			//если выделены все строки, но среди них не все разлочены - далее не проверяем и возвращаем true
-			return true;
+			res = !res;
 		}
 
-		var unLockedColndex = range.c1 - 1;
+		//all selected cols
+		let unLockedColIndex = range.c1 - 1;
 		oRange._foreachColNoEmpty(function(col){
-			if(null != col && col.xfs && false === col.xfs.getLocked()) {
-				if (unLockedColndex + 1 === col.index) {
-					unLockedColndex++;
+			if(null != col && col.xfs && !res === _getLocked(col.xfs)) {
+				if (unLockedColIndex + 1 === col.index) {
+					unLockedColIndex++;
 				}
 			}
 		});
-		if (unLockedColndex === range.c2) {
-			//если все столбцы разлочены, далее можно не проверять
-			return false;
-		} else if (rangeType === Asc.c_oAscSelectionType.RangeMax || rangeType === Asc.c_oAscSelectionType.RangeCol) {
-			//если выделены все столбцы, но среди них не все разлочены - далее не проверяем и возвращаем true
-			return true;
+		if (unLockedColIndex === range.c2) {
+			res = !res;
 		}
 
-		oRange._foreach2(function(cell){
+		oRange._foreachNoEmpty(function(cell){
 			if (!cell) {
-				res = true;
-				return true;
+				return;
 			}
-			var cellxfs = cell.xfs;
-			var isLocked = cellxfs && cellxfs.asc_getLocked();
-			if (isLocked === null || isLocked === true) {
+
+			var isLocked = _getLocked(cell.xfs);
+			if (isLocked === true) {
 				res = true;
 				return true;
-			} else {
+			} else if (isLocked === false) {
 				res = false;
 			}
 		});
+
 		return res;
 	};
 
@@ -11908,6 +12032,25 @@
 		this.workbook.handlers.trigger("onChangePageSetupProps", this.getId());
 	};
 
+	Worksheet.prototype.isBreak = function (index, range, byCol) {
+		let min = null;
+		let max = !byCol ? gc_nMaxCol0 : gc_nMaxRow0;
+
+		let printArea = this.workbook.getDefinesNames("Print_Area", this.getId());
+		if (printArea && range) {
+			if (byCol) {
+				min = range.r1;
+				max = range.r2;
+			} else {
+				min = range.c1;
+				max = range.c2;
+			}
+		}
+
+		let rowColBreaks = !byCol ? this.rowBreaks : this.colBreaks;
+		return rowColBreaks && rowColBreaks.isBreak(index, min, max);
+	};
+
 	Worksheet.prototype.resetAllPageBreaks = function () {
 		let t = this;
 
@@ -12271,6 +12414,17 @@
 		return this.legacyDrawingHF.getDrawingById(val);
 	};
 
+	Worksheet.prototype.getCountNoEmptyCells = function() {
+		if (this.nRowsCount === 0 || this.nColsCount === 0) {
+			return 0;
+		}
+		let count = 0;
+		let range = this.getRange3(0, 0, this.nRowsCount - 1, this.nColsCount - 1);
+		range._foreachNoEmptyByCol(function () {
+			count++;
+		});
+		return count;
+	};
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
@@ -12638,7 +12792,7 @@
 				wb.dependencyFormulas.addToBuildDependencyCell(this);
 			}
 			if (this.ws.workbook.handlers) {
-				this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this);
+				this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this, null, this.ws.getId());
 			}
 		} else if (val) {
 			this._setValue(val, ignoreHyperlink);
@@ -12649,7 +12803,7 @@
 		} else {
 			wb.dependencyFormulas.addToChangedCell(this);
 			if (this.ws.workbook.handlers) {
-				this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this);
+				this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this, null, this.ws.getId());
 			}
 		}
 
@@ -13425,7 +13579,7 @@
 			this.setValue("");
 
 		if (this.ws.workbook.handlers) {
-			this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this);
+			this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this, null, this.ws.getId());
 		}
 	};
 	Cell.prototype._checkDirty = function(){
@@ -13797,7 +13951,7 @@
 
 		if("" == val) {
 			if (this.ws.workbook.handlers) {
-				this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this);
+				this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this, null, this.ws.getId());
 			}
 			return;
 		}
@@ -13868,7 +14022,7 @@
 			}
 		}
 		if (this.ws.workbook.handlers) {
-			this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this);
+			this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this, null, this.ws.getId());
 		}
 	};
 	Cell.prototype._autoformatHyperlink = function(val){
@@ -16410,6 +16564,9 @@
 				return;
 			}
 		}
+
+		this.worksheet.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.mergeRange, true, this.bbox, this.worksheet.getId());
+
 		//пробегаемся по границе диапазона, чтобы посмотреть какие границы нужно оставлять
 		var oLeftBorder = null;
 		var oTopBorder = null;
@@ -16502,7 +16659,7 @@
 
 									 }
 									 if(nRow0 == nRowStart && nCol0 == nColStart)
-										 oLeftTopCellStyle = cell.getStyle();
+										 oLeftTopCellStyle = cell.getStyle();									
 								 });
 		//правила работы с гиперссылками во время merge(отличются от Excel в случаем областей, например hyperlink: C3:D3 мержим C2:C3)
 		// 1)оставляем все ссылки, которые не полностью лежат в merge области
@@ -16714,6 +16871,7 @@
 		if (dataValidationRanges) {
 			this.worksheet.clearDataValidation(dataValidationRanges, true);
 		}
+		this.worksheet.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.mergeRange, null, this.bbox, this.worksheet.getId());
 
 		History.EndTransaction();
 	};
@@ -17765,7 +17923,7 @@
 		this.worksheet.workbook.dependencyFormulas.addToChangedRange(this.worksheet.getId(), new Asc.Range(oBBox.c1, oBBox.r1, oBBox.c2, oBBox.r2));
 		this.worksheet.workbook.dependencyFormulas.calcTree();
 		if (this.worksheet.workbook.handlers) {
-			this.worksheet.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this.worksheet);
+			this.worksheet.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this.worksheet, null, this.worksheet.getId());
 		}
 
 		if (false == this.worksheet.workbook.bUndoChanges && (false == this.worksheet.workbook.bRedoChanges || this.worksheet.workbook.bCollaborativeChanges)) {
@@ -20020,6 +20178,7 @@
 	window['AscCommonExcel'].oFormulaLocaleInfo = oFormulaLocaleInfo;
 	window['AscCommonExcel'].getDefNameIndex = getDefNameIndex;
 	window['AscCommonExcel'].getCellIndex = getCellIndex;
+	window['AscCommonExcel'].getFromCellIndex = getFromCellIndex;
 	window['AscCommonExcel'].angleFormatToInterface2 = angleFormatToInterface2;
 	window['AscCommonExcel'].angleInterfaceToFormat = angleInterfaceToFormat;
 	window['AscCommonExcel'].Workbook = Workbook;

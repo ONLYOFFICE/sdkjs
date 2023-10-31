@@ -386,6 +386,7 @@
 	 * @typedef {Object} CommentData
 	 * The comment data.
 	 * @property {string} UserName - The comment author.
+	 * @property {string} QuoteText - The quote comment text.
 	 * @property {string} Text - The comment text.
 	 * @property {string} Time - The time when the comment was posted (in milliseconds).
 	 * @property {boolean} Solved - Specifies if the comment is resolved (**true**) or not (**false**).
@@ -673,7 +674,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias AddContentControlList
-	 * @param {ContentControlType} type - A numeric value that specifies the content control type. It can have one of the following values: <b>1</b> (block), <b>2</b> (inline), <b>3</b> (row), or <b>4</b> (cell).
+	 * @param {ContentControlType} type - A numeric value that specifies the content control type. It can have one of the following values: <b>1</b> (combo box), <b>0</b> (dropdown list).
 	 * @param {Array<String, String>}  [List = [{Display, Value}]] - A list of the content control elements that consists of two items: <b>Display</b> - an item that will be displayed to the user in the content control list, <b>Value</b> - a value of each item from the content control list.
 	 * @param {ContentControlProperties}  [commonPr = {}] - The common content control properties.
 	 * @example
@@ -787,7 +788,10 @@
 	window["asc_docs_api"].prototype["pluginMethod_GetAllOleObjects"] = function (sPluginId)
 	{
 		let aDataObjects = [];
-		let aOleObjects = this.WordControl.m_oLogicDocument.GetAllOleObjects(sPluginId, []);
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+			return aDataObjects;
+		let aOleObjects = oLogicDocument.GetAllOleObjects(sPluginId, []);
 		for(let nObj = 0; nObj < aOleObjects.length; ++nObj)
 		{
 			aDataObjects.push(aOleObjects[nObj].getDataObject());
@@ -805,7 +809,12 @@
 	 * */
 	window["asc_docs_api"].prototype["pluginMethod_RemoveOleObject"] = function (sInternalId)
 	{
-		this.WordControl.m_oLogicDocument.RemoveDrawingObjectById(sInternalId);
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+		{
+			return;
+		}
+		oLogicDocument.RemoveDrawingObjectById(sInternalId);
 	};
 
 	/**
@@ -820,13 +829,18 @@
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_RemoveOleObjects"] = function (arrObjects)
 	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+		{
+			return;
+		}
 		var arrIds = [];
 		for(var nIdx = 0; nIdx < arrObjects.length; ++nIdx)
 		{
 			let oOleObject = arrObjects[nIdx];
 			arrIds.push(oOleObject["InternalId"]);
 		}
-		this.WordControl.m_oLogicDocument.RemoveDrawingObjects(arrIds);
+		oLogicDocument.RemoveDrawingObjects(arrIds);
 	};
 
 	/**
@@ -963,12 +977,8 @@
 					oDrawing.editExternal(oData["Data"], oData["ImageData"], oData["Width"], oData["Height"], oData["WidthPix"], oData["HeightPix"]);
 					oImagesMap[oData["ImageData"]] = oData["ImageData"];
 				}
-				let oApi = this;
-				let sGuid;
-				if(window.g_asc_plugins)
-				{
-					sGuid = window.g_asc_plugins.setPluginMethodReturnAsync();
-				}
+
+				window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
 				AscCommon.Check_LoadingDataBeforePrepaste(this, {}, oImagesMap, function() {
 					oLogicDocument.Reassign_ImageUrls(oImagesMap);
 					oLogicDocument.Recalculate();
@@ -976,10 +986,8 @@
 					oLogicDocument.LoadDocumentState(oStartState);
 					oLogicDocument.UpdateSelection();
 					oLogicDocument.FinalizeAction();
-					if(window.g_asc_plugins)
-					{
-						window.g_asc_plugins.onPluginMethodReturn(sGuid);
-					}
+
+					window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn();
 				});
 			}
 			else

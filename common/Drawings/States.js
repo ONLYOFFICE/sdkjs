@@ -198,7 +198,7 @@ StartAddNewShape.prototype =
                             oPresentation.StartAction(0);
                             let oTiming;
                             let aAddedEffects;
-                            aAddedEffects = oCurSlide.addAnimation(AscFormat.PRESET_CLASS_PATH, AscFormat.MOTION_SQUARE, 0, this.bReplace);
+                            aAddedEffects = oCurSlide.addAnimation(AscFormat.PRESET_CLASS_PATH, AscFormat.MOTION_SQUARE, 0, null, this.bReplace);
                             oTiming = oCurSlide.timing;
                             if(!oTiming) {
                                 oPresentation.FinalizeAction();

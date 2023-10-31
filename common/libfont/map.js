@@ -3101,6 +3101,13 @@
 	};
 	window['AscFonts']['getFontStream'] = function(index) {
 		var s = AscFonts.g_fonts_streams[index];
+		if (true === s.asc_marker)
+		{
+			return {
+				"data" : AscFonts.GetUint8ArrayFromPointer(s.data),
+				"size" : s.len
+			};
+		}
 		return {
 			"data" : s.data,
 			"size" : s.size

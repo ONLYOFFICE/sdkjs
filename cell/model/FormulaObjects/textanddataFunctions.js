@@ -119,13 +119,17 @@ function (window, undefined) {
 		let instance_num = newArgs[2] && !(newArgs[2].type === cElementType.empty) ? newArgs[2] : new cNumber(1);
 		let match_mode = newArgs[3] && !(newArgs[3].type === cElementType.empty) ? newArgs[3] : new cBool(false);
 		let match_end = newArgs[4] && !(newArgs[4].type === cElementType.empty) ? newArgs[4] : new cBool(false);
+
+		match_mode = match_mode.tocBool();
+		match_end = match_end.tocBool();
+
 		if (instance_num.type === cElementType.error) {
 			return instance_num;
 		}
-		if (match_mode.type === match_mode.error) {
+		if (match_mode.type === cElementType.error) {
 			return match_mode;
 		}
-		if (match_end.type === match_end.error) {
+		if (match_end.type === cElementType.error) {
 			return match_end;
 		}
 
@@ -612,11 +616,11 @@ function (window, undefined) {
 		}
 
 		function Floor(number, significance) {
-			var quotient = number / significance;
-			if (quotient == 0) {
+			let quotient = number / significance;
+			if (quotient === 0) {
 				return 0;
 			}
-			var nolpiat = 5 * Math.sign(quotient) *
+			let nolpiat = 5 * Math.sign(quotient) *
 				Math.pow(10, Math.floor(Math.log10(Math.abs(quotient))) - AscCommonExcel.cExcelSignificantDigits);
 			return truncate(quotient + nolpiat) * significance;
 		}
@@ -636,7 +640,7 @@ function (window, undefined) {
 				return new cNumber(0);
 			}
 
-			var significance = SignZeroPositive(number) * Math.pow(10, -truncate(num_digits));
+			let significance = SignZeroPositive(number) * Math.pow(10, -truncate(num_digits));
 
 			number += significance / 2;
 
@@ -648,7 +652,7 @@ function (window, undefined) {
 		}
 
 		function toFix(str, skip) {
-			var res, _int, _dec, _tmp = "";
+			let res, _int, _dec, _tmp = "";
 
 			if (skip) {
 				return str;
@@ -657,13 +661,13 @@ function (window, undefined) {
 			res = str.split(".");
 			_int = res[0];
 
-			if (res.length == 2) {
+			if (res.length === 2) {
 				_dec = res[1];
 			}
 
 			_int = _int.split("").reverse().join("").match(/([^]{1,3})/ig);
 
-			for (var i = _int.length - 1; i >= 0; i--) {
+			for (let i = _int.length - 1; i >= 0; i--) {
 				_tmp += _int[i].split("").reverse().join("");
 				if (i != 0) {
 					_tmp += ",";
@@ -674,10 +678,10 @@ function (window, undefined) {
 				while (_dec.length < arg1.getValue()) _dec += "0";
 			}
 
-			return "" + _tmp + ( res.length == 2 ? "." + _dec + "" : "");
+			return "" + _tmp + ( res.length === 2 ? "." + _dec + "" : "");
 		}
 
-		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cNumber(2), arg2 = arg[2] ? arg[2] : new cBool(false);
+		let arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cNumber(2), arg2 = arg[2] ? arg[2] : new cBool(false);
 
 		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
 			arg0 = arg0.cross(arguments[1]);
@@ -726,14 +730,14 @@ function (window, undefined) {
 		}
 
 		if (arg0 instanceof cArray && arg1 instanceof cArray) {
-			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
+			if (arg0.getCountElement() !== arg1.getCountElement() || arg0.getRowCount() !== arg1.getRowCount()) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {
-					var a = elem;
-					var b = arg1.getElementRowCol(r, c);
+					let a = elem;
+					let b = arg1.getElementRowCol(r, c);
 					if (a instanceof cNumber && b instanceof cNumber) {
-						var res = roundHelper(a.getValue(), b.getValue());
+						let res = roundHelper(a.getValue(), b.getValue());
 						this.array[r][c] = toFix(res.toString(), arg2.toBool());
 					} else {
 						this.array[r][c] = new cError(cErrorType.wrong_value_type);
@@ -743,10 +747,10 @@ function (window, undefined) {
 			}
 		} else if (arg0 instanceof cArray) {
 			arg0.foreach(function (elem, r, c) {
-				var a = elem;
-				var b = arg1;
+				let a = elem;
+				let b = arg1;
 				if (a instanceof cNumber && b instanceof cNumber) {
-					var res = roundHelper(a.getValue(), b.getValue());
+					let res = roundHelper(a.getValue(), b.getValue());
 					this.array[r][c] = toFix(res.toString(), arg2.toBool());
 				} else {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
@@ -755,10 +759,10 @@ function (window, undefined) {
 			return arg0;
 		} else if (arg1 instanceof cArray) {
 			arg1.foreach(function (elem, r, c) {
-				var a = arg0;
-				var b = elem;
+				let a = arg0;
+				let b = elem;
 				if (a instanceof cNumber && b instanceof cNumber) {
-					var res = roundHelper(a.getValue(), b.getValue());
+					let res = roundHelper(a.getValue(), b.getValue());
 					this.array[r][c] = toFix(res.toString(), arg2.toBool());
 				} else {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
@@ -767,19 +771,36 @@ function (window, undefined) {
 			return arg1;
 		}
 
-		var number = arg0.getValue(), num_digits = arg1.getValue();
+		let number = arg0.getValue(), num_digits = arg1.getValue();
 
-		var res = roundHelper(number, num_digits).getValue();
+		let res = roundHelper(number, num_digits).getValue();
 
-		var cNull = "";
+		let cNull = "";
 
 		if (num_digits > 0) {
 			cNull = ".";
-			for (var i = 0; i < num_digits; i++, cNull += "0") {
+			for (let i = 0; i < num_digits; i++, cNull += "0") {
 			}
 		}
 
-		res = new cString(oNumFormatCache.get("$#,##0" + cNull + ";($#,##0" + cNull + ")")
+
+
+		let format;
+		let api = window["Asc"]["editor"];
+		let nLocal = api && api.asc_getLocale();
+		if (nLocal != null) {
+			let info = new Asc.asc_CFormatCellsInfo();
+			info.asc_setType(Asc.c_oAscNumFormatType.Currency);
+			info.asc_setSymbol(nLocal);
+			info.asc_setDecimalPlaces(num_digits);
+			let arr = api.asc_getFormatCells(info);
+			format = arr && arr[2];
+		}
+		if (!format) {
+			format = "$#,##0" + cNull + ";($#,##0" + cNull + ")";
+		}
+
+		res = new cString(oNumFormatCache.get(format)
 			.format(roundHelper(number, num_digits).getValue(), CellValueType.Number,
 				AscCommon.gc_nMaxDigCount)[0].text);
 		return res;

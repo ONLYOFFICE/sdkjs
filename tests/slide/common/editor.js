@@ -34,26 +34,94 @@
 
 (function (window)
 {
-	Asc.asc_docs_api.prototype._loadModules = function () {};
-	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {
-		this.ImageLoader = AscCommon.g_image_loader;
-		this.chartPreviewManager   = new AscCommon.ChartPreviewManager();
-		this.textArtPreviewManager = new AscCommon.TextArtPreviewManager();
-
-		AscFormat.initStyleManager();
+	const drawingDocument = {
+		CanvasHit : null,
+		CanvasHitContext : null,
+		GoToPage: function (slideNumber)
+		{
+			AscTest.DrawingDocument.m_oLogicDocument.Set_CurPage(slideNumber);
+			editor.WordControl.m_oDrawingDocument.SlideCurrent = slideNumber;
+			this.Thumbnails && this.Thumbnails.SelectPage(slideNumber);
+		},
+		ConvertCoordsToCursorWR: function () {return {X:0,Y:0}},
+		Notes_GetWidth: function () {return 100;},
+		Notes_OnRecalculate: function () {return 100;},
+		scrollToY: function () {},
+		OnStartRecalculate: function () {},
+		OnRecalculatePage: function () {},
+		OnEndRecalculate: function () {},
+		UpdateTargetTransform : function(){},
+		SetTargetColor : function(){},
+		ClearCachePages : function(){},
+		FirePaint : function(){},
+		SetTargetSize : function(){},
+		UpdateTarget : function(){},
+		Set_RulerState_Paragraph : function(){},
+		SelectEnabled : function(){},
+		SelectShow : function(){},
+		TargetStart : function(){},
+		SetCursorType : function(){},
+		TargetShow : function(){},
+		TargetEnd : function(){},
+		Update_MathTrack : function(){},
+		CheckTableStyles : function(){},
+		OnUpdateOverlay : function(){},
+		AddPageSelection : function(){},
+		IsTrackText  : function(){},
+		Set_RulerState_Table  : function(){},
+		SelectClear : function() {},
+		GetDotsPerMM : function(value) {return 72;},
+		GetMMPerDot : function(value){return value / this.GetDotsPerMM(1);},
+		m_oNotesApi: {},
+		clear: function () {}
 	};
-	const editor = new Asc.asc_docs_api({'id-view': 'editor_sdk'});
-	editor.ShowThumbnails(true);
-	AscCommon.loadSdk = function ()
-	{
-		editor._onEndLoadSdk();
-	}
-	editor.WordControl.DemonstrationManager.OnPaintSlide = function () {};
 
+	drawingDocument.CanvasHit = document.createElement('canvas');
+	drawingDocument.CanvasHitContext = drawingDocument.CanvasHit.getContext('2d');
+
+	window['asc_docs_api'] = AscCommon.baseEditorsApi;
+
+	const editor = new AscCommon.baseEditorsApi({});
+	editor.WordControl = drawingDocument;
+	editor.WordControl.m_oDrawingDocument = drawingDocument;
+	editor.WordControl.m_oDrawingDocument.m_oWordControl = drawingDocument;
+	editor.WordControl.m_oApi = editor;
+
+	editor.textArtPreviewManager = drawingDocument;
+
+	editor.asc_hideComments = function () {};
+	editor.isSlideShow = function () {return false};
+	editor.sync_HideComment = function () {};
+	editor.sync_CanUndoCallback = function () {};
+	editor.sync_CanRedoCallback = function () {};
+	editor.CheckChangedDocument = function () {};
+	editor.sync_BeginCatchSelectedElements = function(){};
+	editor.ClearPropObjCallback = function(){};
+	editor.sync_slidePropCallback = function(){};
+	editor.sync_PrLineSpacingCallBack = function(){};
+	editor.sync_EndCatchSelectedElements = function(){};
+	editor.sync_CanAddHyperlinkCallback = function(){};
+	editor.sync_shapePropCallback = function(){};
+	editor.sync_VerticalTextAlign = function(){};
+	editor.sync_Vert = function(){};
+	editor.sync_animPropCallback = function(){};
+	editor.sync_ImgPropCallback = function(){};
+	editor.sync_TblPropCallback = function(){};
+	editor.sync_EndCatchSelectedElements = function(){};
+	editor.Update_ParaTab = function(){};
+	editor.sync_ParaStyleName = function(){};
+	editor.UpdateParagraphProp = function(){};
+	editor.UpdateTextPr = function(){};
+	editor.sync_MathPropCallback = function(){};
+	editor.sync_HyperlinkPropCallback = function(){};
+	editor.DemonstrationReporterEnd = function () {};
+	editor.private_GetLogicDocument = function(){return this.WordControl.m_oLogicDocument;};
+	editor.asc_getKeyboardLanguage = function(){return -1;};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.DrawingDocument = editor.WordControl.m_oDrawingDocument;
 	AscTest.Editor = editor;
 
 	window.editor = editor;
+	Asc.editor = editor;
 
 })(window);

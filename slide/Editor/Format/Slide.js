@@ -858,12 +858,12 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         //     }
         // }
     };
-    Slide.prototype.addAnimation = function(nPresetClass, nPresetId, nPresetSubtype, bReplace) {
+    Slide.prototype.addAnimation = function(nPresetClass, nPresetId, nPresetSubtype, oColor, bReplace) {
         this.checkNeedCopyTimingBeforeEdit();
         if(!this.timing) {
             this.setTiming(new AscFormat.CTiming());
         }
-        return this.timing.addAnimation(nPresetClass, nPresetId, nPresetSubtype, bReplace);
+        return this.timing.addAnimation(nPresetClass, nPresetId, nPresetSubtype, oColor, bReplace);
     };
     Slide.prototype.setAnimationProperties = function(oPr) {
         if(!this.timing) {
@@ -1284,6 +1284,27 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 
     Slide.prototype.needLayoutSpDraw = function() {
         return this.showMasterSp !== false;
+    };
+
+    Slide.prototype.isEqualBgMasterAndLayout = function(oSlide) {
+        if(!(this.backgroundFill === oSlide.backgroundFill ||
+            this.backgroundFill && this.backgroundFill.isEqual(oSlide.backgroundFill))) {
+            return false;
+        }
+        if(this.needMasterSpDraw() && !oSlide.needMasterSpDraw() || oSlide.needMasterSpDraw() && !this.needMasterSpDraw()) {
+            return false;
+        }
+        if(this.needMasterSpDraw()) {
+            if(this.Layout.Master !== oSlide.Layout.Master) {
+               return false;
+            }
+        }
+        if(this.needLayoutSpDraw()) {
+            if(this.Layout !== oSlide.Layout) {
+                return false;
+            }
+        }
+        return true;
     };
 
     Slide.prototype.drawBgMasterAndLayout = function(graphics, bClipBySlide, bCheckBounds) {
@@ -1731,7 +1752,32 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 
     Slide.prototype.getColorMap = function()
     {
-
+        if(this.clrMap)
+        {
+            return this.clrMap;
+        }
+        else if(this.Layout)
+        {
+            if(this.Layout.clrMap)
+            {
+                return this.Layout.clrMap;
+            }
+            else if(this.Layout.Master)
+            {
+                if(this.Layout.Master.clrMap)
+                {
+                    return this.Layout.Master.clrMap;
+                }
+            }
+        }
+        else if(this.Master)
+        {
+            if(this.Master.clrMap)
+            {
+                return this.Master.clrMap;
+            }
+        }
+        return AscFormat.GetDefaultColorMap();
     };
 
 

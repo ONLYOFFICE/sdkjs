@@ -730,7 +730,12 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
                         _imagePr.verticalTextAlign = _params[_current.pos++];
                         break;
                     }
-                    case 21:
+                    case 21: 
+                    {
+                        _imagePr.vert = _params[_current.pos++];
+                        break;      
+                    }
+                    case 22:
                     {
                         var bIsNeed = _params[_current.pos++];
 

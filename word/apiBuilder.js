@@ -3531,7 +3531,7 @@
 	ApiImage.prototype.constructor = ApiImage;
 
 	/**
-	 * Class representing an Ole-object.
+	 * Class representing an Ole object.
 	 * @constructor
 	 */
 	function ApiOleObject(OleObject)
@@ -3672,7 +3672,7 @@
 	}
 
 	/**
-	 * Class representing a list values of combobox/dropdown list content control.
+	 * Class representing a list of values of the combo box / dropdown list content control.
 	 * @constructor
 	 */
 	function ApiContentControlList(Parent)
@@ -3682,7 +3682,7 @@
 	}
 
 	/**
-	 * Class representing an entry of a list values of combobox/dropdown list content control.
+	 * Class representing an entry of the combo box / dropdown list content control.
 	 * @constructor
 	 */
 	function ApiContentControlListEntry(Sdt, Parent, Text, Value)
@@ -3701,6 +3701,16 @@
 	{
 		this.Sdt = Sdt;
 	}
+
+	/**
+	 * Class representing the settings which are used to create a watermark.
+	 * @constructor
+	 */
+	function ApiWatermarkSettings(oSettings)
+	{
+		this.Settings = oSettings;
+	}
+
 
 	/**
 	 * Twentieths of a point (equivalent to 1/1440th of an inch).
@@ -4127,11 +4137,22 @@
 	 * */
 
 	/**
+	 * The watermark type.
+	 * @typedef {("none" | "text" | "image")} WatermarkType
+	 */
+
+	/**
+	 * The watermark direction.
+	 * @typedef {("horizontal" | "clockwise45" | "counterclockwise45")} WatermarkDirection
+	 */
+
+	/**
 	 * Returns the main document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiDocument}
 	 */
+
 	Api.prototype.GetDocument = function()
 	{
 		return new ApiDocument(this.WordControl.m_oLogicDocument);
@@ -5098,6 +5119,7 @@
 
 	/**
 	 * Subscribes to the specified event and calls the callback function when the event fires.
+	 * @function
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {string} eventName - The event name.
@@ -5107,6 +5129,7 @@
 
 	/**
 	 * Unsubscribes from the specified event.
+	 * @function
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @param {string} eventName - The event name.
@@ -5541,16 +5564,16 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiParagraph} oParagraph - The paragraph after which a new document section will be inserted.
 	 * Paragraph must be in a document.
-	 * @returns {ApiSection | null}
+	 * @returns {ApiSection | null} Returns null if parametr is invalid.
 	 */
 	ApiDocument.prototype.CreateSection = function(oParagraph)
 	{
 		if (!(oParagraph instanceof ApiParagraph)) {
-			console.error(new Error('Parameter is invalid.'));
+			private_makeError('Parameter is invalid.', false);
 			return null;
 		}
 		if (!oParagraph.Paragraph.CanAddSectionPr()) {
-			console.error(new Error('Paragraph must be in a document.'));
+			private_makeError('Paragraph must be in a document.', false);
 			return null;
 		}
 
@@ -6278,7 +6301,8 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {?string} [sText="WATERMARK"] - Watermark text.
-	 * @param {?boolean} [bIsDiagonal=true] - Specifies if the watermark is placed diagonally (true) or horizontally (false).
+	 * @param {?boolean} [bIsDiagonal=false] - Specifies if the watermark is placed diagonally (true) or horizontally (false).
+	 * @returns {?ApiDrawing} - The object which represents the inserted watermark. Returns null if the watermark type is "none".
 	 */
 	ApiDocument.prototype.InsertWatermark = function(sText, bIsDiagonal){
 		var oSectPrMap = {};
@@ -6318,6 +6342,57 @@
 				privateInsertWatermarkToContent(this.Document.Api, oHeadersMap[sId], sText, bIsDiagonal);
 			}
 		}
+	};
+
+
+	/**
+	 * Returns the watermark settings in the current document.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiWatermarkSettings} - The object which represents the watermark settings.
+	 */
+	ApiDocument.prototype.GetWatermarkSettings = function()
+	{
+		return new ApiWatermarkSettings(this.Document.GetWatermarkProps());
+	};
+
+
+	/**
+	 * Sets the watermark settings in the current document.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @param {ApiWatermarkSettings} Settings - The object which represents the watermark settings.
+	 * @returns {?ApiDrawing} - The object which represents the watermark drawing if the watermark type in Settings is not "none".
+	 */
+	ApiDocument.prototype.SetWatermarkSettings = function(Settings)
+	{
+		let oDrawing = this.Document.SetWatermarkPropsAction(Settings.Settings);
+		if(oDrawing && oDrawing.GraphicObj)
+		{
+			const oGraphic = oDrawing.GraphicObj;
+			if(oGraphic.isImage())
+			{
+				return new ApiImage(oGraphic);
+			}
+			else if(oGraphic.isShape())
+			{
+				return new ApiShape(oGraphic);
+			}
+
+		}
+		return null;
+	};
+
+	/**
+	 * Removes a watermark from the current document.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 */
+	ApiDocument.prototype.RemoveWatermark = function()
+	{
+		let Settings = new Asc.CAscWatermarkProperties();
+		Settings.put_Type(Asc.c_oAscWatermarkType.None);
+		this.Document.SetWatermarkPropsAction(Settings);
 	};
 
 	/**
@@ -8935,7 +9010,7 @@
 			return false;
 
 		if (!this.Paragraph.CanAddSectionPr()) {
-			console.error(new Error('Paragraph must be in a document.'));
+			private_makeError('Paragraph must be in a document.', false);
 			return false;
 		}
 
@@ -16274,7 +16349,7 @@
 	};
 
 	/**
-	 * Checks if the content control is a form.
+	 * Returns a list of values of the combo box / dropdown list content control.
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiContentControlList}
@@ -16282,7 +16357,7 @@
 	ApiInlineLvlSdt.prototype.GetDropdownList = function()
 	{
 		if (!this.Sdt.IsComboBox() && !this.Sdt.IsDropDownList())
-			throw "Not a drop down content control";
+			private_makeError("Not a drop down content control", true);
 		
 		return new ApiContentControlList(this);
 	};
@@ -16305,7 +16380,7 @@
 	};
 
 	/**
-	 * Returns a collection of the ApiContentControlListEntry of a list.
+	 * Returns a collection of items (the ApiContentControlListEntry objects) of the combo box / dropdown list content control.
 	 * @memberof ApiContentControlList
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiContentControlListEntry[]}
@@ -16324,7 +16399,7 @@
 	};
 
 	/**
-	 * Gets items count of the list of values of combobox/listbox.
+	 * Returns a number of items of the combo box / dropdown list content control.
 	 * @memberof ApiContentControlList
 	 * @typeofeditors ["CDE"]
 	 * @returns {number}
@@ -16335,7 +16410,7 @@
 	};
 
 	/**
-	 * Gets parent content control.
+	 * Returns a parent of the combo box / dropdown list content control.
 	 * @memberof ApiContentControlList
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiInlineLvlSdt | ApiBlockLvlSdt}
@@ -16346,11 +16421,11 @@
 	};
 
 	/**
-	 * Adds the new value to list of values of combobox/dropdown list.
+	 * Adds a new value to the combo box / dropdown list content control.
 	 * @memberof ApiContentControlList
-	 * @param {string} sText - Specifies the display text for the list item..
-	 * @param {string} [sValue=sText] - Specifies the value of the list item.
-	 * @param {number} [nIndex=this.GetElementsCount()] - position to add.
+	 * @param {string} sText - The display text for the list item.
+	 * @param {string} [sValue=sText] - The list item value.
+	 * @param {number} [nIndex=this.GetElementsCount()] - A position where a new value will be added.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -16376,7 +16451,7 @@
 	};
 
 	/**
-	 * Clears the list of values of combobox/dropdown list.
+	 * Clears a list of values of the combo box / dropdown list content control.
 	 * @memberof ApiContentControlList
 	 * @typeofeditors ["CDE"]
 	 */
@@ -16389,9 +16464,9 @@
 	};
 
 	/**
-	 * Gets the item of values of combobox/dropdown list.
+	 * Returns an item of the combo box / dropdown list content control by the position specified in the request.
 	 * @memberof ApiContentControlList
-	 * @param {number} nIndex
+	 * @param {number} nIndex - Item position.
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiContentControlListEntry}
 	 */
@@ -16401,9 +16476,9 @@
 		
 		nIndex = AscBuilder.GetNumberParameter(nIndex, null);
 		if (null === nIndex)
-			throw "Index must be a number";
+			private_makeError("Index must be a number", true);
 		else if (nIndex < 0 || nIndex >= listPr.GetItemsCount())
-			throw "Index out of list range";
+			private_makeError("Index out of list range", true);
 		
 		return new ApiContentControlListEntry(this.Sdt, this, listPr.GetItemDisplayText(nIndex), listPr.GetItemValue(nIndex));
 	};
@@ -16426,7 +16501,7 @@
 	};
 
 	/**
-	 * Returns the parent of a content control list item in the collection of list items.
+	 * Returns a parent of the content control list item in the combo box / dropdown list content control.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiContentControlList}
@@ -16440,7 +16515,7 @@
 	};
 
 	/**
-	 * Selects the list entry in a drop-down list or combo box content control and sets the text of the content control to the value of the item.
+	 * Selects the list entry in the combo box / dropdown list content control and sets the text of the content control to the selected item value.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -16455,7 +16530,7 @@
 	};
 
 	/**
-	 * Moves the current item in the parent drop-down list or combo box content control up one element.
+	 * Moves the current item in the parent combo box / dropdown list content control up one element.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -16470,7 +16545,7 @@
 	};
 
 	/**
-	 * Moves an item in a drop-down list or combo box content control down one item, so that it is after the item that originally followed it.
+	 * Moves the current item in the parent combo box / dropdown list content control down one element, so that it is after the item that originally followed it.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -16486,7 +16561,7 @@
 	};
 
 	/**
-	 * Returns the index of a content control list item in the collection of list items.
+	 * Returns an index of the content control list item in the combo box / dropdown list content control.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @returns {number}
@@ -16498,9 +16573,9 @@
 	};
 
 	/**
-	 * Sets the index of a content control list item in the collection of list items.
+	 * Sets an index to the content control list item in the combo box / dropdown list content control.
 	 * @memberof ApiContentControlListEntry
-	 * @param {number} nIndex
+	 * @param {number} nIndex - An index of the content control list item.
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
 	 */
@@ -16521,7 +16596,7 @@
 	};
 
 	/**
-	 * Deletes the specified item in a combo box or drop-down list content control..
+	 * Deletes the specified item in the combo box / dropdown list content control.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @returns {boolean}
@@ -16550,7 +16625,7 @@
 	};
 
 	/**
-	 * Returns a String that represents the display text of a list item for a drop-down list or combo box content control.
+	 * Returns a String that represents the display text of a list item for the combo box / dropdown list content control.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -16561,10 +16636,10 @@
 	};
 
 	/**
-	 * Sets a String that represents the display text of a list item for a drop-down list or combo box content control.
+	 * Sets a String that represents the display text of a list item for the combo box / dropdown list content control.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sText
+	 * @param {string} sText - The display text of a list item.
 	 * @returns {boolean}
 	 */
 	ApiContentControlListEntry.prototype.SetText = function(sText)
@@ -16588,7 +16663,7 @@
 	};
 
 	/**
-	 * Returns a String that represents the value of a list item for a drop-down list or combo box content control.
+	 * Returns a String that represents the value of a list item for the combo box / dropdown list content control.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
@@ -16599,10 +16674,10 @@
 	};
 
 	/**
-	 * Sets a String that represents the value of a list item for a drop-down list or combo box content control.
+	 * Sets a String that represents the value of a list item for the combo box / dropdown list content control.
 	 * @memberof ApiContentControlListEntry
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sValue
+	 * @param {string} sValue - The value of a list item.
 	 * @returns {boolean}
 	 */
 	ApiContentControlListEntry.prototype.SetValue = function(sValue)
@@ -17354,7 +17429,7 @@
 	};
 	
 	/**
-	 * Checks if the content control is a form.
+	 * Returns a list of values of the combo box / dropdown list content control.
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiContentControlList}
@@ -17362,7 +17437,7 @@
 	ApiBlockLvlSdt.prototype.GetDropdownList = function()
 	{
 		if (!this.Sdt.IsComboBox() && !this.Sdt.IsDropDownList())
-			throw "Not a drop down content control";
+			private_makeError("Not a drop down content control", true);
 		
 		return new ApiContentControlList(this);
 	};
@@ -19233,6 +19308,250 @@
 		return this;
 	};
 
+
+	/**
+	 * Returns a type of the ApiWatermarkSettings class.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {"watermarkSettings"}
+	 */
+	ApiWatermarkSettings.prototype.GetClassType = function()
+	{
+		return "watermarkSettings";
+	};
+
+	/**
+	 * Sets the type of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @param {WatermarkType} sType - The watermark type.
+	 */
+	ApiWatermarkSettings.prototype.SetType = function (sType)
+	{
+		let nType;
+		if(sType === "text")
+		{
+			nType = Asc.c_oAscWatermarkType.Text;
+		}
+		else if(sType === "image")
+		{
+			nType = Asc.c_oAscWatermarkType.Image;
+		}
+		else
+		{
+			nType = Asc.c_oAscWatermarkType.None;
+		}
+		this.Settings.put_Type(nType);
+	};
+
+	/**
+	 * Returns the type of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {WatermarkType}
+	 */
+	ApiWatermarkSettings.prototype.GetType = function ()
+	{
+		const nType = this.Settings.get_Type();
+		if(nType === Asc.c_oAscWatermarkType.Text)
+		{
+			return "text";
+		}
+		if(nType === Asc.c_oAscWatermarkType.Image)
+		{
+			return "image";
+		}
+		return "none";
+	};
+
+	/**
+	 * Sets the text of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sText - The watermark text.
+	 */
+	ApiWatermarkSettings.prototype.SetText = function (sText)
+	{
+		this.Settings.put_Text(sText);
+	};
+
+	/**
+	 * Returns the text of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {string | null}
+	 */
+	ApiWatermarkSettings.prototype.GetText = function ()
+	{
+		return this.Settings.get_Text();
+	};
+
+	/**
+	 * Sets the text properties of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @param {ApiTextPr} oTextPr - The watermark text properties.
+	 */
+	ApiWatermarkSettings.prototype.SetTextPr = function (oTextPr)
+	{
+		this.Settings.put_TextPr(new Asc.CTextProp(oTextPr.TextPr));
+	};
+
+	/**
+	 * Returns the text properties of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {ApiTextPr}
+	 */
+	ApiWatermarkSettings.prototype.GetTextPr = function ()
+	{
+		const oTextPr = new CTextPr();
+		const oSettingsTextPr = this.Settings.get_TextPr();
+		if(oSettingsTextPr)
+		{
+			oTextPr.Set_FromObject(oSettingsTextPr);
+		}
+		else
+		{
+			oTextPr.Set_FromObject(new AscWord.CTextPr());
+		}
+		return private_GetLogicDocument().GetApi().private_CreateApiTextPr(oTextPr);
+	};
+
+	/**
+	 * Sets the opacity of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @param {number} nOpacity - The watermark opacity. This value must be from 0 to 255.
+	 */
+	ApiWatermarkSettings.prototype.SetOpacity = function (nOpacity)
+	{
+		let nOpacityVal = Math.min(255, Math.max(0, nOpacity));
+		this.Settings.put_Opacity(nOpacityVal);
+	};
+
+	/**
+	 * Returns the opacity of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {number} - The watermark opacity. This value must be from 0 to 255.
+	 */
+	ApiWatermarkSettings.prototype.GetOpacity = function ()
+	{
+		return this.Settings.get_Opacity();
+	};
+
+
+
+	/**
+	 * Sets the direction of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @param {WatermarkDirection} sDirection - The watermark direction.
+	 */
+	ApiWatermarkSettings.prototype.SetDirection = function (sDirection)
+	{
+		switch (sDirection)
+		{
+			case "horizontal":
+			{
+				this.Settings.put_Angle(0);
+				break;
+			}
+			case "clockwise45":
+			{
+				this.Settings.put_Angle(45);
+				break;
+			}
+			case "counterclockwise45":
+			{
+				this.Settings.put_Angle(-45);
+				break;
+			}
+		}
+	};
+	/**
+	 * Returns the direction of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {?WatermarkDirection} - The watermark direction.
+	 */
+	ApiWatermarkSettings.prototype.GetDirection = function ()
+	{
+		const nAngle = this.Settings.get_Angle();
+		if(AscFormat.fApproxEqual(0.0, nAngle))
+		{
+			return "horizontal";
+		}
+		else if(AscFormat.fApproxEqual(45.0, nAngle))
+		{
+			return "clockwise45";
+		}
+		else if(AscFormat.fApproxEqual(315, nAngle))
+		{
+			return "counterclockwise45";
+		}
+		return null;
+	};
+
+	/**
+	 * Sets the image URL of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @param {string} sURL - The watermark image URL.
+	 */
+	ApiWatermarkSettings.prototype.SetImageURL = function (sURL)
+	{
+		this.Settings.put_ImageUrl2(sURL);
+	};
+
+	/**
+	 * Returns the image URL of the watermark in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {string | null} - The watermark image URL.
+	 */
+	ApiWatermarkSettings.prototype.GetImageURL = function ()
+	{
+		return this.Settings.get_ImageUrl();
+	};
+
+	/**
+	 * Returns the width of the watermark image in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {EMU | null} - The watermark image width in EMU.
+	 */
+	ApiWatermarkSettings.prototype.GetImageWidth = function ()
+	{
+		return this.Settings.get_ImageWidth();
+	};
+	/**
+	 * Returns the height of the watermark image in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {EMU | null} - The watermark image height in EMU.
+	 */
+	ApiWatermarkSettings.prototype.GetImageHeight = function ()
+	{
+		return this.Settings.get_ImageHeight();
+	};
+
+
+	/**
+	 * Sets the size (width and height) of the watermark image in the document.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @param {EMU} nWidth - The watermark image width.
+	 * @param {EMU} nHeight - The watermark image height.
+	 */
+	ApiWatermarkSettings.prototype.SetImageSize = function (nWidth, nHeight)
+	{
+		this.Settings.put_ImageSize(nWidth, nHeight);
+	};
+
+
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19344,6 +19663,9 @@
 	ApiDocument.prototype["GetCommentsReport"]           = ApiDocument.prototype.GetCommentsReport;
 	ApiDocument.prototype["GetReviewReport"]             = ApiDocument.prototype.GetReviewReport;
 	ApiDocument.prototype["InsertWatermark"]             = ApiDocument.prototype.InsertWatermark;
+	ApiDocument.prototype["GetWatermarkSettings"]        = ApiDocument.prototype.GetWatermarkSettings;
+	ApiDocument.prototype["SetWatermarkSettings"]        = ApiDocument.prototype.SetWatermarkSettings;
+	ApiDocument.prototype["RemoveWatermark"]             = ApiDocument.prototype.RemoveWatermark;
 	ApiDocument.prototype["SearchAndReplace"]            = ApiDocument.prototype.SearchAndReplace;
 	ApiDocument.prototype["GetAllContentControls"]       = ApiDocument.prototype.GetAllContentControls;
 	ApiDocument.prototype["GetTagsOfAllContentControls"] = ApiDocument.prototype.GetTagsOfAllContentControls;
@@ -20071,6 +20393,25 @@
 	ApiCommentReply.prototype["GetUserId"]		= ApiCommentReply.prototype.GetUserId;
 	ApiCommentReply.prototype["SetUserId"]		= ApiCommentReply.prototype.SetUserId;
 
+	ApiWatermarkSettings.prototype["GetClassType"]   =  ApiWatermarkSettings.prototype.GetClassType;
+	ApiWatermarkSettings.prototype["SetType"]        =  ApiWatermarkSettings.prototype.SetType;
+	ApiWatermarkSettings.prototype["GetType"]        =  ApiWatermarkSettings.prototype.GetType;
+	ApiWatermarkSettings.prototype["SetText"]        =  ApiWatermarkSettings.prototype.SetText;
+	ApiWatermarkSettings.prototype["GetText"]        =  ApiWatermarkSettings.prototype.GetText;
+	ApiWatermarkSettings.prototype["SetTextPr"]      =  ApiWatermarkSettings.prototype.SetTextPr;
+	ApiWatermarkSettings.prototype["GetTextPr"]      =  ApiWatermarkSettings.prototype.GetTextPr;
+	ApiWatermarkSettings.prototype["SetOpacity"]     =  ApiWatermarkSettings.prototype.SetOpacity;
+	ApiWatermarkSettings.prototype["GetOpacity"]     =  ApiWatermarkSettings.prototype.GetOpacity;
+	ApiWatermarkSettings.prototype["SetDirection"]   =  ApiWatermarkSettings.prototype.SetDirection;
+	ApiWatermarkSettings.prototype["GetDirection"]   =  ApiWatermarkSettings.prototype.GetDirection;
+	ApiWatermarkSettings.prototype["SetImageURL"]    =  ApiWatermarkSettings.prototype.SetImageURL;
+	ApiWatermarkSettings.prototype["GetImageURL"]    =  ApiWatermarkSettings.prototype.GetImageURL;
+	ApiWatermarkSettings.prototype["GetImageWidth"]  =  ApiWatermarkSettings.prototype.GetImageWidth;
+	ApiWatermarkSettings.prototype["GetImageHeight"] =  ApiWatermarkSettings.prototype.GetImageHeight;
+	ApiWatermarkSettings.prototype["SetImageSize"]   =  ApiWatermarkSettings.prototype.SetImageSize;
+
+
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export for internal usage
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20655,6 +20996,17 @@
 		return oColor;
 	}
 
+	function private_makeError(message, bMakeThrow) {
+		let err = new Error(message);
+		if (!console.error)
+			console.log(err);
+		
+		if (!bMakeThrow && console.error)
+			console.error(err)
+		else if (bMakeThrow)
+			throw err;
+	};;
+
 	ApiDocument.prototype.OnChangeParaPr = function(oApiParaPr)
 	{
 		var oStyles = this.Document.Get_Styles();
@@ -21169,6 +21521,3 @@
 	};
 
 }(window, null));
-
-
-

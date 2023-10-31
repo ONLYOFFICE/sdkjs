@@ -572,11 +572,12 @@ CDocContentStructure.prototype.checkUnionPaths = function(aWarpedObjects)
 
 
 
-function CParagraphStructure()
+function CParagraphStructure(oParagraph)
 {
     this.m_nType = DRAW_COMMAND_PARAGRAPH;
     this.m_aContent = [];
     this.m_aWords = [];
+    this.m_oParagraph = oParagraph;
     this.n_oLastWordStart = {
         line: 0,
         posInLine: -1
@@ -1173,7 +1174,8 @@ CTextDrawer.prototype =
     Start_Command : function(commandId, param, index, nType)
     {
         this.m_aCommands.push(commandId);
-        var oNewStructure = null;
+        let oNewStructure = null;
+        let bOld = false;
         switch(commandId)
         {
             case DRAW_COMMAND_NO_CREATE_GEOM:
@@ -1188,10 +1190,35 @@ CTextDrawer.prototype =
             }
             case DRAW_COMMAND_PARAGRAPH:
             {
-                oNewStructure = new CParagraphStructure();
-                if(!this.m_bDivByLines)
+
+                if(param)
                 {
-                    this.m_aByParagraphs[this.m_aByParagraphs.length] = [];
+                    let oLast = this.m_aStack[this.m_aStack.length - 1];
+                    if(oLast)
+                    {
+                        let aLastContent = oLast.m_aContent;
+                        if(Array.isArray(aLastContent))
+                        {
+                            for(let nIdx = 0; nIdx < aLastContent.length; ++nIdx)
+                            {
+                                let oElement = aLastContent[nIdx];
+                                if(oElement.m_oParagraph === param)
+                                {
+                                    oNewStructure = oElement;
+                                    bOld = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                if(!oNewStructure)
+                {
+                    oNewStructure = new CParagraphStructure(param);
+                    if(!this.m_bDivByLines)
+                    {
+                        this.m_aByParagraphs[this.m_aByParagraphs.length] = [];
+                    }
                 }
                 break;
             }
@@ -1248,7 +1275,7 @@ CTextDrawer.prototype =
         }
         if(oNewStructure)
         {
-            if(this.m_aStack[this.m_aStack.length - 1])
+            if(this.m_aStack[this.m_aStack.length - 1] && !bOld)
             {
                 this.m_aStack[this.m_aStack.length - 1].m_aContent.push(oNewStructure);
             }

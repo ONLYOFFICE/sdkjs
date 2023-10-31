@@ -231,13 +231,14 @@
 		return (bNeg ? -nRet : nRet) / c_msPerDay / (av ? 1 : pOptDaysIn1stYear);
 	}
 
-	function days360(date1, date2, flag) {
-		var sign;
+	function days360(date1, date2, flag, isAccrint) {
+		// special modifying a function to call from ACCRINT formula
+		let sign;
 
-		var nY1 = date1.getUTCFullYear(), nM1 = date1.getUTCMonth() + 1, nD1 = date1.getUTCDate(),
+		let nY1 = date1.getUTCFullYear(), nM1 = date1.getUTCMonth() + 1, nD1 = date1.getUTCDate(),
 			nY2 = date2.getUTCFullYear(), nM2 = date2.getUTCMonth() + 1, nD2 = date2.getUTCDate();
 
-		if (flag && (date2 < date1)) {
+		if (flag && !isAccrint && (date2 < date1)) {
 			sign = date1;
 			date1 = date2;
 			date2 = sign;
@@ -897,33 +898,29 @@
 	cDAYS.prototype.isXLFN = true;
 	cDAYS.prototype.argumentsType = [argType.number, argType.number];
 	cDAYS.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
+		let oArguments = this._prepareArguments(arg, arguments[1], true);
+		let argClone = oArguments.args;
 
-		var calulateDay = function(curArg) {
-			var val;
-			if (curArg instanceof cArray) {
+		const calulateDay = function(curArg) {
+			let val;
+			if (curArg.type === cElementType.cell || curArg.type === cElementType.cell3D) {
+				curArg = curArg.getValue();
+			} else if (curArg.type === cElementType.array) {
 				curArg = curArg.getElement(0);
-			} else if (curArg instanceof cArea || curArg instanceof cArea3D) {
-				curArg = curArg.cross(arguments[1]).tocNumber();
-				val = curArg.tocNumber().getValue();
+			} else if (curArg.type === cElementType.cellsRange || curArg.type === cElementType.cellsRange3D) {
+				curArg = curArg.cross(arguments[1]);
 			}
 
-			if (curArg instanceof cError) {
-				return curArg;
-			} else if (curArg instanceof cNumber || curArg instanceof cBool || curArg instanceof cEmpty) {
-				val = curArg.tocNumber().getValue();
-			} else if (curArg instanceof cRef || curArg instanceof cRef3D) {
-				val = curArg.getValue().tocNumber();
-				if (val instanceof cNumber || val instanceof cBool || curArg instanceof cEmpty) {
-					val = curArg.tocNumber().getValue();
-				} else {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			} else if (curArg instanceof cString) {
-				val = curArg.tocNumber();
-				if (val instanceof cError || val instanceof cEmpty) {
-					var d = new cDate(curArg.getValue());
+			val = curArg ? curArg : new cNumber(0);
+			
+			if (val.type === cElementType.error) {
+				return val;
+			} else if (val.type === cElementType.number || val.type === cElementType.bool || val.type === cElementType.empty) {
+				val = val.tocNumber().getValue();
+			} else if (val.type === cElementType.string) {
+				val = val.tocNumber();
+				if (val.type === cElementType.error || val.type === cElementType.empty) {
+					let d = new cDate(val.getValue());
 					if (isNaN(d)) {
 						return new cError(cErrorType.wrong_value_type);
 					} else {
@@ -931,24 +928,29 @@
 							( AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1) ));
 					}
 				} else {
-					val = curArg.tocNumber().getValue();
+					val = val.tocNumber().getValue();
 				}
 			}
 
 			return val;
 		};
 
-		var calulateDays = function (argArray) {
-			var val = calulateDay(argArray[0]);
-			var val1 = calulateDay(argArray[1]);
-			if(val instanceof cError) {
-				return val;
-			} else if(val1 instanceof cError) {
-				return val1;
-			} else if (val < 0 || val1 < 0) {
+		const calulateDays = function (argArray) {
+			let end_date = calulateDay(argArray[0]);
+			let start_date = calulateDay(argArray[1]);
+			if (end_date.type === cElementType.error) {
+				return end_date;
+			} else if (start_date.type === cElementType.error) {
+				return start_date;
+			}
+
+			if (end_date < 0 || start_date < 0) {
 				return new cError(cErrorType.not_numeric);
 			} else {
-				return new cNumber(val - val1);
+				let endInteger = Math.floor(end_date);
+				let startInteger = Math.floor(start_date);
+				return new cNumber(endInteger - startInteger);
+				
 			}
 		};
 
@@ -1036,61 +1038,110 @@
 	cEDATE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cEDATE.prototype.argumentsType = [argType.any, argType.any];
 	cEDATE.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1];
+		let arg0 = arg[0], arg1 = arg[1];
 
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
-			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
+			let dimensions = arg0.getDimensions();
+			if (dimensions.row > 1 || dimensions.col > 1) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+			arg0 = arg0.getFirstElement();
+		} else if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElementRowCol(0, 0);
+		} else if (arg0.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
-			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cArray) {
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
+			let dimensions = arg1.getDimensions();
+			if (dimensions.row > 1 || dimensions.col > 1) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+			arg1 = arg1.getFirstElement();
+		} else if (arg1.type === cElementType.array) {
 			arg1 = arg1.getElementRowCol(0, 0);
+		} else if (arg1.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		if (arg0.type === cElementType.empty || arg1.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
 		arg0 = arg0.tocNumber();
 		arg1 = arg1.tocNumber();
 
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (arg1.type === cElementType.error) {
 			return arg1;
 		}
 
-		var val = arg0.getValue(), date, _date;
+		let val = arg0.getValue(), addedMonths = arg1.getValue(), date, _date;
+		let now = new cDate();
+
+		let offsetInMinutes = now.getTimezoneOffset();
+		let offsetInHours = (offsetInMinutes / 60) * -1;
+		let UTCshift = offsetInHours >= 0 ? 1 : 0;
 
 		if (val < 0) {
 			return new cError(cErrorType.not_numeric);
+		} else if (addedMonths === 0) {
+			return arg0;
 		} else if (!AscCommon.bDate1904) {
 			if (val < 60) {
-				val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
-			} else if (val == 60) {
-				val = new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay);
+				val = new cDate((Math.floor(val) - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
+			} else if (val === 60) {
+				// 29 february 1900 - exception - this date doesn't exist in js
+				// val = new cDate(Date.UTC( 1900, 1, 29 ));
+				val = new cDate((Math.floor(val) - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
 			} else {
-				val = new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay);
+				val = new cDate((Math.floor(val) - AscCommonExcel.c_DateCorrectConst - UTCshift) * c_msPerDay);
 			}
 		} else {
-			val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
+			val = new cDate((Math.floor(val) - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
 		}
 
 		date = new cDate(val);
 
-		if (0 <= date.getUTCDate() && 28 >= date.getUTCDate()) {
-			val = new cDate(val.setUTCMonth(val.getUTCMonth() + arg1.getValue()))
-		} else if (29 <= date.getUTCDate() && 31 >= date.getUTCDate()) {
-			date.setUTCDate(1);
-			date.setUTCMonth(date.getUTCMonth() + arg1.getValue());
-			if (val.getUTCDate() > (_date = date.getDaysInMonth())) {
-				val.setUTCDate(_date);
+		let localDay = date.getDate(),
+			localMonth = date.getMonth(),
+			isLeap = date.isLeapYear();
+
+		if (0 <= localDay && 28 >= localDay) {
+			val = new cDate(val.setUTCMonth(val.getUTCMonth() + addedMonths))
+		} else if (29 <= localDay && 31 >= localDay) {
+			// Add the month separately. If the target month is February, the year is a leap year, and the day is greater than 28, return 28 or 29.
+			// It should not depend on UTC since we are working with an isolated date.
+			let newDay = localDay;
+			if (localMonth + addedMonths == 1) {
+				// set day to the last day of february
+				newDay = isLeap ? 29 : 28;
 			}
-			val = new cDate(val.setUTCMonth(val.getUTCMonth() + arg1.getValue()));
+			date.setDate(1);
+			date.setMonth(localMonth + addedMonths);
+
+			// get and compare last day of month
+			if (newDay > (_date = date.getLocalDaysInMonth())) {
+				date.setDate(_date)
+			} else {
+				date.setDate(newDay);
+			}
+
+			val = new cDate(date);
 		}
 
-		return new cNumber(Math.floor(( val.getTime() / 1000 - val.getTimezoneOffset() * 60 ) / c_sPerDay +
-			(AscCommonExcel.c_DateCorrectConst + 1)))
+		let res = Math.floor(( val.getTime() / 1000 - val.getTimezoneOffset() * 60 ) / c_sPerDay + (AscCommonExcel.c_DateCorrectConst + 1));
+		if (res < 0) {
+			return new cError(cErrorType.not_numeric);
+		}
+		// shift for 1904 mode
+		if (AscCommon.bDate1904) {
+			res -= 1;
+		}
+
+		return new cNumber(res);
 	};
 
 	/**
@@ -1375,29 +1426,24 @@
 	cMONTH.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cMONTH.prototype.argumentsType = [argType.number];
 	cMONTH.prototype.Calculate = function (arg) {
-		var t = this;
-		var bIsSpecialFunction = arguments[4];
+		let t = this;
+		let bIsSpecialFunction = arguments[4];
 
-		var calculateFunc = function(curArg) {
-			var val;
+		let calculateFunc = function(curArg) {
+			let val;
 
-			if (curArg instanceof cError) {
+			if (curArg.type === cElementType.cell || curArg.type === cElementType.cell3D) {
+				curArg = curArg.getValue();
+			}
+			
+			if (curArg.type === cElementType.error) {
 				return curArg;
-			} else if (curArg instanceof cNumber || curArg instanceof cBool || curArg instanceof cEmpty) {
+			} else if (curArg.type === cElementType.number || curArg.type === cElementType.bool || curArg.type === cElementType.empty) {
 				val = curArg.tocNumber().getValue();
-			} else if (curArg instanceof cRef || curArg instanceof cRef3D) {
-				val = curArg.getValue();
-				if (val instanceof cError) {
-					return val;
-				} else if (val instanceof cNumber || val instanceof cBool || val instanceof cEmpty) {
-					val = curArg.tocNumber().getValue();
-				} else {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			} else if (curArg instanceof cString) {
+			} else if (curArg.type === cElementType.string) {
 				val = curArg.tocNumber();
-				if (val instanceof cError || val instanceof cEmpty) {
-					var d = new cDate(curArg.getValue());
+				if (val.type === cElementType.error || val.type === cElementType.empty) {
+					let d = new cDate(curArg.getValue());
 					if (isNaN(d)) {
 						return new cError(cErrorType.wrong_value_type);
 					} else {
@@ -1411,22 +1457,21 @@
 				return new cError(cErrorType.not_numeric);
 			}
 			if (!AscCommon.bDate1904) {
-				if (val == 60) {
+				if (val === 60) {
 					return t.setCalcValue(new cNumber(2), 0);
 				} else {
-					return t.setCalcValue(new cNumber(( new cDate(( (val == 0 ? 1 : val) - AscCommonExcel.c_DateCorrectConst - 1 ) * c_msPerDay) ).getUTCMonth() + 1), 0);
+					return t.setCalcValue(new cNumber(( new cDate(( (val === 0 ? 1 : val) - AscCommonExcel.c_DateCorrectConst - 1 ) * c_msPerDay) ).getUTCMonth() + 1), 0);
 				}
 			} else {
-				return t.setCalcValue(new cNumber(( new cDate(( (val == 0 ? 1 : val) - AscCommonExcel.c_DateCorrectConst ) * c_msPerDay) ).getUTCMonth() + 1), 0);
+				return t.setCalcValue(new cNumber(( new cDate(( (val === 0 ? 1 : val) - AscCommonExcel.c_DateCorrectConst ) * c_msPerDay) ).getUTCMonth() + 1), 0);
 			}
 		};
 
-		var arg0 = arg[0], res;
+		let arg0 = arg[0], res;
 		if(!bIsSpecialFunction) {
-
-			if (arg0 instanceof cArray) {
+			if (arg0.type === cElementType.array) {
 				arg0 = arg0.getElement(0);
-			} else if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+			} else if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 				arg0 = arg0.cross(arguments[1]).tocNumber();
 			}
 			res = calculateFunc(arg0);
@@ -1957,7 +2002,7 @@
 		}
 
 		return new cNumber(
-			weekday[new cDate((arg0.getValue() - (AscCommonExcel.c_DateCorrectConst + 1)) * c_msPerDay).getUTCDay()]);
+			weekday[new cDate((arg0.getValue() - (AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1))) * c_msPerDay).getUTCDay()]);
 	};
 
 	/**
@@ -2237,31 +2282,25 @@
 	cYEAR.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cYEAR.prototype.argumentsType = [argType.number];
 	cYEAR.prototype.Calculate = function (arg) {
-		var t = this;
-		var bIsSpecialFunction = arguments[4];
+		let t = this;
+		let bIsSpecialFunction = arguments[4];
 
-		var calculateFunc = function(curArg) {
-			var val;
-
-			if (curArg instanceof cError) {
+		let calculateFunc = function(curArg) {
+			let val;
+			if (curArg.type === cElementType.cell || curArg.type === cElementType.cell3D) {
+				curArg = curArg.getValue();
+			}
+			
+			if (curArg.type === cElementType.error) {
 				return curArg;
-			} else if (curArg instanceof cNumber || curArg instanceof cBool  || curArg instanceof cEmpty) {
+			} else if (curArg.type === cElementType.number || curArg.type === cElementType.bool || curArg.type === cElementType.empty) {
 				val = curArg.tocNumber().getValue();
-			} else if (curArg instanceof cArea || curArg instanceof cArea3D) {
+			} else if (curArg.type === cElementType.cellsRange || curArg.type === cElementType.cellsRange3D) {
 				return new cError(cErrorType.wrong_value_type);
-			} else if (curArg instanceof cRef || curArg instanceof cRef3D) {
-				val = curArg.getValue();
-				if (val instanceof cError) {
-					return val;
-				} else if (val instanceof cNumber || val instanceof cBool || val instanceof cEmpty) {
-					val = curArg.tocNumber().getValue();
-				} else {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			} else if (curArg instanceof cString) {
+ 			} else if (curArg.type === cElementType.string) {
 				val = curArg.tocNumber();
-				if (val instanceof cError || val instanceof cEmpty) {
-					var d = new cDate(curArg.getValue());
+				if (val.type === cElementType.error || val.type === cElementType.empty) {
+					let d = new cDate(curArg.getValue());
 					if (isNaN(d)) {
 						return new cError(cErrorType.wrong_value_type);
 					} else {
@@ -2271,19 +2310,22 @@
 					val = curArg.tocNumber().getValue();
 				}
 			}
+
 			if (val < 0) {
 				return t.setCalcValue(new cError(cErrorType.not_numeric), 0);
 			} else {
+				if (AscCommon.bDate1904 && val === 0) {
+					val += 1;
+				}
 				return t.setCalcValue(new cNumber((new cDate((val - (AscCommonExcel.c_DateCorrectConst + 1)) * c_msPerDay)).getUTCFullYear()), 0);
 			}
 		};
 
-		var arg0 = arg[0], res;
+		let arg0 = arg[0], res;
 		if(!bIsSpecialFunction) {
-
-			if (arg0 instanceof cArray) {
+			if (arg0.type === cElementType.array) {
 				arg0 = arg0.getElement(0);
-			} else if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+			} else if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 				arg0 = arg0.cross(arguments[1]).tocNumber();
 			}
 			res = calculateFunc(arg0);

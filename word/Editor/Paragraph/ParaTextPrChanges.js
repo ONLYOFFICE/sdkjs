@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 02.11.2016
- * Time: 16:42
- */
 
 AscDFH.changesFactory[AscDFH.historyitem_TextPr_Bold]                  = CChangesParaTextPrBold;
 AscDFH.changesFactory[AscDFH.historyitem_TextPr_Italic]                = CChangesParaTextPrItalic;

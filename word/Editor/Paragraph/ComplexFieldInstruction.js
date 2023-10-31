@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 20.10.2017
- * Time: 15:46
- */
 
 var fieldtype_UNKNOWN    = 0x0000;
 var fieldtype_MERGEFIELD = 0x0001;

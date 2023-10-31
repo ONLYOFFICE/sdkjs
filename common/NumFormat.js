@@ -76,6 +76,7 @@ var numFormat_DigitDrop = 104;
 var numFormat_Plus = 105;
 var numFormat_Minus = 106;
 var numFormat_ThousandText = 107;
+var numFormat_DayOfWeek = 110;
 
 var FormatStates = {Decimal: 1, Frac: 2, Scientific: 3, Slash: 4, SlashFrac: 5};
 var SignType = {Negative: 1, Null:2, Positive: 3};
@@ -100,7 +101,8 @@ var NumFormatType =
 {
 	Excel: 1,
 	WordFieldDate: 2,
-	WordFieldNumeric: 3
+	WordFieldNumeric: 3,
+	PDFFormDate: 4
 };
 
 function getNumberParts(x)
@@ -255,7 +257,8 @@ function FormatObjBracket(sData)
                 else if("yellow" == sLowerColor)
                     this.color = 0xffff00;
                 else if("y" == first || "m" == first || "d" == first || "h" == first || "s" == first ||
-                    "Y" == first || "M" == first || "D" == first || "H" == first || "S" == first)
+                    "Y" == first || "M" == first || "D" == first || "H" == first || "S" == first ||
+					"a" == first)
                 {
                     var bSame = true;
                     var nCount = 1;
@@ -282,6 +285,7 @@ function FormatObjBracket(sData)
                             case "h": this.dataObj = new FormatObjDateVal(numFormat_Hour, nCount, true);break;
                             case "S":
                             case "s": this.dataObj = new FormatObjDateVal(numFormat_Second, nCount, true);break;
+                            case "a": this.dataObj = new FormatObjDateVal(numFormat_DayOfWeek, nCount, true);break;
                         }
                     }
                 }
@@ -304,6 +308,7 @@ function ParseLocalFormatSymbol(Name)
 	LocaleFormatSymbol['minute'] = 'm';
 	LocaleFormatSymbol['S'] = 'S';
 	LocaleFormatSymbol['s'] = 's';
+	LocaleFormatSymbol['a'] = 'a';
 	LocaleFormatSymbol['general'] = 'General';
 	switch (Name) {
 //___________________________________________________fi________________________________________________________________
@@ -357,6 +362,7 @@ function ParseLocalFormatSymbol(Name)
 		case("ca-ES-valencia"): {
 			LocaleFormatSymbol['Y'] = 'A';
 			LocaleFormatSymbol['y'] = 'a';
+			LocaleFormatSymbol['a'] = 'o';
 			LocaleFormatSymbol['general'] = 'Estándar';
 			break;
 		}
@@ -364,6 +370,7 @@ function ParseLocalFormatSymbol(Name)
 		case("es-BR"): {
 			LocaleFormatSymbol['Y'] = 'A';
 			LocaleFormatSymbol['y'] = 'a';
+			LocaleFormatSymbol['a'] = 'o';
 			LocaleFormatSymbol['general'] = 'Geral';
 			break;
 		}
@@ -371,6 +378,7 @@ function ParseLocalFormatSymbol(Name)
 		case("pt-PT"): {
 			LocaleFormatSymbol['Y'] = 'A';
 			LocaleFormatSymbol['y'] = 'a';
+			LocaleFormatSymbol['a'] = 'o';
 			LocaleFormatSymbol['general'] = 'Éstandar';
 			break;
 		}
@@ -432,6 +440,7 @@ function ParseLocalFormatSymbol(Name)
 			LocaleFormatSymbol['y'] = 'a';
 			LocaleFormatSymbol['D'] = 'J';
 			LocaleFormatSymbol['d'] = 'j';
+			LocaleFormatSymbol['a'] = 'o';
 			LocaleFormatSymbol['general'] = 'Standard';
 			break;
 		}
@@ -474,6 +483,7 @@ function ParseLocalFormatSymbol(Name)
 			LocaleFormatSymbol['y'] = 'a';
 			LocaleFormatSymbol['D'] = 'G';
 			LocaleFormatSymbol['d'] = 'g';
+			LocaleFormatSymbol['a'] = 'o';
 			LocaleFormatSymbol['general'] = 'Standard';
 			break;
 		}
@@ -579,6 +589,7 @@ function ParseLocalFormatSymbol(Name)
 			LocaleFormatSymbol['minute'] = 'd';
 			LocaleFormatSymbol['S'] = 'N';
 			LocaleFormatSymbol['s'] = 'n';
+			LocaleFormatSymbol['a'] = 'o';
 			LocaleFormatSymbol['general'] = 'Genel';
 			break;
 		}
@@ -755,6 +766,37 @@ NumFormat.prototype =
             this.bDateTime = true;
         }
     },
+	_ReadAmPmPDF : function(next)
+    {
+		let bAmPm = true;
+		let nttCount = 1;
+        while(true)
+        {
+            next = this._readChar();
+            if(this.EOF == next)
+                break;
+            else if ("t" == next)
+            {
+				nttCount++;
+            }
+            else
+            {
+				// если больше двух tt не добавляем am/pm
+				if (nttCount > 2) {
+					bAmPm = false;
+				}
+
+				this._skip(-1);
+				break;
+            }
+        }
+        if(bAmPm == true)
+        {
+            this._addToFormat2(new FormatObj(numFormat_AmPm));
+            this.bTimePeriod = true;
+            this.bDateTime = true;
+        }
+    },
     _parseFormat : function(digitSpaceSymbol, useLocaleFormat)
     {
         var sGeneral;
@@ -773,6 +815,7 @@ NumFormat.prototype =
         var minute;
         var Second;
         var second;
+		var dayOfWeek;
 		if (useLocaleFormat) {
 			sGeneral = LocaleFormatSymbol['general'].toLowerCase();
 			DecimalSeparator = g_oDefaultCultureInfo.NumberDecimalSeparator;
@@ -790,6 +833,7 @@ NumFormat.prototype =
 			minute = LocaleFormatSymbol['minute'];
 			Second = LocaleFormatSymbol['S'];
 			second = LocaleFormatSymbol['s'];
+			dayOfWeek = LocaleFormatSymbol['a'];
 		} else {
 			sGeneral = AscCommon.g_cGeneralFormat.toLowerCase();
 			DecimalSeparator = gc_sFormatDecimalPoint;
@@ -807,6 +851,7 @@ NumFormat.prototype =
 			minute = 'm';
 			Second = 'S';
 			second = 's';
+			dayOfWeek = 'a';
 		}
         var sGeneralFirst = sGeneral[0];
         this.bGeneralChart = true;
@@ -916,6 +961,10 @@ NumFormat.prototype =
             {
                 this._addToFormat2(new FormatObjDateVal(numFormat_Second, 1, false));
             }
+			else if (dayOfWeek == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_DayOfWeek, 1, false));
+			}
             else if ("A" == next || "a" == next) {
                 this._ReadAmPm(next);
             } else {
@@ -956,11 +1005,57 @@ NumFormat.prototype =
 			{
 				this._addToFormat2(new FormatObjDateVal(numFormat_Second, 1, false));
 			}
+			else if ("a" == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_DayOfWeek, 1, false));
+			}
 			else if ("A" == next || "a" == next) {
 				this._ReadAmPm(next);
 			}
 			else {
 					this._addToFormat(numFormat_Text, next);
+			}
+        }
+        return true;
+    },
+	_parseFormatPDFDateTime : function()
+    {
+        while(true)
+        {
+            var next = this._readChar();
+			if(this.EOF == next)
+				break;
+			else if("\'" == next)
+				this._ReadText("\'");
+			else if ("y" == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_Year, 1, false));
+			}
+			else if ("m" == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_Month, 1, false));
+			}
+			else if ("M" == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_Minute, 1, false));
+			}
+			else if ("d" == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_Day, 1, false));
+			}
+			else if ("h" == next || "H" == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_Hour, 1, false));
+			}
+			else if ("s" == next)
+			{
+				this._addToFormat2(new FormatObjDateVal(numFormat_Second, 1, false));
+			}
+			else if ("t" == next) {
+				this._ReadAmPmPDF(next);
+			}
+			else {
+				this._addToFormat(numFormat_Text, next);
 			}
         }
         return true;
@@ -1042,7 +1137,8 @@ NumFormat.prototype =
                     }
                 }
             }
-            else if(numFormat_Year == item.type || numFormat_MonthMinute == item.type || numFormat_Month == item.type || numFormat_Day == item.type || numFormat_Hour == item.type || numFormat_Minute == item.type || numFormat_Second == item.type || numFormat_Thousand == item.type)
+            else if(numFormat_Year == item.type || numFormat_MonthMinute == item.type || numFormat_Month == item.type || numFormat_Day == item.type || numFormat_Hour == item.type || numFormat_Minute == item.type || numFormat_Second == item.type || numFormat_Thousand == item.type ||
+				numFormat_DayOfWeek == item.type)
             {
                 //Собираем в одно целое последовательности hhh
                 var nStartType = item.type;
@@ -1318,6 +1414,38 @@ NumFormat.prototype =
         }
         return true;
     },
+	_prepareFormatDatePDF : function()
+    {
+		var nFormatLength = this.aRawFormat.length;
+        //Группируем несколько элемнтов подряд в один спецсимвол
+        for(var i = 0; i < nFormatLength; ++i)
+        {
+            var item = this.aRawFormat[i];
+            if(numFormat_Year == item.type || numFormat_Month == item.type || numFormat_Day == item.type)
+            {
+                //Удаляем итемы у которых val > 4 (для года удаляем если "yyy")
+				if(item.val === 3 && numFormat_Year == item.type)
+                {
+                    this.aRawFormat.splice(i, 1);
+					nFormatLength -= 1;
+                }
+                if(item.val > 4)
+                {
+                    this.aRawFormat.splice(i, 1);
+					nFormatLength -= 1;
+                }
+            }
+			else if(numFormat_Hour == item.type || numFormat_Minute == item.type || numFormat_Second == item.type)
+            {
+				//Удаляем итемы у которых val > 2
+                if(item.val > 2)
+                {
+                    this.aRawFormat.splice(i, 1);
+					nFormatLength -= 1;
+                }
+            }
+        }
+    },
 	_calsScientific : function(nDecLen, nRealExp)
 	{
 		var nKoef = 0;
@@ -1470,12 +1598,30 @@ NumFormat.prototype =
         }
         return res;
     },
+	_parseNumberForPDFDate : function(number) {
+		let oDateTmp = new Date();
+		oDateTmp.setTime(number * (86400 * 1000));
+	 
+		return {
+			date: {
+				d:			oDateTmp.getDate(),
+				dayWeek:	oDateTmp.getDay(),
+				hour:		oDateTmp.getHours(),
+				min:		oDateTmp.getMinutes(),
+				month:		oDateTmp.getMonth(),
+				ms:			0,
+				//ms:			oDateTmp.getMilliseconds(),
+				sec:		oDateTmp.getSeconds(),
+				year:		oDateTmp.getFullYear()
+			}
+		}
+	},
 	parseDate : function(number)
 	{
         var d = {val: 0, coeff: 1}, h = {val: 0, coeff: 24},
             min = {val: 0, coeff: 60}, s = {val: 0, coeff: 60}, ms = {val: 0, coeff: 1000};
         //number is negative in case of bDate1904
-        var numberAbs = Math.abs(number);
+        var numberAbs = this.formatType == AscCommon.NumFormatType.PDFFormDate ? number : Math.abs(number);
         var tmp = numberAbs;
         var ttimes = [d, h, min, s, ms];
         for(var i = 0; i < 4; i++)
@@ -1510,6 +1656,8 @@ NumFormat.prototype =
 				year = 1900;
 				dayWeek = 3;
 			}
+			// todo test converting all positive fractional values less than one into dates
+			// else if(numberAbs === 0 || (numberAbs > 0 && numberAbs < 1))
 			else if(numberAbs === 0)
 			{
 				//TODO необходимо использовать cDate везде
@@ -1519,10 +1667,11 @@ NumFormat.prototype =
 				month = stDate.getUTCMonth();
 				year = stDate.getUTCFullYear();
 			}
-			else if(numberAbs < 60)
+			else if(numberAbs < 60 && number > 0)
 			{
 				stDate = new Date(Date.UTC(1899,11,31,0,0,0));
 				if(d.val)
+				// setUTCDate doesn't consider the transition from 1899 to 1900 when adding d.val
 					stDate.setUTCDate( stDate.getUTCDate() + d.val );
 				day = stDate.getUTCDate();
 				dayWeek = ( stDate.getUTCDay() > 0) ? stDate.getUTCDay() - 1 : 6;
@@ -1775,6 +1924,8 @@ NumFormat.prototype =
         //string -> tokens
 		if (NumFormatType.WordFieldDate === formatType) {
 			this.valid = this._parseFormatWordDateTime();
+		} else if (NumFormatType.PDFFormDate === formatType) {
+			this.valid = this._parseFormatPDFDateTime();
 		} else if (NumFormatType.WordFieldNumeric === formatType) {
 			this.valid = this._parseFormatWordNumeric("#");
 		} else {
@@ -1782,6 +1933,7 @@ NumFormat.prototype =
 		}
         if (true == this.valid) {
             //prepare tokens
+            // this.valid = formatType != NumFormatType.PDFFormDate ? this._prepareFormat() : this._prepareFormatPDF();
             this.valid = this._prepareFormat();
             if (this.valid) {
                 //additional prepare
@@ -1926,7 +2078,7 @@ NumFormat.prototype =
         {
             if(true === this.bDateTime)
             {
-                if(this.isInvalidDateValue(number))
+                if(this.isInvalidDateValue(number) && this.formatType != AscCommon.NumFormatType.PDFFormDate)
                 {
                     var oNewFont = new AscCommonExcel.Font();
 					oNewFont.repeat = true;
@@ -1934,7 +2086,12 @@ NumFormat.prototype =
                     return res;
                 }
             }
-            var oParsedNumber = this._parseNumber(number, this.aDecFormat, this.aFracFormat.length, nValType);
+            var oParsedNumber;
+			if (this.formatType == AscCommon.NumFormatType.PDFFormDate)
+				oParsedNumber = this._parseNumberForPDFDate(number);
+			else
+				oParsedNumber = this._parseNumber(number, this.aDecFormat, this.aFracFormat.length, nValType);
+
             if (true == this.isGeneral() || (true == oParsedNumber.bDigit && true == this.bTextFormat) || (false == oParsedNumber.bDigit && false == this.bTextFormat) || (bChart && this.bGeneralChart))
             {
                 return this._applyGeneralFormat(number, nValType, dDigitsCount, bChart, cultureInfo);
@@ -2082,13 +2239,31 @@ NumFormat.prototype =
                 {
                     oCurText.text += cultureInfo.TimeSeparator;
 				}
+				else if(numFormat_DayOfWeek == item.type)
+				{
+					if (item.val === 3)
+					{
+						oCurText.text += cultureInfoLCID.AbbreviatedDayNames[oParsedNumber.date.dayWeek];
+					}
+					else if (item.val > 3)
+					{
+						oCurText.text += cultureInfoLCID.DayNames[oParsedNumber.date.dayWeek];
+					}
+					else
+					{
+						oCurText.text += 'a'.repeat(item.val);
+					}
+				}
                 else if(numFormat_Year == item.type)
                 {
                   if (item.val > 0) {
                     if (item.val <= 2) {
-                      oCurText.text += (oParsedNumber.date.year+'').substring(2);
+						oCurText.text += (oParsedNumber.date.year.toString().slice(-2));
                     } else {
-                      oCurText.text += oParsedNumber.date.year;
+						if (oParsedNumber.date.year.toString().length < 4)
+                    		oCurText.text += '0' + oParsedNumber.date.year;
+						else
+							oCurText.text += oParsedNumber.date.year;
                     }
                   }
                 }
@@ -2260,6 +2435,7 @@ NumFormat.prototype =
 		var hour;
 		var minute;
 		var second;
+		var dayOfWeek;
 		if (useLocaleFormat) {
 			sGeneral = LocaleFormatSymbol['general'];
 			DecimalSeparator = g_oDefaultCultureInfo.NumberDecimalSeparator;
@@ -2277,6 +2453,7 @@ NumFormat.prototype =
 			hour = LocaleFormatSymbol['h'];
 			minute = LocaleFormatSymbol['minute'];
 			second = LocaleFormatSymbol['s'];
+			dayOfWeek = LocaleFormatSymbol['a'];
 		} else {
 			sGeneral = AscCommon.g_cGeneralFormat;
 			DecimalSeparator = gc_sFormatDecimalPoint;
@@ -2288,6 +2465,7 @@ NumFormat.prototype =
 			hour = 'h';
 			minute = 'm';
 			second = 's';
+			dayOfWeek = 'a';
 		}
         var nDecLength = this.aDecFormat.length;
         var nDecIndex = 0;
@@ -2482,6 +2660,12 @@ NumFormat.prototype =
                 for(var j = 0; j < item.val; ++j)
                     res += second;
             }
+			else if(numFormat_DayOfWeek == item.type)
+			{
+				var nIndex = (item.val > 3) ? 3 : item.val;
+				for(var j = 0; j < nIndex; ++j)
+					res += dayOfWeek;
+			}
             else if(numFormat_AmPm == item.type)
                 res += "AM/PM";
             else if(numFormat_Milliseconds == item.type)
@@ -2564,84 +2748,8 @@ function CellFormat(format, formatType, useLocaleFormat)
 		aParsedFormats.push(oNewFormat);
 	}
   var nFormatsLength = aParsedFormats.length;
-	var bComporationOperator = false;
-	if(nFormatsLength > 0)
-	{
-		var oFirstFormat = aParsedFormats[0];
-		if(null != oFirstFormat.ComporationOperator)
-		{
-			bComporationOperator = true;
-			//проверяем можно ли привести к стандартному формату
-			//todo сохранять измененный формат в файл
-			if(3 == nFormatsLength)
-			{
-				var oPositive = null;
-				var oNegative = null;
-				var oNull = null;
-				for(var i = 0; i < nFormatsLength; ++i)
-				{
-					var oCurFormat = aParsedFormats[i];
-					if(null == oCurFormat.ComporationOperator)
-					{
-						if(null == oPositive)
-							oPositive = oCurFormat;
-						else if(null == oNegative)
-							oNegative = oCurFormat;
-						else if(null == oNull)
-							oNull = oCurFormat;
-					}
-					else
-					{
-						var oComporationOperator = oCurFormat.ComporationOperator;
-						if(0 == oComporationOperator.operatorValue)
-						{
-							switch(oComporationOperator.operator)
-							{
-								case NumComporationOperators.greater: oPositive = oCurFormat;break;
-								case NumComporationOperators.less: oNegative = oCurFormat;break;
-								case NumComporationOperators.equal: oNull = oCurFormat;break;
-							}
-						}
-						else
-						{
-							//невозможно привести
-							oPositive = oNegative = oNull = null;
-							break;
-						}
-					}
-				}
-			}
-			this.oTextFormat = new NumFormat(false);
-			this.oTextFormat.setFormat("@", undefined, undefined, useLocaleFormat);
-			if(null == oPositive || null == oNegative || null == oNull)
-			{
-				//по результатам опытов, если оператор сравнения проходит через 0, то надо добавлять знак минус в зависимости от значения
-				//пример [<100] надо добавлять знак, [<-100] знак добавлять не надо
-				for(var i = 0, length = aParsedFormats.length; i < length; ++i)
-				{
-					var oCurFormat = aParsedFormats[i];
-					if(null == oCurFormat.ComporationOperator)
-						oCurFormat.bAddMinusIfNes = true;
-					else
-					{
-						var oComporationOperator = oCurFormat.ComporationOperator;
-						if(0 < oComporationOperator.operatorValue && (oComporationOperator.operator == NumComporationOperators.less || oComporationOperator.operator == NumComporationOperators.lessorequal))
-							oCurFormat.bAddMinusIfNes = true;
-						else if(0 > oComporationOperator.operatorValue && (oComporationOperator.operator == NumComporationOperators.greater || oComporationOperator.operator == NumComporationOperators.greaterorequal))
-							oCurFormat.bAddMinusIfNes = true;
-					}
-				}
-				this.aComporationFormats = aParsedFormats;
-			}
-			else
-			{
-				this.oPositiveFormat = oPositive;
-				this.oNegativeFormat = oNegative;
-				this.oNullFormat = oNull;
-			}
-		}
-	}
-	if(false == bComporationOperator)
+	var noComparisonn = aParsedFormats.every(function(format) {return !format.ComporationOperator});
+	if(noComparisonn)
 	{
 		if(4 <= nFormatsLength)
 		{
@@ -2659,8 +2767,8 @@ function CellFormat(format, formatType, useLocaleFormat)
 			this.oNullFormat = aParsedFormats[2];
 			this.oTextFormat = this.oPositiveFormat;
 			if (this.oNullFormat.bTextFormat) {
-			    this.oTextFormat = this.oNullFormat;
-			    this.oNullFormat = this.oPositiveFormat;
+				this.oTextFormat = this.oNullFormat;
+				this.oNullFormat = this.oPositiveFormat;
 			}
 		}
 		else if(2 == nFormatsLength)
@@ -2670,8 +2778,8 @@ function CellFormat(format, formatType, useLocaleFormat)
 			this.oNullFormat = this.oPositiveFormat;
 			this.oTextFormat = this.oPositiveFormat;
 			if (this.oNegativeFormat.bTextFormat) {
-			    this.oTextFormat = this.oNegativeFormat;
-			    this.oNegativeFormat = this.oPositiveFormat;
+				this.oTextFormat = this.oNegativeFormat;
+				this.oNegativeFormat = this.oPositiveFormat;
 				this.oPositiveFormat.bAddMinusIfNes = true;
 			}
 		}
@@ -2683,6 +2791,28 @@ function CellFormat(format, formatType, useLocaleFormat)
 			this.oNullFormat = this.oPositiveFormat;
 			this.oTextFormat = this.oPositiveFormat;
 		}
+	}
+	else
+	{
+		this.oTextFormat = new NumFormat(false);
+		this.oTextFormat.setFormat("@", undefined, undefined, useLocaleFormat);
+		//по результатам опытов, если оператор сравнения проходит через 0, то надо добавлять знак минус в зависимости от значения
+		//пример [<100] надо добавлять знак, [<-100] знак добавлять не надо
+		for (let i = 0; i < aParsedFormats.length && i < 2; ++i) {
+			let oCurFormat = aParsedFormats[i];
+			if (oCurFormat.ComporationOperator) {
+				let operator = oCurFormat.ComporationOperator.operator;
+				let operatorValue = oCurFormat.ComporationOperator.operatorValue;
+				if (0 < operatorValue && (operator === NumComporationOperators.less || operator === NumComporationOperators.lessorequal))
+					oCurFormat.bAddMinusIfNes = true;
+				else if (0 > operatorValue && (operator === NumComporationOperators.greater || operator === NumComporationOperators.greaterorequal))
+					oCurFormat.bAddMinusIfNes = true;
+			}
+		}
+		if (aParsedFormats.length > 2) {
+			aParsedFormats[2].bAddMinusIfNes = true;
+		}
+		this.aComporationFormats = aParsedFormats.slice(0, 3);
 	}
     this.formatCache = {};
 }
@@ -2743,32 +2873,30 @@ CellFormat.prototype =
 		else
 		{
 			//ищем совпадение
-			var nLength = this.aComporationFormats.length;
-			var oDefaultComporationFormat = null;
-			for(var i = 0, length = nLength; i < length ; ++i)
+			for (let i = 0; i < this.aComporationFormats.length && i < 2; ++i)
 			{
-				var oCurFormat = this.aComporationFormats[i];
-				if(null != oCurFormat.ComporationOperator)
-				{
-					var bOperationResult = false;
-					var oOperationValue = oCurFormat.ComporationOperator.operatorValue;
-					switch(oCurFormat.ComporationOperator.operator)
-					{
-						case NumComporationOperators.equal: bOperationResult = (dNumber == oOperationValue);break;
-						case NumComporationOperators.greater: bOperationResult = (dNumber > oOperationValue);break;
-						case NumComporationOperators.less: bOperationResult = (dNumber < oOperationValue);break;
-						case NumComporationOperators.greaterorequal: bOperationResult = (dNumber >= oOperationValue);break;
-						case NumComporationOperators.lessorequal: bOperationResult = (dNumber <= oOperationValue);break;
-						case NumComporationOperators.notequal: bOperationResult = (dNumber != oOperationValue);break;
-					}
-					if(true == bOperationResult)
-						oRes = oCurFormat;
+				let oCurFormat = this.aComporationFormats[i];
+				let oOperationValue, operator;
+				if (null != oCurFormat.ComporationOperator) {
+					operator = oCurFormat.ComporationOperator.operator;
+					oOperationValue = oCurFormat.ComporationOperator.operatorValue;
+				} else {
+					oOperationValue = 0;
+					operator = 0 === i ? NumComporationOperators.greater : NumComporationOperators.less;
 				}
-				else if(null == oDefaultComporationFormat)
-					oDefaultComporationFormat = oCurFormat;
+				let isMatch = (operator === NumComporationOperators.equal && dNumber === oOperationValue) ||
+					(operator === NumComporationOperators.greater && dNumber > oOperationValue) ||
+					(operator === NumComporationOperators.less && dNumber < oOperationValue) ||
+					(operator === NumComporationOperators.greaterorequal && dNumber >= oOperationValue) ||
+					(operator === NumComporationOperators.lessorequal && dNumber <= oOperationValue) ||
+					(operator === NumComporationOperators.notequal && dNumber !== oOperationValue);
+				if (isMatch) {
+					oRes = oCurFormat;
+					break;
+				}
 			}
-			if(null == oRes && null != oDefaultComporationFormat)
-				oRes = oDefaultComporationFormat;
+			if (null == oRes && null != this.aComporationFormats.length > 2)
+				oRes = this.aComporationFormats[2];
 		}
 		return oRes;
 	},
@@ -3744,10 +3872,11 @@ FormatParser.prototype =
         if(!bError){
             var aDate = [];
             var nMonthIndex = null;
-            var sMonthFormat = null;
+			var sMonthFormat = null;
             var aTime = [];
             var am = false;
             var pm = false;
+
             for (var i = 0, length = match.length; i < length; i++) {
                 var elem = match[i];
                 if (elem.date) {
@@ -3876,6 +4005,194 @@ FormatParser.prototype =
                             }
                             res.sDateFormat = getShortDateFormat(cultureInfo);
                         }
+                    }
+                    if(null != res.y)
+                    {
+                        if(res.y < 30)
+                            res.y = 2000 + res.y;
+                        else if(res.y < 100)
+                            res.y = 1900 + res.y;
+                    }
+                }
+                if(nTimeLength > 0){
+                    res.h = aTime[0];
+                    if(nTimeLength > 1)
+                        res.min = aTime[1];
+                    if(nTimeLength > 2)
+                        res.s = aTime[2];
+                }
+                if(bError)
+                    res = null;
+            }
+        }
+		return res;
+    },
+	_parseDateFromArrayPDF: function (match, oDataTypes, cultureInfo, oFormat)
+	{
+        var res = null;
+        var bError = false;
+        //в первый проход разделяем date и time с помощью delimiter
+        for (var i = 0, length = match.length; i < length; i++) {
+            var elem = match[i];
+            if (elem.type == oDataTypes.delimiter) {
+                bError = true;
+                if(i - 1 >= 0 && i + 1 < length){
+                    var prev = match[i - 1];
+                    var next = match[i + 1];
+                    if(prev.type != oDataTypes.delimiter && next.type != oDataTypes.delimite){
+                        if (cultureInfo.TimeSeparator == elem.val || (":" == elem.val && cultureInfo.DateSeparator != elem.val)) {
+                            if(false == prev.date && false == next.date){
+                                bError = false;
+                                prev.time = true;
+                                next.time = true;
+                            }
+                        }
+                        else{
+                            if(false == prev.time && false == next.time){
+                                bError = false;
+                                prev.date = true;
+                                next.date = true;
+                            }
+                        }
+                    }
+                }
+                else if (i - 1 >= 0 && i + 1 == length) {
+                    //случай "10:"
+                    var prev = match[i - 1];
+                    if (prev.type != oDataTypes.delimiter) {
+                        if (cultureInfo.TimeSeparator == elem.val || (":" == elem.val && cultureInfo.DateSeparator != elem.val)) {
+                            if (false == prev.date) {
+                                bError = false;
+                                prev.time = true;
+                            }
+                        }
+                    }
+                }
+                if(bError)
+                    break;
+            }
+        }
+        if(!bError){
+            //разделяем date и time с помощью Am/Pm и имена месяцев
+            for (var i = 0, length = match.length; i < length; i++) {
+                var elem = match[i];
+                if (elem.type == oDataTypes.letter){
+                    var valLower = elem.val.toLowerCase();
+                    if (elem.am || elem.pm) {
+                        if (i - 1 >= 0) {
+                            var prev = match[i - 1];
+                            if (oDataTypes.digit == prev.type && false == prev.date) {
+                                prev.time = true;
+                            }
+                        }
+                        //AmPm должна быть последней записью
+                        if (i + 1 != length) {
+                            bError = true;
+                        }
+                    }
+                    else if (null != elem.month) {
+                        if (i - 1 >= 0) {
+                            var prev = match[i - 1];
+                            if (oDataTypes.digit == prev.type && false == prev.time)
+                                prev.date = true;
+                        }
+                        if (i + 1 < length) {
+                            var next = match[i + 1];
+                            if (oDataTypes.digit == next.type && false == next.time)
+                                next.date = true;
+                        }
+                    }
+                    else
+                        bError = true;
+                }
+                if(bError)
+                    break;
+            }
+        }
+        if(!bError){
+            var aDate = [];
+            var nMonthIndex = null;
+			var sMonthFormat = null;
+			var monthDone = false;
+            var aTime = [];
+            var am = false;
+            var pm = false;
+
+			var nIndexD = Math.max(cultureInfo.ShortDatePattern.indexOf("0"), cultureInfo.ShortDatePattern.indexOf("1"));
+			var nIndexM = Math.max(cultureInfo.ShortDatePattern.indexOf("2"), cultureInfo.ShortDatePattern.indexOf("3"));
+            var nIndexY = Math.max(cultureInfo.ShortDatePattern.indexOf("4"), cultureInfo.ShortDatePattern.indexOf("5"));
+
+            for (var i = 0, length = match.length; i < length; i++) {
+                var elem = match[i];
+                if (elem.date || (elem.time == false && elem.type == oDataTypes.digit)) {
+                    if (elem.type == oDataTypes.digit)
+                        aDate.push(elem.val);
+                    else if (elem.type == oDataTypes.letter && null != elem.month) {
+                        if (aDate.length >= 3)
+							continue;
+							
+						nMonthIndex = aDate.length;
+                        sMonthFormat = elem.month.format;
+                        aDate.push(elem.month.val);
+						monthDone = true;
+                    }
+                    else
+                        bError = true;
+                }
+                else if (elem.time) {
+                    if (elem.type == oDataTypes.digit)
+                        aTime.push(elem.val);
+                    else if (elem.type == oDataTypes.letter && (elem.am || elem.pm)) {
+                        am = elem.am;
+                        pm = elem.pm;
+                    }
+                    else
+                        bError = true;
+                }
+            }
+			if (aDate.length > 3)
+				aDate.length = 3;
+
+            var nDateLength = aDate.length;
+            var nTimeLength = aTime.length;
+            if (nTimeLength > 3)
+                aTime.length = 3;
+            if(!bError){
+                res = { d: null, m: null, y: null, h: null, min: null, s: null, am: am, pm: pm, sDateFormat: null };
+                if (nDateLength > 0) {
+                    if (null != nMonthIndex) {
+                        res.m = aDate[nMonthIndex];
+
+						if (nIndexD != -1) {
+							if (nIndexD != nMonthIndex) {
+								res.d = aDate[nIndexD];
+							}
+							else {
+								if (aDate[0] <= 31) {
+									res.d = aDate[0];
+									res.y = aDate[2];
+								}
+								else {
+									res.d = aDate[2];
+									res.y = aDate[0];
+								}
+							}
+						}
+						
+						if (nIndexY != -1 && res.y == null) {
+							if (nIndexY != nMonthIndex) {
+								res.y = aDate[nIndexY];
+							}
+							else {
+								res.d = aDate[0];
+								res.y = aDate[2];
+							}
+						}
+                    }
+                    else {
+                        res.m = aDate[nIndexM];
+						res.d = aDate[nIndexD];
+						res.y = aDate[nIndexY];
                     }
                     if(null != res.y)
                     {
@@ -4157,6 +4474,252 @@ FormatParser.prototype =
         }
 		return res;
 	},
+	parseDatePDF: function (value, cultureInfo, oFormat)
+	{
+		let res = null;
+		let match = [];
+		let sCurValue = null;
+		let oCurDataType = null;
+		let oPrevType = null;
+		let bAmPm = false;
+		let bMonth = false;
+		let bError = false;
+		let oDataTypes = {letter: {id: 0, min: 2, max: 9}, digit: {id: 1, min: 1, max: 4}, delimiter: {id: 2, min: 1, max: 1}, space: {id: 3, min: null, max: null}};
+		let valueLower = value.toLowerCase();
+		for(var i = 0, length = value.length; i < length; i++)
+		{
+		    var sChar = value[i];
+		    var oDataType = null;
+		    if("0" <= sChar && sChar <= "9")
+		        oDataType = oDataTypes.digit;
+		    else if(" " == sChar)
+		        oDataType = oDataTypes.space;
+		    else if ("." == sChar || "/" == sChar || "-" == sChar || ":" == sChar || cultureInfo.DateSeparator == sChar || cultureInfo.TimeSeparator == sChar)
+		        oDataType = oDataTypes.delimiter;
+		    else
+		        oDataType = oDataTypes.letter;
+			    
+			// после разделителя может быть опять месяц
+			if (oDataType == oDataTypes.delimiter)
+				bMonth = false;
+
+		    if(null != oDataType)
+		    {
+		        if(null == oCurDataType)
+		            sCurValue = sChar;
+		        else
+		        {
+		            if(oCurDataType == oDataType)
+		            {
+		                if(null == oCurDataType.max || sCurValue.length < oCurDataType.max)
+		                    sCurValue += sChar;
+		                else
+		                    bError = true;
+		            }
+		            else
+		            {
+		                if (null == oCurDataType.min || sCurValue.length >= oCurDataType.min) {
+		                    if (oDataTypes.space != oCurDataType) {
+		                        var oNewElem = { val: sCurValue, type: oCurDataType, month: null, am: false, pm: false, date: false, time: false };
+		                        if (oDataTypes.digit == oCurDataType)
+		                            oNewElem.val = oNewElem.val - 0;
+								if (oNewElem.val < 100 && sCurValue.length == 4)
+									bError = true; // год до ста лет, пример: 0001 год
+		                        
+								match.push(oNewElem);
+		                    }
+		                    sCurValue = sChar;
+		                    oPrevType = oCurDataType;
+		                }
+		                else
+		                    bError = true;
+		            }
+		        }
+		        oCurDataType = oDataType;
+		    }
+		    else
+		        bError = true;
+		    if(oDataTypes.letter == oDataType){
+		        var oNewElem = { val: sCurValue, type: oCurDataType, month: null, am: false, pm: false, date: false, time: false };
+		        var bAm = false;
+		        var bPm = false;
+		        if (!bAmPm && ((bAm = this.strcmp(valueLower, "am", i, 2)) || (bPm = this.strcmp(valueLower, "pm", i, 2)))) {
+		            bAmPm = true;
+		            oNewElem.am = bAm;
+		            oNewElem.pm = bPm;
+		            oNewElem.time = true;
+		            match.push(oNewElem);
+		            i += 2 - 1;
+		            if (oPrevType != oDataTypes.space)
+		                bError = true;
+		        }
+		        else if (!bMonth) {
+		            bMonth = true;
+		            var aArraysToCheck = [{ arr: cultureInfo.MonthNames, format: "mmmm" }, { arr: cultureInfo.AbbreviatedMonthNames, format: "mmm" }];
+		            var bFound = false;
+		            for (var index in aArraysToCheck) {
+		                var aArrayTemp = aArraysToCheck[index];
+		                for (var j = 0, length2 = aArrayTemp.arr.length; j < length2; j++) {
+		                    var sCmpVal = aArrayTemp.arr[j].toLowerCase();
+		                    var sCmpValCrop = sCmpVal.replace(/\./g, "");
+		                    var bCrop = false;
+		                    if (this.strcmp(valueLower, sCmpVal, i, sCmpVal.length) || (bCrop = (sCmpVal != sCmpValCrop && this.strcmp(valueLower, sCmpValCrop, i, sCmpValCrop.length)))) {
+		                        bFound = true;
+		                        oNewElem.month = { val: j + 1, format: aArrayTemp.format };
+		                        oNewElem.date = true;
+		                        if (bCrop)
+		                            i += sCmpValCrop.length - 1;
+		                        else
+		                            i += sCmpVal.length - 1;
+		                        break;
+		                    }
+		                }
+		                if (bFound)
+		                    break;
+		            }
+		            //ничего кроме имени месяца больше быть не может
+		            if (bFound)
+		                match.push(oNewElem);
+		            else
+		                bError = true;
+		        }
+		        else
+		            bError = true;
+		        oCurDataType = null;
+		        sCurValue = null;
+		    }
+			if (bError)
+			{
+				match = null;
+				break;
+			}
+		}
+		if (null != match && null != sCurValue) {
+		    if (oDataTypes.space != oCurDataType) {
+		        var oNewElem = { val: sCurValue, type: oCurDataType, month: null, am: false, pm: false, date: false, time: false };
+		        if (oDataTypes.digit == oCurDataType)
+		            oNewElem.val = oNewElem.val - 0;
+
+		        match.push(oNewElem);
+		    }
+		}
+		if(null != match && match.length > 0)
+		{
+		    var oParsedDate = this._parseDateFromArrayPDF(match, oDataTypes, cultureInfo, oFormat);
+			if(null != oParsedDate)
+			{
+				var d = oParsedDate.d;
+				var m = oParsedDate.m;
+				var y = oParsedDate.y;
+				var h = oParsedDate.h;
+				var min = oParsedDate.min;
+				var s = oParsedDate.s;
+				var am = oParsedDate.am;
+				var pm = oParsedDate.pm;
+				var sDateFormat = oParsedDate.sDateFormat;
+				
+				var bDate = false;
+				var bTime = false;
+				var nDay;
+				var nMounth;
+				var nYear;
+				if(AscCommon.bDate1904)
+				{
+					nDay = 1;
+					nMounth = 0;
+					nYear = 1904;
+				}
+				else
+				{
+					nDay = 31;
+					nMounth = 11;
+					nYear = 1899;
+				}
+				var nHour = 0;
+				var nMinute = 0;
+				var nSecond = 0;
+				var dValue = 0;
+				var bValidDate = true;
+				if(null != m && (null != d || null != y))
+				{
+					bDate = true;
+					var oNowDate;
+					if(null != d)
+						nDay = d - 0;
+					else
+						nDay = 1;
+					nMounth = m - 1;
+					if(null != y)
+						nYear = y - 0;
+					else
+                    {
+                        oNowDate = new Date();
+						nYear = oNowDate.getFullYear();
+                    }
+					
+					//проверяем дату на валидность
+					bValidDate = this.isValidDatePDF(nYear, nMounth, nDay);
+				}
+				if(null != h)
+				{
+					bTime = true;
+					nHour = h - 0;
+					if (am || pm)
+					{
+						if(nHour <= 23)
+						{
+							//переводим 24
+							nHour = nHour % 12;
+							if(pm)
+								nHour += 12;
+						}
+						else
+							bValidDate = false;
+					}
+					if(null != min)
+					{
+						nMinute = min - 0;
+						if(nMinute > 59)
+							bValidDate = false;
+					}
+					if(null != s)
+					{
+						nSecond = s - 0;
+						if(nSecond > 59)
+							bValidDate = false;
+					}
+				}
+				if(true == bValidDate && (true == bDate || true == bTime))
+				{
+					var oDateTmp = new Date();
+					oDateTmp.setFullYear(nYear, nMounth, nDay);
+					oDateTmp.setHours(nHour, nMinute, nSecond);
+					dValue = oDateTmp.getTime() / (86400 * 1000);
+
+					var sFormat;
+					if(true == bDate && true == bTime)
+					{
+						sFormat = sDateFormat + " h:mm:ss";
+						if (am || pm)
+							sFormat += " AM/PM";
+					}
+					else if(true == bDate)
+						sFormat = sDateFormat;
+					else
+					{
+						if(dValue > 1)
+							sFormat = "[h]:mm:ss";
+						else if (am || pm)
+							sFormat = "h:mm:ss AM/PM";
+						else
+							sFormat = "h:mm:ss";
+					}
+					res = {format: sFormat, value: dValue, bDateTime: true, bDate: bDate, bTime: bTime, bPercent: false, bCurrency: false};
+				}
+            }
+        }
+		return res;
+	},
 	isValidDate : function(nYear, nMounth, nDay)
 	{
 		if(nYear < 1900 && !(1899 === nYear && 11 == nMounth && 31 == nDay))
@@ -4170,6 +4733,16 @@ FormatParser.prototype =
 			else if(1900 == nYear && 1 == nMounth && 29 == nDay)
 				return true;
 		}
+		return false;
+	},
+	isValidDatePDF : function(nYear, nMounth, nDay)
+	{
+		if(nMounth < 0 || nMounth > 11)
+			return false;
+		else if(this.isValidDay(nYear, nMounth, nDay))
+			return true;
+		else if(1900 == nYear && 1 == nMounth && 29 == nDay)
+			return true;
 		return false;
 	},
 	isValidDay : function(nYear, nMounth, nDay){
@@ -4943,6 +5516,7 @@ var g_aCultureInfos = {
 	25: {LCID: 25, Name: "ru", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₽", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"], AbbreviatedDayNames: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"], MonthNames: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь", ""], AbbreviatedMonthNames: ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек", ""], MonthGenitiveNames: ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря", ""], AbbreviatedMonthGenitiveNames: ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек", ""], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\ mmmm\\ yyyy\\ \"г.\""},
 	29: {LCID: 29, Name: "sv", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "kr", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["söndag", "måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag"], AbbreviatedDayNames: ["sön", "mån", "tis", "ons", "tor", "fre", "lör"], MonthNames: ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december", ""], AbbreviatedMonthNames: ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "\"den \"d\\ mmmm\\ yyyy"},
 	31: {LCID: 31, Name: "tr", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "₺", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"], AbbreviatedDayNames: ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"], MonthNames: ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık", ""], AbbreviatedMonthNames: ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ÖÖ", PMDesignator: "ÖS", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "d\\ mmmm\\ yyyy\\ dddd"},
+	33: {LCID: 33, Name: "id", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "Rp", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"], AbbreviatedDayNames: ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], MonthNames: ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ".", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ dd\\ mmmm\\ yyyy"},
 	34: {LCID: 34, Name: "uk", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₴", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["неділя", "понеділок", "вівторок", "середа", "четвер", "п'ятниця", "субота"], AbbreviatedDayNames: ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"], MonthNames: ["січень", "лютий", "березень", "квітень", "травень", "червень", "липень", "серпень", "вересень", "жовтень", "листопад", "грудень", ""], AbbreviatedMonthNames: ["Січ", "Лют", "Бер", "Кві", "Тра", "Чер", "Лип", "Сер", "Вер", "Жов", "Лис", "Гру", ""], MonthGenitiveNames: ["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня", ""], AbbreviatedMonthGenitiveNames: ["січ", "лют", "бер", "кві", "тра", "чер", "лип", "сер", "вер", "жов", "лис", "гру", ""], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\ mmmm\\ yyyy\" р.\""},
 	36: {LCID: 36, Name: "sl", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["nedelja", "ponedeljek", "torek", "sreda", "četrtek", "petek", "sobota"], AbbreviatedDayNames: ["ned.", "pon.", "tor.", "sre.", "čet.", "pet.", "sob."], MonthNames: ["januar", "februar", "marec", "april", "maj", "junij", "julij", "avgust", "september", "oktober", "november", "december", ""], AbbreviatedMonthNames: ["jan.", "feb.", "mar.", "apr.", "maj", "jun.", "jul.", "avg.", "sep.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "dop.", PMDesignator: "pop.", UseAMPM: 0, DateSeparator: ". ", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "dddd\\,\\ dd\\.\\ mmmm\\ yyyy"},
 	38: {LCID: 38, Name: "lv", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["svētdiena", "pirmdiena", "otrdiena", "trešdiena", "ceturtdiena", "piektdiena", "sestdiena"], AbbreviatedDayNames: ["svētd.", "pirmd.", "otrd.", "trešd.", "ceturtd.", "piektd.", "sestd."], MonthNames: ["janvāris", "februāris", "marts", "aprīlis", "maijs", "jūnijs", "jūlijs", "augusts", "septembris", "oktobris", "novembris", "decembris", ""], AbbreviatedMonthNames: ["janv.", "febr.", "marts", "apr.", "maijs", "jūn.", "jūl.", "aug.", "sept.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "priekšp.", PMDesignator: "pēcp.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ yyyy\\.\\ \"gada\"\\ d\\.\\ mmmm"},
@@ -4972,6 +5546,7 @@ var g_aCultureInfos = {
 	1051: {LCID: 1051, Name: "sk-SK", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["nedeľa", "pondelok", "utorok", "streda", "štvrtok", "piatok", "sobota"], AbbreviatedDayNames: ["ne", "po", "ut", "st", "št", "pi", "so"], MonthNames: ["január", "február", "marec", "apríl", "máj", "jún", "júl", "august", "september", "október", "november", "december", ""], AbbreviatedMonthNames: ["jan", "feb", "mar", "apr", "máj", "jún", "júl", "aug", "sep", "okt", "nov", "dec", ""], MonthGenitiveNames: ["januára", "februára", "marca", "apríla", "mája", "júna", "júla", "augusta", "septembra", "októbra", "novembra", "decembra", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: ". ", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\ d\\.\\ mmmm\\ yyyy"},
 	1053: {LCID: 1053, Name: "sv-SE", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "kr", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["söndag", "måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag"], AbbreviatedDayNames: ["sön", "mån", "tis", "ons", "tor", "fre", "lör"], MonthNames: ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december", ""], AbbreviatedMonthNames: ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "\"den \"d\\ mmmm\\ yyyy"},
 	1055: {LCID: 1055, Name: "tr-TR", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "₺", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"], AbbreviatedDayNames: ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"], MonthNames: ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık", ""], AbbreviatedMonthNames: ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ÖÖ", PMDesignator: "ÖS", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "d\\ mmmm\\ yyyy\\ dddd"},
+	1057: {LCID: 1057, Name: "id-ID", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "Rp", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"], AbbreviatedDayNames: ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], MonthNames: ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ".", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ dd\\ mmmm\\ yyyy"},
 	1058: {LCID: 1058, Name: "uk-UA", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₴", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["неділя", "понеділок", "вівторок", "середа", "четвер", "п'ятниця", "субота"], AbbreviatedDayNames: ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"], MonthNames: ["січень", "лютий", "березень", "квітень", "травень", "червень", "липень", "серпень", "вересень", "жовтень", "листопад", "грудень", ""], AbbreviatedMonthNames: ["Січ", "Лют", "Бер", "Кві", "Тра", "Чер", "Лип", "Сер", "Вер", "Жов", "Лис", "Гру", ""], MonthGenitiveNames: ["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня", ""], AbbreviatedMonthGenitiveNames: ["січ", "лют", "бер", "кві", "тра", "чер", "лип", "сер", "вер", "жов", "лис", "гру", ""], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\ mmmm\\ yyyy\" р.\""},
 	1060: {LCID: 1060, Name: "sl-SI", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["nedelja", "ponedeljek", "torek", "sreda", "četrtek", "petek", "sobota"], AbbreviatedDayNames: ["ned.", "pon.", "tor.", "sre.", "čet.", "pet.", "sob."], MonthNames: ["januar", "februar", "marec", "april", "maj", "junij", "julij", "avgust", "september", "oktober", "november", "december", ""], AbbreviatedMonthNames: ["jan.", "feb.", "mar.", "apr.", "maj", "jun.", "jul.", "avg.", "sep.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "dop.", PMDesignator: "pop.", UseAMPM: 0, DateSeparator: ". ", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "dddd\\,\\ dd\\.\\ mmmm\\ yyyy"},
 	1062: {LCID: 1062, Name: "lv-LV", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["svētdiena", "pirmdiena", "otrdiena", "trešdiena", "ceturtdiena", "piektdiena", "sestdiena"], AbbreviatedDayNames: ["svētd.", "pirmd.", "otrd.", "trešd.", "ceturtd.", "piektd.", "sestd."], MonthNames: ["janvāris", "februāris", "marts", "aprīlis", "maijs", "jūnijs", "jūlijs", "augusts", "septembris", "oktobris", "novembris", "decembris", ""], AbbreviatedMonthNames: ["janv.", "febr.", "marts", "apr.", "maijs", "jūn.", "jūl.", "aug.", "sept.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "priekšp.", PMDesignator: "pēcp.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ yyyy\\.\\ \"gada\"\\ d\\.\\ mmmm"},

@@ -2329,6 +2329,13 @@
     CBaseChartObject.prototype.isObjectInSmartArt = function() {
         return false;
     };
+    CBaseChartObject.prototype.getParentObjects = function() {
+        let oChartSpace = this.getChartSpace();
+        if(oChartSpace) {
+            return oChartSpace.getParentObjects();
+        }
+        return null;
+    };
 
     function getMinMaxFromArrPoints(aPoints) {
         if(Array.isArray(aPoints) && aPoints.length > 0) {
@@ -4409,6 +4416,12 @@
 	CSeriesBase.prototype.checkSeriesAfterChangeType = function() {
 
 	};
+    CSeriesBase.prototype.recalculateTrendline = function() {
+        let oTrendline = this.trendline;
+        if(oTrendline) {
+            oTrendline.recalculate();
+        }
+    };
     CSeriesBase.prototype.asc_getName = function() {
         var oThis = this;
         return AscFormat.ExecuteNoHistory(function() {
@@ -14114,6 +14127,16 @@
             return;
         }
         this.applyStyleEntry(oChartStyle.trendline, oColors.generateColors(1), 0, bReset);
+    };
+    CTrendLine.prototype.recalculate = function() {
+        this.pen = null;
+        if(this.spPr && this.spPr.ln && this.spPr.ln.Fill) {
+            let oChartSpace = this.getChartSpace();
+            if(oChartSpace) {
+                this.pen = this.spPr.ln.createDuplicate();
+                this.pen.Fill.check(oChartSpace.Get_Theme(), oChartSpace.Get_ColorMap())
+            }
+        }
     };
 
     function CUpDownBars() {

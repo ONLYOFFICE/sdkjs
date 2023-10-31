@@ -50,6 +50,7 @@
 	 * @property {ApiWorksheet} ActiveSheet - Returns an object that represents the active sheet.
 	 * @property {ApiRange} Selection - Returns an object that represents the selected range.
 	 * @property {ApiComment[]} Comments - Returns an array of ApiComment objects.
+	 * @property {FreezePaneType} FreezePanes - Returns or sets a freeze panes type.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
@@ -82,6 +83,7 @@
 	 * @property {boolean} PrintGridlines - Returns or sets the page PrintGridlines property.
 	 * @property {Array} Defnames - Returns an array of the ApiName objects.
 	 * @property {Array} Comments - Returns an array of the ApiComment objects.
+	 * @property {ApiFreezePanes} FreezePanes - Returns a freeze Panes for a current worsheet.
 	 */
 	function ApiWorksheet(worksheet) {
 		this.worksheet = worksheet;
@@ -356,6 +358,14 @@
 	}
 
 	/**
+	 * Class representing a freeze Panes.
+	 * @constructor
+	 */
+	function ApiFreezePanes(ws) {
+		this.ws = ws;
+	}
+
+	/**
 	 * Returns a class formatted according to the instructions contained in the format expression.
 	 * @memberof Api
 	 * @param {string} expression - Any valid expression.
@@ -376,7 +386,7 @@
 	 */
 	Api.prototype.AddSheet = function (sName) {
 		if (this.GetSheet(sName))
-			console.error(new Error('Worksheet with such a name already exists.'));
+			private_makeError('Worksheet with such a name already exists.', true);
 		else
 			this.asc_addWorksheet(sName);
 	};
@@ -521,17 +531,17 @@
 	 * @param {ApiRange} Range2 - One of the intersecting ranges. At least two Range objects must be specified.
 	 * @returns {ApiRange | null}
 	 */
-	Api.prototype.Intersect  = function (Range1, Range2) {
+	Api.prototype.Intersect = function (Range1, Range2) {
 		let result = null;
 		if (Range1.GetWorksheet().Id === Range2.GetWorksheet().Id) {
 			var res = Range1.range.bbox.intersection(Range2.range.bbox);
 			if (!res) {
-				console.error(new Error("Ranges do not intersect."));
+				private_makeError('Ranges do not intersect.', false);
 			} else {
 				result = new ApiRange(this.GetActiveSheet().worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
 			}
 		} else {
-			console.error(new Error('Ranges should be from one worksheet.'));
+			private_makeError('Ranges should be from one worksheet.', false);
 		}
 		return result;
 	};
@@ -611,16 +621,12 @@
 	 * Returns an object that represents the range of the specified sheet using the maximum and minimum row/column coordinates.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiWorksheet} ws - The sheet where the specified range is represented.
-	 * @param {number} r1 - The minimum row number of the specified range.
-	 * @param {number} c1 - The minimum column number of the specified range.
-	 * @param {number} r2 - The maximum row number of the specified range.
-	 * @param {number} c2 - The maximum column number of the specified range.
-	 * @param {ApiAreas} areas - A collection of the ranges from the specified range.
+	 * @param {Range} range - The internal Range class (not a ApiRange). For more details see any new ApiRange.
+	 * @param {[Range]} areas - A collection of the ranges (not a ApiRange) from the specified range. For more details see any new ApiRange.
 	 * @returns {ApiRange}
 	 */
-	Api.prototype.GetRangeByNumber = function(ws, r1, c1, r2, c2, areas) {
-		return new ApiRange( (ws ? ws.getRange3(r1, c1, r2, c2) : null), areas);
+	Api.prototype.private_GetRange = function(range, areas) {
+		return new ApiRange(range, areas);
 	};
 
 	/**
@@ -823,6 +829,7 @@
 
 	/**
 	 * Subscribes to the specified event and calls the callback function when the event fires.
+	 * @function
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {string} eventName - The event name.
@@ -833,6 +840,7 @@
 
 	/**
 	 * Unsubscribes from the specified event.
+	 * @function
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {string} eventName - The event name.
@@ -898,6 +906,83 @@
 	Object.defineProperty(Api.prototype, "Comments", {
 		get: function () {
 			return this.GetComments();
+		}
+	});
+
+	/**
+	 * Specifies freeze panes type.
+	 * @typedef {("row" | "column" | "cell" | null )} FreezePaneType
+	 */
+
+	/**
+	 * Sets freeze panes type.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {FreezePaneType} FreezePaneType - The type of freezing ('null' to unfreeze).
+	 * @since 7.6.0
+	 */
+	Api.prototype.SetFreezePanesType = function(FreezePaneType) {
+		if (typeof FreezePaneType === 'string' || FreezePaneType === null) {
+			//detect current freeze type
+			let curType = this.GetFreezePanesType();
+
+			let type = null;
+			if (FreezePaneType === 'cell' && ( ( curType && curType !== 'cell' ) || ( !curType ) ) ) {
+				// make unfreeze and freeze then
+				if (curType)
+					this.asc_freezePane(undefined);
+
+				type = undefined;
+			} else if (FreezePaneType === null && curType) {
+				type = undefined;
+			} else if (FreezePaneType === 'row' && curType !== 'row') {
+				type = 1;
+			} else if (FreezePaneType === 'column' && curType !== 'column') {
+				type = 2;
+			}
+			
+			if (type !== null)
+				this.asc_freezePane(type);
+
+		} else {
+			private_makeError('Invalid parametr "FreezePaneType".', false);
+		}
+	};
+
+	/**
+	 * Rerutns freeze panes type.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {FreezePaneType} FreezePaneType - The type of freezing ('null' - if there is no frozen pane).
+	 * @since 7.6.0
+	 */
+	Api.prototype.GetFreezePanesType = function() {
+		let cell = this.wb.getWorksheet().topLeftFrozenCell;
+		//detect current freeze type
+		let curType = null;
+		if (cell) {
+			let c = cell.getCol0();
+			let r = cell.getRow0();
+			if (c == 0) {
+				// hole row
+				curType = 'row';
+			} else if (r == 0) {
+				// whole column
+				curType = 'column';
+			} else {
+				// cell
+				curType = 'cell';
+			}
+		}
+		return curType;
+	};
+
+	Object.defineProperty(Api.prototype, "FreezePanes", {
+		get: function () {
+			return this.GetFreezePanesType();
+		},
+		set: function(FreezePaneType) {
+			this.SetFreezePanesType(FreezePaneType);
 		}
 	});
 
@@ -996,7 +1081,7 @@
 		let result;
 		if (typeof col == "number" && typeof row == "number") {
 			if (col < 1 || row < 1 || col > AscCommon.gc_nMaxCol0 || row > AscCommon.gc_nMaxRow0) {
-				console.error(new Error('Invalid paremert "row" or "col".'));
+				private_makeError('Invalid paremert "row" or "col".', false);
 				result = null;
 			} else {
 				row--;
@@ -1005,20 +1090,19 @@
 			}
 		} else if (typeof row == "number") {
 			if (row < 1 || row > AscCommon.gc_nMaxRow0) {
-				console.error(new Error('Invalid paremert "row".'));
+				private_makeError('Invalid paremert "row".', false);
 				result = null;
 			} else {
-				row--
+				row--;
 				let r = (row) ?  (row / AscCommon.gc_nMaxCol0) >> 0 : row;
 				let c = (row) ? row % AscCommon.gc_nMaxCol0 : row;
 				if (r && c) c--;
-				console.error()
 				result = new ApiRange(this.worksheet.getRange3(r, c, r, c));
 			}
 			
 		} else if (typeof col == "number") {
 			if (col < 1 || col > AscCommon.gc_nMaxCol0) {
-				console.error(new Error('Invalid paremert "col".'))
+				private_makeError('Invalid paremert "col".', false);
 				result = null;
 			} else {
 				col--;
@@ -1056,7 +1140,7 @@
 			if (value > 0 && value <=  AscCommon.gc_nMaxRow0 + 1 && value[0] !== NaN) {
 				value --;
 			} else {
-				console.error(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
+				private_makeError('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1), false);
 				return null;
 			}
 			return new ApiRange(this.worksheet.getRange3(value, 0, value, AscCommon.gc_nMaxCol0));
@@ -1072,7 +1156,7 @@
 				}
 			}
 			if (isError) {
-				console.error(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
+				private_makeError('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1), false);
 				return null;
 			} else {
 				return new ApiRange(this.worksheet.getRange3(value[0], 0, value[1], AscCommon.gc_nMaxCol0));
@@ -1181,7 +1265,7 @@
 		Range1 = (Range1 instanceof ApiRange) ? Range1.range : (typeof Range1 == 'string') ? this.worksheet.getRange2(Range1) : null;
 
 		if (!Range1) {
-			console.error(new Error('Incorrect "Range1" or it is empty.'));
+			private_makeError('Incorrect "Range1" or it is empty.', false);
 			return null;
 		}
 		
@@ -1574,21 +1658,18 @@
 		if ( range && range.range.isOneCell() && (sAddress || subAddress) ) {
 			var externalLink = sAddress ? AscCommon.rx_allowedProtocols.test(sAddress) : false;
 			if (externalLink && AscCommonExcel.getFullHyperlinkLength(sAddress) > Asc.c_nMaxHyperlinkLength) {
-				console.error(new Error('Incorrect "sAddress".'));
-				return null;
+				private_makeError('Incorrect "sAddress".', true);
 			}
 			if (!externalLink) {
 				address = subAddress.split("!");
 				if (address.length == 1) 
 					address.unshift(this.GetName());
 				else if (this.worksheet.workbook.getWorksheetByName(address[0]) === null) {
-					console.error(new Error('Invalid "subAddress".'));	
-					return null;
+					private_makeError('Invalid "subAddress".', true);
 				}
 				var res = this.worksheet.workbook.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.FormatTable, address[1], false);
 				if (res === Asc.c_oAscError.ID.DataRangeError) {
-					console.error(new Error('Invalid "subAddress".'));
-					return null;
+					private_makeError('Invalid "subAddress".', true);
 				}
 			}
 			this.worksheet.selectionRange.assign2(range.range.bbox);
@@ -1884,13 +1965,30 @@
 		let bb = before instanceof ApiWorksheet;
 		let ba = after instanceof ApiWorksheet;
 		if ( (bb && ba) || (!bb && !ba) ) {
-			console.error(new Error('Incorrect parametrs.'));
+			private_makeError('Incorrect parametrs.', true);
 		} else {
 			let curIndex = this.GetIndex();
 			let newIndex = ( bb ? ( before.GetIndex() ) : (after.GetIndex() + 1) );
 			this.worksheet.workbook.oApi.asc_moveWorksheet( newIndex, [curIndex] );
 		}
 	};
+
+	/**
+	 * Returns a freezePanes for a current worsheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiFreezePanes}
+	*/
+	ApiWorksheet.prototype.GetFreezePanes = function() {
+		return new ApiFreezePanes(this.worksheet);
+	};
+
+	Object.defineProperty(ApiWorksheet.prototype, "FreezePanes", {
+		get: function () {
+			return this.GetFreezePanes();
+		}
+	});
+
 
 	/**
 	 * Specifies the cell border position.
@@ -1997,7 +2095,7 @@
 				if (r < 0) r = 0;
 				result = new ApiRange(this.range.worksheet.getRange3(r, this.range.bbox.c1, r, this.range.bbox.c2));
 			} else {
-				console.error(new Error('The nRow must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
+				private_makeError('The nRow must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1), false);
 			}
 		}
 		return result;
@@ -2028,7 +2126,7 @@
 				if (c < 0) c = 0;
 				result = new ApiRange(this.range.worksheet.getRange3(this.range.bbox.r1, c, this.range.bbox.r2, c));
 			} else {
-				console.error(new Error('The nCol must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1)))
+				private_makeError('The nCol must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1), false);
 			}
 		} 
 		return result;
@@ -2968,16 +3066,18 @@
 	 * Returns one cell or cells from the merge area.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiRange}
+	 * @returns {ApiRange | null} - returns null if range isn't one cell
 	 */
 	Object.defineProperty(ApiRange.prototype, "MergeArea", {
 		get: function () {
+			let result = null;
 			if (this.range.isOneCell()) {
 				var bb = this.range.hasMerged();
-				return new ApiRange((bb) ? AscCommonExcel.Range.prototype.createFromBBox(this.range.worksheet, bb) : this.range);
+				result = new ApiRange((bb) ? AscCommonExcel.Range.prototype.createFromBBox(this.range.worksheet, bb) : this.range);
 			} else {
-				console.error(new Error('Range must be is one cell.'));
+				private_makeError('Range must be is one cell.', false);
 			}
+			return result;
 		}
 	});
 
@@ -3091,7 +3191,14 @@
 	ApiRange.prototype.Select = function () {
 		if (this.range.worksheet.getId() === this.range.worksheet.workbook.getActiveWs().getId()) {
 			var newSelection = new AscCommonExcel.SelectionRange(this.range.worksheet);
-			newSelection.assign2(this.range.bbox);
+			let bbox = this.range.bbox;
+			newSelection.assign2(bbox);
+			if (this.areas) {
+				this.areas.forEach(function(el){
+					if (!bbox.isEqual(el.bbox))
+						newSelection.ranges.push(el.bbox);
+				})
+			}
 			newSelection.Select();
 		}
 	};
@@ -3317,7 +3424,7 @@
 			var range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols) );
 			this.range.move(range.bbox, true, destination.range.worksheet);
 		} else {
-			console.error(new Error ("Invalid destination"));
+			private_makeError('Invalid destination', false);
 		}
 	};
 
@@ -3335,7 +3442,7 @@
 			var range = this.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols) );
 			rangeFrom.range.move(range.bbox, true, range.worksheet);
 		} else {
-			console.error(new Error ("Invalid range"));
+			private_makeError('Invalid range', false);
 		}
 	};
 
@@ -3455,7 +3562,7 @@
 			this._searchOptions = options;
 			return res;
 		} else {
-			console.error(new Error('Invalid parametr "What".'));
+			private_makeError('Invalid parametr "What".', false);
 			return null;
 		}
 	};
@@ -3495,7 +3602,7 @@
 			}
 			return res;
 		} else {
-			console.error(new Error('You should use "Find" method before this.'));
+			private_makeError('You should use "Find" method before this.', false);
 			return null;
 		}
 	};
@@ -3535,7 +3642,7 @@
 			}
 			return res;
 		} else {
-			console.error(new Error('You should use "Find" method before this.'));
+			private_makeError('You should use "Find" method before this.', false);
 			return null;
 		}
 	};
@@ -3557,7 +3664,6 @@
 	 * @param {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
 	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
 	 * @param {boolean} ReplaceAll - Specifies if all the found data will be replaced or not. The default value is "true".
-	 * 
 	 */
 	ApiRange.prototype.Replace = function(oReplaceData) {
 		let What, Replacement, LookAt, SearchOrder, SearchDirection, MatchCase, ReplaceAll;
@@ -3614,7 +3720,7 @@
 				this.range.worksheet.workbook.oApi.wb.replaceCellText(options);
 			}
 		} else {
-			console.error(new Error('Invalid type of parametr "What" or "Replacement".'));
+			private_makeError('Invalid type of parametr "What" or "Replacement".', false);
 		}
 	};
 
@@ -4633,12 +4739,12 @@
 	 */
 	ApiName.prototype.SetName = function (sName) {
 		if (!sName || typeof sName !== 'string' || !this.DefName) {
-			console.error(new Error('Invalid name or Defname is undefined.'));
+			private_makeError('Invalid name or Defname is undefined.', false);
 			return false;
 		}
 		var res = this.DefName.wb.checkDefName(sName);
 		if (!res.status) {
-			console.error(new Error('Invalid name.')); // invalid name
+			private_makeError('Invalid name.', false); // invalid name
 			return false; 
 		}
 		var oldName = this.DefName.getAscCDefName(false);
@@ -5439,7 +5545,7 @@
 			if (excess) {
 				length -= excess;
 				if (!length) {
-					console.error(new Error("Max symbols in one cell."))
+					private_makeError('Max symbols in one cell.', false);
 					return;
 				}
 				String = String.slice(0, length);
@@ -5622,7 +5728,7 @@
 	 */
 	ApiFont.prototype.SetBold = function (isBold) {
 		if (typeof isBold !== 'boolean') {
-			console.error(new Error('Invalid type of parametr "isBold".'));
+			private_makeError('Invalid type of parametr "isBold".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5702,7 +5808,7 @@
 	 */
 	ApiFont.prototype.SetItalic = function (isItalic) {
 		if (typeof isItalic !== 'boolean') {
-			console.error(new Error('Invalid type of parametr "isItalic".'));
+			private_makeError('Invalid type of parametr "isItalic".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5782,7 +5888,7 @@
 	 */
 	ApiFont.prototype.SetSize = function (Size) {
 		if (typeof Size !== 'number' || Size < 0 || Size > 409) {
-			console.error(new Error('Invalid type of parametr "Size".'));
+			private_makeError('Invalid type of parametr "Size".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5862,7 +5968,7 @@
 	 */
 	ApiFont.prototype.SetStrikethrough = function (isStrikethrough) {
 		if (typeof isStrikethrough !== 'boolean') {
-			console.error(new Error('Invalid type of parametr "isStrikethrough".'));
+			private_makeError('Invalid type of parametr "isStrikethrough".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5973,7 +6079,7 @@
 	 */
 	ApiFont.prototype.SetUnderline = function (Underline) {
 		if (typeof Underline !== 'string') {
-			console.error(new Error('Invalid type of parametr "isUnderline".'));
+			private_makeError('Invalid type of parametr "isUnderline".', false);
 			return;
 		}
 		switch (Underline) {
@@ -6078,7 +6184,7 @@
 	 */
 	ApiFont.prototype.SetSubscript = function (isSubscript) {
 		if (typeof isSubscript !== 'boolean') {
-			console.error(new Error('Invalid type of parameter "isSubscript".'));
+			private_makeError('Invalid type of parametr "isSubscript".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6158,7 +6264,7 @@
 	 */
 	ApiFont.prototype.SetSuperscript = function (isSuperscript) {
 		if (typeof isSuperscript !== 'boolean') {
-			console.error(new Error('Invalid type of parametr "isSuperscript".'));
+			private_makeError('Invalid type of parametr "isSuperscript".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6238,7 +6344,7 @@
 	 */
 	ApiFont.prototype.SetName = function (FontName) {
 		if (typeof FontName !== 'string') {
-			console.error(new Error('Invalid type of parametr "FontName".'));
+			private_makeError('Invalid type of parametr "FontName".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6319,7 +6425,7 @@
 	 */
 	ApiFont.prototype.SetColor = function (Color) {
 		if (!Color instanceof ApiColor) {
-			console.error(new Error('Invalid type of parametr "Color".'));
+			private_makeError('Invalid type of parametr "Color".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6359,6 +6465,116 @@
 		}
 	});
 
+	
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiFreezePanes
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Sets the frozen cells in the active worksheet view. The range provided corresponds to cells that will be frozen in the top- and left-most pane.
+	 * @memberof ApiFreezePanes
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange | String} frozenRange - A range that represents the cells to be frozen panes.
+	 * @since 7.6.0
+	 */
+	ApiFreezePanes.prototype.FreezeAt = function(frozenRange) {
+		let api = this.ws.workbook.oApi;
+		let tempRange = (typeof frozenRange === 'string') ? api.GetRange(frozenRange) : frozenRange;
+
+		if (tempRange.range) {
+			let bbox = tempRange.range.bbox;
+			let r = bbox.r2 < AscCommon.gc_nMaxRow0 ? bbox.r2 + 1 : bbox.r2;
+			let c = bbox.c2 < AscCommon.gc_nMaxCol0 ? bbox.c2 + 1 : bbox.c2;
+			api.asc_freezePane(null, c, r);
+		} else {
+			private_makeError('Invalid parametr "frozenRange".', false);
+		}
+	};
+
+	/**
+	 * Freeze the first column or columns of the worksheet in place.
+	 * @memberof ApiFreezePanes
+	 * @typeofeditors ["CSE"]
+	 * @param {Number?} [count=0] - Optional number of columns to freeze, or zero to unfreeze all columns.
+	 * @since 7.6.0
+	 */
+	ApiFreezePanes.prototype.FreezeColumns = function(count) {
+		let api = this.ws.workbook.oApi;
+		if (count == undefined) count = 0;
+		if (typeof count === 'number' && count > 0 && count <= AscCommon.gc_nMaxCol0) {
+			api.asc_freezePane(null, count, 0);
+		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
+			api.asc_freezePane(undefined);
+		} else {
+			private_makeError('Invalid parametr "count".', false);
+		}
+	};
+
+	/**
+	 * Freeze the top row or rows of the worksheet in place.
+	 * @memberof ApiFreezePanes
+	 * @typeofeditors ["CSE"]
+	 * @param {Number?} [count=0] - Optional number of rows to freeze, or zero to unfreeze all rows.
+	 * @since 7.6.0
+	 */
+	ApiFreezePanes.prototype.FreezeRows = function(count) {
+		let api = this.ws.workbook.oApi;
+		if (count == undefined) count = 0;
+		if (typeof count === 'number' && count > 0 && count <= AscCommon.gc_nMaxRow0) {
+			api.asc_freezePane(null, 0, count);
+		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
+			api.asc_freezePane(undefined);
+		} else {
+			private_makeError('Invalid parametr "count".', false);
+		}
+	};
+
+	/**
+	 * Gets a range that describes the frozen cells in the active worksheet view.
+	 * @memberof ApiFreezePanes
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange | null} - Returns null if there is no frozen pane.
+	 * @since 7.6.0
+	 */
+	ApiFreezePanes.prototype.GetLocation = function() {
+		let result = null;
+		let api = this.ws.workbook.oApi;
+		let cell = api.wb.getWorksheet().topLeftFrozenCell;
+		if (cell) {
+			let c = cell.getCol0();
+			let r = cell.getRow0();
+			if (c == 0) {
+				// hole row
+				r--;
+				c = AscCommon.gc_nMaxCol0;
+			} else if (r == 0) {
+				// whole column
+				c--;
+				r = AscCommon.gc_nMaxRow0;
+			} else {
+				// cell
+				r--;
+				c--;
+			}
+			result = new ApiRange(this.ws.getRange3(0, 0, r, c));
+		}
+		return result;
+	};
+
+	/**
+	 * Removes all frozen panes in the worksheet.
+	 * @memberof ApiFreezePanes
+	 * @typeofeditors ["CSE"]
+	 * @since 7.6.0
+	 */
+	ApiFreezePanes.prototype.Unfreeze = function() {
+		if (!!this.ws.workbook.oApi.wb.getWorksheet().topLeftFrozenCell)
+			this.ws.workbook.oApi.asc_freezePane(undefined);
+	};
+
+
 	Api.prototype["Format"]                = Api.prototype.Format;
 	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
 	Api.prototype["GetSheets"]             = Api.prototype.GetSheets;
@@ -6384,6 +6600,8 @@
 	Api.prototype["AddComment"]  = Api.prototype.AddComment;
 	Api.prototype["GetComments"] = Api.prototype.GetComments;
 	Api.prototype["GetCommentById"] = Api.prototype.GetCommentById;
+	Api.prototype["SetFreezePanesType"] = Api.prototype.SetFreezePanesType;
+	Api.prototype["GetFreezePanesType"] = Api.prototype.GetFreezePanesType;
 
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
@@ -6436,6 +6654,7 @@
 	ApiWorksheet.prototype["GetAllCharts"] = ApiWorksheet.prototype.GetAllCharts;
 	ApiWorksheet.prototype["GetAllOleObjects"] = ApiWorksheet.prototype.GetAllOleObjects;
 	ApiWorksheet.prototype["Move"] = ApiWorksheet.prototype.Move;
+	ApiWorksheet.prototype["GetFreezePanes"] = ApiWorksheet.prototype.GetFreezePanes;
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
@@ -6650,6 +6869,13 @@
 	ApiFont.prototype["GetColor"]                = ApiFont.prototype.GetColor;
 	ApiFont.prototype["SetColor"]                = ApiFont.prototype.SetColor;
 
+	ApiFreezePanes.prototype["FreezeAt"]         = ApiFreezePanes.prototype.FreezeAt;
+	ApiFreezePanes.prototype["FreezeColumns"]    = ApiFreezePanes.prototype.FreezeColumns;
+	ApiFreezePanes.prototype["FreezeRows"]       = ApiFreezePanes.prototype.FreezeRows;
+	ApiFreezePanes.prototype["GetLocation"]      = ApiFreezePanes.prototype.GetLocation;
+	ApiFreezePanes.prototype["Unfreeze"]         = ApiFreezePanes.prototype.Unfreeze;
+
+
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset,  nFromRow, nRowOffset, pos){
 		oDrawing.x = 0;
 		oDrawing.y = 0;
@@ -6723,12 +6949,12 @@
 	function private_AddDefName(wb, name, ref, sheetInd, hidden) {
 		let res = wb.checkDefName(name);
 		if (!res.status) {
-			console.error(new Error('Invalid name.'));
+			private_makeError('Invalid name.', false);
 			return false;
 		}
 		res = wb.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.Chart, ref, false);
 		if (res === Asc.c_oAscError.ID.DataRangeError) {
-			console.error(new Error('Invalid range.'));
+			private_makeError('Invalid range.', false);
 			return false;
 		}
 		if (sheetInd) {
@@ -6798,5 +7024,16 @@
 
 		return nLockType;
 	}
+
+	function private_makeError(message, bMakeThrow) {
+		let err = new Error(message);
+		if (!console.error)
+			console.log(err);
+		
+		if (!bMakeThrow && console.error)
+			console.error(err)
+		else if (bMakeThrow)
+			throw err;
+	};
 
 }(window, null));

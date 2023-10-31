@@ -885,10 +885,10 @@ function (window, undefined) {
 	CHeaderFooterEditorSection.prototype.getPictures = function () {
 		return this.pictures;
 	};
-	CHeaderFooterEditorSection.prototype.getStringName = function () {
-		let sPortionPrefix = this.getStringPortion();
+	CHeaderFooterEditorSection.prototype.getStringName = function (portion, type) {
+		let sPortionPrefix = this.getStringPortion(portion);
 		if (sPortionPrefix) {
-			let sType = this.getStringType();
+			let sType = this.getStringType(type);
 			if (sType) {
 				return sPortionPrefix + sType;
 			}
@@ -896,18 +896,24 @@ function (window, undefined) {
 		return null;
 	};
 
-	CHeaderFooterEditorSection.prototype.getStringPortion = function () {
+	CHeaderFooterEditorSection.prototype.getStringPortion = function (portion) {
 		let sPortion = null;
-		switch (this.portion) {
-			case c_oPortionPosition.left: {
+		if (portion == null) {
+			portion = this.portion;
+		}
+		switch (portion) {
+			case c_nPortionLeftHeader:
+			case c_nPortionLeftFooter: {
 				sPortion = "L";
 				break;
 			}
-			case c_oPortionPosition.center: {
+			case c_nPortionCenterHeader:
+			case c_nPortionCenterFooter: {
 				sPortion = "C";
 				break;
 			}
-			case c_oPortionPosition.right: {
+			case c_nPortionRightHeader:
+			case c_nPortionRightFooter: {
 				sPortion = "R";
 				break;
 			}
@@ -916,10 +922,13 @@ function (window, undefined) {
 		return sPortion;
 	};
 
-	CHeaderFooterEditorSection.prototype.getStringType = function () {
+	CHeaderFooterEditorSection.prototype.getStringType = function (type) {
 		//"LH", "CH", "RH", "LF", "CF", "RF", "LHEVEN",..., "LHFIRST"
 		let sType = null;
-		switch (this.type) {
+		if (type == null) {
+			type = this.type;
+		}
+		switch (type) {
 			case asc.c_oAscPageHFType.oddFooter: {
 				sType = "F";
 				break;
@@ -1122,7 +1131,10 @@ function (window, undefined) {
 			prevField.canvasObj.canvas.style.display = "block";
 
 			this.cellEditor.close();
-			document.getElementById(this.editorElemId).remove();
+			let elem = document.getElementById(this.editorElemId);
+			if (elem) {
+				elem.parentNode.removeChild(elem);
+			}
 		}
 
 		this.curParentFocusId = null;
@@ -1427,6 +1439,8 @@ function (window, undefined) {
 		this.differentFirst = props.differentFirst;
 		this.differentOddEven = props.differentOddEven;
 		this.scaleWithDoc = props.scaleWithDoc;
+
+		this.needAddPicturesMap = props.needAddPicturesMap;
 	};
 
 	CHeaderFooterEditor.prototype.getPropsToInterface = function (savedHeaderFooter) {
@@ -1453,6 +1467,7 @@ function (window, undefined) {
 		res.differentFirst = this.differentFirst;
 		res.differentOddEven = this.differentOddEven;
 		res.scaleWithDoc = this.scaleWithDoc;
+		res.needAddPicturesMap = this.needAddPicturesMap;
 
 		return res;
 	};
@@ -1546,7 +1561,12 @@ function (window, undefined) {
 
 		//save pictures
 		if (ws && ws.changeLegacyDrawingHFPictures && this.needAddPicturesMap) {
-			ws.changeLegacyDrawingHFPictures(this.needAddPicturesMap)
+			ws.changeLegacyDrawingHFPictures(this.needAddPicturesMap);
+		} else if (opt_headerFooter && this.needAddPicturesMap) {
+			if (!opt_headerFooter.legacyDrawingHF) {
+				opt_headerFooter.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF();
+			}
+			opt_headerFooter.legacyDrawingHF.addPictures(this.needAddPicturesMap, true);
 		}
 
 		if (isAddHistory) {
@@ -1672,7 +1692,7 @@ function (window, undefined) {
 	CHeaderFooterEditor.prototype.addPictureField = function () {
 		let t = this;
 		let showFileDialog = function (needPushField) {
-
+			t.api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 			t.api.asc_addImage({
 				callback: function (oImage) {
 					if (oImage) {
@@ -1687,6 +1707,7 @@ function (window, undefined) {
 							}
 						}
 					}
+					t.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 				}
 			});
 		};
@@ -2298,7 +2319,7 @@ function (window, undefined) {
 
 	};
 
-	CLegacyDrawingHF.prototype.addPictures = function (picturesMap) {
+	CLegacyDrawingHF.prototype.addPictures = function (picturesMap, notDeletePictures) {
 		let t = this;
 		let api = window["Asc"]["editor"];
 
@@ -2320,7 +2341,9 @@ function (window, undefined) {
 				newHFDrawing.graphicObject = ws.objectRender.controller.createImage(url, 0, 0, __w, __h);
 				t.changePicture(oldHFDrawing && oldHFDrawing.obj, newHFDrawing, true);
 
-				delete picturesMap[i];
+				if (!notDeletePictures) {
+					delete picturesMap[i];
+				}
 			}
 		}
 	};
@@ -2345,7 +2368,7 @@ function (window, undefined) {
 			this.addPicture(to, addToHistory);
 		}
 
-		if ((from || to) && addToHistory) {
+		if ((from || to) && addToHistory && this.ws) {
 			let fromData = from && new AscCommonExcel.UndoRedoData_LegacyDrawingHFDrawing(from.id, from.graphicObject.Id);
 			let toData = to && new AscCommonExcel.UndoRedoData_LegacyDrawingHFDrawing(to.id, to.graphicObject.Id);
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ChangeLegacyDrawingHFDrawing, this.ws.getId(),

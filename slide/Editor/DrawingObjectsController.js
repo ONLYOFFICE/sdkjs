@@ -112,33 +112,11 @@ DrawingObjectsController.prototype.recalculateCurPos = function(bUpdateX, bUpdat
 
 DrawingObjectsController.prototype.getColorMap = function()
 {
-
-    if(this.drawingObjects )
+    if(this.drawingObjects)
     {
-        if(this.drawingObjects.clrMap)
+        if(this.drawingObjects.getColorMap)
         {
-            return this.drawingObjects.clrMap;
-        }
-        else if(this.drawingObjects.Layout )
-        {
-            if(this.drawingObjects.Layout.clrMap)
-            {
-                return this.drawingObjects.Layout.clrMap;
-            }
-            else if(this.drawingObjects.Layout.Master)
-            {
-                if(this.drawingObjects.Layout.Master.clrMap)
-                {
-                    return this.drawingObjects.Layout.Master.clrMap;
-                }
-            }
-        }
-        else if(this.drawingObjects.Master )
-        {
-            if(this.drawingObjects.Master.clrMap)
-            {
-                return this.drawingObjects.Master.clrMap;
-            }
+            return this.drawingObjects.getColorMap();
         }
     }
     return AscFormat.GetDefaultColorMap();
@@ -176,7 +154,7 @@ DrawingObjectsController.prototype.handleOleObjectDoubleClick = function(drawing
     oPresentation.OnMouseUp(e, x, y, pageIndex);
 };
 
-DrawingObjectsController.prototype.checkSelectedObjectsAndCallback = function(callback, args, bNoSendProps, nHistoryPointType, aAdditionaObjects)
+DrawingObjectsController.prototype.checkSelectedObjectsAndCallback = function(callback, args, bNoSendProps, nHistoryPointType, aAdditionaObjects, bNoCheckLock)
 {
     var check_type = AscCommon.changestype_Drawing_Props, comment;
     var aCommentData = undefined;
@@ -195,7 +173,7 @@ DrawingObjectsController.prototype.checkSelectedObjectsAndCallback = function(ca
         }
     }
 	let oPresentation = this.getPresentation();
-    if(oPresentation.Document_Is_SelectionLocked(check_type, aCommentData, undefined, aAdditionaObjects) === false)
+    if(bNoCheckLock || oPresentation.Document_Is_SelectionLocked(check_type, aCommentData, undefined, aAdditionaObjects) === false)
     {
         var nPointType = AscFormat.isRealNumber(nHistoryPointType) ? nHistoryPointType : AscDFH.historydescription_CommonControllerCheckSelected;
         oPresentation.StartAction(nPointType)

@@ -4804,6 +4804,7 @@
 					maxFilterRow--;
 				}
 
+				let g_cCharDelimiter = AscCommon.g_cCharDelimiter;
 				let findDateTimeFormat;
 				let individualCount = 0, count = 0;
 				let visibleCount = 0, maxVisibleCountTooltip = 100;
@@ -4836,8 +4837,10 @@
 					if (isDateTimeFormat) {
 						dataValue = AscCommon.NumFormat.prototype.parseDate(val);
 						findDateTimeFormat = true;
-						textLowerCase = dataValue.countDay + dataValue.d +  dataValue.dayWeek + dataValue.dayWeek + dataValue.hour +
-							dataValue.min + dataValue.month + dataValue.sec + dataValue.year;
+						textLowerCase =
+							dataValue.countDay + g_cCharDelimiter + dataValue.d + g_cCharDelimiter + dataValue.dayWeek + g_cCharDelimiter + dataValue.dayWeek + g_cCharDelimiter +
+							dataValue.hour + g_cCharDelimiter + dataValue.min + g_cCharDelimiter + dataValue.month + g_cCharDelimiter + dataValue.sec + g_cCharDelimiter +
+							dataValue.year;
 					}
 
 					//check duplicate value
@@ -4947,19 +4950,6 @@
 					}
 				}
 
-				if (findDateTimeFormat) {
-					_values.sort(function (a, b) {
-						if (a.isDateFormat && !b.isDateFormat) {
-							return -1;
-						}
-						if (!a.isDateFormat && b.isDateFormat) {
-							return 1;
-						}
-						if (a.isDateFormat && b.isDateFormat) {
-							return parseFloat(a.val) > parseFloat(b.val) ? -1 : 1;
-						}
-					});
-				}
 
 				return {values: _values, automaticRowCount: automaticRowCount, ignoreCustomFilter: ignoreCustomFilter, isTimeFormat: isTimeFormat};
 			},
@@ -5033,20 +5023,38 @@
 				}
 
 				elements.sort(function sortArr(a, b) {
-					var isNumericA = isNumeric(a.val);
-					var isNumericB = isNumeric(b.val);
+					let val1 = a.val;
+					let val2 = b.val;
+					let isNumericA = isNumeric(val1);
+					let isNumericB = isNumeric(val2);
+					let isDateTimeA = a.isDateFormat;
+					let isDateTimeB = b.isDateFormat;
+
+					if (isDateTimeA && !isDateTimeB) {
+						//date have max priority
+						return -1;
+					} else if (!isDateTimeA && isDateTimeB) {
+						return 1;
+					} else if (isDateTimeA && isDateTimeB) {
+						if (a.year === b.year) {
+							return parseFloat(val1) > parseFloat(val2) ? 1 : -1;
+						} else {
+							return a.year > b.year ? -1 : 1;
+						}
+					}
+
 					if (a.val === "") {
 						return 1;
-					} else if (b.val === "") {
-						return  -1;
+					} else if (val2 === "") {
+						return -1;
 					} else if (isNumericA && isNumericB) {
-						return (isAscending || isAscending === undefined) ? (a.val - b.val) : (b.val - a.val);
+						return (isAscending || isAscending === undefined) ? (val1 - val2) : (val2 - val1);
 					} else if (!isNumericA && !isNumericB) {
-						var _cmp = 0;
-						if (a.val > b.val){
+						let _cmp = 0;
+						if (val1 > val2) {
 							_cmp = 1;
 						}
-						if (a.val < b.val) {
+						if (val1 < val2) {
 							_cmp = -1;
 						}
 						return (isAscending || isAscending === undefined) ? _cmp : -_cmp;
@@ -5577,7 +5585,7 @@
 					for (var i = 0; i < this.worksheet.TableParts.length; i++) {
 						var table = this.worksheet.TableParts[i];
 						if (table && table.Ref.contains(activeCell.col, activeCell.row)) {
-							res = table;
+							res = {table: table, id: i};
 							break;
 						}
 					}

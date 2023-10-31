@@ -34,39 +34,52 @@
 
 (function(window)
 {
-  let oLogicDocument = null;
+  let logicDocument = null;
 
-  function CreateLogicDocument()
-  {
-    if (oLogicDocument)
-      return oLogicDocument;
-    
-    editor.InitEditor();
-    editor.bInit_word_control = true;
-    editor.WordControl.Thumbnails.SetFont = function () {
+	function CreateLogicDocument()
+	{
+		if (logicDocument)
+			return logicDocument;
 
-    };
-		editor.WordControl.StartMainTimer = function ()
-		{
+		logicDocument = new AscCommonSlide.CPresentation(AscTest.DrawingDocument, true);
+		logicDocument.Api = AscTest.Editor;
 
-		};
-    editor.WordControl.InitControl();
-
-    oLogicDocument = editor.WordControl.m_oLogicDocument;
-    oLogicDocument.createNecessaryObjectsIfNoPresent();
-    AscTest.DrawingDocument.m_oLogicDocument = oLogicDocument;
-
-    return oLogicDocument;
-  }
+		AscTest.DrawingDocument.m_oLogicDocument = logicDocument;
+		logicDocument.createNecessaryObjectsIfNoPresent();
+		return logicDocument;
+	}
 
   function GetParagraphText(paragraph)
   {
     return paragraph.GetText({ParaEndToSpace : false});
   }
 
+	function EnterText(text)
+	{
+		if (!logicDocument)
+			return;
+
+		logicDocument.EnterText(text);
+	}
+
+	function TurnOnRecalculate()
+	{
+		logicDocument.Recalculate = AscCommonSlide.CPresentation.prototype.Recalculate.bind(logicDocument);
+		logicDocument.Recalculate2 = AscCommonSlide.CPresentation.prototype.Recalculate2.bind(logicDocument);
+	}
+
+	function TurnOffRecalculate()
+	{
+		logicDocument.Recalculate = function () {};
+		logicDocument.Recalculate2 = function () {};
+	}
+
   //--------------------------------------------------------export----------------------------------------------------
   AscTest.CreateLogicDocument      = CreateLogicDocument;
   AscTest.GetParagraphText         = GetParagraphText;
+  AscTest.EnterText                = EnterText;
+  AscTest.TurnOnRecalculate        = TurnOnRecalculate;
+  AscTest.TurnOffRecalculate       = TurnOffRecalculate;
 
 
 })(window);

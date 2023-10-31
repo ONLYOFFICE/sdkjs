@@ -47,6 +47,7 @@
 	 * @typedef {Object} CommentData
 	 * The comment data.
 	 * @property {string} UserName - The comment author.
+	 * @property {string} QuoteText - The quote comment text.
 	 * @property {string} Text - The comment text.
 	 * @property {string} Time - The time when the comment was posted (in milliseconds).
 	 * @property {boolean} Solved - Specifies if the comment is resolved (**true**) or not (**false**).
@@ -113,8 +114,13 @@
 	 */
 	Api.prototype["pluginMethod_RemoveComments"] = function(arrIds)
 	{
-		for (let comm of arrIds)
-			this.asc_removeComment(comm);
+		for (let comm in arrIds)
+		{
+			if (arrIds.hasOwnProperty(comm))
+			{
+				this.asc_removeComment(arrIds[comm]);
+			}
+		}
 	};
 
 })(window);

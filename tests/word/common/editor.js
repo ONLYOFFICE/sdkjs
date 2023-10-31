@@ -63,7 +63,9 @@
 		GetDotsPerMM : function(value) {return 72;},
 		EndTrackTable : function() {},
 		SetCurrentPage : function(pageNum) {},
-		SelectClear : function() {}
+		SelectClear : function() {},
+		Start_CollaborationEditing : function() {},
+		End_CollaborationEditing : function() {}
 	};
 
 	drawingDocument.CanvasHit = document.createElement('canvas');
@@ -74,6 +76,8 @@
 	const editor = new AscCommon.baseEditorsApi({});
 	editor.WordControl = drawingDocument;
 	editor.WordControl.m_oDrawingDocument = drawingDocument;
+	editor.WordControl.m_oDrawingDocument.m_oWordControl = drawingDocument;
+	editor.WordControl.m_oApi = editor;
 	editor.sync_BeginCatchRevisionsChanges = function(){};
 	editor.sync_EndCatchRevisionsChanges = function(){};
 	editor.sync_ChangeCommentLogicalPosition = function(){};
@@ -101,7 +105,7 @@
 	editor.sync_ColumnsPropsCallback = function(){};
 	editor.sync_LineNumbersPropsCollback = function(){};
 	editor.sync_SectionPropsCallback = function(){};
-	
+
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.DrawingDocument = drawingDocument;
 	AscTest.Editor          = editor;

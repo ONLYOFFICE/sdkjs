@@ -109,7 +109,9 @@ var c_oAscSelectionDialogType = {
   Function: 9,
   DataValidation: 10,
   ConditionalFormattingRule: 11,
-  ImportXml: 12
+  ImportXml: 12,
+  GoalSeek_Cell: 13,
+  GoalSeek_ChangingCell: 14
 };
 
 var c_oAscScrollType = {
@@ -119,7 +121,8 @@ var c_oAscScrollType = {
 
 var c_oAscHyperlinkType = {
   WebLink: 1,
-  RangeLink: 2
+  RangeLink: 2,
+  FileLink: 3
 };
 
 var c_oAscMouseMoveType = {
@@ -360,7 +363,8 @@ var c_oAscVisibleAreaOleEditorBorderColor = new CColor(32, 139, 255);
     sheetRemove: 3,
     sheetRename: 4,
     sheetChangeIndex: 5,
-    markModifiedSearch: 6
+    markModifiedSearch: 6,
+    mergeRange: 7
   };
 
   var c_oAscLockNameFrozenPane = "frozenPane";
@@ -600,6 +604,12 @@ var c_oAscPopUpSelectorType = {
   };
 
 
+  var c_oAscRemoveArrowsType = {
+    all: 0,
+    precedent: 1,
+    dependent: 2
+  };
+
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window['AscCommonExcel'].c_oAscDrawDepOptions = c_oAscDrawDepOptions;
@@ -695,11 +705,15 @@ var c_oAscPopUpSelectorType = {
   prot['DataValidation'] = prot.DataValidation;
   prot['ImportXml'] = prot.ImportXml;
   prot['ConditionalFormattingRule'] = prot.ConditionalFormattingRule;
+  prot['GoalSeek_Cell'] = prot.GoalSeek_Cell;
+  prot['GoalSeek_ChangingCell'] = prot.GoalSeek_ChangingCell;
+
 
   window['Asc']['c_oAscHyperlinkType'] = window['Asc'].c_oAscHyperlinkType = c_oAscHyperlinkType;
   prot = c_oAscHyperlinkType;
   prot['WebLink'] = prot.WebLink;
   prot['RangeLink'] = prot.RangeLink;
+  prot['FileLink'] = prot.FileLink;
   window['Asc']['c_oAscMouseMoveType'] = window['Asc'].c_oAscMouseMoveType = c_oAscMouseMoveType;
   prot = c_oAscMouseMoveType;
   prot['None'] = prot.None;
@@ -1002,6 +1016,11 @@ var c_oAscPopUpSelectorType = {
   prot['all'] = prot.all;
   prot['insertRemove'] = prot.insertRemove;
   prot['reset'] = prot.reset;
+  window['Asc']['c_oAscRemoveArrowsType'] = window['Asc'].c_oAscRemoveArrowsType = c_oAscRemoveArrowsType;
+  prot = c_oAscRemoveArrowsType;
+  prot['all'] = prot.all;
+  prot['precedent'] = prot.precedent;
+  prot['dependent'] = prot.dependent;
 
   window['Asc']['c_oAscSeriesInType'] = window['Asc'].c_oAscSeriesInType = c_oAscSeriesInType;
   prot = c_oAscSeriesInType;

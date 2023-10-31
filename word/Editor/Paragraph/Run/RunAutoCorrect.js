@@ -87,7 +87,7 @@
 			return;
 
 		let oDocument = this.Paragraph.GetLogicDocument();
-		if (!oDocument || !(oDocument instanceof CDocument) && !(oDocument instanceof CPresentation))
+		if (!oDocument || (!oDocument.IsDocumentEditor() && !oDocument.IsPresentationEditor()))
 			return;
 
 		this.Document = oDocument;

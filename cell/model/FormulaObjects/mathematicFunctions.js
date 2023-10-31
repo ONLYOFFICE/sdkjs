@@ -3306,68 +3306,108 @@
 	cPOWER.prototype.Calculate = function (arg) {
 
 		function powerHelper(a, b) {
-			if (a == 0 && b < 0) {
+			if (a === 0 && b < 0) {
 				return new cError(cErrorType.division_by_zero);
 			}
-			if (a == 0 && b == 0) {
-				return new cError(cErrorType.not_numeric);
-			}
 
-			return new cNumber(Math.pow(a, b));
+			if (a >= 0 || Math.round(b) === b) {
+				return new cNumber(Math.pow(a, b));
+			} else {
+				let r = -1 * Math.pow(-a, b);
+				if (Math.round(Math.pow(r, 1 / b)) === Math.round(a)) {
+					return new cNumber(r);
+				} else {
+					return new cError(cErrorType.not_numeric);
+				}
+			}
 		}
 
-		function f(a, b, r, c) {
-			if (a instanceof cNumber && b instanceof cNumber) {
+		function f(a, b, r, c, shouldBeNA) {
+			if (cElementType.number === a.type && cElementType.number === b.type) {
 				this.array[r][c] = powerHelper(a.getValue(), b.getValue());
 			} else {
-				this.array[r][c] = new cError(cErrorType.wrong_value_type);
+				if (shouldBeNA) {
+					this.array[r][c] = new cError(cErrorType.not_available);
+				} else if (cElementType.error === a.type) {
+					this.array[r][c] = a;
+				} else if (cElementType.error === b.type) {
+					this.array[r][c] = b;
+				} else {
+					this.array[r][c] = new cError(cErrorType.wrong_value_type);
+				}
 			}
 		}
-
-		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cArea || arg1 instanceof cArea3D) {
-			arg0 = arg0.cross(arguments[1]);
+		
+		let arg0 = arg[0], arg1 = arg[1], t = this;
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			arg0 = arg0.getFullArray();
+			if (arg0.isOneElement()) {
+				arg0 = arg0.getFirstElement();
+			}
 		}
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
-			arg1 = arg1.cross(arguments[1]);
+		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
+			arg1 = arg1.getFullArray();
+			if (arg1.isOneElement()) {
+				arg1 = arg1.getFirstElement();
+			}
 		}
+		
 		arg0 = arg0.tocNumber();
 		arg1 = arg1.tocNumber();
 
-		if (arg0 instanceof cError) {
+		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (cElementType.error === arg1.type) {
 			return arg1;
 		}
 
-		if (arg0 instanceof cArray && arg1 instanceof cArray) {
+		if (cElementType.array === arg0.type && cElementType.array === arg1.type) {
 			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
-				return new cError(cErrorType.not_available);
+				let arg0Dimensions = arg0.getDimensions(),
+					arg1Dimensions = arg1.getDimensions(), shouldBeNA;
+
+				arg0.foreach(function (elem, r, c) {
+					let power;
+					
+					if (arg1Dimensions.row === 1 && r > 0) {
+						power = arg1.getElementRowCol(0, c);
+					} else if (arg1Dimensions.col === 1 && c > 0) {
+						power = arg1.getElementRowCol(r, 0);
+					} else {
+						if (arg1Dimensions.row - 1 < r || arg1Dimensions.col - 1 < c) {
+							shouldBeNA = true;
+							power = new cError(cErrorType.not_available);
+						}
+						power = power ? power : arg1.getElementRowCol(r, c);
+					}
+
+					f.call(this, elem, power, r, c, shouldBeNA);
+				});
+				return arg0;
 			} else {
 				arg0.foreach(function (elem, r, c) {
 					f.call(this, elem, arg1.getElementRowCol(r, c), r, c);
 				});
 				return arg0;
 			}
-		} else if (arg0 instanceof cArray) {
+		} else if (cElementType.array === arg0.type) {
 			arg0.foreach(function (elem, r, c) {
 				f.call(this, elem, arg1, r, c)
 			});
 			return arg0;
-		} else if (arg1 instanceof cArray) {
+		} else if (cElementType.array === arg1.type) {
 			arg1.foreach(function (elem, r, c) {
 				f.call(this, arg0, elem, r, c);
 			});
 			return arg1;
 		}
 
-		if (!(arg0 instanceof cNumber) || ( arg1 && !(arg0 instanceof cNumber) )) {
+		if (!(cElementType.number === arg0.type) || (arg1 && !(cElementType.number === arg0.type))) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
 		return powerHelper(arg0.getValue(), arg1.getValue());
-
 	};
 
 	/**
@@ -5210,10 +5250,12 @@
 				resArr[i] = [[arg[i]]];
 			}
 
-			row = Math.max(resArr[0].length, row);
-			col = resArr[0][0] ? Math.max(resArr[0][0].length, col) : 0;
+			let matrixSize = arg[i].getDimensions();
 
-			if (row != resArr[i].length || (resArr[i][0] && col != resArr[i][0].length)) {
+			row = Math.max(matrixSize.row, row);
+			col = Math.max(matrixSize.col, col);
+
+			if (row !== matrixSize.row || col !== matrixSize.col) {
 				return new cError(cErrorType.not_numeric);
 			}
 
@@ -5222,11 +5264,15 @@
 			}
 		}
 
+		let emptyVal = new cEmpty();
 		for (let iRow = 0; iRow < row; iRow++) {
 			for (let iCol = 0; iCol < col; iCol++) {
 				res = 1;
 				for (let iRes = 0; iRes < resArr.length; iRes++) {
-					arg0 = resArr[iRes][iRow][iCol];
+					arg0 = resArr[iRes] && resArr[iRes][iRow] && resArr[iRes][iRow][iCol];
+					if (!arg0) {
+						arg0 = emptyVal;
+					}
 					if (cElementType.error === arg0.type) {
 						return arg0;
 					} else if (cElementType.string === arg0.type) {

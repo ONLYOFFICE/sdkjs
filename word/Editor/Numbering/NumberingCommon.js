@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 08.05.2018
- * Time: 15:41
- */
 
 var numbering_lvltext_Text = 1;
 var numbering_lvltext_Num  = 2;

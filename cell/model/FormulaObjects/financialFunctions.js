@@ -497,10 +497,14 @@
 			calcMethod = arg[7] && !(cElementType.empty === arg[7].type) ? arg[7] : new cBool(true);
 
 		// ------------------------- arg0 type check -------------------------//
-		if (cElementType.cell === issue.type) {
+		if (cElementType.cell === issue.type || cElementType.cell3D === issue.type) {
 			issue = issue.getValue();
 		} else if (cElementType.cellsRange === issue.type || cElementType.cellsRange3D === issue.type) {
-			issue = issue.cross(arguments[1]);
+			if (issue.isOneElement()) {
+				issue = issue.getFirstElement();
+			} else {
+				issue = new cError(cErrorType.wrong_value_type);
+			}
 		} else if (cElementType.array === issue.type) {
 			issue = issue.getElementRowCol(0, 0);
 		}
@@ -512,10 +516,14 @@
 		}
 
 		// ------------------------- arg1 type check -------------------------//
-		if (cElementType.cell === firstInterest.type) {
+		if (cElementType.cell === firstInterest.type || cElementType.cell3D === firstInterest.type) {
 			firstInterest = firstInterest.getValue();
 		} else if (cElementType.cellsRange === firstInterest.type || cElementType.cellsRange3D === firstInterest.type) {
-			firstInterest = firstInterest.cross(arguments[1]);
+			if (firstInterest.isOneElement()) {
+				firstInterest = firstInterest.getFirstElement();
+			} else {
+				firstInterest = new cError(cErrorType.wrong_value_type);
+			}
 		} else if (cElementType.array === firstInterest.type) {
 			firstInterest = firstInterest.getElementRowCol(0, 0);
 		}
@@ -527,10 +535,14 @@
 		}
 
 		// ------------------------- arg2 type check -------------------------//
-		if (cElementType.cell === settlement.type) {
+		if (cElementType.cell === settlement.type || cElementType.cell3D === settlement.type) {
 			settlement = settlement.getValue();
 		} else if (cElementType.cellsRange === settlement.type || cElementType.cellsRange3D === settlement.type) {
-			settlement = settlement.cross(arguments[1]);
+			if (settlement.isOneElement()) {
+				settlement = settlement.getFirstElement();
+			} else {
+				settlement = new cError(cErrorType.wrong_value_type);
+			}
 		} else if (cElementType.array === settlement.type) {
 			settlement = settlement.getElementRowCol(0, 0);
 		}
@@ -542,10 +554,14 @@
 		}
 
 		// ------------------------- arg3 type check -------------------------//
-		if (cElementType.cell === rate.type) {
+		if (cElementType.cell === rate.type || cElementType.cell3D === rate.type) {
 			rate = rate.getValue();
 		} else if (cElementType.cellsRange === rate.type || cElementType.cellsRange3D === rate.type) {
-			rate = rate.cross(arguments[1]);
+			if (rate.isOneElement()) {
+				rate = rate.getFirstElement();
+			} else {
+				rate = new cError(cErrorType.wrong_value_type);
+			}
 		} else if (cElementType.array === rate.type) {
 			rate = rate.getElementRowCol(0, 0);
 		}
@@ -557,10 +573,14 @@
 		}
 
 		// ------------------------- arg4 type check -------------------------//
-		if (cElementType.cell === par.type) {
+		if (cElementType.cell === par.type || cElementType.cell3D === par.type) {
 			par = par.getValue();
 		} else if (cElementType.cellsRange === par.type || cElementType.cellsRange3D === par.type) {
-			par = par.cross(arguments[1]);
+			if (par.isOneElement()) {
+				par = par.getFirstElement();
+			} else {
+				par = new cError(cErrorType.wrong_value_type);
+			}
 		} else if (cElementType.array === par.type) {
 			par = par.getElementRowCol(0, 0);
 		}
@@ -570,10 +590,14 @@
 		}
 
 		// ------------------------- arg5 type check -------------------------//
-		if (cElementType.cell === frequency.type) {
+		if (cElementType.cell === frequency.type || cElementType.cell3D === frequency.type) {
 			frequency = frequency.getValue();
 		} else if (cElementType.cellsRange === frequency.type || cElementType.cellsRange3D === frequency.type) {
-			frequency = frequency.cross(arguments[1]);
+			if (frequency.isOneElement()) {
+				frequency = frequency.getFirstElement();
+			} else {
+				frequency = new cError(cErrorType.wrong_value_type);
+			}
 		} else if (cElementType.array === frequency.type) {
 			frequency = frequency.getElementRowCol(0, 0);
 		}
@@ -585,10 +609,14 @@
 		}
 
 		// ------------------------- arg6 type check -------------------------//
-		if (cElementType.cell === basis.type) {
+		if (cElementType.cell === basis.type || cElementType.cell3D === basis.type) {
 			basis = basis.getValue();
 		} else if (cElementType.cellsRange === basis.type || cElementType.cellsRange3D === basis.type) {
-			basis = basis.cross(arguments[1]);
+			if (basis.isOneElement()) {
+				basis = basis.getFirstElement();
+			} else {
+				basis = new cError(cErrorType.wrong_value_type);
+			}
 		} else if (cElementType.array === basis.type) {
 			basis = basis.getElementRowCol(0, 0);
 		}
@@ -600,10 +628,23 @@
 		}
 
 		// ------------------------- arg7 type check -------------------------//
-		if (cElementType.cellsRange === calcMethod.type || cElementType.cellsRange3D === calcMethod.type) {
-			calcMethod = calcMethod.cross(arguments[1]);
+		if (cElementType.cell === calcMethod.type || cElementType.cell3D === calcMethod.type) {
+			calcMethod = calcMethod.getValue();
+		} else if (cElementType.cellsRange === calcMethod.type || cElementType.cellsRange3D === calcMethod.type) {
+			if (calcMethod.isOneElement()) {
+				calcMethod = calcMethod.getFirstElement();
+			} else {
+				calcMethod = new cError(cErrorType.wrong_value_type);
+			}
 		} else if (cElementType.array === calcMethod.type) {
 			calcMethod = calcMethod.getElementRowCol(0, 0);
+		}
+
+		if (cElementType.string === calcMethod.type) {
+			calcMethod = calcMethod.tocNumber();
+		}
+		if (cElementType.error === calcMethod.type) {
+			return calcMethod;
 		}
 
 		issue = issue.tocNumber();
@@ -674,7 +715,7 @@
 		if (settl > fInter && calcMethod) {
 			coupPCD = new cDate(fInter);
 			startDate = endDate = new cDate(settl);
-
+			
 			while (!(numMonths > 0 ? coupPCD >= startDate : coupPCD <= startDate)) {
 				endDate = coupPCD;
 				coupPCD = addMonth(coupPCD, numMonths, endMonth);
@@ -684,14 +725,15 @@
 			coupPCD = addMonth(fInter, numMonthsNeg, endMonth);
 		}
 
+		// basis = 0;
 		firstDate = new cDate(iss > coupPCD ? iss : coupPCD);
-		days = AscCommonExcel.days360(firstDate, settl, basis);
-		// TODO пересмотреть выполнение функции getcoupdays при basis !== 0
+		days = AscCommonExcel.days360(firstDate, settl, basis, true);
 		coupDays = getcoupdays(coupPCD, fInter, frequency, basis).getValue();
 		res = days / coupDays;
 		startDate = new cDate(coupPCD);
 		endDate = iss;
 
+		// ???
 		while (!( numMonthsNeg > 0 ? startDate >= iss : startDate <= iss )) {
 			endDate = startDate;
 			startDate = addMonth(startDate, numMonthsNeg, endMonth);

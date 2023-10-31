@@ -1430,7 +1430,7 @@ CopyProcessor.prototype =
 
 			pptx_content_writer.Start_UseFullUrl();
 			for (var i = 0; i < elements.length; ++i) {
-				if (!(elements[i].Drawing instanceof CGraphicFrame)) {
+				if (!elements[i].Drawing.isTable()) {
 					oThis.oPresentationWriter.WriteBool(true);
 
 					oThis.CopyGraphicObject(oDomTarget, elements[i].Drawing, elements[i]);
@@ -1897,7 +1897,7 @@ CopyProcessor.prototype =
 			this.CopyTable(oDomTarget, Item, aSelectedRows);
 		}
 		History.TurnOff();
-		var graphic_frame = new CGraphicFrame(graphicFrame.parent);
+		var graphic_frame = new AscFormat.CGraphicFrame(graphicFrame.parent);
 		var grid = [];
 
 		for (var i = nMinGrid; i <= nMaxGrid; ++i) {
@@ -2416,7 +2416,7 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
     this.bInBlock = null;
 
 	//ширина элемента в который вставляем страница или ячейка
-    this.dMaxWidth = Page_Width - X_Left_Margin - X_Right_Margin;
+    this.dMaxWidth = getPageWidth();
 	//коэфициент сжатия(например при вставке таблица сжалась, значит при вставке содержимого ячейки к картинкам и таблице будет применен этот коэффициент)
     this.dScaleKoef = 1;
     this.bUseScaleKoef = false;
@@ -4043,7 +4043,7 @@ PasteProcessor.prototype =
 			var fonts = [];
 			//грузим картинки и фонты
 			for (var i in font_map) {
-				fonts.push(new CFont(i, 0, "", 0));
+				fonts.push(new CFont(i));
 			}
 
 			//images
@@ -4079,7 +4079,7 @@ PasteProcessor.prototype =
 					//TODO переделать количество строк и ширину
 					var W = 100;
 					var Rows = 3;
-					var graphic_frame = new CGraphicFrame();
+					var graphic_frame = new AscFormat.CGraphicFrame();
 					graphic_frame.setSpPr(new AscFormat.CSpPr());
 					graphic_frame.spPr.setParent(graphic_frame);
 					graphic_frame.spPr.setXfrm(new AscFormat.CXfrm());
@@ -4274,7 +4274,7 @@ PasteProcessor.prototype =
 					var W = oThis.oDocument.GetWidthMM() / 1.45;
 					var Rows = element.GetRowsCount();
 					var H = Rows * 7.478268771701388;
-					var graphic_frame = new CGraphicFrame();
+					var graphic_frame = new AscFormat.CGraphicFrame();
 					graphic_frame.setSpPr(new AscFormat.CSpPr());
 					graphic_frame.spPr.setParent(graphic_frame);
 					graphic_frame.spPr.setXfrm(new AscFormat.CXfrm());
@@ -4328,7 +4328,7 @@ PasteProcessor.prototype =
 				//для таблиц необходимо рассчитать их размер, чтобы разместить в центре
 				var slide = presentation.Slides[0];
 				for (var i = 0; i < presentationSelectedContent.Drawings.length; i++) {
-					if (presentationSelectedContent.Drawings[i].Drawing instanceof CGraphicFrame) {
+					if (presentationSelectedContent.Drawings[i].Drawing instanceof AscFormat.CGraphicFrame) {
 						var drawing = presentationSelectedContent.Drawings[i].Drawing;
 						var oldParent = drawing.parent;
 						var bDeleted = drawing.bDeleted;
@@ -4371,7 +4371,7 @@ PasteProcessor.prototype =
 		//перебираем шрифты
 		var fonts = [];
 		for (var i in font_map)
-			fonts.push(new CFont(i, 0, "", 0));
+			fonts.push(new CFont(i));
 
 		var oObjectsForDownload = GetObjectsForImageDownload(aContent.aPastedImages);
 		if (oObjectsForDownload.aUrls.length > 0) {
@@ -4380,7 +4380,7 @@ PasteProcessor.prototype =
 				ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
 				//ковертим изображения в презентационный формат
 				for (var i = 0; i < presentationSelectedContent.Drawings.length; i++) {
-					if (!(presentationSelectedContent.Drawings[i].Drawing instanceof CGraphicFrame)) {
+					if (!(presentationSelectedContent.Drawings[i].Drawing instanceof AscFormat.CGraphicFrame)) {
 						AscFormat.ExecuteNoHistory(function () {
 							if (presentationSelectedContent.Drawings[i].Drawing.setBDeleted2) {
 								presentationSelectedContent.Drawings[i].Drawing.setBDeleted2(true);
@@ -4398,7 +4398,7 @@ PasteProcessor.prototype =
 		} else {
 			//ковертим изображения в презентационный формат
 			for (var i = 0; i < presentationSelectedContent.Drawings.length; i++) {
-				if (!(presentationSelectedContent.Drawings[i].Drawing instanceof CGraphicFrame)) {
+				if (!(presentationSelectedContent.Drawings[i].Drawing instanceof AscFormat.CGraphicFrame)) {
 					presentationSelectedContent.Drawings[i].Drawing = presentationSelectedContent.Drawings[i].Drawing.convertToPPTX(oThis.oDocument.DrawingDocument, undefined, true);
 					AscFormat.checkBlipFillRasterImages(presentationSelectedContent.Drawings[i].Drawing);
 				}
@@ -4474,7 +4474,7 @@ PasteProcessor.prototype =
 
 					//перебираем шрифты
 					for (var i in font_map) {
-						fonts.push(new CFont(i, 0, "", 0));
+						fonts.push(new CFont(i));
 					}
 
 					//TODO стиль не прокидывается. в будущем нужно реализовать
@@ -4492,7 +4492,7 @@ PasteProcessor.prototype =
 			//если несколько графических объектов, то собираем base64 у таблиц(graphicFrame)
 			if (arr_shapes.length > 1) {
 				for (var i = 0; i < arr_shapes.length; i++) {
-					if (typeof CGraphicFrame !== "undefined" && arr_shapes[i].Drawing instanceof CGraphicFrame) {
+					if (arr_shapes[i].Drawing && arr_shapes[i].Drawing.isTable()) {
 						arrImages.push(new AscCommon.CBuilderImages(null, arr_shapes[i].base64, arr_shapes[i], null, null));
 					}
 				}
@@ -5049,7 +5049,7 @@ PasteProcessor.prototype =
 					}
 				}
 				for (var key in oFontMap) {
-					fonts.push(new CFont(key, 0, "", 0));
+					fonts.push(new CFont(key));
 				}
 			}
 			if (bIsEmptyContent) {
@@ -5195,6 +5195,12 @@ PasteProcessor.prototype =
 						oThis._setSpecialPasteShowOptionsPresentation([Asc.c_oSpecialPasteProps.sourceformatting, Asc.c_oSpecialPasteProps.keepTextOnly]);
 					}
 					oPasteHelper.Paste_Process_End();
+				}
+
+				if (false === oThis.bNested) {
+					if (oThis.pasteCallback) {
+						oThis.pasteCallback();
+					}
 				}
 			};
 			if (oPresentation.GetSlidesCount() === 0) {
@@ -5673,7 +5679,7 @@ PasteProcessor.prototype =
 
 			fonts = [];
 			for (var i in font_map) {
-				fonts.push(new CFont(i, 0, "", 0));
+				fonts.push(new CFont(i));
 			}
 
 			if (tempParagraph)
@@ -5734,7 +5740,7 @@ PasteProcessor.prototype =
 
 			if (!t.oFonts[fontFamily]) {
 				t.oFonts[fontFamily] = {Name: fontFamily, Index: -1};
-				fonts.push(new CFont(fontFamily, 0, "", 0));
+				fonts.push(new CFont(fontFamily));
 			}
 		};
 
@@ -5973,7 +5979,7 @@ PasteProcessor.prototype =
 
 			if (!t.oFonts[fontFamily]) {
 				t.oFonts[fontFamily] = {Name: fontFamily, Index: -1};
-				fonts.push(new CFont(fontFamily, 0, "", 0));
+				fonts.push(new CFont(fontFamily));
 			}
 		};
 
@@ -6613,7 +6619,7 @@ PasteProcessor.prototype =
 				var oFontItem = this.oFonts[font_family];
 				//Ищем среди наших шрифтов
 				this.oFonts[font_family].Index = -1;
-				aPrepeareFonts.push(new CFont(oFontItem.Name, 0, "", 0));
+				aPrepeareFonts.push(new CFont(oFontItem.Name));
 			}
 
 			return aPrepeareFonts;
@@ -8459,6 +8465,7 @@ PasteProcessor.prototype =
 		var oDocument = this.oDocument;
 		var tableNode = node, newNode, headNode;
 		var bPresentation = !PasteElementsId.g_bIsDocumentCopyPaste;
+		let tBodyNode;
 
 		//Ищем если есть tbody
 		var i, length, j, length2;
@@ -8486,11 +8493,10 @@ PasteProcessor.prototype =
 
 		if (newNode) {
 			node = newNode;
-			tableNode = newNode;
+			tBodyNode = newNode;
 		} else if (headNode) {
 			node = headNode;
-			//tableNode = headNode;
-			//pPr.repeatHeaderRow = true;
+			tBodyNode = tableNode;
 		}
 
 		//валидация талиц. В таблице не может быть строк состоящих из вертикально замерженых ячеек.
@@ -8670,8 +8676,23 @@ PasteProcessor.prototype =
 				aSumGrid[i] = nSum;
 			}
 			//набиваем content
-			this._ExecuteTable(tableNode, node, table, aSumGrid, nMaxColCount !== nMinColCount ? aColsCountByRow : null, pPr, bUseScaleKoef, dScaleKoef, arrShapes, arrImages, arrTables);
+			this._ExecuteTable(tBodyNode, node, table, aSumGrid, nMaxColCount !== nMinColCount ? aColsCountByRow : null, pPr, bUseScaleKoef, dScaleKoef, arrShapes, arrImages, arrTables);
 			table.MoveCursorToStartPos();
+
+			if (tableNode) {
+				let nWidth = null;
+				if (tableNode.style.width.indexOf('%') !== -1 || tableNode.width.indexOf('%') !== -1) {
+					nWidth = -1 * parseInt(tableNode.style.width || tableNode.width);
+				} else {
+					let nodeStyleWidth =  node.style.width;
+					nWidth = AscCommon.valueToMmType(nodeStyleWidth);
+					nWidth = nWidth && nWidth.val;
+				}
+
+				if (nWidth != null) {
+					table.SetTableProps({TableWidth: nWidth});
+				}
+			}
 
 			if (!bPresentation) {
 				this.aContent.push(table);
@@ -10969,6 +10990,16 @@ function CheckDefaultFontSize(val, api)
 	return "0px" === val && api && api.getDefaultFontSize ? api.getDefaultFontSize() + "pt" : val;
 }
 
+function getPageWidth()
+{
+	let logicDocument = editor && editor.WordControl && editor.WordControl.m_oLogicDocument && editor.WordControl.m_oLogicDocument;
+	let isPortraitOrient = true;
+	if (logicDocument) {
+		isPortraitOrient = logicDocument && logicDocument.Get_DocumentOrientation && logicDocument.Get_DocumentOrientation();
+	}
+	return !isPortraitOrient ? Page_Height - (Y_Top_Margin + Y_Bottom_Margin) : Page_Width - (X_Left_Margin + X_Right_Margin);
+}
+
 function CreateImageFromBinary(bin, nW, nH)
 {
     var w, h;
@@ -11029,7 +11060,7 @@ function Check_LoadingDataBeforePrepaste(_api, _fonts, _images, _callback)
     let aPrepeareFonts = [];
     for (var font_family in _fonts)
     {
-        aPrepeareFonts.push(new CFont(font_family, 0, "", 0));
+        aPrepeareFonts.push(new CFont(font_family));
     }
     AscFonts.FontPickerByCharacter.extendFonts(aPrepeareFonts);
 

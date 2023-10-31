@@ -3958,24 +3958,29 @@ function(window, undefined) {
 		return fRetLayout;
 	};
 	CChartSpace.prototype.calculateLabelsPositions = function (b_recalc_labels, b_recalc_legend) {
-		var layout;
-		for (var i = 0; i < this.recalcInfo.dataLbls.length; ++i) {
-			var series = this.getAllSeries();
-			if (this.recalcInfo.dataLbls[i].series && this.recalcInfo.dataLbls[i].pt) {
+		let layout;
+		let aDLbls = this.recalcInfo.dataLbls;
+		for (let i = 0; i < aDLbls.length; ++i) {
+			let series = this.getAllSeries();
+			let oLbl = aDLbls[i];
+			if (oLbl && oLbl.series && oLbl.pt) {
 
-				var ser_idx = this.recalcInfo.dataLbls[i].series.idx; //сделаем проверку лежит ли серия с индексом this.recalcInfo.dataLbls[i].series.idx в сериях первой диаграммы
+				let ser_idx = oLbl.series.idx; //сделаем проверку лежит ли серия с индексом this.recalcInfo.dataLbls[i].series.idx в сериях первой диаграммы
 				for (var j = 0; j < series.length; ++j) {
-					if (series[j].idx === this.recalcInfo.dataLbls[i].series.idx) {
-						var bLayout = AscCommon.isRealObject(this.recalcInfo.dataLbls[i].layout) && (AscFormat.isRealNumber(this.recalcInfo.dataLbls[i].layout.x) || AscFormat.isRealNumber(this.recalcInfo.dataLbls[i].layout.y));
-						var pos = this.chartObj.recalculatePositionText(this.recalcInfo.dataLbls[i]);
-						var oLbl = this.recalcInfo.dataLbls[i];
+					if (series[j].idx === ser_idx) {
+						let pos = this.chartObj.recalculatePositionText(oLbl);
+
 						if (oLbl.layout) {
 							layout = oLbl.layout;
 							if (AscFormat.isRealNumber(layout.x)) {
-								pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, this.recalcInfo.dataLbls[i].extX, this.extX);
+								pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, oLbl.extX, this.extX);
 							}
 							if (AscFormat.isRealNumber(layout.y)) {
-								pos.y = this.calculatePosByLayout(pos.y, layout.yMode, layout.y, this.recalcInfo.dataLbls[i].extY, this.extY);
+								let bReverse = false;
+								if(AscFormat.isRealNumber(oLbl.pt.val) && oLbl.pt.val < 0) {
+									bReverse = true;
+								}
+								pos.y = this.calculatePosByLayout(pos.y, layout.yMode, bReverse ? -layout.y : layout.y, oLbl.extY, this.extY);
 							}
 						}
 						if (pos.x + oLbl.extX > this.extX) {
@@ -7093,7 +7098,7 @@ function(window, undefined) {
 						var ser = series[ii];
 						var pts = ser.getNumPts();
 						this.ptsCount += pts.length;
-
+						ser.recalculateTrendline();
 						ser.compiledSeriesBrush = new AscFormat.CUniFill();
 						ser.compiledSeriesBrush.merge(base_fills2[ser.idx]);
 						if (ser.spPr && ser.spPr.Fill) {
@@ -7363,6 +7368,7 @@ function(window, undefined) {
 						for(var i = 0; i < series.length; ++i) {
 							var default_line = parents.theme.themeElements.fmtScheme.lnStyleLst[0];
 							var ser = series[i];
+							ser.recalculateTrendline();
 							var pts = ser.getNumPts();
 							this.ptsCount += pts.length;
 							if(oChart.scatterStyle === AscFormat.SCATTER_STYLE_SMOOTH || oChart.scatterStyle === AscFormat.SCATTER_STYLE_SMOOTH_MARKER) {
@@ -7524,6 +7530,7 @@ function(window, undefined) {
 							base_line_fills = getArrayFillsFromBase(style.line2, nMaxSeriesIdx);
 						for(var i = 0; i < series.length; ++i) {
 							var ser = series[i];
+							ser.recalculateTrendline();
 							var compiled_brush = new AscFormat.CUniFill();
 							compiled_brush.merge(base_fills[ser.idx]);
 							if(ser.spPr && ser.spPr.Fill) {
@@ -9326,6 +9333,76 @@ function(window, undefined) {
 		}
 	};
 
+	CChartSpace.prototype.getTrackGeometry = function() {
+		return AscFormat.ExecuteNoHistory(
+			function () {
+				const oGeometry = AscFormat.CreateGeometry("rect");
+				oGeometry.Recalculate(this.extX, this.extY);
+				return oGeometry;
+			}, this, []
+		);
+	};
+
+	CChartSpace.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate, oMapPaired) {
+		if(!oDrawingToCheck) {
+			return oCurCandidate;
+		}
+		const nOwnType = this.getObjectType();
+		const nCheckType = oDrawingToCheck.getObjectType();
+		if(nOwnType !== nCheckType) {
+			return oCurCandidate;
+		}
+		const sName = this.getOwnName();
+		const nChartType = this.getChartType();
+		if(sName && sName.startsWith(AscFormat.OBJECT_MORPH_MARKER)) {
+			const sCheckName = oDrawingToCheck.getOwnName();
+			if(sName !== sCheckName) {
+				return oCurCandidate;
+			}
+		}
+		else {
+			if(oDrawingToCheck.getChartType() !== nChartType) {
+				return oCurCandidate;
+			}
+		}
+		if(!oMapPaired || !oMapPaired[oDrawingToCheck.Id]) {
+			if(!oCurCandidate) {
+				if(oMapPaired && oMapPaired[oDrawingToCheck.Id]) {
+					let oParedDrawing = oMapPaired[oDrawingToCheck.Id].drawing;
+					if(oParedDrawing.getOwnName() === oDrawingToCheck.getOwnName()) {
+						return oCurCandidate;
+					}
+				}
+				return oDrawingToCheck;
+			}
+			const dDistCheck = this.getDistanceL1(oDrawingToCheck);
+			const dDistCur = this.getDistanceL1(oCurCandidate);
+			let dSizeMCandidate = Math.abs(oCurCandidate.extX - this.extX) + Math.abs(oCurCandidate.extY - this.extY);
+			let dSizeMCheck = Math.abs(oDrawingToCheck.extX - this.extX) + Math.abs(oDrawingToCheck.extY - this.extY);
+			if(dSizeMCandidate < dSizeMCheck) {
+				return  oCurCandidate;
+			}
+			else {
+				if(dDistCur < dDistCheck) {
+					return  oCurCandidate;
+				}
+			}
+			if(!oMapPaired || !oMapPaired[oDrawingToCheck.Id]) {
+				return oDrawingToCheck;
+			}
+			else {
+				let oParedDrawing = oMapPaired[oDrawingToCheck.Id].drawing;
+				if(oParedDrawing.getOwnName() === oDrawingToCheck.getOwnName()) {
+					return oCurCandidate;
+				}
+				else {
+					return oDrawingToCheck;
+				}
+			}
+		}
+		return  oCurCandidate;
+	};
+
 	function CAdditionalStyleData() {
 		this.dLbls = null;
 		this.catAx = null;
@@ -9444,15 +9521,11 @@ function(window, undefined) {
 			effectVal *= 100000.0;
 			if (!unicolor.Mods)
 				unicolor.setMods(new AscFormat.CColorModifiers());
-			var mod = new AscFormat.CColorMod();
 			if (effectVal > 0) {
-				mod.setName("tint");
-				mod.setVal(effectVal);
+				unicolor.Mods.addMod("tint", effectVal);
 			} else {
-				mod.setName("shade");
-				mod.setVal(Math.abs(effectVal));
+				unicolor.Mods.addMod("shade", Math.abs(effectVal));
 			}
-			unicolor.Mods.addMod(mod);
 		}
 		return ret;
 	}
