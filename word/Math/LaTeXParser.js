@@ -225,12 +225,12 @@
 	};
 	CLaTeXParser.prototype.IsFractionLiteral = function ()
 	{
-		return (this.oLookahead.class === "\\frac" || this.oLookahead.class === "\\binom" || this.oLookahead.class === "\\cfrac" || this.oLookahead.class === "\\sfrac");
+		return (this.oLookahead.class === "\\frac" || this.oLookahead.data === "\\binom" || this.oLookahead.class === "\\cfrac" || this.oLookahead.class === "\\sfrac");
 	};
 	CLaTeXParser.prototype.GetFractionLiteral = function ()
 	{
 		let type;
-		if (this.oLookahead.class === "\\binom") {
+		if (this.oLookahead.data === "\\binom") {
 			type = oLiteralNames.binomLiteral[num];
 		}
 		else if (this.oLookahead.class === "\\sfrac") {

@@ -713,7 +713,6 @@
 		["⨄", oNamesOfLiterals.opNaryLiteral[0]], //		["⨄", oNamesOfLiterals.opNaryLiteral[0]],
 		["⋁", oNamesOfLiterals.opNaryLiteral[0]],
 		["⋀", oNamesOfLiterals.opNaryLiteral[0]],
-		["\\binom", true],
 		["⊥", oNamesOfLiterals.operatorLiteral[0]],
 		["□", oNamesOfLiterals.boxLiteral[0]],
 		["\\boxplus", "⊞"],
@@ -3303,6 +3302,9 @@
 					for (let i = oCMathContent.Content.length - 1; i >= 0 && nCounter !== strToken.length; i--)
 					{
 						let oCurrentElement = oCMathContent.Content[i];
+						if (!oCurrentElement || !oCurrentElement.Content)
+							return false;
+
 						let oCurrentElementCounter = oCurrentElement.Content.length;
 
 						if (oCurrentElementCounter > strToken.length)
