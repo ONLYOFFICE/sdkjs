@@ -3033,13 +3033,44 @@
 			}
 			else if ( e.KeyCode == 33 ) // PgUp
 			{
-				this.m_oScrollVerApi.scrollByY(-this.height, false);
-				this.timerSync();
+				if (e.AltKey == true)
+				{
+					var nextPage = -1;
+					if (this.thumbnails)
+						nextPage = this.currentPage - this.thumbnails.countPagesInBlock;
+					if (nextPage < 0)
+						nextPage = this.currentPage - 1;
+
+					if (nextPage >= 0)
+						this.navigateToPage(nextPage);
+				}
+				else {
+					this.m_oScrollVerApi.scrollByY(-this.height, false);
+					this.timerSync();
+				}
 			}
 			else if ( e.KeyCode == 34 ) // PgDn
 			{
-				this.m_oScrollVerApi.scrollByY(this.height, false);
-				this.timerSync();
+				if (e.AltKey == true)
+				{
+					var pagesCount = this.getPagesCount();
+					var nextPage = pagesCount;
+					if (this.thumbnails)
+					{
+						nextPage = this.currentPage + this.thumbnails.countPagesInBlock;
+						if (nextPage >= pagesCount)
+							nextPage = pagesCount - 1;
+					}
+					if (nextPage >= pagesCount)
+						nextPage = this.currentPage + 1;
+
+					if (nextPage < pagesCount)
+						this.navigateToPage(nextPage);
+				}
+				else {
+					this.m_oScrollVerApi.scrollByY(this.height, false);
+					this.timerSync();
+				}
 			}
 			else if ( e.KeyCode == 35 ) // End
 			{
@@ -3130,20 +3161,9 @@
 							break;
 					}
 				}
-				else if (!this.isFocusOnThumbnails && e.AltKey == false)
+				else if (!this.isFocusOnThumbnails)
 				{
 					this.m_oScrollVerApi.scrollByY(-40);
-				}
-				else
-				{
-					var nextPage = -1;
-					if (this.thumbnails)
-						nextPage = this.currentPage - this.thumbnails.countPagesInBlock;
-					if (nextPage < 0)
-						nextPage = this.currentPage - 1;
-
-					if (nextPage >= 0)
-						this.navigateToPage(nextPage);
 				}
 				bRetValue = true;
 			}
@@ -3218,25 +3238,9 @@
 					}
 					
 				}
-				else if (!this.isFocusOnThumbnails && e.AltKey == false)
+				else if (!this.isFocusOnThumbnails)
 				{
 					this.m_oScrollVerApi.scrollByY(40);
-				}
-				else
-				{
-					var pagesCount = this.getPagesCount();
-					var nextPage = pagesCount;
-					if (this.thumbnails)
-					{
-						nextPage = this.currentPage + this.thumbnails.countPagesInBlock;
-						if (nextPage >= pagesCount)
-							nextPage = pagesCount - 1;
-					}
-					if (nextPage >= pagesCount)
-						nextPage = this.currentPage + 1;
-
-					if (nextPage < pagesCount)
-						this.navigateToPage(nextPage);
 				}
 				bRetValue = true;
 			}
