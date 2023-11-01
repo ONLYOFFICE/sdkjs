@@ -30,53 +30,53 @@
  *
  */
 QUnit.config.autostart = false;
-$(function() {
+$(function () {
 
-	Asc.spreadsheet_api.prototype._init = function() {
+	Asc.spreadsheet_api.prototype._init = function () {
 		this._loadModules();
 	};
-	Asc.spreadsheet_api.prototype._loadFonts = function(fonts, callback) {
+	Asc.spreadsheet_api.prototype._loadFonts = function (fonts, callback) {
 		callback();
 	};
-	Asc.spreadsheet_api.prototype.onEndLoadFile = function(fonts, callback) {
+	Asc.spreadsheet_api.prototype.onEndLoadFile = function (fonts, callback) {
 		openDocument();
 	};
-	AscCommonExcel.WorkbookView.prototype._calcMaxDigitWidth = function() {
+	AscCommonExcel.WorkbookView.prototype._calcMaxDigitWidth = function () {
 	};
-	AscCommonExcel.WorkbookView.prototype._canResize = function() {
-	};
-
-	AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged = function() {
-	};
-	AscCommonExcel.WorkbookView.prototype.showWorksheet = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype._init = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype.updateRanges = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype._autoFitColumnsWidth = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype.setSelection = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype.draw = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype.getZoom = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype._getPPIY = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype._getPPIX = function() {
+	AscCommonExcel.WorkbookView.prototype._canResize = function () {
 	};
 
-	AscCommonExcel.asc_CEventsController.prototype.init = function() {
+	AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged = function () {
+	};
+	AscCommonExcel.WorkbookView.prototype.showWorksheet = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._init = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype.updateRanges = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._autoFitColumnsWidth = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype.setSelection = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype.draw = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype.getZoom = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._getPPIY = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._getPPIX = function () {
+	};
+
+	AscCommonExcel.asc_CEventsController.prototype.init = function () {
 	};
 
 	AscCommon.InitBrowserInputContext = function () {
 
 	};
 
-	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {
+	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {
 		this.ImageLoader = AscCommon.g_image_loader;
 	};
 
@@ -84,7 +84,7 @@ $(function() {
 		'id-view': 'editor_sdk'
 	});
 	api.FontLoader = {
-		LoadDocumentFonts: function() {
+		LoadDocumentFonts: function () {
 			setTimeout(startTests, 0)
 		}
 	};
@@ -155,7 +155,7 @@ $(function() {
 	};
 
 	function testChartBaseTypes(doGeneratePaths) {
-		QUnit.test("Test: Base Charts Draw ", function(assert ) {
+		QUnit.test("Test: Base Charts Draw ", function (assert) {
 			let testData = [["", "2014", "2015", "2016"], ["Projected Revenue", "200", "240", "280"], ["Estimated Costs", "250", "260"]];
 			let testDataRange = new Asc.Range(0, 0, testData[0].length - 1, testData.length - 1);
 			fillData(wsData, testData, testDataRange);
@@ -199,7 +199,7 @@ $(function() {
 				}
 			}
 		});
-	}
+	};
 
 	const isEqual = function (a, b) {
 
@@ -2287,5 +2287,4 @@ $(function() {
 		testDispR()
 		testIntercept();
 	}
-	
 });
