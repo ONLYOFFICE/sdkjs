@@ -4560,8 +4560,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 					PRS.LastTab.Item         = Item;
 					PRS.LastTab.TabRightEdge = TabPos.TabRightEdge;
 
-					var oLogicDocument     = PRS.Paragraph.LogicDocument;
-					var nCompatibilityMode = oLogicDocument && oLogicDocument.GetCompatibilityMode ? oLogicDocument.GetCompatibilityMode() : AscCommon.document_compatibility_mode_Current;
+					var nCompatibilityMode = PRS.getCompatibilityMode();
 
 					// Если таб не левый, значит он не может быть сразу рассчитан, а если левый, тогда
                     // рассчитываем его сразу здесь
@@ -4575,6 +4574,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						{
 							Para.Lines[PRS.Line].Ranges[PRS.Range].XEnd = 558.7;
 							XEnd                                        = 558.7;
+							PRS.XEnd                                    = XEnd;
 							PRS.BadLeftTab                              = true;
 						}
                     }
@@ -4595,6 +4595,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						{
 							Para.Lines[PRS.Line].Ranges[PRS.Range].XEnd = 558.7;
 							XEnd                                        = 558.7;
+							PRS.XEnd                                    = XEnd;
 							PRS.BadLeftTab                              = true;
 
 							twXEnd = AscCommon.MMToTwips(XEnd);
