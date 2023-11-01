@@ -26329,7 +26329,7 @@
 	WorksheetView.prototype.applySeriesSettings = function (settings) {
 		if (this.activeFillHandle) {
 			//1. fill handle through context menu
-			
+			this.applyFillHandle(null, null, null, null, settings);
 		} else {
 			//2. fill from toolbar
 			let oRanges = this.model.getSelection();
