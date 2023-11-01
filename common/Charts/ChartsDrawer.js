@@ -16116,7 +16116,7 @@ CColorObj.prototype =
 		this.cChartDrawer = chartsDrawer;
 		//[chartId][seriesId]
 		this.coordinates = {};
-		this.points = {}
+		this.chartletiables = null;
 	}
 	
 	CTrendline.prototype = {
@@ -16131,7 +16131,7 @@ CColorObj.prototype =
 				this.coordinates[oSeries.parent.Id] = {};
 			}
 			if (!this.coordinates[oSeries.parent.Id][oSeries.Id]) {
-				this.coordinates[oSeries.parent.Id][oSeries.Id] = { coords: { xVals: [], yVals: [] }, path: [], ptCount: null };
+				this.coordinates[oSeries.parent.Id][oSeries.Id] = { coords: { xVals: [], yVals: [] }, path: [], ptCount: null, chartletiables: null, rSquared: null};
 			}
 	
 			this.coordinates[oSeries.parent.Id][oSeries.Id].ptCount = ptCount;
@@ -16157,21 +16157,21 @@ CColorObj.prototype =
 			let type = atributes.trendlineType;
 			const xAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_CatAx);
 			const yAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_ValAx);
-	
-			let results = { vals: null, cond: true };
+			let results = { vals: null, cond: true };	
 	
 			if (type == AscFormat.TRENDLINE_TYPE_MOVING_AVG) {
 				const period = atributes.period
 				results.vals = this._getMAline(coordinates.coords.xVals, coordinates.coords.yVals, coordinates.ptCount, period)
 			} else {
 				const order = atributes.order ? atributes.order + 1 : 2;
-				let chartletiables = this._getEquationCoefficients(coordinates.coords.xVals, coordinates.coords.yVals, type, order);
+				
+				const chartletiables = this._getEquationCoefficients(coordinates.coords.xVals, coordinates.coords.yVals, type, order, atributes.intercept);
 				const equationStorage = this._obtainEquationStorage(type)
 	
-				if (chartletiables.length != 0 && equationStorage.hasOwnProperty('calcYVal')) {
+				if (chartletiables && equationStorage.hasOwnProperty('calcYVal')) {
 	
 					//function to obtain arbitrary point of the equation
-					const _lineCoordinate = function (xIndex, cChartDrawer) {
+					const _lineCoordinate = function (xIndex) {
 						const xVal = xAxis.xPoints[xIndex].val;
 						const yVal = equationStorage.calcYVal(xVal, chartletiables);
 						return { xVal: xVal, yVal: yVal }
@@ -16179,7 +16179,7 @@ CColorObj.prototype =
 	
 					// divide the length between xStart and xEnd by the number of points, to retrieve the xVal somewhere between
 					// log cases does not allow yVal to be less or equal to 0
-					const _findMidCoordinates = function (pointsNumber, cChartDrawer, allow) {
+					const _findMidCoordinates = function (pointsNumber, allow) {
 						const results = { xVals: [], yVals: [] }
 						const xNet = xAxis.xPoints[xAxis.xPoints.length - 1].val - xAxis.xPoints[0].val;
 						for (let i = 0; i < pointsNumber; i++) {
@@ -16193,11 +16193,11 @@ CColorObj.prototype =
 						return results
 					}
 	
-					const _findCentralPoint = function (chartletiables, cChartDrawer) {
+					const _findCentralPoint = function (chartletiables) {
 	
 						const results = { xVals: [], yVals: [] }
-						const start = _lineCoordinate(0, cChartDrawer)
-						const end = _lineCoordinate(xAxis.xPoints.length - 1, cChartDrawer)
+						const start = _lineCoordinate(0)
+						const end = _lineCoordinate(xAxis.xPoints.length - 1)
 	
 						results.xVals.push(start.xVal);
 						results.yVals.push(start.yVal);
@@ -16239,6 +16239,16 @@ CColorObj.prototype =
 						results.vals = _findCentralPoint(chartletiables, this.cChartDrawer);
 						results.cond = (type == AscFormat.TRENDLINE_TYPE_LINEAR) ? true : false
 					}
+
+					if(atributes.dispEq){
+						coordinates.chartletiables = chartletiables;
+						console.log(coordinates.chartletiables)
+					}
+					if(atributes.dispRSqr){
+						coordinates.rSquared = this._dispRSquared(coordinates.coords.xVals, coordinates.coords.yVals, chartletiables, type);
+						console.log(coordinates.rSquared)
+					}
+
 				}
 			}
 	
@@ -16285,7 +16295,6 @@ CColorObj.prototype =
 				let sum = 0;
 				let counter = 0;
 				let j = 0;
-				console.log(xVals, yVals)
 				for (let i = 0; i < ptCount; i++) {
 					//check if past existed and remove it
 					if (i >= period && xVals[j - counter] == i + 1 - period) {
@@ -16349,8 +16358,13 @@ CColorObj.prototype =
 			return storage.hasOwnProperty(type) ? storage[type] : {}
 		},
 	
-		_getEquationCoefficients: function (xVals, yVals, type, pow) {
+		_getEquationCoefficients: function (xVals, yVals, type, pow, intercept) {
 			if (xVals.length == yVals.length) {
+
+				if(type == AscFormat.TRENDLINE_TYPE_LOG || type == AscFormat.TRENDLINE_TYPE_POWER){
+					intercept = null
+				}
+
 				const size = xVals.length
 				pow = size < pow ? size : pow
 	
@@ -16372,8 +16386,8 @@ CColorObj.prototype =
 				}
 
 				const mapped = _mapCoordinates()
-	
-				if (mappingStorage && mapped) {
+
+				if (mapped) {
 	
 					/*
 					X = createMatrix(coordsX)
@@ -16384,13 +16398,17 @@ CColorObj.prototype =
 					result = matMul(P_I, S)
 					*/
 	
-					const _createMatrix = function (arr, size, starting) {
+					const _createMatrix = function (arr, size, starting, shift) {
 						let result = []
+						shift = shift ? shift : 0
+						if (shift && mappingStorage.hasOwnProperty('yVal')) {
+							shift = mappingStorage['yVal'](shift)
+						}
 						for (let i = 0; i < arr.length; i++) {
 							let power = starting;
 							let row = []
 							for (let j = 0; j < size; j++) {
-								row.push(Math.pow(arr[i], power));
+								row.push(Math.pow((arr[i] - shift), power));
 								power++;
 							}
 							result.push(row)
@@ -16403,8 +16421,7 @@ CColorObj.prototype =
 						for (let i = 0; i < N; i++) {
 							B[i] = Array(M).fill(1);
 						}
-	
-						for (let i = 1; i < N; i++)
+						for (let i = 0; i < N; i++)
 							for (let j = 0; j < M; j++)
 								B[i][j] = A[j][i];
 						return B
@@ -16415,7 +16432,6 @@ CColorObj.prototype =
 						for (let i = 0; i < R; i++) {
 							rslt[i] = Array(C).fill(0);
 						}
-	
 						for (let i = 0; i < R; i++) {
 							for (let j = 0; j < C; j++) {
 								for (let k = 0; k < D; k++) {
@@ -16520,25 +16536,31 @@ CColorObj.prototype =
 						return I;
 					}
 	
-					const flatten = function (arr) {
+					const flatten = function (arr, intercept, value) {
 						for (let i = 0; i < arr.length; i++) {
 							arr[i] = arr[i][0]
-							if (i == 0 && mappingStorage.hasOwnProperty('bVal')) {
-								arr[0] = mappingStorage['bVal'](arr[0])
+						}
+						if(intercept != 0){
+							arr.unshift(value)
+						}else{
+							if (mappingStorage.hasOwnProperty('bValBackward')) {
+								arr[0] = mappingStorage['bValBackward'](arr[0])
 							}
 						}
 					}
+
+					const y_intercept = (typeof intercept === 'number') ? 1 : 0
 	
 					// Letiables = ((X_T@X)^-1)@X_T@Y
-					const X = _createMatrix(xVals, pow, 0)
-					const X_T = _findTranspose(X, pow, xVals.length)
-					const P = _matMul(X_T, X, pow, pow, xVals.length)
+					const X = _createMatrix(xVals, pow - y_intercept, y_intercept, 0)
+					const X_T = _findTranspose(X, pow - y_intercept, xVals.length)
+					const P = _matMul(X_T, X, pow - y_intercept, pow - y_intercept, xVals.length)
 					const P_I = _findInverse(P)
 					if (P_I) {
-						const Y = _createMatrix(yVals, 1, 1)
-						const S = _matMul(X_T, Y, pow, 1, xVals.length)
-						const letiables = _matMul(P_I, S, pow, 1, pow)
-						flatten(letiables)
+						const Y = _createMatrix(yVals, 1, 1, intercept)
+						const S = _matMul(X_T, Y, pow - y_intercept, 1, xVals.length)
+						const letiables = _matMul(P_I, S, pow - y_intercept, 1, pow - y_intercept)
+						flatten(letiables, y_intercept, intercept)
 						return letiables
 					}
 				}
@@ -16549,25 +16571,68 @@ CColorObj.prototype =
 			const storage = {
 				[AscFormat.TRENDLINE_TYPE_EXP]: {
 					yVal: function (val) {
-						return Math.log(val)
-					}, bVal: function (val) {
+						return val>0 ? Math.log(val) : NaN
+					}, bValBackward: function (val) {
 						return Math.exp(val)
+					}, bValForward: function (val) {
+						return Math.log(val)
 					}
 				}, [AscFormat.TRENDLINE_TYPE_LOG]: {
 					xVal: function (val) {
-						return Math.log(val)
+						return val>0 ? Math.log(val) : NaN
 					}
 				}, [AscFormat.TRENDLINE_TYPE_POWER]: {
 					xVal: function (val) {
-						return Math.log(val)
+						return val>0 ? Math.log(val) : NaN
 					}, yVal: function (val) {
-						return Math.log(val)
-					}, bVal: function (val) {
+						return val>0 ? Math.log(val) : NaN
+					}, bValBackward: function (val) {
 						return Math.exp(val)
+					}, bValForward: function (val) {
+						return Math.log(val)
 					}
 				}
 			}
 			return storage.hasOwnProperty(type) ? storage[type] : {}
+		},
+
+		
+		_dispRSquared: function (xVals, yVals, chartletiables, type) {
+			const mappingStorage = this._obtainMappingStorage(type)
+			const findYMean = function () {
+				let sum = 0;
+				let size = yVals.length;
+				for(let i=0; i<size; i++){
+					sum+=yVals[i]
+				}
+				return sum / size;
+			}
+
+			const yMean = findYMean();
+
+			const predictY = function (xVal) {
+				const bVal = mappingStorage.hasOwnProperty('bValForward') ? mappingStorage.bValForward(chartletiables[0]) :  chartletiables[0]
+				let result = bVal;
+				let power = 1
+				for (let i = 1; i < chartletiables.length; i++) {
+					result += (Math.pow(xVal, power) * chartletiables[i])
+					power++;
+				}
+				return result;
+			}
+
+			// R squared = 1 - sumRegression/sumSquared 
+			// sumRegression is ∑(y-yPredicted)^2
+			// sumSquared is ∑(y-yMean)^2
+
+			let sumSquared = 0;
+			let sumRegression = 0;
+			for (let i=0; i < yVals.length; i++){
+				const yValPred = predictY(xVals[i])
+				sumRegression += Math.pow((yVals[i] - yValPred), 2);
+				sumSquared += Math.pow((yVals[i] - yMean), 2);
+			}
+			return 1 - (sumRegression / sumSquared);
 		},
 	
 		draw: function () {
