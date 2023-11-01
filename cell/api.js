@@ -8981,7 +8981,7 @@ var editor;
 		let res = new Asc.asc_CSeriesSettings();
 
 		let ws = this.wb && this.wb.getWorksheet();
-		res.init(ws && ws.model);
+		res.init(ws);
 
 		return res;
 	};
@@ -9581,8 +9581,8 @@ var editor;
   prot["asc_ContinueGoalSeek"]= prot.asc_ContinueGoalSeek;
   prot["asc_StepGoalSeek"]= prot.asc_StepGoalSeek;
 
-
-
+  prot["asc_GetSeriesSettings"]= prot.asc_GetSeriesSettings;
+  prot["asc_ApplySeriesSettings"]= prot.asc_ApplySeriesSettings;
 
 
 })(window);

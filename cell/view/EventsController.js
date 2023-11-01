@@ -1448,6 +1448,7 @@
 		asc_CEventsController.prototype._onWindowMouseUp = function (event) {
 			AscCommon.global_mouseEvent.UnLockMouse();
 
+			var button = AscCommon.getMouseButton(event);
 			var coord = this._getCoordinates(event);
             if (this.hsbApiLockMouse)
                 this.hsbApi.mouseDown ? this.hsbApi.evt_mouseup.call(this.hsbApi, event) : false;
@@ -1491,7 +1492,11 @@
 			if (this.isFillHandleMode) {
 				// Закончили автозаполнение
 				this.isFillHandleMode = false;
-				this._changeFillHandleDone(event);
+				if (2 === button) {
+					this.handlers.trigger('onContextMenu', event);
+				} else {
+					this._changeFillHandleDone(event);
+				}
 			}
 
 			// Режим перемещения диапазона

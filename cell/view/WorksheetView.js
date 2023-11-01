@@ -26327,7 +26327,25 @@
 	};
 
 	WorksheetView.prototype.applySeriesSettings = function (settings) {
+		if (this.activeFillHandle) {
+			//1. fill handle through context menu
+			
+		} else {
+			//2. fill from toolbar
+			let oRanges = this.model.getSelection();
+			let aRanges = oRanges.ranges;
 
+			this._isLockedCells(aRanges, /*subType*/null, function (success) {
+				if (!success) {
+					return;
+				}
+
+				for (let i = 0; i < aRanges.length; i++) {
+					let cSerial = new AscCommonExcel.CSerial(settings, aRanges[i]);
+					cSerial.exec();
+				}
+			});
+		}
 	};
 
 

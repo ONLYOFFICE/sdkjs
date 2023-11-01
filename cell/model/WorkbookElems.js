@@ -15858,6 +15858,10 @@ QueryTableField.prototype.clone = function() {
 		this.stepValue = null;
 		this.stopValue = null;
 
+		//transfer right click fill information
+		this.contextMenuAllowedProps = null;
+		this.contextMenuChosenProperty = null;
+
 		return this;
 	}
 	asc_CSeriesSettings.prototype.clone = function () {
@@ -15872,6 +15876,9 @@ QueryTableField.prototype.clone = function() {
 		res.stepValue = this.stepValue;
 		res.stopValue = this.stopValue;
 
+		res.contextMenuAllowedProps = this.contextMenuAllowedProps;
+		res.contextMenuChosenProperty = this.contextMenuChosenProperty;
+
 		return res;
 	};
 
@@ -15880,6 +15887,7 @@ QueryTableField.prototype.clone = function() {
 			return;
 		}
 
+		//1. init for toolbar
 		//remove all comments after realization
 		/*asc_getSeriesIn/asc_setSeriesIn; -> Asc.c_oAscSeriesInType
 		asc_getType/asc_setType; ->  Asc.c_oAscSeriesType
@@ -15897,6 +15905,9 @@ QueryTableField.prototype.clone = function() {
 		/*let selection = ws && ws.getSelection();
 		let selectionRanges = selection && selection.ranges;
 		res = selectionRanges && selectionRanges[0];*/
+
+		//2. init for context menu - allowed options
+		//settings.asc_setContextMenuAllowedProps({c_oAscFillRightClickOptions.copyCells: true, ....})
 	};
 
 	asc_CSeriesSettings.prototype.asc_getSeriesIn = function () {
@@ -15917,6 +15928,12 @@ QueryTableField.prototype.clone = function() {
 	asc_CSeriesSettings.prototype.asc_getStopValue = function () {
 		return this.stopValue;
 	};
+	asc_CSeriesSettings.prototype.asc_getContextMenuAllowedProps = function () {
+		return this.contextMenuAllowedProps;
+	};
+	asc_CSeriesSettings.prototype.asc_getContextMenuChosenProperty = function () {
+		return this.contextMenuChosenProperty;
+	};
 
 	asc_CSeriesSettings.prototype.asc_setSeriesIn = function (val) {
 		this.seriesIn = val;
@@ -15936,7 +15953,12 @@ QueryTableField.prototype.clone = function() {
 	asc_CSeriesSettings.prototype.asc_setStopValue = function (val) {
 		this.stopValue = val;
 	};
-
+	asc_CSeriesSettings.prototype.asc_setContextMenuAllowedProps = function (val) {
+		this.contextMenuAllowedProps = val;
+	};
+	asc_CSeriesSettings.prototype.asc_setContextMenuChosenProperty = function (val) {
+		this.contextMenuChosenProperty = val;
+	};
 
 
 //----------------------------------------------------------export----------------------------------------------------
@@ -16421,6 +16443,8 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_getTrend"] = prot.asc_getTrend;
 	prot["asc_getStepValue"] = prot.asc_getStepValue;
 	prot["asc_getStopValue"] = prot.asc_getStopValue;
+	prot["asc_getContextMenuAllowedProps"] = prot.asc_getContextMenuAllowedProps;
+	prot["asc_getContextMenuChosenProperty"] = prot.asc_getContextMenuChosenProperty;
 
 	prot["asc_setSeriesIn"] = prot.asc_setSeriesIn;
 	prot["asc_setType"] = prot.asc_setType;
@@ -16428,6 +16452,8 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_setTrend"] = prot.asc_setTrend;
 	prot["asc_setStepValue"] = prot.asc_setStepValue;
 	prot["asc_setStopValue"] = prot.asc_setStopValue;
+	prot["asc_setContextMenuAllowedProps"] = prot.asc_setContextMenuAllowedProps;
+	prot["asc_setContextMenuChosenProperty"] = prot.asc_setContextMenuChosenProperty;
 
 
 })(window);
