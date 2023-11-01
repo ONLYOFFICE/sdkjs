@@ -415,7 +415,7 @@
 			}
 		}
 	};
-	PDFEditorApi.prototype.Paste          = function()
+	PDFEditorApi.prototype.Paste = function()
 	{
 		if (AscCommon.g_clipboardBase.IsWorking())
 			return false;
@@ -966,5 +966,9 @@
 	PDFEditorApi.prototype['asc_EditSelectAll']            = PDFEditorApi.prototype.asc_EditSelectAll;
 	PDFEditorApi.prototype['Undo']                         = PDFEditorApi.prototype.Undo;
 	PDFEditorApi.prototype['Redo']                         = PDFEditorApi.prototype.Redo;
+	PDFEditorApi.prototype['asc_SelectionCut']             = PDFEditorApi.prototype.asc_SelectionCut;
+	PDFEditorApi.prototype['asc_CheckCopy']                = PDFEditorApi.prototype.asc_CheckCopy;
+	PDFEditorApi.prototype['Paste']                        = PDFEditorApi.prototype.Paste;
+	PDFEditorApi.prototype['asc_PasteData']                = PDFEditorApi.prototype.asc_PasteData;
 
 })(window, window.document);
