@@ -30,25 +30,22 @@
  *
  */
 
-
 $(function ()
 {
-	let charWidth    = AscTest.CharWidth * AscTest.FontSize;
-	let contentWidth = 20 * charWidth;
+	// For correct calculation of a tab position we need to create logic document
+	// since position depends on overall document margins
+	let logicDocument = AscTest.CreateLogicDocument();
+	let charWidth     = AscTest.CharWidth * AscTest.FontSize;
 	
-	let dc = new AscWord.CDocumentContent();
-	dc.ClearContent(false);
-	let p = new AscWord.CParagraph();
-	dc.AddToContent(0, p);
+	let sectPr = AscTest.GetFinalSection();
+	sectPr.SetPageSize(100 * charWidth, 1000);
+	sectPr.SetPageMargins(10 * charWidth, 50, 15 * charWidth, 50);
 	
-	let r = new AscWord.CRun();
+	let p = AscTest.CreateParagraph();
+	logicDocument.AddToContent(0, p);
+	
+	let r = AscTest.CreateRun();
 	p.AddToContent(0, r);
-	
-	function recalculate()
-	{
-		dc.Reset(0, 0, contentWidth, 10000);
-		dc.Recalculate_Page(0, true);
-	}
 	
 	function setTabs(tabs)
 	{
@@ -61,19 +58,13 @@ $(function ()
 	
 	QUnit.test("Special case for left tab which exceed right edge", function (assert)
 	{
+		// Check situation when left tab lies between right edge of a paragraph and right field of the document
 		r.AddText("Before\tafter");
-		setTabs([{value : tab_Left, pos : contentWidth + 5 * charWidth}]);
+		p.SetParagraphIndent({Right : 20 * charWidth});
+		setTabs([{value : tab_Left, pos : 70 * charWidth}]);
 		
-		AscTest.SetCompatibilityMode(AscCommon.document_compatibility_mode_Word14);
-		recalculate();
+		AscTest.Recalculate();
 		assert.strictEqual(p.GetLinesCount(), 1, "Check number of lines");
 		assert.strictEqual(p.GetTextOnLine(0), "Before after", "Text on line 0 'Before after'");
-		
-		AscTest.SetCompatibilityMode(AscCommon.document_compatibility_mode_Word15);
-		recalculate();
-		assert.strictEqual(p.GetLinesCount(), 2, "Check number of lines");
-		assert.strictEqual(p.GetTextOnLine(0), "Before", "Text on line 0 'Before'");
-		assert.strictEqual(p.GetTextOnLine(1), " after", "Text on line 0 'after'");
-
 	});
 });
