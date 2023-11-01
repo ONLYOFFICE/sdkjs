@@ -211,7 +211,10 @@
 
 		if (!data)
 			return;
-		
+
+		if (oField && (oField.GetType() != AscPDF.FIELD_TYPES.text || oField.IsMultiline() == false))
+			data = data.trim().replace(/[\n\r]/g, ' ');
+
 		if (oField && (oField.GetType() === AscPDF.FIELD_TYPES.text || (oField.GetType() === AscPDF.FIELD_TYPES.combobox && oField.IsEditable()))) {
 			let aChars = [];
 			for (let i = 0; i < data.length; i++)
@@ -411,6 +414,13 @@
 					break;
 			}
 		}
+	};
+	PDFEditorApi.prototype.Paste          = function()
+	{
+		if (AscCommon.g_clipboardBase.IsWorking())
+			return false;
+
+		return AscCommon.g_clipboardBase.Button_Paste();
 	};
 	PDFEditorApi.prototype.asc_setSkin = function(theme)
     {
