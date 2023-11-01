@@ -222,12 +222,12 @@ $(function () {
 		}
 
 		//Math.round((num + Number.EPSILON) * 100) / 100
-		const tollerance = 0.0005;
+		const tollerance = 0.005;
 		return Math.abs(a - b) < tollerance;
 	}
 
 	function testLinearTrendLineEquation() {
-		QUnit.test("Test: Linear trendlines slope", function (assert) {
+		QUnit.test("Test: Linear trendlines equation", function (assert) {
 
 			const trendline = AscFormat.CTrendline
 			const order = 2;
@@ -385,7 +385,7 @@ $(function () {
 	}
 
 	function testLogarithmicTrendLineEquation() {
-		QUnit.test("Test: Logarithmic trendlines slope", function (assert) {
+		QUnit.test("Test: Logarithmic trendlines equation", function (assert) {
 
 			const trendline = AscFormat.CTrendline;
 			const order = 2;
@@ -543,7 +543,7 @@ $(function () {
 	}
 
 	function testPowerTrendLineEquation() {
-		QUnit.test("Test: Power trendlines slope", function (assert) {
+		QUnit.test("Test: Power trendlines equation", function (assert) {
 
 			const trendline = AscFormat.CTrendline;
 			const order = 2;
@@ -618,11 +618,23 @@ $(function () {
 			assert.ok(isEqual(results[1], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [5, 50, 500, 0, 50000, 500000];
+			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			assert.strictEqual(results, undefined, "PowerResults should be undefined, due to the zero value in calculations, got:" + results);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [5, 50, 500, -1, 50000, 500000];
+			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			assert.strictEqual(results, undefined, "PowerResults should be undefined, due to the negative value in calculations, got:" + results);
+
 		})
 	}
 
 	function testExponentialTrendLineEquation() {
-		QUnit.test("Test: Exponential trendlines slope", function (assert) {
+		QUnit.test("Test: Exponential trendlines equation", function (assert) {
 
 			const trendline = AscFormat.CTrendline
 			const order = 2;
@@ -697,11 +709,23 @@ $(function () {
 			assert.ok(isEqual(results[1], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [5, 50, 500, 0, 50000, 500000];
+			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			assert.strictEqual(results, undefined, "ExponentialResults should be undefined, due to the zero value in calculations, got:" + results);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [5, 50, 500, -1, 50000, 500000];
+			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			assert.strictEqual(results, undefined, "ExponentialResults should be undefined, due to the negative value in calculations, got:" + results);
+
 		})
 	}
 
 	function testPolynomialTrendLineEquation() {
-		QUnit.test("Test: Polynomial trendlines slope", function (assert) {
+		QUnit.test("Test: Polynomial trendlines equation", function (assert) {
 			// the equation is in the form of y = letiables[0] + x * letiables1 + x^2 * letiables2 ...
 			const trendline = AscFormat.CTrendline
 
@@ -880,7 +904,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
 			xVals = [1, 2, 3, 4, 5, 6, 7];
@@ -892,7 +916,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
 			xVals = [1, 2, 3, 4, 5, 6, 7];
@@ -904,7 +928,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
 			xVals = [1, 2, 3, 4, 5, 6, 7];
@@ -916,7 +940,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
 			xVals = [1, 2, 3, 4, 5, 6, 7];
@@ -928,7 +952,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
 			xVals = [1, 2, 3, 4, 5, 6, 7];
@@ -940,7 +964,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
 			xVals = [1, 2, 3, 4, 5, 6, 7];
@@ -952,7 +976,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
 			xVals = [1, 2, 3, 4, 5, 6, 7];
@@ -964,7 +988,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
 			xVals = [1, 2, 3, 4, 5, 6, 7];
@@ -976,7 +1000,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
 			xVals = [1, 2, 3, 4, 5, 6, 7];
@@ -988,7 +1012,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 4;
 			xVals = [1, 2, 3, 4];
@@ -1000,7 +1024,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
 			xVals = [1, 2, 3, 4, 5, 6, 7];
@@ -1012,7 +1036,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 6;
 			xVals = [1, 2, 3, 4, 5, 6];
@@ -1024,7 +1048,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 6;
 			xVals = [1, 2, 3, 4, 5, 6];
@@ -1036,7 +1060,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			
 			size = 7;
 			xVals = [1, 2, 3, 4, 5, 6, 7];
@@ -1048,7 +1072,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
@@ -1061,7 +1085,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
@@ -1074,7 +1098,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
@@ -1087,7 +1111,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
@@ -1100,7 +1124,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
@@ -1113,7 +1137,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
@@ -1126,7 +1150,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
@@ -1139,7 +1163,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
@@ -1152,7 +1176,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
@@ -1165,7 +1189,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
@@ -1178,7 +1202,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 6;
@@ -1191,7 +1215,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 6;
@@ -1204,7 +1228,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
@@ -1217,7 +1241,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
@@ -1231,7 +1255,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
@@ -1245,7 +1269,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
@@ -1259,7 +1283,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
@@ -1273,7 +1297,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
@@ -1287,7 +1311,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
@@ -1301,7 +1325,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
@@ -1315,7 +1339,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
@@ -1329,7 +1353,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
@@ -1343,7 +1367,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
@@ -1357,7 +1381,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
@@ -1371,7 +1395,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
@@ -1385,7 +1409,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
@@ -1399,7 +1423,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
@@ -1414,7 +1438,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
@@ -1429,7 +1453,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
@@ -1444,7 +1468,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
@@ -1459,7 +1483,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
@@ -1474,7 +1498,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
@@ -1489,7 +1513,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
@@ -1504,7 +1528,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
@@ -1519,7 +1543,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
@@ -1534,7 +1558,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
@@ -1549,7 +1573,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
@@ -1574,7 +1598,7 @@ $(function () {
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
-			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fouth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 		})
 	}
@@ -1850,18 +1874,416 @@ $(function () {
 		})
 	}
 
+	function testDispR(){
+		QUnit.test("Test: Check R squared", function (assert) {
+
+			const trendline = AscFormat.CTrendline
+
+			let size = 6;
+			let xVals = [1, 2, 3, 4, 5, 6];
+			let yVals = [4, 6, 3, 7, 8, 9];
+			let letiables = [2.6667, 1]
+			let rSquared = 0.6522
+			let results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 2;
+			xVals = [1, 2];
+			yVals = [5, 15];
+			letiables = [-5, 10]
+			rSquared = 1
+			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [-1, -2, -3, -4, -5, -6];
+			letiables = [0, -1]
+			rSquared = 1
+			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			xVals = [0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469];
+			yVals = [-3, 6, -9, 12, -15, 18];
+			letiables = [-3.0691, 4.1668]
+			rSquared = 0.0473
+			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LOG)
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0.693147181, 1.098612289, 1.791759469, 2.079441542, 2.302585093, 2.48490665];
+			letiables = [1.5776, 0.3674]
+			rSquared = 0.9461
+			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0, 2, -3, 6, 8, 9];
+			letiables = [0.3, -0.8179, 0.4107]
+			rSquared = 0.709
+			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0, 1, 0, 2, 0, 3];
+			letiables = [-2.6667, 3.75973, -1.254, 0.1296]
+			rSquared = 0.5397
+			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [-9, -7, -6, -5, -4, -2];
+			letiables = [-12.333, 4.2209, -0.9722, 0.0926, 3e-14]
+			rSquared = 0.9995
+			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			xVals = [0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469];
+			yVals = [-2.302585093, -1.203972804, -1.609437912, -0.693147181, -0.356674944, -0.105360516];
+			letiables = [0.0984, 1.1616]
+			rSquared = 0.8697
+			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POWER)
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
+			letiables = [3.2, -8.2283, 6.4375, -2.25, 0.3625, -0.0217]
+			rSquared = 1
+			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0.693147181, 0, 1.386294361, 1.098612289, 1.791759469, 1.609437912];
+			letiables = [1.1384, 0.2763]
+			rSquared = 0.6083
+			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 4;
+			xVals = [1, 2, 3, 4];
+			yVals = [2, 8, 16, 50];
+			letiables = [-19, 15.2]
+			rSquared = 0.8371
+			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [4, -6, 3, -7, 8, 10];
+			letiables = [-4.2, 1.7714]
+			rSquared = 0.2197
+			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			xVals = [0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469];
+			yVals = [1.609437912, 3.912023005, 6.214608098, 8.517193191, 10.81977828, 13.12236338];
+			letiables = [1.5974, 6.2903]
+			rSquared = 0.9363
+			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POWER)
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0, 2, 3, 4, 5, 0];
+			letiables = [1.3333, 0.2857]
+			rSquared = 0.067
+			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+		})
+	}
+
+	function testIntercept () {
+		QUnit.test("Test: Interception equation + rSquared", function (assert) {
+
+			const trendline = AscFormat.CTrendline
+
+			let size = 6;
+			let xVals = [1, 2, 3, 4, 5, 6];
+			let yVals = [4, 6, 3, 7, 8, 9];
+			let letiables = [0, 1.6154]
+			let rSquared = 0.3464;
+			let order = 2;
+			let intercept = 0;
+			let equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
+			let rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 2;
+			xVals = [1, 2];
+			yVals = [5, 15];
+			letiables = [0, 7]
+			rSquared = 0.9;
+			order = 2;
+			intercept = 0;
+			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [-1, -2, -3, -4, -5, -6];
+			m = -2.732;
+			b = -0.5044;
+			letiables = [-0.5044, -2.732]
+			rSquared = 0.9363;
+			order = 2;
+			intercept = 0;
+			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LOG)
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "LogarithmicResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "LogarithmicResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquaredResults + ', got:' + rSquaredResults);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [-3, 6, -9, 12, -15, 18];
+			letiables = [0, -2.8125, 0.7232];
+			rSquared = 0.1269;
+			order = 3;
+			intercept = 0;
+			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(equationResults[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + equationResults[2]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+			
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [2, 3, 6, 8, 10, 12];
+			letiables = [1, 0.4726];
+			rSquared = 0.85;
+			order = 2;
+			intercept = 1;
+
+			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "ExponentialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "ExponentialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [2, 3, 6, 8, 10, 12];
+			letiables = [2, 0.3126];
+			rSquared = 0.9201;
+			order = 2;
+			intercept = 2;
+
+			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "ExponentialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "ExponentialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0, 2, -3, 6, 8, 9];
+			letiables = [0, -1.7176, 0.9524, -0.0662];
+			rSquared = 0.719;
+			order = 4;
+			intercept = 0;
+
+			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(equationResults[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + equationResults[2]);
+			assert.ok(isEqual(equationResults[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + equationResults[3]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0, 1, 0, 2, 0, 3];
+			letiables = [0, -1.1891, 1.5552, -0.4827, 0.045];
+			rSquared = 0.5928;
+			order = 5;
+			intercept = 0;
+
+			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(equationResults[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + equationResults[2]);
+			assert.ok(isEqual(equationResults[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + equationResults[3]);
+			assert.ok(isEqual(equationResults[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + equationResults[4]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [-9, -7, -6, -5, -4, -2];
+			letiables = [0, -21.228, 17.348, -5.857, 0.8914, -0.0501];
+			rSquared = 0.9906;
+			order = 6;
+			intercept = 0;
+
+			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(equationResults[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + equationResults[2]);
+			assert.ok(isEqual(equationResults[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + equationResults[3]);
+			assert.ok(isEqual(equationResults[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + equationResults[4]);
+			assert.ok(isEqual(equationResults[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + equationResults[5]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 7;
+			xVals = [1, 2, 3, 4, 5, 6, 7];
+			yVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
+			letiables = [0, -0.3486, 0.9099, -0.5973, 0.1707, -0.0219, 0.001];
+			rSquared = 0.9822;
+			order = 7;
+			intercept = 0;
+
+			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, equationResults, AscFormat.TRENDLINE_TYPE_POLY)
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(equationResults[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + equationResults[2]);
+			assert.ok(isEqual(equationResults[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + equationResults[3]);
+			assert.ok(isEqual(equationResults[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + equationResults[4]);
+			assert.ok(isEqual(equationResults[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + equationResults[5]);
+			assert.ok(isEqual(equationResults[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + equationResults[6]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
+			letiables = [-2, 0.5286]
+			rSquared = 0.1296;
+			order = 2;
+			intercept = -2;
+			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [2, 1, 4, 3, 6, 5];
+			letiables = [12.365, -1.8864]
+			rSquared = -8.44;
+			order = 2;
+			intercept = 12.365;
+			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 4;
+			xVals = [1, 2, 3, 4];
+			yVals = [2, 8, 16, 50];
+			letiables = [12.365, 0.1223]
+			rSquared = 0.0659;
+			order = 2;
+			intercept = 12.365;
+			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "ExponentialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "ExponentialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [4, -6, 3, -7, 8, 10];
+			letiables = [-6.958, 2.4079]
+			rSquared = 0.1845;
+			order = 2;
+			intercept = -6.958;
+			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [5, 50, 500, 5000, 50000, 500000];
+			letiables = [0.1265, 2.6197]
+			rSquared = 0.9765;
+			order = 2;
+			intercept = 0.1265;
+			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "ExponentialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "ExponentialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			xVals = [1, 2, 3, 4, 5, 6];
+			yVals = [0, 2, 3, 4, 5, 0];
+			letiables = [0.1265, 0.5642]
+			rSquared = -0.012;
+			order = 2;
+			intercept = 0.1265;
+			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+		})
+	}
 
 	QUnit.module("ChartsDraw");
 
 	function startTests() {
 		QUnit.start();
 
-		testChartBaseTypes();
-		testLinearTrendLineEquation();
-		testLogarithmicTrendLineEquation();
-		testPowerTrendLineEquation();
-		testExponentialTrendLineEquation();
-		testPolynomialTrendLineEquation();
-		testMovingAverageTrendLineResuts();
+		testChartBaseTypes(null);
+		testLinearTrendLineEquation(null);
+		testLogarithmicTrendLineEquation(null);
+		testPowerTrendLineEquation(null);
+		testExponentialTrendLineEquation(null);
+		testPolynomialTrendLineEquation(null);
+		testMovingAverageTrendLineResuts(null);
+		testIntercept();
 	}
 });
