@@ -7243,6 +7243,7 @@ function(window, undefined) {
 								var default_line = parents.theme.themeElements.fmtScheme.lnStyleLst[0];
 								var ser = series[i];
 								var pts = ser.getNumPts();
+								ser.recalculateTrendline();
 								this.ptsCount += pts.length;
 								var compiled_line = new AscFormat.CLn();
 								compiled_line.merge(default_line);
