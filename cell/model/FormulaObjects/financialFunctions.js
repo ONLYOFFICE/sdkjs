@@ -5231,37 +5231,43 @@
 	cTBILLYIELD.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cTBILLYIELD.prototype.argumentsType = [argType.any, argType.any, argType.any];
 	cTBILLYIELD.prototype.Calculate = function (arg) {
-		var settlement = arg[0], maturity = arg[1], pr = arg[2];
+		let settlement = arg[0], maturity = arg[1], pr = arg[2];
 
-		if (settlement instanceof cArea || settlement instanceof cArea3D) {
+		if (settlement.type === cElementType.cellsRange || settlement.type === cElementType.cellsRange3D) {
 			settlement = settlement.cross(arguments[1]);
-		} else if (settlement instanceof cArray) {
+		} else if (settlement.type === cElementType.array) {
 			settlement = settlement.getElementRowCol(0, 0);
 		}
 
-		if (maturity instanceof cArea || maturity instanceof cArea3D) {
+		if (maturity.type === cElementType.cellsRange || maturity.type === cElementType.cellsRange3D) {
 			maturity = maturity.cross(arguments[1]);
-		} else if (maturity instanceof cArray) {
+		} else if (maturity.type === cElementType.array) {
 			maturity = maturity.getElementRowCol(0, 0);
 		}
 
-		if (pr instanceof cArea || pr instanceof cArea3D) {
+		if (pr.type === cElementType.cellsRange || pr.type === cElementType.cellsRange3D) {
 			pr = pr.cross(arguments[1]);
-		} else if (pr instanceof cArray) {
+		} else if (pr.type === cElementType.array) {
 			pr = pr.getElementRowCol(0, 0);
+		}
+
+		if (settlement.type === cElementType.bool || maturity.type === cElementType.bool || pr.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		} else if (settlement.type === cElementType.empty || maturity.type === cElementType.empty || pr.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
 		settlement = settlement.tocNumber();
 		maturity = maturity.tocNumber();
 		pr = pr.tocNumber();
 
-		if (settlement instanceof cError) {
+		if (settlement.type === cElementType.error) {
 			return settlement;
 		}
-		if (maturity instanceof cError) {
+		if (maturity.type === cElementType.error) {
 			return maturity;
 		}
-		if (pr instanceof cError) {
+		if (pr.type === cElementType.error) {
 			return pr;
 		}
 
@@ -5274,18 +5280,20 @@
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var d1 = cDate.prototype.getDateFromExcel(settlement), d2 = cDate.prototype.getDateFromExcel(maturity),
-			date1 = d1.getUTCDate(), month1 = d1.getUTCMonth(), year1 = d1.getUTCFullYear(), date2 = d2.getUTCDate(),
-			month2 = d2.getUTCMonth(), year2 = d2.getUTCFullYear();
+		let d1 = cDate.prototype.getDateFromExcel(settlement), d2 = cDate.prototype.getDateFromExcel(maturity),
+			date1 = d1.getUTCDate(), month1 = d1.getUTCMonth(), year1 = d1.getUTCFullYear(), 
+			date2 = d2.getUTCDate(), month2 = d2.getUTCMonth(), year2 = d2.getUTCFullYear();
 
-		var nDiff = AscCommonExcel.GetDiffDate360(date1, month1, year1, date2, month2, year2, true);
-		nDiff++;
+		let nDiff = AscCommonExcel.GetDiffDate360(date1, month1, year1, date2, month2, year2, true);
+		if (maturity >= 33) {
+			nDiff++;
+		}
 
 		if (nDiff > 360) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var res = new cNumber(( ( 100 - pr ) / pr) * (360 / nDiff));
+		let res = new cNumber(( ( 100 - pr ) / pr) * (360 / nDiff));
 		res.numFormat = 9;
 		return res;
 

@@ -165,8 +165,12 @@ module.exports = function(grunt) {
 		}
 		return result;
 	}
-
 	const path = require('path');
+	const deploy = '../deploy/sdkjs/';
+	const word = path.join(deploy, 'word');
+	const cell = path.join(deploy, 'cell');
+	const slide = path.join(deploy, 'slide');
+
 	const level = grunt.option('level') || 'ADVANCED';
 	const formatting = grunt.option('formatting') || '';
 
@@ -182,23 +186,55 @@ module.exports = function(grunt) {
 	if (!configs.valid()) {
 		return;
 	}
-
+	const otherFiles = [
+		{
+			cwd: '../common/',
+			src: [
+				'Charts/ChartStyles.js',
+				'SmartArts/SmartArtData/*',
+				'SmartArts/SmartArtDrawing/*',
+				'Images/*',
+				'Images/placeholders/*',
+				'Images/content_controls/*',
+				'Images/cursors/*',
+				'Images/reporter/*',
+				'Images/icons/*',
+				'Native/*.js',
+				'libfont/engine/*',
+				'spell/spell/*',
+				'hash/hash/*',
+				'zlib/engine/*'
+			],
+			dest: path.join(deploy, 'common'),
+			name: 'common'
+		},
+		{
+			cwd: '../cell/css',
+			src: ['*.css'],
+			dest: path.join(cell, 'css'),
+			name: 'cell-css'
+		},
+		{
+			cwd: '../slide/themes',
+			src: ['**/**'],
+			dest: path.join(slide, 'themes'),
+			name: 'slide-themes'
+		},
+		{
+			cwd: '../pdf/',
+			src: ['src/engine/*'],
+			dest: path.join(deploy, 'pdf'),
+			name: 'pdf'
+		}
+	];
 	const configWord = configs.word['sdk'];
 	const configCell = configs.cell['sdk'];
 	const configSlide = configs.slide['sdk'];
-	const deploy = '../deploy/sdkjs/';
 
 	const compilerArgs = getExterns(configs.externs);
 	if (formatting) {
 		compilerArgs.push('--formatting=' + formatting);
 	}
-	if (grunt.option('map')) {
-		grunt.file.mkdir(path.join('./maps'));
-		compilerArgs.push('--create_source_map=' + path.join('maps/%outname%.map'));
-		compilerArgs.push('--source_map_format=V3');
-		compilerArgs.push('--source_map_include_content=true');
-	}
-
 	const appCopyright = process.env['APP_COPYRIGHT'] || "Copyright (C) Ascensio System SIA 2012-" + grunt.template.today('yyyy') +". All rights reserved";
 	const publisherUrl = process.env['PUBLISHER_URL'] || "https://www.onlyoffice.com/";
 	const companyName = process.env['COMPANY_NAME'] || 'onlyoffice';
@@ -212,7 +248,7 @@ module.exports = function(grunt) {
 	license = license.replace('@@Version', version);
 	license = license.replace('@@Build', buildNumber);
 
-	function getCompileConfig(sdkmin, sdkall, outmin, outall, name) {
+	function getCompileConfig(sdkmin, sdkall, outmin, outall, name, pathPrefix) {
 		const args = compilerArgs.concat (
 		`--define=window.AscCommon.g_cCompanyName='${companyName}'`,
 		`--define=window.AscCommon.g_cProductVersion='${version}'`,
@@ -227,10 +263,15 @@ module.exports = function(grunt) {
 		`--chunk_wrapper=${outmin}:${license}\n%s`,
 		...sdkall.map((file) => ('--js=' + file)),
 		`--chunk=${outall}:${sdkall.length}:${outmin}`,
-		`--chunk_wrapper=${outall}:${license}\n(function(window, undefined) {%s})(window);`);
+		`--chunk_wrapper=${outall}:${license}\n(function(window, undefined) {%s})(window);`,
+		`--chunk_output_path_prefix=${pathPrefix}`);
 		if (grunt.option('map')) {
+			grunt.file.mkdir(path.join('./maps'));
 			args.push('--property_renaming_report=' + path.join(`maps/${name}.props.js.map`));
 			args.push('--variable_renaming_report=' + path.join(`maps/${name}.vars.js.map`));
+			args.push('--create_source_map=' + path.join(`%outname%.map`));
+			args.push('--source_map_format=V3');
+			args.push('--source_map_include_content=true');
 		}
 		return {
 			'closure-compiler': {
@@ -243,50 +284,89 @@ module.exports = function(grunt) {
 		}
 	}
 	grunt.registerTask('compile-word', 'Compile Word SDK', function () {
-		grunt.initConfig(getCompileConfig(getFilesMin(configWord), getFilesAll(configWord), 'word-all-min', 'word-all', 'word'));
+		grunt.initConfig(getCompileConfig(getFilesMin(configWord), getFilesAll(configWord), 'sdk-all-min', 'sdk-all', 'word', path.join(word , '/')));
 		grunt.task.run('closure-compiler');
 	});
 	grunt.registerTask('compile-cell', 'Compile Cell SDK', function () {
-		grunt.initConfig(getCompileConfig(getFilesMin(configCell), getFilesAll(configCell), 'cell-all-min', 'cell-all', 'cell'));
+		grunt.initConfig(getCompileConfig(getFilesMin(configCell), getFilesAll(configCell), 'sdk-all-min', 'sdk-all', 'cell', path.join(cell , '/')));
 		grunt.task.run('closure-compiler');
 	});
 	grunt.registerTask('compile-slide', 'Compile Slide SDK', function () {
-		grunt.initConfig(getCompileConfig(getFilesMin(configSlide), getFilesAll(configSlide), 'slide-all-min', 'slide-all', 'slide'));
+		grunt.initConfig(getCompileConfig(getFilesMin(configSlide), getFilesAll(configSlide), 'sdk-all-min', 'sdk-all', 'slide', path.join(slide , '/')));
 		grunt.task.run('closure-compiler');
 	});
-	grunt.registerTask('compile-sdk', ['compile-word', 'compile-cell', 'compile-slide']);
-
-	grunt.registerTask('clean-deploy', 'Clean files after deploy', function() {
+	grunt.registerTask('copy-maps', 'Copy maps from deploy to build', function() {
 		grunt.initConfig({
+			copy: {
+				word: {
+					files: [
+						{
+							expand: true,
+							cwd: word,
+							src: [
+								'sdk-all-min.js.map',
+								'sdk-all.js.map',
+							],
+							dest: 'maps',
+							rename: function (dest, src) {
+								return path.join(dest , src.replace('sdk', 'word'));
+							}
+						}
+					]
+				},
+				cell: {
+					files: [
+						{
+							expand: true,
+							cwd: cell,
+							src: [
+								'sdk-all-min.js.map',
+								'sdk-all.js.map',
+							],
+							dest: 'maps',
+							rename: function (dest, src) {
+								return path.join(dest , src.replace('sdk', 'cell'));
+							}
+						}
+					]
+				},
+				slide: {
+					files: [
+						{
+							expand: true,
+							cwd: slide,
+							src: [
+								'sdk-all-min.js.map',
+								'sdk-all.js.map',
+							],
+							dest: 'maps',
+							rename: function (dest, src) {
+								return path.join(dest , src.replace('sdk', 'slide'));
+							}
+						}
+					]
+				}
+			},
 			clean: {
-				tmp: {
+				deploy: {
 					options: {
 						force: true
 					},
 					src: [
-						wordJsAll,
-						wordJsMin,
-						cellJsAll,
-						cellJsMin,
-						slideJsAll,
-						slideJsMin,
+						path.join(word, 'sdk-all-min.js.map'),
+						path.join(word, 'sdk-all.js.map'),
+						path.join(cell, 'sdk-all-min.js.map'),
+						path.join(cell, 'sdk-all.js.map'),
+						path.join(slide, 'sdk-all-min.js.map'),
+						path.join(slide, 'sdk-all.js.map'),
 					]
 				}
 			}
 		});
-		grunt.task.run('clean');
+		grunt.task.run('copy', 'clean');
 	});
-	const word = path.join(deploy, 'word');
-	const cell = path.join(deploy, 'cell');
-	const slide = path.join(deploy, 'slide');
-	
-	const wordJsAll = 'word-all.js';
-	const wordJsMin = 'word-all-min.js';
-	const cellJsAll = 'cell-all.js';
-	const cellJsMin = 'cell-all-min.js';
-	const slideJsAll = 'slide-all.js';
-	const slideJsMin = 'slide-all-min.js';
-	grunt.registerTask('deploy-sdk', 'Deploy SDK files', function () {
+	grunt.registerTask('compile-sdk', ['compile-word', 'compile-cell', 'compile-slide']);
+	grunt.registerTask('clean-deploy', 'Clean deploy folder before deploying', function () {
 		grunt.initConfig({
 			clean: {
 				deploy: {
@@ -297,86 +377,90 @@ module.exports = function(grunt) {
 						deploy
 					]
 				}
-			},
+			}
+		});
+		grunt.task.run('clean');
+	});
+	const glob = require('glob');
+	const ignoreFiles = ['jquery_native'];
+	/**
+	 * @param {string[]} paths
+	 * @param {string} cwd
+	 * @return {[string[], string[]]}
+	 */
+	function splitJSFiles(paths, cwd) {
+		const jsFiles = [];
+		const noJSFiles = [];
+		paths.forEach((p) => {
+			glob.sync(p, {
+				cwd: cwd,
+			}).forEach((f) => {
+				if (path.extname(f) === '.js' && !ignoreFiles.includes(path.parse(f).name)) {
+					jsFiles.push(path.join(f));
+				} else {
+					noJSFiles.push(path.join(f));
+				}
+			})
+		});
+		return [jsFiles, noJSFiles];
+	}
+	function getOtherCompileConfig(o, jsFile) {
+		return {
+			'closure-compiler': {
+				js: {
+					options: {
+						args: [
+							'--language_out=ECMASCRIPT5',
+							'--compilation_level=WHITESPACE_ONLY',
+							'--rewrite_polyfills=true',
+							'--warning_level=QUIET',
+							`--js=${path.join(o.cwd, jsFile)}`,
+							`--js_output_file=${path.join(o.dest, jsFile)}`,
+							`--output_wrapper=${license}\n%output%`
+						]
+					}
+				}
+			}
+		}
+	}
+	function getOtherCopyConfig(o, noJSFiles) {
+		return {
 			copy: {
 				sdkjs: {
-					files: [
-						{
-							expand: true,
-							src: [
-								slideJsAll,
-								slideJsMin
-							],
-							dest: slide,
-							rename: function (dest, src) {
-								return path.join(dest , src.replace('slide', 'sdk'));
-							}
-						},
-						{
-							expand: true,
-							src: [
-								wordJsAll,
-								wordJsMin
-							],
-							dest: word,
-							rename: function (dest, src) {
-								return path.join(dest , src.replace('word', 'sdk'));
-							}
-						},
-						{
-							expand: true,
-							src: [
-								cellJsAll,
-								cellJsMin
-							],
-							dest: cell,
-							rename: function (dest, src) {
-								return path.join(dest , src.replace('cell', 'sdk'));
-							}
-						},
-						{
-							expand: true,
-							cwd: '../common/',
-							src: [
-								'Charts/ChartStyles.js',
-								'SmartArts/SmartArtData/*',
-								'SmartArts/SmartArtDrawing/*',
-								'Images/*',
-								'Images/placeholders/*',
-								'Images/content_controls/*',
-								'Images/cursors/*',
-								'Images/reporter/*',
-								'Images/icons/*',
-								'Native/*.js',
-								'libfont/engine/*',
-								'spell/spell/*',
-								'hash/hash/*',
-								'zlib/engine/*'
-							],
-							dest: path.join(deploy, 'common')
-						},
-						{
-							expand: true,
-							cwd: '../cell/css',
-							src: '*.css',
-							dest: path.join(cell, 'css')
-						},
-						{
-							expand: true,
-							cwd: '../slide/themes',
-							src: '**/**',
-							dest: path.join(slide, 'themes')
-						},
-						{
-							expand: true,
-							cwd: '../pdf/',
-							src: 'src/engine/*',
-							dest: path.join(deploy, 'pdf')
-						}
-					]
+					files: noJSFiles.map(f => ({
+						expand: true,
+						cwd: o.cwd,
+						src: f,
+						dest: o.dest
+					}))
 				}
-			},
+			}
+		}
+	}
+	grunt.registerTask('copy-other', 'Copy other SDK files', function () {
+		const compilerTasks = [];
+		const copyTasks = [];
+		otherFiles.forEach((o) => {
+			const [jsFiles, noJSFiles] = splitJSFiles(o.src, o.cwd);
+			if (jsFiles.length !== 0) {
+				jsFiles.forEach((f) => {
+					grunt.registerTask(`compile-${path.join(o.dest, f)}`, `Compiling ${path.join(o.dest, f)}`, function() {
+						grunt.initConfig(getOtherCompileConfig(o, f));
+						grunt.task.run('closure-compiler');
+					});
+					compilerTasks.push(`compile-${path.join(o.dest, f)}`);
+				});
+			}
+			if (noJSFiles.length !== 0) {
+				grunt.registerTask(`copy-${path.normalize(o.name)}`, `Copying files ${path.normalize(o.name)}`, function() {
+					grunt.initConfig(getOtherCopyConfig(o, noJSFiles));
+					grunt.task.run('copy');
+				});
+				copyTasks.push(`copy-${path.normalize(o.name)}`);
+			}
 		});
+		grunt.task.run(compilerTasks);
+		grunt.task.run(copyTasks);
 	});
 	grunt.registerTask('clean-develop', 'Clean develop scripts', function () {
 		const develop = '../develop/sdkjs/';
@@ -389,6 +473,7 @@ module.exports = function(grunt) {
 				}
 			}
 		});
+		grunt.task.run('clean');
 	});
 	grunt.registerTask('build-develop', 'Build develop scripts', function () {
 		const configs = getConfigs();
@@ -400,7 +485,10 @@ module.exports = function(grunt) {
 		writeScripts(configs.cell['sdk'], 'cell');
 		writeScripts(configs.slide['sdk'], 'slide');
 	});
-	grunt.registerTask('deploy', ['deploy-sdk', 'clean', 'copy']);
-	grunt.registerTask('default', ['compile-sdk', 'deploy', 'clean-deploy']);
-	grunt.registerTask('develop', ['clean-develop', 'clean', 'build-develop']);
+	const defaultTasks = ['clean-deploy', 'compile-sdk', 'copy-other'];
+	if (grunt.option('map')) {
+		defaultTasks.push('copy-maps');
+	}
+	grunt.registerTask('default', defaultTasks);
+	grunt.registerTask('develop', ['clean-develop', 'build-develop']);
 };

@@ -1149,7 +1149,7 @@ ParaMath.prototype.GetSelectContent = function(isAll)
     return this.Root.GetSelectContent(isAll);
 };
 
-ParaMath.prototype.GetCurrentParaPos = function()
+ParaMath.prototype.GetCurrentParaPos = function(align)
 {
     return this.Root.GetCurrentParaPos();
 };

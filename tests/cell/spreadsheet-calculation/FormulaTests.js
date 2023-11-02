@@ -21615,6 +21615,7 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"TBILLYIELD\"", function (assert) {
+		let array;
 
 		function tbillyield(settlement, maturity, pr) {
 
@@ -21635,6 +21636,122 @@ $(function () {
 		oParser = new parserFormula("TBILLYIELD(DATE(2008,3,31),DATE(2008,6,1),98.45)", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), tbillyield(new cDate(2008, 2, 31), new cDate(2008, 5, 1), 98.45));
+
+		// errs
+		oParser = new parserFormula('TBILLYIELD(#N/A,2,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(#N/A,2,2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of TBILLYIELD(#N/A,2,2)');
+
+		oParser = new parserFormula('TBILLYIELD(1,#DIV/0!,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(1,#DIV/0!,2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of TBILLYIELD(1,#DIV/0!,2)');
+
+		oParser = new parserFormula('TBILLYIELD(1,2,#NUM!)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(1,2,#NUM!)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of TBILLYIELD(1,2,#NUM!)');
+
+		oParser = new parserFormula('TBILLYIELD(#N/A,2,#NUM!)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(#N/A,2,#NUM!)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of TBILLYIELD(#N/A,2,#NUM!)');
+
+		// string
+		oParser = new parserFormula('TBILLYIELD("1","2","2")', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD("1","2","2")');
+		assert.strictEqual(oParser.calculate().getValue(), 17640, 'Result of TBILLYIELD("1","2","2")');
+
+		oParser = new parserFormula('TBILLYIELD("1s","2","2")', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD("1s","2","2")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of TBILLYIELD("1s","2","2")');
+
+		oParser = new parserFormula('TBILLYIELD("1","2s","2")', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD("1","2s","2")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of TBILLYIELD("1","2s","2")');
+
+		oParser = new parserFormula('TBILLYIELD("1","2","2s")', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD("1","2","2s")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of TBILLYIELD("1","2","2s")');
+
+		// bool
+		oParser = new parserFormula('TBILLYIELD(FALSE,2,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(FALSE,2,2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of TBILLYIELD(FALSE,2,2)');
+
+		oParser = new parserFormula('TBILLYIELD(TRUE,2,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(TRUE,2,2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of TBILLYIELD(TRUE,2,2)');
+
+		oParser = new parserFormula('TBILLYIELD(1,TRUE,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(1,TRUE,2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of TBILLYIELD(1,TRUE,2)');
+
+		oParser = new parserFormula('TBILLYIELD(1,2,TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(1,2,TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of TBILLYIELD(1,2,TRUE)');
+
+		// array
+		oParser = new parserFormula('TBILLYIELD(1,{1,2,3;2,3,4},{1,2,3;2,3,4})', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:H109").bbox);
+		assert.ok(oParser.parse(), 'TBILLYIELD(1,{1,2,3;2,3,4},{1,2,3;2,3,4})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#NUM!", "Result of TBILLYIELD(1,{1,2,3;2,3,4},{1,2,3;2,3,4}) [0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 17640, "Result of TBILLYIELD(1,{1,2,3;2,3,4},{1,2,3;2,3,4}) [1,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 17640, "Result of TBILLYIELD(1,{1,2,3;2,3,4},{1,2,3;2,3,4}) [0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 5820, "Result of TBILLYIELD(1,{1,2,3;2,3,4},{1,2,3;2,3,4}) [1,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 5820, "Result of TBILLYIELD(1,{1,2,3;2,3,4},{1,2,3;2,3,4}) [0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 2880, "Result of TBILLYIELD(1,{1,2,3;2,3,4},{1,2,3;2,3,4}) [1,1]");
+
+		oParser = new parserFormula('TBILLYIELD(,2,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(,2,2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of TBILLYIELD(,2,2)');
+
+		oParser = new parserFormula('TBILLYIELD(1,,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(1,,2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of TBILLYIELD(1,,2)');
+
+		oParser = new parserFormula('TBILLYIELD(1,,)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(1,,)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of TBILLYIELD(1,,)');
+
+		oParser = new parserFormula('TBILLYIELD(1,2,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(1,2,2)');
+		assert.strictEqual(oParser.calculate().getValue(), 17640, 'Result of TBILLYIELD(1,2,2)');
+
+		oParser = new parserFormula('TBILLYIELD(1,3,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(1,3,2)');
+		assert.strictEqual(oParser.calculate().getValue(), 8820, 'Result of TBILLYIELD(1,3,2)');
+
+		oParser = new parserFormula('TBILLYIELD(1,4,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(1,4,2)');
+		assert.strictEqual(oParser.calculate().getValue(), 5880, 'Result of TBILLYIELD(1,4,2)');
+
+		oParser = new parserFormula('TBILLYIELD(1,5,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(1,5,2)');
+		assert.strictEqual(oParser.calculate().getValue(), 4410, 'Result of TBILLYIELD(1,5,2)');
+
+		oParser = new parserFormula('TBILLYIELD(1,32,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(1,32,2)');
+		assert.strictEqual(oParser.calculate().getValue().toFixed(4), "569.0323", 'Result of TBILLYIELD(1,32,2)');
+
+		oParser = new parserFormula('TBILLYIELD(1,33,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(1,33,2)');
+		assert.strictEqual(oParser.calculate().getValue().toFixed(2), "551.25", 'Result of TBILLYIELD(1,33,2)');
+
+		oParser = new parserFormula('TBILLYIELD(1,59,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'TBILLYIELD(1,59,2)');
+		assert.strictEqual(oParser.calculate().getValue().toFixed(4), "304.1379", 'Result of TBILLYIELD(1,59,2)');
+
+		// oParser = new parserFormula('TBILLYIELD(1,60,2)', "A2", ws);
+		// assert.ok(oParser.parse(), 'TBILLYIELD(1,60,2)');
+		// assert.strictEqual(oParser.calculate().getValue().toFixed(4), "298.9831", 'Result of TBILLYIELD(1,60,2)');
+
+		// oParser = new parserFormula('TBILLYIELD(1,61,2)', "A2", ws);
+		// assert.ok(oParser.parse(), 'TBILLYIELD(1,61,2)');
+		// assert.strictEqual(oParser.calculate().getValue().toFixed(4), 294, 'Result of TBILLYIELD(1,61,2)');
+
+		// days between - 101
+		// oParser = new parserFormula('TBILLYIELD(500,601,2)', "A2", ws);
+		// assert.ok(oParser.parse(), 'TBILLYIELD(500,601,2)');
+		// assert.strictEqual(oParser.calculate().getValue().toFixed(4), 174.6535, 'Result of TBILLYIELD(500,601,2)');
 
 	});
 

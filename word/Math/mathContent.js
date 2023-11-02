@@ -3754,10 +3754,10 @@ CMathContent.prototype.Recalculate_CurPos = function(_X, _Y, CurrentRun, _CurRan
 
     return this.Content[_EndPos].Recalculate_CurPos(_X, _Y, CurrentRun, _CurRange, _CurLine, _CurPage, UpdateCurPos, UpdateTarget, ReturnTarget);
 };
-CMathContent.prototype.GetCurrentParaPos = function()
+CMathContent.prototype.GetCurrentParaPos = function(align)
 {
 	if (this.CurPos >= 0 && this.CurPos < this.Content.length)
-		return this.Content[this.CurPos].GetCurrentParaPos();
+		return this.Content[this.CurPos].GetCurrentParaPos(align);
 
 	return new CParaPos(this.StartRange, this.StartLine, 0, 0);
 };

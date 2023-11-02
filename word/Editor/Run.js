@@ -2030,7 +2030,7 @@ ParaRun.prototype.AddInstrText = function(sString, nPos)
 };
 
 // Определим строку и отрезок текущей позиции
-ParaRun.prototype.GetCurrentParaPos = function()
+ParaRun.prototype.GetCurrentParaPos = function(align)
 {
     var Pos = this.State.ContentPos;
 
@@ -2048,8 +2048,10 @@ ParaRun.prototype.GetCurrentParaPos = function()
         {
             var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
             var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-            if ( Pos < EndPos && Pos >= StartPos )
-                return new CParaPos((CurLine === 0 ? CurRange + this.StartRange : CurRange), CurLine + this.StartLine, 0, 0);
+	
+			if (((-1 === align) && (StartPos < Pos && Pos <= EndPos))
+				|| ((-1 !== align) && (StartPos <= Pos && Pos < EndPos)))
+				return new CParaPos((CurLine === 0 ? CurRange + this.StartRange : CurRange), CurLine + this.StartLine, 0, 0);
         }
     }
 
