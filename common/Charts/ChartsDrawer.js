@@ -1762,11 +1762,16 @@ CChartsDrawer.prototype =
 					seria = series[0];
 					numCache = t.getNumCache(seria.val);
 					min = 1;
-					if(numCache){
-						max = numCache.ptCount;
-					}
-					else{
-						max = 1;
+					max = numCache ? numCache.ptCount : 1;
+
+					for( let i=0; i< series.length; i++){
+						if (seria.trendline){
+							const tl = seria.trendline;
+							const forward = tl.forward? tl.forward : 0;
+							const backward = tl.backward? tl.backward : 0;
+							min = Math.min(min, min - backward);
+							max = Math.max(max, max + forward);
+						}
 					}
 				}
 			}
@@ -1820,7 +1825,6 @@ CChartsDrawer.prototype =
 		if (maxErr !== null && max < maxErr) {
 			max = maxErr;
 		}
-
 		return {min: min, max: max, ymin: minY, ymax: maxY};
 	},
 
@@ -6036,6 +6040,7 @@ drawBarChart.prototype = {
 						this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
 					}
 					if (this.chart.series[i].trendline && this.subType === "normal" && seria.length>1) {
+						//numCache.ptCount is constant for seria in series, not the best solution always pass the same value n times
 						this.cChartDrawer.trendline.addCoordinate(idx, _pointVal, this.chart.series[i], numCache.ptCount)
 					}
 				}
@@ -7133,9 +7138,12 @@ drawLineChart.prototype = {
 
 				if (val != null) {
 					this.paths.points[i][n] = this.cChartDrawer.calculatePoint(x, y, compiledMarkerSize, compiledMarkerSymbol);
-					//this.paths.points[i][n].val = val;
 					if (this.chart.series[i].errBars) {
 						this.cChartDrawer.errBars.putPoint(x, y, val, null,  seria.idx, n);
+					}
+					if (this.chart.series[i].trendline && this.subType === "normal" && numCache.ptCount>1) {
+						//numCache.ptCount is constant for seria in series, not the best solution always pass the same value n times
+						this.cChartDrawer.trendline.addCoordinate(n, val, this.chart.series[i], numCache.ptCount);
 					}
 					points[i][n] = {x: x, y: y};
 				} else {
@@ -16116,7 +16124,6 @@ CColorObj.prototype =
 		this.cChartDrawer = chartsDrawer;
 		//[chartId][seriesId]
 		this.coordinates = {};
-		this.chartletiables = null;
 	}
 	
 	CTrendline.prototype = {
@@ -16154,7 +16161,8 @@ CColorObj.prototype =
 		},
 	
 		_calculateLine: function (oChart, coordinates, atributes) {
-			let type = atributes.trendlineType;
+			let type = atributes.trendlineType
+
 			const xAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_CatAx);
 			const yAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_ValAx);
 			let results = { vals: null, cond: true };	
@@ -16198,10 +16206,8 @@ CColorObj.prototype =
 						const results = { xVals: [], yVals: [] }
 						const start = _lineCoordinate(0)
 						const end = _lineCoordinate(xAxis.xPoints.length - 1)
-	
 						results.xVals.push(start.xVal);
 						results.yVals.push(start.yVal);
-	
 						// only linear trendlines does not contain slope property
 						if (equationStorage.hasOwnProperty('slope')) {
 	
@@ -16218,7 +16224,6 @@ CColorObj.prototype =
 							// find the intersection of two tangent lines
 							const xVal = (line2Letiables[1] - line1Letiables[1]) / (line1Letiables[0] - line2Letiables[0])
 							const yVal = (xVal * line1Letiables[0]) + line1Letiables[1]
-	
 							results.xVals.push(xVal);
 							results.yVals.push(yVal);
 	
@@ -16226,10 +16231,8 @@ CColorObj.prototype =
 	
 						results.xVals.push(end.xVal);
 						results.yVals.push(end.yVal);
-	
+
 						return results
-						// result.xPos = cChartDrawer.getYPosition(xVal, xAxis);
-						// result.yPos = cChartDrawer.getYPosition(yVal, yAxis);
 					};
 	
 					if (type == AscFormat.TRENDLINE_TYPE_POLY || yAxis.scaling.logBase) {
@@ -16264,7 +16267,7 @@ CColorObj.prototype =
 					const posArr = { xPos: [], yPos: [] }
 					for (let i = 0; i < arr.xVals.length; i++) {
 						const xPos = cChartDrawer.getYPosition(arr.xVals[i], xAxis);
-						const yPos = cChartDrawer.getYPosition(arr.yVals[i], yAxis);
+						const yPos = cChartDrawer.getYPosition(arr.yVals[i], yAxis, true);
 						posArr.xPos.push(xPos)
 						posArr.yPos.push(yPos)
 					}
@@ -16272,7 +16275,6 @@ CColorObj.prototype =
 				}
 	
 				const positions = valsToPos(results.vals, this.cChartDrawer)
-	
 				path.moveTo(positions.xPos[0] * pathW, positions.yPos[0] * pathH);
 	
 				// if cond is true use for loop 
@@ -16636,7 +16638,6 @@ CColorObj.prototype =
 		},
 	
 		draw: function () {
-	
 			let plotArea = this.cChartDrawer.cChartSpace.chart.plotArea;
 			if (this.coordinates) {
 				for (let i in this.coordinates) {
@@ -16649,15 +16650,15 @@ CColorObj.prototype =
 						if (!oSeries || !this.coordinates[i][j]) {
 							continue;
 						}
-	
 						let pen = oSeries.trendline.pen;
+						if (!pen){
+							pen = this.cChartDrawer.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines;
+						}
 						if (pen && this.coordinates[i][j].path.length > 0) {
-	
-							let thickness = pen.cap;
 							let leftRect = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
 							let topRect = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
 							let rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
-							let bottomRect = (this.cChartDrawer.calcProp.trueHeight - thickness) / this.cChartDrawer.calcProp.pxToMM;
+							let bottomRect = (this.cChartDrawer.calcProp.trueHeight) / this.cChartDrawer.calcProp.pxToMM;
 	
 							this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
 							this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
