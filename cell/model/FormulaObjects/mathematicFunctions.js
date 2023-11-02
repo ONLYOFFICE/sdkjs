@@ -3322,22 +3322,36 @@
 			}
 		}
 
-		function f(a, b, r, c) {
+		function f(a, b, r, c, shouldBeNA) {
 			if (cElementType.number === a.type && cElementType.number === b.type) {
 				this.array[r][c] = powerHelper(a.getValue(), b.getValue());
 			} else {
-				this.array[r][c] = new cError(cErrorType.wrong_value_type);
+				if (shouldBeNA) {
+					this.array[r][c] = new cError(cErrorType.not_available);
+				} else if (cElementType.error === a.type) {
+					this.array[r][c] = a;
+				} else if (cElementType.error === b.type) {
+					this.array[r][c] = b;
+				} else {
+					this.array[r][c] = new cError(cErrorType.wrong_value_type);
+				}
 			}
 		}
-
-		let arg0 = arg[0], arg1 = arg[1];
+		
+		let arg0 = arg[0], arg1 = arg[1], t = this;
 		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-			arg0 = arg0.cross(arguments[1]);
+			arg0 = arg0.getFullArray();
+			if (arg0.isOneElement()) {
+				arg0 = arg0.getFirstElement();
+			}
 		}
 		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
-			arg1 = arg1.cross(arguments[1]);
+			arg1 = arg1.getFullArray();
+			if (arg1.isOneElement()) {
+				arg1 = arg1.getFirstElement();
+			}
 		}
-
+		
 		arg0 = arg0.tocNumber();
 		arg1 = arg1.tocNumber();
 
@@ -3350,7 +3364,27 @@
 
 		if (cElementType.array === arg0.type && cElementType.array === arg1.type) {
 			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
-				return new cError(cErrorType.not_available);
+				let arg0Dimensions = arg0.getDimensions(),
+					arg1Dimensions = arg1.getDimensions(), shouldBeNA;
+
+				arg0.foreach(function (elem, r, c) {
+					let power;
+					
+					if (arg1Dimensions.row === 1 && r > 0) {
+						power = arg1.getElementRowCol(0, c);
+					} else if (arg1Dimensions.col === 1 && c > 0) {
+						power = arg1.getElementRowCol(r, 0);
+					} else {
+						if (arg1Dimensions.row - 1 < r || arg1Dimensions.col - 1 < c) {
+							shouldBeNA = true;
+							power = new cError(cErrorType.not_available);
+						}
+						power = power ? power : arg1.getElementRowCol(r, c);
+					}
+
+					f.call(this, elem, power, r, c, shouldBeNA);
+				});
+				return arg0;
 			} else {
 				arg0.foreach(function (elem, r, c) {
 					f.call(this, elem, arg1.getElementRowCol(r, c), r, c);

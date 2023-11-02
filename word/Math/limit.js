@@ -332,7 +332,6 @@ CLimit.prototype.GetTextOfElement = function(isLaTeX) {
 			strFuncName === 'min' ||
 			strFuncName === 'ln')
         {
-            strLimitSymbol = (this.Pr.type == 1) ? "^" : "_";
             strFuncName = '\\' + strFuncName;
 		}
 	}
@@ -453,63 +452,22 @@ CMathFunc.prototype.GetTextOfElement = function(isLaTeX) {
 	var strFuncName = this.getFName().GetMultipleContentForGetText(isLaTeX, true);
 	var strArgument = this.getArgument().GetMultipleContentForGetText(isLaTeX, true);
 
-    if (!isLaTeX)
-    {
-        if (!this.getArgument().IsOneElementInContentForGetText())
-        {
-            strArgument =  " 〖" + strArgument + "〗";
-        }
-        else
-        {
-            strArgument = " " + strArgument;
-        }
-    }
-    if (isLaTeX)
-    {
-        strArgument = "{" + strArgument + "}";
-    }
-	//	Unicode
-	//	if strArgument is block.. such as (2+1), then don't add brackets
-
-	if (isLaTeX) {
-		switch (strFuncName) {
-			case 'cos':
-			case 'sin':
-			case 'tan':
-			case 'sec':
-			case 'cot':
-			case 'csc':
-			case 'arcsin':
-			case 'arccos':
-			case 'arctan':
-			case 'arcsec':
-			case 'arccot':
-			case 'arccsc':
-			case 'sinh':
-			case 'cosh':
-			case 'tanh':
-			case 'coth':
-			case 'sech':
-			case 'csch':
-			case 'srcsinh':
-			case 'arctanh':
-			case 'arcsech':
-			case 'arccosh':
-			case 'arccoth':
-			case 'arccsch':
-			case 'log':
-
-			case 'lin':
-			case 'ln':
-			case 'max':
-			case 'min':
-			case 'exp': strFuncName = '\\'+ strFuncName; break;
-			default: break;
-		}
+	if (!isLaTeX)
+	{
+		let strFuncApply = String.fromCharCode(8289);
+		if (this.getArgument().haveMixedContent())
+			strArgument = strFuncApply + "〖" + strArgument + "〗";
+		else
+			strArgument = strFuncApply + strArgument;
+	}
+	if (isLaTeX)
+	{
+		strArgument = "{" + strArgument + "}";
+		if (AscMath.LimitFunctions.includes(strFuncName) || AscMath.functionNames.includes(strFuncName))
+			strFuncName = '\\'+ strFuncName;
 	}
 
 	strTemp = strFuncName + strArgument;
-
 	return strTemp;
 };
 

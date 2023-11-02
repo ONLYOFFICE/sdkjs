@@ -2984,7 +2984,7 @@
 					oStyleBrush = this.brush.createDuplicate();
 				}
 			} else {
-				this.brush = new AscFormat.CUniFill();
+				this.brush = AscFormat.CreateNoFillUniFill();
 			}
 
 			this.brush.merge(this.getCompiledFill());

@@ -555,10 +555,7 @@ CGraphicObjects.prototype =
             oBodyPr.vertOverflow = AscFormat.nVOTOverflow;
             oBodyPr.horzOverflow = AscFormat.nHOTOverflow;
             oBodyPr.vert = AscFormat.nVertTThorz;
-            oBodyPr.lIns = 0.0;
-            oBodyPr.tIns = 0.0;
-            oBodyPr.rIns = 0.0;
-            oBodyPr.bIns = 0.0;
+            oBodyPr.resetInsets();
             oBodyPr.numCol = 1;
             oBodyPr.spcCol = 0;
             oBodyPr.rtlCol = 0;

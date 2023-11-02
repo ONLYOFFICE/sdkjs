@@ -313,7 +313,9 @@
 		return new CGraphicBounds(this.l, this.t, this.r, this.b);
 	};
 	CGraphicBounds.prototype.transform = function (oTransform) {
-
+		if(!oTransform) {
+			return;
+		}
 		var xlt = oTransform.TransformPointX(this.l, this.t);
 		var ylt = oTransform.TransformPointY(this.l, this.t);
 
@@ -333,6 +335,18 @@
 
 		this.checkWH();
 	};
+	CGraphicBounds.prototype.shift = function(dx, dy) {
+		this.l -= dx;
+		this.t -= dy;
+		this.r -= dx;
+		this.b -= dy;
+		this.checkWH();
+	};
+	CGraphicBounds.prototype.transformRect = function (oTransform) {
+		this.shift(this.l, this.t);
+		this.transform(oTransform);
+	};
+
 
 	CGraphicBounds.prototype.checkByOther = function (oBounds) {
 		if (oBounds) {
@@ -428,7 +442,7 @@
 			AscFormat.fApproxEqual(this.b, oBounds.b);
 	};
 	CGraphicBounds.prototype.getPixSize = function(dScale) {
-		return {w: this.w * dScale + 0.5 >> 0, h: this.h * dScale + 0.5};
+		return {w: this.w * dScale + 0.5 >> 0, h: this.h * dScale + 0.5 >> 0};
 	};
 	CGraphicBounds.prototype.getCenter = function() {
 		return {x: (this.l + this.r) / 2.0, y: (this.t + this.b) / 2.0};
@@ -1094,12 +1108,8 @@
 				if (outerShdw.sy) {
 					H *= outerShdw.sy / 100000;
 				}
-				// W += penW;
-				// H += penW;
-				if (W < this.extX + penW) {
+				if(AscFormat.fApproxEqual(W, this.extX) && AscFormat.fApproxEqual(H, this.extY)) {
 					W = this.extX + penW + 1;
-				}
-				if (H < this.extY + penW) {
 					H = this.extY + penW + 1;
 				}
 				shape.spPr.xfrm.setExtX(W);
@@ -1178,8 +1188,14 @@
 			var oTransform = new AscCommon.CMatrix();
 			var dist = outerShdw.dist ? outerShdw.dist / 36000 : 0;
 			var dir = outerShdw.dir ? outerShdw.dir : 0;
-			oTransform.tx = dist * Math.cos(AscFormat.cToRad * dir) - (this.shdwSp.extX - this.extX) / 2.0;
-			oTransform.ty = dist * Math.sin(AscFormat.cToRad * dir) - (this.shdwSp.extY - this.extY) / 2.0;
+			if(this.shdwSp.extX < this.extX && this.shdwSp.extY < this.extY) {
+				oTransform.tx = dist * Math.cos(AscFormat.cToRad * dir);
+				oTransform.ty = dist * Math.sin(AscFormat.cToRad * dir);
+			}
+			else {
+				oTransform.tx = dist * Math.cos(AscFormat.cToRad * dir) - (this.shdwSp.extX - this.extX) / 2.0;
+				oTransform.ty = dist * Math.sin(AscFormat.cToRad * dir) - (this.shdwSp.extY - this.extY) / 2.0;
+			}
 			global_MatrixTransformer.MultiplyAppend(oTransform, this.transform);
 			this.shdwSp.bounds.x = this.bounds.x + this.shdwSp.bounds.l;
 			this.shdwSp.bounds.y = this.bounds.y + this.shdwSp.bounds.t;
@@ -2995,21 +3011,48 @@
 			h: oPresentation.GetHeightMM()
 		}
 	};
-	CGraphicObjectBase.prototype.getAnimTexture = function (scale, bMorph) {
+	CGraphicObjectBase.prototype.getAnimTexture = function (scale, bMorph, oAnimParams) {
+
 		const oBounds = this.getBoundsByDrawing(bMorph);
 		const oCanvas = oBounds.createCanvas(scale);
 		if(!oCanvas) {
 			return null;
 		}
 		const oGraphics = oBounds.createGraphicsFromCanvas(oCanvas, scale)
-		const nX = oBounds.x * oGraphics.m_oCoordTransform.sx;
-		const nY = oBounds.y * oGraphics.m_oCoordTransform.sy;
+		let nX = oBounds.x * oGraphics.m_oCoordTransform.sx;
+		let nY = oBounds.y * oGraphics.m_oCoordTransform.sy;
 		oGraphics.m_oCoordTransform.tx = -nX;
 		oGraphics.m_oCoordTransform.ty = -nY;
 		AscCommon.IsShapeToImageConverter = true;
+		let oOldBrush = this.brush;
+		let oOldPen = this.pen;
+		if(oAnimParams && IsTrueDrawing(this)) {
+			this.brush = oAnimParams.brush;
+			this.pen = oAnimParams.pen;
+		}
 		this.draw(oGraphics);
+		if(oAnimParams && IsTrueDrawing(this)) {
+			this.brush = oOldBrush;
+			this.pen = oOldPen;
+		}
 		AscCommon.IsShapeToImageConverter = false;
-		return new AscFormat.CBaseAnimTexture(oCanvas, scale, nX, nY)
+		let oTexture = new AscFormat.CBaseAnimTexture(oCanvas, scale, nX, nY);
+		if(oAnimParams && oAnimParams.transform) {
+			let oNewBounds = oBounds.copy();
+			oNewBounds.transformRect(oAnimParams.transform);
+			let oNewCanvas = oBounds.createCanvas(scale);
+			if(!oNewCanvas) {
+				return null;
+			}
+			let oNewGraphics = oNewBounds.createGraphicsFromCanvas(oNewCanvas, scale)
+			nX = oNewBounds.x * oGraphics.m_oCoordTransform.sx;
+			nY = oNewBounds.y * oGraphics.m_oCoordTransform.sy;
+			oNewGraphics.m_oCoordTransform.tx = -nX;
+			oNewGraphics.m_oCoordTransform.ty = -nY;
+			oTexture.draw(oNewGraphics, oAnimParams.transform);
+			oTexture = new AscFormat.CBaseAnimTexture(oNewCanvas, scale, nX, nY);
+		}
+		return oTexture;
 	};
 	CGraphicObjectBase.prototype.isOnProtectedSheet = function () {
 		if (this.worksheet) {
@@ -3668,6 +3711,15 @@
 	AscDFH.changesFactory[AscDFH.historyitem_AbsSizeAnchorObject] = window['AscDFH'].CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_AbsSizeAnchorParent] = window['AscDFH'].CChangesDrawingsObject;
 
+	function IsTrueDrawing(oDrawing) {
+		if(!oDrawing) {
+			return false;
+		}
+		if(oDrawing instanceof CGraphicObjectBase) {
+			return true;
+		}
+		return false;
+	}
 
 	window['AscFormat'] = window['AscFormat'] || {};
 	window['AscFormat'].CGraphicObjectBase = CGraphicObjectBase;
@@ -3682,4 +3734,5 @@
 	window['AscFormat'].LOCKS_MASKS = LOCKS_MASKS;
 	window['AscFormat'].MACRO_PREFIX = "jsaProject_";
 	window['AscFormat'].canSelectDrawing = canSelectDrawing;
+	window['AscFormat'].IsTrueDrawing = IsTrueDrawing;
 })(window);

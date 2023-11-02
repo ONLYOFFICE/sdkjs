@@ -1574,15 +1574,6 @@ CMathContent.prototype.SetParent = function(Parent, ParaMath)
     this.Parent   = Parent;
     this.ParaMath = ParaMath;
 };
-CMathContent.prototype.CheckRunContent = function(fCheck)
-{
-	for (var i = 0; i < this.Content.length; ++i)
-	{
-		this.Content[i].CheckRunContent(fCheck);
-	}
-};
-
-
 ///// properties /////
 CMathContent.prototype.hidePlaceholder = function(flag)
 {
@@ -2324,6 +2315,9 @@ CMathContent.prototype.ConcatToContent = function(Pos, NewItems)
 };
 CMathContent.prototype.Remove_FromContent = function(Pos, Count)
 {
+	if (Count <= 0)
+		return;
+	
 	var DeletedItems = this.Content.splice(Pos, Count);
 	History.Add(new CChangesMathContentRemoveItem(this, Pos, DeletedItems));
 
@@ -2338,17 +2332,7 @@ CMathContent.prototype.Remove_FromContent = function(Pos, Count)
 };
 CMathContent.prototype.Remove_Content = function(Pos, Count)
 {
-	var DeletedItems = this.Content.splice(Pos, Count);
-	History.Add(new CChangesMathContentRemoveItem(this, Pos, DeletedItems));
-
-	// Обновим текущую позицию
-	if (this.CurPos > Pos + Count) {
-		this.CurPos -= Count;
-    } else if (this.CurPos > Pos) {
-        this.CurPos = Pos;
-    } else if (this.CurPos > (this.Content.length - 1)) { // подправить условие
-        this.CurPos = this.Content.length - 1;
-    }
+	this.Remove_FromContent(Pos, Count);
 };
 CMathContent.prototype.private_UpdatePosOnRemove = function(Pos, Count)
 {
@@ -2510,12 +2494,15 @@ CMathContent.prototype.Refresh_RecalcData = function()
 };
 CMathContent.prototype.InsertMathContent = function(oMathContent, nPos, isSelect)
 {
+	if (!oMathContent || !oMathContent.Content)
+		return;
+	
 	if (!this.ParaMath || !this.ParaMath.Paragraph)
 		isSelect = false;
 
 	if (undefined === nPos)
 		nPos = this.CurPos;
-
+	
 	let nCount = oMathContent.Content.length;
 	for (let nIndex = 0; nIndex < nCount; ++nIndex)
 	{
@@ -2527,14 +2514,19 @@ CMathContent.prototype.InsertMathContent = function(oMathContent, nPos, isSelect
 		else
 			oElement.RemoveSelection();
 	}
-
-	this.CurPos = nPos + nCount;
-
+	
+	let newPos = nPos + nCount + 1;
+	if (this.Content[newPos])
+		this.Content[newPos].MoveCursorToStartPos();
+	else
+		this.Content[--newPos].MoveCursorToEndPos();
+	
 	if (isSelect)
 	{
 		this.Selection.Use      = true;
 		this.Selection.StartPos = nPos;
 		this.Selection.EndPos   = nPos + nCount - 1;
+		this.CurPos             = newPos;
 
 		if (!this.bRoot)
 			this.ParentElement.Select_MathContent(this);
@@ -2547,14 +2539,13 @@ CMathContent.prototype.InsertMathContent = function(oMathContent, nPos, isSelect
 	{
 		this.ParaMath.SetThisElementCurrent();
 		this.RemoveSelection();
-
+		
 		if (!this.bRoot)
 			this.ParentElement.SetCurrentMathContent(this);
-
-		if (this.Content[this.CurPos])
-            this.CurPos += nCount;
+		
+		this.CurPos = newPos;
 	}
-    this.Correct_Content(true);
+	this.Correct_Content(true);
 	this.Correct_ContentPos(-1);
 };
 CMathContent.prototype.Set_ParaMath = function(ParaMath, Parent)
@@ -3321,53 +3312,72 @@ CMathContent.prototype.Add_Text = function(text, paragraph, mathStyle)
 	if (!text)
 		return;
 	
-	this.Paragraph = paragraph;
+	if (this.IsAddTextInLastParaRun(mathStyle))
+	{
+		this.Add_ToPrevParaRun(text);
+		return;
+	}
 	
-	let run = new AscWord.CRun(this.Paragraph, true);
+	var oMathRun = new AscWord.CRun(undefined, true);
+	
+	AscWord.TextToMathRunElements(text, function(item)
+	{
+		oMathRun.Add(item, true);
+	});
+
+	oMathRun.Set_RFont_ForMathRun();
+	
+	if (mathStyle)
+		oMathRun.Math_Apply_Style(mathStyle);
+
+	this.AddToContent(this.CurPos, oMathRun, false);
+	this.CurPos++;
+};
+CMathContent.prototype.Add_ToPrevParaRun = function(text)
+{
+	let run = this.Content[this.Content.length - 1];
+
 	AscWord.TextToMathRunElements(text, function(item)
 	{
 		run.Add(item, true);
 	});
-	
-	run.Set_RFont_ForMathRun();
-	
-	if (mathStyle)
-		run.Math_Apply_Style(mathStyle);
-	
-	this.AddToContent(this.CurPos, run, false);
-	this.CurPos++;
-};
-
-CMathContent.prototype.Add_TextOnPos = function(nPos, sText, Paragraph, MathStyle)
+}
+CMathContent.prototype.Add_TextOnPos = function(nPos, sText, MathStyle)
 {
-    this.Paragraph = Paragraph;
+	if (!sText)
+		return;
 
-    if (sText)
-    {
-        var MathRun = new ParaRun(this.Paragraph, true);
+	let oMathRun = new AscWord.CRun(undefined, true);
 
-        for (var nCharPos = 0, nTextLen = sText.length; nCharPos < nTextLen; nCharPos++)
-        {
-            var oText = null;
-            if (0x0026 == sText.charCodeAt(nCharPos))
-                oText = new CMathAmp();
-            else
-            {
-                oText = new CMathText(false);
-                oText.addTxt(sText[nCharPos]);
-            }
-            MathRun.Add(oText, true);
-        }
+	AscWord.TextToMathRunElements(sText, function(item)
+	{
+		oMathRun.Add(item, true);
+	});
 
-        MathRun.Set_RFont_ForMathRun();
+	oMathRun.Set_RFont_ForMathRun();
 
-        if (undefined !== MathStyle && null !== MathStyle)
-            MathRun.Math_Apply_Style(MathStyle);
+	if (undefined !== MathStyle && null !== MathStyle)
+		oMathRun.Math_Apply_Style(MathStyle);
 
-        this.Internal_Content_Add(nPos, MathRun, false);
-        this.CurPos++;
-    }
+	this.Internal_Content_Add(nPos, oMathRun, false);
+	this.CurPos++;
+
 };
+CMathContent.prototype.IsAddTextInLastParaRun = function(oMathStyle)
+{
+	if (this.Content.length > 0)
+	{
+		let oLastContent = this.Content[this.Content.length - 1];
+		if (
+			oLastContent instanceof ParaRun &&
+			!oLastContent.IsPlaceholder() &&
+			!oLastContent.Is_Empty() &&
+			(oMathStyle === oLastContent.MathPrp.sty || oMathStyle === undefined)
+		)
+			return true;
+	}
+	return false
+}
 CMathContent.prototype.Add_Symbol = function(Code, TextPr, MathPr)
 {
     var MathRun = new ParaRun(this.Paragraph, true);
@@ -3744,10 +3754,10 @@ CMathContent.prototype.Recalculate_CurPos = function(_X, _Y, CurrentRun, _CurRan
 
     return this.Content[_EndPos].Recalculate_CurPos(_X, _Y, CurrentRun, _CurRange, _CurLine, _CurPage, UpdateCurPos, UpdateTarget, ReturnTarget);
 };
-CMathContent.prototype.GetCurrentParaPos = function()
+CMathContent.prototype.GetCurrentParaPos = function(align)
 {
 	if (this.CurPos >= 0 && this.CurPos < this.Content.length)
-		return this.Content[this.CurPos].GetCurrentParaPos();
+		return this.Content[this.CurPos].GetCurrentParaPos(align);
 
 	return new CParaPos(this.StartRange, this.StartLine, 0, 0);
 };
@@ -3982,178 +3992,202 @@ CMathContent.prototype.Get_RightPos = function(SearchPos, ContentPos, Depth, Use
 
     return false;
 };
-CMathContent.prototype.Get_WordStartPos = function(SearchPos, ContentPos, Depth, UseContentPos)
+CMathContent.prototype.Get_WordStartPos = function(SearchPos, ContentPos, Depth, UseContentPos, StepStart)
 {
-    if (true !== this.ParentElement.Is_ContentUse(this))
-        return false;
+	if (true !== this.ParentElement.Is_ContentUse(this))
+		return false;
 
-    if (false === UseContentPos && para_Math_Run === this.Content[this.Content.length - 1].Type)
-    {
-        // При переходе в новый контент встаем в его конец
-        var CurPos = this.Content.length - 1;
-        this.Content[CurPos].Get_EndPos(false, SearchPos.Pos, Depth + 1);
-        SearchPos.Pos.Update(CurPos, Depth);
-        SearchPos.Found     = true;
-        SearchPos.UpdatePos = true;
-        return true;
-    }
+	if (false === UseContentPos && para_Math_Run === this.Content[this.Content.length - 1].Type)
+	{
+		// При переходе в новый контент встаем в его конец
+		var CurPos = this.Content.length - 1;
+		this.Content[CurPos].Get_EndPos(false, SearchPos.Pos, Depth + 1);
+		SearchPos.Pos.Update(CurPos, Depth);
+		SearchPos.Found		= true;
+		SearchPos.UpdatePos = true;
+		return true;
+	}
 
-    var CurPos = true === UseContentPos ? ContentPos.Get(Depth) : this.Content.length - 1;
+	var CurPos = true === UseContentPos ? ContentPos.Get(Depth) : this.Content.length - 1;
 
-    var bStepStart = false;
-    if (CurPos > 0 || !this.Content[0].Cursor_Is_Start())
-        bStepStart = true;
+	var bStepStart = false;
+	if (CurPos > 0 || !this.Content[0].Cursor_Is_Start())
+		bStepStart = true;
 
-    this.Content[CurPos].Get_WordStartPos(SearchPos, ContentPos, Depth + 1, UseContentPos);
+	this.Content[CurPos].Get_WordStartPos(SearchPos, ContentPos, Depth + 1, UseContentPos, StepStart);
 
-    if (true === SearchPos.UpdatePos)
-        SearchPos.Pos.Update( CurPos, Depth );
+	if (true === SearchPos.UpdatePos)
+		SearchPos.Pos.Update( CurPos, Depth );
 
-    if (true === SearchPos.Found)
-        return;
+	if (true === SearchPos.Found)
+		return;
 
-    CurPos--;
+	CurPos--;
 
-    var bStepStartRun = false;
-    if (true === UseContentPos && para_Math_Composition === this.Content[CurPos + 1].Type)
-    {
-        // При выходе из формулы встаем в конец рана
-        this.Content[CurPos].Get_EndPos(false, SearchPos.Pos, Depth + 1);
-        SearchPos.Pos.Update(CurPos, Depth);
-        SearchPos.Found     = true;
-        SearchPos.UpdatePos = true;
-        return true;
-    }
-    else if (para_Math_Run === this.Content[CurPos + 1].Type && true === SearchPos.Shift)
-        bStepStartRun = true;
+	var bStepStartRun = false;
+	if (true === UseContentPos && para_Math_Composition === this.Content[CurPos + 1].Type)
+	{
+		// При выходе из формулы встаем в конец рана
+		this.Content[CurPos].Get_EndPos(false, SearchPos.Pos, Depth + 1);
+		SearchPos.Pos.Update(CurPos, Depth);
+		SearchPos.Found		= true;
+		SearchPos.UpdatePos	= true;
+		return true;
+	}
+	else if (para_Math_Run === this.Content[CurPos + 1].Type && true === SearchPos.Shift)
+		bStepStartRun = true;
 
-    while (CurPos >= 0)
-    {
-        if (true !== bStepStartRun || para_Math_Run === this.Content[CurPos].Type)
-        {
-            var OldUpdatePos = SearchPos.UpdatePos;
 
-            this.Content[CurPos].Get_WordStartPos(SearchPos, ContentPos, Depth + 1, false);
 
-            if (true === SearchPos.UpdatePos)
-                SearchPos.Pos.Update(CurPos, Depth);
-            else
-                SearchPos.UpdatePos = OldUpdatePos;
+	while (CurPos >= 0)
+	{
+		if (true !== bStepStartRun || para_Math_Run === this.Content[CurPos].Type)
+		{
+			var OldUpdatePos = SearchPos.UpdatePos;
+			if (this.Content[CurPos].Type !== 49)
+			{
+				this.Content[CurPos - 1].Get_EndPos(false, SearchPos.Pos, Depth + 1);
+				SearchPos.Pos.Update(CurPos - 1, Depth);
+				SearchPos.Found		= true;
+				SearchPos.UpdatePos	= true;
+				return;
+			}
+			else
+			{
+				this.Content[CurPos].Get_WordStartPos(SearchPos, ContentPos, Depth + 1, false, StepStart);
 
-            if (true === SearchPos.Found)
-                return;
+				if (true === SearchPos.UpdatePos)
+					SearchPos.Pos.Update(CurPos, Depth);
+				else
+					SearchPos.UpdatePos = OldUpdatePos;
 
-            if (true === SearchPos.Shift)
-                bStepStartRun = true;
-        }
-        else
-        {
-            // Встаем в начало рана перед формулой
-            this.Content[CurPos + 1].Get_StartPos(SearchPos.Pos, Depth + 1);
-            SearchPos.Pos.Update(CurPos + 1, Depth);
-            SearchPos.Found     = true;
-            SearchPos.UpdatePos = true;
-            return true;
-        }
-        CurPos--;
-    }
+				if (true === SearchPos.Found)
+					return;
 
-    if (true === bStepStart)
-    {
-        // Перед выходом из контента встаем в его начало
-        this.Content[0].Get_StartPos(SearchPos.Pos, Depth + 1);
-        SearchPos.Pos.Update(0, Depth);
-        SearchPos.Found     = true;
-        SearchPos.UpdatePos = true;
-        return true;
-    }
+				if (true === SearchPos.Shift)
+					bStepStartRun = true;
+			}
+		}
+		else
+		{
+			// Встаем в начало рана перед формулой
+			this.Content[CurPos + 1].Get_StartPos(SearchPos.Pos, Depth + 1);
+			SearchPos.Pos.Update(CurPos + 1, Depth);
+			SearchPos.Found		= true;
+			SearchPos.UpdatePos	= true;
+			return true;
+		}
+		CurPos--;
+	}
+
+	if (true === bStepStart)
+	{
+		// Перед выходом из контента встаем в его начало
+		this.Content[0].Get_StartPos(SearchPos.Pos, Depth + 1);
+		SearchPos.Pos.Update(0, Depth);
+		SearchPos.Found		= true;
+		SearchPos.UpdatePos	= true;
+		return true;
+	}
 };
 CMathContent.prototype.Get_WordEndPos = function(SearchPos, ContentPos, Depth, UseContentPos, StepEnd)
 {
-    if (true !== this.ParentElement.Is_ContentUse(this))
-        return false;
+	if (true !== this.ParentElement.Is_ContentUse(this))
+		return false;
 
-    if (false === UseContentPos && para_Math_Run === this.Content[0].Type)
-    {
-        // При переходе в новый контент встаем в его начало
-        this.Content[0].Get_StartPos(SearchPos.Pos, Depth + 1);
-        SearchPos.Pos.Update(0, Depth);
-        SearchPos.Found     = true;
-        SearchPos.UpdatePos = true;
-        return true;
-    }
+	if (false === UseContentPos && para_Math_Run === this.Content[0].Type)
+	{
+		// При переходе в новый контент встаем в его начало
+		this.Content[0].Get_StartPos(SearchPos.Pos, Depth + 1);
+		SearchPos.Pos.Update(0, Depth);
+		SearchPos.Found		= true;
+		SearchPos.UpdatePos	= true;
+		return true;
+	}
 
-    var CurPos = true === UseContentPos ? ContentPos.Get(Depth) : 0;
+	var CurPos = true === UseContentPos ? ContentPos.Get(Depth) : 0;
 
-    var Count = this.Content.length;
-    var bStepEnd = false;
-    if (CurPos < Count - 1 || !this.Content[Count - 1].Cursor_Is_End())
-        bStepEnd = true;
+	var Count = this.Content.length;
+	var bStepEnd = false;
+	if (CurPos < Count - 1 || !this.Content[Count - 1].Cursor_Is_End())
+		bStepEnd = true;
 
-    this.Content[CurPos].Get_WordEndPos(SearchPos, ContentPos, Depth + 1, UseContentPos, StepEnd);
+	this.Content[CurPos].Get_WordEndPos(SearchPos, ContentPos, Depth + 1, UseContentPos, StepEnd);
 
-    if (true === SearchPos.UpdatePos)
-        SearchPos.Pos.Update( CurPos, Depth);
+	if (true === SearchPos.UpdatePos)
+		SearchPos.Pos.Update( CurPos, Depth);
 
-    if (true === SearchPos.Found)
-        return;
+	if (true === SearchPos.Found)
+		return;
 
-    CurPos++;
+	CurPos++;
 
-    var bStepEndRun = false;
-    if (true === UseContentPos && para_Math_Composition === this.Content[CurPos - 1].Type)
-    {
-        // При выходе из формулы встаем в начало рана
-        this.Content[CurPos].Get_StartPos(SearchPos.Pos, Depth + 1);
-        SearchPos.Pos.Update(CurPos, Depth);
-        SearchPos.Found     = true;
-        SearchPos.UpdatePos = true;
-        return true;
-    }
-    else if (para_Math_Run === this.Content[CurPos - 1].Type && true === SearchPos.Shift)
-        bStepEndRun = true;
+	var bStepEndRun = false;
+	if (true === UseContentPos && para_Math_Composition === this.Content[CurPos - 1].Type)
+	{
+		// При выходе из формулы встаем в начало рана
+		this.Content[CurPos].Get_StartPos(SearchPos.Pos, Depth + 1);
+		SearchPos.Pos.Update(CurPos, Depth);
+		SearchPos.Found		= true;
+		SearchPos.UpdatePos	= true;
+		return true;
+	}
+	else if (para_Math_Run === this.Content[CurPos - 1].Type && true === SearchPos.Shift)
+		bStepEndRun = true;
 
-    while (CurPos < Count)
-    {
-        if (true !== bStepEndRun || para_Math_Run === this.Content[CurPos].Type)
-        {
-            var OldUpdatePos = SearchPos.UpdatePos;
+	while (CurPos < Count)
+	{
+		if (true !== bStepEndRun || para_Math_Run === this.Content[CurPos].Type)
+		{
+			var OldUpdatePos = SearchPos.UpdatePos;
 
-            this.Content[CurPos].Get_WordEndPos(SearchPos, ContentPos, Depth + 1, false, StepEnd);
+			if (this.Content[CurPos].Type !== 49)
+			{
+				//this.Content[CurPos].Get_WordEndPos(SearchPos, ContentPos, Depth + 1, false, false);
+				SearchPos.Pos.Update(CurPos+1, Depth);
+				SearchPos.Pos.Update(0, Depth + 1);
+				SearchPos.Found		= true;
+				SearchPos.UpdatePos	= true;
+				return;
+			}
+			else
+			{
+				this.Content[CurPos].Get_WordEndPos(SearchPos, ContentPos, Depth + 1, false, StepEnd);
 
-            if (true === SearchPos.UpdatePos)
-                SearchPos.Pos.Update(CurPos, Depth);
-            else
-                SearchPos.UpdatePos = OldUpdatePos;
+				if (true === SearchPos.UpdatePos)
+					SearchPos.Pos.Update(CurPos, Depth);
+				else
+					SearchPos.UpdatePos = OldUpdatePos;
 
-            if (true === SearchPos.Found)
-                return;
+				if (true === SearchPos.Found)
+					return;
 
-            if (true === SearchPos.Shift)
-                bStepEndRun = true;
-        }
-        else
-        {
-            // Встаем в конец рана перед формулой
-            this.Content[CurPos - 1].Get_EndPos(false, SearchPos.Pos, Depth + 1);
-            SearchPos.Pos.Update(CurPos - 1, Depth);
-            SearchPos.Found     = true;
-            SearchPos.UpdatePos = true;
-            return true;
-        }
+				if (true === SearchPos.Shift)
+					bStepEndRun = true;
+			}
+		}
+		else
+		{
+			// Встаем в конец рана перед формулой
+			this.Content[CurPos - 1].Get_EndPos(false, SearchPos.Pos, Depth + 1);
+			SearchPos.Pos.Update(CurPos - 1, Depth);
+			SearchPos.Found		= true;
+			SearchPos.UpdatePos	= true;
+			return true;
+		}
 
-        CurPos++;
-    }
+		CurPos++;
+	}
 
-    if (true === bStepEnd)
-    {
-        // Перед выходом из контента встаем в его конец
-        this.Content[Count - 1].Get_EndPos(false, SearchPos.Pos, Depth + 1);
-        SearchPos.Pos.Update(Count - 1, Depth);
-        SearchPos.Found     = true;
-        SearchPos.UpdatePos = true;
-        return true;
-    }
+	if (true === bStepEnd)
+	{
+		// Перед выходом из контента встаем в его конец
+		this.Content[Count - 1].Get_EndPos(false, SearchPos.Pos, Depth + 1);
+		SearchPos.Pos.Update(Count - 1, Depth);
+		SearchPos.Found		= true;
+		SearchPos.UpdatePos	= true;
+		return true;
+	}
 };
 CMathContent.prototype.Get_StartPos = function(ContentPos, Depth)
 {
@@ -4934,48 +4968,48 @@ CMathContent.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRa
 
     this.Bounds.SetWidth(CurLine, CurRange, PRSC.Range.W - RangeW);
 };
+CMathContent.prototype.recalculateAllSize = function(textMeasurer)
+{
+	var ascent = 0, descent = 0;
+	this.size.width = 0;
+	
+	if (this.RecalcInfo.bEqArray)
+		this.InfoPoints.SetDefault();
+	
+	for (let pos = 0, count = this.Content.length; pos < count; ++pos)
+	{
+		let item = this.Content[pos];
+		if (para_Math_Run === item.Type)
+		{
+			item.Math_RecalculateContent();
+		}
+		else
+		{
+			item.recalculateAllSize(textMeasurer);
+			
+			if (this.RecalcInfo.bEqArray)
+				this.InfoPoints.ContentPoints.UpdatePoint(item.size.width);
+		}
+		
+		
+		this.size.width += item.size.width;
+		
+		if (ascent < item.size.ascent)
+			ascent = item.size.ascent;
+		
+		if (descent < item.size.height - item.size.ascent)
+			descent = item.size.height - item.size.ascent;
+		
+		this.size.ascent = ascent;
+		this.size.height = ascent + descent;
+	}
+};
 CMathContent.prototype.RecalculateMinMaxContentWidth = function(MinMax)
 {
-    if(this.RecalcInfo.bEqArray)
-        this.InfoPoints.SetDefault();
-
-    var ascent = 0, descent = 0;
-    this.size.width = 0;
-
-    var Lng = this.Content.length;
-
-    for(var Pos = 0; Pos < Lng; Pos++)
-    {
-        var Item = this.Content[Pos],
-            Type = Item.Type;
-
-        if(MinMax.bMath_OneLine)
-        {
-            if(Type == para_Math_Run)
-                Item.Math_RecalculateContent();
-            else
-                Item.RecalculateMinMaxContentWidth(MinMax);
-
-            if(this.RecalcInfo.bEqArray && Type == para_Math_Composition)
-                this.InfoPoints.ContentPoints.UpdatePoint(this.Content[Pos].size.width);
-
-            this.size.width += Item.size.width;
-
-            if(ascent < Item.size.ascent)
-                ascent = Item.size.ascent;
-
-            if(descent < Item.size.height - Item.size.ascent)
-                descent = Item.size.height - Item.size.ascent;
-
-            this.size.ascent = ascent;
-            this.size.height = ascent + descent;
-        }
-        else
-        {
-            Item.RecalculateMinMaxContentWidth(MinMax);
-        }
-    }
-
+	for (let pos = 0, count = this.Content.length; pos < count; ++pos)
+	{
+		this.Content[pos].RecalculateMinMaxContentWidth(MinMax);
+	}
 };
 CMathContent.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _CurRange, ContentMetrics)
 {
@@ -5741,7 +5775,7 @@ CMathContent.prototype.SplitContentByContentPos = function()
         arrContent.push(this.Content[i].Copy());
     }
 
-    this.Remove_FromContent(this.CurPos + 1, this.Content.length - this.CurPos);
+    this.Remove_FromContent(this.CurPos + 1, this.Content.length - this.CurPos - 1);
 
     return arrContent;
 };
@@ -5757,10 +5791,9 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
     if (nInputType === 1 || oElement.value === 39 || oElement.value === 34)
         return;
 
-    let lastElement = this.GetLastTextElement();
-
     // split content by cursor position
     const arrNextContent = this.SplitContentByContentPos();
+	let lastElement = this.GetLastTextElement();
 
     if (arrNextContent === false)
         return;
@@ -5778,7 +5811,7 @@ CMathContent.prototype.Process_AutoCorrect = function (oElement)
         this.ConvertContentInLastBracketBlock(nInputType);
 
     // convert word near cursor (\int, \sqrt, \alpha...)
-    if (oElement.value === 32 || this.IsLastElement(AscMath.MathLiterals.operators))
+    if (oElement.value === 32 || this.IsLastElement(AscMath.MathLiterals.operators) || lastElement === '(' || lastElement === ")")
     {
         if (oElement.value === 32)
         {
@@ -5983,26 +6016,7 @@ CMathContent.prototype.AddContentForAutoCorrection = function(arrNewElements, is
     if (arrNewElements.length < 1)
         return;
 
-    if (
-        arrNewElements.length > 1 &&
-
-        arrNewElements[arrNewElements.length - 1] instanceof ParaRun &&
-        arrNewElements[arrNewElements.length - 1].Content.length > 0 &&
-        arrNewElements[arrNewElements.length - 1].Content[0].value === 32 &&
-
-        !(arrNewElements[arrNewElements.length - 2] instanceof ParaRun)
-    )
-    {
-        arrNewElements[arrNewElements.length - 1].Remove_FromContent(0, 1);
-    }
-
-    let count = 0;
-    for (let i = 0; i < arrNewElements.length; i++)
-    {
-        if (arrNewElements[i].Type !== 51) count++;
-    }
-
-    this.ConcatToContent( isCurPosChange ? this.CurPos + 1 : this.CurPos, arrNewElements);
+	this.ConcatToContent( isCurPosChange ? this.CurPos + 1 : this.CurPos, arrNewElements);
 };
 CMathContent.prototype.CorrectWordOnCursor = function(IsLaTeX, pos)
 {
@@ -6088,15 +6102,17 @@ CMathContent.prototype.ConvertContentInLastBracketBlock = function(nInputType)
     {
         const oBracketsContent = this.GetBracketOperatorInfo(nInputType === 1);
         const Brackets = new ProceedBrackets(oBracketsContent);
+		let Result = Brackets.GetPosition();
 
         if (Brackets.intCounter === 0 && Brackets.BracketsPair.length > 0)
         {
-            let pair = Brackets.BracketsPair[0][0];
-            const Result = [pair[2], pair[0] + 1];
+	        let oParaRun = this.Content[Result[0]];
+	        let oTextAfterBracket = oParaRun.Content[Result[1] + 1];
+			let strTextAfterBracket = oTextAfterBracket ? String.fromCharCode(oTextAfterBracket.value) : "";
 
-            if (Result.length === 2)
+	        if (Result.length === 2 && strTextAfterBracket !== "_" || strTextAfterBracket === "^")
             {
-                Result[0]++;
+                Result[1]++;
                 this.CutConvertAndPaste(Result, nInputType);
                 Brackets.isConvert = true;
             }
@@ -6136,6 +6152,11 @@ function ProceedBrackets(arrDataOfBrackets)
                 this.AnalyseData(intCurrentData);
         }
     }
+}
+ProceedBrackets.prototype.GetLastBracketStartPos = function ()
+{
+	let arrBrack = this.BracketsPair[this.BracketsPair.length - 1][0][0];
+	return arrBrack;
 }
 ProceedBrackets.prototype.PushData = function (intContent)
 {
@@ -6251,21 +6272,18 @@ ProceedBrackets.prototype.IsHasPoints = function ()
 {
     return this.Position.length === 2;
 };
-ProceedBrackets.prototype.GetPosition = function (con)
+ProceedBrackets.prototype.GetPosition = function ()
 {
-    // let ContentPos = con.Content.length - 1;
-    // let Content = con.Content[ContentPos];
-    // let RunPos = Content.Content.length - 1;
+	let Pair = [];
+	let oLastBracket = this.BracketsPair[0];
+	if (oLastBracket)
+	{
+		let oClosePos = oLastBracket[0];
+		Pair[0] = oClosePos[2];
+		Pair[1] = oClosePos[0];
+	}
 
-
-    if (this.Position[1] < 0) {
-        this.Position[1] = 0;
-    }
-
-    //if (this.Position[0] === ContentPos && this.Position[1] === RunPos)
-        return this.Position;
-
-    //return []
+	return Pair;
 };
 ProceedBrackets.prototype.IsBufferIncludeOneOpenBracket = function ()
 {
@@ -6370,12 +6388,21 @@ ContentIterator.prototype.GetNextFromCurrentElement = function (nextRule)
             let intCurrent = intCode = this.CurrentElement.GetNext();
             let strCurrent = String.fromCharCode(intCode);
 
-            if (strCurrent === "\"" || strCurrent === "\'")
+	        if (this.CurrentRule === strCurrent)
+		        return intCurrent;
+
+            if (this.CurrentRule !== "\"" && strCurrent === "\"")
             {
                 return this.CheckTextLiteral(strCurrent);
             }
-            if (AscMath.MathLiterals.rBrackets.IsIncludes(strCurrent)) {
+            if (intCount === 0 && AscMath.MathLiterals.rBrackets.IsIncludes(strCurrent))
+			{
                 return this.CheckBracket(strCurrent);
+            }
+			else if (AscMath.MathLiterals.rBrackets.IsIncludes(strCurrent))
+            {
+	            this.CurrentElement.Cursor++;
+				return prevCode;
             }
             else if (AscMath.MathLiterals.lBrackets.IsIncludes(strCurrent))
             {
@@ -6387,9 +6414,6 @@ ContentIterator.prototype.GetNextFromCurrentElement = function (nextRule)
                 this.CurrentElement.Cursor++;
                 return prevCode;
             }
-
-            if (this.CurrentRule === strCurrent)
-                return intCurrent;
 
             else if (nextRule !== true && nextRule && intCurrent === nextRule.charCodeAt(0))
             {
@@ -6420,6 +6444,9 @@ ContentIterator.prototype.CheckTextLiteral = function(literal)
 {
     while (this.CurrentElement)
     {
+		if (this.CurrentElement.Cursor < 0)
+			return
+
         if (!this.CurrentElement.IsHasContent() && this.cursor > 0)
         {
             this.cursor--;
@@ -6505,97 +6532,148 @@ ContentIterator.prototype.ResetParaRunCursor = function()
 };
 ContentIterator.prototype.CheckRules = function ()
 {
-    // TODO it is better to search for sequences by what is, and not vice versa; incredibly inefficient!!!
-    const rules = [
-        //true обозначает обычный текст или блоки контента (CFraction, CLimit, CDegree...);
-        // ["_"],
-        // ["^"],
-        [true, "^", true, "_", true, "▒", true],
-        [true, "_", true, "^", true, "▒", true],
+	// TODO it is better to search for sequences by what is, and not vice versa; incredibly inefficient!!!
+	const rules = [
+		//true обозначает обычный текст или блоки контента (CFraction, CLimit, CDegree...);
+		// ["_"],
+		// ["^"],
+		["(", "_", true, "^", true, ")", true],
+		["(", "^", true, "_", true, ")", true],
 
-        [true, "^", true, "_", true, true],
-        [true, "_", true, "^", true, true],
+		[true, "^", true, "_", true, "▒", true],
+		[true, "_", true, "^", true, "▒", true],
 
-        [true, "┬", true, true],
-        [true, "┴", true, true],
+		["^", true, "_", true, " ", true],
+		["_", true, "^", true, " ", true],
 
-        [true, "_", true, "^", true],
-        [true, "^", true, "_", true],
+		[true, "^", true, "_", true, true],
+		[true, "_", true, "^", true, true],
 
-        [true, "^", true, "▒", true],
-        [true, "_", true, "▒", true],
-        [true, "▒", true],
+		["(", "_", true, ")", true],
+		["(", "^", true, ")", true],
 
-        [true, "┬", true],
-        [true, "┴", true],
+		[true, true, "⁡", true], // funcapply
 
-        ["s","i","n"],["t","a","n"],["t","a","n","h"],["s","u","p"],["s","i","n","h"],["s","e","c"],
-        ["h","o","m"],["a","r","g"],["a","r","c","y","a","n"],["a","r","c","s","i","n"],["a","r","c","s","e","c"],
-        ["a","r","c","c","s","c"],["a","r","c","c","o","t"],["a","r","c","c","o","s"],["i","n","f"],["g","c","d"],
-        ["e","x","p"],["d","i","m"],["d","e","t"],["d","e","g"],["c","s","c"],["c","o","t","h"],["c","o","t"],
-        ["c","o","s","h"],["c","o","s"],["P","r"],["l","g"],["l","n"],["l","o","g"],["s","g","n"],["s","e","c","h"],
-        ["l","i","m"],["m","i","n"],["m","a","x"],
+		["^", true, "_", true],
+		["_", true, "^", true],
 
-        [true, "/", true],
-        [true, "^", true],
-        [true, "_", true],
+		["_", true, " ", true],
+		["^", true, " ", true],
 
-        ['\\frac', true, true],
+		[true, "┬", true, true],
+		[true, "┴", true, true],
 
-        ["√", true],
-        ["∛", true],
-        ["∜", true],
-        ["▭", true],
-        ["/", true],
-        [true, "/"],
+		["⏟", true, "┬", true],
+		["⏟", true, "┴", true],
+		["⏞", true, "┬", true],
+		["⏞", true, "┴", true],
 
-        [true, "┬"],
-        [true, "┴"],
-        ["/"],
+		[true, "_", true, "^", true],
+		[true, "^", true, "_", true],
 
-        [true, "́" ],
-        [true, "̂" ],
-        [true, "̌" ],
-        [true, "̃" ],
-        [true, "̀" ],
-        [true, "̇" ],
-        [true, "̈" ],
-        [true, "⃛" ],
-        [true, "̄" ],
-        [true, "⃗" ],
-        [true],
-    ];
+		[true, "^", true, "▒", true],
+		[true, "_", true, "▒", true],
+		[true, "▒", true],
 
-    for (let j = 0; j < rules.length; j++)
-    {
-        this.cursor = this.Content.length - 1;
-        let arrCurrentRule = rules[j];
-        let intRuleCounter = 0;
+		[true, "┬", true],
+		[true, "┴", true],
 
-        for (let i = arrCurrentRule.length - 1; i >= 0 && this.IsHasContent(); i--)
-        {
-            this.CurrentRule = arrCurrentRule[i];
-            const intCharCode = this.GetNext(arrCurrentRule[i - 1]);
+		[true, "⏟", true],
+		[true, "⏞", true],
 
-            if (arrCurrentRule[i] === true && intCharCode)
-                intRuleCounter++;
-            else if (arrCurrentRule[i] !== true && String.fromCharCode(intCharCode) === arrCurrentRule[i])
-                intRuleCounter++;
-            else
-                break;
-        }
+		["s","i","n"],["t","a","n"],["t","a","n","h"],["s","u","p"],["s","i","n","h"],["s","e","c"],
+		["h","o","m"],["a","r","g"],["a","r","c","y","a","n"],["a","r","c","s","i","n"],["a","r","c","s","e","c"],
+		["a","r","c","c","s","c"],["a","r","c","c","o","t"],["a","r","c","c","o","s"],["i","n","f"],["g","c","d"],
+		["e","x","p"],["d","i","m"],["d","e","t"],["d","e","g"],["c","s","c"],["c","o","t","h"],["c","o","t"],
+		["c","o","s","h"],["c","o","s"],["P","r"],["l","g"],["l","n"],["l","o","g"],["s","g","n"],["s","e","c","h"],
+		["l","i","m"],["m","i","n"],["m","a","x"],
 
-        if (intRuleCounter === arrCurrentRule.length)
-        {
-            this.RulePosition[0] = this.cursor;
-            this.RulePosition[1] = this.CurrentElement instanceof ParaRunIterator && this.CurrentElement.Cursor >= 0 ? this.CurrentElement.Cursor + 1: 0;
-            break;
-        }
-        else
-            this.ResetParaRunCursor();
-    }
+		[true, "/", true],
+		[true, "^", true],
+		[true, "_", true],
 
-    return;
+		['\\frac', true, true],
+
+		[true, "'", true ],
+		[true, "′", true ],
+		[true, "″", true ],
+		[true, "‴", true ],
+		[true, "⁗", true ],
+
+		["√", true],
+		["∛", true],
+		["∜", true],
+		["▭", true],
+		["□", true],
+		["¯", true],
+		["▁", true],
+		["/", true],
+		["⏟", true],
+		["⏞", true],
+		[true, "/"],
+
+		[true, "┬"],
+		[true, "┴"],
+		["/"],
+
+		[true, "́" ],
+		[true, "̂" ],
+		[true, "̌" ],
+		[true, "̃" ],
+		[true, "̀" ],
+		[true, "̇" ],
+		[true, "̈" ],
+		[true, "⃛" ],
+		[true, "̄" ],
+		[true, "⃗" ],
+		[true, "⃖" ],
+		[true, "⃡" ],
+		[true, "⃐" ],
+		[true, "⃑" ],
+
+		[true, "′" ],
+		[true, "'" ],
+		[true, "″" ],
+		[true, "‴" ],
+		[true, "⁗" ],
+
+		["'"],
+		["′"],
+		["″"],
+		["‴"],
+		["⁗"],
+	];
+
+	for (let j = 0; j < rules.length; j++)
+	{
+		this.cursor = this.Content.length - 1;
+		let arrCurrentRule = rules[j];
+		let intRuleCounter = 0;
+
+		for (let i = arrCurrentRule.length - 1; i >= 0 && this.IsHasContent(); i--)
+		{
+			this.CurrentRule = arrCurrentRule[i];
+			const intCharCode = this.GetNext(arrCurrentRule[i - 1]);
+
+			if (arrCurrentRule[i] === true && intCharCode)
+				intRuleCounter++;
+			else if (arrCurrentRule[i] !== true && String.fromCharCode(intCharCode) === arrCurrentRule[i])
+				intRuleCounter++;
+			else
+				break;
+		}
+
+		if (intRuleCounter === arrCurrentRule.length)
+		{
+			this.RulePosition[0] = this.cursor;
+			this.RulePosition[1] = this.CurrentElement instanceof ParaRunIterator && this.CurrentElement.Cursor >= 0 ? this.CurrentElement.Cursor : 0;
+			break;
+		}
+		else
+			this.ResetParaRunCursor();
+	}
+
+	return;
 };
 ContentIterator.prototype.WriteBracketPosition = function (intGlobalPos, intParaRunPos)
 {
@@ -6650,6 +6728,13 @@ CMathContent.prototype.CheckAutoCorrectionRules = function(nInputType)
         for (let i = 0; i < this.Content.length; i++) {
             prev.push([this.Content[i].constructor.name, this.Content[i].Content ? this.Content[i].Content.length : 0]);
         }
+
+		// if we have only space - doesn't convert
+		if (prev.length === 1 && prev[0][0] === 'ParaRun' && this.Content[0].GetTextOfElement().length === 0)
+		{
+			this.Add_Text(' ');
+			return;
+		}
     }
 
     oRuleIterator.CheckRules();
@@ -6658,8 +6743,6 @@ CMathContent.prototype.CheckAutoCorrectionRules = function(nInputType)
 
     if (arrPosition.length === 2)
         this.CutConvertAndPaste(arrPosition, nInputType);
-    else if (isSpace)
-        this.Add_TextOnPos(this.Content.length - 1,' ');
 
     let now = [];
 
@@ -6676,25 +6759,26 @@ CMathContent.prototype.CheckAutoCorrectionRules = function(nInputType)
             let tprev = prev[prev.length - 1 - counter];
             let tnow = now[now.length - 1 - counter];
 
-            let tprevType = tprev[0];
-            let tnowType = tnow[0];
+            let tprevType = tprev ? tprev[0] : undefined;
+            let tnowType = tprev ? tnow[0] : undefined;
+            let tprevCount = tprev ? tprev[1] : undefined;
+            let tnowCount = tprev ? tnow[1] : undefined;
 
-            let tprevCount = tprev[1];
-            let tnowCount= tnow[1];
-
-            if (tprevType !== tnowType || tprevCount !== tnowCount) {
+            if (tprevType !== tnowType || tprevCount !== tnowCount)
+			{
                 if (!(counter === 0 && tprevCount === tnowCount + 1)) {
                     isEqual = false;
                     break;
                 }
             }
 
-            if (tnow !== "ParaRun")
+            if (tnow !== "ParaRun" && counter > 0)
                 break;
 
             counter++;
         }
-        if (isEqual) this.Add_TextOnPos(this.Content.length, ' ');
+        if (isEqual)
+	        this.Add_TextOnPos(this.Content.length,' ');
     }
     else if (lastOperator)
     {
@@ -6717,7 +6801,7 @@ CMathContent.prototype.CheckAutoCorrectionBrackets = function(nInputType)
 {
     const oBracketsContent = this.GetBracketOperatorInfo(nInputType === 1);
     const Brackets = new ProceedBrackets(oBracketsContent, nInputType);
-    const arrPosition = Brackets.GetPosition(this);
+    const arrPosition = Brackets.GetPosition();
 
     if (!(this.IsLastTextElementRBracket() || this.IsPreLastTextElementRBracket()) || this.GetPreLastTextElement() === "〗")
         return Brackets;
@@ -6729,16 +6813,17 @@ CMathContent.prototype.CheckAutoCorrectionBrackets = function(nInputType)
     {
         if (arrPosition.length === 2 && Brackets.intCounter === 0)
         {
-            this.CutConvertAndPaste(arrPosition, nInputType);
+	        if (this.GetLastTextElement() === " ")
+		        this.DeleteEndSpace();
+
+            this.CutConvertAndPaste(arrPosition, nInputType, true);
             Brackets.isConvert = true;
-            if (this.GetLastTextElement() === " ")
-                this.DeleteEndSpace();
         }
     }
 
     return Brackets;
 };
-CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType, isNotCorrect)
+CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType, isNotWrap)
 {
     if (arrPos.length === 0)
         arrPos = [0, 0];
@@ -6756,23 +6841,31 @@ CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType, isNotCo
 
         if (i === arrPos[0] && CurrentContent instanceof ParaRun)
         {
-            for (let j = CurrentContent.Content.length - 1; j >= arrPos[1] && j >= arrPos[1]; j--)
+            for (let j = CurrentContent.Content.length - 1; j >= arrPos[1]; j--)
             {
                 strContent = CurrentContent.Content[j].GetTextOfElement(nInputType === 1) + strContent;
-                CurrentContent.Remove_FromContent(j, 1);
+                CurrentContent.Remove_FromContent(j, 1, true);
             }
         }
         else
         {
-            if (CurrentContent.Type !== 49) {
-                strContent = "〖" + CurrentContent.GetTextOfElement(nInputType === 1).trim() + "〗" + strContent;
+            if (CurrentContent.Type !== 49)
+			{
+				if (CurrentContent instanceof CDelimiter)
+				{
+					strContent = CurrentContent.GetTextOfElement(nInputType === 1) + strContent;
+				}
+				else
+				{
+					strContent = "〖" + CurrentContent.GetTextOfElement(nInputType === 1) + "〗" + strContent;
+				}
                 strContent = strContent.trim();
             }
-            else {
-                strContent = CurrentContent.GetTextOfElement(nInputType === 1).trim() + strContent;
-                strContent = strContent.trim();
+            else
+			{
+                strContent = CurrentContent.GetTextOfElement(nInputType === 1) + strContent;
             }
-            this.Remove_FromContent(i, 1);
+            this.Remove_FromContent(i, 1, true);
         }
     }
 
@@ -6795,13 +6888,8 @@ CMathContent.prototype.DeleteEndSpace = function()
 };
 CMathContent.prototype.IsStartAutoCorrection = function(nInputType, intCode)
 {
-    return  AscMath.IsStartAutoCorrection(nInputType, intCode) &&
-        !(
-            this.IsLastElement(AscMath.MathLiterals.lBrackets)
-            || this.IsLastElement(AscMath.MathLiterals.lrBrackets)
-            || this.IsLastElement(AscMath.MathLiterals.radical)
-            || this.IsLastElement(AscMath.MathLiterals.nary)
-        )
+    return  AscMath.IsStartAutoCorrection(nInputType, intCode)
+	    && !(this.IsLastElement(AscMath.MathLiterals.radical) || this.IsLastElement(AscMath.MathLiterals.nary))
 };
 CMathContent.prototype.Clear_ContentChanges = function()
 {
@@ -6884,7 +6972,7 @@ CMathContent.prototype.GetMultipleContentForGetText = function(isLaTeX, isNotBra
         else
         {
             str = this.GetTextOfElement(isLaTeX);
-            if (!AscMath.functionNames.includes(str) && !(str[0] === "\"" && str[str.length-1] === "\""))
+            if (!AscMath.functionNames.includes(str) && !(str[0] === "\"" && str[str.length-1] === "\"") && str[0] !== "(")
             {
                 str = (isLaTeX === true)
                     ?  "{" + this.GetTextOfElement(isLaTeX) + "}"
@@ -6899,6 +6987,40 @@ CMathContent.prototype.GetMultipleContentForGetText = function(isLaTeX, isNotBra
     }
 
     return this.CheckIsEmpty(str);
+};
+CMathContent.prototype.haveMixedContent = function()
+{
+	let isOperator = 0;
+	let isNormalText = 0;
+	let isCustomContent = 0;
+
+	for (let i = 0; i < this.Content.length; i++)
+	{
+		let oCurrentContent = this.Content[i];
+		if (oCurrentContent instanceof ParaRun)
+		{
+			if (oCurrentContent.IsContainMathOperators())
+				isOperator = 1;
+			
+			if (!oCurrentContent.IsContainMathOperators())
+				isNormalText = 1;
+		}
+		else
+		{
+			if (isCustomContent
+				|| oCurrentContent instanceof CFraction
+				|| oCurrentContent instanceof CDegree
+				|| oCurrentContent instanceof CDegreeSubSup)
+				return true;
+			
+			isCustomContent = 1;
+		}
+		
+		if (isOperator + isNormalText + isCustomContent > 1)
+			return true;
+	}
+
+	return false;
 };
 CMathContent.prototype.CheckIsEmpty = function(strAtom)
 {
@@ -6933,19 +7055,11 @@ CMathContent.prototype.GetTextContent = function(bSelectedText, isLaTeX)
 	}
 
 	for (let i = StartPos; i <= EndPos; i++)
-    {
+	{
 		if (this.Content[i] !== undefined)
-        {
-            if (i < EndPos && i > 0 && this.Content[i - 1].Type !== this.Content[i].Type && str !== "")
-            {
-                str += " " + this.Content[i].GetTextOfElement(isLaTeX);
-            }
-            else
-            {
-                str += this.Content[i].GetTextOfElement(isLaTeX);
-            }
-
-        }
+		{
+			str += this.Content[i].GetTextOfElement(isLaTeX);
+		}
 	}
 
 	return {str: str};

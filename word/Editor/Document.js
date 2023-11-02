@@ -2162,6 +2162,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
 	// Объект для составного ввода текста
 	this.CompositeInput = null;
+	this.compositeInput = null;
 
 	// Нужно ли проверять тип лока у ContentControl при проверке залоченности выделенных объектов
 	this.CheckContentControlsLock = true;
@@ -2701,7 +2702,7 @@ CDocument.prototype.Redraw = function(nStartPage, nEndPage)
 };
 CDocument.prototype.private_Redraw = function(nStartPage, nEndPage)
 {
-	if (-1 !== nStartPage && -1 !== nEndPage)
+	if (-1 !== nStartPage && -1 !== nEndPage && undefined !== nStartPage && undefined !== nEndPage)
 	{
 		var _nStartPage = Math.max(0, nStartPage);
 		var _nEndPage   = Math.min(this.DrawingDocument.m_lCountCalculatePages - 1, nEndPage);
@@ -2778,7 +2779,9 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 
 			if (this.Action.Additional.FormAutoFit)
 				this.private_FinalizeFormAutoFit(nRecalcResult & document_recalcresult_FastFlag);
-
+			
+			if (this.Action.Additional.ShapeAutoFit)
+				this.private_FinalizeShapeAutoFit();
 		}
 		else if (undefined !== this.Action.Redraw.Start && undefined !== this.Action.Redraw.End)
 		{
@@ -2991,7 +2994,7 @@ CDocument.prototype.private_FinalizeCheckTrackMove = function()
 };
 CDocument.prototype.private_FinalizeValidateForm = function()
 {
-	let isCompositeInput = this.IsCompositeInputInProgress();
+	let isCompositeInput = this.getCompositeInput().isInProgress();
 
 	let isCancelAction = this.Action.CancelAction;
 
@@ -3046,6 +3049,11 @@ CDocument.prototype.private_FinalizeFormAutoFit = function(isFastRecalc)
 
 	if (this.Action.Additional.FormAutoFit.length)
 		this.Action.Recalculate = true;
+};
+CDocument.prototype.private_FinalizeShapeAutoFit = function()
+{
+	this.CheckCurrentTextObjectExtends();
+	this.Action.Recalculate = true
 };
 CDocument.prototype.private_FinalizeRadioRequired = function()
 {
@@ -8913,10 +8921,35 @@ CDocument.prototype.OnKeyDown = function(e)
 		}
 		case Asc.c_oAscDocumentShortcutType.InsertEquation:
 		{
-			var oSelectedInfo = this.GetSelectedElementsInfo();
-			var oMath         = oSelectedInfo.GetMath();
-			if (null === oMath)
-				this.Api.asc_AddMath();
+			let math = this.GetSelectedElementsInfo().GetMath();
+			if (!math)
+			{
+				let paragraph = this.GetCurrentParagraph();
+				let adjMath = paragraph && paragraph.getAdjacentMath();
+				if (adjMath)
+					adjMath.SetThisElementCurrentInParagraph();
+				else
+					this.Api.asc_AddMath();
+			}
+			else
+			{
+				if (math.IsContentControlEquation())
+				{
+					if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_Content))
+					{
+						this.StartAction(AscDFH.historydescription_Document_RemoveMathShortcut);
+						math.GetParent().RemoveThisFromParent();
+						this.UpdateInterface();
+						this.Recalculate();
+						this.FinalizeAction();
+					}
+				}
+				else
+				{
+					math.MoveCursorOutsideElement(math.IsCursorAtBegin());
+					// TODO: Когда курсор ни в начале, ни в конце надо сделать временное действие - разбивка формулу
+				}
+			}
 
 			bRetValue = keydownresult_PreventAll;
 			break;
@@ -9983,10 +10016,10 @@ CDocument.prototype.CorrectEnterText = function(oldValue, newValue)
 
 	if (!run)
 		return false;
-
-	if (!this.History.CheckAsYouTypeEnterText(run, inRunPos, oldCodePoints[oldCodePoints.length - 1]))
+	
+	if (!AscWord.checkAsYouTypeEnterText(run, inRunPos, oldCodePoints[oldCodePoints.length - 1]))
 		return false;
-
+	
 	if (undefined === newCodePoints || null === newCodePoints)
 		newCodePoints = [];
 	else if (!Array.isArray(newCodePoints))
@@ -17881,82 +17914,12 @@ CDocument.prototype.HaveRevisionChanges = function(isCheckOwnChanges)
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы с составным вводом
 //----------------------------------------------------------------------------------------------------------------------
-/**
- * Сообщаем о начале составного ввода текста.
- * @returns {boolean} Начался или нет составной ввод.
- */
-CDocument.prototype.Begin_CompositeInput = function()
+CDocument.prototype.getCompositeInput = function()
 {
-	var bResult = false;
-	if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content, null, true, this.IsFormFieldEditing()))
-	{
-		this.StartAction(AscDFH.historydescription_Document_CompositeInput);
-		this.DrawingObjects.CreateDocContent();
-		this.DrawingDocument.TargetStart();
-		this.DrawingDocument.TargetShow();
-
-		if (true === this.IsSelectionUse())
-		{
-			if (docpostype_DrawingObjects === this.GetDocPosType() && null === this.DrawingObjects.getTargetDocContent())
-				this.RemoveSelection();
-			else
-				this.Remove(1, true, false, true);
-		}
-
-		var oPara = this.GetCurrentParagraph();
-		if (oPara)
-		{
-			var oRun = oPara.Get_ElementByPos(oPara.Get_ParaContentPos(false, false));
-
-			if (oRun instanceof ParaRun)
-			{
-				var oRunParent = oRun.GetParent();
-				if (oRunParent instanceof CInlineLevelSdt && oRunParent.IsPlaceHolder())
-				{
-					oRunParent.ReplacePlaceHolderWithContent(false);
-					oRun = oRunParent.GetElement(0);
-				}
-			}
-
-			if (oRun instanceof ParaRun)
-			{
-				let oNewRun = null;
-				let isCheck = false;
-				if (!oRun.GetParentForm())
-				{
-					isCheck = true;
-					oNewRun = oRun.CheckRunBeforeAdd();
-					if (!oNewRun)
-						oNewRun = oRun.private_SplitRunInCurPos();
-				}
-
-				let prevRun = null;
-				if (oNewRun && oNewRun !== oRun)
-				{
-					prevRun = oRun;
-					oRun = oNewRun;
-					oRun.Make_ThisElementCurrent();
-				}
-
-				this.CompositeInput = {
-					Run     : oRun,
-					Pos     : oRun.State.ContentPos,
-					Length  : 0,
-					CanUndo : true,
-					Check   : isCheck,
-					PrevRun : prevRun
-				};
-
-				oRun.Set_CompositeInput(this.CompositeInput);
-
-				bResult = true;
-			}
-		}
-
-		this.FinalizeAction(false);
-	}
-
-	return bResult;
+	if (!this.compositeInput)
+		this.compositeInput = new AscWord.DocumentCompositeInput(this);
+	
+	return this.compositeInput;
 };
 CDocument.prototype.CheckCurrentTextObjectExtends = function()
 {
@@ -17965,227 +17928,6 @@ CDocument.prototype.CheckCurrentTextObjectExtends = function()
 	{
 		oController.checkCurrentTextObjectExtends();
 	}
-};
-CDocument.prototype.Replace_CompositeText = function(arrCharCodes)
-{
-	if (null === this.CompositeInput)
-		return;
-
-	arrCharCodes = typeof(arrCharCodes) === "string" ? arrCharCodes.codePointsArray() : arrCharCodes;
-
-	if (!this.CompositeInput.Length && !arrCharCodes.length)
-		return;
-
-	this.StartAction(AscDFH.historydescription_Document_CompositeInputReplace);
-
-	if (this.CompositeInput.Check && arrCharCodes.length)
-	{
-		let prevRun = this.CompositeInput.PrevRun;
-		let isCS = AscCommon.IsComplexScript(arrCharCodes[0]);
-
-		this.CompositeInput.Run.ApplyComplexScript(isCS);
-		if (prevRun
-			&& isCS !== prevRun.IsCS()
-			&& prevRun.IsOnlyCommonTextScript())
-		{
-			prevRun.ApplyComplexScript(isCS);
-		}
-
-		this.CompositeInput.Check = false;
-	}
-
-	this.Start_SilentMode();
-	this.private_RemoveCompositeText(this.CompositeInput.Length, true);
-	for (var nIndex = 0, nCount = arrCharCodes.length; nIndex < nCount; ++nIndex)
-	{
-		this.private_AddCompositeText(arrCharCodes[nIndex], true);
-	}
-
-	this.End_SilentMode(false);
-
-	let oRun  = this.CompositeInput.Run;
-	let oForm = oRun.GetParentForm();
-	if (oForm)
-	{
-		oForm.TrimTextForm();
-
-		if (oRun.IsEmpty())
-		{
-			oForm.ReplaceContentWithPlaceHolder();
-			AscCommon.g_inputContext.externalEndCompositeInput();
-		}
-	}
-
-	this.CheckCurrentTextObjectExtends();
-	this.Recalculate();
-	this.UpdateSelection();
-	this.UpdateUndoRedo();
-	this.FinalizeAction(false);
-
-	this.private_UpdateCursorXY(true, true);
-
-	if (!this.CompositeInput)
-		return;
-
-	if (!this.History.CheckUnionLastPoints())
-		this.CompositeInput.CanUndo = false;
-};
-CDocument.prototype.Set_CursorPosInCompositeText = function(nPos)
-{
-	if (null === this.CompositeInput)
-		return;
-
-	var oRun = this.CompositeInput.Run;
-
-	var nInRunPos = Math.max(Math.min(this.CompositeInput.Pos + nPos, this.CompositeInput.Pos + this.CompositeInput.Length, oRun.Content.length), this.CompositeInput.Pos);
-	oRun.State.ContentPos = nInRunPos;
-	this.Document_UpdateSelectionState();
-};
-CDocument.prototype.Get_CursorPosInCompositeText = function()
-{
-	if (null === this.CompositeInput)
-		return 0;
-
-	var oRun = this.CompositeInput.Run;
-	var nInRunPos = oRun.State.ContentPos;
-	var nPos = Math.min(this.CompositeInput.Length, Math.max(0, nInRunPos - this.CompositeInput.Pos));
-	return nPos;
-};
-CDocument.prototype.End_CompositeInput = function()
-{
-	if (null === this.CompositeInput)
-		return;
-
-	var nLen = this.CompositeInput.Length;
-
-	var oRun = this.CompositeInput.Run;
-	oRun.Set_CompositeInput(null);
-
-	let oParentForm;
-	if ((0 === nLen && this.CompositeInput.CanUndo)
-		|| ((oParentForm = oRun.GetParentForm()) && !this.FormsManager.ValidateChangeOnFly(oParentForm)))
-	{
-		let arrChanges = this.History.UndoCompositeInput();
-		if (arrChanges)
-		{
-			this.History.ClearRedo();
-			this.UpdateAfterUndoRedo(arrChanges);
-		}
-	}
-
-	this.CompositeInput = null;
-
-	var oController = this.DrawingObjects;
-    if(oController)
-    {
-        var oTargetTextObject = AscFormat.getTargetTextObject(oController);
-        if(oTargetTextObject && oTargetTextObject.txWarpStructNoTransform)
-        {
-            oTargetTextObject.recalcInfo.recalculateTxBoxContent = true;
-            oTargetTextObject.recalculateText();
-        }
-    }
-
-	// Обновление интерфейса здесь обязательно, т.к. на нем должно сработать Api.CheckChangedDocument
-	this.UpdateInterface();
-
-    this.private_UpdateCursorXY(true, true);
-
-	this.DrawingDocument.ClearCachePages();
-	this.DrawingDocument.FirePaint();
-};
-CDocument.prototype.Get_MaxCursorPosInCompositeText = function()
-{
-	if (null === this.CompositeInput)
-		return 0;
-
-	return this.CompositeInput.Length;
-};
-CDocument.prototype.private_AddCompositeText = function(nCharCode, bSkipCheckExtents)
-{
-	var oRun = this.CompositeInput.Run;
-	var nPos = this.CompositeInput.Pos + this.CompositeInput.Length;
-	var oChar;
-
-	if (para_Math_Run === oRun.Type)
-	{
-		oChar = new CMathText();
-		oChar.add(nCharCode);
-	}
-	else
-	{
-		if (AscCommon.IsSpace(nCharCode))
-			oChar = new AscWord.CRunSpace(nCharCode);
-		else
-			oChar = new AscWord.CRunText(nCharCode);
-	}
-
-	oRun.AddToContent(nPos, oChar, true);
-	this.CompositeInput.Length++;
-
-	var oForm = oRun.GetParentForm();
-	if (oForm && oForm.IsAutoFitContent())
-		this.CheckFormAutoFit(oForm);
-    if (!bSkipCheckExtents)
-    {
-        this.CheckCurrentTextObjectExtends();
-    }
-	this.Recalculate();
-	this.UpdateSelection();
-};
-CDocument.prototype.private_RemoveCompositeText = function(nCount, bSkipCheckExtents)
-{
-	var oRun = this.CompositeInput.Run;
-	var nPos = this.CompositeInput.Pos + this.CompositeInput.Length;
-
-	var nDelCount = Math.max(0, Math.min(nCount, this.CompositeInput.Length, oRun.Content.length, nPos));
-	oRun.Remove_FromContent(nPos - nDelCount, nDelCount, true);
-	this.CompositeInput.Length -= nDelCount;
-
-	var oForm = oRun.GetParentForm();
-	if (oForm && oForm.IsAutoFitContent())
-		this.CheckFormAutoFit(oForm);
-
-    if (!bSkipCheckExtents)
-    {
-        this.CheckCurrentTextObjectExtends();
-    }
-	this.Recalculate();
-	this.UpdateSelection();
-};
-CDocument.prototype.Check_CompositeInputRun = function()
-{
-	if (null === this.CompositeInput)
-		return;
-
-	var oRun = this.CompositeInput.Run;
-	if (true !== oRun.IsUseInDocument())
-		AscCommon.g_inputContext.externalEndCompositeInput();
-};
-CDocument.prototype.Is_CursorInsideCompositeText = function()
-{
-	if (null === this.CompositeInput)
-		return false;
-
-	var oCurrentParagraph = this.GetCurrentParagraph();
-	if (!oCurrentParagraph)
-		return false;
-
-	var oParaPos   = oCurrentParagraph.Get_ParaContentPos(false, false, false);
-	var arrClasses = oCurrentParagraph.Get_ClassesByPos(oParaPos);
-
-	if (arrClasses.length <= 0 || arrClasses[arrClasses.length - 1] !== this.CompositeInput.Run)
-		return false;
-
-	var nInRunPos = oParaPos.Get(oParaPos.GetDepth());
-	if (nInRunPos >= this.CompositeInput.Pos && nInRunPos <= this.CompositeInput.Pos + this.CompositeInput.Length)
-		return true;
-
-	return false;
-};
-CDocument.prototype.IsCompositeInputInProgress = function()
-{
-	return (!!this.CompositeInput);
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы со сносками
@@ -24760,10 +24502,7 @@ CDocument.prototype.AddCaption = function(oPr)
                     var oBodyPr;
                     oBodyPr = oShape.getBodyPr().createDuplicate();
                     oBodyPr.wrap = AscFormat.nTWTSquare;
-                    oBodyPr.lIns = 0.0;
-                    oBodyPr.tIns = 0.0;
-                    oBodyPr.rIns = 0.0;
-                    oBodyPr.bIns = 0.0;
+                    oBodyPr.resetInsets();
                     var dInset = 1.6;
                     var Y = oDrawing.Y + oDrawing.Extent.H + dInset;
                     if(oPr.get_Before())
@@ -25138,6 +24877,17 @@ CDocument.prototype.CheckFormAutoFit = function(oForm)
 		this.Action.Additional.FormAutoFit = [];
 
 	this.Action.Additional.FormAutoFit.push(oForm);
+};
+/**
+ * Сообщаем, что в конце действия нужно будет проверить размер текущей автофигуры
+ */
+CDocument.prototype.CheckShapeAutoFit = function(shape)
+{
+	if (!this.Action.Start)
+		return;
+	
+	if (!this.Action.Additional.ShapeAutoFit)
+		this.Action.Additional.ShapeAutoFit = true;
 };
 /**
  * Выставляем настройку выделять знак параграфа, когда выделено все его содержимое
@@ -28691,6 +28441,7 @@ window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 window['AscWord'] = window['AscWord'] || {};
 
 window['AscWord'].CDocument = CDocument;
+window['AscWord'].Document = CDocument;
 window['AscCommonWord'].CDocument = CDocument;
 window['AscCommonWord'].docpostype_Content        = docpostype_Content;
 window['AscCommonWord'].docpostype_HdrFtr         = docpostype_HdrFtr;

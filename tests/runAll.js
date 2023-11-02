@@ -95,6 +95,7 @@ const {
 			.then(result =>
 			{
 				count++;
+				console.log("\n" + allTests[nIndex].yellow.bold);
 				printResultSummary(result, console);
 
 				if (result.stats.failed > 0)

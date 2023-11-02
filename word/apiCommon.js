@@ -2140,7 +2140,7 @@
 		this.Scale = v;
 	};
 	CAscWatermarkProperties.prototype['get_Scale'] = CAscWatermarkProperties.prototype.get_Scale = function () {
-		return this.Scale;
+		return this.Scale || 1.0;
 	};
 	CAscWatermarkProperties.prototype['put_ImageSize'] = CAscWatermarkProperties.prototype.put_ImageSize = function (w, h) {
 		this.ImageW = w;

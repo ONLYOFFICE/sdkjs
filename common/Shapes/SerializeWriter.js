@@ -2308,9 +2308,7 @@ function CBinaryFileWriter()
                 mods.splice(nIndex, 1);
             }
 
-            mods[_len] = new AscFormat.CColorMod();
-            mods[_len].name = "alpha";
-            mods[_len].val = (trans * 100000 / 255) >> 0;
+            mods[_len] = new AscFormat.CColorMod("alpha", (trans * 100000 / 255) >> 0);
         }
     };
 

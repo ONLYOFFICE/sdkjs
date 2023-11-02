@@ -759,7 +759,7 @@ function CEditorPage(api)
 				_elem.innerHTML = _text;
 
 				//window.editor.WordControl.Thumbnails.SelectPage(_current - 1);
-				window.editor.WordControl.GoToPage(_current - 1, false, false, true);
+				window.editor.WordControl.GoToPage(slideNum, false, false, true);
 
 				window.editor.WordControl.OnResizeReporter();
 			});

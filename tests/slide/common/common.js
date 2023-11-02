@@ -65,25 +65,6 @@ const AscTest = window.AscTest || {};
 
   AscCommon.g_oIdCounter.m_bLoad = false;
   AscCommon.g_oIdCounter.m_bRead = false;
-
-
-  AscTest.createShape = function (oParent) {
-    AscCommon.History.Create_NewPoint();
-    const nOldSpTreeLength = oParent.cSld.spTree.length
-    var oShapeTrack = new AscFormat.NewShapeTrack('rect', 0, 0, AscFormat.GetDefaultTheme(), null, null, null, 0);
-    oShapeTrack.track({}, 100, 100);
-    var oShape = oShapeTrack.getShape(false, AscTest.DrawingDocument, null);
-    oShape.setBDeleted(false);
-    oShape.setParent(oParent);
-    //oShape.createTextBody();
-    oShape.addToDrawingObjects();
-    if (oParent.cSld.spTree.length !== nOldSpTreeLength + 1) {
-      throw new Error("Shape didn't added");
-    }
-    return oShape;
-  };
-
-
   AscTest.Letter = Letter;
 
 })(window);

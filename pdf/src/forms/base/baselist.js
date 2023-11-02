@@ -100,7 +100,7 @@
     CBaseListField.prototype.SetCommitOnSelChange = function(bValue) {
         this._commitOnSelChange = bValue;
     };
-    CBaseListField.prototype.GetCommitOnSelChange = function() {
+    CBaseListField.prototype.IsCommitOnSelChange = function() {
         return this._commitOnSelChange;
     };
     CBaseListField.prototype.GetApiCurIdxs = function() {
@@ -108,6 +108,9 @@
         return this._currentValueIndices;
     };
 
+    CBaseListField.prototype.GetOptions = function() {
+        return this._options;
+    };
 	// export
 	CBaseListField.prototype["getOptions"] = function() {
 		return this._options;

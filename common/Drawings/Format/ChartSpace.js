@@ -7243,6 +7243,7 @@ function(window, undefined) {
 								var default_line = parents.theme.themeElements.fmtScheme.lnStyleLst[0];
 								var ser = series[i];
 								var pts = ser.getNumPts();
+								ser.recalculateTrendline();
 								this.ptsCount += pts.length;
 								var compiled_line = new AscFormat.CLn();
 								compiled_line.merge(default_line);
@@ -9521,15 +9522,11 @@ function(window, undefined) {
 			effectVal *= 100000.0;
 			if (!unicolor.Mods)
 				unicolor.setMods(new AscFormat.CColorModifiers());
-			var mod = new AscFormat.CColorMod();
 			if (effectVal > 0) {
-				mod.setName("tint");
-				mod.setVal(effectVal);
+				unicolor.Mods.addMod("tint", effectVal);
 			} else {
-				mod.setName("shade");
-				mod.setVal(Math.abs(effectVal));
+				unicolor.Mods.addMod("shade", Math.abs(effectVal));
 			}
-			unicolor.Mods.addMod(mod);
 		}
 		return ret;
 	}

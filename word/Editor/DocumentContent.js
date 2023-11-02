@@ -1529,6 +1529,10 @@ CDocumentContent.prototype.GetAllMaths = function(AllMaths)
 
 	return AllMaths;
 };
+CDocumentContent.prototype.HaveMaths = function()
+{
+	return this.GetAllMaths().length > 0;
+};
 CDocumentContent.prototype.GetAllFloatElements = function(FloatObjs)
 {
 	if (undefined === FloatObjs)

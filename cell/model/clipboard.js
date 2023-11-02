@@ -551,120 +551,124 @@
 			},
 
 			getBinaryForCopy: function (wsModel, objectRender, activeRange, selectAll, ignoreCopyPaste) {
-				var isIntoShape = objectRender && objectRender.controller ? objectRender.controller.getTargetDocContent() : null;
+				let isIntoShape = objectRender && objectRender.controller ? objectRender.controller.getTargetDocContent() : null;
+				let sBase64 = null;
 
-				var sBase64 = null;
 				if (isIntoShape) {
 					//в данному случае пишем бинарник с меткой pptData - с префиксом xlsData отдельно параграфы записать не получится
 					sBase64 = this._getBinaryShapeContent(isIntoShape);
 				} else {
-					pptx_content_writer.Start_UseFullUrl();
 
-					var unselectedIndexes = [];
-					if(selectAll) {
-						activeRange = new Asc.Range(0, 0, AscCommon.gc_nMaxCol - 1, AscCommon.gc_nMaxRow - 1);
+					AscFormat.ExecuteNoHistory(function () {
+						pptx_content_writer.Start_UseFullUrl();
 
-						for(var i = 0; i < wsModel.Drawings.length; i++) {
-							if(!wsModel.Drawings[i].graphicObject.selected) {
-								unselectedIndexes[i] = true;
-								wsModel.Drawings[i].graphicObject.selected = true;
+						let unselectedIndexes = [];
+						if(selectAll) {
+							activeRange = new Asc.Range(0, 0, AscCommon.gc_nMaxCol - 1, AscCommon.gc_nMaxRow - 1);
+
+							for(let i = 0; i < wsModel.Drawings.length; i++) {
+								if(!wsModel.Drawings[i].graphicObject.selected) {
+									unselectedIndexes[i] = true;
+									wsModel.Drawings[i].graphicObject.selected = true;
+								}
 							}
 						}
-					}
-					
-					var selectionRange;
-					if (activeRange) {
-						selectionRange = activeRange;
-					} else {
-						if (1 !== wsModel.selectionRange.ranges.length) {
-							selectionRange = new AscCommonExcel.MultiplyRange(wsModel.selectionRange.ranges).getUnionRange();
+
+						let selectionRange;
+						if (activeRange) {
+							selectionRange = activeRange;
 						} else {
-							selectionRange = wsModel.selectionRange.getLast();
+							if (1 !== wsModel.selectionRange.ranges.length) {
+								selectionRange = new AscCommonExcel.MultiplyRange(wsModel.selectionRange.ranges).getUnionRange();
+							} else {
+								selectionRange = wsModel.selectionRange.getLast();
+							}
 						}
-					}
-					var maxRowCol = this._getRangeMaxRowCol(wsModel, selectionRange);
-					if (null !== maxRowCol) {
-						if (maxRowCol.col < selectionRange.c1) {
-							maxRowCol.col = selectionRange.c1;
+						let maxRowCol = this._getRangeMaxRowCol(wsModel, selectionRange);
+						if (null !== maxRowCol) {
+							if (maxRowCol.col < selectionRange.c1) {
+								maxRowCol.col = selectionRange.c1;
+							}
+							if (maxRowCol.row < selectionRange.r1) {
+								maxRowCol.row = selectionRange.r1;
+							}
+							selectionRange = new Asc.Range(selectionRange.c1, selectionRange.r1, maxRowCol.col, maxRowCol.row);
 						}
-						if (maxRowCol.row < selectionRange.r1) {
-							maxRowCol.row = selectionRange.r1;
+
+						let wb = wsModel.workbook;
+						let isNullCore = false;
+						if(!wb.Core) {
+							isNullCore = true;
+							wb.Core = new window['AscCommon'].CCore();
 						}
-						selectionRange = new Asc.Range(selectionRange.c1, selectionRange.r1, maxRowCol.col, maxRowCol.row);
-					}
 
-					var wb = wsModel.workbook;
-					var isNullCore = false;
-					if(!wb.Core) {
-						isNullCore = true;
-						wb.Core = new window['AscCommon'].CCore();
-					}
+						//подменяем identifier/creator для того, чтобы протащить id
+						let oldCreator = wb.Core.creator;
+						let oldIdentifier = wb.Core.identifier;
+						let oldLanguage = wb.Core.language;
+						let oldTitle = wb.Core.title;
+						let oldCategory = wb.Core.category;
+						let oldContentStatus = wb.Core.contentStatus;
 
-					//подменяем identifier/creator для того, чтобы протащить id
-					var oldCreator = wb.Core.creator;
-					var oldIdentifier = wb.Core.identifier;
-					var oldLanguage = wb.Core.language;
-					var oldTitle = wb.Core.title;
-					var oldCategory = wb.Core.category;
-					var oldContentStatus = wb.Core.contentStatus;
+						wb.Core.creator = wb.oApi && wb.oApi.CoAuthoringApi ? wb.oApi.CoAuthoringApi.getUserConnectionId() : null;
+						wb.Core.identifier = wb.oApi && wb.oApi.DocInfo ? wb.oApi.DocInfo.Id : null;
 
-					wb.Core.creator = wb.oApi && wb.oApi.CoAuthoringApi ? wb.oApi.CoAuthoringApi.getUserConnectionId() : null;
-					wb.Core.identifier = wb.oApi && wb.oApi.DocInfo ? wb.oApi.DocInfo.Id : null;
-
-					//для внешних данных необходимо протащить docInfo->ReferenceData
-					//пока беру данные поля, поскольку для копипаста они не используются. по названию не особо совпадают - пересмотреть
-					let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
-					if (isLocalDesktop && window["AscDesktopEditor"]["LocalFileGetSaved"]()) {
-						wb.Core.contentStatus = window["AscDesktopEditor"]["LocalFileGetSourcePath"]();
-						wb.Core.category = null;
-					} else if (wb.oApi && wb.oApi.DocInfo && !notSupportExternalReferenceFileFormat[wb.oApi.DocInfo.Format]) {
-						wb.Core.contentStatus = wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData["fileKey"] : null;
-						wb.Core.category = wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData["instanceId"] : null;
-					}
-
-					wb.Core.title = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.Title ? wb.oApi.DocInfo.Title : null;
-
-					//записываю изображение выделенного фрагмента. пока только для изоюражений
-					//выбрал для этого поле subject
-					var oldSubject = wb.Core.subject;
-					var objectRender = Asc.editor.wb.getWorksheet().objectRender;
-					var _imgProperty = objectRender && objectRender.controller && objectRender.controller.getSelectionImage();
-					if (_imgProperty) {
-						var _base64 = _imgProperty.asc_getImageUrl();
-						var _width = _imgProperty.Width;
-						var _height = _imgProperty.Height;
-						wb.Core.subject = _width + ";" + _height + ";" + _base64;
-					}
-
-					//так же необходимо протащить локаль, для этого использую поля language
-					//и записываю туда номер локали, предварительно конвертируя его в строку
-					//пока буду использовать его только при вставке в документы, а в документах устанавливать -> AscCommon.setCurrentCultureInfo(val)
-					var locale = wb.oApi ? wb.oApi.asc_getLocale() : null;
-					wb.Core.language = (undefined !== locale && null !== locale) ? locale.toString() : null;
-
-
-					//WRITE
-					var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(wb, !ignoreCopyPaste ? selectionRange : false);
-					sBase64 = "xslData;" + oBinaryFileWriter.Write();
-					pptx_content_writer.End_UseFullUrl();
-
-					if(selectAll) {
-						for(i in unselectedIndexes) {
-							wsModel.Drawings[i].graphicObject.selected = false;
+						//для внешних данных необходимо протащить docInfo->ReferenceData
+						//пока беру данные поля, поскольку для копипаста они не используются. по названию не особо совпадают - пересмотреть
+						let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
+						if (isLocalDesktop && window["AscDesktopEditor"]["LocalFileGetSaved"]()) {
+							wb.Core.contentStatus = window["AscDesktopEditor"]["LocalFileGetSourcePath"]();
+							wb.Core.category = null;
+						} else if (wb.oApi && wb.oApi.DocInfo && !notSupportExternalReferenceFileFormat[wb.oApi.DocInfo.Format]) {
+							wb.Core.contentStatus = wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData["fileKey"] : null;
+							wb.Core.category = wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData["instanceId"] : null;
 						}
-					}
 
-					if(isNullCore) {
-						wb.Core = null;
-					} else {
-						wb.Core.creator = oldCreator;
-						wb.Core.identifier = oldIdentifier;
-						wb.Core.language = oldLanguage;
-						wb.Core.subject = oldSubject;
-						wb.Core.title = oldTitle;
-						wb.Core.category = oldCategory;
-						wb.Core.contentStatus = oldContentStatus;
-					}
+						wb.Core.title = wb.oApi && wb.oApi.DocInfo && wb.oApi.DocInfo.Title ? wb.oApi.DocInfo.Title : null;
+
+						//записываю изображение выделенного фрагмента. пока только для изоюражений
+						//выбрал для этого поле subject
+						let oldSubject = wb.Core.subject;
+						let objectRender = Asc.editor.wb.getWorksheet().objectRender;
+						let _imgProperty = objectRender && objectRender.controller && objectRender.controller.getSelectionImage();
+						if (_imgProperty) {
+							let _base64 = _imgProperty.asc_getImageUrl();
+							let _width = _imgProperty.Width;
+							let _height = _imgProperty.Height;
+							wb.Core.subject = _width + ";" + _height + ";" + _base64;
+						}
+
+						//так же необходимо протащить локаль, для этого использую поля language
+						//и записываю туда номер локали, предварительно конвертируя его в строку
+						//пока буду использовать его только при вставке в документы, а в документах устанавливать -> AscCommon.setCurrentCultureInfo(val)
+						let locale = wb.oApi ? wb.oApi.asc_getLocale() : null;
+						wb.Core.language = (undefined !== locale && null !== locale) ? locale.toString() : null;
+
+
+						//WRITE
+						let oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(wb, !ignoreCopyPaste ? selectionRange : false);
+						sBase64 = "xslData;" + oBinaryFileWriter.Write();
+						pptx_content_writer.End_UseFullUrl();
+
+
+						if(selectAll) {
+							for(let i in unselectedIndexes) {
+								wsModel.Drawings[i].graphicObject.selected = false;
+							}
+						}
+
+						if(isNullCore) {
+							wb.Core = null;
+						} else {
+							wb.Core.creator = oldCreator;
+							wb.Core.identifier = oldIdentifier;
+							wb.Core.language = oldLanguage;
+							wb.Core.subject = oldSubject;
+							wb.Core.title = oldTitle;
+							wb.Core.category = oldCategory;
+							wb.Core.contentStatus = oldContentStatus;
+						}
+					}, this, []);
 				}
 
 				return sBase64;

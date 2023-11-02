@@ -7217,10 +7217,10 @@ function (window, undefined) {
 	cINTERCEPT.prototype.name = 'INTERCEPT';
 	cINTERCEPT.prototype.argumentsMin = 2;
 	cINTERCEPT.prototype.argumentsMax = 2;
+	cINTERCEPT.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cINTERCEPT.prototype.arrayIndexes = {0: 1, 1: 1};
 	cINTERCEPT.prototype.argumentsType = [argType.array, argType.array];
 	cINTERCEPT.prototype.Calculate = function (arg) {
-
 		function intercept(y, x) {
 
 			var fSumDeltaXDeltaY = 0, fSumSqrDeltaX = 0, _x = 0, _y = 0, xLength = 0, i;
@@ -7461,34 +7461,33 @@ function (window, undefined) {
 	cLINEST.prototype.arrayIndexes = {0: 1, 1: 1};
 	cLINEST.prototype.argumentsType = [argType.reference, argType.reference, argType.logical, argType.logical];
 	cLINEST.prototype.Calculate = function (arg) {
-
 		arg[0] = tryNumberToArray(arg[0]);
 		if (arg[1]) {
 			arg[1] = tryNumberToArray(arg[1]);
 		}
 
-		var oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
-		var argClone = oArguments.args;
+		let oArguments = this._prepareArguments(arg, arguments[1], true, [cElementType.array, cElementType.array]);
+		let argClone = oArguments.args;
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var pMatY = argClone[0];
-		var pMatX = argClone[1];
-		var bConstant = getBoolValue(argClone[2], true);
-		var bStats = getBoolValue(argClone[3], false);
+		let pMatY = argClone[0];
+		let pMatX = argClone[1];
+		let bConstant = getBoolValue(argClone[2], true);
+		let bStats = getBoolValue(argClone[3], false);
 
 		//возвращает матрицу [col][row]
-		var mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats);
+		let mat = CalculateRGPRKP(pMatY, pMatX, bConstant, bStats);
 
 		//TODO далее функцию необходимо отптимизировать и сразу формировать итоговую матрицу без промежуточного транспонирования
 		if (mat && mat[0] && mat[0][0] !== undefined) {
-			var tMatrix = [], res = new cArray();
+			let tMatrix = [], res = new cArray();
 
-			for (var i = 0; i < mat.length; i++) {
-				for (var j = 0; j < mat[i].length; j++) {
+			for (let i = 0; i < mat.length; i++) {
+				for (let j = 0; j < mat[i].length; j++) {
 					if (!tMatrix[j]) {
 						tMatrix[j] = [];
 					}

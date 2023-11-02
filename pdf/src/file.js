@@ -1089,8 +1089,7 @@ void main() {\n\
                 page: i,
                 quads: []
             }
-            aInfo.push(oInfo);
-
+            
             var sel = this.Selection;
             var Page1 = 0;
             var Page2 = 0;
@@ -1380,6 +1379,9 @@ void main() {\n\
                     }
                 }
             }
+
+            if (oInfo.quads.length > 0)
+                aInfo.push(oInfo);
         }
         
         return aInfo;

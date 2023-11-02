@@ -32,16 +32,12 @@
 
 (function (window)
 {
-	const {createNativeEvent} = AscTestShortcut;
-	const testAll = 0;
-	const testMacOs = 1;
-	const testWindows = 2;
-	function CTestEvent(oEvent, nType)
-	{
-		this.type = nType || testAll;
-		this.event = oEvent;
-	}
-	const oTestTypes = {
+	window.AscTestShortcut = {};
+	const testFlags = {
+		nothing: 0x0000,
+		macOs: 0x0001
+	};
+	const testHotkeyActions = {
 		removeBackSymbol                   : 0,
 		removeBackWord                     : 1,
 		removeShape                        : 2,
@@ -63,7 +59,6 @@
 		addNewLineToMath                   : 18,
 		moveCursorToStartPositionShapeEnter: 19,
 		selectAllShapeEnter                : 20,
-		moveCursorToStartPositionTitleEnter: 21,
 		selectAllInChartTitle              : 22,
 		addNewParagraphContent             : 23,
 		addNewParagraphMath                : 24,
@@ -87,7 +82,7 @@
 		moveToStartDocument                : 42,
 		selectLeftWord                     : 43,
 		moveToLeftWord                     : 44,
-		selectLeftSymbol                   : 45,
+		selectLeftChar                     : 45,
 		moveToLeftChar                     : 46,
 		moveToRightChar                    : 47,
 		selectRightChar                    : 48,
@@ -128,148 +123,180 @@
 		moveToNextHeader                   : 83
 	};
 
-	const oTestEvents = {};
-	oTestEvents[oTestTypes.bigMoveGraphicObjectLeft] = [new CTestEvent(createNativeEvent(37, false, false, false, false, false))];
-	oTestEvents[oTestTypes.littleMoveGraphicObjectLeft] = [new CTestEvent(createNativeEvent(37, true, false, false, false, false))];
-	oTestEvents[oTestTypes.bigMoveGraphicObjectRight] = [new CTestEvent(createNativeEvent(39, false, false, false, false, false))];
-	oTestEvents[oTestTypes.littleMoveGraphicObjectRight] = [new CTestEvent(createNativeEvent(39, true, false, false, false, false))];
-	oTestEvents[oTestTypes.bigMoveGraphicObjectDown] = [new CTestEvent(createNativeEvent(40, false, false, false, false, false))];
-	oTestEvents[oTestTypes.littleMoveGraphicObjectDown] = [new CTestEvent(createNativeEvent(40, true, false, false, false, false))];
-	oTestEvents[oTestTypes.bigMoveGraphicObjectUp] = [new CTestEvent(createNativeEvent(38, false, false, false, false, false))];
-	oTestEvents[oTestTypes.littleMoveGraphicObjectUp] = [new CTestEvent(createNativeEvent(38, true, false, false, false, false))];
-	oTestEvents[oTestTypes.removeBackSymbol] = [new CTestEvent(createNativeEvent(8, false, false, false, false))];
-	oTestEvents[oTestTypes.removeBackWord] = [new CTestEvent(createNativeEvent(8, true, false, false, false), testWindows),
-		new CTestEvent(createNativeEvent(8, false, false, true, false), testMacOs)];
-	oTestEvents[oTestTypes.removeShape] = [
-		new CTestEvent(createNativeEvent(8, false, false, false, false, false)),
-		new CTestEvent(createNativeEvent(46, false, false, false, false, false))
+	const testHotkeyEvents = {};
+	testHotkeyEvents[testHotkeyActions.bigMoveGraphicObjectLeft] = [CreateTestEvent(37, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.littleMoveGraphicObjectLeft] = [CreateTestEvent(37, true, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.bigMoveGraphicObjectRight] = [CreateTestEvent(39, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.littleMoveGraphicObjectRight] = [CreateTestEvent(39, true, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.bigMoveGraphicObjectDown] = [CreateTestEvent(40, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.littleMoveGraphicObjectDown] = [CreateTestEvent(40, true, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.bigMoveGraphicObjectUp] = [CreateTestEvent(38, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.littleMoveGraphicObjectUp] = [CreateTestEvent(38, true, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.removeBackSymbol] = [CreateTestEvent(8, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.removeBackWord] = [
+		CreateTestEvent(8, true, false, false, false),
+		CreateTestEvent(8, false, false, true, false, testFlags.macOs),
 	];
-	oTestEvents[oTestTypes.removeForm] = [
-		new CTestEvent(createNativeEvent(8, false, false, false, false, false)),
-		new CTestEvent(createNativeEvent(46, false, false, false, false, false))
+	testHotkeyEvents[testHotkeyActions.removeShape] = [
+		CreateTestEvent(8, false, false, false, false, false),
+		CreateTestEvent(46, false, false, false, false, false)
 	];
-	oTestEvents[oTestTypes.moveToNextForm] = [new CTestEvent(createNativeEvent(9, false, false, false, false, false))];
-	oTestEvents[oTestTypes.moveToPreviousForm] = [new CTestEvent(createNativeEvent(9, false, true, false, false, false))];
-	oTestEvents[oTestTypes.handleTab] = [new CTestEvent(createNativeEvent(9, false, false, false, false, false))];
-	oTestEvents[oTestTypes.moveToNextCell] = [new CTestEvent(createNativeEvent(9, false, false, false, false))];
-	oTestEvents[oTestTypes.moveToPreviousCell] = [new CTestEvent(createNativeEvent(9, false, true, false, false))];
-	oTestEvents[oTestTypes.selectNextObject] = [new CTestEvent(createNativeEvent(9, false, false, false, false))];
-	oTestEvents[oTestTypes.selectPreviousObject] = [new CTestEvent(createNativeEvent(9, false, true, false, false))];
-	oTestEvents[oTestTypes.testIndent] = [new CTestEvent(createNativeEvent(9, false, false, false, false))];
-	oTestEvents[oTestTypes.testUnIndent] = [new CTestEvent(createNativeEvent(9, false, true, false, false))];
-	oTestEvents[oTestTypes.addTabToParagraph] = [new CTestEvent(createNativeEvent(9, false, false, false))];
-	oTestEvents[oTestTypes.visitHyperlink] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false))];
-	oTestEvents[oTestTypes.addBreakLineInlineLvlSdt] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false))];
-	oTestEvents[oTestTypes.createTextBoxContent] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false))];
-	oTestEvents[oTestTypes.createTextBody] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false))];
-	oTestEvents[oTestTypes.addNewLineToMath] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false))];
-	oTestEvents[oTestTypes.moveCursorToStartPositionShapeEnter] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false))];
-	oTestEvents[oTestTypes.selectAllShapeEnter] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false))];
-	oTestEvents[oTestTypes.moveCursorToStartPositionTitleEnter] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false))];
-	oTestEvents[oTestTypes.selectAllInChartTitle] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false))];
-	oTestEvents[oTestTypes.addNewParagraphContent] = [new CTestEvent(createNativeEvent(13, false, false, false, false))];
-	oTestEvents[oTestTypes.addNewParagraphMath] = [new CTestEvent(createNativeEvent(13, false, false, false, false))];
-	oTestEvents[oTestTypes.closeAllWindowsPopups] = [new CTestEvent(createNativeEvent(27, false, false, false, false, false))];
-	oTestEvents[oTestTypes.resetShapeSelection] = [new CTestEvent(createNativeEvent(27, false, false, false, false, false))];
-	oTestEvents[oTestTypes.resetStartAddShape] = [new CTestEvent(createNativeEvent(27, false, false, false, false, false))];
-	oTestEvents[oTestTypes.resetFormattingByExample] = [new CTestEvent(createNativeEvent(27, false, false, false, false, false))];
-	oTestEvents[oTestTypes.resetMarkerFormat] = [new CTestEvent(createNativeEvent(27, false, false, false, false, false))];
-	oTestEvents[oTestTypes.resetDragNDrop] = [new CTestEvent(createNativeEvent(27, false, false, false, false, false))];
-	oTestEvents[oTestTypes.endEditing] = [new CTestEvent(createNativeEvent(27, false, false, false, false, false))];
-	oTestEvents[oTestTypes.toggleCheckBox] = [new CTestEvent(createNativeEvent(32, false, false, false, false, false))];
-	oTestEvents[oTestTypes.pageUp] = [new CTestEvent()];
-	oTestEvents[oTestTypes.pageDown] = [new CTestEvent()];
-	oTestEvents[oTestTypes.moveToEndDocument] = [new CTestEvent(createNativeEvent(35, true, false, false))];
-	oTestEvents[oTestTypes.moveToEndLine] = [new CTestEvent(createNativeEvent(35, false, false, false, false)),
-		new CTestEvent(createNativeEvent(39, true, false, false, false), testMacOs)];
-	oTestEvents[oTestTypes.selectToEndDocument] = [new CTestEvent(createNativeEvent(35, true, true, false, false))];
-	oTestEvents[oTestTypes.selectToEndLine] = [new CTestEvent(createNativeEvent(35, false, true, false, false)),
-		new CTestEvent(createNativeEvent(39, true, true, false, false), testMacOs)];
-	oTestEvents[oTestTypes.selectToStartLine] = [new CTestEvent(createNativeEvent(36, false, true, false, false)),
-		new CTestEvent(createNativeEvent(37, true, true, false, false), testMacOs)];
-	oTestEvents[oTestTypes.selectToStartDocument] = [new CTestEvent(createNativeEvent(36, true, true, false, false))];
-	oTestEvents[oTestTypes.moveToStartLine] = [new CTestEvent(createNativeEvent(36, false, false, false, false)),
-		new CTestEvent(createNativeEvent(37, true, false, false, false), testMacOs)];
-	oTestEvents[oTestTypes.moveToStartDocument] = [new CTestEvent(createNativeEvent(36, true, false, false))];
-	oTestEvents[oTestTypes.selectLeftWord] = [new CTestEvent(createNativeEvent(37, true, true, false, false), testWindows),
-		new CTestEvent(createNativeEvent(37, false, true, true, false), testMacOs)];
-	oTestEvents[oTestTypes.moveToLeftWord] = [new CTestEvent(createNativeEvent(37, true, false, false, false)),
-		new CTestEvent(createNativeEvent(37, false, false, true, false), testMacOs)];
-	oTestEvents[oTestTypes.selectLeftSymbol] = [new CTestEvent(createNativeEvent(37, false, true, false, false))];
-	oTestEvents[oTestTypes.moveToLeftChar] = [new CTestEvent(createNativeEvent(37, false, false, false, false))];
-	oTestEvents[oTestTypes.moveToRightChar] = [new CTestEvent(createNativeEvent(39, false, false, false, false))];
-	oTestEvents[oTestTypes.selectRightChar] = [new CTestEvent(createNativeEvent(39, false, true, false, false))];
-	oTestEvents[oTestTypes.moveToRightWord] = [new CTestEvent(createNativeEvent(39, true, false, false, false), testWindows),
-		new CTestEvent(createNativeEvent(39, false, false, true, false), testMacOs)];
-	oTestEvents[oTestTypes.selectRightWord] = [new CTestEvent(createNativeEvent(39, true, true, false, false), testWindows),
-		new CTestEvent(createNativeEvent(39, false, true, true, false), testMacOs)];
-	oTestEvents[oTestTypes.moveUp] = [new CTestEvent(createNativeEvent(38, false, false, false, false))];
-	oTestEvents[oTestTypes.selectUp] = [new CTestEvent(createNativeEvent(38, false, true, false, false))];
-	oTestEvents[oTestTypes.previousOptionComboBox] = [new CTestEvent(createNativeEvent(38, false, false, false, false, false))];
-	oTestEvents[oTestTypes.moveDown] = [new CTestEvent(createNativeEvent(40, false, false, false, false))];
-	oTestEvents[oTestTypes.selectDown] = [new CTestEvent(createNativeEvent(40, false, true, false, false))];
-	oTestEvents[oTestTypes.nextOptionComboBox] = [new CTestEvent(createNativeEvent(40, false, false, false, false, false))];
-	oTestEvents[oTestTypes.removeFrontSymbol] = [new CTestEvent(createNativeEvent(46, false, false, false, false))];
-	oTestEvents[oTestTypes.removeFrontWord] = [
-		new CTestEvent(createNativeEvent(46, true, false, false, false), testWindows),
-		new CTestEvent(createNativeEvent(46, false, false, true, false), testMacOs)
+	testHotkeyEvents[testHotkeyActions.removeForm] = [
+		CreateTestEvent(8, false, false, false, false, false),
+		CreateTestEvent(46, false, false, false, false, false)
 	];
-	oTestEvents[oTestTypes.unicodeToChar] = [
-		new CTestEvent(createNativeEvent(88, false, false, true, false), testWindows),
-		new CTestEvent(createNativeEvent(88, true, false, true, false), testMacOs)
+	testHotkeyEvents[testHotkeyActions.moveToNextForm] = [CreateTestEvent(9, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToPreviousForm] = [CreateTestEvent(9, false, true, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.handleTab] = [CreateTestEvent(9, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToNextCell] = [CreateTestEvent(9, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToPreviousCell] = [CreateTestEvent(9, false, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.selectNextObject] = [CreateTestEvent(9, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.selectPreviousObject] = [CreateTestEvent(9, false, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.testIndent] = [CreateTestEvent(9, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.testUnIndent] = [CreateTestEvent(9, false, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.addTabToParagraph] = [CreateTestEvent(9, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.visitHyperlink] = [CreateTestEvent(13, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.addBreakLineInlineLvlSdt] = [CreateTestEvent(13, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.createTextBoxContent] = [CreateTestEvent(13, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.createTextBody] = [CreateTestEvent(13, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.addNewLineToMath] = [CreateTestEvent(13, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveCursorToStartPositionShapeEnter] = [CreateTestEvent(13, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.selectAllShapeEnter] = [CreateTestEvent(13, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.selectAllInChartTitle] = [CreateTestEvent(13, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.addNewParagraphContent] = [CreateTestEvent(13, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.addNewParagraphMath] = [CreateTestEvent(13, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.closeAllWindowsPopups] = [CreateTestEvent(27, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.resetShapeSelection] = [CreateTestEvent(27, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.resetStartAddShape] = [CreateTestEvent(27, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.resetFormattingByExample] = [CreateTestEvent(27, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.resetMarkerFormat] = [CreateTestEvent(27, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.resetDragNDrop] = [CreateTestEvent(27, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.endEditing] = [CreateTestEvent(27, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.toggleCheckBox] = [CreateTestEvent(32, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToEndDocument] = [CreateTestEvent(35, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToEndLine] = [
+		CreateTestEvent(35, false, false, false, false),
+		CreateTestEvent(39, true, false, false, false, testFlags.macOs),
 	];
-	oTestEvents[oTestTypes.showContextMenu] = [
-		new CTestEvent(createNativeEvent(93, false, false, false, false)),
-		new CTestEvent(createNativeEvent(57351, false, false, false, false)),
-		new CTestEvent(createNativeEvent(121, false, true, false, false))
+	testHotkeyEvents[testHotkeyActions.selectToEndDocument] = [CreateTestEvent(35, true, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.selectToEndLine] = [
+		CreateTestEvent(35, false, true, false, false),
+		CreateTestEvent(39, true, true, false, false, testFlags.macOs),
 	];
-	oTestEvents[oTestTypes.disableNumLock] = [new CTestEvent(createNativeEvent(144, false, false, false, false))];
-	oTestEvents[oTestTypes.disableScrollLock] = [new CTestEvent(createNativeEvent(145, false, false, false, false))];
-	oTestEvents[oTestTypes.addSJKSpace] = [new CTestEvent(createNativeEvent(12288, false, false, false, false))];
-	oTestEvents[oTestTypes.moveToStartPreviousPage] = [new CTestEvent(createNativeEvent(33, true, false, true, false))];
-	oTestEvents[oTestTypes.moveToPreviousPage] = [new CTestEvent(createNativeEvent(33, false, false, false, false))];
-	oTestEvents[oTestTypes.moveToPreviousHeaderFooter] = [new CTestEvent(createNativeEvent(33, false, false, false, false))];
-	oTestEvents[oTestTypes.moveToPreviousHeader] = [
-		new CTestEvent(createNativeEvent(33, true, false, true, false)),
-		new CTestEvent(createNativeEvent(33, false, false, true, false))
+	testHotkeyEvents[testHotkeyActions.selectToStartLine] = [
+		CreateTestEvent(36, false, true, false, false),
+		CreateTestEvent(37, true, true, false, false, testFlags.macOs),
 	];
-	oTestEvents[oTestTypes.selectToStartPreviousPage] = [new CTestEvent(createNativeEvent(33, true, true, false, false))];
-	oTestEvents[oTestTypes.selectToPreviousPage] = [new CTestEvent(createNativeEvent(33, false, true, false, false))];
-	oTestEvents[oTestTypes.moveToStartNextPage] = [new CTestEvent(createNativeEvent(34, true, false, true, false))];
-	oTestEvents[oTestTypes.moveToNextPage] = [new CTestEvent(createNativeEvent(34, false, false, false, false))];
-	oTestEvents[oTestTypes.moveToNextHeaderFooter] = [new CTestEvent(createNativeEvent(34, false, false, false, false))];
-	oTestEvents[oTestTypes.moveToNextHeader] = [
-		new CTestEvent(createNativeEvent(34, true, false, true, false)),
-		new CTestEvent(createNativeEvent(34, false, false, true, false))
+	testHotkeyEvents[testHotkeyActions.selectToStartDocument] = [CreateTestEvent(36, true, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToStartLine] = [
+		CreateTestEvent(36, false, false, false, false),
+		CreateTestEvent(37, true, false, false, false, testFlags.macOs),
 	];
-	oTestEvents[oTestTypes.selectToStartNextPage] = [new CTestEvent(createNativeEvent(34, true, true, false, false))];
-	oTestEvents[oTestTypes.selectToNextPage] = [new CTestEvent(createNativeEvent(34, false, true, false, false))];
+	testHotkeyEvents[testHotkeyActions.moveToStartDocument] = [CreateTestEvent(36, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.selectLeftWord] = [
+		CreateTestEvent(37, true, true, false, false),
+		CreateTestEvent(37, false, true, true, false, testFlags.macOs),
+	];
+	testHotkeyEvents[testHotkeyActions.moveToLeftWord] = [
+		CreateTestEvent(37, true, false, false, false),
+		CreateTestEvent(37, false, false, true, false, testFlags.macOs),
+	];
+	testHotkeyEvents[testHotkeyActions.selectLeftChar] = [CreateTestEvent(37, false, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToLeftChar] = [CreateTestEvent(37, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToRightChar] = [CreateTestEvent(39, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.selectRightChar] = [CreateTestEvent(39, false, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToRightWord] = [
+		CreateTestEvent(39, true, false, false, false),
+		CreateTestEvent(39, false, false, true, false, testFlags.macOs)
+	];
+	testHotkeyEvents[testHotkeyActions.selectRightWord] = [
+		CreateTestEvent(39, true, true, false, false),
+		CreateTestEvent(39, false, true, true, false, testFlags.macOs),
+	];
+	testHotkeyEvents[testHotkeyActions.moveUp] = [CreateTestEvent(38, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.selectUp] = [CreateTestEvent(38, false, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.previousOptionComboBox] = [CreateTestEvent(38, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveDown] = [CreateTestEvent(40, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.selectDown] = [CreateTestEvent(40, false, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.nextOptionComboBox] = [CreateTestEvent(40, false, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.removeFrontSymbol] = [CreateTestEvent(46, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.removeFrontWord] = [
+		CreateTestEvent(46, true, false, false, false),
+		CreateTestEvent(46, false, false, true, false, testFlags.macOs),
+	];
+	testHotkeyEvents[testHotkeyActions.unicodeToChar] = [
+		CreateTestEvent(88, false, false, true, false),
+		CreateTestEvent(88, true, false, true, false, testFlags.macOs)
+	];
+	testHotkeyEvents[testHotkeyActions.showContextMenu] = [
+		CreateTestEvent(93, false, false, false, false),
+		CreateTestEvent(57351, false, false, false, false),
+		CreateTestEvent(121, false, true, false, false)
+	];
+	testHotkeyEvents[testHotkeyActions.disableNumLock] = [CreateTestEvent(144, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.disableScrollLock] = [CreateTestEvent(145, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.addSJKSpace] = [CreateTestEvent(12288, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToStartPreviousPage] = [CreateTestEvent(33, true, false, true, false)];
+	testHotkeyEvents[testHotkeyActions.moveToPreviousPage] = [CreateTestEvent(33, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToPreviousHeaderFooter] = [CreateTestEvent(33, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToPreviousHeader] = [
+		CreateTestEvent(33, true, false, true, false),
+		CreateTestEvent(33, false, false, true, false)
+	];
+	testHotkeyEvents[testHotkeyActions.selectToStartPreviousPage] = [CreateTestEvent(33, true, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.selectToPreviousPage] = [CreateTestEvent(33, false, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToStartNextPage] = [CreateTestEvent(34, true, false, true, false)];
+	testHotkeyEvents[testHotkeyActions.moveToNextPage] = [CreateTestEvent(34, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToNextHeaderFooter] = [CreateTestEvent(34, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToNextHeader] = [
+		CreateTestEvent(34, true, false, true, false),
+		CreateTestEvent(34, false, false, true, false)
+	];
+	testHotkeyEvents[testHotkeyActions.selectToStartNextPage] = [CreateTestEvent(34, true, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.selectToNextPage] = [CreateTestEvent(34, false, true, false, false)];
 
-	function startTest(fCallback, nShortcutType)
+function CreateTestEvent(nKeyCode, bIsCtrl, bIsShift, bIsAlt, bIsMetaKey, flags)
+{
+	flags = flags || testFlags.nothing;
+	const event = new AscCommon.CKeyboardEvent();
+	event.KeyCode = nKeyCode;
+	event.CtrlKey = !!bIsCtrl;
+	event.ShiftKey = !!bIsShift;
+	event.AltKey = !!bIsAlt;
+	event.MacCmdKey = !!bIsMetaKey;
+	event.enableFlags = function ()
 	{
-		const arrTestEvents = oTestEvents[nShortcutType];
-
-		for (let i = 0; i < arrTestEvents.length; i += 1)
+		if (flags & testFlags.macOs)
 		{
-			const nTestType = arrTestEvents[i].type;
-			if (nTestType === testAll)
-			{
-				AscCommon.AscBrowser.isMacOs = true;
-				fCallback(arrTestEvents[i].event);
-
-				AscCommon.AscBrowser.isMacOs = false;
-				fCallback(arrTestEvents[i].event);
-			} else if (nTestType === testMacOs)
-			{
-				AscCommon.AscBrowser.isMacOs = true;
-				fCallback(arrTestEvents[i].event);
-				AscCommon.AscBrowser.isMacOs = false;
-			} else if (nTestType === testWindows)
-			{
-				fCallback(arrTestEvents[i].event);
-			}
+			AscCommon.AscBrowser.isMacOs = true;
 		}
 	}
-	AscTestShortcut.oTestTypes = oTestTypes;
-	AscTestShortcut.startTest = startTest;
+	event.disableFlags = function ()
+	{
+		if (flags & testFlags.macOs)
+		{
+			AscCommon.AscBrowser.isMacOs = false;
+		}
+	}
+	return event;
+}
+
+	function ExecuteShortcut(e)
+	{
+		e.enableFlags && e.enableFlags();
+		const res = editor.WordControl.m_oLogicDocument.OnKeyDown(e);
+		e.disableFlags && e.disableFlags();
+		return res;
+	}
+
+	function ExecuteHotkey(type, eventIndex)
+	{
+		const event = testHotkeyEvents[type][eventIndex || 0];
+		return ExecuteShortcut(event);
+	}
+
+	AscTestShortcut.testHotkeyActions = testHotkeyActions;
+	AscTestShortcut.testHotkeyEvents = testHotkeyEvents;
+	AscTestShortcut.ExecuteShortcut = ExecuteShortcut;
+	AscTestShortcut.ExecuteHotkey = ExecuteHotkey;
 })(window);

@@ -4021,9 +4021,13 @@ var editor;
 	}
 
 	if (window["NATIVE_EDITOR_ENJINE"]) {
-		var ws = this.wb.getWorksheet();
-		var activeCell = this.wbModel.getActiveWs().selectionRange.activeCell;
-		result = [ws.getCellLeftRelative(activeCell.col, 0), ws.getCellTopRelative(activeCell.row, 0)];
+        if (SearchEngine.Count > 0) {
+            var ws = this.wb.getWorksheet();
+            var activeCell = this.wbModel.getActiveWs().selectionRange.activeCell;
+            result = [ws.getCellLeftRelative(activeCell.col, 0), ws.getCellTopRelative(activeCell.row, 0)];
+        } else {
+            result = null;
+        }
 	} else {
 		result = SearchEngine.Count;
 	}
@@ -5793,22 +5797,26 @@ var editor;
 		  this.wb.cellEditor.options.menuEditor;
   };
 
-  spreadsheet_api.prototype.asc_getActiveRangeStr = function(referenceType, opt_getActiveCell, opt_ignore_r1c1) {
-  	var ws = this.wb.getWorksheet();
-  	var res = null;
-  	var tmpR1C1;
+  spreadsheet_api.prototype.asc_getActiveRangeStr = function(referenceType, opt_getActiveCell, opt_ignore_r1c1, opt_only_range) {
+  	let ws = this.wb.getWorksheet();
+  	let res = null;
+  	let tmpR1C1;
   	if (opt_ignore_r1c1) {
 		tmpR1C1 = AscCommonExcel.g_R1C1Mode;
 		AscCommonExcel.g_R1C1Mode = false;
   	}
   	if (ws && ws.model && ws.model.selectionRange) {
-  		var range;
+  		let range;
   		if (opt_getActiveCell) {
-			var activeCell = ws.model.selectionRange.activeCell;
+			let activeCell = ws.model.selectionRange.activeCell;
 			range = new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row);
 		} else {
-			var lastRange = ws.model.selectionRange.getLast();
+			let lastRange = ws.model.selectionRange.getLast();
 			range = new Asc.Range(lastRange.c1, lastRange.r1, lastRange.c2, lastRange.r2);
+		}
+
+		if (opt_only_range && range.isOneCell()) {
+			return null;
 		}
 
 		res = range.getName(referenceType);
@@ -8612,9 +8620,20 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_openExternalReference = function(externalReference) {
+		let t = this;
 		let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
 		if (isLocalDesktop) {
-			alert("NEED SUPPORT LOCAL OPEN FILE");
+			window["AscDesktopEditor"]["openExternalReference"](externalReference.externalReference.Id, function(error) {
+				let internalError = Asc.c_oAscError.ID.No;
+				switch (error) {
+					case 0: internalError = Asc.c_oAscError.ID.ConvertationOpenError; break;
+					default: break;
+				}
+
+				if (Asc.c_oAscError.ID.No !== internalError) {
+					t.sendEvent("asc_onError", internalError, c_oAscError.Level.NoCritical);
+				}
+			});
 			return null;
 		} else {
 			return externalReference;
@@ -8858,6 +8877,41 @@ var editor;
 		return res;
 	};
 
+	//goal seek
+	spreadsheet_api.prototype.asc_StartGoalSeek = function (sFormulaCell, nExpectedValue, sChangingCell) {
+		if (!this.wb) {
+			return;
+		}
+		return this.wb.startGoalSeek(sFormulaCell, nExpectedValue, sChangingCell);
+	};
+
+	spreadsheet_api.prototype.asc_CloseGoalClose = function (bSave) {
+		if (!this.wb) {
+			return;
+		}
+		return this.wb.closeGoalSeek(bSave);
+	};
+
+	spreadsheet_api.prototype.asc_PauseGoalSeek = function () {
+		if (!this.wb) {
+			return;
+		}
+		return this.wb.pauseGoalSeek();
+	};
+
+	spreadsheet_api.prototype.asc_ContinueGoalSeek = function () {
+		if (!this.wb) {
+			return;
+		}
+		return this.wb.continueGoalSeek();
+	};
+
+	spreadsheet_api.prototype.asc_StepGoalSeek = function () {
+		if (!this.wb) {
+			return;
+		}
+		return this.wb.stepGoalSeek();
+	};
 
 	spreadsheet_api.prototype.asc_TracePrecedents = function() {
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
@@ -8895,6 +8949,18 @@ var editor;
 		return ws.removeTraceArrows(type);
 	};
 
+	/** Returns array of function info
+	 * @param {number} pos - cursor position
+	 * @param {string} s - cell text
+	 * @returns {asc_CCompleteMenu[]}
+	 */
+	spreadsheet_api.prototype.asc_GetEditableFunctions = function(pos, s) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.getEditableFunctions(pos, s);
+	};
 	spreadsheet_api.prototype.getSelectionState = function() {
 		let wb = this.wb;
 		if (!wb) {
@@ -9483,7 +9549,13 @@ var editor;
   prot["asc_ResetAllPageBreaks"]      = prot.asc_ResetAllPageBreaks;
   prot["asc_GetPageBreaksDisableType"]= prot.asc_GetPageBreaksDisableType;
 
+  prot["asc_GetEditableFunctions"]= prot.asc_GetEditableFunctions;
 
+  prot["asc_StartGoalSeek"]= prot.asc_StartGoalSeek;
+  prot["asc_CloseGoalClose"]= prot.asc_CloseGoalClose;
+  prot["asc_PauseGoalSeek"]= prot.asc_PauseGoalSeek;
+  prot["asc_ContinueGoalSeek"]= prot.asc_ContinueGoalSeek;
+  prot["asc_StepGoalSeek"]= prot.asc_StepGoalSeek;
 
 
 

@@ -846,14 +846,10 @@
 
 				case 120: // F9
 					var type;
-					if (ctrlKey && event.altKey && shiftKey) {
-						type = Asc.c_oAscCalculateType.All;
-					} else if (ctrlKey && event.altKey) {
-						type = Asc.c_oAscCalculateType.Workbook;
-					} else if (shiftKey) {
+					if (shiftKey) {
 						type = Asc.c_oAscCalculateType.ActiveSheet;
 					} else {
-						type = Asc.c_oAscCalculateType.WorkbookOnlyChanged;
+						type = Asc.c_oAscCalculateType.All;
 					}
 					t.handlers.trigger("calculate", type);
 					return result;
@@ -1798,22 +1794,24 @@
 				oOleSize.addPointToLocalHistory();
 			}
 
+			var coord = this._getCoordinates(event);
+			// Shapes
+			event.isLocked = this.isMousePressed = false;
 			if (2 === button) {
 				if (this.isShapeAction) {
+					event.ClickCount = this.clickCounter.clickCount;
+					this.handlers.trigger("graphicObjectMouseUp", event, coord.x, coord.y);
 					this.handlers.trigger('onContextMenu', event);
 				}
 				return true;
 			}
 
-			var coord = this._getCoordinates(event);
 			if(this.view.Api.isEyedropperStarted()) {
 				this.view.Api.finishEyedropper();
 				var t = this;
 				t.handlers.trigger("updateWorksheet", coord.x, coord.y, false, function(info){t.targetInfo = info;});
 				return true;
 			}
-			// Shapes
-			event.isLocked = this.isMousePressed = false;
 
 			if (this.isShapeAction) {
 				event.ClickCount = this.clickCounter.clickCount;

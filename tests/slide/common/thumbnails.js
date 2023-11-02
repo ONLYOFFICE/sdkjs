@@ -30,39 +30,24 @@
  *
  */
 
-"use strict";
-function IsCanvas(sName) {
-  return true;
-}
-(function(window, undefined){
+'use strict';
 
-  function CreateControlContainer(name)
-  {
-    var ctrl = new AscCommon.CControlContainer();
-    ctrl.Name = name;
-    const oHtmlElement = document.createElement(IsCanvas(name) ? 'canvas' : 'div');
-    oHtmlElement.style.display = 'none';
-    oHtmlElement.style.width = '20px';
-    oHtmlElement.style.height = '20px';
-    document.body.appendChild(oHtmlElement);
-    ctrl.HtmlElement = oHtmlElement;
-    return ctrl;
-  }
-  function CreateControl(name)
-  {
-    var ctrl = new AscCommon.CControl();
-    ctrl.Name = name;
-    const oHtmlElement = document.createElement(IsCanvas(name) ? 'canvas' : 'div');
-    oHtmlElement.style.display = 'none';
-    oHtmlElement.style.width = '20px';
-    oHtmlElement.style.height = '20px';
-    document.body.appendChild(oHtmlElement);
-    ctrl.HtmlElement = oHtmlElement;
-    return ctrl;
-  }
+(function (window)
+{
+	AscTest.DrawingDocument.m_oThumbnails = new AscCommon.CControl();
+	AscTest.DrawingDocument.m_oScrollThumbApi = AscTest.DrawingDocument;
+	AscTest.DrawingDocument.Thumbnails = new CThumbnailsManager();
+	AscTest.DrawingDocument.Thumbnails.m_bIsVisible = true;
+	AscTest.DrawingDocument.Thumbnails.m_oWordControl = AscTest.DrawingDocument;
+	AscTest.DrawingDocument.Thumbnails.OnUpdateOverlay = function () {};
 
-  //--------------------------------------------------------export----------------------------------------------------
-  window['AscCommon'] = window['AscCommon'] || {};
-  window['AscCommon'].CreateControlContainer = CreateControlContainer;
-  window['AscCommon'].CreateControl = CreateControl;
+	AscTest.DrawingDocument.m_oThumbnails.Name = "id_th";
+	AscTest.DrawingDocument.m_oThumbnails.HtmlElement = document.createElement('canvas');
+
+	AscTest.DrawingDocument.OnEndRecalculate = function ()
+	{
+		AscTest.DrawingDocument.m_oDrawingDocument.SlidesCount = AscTest.DrawingDocument.m_oLogicDocument.Slides.length;
+		AscTest.DrawingDocument.Thumbnails.SlidesCount = AscTest.DrawingDocument.m_oLogicDocument.Slides.length;
+		AscTest.DrawingDocument.Thumbnails.CalculatePlaces();
+	}
 })(window);

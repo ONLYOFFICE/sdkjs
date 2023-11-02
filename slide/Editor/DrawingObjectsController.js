@@ -112,33 +112,11 @@ DrawingObjectsController.prototype.recalculateCurPos = function(bUpdateX, bUpdat
 
 DrawingObjectsController.prototype.getColorMap = function()
 {
-
-    if(this.drawingObjects )
+    if(this.drawingObjects)
     {
-        if(this.drawingObjects.clrMap)
+        if(this.drawingObjects.getColorMap)
         {
-            return this.drawingObjects.clrMap;
-        }
-        else if(this.drawingObjects.Layout )
-        {
-            if(this.drawingObjects.Layout.clrMap)
-            {
-                return this.drawingObjects.Layout.clrMap;
-            }
-            else if(this.drawingObjects.Layout.Master)
-            {
-                if(this.drawingObjects.Layout.Master.clrMap)
-                {
-                    return this.drawingObjects.Layout.Master.clrMap;
-                }
-            }
-        }
-        else if(this.drawingObjects.Master )
-        {
-            if(this.drawingObjects.Master.clrMap)
-            {
-                return this.drawingObjects.Master.clrMap;
-            }
+            return this.drawingObjects.getColorMap();
         }
     }
     return AscFormat.GetDefaultColorMap();

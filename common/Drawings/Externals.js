@@ -41,6 +41,8 @@
     var g_map_font_index = {};
     var g_fonts_streams = [];
 
+    var isLoadFontsSync = (window["NATIVE_EDITOR_ENJINE"] === true);
+
     function CFontFileLoader(id)
     {
         this.LoadingCounter = 0;
@@ -157,6 +159,9 @@
     };
     CFontFileLoader.prototype.LoadFontAsync = function(basePath, callback)
     {
+        if (isLoadFontsSync)
+            return true;
+
         if (window["AscDesktopEditor"] !== undefined)
         {
             if (-1 !== this.Status)
@@ -173,6 +178,8 @@
 
             if (callback)
                 callback();
+            if (this["externalCallback"])
+                this["externalCallback"]();
             return;
         }
 
@@ -240,6 +247,9 @@
         // начинаем грузить нужные стили
         CheckFontLoadStyles : function(global_loader)
         {
+            if (isLoadFontsSync)
+                return false;
+
             if ((this.NeedStyles & 0x0F) === 0x0F)
             {
                 this.needR = true;
@@ -295,6 +305,8 @@
         // надо ли грузить хоть один шрифт из семейства
         CheckFontLoadStylesNoLoad : function(global_loader)
         {
+            if (isLoadFontsSync)
+                return false;
             var fonts = global_loader.fontFiles;
             if ((-1 !== this.indexR) && (fonts[this.indexR].CheckLoaded() === false))
                 return true;

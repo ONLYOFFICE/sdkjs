@@ -148,6 +148,7 @@
 			
 			"word/Editor/Paragraph/Run/FontClassification.js",
 			"word/Editor/Paragraph/Run/FontCalculator.js",
+			"word/Editor/Paragraph/Run/run-composite-input.js",
 			"word/Editor/Paragraph/Run/RunAutoCorrect.js",
 			"slide/Drawing/ThemeLoader.js",
 			"word/Editor/Serialize2.js",
@@ -265,6 +266,7 @@
 			"word/Editor/Layout/ReadView.js",
 			"word/Editor/DocumentContentBase.js",
 			"word/Editor/Document.js",
+			"word/Editor/document-composite-input.js",
 			"word/Editor/ChangeCase.js",
 			"word/Editor/SelectedContent.js",
 			"word/Editor/DocumentOutline.js",

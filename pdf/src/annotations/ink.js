@@ -57,62 +57,62 @@
 	CAnnotationInk.prototype.constructor = CAnnotationInk;
     Object.defineProperties(CAnnotationInk.prototype, {
         extX: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.extX;
             }
         },
         extY: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.extY;
             }
         },
         transform: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.transform;
             }
         },
         spPr: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.spPr;
             }
         },
         rot: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.rot;
             }
         },
         x: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.x;
             }
         },
         y: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.y;
             }
         },
         brush: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.brush;
             }
         },
         pen: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.pen;
             }
         },
         txXfrm: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.txXfrm;
             }
         },
         flipV: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.flipV;
             }
         },
         flipH: {
-            get() {
+            get: function() {
                 return this.GetDrawing().GraphicObj.flipH;
             }
         },
@@ -213,7 +213,6 @@
     CAnnotationInk.prototype.SetInkPoints = function(aSourcePaths) {
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = oViewer.getPDFDoc();
-        let oDrawingObjects = oViewer.DrawingObjects;
         let oDrDoc          = oDoc.GetDrawingDocument();
 
         let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom;
@@ -620,10 +619,7 @@
         oNewInk.SetStrokeColor(this.GetStrokeColor().slice());
         oNewInk._relativePaths = this.GetRelativePaths().slice();
         oNewInk._gestures = this._gestures.slice();
-
-        let oContents = this.GetContents();
-        if (oContents)
-            oNewInk.SetContents(oContents.Copy());
+        oNewInk.SetContents(this.GetContents());
 
         return oNewInk;
     };
@@ -737,8 +733,7 @@
 		}
 		if (i === selected_objects.length)
 			selected_objects.push(this);
-
-
+        
 		if (drawingObjectsController) {
 			drawingObjectsController.onChangeDrawingsSelection();
 		}
@@ -800,7 +795,91 @@
     CAnnotationInk.prototype.convertPixToMM = function(px) {
         return this.GetDrawing().GraphicObj.convertPixToMM(px);
     };
+    CAnnotationInk.prototype.WriteToBinary = function(memory) {
+        memory.WriteByte(AscCommon.CommandType.ctAnnotField);
+
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.WriteToBinaryBase(memory);
+        this.WriteToBinaryBase2(memory);
         
+        // считаем точки
+        let aRelPointsPos   = this._relativePaths;
+        let aShapePaths     = [];
+        let nLineW          = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+        let aBounds         = this.GetOrigRect();
+
+        let xMin;
+        let yMin;
+        let xMax;
+        let yMax;
+        if (this.IsNeedDrawFromStream() == false) {
+            xMin = aBounds[0] + nLineW * 0.75;
+            yMin = aBounds[1] + nLineW * 0.75;
+            xMax = aBounds[2] - nLineW * 0.75;
+            yMax = aBounds[3] - nLineW * 0.75;
+
+            let nWidthMM    = (xMax - xMin);
+            let nHeightMM   = (yMax - yMin);
+
+            for (let nPath = 0; nPath < aRelPointsPos.length; nPath++) {
+                let aPath       = aRelPointsPos[nPath];
+                let aShapePath  = [];
+
+                for (let nPoint = 0; nPoint < aPath.length; nPoint++) {
+                    aShapePath.push({
+                        x: (nWidthMM) * aPath[nPoint].relX + xMin,
+                        y: (nHeightMM) * aPath[nPoint].relY + yMin
+                    });
+                }
+                
+                aShapePaths.push(aShapePath);
+            }
+        }
+        else {
+            let oViewer = editor.getDocumentRenderer();
+            let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom;
+            let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom;
+
+            for (let nPath = 0; nPath < this._gestures.length; nPath++) {
+                let aPath       = this._gestures[nPath];
+                let aShapePath  = [];
+
+                for (let nPoint = 0; nPoint < aPath.length; nPoint++) {
+                    aShapePath.push({
+                        x: aPath[nPoint].x * g_dKoef_mm_to_pix / nScaleX,
+                        y: aPath[nPoint].y * g_dKoef_mm_to_pix / nScaleY
+                    });
+                }
+                
+                aShapePaths.push(aShapePath);
+            }
+        }
+
+        memory.WriteLong(aShapePaths.length);
+        for (let i = 0; i < aShapePaths.length; i++) {
+            memory.WriteLong(aShapePaths[i].length * 2);
+
+            for (let j = 0; j < aShapePaths[i].length; j++) {
+                memory.WriteDouble(aShapePaths[i][j].x);
+                memory.WriteDouble(aShapePaths[i][j].y);
+            }
+        }
+
+        let nEndPos = memory.GetCurPosition();
+        memory.Seek(memory.posForFlags);
+        memory.WriteLong(memory.annotFlags);
+        
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+
+        this._replies.forEach(function(reply) {
+            reply.WriteToBinary(memory); 
+        });
+    };
+
     function generateShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
         // смещаем точки для отступа внутри шейпа
         let xMax = arrOfArrPoints[0][0].x, yMax = arrOfArrPoints[0][0].y, xMin = xMax, yMin = yMax;
@@ -809,11 +888,6 @@
         xMin = aShapeRect[0];
         yMin = aShapeRect[1];
         yMax = aShapeRect[3];
-
-        // xMax = aMinPointsRect[2];
-        // xMin = aMinPointsRect[0];
-        // yMin = aMinPointsRect[1];
-        // yMax = aMinPointsRect[3];
 
         let shape = new AscFormat.CShape();
         shape.setSpPr(new AscFormat.CSpPr());

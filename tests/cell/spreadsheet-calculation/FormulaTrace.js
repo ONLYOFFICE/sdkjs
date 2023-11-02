@@ -2117,6 +2117,204 @@ $(function() {
 			// clear traces
 			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
 		});
+		// 	let bbox;
+		// 	// -------------- precedents --------------
+		// 	ws.getRange2("A1:Z10000").cleanAll();
+
+		// 	let A1Index = AscCommonExcel.getCellIndex(ws.getRange2("A1").bbox.r1, ws.getRange2("A1").bbox.c1),
+		// 		A50Index = AscCommonExcel.getCellIndex(ws.getRange2("A50").bbox.r1, ws.getRange2("A50").bbox.c1),
+		// 		AA500Index = AscCommonExcel.getCellIndex(ws.getRange2("AA500").bbox.r1, ws.getRange2("AA500").bbox.c1);
+
+		// // / / // TODO check all the formulas, write them in a string according to the number of arguments and call the formulas.
+		// // Also, you can divide formulas into having a return type and not
+
+		// 	// console.log(AscCommonExcel.cFormulaFunctionGroup);
+		// 	// console.log(AscCommonExcel.cReturnFormulaType);
+
+		// 	let valueType = [],						// 0
+		// 		value_replace_areaType = [],		// 1
+		// 		arrayType = [],						// 2
+		// 		area_to_refType = [],				// 3
+		// 		replace_only_arrayType = [],		// 4
+		// 		setArrayRefAsArgType = [],			// 5
+		// 		noRetType = [],
+		// 		withArrIndexes = [],
+		// 		withoutArrIndexes = [],
+		// 		retType = [], str = "";
+
+		// 	console.log(AscCommonExcel.cFormulaFunctionGroup);
+		// 	// TODO test all type functions
+		// 	for (let index in AscCommonExcel.cFormulaFunctionGroup) {
+		// 		let array = AscCommonExcel.cFormulaFunctionGroup[index];
+		// 		for (let i = 0; i < array.length; i++) {
+		// 			if (array[i].prototype.returnValueType !== null) {
+		// 				retType.push(array[i]);
+		// 			} else {
+		// 				noRetType.push(array[i]);
+		// 			}
+		// 		}
+		// 	}
+
+		// 	let fullArrrayWithF = [];
+		// 	for (let index in AscCommonExcel.cFormulaFunctionGroup) {
+		// 		let array = AscCommonExcel.cFormulaFunctionGroup[index];
+		// 		for (let i = 0; i < array.length; i++) {
+		// 			let formula = array[i];
+		// 			if (formula.prototype && formula.prototype.name) {
+		// 				let minArg = formula.prototype.argumentsMin ? formula.prototype.argumentsMin : 1, maxArg = formula.prototype.argumentsMax ? formula.prototype.argumentsMax : 1;
+		// 				let formulas = [];
+		// 				let arrayMinArg = new Array(minArg);
+
+		// 				maxArg = maxArg > 10 ? 10 : maxArg;
+		// 				arrayMinArg.fill("1", 0, minArg);
+
+		// 				for (let i = 0; i < minArg; i++) {
+		// 					let curFormula = arrayMinArg.slice();
+		// 					curFormula[i] = "A:A";
+		// 					formulas.push("=" + formula.prototype.name + "(" + curFormula.join(";") + ")" + "\t");
+		// 					// formulas.push(curFormula);
+		// 				}
+		// 				for (let i = minArg; i < maxArg; i++) {
+		// 					arrayMinArg.push("1");
+		// 					let curFormula = arrayMinArg.slice();
+		// 					curFormula[i] = "A:A";
+		// 					formulas.push("=" + formula.prototype.name + "(" + curFormula.join(";") + ")" + "\t");
+		// 					// console.log(formulas);
+		// 				}
+		// 				formulas.push("\n");
+		// 				fullArrrayWithF.push(formulas.join(""));
+			
+		// 			}
+		// 		}
+		// 	}
+		// 	console.log(fullArrrayWithF.join(""));
+		// 	// console.log(noRetType);
+		// 	// console.log(retType);
+		// 	// console.log(withArrIndexes);
+		// 	// console.log(withoutArrIndexes);
+
+		// 	ws.getRange2("A1").setValue("2");
+
+		// 	// clear traces
+		// 	api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+		// });
+		QUnit.test("Test: \"Formulas tests\"", function (assert) {
+			let bbox;
+			ws.getRange2("A:A").cleanAll();
+
+			let A1Index = AscCommonExcel.getCellIndex(ws.getRange2("A1").bbox.r1, ws.getRange2("A1").bbox.c1);
+			let noRetType = [],
+				withArrIndexes = [],
+				withoutArrIndexes = [],
+				haveRetType = [];
+
+			// this formulas doesn't exist in excel 2016
+			let versionExceptions = [
+				"FORECAST", "PHONETIC", "TEXTJOIN", "TEXTBEFORE", "TEXTAFTER", "TEXTSPLIT", "MAXIFS", 
+				"MINIFS", "JIS", "RANDARRAY", "SEQUENCE", "CHOOSECOLS", "CHOOSEROWS", "DROP", "EXPAND", 
+				"FILTER", "SORT", "TAKE", "UNIQUE", "XLOOKUP", "VSTACK", "HSTACK", "TOROW", "TOCOL", "WRAPROWS", "IFS", "SWITCH"
+			];
+			// this formulas different in behavior in arrayIndexes
+			let behaviourExceptions = [
+				"GROWTH", "LINEST", "LOGEST", "TREND", "CUBEMEMBER", "CUBESET", "CUBEVALUE",
+				"AREAS", "GETPIVOTDATA", "NETWORKDAYS.INTL", "WORKDAY.INTL", "MUNIT", "CHOOSE",
+				"MATCH", "TRANSPOSE", "TYPE", "IF", "IFERROR", "IFNA"
+			];
+
+			// for (let index in AscCommonExcel.cFormulaFunctionGroup) {
+			// 	let array = AscCommonExcel.cFormulaFunctionGroup[index];
+			// 	for (let i = 0; i < array.length; i++) {
+			// 		if (versionExceptions.includes(array[i].prototype.name) || behaviourExceptions.includes(array[i].prototype.name)) {
+			// 			continue
+			// 		}
+			// 		// fill row with current formula
+			// 	}
+			// }
+
+			ws.getRange2("B3").setValue("=SUM(A:A)");
+			let A3Index = AscCommonExcel.getCellIndex(ws.getRange2("A3").bbox.r1, ws.getRange2("A3").bbox.c1),
+				B3Index = AscCommonExcel.getCellIndex(ws.getRange2("B3").bbox.r1, ws.getRange2("B3").bbox.c1);
+
+			ws.selectionRange.ranges = [ws.getRange2("B3").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("B3").getBBox0().r1, ws.getRange2("B3").getBBox0().c1);
+
+			assert.ok(1, "Trace dependents from B3");
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(B3Index, A1Index), 1, "B3<-A1. Line should be directed to the range header");
+			assert.strictEqual(traceManager._getPrecedents(B3Index, A3Index), undefined, "B3<-A3. Line shouldn't be directed to the opposite cell in range A:A");
+			assert.strictEqual(traceManager.precedentsAreas ? typeof(traceManager.precedentsAreas["A:A"]) : undefined, "object", "A:A should exist as a range");
+
+			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+
+
+			ws.getRange2("B4").setValue("=SIN(A:A)");
+			let A4Index = AscCommonExcel.getCellIndex(ws.getRange2("A4").bbox.r1, ws.getRange2("A4").bbox.c1),
+				B4Index = AscCommonExcel.getCellIndex(ws.getRange2("B4").bbox.r1, ws.getRange2("B4").bbox.c1);
+
+			ws.selectionRange.ranges = [ws.getRange2("B4").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("B4").getBBox0().r1, ws.getRange2("B4").getBBox0().c1);
+			
+			assert.ok(1, "Trace dependents from B4");
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(B4Index, A1Index), undefined, "B4<-A1. Line shouldn't be directed to the range header");
+			assert.strictEqual(traceManager._getPrecedents(B4Index, A4Index), 1, "B4<-A4. Line should be directed to the opposite cell in range A:A");
+			assert.strictEqual(traceManager.precedentsAreas ? typeof(traceManager.precedentsAreas["A:A"]) : undefined, undefined, "A:A shouldn't exist as a range");
+
+			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+			
+			
+			ws.getRange2("B5").setValue("=NPV(1;A:A)");
+			let A5Index = AscCommonExcel.getCellIndex(ws.getRange2("A5").bbox.r1, ws.getRange2("A5").bbox.c1),
+				B5Index = AscCommonExcel.getCellIndex(ws.getRange2("B5").bbox.r1, ws.getRange2("B5").bbox.c1);
+
+			ws.selectionRange.ranges = [ws.getRange2("B5").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("B5").getBBox0().r1, ws.getRange2("B5").getBBox0().c1);
+			
+			assert.ok(1, "Trace dependents from B5");
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(B5Index, A1Index), 1, "B5<-A1. Line should be directed to the range header");
+			assert.strictEqual(traceManager._getPrecedents(B5Index, A5Index), undefined, "B5<-A5. Line shouldn't be directed to the opposite cell in range A:A");
+			assert.strictEqual(traceManager.precedentsAreas ? typeof(traceManager.precedentsAreas["A:A"]) : undefined, "object", "A:A should exist as a range");
+
+			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+
+
+			ws.getRange2("B6").setValue("=NPV(A:A;1)");
+			let A6Index = AscCommonExcel.getCellIndex(ws.getRange2("A6").bbox.r1, ws.getRange2("A6").bbox.c1),
+				B6Index = AscCommonExcel.getCellIndex(ws.getRange2("B6").bbox.r1, ws.getRange2("B6").bbox.c1);
+
+			ws.selectionRange.ranges = [ws.getRange2("B6").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("B6").getBBox0().r1, ws.getRange2("B6").getBBox0().c1);
+			
+			assert.ok(1, "Trace dependents from B6");
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(B6Index, A1Index), undefined, "B6<-A1. Line shouldn't be directed to the range header");
+			assert.strictEqual(traceManager._getPrecedents(B6Index, A6Index), 1, "B6<-A6. Line should be directed to the opposite cell in range A:A");
+			assert.strictEqual(traceManager.precedentsAreas ? typeof(traceManager.precedentsAreas["A:A"]) : undefined, undefined, "A:A shouldn't exist as a range");
+
+			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+
+			
+			ws.getRange2("B7").setValue("=NPV(A:A;A:A)");
+			let A7Index = AscCommonExcel.getCellIndex(ws.getRange2("A7").bbox.r1, ws.getRange2("A7").bbox.c1),
+				B7Index = AscCommonExcel.getCellIndex(ws.getRange2("B7").bbox.r1, ws.getRange2("B7").bbox.c1);
+
+			ws.selectionRange.ranges = [ws.getRange2("B7").getBBox0()];
+			ws.selectionRange.setActiveCell(ws.getRange2("B7").getBBox0().r1, ws.getRange2("B7").getBBox0().c1);
+			
+			assert.ok(1, "Trace dependents from B7");
+			api.asc_TracePrecedents();
+			assert.strictEqual(traceManager._getPrecedents(B7Index, A1Index), 1, "B7<-A1. Line should be directed to both ways. Line to the range header");
+			assert.strictEqual(traceManager._getPrecedents(B7Index, A7Index), 1, "B7<-A7. Line should be directed to both ways. Line to the opposite cell");
+			assert.strictEqual(traceManager.precedentsAreas ? typeof(traceManager.precedentsAreas["A:A"]) : undefined, "object", "A:A should exist as a range");
+
+			// clear traces
+			api.asc_RemoveTraceArrows(Asc.c_oAscRemoveArrowsType.all);
+		});
 		// QUnit.test("Test: \"Interface tests\"", function (assert) {
 		// 	let bbox;
 		// 	// trace dependents/precedents -> click on interface element -> check dependencies

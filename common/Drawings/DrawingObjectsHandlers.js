@@ -318,7 +318,7 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
                 continue;
             }
 
-            if (drawing.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink) {
+            if (drawing.GetType() == AscPDF.ANNOTATIONS_TYPES.Text) {
                 ret = handleBaseAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex);
             }
             else {

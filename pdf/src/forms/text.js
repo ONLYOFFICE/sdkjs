@@ -41,7 +41,7 @@
         AscPDF.CBaseField.call(this, sName, AscPDF. FIELD_TYPES.text, nPage, aRect, oDoc);
         
         this._alignment         = AscPDF.ALIGN_TYPE.left;
-        this._charLimit         = 0; // to do
+        this._charLimit         = 0;
         this._comb              = false;
         this._defaultStyle      = Object.assign({}, {}); // to do (must not be fileSelect flag)
         this._doNotScroll       = false;
@@ -53,6 +53,8 @@
         this._textFont          = AscPDF.DEFAULT_FIELD_FONT;
         this._fileSelect        = false;
         this._value             = undefined;
+		this._displayValue      = "";
+		this._useDisplayValue   = true;
 
         // internal
         TurnOffHistory();
@@ -63,6 +65,9 @@
 		this.contentFormat = new AscPDF.CTextBoxContent(this, oDoc);
 
         this._scrollInfo = null;
+		
+		this.compositeInput = null;
+		this.compositeReplaceCount = 0;
     }
     CTextField.prototype = Object.create(AscPDF.CBaseField.prototype);
 	CTextField.prototype.constructor = CTextField;
@@ -98,7 +103,7 @@
     CTextField.prototype.SetCharLimit = function(nChars) {
         let oViewer = editor.getDocumentRenderer();
 
-        if (typeof(nChars) == "number" && nChars <= 500 && nChars > 0 && this.GetFileSelect() === false) {
+        if (typeof(nChars) == "number" && nChars <= 500 && nChars > 0 && this.IsFileSelect() === false) {
             nChars = Math.round(nChars);
             if (this._charLimit != nChars) {
 
@@ -126,7 +131,7 @@
     CTextField.prototype.SetDoNotScroll = function(bNot) {
         this._doNotScroll = bNot;
     };
-    CTextField.prototype.GetDoNotScroll = function() {
+    CTextField.prototype.IsDoNotScroll = function() {
         return this._doNotScroll;
     };
     CTextField.prototype.SetDoNotSpellCheck = function(bNot) {
@@ -144,7 +149,7 @@
             this._fileSelect = false;
         }
     };
-    CTextField.prototype.GetFileSelect = function() {
+    CTextField.prototype.IsFileSelect = function() {
         return this._fileSelect;
     };
     CTextField.prototype.SetMultiline = function(bMultiline) {
@@ -170,45 +175,50 @@
             this._password = false;
         }
     };
+    CTextField.prototype.IsPassword = function() {
+        return this._password;
+    };
     CTextField.prototype.SetRichText = function(bRichText) {
         this._richText = bRichText;
     };
-    CTextField.prototype.SetValue = function(sValue) {
-        if (this.IsWidget()) {
-            let oPara   = this.content.GetElement(0);
-            let oRun    = oPara.GetElement(0);
-            oPara.RemoveFromContent(1, oPara.GetElementsCount() - 1);
-            oRun.ClearContent();
-
-            let oTextFormat = new AscWord.CTextFormFormat();
-            let arrBuffer   = oTextFormat.GetBuffer(sValue);
-            
-            if (sValue) {
-                for (let index = 0; index < arrBuffer.length; ++index) {
-                    let codePoint = arrBuffer[index];
-                    if (9 === codePoint) // \t
-                        oRun.AddToContent(index, new AscWord.CRunTab(), true);
-                    else if (10 === codePoint || 13 === codePoint) // \n \r
-                        oRun.AddToContent(index, new AscWord.CRunBreak(AscWord.break_Line), true);
-                    else if (AscCommon.IsSpace(codePoint)) // space
-                        oRun.AddToContent(index, new AscWord.CRunSpace(codePoint), true);
-                    else
-                        oRun.AddToContent(index, new AscWord.CRunText(codePoint), true);
-                }
-                
-                this.content.MoveCursorToStartPos();
-            }
-
-            this.SetNeedRecalc(true);
-            this.SetWasChanged(true);
-
-            if (editor.getDocumentRenderer().IsOpenFormsInProgress && this.GetParent() == null)
-                this.SetApiValue(sValue);
-        }
-        else
-            this.SetApiValue(sValue);
+    CTextField.prototype.IsRichText = function() {
+        return this._richText;
     };
-    
+	CTextField.prototype.SetValue = function(sValue) {
+		if (this.IsWidget()) {
+			let args = arguments; // args[1] == true -> флаг, что вызывается на открытии
+			
+			if (args[1] != true)
+				this.SetWasChanged(true);
+			
+			if (args[1] == true && !this.GetParent())
+				this.SetApiValue(sValue);
+			
+			this.UpdateDisplayValue(sValue);
+		}
+		else {
+			this.SetApiValue(sValue);
+		}
+	};
+	CTextField.prototype.UpdateDisplayValue = function(displayValue) {
+		if (displayValue === this._displayValue)
+			return;
+		
+		this._displayValue = displayValue;
+		this._useDisplayValue = true;
+		
+		let _t = this;
+		
+		this._displayPromise = new Promise(function(resolve) {
+			AscFonts.FontPickerByCharacter.checkText(displayValue, _t, resolve);
+		}).then(function() {
+			if (_t._displayValue !== displayValue)
+				return;
+			
+			_t.content.replaceAllText(displayValue);
+			_t.SetNeedRecalc(true);
+		});
+	};
     CTextField.prototype.GetCalcOrderIndex = function() {
         return this.field.GetDocument().GetCalculateInfo().names.indexOf(this.field.GetFullName());
     };
@@ -254,29 +264,25 @@
     //             oField.SetValueToKids(sValue);
     //     }
     // };
-
-    /**
+	
+	/**
 	 * Gets the value of current form (can be not commited).
 	 * @memberof CTextField
 	 * @typeofeditors ["PDF"]
-     * @returns {string | Array} - can be array of rich value
+	 * @returns {string | Array} - can be array of rich value
 	 */
-    CTextField.prototype.GetValue = function() {
-        // to do обработать rich value
-        let oPara = this.content.GetElement(0);
-        oPara.SetApplyToAll(true);
-        let sValue = oPara.GetSelectedText(true, {NewLine: true});
-        oPara.SetApplyToAll(false);
-
-        return sValue;
-    };
+	CTextField.prototype.GetValue = function() {
+		return (this._useDisplayValue ? this._displayValue : this.content.getAllText());
+	};
+	CTextField.prototype.OnContentChange = function() {
+		this._useDisplayValue = false;
+	};
         
     CTextField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)
             return;
 
-        let oViewer         = editor.getDocumentRenderer();
-        let oDoc            = this.GetDocument();
+        let oDoc = this.GetDocument();
 
         this.Recalculate();
         this.DrawBackground(oGraphicsPDF);
@@ -301,6 +307,89 @@
         // redraw target cursor if field is selected
         if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsEditable())
             oContentToDraw.RecalculateCurPos();
+    };
+    CTextField.prototype.ProcessAutoFitContent = function() {
+        let oPara   = this.content.GetElement(0);
+        let oRun    = oPara.GetElement(0);
+        let oTextPr = oRun.Get_CompiledPr(true);
+        let oBounds = this.getFormRelRect();
+
+        g_oTextMeasurer.SetTextPr(oTextPr, null);
+        g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
+
+        var nTextHeight = g_oTextMeasurer.GetHeight();
+        var nMaxWidth   = oPara.RecalculateMinMaxContentWidth(false).Max;
+        var nFontSize   = oTextPr.FontSize;
+
+        if (nMaxWidth < 0.001 || nTextHeight < 0.001 || oBounds.W < 0.001 || oBounds.H < 0.001)
+    	    return nTextHeight;
+
+        var nNewFontSize = nFontSize;
+
+        if (this.IsMultiline() == true) {
+            const nFontStep = 0.05;
+            oPara.Recalculate_Page(0);
+            let oContentBounds = this.content.GetContentBounds(0);
+            if (oContentBounds.Bottom - oContentBounds.Top > oBounds.H)
+            {
+                nNewFontSize = AscCommon.CorrectFontSize(nFontSize, true);
+                while (nNewFontSize > 1)
+                {
+                    oRun.SetFontSize(nNewFontSize);
+                    oPara.Recalculate_Page(0);
+
+                    oContentBounds = this.content.GetContentBounds(0);
+                    if (oContentBounds.Bottom - oContentBounds.Top < oBounds.H)
+                        break;
+
+                    nNewFontSize -= nFontStep;
+                }
+            }
+            else
+            {
+                let nMaxFontSize = 12;
+
+                while (nNewFontSize <= nMaxFontSize)
+                {
+                    oRun.SetFontSize(nNewFontSize);
+                    oPara.Recalculate_Page(0);
+
+                    let oContentBounds = this.content.GetContentBounds(0);
+                    if (oContentBounds.Bottom - oContentBounds.Top > oBounds.H)
+                    {
+                        nNewFontSize -= nFontStep;
+                        oRun.SetFontSize(nNewFontSize);
+                        oPara.Recalculate_Page(0);
+                        break;
+                    }
+
+                    nNewFontSize += nFontStep;
+                }
+
+                nNewFontSize = Math.min(nNewFontSize, nMaxFontSize);
+            }
+
+        }
+        else {
+            nNewFontSize = (Math.min(nFontSize * oBounds.H / nTextHeight * 0.9, 100, nFontSize * oBounds.W / nMaxWidth) * 100 >> 0) / 100;
+            oRun.SetFontSize(nNewFontSize);
+            oPara.Recalculate_Page(0);
+        }
+
+        oTextPr.FontSize    = nNewFontSize;
+        oTextPr.FontSizeCS  = nNewFontSize;
+
+        this.AddToRedraw();
+    };
+    CTextField.prototype.GetTextHeight = function() {
+        let oPara   = this.content.GetElement(0);
+        let oRun    = oPara.GetElement(0);
+        let oTextPr = oRun.Get_CompiledPr(true);
+
+        g_oTextMeasurer.SetTextPr(oTextPr, null);
+        g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
+
+        return g_oTextMeasurer.GetHeight();
     };
     CTextField.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
@@ -328,6 +417,11 @@
         let contentXLimit = this.IsComb() ? (X + nWidth - oMargins.left) * g_dKoef_pix_to_mm : (X + nWidth - 2 * oMargins.left) * g_dKoef_pix_to_mm;
         let contentYLimit = (Y + nHeight - oMargins.bottom) * g_dKoef_pix_to_mm;
         
+        this.contentRect.X = contentX;
+        this.contentRect.Y = contentY;
+        this.contentRect.W = contentXLimit - contentX;
+        this.contentRect.H = contentYLimit - contentY;
+        
         if ((this.borderStyle == "solid" || this.borderStyle == "dashed") && 
         this._comb == true && this._charLimit > 1) {
             contentX = (X) * g_dKoef_pix_to_mm;
@@ -335,9 +429,11 @@
         }
         
         if (this.IsMultiline() == false) {
-            // выставляем текст посередине
-            let nContentH = this.content.GetElement(0).Get_EmptyHeight();
-            contentY = (Y + nHeight / 2) * g_dKoef_pix_to_mm - nContentH / 2;
+            if (this.GetTextSize() == 0)
+                this.ProcessAutoFitContent();
+            
+            let nContentH       = this.GetTextHeight();
+            contentY            = (Y + nHeight / 2) * g_dKoef_pix_to_mm - nContentH / 2;
         }
 
         this._formRect.X = X * g_dKoef_pix_to_mm;
@@ -345,11 +441,6 @@
         this._formRect.W = nWidth * g_dKoef_pix_to_mm;
         this._formRect.H = nHeight * g_dKoef_pix_to_mm;
         
-        this.contentRect.X = contentX;
-        this.contentRect.Y = contentY;
-        this.contentRect.W = contentXLimit - contentX;
-        this.contentRect.H = contentYLimit - contentY;
-
         if (contentX != this._oldContentPos.X || contentY != this._oldContentPos.Y ||
         contentXLimit != this._oldContentPos.XLimit) {
             this.content.X      = this.contentFormat.X = this._oldContentPos.X = contentX;
@@ -376,6 +467,8 @@
         let oDoc            = this.GetDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
+        let bHighlight = this.IsNeedDrawHighlight();
+        
         function callbackAfterFocus(x, y, e) {
             
             let oPos    = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
@@ -394,11 +487,12 @@
             if (this._doNotScroll == false && this.IsMultiline())
                 this.UpdateScroll(true);
 
+            this.SetDrawHighlight(false);
             if (this.IsNeedDrawFromStream() == true) {
                 this.SetDrawFromStream(false);
                 this.AddToRedraw();
             }
-            else if (this.curContent === this.contentFormat) {
+            else if (this.curContent === this.contentFormat || bHighlight) {
                 this.AddToRedraw();
             }
         }
@@ -444,7 +538,7 @@
     CTextField.prototype.UpdateScroll = function(bShow) {
         if (this.IsMultiline() == false)
             return;
-            
+        
         let oContentBounds  = this.content.GetContentBounds(0);
         let oContentRect    = this.getFormRelRect();
         let oFormRect       = this.getFormRect();
@@ -603,7 +697,6 @@
         if (this._charLimit != 0)
             this.content.CheckRunContent(countChars);
 
-
         // считаем максимум символов для вставки
         let nSelChars = this.content.GetSelectedText(true, {NewLine: true}).length;
         let nMaxCharsToAdd = Math.min(this._charLimit != 0 ? this._charLimit - (nChars - nSelChars) : aChars.length, aChars.length);
@@ -614,29 +707,9 @@
             AscCommon.History.Remove_LastPoint();
             return false;
         }
-
-        let nSelStart = oDoc.event["selStart"];
-        let nSelEnd = oDoc.event["selEnd"];
-
-        // убираем селект, выставляем из nSelStart/nSelEnd
-        if (this.content.IsSelectionUse())
-            this.content.RemoveSelection();
-
-        let oDocPos     = this.CalcDocPos(nSelStart, nSelEnd);
-        let startPos    = oDocPos.startPos;
-        let endPos      = oDocPos.endPos;
-        
-        if (nSelStart == nSelEnd) {
-            this.content.SetContentPosition(startPos, 0, 0);
-            this.content.RecalculateCurPos();
-        }
-        else
-            this.content.SetSelectionByContentPositions(startPos, endPos);
-
-        if (nSelStart != nSelEnd)
-            this.content.Remove(-1, true, false, false, false);
-
-        this.SetNeedRecalc(true);
+		
+		this.removeBeforePaste();
+		
         aChars = AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"]);
         if (aChars.length == 0) {
             return false;
@@ -657,21 +730,96 @@
 
         return true;
     };
-    CTextField.prototype.InsertChars = function(aChars) {
-        let oPara = this.content.GetElement(0);
-
-        for (let index = 0; index < aChars.length; ++index) {
-            let codePoint = aChars[index];
-            if (9 === codePoint) // \t
-				oPara.AddToParagraph(new AscWord.CRunTab(), true);
-			else if (10 === codePoint || 13 === codePoint) // \n \r
-				oPara.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line), true);
-			else if (AscCommon.IsSpace(codePoint)) // space
-				oPara.AddToParagraph(new AscWord.CRunSpace(codePoint), true);
-			else
-				oPara.AddToParagraph(new AscWord.CRunText(codePoint), true);
-        }
-    };
+	CTextField.prototype.InsertChars = function(aChars) {
+		let paragraph = this.getParagraph();
+		for (let index = 0; index < aChars.length; ++index) {
+			let runElement = AscWord.codePointToRunElement(aChars[index]);
+			if (runElement)
+				paragraph.AddToParagraph(runElement, true);
+		}
+	};
+	CTextField.prototype.beginCompositeInput = function() {
+		if (this.compositeInput)
+			return;
+		
+		this.CreateNewHistoryPoint(true);
+		this.DoKeystrokeAction();
+		this.removeBeforePaste();
+		let run = this.content.getCurrentRun();
+		if (!run) {
+			// TODO: Cancel composite input
+			AscCommon.History.Undo();
+			return;
+		}
+		
+		this.compositeReplaceCount = 0;
+		this.compositeInput = new AscWord.RunCompositeInput(false);
+		this.compositeInput.begin(run);
+	};
+	CTextField.prototype.endCompositeInput = function() {
+		if (!this.compositeInput)
+			return;
+		
+		// TODO: As a result, we have two history points here if the text was selected before input
+		//       To avoid this, we need to fix the issue with restoring a selection on undo or we should save the
+		//       selection positions when composite input begins
+		let codePoints = this.compositeInput.getCodePoints();
+		this.compositeInput.end();
+		this.compositeInput = null;
+		while (this.compositeReplaceCount > 0)
+		{
+			AscCommon.History.Undo();
+			--this.compositeReplaceCount;
+		}
+		
+		this.EnterText(codePoints);
+	};
+	CTextField.prototype.addCompositeText = function(codePoint) {
+		if (!this.compositeInput)
+			return;
+		
+		this.CreateNewHistoryPoint(true);
+		this.compositeReplaceCount++;
+		this.compositeInput.add(codePoint);
+		this.SetNeedRecalc(true);
+		this.AddToRedraw();
+	};
+	CTextField.prototype.removeCompositeText = function(count) {
+		if (!this.compositeInput)
+			return;
+		
+		this.CreateNewHistoryPoint(true);
+		this.compositeReplaceCount++;
+		this.compositeInput.remove(count);
+		this.SetNeedRecalc(true);
+		this.AddToRedraw();
+	};
+	CTextField.prototype.replaceCompositeText = function(codePoints) {
+		if (!this.compositeInput)
+			return;
+		
+		this.CreateNewHistoryPoint(true);
+		this.compositeReplaceCount++;
+		this.compositeInput.replace(codePoints);
+		this.SetNeedRecalc(true);
+		this.AddToRedraw();
+	};
+	CTextField.prototype.setPosInCompositeInput = function(pos) {
+		if (this.compositeInput)
+			this.compositeInput.setPos(pos);
+	};
+	CTextField.prototype.getPosInCompositeInput = function(pos) {
+		if (this.compositeInput)
+			return this.compositeInput.getPos(pos);
+		
+		return 0;
+	};
+	CTextField.prototype.getMaxPosInCompositeInput = function() {
+		if (this.compositeInput)
+			return this.compositeInput.getLength();
+		
+		return 0;
+	};
     /**
 	 * Checks is text in form is out of form bounds.
      * Note: in vertical case one line always be valid even if form is very short.
@@ -746,7 +894,8 @@
             this.SetNeedRecalc(true);
             this.AddToRedraw();
         }
-
+		
+		let fieldValue = this.GetValue();
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i].IsChanged() == false)
                 aFields[i].SetWasChanged(true); // фиксируем, что форма была изменена
@@ -763,20 +912,8 @@
             if (aFields[i] == this)
                 continue;
 
-            aFields[i].SetApiValue(this.GetApiValue());
-
-            let oFieldPara = aFields[i].content.GetElement(0);
-            let oThisRun, oFieldRun;
-            for (let nItem = 0; nItem < oThisPara.Content.length - 1; nItem++) {
-                oThisRun = oThisPara.Content[nItem];
-                oFieldRun = oFieldPara.Content[nItem];
-                oFieldRun.ClearContent();
-
-                for (let nRunPos = 0; nRunPos < oThisRun.Content.length; nRunPos++) {
-                    oFieldRun.AddToContent(nRunPos, oThisRun.Content[nRunPos].Copy());
-                }
-            }
-
+            aFields[i].SetApiValue(fieldValue);
+			aFields[i].UpdateDisplayValue(fieldValue);
             aFields[i].SetNeedRecalc(true);
         }
 
@@ -822,7 +959,14 @@
         
         let isCanFormat = oViewer.isOnUndoRedo != true ? this.DoKeystrokeAction(null, false, true) : true;
         if (!isCanFormat) {
-            editor.sendEvent("asc_onFormatErrorPdfForm", oDoc.GetWarningInfo());
+            let oWarningInfo = oDoc.GetWarningInfo();
+            if (!oWarningInfo) {
+                oWarningInfo = {
+                    "format": "",
+                    "target": this
+                };
+            }
+            editor.sendEvent("asc_onFormatErrorPdfForm", oWarningInfo);
             return false;
         }
 
@@ -914,7 +1058,12 @@
 
         if (isValid == false) {
             let oWarningInfo = oDoc.GetWarningInfo();
-            if ((oWarningInfo["greater"] != null || oWarningInfo["less"] != null))
+            if (!oWarningInfo) {
+                oWarningInfo = {
+                    "target": this
+                };
+            }
+            if (oWarningInfo["greater"] != null || oWarningInfo["less"] != null)
                 editor.sendEvent("asc_onValidateErrorPdfForm", oWarningInfo);
             
             return isValid;
@@ -1059,7 +1208,7 @@
 
         if (nSelStart != nSelEnd)
             this.content.Remove(nDirection, true, false, false, bWord);
-        
+
         // скрипт keystroke мог поменять change значение, поэтому
         this.InsertChars(AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"].toString()));
 
@@ -1177,11 +1326,11 @@
             // если высота контента больше чем высота формы
             if (oParagraph.IsSelectionUse()) {
                 if (oParagraph.GetSelectDirection() == 1) {
-                    if (nCursorT + nCursorH > oFormBounds.Y + oFormBounds.H)
+                    if (nCursorT + nCursorH - nCursorH/4 > oFormBounds.Y + oFormBounds.H)
                         nDy = oFormBounds.Y + oFormBounds.H - (nCursorT + nCursorH);
                 }
                 else {
-                    if (nCursorT < oFormBounds.Y)
+                    if (nCursorT + nCursorH/4 < oFormBounds.Y)
                         nDy = oFormBounds.Y - nCursorT;
                 }
             }
@@ -1189,9 +1338,9 @@
                 if (oPageBounds.Bottom - oPageBounds.Top > oFormBounds.H) {
                     if (oLastLineBounds.Bottom - Math.floor(((oFormBounds.Y + oFormBounds.H) * 1000)) / 1000 < 0)
                         nDy = oFormBounds.Y + oFormBounds.H - oLastLineBounds.Bottom;
-                    else if (nCursorT < oFormBounds.Y)
+                    else if (nCursorT + nCursorH/4 < oFormBounds.Y)
                         nDy = oFormBounds.Y - nCursorT;
-                    else if (nCursorT + nCursorH > oFormBounds.Y + oFormBounds.H)
+                    else if (nCursorT + nCursorH - nCursorH/4 > oFormBounds.Y + oFormBounds.H)
                         nDy = oFormBounds.Y + oFormBounds.H - (nCursorT + nCursorH);
                 }
                 else
@@ -1272,6 +1421,117 @@
 
         return { startPos: StartPos, endPos: EndPos }
     };
+    CTextField.prototype.WriteToBinary = function(memory) {
+		// TODO
+		/*
+		if (шрифт_у_CTextField_как-либо_изменялся)
+		{
+			// Также как функция SetFont в common/Drawings/Metafile.js
+			
+			if (шрифт_изменялся)
+			{
+				memory.WriteByte(AscCommon.CommandType.ctFontName);
+				memory.WriteString(this.m_oFont.Name);
+			}
+			
+			if (размер_шрифта_изменялся)
+			{
+				memory.WriteByte(AscCommon.CommandType.ctFontSize);
+				memory.WriteDouble(this.m_oFont.FontSize);
+			}
+			
+			if (стиль_шрифта_изменялся)
+			{
+				memory.WriteByte(AscCommon.CommandType.ctFontStyle);
+				memory.WriteLong(style);
+			}
+		}
+		*/
+
+        memory.WriteByte(AscCommon.CommandType.ctAnnotField);
+
+        // длина комманд
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.WriteToBinaryBase(memory);
+        this.WriteToBinaryBase2(memory);
+
+        let sValue = this.GetValue();
+        if (sValue != null) {
+            memory.fieldFlags2 |= (1 << 9);
+            memory.WriteString(sValue);
+        }
+
+        let nCharLimit = this.GetCharLimit();
+        if (nCharLimit != 0) {
+            memory.fieldFlags2 |= (1 << 10);
+            memory.WriteLong(nCharLimit);
+        }
+
+        //
+        // rich value
+        //
+
+        if (this.IsMultiline()) {
+            memory.fieldFlags2 |= (1 << 12);
+        }
+        // if (this.IsPassword()) {
+        //     memory.fieldFlags2 |= (1 << 13);
+        // }
+        // if (this.IsFileSelect()) {
+        //     memory.fieldFlags2 |= (1 << 20);
+        // }
+        // if (this.IsDoNotSpellCheck()) {
+        //     memory.fieldFlags2 |= (1 << 22);
+        // }
+        if (this.IsDoNotScroll()) {
+            memory.fieldFlags2 |= (1 << 23);
+        }
+        if (this.IsComb()) {
+            memory.fieldFlags2 |= (1 << 24);
+        }
+        // if (this.IsRichText()) {
+        //     memory.fieldFlags2 |= (1 << 25);
+        // }
+
+        let nEndPos = memory.GetCurPosition();
+
+        // запись флагов
+        memory.Seek(memory.posForFlags1);
+        memory.WriteLong(memory.fieldFlags1);
+        memory.Seek(memory.posForFlags2);
+        memory.WriteLong(memory.fieldFlags2);
+
+        // запись длины комманд
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+    };
+	//------------------------------------------------------------------------------------------------------------------
+	CTextField.prototype.getParagraph = function() {
+		return this.content.GetElement(0);
+	};
+	CTextField.prototype.removeBeforePaste = function() {
+		let pdfDoc = this.GetDocument();
+		
+		let selStart = pdfDoc.event["selStart"];
+		let selEnd   = pdfDoc.event["selEnd"];
+		
+		this.content.RemoveSelection();
+		
+		let docPos = this.CalcDocPos(selStart, selEnd);
+		
+		if (selStart === selEnd) {
+			this.content.SetContentPosition(docPos.startPos, 0, 0);
+		}
+		else {
+			this.content.SetSelectionByContentPositions(docPos.startPos, docPos.endPos);
+			this.content.Remove(-1, true, false, false, false);
+		}
+		
+		this.SetNeedRecalc(true);
+	};
 	
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)

@@ -552,7 +552,10 @@ function asc_menu_WriteImagePr(_imagePr, _stream)
 		_stream["WriteByte"](20);
 		_stream["WriteLong"](_imagePr.verticalTextAlign);
 	}
-
+	if (_imagePr.vert !== undefined && _imagePr.vert !== null) {
+		_stream["WriteByte"](21);
+		_stream["WriteLong"](_imagePr.vert);
+	}
 	_stream["WriteByte"](255);
 }
 

@@ -180,105 +180,6 @@
 		return (v - v % 1)   ||   (!isFinite(v) || v === 0 ? v : v < 0 ? -0 : 0);
 	};
 
-	// https://tc39.github.io/ecma262/#sec-array.prototype.includes
-	if (!Array.prototype.includes) {
-		Object.defineProperty(Array.prototype, 'includes', {
-			value: function(searchElement, fromIndex) {
-
-				if (this == null) {
-					throw new TypeError('"this" is null or not defined');
-				}
-
-				// 1. Let O be ? ToObject(this value).
-				var o = Object(this);
-
-				// 2. Let len be ? ToLength(? Get(O, "length")).
-				var len = o.length >>> 0;
-
-				// 3. If len is 0, return false.
-				if (len === 0) {
-					return false;
-				}
-
-				// 4. Let n be ? ToInteger(fromIndex).
-				//    (If fromIndex is undefined, this step produces the value 0.)
-				var n = fromIndex | 0;
-
-				// 5. If n ≥ 0, then
-				//  a. Let k be n.
-				// 6. Else n < 0,
-				//  a. Let k be len + n.
-				//  b. If k < 0, let k be 0.
-				var k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
-
-				function sameValueZero(x, y) {
-					return x === y || (typeof x === 'number' && typeof y === 'number' && isNaN(x) && isNaN(y));
-				}
-
-				// 7. Repeat, while k < len
-				while (k < len) {
-					// a. Let elementK be the result of ? Get(O, ! ToString(k)).
-					// b. If SameValueZero(searchElement, elementK) is true, return true.
-					if (sameValueZero(o[k], searchElement)) {
-						return true;
-					}
-					// c. Increase k by 1.
-					k++;
-				}
-
-				// 8. Return false
-				return false;
-			}
-		});
-	}
-
-	// https://tc39.github.io/ecma262/#sec-array.prototype.find
-	if (!Array.prototype.find) {
-		Object.defineProperty(Array.prototype, 'find', {
-			value: function(predicate) {
-				// 1. Let O be ? ToObject(this value).
-				if (this == null) {
-					throw new TypeError('"this" is null or not defined');
-				}
-
-				var o = Object(this);
-
-				// 2. Let len be ? ToLength(? Get(O, "length")).
-				var len = o.length >>> 0;
-
-				// 3. If IsCallable(predicate) is false, throw a TypeError exception.
-				if (typeof predicate !== 'function') {
-					throw new TypeError('predicate must be a function');
-				}
-
-				// 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
-				var thisArg = arguments[1];
-
-				// 5. Let k be 0.
-				var k = 0;
-
-				// 6. Repeat, while k < len
-				while (k < len) {
-					// a. Let Pk be ! ToString(k).
-					// b. Let kValue be ? Get(O, Pk).
-					// c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
-					// d. If testResult is true, return kValue.
-					var kValue = o[k];
-					if (predicate.call(thisArg, kValue, k, o)) {
-						return kValue;
-					}
-					// e. Increase k by 1.
-					k++;
-				}
-
-				// 7. Return undefined.
-				return undefined;
-			},
-			configurable: true,
-			writable: true
-		});
-	}
-
 	if (typeof require === 'function' && !window['XRegExp'])
 	{
 		window['XRegExp'] = require('xregexp');
@@ -872,7 +773,7 @@
 	}
 	function getEditorByBinSignature(stream, Signature) {
 		if (stream.length > 4) {
-			let signature = AscCommon.UTF8ArrayToString(stream, 0, 4);
+			let signature = typeof stream === 'string' ? stream.slice(0, 4) : AscCommon.UTF8ArrayToString(stream, 0, 4);
 			switch(signature) {
 				case "DOCY":
 					return AscCommon.c_oEditorId.Word;
@@ -3653,8 +3554,9 @@
 	 */
 	parserHelper.prototype.checkDataRange = function (model, wb, dialogType, dataRange, fullCheck, isRows, subType)
 	{
-		var result, range, sheetModel, checkChangeRange;
-		if (Asc.c_oAscSelectionDialogType.Chart === dialogType)
+		let result, range, sheetModel, checkChangeRange;
+		let cDialogType = Asc.c_oAscSelectionDialogType;
+		if (cDialogType.Chart === dialogType)
 		{
 			if(dataRange)
 			{
@@ -3664,7 +3566,7 @@
 				}
 			}
 		}
-		else if(Asc.c_oAscSelectionDialogType.PivotTableData === dialogType || Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType)
+		else if(cDialogType.PivotTableData === dialogType || cDialogType.PivotTableReport === dialogType || cDialogType.ImportXml === dialogType)
 		{
 			result = parserHelp.parse3DRef(dataRange);
 			if (result)
@@ -3674,7 +3576,7 @@
 				{
 					range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
 				}
-			} else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType) {
+			} else if (cDialogType.PivotTableReport === dialogType || cDialogType.ImportXml === dialogType) {
 				range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
 			}
 			if (!range) {
@@ -3684,7 +3586,7 @@
 				range = parserHelp.isTable(dataRange, 0, true);
 			}
 		}
-		else if(Asc.c_oAscSelectionDialogType.PrintTitles === dialogType)
+		else if(cDialogType.PrintTitles === dialogType)
 		{
 			if(dataRange === "")
 			{
@@ -3695,7 +3597,7 @@
 				range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
 			}
 		}
-		else if (Asc.c_oAscSelectionDialogType.DataValidation === dialogType)
+		else if (cDialogType.DataValidation === dialogType)
 		{
 			if (dataRange === null || dataRange === "") {
 				return Asc.c_oAscError.ID.DataValidateMustEnterValue;
@@ -3716,19 +3618,20 @@
 			range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
 		}
 
-		if (!range && Asc.c_oAscSelectionDialogType.DataValidation !== dialogType && Asc.c_oAscSelectionDialogType.ConditionalFormattingRule !== dialogType)
+		if (!range && cDialogType.DataValidation !== dialogType && cDialogType.ConditionalFormattingRule !== dialogType && cDialogType.GoalSeek_Cell !== dialogType &&
+			cDialogType.GoalSeek_ChangingCell !== dialogType)
 		{
 			return Asc.c_oAscError.ID.DataRangeError;
 		}
 
 		if (fullCheck)
 		{
-			if (Asc.c_oAscSelectionDialogType.Chart === dialogType)
+			if (cDialogType.Chart === dialogType)
 			{
 				var oDataRefs = new AscFormat.CChartDataRefs(null);
 				return oDataRefs.checkDataRange(dataRange, isRows, subType);
 			}
-			else if (Asc.c_oAscSelectionDialogType.FormatTable === dialogType)
+			else if (cDialogType.FormatTable === dialogType)
 			{
 				// ToDo убрать эту проверку, заменить на более грамотную после правки функции _searchFilters
 				if (true === wb.getWorksheet().model.autoFilters.isRangeIntersectionTableOrFilter(range)) {
@@ -3739,26 +3642,26 @@
 					return Asc.c_oAscError.ID.LargeRangeWarning;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.FormatTableChangeRange === dialogType)
+			else if (cDialogType.FormatTableChangeRange === dialogType)
 			{
 				// ToDo убрать эту проверку, заменить на более грамотную после правки функции _searchFilters
 				checkChangeRange = wb.getWorksheet().af_checkChangeRange(range);
 				if (null !== checkChangeRange)
 					return checkChangeRange;
 			}
-			else if(Asc.c_oAscSelectionDialogType.CustomSort === dialogType)
+			else if(cDialogType.CustomSort === dialogType)
 			{
 				checkChangeRange = wb.getWorksheet().checkCustomSortRange(range, isRows);
 				if (null !== checkChangeRange)
 					return checkChangeRange;
 			}
-			else if (Asc.c_oAscSelectionDialogType.PivotTableData === dialogType)
+			else if (cDialogType.PivotTableData === dialogType)
 			{
 				if (!Asc.CT_pivotTableDefinition.prototype.isValidDataRef(dataRange)) {
 					return Asc.c_oAscError.ID.PivotLabledColumns;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType)
+			else if (cDialogType.PivotTableReport === dialogType || cDialogType.ImportXml === dialogType)
 			{
 				var location = Asc.CT_pivotTableDefinition.prototype.parseDataRef(dataRange);
 				if (location) {
@@ -3766,7 +3669,7 @@
 					if (!sheetModel) {
 						sheetModel = model.getActiveWs();
 					}
-					if (Asc.c_oAscSelectionDialogType.ImportXml === dialogType) {
+					if (cDialogType.ImportXml === dialogType) {
 						return sheetModel.checkImportXmlLocationForError([location.bbox]);
 					} else {
 						var newRange = new Asc.Range(location.bbox.c1, location.bbox.r1, location.bbox.c1 + AscCommonExcel.NEW_PIVOT_LAST_COL_OFFSET, location.bbox.r1 + AscCommonExcel.NEW_PIVOT_LAST_ROW_OFFSET);
@@ -3776,7 +3679,7 @@
 					return Asc.c_oAscError.ID.DataRangeError;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.DataValidation === dialogType)
+			else if (cDialogType.DataValidation === dialogType)
 			{
 				var dataValidaionTest = AscCommonExcel.CDataValidation.prototype.isValidDataRef(model.getActiveWs(), dataRange, subType);
 				if (null !== dataValidaionTest)
@@ -3784,7 +3687,7 @@
 					return dataValidaionTest;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.ConditionalFormattingRule === dialogType)
+			else if (cDialogType.ConditionalFormattingRule === dialogType)
 			{
 
 				if (dataRange === null || dataRange === "")
@@ -3811,7 +3714,25 @@
 					}
 				}
 			}
+			else if (cDialogType.GoalSeek_Cell === dialogType || cDialogType.GoalSeek_ChangingCell === dialogType)
+			{
+				result = parserHelp.parse3DRef(dataRange);
+				if (result)
+				{
+					sheetModel = model.getWorksheetByName(result.sheet);
+					if (sheetModel)
+					{
+						range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
+					}
+				}
+
+				if (!sheetModel) {
+					sheetModel = model.getActiveWs();
+				}
+				return AscCommonExcel.CGoalSeek.prototype.isValidDataRef(sheetModel, range, dialogType);
+			}
 		}
+
 		return Asc.c_oAscError.ID.No;
 	};
 	parserHelper.prototype.setDigitSeparator = function (sep)
@@ -9565,6 +9486,21 @@
 		return result;
 	}
 	
+	function executeNoRevisions(f, logicDocument, t, args)
+	{
+		if (!logicDocument
+			|| !logicDocument.IsDocumentEditor
+			|| !logicDocument.IsDocumentEditor()
+			|| !logicDocument.IsTrackRevisions())
+			return f.apply(t, args);
+		
+		let localFlag = logicDocument.GetLocalTrackRevisions();
+		logicDocument.SetLocalTrackRevisions(false);
+		let result = f.apply(t, args);
+		logicDocument.SetLocalTrackRevisions(localFlag);
+		return result;
+	}
+	
 	function AddAndExecuteChange(change)
 	{
 		AscCommon.History.Add(change);
@@ -13023,7 +12959,30 @@
 			return;
 		}
 
-		var rect = element.getBoundingClientRect();
+		
+		var rect;
+		if (!AscBrowser.isIE)
+			rect = element.getBoundingClientRect();
+		else {
+			function getCanvasBoundingClientRect(canvas) {
+				const offsetLeft	= canvas.offsetLeft;
+				const offsetTop		= canvas.offsetTop;
+				const offsetWidth	= canvas.offsetWidth;
+				const offsetHeight	= canvas.offsetHeight;
+			
+				return {
+					top:	offsetTop,
+					right:	offsetLeft + offsetWidth,
+					bottom:	offsetTop + offsetHeight,
+					left:	offsetLeft,
+					width:	offsetWidth,
+					height:	offsetHeight,
+				};
+			}
+
+			rect = getCanvasBoundingClientRect(element);
+		}
+
 		var isCorrectRect = (rect.width === 0 && rect.height === 0) ? false : true;
 		if (is_wait_correction || !isCorrectRect)
 		{
@@ -13540,6 +13499,7 @@
 	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
 	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
+	window["AscCommon"].executeNoRevisions = executeNoRevisions;
 	window["AscCommon"].AddAndExecuteChange = AddAndExecuteChange;
 	window["AscCommon"].CompareStrings = CompareStrings;
 	window["AscCommon"].IsSupportAscFeature = IsSupportAscFeature;

@@ -1034,6 +1034,7 @@
 
     /**
 	 * Subscribes to the specified event and calls the callback function when the event fires.
+     * @function
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 * @param {string} eventName - The event name.
@@ -1043,6 +1044,7 @@
 
 	/**
 	 * Unsubscribes from the specified event.
+     * @function
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 * @param {string} eventName - The event name.
@@ -2671,7 +2673,7 @@
 
 
     /**
-     * Returns the visibility to the current presentation slide.
+     * Returns the visibility of the current presentation slide.
      * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
      * @returns {boolean}
@@ -2687,7 +2689,7 @@
      * Sets the visibility to the current presentation slide.
      * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
-     * @param {boolean} value - Value of visibility of slide.
+     * @param {boolean} value - Slide visibility.
      * @returns {boolean}
      * */
     ApiSlide.prototype.SetVisible = function(value){
@@ -4962,6 +4964,8 @@
     ApiSlide.prototype["AddObject"]                       = ApiSlide.prototype.AddObject;
     ApiSlide.prototype["RemoveObject"]                    = ApiSlide.prototype.RemoveObject;
     ApiSlide.prototype["SetBackground"]                   = ApiSlide.prototype.SetBackground;
+    ApiSlide.prototype["GetVisible"]                      = ApiSlide.prototype.GetVisible;
+    ApiSlide.prototype["SetVisible"]                      = ApiSlide.prototype.SetVisible;
     ApiSlide.prototype["GetWidth"]                        = ApiSlide.prototype.GetWidth;
     ApiSlide.prototype["GetHeight"]                       = ApiSlide.prototype.GetHeight;
     ApiSlide.prototype["ApplyLayout"]                     = ApiSlide.prototype.ApplyLayout;

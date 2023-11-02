@@ -208,22 +208,24 @@ CChangesMathContentAddItem.prototype.Undo = function()
 };
 CChangesMathContentAddItem.prototype.Redo = function()
 {
-	var oMathContent = this.Class;
-
-	var Array_start = oMathContent.Content.slice(0, this.Pos);
-	var Array_end   = oMathContent.Content.slice(this.Pos);
-
-	oMathContent.Content = Array_start.concat(this.Items, Array_end);
-	oMathContent.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
-
+	let mathContent = this.Class;
+	
+	var Array_start = mathContent.Content.slice(0, this.Pos);
+	var Array_end   = mathContent.Content.slice(this.Pos);
+	
+	mathContent.Content = Array_start.concat(this.Items, Array_end);
+	mathContent.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
+	
 	for (var nIndex = 0; nIndex < this.Items.length; ++nIndex)
 	{
-		this.Items[nIndex].Set_ParaMath(oMathContent.ParaMath);
+		let item = this.Items[nIndex];
+		item.Set_ParaMath(mathContent.ParaMath);
+		item.SetParent(mathContent);
 
-		if (this.Items[nIndex].SetParagraph)
-			this.Items[nIndex].SetParagraph(oMathContent.Paragraph);
-
-		this.Items[nIndex].Recalc_RunsCompiledPr();
+		if (item.SetParagraph)
+			item.SetParagraph(mathContent.Paragraph);
+		
+		item.Recalc_RunsCompiledPr();
 	}
 };
 CChangesMathContentAddItem.prototype.private_WriteItem = function(Writer, Item)
@@ -282,22 +284,24 @@ CChangesMathContentRemoveItem.prototype.constructor = CChangesMathContentRemoveI
 CChangesMathContentRemoveItem.prototype.Type = AscDFH.historyitem_MathContent_RemoveItem;
 CChangesMathContentRemoveItem.prototype.Undo = function()
 {
-	var oMathContent = this.Class;
-
-	var Array_start = oMathContent.Content.slice(0, this.Pos);
-	var Array_end   = oMathContent.Content.slice(this.Pos);
-
-	oMathContent.Content = Array_start.concat(this.Items, Array_end);
-	oMathContent.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
-
+	let mathContent = this.Class;
+	
+	var Array_start = mathContent.Content.slice(0, this.Pos);
+	var Array_end   = mathContent.Content.slice(this.Pos);
+	
+	mathContent.Content = Array_start.concat(this.Items, Array_end);
+	mathContent.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
+	
 	for (var nIndex = 0; nIndex < this.Items.length; ++nIndex)
 	{
-		this.Items[nIndex].Set_ParaMath(oMathContent.ParaMath);
-
-		if (this.Items[nIndex].SetParagraph)
-			this.Items[nIndex].SetParagraph(oMathContent.Paragraph);
-
-		this.Items[nIndex].Recalc_RunsCompiledPr();
+		let item = this.Items[nIndex];
+		item.Set_ParaMath(mathContent.ParaMath);
+		item.SetParent(mathContent);
+		
+		if (item.SetParagraph)
+			item.SetParagraph(mathContent.Paragraph);
+		
+		item.Recalc_RunsCompiledPr();
 	}
 };
 CChangesMathContentRemoveItem.prototype.Redo = function()

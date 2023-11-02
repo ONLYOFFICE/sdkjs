@@ -1256,16 +1256,9 @@
 		}, "");
 
 		if (isFormula) {
-			fPos = asc_lastidx(s, this.reNotFormula, this.cursorPos) + 1;
-			if (fPos > 0) {
-				match = s.slice(fPos, this.cursorPos).match(this.reFormula);
-			}
-			if (match) {
-				fName = match[1];
-			} else {
-				fPos = undefined;
-				fName = undefined;
-			}
+			let obj = this._getFunctionByString(this.cursorPos, s);
+			fPos = obj.fPos;
+			fName = obj.fName;
 			fCurrent = this._getEditableFunction(this._parseResult).func;
 		}
 
@@ -1274,6 +1267,23 @@
 		if (api && api.isMobileVersion) {
 			this.restoreFocus();
 		}
+	};
+
+	CellEditor.prototype._getFunctionByString = function (cursorPos, s) {
+		let fPos = asc_lastidx(s, this.reNotFormula, cursorPos) + 1;
+		let match;
+		if (fPos > 0) {
+			match = s.slice(fPos, cursorPos).match(this.reFormula);
+		}
+		let fName;
+		if (match) {
+			fName = match[1];
+		} else {
+			fPos = undefined;
+			fName = undefined;
+		}
+
+		return {fPos: fPos, fName: fName};
 	};
 
 	CellEditor.prototype._getEditableFunction = function (parseResult, bEndCurPos) {
@@ -3082,9 +3092,13 @@
 	CellEditor.prototype.End_CompositeInput = function () {
 		var tmpBegin = this.selectionBegin, tmpEnd = this.selectionEnd;
 
-		this.selectionBegin = this.beginCompositePos;
-		this.selectionEnd = this.beginCompositePos + this.compositeLength;
-		this.setTextStyle('u', Asc.EUnderline.underlineNone);
+		//TODO linux(popOs + portuguese lang.) composite input - doesn't come Replace_CompositeText on remove chars
+		let checkFragments = this._findFragment(this.beginCompositePos) && this._findFragment(this.beginCompositePos + this.compositeLength);
+		if (checkFragments) {
+			this.selectionBegin = this.beginCompositePos;
+			this.selectionEnd = this.beginCompositePos + this.compositeLength;
+			this.setTextStyle('u', Asc.EUnderline.underlineNone);
+		}
 
 		this.beginCompositePos = -1;
 		this.compositeLength = 0;

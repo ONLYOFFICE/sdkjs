@@ -119,13 +119,17 @@ function (window, undefined) {
 		let instance_num = newArgs[2] && !(newArgs[2].type === cElementType.empty) ? newArgs[2] : new cNumber(1);
 		let match_mode = newArgs[3] && !(newArgs[3].type === cElementType.empty) ? newArgs[3] : new cBool(false);
 		let match_end = newArgs[4] && !(newArgs[4].type === cElementType.empty) ? newArgs[4] : new cBool(false);
+
+		match_mode = match_mode.tocBool();
+		match_end = match_end.tocBool();
+
 		if (instance_num.type === cElementType.error) {
 			return instance_num;
 		}
-		if (match_mode.type === match_mode.error) {
+		if (match_mode.type === cElementType.error) {
 			return match_mode;
 		}
-		if (match_end.type === match_end.error) {
+		if (match_end.type === cElementType.error) {
 			return match_end;
 		}
 

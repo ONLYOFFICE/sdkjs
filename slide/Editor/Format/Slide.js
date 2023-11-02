@@ -1752,7 +1752,32 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 
     Slide.prototype.getColorMap = function()
     {
-
+        if(this.clrMap)
+        {
+            return this.clrMap;
+        }
+        else if(this.Layout)
+        {
+            if(this.Layout.clrMap)
+            {
+                return this.Layout.clrMap;
+            }
+            else if(this.Layout.Master)
+            {
+                if(this.Layout.Master.clrMap)
+                {
+                    return this.Layout.Master.clrMap;
+                }
+            }
+        }
+        else if(this.Master)
+        {
+            if(this.Master.clrMap)
+            {
+                return this.Master.clrMap;
+            }
+        }
+        return AscFormat.GetDefaultColorMap();
     };
 
 

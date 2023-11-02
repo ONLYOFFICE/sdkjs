@@ -6343,8 +6343,9 @@
                 var bRemoveDocument = false;
                 if(oApi.WordControl && !oApi.WordControl.m_oLogicDocument)
 				{
+					// TODO: Зачем это здесь вообще?
 					bRemoveDocument = true;
-					oApi.WordControl.m_oLogicDocument = new AscCommonWord.CDocument();
+					oApi.WordControl.m_oLogicDocument = new AscWord.CDocument(null, false);
 					oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = oApi.WordControl.m_oLogicDocument;
 				}
                 oShape.setBDeleted(false);

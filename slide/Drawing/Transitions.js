@@ -326,7 +326,11 @@ function CTransitionAnimation(htmlpage)
 
         this.TimerId = null;
         this.Params = null;
-		this.Morph = null;
+        if(this.Morph)
+        {
+            this.Morph.end();
+            this.Morph = null;
+        }
 
         if (this.endCallback)
             this.endCallback()

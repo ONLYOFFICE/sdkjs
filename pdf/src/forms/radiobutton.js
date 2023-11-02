@@ -65,7 +65,7 @@
     CRadioButtonField.prototype.UpdateAll = function() {
         let aFields = this._doc.GetFields(this.GetFullName());
         
-        if (this._radiosInUnison) {
+        if (this.IsRadiosInUnison()) {
             // отмечаем все radiobuttons с тем же экспортом, что и отмеченные
             let sExportValue;
             for (let i = 0; i < aFields.length; i++) {
@@ -125,7 +125,7 @@
         let aFields = this.GetDocument().GetFields(this.GetFullName());
         let oThis = this;
 
-        if (false == this._radiosInUnison) {
+        if (false == this.IsRadiosInUnison()) {
             aFields.forEach(function(field) {
                 if (field == oThis)
                     return;
@@ -163,6 +163,10 @@
     CRadioButtonField.prototype.SetRadiosInUnison = function(bValue) {
         this._radiosInUnison = bValue;
     };
+    CRadioButtonField.prototype.IsRadiosInUnison = function() {
+        return this._radiosInUnison;
+    };
+
 	
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};

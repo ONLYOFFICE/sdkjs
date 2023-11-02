@@ -222,7 +222,17 @@ window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isFo
  		}
 	}
 
-	window["AscDesktopEditor"]["LocalFileSave"](_param, (password === undefined) ? editor.currentPassword : password, docinfo, (options && options.fileType) ? options.fileType : 0, JSON.stringify(jsonOptions));
+	if (editor.isUseNativeViewer && editor.isDocumentRenderer())
+	{
+		let changes = editor.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Save();
+		if (changes)
+			window["AscDesktopEditor"]["AddChanges"](0, AscCommon.Base64.encode(changes, 0, changes.length));
+	}
+
+	window["AscDesktopEditor"]["LocalFileSave"](_param, (password === undefined) ? editor.currentPassword : password,
+		docinfo,
+		(options && options.fileType) ? options.fileType : 0,
+		JSON.stringify(jsonOptions));
 };
 window["DesktopOfflineAppDocumentEndSave"] = function(error, hash, password)
 {

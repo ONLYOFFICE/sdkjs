@@ -33,8 +33,13 @@
 "use strict";
 
 (function (window, undefined) {
-
-function CHistory(Document)
+	
+	/**
+	 * Класс локальной истории изменений
+	 * @param {AscWord.CDocument} Document
+	 * @constructor
+	 */
+	function CHistory(Document)
 {
     this.Index      = -1;
     this.SavedIndex = null;        // Номер точки отката, на которой произошло последнее сохранение
@@ -1424,6 +1429,25 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		this.SavedIndex = null;
 	};
 	/**
+	 * Удаляем все точки
+	 */
+	CHistory.prototype.RemoveAllPoints = function()
+	{
+		this.Index         = -1;
+		this.SavedIndex    = null;
+		this.ForceSave     = false;
+		this.RecIndex      = -1;
+		this.Points.length = 0;
+	};
+	/**
+	 * Пустая ли история
+	 * @returns {boolean}
+	 */
+	CHistory.prototype.isEmpty = function()
+	{
+		return !this.Points.length;
+	};
+	/**
 	 * Получаем массив изменений, которые еще не были пересчитаны
 	 * @returns {[]}
 	 */
@@ -1567,7 +1591,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 	 * @param codePoint {?number}
 	 * @returns {boolean}
 	 */
-	CHistory.prototype.CheckAsYouTypeEnterText = function(run, inRunPos, codePoint)
+	CHistory.prototype.checkAsYouTypeEnterText = function(run, inRunPos, codePoint)
 	{
 		this.CheckUnionLastPoints();
 
@@ -1593,6 +1617,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		return (AscDFH.historyitem_ParaRun_AddItem === lastChange.Type
 			&& lastChange.Class === run
 			&& lastChange.Pos === inRunPos - 1
+			&& lastChange.Items.length
 			&& (undefined === codePoint || lastChange.Items[0].GetCodePoint() === codePoint));
 	};
 	/**

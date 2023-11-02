@@ -1408,16 +1408,10 @@ function CreateThemeUnifill(color, tint, shade){
 			ret.fill.color.setMods(new AscFormat.CColorModifiers());
 			var mod;
 			if(null != tint){
-				mod = new AscFormat.CColorMod();
-				mod.setName("wordTint");
-				mod.setVal(tint /** 100000.0 / 0xff*/);
-				ret.fill.color.Mods.addMod(mod);
+				ret.fill.color.Mods.addMod("wordTint", tint);
 			}
 			if(null != shade){
-				mod = new AscFormat.CColorMod();
-				mod.setName("wordShade");
-				mod.setVal(shade /** 100000.0 / 0xff*/);
-				ret.fill.color.Mods.addMod(mod);
+				ret.fill.color.Mods.addMod("wordShade", shade);
 			}
 		}
 	}
@@ -1679,10 +1673,14 @@ function readBookmarkStart(length, bcr, oReadResult, paragraphContent) {
 	if(typeof CParagraphBookmark === "undefined") {
 		return c_oSerConstants.ReadUnknown;
 	}
-	let bookmark = new CParagraphBookmark(true);
+	let bookmarkPr = {
+		BookmarkName : "",
+		BookmarkId   : ""
+	};
 	let res = bcr.Read1(length, function(t, l){
-		return bcr.ReadBookmark(t,l, bookmark);
+		return bcr.ReadBookmark(t,l, bookmarkPr);
 	});
+	let bookmark = new CParagraphBookmark(true, bookmarkPr.BookmarkId, bookmarkPr.BookmarkName);
 	oReadResult.addBookmarkStart(paragraphContent, bookmark, true);
 	return res;
 }
@@ -1690,10 +1688,14 @@ function readBookmarkEnd(length, bcr, oReadResult, paragraphContent) {
 	if(typeof CParagraphBookmark === "undefined") {
 		return c_oSerConstants.ReadUnknown;
 	}
-	let bookmark = new CParagraphBookmark(false);
+	let bookmarkPr = {
+		BookmarkName : "",
+		BookmarkId   : ""
+	};
 	let res = bcr.Read1(length, function(t, l){
-		return bcr.ReadBookmark(t,l, bookmark);
+		return bcr.ReadBookmark(t,l, bookmarkPr);
 	});
+	let bookmark = new CParagraphBookmark(false, bookmarkPr.BookmarkId, bookmarkPr.BookmarkName);
 	oReadResult.addBookmarkEnd(paragraphContent, bookmark, true);
 	return res;
 }
