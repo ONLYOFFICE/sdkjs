@@ -3462,7 +3462,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var res = null;
 		var t = this;
 
-		this.applyDynamicArray(arg, parserFormula);
+		let dynamicRange = null;
+		if (!parserFormula.ref) {
+			let dynamicArraySize = this.getDynamicArraySize(arg);
+			if (dynamicArraySize && parserFormula.parent && parserFormula.parent.nCol != null && parserFormula.parent.nRow != null) {
+				dynamicRange = Asc.Range(parserFormula.parent.nCol, parserFormula.parent.nRow, dynamicArraySize.width + parserFormula.parent.nCol, dynamicArraySize.height + parserFormula.parent.nRow);
+				parserFormula.ref = dynamicRange;
+			}
+		}
 
 		var functionsCanReturnArray = ["index"];
 
@@ -3646,11 +3653,15 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 
+		if (dynamicRange) {
+			parserFormula.ref = null;
+		}
+
 		return res;
 	};
 
 
-	cBaseFunction.prototype.applyDynamicArray = function (arg, parserFormula) {
+	cBaseFunction.prototype.getDynamicArraySize = function (arg) {
 
 		if (this.returnValueType === AscCommonExcel.cReturnFormulaType.array) {
 			return null;
@@ -3668,7 +3679,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 
 		if ((width !== 1 || height !== 1) && parserFormula.parent && parserFormula.parent.nCol != null && parserFormula.parent.nRow) {
-			parserFormula.ref = Asc.Range(parserFormula.parent.nCol, parserFormula.parent.nRow, parserFormula.parent.nCol + width - 1, parserFormula.parent.nRow + height - 1);
+			return {width: width, height: height};
 		}
 		return null;
 	};
