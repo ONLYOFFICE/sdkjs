@@ -840,6 +840,12 @@
 			isLimits: isLimits
 		};
 	};
+	CLaTeXParser.prototype.GetOneChar = function ()
+	{
+		let char = this.oLookahead.data;
+		this.EatToken(this.oLookahead.class);
+		return char;
+	}
 	CLaTeXParser.prototype.GetPartOfSupSup = function ()
 	{
 		let oElement;
@@ -856,7 +862,7 @@
 		else {
 			oElement = (this.oLookahead.data === "{")
 				? this.GetArguments(1)
-				: this.GetWrapperElement2();
+				: this.GetOneChar();
 		}
 
 		if (this.oLookahead.class === strSymbol) {
