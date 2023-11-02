@@ -37,10 +37,10 @@
 	let STYLES = new AscWord.CStyles(false);
 	STYLES.Default.TextPr.Merge({
 		RFonts : {
-			Ascii : AscPDF.DEFAULT_FIELD_FONT,
-			EastAsia : AscPDF.DEFAULT_FIELD_FONT,
-			HAnsi : AscPDF.DEFAULT_FIELD_FONT,
-			CS : AscPDF.DEFAULT_FIELD_FONT
+			Ascii : {Name : AscPDF.DEFAULT_FIELD_FONT, Index : -1},
+			EastAsia : {Name : AscPDF.DEFAULT_FIELD_FONT, Index : -1},
+			HAnsi : {Name : AscPDF.DEFAULT_FIELD_FONT, Index : -1},
+			CS : {Name : AscPDF.DEFAULT_FIELD_FONT, Index : -1}
 		}
 	});
 	
@@ -118,6 +118,53 @@
 		this.SetApplyToAll(true);
 		this.AddToParagraph(new AscWord.ParaTextPr({FontSize : fontSize}));
 		this.SetApplyToAll(false);
+	};
+	CTextBoxContent.prototype.getCurrentRun = function() {
+		let paragraph = this.GetElement(0);
+		if (!paragraph || !paragraph.IsParagraph())
+			return null;
+		
+		let paraPos = paragraph.Get_ParaContentPos(false);
+		let run = paragraph.GetElementByPos(paraPos);
+		if (!run || !(run instanceof AscWord.CRun))
+			return null;
+		
+		return run;
+	};
+	CTextBoxContent.prototype.replaceAllText = function(value) {
+		let codePoints = typeof(value) === "string" ? value.codePointsArray() : value;
+		
+		let paragraph = this.GetElement(0);
+		if (!paragraph || !paragraph.IsParagraph())
+			return;
+		
+		let run = paragraph.GetElement(0);
+		if (!run || !(run instanceof AscWord.CRun))
+			return;
+		
+		paragraph.RemoveFromContent(1, paragraph.GetElementsCount() - 1);
+		run.ClearContent();
+		
+		for (let index = 0, inRunIndex = 0, count = codePoints.length; index < count; ++index) {
+			let runElement = AscWord.codePointToRunElement(codePoints[index]);
+			if (runElement)
+				run.AddToContent(inRunIndex++, runElement, true);
+		}
+		this.MoveCursorToEndPos();
+	};
+	CTextBoxContent.prototype.getAllText = function() {
+		let paragraph = this.GetElement(0);
+		if (!paragraph || !paragraph.IsParagraph())
+			return "";
+		
+		paragraph.SetApplyToAll(true);
+		let text = paragraph.GetSelectedText(true, {NewLine: true});
+		paragraph.SetApplyToAll(false);
+		return text;
+	};
+	CTextBoxContent.prototype.OnContentChange = function() {
+		if (this.ParentPDF && this.ParentPDF.OnContentChange)
+			this.ParentPDF.OnContentChange();
 	};
 	
 	//--------------------------------------------------------export----------------------------------------------------

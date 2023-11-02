@@ -33,18 +33,12 @@
 
 (function (window)
 {
-	const {createNativeEvent} = AscTestShortcut;
-	const testAll = 0;
-	const testMacOs = 1;
-	const testWindows = 2;
+	const testFlags = {
+		nothing: 0x0000,
+		macOs: 0x0001
+	};
 
-	function CTestEvent(oEvent, nType)
-	{
-		this.type = nType || testAll;
-		this.event = oEvent;
-	}
-
-	const oMainShortcutTypes = {
+	const mainShortcutTypes = {
 		checkDeleteBack                                  : 0,
 		checkDeleteWordBack                              : 1,
 		checkRemoveAnimation                             : 2,
@@ -71,7 +65,6 @@
 		checkMoveCursorToStartPosShape                   : 23,
 		checkSelectAllContentShape                       : 24,
 		checkSelectAllContentChartTitle                  : 25,
-		checkMoveCursorToStartPosChartTitle              : 26,
 		checkRemoveAndMoveToStartPosTable                : 27,
 		checkSelectFirstCellContent                      : 28,
 		checkResetAddShape                               : 29,
@@ -115,135 +108,191 @@
 		checkIncreaseIndent                              : 67,
 		checkDecreaseIndent                              : 68,
 		checkNumLock                                     : 69,
-		checkScrollLock                                  : 70
+		checkScrollLock                                  : 70,
+		addNextSlide                                     : 71,
+		moveToPreviousSlide                              : 72,
+		moveToNextSlide                                  : 73,
+		moveToFirstSlide                                 : 74,
+		selectToFirstSlide                               : 75,
+		moveToLastSlide                                  : 76,
+		selectToLastSlide                                : 77
 	};
-	const oMainEvents = {};
-	oMainEvents[oMainShortcutTypes.checkDeleteBack] = [new CTestEvent(createNativeEvent(8, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkDeleteWordBack] = [new CTestEvent(createNativeEvent(8, true, false, false, false, false, false), testWindows),
-		new CTestEvent(createNativeEvent(8, false, false, true, false, false, false), testMacOs)];
-	oMainEvents[oMainShortcutTypes.checkRemoveAnimation] = [
-		new CTestEvent(createNativeEvent(8, false, false, false, false, false)),
-		new CTestEvent(createNativeEvent(46, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkRemoveChart] = [
-		new CTestEvent(createNativeEvent(8, false, false, false, false, false)),
-		new CTestEvent(createNativeEvent(46, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkRemoveShape] = [
-		new CTestEvent(createNativeEvent(8, false, false, false, false, false)),
-		new CTestEvent(createNativeEvent(46, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkRemoveTable] = [
-		new CTestEvent(createNativeEvent(8, false, false, false, false, false)),
-		new CTestEvent(createNativeEvent(46, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkRemoveGroup] = [
-		new CTestEvent(createNativeEvent(8, false, false, false, false, false)),
-		new CTestEvent(createNativeEvent(46, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkRemoveShapeInGroup] = [
-		new CTestEvent(createNativeEvent(8, false, false, false, false, false)),
-		new CTestEvent(createNativeEvent(46, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveToNextCell] = [new CTestEvent(createNativeEvent(9, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveToPreviousCell] = [new CTestEvent(createNativeEvent(9, false, true, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkIncreaseBulletIndent] = [new CTestEvent(createNativeEvent(9, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkDecreaseBulletIndent] = [new CTestEvent(createNativeEvent(9, false, true, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkAddTab] = [new CTestEvent(createNativeEvent(9, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkSelectNextObject] = [new CTestEvent(createNativeEvent(9, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkSelectPreviousObject] = [new CTestEvent(createNativeEvent(9, false, true, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkVisitHyperlink] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkSelectNextObjectWithPlaceholder] = [new CTestEvent(createNativeEvent(13, true, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkAddNextSlideAfterSelectLastPlaceholderObject] = [new CTestEvent(createNativeEvent(13, true, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkAddBreakLine] = [new CTestEvent(createNativeEvent(13, false, true, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkAddMathBreakLine] = [
-		new CTestEvent(createNativeEvent(13, false, true, false, false, false, false)),
-		new CTestEvent(createNativeEvent(13, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkAddTitleBreakLine] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkAddParagraph] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkAddTxBodyShape] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveCursorToStartPosShape] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkSelectAllContentShape] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkSelectAllContentChartTitle] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveCursorToStartPosChartTitle] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkRemoveAndMoveToStartPosTable] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkSelectFirstCellContent] = [new CTestEvent(createNativeEvent(13, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkResetAddShape] = [new CTestEvent(createNativeEvent(27, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkResetAllDrawingSelection] = [new CTestEvent(createNativeEvent(27, false, true, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkResetStepDrawingSelection] = [new CTestEvent(createNativeEvent(27, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkNonBreakingSpace] = [new CTestEvent(createNativeEvent(32, true, true, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkClearParagraphFormatting] = [new CTestEvent(createNativeEvent(32, true, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkAddSpace] = [new CTestEvent(createNativeEvent(32, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveToEndPosContent] = [new CTestEvent(createNativeEvent(35, true, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveToEndLineContent] = [new CTestEvent(createNativeEvent(35, false, false, false, false, false, false)),
-		new CTestEvent(createNativeEvent(39, true, false, false, false, false, false), testMacOs)];
-	oMainEvents[oMainShortcutTypes.checkSelectToEndLineContent] = [new CTestEvent(createNativeEvent(35, false, true, false, false, false, false)),
-		new CTestEvent(createNativeEvent(39, true, true, false, false, false, false), testMacOs)];
-	oMainEvents[oMainShortcutTypes.checkMoveToStartPosContent] = [new CTestEvent(createNativeEvent(36, true, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveToStartLineContent] = [new CTestEvent(createNativeEvent(36, false, false, false, false, false, false)),
-		new CTestEvent(createNativeEvent(37, true, false, false, false, false, false), testMacOs)];
-	oMainEvents[oMainShortcutTypes.checkSelectToStartLineContent] = [new CTestEvent(createNativeEvent(36, false, true, false, false, false, false)),
-		new CTestEvent(createNativeEvent(37, true, true, false, false, false, false), testMacOs)];
-	oMainEvents[oMainShortcutTypes.checkMoveCursorLeft] = [new CTestEvent(createNativeEvent(37, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkSelectCursorLeft] = [new CTestEvent(createNativeEvent(37, false, true, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkSelectWordCursorLeft] = [new CTestEvent(createNativeEvent(37, true, true, false, false, false, false), testWindows),
-		new CTestEvent(createNativeEvent(37, false, true, true, false, false, false), testMacOs)];
-	oMainEvents[oMainShortcutTypes.checkMoveCursorWordLeft] = [new CTestEvent(createNativeEvent(37, true, false, false, false, false, false), testWindows),
-		new CTestEvent(createNativeEvent(37, false, false, true, false, false, false), testMacOs)];
-	oMainEvents[oMainShortcutTypes.checkMoveCursorLeftTable] = [new CTestEvent(createNativeEvent(37, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveCursorRight] = [new CTestEvent(createNativeEvent(39, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveCursorRightTable] = [new CTestEvent(createNativeEvent(39, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkSelectCursorRight] = [new CTestEvent(createNativeEvent(39, false, true, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkSelectWordCursorRight] = [new CTestEvent(createNativeEvent(39, true, true, false, false, false, false), testWindows),
-		new CTestEvent(createNativeEvent(39, false, true, true, false, false, false), testMacOs)];
-	oMainEvents[oMainShortcutTypes.checkMoveCursorWordRight] = [new CTestEvent(createNativeEvent(39, true, false, false, false, false, false), testWindows),
-		new CTestEvent(createNativeEvent(39, false, false, true, false, false, false), testMacOs)];
-	oMainEvents[oMainShortcutTypes.checkMoveCursorTop] = [new CTestEvent(createNativeEvent(38, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveCursorTopTable] = [new CTestEvent(createNativeEvent(38, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkSelectCursorTop] = [new CTestEvent(createNativeEvent(38, false, true, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveCursorBottom] = [new CTestEvent(createNativeEvent(40, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveCursorBottomTable] = [new CTestEvent(createNativeEvent(40, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkSelectCursorBottom] = [new CTestEvent(createNativeEvent(40, false, true, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveShapeBottom] = [new CTestEvent(createNativeEvent(40, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkLittleMoveShapeBottom] = [new CTestEvent(createNativeEvent(40, true, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveShapeTop] = [new CTestEvent(createNativeEvent(38, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkLittleMoveShapeTop] = [new CTestEvent(createNativeEvent(38, true, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveShapeRight] = [new CTestEvent(createNativeEvent(39, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkLittleMoveShapeRight] = [new CTestEvent(createNativeEvent(39, true, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkMoveShapeLeft] = [new CTestEvent(createNativeEvent(37, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkLittleMoveShapeLeft] = [new CTestEvent(createNativeEvent(37, true, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkDeleteFront] = [new CTestEvent(createNativeEvent(46, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkDeleteWordFront] = [new CTestEvent(createNativeEvent(46, true, false, false, false, false, false), testWindows), new CTestEvent(createNativeEvent(46, false, false, true, false, false, false), testMacOs)];
-	oMainEvents[oMainShortcutTypes.checkIncreaseIndent] = [new CTestEvent(createNativeEvent(77, true, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkDecreaseIndent] = [new CTestEvent(createNativeEvent(77, true, true, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkNumLock] = [new CTestEvent(createNativeEvent(144, false, false, false, false, false, false))];
-	oMainEvents[oMainShortcutTypes.checkScrollLock] = [new CTestEvent(createNativeEvent(145, false, false, false, false, false, false))];
+	const mainEvents = {};
+	mainEvents[mainShortcutTypes.checkDeleteBack] = [CreateKeyboardEvent(8, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkDeleteWordBack] = [
+		CreateKeyboardEvent(8, true, false, false, false),
+		CreateKeyboardEvent(8, false, false, true, false, testFlags.macOs),
+	];
+	mainEvents[mainShortcutTypes.checkRemoveAnimation] = [
+		CreateKeyboardEvent(8, false, false, false, false),
+		CreateKeyboardEvent(46, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkRemoveChart] = [
+		CreateKeyboardEvent(8, false, false, false, false),
+		CreateKeyboardEvent(46, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkRemoveShape] = [
+		CreateKeyboardEvent(8, false, false, false, false),
+		CreateKeyboardEvent(46, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkRemoveTable] = [
+		CreateKeyboardEvent(8, false, false, false, false, false),
+		CreateKeyboardEvent(46, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkRemoveGroup] = [
+		CreateKeyboardEvent(8, false, false, false, false, false),
+		CreateKeyboardEvent(46, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkRemoveShapeInGroup] = [
+		CreateKeyboardEvent(8, false, false, false, false),
+		CreateKeyboardEvent(46, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveToNextCell] = [CreateKeyboardEvent(9, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveToPreviousCell] = [CreateKeyboardEvent(9, false, true, false, false)];
+	mainEvents[mainShortcutTypes.checkIncreaseBulletIndent] = [CreateKeyboardEvent(9, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkDecreaseBulletIndent] = [CreateKeyboardEvent(9, false, true, false, false)];
+	mainEvents[mainShortcutTypes.checkAddTab] = [CreateKeyboardEvent(9, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectNextObject] = [CreateKeyboardEvent(9, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectPreviousObject] = [CreateKeyboardEvent(9, false, true, false, false)];
+	mainEvents[mainShortcutTypes.checkVisitHyperlink] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectNextObjectWithPlaceholder] = [CreateKeyboardEvent(13, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkAddNextSlideAfterSelectLastPlaceholderObject] = [CreateKeyboardEvent(13, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkAddBreakLine] = [CreateKeyboardEvent(13, false, true, false, false)];
+	mainEvents[mainShortcutTypes.checkAddMathBreakLine] = [
+		CreateKeyboardEvent(13, false, true, false, false),
+		CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkAddTitleBreakLine] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkAddParagraph] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkAddTxBodyShape] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveCursorToStartPosShape] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectAllContentShape] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectAllContentChartTitle] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkRemoveAndMoveToStartPosTable] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectFirstCellContent] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkResetAddShape] = [CreateKeyboardEvent(27, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkResetAllDrawingSelection] = [CreateKeyboardEvent(27, false, true, false, false)];
+	mainEvents[mainShortcutTypes.checkResetStepDrawingSelection] = [CreateKeyboardEvent(27, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkNonBreakingSpace] = [CreateKeyboardEvent(32, true, true, false, false)];
+	mainEvents[mainShortcutTypes.checkClearParagraphFormatting] = [CreateKeyboardEvent(32, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkAddSpace] = [CreateKeyboardEvent(32, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveToEndPosContent] = [CreateKeyboardEvent(35, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveToEndLineContent] = [
+		CreateKeyboardEvent(35, false, false, false, false),
+		CreateKeyboardEvent(39, true, false, false, false, testFlags.macOs),
+	];
+	mainEvents[mainShortcutTypes.checkSelectToEndLineContent] = [
+		CreateKeyboardEvent(35, false, true, false, false),
+		CreateKeyboardEvent(39, true, true, false, false, testFlags.macOs),
+	];
+	mainEvents[mainShortcutTypes.checkMoveToStartPosContent] = [CreateKeyboardEvent(36, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveToStartLineContent] = [
+		CreateKeyboardEvent(36, false, false, false, false),
+		CreateKeyboardEvent(37, true, false, false, false, testFlags.macOs)
+	];
+	mainEvents[mainShortcutTypes.checkSelectToStartLineContent] = [
+		CreateKeyboardEvent(36, false, true, false, false),
+		CreateKeyboardEvent(37, true, true, false, false, testFlags.macOs)
+	];
+	mainEvents[mainShortcutTypes.checkMoveCursorLeft] = [CreateKeyboardEvent(37, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectCursorLeft] = [CreateKeyboardEvent(37, false, true, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectWordCursorLeft] = [
+		CreateKeyboardEvent(37, true, true, false, false),
+		CreateKeyboardEvent(37, false, true, true, false, testFlags.macOs)
+	];
+	mainEvents[mainShortcutTypes.checkMoveCursorWordLeft] = [
+		CreateKeyboardEvent(37, true, false, false, false),
+		CreateKeyboardEvent(37, false, false, true, false, testFlags.macOs)
+	];
+	mainEvents[mainShortcutTypes.checkMoveCursorLeftTable] = [CreateKeyboardEvent(37, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveCursorRight] = [CreateKeyboardEvent(39, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveCursorRightTable] = [CreateKeyboardEvent(39, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectCursorRight] = [CreateKeyboardEvent(39, false, true, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectWordCursorRight] = [
+		CreateKeyboardEvent(39, true, true, false, false),
+		CreateKeyboardEvent(39, false, true, true, false, testFlags.macOs),
+	];
+	mainEvents[mainShortcutTypes.checkMoveCursorWordRight] = [
+		CreateKeyboardEvent(39, true, false, false, false),
+		CreateKeyboardEvent(39, false, false, true, false, testFlags.macOs),
+	];
+	mainEvents[mainShortcutTypes.checkMoveCursorTop] = [CreateKeyboardEvent(38, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveCursorTopTable] = [CreateKeyboardEvent(38, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectCursorTop] = [CreateKeyboardEvent(38, false, true, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveCursorBottom] = [CreateKeyboardEvent(40, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveCursorBottomTable] = [CreateKeyboardEvent(40, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectCursorBottom] = [CreateKeyboardEvent(40, false, true, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveShapeBottom] = [CreateKeyboardEvent(40, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkLittleMoveShapeBottom] = [CreateKeyboardEvent(40, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveShapeTop] = [CreateKeyboardEvent(38, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkLittleMoveShapeTop] = [CreateKeyboardEvent(38, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveShapeRight] = [CreateKeyboardEvent(39, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkLittleMoveShapeRight] = [CreateKeyboardEvent(39, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveShapeLeft] = [CreateKeyboardEvent(37, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkLittleMoveShapeLeft] = [CreateKeyboardEvent(37, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkDeleteFront] = [CreateKeyboardEvent(46, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkDeleteWordFront] = [
+		CreateKeyboardEvent(46, true, false, false, false),
+		CreateKeyboardEvent(46, false, false, true, false, testFlags.macOs),
+	];
+	mainEvents[mainShortcutTypes.checkIncreaseIndent] = [CreateKeyboardEvent(77, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkDecreaseIndent] = [CreateKeyboardEvent(77, true, true, false, false)];
+	mainEvents[mainShortcutTypes.checkNumLock] = [CreateKeyboardEvent(144, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkScrollLock] = [CreateKeyboardEvent(145, false, false, false, false)];
+	mainEvents[mainShortcutTypes.addNextSlide] = [
+		CreateKeyboardEvent(77, true, false, false, false)
+	];
+	mainEvents[mainShortcutTypes.moveToPreviousSlide] = [
+		CreateKeyboardEvent(38, false, false, false, false),
+		CreateKeyboardEvent(37, false, false, false, false),
+		CreateKeyboardEvent(33, false, false, false, false)
+	];
+	mainEvents[mainShortcutTypes.moveToNextSlide] = [
+		CreateKeyboardEvent(39, false, false, false, false),
+		CreateKeyboardEvent(40, false, false, false, false),
+		CreateKeyboardEvent(34, false, false, false, false)
+	];
+	mainEvents[mainShortcutTypes.moveToFirstSlide] = [
+		CreateKeyboardEvent(36, false, false, false, false)
+	];
+	mainEvents[mainShortcutTypes.selectToFirstSlide] = [
+		CreateKeyboardEvent(36, false, true, false, false)
+	];
+	mainEvents[mainShortcutTypes.moveToLastSlide] = [
+		CreateKeyboardEvent(35, false, false, false, false)
+	];
+	mainEvents[mainShortcutTypes.selectToLastSlide] = [
+		CreateKeyboardEvent(35, false, true, false, false)
+	];
 
-	const oDemonstrationTypes = {
+	const demonstrationTypes = {
 		moveToNextSlide          : 0,
 		moveToPreviousSlide      : 1,
 		moveToFirstSlide         : 2,
 		moveToLastSlide          : 3,
-		exitFromDemonstrationMode: 4
+		exitFromDemonstrationMode: 4,
+		moveToNumberSlide        : 5
 	};
-	const oDemonstrationEvents = {};
-	oDemonstrationEvents[oDemonstrationTypes.moveToNextSlide] = [
-		new CTestEvent(createNativeEvent(13, false, false, false, false)),
-		new CTestEvent(createNativeEvent(32, false, false, false, false)),
-		new CTestEvent(createNativeEvent(34, false, false, false, false)),
-		new CTestEvent(createNativeEvent(39, false, false, false, false)),
-		new CTestEvent(createNativeEvent(40, false, false, false, false))
+	const demonstrationEvents = {};
+	demonstrationEvents[demonstrationTypes.moveToNextSlide] = [
+		new CNativeEvent(13, false, false, false, false),
+		new CNativeEvent(32, false, false, false, false),
+		new CNativeEvent(34, false, false, false, false),
+		new CNativeEvent(39, false, false, false, false),
+		new CNativeEvent(40, false, false, false, false)
 	];
-	oDemonstrationEvents[oDemonstrationTypes.moveToPreviousSlide] = [
-		new CTestEvent(createNativeEvent(33, false, false, false, false)),
-		new CTestEvent(createNativeEvent(37, false, false, false, false)),
-		new CTestEvent(createNativeEvent(38, false, false, false, false))
+	demonstrationEvents[demonstrationTypes.moveToNumberSlide] = [
+		new CNativeEvent(13, false, false, false, false),
 	];
-	oDemonstrationEvents[oDemonstrationTypes.moveToFirstSlide] = [
-		new CTestEvent(createNativeEvent(36, false, false, false, false))
+	demonstrationEvents[demonstrationTypes.moveToPreviousSlide] = [
+		new CNativeEvent(33, false, false, false, false),
+		new CNativeEvent(37, false, false, false, false),
+		new CNativeEvent(38, false, false, false, false)
 	];
-	oDemonstrationEvents[oDemonstrationTypes.moveToLastSlide] = [
-		new CTestEvent(createNativeEvent(35, false, false, false, false))
+	demonstrationEvents[demonstrationTypes.moveToFirstSlide] = [
+		new CNativeEvent(36, false, false, false, false)
 	];
-	oDemonstrationEvents[oDemonstrationTypes.exitFromDemonstrationMode] = [
-		new CTestEvent(createNativeEvent(27, false, false, false, false))
+	demonstrationEvents[demonstrationTypes.moveToLastSlide] = [
+		new CNativeEvent(35, false, false, false, false)
+	];
+	demonstrationEvents[demonstrationTypes.exitFromDemonstrationMode] = [
+		new CNativeEvent(27, false, false, false, false)
 	];
 
-	const oThumbnailsTypes = {
+	const thumbnailsTypes = {
 		addNextSlide                        : 0,
 		removeSelectedSlides                : 1,
 		moveSelectedSlidesToEnd             : 2,
@@ -259,145 +308,175 @@
 		selectPreviousSlide                 : 12,
 		moveToPreviousSlide                 : 13
 	};
-	const oThumbnailsEvents = {};
-	oThumbnailsEvents[oThumbnailsTypes.addNextSlide] = [
-		new CTestEvent(createNativeEvent(13, false, false, false, false)),
-		new CTestEvent(createNativeEvent(77, true, false, false, false))
+	const thumbnailsEvents = {};
+	thumbnailsEvents[thumbnailsTypes.addNextSlide] = [
+		new CNativeEvent(13, false, false, false, false),
+		new CNativeEvent(77, true, false, false, false)
 	];
-	oThumbnailsEvents[oThumbnailsTypes.removeSelectedSlides] = [
-		new CTestEvent(createNativeEvent(8, false, false, false, false)),
-		new CTestEvent(createNativeEvent(46, false, false, false, false))
+	thumbnailsEvents[thumbnailsTypes.removeSelectedSlides] = [
+		new CNativeEvent(8, false, false, false, false),
+		new CNativeEvent(46, false, false, false, false)
 	];
-	oThumbnailsEvents[oThumbnailsTypes.moveSelectedSlidesToEnd] = [
-		new CTestEvent(createNativeEvent(40, true, true, false, false)),
-		new CTestEvent(createNativeEvent(34, true, true, false, false))
+	thumbnailsEvents[thumbnailsTypes.moveSelectedSlidesToEnd] = [
+		new CNativeEvent(40, true, true, false, false),
+		new CNativeEvent(34, true, true, false, false)
 	];
-	oThumbnailsEvents[oThumbnailsTypes.moveSelectedSlidesToNextPosition] = [
-		new CTestEvent(createNativeEvent(40, true, false, false, false)),
-		new CTestEvent(createNativeEvent(34, true, false, false, false))
+	thumbnailsEvents[thumbnailsTypes.moveSelectedSlidesToNextPosition] = [
+		new CNativeEvent(40, true, false, false, false),
+		new CNativeEvent(34, true, false, false, false)
 	];
-	oThumbnailsEvents[oThumbnailsTypes.selectNextSlide] = [
-		new CTestEvent(createNativeEvent(40, false, true, false, false)),
-		new CTestEvent(createNativeEvent(34, false, true, false, false))
+	thumbnailsEvents[thumbnailsTypes.selectNextSlide] = [
+		new CNativeEvent(40, false, true, false, false),
+		new CNativeEvent(34, false, true, false, false)
 	];
-	oThumbnailsEvents[oThumbnailsTypes.moveToNextSlide] = [
-		new CTestEvent(createNativeEvent(40, true, false, false, false)),
-		new CTestEvent(createNativeEvent(34, true, false, false, false))
+	thumbnailsEvents[thumbnailsTypes.moveToNextSlide] = [
+		new CNativeEvent(40, true, false, false, false),
+		new CNativeEvent(34, true, false, false, false)
 	];
-	oThumbnailsEvents[oThumbnailsTypes.moveToFirstSlide] = [
-		new CTestEvent(createNativeEvent(36, false, false, false, false))
+	thumbnailsEvents[thumbnailsTypes.moveToFirstSlide] = [
+		new CNativeEvent(36, false, false, false, false)
 	];
-	oThumbnailsEvents[oThumbnailsTypes.selectToFirstSlide] = [
-		new CTestEvent(createNativeEvent(36, false, true, false, false))
+	thumbnailsEvents[thumbnailsTypes.selectToFirstSlide] = [
+		new CNativeEvent(36, false, true, false, false)
 	];
-	oThumbnailsEvents[oThumbnailsTypes.moveToLastSlide] = [
-		new CTestEvent(createNativeEvent(35, false, false, false, false))
+	thumbnailsEvents[thumbnailsTypes.moveToLastSlide] = [
+		new CNativeEvent(35, false, false, false, false)
 	];
-	oThumbnailsEvents[oThumbnailsTypes.selectToLastSlide] = [
-		new CTestEvent(createNativeEvent(35, false, true, false, false))
+	thumbnailsEvents[thumbnailsTypes.selectToLastSlide] = [
+		new CNativeEvent(35, false, true, false, false)
 	];
-	oThumbnailsEvents[oThumbnailsTypes.moveSelectedSlidesToStart] = [
-		new CTestEvent(createNativeEvent(33, true, true, false, false)),
-		new CTestEvent(createNativeEvent(38, true, true, false, false))
+	thumbnailsEvents[thumbnailsTypes.moveSelectedSlidesToStart] = [
+		new CNativeEvent(33, true, true, false, false),
+		new CNativeEvent(38, true, true, false, false)
 	];
-	oThumbnailsEvents[oThumbnailsTypes.moveSelectedSlidesToPreviousPosition] = [
-		new CTestEvent(createNativeEvent(33, true, false, false, false)),
-		new CTestEvent(createNativeEvent(38, true, false, false, false))
+	thumbnailsEvents[thumbnailsTypes.moveSelectedSlidesToPreviousPosition] = [
+		new CNativeEvent(33, true, false, false, false),
+		new CNativeEvent(38, true, false, false, false)
 	];
-	oThumbnailsEvents[oThumbnailsTypes.selectPreviousSlide] = [
-		new CTestEvent(createNativeEvent(38, false, true, false, false)),
-		new CTestEvent(createNativeEvent(33, false, true, false, false))
+	thumbnailsEvents[thumbnailsTypes.selectPreviousSlide] = [
+		new CNativeEvent(38, false, true, false, false),
+		new CNativeEvent(33, false, true, false, false)
 	];
-	oThumbnailsEvents[oThumbnailsTypes.moveToPreviousSlide] = [
-		new CTestEvent(createNativeEvent(33, true, false, false, false)),
-		new CTestEvent(createNativeEvent(38, true, false, false, false))
-	];
-
-	const oThumbnailsMainFocusTypes = {
-		addNextSlide                    : 0,
-		moveToPreviousSlide             : 1,
-		moveToNextSlide                 : 2,
-		moveToFirstSlide                : 3,
-		selectToFirstSlide              : 4,
-		moveSelectedSlidesToEnd         : 5,
-		moveSelectedSlidesToNextPosition: 6,
-		moveToLastSlide                 : 7,
-		selectToLastSlide               : 8
-	};
-	const oThumbnailsMainFocusEvents = {};
-	oThumbnailsMainFocusEvents[oThumbnailsMainFocusTypes.addNextSlide] = [
-		new CTestEvent(createNativeEvent(77, true, false, false, false, false, false))
-	];
-	oThumbnailsMainFocusEvents[oThumbnailsMainFocusTypes.moveToPreviousSlide] = [
-		new CTestEvent(createNativeEvent(38, false, false, false, false, false, false)),
-		new CTestEvent(createNativeEvent(37, false, false, false, false, false, false)),
-		new CTestEvent(createNativeEvent(33, false, false, false, false, false, false))
-	];
-	oThumbnailsMainFocusEvents[oThumbnailsMainFocusTypes.moveToNextSlide] = [
-		new CTestEvent(createNativeEvent(39, false, false, false, false, false, false)),
-		new CTestEvent(createNativeEvent(40, false, false, false, false, false, false)),
-		new CTestEvent(createNativeEvent(34, false, false, false, false, false, false))
-	];
-	oThumbnailsMainFocusEvents[oThumbnailsMainFocusTypes.moveToFirstSlide] = [
-		new CTestEvent(createNativeEvent(36, false, false, false, false, false, false))
-	];
-	oThumbnailsMainFocusEvents[oThumbnailsMainFocusTypes.selectToFirstSlide] = [
-		new CTestEvent(createNativeEvent(36, false, true, false, false, false, false))
-	];
-	oThumbnailsMainFocusEvents[oThumbnailsMainFocusTypes.moveToLastSlide] = [
-		new CTestEvent(createNativeEvent(35, false, false, false, false, false, false))
-	];
-	oThumbnailsMainFocusEvents[oThumbnailsMainFocusTypes.selectToLastSlide] = [
-		new CTestEvent(createNativeEvent(35, false, true, false, false, false, false))
+	thumbnailsEvents[thumbnailsTypes.moveToPreviousSlide] = [
+		new CNativeEvent(33, true, false, false, false),
+		new CNativeEvent(38, true, false, false, false)
 	];
 
-	function privateStartTest(fCallback, nShortcutType, oTestEvents)
+
+	function CreateKeyboardEvent(nKeyCode, bIsCtrl, bIsShift, bIsAlt, bIsMetaKey, flags)
 	{
-		const arrTestEvents = oTestEvents[nShortcutType];
-
-		for (let i = 0; i < arrTestEvents.length; i += 1)
+		flags = flags || testFlags.nothing;
+		const event = new AscCommon.CKeyboardEvent();
+		event.KeyCode = nKeyCode;
+		event.CtrlKey = !!bIsCtrl;
+		event.ShiftKey = !!bIsShift;
+		event.AltKey = !!bIsAlt;
+		event.MacCmdKey = !!bIsMetaKey;
+		event.isDefaultPrevented = false;
+		event.isPropagationStopped = false;
+		event.preventDefault = function ()
 		{
-			const nTestType = arrTestEvents[i].type;
-			if (nTestType === testAll)
+			event.isDefaultPrevented = true;
+		}
+		event.stopPropagation = function ()
+		{
+			event.isPropagationStopped = true;
+		}
+		event.enableFlags = function ()
+		{
+			if (flags & testFlags.macOs)
 			{
 				AscCommon.AscBrowser.isMacOs = true;
-				fCallback(arrTestEvents[i].event);
-
-				AscCommon.AscBrowser.isMacOs = false;
-				fCallback(arrTestEvents[i].event);
-			} else if (nTestType === testMacOs)
-			{
-				AscCommon.AscBrowser.isMacOs = true;
-				fCallback(arrTestEvents[i].event);
-				AscCommon.AscBrowser.isMacOs = false;
-			} else if (nTestType === testWindows)
-			{
-				fCallback(arrTestEvents[i].event);
 			}
 		}
+		event.disableFlags = function ()
+		{
+			if (flags & testFlags.macOs)
+			{
+				AscCommon.AscBrowser.isMacOs = false;
+			}
+		}
+		return event;
 	}
 
-	function startThumbnailsMainFocusTest(fCallback, nShortcutType)
+	function CNativeEvent(nKeyCode, bIsCtrl, bIsShift, bIsAlt, bIsMetaKey)
 	{
-		privateStartTest(fCallback, nShortcutType, oThumbnailsMainFocusEvents);
+		this.keyCode = nKeyCode;
+		this.ctrlKey = !!bIsCtrl;
+		this.shiftKey = !!bIsShift;
+		this.altKey = !!bIsAlt;
+		this.metaKey = !!bIsMetaKey;
+		this.isDefaultPrevented = false;
+		this.isPropagationStopped = false;
 	}
 
-	function startMainTest(fCallback, nShortcutType)
+	CNativeEvent.prototype.preventDefault = function ()
 	{
-		privateStartTest(fCallback, nShortcutType, oMainEvents);
-	}
-
-	function startThumbnailsFocusTest(fCallback, nShortcutType)
+		this.isDefaultPrevented = true;
+	};
+	CNativeEvent.prototype.stopPropagation = function ()
 	{
-		privateStartTest(fCallback, nShortcutType, oThumbnailsEvents);
+		this.isPropagationStopped = true;
+	};
+
+	editor.getShortcut = function (e)
+	{
+		if (typeof e === 'number')
+		{
+			return e;
+		}
+	};
+
+	function ExecuteMainHotkey(type, index)
+	{
+		const event = mainEvents[type][index || 0];
+		return ExecuteMainShortcut(event);
 	}
 
-	AscTestShortcut.startThumbnailsMainFocusTest = startThumbnailsMainFocusTest;
-	AscTestShortcut.startMainTest = startMainTest;
-	AscTestShortcut.startThumbnailsFocusTest = startThumbnailsFocusTest;
-	AscTestShortcut.oThumbnailsMainFocusTypes = oThumbnailsMainFocusTypes;
-	AscTestShortcut.oMainShortcutTypes = oMainShortcutTypes;
-	AscTestShortcut.oThumbnailsTypes = oThumbnailsTypes;
-	AscTestShortcut.oDemonstrationTypes = oDemonstrationTypes;
-	AscTestShortcut.oDemonstrationEvents = oDemonstrationEvents;
+	function ExecuteThumbnailHotkey(e, index)
+	{
+		const event = thumbnailsEvents[e][index || 0];
+		return ExecuteThumbnailShortcut(event);
+	}
+
+	function ExecuteMainShortcut(e)
+	{
+		e.enableFlags && e.enableFlags();
+		const res = editor.WordControl.m_oLogicDocument.OnKeyDown(e);
+		e.disableFlags && e.disableFlags();
+		return res;
+	}
+
+	function ExecuteThumbnailShortcut(e)
+	{
+		const OldGetShortcut = editor.getShortcut;
+		if (typeof e === 'number')
+		{
+			const shortcutType = e;
+			editor.getShortcut = function ()
+			{
+				return shortcutType;
+			};
+			e = new CNativeEvent();
+		}
+		const res = editor.WordControl.Thumbnails.onKeyDown(e);
+		editor.getShortcut = OldGetShortcut;
+		return res;
+	}
+
+	function ExecuteDemonstrationShortcut(e)
+	{
+		return editor.WordControl.DemonstrationManager.onKeyDown(e);
+	}
+
+	AscTest.mainShortcutTypes = mainShortcutTypes;
+	AscTest.thumbnailsTypes = thumbnailsTypes;
+	AscTest.demonstrationTypes = demonstrationTypes;
+	AscTest.demonstrationEvents = demonstrationEvents;
+	AscTest.ExecuteDemonstrationShortcut = ExecuteDemonstrationShortcut;
+	AscTest.ExecuteThumbnailShortcut = ExecuteThumbnailShortcut;
+	AscTest.ExecuteMainShortcut = ExecuteMainShortcut;
+	AscTest.ExecuteThumbnailHotkey = ExecuteThumbnailHotkey;
+	AscTest.ExecuteMainHotkey = ExecuteMainHotkey;
+	AscTest.CNativeEvent = CNativeEvent;
 })(window);

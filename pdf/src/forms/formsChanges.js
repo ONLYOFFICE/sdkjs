@@ -32,7 +32,8 @@
 
 "use strict";
 
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Value] = CChangesPDFFormValue;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Value]		= CChangesPDFFormValue;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Image]	= CChangesPDFPushbuttonImage;
 
 /**
  * @constructor
@@ -49,4 +50,21 @@ CChangesPDFFormValue.prototype.private_SetValue = function(Value)
 {
 	var oField = this.Class;
 	oField.SetValue(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseStringProperty}
+ */
+function CChangesPDFPushbuttonImage(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFPushbuttonImage.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFPushbuttonImage.prototype.constructor = CChangesPDFPushbuttonImage;
+CChangesPDFPushbuttonImage.prototype.Type = AscDFH.historyitem_Pdf_Pushbutton_Image;
+CChangesPDFPushbuttonImage.prototype.private_SetValue = function(Value)
+{
+	var oField = this.Class;
+	oField.AddImage2(Value[0], Value[1]);
 };

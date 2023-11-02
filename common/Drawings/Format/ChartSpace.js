@@ -9522,15 +9522,11 @@ function(window, undefined) {
 			effectVal *= 100000.0;
 			if (!unicolor.Mods)
 				unicolor.setMods(new AscFormat.CColorModifiers());
-			var mod = new AscFormat.CColorMod();
 			if (effectVal > 0) {
-				mod.setName("tint");
-				mod.setVal(effectVal);
+				unicolor.Mods.addMod("tint", effectVal);
 			} else {
-				mod.setName("shade");
-				mod.setVal(Math.abs(effectVal));
+				unicolor.Mods.addMod("shade", Math.abs(effectVal));
 			}
-			unicolor.Mods.addMod(mod);
 		}
 		return ret;
 	}

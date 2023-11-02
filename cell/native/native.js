@@ -3843,7 +3843,12 @@ window["native"]["offline_apply_event"] = function(type,params) {
                             _imagePr.verticalTextAlign = params[_current.pos++];
                             break;
                         }
-                        case 21:
+                        case 21: 
+                        {
+                            _imagePr.vert = _params[_current.pos++];
+                            break;      
+                        }
+                        case 22:
                         { 
                             var bIsNeed = params[_current.pos++];
                             if (bIsNeed) {
@@ -5215,6 +5220,7 @@ window["Asc"]["spreadsheet_api"].prototype.openDocument = function(file) {
 
                _s.asc_WriteAllWorksheets(true);
                _s.asc_WriteCurrentCell();
+               t.asc_setZoom(_s.zoom);
 
                return;
                }
@@ -5259,6 +5265,10 @@ window["Asc"]["spreadsheet_api"].prototype.openDocument = function(file) {
 
                           _s.asc_WriteAllWorksheets(true);
                           _s.asc_WriteCurrentCell();
+
+                          // до этого зум если вызывался - то не применился (см. реализацию asc_setZoom)
+                          // но нужно ПОСЛЕ onEndLoadingFile (headersWidth & headersHeight должны прийти без зума)
+                          t.asc_setZoom(_s.zoom);
 
                           setInterval(function() {
 

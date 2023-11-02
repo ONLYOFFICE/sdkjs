@@ -34,31 +34,83 @@
 
 (function (window)
 {
-	const createEvent = AscTestShortcut.createEvent;
-	const cleanGraphic = AscTestShortcut.cleanGraphic;
-	const testAll = 0;
-	const testWindows = 1;
-	const testMacOs = 2;
+	const testFlags = {
+		nothing: 0x0000,
+		macOs  : 0x1000,
+		opera  : 0x0110,
+	};
 
-	function CTestEvent(oEvent, nType)
+	function CNativeEvent(nKeyCode, bIsCtrl, bIsShift, bIsAlt, bIsMetaKey, flags)
 	{
-		this.type = nType || testAll;
-		this.event = oEvent;
+		this.keyCode = nKeyCode;
+		this.which = nKeyCode;
+		this.ctrlKey = !!bIsCtrl;
+		this.shiftKey = !!bIsShift;
+		this.altKey = !!bIsAlt;
+		this.metaKey = !!bIsMetaKey;
+		this.isDefaultPrevented = false;
+		this.isPropagationStopped = false;
+
+		this.flags = flags || testFlags.nothing;
 	}
 
-	const oKeyCode =
+	CNativeEvent.prototype.preventDefault = function ()
+	{
+		this.isDefaultPrevented = true;
+	};
+	CNativeEvent.prototype.stopPropagation = function ()
+	{
+		this.isPropagationStopped = true;
+	};
+
+	CNativeEvent.prototype.enableFlags = function ()
+	{
+		if (this.flags & testFlags.macOs)
+		{
+			AscCommon.AscBrowser.isMacOs = true;
+		}
+
+		if (this.flags & testFlags.opera)
+		{
+			AscCommon.AscBrowser.isOpera = true;
+		}
+	}
+	CNativeEvent.prototype.disableFlags = function ()
+	{
+		if (this.flags & testFlags.macOs)
+		{
+			AscCommon.AscBrowser.isMacOs = false;
+		}
+
+		if (this.flags & testFlags.opera)
+		{
+			AscCommon.AscBrowser.isOpera = false;
+		}
+	}
+	const keyCodes =
 		{
 			BackSpace       : 8,
 			Tab             : 9,
 			Enter           : 13,
 			Esc             : 27,
+			Space           : 32,
+			PageUp          : 33,
+			PageDown        : 34,
 			End             : 35,
 			Home            : 36,
 			ArrowLeft       : 37,
 			ArrowTop        : 38,
 			ArrowRight      : 39,
 			ArrowBottom     : 40,
+			Digit1          : 49,
+			Digit2          : 50,
+			Digit3          : 51,
+			Digit4          : 52,
+			Digit5          : 53,
+			Digit6          : 54,
+			SemicolonFirefox: 59,
 			Delete          : 46,
+			EqualFirefox    : 61,
 			A               : 65,
 			B               : 66,
 			C               : 67,
@@ -76,393 +128,357 @@
 			X               : 88,
 			Y               : 89,
 			Z               : 90,
-			OperaContextMenu: 57351,
+			ContextMenu     : 93,
+			NumpadDecimal   : 110,
+			F2              : 113,
+			F4              : 115,
+			F5              : 116,
+			F9              : 120,
 			F10             : 121,
 			NumLock         : 144,
 			ScrollLock      : 145,
+			MinusFirefox    : 173,
+			Semicolon       : 186,
 			Equal           : 187,
-			EqualFirefox    : 61,
 			Comma           : 188,
 			Minus           : 189,
 			Period          : 190,
+			Backquote       : 192,
 			BracketLeft     : 219,
 			BracketRight    : 221,
-			F2              : 113
+			OperaContextMenu: 57351,
 		}
 
-
-	function privateStartTest(fCallback, nShortcutType, oEvents)
-	{
-		cleanGraphic();
-		const arrTestEvents = oEvents[nShortcutType];
-
-		for (let i = 0; i < arrTestEvents.length; i += 1)
-		{
-			cleanGraphic();
-			const nTestType = arrTestEvents[i].type;
-			if (nTestType === testAll)
-			{
-				AscCommon.AscBrowser.isMacOs = true;
-				fCallback(arrTestEvents[i].event);
-
-				cleanGraphic();
-				AscCommon.AscBrowser.isMacOs = false;
-				fCallback(arrTestEvents[i].event);
-			} else if (nTestType === testMacOs)
-			{
-				AscCommon.AscBrowser.isMacOs = true;
-				fCallback(arrTestEvents[i].event);
-				AscCommon.AscBrowser.isMacOs = false;
-			} else if (nTestType === testWindows)
-			{
-				fCallback(arrTestEvents[i].event);
-			}
-		}
-	}
-
-	const oGraphicTypes = {
-		removeBackChar                  : 1,
-		removeBackWord                  : 1.5,
-		removeChart                     : 2,
-		removeShape                     : 3,
-		removeGroup                     : 4,
-		removeShapeInGroup              : 5,
-		addTab                          : 6,
-		selectNextObject                : 7,
-		selectPreviousObject            : 8,
-		visitHyperink                   : 9,
-		addLineInMath                   : 10,
-		addBreakLine                    : 11,
-		addParagraph                    : 12,
-		createTxBody                    : 13,
-		moveToStartInEmptyContent       : 14,
-		selectAllAfterEnter             : 15,
-		moveCursorToStartPositionInTitle: 16,
-		selectAllTitleAfterEnter        : 17,
-		resetTextSelection              : 18,
-		resetStepSelection              : 18.5,
-		moveCursorToEndDocument         : 19,
-		moveCursorToEndLine             : 19.5,
-		selectToEndDocument             : 20,
-		selectToEndLine                 : 20.5,
-		moveCursorToStartDocument       : 21,
-		moveCursorToStartLine           : 21.5,
-		selectToStartDocument           : 22,
-		selectToStartLine               : 22.5,
-		moveCursorLeftChar              : 23,
-		selectCursorLeftChar            : 24,
-		moveCursorLeftWord              : 25,
-		selectCursorLeftWord            : 26,
-		bigMoveGraphicObjectLeft        : 27,
-		littleMoveGraphicObjectLeft     : 28,
-		moveCursorRightChar             : 29,
-		selectCursorRightChar           : 30,
-		moveCursorRightWord             : 31,
-		selectCursorRightWord           : 32,
-		bigMoveGraphicObjectRight       : 33,
-		littleMoveGraphicObjectRight    : 34,
-		moveCursorUp                    : 35,
-		selectCursorUp                  : 36,
-		bigMoveGraphicObjectUp          : 37,
-		littleMoveGraphicObjectUp       : 38,
-		moveCursorDown                  : 39,
-		selectCursorDown                : 40,
-		bigMoveGraphicObjectDown        : 41,
-		littleMoveGraphicObjectDown     : 42,
-		removeFrontWord                 : 43,
-		removeFrontChar                 : 44,
-		selectAllContent                : 45,
-		selectAllDrawings               : 46,
-		bold                            : 47,
-		cleanSlicer                     : 48,
-		centerAlign                     : 49,
-		italic                          : 50,
-		justifyAlign                    : 51,
-		leftAlign                       : 52,
-		rightAlign                      : 53,
-		invertMultiselectSlicer         : 54,
-		underline                       : 55,
-		superscriptAndSubscript         : 56,
-		superscript                     : 57,
-		enDash                          : 58,
-		subscript                       : 61,
-		increaseFontSize                : 62,
-		decreaseFontSize                : 63
+	const graphicHotkeyTypes = {
+		removeBackChar              : 1,
+		removeChart                 : 2,
+		removeShape                 : 3,
+		removeGroup                 : 4,
+		removeShapeInGroup          : 5,
+		addTab                      : 6,
+		selectNextObject            : 7,
+		selectPreviousObject        : 8,
+		visitHyperink               : 9,
+		addLineInMath               : 10,
+		addBreakLine                : 11,
+		addParagraph                : 12,
+		createTxBody                : 13,
+		moveToStartInEmptyContent   : 14,
+		selectAllAfterEnter         : 15,
+		selectAllTitleAfterEnter    : 17,
+		resetTextSelection          : 18,
+		moveCursorToEndDocument     : 19,
+		selectToEndDocument         : 20,
+		moveCursorToStartDocument   : 21,
+		selectToStartDocument       : 22,
+		moveCursorLeftChar          : 23,
+		selectCursorLeftChar        : 24,
+		moveCursorLeftWord          : 25,
+		selectCursorLeftWord        : 26,
+		bigMoveGraphicObjectLeft    : 27,
+		littleMoveGraphicObjectLeft : 28,
+		moveCursorRightChar         : 29,
+		selectCursorRightChar       : 30,
+		moveCursorRightWord         : 31,
+		selectCursorRightWord       : 32,
+		bigMoveGraphicObjectRight   : 33,
+		littleMoveGraphicObjectRight: 34,
+		moveCursorUp                : 35,
+		selectCursorUp              : 36,
+		bigMoveGraphicObjectUp      : 37,
+		littleMoveGraphicObjectUp   : 38,
+		moveCursorDown              : 39,
+		selectCursorDown            : 40,
+		bigMoveGraphicObjectDown    : 41,
+		littleMoveGraphicObjectDown : 42,
+		removeFrontWord             : 43,
+		removeFrontChar             : 44,
+		selectAllContent            : 45,
+		selectAllDrawings           : 46,
+		bold                        : 47,
+		cleanSlicer                 : 48,
+		centerAlign                 : 49,
+		italic                      : 50,
+		justifyAlign                : 51,
+		leftAlign                   : 52,
+		rightAlign                  : 53,
+		invertMultiselectSlicer     : 54,
+		underline                   : 55,
+		superscript                 : 57,
+		enDash                      : 58,
+		subscript                   : 61,
+		increaseFontSize            : 62,
+		decreaseFontSize            : 63,
+		removeBackWord              : 64,
+		selectToStartLine           : 65,
+		moveCursorToStartLine       : 66,
+		selectToEndLine             : 67,
+		moveCursorToEndLine         : 68,
+		resetStepSelection          : 69
 	};
 
-	const oGraphicTestEvents = {};
-	oGraphicTestEvents[oGraphicTypes.removeBackChar] = [
-		new CTestEvent(createEvent(oKeyCode.BackSpace, false, false, false, false, false))
+	const graphicEvents = {};
+	graphicEvents[graphicHotkeyTypes.removeBackChar] = [
+		new CNativeEvent(keyCodes.BackSpace, false, false, false, false)
 	];
-	oGraphicTestEvents[oGraphicTypes.removeBackWord] = [
-		new CTestEvent(createEvent(oKeyCode.BackSpace, true, false, false, false, false), testWindows),
-		new CTestEvent(createEvent(oKeyCode.BackSpace, false, false, true, false, false), testMacOs)
+	graphicEvents[graphicHotkeyTypes.removeBackWord] = [
+		new CNativeEvent(keyCodes.BackSpace, true, false, false, false),
+		new CNativeEvent(keyCodes.BackSpace, false, false, true, false, testFlags.macOs)
 	];
-	oGraphicTestEvents[oGraphicTypes.removeChart] = [
-		new CTestEvent(createEvent(oKeyCode.BackSpace, false, false, false, false, false)),
-		new CTestEvent(createEvent(oKeyCode.Delete, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.removeChart] = [
+		new CNativeEvent(keyCodes.BackSpace, false, false, false, false),
+		new CNativeEvent(keyCodes.Delete, false, false, false, false)
 	];
-	oGraphicTestEvents[oGraphicTypes.removeShape] = [
-		new CTestEvent(createEvent(oKeyCode.BackSpace, false, false, false, false, false)),
-		new CTestEvent(createEvent(oKeyCode.Delete, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.removeShape] = [
+		new CNativeEvent(keyCodes.BackSpace, false, false, false, false),
+		new CNativeEvent(keyCodes.Delete, false, false, false, false)
 	];
-	oGraphicTestEvents[oGraphicTypes.removeGroup] = [
-		new CTestEvent(createEvent(oKeyCode.BackSpace, false, false, false, false, false)),
-		new CTestEvent(createEvent(oKeyCode.Delete, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.removeGroup] = [
+		new CNativeEvent(keyCodes.BackSpace, false, false, false, false),
+		new CNativeEvent(keyCodes.Delete, false, false, false, false)
 	];
-	oGraphicTestEvents[oGraphicTypes.removeShapeInGroup] = [
-		new CTestEvent(createEvent(oKeyCode.BackSpace, false, false, false, false, false)),
-		new CTestEvent(createEvent(oKeyCode.Delete, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.removeShapeInGroup] = [
+		new CNativeEvent(keyCodes.BackSpace, false, false, false, false),
+		new CNativeEvent(keyCodes.Delete, false, false, false, false)
 	];
-	oGraphicTestEvents[oGraphicTypes.addTab] = [
-		new CTestEvent(createEvent(oKeyCode.Tab, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.addTab] = [
+		new CNativeEvent(keyCodes.Tab, false, false, false, false)
 	];
-	oGraphicTestEvents[oGraphicTypes.selectNextObject] = [
-		new CTestEvent(createEvent(oKeyCode.Tab, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.selectNextObject] = [
+		new CNativeEvent(keyCodes.Tab, false, false, false, false)
 	];
-	oGraphicTestEvents[oGraphicTypes.selectPreviousObject] = [
-		new CTestEvent(createEvent(oKeyCode.Tab, false, true, false, false, false))
+	graphicEvents[graphicHotkeyTypes.selectPreviousObject] = [
+		new CNativeEvent(keyCodes.Tab, false, true, false, false)
 	];
-	oGraphicTestEvents[oGraphicTypes.visitHyperink] = [
-		new CTestEvent(createEvent(oKeyCode.Enter, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.visitHyperink] = [
+		new CNativeEvent(keyCodes.Enter, false, false, false, false)
 	];
-	oGraphicTestEvents[oGraphicTypes.addLineInMath] = [
-		new CTestEvent(createEvent(oKeyCode.Enter, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.addLineInMath] = [
+		new CNativeEvent(keyCodes.Enter, false, false, false, false)
 	];
-	oGraphicTestEvents[oGraphicTypes.addBreakLine] = [
-		new CTestEvent(createEvent(oKeyCode.Enter, false, true, false, false, false))
+	graphicEvents[graphicHotkeyTypes.addBreakLine] = [
+		new CNativeEvent(keyCodes.Enter, false, true, false, false)
 	];
-	oGraphicTestEvents[oGraphicTypes.addParagraph] = [
-		new CTestEvent(createEvent(oKeyCode.Enter, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.addParagraph] = [
+		new CNativeEvent(keyCodes.Enter, false, false, false, false)
 	];
-	oGraphicTestEvents[oGraphicTypes.createTxBody] = [
-		new CTestEvent(createEvent(oKeyCode.Enter, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.createTxBody] = [
+		new CNativeEvent(keyCodes.Enter, false, false, false, false)
 	];
-	oGraphicTestEvents[oGraphicTypes.moveToStartInEmptyContent] = [
-		new CTestEvent(createEvent(oKeyCode.Enter, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.moveToStartInEmptyContent] = [
+		new CNativeEvent(keyCodes.Enter, false, false, false, false)
 	];
-	oGraphicTestEvents[oGraphicTypes.selectAllAfterEnter] = [
-		new CTestEvent(createEvent(oKeyCode.Enter, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.selectAllAfterEnter] = [
+		new CNativeEvent(keyCodes.Enter, false, false, false, false)
 	];
-	oGraphicTestEvents[oGraphicTypes.moveCursorToStartPositionInTitle] = [
-		new CTestEvent(createEvent(oKeyCode.Enter, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.selectAllTitleAfterEnter] = [
+		new CNativeEvent(keyCodes.Enter, false, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.selectAllTitleAfterEnter] = [
-		new CTestEvent(createEvent(oKeyCode.Enter, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.resetTextSelection] = [
+		new CNativeEvent(keyCodes.Esc, false, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.resetTextSelection] = [
-		new CTestEvent(createEvent(oKeyCode.Esc, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.resetStepSelection] = [
+		new CNativeEvent(keyCodes.Esc, false, false, false, false)
+	];
+	graphicEvents[graphicHotkeyTypes.moveCursorToEndDocument] = [
+		new CNativeEvent(keyCodes.End, true, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.resetStepSelection] = [
-		new CTestEvent(createEvent(oKeyCode.Esc, false, false, false, false, false))
-	];
-	oGraphicTestEvents[oGraphicTypes.moveCursorToEndDocument] = [
-		new CTestEvent(createEvent(oKeyCode.End, true, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.moveCursorToEndLine] = [
+		new CNativeEvent(keyCodes.End, false, false, false, false),
+		new CNativeEvent(keyCodes.ArrowRight, false, false, false, true, testFlags.macOs)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.moveCursorToEndLine] = [
-		new CTestEvent(createEvent(oKeyCode.End, false, false, false, false, false)),
-		new CTestEvent(createEvent(oKeyCode.ArrowRight, true, false, false, false, false), testMacOs)
+	graphicEvents[graphicHotkeyTypes.selectToEndDocument] = [
+		new CNativeEvent(keyCodes.End, true, true, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.selectToEndDocument] = [
-		new CTestEvent(createEvent(oKeyCode.End, true, true, false, false, false))
+	graphicEvents[graphicHotkeyTypes.selectToEndLine] = [
+		new CNativeEvent(keyCodes.End, false, true, false, false),
+		new CNativeEvent(keyCodes.ArrowRight, false, true, false, true, testFlags.macOs),
 
 	];
-	oGraphicTestEvents[oGraphicTypes.selectToEndLine] = [
-		new CTestEvent(createEvent(oKeyCode.End, false, true, false, false, false)),
-		new CTestEvent(createEvent(oKeyCode.ArrowRight, true, true, false, false, false), testMacOs)
+	graphicEvents[graphicHotkeyTypes.moveCursorToStartDocument] = [
+		new CNativeEvent(keyCodes.Home, true, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.moveCursorToStartDocument] = [
-		new CTestEvent(createEvent(oKeyCode.Home, true, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.moveCursorToStartLine] = [
+		new CNativeEvent(keyCodes.Home, false, false, false, false),
+		new CNativeEvent(keyCodes.ArrowLeft, false, false, false, true, testFlags.macOs),
 
 	];
-	oGraphicTestEvents[oGraphicTypes.moveCursorToStartLine] = [
-		new CTestEvent(createEvent(oKeyCode.Home, false, false, false, false, false)),
-		new CTestEvent(createEvent(oKeyCode.ArrowLeft, true, false, false, false, false), testMacOs)
+	graphicEvents[graphicHotkeyTypes.selectToStartDocument] = [
+		new CNativeEvent(keyCodes.Home, true, true, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.selectToStartDocument] = [
-		new CTestEvent(createEvent(oKeyCode.Home, true, true, false, false, false))
+	graphicEvents[graphicHotkeyTypes.selectToStartLine] = [
+		new CNativeEvent(keyCodes.Home, false, true, false, false),
+		new CNativeEvent(keyCodes.ArrowLeft, false, true, false, true, testFlags.macOs),
 
 	];
-	oGraphicTestEvents[oGraphicTypes.selectToStartLine] = [
-		new CTestEvent(createEvent(oKeyCode.Home, false, true, false, false, false)),
-		new CTestEvent(createEvent(oKeyCode.ArrowLeft, true, true, false, false, false), testMacOs)
+	graphicEvents[graphicHotkeyTypes.moveCursorLeftChar] = [
+		new CNativeEvent(keyCodes.ArrowLeft, false, false, false, false)
+	];
+	graphicEvents[graphicHotkeyTypes.selectCursorLeftChar] = [
+		new CNativeEvent(keyCodes.ArrowLeft, false, true, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.moveCursorLeftChar] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowLeft, false, false, false, false, false))
-	];
-	oGraphicTestEvents[oGraphicTypes.selectCursorLeftChar] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowLeft, false, true, false, false, false))
+	graphicEvents[graphicHotkeyTypes.moveCursorLeftWord] = [
+		new CNativeEvent(keyCodes.ArrowLeft, true, false, false, false),
+		new CNativeEvent(keyCodes.ArrowLeft, false, false, true, false, testFlags.macOs),
 
 	];
-	oGraphicTestEvents[oGraphicTypes.moveCursorLeftWord] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowLeft, true, false, false, false, false), testWindows),
-		new CTestEvent(createEvent(oKeyCode.ArrowLeft, false, false, true, false, false), testMacOs)
+	graphicEvents[graphicHotkeyTypes.selectCursorLeftWord] = [
+		new CNativeEvent(keyCodes.ArrowLeft, true, true, false, false),
+		new CNativeEvent(keyCodes.ArrowLeft, false, true, true, false, testFlags.macOs),
 
 	];
-	oGraphicTestEvents[oGraphicTypes.selectCursorLeftWord] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowLeft, true, true, false, false, false), testWindows),
-		new CTestEvent(createEvent(oKeyCode.ArrowLeft, false, true, true, false, false), testMacOs)
+	graphicEvents[graphicHotkeyTypes.bigMoveGraphicObjectLeft] = [
+		new CNativeEvent(keyCodes.ArrowLeft, false, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.bigMoveGraphicObjectLeft] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowLeft, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.littleMoveGraphicObjectLeft] = [
+		new CNativeEvent(keyCodes.ArrowLeft, true, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.littleMoveGraphicObjectLeft] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowLeft, true, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.moveCursorRightChar] = [
+		new CNativeEvent(keyCodes.ArrowRight, false, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.moveCursorRightChar] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowRight, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.selectCursorRightChar] = [
+		new CNativeEvent(keyCodes.ArrowRight, false, true, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.selectCursorRightChar] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowRight, false, true, false, false, false))
+	graphicEvents[graphicHotkeyTypes.moveCursorRightWord] = [
+		new CNativeEvent(keyCodes.ArrowRight, true, false, false, false),
+		new CNativeEvent(keyCodes.ArrowRight, false, false, true, false, testFlags.macOs)
+	];
+	graphicEvents[graphicHotkeyTypes.selectCursorRightWord] = [
+		new CNativeEvent(keyCodes.ArrowRight, true, true, false, false),
+		new CNativeEvent(keyCodes.ArrowRight, false, true, true, false, testFlags.macOs),
 
 	];
-	oGraphicTestEvents[oGraphicTypes.moveCursorRightWord] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowRight, true, false, false, false, false), testWindows),
-		new CTestEvent(createEvent(oKeyCode.ArrowRight, false, false, true, false, false), testMacOs)
+	graphicEvents[graphicHotkeyTypes.bigMoveGraphicObjectRight] = [
+		new CNativeEvent(keyCodes.ArrowRight, false, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.selectCursorRightWord] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowRight, true, true, false, false, false), testWindows),
-		new CTestEvent(createEvent(oKeyCode.ArrowRight, false, true, true, false, false), testMacOs),
+	graphicEvents[graphicHotkeyTypes.littleMoveGraphicObjectRight] = [
+		new CNativeEvent(keyCodes.ArrowRight, true, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.bigMoveGraphicObjectRight] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowRight, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.moveCursorUp] = [
+		new CNativeEvent(keyCodes.ArrowTop, false, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.littleMoveGraphicObjectRight] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowRight, true, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.selectCursorUp] = [
+		new CNativeEvent(keyCodes.ArrowTop, false, true, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.moveCursorUp] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowTop, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.bigMoveGraphicObjectUp] = [
+		new CNativeEvent(keyCodes.ArrowTop, false, false, false, false)
+	];
+	graphicEvents[graphicHotkeyTypes.littleMoveGraphicObjectUp] = [
+		new CNativeEvent(keyCodes.ArrowTop, true, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.selectCursorUp] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowTop, false, true, false, false, false))
+	graphicEvents[graphicHotkeyTypes.moveCursorDown] = [
+		new CNativeEvent(keyCodes.ArrowBottom, false, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.bigMoveGraphicObjectUp] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowTop, false, false, false, false, false))
-	];
-	oGraphicTestEvents[oGraphicTypes.littleMoveGraphicObjectUp] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowTop, true, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.selectCursorDown] = [
+		new CNativeEvent(keyCodes.ArrowBottom, false, true, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.moveCursorDown] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowBottom, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.bigMoveGraphicObjectDown] = [
+		new CNativeEvent(keyCodes.ArrowBottom, false, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.selectCursorDown] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowBottom, false, true, false, false, false))
+	graphicEvents[graphicHotkeyTypes.littleMoveGraphicObjectDown] = [
+		new CNativeEvent(keyCodes.ArrowBottom, true, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.bigMoveGraphicObjectDown] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowBottom, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.removeFrontWord] = [
+		new CNativeEvent(keyCodes.Delete, true, false, false, false),
+		new CNativeEvent(keyCodes.Delete, false, false, true, false, testFlags.macOs),
 
 	];
-	oGraphicTestEvents[oGraphicTypes.littleMoveGraphicObjectDown] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowBottom, true, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.removeFrontChar] = [
+		new CNativeEvent(keyCodes.Delete, false, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.removeFrontWord] = [
-		new CTestEvent(createEvent(oKeyCode.Delete, true, false, false, false, false), testWindows),
-		new CTestEvent(createEvent(oKeyCode.Delete, false, false, true, false, false), testMacOs)
+	graphicEvents[graphicHotkeyTypes.selectAllContent] = [
+		new CNativeEvent(keyCodes.A, true, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.removeFrontChar] = [
-		new CTestEvent(createEvent(oKeyCode.Delete, false, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.selectAllDrawings] = [
+		new CNativeEvent(keyCodes.A, true, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.selectAllContent] = [
-		new CTestEvent(createEvent(oKeyCode.A, true, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.bold] = [
+		new CNativeEvent(keyCodes.B, true, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.selectAllDrawings] = [
-		new CTestEvent(createEvent(oKeyCode.A, true, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.cleanSlicer] = [
+		new CNativeEvent(keyCodes.C, true, false, true, false, testFlags.macOs),
+		new CNativeEvent(keyCodes.C, false, false, true, false)
+	];
+	graphicEvents[graphicHotkeyTypes.centerAlign] = [
+		new CNativeEvent(keyCodes.E, true, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.bold] = [
-		new CTestEvent(createEvent(oKeyCode.B, true, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.italic] = [
+		new CNativeEvent(keyCodes.I, true, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.cleanSlicer] = [
-		new CTestEvent(createEvent(oKeyCode.C, true, false, true, false, false), testMacOs),
-		new CTestEvent(createEvent(oKeyCode.C, false, false, true, false, false), testWindows)
-	];
-	oGraphicTestEvents[oGraphicTypes.centerAlign] = [
-		new CTestEvent(createEvent(oKeyCode.E, true, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.justifyAlign] = [
+		new CNativeEvent(keyCodes.J, true, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.italic] = [
-		new CTestEvent(createEvent(oKeyCode.I, true, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.leftAlign] = [
+		new CNativeEvent(keyCodes.L, true, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.justifyAlign] = [
-		new CTestEvent(createEvent(oKeyCode.J, true, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.rightAlign] = [
+		new CNativeEvent(keyCodes.R, true, false, false, false)
+	];
+	graphicEvents[graphicHotkeyTypes.invertMultiselectSlicer] = [
+		new CNativeEvent(keyCodes.S, true, false, true, false, testFlags.macOs),
+		new CNativeEvent(keyCodes.S, false, false, true, false)
+	];
+	graphicEvents[graphicHotkeyTypes.underline] = [
+		new CNativeEvent(keyCodes.U, true, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.leftAlign] = [
-		new CTestEvent(createEvent(oKeyCode.L, true, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.superscript] = [
+		new CNativeEvent(keyCodes.Comma, true, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.rightAlign] = [
-		new CTestEvent(createEvent(oKeyCode.R, true, false, false, false, false))
-	];
-	oGraphicTestEvents[oGraphicTypes.invertMultiselectSlicer] = [
-		new CTestEvent(createEvent(oKeyCode.S, true, false, true, false, false), testMacOs),
-		new CTestEvent(createEvent(oKeyCode.S, false, false, true, false, false), testWindows)
-	];
-	oGraphicTestEvents[oGraphicTypes.underline] = [
-		new CTestEvent(createEvent(oKeyCode.U, true, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.enDash] = [
+		new CNativeEvent(keyCodes.Minus, true, true, false, false),
+		new CNativeEvent(keyCodes.MinusFirefox, true, true, false, false),
 
 	];
-	oGraphicTestEvents[oGraphicTypes.superscript] = [
-		new CTestEvent(createEvent(oKeyCode.Comma, true, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.subscript] = [
+		new CNativeEvent(keyCodes.Period, true, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.enDash] = [
-		new CTestEvent(createEvent(oKeyCode.Minus, true, true, false, false, false))
+	graphicEvents[graphicHotkeyTypes.increaseFontSize] = [
+		new CNativeEvent(keyCodes.BracketRight, true, false, false, false)
 
 	];
-	oGraphicTestEvents[oGraphicTypes.subscript] = [
-		new CTestEvent(createEvent(oKeyCode.Period, true, false, false, false, false))
-
-	];
-	oGraphicTestEvents[oGraphicTypes.increaseFontSize] = [
-		new CTestEvent(createEvent(oKeyCode.BracketRight, true, false, false, false, false))
-
-	];
-	oGraphicTestEvents[oGraphicTypes.decreaseFontSize] = [
-		new CTestEvent(createEvent(oKeyCode.BracketLeft, true, false, false, false, false))
+	graphicEvents[graphicHotkeyTypes.decreaseFontSize] = [
+		new CNativeEvent(keyCodes.BracketLeft, true, false, false, false)
 
 	];
 
-	function startGraphicTest(fCallback, nShortcutType)
-	{
-		privateStartTest(fCallback, nShortcutType, oGraphicTestEvents);
-	}
-
-	const oTableTypes = {
+	const tableHotkeyTypes = {
 		refreshAllConnections     : 0,
 		refreshSelectedConnections: 1,
 		changeFormatTableInfo     : 2,
 		calculateAll              : 3,
-		calculateWorkbook         : 4,
 		calculateActiveSheet      : 5,
-		calculateOnlyChanged      : 6,
 		focusOnCellEditor         : 7,
 		addDate                   : 8,
 		addTime                   : 9,
@@ -521,222 +537,224 @@
 		moveToUpperCell           : 62,
 		contextMenu               : 63,
 		moveToLowerCell           : 64,
-		selectToLowerCell         : 65
+		selectToLowerCell         : 65,
+		selectToUpperCell         : 66,
+		showFilterOptions         : 67,
+		showAutoComplete          : 68,
+		showDataValidation        : 69
 	};
 
-	const oTableEvents = {};
-	oTableEvents[oTableTypes.refreshAllConnections] = [
-		new CTestEvent(createEvent(116, true, false, true, false, false, false))
+	const tableEvents = {};
+	tableEvents[tableHotkeyTypes.refreshAllConnections] = [
+		new CNativeEvent(keyCodes.F5, true, false, true, false)
 	];
-	oTableEvents[oTableTypes.refreshSelectedConnections] = [
-		new CTestEvent(createEvent(116, false, false, true, false, false, false))
+	tableEvents[tableHotkeyTypes.refreshSelectedConnections] = [
+		new CNativeEvent(keyCodes.F5, false, false, true, false)
 	];
-	oTableEvents[oTableTypes.changeFormatTableInfo] = [
-		new CTestEvent(createEvent(82, true, true, false, false, false))
+	tableEvents[tableHotkeyTypes.changeFormatTableInfo] = [
+		new CNativeEvent(keyCodes.R, true, true, false, false)
 	];
-	oTableEvents[oTableTypes.calculateAll] = [
-		new CTestEvent(createEvent(120, true, true, true, false, false))
+	tableEvents[tableHotkeyTypes.calculateAll] = [
+		new CNativeEvent(keyCodes.F9, false, false, false, false)
 	];
 
-	oTableEvents[oTableTypes.calculateActiveSheet] = [
-		new CTestEvent(createEvent(120, false, true, false, false, false))
+	tableEvents[tableHotkeyTypes.calculateActiveSheet] = [
+		new CNativeEvent(keyCodes.F9, false, true, false, false)
 
 	];
-	oTableEvents[oTableTypes.calculateOnlyChanged] = [
-		new CTestEvent(createEvent(120, false, false, false, false, false))
+
+	tableEvents[tableHotkeyTypes.focusOnCellEditor] = [
+		new CNativeEvent(keyCodes.F2, false, false, false, false)
+	];
+	tableEvents[tableHotkeyTypes.addDate] = [
+		new CNativeEvent(keyCodes.Semicolon, true, false, false, false),
+		new CNativeEvent(keyCodes.SemicolonFirefox, true, false, false, false),
+	];
+	tableEvents[tableHotkeyTypes.addTime] = [
+		new CNativeEvent(keyCodes.Semicolon, true, true, false, false),
+		new CNativeEvent(keyCodes.SemicolonFirefox, true, true, false, false),
+	];
+	tableEvents[tableHotkeyTypes.removeActiveCell] = [
+		new CNativeEvent(keyCodes.BackSpace, false, false, false, false)
+	];
+	tableEvents[tableHotkeyTypes.emptyRange] = [
+		new CNativeEvent(keyCodes.Delete, false, false, false, false)
+	];
+	tableEvents[tableHotkeyTypes.moveActiveCellToLeft] = [
+		new CNativeEvent(keyCodes.Tab, false, true, false, false)
+	];
+	tableEvents[tableHotkeyTypes.moveActiveCellToRight] = [
+		new CNativeEvent(keyCodes.Tab, false, false, false, false)
+	];
+	tableEvents[tableHotkeyTypes.moveActiveCellToDown] = [
+		new CNativeEvent(keyCodes.Enter, false, false, false, false)
+	];
+	tableEvents[tableHotkeyTypes.moveActiveCellToUp] = [
+		new CNativeEvent(keyCodes.Enter, false, true, false, false)
+	];
+	tableEvents[tableHotkeyTypes.reset] = [
+		new CNativeEvent(keyCodes.Esc, false, false, false, false)
+	];
+	tableEvents[tableHotkeyTypes.disableNumLock] = [
+		new CNativeEvent(keyCodes.NumLock, false, false, false, false, testFlags.opera)
+	];
+	tableEvents[tableHotkeyTypes.disableScrollLock] = [
+		new CNativeEvent(keyCodes.ScrollLock, false, false, false, false, testFlags.opera)
+	];
+	tableEvents[tableHotkeyTypes.selectColumn] = [
+		new CNativeEvent(keyCodes.Space, false, true, false, false)
+	];
+	tableEvents[tableHotkeyTypes.selectRow] = [
+		new CNativeEvent(keyCodes.Space, true, false, false, false)
+	];
+	tableEvents[tableHotkeyTypes.selectSheet] = [
+		new CNativeEvent(keyCodes.Space, true, true, false, false),
+		new CNativeEvent(keyCodes.A, true, false, false, false)
+	];
+	tableEvents[tableHotkeyTypes.addSeparator] = [
+		new CNativeEvent(keyCodes.NumpadDecimal, false, false, false, false)
+	];
+	tableEvents[tableHotkeyTypes.goToPreviousSheet] = [
+		new CNativeEvent(keyCodes.PageUp, false, false, true, false)
+	];
+	tableEvents[tableHotkeyTypes.moveToUpperCell] = [
+		new CNativeEvent(keyCodes.PageUp, false, false, false, false)
+	];
+	tableEvents[tableHotkeyTypes.selectToUpperCell] = [
+		new CNativeEvent(keyCodes.PageUp, false, true, false, false)
+	];
+	tableEvents[tableHotkeyTypes.moveToTopCell] = [
+		new CNativeEvent(keyCodes.ArrowTop, true, false, false, false)
+	];
+	tableEvents[tableHotkeyTypes.moveToNextSheet] = [
+		new CNativeEvent(keyCodes.PageDown, false, false, true, false)
+	];
+	tableEvents[tableHotkeyTypes.moveToBottomCell] = [
+		new CNativeEvent(keyCodes.ArrowBottom, true, false, false, false)
+	];
+	tableEvents[tableHotkeyTypes.moveToLowerCell] = [
+		new CNativeEvent(keyCodes.PageDown, false, false, false, false)
+	];
+	tableEvents[tableHotkeyTypes.selectToLowerCell] = [
+		new CNativeEvent(keyCodes.PageDown, false, true, false, false)
+	];
+	tableEvents[tableHotkeyTypes.moveToLeftEdgeCell] = [
+		new CNativeEvent(keyCodes.ArrowLeft, true, false, false, false)
+	];
+	tableEvents[tableHotkeyTypes.selectToLeftEdgeCell] = [
+		new CNativeEvent(keyCodes.ArrowLeft, true, true, false, false)
+	];
+	tableEvents[tableHotkeyTypes.moveToLeftCell] = [
+		new CNativeEvent(keyCodes.ArrowLeft, false, false, false, false)
+	];
+	tableEvents[tableHotkeyTypes.selectToLeftCell] = [
+		new CNativeEvent(keyCodes.ArrowLeft, false, true, false, false)
+	];
+	tableEvents[tableHotkeyTypes.moveToRightEdgeCell] = [
+		new CNativeEvent(keyCodes.ArrowRight, true, false, false, false),
+		new CNativeEvent(keyCodes.End, false, false, false, false)
 
 	];
-	oTableEvents[oTableTypes.focusOnCellEditor] = [
-		new CTestEvent(createEvent(113, false, false, false, false, false))
+	tableEvents[tableHotkeyTypes.selectToRightEdgeCell] = [
+		new CNativeEvent(keyCodes.ArrowRight, true, true, false, false),
+		new CNativeEvent(keyCodes.End, false, true, false, false)
 	];
-	oTableEvents[oTableTypes.addDate] = [
-		new CTestEvent(createEvent(186, true, false, false, false, false)),
-		new CTestEvent(createEvent(59, true, false, false, false, false))
+	tableEvents[tableHotkeyTypes.moveToRightCell] = [
+		new CNativeEvent(keyCodes.ArrowRight, false, false, false, false)
 	];
-	oTableEvents[oTableTypes.addTime] = [
-		new CTestEvent(createEvent(186, true, true, false, false, false)),
-		new CTestEvent(createEvent(59, true, true, false, false, false))
+	tableEvents[tableHotkeyTypes.selectToRightCell] = [
+		new CNativeEvent(keyCodes.ArrowRight, false, true, false, false)
 	];
-	oTableEvents[oTableTypes.removeActiveCell] = [
-		new CTestEvent(createEvent(8, false, false, false, false, false))
+	tableEvents[tableHotkeyTypes.selectToTopCell] = [
+		new CNativeEvent(keyCodes.ArrowTop, true, true, false, false)
 	];
-	oTableEvents[oTableTypes.emptyRange] = [
-		new CTestEvent(createEvent(46, false, false, false, false, false))
+	tableEvents[tableHotkeyTypes.moveToUpCell] = [
+		new CNativeEvent(keyCodes.ArrowTop, false, false, false, false)
 	];
-	oTableEvents[oTableTypes.moveActiveCellToLeft] = [
-		new CTestEvent(createEvent(9, false, true, false, false, false, false))
+	tableEvents[tableHotkeyTypes.selectToUpCell] = [
+		new CNativeEvent(keyCodes.ArrowTop, false, true, false, false)
 	];
-	oTableEvents[oTableTypes.moveActiveCellToRight] = [
-		new CTestEvent(createEvent(9, false, false, false, false, false, false))
+	tableEvents[tableHotkeyTypes.selectToBottomCell] = [
+		new CNativeEvent(keyCodes.ArrowBottom, true, true, false, false)
 	];
-	oTableEvents[oTableTypes.moveActiveCellToDown] = [
-		new CTestEvent(createEvent(13, false, false, false, false, false))
+	tableEvents[tableHotkeyTypes.moveToDownCell] = [
+		new CNativeEvent(keyCodes.ArrowBottom, false, false, false, false)
 	];
-	oTableEvents[oTableTypes.moveActiveCellToUp] = [
-		new CTestEvent(createEvent(13, false, true, false, false, false))
+	tableEvents[tableHotkeyTypes.selectToDownCell] = [
+		new CNativeEvent(keyCodes.ArrowBottom, false, true, false, false)
 	];
-	oTableEvents[oTableTypes.reset] = [
-		new CTestEvent(createEvent(27, false, false, false, false))
+	tableEvents[tableHotkeyTypes.moveToFirstColumn] = [
+		new CNativeEvent(keyCodes.Home, false, false, false, false)
 	];
-	oTableEvents[oTableTypes.disableNumLock] = [
-		new CTestEvent(createEvent(144, false, false, false, false, false))
+	tableEvents[tableHotkeyTypes.selectToFirstColumn] = [
+		new CNativeEvent(keyCodes.Home, false, true, false, false)
 	];
-	oTableEvents[oTableTypes.disableScrollLock] = [
-		new CTestEvent(createEvent(145, false, false, false, false, false))
+	tableEvents[tableHotkeyTypes.moveToLeftEdgeTop] = [
+		new CNativeEvent(keyCodes.Home, true, false, false, false)
 	];
-	oTableEvents[oTableTypes.selectColumn] = [
-		new CTestEvent(createEvent(32, true, false, false, false, false))
+	tableEvents[tableHotkeyTypes.selectToLeftEdgeTop] = [
+		new CNativeEvent(keyCodes.Home, true, true, false, false)
 	];
-	oTableEvents[oTableTypes.selectRow] = [
-		new CTestEvent(createEvent(32, false, true, false, false, false))
+	tableEvents[tableHotkeyTypes.moveToRightBottomEdge] = [
+		new CNativeEvent(keyCodes.End, true, false, false, false)
 	];
-	oTableEvents[oTableTypes.selectSheet] = [
-		new CTestEvent(createEvent(32, true, true, false, false, false), testWindows),
-		new CTestEvent(createEvent(65, true, false, false, false, false))
+	tableEvents[tableHotkeyTypes.selectToRightBottomEdge] = [
+		new CNativeEvent(keyCodes.End, true, true, false, false)
 	];
-	oTableEvents[oTableTypes.addSeparator] = [
-		new CTestEvent(createEvent(110, false, false, false, false, false))
+	tableEvents[tableHotkeyTypes.setNumberFormat] = [
+		new CNativeEvent(keyCodes.Digit1, true, true, false, false)
 	];
-	oTableEvents[oTableTypes.goToPreviousSheet] = [
-		new CTestEvent(createEvent(33, false, false, true, false, false))
+	tableEvents[tableHotkeyTypes.setTimeFormat] = [
+		new CNativeEvent(keyCodes.Digit2, true, true, false, false)
 	];
-	oTableEvents[oTableTypes.moveToUpperCell] = [
-		new CTestEvent(createEvent(33, false, false, false, false, false))
+	tableEvents[tableHotkeyTypes.setDateFormat] = [
+		new CNativeEvent(keyCodes.Digit3, true, true, false, false)
 	];
-	oTableEvents[oTableTypes.moveToTopCell] = [
-		new CTestEvent(createEvent(38, true, false, false, false, false))
+	tableEvents[tableHotkeyTypes.setCurrencyFormat] = [
+		new CNativeEvent(keyCodes.Digit4, true, true, false, false)
 	];
-	oTableEvents[oTableTypes.moveToNextSheet] = [
-		new CTestEvent(createEvent(33, false, false, true, false, false))
+	tableEvents[tableHotkeyTypes.setPercentFormat] = [
+		new CNativeEvent(keyCodes.Digit5, true, true, false, false)
 	];
-	oTableEvents[oTableTypes.moveToBottomCell] = [
-		new CTestEvent(createEvent(40, true, false, false, false, false))
+	tableEvents[tableHotkeyTypes.setStrikethrough] = [
+		new CNativeEvent(keyCodes.Digit5, true, false, false, false)
 	];
-	oTableEvents[oTableTypes.moveToLowerCell] = [
-		new CTestEvent(createEvent(34, false, false, false, false, false))
+	tableEvents[tableHotkeyTypes.setExponentialFormat] = [
+		new CNativeEvent(keyCodes.Digit6, true, true, false, false)
 	];
-	oTableEvents[oTableTypes.selectToLowerCell] = [
-		new CTestEvent(createEvent(34, false, true, false, false, false))
+	tableEvents[tableHotkeyTypes.setBold] = [
+		new CNativeEvent(keyCodes.B, true, false, false, false)
 	];
-	oTableEvents[oTableTypes.moveToLeftEdgeCell] = [
-		new CTestEvent(createEvent(37, true, false, false, false, false))
+	tableEvents[tableHotkeyTypes.setItalic] = [
+		new CNativeEvent(keyCodes.I, true, false, false, false)
 	];
-	oTableEvents[oTableTypes.selectToLeftEdgeCell] = [
-		new CTestEvent(createEvent(37, true, false, false, false, false))
+	tableEvents[tableHotkeyTypes.setUnderline] = [
+		new CNativeEvent(keyCodes.U, true, false, false, false)
 	];
-	oTableEvents[oTableTypes.moveToLeftCell] = [
-		new CTestEvent(createEvent(37, false, false, false, false, false))
+	tableEvents[tableHotkeyTypes.setGeneralFormat] = [
+		new CNativeEvent(keyCodes.Backquote, true, true, false, false)
 	];
-	oTableEvents[oTableTypes.selectToLeftCell] = [
-		new CTestEvent(createEvent(37, false, true, false, false, false))
+	tableEvents[tableHotkeyTypes.redo] = [
+		new CNativeEvent(keyCodes.Y, true, false, false, false)
 	];
-	oTableEvents[oTableTypes.moveToRightEdgeCell] = [
-		new CTestEvent(createEvent(39, true, false, false, false, false)),
-		new CTestEvent(createEvent(35, false, false, false, false, false))
+	tableEvents[tableHotkeyTypes.undo] = [
+		new CNativeEvent(keyCodes.Z, true, false, false, false)
+	];
+	tableEvents[tableHotkeyTypes.print] = [
+		new CNativeEvent(keyCodes.P, true, false, false, false)
+	];
+	tableEvents[tableHotkeyTypes.addSum] = [
+		new CNativeEvent(keyCodes.EqualFirefox, false, false, true, false),
+		new CNativeEvent(keyCodes.EqualFirefox, true, false, true, false, testFlags.macOs),
+		new CNativeEvent(keyCodes.Equal, false, false, true, false),
+		new CNativeEvent(keyCodes.Equal, true, false, true, false, testFlags.macOs)
+	];
+	tableEvents[tableHotkeyTypes.contextMenu] = [new CNativeEvent(keyCodes.ContextMenu, false, false, false, false)];
+	tableEvents[tableHotkeyTypes.showFilterOptions] = [new CNativeEvent(keyCodes.ArrowBottom, false, false, true, false)];
+	tableEvents[tableHotkeyTypes.showAutoComplete] = [new CNativeEvent(keyCodes.ArrowBottom, false, false, true, false)];
+	tableEvents[tableHotkeyTypes.showDataValidation] = [new CNativeEvent(keyCodes.ArrowBottom, false, false, true, false)];
 
-	];
-	oTableEvents[oTableTypes.selectToRightEdgeCell] = [
-		new CTestEvent(createEvent(39, true, true, false, false, false)),
-		new CTestEvent(createEvent(35, false, true, false, false, false))
-	];
-	oTableEvents[oTableTypes.moveToRightCell] = [
-		new CTestEvent(createEvent(39, false, false, false, false, false))
-	];
-	oTableEvents[oTableTypes.selectToRightCell] = [
-		new CTestEvent(createEvent(39, false, true, false, false, false))
-	];
-	oTableEvents[oTableTypes.selectToTopCell] = [
-		new CTestEvent(createEvent(38, true, true, false, false, false))
-	];
-	oTableEvents[oTableTypes.moveToUpCell] = [
-		new CTestEvent(createEvent(38, false, false, false, false, false))
-	];
-	oTableEvents[oTableTypes.selectToUpCell] = [
-		new CTestEvent(createEvent(38, false, true, false, false, false))
-	];
-	oTableEvents[oTableTypes.selectToBottomCell] = [
-		new CTestEvent(createEvent(40, true, true, false, false, false))
-	];
-	oTableEvents[oTableTypes.moveToDownCell] = [
-		new CTestEvent(createEvent(40, false, false, false, false, false))
-	];
-	oTableEvents[oTableTypes.selectToDownCell] = [
-		new CTestEvent(createEvent(40, false, true, false, false, false))
-	];
-	oTableEvents[oTableTypes.moveToFirstColumn] = [
-		new CTestEvent(createEvent(36, false, false, false, false, false))
-	];
-	oTableEvents[oTableTypes.selectToFirstColumn] = [
-		new CTestEvent(createEvent(36, false, true, false, false, false))
-	];
-	oTableEvents[oTableTypes.moveToLeftEdgeTop] = [
-		new CTestEvent(createEvent(36, true, false, false, false, false))
-	];
-	oTableEvents[oTableTypes.selectToLeftEdgeTop] = [
-		new CTestEvent(createEvent(36, true, true, false, false, false))
-	];
-	oTableEvents[oTableTypes.moveToRightBottomEdge] = [
-		new CTestEvent(createEvent(35, true, false, false, false, false))
-	];
-	oTableEvents[oTableTypes.selectToRightBottomEdge] = [
-		new CTestEvent(createEvent(35, true, true, false, false, false))
-	];
-	oTableEvents[oTableTypes.setNumberFormat] = [
-		new CTestEvent(createEvent(49, true, true, false, false, false))
-	];
-	oTableEvents[oTableTypes.setTimeFormat] = [
-		new CTestEvent(createEvent(50, true, true, false, false, false))
-	];
-	oTableEvents[oTableTypes.setDateFormat] = [
-		new CTestEvent(createEvent(51, true, true, false, false, false))
-	];
-	oTableEvents[oTableTypes.setCurrencyFormat] = [
-		new CTestEvent(createEvent(52, true, true, false, false, false))
-	];
-	oTableEvents[oTableTypes.setPercentFormat] = [
-		new CTestEvent(createEvent(53, true, true, false, false, false))
-	];
-	oTableEvents[oTableTypes.setStrikethrough] = [
-		new CTestEvent(createEvent(53, true, false, false, false, false))
-	];
-	oTableEvents[oTableTypes.setExponentialFormat] = [
-		new CTestEvent(createEvent(54, true, true, false, false, false))
-	];
-	oTableEvents[oTableTypes.setBold] = [
-		new CTestEvent(createEvent(66, true, false, false, false, false))
-	];
-	oTableEvents[oTableTypes.setItalic] = [
-		new CTestEvent(createEvent(73, true, false, false, false, false))
-	];
-	oTableEvents[oTableTypes.setUnderline] = [
-		new CTestEvent(createEvent(85, true, false, false, false, false))
-	];
-	oTableEvents[oTableTypes.setGeneralFormat] = [
-		new CTestEvent(createEvent(192, true, true, false, false, false))
-	];
-	oTableEvents[oTableTypes.redo] = [
-		new CTestEvent(createEvent(89, true, false, false, false, false))
-	];
-	oTableEvents[oTableTypes.undo] = [
-		new CTestEvent(createEvent(90, true, false, false, false, false))
-	];
-	oTableEvents[oTableTypes.print] = [
-		new CTestEvent(createEvent(80, true, false, false, false, false))
-	];
-	oTableEvents[oTableTypes.addSum] = [
-		new CTestEvent(createEvent(61, false, false, true, false, false), testWindows),
-		new CTestEvent(createEvent(61, true, false, true, false, false), testMacOs)
-	];
-	oTableEvents[oTableTypes.contextMenu] = [
-		new CTestEvent(createEvent(93, false, false, false, false, false))
-	];
-
-	function startTableTest(fCallback, nShortcutType)
-	{
-		privateStartTest(fCallback, nShortcutType, oTableEvents);
-	}
-
-	const oCellEditorTypes = {
+	const cellEditorHotkeyTypes = {
 		closeWithoutSave     : 0,
 		addNewLine           : 1,
 		saveAndMoveDown      : 2,
@@ -745,7 +763,6 @@
 		saveAndMoveLeft      : 5,
 		removeCharBack       : 6,
 		removeWordBack       : 7,
-		addSpace             : 8,
 		moveToEndLine        : 9,
 		moveToEndDocument    : 10,
 		selectToEndLine      : 11,
@@ -786,164 +803,188 @@
 	};
 
 	const oCellEditorEvents = {};
-	oCellEditorEvents[oCellEditorTypes.closeWithoutSave] = [
-		new CTestEvent(createEvent(27, false, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.closeWithoutSave] = [
+		new CNativeEvent(keyCodes.Esc, false, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.addNewLine] = [
-		new CTestEvent(createEvent(13, false, false, true, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.addNewLine] = [
+		new CNativeEvent(keyCodes.Enter, false, false, true, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.saveAndMoveDown] = [
-		new CTestEvent(createEvent(13, false, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.saveAndMoveDown] = [
+		new CNativeEvent(keyCodes.Enter, false, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.saveAndMoveUp] = [
-		new CTestEvent(createEvent(13, false, true, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.saveAndMoveUp] = [
+		new CNativeEvent(keyCodes.Enter, false, true, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.saveAndMoveRight] = [
-		new CTestEvent(createEvent(9, false, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.saveAndMoveRight] = [
+		new CNativeEvent(keyCodes.Tab, false, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.saveAndMoveLeft] = [
-		new CTestEvent(createEvent(9, false, true, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.saveAndMoveLeft] = [
+		new CNativeEvent(keyCodes.Tab, false, true, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.removeCharBack] = [
-		new CTestEvent(createEvent(8, false, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.removeCharBack] = [
+		new CNativeEvent(keyCodes.BackSpace, false, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.removeWordBack] = [
-		new CTestEvent(createEvent(8, true, false, false, false, false), testWindows),
-		new CTestEvent(createEvent(8, false, false, true, false, false), testMacOs)
+	oCellEditorEvents[cellEditorHotkeyTypes.removeWordBack] = [
+		new CNativeEvent(keyCodes.BackSpace, true, false, false, false),
+		new CNativeEvent(keyCodes.BackSpace, false, false, true, false, testFlags.macOs),
 	];
-	oCellEditorEvents[oCellEditorTypes.addSpace] = [
-		new CTestEvent(createEvent(32, true, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.moveToEndLine] = [
+		new CNativeEvent(keyCodes.End, false, false, false, false),
+		new CNativeEvent(keyCodes.ArrowRight, false, false, false, true, testFlags.macOs),
 	];
-	oCellEditorEvents[oCellEditorTypes.moveToEndLine] = [
-		new CTestEvent(createEvent(35, false, false, false, false, false)),
-		new CTestEvent(createEvent(oKeyCode.ArrowRight, false, false, false, false, true), testMacOs)
+	oCellEditorEvents[cellEditorHotkeyTypes.moveToEndDocument] = [
+		new CNativeEvent(keyCodes.End, true, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.moveToEndDocument] = [
-		new CTestEvent(createEvent(35, true, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.selectToEndLine] = [
+		new CNativeEvent(keyCodes.End, false, true, false, false),
+		new CNativeEvent(keyCodes.ArrowRight, false, true, false, true, testFlags.macOs),
 	];
-	oCellEditorEvents[oCellEditorTypes.selectToEndLine] = [
-		new CTestEvent(createEvent(35, false, true, false, false, false)),
-		new CTestEvent(createEvent(oKeyCode.ArrowRight, false, true, false, false, true), testMacOs)
+	oCellEditorEvents[cellEditorHotkeyTypes.selectToEndDocument] = [
+		new CNativeEvent(keyCodes.End, true, true, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.selectToEndDocument] = [
-		new CTestEvent(createEvent(35, true, true, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.moveToStartLine] = [
+		new CNativeEvent(keyCodes.Home, false, false, false, false),
+		new CNativeEvent(keyCodes.ArrowLeft, false, false, false, true, testFlags.macOs),
 	];
-	oCellEditorEvents[oCellEditorTypes.moveToStartLine] = [
-		new CTestEvent(createEvent(36, false, false, false, false, false)),
-		new CTestEvent(createEvent(oKeyCode.ArrowLeft, false, false, false, false, true), testMacOs)
+	oCellEditorEvents[cellEditorHotkeyTypes.moveToStartDocument] = [
+		new CNativeEvent(keyCodes.Home, true, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.moveToStartDocument] = [
-		new CTestEvent(createEvent(36, true, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.selectToStartLine] = [
+		new CNativeEvent(keyCodes.Home, false, true, false, false),
+		new CNativeEvent(keyCodes.ArrowLeft, false, true, false, true, testFlags.macOs),
 	];
-	oCellEditorEvents[oCellEditorTypes.selectToStartLine] = [
-		new CTestEvent(createEvent(36, false, true, false, false, false)),
-		new CTestEvent(createEvent(oKeyCode.ArrowLeft, false, true, false, false, true), testMacOs)
+	oCellEditorEvents[cellEditorHotkeyTypes.selectToStartDocument] = [
+		new CNativeEvent(keyCodes.Home, true, true, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.selectToStartDocument] = [
-		new CTestEvent(createEvent(36, true, true, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.moveCursorLeftChar] = [
+		new CNativeEvent(keyCodes.ArrowLeft, false, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.moveCursorLeftChar] = [
-		new CTestEvent(createEvent(37, false, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.moveCursorLeftWord] = [
+		new CNativeEvent(keyCodes.ArrowLeft, true, false, false, false),
+		new CNativeEvent(keyCodes.ArrowLeft, false, false, true, false, testFlags.macOs),
 	];
-	oCellEditorEvents[oCellEditorTypes.moveCursorLeftWord] = [
-		new CTestEvent(createEvent(37, true, false, false, false, false), testWindows),
-		new CTestEvent(createEvent(37, false, false, true, false, false), testMacOs)
+	oCellEditorEvents[cellEditorHotkeyTypes.selectLeftChar] = [
+		new CNativeEvent(keyCodes.ArrowLeft, false, true, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.selectLeftChar] = [
-		new CTestEvent(createEvent(37, false, true, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.selectLeftWord] = [
+		new CNativeEvent(keyCodes.ArrowLeft, true, true, false, false),
+		new CNativeEvent(keyCodes.ArrowLeft, false, true, true, false, testFlags.macOs),
 	];
-	oCellEditorEvents[oCellEditorTypes.selectLeftWord] = [
-		new CTestEvent(createEvent(37, true, true, false, false, false), testWindows),
-		new CTestEvent(createEvent(37, false, true, true, false, false), testMacOs)
+	oCellEditorEvents[cellEditorHotkeyTypes.moveToUpLine] = [
+		new CNativeEvent(keyCodes.ArrowTop, false, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.moveToUpLine] = [
-		new CTestEvent(createEvent(38, false, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.selectToUpLine] = [
+		new CNativeEvent(keyCodes.ArrowTop, false, true, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.selectToUpLine] = [
-		new CTestEvent(createEvent(38, false, true, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.moveToRightChar] = [
+		new CNativeEvent(keyCodes.ArrowRight, false, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.moveToRightChar] = [
-		new CTestEvent(createEvent(39, false, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.moveToRightWord] = [
+		new CNativeEvent(keyCodes.ArrowRight, true, false, false, false),
+		new CNativeEvent(keyCodes.ArrowRight, false, false, true, false, testFlags.macOs),
 	];
-	oCellEditorEvents[oCellEditorTypes.moveToRightWord] = [
-		new CTestEvent(createEvent(39, true, false, false, false, false), testWindows),
-		new CTestEvent(createEvent(39, false, false, true, false, false), testMacOs),
+	oCellEditorEvents[cellEditorHotkeyTypes.selectRightChar] = [
+		new CNativeEvent(keyCodes.ArrowRight, false, true, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.selectRightChar] = [
-		new CTestEvent(createEvent(39, false, true, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.selectRightWord] = [
+		new CNativeEvent(keyCodes.ArrowRight, true, true, false, false),
+		new CNativeEvent(keyCodes.ArrowRight, false, true, true, false, testFlags.macOs),
 	];
-	oCellEditorEvents[oCellEditorTypes.selectRightWord] = [
-		new CTestEvent(createEvent(39, true, true, false, false, false), testWindows),
-		new CTestEvent(createEvent(39, false, true, true, false, false), testMacOs)
+	oCellEditorEvents[cellEditorHotkeyTypes.moveToDownLine] = [
+		new CNativeEvent(keyCodes.ArrowBottom, false, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.moveToDownLine] = [
-		new CTestEvent(createEvent(40, false, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.selectToDownLine] = [
+		new CNativeEvent(keyCodes.ArrowBottom, false, true, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.selectToDownLine] = [
-		new CTestEvent(createEvent(40, false, true, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.deleteFrontChar] = [
+		new CNativeEvent(keyCodes.Delete, false, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.deleteFrontChar] = [
-		new CTestEvent(createEvent(46, false, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.deleteFrontWord] = [
+		new CNativeEvent(keyCodes.Delete, true, false, false, false),
+		new CNativeEvent(keyCodes.Delete, false, false, true, false, testFlags.macOs),
 	];
-	oCellEditorEvents[oCellEditorTypes.deleteFrontWord] = [
-		new CTestEvent(createEvent(46, true, false, false, false, false), testWindows),
-		new CTestEvent(createEvent(46, false, false, true, false, false), testMacOs)
+	oCellEditorEvents[cellEditorHotkeyTypes.setStrikethrough] = [
+		new CNativeEvent(keyCodes.Digit5, true, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.setStrikethrough] = [
-		new CTestEvent(createEvent(53, true, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.selectAll] = [
+		new CNativeEvent(keyCodes.A, true, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.selectAll] = [
-		new CTestEvent(createEvent(65, true, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.setBold] = [
+		new CNativeEvent(keyCodes.B, true, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.setBold] = [
-		new CTestEvent(createEvent(66, true, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.setItalic] = [
+		new CNativeEvent(keyCodes.I, true, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.setItalic] = [
-		new CTestEvent(createEvent(73, true, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.setUnderline] = [
+		new CNativeEvent(keyCodes.U, true, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.setUnderline] = [
-		new CTestEvent(createEvent(85, true, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.disableScrollLock] = [
+		new CNativeEvent(keyCodes.ScrollLock, false, false, false, false, testFlags.opera)
 	];
-	oCellEditorEvents[oCellEditorTypes.disableScrollLock] = [
-		new CTestEvent(createEvent(145, false, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.disableNumLock] = [
+		new CNativeEvent(keyCodes.NumLock, false, false, false, false, testFlags.opera)
 	];
-	oCellEditorEvents[oCellEditorTypes.disableNumLock] = [
-		new CTestEvent(createEvent(144, false, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.disablePrint] = [
+		new CNativeEvent(keyCodes.P, true, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.disablePrint] = [
-		new CTestEvent(createEvent(80, true, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.undo] = [
+		new CNativeEvent(keyCodes.Z, true, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.undo] = [
-		new CTestEvent(createEvent(90, true, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.redo] = [
+		new CNativeEvent(keyCodes.Y, true, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.redo] = [
-		new CTestEvent(createEvent(89, true, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.addSeparator] = [
+		new CNativeEvent(keyCodes.NumpadDecimal, false, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.addSeparator] = [
-		new CTestEvent(createEvent(110, false, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.disableF2] = [
+		new CNativeEvent(keyCodes.F2, false, false, false, false, testFlags.opera)
 	];
-	oCellEditorEvents[oCellEditorTypes.disableF2] = [
-		new CTestEvent(createEvent(113, false, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.switchReference] = [
+		new CNativeEvent(keyCodes.F4, false, false, false, false)
 	];
-	oCellEditorEvents[oCellEditorTypes.switchReference] = [
-		new CTestEvent(createEvent(115, false, false, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.addTime] = [
+		new CNativeEvent(keyCodes.Semicolon, true, true, false, false),
+		new CNativeEvent(keyCodes.SemicolonFirefox, true, true, false, false),
 	];
-	oCellEditorEvents[oCellEditorTypes.addTime] = [
-		new CTestEvent(createEvent(186, true, true, false, false))
-	];
-	oCellEditorEvents[oCellEditorTypes.addDate] = [
-		new CTestEvent(createEvent(186, true, false, false, false))
+	oCellEditorEvents[cellEditorHotkeyTypes.addDate] = [
+		new CNativeEvent(keyCodes.Semicolon, true, false, false, false),
+		new CNativeEvent(keyCodes.SemicolonFirefox, true, false, false, false),
 	];
 
-	function startCellEditorTest(fCallback, nShortcutType)
+	function ExecuteGraphicHotkey(type, eventIndex)
 	{
-		privateStartTest(fCallback, nShortcutType, oCellEditorEvents);
+		const event = graphicEvents[type][eventIndex || 0];
+		return ExecuteShortcut(event);
 	}
 
-	AscTestShortcut.startCellEditorTest = startCellEditorTest;
-	AscTestShortcut.startTableTest = startTableTest;
-	AscTestShortcut.startGraphicTest = startGraphicTest;
-	AscTestShortcut.oTableTypes = oTableTypes;
-	AscTestShortcut.oCellEditorTypes = oCellEditorTypes;
-	AscTestShortcut.oGraphicTypes = oGraphicTypes;
+	function ExecuteTableHotkey(type, eventIndex)
+	{
+		const event = tableEvents[type][eventIndex || 0];
+		return ExecuteShortcut(event);
+	}
+
+	function ExecuteCellEditorHotkey(type, eventIndex)
+	{
+		const event = oCellEditorEvents[type][eventIndex || 0];
+		return ExecuteShortcut(event);
+	}
+
+	function ExecuteShortcut(e)
+	{
+		e.enableFlags();
+		Asc.editor.onKeyDown(e);
+		e.disableFlags();
+		return e.isDefaultPrevented;
+	}
+
+	window.AscTestShortcut = {};
+	AscTestShortcut.tableHotkeyTypes = tableHotkeyTypes;
+	AscTestShortcut.cellEditorHotkeyTypes = cellEditorHotkeyTypes;
+	AscTestShortcut.graphicHotkeyTypes = graphicHotkeyTypes;
+	AscTestShortcut.graphicEvents = graphicEvents;
+	AscTestShortcut.tableEvents = tableEvents;
+	AscTestShortcut.ExecuteCellEditorHotkey = ExecuteCellEditorHotkey;
+	AscTestShortcut.ExecuteTableHotkey = ExecuteTableHotkey;
+	AscTestShortcut.ExecuteGraphicHotkey = ExecuteGraphicHotkey;
+	AscTestShortcut.ExecuteShortcut = ExecuteShortcut;
 })(window);

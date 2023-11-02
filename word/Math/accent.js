@@ -691,7 +691,7 @@ CAccent.prototype.Get_InterfaceProps = function()
 CAccent.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
 	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
-	var strAccent = String.fromCharCode(this.Pr.chr);
+	var strAccent = this.Pr.chr === null ? "̂" : String.fromCharCode(this.Pr.chr);
 	var strStartBracet = (strBase.length > 1 || isLaTeX) ? this.GetStartBracetForGetTextContent(isLaTeX) : "";
 	var strCloseBracet = (strBase.length > 1 || isLaTeX) ? this.GetEndBracetForGetTextContent(isLaTeX) : "";
 	
@@ -703,29 +703,30 @@ CAccent.prototype.GetTextOfElement = function(isLaTeX) {
 			case 768:	strAccent = '\\grave';				break;
 			case 769:	strAccent = '\\acute';				break;
 			case 771:	strAccent = '\\tilde';				break;
-			case 831:
+			case 831:	strAccent = '\\bar{\\bar';			break;
 			case 773:	strAccent = '\\bar';				break;
 			case 774:	strAccent = '\\breve';				break;
 			case 775:	strAccent = '\\dot';				break;
 			case 776:	strAccent = '\\ddot';				break;
 			case 780:	strAccent = '\\check';				break;
-			case 8400:	strAccent = '\\overleftharpoon';	break;
-			case 8401:	strAccent = '\\overrightharpoon';	break;
-			case 8406:	strAccent = '\\overleftarrow';		break;
-			case 8407:	strAccent = '\\overrightarrow';		break;
 			case 8411:	strAccent = '\\dddot';				break;
-			case 8417:	strAccent = '\\overleftrightarrow';	break;
+			case 8400:	strAccent = '\\lhvec';				break;
+			case 8401:	strAccent = '\\hvec';				break;
+			case 8406:	strAccent = '\\lvec';				break;
+			case 8407:	strAccent = '\\vec';			    break;
+			case 8417:	strAccent = '\\tvec';				break;
 			default:	strAccent = '\\hat';				break;
 		}
 		strTemp = strAccent + strStartBracet + strBase + strCloseBracet
+
+		if (intAccentCode === 831)
+			strTemp += "}";
 	}
     else
     {
         if (strBase.length === 0)
-        {
             strBase = "()";
-        }
-		strTemp = strStartBracet + strBase + strCloseBracet + strAccent;
+	   strTemp = strStartBracet + strBase + strCloseBracet + strAccent;
 	}
 	return strTemp;
 };

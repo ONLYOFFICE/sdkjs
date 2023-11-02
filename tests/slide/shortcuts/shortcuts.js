@@ -31,1645 +31,1203 @@
  */
 
 'use strict';
+
 (function (window)
 {
 	const {
-		createMathInShape,
-		moveCursorDown,
-		moveCursorLeft,
-		moveCursorRight,
-		onInput,
-		goToPageWithFocus,
-		goToPage,
-		checkDirectTextPrAfterKeyDown,
-		checkDirectParaPrAfterKeyDown,
-		createShape,
-		addSlide,
-		onKeyDown,
-		executeTestWithCatchEvent,
-		createNativeEvent,
-		checkSelectedSlides,
-		cleanPresentation,
-		executeCheckMoveShape,
-		addPropertyToDocument,
-		testMoveHelper,
-		createShapeWithTitlePlaceholder,
-		createChart,
-		createTable,
-		checkRemoveObject,
-		checkTextAfterKeyDownHelperHelloWorld,
-		checkTextAfterKeyDownHelperEmpty,
-		createEvent,
-		getShapeWithParagraphHelper,
-		moveToParagraph,
-		getFirstSlide,
-		selectOnlyObjects,
-		addToSelection,
-		createGroup,
-		getController,
-		oGlobalLogicDocument,
-		oMainShortcutTypes,
-		oDemonstrationEvents,
-		oDemonstrationTypes,
-		oThumbnailsTypes,
-		oThumbnailsMainFocusTypes,
-		startThumbnailsFocusTest,
-		startThumbnailsMainFocusTest,
-		startMainTest
-	} = window.AscTestShortcut;
-	let oMockEvent = createNativeEvent();
+		mainShortcutTypes,
+		thumbnailsTypes,
+		demonstrationTypes,
+		demonstrationEvents,
+		ExecuteDemonstrationShortcut,
+		ExecuteThumbnailShortcut,
+		ExecuteMainShortcut,
+		ExecuteThumbnailHotkey,
+		ExecuteMainHotkey,
+		CNativeEvent
+	} = AscTest;
 
-	function checkSave(oAssert)
+	const logicDocument = AscTest.CreateLogicDocument();
+	AscFormat.CHART_STYLE_MANAGER.init();
+
+	editor.sendEvent = Asc.asc_docs_api.prototype.sendEvent.bind(editor);
+	editor.asc_registerCallback = Asc.asc_docs_api.prototype.asc_registerCallback.bind(editor);
+	editor.asc_unregisterCallback = Asc.asc_docs_api.prototype.asc_unregisterCallback.bind(editor);
+	editor.sync_ContextMenuCallback = Asc.asc_docs_api.prototype.sync_ContextMenuCallback.bind(editor);
+	editor.sync_DemonstrationSlideChanged = Asc.asc_docs_api.prototype.sync_DemonstrationSlideChanged.bind(editor);
+	editor.sync_endDemonstration = Asc.asc_docs_api.prototype.sync_endDemonstration.bind(editor);
+	editor.sync_DialogAddHyperlink = Asc.asc_docs_api.prototype.sync_DialogAddHyperlink.bind(editor);
+	editor.getGraphicController = Asc.asc_docs_api.prototype.getGraphicController.bind(editor);
+	editor.FontSizeIn = Asc.asc_docs_api.prototype.FontSizeIn.bind(editor);
+	editor.FontSizeOut = Asc.asc_docs_api.prototype.FontSizeOut.bind(editor);
+	editor.asc_getChartObject = Asc.asc_docs_api.prototype.asc_getChartObject.bind(editor);
+	editor.asc_AddMath2 = Asc.asc_docs_api.prototype.asc_AddMath2.bind(editor);
+	editor.IncreaseIndent = Asc.asc_docs_api.prototype.IncreaseIndent.bind(editor);
+	editor.DecreaseIndent = Asc.asc_docs_api.prototype.DecreaseIndent.bind(editor);
+	editor.get_ShowParaMarks = Asc.asc_docs_api.prototype.get_ShowParaMarks.bind(editor);
+	editor.retrieveFormatPainterData = Asc.asc_docs_api.prototype.retrieveFormatPainterData.bind(editor);
+	editor.sync_EndAddShape = Asc.asc_docs_api.prototype.sync_EndAddShape.bind(editor);
+	editor.asc_getShowGuides = Asc.asc_docs_api.prototype.asc_getShowGuides.bind(editor);
+	editor.sync_HyperlinkClickCallback = Asc.asc_docs_api.prototype.sync_HyperlinkClickCallback.bind(editor);
+	AscCommon.CDocsCoApi.prototype.askSaveChanges = function (callback)
 	{
-		const fOldSave = editor._onSaveCallbackInner;
-		let bCheck = false;
-		editor._onSaveCallbackInner = function ()
+		window.setTimeout(function ()
 		{
-			bCheck = true;
-			editor.canSave = true;
-		};
-		onKeyDown(oMockEvent);
-		oAssert.strictEqual(bCheck, true, 'Check save shortcut');
-		editor._onSaveCallbackInner = fOldSave;
+			callback({"saveLock": false});
+		}, 0);
+	};
+	function CreateSlide()
+	{
+		logicDocument.addNextSlide(0);
+		editor.WordControl.Thumbnails.SlidesCount = logicDocument.Slides.length;
+		editor.WordControl.m_oDrawingDocument.SlidesCount = logicDocument.Slides.length;
+		editor.WordControl.Thumbnails.CalculatePlaces();
 	}
 
-	$(function ()
+	function GoToSlide(slide)
 	{
-		QUnit.module('Check shortcut focus', {
-			before: function ()
-			{
-				addSlide();
-			},
-			after : function ()
-			{
-				cleanPresentation();
-			}
-		});
-		QUnit.test('check shortcut focus', (oAssert) =>
+		editor.WordControl.GoToPage(slide);
+	}
+
+	function CleanPresentation()
+	{
+		editor.WordControl.Thumbnails.SelectAll();
+		logicDocument.deleteSlides(logicDocument.GetSelectedSlides());
+	}
+
+	function AddShape(x, y, height, width)
+	{
+		AscCommon.History.Create_NewPoint();
+		const shapeTrack = new AscFormat.NewShapeTrack('rect', x, y, AscFormat.GetDefaultTheme(), null, null, null, 0);
+		shapeTrack.track({}, x+ width, y + height);
+		const shape = shapeTrack.getShape(false, AscTest.DrawingDocument, null);
+		shape.setBDeleted(false);
+		shape.setParent(logicDocument.Slides[0]);
+		shape.addToDrawingObjects();
+		shape.select(GetDrawingObjects(), 0);
+		return shape;
+	}
+
+	function AddChart()
+	{
+		const chart = editor.asc_getChartObject(Asc.c_oAscChartTypeSettings.lineNormal);
+		chart.setParent(logicDocument.Slides[0]);
+
+		chart.addToDrawingObjects();
+		chart.spPr.setXfrm(new AscFormat.CXfrm());
+		chart.spPr.xfrm.setOffX(0);
+		chart.spPr.xfrm.setOffY(0);
+		chart.spPr.xfrm.setExtX(100);
+		chart.spPr.xfrm.setExtY(100);
+		logicDocument.Recalculate();
+		return chart;
+	}
+
+	function AddPlaceholderShape()
+	{
+		const shape = AddShape(0, 0, 100, 100);
+		shape.setNvSpPr(new AscFormat.UniNvPr());
+		let placeholder = new AscFormat.Ph();
+		placeholder.setType(AscFormat.phType_title);
+		shape.nvSpPr.nvPr.setPh(placeholder);
+		shape.txBody = AscFormat.CreateTextBodyFromString('', shape.getDrawingDocument(), shape);
+
+		shape.recalculateContentWitCompiledPr();
+		return shape;
+	}
+
+	function AddTable(columns, rows)
+	{
+		return logicDocument.Add_FlowTable(columns, rows);
+	}
+
+	function CreateGroup(arrObjects)
+	{
+		const controller = GetDrawingObjects();
+		controller.resetSelection();
+		for (let i = 0; i < arrObjects.length; i += 1)
 		{
-			editor.StartDemonstration("presentation-preview", 0);
-			let bCheck = false;
-			let fOldKeyDown;
-			fOldKeyDown = editor.WordControl.DemonstrationManager.onKeyDown;
-			editor.WordControl.DemonstrationManager.onKeyDown = function ()
-			{
-				bCheck = true;
-			}
-			editor.WordControl.onKeyDown(createNativeEvent());
-			oAssert.true(bCheck, 'Check demonstration onKeyDown');
-			editor.WordControl.DemonstrationManager.onKeyDown = fOldKeyDown;
-			editor.EndDemonstration();
-
-			bCheck = false;
-			goToPageWithFocus(0, FOCUS_OBJECT_THUMBNAILS);
-			fOldKeyDown = editor.WordControl.Thumbnails.onKeyDown;
-			editor.WordControl.Thumbnails.onKeyDown = function ()
-			{
-				bCheck = true;
-			}
-			editor.WordControl.onKeyDown(createNativeEvent());
-			oAssert.true(bCheck, 'Check thumbnails onKeyDown');
-			editor.WordControl.Thumbnails.onKeyDown = fOldKeyDown;
-
-			bCheck = false;
-			goToPageWithFocus(0, FOCUS_OBJECT_MAIN);
-			fOldKeyDown = editor.WordControl.m_oLogicDocument.OnKeyDown;
-			editor.WordControl.m_oLogicDocument.OnKeyDown = function ()
-			{
-				bCheck = true;
-			}
-			editor.WordControl.onKeyDown(createNativeEvent());
-			oAssert.true(bCheck, 'Check logic document onKeyDown');
-			editor.WordControl.m_oLogicDocument.OnKeyDown = fOldKeyDown;
-		});
-
-		QUnit.module("Test thumbnails main focus shortcuts", {
-			beforeEach: function ()
-			{
-				cleanPresentation();
-				addSlide();
-				addSlide();
-				addSlide();
-				addSlide();
-				addSlide();
-				goToPageWithFocus(0, FOCUS_OBJECT_MAIN);
-			},
-			afterEach : function ()
-			{
-				cleanPresentation();
-			}
-		});
-		QUnit.test('Test add next slide', (oAssert) =>
-		{
-			startThumbnailsMainFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(0, FOCUS_OBJECT_MAIN);
-				const arrOldSlides = oGlobalLogicDocument.Slides.slice();
-				onKeyDown(oEvent);
-				const arrSelectedSlides = oGlobalLogicDocument.GetSelectedSlides();
-				oAssert.true(checkSelectedSlides([1]) && (arrOldSlides.indexOf(oGlobalLogicDocument.Slides[arrSelectedSlides[0]]) === -1));
-
-			}, oThumbnailsMainFocusTypes.addNextSlide);
-		});
-
-		QUnit.test('Test move to previous slide', (oAssert) =>
-		{
-			startThumbnailsMainFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(4, FOCUS_OBJECT_MAIN);
-				onKeyDown(oEvent);
-				oAssert.true(checkSelectedSlides([3]));
-			}, oThumbnailsMainFocusTypes.moveToPreviousSlide);
-		});
-
-		QUnit.test('Test move to next slide', (oAssert) =>
-		{
-			startThumbnailsMainFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(0, FOCUS_OBJECT_MAIN);
-				onKeyDown(oEvent);
-				oAssert.true(checkSelectedSlides([1]));
-			}, oThumbnailsMainFocusTypes.moveToNextSlide);
-		});
-
-		QUnit.test('Test move to first slide', (oAssert) =>
-		{
-			startThumbnailsMainFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(4, FOCUS_OBJECT_MAIN);
-				onKeyDown(oEvent);
-				oAssert.true(checkSelectedSlides([0]));
-			}, oThumbnailsMainFocusTypes.moveToFirstSlide);
-		});
-
-		QUnit.test('Test select to first slide', (oAssert) =>
-		{
-			startThumbnailsMainFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(4, FOCUS_OBJECT_MAIN);
-				onKeyDown(oEvent);
-				oAssert.true(checkSelectedSlides([0, 1, 2, 3, 4]));
-			}, oThumbnailsMainFocusTypes.selectToFirstSlide);
-		});
-
-		QUnit.test('Test move to last slide', (oAssert) =>
-		{
-			startThumbnailsMainFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(0, FOCUS_OBJECT_MAIN);
-				onKeyDown(oEvent);
-				oAssert.true(checkSelectedSlides([4]));
-			}, oThumbnailsMainFocusTypes.moveToLastSlide);
-		});
-
-		QUnit.test('Test select to last slide', (oAssert) =>
-		{
-			startThumbnailsMainFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(0, FOCUS_OBJECT_MAIN);
-				onKeyDown(oEvent);
-				oAssert.true(checkSelectedSlides([0, 1, 2, 3, 4]));
-			}, oThumbnailsMainFocusTypes.selectToLastSlide);
-		});
-
-		QUnit.test('Test thumbnails shortcut actions', (oAssert) =>
-		{
-			cleanPresentation();
-			addSlide();
-			addSlide();
-			addSlide();
-			addSlide();
-			const fOldShortcut = editor.getShortcut;
-			goToPage(0);
-
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.EditSelectAll;};
-			goToPageWithFocus(0, FOCUS_OBJECT_THUMBNAILS);
-			onKeyDown(createNativeEvent());
-			oAssert.true(checkSelectedSlides([0, 1, 2, 3]), 'Check select all slides');
-
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.Duplicate;};
-			goToPageWithFocus(0, FOCUS_OBJECT_THUMBNAILS);
-			const arrOldSlides = oGlobalLogicDocument.Slides.slice();
-			onKeyDown(createNativeEvent());
-			oAssert.true(checkSelectedSlides([1]) && oGlobalLogicDocument.Slides.length === 5 && arrOldSlides.indexOf(oGlobalLogicDocument.Slides[1]) === -1, 'Check duplicate slides');
-
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.Print;};
-			goToPageWithFocus(0, FOCUS_OBJECT_THUMBNAILS);
-			executeTestWithCatchEvent('asc_onPrint', () => true, true, createNativeEvent(), oAssert);
-
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.Save;};
-			goToPageWithFocus(0, FOCUS_OBJECT_THUMBNAILS);
-			checkSave(oAssert);
-
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.ShowContextMenu;};
-			goToPageWithFocus(0, FOCUS_OBJECT_THUMBNAILS);
-			executeTestWithCatchEvent('asc_onContextMenu', () => true, true, oMockEvent, oAssert);
-
-			cleanPresentation();
-			editor.getShortcut = fOldShortcut;
-		});
-
-		QUnit.module('Test thumbnails hotkeys', {
-			before: function ()
-			{
-				cleanPresentation();
-				addSlide();
-				addSlide();
-				addSlide();
-				addSlide();
-			},
-			after : function ()
-			{
-				cleanPresentation();
-			}
-		});
-		let arrOldSlides;
-		let oOldSlide;
-		QUnit.test('Test thumbnails focus event', (oAssert) =>
-		{
-			startThumbnailsFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(0, FOCUS_OBJECT_THUMBNAILS);
-				arrOldSlides = oGlobalLogicDocument.Slides.slice();
-				onKeyDown(oEvent);
-				oAssert.true(checkSelectedSlides([1]) && arrOldSlides.indexOf(oGlobalLogicDocument.Slides[1]) === -1, 'Check add next slide');
-			}, oThumbnailsTypes.addNextSlide);
-
-			startThumbnailsFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(0, FOCUS_OBJECT_THUMBNAILS);
-				oOldSlide = getFirstSlide();
-				onKeyDown(oEvent);
-				oAssert.true(checkSelectedSlides([0]) && oGlobalLogicDocument.Slides.indexOf(oOldSlide) === -1, 'Check remove selected slides');
-			}, oThumbnailsTypes.removeSelectedSlides);
-
-			startThumbnailsFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(0, FOCUS_OBJECT_THUMBNAILS);
-				const oFirstSlide = getFirstSlide();
-				onKeyDown(oEvent);
-				oAssert.true(oGlobalLogicDocument.Slides[3] === oFirstSlide, 'Check move selected slides to end');
-			}, oThumbnailsTypes.moveSelectedSlidesToEnd);
-
-			startThumbnailsFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(0, FOCUS_OBJECT_THUMBNAILS);
-				const oFirstSlide = getFirstSlide();
-				onKeyDown(oEvent);
-				oAssert.true(oGlobalLogicDocument.Slides[1] === oFirstSlide, 'Check move selected slides to next pos');
-			}, oThumbnailsTypes.moveSelectedSlidesToNextPosition);
-
-			startThumbnailsFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(0, FOCUS_OBJECT_THUMBNAILS);
-				onKeyDown(oEvent);
-				oAssert.true(checkSelectedSlides([0, 1]), 'Check select next slide');
-			}, oThumbnailsTypes.selectNextSlide);
-
-			startThumbnailsFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(0, FOCUS_OBJECT_THUMBNAILS);
-				onKeyDown(oEvent);
-				oAssert.true(checkSelectedSlides([1]), 'Check move to next slide');
-			}, oThumbnailsTypes.moveToNextSlide);
-
-			startThumbnailsFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(2, FOCUS_OBJECT_THUMBNAILS);
-				onKeyDown(oEvent);
-				oAssert.true(checkSelectedSlides([0]), 'Check move to first slide');
-			}, oThumbnailsTypes.moveToFirstSlide);
-
-			startThumbnailsFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(2, FOCUS_OBJECT_THUMBNAILS);
-				onKeyDown(oEvent);
-				oAssert.true(checkSelectedSlides([0, 1, 2]), 'Check select from current position to first slide');
-			}, oThumbnailsTypes.selectToFirstSlide);
-
-			startThumbnailsFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(0, FOCUS_OBJECT_THUMBNAILS);
-				onKeyDown(oEvent);
-				oAssert.true(checkSelectedSlides([3]), 'Check move to last slide');
-			}, oThumbnailsTypes.moveToLastSlide);
-
-			startThumbnailsFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(0, FOCUS_OBJECT_THUMBNAILS);
-				onKeyDown(oEvent);
-				oAssert.true(checkSelectedSlides([0, 1, 2, 3]), 'Check select from current position to last slide');
-			}, oThumbnailsTypes.selectToLastSlide);
-
-			startThumbnailsFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(2, FOCUS_OBJECT_THUMBNAILS);
-				const oLastSlide = oGlobalLogicDocument.Slides[2];
-				onKeyDown(oEvent);
-				oAssert.true(getFirstSlide() === oLastSlide, 'Check move selected slides to start');
-			}, oThumbnailsTypes.moveSelectedSlidesToStart);
-
-			startThumbnailsFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(2, FOCUS_OBJECT_THUMBNAILS);
-				const oLastSlide = oGlobalLogicDocument.Slides[2];
-				onKeyDown(oEvent);
-				oAssert.true(oGlobalLogicDocument.Slides[1] === oLastSlide, 'Check move selected slides to previous pos');
-			}, oThumbnailsTypes.moveSelectedSlidesToPreviousPosition);
-
-			startThumbnailsFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(2, FOCUS_OBJECT_THUMBNAILS);
-				onKeyDown(oEvent);
-				oAssert.true(checkSelectedSlides([1, 2]), 'Check select previous slide');
-			}, oThumbnailsTypes.selectPreviousSlide);
-
-			startThumbnailsFocusTest((oEvent) =>
-			{
-				goToPageWithFocus(2, FOCUS_OBJECT_THUMBNAILS);
-				onKeyDown(oEvent);
-				oAssert.true(checkSelectedSlides([1]), 'Check move to previous slide');
-			}, oThumbnailsTypes.moveToPreviousSlide);
-		});
-
-		QUnit.module('Test demonstration mode shortcuts', {
-			beforeEach: function ()
-			{
-				cleanPresentation();
-				addSlide();
-				addSlide();
-				addSlide();
-				addSlide();
-				addSlide();
-				addSlide();
-			},
-			afterEach : function ()
-			{
-				cleanPresentation();
-			}
-		});
-
-		QUnit.test('Test demonstration mode shortcuts', (oAssert) =>
-		{
-			editor.StartDemonstration("presentation-preview", 0);
-			executeTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 1, oDemonstrationEvents[oDemonstrationTypes.moveToNextSlide][0].event, oAssert);
-			executeTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 2, oDemonstrationEvents[oDemonstrationTypes.moveToNextSlide][1].event, oAssert);
-			executeTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 3, oDemonstrationEvents[oDemonstrationTypes.moveToNextSlide][2].event, oAssert);
-			executeTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 4, oDemonstrationEvents[oDemonstrationTypes.moveToNextSlide][3].event, oAssert);
-			executeTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 5, oDemonstrationEvents[oDemonstrationTypes.moveToNextSlide][4].event, oAssert);
-
-			executeTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 4, oDemonstrationEvents[oDemonstrationTypes.moveToPreviousSlide][0].event, oAssert);
-			executeTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 3, oDemonstrationEvents[oDemonstrationTypes.moveToPreviousSlide][1].event, oAssert);
-			executeTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 2, oDemonstrationEvents[oDemonstrationTypes.moveToPreviousSlide][2].event, oAssert);
-
-			executeTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 0, oDemonstrationEvents[oDemonstrationTypes.moveToFirstSlide][0].event, oAssert);
-
-			executeTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 5, oDemonstrationEvents[oDemonstrationTypes.moveToLastSlide][0].event, oAssert);
-
-			executeTestWithCatchEvent('asc_onEndDemonstration', () => true, true, oDemonstrationEvents[oDemonstrationTypes.exitFromDemonstrationMode][0].event, oAssert);
-
-			editor.EndDemonstration();
-		});
-
-		QUnit.module("Test main focus shortcuts", {
-			beforeEach: function ()
-			{
-				addSlide();
-				goToPageWithFocus(0, FOCUS_OBJECT_MAIN);
-			},
-			afterEach : function ()
-			{
-				cleanPresentation();
-			}
-		});
-		QUnit.test('Test if the desired action is received by the keyboard shortcut.', (oAssert) =>
-		{
-			let oEvent;
-			oEvent = createEvent(65, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.EditSelectAll, 'Check getting select all shortcut action');
-
-			oEvent = createEvent(90, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.EditUndo, 'Check getting undo shortcut action');
-
-			oEvent = createEvent(89, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.EditRedo, 'Check getting redo shortcut action');
-
-			oEvent = createEvent(88, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Cut, 'Check getting cut shortcut action');
-
-			oEvent = createEvent(67, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Copy, 'Check getting copy shortcut action');
-
-			oEvent = createEvent(86, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Paste, 'Check getting paste shortcut action');
-
-			oEvent = createEvent(68, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Duplicate, 'Check getting duplicate shortcut action');
-
-			oEvent = createEvent(80, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Print, 'Check getting print shortcut action');
-
-			oEvent = createEvent(83, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Save, 'Check getting save shortcut action');
-
-			oEvent = createEvent(93, false, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.ShowContextMenu, 'Check getting show context menu shortcut action');
-
-			oEvent = createEvent(121, false, true, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.ShowContextMenu, 'Check getting show context menu shortcut action');
-
-			oEvent = createEvent(57351, false, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.ShowContextMenu, 'Check getting show context menu shortcut action');
-
-			oEvent = createEvent(56, true, true, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.ShowParaMarks, 'Check getting show paragraph marks shortcut action');
-
-			oEvent = createEvent(66, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Bold, 'Check getting bold shortcut action');
-
-			oEvent = createEvent(67, true, false, true, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.CopyFormat, 'Check getting copy format shortcut action');
-
-			oEvent = createEvent(69, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.CenterAlign, 'Check getting center align shortcut action');
-
-			oEvent = createEvent(69, true, false, true, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.EuroSign, 'Check getting euro sign shortcut action');
-
-			oEvent = createEvent(71, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Group, 'Check getting group shortcut action');
-
-			oEvent = createEvent(71, true, true, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.UnGroup, 'Check getting ungroup shortcut action');
-
-			oEvent = createEvent(73, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Italic, 'Check getting italic shortcut action');
-
-			oEvent = createEvent(74, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.JustifyAlign, 'Check getting justify align shortcut action');
-
-			oEvent = createEvent(75, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.AddHyperlink, 'Check getting add hyperlink shortcut action');
-
-			oEvent = createEvent(76, true, true, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.BulletList, 'Check getting bullet list shortcut action');
-
-			oEvent = createEvent(76, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.LeftAlign, 'Check getting left align shortcut action');
-
-			oEvent = createEvent(82, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.RightAlign, 'Check getting right align shortcut action');
-
-			oEvent = createEvent(85, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Underline, 'Check getting underline shortcut action');
-
-			oEvent = createEvent(53, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Strikethrough, 'Check getting strikethrough shortcut action');
-
-			oEvent = createEvent(86, true, false, true, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.PasteFormat, 'Check getting paste format shortcut action');
-
-			oEvent = createEvent(188, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Superscript, 'Check getting superscript shortcut action');
-
-			oEvent = createEvent(190, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.Subscript, 'Check getting subscript shortcut action');
-
-			oEvent = createEvent(189, true, true, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.EnDash, 'Check getting en dash shortcut action');
-
-			oEvent = createEvent(219, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.DecreaseFont, 'Check getting decrease font size shortcut action');
-
-			oEvent = createEvent(221, true, false, false, false, false);
-			oAssert.strictEqual(editor.getShortcut(oEvent), Asc.c_oAscPresentationShortcutType.IncreaseFont, 'Check getting increase font size shortcut action');
-		});
-
-		let fOldGetShortcut;
-		QUnit.module('Test main shortcut actions', {
-			before: function ()
-			{
-				cleanPresentation();
-				addSlide();
-				goToPageWithFocus(0, FOCUS_OBJECT_MAIN);
-				fOldGetShortcut = editor.getShortcut;
-			},
-			after : function ()
-			{
-				cleanPresentation();
-				editor.getShortcut = fOldGetShortcut;
-			}
-		});
-
-		QUnit.test('Test undo shortcut', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.EditUndo;};
-			createShape();
-			onKeyDown(oMockEvent);
-			oAssert.strictEqual(getFirstSlide().cSld.spTree.length, 0);
-		});
-
-		QUnit.test('Test redo shortcut', (oAssert) =>
-		{
-			const oUndoShape = createShape();
-			editor.Undo();
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.EditRedo;};
-			onKeyDown(oMockEvent);
-			oAssert.strictEqual(getFirstSlide().cSld.spTree.length === 1 && getFirstSlide().cSld.spTree[0] === oUndoShape, true);
-		});
-
-		QUnit.test('Test select all shortcut', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.EditSelectAll;};
-			cleanPresentation();
-			addSlide();
-			goToPageWithFocus(0, FOCUS_OBJECT_MAIN);
-			const oFirstShape = createShape();
-			const oSecondShape = createShape();
-			onKeyDown(oMockEvent);
-			const oController = getController();
-			oAssert.strictEqual(oController.selectedObjects.length === 2 && oController.selectedObjects.indexOf(oFirstShape) !== -1 && oController.selectedObjects.indexOf(oSecondShape) !== -1, true);
-		});
-
-		QUnit.test('Test duplicate shape', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.Duplicate;};
-			const {oShape} = getShapeWithParagraphHelper('', true);
-			const arrOldSpTree = oGlobalLogicDocument.Slides[0].cSld.spTree.slice();
-			selectOnlyObjects([oShape]);
-			onKeyDown(oMockEvent);
-			const arrUpdatedSpTree = oGlobalLogicDocument.Slides[0].cSld.spTree;
-			const oNewShape = arrUpdatedSpTree[arrUpdatedSpTree.length - 1];
-			oAssert.true(arrOldSpTree.indexOf(oNewShape) === -1);
-		});
-
-		QUnit.test('Test print', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.Print;};
-			executeTestWithCatchEvent('asc_onPrint', () => true, true, oMockEvent, oAssert);
-		});
-
-		QUnit.test('Test save', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.Save;};
-			checkSave(oAssert);
-		});
-
-		QUnit.test('Test context menu', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.ShowContextMenu;};
-			executeTestWithCatchEvent('asc_onContextMenu', () => true, true, oMockEvent, oAssert, () =>
-			{
-				const {oParagraph} = getShapeWithParagraphHelper('');
-				oParagraph.SetThisElementCurrent();
-			});
-		});
-
-		QUnit.test('Test show para marks', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.ShowParaMarks;};
-			editor.put_ShowParaMarks(false);
-			onKeyDown(oMockEvent);
-			oAssert.true(!!editor.get_ShowParaMarks(), 'Check show para marks shortcut');
-		});
-
-		QUnit.test('Test bold shortcut', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.Bold;};
-			checkDirectTextPrAfterKeyDown((oTextPr) => oTextPr.Get_Bold(), oMockEvent, oAssert, true, 'Check bold shortcut');
-		});
-
-		function getCopyParagraphPrTest()
-		{
-			const oCopyParagraphTextPr = new AscCommonWord.CTextPr();
-			oCopyParagraphTextPr.SetUnderline(true);
-			oCopyParagraphTextPr.SetBold(true);
-			oCopyParagraphTextPr.BoldCS = true;
-			oCopyParagraphTextPr.SetItalic(true);
-			oCopyParagraphTextPr.ItalicCS = true;
-			return oCopyParagraphTextPr;
+			arrObjects[i].select(controller, 0);
 		}
 
-		QUnit.test('Test copy format', (oAssert) =>
+		return controller.createGroup();
+	}
+
+	function ClearShapeAndAddParagraph(sText)
+	{
+		const textShape = AddShape(0, 0, 100, 100);
+		const txBody = AscFormat.CreateTextBodyFromString(sText, editor.WordControl.m_oDrawingDocument, textShape)
+		textShape.setTxBody(txBody);
+		textShape.setPaddings({Left: 0, Top: 0, Right: 0, Bottom: 0});
+		const content = txBody.content;
+		content.SetThisElementCurrent();
+		content.MoveCursorToStartPos();
+		textShape.recalculate();
+		return {shape: textShape, paragraph: content.Content[0]};
+	}
+
+	function GetDirectTextPr()
+	{
+		return logicDocument.GetDirectTextPr();
+	}
+
+	function GetDirectParaPr()
+	{
+		return logicDocument.GetDirectParaPr();
+	}
+
+	function Round(number, amount)
+	{
+		const power = Math.pow(10, amount);
+		return Math.round(number * power) / power;
+	}
+
+	function SelectDrawings(arrDrawings)
+	{
+		const drawingController = GetDrawingObjects();
+		drawingController.resetSelection()
+		for (let i = 0; i < arrDrawings.length; i += 1)
 		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.CopyFormat;};
-			const {oParagraph} = getShapeWithParagraphHelper('Hello World');
-			oParagraph.SetThisElementCurrent();
-			oGlobalLogicDocument.SelectAll();
-			addPropertyToDocument({Bold: true, Italic: true, Underline: true});
+			arrDrawings[i].select(drawingController, 0);
+		}
+	}
 
-			onKeyDown(oMockEvent);
-			const oTextPr = editor.getFormatPainterData().TextPr;
-			oAssert.strictEqual(oTextPr.Get_Bold(), true, 'Check copy format shortcut');
-			oAssert.strictEqual(oTextPr.Get_Italic(), true, 'Check copy format shortcut');
-			oAssert.strictEqual(oTextPr.Get_Underline(), true, 'Check copy format shortcut');
-		});
+	function GetDrawingObjects()
+	{
+		return editor.getGraphicController();
+	}
 
-		QUnit.test('Test paste format', (oAssert) =>
+	QUnit.module("Test shortcuts",
 		{
-			let oParagraph;
-			oParagraph = getShapeWithParagraphHelper('Hello World').oParagraph;
-			oParagraph.SetThisElementCurrent();
-			oGlobalLogicDocument.SelectAll();
-			addPropertyToDocument({Bold: true, Italic: true, Underline: true});
-			oGlobalLogicDocument.Document_Format_Copy();
-			
-			
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.PasteFormat;};
-			oParagraph = getShapeWithParagraphHelper('Hello World').oParagraph;
-			oParagraph.SetThisElementCurrent();
-			oGlobalLogicDocument.SelectAll();
-
-			onKeyDown(oMockEvent);
-			const oDirectTextPr = oParagraph.GetDirectTextPr();
-			oAssert.strictEqual(oDirectTextPr.Get_Bold(), true, 'Check copy format shortcut');
-			oAssert.strictEqual(oDirectTextPr.Get_Italic(), true, 'Check copy format shortcut');
-			oAssert.strictEqual(oDirectTextPr.Get_Underline(), true, 'Check copy format shortcut');
-		});
-
-		QUnit.test('Test center align', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.CenterAlign;};
-			checkDirectParaPrAfterKeyDown((oParaPr) => oParaPr.GetJc(), oMockEvent, oAssert, AscCommon.align_Center, 'Check center align shortcut');
-		});
-
-		QUnit.test('Test insert euro sign', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.EuroSign;};
-			checkTextAfterKeyDownHelperEmpty('€', oMockEvent, oAssert, 'Check euro sign shortcut');
-		});
-
-		QUnit.test('Test group', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.Group;};
-			const oFirstShape = createShape();
-			const oSecondShape = createShape();
-			selectOnlyObjects([oFirstShape, oSecondShape]);
-
-			onKeyDown(oMockEvent);
-			const oGroup = oFirstShape.group;
-			oAssert.true(oFirstShape.group && (oFirstShape.group === oSecondShape.group), 'Check group shortcut');
-		});
-
-		QUnit.test('Test ungroup', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.UnGroup;};
-			const oFirstShape = createShape();
-			const oSecondShape = createShape();
-			const oGroup = createGroup([oFirstShape, oSecondShape]);
-			selectOnlyObjects([oGroup]);
-
-			onKeyDown(oMockEvent);
-			oAssert.true(!oFirstShape.group && !oSecondShape.group && oGroup.bDeleted, 'Check ungroup shortcut');
-		});
-
-		QUnit.test('Test italic', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.Italic;};
-			checkDirectTextPrAfterKeyDown((oTextPr) => oTextPr.Get_Italic(), oMockEvent, oAssert, true, 'Check italic shortcut');
-		});
-
-		QUnit.test('Test justify align', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.JustifyAlign;};
-			checkDirectParaPrAfterKeyDown((oParaPr) => oParaPr.GetJc(), oMockEvent, oAssert, AscCommon.align_Justify, 'check justify align shortcut');
-		});
-
-		QUnit.test('Test open hyperlink dialog', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.AddHyperlink;};
-			executeTestWithCatchEvent('asc_onDialogAddHyperlink', () => true, true, oMockEvent, oAssert, () =>
+			afterEach : function ()
 			{
-				const {oParagraph} = getShapeWithParagraphHelper('Hello World');
-				moveToParagraph(oParagraph);
-				oGlobalLogicDocument.SelectAll();
-			});
-		});
-
-		QUnit.test('Test add bullet list to paragraphs', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.BulletList;};
-			const {oParagraph} = getShapeWithParagraphHelper('Hello World');
-			oParagraph.SetThisElementCurrent();
-			oGlobalLogicDocument.SelectAll();
-
-			onKeyDown(oMockEvent);
-			const oBullet = oParagraph.Get_PresentationNumbering();
-			oAssert.true(oBullet.m_nType === AscFormat.numbering_presentationnumfrmt_Char, 'Check bullet list shortcut');
-		});
-
-		QUnit.test('Test left align', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.LeftAlign;};
-			checkDirectParaPrAfterKeyDown((oParaPr) => oParaPr.GetJc(), oMockEvent, oAssert, AscCommon.align_Left, 'check right align shortcut');
-		});
-
-		QUnit.test('Test right align', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.RightAlign;};
-			checkDirectParaPrAfterKeyDown((oParaPr) => oParaPr.GetJc(), oMockEvent, oAssert, AscCommon.align_Right, 'check right align shortcut');
-		});
-
-		QUnit.test('Test underline shortcut', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.Underline;};
-			checkDirectTextPrAfterKeyDown((oTextPr) => oTextPr.Get_Underline(), oMockEvent, oAssert, true, 'Check underline shortcut');
-		});
-
-		QUnit.test('Test strikeout shortcut', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.Strikethrough;};
-			checkDirectTextPrAfterKeyDown((oTextPr) => oTextPr.Get_Strikeout(), oMockEvent, oAssert, true, 'Check strikeout shortcut');
-		});
-
-		QUnit.test('Test superscript vertalign', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.Superscript;};
-			checkDirectTextPrAfterKeyDown((oTextPr) => oTextPr.GetVertAlign(), oMockEvent, oAssert, AscCommon.vertalign_SuperScript, 'Check superscript shortcut');
-		});
-
-		QUnit.test('Test subscript vertalign', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.Subscript;};
-			checkDirectTextPrAfterKeyDown((oTextPr) => oTextPr.GetVertAlign(), oMockEvent, oAssert, AscCommon.vertalign_SubScript, 'Check subscript shortcut');
-		});
-
-		QUnit.test('Test en dash shortcut', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.EnDash;};
-			checkTextAfterKeyDownHelperEmpty('–', oMockEvent, oAssert, 'Check en dash shortcut');
-		});
-
-		QUnit.test('Test decrease font size', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.DecreaseFont;};
-			checkDirectTextPrAfterKeyDown((oTextPr) => oTextPr.Get_FontSize(), oMockEvent, oAssert, 9, 'Check decrease font size shortcut');
-		});
-
-		QUnit.test('Test increase font size', (oAssert) =>
-		{
-			editor.getShortcut = function () {return Asc.c_oAscPresentationShortcutType.IncreaseFont;};
-			checkDirectTextPrAfterKeyDown((oTextPr) => oTextPr.Get_FontSize(), oMockEvent, oAssert, 11, 'Check increase font size shortcut');
-		});
-
-		QUnit.module('Test hotkeys', {
+				CleanPresentation();
+			},
+			beforeEach: function ()
+			{
+				CreateSlide();
+			},
 			before: function ()
 			{
-				cleanPresentation();
-				addSlide();
-				goToPageWithFocus(0, FOCUS_OBJECT_MAIN);
+				AscTest.TurnOffRecalculate();
 			},
-			after : function ()
+			after: function ()
 			{
-				cleanPresentation();
+				AscTest.TurnOnRecalculate();
 			}
 		});
-		QUnit.test('Test delete back char', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				checkTextAfterKeyDownHelperHelloWorld('Hello Worl', oEvent, oAssert, 'Check delete with backspace')
-			}, oMainShortcutTypes.checkDeleteBack);
-		});
+	QUnit.test('Check actions with slides', (assert) =>
+	{
+		AscTest.TurnOnRecalculate();
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
 
-		QUnit.test('Test delete back word', (oAssert) =>
+		function CheckSelectedSlides(arrSelectedSlides)
 		{
-			startMainTest((oEvent) =>
-			{
-				checkTextAfterKeyDownHelperHelloWorld('Hello ', oEvent, oAssert, 'Check delete word with backspace')
-			}, oMainShortcutTypes.checkDeleteWordBack);
-		});
+			const presentationSelectedSlides = logicDocument.GetSelectedSlides();
+			assert.deepEqual(presentationSelectedSlides, arrSelectedSlides, 'Check selected slides ' + arrSelectedSlides.join(', '));
+		}
 
-		QUnit.test('Test remove animation', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oShape} = getShapeWithParagraphHelper('', true);
-				selectOnlyObjects([oShape]);
-				oGlobalLogicDocument.AddAnimation(1, 1, 0, null, false, false);
-
-				onKeyDown(oEvent);
-				const oTiming = oGlobalLogicDocument.GetCurTiming();
-				const arrEffects = oTiming.getObjectEffects(oShape.GetId());
-				oAssert.true(arrEffects.length === 0, 'Check remove animation');
-			}, oMainShortcutTypes.checkRemoveAnimation);
-		});
+		GoToSlide(0);
 
-		QUnit.test('Test remove chart', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oChart1 = createChart(getFirstSlide());
-				selectOnlyObjects([oChart1]);
-				onKeyDown(oEvent);
-				oAssert.true(checkRemoveObject(oChart1, getFirstSlide().cSld.spTree), "Check remove chart");
-			}, oMainShortcutTypes.checkRemoveChart);
-		});
+		let oldSlides = logicDocument.Slides.slice();
+		ExecuteThumbnailHotkey(thumbnailsTypes.addNextSlide, 0);
+		CheckSelectedSlides([1]);
+		assert.strictEqual(oldSlides.indexOf(logicDocument.Slides[1]), -1, 'Check add next slide');
 
-		QUnit.test('Test remove shape', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oShape} = getShapeWithParagraphHelper('', true);
-				selectOnlyObjects([oShape]);
-
-				onKeyDown(oEvent);
-				const arrSpTree = oGlobalLogicDocument.Slides[0].cSld.spTree;
-				oAssert.true(checkRemoveObject(oShape, arrSpTree), 'Check remove shape');
-			}, oMainShortcutTypes.checkRemoveShape);
-		});
+		oldSlides = logicDocument.Slides.slice();
+		ExecuteThumbnailHotkey(thumbnailsTypes.addNextSlide, 1);
+		CheckSelectedSlides([2]);
+		assert.strictEqual(oldSlides.indexOf(logicDocument.Slides[2]), -1, 'Check add next slide');
 
-		QUnit.test('Test remove table', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oGraphicFrame = createTable(3, 3);
-				selectOnlyObjects([oGraphicFrame]);
-				onKeyDown(oEvent);
-				const arrSpTree = getFirstSlide().cSld.spTree;
-				oAssert.true(checkRemoveObject(oGraphicFrame, arrSpTree), "Check remove table");
-			}, oMainShortcutTypes.checkRemoveTable);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.moveToNextSlide, 0);
+		CheckSelectedSlides([3]);
 
-		QUnit.test('Test remove group', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oGroup1 = createGroup([createShape(), createShape()]);
-				selectOnlyObjects([oGroup1]);
-				onKeyDown(oEvent);
-				const arrSpTree = getFirstSlide().cSld.spTree;
-				oAssert.true(checkRemoveObject(oGroup1, arrSpTree), 'Check remove group');
-			}, oMainShortcutTypes.checkRemoveGroup);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.moveToNextSlide, 1);
+		CheckSelectedSlides([4]);
 
-		QUnit.test('Test remove shape in group', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oGroupedGroup = createGroup([createShape(), createShape()]);
-				const oRemovedShape = createShape();
-				const oGroup1 = createGroup([oGroupedGroup, oRemovedShape]);
-				selectOnlyObjects([oRemovedShape]);
-				onKeyDown(oEvent);
-				oAssert.true(checkRemoveObject(oRemovedShape, oGroup1.spTree), 'Check remove shape in group');
-			}, oMainShortcutTypes.checkRemoveShapeInGroup);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.moveToPreviousSlide, 0);
+		CheckSelectedSlides([3]);
 
-		//Tab
-		QUnit.test('Test go to next cell', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oGraphicFrame = createTable(3, 3);
-				const oTable = oGraphicFrame.graphicObject;
-				onKeyDown(oEvent);
-				oAssert.strictEqual(oTable.CurCell.Index, 1, 'check go to next cell shortcut');
-			}, oMainShortcutTypes.checkMoveToNextCell);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.moveToPreviousSlide, 1);
+		CheckSelectedSlides([2]);
 
-		QUnit.test('Test go to previous cell', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oGraphicFrame = createTable(3, 3);
-				const oTable = oGraphicFrame.graphicObject;
-				moveCursorRight();
-				onKeyDown(oEvent);
-				oAssert.strictEqual(oTable.CurCell.Index, 0, 'check go to previous cell shortcut');
-			}, oMainShortcutTypes.checkMoveToPreviousCell);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.moveToLastSlide);
+		CheckSelectedSlides([6]);
 
-		QUnit.test('Test bullet indent', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oParagraph} = getShapeWithParagraphHelper('Hello');
-				const oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: 0, SubType: 1});
-				oParagraph.Add_PresentationNumbering(oBullet);
-				moveToParagraph(oParagraph, true);
-				oParagraph.Set_Ind({Left: 0});
-				onKeyDown(oEvent);
-				oAssert.strictEqual(oParagraph.Pr.Get_IndLeft(), 11.1125, 'Check bullet indent shortcut');
-			}, oMainShortcutTypes.checkIncreaseBulletIndent);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.moveToFirstSlide);
+		CheckSelectedSlides([0]);
 
-		QUnit.test('Test bullet unindent', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oParagraph} = getShapeWithParagraphHelper('Hello');
-				const oBullet = AscFormat.fGetPresentationBulletByNumInfo({Type: 0, SubType: 1});
-				oParagraph.Add_PresentationNumbering(oBullet);
-				oParagraph.Set_PresentationLevel(1);
-				moveToParagraph(oParagraph, true);
-				oParagraph.Set_Ind({Left: 11.1125});
-				onKeyDown(oEvent);
-				oAssert.strictEqual(oParagraph.Pr.Get_IndLeft(), 0, 'Check bullet indent shortcut');
-			}, oMainShortcutTypes.checkDecreaseBulletIndent);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.moveToLastSlide);
+		CheckSelectedSlides([6]);
 
-		QUnit.test('Test add tab', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oParagraph} = getShapeWithParagraphHelper('');
-				moveToParagraph(oParagraph);
-				onKeyDown(oEvent);
-				oGlobalLogicDocument.SelectAll();
-				oAssert.strictEqual(oGlobalLogicDocument.GetSelectedText(false, {TabSymbol: '\t'}), '\t', 'Check add tab');
-			}, oMainShortcutTypes.checkAddTab);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.moveToFirstSlide);
+		CheckSelectedSlides([0]);
 
-		QUnit.test('Test select next object', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				cleanPresentation();
-				addSlide();
-				goToPageWithFocus(0, FOCUS_OBJECT_MAIN);
-				const oFirstShape = createShape();
-				const oSecondShape = createShape();
-				const oThirdShape = createShape();
-				selectOnlyObjects([oFirstShape]);
-				onKeyDown(oEvent);
-				oAssert.true(getController().getSelectedArray().length === 1 && getController().getSelectedArray()[0] === oSecondShape, 'Check select previous object');
-			}, oMainShortcutTypes.checkSelectNextObject);
-		});
 
-		QUnit.test('Test select previous object', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				cleanPresentation();
-				addSlide();
-				goToPageWithFocus(0, FOCUS_OBJECT_MAIN);
-				const oFirstShape = createShape();
-				const oSecondShape = createShape();
-				const oThirdShape = createShape();
-				selectOnlyObjects([oFirstShape]);
-				onKeyDown(oEvent);
-				oAssert.true(getController().getSelectedArray().length === 1 && getController().getSelectedArray()[0] === oThirdShape, 'Check select previous object');
-			}, oMainShortcutTypes.checkSelectPreviousObject);
-		});
-		// Enter
-		QUnit.test('Test check visit hyperlink', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				goToPage(1);
-				const {oParagraph} = getShapeWithParagraphHelper('Hello');
-				moveToParagraph(oParagraph);
-				oGlobalLogicDocument.AddHyperlink({
-					Text   : 'abcd',
-					ToolTip: 'abcd',
-					Value  : 'ppaction://hlinkshowjump?jump=firstslide'
-				});
-				moveCursorLeft();
-				moveCursorLeft();
-				onKeyDown(oEvent);
-				const oSelectedInfo = oGlobalLogicDocument.IsCursorInHyperlink();
-				oAssert.true(oSelectedInfo.Visited && oGlobalLogicDocument.GetSelectedSlides()[0] === 0, 'Check visit hyperlink');
-				goToPage(0);
-			}, oMainShortcutTypes.checkVisitHyperlink);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.selectNextSlide, 0);
+		CheckSelectedSlides([0, 1]);
 
-		QUnit.test('Test select shapes with placeholder', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				cleanPresentation();
-				addSlide();
-				goToPageWithFocus(0, FOCUS_OBJECT_MAIN);
-				const oFirstShapeWithPlaceholder = createShapeWithTitlePlaceholder();
-				const oSecondShapeWithPlaceholder = createShapeWithTitlePlaceholder();
+		ExecuteThumbnailHotkey(thumbnailsTypes.selectNextSlide, 1);
+		CheckSelectedSlides([0, 1, 2]);
 
-				const oController = getController();
-				oController.resetSelection();
-				onKeyDown(oEvent);
-				oAssert.true(oController.selectedObjects.length === 1 && oController.selectedObjects[0] === oFirstShapeWithPlaceholder && oFirstShapeWithPlaceholder.selected, 'Check select first shape with placeholder');
+		GoToSlide(2);
 
-				onKeyDown(oEvent);
-				oAssert.true(oController.selectedObjects.length === 1 && oController.selectedObjects[0] === oSecondShapeWithPlaceholder && oSecondShapeWithPlaceholder.selected, 'Check select second shape with placeholder');
-			}, oMainShortcutTypes.checkSelectNextObjectWithPlaceholder);
+		ExecuteThumbnailHotkey(thumbnailsTypes.selectPreviousSlide, 0);
+		CheckSelectedSlides([1, 2]);
 
+		ExecuteThumbnailHotkey(thumbnailsTypes.selectPreviousSlide, 0);
+		CheckSelectedSlides([0, 1, 2]);
 
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.selectToLastSlide);
+		CheckSelectedSlides([2, 3, 4, 5, 6]);
 
-		QUnit.test('Test add next slide after placeholder shape', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				cleanPresentation();
-				addSlide();
-				goToPageWithFocus(0, FOCUS_OBJECT_MAIN);
-
-				const oFirstShapeWithPlaceholder = createShapeWithTitlePlaceholder();
-				selectOnlyObjects([oFirstShapeWithPlaceholder]);
-				const arrOldSlides = oGlobalLogicDocument.Slides.slice();
-				onKeyDown(oEvent);
-				const arrSelectedSlides = oGlobalLogicDocument.GetSelectedSlides();
-				oAssert.true(arrSelectedSlides.length === 1 && arrSelectedSlides[0] === 1 && arrOldSlides.indexOf(oGlobalLogicDocument.Slides[1]) === -1, 'Check add next slide after selecting last placeholder on current slide');
-				goToPage(0);
-			}, oMainShortcutTypes.checkAddNextSlideAfterSelectLastPlaceholderObject);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.selectPreviousSlide, 1);
+		CheckSelectedSlides([2, 3, 4, 5]);
 
-		QUnit.test('Test add break line', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oShape, oParagraph} = getShapeWithParagraphHelper('');
-				moveToParagraph(oParagraph);
-
-				onKeyDown(oEvent);
-				oAssert.true(oShape.getDocContent().Content.length === 1 && oParagraph.GetLinesCount() === 2, 'Check add break line');
-			}, oMainShortcutTypes.checkAddBreakLine);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.selectPreviousSlide, 1);
+		CheckSelectedSlides([2, 3, 4]);
 
-		QUnit.test('Test add break line in title', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oShapeWithPlaceholder = createShapeWithTitlePlaceholder();
-				const oContent = oShapeWithPlaceholder.getDocContent();
-				const oParagraph = oContent.GetAllParagraphs()[0];
-				oParagraph.SetThisElementCurrent();
-				onKeyDown(oEvent);
-				oAssert.true(oContent.Content.length === 1 && oParagraph.GetLinesCount() === 2, 'Check add break line in title');
-			}, oMainShortcutTypes.checkAddTitleBreakLine);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.selectToLastSlide);
+		CheckSelectedSlides([2, 3, 4, 5, 6]);
 
-		QUnit.test('Test add new line in math equation', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oParagraph} = createMathInShape();
-				oGlobalLogicDocument.MoveCursorToStartPos();
-				moveCursorRight();
-				moveCursorRight();
-				onInput([56, 56, 56, 56, 56, 56, 56]);
-				moveCursorLeft();
-				moveCursorLeft();
-				onKeyDown(oEvent);
-				const oParaMath = oParagraph.GetAllParaMaths()[0];
-				const oFraction = oParaMath.Root.GetFirstElement();
-				const oNumerator = oFraction.getNumerator();
-				const oEqArray = oNumerator.GetFirstElement();
-				oAssert.strictEqual(oEqArray.getRowsCount(), 2, 'Check add new line math');
-			}, oMainShortcutTypes.checkAddMathBreakLine);
-		});
+		GoToSlide(3);
 
-		QUnit.test('Test add new paragraph', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oShape, oParagraph} = getShapeWithParagraphHelper('');
-				moveToParagraph(oParagraph);
-
-				onKeyDown(oEvent);
-				oAssert.true(oShape.getDocContent().Content.length === 2, 'Check add new paragraph');
-			}, oMainShortcutTypes.checkAddParagraph);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.selectToFirstSlide);
+		CheckSelectedSlides([0, 1, 2, 3]);
 
-		QUnit.test('Test creating txBody', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oShape = createShape();
-				selectOnlyObjects([oShape]);
-				onKeyDown(oEvent);
-				oAssert.true(!!oShape.txBody, 'Check creating txBody');
-			}, oMainShortcutTypes.checkAddTxBodyShape);
-		});
-		QUnit.test('Test move cursor to start position', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oShape, oParagraph} = getShapeWithParagraphHelper('', true);
-				selectOnlyObjects([oShape]);
-				onKeyDown(oEvent);
-				oAssert.true(oParagraph.IsCursorAtBegin(), 'Check move cursor to start position in shape');
-			}, oMainShortcutTypes.checkMoveCursorToStartPosShape);
-		});
-		QUnit.test('Test select all content in shape', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oShape} = getShapeWithParagraphHelper('Hello Word', true);
-				selectOnlyObjects([oShape]);
-				onKeyDown(oEvent);
-				oAssert.strictEqual(oGlobalLogicDocument.GetSelectedText(), 'Hello Word', 'Check select all content in shape');
-			}, oMainShortcutTypes.checkSelectAllContentShape);
-		});
-		QUnit.test('Test select all title', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oChart = createChart();
-				selectOnlyObjects([oChart]);
-				const oTitles = oChart.getAllTitles();
-				const oController = getController();
-				oController.selection.chartSelection = oChart;
-				oChart.selectTitle(oTitles[0], 0);
-
-				onKeyDown(oEvent);
-				oAssert.strictEqual(oGlobalLogicDocument.GetSelectedText(), 'Diagram Title', 'Check select all title');
-			}, oMainShortcutTypes.checkSelectAllContentChartTitle);
-		});
-		QUnit.test('Test move cursor to begin pos in title', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oChart = createChart();
-				const oTitles = oChart.getAllTitles();
-				const oContent = AscFormat.CreateDocContentFromString('', editor.WordControl.m_oDrawingDocument, oTitles[0].txBody);
-				oTitles[0].txBody.content = oContent;
-				selectOnlyObjects([oChart]);
-
-				const oController = getController();
-				oController.selection.chartSelection = oChart;
-				oChart.selectTitle(oTitles[0], 0);
-
-				onKeyDown(oEvent);
-				oAssert.true(oContent.IsCursorAtBegin(), 'Check move cursor to begin pos in title');
-			}, oMainShortcutTypes.checkMoveCursorToStartPosChartTitle);
-		});
-		QUnit.test('Test remove and move to start position in table', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const arrSteps = [];
-				const oFrame = createTable(3, 3);
-				oFrame.Set_CurrentElement();
-				const oTable1 = oFrame.graphicObject;
-				oTable1.MoveCursorToStartPos();
-				// First cell
-				moveCursorRight(true, true);
-				moveCursorRight(true, true);
-				// Second cell
-				moveCursorRight(true, true);
-				// Third cell
-				moveCursorRight(true, true);
-
-				onKeyDown(oEvent);
-				arrSteps.push(oTable1.IsCursorAtBegin());
-				moveCursorRight(true, true);
-				moveCursorRight(true, true);
-				moveCursorRight(true, true);
-				arrSteps.push(oGlobalLogicDocument.GetSelectedText());
-				oAssert.deepEqual(arrSteps, [true, ''], 'Check remove and move to start position in table');
-			}, oMainShortcutTypes.checkRemoveAndMoveToStartPosTable);
-		});
-		QUnit.test('Test select first cell content', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oFrame = createTable(3, 3);
-				selectOnlyObjects([oFrame]);
-
-				onKeyDown(oEvent);
-				oAssert.strictEqual(oGlobalLogicDocument.GetSelectedText(), 'Cell0x0', 'Check select first cell content');
-			}, oMainShortcutTypes.checkSelectFirstCellContent);
-		});
-		// Esc
-		QUnit.test('Test reset add new shape', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oController = getController();
-				oGlobalLogicDocument.StartAddShape('rect', true);
-				onKeyDown(oEvent);
-				oAssert.true(!oController.checkTrackDrawings(), 'Check reset add new shape');
-			}, oMainShortcutTypes.checkResetAddShape);
-		});
+		GoToSlide(3);
 
-		QUnit.test('Test reset all selection', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oController = getController();
-				oController.resetSelection();
-				const oGroupedShape1 = createShape();
-				const oGroupedShape2 = createShape();
-				createGroup([oGroupedShape1, oGroupedShape2]);
-				addToSelection(oGroupedShape1);
-				const oTestGroup = oGroupedShape1.group;
-				onKeyDown(oEvent);
-				oAssert.true(oController.selectedObjects.length === 0, 'Check reset all selection');
-			}, oMainShortcutTypes.checkResetAllDrawingSelection);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.selectToFirstSlide);
+		CheckSelectedSlides([0, 1, 2, 3]);
 
-		QUnit.test('Test reset step selection', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oController = getController();
-				const oGroupedShape1 = createShape();
-				const oGroupedShape2 = createShape();
-				createGroup([oGroupedShape1, oGroupedShape2]);
-				addToSelection(oGroupedShape1);
-				const oTestGroup = oGroupedShape1.group;
-
-				selectOnlyObjects([oTestGroup, oGroupedShape1]);
-				onKeyDown(oEvent);
-				oAssert.true(oController.selectedObjects.length === 1 && oController.selectedObjects[0] === oTestGroup && oTestGroup.selectedObjects.length === 0, 'Check reset step selection');
-			}, oMainShortcutTypes.checkResetStepDrawingSelection);
-		});
+		let startPositionSlides = logicDocument.Slides.slice();
 
-		// Space
-		QUnit.test('Test add non breaking space', (oAssert) =>
+		function CheckMoveSlides(oldPositions, newPositions)
 		{
-			startMainTest((oEvent) =>
+			for (let i = 0; i < oldPositions.length; i += 1)
 			{
-				checkTextAfterKeyDownHelperEmpty(String.fromCharCode(0x00A0), oEvent, oAssert, 'Check add non breaking space');
-			}, oMainShortcutTypes.checkNonBreakingSpace);
-		});
+				assert.true(startPositionSlides[oldPositions[i]] === logicDocument.Slides[newPositions[i]], 'Check position ' + oldPositions[i] + '->' + newPositions[i]);
+			}
+			startPositionSlides = logicDocument.Slides.slice();
+		}
 
-		QUnit.test('Test clear paragraph formatting', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oParagraph} = getShapeWithParagraphHelper('Hello World');
-				oParagraph.SetThisElementCurrent();
-				oGlobalLogicDocument.SelectAll();
-				addPropertyToDocument({Bold: true, Italic: true, Underline: true});
-
-				onKeyDown(oEvent);
-				const oTextPr = oGlobalLogicDocument.GetDirectTextPr();
-				oAssert.true(!(oTextPr.GetBold() || oTextPr.GetItalic() || oTextPr.GetUnderline()), 'Check clear paragraph formatting');
-			}, oMainShortcutTypes.checkClearParagraphFormatting);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.moveSelectedSlidesToNextPosition, 0);
+		CheckSelectedSlides([1, 2, 3, 4]);
+		CheckMoveSlides([0, 1, 2, 3], [1, 2, 3, 4]);
 
-		QUnit.test('Test add space', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				checkTextAfterKeyDownHelperEmpty(' ', oEvent, oAssert, 'Check add space')
-			}, oMainShortcutTypes.checkAddSpace);
-		});
-		//pgUp
+		ExecuteThumbnailHotkey(thumbnailsTypes.moveSelectedSlidesToNextPosition, 1);
+		CheckSelectedSlides([2, 3, 4, 5]);
+		CheckMoveSlides([1, 2, 3, 4], [2, 3, 4, 5]);
 
-		//End
-		QUnit.test('Test move cursor to end position shortcut', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oPos} = testMoveHelper(oEvent, false, true, false);
-				oAssert.true(oPos.X === 25 && oPos.Y === 75, 'Check move cursor to end position shortcut');
-			}, oMainShortcutTypes.checkMoveToEndPosContent);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.moveSelectedSlidesToStart, 0);
+		CheckSelectedSlides([0, 1, 2, 3]);
+		CheckMoveSlides([2, 3, 4, 5], [0, 1, 2, 3]);
+
+		ExecuteThumbnailHotkey(thumbnailsTypes.moveSelectedSlidesToEnd, 0);
+		CheckSelectedSlides([3, 4, 5, 6]);
+		CheckMoveSlides([0, 1, 2, 3], [3, 4, 5, 6]);
 
-		QUnit.test('Test move cursor to end line shortcut', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oPos} = testMoveHelper(oEvent, false, true, false);
-				oAssert.true(oPos.X === 100 && oPos.Y === 15, 'Check move cursor to end line shortcut');
-			}, oMainShortcutTypes.checkMoveToEndLineContent);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.moveSelectedSlidesToStart, 1);
+		CheckSelectedSlides([0, 1, 2, 3]);
+		CheckMoveSlides([3, 4, 5, 6], [0, 1, 2, 3]);
 
-		QUnit.test('Test select text to end line', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {sSelectedText} = testMoveHelper(oEvent, false, false, true);
-				oAssert.strictEqual(sSelectedText, 'HelloworldHelloworld', 'Check select text to end line shortcut');
-			}, oMainShortcutTypes.checkSelectToEndLineContent);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.moveSelectedSlidesToEnd, 1);
+		CheckSelectedSlides([3, 4, 5, 6]);
+		CheckMoveSlides([0, 1, 2, 3], [3, 4, 5, 6]);
 
-		// Home
-		QUnit.test('Test move to start position', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oPos} = testMoveHelper(oEvent, true, true, false);
-				oAssert.true(oPos.X === 0 && oPos.Y === 15, 'Check move to start position shortcut');
-			}, oMainShortcutTypes.checkMoveToStartPosContent);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.moveSelectedSlidesToPreviousPosition, 0);
+		CheckSelectedSlides([2, 3, 4, 5]);
+		CheckMoveSlides([3, 4, 5, 6], [2, 3, 4, 5]);
 
-		QUnit.test('Test move to start line', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oPos} = testMoveHelper(oEvent, true, true, false);
-				oAssert.true(oPos.X === 0 && oPos.Y === 75, 'Check move to start line shortcut');
-			}, oMainShortcutTypes.checkMoveToStartLineContent);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.moveSelectedSlidesToPreviousPosition, 1);
+		CheckSelectedSlides([1, 2, 3, 4]);
+		CheckMoveSlides([2, 3, 4, 5], [1, 2, 3, 4]);
+
+		ExecuteThumbnailHotkey(thumbnailsTypes.removeSelectedSlides, 0);
+		assert.strictEqual(logicDocument.Slides.length, 3, 'Check slide amount');
+		assert.true(logicDocument.Slides[0] === startPositionSlides[0], 'Check saved slides');
+		assert.true(logicDocument.Slides[1] === startPositionSlides[5], 'Check saved slides');
+		assert.true(logicDocument.Slides[2] === startPositionSlides[6], 'Check saved slides');
 
-		QUnit.test('Test select to start line', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {sSelectedText} = testMoveHelper(oEvent, true, false, true);
-				oAssert.strictEqual(sSelectedText, 'Hello', 'Check select to start line shortcut');
-			}, oMainShortcutTypes.checkSelectToStartLineContent);
-		});
+		ExecuteThumbnailHotkey(thumbnailsTypes.removeSelectedSlides, 1);
+		assert.strictEqual(logicDocument.Slides.length, 2, 'Check slide amount');
+		assert.true(logicDocument.Slides[0] === startPositionSlides[0], 'Check saved slides');
+		assert.true(logicDocument.Slides[1] === startPositionSlides[6], 'Check saved slides');
+
+		ExecuteThumbnailHotkey(thumbnailsTypes.removeSelectedSlides, 1);
+		assert.strictEqual(logicDocument.Slides.length, 1, 'Check slide amount');
+		assert.true(logicDocument.Slides[0] === startPositionSlides[0], 'Check saved slides');
+
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
+
+		GoToSlide(0);
 
-		//Left arrow
-		QUnit.test('Test move cursor to end position', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oPos} = testMoveHelper(oEvent, true, true, false);
-				oAssert.true(oPos.X === 20 && oPos.Y === 75, 'Check move cursor to end position shortcut');
-			}, oMainShortcutTypes.checkMoveCursorLeft);
-		});
+		oldSlides = logicDocument.Slides.slice();
+		ExecuteMainHotkey(mainShortcutTypes.addNextSlide);
+		CheckSelectedSlides([1]);
+		assert.strictEqual(oldSlides.indexOf(logicDocument.Slides[1]), -1, 'Check add next slide');
+
+		ExecuteThumbnailShortcut(Asc.c_oAscPresentationShortcutType.EditSelectAll);
+		CheckSelectedSlides([0, 1, 2, 3, 4, 5, 6]);
+
+		GoToSlide(1);
+
+		ExecuteMainHotkey(mainShortcutTypes.moveToNextSlide, 0);
+		CheckSelectedSlides([2]);
+
+		ExecuteMainHotkey(mainShortcutTypes.moveToPreviousSlide, 0);
+		CheckSelectedSlides([1]);
+
+		ExecuteMainHotkey(mainShortcutTypes.moveToNextSlide, 1);
+		CheckSelectedSlides([2]);
+
+		ExecuteMainHotkey(mainShortcutTypes.moveToPreviousSlide, 1);
+		CheckSelectedSlides([1]);
+
+		ExecuteMainHotkey(mainShortcutTypes.moveToNextSlide, 2);
+		CheckSelectedSlides([2]);
+
+		ExecuteMainHotkey(mainShortcutTypes.moveToPreviousSlide, 2);
+		CheckSelectedSlides([1]);
+
+		ExecuteMainHotkey(mainShortcutTypes.moveToLastSlide);
+		CheckSelectedSlides([6]);
+
+		ExecuteMainHotkey(mainShortcutTypes.moveToFirstSlide);
+		CheckSelectedSlides([0]);
+
+		ExecuteMainHotkey(mainShortcutTypes.selectToLastSlide);
+		CheckSelectedSlides([0, 1, 2, 3, 4, 5, 6]);
+
+		GoToSlide(3);
+
+		ExecuteMainHotkey(mainShortcutTypes.selectToFirstSlide);
+		CheckSelectedSlides([0, 1, 2, 3]);
+		AscTest.TurnOffRecalculate();
+	});
+
+	QUnit.test('Check actions with catch events', (oAssert) =>
+	{
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
+
+		let Execute;
+
+		function ExecuteTestWithCatchEvent(sSendEvent, fCustomCheck, customExpectedValue, oEvent)
+		{
+			let check = false;
+
+			const Check = function (...args)
+			{
+				if (fCustomCheck)
+				{
+					check = fCustomCheck(...args);
+				}
+				else
+				{
+					check = true;
+				}
+			}
+			editor.asc_registerCallback(sSendEvent, Check);
+
+			Execute(oEvent);
+			oAssert.strictEqual(check, customExpectedValue === undefined ? true : customExpectedValue, 'Check catch ' + sSendEvent + ' event');
+			editor.asc_unregisterCallback(sSendEvent, Check);
+		}
+
+		editor.WordControl.DemonstrationManager.Start(null, 0);
+		Execute = ExecuteDemonstrationShortcut;
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 1, demonstrationEvents[demonstrationTypes.moveToNextSlide][0]);
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 2, demonstrationEvents[demonstrationTypes.moveToNextSlide][1]);
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 3, demonstrationEvents[demonstrationTypes.moveToNextSlide][2]);
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 4, demonstrationEvents[demonstrationTypes.moveToNextSlide][3]);
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 5, demonstrationEvents[demonstrationTypes.moveToNextSlide][4]);
+
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 4, demonstrationEvents[demonstrationTypes.moveToPreviousSlide][0]);
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 3, demonstrationEvents[demonstrationTypes.moveToPreviousSlide][1]);
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 2, demonstrationEvents[demonstrationTypes.moveToPreviousSlide][2]);
 
-		QUnit.test('Test select text to left position', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {sSelectedText} = testMoveHelper(oEvent, true, false, true);
-				oAssert.strictEqual(sSelectedText, 'o', 'Check select text to left position shortcut');
-			}, oMainShortcutTypes.checkSelectCursorLeft);
-		});
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 0, demonstrationEvents[demonstrationTypes.moveToFirstSlide][0]);
 
-		QUnit.test('Test select word text to left position', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {sSelectedText} = testMoveHelper(oEvent, true, false, true);
-				oAssert.strictEqual(sSelectedText, 'HelloworldHelloworldHelloworldHelloworldHelloworldHelloworldHello', 'Check select word text to left position shortcut');
-			}, oMainShortcutTypes.checkSelectWordCursorLeft);
-		});
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 11, demonstrationEvents[demonstrationTypes.moveToLastSlide][0]);
 
-		QUnit.test('Test move cursor to left word position', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oPos} = testMoveHelper(oEvent, true, true, false);
-				oAssert.true(oPos.X === 0 && oPos.Y === 15, 'Check move cursor to left word position shortcut');
-			}, oMainShortcutTypes.checkMoveCursorWordLeft);
-		});
-		QUnit.test('Test move left in table', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oFrame = createTable(3, 3);
-				oFrame.Set_CurrentElement();
-				const oTable1 = oFrame.graphicObject;
-				oTable1.MoveCursorToStartPos();
-				moveCursorRight(true);
-				moveCursorRight(true);
-				onKeyDown(oEvent);
-				oAssert.deepEqual([oTable1.CurCell.Row.Index, oTable1.CurCell.Index], [0, 0], 'Check move left in table');
-			}, oMainShortcutTypes.checkMoveCursorLeftTable);
-		});
-		//Right arrow
-		QUnit.test('Test move cursor to right position', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oPos} = testMoveHelper(oEvent, false, true, false);
-				oAssert.true(oPos.X === 5 && oPos.Y === 15, 'Check move cursor to right position shortcut');
-			}, oMainShortcutTypes.checkMoveCursorRight);
-		});
-		QUnit.test('Test move right in table', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oFrame = createTable(3, 3);
-				oFrame.Set_CurrentElement();
-				const oTable1 = oFrame.graphicObject;
-				oTable1.MoveCursorToStartPos();
-				moveCursorRight(true);
-				onKeyDown(oEvent);
-				oAssert.deepEqual([oTable1.CurCell.Row.Index, oTable1.CurCell.Index], [0, 1], 'Check move right in table');
-			}, oMainShortcutTypes.checkMoveCursorRightTable);
-		});
+		ExecuteDemonstrationShortcut(new CNativeEvent(53));
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 4, demonstrationEvents[demonstrationTypes.moveToNumberSlide][0]);
+		ExecuteDemonstrationShortcut(new CNativeEvent(56));
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 7, demonstrationEvents[demonstrationTypes.moveToNumberSlide][0]);
+		ExecuteDemonstrationShortcut(new CNativeEvent(49));
+		ExecuteDemonstrationShortcut(new CNativeEvent(48));
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 9, demonstrationEvents[demonstrationTypes.moveToNumberSlide][0]);
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 10, demonstrationEvents[demonstrationTypes.moveToNumberSlide][0]);
 
-		QUnit.test('Test select text to right position', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {sSelectedText} = testMoveHelper(oEvent, false, false, true);
-				oAssert.strictEqual(sSelectedText, 'H', 'Check select text to right position shortcut');
-			}, oMainShortcutTypes.checkSelectCursorRight);
-		});
+		
+		ExecuteTestWithCatchEvent('asc_onEndDemonstration', () => true, true, demonstrationEvents[demonstrationTypes.exitFromDemonstrationMode][0]);
 
-		QUnit.test('Test select word text to right position', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {sSelectedText} = testMoveHelper(oEvent, false, false, true);
-				oAssert.strictEqual(sSelectedText, 'HelloworldHelloworldHelloworldHelloworldHelloworldHelloworldHello', 'Check select word text to right position shortcut');
-			}, oMainShortcutTypes.checkSelectWordCursorRight);
-		});
+		Execute = ExecuteMainShortcut;
+		ExecuteTestWithCatchEvent('asc_onPrint', () => true, true, Asc.c_oAscPresentationShortcutType.Print);
+		ExecuteTestWithCatchEvent('asc_onContextMenu', () => true, true, Asc.c_oAscPresentationShortcutType.ShowContextMenu);
 
-		QUnit.test('Test move cursor to right word position', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oPos} = testMoveHelper(oEvent, true, true, false);
-				oAssert.true(oPos.X === 25 && oPos.Y === 75, 'Check move cursor to right word position shortcut');
-			}, oMainShortcutTypes.checkMoveCursorWordRight);
-		});
-		//Top arrow
-		QUnit.test('Test move cursor to top position', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oPos} = testMoveHelper(oEvent, true, true, false);
-				oAssert.true(oPos.X === 25 && oPos.Y === 55, 'Check move cursor to top position shortcut');
-			}, oMainShortcutTypes.checkMoveCursorTop);
-		});
-		QUnit.test('Test move top in table', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oFrame = createTable(3, 3);
-				oFrame.Set_CurrentElement();
-				const oTable1 = oFrame.graphicObject;
-				oTable1.MoveCursorToStartPos();
-				moveCursorDown();
-				onKeyDown(oEvent);
-				oAssert.deepEqual([oTable1.CurCell.Row.Index, oTable1.CurCell.Index], [0, 0], 'Check move top in table');
-			}, oMainShortcutTypes.checkMoveCursorTopTable);
-		});
+		ClearShapeAndAddParagraph('')
+		ExecuteTestWithCatchEvent('asc_onDialogAddHyperlink', () => true, true, Asc.c_oAscPresentationShortcutType.AddHyperlink);
 
-		QUnit.test('Test select text to top position', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {sSelectedText} = testMoveHelper(oEvent, true, false, true);
-				oAssert.strictEqual(sSelectedText, 'worldHelloworldHello', 'Check select text to top position shortcut');
-			}, oMainShortcutTypes.checkSelectCursorTop);
-		});
-		// Bottom arrow
-		QUnit.test('Test move cursor to bottom position', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {oPos} = testMoveHelper(oEvent, false, true, false);
-				oAssert.true(oPos.X === 0 && oPos.Y === 35, 'Check move cursor to bottom position shortcut');
-			}, oMainShortcutTypes.checkMoveCursorBottom);
-		});
-		QUnit.test('Test move bottom in table', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oFrame = createTable(3, 3);
-				oFrame.Set_CurrentElement();
-				const oTable1 = oFrame.graphicObject;
-				oTable1.MoveCursorToStartPos();
-				onKeyDown(oEvent);
-				oAssert.deepEqual([oTable1.CurCell.Row.Index, oTable1.CurCell.Index], [1, 0], 'Check move bottom in table');
-			}, oMainShortcutTypes.checkMoveCursorBottomTable);
-		});
+		Execute = ExecuteThumbnailShortcut;
+		GoToSlide(0, FOCUS_OBJECT_THUMBNAILS);
+		ExecuteTestWithCatchEvent('asc_onPrint', () => true, true, Asc.c_oAscPresentationShortcutType.Print);
+		ExecuteTestWithCatchEvent('asc_onContextMenu', () => true, true, Asc.c_oAscPresentationShortcutType.ShowContextMenu);
 
-		QUnit.test('Test select text to bottom position', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const {sSelectedText} = testMoveHelper(oEvent, false, false, true);
-				oAssert.strictEqual(sSelectedText, 'HelloworldHelloworld', 'Check select text to bottom position shortcut');
-			}, oMainShortcutTypes.checkSelectCursorBottom);
-		});
+		GoToSlide(0, FOCUS_OBJECT_MAIN);
+	});
 
-		// Check move shape
-		QUnit.test('Test big move shape bottom', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oShape = executeCheckMoveShape(oEvent);
-				oAssert.strictEqual(oShape.y, 5 * AscCommon.g_dKoef_pix_to_mm, 'Check move shape bottom');
-			}, oMainShortcutTypes.checkMoveShapeBottom);
-		});
+	QUnit.test('Check add various characters', (assert) =>
+	{
+		const {paragraph} = ClearShapeAndAddParagraph('');
+		ExecuteMainHotkey(mainShortcutTypes.checkNonBreakingSpace);
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), String.fromCharCode(0x00A0), 'Check add non breaking space');
 
-		QUnit.test('Test little move shape bottom', (oAssert) =>
-		{
-			startMainTest((oEvent) =>
-			{
-				const oShape = executeCheckMoveShape(oEvent);
-				oAssert.strictEqual(oShape.y, 1 * AscCommon.g_dKoef_pix_to_mm, 'Check little move shape bottom');
-			}, oMainShortcutTypes.checkLittleMoveShapeBottom);
-		});
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.EuroSign);
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), String.fromCharCode(0x00A0, 0x20AC), 'Check add euro sign');
+
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.EnDash);
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), String.fromCharCode(0x00A0, 0x20AC, 0x2013), 'Check add en dash');
 
-		QUnit.test('Test big move shape top', (oAssert) =>
+		ExecuteMainHotkey(mainShortcutTypes.checkAddSpace);
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), String.fromCharCode(0x00A0, 0x20AC, 0x2013, 0x0020), 'Check add space');
+	});
+
+	QUnit.test('Check actions with text movements', (assert) =>
+	{
+		const {shape} = ClearShapeAndAddParagraph(
+			'Hello World Hello ' +
+			'World Hello World ' +
+			'Hello World Hello ' +
+			'World Hello World ' +
+			'Hello World Hello ' +
+			'Hello World Hello ' +
+			'Hello World Hello ' +
+			'Hello World Hello ' +
+			'World Hello World');
+
+		function CheckCursorPosition(expected, description)
 		{
-			startMainTest((oEvent) =>
-			{
-				const oShape = executeCheckMoveShape(oEvent);
-				oAssert.strictEqual(oShape.y, -5 * AscCommon.g_dKoef_pix_to_mm, 'Check move shape top');
-			}, oMainShortcutTypes.checkMoveShapeTop);
-		});
+			const position = shape.txBody.content.GetContentPosition();
+			assert.strictEqual(position[position.length - 1].Position, expected, description);
+		}
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveToEndLineContent);
+		CheckCursorPosition(18, 'Check move to end line');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorRight);
+		CheckCursorPosition(19, 'Check move to right char');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveToEndLineContent, 1);
+		CheckCursorPosition(36, 'Check move to end line');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveToEndLineContent, 1);
+		CheckCursorPosition(36, 'Check move to end line');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveToStartLineContent, 1);
+		CheckCursorPosition(18, 'Check move to start line');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveToStartLineContent, 1);
+		CheckCursorPosition(18, 'Check move to start line');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorRight);
+		CheckCursorPosition(19, 'Check move to right char');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorLeft);
+		CheckCursorPosition(18, 'Check move to left char');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorWordLeft);
+		CheckCursorPosition(12, 'Check move to left word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorWordLeft, 1);
+		CheckCursorPosition(6, 'Check move to left word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorWordRight, 1);
+		CheckCursorPosition(12, 'Check move to right word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorWordRight);
+		CheckCursorPosition(18, 'Check move to right word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorWordRight);
+		CheckCursorPosition(24, 'Check move to right word');
+
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveToStartLineContent);
+		CheckCursorPosition(18, 'Check move to start line');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorBottom);
+		CheckCursorPosition(36, 'Check move down');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorTop);
+		CheckCursorPosition(18, 'Check move up');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveToEndPosContent);
+		CheckCursorPosition(161, 'Check move to end document');
 
-		QUnit.test('Test little move shape top', (oAssert) =>
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveToStartPosContent);
+		CheckCursorPosition(0, 'Check move to start document');
+
+		function CheckSelectedText(expectedText, description)
 		{
-			startMainTest((oEvent) =>
-			{
-				const oShape = executeCheckMoveShape(oEvent);
-				oAssert.strictEqual(oShape.y, -1 * AscCommon.g_dKoef_pix_to_mm, 'Check move shape top');
-			}, oMainShortcutTypes.checkLittleMoveShapeTop);
-		});
+			const selectedText = logicDocument.GetSelectedText();
+			assert.strictEqual(selectedText, expectedText, description);
+		}
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectToEndLineContent);
+		CheckSelectedText('Hello World Hello ', 'Select to end line');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectCursorRight);
+		CheckSelectedText('Hello World Hello W', 'Select to right char');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectToEndLineContent, 1);
+		CheckSelectedText('Hello World Hello World Hello World ', 'Select to end line content');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectToEndLineContent, 1);
+		CheckSelectedText('Hello World Hello World Hello World ', 'Select to end line content');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectToStartLineContent, 1);
+		CheckSelectedText('Hello World Hello ', 'Select to start line content');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectToStartLineContent, 1);
+		CheckSelectedText('Hello World Hello ', 'Select to start line content');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectCursorRight);
+		CheckSelectedText('Hello World Hello W', 'Select to right char');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectCursorLeft);
+		CheckSelectedText('Hello World Hello ', 'Select to left char');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectWordCursorLeft);
+		CheckSelectedText('Hello World ', 'Select to left word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectWordCursorRight);
+		CheckSelectedText('Hello World Hello ', 'Select to right word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectWordCursorLeft, 1);
+		CheckSelectedText('Hello World ', 'Select to left word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectWordCursorRight, 1);
+		CheckSelectedText('Hello World Hello ', 'Select to right word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectWordCursorRight);
+		CheckSelectedText('Hello World Hello World ', 'Select to right word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectWordCursorRight);
+		CheckSelectedText('Hello World Hello World Hello ', 'Select to right word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectToStartLineContent);
+		CheckSelectedText('Hello World Hello ', 'Select to start line');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectCursorBottom);
+		CheckSelectedText('Hello World Hello World Hello World ', 'Select down');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectCursorTop);
+		CheckSelectedText('Hello World Hello ', 'Select up');
+
+
+		logicDocument.MoveCursorToEndPos();
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectCursorLeft);
+		CheckSelectedText('d', 'Select to left char');
 
-		QUnit.test('Test big move shape right', (oAssert) =>
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectWordCursorLeft);
+		CheckSelectedText('World', 'Select to left word');
+	});
+
+	QUnit.test('Check remove parts of text', (assert) =>
+	{
+		const {paragraph} = ClearShapeAndAddParagraph('Hello Hello Hello Hello Hello Hello Hello');
+		logicDocument.MoveCursorToEndPos();
+
+		ExecuteMainHotkey(mainShortcutTypes.checkDeleteBack);
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello Hello Hello Hello Hell', 'Check removing back symbol');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkDeleteWordBack);
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello Hello Hello Hello ', 'Check removing back word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkDeleteWordBack, 1);
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello Hello Hello ', 'Check removing back word');
+
+		logicDocument.MoveCursorToStartPos();
+		ExecuteMainHotkey(mainShortcutTypes.checkDeleteFront);
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), 'ello Hello Hello Hello Hello ', 'Check removing front symbol');
+		ExecuteMainHotkey(mainShortcutTypes.checkDeleteWordFront);
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello Hello ', 'Check removing front word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkDeleteWordFront, 1);
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello ', 'Check removing front word');
+	});
+
+	QUnit.test('Check text property change', (assert) =>
+	{
+		ClearShapeAndAddParagraph('Hello world');
+		logicDocument.SelectAll();
+
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Bold);
+		assert.strictEqual(GetDirectTextPr().GetBold(), true, 'Check turn on bold');
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Bold);
+		assert.strictEqual(GetDirectTextPr().GetBold(), false, 'Check turn off bold');
+
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Italic);
+		assert.strictEqual(GetDirectTextPr().GetItalic(), true, 'Check turn on italic');
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Italic);
+		assert.strictEqual(GetDirectTextPr().GetItalic(), false, 'Check turn off italic');
+
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Strikethrough);
+		assert.strictEqual(GetDirectTextPr().GetStrikeout(), true, 'Check turn on strikeout');
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Strikethrough);
+		assert.strictEqual(GetDirectTextPr().GetStrikeout(), false, 'Check turn off strikeout');
+
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Underline);
+		assert.strictEqual(GetDirectTextPr().GetUnderline(), true, 'Check turn on underline');
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Underline);
+		assert.strictEqual(GetDirectTextPr().GetUnderline(), false, 'Check turn off underline');
+
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Superscript);
+		assert.strictEqual(GetDirectTextPr().GetVertAlign(), AscCommon.vertalign_SuperScript, 'Check turn on superscript');
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Superscript);
+		assert.strictEqual(GetDirectTextPr().GetVertAlign(), AscCommon.vertalign_Baseline, 'Check turn off superscript');
+
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Subscript);
+		assert.strictEqual(GetDirectTextPr().GetVertAlign(), AscCommon.vertalign_SubScript, 'Check turn on subscript');
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Subscript);
+		assert.strictEqual(GetDirectTextPr().GetVertAlign(), AscCommon.vertalign_Baseline, 'Check turn off subscript');
+
+		// defaultSize = 10
+		// 10 -> 11 -> 12 -> 14 -> 16 -> 14 -> 12 -> 11 -> 10
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFont);
+		assert.strictEqual(GetDirectTextPr().GetFontSize(), 11, 'Check increase font size');
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFont);
+		assert.strictEqual(GetDirectTextPr().GetFontSize(), 12, 'Check increase font size');
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFont);
+		assert.strictEqual(GetDirectTextPr().GetFontSize(), 14, 'Check increase font size');
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.IncreaseFont);
+		assert.strictEqual(GetDirectTextPr().GetFontSize(), 16, 'Check increase font size');
+
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFont);
+		assert.strictEqual(GetDirectTextPr().GetFontSize(), 14, 'Check decrease font size');
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFont);
+		assert.strictEqual(GetDirectTextPr().GetFontSize(), 12, 'Check decrease font size');
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFont);
+		assert.strictEqual(GetDirectTextPr().GetFontSize(), 11, 'Check decrease font size');
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.DecreaseFont);
+		assert.strictEqual(GetDirectTextPr().GetFontSize(), 10, 'Check decrease font size');
+	});
+
+	QUnit.test('Check paragraph property change', (assert) =>
+	{
+		const {paragraph} = ClearShapeAndAddParagraph('Hello world');
+
+		assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Left, "Check align left");
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.CenterAlign);
+		assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Center, "Check turn on center para");
+
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.JustifyAlign);
+		assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Justify, "Check turn on justify para");
+
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.LeftAlign);
+		assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Left, "Check turn on left para");
+
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.RightAlign);
+		assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Right, "Check turn on right para");
+
+
+		paragraph.Set_PresentationLevel(0);
+		paragraph.Pr.SetInd(0, 0, 0);
+		ExecuteMainHotkey(mainShortcutTypes.checkIncreaseIndent);
+		assert.strictEqual(GetDirectParaPr().GetIndLeft(), 11.1125, "Check indent");
+
+		ExecuteMainHotkey(mainShortcutTypes.checkDecreaseIndent);
+		assert.strictEqual(GetDirectParaPr().GetIndLeft(), 0, "Check unindent");
+
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.BulletList);
+		const bullet = paragraph.Get_PresentationNumbering();
+		assert.strictEqual(bullet.m_nType, AscFormat.numbering_presentationnumfrmt_Char, 'Check bullet list shortcut');
+
+		paragraph.Pr.SetInd(0, 0, 0);
+		ExecuteMainHotkey(mainShortcutTypes.checkIncreaseBulletIndent);
+		assert.strictEqual(paragraph.Pr.Get_IndLeft(), 11.1125, 'Check bullet indent shortcut');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkDecreaseBulletIndent);
+		assert.strictEqual(paragraph.Pr.Get_IndLeft(), 0, 'Check bullet unindent shortcut');
+	});
+
+	QUnit.test('Check main actions with shapes', (assert) =>
+	{
+		const drawing1 = AddShape(0, 0, 100, 200);
+
+		const dotsPerMM = logicDocument.DrawingDocument.GetDotsPerMM();
+
+		function CheckShapePosition(X, Y)
 		{
-			startMainTest((oEvent) =>
-			{
-				const oShape = executeCheckMoveShape(oEvent);
-				oAssert.strictEqual(oShape.x, 5 * AscCommon.g_dKoef_pix_to_mm, 'Check move shape right');
-			}, oMainShortcutTypes.checkMoveShapeRight);
-		});
+			assert.deepEqual([Round(drawing1.x * dotsPerMM, 10), Round(drawing1.y * dotsPerMM, 10), drawing1.extX, drawing1.extY], [X, Y, 200, 100], 'Check shape position after movement ' + X + ' ' + Y);
+		}
+
+		SelectDrawings([drawing1]);
+
+		AscTest.TurnOnRecalculate();
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveShapeLeft);
+		CheckShapePosition(-5, 0);
 
-		QUnit.test('Test little move shape right', (oAssert) =>
+		ExecuteMainHotkey(mainShortcutTypes.checkLittleMoveShapeLeft);
+		CheckShapePosition(-6, 0);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveShapeRight);
+		CheckShapePosition(-1, 0);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkLittleMoveShapeRight);
+		CheckShapePosition(0, 0);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveShapeBottom);
+		CheckShapePosition(0, 5);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkLittleMoveShapeBottom);
+		CheckShapePosition(0, 6);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveShapeTop);
+		CheckShapePosition(0, 1);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkLittleMoveShapeTop);
+		CheckShapePosition(0, 0);
+		AscTest.TurnOffRecalculate();
+
+
+		function CheckSelectedObjects(arrOfDrawings)
 		{
-			startMainTest((oEvent) =>
+			const length = Math.max(arrOfDrawings.length, GetDrawingObjects().selectedObjects.length);
+			for (let i = 0; i < length; i++)
 			{
-				const oShape = executeCheckMoveShape(oEvent);
-				oAssert.strictEqual(oShape.x, 1 * AscCommon.g_dKoef_pix_to_mm, 'Check little move shape right');
-			}, oMainShortcutTypes.checkLittleMoveShapeRight);
-		});
+				assert.true(GetDrawingObjects().selectedObjects[i] === arrOfDrawings[i], 'Check selection movement between objects');
+			}
+		}
+
+		logicDocument.RemoveSelection();
+		const drawing2 = AddShape(0, 0, 10, 10);
+		const drawing3 = AddShape(0, 0, 10, 10);
+		SelectDrawings([drawing3]);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectNextObject);
+		CheckSelectedObjects([drawing1]);
 
-		QUnit.test('Test big move shape left', (oAssert) =>
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectNextObject);
+		CheckSelectedObjects([drawing2]);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectNextObject);
+		CheckSelectedObjects([drawing3]);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectPreviousObject);
+		CheckSelectedObjects([drawing2]);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectPreviousObject);
+		CheckSelectedObjects([drawing1]);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectPreviousObject);
+		CheckSelectedObjects([drawing3]);
+
+		drawing2.setWordShape(false);
+		SelectDrawings([drawing2]);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkAddTxBodyShape);
+		assert.true(!!drawing2.txBody, 'Check create textBody after enter');
+
+		SelectDrawings([drawing2]);
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorToStartPosShape);
+		const paragraph = drawing2.getDocContent().Content[0];
+		assert.true(paragraph.IsThisElementCurrent() && paragraph.IsCursorAtBegin(), 'Check movement to start position in empty content');
+
+		AscTest.EnterText([72, 101, 108, 108, 111]);
+		SelectDrawings([drawing2]);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectAllContentShape);
+		assert.strictEqual(logicDocument.GetSelectedText(), 'Hello', 'Check select non empty content');
+
+		SelectDrawings([drawing1, drawing2]);
+
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Group);
+		assert.strictEqual(GetDrawingObjects().selectedObjects[0].getObjectType(), AscDFH.historyitem_type_GroupShape, 'Check group selected objects');
+
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.UnGroup);
+		assert.strictEqual(GetDrawingObjects().selectedObjects[0].getObjectType(), AscDFH.historyitem_type_Shape, 'Check ungroup selected group');
+		assert.strictEqual(GetDrawingObjects().selectedObjects[1].getObjectType(), AscDFH.historyitem_type_Shape, 'Check ungroup selected group');
+
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Group);
+		let group = GetDrawingObjects().selectedObjects[0];
+		group.selectObject(drawing1, 0);
+		GetDrawingObjects().selection.groupSelection = group;
+
+		ExecuteMainHotkey(mainShortcutTypes.checkResetStepDrawingSelection);
+		assert.strictEqual(GetDrawingObjects().selectedObjects[0].getObjectType(), AscDFH.historyitem_type_GroupShape, 'Check reset step drawing selection');
+		assert.strictEqual(group.selectedObjects.length, 0);
+
+		group.selectObject(drawing1, 0);
+		GetDrawingObjects().selection.groupSelection = group;
+
+		ExecuteMainHotkey(mainShortcutTypes.checkResetAllDrawingSelection);
+		assert.strictEqual(GetDrawingObjects().selectedObjects.length, 0, 'Check reset all drawing selection');
+
+		const graphicFrame = AddTable(4, 4);
+
+		function CheckTablePosition(row, column)
 		{
-			startMainTest((oEvent) =>
-			{
-				const oShape = executeCheckMoveShape(oEvent);
-				oAssert.strictEqual(oShape.x, -5 * AscCommon.g_dKoef_pix_to_mm, 'Check move shape left');
-			}, oMainShortcutTypes.checkMoveShapeLeft);
-		});
+			assert.strictEqual(graphicFrame.graphicObject.CurCell.Index, column, 'Check column active cell position');
+			assert.strictEqual(graphicFrame.graphicObject.CurCell.Row.Index, row, 'Check row active cell position');
+		}
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorRightTable);
+		CheckTablePosition(0, 1);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorRightTable);
+		CheckTablePosition(0, 2);
 
-		QUnit.test('Test little move shape left', (oAssert) =>
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorRightTable);
+		CheckTablePosition(0, 3);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorLeftTable);
+		CheckTablePosition(0, 2);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorLeftTable);
+		CheckTablePosition(0, 1);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorBottomTable);
+		CheckTablePosition(1, 1);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorTopTable);
+		CheckTablePosition(0, 1);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveToNextCell);
+		CheckTablePosition(0, 2);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveToNextCell);
+		CheckTablePosition(0, 3);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveToPreviousCell);
+		CheckTablePosition(0, 2);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveToPreviousCell);
+		CheckTablePosition(0, 1);
+
+		const cell = graphicFrame.graphicObject.Content[0].Get_Cell(0);
+		const content = cell.GetContent();
+		AscFormat.AddToContentFromString(content, 'Hello Hello');
+		SelectDrawings([graphicFrame]);
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectFirstCellContent);
+		CheckTablePosition(0, 0);
+		assert.strictEqual(logicDocument.GetSelectedText(), 'Hello Hello', 'Check select first cell content');
+
+		graphicFrame.MoveCursorToStartPos();
+		logicDocument.MoveCursorRight(true, true);
+		logicDocument.MoveCursorRight(true, true);
+
+		logicDocument.MoveCursorRight(true, true);
+
+		logicDocument.MoveCursorRight(true, true);
+		ExecuteMainHotkey(mainShortcutTypes.checkRemoveAndMoveToStartPosTable);
+		assert.true(graphicFrame.graphicObject.IsCursorAtBegin(), 'Check removing in table');
+		assert.strictEqual(logicDocument.GetSelectedText(), '', 'Check removing in table');
+	});
+
+	QUnit.test('Check prevent default', (assert) =>
+	{
+		let res = ExecuteMainHotkey(mainShortcutTypes.checkNumLock);
+		assert.strictEqual(res & keydownresult_PreventDefault, keydownresult_PreventDefault, 'Check prevent default');
+		res = ExecuteMainHotkey(mainShortcutTypes.checkScrollLock);
+		assert.strictEqual(res & keydownresult_PreventDefault, keydownresult_PreventDefault, 'Check prevent default');
+	});
+
+	QUnit.test('Check remove graphic objects', (assert) =>
+	{
+
+		function CheckRemoveObject(spTree, shape)
 		{
-			startMainTest((oEvent) =>
-			{
-				const oShape = executeCheckMoveShape(oEvent);
-				oAssert.strictEqual(oShape.x, -1 * AscCommon.g_dKoef_pix_to_mm, 'Check little move shape left');
-			}, oMainShortcutTypes.checkLittleMoveShapeLeft);
-		});
+			assert.true(spTree.indexOf(shape) === -1, 'Check remove shape from spTree');
+		}
 
-		//Delete
-		QUnit.test('Test delete front symbol', (oAssert) =>
+		const checkActionsWithEvent = (eventIndex) =>
 		{
-			startMainTest((oEvent) =>
-			{
-				const {oParagraph} = getShapeWithParagraphHelper('Hello world');
-				moveToParagraph(oParagraph, true);
-
-				onKeyDown(oEvent);
-				oAssert.strictEqual(AscTest.GetParagraphText(oParagraph), 'ello world', 'Check delete front shortcut');
-			}, oMainShortcutTypes.checkDeleteFront);
-		});
+			const shape = AddShape(0, 0, 100, 100);
+			SelectDrawings([shape]);
+			logicDocument.AddAnimation(1, 1, 0, null, false, false);
+			GetDrawingObjects().resetSelection();
+			const timing = logicDocument.GetCurTiming();
+			let effects = timing.getObjectEffects(shape.GetId());
+			effects[0].select();
+			ExecuteMainHotkey(mainShortcutTypes.checkRemoveAnimation, eventIndex)
+			effects = timing.getObjectEffects(shape.GetId());
+			assert.strictEqual(effects.length, 0, 'Check remove animation');
+
+			SelectDrawings([shape]);
+			assert.true(logicDocument.GetCurrentSlide().cSld.spTree.indexOf(shape) !== -1, 'Check available shape in spTree');
+			ExecuteMainHotkey(mainShortcutTypes.checkRemoveShape, eventIndex);
+			CheckRemoveObject(logicDocument.GetCurrentSlide().cSld.spTree, shape);
+
+			const chart = AddChart();
+			SelectDrawings([chart]);
+			ExecuteMainHotkey(mainShortcutTypes.checkRemoveChart, eventIndex);
+			CheckRemoveObject(logicDocument.GetCurrentSlide().cSld.spTree, chart);
+
 
-		QUnit.test('Test delete front word', (oAssert) =>
+			const shape1 = AddShape(0, 0, 100, 100);
+			const shape2 = AddShape(0, 0, 100, 100);
+			const shape3 = AddShape(0, 0, 100, 100);
+
+			const group = CreateGroup([shape1, shape2, shape3]);
+			group.selectObject(shape1, 0);
+			GetDrawingObjects().selection.groupSelection = group;
+
+			ExecuteMainHotkey(mainShortcutTypes.checkRemoveShapeInGroup, eventIndex);
+			CheckRemoveObject(group.spTree, shape1);
+
+			SelectDrawings([group]);
+			ExecuteMainHotkey(mainShortcutTypes.checkRemoveGroup, eventIndex);
+			CheckRemoveObject(logicDocument.GetCurrentSlide().cSld.spTree, group);
+		};
+
+		checkActionsWithEvent(0);
+		checkActionsWithEvent(1);
+	});
+
+	QUnit.test('Check select all in chart title', (assert) =>
+	{
+		AscTest.TurnOnRecalculate();
+		const chart = AddChart();
+		SelectDrawings([chart]);
+		const titles = chart.getAllTitles();
+		const controller = GetDrawingObjects();
+		controller.selection.chartSelection = chart;
+		chart.selectTitle(titles[0], 0);
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectAllContentChartTitle);
+		assert.strictEqual(logicDocument.GetSelectedText(), 'Diagram Title', 'Check select all content in chart title');
+		logicDocument.Remove();
+		AscTest.TurnOffRecalculate();
+	});
+
+	QUnit.test('Check actions for objects with placeholder', (assert) =>
+	{
+		const shape1 = AddPlaceholderShape();
+		const shape2 = AddPlaceholderShape();
+		const shape3 = AddPlaceholderShape();
+
+		SelectDrawings([shape1]);
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectNextObjectWithPlaceholder);
+		assert.true(GetDrawingObjects().selectedObjects[0] === shape2, 'Check select next object with placeholder');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectNextObjectWithPlaceholder);
+		assert.true(GetDrawingObjects().selectedObjects[0] === shape3, 'Check select next object with placeholder');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkAddNextSlideAfterSelectLastPlaceholderObject);
+
+		assert.strictEqual(logicDocument.Slides.length, 2, 'Check creating new slide after selecting last shape with placeholder');
+		assert.strictEqual(logicDocument.Get_CurPage(), 1, 'Check creating new slide after selecting last shape with placeholder');
+	});
+
+	QUnit.test('Check add break line', (assert) =>
+	{
+		function CheckAddBreakLine(shape)
 		{
-			startMainTest((oEvent) =>
-			{
-				const {oParagraph} = getShapeWithParagraphHelper('Hello world');
-				moveToParagraph(oParagraph, true);
-
-				onKeyDown(oEvent);
-				oAssert.strictEqual(AscTest.GetParagraphText(oParagraph), 'world', 'Check delete front word shortcut');
-			}, oMainShortcutTypes.checkDeleteWordFront);
-		});
+			assert.strictEqual(shape.txBody.content.Content.length, 1, 'Check amount paragraphs');
+			assert.strictEqual(shape.txBody.content.Content[0].GetLinesCount(), 2, 'Check amount lines');
+		}
 
-		QUnit.test('Test increase indent', (oAssert) =>
 		{
-			startMainTest((oEvent) =>
-			{
-				const {oParagraph} = getShapeWithParagraphHelper('Hello');
-				oParagraph.Pr.SetInd(0, 0, 0);
-				oParagraph.Set_PresentationLevel(0);
-				moveToParagraph(oParagraph, true);
-
-				onKeyDown(oEvent);
-				const oParaPr = oGlobalLogicDocument.GetDirectParaPr();
-				oAssert.strictEqual(oParaPr.GetIndLeft(), 11.1125, 'Check increase indent');
-			}, oMainShortcutTypes.checkIncreaseIndent);
-		});
+			AscTest.TurnOnRecalculate();
+			const {shape} = ClearShapeAndAddParagraph('Hello Hello');
+			logicDocument.MoveCursorRight(false, true);
 
-		QUnit.test('Test decrease indent', (oAssert) =>
+			ExecuteMainHotkey(mainShortcutTypes.checkAddBreakLine);
+			CheckAddBreakLine(shape);
+
+			const placeholderShape = AddPlaceholderShape();
+			placeholderShape.setTxBody(AscFormat.CreateTextBodyFromString('Hello hello', AscTest.DrawingDocument, placeholderShape));
+			placeholderShape.txBody.content.SetThisElementCurrent();
+			placeholderShape.txBody.content.MoveCursorToStartPos();
+			logicDocument.MoveCursorRight(false, true);
+
+			ExecuteMainHotkey(mainShortcutTypes.checkAddTitleBreakLine);
+			CheckAddBreakLine(placeholderShape);
+			AscTest.TurnOffRecalculate();
+		}
+
+		const checkAddMathBreakLine = (eventIndex) =>
 		{
-			startMainTest((oEvent) =>
-			{
-				const {oParagraph} = getShapeWithParagraphHelper('Hello');
-				oParagraph.Pr.SetInd(0, 12, 0);
-				oParagraph.Set_PresentationLevel(1);
-				moveToParagraph(oParagraph, true);
-
-				onKeyDown(oEvent);
-				const oParaPr = oGlobalLogicDocument.GetDirectParaPr();
-				oAssert.true(AscFormat.fApproxEqual(oParaPr.GetIndLeft(), 0.8875), 'Check decrease indent');
-			}, oMainShortcutTypes.checkDecreaseIndent);
+			const {shape} = ClearShapeAndAddParagraph('');
+			editor.asc_AddMath2(c_oAscMathType.FractionVertical);
+			logicDocument.Recalculate();
+			const paragraph = shape.txBody.content.Content[0];
+			logicDocument.MoveCursorLeft();
+			logicDocument.MoveCursorLeft();
+			AscTest.EnterText([56, 56, 56, 56, 56, 56, 56]);
+			logicDocument.MoveCursorLeft();
+			logicDocument.MoveCursorLeft();
+			ExecuteMainHotkey(mainShortcutTypes.checkAddMathBreakLine, eventIndex);
+			const paraMath = paragraph.GetAllParaMaths()[0];
+			const fraction = paraMath.Root.GetFirstElement();
+			const numerator = fraction.getNumerator();
+			const eqArray = numerator.GetFirstElement();
+			assert.strictEqual(eqArray.getRowsCount(), 2, 'Check add new line in math');
+		}
+
+		checkAddMathBreakLine(0);
+		checkAddMathBreakLine(1);
+	});
+
+	QUnit.test('Check add new paragraph', (assert) =>
+	{
+		const {shape} = ClearShapeAndAddParagraph('');
+		ExecuteMainHotkey(mainShortcutTypes.checkAddParagraph);
+		assert.strictEqual(shape.txBody.content.Content.length, 2, 'Check add new paragraph');
+	});
+
+	QUnit.test('Check add tab symbol', (assert) =>
+	{
+		const {paragraph} = ClearShapeAndAddParagraph('');
+		ExecuteMainHotkey(mainShortcutTypes.checkAddTab);
+		assert.true(paragraph.Content[0].Content[0].IsTab(), 'Check add tab symbol');
+	});
+
+	QUnit.test('Check show paragraph marks', (assert) =>
+	{
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.ShowParaMarks);
+		assert.true(editor.get_ShowParaMarks(), 'Check show para marks');
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.ShowParaMarks);
+		assert.false(editor.get_ShowParaMarks(), 'Check hide para marks');
+	});
+
+	QUnit.test('Check copy/paste format and clear formatting actions', (assert) =>
+	{
+		ClearShapeAndAddParagraph('Hello');
+		logicDocument.SelectAll();
+
+		logicDocument.AddToParagraph(new AscCommonWord.ParaTextPr({Bold: true, Italic: true, Strikeout: true}), true);
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.CopyFormat);
+
+		let textPr = editor.getFormatPainterData().TextPr;
+		assert.true(textPr.GetBold(), 'Check copy paragraph property');
+		assert.true(textPr.GetItalic(), 'Check copy paragraph property');
+		assert.true(textPr.GetStrikeout(), 'Check copy paragraph property');
+
+
+		ClearShapeAndAddParagraph('Hello');
+		logicDocument.SelectAll();
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.PasteFormat);
+
+		textPr = GetDirectTextPr();
+		assert.true(textPr.GetBold(), 'Check paste paragraph property');
+		assert.true(textPr.GetItalic(), 'Check paste paragraph property');
+		assert.true(textPr.GetStrikeout(), 'Check paste paragraph property');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkClearParagraphFormatting);
+		textPr = GetDirectTextPr();
+		assert.false(textPr.GetBold(), 'Check clear paragraph property');
+		assert.false(textPr.GetItalic(), 'Check clear paragraph property');
+		assert.false(textPr.GetStrikeout(), 'Check clear paragraph property');
+	});
+
+	QUnit.test('Check undo/redo', (assert) =>
+	{
+		const {paragraph} = ClearShapeAndAddParagraph('');
+		AscTest.EnterText([56, 56, 56, 56]);
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), '8888', 'Check enter text');
+
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.EditUndo);
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), '', 'Check undo text');
+
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.EditRedo);
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), '8888', 'Check redo text');
+	});
+
+	QUnit.test('Check select all', (assert) =>
+	{
+		const {paragraph, shape} = ClearShapeAndAddParagraph('Hello');
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.EditSelectAll);
+
+		assert.true(shape.txBody.content.IsSelectionUse(), 'Check content selection');
+		assert.true(paragraph.IsSelectedAll(), 'Check paragraph selection');
+		assert.strictEqual(logicDocument.GetSelectedText(), 'Hello', 'Check selected text');
+	});
+
+	QUnit.test('Check reset action with adding new shape', (assert) =>
+	{
+		logicDocument.StartAddShape('rect', true);
+		ExecuteMainHotkey(mainShortcutTypes.checkResetAddShape);
+		assert.true(!GetDrawingObjects().checkTrackDrawings(), 'Check reset add new shape');
+	});
+
+	QUnit.test('Check visit hyperlink', (assert) =>
+	{
+		CreateSlide();
+		ClearShapeAndAddParagraph('Hello');
+		logicDocument.AddHyperlink({
+			Text   : 'abcd',
+			ToolTip: 'abcd',
+			Value  : "ppaction://hlinkshowjump?jump=lastslide"
 		});
+		logicDocument.MoveCursorLeft();
+		logicDocument.MoveCursorLeft();
+		const selectedInfo = logicDocument.IsCursorInHyperlink();
+		ExecuteMainHotkey(mainShortcutTypes.checkVisitHyperlink);
+		assert.true(selectedInfo.Visited && logicDocument.GetSelectedSlides()[0] === 1, 'Check visit hyperlink');
+	});
 
-		QUnit.test('Test prevent default on num lock', (oAssert) =>
+	QUnit.test('Check duplicate presentation objects', (assert) =>
+	{
+		const shape = AddShape(0, 0, 100, 100);
+		SelectDrawings([shape]);
+		assert.strictEqual(logicDocument.Slides[0].cSld.spTree.length, 1, 'Check duplicate graphic object');
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Duplicate);
+		assert.strictEqual(logicDocument.Slides[0].cSld.spTree.length, 2, 'Check duplicate graphic object');
+
+		GetDrawingObjects().resetSelection();
+		assert.strictEqual(logicDocument.Slides.length, 1, 'Check duplicate slide');
+		ExecuteMainShortcut(Asc.c_oAscPresentationShortcutType.Duplicate);
+		assert.strictEqual(logicDocument.Slides.length, 2, 'Check duplicate slide');
+	});
+
+	QUnit.test('Check save action', (assert) =>
+	{
+		assert.timeout(1000);
+		const done1 = assert.async();
+		const done2 = assert.async();
+
+		function CheckSave(Execute, resolve)
 		{
-			startMainTest((oEvent) =>
+			const OldSave = editor._onSaveCallbackInner;
+			editor._onSaveCallbackInner = function ()
 			{
-				onKeyDown(oEvent);
-				oAssert.true(oEvent.isDefaultPrevented, 'Check prevent default on num lock');
-			}, oMainShortcutTypes.checkNumLock);
-		});
+				resolve();
+				editor._onSaveCallbackInner = OldSave;
+			};
+			editor._saveCheck = () => true;
+			editor.asc_isDocumentCanSave = () => true;
+			editor.canSave = true;
+			Execute(Asc.c_oAscPresentationShortcutType.Save);
+		}
 
-		QUnit.test('Test prevent default on scroll lock', (oAssert) =>
+		new Promise((resolve) => CheckSave(ExecuteThumbnailShortcut, resolve)).then(function ()
 		{
-			startMainTest((oEvent) =>
-			{
-				onKeyDown(oEvent);
-				oAssert.true(oEvent.isDefaultPrevented, 'Check prevent default on scroll lock');
-			}, oMainShortcutTypes.checkScrollLock);
+			assert.true(true, 'Check save shortcut');
+			done1();
+			return new Promise((resolve) => CheckSave(ExecuteMainShortcut, resolve))
+		}).then(function ()
+		{
+			assert.true(true, 'Check save shortcut');
+			done2();
 		});
 	});
 })(window);

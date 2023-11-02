@@ -1275,6 +1275,15 @@
 			case AscDFH.historydescription_Document_SetAutoHyphenation:
 				sString = "Document_SetAutoHyphenation";
 				break;
+			case AscDFH.historydescription_Document_SetConsecutiveHyphenLimit:
+				sString = "Document_SetConsecutiveHyphenLimit";
+				break;
+			case AscDFH.historydescription_Document_SetHyphenateCaps:
+				sString = "Document_SetHyphenateCaps";
+				break;
+			case AscDFH.historydescription_Document_RemoveMathShortcut:
+				sString = "Document_RemoveMathShortcut";
+				break;
 		}
 		return sString;
 	}
@@ -1714,7 +1723,8 @@
 	window['AscDFH'].historyitem_type_Pdf_Form				= 2211 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Comment			= 2212 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Ink				= 2213 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Annot				= 2213 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot				= 2214 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Pushbutton		= 2215 << 16;
 
 	
 
@@ -3994,6 +4004,9 @@
 
 	AscDFH.historyitem_Pdf_Form_Value			= AscDFH.historyitem_type_Pdf_Form | 1;
 
+
+	AscDFH.historyitem_Pdf_Pushbutton_Image		= AscDFH.historyitem_type_Pdf_Pushbutton | 1;
+	
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в PDF Annots 
 	//------------------------------------------------------------------------------------------------------------------
@@ -4003,6 +4016,7 @@
 	AscDFH.historyitem_Pdf_Annot_Pos				= AscDFH.historyitem_type_Pdf_Annot | 2;
 	AscDFH.historyitem_Pdf_Annot_Contents			= AscDFH.historyitem_type_Pdf_Annot | 3;
 	AscDFH.historyitem_Pdf_Annot_Page				= AscDFH.historyitem_type_Pdf_Annot | 4;
+	AscDFH.historyitem_Pdf_Annot_Replies			= AscDFH.historyitem_type_Pdf_Annot | 5;
 
 	// Comment
 	AscDFH.historyitem_Pdf_Comment_Data			= AscDFH.historyitem_type_Pdf_Comment | 1;
@@ -4454,6 +4468,7 @@
 	window['AscDFH'].historydescription_Document_SetAutoHyphenation                 = 0x01a6;
 	window['AscDFH'].historydescription_Document_SetConsecutiveHyphenLimit          = 0x01a7;
 	window['AscDFH'].historydescription_Document_SetHyphenateCaps                   = 0x01a8;
+	window['AscDFH'].historydescription_Document_RemoveMathShortcut                 = 0x01a9;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

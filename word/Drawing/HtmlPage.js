@@ -3693,7 +3693,7 @@ function CEditorPage(api)
 		this.UpdateHorRuler();
 		this.UpdateVerRuler();
 
-        if (true)
+        if (!this.m_oApi.isPdfEditor())
         {
             AscCommon.InitBrowserInputContext(this.m_oApi, "id_target_cursor");
             if (AscCommon.g_inputContext)

@@ -386,7 +386,7 @@
 	 */
 	Api.prototype.AddSheet = function (sName) {
 		if (this.GetSheet(sName))
-			console.error(new Error('Worksheet with such a name already exists.'));
+			private_makeError('Worksheet with such a name already exists.', true);
 		else
 			this.asc_addWorksheet(sName);
 	};
@@ -531,17 +531,17 @@
 	 * @param {ApiRange} Range2 - One of the intersecting ranges. At least two Range objects must be specified.
 	 * @returns {ApiRange | null}
 	 */
-	Api.prototype.Intersect  = function (Range1, Range2) {
+	Api.prototype.Intersect = function (Range1, Range2) {
 		let result = null;
 		if (Range1.GetWorksheet().Id === Range2.GetWorksheet().Id) {
 			var res = Range1.range.bbox.intersection(Range2.range.bbox);
 			if (!res) {
-				console.error(new Error("Ranges do not intersect."));
+				private_makeError('Ranges do not intersect.', false);
 			} else {
 				result = new ApiRange(this.GetActiveSheet().worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
 			}
 		} else {
-			console.error(new Error('Ranges should be from one worksheet.'));
+			private_makeError('Ranges should be from one worksheet.', false);
 		}
 		return result;
 	};
@@ -829,6 +829,7 @@
 
 	/**
 	 * Subscribes to the specified event and calls the callback function when the event fires.
+	 * @function
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {string} eventName - The event name.
@@ -839,6 +840,7 @@
 
 	/**
 	 * Unsubscribes from the specified event.
+	 * @function
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {string} eventName - The event name.
@@ -943,7 +945,7 @@
 				this.asc_freezePane(type);
 
 		} else {
-			throw(new Error('Invalid parametr "FreezePaneType".'));
+			private_makeError('Invalid parametr "FreezePaneType".', false);
 		}
 	};
 
@@ -1079,7 +1081,7 @@
 		let result;
 		if (typeof col == "number" && typeof row == "number") {
 			if (col < 1 || row < 1 || col > AscCommon.gc_nMaxCol0 || row > AscCommon.gc_nMaxRow0) {
-				console.error(new Error('Invalid paremert "row" or "col".'));
+				private_makeError('Invalid paremert "row" or "col".', false);
 				result = null;
 			} else {
 				row--;
@@ -1088,20 +1090,19 @@
 			}
 		} else if (typeof row == "number") {
 			if (row < 1 || row > AscCommon.gc_nMaxRow0) {
-				console.error(new Error('Invalid paremert "row".'));
+				private_makeError('Invalid paremert "row".', false);
 				result = null;
 			} else {
-				row--
+				row--;
 				let r = (row) ?  (row / AscCommon.gc_nMaxCol0) >> 0 : row;
 				let c = (row) ? row % AscCommon.gc_nMaxCol0 : row;
 				if (r && c) c--;
-				console.error()
 				result = new ApiRange(this.worksheet.getRange3(r, c, r, c));
 			}
 			
 		} else if (typeof col == "number") {
 			if (col < 1 || col > AscCommon.gc_nMaxCol0) {
-				console.error(new Error('Invalid paremert "col".'))
+				private_makeError('Invalid paremert "col".', false);
 				result = null;
 			} else {
 				col--;
@@ -1139,7 +1140,7 @@
 			if (value > 0 && value <=  AscCommon.gc_nMaxRow0 + 1 && value[0] !== NaN) {
 				value --;
 			} else {
-				console.error(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
+				private_makeError('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1), false);
 				return null;
 			}
 			return new ApiRange(this.worksheet.getRange3(value, 0, value, AscCommon.gc_nMaxCol0));
@@ -1155,7 +1156,7 @@
 				}
 			}
 			if (isError) {
-				console.error(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
+				private_makeError('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1), false);
 				return null;
 			} else {
 				return new ApiRange(this.worksheet.getRange3(value[0], 0, value[1], AscCommon.gc_nMaxCol0));
@@ -1264,7 +1265,7 @@
 		Range1 = (Range1 instanceof ApiRange) ? Range1.range : (typeof Range1 == 'string') ? this.worksheet.getRange2(Range1) : null;
 
 		if (!Range1) {
-			console.error(new Error('Incorrect "Range1" or it is empty.'));
+			private_makeError('Incorrect "Range1" or it is empty.', false);
 			return null;
 		}
 		
@@ -1657,21 +1658,18 @@
 		if ( range && range.range.isOneCell() && (sAddress || subAddress) ) {
 			var externalLink = sAddress ? AscCommon.rx_allowedProtocols.test(sAddress) : false;
 			if (externalLink && AscCommonExcel.getFullHyperlinkLength(sAddress) > Asc.c_nMaxHyperlinkLength) {
-				console.error(new Error('Incorrect "sAddress".'));
-				return null;
+				private_makeError('Incorrect "sAddress".', true);
 			}
 			if (!externalLink) {
 				address = subAddress.split("!");
 				if (address.length == 1) 
 					address.unshift(this.GetName());
 				else if (this.worksheet.workbook.getWorksheetByName(address[0]) === null) {
-					console.error(new Error('Invalid "subAddress".'));	
-					return null;
+					private_makeError('Invalid "subAddress".', true);
 				}
 				var res = this.worksheet.workbook.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.FormatTable, address[1], false);
 				if (res === Asc.c_oAscError.ID.DataRangeError) {
-					console.error(new Error('Invalid "subAddress".'));
-					return null;
+					private_makeError('Invalid "subAddress".', true);
 				}
 			}
 			this.worksheet.selectionRange.assign2(range.range.bbox);
@@ -1967,7 +1965,7 @@
 		let bb = before instanceof ApiWorksheet;
 		let ba = after instanceof ApiWorksheet;
 		if ( (bb && ba) || (!bb && !ba) ) {
-			console.error(new Error('Incorrect parametrs.'));
+			private_makeError('Incorrect parametrs.', true);
 		} else {
 			let curIndex = this.GetIndex();
 			let newIndex = ( bb ? ( before.GetIndex() ) : (after.GetIndex() + 1) );
@@ -2097,7 +2095,7 @@
 				if (r < 0) r = 0;
 				result = new ApiRange(this.range.worksheet.getRange3(r, this.range.bbox.c1, r, this.range.bbox.c2));
 			} else {
-				console.error(new Error('The nRow must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
+				private_makeError('The nRow must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1), false);
 			}
 		}
 		return result;
@@ -2128,7 +2126,7 @@
 				if (c < 0) c = 0;
 				result = new ApiRange(this.range.worksheet.getRange3(this.range.bbox.r1, c, this.range.bbox.r2, c));
 			} else {
-				console.error(new Error('The nCol must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1)))
+				private_makeError('The nCol must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1), false);
 			}
 		} 
 		return result;
@@ -3068,16 +3066,18 @@
 	 * Returns one cell or cells from the merge area.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiRange}
+	 * @returns {ApiRange | null} - returns null if range isn't one cell
 	 */
 	Object.defineProperty(ApiRange.prototype, "MergeArea", {
 		get: function () {
+			let result = null;
 			if (this.range.isOneCell()) {
 				var bb = this.range.hasMerged();
-				return new ApiRange((bb) ? AscCommonExcel.Range.prototype.createFromBBox(this.range.worksheet, bb) : this.range);
+				result = new ApiRange((bb) ? AscCommonExcel.Range.prototype.createFromBBox(this.range.worksheet, bb) : this.range);
 			} else {
-				console.error(new Error('Range must be is one cell.'));
+				private_makeError('Range must be is one cell.', false);
 			}
+			return result;
 		}
 	});
 
@@ -3424,7 +3424,7 @@
 			var range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols) );
 			this.range.move(range.bbox, true, destination.range.worksheet);
 		} else {
-			console.error(new Error ("Invalid destination"));
+			private_makeError('Invalid destination', false);
 		}
 	};
 
@@ -3442,7 +3442,7 @@
 			var range = this.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols) );
 			rangeFrom.range.move(range.bbox, true, range.worksheet);
 		} else {
-			console.error(new Error ("Invalid range"));
+			private_makeError('Invalid range', false);
 		}
 	};
 
@@ -3562,7 +3562,7 @@
 			this._searchOptions = options;
 			return res;
 		} else {
-			console.error(new Error('Invalid parametr "What".'));
+			private_makeError('Invalid parametr "What".', false);
 			return null;
 		}
 	};
@@ -3602,7 +3602,7 @@
 			}
 			return res;
 		} else {
-			console.error(new Error('You should use "Find" method before this.'));
+			private_makeError('You should use "Find" method before this.', false);
 			return null;
 		}
 	};
@@ -3642,7 +3642,7 @@
 			}
 			return res;
 		} else {
-			console.error(new Error('You should use "Find" method before this.'));
+			private_makeError('You should use "Find" method before this.', false);
 			return null;
 		}
 	};
@@ -3664,7 +3664,6 @@
 	 * @param {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
 	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
 	 * @param {boolean} ReplaceAll - Specifies if all the found data will be replaced or not. The default value is "true".
-	 * 
 	 */
 	ApiRange.prototype.Replace = function(oReplaceData) {
 		let What, Replacement, LookAt, SearchOrder, SearchDirection, MatchCase, ReplaceAll;
@@ -3721,7 +3720,7 @@
 				this.range.worksheet.workbook.oApi.wb.replaceCellText(options);
 			}
 		} else {
-			console.error(new Error('Invalid type of parametr "What" or "Replacement".'));
+			private_makeError('Invalid type of parametr "What" or "Replacement".', false);
 		}
 	};
 
@@ -4740,12 +4739,12 @@
 	 */
 	ApiName.prototype.SetName = function (sName) {
 		if (!sName || typeof sName !== 'string' || !this.DefName) {
-			console.error(new Error('Invalid name or Defname is undefined.'));
+			private_makeError('Invalid name or Defname is undefined.', false);
 			return false;
 		}
 		var res = this.DefName.wb.checkDefName(sName);
 		if (!res.status) {
-			console.error(new Error('Invalid name.')); // invalid name
+			private_makeError('Invalid name.', false); // invalid name
 			return false; 
 		}
 		var oldName = this.DefName.getAscCDefName(false);
@@ -5546,7 +5545,7 @@
 			if (excess) {
 				length -= excess;
 				if (!length) {
-					console.error(new Error("Max symbols in one cell."))
+					private_makeError('Max symbols in one cell.', false);
 					return;
 				}
 				String = String.slice(0, length);
@@ -5729,7 +5728,7 @@
 	 */
 	ApiFont.prototype.SetBold = function (isBold) {
 		if (typeof isBold !== 'boolean') {
-			console.error(new Error('Invalid type of parametr "isBold".'));
+			private_makeError('Invalid type of parametr "isBold".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5809,7 +5808,7 @@
 	 */
 	ApiFont.prototype.SetItalic = function (isItalic) {
 		if (typeof isItalic !== 'boolean') {
-			console.error(new Error('Invalid type of parametr "isItalic".'));
+			private_makeError('Invalid type of parametr "isItalic".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5889,7 +5888,7 @@
 	 */
 	ApiFont.prototype.SetSize = function (Size) {
 		if (typeof Size !== 'number' || Size < 0 || Size > 409) {
-			console.error(new Error('Invalid type of parametr "Size".'));
+			private_makeError('Invalid type of parametr "Size".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5969,7 +5968,7 @@
 	 */
 	ApiFont.prototype.SetStrikethrough = function (isStrikethrough) {
 		if (typeof isStrikethrough !== 'boolean') {
-			console.error(new Error('Invalid type of parametr "isStrikethrough".'));
+			private_makeError('Invalid type of parametr "isStrikethrough".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6080,7 +6079,7 @@
 	 */
 	ApiFont.prototype.SetUnderline = function (Underline) {
 		if (typeof Underline !== 'string') {
-			console.error(new Error('Invalid type of parametr "isUnderline".'));
+			private_makeError('Invalid type of parametr "isUnderline".', false);
 			return;
 		}
 		switch (Underline) {
@@ -6185,7 +6184,7 @@
 	 */
 	ApiFont.prototype.SetSubscript = function (isSubscript) {
 		if (typeof isSubscript !== 'boolean') {
-			console.error(new Error('Invalid type of parameter "isSubscript".'));
+			private_makeError('Invalid type of parametr "isSubscript".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6265,7 +6264,7 @@
 	 */
 	ApiFont.prototype.SetSuperscript = function (isSuperscript) {
 		if (typeof isSuperscript !== 'boolean') {
-			console.error(new Error('Invalid type of parametr "isSuperscript".'));
+			private_makeError('Invalid type of parametr "isSuperscript".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6345,7 +6344,7 @@
 	 */
 	ApiFont.prototype.SetName = function (FontName) {
 		if (typeof FontName !== 'string') {
-			console.error(new Error('Invalid type of parametr "FontName".'));
+			private_makeError('Invalid type of parametr "FontName".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6426,7 +6425,7 @@
 	 */
 	ApiFont.prototype.SetColor = function (Color) {
 		if (!Color instanceof ApiColor) {
-			console.error(new Error('Invalid type of parametr "Color".'));
+			private_makeError('Invalid type of parametr "Color".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6490,7 +6489,7 @@
 			let c = bbox.c2 < AscCommon.gc_nMaxCol0 ? bbox.c2 + 1 : bbox.c2;
 			api.asc_freezePane(null, c, r);
 		} else {
-			throw(new Error('Invalid parametr "frozenRange".'));
+			private_makeError('Invalid parametr "frozenRange".', false);
 		}
 	};
 
@@ -6509,7 +6508,7 @@
 		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
 			api.asc_freezePane(undefined);
 		} else {
-			throw(new Error('Invalid parameter "count".'))
+			private_makeError('Invalid parametr "count".', false);
 		}
 	};
 
@@ -6528,7 +6527,7 @@
 		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
 			api.asc_freezePane(undefined);
 		} else {
-			throw(new Error('Invalid parameter "count".'))
+			private_makeError('Invalid parametr "count".', false);
 		}
 	};
 
@@ -6950,12 +6949,12 @@
 	function private_AddDefName(wb, name, ref, sheetInd, hidden) {
 		let res = wb.checkDefName(name);
 		if (!res.status) {
-			console.error(new Error('Invalid name.'));
+			private_makeError('Invalid name.', false);
 			return false;
 		}
 		res = wb.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.Chart, ref, false);
 		if (res === Asc.c_oAscError.ID.DataRangeError) {
-			console.error(new Error('Invalid range.'));
+			private_makeError('Invalid range.', false);
 			return false;
 		}
 		if (sheetInd) {
@@ -7025,5 +7024,16 @@
 
 		return nLockType;
 	}
+
+	function private_makeError(message, bMakeThrow) {
+		let err = new Error(message);
+		if (!console.error)
+			console.log(err);
+		
+		if (!bMakeThrow && console.error)
+			console.error(err)
+		else if (bMakeThrow)
+			throw err;
+	};
 
 }(window, null));

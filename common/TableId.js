@@ -139,6 +139,12 @@
 		this.Id         = AscCommon.g_oIdCounter.Get_NewId();
 		this.Add(this, this.Id);
 	};
+	CTableId.prototype.Delete = function(sId)
+	{
+		if(this.m_aPairs.hasOwnProperty(sId)) {
+			delete this.m_aPairs[sId];
+		}
+	};
 	CTableId.prototype.private_InitFactoryClass = function()
 	{
 		this.m_oFactoryClass[AscDFH.historyitem_type_Paragraph]              = AscCommonWord.Paragraph;

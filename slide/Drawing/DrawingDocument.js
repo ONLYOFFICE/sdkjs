@@ -4603,15 +4603,18 @@ function CThumbnailsManager()
 				context.stroke();
 				context.beginPath();
 			}
+			page.animateLabelRect = null;
 			if (_logicDocument.isSlideAnimated(i))
 			{
 				let nX = (_bounds.x + _bounds.r) / 2 - AscCommon.AscBrowser.convertToRetinaValue(9.5, true);
 				let nY = _bounds.b + 3;
-				let oColor = text_color;
-				let resCords = this.DrawAnimLabel(g, nX, nY, oColor);
-				page.animateLabelRect = resCords
-			} else {
-				delete page.animateLabelRect;
+				let nIconH = AscCommon.AscBrowser.convertToRetinaValue(15, true);
+				if(nY + nIconH < page.bottom)
+				{
+					let oColor = text_color;
+					let resCords = this.DrawAnimLabel(g, nX, nY, oColor);
+					page.animateLabelRect = resCords
+				}
 			}
 		}
 
@@ -5489,6 +5492,9 @@ function CSlideDrawer()
 {
 	this.m_oWordControl             = null;
 	this.CONST_MAX_SLIDE_CACHE_SIZE = 104857600; // 100 megabytes
+	if (AscCommon.AscBrowser.isAppleDevices)
+		this.CONST_MAX_SLIDE_CACHE_SIZE = 16777216;
+
 	this.CONST_BORDER               = 10; // in px
 
 	this.IsCached        = false;

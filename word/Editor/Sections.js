@@ -583,6 +583,11 @@ CSectionPr.prototype =
 			this.Columns.Num = Num;
 		}
 	},
+	
+	SetColumnsNum : function(num)
+	{
+		return this.Set_Columns_Num(num);
+	},
 
 	Set_Columns_Sep : function(Sep)
 	{

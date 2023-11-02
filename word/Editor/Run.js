@@ -532,10 +532,28 @@ ParaRun.prototype.GetText = function(oText)
 
 ParaRun.prototype.GetTextOfElement = function(isLaTeX)
 {
-    var str = "";
-	for (var i = 0; i < this.Content.length; i++) {
-		if (this.Content[i]) {
-			str += this.Content[i].GetTextOfElement(isLaTeX);
+    let str = "";
+	for (let i = 0; i < this.Content.length; i++)
+	{
+		if (this.Content[i])
+		{
+			let strTemp = this.Content[i].GetTextOfElement(isLaTeX);
+
+			if (isLaTeX)
+			{
+				let value = AscMath.GetLaTeXFromValue(strTemp);
+				if (value)
+				{
+					str += value;
+				}
+				else
+				{
+					str += strTemp;
+				}
+			}
+			else{
+				str += strTemp;
+			}
 		}
 	}
 	return str;
@@ -1730,37 +1748,17 @@ ParaRun.prototype.private_UpdatePositionsOnRemove = function(Pos, Count)
 
 ParaRun.prototype.private_UpdateCompositeInputPositionsOnAdd = function(Pos)
 {
-	if (null !== this.CompositeInput)
-	{
-		if (Pos <= this.CompositeInput.Pos)
-			this.CompositeInput.Pos++;
-		else if (Pos < this.CompositeInput.Pos + this.CompositeInput.Length)
-			this.CompositeInput.Length++;
-	}
+	if (!this.CompositeInput)
+		return;
+	
+	this.CompositeInput.updateOnAdd(Pos);
 };
-
 ParaRun.prototype.private_UpdateCompositeInputPositionsOnRemove = function(Pos, Count)
 {
-	if (null !== this.CompositeInput)
-	{
-		if (Pos + Count <= this.CompositeInput.Pos)
-		{
-			this.CompositeInput.Pos -= Count;
-		}
-		else if (Pos < this.CompositeInput.Pos)
-		{
-			this.CompositeInput.Pos    = Pos;
-			this.CompositeInput.Length = Math.max(0, this.CompositeInput.Length - (Count - (this.CompositeInput.Pos - Pos)));
-		}
-		else if (Pos + Count < this.CompositeInput.Pos + this.CompositeInput.Length)
-		{
-			this.CompositeInput.Length = Math.max(0, this.CompositeInput.Length - Count);
-		}
-		else if (Pos < this.CompositeInput.Pos + this.CompositeInput.Length)
-		{
-			this.CompositeInput.Length = Math.max(0, Pos - this.CompositeInput.Pos);
-		}
-	}
+	if (!this.CompositeInput)
+		return;
+	
+	this.CompositeInput.updateOnRemove(Pos, Count);
 };
 
 ParaRun.prototype.GetLogicDocument = function()
@@ -2032,7 +2030,7 @@ ParaRun.prototype.AddInstrText = function(sString, nPos)
 };
 
 // Определим строку и отрезок текущей позиции
-ParaRun.prototype.GetCurrentParaPos = function()
+ParaRun.prototype.GetCurrentParaPos = function(align)
 {
     var Pos = this.State.ContentPos;
 
@@ -2050,8 +2048,10 @@ ParaRun.prototype.GetCurrentParaPos = function()
         {
             var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
             var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-            if ( Pos < EndPos && Pos >= StartPos )
-                return new CParaPos((CurLine === 0 ? CurRange + this.StartRange : CurRange), CurLine + this.StartLine, 0, 0);
+	
+			if (((-1 === align) && (StartPos < Pos && Pos <= EndPos))
+				|| ((-1 !== align) && (StartPos <= Pos && Pos < EndPos)))
+				return new CParaPos((CurLine === 0 ? CurRange + this.StartRange : CurRange), CurLine + this.StartLine, 0, 0);
         }
     }
 
@@ -6134,16 +6134,19 @@ ParaRun.prototype.RecalculateMinMaxContentWidth = function(MinMax)
             }
             case para_Math_BreakOperator:
             {
-                if ( true === bWord )
-                {
-                    if ( nMinWidth < nWordLen )
-                        nMinWidth = nWordLen;
+				let itemWidth = Item.GetWidth() / AscWord.TEXTWIDTH_DIVIDER;
+				if (!bWord)
+					nWordLen = itemWidth;
+				else
+					nWordLen += itemWidth;
+	
+				if (nMinWidth < nWordLen)
+					nMinWidth = nWordLen;
+	
+				bWord    = false;
+				nWordLen = 0;
 
-                    bWord    = false;
-                    nWordLen = 0;
-                }
-
-                nCurMaxWidth += Item.GetWidth() / AscWord.TEXTWIDTH_DIVIDER;
+                nCurMaxWidth += itemWidth;
                 bCheckTextHeight = true;
                 break;
             }
@@ -7242,7 +7245,7 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
 			case para_Separator:
 			case para_ContinuationSeparator:
 			{
-				if (para_Text === ItemType && null !== this.CompositeInput && Pos >= this.CompositeInput.Pos && Pos < this.CompositeInput.Pos + this.CompositeInput.Length)
+				if (para_Text === ItemType && this.CompositeInput && this.CompositeInput.isInside(Pos))
 				{
 					aUnderline.Add(UnderlineY, UnderlineY, X, X + ItemWidthVisible, LineW, CurColor.r, CurColor.g, CurColor.b, undefined, CurTextPr);
 				}
@@ -10591,7 +10594,16 @@ ParaRun.prototype.RemoveTrackMoveMarks = function(oTrackManager)
 		}
 	}
 };
-
+ParaRun.prototype.IsContainMathOperators = function ()
+{
+	for (let i = 0; i < this.Content.length; i++)
+	{
+		let oCurrentMathText = this.Content[i];
+		if (oCurrentMathText.IsBreakOperator())
+			return true;
+	}
+	return false;
+};
 ParaRun.prototype.private_RecalcCtrPrp = function()
 {
     if (para_Math_Run === this.Type && undefined !== this.Parent && null !== this.Parent && null !== this.Parent.ParaMath)
@@ -11463,6 +11475,9 @@ ParaRun.prototype.AddMathPlaceholder = function()
     var oPlaceholder = new CMathText(false);
 	oPlaceholder.SetPlaceholder();
     this.Add_ToContent(0, oPlaceholder, false);
+	
+	// TODO: Расчет стилей разный для плейсхолдера и для текса (разобраться почему)
+	this.Recalc_CompiledPr();
 };
 ParaRun.prototype.RemoveMathPlaceholder = function()
 {
@@ -11474,6 +11489,9 @@ ParaRun.prototype.RemoveMathPlaceholder = function()
 			nPos--;
 		}
 	}
+	
+	// TODO: Расчет стилей разный для плейсхолдера и для текса (разобраться почему)
+	this.Recalc_CompiledPr();
 };
 ParaRun.prototype.Set_MathPr = function(MPrp)
 {

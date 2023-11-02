@@ -869,6 +869,7 @@
 	cSHEET.prototype.name = 'SHEET';
 	cSHEET.prototype.argumentsMin = 0;
 	cSHEET.prototype.argumentsMax = 1;
+	cSHEET.prototype.ca = true;
 	cSHEET.prototype.isXLFN = true;
 	cSHEET.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSHEET.prototype.argumentsType = [argType.text];

@@ -134,11 +134,75 @@
     CAnnotationPolyLine.prototype.SetVertices = function(aVertices) {
         this._vertices = aVertices;
     };
+    CAnnotationPolyLine.prototype.GetVertices = function() {
+        return this._vertices;
+    };
     CAnnotationPolyLine.prototype.SetLineStart = function(nType) {
         this._lineStart = nType;
     };
+    CAnnotationPolyLine.prototype.GetLineStart = function() {
+        return this._lineStart;
+    };
     CAnnotationPolyLine.prototype.SetLineEnd = function(nType) {
         this._lineEnd = nType;
+    };
+    CAnnotationPolyLine.prototype.GetLineEnd = function() {
+        return this._lineEnd;
+    };
+    CAnnotationPolyLine.prototype.WriteToBinary = function(memory) {
+        memory.WriteByte(AscCommon.CommandType.ctAnnotField);
+
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.WriteToBinaryBase(memory);
+        this.WriteToBinaryBase2(memory);
+        
+        // vertices
+        let aVertices = this.GetVertices();
+        if (aVertices) {
+            memory.WriteLong(aVertices.length);
+            for (let i = 0; i < aVertices.length; i++) {
+                memory.WriteDouble(aVertices[i]);
+            }
+        }
+        
+        // line ending
+        let nLS = this.GetLineStart();
+        let nLE = this.GetLineEnd();
+        if (nLE != null && nLS != null) {
+            memory.annotFlags |= (1 << 15);
+            memory.WriteByte(nLS);
+            memory.WriteByte(nLE);
+        }
+
+        // fill
+        let aFill = this.GetFillColor();
+        if (aFill != null) {
+            memory.annotFlags |= (1 << 16);
+            memory.WriteLong(aFill.length);
+            for (let i = 0; i < aFill.length; i++)
+                memory.WriteDouble(aFill[i]);
+        }
+
+        // intent
+        let nIntent = this.GetIntent();
+        if (nIntent != null) {
+            memory.annotFlags |= (1 << 20);
+            memory.WriteDouble(nIntent);
+        }
+
+        let nEndPos = memory.GetCurPosition();
+        memory.Seek(memory.posForFlags);
+        memory.WriteLong(memory.annotFlags);
+        
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+
+        this._replies.forEach(function(reply) {
+            reply.WriteToBinary(memory); 
+        });
     };
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)

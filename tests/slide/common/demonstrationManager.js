@@ -30,28 +30,30 @@
  *
  */
 
-"use strict";
+'use strict';
 
 (function (window)
 {
-	AscCommon.g_oTableId = {
-		map : {},
-		Add : function(c, id)
-		{
-			this.map[id] = c;
-		},
-		Get_ById : function(id)
-		{
-			if (!this.map[id])
-				return null;
+	editor.WordControl.DemonstrationManager = new CDemonstrationManager(editor.WordControl);
+	editor.WordControl.DemonstrationManager.HtmlPage = editor.WordControl;
+	editor.WordControl.DemonstrationManager.DemonstrationDiv = document.createElement('div');
+	editor.WordControl.DemonstrationManager.Canvas = document.createElement('canvas');
+	editor.WordControl.DemonstrationManager.DemonstrationDiv.appendChild(editor.WordControl.DemonstrationManager.Canvas);
+	editor.WordControl.DemonstrationManager.Start = function (main_div_id, start_slide_num, is_play_mode, is_no_fullscreen)
+	{
+		this.StartSlideNum = start_slide_num;
+		if (-1 === start_slide_num)
+			start_slide_num = 0;
 
-			return this.map[id];
-		},
-		TurnOff : function(){},
-		TurnOn : function(){},
-		init : function () {},
+		this.SlidesCount = this.HtmlPage.m_oDrawingDocument.SlidesCount;
+		this.Mode = true;
+		this.SlideNum = start_slide_num;
+	}
+
+	editor.WordControl.DemonstrationManager.End = function (isNoUseFullScreen)
+	{
+		this.Mode = false;
+		this.HtmlPage.m_oApi.sync_endDemonstration();
+		this.HtmlPage.GoToPage(this.SlideNum);
 	};
-
-	AscCommon.g_oIdCounter.m_bLoad = false;
-	AscCommon.g_oIdCounter.m_bRead = false;
 })(window);

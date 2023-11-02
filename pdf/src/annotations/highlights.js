@@ -71,7 +71,7 @@
     CAnnotationTextMarkup.prototype.IsInQuads = function(x, y) {
         let oOverlayCtx = editor.getDocumentRenderer().overlay.m_oContext;
         let aQuads      = this.GetQuads();
-
+        
         for (let i = 0; i < aQuads.length; i++) {
             let aPoints = aQuads[i];
 
@@ -165,6 +165,40 @@
         this.unitedRegion = resultRegion;
         return this.unitedRegion;
     };
+    CAnnotationTextMarkup.prototype.WriteToBinary = function(memory) {
+        memory.WriteByte(AscCommon.CommandType.ctAnnotField);
+
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.WriteToBinaryBase(memory);
+        this.WriteToBinaryBase2(memory);
+        
+        // quads
+        let aQuads = this.GetQuads();
+        let nLen = 0;
+        for (let i = 0; i < aQuads.length; i++) {
+            nLen += aQuads[i].length;
+        }
+        memory.WriteLong(nLen);  
+        for (let i = 0; i < aQuads.length; i++) {
+            for (let j = 0; j < aQuads[i].length; j++) {
+                memory.WriteDouble(aQuads[i][j]);
+            }
+        }
+
+        let nEndPos = memory.GetCurPosition();
+        memory.Seek(memory.posForFlags);
+        memory.WriteLong(memory.annotFlags);
+        
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+
+        this._replies.forEach(function(reply) {
+            reply.WriteToBinary(memory); 
+        });
+    };
     /**
 	 * Class representing a highlight annotation.
 	 * @constructor
@@ -185,7 +219,6 @@
             return;
 
         let oRGBFill = this.GetRGBColor(this.GetStrokeColor());
-        let nGrScale = oGraphicsPDF.GetScale();
 
         let aQuads = this.GetQuads();
         for (let i = 0; i < aQuads.length; i++) {
@@ -216,10 +249,10 @@
             let angle2          = Math.atan2(dy2, dx2);
             let rotationAngle   = angle1;
 
-            oGraphicsPDF.context.globalCompositeOperation = "multiply";
+            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
+            AscPDF.startMultiplyMode(oGraphicsPDF.context);
 
             oGraphicsPDF.BeginPath();
-            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
             oGraphicsPDF.SetFillStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
 
             if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {
@@ -238,7 +271,7 @@
             }
 
             oGraphicsPDF.Fill();
-            oGraphicsPDF.context.globalCompositeOperation = "source-over";
+            AscPDF.endMultiplyMode(oGraphicsPDF.context);
         }
     };
         
@@ -476,6 +509,136 @@
         }
     };
 
+    let CARET_SYMBOL = {
+        None:       0,
+        Paragraph:  1,
+        Space:      2
+    }
+
+    /**
+	 * Class representing a caret annotation.
+	 * @constructor
+    */
+    function CAnnotationCaret(sName, nPage, aRect, oDoc)
+    {
+        CAnnotationTextMarkup.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Caret, nPage, aRect, oDoc);
+        this._caretSymbol = CARET_SYMBOL.None;
+    }
+    CAnnotationCaret.prototype = Object.create(CAnnotationTextMarkup.prototype);
+	CAnnotationCaret.prototype.constructor = CAnnotationCaret;
+
+    CAnnotationCaret.prototype.Draw = function(oGraphicsPDF) {
+        if (this.IsHidden() == true)
+            return;
+
+        let aQuads      = this.GetQuads();
+        let oRGBFill    = this.GetRGBColor(this.GetStrokeColor());
+        
+        for (let i = 0; i < aQuads.length; i++) {
+            let aPoints     = aQuads[i];
+            
+            oGraphicsPDF.SetStrokeStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
+            oGraphicsPDF.BeginPath();
+
+            let oPoint1 = {
+                x: aPoints[0],
+                y: aPoints[1]
+            }
+            let oPoint2 = {
+                x: aPoints[2],
+                y: aPoints[3]
+            }
+            let oPoint3 = {
+                x: aPoints[4],
+                y: aPoints[5]
+            }
+            let oPoint4 = {
+                x: aPoints[6],
+                y: aPoints[7]
+            }
+
+            let X1 = oPoint3.x
+            let Y1 = oPoint3.y;
+            let X2 = oPoint4.x;
+            let Y2 = oPoint4.y;
+
+            let dx1 = oPoint2.x - oPoint1.x;
+            let dy1 = oPoint2.y - oPoint1.y;
+            let dx2 = oPoint4.x - oPoint3.x;
+            let dy2 = oPoint4.y - oPoint3.y;
+            let angle1          = Math.atan2(dy1, dx1);
+            let angle2          = Math.atan2(dy2, dx2);
+            let rotationAngle   = angle1;
+
+            let nSide;
+            if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {
+                nSide = Math.abs(oPoint3.y - oPoint1.y);
+                oGraphicsPDF.SetLineWidth(Math.max(1, nSide * 0.1 >> 0));
+            }
+            else {
+                nSide = findMaxSideWithRotation(oPoint1.x, oPoint1.y, oPoint2.x, oPoint2.y, oPoint3.x, oPoint3.y, oPoint4.x, oPoint4.y);
+                oGraphicsPDF.SetLineWidth(Math.max(1, nSide * 0.1 >> 0));
+            }
+
+            let nLineW      = oGraphicsPDF.GetLineWidth();
+            let nIndentX    = Math.sin(rotationAngle) * nLineW * 1.5;
+            let nIndentY    = Math.cos(rotationAngle) * nLineW * 1.5;
+
+            if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {
+                oGraphicsPDF.HorLine(X1, X2, Y2 - nIndentY);
+            }
+            else {
+                oGraphicsPDF.MoveTo(X1 + nIndentX, Y1 - nIndentY);
+                oGraphicsPDF.LineTo(X2 + nIndentX, Y2 - nIndentY);
+            }
+            
+            oGraphicsPDF.Stroke();
+        }
+    };
+    CAnnotationCaret.prototype.SetCaretSymbol = function(nType) {
+        this._caretSymbol = nType;
+    };
+    CAnnotationCaret.prototype.GetCaretSymbol = function() {
+        return this._caretSymbol;
+    };
+    CAnnotationCaret.prototype.WriteToBinary = function(memory) {
+        memory.WriteByte(AscCommon.CommandType.ctAnnotField);
+
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.WriteToBinaryBase(memory);
+        this.WriteToBinaryBase2(memory);
+        
+        // rectange diff
+        let aRD = this.GetReqtangleDiff();
+        if (aRD) {
+            memory.annotFlags |= (1 << 15);
+            for (let i = 0; i < 4; i++) {
+                memory.WriteDouble(aRD[i]);
+            }
+        }
+        
+        // caret symbol
+        let nCaretSymbol = this.GetCaretSymbol();
+        if (nCaretSymbol != null) {
+            memory.annotFlags |= (1 << 16);
+            memory.WriteByte(nCaretSymbol);
+        }
+
+        let nEndPos = memory.GetCurPosition();
+        memory.Seek(memory.posForFlags);
+        memory.WriteLong(memory.annotFlags);
+        
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+
+        this._replies.forEach(function(reply) {
+            reply.WriteToBinary(memory); 
+        });
+    };
+
     function findMaxSideWithRotation(x1, y1, x2, y2, x3, y3, x4, y4) {
         // Найдите центр поворота
         const x_center = (x1 + x3) / 2;
@@ -595,5 +758,6 @@
     window["AscPDF"].CAnnotationUnderline   = CAnnotationUnderline;
     window["AscPDF"].CAnnotationStrikeout   = CAnnotationStrikeout;
     window["AscPDF"].CAnnotationSquiggly    = CAnnotationSquiggly;
+    window["AscPDF"].CAnnotationCaret       = CAnnotationCaret;
 })();
 

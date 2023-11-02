@@ -56,6 +56,10 @@
         Slash:          9
     }
 
+    let CAPTION_POSITIONING = {
+        Inline: 0,
+        Top:    1
+    }
     /**
 	 * Class representing a Ink annotation.
 	 * @constructor
@@ -72,11 +76,16 @@
         this._stateModel    = undefined;
         this._width         = undefined;
         this._points        = undefined;
-        this._cap           = LINE_CAP_STYLES.Projecting;
+        this._doCaption     = undefined;
         this._intent        = undefined;
         this._lineStart     = undefined;
         this._lineEnd       = undefined;
-        
+        this._leaderLength  = undefined; // LL
+        this._leaderExtend  = undefined; // LLE
+        this._leaderLineOffset  = undefined; // LLO
+        this._captionPos        = CAPTION_POSITIONING.Inline; // CP
+        this._captionOffset     = undefined;  // CO
+
         // internal
         TurnOffHistory();
         this.content        = new AscPDF.CTextBoxContent(this, oDoc);
@@ -84,17 +93,61 @@
     CAnnotationLine.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationLine.prototype.constructor = CAnnotationLine;
 
+    CAnnotationLine.prototype.SetCaptionOffset = function(array) {
+        this._captionOffset = array;
+    };
+    CAnnotationLine.prototype.GetCaptionOffset = function() {
+        return this._captionOffset;
+    };
+
+    CAnnotationLine.prototype.SetCaptionPos = function(nPosType) {
+        this._captionPos = nPosType;
+    };
+    CAnnotationLine.prototype.GetCaptionPos = function() {
+        return this._captionPos;
+    };
+
+    CAnnotationLine.prototype.SetLeaderLineOffset = function(nValue) {
+        this._leaderLineOffset = nValue;
+    };
+    CAnnotationLine.prototype.GetLeaderLineOffset = function() {
+        return this._leaderLineOffset;
+    };
+    CAnnotationLine.prototype.SetLeaderLength = function(nValue) {
+        this._leaderLength = nValue;
+    };
+    CAnnotationLine.prototype.GetLeaderLength = function() {
+        return this._leaderLength;
+    };
+    CAnnotationLine.prototype.SetLeaderExtend = function(nValue) {
+        this._leaderExtend = nValue;
+    };
+    CAnnotationLine.prototype.GetLeaderExtend = function() {
+        return this._leaderExtend;
+    };
     CAnnotationLine.prototype.SetLinePoints = function(aPoints) {
         this._points = aPoints;
     };
-    CAnnotationLine.prototype.SetLineCap = function(nType) {
-        this._cap = nType;
+    CAnnotationLine.prototype.GetLinePoints = function() {
+        return this._points;
+    };
+    CAnnotationLine.prototype.SetDoCaption = function(nType) {
+        this._doCaption = nType;
+    };
+    CAnnotationLine.prototype.GetDoCaption = function() {
+        return this._doCaption;
     };
     CAnnotationLine.prototype.SetLineStart = function(nType) {
         this._lineStart = nType;
     };
     CAnnotationLine.prototype.SetLineEnd = function(nType) {
         this._lineEnd = nType;
+    };
+    CAnnotationLine.prototype.GetLineStart = function() {
+        return this._lineStart;
+    };
+    CAnnotationLine.prototype.GetLineEnd = function() {
+        return this._lineEnd;
     };
 
     CAnnotationLine.prototype.Draw = function(oGraphics) {
@@ -152,6 +205,101 @@
             this.content.YLimit = this._oldContentPos.YLimit   = 20000;
             this.content.Recalculate_Page(0, true);
         }
+    };
+
+    CAnnotationLine.prototype.WriteToBinary = function(memory) {
+        memory.WriteByte(AscCommon.CommandType.ctAnnotField);
+
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.WriteToBinaryBase(memory);
+        this.WriteToBinaryBase2(memory);
+        
+        // line points
+        let aLinePoints = this.GetLinePoints();
+        for (let i = 0; i < aLinePoints.length; i++) {
+            memory.WriteDouble(aLinePoints[i]);
+        }
+
+        // line ending
+        let nLS = this.GetLineStart();
+        let nLE = this.GetLineEnd();
+        if (nLE != null && nLS != null) {
+            memory.annotFlags |= (1 << 15);
+            memory.WriteByte(nLS);
+            memory.WriteByte(nLE);
+        }
+
+        // fill
+        let aFill = this.GetFillColor();
+        if (aFill != null) {
+            memory.annotFlags |= (1 << 16);
+            memory.WriteLong(aFill.length);
+            for (let i = 0; i < aFill.length; i++)
+                memory.WriteDouble(aFill[i]);
+        }
+
+        // leader leader
+        let nLL = this.GetLeaderLength();
+        if (nLL) {
+            memory.annotFlags |= (1 << 17);
+            memory.WriteDouble(nLL);
+        }
+
+        // leader extend
+        let nLLE = this.GetLeaderExtend();
+        if (nLLE) {
+            memory.annotFlags |= (1 << 18);
+            memory.WriteDouble(nLLE);
+        }
+
+        // do caption
+        let bDoCaption = this.GetDoCaption();
+        if (bDoCaption) {
+            memory.annotFlags |= (1 << 19);
+        }
+        
+        // intent
+        let nIntent = this.GetIntent();
+        if (nIntent != null) {
+            memory.annotFlags |= (1 << 20);
+            memory.WriteDouble(nIntent);
+        }
+
+        // leader Line Offset
+        let nLLO = this.GetLeaderLineOffset();
+        if (nLLO != null) {
+            memory.annotFlags |= (1 << 21);
+            memory.WriteDouble(nLLO);
+        }
+
+        // caption positioning
+        let nCP = this.GetCaptionPos();
+        if (nCP != null) {
+            memory.annotFlags |= (1 << 22);
+            memory.WriteByte(nCP);
+        }
+
+        // caption offset
+        let aCO = this.GetCaptionOffset();
+        if (aCO != null) {
+            memory.annotFlags |= (1 << 23);
+            memory.WriteDouble(aCO[0]);
+            memory.WriteDouble(aCO[1]);
+        }
+
+        let nEndPos = memory.GetCurPosition();
+        memory.Seek(memory.posForFlags);
+        memory.WriteLong(memory.annotFlags);
+        
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+
+        this._replies.forEach(function(reply) {
+            reply.WriteToBinary(memory); 
+        });
     };
 
     function TurnOffHistory() {

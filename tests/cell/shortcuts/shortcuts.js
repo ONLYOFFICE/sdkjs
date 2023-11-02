@@ -32,2441 +32,1700 @@
 
 "use strict";
 
+QUnit.config.autostart = false;
 (function (window)
 {
-	const editor = Asc.editor;
 	const {
-		wbView,
-		executeTestWithCatchEvent,
-		getFragments,
-		getSelectionCellEditor,
-		moveToStartCellEditor,
-		moveToEndCellEditor,
-		moveToCell,
-		selectToCell,
-		checkOpenCellEditor,
-		onKeyDown,
-		closeCellEditor,
-		enterTextWithoutClose,
-		setCheckOpenCellEditor,
-		enterText,
-		cellEditor,
-		getCellText,
-		wsView,
-		ws,
-		moveAndEnterText,
-		createTest,
-		moveAndGetCellText,
-		goToSheet,
-		createWorksheet,
-		removeCurrentWorksheet,
-		cleanSelection,
-		cleanActiveCell,
-		checkRange,
-		openCellEditor,
-		checkActiveCell,
-		selectAll,
-		cleanAll,
-		setCellFormat,
-		xfs,
-		undo,
-		createEvent,
-		selectAllCell,
-		cellPosition,
-		getCellEditMode,
-		testPreventDefaultAndStopPropagation,
-		addHyperlink,
-		createMathInShape,
-		moveCursorRight,
-		moveCursorLeft,
-		moveCursorUp,
-		moveCursorDown,
-		checkMoveContentShapeHelper,
-		contentPosition,
-		selectedContent,
-		checkSelectContentShapeHelper,
-		round,
-		moveShapeHelper,
-		createTable,
-		createSlicer,
-		moveToShapeParagraph,
-		addProperty,
-		textPr,
-		moveToParagraph,
-		selectedObjects,
-		graphicController,
-		createShape,
-		selectOnlyObjects,
-		createShapeWithContent,
-		checkTextAfterKeyDownHelperHelloWorld,
-		getParagraphText,
-		checkDirectTextPrAfterKeyDown,
-		checkDirectParaPrAfterKeyDown,
-		startCellEditorTest,
-		startTableTest,
-		startGraphicTest,
-		oTableTypes,
-		oCellEditorTypes,
-		oGraphicTypes,
-		checkRemoveObject,
-		checkTextAfterKeyDownHelperEmpty,
-		createGroup,
-		createChart
-	} = window.AscTestShortcut;
-	const pxToMm = AscCommon.g_dKoef_pix_to_mm;
+		tableHotkeyTypes,
+		cellEditorHotkeyTypes,
+		graphicHotkeyTypes,
+		tableEvents,
+		graphicEvents,
+		ExecuteCellEditorHotkey,
+		ExecuteTableHotkey,
+		ExecuteGraphicHotkey,
+		ExecuteShortcut,
+		InitEditor
+	} = AscTestShortcut;
 
-	$(
-		function ()
+	let editor, wb, wbView, ws, wsView, cellEditor;
+	InitEditor(function ()
+	{
+		editor = window["Asc"]["editor"];
+		wb = editor.wbModel;
+		wbView = editor.wb;
+		ws = wb.aWorksheets[0];
+		wsView = wbView.getWorksheet();
+		cellEditor = wbView.cellEditor;
+		QUnit.start();
+	});
+
+	function GetParagraphText(paragraph)
+	{
+		return paragraph.GetText({ParaEndToSpace: false});
+	}
+
+	function ClearShapeAndAddParagraph(sText)
+	{
+		const textShape = AddShape(0, 0, 100, 100);
+		const txBody = AscFormat.CreateTextBodyFromString(sText, wb.DrawingDocument, textShape);
+		textShape.setTxBody(txBody);
+		textShape.setPaddings({Left: 0, Top: 0, Right: 0, Bottom: 0});
+		const paragraph = txBody.content.Content[0];
+		paragraph.SetThisElementCurrent();
+		paragraph.MoveCursorToStartPos();
+		textShape.recalculate();
+		return {shape: textShape, paragraph: paragraph};
+	}
+
+	function AddShape(x, y, height, width)
+	{
+		const shapeTrack = new AscFormat.NewShapeTrack('rect', x, y, wb.theme, null, null, null, 0);
+		shapeTrack.track({}, x + width, y + height);
+		const shape = shapeTrack.getShape(false, wb.DrawingDocument, null);
+		shape.setBDeleted(false);
+		shape.setWorksheet(ws);
+		shape.setParent(GetDrawingObjects().drawingObjects);
+		shape.addToDrawingObjects(undefined, AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+		shape.checkDrawingBaseCoords();
+
+		shape.select(GetDrawingObjects(), 0);
+		return shape;
+	}
+
+	function EnterText(text)
+	{
+		const codePoints = text.split('').map((e) => e.charCodeAt());
+		wbView.EnterText(codePoints);
+	}
+
+	function AddChart()
+	{
+		ws.getRange4(0, 0).fillData([['1']]);
+		const props = editor.asc_getChartObject(Asc.c_oAscChartTypeSettings.lineNormal);
+		props.left = 0;
+		props.top = 0;
+		props.width = 100;
+		props.height = 100;
+		return GetDrawingObjects().addChartDrawingObject(props);
+	}
+
+	function CreateGroup(arrObjects)
+	{
+		const controller = GetDrawingObjects();
+		controller.resetSelection();
+		for (let i = 0; i < arrObjects.length; i += 1)
 		{
-			QUnit.module('test worksheet shortcuts');
-			function createTwoPivotTables()
-			{
-				cleanAll();
-				moveAndEnterText('ad', 0, 0);
-				moveAndEnterText('1', 1, 0);
-				moveAndEnterText('2', 2, 0);
-				editor.asc_insertPivotExistingWorksheet("Sheet1!$A$1:$A$3", "Sheet1!$C$1");
-				const oPivotTable1 = ws().getPivotTable(2, 1);
-				oPivotTable1.asc_addField(editor, 0);
-
-				moveAndEnterText('ap', 0, 1);
-				moveAndEnterText('2', 1, 1);
-				moveAndEnterText('3', 2, 1);
-				editor.asc_insertPivotExistingWorksheet("Sheet1!$B$1:$B$3", "Sheet1!$D$1");
-				const oPivotTable2 = ws().getPivotTable(3, 1);
-				oPivotTable2.asc_addField(editor, 0);
-			}
-			QUnit.test('Test refresh all connections', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					createTwoPivotTables();
-
-					moveAndEnterText('4', 2, 0);
-					moveAndEnterText('4', 2, 1);
-
-					moveToCell(1, 2);
-					onKeyDown(oEvent);
-					equal(getCellText(), '5');
-
-					moveToCell(1, 3);
-					equal(getCellText(), '6');
-				}, oTableTypes.refreshAllConnections);
-
-			});
-
-			QUnit.test('Test refresh selected connections', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					createTwoPivotTables();
-
-					moveAndEnterText('4', 2, 0);
-					moveAndEnterText('4', 2, 1);
-
-					moveToCell(1, 2);
-					onKeyDown(oEvent);
-					equal(getCellText(), '5');
-
-					moveToCell(1, 3);
-					equal(getCellText(), '5');
-				}, oTableTypes.refreshSelectedConnections);
-			});
-
-
-			QUnit.test('Test change format table info', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					createTable();
-					moveToCell(4, 0);
-					onKeyDown(oEvent);
-					moveToCell(5, 0);
-					equal(getCellText(), '10');
-				}, oTableTypes.changeFormatTableInfo);
-			});
-			// todo
-			// QUnit.test.todo('Test calculate all', (oAssert) =>
-			// {
-			// 	const {deep, equal} = createTest(oAssert);
-			// 	startTableTest((oEvent) =>
-			// 	{
-			//
-			// 	}, oTableTypes.calculateAll);
-			//
-			// });
-			//
-			//
-			// QUnit.test.todo('Test calculate active sheet', (oAssert) =>
-			// {
-			// 	const {deep, equal} = createTest(oAssert);
-			// 	startTableTest((oEvent) =>
-			// 	{
-			//
-			// 	}, oTableTypes.calculateActiveSheet);
-			//
-			// });
-			//
-			// QUnit.test.todo('Test calculate only changed', (oAssert) =>
-			// {
-			// 	const {deep, equal} = createTest(oAssert);
-			// 	startTableTest((oEvent) =>
-			// 	{
-			//
-			// 	}, oTableTypes.calculateOnlyChanged);
-			//
-			// });
-
-			QUnit.test('Test focus on cell editor', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					onKeyDown(oEvent);
-					equal(getCellEditMode(), true);
-				}, oTableTypes.focusOnCellEditor);
-			});
-
-			QUnit.test('Test add date', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					onKeyDown(oEvent);
-					const oDate = new Asc.cDate();
-					equal(getCellText(), oDate.getDateString(editor), 'Check insert current date');
-				}, oTableTypes.addDate);
-
-
-			});
-			QUnit.test('Test add time', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					const oDate = new Asc.cDate();
-					onKeyDown(oEvent);
-					equal(getCellText(), oDate.getTimeString(editor).split(' ').join(':00 '), 'Check insert current time');
-				}, oTableTypes.addTime);
-
-
-			});
-
-
-			QUnit.test('Test remove active cell text', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveToCell(0, 0);
-					enterText('hello World');
-					onKeyDown(oEvent);
-					equal(getCellText(), '', 'Check remove active cell');
-				}, oTableTypes.removeActiveCell);
-			});
-
-
-			QUnit.test('Test empty range', (oAssert) =>
-			{
-
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveAndEnterText('Hello World', 0, 0);
-					moveAndEnterText('Hello World', 1, 1);
-					moveAndEnterText('Hello World', 2, 2);
-					moveToCell(0, 0);
-					selectToCell(5, 5);
-					onKeyDown(oEvent);
-					const arrSteps = [];
-					closeCellEditor();
-					arrSteps.push(moveAndGetCellText(0, 0));
-					arrSteps.push(moveAndGetCellText(1, 1));
-					arrSteps.push(moveAndGetCellText(2, 2));
-					deep(arrSteps, ['', '', ''], 'Check empty shortcut');
-				}, oTableTypes.emptyRange);
-
-			});
-
-
-			QUnit.test('Test move active cell to left', (oAssert) =>
-			{
-
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(0, 1);
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(0, 0), 'Check move left active cell');
-				}, oTableTypes.moveActiveCellToLeft);
-
-			});
-
-			QUnit.test('Test move active cell to right', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(0, 1), 'Check move right active cell');
-				}, oTableTypes.moveActiveCellToRight);
-
-			});
-
-			QUnit.test('Test move active cell to down', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(1, 0);
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(2, 0), 'Check move down active cell');
-				}, oTableTypes.moveActiveCellToDown);
-			});
-
-			QUnit.test('Test move active cell to up', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(1, 0);
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(0, 0), 'Check move up active cell');
-				}, oTableTypes.moveActiveCellToUp);
-
-			});
-
-			QUnit.test('Test reset', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					editor.asc_startAddShape('rect');
-					onKeyDown(oEvent);
-					equal(graphicController().checkEndAddShape(), false);
-					moveToCell(0, 0);
-					editor.asc_SelectionCut();
-					onKeyDown(oEvent);
-					equal(wsView().copyCutRange, null);
-
-					moveToCell(0, 0);
-					editor.asc_Copy();
-					onKeyDown(oEvent);
-					equal(wsView().copyCutRange, null);
-				}, oTableTypes.reset);
-
-			});
-
-			QUnit.test('Test disable num lock', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					// run test for macOS and Windows
-					moveToCell(0, 0);
-					AscCommon.AscBrowser.isOpera = true;
-					testPreventDefaultAndStopPropagation(createEvent(144, false, false, false, false, false), oAssert);
-
-					AscCommon.AscBrowser.isOpera = false;
-					testPreventDefaultAndStopPropagation(createEvent(144, false, false, false, false, false), oAssert, true);
-				}, oTableTypes.disableNumLock);
-
-
-			});
-
-			QUnit.test('Test disable scroll lock', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					// run test for macOS and Windows
-					moveToCell(0, 0);
-					AscCommon.AscBrowser.isOpera = true;
-					testPreventDefaultAndStopPropagation(createEvent(145, false, false, false, false, false), oAssert);
-
-					AscCommon.AscBrowser.isOpera = false;
-					testPreventDefaultAndStopPropagation(createEvent(145, false, false, false, false, false), oAssert, true);
-				}, oTableTypes.disableScrollLock);
-
-			});
-
-			QUnit.test('Test select column', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(0, 1048575, 0, 0), 'Check move up');
-				}, oTableTypes.selectColumn);
-
-			});
-
-			QUnit.test('Test select row', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(0, 0, 0, 16383), 'Check move up');
-				}, oTableTypes.selectRow);
-			});
-
-			QUnit.test('Test select sheet', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(0, 1048575, 0, 16383), 'Check move up');
-				}, oTableTypes.selectSheet);
-			});
-
-			QUnit.test('Test add separator', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					onKeyDown(oEvent);
-					equal(getCellText(), '.');
-				}, oTableTypes.addSeparator);
-			});
-
-
-			QUnit.test('Test go to previous sheet', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					createWorksheet();
-					onKeyDown(oEvent);
-					equal(wbView().wsActive, 0, 'Check got to previous worksheet');
-					goToSheet(1);
-					removeCurrentWorksheet();
-				}, oTableTypes.goToPreviousSheet);
-			});
-
-			QUnit.test('Test move to next sheet', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					createWorksheet();
-					goToSheet(0);
-					onKeyDown(oEvent);
-					equal(wbView().wsActive, 1, 'Check got to next worksheet');
-					removeCurrentWorksheet();
-				}, oTableTypes.moveToNextSheet);
-
-			});
-
-			QUnit.test('Test move to left edge cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(0, 39);
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(0, 0), 'check move left');
-				}, oTableTypes.moveToLeftEdgeCell);
-			});
-
-			QUnit.test('Test select to left edge cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(0, 39);
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(0, 0, 0, 0), 'check move left');
-				}, oTableTypes.selectToLeftEdgeCell);
-			});
-
-			QUnit.test('Test move to left cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(0, 1);
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(0, 0), 'check move left');
-				}, oTableTypes.moveToLeftCell);
-			});
-
-			QUnit.test('Test select to left cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(0, 1);
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(0, 0, 0, 1), 'check move left');
-				}, oTableTypes.selectToLeftCell);
-			});
-
-			QUnit.test('Test move to right cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(0, 1), 'check move left');
-				}, oTableTypes.moveToRightCell);
-			});
-
-			QUnit.test('Test select to right cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(0, 0, 0, 1), 'check move left');
-				}, oTableTypes.selectToRightCell);
-			});
-
-			QUnit.test('Test move to top cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-
-					moveToCell(25, 0);
-					enterText('Hello');
-					moveToCell(27, 0);
-					enterText('Hello');
-					moveToCell(35, 0);
-
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(27, 0));
-
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(25, 0));
-				}, oTableTypes.moveToTopCell);
-			});
-
-			QUnit.test('Test move to upper cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-
-					moveAndEnterText('Hello', 22, 0);
-					moveToCell(33, 0);
-					wsView().visibleRange = new Asc.Range(0, 0, 23, 35);
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(0, 0));
-
-				}, oTableTypes.moveToUpperCell);
-			});
-
-			QUnit.test('Test select to top cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-
-					moveToCell(25, 0);
-					enterText('Hello');
-					moveToCell(27, 0);
-					enterText('Hello');
-					moveToCell(35, 0);
-
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(27, 35, 0, 0));
-
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(25, 35, 0, 0));
-				}, oTableTypes.selectToTopCell);
-
-			});
-
-			QUnit.test('Test move to up cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(5, 0);
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(4, 0));
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(3, 0));
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(2, 0));
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(1, 0));
-				}, oTableTypes.moveToUpCell);
-
-			});
-
-			QUnit.test('Test select to up cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(5, 0);
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(5, 4, 0, 0));
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(5, 3, 0, 0));
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(5, 2, 0, 0));
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(5, 1, 0, 0));
-				}, oTableTypes.selectToUpCell);
-
-			});
-
-			QUnit.test('Test move to bottom cell', (oAssert) =>
-			{
-
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(45, 0);
-					enterText('Hello');
-					moveToCell(47, 0);
-					enterText('Hello');
-					moveToCell(42, 0);
-
-					wsView().visibleRange = new Asc.Range(0, 0, 49, 49);
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(45, 0));
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(47, 0));
-				}, oTableTypes.moveToBottomCell);
-
-				startTableTest((oEvent) =>
-				{
-					moveToCell(45, 0);
-					enterText('Hello');
-					moveToCell(47, 0);
-					enterText('Hello');
-					moveToCell(42, 0);
-
-					wsView().visibleRange = new Asc.Range(0, 0, 49, 49);
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(92, 0));
-				}, oTableTypes.moveToLowerCell);
-			});
-
-			QUnit.test('Test select to bottom cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveToCell(45, 0);
-					enterText('Hello');
-					moveToCell(47, 0);
-					enterText('Hello');
-					moveToCell(42, 0);
-					wsView().visibleRange = new Asc.Range(0, 0, 100, 100);
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(42, 45, 0, 0));
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(42, 47, 0, 0));
-				}, oTableTypes.selectToBottomCell);
-			});
-
-			QUnit.test('Test select to lower cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveToCell(45, 0);
-					enterText('Hello');
-					moveToCell(47, 0);
-					enterText('Hello');
-					moveToCell(42, 0);
-
-					wsView().visibleRange = new Asc.Range(0, 0, 100, 100);
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(42, 143, 0, 0));
-				}, oTableTypes.selectToLowerCell);
-			});
-
-			QUnit.test('Test move to down cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(1, 0));
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(2, 0));
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(3, 0));
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(4, 0));
-				}, oTableTypes.moveToDownCell);
-			});
-
-			QUnit.test('Test select to down cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(0, 1, 0, 0));
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(0, 2, 0, 0));
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(0, 3, 0, 0));
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(0, 4, 0, 0));
-				}, oTableTypes.selectToDownCell);
-			});
-
-
-			QUnit.test('Test move to left edge cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveAndEnterText('Hello', 5, 5);
-					moveAndEnterText('Hello', 4, 8);
-					moveToCell(5, 25);
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(5, 0));
-				}, oTableTypes.moveToFirstColumn);
-			});
-
-			QUnit.test('Test select to left edge cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveAndEnterText('Hello', 5, 5);
-					moveAndEnterText('Hello', 4, 8);
-					moveToCell(5, 25);
-
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(5, 5, 0, 25));
-				}, oTableTypes.selectToFirstColumn);
-
-			});
-
-			QUnit.test('Test move to left edge top', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveAndEnterText('Hello', 5, 5);
-					moveAndEnterText('Hello', 4, 8);
-					moveToCell(5, 25);
-
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(0, 0));
-				}, oTableTypes.moveToLeftEdgeTop);
-			});
-
-			QUnit.test('Test select to left edge top', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveAndEnterText('Hello', 5, 5);
-					moveAndEnterText('Hello', 4, 8);
-					moveToCell(5, 25);
-
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(0, 5, 0, 25));
-				}, oTableTypes.selectToLeftEdgeTop);
-			});
-
-
-			QUnit.test('Test select to right edge cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll()
-					moveAndEnterText('Hello', 5, 5);
-					moveAndEnterText('Hello', 4, 8);
-					moveToCell(0, 0);
-
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(0, 0, 0, 23));
-
-					moveToCell(4, 0);
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(4, 4, 0, 8));
-
-					moveToCell(5, 0);
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(5, 5, 0, 5));
-				}, oTableTypes.selectToRightEdgeCell);
-			});
-
-			QUnit.test('Test move to right edge cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveAndEnterText('Hello', 5, 5);
-					moveAndEnterText('Hello', 4, 8);
-					moveToCell(0, 0);
-
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(0, 23));
-
-					moveToCell(4, 0);
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(4, 8));
-
-					moveToCell(5, 0);
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(5, 5));
-				}, oTableTypes.moveToRightEdgeCell);
-			});
-
-			QUnit.test('Test move to right bottom edge cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll()
-					moveAndEnterText('Hello', 5, 5);
-					moveAndEnterText('Hello', 4, 8);
-					moveToCell(0, 0);
-
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(5, 8));
-				}, oTableTypes.moveToRightBottomEdge);
-			});
-
-			QUnit.test('Test select to right bottom edge cell', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveAndEnterText('Hello', 5, 5);
-					moveAndEnterText('Hello', 4, 8);
-					moveToCell(0, 0);
-
-					onKeyDown(oEvent);
-					deep(cleanSelection(), checkRange(0, 5, 0, 8));
-				}, oTableTypes.selectToRightBottomEdge);
-			});
-
-			QUnit.test('Test set number format', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveAndEnterText('49990', 5, 5);
-					onKeyDown(oEvent);
-					equal(getCellText(), '49990.00', 'set number format');
-					setCellFormat(Asc.c_oAscNumFormatType.General);
-				}, oTableTypes.setNumberFormat);
-			});
-
-
-			QUnit.test('Test set time format', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveToCell(5, 5);
-					enterText('49990');
-					onKeyDown(oEvent);
-					equal(getCellText(), '12:00:00 AM', 'set number format');
-					setCellFormat(Asc.c_oAscNumFormatType.General);
-				}, oTableTypes.setTimeFormat);
-			});
-
-			QUnit.test('Test set date format', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveToCell(5, 5);
-					enterText('49990');
-					onKeyDown(oEvent);
-					equal(getCellText(), '11/11/2036', 'set number format');
-					setCellFormat(Asc.c_oAscNumFormatType.General);
-				}, oTableTypes.setDateFormat);
-			});
-
-			QUnit.test('Test set currency format', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveToCell(5, 5);
-					enterText('49990');
-					onKeyDown(oEvent);
-					equal(getCellText(), '$49,990.00', 'set number format');
-					setCellFormat(Asc.c_oAscNumFormatType.General);
-				}, oTableTypes.setCurrencyFormat);
-			});
-
-			QUnit.test('Test set percent format', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveToCell(5, 5);
-					enterText('0.1');
-					onKeyDown(oEvent);
-					equal(getCellText(), '10.00%', 'set number format');
-					setCellFormat(Asc.c_oAscNumFormatType.General);
-				}, oTableTypes.setPercentFormat);
-			});
-
-
-			QUnit.test('Test strikethrough', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveToCell(6, 6);
-					enterText('0.1');
-					onKeyDown(oEvent);
-					equal(xfs().asc_getFontStrikeout(), true);
-					onKeyDown(oEvent);
-					equal(xfs().asc_getFontStrikeout(), false);
-				}, oTableTypes.setStrikethrough);
-			});
-
-			QUnit.test('Test set exponential format', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveToCell(5, 5);
-					enterText('0.1');
-					onKeyDown(oEvent);
-					equal(getCellText(), '1.00E-01', 'set number format');
-					setCellFormat(Asc.c_oAscNumFormatType.General);
-				}, oTableTypes.setExponentialFormat);
-			});
-
-			QUnit.test('Test bold', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveToCell(6, 6);
-					enterText('0.1');
-					onKeyDown(oEvent);
-					equal(xfs().asc_getFontBold(), true);
-					onKeyDown(oEvent);
-					equal(xfs().asc_getFontBold(), false);
-				}, oTableTypes.setBold);
-			});
-
-			QUnit.test('Test italic', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveToCell(6, 6);
-					enterText('0.1');
-					onKeyDown(oEvent);
-					equal(xfs().asc_getFontItalic(), true);
-					onKeyDown(oEvent);
-					equal(xfs().asc_getFontItalic(), false);
-				}, oTableTypes.setItalic);
-			});
-
-			QUnit.test('Test underline', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveToCell(6, 6);
-					enterText('0.1');
-					onKeyDown(oEvent);
-					equal(xfs().asc_getFontUnderline(), true);
-					onKeyDown(oEvent);
-					equal(xfs().asc_getFontUnderline(), false);
-				}, oTableTypes.setUnderline);
-			});
-
-
-			QUnit.test('Test set general format', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveToCell(5, 5);
-					enterText('0.1');
-					setCellFormat(Asc.c_oAscNumFormatType.Time);
-
-					onKeyDown(oEvent);
-					equal(getCellText(), '0.1', 'set number format');
-					setCellFormat(Asc.c_oAscNumFormatType.General);
-				}, oTableTypes.setGeneralFormat);
-			});
-
-
-			QUnit.test('Test redo', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveToCell(6, 6);
-					enterText('0.1');
-					undo();
-					onKeyDown(oEvent);
-					equal(getCellText(), '0.1');
-				}, oTableTypes.redo);
-			});
-
-			QUnit.test('Test undo', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					moveToCell(6, 6);
-					enterText('0.1');
-					onKeyDown(oEvent);
-					equal(getCellText(), '');
-				}, oTableTypes.undo);
-			});
-
-			QUnit.test('Test print', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					executeTestWithCatchEvent('asc_onPrint', () => true, true, oEvent, oAssert);
-				}, oTableTypes.print);
-			});
-
-			QUnit.test('Test add sum function', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					cleanAll();
-					goToSheet(0);
-					moveToCell(0, 0);
-					enterText('1');
-					moveToCell(0, 1);
-					enterText('2');
-					moveToCell(7, 7);
-					setCellFormat(Asc.c_oAscNumFormatType.General);
-					onKeyDown(oEvent);
-					enterTextWithoutClose('A1,B1');
-					equal(getCellText(), "3");
-				}, oTableTypes.addSum);
-			});
-
-			QUnit.test('Test context menu', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startTableTest((oEvent) =>
-				{
-					executeTestWithCatchEvent('asc_onContextMenu', () => true, true, oEvent, oAssert);
-				}, oTableTypes.contextMenu);
-			});
-
-			QUnit.module("test cell editor shortcuts", {
-				before    : function ()
-				{
-					goToSheet(0);
-				},
-				beforeEach: function ()
-				{
-					setCheckOpenCellEditor(false);
-					goToSheet(0);
-					cleanAll();
-				},
-				afterEach : function ()
-				{
-					if (!checkOpenCellEditor())
-					{
-						throw new Error('cell editor must be opened in cell editor module');
-					}
-				}
-			});
-			QUnit.test('Test close cell editor', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello');
-					onKeyDown(oEvent);
-					equal(getCellText(), '');
-				}, oCellEditorTypes.closeWithoutSave);
-
-			});
-			QUnit.test('Test add new line', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello');
-					onKeyDown(oEvent);
-					equal(cellEditor().textRender.getLinesCount(), 2);
-
-					onKeyDown(oEvent);
-					equal(cellEditor().textRender.getLinesCount(), 3);
-
-					onKeyDown(oEvent);
-					equal(cellEditor().textRender.getLinesCount(), 4);
-
-					onKeyDown(oEvent);
-					equal(cellEditor().textRender.getLinesCount(), 5);
-				}, oCellEditorTypes.addNewLine);
-			});
-
-			QUnit.test('Try close editor', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello');
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(1, 0));
-
-					moveToCell(0, 0);
-					equal(getCellText(), 'Hello');
-				}, oCellEditorTypes.saveAndMoveDown);
-				cleanAll();
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(1, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello');
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(0, 0));
-
-					moveToCell(1, 0);
-					equal(getCellText(), 'Hello');
-				}, oCellEditorTypes.saveAndMoveUp);
-			});
-
-			QUnit.test('Test sync and close editor', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello');
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(0, 1));
-					moveToCell(0, 0);
-					equal(getCellText(), 'Hello');
-				}, oCellEditorTypes.saveAndMoveRight);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 1);
-					openCellEditor();
-					enterTextWithoutClose('Hello');
-					onKeyDown(oEvent);
-					deep(cleanActiveCell(), checkActiveCell(0, 0));
-					moveToCell(0, 1);
-					equal(getCellText(), 'Hello');
-				}, oCellEditorTypes.saveAndMoveLeft);
-			});
-			QUnit.test('Test remove char back', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello');
-					onKeyDown(oEvent);
-					equal(getCellText(), 'Hell');
-				}, oCellEditorTypes.removeCharBack);
-
-			});
-			QUnit.test('Test remove word back', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World');
-					onKeyDown(oEvent);
-					equal(getCellText(), 'Hello ');
-				}, oCellEditorTypes.removeWordBack);
-
-			});
-
-			QUnit.test('Test add space in cell editor', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					onKeyDown(oEvent);
-					equal(getCellText(), ' ');
-				}, oCellEditorTypes.addSpace);
-
-			});
-
-			QUnit.test('Test move cursor to end', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToStartCellEditor();
-					onKeyDown(oEvent);
-					equal(cellPosition(), 18);
-				}, oCellEditorTypes.moveToEndLine);
-
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToStartCellEditor();
-					onKeyDown(oEvent);
-					equal(cellPosition(), 47);
-				}, oCellEditorTypes.moveToEndDocument);
-			});
-
-			QUnit.test('Test select to end', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToStartCellEditor();
-					onKeyDown(oEvent);
-					equal(getSelectionCellEditor(), 'Hello World Hello ');
-				}, oCellEditorTypes.selectToEndLine);
-
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToStartCellEditor();
-					onKeyDown(oEvent);
-					equal(getSelectionCellEditor(), 'Hello World Hello World Hello World Hello World');
-				}, oCellEditorTypes.selectToEndDocument);
-			});
-
-			QUnit.test('Test move cursor to start', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToEndCellEditor();
-					onKeyDown(oEvent);
-					equal(cellPosition(), 36);
-				}, oCellEditorTypes.moveToStartLine);
-
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToEndCellEditor();
-					onKeyDown(oEvent);
-					equal(cellPosition(), 0);
-				}, oCellEditorTypes.moveToStartDocument);
-			});
-			QUnit.test('Test select to start', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToEndCellEditor();
-					onKeyDown(oEvent);
-					equal(getSelectionCellEditor(), 'Hello World');
-				}, oCellEditorTypes.selectToStartLine);
-
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToEndCellEditor();
-					onKeyDown(oEvent);
-					equal(getSelectionCellEditor(), 'Hello World Hello World Hello World Hello World');
-				}, oCellEditorTypes.selectToStartDocument);
-			});
-			QUnit.test('Test move cursor to left', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToEndCellEditor();
-					onKeyDown(oEvent);
-					equal(cellPosition(), 46);
-				}, oCellEditorTypes.moveCursorLeftChar);
-
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToEndCellEditor();
-					onKeyDown(oEvent);
-					equal(cellPosition(), 42);
-				}, oCellEditorTypes.moveCursorLeftWord);
-			});
-			QUnit.test('Test select to left', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToEndCellEditor();
-					onKeyDown(oEvent);
-					equal(getSelectionCellEditor(), 'd');
-				}, oCellEditorTypes.selectLeftChar);
-
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToEndCellEditor();
-					onKeyDown(oEvent);
-					equal(getSelectionCellEditor(), 'World');
-				}, oCellEditorTypes.selectLeftWord);
-			});
-			QUnit.test('Test move cursor to up', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					onKeyDown(oEvent);
-					equal(cellPosition(), 29);
-				}, oCellEditorTypes.moveToUpLine);
-
-			});
-			QUnit.test('Test select to up', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					onKeyDown(oEvent);
-					equal(getSelectionCellEditor(), ' World Hello World');
-				}, oCellEditorTypes.selectToUpLine);
-			});
-			QUnit.test('Test move cursor to right', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToStartCellEditor();
-					onKeyDown(oEvent);
-					equal(cellPosition(), 1);
-				}, oCellEditorTypes.moveToRightChar);
-
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToStartCellEditor();
-					onKeyDown(oEvent);
-					equal(cellPosition(), 6);
-				}, oCellEditorTypes.moveToRightWord);
-			});
-			QUnit.test('Test select to right', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToStartCellEditor();
-					onKeyDown(oEvent);
-					equal(getSelectionCellEditor(), 'H');
-				}, oCellEditorTypes.selectRightChar);
-
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToStartCellEditor();
-					onKeyDown(oEvent);
-					equal(getSelectionCellEditor(), 'Hello ');
-				}, oCellEditorTypes.selectRightWord);
-			});
-
-			QUnit.test('Test move cursor to down', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToStartCellEditor();
-					onKeyDown(oEvent);
-					equal(cellPosition(), 18);
-				}, oCellEditorTypes.moveToDownLine);
-			});
-			QUnit.test('Test select to down', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToStartCellEditor();
-					onKeyDown(oEvent);
-					equal(getSelectionCellEditor(), 'Hello World Hello ');
-				}, oCellEditorTypes.selectToDownLine);
-			});
-
-			QUnit.test('Test delete front', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToStartCellEditor();
-					onKeyDown(oEvent);
-					equal(getCellText(), 'ello World Hello World Hello World Hello World');
-				}, oCellEditorTypes.deleteFrontChar);
-
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToStartCellEditor();
-					onKeyDown(oEvent);
-					equal(getCellText(), 'World Hello World Hello World Hello World');
-				}, oCellEditorTypes.deleteFrontWord);
-			});
-
-			QUnit.test('Test strikethrough', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToStartCellEditor();
-					onKeyDown(oEvent);
-					enterTextWithoutClose('hihih');
-					const arrFragments = getFragments(0, 5);
-					equal(arrFragments.length, 1);
-					equal(arrFragments[0].format.getStrikeout(), true);
-				}, oCellEditorTypes.setStrikethrough);
-			});
-
-			QUnit.test('Test select all text', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToStartCellEditor();
-					onKeyDown(oEvent);
-
-					equal(getSelectionCellEditor(), 'Hello World Hello World Hello World Hello World');
-				}, oCellEditorTypes.selectAll);
-			});
-
-			QUnit.test('Test bold', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToStartCellEditor();
-					onKeyDown(oEvent);
-					enterTextWithoutClose('hihih');
-					const arrFragments = getFragments(0, 5);
-					equal(arrFragments.length, 1);
-					equal(arrFragments[0].format.getBold(), true);
-				}, oCellEditorTypes.setBold);
-			});
-
-			QUnit.test('Test italic', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToStartCellEditor();
-					onKeyDown(oEvent);
-					enterTextWithoutClose('hihih');
-					const arrFragments = getFragments(0, 5);
-					equal(arrFragments.length, 1);
-					equal(arrFragments[0].format.getItalic(), true);
-				}, oCellEditorTypes.setItalic);
-			});
-
-			QUnit.test('Test underline', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					enterTextWithoutClose('Hello World Hello World Hello World Hello World');
-					moveToStartCellEditor();
-					onKeyDown(oEvent);
-					enterTextWithoutClose('hihih');
-					const arrFragments = getFragments(0, 5);
-					equal(arrFragments.length, 1);
-					equal(arrFragments[0].format.getUnderline(), Asc.EUnderline.underlineSingle);
-				}, oCellEditorTypes.setUnderline);
-			});
-
-			QUnit.test('Test disable scroll lock', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					AscCommon.AscBrowser.isOpera = true;
-					testPreventDefaultAndStopPropagation(createEvent(145, false, false, false, false, false), oAssert);
-
-					AscCommon.AscBrowser.isOpera = false;
-					testPreventDefaultAndStopPropagation(createEvent(145, false, false, false, false, false), oAssert, true);
-				}, oCellEditorTypes.disableScrollLock);
-			});
-			QUnit.test('Test disable num lock', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					AscCommon.AscBrowser.isOpera = true;
-					testPreventDefaultAndStopPropagation(createEvent(144, false, false, false, false, false), oAssert);
-
-					AscCommon.AscBrowser.isOpera = false;
-					testPreventDefaultAndStopPropagation(createEvent(144, false, false, false, false, false), oAssert, true);
-				}, oCellEditorTypes.disableNumLock);
-			});
-
-			QUnit.test('Test print', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					testPreventDefaultAndStopPropagation(createEvent(80, true, false, false, false, false), oAssert);
-				}, oCellEditorTypes.disablePrint);
-			});
-
-			QUnit.test('Test undo', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					enterTextWithoutClose('H');
-					enterTextWithoutClose('e');
-					enterTextWithoutClose('l');
-					enterTextWithoutClose('l');
-					enterTextWithoutClose('o');
-					onKeyDown(oEvent);
-					equal(getCellText(), 'Hell');
-				}, oCellEditorTypes.undo);
-			});
-
-			QUnit.test('Test redo', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					enterTextWithoutClose('H');
-					enterTextWithoutClose('e');
-					enterTextWithoutClose('l');
-					enterTextWithoutClose('l');
-					enterTextWithoutClose('o');
-					cellEditor().undo();
-					onKeyDown(oEvent);
-					equal(getCellText(), 'Hello');
-				}, oCellEditorTypes.redo);
-			});
-
-			QUnit.test('Test add separator', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					onKeyDown(oEvent);
-					equal(getCellText(), '.');
-				}, oCellEditorTypes.addSeparator);
-			});
-			QUnit.test('Test disable F2', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-
-					AscCommon.AscBrowser.isOpera = true;
-					testPreventDefaultAndStopPropagation(createEvent(113, false, false, false, false, false), oAssert);
-
-					AscCommon.AscBrowser.isOpera = false;
-					testPreventDefaultAndStopPropagation(createEvent(113, false, false, false, false, false), oAssert, true);
-				}, oCellEditorTypes.disableF2);
-			});
-
-			QUnit.test('Test switch reference', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					enterTextWithoutClose('=F4');
-
-					onKeyDown(oEvent);
-					selectAllCell();
-					equal(getSelectionCellEditor(), '=$F$4');
-					closeCellEditor();
-				}, oCellEditorTypes.switchReference);
-
-			});
-
-			QUnit.test('Test add time', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					onKeyDown(oEvent);
-					const oDate = new Asc.cDate();
-					equal(getCellText(), oDate.getTimeString(editor).split(' ').join(':00 '), 'Check insert current time');
-				}, oCellEditorTypes.addTime);
-			});
-
-			QUnit.test('Test add date', (oAssert) =>
-			{
-				const {equal, deep} = createTest(oAssert);
-				startCellEditorTest((oEvent) =>
-				{
-					moveToCell(0, 0);
-					openCellEditor();
-					onKeyDown(oEvent);
-					const oDate = new Asc.cDate();
-					equal(getCellText(), oDate.getDateString(editor), 'Check insert current date');
-				}, oCellEditorTypes.addDate);
-			});
-
-			QUnit.module('Test graphic objects shortcuts');
-			QUnit.test('Test remove back text graphic object', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkTextAfterKeyDownHelperHelloWorld('Hello Worl', oEvent, oAssert, 'Check delete with backspace');
-				}, oGraphicTypes.removeBackChar);
-			});
-			QUnit.test('Test remove back text graphic object', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkTextAfterKeyDownHelperHelloWorld('Hello ', oEvent, oAssert, 'Check delete word with backspace')
-				}, oGraphicTypes.removeBackWord);
-			});
-
-			QUnit.test('Test remove chart', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const oChart = createChart();
-					selectOnlyObjects([oChart]);
-					onKeyDown(oEvent);
-					oAssert.true(checkRemoveObject(oChart, ws().Drawings.map((el) => el.graphicObject)), "Check remove group");
-				}, oGraphicTypes.removeChart);
-			});
-
-			QUnit.test('Test remove shape', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const {oShape} = createShapeWithContent('', true);
-					selectOnlyObjects([oShape]);
-					onKeyDown(oEvent);
-					oAssert.true(checkRemoveObject(oShape, ws().Drawings.map((el) => el.graphicObject)), 'Check remove shape');
-				}, oGraphicTypes.removeShape);
-			});
-
-			QUnit.test('Test remove group', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const oGroup = createGroup([createShape(), createShape()]);
-					selectOnlyObjects([oGroup]);
-					onKeyDown(oEvent);
-					oAssert.true(checkRemoveObject(oGroup, ws().Drawings.map((el) => el.graphicObject)), 'Check remove group');
-				}, oGraphicTypes.removeGroup);
-			});
-			QUnit.test('Test remove shape in group', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const oGroupedGroup = createGroup([createShape(), createShape()]);
-					const oRemovedShape = createShape();
-					const oGroup = createGroup([oGroupedGroup, oRemovedShape]);
-					selectOnlyObjects([oRemovedShape]);
-					onKeyDown(oEvent);
-					oAssert.true(checkRemoveObject(oRemovedShape, oGroup.spTree), 'Check remove shape in group');
-				}, oGraphicTypes.removeShapeInGroup);
-			});
-
-			QUnit.test('Test add tab', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const {oParagraph} = createShapeWithContent('');
-					moveToParagraph(oParagraph);
-					onKeyDown(oEvent);
-					selectAll();
-					equal(selectedContent(), '\t');
-				}, oGraphicTypes.addTab);
-			});
-			QUnit.test('Test select next object', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const oShape1 = createShape();
-					const oShape2 = createShape();
-					const oShape3 = createShape();
-					selectOnlyObjects([oShape1]);
-					onKeyDown(oEvent);
-					equal(selectedObjects().length === 1 && selectedObjects()[0] === oShape2, true);
-					onKeyDown(oEvent);
-					equal(selectedObjects().length === 1 && selectedObjects()[0] === oShape3, true);
-					onKeyDown(oEvent);
-					equal(selectedObjects().length === 1 && selectedObjects()[0] === oShape1, true);
-				}, oGraphicTypes.selectNextObject);
-			});
-
-			QUnit.test('Test select previous object', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const oShape1 = createShape();
-					const oShape2 = createShape();
-					const oShape3 = createShape();
-					selectOnlyObjects([oShape1]);
-					onKeyDown(oEvent);
-					equal(selectedObjects().length === 1 && selectedObjects()[0] === oShape3, true);
-					onKeyDown(oEvent);
-					equal(selectedObjects().length === 1 && selectedObjects()[0] === oShape2, true);
-					onKeyDown(oEvent);
-					equal(selectedObjects().length === 1 && selectedObjects()[0] === oShape1, true);
-				}, oGraphicTypes.selectPreviousObject);
-			});
-
-			QUnit.test('Test visit hyperlink', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const {oShape, oParagraph} = createShapeWithContent('', 0, false);
-					moveToParagraph(oParagraph);
-					addHyperlink("https://www.onlyoffice.com/", "Hello");
-					moveCursorLeft();
-					moveCursorLeft();
-					executeTestWithCatchEvent('asc_onHyperlinkClick', (sValue) => sValue, 'https://www.onlyoffice.com/', oEvent, oAssert);
-					moveToParagraph(oParagraph);
-					moveCursorLeft();
-					const oSelectedInfo = new CSelectedElementsInfo();
-					graphicController().getTargetDocContent().GetSelectedElementsInfo(oSelectedInfo);
-					equal(oSelectedInfo.m_oHyperlink.Visited, true);
-				}, oGraphicTypes.visitHyperink);
-			});
-
-			QUnit.test('Test add line in math', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const {oParagraph} = createMathInShape();
-					moveToParagraph(oParagraph, true);
-					moveCursorRight();
-					moveCursorRight();
-					enterText('fffffff');
-					moveCursorLeft();
-					moveCursorLeft();
-					onKeyDown(oEvent);
-					const oParaMath = oParagraph.GetAllParaMaths()[0];
-					const oFraction = oParaMath.Root.GetFirstElement();
-					const oNumerator = oFraction.getNumerator();
-					const oEqArray = oNumerator.GetFirstElement();
-					oAssert.strictEqual(oEqArray.getRowsCount(), 2, 'Check add new line math');
-				}, oGraphicTypes.addLineInMath);
-			});
-			QUnit.test('Test add break line', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const {oShape, oParagraph} = createShapeWithContent('');
-					moveToParagraph(oParagraph);
-
-					onKeyDown(oEvent);
-					oAssert.true(oShape.getDocContent().Content.length === 1 && oParagraph.GetLinesCount() === 2, 'Check add break line');
-				}, oGraphicTypes.addBreakLine);
-			});
-
-			QUnit.test('Test add paragraph', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const {oShape, oParagraph} = createShapeWithContent('');
-					moveToParagraph(oParagraph);
-
-					onKeyDown(oEvent);
-					oAssert.true(oShape.getDocContent().Content.length === 2, 'Check add new paragraph');
-				}, oGraphicTypes.addParagraph);
-			});
-
-			QUnit.test('Test create text body', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const oShape = createShape();
-					selectOnlyObjects([oShape]);
-					onKeyDown(oEvent);
-					oAssert.true(!!oShape.txBody, 'Check creating txBody');
-				}, oGraphicTypes.createTxBody);
-			});
-
-			QUnit.test('Test move cursor to start position in empty content', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const {oShape, oParagraph} = createShapeWithContent('', true);
-					selectOnlyObjects([oShape]);
-					onKeyDown(oEvent);
-					oAssert.true(oParagraph.IsCursorAtBegin(), 'Check move cursor to start position in shape');
-				}, oGraphicTypes.moveToStartInEmptyContent);
-			});
-			QUnit.test('Test select all after enter', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const {oShape} = createShapeWithContent('Hello Word', true);
-					selectOnlyObjects([oShape]);
-					onKeyDown(oEvent);
-					oAssert.strictEqual(selectedContent(), 'Hello Word', 'Check select all content in shape');
-				}, oGraphicTypes.selectAllAfterEnter);
-			});
-			QUnit.test('Test select all after enter in title', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const oChart = createChart();
-					selectOnlyObjects([oChart]);
-					const oTitles = oChart.getAllTitles();
-					const oController = graphicController();
-					oController.selection.chartSelection = oChart;
-					oChart.selectTitle(oTitles[0], 0);
-
-					onKeyDown(oEvent);
-					oAssert.strictEqual(selectedContent(), 'Diagram Title', 'Check select all title');
-				}, oGraphicTypes.selectAllTitleAfterEnter);
-			});
-			QUnit.test('Test move cursor to start position in empty title', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const oChart = createChart();
-					const oTitles = oChart.getAllTitles();
-					const oContent = AscFormat.CreateDocContentFromString('', graphicController().drawingObjects.getDrawingDocument(), oTitles[0].txBody);
-					oTitles[0].txBody.content = oContent;
-					selectOnlyObjects([oChart]);
-
-					const oController = graphicController();
-					oController.selection.chartSelection = oChart;
-					oChart.selectTitle(oTitles[0], 0);
-
-					onKeyDown(oEvent);
-					oAssert.true(oContent.IsCursorAtBegin(), 'Check move cursor to begin pos in title');
-				}, oGraphicTypes.moveCursorToStartPositionInTitle);
-			});
-			QUnit.test('Test reset text selection', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const {oShape} = createShapeWithContent("Hello world");
-					const oParagraph = moveToShapeParagraph(oShape, 0);
-					onKeyDown(oEvent);
-					equal(!graphicController().selection.textSelection, true);
-				}, oGraphicTypes.resetTextSelection);
-			});
-
-			QUnit.test('Test reset step selection', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					let oGroupedShape1 = createShape();
-					let oGroupedShape2 = createShape();
-					createGroup([oGroupedShape1, oGroupedShape2]);
-					let oTestGroup = oGroupedShape1.group;
-					const oController = graphicController();
-					selectOnlyObjects([oTestGroup, oGroupedShape1]);
-					onKeyDown(oEvent);
-					oAssert.true(oController.selectedObjects.length === 1 && oController.selectedObjects[0] === oTestGroup && oTestGroup.selectedObjects.length === 0, 'Check reset step selection');
-
-				}, oGraphicTypes.resetStepSelection);
-			});
-			QUnit.test('Test move cursor to end', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkMoveContentShapeHelper([59, 18], oEvent, oAssert);
-				}, oGraphicTypes.moveCursorToEndLine);
-			});
-
-			QUnit.test('Test move cursor to end', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkMoveContentShapeHelper([59, 59], oEvent, oAssert);
-				}, oGraphicTypes.moveCursorToEndDocument);
-			});
-
-
-			QUnit.test('Test select to end', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkSelectContentShapeHelper(['Hello World Hello ', ''], oEvent, oAssert);
-				}, oGraphicTypes.selectToEndLine);
-			});
-
-			QUnit.test('Test select to end', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkSelectContentShapeHelper(['Hello World Hello World Hello World Hello World Hello World', ''], oEvent, oAssert);
-				}, oGraphicTypes.selectToEndDocument);
-			});
-
-			QUnit.test('Test move cursor to start', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkMoveContentShapeHelper([54, 0], oEvent, oAssert);
-				}, oGraphicTypes.moveCursorToStartLine);
-			});
-
-			QUnit.test('Test move cursor to start', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkMoveContentShapeHelper([0, 0], oEvent, oAssert);
-				}, oGraphicTypes.moveCursorToStartDocument);
-			});
-
-			QUnit.test('Test select to start', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkSelectContentShapeHelper(['', 'World'], oEvent, oAssert);
-				}, oGraphicTypes.selectToStartLine);
-			});
-
-			QUnit.test('Test select to start', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkSelectContentShapeHelper(['', 'Hello World Hello World Hello World Hello World Hello World'], oEvent, oAssert);
-				}, oGraphicTypes.selectToStartDocument);
-			});
-
-			QUnit.test('Test move cursor to left char', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkMoveContentShapeHelper([58, 0], oEvent, oAssert);
-
-				}, oGraphicTypes.moveCursorLeftChar);
-			});
-
-			QUnit.test('Test select to left char', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkSelectContentShapeHelper(['', 'd'], oEvent, oAssert);
-				}, oGraphicTypes.selectCursorLeftChar);
-			});
-
-			QUnit.test('Test move cursor to left word', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkMoveContentShapeHelper([54, 0], oEvent, oAssert);
-				}, oGraphicTypes.moveCursorLeftWord);
-			});
-
-			QUnit.test('Test select to left word', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkSelectContentShapeHelper(['', 'World'], oEvent, oAssert);
-				}, oGraphicTypes.selectCursorLeftWord);
-			});
-
-			QUnit.test('Test move object to left', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					moveShapeHelper({x: 100 - pxToMm, y: 100}, oEvent, oAssert);
-				}, oGraphicTypes.littleMoveGraphicObjectLeft);
-			});
-
-			QUnit.test('Test move object to left', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					moveShapeHelper({x: 100 - 5 * pxToMm, y: 100}, oEvent, oAssert);
-
-				}, oGraphicTypes.bigMoveGraphicObjectLeft);
-			});
-
-			QUnit.test('Test move cursor to up', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkMoveContentShapeHelper([41, 0], oEvent, oAssert);
-
-				}, oGraphicTypes.moveCursorUp);
-			});
-
-			QUnit.test('Test select to up', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkSelectContentShapeHelper(['', ' World Hello World'], oEvent, oAssert);
-				}, oGraphicTypes.selectCursorUp);
-			});
-
-			QUnit.test('Test move object to up', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					moveShapeHelper({x: 100, y: 100 - pxToMm}, oEvent, oAssert);
-				}, oGraphicTypes.littleMoveGraphicObjectUp);
-			});
-
-			QUnit.test('Test move object to up', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					moveShapeHelper({x: 100, y: 100 - 5 * pxToMm}, oEvent, oAssert);
-				}, oGraphicTypes.bigMoveGraphicObjectUp);
-			});
-
-			QUnit.test('Test move cursor to right char', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkMoveContentShapeHelper([59, 1], oEvent, oAssert);
-
-				}, oGraphicTypes.moveCursorRightChar);
-			});
-
-			QUnit.test('Test select to right char', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkSelectContentShapeHelper(['H', ''], oEvent, oAssert);
-				}, oGraphicTypes.selectCursorRightChar);
-			});
-
-			QUnit.test('Test move cursor to right word', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkMoveContentShapeHelper([59, 6], oEvent, oAssert);
-				}, oGraphicTypes.moveCursorRightWord);
-			});
-
-			QUnit.test('Test select to right word', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkSelectContentShapeHelper(['Hello ', ''], oEvent, oAssert);
-				}, oGraphicTypes.selectCursorRightWord);
-			});
-
-			QUnit.test('Test move object to right', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					moveShapeHelper({x: 100 + pxToMm, y: 100}, oEvent, oAssert);
-
-				}, oGraphicTypes.littleMoveGraphicObjectRight);
-			});
-
-			QUnit.test('Test move object to right', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					moveShapeHelper({x: 100 + 5 * pxToMm, y: 100}, oEvent, oAssert);
-
-				}, oGraphicTypes.bigMoveGraphicObjectRight);
-			});
-
-			QUnit.test('Test move cursor to down', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkMoveContentShapeHelper([59, 18], oEvent, oAssert);
-				}, oGraphicTypes.moveCursorDown);
-			});
-
-			QUnit.test('Test select to down', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkSelectContentShapeHelper(['Hello World Hello ', ''], oEvent, oAssert);
-				}, oGraphicTypes.selectCursorDown);
-			});
-
-			QUnit.test('Test move object to down', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					moveShapeHelper({x: 100, y: 100 + pxToMm}, oEvent, oAssert);
-
-				}, oGraphicTypes.littleMoveGraphicObjectDown);
-			});
-
-			QUnit.test('Test move object to down', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					moveShapeHelper({x: 100, y: 100 + 5 * pxToMm}, oEvent, oAssert);
-				}, oGraphicTypes.bigMoveGraphicObjectDown);
-			});
-
-			QUnit.test('Test remove front text graphic object', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const {oParagraph} = createShapeWithContent('Hello World');
-					moveToParagraph(oParagraph, true);
-					onKeyDown(oEvent);
-					equal(getParagraphText(oParagraph), 'ello World');
-				}, oGraphicTypes.removeFrontChar);
-			});
-
-			QUnit.test('Test remove front text graphic object', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const {oParagraph} = createShapeWithContent('Hello World');
-					moveToParagraph(oParagraph, true);
-					onKeyDown(oEvent);
-					equal(getParagraphText(oParagraph), 'World');
-				}, oGraphicTypes.removeFrontWord);
-			});
-			QUnit.test('Test select all content in shape', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const {oShape} = createShapeWithContent('Hello World');
-					const oParagraph = moveToShapeParagraph(oShape, 0);
-					onKeyDown(oEvent);
-					equal(selectedContent(), 'Hello World');
-				}, oGraphicTypes.selectAllContent);
-			});
-			QUnit.test('Test select all graphic objects', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const oShape1 = createShape();
-					const oShape2 = createShape();
-					const oShape3 = createShape();
-					selectOnlyObjects([oShape1]);
-					onKeyDown(oEvent);
-					equal(selectedObjects().length === 3 && (oShape1.selected && selectedObjects().indexOf(oShape1) !== -1) && (oShape2.selected && selectedObjects().indexOf(oShape2) !== -1) && (oShape3.selected && selectedObjects().indexOf(oShape3) !== -1), true);
-				}, oGraphicTypes.selectAllDrawings);
-			});
-
-			QUnit.test('Test bold', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkDirectTextPrAfterKeyDown((oTextPr) => oTextPr.GetBold(), oEvent, oAssert, true);
-
-				}, oGraphicTypes.bold);
-			});
-
-			QUnit.test('Test clear slicer', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const oSlicer = createSlicer();
-					oSlicer.buttonsContainer.buttons[0].setInvertSelectTmpState();
-					oSlicer.onViewUpdate();
-					onKeyDown(oEvent);
-					equal(oSlicer.buttonsContainer.buttons[0].isSelected(), true);
-				}, oGraphicTypes.cleanSlicer);
-			});
-
-			QUnit.test('Test center align', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkDirectParaPrAfterKeyDown((oPara) => oPara.GetJc(), oEvent, oAssert, align_Center);
-
-				}, oGraphicTypes.centerAlign);
-			});
-			QUnit.test('Test italic', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkDirectTextPrAfterKeyDown((oTextPr) => oTextPr.GetItalic(), oEvent, oAssert, true);
-
-				}, oGraphicTypes.italic);
-			});
-			QUnit.test('Test justify align', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkDirectParaPrAfterKeyDown((oPara) => oPara.GetJc(), oEvent, oAssert, align_Justify);
-
-				}, oGraphicTypes.justifyAlign);
-			});
-			QUnit.test('Test left align', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const continueCheck = checkDirectParaPrAfterKeyDown((oPara) => oPara.GetJc(), oEvent, oAssert, align_Justify);
-					continueCheck((oPara) => oPara.GetJc(), oEvent, oAssert, align_Left);
-
-				}, oGraphicTypes.leftAlign);
-			});
-			QUnit.test('Test right align', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkDirectParaPrAfterKeyDown((oParaPr) => oParaPr.GetJc(), oEvent, oAssert, align_Right);
-				}, oGraphicTypes.rightAlign);
-			});
-
-			QUnit.test('Test invert multiselect slicer', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const oSlicer = createSlicer();
-					onKeyDown(oEvent);
-					equal(oSlicer.isMultiSelect(), true);
-				}, oGraphicTypes.invertMultiselectSlicer);
-			});
-			QUnit.test('Test underline', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkDirectTextPrAfterKeyDown((oTextPr) => oTextPr.GetUnderline(), oEvent, oAssert, true);
-				}, oGraphicTypes.underline);
-			});
-
-			QUnit.test('Test superscript vertical align', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkDirectTextPrAfterKeyDown((oTextPr) => oTextPr.GetVertAlign(), oEvent, oAssert, AscCommon.vertalign_SuperScript);
-
-				}, oGraphicTypes.superscript);
-			});
-
-			QUnit.test('Test add en dash', (oAssert) =>
-			{
-				startGraphicTest((oEvent) =>
-				{
-					checkTextAfterKeyDownHelperEmpty('–', oEvent, oAssert);
-				}, oGraphicTypes.enDash);
-			});
-
-			QUnit.test('Test add subscript', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					checkDirectTextPrAfterKeyDown((oTextPr) => oTextPr.GetVertAlign(), oEvent, oAssert, AscCommon.vertalign_SubScript, 'Check subscript shortcut');
-				}, oGraphicTypes.subscript);
-			});
-
-			QUnit.test('Test decrease font size', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const {oShape} = createShapeWithContent('Hello');
-					selectAll();
-					addProperty({FontSize: 16});
-					onKeyDown(oEvent);
-					equal(textPr().GetFontSize(), 14);
-					onKeyDown(oEvent);
-					equal(textPr().GetFontSize(), 12);
-
-					selectOnlyObjects([oShape]);
-					onKeyDown(oEvent);
-					equal(textPr().GetFontSize(), 11);
-
-					onKeyDown(oEvent);
-					equal(textPr().GetFontSize(), 10);
-				}, oGraphicTypes.decreaseFontSize);
-			});
-
-			QUnit.test('Test increase font size', (oAssert) =>
-			{
-				const {deep, equal} = createTest(oAssert);
-				startGraphicTest((oEvent) =>
-				{
-					const {oShape} = createShapeWithContent('Hello');
-					moveToShapeParagraph(oShape, 0);
-					selectAll();
-					onKeyDown(oEvent);
-					equal(textPr().GetFontSize(), 11);
-					onKeyDown(oEvent);
-					equal(textPr().GetFontSize(), 12);
-
-					selectOnlyObjects([oShape]);
-					onKeyDown(oEvent);
-					equal(textPr().GetFontSize(), 14);
-
-					onKeyDown(oEvent);
-					equal(textPr().GetFontSize(), 16);
-				}, oGraphicTypes.increaseFontSize);
-			});
+			arrObjects[i].select(controller, 0);
 		}
-	)
+
+		return controller.createGroup();
+	}
+
+	function GetDirectGraphicTextPr()
+	{
+		return GetDrawingObjects().getParagraphTextPr();
+	}
+
+	function GetDirectGraphicParaPr()
+	{
+		return GetDrawingObjects().getParagraphParaPr();
+	}
+
+	function Round(number, amount)
+	{
+		const power = Math.pow(10, amount);
+		return Math.round(number * power) / power;
+	}
+
+	function SelectDrawings(arrDrawings)
+	{
+		const drawingController = GetDrawingObjects();
+		drawingController.resetSelection()
+		for (let i = 0; i < arrDrawings.length; i += 1)
+		{
+			arrDrawings[i].select(drawingController, 0);
+		}
+	}
+
+	function GetDrawingObjects()
+	{
+		return editor.getGraphicController();
+	}
+
+	function FillActiveCell(text)
+	{
+		const activeCell = ws.selectionRange.activeCell;
+		ws.getRange4(activeCell.row, activeCell.col).fillData([[text]]);
+
+	}
+
+	function SetVisibleRange(r1, c1, r2, c2)
+	{
+		wsView.visibleRange = new Asc.Range(r1, c1, r2, c2);
+		wsView.nRowsCount = 49;
+		wsView.nColsCount = 49;
+	}
+
+	function FillExampleData()
+	{
+		ws.getRange3(0, 0, 2, 2).fillData([
+			['test11', 'test12', 'test13'],
+			['1', '2', '3'],
+			['1', '2', '3']
+		]);
+
+		Select(0, 0, 0, 0, 2, 2);
+	}
+
+	function GetRange(c1, r1, c2, r2)
+	{
+		return new Asc.Range(c1, r1, c2, r2);
+	}
+
+	function Select(activeR, activeC, r1, c1, r2, c2)
+	{
+		CloseCellEditor(true);
+		ws.selectionRange.ranges = [GetRange(c1, r1, c2, r2)];
+		ws.selectionRange.activeCell = new AscCommon.CellBase(activeR, activeC);
+		wbView._updateSelectionInfo();
+	}
+
+	function ResetData(r1, c1, r2, c2)
+	{
+		ws.autoFilters.deleteAutoFilter(GetRange(0, 0, 0, 0));
+		while (ws.TableParts.length)
+		{
+			ws.deleteTablePart(0);
+		}
+		ws.removeRows(r1, r2, false);
+		ws.removeCols(c1, c2);
+	}
+
+	function GetCellText(row, column)
+	{
+		return ws.getRange4(row, column).getValueWithFormat();
+	}
+
+	function CloseCellEditor(save)
+	{
+		wbView.closeCellEditor(!save);
+	}
+
+	function CreateTable()
+	{
+		FillExampleData();
+		ws.autoFilters.addAutoFilter('TableStyleMedium2', GetRange(0, 0, 2, 2));
+	}
+
+	function CreateSlicer()
+	{
+		CreateTable();
+		editor.asc_insertSlicer(['test11']);
+		return GetDrawingObjects().selectedObjects[0];
+	}
+
+	function RemoveGraphicObjects()
+	{
+		GetDrawingObjects().resetSelection();
+		GetDrawingObjects().selectAll();
+		GetDrawingObjects().remove();
+	}
+
+	function GetCellEditorText()
+	{
+		return AscCommonExcel.getFragmentsText(cellEditor.options.fragments);
+	}
+
+	function OpenCellEditor()
+	{
+		const enterOptions = new AscCommonExcel.CEditorEnterOptions();
+		enterOptions.newText = '';
+		enterOptions.quickInput = true;
+		enterOptions.focus = true;
+		wbView._onEditCell(enterOptions);
+	}
+
+	function GetSelectedCellEditorText()
+	{
+		const fragments = cellEditor.copySelection() || [];
+		return AscCommonExcel.getFragmentsText(fragments)
+	}
+
+	function CreateWorksheets(names)
+	{
+		editor.asc_insertWorksheet(names);
+	}
+
+	function RemoveWorksheets(indexes)
+	{
+		editor.asc_deleteWorksheet(indexes);
+	}
+
+	QUnit.module('Test cell editor shortcut', {
+		afterEach: function ()
+		{
+			CloseCellEditor();
+		}
+	});
+	QUnit.test('Check actions with text movements', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		OpenCellEditor();
+		EnterText('Hello World Hello ' +
+			'World Hello World ' +
+			'Hello World Hello ' +
+			'World Hello World ' +
+			'Hello World Hello ' +
+			'Hello World Hello ' +
+			'Hello World Hello ' +
+			'Hello World Hello ' +
+			'World Hello World');
+
+		cellEditor._moveCursor(-2);
+
+		function CheckCursorPosition(expected, description)
+		{
+			assert.strictEqual(cellEditor.cursorPos, expected, description);
+		}
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToEndLine);
+		CheckCursorPosition(18, 'Check move to end line');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToRightChar);
+		CheckCursorPosition(19, 'Check move to right char');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToEndLine, 1);
+		CheckCursorPosition(36, 'Check move to end line');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToEndLine, 1);
+		CheckCursorPosition(36, 'Check move to end line');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToStartLine, 1);
+		CheckCursorPosition(18, 'Check move to start line');
+
+		//TODO ****temporarily commenting on tests. this is due to the lack of logical separation of the end of the line and the beginning of the next line in the cell editor****
+		/*ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToStartLine, 1);
+		CheckCursorPosition(18, 'Check move to start line');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToRightChar);
+		CheckCursorPosition(19, 'Check move to right char');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveCursorLeftChar);
+		CheckCursorPosition(18, 'Check move to left char');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveCursorLeftWord);
+		CheckCursorPosition(12, 'Check move to left word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveCursorLeftWord, 1);
+		CheckCursorPosition(6, 'Check move to left word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToRightWord, 1);
+		CheckCursorPosition(12, 'Check move to right word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToRightWord);
+		CheckCursorPosition(18, 'Check move to right word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToRightWord);
+		CheckCursorPosition(24, 'Check move to right word');
+
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToStartLine);
+		CheckCursorPosition(18, 'Check move to start line');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToDownLine);
+		CheckCursorPosition(36, 'Check move down');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToUpLine);
+		CheckCursorPosition(18, 'Check move up');*/
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToEndDocument);
+		CheckCursorPosition(161, 'Check move to end document');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToStartDocument);
+		CheckCursorPosition(0, 'Check move to start document');
+
+		function CheckSelectedText(expectedText, description)
+		{
+			assert.strictEqual(GetSelectedCellEditorText(), expectedText, description);
+		}
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectToEndLine);
+		CheckSelectedText('Hello World Hello ', 'Select to end line');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectRightChar);
+		CheckSelectedText('Hello World Hello W', 'Select to right char');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectToEndLine, 1);
+		CheckSelectedText('Hello World Hello World Hello World ', 'Select to end line content');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectToEndLine, 1);
+		CheckSelectedText('Hello World Hello World Hello World ', 'Select to end line content');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectToStartLine, 1);
+		CheckSelectedText('Hello World Hello ', 'Select to start line content');
+
+		//TODO ****temporarily commenting on tests. this is due to the lack of logical separation of the end of the line and the beginning of the next line in the cell editor****
+		/*ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectToStartLine, 1);
+		CheckSelectedText('Hello World Hello ', 'Select to start line content');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectRightChar);
+		CheckSelectedText('Hello World Hello W', 'Select to right char');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectLeftChar);
+		CheckSelectedText('Hello World Hello ', 'Select to left char');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectLeftWord);
+		CheckSelectedText('Hello World ', 'Select to left word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectRightWord);
+		CheckSelectedText('Hello World Hello ', 'Select to right word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectLeftWord, 1);
+		CheckSelectedText('Hello World ', 'Select to left word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectRightWord, 1);
+		CheckSelectedText('Hello World Hello ', 'Select to right word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectRightWord);
+		CheckSelectedText('Hello World Hello World ', 'Select to right word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectRightWord);
+		CheckSelectedText('Hello World Hello World Hello ', 'Select to right word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectToStartLine);
+		CheckSelectedText('Hello World Hello ', 'Select to start line');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectToDownLine);
+		CheckSelectedText('Hello World Hello World Hello World ', 'Select down');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectToUpLine);
+		CheckSelectedText('Hello World Hello ', 'Select up');*/
+
+		cellEditor._moveCursor(-4);
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectLeftChar);
+		CheckSelectedText('d', 'Select to left char');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectLeftWord);
+		CheckSelectedText('World', 'Select to left word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectToStartDocument);
+		CheckSelectedText('Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello Hello World Hello Hello World Hello Hello World Hello World Hello World', 'Select to start content');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectToEndDocument);
+		CheckSelectedText('', 'Select to end content');
+
+		cellEditor._moveCursor(-2);
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectToEndDocument);
+		CheckSelectedText('Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello Hello World Hello Hello World Hello Hello World Hello World Hello World', 'Select to end content');
+		cellEditor._moveCursor(-4);
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToStartLine);
+		CheckCursorPosition(144, 'Check move to start line');
+
+		//TODO ****temporarily commenting on tests. this is due to the lack of logical separation of the end of the line and the beginning of the next line in the cell editor****
+		/*ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToStartLine);
+		CheckCursorPosition(144, 'Check move to start line');*/
+	});
+
+	QUnit.test('Check remove parts of text', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		OpenCellEditor();
+		EnterText('Hello Hello Hello Hello Hello Hello Hello');
+		cellEditor._moveCursor(-4);
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.removeCharBack);
+		assert.strictEqual(GetCellEditorText(), 'Hello Hello Hello Hello Hello Hello Hell', 'Check removing back symbol');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.removeWordBack);
+		assert.strictEqual(GetCellEditorText(), 'Hello Hello Hello Hello Hello Hello ', 'Check removing back word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.removeWordBack, 1);
+		assert.strictEqual(GetCellEditorText(), 'Hello Hello Hello Hello Hello ', 'Check removing back word');
+
+		cellEditor._moveCursor(-2);
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.deleteFrontChar);
+		assert.strictEqual(GetCellEditorText(), 'ello Hello Hello Hello Hello ', 'Check removing front symbol');
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.deleteFrontWord);
+		assert.strictEqual(GetCellEditorText(), 'Hello Hello Hello Hello ', 'Check removing front word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.deleteFrontWord, 1);
+		assert.strictEqual(GetCellEditorText(), 'Hello Hello Hello ', 'Check removing front word');
+	});
+
+	QUnit.test('Check save and moving from cell', (assert) =>
+	{
+
+		function CheckSaveAndMoving(row, column, text)
+		{
+			assert.false(wbView.getCellEditMode(), 'Check closing cell editor');
+			assert.deepEqual([ws.selectionRange.activeCell.row, ws.selectionRange.activeCell.col], [row, column], 'Check active cell');
+			assert.strictEqual(GetCellText(5, 5), text, 'Check initial text');
+		}
+
+		Select(5, 5, 5, 5, 5, 5);
+		EnterText('Hello1');
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.saveAndMoveDown);
+		CheckSaveAndMoving(6, 5, 'Hello1');
+
+		Select(5, 5, 5, 5, 5, 5);
+		EnterText('Hello2');
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.saveAndMoveUp);
+		CheckSaveAndMoving(4, 5, 'Hello2');
+
+		Select(5, 5, 5, 5, 5, 5);
+		EnterText('Hello3');
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.saveAndMoveRight);
+		CheckSaveAndMoving(5, 6, 'Hello3');
+
+		Select(5, 5, 5, 5, 5, 5);
+		EnterText('Hello4');
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.saveAndMoveLeft);
+		CheckSaveAndMoving(5, 4, 'Hello4');
+
+		Select(5, 5, 5, 5, 5, 5);
+		EnterText('Hello5');
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.closeWithoutSave);
+		CheckSaveAndMoving(5, 5, 'Hello4');
+	});
+
+	QUnit.test('Check change text formatting', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		EnterText('Hello Hello');
+		cellEditor.selectAll();
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.setStrikethrough);
+		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getStrikeout()), 'Check cell editor strikeout format');
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.setStrikethrough);
+		assert.false(cellEditor._getFragments(0, 11).every((e) => e.format.getStrikeout()), 'Check cell editor strikeout format');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.setBold);
+		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getBold()), 'Check cell editor bold format');
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.setBold);
+		assert.false(cellEditor._getFragments(0, 11).every((e) => e.format.getBold()), 'Check cell editor bold format');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.setItalic);
+		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getItalic()), 'Check cell editor italic format');
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.setItalic);
+		assert.false(cellEditor._getFragments(0, 11).every((e) => e.format.getItalic()), 'Check cell editor italic format');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.setUnderline);
+		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getUnderline() === Asc.EUnderline.underlineSingle), 'Check cell editor underline format');
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.setUnderline);
+		assert.true(cellEditor._getFragments(0, 11).every((e) => e.format.getUnderline() === Asc.EUnderline.underlineNone), 'Check cell editor underline format');
+	});
+
+	QUnit.test('Check enter text in cell editor', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		OpenCellEditor();
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addTime);
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor).split(' ').join(':00 '), 'Check add time');
+		EnterText('');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addDate);
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getDateString(editor), 'Check add date');
+		EnterText('');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addTime, 1);
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor).split(' ').join(':00 '), 'Check add time');
+		EnterText('');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addDate, 1);
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getDateString(editor), 'Check add date');
+		EnterText('');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addSeparator);
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(0, 0), '.', 'Check add separator');
+		EnterText('');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addNewLine);
+		assert.strictEqual(cellEditor.textRender.getLinesCount(), 2, 'Check add new line');
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addNewLine);
+		assert.strictEqual(cellEditor.textRender.getLinesCount(), 3, 'Check add new line');
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addNewLine);
+		assert.strictEqual(cellEditor.textRender.getLinesCount(), 4, 'Check add new line');
+	});
+
+	QUnit.test('Check disabling shortcuts', (assert) =>
+	{
+		OpenCellEditor();
+		assert.true(ExecuteCellEditorHotkey(cellEditorHotkeyTypes.disableScrollLock));
+		assert.true(ExecuteCellEditorHotkey(cellEditorHotkeyTypes.disableNumLock));
+		assert.true(ExecuteCellEditorHotkey(cellEditorHotkeyTypes.disableF2));
+		assert.true(ExecuteCellEditorHotkey(cellEditorHotkeyTypes.disablePrint));
+	});
+
+	QUnit.test('Check select all', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		EnterText('Hello');
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectAll)
+		assert.strictEqual(GetSelectedCellEditorText(), 'Hello', 'Check select all');
+	});
+
+	QUnit.test('Check undo/redo in cell editor', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		EnterText('H');
+		EnterText('e');
+		EnterText('l');
+		EnterText('l');
+		EnterText('o');
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.undo);
+		assert.strictEqual(GetCellEditorText(), 'Hell', 'Check undo');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.undo);
+		assert.strictEqual(GetCellEditorText(), 'Hel', 'Check undo');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.redo);
+		assert.strictEqual(GetCellEditorText(), 'Hell', 'Check redo');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.redo);
+		assert.strictEqual(GetCellEditorText(), 'Hello', 'Check redo');
+	});
+	QUnit.test('Check switch reference of formula', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		EnterText('=F4');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.switchReference);
+		assert.strictEqual(GetCellEditorText(), '=$F$4', 'Check switch to absolute reference');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.switchReference);
+		assert.strictEqual(GetCellEditorText(), '=F$4', 'Check switch to absolute row');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.switchReference);
+		assert.strictEqual(GetCellEditorText(), '=$F4', 'Check switch to absolute column');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.switchReference);
+		assert.strictEqual(GetCellEditorText(), '=F4', 'Check switch to relative reference');
+	});
+
+	QUnit.test('Test catch events', (assert) =>
+	{
+		function ExecuteTestWithCatchEvent(sSendEvent, fCustomCheck, customExpectedValue, oEvent)
+		{
+			let check = false;
+			const Check = function (...args)
+			{
+				if (fCustomCheck)
+				{
+					check = fCustomCheck(...args);
+				}
+				else
+				{
+					check = true;
+				}
+			}
+			editor.asc_registerCallback(sSendEvent, Check);
+			ExecuteShortcut(oEvent);
+			assert.strictEqual(check, customExpectedValue === undefined ? true : customExpectedValue, 'Check catch ' + sSendEvent + ' event');
+			editor.asc_unregisterCallback(sSendEvent, Check);
+		}
+
+		ExecuteTestWithCatchEvent('asc_onPrint', () => true, true, tableEvents[tableHotkeyTypes.print][0]);
+		ExecuteTestWithCatchEvent('asc_onContextMenu', () => true, true, tableEvents[tableHotkeyTypes.contextMenu][0]);
+
+
+		ClearShapeAndAddParagraph('');
+		const hyperlink = new AscCommonExcel.Hyperlink();
+		hyperlink.Hyperlink = "https://www.onlyoffice.com/";
+		const ascHyperlink = new Asc.asc_CHyperlink(hyperlink);
+		ascHyperlink.text = "Hello";
+		editor.asc_insertHyperlink(ascHyperlink);
+		GetDrawingObjects().cursorMoveLeft();
+		GetDrawingObjects().cursorMoveLeft();
+
+		ExecuteTestWithCatchEvent('asc_onHyperlinkClick', (sValue) => sValue, 'https://www.onlyoffice.com/', graphicEvents[graphicHotkeyTypes.visitHyperink][0]);
+		const selectedInfo = new CSelectedElementsInfo();
+		GetDrawingObjects().getTargetDocContent().GetSelectedElementsInfo(selectedInfo);
+		assert.true(selectedInfo.m_oHyperlink.Visited, 'Check hyperlink visited');
+		RemoveGraphicObjects();
+
+	});
+	QUnit.module('Test graphic shortcuts', {
+		afterEach: function ()
+		{
+			RemoveGraphicObjects();
+		}
+	});
+	QUnit.test('Check remove parts of text', (assert) =>
+	{
+		const {paragraph} = ClearShapeAndAddParagraph('Hello Hello Hello Hello Hello Hello Hello');
+		GetDrawingObjects().cursorMoveToEndPos();
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.removeBackChar);
+		assert.strictEqual(GetParagraphText(paragraph), 'Hello Hello Hello Hello Hello Hello Hell', 'Check removing back symbol');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.removeBackWord);
+		assert.strictEqual(GetParagraphText(paragraph), 'Hello Hello Hello Hello Hello Hello ', 'Check removing back word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.removeBackWord, 1);
+		assert.strictEqual(GetParagraphText(paragraph), 'Hello Hello Hello Hello Hello ', 'Check removing back word');
+
+		GetDrawingObjects().cursorMoveToStartPos();
+		ExecuteGraphicHotkey(graphicHotkeyTypes.removeFrontChar);
+		assert.strictEqual(GetParagraphText(paragraph), 'ello Hello Hello Hello Hello ', 'Check removing front symbol');
+		ExecuteGraphicHotkey(graphicHotkeyTypes.removeFrontWord);
+		assert.strictEqual(GetParagraphText(paragraph), 'Hello Hello Hello Hello ', 'Check removing front word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.removeFrontWord, 1);
+		assert.strictEqual(GetParagraphText(paragraph), 'Hello Hello Hello ', 'Check removing front word');
+	});
+
+	QUnit.test('Check remove graphic objects', (assert) =>
+	{
+
+		function CheckRemoveObject(spTree, shape)
+		{
+			assert.true(spTree.indexOf(shape) === -1, 'Check remove shape from spTree');
+		}
+
+		function CheckRemoveDrawingObject(shape)
+		{
+			assert.false(ws.Drawings.some((e) => e.graphicObject === shape), 'Check remove shape from spTree');
+		}
+
+		const CheckActionsWithEvent = (eventIndex) =>
+		{
+			const shape = AddShape(0, 0, 100, 100);
+			SelectDrawings([shape]);
+			assert.true(ws.Drawings.some((e) => e.graphicObject === shape), 'Check available shape in spTree');
+			ExecuteGraphicHotkey(graphicHotkeyTypes.removeShape, eventIndex);
+			CheckRemoveDrawingObject(shape);
+
+			const chart = AddChart();
+			SelectDrawings([chart]);
+			ExecuteGraphicHotkey(graphicHotkeyTypes.removeChart, eventIndex);
+			CheckRemoveDrawingObject(chart);
+
+
+			const shape1 = AddShape(0, 0, 100, 100);
+			const shape2 = AddShape(0, 0, 100, 100);
+			const shape3 = AddShape(0, 0, 100, 100);
+
+			const group = CreateGroup([shape1, shape2, shape3]);
+			group.selectObject(shape1, 0);
+			GetDrawingObjects().selection.groupSelection = group;
+
+			ExecuteGraphicHotkey(graphicHotkeyTypes.removeShapeInGroup, eventIndex);
+			CheckRemoveObject(group.spTree, shape1);
+
+			SelectDrawings([group]);
+			ExecuteGraphicHotkey(graphicHotkeyTypes.removeGroup, eventIndex);
+			CheckRemoveDrawingObject(group);
+		};
+
+		CheckActionsWithEvent(0);
+		CheckActionsWithEvent(1);
+	});
+
+	QUnit.test('Check main actions with shapes', (assert) =>
+	{
+		const drawing1 = AddShape(100, 100, 100, 200);
+
+		function CheckShapePosition(X, Y)
+		{
+			assert.deepEqual([Round(drawing1.x, 12), Round(drawing1.y, 12), Round(drawing1.extX, 12), Round(drawing1.extY, 12)], [Round(X, 12), Round(Y, 12), 200, 100], 'Check shape position after movement ' + X + ' ' + Y);
+		}
+
+		SelectDrawings([drawing1]);
+
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.bigMoveGraphicObjectLeft);
+		CheckShapePosition(100 - 5 * AscCommon.g_dKoef_pix_to_mm, 100);
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.littleMoveGraphicObjectLeft);
+		CheckShapePosition(100 - 6 * AscCommon.g_dKoef_pix_to_mm, 100);
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.bigMoveGraphicObjectRight);
+		CheckShapePosition(100 - AscCommon.g_dKoef_pix_to_mm, 100);
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.littleMoveGraphicObjectRight);
+		CheckShapePosition(100, 100);
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.bigMoveGraphicObjectDown);
+		CheckShapePosition(100, 100 + 5 * AscCommon.g_dKoef_pix_to_mm);
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.littleMoveGraphicObjectDown);
+		CheckShapePosition(100, 100 + 6 * AscCommon.g_dKoef_pix_to_mm);
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.bigMoveGraphicObjectUp);
+		CheckShapePosition(100, 100 + AscCommon.g_dKoef_pix_to_mm);
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.littleMoveGraphicObjectUp);
+		CheckShapePosition(100, 100);
+
+		function CheckSelectedObjects(arrOfDrawings)
+		{
+			const length = Math.max(arrOfDrawings.length, GetDrawingObjects().selectedObjects.length);
+			for (let i = 0; i < length; i++)
+			{
+				assert.true(GetDrawingObjects().selectedObjects[i] === arrOfDrawings[i], 'Check selection movement between objects');
+			}
+		}
+
+		GetDrawingObjects().resetSelection();
+		const drawing2 = AddShape(0, 0, 10, 10);
+		const drawing3 = AddShape(0, 0, 10, 10);
+		SelectDrawings([drawing3]);
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectNextObject);
+		CheckSelectedObjects([drawing1]);
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectNextObject);
+		CheckSelectedObjects([drawing2]);
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectNextObject);
+		CheckSelectedObjects([drawing3]);
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectPreviousObject);
+		CheckSelectedObjects([drawing2]);
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectPreviousObject);
+		CheckSelectedObjects([drawing1]);
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectPreviousObject);
+		CheckSelectedObjects([drawing3]);
+
+		drawing2.setWordShape(false);
+		SelectDrawings([drawing2]);
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.createTxBody);
+		assert.true(!!drawing2.txBody, 'Check create textBody after enter');
+
+		SelectDrawings([drawing2]);
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveToStartInEmptyContent);
+		const paragraph = drawing2.getDocContent().Content[0];
+		assert.true(drawing2.parent.controller.selection.textSelection === drawing2, 'Check text selection');
+		assert.true(paragraph.IsCursorAtBegin(), 'Check movement to start position in empty content');
+
+		EnterText('Hello');
+		SelectDrawings([drawing2]);
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectAllAfterEnter);
+		assert.strictEqual(GetDrawingObjects().GetSelectedText(), 'Hello', 'Check select non empty content');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.resetTextSelection);
+		assert.true(GetDrawingObjects().selectedObjects[0] === drawing2, 'Check reset text selection');
+		assert.true(!GetDrawingObjects().selection.textSelection, 'Check reset text selection');
+
+
+		let group = CreateGroup([drawing1, drawing2]);
+		group.selectObject(drawing1, 0);
+		GetDrawingObjects().selection.groupSelection = group;
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.resetStepSelection);
+		assert.strictEqual(GetDrawingObjects().selectedObjects[0].getObjectType(), AscDFH.historyitem_type_GroupShape, 'Check reset step drawing selection');
+		assert.strictEqual(group.selectedObjects.length, 0, 'Check reset step selection');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.resetStepSelection);
+		assert.strictEqual(GetDrawingObjects().selectedObjects.length, 0, 'Check reset all drawing selection');
+	});
+
+	QUnit.test('Check actions with text movements', (assert) =>
+	{
+		const {shape} = ClearShapeAndAddParagraph(
+			'Hello World Hello ' +
+			'World Hello World ' +
+			'Hello World Hello ' +
+			'World Hello World ' +
+			'Hello World Hello ' +
+			'Hello World Hello ' +
+			'Hello World Hello ' +
+			'Hello World Hello ' +
+			'World Hello World');
+
+		function CheckCursorPosition(expected, description)
+		{
+			const position = shape.txBody.content.GetContentPosition();
+			assert.strictEqual(position[position.length - 1].Position, expected, description);
+		}
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorToEndLine);
+		CheckCursorPosition(18, 'Check move to end line');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorRightChar);
+		CheckCursorPosition(19, 'Check move to right char');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorToEndLine, 1);
+		CheckCursorPosition(36, 'Check move to end line');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorToEndLine, 1);
+		CheckCursorPosition(36, 'Check move to end line');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorToStartLine, 1);
+		CheckCursorPosition(18, 'Check move to start line');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorToStartLine, 1);
+		CheckCursorPosition(18, 'Check move to start line');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorRightChar);
+		CheckCursorPosition(19, 'Check move to right char');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorLeftChar);
+		CheckCursorPosition(18, 'Check move to left char');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorLeftWord);
+		CheckCursorPosition(12, 'Check move to left word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorLeftWord, 1);
+		CheckCursorPosition(6, 'Check move to left word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorRightWord, 1);
+		CheckCursorPosition(12, 'Check move to right word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorRightWord);
+		CheckCursorPosition(18, 'Check move to right word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorRightWord);
+		CheckCursorPosition(24, 'Check move to right word');
+
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorToStartLine);
+		CheckCursorPosition(18, 'Check move to start line');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorDown);
+		CheckCursorPosition(36, 'Check move down');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorUp);
+		CheckCursorPosition(18, 'Check move up');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorToEndDocument);
+		CheckCursorPosition(161, 'Check move to end document');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorToStartDocument);
+		CheckCursorPosition(0, 'Check move to start document');
+
+		function CheckSelectedText(expectedText, description)
+		{
+			const selectedText = GetDrawingObjects().GetSelectedText();
+			assert.strictEqual(selectedText, expectedText, description);
+		}
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectToEndLine);
+		CheckSelectedText('Hello World Hello ', 'Select to end line');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorRightChar);
+		CheckSelectedText('Hello World Hello W', 'Select to right char');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectToEndLine, 1);
+		CheckSelectedText('Hello World Hello World Hello World ', 'Select to end line content');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectToEndLine, 1);
+		CheckSelectedText('Hello World Hello World Hello World ', 'Select to end line content');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectToStartLine, 1);
+		CheckSelectedText('Hello World Hello ', 'Select to start line content');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectToStartLine, 1);
+		CheckSelectedText('Hello World Hello ', 'Select to start line content');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorRightChar);
+		CheckSelectedText('Hello World Hello W', 'Select to right char');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorLeftChar);
+		CheckSelectedText('Hello World Hello ', 'Select to left char');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorLeftWord);
+		CheckSelectedText('Hello World ', 'Select to left word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorRightWord);
+		CheckSelectedText('Hello World Hello ', 'Select to right word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorLeftWord, 1);
+		CheckSelectedText('Hello World ', 'Select to left word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorRightWord, 1);
+		CheckSelectedText('Hello World Hello ', 'Select to right word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorRightWord);
+		CheckSelectedText('Hello World Hello World ', 'Select to right word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorRightWord);
+		CheckSelectedText('Hello World Hello World Hello ', 'Select to right word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectToStartLine);
+		CheckSelectedText('Hello World Hello ', 'Select to start line');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorDown);
+		CheckSelectedText('Hello World Hello World Hello World ', 'Select down');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorUp);
+		CheckSelectedText('Hello World Hello ', 'Select up');
+
+		GetDrawingObjects().cursorMoveToEndPos();
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorLeftChar);
+		CheckSelectedText('d', 'Select to left char');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorLeftWord);
+		CheckSelectedText('World', 'Select to left word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectToStartDocument);
+		CheckSelectedText('Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello Hello World Hello Hello World Hello Hello World Hello World Hello World', 'Select to start content');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectToEndDocument);
+		CheckSelectedText('', 'Select to end content');
+
+		GetDrawingObjects().cursorMoveToStartPos();
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectToEndDocument);
+		CheckSelectedText('Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello Hello World Hello Hello World Hello Hello World Hello World Hello World', 'Select to end content');
+	});
+
+	QUnit.test('Check paragraph property change', (assert) =>
+	{
+		ClearShapeAndAddParagraph('Hello world');
+
+		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check align left");
+		ExecuteGraphicHotkey(graphicHotkeyTypes.centerAlign);
+		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Center, "Check turn on center para");
+		ExecuteGraphicHotkey(graphicHotkeyTypes.centerAlign);
+		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check turn on center para");
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.justifyAlign);
+		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Justify, "Check turn on justify para");
+		ExecuteGraphicHotkey(graphicHotkeyTypes.justifyAlign);
+		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check turn on justify para");
+		ExecuteGraphicHotkey(graphicHotkeyTypes.justifyAlign);
+		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Justify, "Check turn on justify para");
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.leftAlign);
+		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check turn on left para");
+		ExecuteGraphicHotkey(graphicHotkeyTypes.leftAlign);
+		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Justify, "Check turn on left para");
+		ExecuteGraphicHotkey(graphicHotkeyTypes.leftAlign);
+		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check turn on left para");
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.rightAlign);
+		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Right, "Check turn on right para");
+		ExecuteGraphicHotkey(graphicHotkeyTypes.rightAlign);
+		assert.strictEqual(GetDirectGraphicParaPr().GetJc(), AscCommon.align_Left, "Check turn on right para");
+	});
+
+	QUnit.test('Check text property change', (assert) =>
+	{
+		ClearShapeAndAddParagraph('Hello world');
+		GetDrawingObjects().selectAll();
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.bold);
+		assert.strictEqual(GetDirectGraphicTextPr().GetBold(), true, 'Check turn on bold');
+		ExecuteGraphicHotkey(graphicHotkeyTypes.bold);
+		assert.strictEqual(GetDirectGraphicTextPr().GetBold(), false, 'Check turn off bold');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.italic);
+		assert.strictEqual(GetDirectGraphicTextPr().GetItalic(), true, 'Check turn on italic');
+		ExecuteGraphicHotkey(graphicHotkeyTypes.italic);
+		assert.strictEqual(GetDirectGraphicTextPr().GetItalic(), false, 'Check turn off italic');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.underline);
+		assert.strictEqual(GetDirectGraphicTextPr().GetUnderline(), true, 'Check turn on underline');
+		ExecuteGraphicHotkey(graphicHotkeyTypes.underline);
+		assert.strictEqual(GetDirectGraphicTextPr().GetUnderline(), false, 'Check turn off underline');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.superscript);
+		assert.strictEqual(GetDirectGraphicTextPr().GetVertAlign(), AscCommon.vertalign_SuperScript, 'Check turn on superscript');
+		ExecuteGraphicHotkey(graphicHotkeyTypes.superscript);
+		assert.strictEqual(GetDirectGraphicTextPr().GetVertAlign(), AscCommon.vertalign_Baseline, 'Check turn off superscript');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.subscript);
+		assert.strictEqual(GetDirectGraphicTextPr().GetVertAlign(), AscCommon.vertalign_SubScript, 'Check turn on subscript');
+		ExecuteGraphicHotkey(graphicHotkeyTypes.subscript);
+		assert.strictEqual(GetDirectGraphicTextPr().GetVertAlign(), AscCommon.vertalign_Baseline, 'Check turn off subscript');
+
+		// defaultSize = 10
+		// 10 -> 11 -> 12 -> 14 -> 16 -> 14 -> 12 -> 11 -> 10
+		ExecuteGraphicHotkey(graphicHotkeyTypes.increaseFontSize);
+		assert.strictEqual(GetDirectGraphicTextPr().GetFontSize(), 11, 'Check increase font size');
+		ExecuteGraphicHotkey(graphicHotkeyTypes.increaseFontSize);
+		assert.strictEqual(GetDirectGraphicTextPr().GetFontSize(), 12, 'Check increase font size');
+		ExecuteGraphicHotkey(graphicHotkeyTypes.increaseFontSize);
+		assert.strictEqual(GetDirectGraphicTextPr().GetFontSize(), 14, 'Check increase font size');
+		ExecuteGraphicHotkey(graphicHotkeyTypes.increaseFontSize);
+		assert.strictEqual(GetDirectGraphicTextPr().GetFontSize(), 16, 'Check increase font size');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.decreaseFontSize);
+		assert.strictEqual(GetDirectGraphicTextPr().GetFontSize(), 14, 'Check decrease font size');
+		ExecuteGraphicHotkey(graphicHotkeyTypes.decreaseFontSize);
+		assert.strictEqual(GetDirectGraphicTextPr().GetFontSize(), 12, 'Check decrease font size');
+		ExecuteGraphicHotkey(graphicHotkeyTypes.decreaseFontSize);
+		assert.strictEqual(GetDirectGraphicTextPr().GetFontSize(), 11, 'Check decrease font size');
+		ExecuteGraphicHotkey(graphicHotkeyTypes.decreaseFontSize);
+		assert.strictEqual(GetDirectGraphicTextPr().GetFontSize(), 10, 'Check decrease font size');
+	});
+
+	QUnit.test('Check add various characters', (assert) =>
+	{
+		const {paragraph} = ClearShapeAndAddParagraph('');
+		ExecuteGraphicHotkey(graphicHotkeyTypes.enDash);
+		assert.strictEqual(GetParagraphText(paragraph), String.fromCharCode(0x2013), 'Check add en dash');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.enDash, 1);
+		assert.strictEqual(GetParagraphText(paragraph), String.fromCharCode(0x2013, 0x2013), 'Check add en dash');
+	});
+
+	QUnit.test('Check select all', (assert) =>
+	{
+		const {paragraph, shape} = ClearShapeAndAddParagraph('Hello');
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectAllContent);
+
+		assert.true(shape.txBody.content.IsSelectionUse(), 'Check content selection');
+		assert.true(paragraph.IsSelectedAll(), 'Check paragraph selection');
+		assert.strictEqual(GetDrawingObjects().GetSelectedText(), 'Hello', 'Check selected text');
+
+		const drawing2 = AddShape();
+
+		SelectDrawings([shape]);
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectAllDrawings);
+		assert.strictEqual(GetDrawingObjects().selectedObjects.length, 2, 'Check amount of selected shapes');
+		assert.true(GetDrawingObjects().selectedObjects[0] === drawing2, 'Check selected shape');
+		assert.true(GetDrawingObjects().selectedObjects[1] === shape, 'Check selected shape');
+	});
+
+	QUnit.test('Check select all in chart title', (assert) =>
+	{
+		const chart = AddChart();
+		SelectDrawings([chart]);
+		const titles = chart.getAllTitles();
+		const controller = GetDrawingObjects();
+		controller.selection.chartSelection = chart;
+		chart.selectTitle(titles[0], 0);
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectAllTitleAfterEnter);
+		assert.strictEqual(GetDrawingObjects().GetSelectedText(), 'Diagram Title', 'Check select all content in chart title');
+	});
+
+	QUnit.test('Check add tab symbol', (assert) =>
+	{
+		const {paragraph} = ClearShapeAndAddParagraph('');
+		ExecuteGraphicHotkey(graphicHotkeyTypes.addTab);
+		assert.true(paragraph.Content[0].Content[0].IsTab(), 'Check add tab symbol');
+	});
+
+	QUnit.test('Check add new paragraph', (assert) =>
+	{
+		const {shape} = ClearShapeAndAddParagraph('');
+		ExecuteGraphicHotkey(graphicHotkeyTypes.addParagraph);
+		assert.strictEqual(shape.txBody.content.Content.length, 2, 'Check add new paragraph');
+	});
+
+	QUnit.test('Check add break line', (assert) =>
+	{
+		function CheckAddBreakLine(shape)
+		{
+			assert.strictEqual(shape.txBody.content.Content.length, 1, 'Check amount paragraphs');
+			assert.strictEqual(shape.txBody.content.Content[0].GetLinesCount(), 2, 'Check amount lines');
+		}
+
+		{
+
+			const {shape} = ClearShapeAndAddParagraph('Hello Hello');
+			GetDrawingObjects().cursorMoveRight(false, true);
+			ExecuteGraphicHotkey(graphicHotkeyTypes.addBreakLine);
+			CheckAddBreakLine(shape);
+
+		}
+
+		{
+			const {shape} = ClearShapeAndAddParagraph('');
+			editor.asc_AddMath2(c_oAscMathType.FractionVertical);
+			GetDrawingObjects().recalculate();
+			const paragraph = shape.txBody.content.Content[0];
+			GetDrawingObjects().cursorMoveLeft();
+			GetDrawingObjects().cursorMoveLeft();
+			EnterText('8888888');
+			GetDrawingObjects().cursorMoveLeft();
+			GetDrawingObjects().cursorMoveLeft();
+			ExecuteGraphicHotkey(graphicHotkeyTypes.addLineInMath);
+			const paraMath = paragraph.GetAllParaMaths()[0];
+			const fraction = paraMath.Root.GetFirstElement();
+			const numerator = fraction.getNumerator();
+			const eqArray = numerator.GetFirstElement();
+			assert.strictEqual(eqArray.getRowsCount(), 2, 'Check add new line in math');
+		}
+	});
+
+	QUnit.test('Check slicer shortcuts', (assert) =>
+	{
+		const ExecuteHotkeyWithEvent = (index) =>
+		{
+			const slicer = CreateSlicer();
+			ExecuteGraphicHotkey(graphicHotkeyTypes.invertMultiselectSlicer, index);
+			assert.true(slicer.isMultiSelect(), 'Check multiselect slicer');
+
+			slicer.buttonsContainer.buttons[0].setUnselectTmpState();
+			ExecuteGraphicHotkey(graphicHotkeyTypes.cleanSlicer, index);
+			assert.true(slicer.buttonsContainer.buttons[0].isSelected(), 'Check clean slicer');
+			RemoveGraphicObjects();
+			ResetData(0, 0, 49, 49);
+		};
+		ExecuteHotkeyWithEvent(0);
+		ExecuteHotkeyWithEvent(1);
+	});
+
+
+	QUnit.module('Test table hotkeys', {
+		before   : function f()
+		{
+			SetVisibleRange(0, 0, 49, 49);
+		},
+		afterEach: function ()
+		{
+			CloseCellEditor(true);
+			ResetData(0, 0, 49, 49);
+		}
+	});
+	QUnit.test('Check drop down menu', (assert) =>
+	{
+		let check = false;
+		const ShowAutoComplete = function () {check = true;};
+		wbView.handlers.add("asc_onEntriesListMenu", ShowAutoComplete);
+		Select(0, 0, 0, 0, 0, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.showAutoComplete);
+		assert.true(check);
+		wbView.handlers.remove("asc_onEntriesListMenu", ShowAutoComplete);
+		check = false;
+
+		const props = ws.getDataValidationProps();
+		props.setType(Asc.EDataValidationType.List);
+		props.setFormula1(new Asc.CDataFormula('"1"'));
+		ws.setDataValidationProps(props);
+		const ShowDataValidations = function () {check = true;};
+		wbView.handlers.add("asc_onValidationListMenu", ShowDataValidations);
+		Select(0, 0, 0, 0, 0, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.showDataValidation);
+		assert.true(check);
+		ws.deleteDataValidationById(props.Get_Id());
+		wbView.handlers.remove("asc_onValidationListMenu", ShowDataValidations);
+		check = false;
+
+		const SetAutoFiltersDialog = function () {check = true;};
+		wbView.handlers.add("setAutoFiltersDialog", SetAutoFiltersDialog);
+		CreateTable();
+		Select(0, 0, 0, 0, 0, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.showFilterOptions);
+		assert.true(check);
+		wbView.handlers.remove("setAutoFiltersDialog", SetAutoFiltersDialog);
+	});
+	QUnit.test('Check cell movement', (assert) =>
+	{
+		function CheckActiveCell(expectedRow, expectedColumn, description)
+		{
+			assert.deepEqual([ws.selectionRange.activeCell.row, ws.selectionRange.activeCell.col], [expectedRow, expectedColumn], description);
+		}
+
+		function CheckActiveRange(r1, c1, r2, c2, description)
+		{
+			const lastRange = ws.selectionRange.getLast();
+			assert.deepEqual([lastRange.r1, lastRange.c1, lastRange.r2, lastRange.c2], [r1, c1, r2, c2], description);
+		}
+
+
+		Select(0, 15, 0, 15, 0, 15);
+		FillActiveCell('Hello');
+		Select(25, 0, 25, 0, 25, 0);
+		FillActiveCell('Hello');
+		Select(27, 0, 27, 0, 27, 0);
+		FillActiveCell('Hello');
+
+		Select(5, 5, 5, 5, 5, 5);
+		FillActiveCell('Hello');
+		Select(4, 8, 4, 8, 4, 8);
+		FillActiveCell('Hello');
+
+		Select(35, 0, 35, 0, 35, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.moveToTopCell);
+		CheckActiveCell(27, 0, 'Check move to top cell');
+		ExecuteTableHotkey(tableHotkeyTypes.moveToTopCell);
+		CheckActiveCell(25, 0, 'Check move to top cell');
+		ExecuteTableHotkey(tableHotkeyTypes.moveToTopCell);
+		CheckActiveCell(0, 0, 'Check move to top cell');
+
+
+		Select(0, 39, 0, 39, 0, 39);
+		ExecuteTableHotkey(tableHotkeyTypes.moveToLeftEdgeCell);
+		CheckActiveCell(0, 15, 'Check move to left edge cell');
+		ExecuteTableHotkey(tableHotkeyTypes.moveToLeftEdgeCell);
+		CheckActiveCell(0, 0, 'Check move to left edge cell');
+
+		Select(0, 2, 0, 2, 0, 2);
+		ExecuteTableHotkey(tableHotkeyTypes.moveToLeftCell);
+		CheckActiveCell(0, 1, 'Check move to left cell');
+
+		Select(0, 0, 0, 0, 0, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.moveToRightEdgeCell);
+		CheckActiveCell(0, 15, 'Check move to right edge cell');
+
+		Select(4, 0, 4, 0, 4, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.moveToRightEdgeCell, 1);
+		CheckActiveCell(4, 8, 'Check move to right edge cell');
+
+		Select(5, 0, 5, 0, 5, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.moveToRightEdgeCell);
+		CheckActiveCell(5, 5, 'Check move to right edge cell');
+
+		ExecuteTableHotkey(tableHotkeyTypes.moveToRightCell);
+		CheckActiveCell(5, 6, 'Check move to right cell');
+		ExecuteTableHotkey(tableHotkeyTypes.moveToRightCell);
+		CheckActiveCell(5, 7, 'Check move to right cell');
+
+		ExecuteTableHotkey(tableHotkeyTypes.moveToDownCell);
+		CheckActiveCell(6, 7, 'Check move to down cell');
+		ExecuteTableHotkey(tableHotkeyTypes.moveToDownCell);
+		CheckActiveCell(7, 7, 'Check move to down cell');
+
+		ExecuteTableHotkey(tableHotkeyTypes.moveToUpCell);
+		CheckActiveCell(6, 7, 'Check move to up cell');
+		ExecuteTableHotkey(tableHotkeyTypes.moveToUpCell);
+		CheckActiveCell(5, 7, 'Check move to up cell');
+
+		Select(0, 0, 0, 0, 0, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.moveToBottomCell);
+		CheckActiveCell(25, 0, 'Check move to bottom cell');
+		ExecuteTableHotkey(tableHotkeyTypes.moveToBottomCell);
+		CheckActiveCell(27, 0, 'Check move to bottom cell');
+
+		Select(5, 25, 5, 25, 5, 25);
+		ExecuteTableHotkey(tableHotkeyTypes.moveToFirstColumn);
+		CheckActiveCell(5, 0, 'Check move to first column');
+
+		Select(5, 25, 5, 25, 5, 25);
+		ExecuteTableHotkey(tableHotkeyTypes.moveToLeftEdgeTop);
+		CheckActiveCell(0, 0, 'Check move to left-top edge cell');
+
+		ExecuteTableHotkey(tableHotkeyTypes.moveToRightBottomEdge);
+		CheckActiveCell(27, 15, 'Check move to right-bottom edge cell');
+		ExecuteTableHotkey(tableHotkeyTypes.moveToLowerCell);
+		CheckActiveCell(77, 15, 'Check move to lower cell');
+
+		ExecuteTableHotkey(tableHotkeyTypes.moveToUpperCell);
+		CheckActiveCell(27, 15, 'Check move to upper cell');
+
+		Select(35, 0, 35, 0, 35, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.selectToTopCell);
+		CheckActiveRange(27, 0, 35, 0, 'Check select to top cell');
+		ExecuteTableHotkey(tableHotkeyTypes.selectToTopCell);
+		CheckActiveRange(25, 0, 35, 0, 'Check select to top cell');
+		ExecuteTableHotkey(tableHotkeyTypes.selectToTopCell);
+		CheckActiveRange(0, 0, 35, 0, 'Check select to top cell');
+
+		Select(0, 39, 0, 39, 0, 39);
+		ExecuteTableHotkey(tableHotkeyTypes.selectToLeftEdgeCell);
+		CheckActiveRange(0, 15, 0, 39, 'Check select to left edge cell');
+		ExecuteTableHotkey(tableHotkeyTypes.selectToLeftEdgeCell);
+		CheckActiveRange(0, 0, 0, 39, 'Check select to left edge cell');
+
+		Select(0, 2, 0, 2, 0, 2);
+		ExecuteTableHotkey(tableHotkeyTypes.selectToLeftCell);
+		CheckActiveRange(0, 1, 0, 2, 'Check select to left cell');
+
+		Select(0, 0, 0, 0, 0, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.selectToRightEdgeCell);
+		CheckActiveRange(0, 0, 0, 15, 'Check select to right edge cell');
+
+		Select(4, 0, 4, 0, 4, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.selectToRightEdgeCell, 1);
+		CheckActiveRange(4, 0, 4, 8, 'Check select to right edge cell');
+
+		Select(5, 0, 5, 0, 5, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.selectToRightEdgeCell);
+		CheckActiveRange(5, 0, 5, 5, 'Check select to right edge cell');
+
+		ExecuteTableHotkey(tableHotkeyTypes.selectToRightCell);
+		CheckActiveRange(5, 0, 5, 6, 'Check select to right cell');
+		ExecuteTableHotkey(tableHotkeyTypes.selectToRightCell);
+		CheckActiveRange(5, 0, 5, 7, 'Check select to right cell');
+
+		ExecuteTableHotkey(tableHotkeyTypes.selectToDownCell);
+		CheckActiveRange(5, 0, 6, 7, 'Check select to down cell');
+		ExecuteTableHotkey(tableHotkeyTypes.selectToDownCell);
+		CheckActiveRange(5, 0, 7, 7, 'Check select to down cell');
+
+		ExecuteTableHotkey(tableHotkeyTypes.selectToUpCell);
+		CheckActiveRange(5, 0, 6, 7, 'Check select to up cell');
+		ExecuteTableHotkey(tableHotkeyTypes.selectToUpCell);
+		CheckActiveRange(5, 0, 5, 7, 'Check select to up cell');
+
+		Select(0, 0, 0, 0, 0, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.selectToBottomCell);
+		CheckActiveRange(0, 0, 25, 0, 'Check select to bottom cell');
+		ExecuteTableHotkey(tableHotkeyTypes.selectToBottomCell);
+		CheckActiveRange(0, 0, 27, 0, 'Check select to bottom cell');
+
+		Select(5, 25, 5, 25, 5, 25);
+		ExecuteTableHotkey(tableHotkeyTypes.selectToFirstColumn);
+		CheckActiveRange(5, 0, 5, 25, 'Check select to first column');
+
+		Select(5, 25, 5, 25, 5, 25);
+		ExecuteTableHotkey(tableHotkeyTypes.selectToLeftEdgeTop);
+		CheckActiveRange(0, 0, 5, 25, 'Check select to left-top edge cell');
+
+		ExecuteTableHotkey(tableHotkeyTypes.selectToRightBottomEdge);
+		CheckActiveRange(5, 15, 27, 25, 'Check select to right-bottom edge cell');
+
+		ExecuteTableHotkey(tableHotkeyTypes.selectToLowerCell);
+		CheckActiveRange(5, 15, 77, 25, 'Check select to lower cell');
+
+		ExecuteTableHotkey(tableHotkeyTypes.selectToUpperCell);
+		CheckActiveRange(5, 15, 27, 25, 'Check select to upper cell');
+
+		Select(0, 0, 0, 0, 3, 3);
+
+		ExecuteTableHotkey(tableHotkeyTypes.moveActiveCellToRight);
+		CheckActiveCell(0, 1, 'Check move active cell to right');
+		ExecuteTableHotkey(tableHotkeyTypes.moveActiveCellToRight);
+		CheckActiveCell(0, 2, 'Check move active cell to right');
+		ExecuteTableHotkey(tableHotkeyTypes.moveActiveCellToRight);
+		CheckActiveCell(0, 3, 'Check move active cell to right');
+		ExecuteTableHotkey(tableHotkeyTypes.moveActiveCellToRight);
+		CheckActiveCell(1, 0, 'Check move active cell to right');
+
+		ExecuteTableHotkey(tableHotkeyTypes.moveActiveCellToLeft);
+		CheckActiveCell(0, 3, 'Check move active cell to left');
+		ExecuteTableHotkey(tableHotkeyTypes.moveActiveCellToLeft);
+		CheckActiveCell(0, 2, 'Check move active cell to left');
+		ExecuteTableHotkey(tableHotkeyTypes.moveActiveCellToLeft);
+		CheckActiveCell(0, 1, 'Check move active cell to left');
+		ExecuteTableHotkey(tableHotkeyTypes.moveActiveCellToLeft);
+		CheckActiveCell(0, 0, 'Check move active cell to left');
+
+		ExecuteTableHotkey(tableHotkeyTypes.moveActiveCellToDown);
+		CheckActiveCell(1, 0, 'Check move active cell to down');
+		ExecuteTableHotkey(tableHotkeyTypes.moveActiveCellToDown);
+		CheckActiveCell(2, 0, 'Check move active cell to down');
+		ExecuteTableHotkey(tableHotkeyTypes.moveActiveCellToDown);
+		CheckActiveCell(3, 0, 'Check move active cell to down');
+		ExecuteTableHotkey(tableHotkeyTypes.moveActiveCellToDown);
+		CheckActiveCell(0, 1, 'Check move active cell to down');
+
+		ExecuteTableHotkey(tableHotkeyTypes.moveActiveCellToUp);
+		CheckActiveCell(3, 0, 'Check move active cell to up');
+		ExecuteTableHotkey(tableHotkeyTypes.moveActiveCellToUp);
+		CheckActiveCell(2, 0, 'Check move active cell to up');
+		ExecuteTableHotkey(tableHotkeyTypes.moveActiveCellToUp);
+		CheckActiveCell(1, 0, 'Check move active cell to up');
+		ExecuteTableHotkey(tableHotkeyTypes.moveActiveCellToUp);
+		CheckActiveCell(0, 0, 'Check move active cell to up');
+
+		Select(0, 0, 0, 0, 0, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.selectRow);
+		CheckActiveRange(0, 0, AscCommon.gc_nMaxRow0, 0, 'Check select row');
+
+		Select(0, 0, 0, 0, 0, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.selectColumn);
+		CheckActiveRange(0, 0, 0, AscCommon.gc_nMaxCol0, 'Check select column');
+
+		Select(0, 0, 0, 0, 0, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.selectSheet);
+		CheckActiveRange(0, 0, AscCommon.gc_nMaxRow0, AscCommon.gc_nMaxCol0, 'Check select sheet');
+
+		Select(0, 0, 0, 0, 0, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.selectSheet, 1);
+		CheckActiveRange(0, 0, AscCommon.gc_nMaxRow0, AscCommon.gc_nMaxCol0, 'Check select sheet');
+	});
+
+	QUnit.test('Check reset actions', (assert) =>
+	{
+		editor.asc_startAddShape('rect');
+		ExecuteTableHotkey(tableHotkeyTypes.reset);
+		assert.strictEqual(GetDrawingObjects().checkEndAddShape(), false, 'Check resetting add shape');
+		Select(0, 0, 0, 0, 0, 0);
+		editor.asc_SelectionCut();
+		ExecuteTableHotkey(tableHotkeyTypes.reset);
+		assert.strictEqual(wsView.copyCutRange, null, 'Check resetting cut range');
+
+		Select(0, 0, 0, 0, 0, 0);
+		editor.asc_Copy();
+		ExecuteTableHotkey(tableHotkeyTypes.reset);
+		assert.strictEqual(wsView.copyCutRange, null, 'Check resetting copy range');
+	});
+
+
+	QUnit.test('Check actions with removing', (assert) =>
+	{
+		Select(0, 15, 0, 15, 0, 15);
+		FillActiveCell('Hello');
+		Select(25, 0, 25, 0, 25, 0);
+		FillActiveCell('Hello');
+		Select(27, 0, 27, 0, 27, 0);
+		FillActiveCell('Hello');
+
+		Select(0, 15, 0, 0, 30, 30);
+		ExecuteTableHotkey(tableHotkeyTypes.removeActiveCell);
+		CloseCellEditor(true);
+
+		assert.strictEqual(GetCellText(0, 15), '', 'Check remove active cell');
+		assert.strictEqual(GetCellText(25, 0), 'Hello', 'Check remove active cell');
+		assert.strictEqual(GetCellText(27, 0), 'Hello', 'Check remove active cell');
+
+		ExecuteTableHotkey(tableHotkeyTypes.emptyRange);
+		assert.strictEqual(GetCellText(0, 15), '', 'Check remove range');
+		assert.strictEqual(GetCellText(25, 0), '', 'Check remove range');
+		assert.strictEqual(GetCellText(27, 0), '', 'Check remove range');
+	});
+
+	QUnit.test('Check actions with filling cell', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.addDate);
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getDateString(editor), 'Check add date');
+
+		ExecuteTableHotkey(tableHotkeyTypes.addTime);
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor).split(' ').join(':00 '), 'Check add time');
+
+		ExecuteTableHotkey(tableHotkeyTypes.addDate, 1);
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getDateString(editor), 'Check add date');
+
+		ExecuteTableHotkey(tableHotkeyTypes.addTime, 1);
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor).split(' ').join(':00 '), 'Check add time');
+		
+		ExecuteTableHotkey(tableHotkeyTypes.addSeparator);
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(0, 0), '.', 'Check add separator');
+	});
+
+	QUnit.test('Check actions with formatting cell', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		FillActiveCell('0.1');
+		ExecuteTableHotkey(tableHotkeyTypes.setExponentialFormat);
+		assert.strictEqual(GetCellText(0, 0), '1.00E-01', 'set exponential format');
+		ExecuteTableHotkey(tableHotkeyTypes.setPercentFormat);
+		assert.strictEqual(GetCellText(0, 0), '10.00%', 'set percent format');
+
+		FillActiveCell('49990');
+		ExecuteTableHotkey(tableHotkeyTypes.setCurrencyFormat);
+		assert.strictEqual(GetCellText(0, 0), '$49,990.00', 'set currency format');
+		ExecuteTableHotkey(tableHotkeyTypes.setTimeFormat);
+		assert.strictEqual(GetCellText(0, 0), '12:00:00 AM', 'set time format');
+		ExecuteTableHotkey(tableHotkeyTypes.setDateFormat);
+		assert.strictEqual(GetCellText(0, 0), '11/11/2036', 'set date format');
+		ExecuteTableHotkey(tableHotkeyTypes.setNumberFormat);
+		assert.strictEqual(GetCellText(0, 0), '49990.00', 'set number format');
+		ExecuteTableHotkey(tableHotkeyTypes.setGeneralFormat);
+		assert.strictEqual(GetCellText(0, 0), '49990', 'set general format');
+
+		function GetCellFormatting(row, column)
+		{
+			return ws.getRange4(row, column).getXfs();
+		}
+
+		ExecuteTableHotkey(tableHotkeyTypes.setStrikethrough);
+		assert.true(GetCellFormatting(0, 0).asc_getFontStrikeout(), 'Check turn on strikeout format');
+		ExecuteTableHotkey(tableHotkeyTypes.setStrikethrough);
+		assert.false(GetCellFormatting(0, 0).asc_getFontStrikeout(), 'Check turn of strikeout format');
+
+		ExecuteTableHotkey(tableHotkeyTypes.setBold);
+		assert.true(GetCellFormatting(0, 0).asc_getFontBold(), 'Check turn on bold format');
+		ExecuteTableHotkey(tableHotkeyTypes.setBold);
+		assert.false(GetCellFormatting(0, 0).asc_getFontBold(), 'Check turn off bold format');
+
+		ExecuteTableHotkey(tableHotkeyTypes.setItalic);
+		assert.true(GetCellFormatting(0, 0).asc_getFontItalic(), 'Check turn on italic format');
+		ExecuteTableHotkey(tableHotkeyTypes.setItalic);
+		assert.false(GetCellFormatting(0, 0).asc_getFontItalic(), 'Check turn off italic format');
+
+		ExecuteTableHotkey(tableHotkeyTypes.setUnderline);
+		assert.true(GetCellFormatting(0, 0).asc_getFontUnderline(), 'Check turn on underline format');
+		ExecuteTableHotkey(tableHotkeyTypes.setUnderline);
+		assert.false(GetCellFormatting(0, 0).asc_getFontUnderline(), 'Check turn off underline format');
+	});
+
+	QUnit.test('Check undo/redo', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		EnterText('0.1');
+		CloseCellEditor(true);
+
+		assert.strictEqual(GetCellText(0, 0), '0.1', 'Check cell value');
+		ExecuteTableHotkey(tableHotkeyTypes.undo);
+		assert.strictEqual(GetCellText(0, 0), '', 'Check undo');
+		ExecuteTableHotkey(tableHotkeyTypes.redo);
+		assert.strictEqual(GetCellText(0, 0), '0.1', 'Check redo');
+	});
+
+	QUnit.test('Check focus on cell editor', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.focusOnCellEditor);
+		assert.true(wsView.getCellEditMode(), 'Check open cell editor');
+	});
+
+	QUnit.test('Check prevent default in Opera', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		let isPreventDefaulted = ExecuteTableHotkey(tableHotkeyTypes.disableNumLock);
+		assert.true(isPreventDefaulted);
+
+		isPreventDefaulted = ExecuteTableHotkey(tableHotkeyTypes.disableScrollLock);
+		assert.true(isPreventDefaulted);
+	});
+
+	QUnit.test('Check add sum formula', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		EnterText('1');
+		Select(0, 1, 0, 1, 0, 1);
+		EnterText('2');
+		
+		Select(7, 7, 7, 7, 7, 7);
+		ExecuteTableHotkey(tableHotkeyTypes.addSum);
+		EnterText('A1,B1');
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(7, 7), "3", 'Check sum result');
+
+		Select(8, 8, 8, 8, 8, 8);
+		ExecuteTableHotkey(tableHotkeyTypes.addSum, 1);
+		EnterText('A1,B1');
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(8, 8), "3", 'Check sum result');
+
+		Select(9, 9, 9, 9, 9, 9);
+		ExecuteTableHotkey(tableHotkeyTypes.addSum, 2);
+		EnterText('A1,B1');
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(9, 9), "3", 'Check sum result');
+
+		Select(10, 10, 10, 10, 10, 10);
+		ExecuteTableHotkey(tableHotkeyTypes.addSum, 3);
+		EnterText('A1,B1');
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(10, 10), "3", 'Check sum result');
+	});
+
+	QUnit.test('Check move on worksheets', (assert) =>
+	{
+		CreateWorksheets(['name1', 'name2']);
+		const ws1 = wb.getWorksheetByName(['name1'], 0);
+		const ws2 = wb.getWorksheetByName(['name2'], 0);
+		assert.strictEqual(wb.getActive(), 0, 'Check select first sheet');
+		assert.true(wb.getWorksheet(0) === ws1, 'Check select first sheet');
+
+		ExecuteTableHotkey(tableHotkeyTypes.moveToNextSheet);
+		assert.strictEqual(wb.getActive(), 1, 'Check select second sheet');
+		assert.true(wb.getWorksheet(1) === ws2, 'Check select second sheet');
+		ExecuteTableHotkey(tableHotkeyTypes.moveToNextSheet);
+		assert.strictEqual(wb.getActive(), 2, 'Check select third sheet');
+		assert.true(wb.getWorksheet(2) === ws, 'Check select third sheet');
+
+		ExecuteTableHotkey(tableHotkeyTypes.goToPreviousSheet);
+		assert.strictEqual(wb.getActive(), 1, 'Check select second sheet');
+		assert.true(wb.getWorksheet(1) === ws2, 'Check select second sheet');
+		ExecuteTableHotkey(tableHotkeyTypes.goToPreviousSheet);
+		assert.strictEqual(wb.getActive(), 0, 'Check select first sheet');
+		assert.true(wb.getWorksheet(0) === ws1, 'Check select first sheet');
+
+		RemoveWorksheets([0, 1]);
+	});
+
+	QUnit.test('Check refresh connections', (assert) =>
+	{
+		Select(0, 0, 0, 0, 0, 0);
+		EnterText('ad');
+		Select(1, 0, 1, 0, 1, 0);
+		EnterText('1');
+		Select(2, 0, 2, 0, 2, 0);
+		EnterText('2');
+		CloseCellEditor(true);
+		editor.asc_insertPivotExistingWorksheet("Sheet1!$A$1:$A$3", "Sheet1!$C$1");
+		const pivotTable1 = ws.getPivotTable(2, 1);
+		pivotTable1.asc_addField(editor, 0);
+
+		Select(0, 1, 0, 1, 0, 1);
+		EnterText('ap');
+		Select(1, 1, 1, 1, 1, 1);
+		EnterText('2');
+		Select(2, 1, 2, 1, 2, 1);
+		EnterText('3');
+		CloseCellEditor(true);
+		editor.asc_insertPivotExistingWorksheet("Sheet1!$B$1:$B$3", "Sheet1!$D$1");
+		const pivotTable2 = ws.getPivotTable(3, 1);
+		pivotTable2.asc_addField(editor, 0);
+
+		Select(2, 0, 2, 0, 2, 0);
+		EnterText('4');
+		Select(2, 1, 2, 1, 2, 1);
+		EnterText('4');
+
+		Select(1, 2, 1, 2, 1, 2);
+		ExecuteTableHotkey(tableHotkeyTypes.refreshSelectedConnections);
+		assert.strictEqual(GetCellText(1, 2), '5', 'Check refresh selected connections');
+
+		Select(1, 3, 1, 3, 1, 3);
+		assert.strictEqual(GetCellText(1, 3), '5', 'Check refresh selected connections');
+
+		Select(2, 0, 2, 0, 2, 0);
+		EnterText('5');
+
+		Select(1, 2, 1, 2, 1, 2);
+		ExecuteTableHotkey(tableHotkeyTypes.refreshAllConnections);
+		assert.strictEqual(GetCellText(1, 2), '6', 'Check refresh all connections');
+
+		Select(1, 3, 1, 3, 1, 3);
+		assert.strictEqual(GetCellText(1, 3), '6', 'Check refresh all connections');
+
+	});
+	QUnit.test('Change format table info', (assert) =>
+	{
+		CreateTable();
+		Select(1, 0, 1, 0, 1, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.changeFormatTableInfo);
+		assert.strictEqual(GetCellText(3, 2), '6', 'Check change format table info');
+		ExecuteTableHotkey(tableHotkeyTypes.changeFormatTableInfo);
+	});
+
+	QUnit.test('Check recalculating data', (assert) =>
+	{
+		CreateWorksheets(['name1']);
+		const wsName = wb.getWorksheetByName(['name1'], 0);
+
+		ws.getRange4(0, 2).fillData([['=sum(a1+b1)']]);
+		ws.getRange4(0, 0)._foreach(function (cell)
+		{
+			cell.setValueNumberInternal(1);
+		});
+		ws.getRange4(0, 1)._foreach(function (cell)
+		{
+			cell.setValueNumberInternal(2);
+		});
+
+		wsName.getRange4(0, 2).fillData([['=sum(a1+b1)']]);
+		wsName.getRange4(0, 0)._foreach(function (cell)
+		{
+			cell.setValueNumberInternal(1);
+		});
+		wsName.getRange4(0, 1)._foreach(function (cell)
+		{
+			cell.setValueNumberInternal(2);
+		});
+
+		assert.strictEqual(ws.getRange4(0, 2).getValueWithFormat(), '0', 'Check non calculating values');
+		assert.strictEqual(wsName.getRange4(0, 2).getValueWithFormat(), '0', 'Check non calculating values');
+		ExecuteTableHotkey(tableHotkeyTypes.calculateActiveSheet);
+		assert.strictEqual(ws.getRange4(0, 2).getValueWithFormat(), '0', 'Check non calculating value');
+		assert.strictEqual(wsName.getRange4(0, 2).getValueWithFormat(), '3', 'Check calculating value');
+
+		wsName.getRange4(0, 0)._foreach(function (cell)
+		{
+			cell.setValueNumberInternal(0);
+		});
+
+		ExecuteTableHotkey(tableHotkeyTypes.calculateAll);
+		assert.strictEqual(ws.getRange4(0, 2).getValueWithFormat(), '3', 'Check calculating value');
+		assert.strictEqual(wsName.getRange4(0, 2).getValueWithFormat(), '2', 'Check calculating value');
+		RemoveWorksheets([0]);
+	});
 })(window);

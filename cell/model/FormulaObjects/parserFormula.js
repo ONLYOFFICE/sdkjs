@@ -1081,7 +1081,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return v;
 	};
 	cArea.prototype.tocString = function () {
-		return this.getValue()[0].tocString();
+		let val = this.getValue()[0];
+		if (!val) {
+			return new cString("");
+		}
+		return val.tocString();
 	};
 	cArea.prototype.tocBool = function () {
 		return new cError(cErrorType.wrong_value_type);
@@ -1479,7 +1483,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this.getValue()[0].tocNumber();
 	};
 	cArea3D.prototype.tocString = function () {
-		return this.getValue()[0].tocString();
+		let val = this.getValue()[0];
+		if (!val) {
+			return new cString("");
+		}
+		return val.tocString();
 	};
 	cArea3D.prototype.tocBool = function () {
 		return new cError(cErrorType.wrong_value_type);
@@ -3992,7 +4000,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cPowOperator.prototype.priority = 40;
 	cPowOperator.prototype.argumentsCurrent = 2;
 	cPowOperator.prototype.Calculate = function (arg) {
-		let res = AscCommonExcel.cFormulaFunction.POWER.prototype.Calculate(arg);
+		let res = AscCommonExcel.cFormulaFunction.POWER.prototype.Calculate(arg, arguments[1]);
 
 		if (res) {
 			return res;
@@ -5091,7 +5099,7 @@ _func[cElementType.cellsRange][cElementType.cellsRange] = function ( arg0, arg1,
 
 _func[cElementType.array][cElementType.array] = function ( arg0, arg1, what, bbox, bIsSpecialFunction ) {
 	if (bIsSpecialFunction) {
-		var specialArray = specialFuncArrayToArray(arg0, arg1, what);
+		let specialArray = specialFuncArrayToArray(arg0, arg1, what);
 		if(null !== specialArray){
 			return specialArray;
 		}
@@ -8755,8 +8763,8 @@ function parserFormula( formula, parent, _ws ) {
 	}
 
 	function specialFuncArrayToArray(arg0, arg1, what) {
-		var retArr = null, _arg0, _arg1;
-		var iRow, iCol;
+		let retArr = null, _arg0, _arg1;
+		let iRow, iCol;
 		if (arg0.getRowCount() === arg1.getRowCount() && 1 === arg0.getCountElementInRow()) {
 			retArr = new cArray();
 			for (iRow = 0; iRow < arg1.getRowCount(); iRow++, iRow < arg1.getRowCount() ? retArr.addRow() : true) {
@@ -8812,14 +8820,106 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}
 		} else if (arg0.getCountElement() !== arg1.getCountElement()) {
-			let arrayRows = Math.min(arg0.getRowCount(), arg1.getRowCount()),
-				arrayCols = Math.min(arg0.getCountElementInRow(), arg1.getCountElementInRow());
+			let arg0Copy = new cArray(), arg1Copy = new cArray();
+			let errNA = new cError(cErrorType.not_available);
+
+			arg0Copy.fillFromArray(arg0.array);
+			arg1Copy.fillFromArray(arg1.array);
+
+			// if there is only one element in the range, get this element and call the function again
+			if (arg0.isOneElement()) {
+				arg0Copy = arg0.getFirstElement();
+				return _func[arg0Copy.type][arg1.type](arg0Copy, arg1, what);
+			} else if (arg1.isOneElement()) {
+				arg1Copy = arg1.getFirstElement();
+				return _func[arg0.type][arg1Copy.type](arg0, arg1Copy, what);
+			}
+
+			let arg0Dimensions = arg0.getDimensions(),
+				arg1Dimensions = arg1.getDimensions();
+
+			let arrayMaxRows = Math.max(arg0.getRowCount(), arg1.getRowCount()),
+				arrayMaxCols = Math.max(arg0.getCountElementInRow(), arg1.getCountElementInRow());
 				retArr = new cArray();
 
-			for (iRow = 0; iRow < arrayRows; iRow++, iRow < arrayRows ? retArr.addRow() : true) {
-				for (iCol = 0; iCol < arrayCols; iCol++) {
-					_arg0 = arg0.getElementRowCol(iRow, iCol);
-					_arg1 = arg1.getElementRowCol(iRow, iCol);
+			// The logic for creating the final array when the argument sizes do not match:
+			// If we have arrays consisting of a single row/column, we fill a copy of that array with these columns/rows (up to the maximum number of rows/columns).
+			// Then we redefine dimensions based on the copies.
+			// Next, we iterate over the missing columns (those that are less than maxCol) and fill the missing columns with #N/A errors (for correct calculations, as in normal conditions, an empty cell would return cEmpty).
+			// We do the same for rows, but we fill them entirely since they are completely empty.
+			// Then, we fill the final array with two loops, with its dimensions being maxRows and maxCols.
+			// In MS returns the maximum RowCol in the dynamic array.
+
+			// check if we have single row/col in arg0
+			if ((arg0Dimensions.row === 1 && arrayMaxRows > 1) || (arg0Dimensions.col === 1 && arrayMaxCols > 1)) {
+				if (arg0Dimensions.row === 1) {
+					let firstRow = arg0._getRow(0);
+					for (let i = 1; i < arrayMaxRows; i++) {
+						arg0Copy.pushRow(firstRow, 0);
+					}
+ 				} else if (arg0Dimensions.col === 1) {
+					let firstCol = arg0._getCol(0);
+					for (let i = 1; i < arrayMaxCols; i++) {
+						arg0Copy.pushCol(firstCol, 0);
+					}
+				}
+			}
+
+			// check arg0 col dimensions and fill missing positions with errors
+			arg0Dimensions = arg0Copy.getDimensions();
+			if (arg0Dimensions.col < arrayMaxCols) {
+				// fill the cols with N/A
+				let errArray = new Array(arg0Dimensions.row).fill([errNA]);
+				for (let i = arg0Dimensions.col; i < arrayMaxCols; i++) {
+					arg0Copy.pushCol(errArray, 0);
+				}
+			}
+			// check arg0 row dimensions and fill missing positions with errors
+			if (arg0Dimensions.row < arrayMaxRows) {
+				// fill rows with N/A
+				let errArray = new Array(arrayMaxCols).fill(errNA);
+				for (let i = arg0Dimensions.row; i < arrayMaxRows; i++) {
+					arg0Copy.pushRow([errArray], 0);
+				}
+			}
+
+			// check if we have single row/col in arg1
+			if ((arg1Dimensions.row === 1 && arrayMaxRows > 1) || (arg1Dimensions.col === 1 && arrayMaxCols > 1)) {
+				if (arg1Dimensions.row === 1) {
+					for (let i = 0; i < arrayMaxRows; i++) {
+						arg1Copy.pushRow(arg1._getRow(0), 0);
+					}
+ 				} else if (arg1Dimensions.col === 1) {
+					let firstCol = arg0._getCol(0);
+					for (let i = 1; i < arrayMaxCols; i++) {
+						arg0Copy.pushCol(firstCol, 0);
+					}
+				}
+			}
+
+			// check arg1 col dimensions and fill missing positions with errors
+			arg1Dimensions = arg1Copy.getDimensions();
+			if (arg1Dimensions.col < arrayMaxCols) {
+				// fill cols with N/A
+				let errArray = new Array(arg1Dimensions.row).fill([errNA]);
+				for (let i = arg1Dimensions.col; i < arrayMaxCols; i++) {
+					arg1Copy.pushCol(errArray, 0);
+				}
+			}
+			// check arg1 row dimensions and fill missing positions with errors
+			if (arg1Dimensions.row < arrayMaxRows) {
+				// fill rows with N/A
+				let errArray = new Array(arrayMaxCols).fill(errNA);
+				for (let i = arg1Dimensions.row; i < arrayMaxRows; i++) {
+					arg1Copy.pushRow([errArray], 0);
+				}
+			}
+
+			// fill result array
+			for (iRow = 0; iRow < arrayMaxRows; iRow++, iRow < arrayMaxRows ? retArr.addRow() : true) {
+				for (iCol = 0; iCol < arrayMaxCols; iCol++) {
+					_arg0 = arg0Copy.getElementRowCol(iRow, iCol);
+					_arg1 = arg1Copy.getElementRowCol(iRow, iCol);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
@@ -8862,6 +8962,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].cBaseFunction = cBaseFunction;
 	window['AscCommonExcel'].cUnknownFunction = cUnknownFunction;
 	window['AscCommonExcel'].cStrucTable = cStrucTable;
+	window['AscCommonExcel'].cBaseOperator = cBaseOperator;
 
 	window['AscCommonExcel'].checkTypeCell = checkTypeCell;
 	window['AscCommonExcel'].cFormulaFunctionGroup = cFormulaFunctionGroup;

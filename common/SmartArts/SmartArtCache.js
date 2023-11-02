@@ -212,17 +212,13 @@
 	CSmartArtBinCache.prototype.checkLoadDrawing = function ()
 	{
 		const oThis = this;
-		return new Promise(function (resolve, reject)
+		return new Promise(function (resolve)
 		{
-			if (window["NATIVE_EDITOR_ENJINE"] || oThis.drawingBin.bin === null)
-			{
-				reject();
-			}
-			else if (oThis.drawingBin.bin)
+			if (oThis.drawingBin.bin)
 			{
 				resolve();
 			}
-			else
+			else if (!(window["NATIVE_EDITOR_ENJINE"] || oThis.drawingBin.bin === null))
 			{
 				oThis.drawingBin.bin = null;
 				AscCommon.loadFileContent('../../../../sdkjs/common/SmartArts/SmartArtDrawing/SmartArtDrawings.bin', function (httpRequest)
@@ -232,10 +228,6 @@
 						const arrStream = AscCommon.initStreamFromResponse(httpRequest);
 						AscCommon.g_oBinarySmartArts.initDrawingFromBin(arrStream);
 						resolve();
-					}
-					else
-					{
-						reject();
 					}
 				}, 'arraybuffer');
 			}
@@ -267,17 +259,13 @@
 	CSmartArtBinCache.prototype.checkLoadData = function (nSmartArtType)
 	{
 		const oThis = this;
-		return new Promise(function (resolve, reject)
+		return new Promise(function (resolve)
 		{
-			if (window["NATIVE_EDITOR_ENJINE"] || oThis.dataBin[nSmartArtType] === null)
-			{
-				reject();
-			}
-			else if (oThis.dataBin[nSmartArtType])
+			if (oThis.dataBin[nSmartArtType])
 			{
 				resolve();
 			}
-			else
+			else if (!(window["NATIVE_EDITOR_ENJINE"] || oThis.dataBin[nSmartArtType] === null))
 			{
 				oThis.dataBin[nSmartArtType] = null;
 				const sFileName = c_oAscSmartArtTypesToNameBinRelationShip[nSmartArtType];
@@ -288,10 +276,6 @@
 						const arrStream = AscCommon.initStreamFromResponse(httpRequest);
 						AscCommon.g_oBinarySmartArts.initDataFromBin(nSmartArtType, arrStream);
 						resolve();
-					}
-					else
-					{
-						reject();
 					}
 				}, 'arraybuffer');
 			}

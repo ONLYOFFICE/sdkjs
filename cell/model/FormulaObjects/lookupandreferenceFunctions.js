@@ -1424,12 +1424,12 @@ function (window, undefined) {
 	cINDIRECT.prototype.ca = true;
 	cINDIRECT.prototype.argumentsType = [argType.text, argType.logical];
 	cINDIRECT.prototype.Calculate = function (arg) {
-		var t = this, arg0 = arg[0].tocString(), arg1 = arg[1] ? arg[1] : new cBool(true), ws = arguments[3],
+		let t = this, arg0 = arg[0].tocString(), arg1 = arg[1] ? arg[1] : new cBool(true), ws = arguments[3],
 			wb = ws.workbook, o = {
 				Formula: "", pCurrPos: 0
 			}, ref, found_operand, ret;
 
-		var _getWorksheetByName = function(name){
+		const _getWorksheetByName = function(name) {
 			if(!name) {
 				return null;
 			}
@@ -1441,10 +1441,10 @@ function (window, undefined) {
 		};
 
 		function parseReference() {
+			let _tableTMP;
 			if ((ref = parserHelp.is3DRef.call(o, o.Formula, o.pCurrPos, true))[0]) {
-				var _tableTMP;
-				var wsFrom = _getWorksheetByName(ref[1]);
-				var wsTo = (null !== ref[2]) ? _getWorksheetByName(ref[2]) : wsFrom;
+				let wsFrom = _getWorksheetByName(ref[1]);
+				let wsTo = (null !== ref[2]) ? _getWorksheetByName(ref[2]) : wsFrom;
 				if (!(wsFrom && wsTo)) {
 					return new cError(cErrorType.bad_reference);
 				}
@@ -3445,7 +3445,11 @@ function (window, undefined) {
 
 		let a2Value;
 		if (cElementType.array === arg2.type || cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
-			a2Value = arg2.getFirstElement().tocNumber();
+			a2Value = arg2.getFirstElement();
+			if (!a2Value) {
+				a2Value = new cEmpty();
+			}
+			a2Value = a2Value.tocNumber();
 		} else if (cElementType.error === arg2.type) {
 			return arg2;
 		} else {
@@ -3466,7 +3470,11 @@ function (window, undefined) {
 		
 		let a3Value;
 		if (cElementType.array === arg3.type || cElementType.cellsRange === arg3.type || cElementType.cellsRange3D === arg3.type) {
-			a3Value = arg3.getFirstElement().tocNumber();
+			a3Value = arg3.getFirstElement();
+			if (!a3Value) {
+				a3Value = new cEmpty();
+			}
+			a3Value = a3Value.tocNumber();
 		} else if (cElementType.error === arg3.type) {
 			return arg3;
 		} else {
@@ -4404,7 +4412,7 @@ function (window, undefined) {
 	};
 
 	function wrapRowsCols(arg, argument1, toCol) {
-		var argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
+		let argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
 		if (argError) {
 			return argError;
 		}
@@ -4413,7 +4421,7 @@ function (window, undefined) {
 		if (arg1.type === cElementType.empty) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		var arg0Dimensions = arg1.getDimensions();
+		let arg0Dimensions = arg1.getDimensions();
 		if (arg0Dimensions.col > 1 && arg0Dimensions.row > 1) {
 			return new cError(cErrorType.wrong_value_type);
 		}
@@ -4426,6 +4434,10 @@ function (window, undefined) {
 		} else if (arg2.type === cElementType.empty) {
 			return new cError(cErrorType.not_numeric);
 		}
+		if (!arg2) {
+			arg2 = new cEmpty();
+		}
+
 		arg2 = arg2.tocNumber();
 		if (arg2.type === cElementType.error) {
 			return arg2;

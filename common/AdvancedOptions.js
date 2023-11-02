@@ -53,6 +53,7 @@
 			
 			this.isGetTextFromUrl = null;
 			this.isPdfPrint = false;
+			this.pdfChanges = null;
 
 			this.textParams = null;
 		}

@@ -118,6 +118,11 @@
 			CannotMoveRange  : -74,
 			DataRangeError   : -75,
 
+			MustSingleCell          : -76,
+			MustContainFormula      : -77,
+			MustFormulaResultNumber : -78,
+			MustContainValue        : -79,
+
 			MaxDataSeriesError : -80,
 			CannotFillRange    : -81,
 
@@ -130,11 +135,13 @@
 			Warning  : -101,
 			UpdateVersion : -102,
 
-			PrintMaxPagesCount					: -110,
+			PrintMaxPagesCount : -110,
 
 			SessionAbsolute: -120,
 			SessionIdle: -121,
 			SessionToken: -122,
+
+			LockedCellGoalSeek          : -200,
 
 			/* для формул */
 			FrmlMaxReference            : -297,
@@ -306,6 +313,11 @@
 	prot['PasteMultiSelectError']            = prot.PasteMultiSelectError;
 	prot['CanNotPasteImage']                 = prot.CanNotPasteImage;
 	prot['DataRangeError']                   = prot.DataRangeError;
+	prot['MustSingleCell']                   = prot.MustSingleCell;
+	prot['MustContainFormula']               = prot.MustContainFormula;
+	prot['MustFormulaResultNumber']          = prot.MustFormulaResultNumber;
+	prot['MustContainValue']                 = prot.MustContainValue;
+	prot['LockedCellGoalSeek']               = prot.LockedCellGoalSeek;
 	prot['NoValues']                         = prot.NoValues;
 	prot['NoSingleRowCol']                   = prot.NoSingleRowCol;
 	prot['InvalidReference']                 = prot.InvalidReference;

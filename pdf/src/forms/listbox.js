@@ -145,7 +145,7 @@
 
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i] != this) {
-                this._multipleSelection = aFields[i]._multipleSelection;
+                this.SetMultipleSelection(aFields[i].IsMultipleSelection());
                 this.content.Internal_Content_RemoveAll();
                 for (let nItem = 0; nItem < aFields[i].content.Content.length; nItem++) {
                     this.content.Internal_Content_Add(nItem, aFields[i].content.Content[nItem].Copy());
@@ -207,7 +207,7 @@
             if (oThis == field)
                 return;
 
-            if (oThis._multipleSelection) {
+            if (oThis.IsMultipleSelection()) {
                 // снимаем выделение с тех, которые не присутсвуют в поле, от которого применяем ко всем
                 for (let i = 0; i < field._currentValueIndices.length; i++) {
                     if (oThis._currentValueIndices.includes(field._currentValueIndices[i]) == false) {
@@ -230,8 +230,7 @@
 
             let oFieldBounds = field.getFormRelRect();
             if (Math.abs(oFieldBounds.H - oThisBounds.H) > 0.001) {
-                field.CheckFormViewWindow();
-                field.RevertContentViewToOriginal();
+                field._bAutoShiftContentView = true;
             }
             else {
                 field._curShiftView.x = oThis._curShiftView.x;
@@ -253,7 +252,9 @@
             this._currentValueIndices != -1 && this.SelectOption(this._currentValueIndices, true);
         }
     };
-
+    CListBoxField.prototype.IsMultipleSelection = function() {
+        return this._multipleSelection;
+    };
     CListBoxField.prototype.SelectOption = function(nIdx, isSingleSelect) {
         if (this.GetCurIdxs() == nIdx)
             return;
@@ -367,7 +368,7 @@
                 }
             }
 
-            this._currentValueIndices = this._multipleSelection == true ? aIndexes : aIndexes[0];
+            this._currentValueIndices = this.IsMultipleSelection() == true ? aIndexes : aIndexes[0];
             this.content.Content.forEach(function(para) {
                 let oApiPara = editor.private_CreateApiParagraph(para);
                 if (para.Pr.Shd && para.Pr.Shd.IsNil() == false) {
@@ -377,7 +378,7 @@
             });
 
             for (let i = 0; i < aIndexes.length; i++) {
-                if (this._multipleSelection) {
+                if (this.IsMultipleSelection()) {
                     this.SelectOption(aIndexes[i], false);
                 }
                 else
@@ -414,7 +415,10 @@
         function callbackAfterFocus(x, y, e) {
             if (this._options.length == 0)
                 return;
-            
+
+            let bHighlight = this.IsNeedDrawHighlight();
+            this.SetDrawHighlight(false);
+
             let oPos    = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
             let X       = oPos["X"];
             let Y       = oPos["Y"];
@@ -431,8 +435,11 @@
                 this.SetDrawFromStream(false);
                 this.AddToRedraw();
             }
+            else if (bHighlight) {
+                this.AddToRedraw();
+            }
 
-            if (this._multipleSelection == true) {
+            if (this.IsMultipleSelection() == true) {
                 if (e.ctrlKey == true) {
                     if (oShd && oShd.IsNil() == false) {
                         this.UnselectOption(nPos);
@@ -453,7 +460,7 @@
                 this._bAutoShiftContentView = true;
                 this.UnionLastHistoryPoints(false);
 
-                if (this._commitOnSelChange == true) {
+                if (this.IsCommitOnSelChange() == true) {
                     this.Commit();
                 }
             }
@@ -475,7 +482,7 @@
         this._bAutoShiftContentView = true;
         this.content.MoveCursorDown();
 
-        if (this._multipleSelection == true) {
+        if (this.IsMultipleSelection() == true) {
             this.SelectOption(this.content.CurPos.ContentPos, true);
             this._currentValueIndices = [this.content.CurPos.ContentPos];
         }
@@ -492,7 +499,7 @@
         this._bAutoShiftContentView = true;
         this.content.MoveCursorUp();
 
-        if (this._multipleSelection == true) {
+        if (this.IsMultipleSelection() == true) {
             this.SelectOption(this.content.CurPos.ContentPos, true);
             this._currentValueIndices = [this.content.CurPos.ContentPos];
         }
@@ -641,7 +648,7 @@
 	 */
     CListBoxField.prototype.UpdateIndexies = function() {
         let nIdx;
-        if (this._multipleSelection)
+        if (this.IsMultipleSelection())
             nIdx = []
         else
             nIdx = -1;
@@ -650,7 +657,7 @@
         for (let i = 0; i < this.content.Content.length; i++) {
             oCurPara = this.content.GetElement(i);
             if (oCurPara.Pr.Shd && oCurPara.Pr.Shd.IsNil() == false) {
-                if (this._multipleSelection)
+                if (this.IsMultipleSelection())
                     nIdx.push(i);
                 else {
                     nIdx = i;
@@ -729,7 +736,7 @@
 	 */
     CListBoxField.prototype.GetValue = function() {
         let oPara, oShd;
-        if (this._multipleSelection) {
+        if (this.IsMultipleSelection()) {
             let aIndexes = [];
             for (let i = 0, nCount = this.content.GetElementsCount(); i < nCount; i++) {
                 oPara = this.content.GetElement(i);
@@ -754,7 +761,7 @@
             return this._currentValueIndices;
             
         let oPara, oShd;
-        if (this._multipleSelection) {
+        if (this.IsMultipleSelection()) {
             let aIndexes = [];
             for (let i = 0, nCount = this.content.GetElementsCount(); i < nCount; i++) {
                 oPara = this.content.GetElement(i);
@@ -774,7 +781,94 @@
             }
         }
     };
-	
+	CListBoxField.prototype.UndoNotAppliedChanges = function() {
+        this.SetValue(this.GetApiValue());
+        this.SetNeedRecalc(true);
+        this.AddToRedraw();
+        this.SetNeedCommit(false);
+    };
+
+    CListBoxField.prototype.WriteToBinary = function(memory) {
+        // TODO
+		/*
+		if (шрифт_у_CTextField_как-либо_изменялся)
+		{
+			// Также как функция SetFont в common/Drawings/Metafile.js
+			
+			if (шрифт_изменялся)
+			{
+				memory.WriteByte(AscCommon.CommandType.ctFontName);
+				memory.WriteString(this.m_oFont.Name);
+			}
+			
+			if (размер_шрифта_изменялся)
+			{
+				memory.WriteByte(AscCommon.CommandType.ctFontSize);
+				memory.WriteDouble(this.m_oFont.FontSize);
+			}
+			
+			if (стиль_шрифта_изменялся)
+			{
+				memory.WriteByte(AscCommon.CommandType.ctFontStyle);
+				memory.WriteLong(style);
+			}
+		}
+		*/
+
+        memory.WriteByte(AscCommon.CommandType.ctAnnotField);
+
+        // длина комманд
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.WriteToBinaryBase(memory);
+        this.WriteToBinaryBase2(memory);
+
+        let sValue = this.GetValue();
+        if (sValue != null) {
+            memory.fieldFlags2 |= (1 << 9);
+            memory.WriteString(sValue);
+        }
+
+        let aOptions = this.GetOptions();
+        if (aOptions && aOptions.length != 0) {
+            memory.WriteLong(aOptions.length);
+            for (let i = 0; i < aOptions.length; i++) {
+                memory.WriteString(aOptions[i][1] != undefined ? aOptions[i][1] : "");
+                memory.WriteString(aOptions[i][0] != undefined ? aOptions[i][0] : "");
+            }
+        }
+        
+        //
+        // top index
+        //
+
+        if (this.IsMultipleSelection()) {
+            memory.fieldFlags1 |= (1 << 21);
+        }
+
+        // if (this.IsDoNotSpellCheck()) {
+        //     memory.fieldFlags2 |= (1 << 22);
+        // }
+
+        if (this.IsCommitOnSelChange()) {
+            memory.fieldFlags1 |= (1 << 26);
+        }
+
+        let nEndPos = memory.GetCurPosition();
+
+        // запись флагов
+        memory.Seek(memory.posForFlags1);
+        memory.WriteLong(memory.fieldFlags1);
+        memory.Seek(memory.posForFlags2);
+        memory.WriteLong(memory.fieldFlags2);
+
+        // запись длины комманд
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+    };
+
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();

@@ -563,20 +563,8 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 		let arrElements = fHandle ? null : [];
 		for (var oIterator = sText.getUnicodeIterator(); oIterator.check(); oIterator.next())
 		{
-			let nCharCode = oIterator.value();
-
-			let oElement = null;
-			if (9 === nCharCode)
-				oElement = new AscWord.CRunTab();
-			else if (10 === nCharCode)
-				oElement = new AscWord.CRunBreak(AscWord.break_Line);
-			else if (13 === nCharCode)
-				continue;
-			else if (AscCommon.IsSpace(nCharCode))
-				oElement = new AscWord.CRunSpace(nCharCode);
-			else
-				oElement = new AscWord.CRunText(nCharCode);
-
+			let oElement = codePointToRunElement(oIterator.value(), false);
+			
 			if (fHandle)
 				fHandle(oElement);
 			else
@@ -589,25 +577,44 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 		let arrElements = fHandle ? null : [];
 		for (var oIterator = sText.getUnicodeIterator(); oIterator.check(); oIterator.next())
 		{
-			let nCharCode = oIterator.value();
+			let oElement = codePointToRunElement(oIterator.value(), true);
 			
-			let oElement = null;
-			if (0x0026 === nCharCode)
-			{
-				oElement = new AscWord.CMathAmp();
-			}
-			else
-			{
-				oElement = new AscWord.CMathText(false);
-				oElement.add(nCharCode);
-			}
-		
 			if (fHandle)
 				fHandle(oElement);
 			else
 				arrElements.push(oElement);
 		}
 		return fHandle ? null : arrElements;
+	}
+	function codePointToRunElement(codePoint, isMath)
+	{
+		let element = null;
+		if (isMath)
+		{
+			if (0x0026 === codePoint)
+			{
+				element = new AscWord.CMathAmp();
+			}
+			else
+			{
+				element = new AscWord.CMathText(false);
+				element.add(codePoint);
+			}
+		}
+		else
+		{
+			if (9 === codePoint)
+				element = new AscWord.CRunTab();
+			else if (10 === codePoint)
+				element = new AscWord.CRunBreak(AscWord.break_Line);
+			else if (13 === codePoint)
+				element = null;
+			else if (AscCommon.IsSpace(codePoint))
+				element = new AscWord.CRunSpace(codePoint);
+			else
+				element = new AscWord.CRunText(codePoint);
+		}
+		return element;
 	}
 	function sortByDocumentPosition(elements)
 	{
@@ -622,12 +629,24 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 			return CompareDocumentPositions(docPos[l.GetId()], docPos[r.GetId()]);
 		});
 	}
+	function checkAsYouTypeEnterText(run, inRunPos, codePoint)
+	{
+		let localHistory = AscCommon.History;
+		if (!localHistory.isEmpty())
+			return AscCommon.History.checkAsYouTypeEnterText(run, inRunPos, codePoint);
+		else (AscCommon.CollaborativeEditing.Is_Fast() && !AscCommon.CollaborativeEditing.Is_SingleUser())
+			return AscCommon.CollaborativeEditing.getCoHistory().checkAsYouTypeEnterText(run, inRunPos, codePoint);
+		
+		return false;
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CompareDocumentPositions = CompareDocumentPositions;
 	window['AscWord'].AlignFontSize            = AlignFontSize;
 	window['AscWord'].TextToRunElements        = TextToRunElements;
 	window['AscWord'].TextToMathRunElements    = TextToMathRunElements;
+	window['AscWord'].codePointToRunElement    = codePointToRunElement;
 	window['AscWord'].sortByDocumentPosition   = sortByDocumentPosition;
+	window['AscWord'].checkAsYouTypeEnterText  = checkAsYouTypeEnterText;
 
 })(window);

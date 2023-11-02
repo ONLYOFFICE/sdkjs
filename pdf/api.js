@@ -370,15 +370,13 @@
 			return false;
 		}
 		
-		oDoc.activeForm.EnterText(text);
-		if (viewer.pagesInfo.pages[oDoc.activeForm._page].needRedrawForms) {
-			viewer._paint();
-			viewer.onUpdateOverlay();
-		}
+		let isEntered = oDoc.activeForm.EnterText(text);
 		
-		this.WordControl.m_oDrawingDocument.TargetStart();
-		// Чтобы при зажатой клавише курсор не пропадал
-		this.WordControl.m_oDrawingDocument.showTarget(true);
+		if (isEntered) {
+			this.WordControl.m_oDrawingDocument.TargetStart();
+			// Чтобы при зажатой клавише курсор не пропадал
+			this.WordControl.m_oDrawingDocument.showTarget(true);
+		}
 		
 		return true;
 	};
@@ -448,7 +446,7 @@
 		
 		oField.SelectOption(nIdx);
 		let isNeedRedraw = oField.IsNeedCommit();
-		if (oField._commitOnSelChange && oField.IsNeedCommit()) {
+		if (oField.IsCommitOnSelChange() && oField.IsNeedCommit()) {
 			oField.Commit();
 			isNeedRedraw = true;
 			
@@ -486,7 +484,86 @@
 		if (!bIsFreeze)
 			this.WordControl.OnScroll();
 	};
-	
+	// composite input
+	PDFEditorApi.prototype.Begin_CompositeInput = function()
+	{
+		let viewer = this.DocumentRenderer;
+		if (!viewer)
+			return false;
+		
+		let pdfDoc = viewer.getPDFDoc();
+		if (!pdfDoc.activeForm || !pdfDoc.activeForm.IsEditable())
+			return false;
+		
+		function begin() {
+			pdfDoc.activeForm.beginCompositeInput();
+		}
+		
+		if (!pdfDoc.checkDefaultFieldFonts(begin))
+			return true;
+		
+		begin();
+		return true;
+	};
+	PDFEditorApi.prototype.Add_CompositeText = function(codePoint) {
+		let form = this._getActiveForm();
+		if (!form || !form.IsEditable())
+			return;
+		
+		form.addCompositeText(codePoint);
+	};
+	PDFEditorApi.prototype.Remove_CompositeText = function(count) {
+		let form = this._getActiveForm();
+		if (!form || !form.IsEditable())
+			return;
+		
+		form.removeCompositeText(count);
+	};
+	PDFEditorApi.prototype.Replace_CompositeText = function(codePoints) {
+		let form = this._getActiveForm();
+		if (!form || !form.IsEditable())
+			return;
+		
+		form.replaceCompositeText(codePoints);
+	};
+	PDFEditorApi.prototype.End_CompositeInput = function()
+	{
+		let form = this._getActiveForm();
+		if (!form || !form.IsEditable())
+			return;
+		
+		form.endCompositeInput();
+	};
+	PDFEditorApi.prototype.Set_CursorPosInCompositeText = function(pos) {
+		let form = this._getActiveForm();
+		if (!form || !form.IsEditable())
+			return;
+		
+		form.setPosInCompositeInput(pos);
+	};
+	PDFEditorApi.prototype.Get_CursorPosInCompositeText = function() {
+		let form = this._getActiveForm();
+		if (!form || !form.IsEditable())
+			return 0;
+		
+		return form.getPosInCompositeInput();
+	};
+	PDFEditorApi.prototype.Get_MaxCursorPosInCompositeText = function() {
+		let form = this._getActiveForm();
+		if (!form || !form.IsEditable())
+			return 0;
+		
+		return form.getMaxPosInCompositeInput();
+	};
+	PDFEditorApi.prototype._getActiveForm = function() {
+		let viewer = this.DocumentRenderer;
+		if (!viewer)
+			return null;
+		
+		let pdfDoc = viewer.getPDFDoc();
+		return pdfDoc.activeForm;
+	};
+
 
 	// for comments
 	PDFEditorApi.prototype.can_AddQuotedComment = function()
@@ -579,6 +656,11 @@
 		CommentData.Read_FromAscCommentData(AscCommentData);
 		oDoc.EditComment(Id, CommentData);
 	};
+	PDFEditorApi.prototype.asc_selectComment = function(Id)
+	{
+		this.getPDFDoc().GoToAnnot(Id);
+	};
+
 	PDFEditorApi.prototype.asc_EditSelectAll = function()
 	{
 		let oViewer = this.getDocumentRenderer();
@@ -866,9 +948,13 @@
 	PDFEditorApi.prototype['asc_hideComments']             = PDFEditorApi.prototype.asc_hideComments;
 	PDFEditorApi.prototype['asc_removeComment']            = PDFEditorApi.prototype.asc_removeComment;
 	PDFEditorApi.prototype['asc_changeComment']            = PDFEditorApi.prototype.asc_changeComment;
+	PDFEditorApi.prototype['asc_selectComment']            = PDFEditorApi.prototype.asc_selectComment;
 
 	PDFEditorApi.prototype['asc_setSkin']                  = PDFEditorApi.prototype.asc_setSkin;
 	PDFEditorApi.prototype['asc_getAnchorPosition']        = PDFEditorApi.prototype.asc_getAnchorPosition;
 	PDFEditorApi.prototype['SetMarkerFormat']              = PDFEditorApi.prototype.SetMarkerFormat;
+	PDFEditorApi.prototype['asc_EditSelectAll']            = PDFEditorApi.prototype.asc_EditSelectAll;
+	PDFEditorApi.prototype['Undo']                         = PDFEditorApi.prototype.Undo;
+	PDFEditorApi.prototype['Redo']                         = PDFEditorApi.prototype.Redo;
 
 })(window, window.document);

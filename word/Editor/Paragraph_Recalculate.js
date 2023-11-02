@@ -532,10 +532,10 @@ Paragraph.prototype.StartFromNewPage = function()
  */
 Paragraph.prototype.recalculateRangeFast = function(iRange, iLine)
 {
-	let wrapState = AscWord.ParagraphRecalculateStateManager.getWrapState();
+	let wrapState = AscWord.ParagraphStatePool.getWrapState();
 	wrapState.SetFast(true);
 	let result = this.private_RecalculateFastRange(wrapState, iRange, iLine);
-	AscWord.ParagraphRecalculateStateManager.release(wrapState);
+	AscWord.ParagraphStatePool.release(wrapState);
 	return result;
 };
 Paragraph.prototype.private_RecalculateFastRange       = function(PRS, CurRange, CurLine)
@@ -663,10 +663,10 @@ Paragraph.prototype.private_RecalculateFastRange       = function(PRS, CurRange,
 };
 Paragraph.prototype.private_RecalculatePage = function(CurPage, isFast)
 {
-	let wrapState = AscWord.ParagraphRecalculateStateManager.getWrapState();
+	let wrapState = AscWord.ParagraphStatePool.getWrapState();
 	wrapState.SetFast(isFast);
 	let result = this.private_RecalculatePageInternal(wrapState, CurPage, true);
-	AscWord.ParagraphRecalculateStateManager.release(wrapState);
+	AscWord.ParagraphStatePool.release(wrapState);
 	return result;
 };
 Paragraph.prototype.private_RecalculatePageInternal = function(PRS, CurPage, bFirstRecalculate)
@@ -731,13 +731,12 @@ Paragraph.prototype.private_RecalculatePageInternal = function(PRS, CurPage, bFi
 			PRS.Reset_RunRecalcInfo();
 			PRS.Reset_MathRecalcInfo();
 		}
-        else if (RecalcResult & recalcresult_ParaMath)
-        {
-        	// В эту ветку попадаем, если нужно заново пересчитать неинлайновую формулу с начала
-			CurLine = PRS.GetMathRecalcInfoLine();
-
+		else if (RecalcResult & recalcresult_ParaMath)
+		{
+			// В эту ветку попадаем, если нужно заново пересчитать неинлайновую формулу с начала
+			CurLine = PRS.resetToMathFirstLine();
 			PRS.Reset_RunRecalcInfo();
-        }
+		}
         else if (RecalcResult & recalcresult_CurLine)
         {
             // В эту ветку мы попадаем, если нам необходимо заново пересчитать данную строку. Такое случается
@@ -3169,12 +3168,13 @@ ParagraphRecalculateStateBase.prototype.unlock = function()
 	this.locked = false;
 };
 
-function ParagraphRecalculateStateManager()
+function ParagraphStatePool()
 {
 	this.wrap    = [];
 	this.endInfo = [];
+	this.draw    = [];
 }
-ParagraphRecalculateStateManager.prototype.getInstance = function(pool, className)
+ParagraphStatePool.prototype.getInstance = function(pool, className)
 {
 	let instance = null;
 	for (let i = 0, n = pool.length; i < n; ++i)
@@ -3195,19 +3195,23 @@ ParagraphRecalculateStateManager.prototype.getInstance = function(pool, classNam
 	instance.lock();
 	return instance;
 };
-ParagraphRecalculateStateManager.prototype.release = function(instance)
+ParagraphStatePool.prototype.release = function(instance)
 {
 	instance.unlock();
 };
-ParagraphRecalculateStateManager.prototype.getWrapState = function()
+ParagraphStatePool.prototype.getWrapState = function()
 {
 	return this.getInstance(this.wrap, CParagraphRecalculateStateWrap);
 };
-ParagraphRecalculateStateManager.prototype.getEndInfoState = function()
+ParagraphStatePool.prototype.getEndInfoState = function()
 {
 	return this.getInstance(this.endInfo, CParagraphRecalculateStateInfo);
 };
-window['AscWord'].ParagraphRecalculateStateManager = new ParagraphRecalculateStateManager();
+ParagraphStatePool.prototype.getDrawState = function()
+{
+	return this.getInstance(this.draw, ParagraphDrawState);
+};
+window['AscWord'].ParagraphStatePool = new ParagraphStatePool();
 
 function CParagraphRecalculateStateWrap()
 {
@@ -3238,6 +3242,8 @@ function CParagraphRecalculateStateWrap()
 
     this.Ranges          = [];
     this.RangesCount     = 0;
+	
+	this.LineY = [];
 
     this.FirstItemOnLine = true;
 	this.PrevItemFirst   = false;
@@ -3316,13 +3322,13 @@ function CParagraphRecalculateStateWrap()
     this.BaseLineOffset = 0;
 
     this.RecalcResult = 0x00;//recalcresult_NextElement;
-
-    // Управляющий объект для пересчета неинлайновой формулы
-    this.MathRecalcInfo = {
-    	Line        : 0,    // Номер строки, с которой начинается формула на текущей странице
-		Math        : null  // Сам объект формулы
+	
+	// Управляющий объект для пересчета неинлайновой формулы
+	this.MathRecalcInfo = {
+		Line : 0,    // Номер строки, с которой начинается формула на текущей странице
+		Math : null  // Сам объект формулы
 	};
-
+	
     this.Footnotes                  = [];
 	this.FootnotesRecalculateObject = null;
 
@@ -3442,6 +3448,10 @@ CParagraphRecalculateStateWrap.prototype.Reset_Line = function()
 	this.bBreakPosInLWord    = true;
 	
 	this.MathNotInline = null;
+	
+	this.LineY.length = this.Line + 1;
+	if (this.Line >= 0)
+		this.LineY[this.Line] = this.Y;
 };
 CParagraphRecalculateStateWrap.prototype.Reset_Range = function(X, XEnd)
 {
@@ -3994,10 +4004,16 @@ CParagraphRecalculateStateWrap.prototype.ResetMathRecalcInfo = function()
 	this.MathRecalcInfo.Line = 0;
 	this.MathRecalcInfo.Math = null;
 };
-CParagraphRecalculateStateWrap.prototype.SetMathRecalcInfo = function(nLine, oMath)
+CParagraphRecalculateStateWrap.prototype.SetMathRecalcInfo = function(math)
 {
-	this.MathRecalcInfo.Line = nLine;
-	this.MathRecalcInfo.Math = oMath;
+	this.MathRecalcInfo.Line = this.Line;
+	this.MathRecalcInfo.Math = math;
+};
+CParagraphRecalculateStateWrap.prototype.resetToMathFirstLine = function()
+{
+	this.Line = this.MathRecalcInfo.Line;
+	this.Y    = this.LineY[this.Line];
+	return this.Line;
 };
 CParagraphRecalculateStateWrap.prototype.GetMathRecalcInfoObject = function()
 {
@@ -4006,14 +4022,6 @@ CParagraphRecalculateStateWrap.prototype.GetMathRecalcInfoObject = function()
 CParagraphRecalculateStateWrap.prototype.SetMathRecalcInfoObject = function(oMath)
 {
 	this.MathRecalcInfo.Math = oMath;
-};
-CParagraphRecalculateStateWrap.prototype.GetMathRecalcInfoLine = function()
-{
-	return this.MathRecalcInfo.Line;
-};
-CParagraphRecalculateStateWrap.prototype.SetMathRecalcInfoLine = function(nLine)
-{
-	this.MathRecalcInfo.Line = nLine;
 };
 CParagraphRecalculateStateWrap.prototype.IsCondensedSpaces = function()
 {
@@ -4480,6 +4488,37 @@ CParagraphRecalculateStateInfo.prototype.ProcessInstruction = function(oInstruct
 };
 
 const g_PRSI = new CParagraphRecalculateStateInfo();
+
+function ParagraphDrawState()
+{
+	ParagraphRecalculateStateBase.call(this);
+	
+	this.highlightState  = new CParagraphDrawStateHighlights();
+	this.runElementState = new CParagraphDrawStateElements();
+	this.lineState       = new CParagraphDrawStateLines();
+}
+
+ParagraphDrawState.prototype = Object.create(ParagraphRecalculateStateBase.prototype);
+ParagraphDrawState.prototype.constructor = ParagraphDrawState;
+
+ParagraphDrawState.prototype.init = function(paragraph, graphics)
+{
+	this.highlightState.init(paragraph, graphics);
+	this.runElementState.init(paragraph, graphics);
+	this.lineState.init(paragraph, graphics);
+};
+ParagraphDrawState.prototype.getHighlightState = function()
+{
+	return this.highlightState;
+};
+ParagraphDrawState.prototype.getRunElementState = function()
+{
+	return this.runElementState;
+};
+ParagraphDrawState.prototype.getLineState = function()
+{
+	return this.lineState;
+};
 
 function CParagraphRecalculateObject()
 {

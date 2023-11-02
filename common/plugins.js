@@ -181,8 +181,8 @@
 				{
 					if (guid === currentArray[i].guid)
 					{
-						currentArray.splice(i, 1);
-						return currentArray[i];
+						let removed = currentArray.splice(i, 1);
+						return removed[0];
 					}
 				}
 			}
@@ -1033,7 +1033,7 @@
 			if (undefined === pluginData.getAttribute("data"))
 				pluginData.setAttribute("data", "");
 
-            pluginData.setAttribute("isViewMode", this.api.isViewMode);
+            pluginData.setAttribute("isViewMode", (this.api.isViewMode || this.api.isPdfEditor()));
             pluginData.setAttribute("isMobileMode", this.api.isMobileVersion);
             pluginData.setAttribute("isEmbedMode", this.api.isEmbedVersion);
             pluginData.setAttribute("lang", this.language);

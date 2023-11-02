@@ -437,21 +437,6 @@ function (window, undefined)
 	window["AscCommon"].CDocumentMacros = CDocumentMacros;
 	window['AscCommon'].VbaProject = VbaProject;
 
-	// TODO: Use this code with closurecompiler markers
-	/*
-	window['AscCommon'].safePluginEval = function(value) {
-
-		var closure = function(Api, window, alert, document, XMLHttpRequest) {
-
-			eval("\"use strict\";\r\n" + value);
-
-		};
-
-		closure.call({}, window.g_asc_plugins.api, {}, function(){}, {}, customXMLHttpRequest);
-
-	};
-	*/
-
 	var _safe_eval_closure = new Function("Api", "window", "alert", "document", "XMLHttpRequest", "self", "globalThis", "value", "return eval(\"\\\"use strict\\\";\\r\\n\" + value)");
 	window['AscCommon'].safePluginEval = function(value) {
 

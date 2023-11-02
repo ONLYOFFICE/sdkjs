@@ -568,7 +568,7 @@ function ParaMath()
     this.DefaultTextPr.RFonts.SetAll("Cambria Math", -1);
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-	g_oTableId.Add( this, this.Id );
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 
 ParaMath.prototype = Object.create(CParagraphContentWithContentBase.prototype);
@@ -1149,7 +1149,7 @@ ParaMath.prototype.GetSelectContent = function(isAll)
     return this.Root.GetSelectContent(isAll);
 };
 
-ParaMath.prototype.GetCurrentParaPos = function()
+ParaMath.prototype.GetCurrentParaPos = function(align)
 {
     return this.Root.GetCurrentParaPos();
 };
@@ -1356,9 +1356,9 @@ ParaMath.prototype.Set_MenuProps = function(Props)
         this.Root.Set_MenuProps(Props);
 };
 
-ParaMath.prototype.CheckRunContent = function(fCheck)
+ParaMath.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward)
 {
-    this.Root.CheckRunContent(fCheck);
+	this.Root.CheckRunContent(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward);
 };
 
 //-----------------------------------------------------------------------------------
@@ -1820,9 +1820,9 @@ ParaMath.prototype.private_RecalculateRoot = function(PRS, ParaPr, Depth)
 };
 ParaMath.prototype.private_SetRestartRecalcInfo = function(PRS)
 {
-	var Page = this.Paragraph == null ? 0 : this.Paragraph.GetAbsolutePage(PRS.Page);
-	var Line = this.PageInfo.Get_FirstLineOnPage(Page);
-	PRS.SetMathRecalcInfo(Line, this, PRS.Ranges, PRS.RangesCount);
+	let absPage   = PRS.Paragraph.GetAbsolutePage(PRS.Page);
+	let firstLine = this.PageInfo.Get_FirstLineOnPage(absPage);
+	PRS.SetMathRecalcInfo(firstLine, this);
 	PRS.RecalcResult = recalcresult_ParaMath;
 	PRS.NewRange     = true;
 };
@@ -2073,6 +2073,7 @@ ParaMath.prototype.RecalculateMinMaxContentWidth = function(MinMax)
     RPI.MergeMathInfo(this.ParaMathRPI);
 
     this.Root.PreRecalc(null, this, new CMathArgSize(), RPI);
+	this.Root.recalculateAllSize(AscCommon.g_oTextMeasurer);
     this.Root.RecalculateMinMaxContentWidth(MinMax);
 };
 
@@ -2632,7 +2633,14 @@ ParaMath.prototype.IsCursorPlaceable = function()
 {
     return true;
 };
-
+ParaMath.prototype.IsCursorAtEnd = function()
+{
+	return this.Cursor_Is_End();
+};
+ParaMath.prototype.IsCursorAtBegin = function()
+{
+	return this.Cursor_Is_Start();
+};
 ParaMath.prototype.Cursor_Is_Start = function()
 {
     // TODO: ParaMath.Cursor_Is_Start
@@ -3243,7 +3251,10 @@ ParaMath.prototype.CalculateTextToTable = function(oEngine)
 };
 ParaMath.prototype.ConvertFromLaTeX = function()
 {
+	AscMath.SetIsLaTeXGetParaRun(false);
 	var strLaTeX = this.GetText(true);
+	AscMath.SetIsLaTeXGetParaRun(true);
+
     this.Root.Remove_Content(0, this.Root.Content.length);
     this.Root.Correct_Content(true);
     AscMath.ConvertLaTeXToTokensList(strLaTeX, this.Root);
@@ -3280,11 +3291,18 @@ ParaMath.prototype.ConvertToUnicodeMath = function()
 };
 ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 {
+	AscCommon.executeNoRevisions(this._convertView, this.GetLogicDocument(), this, arguments);
+};
+ParaMath.prototype._convertView = function(isToLinear, nInputType)
+{
 	if (undefined === nInputType)
 	{
 		let oApi = Asc.editor || editor;
 		nInputType = oApi ? oApi.getMathInputType() : Asc.c_oAscMathInputType.Unicode;
 	}
+
+	if (this.IsEmpty())
+		return;
 
 	if (isToLinear)
 	{
@@ -3312,6 +3330,10 @@ ParaMath.prototype.SplitSelectedContent = function()
     oContent.SplitSelectedContent();
 };
 ParaMath.prototype.ConvertViewBySelection = function(isToLinear, nInputType)
+{
+	AscCommon.executeNoRevisions(this._convertViewBySelection, this.GetLogicDocument(), this, arguments);
+};
+ParaMath.prototype._convertViewBySelection = function(isToLinear, nInputType)
 {
     this.SplitSelectedContent();
 
@@ -3361,6 +3383,14 @@ ParaMath.prototype.GetSearchElementId = function(bNext, bUseContentPos, ContentP
 	return this.Root.GetSearchElementId(bNext, bUseContentPos, ContentPos, Depth);
 };
 //----------------------------------------------------------------------------------------------------------------------
+ParaMath.prototype.IsContentControlEquation = function()
+{
+	let parent = this.GetParent();
+	return (parent
+		&& parent instanceof AscWord.CInlineLevelSdt
+		&& parent.IsContentControlEquation()
+		&& parent.IsPlaceHolder());
+};
 
 
 function MatGetKoeffArgSize(FontSize, ArgSize)
