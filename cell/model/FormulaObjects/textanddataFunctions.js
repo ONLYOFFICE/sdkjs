@@ -188,7 +188,7 @@ function (window, undefined) {
 	cARRAYTOTEXT.prototype.isXLFN = true;
 	cARRAYTOTEXT.prototype.argumentsMin = 1;
 	cARRAYTOTEXT.prototype.argumentsMax = 2;
-	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1, 1: 1};
+	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1};
 	cARRAYTOTEXT.prototype.argumentsType = [argType.reference, argType.number];
 	cARRAYTOTEXT.prototype.Calculate = function (arg) {
 		function arrayToTextGeneral (args, isRange) {

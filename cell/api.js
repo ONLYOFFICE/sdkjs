@@ -5860,6 +5860,35 @@ var editor;
      return;
     }
 
+	let text1 = "";
+	let text2 = "";
+	for (let i in AscCommonExcel.cFormulaFunctionGroup) {
+		for (let j in AscCommonExcel.cFormulaFunctionGroup[i]) {
+			let func = AscCommonExcel.cFormulaFunctionGroup[i][j];
+			if (func.prototype.argumentsType) {
+				for (let n = 0; n < func.prototype.argumentsType.length; n++) {
+					if (func.prototype.argumentsType[n] === Asc.c_oAscFormulaArgumentType.reference && (!func.prototype.arrayIndexes || !func.prototype.arrayIndexes[n])) {
+						text1 += func.name + " " + n + "\n";
+					}
+				}
+			}
+
+			if (func.prototype.arrayIndexes) {
+				for (let n in func.prototype.arrayIndexes) {
+					if (func.prototype.arrayIndexes[n] && (!func.prototype.argumentsType || func.prototype.argumentsType[n] !== Asc.c_oAscFormulaArgumentType.reference)) {
+						text2 += func.name + " " + n + "\n";
+					}
+				}
+			}
+		}
+	}
+
+	console.log(text1)
+	  console.log("*******")
+	  console.log(text2)
+
+	return;
+
   	let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
