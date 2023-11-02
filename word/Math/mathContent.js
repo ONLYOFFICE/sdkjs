@@ -6611,6 +6611,7 @@ ContentIterator.prototype.CheckRules = function ()
 		["⏟", true],
 		["⏞", true],
 		[true, "/"],
+		["■", true],
 
 		[true, "┬"],
 		[true, "┴"],
@@ -6742,7 +6743,7 @@ CMathContent.prototype.CheckAutoCorrectionRules = function(nInputType)
     const arrPosition = oRuleIterator.RulePosition;
 
     if (arrPosition.length === 2)
-        this.CutConvertAndPaste(arrPosition, nInputType);
+        this.CutConvertAndPaste(arrPosition, nInputType, true);
 
     let now = [];
 
@@ -6816,14 +6817,14 @@ CMathContent.prototype.CheckAutoCorrectionBrackets = function(nInputType)
 	        if (this.GetLastTextElement() === " ")
 		        this.DeleteEndSpace();
 
-            this.CutConvertAndPaste(arrPosition, nInputType, true);
+            this.CutConvertAndPaste(arrPosition, nInputType);
             Brackets.isConvert = true;
         }
     }
 
     return Brackets;
 };
-CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType, isNotWrap)
+CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType, isRules)
 {
     if (arrPos.length === 0)
         arrPos = [0, 0];
@@ -6832,6 +6833,7 @@ CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType, isNotWr
         arrPos[0] = 0;
 
     let strContent = "";
+	let strFirstLetter = ""
 
     for (let i = this.Content.length - 1; i >= arrPos[0]; i--)
     {
@@ -6841,10 +6843,19 @@ CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType, isNotWr
 
         if (i === arrPos[0] && CurrentContent instanceof ParaRun)
         {
-            for (let j = CurrentContent.Content.length - 1; j >= arrPos[1]; j--)
+            for (let j = CurrentContent.Content.length - 1; j >= arrPos[1] - 1; j--)
             {
-                strContent = CurrentContent.Content[j].GetTextOfElement(nInputType === 1) + strContent;
-                CurrentContent.Remove_FromContent(j, 1, true);
+				if (j >= 0)
+				{
+					if (j >= arrPos[1])
+					{
+						strContent = CurrentContent.Content[j].GetTextOfElement(nInputType === 1) + strContent;
+						CurrentContent.Remove_FromContent(j, 1, true);
+					}
+
+					else if (j >= 0)
+						strFirstLetter = CurrentContent.Content[j].GetTextOfElement(nInputType === 1);
+				}
             }
         }
         else
@@ -6869,7 +6880,12 @@ CMathContent.prototype.CutConvertAndPaste = function(arrPos, nInputType, isNotWr
         }
     }
 
-    AscMath.GetConvertContent(nInputType, strContent, this);
+	if (strFirstLetter === "■" && !isRules)
+		this.Add_Text(strContent);
+	else
+		AscMath.GetConvertContent(nInputType, strContent, this);
+
+	this.Correct_ContentCurPos();
     this.Correct_Content(true);
     this.MoveCursorToEndPos();
 };
