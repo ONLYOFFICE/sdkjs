@@ -216,7 +216,8 @@ var c_oSerProp_tblPrType = {
 	tblCaption: 17,
 	tblDescription: 18,
 	TableIndTwips: 19,
-	TableCellSpacingTwips: 20
+	TableCellSpacingTwips: 20,
+	tblOverlap: 21
 };
 var c_oSer_tblpPrType = {
     Page:0,
@@ -1210,6 +1211,10 @@ var EHint = {
 var ETblLayoutType = {
 	tbllayouttypeAutofit: 1,
 	tbllayouttypeFixed: 2
+};
+let ETblOverlapType = {
+	tbloverlapNever   : 1,
+	tbloverlapOverlap : 2
 };
 var ESectionMark = {
 	sectionmarkContinuous: 0,
@@ -4469,6 +4474,10 @@ Binary_tblPrWriter.prototype =
 		}
 		if (tblPr.PrChange && tblPr.ReviewInfo) {
 			this.bs.WriteItem(c_oSerProp_tblPrType.tblPrChange, function(){WriteTrackRevision(oThis.bs, oThis.saveParams.trackRevisionId++, tblPr.ReviewInfo, {btw: oThis, tblPr: tblPr.PrChange});});
+		}
+		if (table && false === table.Get_AllowOverlap())
+		{
+			this.bs.WriteItem(c_oSerProp_tblPrType.tblOverlap, function(){oThis.memory.WriteByte(ETblOverlapType.tbloverlapNever);});
 		}
     },
     WriteCellMar: function(cellMar)
@@ -10377,6 +10386,15 @@ Binary_tblPrReader.prototype =
 				return ReadTrackRevision(t, l, oThis.stream, reviewInfo, {btblPrr: oThis, tblPr: tblPrChange});
 			});
 			Pr.SetPrChange(tblPrChange, reviewInfo);
+		}
+		else if (c_oSerProp_tblPrType.tblOverlap === type && table)
+		{
+			 let overlapType = this.stream.GetUChar();
+			switch(overlapType)
+			{
+				case ETblOverlapType.tbloverlapNever: table.Set_AllowOverlap(false);break;
+				case ETblOverlapType.tbloverlapOverlap: table.Set_AllowOverlap(true);break;
+			}
 		}
 		else if(null != table)
 		{
