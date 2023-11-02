@@ -10598,7 +10598,8 @@ ParaRun.prototype.IsContainMathOperators = function ()
 	for (let i = 0; i < this.Content.length; i++)
 	{
 		let oCurrentMathText = this.Content[i];
-		if (oCurrentMathText.IsBreakOperator())
+		let isNamesOFLiteralsOperator = AscMath.MathLiterals.operators.IsIncludes(String.fromCharCode(oCurrentMathText.value));
+		if (oCurrentMathText.IsBreakOperator() || isNamesOFLiteralsOperator)
 			return true;
 	}
 	return false;
