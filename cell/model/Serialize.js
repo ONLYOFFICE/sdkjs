@@ -1189,7 +1189,23 @@
 		Name: 1
 	};
 
-	/** @enum */
+    /** @enum */
+    var c_oSer_Timeline = {
+        Name: 0,
+        Caption: 1,
+        Uid: 2,
+        Cache: 3,
+        ShowHeader: 4,
+        ShowTimeLevel: 5,
+        ShowSelectionLabel: 6,
+        ShowHorizontalScrollbar: 7,
+        Level: 8,
+        SelectionLevel: 9,
+        ScrollPosition: 10,
+        Style: 11
+    };
+
+    /** @enum */
     var EBorderStyle =
     {
         borderstyleDashDot:  0,
@@ -8354,7 +8370,9 @@
                     return oThis.ReadUserProtectedRanges(t, l, oWorksheet.userProtectedRanges);
                 });
             } else if (c_oSerWorksheetsTypes.TimelinesList === type) {
-                oWorksheet.timelinesList = this.stream.GetBuffer(length);
+                res = this.bcr.Read1(length, function(t, l) {
+                    return oThis.ReadTimelinesList(t, l, oWorksheet.timelines);
+                });
             } else if (c_oSerWorksheetsTypes.Timelines === type) {
                 oWorksheet.timelines = this.stream.GetBuffer(length);
             } else if (c_oSerWorksheetsTypes.Timeline === type) {
@@ -8673,6 +8691,73 @@
 					res = c_oSerConstants.ReadUnknown;
 				}
 			} else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadTimelinesList = function (type, length, aTimelines) {
+            var res = c_oSerConstants.ReadOk;
+            var oThis = this;
+            var oTimeline = null;
+
+            if (c_oSerWorksheetsTypes.Timelines === type) {
+                oTimeline = AscCommonExcel.CTimeline ? new AscCommonExcel.CTimeline() : null;
+                if (oTimeline) {
+                    res = this.bcr.Read1(length, function (t, l) {
+                        return oThis.ReadTimelines(t, l, oTimeline);
+                    });
+                    aTimelines.push(oTimeline);
+                } else {
+                    res = c_oSerConstants.ReadUnknown;
+                }
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadTimelines = function (type, length, oTimeline) {
+            var res = c_oSerConstants.ReadOk;
+            var oThis = this;
+
+            if (c_oSerWorksheetsTypes.Timeline === type) {
+                res = this.bcr.Read2(length, function (t, l) {
+                    return oThis.ReadTimeline(t, l, oTimeline);
+                });
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadTimeline = function (type, length, oTimeline) {
+            var res = c_oSerConstants.ReadOk;
+            var oThis = this;
+
+            if (c_oSer_Timeline.Name === type) {
+                oTimeline.name = this.stream.GetString2LE(length);
+            } else if (c_oSer_Timeline.Cache === type) {
+                oTimeline.cache = this.stream.GetString2LE(length);
+            } else if (c_oSer_Timeline.Caption === type) {
+                oTimeline.caption = this.stream.GetString2LE(length);
+            } else if (c_oSer_Timeline.ScrollPosition === type) {
+                oTimeline.scrollPosition = this.stream.GetString2LE(length);
+            } else if (c_oSer_Timeline.Uid === type) {
+                oTimeline.uid = this.stream.GetString2LE(length);
+            } else if (c_oSer_Timeline.Level === type) {
+                oTimeline.level = this.stream.GetULong();
+            } else if (c_oSer_Timeline.SelectionLevel === type) {
+                oTimeline.selectionLevel = this.stream.GetULong();
+            } else if (c_oSer_Timeline.ShowHeader === type) {
+                oTimeline.showHeader = this.stream.GetBool();
+            } else if (c_oSer_Timeline.ShowHorizontalScrollbar === type) {
+                oTimeline.showHorizontalScrollbar = this.stream.GetBool();
+            } else if (c_oSer_Timeline.ShowSelectionLabel === type) {
+                oTimeline.showSelectionLabel = this.stream.GetBool();
+            } else if (c_oSer_Timeline.ShowTimeLevel === type) {
+                oTimeline.showTimeLevel = this.stream.GetBool();
+            } else if (c_oSer_Timeline.Style === type) {
+                //oTimeline.Style.Init();
+                //oTimeline.Style->SetValueFromByte(this.stream.GetUChar());
+            } else {
                 res = c_oSerConstants.ReadUnknown;
             }
             return res;

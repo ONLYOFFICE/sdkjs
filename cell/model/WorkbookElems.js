@@ -15848,6 +15848,46 @@ QueryTableField.prototype.clone = function() {
 		return isChanged ? this : null;
 	};
 
+	function CTimeline() {
+		this.name = null;
+		this.cache = null;
+		this.caption = null;
+
+		this.scrollPosition = null;
+		this.uid = null;
+
+		this.level = null;
+		this.selectionLevel = null;
+		this.showHeader = null;
+
+		this.showHorizontalScrollbar = null;
+		this.showSelectionLabel = null;
+		this.showTimeLevel = null;
+		this.style = null;
+
+		return this;
+	}
+	CTimeline.prototype.clone = function () {
+		var res = new CTimeline();
+
+		res.name = this.name;
+		res.cache = this.cache;
+		res.caption = this.caption;
+
+		res.scrollPosition = this.scrollPosition;
+		res.uid = this.uid;
+
+		res.level = this.level;
+		res.selectionLevel = this.selectionLevel;
+		res.showHeader = this.showHeader;
+
+		res.showHorizontalScrollbar = this.showHorizontalScrollbar;
+		res.showSelectionLabel = this.showSelectionLabel;
+		res.showTimeLevel = this.showTimeLevel;
+		res.style = this.style;
+
+		return res;
+	};
 
 
 	//----------------------------------------------------------export----------------------------------------------------
@@ -16323,6 +16363,9 @@ QueryTableField.prototype.clone = function() {
 
 	window["AscCommonExcel"].CRowColBreaks = CRowColBreaks;
 	window["AscCommonExcel"].CBreak = CBreak;
+
+	window["AscCommonExcel"].CTimeline = CTimeline;
+
 
 
 })(window);
