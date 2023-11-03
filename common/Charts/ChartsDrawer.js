@@ -6039,6 +6039,7 @@ drawBarChart.prototype = {
 					if (this.chart.series[i].errBars) {
 						this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
 					}
+					console.log(this.subType)
 					if (this.chart.series[i].trendline && this.subType === "normal" && seria.length>1) {
 						//numCache.ptCount is constant for seria in series, not the best solution always pass the same value n times
 						this.cChartDrawer.trendline.addCoordinate(idx, _pointVal, this.chart.series[i], numCache.ptCount)
@@ -7141,7 +7142,7 @@ drawLineChart.prototype = {
 					if (this.chart.series[i].errBars) {
 						this.cChartDrawer.errBars.putPoint(x, y, val, null,  seria.idx, n);
 					}
-					if (this.chart.series[i].trendline && this.subType === "normal" && numCache.ptCount>1) {
+					if (this.chart.series[i].trendline && this.subType === "normal" && numCache.ptCount>1 && this.cChartDrawer.nDimensionCount !== 3) {
 						//numCache.ptCount is constant for seria in series, not the best solution always pass the same value n times
 						this.cChartDrawer.trendline.addCoordinate(n, val, this.chart.series[i], numCache.ptCount);
 					}
@@ -7677,6 +7678,10 @@ drawAreaChart.prototype = {
 					this.points[i][n] = {x: x, y: y, val: val};
 				} else {
 					this.points[i][n] = {x: x, y: nullPositionOX, val: val};
+				}
+
+				if (this.chart.series[i].trendline && this.subType === "normal" && numCache.ptCount>1 && this.cChartDrawer.nDimensionCount !== 3) {
+					this.cChartDrawer.trendline.addCoordinate(n, val, this.chart.series[i], numCache.ptCount)
 				}
 			}
 
@@ -9320,12 +9325,20 @@ drawHBarChart.prototype = {
 					this.paths.series[serIdx][idx] = paths;
 				}
 
-				if (this.chart.series[i].errBars) {
+				if (this.chart.series[i].errBars || this.chart.series[i].trendline) {
 					var _pointX = (startX) / this.chartProp.pxToMM;
 					var pointY = (startY - individualBarHeight / 2) / this.chartProp.pxToMM;
 					//var _pointVal = this.subType === "stacked" || this.subType === "stackedPer" ? this._getStackedValue(this.chart.series, i, j, val) : val;
 					var _pointVal = this.cChartDrawer.getValWithStacked(i, idx, this.chart);
 					this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
+					if (this.chart.series[i].errBars) {
+						this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
+					}
+					console.log(this.subType)
+					if (this.chart.series[i].trendline && this.subType === "normal" && seria.length>1 && this.cChartDrawer.nDimensionCount !== 3) {
+						//numCache.ptCount is constant for seria in series, not the best solution always pass the same value n times
+						this.cChartDrawer.trendline.addCoordinate(idx, _pointVal, this.chart.series[i], numCache.ptCount)
+					}
 				}
 
 			}
@@ -12721,6 +12734,10 @@ drawScatterChart.prototype = {
 						if (this.chart.series[i].errBars) {
 							this.cChartDrawer.errBars.putPoint(x, y, xVal, yVal, seria.idx, idx);
 						}
+						if (this.chart.series[i].trendline && yNumCache.ptCount>1) {
+							//numCache.ptCount is constant for seria in series, not the best solution always pass the same value n times
+							this.cChartDrawer.trendline.addCoordinate(idx, yVal, this.chart.series[i], yNumCache.ptCount)
+						}
 
 						points[i].push({x: xVal, y: yVal});
 					} else {
@@ -12728,7 +12745,6 @@ drawScatterChart.prototype = {
 						points[i].push(null);
 					}
 				}
-
 
 				//idx - индекс точки по оси OY
 				/*idx = yNumCache.pts && undefined !== yNumCache.pts[n] ? yNumCache.pts[n].idx : null;
@@ -13051,7 +13067,6 @@ drawScatterChart.prototype = {
 
 		var x3 = points[k + 2] ? points[k + 2].x : points[k + 1] ? points[k + 1].x : points[k].x;
 		var y3 = points[k + 2] ? points[k + 2].y : points[k + 1] ? points[k + 1].y : points[k].y;
-
 
 		var splineCoords = this.cChartDrawer.calculate_Bezier(x, y, x1, y1, x2, y2, x3, y3);
 
@@ -16155,20 +16170,29 @@ CColorObj.prototype =
 					if (!this.coordinates[i][charts[i].chart.series[j].Id]) {
 						continue;
 					}
+					// axis reverts, the only way to check is to se if undefined 
+					// xAxis, yAxis 
 					this._calculateLine(charts[i].chart.series[j].parent, this.coordinates[i][charts[i].chart.series[j].Id], charts[i].chart.series[j].trendline);
 				}
 			}
 		},
 	
 		_calculateLine: function (oChart, coordinates, atributes) {
-			let type = atributes.trendlineType
+			let type = atributes.trendlineType;
+			// let type = 2;
 
-			const xAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_CatAx);
-			const yAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_ValAx);
+			// const yAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_ValAx);
+			// const xAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_CatAx);
+			
+			//let temp = oChart.axId[0].xPoints ? oChart.axId[0] : oChart.axId[1];
+			const xAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[0]);
+			//temp = oChart.axId[0].yPoints ? oChart.axId[0] : oChart.axId[1];
+			const yAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[1]);
+
+			const orientation = xAxis.xPoints ? "xPoints" : "yPoints"
 			let results = { vals: null, cond: true };	
-	
 			if (type == AscFormat.TRENDLINE_TYPE_MOVING_AVG) {
-				const period = atributes.period
+				const period = atributes.period? atributes.period : 0
 				results.vals = this._getMAline(coordinates.coords.xVals, coordinates.coords.yVals, coordinates.ptCount, period)
 			} else {
 				const order = atributes.order ? atributes.order + 1 : 2;
@@ -16180,8 +16204,8 @@ CColorObj.prototype =
 	
 					//function to obtain arbitrary point of the equation
 					const _lineCoordinate = function (xIndex) {
-						const xVal = xAxis.xPoints[xIndex].val;
-						const yVal = equationStorage.calcYVal(xVal, chartletiables);
+						let xVal = xAxis[orientation][xIndex].val;
+						let yVal = equationStorage.calcYVal(xVal, chartletiables);
 						return { xVal: xVal, yVal: yVal }
 					}
 	
@@ -16189,9 +16213,9 @@ CColorObj.prototype =
 					// log cases does not allow yVal to be less or equal to 0
 					const _findMidCoordinates = function (pointsNumber, allow) {
 						const results = { xVals: [], yVals: [] }
-						const xNet = xAxis.xPoints[xAxis.xPoints.length - 1].val - xAxis.xPoints[0].val;
+						const xNet = xAxis[orientation][xAxis[orientation].length - 1].val - xAxis[orientation][0].val;
 						for (let i = 0; i < pointsNumber; i++) {
-							const xVal = (xNet / (pointsNumber - 1)) * i + xAxis.xPoints[0].val;;
+							const xVal = (xNet / (pointsNumber - 1)) * i + xAxis[orientation][0].val;;
 							const yVal = equationStorage.calcYVal(xVal, chartletiables)
 							if (allow || yVal > 0) {
 								results.xVals.push(xVal)
@@ -16204,8 +16228,14 @@ CColorObj.prototype =
 					const _findCentralPoint = function (chartletiables) {
 	
 						const results = { xVals: [], yVals: [] }
+						//TODO: scatter plot's defaul xValues start from zero
+						// while all other graphs start on default from 1 
+						//Example
+						// xrange for Bar chart -> [1,2,3,4,5,6]
+						// xrange for Scatter chart -> [0,1,2,3,4,5,6,7]
+						// I need only 1 and 6 in both scenarios 
 						const start = _lineCoordinate(0)
-						const end = _lineCoordinate(xAxis.xPoints.length - 1)
+						const end = _lineCoordinate(xAxis[orientation].length - 1)
 						results.xVals.push(start.xVal);
 						results.yVals.push(start.yVal);
 						// only linear trendlines does not contain slope property
@@ -16231,7 +16261,6 @@ CColorObj.prototype =
 	
 						results.xVals.push(end.xVal);
 						results.yVals.push(end.yVal);
-
 						return results
 					};
 	
@@ -16268,8 +16297,13 @@ CColorObj.prototype =
 					for (let i = 0; i < arr.xVals.length; i++) {
 						const xPos = cChartDrawer.getYPosition(arr.xVals[i], xAxis);
 						const yPos = cChartDrawer.getYPosition(arr.yVals[i], yAxis, true);
-						posArr.xPos.push(xPos)
-						posArr.yPos.push(yPos)
+						if(orientation === 'xPoints'){
+							posArr.xPos.push(xPos)
+							posArr.yPos.push(yPos)
+						}else{
+							posArr.yPos.push(xPos)
+							posArr.xPos.push(yPos)
+						}
 					}
 					return posArr
 				}
@@ -16334,7 +16368,7 @@ CColorObj.prototype =
 					}
 				}, [AscFormat.TRENDLINE_TYPE_LOG]: {
 					calcYVal: function (val, supps) {
-						return supps[1] * Math.log(val) + supps[0];
+						return val>0 ? supps[1] * Math.log(val) + supps[0] : NaN
 					}, slope: function (val, supps) {
 						return supps[1] / val
 					}
@@ -16361,6 +16395,7 @@ CColorObj.prototype =
 		},
 	
 		_getEquationCoefficients: function (xVals, yVals, type, pow, intercept) {
+			console.log(xVals, yVals)
 			if (xVals.length == yVals.length) {
 
 				if(type == AscFormat.TRENDLINE_TYPE_LOG || type == AscFormat.TRENDLINE_TYPE_POWER){
