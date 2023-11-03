@@ -3071,10 +3071,17 @@ CChartsDrawer.prototype =
 	},
 
 	getPtCount: function (series) {
-		var numCache;
+		let numCache, oVal;
 		for (var i = 0; i < series.length; i++) {
-			//todo use getNumCache
-			numCache = series[i].val && series[i].val.numRef ? series[i].val.numRef.numCache : series[i].val.numLit;
+			if (series[i].val) {
+				oVal = series[i].val;
+			} else if (series[i].xVal) {
+				oVal = series[i].xVal;
+			} else if (series[i].yVal) {
+				oVal = series[i].yVal;
+			}
+
+			numCache = oVal && oVal.getNumCache && oVal.getNumCache();
 			if (numCache && numCache.ptCount) {
 				return numCache.ptCount;
 			}
