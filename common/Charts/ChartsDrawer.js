@@ -16233,7 +16233,7 @@ CColorObj.prototype =
 						//Example
 						// xrange for Bar chart -> [1,2,3,4,5,6]
 						// xrange for Scatter chart -> [0,1,2,3,4,5,6,7]
-						// I need only 1 and 6 in both scenarios 
+						// I need only 1 and 6 in both scenarios
 						const start = _lineCoordinate(0)
 						const end = _lineCoordinate(xAxis[orientation].length - 1)
 						results.xVals.push(start.xVal);
