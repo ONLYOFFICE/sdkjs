@@ -10392,8 +10392,8 @@ Binary_tblPrReader.prototype =
 			 let overlapType = this.stream.GetUChar();
 			switch(overlapType)
 			{
-				case ETblOverlapType.tbloverlapNever: table.Set_AllowOverlap(false);break;
-				case ETblOverlapType.tbloverlapOverlap: table.Set_AllowOverlap(true);break;
+				case ETblOverlapType.tbloverlapNever: table.setAllowOverlap(false);break;
+				case ETblOverlapType.tbloverlapOverlap: table.setAllowOverlap(true);break;
 			}
 		}
 		else if(null != table)
