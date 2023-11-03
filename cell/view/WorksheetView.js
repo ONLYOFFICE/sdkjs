@@ -18339,7 +18339,7 @@
 		var changeRangesIfArrayFormula = function() {
 			if(ctrlKey) {
 				//TODO есть баг с тем, что не лочатся все ячейки при данном действии
-				c = t.getSelectedRange();
+				c = dynamicSelectionRange ? t._getRange(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c2, dynamicSelectionRange.r2) : t.getSelectedRange();
 				var isAllColumnSelect = c && c.bbox && (c.bbox.getType() === c_oAscSelectionType.RangeMax || c.bbox.getType() === c_oAscSelectionType.RangeCol);
 				if(c.bbox.isOneCell()) {
 					//проверяем, есть ли формула массива в этой ячейке
@@ -18378,6 +18378,8 @@
 			}
 		};
 
+		let dynamicSelectionRange = null;
+
 		var isFormula = this._isFormula(val);
 		var newFP, parseResult;
 		if (isFormula) {
@@ -18389,6 +18391,17 @@
 				if (parseResult.error !== c_oAscError.ID.FrmlWrongFunctionName && parseResult.error !== c_oAscError.ID.FrmlParenthesesCorrectCount) {
 					this.model.workbook.handlers.trigger("asc_onError", parseResult.error, c_oAscError.Level.NoCritical);
 					return;
+				}
+			} else {
+				if (!applyByArray) {
+					newFP.calculate();
+					if (newFP.ref) {
+						applyByArray = true;
+						ctrlKey = true;
+						//c = t._getRange(newFP.ref.c1, newFP.ref.r1, newFP.ref.c2, newFP.ref.r2);
+						//t.setSelection(newFP.ref);
+						dynamicSelectionRange = newFP.ref;
+					}
 				}
 			}
 		}
@@ -18434,6 +18447,21 @@
 			c.setValue(AscCommonExcel.getFragmentsText(val), function (r) {
 				ret = r;
 			}, null, applyByArray ? bbox : ((!applyByArray && ctrlKey) ? null : undefined));
+
+			if (!applyByArray) {
+				t.model._getCell(c.bbox.r1, c.bbox.c1, function(cell){
+					var formulaParsed = cell && cell.formulaParsed;
+					if(formulaParsed && !formulaParsed.ref) {
+						formulaParsed.calculate();
+						if (formulaParsed.ref) {
+							applyByArray = true;
+							ctrlKey = true;
+
+						}
+					}
+				});
+			}
+
 
 			//***array-formula***
 			if(ctrlKey) {

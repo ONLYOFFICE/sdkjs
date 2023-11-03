@@ -3667,7 +3667,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 	cBaseFunction.prototype.getDynamicArraySize = function (arg) {
 
-		if (this.returnValueType === AscCommonExcel.cReturnFormulaType.array) {
+		if (!bIsSupportDynamicArrays || this.returnValueType === AscCommonExcel.cReturnFormulaType.array) {
 			return null;
 		}
 
