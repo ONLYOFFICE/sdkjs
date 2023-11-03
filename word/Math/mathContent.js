@@ -6491,7 +6491,7 @@ ContentIterator.prototype.CheckBracket = function(strCurrent)
             let intCurrent = this.CurrentElement.GetNext();
             let strCurrent = String.fromCharCode(intCurrent);
 
-            if (AscMath.MathLiterals.rBrackets.IsIncludes(strCurrent))
+            if (AscMath.MathLiterals.rBrackets.IsIncludes(strCurrent) || strCurrent === "┤")
             {
                 this.CheckBracket(strCurrent);
             }
@@ -6510,12 +6510,12 @@ ContentIterator.prototype.CheckBracket = function(strCurrent)
                     this.intBracketCounter--;
                 }
             }
-            else if (AscMath.MathLiterals.lBrackets.IsIncludes(strCurrent) && this.intBracketCounter < 0)
+            else if (AscMath.MathLiterals.lBrackets.IsIncludes(strCurrent) || strCurrent === "├" && this.intBracketCounter < 0)
             {
                 this.intBracketCounter++;
                 return true
             }
-            else if (AscMath.MathLiterals.lBrackets.IsIncludes(strCurrent))
+            else if (AscMath.MathLiterals.lBrackets.IsIncludes(strCurrent) || strCurrent === "├")
             {
                 this.CurrentElement.CheckCursor();
                 this.CurrentElement.Cursor++;
@@ -6796,7 +6796,7 @@ CMathContent.prototype.IsPreLastTextElementRBracket = function()
 {
     let strPreLast = this.GetPreLastTextElement()
     return  AscMath.MathLiterals.rBrackets.IsIncludes(strPreLast) ||
-            AscMath.MathLiterals.lrBrackets.IsIncludes(strPreLast)
+            AscMath.MathLiterals.lrBrackets.IsIncludes(strPreLast) || strPreLast ===  "┤"
 };
 CMathContent.prototype.CheckAutoCorrectionBrackets = function(nInputType)
 {

@@ -670,6 +670,10 @@
 					strOpen = this.oLookahead.data;
 					this.EatToken(this.oLookahead.class);
 				}
+				else
+				{
+					strOpen = ".";
+				}
 			}
 			else if (this.IsBracketLiteral())
 			{
@@ -703,6 +707,10 @@
 				{
 					strClose = this.oLookahead.data;
 					this.EatToken(this.oLookahead.class);
+				}
+				else
+				{
+					strClose = ".";
 				}
 			}
 			else
@@ -1116,6 +1124,9 @@
 				oFirstElement = this.GetExpLiteral();
 			}
 
+			if (this.oLookahead.class === oLiteralNames.spaceLiteral[0])
+				this.EatToken(this.oLookahead.class);
+
 			// Get second element
 			if (this.oLookahead.data === "^" && !this.isOneSubSup)
 			{
@@ -1129,6 +1140,9 @@
 				{
 					oSecondElement = this.GetExpLiteral();
 				}
+
+				if (this.oLookahead.class === oLiteralNames.spaceLiteral[0])
+					this.EatToken(this.oLookahead.class);
 
 				return {
 					type: oLiteralNames.subSupLiteral[num],
@@ -1157,6 +1171,8 @@
 			{
 				oSecondElement = this.GetExpLiteral();
 			}
+			if (this.oLookahead.class === oLiteralNames.spaceLiteral[0])
+				this.EatToken(this.oLookahead.class);
 
 			if (oSecondElement && (oSecondElement.value === "′" || oSecondElement.value === "′′" || oSecondElement === "‵"))
 			{
@@ -1866,7 +1882,10 @@
 				this.EatToken(this.oLookahead.class)
 
 				if (this.oLookahead.class)
-					down = this.GetElementLiteral();
+					down = this.GetSpaceExitFunction(this.GetElementLiteral);
+
+				if (this.oLookahead.class === oLiteralNames.spaceLiteral[0])
+					this.EatToken(this.oLookahead.class);
 
 				oExpLiteral.push({
 					type: type,
