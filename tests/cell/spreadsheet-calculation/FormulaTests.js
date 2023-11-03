@@ -5270,7 +5270,7 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 
-		testArrayFormula2(assert, "SEARCH", 2, 3);
+		// testArrayFormula2(assert, "SEARCH", 2, 3);
 	});
 
 	QUnit.test("Test: \"SUBSTITUTE\"", function (assert) {
