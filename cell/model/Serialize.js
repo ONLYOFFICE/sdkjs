@@ -360,7 +360,10 @@
         CellWatches: 44,
         CellWatch: 45,
         CellWatchR: 46,
-        UserProtectedRanges: 47
+        UserProtectedRanges: 47,
+        TimelinesList: 48,
+        Timelines: 49,
+        Timeline: 50
     };
     /** @enum */
     var c_oSerWorksheetPropTypes =
@@ -4020,6 +4023,22 @@
 
             if (ws.userProtectedRanges && ws.userProtectedRanges.length > 0) {
                 this.bs.WriteItem(c_oSerWorksheetsTypes.UserProtectedRanges, function(){oThis.WriteUserProtectedRanges(ws.userProtectedRanges);});
+            }
+
+            if (ws.timelinesList) {
+                this.bs.WriteItem(c_oSerWorksheetsTypes.TimelinesList, function() {
+                    oThis.memory.WriteULong(ws.timelinesList.length);
+                });
+            }
+            if (ws.timelines) {
+                this.bs.WriteItem(c_oSerWorksheetsTypes.Timelines, function() {
+                    oThis.memory.WriteULong(ws.Timelines.length);
+                });
+            }
+            if (ws.timeline) {
+                  this.bs.WriteItem(c_oSerWorksheetsTypes.Timeline, function() {
+                    oThis.memory.WriteULong(ws.Timeline.length);
+                });
             }
         };
 		this.WriteDataValidations = function(dataValidations)
@@ -8334,6 +8353,12 @@
                 res = this.bcr.Read1(length, function(t, l) {
                     return oThis.ReadUserProtectedRanges(t, l, oWorksheet.userProtectedRanges);
                 });
+            } else if (c_oSerWorksheetsTypes.TimelinesList === type) {
+                oWorksheet.timelinesList = this.stream.GetBuffer(length);
+            } else if (c_oSerWorksheetsTypes.Timelines === type) {
+                oWorksheet.timelines = this.stream.GetBuffer(length);
+            } else if (c_oSerWorksheetsTypes.Timeline === type) {
+                oWorksheet.timeline = this.stream.GetBuffer(length);
             } else
 				res = c_oSerConstants.ReadUnknown;
 			return res;
