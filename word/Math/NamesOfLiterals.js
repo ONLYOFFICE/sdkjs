@@ -1044,6 +1044,7 @@
 		["\\breve", MathLiterals.accent.id],
 		["\\tilde", MathLiterals.accent.id],
 		["\\bar", MathLiterals.accent.id],
+		["\\dots", MathLiterals.operators.id],
 
 		["\"",  oNamesOfLiterals.charLiteral[0]],
 		["\ ",  oNamesOfLiterals.spaceLiteral[0]],
