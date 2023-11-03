@@ -1180,6 +1180,7 @@
 					this.callMethodInternal(nextCommand.guid, nextCommand.name, nextCommand.value);
 				}
 			}
+			return pluginDataTmp.privateData.guid;
 		},
 
 		callCommand : function(guid, value, isClose, isInterface, isRecalculate, isResize)
@@ -1309,7 +1310,10 @@
 
 		onPluginMethodReturn : function(returnValue)
 		{
-			this.shiftCommand(returnValue);
+			let guid = this.shiftCommand(returnValue);
+			// this is necessary for the following (non-async plugin methods)
+			if (this.runnedPluginsMap[guid])
+				this.runnedPluginsMap[guid].methodReturnAsync = false;
 		},
 
 		callMethodInternal : function(guid, name, value)
