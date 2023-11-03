@@ -3463,11 +3463,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var t = this;
 
 		let dynamicRange = null;
+		parserFormula.dynamicRange = null;
 		if (!parserFormula.ref) {
 			let dynamicArraySize = this.getDynamicArraySize(arg);
 			if (dynamicArraySize && parserFormula.parent && parserFormula.parent.nCol != null && parserFormula.parent.nRow != null) {
-				dynamicRange = Asc.Range(parserFormula.parent.nCol, parserFormula.parent.nRow, dynamicArraySize.width + parserFormula.parent.nCol, dynamicArraySize.height + parserFormula.parent.nRow);
+				dynamicRange = Asc.Range(parserFormula.parent.nCol, parserFormula.parent.nRow, dynamicArraySize.width + parserFormula.parent.nCol - 1, dynamicArraySize.height + parserFormula.parent.nRow - 1);
 				parserFormula.ref = dynamicRange;
+				parserFormula.dynamicRange = dynamicRange;
+				this.bArrayFormula = true;
 			}
 		}
 
@@ -3655,6 +3658,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		if (dynamicRange) {
 			parserFormula.ref = null;
+			this.bArrayFormula = null;
 		}
 
 		return res;
@@ -3678,7 +3682,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 
-		if ((width !== 1 || height !== 1) && parserFormula.parent && parserFormula.parent.nCol != null && parserFormula.parent.nRow) {
+		if (width !== 1 || height !== 1) {
 			return {width: width, height: height};
 		}
 		return null;
@@ -7216,6 +7220,11 @@ function parserFormula( formula, parent, _ws ) {
 			} else {
 				elemArr.push(currentElement);
 			}
+		}
+
+		if (this.dynamicRange) {
+			this.ref = this.dynamicRange;
+			this.dynamicRange = null;
 		}
 
 		//TODO заглушка для парсинга множественного диапазона в _xlnm.Print_Area. Сюда попадаем только в одном случае - из функции findCell для отображения диапазона области печати
