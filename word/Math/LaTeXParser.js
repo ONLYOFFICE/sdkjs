@@ -72,7 +72,16 @@
 		else {
 			let strLiteral = "";
 			while (this.oLookahead.class === arrTypeOfLiteral[0]) {
-				strLiteral += this.EatToken(arrTypeOfLiteral[0]).data;
+				let strConvert = AscMath.AutoCorrection[this.oLookahead.data];
+				if (strConvert)
+				{
+					this.EatToken(this.oLookahead.class);
+					strLiteral += strConvert
+				}
+				else
+				{
+					strLiteral += this.EatToken(arrTypeOfLiteral[0]).data;
+				}
 			}
 			arrLiterals.push({
 				type: arrTypeOfLiteral[num],
@@ -734,10 +743,6 @@
 			if (this.IsSubSup() || this.oLookahead.class === "\\limits")
 			{
 				return this.GetSubSupLiteral(oWrapperContent);
-			}
-			else if (this.oLookahead.class === MathLiterals.accent.id)
-			{
-				return this.GetAccentLiteral(oWrapperContent);
 			}
 			else if (this.IsGetBelowAboveLiteral())
 			{

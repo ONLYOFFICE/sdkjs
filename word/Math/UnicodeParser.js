@@ -521,7 +521,7 @@
 
 			if (this.IsOperandLiteral())
 			{
-				oIndex = this.GetExpLiteral();
+				oIndex = this.GetExpLiteral(undefined, true);
 
 				if (this.oLookahead.data === "&")
 				{
