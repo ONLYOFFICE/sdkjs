@@ -6048,7 +6048,7 @@ drawBarChart.prototype = {
 					}
 					if (this.chart.series[i].trendline && this.subType === "normal" && seria.length>1) {
 						//numCache.ptCount is constant for seria in series, not the best solution always pass the same value n times
-						this.cChartDrawer.trendline.addCoordinate(idx, _pointVal, this.chart.series[i], numCache.ptCount)
+						this.cChartDrawer.trendline.addCoordinate(idx + 1, _pointVal, this.chart.series[i], numCache.ptCount)
 					}
 				}
 			}
@@ -7150,7 +7150,7 @@ drawLineChart.prototype = {
 					}
 					if (this.chart.series[i].trendline && this.subType === "normal" && numCache.ptCount>1 && this.cChartDrawer.nDimensionCount !== 3) {
 						//numCache.ptCount is constant for seria in series, not the best solution always pass the same value n times
-						this.cChartDrawer.trendline.addCoordinate(n, val, this.chart.series[i], numCache.ptCount);
+						this.cChartDrawer.trendline.addCoordinate(n + 1, val, this.chart.series[i], numCache.ptCount);
 					}
 					points[i][n] = {x: x, y: y};
 				} else {
@@ -7687,7 +7687,7 @@ drawAreaChart.prototype = {
 				}
 
 				if (this.chart.series[i].trendline && this.subType === "normal" && numCache.ptCount>1 && this.cChartDrawer.nDimensionCount !== 3) {
-					this.cChartDrawer.trendline.addCoordinate(n, val, this.chart.series[i], numCache.ptCount)
+					this.cChartDrawer.trendline.addCoordinate(n + 1, val, this.chart.series[i], numCache.ptCount)
 				}
 			}
 
@@ -9342,7 +9342,7 @@ drawHBarChart.prototype = {
 					}
 					if (this.chart.series[i].trendline && this.subType === "normal" && seria.length>1 && this.cChartDrawer.nDimensionCount !== 3) {
 						//numCache.ptCount is constant for seria in series, not the best solution always pass the same value n times
-						this.cChartDrawer.trendline.addCoordinate(idx, _pointVal, this.chart.series[i], numCache.ptCount)
+						this.cChartDrawer.trendline.addCoordinate(idx + 1, _pointVal, this.chart.series[i], numCache.ptCount)
 					}
 				}
 
@@ -12741,7 +12741,7 @@ drawScatterChart.prototype = {
 						}
 						if (this.chart.series[i].trendline && yNumCache.ptCount>1) {
 							//numCache.ptCount is constant for seria in series, not the best solution always pass the same value n times
-							this.cChartDrawer.trendline.addCoordinate(xVal-1, yVal, this.chart.series[i], yNumCache.ptCount)
+							this.cChartDrawer.trendline.addCoordinate(xVal, yVal, this.chart.series[i], yNumCache.ptCount)
 						}
 
 						points[i].push({x: xVal, y: yVal});
@@ -16162,7 +16162,7 @@ CColorObj.prototype =
 			}
 	
 			this.coordinates[oSeries.parent.Id][oSeries.Id].ptCount = ptCount;
-			this.coordinates[oSeries.parent.Id][oSeries.Id].coords.xVals.push(xVal + 1);
+			this.coordinates[oSeries.parent.Id][oSeries.Id].coords.xVals.push(xVal);
 			this.coordinates[oSeries.parent.Id][oSeries.Id].coords.yVals.push(yVal);
 		},
 	
@@ -16175,8 +16175,6 @@ CColorObj.prototype =
 					if (!this.coordinates[i][charts[i].chart.series[j].Id]) {
 						continue;
 					}
-					// axis reverts, the only way to check is to se if undefined 
-					// xAxis, yAxis 
 					this._calculateLine(charts[i].chart.series[j].parent, this.coordinates[i][charts[i].chart.series[j].Id], charts[i].chart.series[j].trendline);
 				}
 			}
@@ -16184,10 +16182,6 @@ CColorObj.prototype =
 	
 		_calculateLine: function (oChart, coordinates, attributes) {
 			let type = attributes.trendlineType;
-			// let type = 2;
-
-			// const yAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_ValAx);
-			// const xAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_CatAx);
 			
 			//let temp = oChart.axId[0].xPoints ? oChart.axId[0] : oChart.axId[1];
 			const xAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[0]);
@@ -16233,14 +16227,9 @@ CColorObj.prototype =
 					const _findCentralPoint = function (chartletiables) {
 	
 						const results = { xVals: [], yVals: [] }
-						//TODO: scatter plot's defaul xValues start from zero
-						// while all other graphs start on default from 1 
-						//Example
-						// xrange for Bar chart -> [1,2,3,4,5,6]
-						// xrange for Scatter chart -> [0,1,2,3,4,5,6,7]
-						// I need only 1 and 6 in both scenarios
 						const start = _lineCoordinate(0)
 						const end = _lineCoordinate(xAxis[orientation].length - 1)
+						console.log(start, end)
 						results.xVals.push(start.xVal);
 						results.yVals.push(start.yVal);
 						// only linear trendlines does not contain slope property
