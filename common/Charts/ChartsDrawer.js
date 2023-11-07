@@ -1502,7 +1502,6 @@ CChartsDrawer.prototype =
 					}
 				}
 			}
-
 			return {min: min, max: max};
 		};
 
@@ -1794,6 +1793,13 @@ CChartsDrawer.prototype =
 						newArr[l][j] = [val.x, val.y];
 					}
 				}
+				const tl = series[l].trendline;
+				if(tl){
+					const forward = tl.forward? tl.forward : 0;
+					const backward = tl.backward? tl.backward : 0;
+					min = Math.min(min, min - backward);
+					max = Math.max(max, max + forward);
+				}
 			}
 		};
 
@@ -1825,6 +1831,7 @@ CChartsDrawer.prototype =
 		if (maxErr !== null && max < maxErr) {
 			max = maxErr;
 		}
+
 		return {min: min, max: max, ymin: minY, ymax: maxY};
 	},
 
@@ -6039,7 +6046,6 @@ drawBarChart.prototype = {
 					if (this.chart.series[i].errBars) {
 						this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
 					}
-					console.log(this.subType)
 					if (this.chart.series[i].trendline && this.subType === "normal" && seria.length>1) {
 						//numCache.ptCount is constant for seria in series, not the best solution always pass the same value n times
 						this.cChartDrawer.trendline.addCoordinate(idx, _pointVal, this.chart.series[i], numCache.ptCount)
@@ -9334,7 +9340,6 @@ drawHBarChart.prototype = {
 					if (this.chart.series[i].errBars) {
 						this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
 					}
-					console.log(this.subType)
 					if (this.chart.series[i].trendline && this.subType === "normal" && seria.length>1 && this.cChartDrawer.nDimensionCount !== 3) {
 						//numCache.ptCount is constant for seria in series, not the best solution always pass the same value n times
 						this.cChartDrawer.trendline.addCoordinate(idx, _pointVal, this.chart.series[i], numCache.ptCount)
@@ -12736,7 +12741,7 @@ drawScatterChart.prototype = {
 						}
 						if (this.chart.series[i].trendline && yNumCache.ptCount>1) {
 							//numCache.ptCount is constant for seria in series, not the best solution always pass the same value n times
-							this.cChartDrawer.trendline.addCoordinate(idx, yVal, this.chart.series[i], yNumCache.ptCount)
+							this.cChartDrawer.trendline.addCoordinate(xVal-1, yVal, this.chart.series[i], yNumCache.ptCount)
 						}
 
 						points[i].push({x: xVal, y: yVal});
@@ -16177,8 +16182,8 @@ CColorObj.prototype =
 			}
 		},
 	
-		_calculateLine: function (oChart, coordinates, atributes) {
-			let type = atributes.trendlineType;
+		_calculateLine: function (oChart, coordinates, attributes) {
+			let type = attributes.trendlineType;
 			// let type = 2;
 
 			// const yAxis = this.cChartDrawer.getAxisFromAxId(oChart.axId, AscDFH.historyitem_type_ValAx);
@@ -16192,12 +16197,12 @@ CColorObj.prototype =
 			const orientation = xAxis.xPoints ? "xPoints" : "yPoints"
 			let results = { vals: null, cond: true };	
 			if (type == AscFormat.TRENDLINE_TYPE_MOVING_AVG) {
-				const period = atributes.period? atributes.period : 0
+				const period = attributes.period? attributes.period : 0
 				results.vals = this._getMAline(coordinates.coords.xVals, coordinates.coords.yVals, coordinates.ptCount, period)
 			} else {
-				const order = atributes.order ? atributes.order + 1 : 2;
+				const order = attributes.order ? attributes.order + 1 : 2;
 				
-				const chartletiables = this._getEquationCoefficients(coordinates.coords.xVals, coordinates.coords.yVals, type, order, atributes.intercept);
+				const chartletiables = this._getEquationCoefficients(coordinates.coords.xVals, coordinates.coords.yVals, type, order, attributes.intercept);
 				const equationStorage = this._obtainEquationStorage(type)
 	
 				if (chartletiables && equationStorage.hasOwnProperty('calcYVal')) {
@@ -16272,11 +16277,11 @@ CColorObj.prototype =
 						results.cond = (type == AscFormat.TRENDLINE_TYPE_LINEAR) ? true : false
 					}
 
-					if(atributes.dispEq){
+					if(attributes.dispEq){
 						coordinates.chartletiables = chartletiables;
 						console.log(coordinates.chartletiables)
 					}
-					if(atributes.dispRSqr){
+					if(attributes.dispRSqr){
 						coordinates.rSquared = this._dispRSquared(coordinates.coords.xVals, coordinates.coords.yVals, chartletiables, type);
 						console.log(coordinates.rSquared)
 					}
@@ -16395,7 +16400,6 @@ CColorObj.prototype =
 		},
 	
 		_getEquationCoefficients: function (xVals, yVals, type, pow, intercept) {
-			console.log(xVals, yVals)
 			if (xVals.length == yVals.length) {
 
 				if(type == AscFormat.TRENDLINE_TYPE_LOG || type == AscFormat.TRENDLINE_TYPE_POWER){
