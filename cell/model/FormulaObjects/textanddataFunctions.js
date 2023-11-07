@@ -1870,7 +1870,7 @@ function (window, undefined) {
 	cSEARCH.prototype.argumentsType = [argType.text, argType.text, argType.number];
 	cSEARCH.prototype.arrayIndexes = {0: 1, 1: 1};
 	cSEARCH.prototype.Calculate = function (arg) {
-		
+
 		const searchString = function (find_text, within_text, start_num) {
 			if (start_num < 1 || start_num > within_text.length) {
 				return new cError(cErrorType.wrong_value_type);
@@ -1920,7 +1920,7 @@ function (window, undefined) {
 		}
 
 		if ((arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D || arg0.type === cElementType.array) || (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D || arg1.type === cElementType.array)) {
-			// todo getMatrixNoEmpty?
+			// todo getMatrixNoEmpty optimize?
 			let resArr = new cArray();
 			if (arg0.type !== cElementType.cellsRange && arg0.type !== cElementType.cellsRange3D && arg0.type !== cElementType.array) {
 				let isArea = arg1.type !== cElementType.array ? true : false;
@@ -1929,11 +1929,11 @@ function (window, undefined) {
 						resArr.addRow();
 					}
 					let item = isArea ? AscCommonExcel.checkTypeCell(elem) : elem;
-					// resArr.addElement(t.Calculate([arg0, item, arg2]));
+
 					arg0 = arg0.tocString();
 					item = item.tocString();
 					arg2 = arg2.tocNumber();
-			
+
 					if (arg0.type === cElementType.error) {
 						resArr.addElement(arg0);
 					} else if (item.type === cElementType.error) {
@@ -1954,7 +1954,7 @@ function (window, undefined) {
 						resArr.addRow();
 					}
 					let item = isArea ? AscCommonExcel.checkTypeCell(elem) : elem;
-					// resArr.addElement(t.Calculate([item, arg1, arg2]));
+
 					item = item.tocString();
 					arg1 = arg1.tocString();
 					arg2 = arg2.tocNumber();
@@ -1986,7 +1986,7 @@ function (window, undefined) {
 					for (let j = 0; j < resCols; j++) {
 						let findText, withinText;
 						// get the substring that we will look for
-						if ((findTextArrDimensions.col < j && findTextArrDimensions.col > 1) || (findTextArrDimensions.row < i && findTextArrDimensions.row > 1)) {
+						if ((findTextArrDimensions.col - 1 < j && findTextArrDimensions.col > 1) || (findTextArrDimensions.row - 1 < i && findTextArrDimensions.row > 1)) {
 							findText = new cError(cErrorType.not_available);
 							resArr.addElement(findText);
 							continue;
@@ -2001,7 +2001,7 @@ function (window, undefined) {
 						}
 	
 						// get the string that we will search in
-						if ((withinTextArrDimensions.col < j && withinTextArrDimensions.col > 1) || (withinTextArrDimensions.row < i && withinTextArrDimensions.row > 1)) {
+						if ((withinTextArrDimensions.col - 1 < j && withinTextArrDimensions.col > 1) || (withinTextArrDimensions.row - 1 < i && withinTextArrDimensions.row > 1)) {
 							withinText = new cError(cErrorType.not_available);
 							resArr.addElement(withinText);
 							continue;
@@ -2032,7 +2032,6 @@ function (window, undefined) {
 							return arg2;
 						}
 
-						// let res = t.Calculate([findText, withinText, arg2]);
 						let res = searchString(findText.getValue(), withinText.getValue(), arg2.getValue());
 						resArr.addElement(res);
 					}
@@ -2057,44 +2056,6 @@ function (window, undefined) {
 
 		return searchString(arg0.getValue(), arg1.getValue(), arg2.getValue());
 
-		// if (arg2.getValue() < 1 || arg2.getValue() > arg1.getValue().length) {
-		// 	return new cError(cErrorType.wrong_value_type);
-		// }
-
-		// let string1 = arg0.getValue(), string2 = arg1.getValue(), valueForSearching = string1
-		// 	.replace(/(\\)/g, "\\\\")
-		// 	.replace(/(\^)/g, "\\^")
-		// 	.replace(/(\()/g, "\\(")
-		// 	.replace(/(\))/g, "\\)")
-		// 	.replace(/(\+)/g, "\\+")
-		// 	.replace(/(\[)/g, "\\[")
-		// 	.replace(/(\])/g, "\\]")
-		// 	.replace(/(\{)/g, "\\{")
-		// 	.replace(/(\})/g, "\\}")
-		// 	.replace(/(\$)/g, "\\$")
-		// 	.replace(/(\.)/g, "\\.")
-		// 	.replace(/(~)?\*/g, function ($0, $1) {
-		// 		return $1 ? $0 : '(.*)';
-		// 	})
-		// 	.replace(/(~)?\?/g, function ($0, $1) {
-		// 		return $1 ? $0 : '.';
-		// 	})
-		// 	.replace(/(~\*)/g, "\\*").replace(/(~\?)/g, "\\?");
-		// valueForSearching = new RegExp(valueForSearching, "ig");
-		// if ('' === string1) {
-		// 	return arg2;
-		// }
-
-
-		// let res = string2.substring(arg2.getValue() - 1).search(valueForSearching);
-
-		// if (res < 0) {
-		// 	return new cError(cErrorType.wrong_value_type);
-		// }
-
-		// res += arg2.getValue() - 1;
-
-		// // return new cNumber(res + 1);
 	};
 
 	/**
@@ -2820,5 +2781,4 @@ function (window, undefined) {
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].cTEXT = cTEXT;
-	// window['AscCommonExcel'].checkTypeCell = checkTypeCell;
 })(window);
