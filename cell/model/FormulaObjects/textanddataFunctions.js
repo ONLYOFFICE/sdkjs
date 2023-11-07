@@ -1870,38 +1870,115 @@ function (window, undefined) {
 	cSEARCH.prototype.argumentsType = [argType.text, argType.text, argType.number];
 	cSEARCH.prototype.arrayIndexes = {0: 1, 1: 1};
 	cSEARCH.prototype.Calculate = function (arg) {
+		
+		const searchString = function (find_text, within_text, start_num) {
+			if (start_num < 1 || start_num > within_text.length) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+	
+			let valueForSearching = find_text
+				.replace(/(\\)/g, "\\\\")
+				.replace(/(\^)/g, "\\^")
+				.replace(/(\()/g, "\\(")
+				.replace(/(\))/g, "\\)")
+				.replace(/(\+)/g, "\\+")
+				.replace(/(\[)/g, "\\[")
+				.replace(/(\])/g, "\\]")
+				.replace(/(\{)/g, "\\{")
+				.replace(/(\})/g, "\\}")
+				.replace(/(\$)/g, "\\$")
+				.replace(/(\.)/g, "\\.")
+				.replace(/(~)?\*/g, function ($0, $1) {
+					return $1 ? $0 : '(.*)';
+				})
+				.replace(/(~)?\?/g, function ($0, $1) {
+					return $1 ? $0 : '.';
+				})
+				.replace(/(~\*)/g, "\\*").replace(/(~\?)/g, "\\?");
+			valueForSearching = new RegExp(valueForSearching, "ig");
+			if ('' === find_text) {
+				return new cNumber(start_num);
+			}
+	
+			let res = within_text.substring(start_num - 1).search(valueForSearching);
+			if (res < 0) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+	
+			res += start_num - 1;
+
+			return new cNumber(res + 1);
+		}
 
 		const t = this;
 		let arg0 = arg[0] ? arg[0] : new cEmpty(), arg1 = arg[1] ? arg[1] : new cEmpty(), arg2 = arg[2] ? arg[2] : new cNumber(1);
 
+		if (arg2 instanceof cArea || arg2 instanceof cArea3D) {
+			arg2 = arg2.cross(arguments[1]).tocNumber();
+		} else if (arg2 instanceof cArray) {
+			arg2 = arg2.getElement(0).tocNumber();
+		}
+
 		if ((arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D || arg0.type === cElementType.array) || (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D || arg1.type === cElementType.array)) {
+			// todo getMatrixNoEmpty?
+			let resArr = new cArray();
 			if (arg0.type !== cElementType.cellsRange && arg0.type !== cElementType.cellsRange3D && arg0.type !== cElementType.array) {
-				let resArr = new cArray();
+				let isArea = arg1.type !== cElementType.array ? true : false;
 				arg1.foreach(function (elem, r, c) {
 					if (!resArr.array[r]) {
 						resArr.addRow();
 					}
-					resArr.addElement(t.Calculate([arg0, elem, arg2]));
+					let item = isArea ? AscCommonExcel.checkTypeCell(elem) : elem;
+					// resArr.addElement(t.Calculate([arg0, item, arg2]));
+					arg0 = arg0.tocString();
+					item = item.tocString();
+					arg2 = arg2.tocNumber();
+			
+					if (arg0.type === cElementType.error) {
+						resArr.addElement(arg0);
+					} else if (item.type === cElementType.error) {
+						resArr.addElement(item);
+					} else if (arg2.type === cElementType.error) {
+						resArr.addElement(arg2);
+					} else {
+						let res = searchString(arg0.getValue(), item.getValue(), arg2.getValue());
+						resArr.addElement(res);
+					}
 				});
+
 				return resArr;
 			} else if (arg1.type !== cElementType.cellsRange && arg1.type !== cElementType.cellsRange3D && arg1.type !== cElementType.array) {
-				let resArr = new cArray();
+				let isArea = arg0.type !== cElementType.array ? true : false;
 				arg0.foreach(function(elem, r, c) {
 					if (!resArr.array[r]) {
 						resArr.addRow();
 					}
-					resArr.addElement(t.Calculate([elem, arg1, arg2]));
+					let item = isArea ? AscCommonExcel.checkTypeCell(elem) : elem;
+					// resArr.addElement(t.Calculate([item, arg1, arg2]));
+					item = item.tocString();
+					arg1 = arg1.tocString();
+					arg2 = arg2.tocNumber();
+			
+					if (item.type === cElementType.error) {
+						resArr.addElement(item);
+					} else if (arg1.type === cElementType.error) {
+						resArr.addElement(arg1);
+					} else if (arg2.type === cElementType.error) {
+						resArr.addElement(arg2);
+					} else {
+						let res = searchString(item.getValue(), arg1.getValue(), arg2.getValue());
+						resArr.addElement(res);
+					}
 				});
+
 				return resArr;
 			} else {
 				if (arg0.isOneElement() && arg1.isOneElement()) {
-					return t.Calculate([arg0.getFirstElement(), arg1.getFirstElement, arg2]);
+					return t.Calculate([arg0.getFirstElement(), arg1.getFirstElement(), arg2]);
 				}
-				let resArr = new cArray(),
-					findTextArrDimensions = arg0.getDimensions(),
-					withinTextArrDimensions = arg1.getDimensions();
-	
-				let resCols = Math.max(findTextArrDimensions.col, withinTextArrDimensions.col),
+				let findTextArrDimensions = arg0.getDimensions(),
+					withinTextArrDimensions = arg1.getDimensions(),
+					resCols = Math.max(findTextArrDimensions.col, withinTextArrDimensions.col),
 					resRows = Math.max(findTextArrDimensions.row, withinTextArrDimensions.row);
 	
 				for (let i = 0; i < resRows; i++) {
@@ -1937,8 +2014,26 @@ function (window, undefined) {
 						} else {
 							withinText = arg1.getElementRowCol ? arg1.getElementRowCol(i, j) : arg1.getValueByRowCol(i, j);
 						}
-	
-						let res = t.Calculate([findText, withinText, arg2]);
+
+						// check errors
+						findText = findText ? findText.tocString() : new cString("");
+						withinText = withinText ? withinText.tocString() : new cString("");
+						arg2 = arg2.tocNumber();
+
+						if (findText.type === cElementType.error) {
+							resArr.addElement(findText);
+							continue
+						}
+						if (withinText.type === cElementType.error) {
+							resArr.addElement(withinText);
+							continue
+						}
+						if (arg2.type === cElementType.error) {
+							return arg2;
+						}
+
+						// let res = t.Calculate([findText, withinText, arg2]);
+						let res = searchString(findText.getValue(), withinText.getValue(), arg2.getValue());
 						resArr.addElement(res);
 					}
 				}
@@ -1948,13 +2043,6 @@ function (window, undefined) {
 
 		arg0 = arg0.tocString();
 		arg1 = arg1.tocString();
-
-		if (arg2 instanceof cArea || arg2 instanceof cArea3D) {
-			arg2 = arg2.cross(arguments[1]).tocNumber();
-		} else if (arg2 instanceof cArray) {
-			arg2 = arg2.getElement(0).tocNumber();
-		}
-
 		arg2 = arg2.tocNumber();
 
 		if (arg0.type === cElementType.error) {
@@ -1967,45 +2055,46 @@ function (window, undefined) {
 			return arg2;
 		}
 
-		if (arg2.getValue() < 1 || arg2.getValue() > arg1.getValue().length) {
-			return new cError(cErrorType.wrong_value_type);
-		}
+		return searchString(arg0.getValue(), arg1.getValue(), arg2.getValue());
 
-		let string1 = arg0.getValue(), string2 = arg1.getValue(), valueForSearching = string1
-			.replace(/(\\)/g, "\\\\")
-			.replace(/(\^)/g, "\\^")
-			.replace(/(\()/g, "\\(")
-			.replace(/(\))/g, "\\)")
-			.replace(/(\+)/g, "\\+")
-			.replace(/(\[)/g, "\\[")
-			.replace(/(\])/g, "\\]")
-			.replace(/(\{)/g, "\\{")
-			.replace(/(\})/g, "\\}")
-			.replace(/(\$)/g, "\\$")
-			.replace(/(\.)/g, "\\.")
-			.replace(/(~)?\*/g, function ($0, $1) {
-				return $1 ? $0 : '(.*)';
-			})
-			.replace(/(~)?\?/g, function ($0, $1) {
-				return $1 ? $0 : '.';
-			})
-			.replace(/(~\*)/g, "\\*").replace(/(~\?)/g, "\\?");
-		valueForSearching = new RegExp(valueForSearching, "ig");
-		if ('' === string1) {
-			return arg2;
-		}
+		// if (arg2.getValue() < 1 || arg2.getValue() > arg1.getValue().length) {
+		// 	return new cError(cErrorType.wrong_value_type);
+		// }
+
+		// let string1 = arg0.getValue(), string2 = arg1.getValue(), valueForSearching = string1
+		// 	.replace(/(\\)/g, "\\\\")
+		// 	.replace(/(\^)/g, "\\^")
+		// 	.replace(/(\()/g, "\\(")
+		// 	.replace(/(\))/g, "\\)")
+		// 	.replace(/(\+)/g, "\\+")
+		// 	.replace(/(\[)/g, "\\[")
+		// 	.replace(/(\])/g, "\\]")
+		// 	.replace(/(\{)/g, "\\{")
+		// 	.replace(/(\})/g, "\\}")
+		// 	.replace(/(\$)/g, "\\$")
+		// 	.replace(/(\.)/g, "\\.")
+		// 	.replace(/(~)?\*/g, function ($0, $1) {
+		// 		return $1 ? $0 : '(.*)';
+		// 	})
+		// 	.replace(/(~)?\?/g, function ($0, $1) {
+		// 		return $1 ? $0 : '.';
+		// 	})
+		// 	.replace(/(~\*)/g, "\\*").replace(/(~\?)/g, "\\?");
+		// valueForSearching = new RegExp(valueForSearching, "ig");
+		// if ('' === string1) {
+		// 	return arg2;
+		// }
 
 
-		let res = string2.substring(arg2.getValue() - 1).search(valueForSearching);
+		// let res = string2.substring(arg2.getValue() - 1).search(valueForSearching);
 
-		if (res < 0) {
-			return new cError(cErrorType.wrong_value_type);
-		}
+		// if (res < 0) {
+		// 	return new cError(cErrorType.wrong_value_type);
+		// }
 
-		res += arg2.getValue() - 1;
+		// res += arg2.getValue() - 1;
 
-		return new cNumber(res + 1);
-
+		// // return new cNumber(res + 1);
 	};
 
 	/**
@@ -2731,4 +2820,5 @@ function (window, undefined) {
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].cTEXT = cTEXT;
+	// window['AscCommonExcel'].checkTypeCell = checkTypeCell;
 })(window);
