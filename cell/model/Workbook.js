@@ -2334,6 +2334,8 @@
 
 		this.customXmls = null;//[]
 		this.oGoalSeek = null;
+
+		this.timelineCaches = [];
 	}
 	Workbook.prototype.init=function(tableCustomFunc, tableIds, sheetIds, bNoBuildDep, bSnapshot){
 		if(this.nActive < 0)

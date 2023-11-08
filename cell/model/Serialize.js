@@ -7813,9 +7813,9 @@
 			}
             else if (c_oSerWorkbookTypes.TimelineCaches === type)
             {
-                let timelineCaches = [];
+                this.oWorkbook.timelineCaches = [];
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadTimelineCaches(t, l, timelineCaches);
+                    return oThis.ReadTimelineCaches(t, l, oThis.oWorkbook.timelineCaches);
                 });
             }
             else
@@ -7934,9 +7934,10 @@
             if (c_oSer_TimelineCache.PivotTable === type)
             {
                 let oTimelineCachePivotTable = new AscCommonExcel.CTimelineCachePivotTable();
-                res = this.bcr.Read1(length, function(t,l){
+                res = this.bcr.Read2Spreadsheet(length, function(t,l){
                     return oThis.ReadTimelineCachePivotTable(t, l, oTimelineCachePivotTable);
                 });
+                aTimelineCachePivotTables.push(oTimelineCachePivotTable);
             }
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -7991,14 +7992,14 @@
             else if (c_oSer_TimelineState.Selection === type)
             {
                 oTimelineState.selection = new AscCommonExcel.CTimelineRange();
-                res = this.bcr.Read1(length, function(t,l){
+                res = this.bcr.Read2Spreadsheet(length, function(t,l){
                     return oThis.ReadTimelineRange(t, l, oTimelineState.selection);
                 });
             }
             else if (c_oSer_TimelineState.Bounds === type)
             {
                 oTimelineState.bounds = new AscCommonExcel.CTimelineRange();
-                res = this.bcr.Read1(length, function(t,l){
+                res = this.bcr.Read2Spreadsheet(length, function(t,l){
                     return oThis.ReadTimelineRange(t, l, oTimelineState.selection);
                 });
             }
