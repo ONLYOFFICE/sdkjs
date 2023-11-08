@@ -16193,13 +16193,14 @@ CColorObj.prototype =
 			if (type === AscFormat.TRENDLINE_TYPE_MOVING_AVG) {
 				const period = attributes.period ? attributes.period : 0
 				results.vals = this._getMAline(coordinates.coords.xVals, coordinates.coords.yVals, coordinates.ptCount, period)
+				console.log(results.vals)
 			} else {
 				const order = attributes.order ? attributes.order + 1 : 2;
 
 				const chartletiables = this._getEquationCoefficients(coordinates.coords.xVals, coordinates.coords.yVals, type, order, attributes.intercept);
 				const equationStorage = this._obtainEquationStorage(type)
 
-				if (chartletiables && equationStorage.hasOwnProperty('calcYVal')) {
+				if (chartletiables && equationStorage.calcYVal) {
 
 					//function to obtain arbitrary point of the equation
 					const _lineCoordinate = function (xIndex) {
@@ -16210,16 +16211,15 @@ CColorObj.prototype =
 
 					// divide the length between xStart and xEnd by the number of points, to retrieve the xVal somewhere between
 					// log cases does not allow yVal to be less or equal to 0
-					const _findMidCoordinates = function (pointsNumber, allow) {
+					const _findMidCoordinates = function (pointsNumber) {
 						const results = {xVals: [], yVals: []}
 						const xNet = points[points.length - 1].val - points[0].val;
 						for (let i = 0; i < pointsNumber; i++) {
 							const xVal = (xNet / (pointsNumber - 1)) * i + points[0].val;
 							const yVal = equationStorage.calcYVal(xVal, chartletiables)
-							if (allow || yVal > 0) {
-								results.xVals.push(xVal)
-								results.yVals.push(yVal)
-							}
+
+							results.xVals.push(xVal)
+							results.yVals.push(yVal)
 						}
 						return results
 					}
@@ -16229,11 +16229,11 @@ CColorObj.prototype =
 						const results = {xVals: [], yVals: []}
 						const start = _lineCoordinate(0)
 						const end = _lineCoordinate(points.length - 1)
-						console.log(start, end)
+						
 						results.xVals.push(start.xVal);
 						results.yVals.push(start.yVal);
 						// only linear trendlines does not contain slope property
-						if (equationStorage.hasOwnProperty('slope')) {
+						if (equationStorage.slope) {
 
 							// find the slope which is a derevative of specific equation
 							const _findLine = function (xVal, yVal) {
@@ -16259,10 +16259,10 @@ CColorObj.prototype =
 					};
 
 					if (type === AscFormat.TRENDLINE_TYPE_POLY || yAxis.scaling.logBase) {
-						const midPointsNum = 100
-						results.vals = _findMidCoordinates(midPointsNum, this.cChartDrawer, !yAxis.scaling.logBase);
+						const midPointsNum = 450
+						results.vals = _findMidCoordinates(midPointsNum);
 					} else {
-						results.vals = _findCentralPoint(chartletiables, this.cChartDrawer);
+						results.vals = _findCentralPoint(chartletiables);
 						results.cond = type === AscFormat.TRENDLINE_TYPE_LINEAR;
 					}
 
@@ -16281,16 +16281,22 @@ CColorObj.prototype =
 			// At this point we should have an array of xVals and yVals
 			if (results.vals) {
 
-				let pathH = this.cChartDrawer.calcProp.pathH;
-				let pathW = this.cChartDrawer.calcProp.pathW;
-				let pathId = this.cChartDrawer.cChartSpace.AllocPath();
+				const pathH = this.cChartDrawer.calcProp.pathH;
+				const pathW = this.cChartDrawer.calcProp.pathW;
+				const pathId = this.cChartDrawer.cChartSpace.AllocPath();
 				let path = this.cChartDrawer.cChartSpace.GetPath(pathId);
+				const height = this.cChartDrawer.calcProp.heightCanvas;
 
 				const valsToPos = function (arr, cChartDrawer) {
 					const posArr = {xPos: [], yPos: []}
 					for (let i = 0; i < arr.xVals.length; i++) {
 						const xPos = cChartDrawer.getYPosition(arr.xVals[i], xAxis);
-						const yPos = cChartDrawer.getYPosition(arr.yVals[i], yAxis, true);
+						let yPos = cChartDrawer.getYPosition(arr.yVals[i], yAxis, true);
+
+						if(yAxis.scaling.logBase && yPos <= 0){
+							yPos = height;
+						}
+
 						if (horOrientation) {
 							posArr.xPos.push(xPos)
 							posArr.yPos.push(yPos)
@@ -16298,6 +16304,7 @@ CColorObj.prototype =
 							posArr.yPos.push(xPos)
 							posArr.xPos.push(yPos)
 						}
+					
 					}
 					return posArr
 				}
@@ -16327,18 +16334,18 @@ CColorObj.prototype =
 				let j = 0;
 				for (let i = 0; i < ptCount; i++) {
 					//check if past existed and remove it
-					if (i >= period && xVals[j - counter] == i + 1 - period) {
+					if (i >= period && xVals[j - counter] === i + 1 - period) {
 						sum -= yVals[j - counter]
 						counter--;
 					}
 					//check if next exists and add it
-					if (xVals[j] == i + 1) {
+					if (xVals[j] === i + 1) {
 						sum += yVals[j]
 						counter++;
 						j++;
 					}
 					//sum/counter after sliding window will be created
-					if (i >= (period - 1) && counter != 0) {
+					if (i >= (period - 1) && counter !== 0) {
 						let yVal = sum / counter;
 						result.yVals.push(yVal);
 						result.xVals.push(i + 1);
@@ -16389,9 +16396,9 @@ CColorObj.prototype =
 		},
 
 		_getEquationCoefficients: function (xVals, yVals, type, pow, intercept) {
-			if (xVals.length == yVals.length) {
+			if (xVals.length === yVals.length) {
 
-				if (type == AscFormat.TRENDLINE_TYPE_LOG || type == AscFormat.TRENDLINE_TYPE_POWER) {
+				if (type === AscFormat.TRENDLINE_TYPE_LOG || type === AscFormat.TRENDLINE_TYPE_POWER) {
 					intercept = null
 				}
 
@@ -16402,11 +16409,11 @@ CColorObj.prototype =
 
 				const _mapCoordinates = function () {
 					for (let i = 0; i < size; i++) {
-						if (mappingStorage.hasOwnProperty('xVal')) {
-							xVals[i] = mappingStorage['xVal'](xVals[i])
+						if (mappingStorage.xVal) {
+							xVals[i] = mappingStorage.xVal(xVals[i])
 						}
-						if (mappingStorage.hasOwnProperty('yVal')) {
-							yVals[i] = mappingStorage['yVal'](yVals[i])
+						if (mappingStorage.yVal) {
+							yVals[i] = mappingStorage.yVal(yVals[i])
 						}
 						if (isNaN(xVals[i]) || isNaN(yVals[i])) {
 							return false
@@ -16431,8 +16438,8 @@ CColorObj.prototype =
 					const _createMatrix = function (arr, size, starting, shift) {
 						let result = []
 						shift = shift ? shift : 0
-						if (shift && mappingStorage.hasOwnProperty('yVal')) {
-							shift = mappingStorage['yVal'](shift)
+						if (shift && mappingStorage.yVal) {
+							shift = mappingStorage.yVal(shift)
 						}
 						for (let i = 0; i < arr.length; i++) {
 							let power = starting;
@@ -16521,7 +16528,7 @@ CColorObj.prototype =
 								//look through every row below the i'th row
 								for (ii = i + 1; ii < dim; ii += 1) {
 									//if the ii'th row has a non-0 in the i'th col
-									if (C[ii][i] != 0) {
+									if (C[ii][i] !== 0) {
 										//it would make the diagonal have a non-0 so swap it
 										for (let j = 0; j < dim; j++) {
 											e = C[i][j];       //temp store i'th row
@@ -16538,7 +16545,7 @@ CColorObj.prototype =
 								//get the new diagonal
 								e = C[i][i];
 								//if it's still 0, not invertable (error)
-								if (e == 0) {
+								if (e === 0) {
 									return
 								}
 							}
@@ -16581,11 +16588,11 @@ CColorObj.prototype =
 						for (let i = 0; i < arr.length; i++) {
 							arr[i] = arr[i][0]
 						}
-						if (intercept != 0) {
+						if (intercept !== 0) {
 							arr.unshift(value)
 						} else {
-							if (mappingStorage.hasOwnProperty('bValBackward')) {
-								arr[0] = mappingStorage['bValBackward'](arr[0])
+							if (mappingStorage.bValBackward) {
+								arr[0] = mappingStorage.bValBackward(arr[0])
 							}
 						}
 					}
@@ -16602,6 +16609,7 @@ CColorObj.prototype =
 						const S = _matMul(X_T, Y, pow - y_intercept, 1, xVals.length)
 						const letiables = _matMul(P_I, S, pow - y_intercept, 1, pow - y_intercept)
 						flatten(letiables, y_intercept, intercept)
+						
 						return letiables
 					}
 				}
@@ -16652,7 +16660,7 @@ CColorObj.prototype =
 			const yMean = findYMean();
 
 			const predictY = function (xVal) {
-				const bVal = mappingStorage.hasOwnProperty('bValForward') ? mappingStorage.bValForward(chartletiables[0]) : chartletiables[0]
+				const bVal = mappingStorage.bValForward ? mappingStorage.bValForward(chartletiables[0]) : chartletiables[0]
 				let result = bVal;
 				let power = 1
 				for (let i = 1; i < chartletiables.length; i++) {
