@@ -1867,8 +1867,8 @@ function (window, undefined) {
 	cSEARCH.prototype.name = 'SEARCH';
 	cSEARCH.prototype.argumentsMin = 2;
 	cSEARCH.prototype.argumentsMax = 3;
+	cSEARCH.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cSEARCH.prototype.argumentsType = [argType.text, argType.text, argType.number];
-	cSEARCH.prototype.arrayIndexes = {0: 1, 1: 1};
 	cSEARCH.prototype.Calculate = function (arg) {
 
 		const searchString = function (find_text, within_text, start_num) {
@@ -1912,132 +1912,133 @@ function (window, undefined) {
 
 		const t = this;
 		let arg0 = arg[0] ? arg[0] : new cEmpty(), arg1 = arg[1] ? arg[1] : new cEmpty(), arg2 = arg[2] ? arg[2] : new cNumber(1);
-
-		if (arg2 instanceof cArea || arg2 instanceof cArea3D) {
-			arg2 = arg2.cross(arguments[1]).tocNumber();
-		} else if (arg2 instanceof cArray) {
-			arg2 = arg2.getElement(0).tocNumber();
+		
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
+			arg0 = arg0.cross(arguments[1]).tocString();
 		}
 
-		if ((arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D || arg0.type === cElementType.array) || (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D || arg1.type === cElementType.array)) {
-			// todo getMatrixNoEmpty optimize?
-			let resArr = new cArray();
-			if (arg0.type !== cElementType.cellsRange && arg0.type !== cElementType.cellsRange3D && arg0.type !== cElementType.array) {
-				let isArea = arg1.type !== cElementType.array ? true : false;
-				arg1.foreach(function (elem, r, c) {
-					if (!resArr.array[r]) {
-						resArr.addRow();
-					}
-					let item = isArea ? AscCommonExcel.checkTypeCell(elem) : elem;
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
+			arg1 = arg1.cross(arguments[1]).tocString();
+		}
 
-					arg0 = arg0.tocString();
-					item = item.tocString();
-					arg2 = arg2.tocNumber();
+		if (arg2.type === cElementType.cellsRange || arg2.type === cElementType.cellsRange3D) {
+			arg2 = arg2.cross(arguments[1]).tocString();
+		}
+		
 
-					if (arg0.type === cElementType.error) {
-						resArr.addElement(arg0);
-					} else if (item.type === cElementType.error) {
-						resArr.addElement(item);
-					} else if (arg2.type === cElementType.error) {
-						resArr.addElement(arg2);
-					} else {
-						let res = searchString(arg0.getValue(), item.getValue(), arg2.getValue());
-						resArr.addElement(res);
-					}
-				});
-
-				return resArr;
-			} else if (arg1.type !== cElementType.cellsRange && arg1.type !== cElementType.cellsRange3D && arg1.type !== cElementType.array) {
-				let isArea = arg0.type !== cElementType.array ? true : false;
-				arg0.foreach(function(elem, r, c) {
-					if (!resArr.array[r]) {
-						resArr.addRow();
-					}
-					let item = isArea ? AscCommonExcel.checkTypeCell(elem) : elem;
-
-					item = item.tocString();
-					arg1 = arg1.tocString();
-					arg2 = arg2.tocNumber();
-			
-					if (item.type === cElementType.error) {
-						resArr.addElement(item);
-					} else if (arg1.type === cElementType.error) {
-						resArr.addElement(arg1);
-					} else if (arg2.type === cElementType.error) {
-						resArr.addElement(arg2);
-					} else {
-						let res = searchString(item.getValue(), arg1.getValue(), arg2.getValue());
-						resArr.addElement(res);
-					}
-				});
-
-				return resArr;
-			} else {
-				if (arg0.isOneElement() && arg1.isOneElement()) {
-					return t.Calculate([arg0.getFirstElement(), arg1.getFirstElement(), arg2]);
-				}
-				let findTextArrDimensions = arg0.getDimensions(),
-					withinTextArrDimensions = arg1.getDimensions(),
-					resCols = Math.max(findTextArrDimensions.col, withinTextArrDimensions.col),
-					resRows = Math.max(findTextArrDimensions.row, withinTextArrDimensions.row);
-	
-				for (let i = 0; i < resRows; i++) {
-					resArr.addRow();
-					for (let j = 0; j < resCols; j++) {
-						let findText, withinText;
-						// get the substring that we will look for
-						if ((findTextArrDimensions.col - 1 < j && findTextArrDimensions.col > 1) || (findTextArrDimensions.row - 1 < i && findTextArrDimensions.row > 1)) {
-							findText = new cError(cErrorType.not_available);
-							resArr.addElement(findText);
-							continue;
-						} else if (findTextArrDimensions.row === 1) {
-							// get elem from first row
-							findText = arg0.getElementRowCol ? arg0.getElementRowCol(0, j) : arg0.getValueByRowCol(0, j);
-						} else if (findTextArrDimensions.col === 1) {
-							// get elem from first col
-							findText = arg0.getElementRowCol ? arg0.getElementRowCol(i, 0) : arg0.getValueByRowCol(i, 0);
-						} else {
-							findText = arg0.getElementRowCol ? arg0.getElementRowCol(i, j) : arg0.getValueByRowCol(i, j);
-						}
-	
-						// get the string that we will search in
-						if ((withinTextArrDimensions.col - 1 < j && withinTextArrDimensions.col > 1) || (withinTextArrDimensions.row - 1 < i && withinTextArrDimensions.row > 1)) {
-							withinText = new cError(cErrorType.not_available);
-							resArr.addElement(withinText);
-							continue;
-						} else if (withinTextArrDimensions.row === 1) {
-							// get elem from first row
-							withinText = arg1.getElementRowCol ? arg1.getElementRowCol(0, j) : arg1.getValueByRowCol(0, j);
-						} else if (withinTextArrDimensions.col === 1) {
-							// get elem from first col
-							withinText = arg1.getElementRowCol ? arg1.getElementRowCol(i, 0) : arg1.getValueByRowCol(i, 0);
-						} else {
-							withinText = arg1.getElementRowCol ? arg1.getElementRowCol(i, j) : arg1.getValueByRowCol(i, j);
-						}
-
-						// check errors
-						findText = findText ? findText.tocString() : new cString("");
-						withinText = withinText ? withinText.tocString() : new cString("");
-						arg2 = arg2.tocNumber();
-
-						if (findText.type === cElementType.error) {
-							resArr.addElement(findText);
-							continue
-						}
-						if (withinText.type === cElementType.error) {
-							resArr.addElement(withinText);
-							continue
-						}
-						if (arg2.type === cElementType.error) {
-							return arg2;
-						}
-
-						let res = searchString(findText.getValue(), withinText.getValue(), arg2.getValue());
-						resArr.addElement(res);
-					}
-				}
-				return resArr;
+		let resArr = new cArray();
+		if (arg0.type === cElementType.array && arg1.type === cElementType.array) {
+			if (arg0.isOneElement() && arg1.isOneElement()) {
+				return t.Calculate([arg0.getFirstElement(), arg1.getFirstElement(), arg2]);
 			}
+			let findTextArrDimensions = arg0.getDimensions(),
+				withinTextArrDimensions = arg1.getDimensions(),
+				resCols = Math.max(findTextArrDimensions.col, withinTextArrDimensions.col),
+				resRows = Math.max(findTextArrDimensions.row, withinTextArrDimensions.row);
+
+			for (let i = 0; i < resRows; i++) {
+				resArr.addRow();
+				for (let j = 0; j < resCols; j++) {
+					let findText, withinText;
+					// get the substring that we will look for
+					if ((findTextArrDimensions.col - 1 < j && findTextArrDimensions.col > 1) || (findTextArrDimensions.row - 1 < i && findTextArrDimensions.row > 1)) {
+						findText = new cError(cErrorType.not_available);
+						resArr.addElement(findText);
+						continue;
+					} else if (findTextArrDimensions.row === 1) {
+						// get elem from first row
+						findText = arg0.getElementRowCol ? arg0.getElementRowCol(0, j) : arg0.getValueByRowCol(0, j);
+					} else if (findTextArrDimensions.col === 1) {
+						// get elem from first col
+						findText = arg0.getElementRowCol ? arg0.getElementRowCol(i, 0) : arg0.getValueByRowCol(i, 0);
+					} else {
+						findText = arg0.getElementRowCol ? arg0.getElementRowCol(i, j) : arg0.getValueByRowCol(i, j);
+					}
+
+					// get the string that we will search in
+					if ((withinTextArrDimensions.col - 1 < j && withinTextArrDimensions.col > 1) || (withinTextArrDimensions.row - 1 < i && withinTextArrDimensions.row > 1)) {
+						withinText = new cError(cErrorType.not_available);
+						resArr.addElement(withinText);
+						continue;
+					} else if (withinTextArrDimensions.row === 1) {
+						// get elem from first row
+						withinText = arg1.getElementRowCol ? arg1.getElementRowCol(0, j) : arg1.getValueByRowCol(0, j);
+					} else if (withinTextArrDimensions.col === 1) {
+						// get elem from first col
+						withinText = arg1.getElementRowCol ? arg1.getElementRowCol(i, 0) : arg1.getValueByRowCol(i, 0);
+					} else {
+						withinText = arg1.getElementRowCol ? arg1.getElementRowCol(i, j) : arg1.getValueByRowCol(i, j);
+					}
+
+					// check errors
+					findText = findText ? findText.tocString() : new cString("");
+					withinText = withinText ? withinText.tocString() : new cString("");
+					arg2 = arg2.tocNumber();
+
+					if (findText.type === cElementType.error) {
+						resArr.addElement(findText);
+						continue
+					}
+					if (withinText.type === cElementType.error) {
+						resArr.addElement(withinText);
+						continue
+					}
+					if (arg2.type === cElementType.error) {
+						return arg2;
+					}
+
+					let res = searchString(findText.getValue(), withinText.getValue(), arg2.getValue());
+					resArr.addElement(res);
+				}
+			}
+
+			return resArr;
+		} else if (arg0.type === cElementType.array) {	
+			arg1 = arg1.tocString();
+			arg2 = arg2.tocNumber();
+			
+			arg0.foreach(function (elem, r, c) {
+				if (!resArr.array[r]) {
+					resArr.addRow();
+				}
+
+				let item = elem.tocString();
+				if (item && item.type === cElementType.error) {
+					resArr.addElement(item);
+				} else if (arg1.type === cElementType.error) {
+					resArr.addElement(arg1);
+				} else if (arg2.type === cElementType.error) {
+					resArr.addElement(arg2);
+				} else {
+					let res = searchString(item.getValue(), arg1.getValue(), arg2.getValue());
+					resArr.addElement(res);
+				}
+			})
+
+			return resArr;
+		} else if (arg1.type === cElementType.array) {
+			arg0 = arg0.tocString();
+			arg2 = arg2.tocNumber();
+			
+			arg1.foreach(function (elem, r, c) {
+				if (!resArr.array[r]) {
+					resArr.addRow();
+				}
+
+				let item = elem.tocString();
+				if (arg0.type === cElementType.error) {
+					resArr.addElement(arg1);
+				} if (item && item.type === cElementType.error) {
+					resArr.addElement(item);
+				} else if (arg2.type === cElementType.error) {
+					resArr.addElement(arg2);
+				} else {
+					let res = searchString(arg0.getValue(), item.getValue(), arg2.getValue());
+					resArr.addElement(res);
+				}
+			})
+
+			return resArr;
 		}
 
 		arg0 = arg0.tocString();

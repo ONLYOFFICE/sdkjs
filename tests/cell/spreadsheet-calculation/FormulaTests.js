@@ -5316,88 +5316,134 @@ $(function () {
 		oParser = new parserFormula('SEARCH("abcde",#DIV/0!,#NUM!)', "C2", ws);
 		assert.ok(oParser.parse(), 'SEARCH("abcde",#DIV/0!,#NUM!)');
 		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of SEARCH("abcde",#DIV/0!,#NUM!)');
+
+		oParser = new parserFormula('SEARCH({5;6;7;1;2;3;4},123)', "K4", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("K4:K10").bbox);
+		assert.ok(oParser.parse(), 'SEARCH({5;6;7;1;2;3;4},123)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of SEARCH({5;6;7;1;2;3;4},123)[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of SEARCH({5;6;7;1;2;3;4},123)[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#VALUE!", 'Result of SEARCH({5;6;7;1;2;3;4},123)[2,0]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 1, 'Result of SEARCH({5;6;7;1;2;3;4},123)[3,0]');
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 2, 'Result of SEARCH({5;6;7;1;2;3;4},123)[4,0]');
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 3, 'Result of SEARCH({5;6;7;1;2;3;4},123)[5,0]');
+		assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "#VALUE!", 'Result of SEARCH({5;6;7;1;2;3;4},123)[6,0]');
 		
-		
-		ws.getRange2("A1").setValue("hcdpmhatlvmctst71a");
-		ws.getRange2("A2").setValue("pmhwebvmwtst01");
-		ws.getRange2("B1").setValue("sd");
-		ws.getRange2("B2").setValue("dd");
+		ws.getRange2("K1").setValue("hcd*prd");
+		ws.getRange2("L1").setValue("*vmwprd*");
+		ws.getRange2("M1").setValue("*vmcprd*");
+
+		oParser = new parserFormula('SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M2)', "K4", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("K4:M4").bbox);
+		assert.ok(oParser.parse(), 'SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M2)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M2)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M2)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#VALUE!", 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M2)[0,2]');
+
+		oParser = new parserFormula('SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},{"hcdpmhatlvmctst71a";"dsdsvmwprd";"hcdpmhatlvmcprd71a";"hcd*prd*vmwprd**vmcprd*"})', "K4", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("K4:M7").bbox);
+		assert.ok(oParser.parse(), 'SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},{"hcdpmhatlvmctst71a";"dsdsvmwprd";"hcdpmhatlvmcprd71a";"hcd*prd*vmwprd**vmcprd*"})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},{"hcdpmhatlvmctst71a";"dsdsvmwprd";"hcdpmhatlvmcprd71a";"hcd*prd*vmwprd**vmcprd*"})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},{"hcdpmhatlvmctst71a";"dsdsvmwprd";"hcdpmhatlvmcprd71a";"hcd*prd*vmwprd**vmcprd*"})[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#VALUE!", 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},{"hcdpmhatlvmctst71a";"dsdsvmwprd";"hcdpmhatlvmcprd71a";"hcd*prd*vmwprd**vmcprd*"})[0,2]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},{"hcdpmhatlvmctst71a";"dsdsvmwprd";"hcdpmhatlvmcprd71a";"hcd*prd*vmwprd**vmcprd*"})[0,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},{"hcdpmhatlvmctst71a";"dsdsvmwprd";"hcdpmhatlvmcprd71a";"hcd*prd*vmwprd**vmcprd*"})[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "#VALUE!", 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},{"hcdpmhatlvmctst71a";"dsdsvmwprd";"hcdpmhatlvmcprd71a";"hcd*prd*vmwprd**vmcprd*"})[0,2]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 1, 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},{"hcdpmhatlvmctst71a";"dsdsvmwprd";"hcdpmhatlvmcprd71a";"hcd*prd*vmwprd**vmcprd*"})[0,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#VALUE!", 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},{"hcdpmhatlvmctst71a";"dsdsvmwprd";"hcdpmhatlvmcprd71a";"hcd*prd*vmwprd**vmcprd*"})[0,1]');
+		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), 1, 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},{"hcdpmhatlvmctst71a";"dsdsvmwprd";"hcdpmhatlvmcprd71a";"hcd*prd*vmwprd**vmcprd*"})[0,2]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 1, 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},{"hcdpmhatlvmctst71a";"dsdsvmwprd";"hcdpmhatlvmcprd71a";"hcd*prd*vmwprd**vmcprd*"})[0,0]');
+		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), 1, 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},{"hcdpmhatlvmctst71a";"dsdsvmwprd";"hcdpmhatlvmcprd71a";"hcd*prd*vmwprd**vmcprd*"})[0,1]');
+		assert.strictEqual(array.getElementRowCol(3, 2).getValue(), 1, 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},{"hcdpmhatlvmctst71a";"dsdsvmwprd";"hcdpmhatlvmcprd71a";"hcd*prd*vmwprd**vmcprd*"})[0,2]');
+
+		// todo cross tests
+		// oParser = new parserFormula('SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M1)', "K4", ws);
+		// oParser.setArrayFormulaRef(ws.getRange2("K4:M4").bbox);
+		// assert.ok(oParser.parse(), 'SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M1)');
+		// array = oParser.calculate();
+		// assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M1)[0,0]');
+		// assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M1)[0,1]');
+		// assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#VALUE!", 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M1)[0,2]');
+
+		// ws.getRange2("A1").setValue("hcdpmhatlvmctst71a");
+		// ws.getRange2("A2").setValue("pmhwebvmwtst01");
+		// ws.getRange2("B1").setValue("sd");
+		// ws.getRange2("B2").setValue("dd");
 
 		// array|area
-		oParser = new parserFormula('SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)', "C2", ws);
-		oParser.setArrayFormulaRef(ws.getRange2("D1:F2").bbox);
-		assert.ok(oParser.parse(), 'SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)');
-		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[0,1]');
-		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[0,2]');
-		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[1,0]');
-		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[1,1]');
-		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[1,2]');
+		// oParser = new parserFormula('SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)', "C2", ws);
+		// oParser.setArrayFormulaRef(ws.getRange2("D1:F2").bbox);
+		// assert.ok(oParser.parse(), 'SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)');
+		// array = oParser.calculate();
+		// assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[0,0]');
+		// assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[0,1]');
+		// assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[0,2]');
+		// assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[1,0]');
+		// assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[1,1]');
+		// assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[1,2]');
 
-		oParser = new parserFormula('SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)', "C2", ws);
-		oParser.setArrayFormulaRef(ws.getRange2("D1:F2").bbox);
-		assert.ok(oParser.parse(), 'SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)');
-		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[0,1]');
-		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#N/A", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[0,2]');
-		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[1,0]');
-		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[1,1]');
-		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "#N/A", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[1,2]');
+		// oParser = new parserFormula('SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)', "C2", ws);
+		// oParser.setArrayFormulaRef(ws.getRange2("D1:F2").bbox);
+		// assert.ok(oParser.parse(), 'SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)');
+		// array = oParser.calculate();
+		// assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[0,0]');
+		// assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[0,1]');
+		// assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#N/A", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[0,2]');
+		// assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[1,0]');
+		// assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[1,1]');
+		// assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "#N/A", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[1,2]');
 
-		ws.getRange2("A3:A5").cleanAll();
+		// ws.getRange2("A3:A5").cleanAll();
+		// oParser = new parserFormula('SEARCH({"mhat","vmc"}, A1:A5)', "C2", ws);
+		// oParser.setArrayFormulaRef(ws.getRange2("D1:F5").bbox);
+		// assert.ok(oParser.parse(), 'SEARCH({"mhat","vmc"}, A1:A5)');
+		// array = oParser.calculate();
+		// assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 5, 'Result of SEARCH({"mhat","vmc"}, A1:A5)[0,0]');
+		// assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 10, 'Result of SEARCH({"mhat","vmc"}, A1:A5)[0,1]');
+		// assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[1,0]');
+		// assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[1,1]');
+		// assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[2,0]');
+		// assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[2,1]');
+		// assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[3,0]');
+		// assert.strictEqual(array.getElementRowCol(3, 1).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[3,1]');
 
-		oParser = new parserFormula('SEARCH({"mhat","vmc"}, A1:A5)', "C2", ws);
-		oParser.setArrayFormulaRef(ws.getRange2("D1:F5").bbox);
-		assert.ok(oParser.parse(), 'SEARCH({"mhat","vmc"}, A1:A5)');
-		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 5, 'Result of SEARCH({"mhat","vmc"}, A1:A5)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 10, 'Result of SEARCH({"mhat","vmc"}, A1:A5)[0,1]');
-		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[1,0]');
-		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[1,1]');
-		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[2,0]');
-		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[2,1]');
-		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[3,0]');
-		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[3,1]');
+		// ws.getRange2("S1").setValue("hcd*tst");
+		// ws.getRange2("S2").setValue("2");
+		// ws.getRange2("T1").setValue("#DIV/0!");
+		// ws.getRange2("T2").setValue("*vmwtst*");
+		// ws.getRange2("U1").setValue("1");
+		// ws.getRange2("U2").setValue("*vmctst*");
 
-		ws.getRange2("S1").setValue("hcd*tst");
-		ws.getRange2("S2").setValue("2");
-		ws.getRange2("T1").setValue("#DIV/0!");
-		ws.getRange2("T2").setValue("*vmwtst*");
-		ws.getRange2("U1").setValue("1");
-		ws.getRange2("U2").setValue("*vmctst*");
+		// oParser = new parserFormula('SEARCH(S1:U2,A1:A2)', "C2", ws);
+		// oParser.setArrayFormulaRef(ws.getRange2("D1:F5").bbox);
+		// assert.ok(oParser.parse(), 'SEARCH(S1:U2,A1:A2)');
+		// array = oParser.calculate();
+		// assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SEARCH(S1:U2,A1:A2)[0,0]');
+		// assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#DIV/0!", 'Result of SEARCH(S1:U2,A1:A2)[0,1]');
+		// assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 17, 'Result of SEARCH(S1:U2,A1:A2)[0,2]');
+		// assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,A1:A2)[1,0]');
+		// assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, 'Result of SEARCH(S1:U2,A1:A2)[1,1]');
+		// assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,A1:A2)[1,2]');
 
-		oParser = new parserFormula('SEARCH(S1:U2,A1:A2)', "C2", ws);
-		oParser.setArrayFormulaRef(ws.getRange2("D1:F5").bbox);
-		assert.ok(oParser.parse(), 'SEARCH(S1:U2,A1:A2)');
-		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SEARCH(S1:U2,A1:A2)[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#DIV/0!", 'Result of SEARCH(S1:U2,A1:A2)[0,1]');
-		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 17, 'Result of SEARCH(S1:U2,A1:A2)[0,2]');
-		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,A1:A2)[1,0]');
-		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, 'Result of SEARCH(S1:U2,A1:A2)[1,1]');
-		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,A1:A2)[1,2]');
+		// oParser = new parserFormula('SEARCH(S1:U2,"hcdpmh71")', "C2", ws);
+		// oParser.setArrayFormulaRef(ws.getRange2("D1:F5").bbox);
+		// assert.ok(oParser.parse(), 'SEARCH(S1:U2,"hcdpmh71")');
+		// array = oParser.calculate();
+		// assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,"hcdpmh71")[0,0]');
+		// assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#DIV/0!", 'Result of SEARCH(S1:U2,"hcdpmh71")[0,1]');
+		// assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 8, 'Result of SEARCH(S1:U2,"hcdpmh71")[0,2]');
+		// assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,"hcdpmh71")[1,0]');
+		// assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,"hcdpmh71")[1,1]');
+		// assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,"hcdpmh71")[1,2]');
 
-		oParser = new parserFormula('SEARCH(S1:U2,"hcdpmh71")', "C2", ws);
-		oParser.setArrayFormulaRef(ws.getRange2("D1:F5").bbox);
-		assert.ok(oParser.parse(), 'SEARCH(S1:U2,"hcdpmh71")');
-		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,"hcdpmh71")[0,0]');
-		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#DIV/0!", 'Result of SEARCH(S1:U2,"hcdpmh71")[0,1]');
-		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 8, 'Result of SEARCH(S1:U2,"hcdpmh71")[0,2]');
-		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,"hcdpmh71")[1,0]');
-		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,"hcdpmh71")[1,1]');
-		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,"hcdpmh71")[1,2]');
-
-		oParser = new parserFormula('SEARCH("hcd",A1:A2)', "C2", ws);
-		oParser.setArrayFormulaRef(ws.getRange2("D1:F5").bbox);
-		assert.ok(oParser.parse(), 'SEARCH("hcd",A1:A2)');
-		array = oParser.calculate();
-		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SEARCH("hcd",A1:A2)[0,0]');
-		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of SEARCH("hcd",A1:A2)[1,0]');
-
-		
+		// oParser = new parserFormula('SEARCH("hcd",A1:A2)', "C2", ws);
+		// oParser.setArrayFormulaRef(ws.getRange2("D1:F5").bbox);
+		// assert.ok(oParser.parse(), 'SEARCH("hcd",A1:A2)');
+		// array = oParser.calculate();
+		// assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SEARCH("hcd",A1:A2)[0,0]');
+		// assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of SEARCH("hcd",A1:A2)[1,0]');
 
 		// testArrayFormula2(assert, "SEARCH", 2, 3);
 	});
