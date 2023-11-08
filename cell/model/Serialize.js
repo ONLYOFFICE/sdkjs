@@ -4041,20 +4041,8 @@
                 this.bs.WriteItem(c_oSerWorksheetsTypes.UserProtectedRanges, function(){oThis.WriteUserProtectedRanges(ws.userProtectedRanges);});
             }
 
-            if (ws.timelinesList) {
-                this.bs.WriteItem(c_oSerWorksheetsTypes.TimelinesList, function() {
-                    oThis.memory.WriteULong(ws.timelinesList.length);
-                });
-            }
-            if (ws.timelines) {
-                this.bs.WriteItem(c_oSerWorksheetsTypes.Timelines, function() {
-                    oThis.memory.WriteULong(ws.Timelines.length);
-                });
-            }
-            if (ws.timeline) {
-                  this.bs.WriteItem(c_oSerWorksheetsTypes.Timeline, function() {
-                    oThis.memory.WriteULong(ws.Timeline.length);
-                });
+            if (ws.timelines && ws.timelines.length > 0) {
+                this.bs.WriteItem(c_oSerWorksheetsTypes.TimelinesList, function(){oThis.WriteTimelines(ws.timelines);});
             }
         };
 		this.WriteDataValidations = function(dataValidations)
@@ -5838,6 +5826,95 @@
 						oThis.WriteUserProtectedRangeDesc(userGroups[i]);
 					});
 				}
+            }
+        };
+
+        this.WriteTimelines = function (aTimelines) {
+            var oThis = this;
+            for (let i = 0, length = aTimelines.length; i < length; ++i) {
+                this.bs.WriteItem(c_oSerUserProtectedRange.Timeline, function () {
+                    oThis.WriteUserProtectedRange(aTimelines[i]);
+                });
+            }
+        };
+        this.WriteTimeline = function (oTimeline) {
+
+            if (!oTimeline) {
+                return;
+            }
+
+            var oThis = this;
+            if (oTimeline.name != null)
+            {
+                this.bs.WriteItem(c_oSer_Timeline.Name, function () {
+                    oThis.memory.WriteString3(oTimeline.name);
+                });
+            }
+            if (oTimeline.caption != null)
+            {
+                this.bs.WriteItem(c_oSer_Timeline.Caption, function () {
+                    oThis.memory.WriteString3(oTimeline.caption);
+                });
+            }
+            if (oTimeline.uid != null)
+            {
+                this.bs.WriteItem(c_oSer_Timeline.Uid, function () {
+                    oThis.memory.WriteString3(oTimeline.uid);
+                });
+            }
+            if (oTimeline.scrollPosition != null)
+            {
+                this.bs.WriteItem(c_oSer_Timeline.ScrollPosition, function () {
+                    oThis.memory.WriteString3(oTimeline.scrollPosition);
+                });
+            }
+            if (oTimeline.cache != null)
+            {
+                this.bs.WriteItem(c_oSer_Timeline.Cache, function () {
+                    oThis.memory.WriteString3(oTimeline.cache);
+                });
+            }
+            if (oTimeline.selectionLevel != null)
+            {
+                this.bs.WriteItem(c_oSer_Timeline.SelectionLevel, function () {
+                    oThis.memory.WriteLong(oTimeline.selectionLevel);
+                });
+            }
+            if (oTimeline.level != null)
+            {
+                this.bs.WriteItem(c_oSer_Timeline.Level, function () {
+                    oThis.memory.WriteLong(oTimeline.level);
+                });
+            }
+            if (oTimeline.showHeader != null)
+            {
+                this.bs.WriteItem(c_oSer_Timeline.ShowHeader, function () {
+                    oThis.memory.WriteBool(oTimeline.showHeader);
+                });
+            }
+            if (oTimeline.showSelectionLabel != null)
+            {
+                this.bs.WriteItem(c_oSer_Timeline.ShowSelectionLabel, function () {
+                    oThis.memory.WriteBool(oTimeline.showSelectionLabel);
+                });
+            }
+            if (oTimeline.showTimeLevel != null)
+            {
+                this.bs.WriteItem(c_oSer_Timeline.ShowTimeLevel, function () {
+                    oThis.memory.WriteBool(oTimeline.showTimeLevel);
+                });
+            }
+            if (oTimeline.showHorizontalScrollbar != null)
+            {
+                this.bs.WriteItem(c_oSer_Timeline.ShowHorizontalScrollbar, function () {
+                    oThis.memory.WriteBool(oTimeline.showHorizontalScrollbar);
+                });
+            }
+            if (oTimeline.style != null)
+            {
+                this.bs.WriteItem(c_oSer_Timeline.Style, function () {
+                    oThis.memory.WriteLong(oTimeline.style);
+                });
             }
         };
     }

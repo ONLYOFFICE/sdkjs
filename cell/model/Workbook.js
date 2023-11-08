@@ -5124,6 +5124,7 @@
 		this.aCellWatches = [];
 		
 		this.userProtectedRanges = [];
+		this.timelines = [];
 	}
 
 	Worksheet.prototype.getCompiledStyle = function (row, col, opt_cell, opt_styleComponents) {
