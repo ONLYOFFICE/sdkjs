@@ -15889,6 +15889,44 @@ QueryTableField.prototype.clone = function() {
 		return res;
 	};
 
+	function CTimelineCacheDefinition() {
+		this.name = null;
+		this.sourceName = null;
+		this.uid = null;
+
+		this.pivotTables = null;
+		this.state = null;
+		this.pivotFilter = null;
+
+		return this;
+	}
+	CTimelineCacheDefinition.prototype.clone = function () {
+		var res = new CTimelineCacheDefinition();
+
+		res.name = this.name;
+		res.sourceName = this.sourceName;
+		res.uid = this.uid;
+
+		res.pivotTables = this.pivotTables;
+		res.state = this.state;
+		res.pivotFilter = this.pivotFilter;
+
+		return res;
+	};
+
+	function CTimelineCachePivotTable() {
+		this.name = null;
+		this.tabId = null;
+	}
+	CTimelineCachePivotTable.prototype.clone = function () {
+		var res = new CTimelineCachePivotTable();
+
+		res.name = this.name;
+		res.tabId = this.tabId;
+
+		return res;
+	};
+
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
@@ -16365,6 +16403,8 @@ QueryTableField.prototype.clone = function() {
 	window["AscCommonExcel"].CBreak = CBreak;
 
 	window["AscCommonExcel"].CTimeline = CTimeline;
+	window["AscCommonExcel"].CTimelineCacheDefinition = CTimelineCacheDefinition;
+	window["AscCommonExcel"].CTimelineCachePivotTable = CTimelineCachePivotTable;
 
 
 
