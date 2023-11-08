@@ -3436,6 +3436,11 @@
 				var sRange = this.wb.oleSize.getName();
 				this.bs.WriteItem(c_oSerWorkbookTypes.OleSize, function () {oThis.memory.WriteString3(sRange)});
 			}
+
+            if (this.wb.timelineCaches) {
+                this.bs.WriteItem(c_oSerWorkbookTypes.TimelineCaches, function () {oThis.WriteTimelineCaches(oThis.wb.timelineCaches);});
+            }
+
         };
         this.WriteWorkbookPr = function()
         {
@@ -3610,7 +3615,180 @@
                 }
             }
         };
-		this.WriteExternalReferences = function() {
+
+        this.WriteTimelineCaches = function (timelineCaches) {
+            let oThis = this;
+            for (let id in timelineCaches) {
+                if (timelineCaches.hasOwnProperty(id)) {
+                    let elem = timelineCaches[id];
+                    this.bs.WriteItem(c_oSerWorkbookTypes.TimelineCache, function () {
+                        oThis.WriteTimelineCache(elem);
+                    });
+                }
+            }
+        };
+        this.WriteTimelineCache = function (oTimelineCache) {
+            if (!oTimelineCache) {
+                return;
+            }
+
+            let oThis = this;
+            if (oTimelineCache.name != null) {
+                //this.bs.WriteItem(c_oSerWorksheetsTypes.PageMargins, function(){oThis.WritePageMargins(ws.PagePrintOptions.asc_getPageMargins());});
+
+                oThis.memory.WriteByte(c_oSer_TimelineCache.Name);
+                oThis.memory.WriteString2(oTimelineCache.name);
+            }
+            if (oTimelineCache.SourceName != null) {
+                oThis.memory.WriteByte(c_oSer_TimelineCache.SourceName);
+                oThis.memory.WriteString2(oTimelineCache.sourceName);
+            }
+            if (oTimelineCache.Uid != null) {
+                oThis.memory.WriteByte(c_oSer_TimelineCache.Uid);
+                oThis.memory.WriteString2(oTimelineCache.uid);
+            }
+            if (oTimelineCache.pivotTables != null && oTimelineCache.pivotTables > 0) {
+                this.bs.WriteItem(c_oSer_TimelineCache.PivotTables, function () {
+                    oThis.WriteTimelineCachePivotTables(oTimelineCache.pivotTables);
+                });
+            }
+            if (oTimelineCache.pivotFilter != null) {
+                this.bs.WriteItem(c_oSer_TimelineCache.PivotFilter, function () {
+                    oThis.WriteTimelineCachePivotTables(oTimelineCache.pivotTables);
+                });
+            }
+            if (oTimelineCache.state != null) {
+                this.bs.WriteItem(c_oSer_TimelineCache.State, function () {
+                    oThis.WriteTimelineCachePivotTables(oTimelineCache.state);
+                });
+            }
+        };
+        this.WriteTimelineState = function (oTimelineState) {
+            if (!oTimelineState) {
+                return;
+            }
+
+            let oThis = this;
+            if (oTimelineState.name != null) {
+                oThis.memory.WriteByte(c_oSer_TimelineState.Name);
+                oThis.memory.WriteString2(oTimelineState.name);
+            }
+            if (oTimelineState.singleRangeFilterState != null) {
+                oThis.memory.WriteByte(c_oSer_TimelineState.FilterState);
+                oThis.memory.WriteBool(oTimelineState.singleRangeFilterState);
+            }
+            if (oTimelineState.PivotCacheId != null) {
+                oThis.memory.WriteByte(c_oSer_TimelineState.PivotCacheId);
+                oThis.memory.WriteULong(oTimelineState.pivotCacheId);
+            }
+            if (oTimelineState.minimalRefreshVersion != null) {
+                oThis.memory.WriteByte(c_oSer_TimelineState.MinimalRefreshVersion);
+                oThis.memory.WriteULong(oTimelineState.minimalRefreshVersion);
+            }
+            if (oTimelineState.lastRefreshVersion != null) {
+                oThis.memory.WriteByte(c_oSer_TimelineState.LastRefreshVersion);
+                oThis.memory.WriteULong(oTimelineState.lastRefreshVersion);
+            }
+            if (oTimelineState.filterType != null) {
+                oThis.memory.WriteByte(c_oSer_TimelineState.FilterType);
+                oThis.memory.WriteString2(oTimelineState.filterType);
+            }
+            if (oTimelineState.selection != null) {
+                this.bs.WriteItem(c_oSer_TimelineCache.Selection, function () {
+                    oThis.WriteTimelineRange(oTimelineCache.selection);
+                });
+            }
+            if (oTimelineState.bounds != null) {
+                this.bs.WriteItem(c_oSer_TimelineCache.Bounds, function () {
+                    oThis.WriteTimelineRange(oTimelineCache.bounds);
+                });
+            }
+        };
+        this.WriteTimelineRange = function (oTimelineRange) {
+            if (!oTimelineRange) {
+                return;
+            }
+
+            if (oTimelineRange.startDate != null) {
+                this.memory.WriteByte(c_oSer_DateGroupItem.StartDate);
+                this.memory.WriteByte(c_oSerPropLenType.Variable);
+                this.memory.WriteString2(oTimelineRange.startDate);
+            }
+            if (oTimelineRange.endDate != null) {
+                this.memory.WriteByte(c_oSer_DateGroupItem.EndDate);
+                this.memory.WriteByte(c_oSerPropLenType.Variable);
+                this.memory.WriteString2(oTimelineRange.endDate);
+            }
+        };
+        this.WriteTimelinePivotFilter = function (oPivotFilter) {
+            if (!oPivotFilter) {
+                return;
+            }
+
+            let oThis = this;
+            if (oPivotFilter.name != null) {
+                this.bs.WriteItem(c_oSer_TimelinePivotFilter.Name, function () {
+                    oThis.memory.WriteString2(oPivotFilter.name)
+                });
+            }
+            if (oPivotFilter.description != null) {
+                this.bs.WriteItem(c_oSer_TimelinePivotFilter.Description, function () {
+                    oThis.memory.WriteString2(oPivotFilter.description)
+                });
+            }
+            if (oPivotFilter.UseWholeDay != null) {
+                this.bs.WriteItem(c_oSer_TimelinePivotFilter.UseWholeDay, function () {
+                    oThis.memory.WriteBool(oPivotFilter.useWholeDay)
+                });
+            }
+            if (oPivotFilter.id != null) {
+                this.bs.WriteItem(c_oSer_TimelinePivotFilter.Id, function () {
+                    oThis.memory.WriteULong(oPivotFilter.id)
+                });
+            }
+            if (oPivotFilter.fld != null) {
+                this.bs.WriteItem(c_oSer_TimelinePivotFilter.Fld, function () {
+                    oThis.memory.WriteULong(oPivotFilter.fld)
+                });
+            }
+            if (oPivotFilter.AutoFilter != null) {
+                //TODO
+                /*nCurPos = m_oBcw.WriteItemStart(c_oSer_TimelinePivotFilter.AutoFilter);
+                BinaryTableWriter oBinaryTableWriter(m_oBcw.m_oStream);
+                oBinaryTableWriter.WriteAutoFilter(oPivotFilter.AutoFilter.get());
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);*/
+            }
+        };
+        this.WriteTimelineCachePivotTables = function (oPivotTables) {
+            if (!oPivotTables || !oPivotTables.length) {
+                return;
+            }
+
+            let oThis = this;
+            for (let i = 0; i < oPivotTables.length; ++i) {
+                this.bs.WriteItem(c_oSer_TimelineCache.PivotTable, function () {
+                    oThis.WriteTimelineCachePivotTable(oPivotTables[i]);
+                });
+            }
+        };
+        this.WriteTimelineCachePivotTable = function (oPivotTables) {
+            if (!oPivotTables) {
+                return;
+            }
+
+            if (oPivotTables.name != null) {
+                this.memory.WriteByte(c_oSer_TimelineCachePivotTable.name);
+                this.memory.WriteByte(c_oSerPropLenType.Variable);
+                this.memory.WriteString2(oPivotTables.name);
+            }
+            if (pPivotTable.tabId != null) {
+                this.memory.WriteByte(c_oSer_TimelineCachePivotTable.TabId);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteULong(pPivotTable.tabId);
+            }
+        };
+
+        this.WriteExternalReferences = function() {
 			var oThis = this;
 
             for(var i = 0, length = this.wb.externalReferences.length; i < length; ++i) {
