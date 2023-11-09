@@ -5361,6 +5361,63 @@
 		return arrApiImages;
 	};
 	/**
+	 * Returns a collection of image objects from the document content.
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiTitle[]}  
+	 */
+	ApiDocumentContent.prototype.getAllTitles = function()
+	{
+		const allText = this.Document.Content;
+		const result = {
+			h1Title: [],
+			h2Title: [],
+			h3Title: [],
+			h4Title: [],
+			h5Title: [],
+			h6Title: [],
+			h7Title: [],
+			h8Title: [],
+			h9Title: []
+		  }
+		  for(var text of allText){
+			const { Pr = {} } = text;
+			const { PStyle } = Pr;
+			switch (PStyle) {
+			  case "698":
+				result.h1Title.push(text);
+				break;
+			  case "700":
+				result.h2Title.push(text);
+				break;
+			  case "702":
+				result.h3Title.push(text);
+				break;
+			  case "704":
+				result.h4Title.push(text);
+				break;
+			  case "706":
+				result.h5Title.push(text);
+				break;
+			  case "708":
+				result.h6Title.push(text);
+				break;
+			  case "710":
+				result.h7Title.push(text);
+				break;
+			  case "712":
+				result.h8Title.push(text);
+				break;
+			  case "714":
+				result.h9Title.push(text);
+				break;
+			  default:
+				break;
+			}
+		  }
+		return result;
+	};
+	/**
 	 * Returns a collection of chart objects from the document content.
 	 * @memberof ApiDocumentContent
 	 * @typeofeditors ["CDE"]
@@ -19604,6 +19661,7 @@
 	ApiDocumentContent.prototype["GetAllDrawingObjects"] = ApiDocumentContent.prototype.GetAllDrawingObjects;
 	ApiDocumentContent.prototype["GetAllShapes"]         = ApiDocumentContent.prototype.GetAllShapes;
 	ApiDocumentContent.prototype["GetAllImages"]         = ApiDocumentContent.prototype.GetAllImages;
+	ApiDocumentContent.prototype["getAllTitles"]         = ApiDocumentContent.prototype.getAllTitles;
 	ApiDocumentContent.prototype["GetAllCharts"]         = ApiDocumentContent.prototype.GetAllCharts;
 	ApiDocumentContent.prototype["GetAllOleObjects"]     = ApiDocumentContent.prototype.GetAllOleObjects;
 	ApiDocumentContent.prototype["GetAllParagraphs"]     = ApiDocumentContent.prototype.GetAllParagraphs;
