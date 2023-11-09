@@ -16193,7 +16193,6 @@ CColorObj.prototype =
 			if (type === AscFormat.TRENDLINE_TYPE_MOVING_AVG) {
 				const period = attributes.period ? attributes.period : 0
 				results.vals = this._getMAline(coordinates.coords.xVals, coordinates.coords.yVals, coordinates.ptCount, period)
-				console.log(results.vals)
 			} else {
 				const order = attributes.order ? attributes.order + 1 : 2;
 
@@ -16203,8 +16202,7 @@ CColorObj.prototype =
 				if (chartletiables && equationStorage.calcYVal) {
 
 					//function to obtain arbitrary point of the equation
-					const _lineCoordinate = function (xIndex) {
-						let xVal = points[xIndex].val;
+					const _lineCoordinate = function (xVal) {
 						let yVal = equationStorage.calcYVal(xVal, chartletiables);
 						return {xVal: xVal, yVal: yVal}
 					}
@@ -16213,9 +16211,9 @@ CColorObj.prototype =
 					// log cases does not allow yVal to be less or equal to 0
 					const _findMidCoordinates = function (pointsNumber) {
 						const results = {xVals: [], yVals: []}
-						const xNet = points[points.length - 1].val - points[0].val;
+						const xNet = xAxis.max - xAxis.min;
 						for (let i = 0; i < pointsNumber; i++) {
-							const xVal = (xNet / (pointsNumber - 1)) * i + points[0].val;
+							const xVal = (xNet / (pointsNumber - 1)) * i + xAxis.min;
 							const yVal = equationStorage.calcYVal(xVal, chartletiables)
 
 							results.xVals.push(xVal)
@@ -16227,8 +16225,8 @@ CColorObj.prototype =
 					const _findCentralPoint = function (chartletiables) {
 
 						const results = {xVals: [], yVals: []}
-						const start = _lineCoordinate(0)
-						const end = _lineCoordinate(points.length - 1)
+						const start = _lineCoordinate(xAxis.min)
+						const end = _lineCoordinate(xAxis.max)
 						
 						results.xVals.push(start.xVal);
 						results.yVals.push(start.yVal);
@@ -16294,7 +16292,7 @@ CColorObj.prototype =
 						let yPos = cChartDrawer.getYPosition(arr.yVals[i], yAxis, true);
 
 						if(yAxis.scaling.logBase && yPos <= 0){
-							yPos = height;
+							yPos = horOrientation ? height : 0
 						}
 
 						if (horOrientation) {
@@ -16310,6 +16308,7 @@ CColorObj.prototype =
 				}
 
 				const positions = valsToPos(results.vals, this.cChartDrawer)
+				console.log(results, positions)
 				path.moveTo(positions.xPos[0] * pathW, positions.yPos[0] * pathH);
 
 				// if cond is true use for loop 
