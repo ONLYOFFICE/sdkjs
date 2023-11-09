@@ -4400,6 +4400,12 @@ var editor;
     this.asc_onCloseChartFrame();
     return ret;
   };
+  spreadsheet_api.prototype.asc_getRecommendedChartData = function() {
+	  if(!this.wb) {
+		  return null;
+	  }
+	  return this.wb.getRecommendedChartData();
+  };
 
     spreadsheet_api.prototype.getScaleCoefficientsForOleTableImage = function (nImageWidth, nImageHeight) {
       const oThis = this;
@@ -9206,6 +9212,7 @@ var editor;
   prot["asc_getChartObject"] = prot.asc_getChartObject;
   prot["asc_addChartDrawingObject"] = prot.asc_addChartDrawingObject;
   prot["asc_editChartDrawingObject"] = prot.asc_editChartDrawingObject;
+  prot["asc_getRecommendedChartData"] = prot.asc_getRecommendedChartData;
   prot["asc_addImageDrawingObject"] = prot.asc_addImageDrawingObject;
   prot["asc_getCurrentDrawingMacrosName"] = prot.asc_getCurrentDrawingMacrosName;
   prot["asc_assignMacrosToCurrentDrawing"] = prot.asc_assignMacrosToCurrentDrawing;

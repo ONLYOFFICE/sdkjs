@@ -610,6 +610,107 @@
 		return charts;
 	};
 
+	WorksheetView.prototype.getRecommendedChartData = function() {
+
+		return AscFormat.ExecuteNoHistory(function() {
+			let aRanges = this.getSelectedRanges();
+			if(!aRanges) {
+				return null;
+			}
+			let aResultCheckRange = aRanges;
+			if(aRanges.length === 1 && aRanges[0].isOneCell()) {
+				let oBBox = this.model.autoFilters.expandRange(aRanges[0].bbox, true);
+				let oRange = AscCommonExcel.Range.prototype.createFromBBox(this.model, oBBox);
+				aResultCheckRange = [oRange];
+			}
+
+			if(aResultCheckRange.length > 2) {
+				let oFirstRange = aResultCheckRange[0];
+				let oSecondRange = aResultCheckRange[1];
+				if(!oFirstRange.isEqualCols(oSecondRange) && !oFirstRange.isEqualRows(oSecondRange)) {
+					return null;
+				}
+				let bRows = oFirstRange.isEqualRows(oSecondRange);
+				for(let nRange = 2; nRange < aResultCheckRange.length; ++nRange) {
+					let oCurRange = aResultCheckRange[nRange];
+					if(bRows) {
+						if(!oFirstRange.isEqualRows(oCurRange)) {
+							return null;
+						}
+					}
+					else {
+						if(!oFirstRange.isEqualCols(oCurRange)) {
+							return null;
+						}
+					}
+				}
+			}
+			let bEmpty = true;
+			for(let nRange = 0; nRange < aResultCheckRange.length; ++nRange) {
+				let oRange = aResultCheckRange[nRange];
+				if(!oRange.isNullText()) {
+					bEmpty = false;
+					break;
+				}
+			}
+			if(bEmpty) {
+				return null;
+			}
+
+			const oDataRefs = new AscFormat.CChartDataRefs(null);
+			const nHorCheckError = oDataRefs.checkDataRangeRefs(aResultCheckRange, true, Asc.c_oAscChartTypeSettings.unknown);
+			const nVertCheckError = oDataRefs.checkDataRangeRefs(aResultCheckRange, false, Asc.c_oAscChartTypeSettings.unknown);
+			if(Asc.c_oAscError.ID.No !== nHorCheckError && Asc.c_oAscError.ID.No !== nVertCheckError) {
+				return null;
+			}
+
+
+			let aCharts = [];
+			let aSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aResultCheckRange, true, false);
+			let aSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aResultCheckRange, false, false);
+
+			let oProps = Asc.editor.asc_getChartObject(true);
+			oProps.putRange(null);
+			oProps.putStyle(null);
+			oProps.removeAllAxesProps();
+			if(aSeriesRefsHor.length === 1 || aSeriesRefsVer.length === 1) {
+				//bar, hbar, linear, pie
+
+				let oBarCS = AscFormat.CreateBarChart([], AscFormat.BAR_GROUPING_CLUSTERED, false, {type: Asc.c_oAscChartTypeSettings.barNormal}, false, false);
+				aCharts.push(oBarCS);
+				let oHBarCS = AscFormat.CreateHBarChart([], AscFormat.BAR_GROUPING_CLUSTERED, false, {type: Asc.c_oAscChartTypeSettings.hBarNormal}, false);
+				aCharts.push(oHBarCS);
+				let oPieChart = AscFormat.CreatePieChart([], false, false, {type: Asc.c_oAscChartTypeSettings.pie}, false);
+				aCharts.push(oPieChart);
+				if(aSeriesRefsHor.length > 1 || aSeriesRefsVer.length > 1) {
+					let oLineCS = AscFormat.CreateLineChart([], AscFormat.GROUPING_STANDARD, false, {type: Asc.c_oAscChartTypeSettings.lineNormal}, false);
+					aCharts.push(oLineCS);
+				}
+				let aSeriesRef = aSeriesRefsHor.length === 1 ? aSeriesRefsHor : aSeriesRefsVer;
+				for(let nChart = 0; nChart < aCharts.length; ++nChart) {
+					let oCS = aCharts[nChart];
+					oCS.setBDeleted(false);
+					oCS.setWorksheet(this.model);
+					oCS.buildSeries(aSeriesRef);
+					oProps.type = oCS.getChartType();
+					this.objectRender.controller.applyPropsToChartSpace(oProps, oCS);
+					AscFormat.CheckSpPrXfrm(oCS);
+					oCS.allPreviewCharts = aCharts;
+				}
+			}
+
+			let aScatterSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, true, true);
+			let aScatterSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, false, true);
+
+			// if(!this.objectRender) {
+			// 	return null;
+			// }
+			//return this.objectRender.getRecommendedChartData();
+
+			return aCharts;
+		}, this, []);
+	};
+
 	WorksheetView.prototype._initWorksheetDefaultWidthForPrint = function () {
 		var defaultPpi = 96;
 		var truePPIX = this.drawingCtx.ppiX;

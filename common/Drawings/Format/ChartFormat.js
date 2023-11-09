@@ -17735,11 +17735,8 @@
         }
         return aData;
     };
-    CChartDataRefs.prototype.checkDataRange = function(sRange, bHorValue, nType) {
-        if(typeof  sRange !== "string") {
-            return  Asc.c_oAscError.ID.DataRangeError;
-        }
-        var aSeriesRefs = this.getSeriesRefsFromUnionRefs(AscFormat.fParseChartFormulaExternal(sRange), bHorValue, isScatterChartType(nType));
+    CChartDataRefs.prototype.checkDataRangeRefs = function (aRanges, bHorValue, nType) {
+        var aSeriesRefs = this.getSeriesRefsFromUnionRefs(aRanges, bHorValue, isScatterChartType(nType));
         if(!Array.isArray(aSeriesRefs)) {
             return  Asc.c_oAscError.ID.DataRangeError;
         }
@@ -17769,6 +17766,12 @@
             }
         }
         return Asc.c_oAscError.ID.No;
+    };
+    CChartDataRefs.prototype.checkDataRange = function(sRange, bHorValue, nType) {
+        if(typeof  sRange !== "string") {
+            return  Asc.c_oAscError.ID.DataRangeError;
+        }
+        return this.checkDataRangeRefs(AscFormat.fParseChartFormulaExternal(sRange), bHorValue, nType);
     };
     CChartDataRefs.prototype.fillSelectedRanges = function(oWSView) {
         this.updateDataRefs();

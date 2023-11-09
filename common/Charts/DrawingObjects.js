@@ -3022,6 +3022,10 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         }
     };
 
+    _this.getRecommendedChartData = function () {
+
+    };
+
     _this.checkSparklineGroupMinMaxVal = function(oSparklineGroup)
     {
         var maxVal = null, minVal = null, i, j, sparkline, nPtCount = 0;
