@@ -2840,58 +2840,84 @@ CChartsDrawer.prototype =
 		return result;
 	},
 
+	// Assumptions:
+	/*	yPoints.length always greater than 2
+		logBase is always 10
+	 */
 	_getYPositionLogBase: function (val, yPoints, isOx, logBase) {
 		if (val <= 0) {
-			return 0;
+			return this.axesChart[0].axis.xPoints ? (this.calcProp.heightCanvas / this.calcProp.pxToMM) : 0;
 		}
 
-		var logVal = Math.log(val) / Math.log(logBase);
-		var result;
-
-		//TODO переписать функцию!
-		var parseVal, maxVal, minVal, startPos = 0, diffPos;
-
-		if (yPoints.length < 2) {
-			return parseFloat("0." + logVal.toString().split(".")[1]) * yPoints[0].pos;
-		}
-		if (logVal < 0) {
-			parseVal = logVal.toString().split(".");
-			maxVal = Math.pow(logBase, parseVal[0]);
-			minVal = Math.pow(logBase, parseFloat(parseVal[0]) - 1);
-			for (var i = 0; i < yPoints.length; i++) {
-				if (yPoints[i].val < maxVal && yPoints[i].val >= minVal) {
-					if(yPoints[i + 1]) {
-						startPos = yPoints[i + 1].pos;
-						diffPos = yPoints[i].pos - yPoints[i + 1].pos;
-					} else {
-						startPos = yPoints[i].pos;
-						diffPos = yPoints[i - 1].pos - yPoints[i].pos;
-					}
-
-					break;
-				}
+		const getPower = function(val){
+			let power = 0;
+			while(val>10){
+				val/=10;
+				power++;
 			}
-			result = startPos + parseFloat("0." + parseVal[1]) * diffPos;
-		} else {
-			parseVal = logVal.toString().split(".");
-			minVal = Math.pow(logBase, parseVal[0]);
-			maxVal = Math.pow(logBase, parseFloat(parseVal[0]) + 1);
-			for (var i = 0; i < yPoints.length; i++) {
-				if (yPoints[i].val < maxVal && yPoints[i].val >= minVal) {
-					if(yPoints[i + 1]) {
-						startPos = yPoints[i].pos;
-						diffPos = yPoints[i].pos - yPoints[i + 1].pos;
-					} else {
-						startPos = yPoints[i].pos;
-						diffPos = yPoints[i - 1].pos - yPoints[i].pos;
-					}
-					break;
-				}
+			while(val<1){
+				val*=10;
+				power--;
 			}
-			result = startPos - parseFloat("0." + parseVal[1]) * diffPos;
+			return power
 		}
 
-		return result;
+		const startingPos = yPoints[yPoints.length-1].pos
+		const stepDistance = yPoints[yPoints.length-2].pos - yPoints[yPoints.length-1].pos 
+		const valPower = getPower(val)
+		const startingPower = getPower(yPoints[yPoints.length-1].val)
+		const stepCount = startingPower - valPower
+		const newVal = val * Math.pow(10, -valPower)
+		const changedVal = Math.log(newVal) / Math.log(logBase);
+		return (stepDistance * stepCount) + startingPos + (1 - changedVal) * stepDistance
+
+		// var logVal = Math.log(val) / Math.log(logBase);
+		// var result;
+
+		// //TODO переписать функцию!
+		// var parseVal, maxVal, minVal, startPos = 0, diffPos;
+
+		// if (yPoints.length < 2) {
+		// 	return parseFloat("0." + logVal.toString().split(".")[1]) * yPoints[0].pos;
+		// }
+		// if (logVal < 0) {
+		// 	parseVal = logVal.toString().split(".");
+		// 	maxVal = Math.pow(logBase, parseVal[0]);
+		// 	minVal = Math.pow(logBase, parseFloat(parseVal[0]) - 1);
+		// 	for (var i = 0; i < yPoints.length; i++) {
+		// 		if (yPoints[i].val < maxVal && yPoints[i].val >= minVal) {
+		// 			if(yPoints[i + 1]) {
+		// 				startPos = yPoints[i + 1].pos;
+		// 				diffPos = yPoints[i].pos - yPoints[i + 1].pos;
+		// 			} else {
+		// 				startPos = yPoints[i].pos;
+		// 				diffPos = yPoints[i - 1].pos - yPoints[i].pos;
+		// 			}
+
+		// 			break;
+		// 		}
+		// 	}
+		// 	result = startPos + parseFloat("0." + parseVal[1]) * diffPos;
+		// } else {
+		// 	parseVal = logVal.toString().split(".");
+		// 	minVal = Math.pow(logBase, parseVal[0]);
+		// 	maxVal = Math.pow(logBase, parseFloat(parseVal[0]) + 1);
+		// 	for (var i = 0; i < yPoints.length; i++) {
+		// 		if (yPoints[i].val < maxVal && yPoints[i].val >= minVal) {
+		// 			if(yPoints[i + 1]) {
+		// 				startPos = yPoints[i].pos;
+		// 				diffPos = yPoints[i].pos - yPoints[i + 1].pos;
+		// 			} else {
+		// 				startPos = yPoints[i].pos;
+		// 				diffPos = yPoints[i - 1].pos - yPoints[i].pos;
+		// 			}
+		// 			break;
+		// 		}
+		// 	}
+		// 	result = startPos - parseFloat("0." + parseVal[1]) * diffPos;
+		// }
+
+		// return result;
 	},
 
 	getLogarithmicValue: function (val, logBase) {
@@ -16290,10 +16316,6 @@ CColorObj.prototype =
 					for (let i = 0; i < arr.xVals.length; i++) {
 						const xPos = cChartDrawer.getYPosition(arr.xVals[i], xAxis);
 						let yPos = cChartDrawer.getYPosition(arr.yVals[i], yAxis, true);
-
-						if(yAxis.scaling.logBase && yPos <= 0){
-							yPos = horOrientation ? height : 0
-						}
 
 						if (horOrientation) {
 							posArr.xPos.push(xPos)
