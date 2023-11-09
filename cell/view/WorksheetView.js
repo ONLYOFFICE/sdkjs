@@ -755,6 +755,7 @@
 				oScatterCS.buildSeries(aSeriesRef);
 			}
 
+			let oResultMap = {};
 			for(let nChart = 0; nChart < aCharts.length; ++nChart) {
 				let oCS = aCharts[nChart];
 				oCS.setBDeleted(false);
@@ -763,14 +764,15 @@
 				this.objectRender.controller.applyPropsToChartSpace(oProps, oCS);
 				AscFormat.CheckSpPrXfrm(oCS);
 				oCS.allPreviewCharts = aCharts;
+
+				let nType = oCS.getChartType();
+				if(!Array.isArray(oResultMap[nType])) {
+					oResultMap[nType] = [];
+				}
+				oResultMap[nType].push(oCS);
 			}
 
-			// if(!this.objectRender) {
-			// 	return null;
-			// }
-			//return this.objectRender.getRecommendedChartData();
-
-			return aCharts;
+			return oResultMap;
 		}, this, []);
 	};
 
