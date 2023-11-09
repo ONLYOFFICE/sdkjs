@@ -1910,6 +1910,34 @@ function (window, undefined) {
 			return new cNumber(res + 1);
 		}
 
+		const searchInArray = function (arr, findText, withinText, startNum) {
+			findText = findText ? findText.tocString() : findText;
+			withinText = withinText ? withinText.tocString()  : withinText;
+			startNum = startNum ? startNum.tocNumber() : startNum;
+			
+			arr.foreach(function (elem, r, c) {
+				if (!resArr.array[r]) {
+					resArr.addRow();
+				}
+
+				let item = startNum ? elem.tocString() : elem.tocNumber();
+				if (findText && findText.type === cElementType.error) {
+					resArr.addElement(findText);
+				} else if (withinText && withinText.type === cElementType.error) {
+					resArr.addElement(withinText);
+				} else if (startNum && startNum.type === cElementType.error) {
+					resArr.addElement(startNum);
+				} else if (item && item.type === cElementType.error) {
+					resArr.addElement(item);
+				} else {
+					let res = searchString(findText ? findText.getValue() : item.getValue(), withinText ? withinText.getValue() : item.getValue(), startNum ? startNum.getValue() : item.getValue());
+					resArr.addElement(res);
+				}
+			})
+
+			return resArr;
+		}
+
 		const t = this;
 		let arg0 = arg[0] ? arg[0] : new cEmpty(), arg1 = arg[1] ? arg[1] : new cEmpty(), arg2 = arg[2] ? arg[2] : new cNumber(1);
 		
@@ -2031,75 +2059,12 @@ function (window, undefined) {
 			}
 
 			return resArr;
-		} else if (arg0.type === cElementType.array) {	
-			arg1 = arg1.tocString();
-			arg2 = arg2.tocNumber();
-			
-			arg0.foreach(function (elem, r, c) {
-				if (!resArr.array[r]) {
-					resArr.addRow();
-				}
-
-				let item = elem.tocString();
-				if (item && item.type === cElementType.error) {
-					resArr.addElement(item);
-				} else if (arg1.type === cElementType.error) {
-					resArr.addElement(arg1);
-				} else if (arg2.type === cElementType.error) {
-					resArr.addElement(arg2);
-				} else {
-					let res = searchString(item.getValue(), arg1.getValue(), arg2.getValue());
-					resArr.addElement(res);
-				}
-			})
-
-			return resArr;
+		} else if (arg0.type === cElementType.array) {
+			return searchInArray(arg0, null, arg1, arg2);
 		} else if (arg1.type === cElementType.array) {
-			arg0 = arg0.tocString();
-			arg2 = arg2.tocNumber();
-			
-			arg1.foreach(function (elem, r, c) {
-				if (!resArr.array[r]) {
-					resArr.addRow();
-				}
-
-				let item = elem.tocString();
-				if (arg0.type === cElementType.error) {
-					resArr.addElement(arg0);
-				} else if (item && item.type === cElementType.error) {
-					resArr.addElement(item);
-				} else if (arg2.type === cElementType.error) {
-					resArr.addElement(arg2);
-				} else {
-					let res = searchString(arg0.getValue(), item.getValue(), arg2.getValue());
-					resArr.addElement(res);
-				}
-			})
-
-			return resArr;
+			return searchInArray(arg1, arg0, null, arg2);
 		} else if (arg2.type === cElementType.array) {
-			arg0 = arg0.tocString();
-			arg1 = arg1.tocString();
-			
-			arg2.foreach(function (elem, r, c) {
-				if (!resArr.array[r]) {
-					resArr.addRow();
-				}
-
-				let item = elem.tocNumber();
-				if (arg0.type === cElementType.error) {
-					resArr.addElement(arg0);
-				} else if (arg1.type === cElementType.error) {
-					resArr.addElement(arg1);
-				} else if (item && item.type === cElementType.error) {
-					resArr.addElement(item);
-				} else {
-					let res = searchString(arg0.getValue(), arg1.getValue(), item.getValue());
-					resArr.addElement(res);
-				}
-			})
-
-			return resArr;
+			return searchInArray(arg2, arg0, arg1, null);
 		}
 
 		arg0 = arg0.tocString();
