@@ -3695,12 +3695,12 @@
             }
             if (oTimelineState.selection != null) {
                 this.bs.WriteItem(c_oSer_TimelineCache.Selection, function () {
-                    oThis.WriteTimelineRange(oTimelineCache.selection);
+                    oThis.WriteTimelineRange(oTimelineState.selection);
                 });
             }
             if (oTimelineState.bounds != null) {
                 this.bs.WriteItem(c_oSer_TimelineCache.Bounds, function () {
-                    oThis.WriteTimelineRange(oTimelineCache.bounds);
+                    oThis.WriteTimelineRange(oTimelineState.bounds);
                 });
             }
         };
@@ -3752,11 +3752,10 @@
                 });
             }
             if (oPivotFilter.AutoFilter != null) {
-                //TODO
-                /*nCurPos = m_oBcw.WriteItemStart(c_oSer_TimelinePivotFilter.AutoFilter);
-                BinaryTableWriter oBinaryTableWriter(m_oBcw.m_oStream);
-                oBinaryTableWriter.WriteAutoFilter(oPivotFilter.AutoFilter.get());
-                m_oBcw.WriteItemWithLengthEnd(nCurPos);*/
+                let oBinaryTableWriter = new BinaryTableWriter(this.memory, this.InitSaveManager, false, {});
+                this.bs.WriteItem(c_oSer_TimelinePivotFilter.AutoFilter, function () {
+                    oBinaryTableWriter.WriteAutoFilter(oPivotFilter.AutoFilter);
+                });
             }
         };
         this.WriteTimelineCachePivotTables = function (oPivotTables) {
@@ -8045,196 +8044,145 @@
 			return res;
 		};
 
-
-        this.ReadTimelineCaches = function(type, length, aTimelineCaches)
-        {
+        this.ReadTimelineCaches = function (type, length, aTimelineCaches) {
             let oThis = this;
             let res = c_oSerConstants.ReadOk;
 
-            if (c_oSerWorkbookTypes.TimelineCache === type)
-            {
+            if (c_oSerWorkbookTypes.TimelineCache === type) {
                 let oTimelineCache = new AscCommonExcel.CTimelineCacheDefinition();
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadTimelineCache(t, l, oTimelineCache);
                 });
                 aTimelineCaches.push(oTimelineCache);
-            } else
+            } else {
                 res = c_oSerConstants.ReadUnknown;
+            }
             return res;
         };
-        this.ReadTimelineCache = function(type, length, oTimelineCache)
-        {
+        this.ReadTimelineCache = function (type, length, oTimelineCache) {
             let oThis = this;
             let res = c_oSerConstants.ReadOk;
-            if (c_oSer_TimelineCache.Name === type)
-            {
+            if (c_oSer_TimelineCache.Name === type) {
                 oTimelineCache.name = this.stream.GetString2LE(length);
-            }
-            else if (c_oSer_TimelineCache.SourceName === type)
-            {
+            } else if (c_oSer_TimelineCache.SourceName === type) {
                 oTimelineCache.sourceName = this.stream.GetString2LE(length);
-            }
-            else if (c_oSer_TimelineCache.Uid === type)
-            {
+            } else if (c_oSer_TimelineCache.Uid === type) {
                 oTimelineCache.uid = this.stream.GetString2LE(length);
-            }
-            else if (c_oSer_TimelineCache.PivotTables === type)
-            {
+            } else if (c_oSer_TimelineCache.PivotTables === type) {
                 oTimelineCache.PivotTables = [];
-                res = this.bcr.Read1(length, function(t,l){
+                res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadTimelineCachePivotTables(t, l, oTimelineCache.PivotTables);
                 });
-            }
-            else if (c_oSer_TimelineCache.State === type)
-            {
+            } else if (c_oSer_TimelineCache.State === type) {
                 oTimelineCache.state = new AscCommonExcel.CTimelineState();
-                res = this.bcr.Read1(length, function(t,l){
+                res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadTimelineState(t, l, oTimelineCache.state);
                 });
-            }
-            else if (c_oSer_TimelineCache.PivotFilter === type)
-            {
+            } else if (c_oSer_TimelineCache.PivotFilter === type) {
                 oTimelineCache.pivotFilter = new AscCommonExcel.CTimelinePivotFilter();
-                res = this.bcr.Read1(length, function(t,l){
+                res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadTimelinePivotFilter(t, l, oTimelineCache.pivotFilter);
                 });
-            }
-            else
+            } else {
                 res = c_oSerConstants.ReadUnknown;
+            }
 
             return res;
         }
-        this.ReadTimelineCachePivotTables = function (type, length, aTimelineCachePivotTables)
-        {
+        this.ReadTimelineCachePivotTables = function (type, length, aTimelineCachePivotTables) {
             let oThis = this;
             let res = c_oSerConstants.ReadOk;
 
-            if (c_oSer_TimelineCache.PivotTable === type)
-            {
+            if (c_oSer_TimelineCache.PivotTable === type) {
                 let oTimelineCachePivotTable = new AscCommonExcel.CTimelineCachePivotTable();
-                res = this.bcr.Read2Spreadsheet(length, function(t,l){
+                res = this.bcr.Read2Spreadsheet(length, function (t, l) {
                     return oThis.ReadTimelineCachePivotTable(t, l, oTimelineCachePivotTable);
                 });
                 aTimelineCachePivotTables.push(oTimelineCachePivotTable);
-            }
-            else
+            } else {
                 res = c_oSerConstants.ReadUnknown;
+            }
             return res;
         };
 
-        this.ReadTimelineCachePivotTable = function (type, length, oTimelineCachePivotTable)
-        {
+        this.ReadTimelineCachePivotTable = function (type, length, oTimelineCachePivotTable) {
             let res = c_oSerConstants.ReadOk;
 
-            if (c_oSer_TimelineCachePivotTable.Name === type)
-            {
+            if (c_oSer_TimelineCachePivotTable.Name === type) {
                 oTimelineCachePivotTable.name = this.stream.GetString2LE(length);
-            }
-            else if (c_oSer_TimelineCachePivotTable.TabId === type)
-            {
+            } else if (c_oSer_TimelineCachePivotTable.TabId === type) {
                 oTimelineCachePivotTable.tabId = this.stream.GetLong(length);
-            }
-            else
+            } else {
                 res = c_oSerConstants.ReadUnknown;
+            }
             return res;
         }
 
-        this.ReadTimelineState = function (type, length, oTimelineState)
-        {
+        this.ReadTimelineState = function (type, length, oTimelineState) {
             let oThis = this;
             let res = c_oSerConstants.ReadOk;
-            if (c_oSer_TimelineState.Name === type)
-            {
+            if (c_oSer_TimelineState.Name === type) {
                 oTimelineState.name = this.stream.GetString2LE(length);
-            }
-            else if (c_oSer_TimelineState.FilterState === type)
-            {
+            } else if (c_oSer_TimelineState.FilterState === type) {
                 oTimelineState.singleRangeFilterState = this.stream.GetBool();
-            }
-            else if (c_oSer_TimelineState.PivotCacheId === type)
-            {
+            } else if (c_oSer_TimelineState.PivotCacheId === type) {
                 oTimelineState.pivotCacheId = this.stream.GetLong();
-            }
-            else if (c_oSer_TimelineState.MinimalRefreshVersion === type)
-            {
+            } else if (c_oSer_TimelineState.MinimalRefreshVersion === type) {
                 oTimelineState.minimalRefreshVersion = this.stream.GetLong();
-            }
-            else if (c_oSer_TimelineState.LastRefreshVersion === type)
-            {
+            } else if (c_oSer_TimelineState.LastRefreshVersion === type) {
                 oTimelineState.lastRefreshVersion = this.stream.GetLong();
-            }
-            else if (c_oSer_TimelineState.FilterType === type)
-            {
+            } else if (c_oSer_TimelineState.FilterType === type) {
                 oTimelineState.filterType = this.stream.GetString2LE(length);
-            }
-            else if (c_oSer_TimelineState.Selection === type)
-            {
+            } else if (c_oSer_TimelineState.Selection === type) {
                 oTimelineState.selection = new AscCommonExcel.CTimelineRange();
-                res = this.bcr.Read2Spreadsheet(length, function(t,l){
+                res = this.bcr.Read2Spreadsheet(length, function (t, l) {
                     return oThis.ReadTimelineRange(t, l, oTimelineState.selection);
                 });
-            }
-            else if (c_oSer_TimelineState.Bounds === type)
-            {
+            } else if (c_oSer_TimelineState.Bounds === type) {
                 oTimelineState.bounds = new AscCommonExcel.CTimelineRange();
-                res = this.bcr.Read2Spreadsheet(length, function(t,l){
-                    return oThis.ReadTimelineRange(t, l, oTimelineState.selection);
+                res = this.bcr.Read2Spreadsheet(length, function (t, l) {
+                    return oThis.ReadTimelineRange(t, l, oTimelineState.bounds);
                 });
-            }
-            else
+            } else {
                 res = c_oSerConstants.ReadUnknown;
+            }
             return res;
         }
-        this.ReadTimelineRange = function (type, length, oTimelineRange)
-        {
+        this.ReadTimelineRange = function (type, length, oTimelineRange) {
             let res = c_oSerConstants.ReadOk;
 
-            if (c_oSer_TimelineRange.StartDate === type)
-            {
+            if (c_oSer_TimelineRange.StartDate === type) {
                 oTimelineRange.startDate = this.stream.GetString2LE(length);
-            }
-            else if (c_oSer_TimelineRange.EndDate === type)
-            {
+            } else if (c_oSer_TimelineRange.EndDate === type) {
                 oTimelineRange.endDate = this.stream.GetString2LE(length);
-            }
-            else
+            } else {
                 res = c_oSerConstants.ReadUnknown;
+            }
 
             return res;
         }
         this.ReadTimelinePivotFilter = function (type, length, oTimelinePivotFilter) {
             let res = c_oSerConstants.ReadOk;
 
-            if (c_oSer_TimelinePivotFilter.Name === type)
-            {
+            if (c_oSer_TimelinePivotFilter.Name === type) {
                 oTimelinePivotFilter.name = this.stream.GetString2LE(length);
-            }
-            else if (c_oSer_TimelinePivotFilter.Description === type)
-            {
+            } else if (c_oSer_TimelinePivotFilter.Description === type) {
                 oTimelinePivotFilter.description = this.stream.GetString2LE(length);
-            }
-            else if (c_oSer_TimelinePivotFilter.UseWholeDay === type)
-            {
+            } else if (c_oSer_TimelinePivotFilter.UseWholeDay === type) {
                 oTimelinePivotFilter.useWholeDay = this.stream.GetBool();
-            }
-            else if (c_oSer_TimelinePivotFilter.Id === type)
-            {
+            } else if (c_oSer_TimelinePivotFilter.Id === type) {
                 oTimelinePivotFilter.id = this.stream.Getlong();
-            }
-            else if (c_oSer_TimelinePivotFilter.Fld === type)
-            {
+            } else if (c_oSer_TimelinePivotFilter.Fld === type) {
                 oTimelinePivotFilter.fld = this.stream.Getlong();
-            }
-            else if (c_oSer_TimelinePivotFilter.AutoFilter === type)
-            {
-                let oBinary_TableReader = new Binary_TableReader(this.stream, this.InitOpenManager, oWorksheet);
+            } else if (c_oSer_TimelinePivotFilter.AutoFilter === type) {
+                let oBinary_TableReader = new Binary_TableReader(this.stream, this.InitOpenManager, /*ws*/null);
                 oTimelinePivotFilter.autoFilter = new AscCommonExcel.AutoFilter();
-                res = this.bcr.Read1(length, function(t,l){
-                    return oBinary_TableReader.ReadAutoFilter(t,l, oTimelinePivotFilter.autoFilter);
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oBinary_TableReader.ReadAutoFilter(t, l, oTimelinePivotFilter.autoFilter);
                 });
-            }
-            else
+            } else {
                 res = c_oSerConstants.ReadUnknown;
+            }
             return res;
         };
 
