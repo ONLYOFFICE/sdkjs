@@ -6041,9 +6041,11 @@
 
         this.WriteTimelines = function (aTimelines) {
             var oThis = this;
-            for (let i = 0, length = aTimelines.length; i < length; ++i) {
-                this.bs.WriteItem(c_oSerUserProtectedRange.Timeline, function () {
-                    oThis.WriteTimeline(aTimelines[i]);
+            if (aTimelines.length > 0) {
+                this.bs.WriteItem(c_oSerWorksheetsTypes.Timelines, function () {
+                    for (var i = 0; i < aTimelines.length; ++i) {
+                        oThis.bs.WriteItem(c_oSerWorksheetsTypes.Timeline, function () {oThis.WriteTimeline(aTimelines[i]);});
+                    }
                 });
             }
         };
@@ -6053,81 +6055,69 @@
                 return;
             }
 
-            var oThis = this;
-            if (oTimeline.name != null)
-            {
-                this.bs.WriteItem(c_oSer_Timeline.Name, function () {
-                    oThis.memory.WriteString3(oTimeline.name);
-                });
+            if (oTimeline.name != null) {
+                this.memory.WriteByte(c_oSer_Timeline.Name);
+                this.memory.WriteByte(c_oSerPropLenType.Variable);
+                this.memory.WriteString2(oTimeline.name);
             }
-            if (oTimeline.caption != null)
-            {
-                this.bs.WriteItem(c_oSer_Timeline.Caption, function () {
-                    oThis.memory.WriteString3(oTimeline.caption);
-                });
+            if (oTimeline.caption != null) {
+                this.memory.WriteByte(c_oSer_Timeline.Caption);
+                this.memory.WriteByte(c_oSerPropLenType.Variable);
+                this.memory.WriteString2(oTimeline.caption);
             }
-            if (oTimeline.uid != null)
-            {
-                this.bs.WriteItem(c_oSer_Timeline.Uid, function () {
-                    oThis.memory.WriteString3(oTimeline.uid);
-                });
+            if (oTimeline.uid != null) {
+                this.memory.WriteByte(c_oSer_Timeline.Uid);
+                this.memory.WriteByte(c_oSerPropLenType.Variable);
+                this.memory.WriteString2(oTimeline.uid);
             }
-            if (oTimeline.scrollPosition != null)
-            {
-                this.bs.WriteItem(c_oSer_Timeline.ScrollPosition, function () {
-                    oThis.memory.WriteString3(oTimeline.scrollPosition);
-                });
+            if (oTimeline.scrollPosition != null) {
+                this.memory.WriteByte(c_oSer_Timeline.ScrollPosition);
+                this.memory.WriteByte(c_oSerPropLenType.Variable);
+                this.memory.WriteString2(oTimeline.scrollPosition);
             }
-            if (oTimeline.cache != null)
-            {
-                this.bs.WriteItem(c_oSer_Timeline.Cache, function () {
-                    oThis.memory.WriteString3(oTimeline.cache);
-                });
+            if (oTimeline.cache != null) {
+                this.memory.WriteByte(c_oSer_Timeline.Cache);
+                this.memory.WriteByte(c_oSerPropLenType.Variable);
+                this.memory.WriteString2(oTimeline.cache);
             }
-            if (oTimeline.selectionLevel != null)
-            {
-                this.bs.WriteItem(c_oSer_Timeline.SelectionLevel, function () {
-                    oThis.memory.WriteLong(oTimeline.selectionLevel);
-                });
+            if (oTimeline.selectionLevel != null) {
+                this.memory.WriteByte(c_oSer_Timeline.SelectionLevel);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(oTimeline.selectionLevel);
             }
-            if (oTimeline.level != null)
-            {
-                this.bs.WriteItem(c_oSer_Timeline.Level, function () {
-                    oThis.memory.WriteLong(oTimeline.level);
-                });
+            if (oTimeline.level != null) {
+                this.memory.WriteByte(c_oSer_Timeline.Level);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(oTimeline.level);
             }
-            if (oTimeline.showHeader != null)
-            {
-                this.bs.WriteItem(c_oSer_Timeline.ShowHeader, function () {
-                    oThis.memory.WriteBool(oTimeline.showHeader);
-                });
+            if (oTimeline.showHeader != null) {
+                this.memory.WriteByte(c_oSer_Timeline.ShowHeader);
+                this.memory.WriteByte(c_oSerPropLenType.Byte);
+                this.memory.WriteBool(oTimeline.showHeader);
             }
-            if (oTimeline.showSelectionLabel != null)
-            {
-                this.bs.WriteItem(c_oSer_Timeline.ShowSelectionLabel, function () {
-                    oThis.memory.WriteBool(oTimeline.showSelectionLabel);
-                });
+            if (oTimeline.showSelectionLabel != null) {
+                this.memory.WriteByte(c_oSer_Timeline.ShowSelectionLabel);
+                this.memory.WriteByte(c_oSerPropLenType.Byte);
+                this.memory.WriteBool(oTimeline.showSelectionLabel);
             }
-            if (oTimeline.showTimeLevel != null)
-            {
-                this.bs.WriteItem(c_oSer_Timeline.ShowTimeLevel, function () {
-                    oThis.memory.WriteBool(oTimeline.showTimeLevel);
-                });
+            if (oTimeline.showTimeLevel != null) {
+                this.memory.WriteByte(c_oSer_Timeline.ShowTimeLevel);
+                this.memory.WriteByte(c_oSerPropLenType.Byte);
+                this.memory.WriteBool(oTimeline.showTimeLevel);
             }
-            if (oTimeline.showHorizontalScrollbar != null)
-            {
-                this.bs.WriteItem(c_oSer_Timeline.ShowHorizontalScrollbar, function () {
-                    oThis.memory.WriteBool(oTimeline.showHorizontalScrollbar);
-                });
+            if (oTimeline.showHorizontalScrollbar != null) {
+                this.memory.WriteByte(c_oSer_Timeline.ShowHorizontalScrollbar);
+                this.memory.WriteByte(c_oSerPropLenType.Byte);
+                this.memory.WriteBool(oTimeline.showHorizontalScrollbar);
             }
-            if (oTimeline.style != null)
-            {
-                this.bs.WriteItem(c_oSer_Timeline.Style, function () {
-                    oThis.memory.WriteLong(oTimeline.style);
-                });
+            if (oTimeline.style != null) {
+                this.memory.WriteByte(c_oSer_Timeline.Style);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(oTimeline.style);
             }
         };
     }
+
 	/** @constructor */
 	function BinaryOtherTableWriter(memory, wb)
 	{
