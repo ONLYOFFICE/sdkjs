@@ -697,10 +697,73 @@
 					AscFormat.CheckSpPrXfrm(oCS);
 					oCS.allPreviewCharts = aCharts;
 				}
+				return aCharts;
+			}
+
+			let aSeriesRefsArr = [];
+			if(aSeriesRefsHor.length >= aSeriesRefsVer.length) {
+				aSeriesRefsArr.push(aSeriesRefsVer);
+			}
+
+			if(aSeriesRefsHor.length <= aSeriesRefsVer.length) {
+				aSeriesRefsArr.push(aSeriesRefsHor);
+			}
+
+			for(let nSerArr = 0; nSerArr <  aSeriesRefsArr.length; ++nSerArr) {
+				let aSeriesRef = aSeriesRefsArr[nSerArr];
+				//bar, hbar, linear, hbarstacked, barstacked, barstackedper, hbarstackedper;
+
+				let oBarCS = AscFormat.CreateBarChart([], AscFormat.BAR_GROUPING_CLUSTERED, false, {type: Asc.c_oAscChartTypeSettings.barNormal}, false, false);
+				aCharts.push(oBarCS);
+				oBarCS.buildSeries(aSeriesRef);
+				let oHBarCS = AscFormat.CreateHBarChart([], AscFormat.BAR_GROUPING_CLUSTERED, false, {type: Asc.c_oAscChartTypeSettings.hBarNormal}, false);
+				aCharts.push(oHBarCS);
+				oHBarCS.buildSeries(aSeriesRef);
+				let oLineCS = AscFormat.CreateLineChart([], AscFormat.GROUPING_STANDARD, false, {type: Asc.c_oAscChartTypeSettings.lineNormal}, false);
+				aCharts.push(oLineCS);
+				oLineCS.buildSeries(aSeriesRef);
+				let oHBarStackedCS = AscFormat.CreateHBarChart([], AscFormat.BAR_GROUPING_STACKED, false, {type: Asc.c_oAscChartTypeSettings.hBarStacked}, false);
+				aCharts.push(oHBarStackedCS);
+				oHBarStackedCS.buildSeries(aSeriesRef);
+				let oBarStackedCS = AscFormat.CreateBarChart([], AscFormat.BAR_GROUPING_STACKED, false, {type: Asc.c_oAscChartTypeSettings.barStacked}, false);
+				aCharts.push(oBarStackedCS);
+				oBarStackedCS.buildSeries(aSeriesRef);
+				let oBarStackedPerCS = AscFormat.CreateBarChart([], AscFormat.BAR_GROUPING_PERCENT_STACKED, false, {type: Asc.c_oAscChartTypeSettings.barStackedPer}, false);
+				aCharts.push(oBarStackedPerCS);
+				oBarStackedPerCS.buildSeries(aSeriesRef);
+				let oHBarStackedPerCS = AscFormat.CreateHBarChart([], AscFormat.BAR_GROUPING_PERCENT_STACKED, false, {type: Asc.c_oAscChartTypeSettings.hBarStackedPer}, false);
+				aCharts.push(oHBarStackedPerCS);
+				oHBarStackedPerCS.buildSeries(aSeriesRef);
 			}
 
 			let aScatterSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, true, true);
 			let aScatterSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, false, true);
+
+			aSeriesRefsArr = [];
+			if(aScatterSeriesRefsHor.length >= aScatterSeriesRefsVer.length) {
+				aSeriesRefsArr.push(aScatterSeriesRefsVer);
+			}
+
+			if(aScatterSeriesRefsHor.length <= aScatterSeriesRefsVer.length) {
+				aSeriesRefsArr.push(aScatterSeriesRefsHor);
+			}
+
+			for(let nSerArr = 0; nSerArr <  aSeriesRefsArr.length; ++nSerArr) {
+				let aSeriesRef = aSeriesRefsArr[nSerArr];
+				let oScatterCS = AscFormat.CreateScatterChart([], false, {type: Asc.c_oAscChartTypeSettings.scatterMarker});
+				aCharts.push(oScatterCS);
+				oScatterCS.buildSeries(aSeriesRef);
+			}
+
+			for(let nChart = 0; nChart < aCharts.length; ++nChart) {
+				let oCS = aCharts[nChart];
+				oCS.setBDeleted(false);
+				oCS.setWorksheet(this.model);
+				oProps.type = oCS.getChartType();
+				this.objectRender.controller.applyPropsToChartSpace(oProps, oCS);
+				AscFormat.CheckSpPrXfrm(oCS);
+				oCS.allPreviewCharts = aCharts;
+			}
 
 			// if(!this.objectRender) {
 			// 	return null;
