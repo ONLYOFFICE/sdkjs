@@ -665,6 +665,7 @@
 			}
 
 
+			let oResultMap = {};
 			let aCharts = [];
 			let aSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aResultCheckRange, true, false);
 			let aSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aResultCheckRange, false, false);
@@ -696,8 +697,14 @@
 					this.objectRender.controller.applyPropsToChartSpace(oProps, oCS);
 					AscFormat.CheckSpPrXfrm(oCS);
 					oCS.allPreviewCharts = aCharts;
+
+					let nType = oCS.getChartType();
+					if(!Array.isArray(oResultMap[nType])) {
+						oResultMap[nType] = [];
+					}
+					oResultMap[nType].push(oCS);
 				}
-				return aCharts;
+				return oResultMap;
 			}
 
 			let aSeriesRefsArr = [];
@@ -755,7 +762,6 @@
 				oScatterCS.buildSeries(aSeriesRef);
 			}
 
-			let oResultMap = {};
 			for(let nChart = 0; nChart < aCharts.length; ++nChart) {
 				let oCS = aCharts[nChart];
 				oCS.setBDeleted(false);
