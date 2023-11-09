@@ -3639,15 +3639,15 @@
                 oThis.memory.WriteByte(c_oSer_TimelineCache.Name);
                 oThis.memory.WriteString2(oTimelineCache.name);
             }
-            if (oTimelineCache.SourceName != null) {
+            if (oTimelineCache.sourceName != null) {
                 oThis.memory.WriteByte(c_oSer_TimelineCache.SourceName);
                 oThis.memory.WriteString2(oTimelineCache.sourceName);
             }
-            if (oTimelineCache.Uid != null) {
+            if (oTimelineCache.uid != null) {
                 oThis.memory.WriteByte(c_oSer_TimelineCache.Uid);
                 oThis.memory.WriteString2(oTimelineCache.uid);
             }
-            if (oTimelineCache.pivotTables != null && oTimelineCache.pivotTables > 0) {
+            if (oTimelineCache.pivotTables != null && oTimelineCache.pivotTables.length > 0) {
                 this.bs.WriteItem(c_oSer_TimelineCache.PivotTables, function () {
                     oThis.WriteTimelineCachePivotTables(oTimelineCache.pivotTables);
                 });
@@ -3659,7 +3659,7 @@
             }
             if (oTimelineCache.state != null) {
                 this.bs.WriteItem(c_oSer_TimelineCache.State, function () {
-                    oThis.WriteTimelineCachePivotTables(oTimelineCache.state);
+                    oThis.WriteTimelineState(oTimelineCache.state);
                 });
             }
         };
@@ -3670,36 +3670,30 @@
 
             let oThis = this;
             if (oTimelineState.name != null) {
-                oThis.memory.WriteByte(c_oSer_TimelineState.Name);
-                oThis.memory.WriteString2(oTimelineState.name);
+                this.bs.WriteItem(c_oSer_TimelineState.Name, function(){oThis.memory.WriteString3(oTimelineState.name);});
             }
             if (oTimelineState.singleRangeFilterState != null) {
-                oThis.memory.WriteByte(c_oSer_TimelineState.FilterState);
-                oThis.memory.WriteBool(oTimelineState.singleRangeFilterState);
+                this.bs.WriteItem(c_oSer_TimelineState.FilterState, function(){oThis.memory.WriteBool(oTimelineState.singleRangeFilterState);});
             }
-            if (oTimelineState.PivotCacheId != null) {
-                oThis.memory.WriteByte(c_oSer_TimelineState.PivotCacheId);
-                oThis.memory.WriteULong(oTimelineState.pivotCacheId);
+            if (oTimelineState.pivotCacheId != null) {
+                this.bs.WriteItem(c_oSer_TimelineState.PivotCacheId, function(){oThis.memory.WriteLong(oTimelineState.pivotCacheId);});
             }
             if (oTimelineState.minimalRefreshVersion != null) {
-                oThis.memory.WriteByte(c_oSer_TimelineState.MinimalRefreshVersion);
-                oThis.memory.WriteULong(oTimelineState.minimalRefreshVersion);
+                this.bs.WriteItem(c_oSer_TimelineState.MinimalRefreshVersion, function(){oThis.memory.WriteLong(oTimelineState.minimalRefreshVersion);});
             }
             if (oTimelineState.lastRefreshVersion != null) {
-                oThis.memory.WriteByte(c_oSer_TimelineState.LastRefreshVersion);
-                oThis.memory.WriteULong(oTimelineState.lastRefreshVersion);
+                this.bs.WriteItem(c_oSer_TimelineState.LastRefreshVersion, function(){oThis.memory.WriteLong(oTimelineState.lastRefreshVersion);});
             }
             if (oTimelineState.filterType != null) {
-                oThis.memory.WriteByte(c_oSer_TimelineState.FilterType);
-                oThis.memory.WriteString2(oTimelineState.filterType);
+                this.bs.WriteItem(c_oSer_TimelineState.FilterType, function(){oThis.memory.WriteString3(oTimelineState.filterType);});
             }
             if (oTimelineState.selection != null) {
-                this.bs.WriteItem(c_oSer_TimelineCache.Selection, function () {
+                this.bs.WriteItem(c_oSer_TimelineState.Selection, function () {
                     oThis.WriteTimelineRange(oTimelineState.selection);
                 });
             }
             if (oTimelineState.bounds != null) {
-                this.bs.WriteItem(c_oSer_TimelineCache.Bounds, function () {
+                this.bs.WriteItem(c_oSer_TimelineState.Bounds, function () {
                     oThis.WriteTimelineRange(oTimelineState.bounds);
                 });
             }
@@ -3710,12 +3704,12 @@
             }
 
             if (oTimelineRange.startDate != null) {
-                this.memory.WriteByte(c_oSer_DateGroupItem.StartDate);
+                this.memory.WriteByte(c_oSer_TimelineRange.StartDate);
                 this.memory.WriteByte(c_oSerPropLenType.Variable);
                 this.memory.WriteString2(oTimelineRange.startDate);
             }
             if (oTimelineRange.endDate != null) {
-                this.memory.WriteByte(c_oSer_DateGroupItem.EndDate);
+                this.memory.WriteByte(c_oSer_TimelineRange.EndDate);
                 this.memory.WriteByte(c_oSerPropLenType.Variable);
                 this.memory.WriteString2(oTimelineRange.endDate);
             }
@@ -3780,10 +3774,10 @@
                 this.memory.WriteByte(c_oSerPropLenType.Variable);
                 this.memory.WriteString2(oPivotTables.name);
             }
-            if (pPivotTable.tabId != null) {
+            if (oPivotTables.tabId != null) {
                 this.memory.WriteByte(c_oSer_TimelineCachePivotTable.TabId);
                 this.memory.WriteByte(c_oSerPropLenType.Long);
-                this.memory.WriteULong(pPivotTable.tabId);
+                this.memory.WriteULong(oPivotTables.tabId);
             }
         };
 
@@ -8069,9 +8063,9 @@
             } else if (c_oSer_TimelineCache.Uid === type) {
                 oTimelineCache.uid = this.stream.GetString2LE(length);
             } else if (c_oSer_TimelineCache.PivotTables === type) {
-                oTimelineCache.PivotTables = [];
+                oTimelineCache.pivotTables = [];
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadTimelineCachePivotTables(t, l, oTimelineCache.PivotTables);
+                    return oThis.ReadTimelineCachePivotTables(t, l, oTimelineCache.pivotTables);
                 });
             } else if (c_oSer_TimelineCache.State === type) {
                 oTimelineCache.state = new AscCommonExcel.CTimelineState();
