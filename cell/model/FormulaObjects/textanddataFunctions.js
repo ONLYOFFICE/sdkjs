@@ -1922,29 +1922,45 @@ function (window, undefined) {
 		}
 
 		if (arg2.type === cElementType.cellsRange || arg2.type === cElementType.cellsRange3D) {
-			arg2 = arg2.cross(arguments[1]).tocString();
+			arg2 = arg2.cross(arguments[1]).tocNumber();
 		}
-		
 
 		let resArr = new cArray();
-		if (arg0.type === cElementType.array && arg1.type === cElementType.array) {
-			if (arg0.isOneElement() && arg1.isOneElement()) {
-				return t.Calculate([arg0.getFirstElement(), arg1.getFirstElement(), arg2]);
-			}
+		if ((arg0.type === cElementType.array && arg1.type === cElementType.array) || (arg0.type === cElementType.array && arg2.type === cElementType.array) || (arg1.type === cElementType.array && arg2.type === cElementType.array)) {
 			let findTextArrDimensions = arg0.getDimensions(),
 				withinTextArrDimensions = arg1.getDimensions(),
-				resCols = Math.max(findTextArrDimensions.col, withinTextArrDimensions.col),
-				resRows = Math.max(findTextArrDimensions.row, withinTextArrDimensions.row);
+				startNumDimensions = arg2.getDimensions(),
+				resCols = Math.max(findTextArrDimensions.col, withinTextArrDimensions.col, startNumDimensions.col),
+				resRows = Math.max(findTextArrDimensions.row, withinTextArrDimensions.row, startNumDimensions.row);
+
+			if (arg0.type !== cElementType.array) {
+				let tempArg0 = new cArray();
+				tempArg0.addElement(arg0);
+				arg0 = tempArg0;
+			}
+			if (arg1.type !== cElementType.array) {
+				let tempArg1 = new cArray();
+				tempArg1.addElement(arg1);
+				arg1 = tempArg1;
+			}
+			if (arg2.type !== cElementType.array) {
+				let tempArg2 = new cArray();
+				tempArg2.addElement(arg2);
+				arg2 = tempArg2;
+			}
 
 			for (let i = 0; i < resRows; i++) {
 				resArr.addRow();
 				for (let j = 0; j < resCols; j++) {
-					let findText, withinText;
+					let findText, withinText, startNum;
 					// get the substring that we will look for
 					if ((findTextArrDimensions.col - 1 < j && findTextArrDimensions.col > 1) || (findTextArrDimensions.row - 1 < i && findTextArrDimensions.row > 1)) {
 						findText = new cError(cErrorType.not_available);
 						resArr.addElement(findText);
 						continue;
+					} else if (findTextArrDimensions.row === 1 && findTextArrDimensions.col === 1) {
+						// get first elem
+						findText = arg0.getElementRowCol ? arg0.getElementRowCol(0, 0) : arg0.getValueByRowCol(0, 0);
 					} else if (findTextArrDimensions.row === 1) {
 						// get elem from first row
 						findText = arg0.getElementRowCol ? arg0.getElementRowCol(0, j) : arg0.getValueByRowCol(0, j);
@@ -1960,6 +1976,9 @@ function (window, undefined) {
 						withinText = new cError(cErrorType.not_available);
 						resArr.addElement(withinText);
 						continue;
+					} else if (withinTextArrDimensions.row === 1 && withinTextArrDimensions.col === 1) {
+						// get first elem
+						withinText = arg1.getElementRowCol ? arg1.getElementRowCol(0, 0) : arg1.getValueByRowCol(0, 0);
 					} else if (withinTextArrDimensions.row === 1) {
 						// get elem from first row
 						withinText = arg1.getElementRowCol ? arg1.getElementRowCol(0, j) : arg1.getValueByRowCol(0, j);
@@ -1970,10 +1989,28 @@ function (window, undefined) {
 						withinText = arg1.getElementRowCol ? arg1.getElementRowCol(i, j) : arg1.getValueByRowCol(i, j);
 					}
 
+					// get the start num that we will start search
+					if ((startNumDimensions.col - 1 < j && startNumDimensions.col > 1) || (startNumDimensions.row - 1 < i && startNumDimensions.row > 1)) {
+						startNum = new cError(cErrorType.not_available);
+						resArr.addElement(startNum);
+						continue;
+					} else if (startNumDimensions.row === 1 && startNumDimensions.col === 1) {
+						// get first elem
+						startNum = arg2.getElementRowCol ? arg2.getElementRowCol(0, 0) : arg2.getValueByRowCol(0, 0);
+					} else if (startNumDimensions.row === 1) {
+						// get elem from first row
+						startNum = arg2.getElementRowCol ? arg2.getElementRowCol(0, j) : arg2.getValueByRowCol(0, j);
+					} else if (startNumDimensions.col === 1) {
+						// get elem from first col
+						startNum = arg2.getElementRowCol ? arg2.getElementRowCol(i, 0) : arg2.getValueByRowCol(i, 0);
+					} else {
+						startNum = arg2.getElementRowCol ? arg2.getElementRowCol(i, j) : arg2.getValueByRowCol(i, j);
+					}
+
 					// check errors
 					findText = findText ? findText.tocString() : new cString("");
 					withinText = withinText ? withinText.tocString() : new cString("");
-					arg2 = arg2.tocNumber();
+					startNum = startNum ? startNum.tocNumber() : new cNumber(0);
 
 					if (findText.type === cElementType.error) {
 						resArr.addElement(findText);
@@ -1983,11 +2020,12 @@ function (window, undefined) {
 						resArr.addElement(withinText);
 						continue
 					}
-					if (arg2.type === cElementType.error) {
-						return arg2;
+					if (startNum.type === startNum.error) {
+						resArr.addElement(startNum);
+						continue
 					}
 
-					let res = searchString(findText.getValue(), withinText.getValue(), arg2.getValue());
+					let res = searchString(findText.getValue(), withinText.getValue(), startNum.getValue());
 					resArr.addElement(res);
 				}
 			}
@@ -2027,13 +2065,36 @@ function (window, undefined) {
 
 				let item = elem.tocString();
 				if (arg0.type === cElementType.error) {
-					resArr.addElement(arg1);
-				} if (item && item.type === cElementType.error) {
+					resArr.addElement(arg0);
+				} else if (item && item.type === cElementType.error) {
 					resArr.addElement(item);
 				} else if (arg2.type === cElementType.error) {
 					resArr.addElement(arg2);
 				} else {
 					let res = searchString(arg0.getValue(), item.getValue(), arg2.getValue());
+					resArr.addElement(res);
+				}
+			})
+
+			return resArr;
+		} else if (arg2.type === cElementType.array) {
+			arg0 = arg0.tocString();
+			arg1 = arg1.tocString();
+			
+			arg2.foreach(function (elem, r, c) {
+				if (!resArr.array[r]) {
+					resArr.addRow();
+				}
+
+				let item = elem.tocNumber();
+				if (arg0.type === cElementType.error) {
+					resArr.addElement(arg0);
+				} else if (arg1.type === cElementType.error) {
+					resArr.addElement(arg1);
+				} else if (item && item.type === cElementType.error) {
+					resArr.addElement(item);
+				} else {
+					let res = searchString(arg0.getValue(), arg1.getValue(), item.getValue());
 					resArr.addElement(res);
 				}
 			})

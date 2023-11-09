@@ -5358,92 +5358,85 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), 1, 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},{"hcdpmhatlvmctst71a";"dsdsvmwprd";"hcdpmhatlvmcprd71a";"hcd*prd*vmwprd**vmcprd*"})[0,1]');
 		assert.strictEqual(array.getElementRowCol(3, 2).getValue(), 1, 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},{"hcdpmhatlvmctst71a";"dsdsvmwprd";"hcdpmhatlvmcprd71a";"hcd*prd*vmwprd**vmcprd*"})[0,2]');
 
-		// todo cross tests
-		// oParser = new parserFormula('SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M1)', "K4", ws);
-		// oParser.setArrayFormulaRef(ws.getRange2("K4:M4").bbox);
-		// assert.ok(oParser.parse(), 'SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M1)');
-		// array = oParser.calculate();
-		// assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M1)[0,0]');
-		// assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M1)[0,1]');
-		// assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#VALUE!", 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M1)[0,2]');
-
-		// ws.getRange2("A1").setValue("hcdpmhatlvmctst71a");
-		// ws.getRange2("A2").setValue("pmhwebvmwtst01");
-		// ws.getRange2("B1").setValue("sd");
-		// ws.getRange2("B2").setValue("dd");
+		ws.getRange2("A1").setValue("hcdpmhatlvmctst71a");
+		ws.getRange2("A2").setValue("pmhwebvmwtst01");
+		ws.getRange2("B1").setValue("sd");
+		ws.getRange2("B2").setValue("dd");
 
 		// array|area
-		// oParser = new parserFormula('SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)', "C2", ws);
-		// oParser.setArrayFormulaRef(ws.getRange2("D1:F2").bbox);
-		// assert.ok(oParser.parse(), 'SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)');
-		// array = oParser.calculate();
-		// assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[0,0]');
-		// assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[0,1]');
-		// assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[0,2]');
-		// assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[1,0]');
-		// assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[1,1]');
-		// assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[1,2]');
+		let bbox = ws.getRange2("K4").bbox;
+		let cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula('SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M1)', cellWithFormula, ws);
+		oParser.setArrayFormulaRef(ws.getRange2("K4:M4").bbox);
+		assert.ok(oParser.parse(), 'SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M1)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M1)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#VALUE!", 'Result of SEARCH({"hcd*prd","*vmwprd*","*vmcprd*"},K1:M1)[0,2]');
 
-		// oParser = new parserFormula('SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)', "C2", ws);
-		// oParser.setArrayFormulaRef(ws.getRange2("D1:F2").bbox);
-		// assert.ok(oParser.parse(), 'SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)');
-		// array = oParser.calculate();
-		// assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[0,0]');
-		// assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[0,1]');
-		// assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#N/A", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[0,2]');
-		// assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[1,0]');
-		// assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[1,1]');
-		// assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "#N/A", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[1,2]');
+		bbox = ws.getRange2("D1:F2").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula('SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)', cellWithFormula, ws);
+		oParser.setArrayFormulaRef(ws.getRange2("D1:F2").bbox);
+		assert.ok(oParser.parse(), 'SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[0,2]');
 
-		// ws.getRange2("A3:A5").cleanAll();
-		// oParser = new parserFormula('SEARCH({"mhat","vmc"}, A1:A5)', "C2", ws);
-		// oParser.setArrayFormulaRef(ws.getRange2("D1:F5").bbox);
-		// assert.ok(oParser.parse(), 'SEARCH({"mhat","vmc"}, A1:A5)');
-		// array = oParser.calculate();
-		// assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 5, 'Result of SEARCH({"mhat","vmc"}, A1:A5)[0,0]');
-		// assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 10, 'Result of SEARCH({"mhat","vmc"}, A1:A5)[0,1]');
-		// assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[1,0]');
-		// assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[1,1]');
-		// assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[2,0]');
-		// assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[2,1]');
-		// assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[3,0]');
-		// assert.strictEqual(array.getElementRowCol(3, 1).getValue(), "#VALUE!", 'Result of SEARCH({"mhat","vmc"}, A1:A5)[3,1]');
+		bbox = ws.getRange2("E1").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula('SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)', cellWithFormula, ws);
+		oParser.setArrayFormulaRef(ws.getRange2("D1:F2").bbox);
+		assert.ok(oParser.parse(), 'SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 1, 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:A2)[0,2]');
 
-		// ws.getRange2("S1").setValue("hcd*tst");
-		// ws.getRange2("S2").setValue("2");
-		// ws.getRange2("T1").setValue("#DIV/0!");
-		// ws.getRange2("T2").setValue("*vmwtst*");
-		// ws.getRange2("U1").setValue("1");
-		// ws.getRange2("U2").setValue("*vmctst*");
 
-		// oParser = new parserFormula('SEARCH(S1:U2,A1:A2)', "C2", ws);
-		// oParser.setArrayFormulaRef(ws.getRange2("D1:F5").bbox);
-		// assert.ok(oParser.parse(), 'SEARCH(S1:U2,A1:A2)');
-		// array = oParser.calculate();
-		// assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SEARCH(S1:U2,A1:A2)[0,0]');
-		// assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#DIV/0!", 'Result of SEARCH(S1:U2,A1:A2)[0,1]');
-		// assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 17, 'Result of SEARCH(S1:U2,A1:A2)[0,2]');
-		// assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,A1:A2)[1,0]');
-		// assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, 'Result of SEARCH(S1:U2,A1:A2)[1,1]');
-		// assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,A1:A2)[1,2]');
+		bbox = ws.getRange2("D1:F2").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula('SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)', cellWithFormula, ws);
+		oParser.setArrayFormulaRef(ws.getRange2("D1:F2").bbox);
+		assert.ok(oParser.parse(), 'SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#VALUE!", 'Result of SEARCH({"*vmwtst*","hcd*tst","*vmctst*"}, A1:B2)[0,2]');
 
-		// oParser = new parserFormula('SEARCH(S1:U2,"hcdpmh71")', "C2", ws);
-		// oParser.setArrayFormulaRef(ws.getRange2("D1:F5").bbox);
-		// assert.ok(oParser.parse(), 'SEARCH(S1:U2,"hcdpmh71")');
-		// array = oParser.calculate();
-		// assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,"hcdpmh71")[0,0]');
-		// assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#DIV/0!", 'Result of SEARCH(S1:U2,"hcdpmh71")[0,1]');
-		// assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 8, 'Result of SEARCH(S1:U2,"hcdpmh71")[0,2]');
-		// assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,"hcdpmh71")[1,0]');
-		// assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,"hcdpmh71")[1,1]');
-		// assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,"hcdpmh71")[1,2]');
+		ws.getRange2("A3:A5").cleanAll();
 
-		// oParser = new parserFormula('SEARCH("hcd",A1:A2)', "C2", ws);
-		// oParser.setArrayFormulaRef(ws.getRange2("D1:F5").bbox);
-		// assert.ok(oParser.parse(), 'SEARCH("hcd",A1:A2)');
-		// array = oParser.calculate();
-		// assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of SEARCH("hcd",A1:A2)[0,0]');
-		// assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#VALUE!", 'Result of SEARCH("hcd",A1:A2)[1,0]');
+		bbox = ws.getRange2("D1:F5").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula('SEARCH({"mhat","vmc"}, A1:A5)', cellWithFormula, ws);
+		oParser.setArrayFormulaRef(ws.getRange2("D1:F5").bbox);
+		assert.ok(oParser.parse(), 'SEARCH({"mhat","vmc"}, A1:A5)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 5, 'Result of SEARCH({"mhat","vmc"}, A1:A5)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 10, 'Result of SEARCH({"mhat","vmc"}, A1:A5)[0,1]');
+
+		ws.getRange2("S1").setValue("hcd*tst");
+		ws.getRange2("S2").setValue("2");
+		ws.getRange2("T1").setValue("#DIV/0!");
+		ws.getRange2("T2").setValue("*vmwtst*");
+		ws.getRange2("U1").setValue("1");
+		ws.getRange2("U2").setValue("*vmctst*");
+
+		oParser = new parserFormula('SEARCH(S1:U2,A1:A2)', cellWithFormula, ws);
+		oParser.setArrayFormulaRef(ws.getRange2("D1:F5").bbox);
+		assert.ok(oParser.parse(), 'SEARCH(S1:U2,A1:A2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,A1:A2)');
+
+		oParser = new parserFormula('SEARCH(S1:U2,"hcdpmh71")', cellWithFormula, ws);
+		oParser.setArrayFormulaRef(ws.getRange2("D1:F5").bbox);
+		assert.ok(oParser.parse(), 'SEARCH(S1:U2,"hcdpmh71")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of SEARCH(S1:U2,"hcdpmh71")');
+
+		oParser = new parserFormula('SEARCH("hcd",A1:A2)', cellWithFormula, ws);
+		oParser.setArrayFormulaRef(ws.getRange2("D1:F5").bbox);
+		assert.ok(oParser.parse(), 'SEARCH("hcd",A1:A2)');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of SEARCH("hcd",A1:A2)[0,0]');
 
 		// testArrayFormula2(assert, "SEARCH", 2, 3);
 	});
