@@ -4469,6 +4469,7 @@
 	window['AscDFH'].historydescription_Document_SetConsecutiveHyphenLimit          = 0x01a7;
 	window['AscDFH'].historydescription_Document_SetHyphenateCaps                   = 0x01a8;
 	window['AscDFH'].historydescription_Document_RemoveMathShortcut                 = 0x01a9;
+	window['AscDFH'].historydescription_Document_SetAllFormsData                    = 0x01aa;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

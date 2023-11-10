@@ -10909,13 +10909,26 @@ background-repeat: no-repeat;\
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.onPluginEvent("onBlurContentControl", oControl.GetContentControlPr().GetEventObject());
 	};
-	asc_docs_api.prototype.asc_GetAllFormsData = function(toArray)
+	asc_docs_api.prototype.asc_GetAllFormsData = function()
 	{
 		let formManager = this.private_GetFormsManager();
 		if (!formManager)
-			return toArray ? [] : {};
+			return [];
 
-		return formManager.GetAllFormsData(toArray);
+		return formManager.GetAllFormsData();
+	};
+	asc_docs_api.prototype.asc_SetAllFormsData = function(data)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		let formManager   = this.private_GetFormsManager();
+		if (!formManager || !logicDocument)
+			return;
+		
+		// TODO: For now we assume that there is no need to check for document selection lock
+		logicDocument.StartAction(AscDFH.historydescription_Document_SetAllFormsData);
+		formManager.SetAllFormsData(data);
+		logicDocument.Recalculate();
+		logicDocument.FinalizeAction();
 	};
 	asc_docs_api.prototype.asc_GetOForm = function()
 	{

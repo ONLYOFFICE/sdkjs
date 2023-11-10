@@ -282,12 +282,11 @@
 	};
 	/**
 	 * Получаем данные всех форм
-	 * @param {boolean} toArray
-	 * @returns {object|array}
+	 * @returns {array}
 	 */
-	CFormsManager.prototype.GetAllFormsData = function(toArray)
+	CFormsManager.prototype.GetAllFormsData = function()
 	{
-		let data = toArray ? [] : {};
+		let data = [];
 
 		let allForms = this.GetAllForms();
 		let passedKeys = {};
@@ -315,35 +314,45 @@
 			if (form.IsRadioButton())
 				stringType = "radio";
 			
-			let val = {
+			data.push({
 				"key"   : key,
 				"tag"   : form.GetTag(),
 				"value" : this.GetFormValue(form),
 				"type"  : stringType
-			};
-			
-			if (toArray)
-			{
-				data.push(val);
-			}
-			else
-			{
-				if (data[key])
-				{
-					let oldVal = data[key];
-					if (Array.isArray(oldVal))
-						oldVal.push(oldVal);
-					else
-						data[key] = [oldVal, val];
-				}
-				else
-				{
-					data[key] = val;
-				}
-			}
+			});
 		}
 		
 		return data;
+	};
+	CFormsManager.prototype.SetAllFormsData = function(data)
+	{
+		if (!data || !Array.isArray(data))
+			return;
+		
+		for (let index = 0, count = data.length; index < count; ++index)
+		{
+			let key   = data[index]["key"];
+			let value = data[index]["value"];
+			let type  = data[index]["type"];
+			
+			if (undefined !== type && null !== type)
+				type = Asc.c_oAscContentControlSpecificType.fromString(type);
+			
+			let forms = this.GetAllFormsByKey(key, type);
+			let form  = forms[0];
+			if (!form)
+			{
+				let radioGroup = this.GetRadioButtons(key);
+				if (!radioGroup.length)
+					continue;
+				
+				this.SetRadioGroupValue(key, value);
+			}
+			else
+			{
+				form.SetFormValue(value);
+			}
+		}
 	};
 	CFormsManager.prototype.GetFormValue = function(form)
 	{
@@ -574,6 +583,20 @@
 				return radioButton.GetFormKey();
 		}
 
+		return "";
+	};
+	CFormsManager.prototype.SetRadioGroupValue = function(groupKey, value)
+	{
+		let group = this.GetRadioButtons(groupKey);
+		for (let index = 0, count = group.length; index < count; ++index)
+		{
+			let radioButton = group[index];
+			if (radioButton.GetFormKey() !== value)
+				radioButton.SetCheckBoxChecked(false);
+			else
+				radioButton.SetCheckBoxChecked(true);
+		}
+		
 		return "";
 	};
 	CFormsManager.prototype.GetUserMasterByForm = function(form)

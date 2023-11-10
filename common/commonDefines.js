@@ -3171,6 +3171,30 @@ window.AscCommon.g_cIsBeta = "false";
 			}
 			
 			return "unknown";
+		},
+		
+		fromString : function(value)
+		{
+			switch (value)
+			{
+				case "checkBox":
+				case "radio":
+					return c_oAscContentControlSpecificType.CheckBox;
+				case "picture":
+					return c_oAscContentControlSpecificType.Picture;
+				case "comboBox":
+					return c_oAscContentControlSpecificType.ComboBox;
+				case "dropDownList":
+					return c_oAscContentControlSpecificType.DropDownList;
+				case "dateTime":
+					return c_oAscContentControlSpecificType.DateTime;
+				case "toc":
+					return c_oAscContentControlSpecificType.TOC;
+				case "complex":
+					return c_oAscContentControlSpecificType.Complex;
+			}
+			
+			return c_oAscContentControlSpecificType.None;
 		}
 	};
 
