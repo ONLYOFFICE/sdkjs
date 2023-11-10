@@ -1247,7 +1247,6 @@ function (window, undefined) {
 		arg2 = arg2.tocNumber();
 		arg3 = arg3.tocNumber();
 
-		// todo ошибки по порядку протестить
 
 		if (cElementType.error === arg1.type || cElementType.error === arg2.type || cElementType.error === arg3.type) {
 			return new cError(cErrorType.wrong_value_type);
