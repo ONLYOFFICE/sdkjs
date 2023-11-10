@@ -18359,6 +18359,118 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
 
+		// for bug 63026 - cEmpty tests
+
+		// range 1
+		ws.getRange2("K100").setValue("SCALE 1");
+		ws.getRange2("K101").setValue("$");
+		ws.getRange2("K102").setValue("");
+		ws.getRange2("K103").setValue("0");
+		ws.getRange2("K104").setValue("88");
+		ws.getRange2("K105").setValue("371");
+		ws.getRange2("K106").setValue("515");
+		ws.getRange2("K107").setValue("932");
+		ws.getRange2("K108").setValue("1957");
+		ws.getRange2("K109").setValue("3111");
+		ws.getRange2("K110").setValue("");
+		ws.getRange2("K111").setValue("");
+		ws.getRange2("K112").setValue("");
+		ws.getRange2("K113").setValue("");
+
+		ws.getRange2("L100").setValue("");
+		ws.getRange2("L101").setValue("a");
+		ws.getRange2("L102").setValue("");
+		ws.getRange2("L103").setValue("0.19");
+		ws.getRange2("L104").setValue("0.2348");
+		ws.getRange2("L105").setValue("0.219");
+		ws.getRange2("L106").setValue("0.3477");
+		ws.getRange2("L107").setValue("0.345");
+		ws.getRange2("L108").setValue("0.39");
+		ws.getRange2("L109").setValue("0.47");
+		ws.getRange2("L110").setValue("1");
+		ws.getRange2("L111").setValue("2");
+		ws.getRange2("L112").setValue("3");
+		ws.getRange2("L113").setValue("4");
+
+		// range 2
+		ws.getRange2("N100").setValue("SCALE 2");
+		ws.getRange2("N101").setValue("$");
+		ws.getRange2("N102").setValue("");
+		ws.getRange2("N103").setValue("0");
+		ws.getRange2("N104").setValue("359");
+		ws.getRange2("N105").setValue("438");
+		ws.getRange2("N106").setValue("548");
+		ws.getRange2("N107").setValue("721");
+		ws.getRange2("N108").setValue("865");
+		ws.getRange2("N109").setValue("1282");
+		ws.getRange2("N110").setValue("2307");
+		ws.getRange2("N111").setValue("3461");
+		ws.getRange2("N112").setValue("");
+		ws.getRange2("N113").setValue("");
+		ws.getRange2("N114").setValue("");
+
+		ws.getRange2("O100").setValue("");
+		ws.getRange2("O101").setValue("a");
+		ws.getRange2("O102").setValue("");
+		ws.getRange2("O103").setValue("");
+		ws.getRange2("O104").setValue("0.19");
+		ws.getRange2("O105").setValue("0.29");
+		ws.getRange2("O106").setValue("0.21");
+		ws.getRange2("O107").setValue("0.219");
+		ws.getRange2("O108").setValue("0.3477");
+		ws.getRange2("O109").setValue("0.345");
+		ws.getRange2("O110").setValue("0.39");
+		ws.getRange2("O111").setValue("0.47");
+		ws.getRange2("O112").setValue("1");
+		ws.getRange2("O113").setValue("2");
+		ws.getRange2("O114").setValue("3");
+
+		oParser = new parserFormula('VLOOKUP(576,K100:L113,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'VLOOKUP(576,K100:L113,2)');
+		assert.strictEqual(oParser.calculate().getValue(), 0.3477, 'Result of VLOOKUP(576,K100:L113,2)');
+
+		oParser = new parserFormula('VLOOKUP(576,N100:O114,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'VLOOKUP(576,N100:O114,2)');
+		assert.strictEqual(oParser.calculate().getValue(), 0.21, 'Result of VLOOKUP(576,N100:O114,2)');
+
+		// range 1 modify
+		ws.getRange2("K110").setValue("0");
+		ws.getRange2("K111").setValue("0");
+		ws.getRange2("K112").setValue("0");
+		ws.getRange2("K113").setValue("0");
+
+		// range 2 modify
+		ws.getRange2("N112").setValue("0");
+		ws.getRange2("N113").setValue("0");
+		ws.getRange2("N114").setValue("0");
+
+		oParser = new parserFormula('VLOOKUP(576,K100:L113,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'VLOOKUP(576,K100:L113,2)');
+		assert.strictEqual(oParser.calculate().getValue(), 4, 'Result of VLOOKUP(576,K100:L113,2)');
+
+		oParser = new parserFormula('VLOOKUP(576,N100:O114,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'VLOOKUP(576,N100:O114,2)');
+		assert.strictEqual(oParser.calculate().getValue(), 0.21, 'Result of VLOOKUP(576,N100:O114,2)');
+
+		// range 1 modify
+		ws.getRange2("K110").setValue("FALSE");
+		ws.getRange2("K111").setValue("FALSE");
+		ws.getRange2("K112").setValue("FALSE");
+		ws.getRange2("K113").setValue("FALSE");
+
+		// range 2 modify
+		ws.getRange2("N112").setValue("FALSE");
+		ws.getRange2("N113").setValue("FALSE");
+		ws.getRange2("N114").setValue("FALSE");
+
+		oParser = new parserFormula('VLOOKUP(576,K100:L113,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'VLOOKUP(576,K100:L113,2)');
+		assert.strictEqual(oParser.calculate().getValue(), 0.3477, 'Result of VLOOKUP(576,K100:L113,2)');
+
+		oParser = new parserFormula('VLOOKUP(576,N100:O114,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'VLOOKUP(576,N100:O114,2)');
+		assert.strictEqual(oParser.calculate().getValue(), 0.21, 'Result of VLOOKUP(576,N100:O114,2)');
+
 	});
 
 	QUnit.test("Test: \"LOOKUP\"", function (assert) {
