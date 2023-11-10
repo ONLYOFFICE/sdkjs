@@ -15973,26 +15973,36 @@ QueryTableField.prototype.clone = function() {
 
 	function CTimelineStyles() {
 		this.defaultTimelineStyle = null;
-		this.timelineStyle = null;
+		this.timelineStyles = null;
 	}
 	CTimelineStyles.prototype.clone = function () {
 		var res = new CTimelineRange();
 
 		res.defaultTimelineStyle = this.defaultTimelineStyle;
-		res.timelineStyle = this.timelineStyle && this.timelineStyle.clone();
+		if (this.timelineStyles) {
+			res.timelineStyles = [];
+			for (let i = 0; i < this.timelineStyles.length; i++) {
+				res.timelineStyles.push(this.timelineStyles[i].clone());
+			}
+		}
 
 		return res;
 	};
 
 	function CTimelineStyle() {
 		this.name = null;
-		this.timelineStyleElement = null;
+		this.timelineStyleElements = null;
 	}
 	CTimelineStyle.prototype.clone = function () {
 		var res = new CTimelineRange();
 
 		res.name = this.name;
-		res.timelineStyleElement = this.timelineStyleElement && this.timelineStyleElement.clone();
+		if (this.timelineStyleElements) {
+			res.timelineStyleElements = [];
+			for (let i = 0; i < this.timelineStyleElements.length; i++) {
+				res.timelineStyleElements.push(this.timelineStyleElements[i].clone());
+			}
+		}
 
 		return res;
 	};

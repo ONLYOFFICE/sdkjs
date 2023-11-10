@@ -2747,6 +2747,10 @@
             this.bs.WriteItem(c_oSerStylesTypes.SlicerStyles, function(){oThis.WriteSlicerStyles(slicerStyles);});
             //numfmts пишется в конце потому что они могут пополниться при записи Dxfs
             this.bs.WriteItem(c_oSerStylesTypes.NumFmts, function(){oThis.WriteNumFmts();});
+
+            if (wb.TimelineStyles) {
+                this.bs.WriteItem(c_oSerStylesTypes.TimelineStyles, function(){oThis.WriteTimelineStyles(wb.TimelineStyles);});
+            }
         };
         this.WriteBorders = function()
         {
@@ -3301,6 +3305,62 @@
                 dxfs.push(customElement.dxf);
             }
         };
+        this.WriteTimelineStyles = function (oTimelineStyles) {
+            if (!oTimelineStyles) {
+                return;
+            }
+
+            var oThis = this;
+            if (oTimelineStyles.defaultTimelineStyle != null) {
+                this.bs.WriteItem(c_oSer_TimelineStyles.DefaultTimelineStyle, function () {
+                    oThis.memory.WriteString3(oTimelineStyles.defaultTimelineStyle);
+                });
+            }
+            if (oTimelineStyles.timelineStyles && oTimelineStyles.timelineStyles.length) {
+                for (let i = 0; i < oTimelineStyles.timelineStyles.length; ++i) {
+                    this.bs.WriteItem(c_oSer_TimelineStyles.DefaultTimelineStyle, function () {
+                        oThis.WriteTimelineStyle(oTimelineStyles.timelineStyles[i]);
+                    });
+                }
+            }
+        };
+        this.WriteTimelineStyle = function (oTimelineStyle) {
+            if (!oTimelineStyle) {
+                return;
+            }
+
+            var oThis = this;
+            if (oTimelineStyle.name) {
+                this.bs.WriteItem(c_oSer_TimelineStyles.Name, function () {
+                    oThis.memory.WriteString3(oTimelineStyle.name);
+                });
+
+            }
+
+            if (oTimelineStyle.timelineStyleElements && oTimelineStyle.timelineStyleElements.length) {
+                for (let i = 0; i < oTimelineStyle.timelineStyleElements.length; ++i) {
+                    this.bs.WriteItem(c_oSer_TimelineStyles.DefaultTimelineStyle, function () {
+                        oThis.WriteTimelineStyleElement(oTimelineStyle.timelineStyleElements[i]);
+                    });
+                }
+            }
+        };
+        this.WriteTimelineStyleElement = function (oTimelineStyleElement) {
+            if (!oTimelineStyleElement) {
+                return;
+            }
+
+            if (oTimelineStyleElement.type) {
+                this.memory.WriteByte(c_oSer_TimelineStyles.TimelineStyleElementType);
+                this.memory.WriteByte(c_oSerPropLenType.Byte);
+                this.memory.WriteByte(oTimelineStyleElement.type);
+            }
+            if (oTimelineStyleElement.DxfId) {
+                this.memory.WriteByte(c_oSer_TimelineStyles.TimelineStyleElementDxfId);
+                this.memory.WriteByte(c_oSerPropLenType.Long);
+                this.memory.WriteLong(oTimelineStyleElement.DxfId);
+            }
+        }
     }
 
     function BinaryWorkbookTableWriter(memory, wb, oBinaryWorksheetsTableWriter, isCopyPaste, initSaveManager/*, tableIds, sheetIds*/)
@@ -7857,10 +7917,14 @@
             if (c_oSer_TimelineStyles.DefaultTimelineStyle === type) {
                 oTimelineStyles.defaultTimelineStyle = this.stream.GetString2LE(length);
             } else if (c_oSer_TimelineStyles.TimelineStyle === type) {
-                oTimelineStyles.timelineStyle = new AscCommonExcel.CTimelineStyle();
+                if (!oTimelineStyles.timelineStyles) {
+                    oTimelineStyles.timelineStyles = [];
+                }
+                let newTimelineStyle = new AscCommonExcel.CTimelineStyle();
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadTimelineStyle(t, l, oTimelineStyles.timelineStyle);
+                    return oThis.ReadTimelineStyle(t, l, newTimelineStyle);
                 });
+                oTimelineStyles.timelineStyles.push(newTimelineStyle);
             } else {
                 res = c_oSerConstants.ReadUnknown;
             }
@@ -7872,15 +7936,19 @@
             if (c_oSer_TimelineStyles.TimelineStyleName === type) {
                 oTimelineStyle.name = this.stream.GetString2LE(length);
             } else if (c_oSer_TimelineStyles.TimelineStyle === type) {
-                oTimelineStyle.timelineStyleElement = new AscCommonExcel.CTimelineStyleElement();
+                if (!oTimelineStyle.timelineStyleElements) {
+                    oTimelineStyle.timelineStyleElements = [];
+                }
+                let timelineStyleElement = new AscCommonExcel.CTimelineStyleElement();
                 res = this.bcr.Read2Spreadsheet(length, function (t, l) {
-                    return oThis.ReadTimelineStyleElement(t, l, oTimelineStyle.TimelineStyleElement);
+                    return oThis.ReadTimelineStyleElement(t, l, timelineStyleElement);
                 });
+                oTimelineStyle.timelineStyleElements.push(timelineStyleElement);
             } else {
                 res = c_oSerConstants.ReadUnknown;
             }
             return res;
-        }
+        };
         this.ReadTimelineStyleElement = function (type, length, oTimelineStyleElement) {
             let res = c_oSerConstants.ReadOk;
             if (c_oSer_TimelineStyles.TimelineStyleElementType === type) {
@@ -7891,7 +7959,7 @@
                 res = c_oSerConstants.ReadUnknown;
             }
             return res;
-        }
+        };
 
     }
     /** @constructor */
