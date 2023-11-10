@@ -26326,7 +26326,10 @@
 		}
 		this.model.removeLegacyDrawingHFPictures(aPictures);
 	};
-
+	/**
+	 * Method applies series settings when user confirms "Series" settings in dialog window or context menu.
+	 * @param {asc_CSeriesSettings} settings
+	 */
 	WorksheetView.prototype.applySeriesSettings = function (settings) {
 		const wsView = this;
 		const cSerial = new AscCommonExcel.CSerial(settings);

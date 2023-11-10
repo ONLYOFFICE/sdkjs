@@ -15848,6 +15848,19 @@ QueryTableField.prototype.clone = function() {
 		return isChanged ? this : null;
 	};
 
+	/**
+	 * Class representing a Series settings for fills data of context menu and dialog window - "Series"
+	 * @property {c_oAscSeriesInType} seriesIn - Series in. Contains: Rows, Columns
+	 * @property {c_oAscSeriesType} type - Type. Contains:  Linear, Growth, Date, AutoFill
+	 * @property {c_oAscDateUnitType} dateUnit - Date Unit. Contains: Day, Weekday, Month, Year
+	 * @property {number|null} stepValue - Step value
+	 * @property {number|null} stopValue - Stop value
+	 * @property {boolean|null} trend - Trend
+	 * @property {object} contextMenuAllowedProps - Allowed properties
+	 * @property {c_oAscFillRightClickOptions} contextMenuChosenProperty - Chosen property of context menu
+	 * @constructor
+	 * @returns {asc_CSeriesSettings}
+	 */
 	function asc_CSeriesSettings() {
 		this.seriesIn = null;
 		this.type = null;
@@ -15864,6 +15877,12 @@ QueryTableField.prototype.clone = function() {
 
 		return this;
 	}
+
+	/**
+	 * Method clones SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @returns {asc_CSeriesSettings}
+	 */
 	asc_CSeriesSettings.prototype.clone = function () {
 		let res = new asc_CSeriesSettings();
 
@@ -15881,7 +15900,11 @@ QueryTableField.prototype.clone = function() {
 
 		return res;
 	};
-
+	/**
+	 * Method fills data of SeriesSettings object for context menu and dialog window
+	 * @memberof asc_CSeriesSettings
+	 * @param {WorksheetView} ws
+	 */
 	asc_CSeriesSettings.prototype.prepare = function (ws) {
 		if (!ws) {
 			return;
@@ -16001,6 +16024,10 @@ QueryTableField.prototype.clone = function() {
 		//2. init for context menu - allowed options
 		this.asc_setContextMenuAllowedProps(contextMenuAllowedProps);
 	};
+	/**
+	 * Method updates "Type" and "Trend" attributes of SeriesSettings object for chosen context menu property
+	 * @memberof asc_CSeriesSettings
+	 */
 	asc_CSeriesSettings.prototype.init = function () {
 		const chosenContextMenuProp = this.asc_getContextMenuChosenProperty();
 		if (chosenContextMenuProp === Asc.c_oAscFillRightClickOptions.linearTrend) {
@@ -16011,53 +16038,135 @@ QueryTableField.prototype.clone = function() {
 			this.asc_setTrend(true);
 		}
 	};
-
+	/**
+	 * Method returns "Series In" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @returns {c_oAscSeriesInType}
+	 */
 	asc_CSeriesSettings.prototype.asc_getSeriesIn = function () {
 		return this.seriesIn;
 	};
+	/**
+	 * Method returns "Type" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @returns {c_oAscSeriesType}
+	 */
 	asc_CSeriesSettings.prototype.asc_getType = function () {
 		return this.type;
 	};
+	/**
+	 * Method returns "Date Unit" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @returns {c_oAscDateUnitType}
+	 */
 	asc_CSeriesSettings.prototype.asc_getDateUnit = function () {
 		return this.dateUnit;
 	};
+	/**
+	 * Method returns "Trend" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @returns {boolean}
+	 */
 	asc_CSeriesSettings.prototype.asc_getTrend = function () {
 		return this.trend;
 	};
+	/**
+	 * Method returns "Step Value" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @returns {number}
+	 */
 	asc_CSeriesSettings.prototype.asc_getStepValue = function () {
 		return this.stepValue;
 	};
+	/**
+	 * Method returns "Stop Value" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @returns {number}
+	 */
 	asc_CSeriesSettings.prototype.asc_getStopValue = function () {
 		return this.stopValue;
 	};
+	/**
+	 * Method returns "contextMenuAllowedProps" attribute of SeriesSettings object.
+	 * Uses for hide and shade menu items in context menu.
+	 * @memberof asc_CSeriesSettings
+	 * @returns {object} - object with properties of Asc.c_oAscFillRightClickOptions
+	 */
 	asc_CSeriesSettings.prototype.asc_getContextMenuAllowedProps = function () {
 		return this.contextMenuAllowedProps;
 	};
+	/**
+	 * Method returns "contextMenuChosenProperty" attribute of SeriesSettings object.
+	 * Uses for recognize chosen item in context menu.
+	 * @memberof asc_CSeriesSettings
+	 * @returns {c_oAscFillRightClickOptions}
+	 */
 	asc_CSeriesSettings.prototype.asc_getContextMenuChosenProperty = function () {
 		return this.contextMenuChosenProperty;
 	};
-
+	/**
+	 * Method sets "Series In" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @param {c_oAscSeriesInType} val - attribute of c_oAscSeriesInType
+	 */
 	asc_CSeriesSettings.prototype.asc_setSeriesIn = function (val) {
 		this.seriesIn = val;
 	};
+	/**
+	 * Method sets "Type" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @param {c_oAscSeriesType} val - attribute of c_oAscSeriesType
+	 */
 	asc_CSeriesSettings.prototype.asc_setType = function (val) {
 		this.type = val;
 	};
+	/**
+	 * Method sets "Date Unit" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @param {c_oAscDateUnitType} val - attribute of c_oAscDateUnitType
+	 */
 	asc_CSeriesSettings.prototype.asc_setDateUnit = function (val) {
 		this.dateUnit = val;
 	};
+	/**
+	 * Method sets "Trend" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @param {boolean} val
+	 */
 	asc_CSeriesSettings.prototype.asc_setTrend = function (val) {
 		this.trend = val;
 	};
+	/**
+	 * Method sets "Step Value" attribute of SeriesSettings object
+	 * @param {number} val
+	 */
 	asc_CSeriesSettings.prototype.asc_setStepValue = function (val) {
 		this.stepValue = val;
 	};
+	/**
+	 * Method sets "Stop Value" attribute of SeriesSettings object
+	 * @param {number} val
+	 */
 	asc_CSeriesSettings.prototype.asc_setStopValue = function (val) {
 		this.stopValue = val;
 	};
+	/**
+	 * Method sets "contextMenuAllowedProps" attribute of SeriesSettings object.
+	 * Uses for hide and shade menu items in context menu.
+	 * * true - unshade menu item
+	 * * false - shade menu item
+	 * * null - hide menu item
+	 * @memberof asc_CSeriesSettings
+	 * @param {object} val - object with properties of Asc.c_oAscFillRightClickOptions as attribute and boolean or null as value
+	 */
 	asc_CSeriesSettings.prototype.asc_setContextMenuAllowedProps = function (val) {
 		this.contextMenuAllowedProps = val;
 	};
+	/**
+	 * Method sets "contextMenuChosenProperty" attribute of SeriesSettings object.
+	 * Uses for recognize chosen item in context menu.
+	 * @param {c_oAscFillRightClickOptions} val - attribute of c_oAscFillRightClickOptions
+	 */
 	asc_CSeriesSettings.prototype.asc_setContextMenuChosenProperty = function (val) {
 		this.contextMenuChosenProperty = val;
 	};

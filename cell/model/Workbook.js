@@ -19548,14 +19548,8 @@
 	};
 	//-------------------------------------------------------------------------------------------------
 	/**
-	 * Class representing a Serial feature
-	 * @param {object} settings - Data from dialog window
-	 * @param {c_oAscSeriesInType} settings.seriesIn - Series in. Contains: Rows, Columns
-	 * @param {c_oAscSeriesType} settings.type - Type. Contains:  Linear, Growth, Date, AutoFill
-	 * @param {c_oAscDateUnitType} settings.dateUnit - Date Unit. Contains: Day, Weekday, Month, Year
-	 * @param {number} settings.stepValue - Step value
-	 * @param {number} settings.stopValue - Stop value
-	 * @param {boolean} settings.trend - Trend
+	 * Class representing a Series feature
+	 * @param {asc_CSeriesSettings} settings - Data from dialog window
 	 * @constructor
 	 */
 	function CSerial (settings) {
@@ -19905,7 +19899,7 @@
 		return aFilledCells;
 	};
 	/**
-	 * Creates a history point for "Serial" feature
+	 * Creates a history point for "Series" feature
 	 * @memberof CSerial
 	 */
 	CSerial.prototype.initHistoryPoint = function () {
@@ -20160,7 +20154,7 @@
 		}
 	};
 	/**
-	 * Main method runs "Serial" feature according to the specified parameters
+	 * Main method runs "Series" feature according to the specified parameters
 	 * @memberof CSerial
 	 */
 	CSerial.prototype.exec = function () {
