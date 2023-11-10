@@ -18474,6 +18474,48 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), 0.21, 'Result of VLOOKUP(576,N100:O114,2)');
 		wb.dependencyFormulas.lockRecal();
 
+		// for bug 65016 - error tests when simpleSearch
+		ws.getRange2("A101:B120").cleanAll();
+		ws.getRange2("A101").setValue("String");
+		ws.getRange2("A102").setValue("1");
+		ws.getRange2("A103").setValue("2");
+		ws.getRange2("A104").setValue("3");
+		ws.getRange2("A105").setValue("#VALUE!");
+		ws.getRange2("A106").setValue("#NUM!");
+		ws.getRange2("A107").setValue("#DIV/0!");
+		ws.getRange2("A108").setValue("TRUE");
+		ws.getRange2("A109").setValue("Sandra");
+		ws.getRange2("A113").setValue("5");
+		ws.getRange2("B101").setValue("1");
+		ws.getRange2("B102").setValue("2");
+		ws.getRange2("B103").setValue("3");
+		ws.getRange2("B104").setValue("4");
+		ws.getRange2("B105").setValue("5");
+		ws.getRange2("B106").setValue("6");
+		ws.getRange2("B107").setValue("7");
+		ws.getRange2("B108").setValue("8");
+		ws.getRange2("B109").setValue("9");
+		ws.getRange2("B110").setValue("10");
+		ws.getRange2("B111").setValue("11");
+		ws.getRange2("B112").setValue("12");
+		ws.getRange2("B113").setValue("13");
+
+		oParser = new parserFormula('VLOOKUP("SANDRA",A101:B113,2,FALSE)', "A2", ws);
+		assert.ok(oParser.parse(), 'VLOOKUP("SANDRA",A101:B113,2,FALSE)');
+		assert.strictEqual(oParser.calculate().getValue(), 9, 'Result of VLOOKUP("SANDRA",A101:B113,2,FALSE)');
+
+		oParser = new parserFormula('VLOOKUP(TRUE,A101:B113,2,FALSE)', "A2", ws);
+		assert.ok(oParser.parse(), 'VLOOKUP(TRUE,A101:B113,2,FALSE)');
+		assert.strictEqual(oParser.calculate().getValue(), 8, 'Result of VLOOKUP(TRUE,A101:B113,2,FALSE)');
+
+		oParser = new parserFormula('VLOOKUP(A107,A101:B113,2,FALSE)', "A2", ws);
+		assert.ok(oParser.parse(), 'VLOOKUP(A107,A101:B113,2,FALSE)');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of VLOOKUP(A107,A101:B113,2,FALSE)');
+
+		oParser = new parserFormula('VLOOKUP(5,A101:B113,2,FALSE)', "A2", ws);
+		assert.ok(oParser.parse(), 'VLOOKUP(5,A101:B113,2,FALSE)');
+		assert.strictEqual(oParser.calculate().getValue(), 13, 'Result of VLOOKUP(5,A101:B113,2,FALSE)');
+
 	});
 
 	QUnit.test("Test: \"LOOKUP\"", function (assert) {
