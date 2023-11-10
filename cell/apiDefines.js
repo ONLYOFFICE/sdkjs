@@ -598,7 +598,7 @@ var c_oAscPopUpSelectorType = {
 
   var c_oAscDateUnitType = {
     day: 0,
-    weekend: 1,
+    weekday: 1,
     month: 2,
     year: 3
   };
@@ -1042,7 +1042,7 @@ var c_oAscPopUpSelectorType = {
   prot['columns'] = prot.columns;
 
   window['Asc']['c_oAscSeriesType'] = window['Asc'].c_oAscSeriesType = c_oAscSeriesType;
-  prot = c_oAscSeriesInType;
+  prot = c_oAscSeriesType;
   prot['linear'] = prot.linear;
   prot['growth'] = prot.growth;
   prot['date'] = prot.date;
@@ -1051,7 +1051,7 @@ var c_oAscPopUpSelectorType = {
   window['Asc']['c_oAscDateUnitType'] = window['Asc'].c_oAscDateUnitType = c_oAscDateUnitType;
   prot = c_oAscDateUnitType;
   prot['day'] = prot.day;
-  prot['weekend'] = prot.weekend;
+  prot['weekday'] = prot.weekday;
   prot['month'] = prot.month;
   prot['year'] = prot.year;
 

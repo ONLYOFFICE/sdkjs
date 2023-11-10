@@ -52,6 +52,10 @@
 	var cErrorLocal = AscCommon.cErrorLocal;
 	var cErrorOrigin = AscCommon.cErrorOrigin;
 	var c_oAscNumFormatType = Asc.c_oAscNumFormatType;
+	var oSeriesInType = Asc.c_oAscSeriesInType;
+	var oSeriesType = Asc.c_oAscSeriesType;
+	var oSeriesDateUnitType = Asc.c_oAscDateUnitType;
+
 
 	var UndoRedoItemSerializable = AscCommonExcel.UndoRedoItemSerializable;
 	var UndoRedoData_CellSimpleData = AscCommonExcel.UndoRedoData_CellSimpleData;
@@ -19546,25 +19550,26 @@
 	/**
 	 * Class representing a Serial feature
 	 * @param {object} settings - Data from dialog window
-	 * @param {string} settings.seriesIn - Series in. Contains: Rows, Columns
-	 * @param {string} settings.type - Type. Contains:  Linear, Growth, Date, AutoFill
-	 * @param {string} settings.dateUnit - Date Unit. Contains: Day, Weekday, Month, Year
-	 * @param {string} settings.step - Step value
-	 * @param {string} settings.stopValue - Stop value
+	 * @param {c_oAscSeriesInType} settings.seriesIn - Series in. Contains: Rows, Columns
+	 * @param {c_oAscSeriesType} settings.type - Type. Contains:  Linear, Growth, Date, AutoFill
+	 * @param {c_oAscDateUnitType} settings.dateUnit - Date Unit. Contains: Day, Weekday, Month, Year
+	 * @param {number} settings.stepValue - Step value
+	 * @param {number} settings.stopValue - Stop value
 	 * @param {boolean} settings.trend - Trend
-	 * @param {Range} range - Range of cells
 	 * @constructor
 	 */
-	function CSerial (settings, range) {
-		this.bVertical = settings.seriesIn === 'Columns';
-		this.sType = settings.type;
-		this.sDateUnit = settings.dateUnit;
-		this.sStep = settings.step;
-		this.sStopValue = settings.stopValue;
+	function CSerial (settings) {
+		this.bVertical = settings.seriesIn === oSeriesInType.columns;
+		this.nType = settings.type;
+		this.nDateUnit = settings.dateUnit;
+		this.nStep = settings.stepValue;
+		this.nStopValue = settings.stopValue;
 		this.bTrend = settings.trend;
-		this.oFromRange = range;
+
+		this.oFromRange = null;
 		this.oToRange = null;
-		this.ws = range.worksheet;
+		this.oActiveFillHandle = null;
+		this.ws = null;
 		this.nPrevValue = null;
 		this.nIndex = null;
 
@@ -19578,55 +19583,64 @@
 	 * @memberof CSerial
 	 * @returns {boolean}
 	 */
-	CSerial.prototype.getVertical = function() {
+	CSerial.prototype.getVertical = function () {
 		return this.bVertical;
 	};
 	/**
 	 * Returns modes of progressions.
 	 * @memberof CSerial
-	 * @returns {string}
+	 * @returns {c_oAscSeriesType}
 	 */
-	CSerial.prototype.getType = function() {
-		return this.sType;
+	CSerial.prototype.getType = function () {
+		return this.nType;
 	};
 	/**
 	 * Returns modes for work with date
 	 * @memberof CSerial
-	 * @returns {string}
+	 * @returns {c_oAscDateUnitType}
 	 */
-	CSerial.prototype.getDateUnit = function() {
-		return this.sDateUnit;
+	CSerial.prototype.getDateUnit = function () {
+		return this.nDateUnit;
 	};
 	/**
 	 * Returns a step of progression
 	 * @memberof CSerial
-	 * @returns {string}
+	 * @returns {number}
 	 */
-	CSerial.prototype.getStep = function() {
-		return this.sStep;
+	CSerial.prototype.getStep = function () {
+		return this.nStep;
 	};
 	/**
 	 * Returns a stop value. Fills a progression to value inputted in "Stop value"
 	 * @memberof CSerial
-	 * @returns {string}
+	 * @returns {number}
 	 */
-	CSerial.prototype.getStopValue = function() {
-		return this.sStopValue;
+	CSerial.prototype.getStopValue = function () {
+		return this.nStopValue;
 	};
 	/**
 	 * Returns a flag of trend mode. true - Fills cells in trend mode. Step defines automatically. false - Fills cells according step value
 	 * @memberof CSerial
 	 * @returns {boolean}
 	 */
-	CSerial.prototype.getTrend = function() {
+	CSerial.prototype.getTrend = function () {
 		return this.bTrend;
+	};
+	/**
+	 * Sets a range of selected cells
+	 * @memberof CSerial
+	 * @param {Range} oFromRange
+	 */
+	CSerial.prototype.setFromRange = function (oFromRange) {
+		this.oFromRange = oFromRange;
+		this.setWs(oFromRange.worksheet);
 	};
 	/**
 	 * Returns a range of selected cells
 	 * @memberof CSerial
 	 * @returns {Range}
 	 */
-	CSerial.prototype.getFromRange = function() {
+	CSerial.prototype.getFromRange = function () {
 		return this.oFromRange;
 	};
 	/**
@@ -19634,7 +19648,7 @@
 	 * @memberof CSerial
 	 * @param {Range} oRange
 	 */
-	CSerial.prototype.setToRange = function(oRange) {
+	CSerial.prototype.setToRange = function (oRange) {
 		this.oToRange = oRange;
 	};
 	/**
@@ -19642,15 +19656,36 @@
 	 * @memberof CSerial
 	 * @returns {Range}
 	 */
-	CSerial.prototype.getToRange = function() {
+	CSerial.prototype.getToRange = function () {
 		return this.oToRange;
+	};
+	/**
+	 * Sets an active fill handle.
+	 * @param {Asc.Range} oActiveFillHandle
+	 */
+	CSerial.prototype.setActiveFillHandle = function (oActiveFillHandle) {
+		this.oActiveFillHandle = oActiveFillHandle;
+	};
+	/**
+	 * Returns an active fill handle
+	 * @returns {Asc.Range}
+	 */
+	CSerial.prototype.getActiveFillHandle = function () {
+		return this.oActiveFillHandle;
+	};
+	/**
+	 * Sets a worksheet of selected range
+	 * @param {Worksheet} ws
+	 */
+	CSerial.prototype.setWs = function (ws) {
+		this.ws = ws;
 	};
 	/**
 	 * Returns a worksheet of selected range
 	 * @memberof CSerial
 	 * @returns {Worksheet}
 	 */
-	CSerial.prototype.getWs = function() {
+	CSerial.prototype.getWs = function () {
 		return this.ws;
 	};
 	/**
@@ -19658,7 +19693,7 @@
 	 * @memberof CSerial
 	 * @param {number} nValue
 	 */
-	CSerial.prototype.setPrevValue = function(nValue) {
+	CSerial.prototype.setPrevValue = function (nValue) {
 		this.nPrevValue = nValue;
 	};
 	/**
@@ -19666,7 +19701,7 @@
 	 * @memberof CSerial
 	 * @returns {number}
 	 */
-	CSerial.prototype.getPrevValue = function() {
+	CSerial.prototype.getPrevValue = function () {
 		return this.nPrevValue;
 	};
 	/**
@@ -19674,7 +19709,7 @@
 	 * @memberof CSerial
 	 * @param {number} nIndex
 	 */
-	CSerial.prototype.setIndex = function(nIndex) {
+	CSerial.prototype.setIndex = function (nIndex) {
 		this.nIndex = nIndex;
 	};
 	/**
@@ -19682,7 +19717,7 @@
 	 * @memberof CSerial
 	 * @returns {number}
 	 */
-	CSerial.prototype.getIndex = function() {
+	CSerial.prototype.getIndex = function () {
 		return this.nIndex;
 	};
 	/**
@@ -19691,8 +19726,7 @@
 	 */
 	CSerial.prototype.initIndex = function () {
 		let ws = this.getWs();
-		let wsView = ws.workbook.oApi.wb.getWorksheet();
-		let oActiveFillHandle = wsView.activeFillHandle;
+		let oActiveFillHandle = this.getActiveFillHandle();
 		let oRange = ws.selectionRange.getLast();
 
 		if (oActiveFillHandle) {
@@ -19754,8 +19788,7 @@
 	 */
 	CSerial.prototype.initTrendIterCoords = function (oFilledLine) {
 		const bReverse = this.getIndex() < 0;
-		const wsView = this.getWs().workbook.oApi.wb.getWorksheet();
-		const bActiveFillHandleExists = !!wsView.activeFillHandle;
+		const bActiveFillHandleExists = !!this.getActiveFillHandle();
 		const bVertical = this.getVertical();
 		const oTo = oFilledLine.oToRange.bbox;
 		const oFrom = this.getFromRange().bbox;
@@ -19782,14 +19815,13 @@
 	 * @param {number} [nIndexLine] - Line index of filled cells. Not required param
 	 * @returns {Range}
 	 */
-	CSerial.prototype.getFilledRange = function(nIndexLine) {
+	CSerial.prototype.getFilledRange = function (nIndexLine) {
 		let oFilledRange = this.getFromRange().clone();
 		let nRow = 0;
 		let nCol = 0;
-		let sType = this.getType();
+		let nType = this.getType();
 		let bTrend = this.getTrend();
-		let wsView = this.getWs().workbook.oApi.wb.getWorksheet();
-		let oActiveFillHandle = wsView.activeFillHandle;
+		let oActiveFillHandle = this.getActiveFillHandle();
 
 		if (nIndexLine != null) {
 			if (this.getVertical()) {
@@ -19801,9 +19833,9 @@
 			}
 		}
 		if (!oActiveFillHandle) {
-			oFilledRange._foreachNoEmpty(function(oCell, nRow0, nCol0) {
+			oFilledRange._foreachNoEmpty(function (oCell, nRow0, nCol0) {
 				if (oCell && oCell.getValueWithoutFormat()) {
-					if (sType === 'AutoFill' || bTrend) {
+					if (nType === oSeriesType.autoFill || bTrend) {
 						nRow = nRow0;
 						nCol = nCol0;
 					} else { // for other modes use only first filled cell in range
@@ -19826,7 +19858,7 @@
 	 * @memberof CSerial
 	 * @param {Range} oFilledRange - Range of filled line of cells.
 	 */
-	CSerial.prototype.initToRange = function(oFilledRange) {
+	CSerial.prototype.initToRange = function (oFilledRange) {
 		let ws = this.getWs();
 		let oTo = null;
 
@@ -19843,21 +19875,21 @@
 	 * @memberof CSerial
 	 * @returns {Object[]}
 	 */
-	CSerial.prototype.getFilledCells = function() {
+	CSerial.prototype.getFilledCells = function () {
 		let oSerial = this;
 		let oFromRange = this.getFromRange();
 		let bVertical = this.getVertical();
-		let sType = this.getType();
+		let nType = this.getType();
 		let aFilledCells = [];
 
-		oFromRange._foreachNoEmpty(function(oCell, nRow, nCol, nRowStart, nColStart) {
-			if (oCell && oCell.getValueWithoutFormat() && sType !== 'AutoFill') {
-				let nType = oCell.getType();
+		oFromRange._foreachNoEmpty(function (oCell, nRow, nCol, nRowStart, nColStart) {
+			if (oCell && oCell.getValueWithoutFormat() && nType !== oSeriesType.autoFill) {
+				let nTypeCell = oCell.getType();
 				let oDirectCondition = {
 					true: nRow === nRowStart,
 					false: nCol === nColStart
 				};
-				if (oDirectCondition[bVertical] && nType === CellValueType.Number) {
+				if (oDirectCondition[bVertical] && nTypeCell === CellValueType.Number) {
 					let oFilledRange = oSerial.getFilledRange(bVertical ? nCol : nRow);
 					oSerial.initToRange(oFilledRange);
 					let oToRange = oSerial.getToRange();
@@ -19876,7 +19908,7 @@
 	 * Creates a history point for "Serial" feature
 	 * @memberof CSerial
 	 */
-	CSerial.prototype.initHistoryPoint = function() {
+	CSerial.prototype.initHistoryPoint = function () {
 		let nIndex = this.getIndex();
 		let oBBox = this.getFromRange().bbox;
 		let nWidth = oBBox.c2 - oBBox.c1 + 1;
@@ -19912,18 +19944,18 @@
 	 * Fills current value for Date type
 	 * @param {number} nPrevVal - Previous cell value
 	 * @param {number} nStep - Step value
-	 * @param {string} sDateUnit - Date unit
+	 * @param {c_oAscDateUnitType} nDateUnit - Date unit
 	 * @returns {number} Current value in ExcelDate format
 	 */
-	function _fillExcelDate(nPrevVal, nStep, sDateUnit) {
+	function _fillExcelDate(nPrevVal, nStep, nDateUnit) {
 		// Convert number to cDate object
 		let oPrevValDate = new cDate().getDateFromExcel(nPrevVal);
 
-		switch (sDateUnit) {
-			case 'Day':
+		switch (nDateUnit) {
+			case oSeriesDateUnitType.day:
 				oPrevValDate.addDays(nStep);
 				break;
-			case 'Weekday':
+			case oSeriesDateUnitType.weekday:
 				let aWeekdays = [1, 2, 3, 4, 5];
                 oPrevValDate.addDays(nStep);
 				while (true) {
@@ -19934,10 +19966,10 @@
                     }
 				}
 				break;
-			case 'Month':
+			case oSeriesDateUnitType.month:
 				oPrevValDate.addMonths(nStep);
 				break;
-			case 'Year':
+			case oSeriesDateUnitType.year:
 				oPrevValDate.addYears(nStep);
 				break;
 		}
@@ -19982,8 +20014,8 @@
 		}
 
 		let oSerial = this;
-		let nStep = this.getTrend() ? 1 : this.getStep() - 0;
-		let nStopValue = this.getStopValue() ? this.getStopValue() - 0 : null;
+		let nStep = this.getTrend() ? 1 : this.getStep();
+		let nStopValue = this.getStopValue() ? this.getStopValue() : null;
 		let nIndexFilledLine = this.getVertical() ? oFilledLine.oCell.nCol : oFilledLine.oCell.nRow;
 		let oTo = oFilledLine.oToRange.bbox;
 		let oToRange = oFilledLine.oToRange;
@@ -19997,11 +20029,11 @@
 		let nEndIndex = this.getVertical() ? oTo.r2 : oTo.c2;
 		// Fill range cells for i row or col
 		let oProgressionCalc = {
-			'Linear': function () {
+			0: function () { // linear
 				return oSerial.getPrevValue() + nStep;
-			}, 'Growth': function () {
+			}, 1: function () { // growth
 				return oSerial.getPrevValue() * nStep;
-			}, 'Date': function () {
+			}, 2: function () { // date
 				return _fillExcelDate(oSerial.getPrevValue(), nStep, oSerial.getDateUnit());
 			}
 		};
@@ -20046,7 +20078,7 @@
 					let nValue = oCell.getNumberValue();
 					if (nValue !== null) {
 						// For Growth type take ln from value
-						if (oSerial.getType() === 'Growth') {
+						if (oSerial.getType() === oSeriesType.growth) {
 							nValue = Math.log(nValue);
 						}
 						oRes = fAction(nValue, i);
@@ -20114,7 +20146,7 @@
 				oCopyCell.cleanText();
 				let oCellValue = new AscCommonExcel.CCellValue();
 				let nCellValue = nIntercept + nSlope * x;
-				if (oSerial.getType() === 'Growth') {
+				if (oSerial.getType() === oSeriesType.growth) {
 					nCellValue = Math.exp(nCellValue);
 				}
 				oCellValue.type = CellValueType.Number;
@@ -20134,9 +20166,9 @@
 	CSerial.prototype.exec = function () {
 		let oFromRange = this.getFromRange();
 		let bVertical = this.getVertical();
-		let sType = this.getType();
+		let nType = this.getType();
 
-		if (sType === 'AutoFill') {
+		if (nType === oSeriesType.autoFill) {
 			let oFilledRange = this.getFilledRange();
 			this.initIndex();
 			let oCanPromote = oFilledRange.canPromote(false, bVertical, this.getIndex());

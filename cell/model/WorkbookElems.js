@@ -15882,32 +15882,134 @@ QueryTableField.prototype.clone = function() {
 		return res;
 	};
 
-	asc_CSeriesSettings.prototype.init = function (ws) {
+	asc_CSeriesSettings.prototype.prepare = function (ws) {
 		if (!ws) {
 			return;
 		}
 
-		//1. init for toolbar
-		//remove all comments after realization
-		/*asc_getSeriesIn/asc_setSeriesIn; -> Asc.c_oAscSeriesInType
-		asc_getType/asc_setType; ->  Asc.c_oAscSeriesType
-		asc_getDateUnit/asc_setDateUnit; -> Asc.c_oAscDateUnitType
-		asc_getTrend/asc_setTrend; //bool
-		asc_getStepValue/asc_setStepValue; //number
-		asc_getStopValue/asc_setStopValue; //number*/
+		function actionCell(cell) {
+			if (cell && cell.getValueWithoutFormat()) {
+				// Fill type
+				seriesSettings.asc_setType(Asc.c_oAscSeriesType.linear);
+				if (cell.xfs != null && cell.xfs.num != null && cell.xfs.num.getFormat() != null) {
+					let numFormat = AscCommon.oNumFormatCache.get(cell.xfs.num.getFormat());
+					if (numFormat.isDateTimeFormat()) {
+						seriesSettings.asc_setType(Asc.c_oAscSeriesType.date);
 
-		//TODO!!!
-		//analyze sheet selection
-		//this.dateUnit
-		//seriesIn
-		//type
+						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillDays] = true;
+						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillWeekdays] = true;
+						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillMonths] = true;
+						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillYears] = true;
+					}
+				}
 
-		/*let selection = ws && ws.getSelection();
+				// Fill step value
+				let cellNumberValue = cell.getNumberValue();
+				if (cell.isFormula()) {
+					seriesSettings.asc_setStepValue(1);
+				} else if (prevValue) {
+					if (cellNumberValue) {
+						seriesSettings.asc_setStepValue(cellNumberValue - prevValue);
+
+						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillSeries] = true;
+						if (seriesSettings.asc_getType() !== Asc.c_oAscSeriesType.date) {
+							contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.linearTrend] = true;
+							contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.growthTrend] = true;
+						}
+						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.series] = true;
+					} else {
+						seriesSettings.asc_setStepValue(1);
+
+						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillSeries] = true;
+						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.series] = true;
+					}
+				} else {
+					if (cellNumberValue) {
+						prevValue = cellNumberValue;
+					} else {
+						seriesSettings.asc_setStepValue(1);
+
+						let typeCell = cell.getType();
+						if (typeCell === AscCommon.CellValueType.String) {
+							let cellValue = cell.getValueWithoutFormat();
+							if (cellValue[cellValue.length - 1] >= '0' && cellValue[cellValue.length - 1] <= '9') {
+								contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillSeries] = true;
+							}
+						}
+					}
+				}
+			} else {
+				seriesSettings.asc_setStepValue(1);
+
+				if(prevValue != null) {
+					contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.series] = true;
+					contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillSeries] = true;
+				}
+			}
+
+			if (seriesSettings.asc_getStepValue()) {
+				if (seriesSettings.asc_getType() == null) {
+					seriesSettings.asc_setType(Asc.c_oAscSeriesType.linear);
+				}
+				return true;
+			}
+		}
+
+		let seriesSettings = this;
+		let selection = ws.model && ws.model.getSelection();
 		let selectionRanges = selection && selection.ranges;
-		res = selectionRanges && selectionRanges[0];*/
+		let range = selectionRanges && selectionRanges[0];
+		if(!range) {
+			return;
+		}
+		let rangeModel = ws.model.getRange3(range.r1, range.c1, range.r2, range.c2);
+		let prevValue = null;
+		let contextMenuAllowedProps = {
+			0: true, // copyCells
+			1: false, // fillSeries
+			2: null, // fillFormattingOnly
+			3: null, // fillWithoutFormatting
+			4: false, // fillDays
+			5: false, // fillWeekdays
+			6: false, // fillMonths
+			7: false, // fillYears
+			8: false, // linearTrend
+			9: false, // growthTrend
+			10: null, // flashFill
+			11: false // series
+		};
+		let countOfCol = range.c2 - range.c1;
+		let countOfRow = range.r2 - range.r1;
+
+		if (countOfCol >= countOfRow) {
+			this.asc_setSeriesIn(Asc.c_oAscSeriesInType.rows);
+			rangeModel._foreachNoEmpty(actionCell);
+		} else {
+			this.asc_setSeriesIn(Asc.c_oAscSeriesInType.columns);
+			rangeModel._foreachNoEmpty(function (cell, curRow, curCol, rowStart, colStart) {
+				if (curCol === colStart) {
+					return actionCell(cell);
+				}
+			});
+		}
+		if (seriesSettings.asc_getStepValue() == null) {
+			seriesSettings.asc_setStepValue(1);
+		}
+		this.asc_setTrend(false);
+		this.asc_setDateUnit(Asc.c_oAscDateUnitType.day);
 
 		//2. init for context menu - allowed options
-		//settings.asc_setContextMenuAllowedProps({c_oAscFillRightClickOptions.copyCells: true, ....})
+		this.asc_setContextMenuAllowedProps(contextMenuAllowedProps);
+	};
+	asc_CSeriesSettings.prototype.init = function () {
+		const chosenContextMenuProp = this.asc_getContextMenuChosenProperty();
+		if (chosenContextMenuProp === Asc.c_oAscFillRightClickOptions.linearTrend) {
+			this.asc_setType(Asc.c_oAscSeriesType.linear);
+			this.asc_setTrend(true);
+		} else if (chosenContextMenuProp === Asc.c_oAscFillRightClickOptions.growthTrend) {
+			this.asc_setType(Asc.c_oAscSeriesType.growth);
+			this.asc_setTrend(true);
+		}
 	};
 
 	asc_CSeriesSettings.prototype.asc_getSeriesIn = function () {
@@ -15938,7 +16040,7 @@ QueryTableField.prototype.clone = function() {
 	asc_CSeriesSettings.prototype.asc_setSeriesIn = function (val) {
 		this.seriesIn = val;
 	};
-	asc_CSeriesSettings.prototype.asc_getType = function (val) {
+	asc_CSeriesSettings.prototype.asc_setType = function (val) {
 		this.type = val;
 	};
 	asc_CSeriesSettings.prototype.asc_setDateUnit = function (val) {

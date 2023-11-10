@@ -8981,7 +8981,7 @@ var editor;
 		let res = new Asc.asc_CSeriesSettings();
 
 		let ws = this.wb && this.wb.getWorksheet();
-		res.init(ws);
+		res.prepare(ws);
 
 		return res;
 	};
