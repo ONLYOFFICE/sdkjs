@@ -127,6 +127,7 @@ CChartsDrawer.prototype =
 
 	//****draw and recalculate functions****
 	recalculate : function (chartSpace) {
+		console.log(chartSpace)
 		this.cChartSpace = chartSpace;
 
 		this.calcProp = {};
@@ -2108,82 +2109,109 @@ CChartsDrawer.prototype =
 	},
 
 	_getLogArray: function (yMin, yMax, logBase, axis) {
-		var result = [];
 
-		var temp;
-		var pow = 0;
-		var tempPow = yMin;
+		/**
+		 * logbase contains min and max values and logBase
+		 * if they are null just use yMin lowerBound and yMax upperBound
+		 * create loop from min to max, multiply each time by logBase
+		 */
 
-		var kF = 1000000000;
-		var manualMin = axis.scaling && axis.scaling.min !== null ? Math.round(axis.scaling.min * kF) / kF : null;
-		var manualMax = axis.scaling && axis.scaling.max !== null ? Math.round(axis.scaling.max * kF) / kF : null;
+		let kF = 1000000000;
+		let trueMin = axis.scaling && axis.scaling.min !== null ? Math.round(axis.scaling.min * kF) / kF : null;
+		let trueMax = axis.scaling && axis.scaling.max !== null ? Math.round(axis.scaling.max * kF) / kF : null;
 
-		if(manualMin !== null) {
-			yMin = manualMin;
+		if(!trueMin){
+			trueMin = Math.pow(logBase, Math.floor(Math.log(yMin) / Math.log(logBase)))
 		}
 
-		if (yMin < 1 && yMin > 0) {
-			temp = this._getFirstDegree(yMin).numPow;
-
-			tempPow = temp;
-			while (tempPow < 1) {
-				pow--;
-				tempPow = tempPow * 10;
-			}
-		} else {
-			temp = Math.pow(logBase, 0);
+		if(!trueMax){
+			trueMax = Math.pow(logBase, Math.ceil(Math.log(yMax) / Math.log(logBase)))
 		}
 
-		if (logBase < 1) {
-			logBase = 2;
+		const result = []
+		while(trueMin<=trueMax){
+			result.push(trueMin)
+			trueMin *= logBase 
 		}
+		return result
 
-		var step = 0;
-		var lMax = 1;
-		if (yMin < 1 && yMin > 0) {
-			if (lMax < yMax) {
-				lMax = yMax;
-			}
-			if(manualMax !== null && manualMax > lMax) {
-				lMax = manualMax;
-			}
 
-			while (temp < lMax) {
-				temp = Math.pow(logBase, pow);
-				if(manualMin !== null && manualMin > temp) {
-					pow++;
-					continue;
-				}
-				if(manualMax !== null && manualMax < temp) {
-					result[step] = manualMax;
-					break;
-				}
-				result[step] = temp;
-				pow++;
-				step++;
-			}
-		} else {
-			if(manualMax !== null && manualMax > yMax) {
-				yMax = manualMax;
-			}
+		// var result = [];
 
-			while (temp <= yMax) {
-				temp = Math.pow(logBase, pow);
-				if(manualMin !== null && manualMin > temp) {
-					pow++;
-					continue;
-				}
-				if(manualMax !== null && manualMax < temp) {
-					result[step] = manualMax;
-					break;
-				}
-				result[step] = temp;
-				pow++;
-				step++;
-			}
-		}
+		// var temp;
+		// var pow = 0;
+		// var tempPow = yMin;
 
-		return result;
+		// var kF = 1000000000;
+		// var manualMin = axis.scaling && axis.scaling.min !== null ? Math.round(axis.scaling.min * kF) / kF : null;
+		// var manualMax = axis.scaling && axis.scaling.max !== null ? Math.round(axis.scaling.max * kF) / kF : null;
+
+		// if(manualMin !== null) {
+		// 	yMin = manualMin;
+		// }
+
+		// if (yMin < 1 && yMin > 0) {
+		// 	temp = this._getFirstDegree(yMin).numPow;
+
+		// 	tempPow = temp;
+		// 	while (tempPow < 1) {
+		// 		pow--;
+		// 		tempPow = tempPow * 10;
+		// 	}
+		// } else {
+		// 	temp = Math.pow(logBase, 0);
+		// }
+
+		// if (logBase < 1) {
+		// 	logBase = 2;
+		// }
+
+		// var step = 0;
+		// var lMax = 1;
+		// if (yMin < 1 && yMin > 0) {
+		// 	if (lMax < yMax) {
+		// 		lMax = yMax;
+		// 	}
+		// 	if(manualMax !== null && manualMax > lMax) {
+		// 		lMax = manualMax;
+		// 	}
+
+		// 	while (temp < lMax) {
+		// 		temp = Math.pow(logBase, pow);
+		// 		if(manualMin !== null && manualMin > temp) {
+		// 			pow++;
+		// 			continue;
+		// 		}
+		// 		if(manualMax !== null && manualMax < temp) {
+		// 			result[step] = manualMax;
+		// 			break;
+		// 		}
+		// 		result[step] = temp;
+		// 		pow++;
+		// 		step++;
+		// 	}
+		// } else {
+		// 	if(manualMax !== null && manualMax > yMax) {
+		// 		yMax = manualMax;
+		// 	}
+
+		// 	while (temp <= yMax) {
+		// 		temp = Math.pow(logBase, pow);
+		// 		if(manualMin !== null && manualMin > temp) {
+		// 			pow++;
+		// 			continue;
+		// 		}
+		// 		if(manualMax !== null && manualMax < temp) {
+		// 			result[step] = manualMax;
+		// 			break;
+		// 		}
+		// 		result[step] = temp;
+		// 		pow++;
+		// 		step++;
+		// 	}
+		// }
+
+		// return result;
 	},
 
 	_getRadarAxisValues: function (axisMin, axisMax, step) {
