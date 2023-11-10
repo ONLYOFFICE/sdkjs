@@ -1043,6 +1043,7 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), -1);
 
 
+		ws.getRange2("K100:Z200").cleanAll();
 		ws.getRange2("M106").setValue("1");
 		ws.getRange2("M107").setValue("2");
 		ws.getRange2("M108").setValue("2");
@@ -18360,7 +18361,8 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
 
 		// for bug 63026 - cEmpty tests
-
+		wb.dependencyFormulas.unlockRecal();
+		ws.getRange2("K100:Z200").cleanAll();
 		// range 1
 		ws.getRange2("K100").setValue("SCALE 1");
 		ws.getRange2("K101").setValue("$");
@@ -18470,6 +18472,7 @@ $(function () {
 		oParser = new parserFormula('VLOOKUP(576,N100:O114,2)', "A2", ws);
 		assert.ok(oParser.parse(), 'VLOOKUP(576,N100:O114,2)');
 		assert.strictEqual(oParser.calculate().getValue(), 0.21, 'Result of VLOOKUP(576,N100:O114,2)');
+		wb.dependencyFormulas.lockRecal();
 
 	});
 
