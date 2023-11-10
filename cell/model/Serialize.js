@@ -139,7 +139,8 @@
         CellStyles: 15,
         CellStyle: 16,
         SlicerStyles: 17,
-        ExtDxfs: 18
+        ExtDxfs: 18,
+        TimelineStyles: 19
     };
     /** @enum */
     var c_oSerBorderTypes =
@@ -1242,6 +1243,14 @@
     var c_oSer_TimelineCachePivotTable = {
         Name: 0,
         TabId: 1
+    };
+    var c_oSer_TimelineStyles = {
+        DefaultTimelineStyle : 0,
+        TimelineStyle : 2,
+        TimelineStyleName : 3,
+        TimelineStyleElement : 4,
+        TimelineStyleElementType : 5,
+        TimelineStyleElementDxfId : 6
     };
 
     /** @enum */
@@ -7198,7 +7207,7 @@
         {
             var oThis = this;
             var oStyleObject = {aBorders: [], aFills: [], aFonts: [], oNumFmts: {}, aCellStyleXfs: [],
-                aCellXfs: [], aDxfs: [], aExtDxfs: [], aCellStyles: [], oCustomTableStyles: {}, oCustomSlicerStyles: null};
+                aCellXfs: [], aDxfs: [], aExtDxfs: [], aCellStyles: [], oCustomTableStyles: {}, oCustomSlicerStyles: null, oTimelineStyles: null};
             var res = this.bcr.ReadTable(function (t, l) {
                 return oThis.ReadStylesContent(t, l, oStyleObject);
             });
@@ -7253,6 +7262,11 @@
                 oStyleObject.oCustomSlicerStyles = new Asc.CT_slicerStyles();
                 oStyleObject.oCustomSlicerStyles.fromStream(fileStream);
                 this.stream.FromFileStream(fileStream);
+            } else if (c_oSerStylesTypes.TimelineStyles === type) {
+                oStyleObject.oTimeLineStyles = new AscCommonExcel.CTimelineStyles();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadTimelineStyles(t, l, oStyleObject.oTimeLineStyles);
+                });
             } else
                 res = c_oSerConstants.ReadUnknown;
             return res;
@@ -7837,6 +7851,48 @@
                 res = c_oSerConstants.ReadUnknown;
             return res;
         };
+        this.ReadTimelineStyles = function (type, length, oTimelineStyles) {
+            var oThis = this;
+            let res = c_oSerConstants.ReadOk;
+            if (c_oSer_TimelineStyles.DefaultTimelineStyle === type) {
+                oTimelineStyles.defaultTimelineStyle = this.stream.GetString2LE(length);
+            } else if (c_oSer_TimelineStyles.TimelineStyle === type) {
+                oTimelineStyles.timelineStyle = new AscCommonExcel.CTimelineStyle();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadTimelineStyle(t, l, oTimelineStyles.timelineStyle);
+                });
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadTimelineStyle = function (type, length, oTimelineStyle) {
+            var oThis = this;
+            let res = c_oSerConstants.ReadOk;
+            if (c_oSer_TimelineStyles.TimelineStyleName === type) {
+                oTimelineStyle.name = this.stream.GetString2LE(length);
+            } else if (c_oSer_TimelineStyles.TimelineStyle === type) {
+                oTimelineStyle.timelineStyleElement = new AscCommonExcel.CTimelineStyleElement();
+                res = this.bcr.Read2Spreadsheet(length, function (t, l) {
+                    return oThis.ReadTimelineStyleElement(t, l, oTimelineStyle.TimelineStyleElement);
+                });
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        }
+        this.ReadTimelineStyleElement = function (type, length, oTimelineStyleElement) {
+            let res = c_oSerConstants.ReadOk;
+            if (c_oSer_TimelineStyles.TimelineStyleElementType === type) {
+                oTimelineStyleElement.type = this.stream.GetUChar();
+            } else if (c_oSer_TimelineStyles.TimelineStyleElementDxfId === type) {
+                oTimelineStyleElement.dxfId = this.stream.GetLong();
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        }
+
     }
     /** @constructor */
     function Binary_WorkbookTableReader(stream, InitOpenManager, oWorkbook, bwtr)

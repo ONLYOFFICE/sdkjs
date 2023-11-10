@@ -15971,6 +15971,46 @@ QueryTableField.prototype.clone = function() {
 		return res;
 	};
 
+	function CTimelineStyles() {
+		this.defaultTimelineStyle = null;
+		this.timelineStyle = null;
+	}
+	CTimelineStyles.prototype.clone = function () {
+		var res = new CTimelineRange();
+
+		res.defaultTimelineStyle = this.defaultTimelineStyle;
+		res.timelineStyle = this.timelineStyle && this.timelineStyle.clone();
+
+		return res;
+	};
+
+	function CTimelineStyle() {
+		this.name = null;
+		this.timelineStyleElement = null;
+	}
+	CTimelineStyle.prototype.clone = function () {
+		var res = new CTimelineRange();
+
+		res.name = this.name;
+		res.timelineStyleElement = this.timelineStyleElement && this.timelineStyleElement.clone();
+
+		return res;
+	};
+
+	function CTimelineStyleElement() {
+		this.type = null;
+		this.dxfId = null;
+	}
+	CTimelineStyleElement.prototype.clone = function () {
+		var res = new CTimelineRange();
+
+		res.type = this.type;
+		res.dxfId = this.dxfId;
+
+		return res;
+	};
+
+
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
@@ -16451,6 +16491,9 @@ QueryTableField.prototype.clone = function() {
 	window["AscCommonExcel"].CTimelineCachePivotTable = CTimelineCachePivotTable;
 	window["AscCommonExcel"].CTimelineState = CTimelineState;
 	window["AscCommonExcel"].CTimelineRange = CTimelineRange;
+	window["AscCommonExcel"].CTimelineStyles = CTimelineStyles;
+	window["AscCommonExcel"].CTimelineStyle = CTimelineStyle;
+	window["AscCommonExcel"].CTimelineStyleElement = CTimelineStyleElement;
 
 
 
