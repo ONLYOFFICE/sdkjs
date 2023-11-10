@@ -2111,7 +2111,7 @@ CChartsDrawer.prototype =
 	_getLogArray: function (yMin, yMax, logBase, axis) {
 
 		/**
-		 * logbase contains min and max values and logBase
+		 * axis contains min and max values and logBase
 		 * if they are null just use yMin lowerBound and yMax upperBound
 		 * create loop from min to max, multiply each time by logBase
 		 */
@@ -2746,7 +2746,7 @@ CChartsDrawer.prototype =
 		var isOx = axis.axPos === window['AscFormat'].AX_POS_T || axis.axPos === window['AscFormat'].AX_POS_B;
 		var logBase = axis.scaling.logBase;
 		if (logBase) {
-			return this._getYPositionLogBase(val, yPoints, isOx, logBase);
+			return this._getYPositionLogBase(val, yPoints, isOx, logBase, axis.scaling.max);
 		}
 
 		//позиция в заисимости от положения точек на оси OY
@@ -2872,7 +2872,7 @@ CChartsDrawer.prototype =
 	/*	yPoints.length always greater than 2
 		logBase is always 10
 	 */
-	_getYPositionLogBase: function (val, yPoints, isOx, logBase) {
+	_getYPositionLogBase: function (val, yPoints, isOx, logBase, upperBoundVal) {
 		if (val <= 0) {
 			return this.axesChart[0].axis.xPoints ? (this.calcProp.heightCanvas / this.calcProp.pxToMM) : 0;
 		}
@@ -2893,9 +2893,9 @@ CChartsDrawer.prototype =
 		const startingPos = yPoints[yPoints.length-1].pos
 		const stepDistance = yPoints[yPoints.length-2].pos - yPoints[yPoints.length-1].pos 
 		const valPower = getPower(val)
-		const startingPower = getPower(yPoints[yPoints.length-1].val)
+		const startingPower = getPower(upperBoundVal)
 		const stepCount = startingPower - valPower
-		const newVal = val * Math.pow(10, -valPower)
+		const newVal = val * Math.pow(10, - valPower)
 		const changedVal = Math.log(newVal) / Math.log(logBase);
 		return (stepDistance * stepCount) + startingPos + (1 - changedVal) * stepDistance
 
@@ -16246,7 +16246,7 @@ CColorObj.prototype =
 			let results = {vals: null, cond: true};
 			if (type === AscFormat.TRENDLINE_TYPE_MOVING_AVG) {
 				const period = attributes.period ? attributes.period : 0
-				results.vals = this._getMAline(coordinates.coords.xVals, coordinates.coords.yVals, coordinates.ptCount, period)
+				results.vals = this._getMAline(coordinates.coords.xVals, coordinates.coords.yVals, coordinates.ptCount, period, !yAxis.scaling.logBase)
 			} else {
 				const order = attributes.order ? attributes.order + 1 : 2;
 
@@ -16375,7 +16375,7 @@ CColorObj.prototype =
 			}
 		},
 
-		_getMAline: function (xVals, yVals, ptCount, period) {
+		_getMAline: function (xVals, yVals, ptCount, period, allow) {
 			const result = {xVals: [], yVals: []}
 			if (ptCount > period) {
 				let sum = 0;
@@ -16396,8 +16396,10 @@ CColorObj.prototype =
 					//sum/counter after sliding window will be created
 					if (i >= (period - 1) && counter !== 0) {
 						let yVal = sum / counter;
-						result.yVals.push(yVal);
-						result.xVals.push(i + 1);
+						if(allow || yVal > 0){
+							result.yVals.push(yVal);
+							result.xVals.push(i + 1);
+						}
 					}
 				}
 			}
