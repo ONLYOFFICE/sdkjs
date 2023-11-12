@@ -352,6 +352,8 @@
 			{
 				form.SetFormValue(value);
 			}
+			
+			this.OnChange(form);
 		}
 	};
 	CFormsManager.prototype.GetFormValue = function(form)
