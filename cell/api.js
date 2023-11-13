@@ -4406,11 +4406,11 @@ var editor;
 	  }
 	  return this.wb.getRecommendedChartData();
   };
-  spreadsheet_api.prototype.asc_getChartData = function() {
+  spreadsheet_api.prototype.asc_getChartData = function(nType) {
 	  if(!this.wb) {
 		  return null;
 	  }
-	  return this.wb.getChartData();
+	  return this.wb.getChartData(nType);
   };
   spreadsheet_api.prototype.asc_addChartSpace = function(oChartSpace) {
 	  var ws = this.wb.getWorksheet();

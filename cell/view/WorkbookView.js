@@ -3919,12 +3919,12 @@
 		}
 		return oCurWorksheet.getRecommendedChartData();
 	};
-	WorkbookView.prototype.getChartData = function() {
+	WorkbookView.prototype.getChartData = function(nType) {
 		const oCurWorksheet = this.getWorksheet();
 		if(!oCurWorksheet) {
 			return null;
 		}
-		return oCurWorksheet.getChartData();
+		return oCurWorksheet.getChartData(nType);
 	};
   WorkbookView.prototype.insertHyperlink = function(options, sheetId) {
     var ws = this.getWorksheet(sheetId);
