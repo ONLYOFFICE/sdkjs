@@ -1764,11 +1764,11 @@ CChartsDrawer.prototype =
 					min = 1;
 					max = numCache ? numCache.ptCount : 1;
 
-					for( let i=0; i< series.length; i++){
-						if (seria.trendline){
+					for (let i = 0; i < series.length; i++) {
+						if (seria.trendline) {
 							const tl = seria.trendline;
-							const forward = tl.forward? tl.forward : 0;
-							const backward = tl.backward? tl.backward : 0;
+							const forward = tl.forward ? tl.forward : 0;
+							const backward = tl.backward ? tl.backward : 0;
 							min = Math.min(min, min - backward);
 							max = Math.max(max, max + forward);
 						}
@@ -1795,9 +1795,9 @@ CChartsDrawer.prototype =
 					}
 				}
 				const tl = series[l].trendline;
-				if(tl){
-					const forward = tl.forward? tl.forward : 0;
-					const backward = tl.backward? tl.backward : 0;
+				if (tl) {
+					const forward = tl.forward ? tl.forward : 0;
+					const backward = tl.backward ? tl.backward : 0;
 					min = Math.min(min, min - backward);
 					max = Math.max(max, max + forward);
 				}
@@ -2120,20 +2120,20 @@ CChartsDrawer.prototype =
 		let trueMin = axis.scaling && axis.scaling.min !== null ? Math.round(axis.scaling.min * kF) / kF : null;
 		let trueMax = axis.scaling && axis.scaling.max !== null ? Math.round(axis.scaling.max * kF) / kF : null;
 
-		if(!trueMin){
+		if (!trueMin) {
 			trueMin = Math.pow(logBase, Math.floor(Math.log(yMin) / Math.log(logBase)))
 		}
 
-		if(!trueMax){
+		if (!trueMax) {
 			trueMax = Math.pow(logBase, Math.ceil(Math.log(yMax) / Math.log(logBase)))
 		}
 
 		const result = []
-		while(trueMin<=trueMax){
+		while (trueMin <= trueMax) {
 			result.push(trueMin)
-			trueMin *= logBase 
+			trueMin *= logBase
 		}
-		return result
+		return result;
 
 
 		// var result = [];
@@ -2877,27 +2877,27 @@ CChartsDrawer.prototype =
 			return this.axesChart[0].axis.xPoints ? (this.calcProp.heightCanvas / this.calcProp.pxToMM) : 0;
 		}
 
-		const getPower = function(val){
+		const getPower = function (val) {
 			let power = 0;
-			while(val>10){
-				val/=10;
+			while (val > 10) {
+				val /= 10;
 				power++;
 			}
-			while(val<1){
-				val*=10;
+			while (val < 1) {
+				val *= 10;
 				power--;
 			}
 			return power
 		}
 
-		const startingPos = yPoints[yPoints.length-1].pos
-		const stepDistance = yPoints[yPoints.length-2].pos - yPoints[yPoints.length-1].pos 
-		const valPower = getPower(val)
-		const startingPower = getPower(upperBoundVal)
-		const stepCount = startingPower - valPower
-		const newVal = val * Math.pow(10, - valPower)
+		const startingPos = yPoints[yPoints.length - 1].pos;
+		const stepDistance = yPoints[yPoints.length - 2].pos - yPoints[yPoints.length - 1].pos;
+		const valPower = getPower(val);
+		const startingPower = getPower(upperBoundVal);
+		const stepCount = startingPower - valPower;
+		const newVal = val * Math.pow(10, -valPower);
 		const changedVal = Math.log(newVal) / Math.log(logBase);
-		return (stepDistance * stepCount) + startingPos + (1 - changedVal) * stepDistance
+		return (stepDistance * stepCount) + startingPos + (1 - changedVal) * stepDistance;
 
 		// var logVal = Math.log(val) / Math.log(logBase);
 		// var result;
@@ -16696,7 +16696,7 @@ CColorObj.prototype =
 			}
 			return storage.hasOwnProperty(type) ? storage[type] : {}
 		},
-		
+
 		_dispRSquared: function (xVals, yVals, chartletiables, type) {
 			const mappingStorage = this._obtainMappingStorage(type)
 			const findYMean = function () {
