@@ -9476,6 +9476,9 @@ function(window, undefined) {
 				}
 			}
 		}
+		else {
+			bBigPreview = false;
+		}
 		let nPixW, nPixH;
 		let dMMW, dMMH;
 		if(bBigPreview) {

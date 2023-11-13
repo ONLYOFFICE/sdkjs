@@ -809,15 +809,105 @@
 		return AscFormat.ExecuteNoHistory(function() {
 			let aRanges = this.getRangesForCharts();
 			const oDataRefs = new AscFormat.CChartDataRefs(null);
-
 			let oResultMap = {};
-			let aCharts = [];
 			let aSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, true, false);
 			let aSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, false, false);
 			let aScatterSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, true, true);
 			let aScatterSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, false, true);
+			let oChartSpace;
+			let oProps = Asc.editor.asc_getChartObject(true);
+			oProps.putRange(null);
+			oProps.putStyle(null);
+			oProps.removeAllAxesProps();
+			oProps.chartSpace = null;
+			const oChartTypes = Asc.c_oAscChartTypeSettings;
+			const aTypes = [
+					oChartTypes.barNormal              ,
+					oChartTypes.barStacked             ,
+					oChartTypes.barStackedPer          ,
+					oChartTypes.barNormal3d            ,
+					oChartTypes.barStacked3d           ,
+					oChartTypes.barStackedPer3d        ,
+					oChartTypes.barNormal3dPerspective ,
+					oChartTypes.lineNormal             ,
+					oChartTypes.lineStacked            ,
+					oChartTypes.lineStackedPer         ,
+					oChartTypes.lineNormalMarker       ,
+					oChartTypes.lineStackedMarker      ,
+					oChartTypes.lineStackedPerMarker   ,
+					oChartTypes.line3d                 ,
+					oChartTypes.pie                    ,
+					oChartTypes.pie3d                  ,
+					oChartTypes.hBarNormal             ,
+					oChartTypes.hBarStacked            ,
+					oChartTypes.hBarStackedPer         ,
+					oChartTypes.hBarNormal3d           ,
+					oChartTypes.hBarStacked3d          ,
+					oChartTypes.hBarStackedPer3d       ,
+					oChartTypes.areaNormal             ,
+					oChartTypes.areaStacked            ,
+					oChartTypes.areaStackedPer         ,
+					oChartTypes.doughnut               ,
+					oChartTypes.stock                  ,
+					oChartTypes.scatter                ,
+					oChartTypes.scatterLine            ,
+					oChartTypes.scatterLineMarker      ,
+					oChartTypes.scatterMarker          ,
+					oChartTypes.scatterNone            ,
+					oChartTypes.scatterSmooth          ,
+					oChartTypes.scatterSmoothMarker    ,
+					oChartTypes.surfaceNormal          ,
+					oChartTypes.surfaceWireframe       ,
+					oChartTypes.contourNormal          ,
+					oChartTypes.contourWireframe       ,
+					oChartTypes.comboCustom            ,
+					oChartTypes.comboBarLine           ,
+					oChartTypes.comboBarLineSecondary  ,
+					oChartTypes.comboAreaBar           ,
+					oChartTypes.radar                  ,
+					oChartTypes.radarMarker            ,
+					oChartTypes.radarFilled
+			]
+			for(let nIdx = 0; nIdx < aTypes.length; ++nIdx) {
+				let nType = aTypes[nIdx];
+				let aParams = [
+					{
+						bHorValue: true,
+						aSeries: aSeriesRefsHor,
+						aScatterSeries: aScatterSeriesRefsHor
+					},
 
-		}, [], this);
+					{
+						bHorValue: false,
+						aSeries: aSeriesRefsVer,
+						aScatterSeries: aScatterSeriesRefsVer
+					}
+				];
+				oResultMap[nType] = [];
+				for(let nParam = 0; nParam < aParams.length; ++nParam) {
+					let oParam = aParams[nParam];
+					let nError = oDataRefs.checkDataRangeRefs(aRanges, oParam.bHorValue, nType);
+					if(nError === Asc.c_oAscError.ID.No) {
+						oChartSpace = this.objectRender.controller._getChartSpace([], {type: nType}, false);
+						if(oChartSpace) {
+							if(AscFormat.isScatterChartType(nType)) {
+								oChartSpace.buildSeries(oParam.aScatterSeries);
+							}
+							else {
+								oChartSpace.buildSeries(oParam.aSeries);
+							}
+							oResultMap[nType].push(oChartSpace);
+							oChartSpace.setBDeleted(false);
+							oChartSpace.setWorksheet(this.model);
+							oChartSpace.type = nType;
+							this.objectRender.controller.applyPropsToChartSpace(oProps, oChartSpace);
+							AscFormat.CheckSpPrXfrm(oChartSpace);
+						}
+					}
+				}
+			}
+			return oResultMap;
+		}, this, []);
 	};
 
 	WorksheetView.prototype._initWorksheetDefaultWidthForPrint = function () {
