@@ -52,6 +52,16 @@ $(function () {
 		logicDocument.MoveCursorToEndPos();
 		return form;
 	}
+	function addRadioButton(groupKey)
+	{
+		let form = logicDocument.AddContentControlCheckBox();
+		form.SetFormPr(new AscWord.CSdtFormPr());
+		let checkBoxPr = form.GetCheckBoxPr().Copy();
+		checkBoxPr.SetGroupKey(groupKey);
+		form.SetCheckBoxPr(checkBoxPr);
+		form.MoveCursorOutsideForm();
+		return form;
+	}
 
 	QUnit.module("Check forms");
 
@@ -581,10 +591,18 @@ $(function () {
 		let textForm2   = addTextForm("TextForm2", "222");
 		let textForm3   = addTextForm("TextForm3", "333");
 		
+		let radio1_1 = addRadioButton("Group1", "Choice1");
+		let radio1_2 = addRadioButton("Group1", "123");
+		let radio1_3 = addRadioButton("Group1", "Last");
+		let radio2_1 = addRadioButton("Group2", "Choice1");
+		let radio2_2 = addRadioButton("Group2", "Choice2");
+		
 		assert.deepEqual(formsManager.GetAllFormsData(), [
 			{"key" : "TextForm1", "value" : "123", "tag" : "", "type" : "text"},
 			{"key" : "TextForm2", "value" : "222", "tag" : "", "type" : "text"},
 			{"key" : "TextForm3", "value" : "333", "tag" : "", "type" : "text"},
+			{"key" : "Group1", "value" : "", "tag" : "", "type" : "radio"},
+			{"key" : "Group2", "value" : "", "tag" : "", "type" : "radio"}
 		], "Add text forms and check GetAllFormsData");
 		
 		AscTest.SetFillingFormMode();
@@ -592,12 +610,19 @@ $(function () {
 		formsManager.SetAllFormsData([
 			{"key" : "TextForm1", "value" : "text1"},
 			{"key" : "TextForm2", "value" : "another text", "type" : "text"},
+			{"key" : "Group1", "value" : "Last"},
+			{"key" : "Group2", "value" : "Choice2"}
 		]);
 		
 		assert.strictEqual(textForm1.GetInnerText(), "text1", "Check form1");
 		assert.strictEqual(textForm1_1.GetInnerText(), "text1", "Check form1_1");
 		assert.strictEqual(textForm2.GetInnerText(), "another text", "Check form2");
 		assert.strictEqual(textForm3.GetInnerText(), "333", "Check form2");
+		assert.strictEqual(radio1_1.IsCheckBoxChecked(), false, "Check radio button 1. Group1");
+		assert.strictEqual(radio1_2.IsCheckBoxChecked(), false, "Check radio button 2. Group1");
+		assert.strictEqual(radio1_3.IsCheckBoxChecked(), true, "Check radio button 3. Group1");
+		assert.strictEqual(radio2_1.IsCheckBoxChecked(), false, "Check radio button 1. Group2");
+		assert.strictEqual(radio2_2.IsCheckBoxChecked(), true, "Check radio button 2. Group2");
 		
 		assert.deepEqual(formsManager.GetAllFormsData(), [
 			{"key" : "TextForm1", "value" : "text1", "tag" : "", "type" : "text"},
