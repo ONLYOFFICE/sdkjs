@@ -2121,6 +2121,9 @@ CChartsDrawer.prototype =
 		let trueMax = axis.scaling && axis.scaling.max !== null ? Math.round(axis.scaling.max * kF) / kF : null;
 
 		if (!trueMin) {
+			if(yMin <= 0){
+				yMin = 1;
+			}
 			trueMin = Math.pow(logBase, Math.floor(Math.log(yMin) / Math.log(logBase)))
 		}
 
@@ -2746,7 +2749,7 @@ CChartsDrawer.prototype =
 		var isOx = axis.axPos === window['AscFormat'].AX_POS_T || axis.axPos === window['AscFormat'].AX_POS_B;
 		var logBase = axis.scaling.logBase;
 		if (logBase) {
-			return this._getYPositionLogBase(val, yPoints, isOx, logBase, axis.scaling.max);
+			return this._getYPositionLogBase(val, yPoints, isOx, logBase);
 		}
 
 		//позиция в заисимости от положения точек на оси OY
@@ -2872,7 +2875,7 @@ CChartsDrawer.prototype =
 	/*	yPoints.length always greater than 2
 		logBase is always 10
 	 */
-	_getYPositionLogBase: function (val, yPoints, isOx, logBase, upperBoundVal) {
+	_getYPositionLogBase: function (val, yPoints, isOx, logBase) {
 		if (val <= 0) {
 			return this.axesChart[0].axis.xPoints ? (this.calcProp.heightCanvas / this.calcProp.pxToMM) : 0;
 		}
@@ -2893,7 +2896,7 @@ CChartsDrawer.prototype =
 		const startingPos = yPoints[yPoints.length - 1].pos;
 		const stepDistance = yPoints[yPoints.length - 2].pos - yPoints[yPoints.length - 1].pos;
 		const valPower = getPower(val);
-		const startingPower = getPower(upperBoundVal);
+		const startingPower = getPower(yPoints[yPoints.length - 1].val);
 		const stepCount = startingPower - valPower;
 		const newVal = val * Math.pow(10, -valPower);
 		const changedVal = Math.log(newVal) / Math.log(logBase);
