@@ -9462,39 +9462,43 @@ function(window, undefined) {
 		}
 		return  oCurCandidate;
 	};
-	CChartSpace.prototype.asc_getPreview = CChartSpace.prototype["asc_getPreview"] = function() {
-		//small or big
-		let bBigPreview = true;
-		if(Array.isArray(this.allPreviewCharts)) {
-			for(let nChart = 0; nChart < this.allPreviewCharts.length; ++nChart) {
-				let oChartSpace = this.allPreviewCharts[nChart];
-				if(oChartSpace !== this) {
-					if(this.getChartType() === oChartSpace.getChartType()) {
-						bBigPreview = false;
-						break;
+	CChartSpace.prototype.asc_getPreview = CChartSpace.prototype["asc_getPreview"] = function(nWidth, nHeight) {
+
+		let nDivW = nWidth;
+		let nDivH = nHeight;
+		if(!AscFormat.isRealNumber(nDivW) || !AscFormat.isRealNumber(nDivH)) {
+			let bBigPreview = true;
+			if(Array.isArray(this.allPreviewCharts)) {
+				for(let nChart = 0; nChart < this.allPreviewCharts.length; ++nChart) {
+					let oChartSpace = this.allPreviewCharts[nChart];
+					if(oChartSpace !== this) {
+						if(this.getChartType() === oChartSpace.getChartType()) {
+							bBigPreview = false;
+							break;
+						}
 					}
 				}
 			}
-		}
-		else {
-			bBigPreview = false;
+			else {
+				bBigPreview = true;
+			}
+			if(bBigPreview) {
+				nDivW = 430;
+				nDivH = 258;
+			}
+			else {
+				nDivW = 210;
+				nDivH = 120;
+			}
 		}
 		let nPixW, nPixH;
 		let dMMW, dMMH;
-		if(bBigPreview) {
-			nPixW = AscCommon.AscBrowser.convertToRetinaValue(544, true);
-			nPixH = AscCommon.AscBrowser.convertToRetinaValue(320, true);
-			let dScale = 0.9;
-			dMMW = (430 * AscCommon.g_dKoef_pix_to_mm)/dScale;
-			dMMH = (258 * AscCommon.g_dKoef_pix_to_mm)/dScale;
-		}
-		else {
-			nPixW = AscCommon.AscBrowser.convertToRetinaValue(264, true);
-			nPixH = AscCommon.AscBrowser.convertToRetinaValue(156, true);
-			let dScale = 0.5;
-			dMMW = (210 * AscCommon.g_dKoef_pix_to_mm) / 0.5;
-			dMMH = (120 * AscCommon.g_dKoef_pix_to_mm) / 0.5;
-		}
+		nPixW = AscCommon.AscBrowser.convertToRetinaValue(nDivW, true);
+		nPixH = AscCommon.AscBrowser.convertToRetinaValue(nDivH, true);
+		const nChartPixW = 478;
+		const dScale = nDivW/nChartPixW;
+		dMMW = (nDivW * AscCommon.g_dKoef_pix_to_mm)/dScale;
+		dMMH = (nDivH * AscCommon.g_dKoef_pix_to_mm)/dScale;
 		this.spPr.xfrm.extX = dMMW;
 		this.spPr.xfrm.extY = dMMH;
 		this.recalculate();

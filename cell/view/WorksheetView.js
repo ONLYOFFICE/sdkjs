@@ -864,6 +864,7 @@
 						aResult.push(oChartSpace);
 						oChartSpace.setBDeleted(false);
 						oChartSpace.setWorksheet(this.model);
+						oChartSpace.allPreviewCharts = aResult;
 						oProps.type = nType;
 						this.objectRender.controller.applyPropsToChartSpace(oProps, oChartSpace);
 						AscFormat.CheckSpPrXfrm(oChartSpace);
