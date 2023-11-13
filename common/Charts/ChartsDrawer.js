@@ -16237,10 +16237,11 @@ CColorObj.prototype =
 		_calculateLine: function (oChart, coordinates, attributes) {
 			let type = attributes.trendlineType;
 
-			const xAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[0]);
-			const yAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[1]);
+			const catAx = oChart.axId[0].xPoints ? oChart.axId[0] : oChart.axId[1];
+			const xAxis = this.cChartDrawer._searchChangedAxis(catAx);
+			const valAx = oChart.axId[0].yPoints ? oChart.axId[0] : oChart.axId[1];
+			const yAxis = this.cChartDrawer._searchChangedAxis(valAx);
 
-			const points = xAxis.xPoints ? xAxis.xPoints : xAxis.yPoints;
 			const horOrientation = !!xAxis.xPoints;
 
 			let results = {vals: null, cond: true};
@@ -16558,7 +16559,7 @@ CColorObj.prototype =
 							for (let j = 0; j < dim; j += 1) {
 
 								//if we're on the diagonal, put a 1 (for identity)
-								if (i == j) {
+								if (i === j) {
 									I[i][j] = 1;
 								} else {
 									I[i][j] = 0;
@@ -16575,7 +16576,7 @@ CColorObj.prototype =
 							e = C[i][i];
 
 							// if we have a 0 on the diagonal (we'll need to swap with a lower row)
-							if (e == 0) {
+							if (e === 0) {
 								//look through every row below the i'th row
 								for (ii = i + 1; ii < dim; ii += 1) {
 									//if the ii'th row has a non-0 in the i'th col
@@ -16612,7 +16613,7 @@ CColorObj.prototype =
 							// rows above and below this one
 							for (let ii = 0; ii < dim; ii++) {
 								// Only apply to other rows (we want a 1 on the diagonal)
-								if (ii == i) {
+								if (ii === i) {
 									continue;
 								}
 
@@ -16695,8 +16696,7 @@ CColorObj.prototype =
 			}
 			return storage.hasOwnProperty(type) ? storage[type] : {}
 		},
-
-
+		
 		_dispRSquared: function (xVals, yVals, chartletiables, type) {
 			const mappingStorage = this._obtainMappingStorage(type)
 			const findYMean = function () {
@@ -16711,8 +16711,7 @@ CColorObj.prototype =
 			const yMean = findYMean();
 
 			const predictY = function (xVal) {
-				const bVal = mappingStorage.bValForward ? mappingStorage.bValForward(chartletiables[0]) : chartletiables[0]
-				let result = bVal;
+				let result = mappingStorage.bValForward ? mappingStorage.bValForward(chartletiables[0]) : chartletiables[0];
 				let power = 1
 				for (let i = 1; i < chartletiables.length; i++) {
 					result += (Math.pow(xVal, power) * chartletiables[i])
@@ -16762,7 +16761,7 @@ CColorObj.prototype =
 							this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
 
 							for (let k = 0; k < this.coordinates[i][j].path.length; k++) {
-								if (k != 0) {
+								if (k !== 0) {
 									pen.Fill.fill.color.RGBA.R = 255;
 									pen.Fill.fill.color.RGBA.G = 0;
 									pen.Fill.fill.color.RGBA.B = 0;
