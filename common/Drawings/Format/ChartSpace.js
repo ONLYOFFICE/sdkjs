@@ -9511,6 +9511,9 @@ function(window, undefined) {
 		this.bPreview = false;
 		return oCanvas.toDataURL("image/png");
 	};
+	CChartSpace.prototype.asc_getSeries = CChartSpace.prototype["asc_getSeries"] = function() {
+		return this.getAllSeries();
+	};
 	function CAdditionalStyleData() {
 		this.dLbls = null;
 		this.catAx = null;
