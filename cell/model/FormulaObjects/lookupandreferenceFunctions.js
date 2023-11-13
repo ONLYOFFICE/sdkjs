@@ -3123,7 +3123,6 @@ function (window, undefined) {
 						if (!(valueForSearching.type !== cElementType.error && val.type === cElementType.error)) {
 							return elem.i;
 						}
-						// return elem.i;
 					}
 					opt_arg4 !== undefined && addNextOptVal(elem, valueForSearching);
 				}
@@ -3135,9 +3134,6 @@ function (window, undefined) {
 						if (!(valueForSearching.type !== cElementType.error && val.type === cElementType.error)) {
 							return elem.i;
 						}
-						// else {
-						// 	return elem.i;
-						// }
 					}
 					(opt_arg4 === 1 || opt_arg4 === -1) && addNextOptVal(elem, valueForSearching);
 				}
