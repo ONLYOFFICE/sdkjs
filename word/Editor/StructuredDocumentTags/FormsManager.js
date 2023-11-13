@@ -296,13 +296,10 @@
 			let key  = form.GetFormKey();
 			let type = form.GetSpecificType();
 			
-			if (!key)
-				continue;
-			
 			if (form.IsRadioButton())
 				key = form.GetCheckBoxPr().GetGroupKey();
 			
-			if (passedKeys[key] && passedKeys[key][type])
+			if (!key || (passedKeys[key] && passedKeys[key][type]))
 				continue;
 			
 			if (!passedKeys[key])

@@ -52,14 +52,16 @@ $(function () {
 		logicDocument.MoveCursorToEndPos();
 		return form;
 	}
-	function addRadioButton(groupKey)
+	function addRadioButton(groupKey, choiceName)
 	{
 		let form = logicDocument.AddContentControlCheckBox();
 		form.SetFormPr(new AscWord.CSdtFormPr());
 		let checkBoxPr = form.GetCheckBoxPr().Copy();
+		checkBoxPr.SetChoiceName(choiceName);
 		checkBoxPr.SetGroupKey(groupKey);
+		form.SetFormKey(choiceName);
 		form.SetCheckBoxPr(checkBoxPr);
-		form.MoveCursorOutsideForm();
+		logicDocument.MoveCursorToEndPos();
 		return form;
 	}
 
@@ -628,6 +630,8 @@ $(function () {
 			{"key" : "TextForm1", "value" : "text1", "tag" : "", "type" : "text"},
 			{"key" : "TextForm2", "value" : "another text", "tag" : "", "type" : "text"},
 			{"key" : "TextForm3", "value" : "333", "tag" : "", "type" : "text"},
+			{"key" : "Group1", "value" : "Last", "tag" : "", "type" : "radio"},
+			{"key" : "Group2", "value" : "Choice2", "tag" : "", "type" : "radio"}
 		], "Add text forms and check GetAllFormsData");
 	});
 
