@@ -4104,6 +4104,10 @@ function (window, undefined) {
 			if (res === -1) {
 				return arg3;
 			} else {
+				if (res.type && res.type === cElementType.error) {
+					return res;
+				}
+				
 				if (arg1.type === cElementType.array) {
 					if (dimensions2.bbox) {
 						arrayOffset = bVertical ? dimensions2.bbox.r1 : dimensions2.bbox.c1;

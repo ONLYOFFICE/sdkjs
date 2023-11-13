@@ -19085,6 +19085,45 @@ $(function () {
 		assert.ok(oParser.parse(), 'XLOOKUP(19,{87;67;16;68;21;72;19;14},A203:A210)');
 		assert.strictEqual(_getValue(oParser.calculate()), "Jenna", 'Result of XLOOKUP(19,{87;67;16;68;21;72;19;14},A203:A210)');
 
+		// errors check
+		ws.getRange2("A300").setValue("String");
+		ws.getRange2("A301").setValue("1");
+		ws.getRange2("A302").setValue("2");
+		ws.getRange2("A303").setValue("3");
+		ws.getRange2("A304").setValue("#VALUE!");
+		ws.getRange2("A305").setValue("#NUM!");
+		ws.getRange2("A306").setValue("#DIV/0!");
+		ws.getRange2("A307").setValue("TRUE");
+		ws.getRange2("A308").setValue("Sandra");
+		ws.getRange2("A309").setValue("");
+		ws.getRange2("A310").setValue("");
+		ws.getRange2("A311").setValue("5");
+
+		ws.getRange2("B300").setValue("1");
+		ws.getRange2("B301").setValue("2");
+		ws.getRange2("B302").setValue("3");
+		ws.getRange2("B303").setValue("4");
+		ws.getRange2("B304").setValue("5");
+		ws.getRange2("B305").setValue("6");
+		ws.getRange2("B306").setValue("7");
+		ws.getRange2("B307").setValue("8");
+		ws.getRange2("B308").setValue("9");
+		ws.getRange2("B309").setValue("10");
+		ws.getRange2("B310").setValue("11");
+		ws.getRange2("B311").setValue("12");
+
+		oParser = new parserFormula('XLOOKUP(A304,A300:A311,B300:B311,-2,0,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'XLOOKUP(A304,A300:A311,B300:B311,-2,0,1)');
+		assert.strictEqual(_getValue(oParser.calculate()), "#VALUE!", 'Result of XLOOKUP(A304,A300:A311,B300:B311,-2,0,1)');
+
+		oParser = new parserFormula('XLOOKUP(A305,A300:A311,B300:B311,-2,0,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'XLOOKUP(A305,A300:A311,B300:B311,-2,0,1)');
+		assert.strictEqual(_getValue(oParser.calculate()), "#NUM!", 'Result of XLOOKUP(A305,A300:A311,B300:B311,-2,0,1)');
+
+		oParser = new parserFormula('XLOOKUP(A306,A300:A311,B300:B311,-2,0,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'XLOOKUP(A306,A300:A311,B300:B311,-2,0,1)');
+		assert.strictEqual(_getValue(oParser.calculate()), "#DIV/0!", 'Result of XLOOKUP(A306,A300:A311,B300:B311,-2,0,1)');
+
 	});
 
 
