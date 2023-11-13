@@ -18676,6 +18676,7 @@
     window['AscFormat'].CChartColors = CChartColors;
     window['AscFormat'].CBaseChartObject = CBaseChartObject;
     window['AscFormat'].isStockChartType = isStockChartType;
+    window['AscFormat'].isComboChartType = isComboChartType;
 
     window['AscFormat'].AX_POS_L = AX_POS_L;
     window['AscFormat'].AX_POS_T = AX_POS_T;

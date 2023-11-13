@@ -820,19 +820,35 @@
 			oProps.removeAllAxesProps();
 			oProps.chartSpace = null;
 			let aResult = [];
-			let aParams = [
-				{
+			let aParams = [];
+			if(AscFormat.isComboChartType(nType)) {
+				if(aSeriesRefsHor <= aSeriesRefsVer) {
+					aParams.push({
+						bHorValue: true,
+						aSeries: aSeriesRefsHor,
+						aScatterSeries: aScatterSeriesRefsHor
+					});
+				}
+				else {
+					aParams.push({
+						bHorValue: false,
+						aSeries: aSeriesRefsVer,
+						aScatterSeries: aScatterSeriesRefsVer
+					});
+				}
+			}
+			else {
+				aParams.push({
 					bHorValue: true,
 					aSeries: aSeriesRefsHor,
 					aScatterSeries: aScatterSeriesRefsHor
-				},
-
-				{
+				});
+				aParams.push({
 					bHorValue: false,
 					aSeries: aSeriesRefsVer,
 					aScatterSeries: aScatterSeriesRefsVer
-				}
-			];
+				});
+			}
 			for(let nParam = 0; nParam < aParams.length; ++nParam) {
 				let oParam = aParams[nParam];
 				let nError = oDataRefs.checkDataRangeRefs(aRanges, oParam.bHorValue, nType);
