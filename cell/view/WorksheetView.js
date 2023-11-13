@@ -611,9 +611,22 @@
 	};
 
 	WorksheetView.prototype.getRecommendedChartData = function() {
-
 		return AscFormat.ExecuteNoHistory(function() {
-			let aRanges = this.getSelectedRanges();
+
+			let aRanges;
+			if(this.isSelectOnShape) {
+				let aSelectedDrawings = this.objectRender.controller.getSelectedArray();
+				if(aSelectedDrawings.length === 1 && aSelectedDrawings[0].isChart()) {
+					let sChartRange = aSelectedDrawings[0].getCommonRange();
+					if(!sChartRange) {
+						return null;
+					}
+					aRanges = AscFormat.fParseChartFormulaExternal(sChartRange);
+				}
+			}
+			if(!aRanges) {
+				aRanges = this.getSelectedRanges();
+			}
 			if(!aRanges) {
 				return null;
 			}
@@ -648,8 +661,14 @@
 			let bEmpty = true;
 			for(let nRange = 0; nRange < aResultCheckRange.length; ++nRange) {
 				let oRange = aResultCheckRange[nRange];
-				if(!oRange.isNullText()) {
-					bEmpty = false;
+				oRange._foreachNoEmpty(function (oCell) {
+					if(AscFormat.isRealNumber(oCell.getNumberValue())) {
+						bEmpty = false;
+						return true;
+					}
+					return null;
+				}, undefined, true);
+				if(!bEmpty) {
 					break;
 				}
 			}
@@ -674,6 +693,7 @@
 			oProps.putRange(null);
 			oProps.putStyle(null);
 			oProps.removeAllAxesProps();
+			oProps.chartSpace = null;
 			if(aSeriesRefsHor.length === 1 || aSeriesRefsVer.length === 1) {
 				//bar, hbar, linear, pie
 
@@ -780,6 +800,9 @@
 
 			return oResultMap;
 		}, this, []);
+	};
+	WorksheetView.prototype.getChartData = function() {
+		return null;
 	};
 
 	WorksheetView.prototype._initWorksheetDefaultWidthForPrint = function () {

@@ -1355,7 +1355,73 @@ function(window, undefined) {
 	}
 
 	AscFormat.InitClass(CChartSpace, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_ChartSpace);
-
+	CChartSpace.prototype.fromOther = function(oChartSpace) {
+		if(oChartSpace.nvGraphicFramePr) {
+			this.setNvSpPr(oChartSpace.nvGraphicFramePr.createDuplicate());
+		}
+		else {
+			this.setNvSpPr(null);
+		}
+		if(oChartSpace.chart) {
+			this.setChart(oChartSpace.chart.createDuplicate());
+		}
+		else {
+			this.setChart(null);
+		}
+		if(oChartSpace.clrMapOvr) {
+			this.setClrMapOvr(oChartSpace.clrMapOvr.createDuplicate());
+		}
+		else {
+			this.setClrMapOvr(null);
+		}
+		if(oChartSpace.date1904 !== null) {
+			this.setDate1904(oChartSpace.date1904);
+		}
+		else {
+			this.setChart(null);
+		}
+		if(oChartSpace.externalData) {
+			this.setExternalData(oChartSpace.externalData.createDuplicate());
+		}
+		else {
+			this.setExternalData(null);
+		}
+		this.setLang(oChartSpace.lang);
+		if (oChartSpace.pivotSource) {
+			this.setPivotSource(oChartSpace.pivotSource.createDuplicate());
+		}
+		if (oChartSpace.printSettings) {
+			this.setPrintSettings(oChartSpace.printSettings.createDuplicate());
+		}
+		if (oChartSpace.protection) {
+			this.setProtection(oChartSpace.protection.createDuplicate());
+		}
+		this.setRoundedCorners(oChartSpace.roundedCorners);
+		if (this.spPr) {
+			oChartSpace.setSpPr(oChartSpace.spPr.createDuplicate());
+			oChartSpace.spPr.setParent(oChartSpace);
+		}
+		this.setStyle(oChartSpace.style);
+		if (oChartSpace.txPr) {
+			this.setTxPr(oChartSpace.txPr.createDuplicate())
+		}
+		for (var i = 0; i < oChartSpace.userShapes.length; ++i) {
+			this.addUserShape(undefined, oChartSpace.userShapes[i].copy());
+		}
+		this.setThemeOverride(oChartSpace.themeOverride);
+		this.setBDeleted(oChartSpace.bDeleted);
+		this.setLocks(oChartSpace.locks);
+		if (oChartSpace.chartStyle && oChartSpace.chartColors) {
+			this.setChartStyle(oChartSpace.chartStyle.createDuplicate());
+			this.setChartColors(oChartSpace.chartColors.createDuplicate());
+		}
+		if (oChartSpace.macro !== null) {
+			this.setMacro(oChartSpace.macro);
+		}
+		if (oChartSpace.textLink !== null) {
+			this.setTextLink(oChartSpace.textLink);
+		}
+	};
 	CChartSpace.prototype.changeSize = CShape.prototype.changeSize;
 	CChartSpace.prototype.getDataRefs = function () {
 		if (!this.dataRefs) {
@@ -9415,14 +9481,16 @@ function(window, undefined) {
 		if(bBigPreview) {
 			nPixW = AscCommon.AscBrowser.convertToRetinaValue(544, true);
 			nPixH = AscCommon.AscBrowser.convertToRetinaValue(320, true);
-			dMMW = 544 * AscCommon.g_dKoef_pix_to_mm;
-			dMMH = 320 * AscCommon.g_dKoef_pix_to_mm;
+			let dScale = 0.9;
+			dMMW = (430 * AscCommon.g_dKoef_pix_to_mm)/dScale;
+			dMMH = (258 * AscCommon.g_dKoef_pix_to_mm)/dScale;
 		}
 		else {
 			nPixW = AscCommon.AscBrowser.convertToRetinaValue(264, true);
 			nPixH = AscCommon.AscBrowser.convertToRetinaValue(156, true);
-			dMMW = 264 * AscCommon.g_dKoef_pix_to_mm;
-			dMMH = 156 * AscCommon.g_dKoef_pix_to_mm;
+			let dScale = 0.5;
+			dMMW = (210 * AscCommon.g_dKoef_pix_to_mm) / 0.5;
+			dMMH = (120 * AscCommon.g_dKoef_pix_to_mm) / 0.5;
 		}
 		this.spPr.xfrm.extX = dMMW;
 		this.spPr.xfrm.extY = dMMH;

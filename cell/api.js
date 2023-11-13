@@ -4406,6 +4406,12 @@ var editor;
 	  }
 	  return this.wb.getRecommendedChartData();
   };
+  spreadsheet_api.prototype.asc_getChartData = function() {
+	  if(!this.wb) {
+		  return null;
+	  }
+	  return this.wb.getChartData();
+  };
   spreadsheet_api.prototype.asc_addChartSpace = function(oChartSpace) {
 	  var ws = this.wb.getWorksheet();
 	  if (ws.model.getSheetProtection(Asc.c_oAscSheetProtectType.objects)) {
@@ -9225,6 +9231,7 @@ var editor;
   prot["asc_addChartDrawingObject"] = prot.asc_addChartDrawingObject;
   prot["asc_editChartDrawingObject"] = prot.asc_editChartDrawingObject;
   prot["asc_getRecommendedChartData"] = prot.asc_getRecommendedChartData;
+  prot["asc_getChartData"] = prot.asc_getChartData;
   prot["asc_addChartSpace"] = prot.asc_addChartSpace;
   prot["asc_addImageDrawingObject"] = prot.asc_addImageDrawingObject;
   prot["asc_getCurrentDrawingMacrosName"] = prot.asc_getCurrentDrawingMacrosName;

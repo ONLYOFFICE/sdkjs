@@ -2494,6 +2494,17 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         if (!_this.canEdit())
             return;
 
+        let aSelectedDrawings = _this.controller.getSelectedArray();
+        if(aSelectedDrawings.length === 1 && aSelectedDrawings[0].isChart()) {
+            _this.controller.checkSelectedObjectsAndCallback(function () {
+                let oSelectedChartSpace = aSelectedDrawings[0];
+                oSelectedChartSpace.fromOther(oChartSpace);
+                _this.controller.startRecalculate();
+                _this.sendGraphicObjectProps();
+            }, [], false, 0, [], false);
+            return;
+        }
+
         History.Create_NewPoint();
         worksheet.setSelectionShape(true);
         let oCSForAdd = oChartSpace.copy();
@@ -2521,6 +2532,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         oCSForAdd.checkDrawingBaseCoords();
         _this.controller.startRecalculate();
         this.sendGraphicObjectProps();
+
     };
 
     _this.addSlicers = function(aNames) {
