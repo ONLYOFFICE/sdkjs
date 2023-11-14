@@ -870,6 +870,9 @@
 						AscFormat.CheckSpPrXfrm(oChartSpace);
 					}
 				}
+				else {
+					return nError;
+				}
 			}
 			return aResult;
 		}, this, []);
