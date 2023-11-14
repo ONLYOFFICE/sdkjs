@@ -9462,6 +9462,34 @@ function(window, undefined) {
 		}
 		return  oCurCandidate;
 	};
+
+	CChartSpace.prototype.updateView = CChartSpace.prototype["updateView"] = function (sDivId) {
+		let oCanvas = AscCommon.checkCanvasInDiv(sDivId);
+		if(!oCanvas) {
+			return;
+		}
+		let c = AscCommon.AscBrowser.convertToRetinaValue;
+		let nCanvasW = c(oCanvas.width, false);
+		let nCanvasH = c(oCanvas.height, false);
+		let dMMW, dMMH;
+		const nChartPixW = 478;
+		const dScale = nCanvasW/nChartPixW;
+		dMMW = (nCanvasW * AscCommon.g_dKoef_pix_to_mm)/dScale;
+		dMMH = (nCanvasH * AscCommon.g_dKoef_pix_to_mm)/dScale;
+		this.spPr.xfrm.extX = dMMW;
+		this.spPr.xfrm.extY = dMMH;
+		this.recalculate();
+
+		let oContext = oCanvas.getContext('2d');
+		oContext.clearRect(0, 0, oCanvas.width, oCanvas.height);
+		const oGraphics = new AscCommon.CGraphics();
+		oGraphics.init(oContext, oCanvas.width, oCanvas.height, dMMW, dMMH);
+		oGraphics.m_oFontManager = AscCommon.g_fontManager;
+		oGraphics.transform(1,0,0,1,0,0);
+		this.bPreview = true;
+		this.draw(oGraphics);
+		this.bPreview = false;
+	};
 	CChartSpace.prototype.asc_getPreview = CChartSpace.prototype["asc_getPreview"] = function(nWidth, nHeight) {
 
 		let nDivW = nWidth;
