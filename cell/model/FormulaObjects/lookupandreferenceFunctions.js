@@ -606,15 +606,44 @@ function (window, undefined) {
 	cCHOOSE.prototype.name = 'CHOOSE';
 	cCHOOSE.prototype.argumentsMin = 2;
 	cCHOOSE.prototype.argumentsMax = 30;
+	// todo add arrayIndex to all n-arguments (in array)
+	cCHOOSE.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1, 4: 1};
 	cCHOOSE.prototype.argumentsType = [argType.number, [argType.any]];
 	cCHOOSE.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
+		const args = arguments;
+		let arg0 = arg[0];
 
 		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			arg0 = arg0.cross(arguments[1]);
 		}
-		arg0 = arg0.tocNumber();
 
+		if (cElementType.array === arg0.type) {
+			// go through the array and return result for each element
+			let resArr = new cArray();
+			arg0.foreach(function(elem, r, c) {
+				if (!resArr.array[r]) {
+					resArr.addRow();
+				}
+
+				let val = elem.tocNumber();
+				if (val.type === cElementType.error) {
+					resArr.addElement(val);
+				} else {
+					val = Math.floor(val.getValue());
+					if (val < 1 || val > arg.length - 1) {
+						val = new cError(cErrorType.wrong_value_type);
+						resArr.addElement(val);
+					} else if (arg[val].type === cElementType.cellsRange || arg[val].type === cElementType.cellsRange3D) {
+						resArr.addElement(arg[val].cross(args[1]));
+					} else {
+						resArr.addElement(arg[val]);
+					}
+				}
+			});
+			return resArr;
+		}
+
+		arg0 = arg0.tocNumber();
 		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
@@ -623,8 +652,13 @@ function (window, undefined) {
 			if (arg0.getValue() < 1 || arg0.getValue() > arg.length - 1) {
 				return new cError(cErrorType.wrong_value_type);
 			}
+			let returnVal = arg[Math.floor(arg0.getValue())];
 
-			return arg[Math.floor(arg0.getValue())];
+			if (returnVal.type === cElementType.cell || returnVal.type === cElementType.cell3D) {
+				returnVal = returnVal.getValue();
+			}
+
+			return returnVal;
 		}
 
 		return new cError(cErrorType.wrong_value_type);
