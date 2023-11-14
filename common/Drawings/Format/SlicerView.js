@@ -2848,8 +2848,59 @@
         }
     };
 
+
+    AscDFH.changesFactory[AscDFH.historyitem_TimelineSlicerViewTag] = AscDFH.CChangesDrawingsString;
+    AscDFH.drawingsChangesMap[AscDFH.historyitem_TimelineSlicerViewTag] = function(oClass, value) {
+        oClass.tag = value;
+    };
+
+    function CTimeslicer() {
+        AscFormat.CShape.call(this);
+        this.tag = null;
+    }
+    AscFormat.InitClass(CTimeslicer, AscFormat.CShape, AscDFH.historyitem_type_TimelineSlicerView);
+    CTimeslicer.prototype.setTag = function (val) {
+        AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_TimelineSlicerViewTag, this.tag, val));
+        this.tag = val;
+    };
+
+    CTimeslicer.prototype.copy = function (oPr) {
+        const oCopy = new CTimeslicer();
+        oCopy.setTag(this.tag);
+        return oCopy;
+    };
+    CTimeslicer.prototype.fromStream = function (s) {
+        var _len = s.GetULong();
+        var _start_pos = s.cur;
+        var _end_pos = _len + _start_pos;
+        var _at;
+// attributes
+        s.GetUChar();
+        while (true) {
+            _at = s.GetUChar();
+            if (_at === AscCommon.g_nodeAttributeEnd)
+                break;
+            switch (_at) {
+                case 0: {
+                    this.setTag(s.GetString2());
+                    break;
+                }
+                default: {
+                    s.Seek2(_end_pos);
+                    return;
+                }
+            }
+        }
+        s.Seek2(_end_pos);
+    };
+    CTimeslicer.prototype.toStream = function (s) {
+        s.WriteUChar(AscCommon.g_nodeAttributeStart);
+        s._WriteString2(0, this.tag);
+        s.WriteUChar(AscCommon.g_nodeAttributeEnd);
+    };
     window["AscFormat"] = window["AscFormat"] || {};
     window["AscFormat"].CSlicer = CSlicer;
+    window["AscFormat"].CTimeslicer = CTimeslicer;
 
     window["AscCommonExcel"] = window["AscCommonExcel"] || {};
     window["AscCommonExcel"].getSlicerIconsForLoad = getSlicerIconsForLoad;

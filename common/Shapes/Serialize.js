@@ -7039,6 +7039,7 @@ function BinaryPPTYLoader()
         var _table = null;
         var _chart = null;
         var _slicer = null;
+        var _timeslicer = null;
         var _smartArt = null;
 
         while (s.cur < _end_rec)
@@ -7105,6 +7106,19 @@ function BinaryPPTYLoader()
                 case 8://smartArt
                 {
                     _smartArt = this.ReadSmartArt();
+                    break;
+                }
+                case 9:
+                {
+                    if (typeof AscFormat.CTimeslicer !== "undefined")
+                    {
+                        _timeslicer = new AscFormat.CTimeslicer();
+                        _timeslicer.fromStream(s);
+                    }
+                    else
+                    {
+                        s.SkipRecord();
+                    }
                     break;
                 }
                 case 0xA1:

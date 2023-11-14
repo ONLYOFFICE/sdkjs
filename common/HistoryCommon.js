@@ -1593,6 +1593,7 @@
 	window['AscDFH'].historyitem_type_ChartStyle             = 1197 << 16;
 	window['AscDFH'].historyitem_type_ChartStyleEntry        = 1198 << 16;
 	window['AscDFH'].historyitem_type_MarkerLayout           = 1199 << 16;
+	window['AscDFH'].historyitem_type_TimelineSlicerView     = 1200 << 16;
 
 	window['AscDFH'].historyitem_type_DocumentMacros         = 2000 << 16;
 	window['AscDFH'].historyitem_type_PrSet                  = 2001 << 16;
@@ -3961,6 +3962,8 @@
 
 	AscDFH.historyitem_MarkerLayoutSymbol = AscDFH.historyitem_type_MarkerLayout | 1;
 	AscDFH.historyitem_MarkerLayoutSize   = AscDFH.historyitem_type_MarkerLayout | 2;
+
+	AscDFH.historyitem_TimelineSlicerViewTag   = AscDFH.historyitem_type_TimelineSlicerView | 1;
 
 	AscDFH.historyitem_SmartArtColorsDef = AscDFH.historyitem_type_SmartArt | 1;
 	AscDFH.historyitem_SmartArtDrawing   = AscDFH.historyitem_type_SmartArt | 2;
