@@ -613,8 +613,33 @@ function (window, undefined) {
 		const args = arguments;
 		let arg0 = arg[0];
 
-		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-			arg0 = arg0.cross(arguments[1]);
+		const chooseArgument = function (_arg0) {
+			if (cElementType.cellsRange === _arg0.type || cElementType.cellsRange3D === _arg0.type) {
+				_arg0 = _arg0.cross(args[1]);
+			}
+	
+			_arg0 = _arg0.tocNumber();
+			if (cElementType.error === _arg0.type) {
+				return _arg0;
+			}
+	
+			if (cElementType.number === _arg0.type) {
+				_arg0 = Math.floor(_arg0.getValue());
+				if (_arg0 < 1 || _arg0 > arg.length - 1) {
+					return new cError(cErrorType.wrong_value_type);
+				}
+
+				let returnVal = arg[Math.floor(_arg0)];
+				if (returnVal.type === cElementType.cell || returnVal.type === cElementType.cell3D) {
+					returnVal = returnVal.getValue();
+				} else if (returnVal.type === cElementType.cellsRange || returnVal.type === cElementType.cellsRange3D) {
+					returnVal = returnVal.cross(args[1]);
+				}
+	
+				return returnVal;
+			}
+
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		if (cElementType.array === arg0.type) {
@@ -625,43 +650,14 @@ function (window, undefined) {
 					resArr.addRow();
 				}
 
-				let val = elem.tocNumber();
-				if (val.type === cElementType.error) {
-					resArr.addElement(val);
-				} else {
-					val = Math.floor(val.getValue());
-					if (val < 1 || val > arg.length - 1) {
-						val = new cError(cErrorType.wrong_value_type);
-						resArr.addElement(val);
-					} else if (arg[val].type === cElementType.cellsRange || arg[val].type === cElementType.cellsRange3D) {
-						resArr.addElement(arg[val].cross(args[1]));
-					} else {
-						resArr.addElement(arg[val]);
-					}
-				}
+				let res = chooseArgument(elem);
+				resArr.addElement(res);
 			});
 			return resArr;
 		}
 
-		arg0 = arg0.tocNumber();
-		if (cElementType.error === arg0.type) {
-			return arg0;
-		}
+		return chooseArgument(arg0);
 
-		if (cElementType.number === arg0.type) {
-			if (arg0.getValue() < 1 || arg0.getValue() > arg.length - 1) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-			let returnVal = arg[Math.floor(arg0.getValue())];
-
-			if (returnVal.type === cElementType.cell || returnVal.type === cElementType.cell3D) {
-				returnVal = returnVal.getValue();
-			}
-
-			return returnVal;
-		}
-
-		return new cError(cErrorType.wrong_value_type);
 	};
 
 	function chooseRowsCols(arg, argument1, byCol) {
