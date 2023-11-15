@@ -1743,6 +1743,10 @@ var CPresentation = CPresentation || function(){};
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();
     }
+    CPDFDoc.prototype.TurnOnHistory = function() {
+        if (AscCommon.History.IsOn() == false)
+            AscCommon.History.TurnOn();
+    }
     CPDFDoc.prototype.ShowComment = function(arrId)
     {
         let oPos;
@@ -1849,6 +1853,7 @@ var CPresentation = CPresentation || function(){};
 
         editor.sync_HideComment();
         editor.sync_RemoveComment(Id);
+        oViewer.DrawingObjects.resetSelection();
         oViewer._paint();
         oViewer.onUpdateOverlay();
     };

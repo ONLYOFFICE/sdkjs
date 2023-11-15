@@ -32,15 +32,17 @@
 
 "use strict";
 
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Comment_Data]		= CChangesPDFCommentData;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Ink_Points]		= CChangesPDFInkPoints;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Ink_FlipV]			= CChangesPDFInkFlipV;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Ink_FlipH]			= CChangesPDFInkFlipH;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Rect]		= CChangesPDFAnnotRect;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Contents]	= CChangesPDFAnnotContents;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Pos]			= CChangesPDFAnnotPos;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Page]		= CChangesPDFAnnotPage;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Replies]		= CChangesPDFAnnotReplies;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Comment_Data]		= CChangesPDFCommentData;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Ink_Points]		= CChangesPDFInkPoints;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Ink_FlipV]			= CChangesPDFInkFlipV;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Ink_FlipH]			= CChangesPDFInkFlipH;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Line_Points]		= CChangesPDFLinePoints;
+
 
 /**
  * @constructor
@@ -202,4 +204,21 @@ CChangesPDFAnnotPage.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot.SetPage(Value, true);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesPDFLinePoints(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFLinePoints.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFLinePoints.prototype.constructor = CChangesPDFLinePoints;
+CChangesPDFLinePoints.prototype.Type = AscDFH.historyitem_Pdf_Line_Geometry;
+CChangesPDFLinePoints.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetLinePoints(Value, true);
 };

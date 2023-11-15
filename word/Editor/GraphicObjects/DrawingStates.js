@@ -215,15 +215,15 @@ StartAddNewShape.prototype =
                         modDate:        (new Date().getTime()).toString()
                     });
 
+                    var shape = oInkAnnot.FillShapeByPoints(oTrack.arrPoint, oTrack.pen);
+
                     oInkAnnot.SetWidth(oTrack.pen.w / (36000  * g_dKoef_pt_to_mm));
                     oInkAnnot.SetOpacity(oTrack.pen.Fill.transparent / 255);
-                    var shape = oInkAnnot.AddShapeByPoints(oTrack.arrPoint, oTrack.pen);
-
+                    
                     oInkAnnot.AddToRedraw();
                     shape.recalculate();
 
                     oViewer._paint();
-
                     oLogicDocument.currInkInDrawingProcess = oInkAnnot;
                 }
             }
@@ -774,24 +774,52 @@ RotateState.prototype =
         {
             var bounds;
 
-            if (editor.isDocumentRenderer()) {
-                
-                let oDoc = editor.getDocumentRenderer().getPDFDoc();
+            
+            if (Asc.editor.isPdfEditor()) {
+                let oViewer = editor.getDocumentRenderer();
+                let oDoc = oViewer.getPDFDoc();
+
                 for(i = 0; i < aTracks.length; ++i)
                 {   
                     var oTrack  = aTracks[i];
                     bounds      = oTrack.getBounds();
                     oTrack.trackEnd(true);
 
-                    if (oTrack instanceof AscFormat.ResizeTrackShapeImage) {
-                        let aRect = [bounds.min_x * g_dKoef_mm_to_pix, bounds.min_y * g_dKoef_mm_to_pix, bounds.max_x * g_dKoef_mm_to_pix, bounds.max_y * g_dKoef_mm_to_pix];
+                    if (oTrack instanceof AscFormat.ResizeTrackShapeImage || oTrack instanceof AscFormat.EditShapeGeometryTrack) {
+                        let aRect = [bounds.posX * g_dKoef_mm_to_pix, bounds.posY * g_dKoef_mm_to_pix, (bounds.posX + bounds.extX) * g_dKoef_mm_to_pix, (bounds.posY + bounds.extY) * g_dKoef_mm_to_pix];
                         
                         oDoc.CreateNewHistoryPoint();
                         if (oTrack.originalFlipV != oTrack.resizedflipV)
                             oDoc.History.Add(new CChangesPDFInkFlipV(oTrack.originalObject, oTrack.originalFlipV, oTrack.resizedflipV));
                         if (oTrack.originalFlipH != oTrack.resizedflipH)
                             oDoc.History.Add(new CChangesPDFInkFlipH(oTrack.originalObject, oTrack.originalFlipH, oTrack.resizedflipH));
-                        oTrack.originalObject.SetRect(aRect);
+
+                        // для аннотации линии свой расчет ректа и точек, потому что меняем саму геометрию при редактировании
+                        if (oTrack.originalObject.IsLine()) {
+                            
+                            let aPaths = oTrack.geometry.pathLst[0].ArrPathCommand;
+
+                            let nPage = oTrack.originalObject.GetPage();
+                            let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+                            let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+                            let aLinePoints = [];
+                            let oTranform   = oTrack.originalObject.transform;
+                            // считаем новые точки linePoints (в оригинальных координатах - в пикселях, без скейлов)
+                            aLinePoints.push(oTranform.TransformPointX(aPaths[0].X, 0) * g_dKoef_mm_to_pix / nScaleX)
+                            aLinePoints.push(oTranform.TransformPointY(0, aPaths[0].Y) * g_dKoef_mm_to_pix / nScaleY)
+                            aLinePoints.push(oTranform.TransformPointX(aPaths[1].X, 0) * g_dKoef_mm_to_pix / nScaleX)
+                            aLinePoints.push(oTranform.TransformPointY(0, aPaths[1].Y) * g_dKoef_mm_to_pix / nScaleY)
+
+                            oTrack.originalObject.SetLinePoints(aLinePoints);
+                            oTrack.originalObject.SetRect(oTrack.originalObject.GetMinShapeRect());
+
+                            oDoc.TurnOnHistory();
+                        }
+                        else {
+                            oTrack.originalObject.SetRect(aRect);
+                        }
+                        
                         oDoc.TurnOffHistory();
                     }
                     
