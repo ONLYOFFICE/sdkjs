@@ -1541,10 +1541,10 @@ MoveInGroupState.prototype =
         }
         if(false === this.drawingObjects.document.Document_Is_SelectionLocked(changestype_Drawing_Props, {Type : changestype_2_ElementsArray_and_Type , Elements : check_paragraphs, CheckType : AscCommon.changestype_Paragraph_Content}))
         {
-			this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_MoveInGroup);
-            var i;
             var tracks = [].concat(this.drawingObjects.arrTrackObjects);
             this.drawingObjects.resetTrackState();
+			this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_MoveInGroup);
+            var i;
             if(this instanceof MoveInGroupState && e.CtrlKey && !this.hasObjectInSmartArt)
             {
                 this.group.resetSelection();
