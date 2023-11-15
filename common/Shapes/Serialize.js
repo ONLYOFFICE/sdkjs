@@ -7137,7 +7137,7 @@ function BinaryPPTYLoader()
         s.Seek2(_end_rec);
 
         this.TempGroupObject = null;
-        if (_table == null && _chart == null && _slicer == null && _smartArt == null)
+        if (_table == null && _chart == null && _slicer == null && _smartArt == null && _timeslicer == null)
             return null;
 
         if (_table != null)
@@ -7181,6 +7181,20 @@ function BinaryPPTYLoader()
                 }
             }
             return _slicer;
+        }
+        else if(_timeslicer != null)
+        {
+            _timeslicer.setBDeleted(false);
+            _timeslicer.checkEmptySpPrAndXfrm(_xfrm);
+            if(AscCommon.isRealObject(_nvGraphicFramePr) )
+            {
+                _timeslicer.setNvSpPr(_nvGraphicFramePr);
+                if(AscFormat.isRealNumber(_nvGraphicFramePr.locks))
+                {
+                    _timeslicer.setLocks(_nvGraphicFramePr.locks);
+                }
+            }
+            return _timeslicer;
         }
         else if(_smartArt != null)
         {
