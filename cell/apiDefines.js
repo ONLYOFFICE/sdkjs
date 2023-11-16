@@ -624,6 +624,12 @@ var c_oAscPopUpSelectorType = {
     series: 11
   };
 
+  /** @enum {number} */
+  var c_oAscContextMenuTypes = {
+    common       : 0, // default context menu
+    changeSeries : 1  // fill right click mouse - series menu
+  };
+
   //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window['AscCommonExcel'].c_oAscDrawDepOptions = c_oAscDrawDepOptions;
@@ -1069,5 +1075,10 @@ var c_oAscPopUpSelectorType = {
   prot['growthTrend'] = prot.growthTrend;
   prot['flashFill'] = prot.flashFill;
   prot['series'] = prot.series;
+
+  window['Asc']['c_oAscContextMenuTypes'] = window['Asc'].c_oAscContextMenuTypes = c_oAscContextMenuTypes;
+  prot = c_oAscContextMenuTypes;
+  prot['common'] = prot.common;
+  prot['changeSeries'] = prot.changeSeries;
 
 })(window);

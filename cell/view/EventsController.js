@@ -1546,7 +1546,7 @@
 				// Закончили автозаполнение
 				this.isFillHandleMode = false;
 				if (2 === button) {
-					this.handlers.trigger('onContextMenu', event);
+					this.handlers.trigger('onContextMenu', event, Asc.c_oAscContextMenuTypes.changeSeries);
 				} else {
 					this._changeFillHandleDone(event);
 				}
