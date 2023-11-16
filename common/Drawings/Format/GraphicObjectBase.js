@@ -2830,6 +2830,9 @@
 		return oPr.hasSameNameAndId(oOtherPr);
 	};
 	CGraphicObjectBase.prototype.select = function (drawingObjectsController, pageIndex) {
+		if (!AscFormat.canSelectDrawing(this)) {
+			return;
+		}
 		this.selected = true;
 		this.selectStartPage = pageIndex;
 		var content = this.getDocContent && this.getDocContent();

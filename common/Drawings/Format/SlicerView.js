@@ -2898,6 +2898,12 @@
         s._WriteString2(0, this.tag);
         s.WriteUChar(AscCommon.g_nodeAttributeEnd);
     };
+    CTimeslicer.prototype.canSelect = function () {
+        return false;
+    };
+    CTimeslicer.prototype.hit = function () {
+        return false;
+    };
     window["AscFormat"] = window["AscFormat"] || {};
     window["AscFormat"].CSlicer = CSlicer;
     window["AscFormat"].CTimeslicer = CTimeslicer;
