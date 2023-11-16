@@ -16020,6 +16020,28 @@ QueryTableField.prototype.clone = function() {
 		return res;
 	};
 
+	function CTimelinePivotFilter() {
+		this.name = null;
+		this.description = null;
+		this.useWholeDay = null;
+		this.id = null;
+		this.fld = null;
+
+		this.autoFilter = null;
+	}
+	CTimelinePivotFilter.prototype.clone = function () {
+		var res = new CTimelinePivotFilter();
+
+		res.name = this.name;
+		res.description = this.description;
+		res.useWholeDay = this.name;
+		res.id = this.description;
+		res.fld = this.name;
+
+		res.autoFilter = this.autoFilter && this.autoFilter.clone();
+
+		return res;
+	};
 
 
 	//----------------------------------------------------------export----------------------------------------------------
@@ -16504,6 +16526,7 @@ QueryTableField.prototype.clone = function() {
 	window["AscCommonExcel"].CTimelineStyles = CTimelineStyles;
 	window["AscCommonExcel"].CTimelineStyle = CTimelineStyle;
 	window["AscCommonExcel"].CTimelineStyleElement = CTimelineStyleElement;
+	window["AscCommonExcel"].CTimelinePivotFilter = CTimelinePivotFilter;
 
 
 
