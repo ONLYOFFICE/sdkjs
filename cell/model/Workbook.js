@@ -3966,6 +3966,17 @@
 
 		History.EndTransaction();
 	};
+
+	Workbook.prototype.onTimeSlicerDelete = function(sName) {
+		if(AscCommon.isFileBuild()) {
+			return false;
+		}
+		var bRet = false;
+		for(var i = 0; i < this.aWorksheets.length; ++i) {
+			bRet = bRet || this.aWorksheets[i].onTimeSlicerDelete(sName);
+		}
+		return bRet;
+	};
 	Workbook.prototype.handleDrawings = function (fCallback) {
 		for(var i = 0; i < this.aWorksheets.length; ++i) {
 			this.aWorksheets[i].handleDrawings(fCallback);

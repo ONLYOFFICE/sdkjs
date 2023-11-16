@@ -2904,6 +2904,13 @@
     CTimeslicer.prototype.hit = function () {
         return false;
     };
+
+    CTimeslicer.prototype.onTimeSlicerDelete = function (sTag) {
+        this.name = this.tag;
+        let bResult = CSlicer.prototype.onSlicerDelete.call(this, sTag);
+        this.name = undefined;
+        return bResult;
+    };
     window["AscFormat"] = window["AscFormat"] || {};
     window["AscFormat"].CSlicer = CSlicer;
     window["AscFormat"].CTimeslicer = CTimeslicer;

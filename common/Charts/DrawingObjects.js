@@ -1693,6 +1693,12 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         }
         return this.graphicObject.onSlicerDelete(sName);
     };
+    DrawingBase.prototype.onTimeSlicerDelete = function (sTag) {
+        if(!this.graphicObject) {
+            return false;
+        }
+        return this.graphicObject.onTimeSlicerDelete(sTag);
+    };
     DrawingBase.prototype.onSlicerLock = function (sName, bLock) {
         if(!this.graphicObject) {
             return;

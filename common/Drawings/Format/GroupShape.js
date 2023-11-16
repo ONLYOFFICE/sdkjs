@@ -1551,6 +1551,13 @@
 			}
 			return bRet;
 		};
+		CGroupShape.prototype.onTimeSlicerDelete = function (sTag) {
+			var bRet = false;
+			for (var i = 0; i < this.spTree.length; ++i) {
+				bRet = bRet || this.spTree[i].onTimeSlicerDelete(sTag);
+			}
+			return bRet;
+		};
 		CGroupShape.prototype.onSlicerLock = function (sName, bLock) {
 			for (var i = 0; i < this.spTree.length; ++i) {
 				this.spTree[i].onSlicerLock(sName, bLock);
