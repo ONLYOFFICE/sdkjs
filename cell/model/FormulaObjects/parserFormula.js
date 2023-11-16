@@ -5214,6 +5214,93 @@ _func.binarySearch = function ( sElem, arrTagert, regExp ) {
 
 };
 
+_func.binarySearchLookup = function ( sElem, arrTagert, regExp ) {
+	// В Excel существует неудокументированное поведение, заключающееся в том, что, кажется, внутренне сортируется промежуточный массив 
+	/*(такие значения ошибок, как #DIV/0!, специально сортируются в конец) или игнорируются значения ошибок, 
+	что позволяет работать таким поискам "получить последнее непустое значение", 
+	например, =LOOKUP(2,1/NOT(ISBLANK(A:A)),A:A). Вместо сортировки миллиона записей, 
+	из которых большинство заполнены всего лишь несколькими строками, и перемещения значений ошибок в конец, 
+	что, в основном, уже сделано, предполагается, что матрица отсортирована за исключением значений ошибок. 
+	Это выполняется только для числовой матрицы (к которой относятся ошибки, закодированные как doubles), что решает данную проблему.
+	/* Также неясно, соответствует ли это действительно поведению Excel во всех случаях, или есть ситуации, 
+	включающие несортированные значения ошибок и, таким образом, дающие произвольные результаты бинарного поиска или что-то другое, 
+	или есть случаи, когда значения ошибок также исключаются из смешанных числовых/строковых массивов, или если это не промежуточная матрица, а ссылка на диапазон ячеек. */
+
+	let first = 0, /* The number of the first element in the array */
+		last = arrTagert.length - 1, /* The number of the element in the array that comes AFTER the last one */
+		/* If the viewed segment is not empty, first<last */
+		mid;
+
+	let arrTagertOneType = [], isString = false;
+
+	for (let i = 0; i < arrTagert.length; i++) {
+		if ((arrTagert[i] instanceof cString || sElem instanceof cString) && !isString) {
+			i = 0;
+			isString = true;
+			sElem = new cString(sElem.toString().toLowerCase());
+		}
+		if (isString) {
+			arrTagertOneType[i] = new cString(arrTagert[i].toString().toLowerCase());
+		} else {
+			arrTagertOneType[i] = arrTagert[i].tocNumber();
+		}
+	}
+
+	let firstItem = arrTagert[0],
+		lastItem = arrTagert[arrTagert.length - 1];
+
+	// comparing the lengths of arrays and the first and last element
+	if (arrTagert.length === 0) {
+		/* array empty */
+		return -1;
+	}
+	// 2 elements next to each other
+	if (arrTagert.length === 2) {
+		// todo check two element behaviour
+	}
+	if ((firstItem.value > sElem.value || lastItem.value < sElem.value) || (firstItem.type !== lastItem.type) || firstItem.value > lastItem.value || firstItem.type === cElementType.error || lastItem.type === cElementType.error) {
+		/* array is not sorted */
+		return _func.getLastMatch(sElem, arrTagert);
+	}
+	// With 0-9 < A-Z, if query is numeric and data found is string, or
+	// vice versa, the (yet another undocumented) Excel behavior is to
+	// return #N/A instead.
+
+	let cache;
+	while (first < last) {
+		mid = Math.floor(first + (last - first) / 2);
+		if (sElem.type !== arrTagert[mid].type) {
+			if (sElem.type === cElementType.empty || arrTagert[mid].type === cElementType.empty) {
+				if (sElem.value <= arrTagert[mid].value) {
+					last = mid;
+				} else {
+					first = mid + 1;
+				}
+			} else {
+				if (cElementTypeWeight.get(sElem.type) < cElementTypeWeight.get(arrTagert[mid].type)) {
+					last = mid;
+				} else {
+					first = mid + 1;
+				}
+			}
+		} else {
+			if (sElem.value < arrTagert[mid].value || ( regExp && regExp.test(arrTagert[mid].value) )) {
+				last = mid;
+			} else {
+				first = mid + 1;
+			}
+		}
+	}
+
+	if (arrTagert[last].value === sElem.value) {
+		return last;
+		/* The desired element is found. last is the desired index */
+	} else {
+		return _func.getLastMatch(sElem, arrTagert);
+	}
+
+};
+
 _func.binarySearchByRange = function ( sElem, area, regExp ) {
 	var bbox, ws;
 	if (cElementType.cellsRange3D === area.type) {
@@ -5279,17 +5366,28 @@ _func.binarySearchByRange = function ( sElem, area, regExp ) {
 
 };
 
+_func.getLastMatch = function (value, array) {
+	// todo add compare to all types
+	let resIndex = -2, exactMatchIndex;
+	if (value.type === cElementType.empty) {
+		value = value.tocNumber();
+	}
+	for (let i = 0; i < array.length; i++) {
+		if (array[i].type !== value.type) {
+			continue;
+		}
 
-_func.getLastMatch = function (index, value, array) {
-	let resIndex = index;
-	for (let i = index; i < array.length; i++) {
-		if (array[i].type === value.type && array[i].value === value.value) {
+		if (array[i].value <= value.value) {
 			resIndex = i;
-		} else {
+			if (array[i].value === value.value) {
+				exactMatchIndex = i;
+			}
+		} else if (array[i].value > value.value) {
 			break;
 		}
 	}
-	return resIndex;
+	return exactMatchIndex ? exactMatchIndex : resIndex;
+
 };
 
 _func[cElementType.number][cElementType.cell] = function ( arg0, arg1, what, bbox ) {

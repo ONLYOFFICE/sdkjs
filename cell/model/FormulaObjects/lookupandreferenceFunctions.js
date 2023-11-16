@@ -1584,12 +1584,14 @@ function (window, undefined) {
 				// searching in the first column
 				resC = arr.getCountElementInRow() > 1 ? 1 : 0;
 				let arrCol = arr.getCol(0);
-				resR = _func.binarySearch(arg0, arrCol);
+				// resR = _func.binarySearch(arg0, arrCol);
+				resR = _func.binarySearchLookup(arg0, arrCol);
 			} else {
 				// searching in the first row
 				resR = arr.getRowCount() > 1 ? 1 : 0;
 				let arrRow = arr.getRow(0);
-				resC = _func.binarySearch(arg0, arrRow);
+				// resC = _func.binarySearch(arg0, arrRow);
+				resC = _func.binarySearchLookup(arg0, arrRow);
 			}
 		}
 
@@ -1616,28 +1618,35 @@ function (window, undefined) {
 
 		} else if (cElementType.array === arg1.type || cElementType.array === arg2.type) {
 
-			let _arg1, _arg2;
+			let _arg1, BBox;
+			_arg1 = cElementType.array === arg1.type ? arg1 : arg1.getFullArray();
 
-			_arg1 = cElementType.array === arg1.type ? arg1 : arg2;
-
-			_arg2 = cElementType.array === arg2.type ? arg1 : arg2;
-
-			let BBox = _arg2.getBBox0();
-
-			if (_arg1.getRowCount() !== (BBox.r2 - BBox.r1) + 1 && _arg1.getCountElementInRow() !== (BBox.c2 - BBox.c1) + 1) {
-				return new cError(cErrorType.not_available);
+			if (cElementType.array === arg2.type) {
+				if (_arg1.getRowCount() !== arg2.getRowCount() && _arg1.getCountElementInRow() !== arg2.getCountElementInRow()) { 
+					return new cError(cErrorType.not_available);
+				}
+			} else {
+				BBox = arg2.getBBox0();
+				if (_arg1.getRowCount() !== (BBox.r2 - BBox.r1) + 1 && _arg1.getCountElementInRow() !== (BBox.c2 - BBox.c1) + 1) {
+					return new cError(cErrorType.not_available);
+				}
 			}
 
+			// find resR & resC position in array/area
 			arrFinder(_arg1);
 
 			if (resR <= -1 && resC <= -1 || resR <= -2 || resC <= -2) {
 				return new cError(cErrorType.not_available);
 			}
 
-			let c = new CellAddress(BBox.r1 + resR, BBox.c1 + resC, 0);
-			_arg2.getWS()._getCellNoEmpty(c.getRow0(), c.getCol0(), function (cell) {
-				res = checkTypeCell(cell);
-			});
+			if (cElementType.array === arg2.type) {
+				res = arg2.getElementRowCol(resR, resC);
+			} else {
+				let c = new CellAddress(BBox.r1 + resR, BBox.c1 + resC, 0);
+				arg2.getWS()._getCellNoEmpty(c.getRow0(), c.getCol0(), function (cell) {
+					res = checkTypeCell(cell);
+				});
+			}
 			return res;
 		} else {
 			if (cElementType.cellsRange3D === arg1.type && !arg1.isSingleSheet() ||
