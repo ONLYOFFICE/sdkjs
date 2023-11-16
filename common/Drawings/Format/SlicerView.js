@@ -2849,19 +2849,19 @@
     };
 
 
-    AscDFH.changesFactory[AscDFH.historyitem_TimelineSlicerViewTag] = AscDFH.CChangesDrawingsString;
-    AscDFH.drawingsChangesMap[AscDFH.historyitem_TimelineSlicerViewTag] = function(oClass, value) {
+    AscDFH.changesFactory[AscDFH.historyitem_TimelineSlicerViewName] = AscDFH.CChangesDrawingsString;
+    AscDFH.drawingsChangesMap[AscDFH.historyitem_TimelineSlicerViewName] = function(oClass, value) {
         oClass.tag = value;
     };
 
     function CTimeslicer() {
         AscFormat.CShape.call(this);
-        this.tag = null;
+        this.name = null;
     }
     AscFormat.InitClass(CTimeslicer, AscFormat.CShape, AscDFH.historyitem_type_TimelineSlicerView);
-    CTimeslicer.prototype.setTag = function (val) {
-        AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_TimelineSlicerViewTag, this.tag, val));
-        this.tag = val;
+    CTimeslicer.prototype.setName = function (val) {
+        AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_TimelineSlicerViewName, this.name, val));
+        this.name = val;
     };
 
     CTimeslicer.prototype.copy = function (oPr) {
@@ -2882,7 +2882,7 @@
                 break;
             switch (_at) {
                 case 0: {
-                    this.setTag(s.GetString2());
+                    this.setName(s.GetString2());
                     break;
                 }
                 default: {
@@ -2895,7 +2895,7 @@
     };
     CTimeslicer.prototype.toStream = function (s) {
         s.WriteUChar(AscCommon.g_nodeAttributeStart);
-        s._WriteString2(0, this.tag);
+        s._WriteString2(0, this.name);
         s.WriteUChar(AscCommon.g_nodeAttributeEnd);
     };
     CTimeslicer.prototype.canSelect = function () {
@@ -2905,11 +2905,8 @@
         return false;
     };
 
-    CTimeslicer.prototype.onTimeSlicerDelete = function (sTag) {
-        this.name = this.tag;
-        let bResult = CSlicer.prototype.onSlicerDelete.call(this, sTag);
-        this.name = undefined;
-        return bResult;
+    CTimeslicer.prototype.onTimeSlicerDelete = function (sName) {
+        return CSlicer.prototype.onSlicerDelete.call(this, sName);
     };
     window["AscFormat"] = window["AscFormat"] || {};
     window["AscFormat"].CSlicer = CSlicer;

@@ -3963,7 +3963,7 @@
 	AscDFH.historyitem_MarkerLayoutSymbol = AscDFH.historyitem_type_MarkerLayout | 1;
 	AscDFH.historyitem_MarkerLayoutSize   = AscDFH.historyitem_type_MarkerLayout | 2;
 
-	AscDFH.historyitem_TimelineSlicerViewTag   = AscDFH.historyitem_type_TimelineSlicerView | 1;
+	AscDFH.historyitem_TimelineSlicerViewName   = AscDFH.historyitem_type_TimelineSlicerView | 1;
 
 	AscDFH.historyitem_SmartArtColorsDef = AscDFH.historyitem_type_SmartArt | 1;
 	AscDFH.historyitem_SmartArtDrawing   = AscDFH.historyitem_type_SmartArt | 2;

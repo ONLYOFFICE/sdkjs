@@ -3967,13 +3967,13 @@
 		History.EndTransaction();
 	};
 
-	Workbook.prototype.onTimeSlicerDelete = function(sTag) {
+	Workbook.prototype.onTimeSlicerDelete = function(sName) {
 		if(AscCommon.isFileBuild()) {
 			return false;
 		}
 		var bRet = false;
 		for(var i = 0; i < this.aWorksheets.length; ++i) {
-			bRet = bRet || this.aWorksheets[i].onTimeSlicerDelete(sTag);
+			bRet = bRet || this.aWorksheets[i].onTimeSlicerDelete(sName);
 		}
 		return bRet;
 	};
@@ -10579,6 +10579,11 @@
 	Worksheet.prototype.onSlicerChangeName = function (sName, sNewName) {
 		for(var i = 0; i < this.Drawings.length; ++i) {
 			this.Drawings[i].onSlicerChangeName(sName, sNewName);
+		}
+	};
+	Worksheet.prototype.onTimeSlicerDelete = function (sName) {
+		for(var i = 0; i < this.Drawings.length; ++i) {
+			this.Drawings[i].onTimeSlicerDelete(sName);
 		}
 	};
 

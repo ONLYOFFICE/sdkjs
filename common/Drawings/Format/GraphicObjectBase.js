@@ -2790,7 +2790,7 @@
 	CGraphicObjectBase.prototype.onSlicerDelete = function (sName) {
 		return false;
 	};
-	CGraphicObjectBase.prototype.onTimeSlicerDelete = function (sTag) {
+	CGraphicObjectBase.prototype.onTimeSlicerDelete = function (sName) {
 		return false;
 	};
 	CGraphicObjectBase.prototype.onSlicerChangeName = function (sName, sNewName) {

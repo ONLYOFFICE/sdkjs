@@ -1551,10 +1551,10 @@
 			}
 			return bRet;
 		};
-		CGroupShape.prototype.onTimeSlicerDelete = function (sTag) {
+		CGroupShape.prototype.onTimeSlicerDelete = function (sName) {
 			var bRet = false;
 			for (var i = 0; i < this.spTree.length; ++i) {
-				bRet = bRet || this.spTree[i].onTimeSlicerDelete(sTag);
+				bRet = bRet || this.spTree[i].onTimeSlicerDelete(sName);
 			}
 			return bRet;
 		};
