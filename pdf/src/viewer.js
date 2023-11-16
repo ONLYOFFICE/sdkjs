@@ -1669,7 +1669,7 @@
 				let X       = oPos.X;
 				let Y       = oPos.Y;
 
-				if (oDoc.mouseDownAnnot.hitInPath(X, Y))
+				if (oDoc.mouseDownAnnot.hitInPath && oDoc.mouseDownAnnot.hitInPath(X, Y))
 					return oDoc.mouseDownAnnot;
 			}
 
