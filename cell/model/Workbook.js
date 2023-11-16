@@ -3967,13 +3967,13 @@
 		History.EndTransaction();
 	};
 
-	Workbook.prototype.onTimeSlicerDelete = function(sName) {
+	Workbook.prototype.onTimeSlicerDelete = function(sTag) {
 		if(AscCommon.isFileBuild()) {
 			return false;
 		}
 		var bRet = false;
 		for(var i = 0; i < this.aWorksheets.length; ++i) {
-			bRet = bRet || this.aWorksheets[i].onTimeSlicerDelete(sName);
+			bRet = bRet || this.aWorksheets[i].onTimeSlicerDelete(sTag);
 		}
 		return bRet;
 	};
