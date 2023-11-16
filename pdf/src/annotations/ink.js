@@ -480,6 +480,7 @@
         oNewInk._gestures = this._gestures.slice();
         oNewInk.SetContents(this.GetContents());
         oNewInk.recalcInfo.recalculatePen = false;
+        oNewInk.recalcInfo.recalculateGeometry = true;
 
         return oNewInk;
     };
