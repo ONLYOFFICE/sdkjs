@@ -168,7 +168,7 @@
             this.RefillGeometry();
 
         this.recalculate();
-        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY)
+        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
     };
     CAnnotationLine.prototype.SetNeedRecalc = function(bRecalc) {
         this._needRecalc = bRecalc;
@@ -572,124 +572,6 @@
             reply.WriteToBinary(memory); 
         });
     };
-
-    function generateGeometry(arrOfArrPoints, aBounds, oGeometry) {
-        let xMin = aBounds[0];
-        let yMin = aBounds[1];
-        let xMax = aBounds[2];
-        let yMax = aBounds[3];
-        // let xMin = Math.min(arrOfArrPoints[0][0].x, arrOfArrPoints[0][1].x);
-        // let yMin = Math.min(arrOfArrPoints[0][0].y, arrOfArrPoints[0][1].y);
-        // let xMax = Math.max(arrOfArrPoints[0][0].x, arrOfArrPoints[0][1].x);
-        // let yMax = Math.max(arrOfArrPoints[0][0].y, arrOfArrPoints[0][1].y);
-
-        let geometry = oGeometry ? oGeometry : new AscFormat.Geometry();
-        if (oGeometry) {
-            oGeometry.pathLst = [];
-        }
-
-        for (let nPath = 0; nPath < arrOfArrPoints.length; nPath++) {
-            let bClosed     = false;
-            let aPoints     = arrOfArrPoints[nPath];
-            let min_dist    = editor.WordControl.m_oDrawingDocument.GetMMPerDot(3);
-            let oLastPoint  = aPoints[aPoints.length-1];
-            let nLastIndex  = aPoints.length-1;
-            if(oLastPoint.bTemporary) {
-                nLastIndex--;
-            }
-            if(nLastIndex > 1)
-            {
-                let dx = aPoints[0].x - aPoints[nLastIndex].x;
-                let dy = aPoints[0].y - aPoints[nLastIndex].y;
-                if(Math.sqrt(dx*dx +dy*dy) < min_dist)
-                {
-                    bClosed = true;
-                }
-            }
-            let nMaxPtIdx = bClosed ? (nLastIndex - 1) : nLastIndex;
-
-            let w = xMax - xMin, h = yMax-yMin;
-            let kw, kh, pathW, pathH;
-            if(w > 0)
-            {
-                pathW = 43200;
-                kw = 43200/ w;
-            }
-            else
-            {
-                pathW = 0;
-                kw = 0;
-            }
-            if(h > 0)
-            {
-                pathH = 43200;
-                kh = 43200 / h;
-            }
-            else
-            {
-                pathH = 0;
-                kh = 0;
-            }
-            geometry.AddPathCommand(0, undefined, bClosed ? "norm": "none", undefined, pathW, pathH);
-            geometry.AddRect("l", "t", "r", "b");
-            geometry.AddPathCommand(1, (((aPoints[0].x - xMin) * kw) >> 0) + "", (((aPoints[0].y - yMin) * kh) >> 0) + "");
-            let i = 1;
-            let aRanges = [[0, aPoints.length - 1]];
-            let aRange, nRange;
-            let nEnd;
-            let nPtsCount = aPoints.length;
-            let oPt1, oPt2, oPt3, nPt;
-            for(nRange = 0; nRange < aRanges.length; ++nRange)
-            {
-                aRange = aRanges[nRange];
-                if(aRange[0] + 1 > nMaxPtIdx) {
-                    break;
-                }
-                nPt = aRange[0] + 1;
-                nEnd = Math.min(aRange[1], nMaxPtIdx);
-                while(nPt <= nEnd)
-                {
-                    if(nPt + 2 <= nEnd)
-                    {
-                        //cubic bezier curve
-                        oPt1 = aPoints[nPt++];
-                        oPt2 = aPoints[nPt++];
-                        oPt3 = aPoints[nPt++];
-                        geometry.AddPathCommand(5,
-                            (((oPt1.x - xMin) * kw) >> 0) + "", (((oPt1.y - yMin) * kh) >> 0) + "",
-                            (((oPt2.x - xMin) * kw) >> 0) + "", (((oPt2.y - yMin) * kh) >> 0) + "",
-                            (((oPt3.x - xMin) * kw) >> 0) + "", (((oPt3.y - yMin) * kh) >> 0) + ""
-                        );
-                    }
-                    else if(nPt + 1 <= nEnd)
-                    {
-                        //quad bezier curve
-                        oPt1 = aPoints[nPt++];
-                        oPt2 = aPoints[nPt++];
-                        geometry.AddPathCommand(4,
-                            (((oPt1.x - xMin) * kw) >> 0) + "", (((oPt1.y - yMin) * kh) >> 0) + "",
-                            (((oPt2.x - xMin) * kw) >> 0) + "", (((oPt2.y - yMin) * kh) >> 0) + ""
-                        );
-                    }
-                    else
-                    {
-                        //lineTo
-                        oPt1 = aPoints[nPt++];
-                        geometry.AddPathCommand(2,
-                            (((oPt1.x - xMin) * kw) >> 0) + "", (((oPt1.y - yMin) * kh) >> 0) + ""
-                        );
-                    }
-                }
-            }
-            if(bClosed)
-            {
-                geometry.AddPathCommand(6);
-            }
-        }
-        
-
-        return geometry;
-    }
 
     function getMinRect(aPoints) {
         let xMax = aPoints[0].x, yMax = aPoints[0].y, xMin = xMax, yMin = yMax;

@@ -2379,7 +2379,7 @@
 					{
 						oDoc.mouseDownAnnot.DrawSelected(this.overlay);
 					}
-					else if (oDoc.mouseDownAnnot.IsInk() || oDoc.mouseDownAnnot.IsLine())
+					else if (oDoc.mouseDownAnnot.IsComment() == false)
 					{
 						let nPage = oDoc.mouseDownAnnot.GetPage();
 						this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = nPage;
