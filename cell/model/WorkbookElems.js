@@ -16006,13 +16006,23 @@ function RangeDataManagerElem(bbox, data)
 
 		let countOfCol = range.c2 - range.c1;
 		let countOfRow = range.r2 - range.r1;
+		// select one cell and use fill handle
+		if (ws.activeFillHandle != null && countOfCol === countOfRow) {
+			if (ws.fillHandleDirection === 0) {
+				this.asc_setSeriesIn(Asc.c_oAscSeriesInType.rows);
+			} else {
+				this.asc_setSeriesIn(Asc.c_oAscSeriesInType.columns);
+			}
+			rangeModel._foreach2(actionCell);
 
-		if (countOfCol >= countOfRow) {
+			contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
+			contextMenuAllowedProps[Asc.c_oAscFillType.series] = true;
+		} else if (countOfCol >= countOfRow) {
 			this.asc_setSeriesIn(Asc.c_oAscSeriesInType.rows);
-			rangeModel._foreachNoEmpty(actionCell);
+			rangeModel._foreach2(actionCell);
 		} else {
 			this.asc_setSeriesIn(Asc.c_oAscSeriesInType.columns);
-			rangeModel._foreachNoEmpty(function (cell, curRow, curCol, rowStart, colStart) {
+			rangeModel._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
 				if (curCol === colStart) {
 					return actionCell(cell);
 				}
