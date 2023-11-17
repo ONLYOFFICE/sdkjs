@@ -15860,7 +15860,7 @@ function RangeDataManagerElem(bbox, data)
 	 * @property {number|null} stopValue - Stop value
 	 * @property {boolean|null} trend - Trend
 	 * @property {object} contextMenuAllowedProps - Allowed properties
-	 * @property {c_oAscFillRightClickOptions} contextMenuChosenProperty - Chosen property of context menu
+	 * @property {c_oAscFillType} contextMenuChosenProperty - Chosen property of context menu
 	 * @constructor
 	 * @returns {asc_CSeriesSettings}
 	 */
@@ -15922,10 +15922,10 @@ function RangeDataManagerElem(bbox, data)
 					if (numFormat.isDateTimeFormat()) {
 						seriesSettings.asc_setType(Asc.c_oAscSeriesType.date);
 
-						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillDays] = true;
-						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillWeekdays] = true;
-						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillMonths] = true;
-						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillYears] = true;
+						contextMenuAllowedProps[Asc.c_oAscFillType.fillDays] = true;
+						contextMenuAllowedProps[Asc.c_oAscFillType.fillWeekdays] = true;
+						contextMenuAllowedProps[Asc.c_oAscFillType.fillMonths] = true;
+						contextMenuAllowedProps[Asc.c_oAscFillType.fillYears] = true;
 					}
 				}
 
@@ -15937,17 +15937,17 @@ function RangeDataManagerElem(bbox, data)
 					if (cellNumberValue) {
 						seriesSettings.asc_setStepValue(cellNumberValue - prevValue);
 
-						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillSeries] = true;
+						contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
 						if (seriesSettings.asc_getType() !== Asc.c_oAscSeriesType.date) {
-							contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.linearTrend] = true;
-							contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.growthTrend] = true;
+							contextMenuAllowedProps[Asc.c_oAscFillType.linearTrend] = true;
+							contextMenuAllowedProps[Asc.c_oAscFillType.growthTrend] = true;
 						}
-						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.series] = true;
+						contextMenuAllowedProps[Asc.c_oAscFillType.series] = true;
 					} else {
 						seriesSettings.asc_setStepValue(1);
 
-						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillSeries] = true;
-						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.series] = true;
+						contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
+						contextMenuAllowedProps[Asc.c_oAscFillType.series] = true;
 					}
 				} else {
 					if (cellNumberValue) {
@@ -15959,7 +15959,7 @@ function RangeDataManagerElem(bbox, data)
 						if (typeCell === AscCommon.CellValueType.String) {
 							let cellValue = cell.getValueWithoutFormat();
 							if (cellValue[cellValue.length - 1] >= '0' && cellValue[cellValue.length - 1] <= '9') {
-								contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillSeries] = true;
+								contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
 							}
 						}
 					}
@@ -15968,8 +15968,8 @@ function RangeDataManagerElem(bbox, data)
 				seriesSettings.asc_setStepValue(1);
 
 				if(prevValue != null) {
-					contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.series] = true;
-					contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillSeries] = true;
+					contextMenuAllowedProps[Asc.c_oAscFillType.series] = true;
+					contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
 				}
 			}
 
@@ -15991,18 +15991,18 @@ function RangeDataManagerElem(bbox, data)
 		let rangeModel = ws.model.getRange3(range.r1, range.c1, range.r2, range.c2);
 		let prevValue = null;
 		let contextMenuAllowedProps = {};
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.copyCells] = true;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillSeries] = false;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillFormattingOnly] = null;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillWithoutFormatting] = null;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillDays] = false;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillWeekdays] = false;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillMonths] = false;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillYears] = false;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.linearTrend] = false;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.growthTrend] = false;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.flashFill] = null;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.series] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.copyCells] = true;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillFormattingOnly] = null;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillWithoutFormatting] = null;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillDays] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillWeekdays] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillMonths] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillYears] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.linearTrend] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.growthTrend] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.flashFill] = null;
+		contextMenuAllowedProps[Asc.c_oAscFillType.series] = false;
 
 		let countOfCol = range.c2 - range.c1;
 		let countOfRow = range.r2 - range.r1;
@@ -16033,10 +16033,10 @@ function RangeDataManagerElem(bbox, data)
 	 */
 	asc_CSeriesSettings.prototype.init = function () {
 		const chosenContextMenuProp = this.asc_getContextMenuChosenProperty();
-		if (chosenContextMenuProp === Asc.c_oAscFillRightClickOptions.linearTrend) {
+		if (chosenContextMenuProp === Asc.c_oAscFillType.linearTrend) {
 			this.asc_setType(Asc.c_oAscSeriesType.linear);
 			this.asc_setTrend(true);
-		} else if (chosenContextMenuProp === Asc.c_oAscFillRightClickOptions.growthTrend) {
+		} else if (chosenContextMenuProp === Asc.c_oAscFillType.growthTrend) {
 			this.asc_setType(Asc.c_oAscSeriesType.growth);
 			this.asc_setTrend(true);
 		}
@@ -16093,7 +16093,7 @@ function RangeDataManagerElem(bbox, data)
 	 * Method returns "contextMenuAllowedProps" attribute of SeriesSettings object.
 	 * Uses for hide and shade menu items in context menu.
 	 * @memberof asc_CSeriesSettings
-	 * @returns {object} - object with properties of Asc.c_oAscFillRightClickOptions
+	 * @returns {object} - object with properties of Asc.c_oAscFillType
 	 */
 	asc_CSeriesSettings.prototype.asc_getContextMenuAllowedProps = function () {
 		return this.contextMenuAllowedProps;
@@ -16102,7 +16102,7 @@ function RangeDataManagerElem(bbox, data)
 	 * Method returns "contextMenuChosenProperty" attribute of SeriesSettings object.
 	 * Uses for recognize chosen item in context menu.
 	 * @memberof asc_CSeriesSettings
-	 * @returns {c_oAscFillRightClickOptions}
+	 * @returns {c_oAscFillType}
 	 */
 	asc_CSeriesSettings.prototype.asc_getContextMenuChosenProperty = function () {
 		return this.contextMenuChosenProperty;
@@ -16160,7 +16160,7 @@ function RangeDataManagerElem(bbox, data)
 	 * * false - shade menu item
 	 * * null - hide menu item
 	 * @memberof asc_CSeriesSettings
-	 * @param {object} val - object with properties of Asc.c_oAscFillRightClickOptions as attribute and boolean or null as value
+	 * @param {object} val - object with properties of Asc.c_oAscFillType as attribute and boolean or null as value
 	 */
 	asc_CSeriesSettings.prototype.asc_setContextMenuAllowedProps = function (val) {
 		this.contextMenuAllowedProps = val;
@@ -16168,7 +16168,7 @@ function RangeDataManagerElem(bbox, data)
 	/**
 	 * Method sets "contextMenuChosenProperty" attribute of SeriesSettings object.
 	 * Uses for recognize chosen item in context menu.
-	 * @param {c_oAscFillRightClickOptions} val - attribute of c_oAscFillRightClickOptions
+	 * @param {c_oAscFillType} val - attribute of c_oAscFillType
 	 */
 	asc_CSeriesSettings.prototype.asc_setContextMenuChosenProperty = function (val) {
 		this.contextMenuChosenProperty = val;

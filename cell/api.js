@@ -5862,6 +5862,9 @@ var editor;
      return;
     }
 
+	this.asc_FillCells(Asc.c_oAscFillType.fillDown);
+	return;
+
   	let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
@@ -8999,6 +9002,19 @@ var editor;
 
 		var ws = this.wb.getWorksheet();
 		return ws.applySeriesSettings(settings);
+	};
+
+	spreadsheet_api.prototype.asc_FillCells = function(type, settings) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+
+		var ws = this.wb.getWorksheet();
+		return ws.applySeriesSettings(type, settings);
 	};
 
   /*

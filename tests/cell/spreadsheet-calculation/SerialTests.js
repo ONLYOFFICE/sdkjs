@@ -133,7 +133,7 @@ $(function () {
 	let oSeriesInType = Asc.c_oAscSeriesInType;
 	let oSeriesType = Asc.c_oAscSeriesType;
 	let oSeriesDateUnitType = Asc.c_oAscDateUnitType;
-	let oRightClickOptions = Asc.c_oAscFillRightClickOptions;
+	let oRightClickOptions = Asc.c_oAscFillType;
 	let settings, cSerial, autofillRange, oFromRange, expectedData;
 	
 	const getRange = function(c1, r1, c2, r2) {

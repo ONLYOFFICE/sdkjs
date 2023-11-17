@@ -58,7 +58,7 @@
     var gc_nMaxRow = AscCommon.gc_nMaxRow;
     var gc_nMaxCol = AscCommon.gc_nMaxCol;
     var History = AscCommon.History;
-	var c_oAscFillRightClickOptions = Asc.c_oAscFillRightClickOptions;
+	var c_oAscFillType = Asc.c_oAscFillType;
 
     var asc = window["Asc"];
     var asc_applyFunction = AscCommonExcel.applyFunction;
@@ -12246,7 +12246,7 @@
     };
 
     /* Функция для применения автозаполнения */
-    WorksheetView.prototype.applyFillHandle = function (x, y, ctrlPress, opt_doNotDraw) {
+    WorksheetView.prototype.applyFillHandle = function (x, y, ctrlPress, opt_doNotDraw, callback) {
         var t = this;
 
         if (null !== this.resizeTableIndex) {
@@ -12264,6 +12264,7 @@
 			t.resizeTableIndex = null;
 			t.fillHandleDirection = -1;
 			!opt_doNotDraw && t._drawSelection();
+			callback && callback(false);
         	return;
 		}
 
@@ -12388,6 +12389,7 @@
 						// Обновляем выделенные ячейки
 						t._updateRange(arn);
 						!opt_doNotDraw && t.draw();
+						callback && callback(true);
                     } else {
                         t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotFillRange,
                           c_oAscError.Level.NoCritical);
@@ -12405,6 +12407,7 @@
 					t.fillHandleDirection = -1;
 					// Перерисовываем
 					!opt_doNotDraw && t._drawSelection();
+					callback && callback(false);
                 }
             };
 
@@ -12425,6 +12428,7 @@
 						t.fillHandleDirection = -1;
 						// Перерисовываем
 						!opt_doNotDraw && t._drawSelection();
+						callback && callback(false);
 					}
 				}, true);
 				return;
@@ -12435,6 +12439,7 @@
 				this.fillHandleDirection = -1;
 				// Перерисовываем
 				!opt_doNotDraw && this._drawSelection();
+				callback && callback(false);
 
 				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
 					c_oAscError.Level.NoCritical);
@@ -12448,6 +12453,7 @@
 				this.fillHandleDirection = -1;
 				// Перерисовываем
 				!opt_doNotDraw && this._drawSelection();
+				callback && callback(false);
 
 				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray,
 					c_oAscError.Level.NoCritical);
@@ -12464,6 +12470,7 @@
             this.fillHandleDirection = -1;
             // Перерисовываем
 			!opt_doNotDraw && this._drawSelection();
+			callback && callback(false);
         }
     };
 
@@ -26327,61 +26334,157 @@
 	};
 	/**
 	 * Method applies series settings when user confirms "Series" settings in dialog window or context menu.
+	 * @param {c_oAscFillType} type
 	 * @param {asc_CSeriesSettings} settings
 	 */
-	WorksheetView.prototype.applySeriesSettings = function (settings) {
-		const wsView = this;
-		const cSerial = new AscCommonExcel.CSerial(settings);
+	WorksheetView.prototype.applySeriesSettings = function (type, settings) {
+		const oThis = this;
+		const cSerial = settings ? new AscCommonExcel.CSerial(settings) : null;
 
-		if (settings.contextMenuChosenProperty != null && this.activeFillHandle) { // 1. fill handle through context menu
-			switch (settings.contextMenuChosenProperty) {
-				case c_oAscFillRightClickOptions.copyCells:
-					this.applyFillHandle(null, null, true, null);
-					break;
-				case c_oAscFillRightClickOptions.fillSeries:
-					this.applyFillHandle(null, null, false, null);
-					break;
-				case c_oAscFillRightClickOptions.linearTrend:
-				case c_oAscFillRightClickOptions.growthTrend:
-					const oRange = this.model.getSelection().getLast();
-					const oRangeModel = this.model.getRange3(oRange.r1, oRange.c1, oRange.r2, oRange.c2);
+		let oRanges = this.model.getSelection();
+		let aRanges = oRanges.ranges;
 
-					this._isLockedCells(oRangeModel, /*subType*/null, function (success) {
-						if (!success) {
-							return;
-						}
-
-						cSerial.setFromRange(oRangeModel);
-						cSerial.setActiveFillHandle(wsView.activeFillHandle);
-						cSerial.exec();
-					});
-					break;
-				case c_oAscFillRightClickOptions.series:
-					//Should open a series dialog window from toolbar?
-					break;
+		let executeFillHandle = function (func, selectionRange) {
+			let cloneSelection = selectionRange.clone();
+			let needDoFunc = false;
+			if (type === c_oAscFillType.fillDown) {
+				if (selectionRange.isOneRow()) {
+					if (selectionRange.r1 > 0) {
+						//select previous row and fill on this row
+						selectionRange.assign(selectionRange.c1, selectionRange.r1 - 1, selectionRange.c2, selectionRange.r2 - 1);
+						oThis.activeFillHandle = cloneSelection;
+						oThis.fillHandleDirection = 1;
+						needDoFunc = true;
+					}
+				} else {
+					selectionRange.assign(selectionRange.c1, selectionRange.r1, selectionRange.c2, selectionRange.r1);
+					oThis.activeFillHandle = cloneSelection;
+					oThis.fillHandleDirection = 1;
+					needDoFunc = true;
+				}
+			} else if (type === c_oAscFillType.fillUp) {
+				if (selectionRange.isOneRow()) {
+					if (/*selectionRange.r1 > 0*/true) {
+						//select previous row and fill on this row
+						selectionRange.assign(selectionRange.c1, selectionRange.r1 + 1, selectionRange.c2, selectionRange.r2 + 1);
+						oThis.activeFillHandle = cloneSelection;
+						oThis.fillHandleDirection = 1;
+						needDoFunc = true;
+					}
+				} else {
+					selectionRange.assign(selectionRange.c1, selectionRange.r2, selectionRange.c2, selectionRange.r2);
+					oThis.activeFillHandle = cloneSelection;
+					oThis.fillHandleDirection = 1;
+					needDoFunc = true;
+				}
+			} else if (type === c_oAscFillType.fillRight) {
+				if (selectionRange.isOneCol()) {
+					if (selectionRange.c1 > 0) {
+						//select previous row and fill on this row
+						selectionRange.assign(selectionRange.c1 - 1, selectionRange.r1, selectionRange.c2 - 1, selectionRange.r2);
+						oThis.activeFillHandle = cloneSelection;
+						oThis.fillHandleDirection = 0;
+						needDoFunc = true;
+					}
+				} else {
+					selectionRange.assign(selectionRange.c1, selectionRange.r1, selectionRange.c1, selectionRange.r2);
+					oThis.activeFillHandle = cloneSelection;
+					oThis.fillHandleDirection = 0;
+					needDoFunc = true;
+				}
+			} else if (type === c_oAscFillType.fillLeft) {
+				if (selectionRange.isOneCol()) {
+					if (/*selectionRange.c1 > 0*/true) {
+						//select previous row and fill on this row
+						selectionRange.assign(selectionRange.c1 + 1, selectionRange.r1, selectionRange.c2 + 1, selectionRange.r2);
+						oThis.activeFillHandle = cloneSelection;
+						oThis.fillHandleDirection = 0;
+						needDoFunc = true;
+					}
+				} else {
+					selectionRange.assign(selectionRange.c2, selectionRange.r1, selectionRange.c2, selectionRange.r2);
+					oThis.activeFillHandle = cloneSelection;
+					oThis.fillHandleDirection = 0;
+					needDoFunc = true;
+				}
 			}
 
-		} else { // 2. fill from toolbar
-			const oRanges = this.model.getSelection();
-			const aRanges = oRanges.ranges;
+			if (needDoFunc) {
+				func(function (success) {
+					selectionRange.assign(cloneSelection.c1, cloneSelection.r1, cloneSelection.c2, cloneSelection.r2);
+					success && oThis.draw();
+				});
+			}
+		};
 
-			this._isLockedCells(aRanges, /*subType*/null, function (success) {
-				if (!success) {
+		switch (type) {
+			case c_oAscFillType.copyCells:
+				if (!this.activeFillHandle) {
+					return;
+				}
+				this.applyFillHandle(null, null, true, null);
+				break;
+			case c_oAscFillType.fillSeries:
+				if (!this.activeFillHandle) {
+					return;
+				}
+				this.applyFillHandle(null, null, false, null);
+				break;
+			case c_oAscFillType.linearTrend:
+			case c_oAscFillType.growthTrend:
+				if (!cSerial) {
+					return;
+				}
+				const oRange = this.model.getSelection().getLast();
+				const oRangeModel = this.model.getRange3(oRange.r1, oRange.c1, oRange.r2, oRange.c2);
+
+				this._isLockedCells(oRangeModel, /*subType*/null, function (success) {
+					if (!success) {
+						return;
+					}
+
+					cSerial.setFromRange(oRangeModel);
+					cSerial.setActiveFillHandle(oThis.activeFillHandle);
+					cSerial.exec();
+				});
+				break;
+			case c_oAscFillType.series:
+				if (!cSerial) {
 					return;
 				}
 
-				for (let i = 0; i < aRanges.length; i++) {
-					const oRangeModel = wsView.model.getRange3(aRanges[i].r1, aRanges[i].c1, aRanges[i].r2, aRanges[i].c2);
-					cSerial.setFromRange(oRangeModel);
-					cSerial.exec();
+				this._isLockedCells(aRanges, /*subType*/null, function (success) {
+					if (!success) {
+						return;
+					}
+
+					for (let i = 0; i < aRanges.length; i++) {
+						const oRangeModel = oThis.model.getRange3(aRanges[i].r1, aRanges[i].c1, aRanges[i].r2, aRanges[i].c2);
+						cSerial.setFromRange(oRangeModel);
+						cSerial.exec();
+					}
+
+					//update
+					for (let i = 0; i < aRanges.length; i++) {
+						oThis._updateRange(aRanges[i]);
+					}
+					oThis.draw();
+				});
+				break;
+			case c_oAscFillType.fillDown:
+			case c_oAscFillType.fillLeft:
+			case c_oAscFillType.fillRight:
+			case c_oAscFillType.fillUp:
+				//don't work in  ms
+				if (aRanges.length > 1) {
+					return;
 				}
 
-				//update
-				for (let i = 0; i < aRanges.length; i++) {
-					wsView._updateRange(aRanges[i]);
-				}
-				wsView.draw();
-			});
+				executeFillHandle(function (_callback) {
+					oThis.applyFillHandle(null, null, true, true, _callback);
+				}, aRanges[0]);
+
+				break;
 		}
 	};
 
