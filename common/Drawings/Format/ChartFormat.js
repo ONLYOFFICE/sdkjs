@@ -17395,7 +17395,7 @@
                 nCol = oBBox.c2;
 
                 var nStartRow = oBBox.r2;
-                if(aGridRow.length === 1) {
+                if(aGridRow.length === 1 && oBBox.r2 > oBBox.r1) {
                     for(nRow = oBBox.r2 - 1; nRow >= oBBox.r1; --nRow) {
                         if(!this.privateCheckCellDateTimeFormatFull(oRef.worksheet.getCell3(nRow, nCol))) {
                             break;
@@ -17420,7 +17420,7 @@
                 oBBox = oRef.bbox;
                 nRow = oBBox.r2;
                 var nStartCol = oBBox.c2;
-                if(aGrid.length === 1) {
+                if(aGrid.length === 1  && oBBox.c2 > oBBox.c1) {
                     for(nCol = oBBox.c2 - 1; nCol >= oBBox.c1; --nCol) {
                         if(!this.privateCheckCellDateTimeFormatFull(oRef.worksheet.getCell3(nRow, nCol))) {
                             break;
@@ -17434,7 +17434,7 @@
                     }
                 }
                 nLeftHeader = nCol - oBBox.c1;
-                if(nCol === oBBox.r2) {
+                if(nCol === oBBox.c2) {
                     if(aGrid.length === 1) {
                         nLeftHeader -= 1;
                     }
