@@ -1557,6 +1557,8 @@ function (window, undefined) {
 	cLOOKUP.prototype.arrayIndexes = {1: 1, 2: 1};
 	cLOOKUP.prototype.argumentsType = [argType.any, argType.reference, argType.reference];
 	cLOOKUP.prototype.Calculate = function (arg) {
+		// todo tests arr-area, area-arr
+		// todo implement LOOKUPCache
 		let arg0 = arg[0], arg1 = arg[1], arg2 = 2 === arg.length ? arg1 : arg[2], resC = -1, resR = -1,
 			t = this, res;
 
@@ -1578,6 +1580,10 @@ function (window, undefined) {
 		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
+		
+		if (cElementType.empty === arg0.type) {
+			arg0 = arg0.tocNumber();
+		}
 
 		function arrFinder(arr) {
 			if (arr.getRowCount() > arr.getCountElementInRow()) {
@@ -1585,13 +1591,13 @@ function (window, undefined) {
 				resC = arr.getCountElementInRow() > 1 ? 1 : 0;
 				let arrCol = arr.getCol(0);
 				// resR = _func.binarySearch(arg0, arrCol);
-				resR = _func.binarySearchLookup(arg0, arrCol);
+				resR = _func.lookupBinarySearch(arg0, arrCol);
 			} else {
 				// searching in the first row
 				resR = arr.getRowCount() > 1 ? 1 : 0;
 				let arrRow = arr.getRow(0);
 				// resC = _func.binarySearch(arg0, arrRow);
-				resC = _func.binarySearchLookup(arg0, arrRow);
+				resC = _func.lookupBinarySearch(arg0, arrRow);
 			}
 		}
 
@@ -1619,7 +1625,7 @@ function (window, undefined) {
 		} else if (cElementType.array === arg1.type || cElementType.array === arg2.type) {
 
 			let _arg1, BBox;
-			_arg1 = cElementType.array === arg1.type ? arg1 : arg1.getFullArray();
+			_arg1 = cElementType.array === arg1.type ? arg1 : arg1.getFullArray();	// !!! slow
 
 			if (cElementType.array === arg2.type) {
 				if (_arg1.getRowCount() !== arg2.getRowCount() && _arg1.getCountElementInRow() !== arg2.getCountElementInRow()) { 
@@ -1745,33 +1751,33 @@ function (window, undefined) {
 				};
 
 				let length = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1;
-				let lastValue = _getValue(length);
+				// let lastValue = _getValue(length);
 				// TODO
 				// In the formula description, it is written that the function checks the first and last elements, but in practice, it works differently (perhaps this check should be done after the binary search).
 				// The binary search has the same check.
-				if(lastValue && lastValue.value < arg0.value) {
-					// In this case, the binary search function will return the last element. This is incorrect for this specific case
-					// If the function cannot find the desired_value, it selects the largest value in the viewed_vector that is less than or equal to the desired_value.
-					let diff = null;
-					let endNumber;
-					for(let i = 0; i <= length; i++) {
-						let tempValue = _getValue(i);
-						if(cElementType.number === tempValue.type) {
-							if(tempValue.value <= arg0.value && (null === diff || diff > (arg0.value - tempValue.value))) {
-								index = i;
-								diff = arg0.value - tempValue.value;
-							}
-							endNumber = i;
-						}
-					}
-					if(undefined === index) {
-						if(undefined !== endNumber) {
-							index = endNumber;
-						}
-					}
-				}
+				// if(lastValue && lastValue.value < arg0.value) {
+				// 	// In this case, the binary search function will return the last element. This is incorrect for this specific case
+				// 	// If the function cannot find the desired_value, it selects the largest value in the viewed_vector that is less than or equal to the desired_value.
+				// 	let diff = null;
+				// 	let endNumber;
+				// 	for(let i = 0; i <= length; i++) {
+				// 		let tempValue = _getValue(i);
+				// 		if(cElementType.number === tempValue.type) {
+				// 			if(tempValue.value <= arg0.value && (null === diff || diff > (arg0.value - tempValue.value))) {
+				// 				index = i;
+				// 				diff = arg0.value - tempValue.value;
+				// 			}
+				// 			endNumber = i;
+				// 		}
+				// 	}
+				// 	if(undefined === index) {
+				// 		if(undefined !== endNumber) {
+				// 			index = endNumber;
+				// 		}
+				// 	}
+				// }
 				if(index === undefined) {
-					index = _func.binarySearchByRange(arg0, arg1);
+					index = _func.lookupBinarySearchByRange(arg0, arg1);
 
 					if (index === undefined || index < 0) {
 						return new cError(cErrorType.not_available);
