@@ -26344,77 +26344,48 @@
 		let oRanges = this.model.getSelection();
 		let aRanges = oRanges.ranges;
 
-		let executeFillHandle = function (func, selectionRange) {
+		let prepareFillHandle = function (selectionRange) {
 			let cloneSelection = selectionRange.clone();
-			let needDoFunc = false;
+
+			let _applyFillHandleSettings = function (_fillRange, _direction, _area) {
+				oThis.activeFillHandle = _fillRange;
+				oThis.fillHandleDirection = _direction;
+				oThis.fillHandleArea = _area;
+			};
+
+			let oneRow = selectionRange.isOneRow();
+			let oneCol = selectionRange.isOneCol();
 			if (type === c_oAscFillType.fillDown) {
-				if (selectionRange.isOneRow()) {
-					if (selectionRange.r1 > 0) {
-						//select previous row and fill on this row
-						selectionRange.assign(selectionRange.c1, selectionRange.r1 - 1, selectionRange.c2, selectionRange.r2 - 1);
-						oThis.activeFillHandle = cloneSelection;
-						oThis.fillHandleDirection = 1;
-						needDoFunc = true;
-					}
-				} else {
-					selectionRange.assign(selectionRange.c1, selectionRange.r1, selectionRange.c2, selectionRange.r1);
-					oThis.activeFillHandle = cloneSelection;
-					oThis.fillHandleDirection = 1;
-					needDoFunc = true;
+				if (oneRow && selectionRange.r1 === 0) {
+					return false;
 				}
+
+				selectionRange.assign(selectionRange.c1, selectionRange.r1 - 1*oneRow, selectionRange.c2, selectionRange.r1 - 1*oneRow);
+				_applyFillHandleSettings(cloneSelection, 1, 3);
 			} else if (type === c_oAscFillType.fillUp) {
-				if (selectionRange.isOneRow()) {
-					if (selectionRange.r2 < gc_nMaxRow0) {
-						//select previous row and fill on this row
-						selectionRange.assign(selectionRange.c1, selectionRange.r1 + 1, selectionRange.c2, selectionRange.r2 + 1);
-						oThis.activeFillHandle = cloneSelection;
-						oThis.fillHandleDirection = 1;
-						needDoFunc = true;
-					}
-				} else {
-					selectionRange.assign(selectionRange.c1, selectionRange.r2, selectionRange.c2, selectionRange.r2);
-					oThis.activeFillHandle = cloneSelection;
-					oThis.fillHandleDirection = 1;
-					needDoFunc = true;
+				if (oneRow && selectionRange.r2 === gc_nMaxRow0) {
+					return false;
 				}
+
+				selectionRange.assign(selectionRange.c1, selectionRange.r2 + 1*oneRow, selectionRange.c2, selectionRange.r2 + 1*oneRow);
+				_applyFillHandleSettings(new asc_Range(cloneSelection.c2, cloneSelection.r2, cloneSelection.c1, cloneSelection.r1), 1, 1);
 			} else if (type === c_oAscFillType.fillRight) {
-				if (selectionRange.isOneCol()) {
-					if (selectionRange.c1 > 0) {
-						//select previous row and fill on this row
-						selectionRange.assign(selectionRange.c1 - 1, selectionRange.r1, selectionRange.c2 - 1, selectionRange.r2);
-						oThis.activeFillHandle = cloneSelection;
-						oThis.fillHandleDirection = 0;
-						needDoFunc = true;
-					}
-				} else {
-					selectionRange.assign(selectionRange.c1, selectionRange.r1, selectionRange.c1, selectionRange.r2);
-					oThis.activeFillHandle = cloneSelection;
-					oThis.fillHandleDirection = 0;
-					needDoFunc = true;
+				if (oneCol && selectionRange.c1 === 0) {
+					return false;
 				}
+
+				selectionRange.assign(selectionRange.c1 - 1*oneCol, selectionRange.r1, selectionRange.c1 - 1*oneCol, selectionRange.r2);
+				_applyFillHandleSettings(cloneSelection, 0, 3);
 			} else if (type === c_oAscFillType.fillLeft) {
-				if (selectionRange.isOneCol()) {
-					if (selectionRange.c2 < gc_nMaxCol0) {
-						//select previous row and fill on this row
-						selectionRange.assign(selectionRange.c1 + 1, selectionRange.r1, selectionRange.c2 + 1, selectionRange.r2);
-						oThis.activeFillHandle = cloneSelection;
-						oThis.fillHandleDirection = 0;
-						needDoFunc = true;
-					}
-				} else {
-					selectionRange.assign(selectionRange.c2, selectionRange.r1, selectionRange.c2, selectionRange.r2);
-					oThis.activeFillHandle = cloneSelection;
-					oThis.fillHandleDirection = 0;
-					needDoFunc = true;
+				if (oneCol && selectionRange.c2 === gc_nMaxCol0) {
+					return false;
 				}
+
+				selectionRange.assign(selectionRange.c2 + 1*oneCol, selectionRange.r1, selectionRange.c2 + 1*oneCol, selectionRange.r2);
+				_applyFillHandleSettings(new asc_Range(cloneSelection.c2, cloneSelection.r2, cloneSelection.c1, cloneSelection.r1), 0, 1);
 			}
 
-			if (needDoFunc) {
-				func(function (success) {
-					selectionRange.assign(cloneSelection.c1, cloneSelection.r1, cloneSelection.c2, cloneSelection.r2);
-					success && oThis.draw();
-				});
-			}
+			return true;
 		};
 
 		switch (type) {
@@ -26480,9 +26451,13 @@
 					return;
 				}
 
-				executeFillHandle(function (_callback) {
-					oThis.applyFillHandle(null, null, true, true, _callback);
-				}, aRanges[0]);
+				let _cloneSelection = aRanges[0].clone();
+				if (prepareFillHandle(aRanges[0])) {
+					oThis.applyFillHandle(null, null, null, true, function (success) {
+						aRanges[0].assign(_cloneSelection.c1, _cloneSelection.r1, _cloneSelection.c2, _cloneSelection.r2);
+						success && oThis.draw();
+					});
+				}
 
 				break;
 		}
