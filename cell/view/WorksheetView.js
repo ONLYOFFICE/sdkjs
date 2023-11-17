@@ -26364,7 +26364,7 @@
 				}
 			} else if (type === c_oAscFillType.fillUp) {
 				if (selectionRange.isOneRow()) {
-					if (/*selectionRange.r1 > 0*/true) {
+					if (selectionRange.r2 < gc_nMaxRow0) {
 						//select previous row and fill on this row
 						selectionRange.assign(selectionRange.c1, selectionRange.r1 + 1, selectionRange.c2, selectionRange.r2 + 1);
 						oThis.activeFillHandle = cloneSelection;
@@ -26394,7 +26394,7 @@
 				}
 			} else if (type === c_oAscFillType.fillLeft) {
 				if (selectionRange.isOneCol()) {
-					if (/*selectionRange.c1 > 0*/true) {
+					if (selectionRange.c2 < gc_nMaxCol0) {
 						//select previous row and fill on this row
 						selectionRange.assign(selectionRange.c1 + 1, selectionRange.r1, selectionRange.c2 + 1, selectionRange.r2);
 						oThis.activeFillHandle = cloneSelection;
