@@ -1397,9 +1397,10 @@ function(window, undefined) {
 			this.setProtection(oChartSpace.protection.createDuplicate());
 		}
 		this.setRoundedCorners(oChartSpace.roundedCorners);
-		if (this.spPr) {
-			oChartSpace.setSpPr(oChartSpace.spPr.createDuplicate());
-			oChartSpace.spPr.setParent(oChartSpace);
+		if (oChartSpace.spPr) {
+			let oXfrm = this.spPr && this.spPr.xfrm;
+			this.setSpPr(oChartSpace.spPr.createDuplicate());
+			this.spPr.setXfrm(oXfrm ? oXfrm.createDuplicate() : null)
 		}
 		this.setStyle(oChartSpace.style);
 		if (oChartSpace.txPr) {
@@ -2880,20 +2881,17 @@ function(window, undefined) {
 			unifill2.convertToPPTXMods();
 			if (!this.spPr) {
 				this.setSpPr(new AscFormat.CSpPr());
-				this.spPr.setParent(this);
 			}
 			this.spPr.setFill(unifill2);
 		}
 		if (!this.spPr) {
 			this.setSpPr(new AscFormat.CSpPr());
-			this.spPr.setParent(this);
 		}
 		this.spPr.setFill(this.spPr.Fill ? this.spPr.Fill.createDuplicate() : this.spPr.Fill);
 	};
 	CChartSpace.prototype.setFill = function (fill) {
 		if (!this.spPr) {
 			this.setSpPr(new AscFormat.CSpPr());
-			this.spPr.setParent(this);
 		}
 		this.spPr.setFill(fill);
 	};
@@ -3173,13 +3171,11 @@ function(window, undefined) {
 			}
 			if (!this.spPr) {
 				this.setSpPr(new AscFormat.CSpPr());
-				this.spPr.setParent(this);
 			}
 			this.spPr.setLn(stroke);
 		}
 		if (!this.spPr) {
 			this.setSpPr(new AscFormat.CSpPr());
-			this.spPr.setParent(this);
 		}
 		this.spPr.setFill(this.spPr.Fill ? this.spPr.Fill.createDuplicate() : this.spPr.Fill);
 	};
@@ -8701,6 +8697,17 @@ function(window, undefined) {
 	CChartSpace.prototype.checkElementChartStyle = function (oElement) {
 		if (oElement && this.chartStyle && this.chartColors) {
 			oElement.applyChartStyle(this.chartStyle, this.chartColors, oChartStyleCache.getAdditionalData(this.getChartType(), this.chartStyle.id), false);
+		}
+	};
+
+	CChartSpace.prototype.applyChartStyleFormOtherCS = function (oChartSpace) {
+		if(!oChartSpace) {
+			return;
+		}
+		if (oChartSpace.chartStyle && oChartSpace.chartColors) {
+			this.setChartStyle(oChartSpace.chartStyle.createDuplicate());
+			this.setChartColors(oChartSpace.chartColors.createDuplicate());
+			this.resetToChartStyle();
 		}
 	};
 	CChartSpace.prototype.getChildren = function () {

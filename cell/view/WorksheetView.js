@@ -610,17 +610,25 @@
 		return charts;
 	};
 
-	WorksheetView.prototype.getRangesForCharts = function () {
-		let aRanges;
+
+	WorksheetView.prototype.getCurrentChart = function() {
 		if(this.isSelectOnShape) {
 			let aSelectedDrawings = this.objectRender.controller.getSelectedArray();
 			if(aSelectedDrawings.length === 1 && aSelectedDrawings[0].isChart()) {
-				let sChartRange = aSelectedDrawings[0].getCommonRange();
-				if(!sChartRange) {
-					return null;
-				}
-				aRanges = AscFormat.fParseChartFormulaExternal(sChartRange);
+				return aSelectedDrawings[0];
 			}
+		}
+		return null;
+	};
+	WorksheetView.prototype.getRangesForCharts = function () {
+		let aRanges;
+		let oCurChart = this.getCurrentChart();
+		if(oCurChart) {
+			let sChartRange = oCurChart.getCommonRange();
+			if(!sChartRange) {
+				return null;
+			}
+			aRanges = AscFormat.fParseChartFormulaExternal(sChartRange);
 		}
 		if(!aRanges) {
 			aRanges = this.getSelectedRanges();
@@ -679,7 +687,7 @@
 			if(bEmpty) {
 				return null;
 			}
-
+			let oCurChart = this.getCurrentChart();
 			const oDataRefs = new AscFormat.CChartDataRefs(null);
 			const nHorCheckError = oDataRefs.checkDataRangeRefs(aResultCheckRange, true, Asc.c_oAscChartTypeSettings.unknown);
 			const nVertCheckError = oDataRefs.checkDataRangeRefs(aResultCheckRange, false, Asc.c_oAscChartTypeSettings.unknown);
@@ -719,6 +727,7 @@
 					oCS.buildSeries(aSeriesRef);
 					oProps.type = oCS.getChartType();
 					this.objectRender.controller.applyPropsToChartSpace(oProps, oCS);
+					oCS.applyChartStyleFormOtherCS(oCurChart);
 					AscFormat.CheckSpPrXfrm(oCS);
 					oCS.allPreviewCharts = aCharts;
 
@@ -791,6 +800,7 @@
 				oCS.setBDeleted(false);
 				oCS.setWorksheet(this.model);
 				oProps.type = oCS.getChartType();
+				oCS.applyChartStyleFormOtherCS(oCurChart);
 				this.objectRender.controller.applyPropsToChartSpace(oProps, oCS);
 				AscFormat.CheckSpPrXfrm(oCS);
 				oCS.allPreviewCharts = aCharts;
@@ -849,6 +859,7 @@
 					aScatterSeries: aScatterSeriesRefsVer
 				});
 			}
+			let oCurChart = this.getCurrentChart();
 			for(let nParam = 0; nParam < aParams.length; ++nParam) {
 				let oParam = aParams[nParam];
 				let nError = oDataRefs.checkDataRangeRefs(aRanges, oParam.bHorValue, nType);
@@ -866,7 +877,9 @@
 						oChartSpace.setWorksheet(this.model);
 						oChartSpace.allPreviewCharts = aResult;
 						oProps.type = nType;
+						oChartSpace.applyChartStyleFormOtherCS(oCurChart);
 						this.objectRender.controller.applyPropsToChartSpace(oProps, oChartSpace);
+
 						AscFormat.CheckSpPrXfrm(oChartSpace);
 					}
 				}
