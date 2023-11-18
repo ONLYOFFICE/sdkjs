@@ -819,10 +819,11 @@
 		return AscFormat.ExecuteNoHistory(function() {
 			let aRanges = this.getRangesForCharts();
 			const oDataRefs = new AscFormat.CChartDataRefs(null);
-			let aSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, true, false);
-			let aSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, false, false);
-			let aScatterSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, true, true);
-			let aScatterSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, false, true);
+
+			const bIsScatter = AscFormat.isScatterChartType(nType);
+
+			let aSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, true, bIsScatter);
+			let aSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, false, bIsScatter);
 			let oChartSpace;
 			let oProps = Asc.editor.asc_getChartObject(true);
 			oProps.putRange(null);
@@ -831,47 +832,97 @@
 			oProps.chartSpace = null;
 			let aResult = [];
 			let aParams = [];
+			
+			function getSeriesMaxValCount(aSeries) {
+				let nMaxCount = 0;
+				for(let nS = 0; nS < aSeries.length; ++nS) {
+					let nValCount = aSeries[nS].getValCellsCount();
+					if(nValCount > nMaxCount) {
+						nMaxCount = nValCount;
+					}
+				}
+				return nMaxCount;
+			}
 			if(AscFormat.isComboChartType(nType)) {
-				if(aSeriesRefsHor <= aSeriesRefsVer) {
-					aParams.push({
-						bHorValue: true,
-						aSeries: aSeriesRefsHor,
-						aScatterSeries: aScatterSeriesRefsHor
-					});
+				if(aSeriesRefsHor.length <= aSeriesRefsVer.length) {
+					if(oDataRefs.checkValidDataRangeRefs(aRanges, true, nType)) {
+						aParams.push({
+							bHorValue: true,
+							aSeries: aSeriesRefsHor
+						});
+					}
+					else {
+						if(oDataRefs.checkValidDataRangeRefs(aRanges, false, nType)) {
+							aParams.push({
+								bHorValue: false,
+								aSeries: aSeriesRefsVer
+							});
+						}
+					}
 				}
 				else {
+					if(oDataRefs.checkValidDataRangeRefs(aRanges, false, nType)) {
+						aParams.push({
+							bHorValue: false,
+							aSeries: aSeriesRefsVer,
+						});
+					}
+					else {
+						if(oDataRefs.checkValidDataRangeRefs(aRanges, true, nType)) {
+							aParams.push({
+								bHorValue: true,
+								aSeries: aSeriesRefsHor
+							});
+						}
+					}
+				}
+			}
+			else if(AscFormat.isAreaChartType(nType) || AscFormat.isRadarChartType(nType)) {
+				let nMinPtCount;
+				if(AscFormat.isAreaChartType(nType)) {
+					nMinPtCount = 2;
+				}
+				else {
+					nMinPtCount = 3;
+				}
+				if(getSeriesMaxValCount(aSeriesRefsHor) >= nMinPtCount) {
+					aParams.push({
+						bHorValue: true,
+						aSeries: aSeriesRefsHor
+					});
+				}
+				if(getSeriesMaxValCount(aSeriesRefsVer) >= nMinPtCount) {
 					aParams.push({
 						bHorValue: false,
-						aSeries: aSeriesRefsVer,
-						aScatterSeries: aScatterSeriesRefsVer
+						aSeries: aSeriesRefsVer
+					});
+				}
+				if(aParams.length === 0) {
+					aParams.push({
+						bHorValue: true,
+						aSeries: aSeriesRefsHor
 					});
 				}
 			}
 			else {
 				aParams.push({
 					bHorValue: true,
-					aSeries: aSeriesRefsHor,
-					aScatterSeries: aScatterSeriesRefsHor
+					aSeries: aSeriesRefsHor
 				});
 				aParams.push({
 					bHorValue: false,
-					aSeries: aSeriesRefsVer,
-					aScatterSeries: aScatterSeriesRefsVer
+					aSeries: aSeriesRefsVer
 				});
 			}
 			let oCurChart = this.getCurrentChart();
+			let nError = Asc.c_oAscError.ID.No;
 			for(let nParam = 0; nParam < aParams.length; ++nParam) {
 				let oParam = aParams[nParam];
-				let nError = oDataRefs.checkDataRangeRefs(aRanges, oParam.bHorValue, nType);
+				nError = oDataRefs.checkDataRangeRefs(aRanges, oParam.bHorValue, nType)
 				if(nError === Asc.c_oAscError.ID.No) {
 					oChartSpace = this.objectRender.controller._getChartSpace([], {type: nType}, false);
 					if(oChartSpace) {
-						if(AscFormat.isScatterChartType(nType)) {
-							oChartSpace.buildSeries(oParam.aScatterSeries);
-						}
-						else {
-							oChartSpace.buildSeries(oParam.aSeries);
-						}
+						oChartSpace.buildSeries(oParam.aSeries);
 						aResult.push(oChartSpace);
 						oChartSpace.setBDeleted(false);
 						oChartSpace.setWorksheet(this.model);
@@ -883,13 +934,14 @@
 						AscFormat.CheckSpPrXfrm(oChartSpace);
 					}
 				}
-				else {
-					return nError;
-				}
+			}
+			if(aResult.length === 0 && nError !== Asc.c_oAscError.ID.No) {
+				return nError;
 			}
 			return aResult;
 		}, this, []);
 	};
+
 
 	WorksheetView.prototype._initWorksheetDefaultWidthForPrint = function () {
 		var defaultPpi = 96;

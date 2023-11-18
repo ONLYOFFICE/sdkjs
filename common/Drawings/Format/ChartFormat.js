@@ -6171,29 +6171,16 @@
         return false;
     };
     CPlotArea.prototype.isAreaType = function(nType) {
-        if(Asc.c_oAscChartTypeSettings.areaNormal === nType
-            || Asc.c_oAscChartTypeSettings.areaStacked === nType
-            || Asc.c_oAscChartTypeSettings.areaStackedPer === nType) {
-            return true
-        }
-        return false;
+        return isAreaChartType(nType);
     };
     CPlotArea.prototype.isRadarType = function(nType) {
-        if(Asc.c_oAscChartTypeSettings.radar === nType
-            || Asc.c_oAscChartTypeSettings.radarMarker === nType
-            || Asc.c_oAscChartTypeSettings.radarFilled === nType) {
-            return true
-        }
-        return false;
+        return isRadarChartType(nType);
     };
     CPlotArea.prototype.isScatterType = function(nType) {
         return isScatterChartType(nType);
     };
     CPlotArea.prototype.isStockChart = function(nType) {
-        if(Asc.c_oAscChartTypeSettings.stock === nType) {
-            return true
-        }
-        return false;
+        isStockChartType(nType);
     };
     CPlotArea.prototype.isRadarChart = function(nType) {
       return this.isRadarType(nType);
@@ -15935,18 +15922,29 @@
         || Asc.c_oAscChartTypeSettings.scatterMarker === nType
         || Asc.c_oAscChartTypeSettings.scatterNone === nType
         || Asc.c_oAscChartTypeSettings.scatterSmooth === nType
-        || Asc.c_oAscChartTypeSettings.scatterSmoothMarker === nType)
+        || Asc.c_oAscChartTypeSettings.scatterSmoothMarker === nType);
     }
 
     function isStockChartType(nType) {
-        return (Asc.c_oAscChartTypeSettings.stock === nType)
+        return (Asc.c_oAscChartTypeSettings.stock === nType);
     }
 
     function isComboChartType(nType) {
         return (Asc.c_oAscChartTypeSettings.comboAreaBar === nType
             || Asc.c_oAscChartTypeSettings.comboBarLine === nType
             || Asc.c_oAscChartTypeSettings.comboBarLineSecondary === nType
-            || Asc.c_oAscChartTypeSettings.comboCustom === nType)
+            || Asc.c_oAscChartTypeSettings.comboCustom === nType);
+    }
+    function isAreaChartType(nType) {
+        return (Asc.c_oAscChartTypeSettings.areaNormal === nType
+            || Asc.c_oAscChartTypeSettings.areaStacked === nType
+            || Asc.c_oAscChartTypeSettings.areaStackedPer === nType);
+    }
+
+    function isRadarChartType(nType) {
+        return (Asc.c_oAscChartTypeSettings.radar === nType
+            || Asc.c_oAscChartTypeSettings.radarMarker === nType
+            || Asc.c_oAscChartTypeSettings.radarFilled === nType);
     }
 
     function CParseResult() {
@@ -17735,6 +17733,11 @@
         }
         return aData;
     };
+
+    CChartDataRefs.prototype.checkValidDataRangeRefs = function (aRanges, bHorValue, nType) {
+        return this.checkDataRangeRefs(aRanges, bHorValue, nType) === Asc.c_oAscError.ID.No;
+    };
+
     CChartDataRefs.prototype.checkDataRangeRefs = function (aRanges, bHorValue, nType) {
         var aSeriesRefs = this.getSeriesRefsFromUnionRefs(aRanges, bHorValue, isScatterChartType(nType));
         if(!Array.isArray(aSeriesRefs)) {
@@ -18677,6 +18680,8 @@
     window['AscFormat'].CBaseChartObject = CBaseChartObject;
     window['AscFormat'].isStockChartType = isStockChartType;
     window['AscFormat'].isComboChartType = isComboChartType;
+    window['AscFormat'].isAreaChartType = isAreaChartType;
+    window['AscFormat'].isRadarChartType = isRadarChartType;
 
     window['AscFormat'].AX_POS_L = AX_POS_L;
     window['AscFormat'].AX_POS_T = AX_POS_T;
