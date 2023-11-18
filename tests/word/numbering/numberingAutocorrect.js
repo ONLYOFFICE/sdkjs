@@ -51,36 +51,39 @@ $(function ()
 	QUnit.module("Check autocorrect text to numbering in clear paragraph");
 	QUnit.test("Check autocorrect text to numbering in clear paragraph", (assert) =>
 	{
-		function TestAutoCorrect(enterText, checkNumberingText)
+		function TestAutoCorrect(enterText, checkNumberingText, description)
 		{
 			const p = GenerateClearParagraph(enterText);
-			assert.true(p.Is_Empty());
-			assert.strictEqual(p.GetNumberingText(false), checkNumberingText);
+			assert.true(p.Is_Empty(), "Check empty paragraph after autocorrection");
+			assert.strictEqual(p.GetNumberingText(false), checkNumberingText, description);
 		}
+		TestAutoCorrect("* ", String.fromCharCode(0x00B7), "Check bullet autocorrect with *");
+		TestAutoCorrect("- ", String.fromCharCode(0x2013), "Check bullet autocorrect with -");
+		TestAutoCorrect("> ", String.fromCharCode(0x00D8), "Check bullet autocorrect with >");
 
-		TestAutoCorrect("1. ", "1.");
-		TestAutoCorrect("1.1. ", "1.1.");
-		TestAutoCorrect("1.1.1. ", "1.1.1.");
-		TestAutoCorrect("1.1.1.1. ", "1.1.1.1.");
-		TestAutoCorrect("1.1.1.1.1. ", "1.1.1.1.1.");
-		TestAutoCorrect("1.1.1.1.1.1. ", "1.1.1.1.1.1.");
-		TestAutoCorrect("1.1.1.1.1.1.1. ", "1.1.1.1.1.1.1.");
-		TestAutoCorrect("1.1.1.1.1.1.1.1. ", "1.1.1.1.1.1.1.1.");
-		TestAutoCorrect("1.1.1.1.1.1.1.1.1. ", "1.1.1.1.1.1.1.1.1.");
+		TestAutoCorrect("1. ", "1.", "Check decimal with dot autocorrect for 1 level");
+		TestAutoCorrect("1.1. ", "1.1.", "Check decimal with dot autocorrect for 2 levels");
+		TestAutoCorrect("1.1.1. ", "1.1.1.", "Check decimal with dot autocorrect for 3 levels");
+		TestAutoCorrect("1.1.1.1. ", "1.1.1.1.", "Check decimal with dot autocorrect for 4 levels");
+		TestAutoCorrect("1.1.1.1.1. ", "1.1.1.1.1.", "Check decimal with dot autocorrect for 5 levels");
+		TestAutoCorrect("1.1.1.1.1.1. ", "1.1.1.1.1.1.", "Check decimal with dot autocorrect for 6 levels");
+		TestAutoCorrect("1.1.1.1.1.1.1. ", "1.1.1.1.1.1.1.", "Check decimal with dot autocorrect for 7 levels");
+		TestAutoCorrect("1.1.1.1.1.1.1.1. ", "1.1.1.1.1.1.1.1.", "Check decimal with dot autocorrect for 8 levels");
+		TestAutoCorrect("1.1.1.1.1.1.1.1.1. ", "1.1.1.1.1.1.1.1.1.", "Check decimal with dot autocorrect for 9 levels");
 
-		TestAutoCorrect("1) ", "1)");
-		TestAutoCorrect("1)1) ", "1)1)");
-		TestAutoCorrect("1)1)1) ", "1)1)1)");
-		TestAutoCorrect("1)1)1)1) ", "1)1)1)1)");
-		TestAutoCorrect("1)1)1)1)1) ", "1)1)1)1)1)");
-		TestAutoCorrect("1)1)1)1)1)1) ", "1)1)1)1)1)1)");
-		TestAutoCorrect("1)1)1)1)1)1)1) ", "1)1)1)1)1)1)1)");
-		TestAutoCorrect("1)1)1)1)1)1)1)1) ", "1)1)1)1)1)1)1)1)");
-		TestAutoCorrect("1)1)1)1)1)1)1)1)1) ", "1)1)1)1)1)1)1)1)1)");
-		TestAutoCorrect("a. ", "a.");
-		TestAutoCorrect("a) ", "a)");
-		TestAutoCorrect("A. ", "A.");
-		TestAutoCorrect("A) ", "A)");
+		TestAutoCorrect("1) ", "1)", "Check decimal with bracket autocorrect for 1 level");
+		TestAutoCorrect("1)1) ", "1)1)", "Check decimal with bracket autocorrect for 2 levels");
+		TestAutoCorrect("1)1)1) ", "1)1)1)", "Check decimal with bracket autocorrect for 3 levels");
+		TestAutoCorrect("1)1)1)1) ", "1)1)1)1)", "Check decimal with bracket autocorrect for 4 levels");
+		TestAutoCorrect("1)1)1)1)1) ", "1)1)1)1)1)", "Check decimal with bracket autocorrect for 5 levels");
+		TestAutoCorrect("1)1)1)1)1)1) ", "1)1)1)1)1)1)", "Check decimal with bracket autocorrect for 6 levels");
+		TestAutoCorrect("1)1)1)1)1)1)1) ", "1)1)1)1)1)1)1)", "Check decimal with bracket autocorrect for 7 levels");
+		TestAutoCorrect("1)1)1)1)1)1)1)1) ", "1)1)1)1)1)1)1)1)", "Check decimal with bracket autocorrect for 8 levels");
+		TestAutoCorrect("1)1)1)1)1)1)1)1)1) ", "1)1)1)1)1)1)1)1)1)", "Check decimal with bracket autocorrect for 9 levels");
+		TestAutoCorrect("a. ", "a.", "Check lower letter with dot autocorrect");
+		TestAutoCorrect("a) ", "a)", "Check lower letter with bracket autocorrect");
+		TestAutoCorrect("A. ", "A.", "Check upper letter with dot autocorrect");
+		TestAutoCorrect("A) ", "A)", "Check upper letter with bracket autocorrect");
 
 		// todo
 		// TestAutoCorrect("I. ", "I.", "Check upper roman with dot");
@@ -94,7 +97,7 @@ $(function ()
 		function TestNotAutoCorrect(enterText, checkText, description)
 		{
 			const p = GenerateClearParagraph(enterText);
-			assert.strictEqual(p.GetNumberingText(false), "");
+			assert.true(!p.GetNumPr(), "Check empty num pr");
 			assert.strictEqual(AscTest.GetParagraphText(p), checkText, description);
 		}
 
@@ -136,25 +139,25 @@ $(function ()
 			}
 		}
 
-		function TestAutoCorrect(subType, enterText, checkNumberText)
+		function TestAutoCorrect(subType, enterText, checkNumberText, description)
 		{
 			GenerateDocumentWithNumberingParagraphs(subType);
 			const p = AscTest.CreateParagraph();
 			logicDocument.PushToContent(p);
 			AscTest.MoveCursorToParagraph(p, true);
 			AscTest.EnterText(enterText);
-			assert.true(p.Is_Empty());
-			assert.strictEqual(p.GetNumberingText(false), checkNumberText);
+			assert.true(p.Is_Empty(), "Check empty paragraph after autocorrection");
+			assert.strictEqual(p.GetNumberingText(false), checkNumberText, description);
 		}
 
-		TestAutoCorrect(1, "5. ", "5.");
-		TestAutoCorrect(2, "5) ", "5)");
-		TestAutoCorrect(4, "E. ", "E.");
-		TestAutoCorrect(5, "e) ", "e)");
-		TestAutoCorrect(6, "e. ", "e.");
+		TestAutoCorrect(1, "5. ", "5.", "Check decimal with dot autocorrection");
+		TestAutoCorrect(2, "5) ", "5)", "Check decimal with bracket autocorrection");
+		TestAutoCorrect(4, "E. ", "E.", "Check upper letter with dot autocorrection");
+		TestAutoCorrect(5, "e) ", "e)", "Check lower letter with bracket autocorrection");
+		TestAutoCorrect(6, "e. ", "e.", "Check lower letter with dot autocorrection");
 
 		// todo
-		// TestAutoCorrect(3, "V. ", "V.");
-		// TestAutoCorrect(7, "v. ", "v.");
+		// TestAutoCorrect(3, "V. ", "V.", "Check upper roman with dot autocorrection");
+		// TestAutoCorrect(7, "v. ", "v.", "Check lower roman with dot autocorrection");
 	});
 });
