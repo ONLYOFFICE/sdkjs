@@ -56,6 +56,7 @@ jobs:
           node-qunit-puppeteer tests/word/forms/complexForm.html
           node-qunit-puppeteer tests/word/numbering/numberingApplicator.html
           node-qunit-puppeteer tests/word/numbering/numberingCalculation.html
+          node-qunit-puppeteer tests/word/numbering/numberingAutocorrect.html
           node-qunit-puppeteer tests/word/api/api.html
           node-qunit-puppeteer tests/word/api/textInput.html
           node-qunit-puppeteer tests/word/styles/displayStyle.html
