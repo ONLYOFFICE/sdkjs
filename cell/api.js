@@ -1873,6 +1873,22 @@ var editor;
 								}
 							});
 						}
+						if (ext.timelineCachesIds) {
+							ext.timelineCachesIds.forEach(function (timelineCacheId) {
+								if (null !== timelineCacheId) {
+									var timelineCacheWorkbookPart = wbPart.getPartById(timelineCacheId);
+									if (timelineCacheWorkbookPart) {
+										var contentTimelineCache = timelineCacheWorkbookPart.getDocumentContent();
+										if (contentTimelineCache) {
+											var oTimelineCacheDefinition = new AscCommonExcel.CTimelineCacheDefinition();
+											var reader = new StaxParser(contentTimelineCache, timelineCacheWorkbookPart, xmlParserContext);
+											oTimelineCacheDefinition.fromXml(reader);
+											wb.timelineCaches.push(oTimelineCacheDefinition);
+										}
+									}
+								}
+							});
+						}
 					});
 				}
 
@@ -1964,6 +1980,16 @@ var editor;
 						reader = new StaxParser(contentPersonList, personListPart, xmlParserContext);
 						personList.fromXml(reader);
 					}
+				}
+
+				//timelinecaches
+				var timelines = wbPart.getPartsByRelationshipType(openXml.Types.timeline.relationType);
+				for (i = 0; i < timelines.length; ++i) {
+					var contentTimelines = slicers[i].getDocumentContent();
+					var oTimelines = new Asc.CT_slicers(ws);
+					oTimelines.Timelines = ws.aSlicers;
+					reader = new StaxParser(contentSlicers, oSlicers, xmlParserContext);
+					oSlicers.fromXml(reader);
 				}
 
 				//wb comments
