@@ -122,17 +122,31 @@
             return points;
         }
 
+        function approximateEllipseCircumference(rx, ry) {
+            return Math.PI * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry)));
+        }
+        
+        // длина эллипса
+        const nEllipseLenght = approximateEllipseCircumference(radiusX, radiusY);
+        const nCloudPoints = nEllipseLenght / 15;
+
         // Получаем точки
-        let ellipsePoints = calculateEllipsePoints(centerX, centerY, radiusX, radiusY, 4 * 7);
+        let ellipsePoints = calculateEllipsePoints(centerX, centerY, radiusX, radiusY, nCloudPoints);
 
         let oViewer = editor.getDocumentRenderer();
         let oDoc    = oViewer.getPDFDoc();
 
         let aPoints = [];
+        let aPointsCanvas = [];
         for (let i = 0; i < ellipsePoints.length; i++) {
             aPoints.push({
                 x: ellipsePoints[i].x * g_dKoef_pix_to_mm,
-                y: ellipsePoints[i].y* g_dKoef_pix_to_mm
+                y: ellipsePoints[i].y * g_dKoef_pix_to_mm
+            });
+
+            aPointsCanvas.push({
+                x: ellipsePoints[i].x,
+                y: ellipsePoints[i].y
             });
         }
         
@@ -140,6 +154,28 @@
             return measure * g_dKoef_pix_to_mm;
         });
 
+        const canvas = document.createElement('canvas');
+        canvas.width = 1000;
+        canvas.height = 1000;
+        const ctx = canvas.getContext('2d');
+
+        ctx.beginPath();
+        for (let i = 0; i < aPointsCanvas.length; i++) {
+            let oPt1 = aPointsCanvas[i];
+            let oPt2 = aPointsCanvas[i + 1];
+            if (!oPt2)
+                oPt2 = aPointsCanvas[0];
+
+            let centerX = (oPt1.x + oPt2.x) / 2;
+            let centerY = (oPt1.y + oPt2.y) / 2;
+            let radius  = Math.sqrt(Math.pow(oPt2.x - oPt1.x, 2) + Math.pow(oPt2.y - oPt1.y, 2)) / 2 * 3/2;
+            let angle   = Math.atan2(oPt1.y - centerY, oPt1.x - centerX);
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, angle + Math.PI/4, angle + Math.PI - Math.PI/8);
+            ctx.stroke();
+        }
+        
         oDoc.TurnOffHistory();
         generateGeometry([aPoints], aShapeRectInMM, this.spPr.geometry);
     };
@@ -277,6 +313,7 @@
                 pathH = 0;
                 kh = 0;
             }
+            
             geometry.AddPathCommand(0, undefined, bClosed ? "norm": "none", undefined, pathW, pathH);
             geometry.AddRect("l", "t", "r", "b");
             geometry.AddPathCommand(1, (((aPoints[0].x - xMin) * kw) >> 0) + "", (((aPoints[0].y - yMin) * kh) >> 0) + "");
@@ -293,7 +330,7 @@
                 }
                 nPt = aRange[0] + 1;
                 nEnd = Math.min(aRange[1], nMaxPtIdx);
-                while(nPt <= nEnd) {
+                while (nPt <= nEnd) {
                     // arc
                     oPt1 = aPoints[nPt++];
                     oPt2 = aPoints[nPt++];
@@ -301,19 +338,36 @@
                         oPt2 = aPoints[0];
                     }
 
-                    geometry.AddPathCommand(3, (((oPt1.x - xMin) * kw) >> 0) + "", (((oPt1.y - yMin) * kh) >> 0) + "", 
-                    (((oPt2.x - xMin) * kw) >> 0) + "", (((oPt2.y - yMin) * kh) >> 0) + "");
+                    let centerX = (oPt1.x + oPt2.x) / 2;
+                    let centerY = (oPt1.y + oPt2.y) / 2;
+                    let radius  = Math.sqrt(Math.pow(oPt2.x - oPt1.x, 2) + Math.pow(oPt2.y - oPt1.y, 2)) / 2 * 3/2;
+                    let angle   = Math.atan2(oPt1.y - centerY, oPt1.x - centerX);
+
+                    let stAng = (angle + Math.PI/4) * (180 / Math.PI);
+                    let endAng = (angle + Math.PI - Math.PI/8) * (180 / Math.PI);
+
+                    geometry.AddPathCommand(3, ((radius * kw) >> 0) + "", ((radius * kh) >> 0) + "", 
+                    (stAng * 60000 >> 0) + "", (endAng * 60000 >> 0) + "");
+                    // geometry.AddPathCommand(3, ((Math.abs((centerX - xMin) * kw) >> 0)) + "", (((Math.abs(centerY - yMin) * kh)) >> 0) + "", 
+                    // stAng * 60000 >> 0 + "", endAng * 60000 >> 0 + "");
                 }
 
                 geometry.AddPathCommand(6);
-                
             }
         }
-        
 
         return geometry;
     }
 
+    function calculateAngle(x1, y1, x2, y2) {
+        var dy = y2 - y1;
+        var dx = x2 - x1;
+        var theta = Math.atan2(dy, dx); // диапазон [-PI, PI]
+        theta *= 180 / Math.PI; // радианы в градусы
+        // если нужен угол в диапазоне [0, 360)
+        if (theta < 0) theta = 360 + theta;
+        return theta;
+    }
 
     window["AscPDF"].CAnnotationCircle = CAnnotationCircle;
 })();
