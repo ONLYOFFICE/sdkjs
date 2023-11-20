@@ -26453,8 +26453,16 @@
 
 				let _cloneSelection = aRanges[0].clone();
 				if (prepareFillHandle(aRanges[0])) {
+					History.Create_NewPoint();
+					History.StartTransaction();
+
 					oThis.applyFillHandle(null, null, null, true, function (success) {
 						aRanges[0].assign(_cloneSelection.c1, _cloneSelection.r1, _cloneSelection.c2, _cloneSelection.r2);
+
+						History.SetSelection(_cloneSelection);
+						History.SetSelectionRedo(_cloneSelection);
+						History.EndTransaction();
+
 						success && oThis.draw();
 					});
 				}
