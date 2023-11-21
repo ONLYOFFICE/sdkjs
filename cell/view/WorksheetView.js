@@ -687,7 +687,6 @@
 			if(bEmpty) {
 				return null;
 			}
-			let oCurChart = this.getCurrentChart();
 			const oDataRefs = new AscFormat.CChartDataRefs(null);
 			const nHorCheckError = oDataRefs.checkDataRangeRefs(aResultCheckRange, true, Asc.c_oAscChartTypeSettings.unknown);
 			const nVertCheckError = oDataRefs.checkDataRangeRefs(aResultCheckRange, false, Asc.c_oAscChartTypeSettings.unknown);
@@ -695,39 +694,29 @@
 				return null;
 			}
 
-
 			let oResultMap = {};
 			let aCharts = [];
 			let aSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aResultCheckRange, true, false);
 			let aSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aResultCheckRange, false, false);
 
-			let oProps = Asc.editor.asc_getChartObject(true);
-			oProps.putRange(null);
-			oProps.putStyle(null);
-			oProps.removeAllAxesProps();
-			oProps.chartSpace = null;
 			if(aSeriesRefsHor.length === 1 || aSeriesRefsVer.length === 1) {
 				//bar, hbar, linear, pie
 
-				let oBarCS = AscFormat.CreateBarChart([], AscFormat.BAR_GROUPING_CLUSTERED, false, {type: Asc.c_oAscChartTypeSettings.barNormal}, false, false);
+				let aSeriesRef = aSeriesRefsHor.length === 1 ? aSeriesRefsHor : aSeriesRefsVer;
+				let oBarCS = this.getChartByType(Asc.c_oAscChartTypeSettings.barNormal, aSeriesRef);
 				aCharts.push(oBarCS);
-				let oHBarCS = AscFormat.CreateHBarChart([], AscFormat.BAR_GROUPING_CLUSTERED, false, {type: Asc.c_oAscChartTypeSettings.hBarNormal}, false);
+				let oHBarCS = this.getChartByType(Asc.c_oAscChartTypeSettings.hBarNormal, aSeriesRef);
 				aCharts.push(oHBarCS);
-				let oPieChart = AscFormat.CreatePieChart([], false, false, {type: Asc.c_oAscChartTypeSettings.pie}, false);
+				let oPieChart = this.getChartByType(Asc.c_oAscChartTypeSettings.pie, aSeriesRef);
 				aCharts.push(oPieChart);
 				if(aSeriesRefsHor.length > 1 || aSeriesRefsVer.length > 1) {
-					let oLineCS = AscFormat.CreateLineChart([], AscFormat.GROUPING_STANDARD, false, {type: Asc.c_oAscChartTypeSettings.lineNormal}, false);
+					let oLineCS = this.getChartByType(Asc.c_oAscChartTypeSettings.lineNormal, aSeriesRef);
 					aCharts.push(oLineCS);
 				}
-				let aSeriesRef = aSeriesRefsHor.length === 1 ? aSeriesRefsHor : aSeriesRefsVer;
 				for(let nChart = 0; nChart < aCharts.length; ++nChart) {
 					let oCS = aCharts[nChart];
 					oCS.setBDeleted(false);
 					oCS.setWorksheet(this.model);
-					oCS.buildSeries(aSeriesRef);
-					oProps.type = oCS.getChartType();
-					this.objectRender.controller.applyPropsToChartSpace(oProps, oCS);
-					oCS.applyChartStyleFormOtherCS(oCurChart);
 					AscFormat.CheckSpPrXfrm(oCS);
 					oCS.allPreviewCharts = aCharts;
 
@@ -753,27 +742,20 @@
 				let aSeriesRef = aSeriesRefsArr[nSerArr];
 				//bar, hbar, linear, hbarstacked, barstacked, barstackedper, hbarstackedper;
 
-				let oBarCS = AscFormat.CreateBarChart([], AscFormat.BAR_GROUPING_CLUSTERED, false, {type: Asc.c_oAscChartTypeSettings.barNormal}, false, false);
+				let oBarCS = this.getChartByType(Asc.c_oAscChartTypeSettings.barNormal, aSeriesRef);
 				aCharts.push(oBarCS);
-				oBarCS.buildSeries(aSeriesRef);
-				let oHBarCS = AscFormat.CreateHBarChart([], AscFormat.BAR_GROUPING_CLUSTERED, false, {type: Asc.c_oAscChartTypeSettings.hBarNormal}, false);
+				let oHBarCS = this.getChartByType(Asc.c_oAscChartTypeSettings.hBarNormal, aSeriesRef);
 				aCharts.push(oHBarCS);
-				oHBarCS.buildSeries(aSeriesRef);
-				let oLineCS = AscFormat.CreateLineChart([], AscFormat.GROUPING_STANDARD, false, {type: Asc.c_oAscChartTypeSettings.lineNormal}, false);
+				let oLineCS = this.getChartByType(Asc.c_oAscChartTypeSettings.lineNormal, aSeriesRef);
 				aCharts.push(oLineCS);
-				oLineCS.buildSeries(aSeriesRef);
-				let oHBarStackedCS = AscFormat.CreateHBarChart([], AscFormat.BAR_GROUPING_STACKED, false, {type: Asc.c_oAscChartTypeSettings.hBarStacked}, false);
+				let oHBarStackedCS = this.getChartByType(Asc.c_oAscChartTypeSettings.hBarStacked, aSeriesRef);
 				aCharts.push(oHBarStackedCS);
-				oHBarStackedCS.buildSeries(aSeriesRef);
-				let oBarStackedCS = AscFormat.CreateBarChart([], AscFormat.BAR_GROUPING_STACKED, false, {type: Asc.c_oAscChartTypeSettings.barStacked}, false);
+				let oBarStackedCS = this.getChartByType(Asc.c_oAscChartTypeSettings.barStacked, aSeriesRef);
 				aCharts.push(oBarStackedCS);
-				oBarStackedCS.buildSeries(aSeriesRef);
-				let oBarStackedPerCS = AscFormat.CreateBarChart([], AscFormat.BAR_GROUPING_PERCENT_STACKED, false, {type: Asc.c_oAscChartTypeSettings.barStackedPer}, false);
+				let oBarStackedPerCS = this.getChartByType(Asc.c_oAscChartTypeSettings.barStackedPer, aSeriesRef);
 				aCharts.push(oBarStackedPerCS);
-				oBarStackedPerCS.buildSeries(aSeriesRef);
-				let oHBarStackedPerCS = AscFormat.CreateHBarChart([], AscFormat.BAR_GROUPING_PERCENT_STACKED, false, {type: Asc.c_oAscChartTypeSettings.hBarStackedPer}, false);
+				let oHBarStackedPerCS = this.getChartByType(Asc.c_oAscChartTypeSettings.hBarStackedPer, aSeriesRef);
 				aCharts.push(oHBarStackedPerCS);
-				oHBarStackedPerCS.buildSeries(aSeriesRef);
 			}
 
 			let aScatterSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aResultCheckRange, true, true);
@@ -790,31 +772,46 @@
 
 			for(let nSerArr = 0; nSerArr <  aSeriesRefsArr.length; ++nSerArr) {
 				let aSeriesRef = aSeriesRefsArr[nSerArr];
-				let oScatterCS = AscFormat.CreateScatterChart([], false, {type: Asc.c_oAscChartTypeSettings.scatterMarker});
+				let oScatterCS = this.getChartByType(Asc.c_oAscChartTypeSettings.scatterMarker, aSeriesRef);
 				aCharts.push(oScatterCS);
-				oScatterCS.buildSeries(aSeriesRef);
 			}
 
 			for(let nChart = 0; nChart < aCharts.length; ++nChart) {
 				let oCS = aCharts[nChart];
 				oCS.setBDeleted(false);
 				oCS.setWorksheet(this.model);
-				oProps.type = oCS.getChartType();
-				oCS.applyChartStyleFormOtherCS(oCurChart);
-				this.objectRender.controller.applyPropsToChartSpace(oProps, oCS);
 				AscFormat.CheckSpPrXfrm(oCS);
 				oCS.allPreviewCharts = aCharts;
-
 				let nType = oCS.getChartType();
 				if(!Array.isArray(oResultMap[nType])) {
 					oResultMap[nType] = [];
 				}
 				oResultMap[nType].push(oCS);
 			}
-
 			return oResultMap;
 		}, this, []);
 	};
+
+	WorksheetView.prototype.getChartByType = function(nType, aSeriesRef) {
+		let oCurChart = this.getCurrentChart();
+		let oChartSpace;
+		if(oCurChart) {
+			oChartSpace = oCurChart.copy();
+			oChartSpace.buildSeries(aSeriesRef);
+			oChartSpace.changeChartType(nType);
+		}
+		else {
+			let oDrawingsController = this.objectRender.controller;
+			oChartSpace = oDrawingsController._getChartSpace([], {type: nType}, false);
+			oChartSpace.buildSeries(aSeriesRef);
+			let oProps = Asc.editor.asc_getChartObject(true);
+			oProps.chartSpace = null;
+			oProps.removeAllAxesProps();
+			oProps.putType(nType);
+			oDrawingsController.applyPropsToChartSpace(oProps, oChartSpace);
+		}
+		return oChartSpace;
+	}
 	WorksheetView.prototype.getChartData = function(nType) {
 		return AscFormat.ExecuteNoHistory(function() {
 			let aRanges = this.getRangesForCharts();
@@ -825,11 +822,6 @@
 			let aSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, true, bIsScatter);
 			let aSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, false, bIsScatter);
 			let oChartSpace;
-			let oProps = Asc.editor.asc_getChartObject(true);
-			oProps.putRange(null);
-			oProps.putStyle(null);
-			oProps.removeAllAxesProps();
-			oProps.chartSpace = null;
 			let aResult = [];
 			let aParams = [];
 			
@@ -843,6 +835,7 @@
 				}
 				return nMaxCount;
 			}
+
 			if(AscFormat.isComboChartType(nType)) {
 				if(aSeriesRefsHor.length <= aSeriesRefsVer.length) {
 					if(oDataRefs.checkValidDataRangeRefs(aRanges, true, nType)) {
@@ -919,23 +912,17 @@
 					aSeries: aSeriesRefsVer
 				});
 			}
-			let oCurChart = this.getCurrentChart();
 			let nError = Asc.c_oAscError.ID.No;
 			for(let nParam = 0; nParam < aParams.length; ++nParam) {
 				let oParam = aParams[nParam];
 				nError = oDataRefs.checkDataRangeRefs(aRanges, oParam.bHorValue, nType)
 				if(nError === Asc.c_oAscError.ID.No) {
-					oChartSpace = this.objectRender.controller._getChartSpace([], {type: nType}, false);
+					oChartSpace = this.getChartByType(nType, oParam.aSeries);
 					if(oChartSpace) {
-						oChartSpace.buildSeries(oParam.aSeries);
 						aResult.push(oChartSpace);
 						oChartSpace.setBDeleted(false);
 						oChartSpace.setWorksheet(this.model);
 						oChartSpace.allPreviewCharts = aResult;
-						oProps.type = nType;
-						oChartSpace.applyChartStyleFormOtherCS(oCurChart);
-						this.objectRender.controller.applyPropsToChartSpace(oProps, oChartSpace);
-
 						AscFormat.CheckSpPrXfrm(oChartSpace);
 					}
 				}

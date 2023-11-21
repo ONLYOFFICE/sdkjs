@@ -9483,6 +9483,8 @@ function(window, undefined) {
 		const dScale = nCanvasW/nChartPixW;
 		dMMW = (nCanvasW * AscCommon.g_dKoef_pix_to_mm)/dScale;
 		dMMH = (nCanvasH * AscCommon.g_dKoef_pix_to_mm)/dScale;
+		this.spPr.xfrm.offX = 0;
+		this.spPr.xfrm.offY = 0;
 		this.spPr.xfrm.extX = dMMW;
 		this.spPr.xfrm.extY = dMMH;
 		this.recalculate();
@@ -9534,6 +9536,8 @@ function(window, undefined) {
 		const dScale = nDivW/nChartPixW;
 		dMMW = (nDivW * AscCommon.g_dKoef_pix_to_mm)/dScale;
 		dMMH = (nDivH * AscCommon.g_dKoef_pix_to_mm)/dScale;
+		this.spPr.xfrm.offX = 0;
+		this.spPr.xfrm.offY = 0;
 		this.spPr.xfrm.extX = dMMW;
 		this.spPr.xfrm.extY = dMMH;
 		this.recalculate();
