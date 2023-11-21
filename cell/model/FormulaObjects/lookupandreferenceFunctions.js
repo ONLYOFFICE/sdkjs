@@ -1557,293 +1557,7 @@ function (window, undefined) {
 	cLOOKUP.prototype.arrayIndexes = {1: 1, 2: 1};
 	cLOOKUP.prototype.argumentsType = [argType.any, argType.reference, argType.reference];
 	cLOOKUP.prototype.Calculate = function (arg) {
-		// todo tests arr-area, area-arr
-		// todo implement LOOKUPCache
-		let arg0 = arg[0], arg1 = arg[1], arg2 = 2 === arg.length ? arg1 : arg[2], resC = -1, resR = -1,
-			t = this, res;
-
-		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-			if (arg0.isOneElement()) {
-				arg0 = arg0.getFirstElement();
-			} else {
-				arg0 = new cError(cErrorType.wrong_value_type);
-			}
-		} else if (cElementType.array === arg0.type) {
-			arg0 = arg0.getElementRowCol(0, 0);
-		}
-
-
-		if (cElementType.cell === arg0.type) {
-			arg0 = arg0.getValue();
-		}
-
-		if (cElementType.error === arg0.type) {
-			return arg0;
-		}
-		
-		if (cElementType.empty === arg0.type) {
-			arg0 = arg0.tocNumber();
-		}
-
-		function arrFinder(arr) {
-			if (arr.getRowCount() > arr.getCountElementInRow()) {
-				// searching in the first column
-				resC = arr.getCountElementInRow() > 1 ? 1 : 0;
-				let arrCol = arr.getCol(0);
-				// resR = _func.binarySearch(arg0, arrCol);
-				resR = _func.lookupBinarySearch(arg0, arrCol);
-			} else {
-				// searching in the first row
-				resR = arr.getRowCount() > 1 ? 1 : 0;
-				let arrRow = arr.getRow(0);
-				// resC = _func.binarySearch(arg0, arrRow);
-				resC = _func.lookupBinarySearch(arg0, arrRow);
-			}
-		}
-
-		if (!( (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type ||
-				cElementType.array === arg1.type) &&
-				(cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type ||
-					cElementType.array === arg2.type) )) {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		if (cElementType.array === arg1.type && cElementType.array === arg2.type) {
-			if (arg1.getRowCount() !== arg2.getRowCount() &&
-				arg1.getCountElementInRow() !== arg2.getCountElementInRow()) {
-				return new cError(cErrorType.not_available);
-			}
-
-			arrFinder(arg1);
-
-			if (resR <= -1 && resC <= -1 || resR <= -2 || resC <= -2) {
-				return new cError(cErrorType.not_available);
-			}
-
-			return arg2.getElementRowCol(resR, resC);
-
-		} else if (cElementType.array === arg1.type || cElementType.array === arg2.type) {
-
-			let _arg1, BBox;
-			_arg1 = cElementType.array === arg1.type ? arg1 : arg1.getFullArray();	// !!! slow
-
-			if (cElementType.array === arg2.type) {
-				if (_arg1.getRowCount() !== arg2.getRowCount() && _arg1.getCountElementInRow() !== arg2.getCountElementInRow()) { 
-					return new cError(cErrorType.not_available);
-				}
-			} else {
-				BBox = arg2.getBBox0();
-				if (_arg1.getRowCount() !== (BBox.r2 - BBox.r1) + 1 && _arg1.getCountElementInRow() !== (BBox.c2 - BBox.c1) + 1) {
-					return new cError(cErrorType.not_available);
-				}
-			}
-
-			// find resR & resC position in array/area
-			arrFinder(_arg1);
-
-			if (resR <= -1 && resC <= -1 || resR <= -2 || resC <= -2) {
-				return new cError(cErrorType.not_available);
-			}
-
-			if (cElementType.array === arg2.type) {
-				res = arg2.getElementRowCol(resR, resC);
-			} else {
-				let c = new CellAddress(BBox.r1 + resR, BBox.c1 + resC, 0);
-				arg2.getWS()._getCellNoEmpty(c.getRow0(), c.getCol0(), function (cell) {
-					res = checkTypeCell(cell);
-				});
-			}
-			return res;
-		} else {
-			if (cElementType.cellsRange3D === arg1.type && !arg1.isSingleSheet() ||
-				cElementType.cellsRange3D === arg2.type && !arg2.isSingleSheet()) {
-				return new cError(cErrorType.not_available);
-			}
-
-			//todo test and delete!
-			if(false) {
-				/*var arg1Range, arg2RowsLength;
-
-				if (cElementType.cellsRange3D === arg1.type) {
-					arg1Range = arg1.getMatrix()[0];
-				} else if (cElementType.cellsRange === arg1.type) {
-					arg1Range = arg1.getMatrix();
-				}
-
-				if (cElementType.cellsRange3D === arg2.type) {
-					arg2RowsLength = arg2.bbox.r2 - arg2.bbox.r1 + 1;
-					//arg2Range = arg2.getMatrix()[0];
-				} else if (cElementType.cellsRange === arg2.type) {
-					arg2RowsLength = arg2.range.bbox.r2 - arg2.range.bbox.r1 + 1;
-					//arg2Range = arg2.getMatrix();
-				}
-
-				var bVertical = arg1Range[0].length >= arg1Range.length;//r>=c
-				var index;
-				var tempArr = [], i;
-				if(bVertical) {
-					for (i = 0; i < arg1Range[0].length; i++) {
-						tempArr.push(arg1Range[0][i]);
-					}
-				} else {
-					for (i = 0; i < arg1Range.length; i++) {
-						tempArr.push(arg1Range[i][0]);
-					}
-				}
-
-				if(tempArr[tempArr.length - 1] && tempArr[tempArr.length - 1].value < arg0.value) {
-					//в этом случае фукнция бинарного поиска одаст последний элемент. для конкретного случая это неверно
-					//Если функции не удается найти искомое_значение, то в просматриваемом_векторе выбирается наибольшее значение, которое меньше искомого_значения или равно ему.
-					var diff = null;
-					var endNumber;
-					for(i = 0; i < tempArr.length; i++) {
-						if(cElementType.number === tempArr[i].type) {
-							if(tempArr[i].value <= arg0.value && (null === diff || diff > (arg0.value - tempArr[i].value))) {
-								index = i;
-								diff = arg0.value - tempArr[i].value;
-							}
-							endNumber = i;
-						}
-					}
-					if(undefined === index) {
-						if(undefined !== endNumber) {
-							index = endNumber;
-						}
-					}
-				}
-				if(index === undefined) {
-					index = _func.binarySearch(arg0, tempArr);
-
-					if (index < 0) {
-						return new cError(cErrorType.not_available);
-					}
-				}*/
-			} else {
-				var arg2RowsLength;
-				var bbox;
-				if (cElementType.cellsRange3D === arg1.type) {
-					bbox = arg1.bbox;
-				} else if (cElementType.cellsRange === arg1.type) {
-					bbox = arg1.range.bbox;
-				}
-
-				if (cElementType.cellsRange3D === arg2.type) {
-					arg2RowsLength = arg2.bbox.r2 - arg2.bbox.r1 + 1;
-				} else if (cElementType.cellsRange === arg2.type) {
-					arg2RowsLength = arg2.range.bbox.r2 - arg2.range.bbox.r1 + 1;
-				}
-
-
-				var bVertical = bbox.r2 - bbox.r1 >= bbox.c2 - bbox.c1;
-				var index;
-
-				const _getValue = function(n) {
-					let r, c;
-					if(bVertical) {
-						r = n;
-						c = 0;
-					} else {
-						r = 0;
-						c = n;
-					}
-					let res = arg1.getValueByRowCol(r, c);
-					return res ? res : new cEmpty();
-				};
-
-				let length = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1;
-				// let lastValue = _getValue(length);
-				// TODO
-				// In the formula description, it is written that the function checks the first and last elements, but in practice, it works differently (perhaps this check should be done after the binary search).
-				// The binary search has the same check.
-				// if(lastValue && lastValue.value < arg0.value) {
-				// 	// In this case, the binary search function will return the last element. This is incorrect for this specific case
-				// 	// If the function cannot find the desired_value, it selects the largest value in the viewed_vector that is less than or equal to the desired_value.
-				// 	let diff = null;
-				// 	let endNumber;
-				// 	for(let i = 0; i <= length; i++) {
-				// 		let tempValue = _getValue(i);
-				// 		if(cElementType.number === tempValue.type) {
-				// 			if(tempValue.value <= arg0.value && (null === diff || diff > (arg0.value - tempValue.value))) {
-				// 				index = i;
-				// 				diff = arg0.value - tempValue.value;
-				// 			}
-				// 			endNumber = i;
-				// 		}
-				// 	}
-				// 	if(undefined === index) {
-				// 		if(undefined !== endNumber) {
-				// 			index = endNumber;
-				// 		}
-				// 	}
-				// }
-				if(index === undefined) {
-					index = _func.lookupBinarySearchByRange(arg0, arg1);
-
-					if (index === undefined || index < 0) {
-						return new cError(cErrorType.not_available);
-					}
-				}
-			} 
-			/*else {
-				var arg2RowsLength;
-
-				if (cElementType.cellsRange3D === arg2.type) {
-					arg2RowsLength = arg2.bbox.r2 - arg2.bbox.r1 + 1;
-				} else if (cElementType.cellsRange === arg2.type) {
-					arg2RowsLength = arg2.range.bbox.r2 - arg2.range.bbox.r1 + 1;
-				}
-
-				index = g_oLOOKUPCache.calculate(arg);
-
-				if (index < 0) {
-					return new cError(cErrorType.not_available);
-				}
-			}*/
-
-
-			let ws = cElementType.cellsRange3D === arg1.type && arg1.isSingleSheet() ? arg1.getWS() : arg1.ws;
-			if (cElementType.cellsRange3D === arg1.type) {
-				if (arg1.isSingleSheet()) {
-					ws = arg1.getWS();
-				} else {
-					return new cError(cErrorType.bad_reference);
-				}
-			} else if (cElementType.cellsRange === arg1.type) {
-				ws = arg1.getWS();
-			} else {
-				return new cError(cErrorType.bad_reference);
-			}
-
-			AscCommonExcel.executeInR1C1Mode(false, function () {
-				let b = arg2.getBBox0();
-				if (2 === arg.length) {
-					if (!bVertical) {
-						// return the lookup value
-						// res = new cRef(ws.getCell3(b.r1 + 0, b.c1 + index).getName(), ws);
-						// return the last element in column (like in ms)
-						res = new cRef(ws.getCell3(b.r2, b.c1 + index).getName(), ws);
-					} else {
-						// return the lookup value
-						// res = new cRef(ws.getCell3(b.r1 + index, b.c1 + 0).getName(), ws);
-						// return the last element in row (like in ms)
-						res = new cRef(ws.getCell3(b.r1 + index, b.c2).getName(), ws);
-					}
-				} else {
-					if (1 === arg2RowsLength) {
-						// return the lookup value
-						// res = new cRef(ws.getCell3(b.r1 + 0, b.c1 + index).getName(), ws);
-						// return the last element in column (like in ms)
-						res = new cRef(ws.getCell3(b.r2, b.c1 + index).getName(), ws);
-					} else {
-						// return the lookup value
-						// res = new cRef(ws.getCell3(b.r1 + index, b.c1 + 0).getName(), ws);
-						// return the last element in row (like in ms)
-						res = new cRef(ws.getCell3(b.r1 + index, b.c2).getName(), ws);
-					}
-				}
-			});
-			return res;
-		}
+		return g_oLOOKUPCache.calculate(arg, arguments[1]);
 	};
 
 	/**
@@ -3927,96 +3641,188 @@ function (window, undefined) {
 	LOOKUPCache.prototype.constructor = LOOKUPCache;
 
 	LOOKUPCache.prototype.calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1];
-		var t = this, r, c, count;
+		// .calculate - base args checks, dimensions checks and got to ._get func
+		// ._get - get noEmpty elements from range and add to cache, then get typed array and add calculation result to the cache
+		// ._calculate - calculate result(binary search)
+		let arg0 = arg[0], arg1 = arg[1], arg2 = 2 === arg.length ? arg1 : arg[2], resC = -1, resR = -1,
+			t = this, res;
 
-		if (cElementType.cell3D === arg0.type || cElementType.cell === arg0.type) {
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			if (arg0.isOneElement()) {
+				arg0 = arg0.getFirstElement();
+			} else {
+				arg0 = new cError(cErrorType.wrong_value_type);
+			}
+		} else if (cElementType.array === arg0.type) {
+			arg0 = arg0.getElementRowCol(0, 0);
+		}
+
+
+		if (cElementType.cell === arg0.type) {
 			arg0 = arg0.getValue();
 		}
 
 		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
+		
+		if (cElementType.empty === arg0.type) {
+			arg0 = arg0.tocNumber();
+		}
 
-		var arg0Val;
-		if (cElementType.array === arg0.type) {
-			arg0Val = arg0.getElementRowCol(0, 0);
+		function arrFinder(arr) {
+			if (arr.getRowCount() > arr.getCountElementInRow()) {
+				// searching in the first column
+				resC = arr.getCountElementInRow() > 1 ? 1 : 0;
+				let arrCol = arr.getCol(0);
+				resR = _func.lookupBinarySearch(arg0, arrCol);
+			} else {
+				// searching in the first row
+				resR = arr.getRowCount() > 1 ? 1 : 0;
+				let arrRow = arr.getRow(0);
+				resC = _func.lookupBinarySearch(arg0, arrRow);
+			}
+		}
+
+		if (!( (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type ||
+				cElementType.array === arg1.type) &&
+				(cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type ||
+					cElementType.array === arg2.type) )) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		if (cElementType.array === arg1.type && cElementType.array === arg2.type) {
+			if (arg1.getRowCount() !== arg2.getRowCount() &&
+				arg1.getCountElementInRow() !== arg2.getCountElementInRow()) {
+				return new cError(cErrorType.not_available);
+			}
+
+			arrFinder(arg1);
+
+			if (resR <= -1 && resC <= -1 || resR <= -2 || resC <= -2) {
+				return new cError(cErrorType.not_available);
+			}
+
+			return arg2.getElementRowCol(resR, resC);
+
+		} else if (cElementType.array === arg1.type || cElementType.array === arg2.type) {
+
+			let _arg1, BBox;
+			_arg1 = cElementType.array === arg1.type ? arg1 : arg1.getFullArray();	// !!! slow
+
+			if (cElementType.array === arg2.type) {
+				if (_arg1.getRowCount() !== arg2.getRowCount() && _arg1.getCountElementInRow() !== arg2.getCountElementInRow()) { 
+					return new cError(cErrorType.not_available);
+				}
+			} else {
+				BBox = arg2.getBBox0();
+				if (_arg1.getRowCount() !== (BBox.r2 - BBox.r1) + 1 && _arg1.getCountElementInRow() !== (BBox.c2 - BBox.c1) + 1) {
+					return new cError(cErrorType.not_available);
+				}
+			}
+
+			// find resR & resC position in array/area
+			arrFinder(_arg1);
+
+			if (resR <= -1 && resC <= -1 || resR <= -2 || resC <= -2) {
+				return new cError(cErrorType.not_available);
+			}
+
+			if (cElementType.array === arg2.type) {
+				res = arg2.getElementRowCol(resR, resC);
+			} else {
+				let c = new CellAddress(BBox.r1 + resR, BBox.c1 + resC, 0);
+				arg2.getWS()._getCellNoEmpty(c.getRow0(), c.getCol0(), function (cell) {
+					res = checkTypeCell(cell);
+				});
+			}
+			return res;
 		} else {
-			arg0Val = arg0;
+			if (cElementType.cellsRange3D === arg1.type && !arg1.isSingleSheet() ||
+				cElementType.cellsRange3D === arg2.type && !arg2.isSingleSheet()) {
+				return new cError(cErrorType.not_available);
+			}
+
+			let arg2RowsLength;
+			let bbox;
+			if (cElementType.cellsRange3D === arg1.type) {
+				bbox = arg1.bbox;
+			} else if (cElementType.cellsRange === arg1.type) {
+				bbox = arg1.range.bbox;
+			}
+
+			if (cElementType.cellsRange3D === arg2.type) {
+				arg2RowsLength = arg2.bbox.r2 - arg2.bbox.r1 + 1;
+			} else if (cElementType.cellsRange === arg2.type) {
+				arg2RowsLength = arg2.range.bbox.r2 - arg2.range.bbox.r1 + 1;
+			}
+
+
+			let bVertical = bbox.r2 - bbox.r1 >= bbox.c2 - bbox.c1;
+			let index;
+
+			let length = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1;
+			if(index === undefined) {
+				// index = _func.lookupBinarySearchByRange(arg0, arg1);
+				let ws = arg1.getWS(),
+					r = bVertical ? bbox.r2 : bbox.r1,
+					c = bVertical ? bbox.c1 : bbox.c2;
+				let oSearchRange = ws.getRange3(bbox.r1, bbox.c1, r, c);
+				t.bHor = bVertical ? false : true;
+
+				index = this._get(/* searchRange */oSearchRange, arg0, true);
+
+				if (index === undefined || index < 0) {
+					return new cError(cErrorType.not_available);
+				}
+			}
+
+
+			let ws = cElementType.cellsRange3D === arg1.type && arg1.isSingleSheet() ? arg1.getWS() : arg1.ws;
+			if (cElementType.cellsRange3D === arg1.type) {
+				if (arg1.isSingleSheet()) {
+					ws = arg1.getWS();
+				} else {
+					return new cError(cErrorType.bad_reference);
+				}
+			} else if (cElementType.cellsRange === arg1.type) {
+				ws = arg1.getWS();
+			} else {
+				return new cError(cErrorType.bad_reference);
+			}
+
+			AscCommonExcel.executeInR1C1Mode(false, function () {
+				let b = arg2.getBBox0();
+				// fRow = (area2.r1 - area1.r1) + bVertical ? index : 0
+				// fCol = (area2.c1 - area1.c1) + bVertical ? 0 : index
+				if (2 === arg.length) {
+					if (!bVertical) {
+
+
+						// res = new cRef(ws.getCell3(b.r2, b.c1 + index).getName(), ws);
+						res = new cRef(ws.getCell3(b.r2, Math.abs(bbox.c1 - b.c1) + index).getName(), ws);
+					} else {
+
+						// res = new cRef(ws.getCell3(b.r1 + index, b.c2).getName(), ws);
+						res = new cRef(ws.getCell3(Math.abs(bbox.r1 - b.r1) + index, b.c2).getName(), ws);
+					}
+				} else {
+					if (1 === arg2RowsLength) {
+	
+						// res = new cRef(ws.getCell3(b.r2, b.c1 + index).getName(), ws);
+						res = new cRef(ws.getCell3(b.r2, Math.abs(bbox.c1 - b.c1) + index).getName(), ws);
+					} else {
+
+						// res = new cRef(ws.getCell3(b.r1 + index, b.c2).getName(), ws);
+						res = new cRef(ws.getCell3(Math.abs(bbox.r1 - b.r1) + index, b.c2).getName(), ws);
+					}
+				}
+			});
+			return res;
 		}
-
-		var range;
-		if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ||
-			cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
-			range = arg1.getRange();
-		}
-		if (!range) {
-			return new cError(cErrorType.bad_reference);
-		}
-
-		var bb = range.getBBox0();
-		var bHor = bb.r2 - bb.r1 < bb.c2 - bb.c1;
-		//count = bHor ? (bb.r2 - bb.r1) : (bb.c2 - bb.c1);
-
-		var ws = arg1.getWS();
-		r = bHor ? bb.r1 : bb.r2;
-		c = bHor ? bb.c2 : bb.c1;
-		var oSearchRange = ws.getRange3(bb.r1, bb.c1, r, c);
-
-		if (cElementType.cellsRange === arg0Val.type) {
-			arg0Val = arg0Val.cross(arguments[1]);
-		} else if (cElementType.cellsRange3D === arg0Val.type) {
-			arg0Val = arg0Val.cross(arguments[1]);
-		}
-
-		if (cElementType.error === arg0Val.type) {
-			return arg0;
-		}
-
-		var res = this._get(oSearchRange, arg0Val, true);
-		if (-1 === res) {
-			return new cError(cErrorType.not_available);
-		}
-
-		return res;
 	};
 	LOOKUPCache.prototype._calculate = function (cacheArray, valueForSearching, lookup) {
-		var res = -1, i = 0, j, length = cacheArray.length, k, elem, val;
-
-		//TODO неверно работает функция, допустим для случая: VLOOKUP("12",A1:A5,1) 12.00 ; "qwe" ; "3" ; 3.00 ; 4.00
-
-		//ascending order: ..., -2, -1, 0, 1, 2, ..., A-Z, FALSE
-		var _compareValues = function (val1, val2, op) {
-			var res = _func[val1.type][val2.type](val1, val2, op);
-			return res ? res.value : false;
-		};
-
-		if (lookup) {
-			j = length - 1;
-			while (i <= j) {
-				k = Math.floor((i + j) / 2);
-				elem = cacheArray[k];
-				val = elem.v;
-				if (_compareValues(valueForSearching, val, "=")) {
-					return k;
-				} else if (_compareValues(valueForSearching, val, "<")) {
-					j = k - 1;
-				} else {
-					i = k + 1;
-				}
-			}
-			res = Math.min(i, j);
-		} else {
-			// Exact value
-			for (; i < length; i++) {
-				elem = cacheArray[i];
-				val = elem.v;
-				if (_compareValues(valueForSearching, val, "=")) {
-					return i;
-				}
-			}
-		}
-		return res;
+		return _func.lookupBinarySearchByRange2(valueForSearching, cacheArray);
 	};
 
 	/**
@@ -4622,6 +4428,7 @@ function (window, undefined) {
 
 //----------------------------------------------------------export----------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
+	window['AscCommonExcel'].g_oLOOKUPCache = g_oLOOKUPCache;
 	window['AscCommonExcel'].g_oVLOOKUPCache = g_oVLOOKUPCache;
 	window['AscCommonExcel'].g_oHLOOKUPCache = g_oHLOOKUPCache;
 	window['AscCommonExcel'].g_oMatchCache = g_oMatchCache;

@@ -1566,6 +1566,7 @@
 			for (var i in tmpCellCache) {
 				this.wb.handlers && this.wb.handlers.trigger("cleanCellCache", i, [tmpCellCache[i]], true);
 			}
+			AscCommonExcel.g_oLOOKUPCache.clean();
 			AscCommonExcel.g_oVLOOKUPCache.clean();
 			AscCommonExcel.g_oHLOOKUPCache.clean();
 			AscCommonExcel.g_oMatchCache.clean();
@@ -14072,6 +14073,7 @@
 			}
 
 			this.ws.workbook.dependencyFormulas.addToCleanCellCache(this.ws.getId(), this.nRow, this.nCol);
+			AscCommonExcel.g_oLOOKUPCache.remove(this);
 			AscCommonExcel.g_oVLOOKUPCache.remove(this);
 			AscCommonExcel.g_oHLOOKUPCache.remove(this);
 			AscCommonExcel.g_oMatchCache.remove(this);
