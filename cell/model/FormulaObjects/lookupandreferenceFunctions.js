@@ -3822,7 +3822,7 @@ function (window, undefined) {
 		}
 	};
 	LOOKUPCache.prototype._calculate = function (cacheArray, valueForSearching, lookup) {
-		return _func.lookupBinarySearchByRange2(valueForSearching, cacheArray);
+		return _func.lookupBinarySearchByRange(valueForSearching, cacheArray);
 	};
 
 	/**
