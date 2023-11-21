@@ -3641,6 +3641,7 @@ function (window, undefined) {
 	LOOKUPCache.prototype.constructor = LOOKUPCache;
 
 	LOOKUPCache.prototype.calculate = function (arg) {
+		// todo вариант добавить промежуточный кэш
 		// .calculate - base args checks, dimensions checks and got to ._get func
 		// ._get - get noEmpty elements from range and add to cache, then get typed array and add calculation result to the cache
 		// ._calculate - calculate result(binary search)
@@ -3675,12 +3676,12 @@ function (window, undefined) {
 				// searching in the first column
 				resC = arr.getCountElementInRow() > 1 ? 1 : 0;
 				let arrCol = arr.getCol(0);
-				resR = _func.lookupBinarySearch(arg0, arrCol);
+				resR = _func.lookupBinarySearch(arg0, arrCol, false);
 			} else {
 				// searching in the first row
 				resR = arr.getRowCount() > 1 ? 1 : 0;
 				let arrRow = arr.getRow(0);
-				resC = _func.lookupBinarySearch(arg0, arrRow);
+				resC = _func.lookupBinarySearch(arg0, arrRow, false);
 			}
 		}
 
@@ -3822,7 +3823,7 @@ function (window, undefined) {
 		}
 	};
 	LOOKUPCache.prototype._calculate = function (cacheArray, valueForSearching, lookup) {
-		return _func.lookupBinarySearchByRange(valueForSearching, cacheArray);
+		return _func.lookupBinarySearch(valueForSearching, cacheArray, true);
 	};
 
 	/**

@@ -18654,6 +18654,8 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"LOOKUP\"", function (assert) {
+		AscCommonExcel.g_oLOOKUPCache.clean();
+		// todo очищать кэш перед вызовом
 		let array;
 		ws.getRange2("A102").setValue("4.14");
 		ws.getRange2("A103").setValue("4.19");
@@ -18721,6 +18723,8 @@ $(function () {
 		oParser = new parserFormula("LOOKUP(9,C101:H101,C102:H102)", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue().getValue(), "black");
+
+		AscCommonExcel.g_oLOOKUPCache.clean();
 
 		ws.getRange2("A101").setValue("0");
 		ws.getRange2("A102").setValue("1");
@@ -18813,11 +18817,11 @@ $(function () {
 
 		oParser = new parserFormula("LOOKUP({3,13,14,15},A102:A105,B102:B105)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP({3,13,14,15},A102:A105,B102:B105)");
-		assert.strictEqual(oParser.calculate().getValue().getValue(), "d", "Result of LOOKUP({3,13,14,15},A102:A105,B102:B105)");	//d
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "d", "Result of LOOKUP({3,13,14,15},A102:A105,B102:B105)");
 
 		oParser = new parserFormula("LOOKUP({12,13,14,15},A102:A105,B102:B105)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP({12,13,14,15},A102:A105,B102:B105)");
-		assert.strictEqual(oParser.calculate().getValue().getValue(), "d", "Result of LOOKUP({12,13,14,15},A102:A105,B102:B105)");	//d
+		assert.strictEqual(oParser.calculate().getValue().getValue(), "d", "Result of LOOKUP({12,13,14,15},A102:A105,B102:B105)");
 
 		oParser = new parserFormula("LOOKUP({0},A101:A105,A101:A105)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP({0},A101:A105,A101:A105)");
@@ -18856,24 +18860,28 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of LOOKUP(FALSE,A102:A108,B102:B108)");
 
 		ws.getRange2("B106").setValue("#DIV/0!");
+		AscCommonExcel.g_oLOOKUPCache.clean();
 		oParser = new parserFormula('LOOKUP("b",B102:B110,C102:C110)', "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue().getValue(), 2);		// 2
+		assert.strictEqual(oParser.calculate().getValue().getValue(), 2);
 
 		ws.getRange2("B106").setValue("a");
+		AscCommonExcel.g_oLOOKUPCache.clean();
 		oParser = new parserFormula('LOOKUP("b",B102:B110,C102:C110)', "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue().getValue(), 5);
 
 		ws.getRange2("B106").setValue("0");
+		AscCommonExcel.g_oLOOKUPCache.clean();
 		oParser = new parserFormula('LOOKUP("b",B102:B110,C102:C110)', "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue().getValue(), 2);		// 2
+		assert.strictEqual(oParser.calculate().getValue().getValue(), 2);
 
 		ws.getRange2("B106").setValue("TRUE");
+		AscCommonExcel.g_oLOOKUPCache.clean();
 		oParser = new parserFormula('LOOKUP("b",B102:B110,C102:C110)', "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue().getValue(), 2);		// 2
+		assert.strictEqual(oParser.calculate().getValue().getValue(), 2);
 
 		ws.getRange2("G102").setValue("0");
 		ws.getRange2("G103").setValue("1");
@@ -18890,6 +18898,8 @@ $(function () {
 		ws.getRange2("H106").setValue("e");
 		ws.getRange2("H107").setValue("f");
 		ws.getRange2("H108").setValue("g");
+
+		AscCommonExcel.g_oLOOKUPCache.clean();
 
 		// BOOLEAN TESTS
 		oParser = new parserFormula("LOOKUP(TRUE,G102:G108,H102:H108)", "A2", ws);
@@ -18927,6 +18937,8 @@ $(function () {
 		ws.getRange2("I102").setValue("g");
 		ws.getRange2("J102").setValue("h");
 		ws.getRange2("K102").setValue("i");
+
+		AscCommonExcel.g_oLOOKUPCache.clean();
 
 		oParser = new parserFormula("LOOKUP(3,C101:K101,C102:K102)", "A2", ws);
 		assert.ok(oParser.parse());
@@ -18975,6 +18987,8 @@ $(function () {
 		ws.getRange2("E104").setValue("20");
 		ws.getRange2("E105").setValue("25");
 
+		AscCommonExcel.g_oLOOKUPCache.clean();
+
 		// columns > rows
 		oParser = new parserFormula("LOOKUP(3,A101:E103)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP(3,A101:E103)");
@@ -19019,6 +19033,8 @@ $(function () {
 		ws.getRange2("C200").setValue("c");
 		ws.getRange2("D200").setValue("d");
 
+		AscCommonExcel.g_oLOOKUPCache.clean();
+
 		oParser = new parserFormula("LOOKUP(1,{1,0,0,1},A200:D200)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP(1,{1,0,0,1},A200:D200)");
 		assert.strictEqual(oParser.calculate().getValue(), "d", "Result of LOOKUP(1,{1,0,0,1},A200:D200)");
@@ -19059,6 +19075,8 @@ $(function () {
 		ws.getRange2("C105").setValue("0");
 		ws.getRange2("C106").setValue("0");
 
+		AscCommonExcel.g_oLOOKUPCache.clean();
+
 		// oParser = new parserFormula("LOOKUP(1,A100:A106,B100:B106)", "A2", ws);
 		// assert.ok(oParser.parse(), "LOOKUP(1,A100:A106,B100:B106)");
 		// oParser.setArrayFormulaRef(ws.getRange2("A2").bbox);
@@ -19077,6 +19095,8 @@ $(function () {
 		ws.getRange2("C104").setValue("4");
 		ws.getRange2("C105").setValue("5");
 		ws.getRange2("C106").setValue("10");
+
+		AscCommonExcel.g_oLOOKUPCache.clean();
 
 		oParser = new parserFormula("LOOKUP(3,C100:C106,B100:B106)", "A2", ws);
 		assert.ok(oParser.parse(), "LOOKUP(3,C100:C106,B100:B106) - first and last value test");

@@ -5317,77 +5317,11 @@ _func.binarySearch = function ( sElem, arrTagert, regExp ) {
 
 };
 
-_func.lookupBinarySearch = function ( sElem, array, regExp ) {
-	// В Excel существует неудокументированное поведение, заключающееся в том, что, кажется, внутренне сортируется промежуточный массив 
-	/*(такие значения ошибок, как #DIV/0!, специально сортируются в конец) или игнорируются значения ошибок, 
-	что позволяет работать таким поискам "получить последнее непустое значение", 
-	например, =LOOKUP(2,1/NOT(ISBLANK(A:A)),A:A). Вместо сортировки миллиона записей, 
-	из которых большинство заполнены всего лишь несколькими строками, и перемещения значений ошибок в конец, 
-	что, в основном, уже сделано, предполагается, что матрица отсортирована за исключением значений ошибок. 
-	Это выполняется только для числовой матрицы (к которой относятся ошибки, закодированные как doubles), что решает данную проблему.
-	/* Также неясно, соответствует ли это действительно поведению Excel во всех случаях, или есть ситуации, 
-	включающие несортированные значения ошибок и, таким образом, дающие произвольные результаты бинарного поиска или что-то другое, 
-	или есть случаи, когда значения ошибок также исключаются из смешанных числовых/строковых массивов, или если это не промежуточная матрица, а ссылка на диапазон ячеек. */
-	
+_func.lookupBinarySearch = function ( sElem, arrayNoEmpty, isByRangeCall, regExp ) {
 	let first = 0, last, mid;
 	let typedArr;
 
-	typedArr = prepareTypedArrayUniversal(array, sElem);
-	
-	if (typedArr.length === 0) {
-		/* array empty */
-		return -1;
-	}
-	// 2 elements next to each other
-	if (typedArr.length === 2) {
-		// todo check two element behaviour
-	}
-	// With 0-9 < A-Z, if query is numeric and data found is string, or
-	// vice versa, the (yet another undocumented) Excel behavior is to
-	// return #N/A instead.
-
-	if (sElem.type === cElementType.string) {
-		sElem = new cString(sElem.toString().toLowerCase());
-	}
-
-	let cacheIndex, isFound;
-	first = 0, last = typedArr.length - 1;
-	while (first < last) {
-		mid = Math.floor(first + (last - first) / 2);
-
-		let midValue = typedArr[mid].v;
-		// let cmp = compareValues(sElem, midValue)
-		if (sElem.value === midValue.value) {
-			/* cmp === 0 */
-			last = _func.getLastMatch(mid, sElem, typedArr);
-			break;
-		}
-
-		if (sElem.value < midValue.value || ( regExp && regExp.test(midValue.value) )) {
-			/* cmp > 0 */
-			last = mid;
-		} else {
-			/* cmp < 0 */	
-			cacheIndex = mid;														
-			first = mid + 1;
-		}
-	}
-
-	if (typedArr[last].v.value <= sElem.value) {
-		return typedArr[last].i;
-	} else if (cacheIndex !== undefined && typedArr[cacheIndex].v.value <= sElem.value) {
-		return typedArr[cacheIndex].i;
-	} else {
-		return -2;
-	}
-
-};
-
-_func.lookupBinarySearchByRange = function ( sElem, arrayNoEmpty, regExp ) {
-	let first = 0, last, mid;
-	let typedArr;
-
-	typedArr = prepareTypedArrayUniversal(arrayNoEmpty, sElem, true);
+	typedArr = prepareTypedArrayUniversal(arrayNoEmpty, sElem, isByRangeCall);
 	
 	if (typedArr.length === 0) {
 		/* array empty */
