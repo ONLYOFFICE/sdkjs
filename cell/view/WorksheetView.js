@@ -877,13 +877,18 @@
 					}
 				}
 			}
-			else if(AscFormat.isAreaChartType(nType) || AscFormat.isRadarChartType(nType)) {
+			else if(AscFormat.isAreaChartType(nType) ||
+				AscFormat.isRadarChartType(nType) ||
+				AscFormat.isLineChartType(nType) ||
+				AscFormat.isScatterChartType(nType) ||
+				AscFormat.isDoughnutChartType(nType)) {
 				let nMinPtCount;
-				if(AscFormat.isAreaChartType(nType)) {
-					nMinPtCount = 2;
+
+				if(AscFormat.isRadarChartType(nType)) {
+					nMinPtCount = 3;
 				}
 				else {
-					nMinPtCount = 3;
+					nMinPtCount = 2;
 				}
 				if(getSeriesMaxValCount(aSeriesRefsHor) >= nMinPtCount) {
 					aParams.push({

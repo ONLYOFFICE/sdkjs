@@ -6155,7 +6155,7 @@
         return false;
     };
     CPlotArea.prototype.isLineType = function(nType) {
-        return getIsLineType(nType);
+        return isLineChartType(nType);
     };
     CPlotArea.prototype.isPieType = function(nType) {
         if(Asc.c_oAscChartTypeSettings.pie === nType
@@ -6165,10 +6165,7 @@
         return false;
     };
     CPlotArea.prototype.isDoughnutType = function(nType) {
-        if(Asc.c_oAscChartTypeSettings.doughnut === nType) {
-            return true
-        }
-        return false;
+        isDoughnutChartType(nType);
     };
     CPlotArea.prototype.isAreaType = function(nType) {
         return isAreaChartType(nType);
@@ -6430,7 +6427,7 @@
         return false;
     }
 
-    function getIsLineType(nType) {
+    function isLineChartType(nType) {
         if(Asc.c_oAscChartTypeSettings.lineNormal === nType
             || Asc.c_oAscChartTypeSettings.lineStacked === nType
             || Asc.c_oAscChartTypeSettings.lineStackedPer === nType
@@ -6442,6 +6439,7 @@
         }
         return false;
     }
+
 
     function COrderedAxes(oPlotArea) {
         this.verticalAxes = [];
@@ -15946,6 +15944,9 @@
             || Asc.c_oAscChartTypeSettings.radarMarker === nType
             || Asc.c_oAscChartTypeSettings.radarFilled === nType);
     }
+    function isDoughnutChartType(nType) {
+        return (Asc.c_oAscChartTypeSettings.doughnut === nType);
+    }
 
     function CParseResult() {
         this.error = Asc.c_oAscError.ID.No;
@@ -18671,7 +18672,7 @@
     window['AscFormat'].getIsMarkerByType = getIsMarkerByType;
     window['AscFormat'].getIsSmoothByType = getIsSmoothByType;
     window['AscFormat'].getIsLineByType = getIsLineByType;
-    window['AscFormat'].getIsLineType = getIsLineType;
+    window['AscFormat'].isLineChartType = isLineChartType;
     window['AscFormat'].isValidChartRange = isValidChartRange;
     window['AscFormat'].CChartStyle = CChartStyle;
     window['AscFormat'].CStyleEntry = CStyleEntry;
@@ -18682,6 +18683,7 @@
     window['AscFormat'].isComboChartType = isComboChartType;
     window['AscFormat'].isAreaChartType = isAreaChartType;
     window['AscFormat'].isRadarChartType = isRadarChartType;
+    window['AscFormat'].isDoughnutChartType = isDoughnutChartType;
 
     window['AscFormat'].AX_POS_L = AX_POS_L;
     window['AscFormat'].AX_POS_T = AX_POS_T;
