@@ -1982,16 +1982,6 @@ var editor;
 					}
 				}
 
-				//timelinecaches
-				var timelines = wbPart.getPartsByRelationshipType(openXml.Types.timeline.relationType);
-				for (i = 0; i < timelines.length; ++i) {
-					var contentTimelines = slicers[i].getDocumentContent();
-					var oTimelines = new Asc.CT_slicers(ws);
-					oTimelines.Timelines = ws.aSlicers;
-					reader = new StaxParser(contentSlicers, oSlicers, xmlParserContext);
-					oSlicers.fromXml(reader);
-				}
-
 				//wb comments
 				//лежит в виде бинарника, читаем через serialize
 				var workbookComment = wbPart.getPartByRelationshipType(openXml.Types.workbookComment.relationType);
@@ -2202,6 +2192,16 @@ var editor;
 								}
 
 								AscCommonExcel.PrepareComments(ws, xmlParserContext, comments, pThreadedComments, personList);
+
+								var timelines = wsPart.getPartsByRelationshipType(openXml.Types.timeline.relationType);
+								for (i = 0; i < timelines.length; ++i) {
+									let contentTimeline = timelines[i].getDocumentContent();
+									let oNewTimeline = new AscCommonExcel.CT_CTimelines();
+									reader = new StaxParser(contentTimeline, oNewTimeline, xmlParserContext);
+									oNewTimeline.fromXml(reader);
+
+									ws.timelines.push(oNewTable);
+								}
 							}
 						}
 					}
