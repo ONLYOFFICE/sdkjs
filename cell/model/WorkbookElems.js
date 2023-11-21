@@ -16014,9 +16014,10 @@ function RangeDataManagerElem(bbox, data)
 				this.asc_setSeriesIn(Asc.c_oAscSeriesInType.columns);
 			}
 			rangeModel._foreach2(actionCell);
-
-			contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
-			contextMenuAllowedProps[Asc.c_oAscFillType.series] = true;
+			if (rangeModel.getType() === AscCommon.CellValueType.Number) {
+				contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
+				contextMenuAllowedProps[Asc.c_oAscFillType.series] = true;
+			}
 		} else if (countOfCol >= countOfRow) {
 			this.asc_setSeriesIn(Asc.c_oAscSeriesInType.rows);
 			rangeModel._foreach2(actionCell);
@@ -16038,17 +16039,99 @@ function RangeDataManagerElem(bbox, data)
 		this.asc_setContextMenuAllowedProps(contextMenuAllowedProps);
 	};
 	/**
-	 * Method updates "Type" and "Trend" attributes of SeriesSettings object for chosen context menu property
+	 * Method updates "Type", "Trend" and "Step Value" (for Date type) attributes of SeriesSettings object for chosen context menu property
+	 * @param {WorksheetView} wsView
 	 * @memberof asc_CSeriesSettings
 	 */
-	asc_CSeriesSettings.prototype.init = function () {
+	asc_CSeriesSettings.prototype.init = function (wsView) {
 		const chosenContextMenuProp = this.asc_getContextMenuChosenProperty();
-		if (chosenContextMenuProp === Asc.c_oAscFillType.linearTrend) {
-			this.asc_setType(Asc.c_oAscSeriesType.linear);
-			this.asc_setTrend(true);
-		} else if (chosenContextMenuProp === Asc.c_oAscFillType.growthTrend) {
-			this.asc_setType(Asc.c_oAscSeriesType.growth);
-			this.asc_setTrend(true);
+		const fillType = Asc.c_oAscFillType;
+		const seriesSettings = this;
+		function calcStepForDate() {
+			const arn = wsView.model && wsView.model.getSelection().getLast();
+			const activeFillHandle = wsView.activeFillHandle;
+			const rangeModel = wsView.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
+			const index = wsView.fillHandleDirection === 0 ? activeFillHandle.c2 - arn.c1 : activeFillHandle.r2 - arn.r1;
+			const dateUnitType = Asc.c_oAscDateUnitType;
+
+			let prevCellValue = null;
+
+			function actionCell(cell) {
+				if (cell && cell.getValueWithoutFormat()) {
+					let dateUnit = seriesSettings.asc_getDateUnit();
+					let cellValue;
+
+					if (dateUnit === dateUnitType.day || dateUnit === dateUnitType.weekday) {
+						cellValue = cell.getNumberValue();
+					} else if (dateUnit === dateUnitType.month) {
+						let dateVal = new Asc.cDate().getDateFromExcel(cell.getNumberValue());
+						cellValue = dateVal.getMonth();
+					} else {
+						let dateVal = new Asc.cDate().getDateFromExcel(cell.getNumberValue());
+						cellValue = dateVal.getFullYear();
+					}
+
+					if (prevCellValue != null) {
+						seriesSettings.asc_setStepValue(cellValue - prevCellValue);
+						return true;
+					} else {
+						prevCellValue = cellValue;
+					}
+				} else {
+					return true;
+				}
+			}
+
+			if (arn.isOneCell()) {
+				seriesSettings.asc_setStepValue(1);
+			} else {
+				if (seriesSettings.asc_getSeriesIn() === Asc.c_oAscSeriesInType.rows) {
+					rangeModel._foreach2(actionCell);
+				} else {
+					rangeModel._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
+						if (curCol === colStart) {
+							return actionCell(cell);
+						}
+					});
+				}
+			}
+
+			// Define direction step
+			let step = seriesSettings.asc_getStepValue();
+			if (index < 0) {
+				seriesSettings.asc_setStepValue(step * -1);
+			}
+		}
+
+		switch (chosenContextMenuProp) {
+			case fillType.linearTrend:
+				this.asc_setType(Asc.c_oAscSeriesType.linear);
+				this.asc_setTrend(true);
+				break;
+			case fillType.growthTrend:
+				this.asc_setType(Asc.c_oAscSeriesType.growth);
+				this.asc_setTrend(true);
+				break;
+			case fillType.fillDays:
+				this.asc_setType(Asc.c_oAscSeriesType.date);
+				this.asc_setDateUnit(Asc.c_oAscDateUnitType.day);
+				calcStepForDate()
+				break;
+			case fillType.fillWeekdays:
+				this.asc_setType(Asc.c_oAscSeriesType.date);
+				this.asc_setDateUnit(Asc.c_oAscDateUnitType.weekday);
+				calcStepForDate()
+				break;
+			case fillType.fillMonths:
+				this.asc_setType(Asc.c_oAscSeriesType.date);
+				this.asc_setDateUnit(Asc.c_oAscDateUnitType.month);
+				calcStepForDate()
+				break;
+			case fillType.fillYears:
+				this.asc_setType(Asc.c_oAscSeriesType.date);
+				this.asc_setDateUnit(Asc.c_oAscDateUnitType.year);
+				calcStepForDate()
+				break;
 		}
 	};
 	/**

@@ -55,6 +55,7 @@
 	var oSeriesInType = Asc.c_oAscSeriesInType;
 	var oSeriesType = Asc.c_oAscSeriesType;
 	var oSeriesDateUnitType = Asc.c_oAscDateUnitType;
+	var oFillType = Asc.c_oAscFillType;
 
 
 	var UndoRedoItemSerializable = AscCommonExcel.UndoRedoItemSerializable;
@@ -20038,7 +20039,7 @@
 	CSerial.prototype.initIndex = function () {
 		let ws = this.getWs();
 		let oActiveFillHandle = this.getActiveFillHandle();
-		let oRange = ws.selectionRange.getLast();
+		let oRange = /*this.getFromRange().bbox;*/ws.selectionRange.getLast();
 
 		if (oActiveFillHandle) {
 			this.setIndex(this.getVertical() ? oActiveFillHandle.r2 - oRange.r1 : oActiveFillHandle.c2 - oRange.c1);
@@ -20143,7 +20144,7 @@
 				oFilledRange.bbox.r2 = nIndexLine;
 			}
 		}
-		if (!oActiveFillHandle) {
+		if (!oActiveFillHandle || (oActiveFillHandle && !bTrend)) {
 			oFilledRange._foreachNoEmpty(function (oCell, nRow0, nCol0) {
 				if (oCell && oCell.getValueWithoutFormat()) {
 					if (nType === oSeriesType.autoFill || bTrend) {

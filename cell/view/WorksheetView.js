@@ -26335,11 +26335,15 @@
 	/**
 	 * Method applies series settings when user confirms "Series" settings in dialog window or context menu.
 	 * @param {c_oAscFillType} type
-	 * @param {asc_CSeriesSettings} settings
+	 * @param {asc_CSeriesSettings} [settings]
 	 */
 	WorksheetView.prototype.applySeriesSettings = function (type, settings) {
 		const oThis = this;
 		const cSerial = settings ? new AscCommonExcel.CSerial(settings) : null;
+		const oRange = this.model.getSelection().getLast();
+		const oRangeModel = this.model.getRange3(oRange.r1, oRange.c1, oRange.r2, oRange.c2);
+		const sNumFormat = oRangeModel.getXfs() && oRangeModel.getXfs().num && oRangeModel.getXfs().num.getFormat();
+		const bDateType = !!(sNumFormat && AscCommon.oNumFormatCache.get(sNumFormat).isDateTimeFormat());
 
 		let oRanges = this.model.getSelection();
 		let aRanges = oRanges.ranges;
@@ -26393,21 +26397,34 @@
 				if (!this.activeFillHandle) {
 					return;
 				}
-				this.applyFillHandle(null, null, true, null);
+				// Selected one cell with number type data for copy cells changes ctrlPress logic to false
+				if (oRange.isOneCell() && oRangeModel.getType() === AscCommon.CellValueType.Number && !bDateType) {
+					this.applyFillHandle(null, null, false, null);
+				} else {
+					this.applyFillHandle(null, null, true, null);
+				}
 				break;
 			case c_oAscFillType.fillSeries:
 				if (!this.activeFillHandle) {
 					return;
 				}
-				this.applyFillHandle(null, null, false, null);
+				// Selected one cell with number type data for fills series changes ctrlPress logic to true
+				if (oRange.isOneCell() && oRangeModel.getType() === AscCommon.CellValueType.Number && !bDateType) {
+					this.applyFillHandle(null, null, true, null);
+				} else {
+					this.applyFillHandle(null, null, false, null);
+				}
 				break;
 			case c_oAscFillType.linearTrend:
 			case c_oAscFillType.growthTrend:
+			case c_oAscFillType.fillDays:
+			case c_oAscFillType.fillWeekdays:
+			case c_oAscFillType.fillMonths:
+			case c_oAscFillType.fillYears:
 				if (!cSerial) {
 					return;
 				}
-				const oRange = this.model.getSelection().getLast();
-				const oRangeModel = this.model.getRange3(oRange.r1, oRange.c1, oRange.r2, oRange.c2);
+
 
 				this._isLockedCells(oRangeModel, /*subType*/null, function (success) {
 					if (!success) {
@@ -26418,10 +26435,15 @@
 					cSerial.setActiveFillHandle(oThis.activeFillHandle);
 					cSerial.exec();
 				});
+				oThis._updateRange(this.activeFillHandle);
+				oThis.draw();
 				break;
 			case c_oAscFillType.series:
 				if (!cSerial) {
 					return;
+				}
+				if (this.activeFillHandle != null) {
+					cSerial.setActiveFillHandle(this.activeFillHandle);
 				}
 
 				this._isLockedCells(aRanges, /*subType*/null, function (success) {

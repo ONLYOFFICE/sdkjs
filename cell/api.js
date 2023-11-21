@@ -9001,6 +9001,10 @@ var editor;
 		}
 
 		var ws = this.wb.getWorksheet();
+		if (settings) {
+			settings.asc_setContextMenuChosenProperty(type);
+			settings.init(ws);
+		}
 		return ws.applySeriesSettings(type, settings);
 	};
 
