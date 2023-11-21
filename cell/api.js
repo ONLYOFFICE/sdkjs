@@ -2193,7 +2193,7 @@ var editor;
 
 								AscCommonExcel.PrepareComments(ws, xmlParserContext, comments, pThreadedComments, personList);
 
-								var timelines = wsPart.getPartsByRelationshipType(openXml.Types.timeline.relationType);
+								var timelines = wsPart.getPartsByRelationshipType(openXml.Types.timelines.relationType);
 								for (i = 0; i < timelines.length; ++i) {
 									let contentTimeline = timelines[i].getDocumentContent();
 									let oNewTimeline = new AscCommonExcel.CT_CTimelines();

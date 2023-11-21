@@ -768,7 +768,7 @@
 		ctrlProp: {dir: "../ctrlProps", filename: "ctrlProp[N].xml", contentType: "application/vnd.ms-excel.controlproperties+xml", relationType: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/ctrlProp"},
 		namedSheetViews: {dir: "../namedSheetViews", filename: "namedSheetView[N].xml", contentType: "application/vnd.ms-excel.namedsheetviews+xml", relationType: "http://schemas.microsoft.com/office/2019/04/relationships/namedSheetView"},
 		workbookComment: {dir: "", filename: "workbookComments.bin", contentType: "application/octet-stream", relationType: "http://schemas.onlyoffice.com/workbookComments"},
-		timeline: {dir: "../timelines", filename: "timeline[N].xml", contentType: "application/vnd.ms-excel.timeline+xml", relationType: "http://schemas.microsoft.com/office/2011/relationships/timeline"},
+		timelines: {dir: "../timelines", filename: "timeline[N].xml", contentType: "application/vnd.ms-excel.timeline+xml", relationType: "http://schemas.microsoft.com/office/2011/relationships/timeline"},
 		timelineCaches: {dir: "timelineCaches", filename: "timelineCache[N].xml", contentType: "application/vnd.ms-excel.timelineCache+xml", relationType: "http://schemas.microsoft.com/office/2011/relationships/timelineCache"},
 
 		jsaProject: {dir: "", filename: "jsaProject.bin", contentType: "application/octet-stream", relationType: "http://schemas.onlyoffice.com/jsaProject"},
