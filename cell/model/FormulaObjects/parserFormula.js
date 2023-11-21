@@ -5378,12 +5378,14 @@ _func.getLastMatch = function (startIndex, lookingElem, array) {
 		if (array[i].v.type !== lookingElem.type) {
 			continue;
 		}
+		if (lookingElem.type === cElementType.bool && array[i].v.value !== lookingElem.value) {
+			break;
+		}
 
-		if (array[i].v.value <= lookingElem.value) {
+		if (array[i].v.value === lookingElem.value) {
+			exactMatchIndex = i;
+		} else if (array[i].v.value <= lookingElem.value) {
 			resIndex = i;
-			if (array[i].v.value === lookingElem.value) {
-				exactMatchIndex = i;
-			}
 		} else if (array[i].v.value > lookingElem.value) {
 			break;
 		}

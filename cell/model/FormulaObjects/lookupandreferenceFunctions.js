@@ -3641,34 +3641,22 @@ function (window, undefined) {
 	LOOKUPCache.prototype.constructor = LOOKUPCache;
 
 	LOOKUPCache.prototype.calculate = function (arg) {
-		// todo вариант добавить промежуточный кэш
-		// .calculate - base args checks, dimensions checks and got to ._get func
-		// ._get - get noEmpty elements from range and add to cache, then get typed array and add calculation result to the cache
-		// ._calculate - calculate result(binary search)
-		let arg0 = arg[0], arg1 = arg[1], arg2 = 2 === arg.length ? arg1 : arg[2], resC = -1, resR = -1,
-			t = this, res;
+		function compareValues (val1, val2) {
+			if (val1.type !== val2.type) {
+				return false;
+			} else if (val1.type === cElementType.string) {
+				let str1 = val1.toString().toLowerCase();
+				let str2 = val2.toString().toLowerCase();
 
-		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-			if (arg0.isOneElement()) {
-				arg0 = arg0.getFirstElement();
-			} else {
-				arg0 = new cError(cErrorType.wrong_value_type);
+				if (str1 >= str2) {
+					return true
+				}
+
+				return false;
+			} else if (val1.value >= val2.value) {
+				return true
 			}
-		} else if (cElementType.array === arg0.type) {
-			arg0 = arg0.getElementRowCol(0, 0);
-		}
-
-
-		if (cElementType.cell === arg0.type) {
-			arg0 = arg0.getValue();
-		}
-
-		if (cElementType.error === arg0.type) {
-			return arg0;
-		}
-		
-		if (cElementType.empty === arg0.type) {
-			arg0 = arg0.tocNumber();
+			return false;
 		}
 
 		function arrFinder(arr) {
@@ -3685,10 +3673,80 @@ function (window, undefined) {
 			}
 		}
 
-		if (!( (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type ||
-				cElementType.array === arg1.type) &&
-				(cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type ||
-					cElementType.array === arg2.type) )) {
+		// .calculate - base args checks, dimensions checks and got to ._get func
+		// ._get - get noEmpty elements from range and add to cache, then get typed array and add calculation result to the cache
+		// ._calculate - calculate result(binary search)
+		let arg0 = arg[0], arg1 = arg[1], arg2 = 2 === arg.length ? arg1 : arg[2], resC = -1, resR = -1,
+			t = this, res, arg2SingleElem;
+
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			if (arg0.isOneElement()) {
+				arg0 = arg0.getFirstElement();
+			} else {
+				arg0 = new cError(cErrorType.wrong_value_type);
+			}
+		} else if (cElementType.array === arg0.type) {
+			arg0 = arg0.getElementRowCol(0, 0);
+		}
+
+		if (cElementType.cell === arg0.type) {
+			arg0 = arg0.getValue();
+		}
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.empty === arg0.type) {
+			arg0 = arg0.tocNumber();
+		}
+
+		if (arg1.type === cElementType.empty) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		if ((arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D || arg1.type === cElementType.array) && arg1.isOneElement()) {
+			arg1 = arg1.getFirstElement();
+		}
+		if (arg1.type === cElementType.error) {
+			return arg1;
+		}
+
+		if (arg2.type === cElementType.empty) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		if ((arg2.type === cElementType.cellsRange || arg2.type === cElementType.cellsRange3D || arg2.type === cElementType.array) && arg2.isOneElement()) {
+			arg2 = arg2.getFirstElement();
+		}
+		if (arg2.type === cElementType.error) {
+			return arg2;
+		}
+
+		if (!(cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type || cElementType.array === arg2.type)) {
+			arg2SingleElem = arg2;
+		}
+
+		if ( !(cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type || cElementType.array === arg1.type) ) {
+			/* arg1 is not array/area */
+			if (arg1.type === cElementType.cell) {
+				arg1 = arg1.getValue();
+			}
+			if (arg1.type === cElementType.error) {
+				return arg1;
+			}
+
+			if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type || cElementType.array === arg2.type) {
+				arg2 = arg2.getFirstElement();
+			}
+			if (arg2.type === cElementType.cell) {
+				arg2 = arg2.getValue();
+			}
+			if (arg2.type === cElementType.error) {
+				return arg2;
+			}
+
+			// compare values
+			let res = compareValues(arg0, arg1);
+			if (res) {
+				return arg2;
+			}
 			return new cError(cErrorType.wrong_value_type);
 		}
 
@@ -3727,6 +3785,10 @@ function (window, undefined) {
 
 			if (resR <= -1 && resC <= -1 || resR <= -2 || resC <= -2) {
 				return new cError(cErrorType.not_available);
+			}
+
+			if (arg2SingleElem) {
+				return arg2SingleElem;
 			}
 
 			if (cElementType.array === arg2.type) {
@@ -3792,28 +3854,26 @@ function (window, undefined) {
 				return new cError(cErrorType.bad_reference);
 			}
 
+			if (arg2SingleElem) {
+				return arg2SingleElem;
+			}
+
 			AscCommonExcel.executeInR1C1Mode(false, function () {
 				let b = arg2.getBBox0();
-				// fRow = (area2.r1 - area1.r1) + bVertical ? index : 0
-				// fCol = (area2.c1 - area1.c1) + bVertical ? 0 : index
+
 				if (2 === arg.length) {
 					if (!bVertical) {
-
-
 						// res = new cRef(ws.getCell3(b.r2, b.c1 + index).getName(), ws);
 						res = new cRef(ws.getCell3(b.r2, Math.abs(bbox.c1 - b.c1) + index).getName(), ws);
 					} else {
-
 						// res = new cRef(ws.getCell3(b.r1 + index, b.c2).getName(), ws);
 						res = new cRef(ws.getCell3(Math.abs(bbox.r1 - b.r1) + index, b.c2).getName(), ws);
 					}
 				} else {
 					if (1 === arg2RowsLength) {
-	
 						// res = new cRef(ws.getCell3(b.r2, b.c1 + index).getName(), ws);
 						res = new cRef(ws.getCell3(b.r2, Math.abs(bbox.c1 - b.c1) + index).getName(), ws);
 					} else {
-
 						// res = new cRef(ws.getCell3(b.r1 + index, b.c2).getName(), ws);
 						res = new cRef(ws.getCell3(Math.abs(bbox.r1 - b.r1) + index, b.c2).getName(), ws);
 					}
