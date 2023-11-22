@@ -1574,7 +1574,7 @@ function (window, undefined) {
 	cMATCH.prototype.argumentsMin = 2;
 	cMATCH.prototype.argumentsMax = 3;
 	cMATCH.prototype.arrayIndexes = {1: 1};
-	cMATCH.prototype.argumentsType = [argType.any, argType.array, argType.number];
+	cMATCH.prototype.argumentsType = [argType.any, argType.number, argType.number];
 	cMATCH.prototype.Calculate = function (arg) {
 		return g_oMatchCache.calculate(arg, arguments[1]);
 	};
