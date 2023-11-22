@@ -2880,27 +2880,12 @@ CChartsDrawer.prototype =
 			return this.axesChart[0].axis.xPoints ? (this.calcProp.heightCanvas / this.calcProp.pxToMM) : 0;
 		}
 
-		const getPower = function (val) {
-			let power = 0;
-			while (val > 10) {
-				val /= 10;
-				power++;
-			}
-			while (val < 1) {
-				val *= 10;
-				power--;
-			}
-			return power
-		}
-
 		const startingPos = yPoints[yPoints.length - 1].pos;
 		const stepDistance = yPoints[yPoints.length - 2].pos - yPoints[yPoints.length - 1].pos;
-		const valPower = getPower(val);
-		const startingPower = getPower(yPoints[yPoints.length - 1].val);
-		const stepCount = startingPower - valPower;
-		const newVal = val * Math.pow(10, -valPower);
-		const changedVal = Math.log(newVal) / Math.log(logBase);
-		return (stepDistance * stepCount) + startingPos + (1 - changedVal) * stepDistance;
+		const startingPoint = Math.log(yPoints[yPoints.length - 1].val)/Math.log(logBase);
+		const currentPoint = Math.log(val)/Math.log(logBase);
+		const pointsDiff = startingPoint - currentPoint;
+		return (stepDistance * pointsDiff) + startingPos
 
 		// var logVal = Math.log(val) / Math.log(logBase);
 		// var result;
@@ -16240,14 +16225,12 @@ CColorObj.prototype =
 		_calculateLine: function (oChart, coordinates, attributes) {
 			const type = attributes.trendlineType;
 
-			const catAx = oChart.axId[0].xPoints ? oChart.axId[0] : oChart.axId[1];
-			const xAxis = this.cChartDrawer._searchChangedAxis(catAx);
-			const valAx = oChart.axId[0].yPoints ? oChart.axId[0] : oChart.axId[1];
-			const yAxis = this.cChartDrawer._searchChangedAxis(valAx);
-
+			const xAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[0]);
+			const yAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[1]);
 			const order = attributes.order ? attributes.order + 1 : 2;
 			const chartletiables = this._getEquationCoefficients(coordinates.coords.xVals, coordinates.coords.yVals, type, order, attributes.intercept);
 			const equationStorage = this._obtainEquationStorage(type);
+			const horOrientation = !!oChart.axId[0].xPoints;
 
 			const _findMidCoordinates = function (pointsNumber) {
 				const results = {xVals: [], yVals: []};
@@ -16261,9 +16244,6 @@ CColorObj.prototype =
 				}
 				return results
 			}
-
-
-			const horOrientation = !!xAxis.xPoints;
 
 			let results = null;
 			if (type === AscFormat.TRENDLINE_TYPE_MOVING_AVG) {
@@ -16284,7 +16264,7 @@ CColorObj.prototype =
 						const controlPoints = {xVals: [], yVals: []}
 						const start = _lineCoordinate(xAxis.min)
 						const end = _lineCoordinate(xAxis.max)
-						
+
 						controlPoints.xVals.push(start.xVal);
 						controlPoints.yVals.push(start.yVal);
 						// only linear trendlines does not contain slope property
@@ -16441,7 +16421,6 @@ CColorObj.prototype =
 
 			// At this point we should have an array of xVals and yVals
 			if (results) {
-				console.log(results)
 				const pathH = this.cChartDrawer.calcProp.pathH;
 				const pathW = this.cChartDrawer.calcProp.pathW;
 				const pathId = this.cChartDrawer.cChartSpace.AllocPath();
@@ -16451,7 +16430,7 @@ CColorObj.prototype =
 					const posArr = {xPos: [], yPos: []}
 					for (let i = 0; i < arr.xVals.length; i++) {
 						const xPos = cChartDrawer.getYPosition(arr.xVals[i], xAxis);
-						let yPos = cChartDrawer.getYPosition(arr.yVals[i], yAxis, true);
+						const yPos = cChartDrawer.getYPosition(arr.yVals[i], yAxis, true);
 
 						if (horOrientation) {
 							posArr.xPos.push(xPos)
@@ -16466,6 +16445,7 @@ CColorObj.prototype =
 				}
 
 				const positions = valsToPos(results, this.cChartDrawer)
+				console.log(positions)
 				path.moveTo(positions.xPos[0] * pathW, positions.yPos[0] * pathH);
 
 				// if cond is true use for loop 
@@ -16482,6 +16462,7 @@ CColorObj.prototype =
 					path.quadBezTo(positions.xPos[1] * pathW, positions.yPos[1] * pathH, positions.xPos[2] * pathW, positions.yPos[2] * pathH);
 				}else{
 					for (let i = 1; i < positions.xPos.length; i++) {
+						console.log(positions.xPos[i], positions.yPos[i])
 						path.lnTo(positions.xPos[i] * pathW, positions.yPos[i] * pathH);
 					}
 				}
@@ -16493,9 +16474,9 @@ CColorObj.prototype =
 					let path2 = this.cChartDrawer.cChartSpace.GetPath(pathId2);
 	
 					results = _findMidCoordinates(100);
-					console.log(results);
 					const newPositions = valsToPos(results, this.cChartDrawer)
-	
+					console.log(newPositions);
+
 					path2.moveTo(newPositions.xPos[0] * pathW, newPositions.yPos[0] * pathH);
 	
 					for (let i = 1; i < newPositions.xPos.length; i++) {
