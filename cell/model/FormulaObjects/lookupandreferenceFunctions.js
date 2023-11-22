@@ -3679,6 +3679,7 @@ function (window, undefined) {
 		let arg0 = arg[0], arg1 = arg[1], arg2 = 2 === arg.length ? arg1 : arg[2], resC = -1, resR = -1,
 			t = this, res, arg2SingleElem;
 
+		/* arg0 (looking value) check */
 		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			if (arg0.isOneElement()) {
 				arg0 = arg0.getFirstElement();
@@ -3699,6 +3700,7 @@ function (window, undefined) {
 			arg0 = arg0.tocNumber();
 		}
 
+		/* arg1 (looking array) check */
 		if (arg1.type === cElementType.empty) {
 			return new cError(cErrorType.wrong_value_type);
 		}
@@ -3709,6 +3711,7 @@ function (window, undefined) {
 			return arg1;
 		}
 
+		/* arg2 (return array) check */
 		if (arg2.type === cElementType.empty) {
 			return new cError(cErrorType.wrong_value_type);
 		}
@@ -3723,8 +3726,9 @@ function (window, undefined) {
 			arg2SingleElem = arg2;
 		}
 
+		// variants check:
+		/* arg1 is not array/area */
 		if ( !(cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type || cElementType.array === arg1.type) ) {
-			/* arg1 is not array/area */
 			if (arg1.type === cElementType.cell) {
 				arg1 = arg1.getValue();
 			}
@@ -3750,7 +3754,8 @@ function (window, undefined) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		if (cElementType.array === arg1.type && cElementType.array === arg2.type) {
+		
+		if (cElementType.array === arg1.type && cElementType.array === arg2.type) {		/* arg1 & arg2 is arrays */
 			if (arg1.getRowCount() !== arg2.getRowCount() &&
 				arg1.getCountElementInRow() !== arg2.getCountElementInRow()) {
 				return new cError(cErrorType.not_available);
@@ -3764,7 +3769,7 @@ function (window, undefined) {
 
 			return arg2.getElementRowCol(resR, resC);
 
-		} else if (cElementType.array === arg1.type || cElementType.array === arg2.type) {
+		} else if (cElementType.array === arg1.type || cElementType.array === arg2.type) {	/* arg1 || arg2 is array */
 
 			let _arg1, BBox;
 			_arg1 = cElementType.array === arg1.type ? arg1 : arg1.getFullArray();	// !!! slow
@@ -3800,7 +3805,7 @@ function (window, undefined) {
 				});
 			}
 			return res;
-		} else {
+		} else {		/* arg1 & arg2 is area */
 			if (cElementType.cellsRange3D === arg1.type && !arg1.isSingleSheet() ||
 				cElementType.cellsRange3D === arg2.type && !arg2.isSingleSheet()) {
 				return new cError(cErrorType.not_available);
@@ -3823,10 +3828,7 @@ function (window, undefined) {
 
 			let bVertical = bbox.r2 - bbox.r1 >= bbox.c2 - bbox.c1;
 			let index;
-
-			let length = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1;
 			if(index === undefined) {
-				// index = _func.lookupBinarySearchByRange(arg0, arg1);
 				let ws = arg1.getWS(),
 					r = bVertical ? bbox.r2 : bbox.r1,
 					c = bVertical ? bbox.c1 : bbox.c2;

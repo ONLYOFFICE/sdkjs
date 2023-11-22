@@ -432,73 +432,6 @@ function (window, undefined) {
 		return tokens;
 	}
 
-	// function prepareTypedArray(array, lookingValue) {
-	// 	let isString, typedArr = [];
-	// 	for (let i = 0; i < array.length; i++) {
-	// 		if (lookingValue.type === cElementType.bool) {
-	// 			// return only bool
-	// 			if (lookingValue.type !== array[i].type) {
-	// 				continue
-	// 			}
-	// 			typedArr.push({i: i, v: array[i]});
-	// 		} else if (lookingValue.type === cElementType.number) {
-	// 			// return only numbers or string.tocNumber
-	// 			if (array[i].type !== cElementType.string && array[i].type !== cElementType.number) {
-	// 				continue
-	// 			}
-	// 			let temp = array[i].tocNumber();
-	// 			if (temp.type !== cElementType.error) {
-	// 				typedArr.push({i: i, v: temp});
-	// 			}
-	// 		} else if (cElementType.string === lookingValue.type) {
-	// 			// todo can be "1" === 1
-	// 			if (!isString) {
-	// 				isString = true;
-	// 				lookingValue = new cString(lookingValue.toString().toLowerCase());
-	// 			}
-	// 			// return only strings
-	// 			if (lookingValue.type !== array[i].type) {
-	// 				continue
-	// 			}
-	// 			typedArr.push({i: i, v: new cString(array[i].toString().toLowerCase())});
-	// 		}
-	// 	}
-
-	// 	return typedArr;
-	// }
-	// function prepareTypedArray2(array, lookingElem) {
-	// 	let typedArr = [];
-
-	// 	for (let i = 0; i < array.length; i++) {
-	// 		let arrayElem = array[i];
-	// 		if (lookingElem.type === cElementType.bool) {
-	// 			// return only bool
-	// 			if (lookingElem.type !== arrayElem.v.type) {
-	// 				continue
-	// 			}
-	// 			// typedArr.push({i: i, v: array[i]});
-	// 			typedArr.push(arrayElem);
-	// 		} else if (lookingElem.type === cElementType.number) {
-	// 			// return only numbers or string.tocNumber
-	// 			if (arrayElem.v.type !== cElementType.string && arrayElem.v.type !== cElementType.number) {
-	// 				continue
-	// 			}
-	// 			let temp = arrayElem.v.tocNumber();
-	// 			if (temp.type !== cElementType.error) {
-	// 				typedArr.push({i: arrayElem.i, v: temp});
-	// 			}
-	// 		} else if (cElementType.string === lookingElem.type) {
-	// 			// return only strings
-	// 			if (lookingElem.type !== arrayElem.v.type) {
-	// 				continue
-	// 			}
-	// 			typedArr.push({i: arrayElem.i, v: new cString(arrayElem.v.toString().toLowerCase())});
-	// 		}
-	// 	}
-
-	// 	return typedArr;
-	// }
-
 	function prepareTypedArrayUniversal(array, lookingElem, isByRangeCall) {
 		const typedArr = [];
 
@@ -514,7 +447,6 @@ function (window, undefined) {
 					continue
 				}
 				typedArr.push({i: elemIndex, v: arrayElemValue});
-				// typedArr.push(arrayElem);
 			} else if (lookingElem.type === cElementType.number) {
 				// return only numbers or string.tocNumber
 				if (elemType !== cElementType.string && elemType !== cElementType.number) {
