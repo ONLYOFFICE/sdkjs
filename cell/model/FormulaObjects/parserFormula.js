@@ -1322,7 +1322,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		let col = [];
 		for (let i = 0; i < dimensions.row; i++) {
-			let valInRow = this.getValueByRowCol(i, colIndex);
 			let elem = this.getValueByRowCol(i, colIndex);
 			if (!elem) {
 				elem = new cEmpty();
@@ -1732,7 +1731,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		let col = [];
 		for (let i = 0; i < dimensions.row; i++) {
-			let valInRow = this.getValueByRowCol(i, colIndex);
 			let elem = this.getValueByRowCol(i, colIndex);
 			if (!elem) {
 				elem = new cEmpty();
