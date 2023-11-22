@@ -19513,6 +19513,43 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getElementRowCol(5,0).getValue(), "#N/A");
 		assert.strictEqual(oParser.calculate().getElementRowCol(6,0).getValue(), 7);
 
+		oParser = new parserFormula('MATCH("str","str",0)', "A2", ws);
+		assert.ok(oParser.parse(), 'MATCH("str","str",0)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of MATCH("str","str",0)');
+
+		oParser = new parserFormula('MATCH("str",{"str"},0)', "A2", ws);
+		assert.ok(oParser.parse(), 'MATCH("str",{"str"},0)');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of MATCH("str",{"str"},0)');
+
+		oParser = new parserFormula('MATCH(1,1,-1)', "A2", ws);
+		assert.ok(oParser.parse(), 'MATCH(1,1,-1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of MATCH(1,1,-1)');
+
+		oParser = new parserFormula('MATCH(1,1,0)', "A2", ws);
+		assert.ok(oParser.parse(), 'MATCH(1,1,0)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of MATCH(1,1,0)');
+
+		oParser = new parserFormula('MATCH(1,1,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'MATCH(1,1,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of MATCH(1,1,1)');
+
+		oParser = new parserFormula('MATCH(1,{1},1)', "A2", ws);
+		assert.ok(oParser.parse(), 'MATCH(1,{1},1)');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of MATCH(1,{1},1)');
+
+		oParser = new parserFormula('MATCH(1,{2,1,1},0)', "A2", ws);
+		assert.ok(oParser.parse(), 'MATCH(1,{2,1,1},0)');
+		assert.strictEqual(oParser.calculate().getValue(), 2, 'Result of MATCH(1,{2,1,1},0)');
+
+		oParser = new parserFormula('MATCH(TRUE,TRUE,0)', "A2", ws);
+		assert.ok(oParser.parse(), 'MATCH(TRUE,TRUE,0)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of MATCH(TRUE,TRUE,0)');
+
+		oParser = new parserFormula('MATCH(TRUE,{TRUE},0)', "A2", ws);
+		assert.ok(oParser.parse(), 'MATCH(TRUE,{TRUE},0)');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of MATCH(TRUE,{TRUE},0)');
+
+
 		//TODO excel по-другому работает
 		/*oParser = new parserFormula( "MATCH(123,F106:F117,1)", "A2", ws );
 		assert.ok( oParser.parse() );

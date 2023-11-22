@@ -1574,7 +1574,7 @@ function (window, undefined) {
 	cMATCH.prototype.argumentsMin = 2;
 	cMATCH.prototype.argumentsMax = 3;
 	cMATCH.prototype.arrayIndexes = {1: 1};
-	cMATCH.prototype.argumentsType = [argType.any, argType.number, argType.number];
+	cMATCH.prototype.argumentsType = [argType.any, argType.array, argType.number];
 	cMATCH.prototype.Calculate = function (arg) {
 		return g_oMatchCache.calculate(arg, arguments[1]);
 	};
@@ -3195,6 +3195,9 @@ function (window, undefined) {
 			arg2 = arg[2] ? arg[2] : new cNumber(0);
 			arg3 = arg[3] ? arg[3] : new cNumber(1);
 		} else {
+			if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
+				return new cError(cErrorType.not_available);
+			}	
 			// default values for Match
 			arg2 = arg[2] ? arg[2] : new cNumber(1);
 			arg3 = new cNumber(1);
