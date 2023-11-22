@@ -7328,6 +7328,8 @@
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadTimelineStyles(t, l, oStyleObject.oTimeLineStyles);
                 });
+                //while put in TimelineStyles
+                this.wb.TimelineStyles = oStyleObject.oTimeLineStyles;
             } else
                 res = c_oSerConstants.ReadUnknown;
             return res;
@@ -12062,6 +12064,7 @@
 		this.tableStyles = tableStyles;
 
 		this.oCustomSlicerStyles = null;
+        this.oTimelineStyles = null;
 	}
 
 	CT_Stylesheet.prototype.onStartNode = function(elem, attr, uq) {

@@ -2336,6 +2336,7 @@
 		this.oGoalSeek = null;
 
 		this.timelineCaches = [];
+		this.TimelineStyles = null;
 	}
 	Workbook.prototype.init=function(tableCustomFunc, tableIds, sheetIds, bNoBuildDep, bSnapshot){
 		if(this.nActive < 0)

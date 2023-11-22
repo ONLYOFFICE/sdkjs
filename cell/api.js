@@ -1947,6 +1947,10 @@ var editor;
 						xmlParserContext.InitOpenManager.InitStyleManager(oStyleObject, aCellXfs);
 						dxfs = oStyleObject.aDxfs;
 						wb.oNumFmtsOpen = oStyleObject.oNumFmts;
+
+						if (styleSheet.oTimelineStyles) {
+							wb.TimelineStyles = styleSheet.oTimelineStyles;
+						}
 					}
 				}
 				xmlParserContext.InitOpenManager.aCellXfs = aCellXfs;
