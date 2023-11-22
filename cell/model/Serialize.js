@@ -3721,6 +3721,7 @@
                     oThis.WriteTimelineCachePivotTables(oTimelineCache.pivotTables);
                 });
             }
+            //TODO PivotFilter!
             if (oTimelineCache.pivotFilter != null) {
                 this.bs.WriteItem(c_oSer_TimelineCache.PivotFilter, function () {
                     oThis.WriteTimelineCachePivotTables(oTimelineCache.pivotTables);

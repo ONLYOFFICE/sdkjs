@@ -2194,13 +2194,15 @@ var editor;
 								AscCommonExcel.PrepareComments(ws, xmlParserContext, comments, pThreadedComments, personList);
 
 								var timelines = wsPart.getPartsByRelationshipType(openXml.Types.timelines.relationType);
-								for (i = 0; i < timelines.length; ++i) {
+								if (timelines && timelines.length) {
 									let contentTimeline = timelines[i].getDocumentContent();
-									let oNewTimeline = new AscCommonExcel.CT_CTimelines();
-									reader = new StaxParser(contentTimeline, oNewTimeline, xmlParserContext);
-									oNewTimeline.fromXml(reader);
+									let oNewTimelines = new AscCommonExcel.CT_CTimelines();
+									reader = new StaxParser(contentTimeline, oNewTimelines, xmlParserContext);
+									oNewTimelines.fromXml(reader);
 
-									ws.timelines.push(oNewTable);
+									if (oNewTimelines.timelines && oNewTimelines.timelines.length) {
+										ws.timelines = oNewTimelines.timelines;
+									}
 								}
 							}
 						}
