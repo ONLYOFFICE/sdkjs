@@ -2002,7 +2002,7 @@ function (window, undefined) {
 		if (arg0.getValue() < 0) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-
+		// ???
 		return new cNumber(
 			weekday[new cDate((arg0.getValue() - (AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1))) * c_msPerDay).getUTCDay()]);
 	};
@@ -2190,7 +2190,7 @@ function (window, undefined) {
 	cWORKDAY_INTL.prototype.argumentsMin = 2;
 	cWORKDAY_INTL.prototype.argumentsMax = 4;
 	cWORKDAY_INTL.prototype.numFormat = AscCommonExcel.cNumFormatNone;
-	cWORKDAY_INTL.prototype.arrayIndexes = {2: 1, 3: 1};
+	cWORKDAY_INTL.prototype.arrayIndexes = {2: 0, 3: 1};
 	cWORKDAY_INTL.prototype.argumentsType = [argType.any, argType.any, argType.number, argType.any];
 	//TODO в данном случае есть различия с ms. при 3 и 4 аргументах - замена результата на ошибку не происходит.
 	cWORKDAY_INTL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
@@ -2215,7 +2215,7 @@ function (window, undefined) {
 		if (val0 < 0) {
 			return new cError(cErrorType.not_numeric);
 		}
-		val0 = getCorrectDate(val0);
+		val0 = val0 < 61 ? new cDate((val0 - (AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1))) * c_msPerDay) : getCorrectDate(val0);
 
 		// Weekend
 		if (arg2 && "1111111" === arg2.getValue()) {
@@ -2232,7 +2232,7 @@ function (window, undefined) {
 			return holidays;
 		}
 
-		let calcDate = function () {
+		const calcDate = function () {
 			let dif = arg1.getValue(), count = 0, dif1 = dif > 0 ? 1 : dif < 0 ? -1 : 0, val, date = val0,
 				isEndOfCycle = false;
 			while (Math.abs(dif) > count) {
@@ -2240,9 +2240,9 @@ function (window, undefined) {
 				if (!_includeInHolidays(date, holidays) && !weekends[date.getUTCDay()]) {
 					count++;
 				}
-				//если последняя итерация
+				// if last iteration:
 				if (!(Math.abs(dif) > count)) {
-					//проверяем не оказалось ли следом выходных. если оказались - прибавляем
+					// check if it's next weekend. if found - add
 					date = new cDate(val0.getTime() + dif1 * c_msPerDay);
 					for (let i = 0; i < 7; i++) {
 						if (weekends[date.getUTCDay()]) {
@@ -2261,6 +2261,10 @@ function (window, undefined) {
 
 			if (val < 0) {
 				return new cError(cErrorType.not_numeric);
+			}
+			// shift for date less than 1/3/1900
+			if (arg0.getValue() < 61) {
+				val++;
 			}
 
 			return t.setCalcValue(new cNumber(val), 14);

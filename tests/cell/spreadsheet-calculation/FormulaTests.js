@@ -9785,7 +9785,7 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"WORKDAY.INTL\"", function (assert) {
-
+		let array;
 		ws.getRange2("D10").setValue("44980");
 		ws.getRange2("D11").setValue("44981");
 		ws.getRange2("D12").setValue("1");
@@ -9845,6 +9845,71 @@ $(function () {
 		oParser = new parserFormula('WORKDAY.INTL(DATE(2006,1,1),-20,1,{"1/2/2006",,"1/16/2006"})', "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 38691);
+
+		// for bug 40648
+		oParser = new parserFormula('WORKDAY.INTL({1,2,3;2,3,4},1)', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("F106:H108").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL({1,2,3;2,3,4},1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of WORKDAY.INTL({1,2,3;2,3,4},1)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 3, "Result of WORKDAY.INTL({1,2,3;2,3,4},1)[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 4, "Result of WORKDAY.INTL({1,2,3;2,3,4},1)[0,2]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 3, "Result of WORKDAY.INTL({1,2,3;2,3,4},1)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, "Result of WORKDAY.INTL({1,2,3;2,3,4},1)[1,1]");
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 5, "Result of WORKDAY.INTL({1,2,3;2,3,4},1)[1,2]");
+
+		oParser = new parserFormula('WORKDAY.INTL(1,{1,2,3;2,3,4})', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("F106:H108").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,{1,2,3;2,3,4})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of WORKDAY.INTL(1,{1,2,3;2,3,4})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 3, "Result of WORKDAY.INTL(1,{1,2,3;2,3,4})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 4, "Result of WORKDAY.INTL(1,{1,2,3;2,3,4})[0,2]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 3, "Result of WORKDAY.INTL(1,{1,2,3;2,3,4})[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, "Result of WORKDAY.INTL(1,{1,2,3;2,3,4})[1,1]");
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 5, "Result of WORKDAY.INTL(1,{1,2,3;2,3,4})[1,2]");
+
+		oParser = new parserFormula('WORKDAY.INTL(1,1,{1,2,3;2,3,4})', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("F106:H108").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,1,{1,2,3;2,3,4})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of WORKDAY.INTL(1,1,{1,2,3;2,3,4})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 3, "Result of WORKDAY.INTL(1,1,{1,2,3;2,3,4})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 4, "Result of WORKDAY.INTL(1,1,{1,2,3;2,3,4})[0,2]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 3, "Result of WORKDAY.INTL(1,1,{1,2,3;2,3,4})[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, "Result of WORKDAY.INTL(1,1,{1,2,3;2,3,4})[1,1]");
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 2, "Result of WORKDAY.INTL(1,1,{1,2,3;2,3,4})[1,2]");
+
+		oParser = new parserFormula('WORKDAY.INTL({1,2,3;2,3,4},{1,2,3;2,3,4},{1,2,3;2,3,4},{1,2,3})', "A1", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("F106:H108").bbox);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL({1,2,3;2,3,4},{1,2,3;2,3,4},{1,2,3;2,3,4},{1,2,3})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 4, "Result of WORKDAY.INTL({1,2,3;2,3,4},{1,2,3;2,3,4},{1,2,3;2,3,4},{1,2,3})[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 5, "Result of WORKDAY.INTL({1,2,3;2,3,4},{1,2,3;2,3,4},{1,2,3;2,3,4},{1,2,3})[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 6, "Result of WORKDAY.INTL({1,2,3;2,3,4},{1,2,3;2,3,4},{1,2,3;2,3,4},{1,2,3})[0,2]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 5, "Result of WORKDAY.INTL({1,2,3;2,3,4},{1,2,3;2,3,4},{1,2,3;2,3,4},{1,2,3})[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 6, "Result of WORKDAY.INTL({1,2,3;2,3,4},{1,2,3;2,3,4},{1,2,3;2,3,4},{1,2,3})[1,1]");
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 8, "Result of WORKDAY.INTL({1,2,3;2,3,4},{1,2,3;2,3,4},{1,2,3;2,3,4},{1,2,3})[1,2]");
+
+		oParser = new parserFormula('WORKDAY.INTL(1,1,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,1,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 2, 'Result of WORKDAY.INTL(1,1,1)');
+
+		oParser = new parserFormula('WORKDAY.INTL(1,1,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,1,2)');
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of WORKDAY.INTL(1,1,2)');
+
+		oParser = new parserFormula('WORKDAY.INTL(1,1,3)', "A2", ws);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,1,3)');
+		assert.strictEqual(oParser.calculate().getValue(), 4, 'Result of WORKDAY.INTL(1,1,3)');
+
+		oParser = new parserFormula('WORKDAY.INTL(1,1,4)', "A2", ws);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,1,4)');
+		assert.strictEqual(oParser.calculate().getValue(), 2, 'Result of WORKDAY.INTL(1,1,4)');
+
+		oParser = new parserFormula('WORKDAY.INTL(1,1,12)', "A2", ws);
+		assert.ok(oParser.parse(), 'WORKDAY.INTL(1,1,12)');
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of WORKDAY.INTL(1,1,12)');
 
 	});
 
