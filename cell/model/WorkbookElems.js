@@ -15877,6 +15877,7 @@ function RangeDataManagerElem(bbox, data)
 		//transfer right click fill information
 		this.contextMenuAllowedProps = null;
 		this.contextMenuChosenProperty = null;
+		this.toolbarMenuAllowedProps = null;
 
 		return this;
 	}
@@ -15900,6 +15901,7 @@ function RangeDataManagerElem(bbox, data)
 
 		res.contextMenuAllowedProps = this.contextMenuAllowedProps;
 		res.contextMenuChosenProperty = this.contextMenuChosenProperty;
+		res.toolbarMenuAllowedProps = this.toolbarMenuAllowedProps;
 
 		return res;
 	};
@@ -15923,9 +15925,9 @@ function RangeDataManagerElem(bbox, data)
 						seriesSettings.asc_setType(Asc.c_oAscSeriesType.date);
 
 						contextMenuAllowedProps[Asc.c_oAscFillType.fillDays] = true;
-						contextMenuAllowedProps[Asc.c_oAscFillType.fillWeekdays] = true;
-						contextMenuAllowedProps[Asc.c_oAscFillType.fillMonths] = true;
-						contextMenuAllowedProps[Asc.c_oAscFillType.fillYears] = true;
+						//contextMenuAllowedProps[Asc.c_oAscFillType.fillWeekdays] = true;
+						//contextMenuAllowedProps[Asc.c_oAscFillType.fillMonths] = true;
+						//contextMenuAllowedProps[Asc.c_oAscFillType.fillYears] = true;
 					}
 				}
 
@@ -15996,9 +15998,9 @@ function RangeDataManagerElem(bbox, data)
 		contextMenuAllowedProps[Asc.c_oAscFillType.fillFormattingOnly] = null;
 		contextMenuAllowedProps[Asc.c_oAscFillType.fillWithoutFormatting] = null;
 		contextMenuAllowedProps[Asc.c_oAscFillType.fillDays] = false;
-		contextMenuAllowedProps[Asc.c_oAscFillType.fillWeekdays] = false;
-		contextMenuAllowedProps[Asc.c_oAscFillType.fillMonths] = false;
-		contextMenuAllowedProps[Asc.c_oAscFillType.fillYears] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillWeekdays] = null;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillMonths] = null;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillYears] = null;
 		contextMenuAllowedProps[Asc.c_oAscFillType.linearTrend] = false;
 		contextMenuAllowedProps[Asc.c_oAscFillType.growthTrend] = false;
 		contextMenuAllowedProps[Asc.c_oAscFillType.flashFill] = null;
@@ -16037,6 +16039,31 @@ function RangeDataManagerElem(bbox, data)
 
 		//2. init for context menu - allowed options
 		this.asc_setContextMenuAllowedProps(contextMenuAllowedProps);
+
+		//3. toolbar - allowed options
+		let toolbarMenuAllowedProps = {};
+		toolbarMenuAllowedProps[Asc.c_oAscFillType.fillDown] = true;
+		toolbarMenuAllowedProps[Asc.c_oAscFillType.fillRight] = true;
+		toolbarMenuAllowedProps[Asc.c_oAscFillType.fillUp] = true;
+		toolbarMenuAllowedProps[Asc.c_oAscFillType.fillLeft] = true;
+		toolbarMenuAllowedProps[Asc.c_oAscFillType.series] = true;
+
+		if (range.isOneCol()) {
+			if (selectionRanges.c1 === 0) {
+				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillRight] = false;
+			} else if (selectionRanges.c1 === AscCommon.gc_nMaxCol0) {
+				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillLeft] = false;
+			}
+		}
+		if (range.isOneRow()) {
+			if (selectionRanges.r1 === 0) {
+				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillDown] = false;
+			} else if (selectionRanges.r1 === AscCommon.gc_nMaxRow0) {
+				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillUp] = false;
+			}
+		}
+
+		this.asc_setToolbarMenuAllowedProps(toolbarMenuAllowedProps);
 	};
 	/**
 	 * Method updates "Type", "Trend" and "Step Value" (for Date type) attributes of SeriesSettings object for chosen context menu property
@@ -16201,6 +16228,15 @@ function RangeDataManagerElem(bbox, data)
 		return this.contextMenuChosenProperty;
 	};
 	/**
+	 * Method returns "toolbarMenuAllowedProps" attribute of SeriesSettings object.
+	 * Uses for hide and shade menu items in context menu.
+	 * @memberof asc_CSeriesSettings
+	 * @returns {object} - object with properties of Asc.c_oAscFillType
+	 */
+	asc_CSeriesSettings.prototype.asc_getToolbarMenuAllowedProps = function () {
+		return this.toolbarMenuAllowedProps;
+	};
+	/**
 	 * Method sets "Series In" attribute of SeriesSettings object
 	 * @memberof asc_CSeriesSettings
 	 * @param {c_oAscSeriesInType} val - attribute of c_oAscSeriesInType
@@ -16265,6 +16301,19 @@ function RangeDataManagerElem(bbox, data)
 	 */
 	asc_CSeriesSettings.prototype.asc_setContextMenuChosenProperty = function (val) {
 		this.contextMenuChosenProperty = val;
+	};
+
+	/**
+	 * Method sets "toolbarMenuAllowedProps" attribute of SeriesSettings object.
+	 * Uses for hide and shade menu items in context menu.
+	 * * true - unshade menu item
+	 * * false - shade menu item
+	 * * null - hide menu item
+	 * @memberof asc_CSeriesSettings
+	 * @param {object} val - object with properties of Asc.c_oAscFillType as attribute and boolean or null as value
+	 */
+	asc_CSeriesSettings.prototype.asc_setToolbarMenuAllowedProps = function (val) {
+		this.toolbarMenuAllowedProps = val;
 	};
 
 
@@ -16752,6 +16801,7 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_getStopValue"] = prot.asc_getStopValue;
 	prot["asc_getContextMenuAllowedProps"] = prot.asc_getContextMenuAllowedProps;
 	prot["asc_getContextMenuChosenProperty"] = prot.asc_getContextMenuChosenProperty;
+	prot["asc_getToolbarMenuAllowedProps"] = prot.asc_getToolbarMenuAllowedProps;
 
 	prot["asc_setSeriesIn"] = prot.asc_setSeriesIn;
 	prot["asc_setType"] = prot.asc_setType;
@@ -16761,6 +16811,7 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_setStopValue"] = prot.asc_setStopValue;
 	prot["asc_setContextMenuAllowedProps"] = prot.asc_setContextMenuAllowedProps;
 	prot["asc_setContextMenuChosenProperty"] = prot.asc_setContextMenuChosenProperty;
+	prot["asc_setToolbarMenuAllowedProps"] = prot.asc_setToolbarMenuAllowedProps;
 
 
 })(window);

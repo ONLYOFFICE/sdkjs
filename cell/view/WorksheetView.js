@@ -26405,6 +26405,7 @@
 				}
 				break;
 			case c_oAscFillType.fillSeries:
+			case c_oAscFillType.fillDays:
 				if (!this.activeFillHandle) {
 					return;
 				}
@@ -26417,10 +26418,10 @@
 				break;
 			case c_oAscFillType.linearTrend:
 			case c_oAscFillType.growthTrend:
-			case c_oAscFillType.fillDays:
-			case c_oAscFillType.fillWeekdays:
-			case c_oAscFillType.fillMonths:
-			case c_oAscFillType.fillYears:
+			//case c_oAscFillType.fillDays:
+			//case c_oAscFillType.fillWeekdays:
+			//case c_oAscFillType.fillMonths:
+			//case c_oAscFillType.fillYears:
 				if (!cSerial) {
 					return;
 				}
@@ -26434,9 +26435,11 @@
 					cSerial.setFromRange(oRangeModel);
 					cSerial.setActiveFillHandle(oThis.activeFillHandle);
 					cSerial.exec();
+
+					oThis.cleanFillHandleProps(true);
+					oThis._updateRange(this.activeFillHandle);
+					oThis.draw();
 				});
-				oThis._updateRange(this.activeFillHandle);
-				oThis.draw();
 				break;
 			case c_oAscFillType.series:
 				if (!cSerial) {
@@ -26451,11 +26454,23 @@
 						return;
 					}
 
+					History.Create_NewPoint();
+					History.StartTransaction();
+
 					for (let i = 0; i < aRanges.length; i++) {
 						const oRangeModel = oThis.model.getRange3(aRanges[i].r1, aRanges[i].c1, aRanges[i].r2, aRanges[i].c2);
 						cSerial.setFromRange(oRangeModel);
 						cSerial.exec();
 					}
+
+					if (oThis.activeFillHandle) {
+						aRanges[0].assign(oThis.activeFillHandle.c1, oThis.activeFillHandle.r1, oThis.activeFillHandle.c2, oThis.activeFillHandle.r2);
+						//History.SetSelection(oThis.activeFillHandle.clone());
+						History.SetSelectionRedo(oThis.activeFillHandle.clone());
+					}
+					History.EndTransaction();
+
+					oThis.cleanFillHandleProps(true);
 
 					//update
 					for (let i = 0; i < aRanges.length; i++) {
@@ -26490,6 +26505,16 @@
 				}
 
 				break;
+		}
+	};
+
+	WorksheetView.prototype.cleanFillHandleProps = function (opt_doNotDraw) {
+		this.activeFillHandle = null;
+		this.resizeTableIndex = null;
+		this.fillHandleDirection = -1;
+
+		if (!opt_doNotDraw) {
+			this.draw();
 		}
 	};
 

@@ -9018,6 +9018,7 @@ var editor;
 		}
 
 		var ws = this.wb.getWorksheet();
+		return ws && ws.cleanFillHandleProps();
 	};
 
   /*
