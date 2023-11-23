@@ -2095,6 +2095,7 @@
             annotFlags |= (1 << 4);
             memory.WriteByte(nBorder);
             memory.WriteDouble(nBorderW);
+            memory.WriteLong(0);
         }
         
         // write flags
