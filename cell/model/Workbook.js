@@ -20258,6 +20258,38 @@
 	 * @returns {number} Current value in ExcelDate format
 	 */
 	function _fillExcelDate(nPrevVal, nStep, nDateUnit) {
+		// It's temporary solution for "01/01/1900 - 01/03/1900" dates
+		/* TODO Need make system solution for cDate class for case when excelDate is 1 (01/01/1900).
+		    For now if try convert "1" to Date using getDateFromExcel method result is 31/12/1899
+		    by this reason of next methods addDays and getExcelDate work incorrect. Result of function is always "-30"
+		*/
+		if (nPrevVal < 60) {
+			if (nDateUnit === oSeriesDateUnitType.day) {
+				nPrevVal += 1;
+			} else if (nDateUnit === oSeriesDateUnitType.weekday) {
+				let aWeekdays = [1, 2, 3, 4, 5];
+				nPrevVal += 1;
+				while (true) {
+					let oPrevValDate = new Asc.cDate().getDateFromExcel(nPrevVal + 1);
+					if (aWeekdays.includes(oPrevValDate.getDay())) {
+						break;
+					}
+					nPrevVal += 1;
+				}
+			} else if (nDateUnit === oSeriesDateUnitType.month) {
+				if (nPrevVal <= 27) {
+					nPrevVal += 31;
+				} else if ([28,29,30,31].includes(nPrevVal)) {
+					nPrevVal = 59;
+				} else {
+					nPrevVal += 29;
+				}
+			} else {
+				nPrevVal += 366;
+			}
+
+			return nPrevVal;
+		}
 		// Convert number to cDate object
 		let oPrevValDate = new Asc.cDate().getDateFromExcel(nPrevVal);
 
@@ -20267,13 +20299,13 @@
 				break;
 			case oSeriesDateUnitType.weekday:
 				let aWeekdays = [1, 2, 3, 4, 5];
-                oPrevValDate.addDays(nStep);
+				oPrevValDate.addDays(nStep);
 				while (true) {
 					if (aWeekdays.includes(oPrevValDate.getDay())) {
 						break;
 					} else {
-                        oPrevValDate.addDays(1);
-                    }
+						oPrevValDate.addDays(1);
+					}
 				}
 				break;
 			case oSeriesDateUnitType.month:
