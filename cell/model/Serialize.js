@@ -3848,7 +3848,7 @@
                 this.memory.WriteByte(c_oSer_TimelineCachePivotTable.TabId);
                 this.memory.WriteByte(c_oSerPropLenType.Long);
                 //oThis.sheetIds
-                this.memory.WriteULong(oThis.InitSaveManager.sheetIds[ws.getId()] || 1);
+                this.memory.WriteULong(this.InitSaveManager.sheetIds[oPivotTable.tabId] || 1);
             }
         };
 
