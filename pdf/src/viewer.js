@@ -1251,7 +1251,7 @@
 						oAnnot.SetOpacity(oAnnotInfo["CA"]);
 					}
 					if (oAnnotInfo["borderWidth"] != null) {
-						oAnnot.SetWidth(oAnnotInfo["borderWidth"]);
+						oAnnot.SetWidth(oAnnotInfo["borderWidth"] / 4);
 					}
 					if (oAnnotInfo["QuadPoints"] != null) {
 						let aSepQuads = [];
