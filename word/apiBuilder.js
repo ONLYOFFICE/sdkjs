@@ -7322,7 +7322,6 @@
 	};
 	/**
 	 * Inserts a number of the current document page into the paragraph.
-	 * <note>This method works for the paragraphs in the document header/footer only.</note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiRun}
@@ -7336,7 +7335,6 @@
 	};
 	/**
 	 * Inserts a number of pages in the current document into the paragraph.
-	 * <note>This method works for the paragraphs in the document header/footer only.</note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiRun}
