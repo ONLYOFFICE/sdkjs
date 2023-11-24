@@ -48,6 +48,10 @@
     CAnnotationTextMarkup.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationTextMarkup.prototype.constructor = CAnnotationTextMarkup;
 
+    CAnnotationTextMarkup.prototype.getObjectType = function() {
+        return -1;
+    };
+
     CAnnotationTextMarkup.prototype.SetQuads = function(aQuads) {
         this._quads = aQuads;
     };
