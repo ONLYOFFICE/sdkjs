@@ -2371,6 +2371,10 @@
 		this.forEach(function (ws) {
 			ws.initPostOpen(self.wsHandlers, tableIds, sheetIds);
 		});
+		//timelinecache
+		this.timelineCaches.forEach(function(elem){
+			elem.initPostOpen(tableIds, sheetIds);
+		});
 		//show active if it hidden
 		var wsActive = this.getActiveWs();
 		if (wsActive && wsActive.getHidden()) {

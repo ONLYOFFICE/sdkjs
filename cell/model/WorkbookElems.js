@@ -15913,6 +15913,14 @@ QueryTableField.prototype.clone = function() {
 
 		return res;
 	};
+	CTimelineCacheDefinition.prototype.initPostOpen = function (tableIds, sheetIds) {
+		if (this.pivotTables) {
+			this.pivotTables.forEach(function(elem){
+				elem.initPostOpen(tableIds, sheetIds);
+			});
+		}
+	};
+
 
 	function CTimelineCachePivotTable() {
 		this.name = null;
@@ -15925,6 +15933,16 @@ QueryTableField.prototype.clone = function() {
 		res.tabId = this.tabId;
 
 		return res;
+	};
+	CTimelineCachePivotTable.prototype.initPostOpen = function (tableIds, sheetIds) {
+		var ws = null;
+		if (null != this.tabId) {
+			ws = sheetIds[this.tabId];
+			if (ws) {
+				this.tabId = ws.getId();
+			}
+		}
+		return ws;
 	};
 
 	function CTimelineState() {

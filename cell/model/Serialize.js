@@ -3834,20 +3834,21 @@
                 });
             }
         };
-        this.WriteTimelineCachePivotTable = function (oPivotTables) {
-            if (!oPivotTables) {
+        this.WriteTimelineCachePivotTable = function (oPivotTable) {
+            if (!oPivotTable) {
                 return;
             }
 
-            if (oPivotTables.name != null) {
+            if (oPivotTable.name != null) {
                 this.memory.WriteByte(c_oSer_TimelineCachePivotTable.name);
                 this.memory.WriteByte(c_oSerPropLenType.Variable);
-                this.memory.WriteString2(oPivotTables.name);
+                this.memory.WriteString2(oPivotTable.name);
             }
-            if (oPivotTables.tabId != null) {
+            if (oPivotTable.tabId != null) {
                 this.memory.WriteByte(c_oSer_TimelineCachePivotTable.TabId);
                 this.memory.WriteByte(c_oSerPropLenType.Long);
-                this.memory.WriteULong(oPivotTables.tabId);
+                //oThis.sheetIds
+                this.memory.WriteULong(this.InitSaveManager.sheetIds[oPivotTable.tabId]);
             }
         };
 
