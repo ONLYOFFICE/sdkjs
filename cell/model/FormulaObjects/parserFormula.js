@@ -70,7 +70,7 @@ function (window, undefined) {
 
 	var TOK_SUBTYPE_UNION = 15;
 
-	var arrayFunctionsMap = {"SUMPRODUCT": 1, "FILTER": 1};
+	var arrayFunctionsMap = {"SUMPRODUCT": 1, "FILTER": 1, "AGGREGATE": 1};
 
 	function getArrayCopy(arr) {
 		var newArray = [];

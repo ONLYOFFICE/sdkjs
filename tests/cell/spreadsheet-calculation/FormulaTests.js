@@ -14366,6 +14366,68 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 64);
 
+		// for bug 38994
+		ws.getRange2("B101").setValue("");
+		ws.getRange2("B102").setValue("0");
+		ws.getRange2("B103").setValue("0");
+		ws.getRange2("B104").setValue("1");
+		ws.getRange2("B105").setValue("0");
+		ws.getRange2("B106").setValue("0");
+		ws.getRange2("B107").setValue("1");
+
+		ws.getRange2("C101").setValue("#DIV/0!");
+		ws.getRange2("C102").setValue("#DIV/0!");
+		ws.getRange2("C103").setValue("#DIV/0!");
+		ws.getRange2("C104").setValue("3");
+		ws.getRange2("C105").setValue("#DIV/0!");
+		ws.getRange2("C106").setValue("#DIV/0!");
+		ws.getRange2("C107").setValue("37");
+
+		ws.getRange2("D101").setValue("");
+		ws.getRange2("D102").setValue("1");
+		ws.getRange2("D103").setValue("2");
+		ws.getRange2("D104").setValue("3");
+		ws.getRange2("D105").setValue("4");
+		ws.getRange2("D106").setValue("5");
+		ws.getRange2("D107").setValue("999");
+
+		oParser = new parserFormula("AGGREGATE(15,6,ROW(B101:B107),1)", "A1", ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,6,ROW(B101:B107),1)');
+		assert.strictEqual(oParser.calculate().getValue(), 101, 'Result of AGGREGATE(15,6,ROW(B101:B107),1)');
+		
+		oParser = new parserFormula("AGGREGATE(15,6,ROW(B101:B107)/(B102:B107=1),1)", "A1", ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,6,ROW(B101:B107)/(B102:B107=1),1)');
+		assert.strictEqual(oParser.calculate().getValue(), 103, 'Result of AGGREGATE(15,6,ROW(B101:B107)/(B102:B107=1),1)');
+
+		oParser = new parserFormula("AGGREGATE(15,6,C101:C107,1)", "A1", ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,6,C101:C107,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of AGGREGATE(15,6,C101:C107,1)');
+
+		// cross test
+		let bbox = ws.getRange2("G101").bbox;
+		let cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula('AGGREGATE(15,D101:D107,C101:C107,1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,D101:D107,C101:C107,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of AGGREGATE(15,D101:D107,C101:C107,1)');
+
+		bbox = ws.getRange2("G103").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula('AGGREGATE(15,D101:D107,C101:C107,1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,D101:D107,C101:C107,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of AGGREGATE(15,D101:D107,C101:C107,1)');
+
+		bbox = ws.getRange2("G104").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula('AGGREGATE(15,D101:D107,C101:C107,1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,D101:D107,C101:C107,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of AGGREGATE(15,D101:D107,C101:C107,1)');
+
+		bbox = ws.getRange2("G107").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula('AGGREGATE(15,D101:D107,C101:C107,1)', cellWithFormula, ws);
+		assert.ok(oParser.parse(), 'AGGREGATE(15,D101:D107,C101:C107,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of AGGREGATE(15,D101:D107,C101:C107,1)');
+
 	});
 
 	QUnit.test("Test: \"AND\"", function (assert) {
