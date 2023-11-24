@@ -172,8 +172,16 @@
             let angle   = Math.atan2(oPt1.y - centerY, oPt1.x - centerX);
             
             ctx.beginPath();
+            
             ctx.arc(centerX, centerY, radius, angle + Math.PI/4, angle + Math.PI - Math.PI/8);
-            ctx.stroke();
+            if (i == 0) {
+                let old = ctx.strokeStyle;
+                ctx.strokeStyle = "red";
+                ctx.stroke();
+                ctx.strokeStyle = old;
+            }
+            else
+                ctx.stroke();
         }
         
         oDoc.TurnOffHistory();
@@ -266,6 +274,9 @@
         let xMax = aBounds[2];
         let yMax = aBounds[3];
 
+        let cx = xMin + (xMax - xMin) / 2;
+        let cy = yMin + (yMax - yMin) / 2;
+
         let geometry = oGeometry ? oGeometry : new AscFormat.Geometry();
         if (oGeometry) {
             oGeometry.pathLst = [];
@@ -314,46 +325,111 @@
                 kh = 0;
             }
             
-            geometry.AddPathCommand(0, undefined, bClosed ? "norm": "none", undefined, pathW, pathH);
-            geometry.AddRect("l", "t", "r", "b");
+            function calculateRotationAngle(x1, y1, x2, y2, x, y) {
+                // Находим середину линии AB
+                let mx = (x1 + x2) / 2;
+                let my = (y1 + y2) / 2;
+            
+                // Вычисляем углы
+                let thetaAB = Math.atan2(y2 - y1, x2 - x1);
+                let thetaMP = Math.atan2(y - my, x - mx);
+            
+                // Вычисляем угол поворота
+                let rotationAngle = (thetaMP - thetaAB) * 180 / Math.PI + 90;
+            
+                // Нормализуем угол
+                if (rotationAngle < 0) {
+                    rotationAngle += 360;
+                }
+                return rotationAngle;
+            }
+
+            geometry.AddPathCommand(0,undefined, undefined, undefined, pathW, pathH);
             geometry.AddPathCommand(1, (((aPoints[0].x - xMin) * kw) >> 0) + "", (((aPoints[0].y - yMin) * kh) >> 0) + "");
+
+            let oPt1, oPt2, nPt;
+            for(nPt = 0; nPt < aPoints.length; nPt++) {
+                // arc
+                oPt1 = aPoints[nPt];
+                oPt2 = aPoints[nPt + 1];
+                if (oPt2 == null) {
+                    oPt2 = aPoints[0];
+                }
+
+                let centerX = oPt1.x;
+                let centerY = oPt1.y;
+
+                let radius  = Math.sqrt(Math.pow(oPt2.x - oPt1.x, 2) + Math.pow(oPt2.y - oPt1.y, 2)) / 2;
+                // let radius  = 2.9;
+                // let angle   = Math.atan2(centerY - oPt2.y, centerX - oPt2.x);
+                let angle   = Math.atan2(centerY - oPt2.y, centerX - oPt2.x);
+                let angle2  = Math.atan2(centerX - cy, centerY - cx);
+                
+                let stAng = (angle) * (180 / Math.PI);
+                let swAng = (Math.PI) * (180 / Math.PI);
+
+                geometry.AddPathCommand(3, ((radius * kw) >> 0) + "", ((radius * kh) >> 0) + "", 
+                (stAng * 60000 >> 0) + "", (swAng * 60000 >> 0) + "");
+
+                geometry.AddPathCommand(1, (((oPt2.x - xMin) * kw) >> 0) + "", (((oPt2.y - yMin) * kh) >> 0) + "");
+
+                // break;
+            }
+
+            geometry.AddPathCommand(0,undefined, undefined, undefined, pathW, pathH);
+            geometry.AddPathCommand(1, (((aPoints[0].x - xMin) * kw) >> 0) + "", (((aPoints[0].y - yMin) * kh) >> 0) + "");
+
             let i = 1;
             let aRanges = [[0, aPoints.length - 1]];
             let aRange, nRange;
             let nEnd;
             let nPtsCount = aPoints.length;
-            let oPt1, oPt2, oPt3, nPt;
-            for(nRange = 0; nRange < aRanges.length; ++nRange) {
+            oPt1, oPt2, nPt;
+            for(nRange = 0; nRange < aRanges.length; ++nRange)
+            {
                 aRange = aRanges[nRange];
                 if(aRange[0] + 1 > nMaxPtIdx) {
                     break;
                 }
                 nPt = aRange[0] + 1;
                 nEnd = Math.min(aRange[1], nMaxPtIdx);
-                while (nPt <= nEnd) {
-                    // arc
-                    oPt1 = aPoints[nPt++];
-                    oPt2 = aPoints[nPt++];
-                    if (oPt2 == null) {
-                        oPt2 = aPoints[0];
+                while(nPt <= nEnd)
+                {
+                    if(nPt + 2 <= nEnd)
+                    {
+                        //cubic bezier curve
+                        oPt1 = aPoints[nPt++];
+                        oPt2 = aPoints[nPt++];
+                        oPt3 = aPoints[nPt++];
+                        geometry.AddPathCommand(5,
+                            (((oPt1.x - xMin) * kw) >> 0) + "", (((oPt1.y - yMin) * kh) >> 0) + "",
+                            (((oPt2.x - xMin) * kw) >> 0) + "", (((oPt2.y - yMin) * kh) >> 0) + "",
+                            (((oPt3.x - xMin) * kw) >> 0) + "", (((oPt3.y - yMin) * kh) >> 0) + ""
+                        );
                     }
-
-                    let centerX = (oPt1.x + oPt2.x) / 2;
-                    let centerY = (oPt1.y + oPt2.y) / 2;
-                    let radius  = Math.sqrt(Math.pow(oPt2.x - oPt1.x, 2) + Math.pow(oPt2.y - oPt1.y, 2)) / 2 * 3/2;
-                    let angle   = Math.atan2(oPt1.y - centerY, oPt1.x - centerX);
-
-                    let stAng = (angle + Math.PI/4) * (180 / Math.PI);
-                    let endAng = (angle + Math.PI - Math.PI/8) * (180 / Math.PI);
-
-                    geometry.AddPathCommand(3, ((radius * kw) >> 0) + "", ((radius * kh) >> 0) + "", 
-                    (stAng * 60000 >> 0) + "", (endAng * 60000 >> 0) + "");
-                    // geometry.AddPathCommand(3, ((Math.abs((centerX - xMin) * kw) >> 0)) + "", (((Math.abs(centerY - yMin) * kh)) >> 0) + "", 
-                    // stAng * 60000 >> 0 + "", endAng * 60000 >> 0 + "");
+                    else if(nPt + 1 <= nEnd)
+                    {
+                        //quad bezier curve
+                        oPt1 = aPoints[nPt++];
+                        oPt2 = aPoints[nPt++];
+                        geometry.AddPathCommand(4,
+                            (((oPt1.x - xMin) * kw) >> 0) + "", (((oPt1.y - yMin) * kh) >> 0) + "",
+                            (((oPt2.x - xMin) * kw) >> 0) + "", (((oPt2.y - yMin) * kh) >> 0) + ""
+                        );
+                    }
+                    else
+                    {
+                        //lineTo
+                        oPt1 = aPoints[nPt++];
+                        geometry.AddPathCommand(2,
+                            (((oPt1.x - xMin) * kw) >> 0) + "", (((oPt1.y - yMin) * kh) >> 0) + ""
+                        );
+                    }
                 }
-
-                geometry.AddPathCommand(6);
             }
+            
+            
+            // geometry.AddPathCommand(6);
         }
 
         return geometry;
