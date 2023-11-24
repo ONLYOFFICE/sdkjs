@@ -16475,6 +16475,9 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_getPrintTitlesHeight"] = prot.asc_getPrintTitlesHeight;
 	prot["asc_getHeaderFooter"] = prot.asc_getHeaderFooter;
 	prot["asc_setHeaderFooter"] = prot.asc_setHeaderFooter;
+	prot["asc_getHorizontalCentered"] = prot.asc_getHorizontalCentered;
+	prot["asc_getVerticalCentered"] = prot.asc_getVerticalCentered;
+
 
 	window["Asc"]["CHeaderFooter"] = window["Asc"].CHeaderFooter = CHeaderFooter;
 	window["Asc"]["CHeaderFooterData"] = window["Asc"].CHeaderFooterData = CHeaderFooterData;
