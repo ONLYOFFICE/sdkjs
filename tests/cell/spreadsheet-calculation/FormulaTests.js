@@ -18000,6 +18000,30 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 1);
 
+		oParser = new parserFormula("SMALL(3,1)", "A1", ws);
+		assert.ok(oParser.parse(), 'SMALL(3,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of SMALL(3,1)');
+
+		oParser = new parserFormula("SMALL(1,1)", "A1", ws);
+		assert.ok(oParser.parse(), 'SMALL(1,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of SMALL(1,1)');
+
+		oParser = new parserFormula("SMALL(1,2)", "A1", ws);
+		assert.ok(oParser.parse(), 'SMALL(1,2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of SMALL(1,2)');
+
+		oParser = new parserFormula("SMALL(#N/A,1)", "A1", ws);
+		assert.ok(oParser.parse(), 'SMALL(#N/A,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of SMALL(#N/A,1)');
+
+		oParser = new parserFormula('SMALL("1",1)', "A1", ws);
+		assert.ok(oParser.parse(), 'SMALL("1",1)');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of SMALL("1",1)');
+
+		oParser = new parserFormula('SMALL(-10,1)', "A1", ws);
+		assert.ok(oParser.parse(), 'SMALL(-10,1)');
+		assert.strictEqual(oParser.calculate().getValue(), -10, 'Result of SMALL(-10,1)');
+
 		//TODO нужна другая функция для тестирования
 		//testArrayFormula2(assert, "SMALL", 2, 2)
 	});

@@ -10137,8 +10137,6 @@ function (window, undefined) {
 	cSMALL.prototype.argumentsType = [argType.number, argType.number];
 	cSMALL.prototype.Calculate = function (arg) {
 
-		var retArr = new cArray();
-
 		function frequency(A, k) {
 
 			var tA = [];
@@ -10174,20 +10172,37 @@ function (window, undefined) {
 			retArr.addElement(frequency(arg0, e));
 		}
 
-		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cArea || arg0 instanceof cArray) {
+		let arg0 = arg[0], arg1 = arg[1], retArr = new cArray();
+		if ((arg0.type !== cElementType.array && arg0.type !== cElementType.cellsRange && arg0.type !== cElementType.cellsRange3D) &&
+			(arg1.type !== cElementType.array && arg1.type !== cElementType.cellsRange && arg1.type !== cElementType.cellsRange3D)) {
+			/* value to value */
+			arg0 = arg0.tocNumber();
+			arg1 = arg1.tocNumber();
+
+			if (arg0.type === cElementType.error) {
+				return arg0;
+			}
+			if (arg1.type === cElementType.error) {
+				return arg1;
+			}
+			if (arg1.getValue() !== 1) {
+				return new cError(cErrorType.not_numeric);
+			}
+
+			return arg0;
+		}
+
+		if (cElementType.cellsRange === arg0.type || cElementType.array === arg0.type) {
 			arg0 = arg0.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg);
-		} else if (arg0 instanceof cArea3D) {
+		} else if (cElementType.cellsRange3D === arg0.type) {
 			arg0 = arg0.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg)[0];
 		} else {
 			return new cError(cErrorType.not_numeric);
 		}
 
-
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cArray) {
-//        arg1 = arg1.getElement( 0 );
+		} else if (cElementType.array === arg0.type) {
 			arg1.foreach(actionArray);
 			return retArr;
 		}
