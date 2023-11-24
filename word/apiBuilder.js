@@ -7263,10 +7263,21 @@
 	 */
 	ApiParagraph.prototype.AddPageNumber = function()
 	{
-		var oRun = new ParaRun(this.Paragraph, false);
-		oRun.Add_ToContent(0, new AscWord.CRunPageNum());
-		private_PushElementToParagraph(this.Paragraph, oRun);
-		return new ApiRun(oRun);
+		
+		let oParaParent = this.Paragraph.GetParent();
+		let oParentParent;
+		if (oParaParent)
+			oParentParent = oParaParent.GetParent();
+
+		if (oParentParent && oParentParent instanceof CHeaderFooter) {
+			var oRun = new ParaRun(this.Paragraph, false);
+			oRun.Add_ToContent(0, new AscWord.CRunPageNum());
+			private_PushElementToParagraph(this.Paragraph, oRun);
+			return new ApiRun(oRun);
+		}
+
+		console.error(new Error('Paragraph must be in a Header/Footer.'));
+		return null;
 	};
 	/**
 	 * Inserts a number of pages in the current document into the paragraph.
@@ -7277,10 +7288,20 @@
 	 */
 	ApiParagraph.prototype.AddPagesCount = function()
 	{
-		var oRun = new ParaRun(this.Paragraph, false);
-		oRun.Add_ToContent(0, new AscWord.CRunPagesCount());
-		private_PushElementToParagraph(this.Paragraph, oRun);
-		return new ApiRun(oRun);
+		let oParaParent = this.Paragraph.GetParent();
+		let oParentParent;
+		if (oParaParent)
+			oParentParent = oParaParent.GetParent();
+
+		if (oParentParent && oParentParent instanceof CHeaderFooter) {
+			var oRun = new ParaRun(this.Paragraph, false);
+			oRun.Add_ToContent(0, new AscWord.CRunPagesCount());
+			private_PushElementToParagraph(this.Paragraph, oRun);
+			return new ApiRun(oRun);
+		}
+
+		console.error(new Error('Paragraph must be in a Header/Footer.'));
+		return null;
 	};
 	/**
 	 * Returns the text properties of the paragraph mark which is used to mark the paragraph end. The mark can also acquire
