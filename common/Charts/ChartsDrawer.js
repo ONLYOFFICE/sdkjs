@@ -1329,24 +1329,24 @@ CChartsDrawer.prototype =
 			return;
 		}
 
-		var maxMinObj;
-		var grouping = this.getChartGrouping(chart);
-		var chartType = this._getChartType(chart);
-		var t = this;
+		let maxMinObj;
+		let grouping = this.getChartGrouping(chart);
+		let chartType = this._getChartType(chart);
+		let t = this;
 
 		//TODO стоит сделать общую обработку для всех диаграмм
-		var calculateStacked = function(sum) {
+		let calculateStacked = function(sum) {
 			if(c_oChartTypes.HBar === chartType || c_oChartTypes.Bar === chartType) {
-				var originalData = $.extend(true, [], data);
-				for (var j = 0; j < data.length; j++) {
-					for (var i = 0; i < data[j].length; i++) {
+				let originalData = $.extend(true, [], data);
+				for (let j = 0; j < data.length; j++) {
+					for (let i = 0; i < data[j].length; i++) {
 						data[j][i] = t._findPrevValue(originalData, j, i)
 					}
 				}
 
 				if(sum) {
-					for (var j = 0; j < data.length; j++) {
-						for (var i = 0; i < data[j].length; i++) {
+					for (let j = 0; j < data.length; j++) {
+						for (let i = 0; i < data[j].length; i++) {
 							if (sum[j] === 0) {
 								break;
 							}
@@ -1355,8 +1355,8 @@ CChartsDrawer.prototype =
 					}
 				}
 			} else {
-				for (var j = 0; j < (data.length - 1); j++) {
-					for (var i = 0; i < data[j].length; i++) {
+				for (let j = 0; j < (data.length - 1); j++) {
+					for (let i = 0; i < data[j].length; i++) {
 						if (!data[j + 1]) {
 							data[j + 1] = [];
 						}
@@ -1365,8 +1365,8 @@ CChartsDrawer.prototype =
 				}
 
 				if(sum && data[0]) {
-					for (var j = 0; j < (data[0].length); j++) {
-						for (var i = 0; i < data.length; i++) {
+					for (let j = 0; j < (data[0].length); j++) {
+						for (let i = 0; i < data.length; i++) {
 							if (sum[j] == 0) {
 								data[i][j] = 0;
 							} else {
@@ -1378,23 +1378,27 @@ CChartsDrawer.prototype =
 			}
 		};
 
-		var calculateSum = function() {
+		let calculateSum = function() {
 			//вычисляем сумму
 			//для разных диаграмм она вычисляется по-разному
-			var res = [];
+			let res = [];
 			if(c_oChartTypes.HBar === chartType || c_oChartTypes.Bar === chartType) {
-				for (var j = 0; j < (data.length); j++) {
+				for (let j = 0; j < (data.length); j++) {
 					res[j] = 0;
-					for (var i = 0; i < data[j].length; i++) {
-						res[j] += Math.abs(data[j][i]);
+					for (let i = 0; i < data[j].length; i++) {
+						if (data[j][i] != null) {
+							res[j] += Math.abs(data[j][i]);
+						}
 					}
 				}
 			} else {
 				if(data[0]) {
-					for (var j = 0; j < (data[0].length); j++) {
+					for (let j = 0; j < (data[0].length); j++) {
 						res[j] = 0;
-						for (var i = 0; i < data.length; i++) {
-							res[j] += Math.abs(data[i][j]);
+						for (let i = 0; i < data.length; i++) {
+							if (data[i][j] != null) {
+								res[j] += Math.abs(data[i][j]);
+							}
 						}
 					}
 				}
