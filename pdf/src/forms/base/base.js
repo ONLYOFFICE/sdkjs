@@ -1647,6 +1647,9 @@
             this.AddToRedraw();
         }
     };
+    CBaseField.prototype.GetBorderWidth = function() {
+        return this._borderWidth || this._lineWidth;
+    };
     /**
      * Returns a canvas with origin view (from appearance stream) of current form.
 	 * @memberof CBaseField
@@ -2090,14 +2093,11 @@
         
         annotFlags = 0;
         let nBorder = this.GetBorderStyle();
-        let nBorderW = this.GetBordersWidth();
+        let nBorderW = this.GetBorderWidth();
         if (nBorder != null || nBorderW != null) {
             annotFlags |= (1 << 4);
             memory.WriteByte(nBorder);
             memory.WriteDouble(nBorderW);
-            if (nBorder == 2) {
-                memory.WriteLong(1); memory.WriteDouble(3);
-            }
         }
         
         // write flags
