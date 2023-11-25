@@ -2843,24 +2843,28 @@ function (window, undefined) {
 		return res;
 	};
 	VHLOOKUPCache.prototype._calculate = function (cacheArray, valueForSearching, lookup, opt_arg4, opt_arg5) {
-		var res = -1, i = 0, j, length = cacheArray.length, k, elem, val, nextVal;
-		var xlookup = opt_arg4 !== undefined && opt_arg5 !== undefined;
+		let res = -1, i = 0, j, length = cacheArray.length, k, elem, val, nextVal;
+		let xlookup = opt_arg4 !== undefined && opt_arg5 !== undefined;
 
 		//TODO неверно работает функция, допустим для случая: VLOOKUP("12",A1:A5,1) 12.00 ; "qwe" ; "3" ; 3.00 ; 4.00
-
 		//ascending order: ..., -2, -1, 0, 1, 2, ..., A-Z, FALSE
-		var _compareValues = function (val1, val2, op) {
+
+		const _compareValues = function (val1, val2, op) {
+			if (val2.type === cElementType.string) {
+				val2 = new cString(val2.getValue().toLowerCase());
+			}
+
 			if (opt_arg4 === 2 && val2.type === cElementType.string) {
-				var matchingInfo = AscCommonExcel.matchingValue(val1);
+				let matchingInfo = AscCommonExcel.matchingValue(val1);
 				return AscCommonExcel.matching(val2, matchingInfo)
 			} else {
-				var res = _func[val1.type][val2.type](val1, val2, op);
+				let res = _func[val1.type][val2.type](val1, val2, op);
 				return res ? res.value : false;
 			}
 		};
 
-		var addNextOptVal = function (arrayVal, searchVal, isGreater) {
-			var _needPush;
+		const addNextOptVal = function (arrayVal, searchVal, isGreater) {
+			let _needPush;
 			if (opt_arg4 === -1 && (isGreater === false || (isGreater === undefined && _compareValues(arrayVal.v, searchVal, "<")))) {
 				_needPush = true;
 			} else if (opt_arg4 === 1 && (isGreater || (isGreater === undefined && _compareValues(arrayVal.v, searchVal, ">")))) {
@@ -2873,7 +2877,7 @@ function (window, undefined) {
 			}
 		};
 
-		var simpleSearch = function (revert) {
+		const simpleSearch = function (revert) {
 			if (revert) {
 				for (i = length - 1; i >= 0; i--) {
 					elem = cacheArray[i];
@@ -2908,7 +2912,7 @@ function (window, undefined) {
 		//мы делаем иначе: бинарный поиск происходит всегда и не зависит от длины массива, при поиске наибольшего(наименьшего)
 		//из обработанных элементов выбираем те, которые больше(меньше) -> из них уже ищем наименьший(наибольший)
 		//т.е. в итоге получаем следующий наименьший/наибольший элемент
-		var _binarySearch = function (revert) {
+		const _binarySearch = function (revert) {
 			i = 0;
 
 			//TODO проверить обратный поиск
@@ -2956,13 +2960,16 @@ function (window, undefined) {
 				return -1;
 			}
 
-			var _res = Math.min(i, j);
+			let _res = Math.min(i, j);
 			_res = -1 === _res ? _res : cacheArray[_res].i;
 			return _res;
 		};
 
-		//TODO opt_arg5 - пока не обрабатываю результат == 2( A wildcard match where *, ?, and ~ have)
+		if (valueForSearching.type === cElementType.string) {
+			valueForSearching = new cString(valueForSearching.getValue().toLowerCase());
+		}
 
+		//TODO opt_arg5 - пока не обрабатываю результат == 2( A wildcard match where *, ?, and ~ have)
 		if (xlookup) {
 			if (Math.abs(opt_arg5) === 1) {
 				res = simpleSearch(opt_arg5 < 0);
