@@ -4123,7 +4123,6 @@ function (window, undefined) {
 			availablePrefixMap['d']['m2'] = 1;
 			availablePrefixMap['c']['m2'] = 1;
 			availablePrefixMap['m']['m2'] = 1;
-			// availablePrefixMap['m']['2'] = 1;
 			availablePrefixMap['u']['m2'] = 1;
 			availablePrefixMap['n']['m2'] = 1;
 			availablePrefixMap['p']['m2'] = 1;
