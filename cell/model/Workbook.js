@@ -8548,7 +8548,9 @@
 		var range = this.getRange3(0, 0, gc_nMaxRow0, gc_nMaxCol0);
 		range._setPropertyNoEmpty(null, null, function(cell) {
 			if (cell.isFormula()) {
-				formulas.push(needReturnCellProps ? {f: cell.getFormulaParsed(), c: cell.nCol, r: cell.nRow} : cell.getFormulaParsed());
+				if (!cell.formulaParsed.ref || (cell.formulaParsed.ref && cell.formulaParsed.checkFirstCellArray(cell))) {
+					formulas.push(needReturnCellProps ? {f: cell.getFormulaParsed(), c: cell.nCol, r: cell.nRow} : cell.getFormulaParsed());
+				}
 			}
 		});
 		for (var i = 0; i < this.TableParts.length; ++i) {
