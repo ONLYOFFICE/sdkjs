@@ -4123,6 +4123,7 @@ function (window, undefined) {
 			availablePrefixMap['d']['m2'] = 1;
 			availablePrefixMap['c']['m2'] = 1;
 			availablePrefixMap['m']['m2'] = 1;
+			// availablePrefixMap['m']['2'] = 1;
 			availablePrefixMap['u']['m2'] = 1;
 			availablePrefixMap['n']['m2'] = 1;
 			availablePrefixMap['p']['m2'] = 1;
@@ -5028,27 +5029,26 @@ function (window, undefined) {
 	cCONVERT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCONVERT.prototype.argumentsType = [argType.any, argType.any, argType.any];
 	cCONVERT.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
+		let oArguments = this._prepareArguments(arg, arguments[1], true);
+		let argClone = oArguments.args;
 
 		argClone[0] = argClone[0].tocNumber();
 		argClone[1] = argClone[1].tocString();
 		argClone[2] = argClone[2].tocString();
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var calcFunc = function (argArray) {
-			var num = argArray[0];
-			var from = argArray[1];
-			var to = argArray[2];
-			var prefixFrom = null;
-			var prefixTo = null;
+		const calcFunc = function (argArray) {
+			let num = argArray[0],
+				from = argArray[1],
+				to = argArray[2],
+				prefixFrom = null,
+				prefixTo = null;
 
-
-			var parseFrefix = function (val) {
+			const parseFrefix = function (val) {
 				var isPrefix = val.substr(0, 1);
 				var isOperator;
 				if (availablePrefixMap[isPrefix]) {
@@ -5069,30 +5069,38 @@ function (window, undefined) {
 			};
 
 			generatePrefixAvailableMap();
-			var getPrefixFrom = parseFrefix(from);
-			var prefixValueFrom = null;
+			let getPrefixFrom = parseFrefix(from);
+			let prefixValueFrom = null;
 			if (getPrefixFrom) {
 				prefixFrom = getPrefixFrom.prefix;
 				from = getPrefixFrom.operator;
 				prefixValueFrom = prefixValueMap[prefixFrom];
+				// if num in the operator, do mult operation to get right prefixValue
+				let checkNum = getPrefixFrom.operator.search(/[0-9]/gi);
+				if (checkNum !== -1) {
+					prefixValueFrom = Math.pow(prefixValueFrom, getPrefixFrom.operator[checkNum]);
+				}
 			}
-			var getPrefixTo = parseFrefix(to);
-			var prefixValueTo = null;
+			let getPrefixTo = parseFrefix(to);
+			let prefixValueTo = null;
 			if (getPrefixTo) {
 				prefixTo = getPrefixTo.prefix;
 				to = getPrefixTo.operator;
 				prefixValueTo = prefixValueMap[prefixTo];
+				// if num in the operator, do mult operation to get right prefixValue
+				let checkNum = getPrefixTo.operator.search(/[0-9]/gi);
+				if (checkNum !== -1) {
+					prefixValueTo = Math.pow(prefixValueTo, getPrefixTo.operator[checkNum]);
+				}
 			}
 
-
-			var coeff;
-			var res;
+			let coeff, res;
 			if (from === to) {
 				res = num;
 			} else if (null !== (coeff = getUnitConverterCoeff(from, to))) {
 				if (coeff.length) {
 					res = num;
-					for (var i = 0; i < coeff.length; i++) {
+					for (let i = 0; i < coeff.length; i++) {
 						if (0 === coeff[i].type) {
 							res *= coeff[i].val;
 						} else {
@@ -5105,7 +5113,7 @@ function (window, undefined) {
 			} else if (null !== (coeff = getUnitConverterCoeff(to, from))) {
 				if (coeff.length) {
 					res = num;
-					for (var i = coeff.length - 1; i >= 0; i--) {
+					for (let i = coeff.length - 1; i >= 0; i--) {
 						if (0 === coeff[i].type) {
 							res /= coeff[i].val;
 						} else {

@@ -22785,6 +22785,67 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
 
+		// for bug 63740
+		oParser = new parserFormula('CONVERT(1,"m","mm")', "A2", ws);
+		assert.ok(oParser.parse(), 'CONVERT(1,"m","mm")');
+		assert.strictEqual(oParser.calculate().getValue(), 1000, 'Result of CONVERT(1,"m","mm")');
+
+		oParser = new parserFormula('CONVERT(1,"m2","mm2")', "A2", ws);
+		assert.ok(oParser.parse(), 'CONVERT(1,"m2","mm2")');
+		assert.strictEqual(oParser.calculate().getValue(), 1000000, 'Result of CONVERT(1,"m2","mm"2)');
+
+		oParser = new parserFormula('CONVERT(1,"m3","mm3")', "A2", ws);
+		assert.ok(oParser.parse(), 'CONVERT(1,"m3","mm3")');
+		assert.strictEqual(oParser.calculate().getValue().toFixed(), "1000000000", 'Result of CONVERT(1,"m3","mm3")');
+
+		oParser = new parserFormula('CONVERT(1,"m","cm")', "A2", ws);
+		assert.ok(oParser.parse(), 'CONVERT(1,"m","cm")');
+		assert.strictEqual(oParser.calculate().getValue(), 100, 'Result of CONVERT(1,"m","cm")');
+
+		oParser = new parserFormula('CONVERT(1,"m2","cm2")', "A2", ws);
+		assert.ok(oParser.parse(), 'CONVERT(1,"m2","cm2")');
+		assert.strictEqual(oParser.calculate().getValue(), 10000, 'Result of CONVERT(1,"m2","cm"2)');
+
+		oParser = new parserFormula('CONVERT(1,"m3","cm3")', "A2", ws);
+		assert.ok(oParser.parse(), 'CONVERT(1,"m3","cm3")');
+		assert.strictEqual(oParser.calculate().getValue().toFixed(), "1000000", 'Result of CONVERT(1,"m3","cm3")');
+
+		oParser = new parserFormula('CONVERT(1,"cm","m")', "A2", ws);
+		assert.ok(oParser.parse(), 'CONVERT(1,"cm","m")');
+		assert.strictEqual(oParser.calculate().getValue(), 0.01, 'Result of CONVERT(1,"cm","m")');
+
+		oParser = new parserFormula('CONVERT(1,"cm2","m2")', "A2", ws);
+		assert.ok(oParser.parse(), 'CONVERT(1,"cm2","m2")');
+		assert.strictEqual(oParser.calculate().getValue(), 0.0001, 'Result of CONVERT(1,"cm2","m2")');
+
+		oParser = new parserFormula('CONVERT(1,"cm3","m3")', "A2", ws);
+		assert.ok(oParser.parse(), 'CONVERT(1,"cm3","m3")');
+		assert.strictEqual(oParser.calculate().getValue().toFixed(6), "0.000001", 'Result of CONVERT(1,"cm3","m3")');
+
+		oParser = new parserFormula('CONVERT(1,"m","m")', "A2", ws);
+		assert.ok(oParser.parse(), 'CONVERT(1,"m","m")');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of CONVERT(1,"m","m")');
+
+		oParser = new parserFormula('CONVERT(1,"m2","m2")', "A2", ws);
+		assert.ok(oParser.parse(), 'CONVERT(1,"m2","m2")');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of CONVERT(1,"m2","m2")');
+
+		oParser = new parserFormula('CONVERT(1,"m3","m3")', "A2", ws);
+		assert.ok(oParser.parse(), 'CONVERT(1,"m3","m3")');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of CONVERT(1,"m3","m3")');
+
+		oParser = new parserFormula('CONVERT(1,"m^1","cm^1")', "A2", ws);
+		assert.ok(oParser.parse(), 'CONVERT(1,"m^1","cm^1")');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of CONVERT(1,"m^1","cm^1")');
+
+		oParser = new parserFormula('CONVERT(1,"m^2","cm^2")', "A2", ws);
+		assert.ok(oParser.parse(), 'CONVERT(1,"m^2","cm^2")');
+		assert.strictEqual(oParser.calculate().getValue(), 10000, 'Result of CONVERT(1,"m^2","cm^2")');
+
+		oParser = new parserFormula('CONVERT(1,"m^3","cm^3")', "A2", ws);
+		assert.ok(oParser.parse(), 'CONVERT(1,"m^3","cm^3")');
+		assert.strictEqual(oParser.calculate().getValue().toFixed(), "1000000", 'Result of CONVERT(1,"m^3","cm^3")');
+
 		testArrayFormula2(assert, "CONVERT", 3, 3, true);
 	});
 
