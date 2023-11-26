@@ -127,7 +127,6 @@ CChartsDrawer.prototype =
 
 	//****draw and recalculate functions****
 	recalculate : function (chartSpace) {
-		console.log(chartSpace)
 		this.cChartSpace = chartSpace;
 
 		this.calcProp = {};
@@ -2761,11 +2760,11 @@ CChartsDrawer.prototype =
 		} else if (val < yPoints[0].val) {
 			resPos = Math.abs(yPoints[1].pos - yPoints[0].pos);
 			resVal = yPoints[1].val - yPoints[0].val;
-			diffVal = Math.abs(yPoints[0].val) - Math.abs(val);
+			diffVal = yPoints[0].val - val;
 			if (isOx || isRect) {
-				result = yPoints[0].pos - Math.abs((diffVal / resVal) * resPos);
+				result = yPoints[0].pos - (diffVal / resVal) * resPos;
 			} else {
-				result = yPoints[0].pos + Math.abs((diffVal / resVal) * resPos);
+				result = yPoints[0].pos + (diffVal / resVal) * resPos;
 			}
 
 			if (!ignoreAxisLimits && (result > yPoints[yPoints.length - 1].pos || result < yPoints[0].pos)) {
@@ -16200,12 +16199,12 @@ CColorObj.prototype =
 				this.coordinates[oSeries.parent.Id] = {};
 			}
 			if (!this.coordinates[oSeries.parent.Id][oSeries.Id]) {
-				this.coordinates[oSeries.parent.Id][oSeries.Id] = {coords: {xVals: [], yVals: []}, path: [], ptCount: null, chartletiables: null, rSquared: null};
+				this.coordinates[oSeries.parent.Id][oSeries.Id] = {coords: {catVals: [], valVals: []}, path: [], ptCount: null, chartletiables: null, rSquared: null};
 			}
 
 			this.coordinates[oSeries.parent.Id][oSeries.Id].ptCount = ptCount;
-			this.coordinates[oSeries.parent.Id][oSeries.Id].coords.xVals.push(xVal);
-			this.coordinates[oSeries.parent.Id][oSeries.Id].coords.yVals.push(yVal);
+			this.coordinates[oSeries.parent.Id][oSeries.Id].coords.catVals.push(xVal);
+			this.coordinates[oSeries.parent.Id][oSeries.Id].coords.valVals.push(yVal);
 		},
 
 		recalculate: function (charts) {
@@ -16225,201 +16224,236 @@ CColorObj.prototype =
 		_calculateLine: function (oChart, coordinates, attributes) {
 			const type = attributes.trendlineType;
 
-			const xAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[0]);
-			const yAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[1]);
-			const order = attributes.order ? attributes.order + 1 : 2;
-			const chartletiables = this._getEquationCoefficients(coordinates.coords.xVals, coordinates.coords.yVals, type, order, attributes.intercept);
-			const equationStorage = this._obtainEquationStorage(type);
+			const catAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[0]);
+			const valAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[1]);
 			const horOrientation = !!oChart.axId[0].xPoints;
 
-			const _findMidCoordinates = function (pointsNumber) {
-				const results = {xVals: [], yVals: []};
-				const xNet = xAxis.max - xAxis.min;
-				for (let i = 0; i < pointsNumber; i++) {
-					const xVal = (xNet / (pointsNumber - 1)) * i + xAxis.min;
-					const yVal = equationStorage.calcYVal ? equationStorage.calcYVal(xVal, chartletiables) : 0;
-
-					results.xVals.push(xVal);
-					results.yVals.push(yVal);
-				}
-				return results
-			}
-
 			let results = null;
+			let startPoint = null;
 			if (type === AscFormat.TRENDLINE_TYPE_MOVING_AVG) {
-				const period = attributes.period ? attributes.period : 0
-				results = this._getMAline(coordinates.coords.xVals, coordinates.coords.yVals, coordinates.ptCount, period, !yAxis.scaling.logBase)
+				const period = attributes.period ? attributes.period : 0;
+				results = this._getMAline(coordinates.coords.catVals, coordinates.coords.valVals, coordinates.ptCount, period, valAxis.scaling.logBase);
 			} else {
+				const order = attributes.order ? attributes.order + 1 : 2;
+				const chartletiables = this._getEquationCoefficients(coordinates.coords.catVals, coordinates.coords.valVals, type, order, attributes.intercept);
+				const equationStorage = this._obtainEquationStorage(type);
 
 				if (chartletiables && equationStorage.calcYVal) {
 
-					//function to obtain arbitrary point of the equation
-					const _lineCoordinate = function (xVal) {
-						let yVal = equationStorage.calcYVal(xVal, chartletiables);
-						return {xVal: xVal, yVal: yVal}
+					const _findMidCoordinates = function (pointsNumber) {
+						const results = {catVals: [], valVals: []};
+						const catNet = catAxis.max - catAxis.min;
+						for (let i = 0; i < pointsNumber; i++) {
+							const catVal = (catNet / (pointsNumber - 1)) * i + catAxis.min;
+							const valVal = equationStorage.calcYVal ? equationStorage.calcYVal(catVal, chartletiables) : 0;
+		
+							results.catVals.push(catVal);
+							results.valVals.push(valVal);
+						}
+						return results
 					}
 
-					const _quadraticBezier = function () {
-
-						const controlPoints = {xVals: [], yVals: []}
-						const start = _lineCoordinate(xAxis.min)
-						const end = _lineCoordinate(xAxis.max)
-
-						controlPoints.xVals.push(start.xVal);
-						controlPoints.yVals.push(start.yVal);
-						// only linear trendlines does not contain slope property
-						if (equationStorage.slope) {
-
-							// find the slope which is a derevative of specific equation
-							const _findLine = function (xVal, yVal) {
-								const m = equationStorage.slope(xVal, chartletiables)
-								const b = yVal - (m * xVal)
-								return [m, b]
+					const _getLineCoords = function () {
+						const isLog = valAxis.scaling.logBase;
+						const controlPoints = {catVals: [], valVals: []};
+						const results = {catVals: [], valVals: []};
+						// Step 1 find edges of line 
+						// --------------------------------------
+						const _lineCoordinate = function (storage, point, isVal) {
+							if(isVal){
+								const valVal = equationStorage.calcYVal(point, chartletiables, isLog);
+								storage.catVal = point;
+								storage.valVal = valVal;
+							} else {
+								const catVal = equationStorage.calcXVal(point, chartletiables, isLog);
+								storage.catVal = catVal;
+								storage.valVal = point;
 							}
-
-							const line1Letiables = _findLine(start.xVal, start.yVal);
-							const line2Letiables = _findLine(end.xVal, end.yVal);
-
-							// find the intersection of two tangent lines
-							const xVal = (line2Letiables[1] - line1Letiables[1]) / (line1Letiables[0] - line2Letiables[0])
-							const yVal = (xVal * line1Letiables[0]) + line1Letiables[1]
-							controlPoints.xVals.push(xVal);
-							controlPoints.yVals.push(yVal);
-
 						}
 
-						controlPoints.xVals.push(end.xVal);
-						controlPoints.yVals.push(end.yVal);
-						return controlPoints
-					};
+						const start = {catVal: null, valVal: null};
+						const end = {catVal: null, valVal: null};
+						_lineCoordinate(start, catAxis.min, true);
+						_lineCoordinate(end, catAxis.max, true);
 
-					/* ----------------------------------------------------------------------------------------------------------------- */
+						// yValue for log scale can not be <= 0
+						if (isLog && isNaN(start.valVal)) {
+							_lineCoordinate(start, -1.301029, false);
+						}
 
-					const _approximatedCubicBezier = function () {
-						const controlPoints = {xVals: [null, null, null, null], yVals: [null, null, null, null]};
-						const start = _lineCoordinate(xAxis.min);
-						const end = _lineCoordinate(xAxis.max);
+						// Start from the bottom boundary if possible
+						let lowerBoundary = valAxis.yPoints ? valAxis.yPoints[0].val : valAxis.xPoints[0].val;
+						lowerBoundary = isLog ? Math.log10(lowerBoundary) : lowerBoundary;
+						if (start.valVal < lowerBoundary) {
+							_lineCoordinate(start, lowerBoundary, false);
+						}
 
-						const _findLine = function (xVal, yVal) {
-							const m = equationStorage.logSlope(xVal, chartletiables);
-							const b = Math.log10(yVal) - (m * xVal);
+						// End to the upper boundary if possible
+						let upperBoundary = valAxis.yPoints ? valAxis.yPoints[valAxis.yPoints.length - 1].val : valAxis.xPoints[valAxis.xPoints.length - 1].val;
+						upperBoundary = isLog ? Math.log10(upperBoundary) : upperBoundary;
+						if (end.valVal > upperBoundary) {
+							_lineCoordinate(end, upperBoundary, false);
+						}
+
+						// find slope at given point
+						const _findLine = function (catVal, valVal) {
+							const m = equationStorage.slope(catVal, chartletiables, isLog);
+							const b = valVal - (m * catVal);
 							return [b, m];
 						}
-
-						const setNewStartPoint = function (point){
-							start.yVal = point;
-							start.xVal = equationStorage.calcXVal(start.yVal, chartletiables);
-						}
-
-						// y > 0, always.
-						// Assumptions: power and exponential trendlines can not have y<=0, if contradiction then something went wrong
-						if (start.yVal <= 0) {
-							setNewStartPoint(0.05);
-						}
-
-						if (start.yVal < yAxis.yPoints[0].val) {
-							setNewStartPoint(yAxis.yPoints[0].val);
-						}
-
-						// y value should be between [end.point, end.point/1000] if the slope of endpoints is small
-						const line2Letiables = _findLine(end.xVal, end.yVal);
-						if (line2Letiables[1] < 0.2 && start.yVal < end.yVal/1000){
-							setNewStartPoint(end.yVal/1000);
+						
+						const line2Letiables = _findLine(end.catVal, end.valVal);
+						let line1Letiables = _findLine(start.catVal, start.valVal);
+						const lowestPoint = isLog ? end.valVal - 3 : end.valVal/1000;
+						if (Math.atan(line2Letiables[1]) < 1.56 && Math.atan(line1Letiables[1]) > 1.56 && start.valVal < lowestPoint){
+							_lineCoordinate(start, lowestPoint, false);
+							line1Letiables = _findLine(start.catVal, start.valVal);
 						}	
-						const line1Letiables = _findLine(start.xVal, start.yVal);
 
-						// at this point we know start and end points!
-						const getInterpolation = function (first, second, scale) {
-							const coord = (scale * second) + ((1 - scale) * first);
-							return coord;
+						
+						let direction = true;
+						const startPoint = {catVals:[], valVals:[]};
+						if(Math.atan(line1Letiables[1]) < 1.56 && Math.atan(line2Letiables[1]) > 1.56){
+							startPoint.catVals.push(start.catVal);
+							startPoint.valVals.push(end.catVal);
+							_lineCoordinate(start, (end.catVal + start.catVal) / 2, true);
+							line1Letiables = _findLine(start.catVal, start.valVal);
+							direction = false;
 						}
 
-						// formula to predict any point coordinates on the line, using bernstein polynomials 
-						const predictY = function (cP, t) {
-							const a0 = Math.pow((1 - t), 3);
-							const a1 = 3 * t *Math.pow((1 - t), 2);
-							const a2 = 3 * t * t * (1 - t);
-							const a3 = Math.pow(t, 3);
-							return (a0 * cP[0]) + (a1 * cP[1]) + (a2 * cP[2]) + (a3 * cP[3]);
-						}
-
-						if(line2Letiables[0] != line1Letiables[0] && line2Letiables[1] != line1Letiables[1]){
-							const midXVal = (line2Letiables[0] - line1Letiables[0]) / (line1Letiables[1] - line2Letiables[1]);
-							const midYVal = (midXVal * line1Letiables[1]) + line1Letiables[0];
-							controlPoints.xVals[0] = start.xVal;
-							controlPoints.yVals[0] = Math.log10(start.yVal);
-							controlPoints.xVals[2] = midXVal;
-							controlPoints.yVals[2] = midYVal;
-							controlPoints.xVals[3] = end.xVal;
-							controlPoints.yVals[3] = Math.log10(end.yVal);
-	
-							let lineStart = Math.log10(start.yVal);
-							let lineEnd = midYVal
-							const points = 4;
-							const storage = {minError: null, cpY: null, cpX: null};
-							for (let j = 0; j < 10; j++) {
-								controlPoints.yVals[1] = getInterpolation(lineStart, lineEnd, 0.5);
-								controlPoints.xVals[1] = (controlPoints.yVals[1] - line1Letiables[0]) / line1Letiables[1];
-								const length = 1 / (points + 1);
-								let choice = 0;
-								let predictedError = 0;
-
-								for(let i = 1; i < points + 1; i++){
-									let t = length * i;
-									const predictedYVal = predictY(controlPoints.yVals, t);
-									const predictedXVal = predictY(controlPoints.xVals, t);
-									const actualYVal = Math.log10(equationStorage.calcYVal(predictedXVal, chartletiables));
-									predictedError += predictedYVal - actualYVal;
-								}
-	
-								if(storage.minError === null || Math.abs(predictedError) <= storage.minError){
-									storage.minError = Math.abs(predictedError);
-									storage.cpY = controlPoints.yVals[1];
-									storage.cpX = controlPoints.xVals[1]
-								}
-								if(predictedError > 0){
-									lineEnd = controlPoints.yVals[1];
-								}else if(predictedError < -0){
-									lineStart = controlPoints.yVals[1];
-								}
+						//------------------------------------
+						const normalize = function () {
+							for(let i = 0; i < controlPoints.valVals.length; i++){
+								controlPoints.valVals[i] = Math.pow(10, controlPoints.valVals[i]);
 							}
-							controlPoints.xVals[1]  = storage.cpX;
-							controlPoints.yVals[0]  = Math.pow(10, controlPoints.yVals[0]);
-							controlPoints.yVals[1]  = Math.pow(10, storage.cpY);
-							controlPoints.yVals[2]  = Math.pow(10, controlPoints.yVals[2]);
-							controlPoints.yVals[3]  = Math.pow(10, controlPoints.yVals[3]);
-						}else{
-							controlPoints.xVals = [start.xVal, end.xVal];
-							controlPoints.yVals = [start.yVal, end.yVal];
+						}
+						//Step 2 check slopes at the edges to continue
+						controlPoints.catVals.push(start.catVal);
+						controlPoints.valVals.push(start.valVal);
+
+						if(line2Letiables[1] === line1Letiables[1]){
+							controlPoints.catVals.push(end.catVal);
+							controlPoints.valVals.push(end.valVal);
+							if (isLog){
+								normalize();
+							}
+							return {startPoint: startPoint, mainLine: controlPoints}
 						}
 
-						return controlPoints;
+						// --------------------------------------
+						//Step 3 calculate mid control point
+						const midCatVal = (line2Letiables[0] - line1Letiables[0]) / (line1Letiables[1] - line2Letiables[1]);
+						const midValVal = (midCatVal * line1Letiables[1]) + line1Letiables[0];
+						controlPoints.catVals.push(midCatVal);
+						controlPoints.valVals.push(midValVal);
+						controlPoints.catVals.push(end.catVal);
+						controlPoints.valVals.push(end.valVal);
+
+						// --------------------------------------
+
+						const check = function () {
+
+							const obtainBernsteintPolynomials = function (len, t) {
+								const result = [];
+								result.push(Math.pow((1 - t), len));
+								result.push(len * t * Math.pow((1 - t), (len - 1)));
+								if(len == 3){
+									result.push(len * Math.pow(t, (len - 1)) * (1 - t));
+								}
+								result.push(Math.pow(t, len));
+								return result
+							}
+							const predictY = function (cP, t) {
+								const len = cP.length;
+								const a = obtainBernsteintPolynomials(len-1, t);
+								let result = 0;
+								for(let i = 0; i < len; i++){
+									result += a[i] * cP[i];
+								}
+								return result;
+							}
+
+							const t = 0.5;
+							const predictedYVal = predictY(controlPoints.valVals, t);
+							const predictedXVal = predictY(controlPoints.catVals, t);
+							const actualYVal = equationStorage.calcYVal(predictedXVal, chartletiables, isLog);
+							return predictedYVal - actualYVal;
+						}
+
+						const error = isLog ? 0.01 : 0.05;
+
+						// --------------------------------------
+						//Step 4 check mid control point
+						const predictedErr = check();
+						
+						if(predictedErr <= error && predictedErr>= -error){
+							if (isLog){
+								normalize();
+							}
+							return {startPoint: startPoint, mainLine: controlPoints}
+						}
+
+						//--------------------------------------------
+						//Step 5 find approximation of cubic bezier;
+						controlPoints.catVals.splice(1, 0, null);
+						controlPoints.valVals.splice(1, 0, null);
+
+						let lineStart = start.valVal;
+						let lineEnd = midValVal
+						const storage = {minError: null, cpY: null, cpX: null};
+						for (let i = 0; i < 10; i++) {
+							controlPoints.valVals[1] = (0.5 * lineEnd) + (0.5 * lineStart);
+							controlPoints.catVals[1] = (controlPoints.valVals[1] - line1Letiables[0]) / line1Letiables[1];
+							let predictedError = check();
+							if(storage.minError === null || Math.abs(predictedError) <= storage.minError){
+								storage.minError = Math.abs(predictedError);
+								storage.cpY = controlPoints.valVals[1];
+								storage.cpX = controlPoints.catVals[1];
+							}
+
+							if ((predictedError > error && direction) || (predictedError < -error && !direction)) {
+								lineEnd = controlPoints.valVals[1];
+							}else if ((predictedError > error && !direction) || (predictedError < -error && direction)) {
+								lineStart = controlPoints.valVals[1];
+							} else {
+								break;
+							}
+						}
+
+						if (controlPoints.catVals[1] != storage.cpX || controlPoints.valVals[1] != storage.cpY) {
+							controlPoints.catVals[1] = storage.cpX;
+							controlPoints.valVals[1] = storage.cpY;
+						}
+
+						// console.log(controlPoints);
+						if (isLog) {
+							normalize();
+						}
+
+						return {startPoint: startPoint, mainLine: controlPoints};
 					}
 
-					/* ----------------------------------------------------------------------------------------------------------------- */
-
 					if (type === AscFormat.TRENDLINE_TYPE_POLY) {
-						const midPointsNum = 450
+						const midPointsNum = 450;
 						results = _findMidCoordinates(midPointsNum);
-					} else if (yAxis.scaling.logBase){
-						results = _approximatedCubicBezier();
 					} else {
-						results = _quadraticBezier();
+						const lineCoords = _getLineCoords();
+						results = lineCoords.mainLine;
+						startPoint = lineCoords.startPoint;
 					}
 
 					if (attributes.dispEq) {
 						coordinates.chartletiables = chartletiables;
-						console.log(coordinates.chartletiables)
+						console.log(coordinates.chartletiables);
 					}
 					if (attributes.dispRSqr) {
-						coordinates.rSquared = this._dispRSquared(coordinates.coords.xVals, coordinates.coords.yVals, chartletiables, type);
-						console.log(coordinates.rSquared)
+						coordinates.rSquared = this._dispRSquared(coordinates.coords.catVals, coordinates.coords.valVals, chartletiables, type);
+						console.log(coordinates.rSquared);
 					}
-
 				}
 			}
 
-			// At this point we should have an array of xVals and yVals
+			// At this point we should have an array of catVals and valVals
 			if (results) {
 				const pathH = this.cChartDrawer.calcProp.pathH;
 				const pathW = this.cChartDrawer.calcProp.pathW;
@@ -16428,127 +16462,133 @@ CColorObj.prototype =
 
 				const valsToPos = function (arr, cChartDrawer) {
 					const posArr = {xPos: [], yPos: []}
-					for (let i = 0; i < arr.xVals.length; i++) {
-						const xPos = cChartDrawer.getYPosition(arr.xVals[i], xAxis);
-						const yPos = cChartDrawer.getYPosition(arr.yVals[i], yAxis, true);
+					for (let i = 0; i < arr.catVals.length; i++) {
+						let pos1 = cChartDrawer.getYPosition(arr.catVals[i], catAxis);
+						let pos2 = cChartDrawer.getYPosition(arr.valVals[i], valAxis, true);
 
-						if (horOrientation) {
-							posArr.xPos.push(xPos)
-							posArr.yPos.push(yPos)
-						} else {
-							posArr.yPos.push(xPos)
-							posArr.xPos.push(yPos)
-						}
-					
+						let catPos = horOrientation ? pos1 : pos2;
+						let valPos = horOrientation ? pos2 : pos1;
+
+						posArr.xPos.push(catPos);
+						posArr.yPos.push(valPos);
 					}
 					return posArr
 				}
 
-				const positions = valsToPos(results, this.cChartDrawer)
-				console.log(positions)
-				path.moveTo(positions.xPos[0] * pathW, positions.yPos[0] * pathH);
+				const positions = valsToPos(results, this.cChartDrawer);
+				if(startPoint && startPoint.catVals.length > 0 && startPoint.valVals.length > 0){
+					const startPosiontion = valsToPos(startPoint, this.cChartDrawer);
+					path.moveTo(startPosiontion.xPos[0] * pathW, startPosiontion.yPos[0] * pathH);
+					path.lnTo(positions.xPos[0] * pathW, positions.yPos[0] * pathH);
+				}else{
+					path.moveTo(positions.xPos[0] * pathW, positions.yPos[0] * pathH);
+				}
 
-				// if cond is true use for loop 
-				// false use bezier
-				if (positions.xPos.length ===  4) {
+				if (positions.xPos.length === 4) {
 					path.cubicBezTo(positions.xPos[1] * pathW, positions.yPos[1] * pathH, positions.xPos[2] * pathW, positions.yPos[2] * pathH, positions.xPos[3] * pathW, positions.yPos[3] * pathH);
-						// for(let i=0; i<positions.xPos.length/4; i++){
-						// 	path.lnTo(positions.xPos[i*4 + 0] * pathW, positions.yPos[i*4 + 0] * pathH);
-						// 	path.cubicBezTo(positions.xPos[i*4 +1] * pathW, positions.yPos[i*4 +1] * pathH, positions.xPos[i*4 +2] * pathW, positions.yPos[i*4 +2] * pathH, positions.xPos[i*4 +3] * pathW, positions.yPos[i*4 +3] * pathH);
-
-						// }
-						// console.log(positions.xPos.length)
 				}else if (positions.xPos.length ===  3){
 					path.quadBezTo(positions.xPos[1] * pathW, positions.yPos[1] * pathH, positions.xPos[2] * pathW, positions.yPos[2] * pathH);
 				}else{
 					for (let i = 1; i < positions.xPos.length; i++) {
-						console.log(positions.xPos[i], positions.yPos[i])
 						path.lnTo(positions.xPos[i] * pathW, positions.yPos[i] * pathH);
 					}
 				}
 
 				coordinates.path.push(pathId);
-
-				if (type !== AscFormat.TRENDLINE_TYPE_MOVING_AVG){
-					const pathId2 = this.cChartDrawer.cChartSpace.AllocPath();
-					let path2 = this.cChartDrawer.cChartSpace.GetPath(pathId2);
-	
-					results = _findMidCoordinates(100);
-					const newPositions = valsToPos(results, this.cChartDrawer)
-					console.log(newPositions);
-
-					path2.moveTo(newPositions.xPos[0] * pathW, newPositions.yPos[0] * pathH);
-	
-					for (let i = 1; i < newPositions.xPos.length; i++) {
-						path2.lnTo(newPositions.xPos[i] * pathW, newPositions.yPos[i] * pathH);
-					}
-	
-					coordinates.path.push(pathId2);
-				}
-
 			}
 		},
 
-		_getMAline: function (xVals, yVals, ptCount, period, allow) {
-			const result = {xVals: [], yVals: []}
+		_getMAline: function (catVals, valVals, ptCount, period, allow) {
+			const result = {catVals: [], valVals: []}
 			if (ptCount > period) {
 				let sum = 0;
 				let counter = 0;
 				let j = 0;
 				for (let i = 0; i < ptCount; i++) {
 					//check if past existed and remove it
-					if (i >= period && xVals[j - counter] === i + 1 - period) {
-						sum -= yVals[j - counter]
+					if (i >= period && catVals[j - counter] === i + 1 - period) {
+						sum -= valVals[j - counter]
 						counter--;
 					}
 					//check if next exists and add it
-					if (xVals[j] === i + 1) {
-						sum += yVals[j]
+					if (catVals[j] === i + 1) {
+						sum += valVals[j]
 						counter++;
 						j++;
 					}
 					//sum/counter after sliding window will be created
 					if (i >= (period - 1) && counter !== 0) {
 						let yVal = sum / counter;
-						if(allow || yVal > 0){
-							result.yVals.push(yVal);
-							result.xVals.push(i + 1);
+						if(!allow || yVal > 0){
+							result.valVals.push(yVal);
+							result.catVals.push(i + 1);
 						}
 					}
 				}
 			}
+
 			return result
 		},
 
 		_obtainEquationStorage: function (type) {
 			const storage = {
 				[AscFormat.TRENDLINE_TYPE_EXP]: {
-					calcYVal: function (val, supps) {
-						return supps[0] * Math.exp(val * supps[1]);
-					}, slope: function (val, supps) {
-						return supps[0] * supps[1] * Math.exp(val * supps[1]);
-					}, calcXVal: function (val, supps) {
+					calcYVal: function (val, supps, isLog) {
+						const res = supps[0] * Math.exp(val * supps[1]);
+						if (isLog && res <= 0){
+							return NaN;
+						} else {
+							return isLog ? Math.log10(res) : res;
+						}
+					}, calcXVal: function (val, supps, isLog) {
+						val = isLog ? Math.pow(10, val) : val;
 						return Math.log(val / supps[0]) / supps[1];
-					}, logSlope: function (val, supps) {
-						return Math.log10(Math.exp(1)) * supps[1];
+					}, slope: function (val, supps, isLog) {
+						if (!isLog){
+							return supps[0] * supps[1] * Math.exp(val * supps[1]);
+						} else {
+							return Math.log10(Math.exp(1)) * supps[1];
+						}
 					}
 				}, [AscFormat.TRENDLINE_TYPE_LINEAR]: {
-					calcYVal: function (val, supps) {
-						return supps[1] * val + supps[0];
-					}, calcXVal: function (val, supps) {
+					calcYVal: function (val, supps, isLog) {
+						const res = supps[1] * val + supps[0];
+						if (isLog && res <= 0){
+							return NaN;
+						} else {
+							return isLog ? Math.log10(res) : res;
+						}
+					}, calcXVal: function (val, supps, isLog) {
+						val = isLog ? Math.pow(10, val) : val;
 						return (val - supps[0]) / supps[1];
-					}, logSlope: function (val, supps) {
-						return supps[1] / (Math.log(10) * (supps[1] * val + supps[0]));
+					}, slope: function (val, supps, isLog) {
+						if (!isLog){
+							return supps[1];
+						} else {
+							return supps[1] / (Math.log(10) * (supps[1] * val + supps[0]));
+						}
 					}
 				}, [AscFormat.TRENDLINE_TYPE_LOG]: {
-					calcYVal: function (val, supps) {
-						return val > 0 ? supps[1] * Math.log(val) + supps[0] : NaN;
-					}, slope: function (val, supps) {
-						return supps[1] / val;
-					}, calcXVal: function (val, supps) {
+					calcYVal: function (val, supps, isLog) {
+						if(val > 0){
+							const res = supps[1] * Math.log(val) + supps[0];
+							if (isLog && res <= 0){
+								return NaN;
+							} else {
+								return isLog ? Math.log10(res) : res;
+							}
+						} else {
+							return NaN;
+						}
+					}, calcXVal: function (val, supps, isLog) {
+						val = isLog ? Math.pow(10, val) : val;
 						return Math.exp((val - supps[0]) / supps[1]);
-					}, logSlope: function (val, supps) {
-						return supps[1] / (Math.log(10) * val * (supps[1] * Math.log(val) + supps[0]));
+					}, slope: function (val, supps, isLog) {
+						if (!isLog){
+							return supps[1] / val;
+						} else {
+							return supps[1] / (Math.log(10) * val * (supps[1] * Math.log(val) + supps[0]));
+						}
 					}
 				}, [AscFormat.TRENDLINE_TYPE_POLY]: {
 					calcYVal: function (val, supps) {
@@ -16561,14 +16601,22 @@ CColorObj.prototype =
 						return result;
 					}
 				}, [AscFormat.TRENDLINE_TYPE_POWER]: {
-					calcYVal: function (val, supps) {
-						return supps[0] * Math.pow(val, supps[1]);
-					}, slope: function (val, supps) {
-						return supps[0] * supps[1] * Math.pow(val, supps[1] - 1);
-					}, calcXVal: function (val, supps) {
+					calcYVal: function (val, supps, isLog) {
+						const res = supps[0] * Math.pow(val, supps[1]);
+						if (isLog && res <= 0){
+							return NaN;
+						} else {
+							return isLog ? Math.log10(res) : res;
+						}
+					}, calcXVal: function (val, supps, isLog) {
+						val = isLog ? Math.pow(10, val) : val;
 						return Math.pow((val / supps[0]), 1 / supps[1]);
-					}, logSlope: function (val, supps) {
-						return supps[1] / (Math.log(10) * val);
+					}, slope: function (val, supps, isLog) {
+						if (!isLog){
+							return supps[0] * supps[1] * Math.pow(val, supps[1] - 1);
+						} else {
+							return supps[1] / (Math.log(10) * val);
+						}
 					}
 				}
 			}
@@ -16576,14 +16624,14 @@ CColorObj.prototype =
 			return storage.hasOwnProperty(type) ? storage[type] : {};
 		},
 
-		_getEquationCoefficients: function (xVals, yVals, type, pow, intercept) {
-			if (xVals.length === yVals.length) {
+		_getEquationCoefficients: function (catVals, valVals, type, pow, intercept) {
+			if (catVals.length === valVals.length) {
 
 				if (type === AscFormat.TRENDLINE_TYPE_LOG || type === AscFormat.TRENDLINE_TYPE_POWER) {
 					intercept = null
 				}
 
-				const size = xVals.length
+				const size = catVals.length
 				pow = size < pow ? size : pow
 
 				const mappingStorage = this._obtainMappingStorage(type)
@@ -16591,12 +16639,12 @@ CColorObj.prototype =
 				const _mapCoordinates = function () {
 					for (let i = 0; i < size; i++) {
 						if (mappingStorage.xVal) {
-							xVals[i] = mappingStorage.xVal(xVals[i])
+							catVals[i] = mappingStorage.xVal(catVals[i])
 						}
 						if (mappingStorage.yVal) {
-							yVals[i] = mappingStorage.yVal(yVals[i])
+							valVals[i] = mappingStorage.yVal(valVals[i])
 						}
-						if (isNaN(xVals[i]) || isNaN(yVals[i])) {
+						if (isNaN(catVals[i]) || isNaN(valVals[i])) {
 							return false
 						}
 					}
@@ -16781,13 +16829,13 @@ CColorObj.prototype =
 					const y_intercept = (typeof intercept === 'number') ? 1 : 0
 
 					// Letiables = ((X_T@X)^-1)@X_T@Y
-					const X = _createMatrix(xVals, pow - y_intercept, y_intercept, 0)
-					const X_T = _findTranspose(X, pow - y_intercept, xVals.length)
-					const P = _matMul(X_T, X, pow - y_intercept, pow - y_intercept, xVals.length)
+					const X = _createMatrix(catVals, pow - y_intercept, y_intercept, 0)
+					const X_T = _findTranspose(X, pow - y_intercept, catVals.length)
+					const P = _matMul(X_T, X, pow - y_intercept, pow - y_intercept, catVals.length)
 					const P_I = _findInverse(P)
 					if (P_I) {
-						const Y = _createMatrix(yVals, 1, 1, intercept)
-						const S = _matMul(X_T, Y, pow - y_intercept, 1, xVals.length)
+						const Y = _createMatrix(valVals, 1, 1, intercept)
+						const S = _matMul(X_T, Y, pow - y_intercept, 1, catVals.length)
 						const letiables = _matMul(P_I, S, pow - y_intercept, 1, pow - y_intercept)
 						flatten(letiables, y_intercept, intercept)
 						
@@ -16826,13 +16874,13 @@ CColorObj.prototype =
 			return storage.hasOwnProperty(type) ? storage[type] : {}
 		},
 
-		_dispRSquared: function (xVals, yVals, chartletiables, type) {
+		_dispRSquared: function (catVals, valVals, chartletiables, type) {
 			const mappingStorage = this._obtainMappingStorage(type)
 			const findYMean = function () {
 				let sum = 0;
-				let size = yVals.length;
+				let size = valVals.length;
 				for (let i = 0; i < size; i++) {
-					sum += yVals[i]
+					sum += valVals[i]
 				}
 				return sum / size;
 			}
@@ -16855,10 +16903,10 @@ CColorObj.prototype =
 
 			let sumSquared = 0;
 			let sumRegression = 0;
-			for (let i = 0; i < yVals.length; i++) {
-				const yValPred = predictY(xVals[i])
-				sumRegression += Math.pow((yVals[i] - yValPred), 2);
-				sumSquared += Math.pow((yVals[i] - yMean), 2);
+			for (let i = 0; i < valVals.length; i++) {
+				const yValPred = predictY(catVals[i])
+				sumRegression += Math.pow((valVals[i] - yValPred), 2);
+				sumSquared += Math.pow((valVals[i] - yMean), 2);
 			}
 			return 1 - (sumRegression / sumSquared);
 		},
