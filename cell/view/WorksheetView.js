@@ -26348,6 +26348,11 @@
 		let oRanges = this.model.getSelection();
 		let aRanges = oRanges.ranges;
 
+		let _setSelection = function (_newSelectionRange) {
+			//aRanges[0].assign(_newSelectionRange.c1, _newSelectionRange.r1, _newSelectionRange.c2, _newSelectionRange.r2);
+			oThis.setSelection(_newSelectionRange);
+		};
+
 		let prepareFillHandle = function (selectionRange) {
 			let cloneSelection = selectionRange.clone();
 
@@ -26437,7 +26442,8 @@
 					cSerial.exec();
 
 					oThis._updateRange(oThis.activeFillHandle);
-					aRanges[0].assign(oThis.activeFillHandle.c1, oThis.activeFillHandle.r1, oThis.activeFillHandle.c2, oThis.activeFillHandle.r2);
+					_setSelection(oThis.activeFillHandle);
+
 					oThis.cleanFillHandleProps(true);
 					oThis.draw();
 				});
@@ -26465,7 +26471,7 @@
 					}
 
 					if (oThis.activeFillHandle) {
-						aRanges[0].assign(oThis.activeFillHandle.c1, oThis.activeFillHandle.r1, oThis.activeFillHandle.c2, oThis.activeFillHandle.r2);
+						_setSelection(oThis.activeFillHandle);
 						//History.SetSelection(oThis.activeFillHandle.clone());
 						History.SetSelectionRedo(oThis.activeFillHandle.clone());
 					}
@@ -26495,7 +26501,7 @@
 					History.StartTransaction();
 
 					oThis.applyFillHandle(null, null, null, true, function (success) {
-						aRanges[0].assign(_cloneSelection.c1, _cloneSelection.r1, _cloneSelection.c2, _cloneSelection.r2);
+						_setSelection(oThis.activeFillHandle);
 
 						History.SetSelection(_cloneSelection);
 						History.SetSelectionRedo(_cloneSelection);
