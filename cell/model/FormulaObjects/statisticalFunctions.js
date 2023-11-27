@@ -6088,15 +6088,14 @@ function (window, undefined) {
 
 		function forecast(fx, y, x) {
 
-			var fSumDeltaXDeltaY = 0, fSumSqrDeltaX = 0, _x = 0, _y = 0, xLength = 0, i;
-
+			let fSumDeltaXDeltaY = 0, fSumSqrDeltaX = 0, _x = 0, _y = 0, xLength = 0, i;
 			if (x.length !== y.length) {
 				return new cError(cErrorType.not_available);
 			}
 
 			for (i = 0; i < x.length; i++) {
 
-				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
+				if (!(x[i].type === cElementType.number && y[i].type === cElementType.number)) {
 					continue;
 				}
 
@@ -6110,12 +6109,12 @@ function (window, undefined) {
 
 			for (i = 0; i < x.length; i++) {
 
-				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
+				if (!(x[i].type === cElementType.number && y[i].type === cElementType.number)) {
 					continue;
 				}
 
-				var fValX = x[i].getValue();
-				var fValY = y[i].getValue();
+				let fValX = x[i].getValue();
+				let fValY = y[i].getValue();
 
 				fSumDeltaXDeltaY += (fValX - _x) * (fValY - _y);
 				fSumSqrDeltaX += (fValX - _x) * (fValX - _x);
@@ -6130,36 +6129,38 @@ function (window, undefined) {
 
 		}
 
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arr0 = [], arr1 = [];
-
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arr0 = [], arr1 = [];
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElement(0);
 		}
-		arg0 = arg0.tocNumber();
 
-		if (arg0 instanceof cError) {
+		arg0 = arg0.tocNumber();
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
 
-
-		if (arg1 instanceof cArea) {
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
 			arr0 = arg1.getValue();
-		} else if (arg1 instanceof cArray) {
+		} else if (arg1.type === cElementType.array) {
 			arg1.foreach(function (elem) {
 				arr0.push(elem);
 			});
+		} else if (arg1.type === cElementType.error) {
+			return arg1;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		if (arg2 instanceof cArea) {
+		if (arg2.type === cElementType.cellsRange || arg2.type === cElementType.cellsRange3D) {
 			arr1 = arg2.getValue();
-		} else if (arg2 instanceof cArray) {
+		} else if (arg2.type === cElementType.array) {
 			arg2.foreach(function (elem) {
 				arr1.push(elem);
 			});
+		} else if (arg2.type === cElementType.error) {
+			return arg2;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}

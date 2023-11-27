@@ -604,7 +604,7 @@ $(function () {
 	var fSortAscending = AscCommon.fSortAscending;
 	var g_oIdCounter = AscCommon.g_oIdCounter;
 
-	var oParser, wb, ws, dif = 1e-9, sData = AscCommon.getEmpty(), tmp, array;
+	var oParser, wb, ws, dif = 1e-9, sData = AscCommon.getEmpty(), tmp, array , ws2;
 	if (AscCommon.c_oSerFormat.Signature === sData.substring(0, AscCommon.c_oSerFormat.Signature.length)) {
 
 		Asc.spreadsheet_api.prototype._init = function() {
@@ -15777,8 +15777,8 @@ $(function () {
 
 		function forecast(fx, y, x) {
 
-			var fSumDeltaXDeltaY = 0, fSumSqrDeltaX = 0, _x = 0, _y = 0, xLength = 0;
-			for (var i = 0; i < x.length; i++) {
+			let fSumDeltaXDeltaY = 0, fSumSqrDeltaX = 0, _x = 0, _y = 0, xLength = 0;
+			for (let i = 0; i < x.length; i++) {
 				_x += x[i];
 				_y += y[i];
 				xLength++;
@@ -15787,10 +15787,10 @@ $(function () {
 			_x /= xLength;
 			_y /= xLength;
 
-			for (var i = 0; i < x.length; i++) {
+			for (let i = 0; i < x.length; i++) {
 
-				var fValX = x[i];
-				var fValY = y[i];
+				let fValX = x[i],
+					fValY = y[i];
 
 				fSumDeltaXDeltaY += (fValX - _x) * (fValY - _y);
 				fSumSqrDeltaX += (fValX - _x) * (fValX - _x);
@@ -15801,9 +15801,89 @@ $(function () {
 
 		}
 
+		// add a sheet to check area3D type
+		ws2 = wb.createWorksheet(0, "Sheet2");
+
 		oParser = new parserFormula("FORECAST(30,{6,7,9,15,21},{20,28,31,38,40})", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), forecast(30, [6, 7, 9, 15, 21], [20, 28, 31, 38, 40]));
+
+		oParser = new parserFormula("FORECAST(1,{1,2},{1,2})", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST(1,{1,2},{1,2})");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Result of FORECAST(1,{1,2},{1,2})");
+
+		oParser = new parserFormula("FORECAST(1,{1,2},{1,2,3})", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST(1,{1,2},{1,2,3})");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of FORECAST(1,{1,2},{1,2,3})");
+
+		oParser = new parserFormula("FORECAST(1,{1,2,3},{1,2})", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST(1,{1,2,3},{1,2})");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of FORECAST(1,{1,2,3},{1,2})");
+
+		ws.getRange2("A1").setValue("1");
+		ws.getRange2("A2").setValue("2");
+		ws.getRange2("B1").setValue("3");
+		ws.getRange2("B2").setValue("4");
+
+		ws2.getRange2("A1").setValue("1");
+		ws2.getRange2("A2").setValue("2");
+		ws2.getRange2("B1").setValue("3");
+		ws2.getRange2("B2").setValue("4");
+
+		oParser = new parserFormula("FORECAST(1,A1:A2,B1:B2)", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST(1,A1:A2,B1:B2)");
+		assert.strictEqual(oParser.calculate().getValue(), -1, "Result of FORECAST(1,A1:A2,B1:B2)");
+
+		// for bug 65245
+		oParser = new parserFormula("FORECAST(1,Sheet2!A1:A2,Sheet2!B1:B2)", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST(1,Sheet2!A1:A2,Sheet2!B1:B2). Bug 65245 test");
+		assert.strictEqual(oParser.calculate().getValue(), -1, "Result of FORECAST(1,Sheet2!A1:A2,Sheet2!B1:B2)");
+
+		// errors
+		oParser = new parserFormula("FORECAST(#N/A,A1:A2,B1:B2)", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST(#N/A,A1:A2,B1:B2)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of FORECAST(#N/A,A1:A2,B1:B2)");
+
+		oParser = new parserFormula("FORECAST(1,#NUM!,#N/A)", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST(1,#NUM!,#N/A)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of FORECAST(1,#NUM!,#N/A)");
+
+		oParser = new parserFormula("FORECAST(1,A1:A2,#NUM!)", "A1", ws);
+		assert.ok(oParser.parse(), "FORECAST(1,A1:A2,#NUM!)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Result of FORECAST(1,A1:A2,#NUM!)");
+
+		// strings
+		oParser = new parserFormula('FORECAST("1",A1:A2,B1:B2)', "A1", ws);
+		assert.ok(oParser.parse(), 'FORECAST("1",A1:A2,B1:B2)');
+		assert.strictEqual(oParser.calculate().getValue(), -1, 'Result of FORECAST("1",A1:A2,B1:B2)');
+
+		oParser = new parserFormula('FORECAST("1s",A1:A2,B1:B2)', "A1", ws);
+		assert.ok(oParser.parse(), 'FORECAST("1s",A1:A2,B1:B2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FORECAST("1s",A1:A2,B1:B2)');
+
+		oParser = new parserFormula('FORECAST(1,{1,"2"},{1,2})', "A1", ws);
+		assert.ok(oParser.parse(), 'FORECAST(1,{1,"2"},{1,2})');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of FORECAST(1,{1,"2"},{1,2})');
+
+		oParser = new parserFormula('FORECAST(1,{1,2},{"1",2})', "A1", ws);
+		assert.ok(oParser.parse(), 'FORECAST(1,{1,2},{"1",2})');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of FORECAST(1,{1,2},{"1",2})');
+
+		// bools
+		oParser = new parserFormula('FORECAST(FALSE,A1:A2,B1:B2)', "A1", ws);
+		assert.ok(oParser.parse(), 'FORECAST(FALSE,A1:A2,B1:B2)');
+		assert.strictEqual(oParser.calculate().getValue(), -2, 'Result of FORECAST(FALSE,A1:A2,B1:B2)');
+
+		oParser = new parserFormula('FORECAST(TRUE,A1:A2,B1:B2)', "A1", ws);
+		assert.ok(oParser.parse(), 'FORECAST(TRUE,A1:A2,B1:B2)');
+		assert.strictEqual(oParser.calculate().getValue(), -1, 'Result of FORECAST(TRUE,A1:A2,B1:B2)');
+
+		oParser = new parserFormula('FORECAST(TRUE,{TRUE,2},{TRUE,2})', "A1", ws);
+		assert.ok(oParser.parse(), 'FORECAST(TRUE,{TRUE,2},{TRUE,2})');
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", 'Result of FORECAST(TRUE,{TRUE,2},{TRUE,2})');
+
+		// delete the previously created sheet
+		wb.removeWorksheet(0);
 
 	});
 
