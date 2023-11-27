@@ -1429,7 +1429,7 @@
                 }
                 switch (ct.hyperlink.asc_getType()) {
                     case Asc.c_oAscHyperlinkType.WebLink:
-                        this.handlers.trigger("asc_onHyperlinkClick", ct.hyperlink.asc_getHyperlinkUrl());
+                        this.handlers.trigger("asc_onHyperlinkClick", ct.hyperlink.asc_getHyperlinkUrl(true));
                         break;
                     case Asc.c_oAscHyperlinkType.RangeLink:
                         // ToDo надо поправить отрисовку комментария для данной ячейки (с которой уходим)

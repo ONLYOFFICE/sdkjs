@@ -2797,8 +2797,25 @@
 		asc_CHyperlink.prototype.asc_getType = function () {
 			return this.hyperlinkModel.getHyperlinkType();
 		};
-		asc_CHyperlink.prototype.asc_getHyperlinkUrl = function () {
-			return this.hyperlinkModel.Hyperlink;
+		asc_CHyperlink.prototype.asc_getHyperlinkUrl = function (checkHyperlinkFunction) {
+			let sHyperlink = this.hyperlinkModel.Hyperlink;
+			if (checkHyperlinkFunction && this.hyperlinkModel.getHyperlinkFunction()) {
+				let ph = {operand_str: null, pCurrPos: 0};
+				let _3dRef = AscCommon.parserHelp.is3DRef.call(ph, sHyperlink, 0);
+
+				if (_3dRef && _3dRef[0] && _3dRef[3] && _3dRef[1]) {
+					let ref;
+					if (AscCommon.parserHelp.isArea.call(ph, sHyperlink, ph.pCurrPos) || AscCommon.parserHelp.isRef.call(ph, sHyperlink, ph.pCurrPos)) {
+						ref = ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase()
+					}
+					if (ref) {
+						//https://test.com/test1/testFile.xlsx#TestSheet!F10
+						sHyperlink = _3dRef[3] + "#" + _3dRef[1] + ref;
+					}
+				}
+			}
+
+			return sHyperlink;
 		};
 		asc_CHyperlink.prototype.asc_getTooltip = function () {
 			return this.hyperlinkModel.Tooltip;

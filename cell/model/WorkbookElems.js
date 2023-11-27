@@ -6020,6 +6020,8 @@ StyleManager.prototype =
 		this.bUpdateLocation = false;
 
 		this.bVisited = false;
+
+		this.bHyperlinkFunction = null;
 	}
 
 	Hyperlink.prototype.clone = function (oNewWs) {
@@ -6218,6 +6220,12 @@ StyleManager.prototype =
 				}
 			}
 		}
+	};
+	Hyperlink.prototype.setHyperlinkFunction = function (val) {
+		this.bHyperlinkFunction = val;
+	};
+	Hyperlink.prototype.getHyperlinkFunction = function () {
+		return this.bHyperlinkFunction;
 	};
 
 	/** @constructor */
