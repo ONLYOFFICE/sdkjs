@@ -29766,6 +29766,7 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"GetAllFormulas test\"", function (assert) {
+		wb.dependencyFormulas.unlockRecal();
 		let formulaRange, formulas;
 
 		ws.getRange2("A1:AAZ10000").cleanAll();
@@ -29788,8 +29789,8 @@ $(function () {
 		assert.ok(1, "Created 6 formulas on a sheet: 3 regular, 3 array-formula");
 		assert.strictEqual(formulas.length, 6, "GetAllFormulas array length");
 
-		let randRegVal = ws.getRange2("C1").getValue(),
-			randArrayFVal = ws.getRange2("D1").getValue();
+		let randRegValBefore = ws.getRange2("C1").getValue(),
+			randArrayFValBefore = ws.getRange2("D1").getValue();
 
 		// recalculate workbook
 		wb.calculate(4);
@@ -29797,9 +29798,12 @@ $(function () {
 		assert.ok(1, "Check formulas after workbook recalculate");
 		assert.strictEqual(formulas.length, 6, "GetAllFormulas array length");
 
+		let randRegValAfter = ws.getRange2("C1").getValue(),
+			randArrayFValAfter = ws.getRange2("D1").getValue();
+			
 		assert.ok(1, "Check values after workbook recalculate. Values shouldn't be the same");
-		assert.strictEqual(randRegVal !== ws.getRange2("C1").getValue(), true, "Check values after recalculate");
-		assert.strictEqual(randArrayFVal !== ws.getRange2("D1").getValue(), true, "Check values after recalculate");
+		assert.strictEqual(randRegValBefore !== randRegValAfter, true, "Check values after recalculate");
+		assert.strictEqual(randArrayFValBefore !== randArrayFValAfter, true, "Check values after recalculate");
 
 		ws.getRange2("A1:Z10000").cleanAll();
 	});
