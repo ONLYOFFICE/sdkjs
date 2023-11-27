@@ -26437,7 +26437,7 @@
 					cSerial.exec();
 
 					oThis.cleanFillHandleProps(true);
-					oThis._updateRange(this.activeFillHandle);
+					oThis._updateRange(oThis.activeFillHandle);
 					oThis.draw();
 				});
 				break;
