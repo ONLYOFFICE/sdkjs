@@ -26436,8 +26436,9 @@
 					cSerial.setActiveFillHandle(oThis.activeFillHandle);
 					cSerial.exec();
 
-					oThis.cleanFillHandleProps(true);
 					oThis._updateRange(oThis.activeFillHandle);
+					aRanges[0].assign(oThis.activeFillHandle.c1, oThis.activeFillHandle.r1, oThis.activeFillHandle.c2, oThis.activeFillHandle.r2);
+					oThis.cleanFillHandleProps(true);
 					oThis.draw();
 				});
 				break;
