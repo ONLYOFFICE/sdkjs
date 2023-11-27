@@ -29766,30 +29766,42 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"GetAllFormulas test\"", function (assert) {
-		ws.getRange2("A1:B10000").cleanAll();
-		let formulaRange = ws.getRange2("A10:A110");
+		let formulaRange, formulas;
+
+		ws.getRange2("A1:AAZ10000").cleanAll();
+		formulaRange = ws.getRange2("A10:A110");
 		ws.getRange2("A9").setValue("=SIN(10)");
 		// ws.selectionRange.ranges = [ws.getRange2("A10:A110").getBBox0()];
 		// ws.selectionRange.setActiveCell(ws.getRange2("A10").getBBox0().r1, ws.getRange2("A10").getBBox0().c1);
 		ws.getRange2("A10:A110").setValue("=SUM(A2)", null, null, formulaRange.bbox);
 
-		let formulas = wb.getAllFormulas();
-
-		assert.ok(1, "Created two formulas on a sheet, one regular, the second an array formula in the range A10:A110");
-		if (!(formulas.length > 2)) {
-			// the sheet contains formulas created earlier, so we check the specific value
-			assert.strictEqual(formulas.length, 2, "GetAllFormulas array length");
-		}
-		
 		formulaRange = ws.getRange2("B1:B10000");
 		ws.getRange2("B1:B10000").setValue("=1/NOT(ISBLANK(A1:A10000))", null, null, formulaRange.bbox);
-		formulas = wb.getAllFormulas();
-		if (!(formulas.length > 3)) {
-			// the sheet contains formulas created earlier, so we check the specific value
-			assert.strictEqual(formulas.length, 3, "GetAllFormulas array length");
-		}
+		ws.getRange2("C1").setValue("=RAND()");
+		ws.getRange2("C2").setValue("=SIN(B1)");
+		formulaRange = ws.getRange2("C1:C110");
+		ws.getRange2("C10:C110").setValue("=B:B", null, null, formulaRange.bbox);
+		formulaRange = ws.getRange2("D1:D10");
+		ws.getRange2("D1:D10").setValue("=C1", null, null, formulaRange.bbox);
 
-		ws.getRange2("A1:B10000").cleanAll();
+		formulas = wb.getAllFormulas();
+		assert.ok(1, "Created 6 formulas on a sheet: 3 regular, 3 array-formula");
+		assert.strictEqual(formulas.length, 6, "GetAllFormulas array length");
+
+		let randRegVal = ws.getRange2("C1").getValue(),
+			randArrayFVal = ws.getRange2("D1").getValue();
+
+		// recalculate workbook
+		wb.calculate(4);
+		formulas = wb.getAllFormulas();
+		assert.ok(1, "Check formulas after workbook recalculate");
+		assert.strictEqual(formulas.length, 6, "GetAllFormulas array length");
+
+		assert.ok(1, "Check values after workbook recalculate. Values shouldn't be the same");
+		assert.strictEqual(randRegVal !== ws.getRange2("C1").getValue(), true, "Check values after recalculate");
+		assert.strictEqual(randArrayFVal !== ws.getRange2("D1").getValue(), true, "Check values after recalculate");
+
+		ws.getRange2("A1:Z10000").cleanAll();
 	});
 
 	wb.dependencyFormulas.unlockRecal();
