@@ -391,6 +391,22 @@
 
         return false;
     };
+    CTextField.prototype.GetDateFormat = function() {
+        let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
+        let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
+        if (oActionRunScript && oActionRunScript.script.startsWith('AFDate_Format')) {
+            const regex = /(AFDate_Format|AFDate_FormatEx)\(["']([^"']+)["']\)/;
+            const match = oActionRunScript.script.match(regex);
+
+            if (match) {
+                return match[2];
+            }
+            
+            return "mmmm d, yyyy";
+        }
+
+        return "";
+    }
     CTextField.prototype.ProcessAutoFitContent = function() {
         let oPara   = this.content.GetElement(0);
         let oRun    = oPara.GetElement(0);
@@ -566,7 +582,7 @@
             oViewer.Api.WordControl.m_oDrawingDocument.TargetStart();
             oViewer.Api.WordControl.m_oDrawingDocument.showTarget(true);
 
-            if (this._markRect && pageObject.x >= this._markRect.x1 && pageObject.x <= this._markRect.x2 && pageObject.y >= this._markRect.y1 && pageObject.y <= this._markRect.y2) {
+            if (this.IsDateFormat() && pageObject.x >= this._markRect.x1 && pageObject.x <= this._markRect.x2 && pageObject.y >= this._markRect.y1 && pageObject.y <= this._markRect.y2) {
                 editor.sendEvent("asc_onShowPDFFormsActions", this, x, y);
                 this.content.MoveCursorToStartPos();
             }
@@ -1093,16 +1109,18 @@
     };
 
     CTextField.prototype.UndoNotAppliedChanges = function() {
-        this.UnionLastHistoryPoints();
-        let nPoint = AscCommon.History.Index;
-        AscCommon.History.Undo();
-        
-        // удаляем точки
-        AscCommon.History.Points.length = nPoint;
+        if (AscCommon.History.Points.length > 0) {
+            this.UnionLastHistoryPoints();
+            let nPoint = AscCommon.History.Index;
+            AscCommon.History.Undo();
+            
+            // удаляем точки
+            AscCommon.History.Points.length = nPoint;
 
-        this.SetNeedRecalc(true);
-        this.AddToRedraw();
-        this.SetNeedCommit(false);
+            this.SetNeedRecalc(true);
+            this.AddToRedraw();
+            this.SetNeedCommit(false);
+        }
     };
 
     /**
