@@ -2513,6 +2513,12 @@ function (window, undefined) {
 				}
 			}
 			wb.handlers.trigger("asc_onUpdateExternalReferenceList");
+		} else if (AscCH.historyitem_Workbook_TimelineCacheDelete === Type) {
+			if (bUndo) {
+				wb.timelineCaches.push(Data.from);
+			} else {
+				wb.deleteTimelineCache(Data.from.name);
+			}
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {

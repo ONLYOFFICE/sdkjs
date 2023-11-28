@@ -2788,6 +2788,14 @@
 			var removedSheetId = removedSheet.getId();
 			this.dependencyFormulas.lockRecal();
 			var prepared = this.dependencyFormulas.prepareRemoveSheet(removedSheetId, removedSheet.getTableNames());
+
+			//remove timeline
+			if (removedSheet.timelines) {
+				for (let i = 0; i < removedSheet.timelines.length; i++) {
+					this.onTimeSlicerDelete(removedSheet.timelines[i].name);
+				}
+			}
+
 			//delete sheet
 			var wsActive = this.getActiveWs();
 			var oVisibleWs = null;
@@ -3977,10 +3985,25 @@
 			return false;
 		}
 		var bRet = false;
-		for(var i = 0; i < this.aWorksheets.length; ++i) {
+		for(let i = 0; i < this.aWorksheets.length; ++i) {
 			bRet = bRet || this.aWorksheets[i].onTimeSlicerDelete(sName);
 		}
+		this.deleteTimelineCache(sName, true);
+
 		return bRet;
+	};
+	Workbook.prototype.deleteTimelineCache = function (sName, addToHistory) {
+		if (this.timelineCaches) {
+			for(let i = 0; i < this.timelineCaches.length; ++i) {
+				if (this.timelineCaches[i].sourceName === sName) {
+					if (addToHistory) {
+						History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_TimelineCacheDelete,
+							null, null, new UndoRedoData_FromTo(this.timelineCaches[i], null));
+					}
+					this.timelineCaches.splice(i, 1);
+				}
+			}
+		}
 	};
 	Workbook.prototype.handleDrawings = function (fCallback) {
 		for(var i = 0; i < this.aWorksheets.length; ++i) {
