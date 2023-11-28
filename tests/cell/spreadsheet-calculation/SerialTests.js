@@ -1600,7 +1600,7 @@ $(function () {
 		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
 		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
 		clearData(0, 0, 1, 3);
-		// Series settings with empty cells. Horizontal. Toolbar TODO FIX
+		// Series settings with empty cells. Horizontal. Toolbar
 		testData = [];
 		getFilledData(0, 0, 3, 0, testData, [0,0]);
 		oSeriesSettings = new cSeriesSettings();
