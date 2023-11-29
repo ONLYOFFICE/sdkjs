@@ -2752,7 +2752,7 @@
             //numfmts пишется в конце потому что они могут пополниться при записи Dxfs
             this.bs.WriteItem(c_oSerStylesTypes.NumFmts, function(){oThis.WriteNumFmts();});
 
-            if (wb.TimelineStyles) {
+            if (wb && wb.TimelineStyles) {
                 this.bs.WriteItem(c_oSerStylesTypes.TimelineStyles, function(){oThis.WriteTimelineStyles(wb.TimelineStyles);});
             }
         };
