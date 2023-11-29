@@ -58,6 +58,7 @@
     var gc_nMaxRow = AscCommon.gc_nMaxRow;
     var gc_nMaxCol = AscCommon.gc_nMaxCol;
     var History = AscCommon.History;
+	var c_oAscFillRightClickOptions = Asc.c_oAscFillRightClickOptions;
 
     var asc = window["Asc"];
     var asc_applyFunction = AscCommonExcel.applyFunction;
@@ -523,7 +524,6 @@
 		this._initCellsArea(AscCommonExcel.recalcType.full);
 		this.model.setTableStyleAfterOpen();
 		this.model.setDirtyConditionalFormatting(null);
-		this.model.initPivotTables();
 		this.model.updatePivotTablesStyle(null);
 		this._cleanCellsTextMetricsCache();
 		this._prepareCellTextMetricsCache();
@@ -13649,6 +13649,10 @@
                         }
                         break;
                     case "format":
+						const pivotTables = t.model.getPivotTablesIntersectingRange(range.bbox);
+						pivotTables.forEach(function (pivotTable) {
+							pivotTable.formatsManager.setNum(range.bbox, val);
+						});
                         range.setNumFormat(val);
                         canChangeColWidth = c_oAscCanChangeColWidth.numbers;
                         break;
@@ -26324,6 +26328,65 @@
 			return;
 		}
 		this.model.removeLegacyDrawingHFPictures(aPictures);
+	};
+	/**
+	 * Method applies series settings when user confirms "Series" settings in dialog window or context menu.
+	 * @param {asc_CSeriesSettings} settings
+	 */
+	WorksheetView.prototype.applySeriesSettings = function (settings) {
+		const wsView = this;
+		const cSerial = new AscCommonExcel.CSerial(settings);
+
+		if (settings.contextMenuChosenProperty != null && this.activeFillHandle) { // 1. fill handle through context menu
+			switch (settings.contextMenuChosenProperty) {
+				case c_oAscFillRightClickOptions.copyCells:
+					this.applyFillHandle(null, null, true, null);
+					break;
+				case c_oAscFillRightClickOptions.fillSeries:
+					this.applyFillHandle(null, null, false, null);
+					break;
+				case c_oAscFillRightClickOptions.linearTrend:
+				case c_oAscFillRightClickOptions.growthTrend:
+					const oRange = this.model.getSelection().getLast();
+					const oRangeModel = this.model.getRange3(oRange.r1, oRange.c1, oRange.r2, oRange.c2);
+
+					this._isLockedCells(oRangeModel, /*subType*/null, function (success) {
+						if (!success) {
+							return;
+						}
+
+						cSerial.setFromRange(oRangeModel);
+						cSerial.setActiveFillHandle(wsView.activeFillHandle);
+						cSerial.exec();
+					});
+					break;
+				case c_oAscFillRightClickOptions.series:
+					//Should open a series dialog window from toolbar?
+					break;
+			}
+
+		} else { // 2. fill from toolbar
+			const oRanges = this.model.getSelection();
+			const aRanges = oRanges.ranges;
+
+			this._isLockedCells(aRanges, /*subType*/null, function (success) {
+				if (!success) {
+					return;
+				}
+
+				for (let i = 0; i < aRanges.length; i++) {
+					const oRangeModel = wsView.model.getRange3(aRanges[i].r1, aRanges[i].c1, aRanges[i].r2, aRanges[i].c2);
+					cSerial.setFromRange(oRangeModel);
+					cSerial.exec();
+				}
+
+				//update
+				for (let i = 0; i < aRanges.length; i++) {
+					wsView._updateRange(aRanges[i]);
+				}
+				wsView.draw();
+			});
+		}
 	};
 
 

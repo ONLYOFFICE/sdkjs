@@ -4969,7 +4969,7 @@ Paragraph.prototype.Add_Tab = function(bShift)
 /**
  * Расширяем параграф до позиции X
  */
-Paragraph.prototype.Extend_ToPos = function(_X)
+Paragraph.prototype.extendLastLineToPos = function(_X)
 {
 	var CompiledPr = this.Get_CompiledPr2(false).ParaPr;
 	var Page       = this.Pages[this.Pages.length - 1];
@@ -8362,34 +8362,11 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 
 	// Выставим в полученном месте текущую позицию курсора
 	this.Set_ParaContentPos(SearchPosXY2.Pos, true, SearchPosXY2.Line, SearchPosXY2.Range);
-
-	if (true === SearchPosXY.End || true === this.Is_Empty())
-	{
-		var LastRange = this.Lines[this.Lines.length - 1].Ranges[this.Lines[this.Lines.length - 1].Ranges.length - 1];
-		if (!isFixedForm && !this.Parent.IsFootnote() && CurPage >= PagesCount - 1 && X > LastRange.W && MouseEvent.ClickCount >= 2 && Y <= this.Pages[PagesCount - 1].Bounds.Bottom)
-		{
-			if (this.bFromDocument && false === this.LogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {
-					Type      : AscCommon.changestype_2_Element_and_Type,
-					Element   : this,
-					CheckType : AscCommon.changestype_Paragraph_Content
-				}))
-			{
-				this.LogicDocument.StartAction(AscDFH.historydescription_Document_ParagraphExtendToPos);
-				this.LogicDocument.GetHistory().Set_Additional_ExtendDocumentToPos();
-
-				if (this.Extend_ToPos(X))
-				{
-					this.RemoveSelection();
-					this.MoveCursorToEndPos();
-					this.Document_SetThisElementCurrent(true);
-					this.LogicDocument.Recalculate();
-				}
-
-				this.LogicDocument.FinalizeAction();
-				return;
-			}
-		}
-	}
+	
+	if (!isFixedForm
+		&& !this.Parent.IsFootnote()
+		&& this.extendLastLineToXY(X, Y, CurPage, MouseEvent))
+		return;
 
 	// Выставляем селект
 	this.Set_SelectionContentPos(this.Get_ParaContentPos(true, true), SearchPosXY.Pos, true, this.Selection.StartLine, this.Selection.StartRange, SearchPosXY2.Line, SearchPosXY2.Range);
@@ -8417,7 +8394,7 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 			oSdt.SelectAll(1);
 			oSdt.SelectThisElement(1);
 		}
-		else if (oField && fieldtype_FORMTEXT === oField.Get_FieldType())
+		else if (oField && AscWord.fieldtype_FORMTEXT === oField.Get_FieldType())
 		{
 			oField.SelectAll(1);
 			oField.SelectThisElement(1);
@@ -8495,6 +8472,46 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 			}
 		}
 	}
+};
+Paragraph.prototype.extendLastLineToXY = function(x, y, curPage, mouseEvent)
+{
+	if ((!this.IsEmpty() && !this.Get_ParaContentPosByXY(x, y, curPage, false, true, true).End))
+		return false;
+	
+	let lastLine  = this.Lines.length ? this.Lines[this.Lines.length - 1] : null;
+	let lastRange = lastLine && lastLine.Ranges.length ? lastLine.Ranges[lastLine.Ranges.length - 1] : null;
+	let lastPage  = this.Pages.length ? this.Pages[this.Pages.length - 1] : null;
+	if (!lastRange
+		|| mouseEvent.ClickCount < 2
+		|| curPage !== this.Pages.length - 1
+		|| x <= lastRange.W
+		|| y > lastPage.Bounds.Bottom)
+		return false;
+	
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return false;
+
+	if (logicDocument.IsSelectionLocked(AscCommon.changestype_None, {
+			Type      : AscCommon.changestype_2_Element_and_Type,
+			Element   : this,
+			CheckType : AscCommon.changestype_Paragraph_Content
+		}))
+		return false;
+	
+	logicDocument.StartAction(AscDFH.historydescription_Document_ParagraphExtendToPos);
+	logicDocument.GetHistory().Set_Additional_ExtendDocumentToPos();
+	
+	if (this.extendLastLineToPos(x))
+	{
+		this.RemoveSelection();
+		this.MoveCursorToEndPos();
+		this.Document_SetThisElementCurrent(true);
+		logicDocument.Recalculate();
+	}
+	
+	logicDocument.FinalizeAction();
+	return true;
 };
 Paragraph.prototype.StopSelection = function()
 {
@@ -12304,7 +12321,7 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 	{
 		var oComplexField = arrComplexFields[nIndex];
 		var oInstruction  = oComplexField.GetInstruction();
-		if (oInstruction && fieldtype_PAGEREF === oInstruction.GetType() && oInstruction.IsHyperlink())
+		if (oInstruction && AscWord.fieldtype_PAGEREF === oInstruction.GetType() && oInstruction.IsHyperlink())
 		{
 			bPageRefLink = true;
 			break;
@@ -12503,7 +12520,7 @@ Paragraph.prototype.Document_UpdateInterfaceState = function()
 	for (var nIndex = 0, nCount = arrComplexFields.length; nIndex < nCount; ++nIndex)
 	{
 		var oInstruction = arrComplexFields[nIndex].GetInstruction();
-		if (oInstruction && fieldtype_HYPERLINK === oInstruction.GetType())
+		if (oInstruction && AscWord.fieldtype_HYPERLINK === oInstruction.GetType())
 		{
 			var oHyperProps = new Asc.CHyperlinkProperty();
 			oHyperProps.put_ToolTip(oInstruction.GetToolTip());
@@ -16839,7 +16856,7 @@ Paragraph.prototype.GetTableOfContents = function(isUnique, isCheckFields)
 
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{
-		var oResult = this.Content[nIndex].GetComplexField(fieldtype_TOC);
+		var oResult = this.Content[nIndex].GetComplexField(AscWord.fieldtype_TOC);
 		if (oResult)
 		{
 			var oInstruction = oResult.GetInstruction();
@@ -16856,7 +16873,7 @@ Paragraph.prototype.GetTablesOfFigures = function(arrComplexFields)
 {
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{
-		var oResult = this.Content[nIndex].GetComplexField(fieldtype_TOC);
+		var oResult = this.Content[nIndex].GetComplexField(AscWord.fieldtype_TOC);
 		if (oResult)
 		{
 			var oInstruction = oResult.GetInstruction();
@@ -17354,7 +17371,7 @@ Paragraph.prototype.CheckPageRefLink = function(X, Y, CurPage)
 	{
 		var oComplexField = arrComplexFields[nIndex];
 		var oInstruction  = oComplexField.GetInstruction();
-		if (oInstruction && fieldtype_PAGEREF === oInstruction.GetType() && oInstruction.IsHyperlink())
+		if (oInstruction && AscWord.fieldtype_PAGEREF === oInstruction.GetType() && oInstruction.IsHyperlink())
 			return oComplexField;
 	}
 
@@ -19484,7 +19501,7 @@ CParagraphComplexFieldsInfo.prototype.IsHyperlinkField = function()
 	for (var nIndex = 0, nCount = this.CF.length; nIndex < nCount; ++nIndex)
 	{
 		var oInstruction = this.CF[nIndex].ComplexField.GetInstruction();
-		if (oInstruction && fieldtype_HYPERLINK === oInstruction.GetType())
+		if (oInstruction && AscWord.fieldtype_HYPERLINK === oInstruction.GetType())
 			isHaveHyperlink = true;
 		else
 			isOtherField = true;
@@ -19520,9 +19537,9 @@ CParagraphComplexFieldsInfo.prototype.GetREForHYPERLINK = function()
 	{
 		var oInstruction = this.CF[nIndex].ComplexField.GetInstruction();
 		if (oInstruction && 
-			(fieldtype_HYPERLINK === oInstruction.GetType() 
-			|| fieldtype_REF === oInstruction.GetType() && oInstruction.GetHyperlink()
-			|| fieldtype_NOTEREF === oInstruction.GetType() && oInstruction.GetHyperlink()))
+			(AscWord.fieldtype_HYPERLINK === oInstruction.GetType()
+			|| AscWord.fieldtype_REF === oInstruction.GetType() && oInstruction.GetHyperlink()
+			|| AscWord.fieldtype_NOTEREF === oInstruction.GetType() && oInstruction.GetHyperlink()))
 			return this.CF[nIndex].ComplexField;
 	}
 

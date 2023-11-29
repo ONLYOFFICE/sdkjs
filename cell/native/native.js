@@ -3845,7 +3845,7 @@ window["native"]["offline_apply_event"] = function(type,params) {
                         }
                         case 21: 
                         {
-                            _imagePr.vert = _params[_current.pos++];
+                            _imagePr.vert = params[_current.pos++];
                             break;      
                         }
                         case 22:

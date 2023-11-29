@@ -2618,7 +2618,7 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 	if (!prevState)
 		return null;
 	
-	if (action && (action.type !== AscCommon.SpeakerActionType.keyDown || action.event.KeyCode < 35 || action.event.KeyCode > 40))
+	if (action && (action.type !== AscCommon.SpeakerActionType.keyDown || action.event.KeyCode < 33 || action.event.KeyCode > 40))
 		return null;
 	
 	// В данном метод предполагается, что curState равен this.GetSelectionState()
@@ -2715,6 +2715,14 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 							obj.moveToEndOfDocument = true;
 						else
 							obj.moveToEndOfLine = true;
+					}
+					else if (33 === keyCode)
+					{
+						obj.movePageUp = true;
+					}
+					else if (34 === keyCode)
+					{
+						obj.movePageDown = true;
 					}
 					
 					if (36 === keyCode || 38 === keyCode || 40 === keyCode)

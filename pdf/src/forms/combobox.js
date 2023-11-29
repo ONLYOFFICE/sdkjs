@@ -530,7 +530,17 @@
 				oPara.AddToParagraph(new AscWord.CRunText(codePoint), true);
         }
     };
-    /**
+	CComboBoxField.prototype.canBeginCompositeInput = function() {
+		return this.IsEditable();
+	};
+	CComboBoxField.prototype.beforeCompositeInput = function() {
+		this.DoKeystrokeAction();
+		this.content.Remove(1, true, false, false);
+	};
+	CComboBoxField.prototype.getRunForCompositeInput = function() {
+		return this.content.getCurrentRun();
+	};
+	/**
 	 * Checks curValueIndex, corrects it and return.
 	 * @memberof CComboBoxField
 	 * @typeofeditors ["PDF"]

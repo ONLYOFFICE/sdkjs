@@ -1044,7 +1044,7 @@ CMathText.prototype.GetTextOfElement = function(isLaTeX) {
 	{
 		let str = AscMath.SymbolsToLaTeX[String.fromCharCode(this.value)];
 		if (str)
-			return str;
+			return str + " ";
 	}
 
 	if (this.value && this.value !== 11034)

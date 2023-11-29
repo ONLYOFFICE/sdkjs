@@ -7194,10 +7194,6 @@ background-repeat: no-repeat;\
 		if (!bIsReporter)
 		{
 			this.cancelEyedropper();
-			if (this.WordControl.m_oLogicDocument && slidestart_num !== this.WordControl.m_oLogicDocument.CurPage)
-			{
-				this.WordControl.GoToPage(slidestart_num);
-			}
 		}
 
 		if (bIsReporter)

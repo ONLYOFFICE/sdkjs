@@ -782,20 +782,40 @@
             croppedCanvas.width     = nWidth + 0.5 >> 0;
             croppedCanvas.height    = nHeight + 0.5 >> 0;
             
-            let xCenter = oViewer.width >> 1;
-            if (oViewer.documentWidth > oViewer.width)
-            {
-                xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
-            }
-            let yPos    = oViewer.scrollY >> 0;
-            let page    = oViewer.drawingPages[this.GetPage()];
-            let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-            let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-            let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
-            let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-
             if (this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.invert) {
-                oCroppedCtx.drawImage(oViewer.canvas, X + indLeft, Y + indTop, nWidth, nHeight, 0, 0, nWidth, nHeight);
+                let xCenter = oViewer.width >> 1;
+                if (oViewer.documentWidth > oViewer.width)
+                {
+                    xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
+                }
+                let yPos    = oViewer.scrollY >> 0;
+                let page    = oViewer.drawingPages[this.GetPage()];
+                let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+                let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+                let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
+                let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+
+                let x = X + indLeft;
+                let y = Y + indTop;
+                let nDWidth = 0;
+                let nDHeight = 0;
+
+                if (x < 0) {
+                    nDWidth = nWidth - (nWidth + x);
+                    X       += nDWidth;
+                    nWidth  += x >> 0;
+                    croppedCanvas.width = nWidth;
+                    x = 0;
+                }
+                if (y < 0) {
+                    nDHeight    = nHeight - (nHeight + y);
+                    Y           += nDHeight;
+                    nHeight     += y >> 0;
+                    croppedCanvas.height = nHeight;
+                    y = 0;
+                }
+                
+                oCroppedCtx.drawImage(oViewer.canvas, x, y, nWidth, nHeight, 0, 0, nWidth, nHeight);
                 
                 if (page.ImageAnnots) {
                     oCroppedCtx.drawImage(page.ImageAnnots, X, Y, nWidth, nHeight, 0, 0, nWidth, nHeight);
@@ -805,7 +825,7 @@
                 oCroppedCtx.globalCompositeOperation='difference';
                 oCroppedCtx.fillStyle='white';
                 oCroppedCtx.fillRect(0, 0, croppedCanvas.width,croppedCanvas.height);
-                oGraphicsPDF.DrawImage(oCroppedCtx.canvas, 0, 0, nWidth / nGrScale, nHeight / nGrScale, X / nGrScale, Y / nGrScale, nWidth / nGrScale, nHeight / nGrScale);
+                oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, X / nGrScale, Y / nGrScale);
             }
             else if (this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.outline) {
                 let nLineWidth = this._lineWidth;
@@ -819,7 +839,7 @@
                 oCroppedCtx.globalCompositeOperation='source-over';
                 oCroppedCtx.drawImage(oGraphicsPDF.context.canvas, X + nLineWidth * nGrScale, Y + nLineWidth * nGrScale, nWidth - 2 * nLineWidth * nGrScale, nHeight - 2 * nLineWidth * nGrScale, nLineWidth * nGrScale, nLineWidth * nGrScale, nWidth -  2 * nLineWidth * nGrScale, nHeight - 2 * nLineWidth * nGrScale);
     
-                oGraphicsPDF.DrawImage(oCroppedCtx.canvas, 0, 0, nWidth / nGrScale, nHeight / nGrScale, X / nGrScale, Y / nGrScale, nWidth / nGrScale, nHeight / nGrScale);
+                oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, X / nGrScale, Y / nGrScale);
             }
         }
         
@@ -1154,7 +1174,7 @@
         croppedCanvas.height    = nHeight;
 
         if (this.IsPressed() == false) {
-            oGraphicsPDF.DrawImage(originView, 0, 0, originView.width / nGrScale, originView.height / nGrScale, originView.x / nGrScale, originView.y / nGrScale, originView.width / nGrScale, originView.height / nGrScale);
+            oGraphicsPDF.DrawImageXY(originView, originView.x / nGrScale, originView.y / nGrScale);
             return;
         }
 
@@ -1162,7 +1182,7 @@
             switch (highlightType) {
                 case AscPDF.BUTTON_HIGHLIGHT_TYPES.none:
                 case AscPDF.BUTTON_HIGHLIGHT_TYPES.push:
-                    oGraphicsPDF.DrawImage(originView, 0, 0, originView.width / nGrScale, originView.height / nGrScale, originView.x / nGrScale, originView.y / nGrScale, originView.width / nGrScale, originView.height / nGrScale);
+                    oGraphicsPDF.DrawImageXY(originView, originView.x / nGrScale, originView.y / nGrScale);
                     break;
                 case AscPDF.BUTTON_HIGHLIGHT_TYPES.invert: {
                     let xCenter = oViewer.width >> 1;
@@ -1177,17 +1197,37 @@
                     let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
                     let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
-                    oCroppedCtx.drawImage(oViewer.canvas, X + indLeft, Y + indTop, nWidth, nHeight, 0, 0, nWidth, nHeight);
+                    let x = X + indLeft;
+                    let y = Y + indTop;
+                    let nDWidth = 0;
+                    let nDHeight = 0;
+
+                    if (x < 0) {
+                        nDWidth = nWidth - (nWidth + x);
+                        X       += nDWidth;
+                        nWidth  += x >> 0;
+                        croppedCanvas.width = nWidth;
+                        x = 0;
+                    }
+                    if (y < 0) {
+                        nDHeight    = nHeight - (nHeight + y);
+                        Y           += nDHeight;
+                        nHeight     += y >> 0;
+                        croppedCanvas.height = nHeight;
+                        y = 0;
+                    }
+
+                    oCroppedCtx.drawImage(oViewer.canvas, x, y, nWidth, nHeight, 0, 0, nWidth, nHeight);
                     
                     if (page.ImageAnnots) {
                         oCroppedCtx.drawImage(page.ImageAnnots, X, Y, nWidth, nHeight, 0, 0, nWidth, nHeight);
                     }
 
-                    oCroppedCtx.drawImage(originView, 0, 0);
+                    oCroppedCtx.drawImage(originView, nDWidth, nDHeight, originView.width, originView.height, 0, 0, originView.width, originView.height);
                     oCroppedCtx.globalCompositeOperation='difference';
                     oCroppedCtx.fillStyle='white';
                     oCroppedCtx.fillRect(0, 0, croppedCanvas.width,croppedCanvas.height);
-                    oGraphicsPDF.DrawImage(oCroppedCtx.canvas, 0, 0, nWidth / nGrScale, nHeight / nGrScale, X / nGrScale, Y / nGrScale, nWidth / nGrScale, nHeight / nGrScale);
+                    oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, X / nGrScale, Y / nGrScale);
                     break;
                 }
                 case AscPDF.BUTTON_HIGHLIGHT_TYPES.outline: {
@@ -1206,7 +1246,7 @@
                     oCroppedCtx.globalCompositeOperation='source-over';
                     oCroppedCtx.drawImage(originView, nLineWidth * nGrScale, nLineWidth * nGrScale, nWidth - 2 * nLineWidth * nGrScale, nHeight - 2 * nLineWidth * nGrScale, nLineWidth * nGrScale, nLineWidth * nGrScale, nWidth -  2 * nLineWidth * nGrScale, nHeight - 2 * nLineWidth * nGrScale);
     
-                    oGraphicsPDF.DrawImage(oCroppedCtx.canvas, 0, 0, nWidth / nGrScale, nHeight / nGrScale, X / nGrScale, Y / nGrScale, nWidth / nGrScale, nHeight / nGrScale);
+                    oGraphicsPDF.DrawImageXY(oCroppedCtx.canvas, X / nGrScale, Y / nGrScale);
                     break;
                 }
             }
@@ -1261,24 +1301,42 @@
             oActionsQueue.bContinueAfterEval = false;
         
         Api.oSaveObjectForAddImage = this;
-        AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, undefined, function(error, files)
-        {
-            if (error.canceled == true) {
-                let oDoc            = oThis.GetDocument();
-                let oActionsQueue   = oDoc.GetActionsQueue();
-                oActionsQueue.Continue();
-            }
-            else
-                Api._uploadCallback(error, files, oThis);
-
-        }, function(error)
-        {
-            if (c_oAscError.ID.No !== error)
+        if (window["AscDesktopEditor"]) {
+            window["AscDesktopEditor"]["OpenFilenameDialog"]("images", false, function(_file) {
+                var file = _file;
+                if (Array.isArray(file))
+                    file = file[0];
+                if (!file) {
+                    let oDoc            = oThis.GetDocument();
+                    let oActionsQueue   = oDoc.GetActionsQueue();
+                    oActionsQueue.Continue();
+                    return;
+                }
+        
+                var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file);
+                editor._addImageUrl([AscCommon.g_oDocumentUrls.getImageUrl(_url)], oThis);
+            });
+        }
+        else {
+            AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, undefined, function(error, files)
             {
-                Api.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
-            }
-            Api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-        });
+                if (error.canceled == true) {
+                    let oDoc            = oThis.GetDocument();
+                    let oActionsQueue   = oDoc.GetActionsQueue();
+                    oActionsQueue.Continue();
+                }
+                else
+                    Api._uploadCallback(error, files, oThis);
+
+            }, function(error)
+            {
+                if (c_oAscError.ID.No !== error)
+                {
+                    Api.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+                }
+                Api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+            });
+        }
     };
     CPushButtonField.prototype.GetDrawing = function() {
         return this.content.GetAllDrawingObjects()[0];

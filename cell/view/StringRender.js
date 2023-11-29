@@ -61,6 +61,7 @@
 
 			this.assign(lm);
 		}
+
 		LineInfo.prototype.assign = function (lm) {
 			if (lm) {
 				this.th = lm.th;
@@ -78,6 +79,7 @@
 			this.a = 0;
 			this.d = 0;
 		}
+
 		lineMetrics.prototype.clone = function () {
 			var oRes = new lineMetrics();
 			oRes.th = this.th;
@@ -104,6 +106,7 @@
 			this.total = undefined;
 			this.wrd = undefined;
 		}
+
 		charProperties.prototype.clone = function () {
 			var oRes = new charProperties();
 			oRes.c = (undefined !== this.c) ? this.c.clone() : undefined;
@@ -146,9 +149,9 @@
 			this.charWidths = [];
 			this.charProps = [];
 			this.lines = [];
-            this.angle = 0;
+			this.angle = 0;
 
-            this.fontNeedUpdate = false;
+			this.fontNeedUpdate = false;
 
 
 			this.codesNL = {0xD: 1, 0xA: 1};
@@ -210,13 +213,13 @@
 
 			// For replacing invisible chars while rendering
 			/** @type RegExp */
-			this.reNL =  /[\r\n]/;
+			this.reNL = /[\r\n]/;
 			/** @type RegExp */
 			//this.reSpace = /[\n\r\u2028\u2029\t\v\f\u0020\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2008\u2009\u200A\u200B\u205F\u3000]/;
 			/** @type RegExp */
-			this.reReplaceNL =  /\r?\n|\r/g;
+			this.reReplaceNL = /\r?\n|\r/g;
 
-				// For hyphenation
+			// For hyphenation
 			/** @type RegExp */
 			//this.reHypNL =  /[\n\r\u2028\u2029]/;
 			/** @type RegExp */
@@ -233,9 +236,9 @@
 		 * @param {AscCommonExcel.CellFlags} flags  Optional.
 		 * @return {StringRender}  Returns 'this' to allow chaining
 		 */
-		StringRender.prototype.setString = function(fragments, flags) {
+		StringRender.prototype.setString = function (fragments, flags) {
 			this.fragments = [];
-			if ( asc_typeof(fragments) === "string" ) {
+			if (asc_typeof(fragments) === "string") {
 				var newFragment = new AscCommonExcel.Fragment();
 				newFragment.setFragmentText(fragments);
 				newFragment.format = new AscCommonExcel.Font();
@@ -251,219 +254,204 @@
 			return this;
 		};
 
-        /**
-         * Применяем только трансформации поворота в области
-         * @param {drawingCtx} drawingCtx
-         * @param {type} angle Угол поворота в градусах
-         * @param {Number} x
-         * @param {Number} y
-         * @param {Number} dx
-         * @param {Number} dy
-         * */
+		/**
+		 * Применяем только трансформации поворота в области
+		 * @param {drawingCtx} drawingCtx
+		 * @param {type} angle Угол поворота в градусах
+		 * @param {Number} x
+		 * @param {Number} y
+		 * @param {Number} dx
+		 * @param {Number} dy
+		 * */
 		StringRender.prototype.rotateAtPoint = function (drawingCtx, angle, x, y, dx, dy) {
-            var m   = new asc.Matrix();   m.rotate(angle, 0);
-            var mbt = new asc.Matrix();
+			var m = new asc.Matrix();
+			m.rotate(angle, 0);
+			var mbt = new asc.Matrix();
 
-            if (null === drawingCtx) {
-                mbt.translate(x + dx, y + dy);
+			if (null === drawingCtx) {
+				mbt.translate(x + dx, y + dy);
 
-                this.drawingCtx.setTextTransform(m.sx, m.shy, m.shx, m.sy, m.tx, m.ty);
-                this.drawingCtx.setTransform(mbt.sx, mbt.shy, mbt.shx, mbt.sy, mbt.tx, mbt.ty);
-                this.drawingCtx.updateTransforms();
-            } else {
+				this.drawingCtx.setTextTransform(m.sx, m.shy, m.shx, m.sy, m.tx, m.ty);
+				this.drawingCtx.setTransform(mbt.sx, mbt.shy, mbt.shx, mbt.sy, mbt.tx, mbt.ty);
+				this.drawingCtx.updateTransforms();
+			} else {
 
-                mbt.translate((x + dx) * AscCommonExcel.vector_koef, (y + dy) * AscCommonExcel.vector_koef);
-                mbt.multiply(m, 0);
+				mbt.translate((x + dx) * AscCommonExcel.vector_koef, (y + dy) * AscCommonExcel.vector_koef);
+				mbt.multiply(m, 0);
 
-                drawingCtx.setTransform(mbt.sx, mbt.shy, mbt.shx, mbt.sy, mbt.tx, mbt.ty);
-            }
+				drawingCtx.setTransform(mbt.sx, mbt.shy, mbt.shx, mbt.sy, mbt.tx, mbt.ty);
+			}
 
-            return this;
-        };
+			return this;
+		};
 
-		StringRender.prototype.resetTransform = function (drawingCtx)  {
-            if (null === drawingCtx) {
-                this.drawingCtx.resetTransforms();
-            } else {
-                var m = new asc.Matrix();
-                drawingCtx.setTransform(m.sx, m.shy, m.shx, m.sy, m.tx, m.ty);
-            }
+		StringRender.prototype.resetTransform = function (drawingCtx) {
+			if (null === drawingCtx) {
+				this.drawingCtx.resetTransforms();
+			} else {
+				var m = new asc.Matrix();
+				drawingCtx.setTransform(m.sx, m.shy, m.shx, m.sy, m.tx, m.ty);
+			}
 
-            this.angle = 0;
-            this.fontNeedUpdate = true;
-        };
+			this.angle = 0;
+			this.fontNeedUpdate = true;
+		};
 
-        /**
-         * @param {Number} angle
-         * @param {Number} w
-         * @param {Number} h
-         * @param {Number} textW
-         * @param {String} alignHorizontal
-         * @param {String} alignVertical
-         * @param {Number} maxWidth
-         */
-        StringRender.prototype.getTransformBound = function(angle, w, h, textW, alignHorizontal, alignVertical, maxWidth) {
+		/**
+		 * @param {Number} angle
+		 * @param {Number} w
+		 * @param {Number} h
+		 * @param {Number} textW
+		 * @param {String} alignHorizontal
+		 * @param {String} alignVertical
+		 * @param {Number} maxWidth
+		 */
+		StringRender.prototype.getTransformBound = function (angle, w, h, textW, alignHorizontal, alignVertical, maxWidth) {
 			var ctx = this.drawingCtx;
-			
-            // TODO: добавить padding по сторонам
 
-            this.angle          =   0;  //  angle;
-            this.fontNeedUpdate =   true;
+			// TODO: добавить padding по сторонам
 
-            var dx = 0, dy = 0,offsetX = 0,    // смещение BB
+			this.angle = 0;  //  angle;
+			this.fontNeedUpdate = true;
 
-                tm = this._doMeasure(maxWidth),
+			var dx = 0, dy = 0, offsetX = 0,    // смещение BB
 
-                mul = (90 - (Math.abs(angle)) ) / 90,
+				tm = this._doMeasure(maxWidth),
 
-                angleSin = Math.sin(angle * Math.PI / 180.0),
-                angleCos = Math.cos(angle * Math.PI / 180.0),
+				mul = (90 - (Math.abs(angle))) / 90,
 
-                posh = (angle === 90 || angle === -90) ? textW : Math.abs(angleSin * textW),
-                posv = (angle === 90 || angle === -90) ? 0 : Math.abs(angleCos * textW),
+				angleSin = Math.sin(angle * Math.PI / 180.0),
+				angleCos = Math.cos(angle * Math.PI / 180.0),
 
-                isHorzLeft      = (AscCommon.align_Left   === alignHorizontal),
-                isHorzCenter    = (AscCommon.align_Center === alignHorizontal),
-                isHorzRight     = (AscCommon.align_Right  === alignHorizontal),
+				posh = (angle === 90 || angle === -90) ? textW : Math.abs(angleSin * textW),
+				posv = (angle === 90 || angle === -90) ? 0 : Math.abs(angleCos * textW),
 
-                isVertBottom    = (Asc.c_oAscVAlign.Bottom === alignVertical),
-                isVertCenter    = (Asc.c_oAscVAlign.Center === alignVertical || Asc.c_oAscVAlign.Dist === alignVertical || Asc.c_oAscVAlign.Just === alignVertical),
-                isVertTop       = (Asc.c_oAscVAlign.Top    === alignVertical);
-			
+				isHorzLeft = (AscCommon.align_Left === alignHorizontal),
+				isHorzCenter = (AscCommon.align_Center === alignHorizontal),
+				isHorzRight = (AscCommon.align_Right === alignHorizontal),
 
-			var _height = tm.height *ctx.getZoom();
-            if (isVertBottom) {
-                if (angle < 0) {
-                    if (isHorzLeft) {
-                        dx = - (angleSin * _height);
-                    }
-                    else if (isHorzCenter) {
-                        dx = (w - angleSin * _height - posv) / 2;
-                        offsetX = - (w - posv) / 2 - angleSin * _height / 2;
-                    }
-                    else if (isHorzRight) {
-                        dx = w - posv + 2;
-                        offsetX = - (w - posv) - angleSin * _height - 2;
+				isVertBottom = (Asc.c_oAscVAlign.Bottom === alignVertical),
+				isVertCenter = (Asc.c_oAscVAlign.Center === alignVertical || Asc.c_oAscVAlign.Dist === alignVertical || Asc.c_oAscVAlign.Just === alignVertical),
+				isVertTop = (Asc.c_oAscVAlign.Top === alignVertical);
+
+
+			var _height = tm.height * ctx.getZoom();
+			if (isVertBottom) {
+				if (angle < 0) {
+					if (isHorzLeft) {
+						dx = -(angleSin * _height);
+					} else if (isHorzCenter) {
+						dx = (w - angleSin * _height - posv) / 2;
+						offsetX = -(w - posv) / 2 - angleSin * _height / 2;
+					} else if (isHorzRight) {
+						dx = w - posv + 2;
+						offsetX = -(w - posv) - angleSin * _height - 2;
 					}
-                } else {
-                    if (isHorzLeft) {
+				} else {
+					if (isHorzLeft) {
 
-                    }
-                    else if (isHorzCenter) {
-                        dx = (w - angleSin * _height - posv) / 2;
-                        offsetX = - (w - posv) / 2 + angleSin * _height / 2;
-                    }
-                    else if (isHorzRight) {
-                        dx = w  - posv + 1 + 1 - _height * angleSin;
-                        offsetX = - w  - posv + 1 + 1 - _height * angleSin;
+					} else if (isHorzCenter) {
+						dx = (w - angleSin * _height - posv) / 2;
+						offsetX = -(w - posv) / 2 + angleSin * _height / 2;
+					} else if (isHorzRight) {
+						dx = w - posv + 1 + 1 - _height * angleSin;
+						offsetX = -w - posv + 1 + 1 - _height * angleSin;
 					}
-                }
-
-                if (posh < h) {
-                    if (angle < 0) {
-                        dy = h - (posh + angleCos * _height);
-                    }
-                    else {
-                        dy = h - angleCos * _height;
-                    }
-                } else {
-                    if (angle > 0) {
-                        dy = h - angleCos * _height;
-                    } 
-                }
-            }
-            else if (isVertCenter) {
-
-                if (angle < 0) {
-                    if (isHorzLeft) {
-                        dx = - (angleSin * _height);
-                    }
-                    else if (isHorzCenter) {
-                        dx = (w - angleSin * _height - posv) / 2;
-                        offsetX = - (w - posv) / 2 - angleSin * _height / 2;
-                    }
-                    else if (isHorzRight) {
-                        dx = w - posv + 2;
-                        offsetX = - (w - posv) - angleSin * _height - 2;
-                    }
-                } else {
-                    if (isHorzLeft) {
-
-                    }
-                    else if (isHorzCenter)  {
-                        dx = (w - angleSin * _height - posv) / 2;
-                        offsetX = - (w - posv) / 2 + angleSin * _height / 2;
-                    }
-                    else if (isHorzRight) {
-                        dx = w  - posv + 1 + 1 - _height * angleSin;
-                        offsetX = - w  - posv + 1 + 1 - _height * angleSin;
-                    }
-                }
-
-                //
-
-                if (posh < h) {
-                    if (angle < 0) {
-                        dy = (h - posh - angleCos * _height) * 0.5;
-                    }
-                    else {
-                        dy = (h + posh - angleCos * _height) * 0.5;
-                    }
-                } else {
-                    if (angle > 0) {
-                        dy = h - angleCos * _height;
-                    }
-                }
-            }
-            else if (isVertTop) {
-
-                if (angle < 0) {
-                    if (isHorzLeft) {
-                        dx = - (angleSin * _height);
-                    }
-                    else if (isHorzCenter) {
-                        dx = (w - angleSin * _height - posv) / 2;
-                        offsetX = - (w - posv) / 2 - angleSin * _height / 2;
-                    }
-                    else if (isHorzRight) {
-                        dx = w - posv + 2;
-                        offsetX = - (w - posv) - angleSin * _height - 2;
-					}
-                } else {
-                    if (isHorzLeft) {
-                    }
-                    else if (isHorzCenter) {
-                        dx = (w - angleSin * _height - posv) / 2;
-                        offsetX = - (w - posv) / 2 + angleSin * _height / 2;
-                    }
-                    else if (isHorzRight) {
-                        dx = w  - posv + 1 + 1 - _height * angleSin;
-                        offsetX = - w  - posv + 1 + 1 - _height * angleSin;
-                    }
-
-                    dy = Math.min(h + _height * angleCos, posh);
 				}
-            }
 
-            var bound = { dx: dx, dy: dy, height: 0, width: 0, offsetX: offsetX};
+				if (posh < h) {
+					if (angle < 0) {
+						dy = h - (posh + angleCos * _height);
+					} else {
+						dy = h - angleCos * _height;
+					}
+				} else {
+					if (angle > 0) {
+						dy = h - angleCos * _height;
+					}
+				}
+			} else if (isVertCenter) {
 
-            if (angle === 90 || angle === -90) {
-                bound.width = _height;
-                bound.height = textW;
-            } else {
-                bound.height = Math.abs(angleSin * textW) + Math.abs(angleCos * _height);
-                bound.width  = Math.abs(angleCos * textW) + Math.abs(angleSin * _height);
-            }
+				if (angle < 0) {
+					if (isHorzLeft) {
+						dx = -(angleSin * _height);
+					} else if (isHorzCenter) {
+						dx = (w - angleSin * _height - posv) / 2;
+						offsetX = -(w - posv) / 2 - angleSin * _height / 2;
+					} else if (isHorzRight) {
+						dx = w - posv + 2;
+						offsetX = -(w - posv) - angleSin * _height - 2;
+					}
+				} else {
+					if (isHorzLeft) {
 
-            return bound;
-        };
+					} else if (isHorzCenter) {
+						dx = (w - angleSin * _height - posv) / 2;
+						offsetX = -(w - posv) / 2 + angleSin * _height / 2;
+					} else if (isHorzRight) {
+						dx = w - posv + 1 + 1 - _height * angleSin;
+						offsetX = -w - posv + 1 + 1 - _height * angleSin;
+					}
+				}
 
-        /**
-         * Measures string that was setup by 'setString' method
-         * @param {Number} maxWidth  Optional. Text width restriction
-         * @return {Asc.TextMetrics}  Returns text metrics or null. @see Asc.TextMetrics
-         */
-		StringRender.prototype.measure = function(maxWidth) {
+				//
+
+				if (posh < h) {
+					if (angle < 0) {
+						dy = (h - posh - angleCos * _height) * 0.5;
+					} else {
+						dy = (h + posh - angleCos * _height) * 0.5;
+					}
+				} else {
+					if (angle > 0) {
+						dy = h - angleCos * _height;
+					}
+				}
+			} else if (isVertTop) {
+
+				if (angle < 0) {
+					if (isHorzLeft) {
+						dx = -(angleSin * _height);
+					} else if (isHorzCenter) {
+						dx = (w - angleSin * _height - posv) / 2;
+						offsetX = -(w - posv) / 2 - angleSin * _height / 2;
+					} else if (isHorzRight) {
+						dx = w - posv + 2;
+						offsetX = -(w - posv) - angleSin * _height - 2;
+					}
+				} else {
+					if (isHorzLeft) {
+					} else if (isHorzCenter) {
+						dx = (w - angleSin * _height - posv) / 2;
+						offsetX = -(w - posv) / 2 + angleSin * _height / 2;
+					} else if (isHorzRight) {
+						dx = w - posv + 1 + 1 - _height * angleSin;
+						offsetX = -w - posv + 1 + 1 - _height * angleSin;
+					}
+
+					dy = Math.min(h + _height * angleCos, posh);
+				}
+			}
+
+			var bound = {dx: dx, dy: dy, height: 0, width: 0, offsetX: offsetX};
+
+			if (angle === 90 || angle === -90) {
+				bound.width = _height;
+				bound.height = textW;
+			} else {
+				bound.height = Math.abs(angleSin * textW) + Math.abs(angleCos * _height);
+				bound.width = Math.abs(angleCos * textW) + Math.abs(angleSin * _height);
+			}
+
+			return bound;
+		};
+
+		/**
+		 * Measures string that was setup by 'setString' method
+		 * @param {Number} maxWidth  Optional. Text width restriction
+		 * @return {Asc.TextMetrics}  Returns text metrics or null. @see Asc.TextMetrics
+		 */
+		StringRender.prototype.measure = function (maxWidth) {
 			return this._doMeasure(maxWidth);
 		};
 
@@ -476,7 +464,7 @@
 		 * @param {String} textColor  Default text color for formatless string
 		 * @return {StringRender}  Returns 'this' to allow chaining
 		 */
-		StringRender.prototype.render = function(drawingCtx, x, y, maxWidth, textColor) {
+		StringRender.prototype.render = function (drawingCtx, x, y, maxWidth, textColor) {
 			this._doRender(drawingCtx, x, y, maxWidth, textColor);
 			return this;
 		};
@@ -488,7 +476,7 @@
 		 * @param {Number} [maxWidth]   Optional. Text width restriction
 		 * @return {Asc.TextMetrics}  Returns text metrics or null. @see Asc.TextMetrics
 		 */
-		StringRender.prototype.measureString = function(fragments, flags, maxWidth) {
+		StringRender.prototype.measureString = function (fragments, flags, maxWidth) {
 			if (fragments) {
 				this.setString(fragments, flags);
 			}
@@ -499,10 +487,12 @@
 		 * Returns the width of the widest char in the string has been measured
 		 */
 		StringRender.prototype.getWidestCharWidth = function () {
-			return this.charWidths.reduce(function (p,c) {return p<c?c:p;}, 0);
+			return this.charWidths.reduce(function (p, c) {
+				return p < c ? c : p;
+			}, 0);
 		};
 
-		StringRender.prototype._reset = function() {
+		StringRender.prototype._reset = function () {
 			this.chars = [];
 			this.charWidths = [];
 			this.charProps = [];
@@ -514,13 +504,15 @@
 		 * @param {Boolean} wrap
 		 * @return {String}  Returns filtered fragment
 		 */
-		StringRender.prototype._filterText = function(fragment, wrap) {
+		StringRender.prototype._filterText = function (fragment, wrap) {
 			var s = fragment;
-			if (s.search(this.reNL) >= 0) {s = s.replace(this.reReplaceNL, wrap ? "\n" : "");}
+			if (s.search(this.reNL) >= 0) {
+				s = s.replace(this.reReplaceNL, wrap ? "\n" : "");
+			}
 			return s;
 		};
 
-		StringRender.prototype._filterChars = function(chars, wrap) {
+		StringRender.prototype._filterChars = function (chars, wrap) {
 			var res = [];
 			if (chars) {
 				for (var i = 0; i < chars.length; i++) {
@@ -548,7 +540,7 @@
 		 * @param {Number} endCh
 		 * @return {Number}
 		 */
-		StringRender.prototype._calcCharsWidth = function(startCh, endCh) {
+		StringRender.prototype._calcCharsWidth = function (startCh, endCh) {
 			for (var w = 0, i = startCh; i <= endCh; ++i) {
 				w += this.charWidths[i];
 			}
@@ -568,7 +560,9 @@
 				// search for end of line
 				for (j = startPos + 1; j < this.chars.length; ++j) {
 					chProp = this.charProps[j];
-					if (chProp && (chProp.nl || chProp.hp)) {break;}
+					if (chProp && (chProp.nl || chProp.hp)) {
+						break;
+					}
 				}
 				endPos = j - 1;
 			}
@@ -576,7 +570,9 @@
 			for (j = endPos, tw = 0, isAtEnd = true; j >= startPos; --j) {
 				if (isAtEnd) {
 					// skip space char at end of line
-					if ( (wrap) && this.codesSpace[this.chars[j]] ) {continue;}
+					if ((wrap) && this.codesSpace[this.chars[j]]) {
+						continue;
+					}
 					isAtEnd = false;
 				}
 				tw += this.charWidths[j];
@@ -609,7 +605,7 @@
 				var a_2 = asc_round(fpx / 2) * topt;
 
 				var h_2_3;
-				var a_2_3 = asc_round(fpx * 2/3) * topt;
+				var a_2_3 = asc_round(fpx * 2 / 3) * topt;
 				var d_2_3;
 
 				var x = a_2 + a_2_3;
@@ -624,7 +620,7 @@
 					l.a = fm.ascender + a_2;         // >0
 					l.d = fm.descender - a_2;        // <0
 				} else if (va === AscCommon.vertalign_SubScript) {
-					h_2_3 = hpt * 2/3;
+					h_2_3 = hpt * 2 / 3;
 					d_2_3 = h_2_3 - a_2_3;
 					l.th = x + d_2_3;
 					l.bl = a;
@@ -678,7 +674,9 @@
 				l.beg = b;
 				l.end = e < b ? b : e;
 				self.lines.push(l);
-				if (TW < l.tw) {TW = l.tw;}
+				if (TW < l.tw) {
+					TW = l.tw;
+				}
 				BL = TH + l.bl;
 				TH += l.th;
 			}
@@ -823,7 +821,9 @@
 
 		StringRender.prototype._getCharPropAt = function (index) {
 			var prop = this.charProps[index];
-			if (!prop) {prop = this.charProps[index] = new charProperties();}
+			if (!prop) {
+				prop = this.charProps[index] = new charProperties();
+			}
 			return prop;
 		};
 
@@ -939,7 +939,7 @@
 				if (va === AscCommon.vertalign_SuperScript || va === AscCommon.vertalign_SubScript) {
 					p.va = va;
 					p.fsz = fmt.getSize();
-					fmt.fs = p.fsz * 2/3;
+					fmt.fs = p.fsz * 2 / 3;
 					p.font = fmt;
 				}
 
@@ -973,16 +973,18 @@
 					hasRepeats = true;
 				}
 
-				if (chars.length < 1) {continue;}
+				if (chars.length < 1) {
+					continue;
+				}
 				measureFragment(chars);
 
 				// для italic текста прибавляем к концу строки разницу между charWidth и BBox
 				for (j = startCh; font.getItalic() && j < this.charWidths.length; ++j) {
 					if (this.charProps[j] && this.charProps[j].delta && j > 0) {
-						if (this.charWidths[j-1] > 0) {
-							this.charWidths[j-1] += this.charProps[j].delta;
+						if (this.charWidths[j - 1] > 0) {
+							this.charWidths[j - 1] += this.charProps[j].delta;
 						} else if (j > 1) {
-							this.charWidths[j-2] += this.charProps[j].delta;
+							this.charWidths[j - 2] += this.charProps[j].delta;
 						}
 					}
 				}
@@ -995,21 +997,21 @@
 				this.charWidths[this.charWidths.length - 1] += delta;
 			}
 
-            if (hasRepeats) {
-                if (maxWidth === undefined) {
-                    throw new Error("Undefined width of cell width Numeric Format");
-                }
-                this._insertRepeatChars(maxWidth);
-            }
+			if (hasRepeats) {
+				if (maxWidth === undefined) {
+					throw new Error("Undefined width of cell width Numeric Format");
+				}
+				this._insertRepeatChars(maxWidth);
+			}
 
-            return this._calcTextMetrics();
-        };
+			return this._calcTextMetrics();
+		};
 
-        /**
+		/**
 		 * @param {Number} maxWidth
 		 * @return {Asc.TextMetrics}
 		 */
-		StringRender.prototype._doMeasure = function(maxWidth) {
+		StringRender.prototype._doMeasure = function (maxWidth) {
 			var ratio, format, size, canReduce = true, minSize = 2.5;
 			var tm = this._measureChars(maxWidth);
 			while (this.flags && this.flags.shrinkToFit && tm.width > maxWidth && canReduce) {
@@ -1035,12 +1037,12 @@
 		 * @param {Number} maxWidth
 		 * @param {String} textColor
 		 */
-		StringRender.prototype._doRender = function(drawingCtx, x, y, maxWidth, textColor) {
+		StringRender.prototype._doRender = function (drawingCtx, x, y, maxWidth, textColor) {
 			var self = this;
 			var ctx = drawingCtx || this.drawingCtx;
 			var zoom = ctx.getZoom();
 			var ppiy = ctx.getPPIY();
-			var align  = this.flags ? this.flags.textAlign : null;
+			var align = this.flags ? this.flags.textAlign : null;
 			var i, j, p, p_, strBeg;
 			var n = 0, l = this.lines[0], x1 = l ? initX(0) : 0, y1 = y, dx = l ? computeWordDeltaX() : 0;
 
@@ -1056,10 +1058,14 @@
 			}
 
 			function computeWordDeltaX() {
-				if (align !== AscCommon.align_Justify || n === self.lines.length - 1) {return 0;}
+				if (align !== AscCommon.align_Justify || n === self.lines.length - 1) {
+					return 0;
+				}
 				for (var i = l.beg, c = 0; i <= l.end; ++i) {
 					var p = self.charProps[i];
-					if (p && p.wrd) {++c;}
+					if (p && p.wrd) {
+						++c;
+					}
 				}
 				return c > 1 ? (maxWidth - l.tw) / (c - 1) : 0;
 			}
@@ -1100,9 +1106,10 @@
 					fsz = prop.font.getSize();
 					lw = asc_round(fsz * ppiy / 72 / 18) || 1;
 					ctx.setStrokeStyle(prop.c || textColor)
-					   .setLineWidth(lw)
-					   .beginPath();
-					dy = (lw / 2); dy = dy >> 0;
+						.setLineWidth(lw)
+						.beginPath();
+					dy = (lw / 2);
+					dy = dy >> 0;
 					if (ul) {
 						y = asc_round(y1 + bl + prop.lm.d * 0.4 * zoom);
 						ctx.lineHor(x1, y + dy, x2 + 1/*px*/); // ToDo вопрос тут
@@ -1136,7 +1143,7 @@
 
 					if (p.font) {
 						// change canvas font style
-                        this._setFont(ctx, p.font);
+						this._setFont(ctx, p.font);
 						ctx.setFillStyle(p.c || textColor);
 						p_ = p;
 					}
@@ -1164,23 +1171,23 @@
 		};
 
 		StringRender.prototype.getInternalState = function () {
-            return {
-                /** @type Object */
-                flags       : this.flags,
+			return {
+				/** @type Object */
+				flags: this.flags,
 
-                chars       : this.chars,
-                charWidths  : this.charWidths,
-                charProps   : this.charProps,
-                lines       : this.lines
-            };
-        };
+				chars: this.chars,
+				charWidths: this.charWidths,
+				charProps: this.charProps,
+				lines: this.lines
+			};
+		};
 
 		StringRender.prototype.restoreInternalState = function (state) {
-			this.flags       = state.flags;
-			this.chars       = state.chars;
-			this.charWidths  = state.charWidths;
-			this.charProps   = state.charProps;
-			this.lines       = state.lines;
+			this.flags = state.flags;
+			this.chars = state.chars;
+			this.charWidths = state.charWidths;
+			this.charProps = state.charProps;
+			this.lines = state.lines;
 			return this;
 		};
 

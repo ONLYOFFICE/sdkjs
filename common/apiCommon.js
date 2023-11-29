@@ -4154,6 +4154,10 @@
 			_stream["WriteByte"](9);
 			_stream["WriteLong"](this.verticalTextAlign);
 		}
+		if(this.vert !== null && this.vert !== undefined) {
+			_stream["WriteByte"](10);
+			_stream["WriteLong"](this.vert);
+		}
 
 		_stream["WriteByte"](255);
 	};
@@ -4203,6 +4207,10 @@
 				}
 				case 9: {
 					this.verticalTextAlign = _params[_cursor.pos++];
+					break;
+				}
+				case 10: {
+					this.vert = _params[_cursor.pos++];
 					break;
 				}
 				case 255:
@@ -6663,9 +6671,11 @@
 		this.baseUrl     = "";
 		this.index       = 0;     // сверху не выставляем. оттуда в каком порядке пришли - в таком порядке и работают
 
-		this.icons          = ["1x", "2x"];
-		this.isViewer       = false;
-		this.EditorsSupport = ["word", "cell", "slide"];
+		this.descriptionLocale   = undefined;
+		this.icons               = ["1x", "2x"];
+		this.isViewer            = false;
+		this.isDisplayedInViewer = undefined;
+		this.EditorsSupport      = ["word", "cell", "slide"];
 
 		this.type = PluginType.Background;
 
@@ -6769,11 +6779,14 @@
 		_object["help"]        = this.help;
 		_object["index"]       = this.index;
 
+		_object["descriptionLocale"] = this.descriptionLocale;
+
 		_object["icons"]          = this.icons;
 		_object["icons2"]         = this.icons2;
 
-		_object["isViewer"]       = this.isViewer;
-		_object["EditorsSupport"] = this.EditorsSupport;
+		_object["isViewer"]            = this.isViewer;
+		_object["isDisplayedInViewer"] = this.isDisplayedInViewer;
+		_object["EditorsSupport"]      = this.EditorsSupport;
 
 		_object["type"]           = this.type;
 
@@ -6800,11 +6813,13 @@
 		this.url         = (_object["url"] != null) ? _object["url"] : this.url;
 		this.help        = (_object["help"] != null) ? _object["help"] : this.help;
 		this.index       = (_object["index"] != null) ? _object["index"] : this.index;
-
-		this.icons          = (_object["icons"] != null) ? _object["icons"] : this.icons;
-		this.icons2         = (_object["icons2"] != null) ? _object["icons2"] : this.icons2;
-		this.isViewer       = (_object["isViewer"] != null) ? _object["isViewer"] : this.isViewer;
-		this.EditorsSupport = (_object["EditorsSupport"] != null) ? _object["EditorsSupport"] : this.EditorsSupport;
+		
+		this.descriptionLocale   = (_object["descriptionLocale"] != null) ? _object["descriptionLocale"] : this.descriptionLocale;
+		this.icons               = (_object["icons"] != null) ? _object["icons"] : this.icons;
+		this.icons2              = (_object["icons2"] != null) ? _object["icons2"] : this.icons2;
+		this.isViewer            = (_object["isViewer"] != null) ? _object["isViewer"] : this.isViewer;
+		this.isDisplayedInViewer = (_object["isDisplayedInViewer"] != null) ? _object["isDisplayedInViewer"] : this.isDisplayedInViewer;
+		this.EditorsSupport      = (_object["EditorsSupport"] != null) ? _object["EditorsSupport"] : this.EditorsSupport;
 
 		// default: background
 		this.type = PluginType.Background;

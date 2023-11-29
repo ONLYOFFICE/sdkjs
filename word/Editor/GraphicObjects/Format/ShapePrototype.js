@@ -1200,7 +1200,7 @@ CShape.prototype.setStartPage = function(pageIndex, bNoResetSelectPage, bCheckCo
 							if (oComplexField)
 							{
 								var oInstruction = oComplexField.GetInstruction();
-								if (oInstruction && (fieldtype_NUMPAGES === oInstruction.GetType() || fieldtype_PAGE === oInstruction.GetType()))
+								if (oInstruction && (AscWord.fieldtype_NUMPAGES === oInstruction.GetType() || AscWord.fieldtype_PAGE === oInstruction.GetType()))
 								{
 									return true;
 								}

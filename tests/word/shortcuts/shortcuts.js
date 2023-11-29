@@ -1093,6 +1093,7 @@
 		{
 			assert.strictEqual(ExecuteHotkey(testHotkeyActions.disableNumLock) & keydownresult_PreventAll, keydownresult_PreventAll);
 			assert.strictEqual(ExecuteHotkey(testHotkeyActions.disableScrollLock) & keydownresult_PreventAll, keydownresult_PreventAll);
+			assert.strictEqual(ExecuteHotkey(testHotkeyActions.disableBrowserZoomIn) & keydownresult_PreventAll, keydownresult_PreventAll);
 		});
 
 		QUnit.test('Check filling forms', (assert) =>

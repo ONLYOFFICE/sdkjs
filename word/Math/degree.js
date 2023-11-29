@@ -589,7 +589,7 @@ CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 		let oBase = this.getBase();
 		if (oBase.haveMixedContent())
 			strBase = "〖" + strBase + "〗";
-		strTemp = strBase + strTypeOfScript + strIterator;
+		strTemp = strBase + strTypeOfScript + strIterator + " ";
 	}
 	return strTemp;
 };
@@ -1272,14 +1272,14 @@ CDegreeSubSup.prototype.GetTextOfElement = function(isLaTeX)
 	{
 		if (true === isPreScript)
 		{
-			strTemp = '(' + '_' + strLower + '^' + strUpper + ')' + Base;
+			strTemp = '(' + '_' + strLower + '^' + strUpper + ')' + Base + " ";
 		}
 		else
 		{
 			let oBase = this.getBase();
 			if (oBase.haveMixedContent())
 				Base = "〖" + Base + "〗";
-			strTemp = Base + '_' + strLower + '^' + strUpper;
+			strTemp = Base + '_' + strLower + '^' + strUpper + " ";
 		}
 	}
 	return strTemp;

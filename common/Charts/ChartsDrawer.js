@@ -2696,13 +2696,13 @@ CChartsDrawer.prototype =
 
 		//позиция в заисимости от положения точек на оси OY
 		var result, resPos, resVal, diffVal;
-		var plotArea = this.cChartSpace.chart.plotArea;
 
 		if (!yPoints[1] && val === yPoints[0].val) {
 			result = yPoints[0].pos;
 		} else if (val < yPoints[0].val) {
-			resPos = Math.abs(yPoints[1].pos - yPoints[0].pos);
-			resVal = yPoints[1].val - yPoints[0].val;
+			let firstVal = yPoints[1] ? yPoints[1] : yPoints[0];
+			resPos = Math.abs(firstVal.pos - yPoints[0].pos);
+			resVal = firstVal.val - yPoints[0].val;
 			diffVal = Math.abs(yPoints[0].val) - Math.abs(val);
 			if (isOx || isRect) {
 				result = yPoints[0].pos - Math.abs((diffVal / resVal) * resPos);
@@ -3111,10 +3111,17 @@ CChartsDrawer.prototype =
 	},
 
 	getPtCount: function (series) {
-		var numCache;
+		let numCache, oVal;
 		for (var i = 0; i < series.length; i++) {
-			//todo use getNumCache
-			numCache = series[i].val && series[i].val.numRef ? series[i].val.numRef.numCache : series[i].val.numLit;
+			if (series[i].val) {
+				oVal = series[i].val;
+			} else if (series[i].xVal) {
+				oVal = series[i].xVal;
+			} else if (series[i].yVal) {
+				oVal = series[i].yVal;
+			}
+
+			numCache = oVal && oVal.getNumCache && oVal.getNumCache();
 			if (numCache && numCache.ptCount) {
 				return numCache.ptCount;
 			}

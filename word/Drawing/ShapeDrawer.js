@@ -49,6 +49,10 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             break;
         case AscFormat.LineEndType.Arrow:
         {
+            if (Asc.editor.isPdfEditor() == true) {
+                drawer.CheckDash();
+            }
+
             var _ex = xPrev - xEnd;
             var _ey = yPrev - yEnd;
             var _elen = Math.sqrt(_ex*_ex + _ey*_ey);
@@ -60,6 +64,39 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
 
             var tmpx = xEnd + len * _ex;
             var tmpy = yEnd + len * _ey;
+
+            var x1 = tmpx + _vx * w/2;
+            var y1 = tmpy + _vy * w/2;
+
+            var x3 = tmpx - _vx * w/2;
+            var y3 = tmpy - _vy * w/2;
+
+            drawer._s();
+            drawer._m(trans.TransformPointX(x1, y1), trans.TransformPointY(x1, y1));
+            drawer._l(trans.TransformPointX(xEnd, yEnd), trans.TransformPointY(xEnd, yEnd));
+            drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
+            drawer.ds();
+            drawer._e();
+
+            break;
+        }
+        case AscFormat.LineEndType.ReverseArrow:
+        {
+            if (Asc.editor.isPdfEditor() == true) {
+                drawer.CheckDash();
+            }
+
+            var _ex = xPrev - xEnd;
+            var _ey = yPrev - yEnd;
+            var _elen = Math.sqrt(_ex*_ex + _ey*_ey);
+            _ex /= _elen;
+            _ey /= _elen;
+
+            var _vx = _ey;
+            var _vy = -_ex;
+
+            var tmpx = xEnd - len * _ex;
+            var tmpy = yEnd - len * _ey;
 
             var x1 = tmpx + _vx * w/2;
             var y1 = tmpy + _vy * w/2;
@@ -105,6 +142,13 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             drawer._l(trans.TransformPointX(tmpx2, tmpy2), trans.TransformPointY(tmpx2, tmpy2));
             drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
             drawer._z();
+            if (Asc.editor.isPdfEditor()) {
+                let oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor()); 
+
+                drawer.Graphics.m_oPen.Color.R = oRGBColor.r;
+                drawer.Graphics.m_oPen.Color.G = oRGBColor.g;
+                drawer.Graphics.m_oPen.Color.B = oRGBColor.b;
+            }
             drawer.drawStrokeFillStyle();
             drawer._e();
 
@@ -117,6 +161,93 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             drawer.ds();
             drawer._e();
 
+            break;
+        }
+        case AscFormat.LineEndType.Square:
+        {
+            var angle = Math.atan2(yEnd - yPrev, xEnd - xPrev);
+            function rotatePoints(aPoints) {
+                // Поворачиваем каждую вершину вокруг центра
+                for (var i = 0; i < aPoints.length; i++) {
+                    var x = aPoints[i].x - xEnd;
+                    var y = aPoints[i].y - yEnd;
+
+                    // Применяем матрицу поворота
+                    var rotatedX = x * Math.cos(angle) - y * Math.sin(angle);
+                    var rotatedY = x * Math.sin(angle) + y * Math.cos(angle);
+
+                    // Возвращаем вершины на место
+                    aPoints[i].x = rotatedX + xEnd;
+                    aPoints[i].y = rotatedY + yEnd;
+                }
+            }
+
+            var x1 = xEnd - w/2;
+            var y1 = yEnd + w/2;
+
+            var x2 = xEnd - w/2;
+            var y2 = yEnd - w/2;
+
+            var x3 = xEnd + w/2;
+            var y3 = yEnd - w/2;
+
+            var x4 = xEnd + w/2;
+            var y4 = yEnd + w/2;
+
+            let aSmall = [
+                { x: x1, y: y1 },
+                { x: x2, y: y2 },
+                { x: x3, y: y3 },
+                { x: x4, y: y4 }
+            ]
+
+            rotatePoints(aSmall);
+            
+            drawer._s();
+            drawer._m(trans.TransformPointX(aSmall[0].x, aSmall[0].y), trans.TransformPointY(aSmall[0].x, aSmall[0].y));
+            for (var i = 1; i < aSmall.length; i++) {
+                drawer._l(trans.TransformPointX(aSmall[i].x, aSmall[i].y), trans.TransformPointY(aSmall[i].x, aSmall[i].y));
+            }
+            drawer._z();
+            if (Asc.editor.isPdfEditor()) {
+                let oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor()); 
+
+                drawer.Graphics.m_oPen.Color.R = oRGBColor.r;
+                drawer.Graphics.m_oPen.Color.G = oRGBColor.g;
+                drawer.Graphics.m_oPen.Color.B = oRGBColor.b;
+            }
+            drawer.drawStrokeFillStyle();
+            drawer._e();
+
+            x1 = xEnd - w * 2/4;
+            y1 = yEnd + w * 2/4;
+
+            x2 = xEnd - w * 2/4;
+            y2 = yEnd - w * 2/4;
+
+            x3 = xEnd + w * 2/4;
+            y3 = yEnd - w * 2/4;
+
+            x4 = xEnd + w * 2/4;
+            y4 = yEnd + w * 2/4;
+
+            let aBig = [
+                { x: x1, y: y1 },
+                { x: x2, y: y2 },
+                { x: x3, y: y3 },
+                { x: x4, y: y4 }
+            ]
+
+            rotatePoints(aBig);
+            
+            drawer._s();
+            drawer._m(trans.TransformPointX(aBig[0].x, aBig[0].y), trans.TransformPointY(aBig[0].x, aBig[0].y));
+            for (var i = 1; i < aBig.length; i++) {
+                drawer._l(trans.TransformPointX(aBig[i].x, aBig[i].y), trans.TransformPointY(aBig[i].x, aBig[i].y));
+            }
+            drawer._z();
+            drawer.ds();
+            drawer._e();
             break;
         }
         case AscFormat.LineEndType.Oval:
@@ -156,6 +287,13 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
                 trans.TransformPointX(cx3, cy3), trans.TransformPointY(cx3, cy3),
                 trans.TransformPointX(tmpx, tmpy), trans.TransformPointY(tmpx, tmpy));
 
+            if (Asc.editor.isPdfEditor()) {
+                let oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor()); 
+
+                drawer.Graphics.m_oPen.Color.R = oRGBColor.r;
+                drawer.Graphics.m_oPen.Color.G = oRGBColor.g;
+                drawer.Graphics.m_oPen.Color.B = oRGBColor.b;
+            }
             drawer.drawStrokeFillStyle();
             drawer._e();
 
@@ -216,6 +354,51 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
 
             break;
         }
+        case AscFormat.LineEndType.ReverseTriangle:
+        {
+            var _ex = xPrev - xEnd;
+            var _ey = yPrev - yEnd;
+            var _elen = Math.sqrt(_ex*_ex + _ey*_ey);
+            _ex /= _elen;
+            _ey /= _elen;
+
+            var _vx = _ey;
+            var _vy = -_ex;
+
+            var tmpx = xEnd - len * _ex;
+            var tmpy = yEnd - len * _ey;
+
+            var x1 = tmpx + _vx * w/2;
+            var y1 = tmpy + _vy * w/2;
+
+            var x3 = tmpx - _vx * w/2;
+            var y3 = tmpy - _vy * w/2;
+
+            drawer._s();
+            drawer._m(trans.TransformPointX(x1, y1), trans.TransformPointY(x1, y1));
+            drawer._l(trans.TransformPointX(xEnd, yEnd), trans.TransformPointY(xEnd, yEnd));
+            drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
+            drawer._z();
+            if (Asc.editor.isPdfEditor()) {
+                let oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor()); 
+
+                drawer.Graphics.m_oPen.Color.R = oRGBColor.r;
+                drawer.Graphics.m_oPen.Color.G = oRGBColor.g;
+                drawer.Graphics.m_oPen.Color.B = oRGBColor.b;
+            }
+
+            drawer.drawStrokeFillStyle();
+            drawer._e();
+
+            drawer._s();
+            drawer._m(trans.TransformPointX(x1, y1), trans.TransformPointY(x1, y1));
+            drawer._l(trans.TransformPointX(xEnd, yEnd), trans.TransformPointY(xEnd, yEnd));
+            drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
+            drawer._z();
+            drawer.ds();
+            drawer._e();
+            break;
+        }
         case AscFormat.LineEndType.Triangle:
         {
             var _ex = xPrev - xEnd;
@@ -241,6 +424,14 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             drawer._l(trans.TransformPointX(xEnd, yEnd), trans.TransformPointY(xEnd, yEnd));
             drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
             drawer._z();
+            if (Asc.editor.isPdfEditor()) {
+                let oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor()); 
+
+                drawer.Graphics.m_oPen.Color.R = oRGBColor.r;
+                drawer.Graphics.m_oPen.Color.G = oRGBColor.g;
+                drawer.Graphics.m_oPen.Color.B = oRGBColor.b;
+            }
+
             drawer.drawStrokeFillStyle();
             drawer._e();
 
@@ -251,6 +442,63 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             drawer._z();
             drawer.ds();
             drawer._e();
+            break;
+        }
+        case AscFormat.LineEndType.Butt:
+        {
+            var _ex = xPrev - xEnd;
+            var _ey = yPrev - yEnd;
+            var _elen = Math.sqrt(_ex*_ex + _ey*_ey);
+            _ex /= _elen;
+            _ey /= _elen;
+
+            var _vx = _ey;
+            var _vy = -_ex;
+
+            var tmpx = xEnd + len * _ex;
+            var tmpy = yEnd + len * _ey;
+
+            var angle = Math.atan2(yEnd - yPrev, xEnd - xPrev);
+            // Вычисляем координаты конца перпендикулярной линии
+            var perpendicularLength = w;
+            var x1 = xEnd + perpendicularLength * Math.cos(angle - Math.PI / 2);
+            var y1 = yEnd + perpendicularLength * Math.sin(angle - Math.PI / 2);
+            var x2 = xEnd - perpendicularLength * Math.cos(angle - Math.PI / 2);
+            var y2 = yEnd - perpendicularLength * Math.sin(angle - Math.PI / 2);
+
+            drawer._s();
+            drawer._m(trans.TransformPointX(x1, y1), trans.TransformPointY(x1, y1));
+            drawer._l(trans.TransformPointX(x2, y2), trans.TransformPointY(x2, y2));
+            drawer.ds();
+            break;
+        }
+        case AscFormat.LineEndType.Slash:
+        {
+            var _ex = xPrev - xEnd;
+            var _ey = yPrev - yEnd;
+            var _elen = Math.sqrt(_ex*_ex + _ey*_ey);
+            _ex /= _elen;
+            _ey /= _elen;
+
+            var _vx = _ey;
+            var _vy = -_ex;
+
+            var tmpx = xEnd + len * _ex;
+            var tmpy = yEnd + len * _ey;
+
+            var angle = Math.atan2(yEnd - yPrev, xEnd - xPrev) + (30 * Math.PI / 180);
+
+            // Вычисляем координаты конца перпендикулярной линии
+            var perpendicularLength = w;
+            var x1 = xEnd + perpendicularLength * Math.cos(angle - Math.PI / 2);
+            var y1 = yEnd + perpendicularLength * Math.sin(angle - Math.PI / 2);
+            var x2 = xEnd - perpendicularLength * Math.cos(angle - Math.PI / 2);
+            var y2 = yEnd - perpendicularLength * Math.sin(angle - Math.PI / 2);
+
+            drawer._s();
+            drawer._m(trans.TransformPointX(x1, y1), trans.TransformPointY(x1, y1));
+            drawer._l(trans.TransformPointX(x2, y2), trans.TransformPointY(x2, y2));
+            drawer.ds();
             break;
         }
     }
@@ -342,7 +590,15 @@ CShapeDrawer.prototype =
 
     CheckDash : function()
     {
-        if (this.Ln.prstDash != null && AscCommon.DashPatternPresets[this.Ln.prstDash])
+        if (Asc.editor.isPdfEditor()) {
+            let aDash = this.Shape.GetDash && this.Shape.GetDash();
+            if (aDash) {
+                this.Graphics.p_dash(aDash.map(function(measure) {
+                    return measure / 2;
+                }));
+            }
+        }
+        else if (this.Ln.prstDash != null && AscCommon.DashPatternPresets[this.Ln.prstDash])
         {
             var _arr = AscCommon.DashPatternPresets[this.Ln.prstDash].slice();
             for (var indexD = 0; indexD < _arr.length; indexD++)
@@ -1151,7 +1407,7 @@ CShapeDrawer.prototype =
 
         var rgba = this.StrokeUniColor;
         let nAlpha = 0xFF;
-        if(!isArrowsPresent && !this.IsArrowsDrawing)
+        if(!isArrowsPresent && !this.IsArrowsDrawing || Asc.editor.isPdfEditor())
         {
             if (this.Ln && this.Ln.Fill != null && this.Ln.Fill.transparent != null)
                 nAlpha = this.Ln.Fill.transparent;

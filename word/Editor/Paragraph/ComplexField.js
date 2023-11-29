@@ -470,40 +470,40 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 	this.StartCharsUpdate();
 	switch (this.Instruction.GetType())
 	{
-		case fieldtype_PAGE:
-		case fieldtype_PAGENUM:
+		case AscWord.fieldtype_PAGE:
+		case AscWord.fieldtype_PAGENUM:
 			this.private_UpdatePAGE();
 			break;
-		case fieldtype_TOC:
+		case AscWord.fieldtype_TOC:
 			this.private_UpdateTOC();
 			break;
-		case fieldtype_PAGEREF:
+		case AscWord.fieldtype_PAGEREF:
 			this.private_UpdatePAGEREF();
 			break;
-		case fieldtype_NUMPAGES:
-		case fieldtype_PAGECOUNT:
+		case AscWord.fieldtype_NUMPAGES:
+		case AscWord.fieldtype_PAGECOUNT:
 			this.private_UpdateNUMPAGES();
 			break;
-		case fieldtype_FORMULA:
+		case AscWord.fieldtype_FORMULA:
 			this.private_UpdateFORMULA();
 			break;
-		case fieldtype_SEQ:
+		case AscWord.fieldtype_SEQ:
 			this.private_UpdateSEQ();
 			break;
-		case fieldtype_STYLEREF:
+		case AscWord.fieldtype_STYLEREF:
 			this.private_UpdateSTYLEREF();
 			break;
-		case fieldtype_TIME:
-		case fieldtype_DATE:
+		case AscWord.fieldtype_TIME:
+		case AscWord.fieldtype_DATE:
 			this.private_UpdateTIME();
 			break;
-		case fieldtype_REF:
+		case AscWord.fieldtype_REF:
 			this.private_UpdateREF();
 			break;
-		case fieldtype_NOTEREF:
+		case AscWord.fieldtype_NOTEREF:
 			this.private_UpdateNOTEREF();
 			break;
-		case fieldtype_ADDIN:
+		case AscWord.fieldtype_ADDIN:
 			break;
 	}
 	this.FinishCharsUpdate();
@@ -527,40 +527,40 @@ CComplexField.prototype.CalculateValue = function()
 	var sResult = "";
 	switch (this.Instruction.GetType())
 	{
-		case fieldtype_PAGE:
-		case fieldtype_PAGENUM:
+		case AscWord.fieldtype_PAGE:
+		case AscWord.fieldtype_PAGENUM:
 			sResult = this.private_CalculatePAGE();
 			break;
-		case fieldtype_TOC:
+		case AscWord.fieldtype_TOC:
 			sResult = "";
 			break;
-		case fieldtype_PAGEREF:
+		case AscWord.fieldtype_PAGEREF:
 			sResult = this.private_CalculatePAGEREF();
 			break;
-		case fieldtype_NUMPAGES:
-		case fieldtype_PAGECOUNT:
+		case AscWord.fieldtype_NUMPAGES:
+		case AscWord.fieldtype_PAGECOUNT:
 			sResult = this.private_CalculateNUMPAGES();
 			break;
-		case fieldtype_FORMULA:
+		case AscWord.fieldtype_FORMULA:
 			sResult = this.private_CalculateFORMULA();
 			break;
-		case fieldtype_SEQ:
+		case AscWord.fieldtype_SEQ:
 			sResult = this.private_CalculateSEQ();
 			break;
-		case fieldtype_STYLEREF:
+		case AscWord.fieldtype_STYLEREF:
 			sResult = this.private_CalculateSTYLEREF();
 			break;
-		case fieldtype_TIME:
-		case fieldtype_DATE:
+		case AscWord.fieldtype_TIME:
+		case AscWord.fieldtype_DATE:
 			sResult = this.private_CalculateTIME();
 			break;
-		case fieldtype_REF:
+		case AscWord.fieldtype_REF:
 			sResult = this.private_CalculateREF();
 			break;
-		case fieldtype_NOTEREF:
+		case AscWord.fieldtype_NOTEREF:
 			sResult = this.private_CalculateNOTEREF();
 			break;
-		case fieldtype_ADDIN:
+		case AscWord.fieldtype_ADDIN:
 			sResult = "";
 			break;
 
@@ -577,7 +577,7 @@ CComplexField.prototype.UpdateTIME = function(ms)
 		|| !this.BeginChar
 		|| !this.EndChar
 		|| !this.SeparateChar
-		|| (fieldtype_TIME !== this.Instruction.GetType() && fieldtype_DATE !== this.Instruction.GetType()))
+		|| (AscWord.fieldtype_TIME !== this.Instruction.GetType() && AscWord.fieldtype_DATE !== this.Instruction.GetType()))
 		return;
 
 	this.SelectFieldValue();
@@ -1185,10 +1185,13 @@ CComplexField.prototype.private_GetMessageContent = function(sMessage, oTextPr)
 	var oSelectedContent = new AscCommonWord.CSelectedContent();
 	var oPara = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.LogicDocument, false);
 	var oRun  = new ParaRun(oPara, false);
-	if(oTextPr)
-	{
-		oRun.Apply_Pr(oTextPr);
-	}
+	
+	if (this.Instruction && this.Instruction.isMergeFormat() && this.SeparateChar)
+		oRun.ApplyPr(this.SeparateChar.GetRun().GetDirectTextPr());
+	
+	if (oTextPr)
+		oRun.ApplyPr(oTextPr);
+
 	oRun.AddText(sMessage);
 	oPara.AddToContent(0, oRun);
 	oSelectedContent.Add(new AscCommonWord.CSelectedElement(oPara, false));
@@ -1209,7 +1212,12 @@ CComplexField.prototype.private_GetBookmarkContent = function(sBookmarkName)
 	var oSelectedContent = this.LogicDocument.GetSelectedContent(false);
 	var aElements = oSelectedContent.Elements;
 	var oElement;
-	for(var nIndex = 0; nIndex < aElements.length; ++nIndex)
+	
+	let isMergeFormat = this.Instruction.isMergeFormat();
+	let textPr        = this.GetFieldValueTextPr();
+	let paraTextPr    = new AscWord.ParaTextPr(textPr);
+	
+	for (var nIndex = 0; nIndex < aElements.length; ++nIndex)
 	{
 		oElement = aElements[nIndex];
 		oElement.Element = oElement.Element.Copy(null, null, {
@@ -1222,13 +1230,20 @@ CComplexField.prototype.private_GetBookmarkContent = function(sBookmarkName)
 			SkipBookmarks         : true,
 			SkipFldSimple         : true
 		});
+		
+		if (isMergeFormat)
+		{
+			oElement.Element.SetApplyToAll(true);
+			oElement.Element.AddToParagraph(paraTextPr);
+			oElement.Element.SetApplyToAll(false);
+		}
 	}
 	return oSelectedContent;
 };
 CComplexField.prototype.private_GetREFContent = function()
 {
 	var sValue = AscCommon.translateManager.getValue("Error! Reference source not found.");
-	if(!this.Instruction || this.Instruction.Type !== fieldtype_REF)
+	if(!this.Instruction || this.Instruction.Type !== AscWord.fieldtype_REF)
 	{
 		return this.private_GetErrorContent(sValue);
 	}
@@ -1329,7 +1344,7 @@ CComplexField.prototype.private_GetREFContent = function()
 CComplexField.prototype.private_GetNOTEREFContent = function()
 {
 	var sValue = AscCommon.translateManager.getValue("Error! Bookmark not defined.");
-	if(!this.Instruction || this.Instruction.Type !== fieldtype_NOTEREF)
+	if(!this.Instruction || this.Instruction.Type !== AscWord.fieldtype_NOTEREF)
 	{
 		return this.private_GetErrorContent(sValue);
 	}
@@ -1491,6 +1506,24 @@ CComplexField.prototype.GetFieldValueText = function()
 	
 	return result;
 };
+CComplexField.prototype.GetFieldValueTextPr = function()
+{
+	// TODO: Temporary. We select the first visible element in InstrText area and return its direct TextPr
+	let logicDocument = this.LogicDocument;
+	if (!logicDocument)
+		return new AscWord.CTextPr();
+	
+	let state = logicDocument.SaveDocumentState();
+	
+	let run = this.SeparateChar.GetRun();
+	run.Make_ThisElementCurrent(false);
+	run.SetCursorPosition(run.GetElementPosition(this.SeparateChar) + 1);
+	logicDocument.MoveCursorRight(true, false);
+	
+	let textPr = logicDocument.GetDirectTextPr();
+	logicDocument.LoadDocumentState(state);
+	return textPr;
+};
 CComplexField.prototype.GetTopDocumentContent = function()
 {
 	if (!this.BeginChar || !this.SeparateChar || !this.EndChar)
@@ -1587,7 +1620,7 @@ CComplexField.prototype.IsHidden = function()
 		return false;
 
 	var oInstruction = this.GetInstruction();
-	return (oInstruction && (fieldtype_ASK === oInstruction.GetType() || (this.SeparateChar.IsNumValue() && (fieldtype_NUMPAGES === oInstruction.GetType() || fieldtype_PAGE === oInstruction.GetType() || fieldtype_FORMULA === oInstruction.GetType()))));
+	return (oInstruction && (AscWord.fieldtype_ASK === oInstruction.GetType() || (this.SeparateChar.IsNumValue() && (AscWord.fieldtype_NUMPAGES === oInstruction.GetType() || AscWord.fieldtype_PAGE === oInstruction.GetType() || AscWord.fieldtype_FORMULA === oInstruction.GetType()))));
 };
 CComplexField.prototype.RemoveFieldWrap = function()
 {
@@ -1729,7 +1762,7 @@ CComplexField.prototype.CheckType = function(type)
 };
 CComplexField.prototype.IsAddin = function()
 {
-	return this.CheckType(fieldtype_ADDIN);
+	return this.CheckType(AscWord.fieldtype_ADDIN);
 };
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
