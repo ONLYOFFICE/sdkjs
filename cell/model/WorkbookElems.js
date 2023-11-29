@@ -15921,6 +15921,17 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
+	CTimelineCacheDefinition.prototype.isCachePivotTable = function (sheetId, pivotName) {
+		if (this.pivotTables) {
+			for (let i = 0; i < this.pivotTables.length; i++) {
+				if (this.pivotTables[i].isCachePivotTable(sheetId, pivotName)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	};
+
 
 	function CTimelineCachePivotTable() {
 		this.name = null;
@@ -15944,6 +15955,10 @@ QueryTableField.prototype.clone = function() {
 		}
 		return ws;
 	};
+	CTimelineCachePivotTable.prototype.isCachePivotTable = function (sheetId, pivotName) {
+		return this.tabId === sheetId && this.name === pivotName;
+	};
+
 
 	function CTimelineState() {
 		this.name = null;

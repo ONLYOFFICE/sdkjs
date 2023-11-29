@@ -2793,6 +2793,7 @@
 			if (removedSheet.timelines) {
 				for (let i = 0; i < removedSheet.timelines.length; i++) {
 					this.onTimeSlicerDelete(removedSheet.timelines[i].name);
+					this.onTimelineCacheDelete(removedSheet.timelines[i].name, true);
 				}
 			}
 
@@ -3852,6 +3853,17 @@
 		}
 		return res.length ? res : null;
 	};
+	Workbook.prototype.getTimelineCachesByPivotTable = function (sheetId, pivotName) {
+		var res = [];
+		if (this.timelineCaches) {
+			for (var i = 0, l = this.timelineCaches.length; i < l; ++i) {
+				if (this.timelineCaches[i].isCachePivotTable(sheetId, pivotName)) {
+					res.push(this.timelineCaches[i]);
+				}
+			}
+		}
+		return res;
+	};
 	Workbook.prototype.getDrawingDocument = function() {
 		return this.DrawingDocument;
 	};
@@ -3980,6 +3992,22 @@
 		History.EndTransaction();
 	};
 
+	Workbook.prototype.deleteTimelinesByPivotTable = function (sheetId, pivotName) {
+		var wb = this;
+		var timelineCaches = wb.getTimelineCachesByPivotTable(sheetId, pivotName);
+		timelineCaches.forEach(function (timelineCache) {
+			wb.onTimeSlicerDelete(timelineCache.sourceName);
+			wb.onTimelineCacheDelete(timelineCache.sourceName, true);
+			wb.onTimelinesDelete(timelineCache.sourceName, true);
+		});
+	};
+
+	Workbook.prototype.deleteTimelinesByCacheSourceName = function (name) {
+		this.forEach(function (ws) {
+			ws.deleteTimelinesByCacheSourceName(name);
+		});
+	};
+
 	Workbook.prototype.onTimeSlicerDelete = function(sName) {
 		if(AscCommon.isFileBuild()) {
 			return false;
@@ -3988,11 +4016,10 @@
 		for(let i = 0; i < this.aWorksheets.length; ++i) {
 			bRet = bRet || this.aWorksheets[i].onTimeSlicerDelete(sName);
 		}
-		this.deleteTimelineCache(sName, true);
 
 		return bRet;
 	};
-	Workbook.prototype.deleteTimelineCache = function (sName, addToHistory) {
+	Workbook.prototype.onTimelineCacheDelete = function (sName, addToHistory) {
 		if (this.timelineCaches) {
 			for(let i = 0; i < this.timelineCaches.length; ++i) {
 				if (this.timelineCaches[i].sourceName === sName) {
@@ -4001,9 +4028,22 @@
 							null, null, new UndoRedoData_FromTo(this.timelineCaches[i], null));
 					}
 					this.timelineCaches.splice(i, 1);
+					i--;
+					break;
 				}
 			}
 		}
+	};
+	Workbook.prototype.onTimelinesDelete = function(sName, addToHistory) {
+		if(AscCommon.isFileBuild()) {
+			return false;
+		}
+		var bRet = false;
+		for(let i = 0; i < this.aWorksheets.length; ++i) {
+			bRet = bRet || this.aWorksheets[i].onTimelinesDelete(sName, addToHistory);
+		}
+
+		return bRet;
 	};
 	Workbook.prototype.handleDrawings = function (fCallback) {
 		for(var i = 0; i < this.aWorksheets.length; ++i) {
@@ -9496,6 +9536,7 @@
 	};
 	Worksheet.prototype._deletePivotTable = function (pivotTables, pivotTable, index, withoutCells) {
 		this.workbook.deleteSlicersByPivotTable(this.getId(), pivotTable.asc_getName());
+		this.workbook.deleteTimelinesByPivotTable(this.getId(), pivotTable.asc_getName());
 
 		if (!withoutCells) {
 			this.clearPivotTableCell(pivotTable);
@@ -12471,6 +12512,22 @@
 			count++;
 		});
 		return count;
+	};
+
+	Worksheet.prototype.onTimelinesDelete = function(name, addToHistory) {
+		if (this.timelines && this.timelines.length) {
+			for (let i = 0; i < this.timelines.length; i++) {
+				if (this.timelines[i].name === name) {
+					if (addToHistory) {
+						History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_TimelineDelete,
+							this.getId(), null, new UndoRedoData_FromTo(this.timelines[i], null));
+					}
+
+					this.timelines.splice(i, 1);
+					i--;
+				}
+			}
+		}
 	};
 
 //-------------------------------------------------------------------------------------------------

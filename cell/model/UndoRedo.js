@@ -2517,7 +2517,7 @@ function (window, undefined) {
 			if (bUndo) {
 				wb.timelineCaches.push(Data.from);
 			} else {
-				wb.deleteTimelineCache(Data.from.name);
+				wb.onTimelineCacheDelete(Data.from.name);
 			}
 		}
 	};
@@ -3489,6 +3489,12 @@ function (window, undefined) {
 				ws.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF(ws);
 			}
 			ws.legacyDrawingHF.changePicture(from, to);
+		} else if (AscCH.historyitem_Worksheet_TimelineDelete === Type) {
+			if (bUndo) {
+				ws.timelines.push(Data.from);
+			} else {
+				wb.onTimelinesDelete(Data.from.name);
+			}
 		}
 	};
 	UndoRedoWoorksheet.prototype.forwardTransformationIsAffect = function (Type) {
