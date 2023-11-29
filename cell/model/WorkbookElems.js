@@ -15942,29 +15942,32 @@ function RangeDataManagerElem(bbox, data)
 			let filledRangeLength = null;
 
 			if (seriesInType === Asc.c_oAscSeriesInType.rows) {
-				filledRange._foreach2(function (cell, curRow, curCol) {
+				filledRange._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
 					if (cell && cell.getNumberValue() != null) {
+						// If columns range not starts with 0, define indexCell by difference between current column and start column
+						let indexCell = curCol - colStart;
 						ySum += cell.getNumberValue();
-						xSum += curCol;
+						xSum += indexCell;
 					}
 				});
-				filledRangeLength = filledRange.bbox.c2 + 1;
+				filledRangeLength = (filledRange.bbox.c2 - filledRange.bbox.c1) + 1;
 			} else {
 				filledRange._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
 					if (curCol === colStart) {
 						if (cell && cell.getNumberValue() != null) {
+							let indexCell = curRow - rowStart;
 							ySum += cell.getNumberValue();
-							xSum += curRow;
+							xSum += indexCell;
 						}
 					}
 				});
-				filledRangeLength = filledRange.bbox.r2 + 1;
+				filledRangeLength = (filledRange.bbox.r2 - filledRange.bbox.r1) + 1;
 			}
 
 			xAvg = xSum / filledRangeLength;
 			yAvg = ySum / filledRangeLength;
 		}
-		function actionCell(cell, curRow, curCol) {
+		function actionCell(cell, curRow, curCol, rowStart, colStart) {
 			if (cell && cell.getValueWithoutFormat()) {
 				// Fill type
 				seriesSettings.asc_setType(Asc.c_oAscSeriesType.linear);
@@ -15983,7 +15986,7 @@ function RangeDataManagerElem(bbox, data)
 				// Fill step value
 				let cellNumberValue = cell.getNumberValue();
 				let isVertical = seriesSettings.asc_getSeriesIn() === Asc.c_oAscSeriesInType.columns;
-				let cellIndex = isVertical ? curRow : curCol;
+				let cellIndex = isVertical ? curRow - rowStart : curCol - colStart;
 
 				if (cell.isFormula()) {
 					seriesSettings.asc_setStepValue(1);
@@ -16083,14 +16086,16 @@ function RangeDataManagerElem(bbox, data)
 			calcAvg(Asc.c_oAscSeriesInType.columns);
 			filledRange._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
 				if (curCol === colStart) {
-					return actionCell(cell, curRow, curCol);
+					return actionCell(cell, curRow, curCol, rowStart, colStart);
 				}
 			});
 		}
 		if (seriesSettings.asc_getStepValue() == null) {
 			let isVertical = this.asc_getSeriesIn() === Asc.c_oAscSeriesInType.columns;
-			let rangeLen = isVertical ? range.r2 + 1 : range.c2 + 1;
-			let filledRangeLen = isVertical ? filledRange.bbox.r2 + 1 : filledRange.bbox.c2 + 1;
+			let rangeLen = isVertical ? countOfRow + 1 : countOfCol + 1;
+			let countOfFilledRow = filledRange.bbox.r2 - filledRange.bbox.r1;
+			let countOfFilledCol = filledRange.bbox.c2 - filledRange.bbox.c1;
+			let filledRangeLen = isVertical ? countOfFilledRow + 1 : countOfFilledCol + 1;
 
 			if (rangeLen === filledRangeLen || firstValue === ySum) { // all selected cells are filled or only one cell is filled
 				this.asc_setStepValue(1);
