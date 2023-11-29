@@ -8936,10 +8936,6 @@
                 res = this.bcr.Read1(length, function(t, l) {
                     return oThis.ReadTimelinesList(t, l, oWorksheet.timelines);
                 });
-            } else if (c_oSerWorksheetsTypes.Timelines === type) {
-                oWorksheet.timelines = this.stream.GetBuffer(length);
-            } else if (c_oSerWorksheetsTypes.Timeline === type) {
-                oWorksheet.timeline = this.stream.GetBuffer(length);
             } else
 				res = c_oSerConstants.ReadUnknown;
 			return res;
@@ -12075,7 +12071,7 @@
 		this.tableStyles = tableStyles;
 
 		this.oCustomSlicerStyles = null;
-        this.oTimelineStyles = null;
+		this.oTimelineStyles = null;
 	}
 
 	CT_Stylesheet.prototype.onStartNode = function(elem, attr, uq) {
