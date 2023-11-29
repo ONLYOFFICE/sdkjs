@@ -218,7 +218,7 @@
 	};
 	CConditionalFormattingRule.prototype.recalcInterfaceFormula = function (ws, toInterface) {
 		for (var i = 0; i < this.aRuleElements.length; i++) {
-			this.aRuleElements[i].recalcFormula(ws, toInterface);
+			this.aRuleElements[i].recalcFormula && this.aRuleElements[i].recalcFormula(ws, toInterface);
 		}
 	};
 	CConditionalFormattingRule.prototype.Write_ToBinary2 = function (writer) {
