@@ -20421,7 +20421,7 @@
 					if (nValue !== null) {
 						// For Growth type take ln from value
 						if (oSerial.getType() === oSeriesType.growth) {
-							nValue = Math.log(nValue);
+							nValue =  Math.log(nValue);
 						}
 						oRes = fAction(nValue, i);
 					}
@@ -20451,6 +20451,9 @@
 		let oFromRange = this.getFromRange();
 		let nIndexFilledLine = this.getVertical() ? oFilledLine.oCell.nCol : oFilledLine.oCell.nRow;
 		let nFilledStartIndex = this.getVertical() ? oFromRange.bbox.r1 : oFromRange.bbox.c1;
+		// If the first cell after calculating the linear regression for "growth trend" is Infinity, then the next cells in range fill 0.
+		// This flag is only uses for the Growth trend with an active fill handle
+		let bFirstCellValueInf = false;
 		// Define variables for calculate linear regression
 		let nSumX = 0;
 		let nSumY = 0;
@@ -20461,12 +20464,21 @@
 		// Getting filled cells and calculating sum of index cell (x) and values (y) for calculate intercept and slop
 		// for linear regression formula: y = intercept + slop * x
 		this._calcSum(nFilledStartIndex, nEndIndexFilledLine, nIndexFilledLine, function (nValue, nCellIndex) {
+			if (nValue === -Infinity && nFilledStartIndex === nCellIndex && oSerial.getActiveFillHandle()) {
+				bFirstCellValueInf = true;
+				return true; // break loop
+			}
 			nSumX += nCellIndex;
 			nSumY += nValue;
 		});
 		let nXAvg = nSumX / nFilledLineLength;
 		let nYAvg = nSumY / nFilledLineLength;
 		this._calcSum(nFilledStartIndex, nEndIndexFilledLine, nIndexFilledLine, function (nValue, nCellIndex) {
+			if (bFirstCellValueInf) {
+				nNumeratorOfSlope = 0;
+				nDenominatorOfSlope = 1;
+				return true; // break loop
+			}
 			nNumeratorOfSlope += (nCellIndex - nXAvg) * (nValue - nYAvg);
 			nDenominatorOfSlope += Math.pow((nCellIndex - nXAvg), 2);
 		});
@@ -20489,7 +20501,7 @@
 				let oCellValue = new AscCommonExcel.CCellValue();
 				let nCellValue = nIntercept + nSlope * x;
 				if (oSerial.getType() === oSeriesType.growth) {
-					nCellValue = Math.exp(nCellValue);
+					nCellValue = bFirstCellValueInf ? nCellValue : Math.exp(nCellValue);
 				}
 				oCellValue.type = CellValueType.Number;
 				oCellValue.number = nCellValue;
