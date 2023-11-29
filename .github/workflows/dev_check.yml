@@ -32,6 +32,7 @@ jobs:
           npm install --prefix build
           grunt --gruntfile build/Gruntfile.js develop
           node-qunit-puppeteer tests/common/api/api.html
+          node-qunit-puppeteer tests/common/color-mods/color-mods.html
           node-qunit-puppeteer tests/cell/shortcuts/shortcuts.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/FormulaTests.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/PivotTests.html

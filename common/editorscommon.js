@@ -13598,6 +13598,14 @@
 	{
 		return rad * 180.0 / Math.PI;
 	}
+
+	function trimMinMaxValue(value, min, max) {
+		if (value < min)
+			return min;
+		if (value > max)
+			return max;
+		return value;
+	}
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -13818,6 +13826,7 @@
 	window['AscCommon'].deg2rad = deg2rad;
 	window['AscCommon'].rad2deg = rad2deg;
 	window["AscCommon"].c_oAscImageUploadProp = c_oAscImageUploadProp;
+	window["AscCommon"].trimMinMaxValue = trimMinMaxValue;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
