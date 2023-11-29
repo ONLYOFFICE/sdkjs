@@ -16102,7 +16102,7 @@ function RangeDataManagerElem(bbox, data)
 			let rangeLen = isVertical ? countOfRow + 1 : countOfCol + 1;
 			let filledRangeLen = isVertical ? countOfFilledRow + 1 : countOfFilledCol + 1;
 
-			if (filledRangeLen === rangeLen  || firstValue === ySum || firstValue == null) { // all selected cells are filled or only one cell is filled
+			if (filledRangeLen === rangeLen || firstValue === ySum || firstValue == null) { // all selected cells are filled or only one cell is filled
 				this.asc_setStepValue(1);
 			} else {
 				let slope = numeratorOfSlope / denominatorOfSlope;

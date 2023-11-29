@@ -20421,7 +20421,7 @@
 					if (nValue !== null) {
 						// For Growth type take ln from value
 						if (oSerial.getType() === oSeriesType.growth) {
-							nValue =  Math.log(nValue);
+							nValue = Math.log(nValue);
 						}
 						oRes = fAction(nValue, i);
 					}
