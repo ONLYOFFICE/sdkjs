@@ -26501,7 +26501,7 @@
 					History.StartTransaction();
 
 					oThis.applyFillHandle(null, null, null, true, function (success) {
-						_setSelection(oThis.activeFillHandle);
+						_setSelection(_cloneSelection);
 
 						History.SetSelection(_cloneSelection);
 						History.SetSelectionRedo(_cloneSelection);
