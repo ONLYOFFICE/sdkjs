@@ -35,61 +35,72 @@ function rgb(r, g, b, a) {
 	a = a || 0;
 	return {R: r, G:g, B: b, A: a};
 }
-function test(startColor, arrMods, expectedColor, description) {
+function test(startColor, arrMods, expectedColor) {
 	const oMods = new AscFormat.CColorModifiers();
+	const description = "Check  applying ";
+	const modsDescription = [];
 	for (let i = 0; i < arrMods.length; i += 1) {
 		const mod = arrMods[i];
 		oMods.addMod(mod.name, mod.value);
+		modsDescription.push(mod.description);
 	}
 	oMods.Apply(startColor);
-	return {expected: expectedColor, result: startColor, description: description};
+	return {expected: expectedColor, result: startColor, description: description + modsDescription.join(', ')};
 }
 function mod(name, value) {
-	return {name: name, value: value};
+	return {name: name, value: value, description: name + " with " + value + " value"};
 }
 	QUnit.module("Test applying color mods");
 	const tests = [
 		test(
 			rgb(68, 114, 196),
-			[mod('satOff', 0), mod('lumOff', 0), mod('hueOff')],
-			rgb(68, 114, 196),
-			"Check uselessness of zero offsets"
+			[mod('satOff', 0), mod('lumOff', 0), mod('hueOff', 0)],
+			rgb(68, 114, 196)
 		),
 		test(
 			rgb(68, 114, 196),
 			[],
-			rgb(68, 114, 196),
-			"Check color with empty mods"
+			rgb(68, 114, 196)
 		),
 		test(
 			rgb(68, 114, 196),
 			[mod("hueMod", 100000), mod("satMod", 100000), mod("lumMod", 100000)],
-			rgb(68, 114, 196),
-			"Check uselessness of multiplication by 100%"
+			rgb(68, 114, 196)
 		),
 		test(
 			rgb(68, 114, 196),
 			[mod("satMod", 5000)],
-			rgb(129, 131, 135),
-			"Check saturation multiplication by 5%"
+			rgb(129, 131, 135)
 		),
 		test(
 			rgb(68, 114, 196),
 			[mod("satMod", 10000)],
-			rgb(126, 130, 138),
-			"Check saturation multiplication by 10%"
+			rgb(126, 130, 138)
 		),
 		test(
 			rgb(68, 114, 196),
 			[mod("lumMod", 10000)],
-			rgb(6, 11, 20),
-			"Check lightness multiplication by 10%"
+			rgb(6, 11, 20)
 		),
 		test(
 			rgb(68, 114, 196),
 			[mod("lumMod", 20000)],
-			rgb(13, 23, 40),
-			"Check lightness multiplication by 20%"
+			rgb(13, 23, 40)
+		),
+		test(
+			rgb(68, 114, 196),
+			[mod("lumOff", 20000)],
+			rgb(146, 172, 220)
+		),
+		test(
+			rgb(68, 114, 196),
+			[mod("hueOff", 20000)],
+			rgb(68, 113, 196)
+		),
+		test(
+			rgb(68, 114, 196),
+			[mod("hueOff", -200000)],
+			rgb(68, 121, 196)
 		),
 	];
 

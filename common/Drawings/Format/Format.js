@@ -1555,7 +1555,7 @@
 					var HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
-					var res = (HSL.H + (val * 10.0) / 9.0 + 0.5) >> 0;
+					var res = HSL.H + (val * 10) / 9;
 					HSL.H = AscCommon.trimMinMaxValue(res, 0, max_hls);
 
 					this.HSL2RGB(HSL, RGBA);
@@ -1573,7 +1573,7 @@
 					var HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
-					var res = (HSL.L + val * max_hls + 0.5) >> 0;
+					var res = HSL.L + val * max_hls;
 					HSL.L = AscCommon.trimMinMaxValue(res, 0, max_hls);
 
 					this.HSL2RGB(HSL, RGBA);
@@ -1587,7 +1587,7 @@
 					var HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
-					var res = (HSL.S + val * max_hls + 0.5) >> 0;
+					var res = HSL.S + val * max_hls;
 					HSL.S = AscCommon.trimMinMaxValue(res, 0, max_hls);
 
 					this.HSL2RGB(HSL, RGBA);
