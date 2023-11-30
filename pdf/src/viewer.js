@@ -705,6 +705,11 @@
 				this.thumbnails.init(this);
 
 			this.setMouseLockMode(true);
+
+			if (this.drawingPages[0]) {
+				let nKoeff = this.drawingPages[0].W / this.file.pages[0].W;
+				this.navigateToPage(0, 0, (this.scrollMaxX / 2) / nKoeff);
+			}
 		};
 
 		this.open = function(data, password)
