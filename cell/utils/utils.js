@@ -2794,28 +2794,60 @@
 			return this;
 		}
 
-		asc_CHyperlink.prototype.asc_getType = function () {
-			return this.hyperlinkModel.getHyperlinkType();
+		asc_CHyperlink.prototype.clone = function () {
+			let res = new asc_CHyperlink();
+
+			res.hyperlinkModel = this.hyperlinkModel && this.hyperlinkModel.clone();
+			res.text = this.text;
+
+			return res;
 		};
-		asc_CHyperlink.prototype.asc_getHyperlinkUrl = function (checkHyperlinkFunction) {
-			let sHyperlink = this.hyperlinkModel.Hyperlink;
-			if (checkHyperlinkFunction && this.hyperlinkModel.getHyperlinkFunction()) {
+		asc_CHyperlink.prototype.calculateProps = function () {
+			let type = this.asc_getType();
+			let fileName = window.Asc.editor && window.Asc.editor.DocInfo && window.Asc.editor.DocInfo.Title;
+			if (type === Asc.c_oAscHyperlinkType.WebLink && this.hyperlinkModel.getHyperlinkFunction()) {
+				let res = null;
+				let sHyperlink = this.hyperlinkModel.Hyperlink;
 				let ph = {operand_str: null, pCurrPos: 0};
 				let _3dRef = AscCommon.parserHelp.is3DRef.call(ph, sHyperlink, 0);
 
 				if (_3dRef && _3dRef[0] && _3dRef[3] && _3dRef[1]) {
-					let ref;
-					if (AscCommon.parserHelp.isArea.call(ph, sHyperlink, ph.pCurrPos) || AscCommon.parserHelp.isRef.call(ph, sHyperlink, ph.pCurrPos)) {
-						ref = ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase()
+					AscCommon.getUrlType(_3dRef[3]);
+					if (AscCommon.rx_allowedProtocols.test(_3dRef[3])) {
+						let ref;
+						if (AscCommon.parserHelp.isArea.call(ph, sHyperlink, ph.pCurrPos) || AscCommon.parserHelp.isRef.call(ph, sHyperlink, ph.pCurrPos)) {
+							ref = ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase()
+						}
+						if (ref) {
+							//https://test.com/test1/testFile.xlsx#TestSheet!F10
+							sHyperlink = _3dRef[3] + "#" + _3dRef[1] + ref;
+							res = {hyperlink: this.clone(), type: type};
+							res.hyperlink.asc_setHyperlinkUrl(sHyperlink);
+						}
+					} else {
+						//check [test.xlsx]Sheet2!A1
+						//while check link on this file
+						//TODO need calculate links on other files
+						if (_3dRef[3] === fileName) {
+
+						}
 					}
-					if (ref) {
-						//https://test.com/test1/testFile.xlsx#TestSheet!F10
-						sHyperlink = _3dRef[3] + "#" + _3dRef[1] + ref;
-					}
+				} else {
+					//check [test.xlsx]A14
+
+				}
+
+				if (res) {
+					return res;
 				}
 			}
-
-			return sHyperlink;
+			return null;
+		};
+		asc_CHyperlink.prototype.asc_getType = function () {
+			return this.hyperlinkModel.getHyperlinkType();
+		};
+		asc_CHyperlink.prototype.asc_getHyperlinkUrl = function () {
+			return this.hyperlinkModel.Hyperlink;
 		};
 		asc_CHyperlink.prototype.asc_getTooltip = function () {
 			return this.hyperlinkModel.Tooltip;
