@@ -8381,9 +8381,7 @@ background-repeat: no-repeat;\
 		var t = this;
 		this.sync_StartAction(c_oAscAsyncActionType.Information, c_oAscAsyncAction.Submit);
 		var data = {'type': 'sendForm', 'userconnectionid': this.CoAuthoringApi.getUserConnectionId(), 'formdata': {
-				"key1": "qwerty",
-				"key2": true,
-				"key3": "2023-07-17"
+				'formsdata': this.asc_GetAllFormsData(true)
 		}};
 		this.saveFromChanges(data, Asc.c_nMaxConversionTime, function(isTimeout, response) {
 			if (!(response && AscCommon.c_oAscServerCommandErrors.NoError === response.code)) {
@@ -10915,9 +10913,22 @@ background-repeat: no-repeat;\
 	{
 		let formManager = this.private_GetFormsManager();
 		if (!formManager)
-			return {};
+			return [];
 
 		return formManager.GetAllFormsData();
+	};
+	asc_docs_api.prototype.asc_SetAllFormsData = function(data)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		let formManager   = this.private_GetFormsManager();
+		if (!formManager || !logicDocument)
+			return;
+		
+		// TODO: For now we assume that there is no need to check for document selection lock
+		logicDocument.StartAction(AscDFH.historydescription_Document_SetAllFormsData);
+		formManager.SetAllFormsData(data);
+		logicDocument.Recalculate();
+		logicDocument.FinalizeAction();
 	};
 	asc_docs_api.prototype.asc_GetOForm = function()
 	{
@@ -11246,7 +11257,7 @@ background-repeat: no-repeat;\
 
 				for (var nParaIndex = 0, nParasCount = arrParagraphs.length; nParaIndex < nParasCount; ++nParaIndex)
 				{
-					var arrPageNumbers = arrParagraphs[nParaIndex].GetComplexFieldsArrayByType(AscCommonWord.fieldtype_PAGEREF);
+					var arrPageNumbers = arrParagraphs[nParaIndex].GetComplexFieldsArrayByType(AscWord.fieldtype_PAGEREF);
 					for (var nRefIndex = 0, nRefsCount = arrPageNumbers.length; nRefIndex < nRefsCount; ++nRefIndex)
 					{
 						arrPageNumbers[nRefIndex].Update();

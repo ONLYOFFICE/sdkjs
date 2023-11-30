@@ -1199,6 +1199,129 @@
 
 		return this.SelectedObjectsStack;
 	};
+
+	asc_docs_api.prototype.asc_getAnimatedObjectsStack = function()
+	{
+		let oPresentation = this.private_GetLogicDocument();
+		if(!oPresentation)
+		{
+			return this.SelectedObjectsStack;
+		}
+		let oDrawingsController = oPresentation.GetCurrentController();
+		if(!oDrawingsController)
+		{
+			return this.SelectedObjectsStack;
+		}
+		if(oDrawingsController.getSelectedObjects().length > 0)
+		{
+			return this.SelectedObjectsStack;
+		}
+		let oCurSlide = oPresentation.GetCurrentSlide();
+		if(!oCurSlide)
+		{
+			return [];
+		}
+		let oTiming = oCurSlide.timing;
+		if(!oTiming)
+		{
+			return this.SelectedObjectsStack;
+		}
+		let aEffects = oTiming.getSelectedEffects();
+		if(aEffects.length === 0)
+		{
+			return this.SelectedObjectsStack;
+		}
+		let aDrawings = [];
+		let oMapDrawings = {};
+		for(let nEffect = 0; nEffect < aEffects.length; ++nEffect)
+		{
+			let oEffect = aEffects[nEffect];
+			let sObjectId = oEffect.getObjectId();
+			if(!sObjectId)
+			{
+				continue;
+			}
+			if(oMapDrawings[sObjectId])
+			{
+				continue;
+			}
+
+			let oDrawing = AscCommon.g_oTableId.Get_ById(sObjectId);
+			if (!oDrawing)
+			{
+				continue;
+			}
+			oMapDrawings[sObjectId] = true;
+			aDrawings.push(oDrawing);
+		}
+		if(aDrawings.length === 0)
+		{
+			return this.SelectedObjectsStack;
+		}
+
+		let aStack = [];
+
+
+		for(let nSelObj = 0; nSelObj < this.SelectedObjectsStack.length; ++nSelObj)
+		{
+			if(this.SelectedObjectsStack[nSelObj].Type === c_oAscTypeSelectElement.Slide)
+			{
+				aStack.push(this.SelectedObjectsStack[nSelObj]);
+				break;
+			}
+		}
+		let oDrawingPr = oDrawingsController.getDrawingPropsFromArray(aDrawings);
+		let oParaPr = oDrawingsController.getParagraphParaPr();
+		let oTextPr = oDrawingsController.getParagraphTextPr();
+
+
+		if (oTextPr && oParaPr)
+		{
+			aStack.push(new asc_CSelectedObject(c_oAscTypeSelectElement.Paragraph, new Asc.asc_CParagraphProperty(oParaPr)));
+		}
+		let oImgPr = oDrawingPr.imageProps;
+		let oSpPr = oDrawingPr.shapeProps;
+		let oChartPr = oDrawingPr.chartProps;
+		let oTblPr = oDrawingPr.tableProps;
+		if (oImgPr)
+		{
+			oImgPr.Width = oImgPr.w;
+			oImgPr.Height = oImgPr.h;
+			oImgPr.Position = {X: oImgPr.x, Y: oImgPr.y};
+			if (AscFormat.isRealBool(oImgPr.locked) && oImgPr.locked)
+			{
+				oImgPr.Locked = true;
+			}
+			aStack.push(this.getImageSelectedObject(oImgPr));
+		}
+		if (oSpPr)
+		{
+			oSpPr.Position = new Asc.CPosition({X: oSpPr.x, Y: oSpPr.y});
+			aStack.push(new asc_CSelectedObject(c_oAscTypeSelectElement.Shape, AscFormat.CreateAscShapePropFromProp(oSpPr)));
+		}
+		if (oDrawingPr.animProps)
+		{
+			aStack.push(new asc_CSelectedObject(c_oAscTypeSelectElement.Animation, oDrawingPr.animProps));
+		}
+		if (oChartPr && oChartPr.chartProps)
+		{
+			if (oSpPr)
+			{
+				oChartPr.x = oSpPr.x;
+				oChartPr.y = oSpPr.y;
+				if (oSpPr.Position)
+				{
+					oChartPr.Position = new Asc.CPosition(oSpPr.Position);
+				}
+			}
+			aStack.push(this.getImageSelectedObject(oChartPr));
+		}
+		if (oTblPr)
+		{
+			aStack.push(new asc_CSelectedObject(c_oAscTypeSelectElement.Table, new Asc.CTableProp(oTblPr)));
+		}
+		return aStack;
+	};
 	asc_docs_api.prototype.sync_ChangeLastSelectedElement  = function(type, obj)
 	{
 		var oUnkTypeObj = null;
@@ -4990,7 +5113,8 @@ background-repeat: no-repeat;\
 	{
 		this.sendEvent("asc_onAddImage");
 	};
-	asc_docs_api.prototype.sync_ImgPropCallback  = function(imgProp)
+
+	asc_docs_api.prototype.getImageSelectedObject  = function(imgProp)
 	{
 		var type = imgProp.chartProps ? c_oAscTypeSelectElement.Chart : c_oAscTypeSelectElement.Image;
 		var objects;
@@ -5002,7 +5126,11 @@ background-repeat: no-repeat;\
 		{
 			objects = new Asc.asc_CImgProperty(imgProp);
 		}
-		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new asc_CSelectedObject(type, objects);
+		return new asc_CSelectedObject(type, objects);
+	};
+	asc_docs_api.prototype.sync_ImgPropCallback  = function(imgProp)
+	{
+		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = this.getImageSelectedObject(imgProp);
 	};
 
 	asc_docs_api.prototype.sync_MathPropCallback = function(MathProp)
@@ -5831,7 +5959,7 @@ background-repeat: no-repeat;\
 		}
 		this.onDocumentContentReady();
 
-		if(this.asc_IsStartDemonstartionOnOpen())
+		if(this.asc_IsStartDemonstrationOnOpen())
 		{
 			this.sendEvent("asc_onStartDemonstration");
 		}
@@ -5860,7 +5988,7 @@ background-repeat: no-repeat;\
 		this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.None;
 		this.goTo();
 	};
-	asc_docs_api.prototype.asc_IsStartDemonstartionOnOpen = function()
+	asc_docs_api.prototype.asc_IsStartDemonstrationOnOpen = function()
 	{
 		if(this.documentFormat === "ppsx")
 		{
@@ -8835,6 +8963,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['sync_BeginCatchSelectedElements']     = asc_docs_api.prototype.sync_BeginCatchSelectedElements;
 	asc_docs_api.prototype['sync_EndCatchSelectedElements']       = asc_docs_api.prototype.sync_EndCatchSelectedElements;
 	asc_docs_api.prototype['getSelectedElements']                 = asc_docs_api.prototype.getSelectedElements;
+	asc_docs_api.prototype['asc_getAnimatedObjectsStack']         = asc_docs_api.prototype.asc_getAnimatedObjectsStack;
 	asc_docs_api.prototype['sync_ChangeLastSelectedElement']      = asc_docs_api.prototype.sync_ChangeLastSelectedElement;
 	asc_docs_api.prototype['asc_getEditorPermissions']            = asc_docs_api.prototype.asc_getEditorPermissions;
 	asc_docs_api.prototype['asc_setDocInfo']                      = asc_docs_api.prototype.asc_setDocInfo;

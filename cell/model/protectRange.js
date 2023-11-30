@@ -37,7 +37,7 @@
 	function CUserProtectedRange(ws) {
 		this.ref = null;
 		this.name = null;
-		this.users  = null;
+		this.users = null;
 
 		this.usersGroups = null;
 
@@ -59,7 +59,7 @@
 		return AscCommonExcel.UndoRedoDataTypes.UserProtectedRange;
 	};
 
-	CUserProtectedRange.prototype.clone = function(ws) {
+	CUserProtectedRange.prototype.clone = function (ws) {
 		var res = new CUserProtectedRange(ws);
 
 		res.ref = this.ref ? this.ref.clone() : null;
@@ -72,7 +72,7 @@
 		return res;
 	};
 
-	CUserProtectedRange.prototype.Write_ToBinary2 = function(w) {
+	CUserProtectedRange.prototype.Write_ToBinary2 = function (w) {
 		if (null != this.ref) {
 			w.WriteBool(true);
 
@@ -135,7 +135,7 @@
 		}
 	};
 
-	CUserProtectedRange.prototype.Read_FromBinary2 = function(r) {
+	CUserProtectedRange.prototype.Read_FromBinary2 = function (r) {
 		if (r.GetBool()) {
 			var r1 = r.GetLong();
 			var c1 = r.GetLong();
@@ -179,10 +179,10 @@
 			this.Id = r.GetString2();
 		}
 	};
-	CUserProtectedRange.prototype.intersection = function(range) {
+	CUserProtectedRange.prototype.intersection = function (range) {
 		return this.ref && this.ref.intersection(range);
 	};
-	CUserProtectedRange.prototype.isUserCanEdit = function(userId) {
+	CUserProtectedRange.prototype.isUserCanEdit = function (userId) {
 		if (this.users) {
 			for (let i = 0; i < this.users.length; i++) {
 				if (this.users[i].id === userId) {
@@ -192,15 +192,15 @@
 		}
 		return false;
 	};
-	CUserProtectedRange.prototype.isInRange = function(bbox) {
+	CUserProtectedRange.prototype.isInRange = function (bbox) {
 		return bbox.containsRange(this.ref);
 	};
-	CUserProtectedRange.prototype.setOffset = function(offset, addToHistory) {
+	CUserProtectedRange.prototype.setOffset = function (offset, addToHistory) {
 		var ref = this.ref.clone();
 		ref.setOffset(offset);
 		this.setLocation(ref, addToHistory);
 	};
-	CUserProtectedRange.prototype.setLocation = function(ref, addToHistory) {
+	CUserProtectedRange.prototype.setLocation = function (ref, addToHistory) {
 		if (addToHistory) {
 			AscCommon.History.Add(AscCommonExcel.g_oUndoRedoUserProtectedRange, AscCH.historyitem_UserProtectedRange_Ref,
 				this._ws ? this._ws.getId() : null, null,
@@ -278,7 +278,7 @@
 		this.name = null;
 	}
 
-	CUserProtectedRangeUserInfo.prototype.Write_ToBinary2 = function(w) {
+	CUserProtectedRangeUserInfo.prototype.Write_ToBinary2 = function (w) {
 		if (null != this.id) {
 			w.WriteBool(true);
 			w.WriteString2(this.id);
@@ -293,7 +293,7 @@
 		}
 	};
 
-	CUserProtectedRangeUserInfo.prototype.Read_FromBinary2 = function(r) {
+	CUserProtectedRangeUserInfo.prototype.Read_FromBinary2 = function (r) {
 		if (r.GetBool()) {
 			this.id = r.GetString2();
 		}
@@ -306,7 +306,7 @@
 		return AscCommonExcel.UndoRedoDataTypes.UserProtectedRange;
 	};
 
-	CUserProtectedRangeUserInfo.prototype.clone = function(ws) {
+	CUserProtectedRangeUserInfo.prototype.clone = function (ws) {
 		var res = new CUserProtectedRangeUserInfo(ws);
 
 		res.id = this.id;

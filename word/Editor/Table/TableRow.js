@@ -1206,7 +1206,7 @@ CTableRow.prototype.OnContentChange = function()
 	if (table)
 		table.OnContentChange();
 };
-CTableRow.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
+CTableRow.prototype.FindParagraph = function (fCondition, bBackward, nStartIdx)
 {
 	var nSearchStartIdx, nIdx, oResult, oContent;
 	if(bBackward)
@@ -1222,7 +1222,7 @@ CTableRow.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx
 		for(nIdx = nSearchStartIdx; nIdx >= 0; --nIdx)
 		{
 			oContent = this.Content[nIdx].GetContent();
-			oResult = oContent.FindParaWithStyle(sStyleId, bBackward, null);
+			oResult = oContent.FindParagraph(fCondition, bBackward, null);
 			if(oResult)
 			{
 				return oResult
@@ -1242,7 +1242,7 @@ CTableRow.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx
 		for(nIdx = nSearchStartIdx; nIdx < this.Content.length; ++nIdx)
 		{
 			oContent = this.Content[nIdx].GetContent();
-			oResult = oContent.FindParaWithStyle(sStyleId, bBackward, null);
+			oResult = oContent.FindParagraph(fCondition, bBackward, null);
 			if(oResult)
 			{
 				return oResult
@@ -1250,6 +1250,23 @@ CTableRow.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx
 		}
 	}
 	return null;
+};
+
+CTableRow.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
+{
+	let fCondition = function (oParagraph)
+	{
+		return oParagraph.GetParagraphStyle() === sStyleId;
+	};
+	return this.FindParagraph(fCondition, bBackward, nStartIdx);
+};
+
+CTableRow.prototype.FindParaWithOutlineLvl = function (nOutlineLvl, bBackward, nStartIdx)
+{
+	let fCondition = function (oParagraph) {
+		return oParagraph.GetOutlineLvl() === nOutlineLvl;
+	};
+	return this.FindParagraph(fCondition, bBackward, nStartIdx);
 };
 
 function CTableRowRecalculateObject()

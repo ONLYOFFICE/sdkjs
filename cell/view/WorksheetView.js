@@ -58,6 +58,7 @@
     var gc_nMaxRow = AscCommon.gc_nMaxRow;
     var gc_nMaxCol = AscCommon.gc_nMaxCol;
     var History = AscCommon.History;
+	var c_oAscFillType = Asc.c_oAscFillType;
 
     var asc = window["Asc"];
     var asc_applyFunction = AscCommonExcel.applyFunction;
@@ -523,7 +524,6 @@
 		this._initCellsArea(AscCommonExcel.recalcType.full);
 		this.model.setTableStyleAfterOpen();
 		this.model.setDirtyConditionalFormatting(null);
-		this.model.initPivotTables();
 		this.model.updatePivotTablesStyle(null);
 		this._cleanCellsTextMetricsCache();
 		this._prepareCellTextMetricsCache();
@@ -12571,7 +12571,7 @@
     };
 
     /* Функция для применения автозаполнения */
-    WorksheetView.prototype.applyFillHandle = function (x, y, ctrlPress, opt_doNotDraw) {
+    WorksheetView.prototype.applyFillHandle = function (x, y, ctrlPress, opt_doNotDraw, callback) {
         var t = this;
 
         if (null !== this.resizeTableIndex) {
@@ -12589,6 +12589,7 @@
 			t.resizeTableIndex = null;
 			t.fillHandleDirection = -1;
 			!opt_doNotDraw && t._drawSelection();
+			callback && callback(false);
         	return;
 		}
 
@@ -12713,6 +12714,7 @@
 						// Обновляем выделенные ячейки
 						t._updateRange(arn);
 						!opt_doNotDraw && t.draw();
+						callback && callback(true);
                     } else {
                         t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotFillRange,
                           c_oAscError.Level.NoCritical);
@@ -12730,6 +12732,7 @@
 					t.fillHandleDirection = -1;
 					// Перерисовываем
 					!opt_doNotDraw && t._drawSelection();
+					callback && callback(false);
                 }
             };
 
@@ -12750,6 +12753,7 @@
 						t.fillHandleDirection = -1;
 						// Перерисовываем
 						!opt_doNotDraw && t._drawSelection();
+						callback && callback(false);
 					}
 				}, true);
 				return;
@@ -12760,6 +12764,7 @@
 				this.fillHandleDirection = -1;
 				// Перерисовываем
 				!opt_doNotDraw && this._drawSelection();
+				callback && callback(false);
 
 				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
 					c_oAscError.Level.NoCritical);
@@ -12773,6 +12778,7 @@
 				this.fillHandleDirection = -1;
 				// Перерисовываем
 				!opt_doNotDraw && this._drawSelection();
+				callback && callback(false);
 
 				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray,
 					c_oAscError.Level.NoCritical);
@@ -12789,6 +12795,7 @@
             this.fillHandleDirection = -1;
             // Перерисовываем
 			!opt_doNotDraw && this._drawSelection();
+			callback && callback(false);
         }
     };
 
@@ -26649,6 +26656,198 @@
 			return;
 		}
 		this.model.removeLegacyDrawingHFPictures(aPictures);
+	};
+	/**
+	 * Method applies series settings when user confirms "Series" settings in dialog window or context menu.
+	 * @param {c_oAscFillType} type
+	 * @param {asc_CSeriesSettings} [settings]
+	 */
+	WorksheetView.prototype.applySeriesSettings = function (type, settings) {
+		const oThis = this;
+		const cSerial = settings ? new AscCommonExcel.CSerial(settings) : null;
+		const oRange = this.model.getSelection().getLast();
+		const oRangeModel = this.model.getRange3(oRange.r1, oRange.c1, oRange.r2, oRange.c2);
+		const sNumFormat = oRangeModel.getXfs() && oRangeModel.getXfs().num && oRangeModel.getXfs().num.getFormat();
+		const bDateType = !!(sNumFormat && AscCommon.oNumFormatCache.get(sNumFormat).isDateTimeFormat());
+
+		let oRanges = this.model.getSelection();
+		let aRanges = oRanges.ranges;
+
+		let _setSelection = function (_newSelectionRange) {
+			//aRanges[0].assign(_newSelectionRange.c1, _newSelectionRange.r1, _newSelectionRange.c2, _newSelectionRange.r2);
+			oThis.setSelection(_newSelectionRange);
+		};
+
+		let prepareFillHandle = function (selectionRange) {
+			let cloneSelection = selectionRange.clone();
+
+			let _applyFillHandleSettings = function (_fillRange, _direction, _area) {
+				oThis.activeFillHandle = _fillRange;
+				oThis.fillHandleDirection = _direction;
+				oThis.fillHandleArea = _area;
+			};
+
+			let oneRow = selectionRange.isOneRow();
+			let oneCol = selectionRange.isOneCol();
+			if (type === c_oAscFillType.fillDown) {
+				if (oneRow && selectionRange.r1 === 0) {
+					return false;
+				}
+
+				selectionRange.assign(selectionRange.c1, selectionRange.r1 - 1*oneRow, selectionRange.c2, selectionRange.r1 - 1*oneRow);
+				_applyFillHandleSettings(cloneSelection, 1, 3);
+			} else if (type === c_oAscFillType.fillUp) {
+				if (oneRow && selectionRange.r2 === gc_nMaxRow0) {
+					return false;
+				}
+
+				selectionRange.assign(selectionRange.c1, selectionRange.r2 + 1*oneRow, selectionRange.c2, selectionRange.r2 + 1*oneRow);
+				_applyFillHandleSettings(new asc_Range(cloneSelection.c2, cloneSelection.r2, cloneSelection.c1, cloneSelection.r1), 1, 1);
+			} else if (type === c_oAscFillType.fillRight) {
+				if (oneCol && selectionRange.c1 === 0) {
+					return false;
+				}
+
+				selectionRange.assign(selectionRange.c1 - 1*oneCol, selectionRange.r1, selectionRange.c1 - 1*oneCol, selectionRange.r2);
+				_applyFillHandleSettings(cloneSelection, 0, 3);
+			} else if (type === c_oAscFillType.fillLeft) {
+				if (oneCol && selectionRange.c2 === gc_nMaxCol0) {
+					return false;
+				}
+
+				selectionRange.assign(selectionRange.c2 + 1*oneCol, selectionRange.r1, selectionRange.c2 + 1*oneCol, selectionRange.r2);
+				_applyFillHandleSettings(new asc_Range(cloneSelection.c2, cloneSelection.r2, cloneSelection.c1, cloneSelection.r1), 0, 1);
+			}
+
+			return true;
+		};
+
+		switch (type) {
+			case c_oAscFillType.copyCells:
+				if (!this.activeFillHandle) {
+					return;
+				}
+				// Selected one cell with number type data for copy cells changes ctrlPress logic to false
+				if (oRange.isOneCell() && oRangeModel.getType() === AscCommon.CellValueType.Number && !bDateType) {
+					this.applyFillHandle(null, null, false, null);
+				} else {
+					this.applyFillHandle(null, null, true, null);
+				}
+				break;
+			case c_oAscFillType.fillSeries:
+			case c_oAscFillType.fillDays:
+				if (!this.activeFillHandle) {
+					return;
+				}
+				// Selected one cell with number type data for fills series changes ctrlPress logic to true
+				if (oRange.isOneCell() && oRangeModel.getType() === AscCommon.CellValueType.Number && !bDateType) {
+					this.applyFillHandle(null, null, true, null);
+				} else {
+					this.applyFillHandle(null, null, false, null);
+				}
+				break;
+			case c_oAscFillType.linearTrend:
+			case c_oAscFillType.growthTrend:
+			//case c_oAscFillType.fillDays:
+			//case c_oAscFillType.fillWeekdays:
+			//case c_oAscFillType.fillMonths:
+			//case c_oAscFillType.fillYears:
+				if (!cSerial) {
+					return;
+				}
+
+
+				this._isLockedCells(oRangeModel, /*subType*/null, function (success) {
+					if (!success) {
+						return;
+					}
+
+					cSerial.setFromRange(oRangeModel);
+					cSerial.setActiveFillHandle(oThis.activeFillHandle);
+					cSerial.exec();
+
+					oThis._updateRange(oThis.activeFillHandle);
+					_setSelection(oThis.activeFillHandle);
+
+					oThis.cleanFillHandleProps(true);
+					oThis.draw();
+				});
+				break;
+			case c_oAscFillType.series:
+				if (!cSerial) {
+					return;
+				}
+				if (this.activeFillHandle != null) {
+					cSerial.setActiveFillHandle(this.activeFillHandle);
+				}
+
+				this._isLockedCells(aRanges, /*subType*/null, function (success) {
+					if (!success) {
+						return;
+					}
+
+					History.Create_NewPoint();
+					History.StartTransaction();
+
+					for (let i = 0; i < aRanges.length; i++) {
+						const oRangeModel = oThis.model.getRange3(aRanges[i].r1, aRanges[i].c1, aRanges[i].r2, aRanges[i].c2);
+						cSerial.setFromRange(oRangeModel);
+						cSerial.exec();
+					}
+
+					if (oThis.activeFillHandle) {
+						_setSelection(oThis.activeFillHandle);
+						//History.SetSelection(oThis.activeFillHandle.clone());
+						History.SetSelectionRedo(oThis.activeFillHandle.clone());
+					}
+					History.EndTransaction();
+
+					oThis.cleanFillHandleProps(true);
+
+					//update
+					for (let i = 0; i < aRanges.length; i++) {
+						oThis._updateRange(aRanges[i]);
+					}
+					oThis.draw();
+				});
+				break;
+			case c_oAscFillType.fillDown:
+			case c_oAscFillType.fillLeft:
+			case c_oAscFillType.fillRight:
+			case c_oAscFillType.fillUp:
+				//don't work in  ms
+				if (aRanges.length > 1) {
+					return;
+				}
+
+				let _cloneSelection = aRanges[0].clone();
+				if (prepareFillHandle(aRanges[0])) {
+					History.Create_NewPoint();
+					History.StartTransaction();
+
+					oThis.applyFillHandle(null, null, null, true, function (success) {
+						_setSelection(_cloneSelection);
+
+						History.SetSelection(_cloneSelection);
+						History.SetSelectionRedo(_cloneSelection);
+						History.EndTransaction();
+
+						success && oThis.draw();
+					});
+				}
+
+				break;
+		}
+	};
+
+	WorksheetView.prototype.cleanFillHandleProps = function (opt_doNotDraw) {
+		this.activeFillHandle = null;
+		this.resizeTableIndex = null;
+		this.fillHandleDirection = -1;
+
+		if (!opt_doNotDraw) {
+			this.draw();
+		}
 	};
 
 

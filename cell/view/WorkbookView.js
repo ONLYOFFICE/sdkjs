@@ -561,8 +561,8 @@
 			  // AutoComplete
 			  "showAutoComplete": function () {
 				  self.showAutoComplete.apply(self, arguments);
-			  }, "onContextMenu": function (event) {
-				  self.handlers.trigger("asc_onContextMenu", event);
+			  }, "onContextMenu": function (event, type) {
+				  self.handlers.trigger("asc_onContextMenu", event, type);
 			  },
 
 			  // DataValidation
@@ -5601,10 +5601,12 @@
 		if (~sChangingCell.indexOf(",")) {
 			sChangingCell = sChangingCell.slice(0, sChangingCell.indexOf(","));
 		}
-		sSheetName = sChangingCell.split("!")[0].replace(/'/g, "");
-		sChangingCell = sChangingCell.split("!")[1];
-		if (sSheetName !== wsChangingCell.getName()) {
-			wsChangingCell = this.model.getWorksheetByName(sSheetName);
+		if (~sChangingCell.indexOf("!")) {
+			sSheetName = sChangingCell.split("!")[0].replace(/'/g, "");
+			sChangingCell = sChangingCell.split("!")[1];
+			if (sSheetName !== wsChangingCell.getName()) {
+				wsChangingCell = this.model.getWorksheetByName(sSheetName);
+			}
 		}
 
 		let t = this;

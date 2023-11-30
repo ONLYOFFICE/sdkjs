@@ -394,7 +394,7 @@ function (window, undefined) {
 			return indexes;
 		};
 		const getParentIndex = function (_parent) {
-			if (!_parent || _parent.nCol == null ||  _parent.nRow == null) {
+			if (!_parent || _parent.nCol == null || _parent.nRow == null) {
 				return null;
 			}
 			let _parentCellIndex = AscCommonExcel.getCellIndex(_parent.nRow, _parent.nCol);
@@ -529,7 +529,8 @@ function (window, undefined) {
 						}
 
 						if (isDefName) {
-							let parentInnerElementType = parent.parsedRef.outStack[0] ? parent.parsedRef.outStack[0].type : false, defNameRange;
+							let parentInnerElementType = parent.parsedRef.outStack[0] ? parent.parsedRef.outStack[0].type : false,
+								defNameRange;
 							if (parentInnerElementType === cElementType.cellsRange || parentInnerElementType === cElementType.cellsRange3D || parentInnerElementType === cElementType.cell3D) {
 								defNameRange = parent.parsedRef.outStack[0].getRange();
 							}
@@ -565,7 +566,7 @@ function (window, undefined) {
 
 						let parentCellIndex = getParentIndex(parent);
 						if (parentCellIndex === null) {
-						//if (parentCellIndex === null || (typeof(parentCellIndex) === "number" && isNaN(parentCellIndex))) {
+							//if (parentCellIndex === null || (typeof(parentCellIndex) === "number" && isNaN(parentCellIndex))) {
 							continue;
 						}
 						this._setDependents(cellIndex, parentCellIndex);
@@ -592,7 +593,8 @@ function (window, undefined) {
 							continue;
 						}
 
-						let	elemCellIndex = cellListeners[i].shared !== null ? currentIndex : getParentIndex(parent), formula = cellListeners[i].Formula;
+						let elemCellIndex = cellListeners[i].shared !== null ? currentIndex : getParentIndex(parent),
+							formula = cellListeners[i].Formula;
 						if (formula.includes(":") && !cellListeners[i].is3D) {
 							// call getAllAreaIndexes which return cellIndexes of each element(this will be parentCellIndex)
 							let areaIndexes = getAllAreaIndexes(cellListeners[i]);
@@ -903,7 +905,8 @@ function (window, undefined) {
 		}
 		let t = this;
 		let currentCellIndex = AscCommonExcel.getCellIndex(row, col);
-		let formulaInfoObject = this.checkUnrecordedAndFormNewStack(currentCellIndex, formulaParsed), isHaveUnrecorded, newOutStack;
+		let formulaInfoObject = this.checkUnrecordedAndFormNewStack(currentCellIndex, formulaParsed), isHaveUnrecorded,
+			newOutStack;
 
 		if (formulaInfoObject) {
 			isHaveUnrecorded = formulaInfoObject.isHaveUnrecorded;
@@ -1086,7 +1089,7 @@ function (window, undefined) {
 				shared = formulaParsed.getShared();
 				base = shared.base;
 			}
-			
+
 			for (let i = length - 1; i >= 0; i--) {
 				let elem = formulaParsed.outStack[i];
 				if (!elem) {
@@ -1106,7 +1109,7 @@ function (window, undefined) {
 							inFormulaRef = true;
 						} else if (funcArrayIndexes) {
 							// if have no returnType check for arrayIndexes and if element pass in raw form(as array, range) to argument
-							if (funcArrayIndexes[ numberOfArgs - 1]) {
+							if (funcArrayIndexes[numberOfArgs - 1]) {
 								inFormulaRef = true;
 							}
 						}
@@ -1142,7 +1145,7 @@ function (window, undefined) {
 							continue
 						}
 
-						let	defNameParentWsIndex = elemDefName.parsedRef.outStack[0].wsFrom ? elemDefName.parsedRef.outStack[0].wsFrom.index : (elemDefName.parsedRef.outStack[0].ws ? elemDefName.parsedRef.outStack[0].ws.index : null);
+						let defNameParentWsIndex = elemDefName.parsedRef.outStack[0].wsFrom ? elemDefName.parsedRef.outStack[0].wsFrom.index : (elemDefName.parsedRef.outStack[0].ws ? elemDefName.parsedRef.outStack[0].ws.index : null);
 						elemRange = elemValue.range.bbox ? elemValue.range.bbox : elemValue.bbox;
 
 						if (defNameParentWsIndex && defNameParentWsIndex !== currentWsIndex) {

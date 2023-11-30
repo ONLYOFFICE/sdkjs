@@ -787,7 +787,9 @@
 										if (this.isSlideShow()) {
 											ret.cursorType = "pointer";
 											if (AscCommon.IsLinkPPAction(sHyperlink)) {
-												MMData.Hyperlink = null;
+												MMData = new AscCommon.CMouseMoveData();
+												MMData.X_abs = Coords.X;
+												MMData.Y_abs = Coords.Y;
 											}
 											oDD.SetCursorType("pointer", MMData);
 										} else {

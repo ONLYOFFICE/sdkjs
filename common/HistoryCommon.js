@@ -1284,6 +1284,12 @@
 			case AscDFH.historydescription_Document_RemoveMathShortcut:
 				sString = "Document_RemoveMathShortcut";
 				break;
+			case AscDFH.historydescription_Document_SetAllFormsData:
+				sString = "Document_SetAllFormsData";
+				break;
+			case AscDFH.historydescription_Document_ComplexField_MergeFormat:
+				sString = "Document_ComplexField_MergeFormat";
+				break;
 		}
 		return sString;
 	}
@@ -1725,6 +1731,7 @@
 	window['AscDFH'].historyitem_type_Pdf_Ink				= 2213 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Annot				= 2214 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Pushbutton		= 2215 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Line				= 2216 << 16;
 
 	
 
@@ -4026,6 +4033,9 @@
 	AscDFH.historyitem_Pdf_Ink_FlipV			= AscDFH.historyitem_type_Pdf_Ink | 2;
 	AscDFH.historyitem_Pdf_Ink_FlipH			= AscDFH.historyitem_type_Pdf_Ink | 3;
 
+	// annot line
+	AscDFH.historyitem_Pdf_Line_Points			= AscDFH.historyitem_type_Pdf_Line | 1;
+	
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CPDFDoc
 	//------------------------------------------------------------------------------------------------------------------
@@ -4469,6 +4479,8 @@
 	window['AscDFH'].historydescription_Document_SetConsecutiveHyphenLimit          = 0x01a7;
 	window['AscDFH'].historydescription_Document_SetHyphenateCaps                   = 0x01a8;
 	window['AscDFH'].historydescription_Document_RemoveMathShortcut                 = 0x01a9;
+	window['AscDFH'].historydescription_Document_SetAllFormsData                    = 0x01aa;
+	window['AscDFH'].historydescription_Document_ComplexField_MergeFormat           = 0x01ab;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

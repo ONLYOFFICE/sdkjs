@@ -1301,24 +1301,42 @@
             oActionsQueue.bContinueAfterEval = false;
         
         Api.oSaveObjectForAddImage = this;
-        AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, undefined, function(error, files)
-        {
-            if (error.canceled == true) {
-                let oDoc            = oThis.GetDocument();
-                let oActionsQueue   = oDoc.GetActionsQueue();
-                oActionsQueue.Continue();
-            }
-            else
-                Api._uploadCallback(error, files, oThis);
-
-        }, function(error)
-        {
-            if (c_oAscError.ID.No !== error)
+        if (window["AscDesktopEditor"]) {
+            window["AscDesktopEditor"]["OpenFilenameDialog"]("images", false, function(_file) {
+                var file = _file;
+                if (Array.isArray(file))
+                    file = file[0];
+                if (!file) {
+                    let oDoc            = oThis.GetDocument();
+                    let oActionsQueue   = oDoc.GetActionsQueue();
+                    oActionsQueue.Continue();
+                    return;
+                }
+        
+                var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file);
+                editor._addImageUrl([AscCommon.g_oDocumentUrls.getImageUrl(_url)], oThis);
+            });
+        }
+        else {
+            AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, undefined, function(error, files)
             {
-                Api.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
-            }
-            Api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-        });
+                if (error.canceled == true) {
+                    let oDoc            = oThis.GetDocument();
+                    let oActionsQueue   = oDoc.GetActionsQueue();
+                    oActionsQueue.Continue();
+                }
+                else
+                    Api._uploadCallback(error, files, oThis);
+
+            }, function(error)
+            {
+                if (c_oAscError.ID.No !== error)
+                {
+                    Api.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+                }
+                Api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+            });
+        }
     };
     CPushButtonField.prototype.GetDrawing = function() {
         return this.content.GetAllDrawingObjects()[0];

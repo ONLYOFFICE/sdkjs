@@ -3146,7 +3146,56 @@ window.AscCommon.g_cIsBeta = "false";
 		DateTime     : 5,
 
 		TOC          : 10,
-		Complex      : 11
+		Complex      : 11,
+		
+		toString : function(type)
+		{
+			switch (type)
+			{
+				case c_oAscContentControlSpecificType.None:
+					return "text";
+				case c_oAscContentControlSpecificType.CheckBox:
+					return "checkBox";
+				case c_oAscContentControlSpecificType.Picture:
+					return "picture";
+				case c_oAscContentControlSpecificType.ComboBox:
+					return "comboBox";
+				case c_oAscContentControlSpecificType.DropDownList:
+					return "dropDownList";
+				case c_oAscContentControlSpecificType.DateTime:
+					return "dateTime";
+				case c_oAscContentControlSpecificType.TOC:
+					return "toc";
+				case c_oAscContentControlSpecificType.Complex:
+					return "complex";
+			}
+			
+			return "unknown";
+		},
+		
+		fromString : function(value)
+		{
+			switch (value)
+			{
+				case "checkBox":
+				case "radio":
+					return c_oAscContentControlSpecificType.CheckBox;
+				case "picture":
+					return c_oAscContentControlSpecificType.Picture;
+				case "comboBox":
+					return c_oAscContentControlSpecificType.ComboBox;
+				case "dropDownList":
+					return c_oAscContentControlSpecificType.DropDownList;
+				case "dateTime":
+					return c_oAscContentControlSpecificType.DateTime;
+				case "toc":
+					return c_oAscContentControlSpecificType.TOC;
+				case "complex":
+					return c_oAscContentControlSpecificType.Complex;
+			}
+			
+			return c_oAscContentControlSpecificType.None;
+		}
 	};
 
 	var c_oAscDefNameType = {

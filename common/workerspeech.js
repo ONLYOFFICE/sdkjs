@@ -114,7 +114,10 @@
 		this.isEnabled = false;
 		this.speechElement = null;
 		this.isLogEnabled = false;
+
 		this.timerSetValue = -1;
+		this.value = "";
+		this.valueEqualAddon = false;
 
 		this.setEnabled = function(isEnabled)
 		{
@@ -200,10 +203,27 @@
 		// 3) Resolve the problem with equals with nbsp
 		this._setValuePermanentlyDiffEqual = function(value)
 		{
-			let isEven = this.speechElement.innerHTML.endsWith("&nbsp;");
-			this.speechElement.innerHTML = isEven ? (value) : (value + "&nbsp;");
+			if (this.value !== value)
+			{
+				this.value = value;
+				this.speechElement.innerHTML = this.value;
+				this.valueEqualAddon = false;
+			}
+			else
+			{
+				this.valueEqualAddon = !this.valueEqualAddon;
+				if (this.valueEqualAddon)
+				{
+					this.speechElement.innerHTML = this.value + "&nbsp;";
+				}
+				else
+				{
+					this.speechElement.innerHTML = this.value;
+				}
+			}
+
 			if (this.isLogEnabled)
-				console.log("[speech]: " + value);
+				console.log("[speech]: " + this.speechElement.innerHTML);
 		};
 
 		// 4) Simple timer
@@ -251,6 +271,10 @@
 				this._log("End of the document");
 			else if (obj.moveToEndOfLine)
 				this._log("End of the line");
+			else if (obj.movePageUp)
+				this._log("Page up");
+			else if (obj.movePageDown)
+				this._log("Page down");
 
 			let translateManager = AscCommon.translateManager;
 			switch (type)
@@ -602,29 +626,5 @@
 	
 	window.AscCommon.EditorActionSpeaker = new EditorActionSpeaker();
 	window.AscCommon.SpeakerActionType = SpeakerActionType;
-	
-	window.AscCommon.SpeechWorker.testFunction = function()
-	{
-		AscCommon.SpeechWorker.setEnabled(true);
-		Asc.editor.asc_registerCallback('asc_onSelectionEnd', function() {
-
-			let text_data = {
-				data:     "",
-				pushData: function (format, value) {
-					this.data = value;
-				}
-			};
-
-			Asc.editor.asc_CheckCopy(text_data, 1);
-			if (text_data.data == null)
-				text_data.data = "";
-
-			if (text_data.data === "")
-				AscCommon.SpeechWorker.speech(SpeechWorkerType.TextUnselected);
-			else
-				AscCommon.SpeechWorker.speech(SpeechWorkerType.TextSelected, { text : text_data.data, isBefore : true });
-
-		});
-	};
 
 })(window);

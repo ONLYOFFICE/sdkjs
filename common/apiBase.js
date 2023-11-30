@@ -583,9 +583,9 @@
 	{
 		return this.copyOutEnabled;
 	};
-	baseEditorsApi.prototype.sync_CanCopyCutCallback = function (bCanCopyCut)
+	baseEditorsApi.prototype.sync_CanCopyCutCallback = function (bCanCopyCut, bCanCut)
 	{
-		this.sendEvent("asc_onCanCopyCut", bCanCopyCut);
+		this.sendEvent("asc_onCanCopyCut", bCanCopyCut, bCanCut);
 	};
 	baseEditorsApi.prototype.can_CopyCut = function ()
 	{
@@ -4762,6 +4762,16 @@
 		this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.DownloadAs);
 		if (0 !== error)
 			this.sendEvent("asc_onError", c_oAscError.ID.ConvertationSaveError, c_oAscError.Level.NoCritical);
+	};
+
+	// speech
+	baseEditorsApi.prototype["setSpeechEnabled"] = function(isEnabled) {
+		if (!AscCommon.EditorActionSpeaker)
+			return;
+		if (isEnabled)
+			AscCommon.EditorActionSpeaker.run();
+		else
+			AscCommon.EditorActionSpeaker.stop();
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------

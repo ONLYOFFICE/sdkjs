@@ -3244,7 +3244,17 @@ function Binary_rPrWriter(memory, saveParams)
 		{
 			this.memory.WriteByte(c_oSerProp_rPrType.TextOutline);
             this.memory.WriteByte(c_oSerPropLenType.Variable);
+
+			let oFill = rPr.TextOutline.Fill;
+			if(oFill && null != oFill.transparent)
+			{
+				oFill.transparent = 255 - oFill.transparent;
+			}
 			this.bs.WriteItemWithLength(function () { pptx_content_writer.WriteSpPr(_this.memory, rPr.TextOutline, 0); });
+			if(oFill && null != oFill.transparent)
+			{
+				oFill.transparent = 255 - oFill.transparent;
+			}
 		}
 		if(null != rPr.TextFill)
 		{
@@ -5350,7 +5360,7 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
                     break;
 				case para_Field:
 					let Instr = item.GetInstructionLine();
-					var oFFData = fieldtype_FORMTEXT === item.Get_FieldType() ? {} : null;
+					var oFFData = AscWord.fieldtype_FORMTEXT === item.Get_FieldType() ? {} : null;
 					if (Instr) {
 						if(this.saveParams && this.saveParams.bMailMergeDocx)
 							oThis.WriteParagraphContent(item, bUseSelection, false);
@@ -10199,8 +10209,15 @@ function Binary_rPrReader(doc, oReadResult, stream)
 			case c_oSerProp_rPrType.TextOutline:
 				if(length > 0){
 					var TextOutline = pptx_content_loader.ReadShapeProperty(this.stream, 0);
-					if(null != TextOutline)
+					if(null != TextOutline) {
 						rPr.TextOutline = TextOutline;
+						let oFill = TextOutline.Fill;
+						if(null != oFill){
+							if(null != oFill.transparent){
+								oFill.transparent = 255 - oFill.transparent;
+							}
+						}
+					}
 				}
 				else
 					res = c_oSerConstants.ReadUnknown;
@@ -11730,12 +11747,12 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		let paragraph = paragraphContent.GetParagraph();
         if (c_oSer_FldSimpleType.Instr === type) {
 			var Instr = this.stream.GetString2LE(length);
-			let elem = new ParaField(fieldtype_UNKNOWN);
+			let elem = new ParaField(AscWord.fieldtype_UNKNOWN);
 			elem.SetParagraph(paragraph);
 			let oParser = new CFieldInstructionParser();
 			let Instruction = oParser.GetInstructionClass(Instr);
 			oParser.InitParaFieldArguments(Instruction.Type, Instr, elem);
-			if (fieldtype_UNKNOWN !== elem.FieldType) {
+			if (AscWord.fieldtype_UNKNOWN !== elem.FieldType) {
 				oFldSimpleObj.ParaField = elem;
 			} else {
 				this.ConcatContent(elem.Content);

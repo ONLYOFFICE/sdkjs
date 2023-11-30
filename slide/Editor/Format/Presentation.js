@@ -7792,6 +7792,12 @@ CPresentation.prototype.OnKeyDown = function (e) {
 		{
 			// Ничего не делаем
 			bRetValue = keydownresult_PreventAll;
+		} else if (e.KeyCode === 187) // +
+		{
+			if (e.IsCtrl() && e.IsShift()) {
+				// Ничего не делаем
+				bRetValue = keydownresult_PreventAll;
+			}
 		}
 	}
 

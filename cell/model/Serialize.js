@@ -2662,22 +2662,26 @@
             //cellxfs
             this.bs.WriteItem(c_oSerStylesTypes.CellXfs, function(){oThis.WriteCellXfs();});
 
-            //CellStyles
-            this.bs.WriteItem(c_oSerStylesTypes.CellStyles, function(){oThis.WriteCellStyles(wb.CellStyles.CustomStyles);});
+            if (wb) {
+                //CellStyles
+                this.bs.WriteItem(c_oSerStylesTypes.CellStyles, function(){oThis.WriteCellStyles(wb.CellStyles.CustomStyles);});
 
-            if(null != wb.TableStyles)
-                this.bs.WriteItem(c_oSerStylesTypes.TableStyles, function(){oThis.WriteTableStyles(wb.TableStyles);});
+                if(null != wb.TableStyles)
+                    this.bs.WriteItem(c_oSerStylesTypes.TableStyles, function(){oThis.WriteTableStyles(wb.TableStyles);});
+            }
             //Dxfs пишется после TableStyles, потому что Dxfs может пополниться при записи TableStyles
             var dxfs = this.InitSaveManager.getDxfs();
 			if(null != dxfs && dxfs.length > 0) {
 				this.bs.WriteItem(c_oSerStylesTypes.Dxfs, function(){oThis.WriteDxfs(dxfs);});
             }
-            var aExtDxfs = [];
-            var slicerStyles = this.InitSaveManager.PrepareSlicerStyles(wb.SlicerStyles, aExtDxfs);
-            if(aExtDxfs.length > 0) {
-                this.bs.WriteItem(c_oSerStylesTypes.ExtDxfs, function(){oThis.WriteDxfs(aExtDxfs);});
+            if (wb) {
+                var aExtDxfs = [];
+                var slicerStyles = this.InitSaveManager.PrepareSlicerStyles(wb.SlicerStyles, aExtDxfs);
+                if(aExtDxfs.length > 0) {
+                    this.bs.WriteItem(c_oSerStylesTypes.ExtDxfs, function(){oThis.WriteDxfs(aExtDxfs);});
+                }
+                this.bs.WriteItem(c_oSerStylesTypes.SlicerStyles, function(){oThis.WriteSlicerStyles(slicerStyles);});
             }
-            this.bs.WriteItem(c_oSerStylesTypes.SlicerStyles, function(){oThis.WriteSlicerStyles(slicerStyles);});
             //numfmts пишется в конце потому что они могут пополниться при записи Dxfs
             this.bs.WriteItem(c_oSerStylesTypes.NumFmts, function(){oThis.WriteNumFmts();});
         };
@@ -5595,7 +5599,8 @@
 				this.bs.WriteItem(c_oSer_PivotTypes.cacheId, function() {oThis.memory.WriteLong(pivotTable.cacheId);});
 			}
 			var stylesForWrite = oThis.isCopyPaste ? undefined : oThis.stylesForWrite;
-			this.bs.WriteItem(c_oSer_PivotTypes.table, function() {pivotTable.toXml(oThis.memory, stylesForWrite);});
+			var dxfs = oThis.isCopyPaste ? undefined : this.InitSaveManager.getDxfs();
+			this.bs.WriteItem(c_oSer_PivotTypes.table, function() {pivotTable.toXml(oThis.memory, stylesForWrite, dxfs);});
 		};
         this.WriteHeaderFooter = function(headerFooter)
         {
@@ -6927,7 +6932,7 @@
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadDxfs(t, l, oStyleObject.aDxfs);
                 });
-            } else if (c_oSerStylesTypes.TableStyles === type) {
+            } else if (c_oSerStylesTypes.TableStyles === type && oThis.wb) {
                 res = this.bcr.Read1(length, function (t, l){
                     return oThis.ReadTableStyles(t, l, oThis.wb.TableStyles, oStyleObject.oCustomTableStyles);
                 });
@@ -7289,7 +7294,9 @@
                 res = this.bcr.Read2Spreadsheet(length, function(t,l){
                     return oThis.bssr.ReadRPr(t,l,oNewFont);
                 });
-				oNewFont.checkSchemeFont(this.wb.theme);
+                if (this.wb) {
+                    oNewFont.checkSchemeFont(this.wb.theme);
+                }
                 aFonts.push(oNewFont);
             }
             else
@@ -7411,7 +7418,9 @@
                 res = this.bcr.Read2Spreadsheet(length, function(t,l){
                     return oThis.bssr.ReadRPr(t,l,oNewFont);
                 });
-				oNewFont.checkSchemeFont(this.wb.theme);
+                if (this.wb) {
+                    oNewFont.checkSchemeFont(this.wb.theme);
+                }
                 oDxf.font = oNewFont;
             }
             else if ( c_oSer_Dxf.NumFmt == type )
@@ -10606,6 +10615,7 @@
                     this.InitOpenManager.InitStyleManager(oStyleObject, aCellXfs);
                     this.InitOpenManager.Dxfs = oStyleObject.aDxfs;
                     wb.oNumFmtsOpen = oStyleObject.oNumFmts;
+                    wb.dxfsOpen = oStyleObject.aDxfs;
                 }
             }
 

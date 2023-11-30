@@ -3383,6 +3383,7 @@ CParagraphRecalculateStateWrap.prototype.Reset_Page = function(Paragraph, CurPag
 	this.ColumnAbs   = Paragraph.Get_AbsoluteColumn(CurPage);
 	this.InTable     = Paragraph.Parent.IsTableCellContent();
 	this.SectPr      = null;
+	this.TopIndex    = -1;
 	
 	this.CondensedSpaces = Paragraph.IsCondensedSpaces();
 	this.BalanceSBDB     = Paragraph.IsBalanceSingleByteDoubleByteWidth();

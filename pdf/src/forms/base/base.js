@@ -213,6 +213,12 @@
 		this.compositeReplaceCount = 0;
     }
 
+    CBaseField.prototype.IsAnnot = function() {
+        return false;
+    };
+    CBaseField.prototype.IsForm = function() {
+        return true;
+    };
     CBaseField.prototype.SetApIdx = function(nIdx) {
         this.GetDocument().UpdateApIdx(nIdx);
         this._apIdx = nIdx;

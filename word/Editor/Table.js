@@ -2392,7 +2392,9 @@ CTable.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 		}
 	}
 };
-CTable.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
+
+
+CTable.prototype.FindParagraph = function (fCondition, bBackward, nStartIdx)
 {
 	var nSearchStartIdx, nIdx, oResult;
 	if(bBackward)
@@ -2407,7 +2409,7 @@ CTable.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
 		}
 		for(nIdx = nSearchStartIdx; nIdx >= 0; --nIdx)
 		{
-			oResult = this.Content[nIdx].FindParaWithStyle(sStyleId, bBackward, null);
+			oResult = this.Content[nIdx].FindParagraph(fCondition, bBackward, null);
 			if(oResult)
 			{
 				return oResult
@@ -2426,7 +2428,7 @@ CTable.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
 		}
 		for(nIdx = nSearchStartIdx; nIdx < this.Content.length; ++nIdx)
 		{
-			oResult = this.Content[nIdx].FindParaWithStyle(sStyleId, bBackward, null);
+			oResult = this.Content[nIdx].FindParagraph(fCondition, bBackward, null);
 			if(oResult)
 			{
 				return oResult
@@ -2434,6 +2436,23 @@ CTable.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
 		}
 	}
 	return null;
+};
+
+CTable.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
+{
+	let fCondition = function (oParagraph)
+	{
+		return oParagraph.GetParagraphStyle() === sStyleId;
+	};
+	return this.FindParagraph(fCondition, bBackward, nStartIdx);
+};
+
+CTable.prototype.FindParaWithOutlineLvl = function (nOutlineLvl, bBackward, nStartIdx)
+{
+	let fCondition = function (oParagraph) {
+		return oParagraph.GetOutlineLvl() === nOutlineLvl;
+	};
+	return this.FindParagraph(fCondition, bBackward, nStartIdx);
 };
 /**
  * Данная функция запрашивает новую позицию для содержимого у ячейки, разбивающейся на несколько страниц

@@ -4806,16 +4806,16 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 							}
 
 							var oInstruction = oComplexField.GetInstruction();
-							if (oInstruction && (fieldtype_NUMPAGES === oInstruction.GetType() || fieldtype_PAGE === oInstruction.GetType() || fieldtype_FORMULA === oInstruction.GetType()))
+							if (oInstruction && (AscWord.fieldtype_NUMPAGES === oInstruction.GetType() || AscWord.fieldtype_PAGE === oInstruction.GetType() || AscWord.fieldtype_FORMULA === oInstruction.GetType()))
 							{
-								if (fieldtype_NUMPAGES === oInstruction.GetType())
+								if (AscWord.fieldtype_NUMPAGES === oInstruction.GetType())
 								{
 									oHdrFtr.Add_PageCountElement(Item);
 
 									if (!Item.IsNumValue() && Para.LogicDocument && Para.LogicDocument.IsDocumentEditor())
 										Item.SetNumValue(Para.LogicDocument.Pages.length);
 								}
-								else if (fieldtype_PAGE === oInstruction.GetType())
+								else if (AscWord.fieldtype_PAGE === oInstruction.GetType())
 								{
 									var LogicDocument = Para.LogicDocument;
 									var SectionPage   = LogicDocument.Get_SectionPageNumInfo2(Para.Get_AbsolutePage(PRS.Page)).CurPage;
@@ -9014,7 +9014,7 @@ ParaRun.prototype.IsInHyperlinkInTOC = function()
 		for (var nIndex = 0, nCount = arrComplexFields.length; nIndex < nCount; ++nIndex)
 		{
 			var oInstruction = arrComplexFields[nIndex].GetInstruction();
-			if (oInstruction && fieldtype_HYPERLINK === oInstruction.GetType())
+			if (oInstruction && AscWord.fieldtype_HYPERLINK === oInstruction.GetType())
 			{
 				isHyperlink = true;
 				break;
@@ -9028,7 +9028,7 @@ ParaRun.prototype.IsInHyperlinkInTOC = function()
 	for (var nIndex = 0, nCount = arrComplexFields.length; nIndex < nCount; ++nIndex)
 	{
 		var oInstruction = arrComplexFields[nIndex].GetInstruction();
-		if (oInstruction && fieldtype_TOC === oInstruction.GetType())
+		if (oInstruction && AscWord.fieldtype_TOC === oInstruction.GetType())
 			return true;
 	}
 
@@ -12643,7 +12643,7 @@ ParaRun.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 			let complexField = oItem.GetComplexField();
 			let instruction  = complexField ? complexField.GetInstruction() : null;
 			if (instruction
-				&& instruction.Type === fieldtype_SEQ
+				&& instruction.Type === AscWord.fieldtype_SEQ
 				&& instruction.CheckId(sType)
 				&& -1 === aFields.indexOf(complexField))
 			{
@@ -12651,7 +12651,7 @@ ParaRun.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 			}
 		}
 		else if (para_Field === oItem.Type
-			&& oItem.FieldType === fieldtype_SEQ
+			&& oItem.FieldType === AscWord.fieldtype_SEQ
 			&& oItem.Arguments[0] === sType)
 		{
 			aFields.push(oItem);
@@ -12675,7 +12675,7 @@ ParaRun.prototype.GetLastSEQPos = function(sType)
 				var oInstruction = oComplexField.Instruction;
 				if(oInstruction)
 				{
-					if(oInstruction.Type === fieldtype_SEQ)
+					if(oInstruction.Type === AscWord.fieldtype_SEQ)
 					{
 						if(oInstruction.Id === sType)
 						{
@@ -12687,7 +12687,7 @@ ParaRun.prototype.GetLastSEQPos = function(sType)
 		}
 		else if(para_Field === oItem.Type)
 		{
-			if(oItem.FieldType === fieldtype_SEQ)
+			if(oItem.FieldType === AscWord.fieldtype_SEQ)
 			{
 				if(oItem.Arguments[0] === sType)
 				{

@@ -192,17 +192,18 @@ CDocumentContentBase.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 	}
 };
 
+
 /**
- * Finds a paragraph with a given style
- * @param {string} sStyleId - id of paragraph style
- * @param {boolean} bBackward - whether to search backward or forward
+ * Finds a paragraph which satisfies the specific condition
+ * @param {function} fCondition - represents the condition which paragraph should satisfy.
+ * @param {boolean} bBackward - whether to search backward or forward.
  * @param {?number} nStartIdx - index of searching start. If it is null searching starts depends on bBackward.
  * @returns {?Paragraph}
  */
-CDocumentContentBase.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
+CDocumentContentBase.prototype.FindParagraph = function (fCondition, bBackward, nStartIdx)
 {
-	var nIdx, oElement, oResultPara = null, oContent;
-	var nSearchStartIdx;
+	let nIdx, oElement, oResultPara = null, oContent;
+	let nSearchStartIdx;
 	if(bBackward)
 	{
 		if(nStartIdx !== null)
@@ -218,19 +219,19 @@ CDocumentContentBase.prototype.FindParaWithStyle = function (sStyleId, bBackward
 			oElement = this.Content[nIdx];
 			if(oElement.GetType() === type_Paragraph)
 			{
-				if(oElement.GetParagraphStyle() === sStyleId)
+				if(fCondition(oElement))
 				{
 					oResultPara = oElement;
 				}
 			}
 			else if(oElement.GetType() === type_Table)
 			{
-				oResultPara = oElement.FindParaWithStyle(sStyleId, bBackward, null);
+				oResultPara = oElement.FindParagraph(fCondition, bBackward, null);
 			}
 			else if(oElement.GetType() === type_BlockLevelSdt)
 			{
 				oContent = oElement.GetContent();
-				oResultPara = oContent.FindParaWithStyle(sStyleId, bBackward, null);
+				oResultPara = oContent.FindParagraph(fCondition, bBackward, null);
 			}
 			if(oResultPara !== null)
 			{
@@ -253,19 +254,19 @@ CDocumentContentBase.prototype.FindParaWithStyle = function (sStyleId, bBackward
 			oElement = this.Content[nIdx];
 			if(oElement.GetType() === type_Paragraph)
 			{
-				if(oElement.GetParagraphStyle() === sStyleId)
+				if(fCondition(oElement))
 				{
 					oResultPara = oElement;
 				}
 			}
 			else if(oElement.GetType() === type_Table)
 			{
-				oResultPara = oElement.FindParaWithStyle(sStyleId, bBackward, null);
+				oResultPara = oElement.FindParagraph(fCondition, bBackward, null);
 			}
 			else if(oElement.GetType() === type_BlockLevelSdt)
 			{
 				oContent = oElement.GetContent();
-				oResultPara = oContent.FindParaWithStyle(sStyleId, bBackward, null);
+				oResultPara = oContent.FindParagraph(fCondition, bBackward, null);
 			}
 			if(oResultPara !== null)
 			{
@@ -274,6 +275,37 @@ CDocumentContentBase.prototype.FindParaWithStyle = function (sStyleId, bBackward
 		}
 	}
 	return null;
+};
+
+/**
+ * Finds a paragraph with a given style
+ * @param {string} sStyleId - id of paragraph style
+ * @param {boolean} bBackward - whether to search backward or forward
+ * @param {?number} nStartIdx - index of searching start. If it is null searching starts depends on bBackward.
+ * @returns {?Paragraph}
+ */
+CDocumentContentBase.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
+{
+	let fCondition = function (oParagraph)
+	{
+		return oParagraph.GetParagraphStyle() === sStyleId;
+	};
+	return this.FindParagraph(fCondition, bBackward, nStartIdx);
+};
+
+/**
+ * Finds a paragraph with a given outline level
+ * @param {number} nOutlineLvl - outline level of paragraph
+ * @param {boolean} bBackward - whether to search backward or forward
+ * @param {?number} nStartIdx - index of searching start. If it is null searching starts depends on bBackward.
+ * @returns {?Paragraph}
+ */
+CDocumentContentBase.prototype.FindParaWithOutlineLvl = function (nOutlineLvl, bBackward, nStartIdx)
+{
+	let fCondition = function (oParagraph) {
+		return oParagraph.GetOutlineLvl() === nOutlineLvl;
+	};
+	return this.FindParagraph(fCondition, bBackward, nStartIdx);
 };
 
 /**
@@ -2618,7 +2650,7 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 	if (!prevState)
 		return null;
 	
-	if (action && (action.type !== AscCommon.SpeakerActionType.keyDown || action.event.KeyCode < 35 || action.event.KeyCode > 40))
+	if (action && (action.type !== AscCommon.SpeakerActionType.keyDown || action.event.KeyCode < 33 || action.event.KeyCode > 40))
 		return null;
 	
 	// В данном метод предполагается, что curState равен this.GetSelectionState()
@@ -2715,6 +2747,14 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 							obj.moveToEndOfDocument = true;
 						else
 							obj.moveToEndOfLine = true;
+					}
+					else if (33 === keyCode)
+					{
+						obj.movePageUp = true;
+					}
+					else if (34 === keyCode)
+					{
+						obj.movePageDown = true;
 					}
 					
 					if (36 === keyCode || 38 === keyCode || 40 === keyCode)
