@@ -16848,10 +16848,10 @@ CColorObj.prototype =
 				lowerBoundary = isLog ? Math.log10(lowerBoundary) : lowerBoundary;
 				let upperBoundary = valAxis.yPoints ? valAxis.yPoints[valAxis.yPoints.length - 1].val : valAxis.xPoints[valAxis.xPoints.length - 1].val;
 				upperBoundary = isLog ? Math.log10(upperBoundary) : upperBoundary;
-				if (pos < lowerBoundary) {
+				if (pos.valVal < lowerBoundary) {
 					_lineCoordinate(pos, lowerBoundary, false);
 				} 
-				if (pos > upperBoundary) {
+				if (pos.valVal > upperBoundary) {
 					_lineCoordinate(pos, upperBoundary, false);
 				}
 			}
@@ -16876,6 +16876,8 @@ CColorObj.prototype =
 
 			
 			const startPoint = {catVals:[], valVals:[]};
+			console.log(start.catVal, start.valVal);
+			console.log(end.catVal, end.valVal);
 			if(Math.atan(line1Letiables[1]) < 1.56 && Math.atan(line2Letiables[1]) > 1.56){
 				startPoint.catVals.push(start.catVal);
 				startPoint.valVals.push(end.catVal);
@@ -16883,7 +16885,7 @@ CColorObj.prototype =
 				line1Letiables = _findLine(start.catVal, start.valVal);
 				direction = false;
 			}
-
+			console.log(start)
 			//------------------------------------
 			const normalize = function () {
 				for(let i = 0; i < controlPoints.valVals.length; i++){
