@@ -2813,23 +2813,29 @@
 
 				if (_3dRef && _3dRef[0] && _3dRef[3] && _3dRef[1]) {
 					AscCommon.getUrlType(_3dRef[3]);
-					if (AscCommon.rx_allowedProtocols.test(_3dRef[3])) {
-						let ref;
-						if (AscCommon.parserHelp.isArea.call(ph, sHyperlink, ph.pCurrPos) || AscCommon.parserHelp.isRef.call(ph, sHyperlink, ph.pCurrPos)) {
-							ref = ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase()
-						}
-						if (ref) {
+					let ref;
+					if (AscCommon.parserHelp.isArea.call(ph, sHyperlink, ph.pCurrPos) || AscCommon.parserHelp.isRef.call(ph, sHyperlink, ph.pCurrPos)) {
+						ref = ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase()
+					}
+
+					if (ref) {
+						if (AscCommon.rx_allowedProtocols.test(_3dRef[3])) {
 							//https://test.com/test1/testFile.xlsx#TestSheet!F10
 							sHyperlink = _3dRef[3] + "#" + _3dRef[1] + ref;
-							res = {hyperlink: this.clone(), type: type};
-							res.hyperlink.asc_setHyperlinkUrl(sHyperlink);
-						}
-					} else {
-						//check [test.xlsx]Sheet2!A1
-						//while check link on this file
-						//TODO need calculate links on other files
-						if (_3dRef[3] === fileName) {
-
+							res = this.clone();
+							res.asc_setHyperlinkUrl(sHyperlink);
+						} else {
+							//check [test.xlsx]Sheet2!A1
+							//while check link on this file
+							//TODO need calculate links on other files
+							if (_3dRef[3] === fileName) {
+								type = Asc.c_oAscHyperlinkType.RangeLink;
+								res = this.clone();
+								res.asc_setHyperlinkUrl(null);
+								res.asc_setSheet(_3dRef[1]);
+								res.asc_setRange(ref);
+								res.hyperlinkModel._updateLocation();
+							}
 						}
 					}
 				} else {

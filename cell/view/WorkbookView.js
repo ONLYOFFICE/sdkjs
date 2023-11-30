@@ -1432,8 +1432,8 @@
 				let hyperlink = ct.hyperlink;
 				let hyperlinkProps = hyperlink.calculateProps();
 				if (hyperlinkProps) {
-					type = hyperlinkProps.type;
-					hyperlink = hyperlinkProps.hyperlink;
+					type = hyperlinkProps.asc_getType();
+					hyperlink = hyperlinkProps;
 				}
 
                 switch (type) {
