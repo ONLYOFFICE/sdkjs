@@ -125,9 +125,14 @@ function mod(name, value) {
 			rgb(156, 156, 156)
 		),
 		test(
-			rgb(223, 219, 213),
-			[mod("shade", 80000)],
-			rgb(202, 198, 193)
+			rgb(98, 168, 87),
+			[mod("tint", 12000)],
+			rgb(243, 247, 242)
+		),
+		test(
+			rgb(98, 168, 87),
+			[mod("tint", 50000)],
+			rgb(197, 217, 195)
 		),
 		test(
 			rgb(157, 54, 14),
@@ -291,6 +296,21 @@ function mod(name, value) {
 			rgb(127, 127, 127),
 			[mod("satOff", 99200)],
 			rgb(253, 1, 0)
+		),
+		test(
+			rgb(223, 219, 213),
+			[mod("shade", 80000)],
+			rgb(202, 198, 193)
+		),
+		test(
+			rgb(223, 219, 213),
+			[mod("shade", 50000)],
+			rgb(70, 122, 62)
+		),
+		test(
+			rgb(98, 168, 87),
+			[mod("tint", 90000)],
+			rgb(126, 179, 119)
 		),
 	];
 	QUnit.test('Check colors with mods', (assert) => {

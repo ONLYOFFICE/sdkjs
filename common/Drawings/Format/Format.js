@@ -1503,9 +1503,9 @@
 			//RGBA.B = this.lclGamma(this.lclRgbCompToCrgbComp(RGBA.B), DEC_GAMMA);
 
 			if (this.isUsePow) {
-				RGBA.R = (Math.pow(RGBA.R / 255, DEC_GAMMA) * MAX_PERCENT);
-				RGBA.G = (Math.pow(RGBA.G / 255, DEC_GAMMA) * MAX_PERCENT);
-				RGBA.B = (Math.pow(RGBA.B / 255, DEC_GAMMA) * MAX_PERCENT);
+				RGBA.R = (Math.pow(RGBA.R / 255, DEC_GAMMA) * MAX_PERCENT + 0.5) >> 0;
+				RGBA.G = (Math.pow(RGBA.G / 255, DEC_GAMMA) * MAX_PERCENT + 0.5) >> 0;
+				RGBA.B = (Math.pow(RGBA.B / 255, DEC_GAMMA) * MAX_PERCENT + 0.5) >> 0;
 			}
 		};
 		CColorModifiers.prototype.CrgbtoRgb = function (RGBA) {
@@ -1514,14 +1514,13 @@
 			//RGBA.B = (this.lclCrgbCompToRgbComp(this.lclGamma(RGBA.B, INC_GAMMA)) + 0.5) >> 0;
 
 			if (this.isUsePow) {
-				RGBA.R = (Math.pow(RGBA.R / 100000, INC_GAMMA) * 255) >> 0;
-				RGBA.G = (Math.pow(RGBA.G / 100000, INC_GAMMA) * 255) >> 0;
-				RGBA.B = (Math.pow(RGBA.B / 100000, INC_GAMMA) * 255) >> 0;
-			} else {
-				RGBA.R = AscFormat.ClampColor(RGBA.R);
-				RGBA.G = AscFormat.ClampColor(RGBA.G);
-				RGBA.B = AscFormat.ClampColor(RGBA.B);
+				RGBA.R = Math.pow(RGBA.R / 100000, INC_GAMMA) * 255;
+				RGBA.G = Math.pow(RGBA.G / 100000, INC_GAMMA) * 255;
+				RGBA.B = Math.pow(RGBA.B / 100000, INC_GAMMA) * 255;
 			}
+			RGBA.R = AscFormat.ClampColor(RGBA.R);
+			RGBA.G = AscFormat.ClampColor(RGBA.G);
+			RGBA.B = AscFormat.ClampColor(RGBA.B);
 		};
 		CColorModifiers.prototype.Apply = function (RGBA) {
 			if (null == this.Mods)
