@@ -4229,6 +4229,7 @@ FormatParser.prototype =
     },
 	parseDate: function (value, cultureInfo)
 	{
+		//todo "11: AM" should fail
 		var res = null;
 		var match = [];
 		var sCurValue = null;
@@ -4365,6 +4366,7 @@ FormatParser.prototype =
 				
 				var bDate = false;
 				var bTime = false;
+				var bSeconds = false;
 				var nDay;
 				var nMounth;
 				var nYear;
@@ -4430,8 +4432,11 @@ FormatParser.prototype =
 					if(null != s)
 					{
 						nSecond = s - 0;
-						if(nSecond > 59)
+						if (0 <= nSecond && nSecond < 60) {
+							bSeconds = true;
+						} else {
 							bValidDate = false;
+						}
 					}
 				}
 				if(true == bValidDate && (true == bDate || true == bTime))
@@ -4449,23 +4454,27 @@ FormatParser.prototype =
 					}
 					if(dValue >= 0)
 					{
-						var sFormat;
-						if(true == bDate && true == bTime)
-						{
-							sFormat = sDateFormat + " h:mm:ss";
+						var sFormat = "";
+						if (bDate) {
+							if (bTime && nHour > 23) {
+								sFormat = AscCommon.g_cGeneralFormat;
+							} else {
+								sFormat += sDateFormat;
+								if (bTime) {
+									sFormat += " h:mm";
+								}
+							}
+						} else {
+							if (dValue > 1) {
+								sFormat += "[h]:mm";
+							} else {
+								sFormat += "h:mm";
+							}
+							if (bSeconds || dValue > 1) {
+								sFormat += ":ss";
+							}
 							if (am || pm)
 								sFormat += " AM/PM";
-						}
-						else if(true == bDate)
-							sFormat = sDateFormat;
-						else
-						{
-							if(dValue > 1)
-								sFormat = "[h]:mm:ss";
-							else if (am || pm)
-								sFormat = "h:mm:ss AM/PM";
-							else
-								sFormat = "h:mm:ss";
 						}
 						res = {format: sFormat, value: dValue, bDateTime: true, bDate: bDate, bTime: bTime, bPercent: false, bCurrency: false};
 					}

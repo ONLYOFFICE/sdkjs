@@ -35,7 +35,7 @@
  * @param {Window} window
  * @param {undefined} undefined
  */
-	function (window, undefined) {
+function (window, undefined) {
 	/*cFormulaFunctionGroup['_xlfn'] = [
 
 	 cFILTERXML,//web not support in MS Office Online
@@ -75,7 +75,6 @@
 	// WORKDAY.INTL ; _xlfn.XLOOKUP ; _xlfn.XOR ; _xlfn.Z.TEST
 
 
-
 	/*new funcions with _xlnf-prefix*/
 	cFormulaFunctionGroup['TextAndData'] = cFormulaFunctionGroup['TextAndData'] || [];
 	cFormulaFunctionGroup['TextAndData'].push(cDBCS);
@@ -91,7 +90,7 @@
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
 	 */
-	function cDBCS() {	
+	function cDBCS() {
 	}
 
 	cDBCS.prototype = Object.create(cBaseFunction.prototype);
@@ -103,7 +102,7 @@
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
 	 */
-	function cFILTERXML() {	
+	function cFILTERXML() {
 	}
 
 	cFILTERXML.prototype = Object.create(cBaseFunction.prototype);
@@ -116,7 +115,7 @@
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
 	 */
-	function cFORECAST_ETS() {	
+	function cFORECAST_ETS() {
 	}
 
 	cFORECAST_ETS.prototype = Object.create(cBaseFunction.prototype);
@@ -124,11 +123,12 @@
 	cFORECAST_ETS.prototype.name = "FORECAST.ETS";
 	cFORECAST_ETS.prototype.isXLFN = true;
 	cFORECAST_ETS.prototype.argumentsType = [argType.number, argType.reference, argType.reference, argType.number, argType.number, argType.number];
+
 	/**
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
 	 */
-	function cFORECAST_ETS_CONFINT() {	
+	function cFORECAST_ETS_CONFINT() {
 	}
 
 	cFORECAST_ETS_CONFINT.prototype = Object.create(cBaseFunction.prototype);
@@ -137,11 +137,12 @@
 	cFORECAST_ETS_CONFINT.prototype.isXLFN = true;
 	cFORECAST_ETS_CONFINT.prototype.argumentsType = [argType.number, argType.reference, argType.reference, argType.number, argType.number,
 		argType.number, argType.number];
+
 	/**
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
 	 */
-	function cFORECAST_ETS_SEASONALITY() {	
+	function cFORECAST_ETS_SEASONALITY() {
 	}
 
 	cFORECAST_ETS_SEASONALITY.prototype = Object.create(cBaseFunction.prototype);
@@ -149,11 +150,12 @@
 	cFORECAST_ETS_SEASONALITY.prototype.name = "FORECAST.ETS.SEASONALITY";
 	cFORECAST_ETS_SEASONALITY.prototype.isXLFN = true;
 	cFORECAST_ETS_SEASONALITY.prototype.argumentsType = [argType.reference, argType.reference, argType.number, argType.number];
+
 	/**
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
 	 */
-	function cFORECAST_ETS_STAT() {	
+	function cFORECAST_ETS_STAT() {
 	}
 
 	cFORECAST_ETS_STAT.prototype = Object.create(cBaseFunction.prototype);
@@ -167,18 +169,19 @@
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
 	 */
-	function cQUERYSTRING() {	
+	function cQUERYSTRING() {
 	}
 
 	cQUERYSTRING.prototype = Object.create(cBaseFunction.prototype);
 	cQUERYSTRING.prototype.constructor = cQUERYSTRING;
 	cQUERYSTRING.prototype.name = "QUERYSTRING";
 	cQUERYSTRING.prototype.isXLFN = true;
+
 	/**
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
 	 */
-	function cWEBSERVICE() {	
+	function cWEBSERVICE() {
 	}
 
 	cWEBSERVICE.prototype = Object.create(cBaseFunction.prototype);

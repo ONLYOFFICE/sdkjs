@@ -89,6 +89,11 @@ $(function () {
 		AscTest.CorrectEnterText("3Zzz", "$");
 		assert.strictEqual(GetParagraphText(p), "He123ABCDDllo World!?12$", "Add text 'Zzz' with composite input and correct it from '3Zzz' to '$'");
 		
+		AscTest.ClearParagraph(p);
+		AscTest.EnterTextCompositeInput("x");
+		AscTest.EnterTextCompositeInput("yz");
+		AscTest.CorrectEnterText("yz", "x");
+		assert.strictEqual(GetParagraphText(p), "xx", "Test special case, when added symbols collect to a single grapheme with previous symbols");
 	});
 	QUnit.test("EnterText/CorrectEnterText/CompositeInput in collaboration", function (assert)
 	{

@@ -2201,6 +2201,10 @@ function CEditorPage(api)
 
 		global_mouseEvent.Type = AscCommon.g_mouse_event_type_up;
 
+		let bIsSendedToEditor = true;
+		if (!global_mouseEvent.IsLocked && 0 == oWordControl.MouseDownDocumentCounter)
+			bIsSendedToEditor = false;
+
 		AscCommon.MouseUpLock.MouseUpLockedSend = true;
 
 		if (oWordControl.m_oHorRuler.m_bIsMouseDown)
@@ -2287,7 +2291,8 @@ function CEditorPage(api)
 		}
 		if(!oThis.checkFinishEyedropper())
 		{
-			oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+			if (bIsSendedToEditor)
+				oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
 		}
 		oWordControl.MouseDownDocumentCounter--;
 		if (oWordControl.MouseDownDocumentCounter < 0)

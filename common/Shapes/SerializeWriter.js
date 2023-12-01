@@ -2749,7 +2749,7 @@ function CBinaryFileWriter()
         if (undefined === unifill || null == unifill)
             return;
 
-        var trans = ((unifill.transparent != null) && (unifill.transparent != 255)) ? unifill.transparent : null;
+        var trans = ((unifill.transparent != null)) ? unifill.transparent : null;
         var fill = unifill.fill;
         if (undefined === fill || null == fill)
             return;

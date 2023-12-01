@@ -7937,6 +7937,7 @@ PasteProcessor.prototype =
 			};
 
 			res = this.oLogicDocument.GetNumbering().CreateNum();
+			res.CreateDefault();
 			for (var i = 1; i < aNumbering.length; i++) {
 				var curNumbering = aNumbering[i];
 				if (!curNumbering) {

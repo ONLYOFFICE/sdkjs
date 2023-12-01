@@ -44,6 +44,7 @@
 		this.document       = document;
 		this.compositeInput = new AscWord.RunCompositeInput(true);
 		this.inUse          = false;
+		this.documentState  = null;
 	}
 	
 	DocumentCompositeInput.prototype.isInProgress = function()
@@ -59,6 +60,7 @@
 		if (document.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, document.IsFormFieldEditing()))
 			return false;
 		
+		this.documentState = document.GetSelectionState();
 		document.StartAction(AscDFH.historydescription_Document_CompositeInput);
 		
 		if (document.IsDrawingSelected())
@@ -111,6 +113,7 @@
 		this.document.Redraw();
 		
 		this.inUse = false;
+		this.documentState = null;
 	};
 	DocumentCompositeInput.prototype.replace = function(codePoints)
 	{
@@ -177,7 +180,7 @@
 			&& (!parentForm || this.document.GetFormsManager().ValidateChangeOnFly(parentForm)))
 			return;
 		
-		let changes = AscCommon.History.UndoCompositeInput();
+		let changes = AscCommon.History.UndoCompositeInput(this.documentState);
 		if (changes)
 		{
 			AscCommon.History.ClearRedo();

@@ -473,7 +473,11 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	this.Temporary  = oContentControl.IsContentControlTemporary();
 
 	if (oContentControl.IsCheckBox())
+	{
 		this.CheckBoxPr = oContentControl.GetCheckBoxPr().Copy();
+		if (oContentControl.IsRadioButton())
+			this.CheckBoxPr.SetChoiceName(oContentControl.GetFormKey());
+	}
 	else if (oContentControl.IsComboBox())
 		this.ComboBoxPr = oContentControl.GetComboBoxPr().Copy();
 	else if (oContentControl.IsDropDownList())
@@ -550,9 +554,17 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 
 	if (undefined !== this.CheckBoxPr)
 	{
-		if (undefined !== this.CheckBoxPr.GroupKey && undefined !== this.CheckBoxPr.Checked)
+		let prevGroupKey = oContentControl.GetCheckBoxPr() ? oContentControl.GetCheckBoxPr().GetGroupKey() : undefined;
+		if (prevGroupKey !== this.CheckBoxPr.GroupKey && undefined !== this.CheckBoxPr.Checked)
 			this.CheckBoxPr.Checked = false;
-
+		
+		if (undefined !== this.CheckBoxPr.GetChoiceName())
+		{
+			oContentControl.SetFormKey(this.CheckBoxPr.GetChoiceName());
+			if (this.FormPr)
+				this.FormPr.SetKey(this.CheckBoxPr.GetChoiceName());
+		}
+		
 		oContentControl.SetCheckBoxPr(this.CheckBoxPr);
 		oContentControl.private_UpdateCheckBoxContent();
 	}

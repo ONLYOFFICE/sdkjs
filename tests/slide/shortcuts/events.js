@@ -115,7 +115,8 @@
 		moveToFirstSlide                                 : 74,
 		selectToFirstSlide                               : 75,
 		moveToLastSlide                                  : 76,
-		selectToLastSlide                                : 77
+		selectToLastSlide                                : 77,
+		disableBrowserZoomIn                             : 78,
 	};
 	const mainEvents = {};
 	mainEvents[mainShortcutTypes.checkDeleteBack] = [CreateKeyboardEvent(8, false, false, false, false)];
@@ -256,6 +257,9 @@
 	];
 	mainEvents[mainShortcutTypes.selectToLastSlide] = [
 		CreateKeyboardEvent(35, false, true, false, false)
+	];
+	mainEvents[mainShortcutTypes.disableBrowserZoomIn] = [
+		CreateKeyboardEvent(187, true, true, false, false)
 	];
 
 	const demonstrationTypes = {

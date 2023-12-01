@@ -584,11 +584,44 @@ var c_oAscPopUpSelectorType = {
     reset: 3
   };
 
+  var c_oAscSeriesInType = {
+    rows: 0,
+    columns: 1
+  };
+
+  var c_oAscSeriesType = {
+    linear: 0,
+    growth: 1,
+    date: 2,
+    autoFill: 3
+  };
+
+  var c_oAscDateUnitType = {
+    day: 0,
+    weekday: 1,
+    month: 2,
+    year: 3
+  };
 
   var c_oAscRemoveArrowsType = {
     all: 0,
     precedent: 1,
     dependent: 2
+  };
+
+  var c_oAscFillRightClickOptions = {
+    copyCells: 0,
+    fillSeries: 1,
+    fillFormattingOnly: 2,
+    fillWithoutFormatting: 3,
+    fillDays: 4,
+    fillWeekdays: 5,
+    fillMonths: 6,
+    fillYears: 7,
+    linearTrend: 8,
+    growthTrend: 9,
+    flashFill: 10,
+    series: 11
   };
 
   //----------------------------------------------------------export----------------------------------------------------
@@ -1003,5 +1036,38 @@ var c_oAscPopUpSelectorType = {
   prot['precedent'] = prot.precedent;
   prot['dependent'] = prot.dependent;
 
+  window['Asc']['c_oAscSeriesInType'] = window['Asc'].c_oAscSeriesInType = c_oAscSeriesInType;
+  prot = c_oAscSeriesInType;
+  prot['rows'] = prot.rows;
+  prot['columns'] = prot.columns;
+
+  window['Asc']['c_oAscSeriesType'] = window['Asc'].c_oAscSeriesType = c_oAscSeriesType;
+  prot = c_oAscSeriesType;
+  prot['linear'] = prot.linear;
+  prot['growth'] = prot.growth;
+  prot['date'] = prot.date;
+  prot['autoFill'] = prot.autoFill;
+
+  window['Asc']['c_oAscDateUnitType'] = window['Asc'].c_oAscDateUnitType = c_oAscDateUnitType;
+  prot = c_oAscDateUnitType;
+  prot['day'] = prot.day;
+  prot['weekday'] = prot.weekday;
+  prot['month'] = prot.month;
+  prot['year'] = prot.year;
+
+  window['Asc']['c_oAscFillRightClickOptions'] = window['Asc'].c_oAscFillRightClickOptions = c_oAscFillRightClickOptions;
+  prot = c_oAscFillRightClickOptions;
+  prot['copyCells'] = prot.copyCells;
+  prot['fillSeries'] = prot.fillSeries;
+  prot['fillFormattingOnly'] = prot.fillFormattingOnly;
+  prot['fillWithoutFormatting'] = prot.fillWithoutFormatting;
+  prot['fillDays'] = prot.fillDays;
+  prot['fillWeekdays'] = prot.fillWeekdays;
+  prot['fillMonths'] = prot.fillMonths;
+  prot['fillYears'] = prot.fillYears;
+  prot['linearTrend'] = prot.linearTrend;
+  prot['growthTrend'] = prot.growthTrend;
+  prot['flashFill'] = prot.flashFill;
+  prot['series'] = prot.series;
 
 })(window);

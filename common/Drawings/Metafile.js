@@ -1751,6 +1751,8 @@
 		this.m_bIsPenDash = false;
 
 		this.FontPicker = null;
+
+		this.lastPoint = null;
 	}
 
 	CMetafile.prototype =
@@ -2035,16 +2037,21 @@
 
 			var _memory = (null == this.VectorMemoryForPrint) ? this.Memory : this.VectorMemoryForPrint;
 			_memory.WriteByte(CommandType.ctPathCommandStart);
+
+			this.lastPoint = null;
 		},
 		_e                        : function()
 		{
 			// тут всегда напрямую в Memory
 			this.Memory.WriteByte(CommandType.ctPathCommandEnd);
+			this.lastPoint = null;
 		},
 		_z                        : function()
 		{
 			var _memory = (null == this.VectorMemoryForPrint) ? this.Memory : this.VectorMemoryForPrint;
 			_memory.WriteByte(CommandType.ctPathCommandClose);
+
+			this.lastPoint = null;
 		},
 		_m                        : function(x, y)
 		{
@@ -2052,6 +2059,8 @@
 			_memory.WriteByte(CommandType.ctPathCommandMoveTo);
 			_memory.WriteDouble(x);
 			_memory.WriteDouble(y);
+
+			this.lastPoint = {x: x, y: y};
 		},
 		_l                        : function(x, y)
 		{
@@ -2059,6 +2068,8 @@
 			_memory.WriteByte(CommandType.ctPathCommandLineTo);
 			_memory.WriteDouble(x);
 			_memory.WriteDouble(y);
+
+			this.lastPoint = {x: x, y: y};
 		},
 		_c                        : function(x1, y1, x2, y2, x3, y3)
 		{
@@ -2070,17 +2081,34 @@
 			_memory.WriteDouble(y2);
 			_memory.WriteDouble(x3);
 			_memory.WriteDouble(y3);
+
+			this.lastPoint = {x: x3, y: y3};
 		},
 		_c2                       : function(x1, y1, x2, y2)
 		{
 			var _memory = (null == this.VectorMemoryForPrint) ? this.Memory : this.VectorMemoryForPrint;
 			_memory.WriteByte(CommandType.ctPathCommandCurveTo);
-			_memory.WriteDouble(x1);
-			_memory.WriteDouble(y1);
-			_memory.WriteDouble(x1);
-			_memory.WriteDouble(y1);
-			_memory.WriteDouble(x2);
-			_memory.WriteDouble(y2);
+
+			if (null == this.lastPoint)
+			{
+				_memory.WriteDouble(x1);
+				_memory.WriteDouble(y1);
+				_memory.WriteDouble(x1);
+				_memory.WriteDouble(y1);
+				_memory.WriteDouble(x2);
+				_memory.WriteDouble(y2);
+			}
+			else
+			{
+				_memory.WriteDouble(this.lastPoint.x + 2 * (x1 - this.lastPoint.x) / 3);
+				_memory.WriteDouble(this.lastPoint.y + 2 * (y1 - this.lastPoint.y) / 3);
+				_memory.WriteDouble(x2 + 2 * (x1 - x2) / 3);
+				_memory.WriteDouble(y2 + 2 * (y1 - y2) / 3);
+				_memory.WriteDouble(x2);
+				_memory.WriteDouble(y2);
+			}
+
+			this.lastPoint = {x: x2, y: y2};
 		},
 		ds                        : function()
 		{

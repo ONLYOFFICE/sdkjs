@@ -32,14 +32,17 @@
 
 "use strict";
 
-$(function () {
-
+$(function ()
+{
+	// Temporary we use epsilon equal to 2 twips instead of 1
+	const epsilon = AscCommon.TwipsToMM(2);
+	
 	const logicDocument = AscTest.CreateLogicDocument();
 
 
 	QUnit.module("Test the positioning of flow tables");
 
-	QUnit.test("Test: flow table inside another table", function (assert)
+	QUnit.test("Flow table inside another table", function (assert)
 	{
 		// Здесь мы проверяем горизонтальную позицию вложенной таблицы
 
@@ -147,6 +150,73 @@ $(function () {
 		AscTest.Recalculate();
 		assert.strictEqual(logicDocument.GetPagesCount(), 1, "Check pages count of the document");
 		assert.strictEqual(table.GetPageBounds(0).Left, 20, "Add section to the page and check the left position of the float table");
+	});
+	
+	QUnit.test("Check table overlap", function (assert)
+	{
+		AscTest.ClearDocument();
+
+		let sectPr = logicDocument.GetLastSection();
+		sectPr.SetPageMargins(20, 20, 20, 20);
+		
+		const rowHeight = 30;
+		function createTable(rows, cols)
+		{
+			let t = AscTest.CreateTable(rows, cols);
+			for (let iRow = 0; iRow < t.GetRowsCount(); ++iRow)
+			{
+				t.GetRow(iRow).SetHeight(rowHeight, Asc.linerule_AtLeast);
+			}
+			
+			t.SetInline(false);
+			t.SetPositionH(Asc.c_oAscHAnchor.Page, false, 0);
+			t.SetPositionV(Asc.c_oAscVAnchor.Page, false, 0);
+			AscTest.RemoveTableBorders(t);
+			return t;
+		}
+		
+		let table1 = createTable(2, 2);
+		logicDocument.AddToContent(0, table1);
+		
+		let table2 = createTable(2, 2);
+		logicDocument.AddToContent(1, table2);
+		
+		table1.setAllowOverlap(true);
+		table2.setAllowOverlap(true);
+		
+		table1.SetPositionV(Asc.c_oAscVAnchor.Page, false, 0);
+		table2.SetPositionV(Asc.c_oAscVAnchor.Page, false, 10);
+
+		AscTest.Recalculate();
+		assert.close(table1.GetPageBounds(0).Top, 0, epsilon, "Check top position of the first table");
+		assert.close(table2.GetPageBounds(0).Top, 10, epsilon, "Check top position of the second table");
+		
+		table1.setAllowOverlap(false);
+		table2.setAllowOverlap(true);
+		
+		AscTest.Recalculate();
+		assert.close(table1.GetPageBounds(0).Top, 0, epsilon, "Check top position of the first table");
+		assert.close(table2.GetPageBounds(0).Top, 2 * rowHeight, epsilon, "Check top position of the second table");
+		
+		table1.SetPositionH(Asc.c_oAscHAnchor.Page, false, 50);
+		table2.SetPositionH(Asc.c_oAscHAnchor.Page, false, 50);
+
+		table1.setAllowOverlap(true);
+		table2.setAllowOverlap(true);
+		
+		table1.SetPositionV(Asc.c_oAscVAnchor.Text, false, 0);
+		table2.SetPositionV(Asc.c_oAscVAnchor.Text, false, 10);
+		
+		AscTest.Recalculate();
+		assert.close(table1.GetPageBounds(0).Top, 20, epsilon, "Check top position of the first table");
+		assert.close(table2.GetPageBounds(0).Top, 30, epsilon, "Check top position of the second table");
+		
+		table1.setAllowOverlap(false);
+		table2.setAllowOverlap(false);
+		
+		AscTest.Recalculate();
+		assert.close(table1.GetPageBounds(0).Top, 20, epsilon, "Check top position of the first table");
+		assert.close(table2.GetPageBounds(0).Top, 20 + 2 * rowHeight, epsilon, "Check top position of the second table");
 	});
 
 });

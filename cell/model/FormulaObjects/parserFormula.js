@@ -432,6 +432,41 @@ function (window, undefined) {
 		return tokens;
 	}
 
+	function prepareTypedArrayUniversal(array, lookingElem, isByRangeCall) {
+		const typedArr = [];
+
+		for (let i = 0; i < array.length; i++) {
+			let arrayElemValue = isByRangeCall ? array[i].v : array[i];
+			// let elemType = isByRangeCall ? array[i].v.type : array[i].type;
+			let elemType = arrayElemValue.type;
+			let elemIndex = isByRangeCall ? array[i].i : i;
+
+			if (lookingElem.type === cElementType.bool) {
+				// return only bool
+				if (lookingElem.type !== elemType) {
+					continue
+				}
+				typedArr.push({i: elemIndex, v: arrayElemValue});
+			} else if (lookingElem.type === cElementType.number) {
+				// return only numbers or string.tocNumber
+				if (elemType !== cElementType.string && elemType !== cElementType.number) {
+					continue
+				}
+				let temp = arrayElemValue.tocNumber();
+				if (temp.type !== cElementType.error) {
+					typedArr.push({i: elemIndex, v: temp});
+				}
+			} else if (cElementType.string === lookingElem.type) {
+				// return only strings
+				if (lookingElem.type !== elemType) {
+					continue
+				}
+				typedArr.push({i: elemIndex, v: new cString(arrayElemValue.toString().toLowerCase())});
+			}
+		}
+
+		return typedArr;
+	}
 
 /** @enum */
 var cElementType = {
@@ -1287,7 +1322,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		let col = [];
 		for (let i = 0; i < dimensions.row; i++) {
-			let valInRow = this.getValueByRowCol(i, colIndex);
 			let elem = this.getValueByRowCol(i, colIndex);
 			if (!elem) {
 				elem = new cEmpty();
@@ -1697,7 +1731,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		let col = [];
 		for (let i = 0; i < dimensions.row; i++) {
-			let valInRow = this.getValueByRowCol(i, colIndex);
 			let elem = this.getValueByRowCol(i, colIndex);
 			if (!elem) {
 				elem = new cEmpty();
@@ -5214,82 +5247,81 @@ _func.binarySearch = function ( sElem, arrTagert, regExp ) {
 
 };
 
-_func.binarySearchByRange = function ( sElem, area, regExp ) {
-	var bbox, ws;
-	if (cElementType.cellsRange3D === area.type) {
-		bbox = area.bbox;
-		ws = area.getWS();
-	} else if (cElementType.cellsRange === area.type) {
-		bbox = area.range.bbox;
-		ws = area.ws;
-	}
-	var bVertical = bbox.r2 - bbox.r1 >= bbox.c2 - bbox.c1;//r>=c
-	var first = 0, /* The number of the first element in the array */
-		last = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1, /* The number of the element in the array that comes AFTER the last one */
-		/* If the viewed segment is not empty, first<last */
-		mid;
+_func.lookupBinarySearch = function ( sElem, arrayNoEmpty, isByRangeCall, regExp ) {
+	let first = 0, last, mid;
+	let typedArr;
 
-	var getValuesNoEmpty = function () {
-		var _r1 = bbox.r1;
-		var _r2 = bVertical ? bbox.r2 : bbox.r1;
-		var _c1 = bbox.c1;
-		var _c2 = bVertical ? bbox.c1 : bbox.c2;
-		var _val = [];
-		ws.getRange3(_r1, _c1, _r2, _c2)._foreachNoEmpty(function(cell) {
-			var checkTypeVal = checkTypeCell(cell);
-			if (checkTypeVal.type !== cElementType.empty) {
-				_val.push(checkTypeVal);
-				mapEmptyFullValues[_val.length - 1] = bVertical ? cell.nRow - bbox.r1 : cell.nCol - bbox.c1;
-			}
-		});
-		return _val;
-	};
-
-	var mapEmptyFullValues = [];
-	var noEmptyValues = getValuesNoEmpty();
-	last = noEmptyValues.length - 1;
-
-	if (noEmptyValues.length === 0) {
+	typedArr = prepareTypedArrayUniversal(arrayNoEmpty, sElem, isByRangeCall);
+	
+	if (typedArr.length === 0) {
+		/* array empty */
 		return -1;
-	} else if (noEmptyValues[0].value > sElem.value) {
-		return -2;
-	} else if (noEmptyValues[last].value < sElem.value) {
-		return last;
+	}
+	// 2 elements next to each other
+	if (typedArr.length === 2) {
+		// todo check two element behaviour
+	}
+	// With 0-9 < A-Z, if query is numeric and data found is string, or
+	// vice versa, the (yet another undocumented) Excel behavior is to
+	// return #N/A instead.
+
+	if (sElem.type === cElementType.string) {
+		sElem = new cString(sElem.toString().toLowerCase());
 	}
 
-	var tempValue;
+	let cacheIndex, isFound;
+	first = 0, last = typedArr.length - 1;
 	while (first < last) {
 		mid = Math.floor(first + (last - first) / 2);
-		tempValue = noEmptyValues[mid];
-		if (sElem.value <= tempValue.value || ( regExp && regExp.test(tempValue.value) )) {
+
+		let midValue = typedArr[mid].v;
+		// let cmp = compareValues(sElem, midValue)
+		if (sElem.value === midValue.value) {
+			/* cmp === 0 */
+			last = _func.getLastMatch(mid, sElem, typedArr);
+			break;
+		}
+
+		if (sElem.value < midValue.value || ( regExp && regExp.test(midValue.value) )) {
+			/* cmp > 0 */
 			last = mid;
 		} else {
+			/* cmp < 0 */	
+			cacheIndex = mid;														
 			first = mid + 1;
 		}
 	}
 
-	/* If the conditional operator if(n==0) and so on is omitted at the beginning - then uncomment it here!    */
-	if (/* last<n &&*/ noEmptyValues[last].value === sElem.value) {
-		return mapEmptyFullValues[last];
-		/* The desired element is found. last is the desired index */
+	if (typedArr[last].v.value <= sElem.value) {
+		return typedArr[last].i;
+	} else if (cacheIndex !== undefined && typedArr[cacheIndex].v.value <= sElem.value) {
+		return typedArr[cacheIndex].i;
 	} else {
-		return mapEmptyFullValues[last - 1];
-		/* The desired element is not found. But if you suddenly need to insert it with a shift, its place is at last.    */
+		return -2;
 	}
-
 };
 
+_func.getLastMatch = function (startIndex, lookingElem, array) {
+	// todo add compare to all types?
+	let resIndex = startIndex, exactMatchIndex;
+	for (let i = startIndex; i < array.length; i++) {
+		if (array[i].v.type !== lookingElem.type) {
+			continue;
+		}
+		if (lookingElem.type === cElementType.bool && array[i].v.value !== lookingElem.value) {
+			break;
+		}
 
-_func.getLastMatch = function (index, value, array) {
-	let resIndex = index;
-	for (let i = index; i < array.length; i++) {
-		if (array[i].type === value.type && array[i].value === value.value) {
+		if (array[i].v.value === lookingElem.value) {
+			exactMatchIndex = i;
+		} else if (array[i].v.value <= lookingElem.value) {
 			resIndex = i;
-		} else {
+		} else if (array[i].v.value > lookingElem.value) {
 			break;
 		}
 	}
-	return resIndex;
+	return exactMatchIndex ? exactMatchIndex : resIndex;
+
 };
 
 _func[cElementType.number][cElementType.cell] = function ( arg0, arg1, what, bbox ) {

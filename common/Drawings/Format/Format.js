@@ -6018,12 +6018,17 @@
 		var ar_arrow = 0, ar_diamond = 1, ar_none = 2, ar_oval = 3, ar_stealth = 4, ar_triangle = 5;
 
 		var LineEndType = {
-			None: 0,
-			Arrow: 1,
-			Diamond: 2,
-			Oval: 3,
-			Stealth: 4,
-			Triangle: 5
+			None:				0,
+			Arrow:				1,
+			Diamond:			2,
+			Oval:				3,
+			Stealth:			4,
+			Triangle:			5,
+			ReverseArrow:		6,
+			ReverseTriangle:	7,
+			Butt:				8,
+			Square:				9,
+			Slash:				10
 		};
 		var LineEndSize = {
 			Large: 0,

@@ -102,3 +102,19 @@ var AscTest = AscTest || {};
 	AscTest.GetBinaryReader    = GetBinaryReader;
 
 })(window);
+
+if (QUnit && !QUnit.assert.close)
+{
+	QUnit.assert.close = function(number, expected, maxDifference, message)
+	{
+		if (undefined === maxDifference || null === maxDifference || 0 === maxDifference)
+			maxDifference = 0.00001;
+		
+		QUnit.assert.pushResult({
+			result : Math.abs(number - expected) < maxDifference,
+			actual : number,
+			expected : expected,
+			message : message
+		});
+	}
+}

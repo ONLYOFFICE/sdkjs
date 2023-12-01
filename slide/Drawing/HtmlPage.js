@@ -666,30 +666,6 @@ function CEditorPage(api)
 				.back_image_buttons { position:absolute; left: 0px; top: 0px; background-image: url('" + _images_url + "buttons@2x.png');background-size: 40px 120px; }\
 			}";
 
-			var xOffset1 = "0";
-			var xOffset2 = "-20";
-			if (AscCommon.GlobalSkin.Type === "dark")
-			{
-				xOffset1 = "-20";
-				xOffset2 = "0";
-			}
-
-			styleContent += (".btn-play { background-position: " + xOffset1 + "px -40px; }");
-			styleContent += (".btn-prev { background-position: " + xOffset1 + "px 0px; }");
-			styleContent += (".btn-next { background-position: " + xOffset1 + "px -20px; }");
-			styleContent += (".btn-pause { background-position: " + xOffset1 + "px -80px; }");
-			styleContent += (".btn-pointer { background-position: " + xOffset1 + "px -100px; }");
-			styleContent += (".btn-pointer-active { background-position: " + xOffset2 + "px -100px; }");
-
-			if (false) // менять цвет при нажатии
-			{
-				styleContent += (".btn-play:active { background-position: " + xOffset2 + "px -40px; }");
-				styleContent += (".btn-prev:active { background-position: " + xOffset2 + "px 0px; }");
-				styleContent += (".btn-next:active { background-position: " + xOffset2 + "px -20px; }");
-				styleContent += (".btn-pause:active { background-position: " + xOffset2 + "px -80px; }");
-				styleContent += (".btn-pointer:active { background-position: " + xOffset2 + "px -100px; }");
-			}
-
 			styleContent += this.getStylesReporter();
 
 			var style		 = document.createElement('style');
@@ -3116,7 +3092,23 @@ function CEditorPage(api)
 	// reporter
 	this.getStylesReporter = function()
 	{
-		var styleContent = "";
+		let styleContent = "";
+
+		let xOffset1 = "0";
+		let xOffset2 = "-20";
+		if (AscCommon.GlobalSkin.Type === "dark")
+		{
+			xOffset1 = "-20";
+			xOffset2 = "0";
+		}
+
+		styleContent += (".btn-play { background-position: "           + xOffset1 + "px -40px; }");
+		styleContent += (".btn-prev { background-position: "           + xOffset1 + "px 0px; }");
+		styleContent += (".btn-next { background-position: "           + xOffset1 + "px -20px; }");
+		styleContent += (".btn-pause { background-position: "          + xOffset1 + "px -80px; }");
+		styleContent += (".btn-pointer { background-position: "        + xOffset1 + "px -100px; }");
+		styleContent += (".btn-pointer-active { background-position: " + xOffset2 + "px -100px; }");
+
 		styleContent += (".btn-text-default { position: absolute; background: " + AscCommon.GlobalSkin.DemButtonBackgroundColor + "; border: 1px solid " + AscCommon.GlobalSkin.DemButtonBorderColor + "; border-radius: 2px; color: " + AscCommon.GlobalSkin.DemButtonTextColor + "; font-size: 11px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; height: 22px; cursor: pointer; }");
 		styleContent += ".btn-text-default-img { background-repeat: no-repeat; position: absolute; background: transparent; border: none; height: 22px; cursor: pointer; }";
 		styleContent += (".btn-text-default-img:focus { outline: 0; outline-offset: 0; } .btn-text-default-img:hover { background-color: " + AscCommon.GlobalSkin.DemButtonBackgroundColorHover + "; }");

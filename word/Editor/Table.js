@@ -8609,6 +8609,10 @@ CTable.prototype.Get_TableLook = function()
 {
 	return this.TableLook;
 };
+CTable.prototype.setAllowOverlap = function(isAllow)
+{
+	this.Set_AllowOverlap(isAllow);
+};
 CTable.prototype.Set_AllowOverlap = function(AllowOverlap)
 {
 	History.Add(new CChangesTableAllowOverlap(this, this.AllowOverlap, AllowOverlap));

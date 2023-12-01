@@ -382,7 +382,7 @@ module.exports = function(grunt) {
 		grunt.task.run('clean');
 	});
 	const glob = require('glob');
-	const ignoreFiles = ['jquery_native'];
+	const ignoreFiles = ['jquery_native', 'fonts_ie', 'spell_ie', 'engine_ie', 'zlib_ie', 'drawingfile_ie', 'themes'];
 	/**
 	 * @param {string[]} paths
 	 * @param {string} cwd

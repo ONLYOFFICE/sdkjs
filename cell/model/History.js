@@ -256,6 +256,10 @@ function (window, undefined) {
 	window['AscCH'].historyitem_PivotTable_DataFieldSetBaseItem = 59;
 	window['AscCH'].historyitem_PivotTable_DataFieldSetNumFormat = 60;
 	window['AscCH'].historyitem_PivotTable_PivotFieldSetNumFormat = 61;
+	window['AscCH'].historyitem_PivotTable_FormatsReindex = 62;
+	window['AscCH'].historyitem_PivotTable_FormatsRemoveField = 63;
+	window['AscCH'].historyitem_PivotTable_FormatsAddRowField = 64;
+	window['AscCH'].historyitem_PivotTable_FormatsAddColField = 65;
 
 	window['AscCH'].historyitem_SharedFormula_ChangeFormula = 1;
 	window['AscCH'].historyitem_SharedFormula_ChangeShared = 2;
