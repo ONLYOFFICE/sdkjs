@@ -1553,12 +1553,18 @@
 				} else if (colorMod.name === "redOff") {
 					RGBA.R = AscFormat.ClampColor(RGBA.R + val * 255);
 				} else if (colorMod.name === "hueMod") {
+					if (val === 1) {
+						continue;
+					}
 					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 					HSL.H = AscCommon.trimMinMaxValue(HSL.H * val, 0, max_hls);
 
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "hueOff") {
+					if (val === 0) {
+						continue;
+					}
 					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 					val = (colorMod.val / 60000) * (max_hls / 360);
@@ -1571,12 +1577,18 @@
 					RGBA.G ^= 0xFF;
 					RGBA.B ^= 0xFF;
 				} else if (colorMod.name === "lumMod") {
+					if (val === 1) {
+						continue;
+					}
 					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
 					HSL.L = AscCommon.trimMinMaxValue(HSL.L * val, 0, max_hls);
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "lumOff") {
+					if (val === 0) {
+						continue;
+					}
 					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
@@ -1585,12 +1597,18 @@
 
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "satMod") {
+					if (val === 1) {
+						continue;
+					}
 					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
 					HSL.S = AscCommon.trimMinMaxValue(HSL.S * val, 0, max_hls);
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "satOff") {
+					if (val === 0) {
+						continue;
+					}
 					if (RGBA.R === RGBA.G && RGBA.R === RGBA.B) {
 						const delta = (255 - RGBA.R) * val;
 						RGBA.R = AscFormat.ClampColor(RGBA.R + Math.floor(delta));
@@ -1604,6 +1622,9 @@
 						this.HSL2RGB(HSL, RGBA);
 					}
 				} else if (colorMod.name === "wordShade") {
+					if (colorMod.val === 255) {
+						continue;
+					}
 					const val_ = colorMod.val / 255;
 					//GBA.R = Math.max(0, (RGBA.R * (1 - val_)) >> 0);
 					//GBA.G = Math.max(0, (RGBA.G * (1 - val_)) >> 0);
@@ -1620,6 +1641,9 @@
 					HSL.L = AscCommon.trimMinMaxValue(HSL.L * val_, 0, max_hls);
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "wordTint") {
+					if (colorMod.val === 255) {
+						continue;
+					}
 					const _val = colorMod.val / 255;
 					//RGBA.R = Math.max(0,  ((1 - _val)*(255 - RGBA.R) + RGBA.R) >> 0);
 					//RGBA.G = Math.max(0,  ((1 - _val)*(255 - RGBA.G) + RGBA.G) >> 0);
