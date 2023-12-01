@@ -1609,18 +1609,11 @@
 					if (val === 0) {
 						continue;
 					}
-					if (RGBA.R === RGBA.G && RGBA.R === RGBA.B) {
-						const delta = (255 - RGBA.R) * val;
-						RGBA.R = AscFormat.ClampColor(RGBA.R + Math.floor(delta));
-						RGBA.G = AscFormat.ClampColor(RGBA.G - Math.floor(delta));
-						RGBA.B = AscFormat.ClampColor(RGBA.B - delta * 5);
-					} else {
-						const HSL = {H: 0, S: 0, L: 0};
-						this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
-						const res = HSL.S + val * max_hls;
-						HSL.S = AscCommon.trimMinMaxValue(res, 0, max_hls);
-						this.HSL2RGB(HSL, RGBA);
-					}
+					const HSL = {H: 0, S: 0, L: 0};
+					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+					const res = HSL.S + val * max_hls;
+					HSL.S = AscCommon.trimMinMaxValue(res, 0, max_hls);
+					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "wordShade") {
 					if (colorMod.val === 255) {
 						continue;

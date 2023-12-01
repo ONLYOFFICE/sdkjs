@@ -32,7 +32,7 @@
 
 $(function () {
 function rgb(r, g, b, a) {
-	a = a || 0;
+	a = typeof a === 'number' ? a : 255;
 	return {R: r, G:g, B: b, A: a};
 }
 function test(startColor, arrMods, expectedColor) {
@@ -102,14 +102,201 @@ function mod(name, value) {
 			[mod("hueOff", -200000)],
 			rgb(68, 121, 196)
 		),
+		test(
+			rgb(165, 165, 165),
+			[mod("hueOff", 677650)],
+			rgb(165, 165, 165)
+		),
+
+		test(
+			rgb(165, 165, 165),
+			[mod("satOff", 0), mod("lumOff", 0), mod("hueOff", 0), mod("alphaOff", 0)],
+			rgb(165, 165, 165)
+		),
+
+		test(
+			rgb(134, 86, 64),
+			[mod("hueOff", 2710599)],
+			rgb(129, 134, 64)
+		),
+		test(
+			rgb(165, 165, 165),
+			[mod("lumOff", -3676)],
+			rgb(156, 156, 156)
+		),
+		test(
+			rgb(223, 219, 213),
+			[mod("shade", 80000)],
+			rgb(202, 198, 193)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("hueMod", 44000)],
+			rgb(157, 32, 14)
+		)
 	];
 
-
-	QUnit.test('Check colors', (assert) => {
+	const todoTests = [
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 200000)],
+			rgb(229, 22, 0)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 0)],
+			rgb(85, 85, 85)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 10000)],
+			rgb(93, 82, 78)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 20000)],
+			rgb(100, 79, 71)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 30000)],
+			rgb(107, 76, 64)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 100000)],
+			rgb(157, 54, 14)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 150000)],
+			rgb(193, 38, 0)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 110000)],
+			rgb(164, 51, 7)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 120000)],
+			rgb(171, 48, 0)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 130000)],
+			rgb(178, 45, 0)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 130000)],
+			rgb(178, 45, 0)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 140000)],
+			rgb(186, 41, 0)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 150000)],
+			rgb(193, 38, 0)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 160000)],
+			rgb(200, 35, 0)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 170000)],
+			rgb(207, 32, 0)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 180000)],
+			rgb(214, 29, 0)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 190000)],
+			rgb(221, 26, 0)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satMod", 200000)],
+			rgb(229, 22, 0)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satOff", 10000)],
+			rgb(166, 50, 5)
+		),
+		test(
+			rgb(157, 54, 14),
+			[mod("satOff", 20000)],
+			rgb(174, 46, 0)
+		),
+		test(
+			rgb(165, 165, 165),
+			[mod("satOff", 25000)],
+			rgb(187, 142, 53)
+		),
+		test(
+			rgb(165, 165, 165),
+			[mod("satOff", 40000)],
+			rgb(201, 129, 0)
+		),
+		test(
+			rgb(165, 165, 165),
+			[mod("satOff", 10000)],
+			rgb(174, 156, 120)
+		),
+		test(
+			rgb(165, 165, 165),
+			[mod("satOff", 30000)],
+			rgb(192, 138, 30)
+		),
+		test(
+			rgb(165, 165, 165),
+			[mod("satOff", 35000)],
+			rgb(196, 134, 8)
+		),
+		test(
+			rgb(165, 165, 165),
+			[mod("hueOff", 677650), mod("satOff", 25000), mod("lumOff", -3676),  mod("alphaOff", 0)],
+			rgb(173, 131, 48)
+		),
+		test(
+			rgb(165, 165, 165),
+			[mod("hueOff", 1355300), mod("satOff", 50000), mod("lumOff", -7353),  mod("alphaOff", 0)],
+			rgb(173, 99, 0)
+		),
+		test(
+			rgb(165, 165, 165),
+			[mod("hueOff", 2032949), mod("satOff", 75000), mod("lumOff", -11029),  mod("alphaOff", 0)],
+			rgb(176, 74, 0)
+		),
+		test(
+			rgb(165, 165, 165),
+			[mod("hueOff", 2710599), mod("satOff", 100000), mod("lumOff", -14706),  mod("alphaOff", 0)],
+			rgb(180, 53, 0)
+		),
+		test(
+			rgb(131, 131, 131),
+			[mod("satOff", 99200)],
+			rgb(254, 8, 0)
+		),
+		test(
+			rgb(127, 127, 127),
+			[mod("satOff", 99200)],
+			rgb(253, 1, 0)
+		),
+	];
+	QUnit.test('Check colors with mods', (assert) => {
 		for (let i = 0; i < tests.length; i++) {
 			const test = tests[i];
 			assert.deepEqual(test.result, test.expected, test.description);
 		}
 	});
-
 });
