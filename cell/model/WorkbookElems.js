@@ -16703,6 +16703,8 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_setHeaderFooter"] = prot.asc_setHeaderFooter;
 	prot["asc_getHorizontalCentered"] = prot.asc_getHorizontalCentered;
 	prot["asc_getVerticalCentered"] = prot.asc_getVerticalCentered;
+	prot["asc_setHorizontalCentered"] = prot.asc_setHorizontalCentered;
+	prot["asc_setVerticalCentered"] = prot.asc_setVerticalCentered;
 
 
 	window["Asc"]["CHeaderFooter"] = window["Asc"].CHeaderFooter = CHeaderFooter;
