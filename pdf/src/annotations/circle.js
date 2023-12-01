@@ -56,6 +56,10 @@
     CAnnotationCircle.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationCircle.prototype.constructor = CAnnotationCircle;
 
+    CAnnotationCircle.prototype.getObjectType = function() {
+        return -1;
+    };
+
     CAnnotationCircle.prototype.Draw = function(oGraphics) {
         if (this.IsHidden() == true)
             return;

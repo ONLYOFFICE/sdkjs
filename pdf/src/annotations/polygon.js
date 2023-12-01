@@ -64,6 +64,10 @@
     CAnnotationPolygon.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationPolygon.prototype.constructor = CAnnotationPolygon;
     
+    CAnnotationPolygon.prototype.getObjectType = function() {
+        return -1;
+    };
+
     CAnnotationPolygon.prototype.SetVertices = function(aVertices) {
         this._vertices = aVertices;
     };
