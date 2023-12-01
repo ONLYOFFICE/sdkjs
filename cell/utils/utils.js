@@ -2804,7 +2804,8 @@
 		};
 		asc_CHyperlink.prototype.calculateProps = function () {
 			let type = this.asc_getType();
-			let fileName = window.Asc.editor && window.Asc.editor.DocInfo && window.Asc.editor.DocInfo.Title;
+			let api = window.Asc.editor;
+			let fileName = api && api.DocInfo && api.DocInfo.Title;
 			if (type === Asc.c_oAscHyperlinkType.WebLink && this.hyperlinkModel.getHyperlinkFunction()) {
 				let res = null;
 				let sHyperlink = this.hyperlinkModel.Hyperlink;
@@ -2838,9 +2839,25 @@
 							}
 						}
 					}
-				} else {
+				} else if (_3dRef[3]) {
 					//check [test.xlsx]A14
 
+					let external = _3dRef[3];
+					ph.pCurrPos += _3dRef[4];
+
+					let ref;
+					if (AscCommon.parserHelp.isArea.call(ph, sHyperlink, ph.pCurrPos) || AscCommon.parserHelp.isRef.call(ph, sHyperlink, ph.pCurrPos)) {
+						ref = ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase()
+					}
+					if (ref) {
+						type = Asc.c_oAscHyperlinkType.RangeLink;
+						res = this.clone();
+						res.asc_setHyperlinkUrl(null);
+						let sCurSheetName = api.wbModel.getActiveWs().sName;
+						res.asc_setSheet(sCurSheetName);
+						res.asc_setRange(ref);
+						res.hyperlinkModel._updateLocation();
+					}
 				}
 
 				if (res) {

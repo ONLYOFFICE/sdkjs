@@ -3150,7 +3150,7 @@
 			this.operand_str = match[1];
 			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null, external];
 		}
-		return [false, null, null];
+		return [false, null, null, external, externalLength];
 	};
 	parserHelper.prototype.isNextPtg = function (formula, start_pos, digitDelim)
 	{
