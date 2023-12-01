@@ -1551,6 +1551,12 @@
 					RGBA.R = AscFormat.ClampColor(RGBA.R * val);
 				} else if (colorMod.name === "redOff") {
 					RGBA.R = AscFormat.ClampColor(RGBA.R + val * 255);
+				} else if (colorMod.name === "hueMod") {
+					const HSL = {H: 0, S: 0, L: 0};
+					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+					HSL.H = AscCommon.trimMinMaxValue(HSL.H * val, 0, max_hls);
+
+					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "hueOff") {
 					var HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
@@ -1584,15 +1590,20 @@
 					HSL.S = AscCommon.trimMinMaxValue(HSL.S * val, 0, max_hls);
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "satOff") {
-					var HSL = {H: 0, S: 0, L: 0};
-					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
-
-					var res = HSL.S + val * max_hls;
-					HSL.S = AscCommon.trimMinMaxValue(res, 0, max_hls);
-
-					this.HSL2RGB(HSL, RGBA);
+					if (RGBA.R === RGBA.G && RGBA.R === RGBA.B) {
+						const delta = (255 - RGBA.R) * val;
+						RGBA.R = AscFormat.ClampColor(RGBA.R + Math.floor(delta));
+						RGBA.G = AscFormat.ClampColor(RGBA.G - Math.floor(delta));
+						RGBA.B = AscFormat.ClampColor(RGBA.B - delta * 5);
+					} else {
+						const HSL = {H: 0, S: 0, L: 0};
+						this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+						const res = HSL.S + val * max_hls;
+						HSL.S = AscCommon.trimMinMaxValue(res, 0, max_hls);
+						this.HSL2RGB(HSL, RGBA);
+					}
 				} else if (colorMod.name === "wordShade") {
-					var val_ = colorMod.val / 255;
+					const val_ = colorMod.val / 255;
 					//GBA.R = Math.max(0, (RGBA.R * (1 - val_)) >> 0);
 					//GBA.G = Math.max(0, (RGBA.G * (1 - val_)) >> 0);
 					//GBA.B = Math.max(0, (RGBA.B * (1 - val_)) >> 0);
@@ -1602,7 +1613,7 @@
 					//RGBA.G = Math.max(0,  ((1 - val_)*(- RGBA.G) + RGBA.G) >> 0);
 					//RGBA.B = Math.max(0,  ((1 - val_)*(- RGBA.B) + RGBA.B) >> 0);
 
-					var HSL = {H: 0, S: 0, L: 0};
+					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
 					HSL.L = AscCommon.trimMinMaxValue(HSL.L * val_, 0, max_hls);
