@@ -1502,9 +1502,9 @@
 			//RGBA.B = this.lclGamma(this.lclRgbCompToCrgbComp(RGBA.B), DEC_GAMMA);
 
 			if (this.isUsePow) {
-				RGBA.R = (Math.pow(RGBA.R / 255, DEC_GAMMA) * MAX_PERCENT + 0.5) >> 0;
-				RGBA.G = (Math.pow(RGBA.G / 255, DEC_GAMMA) * MAX_PERCENT + 0.5) >> 0;
-				RGBA.B = (Math.pow(RGBA.B / 255, DEC_GAMMA) * MAX_PERCENT + 0.5) >> 0;
+				RGBA.R = (Math.pow(RGBA.R / 255, DEC_GAMMA) * MAX_PERCENT);
+				RGBA.G = (Math.pow(RGBA.G / 255, DEC_GAMMA) * MAX_PERCENT);
+				RGBA.B = (Math.pow(RGBA.B / 255, DEC_GAMMA) * MAX_PERCENT);
 			}
 		};
 		CColorModifiers.prototype.CrgbtoRgb = function (RGBA) {
@@ -1513,9 +1513,9 @@
 			//RGBA.B = (this.lclCrgbCompToRgbComp(this.lclGamma(RGBA.B, INC_GAMMA)) + 0.5) >> 0;
 
 			if (this.isUsePow) {
-				RGBA.R = (Math.pow(RGBA.R / 100000, INC_GAMMA) * 255 + 0.5) >> 0;
-				RGBA.G = (Math.pow(RGBA.G / 100000, INC_GAMMA) * 255 + 0.5) >> 0;
-				RGBA.B = (Math.pow(RGBA.B / 100000, INC_GAMMA) * 255 + 0.5) >> 0;
+				RGBA.R = (Math.pow(RGBA.R / 100000, INC_GAMMA) * 255) >> 0;
+				RGBA.G = (Math.pow(RGBA.G / 100000, INC_GAMMA) * 255) >> 0;
+				RGBA.B = (Math.pow(RGBA.B / 100000, INC_GAMMA) * 255) >> 0;
 			} else {
 				RGBA.R = AscFormat.ClampColor(RGBA.R);
 				RGBA.G = AscFormat.ClampColor(RGBA.G);
@@ -1558,10 +1558,10 @@
 
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "hueOff") {
-					var HSL = {H: 0, S: 0, L: 0};
+					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
-
-					var res = HSL.H + (val * 10) / 9;
+					val = (colorMod.val / 60000) * (max_hls / 360);
+					const res = HSL.H + val;
 					HSL.H = AscCommon.trimMinMaxValue(res, 0, max_hls);
 
 					this.HSL2RGB(HSL, RGBA);
