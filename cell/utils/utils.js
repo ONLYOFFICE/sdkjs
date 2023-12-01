@@ -2813,7 +2813,6 @@
 				let _3dRef = AscCommon.parserHelp.is3DRef.call(ph, sHyperlink, 0);
 
 				if (_3dRef && _3dRef[0] && _3dRef[3] && _3dRef[1]) {
-					AscCommon.getUrlType(_3dRef[3]);
 					let ref;
 					if (AscCommon.parserHelp.isArea.call(ph, sHyperlink, ph.pCurrPos) || AscCommon.parserHelp.isRef.call(ph, sHyperlink, ph.pCurrPos)) {
 						ref = ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase()
@@ -2836,6 +2835,8 @@
 								res.asc_setSheet(_3dRef[1]);
 								res.asc_setRange(ref);
 								res.hyperlinkModel._updateLocation();
+							} else {
+								//TODO
 							}
 						}
 					}
@@ -2843,20 +2844,23 @@
 					//check [test.xlsx]A14
 
 					let external = _3dRef[3];
-					ph.pCurrPos += _3dRef[4];
+					if (external === fileName) {
+						ph.pCurrPos += _3dRef[4];
 
-					let ref;
-					if (AscCommon.parserHelp.isArea.call(ph, sHyperlink, ph.pCurrPos) || AscCommon.parserHelp.isRef.call(ph, sHyperlink, ph.pCurrPos)) {
-						ref = ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase()
-					}
-					if (ref) {
-						type = Asc.c_oAscHyperlinkType.RangeLink;
-						res = this.clone();
-						res.asc_setHyperlinkUrl(null);
-						let sCurSheetName = api.wbModel.getActiveWs().sName;
-						res.asc_setSheet(sCurSheetName);
-						res.asc_setRange(ref);
-						res.hyperlinkModel._updateLocation();
+						let ref;
+						if (AscCommon.parserHelp.isArea.call(ph, sHyperlink, ph.pCurrPos) || AscCommon.parserHelp.isRef.call(ph, sHyperlink, ph.pCurrPos)) {
+							ref = ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase()
+						}
+						if (ref) {
+							res = this.clone();
+							res.asc_setHyperlinkUrl(null);
+							let sCurSheetName = api.wbModel.getActiveWs().sName;
+							res.asc_setSheet(sCurSheetName);
+							res.asc_setRange(ref);
+							res.hyperlinkModel._updateLocation();
+						} else {
+							//TODO
+						}
 					}
 				}
 
