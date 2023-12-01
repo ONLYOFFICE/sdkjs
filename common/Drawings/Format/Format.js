@@ -1527,10 +1527,10 @@
 			if (null == this.Mods)
 				return;
 
-			var _len = this.Mods.length;
-			for (var i = 0; i < _len; i++) {
-				var colorMod = this.Mods[i];
-				var val = colorMod.val / 100000.0;
+			const _len = this.Mods.length;
+			for (let i = 0; i < _len; i++) {
+				const colorMod = this.Mods[i];
+				let val = colorMod.val / 100000.0;
 
 				if (colorMod.name === "alpha") {
 					RGBA.A = AscFormat.ClampColor(255 * val);
@@ -1571,21 +1571,21 @@
 					RGBA.G ^= 0xFF;
 					RGBA.B ^= 0xFF;
 				} else if (colorMod.name === "lumMod") {
-					var HSL = {H: 0, S: 0, L: 0};
+					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
 					HSL.L = AscCommon.trimMinMaxValue(HSL.L * val, 0, max_hls);
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "lumOff") {
-					var HSL = {H: 0, S: 0, L: 0};
+					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
-					var res = HSL.L + val * max_hls;
+					const res = HSL.L + val * max_hls;
 					HSL.L = AscCommon.trimMinMaxValue(res, 0, max_hls);
 
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "satMod") {
-					var HSL = {H: 0, S: 0, L: 0};
+					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
 					HSL.S = AscCommon.trimMinMaxValue(HSL.S * val, 0, max_hls);
@@ -1620,15 +1620,15 @@
 					HSL.L = AscCommon.trimMinMaxValue(HSL.L * val_, 0, max_hls);
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "wordTint") {
-					var _val = colorMod.val / 255;
+					const _val = colorMod.val / 255;
 					//RGBA.R = Math.max(0,  ((1 - _val)*(255 - RGBA.R) + RGBA.R) >> 0);
 					//RGBA.G = Math.max(0,  ((1 - _val)*(255 - RGBA.G) + RGBA.G) >> 0);
 					//RGBA.B = Math.max(0,  ((1 - _val)*(255 - RGBA.B) + RGBA.B) >> 0);
 
-					var HSL = {H: 0, S: 0, L: 0};
+					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
-					var L_ = HSL.L * _val + (255 - colorMod.val);
+					const L_ = HSL.L * _val + (255 - colorMod.val);
 					HSL.L = AscCommon.trimMinMaxValue(L_, 0, max_hls);
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "shade") {
