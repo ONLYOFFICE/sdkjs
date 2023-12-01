@@ -3326,6 +3326,7 @@ function (window, undefined) {
 			if (cElementType.number === a.type && cElementType.number === b.type) {
 				this.array[r][c] = powerHelper(a.getValue(), b.getValue());
 			} else {
+				//  is there a need for shouldBeNa check???
 				if (shouldBeNA) {
 					this.array[r][c] = new cError(cErrorType.not_available);
 				} else if (cElementType.error === a.type) {
@@ -3367,24 +3368,47 @@ function (window, undefined) {
 				let arg0Dimensions = arg0.getDimensions(),
 					arg1Dimensions = arg1.getDimensions(), shouldBeNA;
 
-				arg0.foreach(function (elem, r, c) {
-					let power;
+				let resArr = new cArray();
+				let resDimensions = {col: Math.max(arg0Dimensions.col, arg1Dimensions.col), row: Math.max(arg0Dimensions.row, arg1Dimensions.row)};
 
-					if (arg1Dimensions.row === 1 && r > 0) {
-						power = arg1.getElementRowCol(0, c);
-					} else if (arg1Dimensions.col === 1 && c > 0) {
-						power = arg1.getElementRowCol(r, 0);
-					} else {
-						if (arg1Dimensions.row - 1 < r || arg1Dimensions.col - 1 < c) {
-							shouldBeNA = true;
-							power = new cError(cErrorType.not_available);
+				for (let resRow = 0; resRow < resDimensions.row; resRow++) {
+					resArr.addRow();
+					for (let resCol = 0; resCol < resDimensions.col; resCol++) {
+						let base, power;
+						/* find base */
+						if (arg0Dimensions.row === 1 && arg0Dimensions.col >= resCol) {
+							base = arg0.getElementRowCol(0, resCol);
+						} else if (arg0Dimensions.col === 1 && arg0Dimensions.row >= resRow) {
+							base = arg0.getElementRowCol(resRow, 0);
+						} else {
+							if (arg0Dimensions.row - 1 < resRow || arg0Dimensions.col - 1 < resCol) {
+								shouldBeNA = true;
+								base = new cError(cErrorType.not_available);
+							}
+							base = base ? base : arg0.getElementRowCol(resRow, resCol);
 						}
-						power = power ? power : arg1.getElementRowCol(r, c);
-					}
 
-					f.call(this, elem, power, r, c, shouldBeNA);
-				});
-				return arg0;
+						/* find power */
+						if (arg1Dimensions.row === 1 && arg1Dimensions.col >= resCol) {
+							power = arg1.getElementRowCol(0, resCol);
+						} else if (arg1Dimensions.col === 1 && arg1Dimensions.row >= resRow) {
+							power = arg1.getElementRowCol(resRow, 0);
+						} else {
+							if (arg1Dimensions.row - 1 < resRow || arg1Dimensions.col - 1 < resCol) {
+								shouldBeNA = true;
+								power = new cError(cErrorType.not_available);
+							}
+							power = power ? power : arg1.getElementRowCol(resRow, resCol);
+						}
+
+						f.call(resArr, base, power, resRow, resCol, shouldBeNA);
+					}
+				}
+
+				if (resArr) {
+					resArr.recalculate();
+					return resArr;
+				}
 			} else {
 				arg0.foreach(function (elem, r, c) {
 					f.call(this, elem, arg1.getElementRowCol(r, c), r, c);

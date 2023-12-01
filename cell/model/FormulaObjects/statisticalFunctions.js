@@ -1703,6 +1703,10 @@ function (window, undefined) {
 				fSum += pX[i][k];
 			}
 			// GetDouble(Column,Row)
+			// todo different results for GROWTH and LINEST
+			// if (pResMat[0] && pResMat[0][k] !== undefined) {
+			// 	pResMat[0][k] = fSum / nC;
+			// }
 			pResMat[k][0] = fSum / nC;
 		}
 	}
@@ -1710,7 +1714,9 @@ function (window, undefined) {
 	function lcl_CalculateRowsDelta(pMat, pRowMeans, nC, nR) {
 		for (var k = 0; k < nR; k++) {
 			for (var i = 0; i < nC; i++) {
+				// todo different results for GROWTH and LINEST
 				pMat[i][k] = approxSub(pMat[i][k], pRowMeans[k][0]);
+				// pMat[i][k] = approxSub(pMat[i][k], pRowMeans[0][k]);
 			}
 		}
 	}
