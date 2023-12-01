@@ -1450,9 +1450,10 @@
 		};
 		CColorModifiers.prototype.HSL2RGB = function (HSL, RGB) {
 			if (HSL.S == 0) {
-				RGB.R = HSL.L;
-				RGB.G = HSL.L;
-				RGB.B = HSL.L;
+				const clampL = AscFormat.ClampColor(HSL.L);
+				RGB.R = clampL;
+				RGB.G = clampL;
+				RGB.B = clampL;
 			} else {
 				var H = HSL.H / max_hls;
 				var S = HSL.S / max_hls;
