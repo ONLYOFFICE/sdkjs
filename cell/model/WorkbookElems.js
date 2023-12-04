@@ -15907,20 +15907,61 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	/**
+	 * Function returns next value from range
+	 * @param {Range} oRange - Range object from Workbook model
+	 * @param {Cell} oCell
+	 * @param {boolean} bVertical
+	 * @returns {string} Value without format of next cell
+	 * @private
+	 */
+	function _getNextValueFromRange(oRange, oCell, bVertical) {
+		let ws = oRange.worksheet;
+
+		if (bVertical) {
+			let nNextItRow = oCell.nRow + 1;
+			if (nNextItRow <= oRange.bbox.r2) {
+				return ws.getCell3(nNextItRow, oCell.nCol).getValueWithoutFormat();
+			}
+		} else {
+			let nNextItCol = oCell.nCol + 1;
+			if (nNextItCol <= oRange.bbox.c2) {
+				return ws.getCell3(oCell.nRow, nNextItCol).getValueWithoutFormat();
+			}
+		}
+
+		return '';
+	}
+	/**
 	 * Function returns range with filled cells.
-	 * @param  oRange - Range object from Workbook model
+	 * @param {Range} oRange - Range object from Workbook model
+	 * @param {boolean} bVertical - Vertical or horizontal direction
 	 * @returns  Range object from Workbook model
 	 * @private
 	 */
-	function _getFilledRange(oRange) {
+	function _getFilledRange(oRange, bVertical) {
 		let oFilledRange = oRange.clone();
 		let nRow = oFilledRange.bbox.r1;
 		let nCol = oFilledRange.bbox.c1;
+		let sFirstValue = null;
 
-		oRange._foreachNoEmpty(function (oCell, nCurRow, nCurCol) {
+		oRange._foreach(function (oCell, nCurRow, nCurCol) {
 			if (oCell && oCell.getValueWithoutFormat()) {
 				nRow = nCurRow;
 				nCol = nCurCol;
+				if (nCurRow === oRange.bbox.r1 && nCurCol === oRange.bbox.c1) {
+					sFirstValue = oCell.getValueWithoutFormat();
+				}
+			} else {
+				let sNextValue = _getNextValueFromRange(oRange, oCell, bVertical);
+				if (!sFirstValue && sNextValue) {
+					if (bVertical) {
+						oFilledRange.bbox.r1 = nCurRow + 1;
+						oFilledRange.bbox.c1 = nCurCol;
+					} else {
+						oFilledRange.bbox.c1 = nCurCol + 1;
+						oFilledRange.bbox.r1 = nCurRow;
+					}
+				}
 			}
 		});
 		oFilledRange.bbox.r2 = nRow;
@@ -16020,10 +16061,10 @@ function RangeDataManagerElem(bbox, data)
 			} else if (firstValue == null){
 				seriesSettings.asc_setStepValue(1);
 
-				if (countOfFilledCol !== countOfFilledRow) {
+				/*if (countOfFilledCol !== countOfFilledRow) {
 					contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
 					contextMenuAllowedProps[Asc.c_oAscFillType.series] = true;
-				}
+				}*/
 			}
 
 			if (seriesSettings.asc_getStepValue() != null) {
@@ -16042,7 +16083,6 @@ function RangeDataManagerElem(bbox, data)
 			return;
 		}
 		let rangeModel = ws.model.getRange3(range.r1, range.c1, range.r2, range.c2);
-		let filledRange = _getFilledRange(rangeModel);
 		let firstValue = null;
 		let contextMenuAllowedProps = {};
 		contextMenuAllowedProps[Asc.c_oAscFillType.copyCells] = true;
@@ -16060,6 +16100,7 @@ function RangeDataManagerElem(bbox, data)
 
 		let countOfCol = range.c2 - range.c1;
 		let countOfRow = range.r2 - range.r1;
+		let filledRange = _getFilledRange(rangeModel, countOfCol <= countOfRow);
 		let countOfFilledRow = filledRange.bbox.r2 - filledRange.bbox.r1;
 		let countOfFilledCol = filledRange.bbox.c2 - filledRange.bbox.c1;
 		// Init variables for calc step. x - index, y - value of cell.
@@ -16101,8 +16142,10 @@ function RangeDataManagerElem(bbox, data)
 			let isVertical = this.asc_getSeriesIn() === Asc.c_oAscSeriesInType.columns;
 			let rangeLen = isVertical ? countOfRow + 1 : countOfCol + 1;
 			let filledRangeLen = isVertical ? countOfFilledRow + 1 : countOfFilledCol + 1;
+			let isStartPointShifted = rangeModel.bbox.r1 !== filledRange.bbox.r1 || rangeModel.bbox.c1 !== filledRange.bbox.c1;
 
-			if (filledRangeLen === rangeLen || firstValue === ySum || firstValue == null) { // all selected cells are filled or only one cell is filled
+			// all selected cells are filled or only one cell is filled or first cell is empty
+			if (filledRangeLen === rangeLen || firstValue === ySum || firstValue == null || isStartPointShifted) {
 				this.asc_setStepValue(1);
 			} else {
 				let slope = numeratorOfSlope / denominatorOfSlope;
