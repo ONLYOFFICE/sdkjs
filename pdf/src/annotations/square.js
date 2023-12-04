@@ -62,9 +62,6 @@
     AscFormat.InitClass(CAnnotationSquare, AscFormat.CShape, AscDFH.historyitem_type_Shape);
     Object.assign(CAnnotationSquare.prototype, AscPDF.CAnnotationBase.prototype);
 
-    CAnnotationSquare.prototype.IsNeedDrawFromStream = function() {
-        return false;
-    };
     CAnnotationSquare.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
         oDoc.TurnOffHistory();
