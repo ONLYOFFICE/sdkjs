@@ -2821,7 +2821,7 @@
 					if (ref) {
 						if (AscCommon.rx_allowedProtocols.test(_3dRef[3])) {
 							//https://test.com/test1/testFile.xlsx#TestSheet!F10
-							sHyperlink = _3dRef[3] + "#" + _3dRef[1] + ref;
+							sHyperlink = _3dRef[3] + "#" + _3dRef[1] + "!" + ref;
 							res = this.clone();
 							res.asc_setHyperlinkUrl(sHyperlink);
 						} else {
