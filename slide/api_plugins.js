@@ -123,4 +123,91 @@
 		}
 	};
 
+	/**
+	 * Starts presentation slide show
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias RemoveComments
+	 * @since 7.6.0
+	 */
+	Api.prototype["pluginMethod_StartSlideShow"] = function()
+	{
+		this.sendEvent("asc_onStartDemonstration");
+	};
+
+	/**
+	 * Pauses current slide show
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias RemoveComments
+	 * @since 7.6.0
+	 */
+	Api.prototype["pluginMethod_PauseSlideShow"] = function()
+	{
+		this.WordControl.DemonstrationManager.Pause();
+		this.sendEvent("asc_onDemonstrationStatus", "pause");
+	};
+	/**
+	 * Resumes current slide show
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias RemoveComments
+	 * @since 7.6.0
+	 */
+	Api.prototype["pluginMethod_ResumeSlideShow"] = function()
+	{
+		this.WordControl.DemonstrationManager.Play();
+		this.sendEvent("asc_onDemonstrationStatus", "play");
+	};
+
+
+	/**
+	 * Ends current slide show
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias RemoveComments
+	 * @since 7.6.0
+	 */
+	Api.prototype["pluginMethod_EndSlideShow"] = function()
+	{
+		this.EndDemonstration();
+	};
+
+	/**
+	 * Displays the slide following the current slide in slide show.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias RemoveComments
+	 * @since 7.6.0
+	 */
+	Api.prototype["pluginMethod_GoToNextSlideInSlideShow"] = function()
+	{
+		this.DemonstrationNextSlide();
+	};
+
+	/**
+	 * Displays the slide following the current slide in slide show.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias RemoveComments
+	 * @since 7.6.0
+	 */
+	Api.prototype["pluginMethod_GoToPreviousSlideInSlideShow"] = function()
+	{
+		this.DemonstrationPrevSlide();
+	};
+
+	/**
+	 * Displays the slide with specific index.
+	 * @memberof Api
+	 * @typeofeditors ["CPE"]
+	 * @alias RemoveComments
+	 * @param {number} nSlideIndex - index of slide
+	 * @since 7.6.0
+	 */
+	Api.prototype["pluginMethod_GoToSlideInSlideShow"] = function(nSlideIndex)
+	{
+		this.DemonstrationGoToSlide(nSlideIndex - 1);
+	};
+
 })(window);

@@ -4570,7 +4570,7 @@
 						case c_oAscChartTypeSettings.barNormal3dPerspective:
 							return AscFormat.CreateBarChart(chartSeries, BAR_GROUPING_STANDARD, bUseCache, options, true, true);
 						case c_oAscChartTypeSettings.hBarNormal:
-							return AscFormat.CreateHBarChart(chartSeries, BAR_GROUPING_CLUSTERED, bUseCache, options);
+							return AscFormat.CreateHBarChart(chartSeries, `BAR_GROUPING_CLUSTERED`, bUseCache, options);
 						case c_oAscChartTypeSettings.hBarStacked:
 							return AscFormat.CreateHBarChart(chartSeries, BAR_GROUPING_STACKED, bUseCache, options);
 						case c_oAscChartTypeSettings.hBarStackedPer:

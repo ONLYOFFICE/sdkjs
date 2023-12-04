@@ -15868,7 +15868,7 @@ function RangeDataManagerElem(bbox, data)
 	 * @property {number|null} stopValue - Stop value
 	 * @property {boolean|null} trend - Trend
 	 * @property {object} contextMenuAllowedProps - Allowed properties
-	 * @property {c_oAscFillRightClickOptions} contextMenuChosenProperty - Chosen property of context menu
+	 * @property {c_oAscFillType} contextMenuChosenProperty - Chosen property of context menu
 	 * @constructor
 	 * @returns {asc_CSeriesSettings}
 	 */
@@ -15885,6 +15885,7 @@ function RangeDataManagerElem(bbox, data)
 		//transfer right click fill information
 		this.contextMenuAllowedProps = null;
 		this.contextMenuChosenProperty = null;
+		this.toolbarMenuAllowedProps = null;
 
 		return this;
 	}
@@ -15908,9 +15909,33 @@ function RangeDataManagerElem(bbox, data)
 
 		res.contextMenuAllowedProps = this.contextMenuAllowedProps;
 		res.contextMenuChosenProperty = this.contextMenuChosenProperty;
+		res.toolbarMenuAllowedProps = this.toolbarMenuAllowedProps;
 
 		return res;
 	};
+
+	/**
+	 * Function returns range with filled cells.
+	 * @param  oRange - Range object from Workbook model
+	 * @returns  Range object from Workbook model
+	 * @private
+	 */
+	function _getFilledRange(oRange) {
+		let oFilledRange = oRange.clone();
+		let nRow = oFilledRange.bbox.r1;
+		let nCol = oFilledRange.bbox.c1;
+
+		oRange._foreachNoEmpty(function (oCell, nCurRow, nCurCol) {
+			if (oCell && oCell.getValueWithoutFormat()) {
+				nRow = nCurRow;
+				nCol = nCurCol;
+			}
+		});
+		oFilledRange.bbox.r2 = nRow;
+		oFilledRange.bbox.c2 = nCol;
+
+		return oFilledRange;
+	}
 	/**
 	 * Method fills data of SeriesSettings object for context menu and dialog window
 	 * @memberof asc_CSeriesSettings
@@ -15921,7 +15946,36 @@ function RangeDataManagerElem(bbox, data)
 			return;
 		}
 
-		function actionCell(cell) {
+		function calcAvg(seriesInType) {
+			let filledRangeLength = null;
+
+			if (seriesInType === Asc.c_oAscSeriesInType.rows) {
+				filledRange._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
+					if (cell && cell.getNumberValue() != null) {
+						// If columns range not starts with 0, define indexCell by difference between current column and start column
+						let indexCell = curCol - colStart;
+						ySum += cell.getNumberValue();
+						xSum += indexCell;
+					}
+				});
+				filledRangeLength = (filledRange.bbox.c2 - filledRange.bbox.c1) + 1;
+			} else {
+				filledRange._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
+					if (curCol === colStart) {
+						if (cell && cell.getNumberValue() != null) {
+							let indexCell = curRow - rowStart;
+							ySum += cell.getNumberValue();
+							xSum += indexCell;
+						}
+					}
+				});
+				filledRangeLength = (filledRange.bbox.r2 - filledRange.bbox.r1) + 1;
+			}
+
+			xAvg = xSum / filledRangeLength;
+			yAvg = ySum / filledRangeLength;
+		}
+		function actionCell(cell, curRow, curCol, rowStart, colStart) {
 			if (cell && cell.getValueWithoutFormat()) {
 				// Fill type
 				seriesSettings.asc_setType(Asc.c_oAscSeriesType.linear);
@@ -15930,36 +15984,35 @@ function RangeDataManagerElem(bbox, data)
 					if (numFormat.isDateTimeFormat()) {
 						seriesSettings.asc_setType(Asc.c_oAscSeriesType.date);
 
-						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillDays] = true;
-						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillWeekdays] = true;
-						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillMonths] = true;
-						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillYears] = true;
+						contextMenuAllowedProps[Asc.c_oAscFillType.fillDays] = true;
+						//contextMenuAllowedProps[Asc.c_oAscFillType.fillWeekdays] = true;
+						//contextMenuAllowedProps[Asc.c_oAscFillType.fillMonths] = true;
+						//contextMenuAllowedProps[Asc.c_oAscFillType.fillYears] = true;
 					}
 				}
 
 				// Fill step value
 				let cellNumberValue = cell.getNumberValue();
+				let isVertical = seriesSettings.asc_getSeriesIn() === Asc.c_oAscSeriesInType.columns;
+				let cellIndex = isVertical ? curRow - rowStart : curCol - colStart;
+
 				if (cell.isFormula()) {
 					seriesSettings.asc_setStepValue(1);
-				} else if (prevValue) {
-					if (cellNumberValue) {
-						seriesSettings.asc_setStepValue(cellNumberValue - prevValue);
-
-						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillSeries] = true;
-						if (seriesSettings.asc_getType() !== Asc.c_oAscSeriesType.date) {
-							contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.linearTrend] = true;
-							contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.growthTrend] = true;
-						}
-						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.series] = true;
+				} else if (firstValue != null) {
+					if (cellNumberValue != null) {
+						numeratorOfSlope += (cellIndex - xAvg) * (cellNumberValue - yAvg);
+						denominatorOfSlope += Math.pow((cellIndex - xAvg), 2);
 					} else {
 						seriesSettings.asc_setStepValue(1);
 
-						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillSeries] = true;
-						contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.series] = true;
+						contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
+						contextMenuAllowedProps[Asc.c_oAscFillType.series] = true;
 					}
 				} else {
-					if (cellNumberValue) {
-						prevValue = cellNumberValue;
+					if (cellNumberValue != null) {
+						numeratorOfSlope += (cellIndex - xAvg) * (cellNumberValue - yAvg);
+						denominatorOfSlope += Math.pow((cellIndex - xAvg), 2);
+						firstValue = cellNumberValue;
 					} else {
 						seriesSettings.asc_setStepValue(1);
 
@@ -15967,21 +16020,21 @@ function RangeDataManagerElem(bbox, data)
 						if (typeCell === AscCommon.CellValueType.String) {
 							let cellValue = cell.getValueWithoutFormat();
 							if (cellValue[cellValue.length - 1] >= '0' && cellValue[cellValue.length - 1] <= '9') {
-								contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillSeries] = true;
+								contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
 							}
 						}
 					}
 				}
-			} else {
+			} else if (firstValue == null){
 				seriesSettings.asc_setStepValue(1);
 
-				if(prevValue != null) {
-					contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.series] = true;
-					contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillSeries] = true;
+				if (countOfFilledCol !== countOfFilledRow) {
+					contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
+					contextMenuAllowedProps[Asc.c_oAscFillType.series] = true;
 				}
 			}
 
-			if (seriesSettings.asc_getStepValue()) {
+			if (seriesSettings.asc_getStepValue() != null) {
 				if (seriesSettings.asc_getType() == null) {
 					seriesSettings.asc_setType(Asc.c_oAscSeriesType.linear);
 				}
@@ -15997,56 +16050,207 @@ function RangeDataManagerElem(bbox, data)
 			return;
 		}
 		let rangeModel = ws.model.getRange3(range.r1, range.c1, range.r2, range.c2);
-		let prevValue = null;
+		let filledRange = _getFilledRange(rangeModel);
+		let firstValue = null;
 		let contextMenuAllowedProps = {};
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.copyCells] = true;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillSeries] = false;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillFormattingOnly] = null;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillWithoutFormatting] = null;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillDays] = false;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillWeekdays] = false;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillMonths] = false;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.fillYears] = false;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.linearTrend] = false;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.growthTrend] = false;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.flashFill] = null;
-		contextMenuAllowedProps[Asc.c_oAscFillRightClickOptions.series] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.copyCells] = true;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillFormattingOnly] = null;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillWithoutFormatting] = null;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillDays] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillWeekdays] = null;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillMonths] = null;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillYears] = null;
+		contextMenuAllowedProps[Asc.c_oAscFillType.linearTrend] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.growthTrend] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.flashFill] = null;
+		contextMenuAllowedProps[Asc.c_oAscFillType.series] = false;
 
 		let countOfCol = range.c2 - range.c1;
 		let countOfRow = range.r2 - range.r1;
+		let countOfFilledRow = filledRange.bbox.r2 - filledRange.bbox.r1;
+		let countOfFilledCol = filledRange.bbox.c2 - filledRange.bbox.c1;
+		// Init variables for calc step. x - index, y - value of cell.
+		let xSum = 0;
+		let ySum = 0;
+		let xAvg = 0;
+		let yAvg = 0;
+		let numeratorOfSlope = 0;
+		let denominatorOfSlope = 0;
 
-		if (countOfCol >= countOfRow) {
+		// select one cell and use fill handle
+		if (ws.activeFillHandle != null && countOfCol === countOfRow) {
+			if (ws.fillHandleDirection === 0) {
+				this.asc_setSeriesIn(Asc.c_oAscSeriesInType.rows);
+			} else {
+				this.asc_setSeriesIn(Asc.c_oAscSeriesInType.columns);
+			}
+			// Calculate xAvg, yAvg
+			calcAvg(this.asc_getSeriesIn());
+			filledRange._foreach2(actionCell);
+			if (rangeModel.getType() === AscCommon.CellValueType.Number) {
+				contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
+				contextMenuAllowedProps[Asc.c_oAscFillType.series] = true;
+			}
+		} else if (countOfCol >= countOfRow) {
 			this.asc_setSeriesIn(Asc.c_oAscSeriesInType.rows);
-			rangeModel._foreachNoEmpty(actionCell);
+			calcAvg(Asc.c_oAscSeriesInType.rows);
+			filledRange._foreach2(actionCell);
 		} else {
 			this.asc_setSeriesIn(Asc.c_oAscSeriesInType.columns);
-			rangeModel._foreachNoEmpty(function (cell, curRow, curCol, rowStart, colStart) {
+			calcAvg(Asc.c_oAscSeriesInType.columns);
+			filledRange._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
 				if (curCol === colStart) {
-					return actionCell(cell);
+					return actionCell(cell, curRow, curCol, rowStart, colStart);
 				}
 			});
 		}
 		if (seriesSettings.asc_getStepValue() == null) {
-			seriesSettings.asc_setStepValue(1);
+			let isVertical = this.asc_getSeriesIn() === Asc.c_oAscSeriesInType.columns;
+			let rangeLen = isVertical ? countOfRow + 1 : countOfCol + 1;
+			let filledRangeLen = isVertical ? countOfFilledRow + 1 : countOfFilledCol + 1;
+
+			if (filledRangeLen === rangeLen || firstValue === ySum || firstValue == null) { // all selected cells are filled or only one cell is filled
+				this.asc_setStepValue(1);
+			} else {
+				let slope = numeratorOfSlope / denominatorOfSlope;
+				this.asc_setStepValue(slope);
+			}
+
+			if (firstValue != null) {
+				contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
+				contextMenuAllowedProps[Asc.c_oAscFillType.series] = true;
+				if (firstValue !== ySum && seriesSettings.asc_getType() !== Asc.c_oAscSeriesType.date) {
+					contextMenuAllowedProps[Asc.c_oAscFillType.linearTrend] = true;
+					contextMenuAllowedProps[Asc.c_oAscFillType.growthTrend] = true;
+				}
+			}
 		}
 		this.asc_setTrend(false);
 		this.asc_setDateUnit(Asc.c_oAscDateUnitType.day);
 
 		//2. init for context menu - allowed options
 		this.asc_setContextMenuAllowedProps(contextMenuAllowedProps);
+
+		//3. toolbar - allowed options
+		let toolbarMenuAllowedProps = {};
+		toolbarMenuAllowedProps[Asc.c_oAscFillType.fillDown] = true;
+		toolbarMenuAllowedProps[Asc.c_oAscFillType.fillRight] = true;
+		toolbarMenuAllowedProps[Asc.c_oAscFillType.fillUp] = true;
+		toolbarMenuAllowedProps[Asc.c_oAscFillType.fillLeft] = true;
+		toolbarMenuAllowedProps[Asc.c_oAscFillType.series] = true;
+
+		if (range.isOneCol()) {
+			if (selectionRanges.c1 === 0) {
+				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillRight] = false;
+			} else if (selectionRanges.c1 === AscCommon.gc_nMaxCol0) {
+				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillLeft] = false;
+			}
+		}
+		if (range.isOneRow()) {
+			if (selectionRanges.r1 === 0) {
+				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillDown] = false;
+			} else if (selectionRanges.r1 === AscCommon.gc_nMaxRow0) {
+				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillUp] = false;
+			}
+		}
+
+		this.asc_setToolbarMenuAllowedProps(toolbarMenuAllowedProps);
 	};
 	/**
-	 * Method updates "Type" and "Trend" attributes of SeriesSettings object for chosen context menu property
+	 * Method updates "Type", "Trend" and "Step Value" (for Date type) attributes of SeriesSettings object for chosen context menu property
+	 * @param {WorksheetView} wsView
 	 * @memberof asc_CSeriesSettings
 	 */
-	asc_CSeriesSettings.prototype.init = function () {
+	asc_CSeriesSettings.prototype.init = function (wsView) {
 		const chosenContextMenuProp = this.asc_getContextMenuChosenProperty();
-		if (chosenContextMenuProp === Asc.c_oAscFillRightClickOptions.linearTrend) {
-			this.asc_setType(Asc.c_oAscSeriesType.linear);
-			this.asc_setTrend(true);
-		} else if (chosenContextMenuProp === Asc.c_oAscFillRightClickOptions.growthTrend) {
-			this.asc_setType(Asc.c_oAscSeriesType.growth);
-			this.asc_setTrend(true);
+		const fillType = Asc.c_oAscFillType;
+		const seriesSettings = this;
+		function calcStepForDate() {
+			const arn = wsView.model && wsView.model.getSelection().getLast();
+			const activeFillHandle = wsView.activeFillHandle;
+			const rangeModel = wsView.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
+			const index = wsView.fillHandleDirection === 0 ? activeFillHandle.c2 - arn.c1 : activeFillHandle.r2 - arn.r1;
+			const dateUnitType = Asc.c_oAscDateUnitType;
+
+			let prevCellValue = null;
+
+			function actionCell(cell) {
+				if (cell && cell.getValueWithoutFormat()) {
+					let dateUnit = seriesSettings.asc_getDateUnit();
+					let cellValue;
+
+					if (dateUnit === dateUnitType.day || dateUnit === dateUnitType.weekday) {
+						cellValue = cell.getNumberValue();
+					} else if (dateUnit === dateUnitType.month) {
+						let dateVal = new Asc.cDate().getDateFromExcel(cell.getNumberValue());
+						cellValue = dateVal.getMonth();
+					} else {
+						let dateVal = new Asc.cDate().getDateFromExcel(cell.getNumberValue());
+						cellValue = dateVal.getFullYear();
+					}
+
+					if (prevCellValue != null) {
+						seriesSettings.asc_setStepValue(cellValue - prevCellValue);
+						return true;
+					} else {
+						prevCellValue = cellValue;
+					}
+				} else {
+					return true;
+				}
+			}
+
+			if (arn.isOneCell()) {
+				seriesSettings.asc_setStepValue(1);
+			} else {
+				if (seriesSettings.asc_getSeriesIn() === Asc.c_oAscSeriesInType.rows) {
+					rangeModel._foreach2(actionCell);
+				} else {
+					rangeModel._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
+						if (curCol === colStart) {
+							return actionCell(cell);
+						}
+					});
+				}
+			}
+
+			// Define direction step
+			let step = seriesSettings.asc_getStepValue();
+			if (index < 0) {
+				seriesSettings.asc_setStepValue(step * -1);
+			}
+		}
+
+		switch (chosenContextMenuProp) {
+			case fillType.linearTrend:
+				this.asc_setType(Asc.c_oAscSeriesType.linear);
+				this.asc_setTrend(true);
+				break;
+			case fillType.growthTrend:
+				this.asc_setType(Asc.c_oAscSeriesType.growth);
+				this.asc_setTrend(true);
+				break;
+			case fillType.fillDays:
+				this.asc_setType(Asc.c_oAscSeriesType.date);
+				this.asc_setDateUnit(Asc.c_oAscDateUnitType.day);
+				calcStepForDate()
+				break;
+			case fillType.fillWeekdays:
+				this.asc_setType(Asc.c_oAscSeriesType.date);
+				this.asc_setDateUnit(Asc.c_oAscDateUnitType.weekday);
+				calcStepForDate()
+				break;
+			case fillType.fillMonths:
+				this.asc_setType(Asc.c_oAscSeriesType.date);
+				this.asc_setDateUnit(Asc.c_oAscDateUnitType.month);
+				calcStepForDate()
+				break;
+			case fillType.fillYears:
+				this.asc_setType(Asc.c_oAscSeriesType.date);
+				this.asc_setDateUnit(Asc.c_oAscDateUnitType.year);
+				calcStepForDate()
+				break;
 		}
 	};
 	/**
@@ -16101,7 +16305,7 @@ function RangeDataManagerElem(bbox, data)
 	 * Method returns "contextMenuAllowedProps" attribute of SeriesSettings object.
 	 * Uses for hide and shade menu items in context menu.
 	 * @memberof asc_CSeriesSettings
-	 * @returns {object} - object with properties of Asc.c_oAscFillRightClickOptions
+	 * @returns {object} - object with properties of Asc.c_oAscFillType
 	 */
 	asc_CSeriesSettings.prototype.asc_getContextMenuAllowedProps = function () {
 		return this.contextMenuAllowedProps;
@@ -16110,10 +16314,19 @@ function RangeDataManagerElem(bbox, data)
 	 * Method returns "contextMenuChosenProperty" attribute of SeriesSettings object.
 	 * Uses for recognize chosen item in context menu.
 	 * @memberof asc_CSeriesSettings
-	 * @returns {c_oAscFillRightClickOptions}
+	 * @returns {c_oAscFillType}
 	 */
 	asc_CSeriesSettings.prototype.asc_getContextMenuChosenProperty = function () {
 		return this.contextMenuChosenProperty;
+	};
+	/**
+	 * Method returns "toolbarMenuAllowedProps" attribute of SeriesSettings object.
+	 * Uses for hide and shade menu items in context menu.
+	 * @memberof asc_CSeriesSettings
+	 * @returns {object} - object with properties of Asc.c_oAscFillType
+	 */
+	asc_CSeriesSettings.prototype.asc_getToolbarMenuAllowedProps = function () {
+		return this.toolbarMenuAllowedProps;
 	};
 	/**
 	 * Method sets "Series In" attribute of SeriesSettings object
@@ -16168,7 +16381,7 @@ function RangeDataManagerElem(bbox, data)
 	 * * false - shade menu item
 	 * * null - hide menu item
 	 * @memberof asc_CSeriesSettings
-	 * @param {object} val - object with properties of Asc.c_oAscFillRightClickOptions as attribute and boolean or null as value
+	 * @param {object} val - object with properties of Asc.c_oAscFillType as attribute and boolean or null as value
 	 */
 	asc_CSeriesSettings.prototype.asc_setContextMenuAllowedProps = function (val) {
 		this.contextMenuAllowedProps = val;
@@ -16176,10 +16389,23 @@ function RangeDataManagerElem(bbox, data)
 	/**
 	 * Method sets "contextMenuChosenProperty" attribute of SeriesSettings object.
 	 * Uses for recognize chosen item in context menu.
-	 * @param {c_oAscFillRightClickOptions} val - attribute of c_oAscFillRightClickOptions
+	 * @param {c_oAscFillType} val - attribute of c_oAscFillType
 	 */
 	asc_CSeriesSettings.prototype.asc_setContextMenuChosenProperty = function (val) {
 		this.contextMenuChosenProperty = val;
+	};
+
+	/**
+	 * Method sets "toolbarMenuAllowedProps" attribute of SeriesSettings object.
+	 * Uses for hide and shade menu items in context menu.
+	 * * true - unshade menu item
+	 * * false - shade menu item
+	 * * null - hide menu item
+	 * @memberof asc_CSeriesSettings
+	 * @param {object} val - object with properties of Asc.c_oAscFillType as attribute and boolean or null as value
+	 */
+	asc_CSeriesSettings.prototype.asc_setToolbarMenuAllowedProps = function (val) {
+		this.toolbarMenuAllowedProps = val;
 	};
 
 
@@ -16485,6 +16711,8 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_setHeaderFooter"] = prot.asc_setHeaderFooter;
 	prot["asc_getHorizontalCentered"] = prot.asc_getHorizontalCentered;
 	prot["asc_getVerticalCentered"] = prot.asc_getVerticalCentered;
+	prot["asc_setHorizontalCentered"] = prot.asc_setHorizontalCentered;
+	prot["asc_setVerticalCentered"] = prot.asc_setVerticalCentered;
 
 
 	window["Asc"]["CHeaderFooter"] = window["Asc"].CHeaderFooter = CHeaderFooter;
@@ -16670,6 +16898,7 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_getStopValue"] = prot.asc_getStopValue;
 	prot["asc_getContextMenuAllowedProps"] = prot.asc_getContextMenuAllowedProps;
 	prot["asc_getContextMenuChosenProperty"] = prot.asc_getContextMenuChosenProperty;
+	prot["asc_getToolbarMenuAllowedProps"] = prot.asc_getToolbarMenuAllowedProps;
 
 	prot["asc_setSeriesIn"] = prot.asc_setSeriesIn;
 	prot["asc_setType"] = prot.asc_setType;
@@ -16679,6 +16908,7 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_setStopValue"] = prot.asc_setStopValue;
 	prot["asc_setContextMenuAllowedProps"] = prot.asc_setContextMenuAllowedProps;
 	prot["asc_setContextMenuChosenProperty"] = prot.asc_setContextMenuChosenProperty;
+	prot["asc_setToolbarMenuAllowedProps"] = prot.asc_setToolbarMenuAllowedProps;
 
 
 })(window);

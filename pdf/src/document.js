@@ -1088,8 +1088,8 @@ var CPresentation = CPresentation || function(){};
                 
                 oField.onMouseUp();
 
+                let oDoc = oField.GetDocument();
                 if (oField.IsNeedCommit() && oDoc.IsNeedDoCalculate()) {
-                    let oDoc = oField.GetDocument();
                     oDoc.DoCalculateFields();
                     oDoc.CommitFields();
                 }
@@ -1134,8 +1134,8 @@ var CPresentation = CPresentation || function(){};
                             oParentForm.Commit();
 
                         // вызываем calculate actions
+                        let oDoc = oParentForm.GetDocument();
                         if (oDoc.IsNeedDoCalculate()) {
-                            let oDoc = oParentForm.GetDocument();
                             oDoc.DoCalculateFields();
                             oDoc.CommitFields();
                         }

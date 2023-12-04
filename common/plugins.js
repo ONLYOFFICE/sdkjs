@@ -343,9 +343,12 @@
 		{
 			for (let i in this.runnedPluginsMap)
 			{
-				let pluginType = this.pluginsMap[i] ? this.pluginsMap[i].type : -1;
+				let oPlugin = this.pluginsMap[i];
+
+				let pluginType = oPlugin ? oPlugin.type : -1;
 				if (pluginType !== Asc.PluginType.System &&
-					pluginType !== Asc.PluginType.Background)
+					pluginType !== Asc.PluginType.Background &&
+					!(oPlugin && oPlugin.isConnector))
 				{
 					this.close(i);
 				}

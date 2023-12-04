@@ -55,6 +55,7 @@
 	var oSeriesInType = Asc.c_oAscSeriesInType;
 	var oSeriesType = Asc.c_oAscSeriesType;
 	var oSeriesDateUnitType = Asc.c_oAscDateUnitType;
+	var oFillType = Asc.c_oAscFillType;
 
 
 	var UndoRedoItemSerializable = AscCommonExcel.UndoRedoItemSerializable;
@@ -20143,7 +20144,7 @@
 				oFilledRange.bbox.r2 = nIndexLine;
 			}
 		}
-		if (!oActiveFillHandle) {
+		if (!oActiveFillHandle || (oActiveFillHandle && !bTrend)) {
 			oFilledRange._foreachNoEmpty(function (oCell, nRow0, nCol0) {
 				if (oCell && oCell.getValueWithoutFormat()) {
 					if (nType === oSeriesType.autoFill || bTrend) {
@@ -20257,6 +20258,38 @@
 	 * @returns {number} Current value in ExcelDate format
 	 */
 	function _fillExcelDate(nPrevVal, nStep, nDateUnit) {
+		// It's temporary solution for "01/01/1900 - 01/03/1900" dates
+		/* TODO Need make system solution for cDate class for case when excelDate is 1 (01/01/1900).
+		    For now if try convert "1" to Date using getDateFromExcel method result is 31/12/1899
+		    by this reason of next methods addDays and getExcelDate work incorrect. Result of function is always "-30"
+		*/
+		if (nPrevVal < 60) {
+			if (nDateUnit === oSeriesDateUnitType.day) {
+				nPrevVal += 1;
+			} else if (nDateUnit === oSeriesDateUnitType.weekday) {
+				let aWeekdays = [1, 2, 3, 4, 5];
+				nPrevVal += 1;
+				while (true) {
+					let oPrevValDate = new Asc.cDate().getDateFromExcel(nPrevVal + 1);
+					if (aWeekdays.includes(oPrevValDate.getDay())) {
+						break;
+					}
+					nPrevVal += 1;
+				}
+			} else if (nDateUnit === oSeriesDateUnitType.month) {
+				if (nPrevVal <= 27) {
+					nPrevVal += 31;
+				} else if ([28,29,30,31].includes(nPrevVal)) {
+					nPrevVal = 59;
+				} else {
+					nPrevVal += 29;
+				}
+			} else {
+				nPrevVal += 366;
+			}
+
+			return nPrevVal;
+		}
 		// Convert number to cDate object
 		let oPrevValDate = new Asc.cDate().getDateFromExcel(nPrevVal);
 
@@ -20266,13 +20299,13 @@
 				break;
 			case oSeriesDateUnitType.weekday:
 				let aWeekdays = [1, 2, 3, 4, 5];
-                oPrevValDate.addDays(nStep);
+				oPrevValDate.addDays(nStep);
 				while (true) {
 					if (aWeekdays.includes(oPrevValDate.getDay())) {
 						break;
 					} else {
-                        oPrevValDate.addDays(1);
-                    }
+						oPrevValDate.addDays(1);
+					}
 				}
 				break;
 			case oSeriesDateUnitType.month:
@@ -20418,6 +20451,9 @@
 		let oFromRange = this.getFromRange();
 		let nIndexFilledLine = this.getVertical() ? oFilledLine.oCell.nCol : oFilledLine.oCell.nRow;
 		let nFilledStartIndex = this.getVertical() ? oFromRange.bbox.r1 : oFromRange.bbox.c1;
+		// If the first cell after calculating the linear regression for "growth trend" is Infinity, then the next cells in range fill 0.
+		// This flag is only uses for the Growth trend with an active fill handle
+		let bFirstCellValueInf = false;
 		// Define variables for calculate linear regression
 		let nSumX = 0;
 		let nSumY = 0;
@@ -20428,12 +20464,21 @@
 		// Getting filled cells and calculating sum of index cell (x) and values (y) for calculate intercept and slop
 		// for linear regression formula: y = intercept + slop * x
 		this._calcSum(nFilledStartIndex, nEndIndexFilledLine, nIndexFilledLine, function (nValue, nCellIndex) {
+			if (nValue === -Infinity && nFilledStartIndex === nCellIndex && oSerial.getActiveFillHandle()) {
+				bFirstCellValueInf = true;
+				return true; // break loop
+			}
 			nSumX += nCellIndex;
 			nSumY += nValue;
 		});
 		let nXAvg = nSumX / nFilledLineLength;
 		let nYAvg = nSumY / nFilledLineLength;
 		this._calcSum(nFilledStartIndex, nEndIndexFilledLine, nIndexFilledLine, function (nValue, nCellIndex) {
+			if (bFirstCellValueInf) {
+				nNumeratorOfSlope = 0;
+				nDenominatorOfSlope = 1;
+				return true; // break loop
+			}
 			nNumeratorOfSlope += (nCellIndex - nXAvg) * (nValue - nYAvg);
 			nDenominatorOfSlope += Math.pow((nCellIndex - nXAvg), 2);
 		});
@@ -20456,7 +20501,7 @@
 				let oCellValue = new AscCommonExcel.CCellValue();
 				let nCellValue = nIntercept + nSlope * x;
 				if (oSerial.getType() === oSeriesType.growth) {
-					nCellValue = Math.exp(nCellValue);
+					nCellValue = bFirstCellValueInf ? nCellValue : Math.exp(nCellValue);
 				}
 				oCellValue.type = CellValueType.Number;
 				oCellValue.number = nCellValue;

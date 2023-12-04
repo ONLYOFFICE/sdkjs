@@ -5959,7 +5959,7 @@ background-repeat: no-repeat;\
 		}
 		this.onDocumentContentReady();
 
-		if(this.asc_IsStartDemonstartionOnOpen())
+		if(this.asc_IsStartDemonstrationOnOpen())
 		{
 			this.sendEvent("asc_onStartDemonstration");
 		}
@@ -5988,7 +5988,7 @@ background-repeat: no-repeat;\
 		this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.None;
 		this.goTo();
 	};
-	asc_docs_api.prototype.asc_IsStartDemonstartionOnOpen = function()
+	asc_docs_api.prototype.asc_IsStartDemonstrationOnOpen = function()
 	{
 		if(this.documentFormat === "ppsx")
 		{

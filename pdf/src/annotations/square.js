@@ -57,6 +57,10 @@
     CAnnotationSquare.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationSquare.prototype.constructor = CAnnotationSquare;
 
+    CAnnotationSquare.prototype.getObjectType = function() {
+        return -1;
+    };
+
     CAnnotationSquare.prototype.Draw = function(oGraphics) {
         if (this.IsHidden() == true)
             return;

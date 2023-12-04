@@ -734,37 +734,17 @@ NumFormat.prototype =
     },
     _ReadAmPm : function(next)
     {
-        var sAm = next;
-        var sPm  = "";
-        var bAm = true;
-        while(true)
-        {
-            next = this._readChar();
-            if(this.EOF == next)
-                break;
-            else if("/" == next)
-            {
-                bAm = false;
-            }
-            else if("A" == next || "a" == next || "P" == next || "p" == next || "M" == next || "m" == next)
-            {
-                if(true == bAm)
-                    sAm += next;
-                else
-                    sPm += next;
-            }
-            else
-            {
-                this._skip(-1);
-                break;
-            }
-        }
-        if("" != sAm && "" != sPm)
-        {
-            this._addToFormat2(new FormatObj(numFormat_AmPm));
-            this.bTimePeriod = true;
-            this.bDateTime = true;
-        }
+		if ("A" === next || "a" === next) {
+			let ampm = "AM/PM";
+			if (ampm.substring(1) === this._GetText(ampm.length - 1).toUpperCase()) {
+				this._addToFormat2(new FormatObj(numFormat_AmPm));
+				this.bTimePeriod = true;
+				this.bDateTime = true;
+				this._skip(ampm.length - 1);
+				return true;
+			}
+		}
+		return false;
     },
 	_ReadAmPmPDF : function(next)
     {
@@ -908,6 +888,10 @@ NumFormat.prototype =
                 this._addToFormat(numFormat_General);
                 this._skip(sGeneral.length - 1);
             }
+			else if (this._ReadAmPm(next))
+			{
+
+			}
             else if("E" == next || "e" == next)
             {
                 var nextnext = this._readChar();
@@ -965,9 +949,7 @@ NumFormat.prototype =
 			{
 				this._addToFormat2(new FormatObjDateVal(numFormat_DayOfWeek, 1, false));
 			}
-            else if ("A" == next || "a" == next) {
-                this._ReadAmPm(next);
-            } else {
+            else {
                 bNoFormat = true;
                 this._addToFormat(numFormat_Text, next);
             }
@@ -985,6 +967,10 @@ NumFormat.prototype =
 				break;
 			else if("\'" == next)
 				this._ReadText("\'");
+			else if (this._ReadAmPm(next))
+			{
+
+			}
 			else if("Y" == next || "y" == next)
 			{
 				this._addToFormat2(new FormatObjDateVal(numFormat_Year, 1, false));
@@ -1008,9 +994,6 @@ NumFormat.prototype =
 			else if ("a" == next)
 			{
 				this._addToFormat2(new FormatObjDateVal(numFormat_DayOfWeek, 1, false));
-			}
-			else if ("A" == next || "a" == next) {
-				this._ReadAmPm(next);
 			}
 			else {
 					this._addToFormat(numFormat_Text, next);
