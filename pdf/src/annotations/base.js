@@ -106,10 +106,26 @@
     CAnnotationBase.prototype.GetRefType = function() {
         return this._refType;
     };
-    CAnnotationBase.prototype.SetReqtangleDiff = function(aDiff) {
+    CAnnotationBase.prototype.SetRectangleDiff = function(aDiff) {
         this._rectDiff = aDiff;
+
+        let oViewer     = editor.getDocumentRenderer();
+        let nPage       = this.GetPage();
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
+
+        let aOrigRect = this.GetOrigRect();
+
+        this.spPr.xfrm.setOffX(aDiff[0] * nScaleX);
+        this.spPr.xfrm.setOffY(aDiff[1] * nScaleY);
+        let extX = ((aOrigRect[2] - aOrigRect[0]) - aDiff[0] - aDiff[2]) * nScaleX;
+        let extY = ((aOrigRect[3] - aOrigRect[1]) - aDiff[1] - aDiff[3]) * nScaleY;
+
+        this.spPr.xfrm.setExtX(extX);
+        this.spPr.xfrm.setExtY(extY);
     };
-    CAnnotationBase.prototype.GetReqtangleDiff = function() {
+    CAnnotationBase.prototype.GetRectangleDiff = function() {
         return this._rectDiff;
     };
     CAnnotationBase.prototype.SetNoRotate = function(bValue) {
@@ -447,6 +463,12 @@
     CAnnotationBase.prototype.IsLine = function() {
         return false;
     };
+    CAnnotationBase.prototype.IsCirlce = function() {
+        return false;
+    };
+    CAnnotationBase.prototype.IsSquare = function() {
+        return false;
+    };
     CAnnotationBase.prototype.SetNeedRecalc = function(bRecalc) {
         this._needRecalc = bRecalc;
     };
@@ -477,6 +499,7 @@
         let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
 
         this._rect = aRect;
+        this._rectDiff = [0, 0, 0, 0];
 
         this._pagePos = {
             x: aRect[0],

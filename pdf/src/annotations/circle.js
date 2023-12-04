@@ -64,6 +64,9 @@
     CAnnotationCircle.prototype.IsNeedDrawFromStream = function() {
         return false;
     };
+    CAnnotationCircle.prototype.IsCircle = function() {
+        return true;
+    };
     CAnnotationCircle.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
         oDoc.TurnOffHistory();
@@ -233,7 +236,7 @@
         this.WriteToBinaryBase2(memory);
         
         // rectangle diff
-        let aRD = this.GetReqtangleDiff();
+        let aRD = this.GetRectangleDiff();
         if (aRD) {
             memory.annotFlags |= (1 << 15);
             for (let i = 0; i < 4; i++) {

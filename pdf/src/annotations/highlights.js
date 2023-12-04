@@ -615,7 +615,7 @@
         this.WriteToBinaryBase2(memory);
         
         // rectange diff
-        let aRD = this.GetReqtangleDiff();
+        let aRD = this.GetRectangleDiff();
         if (aRD) {
             memory.annotFlags |= (1 << 15);
             for (let i = 0; i < 4; i++) {

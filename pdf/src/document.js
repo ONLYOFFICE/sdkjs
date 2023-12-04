@@ -811,10 +811,10 @@ var CPresentation = CPresentation || function(){};
         let X       = oPos.X;
         let Y       = oPos.Y;
 
-        let bInRect = oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
+        let oCursorInfo = oDrawingObjects.getGraphicInfoUnderCursor(oPos.DrawPage, X, Y);
         
         if (IsOnDrawer == false && false == IsOnEraser) {
-            if (bInRect) {
+            if (oCursorInfo.cursorType && oCursorInfo.cursorType.indexOf("resize") != -1) {
                 if (oMouseDownField && (this.mouseDownAnnot != oMouseDownAnnot && !oDrawingObjects.selectedObjects.includes(this.mouseDownAnnot))) {
                     this.mouseDownField = oMouseDownField;
                     this.mouseDownAnnot = null;
@@ -1020,7 +1020,7 @@ var CPresentation = CPresentation || function(){};
 
             oViewer.setCursorType(cursorType);
 
-            if (!mouseMoveAnnotObject || mouseMoveAnnotObject.IsInk() == true)
+            if (mouseMoveAnnotObject && mouseMoveAnnotObject.IsComment() == false && mouseMoveAnnotObject.IsTextMarkup() == false)
                 oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
         }
     };

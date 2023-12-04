@@ -649,6 +649,7 @@
         oParentAnnot.setBDeleted(false);
         oParentAnnot.recalcInfo.recalculateGeometry = false;
         oParentAnnot.recalculate();
+        oParentAnnot.brush = AscFormat.CreateNoFillUniFill();
     }
     function generateGeometry(arrOfArrPoints, aBounds, oGeometry) {
         let xMin = aBounds[0];

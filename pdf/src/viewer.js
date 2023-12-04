@@ -1299,7 +1299,7 @@
 					if (oAnnotInfo["RC"])
 						oAnnot.SetRichContents(oAnnotInfo["RC"]);
 					if (oAnnotInfo["RD"])
-						oAnnot.SetReqtangleDiff(oAnnotInfo["RD"]);
+						oAnnot.SetRectangleDiff(oAnnotInfo["RD"]);
 					if (oAnnotInfo["display"])
 						oAnnot.SetDisplay(oAnnotInfo["display"]);
 					if (oAnnotInfo["locked"] != null)
@@ -1348,7 +1348,7 @@
 						oAnnot.SetOpacity(oAnnotInfo["CA"]);
 					}
 					if (oAnnotInfo["borderWidth"] != null) {
-						oAnnot.SetWidth(oAnnotInfo["borderWidth"] / 4);
+						oAnnot.SetWidth(oAnnotInfo["borderWidth"]);
 					}
 					if (oAnnotInfo["QuadPoints"] != null) {
 						let aSepQuads = [];
@@ -1811,13 +1811,13 @@
 								return oAnnot;
 						}
 						// у draw аннотаций ищем по path
-						else if (oAnnot.IsInk() || oAnnot.IsLine())
+						else if (oAnnot.IsInk() || oAnnot.IsLine() || oAnnot.IsSquare())
 						{
 							let oPos	= oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
 							let X       = oPos.X;
         					let Y       = oPos.Y;
 
-							if (oAnnot.hitInPath(X, Y))
+							if (oAnnot.hitInPath(X, Y) || (oAnnot.hitInInnerArea(X, Y) && oAnnot.GetFillColor() != undefined))
 								return oAnnot;
 						}
 						else

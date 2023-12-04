@@ -733,6 +733,7 @@ function MoveAnnotationTrack(originalObject)
         switch (this.objectToDraw.GetType()) {
             case AscPDF.ANNOTATIONS_TYPES.Ink:
             case AscPDF.ANNOTATIONS_TYPES.Line:
+            case AscPDF.ANNOTATIONS_TYPES.Square:
             case AscPDF.ANNOTATIONS_TYPES.Circle: {
                 let nScale  = AscCommon.AscBrowser.retinaPixelRatio * this.viewer.zoom;
                 oGraphicsWord   = new AscCommon.CGraphics();

@@ -239,7 +239,7 @@
             memory.WriteByte(nAlign);
 
         // rectangle diff
-        let aRD = this.GetReqtangleDiff();
+        let aRD = this.GetRectangleDiff();
         if (aRD) {
             memory.annotFlags |= (1 << 15);
             for (let i = 0; i < 4; i++) {
