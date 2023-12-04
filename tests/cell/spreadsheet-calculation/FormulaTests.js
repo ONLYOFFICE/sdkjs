@@ -3750,7 +3750,7 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#N/A", 'Result of A100:B102^D100:E101[2,0]');
 		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of A100:B102^D100:E101[0,1]');
 		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, 'Result of A100:B102^D100:E101[1,1]');
-		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#N/A", 'Result of A100:B102^D100:E101[2,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#DIV/0!", 'Result of A100:B102^D100:E101[2,1]');
 
 		ws.getRange2("G100").setValue("a");
 		ws.getRange2("G101").setValue("b");
@@ -3793,6 +3793,25 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#DIV/0!", 'Result of I100:J101^2[1,0]');
 		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#NUM!", 'Result of I100:J101^2[0,1]');
 		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 0, 'Result of I100:J101^2[1,1]');
+
+		ws.getRange2("A100").setValue("75");
+		ws.getRange2("B100").setValue("100");
+		ws.getRange2("C100").setValue("200");
+		ws.getRange2("D100").setValue("300");
+		ws.getRange2("E100").setValue("350");
+		ws.getRange2("F100").setValue("400");
+		ws.getRange2("G100").setValue("500");
+
+		oParser = new parserFormula("A100:G100^{1,2,1}", "A1", ws);
+		assert.ok(oParser.parse(), 'A100:G100^{1,2,1}');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 75, 'Result of A100:G100^{1,2,1}[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 10000, 'Result of A100:G100^{1,2,1}[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 200, 'Result of A100:G100^{1,2,1}[0,2]');
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "#N/A", 'Result of A100:G100^{1,2,1}[0,3]');
+		assert.strictEqual(array.getElementRowCol(0, 4).getValue(), "#N/A", 'Result of A100:G100^{1,2,1}[0,4]');
+		assert.strictEqual(array.getElementRowCol(0, 5).getValue(), "#N/A", 'Result of A100:G100^{1,2,1}[0,5]');
+		assert.strictEqual(array.getElementRowCol(0, 6).getValue(), "#N/A", 'Result of A100:G100^{1,2,1}[0,6]');
 
 	});
 
@@ -3879,7 +3898,7 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#N/A", 'Result of A100:B102^D100:E101[2,0]');
 		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of A100:B102^D100:E101[0,1]');
 		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 1, 'Result of A100:B102^D100:E101[1,1]');
-		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#N/A", 'Result of A100:B102^D100:E101[2,1]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "#DIV/0!", 'Result of A100:B102^D100:E101[2,1]');
 
 		ws.getRange2("G100").setValue("a");
 		ws.getRange2("G101").setValue("b");
@@ -3922,6 +3941,25 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#DIV/0!", 'Result of POWER(I100:J101,2)[1,0]');
 		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#NUM!", 'Result of POWER(I100:J101,2)[0,1]');
 		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 0, 'Result of POWER(I100:J101,2)[1,1]');
+
+		ws.getRange2("A100").setValue("75");
+		ws.getRange2("B100").setValue("100");
+		ws.getRange2("C100").setValue("200");
+		ws.getRange2("D100").setValue("300");
+		ws.getRange2("E100").setValue("350");
+		ws.getRange2("F100").setValue("400");
+		ws.getRange2("G100").setValue("500");
+
+		oParser = new parserFormula("POWER(A100:G100,{1,2,1})", "A1", ws);
+		assert.ok(oParser.parse(), 'POWER(A100:G100,{1,2,1})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 75, 'Result of POWER(A100:G100,{1,2,1})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 10000, 'Result of POWER(A100:G100,{1,2,1})[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 200, 'Result of POWER(A100:G100,{1,2,1})[0,2]');
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "#N/A", 'Result of POWER(A100:G100,{1,2,1})[0,3]');
+		assert.strictEqual(array.getElementRowCol(0, 4).getValue(), "#N/A", 'Result of POWER(A100:G100,{1,2,1})[0,4]');
+		assert.strictEqual(array.getElementRowCol(0, 5).getValue(), "#N/A", 'Result of POWER(A100:G100,{1,2,1})[0,5]');
+		assert.strictEqual(array.getElementRowCol(0, 6).getValue(), "#N/A", 'Result of POWER(A100:G100,{1,2,1})[0,6]');
 
 		// ------------------------- same tests as in Pow operator tests ------------------------- //
 
