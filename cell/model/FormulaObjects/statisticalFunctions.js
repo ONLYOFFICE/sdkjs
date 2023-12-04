@@ -1534,9 +1534,14 @@ function (window, undefined) {
 	}
 
 	function lcl_GetMeanOverAll(pMat, nN) {
-		var fSum = 0.0;
-		for (var i = 0; i < pMat.length; i++) {
-			for (var j = 0; j < pMat[i].length; j++) {
+		let fSum = 0.0;
+		for (let i = 0; i < pMat.length; i++) {
+			for (let j = 0; j < pMat[i].length; j++) {
+				// if at least one value in the matrix is ​​not a number, return undefined
+				if (typeof(pMat[i][j]) !== "number") {
+					return
+				}
+
 				fSum += pMat[i][j];
 			}
 		}
@@ -1697,26 +1702,35 @@ function (window, undefined) {
 	}
 
 	function lcl_CalculateRowMeans(pX, pResMat, nC, nR) {
-		for (var k = 0; k < nR; k++) {
-			var fSum = 0.0;
-			for (var i = 0; i < nC; i++) {
+		for (let k = 0; k < nR; k++) {
+			let fSum = 0.0;
+			for (let i = 0; i < nC; i++) {
 				fSum += pX[i][k];
 			}
 			// GetDouble(Column,Row)
-			// todo different results for GROWTH and LINEST
-			// if (pResMat[0] && pResMat[0][k] !== undefined) {
-			// 	pResMat[0][k] = fSum / nC;
-			// }
-			pResMat[k][0] = fSum / nC;
+			if (pResMat.length === 1 && pResMat[0].length > 1) {
+				// single row
+				pResMat[0][k] = fSum / nC;
+			} else if (pResMat.length > 1 && pResMat[0].length === 1) {
+				// single col
+				pResMat[k][0] = fSum / nC;
+			}
+
 		}
 	}
 
 	function lcl_CalculateRowsDelta(pMat, pRowMeans, nC, nR) {
-		for (var k = 0; k < nR; k++) {
-			for (var i = 0; i < nC; i++) {
-				// todo different results for GROWTH and LINEST
-				pMat[i][k] = approxSub(pMat[i][k], pRowMeans[k][0]);
-				// pMat[i][k] = approxSub(pMat[i][k], pRowMeans[0][k]);
+		for (let k = 0; k < nR; k++) {
+			for (let i = 0; i < nC; i++) {
+				// pMat[i][k] = approxSub(pMat[i][k], pRowMeans[k][0]);
+
+				if (pRowMeans.length === 1 && pRowMeans[0].length > 1) {
+					// single row
+					pMat[i][k] = approxSub(pMat[i][k], pRowMeans[0][k]);
+				} else if (pRowMeans.length > 1 && pRowMeans[0].length === 1) {
+					// single col
+					pMat[i][k] = approxSub(pMat[i][k], pRowMeans[k][0]);
+				}
 			}
 		}
 	}
@@ -1845,7 +1859,11 @@ function (window, undefined) {
 		pMatY = getMatrixParams.pMatY;
 
 		// Enough data samples?
-		if ((bConstant && (N < K + 1)) || (!bConstant && (N < K)) || (N < 1) || (K < 1)) {
+		// if ((bConstant && (N < K + 1)) || (!bConstant && (N < K)) || (N < 1) || (K < 1)) {
+		// 	return;
+		// }
+
+		if ((!bConstant && (N < K)) || (N < 1) || (K < 1)) {
 			return;
 		}
 
@@ -1907,6 +1925,9 @@ function (window, undefined) {
 			pMatY = pCopyY;
 			// DeltaY is possible here; DeltaX depends on nCase, so later
 			fMeanY = lcl_GetMeanOverAll(pMatY, N);
+			if (fMeanY === undefined) {	// explicit check for undefined is necessary since the number can be 0
+				return
+			}
 			for (i = 0; i < pMatY.length; i++) {
 				for (j = 0; j < pMatY[i].length; j++) {
 					pMatY[i][j] = approxSub(pMatY[i][j], fMeanY);
@@ -1920,6 +1941,9 @@ function (window, undefined) {
 			var fMeanX = 0.0;
 			if (bConstant) {   // Mat = Mat - Mean
 				fMeanX = lcl_GetMeanOverAll(pMatX, N);
+				if (fMeanX === undefined) {	// explicit check for undefined is necessary since the number can be 0
+					return
+				}
 				for (i = 0; i < pMatX.length; i++) {
 					for (j = 0; j < pMatX[i].length; j++) {
 						pMatX[i][j] = approxSub(pMatX[i][j], fMeanX);
@@ -2122,7 +2146,12 @@ function (window, undefined) {
 		var i, j;
 
 		// Enough data samples?
-		if ((bConstant && (N < K + 1)) || (!bConstant && (N < K)) || (N < 1) || (K < 1)) {
+		// if ((bConstant && (N < K + 1)) || (!bConstant && (N < K)) || (N < 1) || (K < 1)) {
+		// 	//PushIllegalParameter();
+		// 	return;
+		// }
+
+		if ((!bConstant && (N < K)) || (N < 1) || (K < 1)) {
 			//PushIllegalParameter();
 			return;
 		}
@@ -2164,6 +2193,9 @@ function (window, undefined) {
 			pMatY = pNewY;
 			// DeltaY is possible here; DeltaX depends on nCase, so later
 			fMeanY = lcl_GetMeanOverAll(pMatY, N);
+			if (fMeanY === undefined) {	// explicit check for undefined is necessary since the number can be 0
+				return
+			}
 			for (i = 0; i < pMatY.length; i++) {
 				for (j = 0; j < pMatY[i].length; j++) {
 					pMatY[i][j] = approxSub(pMatY[i][j], fMeanY);
@@ -2179,6 +2211,9 @@ function (window, undefined) {
 			var fMeanX = 0.0;
 			if (bConstant) {   // Mat = Mat - Mean
 				fMeanX = lcl_GetMeanOverAll(pMatX, N);
+				if (fMeanX === undefined) {	// explicit check for undefined is necessary since the number can be 0
+					return
+				}
 				for (i = 0; i < pMatX.length; i++) {
 					for (j = 0; j < pMatX[i].length; j++) {
 						pMatX[i][j] = approxSub(pMatX[i][j], fMeanX);

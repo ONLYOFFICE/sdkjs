@@ -16572,6 +16572,7 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"LINEST\"", function (assert) {
+		let array;
 
 		ws.getRange2("A202").setValue("1");
 		ws.getRange2("A203").setValue("2");
@@ -16633,7 +16634,7 @@ $(function () {
 		oParser = new parserFormula("LINEST(A102:A105,B102:B105,,FALSE)", "A1", ws);
 		oParser.setArrayFormulaRef(ws.getRange2("E106:F106").bbox);
 		assert.ok(oParser.parse());
-		var array = oParser.calculate();
+		array = oParser.calculate();
 		if (AscCommonExcel.cElementType.array === array.type) {
 			assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2);
 			assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1);
@@ -16725,6 +16726,91 @@ $(function () {
 		oParser = new parserFormula("LINEST({1,2})", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue().toFixed(8) - 0, 1);
+
+		// for bug 65316
+		ws.getRange2("A150").setValue("1");
+		ws.getRange2("B150").setValue("2");
+		ws.getRange2("C150").setValue("3");
+		ws.getRange2("D150").setValue("4");
+		ws.getRange2("E150").setValue("5");
+
+		ws.getRange2("A151").setValue("5.3");
+		ws.getRange2("B151").setValue("6.3");
+		ws.getRange2("C151").setValue("4.8");
+		ws.getRange2("D151").setValue("3.8");
+		ws.getRange2("E151").setValue("3.3");
+
+		oParser = new parserFormula("LINEST(A151:E151,A150:E150)", "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:F106").bbox);
+		assert.ok(oParser.parse(), "LINEST(A151:E151,A150:E150)");
+		array = oParser.calculate();
+		assert.ok(1, "LINEST(A151:E151,A150:E150) => y = -0.65x + 6.65");
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), -0.65, "Result of LINEST(A151:E151,A150:E150) [0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 6.65, "Result of LINEST(A151:E151,A150:E150) [0,1]");
+
+		oParser = new parserFormula("LINEST(A151:E151,A150:E150^{1;2;3})", "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:F106").bbox);
+		assert.ok(oParser.parse(), "LINEST(A151:E151,A150:E150^{1;2;3})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue().toFixed(2), "0.25", "Result of LINEST(A151:E151,A150:E150)^{1;2;3} [0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue().toFixed(2), "-2.43", "Result of LINEST(A151:E151,A150:E150)^{1;2;3} [0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue().toFixed(2), "6.32", "Result of LINEST(A151:E151,A150:E150)^{1;2;3} [0,2]");
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue().toFixed(1), "1.2", "Result of LINEST(A151:E151,A150:E150)^{1;2;3} [0,3]");
+
+		oParser = new parserFormula("LINEST(A151:E151,A150:E150^{1,2,3})", "A2", ws);
+		assert.ok(oParser.parse(), "LINEST(A151:E151,A150:E150^{1,2,3})");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of LINEST(A151:E151,A150:E150)^{1,2,3}");
+
+		oParser = new parserFormula("LINEST(A151:E151,{1;2;3;4;5})", "A2", ws);
+		assert.ok(oParser.parse(), "LINEST(A151:E151,{1;2;3;4;5})");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of LINEST(A151:E151,{1;2;3;4;5})");
+
+		oParser = new parserFormula("LINEST(A151:E151,{1,2,3,4,5})", "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:F106").bbox);
+		assert.ok(oParser.parse(), "LINEST(A151:E151,{1,2,3,4,5})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), -0.65, "Result of LINEST(A151:E151,{1,2,3,4,5}) [0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 6.65, "Result of LINEST(A151:E151,{1,2,3,4,5}) [0,1]");
+
+		oParser = new parserFormula('LINEST(A151:E151,{"1",2,3,4,5})', "A2", ws);
+		assert.ok(oParser.parse(), 'LINEST(A151:E151,{"1",2,3,4,5})');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of LINEST(A151:E151,{"1",2,3,4,5})');
+
+		oParser = new parserFormula('LINEST(A151:E151,{#N/A,2,3,4,5})', "A2", ws);
+		assert.ok(oParser.parse(), 'LINEST(A151:E151,{#N/A,2,3,4,5})');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of LINEST(A151:E151,{#N/A,2,3,4,5})');
+
+		oParser = new parserFormula('LINEST(A151:E151,{"string",2,3,4,5})', "A2", ws);
+		assert.ok(oParser.parse(), 'LINEST(A151:E151,{"string",2,3,4,5})');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of LINEST(A151:E151,{"string",2,3,4,5})');
+
+		oParser = new parserFormula('LINEST(A151:E151,{TRUE,2,3,4,5})', "A2", ws);
+		assert.ok(oParser.parse(), 'LINEST(A151:E151,{TRUE,2,3,4,5})');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of LINEST(A151:E151,{TRUE,2,3,4,5})');
+
+		oParser = new parserFormula("LINEST({5.3,6.3,4.8,3.8,3.3},A150:E150)", "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("E106:F106").bbox);
+		assert.ok(oParser.parse(), "LINEST({5.3,6.3,4.8,3.8,3.3},A150:E150)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), -0.65, "Result of LINEST({5.3,6.3,4.8,3.8,3.3},A150:E150) [0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 6.65, "Result of LINEST({5.3,6.3,4.8,3.8,3.3},A150:E150) [0,1]");
+
+		oParser = new parserFormula('LINEST({"5.3",6.3,4.8,3.8,3.3},A150:E150)', "A2", ws);
+		assert.ok(oParser.parse(), 'LINEST({"5.3",6.3,4.8,3.8,3.3},A150:E150)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of LINEST({"5.3",6.3,4.8,3.8,3.3},A150:E150)');
+
+		oParser = new parserFormula('LINEST({#N/A,6.3,4.8,3.8,3.3},A150:E150)', "A2", ws);
+		assert.ok(oParser.parse(), 'LINEST({#N/A,6.3,4.8,3.8,3.3},A150:E150)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of LINEST({#N/A,6.3,4.8,3.8,3.3},A150:E150)');
+
+		oParser = new parserFormula('LINEST({"string",6.3,4.8,3.8,3.3},A150:E150)', "A2", ws);
+		assert.ok(oParser.parse(), 'LINEST({"string",6.3,4.8,3.8,3.3},A150:E150)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of LINEST({"string",6.3,4.8,3.8,3.3},A150:E150)');
+
+		oParser = new parserFormula('LINEST({TRUE,6.3,4.8,3.8,3.3},A150:E150)', "A2", ws);
+		assert.ok(oParser.parse(), 'LINEST({TRUE,6.3,4.8,3.8,3.3},A150:E150)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of LINEST({TRUE,6.3,4.8,3.8,3.3},A150:E150)');
+
 
 	});
 
