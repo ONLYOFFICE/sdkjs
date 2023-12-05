@@ -1704,23 +1704,27 @@
 			if (undefined !== items[i]["id"] && undefined !== items[i]["data"])
 				items[i]["id"] = items[i]["id"] + "_oo_sep_" + items[i]["data"];
 
-			if (items[i].icons && Array.isArray(items[i].icons)) {
-				let icons = items[i].icons;
-				if (typeof icons[0] === 'string') {
-					for (let index = 0; index < icons.length; index++) {
-						icons[index] = baseUrl + icons[index];
-					}
-				} else if (typeof icons[0] === 'object') {
-					let arr = ['100%', '125%', '150%', '175%', '200%'];
-					for (let index = 0; index < icons.length; index++) {
-						let tmp = icons[index];
-						for (let j = 0; j < arr.length; j++) {
-							let icon = tmp[ arr[j] ]
-							if (icon && icon.normal) {
-								icon.normal = baseUrl + icon.normal;
+			if (items[i].icons) {
+				if (Array.isArray(items[i].icons) && baseUrl) {
+					let icons = items[i].icons;
+					if (typeof icons[0] === 'string') {
+						for (let index = 0; index < icons.length; index++) {
+							icons[index] = baseUrl + icons[index];
+						}
+					} else if (typeof icons[0] === 'object') {
+						let arr = ['100%', '125%', '150%', '175%', '200%'];
+						for (let index = 0; index < icons.length; index++) {
+							let tmp = icons[index];
+							for (let j = 0; j < arr.length; j++) {
+								let icon = tmp[ arr[j] ]
+								if (icon && icon.normal) {
+									icon.normal = baseUrl + icon.normal;
+								}
 							}
 						}
 					}
+				} else if (items[i].icons.default) {
+					items[i].icons = createIcons(baseUrl);
 				}
 			}
 
@@ -1729,6 +1733,48 @@
 				correctItemsWithData(items[i]["items"], baseUrl);
 		}
 	}
+
+	function createIcons(baseUrl) {
+		let	icons = [{
+							"style" : "light",
+
+							"100%": {
+								"normal": baseUrl + "resources/light/icon.png"
+							},
+							"125%": {
+								"normal": baseUrl + "resources/light/icon@1.25x.png"
+							},
+							"150%": {
+								"normal": baseUrl + "resources/light/icon@1.5x.png"
+							},
+							"175%": {
+								"normal": baseUrl + "resources/light/icon@1.75x.png"
+							},
+							"200%": {
+								"normal": baseUrl + "resources/light/icon@2x.png"
+							}
+						},
+						{
+							"style" : "dark",
+
+							"100%": {
+								"normal": baseUrl + "resources/dark/icon.png"
+							},
+							"125%": {
+								"normal": baseUrl + "resources/dark/icon@1.25x.png"
+							},
+							"150%": {
+								"normal": baseUrl + "resources/dark/icon@1.5x.png"
+							},
+							"175%": {
+								"normal": baseUrl + "resources/dark/icon@1.75x.png"
+							},
+							"200%": {
+								"normal": baseUrl + "resources/dark/icon@2x.png"
+							}
+					}];
+		return icons;
+	};
 
 	/**
 	 * @typedef {Object} ContextMenuItem
@@ -1751,6 +1797,7 @@
 	{
 		let baseUrl = this.pluginsManager.pluginsMap[items.guid].baseUrl;
 		if (items["items"]) correctItemsWithData(items["items"], baseUrl);
+		console.log(items);
 		this.onPluginAddContextMenuItem(items);
 	};
 
