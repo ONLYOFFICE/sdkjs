@@ -7151,7 +7151,7 @@
         this.Read = function()
         {
             var oThis = this;
-			var tempValue = {text: null, multiText: null};
+            var tempValue = {text: null, multiText: null};
             return this.bcr.ReadTable(function(t, l){
                 return oThis.ReadSharedStringContent(t,l, tempValue);
             });
@@ -7162,20 +7162,26 @@
             if ( c_oSerSharedStringTypes.Si === type )
             {
                 var oThis = this;
-				tempValue.text = null;
-				tempValue.multiText = null;
+                tempValue.text = null;
+                tempValue.multiText = null;
                 res = this.bcr.Read1(length, function(t,l){
                     return oThis.ReadSharedString(t,l, tempValue);
                 });
                 if(null != this.aSharedStrings) {
-					if (null != tempValue.text && "" !== tempValue.text) {
-						this.aSharedStrings.push(tempValue.text);
-					} else if (null != tempValue.multiText) {
-						this.aSharedStrings.push(tempValue.multiText);
-					} else {
-						this.aSharedStrings.push("");
-					}
-				}
+                    if (null != tempValue.multiText) {
+                        let aMultiText = tempValue.multiText;
+                        if (null != tempValue.text) {
+                            let oElem = new AscCommonExcel.CMultiTextElem();
+                            oElem.text = tempValue.text;
+                            aMultiText.unshift(oElem);
+                        }
+                        this.aSharedStrings.push(aMultiText);
+                } else if (null != tempValue.text) {
+                        this.aSharedStrings.push(tempValue.text);
+                    } else {
+                        this.aSharedStrings.push("");
+                    }
+                }
             }
             else
                 res = c_oSerConstants.ReadUnknown;
