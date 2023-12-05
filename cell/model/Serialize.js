@@ -7168,7 +7168,7 @@
                     return oThis.ReadSharedString(t,l, tempValue);
                 });
                 if(null != this.aSharedStrings) {
-					if (null != tempValue.text) {
+					if (null != tempValue.text && "" !== tempValue.text) {
 						this.aSharedStrings.push(tempValue.text);
 					} else if (null != tempValue.multiText) {
 						this.aSharedStrings.push(tempValue.multiText);
