@@ -7176,7 +7176,7 @@
                             aMultiText.unshift(oElem);
                         }
                         this.aSharedStrings.push(aMultiText);
-                } else if (null != tempValue.text) {
+                    } else if (null != tempValue.text) {
                         this.aSharedStrings.push(tempValue.text);
                     } else {
                         this.aSharedStrings.push("");
