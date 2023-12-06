@@ -42,7 +42,6 @@
         AscFormat.CShape.call(this);
         AscPDF.initShape(this);
         this.spPr.setGeometry(AscFormat.CreateGeometry("rect"));
-        // this.setStyle(AscFormat.CreateDefaultShapeStyle("rect"));
 
         this._point         = undefined;
         this._popupOpen     = false;

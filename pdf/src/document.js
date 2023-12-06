@@ -856,8 +856,6 @@ var CPresentation = CPresentation || function(){};
             this.OnMouseDownField(this.mouseDownField, e); 
         else if (this.mouseDownAnnot)
             this.mouseDownAnnot.onMouseDown(e);
-        else
-            oDrawingObjects.OnMouseDown(e, X, Y, oPos.DrawPage);
 
         if (!oViewer.MouseHandObject && (!oViewer.mouseDownLinkObject))
         {

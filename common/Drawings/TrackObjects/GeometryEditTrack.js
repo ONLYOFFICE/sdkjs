@@ -207,6 +207,7 @@
             var prevPoint = gmEditPoint.prevPoint;
             var currentPath = geometry.pathLst[gmEditPoint.pathIndex];
             var arrPathCommand = currentPath.ArrPathCommand;
+            this.gmEditPtIdx = this.drawingObjects.selection.geometrySelection.getGmEditPtIdx();
 
             var cur_command_type_array = this.arrPathCommandsType[gmEditPoint.pathIndex];
             var cur_command_type_1 = cur_command_type_array[gmEditPoint.pathC1];

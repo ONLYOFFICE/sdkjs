@@ -1811,7 +1811,7 @@
 								return oAnnot;
 						}
 						// у draw аннотаций ищем по path
-						else if (oAnnot.IsInk() || oAnnot.IsLine() || oAnnot.IsSquare())
+						else if (oAnnot.IsInk() || oAnnot.IsLine() || oAnnot.IsSquare() || oAnnot.IsPolygon())
 						{
 							let oPos	= oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
 							let X       = oPos.X;
@@ -2482,7 +2482,7 @@
 						this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = nPage;
 						this.DrawingObjects.drawSelect(nPage);
 
-						if (oDoc.mouseDownAnnot.IsLine())
+						if (oDoc.mouseDownAnnot.IsLine() || oDoc.mouseDownAnnot.IsPolygon())
 							oDoc.mouseDownAnnot.DrawSelected(this.overlay)
 					}
 				}

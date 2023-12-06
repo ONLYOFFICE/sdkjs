@@ -45,6 +45,8 @@
     function CAnnotationPolygon(sName, nPage, aRect, oDoc)
     {
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Polygon, nPage, aRect, oDoc);
+        AscFormat.CShape.call(this);
+        AscPDF.initShape(this);
 
         this._point         = undefined;
         this._popupOpen     = false;
@@ -61,75 +63,192 @@
         TurnOffHistory();
         this.content = new AscPDF.CTextBoxContent(this, oDoc);
     }
-    CAnnotationPolygon.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
-	CAnnotationPolygon.prototype.constructor = CAnnotationPolygon;
+    CAnnotationPolygon.prototype.constructor = CAnnotationPolygon;
+    AscFormat.InitClass(CAnnotationPolygon, AscFormat.CShape, AscDFH.historyitem_type_Shape);
+    Object.assign(CAnnotationPolygon.prototype, AscPDF.CAnnotationBase.prototype);
     
-    CAnnotationPolygon.prototype.getObjectType = function() {
-        return -1;
-    };
-
     CAnnotationPolygon.prototype.SetVertices = function(aVertices) {
+        let oViewer = editor.getDocumentRenderer();
+        let oDoc    = oViewer.getPDFDoc();
+        
+        this.recalcGeometry();
+        // oDoc.History.Add(new CChangesPDFPolygonPoints(this, this.GetVertices(), aVertices));
+
         this._vertices = aVertices;
     };
     CAnnotationPolygon.prototype.GetVertices = function() {
         return this._vertices;
     };
 
-    CAnnotationPolygon.prototype.Draw = function(oGraphics) {
-        if (this.IsHidden() == true)
+    CAnnotationPolygon.prototype.Recalculate = function() {
+        if (this.IsNeedRecalc() == false)
             return;
 
-        let oViewer = editor.getDocumentRenderer();
-        let oGraphicsWord = oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
+        let oViewer     = editor.getDocumentRenderer();
+        let nPage       = this.GetPage();
+        let aOrigRect   = this.GetOrigRect();
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
         
-        this.Recalculate();
+        this.handleUpdatePosition();
+        if (this.recalcInfo.recalculateGeometry)
+            this.RefillGeometry();
 
-        oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
-
-        this.content.Draw(0, oGraphicsWord);
-        oGraphicsWord.RemoveClip();
+        this.recalculate();
+        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
     };
-    CAnnotationPolygon.prototype.Recalculate = function() {
-        // if (this.IsNeedRecalc() == false)
-        //     return;
-
+    CAnnotationPolygon.prototype.RefillGeometry = function() {
         let oViewer = editor.getDocumentRenderer();
-        let aRect   = this.GetRect();
+        let oDoc    = oViewer.getPDFDoc();
         
-        let X = aRect[0];
-        let Y = aRect[1];
-        let nWidth = (aRect[2] - aRect[0]);
-        let nHeight = (aRect[3] - aRect[1]);
+        let aPoints = this.GetVertices();
+        let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom;
 
-        let contentX;
-        let contentY;
-        let contentXLimit;
-        let contentYLimit;
-        
-        contentX = (X) * g_dKoef_pix_to_mm;
-        contentY = (Y) * g_dKoef_pix_to_mm;
-        contentXLimit = (X + nWidth) * g_dKoef_pix_to_mm;
-        contentYLimit = (Y + nHeight) * g_dKoef_pix_to_mm;
-
-        if (!this.contentRect)
-            this.contentRect = {};
-
-        this.contentRect.X = contentX;
-        this.contentRect.Y = contentY;
-        this.contentRect.W = contentXLimit - contentX;
-        this.contentRect.H = contentYLimit - contentY;
-
-        if (!this._oldContentPos)
-            this._oldContentPos = {};
-
-        if (contentX != this._oldContentPos.X || contentY != this._oldContentPos.Y ||
-            contentXLimit != this._oldContentPos.XLimit) {
-            this.content.X      = this._oldContentPos.X        = contentX;
-            this.content.Y      = this._oldContentPos.Y        = contentY;
-            this.content.XLimit = this._oldContentPos.XLimit   = contentXLimit;
-            this.content.YLimit = this._oldContentPos.YLimit   = 20000;
-            this.content.Recalculate_Page(0, true);
+        let aPolygonPoints = [];
+        let aPointsCanvas = [];
+        for (let i = 0; i < aPoints.length - 1; i += 2) {
+            aPolygonPoints.push({
+                x: aPoints[i] * g_dKoef_pix_to_mm * nScaleX,
+                y: (aPoints[i + 1])* g_dKoef_pix_to_mm * nScaleY
+            });
+            aPointsCanvas.push({
+                x: aPoints[i],
+                y: aPoints[i + 1]
+            });
         }
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = 1000;
+        canvas.height = 1000;
+        const ctx = canvas.getContext('2d');
+
+        ctx.beginPath();
+        ctx.moveTo(aPointsCanvas[0].x, aPointsCanvas[0].y);
+
+        for (let i = 1; i < aPointsCanvas.length; i++) {
+            let oPt = aPointsCanvas[i];
+
+            ctx.lineTo(oPt.x, oPt.y);
+            ctx.stroke();
+            if (i == 2)
+                break;
+        }
+
+        let aShapeRectInMM = this.GetRect().map(function(measure) {
+            return measure * g_dKoef_pix_to_mm;
+        });
+
+        oDoc.TurnOffHistory();
+        fillShapeByPoints([aPolygonPoints], aShapeRectInMM, this);
+    };
+    CAnnotationPolygon.prototype.SetWidth = function(nWidthPt) {
+        this._width = nWidthPt; 
+
+        nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
+        let oLine = this.pen;
+        oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
+    };
+    CAnnotationPolygon.prototype.SetStrokeColor = function(aColor) {
+        this._strokeColor = aColor;
+
+        let oRGB    = this.GetRGBColor(aColor);
+        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+        let oLine   = this.pen;
+        oLine.setFill(oFill);
+    };
+    CAnnotationPolygon.prototype.SetFillColor = function(aColor) {
+        this._fillColor = aColor;
+
+        let oRGB    = this.GetRGBColor(aColor);
+        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+        this.setFill(oFill);
+    };
+    CAnnotationPolygon.prototype.SetRect = function(aRect) {
+        let oViewer     = editor.getDocumentRenderer();
+        let oDoc        = oViewer.getPDFDoc();
+        let nPage       = this.GetPage();
+
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aRect));
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        this._rect = aRect;
+
+        this._pagePos = {
+            x: aRect[0],
+            y: aRect[1],
+            w: (aRect[2] - aRect[0]),
+            h: (aRect[3] - aRect[1])
+        };
+
+        this._origRect[0] = this._rect[0] / nScaleX;
+        this._origRect[1] = this._rect[1] / nScaleY;
+        this._origRect[2] = this._rect[2] / nScaleX;
+        this._origRect[3] = this._rect[3] / nScaleY;
+
+        oDoc.TurnOffHistory();
+
+        this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
+        this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
+        
+        this.AddToRedraw();
+        this.SetWasChanged(true);
+        this.SetDrawFromStream(false);
+    };
+    CAnnotationPolygon.prototype.LazyCopy = function() {
+        let oDoc = this.GetDocument();
+        oDoc.TurnOffHistory();
+
+        let oPolygon = new CAnnotationPolygon(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+
+        oPolygon._pagePos = {
+            x: this._pagePos.x,
+            y: this._pagePos.y,
+            w: this._pagePos.w,
+            h: this._pagePos.h
+        }
+        oPolygon._origRect = this._origRect.slice();
+
+        this.fillObject(oPolygon);
+
+        oPolygon.pen = new AscFormat.CLn();
+        oPolygon._apIdx = this._apIdx;
+        oPolygon._originView = this._originView;
+        oPolygon.SetOriginPage(this.GetOriginPage());
+        oPolygon.SetAuthor(this.GetAuthor());
+        oPolygon.SetModDate(this.GetModDate());
+        oPolygon.SetCreationDate(this.GetCreationDate());
+        oPolygon.SetWidth(this.GetWidth());
+        oPolygon.SetStrokeColor(this.GetStrokeColor().slice());
+        oPolygon.SetContents(this.GetContents());
+        oPolygon.SetFillColor(this.GetFillColor());
+        oPolygon.recalcInfo.recalculatePen = false;
+        oPolygon.recalcInfo.recalculateGeometry = true;
+        oPolygon._vertices = this._vertices.slice();
+        oPolygon.SetWasChanged(oPolygon.IsChanged());
+        return oPolygon;
+    };
+    CAnnotationPolygon.prototype.onMouseDown = function(e) {
+        let oViewer         = editor.getDocumentRenderer();
+        let oDrawingObjects = oViewer.DrawingObjects;
+        let oDoc            = this.GetDocument();
+        let oDrDoc          = oDoc.GetDrawingDocument();
+
+        this.selectStartPage = this.GetPage();
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
+
+        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
+        oDrawingObjects.startEditGeometry();
+    };
+    CAnnotationPolygon.prototype.IsPolygon = function() {
+        return true;
     };
     CAnnotationPolygon.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
@@ -177,6 +296,94 @@
             reply.WriteToBinary(memory); 
         });
     };
+
+    function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
+        let xMax = aShapeRect[2];
+        let xMin = aShapeRect[0];
+        let yMin = aShapeRect[1];
+        let yMax = aShapeRect[3];
+
+        let geometry = generateGeometry(arrOfArrPoints, [xMin, yMin, xMax, yMax]);
+        oParentAnnot.spPr.setGeometry(geometry);
+        oParentAnnot.updatePosition(xMin, yMin);
+
+        oParentAnnot.x = xMin;
+        oParentAnnot.y = yMin;
+        return oParentAnnot;
+    }
+
+    function generateGeometry(arrOfArrPoints, aBounds, oGeometry) {
+        let xMin = aBounds[0];
+        let yMin = aBounds[1];
+        let xMax = aBounds[2];
+        let yMax = aBounds[3];
+
+        let geometry = oGeometry ? oGeometry : new AscFormat.Geometry();
+        if (oGeometry) {
+            oGeometry.pathLst = [];
+        }
+
+        for (let nPath = 0; nPath < arrOfArrPoints.length; nPath++) {
+            let bClosed     = false;
+            let aPoints     = arrOfArrPoints[nPath];
+            let min_dist    = editor.WordControl.m_oDrawingDocument.GetMMPerDot(3);
+            let oLastPoint  = aPoints[aPoints.length-1];
+            let nLastIndex  = aPoints.length-1;
+            if(oLastPoint.bTemporary) {
+                nLastIndex--;
+            }
+            if(nLastIndex > 1)
+            {
+                let dx = aPoints[0].x - aPoints[nLastIndex].x;
+                let dy = aPoints[0].y - aPoints[nLastIndex].y;
+                if(Math.sqrt(dx*dx +dy*dy) < min_dist)
+                {
+                    bClosed = true;
+                }
+            }
+
+            let w = xMax - xMin, h = yMax-yMin;
+            let kw, kh, pathW, pathH;
+            if(w > 0)
+            {
+                pathW = 43200;
+                kw = 43200/ w;
+            }
+            else
+            {
+                pathW = 0;
+                kw = 0;
+            }
+            if(h > 0)
+            {
+                pathH = 43200;
+                kh = 43200 / h;
+            }
+            else
+            {
+                pathH = 0;
+                kh = 0;
+            }
+            
+            geometry.AddPathCommand(0,undefined, undefined, undefined, pathW, pathH);
+            geometry.AddPathCommand(1, (((aPoints[0].x - xMin) * kw) >> 0) + "", (((aPoints[0].y - yMin) * kh) >> 0) + "");
+
+            let oPt, nPt;
+            for(nPt = 1; nPt < aPoints.length - 1; nPt++) {
+                oPt = aPoints[nPt];
+
+                geometry.AddPathCommand(2,
+                    (((oPt.x - xMin) * kw) >> 0) + "", (((oPt.y - yMin) * kh) >> 0) + ""
+                );
+            }
+            
+            geometry.AddPathCommand(6);
+        }
+
+        geometry.preset = null;
+        geometry.rectS = null;
+        return geometry;
+    }
 
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)

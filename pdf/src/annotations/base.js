@@ -421,6 +421,12 @@
                 this._points[i+1] += nDeltaY / nScaleY;
             }
         }
+        else if (this.IsPolygon()) {
+            for (let i = 0; i < this._vertices.length; i+=2) {
+                this._vertices[i] += nDeltaX / nScaleX;
+                this._vertices[i+1] += nDeltaY / nScaleY;
+            }
+        }
 
         oDoc.History.Add(new CChangesPDFAnnotPos(this, [this._rect[0], this._rect[1]], [x, y]));
 
@@ -467,6 +473,9 @@
         return false;
     };
     CAnnotationBase.prototype.IsSquare = function() {
+        return false;
+    };
+    CAnnotationBase.prototype.IsPolygon = function() {
         return false;
     };
     CAnnotationBase.prototype.SetNeedRecalc = function(bRecalc) {

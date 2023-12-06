@@ -773,8 +773,6 @@ RotateState.prototype =
         else
         {
             var bounds;
-
-            
             if (Asc.editor.isPdfEditor()) {
                 let oViewer = editor.getDocumentRenderer();
                 let oDoc = oViewer.getPDFDoc();
@@ -815,6 +813,33 @@ RotateState.prototype =
                             oTrack.originalObject.SetRect(oTrack.originalObject.GetMinShapeRect());
 
                             oDoc.TurnOnHistory();
+                        }
+                        else if (oTrack.originalObject.IsPolygon()) {
+                            // меняем только редактируемую точку в массиве vertices
+                            var pageObject  = oViewer.getPageByCoords(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+                            let aVertices   = oTrack.originalObject.GetVertices().slice();
+                            
+                            // если редактируется последняя точка, то надо отредактировать ещё начальную
+                            let nStartPos = (oTrack.gmEditPtIdx + 1) * 2;
+                            if (nStartPos == aVertices.length - 2) {
+                                aVertices.splice(0, 2, pageObject.x, pageObject.y);
+                            }
+
+                            let nPage = oTrack.originalObject.GetPage();
+                            let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+                            let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+                            aVertices.splice(nStartPos, 2, pageObject.x, pageObject.y);
+                            oTrack.originalObject.SetVertices(aVertices);
+
+                            // расширяем рект на ширину линии
+                            let nLineWidth = oTrack.originalObject.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix * nScaleX;
+                            aRect[0] -= nLineWidth;
+                            aRect[1] -= nLineWidth;
+                            aRect[2] += nLineWidth;
+                            aRect[3] += nLineWidth;
+
+                            oTrack.originalObject.SetRect(aRect);
                         }
                         else {
                             oTrack.originalObject.SetRect(aRect);
