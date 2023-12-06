@@ -16892,7 +16892,7 @@ function RangeDataManagerElem(bbox, data)
 	prot = asc_CSeriesSettings.prototype;
 	prot["asc_getSeriesIn"] = prot.asc_getSeriesIn;
 	prot["asc_getType"] = prot.asc_getType;
-	prot["asc_getDateInit"] = prot.asc_getDateUnit;
+	prot["asc_getDateUnit"] = prot.asc_getDateUnit;
 	prot["asc_getTrend"] = prot.asc_getTrend;
 	prot["asc_getStepValue"] = prot.asc_getStepValue;
 	prot["asc_getStopValue"] = prot.asc_getStopValue;
