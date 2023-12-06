@@ -16243,16 +16243,16 @@ CColorObj.prototype =
 				let order = attributes.order ? attributes.order + 1 : 2;
 				const chartletiables = this._getEquationCoefficients(coordinates.coords.catVals, coordinates.coords.valVals, type, order, attributes.intercept);
 				const equationStorage = this._obtainEquationStorage(type);
-	
+
 				const _findMidCoordinates = function (pointsNumber, isLog) {
 					const results = {catVals: [], valVals: []};
 					const catNet = catAxis.max - catAxis.min;
 					for (let i = 0; i < pointsNumber; i++) {
 						const catVal = (catNet / (pointsNumber - 1)) * i + catAxis.min;
 						let valVal = equationStorage.calcYVal ? equationStorage.calcYVal(catVal, chartletiables) : 0;
-	
+
 						//log array should start from positive point
-						if (isLog && valVal <= 0 && results.valVals.length == 0) {
+						if (isLog && valVal <= 0 && results.valVals.length === 0) {
 							continue;
 						}
 						if (isLog && valVal <= 0) {
@@ -16269,13 +16269,13 @@ CColorObj.prototype =
 					if (type === AscFormat.TRENDLINE_TYPE_POLY) {
 						regularPointsArr = _findMidCoordinates(midPointsNum, valAxis.scaling.logBase);
 					} else {
-						if(!removeBezier){
+						if (!removeBezier) {
 							const bezierDrawer = new CApproximateBezier();
 							const lineCoords = bezierDrawer.approximate(valAxis.scaling.logBase, catAxis, valAxis, equationStorage, chartletiables);
 							bezierPointsArr = lineCoords.mainLine;
 							bezierStartPoints = lineCoords.startPoint;
 						}
-						if(addPoints){
+						if (addPoints) {
 							regularPointsArr = _findMidCoordinates(midPointsNum, valAxis.scaling.logBase);
 						}
 					}
@@ -16317,19 +16317,20 @@ CColorObj.prototype =
 				let path = this.cChartDrawer.cChartSpace.GetPath(pathId);
 
 				const positions = _valsToPos(bezierPointsArr, this.cChartDrawer);
-				if(bezierStartPoints && bezierStartPoints.catVals.length > 0 && bezierStartPoints.valVals.length > 0){
+				if (bezierStartPoints && bezierStartPoints.catVals.length > 0 && bezierStartPoints.valVals.length > 0) {
 					const startPosiontion = _valsToPos(bezierStartPoints, this.cChartDrawer);
 					path.moveTo(startPosiontion.xPos[0] * pathW, startPosiontion.yPos[0] * pathH);
 					path.lnTo(positions.xPos[0] * pathW, positions.yPos[0] * pathH);
-				}else{
+				} else {
 					path.moveTo(positions.xPos[0] * pathW, positions.yPos[0] * pathH);
 				}
 
 				if (positions.xPos.length > 3) {
-					path.cubicBezTo(positions.xPos[1] * pathW, positions.yPos[1] * pathH, positions.xPos[2] * pathW, positions.yPos[2] * pathH, positions.xPos[3] * pathW, positions.yPos[3] * pathH);
-				}else if (positions.xPos.length ===  3){
+					path.cubicBezTo(positions.xPos[1] * pathW, positions.yPos[1] * pathH, positions.xPos[2] * pathW, positions.yPos[2] * pathH, positions.xPos[3] * pathW,
+						positions.yPos[3] * pathH);
+				} else if (positions.xPos.length === 3) {
 					path.quadBezTo(positions.xPos[1] * pathW, positions.yPos[1] * pathH, positions.xPos[2] * pathW, positions.yPos[2] * pathH);
-				}else{
+				} else {
 					for (let i = 1; i < positions.xPos.length; i++) {
 						path.lnTo(positions.xPos[i] * pathW, positions.yPos[i] * pathH);
 					}
@@ -16345,7 +16346,7 @@ CColorObj.prototype =
 				const positions = _valsToPos(regularPointsArr, this.cChartDrawer);
 				path.moveTo(positions.xPos[0] * pathW, positions.yPos[0] * pathH);
 
-				for (let i = 0; i < positions.xPos.length; i++){
+				for (let i = 0; i < positions.xPos.length; i++) {
 					path.lnTo(positions.xPos[i] * pathW, positions.yPos[i] * pathH);
 				}
 				coordinates.path.push(pathId);
@@ -16373,7 +16374,7 @@ CColorObj.prototype =
 					//sum/counter after sliding window will be created
 					if (i >= (period - 1) && counter !== 0) {
 						let yVal = sum / counter;
-						if(!allow || yVal > 0){
+						if (!allow || yVal > 0) {
 							result.valVals.push(yVal);
 							result.catVals.push(i + 1);
 						}
@@ -16390,7 +16391,7 @@ CColorObj.prototype =
 				[AscFormat.TRENDLINE_TYPE_EXP]: {
 					calcYVal: function (val, supps, isLog) {
 						const res = supps[0] * Math.exp(val * supps[1]);
-						if (isLog && res <= 0){
+						if (isLog && res <= 0) {
 							return NaN;
 						} else {
 							return isLog ? Math.log10(res) : res;
@@ -16399,7 +16400,7 @@ CColorObj.prototype =
 						val = isLog ? Math.pow(10, val) : val;
 						return Math.log(val / supps[0]) / supps[1];
 					}, slope: function (val, supps, isLog) {
-						if (!isLog){
+						if (!isLog) {
 							return supps[0] * supps[1] * Math.exp(val * supps[1]);
 						} else {
 							return Math.log10(Math.exp(1)) * supps[1];
@@ -16408,7 +16409,7 @@ CColorObj.prototype =
 				}, [AscFormat.TRENDLINE_TYPE_LINEAR]: {
 					calcYVal: function (val, supps, isLog) {
 						const res = supps[1] * val + supps[0];
-						if (isLog && res <= 0){
+						if (isLog && res <= 0) {
 							return NaN;
 						} else {
 							return isLog ? Math.log10(res) : res;
@@ -16418,7 +16419,7 @@ CColorObj.prototype =
 						return (val - supps[0]) / supps[1];
 					}, slope: function (val, supps, isLog) {
 						console.log(val, supps)
-						if (!isLog){
+						if (!isLog) {
 							return supps[1];
 						} else {
 							return supps[1] / (Math.log(10) * (supps[1] * val + supps[0]));
@@ -16426,9 +16427,9 @@ CColorObj.prototype =
 					}
 				}, [AscFormat.TRENDLINE_TYPE_LOG]: {
 					calcYVal: function (val, supps, isLog) {
-						if(val > 0){
+						if (val > 0) {
 							const res = supps[1] * Math.log(val) + supps[0];
-							if (isLog && res <= 0){
+							if (isLog && res <= 0) {
 								return NaN;
 							} else {
 								return isLog ? Math.log10(res) : res;
@@ -16440,7 +16441,7 @@ CColorObj.prototype =
 						val = isLog ? Math.pow(10, val) : val;
 						return Math.exp((val - supps[0]) / supps[1]);
 					}, slope: function (val, supps, isLog) {
-						if (!isLog){
+						if (!isLog) {
 							console.log(val, supps)
 							return supps[1] / val;
 						} else {
@@ -16460,7 +16461,7 @@ CColorObj.prototype =
 				}, [AscFormat.TRENDLINE_TYPE_POWER]: {
 					calcYVal: function (val, supps, isLog) {
 						const res = supps[0] * Math.pow(val, supps[1]);
-						if (isLog && res <= 0){
+						if (isLog && res <= 0) {
 							return NaN;
 						} else {
 							return isLog ? Math.log10(res) : res;
@@ -16469,7 +16470,7 @@ CColorObj.prototype =
 						val = isLog ? Math.pow(10, val) : val;
 						return Math.pow((val / supps[0]), 1 / supps[1]);
 					}, slope: function (val, supps, isLog) {
-						if (!isLog){
+						if (!isLog) {
 							return supps[0] * supps[1] * Math.pow(val, supps[1] - 1);
 						} else {
 							return supps[1] / (Math.log(10) * val);
@@ -16695,7 +16696,7 @@ CColorObj.prototype =
 						const S = _matMul(X_T, Y, pow - y_intercept, 1, catVals.length)
 						const letiables = _matMul(P_I, S, pow - y_intercept, 1, pow - y_intercept)
 						flatten(letiables, y_intercept, intercept)
-						
+
 						return letiables
 					}
 				}
@@ -16819,13 +16820,12 @@ CColorObj.prototype =
 
 	CApproximateBezier.prototype = {
 
-		constructor: CApproximateBezier,
-		approximate: function (isLog, catAxis, valAxis, equationStorage, chartletiables) {
+		constructor: CApproximateBezier, approximate: function (isLog, catAxis, valAxis, equationStorage, chartletiables) {
 			const controlPoints = {catVals: [], valVals: []};
 			// Step 1 find edges of line 
 			// --------------------------------------
 			const _lineCoordinate = function (storage, point, isVal) {
-				if(isVal){
+				if (isVal) {
 					const valVal = equationStorage.calcYVal(point, chartletiables, isLog);
 					storage.catVal = point;
 					storage.valVal = valVal;
@@ -16857,7 +16857,7 @@ CColorObj.prototype =
 				upperBoundary = isLog ? Math.log10(upperBoundary) : upperBoundary;
 				if (pos.valVal < lowerBoundary) {
 					_lineCoordinate(pos, lowerBoundary, false);
-				} 
+				}
 				if (pos.valVal > upperBoundary) {
 					_lineCoordinate(pos, upperBoundary, false);
 				}
@@ -16875,27 +16875,25 @@ CColorObj.prototype =
 			let direction = true;
 			const line2Letiables = _findLine(end.catVal, end.valVal);
 			let line1Letiables = _findLine(start.catVal, start.valVal);
-			const lowestPoint = isLog ? end.valVal - 3 : end.valVal/1000;
-			if (Math.atan(line2Letiables[1]) < 1.56 && Math.atan(line1Letiables[1]) > 1.56 && start.valVal < lowestPoint){
+			const lowestPoint = isLog ? end.valVal - 3 : end.valVal / 1000;
+			if (Math.atan(line2Letiables[1]) < 1.56 && Math.atan(line1Letiables[1]) > 1.56 && start.valVal < lowestPoint) {
 				_lineCoordinate(start, lowestPoint, false);
 				line1Letiables = _findLine(start.catVal, start.valVal);
-			}	
+			}
 
-			
-			const startPoint = {catVals:[], valVals:[]};
-			console.log(start.catVal, start.valVal);
-			console.log(end.catVal, end.valVal);
-			if(Math.atan(line1Letiables[1]) < 1.56 && Math.atan(line2Letiables[1]) > 1.56){
+
+			const startPoint = {catVals: [], valVals: []};
+			if (Math.atan(line1Letiables[1]) < 1.56 && Math.atan(line2Letiables[1]) > 1.56) {
 				startPoint.catVals.push(start.catVal);
 				startPoint.valVals.push(end.catVal);
 				_lineCoordinate(start, (end.catVal + start.catVal) / 2, true);
 				line1Letiables = _findLine(start.catVal, start.valVal);
 				direction = false;
 			}
-			console.log(start)
+
 			//------------------------------------
 			const normalize = function () {
-				for(let i = 0; i < controlPoints.valVals.length; i++){
+				for (let i = 0; i < controlPoints.valVals.length; i++) {
 					controlPoints.valVals[i] = Math.pow(10, controlPoints.valVals[i]);
 				}
 			}
@@ -16903,10 +16901,10 @@ CColorObj.prototype =
 			controlPoints.catVals.push(start.catVal);
 			controlPoints.valVals.push(start.valVal);
 
-			if(line2Letiables[1] === line1Letiables[1]){
+			if (line2Letiables[1] === line1Letiables[1]) {
 				controlPoints.catVals.push(end.catVal);
 				controlPoints.valVals.push(end.valVal);
-				if (isLog){
+				if (isLog) {
 					normalize();
 				}
 				return {startPoint: startPoint, mainLine: controlPoints}
@@ -16920,11 +16918,11 @@ CColorObj.prototype =
 			controlPoints.valVals.push(midValVal);
 			controlPoints.catVals.push(end.catVal);
 			controlPoints.valVals.push(end.valVal);
-			
+
 			// Based on the midpoint derive the direction of the line either long curve to right or long curve to bottom
 			const diff1 = Math.abs(start.catVal - midCatVal);
 			const diff2 = Math.abs(midCatVal - end.catVal);
-			if(diff1 > diff2){
+			if (diff1 > diff2) {
 				direction = false;
 			}
 
@@ -16936,7 +16934,7 @@ CColorObj.prototype =
 					const result = [];
 					result.push(Math.pow((1 - t), len));
 					result.push(len * t * Math.pow((1 - t), (len - 1)));
-					if(len == 3){
+					if (len === 3) {
 						result.push(len * Math.pow(t, (len - 1)) * (1 - t));
 					}
 					result.push(Math.pow(t, len));
@@ -16944,9 +16942,9 @@ CColorObj.prototype =
 				}
 				const predictY = function (cP, t) {
 					const len = cP.length;
-					const a = obtainBernsteintPolynomials(len-1, t);
+					const a = obtainBernsteintPolynomials(len - 1, t);
 					let result = 0;
-					for(let i = 0; i < len; i++){
+					for (let i = 0; i < len; i++) {
 						result += a[i] * cP[i];
 					}
 					return result;
@@ -16964,9 +16962,9 @@ CColorObj.prototype =
 			// --------------------------------------
 			//Step 4 check mid control point
 			const predictedErr = check();
-			
-			if(predictedErr <= error && predictedErr>= -error){
-				if (isLog){
+
+			if (predictedErr <= error && predictedErr >= -error) {
+				if (isLog) {
 					normalize();
 				}
 				return {startPoint: startPoint, mainLine: controlPoints}
@@ -16985,7 +16983,7 @@ CColorObj.prototype =
 				controlPoints.valVals[1] = (0.5 * lineEnd) + (0.5 * lineStart);
 				controlPoints.catVals[1] = (controlPoints.valVals[1] - line1Letiables[0]) / line1Letiables[1];
 				let predictedError = check();
-				if(storage.minError === null || Math.abs(predictedError) <= storage.minError){
+				if (storage.minError === null || Math.abs(predictedError) <= storage.minError) {
 					storage.minError = Math.abs(predictedError);
 					storage.cpY = controlPoints.valVals[1];
 					storage.cpX = controlPoints.catVals[1];
@@ -16993,19 +16991,18 @@ CColorObj.prototype =
 
 				if ((predictedError > error && direction) || (predictedError < -error && !direction)) {
 					lineEnd = controlPoints.valVals[1];
-				}else if ((predictedError > error && !direction) || (predictedError < -error && direction)) {
+				} else if ((predictedError > error && !direction) || (predictedError < -error && direction)) {
 					lineStart = controlPoints.valVals[1];
 				} else {
 					break;
 				}
 			}
 
-			if (controlPoints.catVals[1] != storage.cpX || controlPoints.valVals[1] != storage.cpY) {
+			if (controlPoints.catVals[1] !== storage.cpX || controlPoints.valVals[1] !== storage.cpY) {
 				controlPoints.catVals[1] = storage.cpX;
 				controlPoints.valVals[1] = storage.cpY;
 			}
 
-			// console.log(controlPoints);
 			if (isLog) {
 				normalize();
 			}
