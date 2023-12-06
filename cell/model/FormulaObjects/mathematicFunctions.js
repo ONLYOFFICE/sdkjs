@@ -2816,56 +2816,69 @@ function (window, undefined) {
 	cMMULT.prototype.Calculate = function (arg) {
 
 		function mult(A, B) {
-			var i, j;
+			if ( !((B[0] && A.length === B[0].length) || (A[0] && B.length === A[0].length)) || 
+				(A[0].length === 1 && (B[0].length !== 1 && A.length !== B[0].length)) ||
+				(A.length === 1 && (B.length !== 1 && A[0].length !== B.length)) ) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			let i, j;
 			for (i = 0; i < A.length; i++) {
 				for (j = 0; j < A[i].length; j++) {
-					if (A[i][j] instanceof cEmpty || A[i][j] instanceof cString) {
-						return new cError(cErrorType.not_available);
+					if (A[i][j].type === cElementType.empty || A[i][j].type === cElementType.string) {
+						return new cError(cErrorType.wrong_value_type);
 					}
 				}
 			}
 			for (i = 0; i < B.length; i++) {
 				for (j = 0; j < B[i].length; j++) {
-					if (B[i][j] instanceof cEmpty || B[i][j] instanceof cString) {
-						return new cError(cErrorType.not_available);
+					if (B[i][j].type === cElementType.empty || B[i][j].type === cElementType.string) {
+						return new cError(cErrorType.wrong_value_type);
 					}
 				}
 			}
 
 
-			if (!((B[0] && A.length === B[0].length) || (A[0] && B.length === A[0].length))) {
-				return new cError(cErrorType.wrong_value_type);
-			}
-			var C = new Array(A.length);
+			let C = new Array(A.length);
 			for (i = 0; i < A.length; i++) {
 				C[i] = new Array(B[0].length);
 				for (j = 0; j < B[0].length; j++) {
 					C[i][j] = 0;
-					for (var k = 0; k < B.length; k++) {
-						C[i][j] += A[i][k].getValue() * B[k][j].getValue();
+					for (let k = 0; k < B.length; k++) {
+						let fMatrixElem = A[i] && A[i][k] ? A[i][k].getValue() : false;
+						let sMatrixElem = B[k] && B[k][j] ? B[k][j].getValue() : false;
+						if (fMatrixElem === false || sMatrixElem === false) {
+							return new cError(cErrorType.wrong_value_type);
+						}
+						C[i][j] += fMatrixElem * sMatrixElem;
 					}
 					C[i][j] = new cNumber(C[i][j]);
 				}
 			}
-			var res = new cArray();
+			let res = new cArray();
 			res.fillFromArray(C);
 			return res;
 		}
 
-		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cArea || arg0 instanceof cArray || arg0 instanceof cRef || arg0 instanceof cRef3D) {
+		let arg0 = arg[0], arg1 = arg[1];
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.array || arg0.type === cElementType.cell || arg0.type === cElementType.cell3D) {
 			arg0 = arg0.getMatrix();
-		} else if (arg1 instanceof cArea3D) {
+		} else if (arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.getMatrix()[0];
+		} else if (arg0.type === cElementType.number) {
+			arg0 = arg0.toArray();
 		} else {
-			return new cError(cErrorType.not_available);
+			return new cError(cErrorType.wrong_value_type);
 		}
-		if (arg1 instanceof cArea || arg1 instanceof cArray || arg1 instanceof cRef || arg1 instanceof cRef3D) {
+
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.array || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
 			arg1 = arg1.getMatrix();
-		} else if (arg1 instanceof cArea3D) {
+		} else if (arg1.type === cElementType.cellsRange3D) {
 			arg1 = arg1.getMatrix()[0];
+		} else if (arg1.type === cElementType.number) {
+			arg1 = arg1.toArray();
 		} else {
-			return new cError(cErrorType.not_available);
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		return mult(arg0, arg1);

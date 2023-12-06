@@ -4718,6 +4718,129 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), 8);
 		assert.strictEqual(oParser.calculate().getElementRowCol(2, 0).getValue(), 12);
 
+		oParser = new parserFormula("MMULT({1,2,3},{1;2;3})", "A1", ws);
+		assert.ok(oParser.parse(), "MMULT({1,2,3},{1;2;3})");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 14, "Result of MMULT({1,2,3},{1;2;3})");
+
+		oParser = new parserFormula("MMULT({1,3,4},{2;3;4;5})", "A1", ws);
+		assert.ok(oParser.parse(), "MMULT({1,3,4},{2;3;4;5})");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of MMULT({1,3,4},{2;3;4;5})");
+
+		oParser = new parserFormula("MMULT({1,2,3,4},{1;2;3})", "A1", ws);
+		assert.ok(oParser.parse(), "MMULT({1,2,3,4},{1;2;3})");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of MMULT({1,2,3,4},{1;2;3})");
+
+		oParser = new parserFormula("MMULT({1;2;3},{1,2,3})", "A1", ws);
+		assert.ok(oParser.parse(), "MMULT({1;2;3},{1,2,3})");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 1).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 2).getValue(), 3);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 1).getValue(), 4);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 2).getValue(), 6);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 0).getValue(), 3);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 1).getValue(), 6);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 2).getValue(), 9);
+
+		oParser = new parserFormula('MMULT({1;2;3},{1,"2",3})', "A1", ws);
+		assert.ok(oParser.parse(), 'MMULT({1;2;3},{1,2,3})');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of MMULT({1;2;3},{1,2,3})');
+
+		ws.getRange2("K100").setValue("");
+
+		oParser = new parserFormula("MMULT({1;2;3},{1;2;3})", "A1", ws);
+		assert.ok(oParser.parse(), "MMULT({1;2;3},{1;2;3})");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of MMULT({1;2;3},{1;2;3})");
+
+		oParser = new parserFormula("MMULT({1,2,3},{1,2,3})", "A1", ws);
+		assert.ok(oParser.parse(), "MMULT({1,2,3},{1,2,3})");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Result of MMULT({1,2,3},{1,2,3})");
+
+		oParser = new parserFormula("MMULT({1;2},2)", "A1", ws);
+		assert.ok(oParser.parse(), "MMULT({1;2},2)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), 4);
+
+		oParser = new parserFormula("MMULT(2,3)", "A1", ws);
+		assert.ok(oParser.parse(), "MMULT(2,3)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 6);
+
+		oParser = new parserFormula('MMULT("2",3)', "A1", ws);
+		assert.ok(oParser.parse(), 'MMULT("2",3)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of MMULT("2",3)');
+
+		oParser = new parserFormula('MMULT(2,TRUE)', "A1", ws);
+		assert.ok(oParser.parse(), 'MMULT(2,TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of MMULT(2,TRUE)');
+
+		oParser = new parserFormula('MMULT(TRUE,2)', "A1", ws);
+		assert.ok(oParser.parse(), 'MMULT(TRUE,2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of MMULT(TRUE,2)');
+
+		oParser = new parserFormula('MMULT(2,-1)', "A1", ws);
+		assert.ok(oParser.parse(), 'MMULT(2,-1)');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), -2, 'Result of MMULT(2,-1)');
+
+		oParser = new parserFormula('MMULT(2,)', "A1", ws);
+		assert.ok(oParser.parse(), 'MMULT(2,)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of MMULT(2,)');
+
+		oParser = new parserFormula('MMULT(,2)', "A1", ws);
+		assert.ok(oParser.parse(), 'MMULT(,2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of MMULT(,2)');
+
+		oParser = new parserFormula('MMULT(2,K100)', "A1", ws);
+		assert.ok(oParser.parse(), 'MMULT(2,K100)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of MMULT(2,K100)');
+
+		oParser = new parserFormula('MMULT(K100,2)', "A1", ws);
+		assert.ok(oParser.parse(), 'MMULT(K100,2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of MMULT(K100,2)');
+
+		oParser = new parserFormula('MMULT(2,0)', "A1", ws);
+		assert.ok(oParser.parse(), 'MMULT(2,0)');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 0, 'Result of MMULT(2,0)');
+
+		oParser = new parserFormula('MMULT(0,2)', "A1", ws);
+		assert.ok(oParser.parse(), 'MMULT(0,2)');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 0, 'Result of MMULT(0,2)');
+
+		oParser = new parserFormula('MMULT(0,0)', "A1", ws);
+		assert.ok(oParser.parse(), 'MMULT(0,0)');
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 0, 'Result of MMULT(0,0)');
+
+		ws.getRange2("A100").setValue("1");
+		ws.getRange2("B100").setValue("2");
+		ws.getRange2("C100").setValue("3");
+		ws.getRange2("A101").setValue("4");
+		ws.getRange2("B101").setValue("5");
+		ws.getRange2("C101").setValue("6");
+		ws.getRange2("A102").setValue("7");
+		ws.getRange2("B102").setValue("8");
+		ws.getRange2("C102").setValue("9");
+
+		oParser = new parserFormula("MMULT(A100:B102,A100:C101)", "A1", ws);
+		assert.ok(oParser.parse(), "MMULT(A100:B102,A100:C101)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 9);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 1).getValue(), 12);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 2).getValue(), 15);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), 24);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 1).getValue(), 33);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 2).getValue(), 42);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 0).getValue(), 39);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 1).getValue(), 54);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 2).getValue(), 69);
+
+		oParser = new parserFormula("MMULT(A100:C102,A100:A102)", "A1", ws);
+		assert.ok(oParser.parse(), "MMULT(A100:C102,A100:A102)");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 30);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), 66);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 0).getValue(), 102);
+
+		oParser = new parserFormula("MMULT(A100:A102,A100:C102)", "A1", ws);
+		assert.ok(oParser.parse(), "MMULT(A100:A102,A100:C102)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
 	});
 
 	QUnit.test("Test: \"T(123)\"", function (assert) {
