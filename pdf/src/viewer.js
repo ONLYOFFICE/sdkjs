@@ -1350,6 +1350,9 @@
 					if (oAnnotInfo["borderWidth"] != null) {
 						oAnnot.SetWidth(oAnnotInfo["borderWidth"]);
 					}
+					else {
+						oAnnot.SetWidth(1);
+					}
 					if (oAnnotInfo["QuadPoints"] != null) {
 						let aSepQuads = [];
 						for (let i = 0; i < oAnnotInfo["QuadPoints"].length; i+=8)
@@ -1811,7 +1814,7 @@
 								return oAnnot;
 						}
 						// у draw аннотаций ищем по path
-						else if (oAnnot.IsInk() || oAnnot.IsLine() || oAnnot.IsSquare() || oAnnot.IsPolygon())
+						else if (oAnnot.IsInk() || oAnnot.IsLine() || oAnnot.IsSquare() || oAnnot.IsPolygon() || oAnnot.IsPolyLine())
 						{
 							let oPos	= oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
 							let X       = oPos.X;
@@ -2482,7 +2485,7 @@
 						this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = nPage;
 						this.DrawingObjects.drawSelect(nPage);
 
-						if (oDoc.mouseDownAnnot.IsLine() || oDoc.mouseDownAnnot.IsPolygon())
+						if (oDoc.mouseDownAnnot.IsLine() || oDoc.mouseDownAnnot.IsPolygon() || oDoc.mouseDownAnnot.IsPolyLine())
 							oDoc.mouseDownAnnot.DrawSelected(this.overlay)
 					}
 				}

@@ -421,7 +421,7 @@
                 this._points[i+1] += nDeltaY / nScaleY;
             }
         }
-        else if (this.IsPolygon()) {
+        else if (this.IsPolygon() || this.IsPolyLine()) {
             for (let i = 0; i < this._vertices.length; i+=2) {
                 this._vertices[i] += nDeltaX / nScaleX;
                 this._vertices[i+1] += nDeltaY / nScaleY;
@@ -476,6 +476,9 @@
         return false;
     };
     CAnnotationBase.prototype.IsPolygon = function() {
+        return false;
+    };
+    CAnnotationBase.prototype.IsPolyLine = function() {
         return false;
     };
     CAnnotationBase.prototype.SetNeedRecalc = function(bRecalc) {

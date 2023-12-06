@@ -55,13 +55,12 @@
         this._rotate        = undefined;
         this._state         = undefined;
         this._stateModel    = undefined;
-        this._width         = 1;
+        this._width         = undefined;
         this._vertices      = undefined;
         this._intent        = undefined;
 
         // internal
         TurnOffHistory();
-        this.content = new AscPDF.CTextBoxContent(this, oDoc);
     }
     CAnnotationPolygon.prototype.constructor = CAnnotationPolygon;
     AscFormat.InitClass(CAnnotationPolygon, AscFormat.CShape, AscDFH.historyitem_type_Shape);
@@ -369,7 +368,12 @@
             geometry.AddPathCommand(1, (((aPoints[0].x - xMin) * kw) >> 0) + "", (((aPoints[0].y - yMin) * kh) >> 0) + "");
 
             let oPt, nPt;
-            for(nPt = 1; nPt < aPoints.length - 1; nPt++) {
+            let nPtCount = aPoints.length;
+            // если последняя точка совпадает с первой, значит её не учитываем
+            if (aPoints[0].x == aPoints[aPoints.length - 1].x && aPoints[0].y == aPoints[aPoints.length - 1].y)
+                nPtCount = aPoints.length - 1;
+
+            for(nPt = 1; nPt < nPtCount; nPt++) {
                 oPt = aPoints[nPt];
 
                 geometry.AddPathCommand(2,

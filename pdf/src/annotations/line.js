@@ -648,6 +648,7 @@
             AscCommon.History.TurnOff();
     }
 
-    window["AscPDF"].CAnnotationLine = CAnnotationLine;
+    window["AscPDF"].CAnnotationLine    = CAnnotationLine;
+    window["AscPDF"].LINE_END_TYPE      = LINE_END_TYPE;
 })();
 
