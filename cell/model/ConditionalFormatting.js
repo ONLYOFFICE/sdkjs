@@ -1181,38 +1181,22 @@
 			if (val[0] === "=") {
 				val = val.slice(1);
 			}
-			val = val.split(",");
 			this.ranges = [];
-			val.forEach(function (item) {
-				if (-1 !== item.indexOf("!")) {
-					var is3DRef = AscCommon.parserHelp.parse3DRef(item);
-					if (is3DRef) {
-						item = is3DRef.range;
+
+			let wb = Asc.editor && Asc.editor.wbModel;
+			let _ranges;
+			if (wb) {
+				let ws = wb.getActiveWs();
+				_ranges = AscCommonExcel.getRangeByRef(val, ws, true);
+			}
+
+			if (_ranges) {
+				for (let i = 0; i < _ranges.length; i++) {
+					if (_ranges[i].bbox) {
+						t.ranges.push(_ranges[i].bbox);
 					}
 				}
-
-				let _range = AscCommonExcel.g_oRangeCache.getAscRange(item);
-				if (!_range) {
-					var oWB = Asc.editor && Asc.editor.wbModel;
-					if (oWB) {
-						var ws = oWB.getActiveWs();
-						_range = window['AscCommonExcel'].getRangeByRef(item, ws, true);
-					}
-				}
-
-				if (_range) {
-					if (Array.isArray(_range)) {
-						for (let i = 0; i < _range.length; i++) {
-							if (_range[i].bbox) {
-								t.ranges.push(_range[i].bbox);
-							}
-						}
-					} else {
-						t.ranges.push(_range);
-					}
-				}
-
-			});
+			}
 		}
 	};
 
