@@ -19877,6 +19877,7 @@
 		this.nStep = settings.stepValue;
 		this.nStopValue = settings.stopValue;
 		this.bTrend = settings.trend;
+		this.nChosenContextMenuProp = settings.contextMenuChosenProperty;
 
 		this.oFromRange = null;
 		this.oToRange = null;
@@ -19937,6 +19938,13 @@
 	 */
 	CSerial.prototype.getTrend = function () {
 		return this.bTrend;
+	};
+	/**
+	 * Returns a chosen context menu property
+	 * @returns {asc_CSeriesSettings.contextMenuChosenProperty|c_oAscFillType}
+	 */
+	CSerial.prototype.getChosenContextMenuProp = function () {
+		return this.nChosenContextMenuProp;
 	};
 	/**
 	 * Sets a range of selected cells
@@ -20093,19 +20101,16 @@
 	};
 	/**
 	 * Initializes iteration coordinates for promote cells in trend mode
-	 * @param {Object} oFilledLine - Line of filled cells and cells which need to fill
-	 * @param {number} oFilledLine.nValue - Value of first cell in line
-	 * @param {Range} oFilledLine.oToRange - Range of cells which will be fill
-	 * @param {Cell} oFilledLine.oCell - First cell of line
 	 */
-	CSerial.prototype.initTrendIterCoords = function (oFilledLine) {
+	CSerial.prototype.initTrendIterCoords = function () {
 		const bReverse = this.getIndex() < 0;
 		const bActiveFillHandleExists = !!this.getActiveFillHandle();
 		const bVertical = this.getVertical();
-		const oTo = oFilledLine.oToRange.bbox;
 		const oFrom = this.getFromRange().bbox;
 
-		if (bActiveFillHandleExists) {
+		if (bActiveFillHandleExists && this.getChosenContextMenuProp() !== Asc.c_oAscFillType.series) {
+			this.initToRange(this.getFromRange());
+			const oTo = this.getToRange().bbox;
 			if (bReverse) {
 				this.setStartIndex(bVertical ? oTo.r2 : oTo.c2);
 				this.setEndIndex(bVertical ? oTo.r1 - 1 : oTo.c1 - 1);
@@ -20116,9 +20121,16 @@
 				this.setDirectionStep(1);
 			}
 		} else {
-			this.setStartIndex(this.getVertical() ? oFrom.r1 : oFrom.c1);
-			this.setEndIndex((this.getIndex() + this.getStartIndex()) + 1);
-			this.setDirectionStep(1);
+			if (bReverse) {
+				let nEndIndexFilledRange = bVertical ? oFrom.r1 : oFrom.c1;
+				this.setStartIndex(bVertical ? oFrom.r2 : oFrom.c2);
+				this.setEndIndex((this.getIndex() + nEndIndexFilledRange) - 1);
+				this.setDirectionStep(-1);
+			} else {
+				this.setStartIndex(bVertical ? oFrom.r1 : oFrom.c1);
+				this.setEndIndex((this.getIndex() + this.getStartIndex()) + 1);
+				this.setDirectionStep(1);
+			}
 		}
 	};
 	/**
@@ -20129,14 +20141,17 @@
 	 */
 	CSerial.prototype.getFilledRange = function (nIndexLine) {
 		let oFilledRange = this.getFromRange().clone();
-		let nRow = 0;
-		let nCol = 0;
-		let nType = this.getType();
+		let bVertical = this.getVertical();
 		let bTrend = this.getTrend();
-		let oActiveFillHandle = this.getActiveFillHandle();
+		let nRow = oFilledRange.bbox.r1;
+		let nCol = oFilledRange.bbox.c1;
+		let sFirstValue = null;
+		let ws = oFilledRange.worksheet;
+		let oBBox = oFilledRange.bbox;
+		let nType = this.getType();
 
 		if (nIndexLine != null) {
-			if (this.getVertical()) {
+			if (bVertical) {
 				oFilledRange.bbox.c1 = nIndexLine;
 				oFilledRange.bbox.c2 = nIndexLine;
 			} else {
@@ -20144,22 +20159,43 @@
 				oFilledRange.bbox.r2 = nIndexLine;
 			}
 		}
-		if (!oActiveFillHandle || (oActiveFillHandle && !bTrend)) {
-			oFilledRange._foreachNoEmpty(function (oCell, nRow0, nCol0) {
+		if (bTrend) {
+			oFilledRange._foreach(function (oCell, nCurRow, nCurCol) {
 				if (oCell && oCell.getValueWithoutFormat()) {
-					if (nType === oSeriesType.autoFill || bTrend) {
-						nRow = nRow0;
-						nCol = nCol0;
+					nRow = nCurRow;
+					nCol = nCurCol;
+					if (nCurRow === oFilledRange.bbox.r1 && nCurCol === oFilledRange.bbox.c1) {
+						sFirstValue = oCell.getValueWithoutFormat();
+					}
+				} else {
+					let sNextValue = _getNextValue(ws, oCell, bVertical, oBBox);
+					if (!sFirstValue && sNextValue) {
+						if (bVertical) {
+							oFilledRange.bbox.r1 = nCurRow + 1;
+							oFilledRange.bbox.c1 = nCurCol;
+						} else {
+							oFilledRange.bbox.c1 = nCurCol + 1;
+							oFilledRange.bbox.r1 = nCurRow;
+						}
+					}
+				}
+			});
+		} else {
+			oFilledRange._foreachNoEmpty(function (oCell, nCurRow, nCurCol) {
+				if (oCell && oCell.getValueWithoutFormat()) {
+					if (nType === oSeriesType.autoFill /*|| bTrend*/) {
+						nRow = nCurRow;
+						nCol = nCurCol;
 					} else { // for other modes use only first filled cell in range
-						nRow = nRow0;
-						nCol = nCol0;
+						nRow = nCurRow;
+						nCol = nCurCol;
 						return true; // break loop
 					}
 				}
 			});
-			oFilledRange.bbox.r2 = nRow;
-			oFilledRange.bbox.c2 = nCol;
 		}
+		oFilledRange.bbox.r2 = nRow;
+		oFilledRange.bbox.c2 = nCol;
 
 		return oFilledRange;
 	};
@@ -20195,18 +20231,19 @@
 		oFromRange._foreachNoEmpty(function (oCell, nRow, nCol, nRowStart, nColStart) {
 			if (oCell && oCell.getValueWithoutFormat() && nType !== oSeriesType.autoFill) {
 				let nTypeCell = oCell.getType();
+				let oFilledRange = oSerial.getFilledRange(bVertical ? nCol : nRow);
 				let oDirectCondition = {
-					true: nRow === nRowStart,
-					false: nCol === nColStart
+					true: nRow === oFilledRange.bbox.r1,
+					false: nCol === oFilledRange.bbox.c1
 				};
 				if (oDirectCondition[bVertical] && nTypeCell === CellValueType.Number) {
-					let oFilledRange = oSerial.getFilledRange(bVertical ? nCol : nRow);
 					oSerial.initToRange(oFilledRange);
 					let oToRange = oSerial.getToRange();
 					aFilledCells.push({
 						'nValue': oCell.getNumberValue(),
 						'oToRange': oToRange,
-						'oCell': oCell.duplicate()
+						'oCell': oCell.duplicate(),
+						'oFilledRange': oFilledRange
 					});
 				}
 			}
@@ -20329,6 +20366,7 @@
 	 * @param {number} oFilledLine.nValue - Value of first cell in line
 	 * @param {Range} oFilledLine.oToRange - Range of cells which will be fill
 	 * @param {Cell} oFilledLine.oCell - First cell of line
+	 * @param {Range} oFilledLine.oFilledRange - Range with filled cells
 	 */
 	CSerial.prototype.promoteCells = function (oFilledLine) {
 		function fillCell(nRow, nCol) {
@@ -20443,14 +20481,15 @@
 	 * @param {number} oFilledLine.nValue - Value of first cell in line
 	 * @param {Range} oFilledLine.oToRange - Range of cells which will be fill
 	 * @param {Cell} oFilledLine.oCell - First cell of line
+	 * @param {Range} oFilledLine.oFilledRange - Range with filled cells
 	 * @param {number} nFilledLineLength - Length line of filled cells
 	 */
 	CSerial.prototype.promoteCellsWithTrend = function (oFilledLine, nFilledLineLength) {
-		this.initTrendIterCoords(oFilledLine);
+		this.initTrendIterCoords();
 		let oSerial = this;
-		let oFromRange = this.getFromRange();
+		let oFilledRange = oFilledLine.oFilledRange;
 		let nIndexFilledLine = this.getVertical() ? oFilledLine.oCell.nCol : oFilledLine.oCell.nRow;
-		let nFilledStartIndex = this.getVertical() ? oFromRange.bbox.r1 : oFromRange.bbox.c1;
+		let nFilledStartIndex = this.getVertical() ? oFilledRange.bbox.r1 : oFilledRange.bbox.c1;
 		// If the first cell after calculating the linear regression for "growth trend" is Infinity, then the next cells in range fill 0.
 		// This flag is only uses for the Growth trend with an active fill handle
 		let bFirstCellValueInf = false;
@@ -20536,10 +20575,11 @@
 				let nFilledLineLength = null;
 				for (let i = 0, length = aFilledCells.length; i < length; i++) {
 					let oToRange = aFilledCells[i].oToRange;
+					let oFilledRange = aFilledCells[i].oFilledRange;
 					if (this.getIndex() > 0) {
-						nFilledLineLength = bVertical ? oToRange.bbox.r1 - oFromRange.bbox.r1 : oToRange.bbox.c1 - oFromRange.bbox.c1;
+						nFilledLineLength = bVertical ? oToRange.bbox.r1 - oFilledRange.bbox.r1 : oToRange.bbox.c1 - oFilledRange.bbox.c1;
 					} else { // Reverse direction
-						nFilledLineLength = bVertical ? oFromRange.bbox.r2 - oToRange.bbox.r2 : oFromRange.bbox.c2 - oToRange.bbox.c2;
+						nFilledLineLength = bVertical ? oFilledRange.bbox.r2 - oToRange.bbox.r2 : oFilledRange.bbox.c2 - oToRange.bbox.c2;
 					}
 					if (this.getTrend() && nFilledLineLength > nOneFilledCellLength) {
 						this.promoteCellsWithTrend(aFilledCells[i], nFilledLineLength);

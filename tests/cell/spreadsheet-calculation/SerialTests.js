@@ -165,7 +165,7 @@ $(function () {
 		return oFromRange;
 	}
 
-	QUnit.module('Serial');
+	QUnit.module('Series');
 	QUnit.test('Autofill linear progression - one filled row/column', function (assert) {
 		// Fill data
 		const testData = [
@@ -179,7 +179,7 @@ $(function () {
 			'stopValue': null,
 			'trend': false
 		}
-		// Run AutoFill -> Serial
+		// Run AutoFill -> Series
 		cSerial = new CSerial(settings);
 		cSerial.setFromRange(oFromRange);
 		cSerial.exec();
@@ -608,42 +608,6 @@ $(function () {
 		autofillRange = getRange(3, 1, 7, 6);
 		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression. Step = 0.5. With indentation row and column');
 		clearData(0, 0, 7, 6);
-		// Growth progression with trend mode. Start with 0 value.
-		testData = [
-			['0', '1'],
-			['0', '2']
-		];
-		oFromRange = getFilledData(0, 0, 3, 1, testData, [0, 0]);
-		settings.type = oSeriesType.growth;
-		settings.trend = true;
-		settings.stopValue = null;
-
-		cSerial = new CSerial(settings);
-		cSerial.setFromRange(oFromRange);
-		cSerial.exec();
-		autofillRange = getRange(2, 0, 3, 1);
-		expectedData = [
-			['', ''],
-			['', '']
-		];
-		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression with trend mode. Start with 0 value.');
-		clearData(0, 0, 3, 1);
-		// Growth progression with trend mode. Start with 0 value for first cell and use activeFillHandle
-		oFromRange = getFilledData(0, 0, 1, 1, testData, [0, 0]);
-		wsView.activeFillHandle = getRange(0, 0, 3, 1);
-
-		cSerial = new CSerial(settings);
-		cSerial.setFromRange(oFromRange);
-		cSerial.setActiveFillHandle(wsView.activeFillHandle);
-		cSerial.exec();
-
-		autofillRange = getRange(2, 0, 3, 1);
-		expectedData = [
-			['0', '0'],
-			['0', '0']
-		];
-		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression with trend mode. Start with 0 value for first cell and use activeFillHandle');
-		clearData(0, 0, 3, 1);
 	});
 	QUnit.test('Autofill vertical progression - multiple filled cells', function (assert) {
 		let testData = [
@@ -802,42 +766,6 @@ $(function () {
 		autofillRange = getRange(1, 2, 6, 6);
 		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Linear progression. Step = -1. With indentation row and column');
 		clearData(0, 0, 6, 6);
-		// Growth progression with trend mode. Start with 0 value.
-		testData = [
-			['0', '0'],
-			['1', '2']
-		];
-		oFromRange = getFilledData(0, 0, 1, 3, testData, [0, 0]);
-		settings.type = oSeriesType.growth;
-		settings.trend = true;
-		settings.stopValue = null;
-
-		cSerial = new CSerial(settings);
-		cSerial.setFromRange(oFromRange);
-		cSerial.exec();
-		autofillRange = getRange(0, 2, 1, 3);
-		expectedData = [
-			['', ''],
-			['', '']
-		];
-		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression with trend mode. Start with 0 value.');
-		clearData(0, 0, 1, 3);
-		// Growth progression with trend mode. Start with 0 value for first cell and use activeFillHandle
-		oFromRange = getFilledData(0, 0, 1, 1, testData, [0, 0]);
-		wsView.activeFillHandle = getRange(0, 0, 1, 3);
-
-		cSerial = new CSerial(settings);
-		cSerial.setFromRange(oFromRange);
-		cSerial.setActiveFillHandle(wsView.activeFillHandle);
-		cSerial.exec();
-
-		autofillRange = getRange(0, 2, 1, 3);
-		expectedData = [
-			['0', '0'],
-			['0', '0']
-		];
-		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression with trend mode. Start with 0 value for first cell and use activeFillHandle');
-		clearData(0, 0, 3, 1);
 	});
 	QUnit.test('Autofill Date type - one filled row/column', function (assert) {
 		const testData = [
@@ -1119,7 +1047,7 @@ $(function () {
 		autofillData(assert, autofillRange, expectedData, 'Date progression - Year, Step - 3');
 		clearData(0, 0, 3, 5);
 	});
-	QUnit.test('Fill -> Serial. Trend. Horizontal - Multiple cells', function (assert) {
+	QUnit.test('Fill -> Series. Trend. Horizontal - Multiple cells', function (assert) {
 		let testData = [
 		  ['4', '2', '0']
 		];
@@ -1239,8 +1167,86 @@ $(function () {
 		autofillRange = getRange(1, 1, 7, 5);
 		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth multiple Rows with trend mode. With indentation row and col');
 		clearData(0, 0, 7, 5);
+		// Growth progression with trend mode. Start with 0 value.
+		testData = [
+			['0', '1'],
+			['0', '2']
+		];
+		oFromRange = getFilledData(0, 0, 3, 1, testData, [0, 0]);
+		settings.type = oSeriesType.growth;
+		settings.trend = true;
+		settings.stopValue = null;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+		autofillRange = getRange(2, 0, 3, 1);
+		expectedData = [
+			['', ''],
+			['', '']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression with trend mode. Start with 0 value.');
+		clearData(0, 0, 3, 1);
+		// Growth progression with trend mode. Start with 0 value for first cell and use activeFillHandle
+		oFromRange = getFilledData(0, 0, 1, 1, testData, [0, 0]);
+		wsView.activeFillHandle = getRange(0, 0, 3, 1);
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.setActiveFillHandle(wsView.activeFillHandle);
+		cSerial.exec();
+
+		autofillRange = getRange(2, 0, 3, 1);
+		expectedData = [
+			['0', '0'],
+			['0', '0']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression with trend mode. Start with 0 value for first cell and use activeFillHandle');
+		clearData(0, 0, 3, 1);
+		// Linear progression with trend mode. Start with empty cells
+		testData = [
+			['', '1', '2'],
+			['', '', '3', '5']
+		];
+		oFromRange = getFilledData(0, 0, 5, 1, testData, [0, 0]);
+		settings.type = oSeriesType.linear;
+		settings.trend = true;
+		settings.stopValue = null;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+
+		autofillRange = getRange(0, 0, 5, 1);
+		expectedData = [
+			['0', '1', '2', '3', '4', '5'],
+			['-1', '1', '3', '5', '7', '9']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Linear progression with trend mode. Start with empty cells');
+		clearData(0, 0, 5, 1);
+		// Growth progression with trend mode. Start with empty cells
+		testData = [
+			['', '2', '4'],
+			['', '4', '8']
+		];
+		oFromRange = getFilledData(0, 0, 5, 1, testData, [0, 0]);
+		settings.type = oSeriesType.growth;
+		settings.trend = true;
+		settings.stopValue = null;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+
+		autofillRange = getRange(0, 0, 5, 1);
+		expectedData = [
+			['1', '2', '4', '7.999999999999998', '15.999999999999998', '32'],
+			['2', '4', '7.999999999999998', '15.999999999999991', '31.999999999999986', '63.99999999999998']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression with trend mode. Start with empty cells');
+		clearData(0, 0, 5, 1);
 	});
-	QUnit.test('Fill -> Serial. Trend. Vertical - Multiple cells', function (assert) {
+	QUnit.test('Fill -> Series. Trend. Vertical - Multiple cells', function (assert) {
 		let testData = [
 			['4'],
 			['2'],
@@ -1370,8 +1376,97 @@ $(function () {
 		autofillRange = getRange(1, 1, 5, 7);
 		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth multiple Columns with trend mode. With indentation row and col');
 		clearData(0, 0, 5, 7);
+		// Growth progression with trend mode. Start with 0 value.
+		testData = [
+			['0', '0'],
+			['1', '2']
+		];
+		oFromRange = getFilledData(0, 0, 1, 3, testData, [0, 0]);
+		settings.type = oSeriesType.growth;
+		settings.trend = true;
+		settings.stopValue = null;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+		autofillRange = getRange(0, 2, 1, 3);
+		expectedData = [
+			['', ''],
+			['', '']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth progression with trend mode. Start with 0 value.');
+		clearData(0, 0, 1, 3);
+		// Growth progression with trend mode. Start with 0 value for first cell and use activeFillHandle
+		oFromRange = getFilledData(0, 0, 1, 1, testData, [0, 0]);
+		wsView.activeFillHandle = getRange(0, 0, 1, 3);
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.setActiveFillHandle(wsView.activeFillHandle);
+		cSerial.exec();
+
+		autofillRange = getRange(0, 2, 1, 3);
+		expectedData = [
+			['0', '0'],
+			['0', '0']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth progression with trend mode. Start with 0 value for first cell and use activeFillHandle');
+		clearData(0, 0, 3, 1);
+		// Linear progression with trend mode. Start with empty cells
+		testData = [
+			['', ''],
+			['1', ''],
+			['2', '3'],
+			['', '5']
+		];
+		oFromRange = getFilledData(0, 0, 1, 5, testData, [0, 0]);
+		settings.type = oSeriesType.linear;
+		settings.trend = true;
+		settings.stopValue = null;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+
+		autofillRange = getRange(0, 0, 1, 5);
+		expectedData = [
+			['0', '-1'],
+			['1', '1'],
+			['2', '3'],
+			['3', '5'],
+			['4', '7'],
+			['5', '9']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Linear progression with trend mode. Start with empty cells');
+		clearData(0, 0, 1, 5);
+		// Growth progression with trend mode. Start with empty cells
+		testData = [
+			['', ''],
+			['2','4'],
+			['4', '8']
+		];
+		oFromRange = getFilledData(0, 0, 1, 5, testData, [0, 0]);
+		settings.type = oSeriesType.growth;
+		settings.trend = true;
+		settings.stopValue = null;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+
+		autofillRange = getRange(0, 0, 1, 5);
+		expectedData = [
+			['1', '2'],
+			['2', '4'],
+			['4', '7.999999999999998'],
+			['7.999999999999998', '15.999999999999991'],
+			['15.999999999999998', '31.999999999999986'],
+			['32', '63.99999999999998']
+		]
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth progression with trend mode. Start with empty cells');
+		clearData(0, 0, 1, 5);
 	});
-	QUnit.test('Autofill Serial. StopValue out of range', function (assert) {
+	QUnit.test('Autofill Series. StopValue out of range', function (assert) {
 		const testData = [
 			['1']
 		];
@@ -1454,7 +1549,7 @@ $(function () {
 		autofillData(assert, autofillRange, [['1'], ['10'], ['100'], ['1000'], ['10000'], ['']], 'Autofill Columns. Growth. Step 10. StopValue 10000. With indentation rows and columns');
 		clearData(5, 2, 5, 7);
 	});
-	QUnit.test('Autofill Serial. Context menu. Horizontal', function (assert) {
+	QUnit.test('Autofill Series. Context menu. Horizontal', function (assert) {
 		let testData = [
 			['4', '2', '0']
 		];
@@ -1514,7 +1609,7 @@ $(function () {
 		autofillData(assert, autofillRange, [['0.2500000000000001', '0.5000000000000002', '1.0000000000000002']], 'Autofill Rows. Context menu, reverse - Growth Trend');
 		clearData(0,0,5,0);
 	});
-	QUnit.test('Autofill Serial. Context menu. Vertical', function (assert) {
+	QUnit.test('Autofill Series. Context menu. Vertical', function (assert) {
 		let testData = [
 			['4'],
 			['2'],

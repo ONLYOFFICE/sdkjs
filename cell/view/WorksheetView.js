@@ -26799,6 +26799,7 @@
 						_setSelection(oThis.activeFillHandle);
 						//History.SetSelection(oThis.activeFillHandle.clone());
 						History.SetSelectionRedo(oThis.activeFillHandle.clone());
+						oThis._updateRange(oThis.activeFillHandle);
 					}
 					History.EndTransaction();
 
