@@ -1176,7 +1176,7 @@
 		this.dxf = val;
 	};
 	CConditionalFormattingRule.prototype.asc_setLocation = function (val) {
-		var t = this;
+		let t = this;
 		if (val) {
 			if (val[0] === "=") {
 				val = val.slice(1);
@@ -1190,7 +1190,28 @@
 						item = is3DRef.range;
 					}
 				}
-				t.ranges.push(AscCommonExcel.g_oRangeCache.getAscRange(item));
+
+				let _range = AscCommonExcel.g_oRangeCache.getAscRange(item);
+				if (!_range) {
+					var oWB = Asc.editor && Asc.editor.wbModel;
+					if (oWB) {
+						var ws = oWB.getActiveWs();
+						_range = window['AscCommonExcel'].getRangeByRef(item, ws, true);
+					}
+				}
+
+				if (_range) {
+					if (Array.isArray(_range)) {
+						for (let i = 0; i < _range.length; i++) {
+							if (_range[i].bbox) {
+								t.ranges.push(_range[i].bbox);
+							}
+						}
+					} else {
+						t.ranges.push(_range);
+					}
+				}
+
 			});
 		}
 	};
