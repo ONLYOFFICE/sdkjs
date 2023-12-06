@@ -16927,7 +16927,7 @@ CColorObj.prototype =
 
 			const check = function () {
 
-				const obtainBernsteintPolynomials = function (len, t) {
+				const obtainBernsteinPolynomials = function (len, t) {
 					const result = [];
 					result.push(Math.pow((1 - t), len));
 					result.push(len * t * Math.pow((1 - t), (len - 1)));
@@ -16939,7 +16939,7 @@ CColorObj.prototype =
 				}
 				const predictY = function (cP, t) {
 					const len = cP.length;
-					const a = obtainBernsteintPolynomials(len - 1, t);
+					const a = obtainBernsteinPolynomials(len - 1, t);
 					let result = 0;
 					for (let i = 0; i < len; i++) {
 						result += a[i] * cP[i];
