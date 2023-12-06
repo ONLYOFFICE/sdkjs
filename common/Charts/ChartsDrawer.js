@@ -16812,26 +16812,23 @@ CColorObj.prototype =
 		}
 	}
 
-	function CApproximateBezier(chartsDrawer) {
-		this.cChartDrawer = chartsDrawer;
-		//[chartId][seriesId]
-		this.coordinates = {};
+	function CApproximateBezier() {
 	}
 
 	CApproximateBezier.prototype = {
 
-		constructor: CApproximateBezier, approximate: function (isLog, catAxis, valAxis, equationStorage, chartletiables) {
+		constructor: CApproximateBezier,
+
+		approximate: function (isLog, catAxis, valAxis, equationStorage, chartletiables) {
 			const controlPoints = {catVals: [], valVals: []};
 			// Step 1 find edges of line 
 			// --------------------------------------
 			const _lineCoordinate = function (storage, point, isVal) {
 				if (isVal) {
-					const valVal = equationStorage.calcYVal(point, chartletiables, isLog);
 					storage.catVal = point;
-					storage.valVal = valVal;
+					storage.valVal = equationStorage.calcYVal(point, chartletiables, isLog);
 				} else {
-					const catVal = equationStorage.calcXVal(point, chartletiables, isLog);
-					storage.catVal = catVal;
+					storage.catVal = equationStorage.calcXVal(point, chartletiables, isLog);
 					storage.valVal = point;
 				}
 			}
