@@ -282,158 +282,205 @@
 
         let geometry = oGeometry ? oGeometry : new AscFormat.Geometry();
         if (oGeometry) {
-            oGeometry.pathLst = [];
+            oGeometry.pathLst.length = 0;
         }
 
-        for (let nPath = 0; nPath < arrOfArrPoints.length; nPath++) {
-            let bClosed     = false;
-            let aPoints     = arrOfArrPoints[nPath];
-            let min_dist    = editor.WordControl.m_oDrawingDocument.GetMMPerDot(3);
-            let oLastPoint  = aPoints[aPoints.length-1];
-            let nLastIndex  = aPoints.length-1;
-            if(oLastPoint.bTemporary) {
-                nLastIndex--;
+
+        let w = xMax - xMin, h = yMax-yMin;
+        let kw, kh, pathW, pathH;
+        if(w > 0)
+        {
+            pathW = 43200;
+            kw = 43200/ w;
+        }
+        else
+        {
+            pathW = 0;
+            kw = 0;
+        }
+        if(h > 0)
+        {
+            pathH = 43200;
+            kh = 43200 / h;
+        }
+        else
+        {
+            pathH = 0;
+            kh = 0;
+        }
+
+        geometry.AddPathCommand(0,undefined, undefined, undefined, pathW, pathH);
+
+        let dR = 5;
+        let dR2 = 1.5*dR;
+
+
+        let dRR = 0.4;
+        let dRRR = 0.8;
+
+        let dXCE = w / 2;
+        let dYCE = h / 2;
+        let dA = w / 2;
+        let dB = h / 2;
+        let dAlpha = 0;
+
+        let aPoints = [];
+        let p;
+        while (dAlpha < 2* Math.PI) {
+            p = AscFormat.getEllipsePoint(dXCE, dYCE, dA, dB, dAlpha);
+            aPoints.push(p);
+            dAlpha = AscFormat.ellipseCircleIntersection(dXCE, dYCE, dA, dB, dAlpha, dR2).alpha;
+        }
+
+
+        let getLocationOnLine = function(p, p0, p1) {
+            let x, y, x0, y0, x1, y1;
+            x = p.x;
+            y = p.y;
+            x0 = p0.x;
+            y0 = p0.y;
+            x1 = p1.x;
+            y1 = p1.y;
+            let dDet = ((y0 - y1)*(x-x0) + (x1-x0)*(y-y0));
+            if(dDet > 0) {
+                return 1;
             }
-            if(nLastIndex > 1)
-            {
-                let dx = aPoints[0].x - aPoints[nLastIndex].x;
-                let dy = aPoints[0].y - aPoints[nLastIndex].y;
-                if(Math.sqrt(dx*dx +dy*dy) < min_dist)
-                {
-                    bClosed = true;
-                }
+            if(dDet < 0) {
+                return -1;
             }
-            let nMaxPtIdx = bClosed ? (nLastIndex - 1) : nLastIndex;
-
-            let w = xMax - xMin, h = yMax-yMin;
-            let kw, kh, pathW, pathH;
-            if(w > 0)
-            {
-                pathW = 43200;
-                kw = 43200/ w;
+            return 0;
+        }
+        for(let nPt = 0; nPt < aPoints.length; ++nPt) {
+            let oPrevPt, oCurPt, oNextPt;
+            if(nPt > 0) {
+                oPrevPt = aPoints[nPt - 1];
             }
-            else
-            {
-                pathW = 0;
-                kw = 0;
+            else {
+                oPrevPt = aPoints[aPoints.length - 1];
             }
-            if(h > 0)
-            {
-                pathH = 43200;
-                kh = 43200 / h;
+            oCurPt = aPoints[nPt];
+
+            if(nPt < aPoints.length - 1) {
+                oNextPt = aPoints[nPt + 1];
             }
-            else
-            {
-                pathH = 0;
-                kh = 0;
-            }
-            
-            function calculateRotationAngle(x1, y1, x2, y2, x, y) {
-                // Находим середину линии AB
-                let mx = (x1 + x2) / 2;
-                let my = (y1 + y2) / 2;
-            
-                // Вычисляем углы
-                let thetaAB = Math.atan2(y2 - y1, x2 - x1);
-                let thetaMP = Math.atan2(y - my, x - mx);
-            
-                // Вычисляем угол поворота
-                let rotationAngle = (thetaMP - thetaAB) * 180 / Math.PI + 90;
-            
-                // Нормализуем угол
-                if (rotationAngle < 0) {
-                    rotationAngle += 360;
-                }
-                return rotationAngle;
-            }
-
-            geometry.AddPathCommand(0,undefined, undefined, undefined, pathW, pathH);
-            geometry.AddPathCommand(1, (((aPoints[0].x - xMin) * kw) >> 0) + "", (((aPoints[0].y - yMin) * kh) >> 0) + "");
-
-            let oPt1, oPt2, nPt;
-            for(nPt = 0; nPt < aPoints.length; nPt++) {
-                // arc
-                oPt1 = aPoints[nPt];
-                oPt2 = aPoints[nPt + 1];
-                if (oPt2 == null) {
-                    oPt2 = aPoints[0];
-                }
-
-                let centerX = oPt1.x;
-                let centerY = oPt1.y;
-
-                let radius  = Math.sqrt(Math.pow(oPt2.x - oPt1.x, 2) + Math.pow(oPt2.y - oPt1.y, 2)) / 2;
-                // let radius  = 2.9;
-                // let angle   = Math.atan2(centerY - oPt2.y, centerX - oPt2.x);
-                let angle   = Math.atan2(centerY - oPt2.y, centerX - oPt2.x);
-                let angle2  = Math.atan2(centerX - cy, centerY - cx);
-                
-                let stAng = (angle) * (180 / Math.PI);
-                let swAng = (Math.PI) * (180 / Math.PI);
-
-                geometry.AddPathCommand(3, ((radius * kw) >> 0) + "", ((radius * kh) >> 0) + "", 
-                (stAng * 60000 >> 0) + "", (swAng * 60000 >> 0) + "");
-
-                geometry.AddPathCommand(1, (((oPt2.x - xMin) * kw) >> 0) + "", (((oPt2.y - yMin) * kh) >> 0) + "");
-
-                // break;
+            else {
+                oNextPt = aPoints[0];
             }
 
-            geometry.AddPathCommand(0,undefined, undefined, undefined, pathW, pathH);
-            geometry.AddPathCommand(1, (((aPoints[0].x - xMin) * kw) >> 0) + "", (((aPoints[0].y - yMin) * kh) >> 0) + "");
+            let dStAng, dSwAng;
+            let aInters1 = AscFormat.circlesIntersection(oPrevPt.x, oPrevPt.y, dR, oCurPt.x, oCurPt.y, dR);
 
-            let i = 1;
-            let aRanges = [[0, aPoints.length - 1]];
-            let aRange, nRange;
-            let nEnd;
-            let nPtsCount = aPoints.length;
-            oPt1, oPt2, nPt;
-            for(nRange = 0; nRange < aRanges.length; ++nRange)
-            {
-                aRange = aRanges[nRange];
-                if(aRange[0] + 1 > nMaxPtIdx) {
+
+
+            // geometry.AddPathCommand(1, (((oCurPt.x + dRR) * kw) >> 0) + "", (((oCurPt.y) * kh) >> 0) + "");
+            // geometry.AddPathCommand(3, ((dRR * kw) >> 0) + "", ((dRR * kh) >> 0) + "",
+            //     (0 * 60000 >> 0) + "", (359 * 60000 >> 0) + "");
+
+            let oStartP;
+            for(let nIdx = 0; nIdx < aInters1.length; ++nIdx) {
+                let oTestP = aInters1[nIdx];
+                if(getLocationOnLine(oTestP, oPrevPt, oCurPt) < 0) {
+                    oStartP = oTestP;
+
+
+                    // geometry.AddPathCommand(1, (((oTestP.x + dRR) * kw) >> 0) + "", (((oTestP.y) * kh) >> 0) + "");
+                    // geometry.AddPathCommand(3, ((dRR * kw) >> 0) + "", ((dRR * kh) >> 0) + "",
+                    //     (0 * 60000 >> 0) + "", (359 * 60000 >> 0) + "");
                     break;
                 }
-                nPt = aRange[0] + 1;
-                nEnd = Math.min(aRange[1], nMaxPtIdx);
-                while(nPt <= nEnd)
-                {
-                    if(nPt + 2 <= nEnd)
-                    {
-                        //cubic bezier curve
-                        oPt1 = aPoints[nPt++];
-                        oPt2 = aPoints[nPt++];
-                        oPt3 = aPoints[nPt++];
-                        geometry.AddPathCommand(5,
-                            (((oPt1.x - xMin) * kw) >> 0) + "", (((oPt1.y - yMin) * kh) >> 0) + "",
-                            (((oPt2.x - xMin) * kw) >> 0) + "", (((oPt2.y - yMin) * kh) >> 0) + "",
-                            (((oPt3.x - xMin) * kw) >> 0) + "", (((oPt3.y - yMin) * kh) >> 0) + ""
-                        );
-                    }
-                    else if(nPt + 1 <= nEnd)
-                    {
-                        //quad bezier curve
-                        oPt1 = aPoints[nPt++];
-                        oPt2 = aPoints[nPt++];
-                        geometry.AddPathCommand(4,
-                            (((oPt1.x - xMin) * kw) >> 0) + "", (((oPt1.y - yMin) * kh) >> 0) + "",
-                            (((oPt2.x - xMin) * kw) >> 0) + "", (((oPt2.y - yMin) * kh) >> 0) + ""
-                        );
-                    }
-                    else
-                    {
-                        //lineTo
-                        oPt1 = aPoints[nPt++];
-                        geometry.AddPathCommand(2,
-                            (((oPt1.x - xMin) * kw) >> 0) + "", (((oPt1.y - yMin) * kh) >> 0) + ""
-                        );
-                    }
+            }
+            if(!oStartP) {
+                return;
+            }
+
+            let aInters2 = AscFormat.circlesIntersection(oCurPt.x, oCurPt.y, dR, oNextPt.x, oNextPt.y, dR);
+            let oEndP;
+            for(let nIdx = 0; nIdx < aInters2.length; ++nIdx) {
+                let oTestP = aInters2[nIdx];
+                if(getLocationOnLine(oTestP, oCurPt, oNextPt) < 0) {
+                    oEndP = oTestP;
+
+                    // geometry.AddPathCommand(1, (((oTestP.x + dRR) * kw) >> 0) + "", (((oTestP.y) * kh) >> 0) + "");
+                    // geometry.AddPathCommand(3, ((dRRR * kw) >> 0) + "", ((dRRR * kh) >> 0) + "",
+                    //     (0 * 60000 >> 0) + "", (359 * 60000 >> 0) + "");
+                    break;
                 }
             }
-            
-            
-            // geometry.AddPathCommand(6);
+            if(!oEndP) {
+                return;
+            }
+
+
+            //vector
+            let dDX = 1;
+            let dDY = 0;
+
+
+            let dDXStart = (oStartP.x - oCurPt.x)*kw;
+            let dDYStart = (oStartP.y - oCurPt.y)*kh;
+            let dDXEnd = (oEndP.x - oCurPt.x)*kw;
+            let dDYEnd = (oEndP.y - oCurPt.y)*kh;
+
+
+            let dot = dDX*dDXStart + dDY*dDYStart;
+            let det = dDX*dDYStart - dDY*dDXStart;
+            dStAng = Math.atan2(det, dot);
+            while (dStAng < 0) {
+                dStAng += Math.PI * 2;
+            }
+
+
+            dot = dDX*dDXEnd + dDY*dDYEnd;
+            det = dDX*dDYEnd - dDY*dDXEnd;
+            let dStEnd = Math.atan2(det, dot);
+            while(dStEnd < 0) {
+                dStEnd += Math.PI * 2;
+            }
+
+            dSwAng = dStEnd - dStAng;
+
+
+            while(dSwAng < 0) {
+                dSwAng += Math.PI * 2;
+            }
+
+
+
+
+
+            // let dStartX =  oCurPt.x;  oStartP.x;
+            // let dStartY =  oCurPt.y - dR;  oStartP.y;
+            // dStAng = -Math.PI / 2;
+
+            let dStartX = oStartP.x;
+            let dStartY =  oStartP.y;
+
+            let dSwAdd = 20;
+
+            dStAng = 180 * dStAng / Math.PI;
+            dSwAng = 180 * dSwAng / Math.PI + dSwAdd;
+
+
+            geometry.AddPathCommand(nPt === 0 ? 1 : 2, (((dStartX) * kw) >> 0) + "", (((dStartY) * kh) >> 0) + "");
+
+
+            geometry.AddPathCommand(3, ((dR * kw) >> 0) + "", ((dR * kh) >> 0) + "",
+                (dStAng * 60000 + 0.5 >> 0) + "", (dSwAng * 60000 + 0.5 >> 0) + "");
+            geometry.AddPathCommand(3, ((dR * kw) >> 0) + "", ((dR * kh) >> 0) + "",
+                ((dStAng + dSwAng)* 60000 + 0.5 >> 0) + "", (-dSwAdd * 60000 + 0.5 >> 0) + "");
         }
+
+        geometry.AddPathCommand(6);
+        // geometry.AddPathCommand(1, (((p.x) * kw) >> 0) + "", (((p.y) * kh) >> 0) + "");
+        // while (dAlpha < 2* Math.PI) {
+        //
+        //     let p = AscFormat.getEllipsePoint(dXCE, dYCE, dA, dB, dAlpha)
+        //     geometry.AddPathCommand(1, (((p.x + dR) * kw) >> 0) + "", (((p.y) * kh) >> 0) + "");
+        //     geometry.AddPathCommand(3, ((dR * kw) >> 0) + "", ((dR * kh) >> 0) + "",
+        //         (0 * 60000 >> 0) + "", (359 * 60000 >> 0) + "");
+        //
+        //     dAlpha = AscFormat.ellipseCircleIntersection(dXCE, dYCE, dA, dB, dAlpha, dR2).alpha;
+        // }
 
         return geometry;
     }
