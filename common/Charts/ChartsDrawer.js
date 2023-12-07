@@ -16762,7 +16762,7 @@ CColorObj.prototype =
 			let sumSquared = 0;
 			let sumRegression = 0;
 			for (let i = 0; i < valVals.length; i++) {
-				const yValPred = predictY(catVals[i])
+				const yValPred = predictY(catVals[i]);
 				sumRegression += Math.pow((valVals[i] - yValPred), 2);
 				sumSquared += Math.pow((valVals[i] - yMean), 2);
 			}
@@ -16810,7 +16810,7 @@ CColorObj.prototype =
 				}
 			}
 		}
-	}
+	};
 
 	function CApproximateBezier() {
 	}
@@ -16831,7 +16831,7 @@ CColorObj.prototype =
 					storage.catVal = equationStorage.calcXVal(point, chartletiables, isLog);
 					storage.valVal = point;
 				}
-			}
+			};
 
 			const start = {catVal: null, valVal: null};
 			const end = {catVal: null, valVal: null};
@@ -16858,7 +16858,7 @@ CColorObj.prototype =
 				if (pos.valVal > upperBoundary) {
 					_lineCoordinate(pos, upperBoundary, false);
 				}
-			}
+			};
 
 			_checkBoundaries(start);
 			_checkBoundaries(end);
@@ -16868,7 +16868,7 @@ CColorObj.prototype =
 				const m = equationStorage.slope(catVal, chartletiables, isLog);
 				const b = valVal - (m * catVal);
 				return [b, m];
-			}
+			};
 			let direction = true;
 			const line2Letiables = _findLine(end.catVal, end.valVal);
 			let line1Letiables = _findLine(start.catVal, start.valVal);
@@ -16893,7 +16893,7 @@ CColorObj.prototype =
 				for (let i = 0; i < controlPoints.valVals.length; i++) {
 					controlPoints.valVals[i] = Math.pow(10, controlPoints.valVals[i]);
 				}
-			}
+			};
 			//Step 2 check slopes at the edges to continue
 			controlPoints.catVals.push(start.catVal);
 			controlPoints.valVals.push(start.valVal);
@@ -16936,7 +16936,7 @@ CColorObj.prototype =
 					}
 					result.push(Math.pow(t, len));
 					return result
-				}
+				};
 				const predictY = function (cP, t) {
 					const len = cP.length;
 					const a = obtainBernsteinPolynomials(len - 1, t);
@@ -16945,14 +16945,14 @@ CColorObj.prototype =
 						result += a[i] * cP[i];
 					}
 					return result;
-				}
+				};
 
 				const t = 0.5;
 				const predictedYVal = predictY(controlPoints.valVals, t);
 				const predictedXVal = predictY(controlPoints.catVals, t);
 				const actualYVal = equationStorage.calcYVal(predictedXVal, chartletiables, isLog);
 				return predictedYVal - actualYVal;
-			}
+			};
 
 			const error = isLog ? 0.01 : 0.05;
 
@@ -16974,7 +16974,7 @@ CColorObj.prototype =
 			controlPoints.valVals.splice(1, 0, null);
 
 			let lineStart = start.valVal;
-			let lineEnd = midValVal
+			let lineEnd = midValVal;
 			const storage = {minError: null, cpY: null, cpX: null};
 			for (let i = 0; i < 10; i++) {
 				controlPoints.valVals[1] = (0.5 * lineEnd) + (0.5 * lineStart);
@@ -17006,7 +17006,7 @@ CColorObj.prototype =
 
 			return {startPoint: startPoint, mainLine: controlPoints};
 		}
-	}
+	};
 
 
 	//----------------------------------------------------------export----------------------------------------------------
