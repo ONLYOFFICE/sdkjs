@@ -45,6 +45,8 @@
     function CAnnotationFreeText(sName, nPage, aRect, oDoc)
     {
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.FreeText, nPage, aRect, oDoc);
+        AscFormat.CShape.call(this);
+        AscPDF.initShape(this);
 
         this._popupOpen     = false;
         this._popupRect     = undefined;
@@ -62,15 +64,18 @@
 
         // internal
         TurnOffHistory();
-        this.content        = new AscPDF.CTextBoxContent(this, oDoc);
     }
-    CAnnotationFreeText.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
-	CAnnotationFreeText.prototype.constructor = CAnnotationFreeText;
+    CAnnotationFreeText.prototype.constructor = CAnnotationFreeText;
+    AscFormat.InitClass(CAnnotationFreeText, AscFormat.CShape, AscDFH.historyitem_type_Shape);
+    Object.assign(CAnnotationFreeText.prototype, AscPDF.CAnnotationBase.prototype);
 
-    CAnnotationFreeText.prototype.getObjectType = function() {
-        return -1;
+    CAnnotationFreeText.prototype.IsNeedDrawFromStream = function() {
+        return false;
     };
 
+    CAnnotationFreeText.prototype.IsFreeText = function() {
+        return true;
+    };
     CAnnotationFreeText.prototype.SetDefaultStyle = function(sStyle) {
         this._defaultStyle = sStyle;
     };
@@ -85,71 +90,329 @@
     }
     CAnnotationFreeText.prototype.SetLineEnd = function(nType) {
         this._lineEnd = nType;
+        
+        this.SetWasChanged(true);
+        let oLine = this.pen;
+        oLine.setTailEnd(new AscFormat.EndArrow());
+        let nLineEndType;
+        switch (nType) {
+            case AscPDF.LINE_END_TYPE.None:
+                nLineEndType = AscFormat.LineEndType.None;
+                break;
+            case AscPDF.LINE_END_TYPE.OpenArrow:
+                nLineEndType = AscFormat.LineEndType.Arrow;
+                break;
+            case AscPDF.LINE_END_TYPE.Diamond:
+                nLineEndType = AscFormat.LineEndType.Diamond;
+                break;
+            case AscPDF.LINE_END_TYPE.Circle:
+                nLineEndType = AscFormat.LineEndType.Oval;
+                break;
+            case AscPDF.LINE_END_TYPE.ClosedArrow:
+                nLineEndType = AscFormat.LineEndType.Triangle;
+                break;
+            case AscPDF.LINE_END_TYPE.ROpenArrow:
+                nLineEndType = AscFormat.LineEndType.ReverseArrow;
+                break;
+            case AscPDF.LINE_END_TYPE.RClosedArrow:
+                nLineEndType = AscFormat.LineEndType.ReverseTriangle;
+                break;
+            case AscPDF.LINE_END_TYPE.Butt:
+                nLineEndType = AscFormat.LineEndType.Butt;
+                break;
+            case AscPDF.LINE_END_TYPE.Square:
+                nLineEndType = AscFormat.LineEndType.Square;
+                break;
+            case AscPDF.LINE_END_TYPE.Slash:
+                nLineEndType = AscFormat.LineEndType.Slash;
+                break;
+            default:
+                nLineEndType = AscFormat.LineEndType.Arrow;
+                break;
+        }
+
+        oLine.tailEnd.setType(nLineEndType);
+        oLine.tailEnd.setLen(AscFormat.LineEndSize.Mid);
     };
     CAnnotationFreeText.prototype.GetLineEnd = function() {
         return this._lineEnd;
     };
+    CAnnotationFreeText.prototype.GetMinShapeRect = function() {
+        let oViewer     = editor.getDocumentRenderer();
+        let nLineWidth  = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+        let aVertices     = this.GetVertices();
+        let nPage       = this.GetPage();
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        let shapeAtStart    = getFigureSize(this.GetLineStart(), nLineWidth);
+        let shapeAtEnd      = getFigureSize(this.GetLineEnd(), nLineWidth);
+
+        function calculateBoundingRectangle(line, figure1, figure2) {
+            const {x1, y1, x2, y2} = line;
+        
+            // Расчет угла поворота в радианах
+            const angle = Math.atan2(y2 - y1, x2 - x1);
+        
+            function rotatePoint(cx, cy, angle, px, py) {
+                var cos = Math.cos(angle),
+                    sin = Math.sin(angle),
+                    nx = (sin * (px - cx)) + (cos * (py - cy)) + cx,
+                    ny = (sin * (py - cy)) - (cos * (px - cx)) + cy;
+                return {x: nx, y: ny};
+            }
+            
+            function getRectangleCorners(cx, cy, width, height, angle) {
+                var halfWidth = width / 2;
+                var halfHeight = height / 2;
+            
+                // Углы прямоугольника до поворота
+                var corners = [
+                    {x: cx - halfWidth, y: cy - halfHeight}, // верхний левый
+                    {x: cx + halfWidth, y: cy - halfHeight}, // верхний правый
+                    {x: cx + halfWidth, y: cy + halfHeight}, // нижний правый
+                    {x: cx - halfWidth, y: cy + halfHeight}  // нижний левый
+                ];
+            
+                // Поворачиваем каждую точку
+                return corners.map(function(point) {
+                    return rotatePoint(cx, cy, angle, point.x, point.y);
+                });
+            }
+        
+            const cornersFigure1 = getRectangleCorners(x1, y1, figure1.width, figure1.height, angle);
+            const cornersFigure2 = getRectangleCorners(x2, y2, figure2.width, figure2.height, angle);
+
+            // Находим минимальные и максимальные координаты
+            let minX = Math.min(x1, x2);
+            let maxX = Math.max(x1, x2);
+            let minY = Math.min(y1, y2);
+            let maxY = Math.max(y1, y2);
+
+            [...cornersFigure1, ...cornersFigure2].forEach(point => {
+                minX = Math.min(minX, point.x);
+                maxX = Math.max(maxX, point.x);
+                minY = Math.min(minY, point.y);
+                maxY = Math.max(maxY, point.y);
+            });
+        
+            // Возвращаем координаты прямоугольника
+            return [minX * nScaleX, minY * nScaleY, maxX * nScaleX, maxY * nScaleY];
+        }
+
+        let oStartLine = {
+            x1: aVertices[0],
+            y1: aVertices[1],
+            x2: aVertices[2],
+            y2: aVertices[3]
+        }
+        let oEndLine = {
+            x1: aVertices[aVertices.length - 4],
+            y1: aVertices[aVertices.length - 3],
+            x2: aVertices[aVertices.length - 2],
+            y2: aVertices[aVertices.length - 1]
+        }
+
+        function findBoundingRectangle(points) {
+            let x_min = points[0], y_min = points[1];
+            let x_max = points[0], y_max = points[1];
+        
+            for (let i = 2; i < points.length; i += 2) {
+                x_min = Math.min(x_min, points[i]);
+                x_max = Math.max(x_max, points[i]);
+                y_min = Math.min(y_min, points[i + 1]);
+                y_max = Math.max(y_max, points[i + 1]);
+            }
+        
+            return [x_min * nScaleX, y_min * nScaleY, x_max * nScaleX, y_max * nScaleY];
+        }
+
+        // находим ректы исходных точек. Стартовой линии учитывая lineStart фигуру, и такую же для конца
+        // далее нахоим объединения всех прямоугольников для получения результирующего
+        let aSourceRect     = findBoundingRectangle(aVertices);
+        let aStartLineRect  = calculateBoundingRectangle(oStartLine, shapeAtStart, {width: 0, height: 0});
+        let aEndLineRect    = calculateBoundingRectangle(oEndLine, {width: 0, height: 0} , shapeAtEnd);
+
+        return unionRectangles([aSourceRect, aStartLineRect, aEndLineRect]);
+    };
     CAnnotationFreeText.prototype.SetCallout = function(aCallout) {
+        this.recalcGeometry();
+        
         this._callout = aCallout;
     };
     CAnnotationFreeText.prototype.GetCallout = function() {
         return this._callout;
     };
-    CAnnotationFreeText.prototype.Draw = function(oGraphics) {
-        if (this.IsHidden() == true)
-            return;
+    CAnnotationFreeText.prototype.SetWidth = function(nWidthPt) {
+        this._width = nWidthPt; 
 
-        let oViewer = editor.getDocumentRenderer();
-        let oGraphicsWord = oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
+        nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
+        let oLine = this.pen;
+        oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
+    };
+    CAnnotationFreeText.prototype.SetStrokeColor = function(aColor) {
+        this._strokeColor = aColor;
+
+        let oRGB    = this.GetRGBColor(aColor);
+        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+        let oLine   = this.pen;
+        oLine.setFill(oFill);
+    };
+    CAnnotationFreeText.prototype.SetFillColor = function(aColor) {
+        this._fillColor = aColor;
+
+        let oRGB    = this.GetRGBColor(aColor);
+        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+        this.setFill(oFill);
+    };
+    CAnnotationFreeText.prototype.SetRect = function(aRect) {
+        let oViewer     = editor.getDocumentRenderer();
+        let oDoc        = oViewer.getPDFDoc();
+        let nPage       = this.GetPage();
+
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aRect));
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        this._rect = aRect;
+
+        this._pagePos = {
+            x: aRect[0],
+            y: aRect[1],
+            w: (aRect[2] - aRect[0]),
+            h: (aRect[3] - aRect[1])
+        };
+
+        this._origRect[0] = this._rect[0] / nScaleX;
+        this._origRect[1] = this._rect[1] / nScaleY;
+        this._origRect[2] = this._rect[2] / nScaleX;
+        this._origRect[3] = this._rect[3] / nScaleY;
+
+        oDoc.TurnOffHistory();
+
+        this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
+        this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
         
-        this.Recalculate();
+        this.AddToRedraw();
+        this.SetWasChanged(true);
+        this.SetDrawFromStream(false);
+    };
+    CAnnotationFreeText.prototype.LazyCopy = function() {
+        let oDoc = this.GetDocument();
+        oDoc.TurnOffHistory();
 
-        oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
+        let oFreeText = new CAnnotationFreeText(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
 
-        this.content.Draw(0, oGraphicsWord);
-        oGraphicsWord.RemoveClip();
+        oFreeText._pagePos = {
+            x: this._pagePos.x,
+            y: this._pagePos.y,
+            w: this._pagePos.w,
+            h: this._pagePos.h
+        }
+        oFreeText._origRect = this._origRect.slice();
+
+        this.fillObject(oFreeText);
+
+        oFreeText.pen = new AscFormat.CLn();
+        oFreeText._apIdx = this._apIdx;
+        oFreeText._originView = this._originView;
+        oFreeText.SetOriginPage(this.GetOriginPage());
+        oFreeText.SetAuthor(this.GetAuthor());
+        oFreeText.SetModDate(this.GetModDate());
+        oFreeText.SetCreationDate(this.GetCreationDate());
+        oFreeText.SetWidth(this.GetWidth());
+        oFreeText.SetStrokeColor(this.GetStrokeColor().slice());
+        oFreeText.SetContents(this.GetContents());
+        oFreeText.SetFillColor(this.GetFillColor());
+        oFreeText.SetLineEnd(this.GetLineEnd());
+        oFreeText.recalcInfo.recalculatePen = false;
+        oFreeText.recalcInfo.recalculateGeometry = true;
+        oFreeText._callout = this._callout.slice();
+        oFreeText._rectDiff = this._rectDiff.slice();
+        oFreeText.SetWasChanged(oFreeText.IsChanged());
+        return oFreeText;
     };
     CAnnotationFreeText.prototype.Recalculate = function() {
-        // if (this.IsNeedRecalc() == false)
-        //     return;
+        if (this.IsNeedRecalc() == false)
+            return;
 
+        let oViewer     = editor.getDocumentRenderer();
+        let nPage       = this.GetPage();
+        let aOrigRect   = this.GetOrigRect();
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+        
+        this.handleUpdatePosition();
+        if (this.recalcInfo.recalculateGeometry)
+            this.RefillGeometry();
+
+        this.recalculate();
+        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
+    };
+    CAnnotationFreeText.prototype.RefillGeometry = function() {
         let oViewer = editor.getDocumentRenderer();
-        let aRect   = this.GetRect();
+        let oDoc    = oViewer.getPDFDoc();
         
-        let X = aRect[0];
-        let Y = aRect[1];
-        let nWidth = (aRect[2] - aRect[0]);
-        let nHeight = (aRect[3] - aRect[1]);
+        let aOrigRect   = this.GetOrigRect();
+        let aCallout    = this.GetCallout(); // координаты выходящей стрелки
+        let aRD         = this.GetRectangleDiff(); // отступ координат фигуры с текстом от ректа аннотации
 
-        let contentX;
-        let contentY;
-        let contentXLimit;
-        let contentYLimit;
-        
-        contentX = (X) * g_dKoef_pix_to_mm;
-        contentY = (Y) * g_dKoef_pix_to_mm;
-        contentXLimit = (X + nWidth) * g_dKoef_pix_to_mm;
-        contentYLimit = (Y + nHeight) * g_dKoef_pix_to_mm;
+        let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom;
 
-        if (!this.contentRect)
-            this.contentRect = {};
+        let aFreeTextPoints = [];
 
-        this.contentRect.X = contentX;
-        this.contentRect.Y = contentY;
-        this.contentRect.W = contentXLimit - contentX;
-        this.contentRect.H = contentYLimit - contentY;
+        // набиваем прямоугольник
+        // точка выхода callout
+        aFreeTextPoints.push({
+            x: aCallout[2 * 2] * g_dKoef_pix_to_mm * nScaleX, // начинаем с x3,y3 из callout
+            y: (aCallout[2 * 2 + 1])* g_dKoef_pix_to_mm * nScaleY
+        });
+        // левый верхний
+        aFreeTextPoints.push({
+            x: aCallout[2 * 2] * g_dKoef_pix_to_mm * nScaleX,
+            y: (aOrigRect[1] + aRD[1]) * g_dKoef_pix_to_mm * nScaleY
+        });
+        // правый верхний
+        aFreeTextPoints.push({
+            x: (aOrigRect[2] - aRD[2]) * g_dKoef_pix_to_mm * nScaleX,
+            y: (aOrigRect[1] + aRD[1]) * g_dKoef_pix_to_mm * nScaleY
+        });
+        // правый нижний
+        aFreeTextPoints.push({
+            x: (aOrigRect[2] - aRD[2]) * g_dKoef_pix_to_mm * nScaleX,
+            y: (aOrigRect[3] - aRD[3]) * g_dKoef_pix_to_mm * nScaleY
+        });
+        // левый нижний
+        aFreeTextPoints.push({
+            x: aCallout[2 * 2] * g_dKoef_pix_to_mm * nScaleX,
+            y: (aOrigRect[3] - aRD[3]) * g_dKoef_pix_to_mm * nScaleY
+        });
+        // возврат в точку выхода callout
+        aFreeTextPoints.push({
+            x: aCallout[2 * 2] * g_dKoef_pix_to_mm * nScaleX,
+            y: (aCallout[2 * 2 + 1])* g_dKoef_pix_to_mm * nScaleY
+        });
+        // x2, y2 линии
+        aFreeTextPoints.push({
+            x: aCallout[1 * 2] * g_dKoef_pix_to_mm * nScaleX,
+            y: (aCallout[1 * 2 + 1])* g_dKoef_pix_to_mm * nScaleY
+        });
+        // x1, y1 линии
+        aFreeTextPoints.push({
+            x: aCallout[0 * 2] * g_dKoef_pix_to_mm * nScaleX,
+            y: (aCallout[0 * 2 + 1])* g_dKoef_pix_to_mm * nScaleY
+        });
 
-        if (!this._oldContentPos)
-            this._oldContentPos = {};
+        let aShapeRectInMM = this.GetRect().map(function(measure) {
+            return measure * g_dKoef_pix_to_mm;
+        });
 
-        if (contentX != this._oldContentPos.X || contentY != this._oldContentPos.Y ||
-            contentXLimit != this._oldContentPos.XLimit) {
-            this.content.X      = this._oldContentPos.X        = contentX;
-            this.content.Y      = this._oldContentPos.Y        = contentY;
-            this.content.XLimit = this._oldContentPos.XLimit   = contentXLimit;
-            this.content.YLimit = this._oldContentPos.YLimit   = 20000;
-            this.content.Recalculate_Page(0, true);
-        }
+        oDoc.TurnOffHistory();
+        fillShapeByPoints([aFreeTextPoints], aShapeRectInMM, this);
     };
     CAnnotationFreeText.prototype.AddReply = function(oReply) {
         let oDoc = this.GetDocument();
@@ -289,6 +552,151 @@
             reply.WriteToBinary(memory); 
         });
     };
+
+    function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
+        let xMax = aShapeRect[2];
+        let xMin = aShapeRect[0];
+        let yMin = aShapeRect[1];
+        let yMax = aShapeRect[3];
+
+        let geometry = generateGeometry(arrOfArrPoints, [xMin, yMin, xMax, yMax]);
+        oParentAnnot.spPr.setGeometry(geometry);
+        oParentAnnot.updatePosition(xMin, yMin);
+
+        oParentAnnot.x = xMin;
+        oParentAnnot.y = yMin;
+        return oParentAnnot;
+    }
+
+    function generateGeometry(arrOfArrPoints, aBounds, oGeometry) {
+        let xMin = aBounds[0];
+        let yMin = aBounds[1];
+        let xMax = aBounds[2];
+        let yMax = aBounds[3];
+
+        let geometry = oGeometry ? oGeometry : new AscFormat.Geometry();
+        if (oGeometry) {
+            oGeometry.pathLst = [];
+        }
+
+        for (let nPath = 0; nPath < arrOfArrPoints.length; nPath++) {
+            let bClosed     = false;
+            let aPoints     = arrOfArrPoints[nPath];
+            let min_dist    = editor.WordControl.m_oDrawingDocument.GetMMPerDot(3);
+            let oLastPoint  = aPoints[aPoints.length-1];
+            let nLastIndex  = aPoints.length-1;
+            if(oLastPoint.bTemporary) {
+                nLastIndex--;
+            }
+            if(nLastIndex > 1)
+            {
+                let dx = aPoints[0].x - aPoints[nLastIndex].x;
+                let dy = aPoints[0].y - aPoints[nLastIndex].y;
+                if(Math.sqrt(dx*dx +dy*dy) < min_dist)
+                {
+                    bClosed = true;
+                }
+            }
+
+            let w = xMax - xMin, h = yMax-yMin;
+            let kw, kh, pathW, pathH;
+            if(w > 0)
+            {
+                pathW = 43200;
+                kw = 43200/ w;
+            }
+            else
+            {
+                pathW = 0;
+                kw = 0;
+            }
+            if(h > 0)
+            {
+                pathH = 43200;
+                kh = 43200 / h;
+            }
+            else
+            {
+                pathH = 0;
+                kh = 0;
+            }
+            
+            geometry.AddPathCommand(0,undefined, "none", undefined, pathW, pathH);
+            geometry.AddPathCommand(1, (((aPoints[0].x - xMin) * kw) >> 0) + "", (((aPoints[0].y - yMin) * kh) >> 0) + "");
+
+            let oPt, nPt;
+            for(nPt = 1; nPt < aPoints.length; nPt++) {
+                oPt = aPoints[nPt];
+
+                geometry.AddPathCommand(2,
+                    (((oPt.x - xMin) * kw) >> 0) + "", (((oPt.y - yMin) * kh) >> 0) + ""
+                );
+            }
+        }
+
+        geometry.preset = null;
+        geometry.rectS = null;
+        return geometry;
+    }
+
+    function getFigureSize(nType, nLineW) {
+        let oSize = {width: 0, height: 0};
+
+        switch (nType) {
+            case AscPDF.LINE_END_TYPE.None:
+                oSize.width = nLineW;
+                oSize.height = nLineW;
+            case AscPDF.LINE_END_TYPE.OpenArrow:
+            case AscPDF.LINE_END_TYPE.ClosedArrow:
+                oSize.width = 4 * nLineW;
+                oSize.height = 2 * nLineW;
+                break;
+            case AscPDF.LINE_END_TYPE.Diamond:
+            case AscPDF.LINE_END_TYPE.Square:
+                oSize.width = 4 * nLineW;
+                oSize.height = 4 * nLineW;
+                break;
+            case AscPDF.LINE_END_TYPE.Circle:
+                oSize.width = 4 * nLineW;
+                oSize.height = 4 * nLineW;
+                break;
+            case AscPDF.LINE_END_TYPE.RClosedArrow:
+                oSize.width = 6 * nLineW;
+                oSize.height = 6 * nLineW;
+                break;
+            case AscPDF.LINE_END_TYPE.ROpenArrow:
+                oSize.width = 5 * nLineW;
+                oSize.height = 5 * nLineW;
+                break;
+            case AscPDF.LINE_END_TYPE.Butt:
+                oSize.width = 5 * nLineW;
+                oSize.height = 1.5 * nLineW;
+                break;
+            case AscPDF.LINE_END_TYPE.Slash:
+                oSize.width = 4 * nLineW;
+                oSize.height = 3.5 * nLineW;
+                break;
+            
+        }
+
+        return oSize;
+    }
+
+    function unionRectangles(rects) {
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+    
+        rects.forEach(rect => {
+            minX = Math.min(minX, rect[0]);
+            minY = Math.min(minY, rect[1]);
+            maxX = Math.max(maxX, rect[2]);
+            maxY = Math.max(maxY, rect[3]);
+        });
+    
+        return [minX, minY, maxX, maxY];
+    }
 
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)

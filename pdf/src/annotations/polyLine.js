@@ -108,35 +108,13 @@
         let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom;
 
         let aPolygonPoints = [];
-        let aPointsCanvas = [];
         for (let i = 0; i < aPoints.length - 1; i += 2) {
             aPolygonPoints.push({
                 x: aPoints[i] * g_dKoef_pix_to_mm * nScaleX,
                 y: (aPoints[i + 1])* g_dKoef_pix_to_mm * nScaleY
             });
-            aPointsCanvas.push({
-                x: aPoints[i],
-                y: aPoints[i + 1]
-            });
         }
         
-        const canvas = document.createElement('canvas');
-        canvas.width = 1000;
-        canvas.height = 1000;
-        const ctx = canvas.getContext('2d');
-
-        ctx.beginPath();
-        ctx.moveTo(aPointsCanvas[0].x, aPointsCanvas[0].y);
-
-        for (let i = 1; i < aPointsCanvas.length; i++) {
-            let oPt = aPointsCanvas[i];
-
-            ctx.lineTo(oPt.x, oPt.y);
-            ctx.stroke();
-            if (i == 2)
-                break;
-        }
-
         let aShapeRectInMM = this.GetRect().map(function(measure) {
             return measure * g_dKoef_pix_to_mm;
         });

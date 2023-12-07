@@ -65,33 +65,34 @@
         let oDoc = this.GetDocument();
         oDoc.TurnOffHistory();
 
-        let oCircle = new CAnnotationSquare(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+        let oSquare = new CAnnotationSquare(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
 
-        oCircle._pagePos = {
+        oSquare._pagePos = {
             x: this._pagePos.x,
             y: this._pagePos.y,
             w: this._pagePos.w,
             h: this._pagePos.h
         }
-        oCircle._origRect = this._origRect.slice();
+        oSquare._origRect = this._origRect.slice();
 
-        this.fillObject(oCircle);
+        this.fillObject(oSquare);
 
-        oCircle.pen = new AscFormat.CLn();
-        oCircle._apIdx = this._apIdx;
-        oCircle._originView = this._originView;
-        oCircle.SetOriginPage(this.GetOriginPage());
-        oCircle.SetAuthor(this.GetAuthor());
-        oCircle.SetModDate(this.GetModDate());
-        oCircle.SetCreationDate(this.GetCreationDate());
-        oCircle.SetWidth(this.GetWidth());
-        oCircle.SetStrokeColor(this.GetStrokeColor().slice());
-        oCircle.SetFillColor(this.GetFillColor());
-        oCircle.recalcInfo.recalculatePen = false;
-        oCircle.recalcInfo.recalculateGeometry = true;
-        oCircle.recalculate();
+        oSquare.pen = new AscFormat.CLn();
+        oSquare._apIdx = this._apIdx;
+        oSquare._originView = this._originView;
+        oSquare.SetOriginPage(this.GetOriginPage());
+        oSquare.SetAuthor(this.GetAuthor());
+        oSquare.SetModDate(this.GetModDate());
+        oSquare.SetCreationDate(this.GetCreationDate());
+        oSquare.SetWidth(this.GetWidth());
+        oSquare.SetStrokeColor(this.GetStrokeColor().slice());
+        oSquare.SetFillColor(this.GetFillColor());
+        oSquare.recalcInfo.recalculatePen = false;
+        oSquare.recalcInfo.recalculateGeometry = true;
+        oSquare._rectDiff = this._rectDiff.slice();
+        oSquare.recalculate();
 
-        return oCircle;
+        return oSquare;
     };
     CAnnotationSquare.prototype.RefillGeometry = function() {
         return;
@@ -119,6 +120,25 @@
         oDoc.TurnOffHistory();
         // generateGeometry([aPoints], aShapeRectInMM, this.spPr.geometry);
         // this.spPr.geometry.Recalculate(10, 10);
+    };
+    CAnnotationSquare.prototype.SetRectangleDiff = function(aDiff) {
+        this._rectDiff = aDiff;
+
+        let oViewer     = editor.getDocumentRenderer();
+        let nPage       = this.GetPage();
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
+
+        let aOrigRect = this.GetOrigRect();
+
+        this.spPr.xfrm.setOffX(aDiff[0] * nScaleX);
+        this.spPr.xfrm.setOffY(aDiff[1] * nScaleY);
+        let extX = ((aOrigRect[2] - aOrigRect[0]) - aDiff[0] - aDiff[2]) * nScaleX;
+        let extY = ((aOrigRect[3] - aOrigRect[1]) - aDiff[1] - aDiff[3]) * nScaleY;
+
+        this.spPr.xfrm.setExtX(extX);
+        this.spPr.xfrm.setExtY(extY);
     };
     CAnnotationSquare.prototype.IsSquare = function() {
         return true;
