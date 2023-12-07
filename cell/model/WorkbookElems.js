@@ -8985,33 +8985,123 @@ function RangeDataManagerElem(bbox, data)
 		return null;
 	};
 
-	TablePart.prototype.getSelectionString = function(activeCell, handleSelectionCell) {
+	TablePart.prototype.getSelectionString = function(activeCell, handleSelectionRange) {
 		let res;
-		if (this.Ref.contains2(handleSelectionCell)) {
-			res = "";
-			if (this._isTotalRowContainsCell(handleSelectionCell)) {
 
-			} else if (this._isHeaderRowContainsCell(handleSelectionCell)) {
-
+		let getColumnNameRange = function (_start, _end) {
+			if (_start !== _end) {
+				return "[" + _start + "]" +  ":" +  "[" + _end + "]";
+			} else {
+				return _start;
 			}
+		};
+
+		if (this.Ref.containsRange(handleSelectionRange)) {
+			if (this.Ref.isEqual(handleSelectionRange)) {
+				//Table1[#All]
+				return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.all + "]";
+			} else if (this.Ref.r1 === handleSelectionRange.r1 && this.Ref.r2 === handleSelectionRange.r2) {
+				//Table1[[#All];[Column1]]
+				//Table1[[#All];[Column1]:[Column2]]
+				let startCol = this.getTableNameColumnByIndex(handleSelectionRange.c1 - this.Ref.c1);
+				let endCol = this.getTableNameColumnByIndex(handleSelectionRange.c2 - this.Ref.c1);
+				return this.DisplayName + "[" + "[" + AscCommon.cStrucTableReservedWords.all + "]" + ";" + getColumnNameRange(startCol, endCol);
+			}
+
+			let dataContains = this._isDataTableContainsRange(handleSelectionRange);
+			if (dataContains && dataContains.partialIntersection) {
+				//check on @
+				if (handleSelectionRange.isOneRow()) {
+					if (activeCell.row === handleSelectionRange.r1) {
+						if (handleSelectionRange.c1 === this.Ref.c1 && handleSelectionRange.c2 === this.Ref.c2) {
+							//all row
+							//Table1[@]
+							return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.at + "]";
+						} else {
+							//part of row
+							//Table1[@[Column2]:[Column3]]
+							//Table1[@Column1]
+							let startCol = this.getTableNameColumnByIndex(handleSelectionRange.c1 - this.Ref.c1);
+							let endCol = this.getTableNameColumnByIndex(handleSelectionRange.c2 - this.Ref.c1);
+							return this.DisplayName +  + "[" + AscCommon.cStrucTableReservedWords.at + getColumnNameRange(startCol, endCol) + "]";
+						}
+					}
+				}
+				return null;
+			}
+			let totalContains = this._isTotalRowContainsRange(handleSelectionRange);
+			if (totalContains && totalContains.partialIntersection) {
+				return null;
+			}
+			let headerContains = this._isHeaderRowContainsRange(handleSelectionRange);
+			if (headerContains && headerContains.partialIntersection) {
+				return null;
+			}
+
+			//1. only all data - Table1
+
+
+			//2. only data Table4[[Column1]:[Column2]] / Table4[Column1]
+
+			//3. only all totals - Table4[#Totals]
+
+			//4. only totals - Table4[[#Totals];[Column1]:[Column2]]
+
+			//5. only all headers - Table4[#Headers]
+
+			//6. only headers - Table4[[#Headers];[Column1]:[Column2]]
+
+			//hybrid totals/headers/data
+			
+			//Table4[[#Data];[#Totals];[Column1]]
+			//Table4[[#Headers];[#Data];[Column1]]
+			//Table4[[#Totals];[Column1]]
+
 		}
 
 	};
 
-	TablePart.prototype._isTotalRowContainsCell = function(cell) {
-		if (cell && this.isTotalsRow()) {
-			if (this.Ref.contains2(cell) && this.Ref.r2 === cell.row) {
-				return true;
+	//return {start: , end: , all: , partIntersection}
+	TablePart.prototype._getContainsRange = function(range, tablePartRange, checkPartialIntersection) {
+		let intersection = range.intersection(tablePartRange);
+		if (intersection) {
+			if (tablePartRange.isEqual(intersection)) {
+				return {all: true};
+			} else {
+				if (checkPartialIntersection && (intersection.r1 !== tablePartRange.r1 || intersection.r2 !== tablePartRange.r2)) {
+					return {partialIntersection: true};
+				}
+				return {start: intersection.c1, end: intersection.c2};
+			}
+		}
+
+		return false;
+	};
+
+	TablePart.prototype._isTotalRowContainsRange = function(range) {
+		if (range && this.isTotalsRow()) {
+			if (this.Ref.containsRange(range)) {
+				let _totalRange = this.getTableRangeForFormula({param: FormulaTablePartInfo.totals});
+				return this._getContainsRange(range, _totalRange);
 			}
 		}
 		return false;
 	};
 
-	TablePart.prototype._isHeaderRowContainsCell = function(cell) {
-		if (cell && this.isHeaderRow()) {
-			if (this.Ref.contains2(cell) && this.Ref.r1 === cell.row) {
-				return true;
+	TablePart.prototype._isHeaderRowContainsRange = function(range) {
+		if (range && this.isHeaderRow()) {
+			if (this.Ref.containsRange(range)) {
+				let _headerRange = this.getTableRangeForFormula({param: FormulaTablePartInfo.headers});
+				return this._getContainsRange(range, _headerRange);
 			}
+		}
+		return false;
+	};
+
+	TablePart.prototype._isDataTableContainsRange = function(range) {
+		if (this.Ref.containsRange(range)) {
+			let _dataRange = this.getTableRangeForFormula({param: FormulaTablePartInfo.data});
+			return this._getContainsRange(range, _dataRange, true);
 		}
 		return false;
 	};
