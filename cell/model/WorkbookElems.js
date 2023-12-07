@@ -8988,24 +8988,26 @@ function RangeDataManagerElem(bbox, data)
 	TablePart.prototype.getSelectionString = function(activeCell, handleSelectionRange) {
 		let res;
 
-		let getColumnNameRange = function (_start, _end) {
+		let getColumnNameRange = function (_start, _end, _needAddParenthesis) {
 			if (_start !== _end) {
 				return "[" + _start + "]" +  ":" +  "[" + _end + "]";
 			} else {
-				return _start;
+				return _needAddParenthesis ? "[" + _start + "]" : _start;
 			}
 		};
 
 		if (this.Ref.containsRange(handleSelectionRange)) {
+
+			let startCol = this.getTableNameColumnByIndex(handleSelectionRange.c1 - this.Ref.c1);
+			let endCol = this.getTableNameColumnByIndex(handleSelectionRange.c2 - this.Ref.c1);
+
 			if (this.Ref.isEqual(handleSelectionRange)) {
 				//Table1[#All]
 				return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.all + "]";
 			} else if (this.Ref.r1 === handleSelectionRange.r1 && this.Ref.r2 === handleSelectionRange.r2) {
 				//Table1[[#All];[Column1]]
 				//Table1[[#All];[Column1]:[Column2]]
-				let startCol = this.getTableNameColumnByIndex(handleSelectionRange.c1 - this.Ref.c1);
-				let endCol = this.getTableNameColumnByIndex(handleSelectionRange.c2 - this.Ref.c1);
-				return this.DisplayName + "[" + "[" + AscCommon.cStrucTableReservedWords.all + "]" + ";" + getColumnNameRange(startCol, endCol);
+				return this.DisplayName + "[" + "[" + AscCommon.cStrucTableReservedWords.all + "]" + ";" + getColumnNameRange(startCol, endCol, true);
 			}
 
 			let dataContains = this._isDataTableContainsRange(handleSelectionRange);
@@ -9021,8 +9023,6 @@ function RangeDataManagerElem(bbox, data)
 							//part of row
 							//Table1[@[Column2]:[Column3]]
 							//Table1[@Column1]
-							let startCol = this.getTableNameColumnByIndex(handleSelectionRange.c1 - this.Ref.c1);
-							let endCol = this.getTableNameColumnByIndex(handleSelectionRange.c2 - this.Ref.c1);
 							return this.DisplayName +  + "[" + AscCommon.cStrucTableReservedWords.at + getColumnNameRange(startCol, endCol) + "]";
 						}
 					}
@@ -9038,30 +9038,91 @@ function RangeDataManagerElem(bbox, data)
 				return null;
 			}
 
-			//1. only all data - Table1
 
-
+			//1. only data - Table1
 			//2. only data Table4[[Column1]:[Column2]] / Table4[Column1]
+			if (dataContains && !totalContains && !headerContains) {
+				return dataContains.all ? this.DisplayName : this.DisplayName + "[" + getColumnNameRange(startCol, endCol, true) + "]";
+			}
 
 			//3. only all totals - Table4[#Totals]
-
 			//4. only totals - Table4[[#Totals];[Column1]:[Column2]]
+			if (!dataContains && totalContains && !headerContains) {
+				if (totalContains.all) {
+					return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.totals + "]";
+				} else {
+					return this.DisplayName + "[" + "[" +  AscCommon.cStrucTableReservedWords.totals + "]" + ";" + getColumnNameRange(startCol, endCol, true) + "]";
+				}
+			}
 
 			//5. only all headers - Table4[#Headers]
-
 			//6. only headers - Table4[[#Headers];[Column1]:[Column2]]
+			if (!dataContains && !totalContains && headerContains) {
+				if (headerContains.all) {
+					return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.headers + "]";
+				} else {
+					return this.DisplayName + "[" + "[" +  AscCommon.cStrucTableReservedWords.headers + "]" + ";" + getColumnNameRange(startCol, endCol, true) + "]";
+				}
+			}
+
 
 			//hybrid totals/headers/data
-			
+
 			//Table4[[#Data];[#Totals];[Column1]]
 			//Table4[[#Headers];[#Data];[Column1]]
 			//Table4[[#Totals];[Column1]]
+			//Table4[[#Headers];[#Data];[Column1]:[Column2]]
 
+
+			//all hybrid
+			//Table4[[#Data];[#Totals]]
+			if (dataContains || totalContains || headerContains) {
+				let isAll;
+				let res = this.DisplayName + "[";
+				let needDelimiter = false;
+				if (headerContains) {
+					res += "[" + AscCommon.cStrucTableReservedWords.headers + "]";
+					needDelimiter = true;
+					if (headerContains.all) {
+						isAll = true;
+					}
+				}
+				if (dataContains) {
+					if (needDelimiter) {
+						res += ";";
+					}
+					res += "[" + AscCommon.cStrucTableReservedWords.data + "]";
+					needDelimiter = true;
+					if (dataContains.all) {
+						isAll = true;
+					}
+				}
+				if (totalContains) {
+					if (needDelimiter) {
+						res += ";";
+					}
+					res += "[" + AscCommon.cStrucTableReservedWords.totals + "]";
+					needDelimiter = true;
+					if (totalContains.all) {
+						isAll = true;
+					}
+				}
+
+				if (!isAll) {
+					res += ";" + getColumnNameRange(startCol, endCol, true);
+				}
+
+				res += "]";
+
+				return res;
+			}
 		}
+
+		return res;
 
 	};
 
-	//return {start: , end: , all: , partIntersection}
+	//return {all: , partIntersection}/true/false
 	TablePart.prototype._getContainsRange = function(range, tablePartRange, checkPartialIntersection) {
 		let intersection = range.intersection(tablePartRange);
 		if (intersection) {
@@ -9071,7 +9132,7 @@ function RangeDataManagerElem(bbox, data)
 				if (checkPartialIntersection && (intersection.r1 !== tablePartRange.r1 || intersection.r2 !== tablePartRange.r2)) {
 					return {partialIntersection: true};
 				}
-				return {start: intersection.c1, end: intersection.c2};
+				return true;
 			}
 		}
 
