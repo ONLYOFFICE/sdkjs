@@ -10955,7 +10955,11 @@
             if (ranges.length === 1) {
 				let tables = this.model.autoFilters.getTablesIntersectionRange(ranges[0]);
 				if (tables && tables.length === 1) {
-					console.log(tables[0].getSelectionString(this.model.getSelection().activeCell, ranges[0]));
+					let sTable = tables[0].getSelectionString(this.model.getSelection().activeCell, ranges[0]);
+					if (sTable) {
+						res.push(sTable);
+						return res;
+					}
 				}
 			}
 
