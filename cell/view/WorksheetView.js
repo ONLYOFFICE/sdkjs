@@ -10950,6 +10950,15 @@
         addSheet = addSheet || this.workbook.getDialogSheetName();
         if (this.model.selectionRange) {
             var ranges = this.model.selectionRange.ranges;
+
+
+            if (ranges.length === 1) {
+				let tables = this.model.autoFilters.getTablesIntersectionRange(ranges[0]);
+				if (tables && tables.length === 1) {
+					console.log(tables[0].getSelectionString(this.model.getSelection().activeCell, ranges[0]));
+				}
+			}
+
             for (var i = 0; i < ranges.length; ++i) {
 				var range = ranges[i];
 				//делаю условие только для формул, просмотреть все остальные диапазоны

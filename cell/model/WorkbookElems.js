@@ -8986,8 +8986,6 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	TablePart.prototype.getSelectionString = function(activeCell, handleSelectionRange) {
-		let res;
-
 		let getColumnNameRange = function (_start, _end, _needAddParenthesis) {
 			if (_start !== _end) {
 				return "[" + _start + "]" +  ":" +  "[" + _end + "]";
@@ -9117,9 +9115,7 @@ function RangeDataManagerElem(bbox, data)
 				return res;
 			}
 		}
-
-		return res;
-
+		return null;
 	};
 
 	//return {all: , partIntersection}/true/false
