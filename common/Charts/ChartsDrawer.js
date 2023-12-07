@@ -16262,7 +16262,7 @@ CColorObj.prototype =
 						results.valVals.push(valVal);
 					}
 					return results
-				}
+				};
 
 				if (chartletiables && equationStorage.calcYVal) {
 
@@ -16306,7 +16306,7 @@ CColorObj.prototype =
 					posArr.yPos.push(valPos);
 				}
 				return posArr
-			}
+			};
 
 			const pathH = this.cChartDrawer.calcProp.pathH;
 			const pathW = this.cChartDrawer.calcProp.pathW;
@@ -16354,7 +16354,7 @@ CColorObj.prototype =
 		},
 
 		_getMAline: function (catVals, valVals, ptCount, period, allow) {
-			const result = {catVals: [], valVals: []}
+			const result = {catVals: [], valVals: []};
 			if (ptCount > period) {
 				let sum = 0;
 				let counter = 0;
@@ -16362,12 +16362,12 @@ CColorObj.prototype =
 				for (let i = 0; i < ptCount; i++) {
 					//check if past existed and remove it
 					if (i >= period && catVals[j - counter] === i + 1 - period) {
-						sum -= valVals[j - counter]
+						sum -= valVals[j - counter];
 						counter--;
 					}
 					//check if next exists and add it
 					if (catVals[j] === i + 1) {
-						sum += valVals[j]
+						sum += valVals[j];
 						counter++;
 						j++;
 					}
@@ -16477,7 +16477,7 @@ CColorObj.prototype =
 						}
 					}
 				}
-			}
+			};
 
 			return storage.hasOwnProperty(type) ? storage[type] : {};
 		},
@@ -16489,10 +16489,10 @@ CColorObj.prototype =
 					intercept = null
 				}
 
-				const size = catVals.length
-				pow = size < pow ? size : pow
+				const size = catVals.length;
+				pow = size < pow ? size : pow;
 
-				const mappingStorage = this._obtainMappingStorage(type)
+				const mappingStorage = this._obtainMappingStorage(type);
 
 				const _mapCoordinates = function () {
 					for (let i = 0; i < size; i++) {
@@ -16507,9 +16507,9 @@ CColorObj.prototype =
 						}
 					}
 					return true
-				}
+				};
 
-				const mapped = _mapCoordinates()
+				const mapped = _mapCoordinates();
 
 				if (mapped) {
 
@@ -16523,14 +16523,14 @@ CColorObj.prototype =
 					*/
 
 					const _createMatrix = function (arr, size, starting, shift) {
-						let result = []
-						shift = shift ? shift : 0
+						let result = [];
+						shift = shift ? shift : 0;
 						if (shift && mappingStorage.yVal) {
 							shift = mappingStorage.yVal(shift)
 						}
 						for (let i = 0; i < arr.length; i++) {
 							let power = starting;
-							let row = []
+							let row = [];
 							for (let j = 0; j < size; j++) {
 								row.push(Math.pow((arr[i] - shift), power));
 								power++;
@@ -16538,7 +16538,7 @@ CColorObj.prototype =
 							result.push(row)
 						}
 						return result
-					}
+					};
 
 					const _findTranspose = function (A, N, M) {
 						const B = Array(N);
@@ -16551,7 +16551,7 @@ CColorObj.prototype =
 							}
 						}
 						return B
-					}
+					};
 
 					const _matMul = function (A, B, R, C, D) {
 						const rslt = Array(R);
@@ -16567,7 +16567,7 @@ CColorObj.prototype =
 						}
 
 						return rslt
-					}
+					};
 
 					const _findInverse = function (M) {
 						// I use Guassian Elimination to calculate the inverse:
@@ -16669,7 +16669,7 @@ CColorObj.prototype =
 						//we've done all operations, C should be the identity
 						//matrix I should be the inverse:
 						return I;
-					}
+					};
 
 					const flatten = function (arr, intercept, value) {
 						for (let i = 0; i < arr.length; i++) {
@@ -16682,20 +16682,20 @@ CColorObj.prototype =
 								arr[0] = mappingStorage.bValBackward(arr[0])
 							}
 						}
-					}
+					};
 
-					const y_intercept = (typeof intercept === 'number') ? 1 : 0
+					const y_intercept = (typeof intercept === 'number') ? 1 : 0;
 
 					// Letiables = ((X_T@X)^-1)@X_T@Y
-					const X = _createMatrix(catVals, pow - y_intercept, y_intercept, 0)
-					const X_T = _findTranspose(X, pow - y_intercept, catVals.length)
-					const P = _matMul(X_T, X, pow - y_intercept, pow - y_intercept, catVals.length)
-					const P_I = _findInverse(P)
+					const X = _createMatrix(catVals, pow - y_intercept, y_intercept, 0);
+					const X_T = _findTranspose(X, pow - y_intercept, catVals.length);
+					const P = _matMul(X_T, X, pow - y_intercept, pow - y_intercept, catVals.length);
+					const P_I = _findInverse(P);
 					if (P_I) {
-						const Y = _createMatrix(valVals, 1, 1, intercept)
-						const S = _matMul(X_T, Y, pow - y_intercept, 1, catVals.length)
-						const letiables = _matMul(P_I, S, pow - y_intercept, 1, pow - y_intercept)
-						flatten(letiables, y_intercept, intercept)
+						const Y = _createMatrix(valVals, 1, 1, intercept);
+						const S = _matMul(X_T, Y, pow - y_intercept, 1, catVals.length);
+						const letiables = _matMul(P_I, S, pow - y_intercept, 1, pow - y_intercept);
+						flatten(letiables, y_intercept, intercept);
 
 						return letiables
 					}
@@ -16728,7 +16728,7 @@ CColorObj.prototype =
 						return Math.log(val)
 					}
 				}
-			}
+			};
 			return storage.hasOwnProperty(type) ? storage[type] : {}
 		},
 
@@ -16741,19 +16741,19 @@ CColorObj.prototype =
 					sum += valVals[i]
 				}
 				return sum / size;
-			}
+			};
 
 			const yMean = findYMean();
 
 			const predictY = function (xVal) {
 				let result = mappingStorage.bValForward ? mappingStorage.bValForward(chartletiables[0]) : chartletiables[0];
-				let power = 1
+				let power = 1;
 				for (let i = 1; i < chartletiables.length; i++) {
-					result += (Math.pow(xVal, power) * chartletiables[i])
+					result += (Math.pow(xVal, power) * chartletiables[i]);
 					power++;
 				}
 				return result;
-			}
+			};
 
 			// R squared = 1 - sumRegression/sumSquared 
 			// sumRegression is ∑(y-yPredicted)^2
