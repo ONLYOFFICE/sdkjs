@@ -16060,11 +16060,6 @@ function RangeDataManagerElem(bbox, data)
 				}
 			} else if (firstValue == null){
 				seriesSettings.asc_setStepValue(1);
-
-				/*if (countOfFilledCol !== countOfFilledRow) {
-					contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
-					contextMenuAllowedProps[Asc.c_oAscFillType.series] = true;
-				}*/
 			}
 
 			if (seriesSettings.asc_getStepValue() != null) {
