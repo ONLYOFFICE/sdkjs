@@ -20183,7 +20183,7 @@
 		} else {
 			oFilledRange._foreachNoEmpty(function (oCell, nCurRow, nCurCol) {
 				if (oCell && oCell.getValueWithoutFormat()) {
-					if (nType === oSeriesType.autoFill /*|| bTrend*/) {
+					if (nType === oSeriesType.autoFill) {
 						nRow = nCurRow;
 						nCol = nCurCol;
 					} else { // for other modes use only first filled cell in range
@@ -20228,7 +20228,7 @@
 		let nType = this.getType();
 		let aFilledCells = [];
 
-		oFromRange._foreachNoEmpty(function (oCell, nRow, nCol, nRowStart, nColStart) {
+		oFromRange._foreachNoEmpty(function (oCell, nRow, nCol) {
 			if (oCell && oCell.getValueWithoutFormat() && nType !== oSeriesType.autoFill) {
 				let nTypeCell = oCell.getType();
 				let oFilledRange = oSerial.getFilledRange(bVertical ? nCol : nRow);
@@ -20394,7 +20394,7 @@
 		}
 
 		let oSerial = this;
-		let nStep = this.getTrend() ? 1 : this.getStep();
+		let nStep = this.getStep();
 		let nStopValue = this.getStopValue() ? this.getStopValue() : null;
 		let nIndexFilledLine = this.getVertical() ? oFilledLine.oCell.nCol : oFilledLine.oCell.nRow;
 		let oTo = oFilledLine.oToRange.bbox;
@@ -20498,6 +20498,7 @@
 		let nSumY = 0;
 		let nNumeratorOfSlope = 0;
 		let nDenominatorOfSlope = 0;
+		let nSlope = null;
 		// Calculate nEndIndex for Filled line with taking into account the shift first element in the filled range
 		let nEndIndexFilledLine = nFilledLineLength + nFilledStartIndex;
 		// Getting filled cells and calculating sum of index cell (x) and values (y) for calculate intercept and slop
@@ -20512,16 +20513,15 @@
 		});
 		let nXAvg = nSumX / nFilledLineLength;
 		let nYAvg = nSumY / nFilledLineLength;
-		this._calcSum(nFilledStartIndex, nEndIndexFilledLine, nIndexFilledLine, function (nValue, nCellIndex) {
-			if (bFirstCellValueInf) {
-				nNumeratorOfSlope = 0;
-				nDenominatorOfSlope = 1;
-				return true; // break loop
-			}
-			nNumeratorOfSlope += (nCellIndex - nXAvg) * (nValue - nYAvg);
-			nDenominatorOfSlope += Math.pow((nCellIndex - nXAvg), 2);
-		});
-		let nSlope = nNumeratorOfSlope / nDenominatorOfSlope;
+		if (nFilledLineLength > 1 && !bFirstCellValueInf) {
+			this._calcSum(nFilledStartIndex, nEndIndexFilledLine, nIndexFilledLine, function (nValue, nCellIndex) {
+				nNumeratorOfSlope += (nCellIndex - nXAvg) * (nValue - nYAvg);
+				nDenominatorOfSlope += Math.pow((nCellIndex - nXAvg), 2);
+			});
+			nSlope = nNumeratorOfSlope / nDenominatorOfSlope;
+		} else {
+			nSlope = this.getType() === oSeriesType.growth ? 0 : 1;
+		}
 		let nIntercept = nYAvg - nSlope * nXAvg;
 		if (isNaN(nSlope) || isNaN(nIntercept)) {
 			return;
@@ -20552,12 +20552,28 @@
 			});
 		}
 	};
+
+	/**
+	 * Gets length of filled line
+	 * @param {Range} oToRange - Range of cells which will be fill
+	 * @param {Range} oFilledRange - Range with filled cells
+	 * @param {boolean} bVertical - Flag recognizes is vertical or horizontal direction
+	 * @param {number} nIndex - Index of cell who must be fill
+	 * @returns {number}
+	 * @private
+	 */
+	function _getFilledLineLength(oToRange, oFilledRange, bVertical, nIndex) {
+		if (nIndex > 0) {
+			return bVertical ? oToRange.bbox.r1 - oFilledRange.bbox.r1 : oToRange.bbox.c1 - oFilledRange.bbox.c1;
+		}
+		// Reverse direction
+		return bVertical ? oFilledRange.bbox.r2 - oToRange.bbox.r2 : oFilledRange.bbox.c2 - oToRange.bbox.c2;
+	}
 	/**
 	 * Main method runs "Series" feature according to the specified parameters
 	 * @memberof CSerial
 	 */
 	CSerial.prototype.exec = function () {
-		let oFromRange = this.getFromRange();
 		let bVertical = this.getVertical();
 		let nType = this.getType();
 
@@ -20571,17 +20587,11 @@
 			if (aFilledCells.length) {
 				this.initHistoryPoint();
 				History.StartTransaction();
-				const nOneFilledCellLength = 1;
-				let nFilledLineLength = null;
 				for (let i = 0, length = aFilledCells.length; i < length; i++) {
 					let oToRange = aFilledCells[i].oToRange;
 					let oFilledRange = aFilledCells[i].oFilledRange;
-					if (this.getIndex() > 0) {
-						nFilledLineLength = bVertical ? oToRange.bbox.r1 - oFilledRange.bbox.r1 : oToRange.bbox.c1 - oFilledRange.bbox.c1;
-					} else { // Reverse direction
-						nFilledLineLength = bVertical ? oFilledRange.bbox.r2 - oToRange.bbox.r2 : oFilledRange.bbox.c2 - oToRange.bbox.c2;
-					}
-					if (this.getTrend() && nFilledLineLength > nOneFilledCellLength) {
+					let nFilledLineLength = _getFilledLineLength(oToRange, oFilledRange, bVertical, this.getIndex());
+					if (this.getTrend()) {
 						this.promoteCellsWithTrend(aFilledCells[i], nFilledLineLength);
 					} else {
 						this.promoteCells(aFilledCells[i]);
