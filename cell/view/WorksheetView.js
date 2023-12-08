@@ -12727,7 +12727,7 @@
                         t.fillHandleDirection = -1;	
 
                         t.updateSelection();
-						callback && callback(false);
+                        callback && callback(false);
                     }
                 } else {
 					// Сбрасываем параметры автозаполнения
