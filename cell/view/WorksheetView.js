@@ -12727,6 +12727,7 @@
                         t.fillHandleDirection = -1;	
 
                         t.updateSelection();
+						callback && callback(false);
                     }
                 } else {
 					// Сбрасываем параметры автозаполнения
@@ -26835,7 +26836,7 @@
 						History.SetSelectionRedo(_cloneSelection);
 						History.EndTransaction();
 
-						success && oThis.draw();
+						oThis.draw();
 					});
 				}
 
