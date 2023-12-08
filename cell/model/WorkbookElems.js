@@ -13477,7 +13477,8 @@ function RangeDataManagerElem(bbox, data)
 			} else {
 				this.evenFooter = new Asc.CHeaderFooterData();
 				this.evenFooter.setStr(newVal);
-				this.evenFooter.setType(Asc.c_oAscPageHFType.evenFooter);
+				//TODO separate on read/init in open
+				this.evenFooter.setType(Asc.c_oAscPageHFType && Asc.c_oAscPageHFType.evenFooter);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13495,7 +13496,8 @@ function RangeDataManagerElem(bbox, data)
 			} else {
 				this.evenHeader = new Asc.CHeaderFooterData();
 				this.evenHeader.setStr(newVal);
-				this.evenHeader.setType(Asc.c_oAscPageHFType.evenHeader);
+				//TODO separate on read/init in open
+				this.evenHeader.setType(Asc.c_oAscPageHFType && Asc.c_oAscPageHFType.evenHeader);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13513,7 +13515,8 @@ function RangeDataManagerElem(bbox, data)
 			} else {
 				this.firstFooter = new Asc.CHeaderFooterData();
 				this.firstFooter.setStr(newVal);
-				this.firstFooter.setType(Asc.c_oAscPageHFType.firstFooter);
+				//TODO separate on read/init in open
+				this.firstFooter.setType(Asc.c_oAscPageHFType && Asc.c_oAscPageHFType.firstFooter);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13531,7 +13534,8 @@ function RangeDataManagerElem(bbox, data)
 			} else {
 				this.firstHeader = new Asc.CHeaderFooterData();
 				this.firstHeader.setStr(newVal);
-				this.firstHeader.setType(Asc.c_oAscPageHFType.firstHeader);
+				//TODO separate on read/init in open
+				this.firstHeader.setType(Asc.c_oAscPageHFType && Asc.c_oAscPageHFType.firstHeader);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13549,7 +13553,8 @@ function RangeDataManagerElem(bbox, data)
 			} else {
 				this.oddFooter = new Asc.CHeaderFooterData();
 				this.oddFooter.setStr(newVal);
-				this.oddFooter.setType(Asc.c_oAscPageHFType.oddFooter);
+				//TODO separate on read/init in open
+				this.oddFooter.setType(Asc.c_oAscPageHFType && Asc.c_oAscPageHFType.oddFooter);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13567,7 +13572,8 @@ function RangeDataManagerElem(bbox, data)
 			} else {
 				this.oddHeader = new Asc.CHeaderFooterData();
 				this.oddHeader.setStr(newVal);
-				this.oddHeader.setType(Asc.c_oAscPageHFType.oddHeader);
+				//TODO separate on read/init in open
+				this.oddHeader.setType(Asc.c_oAscPageHFType && Asc.c_oAscPageHFType.oddHeader);
 			}
 
 			if (this.ws && History.Is_On()) {
