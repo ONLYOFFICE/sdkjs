@@ -16028,7 +16028,7 @@ function RangeDataManagerElem(bbox, data)
 				seriesSettings.asc_setType(Asc.c_oAscSeriesType.linear);
 				if (cell.xfs != null && cell.xfs.num != null && cell.xfs.num.getFormat() != null) {
 					let numFormat = AscCommon.oNumFormatCache.get(cell.xfs.num.getFormat());
-					if (numFormat.isDateTimeFormat()) {
+					if (numFormat.isDateTimeFormat() && numFormat.getType() === Asc.c_oAscNumFormatType.Date) {
 						seriesSettings.asc_setType(Asc.c_oAscSeriesType.date);
 
 						contextMenuAllowedProps[Asc.c_oAscFillType.fillDays] = true;
