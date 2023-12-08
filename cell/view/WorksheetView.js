@@ -26828,7 +26828,7 @@
 					History.Create_NewPoint();
 					History.StartTransaction();
 
-					oThis.applyFillHandle(null, null, null, true, function (success) {
+					oThis.applyFillHandle(null, null, true, true, function (success) {
 						_setSelection(_cloneSelection);
 
 						History.SetSelection(_cloneSelection);
