@@ -1580,5 +1580,6 @@
 	    window["AscPDF"] = {};
         
 	window["AscPDF"].CTextField = CTextField;
+	window["AscPDF"].CTextField.prototype["asc_GetValue"] = CTextField.prototype.GetValue;
 })();
 
