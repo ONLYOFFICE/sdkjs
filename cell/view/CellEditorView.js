@@ -2862,7 +2862,7 @@ function (window, undefined) {
 		}
 		if (t.textRender.getEndOfText() === t.cursorPos && !t.isFormula()) {
 			var s = AscCommonExcel.getFragmentsText(t.options.fragments);
-			if (!AscCommon.isNumber(s)) {
+			if (!AscCommon.isNumber(s) && s.length !== 0) {
 				var arrAutoComplete = t._getAutoComplete(s.toLowerCase());
 				var lengthInput = s.length;
 				if (1 === arrAutoComplete.length) {
@@ -3091,8 +3091,8 @@ function (window, undefined) {
 		if (checkFragments) {
 			this.selectionBegin = this.beginCompositePos;
 			this.selectionEnd = this.beginCompositePos + this.compositeLength;
-			this.setTextStyle('u', Asc.EUnderline.underlineNone);
 		}
+		this.setTextStyle('u', Asc.EUnderline.underlineNone);
 
 		this.beginCompositePos = -1;
 		this.compositeLength = 0;

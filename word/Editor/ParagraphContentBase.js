@@ -4014,10 +4014,7 @@ CParagraphContentWithParagraphLikeContent.prototype.CheckSpelling = function(oSp
 CParagraphContentWithParagraphLikeContent.prototype.Search = function(oParaSearch)
 {
 	this.SearchMarks = [];
-
-	if (this.IsPlaceHolder())
-		return oParaSearch.Reset();
-
+	
 	for (var nPos = 0, nContentLen = this.Content.length; nPos < nContentLen; ++nPos)
 	{
 		this.Content[nPos].Search(oParaSearch);

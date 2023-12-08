@@ -266,9 +266,11 @@
 		if (!isSpaceAsText)
 			ret = this.Api.onKeyDown(e);
 
+		let isSpecialClearInComposition = true;
 		switch (e.keyCode)
 		{
 			case 8:		// backspace
+				isSpecialClearInComposition = false;
 			case 9:		// tab
 			case 13:	// enter
 			case 37:	// left
@@ -281,7 +283,8 @@
 			case 36: 	// home
 			case 46:	// delete
 			{
-				this.clear();
+				if (!this.IsComposition || isSpecialClearInComposition)
+					this.clear();
 			}
 			default:
 				break;

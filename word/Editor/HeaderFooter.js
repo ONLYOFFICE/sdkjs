@@ -1655,15 +1655,17 @@ CHeaderFooterController.prototype =
 
     Recalculate : function(PageIndex)
     {
+		let logicDocument = this.LogicDocument;
+		
         // Определим четность страницы и является ли она первой в данной секции. Заметим, что четность страницы 
         // отсчитывается от начала текущей секции и не зависит от настроек нумерации страниц для данной секции.
-        var SectionPageInfo = this.LogicDocument.Get_SectionPageNumInfo( PageIndex );
+        var SectionPageInfo = logicDocument.Get_SectionPageNumInfo( PageIndex );
         
         var bFirst = SectionPageInfo.bFirst;
         var bEven  = SectionPageInfo.bEven;
         
         // Запросим нужный нам колонтитул 
-        var HdrFtr = this.LogicDocument.Get_SectionHdrFtr( PageIndex, bFirst, bEven );
+        var HdrFtr = logicDocument.Get_SectionHdrFtr( PageIndex, bFirst, bEven );
         
         var Header = HdrFtr.Header;
         var Footer = HdrFtr.Footer;
@@ -1676,8 +1678,12 @@ CHeaderFooterController.prototype =
         var oFrame = SectPr.GetContentFrame(PageIndex);
         var X      = oFrame.Left;
         var XLimit = oFrame.Right;
-
-        var bRecalcHeader = false;
+		
+		let maxContentH = SectPr.GetPageHeight() / 2;
+		if (logicDocument.GetCompatibilityMode() >= AscCommon.document_compatibility_mode_Word15)
+			maxContentH = AscWord.MAX_MM_VALUE;
+		
+		var bRecalcHeader = false;
 
         var HeaderDrawings, HeaderTables, FooterDrawings, FooterTables;
         // Рассчитываем верхний колонтитул
@@ -1686,7 +1692,7 @@ CHeaderFooterController.prototype =
             if ( true === Header.Is_NeedRecalculate( PageIndex ) )
             {
                 var Y      = SectPr.GetPageMarginHeader();
-                var YLimit = SectPr.GetPageHeight() / 2;
+                var YLimit = Y + maxContentH;
 
                 Header.Reset( X, Y, XLimit, YLimit );
                 bRecalcHeader = Header.Recalculate(PageIndex, SectPr);
@@ -1710,16 +1716,13 @@ CHeaderFooterController.prototype =
                 // Нижний колонтитул рассчитываем 2 раза. Сначала, с 0 позиции, чтобы рассчитать суммарную высоту колонитула.
                 // Исходя из уже известной высоты располагаем и рассчитываем колонтитул.
 
-                var Y      = 0;
-                var YLimit = SectPr.GetPageHeight();
-
-                Footer.Reset( X, Y, XLimit, YLimit );
+                Footer.Reset( X, 0, XLimit, maxContentH );
                 Footer.RecalculateContent(PageIndex);
 
-                var SummaryHeight = Footer.Content.GetSummaryHeight();
-                Y = Math.max( 2 * YLimit / 3, YLimit - SectPr.GetPageMarginFooter() - SummaryHeight );
+				let contentBounds = Footer.Content.GetPageBounds(0);
+                let Y = Math.max(0, SectPr.GetPageHeight() - SectPr.GetPageMarginFooter() - (contentBounds.Bottom - contentBounds.Top));
 
-                Footer.Reset( X, Y, XLimit, YLimit );
+                Footer.Reset( X, Y, XLimit, Y + maxContentH );
                 bRecalcFooter = Footer.Recalculate(PageIndex, SectPr);
             }
             else

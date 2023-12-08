@@ -7322,7 +7322,6 @@
 	};
 	/**
 	 * Inserts a number of the current document page into the paragraph.
-	 * <note>This method works for the paragraphs in the document header/footer only.</note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiRun}
@@ -7336,7 +7335,6 @@
 	};
 	/**
 	 * Inserts a number of pages in the current document into the paragraph.
-	 * <note>This method works for the paragraphs in the document header/footer only.</note>
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiRun}
@@ -17355,52 +17353,6 @@
 	};
 
 	/**
-	 * Sets the background color to the current block content control.
-	 * @memberof ApiBlockLvlSdt
-	 * @param {byte} r - Red color component value.
-	 * @param {byte} g - Green color component value.
-	 * @param {byte} b - Blue color component value.
-	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE"]
-	 * @returns {boolean}
-	 */
-	ApiBlockLvlSdt.prototype.SetBackgroundColor = function(r, g, b, bNone)
-	{
-		var oFormPr = this.Sdt.GetFormPr().Copy();
-		
-		let oUnifill = new AscFormat.CUniFill();
-		oUnifill.setFill(new AscFormat.CSolidFill());
-		oUnifill.fill.setColor(new AscFormat.CUniColor());
-		oUnifill.fill.color.setColor(new AscFormat.CRGBColor());
-
-		if (r >=0 && g >=0 && b >=0)
-			oUnifill.fill.color.color.setColor(r, g, b);
-		else
-			return false;
-
-		oFormPr.Shd = new CDocumentShd();
-		oFormPr.Shd.Set_FromObject({
-			Value: bNone ? Asc.c_oAscShd.Clear : Asc.c_oAscShd.Clear,
-			Color: {
-				r: r,
-				g: g,
-				b: b,
-				Auto: false
-			},
-			Fill: {
-				r: r,
-				g: g,
-				b: b,
-				Auto: false
-			},
-			Unifill: oUnifill
-		});
-
-		this.Sdt.SetFormPr(oFormPr);
-		return true;
-	};
-
-	/**
      * Adds a caption paragraph after (or before) the current content control.
 	 * <note>Please note that the current content control must be in the document (not in the footer/header).
 	 * And if the current content control is placed in a shape, then a caption is added after (or before) the parent shape.</note>
@@ -20367,7 +20319,6 @@
 	ApiBlockLvlSdt.prototype["GetPosInParent"]          = ApiBlockLvlSdt.prototype.GetPosInParent;
 	ApiBlockLvlSdt.prototype["ReplaceByElement"]        = ApiBlockLvlSdt.prototype.ReplaceByElement;
 	ApiBlockLvlSdt.prototype["AddComment"]              = ApiBlockLvlSdt.prototype.AddComment;
-	ApiBlockLvlSdt.prototype["SetBackgroundColor"]      = ApiBlockLvlSdt.prototype.SetBackgroundColor;
 	ApiBlockLvlSdt.prototype["AddCaption"]              = ApiBlockLvlSdt.prototype.AddCaption;
 	ApiBlockLvlSdt.prototype["GetDropdownList"]         = ApiBlockLvlSdt.prototype.GetDropdownList;
 

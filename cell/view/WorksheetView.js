@@ -58,7 +58,7 @@
     var gc_nMaxRow = AscCommon.gc_nMaxRow;
     var gc_nMaxCol = AscCommon.gc_nMaxCol;
     var History = AscCommon.History;
-	var c_oAscFillRightClickOptions = Asc.c_oAscFillRightClickOptions;
+	var c_oAscFillType = Asc.c_oAscFillType;
 
     var asc = window["Asc"];
     var asc_applyFunction = AscCommonExcel.applyFunction;
@@ -609,6 +609,331 @@
 		this.model.handleDrawings(appendChart);
 		return charts;
 	};
+
+
+	WorksheetView.prototype.getCurrentChart = function() {
+		if(this.isSelectOnShape) {
+			let aSelectedDrawings = this.objectRender.controller.getSelectedArray();
+			if(aSelectedDrawings.length === 1 && aSelectedDrawings[0].isChart()) {
+				return aSelectedDrawings[0];
+			}
+		}
+		return null;
+	};
+	WorksheetView.prototype.getRangesForCharts = function () {
+		let aRanges;
+		let oCurChart = this.getCurrentChart();
+		if(oCurChart) {
+			let sChartRange = oCurChart.getCommonRange();
+			if(!sChartRange) {
+				return null;
+			}
+			aRanges = AscFormat.fParseChartFormulaExternal(sChartRange);
+		}
+		if(!aRanges) {
+			aRanges = this.getSelectedRanges();
+		}
+		if(!aRanges) {
+			return null;
+		}
+		return aRanges;
+	};
+
+	WorksheetView.prototype.getRecommendedChartData = function() {
+		return AscFormat.ExecuteNoHistory(function() {
+			let aRanges = this.getRangesForCharts();
+			let aResultCheckRange = aRanges;
+			if(aRanges.length === 1 && aRanges[0].isOneCell()) {
+				let oBBox = this.model.autoFilters.expandRange(aRanges[0].bbox, true);
+				let oRange = AscCommonExcel.Range.prototype.createFromBBox(this.model, oBBox);
+				aResultCheckRange = [oRange];
+			}
+
+			if(aResultCheckRange.length > 2) {
+				let oFirstRange = aResultCheckRange[0];
+				let oSecondRange = aResultCheckRange[1];
+				if(!oFirstRange.isEqualCols(oSecondRange) && !oFirstRange.isEqualRows(oSecondRange)) {
+					return null;
+				}
+				let bRows = oFirstRange.isEqualRows(oSecondRange);
+				for(let nRange = 2; nRange < aResultCheckRange.length; ++nRange) {
+					let oCurRange = aResultCheckRange[nRange];
+					if(bRows) {
+						if(!oFirstRange.isEqualRows(oCurRange)) {
+							return null;
+						}
+					}
+					else {
+						if(!oFirstRange.isEqualCols(oCurRange)) {
+							return null;
+						}
+					}
+				}
+			}
+			let bEmpty = true;
+			for(let nRange = 0; nRange < aResultCheckRange.length; ++nRange) {
+				let oRange = aResultCheckRange[nRange];
+				oRange._foreachNoEmpty(function (oCell) {
+					if(AscFormat.isRealNumber(oCell.getNumberValue())) {
+						bEmpty = false;
+						return true;
+					}
+					return null;
+				}, undefined, true);
+				if(!bEmpty) {
+					break;
+				}
+			}
+			if(bEmpty) {
+				return null;
+			}
+			const oDataRefs = new AscFormat.CChartDataRefs(null);
+			const nHorCheckError = oDataRefs.checkDataRangeRefs(aResultCheckRange, true, Asc.c_oAscChartTypeSettings.unknown);
+			const nVertCheckError = oDataRefs.checkDataRangeRefs(aResultCheckRange, false, Asc.c_oAscChartTypeSettings.unknown);
+			if(Asc.c_oAscError.ID.No !== nHorCheckError && Asc.c_oAscError.ID.No !== nVertCheckError) {
+				return null;
+			}
+
+			let oResultMap = {};
+			let aCharts = [];
+			let aSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aResultCheckRange, true, false);
+			let aSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aResultCheckRange, false, false);
+
+			if(aSeriesRefsHor.length === 1 || aSeriesRefsVer.length === 1) {
+				//bar, hbar, linear, pie
+
+				let aSeriesRef = aSeriesRefsHor.length === 1 ? aSeriesRefsHor : aSeriesRefsVer;
+				let oBarCS = this.getChartByType(Asc.c_oAscChartTypeSettings.barNormal, aSeriesRef);
+				aCharts.push(oBarCS);
+				let oHBarCS = this.getChartByType(Asc.c_oAscChartTypeSettings.hBarNormal, aSeriesRef);
+				aCharts.push(oHBarCS);
+				let oPieChart = this.getChartByType(Asc.c_oAscChartTypeSettings.pie, aSeriesRef);
+				aCharts.push(oPieChart);
+				if(aSeriesRefsHor.length > 1 || aSeriesRefsVer.length > 1) {
+					let oLineCS = this.getChartByType(Asc.c_oAscChartTypeSettings.lineNormal, aSeriesRef);
+					aCharts.push(oLineCS);
+				}
+				for(let nChart = 0; nChart < aCharts.length; ++nChart) {
+					let oCS = aCharts[nChart];
+					oCS.setBDeleted(false);
+					oCS.setWorksheet(this.model);
+					AscFormat.CheckSpPrXfrm(oCS);
+					oCS.allPreviewCharts = aCharts;
+
+					let nType = oCS.getChartType();
+					if(!Array.isArray(oResultMap[nType])) {
+						oResultMap[nType] = [];
+					}
+					oResultMap[nType].push(oCS);
+				}
+				return oResultMap;
+			}
+
+			let aSeriesRefsArr = [];
+			if(aSeriesRefsHor.length >= aSeriesRefsVer.length) {
+				aSeriesRefsArr.push(aSeriesRefsVer);
+			}
+
+			if(aSeriesRefsHor.length <= aSeriesRefsVer.length) {
+				aSeriesRefsArr.push(aSeriesRefsHor);
+			}
+
+			for(let nSerArr = 0; nSerArr <  aSeriesRefsArr.length; ++nSerArr) {
+				let aSeriesRef = aSeriesRefsArr[nSerArr];
+				//bar, hbar, linear, hbarstacked, barstacked, barstackedper, hbarstackedper;
+
+				let oBarCS = this.getChartByType(Asc.c_oAscChartTypeSettings.barNormal, aSeriesRef);
+				aCharts.push(oBarCS);
+				let oHBarCS = this.getChartByType(Asc.c_oAscChartTypeSettings.hBarNormal, aSeriesRef);
+				aCharts.push(oHBarCS);
+				let oLineCS = this.getChartByType(Asc.c_oAscChartTypeSettings.lineNormal, aSeriesRef);
+				aCharts.push(oLineCS);
+				let oHBarStackedCS = this.getChartByType(Asc.c_oAscChartTypeSettings.hBarStacked, aSeriesRef);
+				aCharts.push(oHBarStackedCS);
+				let oBarStackedCS = this.getChartByType(Asc.c_oAscChartTypeSettings.barStacked, aSeriesRef);
+				aCharts.push(oBarStackedCS);
+				let oBarStackedPerCS = this.getChartByType(Asc.c_oAscChartTypeSettings.barStackedPer, aSeriesRef);
+				aCharts.push(oBarStackedPerCS);
+				let oHBarStackedPerCS = this.getChartByType(Asc.c_oAscChartTypeSettings.hBarStackedPer, aSeriesRef);
+				aCharts.push(oHBarStackedPerCS);
+			}
+
+			let aScatterSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aResultCheckRange, true, true);
+			let aScatterSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aResultCheckRange, false, true);
+
+			aSeriesRefsArr = [];
+			if(aScatterSeriesRefsHor.length >= aScatterSeriesRefsVer.length) {
+				aSeriesRefsArr.push(aScatterSeriesRefsVer);
+			}
+
+			if(aScatterSeriesRefsHor.length <= aScatterSeriesRefsVer.length) {
+				aSeriesRefsArr.push(aScatterSeriesRefsHor);
+			}
+
+			for(let nSerArr = 0; nSerArr <  aSeriesRefsArr.length; ++nSerArr) {
+				let aSeriesRef = aSeriesRefsArr[nSerArr];
+				let oScatterCS = this.getChartByType(Asc.c_oAscChartTypeSettings.scatterMarker, aSeriesRef);
+				aCharts.push(oScatterCS);
+			}
+
+			for(let nChart = 0; nChart < aCharts.length; ++nChart) {
+				let oCS = aCharts[nChart];
+				oCS.setBDeleted(false);
+				oCS.setWorksheet(this.model);
+				AscFormat.CheckSpPrXfrm(oCS);
+				oCS.allPreviewCharts = aCharts;
+				let nType = oCS.getChartType();
+				if(!Array.isArray(oResultMap[nType])) {
+					oResultMap[nType] = [];
+				}
+				oResultMap[nType].push(oCS);
+			}
+			return oResultMap;
+		}, this, []);
+	};
+
+	WorksheetView.prototype.getChartByType = function(nType, aSeriesRef) {
+		let oCurChart = this.getCurrentChart();
+		let oChartSpace;
+		if(oCurChart) {
+			oChartSpace = oCurChart.copy();
+			oChartSpace.buildSeries(aSeriesRef);
+			oChartSpace.changeChartType(nType);
+		}
+		else {
+			let oDrawingsController = this.objectRender.controller;
+			oChartSpace = oDrawingsController._getChartSpace([], {type: nType}, false);
+			oChartSpace.buildSeries(aSeriesRef);
+			let oProps = Asc.editor.asc_getChartObject(true);
+			oProps.chartSpace = null;
+			oProps.removeAllAxesProps();
+			oProps.putType(nType);
+			oDrawingsController.applyPropsToChartSpace(oProps, oChartSpace);
+		}
+		return oChartSpace;
+	}
+	WorksheetView.prototype.getChartData = function(nType) {
+		return AscFormat.ExecuteNoHistory(function() {
+			let aRanges = this.getRangesForCharts();
+			const oDataRefs = new AscFormat.CChartDataRefs(null);
+
+			const bIsScatter = AscFormat.isScatterChartType(nType);
+
+			let aSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, true, bIsScatter);
+			let aSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, false, bIsScatter);
+			let oChartSpace;
+			let aResult = [];
+			let aParams = [];
+			
+			function getSeriesMaxValCount(aSeries) {
+				let nMaxCount = 0;
+				for(let nS = 0; nS < aSeries.length; ++nS) {
+					let nValCount = aSeries[nS].getValCellsCount();
+					if(nValCount > nMaxCount) {
+						nMaxCount = nValCount;
+					}
+				}
+				return nMaxCount;
+			}
+
+			if(AscFormat.isComboChartType(nType)) {
+				if(aSeriesRefsHor.length <= aSeriesRefsVer.length) {
+					if(oDataRefs.checkValidDataRangeRefs(aRanges, true, nType)) {
+						aParams.push({
+							bHorValue: true,
+							aSeries: aSeriesRefsHor
+						});
+					}
+					else {
+						if(oDataRefs.checkValidDataRangeRefs(aRanges, false, nType)) {
+							aParams.push({
+								bHorValue: false,
+								aSeries: aSeriesRefsVer
+							});
+						}
+					}
+				}
+				else {
+					if(oDataRefs.checkValidDataRangeRefs(aRanges, false, nType)) {
+						aParams.push({
+							bHorValue: false,
+							aSeries: aSeriesRefsVer,
+						});
+					}
+					else {
+						if(oDataRefs.checkValidDataRangeRefs(aRanges, true, nType)) {
+							aParams.push({
+								bHorValue: true,
+								aSeries: aSeriesRefsHor
+							});
+						}
+					}
+				}
+			}
+			else if(AscFormat.isAreaChartType(nType) ||
+				AscFormat.isRadarChartType(nType) ||
+				AscFormat.isLineChartType(nType) ||
+				AscFormat.isScatterChartType(nType) ||
+				AscFormat.isDoughnutChartType(nType)) {
+				let nMinPtCount;
+
+				if(AscFormat.isRadarChartType(nType)) {
+					nMinPtCount = 3;
+				}
+				else {
+					nMinPtCount = 2;
+				}
+				if(getSeriesMaxValCount(aSeriesRefsHor) >= nMinPtCount) {
+					aParams.push({
+						bHorValue: true,
+						aSeries: aSeriesRefsHor
+					});
+				}
+				if(getSeriesMaxValCount(aSeriesRefsVer) >= nMinPtCount) {
+					aParams.push({
+						bHorValue: false,
+						aSeries: aSeriesRefsVer
+					});
+				}
+				if(aParams.length === 0) {
+					aParams.push({
+						bHorValue: true,
+						aSeries: aSeriesRefsHor
+					});
+				}
+			}
+			else {
+				aParams.push({
+					bHorValue: true,
+					aSeries: aSeriesRefsHor
+				});
+				aParams.push({
+					bHorValue: false,
+					aSeries: aSeriesRefsVer
+				});
+			}
+			let nError = Asc.c_oAscError.ID.No;
+			for(let nParam = 0; nParam < aParams.length; ++nParam) {
+				let oParam = aParams[nParam];
+				nError = oDataRefs.checkDataRangeRefs(aRanges, oParam.bHorValue, nType)
+				if(nError === Asc.c_oAscError.ID.No) {
+					oChartSpace = this.getChartByType(nType, oParam.aSeries);
+					if(oChartSpace) {
+						aResult.push(oChartSpace);
+						oChartSpace.setBDeleted(false);
+						oChartSpace.setWorksheet(this.model);
+						oChartSpace.allPreviewCharts = aResult;
+						AscFormat.CheckSpPrXfrm(oChartSpace);
+					}
+				}
+			}
+			if(aResult.length === 0 && nError !== Asc.c_oAscError.ID.No) {
+				return nError;
+			}
+			return aResult;
+		}, this, []);
+	};
+
 
 	WorksheetView.prototype._initWorksheetDefaultWidthForPrint = function () {
 		var defaultPpi = 96;
@@ -10129,7 +10454,7 @@
 				this.model.getCell3(r.row, c.col)._foreachNoEmpty(function (cell) {
 					if (cell.isFormula()) {
 						cell.processFormula(function(formulaParsed) {
-							var formulaHyperlink = formulaParsed.getFormulaHyperlink();
+							let formulaHyperlink = formulaParsed.getFormulaHyperlink();
 							if (formulaHyperlink) {
 								//запсускаю пересчет в связи с тем, что после открытия значение не рассчитано,
 								// но показывать результат при наведении на ссылку нужно
@@ -10139,11 +10464,13 @@
 								if(formulaParsed.value && formulaParsed.value.hyperlink) {
 									oHyperlink = new AscCommonExcel.Hyperlink();
 									oHyperlink.Hyperlink = formulaParsed.value.hyperlink;
+									oHyperlink.setHyperlinkFunction(true);
 								} else if(formulaParsed.value && AscCommonExcel.cElementType.array === formulaParsed.value.type) {
-									var firstArrayElem = formulaParsed.value.getElementRowCol(0,0);
+									let firstArrayElem = formulaParsed.value.getElementRowCol(0,0);
 									if(firstArrayElem && firstArrayElem.hyperlink) {
 										oHyperlink = new AscCommonExcel.Hyperlink();
 										oHyperlink.Hyperlink = firstArrayElem.hyperlink;
+										oHyperlink.setHyperlinkFunction(true);
 									}
 								}
 								oHyperlink && oHyperlink.tryInitLocalLink(t.workbook.model);
@@ -12259,7 +12586,7 @@
     };
 
     /* Функция для применения автозаполнения */
-    WorksheetView.prototype.applyFillHandle = function (x, y, ctrlPress, opt_doNotDraw) {
+    WorksheetView.prototype.applyFillHandle = function (x, y, ctrlPress, opt_doNotDraw, callback) {
         var t = this;
 
         if (null !== this.resizeTableIndex) {
@@ -12277,6 +12604,7 @@
 			t.resizeTableIndex = null;
 			t.fillHandleDirection = -1;
 			!opt_doNotDraw && t._drawSelection();
+			callback && callback(false);
         	return;
 		}
 
@@ -12401,6 +12729,7 @@
 						// Обновляем выделенные ячейки
 						t._updateRange(arn);
 						!opt_doNotDraw && t.draw();
+						callback && callback(true);
                     } else {
                         t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotFillRange,
                           c_oAscError.Level.NoCritical);
@@ -12418,6 +12747,7 @@
 					t.fillHandleDirection = -1;
 					// Перерисовываем
 					!opt_doNotDraw && t._drawSelection();
+					callback && callback(false);
                 }
             };
 
@@ -12438,6 +12768,7 @@
 						t.fillHandleDirection = -1;
 						// Перерисовываем
 						!opt_doNotDraw && t._drawSelection();
+						callback && callback(false);
 					}
 				}, true);
 				return;
@@ -12448,6 +12779,7 @@
 				this.fillHandleDirection = -1;
 				// Перерисовываем
 				!opt_doNotDraw && this._drawSelection();
+				callback && callback(false);
 
 				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot,
 					c_oAscError.Level.NoCritical);
@@ -12461,6 +12793,7 @@
 				this.fillHandleDirection = -1;
 				// Перерисовываем
 				!opt_doNotDraw && this._drawSelection();
+				callback && callback(false);
 
 				this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray,
 					c_oAscError.Level.NoCritical);
@@ -12477,6 +12810,7 @@
             this.fillHandleDirection = -1;
             // Перерисовываем
 			!opt_doNotDraw && this._drawSelection();
+			callback && callback(false);
         }
     };
 
@@ -26344,61 +26678,195 @@
 	};
 	/**
 	 * Method applies series settings when user confirms "Series" settings in dialog window or context menu.
-	 * @param {asc_CSeriesSettings} settings
+	 * @param {c_oAscFillType} type
+	 * @param {asc_CSeriesSettings} [settings]
 	 */
-	WorksheetView.prototype.applySeriesSettings = function (settings) {
-		const wsView = this;
-		const cSerial = new AscCommonExcel.CSerial(settings);
+	WorksheetView.prototype.applySeriesSettings = function (type, settings) {
+		const oThis = this;
+		const cSerial = settings ? new AscCommonExcel.CSerial(settings) : null;
+		const oRange = this.model.getSelection().getLast();
+		const oRangeModel = this.model.getRange3(oRange.r1, oRange.c1, oRange.r2, oRange.c2);
+		const sNumFormat = oRangeModel.getXfs() && oRangeModel.getXfs().num && oRangeModel.getXfs().num.getFormat();
+		const bDateType = !!(sNumFormat && AscCommon.oNumFormatCache.get(sNumFormat).isDateTimeFormat());
 
-		if (settings.contextMenuChosenProperty != null && this.activeFillHandle) { // 1. fill handle through context menu
-			switch (settings.contextMenuChosenProperty) {
-				case c_oAscFillRightClickOptions.copyCells:
-					this.applyFillHandle(null, null, true, null);
-					break;
-				case c_oAscFillRightClickOptions.fillSeries:
-					this.applyFillHandle(null, null, false, null);
-					break;
-				case c_oAscFillRightClickOptions.linearTrend:
-				case c_oAscFillRightClickOptions.growthTrend:
-					const oRange = this.model.getSelection().getLast();
-					const oRangeModel = this.model.getRange3(oRange.r1, oRange.c1, oRange.r2, oRange.c2);
+		let oRanges = this.model.getSelection();
+		let aRanges = oRanges.ranges;
 
-					this._isLockedCells(oRangeModel, /*subType*/null, function (success) {
-						if (!success) {
-							return;
-						}
+		let _setSelection = function (_newSelectionRange) {
+			//aRanges[0].assign(_newSelectionRange.c1, _newSelectionRange.r1, _newSelectionRange.c2, _newSelectionRange.r2);
+			oThis.setSelection(_newSelectionRange);
+		};
 
-						cSerial.setFromRange(oRangeModel);
-						cSerial.setActiveFillHandle(wsView.activeFillHandle);
-						cSerial.exec();
-					});
-					break;
-				case c_oAscFillRightClickOptions.series:
-					//Should open a series dialog window from toolbar?
-					break;
+		let prepareFillHandle = function (selectionRange) {
+			let cloneSelection = selectionRange.clone();
+
+			let _applyFillHandleSettings = function (_fillRange, _direction, _area) {
+				oThis.activeFillHandle = _fillRange;
+				oThis.fillHandleDirection = _direction;
+				oThis.fillHandleArea = _area;
+			};
+
+			let oneRow = selectionRange.isOneRow();
+			let oneCol = selectionRange.isOneCol();
+			if (type === c_oAscFillType.fillDown) {
+				if (oneRow && selectionRange.r1 === 0) {
+					return false;
+				}
+
+				selectionRange.assign(selectionRange.c1, selectionRange.r1 - 1*oneRow, selectionRange.c2, selectionRange.r1 - 1*oneRow);
+				_applyFillHandleSettings(cloneSelection, 1, 3);
+			} else if (type === c_oAscFillType.fillUp) {
+				if (oneRow && selectionRange.r2 === gc_nMaxRow0) {
+					return false;
+				}
+
+				selectionRange.assign(selectionRange.c1, selectionRange.r2 + 1*oneRow, selectionRange.c2, selectionRange.r2 + 1*oneRow);
+				_applyFillHandleSettings(new asc_Range(cloneSelection.c2, cloneSelection.r2, cloneSelection.c1, cloneSelection.r1), 1, 1);
+			} else if (type === c_oAscFillType.fillRight) {
+				if (oneCol && selectionRange.c1 === 0) {
+					return false;
+				}
+
+				selectionRange.assign(selectionRange.c1 - 1*oneCol, selectionRange.r1, selectionRange.c1 - 1*oneCol, selectionRange.r2);
+				_applyFillHandleSettings(cloneSelection, 0, 3);
+			} else if (type === c_oAscFillType.fillLeft) {
+				if (oneCol && selectionRange.c2 === gc_nMaxCol0) {
+					return false;
+				}
+
+				selectionRange.assign(selectionRange.c2 + 1*oneCol, selectionRange.r1, selectionRange.c2 + 1*oneCol, selectionRange.r2);
+				_applyFillHandleSettings(new asc_Range(cloneSelection.c2, cloneSelection.r2, cloneSelection.c1, cloneSelection.r1), 0, 1);
 			}
 
-		} else { // 2. fill from toolbar
-			const oRanges = this.model.getSelection();
-			const aRanges = oRanges.ranges;
+			return true;
+		};
 
-			this._isLockedCells(aRanges, /*subType*/null, function (success) {
-				if (!success) {
+		switch (type) {
+			case c_oAscFillType.copyCells:
+				if (!this.activeFillHandle) {
+					return;
+				}
+				// Selected one cell with number type data for copy cells changes ctrlPress logic to false
+				if (oRange.isOneCell() && oRangeModel.getType() === AscCommon.CellValueType.Number && !bDateType) {
+					this.applyFillHandle(null, null, false, null);
+				} else {
+					this.applyFillHandle(null, null, true, null);
+				}
+				break;
+			case c_oAscFillType.fillSeries:
+			case c_oAscFillType.fillDays:
+				if (!this.activeFillHandle) {
+					return;
+				}
+				// Selected one cell with number type data for fills series changes ctrlPress logic to true
+				if (oRange.isOneCell() && oRangeModel.getType() === AscCommon.CellValueType.Number && !bDateType) {
+					this.applyFillHandle(null, null, true, null);
+				} else {
+					this.applyFillHandle(null, null, false, null);
+				}
+				break;
+			case c_oAscFillType.linearTrend:
+			case c_oAscFillType.growthTrend:
+			//case c_oAscFillType.fillDays:
+			//case c_oAscFillType.fillWeekdays:
+			//case c_oAscFillType.fillMonths:
+			//case c_oAscFillType.fillYears:
+				if (!cSerial) {
 					return;
 				}
 
-				for (let i = 0; i < aRanges.length; i++) {
-					const oRangeModel = wsView.model.getRange3(aRanges[i].r1, aRanges[i].c1, aRanges[i].r2, aRanges[i].c2);
+
+				this._isLockedCells(oRangeModel, /*subType*/null, function (success) {
+					if (!success) {
+						return;
+					}
+
 					cSerial.setFromRange(oRangeModel);
+					cSerial.setActiveFillHandle(oThis.activeFillHandle);
 					cSerial.exec();
+
+					oThis._updateRange(oThis.activeFillHandle);
+					_setSelection(oThis.activeFillHandle);
+
+					oThis.cleanFillHandleProps(true);
+					oThis.draw();
+				});
+				break;
+			case c_oAscFillType.series:
+				if (!cSerial) {
+					return;
+				}
+				if (this.activeFillHandle != null) {
+					cSerial.setActiveFillHandle(this.activeFillHandle);
 				}
 
-				//update
-				for (let i = 0; i < aRanges.length; i++) {
-					wsView._updateRange(aRanges[i]);
+				this._isLockedCells(aRanges, /*subType*/null, function (success) {
+					if (!success) {
+						return;
+					}
+
+					History.Create_NewPoint();
+					History.StartTransaction();
+
+					for (let i = 0; i < aRanges.length; i++) {
+						const oRangeModel = oThis.model.getRange3(aRanges[i].r1, aRanges[i].c1, aRanges[i].r2, aRanges[i].c2);
+						cSerial.setFromRange(oRangeModel);
+						cSerial.exec();
+					}
+
+					if (oThis.activeFillHandle) {
+						_setSelection(oThis.activeFillHandle);
+						//History.SetSelection(oThis.activeFillHandle.clone());
+						History.SetSelectionRedo(oThis.activeFillHandle.clone());
+						oThis._updateRange(oThis.activeFillHandle);
+					}
+					History.EndTransaction();
+
+					oThis.cleanFillHandleProps(true);
+
+					//update
+					for (let i = 0; i < aRanges.length; i++) {
+						oThis._updateRange(aRanges[i]);
+					}
+					oThis.draw();
+				});
+				break;
+			case c_oAscFillType.fillDown:
+			case c_oAscFillType.fillLeft:
+			case c_oAscFillType.fillRight:
+			case c_oAscFillType.fillUp:
+				//don't work in  ms
+				if (aRanges.length > 1) {
+					return;
 				}
-				wsView.draw();
-			});
+
+				let _cloneSelection = aRanges[0].clone();
+				if (prepareFillHandle(aRanges[0])) {
+					History.Create_NewPoint();
+					History.StartTransaction();
+
+					oThis.applyFillHandle(null, null, true, true, function (success) {
+						_setSelection(_cloneSelection);
+
+						History.SetSelection(_cloneSelection);
+						History.SetSelectionRedo(_cloneSelection);
+						History.EndTransaction();
+
+						success && oThis.draw();
+					});
+				}
+
+				break;
+		}
+	};
+
+	WorksheetView.prototype.cleanFillHandleProps = function (opt_doNotDraw) {
+		this.activeFillHandle = null;
+		this.resizeTableIndex = null;
+		this.fillHandleDirection = -1;
+
+		if (!opt_doNotDraw) {
+			this.draw();
 		}
 	};
 

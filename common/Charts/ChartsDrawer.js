@@ -1329,24 +1329,24 @@ CChartsDrawer.prototype =
 			return;
 		}
 
-		var maxMinObj;
-		var grouping = this.getChartGrouping(chart);
-		var chartType = this._getChartType(chart);
-		var t = this;
+		let maxMinObj;
+		let grouping = this.getChartGrouping(chart);
+		let chartType = this._getChartType(chart);
+		let t = this;
 
 		//TODO стоит сделать общую обработку для всех диаграмм
-		var calculateStacked = function(sum) {
+		let calculateStacked = function(sum) {
 			if(c_oChartTypes.HBar === chartType || c_oChartTypes.Bar === chartType) {
-				var originalData = $.extend(true, [], data);
-				for (var j = 0; j < data.length; j++) {
-					for (var i = 0; i < data[j].length; i++) {
+				let originalData = $.extend(true, [], data);
+				for (let j = 0; j < data.length; j++) {
+					for (let i = 0; i < data[j].length; i++) {
 						data[j][i] = t._findPrevValue(originalData, j, i)
 					}
 				}
 
 				if(sum) {
-					for (var j = 0; j < data.length; j++) {
-						for (var i = 0; i < data[j].length; i++) {
+					for (let j = 0; j < data.length; j++) {
+						for (let i = 0; i < data[j].length; i++) {
 							if (sum[j] === 0) {
 								break;
 							}
@@ -1355,8 +1355,8 @@ CChartsDrawer.prototype =
 					}
 				}
 			} else {
-				for (var j = 0; j < (data.length - 1); j++) {
-					for (var i = 0; i < data[j].length; i++) {
+				for (let j = 0; j < (data.length - 1); j++) {
+					for (let i = 0; i < data[j].length; i++) {
 						if (!data[j + 1]) {
 							data[j + 1] = [];
 						}
@@ -1365,8 +1365,8 @@ CChartsDrawer.prototype =
 				}
 
 				if(sum && data[0]) {
-					for (var j = 0; j < (data[0].length); j++) {
-						for (var i = 0; i < data.length; i++) {
+					for (let j = 0; j < (data[0].length); j++) {
+						for (let i = 0; i < data.length; i++) {
 							if (sum[j] == 0) {
 								data[i][j] = 0;
 							} else {
@@ -1378,23 +1378,27 @@ CChartsDrawer.prototype =
 			}
 		};
 
-		var calculateSum = function() {
+		let calculateSum = function() {
 			//вычисляем сумму
 			//для разных диаграмм она вычисляется по-разному
-			var res = [];
+			let res = [];
 			if(c_oChartTypes.HBar === chartType || c_oChartTypes.Bar === chartType) {
-				for (var j = 0; j < (data.length); j++) {
+				for (let j = 0; j < (data.length); j++) {
 					res[j] = 0;
-					for (var i = 0; i < data[j].length; i++) {
-						res[j] += Math.abs(data[j][i]);
+					for (let i = 0; i < data[j].length; i++) {
+						if (data[j][i] != null) {
+							res[j] += Math.abs(data[j][i]);
+						}
 					}
 				}
 			} else {
 				if(data[0]) {
-					for (var j = 0; j < (data[0].length); j++) {
+					for (let j = 0; j < (data[0].length); j++) {
 						res[j] = 0;
-						for (var i = 0; i < data.length; i++) {
-							res[j] += Math.abs(data[i][j]);
+						for (let i = 0; i < data.length; i++) {
+							if (data[i][j] != null) {
+								res[j] += Math.abs(data[i][j]);
+							}
 						}
 					}
 				}
@@ -7742,17 +7746,15 @@ drawAreaChart.prototype = {
 	},
 
 	_calculatePaths: function () {
-		var points = this.points;
-		var prevPoints;
-		var isStacked = this.subType === "stackedPer" || this.subType === "stacked";
+		let points = this.points;
+		let isStacked = this.subType === "stackedPer" || this.subType === "stacked";
 
-		for (var i = 0; i < points.length; i++) {
+		for (let i = 0; i < points.length; i++) {
 			if (!this.paths.series) {
 				this.paths.series = [];
 			}
-			prevPoints = isStacked ? this._getPrevSeriesPoints(points, i) : null;
 			if (points[i]) {
-				this.paths.series[i] = this._calculateLine(points[i], prevPoints);
+				this.paths.series[i] = this._calculateLine(points[i], isStacked ? i : null);
 			}
 		}
 	},
@@ -7783,10 +7785,12 @@ drawAreaChart.prototype = {
 		}
 	},
 
-	_calculateLine: function (points, prevPoints) {
+	_calculateLine: function (points, seriesIndex) {
 		if (!points) {
 			return;
 		}
+		let allPoints = this.points;
+
 		let pathId = this.cChartSpace.AllocPath();
 		let path = this.cChartSpace.GetPath(pathId);
 
@@ -7803,11 +7807,22 @@ drawAreaChart.prototype = {
 
 		let nullPositionOX = this.catAx && this.catAx.posY * this.chartProp.pxToMM;
 
-		var i;
+		let isPrevPoints = seriesIndex !== null && seriesIndex !== 0;
+		let t = this;
+		let searchPreviousPoint = function (pointIndex) {
+			for (let i = seriesIndex; i >= 0; i--) {
+				let prevPoints = t._getPrevSeriesPoints(allPoints, i);
+				if (prevPoints && prevPoints[pointIndex]) {
+					return prevPoints[pointIndex];
+				}
+			}
+			return null;
+		};
+
 		//точки данной серии
 		if(this.subType === "stacked" || this.subType === "stackedPer") {
 			let pointsLength = points.length;
-			for (i = 0; i < pointsLength; i++) {
+			for (let i = 0; i < pointsLength; i++) {
 				point = points[i];
 				if(!point) {
 
@@ -7819,9 +7834,12 @@ drawAreaChart.prototype = {
 			}
 
 			//точки предыдущей серии
-			if (prevPoints != null && pointsLength) {
+			if (isPrevPoints && pointsLength) {
 				for (let i = pointsLength - 1; i >= 0; i--) {
-					point = prevPoints[i];
+					point = searchPreviousPoint(i);
+					if (!point) {
+						continue;
+					}
 					path.lnTo(point.x * pathW, point.y * pathH);
 
 					if (i === 0) {
@@ -7835,7 +7853,7 @@ drawAreaChart.prototype = {
 			}
 		} else {
 			let startSegmentPoint;
-			for (i = 0; i < points.length; i++) {
+			for (let i = 0; i < points.length; i++) {
 				point = points[i];
 				if(!point) {
 					if(startSegmentPoint) {

@@ -925,6 +925,7 @@ function CFieldInstructionSTYLEREF()
 
 	AscWord.FieldInstructionBase.call(this);
 	this.StyleName = null;
+	this.OutlineLvl = null;
 	this.L = null;
 	this.N = null;
 	this.P = null;
@@ -949,17 +950,17 @@ CFieldInstructionSTYLEREF.prototype.SetS = function(v){this.S = v;};
 CFieldInstructionSTYLEREF.prototype.SetGeneralSwitches = function(v){this.GeneralSwitches = v;};
 CFieldInstructionSTYLEREF.prototype.GetText = function()
 {
-	var sDefaultMessage = "Error! No text of specified style in document.";
+	const sDefaultMessage = "Error! No text of specified style in document.";
 	if(this.ParentContent)
 	{
-		var oHdrFtr = this.ParentContent.IsHdrFtr(true);
+		const oHdrFtr = this.ParentContent.IsHdrFtr(true);
 		if (oHdrFtr)
 		{
 			//TODO
 		}
 		else
 		{
-			var oFootNote = this.ParentContent.IsFootnote(true);
+			const oFootNote = this.ParentContent.IsFootnote(true);
 			if(oFootNote)
 			{
 				//TODO
@@ -968,15 +969,36 @@ CFieldInstructionSTYLEREF.prototype.GetText = function()
 			{
 				if(this.ParentParagraph)
 				{
-					var oParagraph = null;
-					var sRet = "";
-					var bAbove = true;
-					var oStyles = this.ParentContent.Styles;
-					var sId = oStyles.GetStyleIdByName(this.StyleName);
-					var nStartIndex, oTmpContent;
-					var oShape, oMainGroup, oDrawing, oCell, oRow, oTable, oBLSdt;
-					var oParentParagraph, oParentContent, nParentIdx;
-					if(sId)
+					let oParagraph = null;
+					let sRet = "";
+					let bAbove = true;
+					let oStyles = this.ParentContent.Styles;
+					let sStyleId;
+					let nOutlineLvl;
+					let nStartIndex, oTmpContent;
+					let oShape, oMainGroup, oDrawing, oCell, oRow, oTable, oBLSdt;
+					let oParentParagraph, oParentContent, nParentIdx;
+					let fCheckParagraph = null;
+					if(this.StyleName)
+					{
+						sStyleId = oStyles.GetStyleIdByName(this.StyleName);
+						if(sStyleId)
+						{
+							fCheckParagraph = function (oParagraph)
+							{
+								return oParagraph.GetParagraphStyle() === sStyleId;
+							};
+						}
+					}
+					else if(this.OutlineLvl !== null)
+					{
+						nOutlineLvl = this.OutlineLvl - 1;
+						fCheckParagraph = function (oParagraph)
+						{
+							return oParagraph.GetOutlineLvl() === nOutlineLvl;
+						};
+					}
+					if(fCheckParagraph)
 					{
 						oParentParagraph = this.ParentParagraph;
 						oParentContent = this.ParentContent;
@@ -1001,7 +1023,8 @@ CFieldInstructionSTYLEREF.prototype.GetText = function()
 							oParentContent = oParentParagraph.GetParent();
 							nParentIdx = oParentParagraph.GetIndex();
 						}
-						if(oParentParagraph.GetParagraphStyle() === sId)
+
+						if(fCheckParagraph(oParentParagraph))
 						{
 							oParagraph = oParentParagraph;
 						}
@@ -1009,7 +1032,7 @@ CFieldInstructionSTYLEREF.prototype.GetText = function()
 						nStartIndex = nParentIdx;
 						while(oTmpContent && !oParagraph)
 						{
-							oParagraph = oTmpContent.FindParaWithStyle(sId, true, nStartIndex);
+							oParagraph = oTmpContent.FindParagraph(fCheckParagraph, true, nStartIndex);
 							if(oParagraph)
 							{
 								break;
@@ -1023,10 +1046,10 @@ CFieldInstructionSTYLEREF.prototype.GetText = function()
 								{
 									return AscCommon.translateManager.getValue(sDefaultMessage);
 								}
-								oParagraph = oRow.FindParaWithStyle(sId, true, oCell.GetIndex() - 1);
+								oParagraph = oRow.FindParagraph(fCheckParagraph, true, oCell.GetIndex() - 1);
 								if(!oParagraph)
 								{
-									oParagraph = oTable.FindParaWithStyle(sId, true, oRow.GetIndex() - 1);
+									oParagraph = oTable.FindParagraph(fCheckParagraph, true, oRow.GetIndex() - 1);
 								}
 								oTmpContent = oTable.Parent;
 								nStartIndex = oTable.GetIndex() - 1;
@@ -1048,7 +1071,7 @@ CFieldInstructionSTYLEREF.prototype.GetText = function()
 							nStartIndex = nParentIdx + 1;
 							while(oTmpContent && !oParagraph)
 							{
-								oParagraph = oTmpContent.FindParaWithStyle(sId, false, nStartIndex);
+								oParagraph = oTmpContent.FindParagraph(fCheckParagraph, false, nStartIndex);
 								if(oParagraph)
 								{
 									break;
@@ -1062,10 +1085,10 @@ CFieldInstructionSTYLEREF.prototype.GetText = function()
 									{
 										return AscCommon.translateManager.getValue(sDefaultMessage);
 									}
-									oParagraph = oRow.FindParaWithStyle(sId, false, oCell.GetIndex() + 1);
+									oParagraph = oRow.FindParagraph(fCheckParagraph, false, oCell.GetIndex() + 1);
 									if(!oParagraph)
 									{
-										oParagraph = oTable.FindParaWithStyle(sId, false, oRow.GetIndex() + 1);
+										oParagraph = oTable.FindParagraph(fCheckParagraph, false, oRow.GetIndex() + 1);
 									}
 									oTmpContent = oTable.Parent;
 									nStartIndex = oTable.GetIndex() + 1;
@@ -1119,6 +1142,10 @@ CFieldInstructionSTYLEREF.prototype.SetStyleName = function(v)
 {
 	this.StyleName = v;
 };
+CFieldInstructionSTYLEREF.prototype.SetOutlineLvl = function(v)
+{
+	this.OutlineLvl = v;
+};
 CFieldInstructionSTYLEREF.prototype.ToString = function()
 {
 	var sRet = " STYLEREF ";
@@ -1130,6 +1157,10 @@ CFieldInstructionSTYLEREF.prototype.ToString = function()
 	if(this.StyleName)
 	{
 		sRet += this.StyleName;
+	}
+	else if(this.OutlineLvl !== null)
+	{
+		sRet += this.OutlineLvl;
 	}
 	if(this.L)
 	{
@@ -1949,7 +1980,21 @@ CFieldInstructionParser.prototype.private_ParseSTYLEREF = function()
 	this.Result = new CFieldInstructionSTYLEREF();
 	var arrArguments = this.private_ReadArguments();
 	if (arrArguments.length > 0)
-		this.Result.SetStyleName(arrArguments[0]);
+	{
+
+		let sArgument = arrArguments[0];
+		if (typeof sArgument === "string" &&
+			sArgument.length === 1 &&
+			AscCommon.IsDigit(sArgument.charCodeAt(0)) &&
+			sArgument !== "0")
+		{
+			this.Result.SetOutlineLvl(parseInt(sArgument));
+		}
+		else
+		{
+			this.Result.SetStyleName(sArgument);
+		}
+	}
 
 	while (this.private_ReadNext())
 	{

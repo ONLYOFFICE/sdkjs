@@ -500,7 +500,8 @@ var cErrorType = {
 		wrong_name          : 5,
 		not_numeric         : 6,
 		not_available       : 7,
-		getting_data        : 8
+		getting_data        : 8,
+		array_not_calc      : 9
   };
 //добавляю константу cReturnFormulaType для корректной обработки формул массива
 // value - функция умеет возвращать только значение(не массив)
@@ -877,6 +878,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				this.errorType = cErrorType.unsupported_function;
 				break;
 			}
+			case cErrorLocal["calc"]:
+			case cErrorOrigin["calc"]:
+			case cErrorType.array_not_calc: {
+				this.value = "#CALC!";
+				this.errorType = cErrorType.array_not_calc;
+				break;
+			}
 		}
 
 		return this;
@@ -933,6 +941,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			case cErrorType.unsupported_function: {
 				return cErrorLocal["uf"];
 			}
+
+			case cErrorOrigin["calc"]:
+			case cErrorType.array_not_calc: {
+				return cErrorLocal["calc"];
+			}
 		}
 		return cErrorLocal["na"];
 	};
@@ -973,6 +986,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 			case cErrorOrigin["uf"]: {
 				res = cErrorType.unsupported_function;
+				break;
+			}
+			case cErrorOrigin["calc"]: {
+				res = cErrorType.array_not_calc;
 				break;
 			}
 			default: {
@@ -1019,6 +1036,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 			case cErrorType.unsupported_function: {
 				res = cErrorOrigin["uf"];
+				break;
+			}
+			case cErrorType.array_not_calc: {
+				res = cErrorOrigin["calc"];
 				break;
 			}
 			default:
@@ -4033,7 +4054,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cPowOperator.prototype.priority = 40;
 	cPowOperator.prototype.argumentsCurrent = 2;
 	cPowOperator.prototype.Calculate = function (arg) {
-		let res = AscCommonExcel.cFormulaFunction.POWER.prototype.Calculate(arg, arguments[1]);
+		let res = AscCommonExcel.cFormulaFunction["POWER"].prototype.Calculate(arg, arguments[1]);
 
 		if (res) {
 			return res;

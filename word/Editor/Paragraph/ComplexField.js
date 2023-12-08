@@ -401,6 +401,10 @@ CComplexField.prototype.SetInstructionLine = function(sLine)
 {
 	this.InstructionLine = sLine;
 };
+CComplexField.prototype.GetInstructionLine = function()
+{
+	return this.InstructionLine;
+};
 CComplexField.prototype.GetBeginChar = function()
 {
 	return this.BeginChar;

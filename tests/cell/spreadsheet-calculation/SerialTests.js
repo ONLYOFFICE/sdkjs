@@ -133,8 +133,8 @@ $(function () {
 	let oSeriesInType = Asc.c_oAscSeriesInType;
 	let oSeriesType = Asc.c_oAscSeriesType;
 	let oSeriesDateUnitType = Asc.c_oAscDateUnitType;
-	let oRightClickOptions = Asc.c_oAscFillRightClickOptions;
-	let settings, cSerial, autofillRange, oFromRange, expectedData;
+	let oRightClickOptions = Asc.c_oAscFillType;
+	let settings, cSerial, autofillRange, oFromRange, expectedData, nType;
 	
 	const getRange = function(c1, r1, c2, r2) {
 		return new window["Asc"].Range(c1, r1, c2, r2);
@@ -142,6 +142,7 @@ $(function () {
 	const clearData = function(c1, r1, c2, r2) {
 		ws.autoFilters.deleteAutoFilter(getRange(0, 0, 0, 0));
 		wsView.activeFillHandle = null;
+		wsView.fillHandleDirection = null;
 		ws.removeRows(r1, r2, false);
 		ws.removeCols(c1, c2);
 	};
@@ -164,7 +165,7 @@ $(function () {
 		return oFromRange;
 	}
 
-	QUnit.module('Serial');
+	QUnit.module('Series');
 	QUnit.test('Autofill linear progression - one filled row/column', function (assert) {
 		// Fill data
 		const testData = [
@@ -178,7 +179,7 @@ $(function () {
 			'stopValue': null,
 			'trend': false
 		}
-		// Run AutoFill -> Serial
+		// Run AutoFill -> Series
 		cSerial = new CSerial(settings);
 		cSerial.setFromRange(oFromRange);
 		cSerial.exec();
@@ -419,7 +420,7 @@ $(function () {
 		cSerial.setFromRange(oFromRange);
 		cSerial.exec();
 		autoFillRange = getRange(0, 1, 0, 5);
-		autofillData(assert, autoFillRange, [[''], [''], [''], [''], ['']], 'Autofill default mode - one Column');
+		autofillData(assert, autoFillRange, [['Test1'], [''], ['Test2'], [''], ['Test3']], 'Autofill default mode - one Column');
 		clearData(0, 0, 0, 5);
 		// Select horizontal oFromRange linear progression. String test
 		oFromRange = getFilledData(0, 1, 5, 1, testData, [0, 0]);
@@ -554,7 +555,7 @@ $(function () {
 		expectedData = [
 			['1', '1', '1', '1', '1'],
 			['2', '2', '2', '2', '2'],
-			['3', '3', '3', '3', '3'],
+			['2.9999999999999996', '2.9999999999999996', '2.9999999999999996', '2.9999999999999996', '2.9999999999999996'],
 			['4', '4', '4', '4', '4'],
 			['5', '5', '5', '5', '5'],
 			['6', '6', '6', '6', '6']
@@ -717,11 +718,11 @@ $(function () {
 		cSerial.exec();
 		autofillRange = getRange(0, 1, 5, 5);
 		expectedData = [
-			['1', '2', '3', '4', '5', '6'],
-			['1', '2', '3', '4', '5', '6'],
-			['1', '2', '3', '4', '5', '6'],
-			['1', '2', '3', '4', '5', '6'],
-			['1', '2', '3', '4', '5', '6']
+			['1', '2', '2.9999999999999996', '4', '5', '6'],
+			['1', '2', '2.9999999999999996', '4', '5', '6'],
+			['1', '2', '2.9999999999999996', '4', '5', '6'],
+			['1', '2', '2.9999999999999996', '4', '5', '6'],
+			['1', '2', '2.9999999999999996', '4', '5', '6']
 		];
 		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth progression with trend');
 		clearData(0, 0, 5, 5);
@@ -1046,7 +1047,7 @@ $(function () {
 		autofillData(assert, autofillRange, expectedData, 'Date progression - Year, Step - 3');
 		clearData(0, 0, 3, 5);
 	});
-	QUnit.test('Fill -> Serial. Trend. Horizontal - Multiple cells', function (assert) {
+	QUnit.test('Fill -> Series. Trend. Horizontal - Multiple cells', function (assert) {
 		let testData = [
 		  ['4', '2', '0']
 		];
@@ -1166,8 +1167,90 @@ $(function () {
 		autofillRange = getRange(1, 1, 7, 5);
 		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth multiple Rows with trend mode. With indentation row and col');
 		clearData(0, 0, 7, 5);
+		// Growth progression with trend mode. Start with 0 value.
+		testData = [
+			['0', '1'],
+			['0', '2']
+		];
+		oFromRange = getFilledData(0, 0, 3, 1, testData, [0, 0]);
+		settings.type = oSeriesType.growth;
+		settings.trend = true;
+		settings.stopValue = null;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+		autofillRange = getRange(2, 0, 3, 1);
+		expectedData = [
+			['', ''],
+			['', '']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression with trend mode. Start with 0 value.');
+		clearData(0, 0, 3, 1);
+		// Growth progression with trend mode. Start with 0 value for first cell and use activeFillHandle
+		oFromRange = getFilledData(0, 0, 1, 1, testData, [0, 0]);
+		wsView.activeFillHandle = getRange(0, 0, 3, 1);
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.setActiveFillHandle(wsView.activeFillHandle);
+		cSerial.exec();
+
+		autofillRange = getRange(2, 0, 3, 1);
+		expectedData = [
+			['0', '0'],
+			['0', '0']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression with trend mode. Start with 0 value for first cell and use activeFillHandle');
+		clearData(0, 0, 3, 1);
+		// Linear progression with trend mode. Start with empty cells
+		testData = [
+			['', '1', '2'],
+			['', '', '3', '5'],
+			['', '2']
+		];
+		oFromRange = getFilledData(0, 0, 5, 2, testData, [0, 0]);
+		settings.type = oSeriesType.linear;
+		settings.trend = true;
+		settings.stopValue = null;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+
+		autofillRange = getRange(0, 0, 5, 2);
+		expectedData = [
+			['0', '1', '2', '3', '4', '5'],
+			['-1', '1', '3', '5', '7', '9'],
+			['1', '2', '3', '4', '5', '6']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Linear progression with trend mode. Start with empty cells');
+		clearData(0, 0, 5, 1);
+		// Growth progression with trend mode. Start with empty cells
+		testData = [
+			['', '2', '4'],
+			['', '4', '8'],
+			['', '', '1']
+		];
+		oFromRange = getFilledData(0, 0, 5, 2, testData, [0, 0]);
+		settings.type = oSeriesType.growth;
+		settings.trend = true;
+		settings.stopValue = null;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+
+		autofillRange = getRange(0, 0, 5, 2);
+		expectedData = [
+			['1', '2', '4', '7.999999999999998', '15.999999999999998', '32'],
+			['2', '4', '7.999999999999998', '15.999999999999991', '31.999999999999986', '63.99999999999998'],
+			['1', '1', '1', '1', '1', '1']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression with trend mode. Start with empty cells');
+		clearData(0, 0, 5, 1);
 	});
-	QUnit.test('Fill -> Serial. Trend. Vertical - Multiple cells', function (assert) {
+	QUnit.test('Fill -> Series. Trend. Vertical - Multiple cells', function (assert) {
 		let testData = [
 			['4'],
 			['2'],
@@ -1297,8 +1380,97 @@ $(function () {
 		autofillRange = getRange(1, 1, 5, 7);
 		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth multiple Columns with trend mode. With indentation row and col');
 		clearData(0, 0, 5, 7);
+		// Growth progression with trend mode. Start with 0 value.
+		testData = [
+			['0', '0'],
+			['1', '2']
+		];
+		oFromRange = getFilledData(0, 0, 1, 3, testData, [0, 0]);
+		settings.type = oSeriesType.growth;
+		settings.trend = true;
+		settings.stopValue = null;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+		autofillRange = getRange(0, 2, 1, 3);
+		expectedData = [
+			['', ''],
+			['', '']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth progression with trend mode. Start with 0 value.');
+		clearData(0, 0, 1, 3);
+		// Growth progression with trend mode. Start with 0 value for first cell and use activeFillHandle
+		oFromRange = getFilledData(0, 0, 1, 1, testData, [0, 0]);
+		wsView.activeFillHandle = getRange(0, 0, 1, 3);
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.setActiveFillHandle(wsView.activeFillHandle);
+		cSerial.exec();
+
+		autofillRange = getRange(0, 2, 1, 3);
+		expectedData = [
+			['0', '0'],
+			['0', '0']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth progression with trend mode. Start with 0 value for first cell and use activeFillHandle');
+		clearData(0, 0, 3, 1);
+		// Linear progression with trend mode. Start with empty cells
+		testData = [
+			['', '', ''],
+			['1', '', '2'],
+			['2', '3', ''],
+			['', '5', '']
+		];
+		oFromRange = getFilledData(0, 0, 2, 5, testData, [0, 0]);
+		settings.type = oSeriesType.linear;
+		settings.trend = true;
+		settings.stopValue = null;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+
+		autofillRange = getRange(0, 0, 2, 5);
+		expectedData = [
+			['0', '-1', '1'],
+			['1', '1', '2'],
+			['2', '3', '3'],
+			['3', '5', '4'],
+			['4', '7', '5'],
+			['5', '9', '6']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Linear progression with trend mode. Start with empty cells');
+		clearData(0, 0, 2, 5);
+		// Growth progression with trend mode. Start with empty cells
+		testData = [
+			['', '', ''],
+			['2','4', ''],
+			['4', '8', '2']
+		];
+		oFromRange = getFilledData(0, 0, 2, 5, testData, [0, 0]);
+		settings.type = oSeriesType.growth;
+		settings.trend = true;
+		settings.stopValue = null;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+
+		autofillRange = getRange(0, 0, 2, 5);
+		expectedData = [
+			['1', '2', '2'],
+			['2', '4', '2'],
+			['4', '7.999999999999998', '2'],
+			['7.999999999999998', '15.999999999999991', '2'],
+			['15.999999999999998', '31.999999999999986', '2'],
+			['32', '63.99999999999998', '2']
+		]
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth progression with trend mode. Start with empty cells');
+		clearData(0, 0, 1, 5);
 	});
-	QUnit.test('Autofill Serial. StopValue out of range', function (assert) {
+	QUnit.test('Autofill Series. StopValue out of range', function (assert) {
 		const testData = [
 			['1']
 		];
@@ -1381,7 +1553,7 @@ $(function () {
 		autofillData(assert, autofillRange, [['1'], ['10'], ['100'], ['1000'], ['10000'], ['']], 'Autofill Columns. Growth. Step 10. StopValue 10000. With indentation rows and columns');
 		clearData(5, 2, 5, 7);
 	});
-	QUnit.test('Autofill Serial. Context menu. Horizontal', function (assert) {
+	QUnit.test('Autofill Series. Context menu. Horizontal', function (assert) {
 		let testData = [
 			['4', '2', '0']
 		];
@@ -1440,8 +1612,72 @@ $(function () {
 		autofillRange = getRange(0, 0, 2, 0);
 		autofillData(assert, autofillRange, [['0.2500000000000001', '0.5000000000000002', '1.0000000000000002']], 'Autofill Rows. Context menu, reverse - Growth Trend');
 		clearData(0,0,5,0);
+		// Context menu - Growth Trend. Series prop. Start with empty cells
+		testData = [
+			['', '2', '4', '']
+		];
+		oFromRange = getFilledData(0, 0, 3, 0, testData, [0, 0]);
+		wsView.activeFillHandle = getRange(0, 0, 5, 0);
+		settings.type = oSeriesType.growth;
+		settings.contextMenuChosenProperty = oRightClickOptions.series;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.setActiveFillHandle(wsView.activeFillHandle);
+		cSerial.exec();
+		autofillRange = getRange(0, 0, 5, 0);
+		autofillData(assert, autofillRange, [['1', '2', '4', '7.999999999999998', '15.999999999999998', '32']], 'Autofill Rows. Context menu - Growth Trend. Series prop. Start with empty cells');
+		clearData(0, 0, 5, 0);
+		// Context menu - Growth Trend. Growth prop. Start with empty cells
+		oFromRange = getFilledData(0, 0, 3, 0, testData, [0, 0]);
+		wsView.activeFillHandle = getRange(0, 0, 5, 0);
+		settings.type = oSeriesType.growth;
+		settings.contextMenuChosenProperty = oRightClickOptions.growthTrend;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.setActiveFillHandle(wsView.activeFillHandle);
+		cSerial.exec();
+		autofillRange = getRange(0, 0, 5, 0);
+		autofillData(assert, autofillRange, [['', '2', '4', '', '15.999999999999998', '32']], 'Autofill Rows. Context menu - Growth Trend. Growth prop. Start with empty cells');
+		clearData(0, 0, 5, 0);
+		// Context menu. Reverse - Growth Trend. Series prop.
+		testData = [
+			['', '2', '4', '8']
+		];
+		oFromRange = getFilledData(4, 0, 7, 0, testData, [0, 4]);
+		wsView.activeFillHandle = getRange(7, 0, 0, 0);
+		settings.type = oSeriesType.growth;
+		settings.contextMenuChosenProperty = oRightClickOptions.series;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.setActiveFillHandle(wsView.activeFillHandle);
+		cSerial.exec();
+		autofillRange = getRange(0, 0, 7, 0);
+		let expectedData = [
+			['0.06250000000000008', '0.1250000000000002', '0.2500000000000003', '0.5000000000000004', '1.0000000000000009', '2.0000000000000018', '4.000000000000001', '8.000000000000002']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu. Reverse - Growth Trend. Series prop.');
+		clearData(0, 0, 7, 0);
+		// Context menu. Reverse - Growth Trend. Growth prop.
+		oFromRange = getFilledData(4, 0, 7, 0, testData, [0, 4]);
+		wsView.activeFillHandle = getRange(7, 0, 0, 0);
+		settings.type = oSeriesType.growth;
+		settings.contextMenuChosenProperty = oRightClickOptions.growthTrend;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.setActiveFillHandle(wsView.activeFillHandle);
+		cSerial.exec();
+		autofillRange = getRange(0, 0, 7, 0);
+		expectedData = [
+			['0.06250000000000008', '0.1250000000000002', '0.2500000000000003', '0.5000000000000004', '', '2', '4', '8']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu. Reverse - Growth Trend. Growth prop.');
+		clearData(0, 0, 7, 0);
 	});
-	QUnit.test('Autofill Serial. Context menu. Vertical', function (assert) {
+	QUnit.test('Autofill Series. Context menu. Vertical', function (assert) {
 		let testData = [
 			['4'],
 			['2'],
@@ -1504,6 +1740,106 @@ $(function () {
 		autofillRange = getRange(0, 0, 0, 2);
 		autofillData(assert, autofillRange, [['0.2500000000000001'], ['0.5000000000000002'], ['1.0000000000000002']], 'Autofill Columns. Context menu, reverse - Growth Trend');
 		clearData(0, 0, 0, 5);
+		// Context menu - Linear Trend. Series prop. Start with empty cells
+		testData = [
+			[''],
+			['1'],
+			['2'],
+			['']
+		];
+		oFromRange = getFilledData(0, 0, 0, 3, testData, [0, 0]);
+		wsView.activeFillHandle = getRange(0, 0, 0, 5);
+		settings.type = oSeriesType.linear;
+		settings.contextMenuChosenProperty = oRightClickOptions.series;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.setActiveFillHandle(wsView.activeFillHandle);
+		cSerial.exec();
+		autofillRange = getRange(0, 0, 0, 5);
+		let expectedData = [
+			['0'],
+			['1'],
+			['2'],
+			['3'],
+			['4'],
+			['5']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Linear Trend. Series prop. Start with empty cells');
+		clearData(0, 0, 0, 5);
+		// Context menu. Linear Trend. Linear prop. Start with empty cells
+		oFromRange = getFilledData(0, 0, 0, 3, testData, [0, 0]);
+		wsView.activeFillHandle = getRange(0, 0, 0, 5);
+		settings.type = oSeriesType.linear;
+		settings.contextMenuChosenProperty = oRightClickOptions.linearTrend;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.setActiveFillHandle(wsView.activeFillHandle);
+		cSerial.exec();
+		autofillRange = getRange(0, 0, 0, 5);
+		expectedData = [
+			[''],
+			['1'],
+			['2'],
+			[''],
+			['4'],
+			['5']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu. Linear Trend. Linear prop. Start with empty cells');
+		clearData(0, 0, 0, 5);
+		// Context menu. Reverse - Linear Trend. Series prop.
+		testData = [
+			[''],
+			['2'],
+			['3'],
+			['4']
+		];
+		oFromRange = getFilledData(0, 4, 0, 7, testData, [4, 0]);
+		wsView.activeFillHandle = getRange(0, 7, 0, 0);
+		settings.type = oSeriesType.linear;
+		settings.contextMenuChosenProperty = oRightClickOptions.series;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.setActiveFillHandle(wsView.activeFillHandle);
+		cSerial.exec();
+		autofillRange = getRange(0, 0, 0, 7);
+		expectedData = [
+			['-3'],
+			['-2'],
+			['-1'],
+			['0'],
+			['1'],
+			['2'],
+			['3'],
+			['4']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu. Reverse - Linear Trend. Series prop. Start with empty cells');
+		clearData(0, 0, 0, 7);
+		// Context menu. Reverse - Linear Trend. Linear prop.
+		oFromRange = getFilledData(0, 4, 0, 7, testData, [4, 0]);
+		wsView.activeFillHandle = getRange(0, 7, 0, 0);
+		settings.type = oSeriesType.linear;
+		settings.contextMenuChosenProperty = oRightClickOptions.linearTrend;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.setActiveFillHandle(wsView.activeFillHandle);
+		cSerial.exec();
+		autofillRange = getRange(0, 0, 0, 7);
+		expectedData = [
+			['-3'],
+			['-2'],
+			['-1'],
+			['0'],
+			[''],
+			['2'],
+			['3'],
+			['4']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu. Reverse - Linear Trend. Linear prop. Start with empty cells');
+		clearData(0, 0, 0, 7);
 	});
 	QUnit.test('CSeriesSettings: method prepare for prepare data in UI', function (assert) {
 		let cSeriesSettings = Asc.asc_CSeriesSettings;
@@ -1525,15 +1861,15 @@ $(function () {
 		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
 		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
 		// contextMenuAllowedProps
-		let oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps
+		let oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -1572,15 +1908,15 @@ $(function () {
 		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
 		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
 		// contextMenuAllowedProps
-		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "true".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "true".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "true".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -1613,20 +1949,47 @@ $(function () {
 		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
 		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
 		// contextMenuAllowedProps
-		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], false, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "false".');
 		clearData(0, 0, 3, 0);
+		// Series settings with empty cells. Vertical. Toolbar
+		getFilledData(0, 0, 0, 3, testData, [0,0]);
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings with empty cells is created used by toolbar. Columns');
+		oSeriesSettings.prepare(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.columns, 'oSeriesSettings: "Series in" is detected as "Columns".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 1, 'oSeriesSettings: "Step" is detected as 1.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		// contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], false, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "false".');
+		clearData(0, 0, 0, 3);
 		// Series settings with one filled cell string type. Vertical. Toolbar
 		testData = [
 			['Test']
@@ -1643,15 +2006,15 @@ $(function () {
 		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
 		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
 		// contextMenuAllowedProps
-		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -1681,15 +2044,15 @@ $(function () {
 		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
 		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
 		// contextMenuAllowedProps
-		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
@@ -1711,26 +2074,504 @@ $(function () {
 		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
 		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
 		// contextMenuAllowedProps
-		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "false".');
-		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
 		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], false, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "false".');
 		clearData(0, 0, 3, 0);
+		// Series settings with one selected filled cell with using activeFillHandle. Horizontal. Context menu
+		testData = [
+			['1']
+		];
+		getFilledData(0, 0, 0, 0, testData, [0,0]);
+		wsView.activeFillHandle = getRange(0, 0, 0, 3);
+		wsView.fillHandleDirection = 0;
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings with one selected filled cell with using activeFillHandle is created used by context menu. Rows');
+		oSeriesSettings.prepare(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 1, 'oSeriesSettings: "Step" is detected as 1.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		// contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], true, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "true".');
+		clearData(0, 0, 0, 3);
+		// Series settings with one selected filled cell with using activeFillHandle. Vertical. Context menu
+		getFilledData(0, 0, 0, 0, testData, [0,0]);
+		wsView.activeFillHandle = getRange(0, 0, 3, 0);
+		wsView.fillHandleDirection = 1;
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings with one selected filled cell with using activeFillHandle is created used by context menu. Columns');
+		oSeriesSettings.prepare(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.columns, 'oSeriesSettings: "Series in" is detected as "Columns".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 1, 'oSeriesSettings: "Step" is detected as 1.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		// contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is nulld as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], true, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "true".');
+		clearData(0, 0, 0, 0);
+		// Series settings with one selected filled cell with using activeFillHandle - String without number. Vertical. Context menu
+		testData = [
+			['Test']
+		];
+		getFilledData(0, 0, 0, 0, testData, [0,0]);
+		wsView.activeFillHandle = getRange(0, 0, 3, 0);
+		wsView.fillHandleDirection = 1;
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings with one selected filled cell with using activeFillHandle is created used by context menu. Columns. String type without number in the end.');
+		oSeriesSettings.prepare(wsView);
+
+		// contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], false, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "false".');
+		clearData(0, 0, 3, 0);
+		// "Series". Three filled cells and four cells is selected. Rows.
+		testData = [
+			['10', '100', '100']
+		];
+		getFilledData(0, 0, 3, 0, testData, [0,0]);
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, '"Series". Three filled cells and four cells is selected. Rows.');
+		oSeriesSettings.prepare(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 45, 'oSeriesSettings: "Step" is detected as 45.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		// contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], true, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "true".');
+		clearData(0, 0, 3, 0);
+		// "Series". Three filled cells are selected. Rows.
+		getFilledData(0, 0, 2, 0, testData, [0,0]);
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, '"Series". Three filled cells are selected. Rows.');
+		oSeriesSettings.prepare(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 1, 'oSeriesSettings: "Step" is detected as 1.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		// contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], true, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "true".');
+		clearData(0, 0, 2, 0);
+		// "Series". Three filled cells  and four cells is selected. Columns.
+		testData = [
+			['10'],
+			['100'],
+			['100']
+		];
+		getFilledData(0, 7, 0, 10, testData, [7, 0])
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, '"Series". Three filled cells  and four cells is selected. Columns.');
+		oSeriesSettings.prepare(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.columns, 'oSeriesSettings: "Series in" is detected as "Columns".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 45, 'oSeriesSettings: "Step" is detected as 45.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		// contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], true, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "true".');
+		clearData(0, 7, 0, 10);
+		// "Series". Three filled cells are selected. Columns.
+		getFilledData(0, 7, 0, 9, testData, [7,0]);
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, '"Series". Three filled cells are selected. Columns.');
+		oSeriesSettings.prepare(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.columns, 'oSeriesSettings: "Series in" is detected as "Columns".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 1, 'oSeriesSettings: "Step" is detected as 1.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		// contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], true, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "true".');
+		clearData(0, 7, 0, 9);
+		// "Series". Three filled cells but between first and second filled cells is empty cell. Selected five cells. Rows.
+		testData = [
+			['10', '', '100', '100']
+		];
+		getFilledData(0, 0, 4, 0, testData, [0,0]);
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, '"Series". Three filled cells but between first and second filled cells is empty cell. Selected five cells. Rows.');
+		oSeriesSettings.prepare(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 33.13253012048193, 'oSeriesSettings: "Step" is detected as 33.13253012048193.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		// contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], true, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "true".');
+		clearData(0, 0, 4, 0);
+		// "Series". Three filled cells but between first and second filled cells is empty cell. Selected five cells. Columns.
+		testData = [
+			['10'],
+			[''],
+			['100'],
+			['100']
+		];
+		getFilledData(0, 7, 0, 11, testData, [7,0]);
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, '"Series". Three filled cells but between first and second filled cells is empty cell. Selected five cells. Columns.');
+		oSeriesSettings.prepare(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.columns, 'oSeriesSettings: "Series in" is detected as "Columns".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 33.13253012048193, 'oSeriesSettings: "Step" is detected as 33.13253012048193.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		// contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], true, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "true".');
+		clearData(0, 7, 0, 11);
+		// Case with 0 value of the first cell. 3 selected cells. Row
+		testData = [
+			['0', '2']
+		];
+		getFilledData(0, 0, 2, 0, testData, [0,0]);
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'Case with 0 value of the first cell. 3 selected cells. Row');
+		oSeriesSettings.prepare(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 2, 'oSeriesSettings: "Step" is detected as 2.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		// contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], true, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "true".');
+		clearData(0, 0, 3, 0);
+		// Case with 0 value of the first cell. 2 selected cells. Row
+		getFilledData(0, 0, 1, 0, testData, [0,0]);
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'Case with 0 value of the first cell. 2 selected cells. Row');
+		oSeriesSettings.prepare(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 1, 'oSeriesSettings: "Step" is detected as 1.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		// contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], true, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "true".');
+		clearData(0, 0, 2, 0);
+		// Case with 0 value of the first cell. 3 selected cells. Columns
+		testData = [
+			['0'],
+			['2']
+		];
+		getFilledData(0, 0, 0, 2, testData, [0,0]);
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'Case with 0 value of the first cell. 3 selected cells. Columns');
+		oSeriesSettings.prepare(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.columns, 'oSeriesSettings: "Series in" is detected as "Columns".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 2, 'oSeriesSettings: "Step" is detected as 2.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		// contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], true, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "true".');
+		clearData(0, 0, 0, 2);
+		// Case with empty first cell, but one another cell in range is filled. 3 selected cells. Row
+		testData = [
+			['', '1']
+		];
+		getFilledData(0, 0, 2, 0, testData, [0,0]);
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'Case with empty first cell, but one another cell in range is filled. 3 selected cells. Row');
+		oSeriesSettings.prepare(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 1, 'oSeriesSettings: "Step" is detected as 1.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		// contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], true, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "true".');
+		clearData(0, 0, 2, 0);
+		// Case with empty first cell, but one another cell in range is filled. 3 selected cells. Columns
+		testData = [
+			[''],
+			['1']
+		];
+		getFilledData(0, 0, 0, 2, testData, [0,0]);
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'Case with empty first cell, but one another cell in range is filled. 3 selected cells. Columns');
+		oSeriesSettings.prepare(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.columns, 'oSeriesSettings: "Series in" is detected as "Columns".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 1, 'oSeriesSettings: "Step" is detected as 1.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		// contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], false, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], true, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "true".');
+		clearData(0, 0, 0, 2);
+		// Case with empty first cell, but another cells in range are filled. 3 selected cells. Rows
+		testData = [
+			['', '', '2', '4'],
+		];
+		getFilledData(0, 0, 4, 0, testData, [0,0]);
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'Case with empty first cell, but another cells in range are filled. 5 selected cells. Rows');
+		oSeriesSettings.prepare(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 1, 'oSeriesSettings: "Step" is detected as 1.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		// contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], true, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "true".');
+		clearData(0, 0, 4, 0);
+		// Case with empty first cell, but another cells in range are filled. 3 selected cells. Columns
+		testData = [
+			[''],
+			[''],
+			['2'],
+			['4']
+		];
+		getFilledData(0, 0, 0, 4, testData, [0,0]);
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'Case with empty first cell, but another cells in range are filled. 5 selected cells. Columns');
+		oSeriesSettings.prepare(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.columns, 'oSeriesSettings: "Series in" is detected as "Columns".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 1, 'oSeriesSettings: "Step" is detected as 1.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		// contextMenuAllowedProps
+		oMenuAllowedProps = oSeriesSettings.contextMenuAllowedProps;
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.copyCells], true, 'oSeriesSettings - contextMenuAllowedProps: "Copy cells" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillSeries], true, 'oSeriesSettings - contextMenuAllowedProps: "Fill series" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillFormattingOnly], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill formatting only" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWithoutFormatting], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill without formatting" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillDays], false, 'oSeriesSettings - contextMenuAllowedProps: "Fill days" is detected as "false".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillWeekdays], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill weekdays" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillMonths], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill months" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.fillYears], null, 'oSeriesSettings - contextMenuAllowedProps: "Fill years" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.linearTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Linear trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.growthTrend], true, 'oSeriesSettings - contextMenuAllowedProps: "Growth trend" is detected as "true".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.flashFill], null, 'oSeriesSettings - contextMenuAllowedProps: "Flash fill" is detected as "null".');
+		assert.strictEqual(oMenuAllowedProps[oRightClickOptions.series], true, 'oSeriesSettings - contextMenuAllowedProps: "Series" is detected as "true".');
+		clearData(0, 0, 0, 4);
 	});
 	QUnit.test('CSeriesSettings: init method for update type and trend step by chosen menu prop', function(assert) {
 		const cSeriesSettings = Asc.asc_CSeriesSettings;
 
 		//  Context menu property is "Linear Trend"
-		const testData = [
+		let testData = [
 			['1', '2']
 		];
 		getFilledData(0, 0, 3, 0, testData, [0,0]);
@@ -1738,7 +2579,7 @@ $(function () {
 		assert.ok(oSeriesSettings, 'oSeriesSettings is created with chosen property "Linear Trend".');
 		oSeriesSettings.prepare(wsView);
 		oSeriesSettings.asc_setContextMenuChosenProperty(oRightClickOptions.linearTrend);
-		oSeriesSettings.init();
+		oSeriesSettings.init(wsView);
 
 		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
 		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
@@ -1750,16 +2591,74 @@ $(function () {
 		assert.ok(oSeriesSettings, 'oSeriesSettings is created with chosen property "Growth Trend".');
 		oSeriesSettings.prepare(wsView);
 		oSeriesSettings.asc_setContextMenuChosenProperty(oRightClickOptions.growthTrend);
-		oSeriesSettings.init();
+		oSeriesSettings.init(wsView);
 
 		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
 		assert.strictEqual(oSeriesSettings.type, oSeriesType.growth, 'oSeriesSettings: "Type" is detected as "Growth".');
 		assert.strictEqual(oSeriesSettings.trend, true, 'oSeriesSettings: "Trend" is detected as "true".');
 		clearData(0, 0, 3, 0);
+		// Context menu property is "fillMonths" - Horizontal direction
+		testData = [
+			['01/01/2000', '02/01/2000']
+		];
+		getFilledData(0, 0, 1, 0, testData, [0,0]);
+		wsView.activeFillHandle = getRange(0, 0, 4, 0);
+		wsView.fillHandleDirection = 0;
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings is created with chosen property "fillMonths".');
+		oSeriesSettings.prepare(wsView);
+		oSeriesSettings.asc_setContextMenuChosenProperty(oRightClickOptions.fillMonths);
+		oSeriesSettings.init(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.date, 'oSeriesSettings: "Type" is detected as "Date".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.month, 'oSeriesSettings: "Date unit" is detected as "Month".');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		assert.strictEqual(oSeriesSettings.stepValue, 1, 'oSeriesSettings: "Step value" is detected as "1".');
+		clearData(0, 0, 4, 0);
+		// Context menu property is "fillMonths" - Vertical direction
+		testData = [
+			['01/01/2000'],
+			['03/01/2000']
+		];
+		getFilledData(0, 0, 0, 1, testData, [0,0]);
+		wsView.activeFillHandle = getRange(0, 0, 0, 4);
+		wsView.fillHandleDirection = 1;
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings is created with chosen property "fillMonths". Columns');
+		oSeriesSettings.prepare(wsView);
+		oSeriesSettings.asc_setContextMenuChosenProperty(oRightClickOptions.fillMonths);
+		oSeriesSettings.init(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.columns, 'oSeriesSettings: "Series in" is detected as "Columns".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.date, 'oSeriesSettings: "Type" is detected as "Date".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.month, 'oSeriesSettings: "Date unit" is detected as "Month".');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		assert.strictEqual(oSeriesSettings.stepValue, 2, 'oSeriesSettings: "Step value" is detected as "2".');
+		clearData(0, 0, 0, 4);
+		// Context menu property is "fillYears" - Horizontal direction
+		testData = [
+			['01/01/2000', '01/01/2002']
+		];
+		getFilledData(0, 0, 1, 0, testData, [0,0]);
+		wsView.activeFillHandle = getRange(0, 0, 4, 0);
+		wsView.fillHandleDirection = 0;
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings is created with chosen property "fillYears".');
+		oSeriesSettings.prepare(wsView);
+		oSeriesSettings.asc_setContextMenuChosenProperty(oRightClickOptions.fillYears);
+		oSeriesSettings.init(wsView);
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.date, 'oSeriesSettings: "Type" is detected as "Date".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.year, 'oSeriesSettings: "Date unit" is detected as "Year".');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		assert.strictEqual(oSeriesSettings.stepValue, 2, 'oSeriesSettings: "Step value" is detected as "2".');
+		clearData(0, 0, 4, 0);
 	});
 	QUnit.test('applySeriesSettings', function(assert) {
 		const cSeriesSettings = Asc.asc_CSeriesSettings;
-		const testData = [
+		let testData = [
 			['2', '4']
 		];
 		//  Context menu property is "Linear Trend"
@@ -1767,10 +2666,9 @@ $(function () {
 		let oSeriesSettings = new cSeriesSettings();
 		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
 		oSeriesSettings.prepare(wsView);
-		oSeriesSettings.asc_setContextMenuChosenProperty(oRightClickOptions.linearTrend);
-		oSeriesSettings.init();
+		nType = oRightClickOptions.linearTrend;
 		wsView.activeFillHandle = getRange(0, 0, 4, 0);
-		wsView.applySeriesSettings(oSeriesSettings);
+		api.asc_FillCells(nType, oSeriesSettings);
 
 		autofillRange = getRange(2, 0, 4, 0);
 		autofillData(assert, autofillRange, [['6', '8', '10']], 'Autofill Rows. Context menu - Linear Trend');
@@ -1780,51 +2678,125 @@ $(function () {
 		oSeriesSettings = new cSeriesSettings();
 		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
 		oSeriesSettings.prepare(wsView);
-		oSeriesSettings.asc_setContextMenuChosenProperty(oRightClickOptions.growthTrend);
-		oSeriesSettings.init();
+		nType = oRightClickOptions.growthTrend;
 		wsView.activeFillHandle = getRange(0, 0, 4, 0);
-		wsView.applySeriesSettings(oSeriesSettings);
+		api.asc_FillCells(nType, oSeriesSettings);
 
 		autofillRange = getRange(2, 0, 4, 0);
 		autofillData(assert, autofillRange, [['7.999999999999998', '15.999999999999991', '31.999999999999986']], 'Autofill Rows. Context menu - Growth Trend');
 		clearData(0,0,4,0);
 		//Context menu property is "Copy cells"
 		getFilledData(0, 0, 1, 0, testData, [0,0]);
-		oSeriesSettings = new cSeriesSettings();
-		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
-		oSeriesSettings.prepare(wsView);
-		oSeriesSettings.asc_setContextMenuChosenProperty(oRightClickOptions.copyCells);
-		oSeriesSettings.init();
+		nType = oRightClickOptions.copyCells;
 		wsView.activeFillHandle = getRange(0, 0, 4, 0);
 		wsView.fillHandleDirection = 0;
-		wsView.applySeriesSettings(oSeriesSettings);
+		api.asc_FillCells(nType);
 
 		autofillRange = getRange(2, 0, 4, 0);
 		autofillData(assert, autofillRange, [['2', '4', '2']], 'Autofill Rows. Context menu - Copy cells');
 		clearData(0,0,4,0);
 		// Context menu property is "Fill series"
 		getFilledData(0, 0, 1, 0, testData, [0,0]);
-		oSeriesSettings = new cSeriesSettings();
-		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
-		oSeriesSettings.prepare(wsView);
-		oSeriesSettings.asc_setContextMenuChosenProperty(oRightClickOptions.fillSeries);
-		oSeriesSettings.init();
+		nType = oRightClickOptions.fillSeries;
 		wsView.activeFillHandle = getRange(0, 0, 4, 0);
 		wsView.fillHandleDirection = 0;
-		wsView.applySeriesSettings(oSeriesSettings);
+		api.asc_FillCells(nType);
 
 		autofillRange = getRange(2, 0, 4, 0);
 		autofillData(assert, autofillRange, [['6', '8', '10']], 'Autofill Rows. Context menu - Fill series');
 		clearData(0,0,4,0);
-		// Toolbar "Serial"
+		// Toolbar "Series"
 		getFilledData(0, 0, 4, 0, testData, [0,0]);
 		oSeriesSettings = new cSeriesSettings();
 		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
 		oSeriesSettings.prepare(wsView);
-		wsView.applySeriesSettings(oSeriesSettings);
+		nType = oRightClickOptions.series;
+		api.asc_FillCells(nType, oSeriesSettings);
 
 		autofillRange = getRange(2, 0, 4, 0);
-		autofillData(assert, autofillRange, [['6', '8', '10']], 'Autofill Rows. Toolbar - Serial - Linear');
+		autofillData(assert, autofillRange, [['6', '8', '10']], 'Autofill Rows. Toolbar - Series - Linear');
 		clearData(0,0,4,0);
+		// Context menu property is "Series". Rows.
+		getFilledData(0, 0, 1, 0, testData, [0,0]);
+		nType = oRightClickOptions.series;
+		wsView.activeFillHandle = getRange(0, 0, 4, 0);
+		wsView.fillHandleDirection = 0;
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
+		oSeriesSettings.prepare(wsView);
+		api.asc_FillCells(nType, oSeriesSettings);
+
+		autofillRange = getRange(2, 0, 4, 0);
+		autofillData(assert, autofillRange, [['4', '5', '6']], 'Autofill Rows. Context menu - Series - Linear.');
+		clearData(0,0,4,0);
+		// Context menu property is "Copy cell" with selected one cell number type data. Rows.
+		getFilledData(0, 0, 0, 0, testData, [0,0]);
+		nType = oRightClickOptions.copyCells;
+		wsView.activeFillHandle = getRange(0, 0, 4, 0);
+		wsView.fillHandleDirection = 0;
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(1, 0, 4, 0);
+		autofillData(assert, autofillRange, [['2', '2', '2', '2']], 'Autofill Rows. Context menu - Copy cells. Selected one cell with number type data.');
+		clearData(0,0,4,0);
+		// Context menu property is "Fill series" with selected one cell number type data. Rows.
+		getFilledData(0, 0, 0, 0, testData, [0,0]);
+		nType = oRightClickOptions.fillSeries;
+		wsView.activeFillHandle = getRange(0, 0, 4, 0);
+		wsView.fillHandleDirection = 0;
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(1, 0, 4, 0);
+		autofillData(assert, autofillRange, [['3', '4', '5', '6']], 'Autofill Rows. Context menu - Fill series. Selected one cell with number type data.');
+		clearData(0,0,4,0);
+		// Context menu property is "Series" with selected one cell number type data. Rows.
+		getFilledData(0, 0, 0, 0, testData, [0,0]);
+		nType = oRightClickOptions.series;
+		wsView.activeFillHandle = getRange(0, 0, 4, 0);
+		wsView.fillHandleDirection = 0;
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
+		oSeriesSettings.prepare(wsView);
+		api.asc_FillCells(nType, oSeriesSettings);
+
+		autofillRange = getRange(1, 0, 4, 0);
+		autofillData(assert, autofillRange, [['3', '4', '5', '6']], 'Autofill Rows. Context menu - Series - Linear. Selected one cell with number type data.');
+		clearData(0,0,4,0);
+		// Context menu property is "Copy cells" with selected one cell Date type data. Columns.
+		testData = [
+			['01/01/2000']
+		];
+		getFilledData(0, 0, 0, 0, testData, [0,0]);
+		nType = oRightClickOptions.copyCells;
+		wsView.activeFillHandle = getRange(0, 0, 0, 4);
+		wsView.fillHandleDirection = 1;
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 1, 0, 4);
+		autofillData(assert, autofillRange, [['36526'], ['36526'], ['36526'], ['36526']], 'Autofill Columns. Context menu - Copy cells. Selected one cell with Date type data.');
+		clearData(0,0,0,4);
+		// Context menu property is "Fill series" with selected one cell Date type data. Columns.
+		getFilledData(0, 0, 0, 0, testData, [0,0]);
+		nType = oRightClickOptions.fillSeries;
+		wsView.activeFillHandle = getRange(0, 0, 0, 4);
+		wsView.fillHandleDirection = 1;
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 1, 0, 4);
+		autofillData(assert, autofillRange, [['36527'], ['36528'], ['36529'], ['36530']], 'Autofill Columns. Context menu - Fill series. Selected one cell with Date type data.');
+		clearData(0,0,0,4);
+		// Context menu property is "Fill Months" with selected one cell Date type data. Rows.
+		/*getFilledData(0, 0, 0, 0, testData, [0,0]);
+		nType = oRightClickOptions.fillMonths;
+		wsView.activeFillHandle = getRange(0, 0, 4, 0);
+		wsView.fillHandleDirection = 0;
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
+		oSeriesSettings.prepare(wsView);
+		api.asc_FillCells(nType, oSeriesSettings);
+
+		autofillRange = getRange(1, 0, 4, 0);
+		autofillData(assert, autofillRange, [['36557', '36586', '36617', '36647']], 'Autofill Rows. Context menu - Fill Months. Selected one cell with Date type data.');
+		clearData(0, 0, 4, 0);*/
 	});
 });

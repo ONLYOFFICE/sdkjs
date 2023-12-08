@@ -6696,6 +6696,7 @@
 
 		this.events = [];
 		this.eventsMap = {};
+		this.menu = null;
 	}
 
 	CPluginVariation.prototype["get_Description"] = function()
@@ -6770,6 +6771,10 @@
         for (var i = 0; i < this.events.length; i++)
         	this.eventsMap[this.events[i]] = true;
     };
+	CPluginVariation.prototype["get_Menu"]           = function()
+	{
+		return this.menu;
+	};
 
 	CPluginVariation.prototype["serialize"]   = function()
 	{
@@ -6788,6 +6793,7 @@
 		_object["isDisplayedInViewer"] = this.isDisplayedInViewer;
 		_object["EditorsSupport"]      = this.EditorsSupport;
 
+		_object["menu"]           = this.menu;
 		_object["type"]           = this.type;
 
 		_object["isCustomWindow"] = this.isCustomWindow;
@@ -6820,6 +6826,7 @@
 		this.isViewer            = (_object["isViewer"] != null) ? _object["isViewer"] : this.isViewer;
 		this.isDisplayedInViewer = (_object["isDisplayedInViewer"] != null) ? _object["isDisplayedInViewer"] : this.isDisplayedInViewer;
 		this.EditorsSupport      = (_object["EditorsSupport"] != null) ? _object["EditorsSupport"] : this.EditorsSupport;
+		this.menu                = (_object["menu"] != null) ? _object["menu"] : this.menu;
 
 		// default: background
 		this.type = PluginType.Background;

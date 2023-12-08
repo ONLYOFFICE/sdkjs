@@ -734,37 +734,17 @@ NumFormat.prototype =
     },
     _ReadAmPm : function(next)
     {
-        var sAm = next;
-        var sPm  = "";
-        var bAm = true;
-        while(true)
-        {
-            next = this._readChar();
-            if(this.EOF == next)
-                break;
-            else if("/" == next)
-            {
-                bAm = false;
-            }
-            else if("A" == next || "a" == next || "P" == next || "p" == next || "M" == next || "m" == next)
-            {
-                if(true == bAm)
-                    sAm += next;
-                else
-                    sPm += next;
-            }
-            else
-            {
-                this._skip(-1);
-                break;
-            }
-        }
-        if("" != sAm && "" != sPm)
-        {
-            this._addToFormat2(new FormatObj(numFormat_AmPm));
-            this.bTimePeriod = true;
-            this.bDateTime = true;
-        }
+		if ("A" === next || "a" === next) {
+			let ampm = "AM/PM";
+			if (ampm.substring(1) === this._GetText(ampm.length - 1).toUpperCase()) {
+				this._addToFormat2(new FormatObj(numFormat_AmPm));
+				this.bTimePeriod = true;
+				this.bDateTime = true;
+				this._skip(ampm.length - 1);
+				return true;
+			}
+		}
+		return false;
     },
 	_ReadAmPmPDF : function(next)
     {
@@ -908,6 +888,10 @@ NumFormat.prototype =
                 this._addToFormat(numFormat_General);
                 this._skip(sGeneral.length - 1);
             }
+			else if (this._ReadAmPm(next))
+			{
+
+			}
             else if("E" == next || "e" == next)
             {
                 var nextnext = this._readChar();
@@ -965,9 +949,7 @@ NumFormat.prototype =
 			{
 				this._addToFormat2(new FormatObjDateVal(numFormat_DayOfWeek, 1, false));
 			}
-            else if ("A" == next || "a" == next) {
-                this._ReadAmPm(next);
-            } else {
+            else {
                 bNoFormat = true;
                 this._addToFormat(numFormat_Text, next);
             }
@@ -985,6 +967,10 @@ NumFormat.prototype =
 				break;
 			else if("\'" == next)
 				this._ReadText("\'");
+			else if (this._ReadAmPm(next))
+			{
+
+			}
 			else if("Y" == next || "y" == next)
 			{
 				this._addToFormat2(new FormatObjDateVal(numFormat_Year, 1, false));
@@ -1008,9 +994,6 @@ NumFormat.prototype =
 			else if ("a" == next)
 			{
 				this._addToFormat2(new FormatObjDateVal(numFormat_DayOfWeek, 1, false));
-			}
-			else if ("A" == next || "a" == next) {
-				this._ReadAmPm(next);
 			}
 			else {
 					this._addToFormat(numFormat_Text, next);
@@ -4503,7 +4486,7 @@ FormatParser.prototype =
 		        oDataType = oDataTypes.digit;
 		    else if(" " == sChar)
 		        oDataType = oDataTypes.space;
-		    else if ("." == sChar || "/" == sChar || "-" == sChar || ":" == sChar || cultureInfo.DateSeparator == sChar || cultureInfo.TimeSeparator == sChar)
+		    else if ("." == sChar || "/" == sChar || "-" == sChar || ":" == sChar || "," == sChar || cultureInfo.DateSeparator == sChar || cultureInfo.TimeSeparator == sChar)
 		        oDataType = oDataTypes.delimiter;
 		    else
 		        oDataType = oDataTypes.letter;
@@ -5525,7 +5508,7 @@ var g_aCultureInfos = {
 	25: {LCID: 25, Name: "ru", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₽", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"], AbbreviatedDayNames: ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"], MonthNames: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь", ""], AbbreviatedMonthNames: ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек", ""], MonthGenitiveNames: ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря", ""], AbbreviatedMonthGenitiveNames: ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек", ""], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\ mmmm\\ yyyy\\ \"г.\""},
 	29: {LCID: 29, Name: "sv", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "kr", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["söndag", "måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag"], AbbreviatedDayNames: ["sön", "mån", "tis", "ons", "tor", "fre", "lör"], MonthNames: ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december", ""], AbbreviatedMonthNames: ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "\"den \"d\\ mmmm\\ yyyy"},
 	31: {LCID: 31, Name: "tr", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "₺", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"], AbbreviatedDayNames: ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"], MonthNames: ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık", ""], AbbreviatedMonthNames: ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ÖÖ", PMDesignator: "ÖS", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "d\\ mmmm\\ yyyy\\ dddd"},
-	33: {LCID: 33, Name: "id", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "Rp", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"], AbbreviatedDayNames: ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], MonthNames: ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ".", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ dd\\ mmmm\\ yyyy"},
+	33: {LCID: 33, Name: "id", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "Rp", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"], AbbreviatedDayNames: ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], MonthNames: ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ dd\\ mmmm\\ yyyy"},
 	34: {LCID: 34, Name: "uk", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₴", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["неділя", "понеділок", "вівторок", "середа", "четвер", "п'ятниця", "субота"], AbbreviatedDayNames: ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"], MonthNames: ["січень", "лютий", "березень", "квітень", "травень", "червень", "липень", "серпень", "вересень", "жовтень", "листопад", "грудень", ""], AbbreviatedMonthNames: ["Січ", "Лют", "Бер", "Кві", "Тра", "Чер", "Лип", "Сер", "Вер", "Жов", "Лис", "Гру", ""], MonthGenitiveNames: ["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня", ""], AbbreviatedMonthGenitiveNames: ["січ", "лют", "бер", "кві", "тра", "чер", "лип", "сер", "вер", "жов", "лис", "гру", ""], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\ mmmm\\ yyyy\" р.\""},
 	36: {LCID: 36, Name: "sl", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["nedelja", "ponedeljek", "torek", "sreda", "četrtek", "petek", "sobota"], AbbreviatedDayNames: ["ned.", "pon.", "tor.", "sre.", "čet.", "pet.", "sob."], MonthNames: ["januar", "februar", "marec", "april", "maj", "junij", "julij", "avgust", "september", "oktober", "november", "december", ""], AbbreviatedMonthNames: ["jan.", "feb.", "mar.", "apr.", "maj", "jun.", "jul.", "avg.", "sep.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "dop.", PMDesignator: "pop.", UseAMPM: 0, DateSeparator: ". ", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "dddd\\,\\ dd\\.\\ mmmm\\ yyyy"},
 	38: {LCID: 38, Name: "lv", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["svētdiena", "pirmdiena", "otrdiena", "trešdiena", "ceturtdiena", "piektdiena", "sestdiena"], AbbreviatedDayNames: ["svētd.", "pirmd.", "otrd.", "trešd.", "ceturtd.", "piektd.", "sestd."], MonthNames: ["janvāris", "februāris", "marts", "aprīlis", "maijs", "jūnijs", "jūlijs", "augusts", "septembris", "oktobris", "novembris", "decembris", ""], AbbreviatedMonthNames: ["janv.", "febr.", "marts", "apr.", "maijs", "jūn.", "jūl.", "aug.", "sept.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "priekšp.", PMDesignator: "pēcp.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ yyyy\\.\\ \"gada\"\\ d\\.\\ mmmm"},
@@ -5555,7 +5538,7 @@ var g_aCultureInfos = {
 	1051: {LCID: 1051, Name: "sk-SK", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["nedeľa", "pondelok", "utorok", "streda", "štvrtok", "piatok", "sobota"], AbbreviatedDayNames: ["ne", "po", "ut", "st", "št", "pi", "so"], MonthNames: ["január", "február", "marec", "apríl", "máj", "jún", "júl", "august", "september", "október", "november", "december", ""], AbbreviatedMonthNames: ["jan", "feb", "mar", "apr", "máj", "jún", "júl", "aug", "sep", "okt", "nov", "dec", ""], MonthGenitiveNames: ["januára", "februára", "marca", "apríla", "mája", "júna", "júla", "augusta", "septembra", "októbra", "novembra", "decembra", ""], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: ". ", TimeSeparator: ":", ShortDatePattern: "025", LongDatePattern: "dddd\\ d\\.\\ mmmm\\ yyyy"},
 	1053: {LCID: 1053, Name: "sv-SE", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "kr", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["söndag", "måndag", "tisdag", "onsdag", "torsdag", "fredag", "lördag"], AbbreviatedDayNames: ["sön", "mån", "tis", "ons", "tor", "fre", "lör"], MonthNames: ["januari", "februari", "mars", "april", "maj", "juni", "juli", "augusti", "september", "oktober", "november", "december", ""], AbbreviatedMonthNames: ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: "-", TimeSeparator: ":", ShortDatePattern: "531", LongDatePattern: "\"den \"d\\ mmmm\\ yyyy"},
 	1055: {LCID: 1055, Name: "tr-TR", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "₺", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"], AbbreviatedDayNames: ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"], MonthNames: ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık", ""], AbbreviatedMonthNames: ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "ÖÖ", PMDesignator: "ÖS", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "d\\ mmmm\\ yyyy\\ dddd"},
-	1057: {LCID: 1057, Name: "id-ID", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "Rp", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"], AbbreviatedDayNames: ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], MonthNames: ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ".", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ dd\\ mmmm\\ yyyy"},
+	1057: {LCID: 1057, Name: "id-ID", CurrencyPositivePattern: 0, CurrencyNegativePattern: 1, CurrencySymbol: "Rp", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"], AbbreviatedDayNames: ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"], MonthNames: ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember", ""], AbbreviatedMonthNames: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "AM", PMDesignator: "PM", UseAMPM: 0, DateSeparator: "/", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ dd\\ mmmm\\ yyyy"},
 	1058: {LCID: 1058, Name: "uk-UA", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "₴", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["неділя", "понеділок", "вівторок", "середа", "четвер", "п'ятниця", "субота"], AbbreviatedDayNames: ["Нд", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"], MonthNames: ["січень", "лютий", "березень", "квітень", "травень", "червень", "липень", "серпень", "вересень", "жовтень", "листопад", "грудень", ""], AbbreviatedMonthNames: ["Січ", "Лют", "Бер", "Кві", "Тра", "Чер", "Лип", "Сер", "Вер", "Жов", "Лис", "Гру", ""], MonthGenitiveNames: ["січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня", ""], AbbreviatedMonthGenitiveNames: ["січ", "лют", "бер", "кві", "тра", "чер", "лип", "сер", "вер", "жов", "лис", "гру", ""], AMDesignator: "", PMDesignator: "", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "d\\ mmmm\\ yyyy\" р.\""},
 	1060: {LCID: 1060, Name: "sl-SI", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: ".", NumberGroupSizes: [3], DayNames: ["nedelja", "ponedeljek", "torek", "sreda", "četrtek", "petek", "sobota"], AbbreviatedDayNames: ["ned.", "pon.", "tor.", "sre.", "čet.", "pet.", "sob."], MonthNames: ["januar", "februar", "marec", "april", "maj", "junij", "julij", "avgust", "september", "oktober", "november", "december", ""], AbbreviatedMonthNames: ["jan.", "feb.", "mar.", "apr.", "maj", "jun.", "jul.", "avg.", "sep.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "dop.", PMDesignator: "pop.", UseAMPM: 0, DateSeparator: ". ", TimeSeparator: ":", ShortDatePattern: "035", LongDatePattern: "dddd\\,\\ dd\\.\\ mmmm\\ yyyy"},
 	1062: {LCID: 1062, Name: "lv-LV", CurrencyPositivePattern: 3, CurrencyNegativePattern: 8, CurrencySymbol: "€", NumberDecimalSeparator: ",", NumberGroupSeparator: " ", NumberGroupSizes: [3], DayNames: ["svētdiena", "pirmdiena", "otrdiena", "trešdiena", "ceturtdiena", "piektdiena", "sestdiena"], AbbreviatedDayNames: ["svētd.", "pirmd.", "otrd.", "trešd.", "ceturtd.", "piektd.", "sestd."], MonthNames: ["janvāris", "februāris", "marts", "aprīlis", "maijs", "jūnijs", "jūlijs", "augusts", "septembris", "oktobris", "novembris", "decembris", ""], AbbreviatedMonthNames: ["janv.", "febr.", "marts", "apr.", "maijs", "jūn.", "jūl.", "aug.", "sept.", "okt.", "nov.", "dec.", ""], MonthGenitiveNames: [], AbbreviatedMonthGenitiveNames: [], AMDesignator: "priekšp.", PMDesignator: "pēcp.", UseAMPM: 0, DateSeparator: ".", TimeSeparator: ":", ShortDatePattern: "135", LongDatePattern: "dddd\\,\\ yyyy\\.\\ \"gada\"\\ d\\.\\ mmmm"},

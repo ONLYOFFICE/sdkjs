@@ -8075,7 +8075,7 @@ PivotFormatsManager.prototype.getSuitableFormatsCollectionItems = function(query
  */
 PivotFormatsManager.prototype.get = function(query) {
 	const suitableFormatsCollectionItems = this.getSuitableFormatsCollectionItems(query);
-	const result = new AscCommonExcel.CellXfs();;
+	const result = new AscCommonExcel.CellXfs();
 	for (let i = 0; i < suitableFormatsCollectionItems.length; i += 1) {
 		const formatsCollectionItem = suitableFormatsCollectionItems[i];
 		const format = formatsCollectionItem.format;

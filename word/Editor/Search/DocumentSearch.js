@@ -167,12 +167,19 @@
 		var oPara = this.Elements[Id];
 		if (oPara)
 		{
+			if (oPara.IsInPlaceholder())
+				return false;
+			
 			var oLogicDocument   = oPara.LogicDocument;
 			var isTrackRevisions = oLogicDocument ? oLogicDocument.IsTrackRevisions() : false;
 
 			var SearchElement = oPara.SearchResults[Id];
 			if (SearchElement)
 			{
+				if (oPara.GetPlaceHolderObject(SearchElement.StartPos)
+					|| oPara.GetPlaceHolderObject(SearchElement.EndPos))
+					return false;
+				
 				var ContentPos, StartPos, EndPos, bSelection;
 				if (true === bRestorePos)
 				{

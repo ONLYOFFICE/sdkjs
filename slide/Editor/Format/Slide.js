@@ -935,7 +935,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             var oSp = this.cSld.spTree[pos];
             History.Add(new AscDFH.CChangesDrawingsContentPresentation(this, AscDFH.historyitem_SlideRemoveFromSpTree, pos, [oSp], false));
             this.cSld.spTree.splice(pos, 1);
-            if(this.timing) {
+            if(this.timing && !AscCommon.IsChangingDrawingZIndex) {
                 this.checkNeedCopyTimingBeforeEdit();
                 this.timing.onRemoveObject(oSp.Get_Id());
             }

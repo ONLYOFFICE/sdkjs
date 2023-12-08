@@ -51,13 +51,14 @@
 	 * @constructor
 	 * @extends {AscWord.CDocumentContent}
 	 */
-	function CTextBoxContent(parent, pdfDocument) {
+	function CTextBoxContent(parent, pdfDocument, isFormatContent) {
 		AscWord.CDocumentContent.call(this, null, pdfDocument ? pdfDocument.GetDrawingDocument() : undefined, 0, 0, 0, 0, false, false, false);
 		
 		this.Content[0].LogicDocument = pdfDocument;
 		
-		this.ParentPDF = parent;
-		this.PdfDoc    = pdfDocument;
+		this.ParentPDF 			= parent;
+		this.PdfDoc    			= pdfDocument;
+		this.isFormatContent	= !!isFormatContent;
 		
 		this.SetUseXLimit(false);
 		this.MoveCursorToStartPos();
@@ -163,7 +164,7 @@
 		return text;
 	};
 	CTextBoxContent.prototype.OnContentChange = function() {
-		if (this.ParentPDF && this.ParentPDF.OnContentChange)
+		if (this.ParentPDF && this.ParentPDF.OnContentChange && this.isFormatContent == false)
 			this.ParentPDF.OnContentChange();
 	};
 	

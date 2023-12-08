@@ -311,6 +311,9 @@
     CAnnotationText.prototype.IsComment = function() {
         return true;
     };
+    CAnnotationText.prototype.getObjectType = function() {
+        return -1;
+    };
     
     CAnnotationText.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);

@@ -2794,6 +2794,82 @@
 			return this;
 		}
 
+		asc_CHyperlink.prototype.clone = function () {
+			let res = new asc_CHyperlink();
+
+			res.hyperlinkModel = this.hyperlinkModel && this.hyperlinkModel.clone();
+			res.text = this.text;
+
+			return res;
+		};
+		asc_CHyperlink.prototype.calculateProps = function () {
+			let type = this.asc_getType();
+			let api = window.Asc.editor;
+			let fileName = api && api.DocInfo && api.DocInfo.Title;
+			if (type === Asc.c_oAscHyperlinkType.WebLink && this.hyperlinkModel.getHyperlinkFunction()) {
+				let res = null;
+				let sHyperlink = this.hyperlinkModel.Hyperlink;
+				let ph = {operand_str: null, pCurrPos: 0};
+				let _3dRef = AscCommon.parserHelp.is3DRef.call(ph, sHyperlink, 0);
+
+				if (_3dRef && _3dRef[0] && _3dRef[3] && _3dRef[1]) {
+					let ref;
+					if (AscCommon.parserHelp.isArea.call(ph, sHyperlink, ph.pCurrPos) || AscCommon.parserHelp.isRef.call(ph, sHyperlink, ph.pCurrPos)) {
+						ref = ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase()
+					}
+
+					if (ref) {
+						if (AscCommon.rx_allowedProtocols.test(_3dRef[3])) {
+							//https://test.com/test1/testFile.xlsx#TestSheet!F10
+							sHyperlink = _3dRef[3] + "#" + _3dRef[1] + "!" + ref;
+							res = this.clone();
+							res.asc_setHyperlinkUrl(sHyperlink);
+						} else {
+							//check [test.xlsx]Sheet2!A1
+							//while check link on this file
+							//TODO need calculate links on other files
+							if (_3dRef[3] === fileName) {
+								type = Asc.c_oAscHyperlinkType.RangeLink;
+								res = this.clone();
+								res.asc_setHyperlinkUrl(null);
+								res.asc_setSheet(_3dRef[1]);
+								res.asc_setRange(ref);
+								res.hyperlinkModel._updateLocation();
+							} else {
+								//TODO
+							}
+						}
+					}
+				} else if (_3dRef[3]) {
+					//check [test.xlsx]A14
+
+					let external = _3dRef[3];
+					if (external === fileName) {
+						ph.pCurrPos += _3dRef[4];
+
+						let ref;
+						if (AscCommon.parserHelp.isArea.call(ph, sHyperlink, ph.pCurrPos) || AscCommon.parserHelp.isRef.call(ph, sHyperlink, ph.pCurrPos)) {
+							ref = ph.real_str ? ph.real_str.toUpperCase() : ph.operand_str.toUpperCase()
+						}
+						if (ref) {
+							res = this.clone();
+							res.asc_setHyperlinkUrl(null);
+							let sCurSheetName = api.wbModel.getActiveWs().sName;
+							res.asc_setSheet(sCurSheetName);
+							res.asc_setRange(ref);
+							res.hyperlinkModel._updateLocation();
+						} else {
+							//TODO
+						}
+					}
+				}
+
+				if (res) {
+					return res;
+				}
+			}
+			return null;
+		};
 		asc_CHyperlink.prototype.asc_getType = function () {
 			return this.hyperlinkModel.getHyperlinkType();
 		};

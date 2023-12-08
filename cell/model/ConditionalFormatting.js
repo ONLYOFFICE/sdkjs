@@ -218,7 +218,7 @@
 	};
 	CConditionalFormattingRule.prototype.recalcInterfaceFormula = function (ws, toInterface) {
 		for (var i = 0; i < this.aRuleElements.length; i++) {
-			this.aRuleElements[i].recalcFormula(ws, toInterface);
+			this.aRuleElements[i].recalcFormula && this.aRuleElements[i].recalcFormula(ws, toInterface);
 		}
 	};
 	CConditionalFormattingRule.prototype.Write_ToBinary2 = function (writer) {
@@ -1176,22 +1176,27 @@
 		this.dxf = val;
 	};
 	CConditionalFormattingRule.prototype.asc_setLocation = function (val) {
-		var t = this;
+		let t = this;
 		if (val) {
 			if (val[0] === "=") {
 				val = val.slice(1);
 			}
-			val = val.split(",");
 			this.ranges = [];
-			val.forEach(function (item) {
-				if (-1 !== item.indexOf("!")) {
-					var is3DRef = AscCommon.parserHelp.parse3DRef(item);
-					if (is3DRef) {
-						item = is3DRef.range;
+
+			let wb = Asc.editor && Asc.editor.wbModel;
+			let _ranges;
+			if (wb) {
+				let ws = wb.getActiveWs();
+				_ranges = AscCommonExcel.getRangeByRef(val, ws, true);
+			}
+
+			if (_ranges) {
+				for (let i = 0; i < _ranges.length; i++) {
+					if (_ranges[i].bbox) {
+						t.ranges.push(_ranges[i].bbox);
 					}
 				}
-				t.ranges.push(AscCommonExcel.g_oRangeCache.getAscRange(item));
-			});
+			}
 		}
 	};
 

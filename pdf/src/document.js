@@ -370,7 +370,7 @@ var CPresentation = CPresentation || function(){};
                 if (isValid) {
                     oCurForm.needValidate = false; 
                     oCurForm.Commit();
-                    if (this.event["rc"] == true) {
+                    if (this.event["rc"] == true && this.IsNeedDoCalculate()) {
                         this.DoCalculateFields(oCurForm);
                         this.AddFieldToCommit(oCurForm);
                         this.CommitFields();
@@ -570,7 +570,7 @@ var CPresentation = CPresentation || function(){};
                 if (isValid) {
                     oField.needValidate = false; 
                     oField.Commit();
-                    if (this.event["rc"] == true) {
+                    if (this.event["rc"] == true && this.IsNeedDoCalculate()) {
                         this.DoCalculateFields(oField);
                         this.AddFieldToCommit(oField);
                         this.CommitFields();
@@ -644,7 +644,7 @@ var CPresentation = CPresentation || function(){};
             if (isValid) {
                 oActiveForm.needValidate = false; 
                 oActiveForm.Commit();
-                if (this.event["rc"] == true) {
+                if (this.event["rc"] == true && this.IsNeedDoCalculate()) {
                     this.DoCalculateFields(oActiveForm);
                     this.AddFieldToCommit(oActiveForm);
                     this.CommitFields();
@@ -757,6 +757,7 @@ var CPresentation = CPresentation || function(){};
         let IsOnDrawer      = oViewer.Api.isDrawInkMode();
         let IsOnEraser      = oViewer.Api.isEraseInkMode();
 
+        editor.sendEvent('asc_onHidePdfFormsActions');
         oViewer.mouseDownLinkObject = oViewer.getPageLinkByMouse();
         let oMouseDownField         = oViewer.getPageFieldByMouse();
         let oMouseDownAnnot         = oViewer.getPageAnnotByMouse();
@@ -947,9 +948,17 @@ var CPresentation = CPresentation || function(){};
             {
                 switch (mouseMoveFieldObject.GetType())
                 {
-                    case AscPDF.FIELD_TYPES.text:
+                    case AscPDF.FIELD_TYPES.text: {
                         cursorType = "text";
+                        
+                        if (mouseMoveFieldObject.IsDateFormat()) {
+                            if (pageObject.x >= mouseMoveFieldObject._markRect.x1 && pageObject.x <= mouseMoveFieldObject._markRect.x2 && pageObject.y >= mouseMoveFieldObject._markRect.y1 && pageObject.y <= mouseMoveFieldObject._markRect.y2) {
+                                cursorType = "pointer";
+                            }
+                        }
+
                         break;
+                    }
                     case AscPDF.FIELD_TYPES.combobox:
                         if (!pageObject)
                             return null;
@@ -1079,8 +1088,8 @@ var CPresentation = CPresentation || function(){};
                 
                 oField.onMouseUp();
 
-                if (oField.IsNeedCommit()) {
-                    let oDoc = oField.GetDocument();
+                let oDoc = oField.GetDocument();
+                if (oField.IsNeedCommit() && oDoc.IsNeedDoCalculate()) {
                     oDoc.DoCalculateFields();
                     oDoc.CommitFields();
                 }
@@ -1126,9 +1135,11 @@ var CPresentation = CPresentation || function(){};
 
                         // вызываем calculate actions
                         let oDoc = oParentForm.GetDocument();
-                        oDoc.DoCalculateFields();
-                        oDoc.CommitFields();
-
+                        if (oDoc.IsNeedDoCalculate()) {
+                            oDoc.DoCalculateFields();
+                            oDoc.CommitFields();
+                        }
+                        
                         // выход из формы
                         if (this.activeForm)
                         {
@@ -1273,6 +1284,12 @@ var CPresentation = CPresentation || function(){};
         this.calculateInfo.SetIsInProgress(false);
         this.calculateInfo.SetSourceField(null);
     };
+    CPDFDoc.prototype.IsNeedDoCalculate = function() {
+        if (this.calculateInfo.names.length > 0)
+            return true;
+
+        return false;
+    }
 
     CPDFDoc.prototype.GetCalculateInfo = function() {
         return this.calculateInfo;
@@ -2307,12 +2324,18 @@ var CPresentation = CPresentation || function(){};
 	};
 	
     function CActionQueue(oDoc) {
-        this.doc            = oDoc;
-        this.actions        = [];
-        this.isInProgress   = false;
-        this.curAction  = null;
-        this.curActionIdx   = -1;
+        this.doc                = oDoc;
+        this.actions            = [];
+        this.isInProgress       = false;
+        this.curAction          = null;
+        this.curActionIdx       = -1;
         this.callBackAfterFocus = null;
+
+        // суть в том, что дату из пикера можем подогнать под любой формат
+		// но в цепочке actions может быть изменение значения формы, куда вводится дата с picker, что вызовет новый коммит
+		// если значение не изменилось на этапе нового коммита формы, то опять выставляем будто бы взяли с пикера
+		// в конце actions удаляем эту информацию, чтобы в дальнейшем это не влияло на обычную работу парсера даты из соответсвующих методов
+        this.datePickerInfo     = null;
     };
 
     CActionQueue.prototype.AddActions = function(aActions) {
@@ -2332,6 +2355,7 @@ var CPresentation = CPresentation || function(){};
     };
     CActionQueue.prototype.Stop = function() {
         this.SetInProgress(false);
+        this.datePickerInfo = null;
     };
     CActionQueue.prototype.IsInProgress = function() {
         return this.isInProgress;

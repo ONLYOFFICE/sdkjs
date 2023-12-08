@@ -4026,7 +4026,10 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 					this.CurPos.ContentPos = StartPos;
 				}
 				
-				if (this.LogicDocument && true === this.LogicDocument.IsTrackRevisions() && this.IsSelectionUse() && !this.GetPlaceHolderObject())
+				if (this.LogicDocument
+					&& true === this.LogicDocument.IsTrackRevisions()
+					&& this.Content[this.CurPos.ContentPos].IsSelectionUse()
+					&& !this.GetPlaceHolderObject())
 				{
 					// TODO: Используем данные функции для сброса селекта, по-хорошему надо сделать для
 					//       этого отдельные методы
@@ -4148,20 +4151,32 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 					this.Content[StartPos].SetRStyle(undefined);
 				}
 			}
-
+			
 			if (this.LogicDocument && true === this.LogicDocument.IsTrackRevisions() && this.IsSelectionUse())
 			{
-				// TODO: Используем данные функции для сброса селекта, по-хорошему надо сделать для
-				//       этого отдельные методы
+				let _startPos = this.Selection.StartPos < this.Selection.EndPos ? this.Selection.StartPos : this.Selection.EndPos;
+				let _endPos   = this.Selection.StartPos < this.Selection.EndPos ? this.Selection.EndPos : this.Selection.StartPos;
+				
+				// TODO: Используем данные функции для сброса селекта, по-хорошему надо сделать для этого отдельные методы
 				if (Direction < 0)
-					this.MoveCursorLeft(false, false);
+				{
+					if (this.Content[_startPos].IsSelectionUse())
+						this.MoveCursorLeft(false, false);
+					else
+						this.RemoveSelection();
+				}
 				else
-					this.MoveCursorRight(false, false);
+				{
+					if (this.Content[_endPos].IsSelectionUse())
+						this.MoveCursorRight(false, false);
+					else
+						this.RemoveSelection();
+				}
 			}
-
+			
 			if (isStartDeleted && isEndDeleted)
 				this.Selection.Use = false;
-
+			
 			if (nCount > -1 && true !== bOnAddText)
 			{
 				this.Correct_ContentPos2();

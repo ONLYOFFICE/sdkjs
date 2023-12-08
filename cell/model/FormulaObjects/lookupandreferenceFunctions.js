@@ -2386,7 +2386,7 @@ function (window, undefined) {
 			arg2 = arg2.toNumber();
 			arg2 = parseInt(arg2);
 			if (Math.abs(arg2) < 1) {
-				return new cError(cErrorType.wrong_value_type);
+				return new cError(cErrorType.array_not_calc);
 			}
 		}
 

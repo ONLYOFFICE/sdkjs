@@ -6335,6 +6335,9 @@ CDocument.prototype.AddToParagraph = function(oParaItem, bRecalculate)
 		this.RemoveSelectedNumberingOnTextAdd();
 	
 	this.Controller.AddToParagraph(oParaItem, bRecalculate);
+	
+	if (para_TextPr === oParaItem.Type)
+		this.setMergeFormatComplexFieldOnApplyTextPr();
 };
 CDocument.prototype.RemoveSelectedNumberingOnTextAdd = function()
 {
@@ -6368,6 +6371,26 @@ CDocument.prototype.RemoveSelectedNumberingOnTextAdd = function()
 
 	paragraph.RemoveNumPr();
 	paragraph.SetParagraphIndent({FirstLine : 0, Left : paraPr.Ind.FirstLine + paraPr.Ind.Left});
+};
+CDocument.prototype.setMergeFormatComplexFieldOnApplyTextPr = function()
+{
+	let complexField = this.GetCurrentComplexField();
+	
+	// Word doesn't add MERGEFORMAT for all field types (for example PAGE)
+	// So we add it to some specific types
+	if (!complexField
+		|| !complexField.IsValid()
+		|| complexField.GetInstruction().isMergeFormat()
+		|| !complexField.CheckType(AscWord.fieldtype_REF)
+		|| !this.Action.Start)
+		return;
+	
+	// We don't check selection lock, because this method should be called when other action was started
+	
+	this.StartAction(AscDFH.historydescription_Document_ComplexField_MergeFormat);
+	complexField.ChangeInstruction(complexField.GetInstructionLine() + " \\* MERGEFORMAT ");
+	this.Recalculate();
+	this.FinalizeAction();
 };
 /**
  * Очищаем форматирование внутри селекта

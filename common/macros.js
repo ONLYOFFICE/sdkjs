@@ -437,11 +437,10 @@ function (window, undefined)
 	window["AscCommon"].CDocumentMacros = CDocumentMacros;
 	window['AscCommon'].VbaProject = VbaProject;
 
-	var _safe_eval_closure = new Function("Api", "window", "alert", "document", "XMLHttpRequest", "self", "globalThis", "value", "return eval(\"\\\"use strict\\\";\\r\\n\" + value)");
+	var _safe_eval_closure = new Function("Function", "Api", "window", "alert", "document", "XMLHttpRequest", "self", "globalThis", "value", "return eval(\"\\\"use strict\\\";\\r\\n\" + value)");
 	window['AscCommon'].safePluginEval = function(value) {
-
-		return _safe_eval_closure.call({}, window.g_asc_plugins.api, {}, function(){}, {}, customXMLHttpRequest, {}, {}, value);
-
+		Object.getPrototypeOf(function(){}).constructor = function(){};
+		return _safe_eval_closure.call(null, {}, window.g_asc_plugins.api, {}, function(){}, {}, customXMLHttpRequest, {}, {}, value);
 	};
 
 

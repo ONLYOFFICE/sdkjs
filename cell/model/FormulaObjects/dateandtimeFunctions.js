@@ -432,7 +432,7 @@ function (window, undefined) {
 						if (res instanceof cError || res instanceof cEmpty) {
 							var d = new cDate(elem.getValue());
 							if (isNaN(d)) {
-								d = g_oFormatParser.parseDate(elem.getValue());
+								d = g_oFormatParser.parseDate(elem.getValue(), AscCommon.g_oDefaultCultureInfo);
 								if (d === null) {
 									return new cError(cErrorType.wrong_value_type);
 								}
@@ -1255,7 +1255,7 @@ function (window, undefined) {
 				if (val instanceof cError || val instanceof cEmpty) {
 					var d = new cDate(curArg.getValue());
 					if (isNaN(d)) {
-						d = g_oFormatParser.parseDate(curArg.getValue());
+						d = g_oFormatParser.parseDate(curArg.getValue(), AscCommon.g_oDefaultCultureInfo);
 						if (d == null) {
 							return new cError(cErrorType.wrong_value_type);
 						}
@@ -1373,7 +1373,7 @@ function (window, undefined) {
 				if (val instanceof cError || val instanceof cEmpty) {
 					var d = new cDate(curArg.getValue());
 					if (isNaN(d)) {
-						d = g_oFormatParser.parseDate(curArg.getValue());
+						d = g_oFormatParser.parseDate(curArg.getValue(), AscCommon.g_oDefaultCultureInfo);
 						if (d == null) {
 							return new cError(cErrorType.wrong_value_type);
 						}
@@ -1767,7 +1767,7 @@ function (window, undefined) {
 				if (val instanceof cError || val instanceof cEmpty) {
 					var d = new cDate(curArg.getValue());
 					if (isNaN(d)) {
-						d = g_oFormatParser.parseDate(curArg.getValue());
+						d = g_oFormatParser.parseDate(curArg.getValue(), AscCommon.g_oDefaultCultureInfo);
 						if (d == null) {
 							return new cError(cErrorType.wrong_value_type);
 						}

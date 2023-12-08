@@ -2496,6 +2496,51 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
     };
 
+    _this.addChartSpace = function (oChartSpace) {
+        if (!_this.canEdit())
+            return;
+
+        let aSelectedDrawings = _this.controller.getSelectedArray();
+        if(aSelectedDrawings.length === 1 && aSelectedDrawings[0].isChart()) {
+            _this.controller.checkSelectedObjectsAndCallback(function () {
+                let oSelectedChartSpace = aSelectedDrawings[0];
+                oSelectedChartSpace.fromOther(oChartSpace);
+                _this.controller.startRecalculate();
+                _this.sendGraphicObjectProps();
+            }, [], false, 0, [], false);
+            return;
+        }
+
+        History.Create_NewPoint();
+        worksheet.setSelectionShape(true);
+        let oCSForAdd = oChartSpace.copy();
+        let w, h, chartLeft, chartTop;
+        w = this.convertMetric(AscCommon.AscBrowser.convertToRetinaValue(AscCommon.c_oAscChartDefines.defaultChartWidth, true), 0, 3);
+        h = this.convertMetric(AscCommon.AscBrowser.convertToRetinaValue(AscCommon.c_oAscChartDefines.defaultChartHeight, true), 0, 3);
+        chartLeft =  -this.convertMetric(this.getScrollOffset().getX(), 0, 3) + (this.convertMetric(this.getContextWidth(), 0, 3) - w) / 2;
+        if(chartLeft < 0)
+        {
+            chartLeft = 0;
+        }
+        chartTop =  -this.convertMetric(this.getScrollOffset().getY(), 0, 3) + (this.convertMetric(this.getContextHeight(), 0, 3) - h) / 2;
+        if(chartTop < 0)
+        {
+            chartTop = 0;
+        }
+        oCSForAdd.setTransformParams(chartLeft, chartTop, w, h, 0, false, false);
+        oCSForAdd.setWorksheet(this.getWorksheetModel());
+        oCSForAdd.setBDeleted(false);
+        oCSForAdd.setDrawingObjects(this);
+        oCSForAdd.addToDrawingObjects();
+        _this.controller.resetSelection();
+        _this.controller.selectObject(oCSForAdd, 0);
+        oCSForAdd.addToRecalculate();
+        oCSForAdd.checkDrawingBaseCoords();
+        _this.controller.startRecalculate();
+        this.sendGraphicObjectProps();
+
+    };
+
     _this.addSlicers = function(aNames) {
         if (_this.canEdit()) {
             if(Array.isArray(aNames) && aNames.length > 0) {
@@ -3026,6 +3071,10 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
             _this.controller.editChartDrawingObjects(chart);
             //_this.showDrawingObjects();
         }
+    };
+
+    _this.getRecommendedChartData = function () {
+
     };
 
     _this.checkSparklineGroupMinMaxVal = function(oSparklineGroup)

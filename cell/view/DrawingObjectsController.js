@@ -471,7 +471,7 @@ DrawingObjectsController.prototype.addChartDrawingObject = function(options)
         this.startRecalculate();
         this.drawingObjects.sendGraphicObjectProps();
     }
-		return chart;
+	return chart;
 };
 
 DrawingObjectsController.prototype.isPointInDrawingObjects = function(x, y, e)

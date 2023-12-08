@@ -300,11 +300,113 @@
 
         oGraphicsWord.RemoveLastClip();
         this.DrawBorders(oGraphicsPDF);
-
         // redraw target cursor if field is selected
         if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsEditable())
             oContentToDraw.RecalculateCurPos();
     };
+    CTextField.prototype.DrawDateMarker = function(oCtx) {
+        if (this.IsHidden())
+            return;
+
+        let oViewer     = editor.getDocumentRenderer();
+        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[this.GetPage()].Dpi);
+        let aOrigRect   = this.GetOrigRect();
+
+        let xCenter = oViewer.width >> 1;
+        if (oViewer.documentWidth > oViewer.width)
+		{
+			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
+		}
+		let yPos    = oViewer.scrollY >> 0;
+        let page    = oViewer.drawingPages[this.GetPage()];
+        let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
+        let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+
+        let X       = aOrigRect[0] * nScale + indLeft;
+        let Y       = aOrigRect[1] * nScale + indTop;
+        let nWidth  = (aOrigRect[2] - aOrigRect[0]) * nScale;
+        let nHeight = (aOrigRect[3] - aOrigRect[1]) * nScale;
+        
+        let oMargins = this.GetBordersWidth(true);
+        
+        let nMarkWidth  = 18;
+        let nMarkX      = (X + nWidth) - oMargins.left - nMarkWidth;
+        let nMarkHeight = nHeight - 2 * oMargins.top - 2;
+        let nMarkY      = Y + oMargins.top + 1;
+
+        // marker rect
+        oCtx.setLineDash([]);
+        oCtx.beginPath();
+        oCtx.globalAlpha = 1;
+        oCtx.fillStyle = "rgb(240, 240, 240)";
+        oCtx.fillRect(nMarkX, nMarkY, nMarkWidth, nMarkHeight);
+
+        // marker border right part
+        oCtx.beginPath();
+        oCtx.strokeStyle = "rgb(100, 100, 100)";
+        oCtx.lineWidth = 1;
+        oCtx.moveTo(nMarkX, nMarkY + nMarkHeight);
+        oCtx.lineTo(nMarkX + nMarkWidth, nMarkY + nMarkHeight);
+        oCtx.lineTo(nMarkX + nMarkWidth, nMarkY);
+        oCtx.stroke();
+
+        // marker border left part
+        oCtx.beginPath();
+        oCtx.strokeStyle = "rgb(255, 255, 255)";
+        oCtx.moveTo(nMarkX, nMarkY + nMarkHeight);
+        oCtx.lineTo(nMarkX, nMarkY);
+        oCtx.lineTo(nMarkX + nMarkWidth, nMarkY);
+        oCtx.stroke();
+
+        // marker icon
+        let nIconW = 5 * 1.5;
+        let nIconH = 3 * 1.5;
+        let nStartIconX = nMarkX + nMarkWidth/2 - (nIconW)/2;
+        let nStartIconY = nMarkY + nMarkHeight/2 - (nIconH)/2;
+
+        oCtx.beginPath();
+        oCtx.fillStyle = "rgb(0, 0, 0)";
+        
+        oCtx.moveTo(nStartIconX, nStartIconY);
+        oCtx.lineTo(nStartIconX + nIconW, nStartIconY);
+        oCtx.lineTo(nStartIconX + nIconW/2, nStartIconY + nIconH);
+        oCtx.lineTo(nStartIconX, nStartIconY);
+        oCtx.fill();
+
+        this._markRect = {
+            x1: (nMarkX - indLeft) / nScale,
+            y1: (nMarkY - indTop) / nScale,
+            x2: ((nMarkX - indLeft) + (nMarkWidth)) / nScale,
+            y2: ((nMarkY - indTop) + (nMarkHeight)) / nScale
+        }
+    };
+    CTextField.prototype.IsDateFormat = function() {
+        let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
+        let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
+        if (oActionRunScript && oActionRunScript.script.startsWith('AFDate_Format')) {
+            return true;
+        }
+
+        return false;
+    };
+    CTextField.prototype.GetDateFormat = function() {
+        let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
+        let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
+        if (oActionRunScript && oActionRunScript.script.startsWith('AFDate_Format')) {
+            const regex = /(AFDate_Format|AFDate_FormatEx)\(["']([^"']+)["']\)/;
+            const match = oActionRunScript.script.match(regex);
+
+            if (match) {
+                return match[2];
+            }
+            
+            return "mmmm d, yyyy";
+        }
+
+        return "";
+    }
     CTextField.prototype.ProcessAutoFitContent = function() {
         let oPara   = this.content.GetElement(0);
         let oRun    = oPara.GetElement(0);
@@ -472,15 +574,24 @@
             let X       = oPos["X"];
             let Y       = oPos["Y"];
 
+            let pageObject = oViewer.getPageByCoords(x - oViewer.x, y - oViewer.y);
+
             editor.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
             editor.WordControl.m_oDrawingDocument.m_lCurrentPage = 0;
 
             oViewer.Api.WordControl.m_oDrawingDocument.TargetStart();
             oViewer.Api.WordControl.m_oDrawingDocument.showTarget(true);
 
-            this.content.Selection_SetStart(X, Y, 0, e);
-            this.content.RecalculateCurPos();
+            if (this.IsDateFormat() && pageObject.x >= this._markRect.x1 && pageObject.x <= this._markRect.x2 && pageObject.y >= this._markRect.y1 && pageObject.y <= this._markRect.y2) {
+                editor.sendEvent("asc_onShowPDFFormsActions", this, x, y);
+                this.content.MoveCursorToStartPos();
+            }
+            else {
+                this.content.Selection_SetStart(X, Y, 0, e);
+            }
 
+            this.content.RecalculateCurPos();
+            
             if (this._doNotScroll == false && this.IsMultiline())
                 this.UpdateScroll(true);
 
@@ -998,16 +1109,18 @@
     };
 
     CTextField.prototype.UndoNotAppliedChanges = function() {
-        this.UnionLastHistoryPoints();
-        let nPoint = AscCommon.History.Index;
-        AscCommon.History.Undo();
-        
-        // удаляем точки
-        AscCommon.History.Points.length = nPoint;
+        if (AscCommon.History.Points.length > 0) {
+            this.UnionLastHistoryPoints();
+            let nPoint = AscCommon.History.Index;
+            AscCommon.History.Undo();
+            
+            // удаляем точки
+            AscCommon.History.Points.length = nPoint;
 
-        this.SetNeedRecalc(true);
-        this.AddToRedraw();
-        this.SetNeedCommit(false);
+            this.SetNeedRecalc(true);
+            this.AddToRedraw();
+            this.SetNeedCommit(false);
+        }
     };
 
     /**
@@ -1467,5 +1580,6 @@
 	    window["AscPDF"] = {};
         
 	window["AscPDF"].CTextField = CTextField;
+	window["AscPDF"].CTextField.prototype["asc_GetValue"] = CTextField.prototype.GetValue;
 })();
 

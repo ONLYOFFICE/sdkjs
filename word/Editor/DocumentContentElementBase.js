@@ -785,6 +785,39 @@ CDocumentContentElementBase.prototype.GetDocumentPositionFromObject = function(a
 
 	return arrPos;
 };
+/**
+ * Получаем массив всех конент контролов, внутри которых лежит данный класс
+ * @returns {Array}
+ */
+CDocumentContentElementBase.prototype.GetParentContentControls = function()
+{
+	let docPos = this.GetDocumentPositionFromObject();
+	
+	let contentControls = [];
+	for (let pos = 0, len = docPos.length; pos < len; ++pos)
+	{
+		if (docPos[pos].Class instanceof AscWord.CInlineLevelSdt)
+			contentControls.push(docPos[pos].Class);
+		else if (docPos[pos].Class instanceof AscWord.CDocumentContent && docPos[pos].Class.Parent instanceof AscWord.CBlockLevelSdt)
+			contentControls.push(docPos[pos].Class.Parent);
+	}
+	
+	return contentControls;
+};
+/**
+ * @returns {boolean}
+ */
+CDocumentContentElementBase.prototype.IsInPlaceholder = function()
+{
+	let contentControls = this.GetParentContentControls();
+	for (let index = 0, count = contentControls.length; index < count; ++index)
+	{
+		if (contentControls[index].IsPlaceHolder())
+			return true;
+	}
+	
+	return false;
+};
 CDocumentContentElementBase.prototype.Get_Index = function()
 {
 	return this.GetIndex();

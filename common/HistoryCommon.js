@@ -1284,6 +1284,12 @@
 			case AscDFH.historydescription_Document_RemoveMathShortcut:
 				sString = "Document_RemoveMathShortcut";
 				break;
+			case AscDFH.historydescription_Document_SetAllFormsData:
+				sString = "Document_SetAllFormsData";
+				break;
+			case AscDFH.historydescription_Document_ComplexField_MergeFormat:
+				sString = "Document_ComplexField_MergeFormat";
+				break;
 		}
 		return sString;
 	}
@@ -4477,6 +4483,7 @@
 	window['AscDFH'].historydescription_Document_SetHyphenateCaps                   = 0x01a8;
 	window['AscDFH'].historydescription_Document_RemoveMathShortcut                 = 0x01a9;
 	window['AscDFH'].historydescription_Document_SetAllFormsData                    = 0x01aa;
+	window['AscDFH'].historydescription_Document_ComplexField_MergeFormat           = 0x01ab;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

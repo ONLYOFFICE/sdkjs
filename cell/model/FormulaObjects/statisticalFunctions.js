@@ -1534,9 +1534,14 @@ function (window, undefined) {
 	}
 
 	function lcl_GetMeanOverAll(pMat, nN) {
-		var fSum = 0.0;
-		for (var i = 0; i < pMat.length; i++) {
-			for (var j = 0; j < pMat[i].length; j++) {
+		let fSum = 0.0;
+		for (let i = 0; i < pMat.length; i++) {
+			for (let j = 0; j < pMat[i].length; j++) {
+				// if at least one value in the matrix is ​​not a number, return undefined
+				if (typeof(pMat[i][j]) !== "number") {
+					return
+				}
+
 				fSum += pMat[i][j];
 			}
 		}
@@ -1697,20 +1702,35 @@ function (window, undefined) {
 	}
 
 	function lcl_CalculateRowMeans(pX, pResMat, nC, nR) {
-		for (var k = 0; k < nR; k++) {
-			var fSum = 0.0;
-			for (var i = 0; i < nC; i++) {
+		for (let k = 0; k < nR; k++) {
+			let fSum = 0.0;
+			for (let i = 0; i < nC; i++) {
 				fSum += pX[i][k];
 			}
 			// GetDouble(Column,Row)
-			pResMat[k][0] = fSum / nC;
+			if (pResMat.length === 1 && pResMat[0].length > 1) {
+				// single row
+				pResMat[0][k] = fSum / nC;
+			} else if (pResMat.length > 1 && pResMat[0].length === 1) {
+				// single col
+				pResMat[k][0] = fSum / nC;
+			}
+
 		}
 	}
 
 	function lcl_CalculateRowsDelta(pMat, pRowMeans, nC, nR) {
-		for (var k = 0; k < nR; k++) {
-			for (var i = 0; i < nC; i++) {
-				pMat[i][k] = approxSub(pMat[i][k], pRowMeans[k][0]);
+		for (let k = 0; k < nR; k++) {
+			for (let i = 0; i < nC; i++) {
+				// pMat[i][k] = approxSub(pMat[i][k], pRowMeans[k][0]);
+
+				if (pRowMeans.length === 1 && pRowMeans[0].length > 1) {
+					// single row
+					pMat[i][k] = approxSub(pMat[i][k], pRowMeans[0][k]);
+				} else if (pRowMeans.length > 1 && pRowMeans[0].length === 1) {
+					// single col
+					pMat[i][k] = approxSub(pMat[i][k], pRowMeans[k][0]);
+				}
 			}
 		}
 	}
@@ -1839,7 +1859,11 @@ function (window, undefined) {
 		pMatY = getMatrixParams.pMatY;
 
 		// Enough data samples?
-		if ((bConstant && (N < K + 1)) || (!bConstant && (N < K)) || (N < 1) || (K < 1)) {
+		// if ((bConstant && (N < K + 1)) || (!bConstant && (N < K)) || (N < 1) || (K < 1)) {
+		// 	return;
+		// }
+
+		if ((!bConstant && (N < K)) || (N < 1) || (K < 1)) {
 			return;
 		}
 
@@ -1901,6 +1925,9 @@ function (window, undefined) {
 			pMatY = pCopyY;
 			// DeltaY is possible here; DeltaX depends on nCase, so later
 			fMeanY = lcl_GetMeanOverAll(pMatY, N);
+			if (fMeanY === undefined) {	// explicit check for undefined is necessary since the number can be 0
+				return
+			}
 			for (i = 0; i < pMatY.length; i++) {
 				for (j = 0; j < pMatY[i].length; j++) {
 					pMatY[i][j] = approxSub(pMatY[i][j], fMeanY);
@@ -1914,6 +1941,9 @@ function (window, undefined) {
 			var fMeanX = 0.0;
 			if (bConstant) {   // Mat = Mat - Mean
 				fMeanX = lcl_GetMeanOverAll(pMatX, N);
+				if (fMeanX === undefined) {	// explicit check for undefined is necessary since the number can be 0
+					return
+				}
 				for (i = 0; i < pMatX.length; i++) {
 					for (j = 0; j < pMatX[i].length; j++) {
 						pMatX[i][j] = approxSub(pMatX[i][j], fMeanX);
@@ -2116,7 +2146,12 @@ function (window, undefined) {
 		var i, j;
 
 		// Enough data samples?
-		if ((bConstant && (N < K + 1)) || (!bConstant && (N < K)) || (N < 1) || (K < 1)) {
+		// if ((bConstant && (N < K + 1)) || (!bConstant && (N < K)) || (N < 1) || (K < 1)) {
+		// 	//PushIllegalParameter();
+		// 	return;
+		// }
+
+		if ((!bConstant && (N < K)) || (N < 1) || (K < 1)) {
 			//PushIllegalParameter();
 			return;
 		}
@@ -2158,6 +2193,9 @@ function (window, undefined) {
 			pMatY = pNewY;
 			// DeltaY is possible here; DeltaX depends on nCase, so later
 			fMeanY = lcl_GetMeanOverAll(pMatY, N);
+			if (fMeanY === undefined) {	// explicit check for undefined is necessary since the number can be 0
+				return
+			}
 			for (i = 0; i < pMatY.length; i++) {
 				for (j = 0; j < pMatY[i].length; j++) {
 					pMatY[i][j] = approxSub(pMatY[i][j], fMeanY);
@@ -2173,6 +2211,9 @@ function (window, undefined) {
 			var fMeanX = 0.0;
 			if (bConstant) {   // Mat = Mat - Mean
 				fMeanX = lcl_GetMeanOverAll(pMatX, N);
+				if (fMeanX === undefined) {	// explicit check for undefined is necessary since the number can be 0
+					return
+				}
 				for (i = 0; i < pMatX.length; i++) {
 					for (j = 0; j < pMatX[i].length; j++) {
 						pMatX[i][j] = approxSub(pMatX[i][j], fMeanX);
@@ -6088,15 +6129,14 @@ function (window, undefined) {
 
 		function forecast(fx, y, x) {
 
-			var fSumDeltaXDeltaY = 0, fSumSqrDeltaX = 0, _x = 0, _y = 0, xLength = 0, i;
-
+			let fSumDeltaXDeltaY = 0, fSumSqrDeltaX = 0, _x = 0, _y = 0, xLength = 0, i;
 			if (x.length !== y.length) {
 				return new cError(cErrorType.not_available);
 			}
 
 			for (i = 0; i < x.length; i++) {
 
-				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
+				if (!(x[i].type === cElementType.number && y[i].type === cElementType.number)) {
 					continue;
 				}
 
@@ -6110,12 +6150,12 @@ function (window, undefined) {
 
 			for (i = 0; i < x.length; i++) {
 
-				if (!(x[i] instanceof cNumber && y[i] instanceof cNumber)) {
+				if (!(x[i].type === cElementType.number && y[i].type === cElementType.number)) {
 					continue;
 				}
 
-				var fValX = x[i].getValue();
-				var fValY = y[i].getValue();
+				let fValX = x[i].getValue();
+				let fValY = y[i].getValue();
 
 				fSumDeltaXDeltaY += (fValX - _x) * (fValY - _y);
 				fSumSqrDeltaX += (fValX - _x) * (fValX - _x);
@@ -6130,36 +6170,38 @@ function (window, undefined) {
 
 		}
 
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arr0 = [], arr1 = [];
-
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2], arr0 = [], arr1 = [];
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
+		} else if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElement(0);
 		}
-		arg0 = arg0.tocNumber();
 
-		if (arg0 instanceof cError) {
+		arg0 = arg0.tocNumber();
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
 
-
-		if (arg1 instanceof cArea) {
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
 			arr0 = arg1.getValue();
-		} else if (arg1 instanceof cArray) {
+		} else if (arg1.type === cElementType.array) {
 			arg1.foreach(function (elem) {
 				arr0.push(elem);
 			});
+		} else if (arg1.type === cElementType.error) {
+			return arg1;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		if (arg2 instanceof cArea) {
+		if (arg2.type === cElementType.cellsRange || arg2.type === cElementType.cellsRange3D) {
 			arr1 = arg2.getValue();
-		} else if (arg2 instanceof cArray) {
+		} else if (arg2.type === cElementType.array) {
 			arg2.foreach(function (elem) {
 				arr1.push(elem);
 			});
+		} else if (arg2.type === cElementType.error) {
+			return arg2;
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
