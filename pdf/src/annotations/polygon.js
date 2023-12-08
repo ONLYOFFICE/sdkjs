@@ -79,6 +79,9 @@
         return this._vertices;
     };
 
+    CAnnotationPolygon.prototype.IsNeedDrawFromStream = function() {
+        return false;
+    };
     CAnnotationPolygon.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;
@@ -90,10 +93,10 @@
         let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
         let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
         
-        this.handleUpdatePosition();
         if (this.recalcInfo.recalculateGeometry)
             this.RefillGeometry();
 
+        this.handleUpdatePosition();
         this.recalculate();
         this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
     };
@@ -118,7 +121,17 @@
         });
 
         oDoc.TurnOffHistory();
-        fillShapeByPoints([aPolygonPoints], aShapeRectInMM, this);
+
+        let geometry;
+        if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
+            geometry = AscPDF.generateCloudyGeometry(aPolygonPoints, aShapeRectInMM, this.spPr.geometry, this.GetBorderEffectIntensity());
+        }
+        else {
+            geometry = generateGeometry(aPolygonPoints, aShapeRectInMM, this.spPr.geometry);
+        }
+
+        if (this.spPr.geometry == null)
+            this.spPr.setGeometry(geometry);
     };
     CAnnotationPolygon.prototype.SetWidth = function(nWidthPt) {
         this._width = nWidthPt; 
@@ -222,7 +235,8 @@
         let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
 
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
-        oDrawingObjects.startEditGeometry();
+        if (this.GetBorderEffectStyle() !== AscPDF.BORDER_EFFECT_STYLES.Cloud)
+            oDrawingObjects.startEditGeometry();
     };
     CAnnotationPolygon.prototype.IsPolygon = function() {
         return true;
@@ -274,22 +288,7 @@
         });
     };
 
-    function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
-        let xMax = aShapeRect[2];
-        let xMin = aShapeRect[0];
-        let yMin = aShapeRect[1];
-        let yMax = aShapeRect[3];
-
-        let geometry = generateGeometry(arrOfArrPoints, [xMin, yMin, xMax, yMax]);
-        oParentAnnot.spPr.setGeometry(geometry);
-        oParentAnnot.updatePosition(xMin, yMin);
-
-        oParentAnnot.x = xMin;
-        oParentAnnot.y = yMin;
-        return oParentAnnot;
-    }
-
-    function generateGeometry(arrOfArrPoints, aBounds, oGeometry) {
+    function generateGeometry(aPoints, aBounds, oGeometry) {
         let xMin = aBounds[0];
         let yMin = aBounds[1];
         let xMax = aBounds[2];
@@ -300,67 +299,64 @@
             oGeometry.pathLst = [];
         }
 
-        for (let nPath = 0; nPath < arrOfArrPoints.length; nPath++) {
-            let bClosed     = false;
-            let aPoints     = arrOfArrPoints[nPath];
-            let min_dist    = editor.WordControl.m_oDrawingDocument.GetMMPerDot(3);
-            let oLastPoint  = aPoints[aPoints.length-1];
-            let nLastIndex  = aPoints.length-1;
-            if(oLastPoint.bTemporary) {
-                nLastIndex--;
-            }
-            if(nLastIndex > 1)
-            {
-                let dx = aPoints[0].x - aPoints[nLastIndex].x;
-                let dy = aPoints[0].y - aPoints[nLastIndex].y;
-                if(Math.sqrt(dx*dx +dy*dy) < min_dist)
-                {
-                    bClosed = true;
-                }
-            }
-
-            let w = xMax - xMin, h = yMax-yMin;
-            let kw, kh, pathW, pathH;
-            if(w > 0)
-            {
-                pathW = 43200;
-                kw = 43200/ w;
-            }
-            else
-            {
-                pathW = 0;
-                kw = 0;
-            }
-            if(h > 0)
-            {
-                pathH = 43200;
-                kh = 43200 / h;
-            }
-            else
-            {
-                pathH = 0;
-                kh = 0;
-            }
-            
-            geometry.AddPathCommand(0,undefined, undefined, undefined, pathW, pathH);
-            geometry.AddPathCommand(1, (((aPoints[0].x - xMin) * kw) >> 0) + "", (((aPoints[0].y - yMin) * kh) >> 0) + "");
-
-            let oPt, nPt;
-            let nPtCount = aPoints.length;
-            // если последняя точка совпадает с первой, значит её не учитываем
-            if (aPoints[0].x == aPoints[aPoints.length - 1].x && aPoints[0].y == aPoints[aPoints.length - 1].y)
-                nPtCount = aPoints.length - 1;
-
-            for(nPt = 1; nPt < nPtCount; nPt++) {
-                oPt = aPoints[nPt];
-
-                geometry.AddPathCommand(2,
-                    (((oPt.x - xMin) * kw) >> 0) + "", (((oPt.y - yMin) * kh) >> 0) + ""
-                );
-            }
-            
-            geometry.AddPathCommand(6);
+        let bClosed     = false;
+        let min_dist    = editor.WordControl.m_oDrawingDocument.GetMMPerDot(3);
+        let oLastPoint  = aPoints[aPoints.length-1];
+        let nLastIndex  = aPoints.length-1;
+        if(oLastPoint.bTemporary) {
+            nLastIndex--;
         }
+        if(nLastIndex > 1)
+        {
+            let dx = aPoints[0].x - aPoints[nLastIndex].x;
+            let dy = aPoints[0].y - aPoints[nLastIndex].y;
+            if(Math.sqrt(dx*dx +dy*dy) < min_dist)
+            {
+                bClosed = true;
+            }
+        }
+
+        let w = xMax - xMin, h = yMax-yMin;
+        let kw, kh, pathW, pathH;
+        if(w > 0)
+        {
+            pathW = 43200;
+            kw = 43200/ w;
+        }
+        else
+        {
+            pathW = 0;
+            kw = 0;
+        }
+        if(h > 0)
+        {
+            pathH = 43200;
+            kh = 43200 / h;
+        }
+        else
+        {
+            pathH = 0;
+            kh = 0;
+        }
+        
+        geometry.AddPathCommand(0,undefined, undefined, undefined, pathW, pathH);
+        geometry.AddPathCommand(1, (((aPoints[0].x - xMin) * kw) >> 0) + "", (((aPoints[0].y - yMin) * kh) >> 0) + "");
+
+        let oPt, nPt;
+        let nPtCount = aPoints.length;
+        // если последняя точка совпадает с первой, значит её не учитываем
+        if (aPoints[0].x == aPoints[aPoints.length - 1].x && aPoints[0].y == aPoints[aPoints.length - 1].y)
+            nPtCount = aPoints.length - 1;
+
+        for(nPt = 1; nPt < nPtCount; nPt++) {
+            oPt = aPoints[nPt];
+
+            geometry.AddPathCommand(2,
+                (((oPt.x - xMin) * kw) >> 0) + "", (((oPt.y - yMin) * kh) >> 0) + ""
+            );
+        }
+        
+        geometry.AddPathCommand(6);
 
         geometry.preset = null;
         geometry.rectS = null;

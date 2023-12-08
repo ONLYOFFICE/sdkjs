@@ -32,17 +32,7 @@
 
 (function(){
 
-    let BORDER_EFFECT_STYLES = {
-        None:   0,
-        Cloud:  1
-    }
-
-    let REF_TO_REASON = {
-        Reply: 0,
-        Group: 1
-    }
-
-	/**
+    /**
 	 * Class representing a base annotation.
 	 * @constructor
     */
@@ -167,10 +157,10 @@
         return this._borderEffectIntensity;
     };
     CAnnotationBase.prototype.SetBorderEffectStyle = function(nStyle) {
-        this._borderEffectIntensity = nStyle;
+        this._borderEffectStyle = nStyle;
     };
     CAnnotationBase.prototype.GetBorderEffectStyle = function() {
-        return this._borderEffectIntensity;
+        return this._borderEffectStyle;
     };
 
     CAnnotationBase.prototype.DrawSelected = function(overlay) {

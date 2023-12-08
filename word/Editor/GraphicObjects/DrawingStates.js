@@ -819,12 +819,17 @@ RotateState.prototype =
                             var pageObject  = oViewer.getPageByCoords(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
                             let aVertices   = oTrack.originalObject.GetVertices().slice();
                             
-                            // если редактируется последняя точка, то надо отредактировать ещё начальную (только у Polygon)
+                            // если редактируется последняя точка, то надо отредактировать ещё начальную (только у Polygon, в случае если первая совпадает с последней)
                             let nStartPos;
                             if (oTrack.originalObject.IsPolygon()) {
                                 nStartPos = (oTrack.gmEditPtIdx + 1) * 2;
 
-                                if (nStartPos == aVertices.length - 2) {
+                                let nFirstX = aVertices[0];
+                                let nFirstY = aVertices[1];
+                                let nLastX  = aVertices[aVertices.length - 2];
+                                let nLastY  = aVertices[aVertices.length - 1];
+
+                                if (nStartPos == aVertices.length - 2 && nFirstX == nLastX && nFirstY == nLastY) {
                                     aVertices.splice(0, 2, pageObject.x, pageObject.y);
                                 }
                             }
@@ -847,8 +852,11 @@ RotateState.prototype =
                             aRect[2] += nLineWidth * nScaleX;
                             aRect[3] += nLineWidth * nScaleY;
 
-                            let aMinShapeRect = oTrack.originalObject.GetMinShapeRect();
-                            let aResultRect = AscPDF.unionRectangles([aRect, aMinShapeRect]);
+                            let aResultRect = aRect;
+                            if (oTrack.originalObject.IsPolyLine()) {
+                                let aMinShapeRect = oTrack.originalObject.GetMinShapeRect();
+                                aResultRect = AscPDF.unionRectangles([aRect, aMinShapeRect]);
+                            }
 
                             oTrack.originalObject.SetRect(aResultRect);
                         }

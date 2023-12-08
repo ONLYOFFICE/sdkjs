@@ -100,95 +100,18 @@
         return oCircle;
     };
     CAnnotationCircle.prototype.RefillGeometry = function() {
-        let aRect = this.GetRect();
-
-        let x = aRect[0]; // X координата верхнего левого угла прямоугольника
-        let y = aRect[1]; // Y координата верхнего левого угла прямоугольника
-        let w = aRect[2] - aRect[0]; // Ширина прямоугольника
-        let h = aRect[3] - aRect[1]; // Высота прямоугольника
-
-        // Рассчитываем параметры эллипса
-        let centerX = x + w / 2;
-        let centerY = y + h / 2;
-        let radiusX = w / 2;
-        let radiusY = h / 2;
-
-        // Функция для вычисления координат точек
-        function calculateEllipsePoints(centerX, centerY, radiusX, radiusY, N) {
-            let points = [];
-            for (let i = 0; i < N; i++) {
-                let angle = (2 * Math.PI / N) * i;
-                let x = centerX + radiusX * Math.cos(angle);
-                let y = centerY + radiusY * Math.sin(angle);
-                points.push({x: x, y: y});
-            }
-            return points;
+        if (this.GetBorderEffectStyle() !== AscPDF.BORDER_EFFECT_STYLES.Cloud) {
+            return;
         }
 
-        function approximateEllipseCircumference(rx, ry) {
-            return Math.PI * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry)));
-        }
-        
-        // длина эллипса
-        const nEllipseLenght = approximateEllipseCircumference(radiusX, radiusY);
-        const nCloudPoints = nEllipseLenght / 15;
+        let oDoc = this.GetDocument();
 
-        // Получаем точки
-        let ellipsePoints = calculateEllipsePoints(centerX, centerY, radiusX, radiusY, nCloudPoints);
-
-        let oViewer = editor.getDocumentRenderer();
-        let oDoc    = oViewer.getPDFDoc();
-
-        let aPoints = [];
-        let aPointsCanvas = [];
-        for (let i = 0; i < ellipsePoints.length; i++) {
-            aPoints.push({
-                x: ellipsePoints[i].x * g_dKoef_pix_to_mm,
-                y: ellipsePoints[i].y * g_dKoef_pix_to_mm
-            });
-
-            aPointsCanvas.push({
-                x: ellipsePoints[i].x,
-                y: ellipsePoints[i].y
-            });
-        }
-        
         let aShapeRectInMM = this.GetRect().map(function(measure) {
             return measure * g_dKoef_pix_to_mm;
         });
-
-        const canvas = document.createElement('canvas');
-        canvas.width = 1000;
-        canvas.height = 1000;
-        const ctx = canvas.getContext('2d');
-
-        ctx.beginPath();
-        for (let i = 0; i < aPointsCanvas.length; i++) {
-            let oPt1 = aPointsCanvas[i];
-            let oPt2 = aPointsCanvas[i + 1];
-            if (!oPt2)
-                oPt2 = aPointsCanvas[0];
-
-            let centerX = (oPt1.x + oPt2.x) / 2;
-            let centerY = (oPt1.y + oPt2.y) / 2;
-            let radius  = Math.sqrt(Math.pow(oPt2.x - oPt1.x, 2) + Math.pow(oPt2.y - oPt1.y, 2)) / 2 * 3/2;
-            let angle   = Math.atan2(oPt1.y - centerY, oPt1.x - centerX);
-            
-            ctx.beginPath();
-            
-            ctx.arc(centerX, centerY, radius, angle + Math.PI/4, angle + Math.PI - Math.PI/8);
-            if (i == 0) {
-                let old = ctx.strokeStyle;
-                ctx.strokeStyle = "red";
-                ctx.stroke();
-                ctx.strokeStyle = old;
-            }
-            else
-                ctx.stroke();
-        }
         
         oDoc.TurnOffHistory();
-        generateGeometry([aPoints], aShapeRectInMM, this.spPr.geometry);
+        generateCloudyGeometry(undefined, aShapeRectInMM, this.spPr.geometry, this.GetBorderEffectIntensity());
     };
     CAnnotationCircle.prototype.SetStrokeColor = function(aColor) {
         this._strokeColor = aColor;
@@ -271,41 +194,70 @@
             AscCommon.History.TurnOff();
     }
 
-    function generateGeometry(arrOfArrPoints, aBounds, oGeometry) {
+    function generateCloudyGeometry(arrPoints, aBounds, oGeometry, nIntensity) {
         let xMin = aBounds[0];
         let yMin = aBounds[1];
         let xMax = aBounds[2];
         let yMax = aBounds[3];
-
-        let cx = xMin + (xMax - xMin) / 2;
-        let cy = yMin + (yMax - yMin) / 2;
 
         let geometry = oGeometry ? oGeometry : new AscFormat.Geometry();
         if (oGeometry) {
             oGeometry.pathLst.length = 0;
         }
 
-
         let w = xMax - xMin, h = yMax-yMin;
         geometry.AddPathCommand(0,undefined, undefined, undefined, undefined, undefined);
 
-        let dR = 5;
-        let dR2 = 1.5*dR;
+        let dR  = nIntensity * 2;
+        let dR2 = 1.5 *dR;
         
-        let dXCE = w / 2;
-        let dYCE = h / 2;
-        let dA = w / 2;
-        let dB = h / 2;
-        let dAlpha = 0;
+        let dXCE    = w / 2;
+        let dYCE    = h / 2;
+        let dA      = w / 2;
+        let dB      = h / 2;
+        let dAlpha  = 0;
 
         let aPoints = [];
         let p;
-        while (dAlpha < 2* Math.PI) {
-            p = AscFormat.getEllipsePoint(dXCE, dYCE, dA, dB, dAlpha);
-            aPoints.push(p);
-            dAlpha = AscFormat.ellipseCircleIntersection(dXCE, dYCE, dA, dB, dAlpha, dR2).alpha;
+        
+        function findPointsOnLine(pt1, pt2, N) {
+            let points = [];
+            let dx = pt2.x - pt1.x;
+            let dy = pt2.y - pt1.y;
+        
+            for (let i = 0; i < N; i++) {
+                let t = i / (N - 1);
+                let x = pt1.x + t * dx;
+                let y = pt1.y + t * dy;
+                points.push({x, y});
+            }
+        
+            return points;
         }
 
+        if (arrPoints) {
+            let oPt1;
+            let oPt2;
+            for (let i = 0; i < arrPoints.length; i++) {
+                oPt1 = arrPoints[i];
+                oPt2 = arrPoints[i + 1] || arrPoints[0];
+
+                if (oPt1.x == oPt2.x && oPt1.y == oPt2.y)
+                    break;
+
+                let nLineLenght = AscFormat.getLineLength(oPt1, oPt2);
+                let nPointsCount = nLineLenght / (dR) + 0.5 >> 0;
+                aPoints = aPoints.concat(findPointsOnLine(oPt1, oPt2, nPointsCount));
+                aPoints.splice(aPoints.length - 1, 1);
+            }
+        }
+        else {
+            while (dAlpha < 2* Math.PI) {
+                p = AscFormat.getEllipsePoint(dXCE, dYCE, dA, dB, dAlpha);
+                aPoints.push(p);
+                dAlpha = AscFormat.ellipseCircleIntersection(dXCE, dYCE, dA, dB, dAlpha, dR2).alpha;
+            }
+        }
 
         let getLocationOnLine = function(p, p0, p1) {
             let x, y, x0, y0, x1, y1;
@@ -342,11 +294,8 @@
             }
 
             let dStAng, dEndAng, dSwAng;
-            const dSwAdd = Math.PI / 12;
+            const dSwAdd = Math.PI / 8;
             let aInters1 = AscFormat.circlesIntersection(oPrevPt.x, oPrevPt.y, dR, oCurPt.x, oCurPt.y, dR);
-
-
-
 
             let oStartP;
             for(let nIdx = 0; nIdx < aInters1.length; ++nIdx) {
@@ -374,8 +323,6 @@
             if(!oEndP) {
                 return;
             }
-
-
 
             function c(dCoord) {
                 return (dCoord * 36000 + 0.5 >> 0) + "";
@@ -431,13 +378,10 @@
                 geometry.AddPathCommand(1, c(dStartX), c(dStartY));
             }
 
-
             geometry.AddPathCommand(3, c(dR), c(dR),
                 a(dStAng), a(dSwAng));
             geometry.AddPathCommand(3, c(dR), c(dR), a(dStAng + dSwAng), "-"  + a(dSwAdd));
         }
-
-        geometry.AddPathCommand(6);
 
         return geometry;
     }
@@ -452,6 +396,7 @@
         return theta;
     }
 
-    window["AscPDF"].CAnnotationCircle = CAnnotationCircle;
+    window["AscPDF"].CAnnotationCircle      = CAnnotationCircle;
+    window["AscPDF"].generateCloudyGeometry = generateCloudyGeometry;
 })();
 

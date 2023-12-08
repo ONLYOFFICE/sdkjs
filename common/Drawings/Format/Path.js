@@ -2678,8 +2678,8 @@ function partition_bezier4(x0, y0, x1, y1, x2, y2, x3, y3, epsilon)
         };
     }
 
-    function getDistance(p1, p2) {
-        return Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
+    function getLineLength(oPt1, oPt2) {
+        return Math.sqrt(Math.pow(oPt2.x - oPt1.x, 2) + Math.pow(oPt2.y - oPt1.y, 2));
     }
 
     function isInsideEllipse(dXCE, dYCE, dA, dB, p) {
@@ -2762,6 +2762,7 @@ function partition_bezier4(x0, y0, x1, y1, x2, y2, x3, y3, epsilon)
     window['AscFormat'].splitBezier4 = splitBezier4;
     window['AscFormat'].splitBezier4OnParts = splitBezier4OnParts;
     window['AscFormat'].ellipseCircleIntersection = ellipseCircleIntersection;
+    window['AscFormat'].getLineLength = getLineLength;
     window['AscFormat'].getEllipsePoint = getEllipsePoint;
     window['AscFormat'].circlesIntersection = circlesIntersection;
 })(window);
