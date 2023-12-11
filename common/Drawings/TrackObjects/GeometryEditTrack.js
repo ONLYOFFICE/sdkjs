@@ -90,7 +90,7 @@
         }, this, []);
     }
     EditShapeGeometryTrack.prototype.getOriginalObjectGeometry = function() {
-        return this.originalObject.spPr.geometry;
+        return this.originalObject instanceof AscPDF.CAnnotationPolygon ? this.originalObject.GetGeometryEdit() : this.originalObject.spPr.geometry;
     };
     EditShapeGeometryTrack.prototype.draw = function(overlay)
     {

@@ -33,6 +33,8 @@
 "use strict";
 
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Rect]		= CChangesPDFAnnotRect;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_RD]			= CChangesPDFAnnotRD;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Vertices]	= CChangesPDFAnnotVertices;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Contents]	= CChangesPDFAnnotContents;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Pos]			= CChangesPDFAnnotPos;
 AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Page]		= CChangesPDFAnnotPage;
@@ -136,6 +138,40 @@ CChangesPDFAnnotRect.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
 	oAnnot.SetRect(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesPDFAnnotRD(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotRD.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFAnnotRD.prototype.constructor = CChangesPDFAnnotRD;
+CChangesPDFAnnotRD.prototype.Type = AscDFH.historyitem_Pdf_Annot_RD;
+CChangesPDFAnnotRD.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetRectangleDiff(Value);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesPDFAnnotVertices(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotVertices.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFAnnotVertices.prototype.constructor = CChangesPDFAnnotVertices;
+CChangesPDFAnnotVertices.prototype.Type = AscDFH.historyitem_Pdf_Annot_Rect;
+CChangesPDFAnnotVertices.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetVertices(Value);
 };
 
 /**

@@ -814,31 +814,54 @@ RotateState.prototype =
 
                             oDoc.TurnOnHistory();
                         }
-                        else if (oTrack.originalObject.IsPolygon() || oTrack.originalObject.IsPolyLine()) {
+                        else if (oTrack.originalObject.IsPolygon()) {
                             // меняем только редактируемую точку в массиве vertices
                             var pageObject  = oViewer.getPageByCoords(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
                             let aVertices   = oTrack.originalObject.GetVertices().slice();
                             
                             // если редактируется последняя точка, то надо отредактировать ещё начальную (только у Polygon, в случае если первая совпадает с последней)
-                            let nStartPos;
-                            if (oTrack.originalObject.IsPolygon()) {
-                                nStartPos = (oTrack.gmEditPtIdx + 1) * 2;
+                            let nStartPos = (oTrack.gmEditPtIdx + 1) * 2;
 
-                                let nFirstX = aVertices[0];
-                                let nFirstY = aVertices[1];
-                                let nLastX  = aVertices[aVertices.length - 2];
-                                let nLastY  = aVertices[aVertices.length - 1];
+                            let nFirstX = aVertices[0];
+                            let nFirstY = aVertices[1];
+                            let nLastX  = aVertices[aVertices.length - 2];
+                            let nLastY  = aVertices[aVertices.length - 1];
 
-                                if (nStartPos == aVertices.length - 2 && nFirstX == nLastX && nFirstY == nLastY) {
-                                    aVertices.splice(0, 2, pageObject.x, pageObject.y);
-                                }
+                            if (nStartPos == aVertices.length - 2 && nFirstX == nLastX && nFirstY == nLastY) {
+                                aVertices.splice(0, 2, pageObject.x, pageObject.y);
                             }
-                            else {
-                                nStartPos = oTrack.gmEditPtIdx * 2;
-                            }
-                            
 
                             let nPage = oTrack.originalObject.GetPage();
+                            let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+                            let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+                            aVertices.splice(nStartPos, 2, pageObject.x, pageObject.y);
+                            oTrack.originalObject.SetVertices(aVertices);
+
+                            // расширяем рект на ширину линии (или на радиус cloud бордера)
+                            let nLineWidth = oTrack.originalObject.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+                            if (oTrack.originalObject.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
+                                aRect[0] -= oTrack.originalObject.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pix * nScaleX;
+                                aRect[1] -= oTrack.originalObject.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pix * nScaleY;
+                                aRect[2] += oTrack.originalObject.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pix * nScaleX;
+                                aRect[3] += oTrack.originalObject.GetBorderEffectIntensity() * 2 * g_dKoef_mm_to_pix * nScaleY;
+                            }
+                            else {
+                                aRect[0] -= nLineWidth * nScaleX;
+                                aRect[1] -= nLineWidth * nScaleY;
+                                aRect[2] += nLineWidth * nScaleX;
+                                aRect[3] += nLineWidth * nScaleY;
+                            }
+
+                            oTrack.originalObject.SetRect(aRect);
+                        }
+                        else if (oTrack.originalObject.IsPolyLine()) {
+                            // меняем только редактируемую точку в массиве vertices
+                            var pageObject  = oViewer.getPageByCoords(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+                            let aVertices   = oTrack.originalObject.GetVertices().slice();
+                            let nStartPos   = oTrack.gmEditPtIdx * 2;
+                            
+                            let nPage   = oTrack.originalObject.GetPage();
                             let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
                             let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
 
@@ -852,6 +875,7 @@ RotateState.prototype =
                             aRect[2] += nLineWidth * nScaleX;
                             aRect[3] += nLineWidth * nScaleY;
 
+                            // у polyline могут быть окончания линии, их тоже учитываем
                             let aResultRect = aRect;
                             if (oTrack.originalObject.IsPolyLine()) {
                                 let aMinShapeRect = oTrack.originalObject.GetMinShapeRect();

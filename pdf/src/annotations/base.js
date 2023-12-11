@@ -478,11 +478,7 @@
         let nPage = this.GetPage();
         let oDoc = this.GetDocument();
 
-        if (this.IsInDocument() == false || oDoc.History.UndoRedoInProgress) {
-            oDoc.CreateNewHistoryPoint();
-            oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aRect));
-            oDoc.TurnOffHistory();
-        }
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aRect));
 
         let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
         let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;

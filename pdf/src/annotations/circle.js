@@ -61,9 +61,6 @@
     AscFormat.InitClass(CAnnotationCircle, AscFormat.CShape, AscDFH.historyitem_type_Shape);
     Object.assign(CAnnotationCircle.prototype, AscPDF.CAnnotationBase.prototype);
 
-    CAnnotationCircle.prototype.IsNeedDrawFromStream = function() {
-        return false;
-    };
     CAnnotationCircle.prototype.IsCircle = function() {
         return true;
     };
@@ -95,23 +92,91 @@
         oCircle.SetFillColor(this.GetFillColor());
         oCircle.recalcInfo.recalculatePen = false;
         oCircle.recalcInfo.recalculateGeometry = true;
+        oCircle._rectDiff = this._rectDiff.slice();
         oCircle.recalculate();
 
         return oCircle;
     };
-    CAnnotationCircle.prototype.RefillGeometry = function() {
-        if (this.GetBorderEffectStyle() !== AscPDF.BORDER_EFFECT_STYLES.Cloud) {
-            return;
+    CAnnotationCircle.prototype.RefillGeometry = function(oGeometry, aShapeRectInMM) {
+        let oViewer = editor.getDocumentRenderer();
+        let oDoc    = oViewer.getPDFDoc();
+
+        let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom * g_dKoef_pix_to_mm;
+        let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom * g_dKoef_pix_to_mm;
+
+        let aRD         = this.GetRectangleDiff();
+        let aOrigRect   = this.GetOrigRect();
+
+        if (!oGeometry)
+            oGeometry = this.spPr.geometry;
+        if (!aShapeRectInMM) {
+            aShapeRectInMM = [
+                (aOrigRect[0] + aRD[0]) * nScaleX, (aOrigRect[1] + aRD[1]) * nScaleY,
+                (aOrigRect[2] - aRD[2]) * nScaleX, (aOrigRect[3] - aRD[3]) * nScaleY
+            ];
         }
-
-        let oDoc = this.GetDocument();
-
-        let aShapeRectInMM = this.GetRect().map(function(measure) {
-            return measure * g_dKoef_pix_to_mm;
-        });
         
         oDoc.TurnOffHistory();
-        generateCloudyGeometry(undefined, aShapeRectInMM, this.spPr.geometry, this.GetBorderEffectIntensity());
+        if (this.GetBorderEffectStyle() === AscPDF.BORDER_EFFECT_STYLES.Cloud) {
+            generateCloudyGeometry(undefined, aShapeRectInMM, oGeometry, this.GetBorderEffectIntensity());
+        }
+        else {
+            oGeometry.Recalculate(aShapeRectInMM[2] - aShapeRectInMM[0], aShapeRectInMM[3] - aShapeRectInMM[1]);
+        }
+    };
+    CAnnotationCircle.prototype.SetRect = function(aRect) {
+        let oViewer     = editor.getDocumentRenderer();
+        let oDoc        = oViewer.getPDFDoc();
+        let nPage       = this.GetPage();
+        let aCurRect    = this.GetRect();
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        this._rect = aRect;
+        this._pagePos = {
+            x: aRect[0],
+            y: aRect[1],
+            w: (aRect[2] - aRect[0]),
+            h: (aRect[3] - aRect[1])
+        };
+
+        this._origRect[0] = this._rect[0] / nScaleX;
+        this._origRect[1] = this._rect[1] / nScaleY;
+        this._origRect[2] = this._rect[2] / nScaleX;
+        this._origRect[3] = this._rect[3] / nScaleY;
+
+        this.SetRectangleDiff([0, 0, 0, 0]);
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, aCurRect, aRect));
+
+        oDoc.TurnOffHistory();
+
+        this.recalcGeometry();
+        this.AddToRedraw();
+        this.SetWasChanged(true);
+        this.SetDrawFromStream(false);
+    };
+    CAnnotationCircle.prototype.SetRectangleDiff = function(aDiff) {
+        let oDoc = this.GetDocument();
+        oDoc.History.Add(new CChangesPDFAnnotRD(this, this.GetRectangleDiff(), aDiff));
+
+        this._rectDiff = aDiff;
+
+        let oViewer     = editor.getDocumentRenderer();
+        let nPage       = this.GetPage();
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
+
+        let aOrigRect = this.GetOrigRect();
+
+        this.spPr.xfrm.setOffX(aDiff[0] * nScaleX);
+        this.spPr.xfrm.setOffY(aDiff[1] * nScaleY);
+        let extX = ((aOrigRect[2] - aOrigRect[0]) - aDiff[0] - aDiff[2]) * nScaleX;
+        let extY = ((aOrigRect[3] - aOrigRect[1]) - aDiff[1] - aDiff[3]) * nScaleY;
+
+        this.spPr.xfrm.setExtX(extX);
+        this.spPr.xfrm.setExtY(extY);
     };
     CAnnotationCircle.prototype.SetStrokeColor = function(aColor) {
         this._strokeColor = aColor;
@@ -139,15 +204,16 @@
         let oViewer     = editor.getDocumentRenderer();
         let nPage       = this.GetPage();
         let aOrigRect   = this.GetOrigRect();
+        let aRD         = this.GetRectangleDiff();
 
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
         
         if (this.recalcInfo.recalculateGeometry)
             this.RefillGeometry();
         this.handleUpdatePosition();
         this.recalculate();
-        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
+        this.updatePosition(aOrigRect[0] * nScaleX, aOrigRect[1] * nScaleY);
     };
     CAnnotationCircle.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
@@ -206,9 +272,9 @@
         }
 
         let w = xMax - xMin, h = yMax-yMin;
-        geometry.AddPathCommand(0,undefined, undefined, undefined, undefined, undefined);
+        geometry.AddPathCommand(0, undefined, undefined, undefined, undefined, undefined);
 
-        let dR  = nIntensity * 2;
+        let dR  = nIntensity * 1.8;
         let dR2 = 1.5 *dR;
         
         let dXCE    = w / 2;
@@ -246,7 +312,7 @@
                     break;
 
                 let nLineLenght = AscFormat.getLineLength(oPt1, oPt2);
-                let nPointsCount = nLineLenght / (dR) + 0.5 >> 0;
+                let nPointsCount = nLineLenght / (dR2) + 0.5 >> 0;
                 aPoints = aPoints.concat(findPointsOnLine(oPt1, oPt2, nPointsCount));
                 aPoints.splice(aPoints.length - 1, 1);
             }
@@ -375,7 +441,10 @@
 
 
             if(nPt === 0) {
-                geometry.AddPathCommand(1, c(dStartX), c(dStartY));
+                if (arrPoints)
+                    geometry.AddPathCommand(1, c(dStartX - xMin), c(dStartY - yMin));
+                else
+                    geometry.AddPathCommand(1, c(dStartX), c(dStartY));
             }
 
             geometry.AddPathCommand(3, c(dR), c(dR),

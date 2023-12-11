@@ -94,8 +94,9 @@
 
         return oSquare;
     };
-    CAnnotationSquare.prototype.RefillGeometry = function() {
-        return;
+    CAnnotationSquare.prototype.RefillGeometry = function(oGeometry, aShapeRectInMM) {
+        if (this.GetBorderEffectStyle() !== AscPDF.BORDER_EFFECT_STYLES.Cloud)
+            return;
 
         let oViewer     = editor.getDocumentRenderer();
         let nPage       = this.GetPage();
@@ -104,26 +105,94 @@
         let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
         let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
 
-        let aRect = this.GetOrigRect();
+        let aOrigRect   = this.GetOrigRect();
+        let aRD         = this.GetRectangleDiff();
 
-        let aRD = this.GetRectangleDiff();
-        let aPoints = [
-            {x: (aRect[0] + aRD[0]) * nScaleX, y: (aRect[1] + aRD[1]) * nScaleY},
-            {x: (aRect[2] - aRD[2]) * nScaleX, y: (aRect[1] + aRD[1]) * nScaleY},
-            {x: (aRect[2] - aRD[2]) * nScaleX, y: (aRect[3] - aRD[3]) * nScaleY},
-            {x: (aRect[0] + aRD[0]) * nScaleX, y: (aRect[3] - aRD[3]) * nScaleY}
-        ]
+        let aPoints;
+        if (!oGeometry)
+            oGeometry = this.spPr.geometry;
+        if (!aShapeRectInMM) {
+            aShapeRectInMM = [
+                (aOrigRect[0] + aRD[0]) * nScaleX, (aOrigRect[1] + aRD[1]) * nScaleY,
+                (aOrigRect[2] - aRD[2]) * nScaleX, (aOrigRect[3] - aRD[3]) * nScaleY
+            ];
 
-        let aShapeRectInMM = this.GetRect().map(function(measure) {
-            return measure * g_dKoef_pix_to_mm;
-        });
+            aPoints = [
+                {x: (aOrigRect[0] + aRD[0]) * nScaleX, y: (aOrigRect[1] + aRD[1]) * nScaleY},
+                {x: (aOrigRect[2] - aRD[2]) * nScaleX, y: (aOrigRect[1] + aRD[1]) * nScaleY},
+                {x: (aOrigRect[2] - aRD[2]) * nScaleX, y: (aOrigRect[3] - aRD[3]) * nScaleY},
+                {x: (aOrigRect[0] + aRD[0]) * nScaleX, y: (aOrigRect[3] - aRD[3]) * nScaleY}
+            ]
+        }
+        else {
+            aPoints = [
+                {x: aShapeRectInMM[0], y: aShapeRectInMM[1]},
+                {x: aShapeRectInMM[2], y: aShapeRectInMM[1]},
+                {x: aShapeRectInMM[2], y: aShapeRectInMM[3]},
+                {x: aShapeRectInMM[0], y: aShapeRectInMM[3]}
+            ]
+        }
+
         oDoc.TurnOffHistory();
-        // generateGeometry([aPoints], aShapeRectInMM, this.spPr.geometry);
-        // this.spPr.geometry.Recalculate(10, 10);
+        AscPDF.generateCloudyGeometry(aPoints, aShapeRectInMM, oGeometry, this.GetBorderEffectIntensity());
+        oGeometry.preset = undefined;
     };
     CAnnotationSquare.prototype.SetRectangleDiff = function(aDiff) {
         this._rectDiff = aDiff;
 
+        let oViewer     = editor.getDocumentRenderer();
+        let nPage       = this.GetPage();
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
+
+        let aOrigRect = this.GetOrigRect();
+
+        this.spPr.xfrm.setOffX(aDiff[0] * nScaleX);
+        this.spPr.xfrm.setOffY(aDiff[1] * nScaleY);
+        let extX = ((aOrigRect[2] - aOrigRect[0]) - aDiff[0] - aDiff[2]) * nScaleX;
+        let extY = ((aOrigRect[3] - aOrigRect[1]) - aDiff[1] - aDiff[3]) * nScaleY;
+
+        this.spPr.xfrm.setExtX(extX);
+        this.spPr.xfrm.setExtY(extY);
+    };
+    CAnnotationSquare.prototype.SetRect = function(aRect) {
+        let oViewer     = editor.getDocumentRenderer();
+        let oDoc        = oViewer.getPDFDoc();
+        let nPage       = this.GetPage();
+        let aCurRect    = this.GetRect();
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        this._rect = aRect;
+        this._pagePos = {
+            x: aRect[0],
+            y: aRect[1],
+            w: (aRect[2] - aRect[0]),
+            h: (aRect[3] - aRect[1])
+        };
+
+        this._origRect[0] = this._rect[0] / nScaleX;
+        this._origRect[1] = this._rect[1] / nScaleY;
+        this._origRect[2] = this._rect[2] / nScaleX;
+        this._origRect[3] = this._rect[3] / nScaleY;
+
+        this.SetRectangleDiff([0, 0, 0, 0]);
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, aCurRect, aRect));
+
+        oDoc.TurnOffHistory();
+
+        this.recalcGeometry();
+        this.AddToRedraw();
+        this.SetWasChanged(true);
+        this.SetDrawFromStream(false);
+    };
+    CAnnotationSquare.prototype.SetRectangleDiff = function(aDiff) {
+        let oDoc = this.GetDocument();
+        oDoc.History.Add(new CChangesPDFAnnotRD(this, this.GetRectangleDiff(), aDiff));
+
+        this._rectDiff  = aDiff;
         let oViewer     = editor.getDocumentRenderer();
         let nPage       = this.GetPage();
 
@@ -170,14 +239,14 @@
         let nPage       = this.GetPage();
         let aOrigRect   = this.GetOrigRect();
 
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
         
         if (this.recalcInfo.recalculateGeometry)
             this.RefillGeometry();
         this.handleUpdatePosition();
         this.recalculate();
-        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
+        this.updatePosition(aOrigRect[0] * nScaleX, aOrigRect[1] * nScaleY);
     };
     
     CAnnotationSquare.prototype.WriteToBinary = function(memory) {
@@ -219,79 +288,6 @@
             reply.WriteToBinary(memory); 
         });
     };
-
-    function generateGeometry(arrOfArrPoints, aBounds, oGeometry) {
-        let xMin = aBounds[0];
-        let yMin = aBounds[1];
-        let xMax = aBounds[2];
-        let yMax = aBounds[3];
-
-        let geometry = oGeometry ? oGeometry : new AscFormat.Geometry();
-        if (oGeometry) {
-            oGeometry.pathLst = [];
-        }
-
-        for (let nPath = 0; nPath < arrOfArrPoints.length; nPath++) {
-            let bClosed     = false;
-            let aPoints     = arrOfArrPoints[nPath];
-            let min_dist    = editor.WordControl.m_oDrawingDocument.GetMMPerDot(3);
-            let oLastPoint  = aPoints[aPoints.length-1];
-            let nLastIndex  = aPoints.length-1;
-            if(oLastPoint.bTemporary) {
-                nLastIndex--;
-            }
-            if(nLastIndex > 1)
-            {
-                let dx = aPoints[0].x - aPoints[nLastIndex].x;
-                let dy = aPoints[0].y - aPoints[nLastIndex].y;
-                if(Math.sqrt(dx*dx +dy*dy) < min_dist)
-                {
-                    bClosed = true;
-                }
-            }
-
-            let w = xMax - xMin, h = yMax-yMin;
-            let kw, kh, pathW, pathH;
-            if(w > 0)
-            {
-                pathW = 43200;
-                kw = 43200/ w;
-            }
-            else
-            {
-                pathW = 0;
-                kw = 0;
-            }
-            if(h > 0)
-            {
-                pathH = 43200;
-                kh = 43200 / h;
-            }
-            else
-            {
-                pathH = 0;
-                kh = 0;
-            }
-            
-            geometry.AddPathCommand(0,undefined, undefined, undefined, pathW, pathH);
-            geometry.AddPathCommand(1, (((aPoints[0].x - xMin) * kw) >> 0) + "", (((aPoints[0].y - yMin) * kh) >> 0) + "");
-
-            let oPt, nPt;
-            for(nPt = 1; nPt < aPoints.length; nPt++) {
-                oPt = aPoints[nPt];
-
-                geometry.AddPathCommand(2,
-                    (((oPt.x - xMin) * kw) >> 0) + "", (((oPt.y - yMin) * kh) >> 0) + ""
-                );
-            }
-            
-            geometry.AddPathCommand(6);
-        }
-
-        geometry.preset = null;
-        geometry.rectS = null;
-        return geometry;
-    }
 
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)

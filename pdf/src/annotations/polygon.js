@@ -71,7 +71,7 @@
         let oDoc    = oViewer.getPDFDoc();
         
         this.recalcGeometry();
-        // oDoc.History.Add(new CChangesPDFPolygonPoints(this, this.GetVertices(), aVertices));
+        oDoc.History.Add(new CChangesPDFAnnotVertices(this, this.GetVertices(), aVertices));
 
         this._vertices = aVertices;
     };
@@ -219,6 +219,8 @@
         oPolygon.recalcInfo.recalculateGeometry = true;
         oPolygon._vertices = this._vertices.slice();
         oPolygon.SetWasChanged(oPolygon.IsChanged());
+        oPolygon.recalculate();
+
         return oPolygon;
     };
     CAnnotationPolygon.prototype.onMouseDown = function(e) {
@@ -235,8 +237,37 @@
         let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
 
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
+        oDrawingObjects.startEditGeometry();
+    };
+    CAnnotationPolygon.prototype.GetGeometryEdit = function() {
         if (this.GetBorderEffectStyle() !== AscPDF.BORDER_EFFECT_STYLES.Cloud)
-            oDrawingObjects.startEditGeometry();
+            return this.spPr.geometry;
+        
+        let oViewer = editor.getDocumentRenderer();
+        let oDoc    = oViewer.getPDFDoc();
+        
+        let aPoints = this.GetVertices();
+        let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom;
+
+        let aPolygonPoints = [];
+        for (let i = 0; i < aPoints.length - 1; i += 2) {
+            aPolygonPoints.push({
+                x: aPoints[i] * g_dKoef_pix_to_mm * nScaleX,
+                y: (aPoints[i + 1])* g_dKoef_pix_to_mm * nScaleY
+            });
+        }
+        
+        let aShapeRectInMM = this.GetRect().map(function(measure) {
+            return measure * g_dKoef_pix_to_mm;
+        });
+
+        oDoc.TurnOffHistory();
+
+        this._internalGeomForEdit = generateGeometry(aPolygonPoints, aShapeRectInMM, this._internalGeomForEdit);
+        this._internalGeomForEdit.Recalculate(aShapeRectInMM[2] - aShapeRectInMM[0], aShapeRectInMM[3] - aShapeRectInMM[1]);
+        
+        return this._internalGeomForEdit;
     };
     CAnnotationPolygon.prototype.IsPolygon = function() {
         return true;

@@ -73,7 +73,7 @@
         let oDoc    = oViewer.getPDFDoc();
         
         this.recalcGeometry();
-        // oDoc.History.Add(new CChangesPDFPolygonPoints(this, this.GetVertices(), aVertices));
+        oDoc.History.Add(new CChangesPDFAnnotVertices(this, this.GetVertices(), aVertices));
 
         this._vertices = aVertices;
     };
