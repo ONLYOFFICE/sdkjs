@@ -9126,7 +9126,7 @@ function RangeDataManagerElem(bbox, data)
 		return null;
 	};
 
-	//return {all: , partIntersection}/true/false
+	//return {all: bool, partIntersection: bool}/true/false
 	TablePart.prototype._getContainsRange = function(range, tablePartRange, checkPartialIntersection) {
 		let intersection = range.intersection(tablePartRange);
 		if (intersection) {
