@@ -1053,18 +1053,22 @@
 
         let aFields = [];
         aFieldsNames.forEach(function(name) {
-            let aTmpFields = oDoc.GetFields(name);
+            let oField = oDoc.GetField(name);
 
-            // смысл в том, что одно поле из многих с таким именем может быть изменено, но еще не применено, ищем его
-            // если нет, то просто берем первое из массива
-            let oChangedField = aTmpFields.find(function(field) {
-                return field.IsNeedCommit();
-            });
-
-            if (oChangedField)
-                aFields.push(oChangedField);
-            else if (aTmpFields[0])
-                aFields.push(aTmpFields[0]);
+            // если по полному имени получили виджет, значит остальные с таким именем тоже виджеты
+            if (oField.IsWidget() == true) {
+                // если имя поля совпадает с именем source поля (вызвавшего calculate), то нужно взять значение source поля
+                let oSourceField = oDoc.GetCalculateInfo().GetSourceField();
+                if (oSourceField && oSourceField.GetFullName() == name)
+                    aFields.push(oSourceField);
+                else
+                    aFields.push(oField);
+            }
+            // если не виджет, значит родитель, значит получаем все дочерние виджеты без повторений имён
+            else {
+                let aTmpFields = oDoc.GetFields(name);
+                aFields = aFields.concat(aTmpFields);
+            }
         });
 
         function extractNumber(str) {

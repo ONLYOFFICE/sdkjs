@@ -1543,6 +1543,7 @@
 		this.ctDocInfo			= 163;
 		this.ctAnnotField		= 164;
 		this.ctAnnotFieldDelete	= 165;
+		this.ctWidgetsInfo		= 166;
 
 		this.ctPageWidth  = 200;
 		this.ctPageHeight = 201;

@@ -54,20 +54,20 @@ var CPresentation = CPresentation || function(){};
     let AscPDF = window["AscPDF"];
 
     function CCalculateInfo(oDoc) {
-        this.names = [];
+        this.ids = [];
         this.document = oDoc;
         this.isInProgress = false;
         this.sourceField = null; // поле вызвавшее calculate
     };
 
-    CCalculateInfo.prototype.AddFieldToOrder = function(sName) {
-        if (this.names.includes(sName) == false)
-            this.names.push(sName);
+    CCalculateInfo.prototype.AddFieldToOrder = function(id) {
+        if (this.ids.includes(id) == false)
+            this.ids.push(id);
     };
-    CCalculateInfo.prototype.RemoveFieldFromOrder = function(sName) {
-        let nIdx = this.names.indexOf(sName);
+    CCalculateInfo.prototype.RemoveFieldFromOrder = function(id) {
+        let nIdx = this.ids.indexOf(id);
         if (nIdx != -1) {
-            this.names.splice(nIdx, 1);
+            this.ids.splice(nIdx, 1);
         }
     };
     CCalculateInfo.prototype.SetIsInProgress = function(bValue) {
@@ -76,8 +76,8 @@ var CPresentation = CPresentation || function(){};
     CCalculateInfo.prototype.IsInProgress = function() {
         return this.isInProgress;
     };
-    CCalculateInfo.prototype.SetCalculateOrder = function(aNames) {
-        this.names = aNames.slice();
+    CCalculateInfo.prototype.SetCalculateOrder = function(aIds) {
+        this.ids = aIds.slice();
     };
     /**
 	 * Sets field to calc info, which caused the recalculation.
@@ -100,6 +100,7 @@ var CPresentation = CPresentation || function(){};
         this.rootFields = new Map(); // root поля форм
         this.widgets    = []; // непосредственно сами поля, которые отрисовываем (дочерние без потомков)
         this.annots     = [];
+        this.widgetsParents = []; // все родительские поля
 
         this.maxApIdx = -1;
         this.theme = new AscFormat.CTheme();
@@ -178,6 +179,7 @@ var CPresentation = CPresentation || function(){};
             oParents[nIdx] = oParent;
 
             this.rootFields.set(oParent.GetPartialName(), oParent);
+            this.widgetsParents.push(oParent);
         }
 
         for (let nParentIdx in oParents) {
@@ -1263,8 +1265,8 @@ var CPresentation = CPresentation || function(){};
         let oThis = this;
         this.calculateInfo.SetIsInProgress(true);
         this.calculateInfo.SetSourceField(oSourceField);
-        this.calculateInfo.names.forEach(function(name) {
-            let oField = oThis.GetField(name);
+        this.calculateInfo.ids.forEach(function(id) {
+            let oField = oThis.GetFieldBySourceIdx(id);
             if (!oField)
                 return;
             
@@ -1285,7 +1287,7 @@ var CPresentation = CPresentation || function(){};
         this.calculateInfo.SetSourceField(null);
     };
     CPDFDoc.prototype.IsNeedDoCalculate = function() {
-        if (this.calculateInfo.names.length > 0)
+        if (this.calculateInfo.ids.length > 0)
             return true;
 
         return false;
@@ -2185,6 +2187,15 @@ var CPresentation = CPresentation || function(){};
                 aFields.push(this.widgets[i]);
         }
 
+        if (aFields.length == 0) {
+            for (let i = 0; i < this.widgetsParents.length; i++) {
+                if (this.widgetsParents[i].GetFullName() == sName) {
+                    aFields = aFields.concat(this.widgetsParents[i].GetAllWidgets());
+                    break;
+                }
+            }
+        }
+
         return aFields;
     };
 
@@ -2220,6 +2231,12 @@ var CPresentation = CPresentation || function(){};
                     return this.widgets[j];
             }
             sPartName += "." + aPartNames[i + 1];
+        }
+
+        for (let i = 0; i < this.widgetsParents.length; i++) {
+            if (this.widgetsParents[i].GetFullName() == sName) {
+                return this.widgetsParents[i];
+            }
         }
 
         return null;

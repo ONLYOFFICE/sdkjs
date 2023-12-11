@@ -899,10 +899,17 @@
 				if (oFormInfo["font"]) {
 					if (oFormInfo["font"]["color"] != null)
 						oForm.SetTextColor(oFormInfo["font"]["color"]);
-					// if (oFormInfo["font"]["name"] != null)
-					// 	oForm.SetTextFont(oFormInfo["font"]["name"]);
+					if (oFormInfo["font"]["name"] != null)
+						oForm.SetTextFont(oFormInfo["font"]["name"]);
 					if (oFormInfo["font"]["size"] != null)
 						oForm.SetTextSize(oFormInfo["font"]["size"]);
+
+					if (oFormInfo["font"]["style"] != null) {
+						oForm.SetFontStyle({
+							bold: Boolean((oFormInfo["font"]["style"] >> 0) & 1),
+							italic: Boolean((oFormInfo["font"]["style"] >> 1) & 1),
+						});
+					}
 				}
 
 				if (oFormInfo["AP"] != null) {
@@ -1024,13 +1031,9 @@
 					// to do
 					oForm.SetFileSelect(Boolean(oFormInfo["fileSelect"]));
 				}
-				if (oFormInfo["flag"] != null)
-				{
-					// to do
-				}
 				if (oFormInfo["noexport"])
 				{
-					// to do
+					oForm.SetNoExport(Boolean(oFormInfo["noexport"]));
 				}
 				if (oFormInfo["readonly"])
 				{
@@ -4000,18 +4003,65 @@
 			// forms
 			if (aPages[i].fields) {
 				for (let nForm = 0; nForm < aPages[i].fields.length; nForm++) {
-					aPages[i].fields[nForm].WriteToBinary && aPages[i].fields[nForm].IsChanged() && aPages[i].fields[nForm].WriteToBinary(oMemory);
+					if (aPages[i].fields[nForm].IsChanged())
+						aPages[i].fields[nForm].WriteToBinary(oMemory);
 				}
 			}
 
 			let nEndPos = oMemory.GetCurPosition();
+			// длина комманд на стринице
 			oMemory.Seek(nStartPos);
 			oMemory.WriteLong(nEndPos - nStartPos);
 			oMemory.Seek(nEndPos);
 		}
 
-		if (oMemory)
+		if (oMemory) {
+			let nStartPos = oMemory.GetCurPosition();
+			oMemory.Skip(4);
+
+			// parents and CO (calculaction order)
+			oMemory.WriteByte(3);
+			oMemory.WriteByte(AscCommon.CommandType.ctWidgetsInfo);
+			let nPosForLenght = oMemory.GetCurPosition();
+			oMemory.Skip(4);
+
+			let aCO = oDoc.GetCalculateInfo().ids;
+			oMemory.WriteLong(aCO.length);
+			for (let i = 0; i < aCO.length; i++) {
+				oMemory.WriteLong(aCO[i]);
+			}
+
+			let nPosForParentLenght = oMemory.GetCurPosition();
+			oMemory.Skip(4);
+			let nParents = 0;
+			oDoc.widgetsParents.forEach(function(field) {
+				// if (field.IsChanged()) {
+				if (true) {
+					nParents++;
+					field.WriteToBinaryAsParent(oMemory);
+				}
+			});
+
+			let nEndPos = oMemory.GetCurPosition();
+			
+			// количество изменённых родителей
+			oMemory.Seek(nPosForParentLenght);
+			oMemory.WriteLong(nParents);
+			oMemory.Seek(nEndPos);
+
+			// длина комманд с информацией о родителях и CO
+			oMemory.Seek(nPosForLenght);
+			oMemory.WriteLong(nEndPos - nPosForLenght);
+			oMemory.Seek(nEndPos);
+
+			// Общая длина комманд
+			oMemory.Seek(nStartPos);
+			oMemory.WriteLong(nEndPos - nStartPos);
+			oMemory.Seek(nEndPos);
+
 			return new Uint8Array(oMemory.data.buffer, 0, oMemory.GetCurPosition());
+		}
+			
 		return null;
 	};
 

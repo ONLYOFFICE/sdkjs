@@ -126,14 +126,14 @@
         this.type = nType;
 
         this._kids          = [];
-        this._borderStyle   = BORDER_TYPES.solid;
+        this._borderStyle   = undefined;
         this._delay         = false;
         this._display       = AscPDF.Api.Objects.display["visible"];
         this._doc           = oDoc;
         this._fillColor     = undefined;
         this._bgColor       = undefined;          // prop for old versions (fillColor)
         this._hidden        = false;             // This property has been superseded by the display property and its use is discouraged.
-        this._lineWidth     = LINE_WIDTH.thin;  // In older versions of this specification, this property was borderWidth
+        this._lineWidth     = undefined;  // In older versions of this specification, this property was borderWidth
         this._borderWidth   = undefined;       
         this._name          = sName;         // partial field name
         this._page          = nPage;        // integer | array
@@ -145,12 +145,14 @@
         this._rotation      = 0;
         this._strokeColor   = null;     // In older versions of this specification, this property was borderColor. The use of borderColor is now discouraged,
                                         // although it is still valid for backward compatibility.
+        this._noExport      = false;
         this._borderColor   = undefined;
         this._submitName    = "";
         this._textColor     = [0,0,0];
         this._textFont      = undefined;
         this._fgColor       = undefined;
         this._textSize      = 10; // 0 == max text size // to do
+        this._fontStyle     = null; // информация о стиле шрифта (bold, italic)
         this._userName      = ""; // It is intended to be used as tooltip text whenever the cursor enters a field. 
         //It can also be used as a user-friendly name, instead of the field name, when generating error messages.
         this._parent        = null;
@@ -319,6 +321,33 @@
     };
     CBaseField.prototype.GetKids = function() {
         return this._kids;
+    };
+    
+    /**
+	 * Gets all widgets fields of this parent field.
+	 * @memberof CBaseField
+	 * @typeofeditors ["PDF"]
+	 * @returns {Array}
+	 */
+    CBaseField.prototype.GetAllWidgets = function() {
+        if (this.IsWidget())
+            return [];
+
+        let aWidgets = [];
+        let aFullNames = [];
+        for (let i = 0; i < this._kids.length; i++) {
+            let sFullName = this._kids[i].GetFullName();
+            if (this._kids[i].IsWidget()) {
+                if (aFullNames.indexOf(sFullName) == -1) {
+                    aWidgets.push(this._kids[i]);
+                    aFullNames.push(sFullName);
+                }
+            }
+            else
+                aWidgets = aWidgets.concat(this._kids[i].GetAllWidgets());
+        }
+
+        return aWidgets;
     };
 
     CBaseField.prototype.Recalculate = function() {};
@@ -650,7 +679,7 @@
     CBaseField.prototype.GetApiValue = function(bInherit) {
         let oParent = this.GetParent();
         if (oParent == null && this._value == null)
-            return "";
+            return undefined;
         else if (bInherit === false || (this._value != null && this.GetPartialName() != null)) {
             return this._value;
         }
@@ -665,12 +694,30 @@
 	 */
     CBaseField.prototype.SetApiValue = function(value) {
         let oParent = this.GetParent();
-        if (oParent && this.IsWidget())
+        if (oParent && this.IsWidget() && oParent.IsAllChildsSame())
             oParent.SetApiValue(value);
         else
             this._value = value;
     };
 
+    /**
+	 * Checks if all clilds have same names.
+	 * @memberof CBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    CBaseField.prototype.IsAllChildsSame = function() {
+        if (this._kids.length > 0) {
+            let sFullName = this._kids[0].GetFullName();
+            for (let i = 1; i < this._kids.length; i++) {
+                if (sFullName != this._kids[i].GetFullName())
+                    return false;
+            }
+
+            return true;
+        }
+
+        return false;
+    };
     /**
      * Does the actions setted for specifed trigger type.
 	 * @memberof CBaseField
@@ -1278,6 +1325,13 @@
     CBaseField.prototype.IsReadOnly = function() {
         return this._readonly;
     };
+
+    CBaseField.prototype.SetNoExport = function(bNoExport) {
+        this._noExport = bNoExport;
+    };
+    CBaseField.prototype.IsNoExport = function() {
+        return this._noExport;
+    };
     
     CBaseField.prototype.SetRequired = function(bRequired) {
         if (this.GetType() != AscPDF.FIELD_TYPES.button)
@@ -1548,14 +1602,14 @@
     };
     CBaseField.prototype.GetBordersWidth = function(bScaled) {
         let oViewer = editor.getDocumentRenderer();
-        let nLineWidth = bScaled == true ? 1.25 * this._lineWidth * AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom : 1.25 * this._lineWidth;
+        let nLineWidth = bScaled == true ? 1.25 * (this._lineWidth ? this._lineWidth : 1)  * AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom : 1.25 * (this._lineWidth ? this._lineWidth : 1);
 
-        if (nLineWidth == 0) {
+        if (nLineWidth == 0 || this._borderStyle == undefined) {
             return {
-                left:     0,
-                top:      0,
-                right:    0,
-                bottom:   0
+                left:     nLineWidth,
+                top:      nLineWidth,
+                right:    nLineWidth,
+                bottom:   nLineWidth
             }
         }
 
@@ -1607,6 +1661,13 @@
                     right:    oBorders.bottom * nKoeff,
                     bottom:   oBorders.bottom * nKoeff
                 }
+            default:
+                return {
+                    left:     oBorders.bottom * nKoeff,
+                    top:      oBorders.bottom * nKoeff,
+                    right:    oBorders.bottom * nKoeff,
+                    bottom:   oBorders.bottom * nKoeff
+                }
         };
     };
     CBaseField.prototype.HasShiftView = function() {
@@ -1646,6 +1707,9 @@
 
             this.AddToRedraw();
         }
+    };
+    CBaseField.prototype.GetBorderWidth = function() {
+        return this._borderWidth || this._lineWidth;
     };
     /**
      * Returns a canvas with origin view (from appearance stream) of current form.
@@ -1917,6 +1981,12 @@
         this.SetWasChanged(true);
         this.AddToRedraw();
     };
+    CBaseField.prototype.SetFontStyle = function(oStyle) {
+        this._fontStyle = oStyle;
+    };
+    CBaseField.prototype.GetFontStyle = function() {
+        return this._fontStyle;
+    };
     CBaseField.prototype.GetTextFont = function() {
         return this._textFont;
     };
@@ -2090,11 +2160,14 @@
         
         annotFlags = 0;
         let nBorder = this.GetBorderStyle();
-        let nBorderW = this.GetBordersWidth();
+        let nBorderW = this.GetBorderWidth();
         if (nBorder != null || nBorderW != null) {
             annotFlags |= (1 << 4);
             memory.WriteByte(nBorder);
             memory.WriteDouble(nBorderW);
+            if (nBorder == 2) {
+                memory.WriteLong(1); memory.WriteDouble(3);
+            }
         }
         
         // write flags
@@ -2126,14 +2199,13 @@
         // text size for ap
         memory.WriteDouble(this.GetFontSizeAP());
 
-        // text style
+        // font style
+        let oStyle = this.GetFontStyle();
         let nStyle = 0;
-        let isBold = true;
-        let isItalic = true;
-        if (isBold) {
+        if (oStyle.bold) {
             nStyle |= (1 << 0);
         }
-        if (isItalic) {
+        if (oStyle.italic) {
             nStyle |= (1 << 1);
         }
         memory.WriteLong(nStyle);
@@ -2159,17 +2231,17 @@
         memory.posForFlags1  = memory.GetCurPosition();
         memory.Skip(4);
         
-        // if (this.IsReadOnly()) {
-        //     memory.fieldFlags1 |= (1 << 0);
-        // }
+        if (this.IsReadOnly()) {
+            memory.fieldFlags1 |= (1 << 0);
+        }
 
         if (this.IsRequired()) {
             memory.fieldFlags1 |= (1 << 1);
         }
 
-        // if (this.IsNoExport()) {
-        //     memory.fieldFlags1 |= (1 << 2);
-        // }
+        if (this.IsNoExport()) {
+            memory.fieldFlags1 |= (1 << 2);
+        }
 
         // сюда пойдут 2ые флаги полей
         memory.fieldFlags2   = 0;
@@ -2213,16 +2285,21 @@
             }
         }
 
+        // default value
         let defValue = this.GetDefaultValue();
         if (defValue != null) {
             memory.fieldFlags2 |= (1 << 8);
             memory.WriteString(defValue);
         }
 
-        //
         // parent
-        //
+        let oParent = this.GetParent();
+        if (oParent != null) {
+            memory.fieldFlags2 |= (1 << 17);
+            memory.WriteLong(oParent.GetApIdx());
+        }
 
+        // partial name
         let sName = this.GetPartialName();
         if (sName != null) {
             memory.fieldFlags2 |= (1 << 18);
@@ -2236,6 +2313,47 @@
         for (let i = 0; i < aActions.length; i++) {
             aActions[i].WriteToBinary(memory);
         }
+    };
+    CBaseField.prototype.WriteToBinaryAsParent = function(memory) {
+        memory.WriteLong(this.GetApIdx());
+        // pos for flags
+        let nStartPos   = memory.GetCurPosition();
+        let nFlags      = 0;
+        memory.Skip(4);
+
+        // partial name
+        let sName = this.GetPartialName();
+        if (sName != null) {
+            nFlags |= (1 << 0);
+            memory.WriteString(sName);
+        }
+
+        // value
+        let sValue = this.GetApiValue();
+        if (sValue != null) {
+            nFlags |= (1 << 1);
+            memory.WriteString(sValue);
+        }
+
+        // default value
+        let defValue = this.GetDefaultValue();
+        if (defValue != null) {
+            nFlags |= (1 << 2);
+            memory.WriteString(defValue);
+        }
+
+        // parent
+        let oParent = this.GetParent();
+        if (oParent != null) {
+            nFlags |= (1 << 3);
+            memory.WriteLong(oParent.GetApIdx());
+        }
+
+        // write flags
+        let nEndPos = memory.GetCurPosition();
+        memory.Seek(nStartPos);
+        memory.WriteLong(nFlags);
+        memory.Seek(nEndPos);
     };
 
     // for format

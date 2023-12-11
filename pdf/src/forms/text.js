@@ -191,14 +191,14 @@
 			if (args[1] == true && !this.GetParent())
 				this.SetApiValue(sValue);
 			
-			this.UpdateDisplayValue(sValue);
+			this.UpdateDisplayValue(sValue, args[1]);
 		}
 		else {
 			this.SetApiValue(sValue);
 		}
 	};
 	CTextField.prototype.UpdateDisplayValue = function(displayValue) {
-		if (displayValue === this._displayValue)
+        if (displayValue === this._displayValue && this._useDisplayValue == true)
 			return;
 		
 		this._displayValue = displayValue;
@@ -206,18 +206,29 @@
 		
 		let _t = this;
 		
-		this._displayPromise = new Promise(function(resolve) {
-			AscFonts.FontPickerByCharacter.checkText(displayValue, _t, resolve);
-		}).then(function() {
-			if (_t._displayValue !== displayValue)
+        let args = arguments; // args[1] == true -> флаг, что вызывается на открытии
+        if (args[1] == true) {
+            if (_t._displayValue !== displayValue)
 				return;
 			
 			_t.content.replaceAllText(displayValue);
 			_t.SetNeedRecalc(true);
-		});
+        }
+        else {
+            this._displayPromise = new Promise(function(resolve) {
+                AscFonts.FontPickerByCharacter.checkText(displayValue, _t, resolve);
+            }).then(function() {
+                if (_t._displayValue !== displayValue)
+                    return;
+                
+                _t.content.replaceAllText(displayValue);
+                _t.SetNeedRecalc(true);
+            });
+        }
+		
 	};
     CTextField.prototype.GetCalcOrderIndex = function() {
-        return this.field.GetDocument().GetCalculateInfo().names.indexOf(this.field.GetFullName());
+        return this.field.GetDocument().GetCalculateInfo().ids.indexOf(this.field.GetFullName());
     };
     CTextField.prototype.SetCalcOrderIndex = function(nIdx) {
         let oCalcInfo = this.GetDocument().GetCalculateInfo();
@@ -225,15 +236,15 @@
         if (oCalcTrigget == null || nIdx < 0)
             return false;
 
-        let nCurIdx = oCalcInfo.names.indexOf(this.GetFullName());
+        let nCurIdx = oCalcInfo.ids.indexOf(this.GetFullName());
         if (nCurIdx == nIdx)
             return true;
 
-        oCalcInfo.names.splice(nCurIdx, 1);
-        if (nIdx > oCalcInfo.names.length)
-            oCalcInfo.names.splice(nIdx, 0, this.GetFullName());
+        oCalcInfo.ids.splice(nCurIdx, 1);
+        if (nIdx > oCalcInfo.ids.length)
+            oCalcInfo.ids.splice(nIdx, 0, this.GetFullName());
         else
-            oCalcInfo.names.push(this.GetFullName());
+            oCalcInfo.ids.push(this.GetFullName());
 
         return true;
     };
@@ -512,7 +523,7 @@
         let oMargins = this.GetMarginsFromBorders(false, false);
         
         let contentX = this.IsComb() ? (X + oMargins.left) * g_dKoef_pix_to_mm : (X + 2 * oMargins.left) * g_dKoef_pix_to_mm;
-        let contentY = (Y + 2.5 * oMargins.top) * g_dKoef_pix_to_mm;
+        let contentY = (Y + (this.IsMultiline() ? (2.5 * oMargins.top) : (2 * oMargins.top))) * g_dKoef_pix_to_mm;
         let contentXLimit = this.IsComb() ? (X + nWidth - oMargins.left) * g_dKoef_pix_to_mm : (X + nWidth - 2 * oMargins.left) * g_dKoef_pix_to_mm;
         let contentYLimit = (Y + nHeight - oMargins.bottom) * g_dKoef_pix_to_mm;
         
@@ -1496,7 +1507,7 @@
         this.WriteToBinaryBase2(memory);
 
         let sValue = this.GetValue();
-        if (sValue != null) {
+        if (sValue != null && this.IsPassword() == false) {
             memory.fieldFlags2 |= (1 << 9);
             memory.WriteString(sValue);
         }
@@ -1514,15 +1525,15 @@
         if (this.IsMultiline()) {
             memory.fieldFlags2 |= (1 << 12);
         }
-        // if (this.IsPassword()) {
-        //     memory.fieldFlags2 |= (1 << 13);
-        // }
-        // if (this.IsFileSelect()) {
-        //     memory.fieldFlags2 |= (1 << 20);
-        // }
-        // if (this.IsDoNotSpellCheck()) {
-        //     memory.fieldFlags2 |= (1 << 22);
-        // }
+        if (this.IsPassword()) {
+            memory.fieldFlags2 |= (1 << 13);
+        }
+        if (this.IsFileSelect()) {
+            memory.fieldFlags2 |= (1 << 20);
+        }
+        if (this.IsDoNotSpellCheck()) {
+            memory.fieldFlags2 |= (1 << 22);
+        }
         if (this.IsDoNotScroll()) {
             memory.fieldFlags2 |= (1 << 23);
         }

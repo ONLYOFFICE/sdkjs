@@ -557,7 +557,6 @@
     
         let oApiConsole = {
             "println": function(value) {
-                console.log("\n");
                 console.log(value);
             },
             "clear": function() {
