@@ -11278,8 +11278,8 @@
         if (this.model.selectionRange) {
             var ranges = this.model.selectionRange.ranges;
 
-
-            if (ranges.length === 1) {
+			//formula edit mode - check tables selection
+            if (ranges.length === 1 && this.getFormulaEditMode()) {
 				let tables = this.model.autoFilters.getTablesIntersectionRange(ranges[0]);
 				if (tables && tables.length === 1) {
 					let sTable = tables[0].getSelectionString(this.model.getSelection().activeCell, ranges[0]);

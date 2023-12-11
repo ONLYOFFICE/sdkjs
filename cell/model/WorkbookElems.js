@@ -9048,7 +9048,7 @@ function RangeDataManagerElem(bbox, data)
 			//1. only data - Table1
 			//2. only data Table4[[Column1]:[Column2]] / Table4[Column1]
 			if (dataContains && !totalContains && !headerContains) {
-				return dataContains.all ? this.DisplayName : this.DisplayName + "[" + getColumnNameRange(startCol, endCol, true) + "]";
+				return dataContains.all ? this.DisplayName : this.DisplayName + "[" + getColumnNameRange(startCol, endCol) + "]";
 			}
 
 			//3. only all totals - Table4[#Totals]
