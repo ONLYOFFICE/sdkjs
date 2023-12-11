@@ -16141,7 +16141,7 @@ function RangeDataManagerElem(bbox, data)
 
 		// select one cell and use fill handle
 		if (!isApplyFilter) {
-			if (ws.activeFillHandle != null && countOfCol === countOfRow) {
+			if (ws.activeFillHandle != null) {
 				if (ws.fillHandleDirection === 0) {
 					this.asc_setSeriesIn(Asc.c_oAscSeriesInType.rows);
 				} else {
