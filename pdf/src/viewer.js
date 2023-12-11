@@ -705,6 +705,11 @@
 				this.thumbnails.init(this);
 
 			this.setMouseLockMode(true);
+
+			if (this.drawingPages[0]) {
+				let nKoeff = this.drawingPages[0].W / this.file.pages[0].W;
+				this.navigateToPage(0, 0, (this.scrollMaxX / 2) / nKoeff);
+			}
 		};
 
 		this.open = function(data, password)
@@ -1669,7 +1674,7 @@
 				let X       = oPos.X;
 				let Y       = oPos.Y;
 
-				if (oDoc.mouseDownAnnot.hitInPath(X, Y))
+				if (oDoc.mouseDownAnnot.hitInPath && oDoc.mouseDownAnnot.hitInPath(X, Y))
 					return oDoc.mouseDownAnnot;
 			}
 
@@ -2593,7 +2598,7 @@
 			this._paintAnnots();
 			this._paintForms();
 			this._paintFormsHighlight();
-			this._paintComboboxesMarkers();
+			this._paintFormsMarkers();
 			oDoc.UpdateUndoRedo();
 			oDoc.UpdateCommentPos();
 		};
@@ -3716,7 +3721,7 @@
 			}
 		}
 	};
-	CHtmlPage.prototype._paintComboboxesMarkers = function()
+	CHtmlPage.prototype._paintFormsMarkers = function()
 	{
 		let oCtx = this.canvasForms.getContext("2d");
 		for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
@@ -3734,6 +3739,9 @@
 				this.pagesInfo.pages[i].fields.forEach(function(field) {
 					if (field.GetType() == AscPDF.FIELD_TYPES.combobox)
 						field.DrawMarker(oCtx);
+					else if (field.GetType() == AscPDF.FIELD_TYPES.text && field.IsDateFormat()) {
+						field.DrawDateMarker(oCtx);
+					}
 				});
 			}
 		}

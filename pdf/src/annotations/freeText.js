@@ -67,6 +67,10 @@
     CAnnotationFreeText.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationFreeText.prototype.constructor = CAnnotationFreeText;
 
+    CAnnotationFreeText.prototype.getObjectType = function() {
+        return -1;
+    };
+
     CAnnotationFreeText.prototype.SetDefaultStyle = function(sStyle) {
         this._defaultStyle = sStyle;
     };

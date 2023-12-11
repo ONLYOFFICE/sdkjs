@@ -444,6 +444,15 @@
     CAnnotationBase.prototype.IsInk = function() {
         return false;
     };
+    CAnnotationBase.prototype.IsLine = function() {
+        return false;
+    };
+    CAnnotationBase.prototype.SetNeedRecalc = function(bRecalc) {
+        this._needRecalc = bRecalc;
+    };
+    CAnnotationBase.prototype.IsNeedRecalc = function() {
+        return this._needRecalc;
+    };
     CAnnotationBase.prototype.GetOrigRect = function() {
         return this._origRect || this.GetReplyTo().GetOrigRect();
     };

@@ -122,10 +122,13 @@
 		if (1 !== FontKoef)
 			FontKoef = (((FontSize * FontKoef * 2 + 0.5) | 0) / 2) / FontSize;
 
-		Context.SetFontSlot(AscWord.fontslot_ASCII, FontKoef);
-
+		if (0x3000 === this.Value)
+			Context.SetFontSlot(AscWord.fontslot_EastAsia, FontKoef);
+		else
+			Context.SetFontSlot(AscWord.fontslot_ASCII, FontKoef);
+		
 		var Temp  = Context.MeasureCode(this.Value).Width;
-
+		
 		var ResultWidth  = (Math.max((Temp + TextPr.Spacing), 0) * 16384) | 0;
 		this.Width       = ResultWidth;
 		this.WidthOrigin = ResultWidth;
@@ -220,6 +223,10 @@
 	};
 	CRunSpace.prototype.BalanceSingleByteDoubleByteWidth = function()
 	{
+		// ea-space doesn't need to be balanced (bug 58483)
+		if (this.Value === 0x3000)
+			return;
+		
 		this.Width = this.WidthEn;
 	};
 	CRunSpace.prototype.SetGaps = function(nLeftGap, nRightGap, nCellWidth)

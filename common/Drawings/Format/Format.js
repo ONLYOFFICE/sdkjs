@@ -1426,19 +1426,19 @@
 				if (H > 1.0) H -= 1.0;
 			}
 
-			H = ((H * max_hls) >> 0) & 0xFF;
+			H = H * max_hls;
 			if (H < 0)
 				H = 0;
 			if (H > 255)
 				H = 255;
 
-			S = ((S * max_hls) >> 0) & 0xFF;
+			S = S * max_hls;
 			if (S < 0)
 				S = 0;
 			if (S > 255)
 				S = 255;
 
-			L = ((L * max_hls) >> 0) & 0xFF;
+			L = L * max_hls;
 			if (L < 0)
 				L = 0;
 			if (L > 255)
@@ -1450,9 +1450,10 @@
 		};
 		CColorModifiers.prototype.HSL2RGB = function (HSL, RGB) {
 			if (HSL.S == 0) {
-				RGB.R = HSL.L;
-				RGB.G = HSL.L;
-				RGB.B = HSL.L;
+				const clampL = AscFormat.ClampColor(HSL.L);
+				RGB.R = clampL;
+				RGB.G = clampL;
+				RGB.B = clampL;
 			} else {
 				var H = HSL.H / max_hls;
 				var S = HSL.S / max_hls;
@@ -1465,28 +1466,13 @@
 
 				var v1 = 2.0 * L - v2;
 
-				var R = (255 * this.Hue_2_RGB(v1, v2, H + cd13)) >> 0;
-				var G = (255 * this.Hue_2_RGB(v1, v2, H)) >> 0;
-				var B = (255 * this.Hue_2_RGB(v1, v2, H - cd13)) >> 0;
+				var R = (255 * this.Hue_2_RGB(v1, v2, H + cd13));
+				var G = (255 * this.Hue_2_RGB(v1, v2, H));
+				var B = (255 * this.Hue_2_RGB(v1, v2, H - cd13));
 
-				if (R < 0)
-					R = 0;
-				if (R > 255)
-					R = 255;
-
-				if (G < 0)
-					G = 0;
-				if (G > 255)
-					G = 255;
-
-				if (B < 0)
-					B = 0;
-				if (B > 255)
-					B = 255;
-
-				RGB.R = R;
-				RGB.G = G;
-				RGB.B = B;
+				RGB.R = AscFormat.ClampColor(R);
+				RGB.G = AscFormat.ClampColor(G);
+				RGB.B = AscFormat.ClampColor(B);
 			}
 		};
 		CColorModifiers.prototype.Hue_2_RGB = function (v1, v2, vH) {
@@ -1528,23 +1514,22 @@
 			//RGBA.B = (this.lclCrgbCompToRgbComp(this.lclGamma(RGBA.B, INC_GAMMA)) + 0.5) >> 0;
 
 			if (this.isUsePow) {
-				RGBA.R = (Math.pow(RGBA.R / 100000, INC_GAMMA) * 255 + 0.5) >> 0;
-				RGBA.G = (Math.pow(RGBA.G / 100000, INC_GAMMA) * 255 + 0.5) >> 0;
-				RGBA.B = (Math.pow(RGBA.B / 100000, INC_GAMMA) * 255 + 0.5) >> 0;
-			} else {
-				RGBA.R = AscFormat.ClampColor(RGBA.R);
-				RGBA.G = AscFormat.ClampColor(RGBA.G);
-				RGBA.B = AscFormat.ClampColor(RGBA.B);
+				RGBA.R = Math.pow(RGBA.R / 100000, INC_GAMMA) * 255;
+				RGBA.G = Math.pow(RGBA.G / 100000, INC_GAMMA) * 255;
+				RGBA.B = Math.pow(RGBA.B / 100000, INC_GAMMA) * 255;
 			}
+			RGBA.R = AscFormat.ClampColor(RGBA.R);
+			RGBA.G = AscFormat.ClampColor(RGBA.G);
+			RGBA.B = AscFormat.ClampColor(RGBA.B);
 		};
 		CColorModifiers.prototype.Apply = function (RGBA) {
 			if (null == this.Mods)
 				return;
 
-			var _len = this.Mods.length;
-			for (var i = 0; i < _len; i++) {
-				var colorMod = this.Mods[i];
-				var val = colorMod.val / 100000.0;
+			const _len = this.Mods.length;
+			for (let i = 0; i < _len; i++) {
+				const colorMod = this.Mods[i];
+				let val = colorMod.val / 100000.0;
 
 				if (colorMod.name === "alpha") {
 					RGBA.A = AscFormat.ClampColor(255 * val);
@@ -1566,12 +1551,24 @@
 					RGBA.R = AscFormat.ClampColor(RGBA.R * val);
 				} else if (colorMod.name === "redOff") {
 					RGBA.R = AscFormat.ClampColor(RGBA.R + val * 255);
-				} else if (colorMod.name === "hueOff") {
-					var HSL = {H: 0, S: 0, L: 0};
+				} else if (colorMod.name === "hueMod") {
+					if (val === 1) {
+						continue;
+					}
+					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+					HSL.H = AscCommon.trimMinMaxValue(HSL.H * val, 0, max_hls);
 
-					var res = (HSL.H + (val * 10.0) / 9.0 + 0.5) >> 0;
-					HSL.H = AscFormat.ClampColor2(res, 0, max_hls);
+					this.HSL2RGB(HSL, RGBA);
+				} else if (colorMod.name === "hueOff") {
+					if (val === 0) {
+						continue;
+					}
+					const HSL = {H: 0, S: 0, L: 0};
+					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
+					val = (colorMod.val / 60000) * (max_hls / 360);
+					const res = HSL.H + val;
+					HSL.H = AscCommon.trimMinMaxValue(res, 0, max_hls);
 
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "inv") {
@@ -1579,35 +1576,48 @@
 					RGBA.G ^= 0xFF;
 					RGBA.B ^= 0xFF;
 				} else if (colorMod.name === "lumMod") {
-					var HSL = {H: 0, S: 0, L: 0};
+					if (val === 1) {
+						continue;
+					}
+					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
-					HSL.L = AscFormat.ClampColor2(HSL.L * val, 0, max_hls);
+					HSL.L = AscCommon.trimMinMaxValue(HSL.L * val, 0, max_hls);
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "lumOff") {
-					var HSL = {H: 0, S: 0, L: 0};
+					if (val === 0) {
+						continue;
+					}
+					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
-					var res = (HSL.L + val * max_hls + 0.5) >> 0;
-					HSL.L = AscFormat.ClampColor2(res, 0, max_hls);
+					const res = HSL.L + val * max_hls;
+					HSL.L = AscCommon.trimMinMaxValue(res, 0, max_hls);
 
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "satMod") {
-					var HSL = {H: 0, S: 0, L: 0};
+					if (val === 1) {
+						continue;
+					}
+					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
-					HSL.S = AscFormat.ClampColor2(HSL.S * val, 0, max_hls);
+					HSL.S = AscCommon.trimMinMaxValue(HSL.S * val, 0, max_hls);
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "satOff") {
-					var HSL = {H: 0, S: 0, L: 0};
+					if (val === 0) {
+						continue;
+					}
+					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
-
-					var res = (HSL.S + val * max_hls + 0.5) >> 0;
-					HSL.S = AscFormat.ClampColor2(res, 0, max_hls);
-
+					const res = HSL.S + val * max_hls;
+					HSL.S = AscCommon.trimMinMaxValue(res, 0, max_hls);
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "wordShade") {
-					var val_ = colorMod.val / 255;
+					if (colorMod.val === 255) {
+						continue;
+					}
+					const val_ = colorMod.val / 255;
 					//GBA.R = Math.max(0, (RGBA.R * (1 - val_)) >> 0);
 					//GBA.G = Math.max(0, (RGBA.G * (1 - val_)) >> 0);
 					//GBA.B = Math.max(0, (RGBA.B * (1 - val_)) >> 0);
@@ -1617,22 +1627,25 @@
 					//RGBA.G = Math.max(0,  ((1 - val_)*(- RGBA.G) + RGBA.G) >> 0);
 					//RGBA.B = Math.max(0,  ((1 - val_)*(- RGBA.B) + RGBA.B) >> 0);
 
-					var HSL = {H: 0, S: 0, L: 0};
+					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
-					HSL.L = AscFormat.ClampColor2(HSL.L * val_, 0, max_hls);
+					HSL.L = AscCommon.trimMinMaxValue(HSL.L * val_, 0, max_hls);
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "wordTint") {
-					var _val = colorMod.val / 255;
+					if (colorMod.val === 255) {
+						continue;
+					}
+					const _val = colorMod.val / 255;
 					//RGBA.R = Math.max(0,  ((1 - _val)*(255 - RGBA.R) + RGBA.R) >> 0);
 					//RGBA.G = Math.max(0,  ((1 - _val)*(255 - RGBA.G) + RGBA.G) >> 0);
 					//RGBA.B = Math.max(0,  ((1 - _val)*(255 - RGBA.B) + RGBA.B) >> 0);
 
-					var HSL = {H: 0, S: 0, L: 0};
+					const HSL = {H: 0, S: 0, L: 0};
 					this.RGB2HSL(RGBA.R, RGBA.G, RGBA.B, HSL);
 
-					var L_ = HSL.L * _val + (255 - colorMod.val);
-					HSL.L = AscFormat.ClampColor2(L_, 0, max_hls);
+					const L_ = HSL.L * _val + (255 - colorMod.val);
+					HSL.L = AscCommon.trimMinMaxValue(L_, 0, max_hls);
 					this.HSL2RGB(HSL, RGBA);
 				} else if (colorMod.name === "shade") {
 					this.RgbtoCrgb(RGBA);

@@ -65,6 +65,10 @@
     CAnnotationPolyLine.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationPolyLine.prototype.constructor = CAnnotationPolyLine;
 
+    CAnnotationPolyLine.prototype.getObjectType = function() {
+        return -1;
+    };
+
     CAnnotationPolyLine.prototype.Draw = function(oGraphics) {
         if (this.IsHidden() == true)
             return;

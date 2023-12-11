@@ -1044,7 +1044,7 @@
                     });
                 }
 
-                if (oCalcInfo.IsInProgress() == false) {
+                if (oCalcInfo.IsInProgress() == false && oDoc.IsNeedDoCalculate()) {
                     oDoc.DoCalculateFields(this.field);
                     oDoc.CommitFields();
                 }
@@ -1099,7 +1099,7 @@
                     });
                 }
 
-                if (oCalcInfo.IsInProgress() == false) {
+                if (oCalcInfo.IsInProgress() == false && oDoc.IsNeedDoCalculate()) {
                     oDoc.DoCalculateFields(this.field);
                     oDoc.CommitFields();
                 }
@@ -1459,7 +1459,7 @@
                     this.field.needValidate = false; 
                     this.field.Commit();
                     if (oCalcInfo.IsInProgress() == false) {
-                        if (oDoc.event["rc"] == true) {
+                        if (oDoc.event["rc"] == true && oDoc.IsNeedDoCalculate()) {
                             oDoc.DoCalculateFields(this.field);
                             oDoc.AddFieldToCommit(this.field);
                             oDoc.CommitFields();
@@ -1613,7 +1613,7 @@
             aFields[0].SelectOption(nValue);
             aFields[0].Commit();
 
-            if (oCalcInfo.IsInProgress() == false) {
+            if (oCalcInfo.IsInProgress() == false && oDoc.IsNeedDoCalculate()) {
                 oDoc.DoCalculateFields(this.field);
                 oDoc.AddFieldToCommit(this.field);
                 oDoc.CommitFields();
@@ -1687,7 +1687,7 @@
                     this.field.needValidate = false; 
                     this.field.Commit();
                     if (oCalcInfo.IsInProgress() == false) {
-                        if (oDoc.event["rc"] == true) {
+                        if (oDoc.event["rc"] == true && oDoc.IsNeedDoCalculate()) {
                             oDoc.DoCalculateFields(this.field);
                             oDoc.AddFieldToCommit(this.field);
                             oDoc.CommitFields();
@@ -1833,7 +1833,7 @@
                 return;
 
             aFields[0].Commit();
-            if (oCalcInfo.IsInProgress() == false) {
+            if (oCalcInfo.IsInProgress() == false && oDoc.IsNeedDoCalculate()) {
                 oDoc.DoCalculateFields(this.field);
                 oDoc.AddFieldToCommit(this.field);
                 oDoc.CommitFields();
@@ -1888,7 +1888,7 @@
                 this.field.SetValue(value);
                 this.field.Commit();
 
-                if (oCalcInfo.IsInProgress() == false) {
+                if (oCalcInfo.IsInProgress() == false && oDoc.IsNeedDoCalculate()) {
                     oDoc.DoCalculateFields(this.field);
                     oDoc.CommitFields();
                 }

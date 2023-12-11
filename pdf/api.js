@@ -457,6 +457,35 @@
             }
         }
     };
+	PDFEditorApi.prototype.asc_SetTextFormDatePickerDate = function(oPr)
+	{
+		let oDoc = this.getPDFDoc();
+		let oActiveForm = oDoc.activeForm;
+		if (!oActiveForm)
+			return;
+
+		let sDate = oPr.get_String();
+		let oActionsQueue = oDoc.GetActionsQueue();
+		
+		let oCurDate = new Date();
+
+		let parts = sDate.split(".");
+		let oDate = new Date(parts[2], parts[1] - 1, parts[0]);
+		oDate.setMinutes(oCurDate.getMinutes());
+		oDate.setSeconds(oCurDate.getSeconds());
+		oDate.getMilliseconds(oCurDate.getMilliseconds());
+
+		// суть в том, что дату из пикера можем подогнать под любой формат
+		// но в цепочке actions может быть изменение значения формы, куда вводится дата с picker, что вызовет новый коммит
+		// если значение не изменилось на этапе нового коммита формы, то опять выставляем будто бы взяли с пикера
+		// в конце actions удаляем эту информацию, чтобы в дальнейшем это не влияло на обычную работу парсера даты из соответсвующих методов
+		oActionsQueue.datePickerInfo = {
+			value: AscPDF.FormatDateValue(oActiveForm.GetDateFormat(), oDate.getTime()),
+			form: oActiveForm
+		}
+
+		oActiveForm.api["value"] = AscPDF.FormatDateValue(oActiveForm.GetDateFormat(), oDate.getTime());
+	};
 	PDFEditorApi.prototype.asc_SelectPDFFormListItem = function(sId) {
 		let nIdx = parseInt(sId);
 		let oViewer = this.DocumentRenderer;
@@ -950,6 +979,16 @@
 	PDFEditorApi.prototype.checkDocumentTitleFonts = function() {
 		// Do not load any fonts
 	};
+
+	PDFEditorApi.prototype.getSelectionState = function()
+	{
+		return null;
+	};
+	PDFEditorApi.prototype.getSpeechDescription = function(prevState, action)
+	{
+		return null;
+	};
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -974,6 +1013,7 @@
 	PDFEditorApi.prototype['asc_enterText']                = PDFEditorApi.prototype.asc_enterText;
 	PDFEditorApi.prototype['asc_GetSelectedText']          = PDFEditorApi.prototype.asc_GetSelectedText;
 	PDFEditorApi.prototype['asc_SelectPDFFormListItem']    = PDFEditorApi.prototype.asc_SelectPDFFormListItem;
+	PDFEditorApi.prototype['asc_SetTextFormDatePickerDate']= PDFEditorApi.prototype.asc_SetTextFormDatePickerDate;
 
 	PDFEditorApi.prototype['SetDrawingFreeze']             = PDFEditorApi.prototype.SetDrawingFreeze;
 	PDFEditorApi.prototype['OnMouseUp']                    = PDFEditorApi.prototype.OnMouseUp;
@@ -997,5 +1037,8 @@
 	PDFEditorApi.prototype['asc_CheckCopy']                = PDFEditorApi.prototype.asc_CheckCopy;
 	PDFEditorApi.prototype['Paste']                        = PDFEditorApi.prototype.Paste;
 	PDFEditorApi.prototype['asc_PasteData']                = PDFEditorApi.prototype.asc_PasteData;
+
+	PDFEditorApi.prototype['getSelectionState']            = PDFEditorApi.prototype.Paste;
+	PDFEditorApi.prototype['getSpeechDescription']         = PDFEditorApi.prototype.asc_PasteData;
 
 })(window, window.document);

@@ -2077,6 +2077,13 @@
 	 */
 	ApiRange.prototype.Clear = function () {
 		this.range.cleanAll();
+		let ws = this.Worksheet.worksheet;
+		ws.deletePivotTables(this.range.bbox);
+		ws.removeSparklines(this.range.bbox);
+		ws.clearDataValidation([this.range.bbox], true);
+		ws.clearConditionalFormattingRulesByRanges([this.range.bbox]);
+		let wsView = Asc['editor'].wb.getWorksheet(ws.getIndex());
+		wsView.cellCommentator.deleteCommentsRange(this.range.bbox, null);
 	};
 
 	/**

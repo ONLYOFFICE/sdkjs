@@ -2523,6 +2523,12 @@ function (window, undefined) {
 				}
 			}
 			wb.handlers.trigger("asc_onUpdateExternalReferenceList");
+		} else if (AscCH.historyitem_Workbook_TimelineCacheDelete === Type) {
+			if (bUndo) {
+				wb.timelineCaches.push(Data.from);
+			} else {
+				wb.onTimelineCacheDelete(Data.from.name);
+			}
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {
@@ -3493,6 +3499,12 @@ function (window, undefined) {
 				ws.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF(ws);
 			}
 			ws.legacyDrawingHF.changePicture(from, to);
+		} else if (AscCH.historyitem_Worksheet_TimelineDelete === Type) {
+			if (bUndo) {
+				ws.timelines.push(Data.from);
+			} else {
+				wb.onTimelinesDelete(Data.from.name);
+			}
 		}
 	};
 	UndoRedoWoorksheet.prototype.forwardTransformationIsAffect = function (Type) {

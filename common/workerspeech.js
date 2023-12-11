@@ -497,7 +497,7 @@
 		//se
 		this.editor.asc_registerCallback('asc_onActiveSheetChanged', this.onActiveSheetChanged);
 		
-		this.selectionState = this.editor.getSelectionState();
+		this.selectionState = this.editor.isDocumentLoadComplete ? this.editor.getSelectionState() : null;
 		this.isAction       = false;
 		this.isApplyChanges = false;
 		this.isKeyDown      = false;

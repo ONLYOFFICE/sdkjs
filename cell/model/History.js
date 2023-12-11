@@ -52,6 +52,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Workbook_PivotWorksheetSource = 10;
 	window['AscCH'].historyitem_Workbook_Date1904 = 11;
 	window['AscCH'].historyitem_Workbook_ChangeExternalReference = 12;
+	window['AscCH'].historyitem_Workbook_TimelineCacheDelete = 13;
 
 	window['AscCH'].historyitem_Worksheet_RemoveCell = 1;
 	window['AscCH'].historyitem_Worksheet_RemoveRows = 2;
@@ -119,6 +120,9 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Worksheet_ChangeRowColBreaks = 63;
 
 	window['AscCH'].historyitem_Worksheet_ChangeLegacyDrawingHFDrawing = 64;
+
+	window['AscCH'].historyitem_Worksheet_TimelineDelete = 65;
+
 
 	window['AscCH'].historyitem_RowCol_Fontname = 1;
 	window['AscCH'].historyitem_RowCol_Fontsize = 2;

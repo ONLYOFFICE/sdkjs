@@ -787,7 +787,9 @@
 										if (this.isSlideShow()) {
 											ret.cursorType = "pointer";
 											if (AscCommon.IsLinkPPAction(sHyperlink)) {
-												MMData.Hyperlink = null;
+												MMData = new AscCommon.CMouseMoveData();
+												MMData.X_abs = Coords.X;
+												MMData.Y_abs = Coords.Y;
 											}
 											oDD.SetCursorType("pointer", MMData);
 										} else {
@@ -3860,98 +3862,84 @@
 					var editorId = oApi.getEditorId();
 					var bMoveFlag = true;
 					if (AscFormat.isRealNumber(props.Width) || AscFormat.isRealNumber(props.Height)) {
-						for (i = 0; i < objects_by_type.shapes.length; ++i) {
-							CheckSpPrXfrm(objects_by_type.shapes[i]);
+
+						function fApplyDrawingSize(oSp) {
+							let oSpParent = oSp.parent;
+							let oXfrm = oSp.spPr.xfrm;
+							CheckSpPrXfrm3(oSp);
 							if (!props.SizeRelH && AscFormat.isRealNumber(props.Width)) {
-								objects_by_type.shapes[i].spPr.xfrm.setExtX(props.Width);
-								if (objects_by_type.shapes[i].parent instanceof AscCommonWord.ParaDrawing) {
-									objects_by_type.shapes[i].parent.SetSizeRelH({
+								oXfrm.setExtX(props.Width);
+								if (oSpParent instanceof AscCommonWord.ParaDrawing) {
+									oSpParent.SetSizeRelH({
 										RelativeFrom: c_oAscSizeRelFromH.sizerelfromhPage,
 										Percent: 0
 									});
 								}
 							}
 							if (!props.SizeRelV && AscFormat.isRealNumber(props.Height)) {
-								objects_by_type.shapes[i].spPr.xfrm.setExtY(props.Height);
-								if (objects_by_type.shapes[i].parent instanceof AscCommonWord.ParaDrawing) {
-									objects_by_type.shapes[i].parent.SetSizeRelV({
+								oXfrm.setExtY(props.Height);
+								if (oSpParent instanceof AscCommonWord.ParaDrawing) {
+									oSpParent.SetSizeRelV({
 										RelativeFrom: c_oAscSizeRelFromV.sizerelfromvPage,
 										Percent: 0
 									});
 								}
 							}
-							if (objects_by_type.shapes[i].parent instanceof AscCommonWord.ParaDrawing) {
-								var oDrawing = objects_by_type.shapes[i].parent;
-								if (oDrawing.SizeRelH && !oDrawing.SizeRelV) {
-									oDrawing.SetSizeRelV({
+							if (oSpParent instanceof AscCommonWord.ParaDrawing) {
+								if (oSpParent.SizeRelH && !oSpParent.SizeRelV) {
+									oSpParent.SetSizeRelV({
 										RelativeFrom: c_oAscSizeRelFromV.sizerelfromvPage,
 										Percent: 0
 									});
 								}
-								if (oDrawing.SizeRelV && !oDrawing.SizeRelH) {
-									oDrawing.SetSizeRelH({
+								if (oSpParent.SizeRelV && !oSpParent.SizeRelH) {
+									oSpParent.SetSizeRelH({
 										RelativeFrom: c_oAscSizeRelFromH.sizerelfromhPage,
 										Percent: 0
 									});
 								}
 							}
-							objects_by_type.shapes[i].ResetParametersWithResize(true);
-							if (objects_by_type.shapes[i].group) {
-								checkObjectInArray(aGroups, objects_by_type.shapes[i].group.getMainGroup());
+							oSp.ResetParametersWithResize(true);
+							if (oSp.group) {
+								checkObjectInArray(aGroups, oSp.group.getMainGroup());
 							}
-							objects_by_type.shapes[i].checkDrawingBaseCoords();
+							oSp.checkDrawingBaseCoords();
 						}
-						if (!props.SizeRelH && !props.SizeRelV && AscFormat.isRealNumber(props.Width) && AscFormat.isRealNumber(props.Height)) {
-							for (i = 0; i < objects_by_type.images.length; ++i) {
-								CheckSpPrXfrm3(objects_by_type.images[i]);
-								objects_by_type.images[i].spPr.xfrm.setExtX(props.Width);
-								objects_by_type.images[i].spPr.xfrm.setExtY(props.Height);
-								if (objects_by_type.images[i].group) {
-									checkObjectInArray(aGroups, objects_by_type.images[i].group.getMainGroup());
-								}
-								objects_by_type.images[i].checkDrawingBaseCoords();
-							}
-							for (i = 0; i < objects_by_type.charts.length; ++i) {
-								CheckSpPrXfrm3(objects_by_type.charts[i]);
-								objects_by_type.charts[i].spPr.xfrm.setExtX(props.Width);
-								objects_by_type.charts[i].spPr.xfrm.setExtY(props.Height);
-								if (objects_by_type.charts[i].group) {
-									checkObjectInArray(aGroups, objects_by_type.charts[i].group.getMainGroup());
-								}
-								objects_by_type.charts[i].checkDrawingBaseCoords();
-							}
-							for (i = 0; i < objects_by_type.smartArts.length; ++i) {
-								var oSmartArt = objects_by_type.smartArts[i];
-								CheckSpPrXfrm3(oSmartArt);
-								var kw, kh;
-								kw = props.Width / oSmartArt.spPr.xfrm.extX;
-								kh = props.Height / oSmartArt.spPr.xfrm.extY;
-								oSmartArt.changeSize(kw, kh);
-								if (oSmartArt.group) {
-									checkObjectInArray(aGroups, oSmartArt.group.getMainGroup());
-								}
-								oSmartArt.checkDrawingBaseCoords();
-								oSmartArt.checkExtentsByDocContent(true, true);
-							}
-							for (i = 0; i < objects_by_type.oleObjects.length; ++i) {
-								CheckSpPrXfrm3(objects_by_type.oleObjects[i]);
-								objects_by_type.oleObjects[i].spPr.xfrm.setExtX(props.Width);
-								objects_by_type.oleObjects[i].spPr.xfrm.setExtY(props.Height);
-								if (objects_by_type.oleObjects[i].group) {
-									checkObjectInArray(aGroups, objects_by_type.oleObjects[i].group.getMainGroup());
-								}
 
-								var api = window.editor || window["Asc"]["editor"];
-								if (api) {
-									var pluginData = new Asc.CPluginData();
-									pluginData.setAttribute("data", objects_by_type.oleObjects[i].m_sData);
-									pluginData.setAttribute("guid", objects_by_type.oleObjects[i].m_sApplicationId);
-									pluginData.setAttribute("width", objects_by_type.oleObjects[i].spPr.xfrm.extX);
-									pluginData.setAttribute("height", objects_by_type.oleObjects[i].spPr.xfrm.extY);
-									pluginData.setAttribute("objectId", objects_by_type.oleObjects[i].Get_Id());
-									api.asc_pluginResize(pluginData);
-								}
-								objects_by_type.oleObjects[i].checkDrawingBaseCoords();
+						for (i = 0; i < objects_by_type.shapes.length; ++i) {
+							fApplyDrawingSize(objects_by_type.shapes[i]);
+						}
+						for (i = 0; i < objects_by_type.images.length; ++i) {
+							fApplyDrawingSize(objects_by_type.images[i]);
+						}
+						for (i = 0; i < objects_by_type.charts.length; ++i) {
+							fApplyDrawingSize(objects_by_type.charts[i]);
+						}
+						for (i = 0; i < objects_by_type.smartArts.length; ++i) {
+							let oSmartArt = objects_by_type.smartArts[i];
+							CheckSpPrXfrm3(oSmartArt);
+							let kw, kh;
+							kw = props.Width / oSmartArt.spPr.xfrm.extX;
+							kh = props.Height / oSmartArt.spPr.xfrm.extY;
+							oSmartArt.changeSize(kw, kh);
+							if (oSmartArt.group) {
+								checkObjectInArray(aGroups, oSmartArt.group.getMainGroup());
+							}
+							oSmartArt.checkDrawingBaseCoords();
+							oSmartArt.checkExtentsByDocContent(true, true);
+						}
+						for (i = 0; i < objects_by_type.oleObjects.length; ++i) {
+							let oOleObject = objects_by_type.oleObjects[i];
+							fApplyDrawingSize(oOleObject);
+							var api = window.editor || window["Asc"]["editor"];
+							if (api) {
+								var pluginData = new Asc.CPluginData();
+								pluginData.setAttribute("data", oOleObject.m_sData);
+								pluginData.setAttribute("guid", oOleObject.m_sApplicationId);
+								pluginData.setAttribute("width", oOleObject.spPr.xfrm.extX);
+								pluginData.setAttribute("height", oOleObject.spPr.xfrm.extY);
+								pluginData.setAttribute("objectId", oOleObject.Get_Id());
+								api.asc_pluginResize(pluginData);
 							}
 						}
 
@@ -4568,7 +4556,7 @@
 						case c_oAscChartTypeSettings.barNormal3dPerspective:
 							return AscFormat.CreateBarChart(chartSeries, BAR_GROUPING_STANDARD, bUseCache, options, true, true);
 						case c_oAscChartTypeSettings.hBarNormal:
-							return AscFormat.CreateHBarChart(chartSeries, BAR_GROUPING_CLUSTERED, bUseCache, options);
+							return AscFormat.CreateHBarChart(chartSeries, `BAR_GROUPING_CLUSTERED`, bUseCache, options);
 						case c_oAscChartTypeSettings.hBarStacked:
 							return AscFormat.CreateHBarChart(chartSeries, BAR_GROUPING_STACKED, bUseCache, options);
 						case c_oAscChartTypeSettings.hBarStackedPer:
@@ -8924,6 +8912,7 @@
 
 
 				bringToFront: function () {
+					AscCommon.IsChangingDrawingZIndex = true;
 					var sp_tree = this.getDrawingObjects();
 					if (!(this.selection.groupSelection)) {
 						var selected = [];
@@ -8944,9 +8933,11 @@
 						this.selection.groupSelection.bringToFront();
 					}
 					this.drawingObjects.showDrawingObjects();
+					AscCommon.IsChangingDrawingZIndex = false;
 				},
 
 				bringForward: function () {
+					AscCommon.IsChangingDrawingZIndex = true;
 					var sp_tree = this.getDrawingObjects();
 					if (!(this.selection.groupSelection)) {
 						for (var i = sp_tree.length - 1; i > -1; --i) {
@@ -8960,9 +8951,12 @@
 						this.selection.groupSelection.bringForward();
 					}
 					this.drawingObjects.showDrawingObjects();
+					AscCommon.IsChangingDrawingZIndex = false;
 				},
 
 				sendToBack: function () {
+
+					AscCommon.IsChangingDrawingZIndex = true;
 					var sp_tree = this.getDrawingObjects();
 
 					if (!(this.selection.groupSelection)) {
@@ -8979,10 +8973,14 @@
 						this.selection.groupSelection.sendToBack();
 					}
 					this.drawingObjects.showDrawingObjects();
+
+					AscCommon.IsChangingDrawingZIndex = false;
 				},
 
 
 				bringBackward: function () {
+
+					AscCommon.IsChangingDrawingZIndex = true;
 					var sp_tree = this.getDrawingObjects();
 					if (!(this.selection.groupSelection)) {
 						for (var i = 0; i < sp_tree.length; ++i) {
@@ -8996,6 +8994,7 @@
 						this.selection.groupSelection.bringBackward();
 					}
 					this.drawingObjects.showDrawingObjects();
+					AscCommon.IsChangingDrawingZIndex = false;
 				},
 
 				addEventListener: function (drawing) {

@@ -1423,7 +1423,8 @@
 		"num": "#NUM!",
 		"na": "#N\/A",
 		"getdata": "#GETTING_DATA",
-		"uf": "#UNSUPPORTED_FUNCTION!"
+		"uf": "#UNSUPPORTED_FUNCTION!",
+		"calc": "#CALC!"
 	};
 	var cErrorLocal = {};
 	let cCellFunctionLocal = {};
@@ -1498,7 +1499,8 @@
 			"num":     "#NUM!",
 			"na":      "#N\/A",
 			"getdata": "#GETTING_DATA",
-			"uf":      "#UNSUPPORTED_FUNCTION!"
+			"uf":      "#UNSUPPORTED_FUNCTION!",
+			"calc":    "#CALC!"
 		};
 		cErrorLocal['nil'] = local['nil'];
 		cErrorLocal['div'] = local['div'];
@@ -1509,6 +1511,7 @@
 		cErrorLocal['na'] = local['na'];
 		cErrorLocal['getdata'] = local['getdata'];
 		cErrorLocal['uf'] = local['uf'];
+		cErrorLocal['calc'] = local['calc'];
 
 		return new RegExp("^(" + cErrorLocal["nil"] + "|" +
 			cErrorLocal["div"] + "|" +
@@ -1518,7 +1521,8 @@
 			cErrorLocal["num"] + "|" +
 			cErrorLocal["na"] + "|" +
 			cErrorLocal["getdata"] + "|" +
-			cErrorLocal["uf"] + ")", "i");
+			cErrorLocal["uf"] + "|" +
+			cErrorLocal["calc"] + ")", "i");
 	}
 
 	function build_rx_cell_func(local)
@@ -3150,7 +3154,7 @@
 			this.operand_str = match[1];
 			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null, external];
 		}
-		return [false, null, null];
+		return [false, null, null, external, externalLength];
 	};
 	parserHelper.prototype.isNextPtg = function (formula, start_pos, digitDelim)
 	{
@@ -13598,6 +13602,14 @@
 	{
 		return rad * 180.0 / Math.PI;
 	}
+
+	function trimMinMaxValue(value, min, max) {
+		if (value < min)
+			return min;
+		if (value > max)
+			return max;
+		return value;
+	}
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -13818,6 +13830,7 @@
 	window['AscCommon'].deg2rad = deg2rad;
 	window['AscCommon'].rad2deg = rad2deg;
 	window["AscCommon"].c_oAscImageUploadProp = c_oAscImageUploadProp;
+	window["AscCommon"].trimMinMaxValue = trimMinMaxValue;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
