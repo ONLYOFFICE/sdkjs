@@ -26746,6 +26746,7 @@
 				if (oRange.isOneCell() && oRangeModel.getType() === AscCommon.CellValueType.Number && !bDateType) {
 					this.applyFillHandle(null, null, true, null);
 				} else {
+					this.model.setFillHandleRightClick(true);
 					this.applyFillHandle(null, null, false, null);
 				}
 				break;

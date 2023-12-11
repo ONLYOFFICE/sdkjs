@@ -5130,6 +5130,8 @@
 		this.aCellWatches = [];
 		
 		this.userProtectedRanges = [];
+
+		this.bFillHandleRightClick = false;
 	}
 
 	Worksheet.prototype.getCompiledStyle = function (row, col, opt_cell, opt_styleComponents) {
@@ -12744,7 +12746,20 @@
 		});
 		return count;
 	};
-
+	/**
+	 * The method returns a flag that recognizes fill handle was called from right click
+	 * @returns {boolean}
+	 */
+	Worksheet.prototype.getFillHandleRightClick = function () {
+		return this.bFillHandleRightClick;
+	};
+	/**
+	 * The method sets a flag that recognizes fill handle was called from right click
+	 * @param {boolean} bFillHandleRightClick
+	 */
+	Worksheet.prototype.setFillHandleRightClick = function (bFillHandleRightClick) {
+		this.bFillHandleRightClick = bFillHandleRightClick;
+	}
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
 	var g_nCellOffsetXf = g_nCellOffsetFlag + 1;
@@ -18799,6 +18814,7 @@
 			if(nIndex < 0)
 				bReverse = true;
 			var oPromoteHelper = new PromoteHelper(bVertical, bReverse, from);
+			oPromoteHelper.setFillHandleRightClick(wsFrom.getFillHandleRightClick());
 			let aInputDaysOfWeek = _addAInputTimePeriod(oDefaultCultureInfo.DayNames, false);
 			let aInputShortDaysOfWeek = _addAInputTimePeriod(oDefaultCultureInfo.AbbreviatedDayNames, false);
 			let aInputMonths = _addAInputTimePeriod(oDefaultCultureInfo.MonthNames, true);
@@ -19350,6 +19366,7 @@
 			this.nRowLength = this.bbox.r2 - this.bbox.r1 + 1;
 			this.nColLength = this.bbox.c2 - this.bbox.c1 + 1;
 		}
+		this.bFillHandleRightClick = false;
 	}
 	PromoteHelper.prototype = {
 		add: function(nRow, nCol, nVal, bDelimiter, sPrefix, padding, bDate, oAdditional, aTimePeriods){
@@ -19449,8 +19466,9 @@
 			if(aCurSequence.length > 0) {
 				var oFirstData = aCurSequence[0];
 				var bCanPromote = true;
+				const bFillHandleRightClick = this.getFillHandleRightClick();
 				//если последовательность состоит из одного числа и той же колонке есть еще последовательности, то надо копировать, а не автозаполнять
-				if(1 == aCurSequence.length) {
+				if(aCurSequence.length === 1 && !bFillHandleRightClick) {
 					var bVisitRowIndex = false;
 					var oVisitData = null;
 					for(var i = 0, length = aSortRowIndex.length; i < length; i++) {
@@ -19461,8 +19479,7 @@
 								bCanPromote = false;
 								break;
 							}
-						}
-						else {
+						} else {
 							var oCurRow = this.oDataRow[nCurRowIndex];
 							if(oCurRow) {
 								var data = oCurRow[oFirstData.getCol()];
@@ -19655,6 +19672,12 @@
 					this.nCurColIndex = 0;
 			}
 			return oRes;
+		},
+		getFillHandleRightClick: function () {
+			return this.bFillHandleRightClick;
+		},
+		setFillHandleRightClick: function (bFillHandleRightClick) {
+			this.bFillHandleRightClick = bFillHandleRightClick;
 		}
 	};
 

@@ -2830,5 +2830,80 @@ $(function () {
 		autofillRange = getRange(1, 0, 4, 0);
 		autofillData(assert, autofillRange, [['36557', '36586', '36617', '36647']], 'Autofill Rows. Context menu - Fill Months. Selected one cell with Date type data.');
 		clearData(0, 0, 4, 0);*/
+		// The context menu property is "Fill series" with selected filled cells - A1:F1. The fill handle has a vertical direction. Case: bug #65405
+		testData = [
+			['1', '1', 'Test1', 'Test1', '01/01/2000', '01/01/2000']
+		];
+		getFilledData(0, 0, 5, 0, testData, [0,0]);
+		nType = oRightClickOptions.fillSeries;
+		wsView.activeFillHandle = getRange(0, 0, 5, 2);
+		wsView.fillHandleDirection = 1;
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 1, 5, 2);
+		expectedData = [
+			['2', '2', 'Test2', 'Test2', '36527', '36527'],
+			['3', '3', 'Test3', 'Test3', '36528', '36528']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Fill series. Selected filled cells - A1:F1. The fill handle has a vertical direction. Case: bug #65405');
+		clearData(0, 0, 5, 2);
+		// The context menu property is "Copy cell" with selected filled cells - A1:F1. The fill handle has a vertical direction. Case: bug #65405
+		getFilledData(0, 0, 5, 0, testData, [0,0]);
+		nType = oRightClickOptions.copyCells;
+		wsView.activeFillHandle = getRange(0, 0, 5, 2);
+		wsView.fillHandleDirection = 1;
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(0, 1, 5, 2);
+		expectedData = [
+			['1', '1', 'Test1', 'Test1', '36526', '36526'],
+			['1', '1', 'Test1', 'Test1', '36526', '36526']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Context menu - Copy cells. Selected filled cells - A1:F1. The fill handle has a vertical direction. Case: bug #65405');
+		clearData(0, 0, 5, 2);
+		// The context menu property is "Fill series" with selected filled cells - A1:A6. The fill handle has a horizontal direction. Case: bug #65405
+		testData = [
+			['1'],
+			['1'],
+			['Test1'],
+			['Test1'],
+			['01/01/2000'],
+			['01/01/2000']
+		];
+		getFilledData(0, 0, 0, 5, testData, [0,0]);
+		nType = oRightClickOptions.fillSeries;
+		wsView.activeFillHandle = getRange(0, 0, 2, 5);
+		wsView.fillHandleDirection = 0;
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(1, 0, 2, 5);
+		expectedData = [
+			['2', '3'],
+			['2', '3'],
+			['Test2', 'Test3'],
+			['Test2', 'Test3'],
+			['36527', '36528'],
+			['36527', '36528']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Fill series. Selected filled cells - A1:A6. The fill handle has a horizontal direction. Case: bug #65405');
+		clearData(0, 0, 2, 5);
+		// The context menu property is "Copy cell" with selected filled cells - A1:A6. The fill handle has a horizontal direction. Case: bug #65405
+		getFilledData(0, 0, 0, 5, testData, [0,0]);
+		nType = oRightClickOptions.copyCells;
+		wsView.activeFillHandle = getRange(0, 0, 2, 5);
+		wsView.fillHandleDirection = 0;
+		api.asc_FillCells(nType);
+
+		autofillRange = getRange(1, 0, 2, 5);
+		expectedData = [
+			['1', '1'],
+			['1', '1'],
+			['Test1', 'Test1'],
+			['Test1', 'Test1'],
+			['36526', '36526'],
+			['36526', '36526']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Copy cells. Selected filled cells - A1:A6. The fill handle has a horizontal direction. Case: bug #65405');
+		clearData(0, 0, 2, 5);
 	});
 });
