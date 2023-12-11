@@ -1541,6 +1541,7 @@ CChartsDrawer.prototype =
 								const catNumCache = seria.xVal ? this.getNumCache(seria.xVal) : null;
 								const catPts = catNumCache ? catNumCache.pts : null;
 								for (let k = 0; k < valPts.length; k++) {
+									console.log(valPts.length)
 									const catVal = catPts ? catPts[k].val : valPts[k].idx + 1;
 									this.trendline.addCoordinate(catVal, valPts[k].val , charts[i].Id, seria.Id);
 								}
@@ -2407,9 +2408,9 @@ CChartsDrawer.prototype =
 		this.calcProp.yaxispos = null;
 
 		//рассчёт данных и ещё некоторых параметров(this.calcProp./min/max/ymax/ymin/)
-		if (!notCalcExtremum) {
+		// if (!notCalcExtremum) {
 			this._calculateExtremumAllCharts(chartSpace);
-		}
+		// }
 
 		//***series***
 		this.calcProp.series = chartSpace.chart.plotArea.chart.series;
@@ -16274,7 +16275,6 @@ CColorObj.prototype =
 					startBezierVal: null};
 			}
 			console.log(xVal, yVal);
-			console.log(this.coordinates);
 			this.coordinates[chartId][seriaId].coords.catVals.push(xVal);
 			this.coordinates[chartId][seriaId].coords.valVals.push(yVal);
 		},
@@ -16294,7 +16294,6 @@ CColorObj.prototype =
 					this._setNewBoundaries(charts[i].series[j].parent, this.coordinates[index1][index2], boundaries);
 				}
 			}
-			console.log(boundaries);
 		},
 
 		_calculateLine: function (oChart, coordinates, attributes) {
@@ -16309,7 +16308,6 @@ CColorObj.prototype =
 				let order = attributes.order ? attributes.order + 1 : 2;
 				const chartletiables = this._getEquationCoefficients(coordinates.coords.catVals, coordinates.coords.valVals, type, order, attributes.intercept);
 				const equationStorage = this._obtainEquationStorage(type);
-				console.log(chartletiables, equationStorage)
 				if (chartletiables && equationStorage) {
 					let catMax = catAxis.max + attributes.forward;
 					let catMin = catAxis.min + attributes.backward;
@@ -16318,7 +16316,6 @@ CColorObj.prototype =
 					lineBuilder.setCalcYVal(equationStorage.calcYVal);
 					if (type === AscFormat.TRENDLINE_TYPE_POLY) {
 						coordinates.pointVals = lineBuilder.drawWithPoints(midPointsNum);
-						console.log("here")
 					} else {
 						if (this.bAllowDrawByBezier) {
 							lineBuilder.setCalcXVal(equationStorage.calcXVal);
@@ -16331,7 +16328,6 @@ CColorObj.prototype =
 						if (this.bAllowDrawByPoints) {
 							coordinates.pointVals = lineBuilder.drawWithPoints(midPointsNum);
 						}
-						console.log("here")
 					}
 					coordinates.boundary = lineBuilder.getBoundary();
 
