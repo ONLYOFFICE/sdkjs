@@ -1461,9 +1461,19 @@
 			structured_tables_userColumn     = new XRegExp('(?:\'\\[|\'\\]|[^[\\]])+'),
 			structured_tables_reservedColumn = new XRegExp('\\#(?:' + loc_all + '|' + loc_headers + '|' + loc_totals + '|' + loc_data + '|' + loc_this_row + ')|@');
 
-		return XRegExp.build('^(?<tableName>{{tableName}})\\[(?<columnName>{{columnName}})?\\]', {
+		//Table1[[#All];[Column1]:[Column2]]
+		//Table4[[#Totals];[Column1]:[Column2]]
+		//Table4[[#Data];[#Totals]]
+		//Table4[[#Headers];[Column1]:[Column2]]
+		//Table1[[#Headers],[#Data],[Column1]]
+		//Table1[[#Data],[#Totals],[Column1]]
+
+		return XRegExp.build('^(?<tableName>{{tableName}})\\[(?<columnName1>{{columnName}})?\\]', {
 			"tableName":  new XRegExp("^(:?[" + str_namedRanges + "][" + str_namedRanges + "\\d.]*)"),
-			"columnName": XRegExp.build('(?<reservedColumn>{{reservedColumn}})|(?<oneColumn>{{userColumn}})|(?<columnRange>{{userColumnRange}})|(?<hdtcc>{{hdtcc}})', {
+			"columnName": XRegExp.build('(?<reservedColumn>{{reservedColumn}})|(?<oneColumn>{{userColumn}})|(?<columnRange>{{userColumnRange}})|(?<hdtcc>{{hdtcc}})' +
+				'| ((?<hdtcc1>{{hdtcc}})&(?<hdtcc2>{{hdtcc}})&(?<hdtcc3>{{hdtcc}}))&((?<oneColumn1>{{userColumn}})|(?<columnRange1>{{userColumnRange}}))',
+
+				{
 				"userColumn":      structured_tables_userColumn,
 				"reservedColumn":  structured_tables_reservedColumn,
 				"userColumnRange": XRegExp.build('\\[(?<colStart>{{uc}})\\]\\:\\[(?<colEnd>{{uc}})\\]', {
