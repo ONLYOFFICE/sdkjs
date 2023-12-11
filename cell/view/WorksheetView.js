@@ -11290,7 +11290,7 @@
 				}
 			}
 
-			for (var i = 0; i < ranges.length; ++i) {
+			for (let i = 0; i < ranges.length; ++i) {
 				var range = ranges[i];
 				//делаю условие только для формул, просмотреть все остальные диапазоны
 				if (this.getFormulaEditMode()) {
