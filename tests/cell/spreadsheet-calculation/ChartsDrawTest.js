@@ -233,151 +233,151 @@ $(function () {
 			const order = 2;
 
 			let size = 6;
-			let xVals = [1, 2, 3, 4, 5, 6];
-			let yVals = [4, 6, 3, 7, 8, 9];
+			let catVals = [1, 2, 3, 4, 5, 6];
+			let valVals = [4, 6, 3, 7, 8, 9];
 			let m = 1;
 			let b = 2.6667;
-			let results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+			let results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
 			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 2;
-			xVals = [1, 2];
-			yVals = [5, 15];
+			catVals = [1, 2];
+			valVals = [5, 15];
 			m = 10;
 			b = -5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
 			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-1, -2, -3, -4, -5, -6];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-1, -2, -3, -4, -5, -6];
 			m = -1;
 			b = 0;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
 			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-3, 6, -9, 12, -15, 18];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-3, 6, -9, 12, -15, 18];
 			m = 1.8;
 			b = -4.8;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
 			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [2, 3, 6, 8, 10, 12];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 3, 6, 8, 10, 12];
 			m = 2.0857;
 			b = -0.4667;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
 			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 2, -3, 6, 8, 9];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, -3, 6, 8, 9];
 			m = 2.0571;
 			b = -3.5333;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
 			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 1, 0, 2, 0, 3];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 1, 0, 2, 0, 3];
 			m = 0.4;
 			b = -0.4;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
 			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-9, -7, -6, -5, -4, -2];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-9, -7, -6, -5, -4, -2];
 			m = 1.2857;
 			b = -10;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
 			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
 			m = 0.1571;
 			b = -0.1;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
 			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
 			m = 0.2886;
 			b = -0.96;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
 			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [2, 1, 4, 3, 6, 5];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 1, 4, 3, 6, 5];
 			m = 0.8286;
 			b = 0.6;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
 			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 4;
-			xVals = [1, 2, 3, 4];
-			yVals = [2, 8, 16, 50];
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
 			m = 15.2;
 			b = -19;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
 			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [4, -6, 3, -7, 8, 10];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [4, -6, 3, -7, 8, 10];
 			m = 1.7714;
 			b = -4.2;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
 			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [5, 50, 500, 5000, 50000, 500000];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
 			m = 75838;
 			b = -172840;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
 			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 2, 3, 4, 5, 0];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
 			m = 0.2857;
 			b = 1.3333;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
 			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
@@ -391,151 +391,151 @@ $(function () {
 			const order = 2;
 
 			let size = 6;
-			let xVals = [1, 2, 3, 4, 5, 6];
-			let yVals = [4, 6, 3, 7, 8, 9];
+			let catVals = [1, 2, 3, 4, 5, 6];
+			let valVals = [4, 6, 3, 7, 8, 9];
 			let m = 2.5453;
 			let b = 3.3757;
-			let results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+			let results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
 			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 2;
-			xVals = [1, 2];
-			yVals = [5, 15];
+			catVals = [1, 2];
+			valVals = [5, 15];
 			m = 14.427;
 			b = 5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
 			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-1, -2, -3, -4, -5, -6];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-1, -2, -3, -4, -5, -6];
 			m = -2.732;
 			b = -0.5044;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
 			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-3, 6, -9, 12, -15, 18];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-3, 6, -9, 12, -15, 18];
 			m = 4.1668;
 			b = -3.0691;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
 			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [2, 3, 6, 8, 10, 12];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 3, 6, 8, 10, 12];
 			m = 5.6474;
 			b = 0.6407;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
 			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 2, -3, 6, 8, 9];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, -3, 6, 8, 9];
 			m = 5.1404;
 			b = -1.97;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
 			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 1, 0, 2, 0, 3];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 1, 0, 2, 0, 3];
 			m = 1.0302;
 			b = -0.1296;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
 			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-9, -7, -6, -5, -4, -2];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-9, -7, -6, -5, -4, -2];
 			m = 3.5479;
 			b = -9.3905;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
 			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
 			m = 0.4096;
 			b = 0.0008;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
 			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
 			m = 0.735;
 			b = -0.756;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
 			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [2, 1, 4, 3, 6, 5];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 1, 4, 3, 6, 5];
 			m = 2.202;
 			b = 1.0854;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
 			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 4;
-			xVals = [1, 2, 3, 4];
-			yVals = [2, 8, 16, 50];
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
 			m = 29.565;
 			b = -4.4898;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
 			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [4, -6, 3, -7, 8, 10];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [4, -6, 3, -7, 8, 10];
 			m = 3.2191;
 			b = -1.5299;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
 			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [5, 50, 500, 5000, 50000, 500000];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
 			m = 170659;
 			b = -94542;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
 			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 2, 3, 4, 5, 0];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
 			m = 1.3313;
 			b = 0.8735;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
 			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
@@ -549,85 +549,85 @@ $(function () {
 			const order = 2;
 
 			let size = 6;
-			let xVals = [1, 2, 3, 4, 5, 6];
-			let yVals = [4, 6, 3, 7, 8, 9];
+			let catVals = [1, 2, 3, 4, 5, 6];
+			let valVals = [4, 6, 3, 7, 8, 9];
 			let m = 0.4178;
 			let b = 3.6391;
-			let results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POWER, order)
+			let results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
 
 			assert.ok(isEqual(results[1], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 2;
-			xVals = [1, 2];
-			yVals = [5, 15];
+			catVals = [1, 2];
+			valVals = [5, 15];
 			m = 1.585;
 			b = 5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POWER, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
 
 			assert.ok(isEqual(results[1], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [2, 3, 6, 8, 10, 12];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 3, 6, 8, 10, 12];
 			m = 1.0529;
 			b = 1.799;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POWER, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
 
 			assert.ok(isEqual(results[1], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
 			m = 1.1616;
 			b = 0.0984;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POWER, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
 
 			assert.ok(isEqual(results[1], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [2, 1, 4, 3, 6, 5];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 1, 4, 3, 6, 5];
 			m = 0.7283;
 			b = 1.347;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POWER, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
 
 			assert.ok(isEqual(results[1], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 4;
-			xVals = [1, 2, 3, 4];
-			yVals = [2, 8, 16, 50];
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
 			m = 2.2106;
 			b = 1.8367;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POWER, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
 
 			assert.ok(isEqual(results[1], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [5, 50, 500, 5000, 50000, 500000];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
 			m = 6.2903;
 			b = 1.5974;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POWER, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
 
 			assert.ok(isEqual(results[1], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [5, 50, 500, 0, 50000, 500000];
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 0, 50000, 500000];
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 			assert.strictEqual(results, undefined, "PowerResults should be undefined, due to the zero value in calculations, got:" + results);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [5, 50, 500, -1, 50000, 500000];
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, -1, 50000, 500000];
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 			assert.strictEqual(results, undefined, "PowerResults should be undefined, due to the negative value in calculations, got:" + results);
 
 		})
@@ -640,85 +640,85 @@ $(function () {
 			const order = 2;
 
 			let size = 6;
-			let xVals = [1, 2, 3, 4, 5, 6];
-			let yVals = [4, 6, 3, 7, 8, 9];
+			let catVals = [1, 2, 3, 4, 5, 6];
+			let valVals = [4, 6, 3, 7, 8, 9];
 			let m = 0.1647;
 			let b = 3.2329;
-			let results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			let results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 
 			assert.ok(isEqual(results[1], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 2;
-			xVals = [1, 2];
-			yVals = [5, 15];
+			catVals = [1, 2];
+			valVals = [5, 15];
 			m = 1.0986;
 			b = 1.6667;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 
 			assert.ok(isEqual(results[1], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [2, 3, 6, 8, 10, 12];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 3, 6, 8, 10, 12];
 			m = 0.3674;
 			b = 1.5776;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 
 			assert.ok(isEqual(results[1], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
 			m = 0.4127;
 			b = 0.0829;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 
 			assert.ok(isEqual(results[1], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [2, 1, 4, 3, 6, 5];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 1, 4, 3, 6, 5];
 			m = 0.2763;
 			b = 1.1384;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 
 			assert.ok(isEqual(results[1], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 4;
-			xVals = [1, 2, 3, 4];
-			yVals = [2, 8, 16, 50];
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
 			m = 1.035;
 			b = 0.8;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 
 			assert.ok(isEqual(results[1], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [5, 50, 500, 5000, 50000, 500000];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
 			m = 2.3026;
 			b = 0.5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 
 			assert.ok(isEqual(results[1], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
 			assert.ok(isEqual(results[0], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [5, 50, 500, 0, 50000, 500000];
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 0, 50000, 500000];
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 			assert.strictEqual(results, undefined, "ExponentialResults should be undefined, due to the zero value in calculations, got:" + results);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [5, 50, 500, -1, 50000, 500000];
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, -1, 50000, 500000];
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 			assert.strictEqual(results, undefined, "ExponentialResults should be undefined, due to the negative value in calculations, got:" + results);
 
 		})
@@ -730,164 +730,164 @@ $(function () {
 			const trendline = AscFormat.CTrendline
 
 			let size = 2;
-			let xVals = [1, 2];
-			let yVals = [5, 15];
+			let catVals = [1, 2];
+			let valVals = [5, 15];
 			let letiables = [-5, 10];
 			let order = 2; 
-			let results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			let results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [4, 6, 3, 7, 8, 9, 11];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, 6, 3, 7, 8, 9, 11];
 			letiables = [4.2857, -0.1905, 0.1667];
 			order = 3;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-1, -2, -3, -4, -5, -6, -7];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-1, -2, -3, -4, -5, -6, -7];
 			letiables = [0, -1, 0];
 			order = 3;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-3, 6, -9, 12, -15, 18, -21];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-3, 6, -9, 12, -15, 18, -21];
 			letiables = [-10.286, 7.8571, -1.1429];
 			order = 3;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [2, 3, 6, 8, 10, 12, 14];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 3, 6, 8, 10, 12, 14];
 			letiables = [-0.4286, 2.0714, 0];
 			order = 3;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [0, 2, -3, 6, 8, 9, 15];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 2, -3, 6, 8, 9, 15];
 			letiables = [0.4286, -0.9286, 0.4286];
 			order = 3;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [0, 1, 0, 2, 0, 3, 0];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 1, 0, 2, 0, 3, 0];
 			letiables = [-0.8571, 0.9048, -0.0952];
 			order = 3;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-9, -7, -6, -5, -4, -2, -1];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-9, -7, -6, -5, -4, -2, -1];
 			letiables = [-10, 1.2857, 9e-16];
 			order = 3;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
 			letiables = [0.0143, 0.081, 0.0095];
 			order = 3;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
 			letiables = [-0.7, 0.1202, 0.0202];
 			order = 3;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [2, 1, 4, 3, 6, 5, 7];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 1, 4, 3, 6, 5, 7];
 			letiables = [0.8571, 0.6071, 0.0357];
 			order = 3;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
 
 			size = 4;
-			xVals = [1, 2, 3, 4];
-			yVals = [2, 8, 16, 50];
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
 			letiables = [16, -19.8, 7];
 			order = 3;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [4, -6, 3, -7, 8, 10, -12];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, -6, 3, -7, 8, 10, -12];
 			letiables = [-4.8571, 3.8929, -0.5357];
 			order = 3;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [5, 50, 500, 5000, 50000, 500000];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
 			letiables = [231822, -227659, 43357];
 			order = 3;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 2, 3, 4, 5, 0];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
 			letiables = [-4.5, 4.6607, -0.625];
 			order = 3;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -895,11 +895,11 @@ $(function () {
 
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [4, 6, 3, 7, 8, 9, 11];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, 6, 3, 7, 8, 9, 11];
 			letiables = [5.2857, -1.3294, 0.5, -0.0278];
 			order = 4;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -907,11 +907,11 @@ $(function () {
 			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-1, -2, -3, -4, -5, -6, -7];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-1, -2, -3, -4, -5, -6, -7];
 			letiables = [5e-12, -1, 0, 0];
 			order = 4;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -919,11 +919,11 @@ $(function () {
 			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-3, 6, -9, 12, -15, 18, -21];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-3, 6, -9, 12, -15, 18, -21];
 			letiables = [13.714, -19.476, 6.8571, -0.6667];
 			order = 4;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -931,11 +931,11 @@ $(function () {
 			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [2, 3, 6, 8, 10, 12, 14];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 3, 6, 8, 10, 12, 14];
 			letiables = [0.5714, 0.9325, 0.3333, -0.0278];
 			order = 4;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -943,11 +943,11 @@ $(function () {
 			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [0, 2, -3, 6, 8, 9, 15];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 2, -3, 6, 8, 9, 15];
 			letiables = [3.4286, -4.3452, 1.4286, -0.0833];
 			order = 4;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -955,11 +955,11 @@ $(function () {
 			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [0, 1, 0, 2, 0, 3, 0];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 1, 0, 2, 0, 3, 0];
 			letiables = [1.1429, -1.373, 0.5714, -0.0556];
 			order = 4;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -967,11 +967,11 @@ $(function () {
 			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-9, -7, -6, -5, -4, -2, -1];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-9, -7, -6, -5, -4, -2, -1];
 			letiables = [-11, 2.4246, -0.3333, 0.0278];
 			order = 4;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -979,11 +979,11 @@ $(function () {
 			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
 			letiables = [0.2143, -0.1468, 0.0762, -0.0056];
 			order = 4;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -991,11 +991,11 @@ $(function () {
 			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
 			letiables = [-0.1, -0.5631, 0.2202, -0.0167];
 			order = 4;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1003,11 +1003,11 @@ $(function () {
 			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [2, 1, 4, 3, 6, 5, 7];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 1, 4, 3, 6, 5, 7];
 			letiables = [1.8571, -0.5317, 0.369, -0.0278];
 			order = 4;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1015,11 +1015,11 @@ $(function () {
 			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 4;
-			xVals = [1, 2, 3, 4];
-			yVals = [2, 8, 16, 50];
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
 			letiables = [-26, 47, -23, 4];
 			order = 4;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 			
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1027,11 +1027,11 @@ $(function () {
 			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [4, -6, 3, -7, 8, 10, -12];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, -6, 3, -7, 8, 10, -12];
 			letiables = [32.143, -38.246, 11.798, -1.0278];
 			order = 4;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1039,11 +1039,11 @@ $(function () {
 			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [5, 50, 500, 5000, 50000, 500000];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
 			letiables = [-265720, 398218, -163953, 19744];
 			order = 4;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1051,11 +1051,11 @@ $(function () {
 			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 2, 3, 4, 5, 0];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
 			letiables = [1.3333, -2.6772, 1.8056, -0.2315];
 			order = 4;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1063,11 +1063,11 @@ $(function () {
 			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
 			
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [4, 6, 3, 7, 8, 9, 11];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, 6, 3, 7, 8, 9, 11];
 			letiables = [2.2857, 3.4282, -1.7917, 0.3965, -0.0265];
 			order = 5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1076,11 +1076,11 @@ $(function () {
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-1, -2, -3, -4, -5, -6, -7];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-1, -2, -3, -4, -5, -6, -7];
 			letiables = [6e-11, -1, 0, 5e-13, 0];
 			order = 5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1089,11 +1089,11 @@ $(function () {
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-3, 6, -9, 12, -15, 18, -21];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-3, 6, -9, 12, -15, 18, -21];
 			letiables = [-68.571, 111.02, -56, 10.97, -0.7273];
 			order = 5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1102,11 +1102,11 @@ $(function () {
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [2, 3, 6, 8, 10, 12, 14];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 3, 6, 8, 10, 12, 14];
 			letiables = [3.5714, -3.825, 2.625, -0.452, 0.0265];
 			order = 5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1115,11 +1115,11 @@ $(function () {
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [0, 2, -3, 6, 8, 9, 15];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 2, -3, 6, 8, 9, 15];
 			letiables = [7.2857, -10.462, 4.375, -0.6288, 0.0341];
 			order = 5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1128,11 +1128,11 @@ $(function () {
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [0, 1, 0, 2, 0, 3, 0];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 1, 0, 2, 0, 3, 0];
 			letiables = [-5.7143, 9.5014, -4.6667, 0.9141, -0.0606];
 			order = 5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1141,11 +1141,11 @@ $(function () {
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-9, -7, -6, -5, -4, -2, -1];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-9, -7, -6, -5, -4, -2, -1];
 			letiables = [-14, 7.1822, -2.625, 0.452, -0.0265];
 			order = 5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1154,11 +1154,11 @@ $(function () {
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
 			letiables = [-0.3, 0.6688, -0.3167, 0.0672, -0.0045];
 			order = 5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1167,11 +1167,11 @@ $(function () {
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
 			letiables = [-1.0429, 0.9321, -0.5, 0.1167, -0.0083];
 			order = 5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1180,11 +1180,11 @@ $(function () {
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [2, 1, 4, 3, 6, 5, 7];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 1, 4, 3, 6, 5, 7];
 			letiables = [7.4286, -9.3672, 4.625, -0.8157, 0.0492];
 			order = 5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1193,11 +1193,11 @@ $(function () {
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [4, -6, 3, -7, 8, 10, -12];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, -6, 3, -7, 8, 10, -12];
 			letiables = [-3.4286, 18.165, -15.375, 4.0025, -0.3144];
 			order = 5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1206,11 +1206,11 @@ $(function () {
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [5, 50, 500, 5000, 50000, 500000];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
 			letiables = [275562, -533991, 337593, -85506, 7517.8];
 			order = 5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1219,11 +1219,11 @@ $(function () {
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 2, 3, 4, 5, 0];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
 			letiables = [-9.1667, 15.406, -7.9236, 1.8102, -0.1458];
 			order = 5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1232,11 +1232,11 @@ $(function () {
 			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [4, 6, 3, 7, 8, 9, 11];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, 6, 3, 7, 8, 9, 11];
 			letiables = [-29.143, 65.508, -43.458, 12.758, -1.6932, 0.0833];
 			order = 6;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1246,11 +1246,11 @@ $(function () {
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-1, -2, -3, -4, -5, -6, -7];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-1, -2, -3, -4, -5, -6, -7];
 			letiables = [4e-9, -1, -3e-11, 7e-12, 0, -6e-14];
 			order = 6;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1260,11 +1260,11 @@ $(function () {
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-3, 6, -9, 12, -15, 18, -21];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-3, 6, -9, 12, -15, 18, -21];
 			letiables = [82.286, -186.96, 144, -48.364, 7.2727, -0.4];
 			order = 6;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1274,11 +1274,11 @@ $(function () {
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [2, 3, 6, 8, 10, 12, 14];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 3, 6, 8, 10, 12, 14];
 			letiables = [9.8571, -16.241, 10.958, -2.9242, 0.3598, -0.0167];
 			order = 6;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1288,11 +1288,11 @@ $(function () {
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [0, 2, -3, 6, 8, 9, 15];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 2, -3, 6, 8, 9, 15];
 			letiables = [-58.714, 119.9, -83.125, 25.33, -3.4659, 0.175];
 			order = 6;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1302,11 +1302,11 @@ $(function () {
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [0, 1, 0, 2, 0, 3, 0];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 1, 0, 2, 0, 3, 0];
 			letiables = [6.8571, -15.33, 12, -4.0303, 0.6061, -0.0333];
 			order = 6;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1316,11 +1316,11 @@ $(function () {
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-9, -7, -6, -5, -4, -2, -1];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-9, -7, -6, -5, -4, -2, -1];
 			letiables = [-10.857, 0.9742, 1.5417, -0.7841, 0.1402, -0.0083];
 			order = 6;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1330,11 +1330,11 @@ $(function () {
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
 			letiables = [-1.8714, 3.7727, -2.4, 0.6852, -0.0879, 0.0042];
 			order = 6;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1344,11 +1344,11 @@ $(function () {
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
 			letiables = [-1.5143, 1.8633, -1.125, 0.3021, -0.0333, 0.0013];
 			order = 6;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1358,11 +1358,11 @@ $(function () {
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [2, 1, 4, 3, 6, 5, 7];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 1, 4, 3, 6, 5, 7];
 			letiables = [9, -12.471, 6.7083, -1.4337, 0.1326, -0.0042];
 			order = 6;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1372,11 +1372,11 @@ $(function () {
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [4, -6, 3, -7, 8, 10, -12];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, -6, 3, -7, 8, 10, -12];
 			letiables = [83, -152.55, 99.208, -29.991, 4.2689, -0.2292];
 			order = 6;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1386,11 +1386,11 @@ $(function () {
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [5, 50, 500, 5000, 50000, 500000];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
 			letiables = [-265720, 611919, -509186, 196071, -35539, 2460.4];
 			order = 6;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1400,11 +1400,11 @@ $(function () {
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 2, 3, 4, 5, 0];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
 			letiables = [-1e-8, -4, 6.4167, -2.9583, 0.5833, -0.0417];
 			order = 6;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1414,11 +1414,11 @@ $(function () {
 			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [4, 6, 3, 7, 8, 9, 11];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, 6, 3, 7, 8, 9, 11];
 			letiables = [-122, 279.75, -224.99, 87, -17.444, 1.75, -0.0694];
 			order = 7;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1429,11 +1429,11 @@ $(function () {
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-1, -2, -3, -4, -5, -6, -7];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-1, -2, -3, -4, -5, -6, -7];
 			letiables = [-1e-6, -1, 2e-8, 2e-9, -8e-10, -3e-11, 0];
 			order = 7;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1444,11 +1444,11 @@ $(function () {
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-3, 6, -9, 12, -15, 18, -21];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-3, 6, -9, 12, -15, 18, -21];
 			letiables = [-1344, 3103.8, -2644.3, 1092, -234.67, 25.2, -1.0667];
 			order = 7;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1459,11 +1459,11 @@ $(function () {
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [2, 3, 6, 8, 10, 12, 14];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 3, 6, 8, 10, 12, 14];
 			letiables = [21, -41.95, 32.742, -11.833, 2.25, -0.2167, 0.0083];
 			order = 7;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1474,11 +1474,11 @@ $(function () {
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [0, 2, -3, 6, 8, 9, 15];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 2, -3, 6, 8, 9, 15];
 			letiables = [-237, 531.25, -431.66, 167.88, -33.708, 3.375, -0.1333];
 			order = 7;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1489,11 +1489,11 @@ $(function () {
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [0, 1, 0, 2, 0, 3, 0];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 1, 0, 2, 0, 3, 0];
 			letiables = [-112, 258.9, -220.36, 91, -19.556, 2.1, -0.0889];
 			order = 7;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1504,11 +1504,11 @@ $(function () {
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-9, -7, -6, -5, -4, -2, -1];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-9, -7, -6, -5, -4, -2, -1];
 			letiables = [-22, 26.683, -20.242, 8.125, -1.75, 0.1917, -0.0083];
 			order = 7;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1519,11 +1519,11 @@ $(function () {
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
 			letiables = [-6.7, 14.913, -11.839, 4.5458, -0.9069, 0.0908, -0.0036];
 			order = 7;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1534,11 +1534,11 @@ $(function () {
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
 			letiables = [8.7, -21.703, 18.843, -7.8646, 1.6993, -0.1821, 0.0076];
 			order = 7;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1549,11 +1549,11 @@ $(function () {
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [2, 1, 4, 3, 6, 5, 7];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 1, 4, 3, 6, 5, 7];
 			letiables = [126, -282.42, 235.43, -94.979, 19.979, -2.1042, 0.0875];
 			order = 7;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1564,11 +1564,11 @@ $(function () {
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [4, -6, 3, -7, 8, 10, -12];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, -6, 3, -7, 8, 10, -12];
 			letiables = [590, -1322.3, 1090.4, -435.35, 90.271, -9.3292, 0.3792];
 			order = 7;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1579,21 +1579,21 @@ $(function () {
 			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
 
 			size = 2;
-			xVals = [1, 2];
-			yVals = [5, 15];
+			catVals = [1, 2];
+			valVals = [5, 15];
 			letiables = [-5, 10];
 			order = 3; 
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
 
 			size = 4;
-			xVals = [1, 2, 3, 4];
-			yVals = [2, 8, 16, 50];
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
 			letiables = [-26, 47, -23, 4];
 			order = 5;
-			results = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 			
 			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
 			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
@@ -1619,257 +1619,257 @@ $(function () {
 			}
 
 			let ptCount = 6;
-			let xVals = [1, 2, 3, 4, 5, 6];
-			let yVals = [4, 6, 3, 7, 8, 9];
-			let xValResults = [2, 3, 4, 5, 6];
-			let yValResults = [5, 4.5, 5, 7.5, 8.5];
+			let catVals = [1, 2, 3, 4, 5, 6];
+			let valVals = [4, 6, 3, 7, 8, 9];
+			let catValResults = [2, 3, 4, 5, 6];
+			let valValResults = [5, 4.5, 5, 7.5, 8.5];
 			let period = 2;
-			let results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			let results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 2;
-			xVals = [1, 2];
-			yVals = [5, 15];
-			xValResults = [];
-			yValResults = [];
+			catVals = [1, 2];
+			valVals = [5, 15];
+			catValResults = [];
+			valValResults = [];
 			period = 3;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-1, -2, -3, -4, -5, -6];
-			xValResults = [4, 5, 6];
-			yValResults = [-2.5, -3.5, -4.5];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-1, -2, -3, -4, -5, -6];
+			catValResults = [4, 5, 6];
+			valValResults = [-2.5, -3.5, -4.5];
 			period = 4;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-3, 6, -9, 12, -15, 18];
-			xValResults = [5, 6];
-			yValResults = [-1.8, 2.4];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-3, 6, -9, 12, -15, 18];
+			catValResults = [5, 6];
+			valValResults = [-1.8, 2.4];
 			period = 5;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [2, 3, 6, 8, 10, 12];
-			xValResults = [];
-			yValResults = [];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 3, 6, 8, 10, 12];
+			catValResults = [];
+			valValResults = [];
 			period = 6;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 2, -3, 6, 8, 9];
-			xValResults = [2, 3, 4, 5, 6];
-			yValResults = [1, -0.5, 1.5, 7, 8.5];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, -3, 6, 8, 9];
+			catValResults = [2, 3, 4, 5, 6];
+			valValResults = [1, -0.5, 1.5, 7, 8.5];
 			period = 2;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 1, 0, 2, 0, 3];
-			xValResults = [3, 4, 5, 6];
-			yValResults = [0.333333, 1, 0.666667, 1.666667];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 1, 0, 2, 0, 3];
+			catValResults = [3, 4, 5, 6];
+			valValResults = [0.333333, 1, 0.666667, 1.666667];
 			period = 3;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-9, -7, -6, -5, -4, -2];
-			xValResults = [4, 5, 6];
-			yValResults = [-6.75, -5.5, -4.25];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-9, -7, -6, -5, -4, -2];
+			catValResults = [4, 5, 6];
+			valValResults = [-6.75, -5.5, -4.25];
 			period = 4;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
-			xValResults = [5, 6];
-			yValResults = [0.36, 0.52];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
+			catValResults = [5, 6];
+			valValResults = [0.36, 0.52];
 			period = 5;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
-			xValResults = [2, 3, 4, 5, 6];
-			yValResults = [-0.45, -0.3, -0.15, 0.25, 0.75];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
+			catValResults = [2, 3, 4, 5, 6];
+			valValResults = [-0.45, -0.3, -0.15, 0.25, 0.75];
 			period = 2;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [2, 1, 4, 3, 6, 5];
-			xValResults = [3, 4, 5, 6];
-			yValResults = [2.333333, 2.666667, 4.333333, 4.666667];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 1, 4, 3, 6, 5];
+			catValResults = [3, 4, 5, 6];
+			valValResults = [2.333333, 2.666667, 4.333333, 4.666667];
 			period = 3;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 4;
-			xVals = [1, 2, 3, 4];
-			yVals = [2, 8, 16, 50];
-			xValResults = [3, 4];
-			yValResults = [8.666667, 24.666667];
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
+			catValResults = [3, 4];
+			valValResults = [8.666667, 24.666667];
 			period = 3;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [4, -6, 3, -7, 8, 10];
-			xValResults = [4, 5, 6];
-			yValResults = [-1.5, -0.5, 3.5];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [4, -6, 3, -7, 8, 10];
+			catValResults = [4, 5, 6];
+			valValResults = [-1.5, -0.5, 3.5];
 			period = 4;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [5, 50, 500, 5000, 50000, 500000];
-			xValResults = [5, 6];
-			yValResults = [11111, 111110];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
+			catValResults = [5, 6];
+			valValResults = [11111, 111110];
 			period = 5;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
-
-			ptCount = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 2, 3, 4, 5, 0];
-			xValResults = [2, 3, 4, 5, 6];
-			yValResults = [1, 2.5, 3.5, 4.5, 2.5];
-			period = 2;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
-
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 6;
-			xVals = [1, 2, 6];
-			yVals = [4, 6, 10];
-			xValResults = [2, 3, 6];
-			yValResults = [5, 6, 10];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
+			catValResults = [2, 3, 4, 5, 6];
+			valValResults = [1, 2.5, 3.5, 4.5, 2.5];
 			period = 2;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 6;
+			catVals = [1, 2, 6];
+			valVals = [4, 6, 10];
+			catValResults = [2, 3, 6];
+			valValResults = [5, 6, 10];
+			period = 2;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 3;
-			xVals = [1, 2];
-			yVals = [4, 6];
-			xValResults = [2, 3];
-			yValResults = [5, 6];
+			catVals = [1, 2];
+			valVals = [4, 6];
+			catValResults = [2, 3];
+			valValResults = [5, 6];
 			period = 2;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 7;
-			xVals = [1, 2, 6, 7];
-			yVals = [4, 6, 10, 13];
-			xValResults = [2, 3, 6, 7];
-			yValResults = [5, 6, 10, 11.5];
+			catVals = [1, 2, 6, 7];
+			valVals = [4, 6, 10, 13];
+			catValResults = [2, 3, 6, 7];
+			valValResults = [5, 6, 10, 11.5];
 			period = 2;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 7;
-			xVals = [1, 4, 6, 7];
-			yVals = [4, 5, 10, 13];
-			xValResults = [2, 4, 5, 6, 7];
-			yValResults = [4, 5, 5, 10, 11.5];
+			catVals = [1, 4, 6, 7];
+			valVals = [4, 5, 10, 13];
+			catValResults = [2, 4, 5, 6, 7];
+			valValResults = [4, 5, 5, 10, 11.5];
 			period = 2;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 7;
-			xVals = [4, 6, 7];
-			yVals = [5, 10, 13];
-			xValResults = [4, 5, 6, 7];
-			yValResults = [5, 5, 10, 11.5];
+			catVals = [4, 6, 7];
+			valVals = [5, 10, 13];
+			catValResults = [4, 5, 6, 7];
+			valValResults = [5, 5, 10, 11.5];
 			period = 2;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 7;
-			xVals = [1, 2, 3, 4, 6];
-			yVals = [4, 6, 3, 7, 10];
-			xValResults = [3, 4, 5, 6, 7];
-			yValResults = [4.333333, 5.333333, 5, 8.5, 10];
+			catVals = [1, 2, 3, 4, 6];
+			valVals = [4, 6, 3, 7, 10];
+			catValResults = [3, 4, 5, 6, 7];
+			valValResults = [4.333333, 5.333333, 5, 8.5, 10];
 			period = 3;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 7;
-			xVals = [1, 2, 3, 6];
-			yVals = [4, 6, 3, 10];
-			xValResults = [3, 4, 5, 6, 7];
-			yValResults = [4.333333, 4.5, 3, 10, 10];
+			catVals = [1, 2, 3, 6];
+			valVals = [4, 6, 3, 10];
+			catValResults = [3, 4, 5, 6, 7];
+			valValResults = [4.333333, 4.5, 3, 10, 10];
 			period = 3;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 			ptCount = 7;
-			xVals = [4, 6];
-			yVals = [5, 10];
-			xValResults = [4, 5, 6, 7];
-			yValResults = [5, 5, 10, 10];
+			catVals = [4, 6];
+			valVals = [5, 10];
+			catValResults = [4, 5, 6, 7];
+			valValResults = [5, 5, 10, 10];
 			period = 2;
-			results = trendline.prototype._getMAline(xVals, yVals, ptCount, period)
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
 
-			assert.ok(areSame(results.xVals, xValResults), "MovingAverage are not equal to the expected x results / expected are: " + xValResults + " got: " + results.xVals );
-			assert.ok(areSame(results.yVals, yValResults), "MovingAverage are not equal to the expected y results / expected are: " + yValResults + " got: " + results.yVals );
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
 
 		})
 	}
@@ -1880,137 +1880,137 @@ $(function () {
 			const trendline = AscFormat.CTrendline
 
 			let size = 6;
-			let xVals = [1, 2, 3, 4, 5, 6];
-			let yVals = [4, 6, 3, 7, 8, 9];
+			let catVals = [1, 2, 3, 4, 5, 6];
+			let valVals = [4, 6, 3, 7, 8, 9];
 			let letiables = [2.6667, 1]
 			let rSquared = 0.6522
-			let results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			let results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 2;
-			xVals = [1, 2];
-			yVals = [5, 15];
+			catVals = [1, 2];
+			valVals = [5, 15];
 			letiables = [-5, 10]
 			rSquared = 1
-			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-1, -2, -3, -4, -5, -6];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-1, -2, -3, -4, -5, -6];
 			letiables = [0, -1]
 			rSquared = 1
-			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
-			xVals = [0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469];
-			yVals = [-3, 6, -9, 12, -15, 18];
+			catVals = [0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469];
+			valVals = [-3, 6, -9, 12, -15, 18];
 			letiables = [-3.0691, 4.1668]
 			rSquared = 0.0473
-			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LOG)
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LOG)
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0.693147181, 1.098612289, 1.791759469, 2.079441542, 2.302585093, 2.48490665];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0.693147181, 1.098612289, 1.791759469, 2.079441542, 2.302585093, 2.48490665];
 			letiables = [1.5776, 0.3674]
 			rSquared = 0.9461
-			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 2, -3, 6, 8, 9];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, -3, 6, 8, 9];
 			letiables = [0.3, -0.8179, 0.4107]
 			rSquared = 0.709
-			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 1, 0, 2, 0, 3];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 1, 0, 2, 0, 3];
 			letiables = [-2.6667, 3.75973, -1.254, 0.1296]
 			rSquared = 0.5397
-			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-9, -7, -6, -5, -4, -2];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-9, -7, -6, -5, -4, -2];
 			letiables = [-12.333, 4.2209, -0.9722, 0.0926, 3e-14]
 			rSquared = 0.9995
-			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
-			xVals = [0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469];
-			yVals = [-2.302585093, -1.203972804, -1.609437912, -0.693147181, -0.356674944, -0.105360516];
+			catVals = [0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469];
+			valVals = [-2.302585093, -1.203972804, -1.609437912, -0.693147181, -0.356674944, -0.105360516];
 			letiables = [0.0984, 1.1616]
 			rSquared = 0.8697
-			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POWER)
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POWER)
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
 			letiables = [3.2, -8.2283, 6.4375, -2.25, 0.3625, -0.0217]
 			rSquared = 1
-			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0.693147181, 0, 1.386294361, 1.098612289, 1.791759469, 1.609437912];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0.693147181, 0, 1.386294361, 1.098612289, 1.791759469, 1.609437912];
 			letiables = [1.1384, 0.2763]
 			rSquared = 0.6083
-			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 4;
-			xVals = [1, 2, 3, 4];
-			yVals = [2, 8, 16, 50];
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
 			letiables = [-19, 15.2]
 			rSquared = 0.8371
-			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [4, -6, 3, -7, 8, 10];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [4, -6, 3, -7, 8, 10];
 			letiables = [-4.2, 1.7714]
 			rSquared = 0.2197
-			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
-			xVals = [0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469];
-			yVals = [1.609437912, 3.912023005, 6.214608098, 8.517193191, 10.81977828, 13.12236338];
+			catVals = [0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469];
+			valVals = [1.609437912, 3.912023005, 6.214608098, 8.517193191, 10.81977828, 13.12236338];
 			letiables = [1.5974, 6.2903]
 			rSquared = 0.9363
-			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POWER)
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POWER)
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 2, 3, 4, 5, 0];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
 			letiables = [1.3333, 0.2857]
 			rSquared = 0.067
-			results = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
@@ -2023,58 +2023,58 @@ $(function () {
 			const trendline = AscFormat.CTrendline
 
 			let size = 6;
-			let xVals = [1, 2, 3, 4, 5, 6];
-			let yVals = [4, 6, 3, 7, 8, 9];
+			let catVals = [1, 2, 3, 4, 5, 6];
+			let valVals = [4, 6, 3, 7, 8, 9];
 			let letiables = [0, 1.6154]
 			let rSquared = 0.3464;
 			let order = 2;
 			let intercept = 0;
-			let equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
-			let rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			let equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
+			let rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
 			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
 
 			size = 2;
-			xVals = [1, 2];
-			yVals = [5, 15];
+			catVals = [1, 2];
+			valVals = [5, 15];
 			letiables = [0, 7]
 			rSquared = 0.9;
 			order = 2;
 			intercept = 0;
-			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
 			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-1, -2, -3, -4, -5, -6];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-1, -2, -3, -4, -5, -6];
 			m = -2.732;
 			b = -0.5044;
 			letiables = [-0.5044, -2.732]
 			rSquared = 0.9363;
 			order = 2;
 			intercept = 0;
-			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LOG, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LOG)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LOG)
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "LogarithmicResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "LogarithmicResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
 			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquaredResults + ', got:' + rSquaredResults);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-3, 6, -9, 12, -15, 18];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-3, 6, -9, 12, -15, 18];
 			letiables = [0, -2.8125, 0.7232];
 			rSquared = 0.1269;
 			order = 3;
 			intercept = 0;
-			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2083,45 +2083,45 @@ $(function () {
 			
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [2, 3, 6, 8, 10, 12];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 3, 6, 8, 10, 12];
 			letiables = [1, 0.4726];
 			rSquared = 0.85;
 			order = 2;
 			intercept = 1;
 
-			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "ExponentialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "ExponentialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
 			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [2, 3, 6, 8, 10, 12];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 3, 6, 8, 10, 12];
 			letiables = [2, 0.3126];
 			rSquared = 0.9201;
 			order = 2;
 			intercept = 2;
 
-			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "ExponentialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "ExponentialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
 			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 2, -3, 6, 8, 9];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, -3, 6, 8, 9];
 			letiables = [0, -1.7176, 0.9524, -0.0662];
 			rSquared = 0.719;
 			order = 4;
 			intercept = 0;
 
-			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2130,15 +2130,15 @@ $(function () {
 			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 1, 0, 2, 0, 3];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 1, 0, 2, 0, 3];
 			letiables = [0, -1.1891, 1.5552, -0.4827, 0.045];
 			rSquared = 0.5928;
 			order = 5;
 			intercept = 0;
 
-			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2148,15 +2148,15 @@ $(function () {
 			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-9, -7, -6, -5, -4, -2];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-9, -7, -6, -5, -4, -2];
 			letiables = [0, -21.228, 17.348, -5.857, 0.8914, -0.0501];
 			rSquared = 0.9906;
 			order = 6;
 			intercept = 0;
 
-			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2167,15 +2167,15 @@ $(function () {
 			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
 
 			size = 7;
-			xVals = [1, 2, 3, 4, 5, 6, 7];
-			yVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
 			letiables = [0, -0.3486, 0.9099, -0.5973, 0.1707, -0.0219, 0.001];
 			rSquared = 0.9822;
 			order = 7;
 			intercept = 0;
 
-			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, equationResults, AscFormat.TRENDLINE_TYPE_POLY)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, equationResults, AscFormat.TRENDLINE_TYPE_POLY)
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2187,84 +2187,84 @@ $(function () {
 			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
 			letiables = [-2, 0.5286]
 			rSquared = 0.1296;
 			order = 2;
 			intercept = -2;
-			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
 			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [2, 1, 4, 3, 6, 5];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 1, 4, 3, 6, 5];
 			letiables = [12.365, -1.8864]
 			rSquared = -8.44;
 			order = 2;
 			intercept = 12.365;
-			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
 			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
 
 			size = 4;
-			xVals = [1, 2, 3, 4];
-			yVals = [2, 8, 16, 50];
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
 			letiables = [12.365, 0.1223]
 			rSquared = 0.0659;
 			order = 2;
 			intercept = 12.365;
-			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "ExponentialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "ExponentialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
 			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [4, -6, 3, -7, 8, 10];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [4, -6, 3, -7, 8, 10];
 			letiables = [-6.958, 2.4079]
 			rSquared = 0.1845;
 			order = 2;
 			intercept = -6.958;
-			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
 			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [5, 50, 500, 5000, 50000, 500000];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
 			letiables = [0.1265, 2.6197]
 			rSquared = 0.9765;
 			order = 2;
 			intercept = 0.1265;
-			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "ExponentialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "ExponentialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
 			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
 
 			size = 6;
-			xVals = [1, 2, 3, 4, 5, 6];
-			yVals = [0, 2, 3, 4, 5, 0];
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
 			letiables = [0.1265, 0.5642]
 			rSquared = -0.012;
 			order = 2;
 			intercept = 0.1265;
-			equationResults = trendline.prototype._getEquationCoefficients(xVals, yVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(xVals, yVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
