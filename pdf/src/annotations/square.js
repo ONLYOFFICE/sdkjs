@@ -55,7 +55,6 @@
 
         // internal
         TurnOffHistory();
-        this.content        = new AscPDF.CTextBoxContent(this, oDoc);
     }
     CAnnotationSquare.prototype.constructor = CAnnotationSquare;
     AscFormat.InitClass(CAnnotationSquare, AscFormat.CShape, AscDFH.historyitem_type_Shape);
