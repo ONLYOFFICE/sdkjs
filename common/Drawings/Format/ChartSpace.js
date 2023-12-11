@@ -3380,7 +3380,7 @@ function(window, undefined) {
 		//this.recalcInfo.axisLabels.length = 0;
 		this.recalcInfo.recalculateAxisVal = true;
 		this.recalcInfo.recalculateLegend = true;
-		// this.chartObj = null;
+		this.chartObj = null;
 
 		for (var i = 0; i < this.userShapes.length; ++i) {
 			if (this.userShapes[i].object) {
