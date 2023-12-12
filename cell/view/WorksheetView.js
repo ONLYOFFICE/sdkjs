@@ -11267,17 +11267,30 @@
 			AscCommonExcel.referenceType.A : AscCommonExcel.referenceType.R);
     };
 
-    WorksheetView.prototype.getSelectionRangeValue = function (absName, addSheet) {
-        return this.getSelectionRangeValues(absName, addSheet).join(AscCommon.FormulaSeparators.functionArgumentSeparator);
-    };
-    WorksheetView.prototype.getSelectionRangeValues = function (absName, addSheet) {
+	WorksheetView.prototype.getSelectionRangeValue = function (absName, addSheet) {
+		return this.getSelectionRangeValues(absName, addSheet).join(AscCommon.FormulaSeparators.functionArgumentSeparator);
+	};
+	WorksheetView.prototype.getSelectionRangeValues = function (absName, addSheet) {
 		// ToDo проблема с выбором целого столбца/строки
-        var name, res = [];
-        absName = absName || this.workbook.dialogAbsName;
-        addSheet = addSheet || this.workbook.getDialogSheetName();
-        if (this.model.selectionRange) {
-            var ranges = this.model.selectionRange.ranges;
-            for (var i = 0; i < ranges.length; ++i) {
+		var name, res = [];
+		absName = absName || this.workbook.dialogAbsName;
+		addSheet = addSheet || this.workbook.getDialogSheetName();
+		if (this.model.selectionRange) {
+			var ranges = this.model.selectionRange.ranges;
+
+			//formula edit mode - check tables selection
+			if (ranges.length === 1 && this.getFormulaEditMode()) {
+				let tables = this.model.autoFilters.getTablesIntersectionRange(ranges[0]);
+				if (tables && tables.length === 1) {
+					let sTable = tables[0].getSelectionString(this.model.getSelection().activeCell, ranges[0]);
+					if (sTable) {
+						res.push(sTable);
+						return res;
+					}
+				}
+			}
+
+			for (let i = 0; i < ranges.length; ++i) {
 				var range = ranges[i];
 				//делаю условие только для формул, просмотреть все остальные диапазоны
 				if (this.getFormulaEditMode()) {
@@ -11287,21 +11300,20 @@
 					}
 				}
 
-                // ToDo проблема с выбором целого столбца/строки
-                name = range.getName(absName ? AscCommonExcel.referenceType.A : AscCommonExcel.referenceType.R);
-                if (addSheet) {
-                    name = parserHelp.get3DRef(this.model.getName(), name);
-                }
-                res.push(name);
-            }
-        }
-        return res;
+				// ToDo проблема с выбором целого столбца/строки
+				name = range.getName(absName ? AscCommonExcel.referenceType.A : AscCommonExcel.referenceType.R);
+				if (addSheet) {
+					name = parserHelp.get3DRef(this.model.getName(), name);
+				}
+				res.push(name);
+			}
+		}
+		return res;
 	};
 
-    WorksheetView.prototype.getSelectionInfo = function () {
-        return this.objectRender.selectedGraphicObjectsExists() ? this._getSelectionInfoObject() :
-          this._getSelectionInfoCell();
-    };
+	WorksheetView.prototype.getSelectionInfo = function () {
+		return this.objectRender.selectedGraphicObjectsExists() ? this._getSelectionInfoObject() : this._getSelectionInfoCell();
+	};
 
     WorksheetView.prototype._getSelectionInfoCell = function () {
         var selectionRange = this.model.selectionRange;
