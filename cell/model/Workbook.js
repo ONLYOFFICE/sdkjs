@@ -20256,11 +20256,8 @@
 			if (oCell && oCell.getValueWithoutFormat() && nType !== oSeriesType.autoFill) {
 				let nTypeCell = oCell.getType();
 				let oFilledRange = oSerial.getFilledRange(bVertical ? nCol : nRow);
-				let oDirectCondition = {
-					true: nRow === oFilledRange.bbox.r1,
-					false: nCol === oFilledRange.bbox.c1
-				};
-				if (oDirectCondition[bVertical] && nTypeCell === CellValueType.Number) {
+				let bFirstCellInRange = bVertical ? nRow === oFilledRange.bbox.r1 : nCol === oFilledRange.bbox.c1;
+				if (bFirstCellInRange && nTypeCell === CellValueType.Number) {
 					oSerial.initToRange(oFilledRange);
 					let oToRange = oSerial.getToRange();
 					aFilledCells.push({
