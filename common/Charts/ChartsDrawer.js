@@ -2151,7 +2151,7 @@ CChartsDrawer.prototype =
 	Assumptions 
 		yMin and yMax alywas nummeric
 		yMin always less than yMax
-		logBase is always 10
+		logBase is always >= 2
 	*/
 	_getLogArray: function (yMin, yMax, logBase, axis) {
 		/**
@@ -2163,7 +2163,7 @@ CChartsDrawer.prototype =
 		let trueMin = (axis.scaling && axis.scaling.min) !== null ? Math.round(axis.scaling.min * kF) / kF : null;
 		let trueMax = (axis.scaling && axis.scaling.max) !== null ? Math.round(axis.scaling.max * kF) / kF : null;
 		yMin = (yMin <= 0) ? 1 : yMin;
-		yMax = (yMax <= 0) ? 10 : yMax;
+		yMax = (yMax <= 0) ? logBase : yMax;
 		trueMin = (!trueMin || trueMin <= 0) ? yMin : trueMin;
 		trueMax = (!trueMax || trueMax <= 0) ? yMax : trueMax;
 
@@ -16344,7 +16344,8 @@ CColorObj.prototype =
 
 		// compare boundaries[chartId][seriaId] with local coordinates[chartId][seriaId].boundary
 		_setNewBoundaries: function (oChart, coordinates, boundary) {
-			if (coordinates.boundary) {
+			if (coordinates.boundary && isFinite(coordinates.boundary.catMin) && isFinite(coordinates.boundary.catMax) && isFinite(coordinates.boundary.valMin) && isFinite(coordinates.boundary.valMax)
+			&& coordinates.boundary.catMin !== null && coordinates.boundary.catMax !== null && coordinates.boundary.valMin !== null && coordinates.boundary.valMax !== null) {
 				const catAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[0]);
 				const valAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[1]);
 
@@ -16367,14 +16368,7 @@ CColorObj.prototype =
 					boundary[valAxis.Id].min = Math.min(coordinates.boundary.valMin, boundary[valAxis.Id].min);
 					boundary[valAxis.Id].max = Math.max(coordinates.boundary.valMax, boundary[valAxis.Id].max);
 				}
-	
-				if (!isFinite(boundary[catAxis.Id].min) || !isFinite(boundary[catAxis.Id].max) || !isFinite(boundary[valAxis.Id].min) || !isFinite(boundary[valAxis.Id].max)) {
-					delete boundary[catAxis.Id];
-				}
-	
-				if (boundary[catAxis.Id].min === null || boundary[catAxis.Id].max === null || boundary[valAxis.Id].min === null || boundary[valAxis.Id].max === null) {
-					delete boundary[catAxis.Id];
-				}
+
 			}
 		},
 
@@ -16505,16 +16499,16 @@ CColorObj.prototype =
 						if (isLog && res <= 0){
 							return NaN;
 						} else {
-							return isLog ? Math.log10(res) : res;
+							return isLog ? (Math.log(res) / Math.log(isLog)) : res;
 						}
 					}, calcXVal: function (val, supps, isLog) {
-						val = isLog ? Math.pow(10, val) : val;
+						val = isLog ? Math.pow(isLog, val) : val;
 						return Math.log(val / supps[0]) / supps[1];
 					}, calcSlope: function (val, supps, isLog) {
 						if (!isLog){
 							return supps[0] * supps[1] * Math.exp(val * supps[1]);
 						} else {
-							return Math.log10(Math.exp(1)) * supps[1];
+							return (Math.log(Math.exp(1)) / Math.log(isLog)) * supps[1];
 						}
 					}
 				}, [AscFormat.TRENDLINE_TYPE_LINEAR]: {
@@ -16523,16 +16517,16 @@ CColorObj.prototype =
 						if (isLog && res <= 0){
 							return NaN;
 						} else {
-							return isLog ? Math.log10(res) : res;
+							return isLog ? (Math.log(res) / Math.log(isLog)) : res;
 						}
 					}, calcXVal: function (val, supps, isLog) {
-						val = isLog ? Math.pow(10, val) : val;
+						val = isLog ? Math.pow(isLog, val) : val;
 						return (val - supps[0]) / supps[1];
 					}, calcSlope: function (val, supps, isLog) {
 						if (!isLog){
 							return supps[1];
 						} else {
-							return supps[1] / (Math.log(10) * (supps[1] * val + supps[0]));
+							return supps[1] / (Math.log(isLog) * (supps[1] * val + supps[0]));
 						}
 					}
 				}, [AscFormat.TRENDLINE_TYPE_LOG]: {
@@ -16542,19 +16536,19 @@ CColorObj.prototype =
 							if (isLog && res <= 0){
 								return NaN;
 							} else {
-								return isLog ? Math.log10(res) : res;
+								return isLog ? (Math.log(res) / Math.log(isLog)) : res;
 							}
 						} else {
 							return NaN;
 						}
 					}, calcXVal: function (val, supps, isLog) {
-						val = isLog ? Math.pow(10, val) : val;
+						val = isLog ? Math.pow(isLog, val) : val;
 						return Math.exp((val - supps[0]) / supps[1]);
 					}, calcSlope: function (val, supps, isLog) {
 						if (!isLog){
 							return supps[1] / val;
 						} else {
-							return supps[1] / (Math.log(10) * val * (supps[1] * Math.log(val) + supps[0]));
+							return supps[1] / (Math.log(isLog) * val * (supps[1] * Math.log(val) + supps[0]));
 						}
 					}
 				}, [AscFormat.TRENDLINE_TYPE_POLY]: {
@@ -16573,16 +16567,16 @@ CColorObj.prototype =
 						if (isLog && res <= 0){
 							return NaN;
 						} else {
-							return isLog ? Math.log10(res) : res;
+							return isLog ? (Math.log(res) / Math.log(isLog)) : res;
 						}
 					}, calcXVal: function (val, supps, isLog) {
-						val = isLog ? Math.pow(10, val) : val;
+						val = isLog ? Math.pow(isLog, val) : val;
 						return Math.pow((val / supps[0]), 1 / supps[1]);
 					}, calcSlope: function (val, supps, isLog) {
 						if (!isLog){
 							return supps[0] * supps[1] * Math.pow(val, supps[1] - 1);
 						} else {
-							return supps[1] / (Math.log(10) * val);
+							return supps[1] / (Math.log(isLog) * val);
 						}
 					}
 				}
@@ -17083,7 +17077,7 @@ CColorObj.prototype =
 			direction = diff1 > diff2 ? false : direction;
 
 			// --------------------------------------
-			const error = this.isLog ? 0.01 : 0.05;
+			const error = 0.01;
 
 			// --------------------------------------
 			//Step 4 check mid control point
@@ -17145,13 +17139,13 @@ CColorObj.prototype =
 		// Check for val boundary
 		_checkBoundaries : function (pos) {
 			if (this.valMin){
-				let lowerBoundary = this.isLog ? Math.log10(this.valMin) : this.valMin;
+				let lowerBoundary = this.isLog ? (Math.log(this.valMin) / Math.log(this.isLog)) : this.valMin;
 				if (pos.valVal < lowerBoundary) {
 					this._lineCoordinate(pos, lowerBoundary, false);
 				} 
 			}
 			if (this.valMax){
-				let upperBoundary = this.isLog ? Math.log10(this.valMax) : this.valMax;
+				let upperBoundary = this.isLog ? (Math.log(this.valMax) / Math.log(this.isLog)) : this.valMax;
 				if (pos.valVal > upperBoundary) {
 					this._lineCoordinate(pos, upperBoundary, false);
 				} 
@@ -17203,7 +17197,7 @@ CColorObj.prototype =
 
 		_normalize : function (arr) {
 			for (let i = 0; i < arr.valVals.length; i++) {
-				arr.valVals[i] = Math.pow(10, arr.valVals[i]);
+				arr.valVals[i] = Math.pow(this.isLog, arr.valVals[i]);
 			}
 		},
 
