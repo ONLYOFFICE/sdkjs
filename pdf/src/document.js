@@ -176,6 +176,8 @@ var CPresentation = CPresentation || function(){};
                 this.AddFieldToChildsMap(oParent, aParentsInfo[i]["Parent"]);
             if (aParentsInfo[i]["defaultValue"] != null)
                 oParent.SetDefaultValue(aParentsInfo[i]["defaultValue"]);
+            if (aParentsInfo[i]["i"] != null)
+                oParent.SetApIdx(aParentsInfo[i]["i"]);
             oParents[nIdx] = oParent;
 
             this.rootFields.set(oParent.GetPartialName(), oParent);

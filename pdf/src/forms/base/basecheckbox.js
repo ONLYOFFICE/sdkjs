@@ -503,8 +503,16 @@
 
         // checked
         let isChecked = this.IsChecked();
-        if (isChecked) {
-            memory.fieldFlags2 |= (1 << 9);
+        // не пишем значение, если есть родитель с такими же видджет полями,
+        // т.к. значение будет хранить родитель
+        let oParent = this.GetParent();
+        if (oParent == null || oParent.IsAllChildsSame() == false) {
+            if (isChecked) {
+                memory.WriteString("Yes");
+                memory.fieldFlags2 |= (1 << 9);
+            }
+            else
+                memory.WriteString("Off");
         }
         
         // just some flags (need to write, but used only in pushbutton)
