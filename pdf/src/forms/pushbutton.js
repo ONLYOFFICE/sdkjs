@@ -91,7 +91,14 @@
         this._imgData           = {
             normal:     null,
             mouseDown:  null,
-            rollover:   null
+            rollover:   null,
+
+            // регистрируем что картинки изменились, нужно при записи, чтобы не писать исходные картинки снова
+            changedInfo: {
+                normal:     false,
+                mouseDown:  false,
+                rollover:   false
+            }
         };
 
         this._captionRun            = null;
@@ -125,17 +132,20 @@
 
             switch (nAPType) {
                 case AscPDF.APPEARANCE_TYPE.rollover:
-                    oPrevImgData = field._imgData.rollover;
+                    oPrevImgData            = field._imgData.rollover;
                     field._imgData.rollover = oImgData;
+                    field._imgData.changedInfo.rollover = true;
                     break;
                 case AscPDF.APPEARANCE_TYPE.mouseDown:
-                    oPrevImgData = field._imgData.mouseDown;
-                    field._imgData.mouseDown = oImgData;
+                    oPrevImgData                = field._imgData.mouseDown;
+                    field._imgData.mouseDown    = oImgData;
+                    field._imgData.changedInfo.mouseDown = true;
                     break;
                 case AscPDF.APPEARANCE_TYPE.normal:
                 default:
-                    oPrevImgData = field._imgData.normal;
-                    field._imgData.normal = oImgData;
+                    oPrevImgData            = field._imgData.normal;
+                    field._imgData.normal   = oImgData;
+                    field._imgData.changedInfo.normal = true;
                     break;
             }
 
@@ -326,6 +336,28 @@
             let oDoc            = this.GetDocument();
             let oActionsQueue   = oDoc.GetActionsQueue();
             oActionsQueue.Continue();   
+        }
+    };
+    CPushButtonField.prototype.IsImageChanged = function(nAPType) {
+        switch (nAPType) {
+            case AscPDF.APPEARANCE_TYPE.rollover:
+                return this._imgData.changedInfo.rollover;
+            case AscPDF.APPEARANCE_TYPE.mouseDown:
+                return this._imgData.changedInfo.mouseDown;
+            case AscPDF.APPEARANCE_TYPE.normal:
+            default:
+                return this._imgData.changedInfo.normal;
+        }
+    };
+    CPushButtonField.prototype.GetImageRasterId = function(nAPType) {
+        switch (nAPType) {
+            case AscPDF.APPEARANCE_TYPE.rollover:
+                return this._imgData.rollover ? this._imgData.rollover.src : "";
+            case AscPDF.APPEARANCE_TYPE.mouseDown:
+                return this._imgData.mouseDown ? this._imgData.mouseDown.src : "";
+            case AscPDF.APPEARANCE_TYPE.normal:
+            default:
+                return this._imgData.normal ? this._imgData.normal.src : "";
         }
     };
     /**
@@ -1973,6 +2005,44 @@
         let isButtonFB = this.IsButtonFitBounds();
         if (isButtonFB) {
             nButtonFlags |= (1 << 4);
+        }
+
+        // запись картинок. добавляем в уникальный массив, далее пишем картинки на уровне родителей
+        if (this.IsImageChanged(AscPDF.APPEARANCE_TYPE.normal)) {
+            memory.fieldFlags2 |= (1 << 5);
+            let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(AscPDF.APPEARANCE_TYPE.normal));
+            let nExistIdx = memory.images.indexOf(sPathToImg);
+            // пишем индекс картинки в массиве
+            if (nExistIdx === -1) {
+                memory.WriteLong(memory.images.length);
+                memory.images.push(sPathToImg);
+            }
+            else
+                memory.WriteLong(nExistIdx);
+        }
+        if (this.IsImageChanged(AscPDF.APPEARANCE_TYPE.mouseDown)) {
+            memory.fieldFlags2 |= (1 << 5);
+            let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(AscPDF.APPEARANCE_TYPE.mouseDown));
+            let nExistIdx = memory.images.indexOf(sPathToImg);
+            // пишем индекс картинки в массиве
+            if (nExistIdx === -1) {
+                memory.WriteLong(memory.images.length);
+                memory.images.push(sPathToImg);
+            }
+            else
+                memory.WriteLong(nExistIdx);
+        }
+        if (this.IsImageChanged(AscPDF.APPEARANCE_TYPE.rollover)) {
+            memory.fieldFlags2 |= (1 << 5);
+            let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(AscPDF.APPEARANCE_TYPE.rollover));
+            let nExistIdx = memory.images.indexOf(sPathToImg);
+            // пишем индекс картинки в массиве
+            if (nExistIdx === -1) {
+                memory.WriteLong(memory.images.length);
+                memory.images.push(sPathToImg);
+            }
+            else
+                memory.WriteLong(nExistIdx);
         }
 
         let nEndPos = memory.GetCurPosition();
