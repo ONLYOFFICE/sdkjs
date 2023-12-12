@@ -240,7 +240,11 @@
 		if (!this.DocumentRenderer)
 			return false;
 		
-		return this.DocumentRenderer.isCanCopy();
+		let oDoc = this.DocumentRenderer.getPDFDoc();
+		if (!oDoc)
+			return false;
+
+		return oDoc.CanCopyCut().copy;
 	};
 	PDFEditorApi.prototype.startGetDocInfo = function() {
 		let renderer = this.DocumentRenderer;
