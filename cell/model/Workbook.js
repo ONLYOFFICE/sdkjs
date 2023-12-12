@@ -18913,6 +18913,7 @@
 			if(1 == nWidth && 1 == nHeight && oPromoteHelper.isOnlyIntegerSequence())
 				bCopy = !bCopy;
 			oPromoteHelper.finishAdd(bCopy);
+			oPromoteHelper.setFillHandleRightClick(false);
 			//заполняем ячейки данными
 			var nStartRow, nEndRow, nStartCol, nEndCol, nColDx, bRowFirst;
 			if(bVertical)

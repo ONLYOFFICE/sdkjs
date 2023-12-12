@@ -26748,6 +26748,7 @@
 				} else {
 					this.model.setFillHandleRightClick(true);
 					this.applyFillHandle(null, null, false, null);
+					this.model.setFillHandleRightClick(false);
 				}
 				break;
 			case c_oAscFillType.linearTrend:
