@@ -1470,6 +1470,14 @@
 		//Table1[[#Data],[#Totals],[Column1]]
 		//Table4[[#Totals];[Column1]:[Column2]]
 
+
+		//bed:
+		//Table1[[#Data],[#Totals]]
+		//Table1[[#Headers],[#Data]]
+
+		//good:
+		//Table1[[#Headers],[#Data],[Column1]:[Column2]]
+
 		return XRegExp.build('^(?<tableName>{{tableName}})\\[(?<columnName1>{{columnName}})?\\]', {
 			"tableName":  new XRegExp("^(:?[" + str_namedRanges + "][" + str_namedRanges + "\\d.]*)"),
 			"columnName": XRegExp.build('(?<reservedColumn>{{reservedColumn}})|(?<oneColumn>{{userColumn}})|(?<columnRange>{{userColumnRange}})|(?<hdtcc>{{hdtcc}})' +
