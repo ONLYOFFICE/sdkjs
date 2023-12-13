@@ -1603,20 +1603,20 @@ $(function () {
 		})
 	}
 
+	const areSame = function (result, check){
+		for(let i=0; i< result.length; i++){
+			if(!isEqual(result[i], check[i])){
+				return false
+			}
+		}
+		return true
+	}
+
 	function testMovingAverageTrendLineResuts(){
 		QUnit.test("Test: MovingAverage trendlines results", function (assert) {
 
 			const trendline = AscFormat.CTrendline;
 			const order = 2;
-
-			const areSame = function (result, check){
-				for(let i=0; i< result.length; i++){
-					if(!isEqual(result[i], check[i])){
-						return false
-					}
-				}
-				return true
-			}
 
 			let ptCount = 6;
 			let catVals = [1, 2, 3, 4, 5, 6];
@@ -2272,6 +2272,877 @@ $(function () {
 		})
 	}
 
+	const _obtainEquationStorage = function (type) {
+		const storage = {
+			[AscFormat.TRENDLINE_TYPE_EXP]: {
+				calcYVal: function (val, supps, isLog) {
+					const res = supps[0] * Math.exp(val * supps[1]);
+					if (isLog && res <= 0){
+						return NaN;
+					} else {
+						return isLog ? (Math.log(res) / Math.log(isLog)) : res;
+					}
+				}, calcXVal: function (val, supps, isLog) {
+					val = isLog ? Math.pow(isLog, val) : val;
+					return Math.log(val / supps[0]) / supps[1];
+				}, calcSlope: function (val, supps, isLog) {
+					if (!isLog){
+						return supps[0] * supps[1] * Math.exp(val * supps[1]);
+					} else {
+						return (Math.log(Math.exp(1)) / Math.log(isLog)) * supps[1];
+					}
+				}
+			}, [AscFormat.TRENDLINE_TYPE_LINEAR]: {
+				calcYVal: function (val, supps, isLog) {
+					const res = supps[1] * val + supps[0];
+					if (isLog && res <= 0){
+						return NaN;
+					} else {
+						return isLog ? (Math.log(res) / Math.log(isLog)) : res;
+					}
+				}, calcXVal: function (val, supps, isLog) {
+					val = isLog ? Math.pow(isLog, val) : val;
+					return (val - supps[0]) / supps[1];
+				}, calcSlope: function (val, supps, isLog) {
+					if (!isLog){
+						return supps[1];
+					} else {
+						return supps[1] / (Math.log(isLog) * (supps[1] * val + supps[0]));
+					}
+				}
+			}, [AscFormat.TRENDLINE_TYPE_LOG]: {
+				calcYVal: function (val, supps, isLog) {
+					if(val > 0){
+						const res = supps[1] * Math.log(val) + supps[0];
+						if (isLog && res <= 0){
+							return NaN;
+						} else {
+							return isLog ? (Math.log(res) / Math.log(isLog)) : res;
+						}
+					} else {
+						return NaN;
+					}
+				}, calcXVal: function (val, supps, isLog) {
+					val = isLog ? Math.pow(isLog, val) : val;
+					return Math.exp((val - supps[0]) / supps[1]);
+				}, calcSlope: function (val, supps, isLog) {
+					if (!isLog){
+						return supps[1] / val;
+					} else {
+						return supps[1] / (Math.log(isLog) * val * (supps[1] * Math.log(val) + supps[0]));
+					}
+				}
+			}, [AscFormat.TRENDLINE_TYPE_POLY]: {
+				calcYVal: function (val, supps) {
+					let result = 0;
+					let power = 0;
+					for (let i = 0; i < supps.length; i++) {
+						result += (Math.pow(val, power) * supps[i]);
+						power++;
+					}
+					return result;
+				}
+			}, [AscFormat.TRENDLINE_TYPE_POWER]: {
+				calcYVal: function (val, supps, isLog) {
+					const res = supps[0] * Math.pow(val, supps[1]);
+					if (isLog && res <= 0){
+						return NaN;
+					} else {
+						return isLog ? (Math.log(res) / Math.log(isLog)) : res;
+					}
+				}, calcXVal: function (val, supps, isLog) {
+					val = isLog ? Math.pow(isLog, val) : val;
+					return Math.pow((val / supps[0]), 1 / supps[1]);
+				}, calcSlope: function (val, supps, isLog) {
+					if (!isLog){
+						return supps[0] * supps[1] * Math.pow(val, supps[1] - 1);
+					} else {
+						return supps[1] / (Math.log(isLog) * val);
+					}
+				}
+			}
+		}
+
+		return storage.hasOwnProperty(type) ? storage[type] : null;
+	}
+
+	function testLineBuilderApproximatedBezier () {
+		QUnit.test("Test: Line Builder approximated bezier function", function (assert) {
+
+			let chartletiables = [0.6000000000000014, 0.8285714285714283]
+			let catMin = 1;
+			let catMax = 6;
+			let valMin = null;
+			let valMax = null;
+			let logBase = null;
+			let type = 1;
+			let lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			let equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			let cutPoint = 1000;
+			let resultStartCatVals = [];
+			let resultsStartValVals = [];
+			let resultsCatVals = [1, 6];
+			let resultsValVals = [1.4285714285714297, 5.571428571428571];
+			let lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-19, 15.200000000000003]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 4];
+			resultsValVals = [-3.799999999999997, 41.80000000000001];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-4.199999999999999, 1.7714285714285714]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 6];
+			resultsValVals = [-2.428571428571428, 6.428571428571429];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-172840, 75837.85714285713]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 6];
+			resultsValVals = [-97002.14285714287, 282187.1428571428];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.333333333333334, 0.28571428571428514]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 6];
+			resultsValVals = [1.619047619047619, 3.047619047619045];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.6000000000000014, 0.8285714285714283]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.4315151945474693, 6];
+			resultsValVals = [1.4285714285714297, 3.2770831944502925, 5.57142857142857];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-19, 15.200000000000003]
+			catMin = 1;
+			catMax = 4;
+			valMin = 0.1;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1.256578947368421, 1.2814964885317515, 1.2898023355861947, 4];
+			resultsValVals = [0.10000000000000005, 4.414440786380464, 15.60154450534442, 41.800000000000004];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-4.199999999999999, 1.7714285714285714]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [2.376612903225806, 2.399797564974433, 2.4075257855573082, 6];
+			resultsValVals = [0.01000000000000001, 0.6076398272462274, 2.3888835256910106, 6.428571428571428];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-172840, 75837.85714285713]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [2.2827937611257103, 2.3006753066997625, 2.304801817216851, 6];
+			resultsValVals = [282.187142857143, 34483.62358038931, 104531.15364045568, 282187.1428571427];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.333333333333334, 0.28571428571428514]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.9798282656993273, 6];
+			resultsValVals = [1.619047619047619, 2.2961172530284593, 3.047619047619045];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.0853780304041418, 2.202033537057911]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.150111363073666, 6];
+			resultsValVals = [1.0853780304041418, 3.6179618232437427, 5.030892471985402];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-4.489845190674558, 29.565068994571178]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.8483924814931874, 4];
+			resultsValVals = [-4.489845190674558, 20.592937059146976, 36.496043242619976];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-1.5298842782486233, 3.2191057898549253]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.1501113630736657, 6];
+			resultsValVals = [-1.5298842782486233, 2.1724458695997537, 4.237979003170796];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-94541.7317212114, 170658.5375973549]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.150111363073666, 6];
+			resultsValVals = [-94541.7317212114, 101734.59157504095, 211237.3190234613];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.8734737381931108, 1.3313304643014572]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.1501113630736657, 6];
+			resultsValVals = [0.8734737381931108, 2.404652033192356, 3.2588977042770297];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.0853780304041418, 2.202033537057911]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.2988232955456442, 1.5976465910912885, 6];
+			resultsValVals = [1.0853780304041418, 1.990102532537364, 3.6489665158755145, 5.0308924719854];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-4.489845190674558, 29.565068994571178]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1.165438725217985, 1.1736988748896424, 1.174553373131538, 4];
+			resultsValVals = [0.03649604324262, 11.370596442990395, 20.593748163716384, 36.49604324261996];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-1.5298842782486233, 3.2191057898549253]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1.6134226199693829, 1.6375316351901021, 1.6409757802216334, 6];
+			resultsValVals = [0.01000000000000001, 1.2276085027998023, 2.4406022912978123, 4.2379790031707945];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-94541.7317212114, 170658.5375973549]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1.7423235984576693, 1.7547074335066466, 1.7559885198910234, 6];
+			resultsValVals = [211.23731902346108, 65857.82996110985, 119286.28973286712, 211237.31902346085];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.8734737381931108, 1.3313304643014572]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.2933202071709262, 1.6704461878192602, 6];
+			resultsValVals = [0.8734737381931108, 1.365875111651997, 2.42687128132288, 3.2588977042770293];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.3470294984018791, 0.7283261086204962]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.6012794465851243, 6];
+			resultsValVals = [1.3470294984018791, 2.918007538131848, 4.967352481769911];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.8367239858577353, 2.210556099993931]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.5676669401272707, 4];
+			resultsValVals = [1.8367239858577353, 8.201736154712346, 39.34878110454656];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.597378819226662, 6.290262865578015]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [1];
+			resultsStartValVals = [6];
+			resultsCatVals = [3.5, 4.128138791741785, 5.175036777978095, 6];
+			resultsValVals = [4224.146163889106, 8992.794563642741, 16940.541896565468, 125367.1738292479];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.3470294984018791, 0.7283261086204962]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.1501113630736657, 6];
+			resultsValVals = [1.3470294984018791, 3.112909844498046, 4.967352481769911];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.8367239858577353, 2.210556099993931]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.8483924814931876, 4];
+			resultsValVals = [1.8367239858577353, 11.981966375832453, 39.34878110454656];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.9540401412926336, 6.056432353383194]
+			catMin = 1;
+			catMax = 10;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.5844104554141858, 2.558427881104495, 10];
+			resultsValVals = [1.9540401412926336, 67.31219921189552, 24548.64985736736, 2225183.5179863917];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.1384149147480012, 0.2762585712743759]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 4.058030426393523, 6];
+			resultsValVals = [1.5006456374707577, 2.7684017513643067, 5.97263555719961];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.7999999999999979, 1.034977465516456]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.8154710586797078, 3.1745894898125546, 4];
+			resultsValVals = [2.252034239498936, 4.152738007182711, 7.3205776199890025, 50.23772863019174];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.5000000000000027, 2.302585092994045]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [1];
+			resultsStartValVals = [6];
+			resultsCatVals = [3.5, 4.925624950443996, 5.573636291554903, 6];
+			resultsValVals = [1581.1388300841957, 6771.4211390038145, 9130.640370330913, 500000.00000000064];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.1384149147480012, 0.2762585712743759]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 6];
+			resultsValVals = [1.5006456374707577, 5.9726355571996095];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.7999999999999979, 1.034977465516456]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 4];
+			resultsValVals = [2.2520342394989354, 50.237728630191725];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.5000000000000027, 2.302585092994045]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 6];
+			resultsValVals = [5.000000000000022, 499999.99999999994];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+
+
+
+		})
+	}
+
 	QUnit.module("ChartsDraw");
 
 	function startTests() {
@@ -2286,5 +3157,6 @@ $(function () {
 		testMovingAverageTrendLineResuts();
 		testDispR()
 		testIntercept();
+		testLineBuilderApproximatedBezier();
 	}
 });
