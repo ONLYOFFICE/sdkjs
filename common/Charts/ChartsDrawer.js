@@ -536,7 +536,7 @@ CChartsDrawer.prototype =
 			}
 		}
 
-    	return res;
+		return res;
 	},
 
 	_getSeriesById: function(oChart, id) {
@@ -1335,7 +1335,7 @@ CChartsDrawer.prototype =
 	//****calculate properties****
 	_calculateProperties: function (chartSpace) {
 		if (!this.calcProp.scale) {
-			this.preCalculateData(chartSpace, true);
+			this.preCalculateData(chartSpace);
 		}
 
 		//считаем маргины
@@ -2393,7 +2393,7 @@ CChartsDrawer.prototype =
 
 
 	//****functions for UP Functions****
-	preCalculateData: function (chartSpace, notCalcExtremum) {
+	preCalculateData: function (chartSpace) {
 		this._calculateChangeAxisMap(chartSpace);
 		this.cChartSpace = chartSpace;
 		this.calcProp.pxToMM = 1 / AscCommon.g_dKoef_pix_to_mm;
@@ -2408,9 +2408,7 @@ CChartsDrawer.prototype =
 		this.calcProp.yaxispos = null;
 
 		//рассчёт данных и ещё некоторых параметров(this.calcProp./min/max/ymax/ymin/)
-		// if (!notCalcExtremum) {
-			this._calculateExtremumAllCharts(chartSpace);
-		// }
+		this._calculateExtremumAllCharts(chartSpace);
 
 		//***series***
 		this.calcProp.series = chartSpace.chart.plotArea.chart.series;
@@ -2817,9 +2815,9 @@ CChartsDrawer.prototype =
 			resVal = firstVal.val - yPoints[0].val;
 			diffVal = yPoints[0].val - val;
 			if (isOx || isRect) {
-				result = yPoints[0].pos - (diffVal / resVal) * resPos;
+				result = yPoints[0].pos - Math.abs((diffVal / resVal) * resPos);
 			} else {
-				result = yPoints[0].pos + (diffVal / resVal) * resPos;
+				result = yPoints[0].pos + Math.abs((diffVal / resVal) * resPos);
 			}
 
 			if (!ignoreAxisLimits && (result > yPoints[yPoints.length - 1].pos || result < yPoints[0].pos)) {
@@ -2936,8 +2934,8 @@ CChartsDrawer.prototype =
 
 		const startingPos = yPoints[yPoints.length - 1].pos;
 		const stepDistance = yPoints[yPoints.length - 2].pos - yPoints[yPoints.length - 1].pos;
-		const startingPoint = Math.log(yPoints[yPoints.length - 1].val)/Math.log(logBase);
-		const currentPoint = Math.log(val)/Math.log(logBase);
+		const startingPoint = Math.log(yPoints[yPoints.length - 1].val) / Math.log(logBase);
+		const currentPoint = Math.log(val) / Math.log(logBase);
 		const pointsDiff = startingPoint - currentPoint;
 		return (stepDistance * pointsDiff) + startingPos;
 
@@ -10305,10 +10303,7 @@ drawHBarChart.prototype = {
 	_applyColorModeByBrush: function (brushFill, val) {
 		var props = this.cChartSpace.getParentObjects();
 		var duplicateBrush = brushFill.createDuplicate();
-		var cColorMod = new AscFormat.CColorMod;
-		cColorMod.val = val;
-
-		cColorMod.name = "shade";
+		var cColorMod = new AscFormat.CColorMod("shade", val);
 		duplicateBrush.addColorMod(cColorMod);
 		duplicateBrush.calculate(props.theme, props.slide, props.layout, props.master, new AscFormat.CUniColor().RGBA, this.cChartSpace.clrMapOvr);
 
@@ -11469,11 +11464,7 @@ drawPieChart.prototype = {
 				if (brush) {
 					var props = t.cChartSpace.getParentObjects();
 					var duplicateBrush = brush.createDuplicate();
-					var cColorMod = new AscFormat.CColorMod;
-
-					cColorMod.val = shadeValue;
-					cColorMod.name = shade;
-
+					var cColorMod = new AscFormat.CColorMod(shade, shadeValue);
 					if (duplicateBrush) {
 						duplicateBrush.addColorMod(cColorMod);
 						duplicateBrush.calculate(props.theme, props.slide, props.layout, props.master, new AscFormat.CUniColor().RGBA, t.cChartSpace.clrMapOvr);
@@ -12064,10 +12055,7 @@ drawPieChart.prototype = {
 				var duplicateBrush = brush;
 				if (n !== this.paths.series.length - 1) {
 					duplicateBrush = brush.createDuplicate();
-					var cColorMod = new AscFormat.CColorMod;
-
-					cColorMod.val = 35000;
-					cColorMod.name = "shade";
+					var cColorMod = new AscFormat.CColorMod("shade", 35000);
 
 					duplicateBrush.addColorMod(cColorMod);
 					duplicateBrush.calculate(props.theme, props.slide, props.layout, props.master, new AscFormat.CUniColor().RGBA, this.cChartSpace.clrMapOvr);
