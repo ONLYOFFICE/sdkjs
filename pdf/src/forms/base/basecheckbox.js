@@ -404,6 +404,7 @@
         oOverlay.ClearAll   = true;
 
         editor.getDocumentRenderer().onUpdateOverlay();
+        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseUp);
     };
     CBaseCheckBoxField.prototype.SetExportValue = function(sValue) {
         this._exportValue = sValue;

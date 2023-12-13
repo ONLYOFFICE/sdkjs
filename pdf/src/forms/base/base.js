@@ -152,7 +152,7 @@
         this._textFont      = undefined;
         this._fgColor       = undefined;
         this._textSize      = 10; // 0 == max text size // to do
-        this._fontStyle     = null; // информация о стиле шрифта (bold, italic)
+        this._fontStyle     = 0; // информация о стиле шрифта (bold, italic)
         this._userName      = ""; // It is intended to be used as tooltip text whenever the cursor enters a field. 
         //It can also be used as a user-friendly name, instead of the field name, when generating error messages.
         this._parent        = null;

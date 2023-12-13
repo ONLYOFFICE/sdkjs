@@ -4053,7 +4053,7 @@
 			// пишем изображения
 			oMemory.WriteLong(oMemory.images.length);
 			for (let i = 0; i < oMemory.images.length; i++) {
-				oMemory.WriteString(oMemory.images[i]);
+				oMemory.WriteStringA(oMemory.images[i]);
 			}
 
 			nEndPos = oMemory.GetCurPosition();
