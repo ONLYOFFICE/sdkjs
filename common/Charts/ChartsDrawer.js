@@ -16262,11 +16262,15 @@ CColorObj.prototype =
 					bezierVals: null,
 					pointVals: null,
 					boundary: null,
+					minLogVal: null,
 					startBezierVal: null
 				};
 			}
 			this.coordinates[chartId][seriaId].coords.catVals.push(xVal);
 			this.coordinates[chartId][seriaId].coords.valVals.push(yVal);
+			if (yVal > 0) {
+				this.coordinates[chartId][seriaId].minLogVal = !this.coordinates[chartId][seriaId].minLogVal ? yVal : Math.min(this.coordinates[chartId][seriaId].minLogVal, yVal);
+			}
 		},
 
 		preCalculate: function (charts, boundaries) {
@@ -16310,12 +16314,13 @@ CColorObj.prototype =
 					if (this.bAllowDrawByBezier && type !== AscFormat.TRENDLINE_TYPE_POLY) {
 						lineBuilder.setCalcXVal(equationStorage.calcXVal);
 						lineBuilder.setCalcSlope(equationStorage.calcSlope);
-						const lineCoords = lineBuilder.drawWithApproximatedBezier();
+						const cutPoint = valAxis.scaling.logBase ? (Math.log(1000) / Math.log(valAxis.scaling.logBase)) : 1000;
+						const lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
 						coordinates.bezierVals = lineCoords.mainLine;
 						coordinates.startBezierVal = lineCoords.startPoint;
 					}
 					if (this.bAllowDrawByPoints || type === AscFormat.TRENDLINE_TYPE_POLY) {
-						coordinates.pointVals = lineBuilder.drawWithPoints(midPointsNum);
+						coordinates.pointVals = lineBuilder.drawWithPoints(midPointsNum, coordinates.minLogVal);
 					}
 					coordinates.boundary = lineBuilder.getBoundary();
 
@@ -16448,8 +16453,8 @@ CColorObj.prototype =
 
 		// find moving average
 		// idea is to create sliding window with slight changes
-		// sum stant for the sum of all elements in the window
-		// counter stends for the amount of the elements in the window
+		// sum stands for the sum of all elements in the window
+		// counter stands for the amount of the elements in the window
 		_getMAline: function (catVals, valVals, ptCount, period, allow) {
 			const result = {catVals: [], valVals: []};
 			if (ptCount > period) {
@@ -16911,7 +16916,7 @@ CColorObj.prototype =
 		}
 	};
 
-	function CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, isLog) {
+	function CLineBuilder (chartletiables, catMin, catMax, valMin, valMax, isLog) {
 		this.chartletiables = chartletiables;
 		this.valMin = valMin;
 		this.valMax = valMax;
@@ -16929,27 +16934,35 @@ CColorObj.prototype =
 
 		constructor: CLineBuilder,
 
-		setCalcYVal: function (func) {
+		setCalcYVal : function (func) {
 			this.calcYVal = func;
 		},
 
-		setCalcXVal: function (func) {
+		setCalcXVal : function (func) {
 			this.calcXVal = func;
 		},
 
-		setCalcSlope: function (func) {
+		setCalcSlope : function (func) {
 			this.calcSlope = func;
 		},
 
-		getBoundary: function () {
+		getBoundary : function () {
 			return this.boundary;
 		},
 
 		// calculate approximated bezier
 		// normalize if axis in log scale
 		// find boundary
-		drawWithApproximatedBezier: function () {
-			const results = this._calcApproximatedBezier();
+		drawWithApproximatedBezier: function (error, tailLimit, cutPoint) {
+			error = error ? error : 0.01;
+			tailLimit = tailLimit ? tailLimit : 1.56;
+			if ( this.isLog && !cutPoint) {
+				cutPoint = Math.log(1000) / Math.log(this.isLog);
+			}
+			if ( !this.isLog && !cutPoint) {
+				cutPoint = 1000;
+			}
+			const results = this._calclApproximatedBezier(error, tailLimit, cutPoint);
 			if (this.isLog) {
 				this._normalize(results.mainLine);
 				this._normalize(results.startPoint);
@@ -16961,10 +16974,10 @@ CColorObj.prototype =
 			let valMaxStart = results.startPoint.valVals.length > 0 ? results.startPoint.valVals[0] : null;
 
 			let size = results.mainLine.catVals.length;
-			let catMin = Math.min(results.mainLine.catVals[0], results.mainLine.catVals[size - 1]);
-			let catMax = Math.max(results.mainLine.catVals[0], results.mainLine.catVals[size - 1]);
-			let valMin = Math.min(results.mainLine.valVals[0], results.mainLine.valVals[size - 1]);
-			let valMax = Math.max(results.mainLine.valVals[0], results.mainLine.valVals[size - 1]);
+			let catMin = Math.min(results.mainLine.catVals[0], results.mainLine.catVals[size-1]);
+			let catMax = Math.max(results.mainLine.catVals[0], results.mainLine.catVals[size-1]);
+			let valMin = Math.min(results.mainLine.valVals[0], results.mainLine.valVals[size-1]);
+			let valMax = Math.max(results.mainLine.valVals[0], results.mainLine.valVals[size-1]);
 
 			if (results.startPoint.valVals.length > 0) {
 				catMin = Math.min(catMin, catMinStart);
@@ -16974,7 +16987,7 @@ CColorObj.prototype =
 			}
 
 			if (!this.boundary) {
-				this.boundary = {catMin: catMin, catMax: catMax, valMin: valMin, valMax: valMax};
+				this.boundary = {catMin : catMin, catMax: catMax, valMin : valMin, valMax: valMax};
 			} else {
 				this.boundary.catMin = Math.min(this.boundary.catMin, catMin);
 				this.boundary.catMax = Math.max(this.boundary.catMax, catMax);
@@ -16987,10 +17000,13 @@ CColorObj.prototype =
 		// this function can return two lines 
 		// secondaryLine which is just a straight line 
 		// primaryLine which is bezier driven line
-		_calcApproximatedBezier: function () {
+		_calclApproximatedBezier: function (error, tailLimit, cutPoint) {
+			// error: the threshold to check the accuracy of the approximated line 
+			// tailLimit: the threshold at which the slope of the point becomes too high leading to its arctangent to become high
+			// cutPoint: the threshold at which line should be cutted. For lines with a long tails, approximation does not work, therefore they must be cutted
 			const controlPoints = {catVals: [], valVals: []};
-			if (!this.calcYVal || !this.calcXVal || !this.calcSlope) {
-				return
+			if (!this.calcYVal || !this.calcXVal || !this.calcSlope){
+				return 
 			}
 
 			// Step 1 find edges of line 
@@ -17003,12 +17019,12 @@ CColorObj.prototype =
 
 			// yValue for log scale can not be <= 0
 			if (this.isLog) {
-				const lowerBoundary = -2;
+				const lowerBoundary = (Math.log(0.01) / Math.log(this.isLog));
 				if (isNaN(start.valVal)) {
-					this._lineCoordinate(start, lowerBoundary, false);
+				this._lineCoordinate(start, lowerBoundary, false);
 				}
 				if (isNaN(end.valVal)) {
-					this._lineCoordinate(start, lowerBoundary, false);
+				this._lineCoordinate(start, lowerBoundary, false);
 				}
 			}
 
@@ -17022,19 +17038,17 @@ CColorObj.prototype =
 
 			// if the slope is to low at the end point, then
 			// starting point should be in the range of three order of magnitude. 
-			const magnitudeOfThree = this.isLog ? 3 : 1000;
-			const lowestPoint = this.isLog ? end.valVal - magnitudeOfThree : end.valVal / magnitudeOfThree;
+			const lowestPoint = this.isLog ? end.valVal - cutPoint : end.valVal / cutPoint;
 
 			// sometimes graph can have huge tails, to detect them use slope of starting and end point of line
 			// if the slope of the starting point is to high, then cut the line up to certain point (lowestPoint)
-			const slopeTurningPoint = 1.56;
-			if (Math.atan(line2Letiables[1]) < slopeTurningPoint && Math.atan(line1Letiables[1]) > slopeTurningPoint && start.valVal < lowestPoint) {
+			if (Math.atan(line2Letiables[1]) < tailLimit && Math.atan(line1Letiables[1]) > tailLimit && start.valVal < lowestPoint) {
 				this._lineCoordinate(start, lowestPoint, false);
 				line1Letiables = this._findLine(start.catVal, start.valVal);
 			}
 			// if the slope of the ending point is to high, then cut the line into 2/3 of its original size
 			const startPoint = {catVals: [], valVals: []};
-			if (Math.atan(line1Letiables[1]) < slopeTurningPoint && Math.atan(line2Letiables[1]) > slopeTurningPoint) {
+			if (Math.atan(line1Letiables[1]) < tailLimit && Math.atan(line2Letiables[1]) > tailLimit) {
 				startPoint.catVals.push(start.catVal);
 				startPoint.valVals.push(end.catVal);
 				this._lineCoordinate(start, (end.catVal + start.catVal) / 2, true);
@@ -17068,9 +17082,7 @@ CColorObj.prototype =
 			direction = diff1 > diff2 ? false : direction;
 
 			// --------------------------------------
-			const error = 0.01;
 
-			// --------------------------------------
 			//Step 4 check mid control point
 			const val1 = this._predictY(controlPoints.valVals, 1);
 			const val2 = this._predictY(controlPoints.valVals, 0);
@@ -17117,7 +17129,7 @@ CColorObj.prototype =
 		},
 
 		// find catVal and valVal of line at given point
-		_lineCoordinate: function (point, val, calcValAxis) {
+		_lineCoordinate : function (point, val, calcValAxis) {
 			if (calcValAxis) {
 				point.catVal = val;
 				point.valVal = this.calcYVal(val, this.chartletiables, this.isLog);
@@ -17128,23 +17140,23 @@ CColorObj.prototype =
 		},
 
 		// Check for val boundary
-		_checkBoundaries: function (pos) {
-			if (this.valMin) {
+		_checkBoundaries : function (pos) {
+			if (this.valMin){
 				let lowerBoundary = this.isLog ? (Math.log(this.valMin) / Math.log(this.isLog)) : this.valMin;
 				if (pos.valVal < lowerBoundary) {
 					this._lineCoordinate(pos, lowerBoundary, false);
-				}
+				} 
 			}
-			if (this.valMax) {
+			if (this.valMax){
 				let upperBoundary = this.isLog ? (Math.log(this.valMax) / Math.log(this.isLog)) : this.valMax;
 				if (pos.valVal > upperBoundary) {
 					this._lineCoordinate(pos, upperBoundary, false);
-				}
+				} 
 			}
 		},
 
 		// find slope of the line at given point
-		_findLine: function (catVal, valVal) {
+		_findLine : function (catVal, valVal) {
 			const m = this.calcSlope(catVal, this.chartletiables, this.isLog);
 			const b = valVal - (m * catVal);
 			return [b, m];
@@ -17153,7 +17165,7 @@ CColorObj.prototype =
 		// predict catVal and valVal from bezier line using bernstein polynomials
 		// find actual valVal at given predicted catVal
 		// compare both valVals (actual and predicted) on normalized scale
-		_check: function (controlPoints, valMin, valMax) {
+		_check : function (controlPoints, valMin, valMax) {
 
 			const t = 0.5;
 			const predictedYVal = this._predictY(controlPoints.valVals, t);
@@ -17165,7 +17177,7 @@ CColorObj.prototype =
 		},
 
 		//https://en.wikipedia.org/wiki/B%C3%A9zier_curve
-		_predictY: function (cP, t) {
+		_predictY : function (cP, t) {
 			const len = cP.length;
 			const a = this._obtainBernsteinPolynomials(len - 1, t);
 			let result = 0;
@@ -17175,7 +17187,7 @@ CColorObj.prototype =
 			return result;
 		},
 
-		_obtainBernsteinPolynomials: function (len, t) {
+		_obtainBernsteinPolynomials : function (len, t) {
 			const result = [];
 			result.push(Math.pow((1 - t), len));
 			result.push(len * t * Math.pow((1 - t), (len - 1)));
@@ -17186,17 +17198,18 @@ CColorObj.prototype =
 			return result
 		},
 
-		_normalize: function (arr) {
+		_normalize : function (arr) {
 			for (let i = 0; i < arr.valVals.length; i++) {
 				arr.valVals[i] = Math.pow(this.isLog, arr.valVals[i]);
 			}
 		},
 
 		// set calcYVal!
-		drawWithPoints: function (pointsNumber) {
+		drawWithPoints : function (pointsNumber, valMin) {
+
 			const results = {catVals: [], valVals: []};
 
-			if (!this.calcYVal) {
+			if (!this.calcYVal){
 				return results;
 			}
 
@@ -17221,7 +17234,7 @@ CColorObj.prototype =
 				}
 
 				// if there exist positive point along the line, take last positive point
-				if (k !== pointsNumber - 1) {
+				if (k != pointsNumber - 1){
 					while (j >= 0) {
 						const catValMax = (catNet / (pointsNumber - 1)) * j + this.catMin;
 						let valValMax = this.calcYVal(catValMax, this.chartletiables);
@@ -17235,27 +17248,27 @@ CColorObj.prototype =
 				}
 
 				// compare if first or last points actually changed 
-				if (k !== 0 || j !== pointsNumber - 1) {
+				if (k != 0 || j != pointsNumber - 1){
 					catNet = this.catMax - this.catMin;
 				}
 			}
 
 			// find everything between edges
 			// k is index of first point and j is index oj last point
-			if (k !== j) {
+			if (k != j) {
 				for (let i = 0; i < remainder; i++) {
 					const catVal = (catNet / (remainder - 1)) * i + this.catMin;
 					let valVal = this.calcYVal(catVal, this.chartletiables);
 					//in the log axis, yVal can not be negative
 					if (this.isLog && valVal <= 0) {
-						valVal = 0.01;
+						valVal = valMin ? Math.pow(this.isLog, Math.floor(Math.log(valMin) / Math.log(this.isLog))) : 0.01;
 					}
 
 					results.catVals.push(catVal);
 					results.valVals.push(valVal);
 
 					if (!this.boundary) {
-						this.boundary = {catMin: catVal, catMax: catVal, valMin: valVal, valMax: valVal};
+						this.boundary = {catMin : catVal, catMax: catVal, valMin : valVal, valMax: valVal};
 					} else {
 						this.boundary.catMin = Math.min(this.boundary.catMin, catVal);
 						this.boundary.catMax = Math.max(this.boundary.catMax, catVal);
@@ -17274,5 +17287,6 @@ CColorObj.prototype =
 	window['AscFormat'].CChartsDrawer = CChartsDrawer;
 	window['AscFormat'].CColorObj = CColorObj;
 	window['AscFormat'].CTrendline = CTrendline;
+	window['AscFormat'].CLineBuilder = CLineBuilder;
 	window["AscFormat"].c_oChartTypes = c_oChartTypes;
 })(window);
