@@ -9355,9 +9355,9 @@ drawHBarChart.prototype = {
 					isValLessZero++;
 				}
 
-				if (this.valAx && this.valAx.scaling.logBase) {
+				/*if (this.valAx && this.valAx.scaling.logBase) {
 					val = this.cChartDrawer.getLogarithmicValue(val, this.valAx.scaling.logBase, xPoints);
-				}
+				}*/
 				idx = seria[j].idx != null ? seria[j].idx : j;
 
 
