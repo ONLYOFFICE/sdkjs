@@ -1942,12 +1942,10 @@
         this.WriteToBinaryBase(memory);
         this.WriteToBinaryBase2(memory);
 
-        // value (зачем оно у кнопок?)
-        memory.fieldFlags2 |= (1 << 9);
-        
         // флаги кнопки
         let nPosForButtonFlags  = memory.GetCurPosition();
         let nButtonFlags        = 0;
+        memory.Skip(4);
         
         // normal caption
         let sCaption = this.GetCaption(CAPTION_TYPES.normal);
@@ -2007,42 +2005,37 @@
             nButtonFlags |= (1 << 4);
         }
 
+        function WriteImage(memory, nImgType) {
+            // let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(nImgType));
+            let oBlipFill = new AscFormat.CBlipFill();
+            oBlipFill.RasterImageId = this.GetImageRasterId(nImgType);
+            let sBase64 = oBlipFill.getBase64Data(false, false).img;
+
+            // let nExistIdx = memory.images.indexOf(sPathToImg);
+            let nExistIdx = memory.images.indexOf(sBase64);
+            // пишем индекс картинки в массиве
+            if (nExistIdx === -1) {
+                memory.WriteLong(memory.images.length);
+                // memory.images.push(sPathToImg);
+                memory.images.push(sBase64);
+            }
+            else
+                memory.WriteLong(nExistIdx);
+        }
+
         // запись картинок. добавляем в уникальный массив, далее пишем картинки на уровне родителей
         if (this.IsImageChanged(AscPDF.APPEARANCE_TYPE.normal)) {
-            memory.fieldFlags2 |= (1 << 5);
-            let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(AscPDF.APPEARANCE_TYPE.normal));
-            let nExistIdx = memory.images.indexOf(sPathToImg);
-            // пишем индекс картинки в массиве
-            if (nExistIdx === -1) {
-                memory.WriteLong(memory.images.length);
-                memory.images.push(sPathToImg);
-            }
-            else
-                memory.WriteLong(nExistIdx);
+            nButtonFlags |= (1 << 5);
+            WriteImage.call(this, memory, AscPDF.APPEARANCE_TYPE.normal);
+            
         }
         if (this.IsImageChanged(AscPDF.APPEARANCE_TYPE.mouseDown)) {
-            memory.fieldFlags2 |= (1 << 5);
-            let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(AscPDF.APPEARANCE_TYPE.mouseDown));
-            let nExistIdx = memory.images.indexOf(sPathToImg);
-            // пишем индекс картинки в массиве
-            if (nExistIdx === -1) {
-                memory.WriteLong(memory.images.length);
-                memory.images.push(sPathToImg);
-            }
-            else
-                memory.WriteLong(nExistIdx);
+            nButtonFlags |= (1 << 6);
+            WriteImage.call(this, memory, AscPDF.APPEARANCE_TYPE.mouseDown);
         }
         if (this.IsImageChanged(AscPDF.APPEARANCE_TYPE.rollover)) {
-            memory.fieldFlags2 |= (1 << 5);
-            let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(AscPDF.APPEARANCE_TYPE.rollover));
-            let nExistIdx = memory.images.indexOf(sPathToImg);
-            // пишем индекс картинки в массиве
-            if (nExistIdx === -1) {
-                memory.WriteLong(memory.images.length);
-                memory.images.push(sPathToImg);
-            }
-            else
-                memory.WriteLong(nExistIdx);
+            nButtonFlags |= (1 << 7);
+            WriteImage.call(this, memory, AscPDF.APPEARANCE_TYPE.rollover);
         }
 
         let nEndPos = memory.GetCurPosition();

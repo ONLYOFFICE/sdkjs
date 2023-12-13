@@ -4056,6 +4056,8 @@
 				oMemory.WriteString(oMemory.images[i]);
 			}
 
+			nEndPos = oMemory.GetCurPosition();
+
 			// длина комманд с информацией о родителях, CO и картинках
 			oMemory.Seek(nPosForLenght);
 			oMemory.WriteLong(nEndPos - nPosForLenght);

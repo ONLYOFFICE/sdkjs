@@ -507,16 +507,13 @@
         // т.к. значение будет хранить родитель
         let oParent = this.GetParent();
         if (oParent == null || oParent.IsAllChildsSame() == false) {
+            memory.fieldFlags2 |= (1 << 9);
             if (isChecked) {
                 memory.WriteString("Yes");
-                memory.fieldFlags2 |= (1 << 9);
             }
             else
                 memory.WriteString("Off");
         }
-        
-        // just some flags (need to write, but used only in pushbutton)
-        memory.WriteLong(0);
         
         // check symbol
         memory.WriteByte(this.GetStyle());
