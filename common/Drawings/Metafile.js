@@ -840,7 +840,7 @@
 		}
 		this.WriteStringA = function(text)
 		{
-			var count = text.length & 0xFFFF;
+			var count = text.length;
 			this.WriteULong(count);
 			this.CheckSize(count);
 			for (var i=0;i<count;i++)

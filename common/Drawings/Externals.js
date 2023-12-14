@@ -563,9 +563,9 @@
             let fontfile = font_loader.fontFiles[this.indexR];
 
             var pFontFile = fontManager.LoadFont(fontfile, this.faceIndexR, fEmSize,
-                (0 !== (style & FontStyle.FontStyleBold)) ? true : false,
-                (0 !== (style & FontStyle.FontStyleItalic)) ? true : false,
-                info.needB, info.needI,
+                false,
+                false,
+                false, false,
                 isNoSetupToManager);
 
             if (pFontFile && (true !== isNoSetupToManager))

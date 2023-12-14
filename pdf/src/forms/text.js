@@ -62,7 +62,7 @@
 
         // content for formatting value
         // Note: draw this content instead of main if form has a "format" action
-		this.contentFormat = new AscPDF.CTextBoxContent(this, oDoc);
+		this.contentFormat = new AscPDF.CTextBoxContent(this, oDoc, true);
 
         this._scrollInfo = null;
     }
@@ -932,6 +932,8 @@
         }
 		
 		let fieldValue = this.GetValue();
+        this.UpdateDisplayValue(fieldValue);
+
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i].IsChanged() == false)
                 aFields[i].SetWasChanged(true); // фиксируем, что форма была изменена

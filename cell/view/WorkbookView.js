@@ -564,6 +564,15 @@
 			  }, "onContextMenu": function (event, type) {
 				  self.handlers.trigger("asc_onContextMenu", event, type);
 			  },
+			  "isRightClickFill": function () {
+				  let ws = self.getWorksheet();
+				  let selection = ws && ws.model && ws.model.getSelection();
+				  selection = selection && selection.isSingleRange() && selection.getLast();
+				  if (ws.activeFillHandle && selection && !selection.containsRange(ws.activeFillHandle)) {
+					  return true;
+				  }
+				  return false;
+			  },
 
 			  // DataValidation
 			  "onDataValidation": function () {

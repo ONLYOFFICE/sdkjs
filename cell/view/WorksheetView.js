@@ -26831,7 +26831,22 @@
 					History.Create_NewPoint();
 					History.StartTransaction();
 
-					oThis.applyFillHandle(null, null, true, true, function (success) {
+					let isCtrlKey = true;
+					if (((type === c_oAscFillType.fillDown || type === c_oAscFillType.fillUp) && aRanges[0].c1 === aRanges[0].c2) ||
+						((type === c_oAscFillType.fillLeft || type === c_oAscFillType.fillRight) && aRanges[0].r1 === aRanges[0].r2)) {
+						let nFormatType = Asc.c_oAscNumFormatType.None;
+						this.model.getCell3(aRanges[0].r1, aRanges[0].c1)._foreachNoEmpty(function (cell) {
+							nFormatType = cell.getNumFormatType();
+						});
+
+						if (nFormatType === Asc.c_oAscNumFormatType.Date || nFormatType === Asc.c_oAscNumFormatType.LongDate || nFormatType === Asc.c_oAscNumFormatType.Time) {
+							isCtrlKey = true;
+						} else {
+							isCtrlKey = false;
+						}
+					}
+
+					oThis.applyFillHandle(null, null, isCtrlKey, true, function (success) {
 						_setSelection(_cloneSelection);
 
 						History.SetSelection(_cloneSelection);

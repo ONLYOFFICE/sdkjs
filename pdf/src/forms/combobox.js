@@ -46,7 +46,7 @@
 
         // content for formatting value
         // Note: draw this content instead of main if form has a "format" action
-		this.contentFormat = new AscPDF.CTextBoxContent(this, oDoc);
+		this.contentFormat = new AscPDF.CTextBoxContent(this, oDoc, true);
 
         this._markRect = null;
     }

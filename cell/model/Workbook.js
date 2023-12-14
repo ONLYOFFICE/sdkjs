@@ -20261,10 +20261,10 @@
 					oSerial.initToRange(oFilledRange);
 					let oToRange = oSerial.getToRange();
 					aFilledCells.push({
-						'nValue': oCell.getNumberValue(),
-						'oToRange': oToRange,
-						'oCell': oCell.duplicate(),
-						'oFilledRange': oFilledRange
+						nValue: oCell.getNumberValue(),
+						oToRange: oToRange,
+						oCell: oCell.duplicate(),
+						oFilledRange: oFilledRange
 					});
 				}
 			}
