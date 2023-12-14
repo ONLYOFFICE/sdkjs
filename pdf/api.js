@@ -468,7 +468,7 @@
 		if (!oActiveForm)
 			return;
 
-		let sDate = oPr.get_String();
+		let sDate = oPr.ToString();
 		let oActionsQueue = oDoc.GetActionsQueue();
 		
 		let oCurDate = new Date();
