@@ -223,6 +223,8 @@
 		this.isDocumentContentReady = false;
 
 		this.doc = new AscPDF.CPDFDoc(this);
+		AscCommon.History.Document = this.doc;
+
 		if (typeof CGraphicObjects !== "undefined") {
 			this.DrawingObjects = new CGraphicObjects(this.doc, editor.WordControl.m_oDrawingDocument, this.Api);
 			this.DrawingObjects.saveDocumentState = null;

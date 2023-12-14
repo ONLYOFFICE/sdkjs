@@ -1218,6 +1218,8 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.UpdateUndoRedo = function() {
 		editor.sync_CanUndoCallback(this.History.Can_Undo());
 		editor.sync_CanRedoCallback(this.History.Can_Redo());
+
+        editor.CheckChangedDocument();
     };
     CPDFDoc.prototype.SetEvent = function(oEventPr) {
         if (oEventPr["target"] != null && oEventPr["target"] != this.event["target"])
@@ -2225,6 +2227,23 @@ var CPresentation = CPresentation || function(){};
         return null;
     };
 	
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Extension required for History
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    CPDFDoc.prototype.IsViewModeInReview = function() {
+        return false;
+    };
+    CPDFDoc.prototype.Is_OnRecalculate = function() {
+        return false;
+    };
+    CPDFDoc.prototype.GetSelectionState = function() {
+        return null;
+    };
+    CPDFDoc.prototype.SetSelectionState = function(oState) {
+        return;
+    };
+    CPDFDoc.prototype.RemoveSelection = function() {};
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Extension required for CTextBoxContent
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

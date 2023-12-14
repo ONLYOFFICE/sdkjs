@@ -88,6 +88,45 @@
 		let perfEnd = performance.now();
 		AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onOpenDocument", perfEnd - perfStart), this);
 	};
+	PDFEditorApi.prototype.CheckChangedDocument = function()
+	{
+		if (true === AscCommon.History.Have_Changes())
+		{
+			this.SetDocumentModified(true);
+		}
+		else
+		{
+			this.SetDocumentModified(false);
+		}
+
+		this._onUpdateDocumentCanSave();
+	};
+	PDFEditorApi.prototype.SetUnchangedDocument = function()
+	{
+		this.SetDocumentModified(false);
+		this._onUpdateDocumentCanSave();
+	};
+
+	PDFEditorApi.prototype.SetDocumentModified = function(bValue)
+	{
+		this.isDocumentModify = bValue;
+		this.sendEvent("asc_onDocumentModifiedChanged");
+
+		if (undefined !== window["AscDesktopEditor"])
+		{
+			window["AscDesktopEditor"]["onDocumentModifiedChanged"](bValue);
+		}
+	};
+
+	PDFEditorApi.prototype.isDocumentModified = function()
+	{
+		if (!this.canSave)
+		{
+			// Пока идет сохранение, мы не закрываем документ
+			return true;
+		}
+		return this.isDocumentModify;
+	};
 	PDFEditorApi.prototype.isPdfEditor = function() {
 		return true;
 	};
