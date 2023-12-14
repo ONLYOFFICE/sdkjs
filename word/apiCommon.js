@@ -2178,7 +2178,7 @@
 		}
 		var t = this.Api;
 		var _this = this;
-		AscCommon.ShowImageFileDialog(t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(), function(error, files)
+		AscCommon.ShowImageFileDialog(t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(), t.documentShardKey, function(error, files)
 			{
 				if (Asc.c_oAscError.ID.No !== error)
 				{
@@ -2187,7 +2187,7 @@
 				else
 				{
 					t.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
-					AscCommon.UploadImageFiles(files, t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(), function(error, urls)
+					AscCommon.UploadImageFiles(files, t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(), t.documentShardKey, function(error, urls)
 					{
 						if (Asc.c_oAscError.ID.No !== error)
 						{

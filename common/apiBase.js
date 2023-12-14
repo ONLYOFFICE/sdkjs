@@ -81,6 +81,7 @@
 		this.documentFormat      = "null";
 		this.documentTitle       = "null";
 		this.documentFormatSave  = Asc.c_oAscFileType.UNKNOWN;
+		this.documentShardKey  = undefined;
 
 		this.documentOpenOptions = undefined;		// Опции при открытии (пока только опции для CSV)
 
@@ -494,6 +495,15 @@
 					window["Asc"]["Addons"]["forms"] = false;
 					AscCommon.g_oTableId.InitOFormClasses();
 				}
+
+				if (this.documentOpenOptions["WOPISrc"])
+				{
+					this.documentShardKey = this.documentOpenOptions["WOPISrc"];
+				}
+			}
+			if (!this.documentShardKey) {
+				//todo add tenant in origin?
+				this.documentShardKey = this.documentId;
 			}
 		}
 
@@ -1848,7 +1858,7 @@
 		};
 
 		this._coAuthoringInitEnd();
-		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo);
+		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo, this.documentShardKey);
 	};
 	baseEditorsApi.prototype._coAuthoringInitEnd                 = function()
 	{
@@ -2290,7 +2300,7 @@
 		var t = this;
         if (this.WordControl) // после показа диалога может не прийти mouseUp
         	this.WordControl.m_bIsMouseLock = false;
-		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), function(error, files)
+		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, function(error, files)
 		{
 			t._uploadCallback(error, files, obj);
 		}, function(error)
@@ -2323,7 +2333,7 @@
 			}
 			obj && obj.fStartUploadImageCallback && obj.fStartUploadImageCallback();
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
-			AscCommon.UploadImageFiles(files, this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), function(error, urls)
+			AscCommon.UploadImageFiles(files, this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, function(error, urls)
 			{
 				if (c_oAscError.ID.No !== error)
 				{

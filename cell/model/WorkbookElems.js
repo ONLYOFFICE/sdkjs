@@ -9004,6 +9004,7 @@ function RangeDataManagerElem(bbox, data)
 
 		if (this.Ref.containsRange(handleSelectionRange)) {
 
+			let argsSeparator = AscCommon.FormulaSeparators.functionArgumentSeparator;
 			let startCol = this.getTableNameColumnByIndex(handleSelectionRange.c1 - this.Ref.c1);
 			let endCol = this.getTableNameColumnByIndex(handleSelectionRange.c2 - this.Ref.c1);
 
@@ -9013,7 +9014,7 @@ function RangeDataManagerElem(bbox, data)
 			} else if (this.Ref.r1 === handleSelectionRange.r1 && this.Ref.r2 === handleSelectionRange.r2) {
 				//Table1[[#All];[Column1]]
 				//Table1[[#All];[Column1]:[Column2]]
-				return this.DisplayName + "[" + "[" + AscCommon.cStrucTableReservedWords.all + "]" + ";" + getColumnNameRange(startCol, endCol, true);
+				return this.DisplayName + "[" + "[" + AscCommon.cStrucTableReservedWords.all + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
 			}
 
 			let dataContains = this._isDataTableContainsRange(handleSelectionRange);
@@ -9057,7 +9058,7 @@ function RangeDataManagerElem(bbox, data)
 				if (totalContains.all) {
 					return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.totals + "]";
 				} else {
-					return this.DisplayName + "[" + "[" +  AscCommon.cStrucTableReservedWords.totals + "]" + ";" + getColumnNameRange(startCol, endCol, true) + "]";
+					return this.DisplayName + "[" + "[" +  AscCommon.cStrucTableReservedWords.totals + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
 				}
 			}
 
@@ -9067,7 +9068,7 @@ function RangeDataManagerElem(bbox, data)
 				if (headerContains.all) {
 					return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.headers + "]";
 				} else {
-					return this.DisplayName + "[" + "[" +  AscCommon.cStrucTableReservedWords.headers + "]" + ";" + getColumnNameRange(startCol, endCol, true) + "]";
+					return this.DisplayName + "[" + "[" +  AscCommon.cStrucTableReservedWords.headers + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
 				}
 			}
 
@@ -9095,7 +9096,7 @@ function RangeDataManagerElem(bbox, data)
 				}
 				if (dataContains) {
 					if (needDelimiter) {
-						res += ";";
+						res += argsSeparator;
 					}
 					res += "[" + AscCommon.cStrucTableReservedWords.data + "]";
 					needDelimiter = true;
@@ -9105,7 +9106,7 @@ function RangeDataManagerElem(bbox, data)
 				}
 				if (totalContains) {
 					if (needDelimiter) {
-						res += ";";
+						res += argsSeparator;
 					}
 					res += "[" + AscCommon.cStrucTableReservedWords.totals + "]";
 					needDelimiter = true;
@@ -9115,7 +9116,7 @@ function RangeDataManagerElem(bbox, data)
 				}
 
 				if (!isAll) {
-					res += ";" + getColumnNameRange(startCol, endCol, true);
+					res += argsSeparator + getColumnNameRange(startCol, endCol, true);
 				}
 
 				res += "]";
