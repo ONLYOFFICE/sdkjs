@@ -702,7 +702,7 @@ var CPresentation = CPresentation || function(){};
 		if (!this.checkDefaultFieldFonts(function(){_t.OnMouseDownField(oField, event)}))
 			return;
 		
-        if (oField.IsNeedDrawFromStream()) {
+        if (oField.IsNeedDrawFromStream() || oField.IsNeedRecalc()) {
 		    oField.Recalculate();
             oField.SetNeedRecalc(true);
         }

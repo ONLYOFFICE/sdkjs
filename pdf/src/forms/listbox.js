@@ -51,6 +51,10 @@
         // internal
         this._scrollInfo = null;
         this._bAutoShiftContentView = true;
+
+        this._internalMargins = {
+            bottom: Infinity
+        }
     };
     CListBoxField.prototype = Object.create(AscPDF.CBaseListField.prototype);
 	CListBoxField.prototype.constructor = CListBoxField;
@@ -256,7 +260,12 @@
         return this._multipleSelection;
     };
     CListBoxField.prototype.SelectOption = function(nIdx, isSingleSelect) {
-        if (this.GetCurIdxs() == nIdx)
+        let curIdxs = this.GetCurIdxs();
+        if (Array.isArray(curIdxs)) {
+            if (curIdxs.includes(nIdx))
+                return;
+        }
+        else if (curIdxs == nIdx)
             return;
             
         let oPara = this.content.GetElement(nIdx);
@@ -692,7 +701,14 @@
         
         let nFirstSelectedPara = 0;
         if (curIdx != null) {
-            nFirstSelectedPara = Array.isArray(curIdx) ? Number(curIdx[0]) : Number(curIdx)
+            if (Array.isArray(curIdx)) {
+                if (curIdx.length == 0)
+                    return;
+
+                nFirstSelectedPara = Number(curIdx[0]);
+            }
+            else
+                nFirstSelectedPara = Number(curIdx);
         }
         
         let oParagraph  = this.content.GetElement(nFirstSelectedPara);
@@ -705,8 +721,11 @@
         let nDy = 0, nDx = 0;
         
         if (oPageBounds.Bottom - oPageBounds.Top > oFormBounds.H) {
-            if (oParagraph.Y + oCurParaHeight > oFormBounds.Y + oFormBounds.H)
-                nDy = oFormBounds.Y + oFormBounds.H - (oParagraph.Y + oCurParaHeight);
+            if (oParagraph.Y + oCurParaHeight - oCurParaHeight * 0.1> oFormBounds.Y + oFormBounds.H) {
+                nDy = oFormBounds.Y + oFormBounds.H - (oParagraph.Y + oCurParaHeight) - (isFinite(this._internalMargins.bottom) ? this._internalMargins.bottom : 0);
+                // nDy = oFormBounds.Y + oFormBounds.H - (oParagraph.Y + oCurParaHeight);
+            }
+                
             else if (oParagraph.Y < oFormBounds.Y)
                 nDy = oFormBounds.Y - oParagraph.Y;
             else if (oParagraph.Y + oCurParaHeight < oFormBounds.Y)
@@ -727,6 +746,10 @@
         else {
             this._originShiftView.x = this._curShiftView.x;
             this._originShiftView.y = this._curShiftView.y;
+        }
+
+        if (nDy == 0) {
+            this._internalMargins.bottom = Math.min(this._internalMargins.bottom, (oFormBounds.Y + oFormBounds.H) - (oParagraph.Y + oCurParaHeight));
         }
     };
     /**
