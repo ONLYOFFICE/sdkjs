@@ -808,7 +808,7 @@
         if (aBgColor && aBgColor.length != 0)
             oBgRGBColor = AscPDF.MakeColorMoreGray(oBgRGBColor, 50);
         
-        let nLineWidth = this._lineWidth;
+        let nLineWidth = this._lineWidth != undefined ? this._lineWidth : 1;
 
         if (nLineWidth == 0) {
             return;
@@ -922,8 +922,11 @@
             return;
         }
         else {
+            // по умолчанию рисуется solid
+            let nBorderStyle = this.GetBorderStyle() != undefined ? this.GetBorderStyle() : BORDER_TYPES.solid;
+
             // отрисовка
-            switch (this._borderStyle) {
+            switch (nBorderStyle) {
                 case BORDER_TYPES.solid:
                     if (color == null)
                         break;

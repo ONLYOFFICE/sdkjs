@@ -1923,32 +1923,6 @@
     CPushButtonField.prototype.Reset = function() {
     };
 	CPushButtonField.prototype.WriteToBinary = function(memory) {
-        // TODO
-		/*
-		if (шрифт_у_CTextField_как-либо_изменялся)
-		{
-			// Также как функция SetFont в common/Drawings/Metafile.js
-			
-			if (шрифт_изменялся)
-			{
-				memory.WriteByte(AscCommon.CommandType.ctFontName);
-				memory.WriteString(this.m_oFont.Name);
-			}
-			
-			if (размер_шрифта_изменялся)
-			{
-				memory.WriteByte(AscCommon.CommandType.ctFontSize);
-				memory.WriteDouble(this.m_oFont.FontSize);
-			}
-			
-			if (стиль_шрифта_изменялся)
-			{
-				memory.WriteByte(AscCommon.CommandType.ctFontStyle);
-				memory.WriteLong(style);
-			}
-		}
-		*/
-
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
         // длина комманд
