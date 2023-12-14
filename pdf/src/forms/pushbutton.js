@@ -107,9 +107,9 @@
     }
     CPushButtonField.prototype = Object.create(AscPDF.CBaseField.prototype);
     CPushButtonField.prototype.constructor = CPushButtonField;
-    CPushButtonField.prototype.IsNeedDrawFromStream = function() {
-        return false;
-    };
+    // CPushButtonField.prototype.IsNeedDrawFromStream = function() {
+    //     return false;
+    // };
     CPushButtonField.prototype.AddImage = function(oImgData, nAPType) {
         if (!oImgData) {
             return;
@@ -327,7 +327,7 @@
 
             oRunForImg.Add_ToContent(oRunForImg.Content.length, oDrawing);
             oDrawing.Set_Parent(oRunForImg);
-            // oShape.recalculate();
+            oShape.recalculate();
         });
         
         if (editor.getDocumentRenderer().IsOpenFormsInProgress == false) {
