@@ -53,7 +53,7 @@
         this._bAutoShiftContentView = true;
 
         this._internalMargins = {
-            bottom: Infinity
+            bottom: undefined
         }
     };
     CListBoxField.prototype = Object.create(AscPDF.CBaseListField.prototype);
@@ -722,7 +722,7 @@
         
         if (oPageBounds.Bottom - oPageBounds.Top > oFormBounds.H) {
             if (oParagraph.Y + oCurParaHeight - oCurParaHeight * 0.1> oFormBounds.Y + oFormBounds.H) {
-                nDy = oFormBounds.Y + oFormBounds.H - (oParagraph.Y + oCurParaHeight) - (isFinite(this._internalMargins.bottom) ? this._internalMargins.bottom : 0);
+                nDy = oFormBounds.Y + oFormBounds.H - (oParagraph.Y + oCurParaHeight) - (this._internalMargins.bottom != undefined ? this._internalMargins.bottom : 0);
                 // nDy = oFormBounds.Y + oFormBounds.H - (oParagraph.Y + oCurParaHeight);
             }
                 
@@ -749,7 +749,8 @@
         }
 
         if (nDy == 0) {
-            this._internalMargins.bottom = Math.min(this._internalMargins.bottom, (oFormBounds.Y + oFormBounds.H) - (oParagraph.Y + oCurParaHeight));
+            let nCurMarginBottom = this._internalMargins.bottom != undefined ? this._internalMargins.bottom : (oFormBounds.Y + oFormBounds.H) - (oParagraph.Y + oCurParaHeight);
+            this._internalMargins.bottom = Math.min(nCurMarginBottom, (oFormBounds.Y + oFormBounds.H) - (oParagraph.Y + oCurParaHeight));
         }
     };
     /**
