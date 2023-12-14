@@ -103,13 +103,10 @@
 
         this._captionRun            = null;
         this._downCaptionRun        = null;
-        this._rollOverCaptionRun    = null; 
+        this._rollOverCaptionRun    = null;
     }
     CPushButtonField.prototype = Object.create(AscPDF.CBaseField.prototype);
     CPushButtonField.prototype.constructor = CPushButtonField;
-    // CPushButtonField.prototype.IsNeedDrawFromStream = function() {
-    //     return false;
-    // };
     CPushButtonField.prototype.AddImage = function(oImgData, nAPType) {
         if (!oImgData) {
             return;
@@ -133,6 +130,7 @@
             if (field.GetButtonPosition() == position["textOnly"])
                 return;
 
+            field.SetNeedRecalc(true);
             switch (nAPType) {
                 case AscPDF.APPEARANCE_TYPE.rollover:
                     oPrevImgData            = field._imgData.rollover;
@@ -335,8 +333,8 @@
                 if (field.GetButtonPosition() == position["textOnly"])
                     return;
 
-                field.SetNeedRecalc(true);
                 field.SetWasChanged(true);
+                field.SetNeedRecalc(true);
             });
             
             let oDoc            = this.GetDocument();
@@ -927,14 +925,21 @@
             let sTargetRasterId = this._imgData.rollover || this._imgData.normal;
             let sTargetCaption = this.GetCaption(CAPTION_TYPES.rollover) || this.GetCaption(CAPTION_TYPES.normal);
 
-            if (oDrawing && this._imgData.mouseDown && sTargetRasterId) {
-                let oFill   = new AscFormat.CUniFill();
-                oFill.fill  = new AscFormat.CBlipFill();
-                oFill.fill.setRasterImageId(sTargetRasterId.src);
-                oFill.fill.tile     = null;
-                oFill.fill.srcRect  = null;
-                oFill.fill.stretch  = true;
-                oFill.convertToPPTXMods();
+            if (oDrawing && this._imgData.mouseDown) {
+                let oFill;
+                if (sTargetRasterId) {
+                    oFill   = new AscFormat.CUniFill();
+                    oFill.fill  = new AscFormat.CBlipFill();
+                    oFill.fill.setRasterImageId(sTargetRasterId.src);
+                    oFill.fill.tile     = null;
+                    oFill.fill.srcRect  = null;
+                    oFill.fill.stretch  = true;
+                    oFill.convertToPPTXMods();
+                }
+                else {
+                    oFill = AscFormat.CreateNoFillUniFill();
+                }
+                
                 oDrawing.GraphicObj.setFill(oFill);
                 oDrawing.GraphicObj.recalculate();
             }
