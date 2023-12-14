@@ -107,6 +107,9 @@
     }
     CPushButtonField.prototype = Object.create(AscPDF.CBaseField.prototype);
     CPushButtonField.prototype.constructor = CPushButtonField;
+    CPushButtonField.prototype.IsNeedDrawFromStream = function() {
+        return false;
+    };
     CPushButtonField.prototype.AddImage = function(oImgData, nAPType) {
         if (!oImgData) {
             return;
@@ -127,7 +130,7 @@
         let aFields = editor.getDocumentRenderer().IsOpenFormsInProgress == false ? oDoc.GetFields(this.GetFullName()) : [this];
 
         aFields.forEach(function(field) {
-            if (field._buttonPosition == position["textOnly"])
+            if (field.GetButtonPosition() == position["textOnly"])
                 return;
 
             switch (nAPType) {
@@ -252,7 +255,7 @@
             oFill.fill.stretch  = true;
             oFill.convertToPPTXMods();
             oShape.setFill(oFill);
-
+            
             oShape.spPr.setLn(new AscFormat.CreateNoFillLine());
 
             let oRunForImg;
@@ -324,11 +327,14 @@
 
             oRunForImg.Add_ToContent(oRunForImg.Content.length, oDrawing);
             oDrawing.Set_Parent(oRunForImg);
-            oShape.recalculate();
+            // oShape.recalculate();
         });
         
         if (editor.getDocumentRenderer().IsOpenFormsInProgress == false) {
             aFields.forEach(function(field) {
+                if (field.GetButtonPosition() == position["textOnly"])
+                    return;
+
                 field.SetNeedRecalc(true);
                 field.SetWasChanged(true);
             });
@@ -951,6 +957,11 @@
         editor.getDocumentRenderer()._paint();
     };
     CPushButtonField.prototype.DrawRollover = function() {
+        // rollover состояние может быть только в push
+        if (this.GetHighlight() != AscPDF.BUTTON_HIGHLIGHT_TYPES.push) {
+            return;
+        }
+
         this.SetHovered(true);
         this.AddToRedraw();
 
@@ -981,6 +992,11 @@
         editor.getDocumentRenderer()._paint();
     };
     CPushButtonField.prototype.OnEndRollover = function() {
+        // rollover состояние может быть только в push
+        if (this.GetHighlight() != AscPDF.BUTTON_HIGHLIGHT_TYPES.push) {
+            return;
+        }
+
         this.SetHovered(false);
         this.AddToRedraw();
 
