@@ -114,7 +114,7 @@ function CChartsDrawer()
 	this.backWall3DChart = null;
 
 	this.errBars = new CErrBarsDraw(this);
-	this.trendline = new CTrendline(this)
+	this.trendline = new CTrendline(this);
 
 	this.changeAxisMap = null;
 
@@ -14282,7 +14282,7 @@ axisChart.prototype = {
 		this.chartProp = chartsDrawer.calcProp;
 		this.cChartSpace = chartsDrawer.cChartSpace;
 		this.cChartDrawer = chartsDrawer;
-		
+
 		if(isDrawGrid) {
 			this._drawGridLines();
 		} else {
@@ -15802,23 +15802,23 @@ CColorObj.prototype =
 	{
 		this.chartsDrawer = chartsDrawer;
 
-		this.x;//startX
-		this.y;//startY
-		this.z;//gapDepth
+		this.x = null;//startX
+		this.y = null;//startY
+		this.z = null;//gapDepth
 
-		this.w;//individualBarWidth
-		this.h;//height
-		this.d;//perspectiveDepth
+		this.w = null;//individualBarWidth
+		this.h = null;//height
+		this.d = null;//perspectiveDepth
 
-		this.onlyFrontFaces;
-		this.val;
-		this.rotated ;//hbar
+		this.onlyFrontFaces = null;
+		this.val = null;
+		this.rotated = null;//hbar
 
-		this.dRadius1;
-		this.dRadius2;
+		this.dRadius1 = null;
+		this.dRadius2 = null;
 		//нужны только для конусов uRadius1/uRadius2
-		this.uRadius1;
-		this.uRadius2;
+		this.uRadius1 = null;
+		this.uRadius2 = null;
 	}
 
 	calcShapesHelper.prototype.setProps = function (x, y, z, w, h, d, onlyFrontFaces, val, rotated, dRadius1, dRadius2, uRadius1, uRadius2, cone) {
@@ -17234,7 +17234,7 @@ CColorObj.prototype =
 				}
 
 				// if there exist positive point along the line, take last positive point
-				if (k != pointsNumber - 1){
+				if (k !== pointsNumber - 1){
 					while (j >= 0) {
 						const catValMax = (catNet / (pointsNumber - 1)) * j + this.catMin;
 						let valValMax = this.calcYVal(catValMax, this.chartletiables);
@@ -17248,14 +17248,14 @@ CColorObj.prototype =
 				}
 
 				// compare if first or last points actually changed 
-				if (k != 0 || j != pointsNumber - 1){
+				if (k !== 0 || j !== pointsNumber - 1){
 					catNet = this.catMax - this.catMin;
 				}
 			}
 
 			// find everything between edges
 			// k is index of first point and j is index oj last point
-			if (k != j) {
+			if (k !== j) {
 				for (let i = 0; i < remainder; i++) {
 					const catVal = (catNet / (remainder - 1)) * i + this.catMin;
 					let valVal = this.calcYVal(catVal, this.chartletiables);
