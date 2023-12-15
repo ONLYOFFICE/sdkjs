@@ -3137,10 +3137,811 @@ $(function () {
 			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
 			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
 			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+		})
+	}
 
+	function testLineBuilderApproximatedBezier () {
+		QUnit.test("Test: Line Builder boundaries calculation", function (assert) {
 
+			let chartletiables = [0.6000000000000014, 0.8285714285714283]
+			let catMin = 1;
+			let catMax = 6;
+			let valMin = null;
+			let valMax = null;
+			let logBase = null;
+			let type = 1;
+			let lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			let equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			let cutPoint = 1000; 
+			let maxCatVal = 6;
+			let minCatVal = 1;
+			let maxValVal = 5.571428571428571;
+			let minValVal = 1.4285714285714297;
+			let lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			let boundaries = lineBuilder.getBoundary();
 
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
 
+			chartletiables = [-19, 15.200000000000003]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 41.80000000000001;
+			minValVal = -3.799999999999997;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-4.199999999999999, 1.7714285714285714]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 6.428571428571429;
+			minValVal = -2.428571428571428;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-172840, 75837.85714285713]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 282187.1428571428;
+			minValVal = -97002.14285714287;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.333333333333334, 0.28571428571428514]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 3.047619047619045;
+			minValVal = 1.619047619047619;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.6000000000000014, 0.8285714285714283]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 5.57142857142857;
+			minValVal = 1.4285714285714297;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-19, 15.200000000000003]
+			catMin = 1;
+			catMax = 4;
+			valMin = 0.1;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 41.800000000000004;
+			minValVal = 0.10000000000000005;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-4.199999999999999, 1.7714285714285714]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 2.376612903225806;
+			maxValVal = 6.428571428571428;
+			minValVal = 0.01000000000000001;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-172840, 75837.85714285713]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 2.2827937611257103;
+			maxValVal = 282187.1428571427;
+			minValVal = 282.187142857143;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.333333333333334, 0.28571428571428514]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 3.047619047619045;
+			minValVal = 1.619047619047619;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.0853780304041418, 2.202033537057911]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 5.030892471985402;
+			minValVal = 1.0853780304041418;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-4.489845190674558, 29.565068994571178]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 36.496043242619976;
+			minValVal = -4.489845190674558;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-1.5298842782486233, 3.2191057898549253]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 4.237979003170796;
+			minValVal = -1.5298842782486233;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-94541.7317212114, 170658.5375973549]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 211237.3190234613;
+			minValVal = -94541.7317212114;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.8734737381931108, 1.3313304643014572]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 3.2588977042770297;
+			minValVal = 0.8734737381931108;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.0853780304041418, 2.202033537057911]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 5.0308924719854;
+			minValVal = 1.0853780304041418;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-4.489845190674558, 29.565068994571178]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 36.49604324261996;
+			minValVal = 0.03649604324262;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-1.5298842782486233, 3.2191057898549253]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1.6134226199693829;
+			maxValVal = 4.2379790031707945;
+			minValVal = 0.01000000000000001;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-94541.7317212114, 170658.5375973549]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1.7423235984576693;
+			maxValVal = 211237.31902346085;
+			minValVal = 211.23731902346108;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.8734737381931108, 1.3313304643014572]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 3.2588977042770293;
+			minValVal = 0.8734737381931108;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.3470294984018791, 0.7283261086204962]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 4.967352481769911;
+			minValVal = 1.3470294984018791;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.8367239858577353, 2.210556099993931]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 39.34878110454656;
+			minValVal = 1.8367239858577353;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.597378819226662, 6.290262865578015]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 125367.1738292479;
+			minValVal = 6;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.3470294984018791, 0.7283261086204962]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 4.967352481769911;
+			minValVal = 1.3470294984018791;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.8367239858577353, 2.210556099993931]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 39.34878110454656;
+			minValVal = 1.8367239858577353;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.9540401412926336, 6.056432353383194]
+			catMin = 1;
+			catMax = 10;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 10;
+			minCatVal = 1;
+			maxValVal = 2225183.5179863917;
+			minValVal = 1.9540401412926336;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.1384149147480012, 0.2762585712743759]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 5.97263555719961;
+			minValVal = 1.5006456374707577;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.7999999999999979, 1.034977465516456]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 50.23772863019174;
+			minValVal = 2.252034239498936;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.5000000000000027, 2.302585092994045]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 500000.00000000064;
+			minValVal = 6;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.1384149147480012, 0.2762585712743759]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 5.9726355571996095;
+			minValVal = 1.5006456374707577;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.7999999999999979, 1.034977465516456]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 50.237728630191725;
+			minValVal = 2.2520342394989354;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.5000000000000027, 2.302585092994045]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 499999.99999999994;
+			minValVal = 5.000000000000022;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
 		})
 	}
 
