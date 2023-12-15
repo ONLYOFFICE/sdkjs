@@ -16968,7 +16968,7 @@ function RangeDataManagerElem(bbox, data)
 
 	prot["asc_setSeriesIn"] = prot.asc_setSeriesIn;
 	prot["asc_setType"] = prot.asc_setType;
-	prot["asc_setDateInit"] = prot.asc_setDateUnit;
+	prot["asc_setDateUnit"] = prot.asc_setDateUnit;
 	prot["asc_setTrend"] = prot.asc_setTrend;
 	prot["asc_setStepValue"] = prot.asc_setStepValue;
 	prot["asc_setStopValue"] = prot.asc_setStopValue;
