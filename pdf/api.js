@@ -163,7 +163,7 @@
 		if (!this.DocumentRenderer)
 			return;
 		
-		var _text_object = (AscCommon.c_oAscClipboardDataFormat.Text & _formats) ? {Text : ""} : null;
+		var _text_object = (AscCommon.c_oAscClipboardDataFormat.Text && _formats) ? {Text : ""} : null;
 		var _html_data;
 		let oDoc = this.DocumentRenderer.getPDFDoc();
 		var oActiveForm = oDoc.activeForm;
@@ -179,10 +179,10 @@
 			_html_data = this.DocumentRenderer.Copy(_text_object)
 		}
 
-		if (AscCommon.c_oAscClipboardDataFormat.Text & _formats)
+		if (AscCommon.c_oAscClipboardDataFormat.Text && _formats)
 			_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Text, _text_object.Text);
 
-		if (AscCommon.c_oAscClipboardDataFormat.Html & _formats)
+		if (AscCommon.c_oAscClipboardDataFormat.Html && _formats)
 			_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, _html_data);
 	};
 	PDFEditorApi.prototype.asc_SelectionCut = function() {
