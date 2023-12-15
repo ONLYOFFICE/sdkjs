@@ -16270,7 +16270,9 @@ CColorObj.prototype =
 				const lastPoint = this.storage[chartId][seriaId].getLastPoint(chartId, seriaId);
 				if (coefficients || rSquared) {
 					const additionalInfo = {
-						coefficients: coefficients, rSquared: rSquared, coordinate: lastPoint
+						coefficients : coefficients,
+						rSquared : rSquared,
+						coordinate : lastPoint
 					}
 					return additionalInfo;
 				}
@@ -17290,8 +17292,17 @@ CColorObj.prototype =
 	}
 
 	function CTrendData() {
-		this.coords = {catVals: [], valVals: []}, this.bezierPath = null, this.pointPath = null, this.coefficients = null, this.rSquared = null, this.bezierVals =
-			null, this.pointVals = null, this.boundary = null, this.minLogVal = null, this.startBezierVal = null, this.lastPoint = {catVal: null, valVal: null}
+		this.coords = {catVals: [], valVals: []};
+		this.bezierPath = null;
+		this.pointPath = null;
+		this.coefficients = null;
+		this.rSquared = null;
+		this.bezierVals = null;
+		this.pointVals = null;
+		this.boundary = null;
+		this.minLogVal = null;
+		this.startBezierVal = null;
+		this.lastPoint = {catVal: null, valVal: null};
 	}
 
 	// set calcYVal! calcXVal! calcSlope!
