@@ -239,8 +239,8 @@ $(function () {
 			let b = 2.6667;
 			let results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
-			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 2;
 			catVals = [1, 2];
@@ -249,8 +249,8 @@ $(function () {
 			b = -5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
-			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -259,8 +259,8 @@ $(function () {
 			b = 0;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
-			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -269,8 +269,8 @@ $(function () {
 			b = -4.8;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
-			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -279,8 +279,8 @@ $(function () {
 			b = -0.4667;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
-			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -289,8 +289,8 @@ $(function () {
 			b = -3.5333;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
-			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -299,8 +299,8 @@ $(function () {
 			b = -0.4;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
-			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -309,8 +309,8 @@ $(function () {
 			b = -10;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
-			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -319,8 +319,8 @@ $(function () {
 			b = -0.1;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
-			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -329,8 +329,8 @@ $(function () {
 			b = -0.96;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
-			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -339,8 +339,8 @@ $(function () {
 			b = 0.6;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
-			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 4;
 			catVals = [1, 2, 3, 4];
@@ -349,8 +349,8 @@ $(function () {
 			b = -19;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
-			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -359,8 +359,8 @@ $(function () {
 			b = -4.2;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
-			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -369,8 +369,8 @@ $(function () {
 			b = -172840;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
-			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -379,8 +379,8 @@ $(function () {
 			b = 1.3333;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
 
-			assert.ok(isEqual(results[1], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 		})
 	}
 
@@ -397,8 +397,8 @@ $(function () {
 			let b = 3.3757;
 			let results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
-			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 2;
 			catVals = [1, 2];
@@ -407,8 +407,8 @@ $(function () {
 			b = 5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
-			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -417,8 +417,8 @@ $(function () {
 			b = -0.5044;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
-			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -427,8 +427,8 @@ $(function () {
 			b = -3.0691;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
-			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -437,8 +437,8 @@ $(function () {
 			b = 0.6407;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
-			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -447,8 +447,8 @@ $(function () {
 			b = -1.97;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
-			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -457,8 +457,8 @@ $(function () {
 			b = -0.1296;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
-			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -467,8 +467,8 @@ $(function () {
 			b = -9.3905;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
-			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -477,8 +477,8 @@ $(function () {
 			b = 0.0008;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
-			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -487,8 +487,8 @@ $(function () {
 			b = -0.756;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
-			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -497,8 +497,8 @@ $(function () {
 			b = 1.0854;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
-			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 4;
 			catVals = [1, 2, 3, 4];
@@ -507,8 +507,8 @@ $(function () {
 			b = -4.4898;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
-			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -517,8 +517,8 @@ $(function () {
 			b = -1.5299;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
-			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -527,8 +527,8 @@ $(function () {
 			b = -94542;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
-			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -537,8 +537,8 @@ $(function () {
 			b = 0.8735;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
 
-			assert.ok(isEqual(results[1], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 		})
 	}
 
@@ -555,8 +555,8 @@ $(function () {
 			let b = 3.6391;
 			let results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
 
-			assert.ok(isEqual(results[1], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 2;
 			catVals = [1, 2];
@@ -565,8 +565,8 @@ $(function () {
 			b = 5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
 
-			assert.ok(isEqual(results[1], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -575,8 +575,8 @@ $(function () {
 			b = 1.799;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
 
-			assert.ok(isEqual(results[1], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -585,8 +585,8 @@ $(function () {
 			b = 0.0984;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
 
-			assert.ok(isEqual(results[1], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -595,8 +595,8 @@ $(function () {
 			b = 1.347;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
 
-			assert.ok(isEqual(results[1], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 4;
 			catVals = [1, 2, 3, 4];
@@ -605,8 +605,8 @@ $(function () {
 			b = 1.8367;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
 
-			assert.ok(isEqual(results[1], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -615,8 +615,8 @@ $(function () {
 			b = 1.5974;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
 
-			assert.ok(isEqual(results[1], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -646,8 +646,8 @@ $(function () {
 			let b = 3.2329;
 			let results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 
-			assert.ok(isEqual(results[1], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 2;
 			catVals = [1, 2];
@@ -656,8 +656,8 @@ $(function () {
 			b = 1.6667;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 
-			assert.ok(isEqual(results[1], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -666,8 +666,8 @@ $(function () {
 			b = 1.5776;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 
-			assert.ok(isEqual(results[1], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -676,8 +676,8 @@ $(function () {
 			b = 0.0829;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 
-			assert.ok(isEqual(results[1], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -686,8 +686,8 @@ $(function () {
 			b = 1.1384;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 
-			assert.ok(isEqual(results[1], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 4;
 			catVals = [1, 2, 3, 4];
@@ -696,8 +696,8 @@ $(function () {
 			b = 0.8;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 
-			assert.ok(isEqual(results[1], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -706,8 +706,8 @@ $(function () {
 			b = 0.5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
 
-			assert.ok(isEqual(results[1], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[1]);
-			assert.ok(isEqual(results[0], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[0]);
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
@@ -732,7 +732,7 @@ $(function () {
 			let size = 2;
 			let catVals = [1, 2];
 			let valVals = [5, 15];
-			let letiables = [-5, 10];
+			let letiables = [10, -5];
 			let order = 2; 
 			let results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -742,7 +742,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [4, 6, 3, 7, 8, 9, 11];
-			letiables = [4.2857, -0.1905, 0.1667];
+			letiables = [0.1667, -0.1905, 4.2857];
 			order = 3;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -764,7 +764,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-3, 6, -9, 12, -15, 18, -21];
-			letiables = [-10.286, 7.8571, -1.1429];
+			letiables = [-1.1429, 7.8571, -10.286];
 			order = 3;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -775,7 +775,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [2, 3, 6, 8, 10, 12, 14];
-			letiables = [-0.4286, 2.0714, 0];
+			letiables = [0, 2.0714, -0.4286];
 			order = 3;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -797,7 +797,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [0, 1, 0, 2, 0, 3, 0];
-			letiables = [-0.8571, 0.9048, -0.0952];
+			letiables = [-0.0952, 0.9048, -0.8571];
 			order = 3;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -808,7 +808,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-9, -7, -6, -5, -4, -2, -1];
-			letiables = [-10, 1.2857, 9e-16];
+			letiables = [9e-16, 1.2857, -10];
 			order = 3;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -819,7 +819,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
-			letiables = [0.0143, 0.081, 0.0095];
+			letiables = [0.0095, 0.081, 0.0143];
 			order = 3;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -830,7 +830,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
-			letiables = [-0.7, 0.1202, 0.0202];
+			letiables = [0.0202, 0.1202, -0.7];
 			order = 3;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -841,7 +841,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [2, 1, 4, 3, 6, 5, 7];
-			letiables = [0.8571, 0.6071, 0.0357];
+			letiables = [0.0357, 0.6071, 0.8571];
 			order = 3;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -852,7 +852,7 @@ $(function () {
 			size = 4;
 			catVals = [1, 2, 3, 4];
 			valVals = [2, 8, 16, 50];
-			letiables = [16, -19.8, 7];
+			letiables = [7, -19.8, 16];
 			order = 3;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -863,7 +863,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [4, -6, 3, -7, 8, 10, -12];
-			letiables = [-4.8571, 3.8929, -0.5357];
+			letiables = [-0.5357, 3.8929, -4.8571];
 			order = 3;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -874,7 +874,7 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [5, 50, 500, 5000, 50000, 500000];
-			letiables = [231822, -227659, 43357];
+			letiables = [43357, -227659, 231822];
 			order = 3;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -885,7 +885,7 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [0, 2, 3, 4, 5, 0];
-			letiables = [-4.5, 4.6607, -0.625];
+			letiables = [-0.625, 4.6607, -4.5];
 			order = 3;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -897,7 +897,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [4, 6, 3, 7, 8, 9, 11];
-			letiables = [5.2857, -1.3294, 0.5, -0.0278];
+			letiables = [-0.0278, 0.5, -1.3294, 5.2857];
 			order = 4;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -909,7 +909,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-1, -2, -3, -4, -5, -6, -7];
-			letiables = [5e-12, -1, 0, 0];
+			letiables = [0, 0, -1, 5e-12];
 			order = 4;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -921,7 +921,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-3, 6, -9, 12, -15, 18, -21];
-			letiables = [13.714, -19.476, 6.8571, -0.6667];
+			letiables = [-0.6667, 6.8571, -19.476, 13.714];
 			order = 4;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -933,7 +933,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [2, 3, 6, 8, 10, 12, 14];
-			letiables = [0.5714, 0.9325, 0.3333, -0.0278];
+			letiables = [-0.0278, 0.3333, 0.9325, 0.5714];
 			order = 4;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -945,7 +945,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [0, 2, -3, 6, 8, 9, 15];
-			letiables = [3.4286, -4.3452, 1.4286, -0.0833];
+			letiables = [-0.0833, 1.4286, -4.3452, 3.4286];
 			order = 4;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -957,7 +957,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [0, 1, 0, 2, 0, 3, 0];
-			letiables = [1.1429, -1.373, 0.5714, -0.0556];
+			letiables = [-0.0556, 0.5714, -1.373, 1.1429];
 			order = 4;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -969,7 +969,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-9, -7, -6, -5, -4, -2, -1];
-			letiables = [-11, 2.4246, -0.3333, 0.0278];
+			letiables = [0.0278, -0.3333, 2.4246, -11];
 			order = 4;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -981,7 +981,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
-			letiables = [0.2143, -0.1468, 0.0762, -0.0056];
+			letiables = [-0.0056, 0.0762, -0.1468, 0.2143];
 			order = 4;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -993,7 +993,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
-			letiables = [-0.1, -0.5631, 0.2202, -0.0167];
+			letiables = [-0.0167, 0.2202, -0.5631, -0.1];
 			order = 4;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1005,7 +1005,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [2, 1, 4, 3, 6, 5, 7];
-			letiables = [1.8571, -0.5317, 0.369, -0.0278];
+			letiables = [-0.0278, 0.369, -0.5317, 1.8571];
 			order = 4;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1017,7 +1017,7 @@ $(function () {
 			size = 4;
 			catVals = [1, 2, 3, 4];
 			valVals = [2, 8, 16, 50];
-			letiables = [-26, 47, -23, 4];
+			letiables = [4, -23, 47, -26];
 			order = 4;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 			
@@ -1029,7 +1029,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [4, -6, 3, -7, 8, 10, -12];
-			letiables = [32.143, -38.246, 11.798, -1.0278];
+			letiables = [-1.0278, 11.798, -38.246, 32.143];
 			order = 4;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1041,7 +1041,7 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [5, 50, 500, 5000, 50000, 500000];
-			letiables = [-265720, 398218, -163953, 19744];
+			letiables = [19744, -163953, 398218, -265720];
 			order = 4;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1053,7 +1053,7 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [0, 2, 3, 4, 5, 0];
-			letiables = [1.3333, -2.6772, 1.8056, -0.2315];
+			letiables = [-0.2315, 1.8056, -2.6772, 1.3333];
 			order = 4;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1065,7 +1065,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [4, 6, 3, 7, 8, 9, 11];
-			letiables = [2.2857, 3.4282, -1.7917, 0.3965, -0.0265];
+			letiables = [-0.0265, 0.3965, -1.7917, 3.4282, 2.2857];
 			order = 5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1078,7 +1078,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-1, -2, -3, -4, -5, -6, -7];
-			letiables = [6e-11, -1, 0, 5e-13, 0];
+			letiables = [0, 5e-13, 0, -1, 6e-11];
 			order = 5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1091,7 +1091,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-3, 6, -9, 12, -15, 18, -21];
-			letiables = [-68.571, 111.02, -56, 10.97, -0.7273];
+			letiables = [-0.7273, 10.97, -56, 111.02, -68.571];
 			order = 5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1104,7 +1104,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [2, 3, 6, 8, 10, 12, 14];
-			letiables = [3.5714, -3.825, 2.625, -0.452, 0.0265];
+			letiables = [0.0265, -0.452, 2.625, -3.825, 3.5714];
 			order = 5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1117,7 +1117,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [0, 2, -3, 6, 8, 9, 15];
-			letiables = [7.2857, -10.462, 4.375, -0.6288, 0.0341];
+			letiables = [0.0341, -0.6288, 4.375, -10.462, 7.2857];
 			order = 5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1130,7 +1130,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [0, 1, 0, 2, 0, 3, 0];
-			letiables = [-5.7143, 9.5014, -4.6667, 0.9141, -0.0606];
+			letiables = [-0.0606, 0.9141, -4.6667, 9.5014, -5.7143];
 			order = 5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1143,7 +1143,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-9, -7, -6, -5, -4, -2, -1];
-			letiables = [-14, 7.1822, -2.625, 0.452, -0.0265];
+			letiables = [-0.0265, 0.452, -2.625, 7.1822, -14];
 			order = 5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1156,7 +1156,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
-			letiables = [-0.3, 0.6688, -0.3167, 0.0672, -0.0045];
+			letiables = [-0.0045,  0.0672, -0.3167, 0.6688, -0.3];
 			order = 5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1169,7 +1169,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
-			letiables = [-1.0429, 0.9321, -0.5, 0.1167, -0.0083];
+			letiables = [ -0.0083, 0.1167, -0.5, 0.9321, -1.0429];
 			order = 5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1182,7 +1182,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [2, 1, 4, 3, 6, 5, 7];
-			letiables = [7.4286, -9.3672, 4.625, -0.8157, 0.0492];
+			letiables = [0.0492, -0.8157, 4.625, -9.3672, 7.4286];
 			order = 5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1195,7 +1195,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [4, -6, 3, -7, 8, 10, -12];
-			letiables = [-3.4286, 18.165, -15.375, 4.0025, -0.3144];
+			letiables = [-0.3144, 4.0025, -15.375, 18.165, -3.4286];
 			order = 5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1208,7 +1208,7 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [5, 50, 500, 5000, 50000, 500000];
-			letiables = [275562, -533991, 337593, -85506, 7517.8];
+			letiables = [7517.8, -85506, 337593, -533991, 275562];
 			order = 5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1221,7 +1221,7 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [0, 2, 3, 4, 5, 0];
-			letiables = [-9.1667, 15.406, -7.9236, 1.8102, -0.1458];
+			letiables = [-0.1458, 1.8102, -7.9236, 15.406, -9.1667];
 			order = 5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1234,7 +1234,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [4, 6, 3, 7, 8, 9, 11];
-			letiables = [-29.143, 65.508, -43.458, 12.758, -1.6932, 0.0833];
+			letiables = [0.0833, -1.6932, 12.758, -43.458, 65.508, -29.143];
 			order = 6;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1248,7 +1248,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-1, -2, -3, -4, -5, -6, -7];
-			letiables = [4e-9, -1, -3e-11, 7e-12, 0, -6e-14];
+			letiables = [-6e-14, 0, 7e-12, -3e-11, -1, 4e-9];
 			order = 6;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1262,7 +1262,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-3, 6, -9, 12, -15, 18, -21];
-			letiables = [82.286, -186.96, 144, -48.364, 7.2727, -0.4];
+			letiables = [-0.4, 7.2727, -48.364, 144, -186.96, 82.286];
 			order = 6;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1276,7 +1276,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [2, 3, 6, 8, 10, 12, 14];
-			letiables = [9.8571, -16.241, 10.958, -2.9242, 0.3598, -0.0167];
+			letiables = [-0.0167, 0.3598, -2.9242, 10.958, -16.241, 9.8571];
 			order = 6;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1290,7 +1290,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [0, 2, -3, 6, 8, 9, 15];
-			letiables = [-58.714, 119.9, -83.125, 25.33, -3.4659, 0.175];
+			letiables = [0.175, -3.4659, 25.33, -83.125, 119.9, -58.714];
 			order = 6;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1304,7 +1304,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [0, 1, 0, 2, 0, 3, 0];
-			letiables = [6.8571, -15.33, 12, -4.0303, 0.6061, -0.0333];
+			letiables = [-0.0333, 0.6061, -4.0303,12, -15.33, 6.8571];
 			order = 6;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1318,7 +1318,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-9, -7, -6, -5, -4, -2, -1];
-			letiables = [-10.857, 0.9742, 1.5417, -0.7841, 0.1402, -0.0083];
+			letiables = [-0.0083, 0.1402, -0.7841, 1.5417, 0.9742, -10.857];
 			order = 6;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1332,7 +1332,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
-			letiables = [-1.8714, 3.7727, -2.4, 0.6852, -0.0879, 0.0042];
+			letiables = [0.0042, -0.0879, 0.6852, -2.4, 3.7727, -1.8714];
 			order = 6;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1346,7 +1346,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
-			letiables = [-1.5143, 1.8633, -1.125, 0.3021, -0.0333, 0.0013];
+			letiables = [0.0013, -0.0333, 0.3021, -1.125, 1.8633, -1.5143];
 			order = 6;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1360,7 +1360,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [2, 1, 4, 3, 6, 5, 7];
-			letiables = [9, -12.471, 6.7083, -1.4337, 0.1326, -0.0042];
+			letiables = [-0.0042,  0.1326, -1.4337, 6.7083, -12.471, 9];
 			order = 6;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1374,7 +1374,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [4, -6, 3, -7, 8, 10, -12];
-			letiables = [83, -152.55, 99.208, -29.991, 4.2689, -0.2292];
+			letiables = [-0.2292, 4.2689, -29.991, 99.208, -152.55, 83];
 			order = 6;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1388,7 +1388,7 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [5, 50, 500, 5000, 50000, 500000];
-			letiables = [-265720, 611919, -509186, 196071, -35539, 2460.4];
+			letiables = [2460.4, -35539, 196071, -509186, 611919, -265720];
 			order = 6;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1402,7 +1402,7 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [0, 2, 3, 4, 5, 0];
-			letiables = [-1e-8, -4, 6.4167, -2.9583, 0.5833, -0.0417];
+			letiables = [-0.0417, 0.5833, -2.9583, 6.4167, -4, -1e-8];
 			order = 6;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1416,7 +1416,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [4, 6, 3, 7, 8, 9, 11];
-			letiables = [-122, 279.75, -224.99, 87, -17.444, 1.75, -0.0694];
+			letiables = [-0.0694,  1.75, -17.444, 87, -224.99, 279.75, -122];
 			order = 7;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1431,7 +1431,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-1, -2, -3, -4, -5, -6, -7];
-			letiables = [-1e-6, -1, 2e-8, 2e-9, -8e-10, -3e-11, 0];
+			letiables = [0, -3e-11, -8e-10, 2e-9, 2e-8, -1, -1e-6];
 			order = 7;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1446,7 +1446,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-3, 6, -9, 12, -15, 18, -21];
-			letiables = [-1344, 3103.8, -2644.3, 1092, -234.67, 25.2, -1.0667];
+			letiables = [-1.0667, 25.2, -234.67, 1092, -2644.3, 3103.8, -1344];
 			order = 7;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1461,7 +1461,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [2, 3, 6, 8, 10, 12, 14];
-			letiables = [21, -41.95, 32.742, -11.833, 2.25, -0.2167, 0.0083];
+			letiables = [0.0083, -0.2167, 2.25, -11.833, 32.742, -41.95, 21];
 			order = 7;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1476,7 +1476,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [0, 2, -3, 6, 8, 9, 15];
-			letiables = [-237, 531.25, -431.66, 167.88, -33.708, 3.375, -0.1333];
+			letiables = [-0.1333, 3.375, -33.708, 167.88,  -431.66, 531.25, -237];
 			order = 7;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1491,7 +1491,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [0, 1, 0, 2, 0, 3, 0];
-			letiables = [-112, 258.9, -220.36, 91, -19.556, 2.1, -0.0889];
+			letiables = [-0.0889, 2.1, -19.556, 91, -220.36, 258.9, -112];
 			order = 7;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1506,7 +1506,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-9, -7, -6, -5, -4, -2, -1];
-			letiables = [-22, 26.683, -20.242, 8.125, -1.75, 0.1917, -0.0083];
+			letiables = [-0.0083, 0.1917, -1.75, 8.125, -20.242, 26.683, -22];
 			order = 7;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1521,7 +1521,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
-			letiables = [-6.7, 14.913, -11.839, 4.5458, -0.9069, 0.0908, -0.0036];
+			letiables = [-0.0036, 0.0908, -0.9069, 4.5458, -11.839, 14.913, -6.7];
 			order = 7;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1536,7 +1536,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
-			letiables = [8.7, -21.703, 18.843, -7.8646, 1.6993, -0.1821, 0.0076];
+			letiables = [0.0076, -0.1821, 1.6993, -7.8646, 18.843, -21.703, 8.7];
 			order = 7;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1551,7 +1551,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [2, 1, 4, 3, 6, 5, 7];
-			letiables = [126, -282.42, 235.43, -94.979, 19.979, -2.1042, 0.0875];
+			letiables = [0.0875, -2.1042, 19.979, -94.979,  235.43, -282.42, 126];
 			order = 7;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1566,7 +1566,7 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [4, -6, 3, -7, 8, 10, -12];
-			letiables = [590, -1322.3, 1090.4, -435.35, 90.271, -9.3292, 0.3792];
+			letiables = [0.3792, -9.3292, 90.271, -435.35, 1090.4, -1322.3, 590];
 			order = 7;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1581,7 +1581,7 @@ $(function () {
 			size = 2;
 			catVals = [1, 2];
 			valVals = [5, 15];
-			letiables = [-5, 10];
+			letiables = [10, -5];
 			order = 3; 
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 
@@ -1592,6 +1592,7 @@ $(function () {
 			catVals = [1, 2, 3, 4];
 			valVals = [2, 8, 16, 50];
 			letiables = [-26, 47, -23, 4];
+			letiables = [4, -23, 47, -26];
 			order = 5;
 			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
 			
@@ -1882,135 +1883,135 @@ $(function () {
 			let size = 6;
 			let catVals = [1, 2, 3, 4, 5, 6];
 			let valVals = [4, 6, 3, 7, 8, 9];
-			let letiables = [2.6667, 1]
-			let rSquared = 0.6522
-			let results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			let letiables = [1, 2.6667];
+			let rSquared = 0.6522;
+			let results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 2;
 			catVals = [1, 2];
 			valVals = [5, 15];
-			letiables = [-5, 10]
-			rSquared = 1
-			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			letiables = [10, -5];
+			rSquared = 1;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [-1, -2, -3, -4, -5, -6];
-			letiables = [0, -1]
-			rSquared = 1
-			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			letiables = [-1, 0];
+			rSquared = 1;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
 			catVals = [0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469];
 			valVals = [-3, 6, -9, 12, -15, 18];
-			letiables = [-3.0691, 4.1668]
-			rSquared = 0.0473
-			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LOG)
+			letiables = [4.1668, -3.0691];
+			rSquared = 0.0473;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LOG);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [0.693147181, 1.098612289, 1.791759469, 2.079441542, 2.302585093, 2.48490665];
-			letiables = [1.5776, 0.3674]
-			rSquared = 0.9461
-			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+			letiables = [0.3674, 1.5776];
+			rSquared = 0.9461;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [0, 2, -3, 6, 8, 9];
-			letiables = [0.3, -0.8179, 0.4107]
-			rSquared = 0.709
-			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+			letiables = [0.4107, -0.8179, 0.3];
+			rSquared = 0.709;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [0, 1, 0, 2, 0, 3];
-			letiables = [-2.6667, 3.75973, -1.254, 0.1296]
-			rSquared = 0.5397
-			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+			letiables = [ 0.1296, -1.254, 3.75973, -2.6667];
+			rSquared = 0.5397;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [-9, -7, -6, -5, -4, -2];
-			letiables = [-12.333, 4.2209, -0.9722, 0.0926, 3e-14]
-			rSquared = 0.9995
-			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+			letiables = [3e-14, 0.0926, -0.9722, 4.2209, -12.333];
+			rSquared = 0.9995;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
 			catVals = [0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469];
 			valVals = [-2.302585093, -1.203972804, -1.609437912, -0.693147181, -0.356674944, -0.105360516];
-			letiables = [0.0984, 1.1616]
-			rSquared = 0.8697
-			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POWER)
+			letiables = [1.1616, 0.0984];
+			rSquared = 0.8697;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POWER);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
-			letiables = [3.2, -8.2283, 6.4375, -2.25, 0.3625, -0.0217]
-			rSquared = 1
-			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+			letiables = [-0.0217,  0.3625, -2.25, 6.4375, -8.2283, 3.2];
+			rSquared = 1;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [0.693147181, 0, 1.386294361, 1.098612289, 1.791759469, 1.609437912];
-			letiables = [1.1384, 0.2763]
-			rSquared = 0.6083
-			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+			letiables = [0.2763, 1.1384];
+			rSquared = 0.6083;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 4;
 			catVals = [1, 2, 3, 4];
 			valVals = [2, 8, 16, 50];
-			letiables = [-19, 15.2]
-			rSquared = 0.8371
-			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			letiables = [15.2, -19];
+			rSquared = 0.8371;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [4, -6, 3, -7, 8, 10];
-			letiables = [-4.2, 1.7714]
-			rSquared = 0.2197
-			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			letiables = [1.7714, -4.2];
+			rSquared = 0.2197;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
 			catVals = [0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469];
 			valVals = [1.609437912, 3.912023005, 6.214608098, 8.517193191, 10.81977828, 13.12236338];
-			letiables = [1.5974, 6.2903]
-			rSquared = 0.9363
-			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POWER)
+			letiables = [6.2903, 1.5974];
+			rSquared = 0.9363;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POWER);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [0, 2, 3, 4, 5, 0];
-			letiables = [1.3333, 0.2857]
-			rSquared = 0.067
-			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			letiables = [0.2857, 1.3333];
+			rSquared = 0.067;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
 
@@ -2025,12 +2026,12 @@ $(function () {
 			let size = 6;
 			let catVals = [1, 2, 3, 4, 5, 6];
 			let valVals = [4, 6, 3, 7, 8, 9];
-			let letiables = [0, 1.6154]
+			let letiables = [1.6154, 0];
 			let rSquared = 0.3464;
 			let order = 2;
 			let intercept = 0;
-			let equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
-			let rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			let equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept);
+			let rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2039,12 +2040,12 @@ $(function () {
 			size = 2;
 			catVals = [1, 2];
 			valVals = [5, 15];
-			letiables = [0, 7]
+			letiables = [7, 0];
 			rSquared = 0.9;
 			order = 2;
 			intercept = 0;
-			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2055,12 +2056,12 @@ $(function () {
 			valVals = [-1, -2, -3, -4, -5, -6];
 			m = -2.732;
 			b = -0.5044;
-			letiables = [-0.5044, -2.732]
+			letiables = [-2.732, -0.5044]
 			rSquared = 0.9363;
 			order = 2;
 			intercept = 0;
-			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LOG)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LOG);
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "LogarithmicResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "LogarithmicResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2069,12 +2070,12 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [-3, 6, -9, 12, -15, 18];
-			letiables = [0, -2.8125, 0.7232];
+			letiables = [0.7232, -2.8125, 0];
 			rSquared = 0.1269;
 			order = 3;
 			intercept = 0;
-			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY);
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2085,13 +2086,13 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [2, 3, 6, 8, 10, 12];
-			letiables = [1, 0.4726];
+			letiables = [0.4726, 1];
 			rSquared = 0.85;
 			order = 2;
 			intercept = 1;
 
-			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP);
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "ExponentialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "ExponentialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2100,13 +2101,13 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [2, 3, 6, 8, 10, 12];
-			letiables = [2, 0.3126];
+			letiables = [0.3126, 2];
 			rSquared = 0.9201;
 			order = 2;
 			intercept = 2;
 
-			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP);
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "ExponentialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "ExponentialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2115,13 +2116,13 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [0, 2, -3, 6, 8, 9];
-			letiables = [0, -1.7176, 0.9524, -0.0662];
+			letiables = [-0.0662, 0.9524, -1.7176, 0];
 			rSquared = 0.719;
 			order = 4;
 			intercept = 0;
 
-			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY);
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2132,13 +2133,13 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [0, 1, 0, 2, 0, 3];
-			letiables = [0, -1.1891, 1.5552, -0.4827, 0.045];
+			letiables = [0.045, -0.4827, 1.5552, -1.1891, 0];
 			rSquared = 0.5928;
 			order = 5;
 			intercept = 0;
 
-			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY);
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2150,13 +2151,13 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [-9, -7, -6, -5, -4, -2];
-			letiables = [0, -21.228, 17.348, -5.857, 0.8914, -0.0501];
+			letiables = [-0.0501, 0.8914, -5.857, 17.348, -21.228, 0];
 			rSquared = 0.9906;
 			order = 6;
 			intercept = 0;
 
-			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY);
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2169,13 +2170,13 @@ $(function () {
 			size = 7;
 			catVals = [1, 2, 3, 4, 5, 6, 7];
 			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
-			letiables = [0, -0.3486, 0.9099, -0.5973, 0.1707, -0.0219, 0.001];
+			letiables = [0.001, -0.0219, 0.1707, -0.5973, 0.9099, -0.3486, 0];
 			rSquared = 0.9822;
 			order = 7;
 			intercept = 0;
 
-			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, equationResults, AscFormat.TRENDLINE_TYPE_POLY)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, equationResults, AscFormat.TRENDLINE_TYPE_POLY);
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2189,21 +2190,21 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
-			letiables = [-2, 0.5286]
+			letiables = [0.5286, -2];
 			rSquared = 0.1296;
 			order = 2;
 			intercept = -2;
-			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
 
-			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
-			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
 
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [2, 1, 4, 3, 6, 5];
-			letiables = [12.365, -1.8864]
+			letiables = [-1.8864, 12.365]
 			rSquared = -8.44;
 			order = 2;
 			intercept = 12.365;
@@ -2217,12 +2218,12 @@ $(function () {
 			size = 4;
 			catVals = [1, 2, 3, 4];
 			valVals = [2, 8, 16, 50];
-			letiables = [12.365, 0.1223]
+			letiables = [0.1223, 12.365]
 			rSquared = 0.0659;
 			order = 2;
 			intercept = 12.365;
-			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP);
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "ExponentialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "ExponentialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2231,12 +2232,12 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [4, -6, 3, -7, 8, 10];
-			letiables = [-6.958, 2.4079]
+			letiables = [2.4079, -6.958]
 			rSquared = 0.1845;
 			order = 2;
 			intercept = -6.958;
-			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2245,12 +2246,12 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [5, 50, 500, 5000, 50000, 500000];
-			letiables = [0.1265, 2.6197]
+			letiables = [2.6197, 0.1265]
 			rSquared = 0.9765;
 			order = 2;
 			intercept = 0.1265;
-			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP);
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "ExponentialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "ExponentialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
@@ -2259,12 +2260,12 @@ $(function () {
 			size = 6;
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [0, 2, 3, 4, 5, 0];
-			letiables = [0.1265, 0.5642]
+			letiables = [0.5642, 0.1265]
 			rSquared = -0.012;
 			order = 2;
 			intercept = 0.1265;
-			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
-			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
 
 			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
 			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
