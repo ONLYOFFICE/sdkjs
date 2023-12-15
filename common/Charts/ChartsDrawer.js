@@ -2180,8 +2180,8 @@ CChartsDrawer.prototype =
 		}
 
 		// range between trueMin and trueMax is too huge
-		if (trueMax / trueMin > 1e20) {
-			trueMin = trueMax / 1e20;
+		if (trueMax / trueMin > 1e50) {
+			trueMin = trueMax / 1e50;
 		}
 		//------------------------------
 
@@ -16229,7 +16229,7 @@ CColorObj.prototype =
 	function CTrendline(chartsDrawer) {
 		this.cChartDrawer = chartsDrawer;
 		//[chartId][seriaId]
-		this.coordinates = {};
+		this.trendData = new CTrendData();
 		this.bAllowDrawByBezier = true;
 		this.bAllowDrawByPoints = false;
 		this.ptCount = null;
@@ -16249,66 +16249,62 @@ CColorObj.prototype =
 		},
 
 		addCoordinate: function (xVal, yVal, chartId, seriaId) {
-			if (!this.coordinates[chartId]) {
-				this.coordinates[chartId] = {};
-			}
-			if (!this.coordinates[chartId][seriaId]) {
-				this.coordinates[chartId][seriaId] = {
-					coords: {catVals: [], valVals: []},
-					bezierPath: null,
-					pointPath: null,
-					chartletiables: null,
-					rSquared: null,
-					bezierVals: null,
-					pointVals: null,
-					boundary: null,
-					minLogVal: null,
-					startBezierVal: null
-				};
-			}
-			this.coordinates[chartId][seriaId].coords.catVals.push(xVal);
-			this.coordinates[chartId][seriaId].coords.valVals.push(yVal);
-			if (yVal > 0) {
-				this.coordinates[chartId][seriaId].minLogVal = !this.coordinates[chartId][seriaId].minLogVal ? yVal : Math.min(this.coordinates[chartId][seriaId].minLogVal, yVal);
+			this.trendData.initSeria(xVal, yVal, chartId, seriaId);
+		},
+
+		getAdditionalInfo : function (chartId, seriaId) {
+			const coefficients = this.trendData.getCoefficients(chartId, seriaId);
+			const rSquared = this.trendData.getRSquared(chartId, seriaId);
+			const lastPoint = this.trendData.getLastPoint(chartId, seriaId);
+			if (coefficients || rSquared) {
+				const additionalInfo = {
+					coefficients : coefficients,
+					rSquared : rSquared,
+					coordinate : lastPoint
+				}
+				return additionalInfo;
 			}
 		},
 
 		preCalculate: function (charts, boundaries) {
 			for (let i in charts) {
-				const index1 = charts[i].Id;
-				if (!this.coordinates[index1]) {
-					continue;
-				}
-				for (let j in charts[i].series) {
-					const index2 = charts[i].series[j].Id
-					if (!this.coordinates[index1][index2]) {
-						continue;
+				if (charts.hasOwnProperty(i)) {
+					const index1 = charts[i].Id;
+					for (let j in charts[i].series) {
+						if (charts[i].series.hasOwnProperty(j)) {
+							const index2 = charts[i].series[j].Id;
+							const isSeriaExist = this.trendData.checkSeria(index1, index2);
+							if (isSeriaExist) {
+								this._calculateLine(charts[i].series[j].parent, index2, charts[i].series[j].trendline);
+								this._setNewBoundaries(charts[i].series[j].parent, index2, boundaries);
+							}
+						}
 					}
-					this._calculateLine(charts[i].series[j].parent, this.coordinates[index1][index2], charts[i].series[j].trendline);
-					this._setNewBoundaries(charts[i].series[j].parent, this.coordinates[index1][index2], boundaries);
 				}
 			}
 		},
 
-		_calculateLine: function (oChart, coordinates, attributes) {
+		_calculateLine: function (oChart, seriaId, attributes) {
 			const type = attributes.trendlineType;
 			const catAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[0]);
 			const valAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[1]);
-
+			const coords = this.trendData.getCoords(oChart.Id, seriaId);
+			
 			// moving average differs much from other trendlines
 			if (type === AscFormat.TRENDLINE_TYPE_MOVING_AVG) {
 				const period = attributes.period ? attributes.period : 2;
-				coordinates.pointVals = this._getMAline(coordinates.coords.catVals, coordinates.coords.valVals, this.ptCount, period, valAxis.scaling.logBase);
+				const pointVals = this._getMAline(coords.catVals, coords.valVals, this.ptCount, period, valAxis.scaling.logBase);
+				this.trendData.setPointVals(oChart.Id, seriaId, pointVals);
 			} else {
 				let order = attributes.order ? attributes.order + 1 : 2;
 				// calculate constants of predicted equation and get its possible mappings such as calcYVal, calcXval, calcSlope
-				const chartletiables = this._getEquationCoefficients(coordinates.coords.catVals, coordinates.coords.valVals, type, order, attributes.intercept);
+				const coefficients = this._getEquationCoefficients(coords.catVals, coords.valVals, type, order, attributes.intercept);
 				const equationStorage = this._obtainEquationStorage(type);
-				if (chartletiables && equationStorage) {
+				if (coefficients && equationStorage) {
 					let catMax = catAxis.max + attributes.forward;
 					let catMin = catAxis.min + attributes.backward;
 					const midPointsNum = 100;
-					const lineBuilder = new CLineBuilder(chartletiables, catMin, catMax, valAxis.scaling.min, valAxis.scaling.max, valAxis.scaling.logBase);
+					const lineBuilder = new CLineBuilder(coefficients, catMin, catMax, valAxis.scaling.min, valAxis.scaling.max, valAxis.scaling.logBase);
 					lineBuilder.setCalcYVal(equationStorage.calcYVal);
 					//poly lines can not be drawn with approximated bezier
 					if (this.bAllowDrawByBezier && type !== AscFormat.TRENDLINE_TYPE_POLY) {
@@ -16316,52 +16312,52 @@ CColorObj.prototype =
 						lineBuilder.setCalcSlope(equationStorage.calcSlope);
 						const cutPoint = valAxis.scaling.logBase ? (Math.log(1000) / Math.log(valAxis.scaling.logBase)) : 1000;
 						const lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
-						coordinates.bezierVals = lineCoords.mainLine;
-						coordinates.startBezierVal = lineCoords.startPoint;
+						this.trendData.setBezierApproximationResults(oChart.Id, seriaId, lineCoords.mainLine, lineCoords.startPoint);
 					}
 					if (this.bAllowDrawByPoints || type === AscFormat.TRENDLINE_TYPE_POLY) {
-						coordinates.pointVals = lineBuilder.drawWithPoints(midPointsNum, coordinates.minLogVal);
+						const minLogVal = this.trendData.getMinLogVal(oChart.Id, seriaId);
+						const pointVals = lineBuilder.drawWithPoints(midPointsNum, minLogVal);
+						this.trendData.setPointVals(oChart.Id, seriaId, pointVals);
 					}
-					coordinates.boundary = lineBuilder.getBoundary();
+					this.trendData.setBoundary(oChart.Id, seriaId, lineBuilder.getBoundary());
 
 					if (attributes.dispEq) {
-						coordinates.chartletiables = chartletiables;
-						console.log(coordinates.chartletiables);
+						this.trendData.setCoefficients(oChart.Id, seriaId, coefficients);
 					}
 					if (attributes.dispRSqr) {
-						coordinates.rSquared = this._dispRSquared(coordinates.coords.catVals, coordinates.coords.valVals, chartletiables, type);
-						console.log(coordinates.rSquared);
+						const rSquared = this._dispRSquared(coords.catVals, coords.valVals, coefficients, type);
+						this.trendData.setRSquared(oChart.Id, seriaId, rSquared);
 					}
 				}
 			}
 		},
 
 		// compare boundaries[chartId][seriaId] with local coordinates[chartId][seriaId].boundary
-		_setNewBoundaries: function (oChart, coordinates, boundary) {
-			if (coordinates.boundary && isFinite(coordinates.boundary.catMin) && isFinite(coordinates.boundary.catMax) && isFinite(coordinates.boundary.valMin) &&
-				isFinite(coordinates.boundary.valMax) && coordinates.boundary.catMin !== null && coordinates.boundary.catMax !== null && coordinates.boundary.valMin !== null &&
-				coordinates.boundary.valMax !== null) {
+		_setNewBoundaries: function (oChart, seriaId, boundaries) {
+			const boundary = this.trendData.getBoundary(oChart.Id, seriaId); 
+			console.log(boundary)
+			if (boundary) {
 				const catAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[0]);
 				const valAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[1]);
 
-				if (!boundary[catAxis.Id]) {
-					boundary[catAxis.Id] = {min: null, max: null};
+				if (!boundaries[catAxis.Id]) {
+					boundaries[catAxis.Id] = {min: null, max: null};
 				}
 
-				if (!boundary[valAxis.Id]) {
-					boundary[valAxis.Id] = {min: null, max: null};
+				if (!boundaries[valAxis.Id]) {
+					boundaries[valAxis.Id] = {min: null, max: null};
 				}
 
-				if (!boundary[catAxis.Id].min && !boundary[catAxis.Id].max && !boundary[valAxis.Id].min && !boundary[valAxis.Id].max) {
-					boundary[catAxis.Id].min = coordinates.boundary.catMin;
-					boundary[catAxis.Id].max = coordinates.boundary.catMax;
-					boundary[valAxis.Id].min = coordinates.boundary.valMin;
-					boundary[valAxis.Id].max = coordinates.boundary.valMax;
+				if (!boundaries[catAxis.Id].min && !boundaries[catAxis.Id].max && !boundaries[valAxis.Id].min && !boundaries[valAxis.Id].max) {
+					boundaries[catAxis.Id].min = boundary.catMin;
+					boundaries[catAxis.Id].max = boundary.catMax;
+					boundaries[valAxis.Id].min = boundary.valMin;
+					boundaries[valAxis.Id].max = boundary.valMax;
 				} else {
-					boundary[catAxis.Id].min = Math.min(coordinates.boundary.catMin, boundary[catAxis.Id].min);
-					boundary[catAxis.Id].max = Math.max(coordinates.boundary.catMax, boundary[catAxis.Id].max);
-					boundary[valAxis.Id].min = Math.min(coordinates.boundary.valMin, boundary[valAxis.Id].min);
-					boundary[valAxis.Id].max = Math.max(coordinates.boundary.valMax, boundary[valAxis.Id].max);
+					boundaries[catAxis.Id].min = Math.min(boundary.catMin, boundaries[catAxis.Id].min);
+					boundaries[catAxis.Id].max = Math.max(boundary.catMax, boundaries[catAxis.Id].max);
+					boundaries[valAxis.Id].min = Math.min(boundary.valMin, boundaries[valAxis.Id].min);
+					boundaries[valAxis.Id].max = Math.max(boundary.valMax, boundaries[valAxis.Id].max);
 				}
 
 			}
@@ -16370,22 +16366,25 @@ CColorObj.prototype =
 		// After precalculate is finished, just transform all the data into the pixel format
 		recalculate: function (charts) {
 			for (let i in charts) {
-				if (!this.coordinates[i]) {
-					continue;
-				}
-				for (let j in charts[i].chart.series) {
-					if (!this.coordinates[i][charts[i].chart.series[j].Id]) {
-						continue;
+				if (charts.hasOwnProperty(i)) {
+					for (let j in charts[i].chart.series) {
+						const isSeriaExist = this.trendData.checkSeria(i, charts[i].chart.series[j].Id);
+						if (charts[i].chart.series.hasOwnProperty(j) && isSeriaExist) {
+							this._calculateRelativeLine(charts[i].chart.series[j].parent, charts[i].chart.series[j].Id);
+							// console.log(this.getAdditionalInfo(i, charts[i].chart.series[j].Id));
+						}
 					}
-					this._calculateRelativeLine(charts[i].chart.series[j].parent, this.coordinates[i][charts[i].chart.series[j].Id]);
 				}
 			}
 		},
 
-		_calculateRelativeLine: function (oChart, coordinates) {
+		_calculateRelativeLine: function (oChart, seriaId) {
 			const catAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[0]);
 			const valAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[1]);
 			const horOrientation = !!oChart.axId[0].xPoints;
+			const bezierVals = this.trendData.getBezierVals(oChart.Id, seriaId);
+			const startBezierVal = this.trendData.getStartBezierVal(oChart.Id, seriaId);
+			const pointVals = this.trendData.getPointVals(oChart.Id, seriaId);
 
 			//Convert given values into pixel values
 			const _valsToPos = function (arr, cChartDrawer) {
@@ -16406,16 +16405,15 @@ CColorObj.prototype =
 			const pathH = this.cChartDrawer.calcProp.pathH;
 			const pathW = this.cChartDrawer.calcProp.pathW;
 
-			if (coordinates.bezierVals) {
+			if (bezierVals) {
 
 				const pathId = this.cChartDrawer.cChartSpace.AllocPath();
 				let path = this.cChartDrawer.cChartSpace.GetPath(pathId);
-
-				const positions = _valsToPos(coordinates.bezierVals, this.cChartDrawer);
+				const positions = _valsToPos(bezierVals, this.cChartDrawer);
 
 				// find the starting point
-				if (coordinates.startBezierVal && coordinates.startBezierVal.catVals.length > 0 && coordinates.startBezierVal.valVals.length > 0) {
-					const startPosiontion = _valsToPos(coordinates.startBezierVal, this.cChartDrawer);
+				if (startBezierVal) {
+					const startPosiontion = _valsToPos(startBezierVal, this.cChartDrawer);
 					path.moveTo(startPosiontion.xPos[0] * pathW, startPosiontion.yPos[0] * pathH);
 					path.lnTo(positions.xPos[0] * pathW, positions.yPos[0] * pathH);
 				} else {
@@ -16434,20 +16432,23 @@ CColorObj.prototype =
 					}
 				}
 
-				coordinates.bezierPath = pathId;
+				this.trendData.setLastPoint(oChart.Id, seriaId, positions.xPos[positions.xPos.length - 1], positions.yPos[positions.yPos.length - 1]);
+				this.trendData.setBezierPath(oChart.Id, seriaId, pathId);
 			}
 
-			if (coordinates.pointVals) {
+			if (pointVals) {
 				const pathId = this.cChartDrawer.cChartSpace.AllocPath();
 				let path = this.cChartDrawer.cChartSpace.GetPath(pathId);
 
-				const positions = _valsToPos(coordinates.pointVals, this.cChartDrawer);
+				const positions = _valsToPos(pointVals, this.cChartDrawer);
+
 				path.moveTo(positions.xPos[0] * pathW, positions.yPos[0] * pathH);
 
 				for (let i = 0; i < positions.xPos.length; i++) {
 					path.lnTo(positions.xPos[i] * pathW, positions.yPos[i] * pathH);
 				}
-				coordinates.pointPath = pathId;
+				this.trendData.setLastPoint(oChart.Id, seriaId, positions.xPos[positions.xPos.length - 1], positions.yPos[positions.yPos.length - 1]);
+				this.trendData.setPointPath(oChart.Id, seriaId, pathId);
 			}
 		},
 
@@ -16491,7 +16492,7 @@ CColorObj.prototype =
 			const storage = {
 				[AscFormat.TRENDLINE_TYPE_EXP]: {
 					calcYVal: function (val, supps, isLog) {
-						const res = supps[0] * Math.exp(val * supps[1]);
+						const res = supps[1] * Math.exp(val * supps[0]);
 						if (isLog && res <= 0) {
 							return NaN;
 						} else {
@@ -16499,17 +16500,17 @@ CColorObj.prototype =
 						}
 					}, calcXVal: function (val, supps, isLog) {
 						val = isLog ? Math.pow(isLog, val) : val;
-						return Math.log(val / supps[0]) / supps[1];
+						return Math.log(val / supps[1]) / supps[0];
 					}, calcSlope: function (val, supps, isLog) {
 						if (!isLog) {
-							return supps[0] * supps[1] * Math.exp(val * supps[1]);
+							return supps[1] * supps[0] * Math.exp(val * supps[0]);
 						} else {
-							return (Math.log(Math.exp(1)) / Math.log(isLog)) * supps[1];
+							return (Math.log(Math.exp(1)) / Math.log(isLog)) * supps[0];
 						}
 					}
 				}, [AscFormat.TRENDLINE_TYPE_LINEAR]: {
 					calcYVal: function (val, supps, isLog) {
-						const res = supps[1] * val + supps[0];
+						const res = supps[0] * val + supps[1];
 						if (isLog && res <= 0) {
 							return NaN;
 						} else {
@@ -16517,18 +16518,18 @@ CColorObj.prototype =
 						}
 					}, calcXVal: function (val, supps, isLog) {
 						val = isLog ? Math.pow(isLog, val) : val;
-						return (val - supps[0]) / supps[1];
+						return (val - supps[1]) / supps[0];
 					}, calcSlope: function (val, supps, isLog) {
 						if (!isLog) {
-							return supps[1];
+							return supps[0];
 						} else {
-							return supps[1] / (Math.log(isLog) * (supps[1] * val + supps[0]));
+							return supps[0] / (Math.log(isLog) * (supps[0] * val + supps[1]));
 						}
 					}
 				}, [AscFormat.TRENDLINE_TYPE_LOG]: {
 					calcYVal: function (val, supps, isLog) {
 						if (val > 0) {
-							const res = supps[1] * Math.log(val) + supps[0];
+							const res = supps[0] * Math.log(val) + supps[1];
 							if (isLog && res <= 0) {
 								return NaN;
 							} else {
@@ -16539,19 +16540,19 @@ CColorObj.prototype =
 						}
 					}, calcXVal: function (val, supps, isLog) {
 						val = isLog ? Math.pow(isLog, val) : val;
-						return Math.exp((val - supps[0]) / supps[1]);
+						return Math.exp((val - supps[1]) / supps[0]);
 					}, calcSlope: function (val, supps, isLog) {
 						if (!isLog) {
-							return supps[1] / val;
+							return supps[0] / val;
 						} else {
-							return supps[1] / (Math.log(isLog) * val * (supps[1] * Math.log(val) + supps[0]));
+							return supps[0] / (Math.log(isLog) * val * (supps[0] * Math.log(val) + supps[1]));
 						}
 					}
 				}, [AscFormat.TRENDLINE_TYPE_POLY]: {
 					calcYVal: function (val, supps) {
 						let result = 0;
 						let power = 0;
-						for (let i = 0; i < supps.length; i++) {
+						for (let i = supps.length - 1; i >= 0; i--) {
 							result += (Math.pow(val, power) * supps[i]);
 							power++;
 						}
@@ -16559,7 +16560,7 @@ CColorObj.prototype =
 					}
 				}, [AscFormat.TRENDLINE_TYPE_POWER]: {
 					calcYVal: function (val, supps, isLog) {
-						const res = supps[0] * Math.pow(val, supps[1]);
+						const res = supps[1] * Math.pow(val, supps[0]);
 						if (isLog && res <= 0) {
 							return NaN;
 						} else {
@@ -16570,9 +16571,9 @@ CColorObj.prototype =
 						return Math.pow((val / supps[0]), 1 / supps[1]);
 					}, calcSlope: function (val, supps, isLog) {
 						if (!isLog) {
-							return supps[0] * supps[1] * Math.pow(val, supps[1] - 1);
+							return supps[1] * supps[0] * Math.pow(val, supps[0] - 1);
 						} else {
-							return supps[1] / (Math.log(isLog) * val);
+							return supps[0] / (Math.log(isLog) * val);
 						}
 					}
 				}
@@ -16771,18 +16772,21 @@ CColorObj.prototype =
 					};
 
 					const flatten = function (arr, intercept, value) {
+						const res = Array(arr.length);
 						for (let i = 0; i < arr.length; i++) {
-							arr[i] = arr[i][0];
+							res[res.length - 1 - i] = arr[i][0];
 						}
 						if (intercept !== 0) {
-							arr.unshift(value);
+							res.push(value);
 						} else {
 							if (mappingStorage.bValBackward) {
-								arr[0] = mappingStorage.bValBackward(arr[0]);
+								res[res.length - 1] = mappingStorage.bValBackward(res[res.length - 1]);
 							}
 						}
+						return res;
 					};
 
+					// if intercept is number then one column shoud be dropped, therefor y_intercept stands for number of columns that should be dropped
 					const y_intercept = (typeof intercept === 'number') ? 1 : 0;
 
 					// Letiables = ((X_T@X)^-1)@X_T@Y
@@ -16794,9 +16798,9 @@ CColorObj.prototype =
 						const Y = _createMatrix(valVals, 1, 1, intercept);
 						const S = _matMul(X_T, Y, pow - y_intercept, 1, catVals.length);
 						const letiables = _matMul(P_I, S, pow - y_intercept, 1, pow - y_intercept);
-						flatten(letiables, y_intercept, intercept);
+						const result = flatten(letiables, y_intercept, intercept);
 
-						return letiables;
+						return result;
 					}
 				}
 			}
@@ -16831,7 +16835,7 @@ CColorObj.prototype =
 			return storage.hasOwnProperty(type) ? storage[type] : {};
 		},
 
-		_dispRSquared: function (catVals, valVals, chartletiables, type) {
+		_dispRSquared: function (catVals, valVals, coefficients, type) {
 			const mappingStorage = this._obtainMappingStorage(type)
 			const findYMean = function () {
 				let sum = 0;
@@ -16845,10 +16849,10 @@ CColorObj.prototype =
 			const yMean = findYMean();
 
 			const predictY = function (xVal) {
-				let result = mappingStorage.bValForward ? mappingStorage.bValForward(chartletiables[0]) : chartletiables[0];
+				let result = mappingStorage.bValForward ? mappingStorage.bValForward(coefficients[coefficients.length - 1]) : coefficients[coefficients.length - 1];
 				let power = 1;
-				for (let i = 1; i < chartletiables.length; i++) {
-					result += (Math.pow(xVal, power) * chartletiables[i]);
+				for (let i = coefficients.length - 2; i >= 0; i--) {
+					result += (Math.pow(xVal, power) * coefficients[i]);
 					power++;
 				}
 				return result;
@@ -16870,22 +16874,23 @@ CColorObj.prototype =
 
 		draw: function () {
 			let plotArea = this.cChartDrawer.cChartSpace.chart.plotArea;
-			if (this.coordinates) {
-				for (let i in this.coordinates) {
+			const storage = this.trendData.getStorage();
+			if (storage) {
+				for (let i in storage) {
 					let oChart = this.cChartDrawer._getChartModelById(plotArea, i);
-					if (!oChart || !this.coordinates[i]) {
+					if (!storage.hasOwnProperty(i) || !oChart || !storage[i]) {
 						continue;
 					}
-					for (let j in this.coordinates[i]) {
+					for (let j in storage[i]) {
 						let oSeries = this.cChartDrawer._getSeriesById(oChart, j);
-						if (!oSeries || !this.coordinates[i][j]) {
+						if (!storage[i].hasOwnProperty(j) || !oSeries || !storage[i][j]) {
 							continue;
 						}
 						let pen = oSeries.trendline.pen;
 						if (!pen) {
 							pen = this.cChartDrawer.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines;
 						}
-						if (pen && (this.coordinates[i][j].bezierPath || this.coordinates[i][j].pointPath)) {
+						if (pen && (storage[i][j].bezierPath || storage[i][j].pointPath)) {
 							let leftRect = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
 							let topRect = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
 							let rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
@@ -16895,17 +16900,17 @@ CColorObj.prototype =
 							this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
 
 							let bezierExist = false;
-							if (this.coordinates[i][j].bezierPath) {
-								this.cChartDrawer.drawPath(this.coordinates[i][j].bezierPath, pen);
+							if (storage[i][j].bezierPath) {
+								this.cChartDrawer.drawPath(storage[i][j].bezierPath, pen);
 								bezierExist = true;
 							}
-							if (this.coordinates[i][j].pointPath) {
+							if (storage[i][j].pointPath) {
 								if (bezierExist) {
 									pen.Fill.fill.color.RGBA.R = 255;
 									pen.Fill.fill.color.RGBA.G = 0;
 									pen.Fill.fill.color.RGBA.B = 0;
 								}
-								this.cChartDrawer.drawPath(this.coordinates[i][j].pointPath, pen);
+								this.cChartDrawer.drawPath(storage[i][j].pointPath, pen);
 							}
 
 							this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
@@ -16916,8 +16921,8 @@ CColorObj.prototype =
 		}
 	};
 
-	function CLineBuilder (chartletiables, catMin, catMax, valMin, valMax, isLog) {
-		this.chartletiables = chartletiables;
+	function CLineBuilder (coefficients, catMin, catMax, valMin, valMax, isLog) {
+		this.coefficients = coefficients;
 		this.valMin = valMin;
 		this.valMax = valMax;
 		this.catMin = catMin;
@@ -17132,9 +17137,9 @@ CColorObj.prototype =
 		_lineCoordinate : function (point, val, calcValAxis) {
 			if (calcValAxis) {
 				point.catVal = val;
-				point.valVal = this.calcYVal(val, this.chartletiables, this.isLog);
+				point.valVal = this.calcYVal(val, this.coefficients, this.isLog);
 			} else {
-				point.catVal = this.calcXVal(val, this.chartletiables, this.isLog);
+				point.catVal = this.calcXVal(val, this.coefficients, this.isLog);
 				point.valVal = val;
 			}
 		},
@@ -17157,7 +17162,7 @@ CColorObj.prototype =
 
 		// find slope of the line at given point
 		_findLine : function (catVal, valVal) {
-			const m = this.calcSlope(catVal, this.chartletiables, this.isLog);
+			const m = this.calcSlope(catVal, this.coefficients, this.isLog);
 			const b = valVal - (m * catVal);
 			return [b, m];
 		},
@@ -17170,7 +17175,7 @@ CColorObj.prototype =
 			const t = 0.5;
 			const predictedYVal = this._predictY(controlPoints.valVals, t);
 			const predictedXVal = this._predictY(controlPoints.catVals, t);
-			const actualYVal = this.calcYVal(predictedXVal, this.chartletiables, this.isLog);
+			const actualYVal = this.calcYVal(predictedXVal, this.coefficients, this.isLog);
 			const normalizedPredictedYVal = (predictedYVal - valMin) / (valMax - valMin);
 			const normalizedActualYVal = (actualYVal - valMin) / (valMax - valMin);
 			return normalizedPredictedYVal - normalizedActualYVal;
@@ -17224,7 +17229,7 @@ CColorObj.prototype =
 				// take first positive point along the line
 				while (k < pointsNumber) {
 					const catValMin = (catNet / (pointsNumber - 1)) * k + this.catMin;
-					let valValMin = this.calcYVal(catValMin, this.chartletiables);
+					let valValMin = this.calcYVal(catValMin, this.coefficients);
 					remainder--;
 					if (valValMin >= 0) {
 						this.catMin = catValMin;
@@ -17237,7 +17242,7 @@ CColorObj.prototype =
 				if (k !== pointsNumber - 1){
 					while (j >= 0) {
 						const catValMax = (catNet / (pointsNumber - 1)) * j + this.catMin;
-						let valValMax = this.calcYVal(catValMax, this.chartletiables);
+						let valValMax = this.calcYVal(catValMax, this.coefficients);
 						remainder--;
 						if (valValMax >= 0) {
 							this.catMax = catValMax;
@@ -17258,7 +17263,7 @@ CColorObj.prototype =
 			if (k !== j) {
 				for (let i = 0; i < remainder; i++) {
 					const catVal = (catNet / (remainder - 1)) * i + this.catMin;
-					let valVal = this.calcYVal(catVal, this.chartletiables);
+					let valVal = this.calcYVal(catVal, this.coefficients);
 					//in the log axis, yVal can not be negative
 					if (this.isLog && valVal <= 0) {
 						valVal = valMin ? Math.pow(this.isLog, Math.floor(Math.log(valMin) / Math.log(this.isLog))) : 0.01;
@@ -17280,6 +17285,170 @@ CColorObj.prototype =
 			return results;
 		}
 	};
+
+	function CTrendData () {
+		this.storage = {};
+	}
+
+	// set calcYVal! calcXVal! calcSlope!
+	CTrendData.prototype = {
+		constructor: CTrendData,
+		initSeria: function (xVal, yVal, chartId, seriaId) {
+			if (!this.storage[chartId]) {
+				this.storage[chartId] = {};
+			}
+			if (!this.storage[chartId][seriaId]) {
+				this.storage[chartId][seriaId] = {
+					coords: {catVals: [], valVals: []},
+					bezierPath: null,
+					pointPath: null,
+					coefficients: null,
+					rSquared: null,
+					bezierVals: null,
+					pointVals: null,
+					boundary: null,
+					minLogVal: null,
+					startBezierVal: null,
+					lastPoint: {catVal: null, valVal: null}
+				};
+			}
+			this.storage[chartId][seriaId].coords.catVals.push(xVal);
+			this.storage[chartId][seriaId].coords.valVals.push(yVal);
+			if (yVal > 0) {
+				this.storage[chartId][seriaId].minLogVal = !this.storage[chartId][seriaId].minLogVal ? yVal : Math.min(this.storage[chartId][seriaId].minLogVal, yVal);
+			}
+		},
+
+		getStorage : function () {
+			return this.storage;
+		},
+
+		getMinLogVal : function (chartId, seriaId) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId]){
+				return this.storage[chartId][seriaId].minLogVal;
+			}
+			return null;
+		},
+
+		getCoefficients : function (chartId, seriaId) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId]){
+				return this.storage[chartId][seriaId].coefficients;
+			}
+			return null;
+		},
+
+		getRSquared : function (chartId, seriaId) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId]){
+				return this.storage[chartId][seriaId].rSquared;
+			}
+			return null;
+		},
+
+		getLastPoint : function (chartId, seriaId) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId]){
+				return this.storage[chartId][seriaId].lastPoint;
+			}
+			return null;
+		},
+
+		getCoords : function (chartId, seriaId) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId]){
+				return this.storage[chartId][seriaId].coords;
+			}
+			return null;
+		},
+
+		getBoundary: function (chartId, seriaId) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId] && this.storage[chartId][seriaId].boundary 
+				&& isFinite(this.storage[chartId][seriaId].boundary.catMin) && isFinite(this.storage[chartId][seriaId].boundary.catMax) && isFinite(this.storage[chartId][seriaId].boundary.valMin) 
+				&& isFinite(this.storage[chartId][seriaId].boundary.valMax) && this.storage[chartId][seriaId].boundary.catMin !== null && this.storage[chartId][seriaId].boundary.catMax !== null 
+				&& this.storage[chartId][seriaId].boundary.valMin !== null && this.storage[chartId][seriaId].boundary.valMax !== null){
+				return this.storage[chartId][seriaId].boundary;
+			}
+			return null;
+		},
+
+		getBezierVals : function (chartId, seriaId) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId]){
+				return this.storage[chartId][seriaId].bezierVals;
+			}
+			return null
+		},
+
+		getStartBezierVal : function (chartId, seriaId) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId] && this.storage[chartId][seriaId].startBezierVal && 
+				this.storage[chartId][seriaId].startBezierVal.catVals.length>1 && this.storage[chartId][seriaId].startBezierVal.valVals.length > 1){
+				return this.storage[chartId][seriaId].startBezierVal;
+			}
+			return null
+		},
+
+		getPointVals : function (chartId, seriaId) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId]){
+				return this.storage[chartId][seriaId].pointVals;
+			}
+			return null
+		},
+
+		setBezierApproximationResults : function (chartId, seriaId, mainLine, startingPoint) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId]){
+				this.storage[chartId][seriaId].bezierVals = mainLine;
+				this.storage[chartId][seriaId].startBezierVal = startingPoint;
+			}
+		},
+
+		setPointVals : function (chartId, seriaId, pointVals) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId]){
+				this.storage[chartId][seriaId].pointVals = pointVals;
+			}
+		},
+
+		setCoefficients : function (chartId, seriaId, coefficients) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId]){
+				console.log(coefficients);
+				this.storage[chartId][seriaId].coefficients = coefficients;
+			}
+		},
+
+		setRSquared : function (chartId, seriaId, rSquared) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId]){
+				console.log(rSquared);
+				this.storage[chartId][seriaId].rSquared = rSquared;
+			}
+		},
+		
+		setBoundary : function (chartId, seriaId, boundary) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId]){
+				this.storage[chartId][seriaId].boundary = boundary;
+			}
+		},
+
+		setLastPoint : function (chartId, seriaId, lastPoint) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId] && !this.storage[chartId][seriaId].lastPoint){
+				this.storage[chartId][seriaId].lastPoint = lastPoint;
+			}
+		},
+
+		setBezierPath : function (chartId, seriaId, bezierPath) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId]){
+				this.storage[chartId][seriaId].bezierPath = bezierPath;
+			}
+		},
+
+		setPointPath : function (chartId, seriaId, pointPath) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId]){
+				this.storage[chartId][seriaId].pointPath = pointPath;
+			}
+		},
+
+		checkSeria : function (chartId, seriaId) {
+			if (this.storage[chartId] && this.storage[chartId][seriaId]){
+				return true;
+			}
+			return false;
+		}
+	}
+
 
 
 	//----------------------------------------------------------export----------------------------------------------------
