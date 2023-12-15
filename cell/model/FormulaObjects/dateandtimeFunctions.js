@@ -232,9 +232,7 @@ function (window, undefined) {
 	}
 
 	function days360(date1, date2, flag, isAccrint) {
-		// special modifying a function to call from ACCRINT formula
 		let sign;
-
 		let nY1 = date1.getUTCFullYear(), nM1 = date1.getUTCMonth() + 1, nD1 = date1.getUTCDate(),
 			nY2 = date2.getUTCFullYear(), nM2 = date2.getUTCMonth() + 1, nD2 = date2.getUTCDate();
 
@@ -309,6 +307,21 @@ function (window, undefined) {
 	function getCorrectDate2(val) {
 		if (!AscCommon.bDate1904) {
 			val = new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay);
+		} else {
+			val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
+		}
+		return val;
+	}
+
+	function getCorrectDateCoup(val) {
+		if (!AscCommon.bDate1904) {
+			if (val < 60) {
+				val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
+			} else if (val === 60) {
+				val = new Date(Date.UTC(1900, 1, 29));
+			} else {
+				val = new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay);
+			}
 		} else {
 			val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
 		}
@@ -2413,5 +2426,6 @@ function (window, undefined) {
 	window['AscCommonExcel'].yearFrac = yearFrac;
 	window['AscCommonExcel'].diffDate = diffDate;
 	window['AscCommonExcel'].days360 = days360;
+	window['AscCommonExcel'].getCorrectDateCoup = getCorrectDateCoup;
 	window['AscCommonExcel'].daysInYear = daysInYear;
 })(window);
