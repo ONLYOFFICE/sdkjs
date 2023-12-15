@@ -6022,36 +6022,42 @@
 		return arrResult;
 	};
 	/**
-	 * The specific type of the form
+	 * The specific form type.
 	 * @typedef {("text" | "checkBox" | "picture" | "comboBox" | "dropDownList" | "dateTime" | "radio")} FormSpecificType
 	 */
 	/**
-	 * Form data
+	 * Form data.
 	 * @typedef {Object} FormData
-	 * @property {string} key - The key of the form. It current form is a radiobutton then this field holds the group key.
-	 * @property {string|boolean} value - Data of the current field.
-	 * @property {string} tag - Tag of the form
-	 * @property {FormSpecificType} type - Type of the form
+	 * @property {string} key - The form key. If the current form is a radio button, then this field contains the group key.
+	 * @property {string | boolean} value - The current field value.
+	 * @property {string} tag - The form tag.
+	 * @property {FormSpecificType} type - The form type.
 	 * @example
 	 * 	{
 	 * 	  "key" : "CompanyName",
-	 * 	  "tag" : "companyName"
-	 * 	  "value" : "OnlyOffice"
+	 * 	  "tag" : "companyName",
+	 * 	  "value" : "ONLYOFFICE",
 	 * 	  "type" : "text"
 	 * 	}
 	 */
 	/**
-	 * Get data from all forms present in the current document.
-	 * If any form was created by not assigned to any part of the document, it won't be present in this list.
+	 * Returns the data from all forms present in the current document.
+	 * If a form was created and not assigned to any part of the document, it won't appear in this list.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
 	 * @returns {Array.<FormData>}
+	 * @since 8.0.0
 	 */
 	ApiDocument.prototype.GetFormsData = function()
 	{
 		return this.Document.GetFormsManager().GetAllFormsData();
 	};
 	/**
-	 * Set the data for specified forms.
-	 * @param {Array.<FormData>} arrData
+	 * Sets the data to the specified forms.
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @param {Array.<FormData>} arrData - An array of form data to set to the specified forms.
+	 * @since 8.0.0
 	 */
 	ApiDocument.prototype.SetFormsData = function(arrData)
 	{
@@ -6242,15 +6248,15 @@
 		return arrApiAllTables;
 	};
 	/**
-	 * Add the shape to a specified page
+	 * Adds a shape to the specified page.
 	 * <note>This method can be a little bit slow, because it runs the document calculation
 	 * process to arrange tables on the specified page.</note>
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param oDrawing {ApiDrawing}
-	 * @param nPage {number}
-	 * @param x {EMU}
-	 * @param y {EMU}
+	 * @param oDrawing {ApiDrawing} - A shape to add to the page.
+	 * @param nPage {number} - The page number.
+	 * @param x {EMU} - The X coordinate in English measure units.
+	 * @param y {EMU} - The Y coordinate in English measure units.
 	 * @return {boolean}
 	 */
 	ApiDocument.prototype.AddDrawingToPage = function(oDrawing, nPage, x, y)
