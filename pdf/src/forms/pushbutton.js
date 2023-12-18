@@ -383,6 +383,7 @@
         const dImgW = Math.max((oHTMLImg.width * AscCommon.g_dKoef_pix_to_mm), 1);
         const dImgH = Math.max((oHTMLImg.height * AscCommon.g_dKoef_pix_to_mm), 1);
         const oRect = this.getFormRelRect();
+        let nContentWidth;
         switch (this._buttonPosition) {
             case position["iconTextH"]:
             case position["textIconH"]:
@@ -551,6 +552,7 @@
         const dImgW = Math.max((oHTMLImg.width * AscCommon.g_dKoef_pix_to_mm), 1);
         const dImgH = Math.max((oHTMLImg.height * AscCommon.g_dKoef_pix_to_mm), 1);
         const oRect = this.getFormRelRect();
+        let nContentWidth;
         switch (this._buttonPosition) {
             case position["iconTextH"]:
             case position["textIconH"]:
