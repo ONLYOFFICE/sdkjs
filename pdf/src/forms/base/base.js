@@ -1978,31 +1978,12 @@
 
             function setFontFamily(){}
         }
-
-        if (this.content) {
-            let oPara       = this.content.GetElement(0);
-            var FontFamily = {
-				Name : sFontName,
-				Index : -1
-			};
-
-			oPara.SetApplyToAll(true);
-			oPara.Add(new AscCommonWord.ParaTextPr({FontFamily : FontFamily}));
-			oPara.SetApplyToAll(false);
-            oPara.RecalcCompiledPr(true);
-        }
-        if (this.contentFormat) {
-            let oPara       = this.contentFormat.GetElement(0);
-            var FontFamily = {
-				Name : sFontName,
-				Index : -1
-			};
-
-			oPara.SetApplyToAll(true);
-			oPara.Add(new AscCommonWord.ParaTextPr({FontFamily : FontFamily}));
-			oPara.SetApplyToAll(false);
-            oPara.RecalcCompiledPr(true);
-        }
+		
+		if (this.content)
+			this.content.SetFont(sFontName);
+		
+		if (this.contentFormat)
+			this.contentFormat.SetFont(sFontName);
         
         this.SetWasChanged(true);
         this.AddToRedraw();
