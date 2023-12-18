@@ -666,8 +666,7 @@
 			xhr.send(null);
 		};
 
-		this.onDocumentReady = function()
-		{
+		this.checkReady = function() {
 			var _t = this;
 			// в интерфейсе есть проблема - нужно посылать onDocumentContentReady после setAdvancedOptions
 			setTimeout(function(){
@@ -685,14 +684,22 @@
 					_t.startTimer();
 				}
 
-				_t.sendEvent("onFileOpened");
+				if (_t.isStarted && _t.isLoadFonts == false && _t.IsOpenFormsInProgress == false) {
+					_t.sendEvent("onFileOpened");
 
-				_t.sendEvent("onPagesCount", _t.file.pages.length);
-				_t.sendEvent("onCurrentPageChanged", 0);
+					_t.sendEvent("onPagesCount", _t.file.pages.length);
+					_t.sendEvent("onCurrentPageChanged", 0);
 
-				_t.sendEvent("onStructure", _t.structure);
+					_t.sendEvent("onStructure", _t.structure);
+				}
+				else
+					_t.checkReady();
+				
 			}, 0);
-
+		};
+		this.onDocumentReady = function()
+		{
+			this.checkReady();
 			this.file.onRepaintPages = this.onUpdatePages.bind(this);
 			this.file.onUpdateStatistics = this.onUpdateStatistics.bind(this);
 			this.currentPage = -1;
@@ -1150,8 +1157,6 @@
 				this.doc.OnAfterFillFormsParents();
 			}
 			
-			this.doc.FillButtonsIconsOnOpen();
-			
 			if (Array.isArray(aFormsInfo["CO"]) && aFormsInfo["CO"].length > 0)
 				this.doc.GetCalculateInfo().SetCalculateOrder(aFormsInfo["CO"]);
 			
@@ -1166,7 +1171,7 @@
 				}
 			});
 
-			this.IsOpenFormsInProgress = false;
+			this.doc.FillButtonsIconsOnOpen();
 		};
 		this.openAnnots = function() {
 			let oThis = this;
@@ -2438,13 +2443,12 @@
 
 		this._paint = function()
 		{
-			if (this.isLoadFonts)
+			if (this.isLoadFonts || this.IsOpenFormsInProgress)
 				return;
 			
 			if (!this.file || !this.file.isValid() || !this.canvas)
 				return;
 
-			this.canvas.width = this.canvas.width;
 			let ctx = this.canvas.getContext("2d");
 			ctx.strokeStyle = AscCommon.GlobalSkin.PageOutline;
 			let lineW = AscCommon.AscBrowser.retinaPixelRatio >> 0;
@@ -2496,6 +2500,7 @@
 			if (this._checkFieldsFontsOnPages(lStartPage, lEndPage) == false)
 				return;
 
+			this.canvas.width = this.canvas.width;
 			this.pageDetector = new CCurrentPageDetector(this.canvas.width, this.canvas.height);
 
 			let oDrDoc = oDoc.GetDrawingDocument();
@@ -3588,11 +3593,14 @@
 		let oThis = this;
 		
 		// грузим шрифты для форм без внешнего вида
-		oThis.isLoadFonts = true;
-		return oThis.doc.checkFonts(aFontsToLoad, function() {
-			oThis.isLoadFonts = false;
-			oThis.isRepaint = true;
+		oThis.isLoadFonts = !oThis.doc.checkFonts(aFontsToLoad, function() {
+			setTimeout(function() {
+				oThis.isLoadFonts = false;
+				oThis.isRepaint = true;
+			});
 		});
+
+		return !oThis.isLoadFonts;
 	};
 	CHtmlPage.prototype._paintAnnots = function()
 	{

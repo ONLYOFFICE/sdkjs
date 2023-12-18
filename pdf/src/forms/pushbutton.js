@@ -1073,6 +1073,11 @@
         this.SetPressed(true);
         this.AddToRedraw();
 
+        if (this.IsNeedDrawFromStream()) {
+            editor.getDocumentRenderer()._paint();
+            return;
+        }
+             
         let sTargetCaption;
         let oTargetImgData;
         let sMouseDownCaption   = this.GetCaption(CAPTION_TYPES.mouseDown);
@@ -1115,6 +1120,11 @@
         this.SetPressed(false);
         this.AddToRedraw();
 
+        if (this.IsNeedDrawFromStream()) {
+            editor.getDocumentRenderer()._paint();
+            return;
+        }
+        
         if (this._imgData.mouseDown || this.GetCaption(CAPTION_TYPES.normal) || this.GetCaption(CAPTION_TYPES.rollover)) {
             let oTargetImgData = this.IsHovered() ? this._imgData.rollover : this._imgData.normal;
             let sTargetCaption = this.IsHovered() ? this.GetCaption(CAPTION_TYPES.rollover) : this.GetCaption(CAPTION_TYPES.normal);
@@ -1169,6 +1179,11 @@
         this.SetHovered(true);
         this.AddToRedraw();
 
+        if (this.IsNeedDrawFromStream()) {
+            editor.getDocumentRenderer()._paint();
+            return;
+        }
+
         let sRolloverCaption = this.GetCaption(CAPTION_TYPES.rollover);
 
         if (this._imgData.rollover || sRolloverCaption) {
@@ -1200,6 +1215,11 @@
         this.SetHovered(false);
         this.AddToRedraw();
 
+        if (this.IsNeedDrawFromStream()) {
+            editor.getDocumentRenderer()._paint();
+            return;
+        }
+        
         if (this._imgData.rollover || this.GetCaption(CAPTION_TYPES.rollover)) {
             let oCaptionRun             = this.GetCaptionRun();
             let sRolloverCaption    = this.GetCaption(CAPTION_TYPES.rollover);

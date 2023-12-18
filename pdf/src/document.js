@@ -210,6 +210,12 @@ var CPresentation = CPresentation || function(){};
         let oViewer = editor.getDocumentRenderer();
         let oDoc = this;
 
+        let aIconsToLoad = [];
+        let oIconsInfo = {
+            "MK": [],
+            "View": []
+        };
+
         for (let i = 0; i < oViewer.pagesInfo.pages.length; i++) {
             let oPage = oViewer.drawingPages[i];
 
@@ -217,62 +223,65 @@ var CPresentation = CPresentation || function(){};
             let h = (oPage.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
             let oFile = oViewer.file;
-            let aIconsInfo = oFile.nativeFile["getButtonIcons"](i, w, h, undefined, true);
+            let oPageIconsInfo = oFile.nativeFile["getButtonIcons"](i, w, h, undefined, true);
 
-            if (aIconsInfo["View"] == null)
-                return;
-                
-            let aIconsToLoad = [];
+            if (oPageIconsInfo["View"] == null)
+                continue;
+
+            oIconsInfo["MK"] = oIconsInfo["MK"].concat(oPageIconsInfo["MK"]);
+            oIconsInfo["View"] = oIconsInfo["View"].concat(oPageIconsInfo["View"]);
 
             // load images
-            for (let nIcon = 0; nIcon < aIconsInfo["View"].length; nIcon++) {
-                let sBase64 = aIconsInfo["View"][nIcon]["retValue"];
+            for (let nIcon = 0; nIcon < oPageIconsInfo["View"].length; nIcon++) {
+                let sBase64 = oPageIconsInfo["View"][nIcon]["retValue"];
 
                 aIconsToLoad.push({
                     Image: {
-                        width: aIconsInfo["View"][nIcon]["w"],
-                        height: aIconsInfo["View"][nIcon]["h"],
+                        width: oPageIconsInfo["View"][nIcon]["w"],
+                        height: oPageIconsInfo["View"][nIcon]["h"],
                     },
                     src: "data:image/png;base64," + sBase64
                 });
 
-                for (let nField = 0; nField < aIconsInfo["MK"].length; nField++) {
-                    if (aIconsInfo["MK"][nField]["I"] == aIconsInfo["View"][nIcon]["j"]) {
-                        aIconsInfo["MK"][nField]["I"] = aIconsToLoad[aIconsToLoad.length - 1];
+                for (let nField = 0; nField < oPageIconsInfo["MK"].length; nField++) {
+                    if (oPageIconsInfo["MK"][nField]["I"] == oPageIconsInfo["View"][nIcon]["j"]) {
+                        oPageIconsInfo["MK"][nField]["I"] = aIconsToLoad[aIconsToLoad.length - 1];
                     }
-                    else if (aIconsInfo["MK"][nField]["RI"] == aIconsInfo["View"][nIcon]["j"]) {
-                        aIconsInfo["MK"][nField]["RI"] = aIconsToLoad[aIconsToLoad.length - 1];
+                    else if (oPageIconsInfo["MK"][nField]["RI"] == oPageIconsInfo["View"][nIcon]["j"]) {
+                        oPageIconsInfo["MK"][nField]["RI"] = aIconsToLoad[aIconsToLoad.length - 1];
                     }
-                    else if (aIconsInfo["MK"][nField]["IX"] == aIconsInfo["View"][nIcon]["j"]) {
-                        aIconsInfo["MK"][nField]["IX"] = aIconsToLoad[aIconsToLoad.length - 1];
+                    else if (oPageIconsInfo["MK"][nField]["IX"] == oPageIconsInfo["View"][nIcon]["j"]) {
+                        oPageIconsInfo["MK"][nField]["IX"] = aIconsToLoad[aIconsToLoad.length - 1];
                     }
-                        //aIconsToLoad[aIconsToLoad.length - 1].fields.push(this.GetFieldBySourceIdx(aIconsInfo["MK"][nField]["i"]));
                 }
             }
-
-            editor.ImageLoader.LoadImagesWithCallback(aIconsToLoad.map(function(info) {
-                return info.src;
-            }), function() {
-                oViewer.IsOpenFormsInProgress = true;
-
-                // выставляем только ImageData. Форму пересчитаем и добавим картинку после того, как форма изменится, чтобы не грузить шрифты
-                for (let nBtn = 0; nBtn < aIconsInfo["MK"].length; nBtn++) {
-                    let oBtnField = oDoc.GetFieldBySourceIdx(aIconsInfo["MK"][nBtn]["i"]);
-
-                    if (aIconsInfo["MK"][nBtn]["I"]) {
-                        oBtnField.SetImageData(aIconsInfo["MK"][nBtn]["I"]);
-                    }
-                    if (aIconsInfo["MK"][nBtn]["RI"]) {
-                        oBtnField.SetImageData(aIconsInfo["MK"][nBtn]["RI"], AscPDF.APPEARANCE_TYPE.rollover);
-                    }
-                    if (aIconsInfo["MK"][nBtn]["IX"]) {
-                        oBtnField.SetImageData(aIconsInfo["MK"][nBtn]["IX"], AscPDF.APPEARANCE_TYPE.mouseDown);
-                    }
-                }
-
-                oViewer.IsOpenFormsInProgress = false;
-            });
         }
+
+        if (aIconsToLoad.length === 0) {
+            oViewer.IsOpenFormsInProgress = false;
+            return;
+        }
+
+        editor.ImageLoader.LoadImagesWithCallback(aIconsToLoad.map(function(info) {
+            return info.src;
+        }), function() {
+            // выставляем только ImageData. Форму пересчитаем и добавим картинку после того, как форма изменится, чтобы не грузить шрифты
+            for (let nBtn = 0; nBtn < oIconsInfo["MK"].length; nBtn++) {
+                let oBtnField = oDoc.GetFieldBySourceIdx(oIconsInfo["MK"][nBtn]["i"]);
+
+                if (oIconsInfo["MK"][nBtn]["I"]) {
+                    oBtnField.SetImageData(oIconsInfo["MK"][nBtn]["I"]);
+                }
+                if (oIconsInfo["MK"][nBtn]["RI"]) {
+                    oBtnField.SetImageData(oIconsInfo["MK"][nBtn]["RI"], AscPDF.APPEARANCE_TYPE.rollover);
+                }
+                if (oIconsInfo["MK"][nBtn]["IX"]) {
+                    oBtnField.SetImageData(oIconsInfo["MK"][nBtn]["IX"], AscPDF.APPEARANCE_TYPE.mouseDown);
+                }
+            }
+            oViewer.isRepaint = true;
+            oViewer.IsOpenFormsInProgress = false;
+        });
     };
     CPDFDoc.prototype.GetFieldBySourceIdx = function(nIdx) {
         for (let i = 0; i < this.widgets.length; i++) {
@@ -2405,16 +2414,13 @@ var CPresentation = CPresentation || function(){};
             }
         }
 
-        if (callback)
-			this.fontLoaderCallbacks.push(callback);
-
         if (aMap.length == 0) {
-            this.fontLoaderCallbacks.forEach(function(callback) {
-                callback();
-            });
             this.fontLoaderCallbacks = [];
             return true;
         }
+
+        if (callback)
+			this.fontLoaderCallbacks.push(callback);
 
         let _t = this;
         this.fontLoader.LoadDocumentFonts2(aMap,
