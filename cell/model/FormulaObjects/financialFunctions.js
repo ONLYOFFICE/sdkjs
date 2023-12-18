@@ -692,16 +692,16 @@ function (window, undefined) {
 			return newDate;
 		}
 
-		let iss = issue < 61 ? AscCommonExcel.getCorrectDateCoup(issue) : cDate.prototype.getDateFromExcel(issue),
-			fInter = firstInterest < 61 ? AscCommonExcel.getCorrectDateCoup(firstInterest) : cDate.prototype.getDateFromExcel(firstInterest),
-			settl = settlement < 61 ? AscCommonExcel.getCorrectDateCoup(settlement) : cDate.prototype.getDateFromExcel(settlement),
+		// exception for 1900/1/29 date
+		let iss = issue === 60 ? new Date(Date.UTC(1900, 1, 29)) : AscCommonExcel.getCorrectDate(issue),
+			fInter = firstInterest === 60 ? new Date(Date.UTC(1900, 1, 29)) : AscCommonExcel.getCorrectDate(firstInterest),
+			settl = settlement === 60 ? new Date(Date.UTC(1900, 1, 29)) : AscCommonExcel.getCorrectDate(settlement),
 			numMonths = 12 / frequency,
 			numMonthsNeg = -numMonths,
 			endMonth = fInter.lastDayOfMonth(), coupPCD, firstDate, startDate, endDate, res, days, coupDays;
 
-
 		let mainCoupPcd = lcl_GetCouppcd(iss, fInter, frequency);
-		// if the first coupon period 0, return 0 as in MS
+		// if the first coupon period === 0, return 0 as in MS
 		if (mainCoupPcd.getExcelDate() <= 0) {
 			return new cNumber(0);
 		}
@@ -1638,12 +1638,6 @@ function (window, undefined) {
 		}
 
 		let settl = cDate.prototype.getDateFromExcel(settlement), matur = cDate.prototype.getDateFromExcel(maturity);
-		settl = AscCommonExcel.getCorrectDateCoup(settlement), matur = AscCommonExcel.getCorrectDateCoup(maturity);
-
-		if (settlement === 60) {
-			// exception, data should be 29/1/1900
-			settl = AscCommonExcel.getCorrectDateCoup(settlement - 1)
-		}
 
 		let n = lcl_GetCouppcd(settl, matur, frequency);
 		let res = new cNumber(n.getExcelDate());

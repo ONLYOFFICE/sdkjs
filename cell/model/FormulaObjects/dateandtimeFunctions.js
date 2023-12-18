@@ -313,20 +313,6 @@ function (window, undefined) {
 		return val;
 	}
 
-	function getCorrectDateCoup(val) {
-		if (!AscCommon.bDate1904) {
-			if (val < 60) {
-				val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
-			} else if (val === 60) {
-				val = new Date(Date.UTC(1900, 1, 29));
-			} else {
-				val = new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay);
-			}
-		} else {
-			val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
-		}
-		return val;
-	}
 
 	function getWeekends(val) {
 		var res = [];
@@ -2426,6 +2412,6 @@ function (window, undefined) {
 	window['AscCommonExcel'].yearFrac = yearFrac;
 	window['AscCommonExcel'].diffDate = diffDate;
 	window['AscCommonExcel'].days360 = days360;
-	window['AscCommonExcel'].getCorrectDateCoup = getCorrectDateCoup;
+	window['AscCommonExcel'].getCorrectDate = getCorrectDate;
 	window['AscCommonExcel'].daysInYear = daysInYear;
 })(window);
