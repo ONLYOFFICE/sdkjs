@@ -141,6 +141,7 @@ $(function () {
 	};
 	const clearData = function(c1, r1, c2, r2) {
 		ws.autoFilters.deleteAutoFilter(getRange(0, 0, 0, 0));
+		ws.mergeManager.remove(getRange(c1, r1, c2, r2));
 		wsView.activeFillHandle = null;
 		wsView.fillHandleDirection = null;
 		ws.removeRows(r1, r2, false);
@@ -2905,5 +2906,58 @@ $(function () {
 		];
 		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Copy cells. Selected filled cells - A1:A6. The fill handle has a horizontal direction. Case: bug #65405');
 		clearData(0, 0, 2, 5);
+	});
+	QUnit.test('Toolbar: Fill -> "Up/Down, Left/Right"', function(assert) {
+		const testData = [
+			['1']
+		];
+		// Fill -> Down with merged cell
+		oFromRange = getFilledData(0, 0, 1, 3, testData, [0,0]);
+		let oFromWs = oFromRange.worksheet;
+		let oFromMergedCell = getRange(0, 0, 1, 1);
+		oFromWs.mergeManager.add(oFromMergedCell, 1);
+		api.asc_FillCells(oRightClickOptions.fillDown);
+
+		autofillRange = getRange(0, 2, 0, 2);
+		autofillData(assert, autofillRange, [['1']], 'Fill -> Down with merged cell');
+		let oToMergedCell = oFromWs.mergeManager.get(autofillRange);
+		assert.strictEqual(oToMergedCell.all.length > 0, true, "Filled cell must be merged" );
+		clearData(0, 0, 1, 3);
+		// Fill -> Up with merged cell
+		oFromRange = getFilledData(0, 0, 1, 3, testData, [3,0]);
+		oFromWs = oFromRange.worksheet;
+		oFromMergedCell = getRange(0, 2, 1, 3);
+		oFromWs.mergeManager.add(oFromMergedCell, 1);
+		api.asc_FillCells(oRightClickOptions.fillUp);
+
+		autofillRange = getRange(0, 1, 0, 1);
+		autofillData(assert, autofillRange, [['1']], 'Fill -> Up with merged cell');
+		oToMergedCell = oFromWs.mergeManager.get(autofillRange);
+		assert.strictEqual(oToMergedCell.all.length > 0, true, "Filled cell must be merged" );
+		clearData(0, 0, 1, 3);
+		// Fill -> Right with merged cell
+		oFromRange = getFilledData(0, 0, 3, 1, testData, [0,0]);
+		oFromWs = oFromRange.worksheet;
+		oFromMergedCell = getRange(0, 0, 1, 1);
+		oFromWs.mergeManager.add(oFromMergedCell, 1);
+		api.asc_FillCells(oRightClickOptions.fillRight);
+
+		autofillRange = getRange(2, 0, 2, 0);
+		autofillData(assert, autofillRange, [['1']], 'Fill -> Right with merged cell');
+		oToMergedCell = oFromWs.mergeManager.get(autofillRange);
+		assert.strictEqual(oToMergedCell.all.length > 0, true, "Filled cell must be merged" );
+		clearData(0, 0, 3, 1);
+		// Fill -> Left with merged cell
+		oFromRange = getFilledData(0, 0, 3, 1, testData, [0,3]);
+		oFromWs = oFromRange.worksheet;
+		oFromMergedCell = getRange(2, 0, 3, 1);
+		oFromWs.mergeManager.add(oFromMergedCell, 1);
+		api.asc_FillCells(oRightClickOptions.fillLeft);
+
+		autofillRange = getRange(1, 0, 1, 0);
+		autofillData(assert, autofillRange, [['1']], 'Fill -> Left with merged cell');
+		oToMergedCell = oFromWs.mergeManager.get(autofillRange);
+		assert.strictEqual(oToMergedCell.all.length > 0, true, "Filled cell must be merged" );
+		clearData(0, 0, 3, 1);
 	});
 });

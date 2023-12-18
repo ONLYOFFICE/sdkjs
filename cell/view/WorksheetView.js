@@ -26692,33 +26692,51 @@
 
 			let oneRow = selectionRange.isOneRow();
 			let oneCol = selectionRange.isOneCol();
+			let ws = oThis.model;
+			let aMergedCells =  ws.mergeManager.get(selectionRange).all;
 			if (type === c_oAscFillType.fillDown) {
 				if (oneRow && selectionRange.r1 === 0) {
 					return false;
 				}
-
-				selectionRange.assign(selectionRange.c1, selectionRange.r1 - 1*oneRow, selectionRange.c2, selectionRange.r1 - 1*oneRow);
+				if (aMergedCells.length) {
+					let oMergedRange = aMergedCells[0].bbox;
+					selectionRange.assign(oMergedRange.c1, oMergedRange.r1, oMergedRange.c2, oMergedRange.r2);
+				} else {
+					selectionRange.assign(selectionRange.c1, selectionRange.r1 - 1*oneRow, selectionRange.c2, selectionRange.r1 - 1*oneRow);
+				}
 				_applyFillHandleSettings(cloneSelection, 1, 3);
 			} else if (type === c_oAscFillType.fillUp) {
 				if (oneRow && selectionRange.r2 === gc_nMaxRow0) {
 					return false;
 				}
-
-				selectionRange.assign(selectionRange.c1, selectionRange.r2 + 1*oneRow, selectionRange.c2, selectionRange.r2 + 1*oneRow);
+				if (aMergedCells.length) {
+					let oMergedRange = aMergedCells[aMergedCells.length - 1].bbox;
+					selectionRange.assign(oMergedRange.c1, oMergedRange.r1, oMergedRange.c2, oMergedRange.r2);
+				} else {
+					selectionRange.assign(selectionRange.c1, selectionRange.r2 + 1 * oneRow, selectionRange.c2, selectionRange.r2 + 1 * oneRow);
+				}
 				_applyFillHandleSettings(new asc_Range(cloneSelection.c2, cloneSelection.r2, cloneSelection.c1, cloneSelection.r1), 1, 1);
 			} else if (type === c_oAscFillType.fillRight) {
 				if (oneCol && selectionRange.c1 === 0) {
 					return false;
 				}
-
-				selectionRange.assign(selectionRange.c1 - 1*oneCol, selectionRange.r1, selectionRange.c1 - 1*oneCol, selectionRange.r2);
+				if (aMergedCells.length) {
+					let oMergedRange = aMergedCells[0].bbox;
+					selectionRange.assign(oMergedRange.c1, oMergedRange.r1, oMergedRange.c2, oMergedRange.r2);
+				} else {
+					selectionRange.assign(selectionRange.c1 - 1*oneCol, selectionRange.r1, selectionRange.c1 - 1*oneCol, selectionRange.r2);
+				}
 				_applyFillHandleSettings(cloneSelection, 0, 3);
 			} else if (type === c_oAscFillType.fillLeft) {
 				if (oneCol && selectionRange.c2 === gc_nMaxCol0) {
 					return false;
 				}
-
-				selectionRange.assign(selectionRange.c2 + 1*oneCol, selectionRange.r1, selectionRange.c2 + 1*oneCol, selectionRange.r2);
+				if (aMergedCells.length) {
+					let oMergedRange = aMergedCells[aMergedCells.length - 1].bbox;
+					selectionRange.assign(oMergedRange.c1, oMergedRange.r1, oMergedRange.c2, oMergedRange.r2);
+				} else {
+					selectionRange.assign(selectionRange.c2 + 1 * oneCol, selectionRange.r1, selectionRange.c2 + 1 * oneCol, selectionRange.r2);
+				}
 				_applyFillHandleSettings(new asc_Range(cloneSelection.c2, cloneSelection.r2, cloneSelection.c1, cloneSelection.r1), 0, 1);
 			}
 
