@@ -929,12 +929,6 @@
 						oForm.SetTextFontActual(AscFonts.getEmbeddedFontPrefix() + oFormInfo["font"]["name"]);
 					}
 
-					if (false == oForm.IsNeedDrawFromStream()) {
-						let sFont = oForm.GetTextFontActual();
-						if (sFont)
-							aFontsToLoad.push(sFont);
-					}
-
 					if (oFormInfo["font"]["size"] != null)
 						oForm.SetTextSize(oFormInfo["font"]["size"]);
 
@@ -1173,15 +1167,6 @@
 			});
 
 			this.IsOpenFormsInProgress = false;
-
-			// грузим шрифты для форм без внешнего вида
-			oThis.isLoadFonts = true;
-			setTimeout(function() {
-				oThis.doc.checkFonts(aFontsToLoad, function() {
-					oThis.isLoadFonts = false;
-					oThis.isRepaint = true;
-				});
-			});
 		};
 		this.openAnnots = function() {
 			let oThis = this;
@@ -2456,9 +2441,6 @@
 			if (this.isLoadFonts)
 				return;
 			
-			if (this._checkFieldsFontsBeforePaint() == false)
-				return;
-
 			if (!this.file || !this.file.isValid() || !this.canvas)
 				return;
 
@@ -2510,6 +2492,9 @@
 					}
 				}
 			}
+
+			if (this._checkFieldsFontsOnPages(lStartPage, lEndPage) == false)
+				return;
 
 			this.pageDetector = new CCurrentPageDetector(this.canvas.width, this.canvas.height);
 
@@ -3574,10 +3559,10 @@
 		if (oDoc.activeForm && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oDoc.activeForm.GetType()))
 			oDoc.activeForm.content.RecalculateCurPos();
 	};
-	CHtmlPage.prototype._checkFieldsFontsBeforePaint = function() {
+	CHtmlPage.prototype._checkFieldsFontsOnPages = function(nStart, nEnd) {
 		let aFontsToLoad = [];
 
-		for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
+		for (let i = nStart; i <= nEnd; i++)
 		{
 			let page = this.drawingPages[i];
 			if (!page)
