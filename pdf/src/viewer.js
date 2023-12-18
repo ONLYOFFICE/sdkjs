@@ -874,7 +874,8 @@
 				this.IsOpenFormsInProgress = false;
 				return;
 			}
-				
+			
+			let aFontsToLoad = [];
 			for (let i = 0; i < aFormsInfo["Fields"].length; i++)
 			{
 				oFormInfo	= aFormsInfo["Fields"][i];
@@ -885,6 +886,11 @@
 				if (!oForm) {
 					// console.log("Error while reading form, index " + oFormInfo["AP"]["i"]);
 					continue;
+				}
+
+				if (oFormInfo["AP"] != null) {
+					oForm.SetApIdx(oFormInfo["AP"]["i"]);
+					oForm.SetDrawFromStream(Boolean(oFormInfo["AP"]["have"]));
 				}
 
 				oForm.SetOriginPage(oFormInfo["page"]);
@@ -914,8 +920,21 @@
 				if (oFormInfo["font"]) {
 					if (oFormInfo["font"]["color"] != null)
 						oForm.SetTextColor(oFormInfo["font"]["color"]);
-					if (oFormInfo["font"]["name"] != null)
+					if (oFormInfo["font"]["name"])
 						oForm.SetTextFont(oFormInfo["font"]["name"]);
+					if (oFormInfo["font"]["actual"]) {
+						oForm.SetTextFontActual(oFormInfo["font"]["actual"]);
+					}
+					else if (oFormInfo["font"]["name"]) {
+						oForm.SetTextFontActual(AscFonts.getEmbeddedFontPrefix() + oFormInfo["font"]["name"]);
+					}
+
+					if (false == oForm.IsNeedDrawFromStream()) {
+						let sFont = oForm.GetTextFontActual();
+						if (sFont)
+							aFontsToLoad.push(sFont);
+					}
+
 					if (oFormInfo["font"]["size"] != null)
 						oForm.SetTextSize(oFormInfo["font"]["size"]);
 
@@ -925,11 +944,6 @@
 							italic: Boolean((oFormInfo["font"]["style"] >> 1) & 1),
 						});
 					}
-				}
-
-				if (oFormInfo["AP"] != null) {
-					oForm.SetApIdx(oFormInfo["AP"]["i"]);
-					oForm.SetDrawFromStream(Boolean(oFormInfo["AP"]["have"]));
 				}
 
 				// text form
@@ -1159,6 +1173,15 @@
 			});
 
 			this.IsOpenFormsInProgress = false;
+
+			// грузим шрифты для форм без внешнего вида
+			oThis.isLoadFonts = true;
+			setTimeout(function() {
+				oThis.doc.checkFonts(aFontsToLoad, function() {
+					oThis.isLoadFonts = false;
+					oThis.isRepaint = true;
+				});
+			});
 		};
 		this.openAnnots = function() {
 			let oThis = this;
@@ -2430,6 +2453,12 @@
 
 		this._paint = function()
 		{
+			if (this.isLoadFonts)
+				return;
+			
+			if (this._checkFieldsFontsBeforePaint() == false)
+				return;
+
 			if (!this.file || !this.file.isValid() || !this.canvas)
 				return;
 
@@ -3544,6 +3573,41 @@
 			
 		if (oDoc.activeForm && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oDoc.activeForm.GetType()))
 			oDoc.activeForm.content.RecalculateCurPos();
+	};
+	CHtmlPage.prototype._checkFieldsFontsBeforePaint = function() {
+		let aFontsToLoad = [];
+
+		for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
+		{
+			let page = this.drawingPages[i];
+			if (!page)
+				break;
+
+			let aForms = this.pagesInfo.pages[i].fields != null ? this.pagesInfo.pages[i].fields : null;
+			if (!aForms)
+				continue;
+
+			if (this.pagesInfo.pages[i].needRedrawForms)
+			{
+				if (this.pagesInfo.pages[i].fields != null) {
+					this.pagesInfo.pages[i].fields.forEach(function(field) {
+						if (field.IsNeedDrawFromStream() == false) {
+							let sFont = field.GetTextFontActual();
+							if (sFont)
+								aFontsToLoad.push(sFont);
+						}
+					});
+				}
+			}
+		}
+		let oThis = this;
+		
+		// грузим шрифты для форм без внешнего вида
+		oThis.isLoadFonts = true;
+		return oThis.doc.checkFonts(aFontsToLoad, function() {
+			oThis.isLoadFonts = false;
+			oThis.isRepaint = true;
+		});
 	};
 	CHtmlPage.prototype._paintAnnots = function()
 	{

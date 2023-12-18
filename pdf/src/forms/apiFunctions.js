@@ -1128,15 +1128,15 @@
             case "MIN":
                 let nMin = extractNumber(aValues[0]);
                 for (let i = 1; i < aValues.length; i++) {
-                    if (aValues[i] < nMin)
+                    if (extractNumber(aValues[i]) < nMin)
                         nMin = aValues[i];
                 }
                 nResult = nMin;
                 break;
             case "MAX":
-                let nMax = aValues[0];
+                let nMax = extractNumber(aValues[0]);
                 for (let i = 1; i < aValues.length; i++) {
-                    if (aValues[i] > nMax)
+                    if (extractNumber(aValues[i]) > nMax)
                         nMax = aValues[i];
                 }
 

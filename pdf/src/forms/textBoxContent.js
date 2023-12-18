@@ -146,12 +146,14 @@
 		paragraph.RemoveFromContent(1, paragraph.GetElementsCount() - 1);
 		run.ClearContent();
 		
-		for (let index = 0, inRunIndex = 0, count = codePoints.length; index < count; ++index) {
-			let runElement = AscWord.codePointToRunElement(codePoints[index]);
-			if (runElement)
-				run.AddToContent(inRunIndex++, runElement, true);
+		if (codePoints) {
+			for (let index = 0, inRunIndex = 0, count = codePoints.length; index < count; ++index) {
+				let runElement = AscWord.codePointToRunElement(codePoints[index]);
+				if (runElement)
+					run.AddToContent(inRunIndex++, runElement, true);
+			}
+			this.MoveCursorToEndPos();
 		}
-		this.MoveCursorToEndPos();
 	};
 	CTextBoxContent.prototype.getAllText = function() {
 		let paragraph = this.GetElement(0);

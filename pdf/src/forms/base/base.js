@@ -149,7 +149,8 @@
         this._borderColor   = undefined;
         this._submitName    = "";
         this._textColor     = [0,0,0];
-        this._textFont      = undefined;
+        this._textFont          = undefined; // исходный
+        this._textFontActual    = undefined; // фактический используемый
         this._fgColor       = undefined;
         this._textSize      = 10; // 0 == max text size // to do
         this._fontStyle     = 0; // информация о стиле шрифта (bold, italic)
@@ -1881,17 +1882,6 @@
         }
     };
 	CBaseField.prototype.DrawFromTextBox = function(pdfGraphics, textBoxGraphics, pageIndex) {
-		let _t = this;
-		if (!this._doc.checkDefaultFieldFonts(function() {
-			let viewer = _t._doc.GetDocumentRenderer();
-			if (!viewer)
-				return;
-			
-			viewer.repaintFormsOnPage(pageIndex);
-		})) {
-			return;
-		}
-		
 		this.Draw(pdfGraphics, textBoxGraphics);
 	};
     CBaseField.prototype.GetParent = function() {
@@ -1964,34 +1954,70 @@
         return this._textColor;
     };
     CBaseField.prototype.SetTextFont = function(sFontName) {
+        if (typeof(sFontName) !== "string" && sFontName == "")
+            return;
+
         this._textFont = sFontName;
+        this.SetWasChanged(true);
+        this.AddToRedraw();
+    };
+    CBaseField.prototype.SetTextFontActual = function(sFontName) {
+        if (typeof(sFontName) !== "string" && sFontName == "")
+            return;
         
-        // if (this.content) {
-        //     let oPara       = this.content.GetElement(0);
-        //     let oApiPara    = editor.private_CreateApiParagraph(oPara);
+        this._textFontActual = sFontName;
+        
+        let oViewer = editor.getDocumentRenderer();
+        if (oViewer.IsOpenFormsInProgress == false) {
+            var loader   = AscCommon.g_font_loader;
+            var fontinfo = g_fontApplication.GetFontInfo(sFontName);
+            var isasync  = loader.LoadFont(fontinfo, setFontFamily);
 
-        //     oApiPara.SetColor(oRGB.r, oRGB.g, oRGB.b, false);
-        //     oPara.RecalcCompiledPr(true);
-        // }
-        // if (this.contentFormat) {
-        //     let oPara       = this.contentFormat.GetElement(0);
-        //     let oApiPara    = editor.private_CreateApiParagraph(oPara);
+            if (isasync === false)
+                setFontFamily()
 
-        //     oApiPara.SetColor(oRGB.r, oRGB.g, oRGB.b, false);
-        //     oPara.RecalcCompiledPr(true);
-        // }
+            function setFontFamily(){}
+        }
+
+        if (this.content) {
+            let oPara       = this.content.GetElement(0);
+            var FontFamily = {
+				Name : sFontName,
+				Index : -1
+			};
+
+			oPara.SetApplyToAll(true);
+			oPara.Add(new AscCommonWord.ParaTextPr({FontFamily : FontFamily}));
+			oPara.SetApplyToAll(false);
+            oPara.RecalcCompiledPr(true);
+        }
+        if (this.contentFormat) {
+            let oPara       = this.contentFormat.GetElement(0);
+            var FontFamily = {
+				Name : sFontName,
+				Index : -1
+			};
+
+			oPara.SetApplyToAll(true);
+			oPara.Add(new AscCommonWord.ParaTextPr({FontFamily : FontFamily}));
+			oPara.SetApplyToAll(false);
+            oPara.RecalcCompiledPr(true);
+        }
         
         this.SetWasChanged(true);
         this.AddToRedraw();
+    };
+    CBaseField.prototype.GetTextFontActual = function() {
+        return this._textFontActual;
+    };
+    CBaseField.prototype.GetTextFont = function(bActual) {
+        return this._textFont;
     };
     CBaseField.prototype.SetFontStyle = function(oStyle) {
         this._fontStyle = oStyle;
     };
     CBaseField.prototype.GetFontStyle = function() {
         return this._fontStyle;
-    };
-    CBaseField.prototype.GetTextFont = function() {
-        return this._textFont;
     };
     CBaseField.prototype.SetTextSize = function(nSize) {
         this._textSize = nSize;

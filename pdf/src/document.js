@@ -133,9 +133,10 @@ var CPresentation = CPresentation || function(){};
 
         this.annotsHidden = false;
 		
-		this.fontLoader = AscCommon.g_font_loader;
-		this.defaultFontsLoaded = -1; // -1 не загружены и не грузим, 0 - грузим, 1 - загружены
-		this.fontLoaderCallbacks = [];
+		this.fontLoader             = AscCommon.g_font_loader;
+		this.defaultFontsLoaded     = -1; // -1 не загружены и не грузим, 0 - грузим, 1 - загружены
+		this.fontLoaderCallbacks    = [];
+        this.loadedFonts            = [];
     }
 
     /////////// методы для открытия //////////////
@@ -197,8 +198,9 @@ var CPresentation = CPresentation || function(){};
             let oField = this.widgets[i];
             if ((oField.GetPartialName() == null || oField.GetApiValue(bInberitValue) == null) && oField.GetParent()) {
                 value = oField.GetParent().GetApiValue();
-                if (value != null && value.toString)
+                if (value != null && value.toString) {
                     value = value.toString();
+                }
 
                 oField.SetValue(value, true);
             }
@@ -251,34 +253,36 @@ var CPresentation = CPresentation || function(){};
             editor.ImageLoader.LoadImagesWithCallback(aIconsToLoad.map(function(info) {
                 return info.src;
             }), function() {
+                oViewer.IsOpenFormsInProgress = true;
 
-                if (!oDoc.checkDefaultFieldFonts(function(){
-                    oViewer.IsOpenFormsInProgress = true;
-                    for (let nField = 0; nField < aIconsInfo["MK"].length; nField++) {
-                        let oField = oDoc.GetFieldBySourceIdx(aIconsInfo["MK"][nField]["i"]);
+                // выставляем только ImageData. Форму пересчитаем и добавим картинку после того, как форма изменится, чтобы не грузить шрифты
+                for (let nBtn = 0; nBtn < aIconsInfo["MK"].length; nBtn++) {
+                    let oBtnField = oDoc.GetFieldBySourceIdx(aIconsInfo["MK"][nBtn]["i"]);
 
-                        oField.Recalculate();
-                        if (aIconsInfo["MK"][nField]["I"]) {
-                            oField.AddImage(aIconsInfo["MK"][nField]["I"]);
-                        }
-                        if (aIconsInfo["MK"][nField]["RI"]) {
-                            oField.AddImage(aIconsInfo["MK"][nField]["RI"], AscPDF.APPEARANCE_TYPE.rollover);
-                        }
-                        if (aIconsInfo["MK"][nField]["IX"]) {
-                            oField.AddImage(aIconsInfo["MK"][nField]["IX"], AscPDF.APPEARANCE_TYPE.mouseDown);
-                        }
+                    if (aIconsInfo["MK"][nBtn]["I"]) {
+                        oBtnField.SetImageData(aIconsInfo["MK"][nBtn]["I"]);
                     }
+                    if (aIconsInfo["MK"][nBtn]["RI"]) {
+                        oBtnField.SetImageData(aIconsInfo["MK"][nBtn]["RI"], AscPDF.APPEARANCE_TYPE.rollover);
+                    }
+                    if (aIconsInfo["MK"][nBtn]["IX"]) {
+                        oBtnField.SetImageData(aIconsInfo["MK"][nBtn]["IX"], AscPDF.APPEARANCE_TYPE.mouseDown);
+                    }
+                }
 
-                    oViewer.IsOpenFormsInProgress = false;
-                }))
-                    return;
+                oViewer.IsOpenFormsInProgress = false;
             });
         }
     };
     CPDFDoc.prototype.GetFieldBySourceIdx = function(nIdx) {
         for (let i = 0; i < this.widgets.length; i++) {
-            if (this.widgets[i]._apIdx == nIdx) {
+            if (this.widgets[i].GetApIdx() == nIdx) {
                 return this.widgets[i];
+            }
+        }
+        for (let i = 0; i < this.widgetsParents.length; i++) {
+            if (this.widgetsParents[i].GetApIdx() == nIdx) {
+                return this.widgetsParents[i];
             }
         }
     };
@@ -351,16 +355,16 @@ var CPresentation = CPresentation || function(){};
         let oActionsQueue   = this.GetActionsQueue();
         let isNeedRedraw    = false;
 		
-		let _t = this;
-		if (!this.checkDefaultFieldFonts(function(){_t.SelectNextField();}))
-			return;
-		
-        if (aWidgetForms.length == 0)
+		if (aWidgetForms.length == 0)
             return;
 
         let nCurIdx = this.widgets.indexOf(this.activeForm);
         let oCurForm = this.widgets[nCurIdx];
         let oNextForm = this.widgets[nCurIdx + 1] || this.widgets[0];
+
+        let _t = this;
+		if (!this.checkFieldFont(oNextForm, function(){_t.SelectNextField();}))
+			return;
 
         if (oCurForm && oNextForm) {
             if (oCurForm.IsNeedCommit()) {
@@ -454,16 +458,16 @@ var CPresentation = CPresentation || function(){};
         let oActionsQueue   = this.GetActionsQueue();
         let isNeedRedraw    = false;
 		
-		let _t = this;
-		if (!this.checkDefaultFieldFonts(function(){_t.SelectNextField();}))
-			return;
-		
-        if (aWidgetForms.length == 0)
+		if (aWidgetForms.length == 0)
             return;
 
         let nCurIdx = this.widgets.indexOf(this.activeForm);
         let oCurForm = this.widgets[nCurIdx];
         let oNextForm = this.widgets[nCurIdx - 1] || this.widgets[this.widgets.length - 1];
+
+        let _t = this;
+		if (!this.checkFieldFont(oNextForm, function(){_t.SelectNextField();}))
+			return;
 
         if (oCurForm && oNextForm) {
             if (oCurForm.IsNeedCommit()) {
@@ -699,10 +703,10 @@ var CPresentation = CPresentation || function(){};
         let oActionsQueue   = this.GetActionsQueue();
 		
 		let _t = this;
-		if (!this.checkDefaultFieldFonts(function(){_t.OnMouseDownField(oField, event)}))
+		if (!this.checkFieldFont(oField, function(){_t.OnMouseDownField(oField, event)}))
 			return;
 		
-        if (oField.IsNeedDrawFromStream() || oField.IsNeedRecalc()) {
+        if ((oField.IsNeedDrawFromStream() || oField.IsNeedRecalc()) && oField.GetType() != AscPDF.FIELD_TYPES.button) {
 		    oField.Recalculate();
             oField.SetNeedRecalc(true);
         }
@@ -1261,10 +1265,6 @@ var CPresentation = CPresentation || function(){};
 
     CPDFDoc.prototype.DoCalculateFields = function(oSourceField) {
 		
-		let _t = this;
-		if (!this.checkDefaultFieldFonts(function(){_t.DoCalculateFields(oSourceField);}))
-			return;
-		
         // при изменении любого поля (с коммитом) вызывается calculate у всех
         let oThis = this;
         this.calculateInfo.SetIsInProgress(true);
@@ -1274,12 +1274,18 @@ var CPresentation = CPresentation || function(){};
             if (!oField)
                 return;
             
-            let oFormatTrigger = oField.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Calculate);
-            let oActionRunScript = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
+            let oCalcTrigget = oField.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Calculate);
+            if (oCalcTrigget == null && oField._kids[0]) {
+                // to do: action действие должно быть в родителе одинаковых виджетов
+                oCalcTrigget = oField._kids[0].GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Calculate);
+                if (oCalcTrigget)
+                    oField = oField._kids[0];
+            }
+            let oActionRunScript = oCalcTrigget ? oCalcTrigget.GetActions()[0] : null;
 
             if (oActionRunScript) {
                 oThis.activeForm = oField;
-                oField.Recalculate();
+                // oField.Recalculate();
                 oActionRunScript.RunScript();
                 if (oField.IsNeedCommit()) {
                     oField.SetNeedRecalc(true);
@@ -2360,6 +2366,72 @@ var CPresentation = CPresentation || function(){};
 
 		return 1 === this.defaultFontsLoaded;
 	};
+    CPDFDoc.prototype.checkFieldFont = function(oField, callback) {
+		let sFontName = oField.GetTextFontActual();
+
+        if (!sFontName)
+            return true;
+        
+		if (this.loadedFonts.includes(sFontName))
+            return true;
+		
+		if (callback)
+			this.fontLoaderCallbacks.push(callback);
+
+		let _t = this;
+		this.fontLoader.LoadDocumentFonts2([{name : sFontName}],
+			Asc.c_oAscAsyncActionType.Empty,
+			function()
+			{
+				_t.loadedFonts.push(sFontName);
+				_t.fontLoaderCallbacks.forEach(function(callback) {
+					callback();
+				});
+				
+				_t.fontLoaderCallbacks = [];
+			}
+		);
+
+		return false;
+	};
+    CPDFDoc.prototype.checkFonts = function(aFontsNames, callback) {
+        let aFontsToLoad    = [];
+        let aMap            = [];
+
+        for (let i = 0; i < aFontsNames.length; i++) {
+            if (this.loadedFonts.includes(aFontsNames[i]) == false) {
+                aFontsToLoad.push(aFontsNames[i]);
+                aMap.push({name: aFontsNames[i]});
+            }
+        }
+
+        if (callback)
+			this.fontLoaderCallbacks.push(callback);
+
+        if (aMap.length == 0) {
+            this.fontLoaderCallbacks.forEach(function(callback) {
+                callback();
+            });
+            this.fontLoaderCallbacks = [];
+            return true;
+        }
+
+        let _t = this;
+        this.fontLoader.LoadDocumentFonts2(aMap,
+			Asc.c_oAscAsyncActionType.Empty,
+			function()
+			{
+				_t.loadedFonts = _t.loadedFonts.concat(aFontsToLoad);
+				_t.fontLoaderCallbacks.forEach(function(callback) {
+					callback();
+				});
+				
+				_t.fontLoaderCallbacks = [];
+			}
+		);
+
+        return false;
+    };
 	
     function CActionQueue(oDoc) {
         this.doc                = oDoc;

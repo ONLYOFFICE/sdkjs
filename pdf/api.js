@@ -373,7 +373,7 @@
 		let viewer	= this.DocumentRenderer;
 		let oDoc	= viewer.getPDFDoc();
 		if (!viewer
-			|| !oDoc.checkDefaultFieldFonts()
+			|| !oDoc.checkFieldFont(oDoc.activeForm)
 			|| !oDoc.activeForm
 			|| !oDoc.activeForm.IsEditable()) {
 			return false;
@@ -555,7 +555,7 @@
 			pdfDoc.activeForm.beginCompositeInput();
 		}
 		
-		if (!pdfDoc.checkDefaultFieldFonts(begin))
+		if (!pdfDoc.checkFieldFont(pdfDoc.activeForm, begin))
 			return true;
 		
 		begin();
