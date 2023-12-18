@@ -225,7 +225,7 @@ function (window, undefined) {
 		if (matur > settl) {
 			matur.addYears(-1);
 		}
-		while (matur < settl) {
+		while (matur <= settl) {
 			matur.addMonths(12 / freq);
 		}
 	}
@@ -1427,31 +1427,35 @@ function (window, undefined) {
 	cCOUPNCD.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cCOUPNCD.prototype.argumentsType = [argType.any, argType.any, argType.any, argType.any];
 	cCOUPNCD.prototype.Calculate = function (arg) {
-		var settlement = arg[0], maturity = arg[1], frequency = arg[2],
-			basis = arg[3] && !(arg[3] instanceof cEmpty) ? arg[3] : new cNumber(0);
+		let settlement = arg[0], maturity = arg[1], frequency = arg[2],
+			basis = arg[3] && !(arg[3].type === cElementType.empty) ? arg[3] : new cNumber(0);
 
-		if (settlement instanceof cArea || settlement instanceof cArea3D) {
+		if (settlement.type === cElementType.cellsRange || settlement.type === cElementType.cellsRange3D) {
 			settlement = settlement.cross(arguments[1]);
-		} else if (settlement instanceof cArray) {
+		} else if (settlement.type === cElementType.array) {
 			settlement = settlement.getElementRowCol(0, 0);
 		}
 
-		if (maturity instanceof cArea || maturity instanceof cArea3D) {
+		if (maturity.type === cElementType.cellsRange || maturity.type === cElementType.cellsRange3D) {
 			maturity = maturity.cross(arguments[1]);
-		} else if (maturity instanceof cArray) {
+		} else if (maturity.type === cElementType.array) {
 			maturity = maturity.getElementRowCol(0, 0);
 		}
 
-		if (frequency instanceof cArea || frequency instanceof cArea3D) {
+		if (frequency.type === cElementType.cellsRange || frequency.type === cElementType.cellsRange3D) {
 			frequency = frequency.cross(arguments[1]);
-		} else if (frequency instanceof cArray) {
+		} else if (frequency.type === cElementType.array) {
 			frequency = frequency.getElementRowCol(0, 0);
 		}
 
-		if (basis instanceof cArea || basis instanceof cArea3D) {
+		if (basis.type === cElementType.cellsRange || basis.type === cElementType.cellsRange3D) {
 			basis = basis.cross(arguments[1]);
-		} else if (basis instanceof cArray) {
+		} else if (basis.type === cElementType.array) {
 			basis = basis.getElementRowCol(0, 0);
+		}
+
+		if (settlement.type === cElementType.empty || maturity.type === cElementType.empty || frequency.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
 		settlement = settlement.tocNumber();
@@ -1459,17 +1463,9 @@ function (window, undefined) {
 		frequency = frequency.tocNumber();
 		basis = basis.tocNumber();
 
-		if (settlement instanceof cError) {
-			return settlement;
-		}
-		if (maturity instanceof cError) {
-			return maturity;
-		}
-		if (frequency instanceof cError) {
-			return frequency;
-		}
-		if (basis instanceof cError) {
-			return basis;
+		let argError;
+		if (argError = this._checkErrorArg([settlement, maturity, frequency, basis])) {
+			return argError;
 		}
 
 		settlement = Math.floor(settlement.getValue());
@@ -1477,16 +1473,16 @@ function (window, undefined) {
 		frequency = Math.floor(frequency.getValue());
 		basis = Math.floor(basis.getValue());
 
-		if (settlement < startRangeCurrentDateSystem || maturity < startRangeCurrentDateSystem ||
+		if ((settlement !== 0 && settlement < startRangeCurrentDateSystem) || maturity < startRangeCurrentDateSystem ||
 			settlement >= maturity || basis < 0 || basis > 4 ||
 			(frequency != 1 && frequency != 2 && frequency != 4)) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		var settl = cDate.prototype.getDateFromExcel(settlement), matur = cDate.prototype.getDateFromExcel(maturity);
+		let settl = AscCommonExcel.getCorrectDate(settlement), matur = AscCommonExcel.getCorrectDate(maturity)
 
-		var res = new cNumber(getcoupncd(settl, matur, frequency).getExcelDate());
-		res.numFormat = 14;
+		let res = new cNumber(getcoupncd(settl, matur, frequency).getExcelDate());
+		// res.numFormat = 14;
 		return res;
 
 	};

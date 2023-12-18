@@ -23138,9 +23138,110 @@ $(function () {
 
 		}
 
+		let array;
+
 		oParser = new parserFormula("COUPNCD(DATE(2007,1,25),DATE(2008,11,15),2,1)", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), coupncd(new cDate(Date.UTC(2007, 0, 25)), new cDate(Date.UTC(2008, 10, 15)), 2, 1));
+
+		oParser = new parserFormula('COUPNCD(DATE(2012,8,31),DATE(2013,3,1),2)', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD(DATE(2012,8,31),DATE(2013,3,1),2)');
+		assert.strictEqual(oParser.calculate().getValue(), 41153, 'Result of COUPNCD(DATE(2012,8,31),DATE(2013,3,1),2)');
+
+		oParser = new parserFormula('COUPNCD(DATE(2012,9,1),DATE(2013,3,1),2)', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD(DATE(2012,9,1),DATE(2013,3,1),2)');
+		assert.strictEqual(oParser.calculate().getValue(), 41334, 'Result of COUPNCD(DATE(2012,9,1),DATE(2013,3,1),2)');
+
+		oParser = new parserFormula('COUPNCD(59,DATE(2013,3,1),2)', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD(59,DATE(2013,3,1),2)');
+		assert.strictEqual(oParser.calculate().getValue(), 61, 'Result of COUPNCD(59,DATE(2013,3,1),2)');
+
+		oParser = new parserFormula('COUPNCD(60,DATE(2013,3,1),2)', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD(60,DATE(2013,3,1),2)');
+		assert.strictEqual(oParser.calculate().getValue(), 61, 'Result of COUPNCD(60,DATE(2013,3,1),2)');
+
+		oParser = new parserFormula('COUPNCD(61,DATE(2013,3,1),2)', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD(61,DATE(2013,3,1),2)');
+		assert.strictEqual(oParser.calculate().getValue(), 245, 'Result of COUPNCD(61,DATE(2013,3,1),2)');
+
+		oParser = new parserFormula("COUPNCD(#N/A,3743,2)", "A2", ws);
+		assert.ok(oParser.parse(), "COUPNCD(#N/A,3743,2)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of COUPNCD(#N/A,3743,2)");
+
+		oParser = new parserFormula("COUPNCD(#N/A,#DIV/0!,2)", "A2", ws);
+		assert.ok(oParser.parse(), "COUPNCD(#N/A,#DIV/0!,2)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of COUPNCD(#N/A,#DIV/0!,2)");
+
+		oParser = new parserFormula("COUPNCD(200,#DIV/0!,#N/A)", "A2", ws);
+		assert.ok(oParser.parse(), "COUPNCD(200,#DIV/0!,#N/A)");
+		assert.strictEqual(oParser.calculate().getValue(), "#DIV/0!", "Result of COUPNCD(200,#DIV/0!,#N/A)");
+
+		oParser = new parserFormula("COUPNCD(200,37437,#N/A)", "A2", ws);
+		assert.ok(oParser.parse(), "COUPNCD(200,37437,#N/A)");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of COUPNCD(200,37437,#N/A)");
+
+		oParser = new parserFormula('COUPNCD("1","2","1")', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD("1","2","1")');
+		assert.strictEqual(oParser.calculate().getValue(), 2, 'Result of COUPNCD("1","2","1")');
+
+		oParser = new parserFormula('COUPNCD("1s",2,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD("1s",2,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of COUPNCD("1s",2,1)');
+
+		oParser = new parserFormula('COUPNCD("1","2s","1")', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD("1","2s","1")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of COUPNCD("1","2s","1")');
+
+		oParser = new parserFormula('COUPNCD("1","2","1s")', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD("1","2","1s")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of COUPNCD("1","2","1s")');
+
+		oParser = new parserFormula('COUPNCD(61,61,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD(61,61,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of COUPNCD(61,61,1)');
+
+		oParser = new parserFormula('COUPNCD(61,61,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD(61,61,2)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of COUPNCD(61,61,2)');
+
+		oParser = new parserFormula('COUPNCD(61,61,4)', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD(61,61,4)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of COUPNCD(61,61,4)');
+
+		oParser = new parserFormula('COUPNCD(61,61,4)', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD(61,61,4)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of COUPNCD(61,61,4)');
+
+		oParser = new parserFormula('COUPNCD(,9222,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD(,9222,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of COUPNCD(,9222,1)');
+
+		oParser = new parserFormula('COUPNCD(0,9222,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD(0,9222,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 91, 'Result of COUPNCD(0,9222,1)');
+
+		oParser = new parserFormula('COUPNCD(0,,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD(0,,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of COUPNCD(0,,1)');
+
+		oParser = new parserFormula('COUPNCD(0,1,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD(0,1,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 1, 'Result of COUPNCD(0,1,1)');
+
+		oParser = new parserFormula('COUPNCD(1060,9222,)', "A2", ws);
+		assert.ok(oParser.parse(), 'COUPNCD(1060,9222,)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of COUPNCD(1060,9222,)');
+
+		oParser = new parserFormula('COUPNCD(1060,9222,{0,1,2,3,4})', "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("T9:X15").bbox);
+		assert.ok(oParser.parse(), 'COUPNCD(1060,9222,{0,1,2,3,4})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#NUM!", 'Result of COUPNCD(1060,9222,{0,1,2,3,4})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1186, 'Result of COUPNCD(1060,9222,{0,1,2,3,4})[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 1186, 'Result of COUPNCD(1060,9222,{0,1,2,3,4})[0,2]');
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "#NUM!", 'Result of COUPNCD(1060,9222,{0,1,2,3,4})[0,3]');
+		assert.strictEqual(array.getElementRowCol(0, 4).getValue(), 1096, 'Result of COUPNCD(1060,9222,{0,1,2,3,4})[0,4]');
+
 
 		testArrayFormula2(assert, "COUPNCD", 3, 4, true);
 	});
