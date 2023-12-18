@@ -561,8 +561,8 @@
 			  // AutoComplete
 			  "showAutoComplete": function () {
 				  self.showAutoComplete.apply(self, arguments);
-			  }, "onContextMenu": function (event) {
-				  self.handlers.trigger("asc_onContextMenu", event);
+			  }, "onContextMenu": function (event, type) {
+				  self.handlers.trigger("asc_onContextMenu", event, type);
 			  },
 
 			  // DataValidation
@@ -1427,20 +1427,29 @@
                         ws.draw();
                     }
                 }
-                switch (ct.hyperlink.asc_getType()) {
+
+				let type = ct.hyperlink.asc_getType();
+				let hyperlink = ct.hyperlink;
+				let hyperlinkProps = hyperlink.calculateProps();
+				if (hyperlinkProps) {
+					type = hyperlinkProps.asc_getType();
+					hyperlink = hyperlinkProps;
+				}
+
+                switch (type) {
                     case Asc.c_oAscHyperlinkType.WebLink:
-                        this.handlers.trigger("asc_onHyperlinkClick", ct.hyperlink.asc_getHyperlinkUrl());
+                        this.handlers.trigger("asc_onHyperlinkClick", hyperlink.asc_getHyperlinkUrl());
                         break;
                     case Asc.c_oAscHyperlinkType.RangeLink:
                         // ToDo надо поправить отрисовку комментария для данной ячейки (с которой уходим)
                         this.handlers.trigger("asc_onHideComment");
-                        this.Api._asc_setWorksheetRange(ct.hyperlink);
+                        this.Api._asc_setWorksheetRange(hyperlink);
                         break;
                     case Asc.c_oAscHyperlinkType.FileLink:
                         //нужно открыть файл через диалоговое окно
                         this.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmFileOpen, function (can) {
                             if (can) {
-                                t.handlers.trigger("asc_onFileOpenClick", ct.hyperlink.asc_getHyperlinkUrl());
+                                t.handlers.trigger("asc_onFileOpenClick", hyperlink.asc_getHyperlinkUrl());
                             }
                         });
                         break;
@@ -3912,6 +3921,20 @@
         this.onShowDrawingObjects();
     };
 
+	WorkbookView.prototype.getRecommendedChartData = function() {
+		const oCurWorksheet = this.getWorksheet();
+		if(!oCurWorksheet) {
+			return null;
+		}
+		return oCurWorksheet.getRecommendedChartData();
+	};
+	WorkbookView.prototype.getChartData = function(nType) {
+		const oCurWorksheet = this.getWorksheet();
+		if(!oCurWorksheet) {
+			return null;
+		}
+		return oCurWorksheet.getChartData(nType);
+	};
   WorkbookView.prototype.insertHyperlink = function(options, sheetId) {
     var ws = this.getWorksheet(sheetId);
     if (ws.objectRender.selectedGraphicObjectsExists()) {
@@ -5587,10 +5610,12 @@
 		if (~sChangingCell.indexOf(",")) {
 			sChangingCell = sChangingCell.slice(0, sChangingCell.indexOf(","));
 		}
-		sSheetName = sChangingCell.split("!")[0].replace(/'/g, "");
-		sChangingCell = sChangingCell.split("!")[1];
-		if (sSheetName !== wsChangingCell.getName()) {
-			wsChangingCell = this.model.getWorksheetByName(sSheetName);
+		if (~sChangingCell.indexOf("!")) {
+			sSheetName = sChangingCell.split("!")[0].replace(/'/g, "");
+			sChangingCell = sChangingCell.split("!")[1];
+			if (sSheetName !== wsChangingCell.getName()) {
+				wsChangingCell = this.model.getWorksheetByName(sSheetName);
+			}
 		}
 
 		let t = this;

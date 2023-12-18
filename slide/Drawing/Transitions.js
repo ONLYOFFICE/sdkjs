@@ -3483,13 +3483,13 @@ function CDemonstrationManager(htmlpage)
         return oSlide.getAnimationPlayer();
 	};
 
-    this.OnNextSlide = function()
+    this.OnNextSlide = function(isNoSendFormReporter)
     {
         if(this.OnNextSlideAnimPlayer())
         {
             return;
         }
-        this.NextSlide();
+        this.NextSlide(isNoSendFormReporter);
     };
 
     this.OnNextSlideAnimPlayer = function ()
@@ -3550,7 +3550,7 @@ function CDemonstrationManager(htmlpage)
         return (this.HtmlPage.m_oApi.WordControl.m_oLogicDocument.isLoopShowMode() || this.HtmlPage.m_oApi.isEmbedVersion);
     };
 
-    this.OnPrevSlide = function()
+    this.OnPrevSlide = function(isNoSendFormReporter)
     {
         var oPlayer = this.GetCurrentAnimPlayer();
         if(oPlayer)
@@ -3560,7 +3560,7 @@ function CDemonstrationManager(htmlpage)
                 return;
             }
         }
-        return this.PrevSlide();
+        return this.PrevSlide(isNoSendFormReporter);
     };
 
     this.PrevSlide = function(isNoSendFormReporter)

@@ -211,7 +211,10 @@
 
 		if (!data)
 			return;
-		
+
+		if (oField && (oField.GetType() != AscPDF.FIELD_TYPES.text || oField.IsMultiline() == false))
+			data = data.trim().replace(/[\n\r]/g, ' ');
+
 		if (oField && (oField.GetType() === AscPDF.FIELD_TYPES.text || (oField.GetType() === AscPDF.FIELD_TYPES.combobox && oField.IsEditable()))) {
 			let aChars = [];
 			for (let i = 0; i < data.length; i++)
@@ -401,6 +404,14 @@
 			oDoc.OnExitFieldByClick();
 
 		if (this.isMarkerFormat) {
+			let aSelQuads = this.getDocumentRenderer().file.getSelectionQuads();
+        	if (aSelQuads.length == 0) {
+				oDoc.bOffMarkerAfterUsing = false;
+			}
+			else {
+				oDoc.bOffMarkerAfterUsing = true;
+			}
+
 			switch (this.curMarkerType) {
 				case AscPDF.ANNOTATIONS_TYPES.Highlight:
 					this.SetHighlight(r, g, b, opacity);
@@ -413,6 +424,16 @@
 					break;
 			}
 		}
+		else {
+			oDoc.bOffMarkerAfterUsing = true;
+		}
+	};
+	PDFEditorApi.prototype.Paste = function()
+	{
+		if (AscCommon.g_clipboardBase.IsWorking())
+			return false;
+
+		return AscCommon.g_clipboardBase.Button_Paste();
 	};
 	PDFEditorApi.prototype.asc_setSkin = function(theme)
     {
@@ -436,6 +457,35 @@
             }
         }
     };
+	PDFEditorApi.prototype.asc_SetTextFormDatePickerDate = function(oPr)
+	{
+		let oDoc = this.getPDFDoc();
+		let oActiveForm = oDoc.activeForm;
+		if (!oActiveForm)
+			return;
+
+		let sDate = oPr.get_String();
+		let oActionsQueue = oDoc.GetActionsQueue();
+		
+		let oCurDate = new Date();
+
+		let parts = sDate.split(".");
+		let oDate = new Date(parts[2], parts[1] - 1, parts[0]);
+		oDate.setMinutes(oCurDate.getMinutes());
+		oDate.setSeconds(oCurDate.getSeconds());
+		oDate.getMilliseconds(oCurDate.getMilliseconds());
+
+		// суть в том, что дату из пикера можем подогнать под любой формат
+		// но в цепочке actions может быть изменение значения формы, куда вводится дата с picker, что вызовет новый коммит
+		// если значение не изменилось на этапе нового коммита формы, то опять выставляем будто бы взяли с пикера
+		// в конце actions удаляем эту информацию, чтобы в дальнейшем это не влияло на обычную работу парсера даты из соответсвующих методов
+		oActionsQueue.datePickerInfo = {
+			value: AscPDF.FormatDateValue(oActiveForm.GetDateFormat(), oDate.getTime()),
+			form: oActiveForm
+		}
+
+		oActiveForm.api["value"] = AscPDF.FormatDateValue(oActiveForm.GetDateFormat(), oDate.getTime());
+	};
 	PDFEditorApi.prototype.asc_SelectPDFFormListItem = function(sId) {
 		let nIdx = parseInt(sId);
 		let oViewer = this.DocumentRenderer;
@@ -666,7 +716,21 @@
 		let oViewer = this.getDocumentRenderer();
 		let oDoc = oViewer.getPDFDoc();
 
-		oViewer.file.selectAll();
+		if (oDoc.activeForm && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oDoc.activeForm.GetType()))
+		{
+			if (oDoc.activeForm.IsNeedDrawHighlight())
+				return;
+
+			oDoc.activeForm.content.SelectAll();
+			if (oDoc.activeForm.content.IsSelectionUse())
+				this.Api.WordControl.m_oDrawingDocument.TargetEnd();
+			
+			this.onUpdateOverlay();
+		}
+		else {
+			oViewer.file.selectAll();
+		}
+		
 		oDoc.UpdateCopyCutState();
 	};
 	PDFEditorApi.prototype.asc_showComment = function(Id)
@@ -912,6 +976,18 @@
 	PDFEditorApi.prototype.isEnabledDropTarget = function() {
 		return false;
 	};
+	PDFEditorApi.prototype.checkDocumentTitleFonts = function() {
+		// Do not load any fonts
+	};
+
+	PDFEditorApi.prototype.getSelectionState = function()
+	{
+		return null;
+	};
+	PDFEditorApi.prototype.getSpeechDescription = function(prevState, action)
+	{
+		return null;
+	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
@@ -937,6 +1013,7 @@
 	PDFEditorApi.prototype['asc_enterText']                = PDFEditorApi.prototype.asc_enterText;
 	PDFEditorApi.prototype['asc_GetSelectedText']          = PDFEditorApi.prototype.asc_GetSelectedText;
 	PDFEditorApi.prototype['asc_SelectPDFFormListItem']    = PDFEditorApi.prototype.asc_SelectPDFFormListItem;
+	PDFEditorApi.prototype['asc_SetTextFormDatePickerDate']= PDFEditorApi.prototype.asc_SetTextFormDatePickerDate;
 
 	PDFEditorApi.prototype['SetDrawingFreeze']             = PDFEditorApi.prototype.SetDrawingFreeze;
 	PDFEditorApi.prototype['OnMouseUp']                    = PDFEditorApi.prototype.OnMouseUp;
@@ -956,5 +1033,12 @@
 	PDFEditorApi.prototype['asc_EditSelectAll']            = PDFEditorApi.prototype.asc_EditSelectAll;
 	PDFEditorApi.prototype['Undo']                         = PDFEditorApi.prototype.Undo;
 	PDFEditorApi.prototype['Redo']                         = PDFEditorApi.prototype.Redo;
+	PDFEditorApi.prototype['asc_SelectionCut']             = PDFEditorApi.prototype.asc_SelectionCut;
+	PDFEditorApi.prototype['asc_CheckCopy']                = PDFEditorApi.prototype.asc_CheckCopy;
+	PDFEditorApi.prototype['Paste']                        = PDFEditorApi.prototype.Paste;
+	PDFEditorApi.prototype['asc_PasteData']                = PDFEditorApi.prototype.asc_PasteData;
+
+	PDFEditorApi.prototype['getSelectionState']            = PDFEditorApi.prototype.Paste;
+	PDFEditorApi.prototype['getSpeechDescription']         = PDFEditorApi.prototype.asc_PasteData;
 
 })(window, window.document);

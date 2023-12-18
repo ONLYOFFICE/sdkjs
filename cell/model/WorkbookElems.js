@@ -4592,6 +4592,9 @@ var g_oFontProperties = {
 	CellXfs.prototype.isNormalFont = function () {
 		return g_StyleCache.firstXf === this || g_StyleCache.normalXf.font === this.font;
 	};
+	CellXfs.prototype.isNormalFill = function () {
+		return g_StyleCache.firstXf === this || g_StyleCache.normalXf.fill === this.fill;
+	};
     CellXfs.prototype.merge = function (xfs, isTable, isTableBorders) {
         var xfIndexNumber = xfs.getIndexNumber();
         if (undefined === xfIndexNumber) {
@@ -6017,6 +6020,8 @@ StyleManager.prototype =
 		this.bUpdateLocation = false;
 
 		this.bVisited = false;
+
+		this.bHyperlinkFunction = null;
 	}
 
 	Hyperlink.prototype.clone = function (oNewWs) {
@@ -6215,6 +6220,12 @@ StyleManager.prototype =
 				}
 			}
 		}
+	};
+	Hyperlink.prototype.setHyperlinkFunction = function (val) {
+		this.bHyperlinkFunction = val;
+	};
+	Hyperlink.prototype.getHyperlinkFunction = function () {
+		return this.bHyperlinkFunction;
 	};
 
 	/** @constructor */
@@ -8355,7 +8366,7 @@ function RangeDataManagerElem(bbox, data)
 
 		this.QueryTable = null;
 		this.tableType = null;
-		
+
 		this.altText = null;
 		this.altTextSummary = null;
 
@@ -8364,7 +8375,7 @@ function RangeDataManagerElem(bbox, data)
 	}
 
 	TablePart.prototype.clone = function () {
-		var i, res = new TablePart(this.handlers);
+		let i, res = new TablePart(this.handlers);
 		res.Ref = this.Ref ? this.Ref.clone() : null;
 		res.HeaderRowCount = this.HeaderRowCount;
 		res.TotalsRowCount = this.TotalsRowCount;
@@ -8404,7 +8415,7 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 	TablePart.prototype.renameSheetCopy = function (ws, renameParams) {
-		for (var i = 0; i < this.TableColumns.length; ++i) {
+		for (let i = 0; i < this.TableColumns.length; ++i) {
 			this.TableColumns[i].renameSheetCopy(ws, renameParams);
 		}
 	};
@@ -8412,22 +8423,22 @@ function RangeDataManagerElem(bbox, data)
 		if (!opt_cols) {
 			opt_cols = this.TableColumns;
 		}
-		for (var i = 0; i < opt_cols.length; ++i) {
+		for (let i = 0; i < opt_cols.length; ++i) {
 			opt_cols[i].removeDependencies();
 		}
 	};
 	TablePart.prototype.buildDependencies = function () {
-		for (var i = 0; i < this.TableColumns.length; ++i) {
+		for (let i = 0; i < this.TableColumns.length; ++i) {
 			this.TableColumns[i].buildDependencies();
 		}
 	};
 	TablePart.prototype.getAllFormulas = function (formulas) {
-		for (var i = 0; i < this.TableColumns.length; ++i) {
+		for (let i = 0; i < this.TableColumns.length; ++i) {
 			this.TableColumns[i].getAllFormulas(formulas);
 		}
 	};
 	TablePart.prototype.moveRef = function (col, row) {
-		var ref = this.Ref.clone();
+		let ref = this.Ref.clone();
 		ref.setOffset(new AscCommon.CellBase(row || 0, col || 0));
 
 		this.Ref = ref;
@@ -8442,8 +8453,8 @@ function RangeDataManagerElem(bbox, data)
 		}
 	};
 	TablePart.prototype.changeRef = function (col, row, bIsFirst, bIsNotChangeAutoFilter) {
-		var ref = this.Ref.clone();
-		var offset = new AscCommon.CellBase(row || 0, col || 0);
+		let ref = this.Ref.clone();
+		let offset = new AscCommon.CellBase(row || 0, col || 0);
 		if (bIsFirst) {
 			ref.setOffsetFirst(offset);
 		} else {
@@ -8469,20 +8480,20 @@ function RangeDataManagerElem(bbox, data)
 
 		//add table columns
 		if (generateNewTableColumns) {
-			var newTableColumns = [];
-			var intersectionRanges = this.Ref.intersection(range);
+			let newTableColumns = [];
+			let intersectionRanges = this.Ref.intersection(range);
 
 			if (null !== intersectionRanges) {
 				this.removeDependencies();
-				var tableColumn;
-				var headerRow = this.isHeaderRow() ? this.Ref.r1 : this.Ref.r1 - 1;
-				for (var i = range.c1; i <= range.c2; i++) {
+				let tableColumn;
+				let headerRow = this.isHeaderRow() ? this.Ref.r1 : this.Ref.r1 - 1;
+				for (let i = range.c1; i <= range.c2; i++) {
 					if (i >= intersectionRanges.c1 && i <= intersectionRanges.c2) {
-						var tableIndex = i - this.Ref.c1;
+						let tableIndex = i - this.Ref.c1;
 						tableColumn = this.TableColumns[tableIndex];
 					} else {
 						tableColumn = new TableColumn();
-						var cell = autoFilters.worksheet.getCell3(headerRow, i);
+						let cell = autoFilters.worksheet.getCell3(headerRow, i);
 						if (!cell.isNullText()) {
 							tableColumn.Name =
 								autoFilters.checkTableColumnName(newTableColumns.concat(this.TableColumns),
@@ -8493,7 +8504,7 @@ function RangeDataManagerElem(bbox, data)
 					newTableColumns.push(tableColumn);
 				}
 
-				for (var j = 0; j < newTableColumns.length; j++) {
+				for (let j = 0; j < newTableColumns.length; j++) {
 					tableColumn = newTableColumns[j];
 					if (!tableColumn) {
 						tableColumn = newTableColumns[j] = new TableColumn();
@@ -8507,9 +8518,9 @@ function RangeDataManagerElem(bbox, data)
 				this.buildDependencies();
 			}
 		}
-		var wb = autoFilters.worksheet.workbook;
+		let wb = autoFilters.worksheet.workbook;
 		if (this.isTotalsRow() && this.Ref.r2 !== range.r2 && !wb.bUndoChanges && !wb.bRedoChanges) {
-			var rangeTotal = autoFilters.worksheet.getRange3(this.Ref.r2, this.Ref.c1, this.Ref.r2, this.Ref.c2);
+			let rangeTotal = autoFilters.worksheet.getRange3(this.Ref.r2, this.Ref.c1, this.Ref.r2, this.Ref.c2);
 			rangeTotal.cleanText()
 		}
 
@@ -8523,12 +8534,12 @@ function RangeDataManagerElem(bbox, data)
 		this.handlers.trigger("changeRefTablePart", this);
 
 		if (this.AutoFilter) {
-			var filterRange = new Asc.Range(range.c1, range.r1, range.c2, this.isTotalsRow() ? range.r2 - 1 : range.r2);
+			let filterRange = new Asc.Range(range.c1, range.r1, range.c2, this.isTotalsRow() ? range.r2 - 1 : range.r2);
 			this.AutoFilter.changeRefOnRange(filterRange);
 		}
 	};
 	TablePart.prototype.isApplyAutoFilter = function () {
-		var res = false;
+		let res = false;
 
 		if (this.AutoFilter) {
 			res = this.AutoFilter.isApplyAutoFilter();
@@ -8537,7 +8548,7 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 	TablePart.prototype.isApplySortConditions = function () {
-		var res = false;
+		let res = false;
 
 		if (this.SortState && this.SortState.SortConditions && this.SortState.SortConditions[0]) {
 			res = true;
@@ -8557,7 +8568,7 @@ function RangeDataManagerElem(bbox, data)
 			return;
 		}
 
-		var diff = null, startCol;
+		let diff = null, startCol;
 		if (activeRange.c1 < this.Ref.c1 && activeRange.c2 >= this.Ref.c1 && activeRange.c2 < this.Ref.c2)//until
 		{
 			diff = activeRange.c2 - this.Ref.c1 + 1;
@@ -8573,7 +8584,7 @@ function RangeDataManagerElem(bbox, data)
 		}
 
 		if (diff !== null) {
-			var deleted = this.TableColumns.splice(startCol, diff);
+			let deleted = this.TableColumns.splice(startCol, diff);
 			this.removeDependencies(deleted);
 
 			if (this.QueryTable) {
@@ -8583,14 +8594,14 @@ function RangeDataManagerElem(bbox, data)
 			}
 
 			//todo undo
-			var deletedMap = {};
-			for (var i = 0; i < deleted.length; ++i) {
+			let deletedMap = {};
+			for (let i = 0; i < deleted.length; ++i) {
 				deletedMap[deleted[i].Name] = 1;
 			}
 			this.handlers.trigger("deleteColumnTablePart", this.DisplayName, deletedMap);
 
 			if (this.SortState) {
-				var bIsDeleteSortState = this.SortState.changeColumns(activeRange, true);
+				let bIsDeleteSortState = this.SortState.changeColumns(activeRange, true);
 				if (bIsDeleteSortState) {
 					this.SortState = null;
 				}
@@ -8600,10 +8611,10 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	TablePart.prototype.addTableColumns = function (activeRange, autoFilters) {
-		var newTableColumns = [], num = 0;
+		let newTableColumns = [], num = 0;
 		this.removeDependencies();
-		for (var j = 0; j < this.TableColumns.length;) {
-			var curCol = num + this.Ref.c1;
+		for (let j = 0; j < this.TableColumns.length;) {
+			let curCol = num + this.Ref.c1;
 			if (activeRange.c1 <= curCol && activeRange.c2 >= curCol) {
 				newTableColumns[newTableColumns.length] = new TableColumn();
 			} else {
@@ -8614,8 +8625,8 @@ function RangeDataManagerElem(bbox, data)
 			num++;
 		}
 
-		for (var j = 0; j < newTableColumns.length; j++) {
-			var tableColumn = newTableColumns[j];
+		for (let j = 0; j < newTableColumns.length; j++) {
+			let tableColumn = newTableColumns[j];
 			if (tableColumn.Name === null) {
 				tableColumn.Name = autoFilters._generateColumnName2(newTableColumns);
 			}
@@ -8630,10 +8641,10 @@ function RangeDataManagerElem(bbox, data)
 
 		/*if(this.SortState && this.SortState.SortConditions && this.SortState.SortConditions[0])
 		 {
-		 var SortConditions = this.SortState.SortConditions[0];
+		 let SortConditions = this.SortState.SortConditions[0];
 		 if(activeRange.c1 <= SortConditions.Ref.c1)
 		 {
-		 var offset = activeRange.c2 - activeRange.c1 + 1;
+		 let offset = activeRange.c2 - activeRange.c1 + 1;
 		 SortConditions.Ref.c1 += offset;
 		 SortConditions.Ref.c2 += offset;
 		 }
@@ -8648,7 +8659,7 @@ function RangeDataManagerElem(bbox, data)
 
 	TablePart.prototype.addTableLastColumn = function (activeRange, autoFilters, isAddLastColumn) {
 		this.removeDependencies();
-		var newTableColumns = this.TableColumns;
+		let newTableColumns = this.TableColumns;
 		newTableColumns.push(new TableColumn());
 		newTableColumns[newTableColumns.length - 1].Name = autoFilters._generateColumnName2(newTableColumns);
 
@@ -8669,9 +8680,9 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	TablePart.prototype.getTableRangeForFormula = function (objectParam) {
-		var res = null;
-		var startRow = this.HeaderRowCount === null ? this.Ref.r1 + 1 : this.Ref.r1;
-		var endRow = this.TotalsRowCount ? this.Ref.r2 - 1 : this.Ref.r2;
+		let res = null;
+		let startRow = this.HeaderRowCount === null ? this.Ref.r1 + 1 : this.Ref.r1;
+		let endRow = this.TotalsRowCount ? this.Ref.r2 - 1 : this.Ref.r2;
 		switch (objectParam.param) {
 			case FormulaTablePartInfo.all: {
 				res = new Asc.Range(this.Ref.c1, this.Ref.r1, this.Ref.c2, this.Ref.r2);
@@ -8714,8 +8725,8 @@ function RangeDataManagerElem(bbox, data)
 				break;
 			}
 			case FormulaTablePartInfo.columns: {
-				var startCol = this.getTableIndexColumnByName(objectParam.startCol);
-				var endCol = this.getTableIndexColumnByName(objectParam.endCol);
+				let startCol = this.getTableIndexColumnByName(objectParam.startCol);
+				let endCol = this.getTableIndexColumnByName(objectParam.endCol);
 
 				if (startCol === null) {
 					break;
@@ -8739,12 +8750,12 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	TablePart.prototype.getTableIndexColumnByName = function (name) {
-		var res = null;
+		let res = null;
 		if (name === null || name === undefined || !this.TableColumns) {
 			return res;
 		}
 
-		for (var i = 0; i < this.TableColumns.length; i++) {
+		for (let i = 0; i < this.TableColumns.length; i++) {
 			if (name.toLowerCase() === this.TableColumns[i].Name.toLowerCase()) {
 				res = i;
 				break;
@@ -8755,12 +8766,12 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	TablePart.prototype.getTableRangeColumnByName = function (name) {
-		var res = null;
+		let res = null;
 		if (name === null || name === undefined || !this.TableColumns) {
 			return res;
 		}
 
-		for (var i = 0; i < this.TableColumns.length; i++) {
+		for (let i = 0; i < this.TableColumns.length; i++) {
 			if (name.toLowerCase() === this.TableColumns[i].Name.toLowerCase()) {
 				res = new Asc.Range(this.Ref.c1 + i, this.Ref.r1, this.Ref.c1 + i, this.Ref.r2);
 				break;
@@ -8771,12 +8782,12 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	TablePart.prototype.getTableNameColumnByIndex = function (index) {
-		var res = null;
+		let res = null;
 		if (index === null || index === undefined || !this.TableColumns) {
 			return res;
 		}
 
-		if(this.TableColumns[index]) {
+		if (this.TableColumns[index]) {
 			res = this.TableColumns[index].Name;
 		}
 
@@ -8784,12 +8795,12 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	TablePart.prototype.getIndexByColumnName = function (name) {
-		var res = null;
+		let res = null;
 		if (name === null || name === undefined || !this.TableColumns) {
 			return res;
 		}
 
-		for (var i = 0; i < this.TableColumns.length; i++) {
+		for (let i = 0; i < this.TableColumns.length; i++) {
 			if (name.toLowerCase() === this.TableColumns[i].Name.toLowerCase()) {
 				res = i;
 				break;
@@ -8815,7 +8826,7 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	TablePart.prototype.isShowButton = function () {
-		var res = false;
+		let res = false;
 
 		if (this.AutoFilter) {
 			res = this.AutoFilter.isShowButton();
@@ -8843,19 +8854,19 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	TablePart.prototype.getRangeWithoutHeaderFooter = function () {
-		var startRow = this.HeaderRowCount === null ? this.Ref.r1 + 1 : this.Ref.r1;
-		var endRow = this.TotalsRowCount ? this.Ref.r2 - 1 : this.Ref.r2;
+		let startRow = this.HeaderRowCount === null ? this.Ref.r1 + 1 : this.Ref.r1;
+		let endRow = this.TotalsRowCount ? this.Ref.r2 - 1 : this.Ref.r2;
 
 		return Asc.Range(this.Ref.c1, startRow, this.Ref.c2, endRow);
 	};
 
 	TablePart.prototype.getColumnRange = function (index, withoutHeader, withoutFooter, opt_range) {
-		var tableRange = opt_range ? opt_range : this.Ref;
-		var startRow = tableRange.r1;
+		let tableRange = opt_range ? opt_range : this.Ref;
+		let startRow = tableRange.r1;
 		if (withoutHeader && this.isHeaderRow()) {
 			startRow++;
 		}
-		var endRow = tableRange.r2;
+		let endRow = tableRange.r2;
 		if (withoutFooter && this.isTotalsRow()) {
 			endRow--;
 		}
@@ -8863,7 +8874,7 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	TablePart.prototype.checkTotalRowFormula = function (ws) {
-		for (var i = 0; i < this.TableColumns.length; i++) {
+		for (let i = 0; i < this.TableColumns.length; i++) {
 			this.TableColumns[i].checkTotalRowFormula(ws, this);
 		}
 	};
@@ -8877,8 +8888,8 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	TablePart.prototype.addAutoFilter = function () {
-		var autoFilter = new AscCommonExcel.AutoFilter();
-		var cloneRef = this.Ref.clone();
+		let autoFilter = new AscCommonExcel.AutoFilter();
+		let cloneRef = this.Ref.clone();
 		if (this.TotalsRowCount) {
 			cloneRef.r2--
 		}
@@ -8897,9 +8908,9 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	TablePart.prototype.getTotalsRowRange = function () {
-		var res = null;
+		let res = null;
 
-		if(this.TotalsRowCount > 0) {
+		if (this.TotalsRowCount > 0) {
 			res = new Asc.Range(this.Ref.c1, this.Ref.r2, this.Ref.c2, this.Ref.r2);
 		}
 
@@ -8915,9 +8926,9 @@ function RangeDataManagerElem(bbox, data)
 	//при открытии в случае если не валидный Ref приходит в объекте AutoFilter
 	//получаем этот Ref из табличного
 	TablePart.prototype.generateAutoFilterRef = function () {
-		var res = null;
-		if(this.Ref) {
-			if(this.isTotalsRow()) {
+		let res = null;
+		if (this.Ref) {
+			if (this.isTotalsRow()) {
 				res = new Asc.Range(this.Ref.c1, this.Ref.r1, this.Ref.c2, this.Ref.r2 - 1);
 			} else {
 				res = new Asc.Range(this.Ref.c1, this.Ref.r1, this.Ref.c2, this.Ref.r2);
@@ -8927,19 +8938,19 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 	TablePart.prototype.syncTotalLabels = function (ws) {
-		if(this.Ref) {
-			if(this.isTotalsRow()) {
-				for(var i = 0; i < this.TableColumns.length; i++) {
-					if(null !== this.TableColumns[i].TotalsRowLabel) {
-						var cell = ws.getCell3(this.Ref.r2, this.Ref.c1 + i);
-						if(cell.isFormula()) {
+		if (this.Ref) {
+			if (this.isTotalsRow()) {
+				for (let i = 0; i < this.TableColumns.length; i++) {
+					if (null !== this.TableColumns[i].TotalsRowLabel) {
+						let cell = ws.getCell3(this.Ref.r2, this.Ref.c1 + i);
+						if (cell.isFormula()) {
 							this.TableColumns[i].TotalsRowLabel = null;
-							if(null === this.TableColumns[i].TotalsRowFunction) {
+							if (null === this.TableColumns[i].TotalsRowFunction) {
 								this.TableColumns[i].TotalsRowFunction = Asc.ETotalsRowFunction.totalrowfunctionCustom;
 							}
 						} else {
-							var val = cell.getValue();
-							if(val !== this.TableColumns[i].TotalsRowLabel) {
+							let val = cell.getValue();
+							if (val !== this.TableColumns[i].TotalsRowLabel) {
 								this.TableColumns[i].TotalsRowLabel = val;
 							}
 						}
@@ -8958,14 +8969,14 @@ function RangeDataManagerElem(bbox, data)
 		//TODO в следующих версиях необходимо реализовать данный функционал в полном объеме
 		this.QueryTable = null;
 		this.tableType = null;
-		for(var i = 0; i < this.TableColumns.length; i++) {
+		for (let i = 0; i < this.TableColumns.length; i++) {
 			this.TableColumns[i].queryTableFieldId = null;
 			this.TableColumns[i].uniqueName = null;
 		}
 	};
 
-	TablePart.prototype.getColIdByName = function(name) {
-		for (var i = 0; i < this.TableColumns.length; i++) {
+	TablePart.prototype.getColIdByName = function (name) {
+		for (let i = 0; i < this.TableColumns.length; i++) {
 			if (name === this.TableColumns[i].Name) {
 				return i;
 			}
@@ -8973,13 +8984,192 @@ function RangeDataManagerElem(bbox, data)
 		return null;
 	};
 
-	TablePart.prototype.getIndexTableColumnById = function(id) {
-		for (var i = 0; i < this.TableColumns.length; i++) {
+	TablePart.prototype.getIndexTableColumnById = function (id) {
+		for (let i = 0; i < this.TableColumns.length; i++) {
 			if (id === this.TableColumns[i].id) {
 				return i + 1;
 			}
 		}
 		return null;
+	};
+
+	TablePart.prototype.getSelectionString = function(activeCell, handleSelectionRange) {
+		let getColumnNameRange = function (_start, _end, _needAddParenthesis) {
+			if (_start !== _end) {
+				return "[" + _start + "]" +  ":" +  "[" + _end + "]";
+			} else {
+				return _needAddParenthesis ? "[" + _start + "]" : _start;
+			}
+		};
+
+		if (this.Ref.containsRange(handleSelectionRange)) {
+
+			let argsSeparator = AscCommon.FormulaSeparators.functionArgumentSeparator;
+			let startCol = this.getTableNameColumnByIndex(handleSelectionRange.c1 - this.Ref.c1);
+			let endCol = this.getTableNameColumnByIndex(handleSelectionRange.c2 - this.Ref.c1);
+
+			if (this.Ref.isEqual(handleSelectionRange)) {
+				//Table1[#All]
+				return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.all + "]";
+			} else if (this.Ref.r1 === handleSelectionRange.r1 && this.Ref.r2 === handleSelectionRange.r2) {
+				//Table1[[#All];[Column1]]
+				//Table1[[#All];[Column1]:[Column2]]
+				return this.DisplayName + "[" + "[" + AscCommon.cStrucTableReservedWords.all + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
+			}
+
+			let dataContains = this._isDataTableContainsRange(handleSelectionRange);
+			if (dataContains && dataContains.partialIntersection) {
+				//check on @
+				if (handleSelectionRange.isOneRow()) {
+					if (activeCell.row === handleSelectionRange.r1) {
+						if (handleSelectionRange.c1 === this.Ref.c1 && handleSelectionRange.c2 === this.Ref.c2) {
+							//all row
+							//Table1[@]
+							return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.at + "]";
+						} else {
+							//part of row
+							//Table1[@[Column2]:[Column3]]
+							//Table1[@Column1]
+							return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.at + getColumnNameRange(startCol, endCol) + "]";
+						}
+					}
+				}
+				return null;
+			}
+			let totalContains = this._isTotalRowContainsRange(handleSelectionRange);
+			if (totalContains && totalContains.partialIntersection) {
+				return null;
+			}
+			let headerContains = this._isHeaderRowContainsRange(handleSelectionRange);
+			if (headerContains && headerContains.partialIntersection) {
+				return null;
+			}
+
+
+			//1. only data - Table1
+			//2. only data Table4[[Column1]:[Column2]] / Table4[Column1]
+			if (dataContains && !totalContains && !headerContains) {
+				return dataContains.all ? this.DisplayName : this.DisplayName + "[" + getColumnNameRange(startCol, endCol) + "]";
+			}
+
+			//3. only all totals - Table4[#Totals]
+			//4. only totals - Table4[[#Totals];[Column1]:[Column2]]
+			if (!dataContains && totalContains && !headerContains) {
+				if (totalContains.all) {
+					return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.totals + "]";
+				} else {
+					return this.DisplayName + "[" + "[" +  AscCommon.cStrucTableReservedWords.totals + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
+				}
+			}
+
+			//5. only all headers - Table4[#Headers]
+			//6. only headers - Table4[[#Headers];[Column1]:[Column2]]
+			if (!dataContains && !totalContains && headerContains) {
+				if (headerContains.all) {
+					return this.DisplayName + "[" + AscCommon.cStrucTableReservedWords.headers + "]";
+				} else {
+					return this.DisplayName + "[" + "[" +  AscCommon.cStrucTableReservedWords.headers + "]" + argsSeparator + getColumnNameRange(startCol, endCol, true) + "]";
+				}
+			}
+
+
+			//hybrid totals/headers/data
+
+			//Table4[[#Data];[#Totals];[Column1]]
+			//Table4[[#Headers];[#Data];[Column1]]
+			//Table4[[#Totals];[Column1]]
+			//Table4[[#Headers];[#Data];[Column1]:[Column2]]
+
+
+			//all hybrid
+			//Table4[[#Data];[#Totals]]
+			if (dataContains || totalContains || headerContains) {
+				let isAll;
+				let res = this.DisplayName + "[";
+				let needDelimiter = false;
+				if (headerContains) {
+					res += "[" + AscCommon.cStrucTableReservedWords.headers + "]";
+					needDelimiter = true;
+					if (headerContains.all) {
+						isAll = true;
+					}
+				}
+				if (dataContains) {
+					if (needDelimiter) {
+						res += argsSeparator;
+					}
+					res += "[" + AscCommon.cStrucTableReservedWords.data + "]";
+					needDelimiter = true;
+					if (dataContains.all) {
+						isAll = true;
+					}
+				}
+				if (totalContains) {
+					if (needDelimiter) {
+						res += argsSeparator;
+					}
+					res += "[" + AscCommon.cStrucTableReservedWords.totals + "]";
+					needDelimiter = true;
+					if (totalContains.all) {
+						isAll = true;
+					}
+				}
+
+				if (!isAll) {
+					res += argsSeparator + getColumnNameRange(startCol, endCol, true);
+				}
+
+				res += "]";
+
+				return res;
+			}
+		}
+		return null;
+	};
+
+	//return {all: bool, partIntersection: bool}/true/false
+	TablePart.prototype._getContainsRange = function(range, tablePartRange, checkPartialIntersection) {
+		let intersection = range.intersection(tablePartRange);
+		if (intersection) {
+			if (tablePartRange.isEqual(intersection)) {
+				return {all: true};
+			} else {
+				if (checkPartialIntersection && (intersection.r1 !== tablePartRange.r1 || intersection.r2 !== tablePartRange.r2)) {
+					return {partialIntersection: true};
+				}
+				return true;
+			}
+		}
+
+		return false;
+	};
+
+	TablePart.prototype._isTotalRowContainsRange = function(range) {
+		if (range && this.isTotalsRow()) {
+			if (this.Ref.containsRange(range)) {
+				let _totalRange = this.getTableRangeForFormula({param: FormulaTablePartInfo.totals});
+				return this._getContainsRange(range, _totalRange);
+			}
+		}
+		return false;
+	};
+
+	TablePart.prototype._isHeaderRowContainsRange = function(range) {
+		if (range && this.isHeaderRow()) {
+			if (this.Ref.containsRange(range)) {
+				let _headerRange = this.getTableRangeForFormula({param: FormulaTablePartInfo.headers});
+				return this._getContainsRange(range, _headerRange);
+			}
+		}
+		return false;
+	};
+
+	TablePart.prototype._isDataTableContainsRange = function(range) {
+		if (this.Ref.containsRange(range)) {
+			let _dataRange = this.getTableRangeForFormula({param: FormulaTablePartInfo.data});
+			return this._getContainsRange(range, _dataRange, true);
+		}
+		return false;
 	};
 
 
@@ -10577,2114 +10767,2114 @@ function RangeDataManagerElem(bbox, data)
 		writer.WriteXmlNodeEnd(ns + name);
 	};
 
-/** @constructor */
-function Filter() {
-	this.Val = null;
-}
-/** @constructor */
-function DateGroupItem() {
-	this.DateTimeGrouping = null;
-	this.Day = null;
-	this.Hour = null;
-	this.Minute = null;
-	this.Month = null;
-	this.Second = null;
-	this.Year = null;
-}
-DateGroupItem.prototype.clone = function() {
-	var res = new DateGroupItem();
-	res.DateTimeGrouping = this.DateTimeGrouping;
-	res.Day = this.Day;
-	res.Hour = this.Hour;
-	res.Minute = this.Minute;
-	res.Month = this.Month;
-	res.Second = this.Second;
-	res.Year = this.Year;
-	return res;
-};
-DateGroupItem.prototype.convertRangeToDateGroupItem = function(range) {
-	var startUtcDate = AscCommon.NumFormat.prototype.parseDate(range.start);
-	var year = startUtcDate.year;
-	var month = startUtcDate.month + 1;
-	var day = startUtcDate.d;
-	var hour = startUtcDate.hour;
-	var minute = startUtcDate.min;
-	var second = startUtcDate.sec;
+	/** @constructor */
+	function Filter() {
+		this.Val = null;
+	}
+	/** @constructor */
+	function DateGroupItem() {
+		this.DateTimeGrouping = null;
+		this.Day = null;
+		this.Hour = null;
+		this.Minute = null;
+		this.Month = null;
+		this.Second = null;
+		this.Year = null;
+	}
+	DateGroupItem.prototype.clone = function() {
+		var res = new DateGroupItem();
+		res.DateTimeGrouping = this.DateTimeGrouping;
+		res.Day = this.Day;
+		res.Hour = this.Hour;
+		res.Minute = this.Minute;
+		res.Month = this.Month;
+		res.Second = this.Second;
+		res.Year = this.Year;
+		return res;
+	};
+	DateGroupItem.prototype.convertRangeToDateGroupItem = function(range) {
+		var startUtcDate = AscCommon.NumFormat.prototype.parseDate(range.start);
+		var year = startUtcDate.year;
+		var month = startUtcDate.month + 1;
+		var day = startUtcDate.d;
+		var hour = startUtcDate.hour;
+		var minute = startUtcDate.min;
+		var second = startUtcDate.sec;
 
-	this.DateTimeGrouping = range.dateTimeGrouping;
+		this.DateTimeGrouping = range.dateTimeGrouping;
 
-	switch(this.DateTimeGrouping)
-	{
-		case Asc.EDateTimeGroup.datetimegroupDay://day
+		switch(this.DateTimeGrouping)
 		{
-			this.Year = year;
-			this.Month = month;
-			this.Day = day;
-			break;
-		}
-		case Asc.EDateTimeGroup.datetimegroupHour://hour
-		{
-			this.Year = year;
-			this.Month = month;
-			this.Day = day;
-			this.Hour = hour;
-			break;
-		}
-		case Asc.EDateTimeGroup.datetimegroupMinute://minute
-		{
-			this.Year = year;
-			this.Month = month;
-			this.Day = day;
-			this.Hour = hour;
-			this.Minute = minute;
-			break;
-		}
-		case Asc.EDateTimeGroup.datetimegroupMonth://month
-		{
-			this.Year = year;
-			this.Month = month;
-			break;
-		}
-		case Asc.EDateTimeGroup.datetimegroupSecond://second
-		{
-			this.Year = year;
-			this.Month = month;
-			this.Day = day;
-			this.Hour = hour;
-			this.Minute = minute;
-			this.Second = second;
-			break;
-		}
-		case Asc.EDateTimeGroup.datetimegroupYear://year
-		{
-			this.Year = year;
-			break;
-		}
-	}
-};
-DateGroupItem.prototype.readAttributes = function(attr, uq) {
-	if (attr()) {
-		var vals = attr();
-		var val;
-		val = vals["year"];
-		if (undefined !== val) {
-			this.Year = val - 0;
-		}
-		val = vals["month"];
-		if (undefined !== val) {
-			this.Month = val - 0;
-		}
-		val = vals["day"];
-		if (undefined !== val) {
-			this.Day = val - 0;
-		}
-		val = vals["hour"];
-		if (undefined !== val) {
-			this.Hour = val - 0;
-		}
-		val = vals["minute"];
-		if (undefined !== val) {
-			this.Minute = val - 0;
-		}
-		val = vals["second"];
-		if (undefined !== val) {
-			this.Second = val - 0;
-		}
-		val = vals["dateTimeGrouping"];
-		if (undefined !== val) {
-			val = AscCommonExcel.FromXml_ST_DateTimeGrouping(val);
-			if (-1 !== val) {
-				this.DateTimeGrouping = val;
-			}
-		}
-	}
-};
-DateGroupItem.prototype.toXml = function (writer, name, ns) {
-	if (!ns) {
-		ns = "";
-	}
-
-	writer.WriteXmlNodeStart(ns + name/*"dateGroupItem"*/);
-
-	writer.WriteXmlNullableAttributeNumber("year", this.Year);
-	writer.WriteXmlNullableAttributeNumber("month", this.Month);
-	writer.WriteXmlNullableAttributeNumber("day", this.Day);
-	writer.WriteXmlNullableAttributeNumber("hour", this.Hour);
-	writer.WriteXmlNullableAttributeNumber("minute", this.Minute);
-	writer.WriteXmlNullableAttributeNumber("second", this.Second);
-	writer.WriteXmlAttributeStringEncode("dateTimeGrouping", AscCommonExcel.ToXml_ST_DateTimeGrouping(this.DateTimeGrouping));
-	writer.WriteXmlAttributesEnd();
-
-	writer.WriteXmlNodeEnd(ns + name);
-
-};
-
-var g_oCustomFilters = {
-	And	 : 0,
-	CustomFilters	: 1
-};
-/** @constructor */
-function CustomFilters() {
-	this.Properties = g_oCustomFilters;
-
-	this.And = false;
-	this.CustomFilters = null;
-}
-CustomFilters.prototype.getType = function() {
-	return UndoRedoDataTypes.CustomFilters;
-};
-CustomFilters.prototype.getProperties = function() {
-	return this.Properties;
-};
-CustomFilters.prototype.getProperty = function(nType) {
-	switch (nType) {
-		case this.Properties.And: return this.And; break;
-		case this.Properties.CustomFilters: return this.CustomFilters; break;
-	}
-	return null;
-};
-CustomFilters.prototype.setProperty = function(nType, value) {
-	switch (nType) {
-		case this.Properties.And: this.And = value;break;
-		case this.Properties.CustomFilters: this.CustomFilters = value;break;
-	}
-};
-CustomFilters.prototype.Write_ToBinary2 = function(writer) {
-	writer.WriteBool(this.And);
-
-	writer.WriteLong(this.CustomFilters ? this.CustomFilters.length : 0);
-	for (var i = 0; i < this.CustomFilters.length; ++i) {
-		this.CustomFilters[i].Write_ToBinary2(writer);
-	}
-};
-CustomFilters.prototype.Read_FromBinary2 = function(reader) {
-	this.And = reader.GetBool();
-	var length = reader.GetLong();
-	for (var i = 0; i < length; ++i) {
-		var reply = new CustomFilter();
-		reply.Read_FromBinary2(reader);
-		if(!this.CustomFilters) {
-			this.CustomFilters = [];
-		}
-		this.CustomFilters.push(reply);
-	}
-};
-CustomFilters.prototype.clone = function() {
-	var i, res = new CustomFilters();
-	res.And = this.And;
-	if (this.CustomFilters) {
-		res.CustomFilters = [];
-		for (i = 0; i < this.CustomFilters.length; ++i)
-			res.CustomFilters.push(this.CustomFilters[i].clone());
-	}
-	return res;
-};
-CustomFilters.prototype.init = function(obj) {
-	this.And = !obj.isChecked;
-	this.CustomFilters = [];
-
-	if(obj.filter1 != null)
-		this.CustomFilters[0] = new CustomFilter(obj.filter1, obj.valFilter1);
-	if(obj.filter2 != null)
-		this.CustomFilters[1] = new CustomFilter(obj.filter2, obj.valFilter2);
-};
-CustomFilters.prototype.isHideValue = function(val, isLabelFilter, cell){
-
-	var res = false;
-	var filterRes1 = this.CustomFilters[0] ? this.CustomFilters[0].isHideValue(val, isLabelFilter, cell) : null;
-	var filterRes2 = this.CustomFilters[1] ? this.CustomFilters[1].isHideValue(val, isLabelFilter, cell) : null;
-
-	if(!this.And && ((filterRes1 === null && filterRes2 === true || filterRes1 === true && filterRes2 === null || filterRes1 === true && filterRes2 === true)))
-		res = true;
-	if(this.And && ((filterRes1 === true || filterRes2 === true)))
-		res = true;
-
-	return res;
-};
-CustomFilters.prototype.asc_getAnd = function () { return this.And; };
-CustomFilters.prototype.asc_getCustomFilters = function () { return this.CustomFilters; };
-
-CustomFilters.prototype.asc_setAnd = function (val) { this.And = val; };
-CustomFilters.prototype.asc_setCustomFilters = function (val) { this.CustomFilters = val; };
-
-CustomFilters.prototype.check = function () {
-	if(this.CustomFilters) {
-		for(var i = 0; i < this.CustomFilters.length; i++) {
-			this.CustomFilters[i].check();
-		}
-	}
-};
-CustomFilters.prototype.correctFromInterface = function () {
-	if(this.CustomFilters) {
-		for(var i = 0; i < this.CustomFilters.length; i++) {
-			this.CustomFilters[i].correctFromInterface();
-		}
-	}
-};
-
-CustomFilters.prototype._generateEmptyValueFilter = function() {
-	this.And = true;
-	this.CustomFilters = [];
-	var customFilter = new CustomFilter();
-	customFilter._generateEmptyValueFilter();
-	this.CustomFilters.push(customFilter);
-};
-CustomFilters.prototype.readAttributes = function(attr, uq) {
-	if (attr()) {
-		var vals = attr();
-		var val;
-		val = vals["and"];
-		if (undefined !== val) {
-			this.And = AscCommon.getBoolFromXml(val);
-		}
-	}
-};
-CustomFilters.prototype.onStartNode = function(elem, attr, uq) {
-	var newContext = this;
-	if ("customFilter" === elem) {
-		if (!this.CustomFilters) {
-			this.CustomFilters = [];
-		}
-		newContext = new CustomFilter();
-		if (newContext.readAttributes) {
-			newContext.readAttributes(attr, uq);
-		}
-		this.CustomFilters.push(newContext);
-	} else {
-		newContext = null;
-	}
-	return newContext;
-};
-CustomFilters.prototype.toXml = function (writer, name, ns, childns) {
-	if (!ns) {
-		ns = "";
-	}
-	if (!childns) {
-		childns = "";
-	}
-
-	writer.WriteXmlNodeStart(ns + name);
-
-	writer.WriteXmlNullableAttributeString("and", this.And ? 1 : null);
-	writer.WriteXmlAttributesEnd();
-
-	for (var i = 0; i < this.CustomFilters.length; ++i) {
-		this.CustomFilters[i].toXml(writer, "customFilter", childns, childns);
-	}
-
-	writer.WriteXmlNodeEnd(ns + name);
-};
-CustomFilters.prototype.changeForInterface = function (filterTypes) {
-	var res = this.clone();
-	if(res.CustomFilters) {
-		for(var i = 0; i < res.CustomFilters.length; i++) {
-			res.CustomFilters[i].changeForInterface(filterTypes);
-		}
-	}
-	return res;
-};
-
-var g_oCustomFilter = {
-	Operator	 : 0,
-	Val	: 1
-};
-
-/** @constructor */
-function CustomFilter(operator, val) {
-	this.Properties = g_oCustomFilter;
-
-	this.Operator = operator != undefined ? operator : c_oAscCustomAutoFilter.equals;
-	this.Val = val != undefined ? val : null;
-}
-CustomFilter.prototype.getType = function() {
-	return UndoRedoDataTypes.CustomFilter;
-};
-CustomFilter.prototype.getProperties = function() {
-	return this.Properties;
-};
-CustomFilter.prototype.getProperty = function(nType) {
-	switch (nType) {
-		case this.Properties.Operator: return this.Operator; break;
-		case this.Properties.Val: return this.Val; break;
-	}
-	return null;
-};
-CustomFilter.prototype.setProperty = function(nType, value) {
-	switch (nType) {
-		case this.Properties.Operator: this.Operator = value;break;
-		case this.Properties.Val: this.Val = value;break;
-	}
-};
-
-CustomFilter.prototype.clone = function() {
-	var res = new CustomFilter();
-	res.Operator = this.Operator;
-	res.Val = this.Val;
-	return res;
-};
-CustomFilter.prototype.init = function(operator, val) {
-	this.Operator = operator;
-	this.Val = val;
-};
-CustomFilter.prototype.isHideValue = function (val, isLabelFilter, cell) {
-
-	var result = false;
-	var isDigitValue = !isNaN(val);
-	if (!isDigitValue) {
-		val = val.toLowerCase();
-	}
-
-	var checkComplexSymbols = null, filterVal;
-	if (checkComplexSymbols != null) {
-		result = checkComplexSymbols;
-	} else {
-		var isNumberFilter = this.Operator === c_oAscCustomAutoFilter.isGreaterThan || this.Operator === c_oAscCustomAutoFilter.isGreaterThanOrEqualTo || this.Operator === c_oAscCustomAutoFilter.isLessThan || this.Operator === c_oAscCustomAutoFilter.isLessThanOrEqualTo;
-
-		if (c_oAscCustomAutoFilter.equals === this.Operator || c_oAscCustomAutoFilter.doesNotEqual === this.Operator) {
-			filterVal = isNaN(this.Val) ? this.Val.toLowerCase() : this.Val;
-		} else if (isNumberFilter) {
-			filterVal = this.Val;
-			if (isLabelFilter) {
-				//'1'0' - число для данного случая
-				filterVal = this.Val.replace(/'/g, "");
-				if (isNaN(filterVal)) {
-					filterVal = this.Val;
-				}
-			}
-
-			if (isLabelFilter && isNaN(filterVal)) {
-				//в случае label filter - сравнивам строки
-				filterVal = filterVal.toLowerCase();
-				isDigitValue = false;
-				val = val.toLowerCase();
-			} else if (isNaN(filterVal) && isNaN(val)) {
-				filterVal = filterVal.toLowerCase();
-			} else {
-				filterVal = parseFloat(filterVal);
-				val = parseFloat(val);
-			}
-		} else {
-			filterVal = isNaN(this.Val) ? this.Val.toLowerCase() : this.Val;
-		}
-
-		if (cell && c_oAscCustomAutoFilter.equals === this.Operator) {
-			val = cell.getValueWithFormat();
-		}
-
-		var trimVal = "string" === typeof(val) ? window["Asc"].trim(val) : val;
-		var trimFilterVal = "string" === typeof(filterVal) ? window["Asc"].trim(filterVal) : filterVal;
-
-
-		var matchingValues = function (_val1, _val2, op) {
-			_val1 = _val1 + "";
-			_val2 = _val2 + "";
-			var matchingInfo = AscCommonExcel.matchingValue(new AscCommonExcel.cString(_val1));
-			if (op) {
-				matchingInfo.op = op;
-			}
-			return AscCommonExcel.matching(new AscCommonExcel.cString(_val2), matchingInfo);
-		};
-
-		switch (this.Operator) {
-			case c_oAscCustomAutoFilter.equals://equals
+			case Asc.EDateTimeGroup.datetimegroupDay://day
 			{
-				if (!isDigitValue) {
-					result = matchingValues(trimFilterVal, trimVal);
-				} else if (trimVal === trimFilterVal) {
-					result = true;
-				}
-
+				this.Year = year;
+				this.Month = month;
+				this.Day = day;
 				break;
 			}
-			case c_oAscCustomAutoFilter.doesNotEqual://doesNotEqual
+			case Asc.EDateTimeGroup.datetimegroupHour://hour
 			{
-				if (!isDigitValue) {
-					result = matchingValues(trimFilterVal, trimVal, "<>");
-				} else if (trimVal !== trimFilterVal) {
-					result = true;
-				}
-
+				this.Year = year;
+				this.Month = month;
+				this.Day = day;
+				this.Hour = hour;
 				break;
 			}
-
-			case c_oAscCustomAutoFilter.isGreaterThan://isGreaterThan
+			case Asc.EDateTimeGroup.datetimegroupMinute://minute
 			{
-				if (!isDigitValue) {
-					result = matchingValues(trimFilterVal, trimVal, ">");
-				} else if (val > filterVal) {
-					result = true;
-				}
-
+				this.Year = year;
+				this.Month = month;
+				this.Day = day;
+				this.Hour = hour;
+				this.Minute = minute;
 				break;
 			}
-			case c_oAscCustomAutoFilter.isGreaterThanOrEqualTo://isGreaterThanOrEqualTo
+			case Asc.EDateTimeGroup.datetimegroupMonth://month
 			{
-				if (!isDigitValue) {
-					result = matchingValues(trimFilterVal, trimVal, ">=");
-				} else if (val >= filterVal) {
-					result = true;
-				}
-
+				this.Year = year;
+				this.Month = month;
 				break;
 			}
-			case c_oAscCustomAutoFilter.isLessThan://isLessThan
+			case Asc.EDateTimeGroup.datetimegroupSecond://second
 			{
-				if (!isDigitValue) {
-					result = matchingValues(trimFilterVal, trimVal, "<");
-				} else if (val < filterVal) {
-					result = true;
-				}
-
+				this.Year = year;
+				this.Month = month;
+				this.Day = day;
+				this.Hour = hour;
+				this.Minute = minute;
+				this.Second = second;
 				break;
 			}
-			case c_oAscCustomAutoFilter.isLessThanOrEqualTo://isLessThanOrEqualTo
+			case Asc.EDateTimeGroup.datetimegroupYear://year
 			{
-				if (!isDigitValue) {
-					result = matchingValues(trimFilterVal, trimVal, "<=");
-				} else if (val <= filterVal) {
-					result = true;
-				}
-
-				break;
-			}
-			case c_oAscCustomAutoFilter.beginsWith://beginsWith
-			{
-				if (!isDigitValue) {
-					result = matchingValues(trimFilterVal + "*", trimVal);
-				}
-
-				break;
-			}
-			case c_oAscCustomAutoFilter.doesNotBeginWith://doesNotBeginWith
-			{
-				if (!isDigitValue) {
-					result = matchingValues(trimFilterVal + "*", trimVal, "<>");
-				} else {
-					result = true;
-				}
-
-				break;
-			}
-			case c_oAscCustomAutoFilter.endsWith://endsWith
-			{
-				if (!isDigitValue) {
-					result = matchingValues("*" + trimFilterVal, trimVal);
-				}
-
-				break;
-			}
-			case c_oAscCustomAutoFilter.doesNotEndWith://doesNotEndWith
-			{
-				if (!isDigitValue) {
-					result = matchingValues("*" + trimFilterVal, trimVal, "<>");
-				} else {
-					result = true;
-				}
-
-				break;
-			}
-			case c_oAscCustomAutoFilter.contains://contains
-			{
-				if (!isDigitValue) {
-					result = matchingValues("*" + trimFilterVal + "*", trimVal);
-				}
-
-				break;
-			}
-			case c_oAscCustomAutoFilter.doesNotContain://doesNotContain
-			{
-				if (!isDigitValue) {
-					result = matchingValues("*" + trimFilterVal + "*", trimVal, "<>");
-				} else {
-					result = true;
-				}
-
+				this.Year = year;
 				break;
 			}
 		}
-	}
-
-	return !result;
-};
-
-CustomFilter.prototype.asc_getOperator = function () { return this.Operator; };
-CustomFilter.prototype.asc_getVal = function () { return this.Val; };
-
-CustomFilter.prototype.asc_setOperator = function (val) { this.Operator = val; };
-CustomFilter.prototype.asc_setVal = function (val) {
-
-
-
-	this.Val = val;
-};
-
-CustomFilter.prototype.check = function () {
-	if(c_oAscCustomAutoFilter.doesNotEqual === this.Operator) {
-		if("" === this.Val.replace(/ /g, "")){
-			this.Val = " ";
-		}
-	}
-
-	if (c_oAscCustomAutoFilter.beginsWith === this.Operator) {
-		this.Operator = c_oAscCustomAutoFilter.equals;
-		this.Val = this.Val + "*";
-	} else if (c_oAscCustomAutoFilter.doesNotBeginWith === this.Operator) {
-		this.Operator = c_oAscCustomAutoFilter.doesNotEqual;
-		this.Val = this.Val + "*";
-	} else if (c_oAscCustomAutoFilter.endsWith === this.Operator) {
-		this.Operator = c_oAscCustomAutoFilter.equals;
-		this.Val = "*" + this.Val;
-	} else if (c_oAscCustomAutoFilter.doesNotEndWith === this.Operator) {
-		this.Operator = c_oAscCustomAutoFilter.doesNotEqual;
-		this.Val = "*" + this.Val;
-	} else if (c_oAscCustomAutoFilter.contains === this.Operator) {
-		this.Operator = c_oAscCustomAutoFilter.equals;
-		this.Val = "*" + this.Val + "*";
-	} else if (c_oAscCustomAutoFilter.doesNotContain === this.Operator) {
-		this.Operator = c_oAscCustomAutoFilter.doesNotEqual;
-		this.Val = "*" + this.Val + "*";
-	}
-};
-CustomFilter.prototype.correctFromInterface = function () {
-	if (this.isNumberCustomFilterType()) {
-		if (!AscCommon.g_oFormatParser.isLocaleNumber(this.Val)) {
-			//try parse format and save without format
-			let resParse = AscCommon.g_oFormatParser.parse(this.Val);
-			if (resParse) {
-				this.Val = resParse.value + "";
+	};
+	DateGroupItem.prototype.readAttributes = function(attr, uq) {
+		if (attr()) {
+			var vals = attr();
+			var val;
+			val = vals["year"];
+			if (undefined !== val) {
+				this.Year = val - 0;
+			}
+			val = vals["month"];
+			if (undefined !== val) {
+				this.Month = val - 0;
+			}
+			val = vals["day"];
+			if (undefined !== val) {
+				this.Day = val - 0;
+			}
+			val = vals["hour"];
+			if (undefined !== val) {
+				this.Hour = val - 0;
+			}
+			val = vals["minute"];
+			if (undefined !== val) {
+				this.Minute = val - 0;
+			}
+			val = vals["second"];
+			if (undefined !== val) {
+				this.Second = val - 0;
+			}
+			val = vals["dateTimeGrouping"];
+			if (undefined !== val) {
+				val = AscCommonExcel.FromXml_ST_DateTimeGrouping(val);
+				if (-1 !== val) {
+					this.DateTimeGrouping = val;
+				}
 			}
 		}
-	}
-};
-CustomFilter.prototype.isNumberCustomFilterType = function () {
-	if (this.Operator === c_oAscCustomAutoFilter.isGreaterThan ||
-		this.Operator === c_oAscCustomAutoFilter.isGreaterThanOrEqualTo ||
-		this.Operator === c_oAscCustomAutoFilter.isLessThan ||
-		this.Operator === c_oAscCustomAutoFilter.isLessThanOrEqualTo ||
-		this.Operator === c_oAscCustomAutoFilter.doesNotEqual) {
-		return true;
-	}
-	return false;
-};
-CustomFilter.prototype._generateEmptyValueFilter = function () {
-	this.Operator = c_oAscCustomAutoFilter.doesNotEqual;
-	this.Val = " ";
-};
-CustomFilter.prototype.readAttributes = function(attr, uq) {
-	if (attr()) {
-		var vals = attr();
-		var val;
-		val = vals["operator"];
-		if (undefined !== val) {
-			val = AscCommonExcel.FromXml_ST_FilterOperator(val);
-			if (-1 !== val) {
-				this.Operator = val;
-			}
-		}
-		val = vals["val"];
-		if (undefined !== val) {
-			this.Val = AscCommon.unleakString(uq(val));
-		}
-	}
-};
-CustomFilter.prototype.toXml = function (writer, name, ns) {
-	if (!ns) {
-		ns = "";
-	}
-
-	writer.WriteXmlNodeStart(ns + name/*"сustomFilter"*/);
-	writer.WriteXmlAttributeString("operator", AscCommonExcel.ToXml_ST_FilterOperator(this.Operator));
-	writer.WriteXmlAttributeStringEncode("val", this.Val);
-	writer.WriteXmlAttributesEnd();
-
-	writer.WriteXmlNodeEnd(ns + name);
-};
-CustomFilter.prototype.Write_ToBinary2 = function(writer) {
-	if (null != this.Operator) {
-		writer.WriteBool(true);
-		writer.WriteLong(this.Operator);
-	} else {
-		writer.WriteBool(false);
-	}
-
-	if (null != this.Val) {
-		writer.WriteBool(true);
-		writer.WriteString2(this.Val);
-	} else {
-		writer.WriteBool(false);
-	}
-};
-CustomFilter.prototype.Read_FromBinary2 = function(reader) {
-	if (reader.GetBool()) {
-		this.Operator = reader.GetLong();
-	}
-	if (reader.GetBool()) {
-		this.Val = reader.GetString2();
-	}
-};
-CustomFilter.prototype.changeForInterface = function(filterTypes) {
-	if (!this.Val || this.Val.length <= 1) {
-		return;
-	}
-
-	var isStartSpecSymbol = this.Val && this.Val.length > 1 && this.Val[0] === "*";
-	var isEndSpecSymbol;
-	if (!isStartSpecSymbol || (isStartSpecSymbol && this.Val.length >= 2)) {
-		isEndSpecSymbol = this.Val && this.Val[this.Val.length - 1] === "*";
-	}
-	if (isStartSpecSymbol && isEndSpecSymbol && this.Val.length <= 2) {
-		return;
-	}
-	if (isStartSpecSymbol || isEndSpecSymbol) {
-		this.Val = this.Val.substring(isStartSpecSymbol ? 1 : 0, isEndSpecSymbol ? this.Val.length - 1 : this.Val.length);
-		if(c_oAscCustomAutoFilter.doesNotEqual === this.Operator) {
-			if (isStartSpecSymbol && isEndSpecSymbol) {
-				this.Operator = c_oAscCustomAutoFilter.doesNotContain;
-			} else if (isStartSpecSymbol) {
-				this.Operator = c_oAscCustomAutoFilter.doesNotEndWith;
-			} else {
-				this.Operator = c_oAscCustomAutoFilter.doesNotBeginWith;
-			}
-		} else {
-			if (isStartSpecSymbol && isEndSpecSymbol) {
-				this.Operator = c_oAscCustomAutoFilter.contains;
-			} else if (isStartSpecSymbol) {
-				this.Operator = c_oAscCustomAutoFilter.endsWith;
-			} else {
-				this.Operator = c_oAscCustomAutoFilter.beginsWith;
-			}
-		}
-	}
-
-	//filterTypes
-	/*autoFilterObject.asc_setIsTextFilter(filterTypes.text);
-	autoFilterObject.asc_setIsDateFilter(filterTypes.date);
-	autoFilterObject.asc_setColorsFill(filterTypes.colors);
-	autoFilterObject.asc_setColorsFont(filterTypes.fontColors);*/
-	if (filterTypes && filterTypes.date && AscCommon.g_oFormatParser.isLocaleNumber(this.Val + "")) {
-		let api = Asc.editor || editor;
-		this.Val = api.asc_getLocaleExample("m/d/yyyy", this.Val);
-	}
-
-};
-
-var g_oDynamicFilter = {
-	Type : 0,
-	Val	: 1,
-	MaxVal: 2
-};
-
-/** @constructor */
-function DynamicFilter() {
-	this.Properties = g_oDynamicFilter;
-
-	this.Type = null;
-	this.Val = null;
-	this.MaxVal = null;
-}
-DynamicFilter.prototype.getType = function() {
-	return UndoRedoDataTypes.DynamicFilter;
-};
-DynamicFilter.prototype.getProperties = function() {
-	return this.Properties;
-};
-DynamicFilter.prototype.getProperty = function(nType) {
-	switch (nType) {
-		case this.Properties.Type: return this.Type;
-		case this.Properties.Val: return this.Val;
-		case this.Properties.MaxVal: return this.MaxVal;
-	}
-	return null;
-};
-DynamicFilter.prototype.setProperty = function(nType, value) {
-	switch (nType) {
-		case this.Properties.Type: this.Type = value;break;
-		case this.Properties.Val: this.Val = value;break;
-		case this.Properties.MaxVal: this.MaxVal = value;break;
-	}
-};
-DynamicFilter.prototype.clone = function() {
-	var res = new DynamicFilter();
-	res.Type = this.Type;
-	res.Val = this.Val;
-	res.MaxVal = this.MaxVal;
-	return res;
-};
-
-DynamicFilter.prototype.init = function(range) {
-	let val = null, maxVal;
-
-	/*if (range) {
-		for (let i in Asc.c_oAscDynamicAutoFilter) {
-			if (i !== "aboveAverage" && i !== "belowAverage") {
-				this.Type = Asc.c_oAscDynamicAutoFilter[i];
-				this.init();
-			}
-		}
-	}*/
-
-	//by test:
-	//today -> 45049
-	let referenceValues = {};
-	referenceValues[Asc.c_oAscDynamicAutoFilter.lastMonth] = [45017, 45047];
-	referenceValues[Asc.c_oAscDynamicAutoFilter.lastQuarter] = [44927, 45017];
-	referenceValues[Asc.c_oAscDynamicAutoFilter.lastWeek] = [45039, 45046];
-	referenceValues[Asc.c_oAscDynamicAutoFilter.lastYear] = [44562, 44927];
-
-	referenceValues[Asc.c_oAscDynamicAutoFilter.nextMonth] = [45078, 45108];
-	referenceValues[Asc.c_oAscDynamicAutoFilter.nextQuarter] = [45108, 45200];
-	referenceValues[Asc.c_oAscDynamicAutoFilter.nextWeek] = [45053, 45060];
-	referenceValues[Asc.c_oAscDynamicAutoFilter.nextYear] = [45292, 45658];
-
-	referenceValues[Asc.c_oAscDynamicAutoFilter.thisMonth] = [45047, 45078];
-	referenceValues[Asc.c_oAscDynamicAutoFilter.thisQuarter] = [45017, 45108];
-	referenceValues[Asc.c_oAscDynamicAutoFilter.thisWeek] = [45046, 45053];
-	referenceValues[Asc.c_oAscDynamicAutoFilter.thisYear] = [44927, 45292];
-
-	referenceValues[Asc.c_oAscDynamicAutoFilter.today] = [45049, 45050];
-	referenceValues[Asc.c_oAscDynamicAutoFilter.tomorrow] = [45050, 45051];
-	referenceValues[Asc.c_oAscDynamicAutoFilter.yearToDate] = [44927, 45050];
-	referenceValues[Asc.c_oAscDynamicAutoFilter.yesterday] = [45048, 45049];
-
-
-	let _calcDateInterval = function (_diff) {
-		let today = new cDate().getCurrentDate();
-		let start, end;
-
-		if (isSimpleWeek) {
-			start = new cDate(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - today.getUTCDay() + _diff * 7);
-			//+1 -> ms excel
-			end = new cDate(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate() + 7 + 1);
-		} else if (isSimpleMonth) {
-			start = new cDate(today.getUTCFullYear(), today.getUTCMonth() + _diff, 1);
-			//+1 -> ms excel
-			end = new cDate(start.getUTCFullYear(), start.getUTCMonth() + 1 + 1, 1);
-		} else if (isSimpleQuarter) {
-			let quarter = Math.floor((today.getUTCMonth() / 3));
-			start = new cDate(today.getUTCFullYear(), quarter * 3 + _diff * 3, 1);
-			end = new cDate(start.getUTCFullYear(), start.getUTCMonth() + 3 + 1, 1);
-		} else if (isSimpleYear) {
-			start = new cDate(today.getUTCFullYear() + _diff, 0, 1);
-			//+1 -> ms excel
-			end = new cDate(start.getUTCFullYear() + 1, 11, 31 + 1);
+	};
+	DateGroupItem.prototype.toXml = function (writer, name, ns) {
+		if (!ns) {
+			ns = "";
 		}
 
-		val = start.getExcelDate(true);
-		maxVal = end.getExcelDate(true);
+		writer.WriteXmlNodeStart(ns + name/*"dateGroupItem"*/);
+
+		writer.WriteXmlNullableAttributeNumber("year", this.Year);
+		writer.WriteXmlNullableAttributeNumber("month", this.Month);
+		writer.WriteXmlNullableAttributeNumber("day", this.Day);
+		writer.WriteXmlNullableAttributeNumber("hour", this.Hour);
+		writer.WriteXmlNullableAttributeNumber("minute", this.Minute);
+		writer.WriteXmlNullableAttributeNumber("second", this.Second);
+		writer.WriteXmlAttributeStringEncode("dateTimeGrouping", AscCommonExcel.ToXml_ST_DateTimeGrouping(this.DateTimeGrouping));
+		writer.WriteXmlAttributesEnd();
+
+		writer.WriteXmlNodeEnd(ns + name);
+
 	};
 
-	let oTypes = Asc.c_oAscDynamicAutoFilter;
-	let isSimpleWeek = this.Type === oTypes.lastWeek || this.Type === oTypes.nextWeek || this.Type === oTypes.thisWeek;
-	let isSimpleMonth = this.Type === oTypes.lastMonth || this.Type === oTypes.nextMonth || this.Type === oTypes.thisMonth;
-	let isSimpleQuarter = this.Type === oTypes.lastQuarter || this.Type === oTypes.nextQuarter || this.Type === oTypes.thisQuarter;
-	let isSimpleYear = this.Type === oTypes.lastYear || this.Type === oTypes.nextYear || this.Type === oTypes.thisYear;
+	var g_oCustomFilters = {
+		And	 : 0,
+		CustomFilters	: 1
+	};
+	/** @constructor */
+	function CustomFilters() {
+		this.Properties = g_oCustomFilters;
 
-	switch (this.Type) {
-		case Asc.c_oAscDynamicAutoFilter.aboveAverage:
-		case Asc.c_oAscDynamicAutoFilter.belowAverage: {
-			let sum = 0;
-			let counter = 0;
-
-			range._foreachNoEmpty(function (cell) {
-				let cellVal = parseFloat(cell.getValueWithoutFormat());
-
-				if (!isNaN(cellVal)) {
-					sum += parseFloat(cellVal);
-					counter++;
-				}
-
-			});
-			val = sum / counter;
-
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.lastMonth:
-		case Asc.c_oAscDynamicAutoFilter.lastQuarter:
-		case Asc.c_oAscDynamicAutoFilter.lastWeek:
-		case Asc.c_oAscDynamicAutoFilter.lastYear: {
-			_calcDateInterval(-1);
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.nextMonth:
-		case Asc.c_oAscDynamicAutoFilter.nextQuarter:
-		case Asc.c_oAscDynamicAutoFilter.nextWeek:
-		case Asc.c_oAscDynamicAutoFilter.nextYear: {
-			_calcDateInterval(1);
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.thisMonth:
-		case Asc.c_oAscDynamicAutoFilter.thisQuarter:
-		case Asc.c_oAscDynamicAutoFilter.thisWeek:
-		case Asc.c_oAscDynamicAutoFilter.thisYear: {
-			_calcDateInterval(0);
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.nullType: {
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.today: {
-			let today = new cDate().getCurrentDate();
-			val = today.getExcelDate(true);
-			today.addDays(1);
-			maxVal = today.getExcelDate(true);
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.tomorrow: {
-			let today = new cDate().getCurrentDate();
-			today.addDays(1);
-			val = today.getExcelDate(true);
-			today.addDays(1);
-			maxVal = today.getExcelDate(true);
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.yearToDate: {
-			let today = new cDate().getCurrentDate();
-			val = new cDate(today.getUTCFullYear(), 0, 1).getExcelDate(true);
-			today.addDays(1);
-			maxVal = today.getExcelDate(true);
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.yesterday: {
-			let today = new cDate().getCurrentDate();
-			maxVal = today.getExcelDate(true);
-			today.addDays(-1);
-			val = today.getExcelDate(true);
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m1: {
-			//<dynamicFilter type="m1"/>
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m10: {
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m11: {
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m12: {
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m2: {
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m3: {
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m4: {
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m5: {
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m6: {
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m7: {
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m8: {
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m9: {
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.q1: {
-			//<dynamicFilter type="Q2"/>
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.q2: {
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.q3: {
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.q4: {
-			break;
-		}
+		this.And = false;
+		this.CustomFilters = null;
 	}
+	CustomFilters.prototype.getType = function() {
+		return UndoRedoDataTypes.CustomFilters;
+	};
+	CustomFilters.prototype.getProperties = function() {
+		return this.Properties;
+	};
+	CustomFilters.prototype.getProperty = function(nType) {
+		switch (nType) {
+			case this.Properties.And: return this.And; break;
+			case this.Properties.CustomFilters: return this.CustomFilters; break;
+		}
+		return null;
+	};
+	CustomFilters.prototype.setProperty = function(nType, value) {
+		switch (nType) {
+			case this.Properties.And: this.And = value;break;
+			case this.Properties.CustomFilters: this.CustomFilters = value;break;
+		}
+	};
+	CustomFilters.prototype.Write_ToBinary2 = function(writer) {
+		writer.WriteBool(this.And);
 
-	/*if (val != undefined && referenceValues[this.Type] && (val !== referenceValues[this.Type][0] || maxVal !== referenceValues[this.Type][1])) {
-		console.log(this.Type);
-	}*/
+		writer.WriteLong(this.CustomFilters ? this.CustomFilters.length : 0);
+		for (var i = 0; i < this.CustomFilters.length; ++i) {
+			this.CustomFilters[i].Write_ToBinary2(writer);
+		}
+	};
+	CustomFilters.prototype.Read_FromBinary2 = function(reader) {
+		this.And = reader.GetBool();
+		var length = reader.GetLong();
+		for (var i = 0; i < length; ++i) {
+			var reply = new CustomFilter();
+			reply.Read_FromBinary2(reader);
+			if(!this.CustomFilters) {
+				this.CustomFilters = [];
+			}
+			this.CustomFilters.push(reply);
+		}
+	};
+	CustomFilters.prototype.clone = function() {
+		var i, res = new CustomFilters();
+		res.And = this.And;
+		if (this.CustomFilters) {
+			res.CustomFilters = [];
+			for (i = 0; i < this.CustomFilters.length; ++i)
+				res.CustomFilters.push(this.CustomFilters[i].clone());
+		}
+		return res;
+	};
+	CustomFilters.prototype.init = function(obj) {
+		this.And = !obj.isChecked;
+		this.CustomFilters = [];
 
+		if(obj.filter1 != null)
+			this.CustomFilters[0] = new CustomFilter(obj.filter1, obj.valFilter1);
+		if(obj.filter2 != null)
+			this.CustomFilters[1] = new CustomFilter(obj.filter2, obj.valFilter2);
+	};
+	CustomFilters.prototype.isHideValue = function(val, isLabelFilter, cell){
 
-	this.Val = val;
-	this.MaxVal = maxVal;
-};
+		var res = false;
+		var filterRes1 = this.CustomFilters[0] ? this.CustomFilters[0].isHideValue(val, isLabelFilter, cell) : null;
+		var filterRes2 = this.CustomFilters[1] ? this.CustomFilters[1].isHideValue(val, isLabelFilter, cell) : null;
 
-DynamicFilter.prototype.isHideValue = function (val) {
-	let res = false;
-	let minMonth, maxMonth;
-	switch (this.Type) {
-		case Asc.c_oAscDynamicAutoFilter.aboveAverage: {
-			res = !(val > this.Val);
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.belowAverage: {
-			res = !(val < this.Val);
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.lastMonth:
-		case Asc.c_oAscDynamicAutoFilter.lastQuarter:
-		case Asc.c_oAscDynamicAutoFilter.lastWeek:
-		case Asc.c_oAscDynamicAutoFilter.lastYear:
-		case Asc.c_oAscDynamicAutoFilter.nextMonth:
-		case Asc.c_oAscDynamicAutoFilter.nextQuarter:
-		case Asc.c_oAscDynamicAutoFilter.nextWeek:
-		case Asc.c_oAscDynamicAutoFilter.nextYear:
-		case Asc.c_oAscDynamicAutoFilter.thisMonth:
-		case Asc.c_oAscDynamicAutoFilter.thisQuarter:
-		case Asc.c_oAscDynamicAutoFilter.thisWeek:
-		case Asc.c_oAscDynamicAutoFilter.today:
-		case Asc.c_oAscDynamicAutoFilter.tomorrow:
-		case Asc.c_oAscDynamicAutoFilter.yearToDate:
-		case Asc.c_oAscDynamicAutoFilter.yesterday:
-		case Asc.c_oAscDynamicAutoFilter.thisYear: {
-			res = !(val >= this.Val && val < this.MaxVal);
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.nullType: {
-			break;
-		}
+		if(!this.And && ((filterRes1 === null && filterRes2 === true || filterRes1 === true && filterRes2 === null || filterRes1 === true && filterRes2 === true)))
+			res = true;
+		if(this.And && ((filterRes1 === true || filterRes2 === true)))
+			res = true;
 
-		case Asc.c_oAscDynamicAutoFilter.m1: {
-			//<dynamicFilter type="m1"/>
-			//Shows the dates that are in January, regardless of year
-			minMonth = maxMonth = 0;
+		return res;
+	};
+	CustomFilters.prototype.asc_getAnd = function () { return this.And; };
+	CustomFilters.prototype.asc_getCustomFilters = function () { return this.CustomFilters; };
 
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m10: {
-			//Shows the dates that are in October, regardless of year
-			minMonth = maxMonth = 9;
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m11: {
-			//Shows the dates that are in November, regardless of year
-			minMonth = maxMonth = 10;
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m12: {
-			//Shows the dates that are in December, regardless of year
-			minMonth = maxMonth = 11;
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m2: {
-			//Shows the dates that are in Februray, regardless of year
-			minMonth = maxMonth = 1;
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m3: {
-			//Shows the dates that are in March, regardless of year
-			minMonth = maxMonth = 2;
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m4: {
-			//Shows the dates that are in April, regardless of year
-			minMonth = maxMonth = 3;
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m5: {
-			//Shows the dates that are in May, regardless of year
-			minMonth = maxMonth = 4;
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m6: {
-			//Shows the dates that are in June, regardless of year
-			minMonth = maxMonth = 5;
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m7: {
-			//Shows the dates that are in July, regardless of year
-			minMonth = maxMonth = 6;
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m8: {
-			//Shows the dates that are in August, regardless of year
-			minMonth = maxMonth = 7;
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.m9: {
-			//Shows the dates that are in September, regardless of year
-			minMonth = maxMonth = 8;
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.q1: {
-			//<dynamicFilter type="Q2"/>
-			//Shows the dates that are in the 1st quarter, regardless of year
-			minMonth = 0;
-			maxMonth = 2;
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.q2: {
-			//Shows the dates that are in the 2st quarter, regardless of year
-			minMonth = 3;
-			maxMonth = 5;
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.q3: {
-			//Shows the dates that are in the 3st quarter, regardless of year
-			minMonth = 6;
-			maxMonth = 8;
-			break;
-		}
-		case Asc.c_oAscDynamicAutoFilter.q4: {
-			//Shows the dates that are in the 4st quarter, regardless of year
-			minMonth = 9;
-			maxMonth = 11;
-			break;
-		}
-	}
+	CustomFilters.prototype.asc_setAnd = function (val) { this.And = val; };
+	CustomFilters.prototype.asc_setCustomFilters = function (val) { this.CustomFilters = val; };
 
-	if (minMonth !== undefined) {
-		let valToDate = new cDate().getDateFromExcel(val);
-		let valMonth = valToDate.getUTCMonth();
-		res = !(valMonth >= minMonth && valMonth <= maxMonth);
-	}
-
-	return res;
-};
-
-DynamicFilter.prototype.asc_getType = function () { return this.Type; };
-DynamicFilter.prototype.asc_getVal = function () { return this.Val; };
-DynamicFilter.prototype.asc_getMaxVal = function () { return this.MaxVal; };
-
-DynamicFilter.prototype.asc_setType = function (val) {
-	this.Type = val; };
-DynamicFilter.prototype.asc_setVal = function (val) { this.Val = val; };
-DynamicFilter.prototype.asc_setMaxVal = function (val) { this.MaxVal = val; };
-DynamicFilter.prototype.readAttributes = function(attr, uq) {
-	if (attr()) {
-		var vals = attr();
-		var val;
-		val = vals["type"];
-		if (undefined !== val) {
-			val = AscCommonExcel.FromXml_ST_DynamicFilterType(val);
-			if (-1 !== val) {
-				this.Type = val;
+	CustomFilters.prototype.check = function () {
+		if(this.CustomFilters) {
+			for(var i = 0; i < this.CustomFilters.length; i++) {
+				this.CustomFilters[i].check();
 			}
 		}
-		val = vals["val"];
-		if (undefined !== val) {
-			this.Val = val - 0;
+	};
+	CustomFilters.prototype.correctFromInterface = function () {
+		if(this.CustomFilters) {
+			for(var i = 0; i < this.CustomFilters.length; i++) {
+				this.CustomFilters[i].correctFromInterface();
+			}
 		}
-		val = vals["maxVal"];
-		if (undefined !== val) {
-			this.MaxVal = val - 0;
+	};
+
+	CustomFilters.prototype._generateEmptyValueFilter = function() {
+		this.And = true;
+		this.CustomFilters = [];
+		var customFilter = new CustomFilter();
+		customFilter._generateEmptyValueFilter();
+		this.CustomFilters.push(customFilter);
+	};
+	CustomFilters.prototype.readAttributes = function(attr, uq) {
+		if (attr()) {
+			var vals = attr();
+			var val;
+			val = vals["and"];
+			if (undefined !== val) {
+				this.And = AscCommon.getBoolFromXml(val);
+			}
 		}
-	}
-};
-DynamicFilter.prototype.toXml = function (writer, name, ns, childns) {
-	if (!ns) {
-		ns = "";
-	}
-
-	writer.WriteXmlNodeStart(ns + name/*"dynamicFilter"*/);
-
-	writer.WriteXmlAttributeString("type", AscCommonExcel.ToXml_ST_DynamicFilterType(this.Type));
-	writer.WriteXmlNullableAttributeNumber("val", this.val);
-	writer.WriteXmlNullableAttributeNumber("maxVal", this.MaxVal);
-
-	writer.WriteXmlAttributesEnd(true);
-};
-DynamicFilter.prototype.Write_ToBinary2 = function(writer) {
-	if (null !== this.Type) {
-		writer.WriteBool(true);
-		writer.WriteLong(this.Type);
-	} else {
-		writer.WriteBool(false);
-	}
-
-	if (null !== this.Val) {
-		writer.WriteBool(true);
-		writer.WriteLong(this.Val);
-	} else {
-		writer.WriteBool(false);
-	}
-
-	if (null !== this.MaxVal) {
-		writer.WriteBool(true);
-		writer.WriteLong(this.MaxVal);
-	} else {
-		writer.WriteBool(false);
-	}
-};
-DynamicFilter.prototype.Read_FromBinary2 = function(reader) {
-	if (reader.GetBool()) {
-		this.Type = reader.GetLong();
-	}
-	if (reader.GetBool()) {
-		this.Val = reader.GetLong();
-	}
-	if (reader.GetBool()) {
-		this.MaxVal = reader.GetLong();
-	}
-};
-
-
-var g_oColorFilter = {
-	CellColor : 0,
-	dxf	: 1
-};
-
-/** @constructor */
-function ColorFilter() {
-	this.Properties = g_oColorFilter;
-
-	this.CellColor = null;
-	this.dxf = null;
-}
-ColorFilter.prototype.getType = function() {
-	return UndoRedoDataTypes.ColorFilter;
-};
-ColorFilter.prototype.getProperties = function() {
-	return this.Properties;
-};
-ColorFilter.prototype.getProperty = function(nType) {
-	switch (nType) {
-		case this.Properties.CellColor: return this.CellColor; break;
-		case this.Properties.dxf: return this.dxf; break;
-	}
-	return null;
-};
-ColorFilter.prototype.setProperty = function(nType, value) {
-	switch (nType) {
-		case this.Properties.CellColor: this.CellColor = value;break;
-		case this.Properties.dxf: this.dxf = value;break;
-	}
-};
-ColorFilter.prototype.clone = function() {
-	var res = new ColorFilter();
-	res.CellColor = this.CellColor;
-	if (this.dxf) {
-		res.dxf = this.dxf.clone();
-	}
-	return res;
-};
-ColorFilter.prototype.isHideValue = function(cell) {
-
-	var res = true;
-	var t = this;
-
-	var isEqualColors = function(filterColor, cellColor)
-	{
-		var res = false;
-		if(filterColor === cellColor)
-		{
-			res = true;
+	};
+	CustomFilters.prototype.onStartNode = function(elem, attr, uq) {
+		var newContext = this;
+		if ("customFilter" === elem) {
+			if (!this.CustomFilters) {
+				this.CustomFilters = [];
+			}
+			newContext = new CustomFilter();
+			if (newContext.readAttributes) {
+				newContext.readAttributes(attr, uq);
+			}
+			this.CustomFilters.push(newContext);
+		} else {
+			newContext = null;
 		}
-		else if(!filterColor && (!cellColor || null === cellColor.rgb || 0 === cellColor.rgb))
-		{
-			res = true;
+		return newContext;
+	};
+	CustomFilters.prototype.toXml = function (writer, name, ns, childns) {
+		if (!ns) {
+			ns = "";
 		}
-		else if(!cellColor && (!filterColor || null === filterColor.rgb || 0 === filterColor.rgb))
-		{
-			res = true;
+		if (!childns) {
+			childns = "";
 		}
-		else if(cellColor && filterColor && cellColor.rgb === filterColor.rgb)
-		{
-			res = true;
+
+		writer.WriteXmlNodeStart(ns + name);
+
+		writer.WriteXmlNullableAttributeString("and", this.And ? 1 : null);
+		writer.WriteXmlAttributesEnd();
+
+		for (var i = 0; i < this.CustomFilters.length; ++i) {
+			this.CustomFilters[i].toXml(writer, "customFilter", childns, childns);
+		}
+
+		writer.WriteXmlNodeEnd(ns + name);
+	};
+	CustomFilters.prototype.changeForInterface = function (filterTypes) {
+		var res = this.clone();
+		if(res.CustomFilters) {
+			for(var i = 0; i < res.CustomFilters.length; i++) {
+				res.CustomFilters[i].changeForInterface(filterTypes);
+			}
+		}
+		return res;
+	};
+
+	var g_oCustomFilter = {
+		Operator	 : 0,
+		Val	: 1
+	};
+
+	/** @constructor */
+	function CustomFilter(operator, val) {
+		this.Properties = g_oCustomFilter;
+
+		this.Operator = operator != undefined ? operator : c_oAscCustomAutoFilter.equals;
+		this.Val = val != undefined ? val : null;
+	}
+	CustomFilter.prototype.getType = function() {
+		return UndoRedoDataTypes.CustomFilter;
+	};
+	CustomFilter.prototype.getProperties = function() {
+		return this.Properties;
+	};
+	CustomFilter.prototype.getProperty = function(nType) {
+		switch (nType) {
+			case this.Properties.Operator: return this.Operator; break;
+			case this.Properties.Val: return this.Val; break;
+		}
+		return null;
+	};
+	CustomFilter.prototype.setProperty = function(nType, value) {
+		switch (nType) {
+			case this.Properties.Operator: this.Operator = value;break;
+			case this.Properties.Val: this.Val = value;break;
+		}
+	};
+
+	CustomFilter.prototype.clone = function() {
+		var res = new CustomFilter();
+		res.Operator = this.Operator;
+		res.Val = this.Val;
+		return res;
+	};
+	CustomFilter.prototype.init = function(operator, val) {
+		this.Operator = operator;
+		this.Val = val;
+	};
+	CustomFilter.prototype.isHideValue = function (val, isLabelFilter, cell) {
+
+		var result = false;
+		var isDigitValue = !isNaN(val);
+		if (!isDigitValue) {
+			val = val.toLowerCase();
+		}
+
+		var checkComplexSymbols = null, filterVal;
+		if (checkComplexSymbols != null) {
+			result = checkComplexSymbols;
+		} else {
+			var isNumberFilter = this.Operator === c_oAscCustomAutoFilter.isGreaterThan || this.Operator === c_oAscCustomAutoFilter.isGreaterThanOrEqualTo || this.Operator === c_oAscCustomAutoFilter.isLessThan || this.Operator === c_oAscCustomAutoFilter.isLessThanOrEqualTo;
+
+			if (c_oAscCustomAutoFilter.equals === this.Operator || c_oAscCustomAutoFilter.doesNotEqual === this.Operator) {
+				filterVal = isNaN(this.Val) ? this.Val.toLowerCase() : this.Val;
+			} else if (isNumberFilter) {
+				filterVal = this.Val;
+				if (isLabelFilter) {
+					//'1'0' - число для данного случая
+					filterVal = this.Val.replace(/'/g, "");
+					if (isNaN(filterVal)) {
+						filterVal = this.Val;
+					}
+				}
+
+				if (isLabelFilter && isNaN(filterVal)) {
+					//в случае label filter - сравнивам строки
+					filterVal = filterVal.toLowerCase();
+					isDigitValue = false;
+					val = val.toLowerCase();
+				} else if (isNaN(filterVal) && isNaN(val)) {
+					filterVal = filterVal.toLowerCase();
+				} else {
+					filterVal = parseFloat(filterVal);
+					val = parseFloat(val);
+				}
+			} else {
+				filterVal = isNaN(this.Val) ? this.Val.toLowerCase() : this.Val;
+			}
+
+			if (cell && c_oAscCustomAutoFilter.equals === this.Operator) {
+				val = cell.getValueWithFormat();
+			}
+
+			var trimVal = "string" === typeof(val) ? window["Asc"].trim(val) : val;
+			var trimFilterVal = "string" === typeof(filterVal) ? window["Asc"].trim(filterVal) : filterVal;
+
+
+			var matchingValues = function (_val1, _val2, op) {
+				_val1 = _val1 + "";
+				_val2 = _val2 + "";
+				var matchingInfo = AscCommonExcel.matchingValue(new AscCommonExcel.cString(_val1));
+				if (op) {
+					matchingInfo.op = op;
+				}
+				return AscCommonExcel.matching(new AscCommonExcel.cString(_val2), matchingInfo);
+			};
+
+			switch (this.Operator) {
+				case c_oAscCustomAutoFilter.equals://equals
+				{
+					if (!isDigitValue) {
+						result = matchingValues(trimFilterVal, trimVal);
+					} else if (trimVal === trimFilterVal) {
+						result = true;
+					}
+
+					break;
+				}
+				case c_oAscCustomAutoFilter.doesNotEqual://doesNotEqual
+				{
+					if (!isDigitValue) {
+						result = matchingValues(trimFilterVal, trimVal, "<>");
+					} else if (trimVal !== trimFilterVal) {
+						result = true;
+					}
+
+					break;
+				}
+
+				case c_oAscCustomAutoFilter.isGreaterThan://isGreaterThan
+				{
+					if (!isDigitValue) {
+						result = matchingValues(trimFilterVal, trimVal, ">");
+					} else if (val > filterVal) {
+						result = true;
+					}
+
+					break;
+				}
+				case c_oAscCustomAutoFilter.isGreaterThanOrEqualTo://isGreaterThanOrEqualTo
+				{
+					if (!isDigitValue) {
+						result = matchingValues(trimFilterVal, trimVal, ">=");
+					} else if (val >= filterVal) {
+						result = true;
+					}
+
+					break;
+				}
+				case c_oAscCustomAutoFilter.isLessThan://isLessThan
+				{
+					if (!isDigitValue) {
+						result = matchingValues(trimFilterVal, trimVal, "<");
+					} else if (val < filterVal) {
+						result = true;
+					}
+
+					break;
+				}
+				case c_oAscCustomAutoFilter.isLessThanOrEqualTo://isLessThanOrEqualTo
+				{
+					if (!isDigitValue) {
+						result = matchingValues(trimFilterVal, trimVal, "<=");
+					} else if (val <= filterVal) {
+						result = true;
+					}
+
+					break;
+				}
+				case c_oAscCustomAutoFilter.beginsWith://beginsWith
+				{
+					if (!isDigitValue) {
+						result = matchingValues(trimFilterVal + "*", trimVal);
+					}
+
+					break;
+				}
+				case c_oAscCustomAutoFilter.doesNotBeginWith://doesNotBeginWith
+				{
+					if (!isDigitValue) {
+						result = matchingValues(trimFilterVal + "*", trimVal, "<>");
+					} else {
+						result = true;
+					}
+
+					break;
+				}
+				case c_oAscCustomAutoFilter.endsWith://endsWith
+				{
+					if (!isDigitValue) {
+						result = matchingValues("*" + trimFilterVal, trimVal);
+					}
+
+					break;
+				}
+				case c_oAscCustomAutoFilter.doesNotEndWith://doesNotEndWith
+				{
+					if (!isDigitValue) {
+						result = matchingValues("*" + trimFilterVal, trimVal, "<>");
+					} else {
+						result = true;
+					}
+
+					break;
+				}
+				case c_oAscCustomAutoFilter.contains://contains
+				{
+					if (!isDigitValue) {
+						result = matchingValues("*" + trimFilterVal + "*", trimVal);
+					}
+
+					break;
+				}
+				case c_oAscCustomAutoFilter.doesNotContain://doesNotContain
+				{
+					if (!isDigitValue) {
+						result = matchingValues("*" + trimFilterVal + "*", trimVal, "<>");
+					} else {
+						result = true;
+					}
+
+					break;
+				}
+			}
+		}
+
+		return !result;
+	};
+
+	CustomFilter.prototype.asc_getOperator = function () { return this.Operator; };
+	CustomFilter.prototype.asc_getVal = function () { return this.Val; };
+
+	CustomFilter.prototype.asc_setOperator = function (val) { this.Operator = val; };
+	CustomFilter.prototype.asc_setVal = function (val) {
+
+
+
+		this.Val = val;
+	};
+
+	CustomFilter.prototype.check = function () {
+		if(c_oAscCustomAutoFilter.doesNotEqual === this.Operator) {
+			if("" === this.Val.replace(/ /g, "")){
+				this.Val = " ";
+			}
+		}
+
+		if (c_oAscCustomAutoFilter.beginsWith === this.Operator) {
+			this.Operator = c_oAscCustomAutoFilter.equals;
+			this.Val = this.Val + "*";
+		} else if (c_oAscCustomAutoFilter.doesNotBeginWith === this.Operator) {
+			this.Operator = c_oAscCustomAutoFilter.doesNotEqual;
+			this.Val = this.Val + "*";
+		} else if (c_oAscCustomAutoFilter.endsWith === this.Operator) {
+			this.Operator = c_oAscCustomAutoFilter.equals;
+			this.Val = "*" + this.Val;
+		} else if (c_oAscCustomAutoFilter.doesNotEndWith === this.Operator) {
+			this.Operator = c_oAscCustomAutoFilter.doesNotEqual;
+			this.Val = "*" + this.Val;
+		} else if (c_oAscCustomAutoFilter.contains === this.Operator) {
+			this.Operator = c_oAscCustomAutoFilter.equals;
+			this.Val = "*" + this.Val + "*";
+		} else if (c_oAscCustomAutoFilter.doesNotContain === this.Operator) {
+			this.Operator = c_oAscCustomAutoFilter.doesNotEqual;
+			this.Val = "*" + this.Val + "*";
+		}
+	};
+	CustomFilter.prototype.correctFromInterface = function () {
+		if (this.isNumberCustomFilterType()) {
+			if (!AscCommon.g_oFormatParser.isLocaleNumber(this.Val)) {
+				//try parse format and save without format
+				let resParse = AscCommon.g_oFormatParser.parse(this.Val);
+				if (resParse) {
+					this.Val = resParse.value + "";
+				}
+			}
+		}
+	};
+	CustomFilter.prototype.isNumberCustomFilterType = function () {
+		if (this.Operator === c_oAscCustomAutoFilter.isGreaterThan ||
+			this.Operator === c_oAscCustomAutoFilter.isGreaterThanOrEqualTo ||
+			this.Operator === c_oAscCustomAutoFilter.isLessThan ||
+			this.Operator === c_oAscCustomAutoFilter.isLessThanOrEqualTo ||
+			this.Operator === c_oAscCustomAutoFilter.doesNotEqual) {
+			return true;
+		}
+		return false;
+	};
+	CustomFilter.prototype._generateEmptyValueFilter = function () {
+		this.Operator = c_oAscCustomAutoFilter.doesNotEqual;
+		this.Val = " ";
+	};
+	CustomFilter.prototype.readAttributes = function(attr, uq) {
+		if (attr()) {
+			var vals = attr();
+			var val;
+			val = vals["operator"];
+			if (undefined !== val) {
+				val = AscCommonExcel.FromXml_ST_FilterOperator(val);
+				if (-1 !== val) {
+					this.Operator = val;
+				}
+			}
+			val = vals["val"];
+			if (undefined !== val) {
+				this.Val = AscCommon.unleakString(uq(val));
+			}
+		}
+	};
+	CustomFilter.prototype.toXml = function (writer, name, ns) {
+		if (!ns) {
+			ns = "";
+		}
+
+		writer.WriteXmlNodeStart(ns + name/*"сustomFilter"*/);
+		writer.WriteXmlAttributeString("operator", AscCommonExcel.ToXml_ST_FilterOperator(this.Operator));
+		writer.WriteXmlAttributeStringEncode("val", this.Val);
+		writer.WriteXmlAttributesEnd();
+
+		writer.WriteXmlNodeEnd(ns + name);
+	};
+	CustomFilter.prototype.Write_ToBinary2 = function(writer) {
+		if (null != this.Operator) {
+			writer.WriteBool(true);
+			writer.WriteLong(this.Operator);
+		} else {
+			writer.WriteBool(false);
+		}
+
+		if (null != this.Val) {
+			writer.WriteBool(true);
+			writer.WriteString2(this.Val);
+		} else {
+			writer.WriteBool(false);
+		}
+	};
+	CustomFilter.prototype.Read_FromBinary2 = function(reader) {
+		if (reader.GetBool()) {
+			this.Operator = reader.GetLong();
+		}
+		if (reader.GetBool()) {
+			this.Val = reader.GetString2();
+		}
+	};
+	CustomFilter.prototype.changeForInterface = function(filterTypes) {
+		if (!this.Val || this.Val.length <= 1) {
+			return;
+		}
+
+		var isStartSpecSymbol = this.Val && this.Val.length > 1 && this.Val[0] === "*";
+		var isEndSpecSymbol;
+		if (!isStartSpecSymbol || (isStartSpecSymbol && this.Val.length >= 2)) {
+			isEndSpecSymbol = this.Val && this.Val[this.Val.length - 1] === "*";
+		}
+		if (isStartSpecSymbol && isEndSpecSymbol && this.Val.length <= 2) {
+			return;
+		}
+		if (isStartSpecSymbol || isEndSpecSymbol) {
+			this.Val = this.Val.substring(isStartSpecSymbol ? 1 : 0, isEndSpecSymbol ? this.Val.length - 1 : this.Val.length);
+			if(c_oAscCustomAutoFilter.doesNotEqual === this.Operator) {
+				if (isStartSpecSymbol && isEndSpecSymbol) {
+					this.Operator = c_oAscCustomAutoFilter.doesNotContain;
+				} else if (isStartSpecSymbol) {
+					this.Operator = c_oAscCustomAutoFilter.doesNotEndWith;
+				} else {
+					this.Operator = c_oAscCustomAutoFilter.doesNotBeginWith;
+				}
+			} else {
+				if (isStartSpecSymbol && isEndSpecSymbol) {
+					this.Operator = c_oAscCustomAutoFilter.contains;
+				} else if (isStartSpecSymbol) {
+					this.Operator = c_oAscCustomAutoFilter.endsWith;
+				} else {
+					this.Operator = c_oAscCustomAutoFilter.beginsWith;
+				}
+			}
+		}
+
+		//filterTypes
+		/*autoFilterObject.asc_setIsTextFilter(filterTypes.text);
+		autoFilterObject.asc_setIsDateFilter(filterTypes.date);
+		autoFilterObject.asc_setColorsFill(filterTypes.colors);
+		autoFilterObject.asc_setColorsFont(filterTypes.fontColors);*/
+		if (filterTypes && filterTypes.date && AscCommon.g_oFormatParser.isLocaleNumber(this.Val + "")) {
+			let api = Asc.editor || editor;
+			this.Val = api.asc_getLocaleExample("m/d/yyyy", this.Val);
+		}
+
+	};
+
+	var g_oDynamicFilter = {
+		Type : 0,
+		Val	: 1,
+		MaxVal: 2
+	};
+
+	/** @constructor */
+	function DynamicFilter() {
+		this.Properties = g_oDynamicFilter;
+
+		this.Type = null;
+		this.Val = null;
+		this.MaxVal = null;
+	}
+	DynamicFilter.prototype.getType = function() {
+		return UndoRedoDataTypes.DynamicFilter;
+	};
+	DynamicFilter.prototype.getProperties = function() {
+		return this.Properties;
+	};
+	DynamicFilter.prototype.getProperty = function(nType) {
+		switch (nType) {
+			case this.Properties.Type: return this.Type;
+			case this.Properties.Val: return this.Val;
+			case this.Properties.MaxVal: return this.MaxVal;
+		}
+		return null;
+	};
+	DynamicFilter.prototype.setProperty = function(nType, value) {
+		switch (nType) {
+			case this.Properties.Type: this.Type = value;break;
+			case this.Properties.Val: this.Val = value;break;
+			case this.Properties.MaxVal: this.MaxVal = value;break;
+		}
+	};
+	DynamicFilter.prototype.clone = function() {
+		var res = new DynamicFilter();
+		res.Type = this.Type;
+		res.Val = this.Val;
+		res.MaxVal = this.MaxVal;
+		return res;
+	};
+
+	DynamicFilter.prototype.init = function(range) {
+		let val = null, maxVal;
+
+		/*if (range) {
+			for (let i in Asc.c_oAscDynamicAutoFilter) {
+				if (i !== "aboveAverage" && i !== "belowAverage") {
+					this.Type = Asc.c_oAscDynamicAutoFilter[i];
+					this.init();
+				}
+			}
+		}*/
+
+		//by test:
+		//today -> 45049
+		let referenceValues = {};
+		referenceValues[Asc.c_oAscDynamicAutoFilter.lastMonth] = [45017, 45047];
+		referenceValues[Asc.c_oAscDynamicAutoFilter.lastQuarter] = [44927, 45017];
+		referenceValues[Asc.c_oAscDynamicAutoFilter.lastWeek] = [45039, 45046];
+		referenceValues[Asc.c_oAscDynamicAutoFilter.lastYear] = [44562, 44927];
+
+		referenceValues[Asc.c_oAscDynamicAutoFilter.nextMonth] = [45078, 45108];
+		referenceValues[Asc.c_oAscDynamicAutoFilter.nextQuarter] = [45108, 45200];
+		referenceValues[Asc.c_oAscDynamicAutoFilter.nextWeek] = [45053, 45060];
+		referenceValues[Asc.c_oAscDynamicAutoFilter.nextYear] = [45292, 45658];
+
+		referenceValues[Asc.c_oAscDynamicAutoFilter.thisMonth] = [45047, 45078];
+		referenceValues[Asc.c_oAscDynamicAutoFilter.thisQuarter] = [45017, 45108];
+		referenceValues[Asc.c_oAscDynamicAutoFilter.thisWeek] = [45046, 45053];
+		referenceValues[Asc.c_oAscDynamicAutoFilter.thisYear] = [44927, 45292];
+
+		referenceValues[Asc.c_oAscDynamicAutoFilter.today] = [45049, 45050];
+		referenceValues[Asc.c_oAscDynamicAutoFilter.tomorrow] = [45050, 45051];
+		referenceValues[Asc.c_oAscDynamicAutoFilter.yearToDate] = [44927, 45050];
+		referenceValues[Asc.c_oAscDynamicAutoFilter.yesterday] = [45048, 45049];
+
+
+		let _calcDateInterval = function (_diff) {
+			let today = new cDate().getCurrentDate();
+			let start, end;
+
+			if (isSimpleWeek) {
+				start = new cDate(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - today.getUTCDay() + _diff * 7);
+				//+1 -> ms excel
+				end = new cDate(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate() + 7 + 1);
+			} else if (isSimpleMonth) {
+				start = new cDate(today.getUTCFullYear(), today.getUTCMonth() + _diff, 1);
+				//+1 -> ms excel
+				end = new cDate(start.getUTCFullYear(), start.getUTCMonth() + 1 + 1, 1);
+			} else if (isSimpleQuarter) {
+				let quarter = Math.floor((today.getUTCMonth() / 3));
+				start = new cDate(today.getUTCFullYear(), quarter * 3 + _diff * 3, 1);
+				end = new cDate(start.getUTCFullYear(), start.getUTCMonth() + 3 + 1, 1);
+			} else if (isSimpleYear) {
+				start = new cDate(today.getUTCFullYear() + _diff, 0, 1);
+				//+1 -> ms excel
+				end = new cDate(start.getUTCFullYear() + 1, 11, 31 + 1);
+			}
+
+			val = start.getExcelDate(true);
+			maxVal = end.getExcelDate(true);
+		};
+
+		let oTypes = Asc.c_oAscDynamicAutoFilter;
+		let isSimpleWeek = this.Type === oTypes.lastWeek || this.Type === oTypes.nextWeek || this.Type === oTypes.thisWeek;
+		let isSimpleMonth = this.Type === oTypes.lastMonth || this.Type === oTypes.nextMonth || this.Type === oTypes.thisMonth;
+		let isSimpleQuarter = this.Type === oTypes.lastQuarter || this.Type === oTypes.nextQuarter || this.Type === oTypes.thisQuarter;
+		let isSimpleYear = this.Type === oTypes.lastYear || this.Type === oTypes.nextYear || this.Type === oTypes.thisYear;
+
+		switch (this.Type) {
+			case Asc.c_oAscDynamicAutoFilter.aboveAverage:
+			case Asc.c_oAscDynamicAutoFilter.belowAverage: {
+				let sum = 0;
+				let counter = 0;
+
+				range._foreachNoEmpty(function (cell) {
+					let cellVal = parseFloat(cell.getValueWithoutFormat());
+
+					if (!isNaN(cellVal)) {
+						sum += parseFloat(cellVal);
+						counter++;
+					}
+
+				});
+				val = sum / counter;
+
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.lastMonth:
+			case Asc.c_oAscDynamicAutoFilter.lastQuarter:
+			case Asc.c_oAscDynamicAutoFilter.lastWeek:
+			case Asc.c_oAscDynamicAutoFilter.lastYear: {
+				_calcDateInterval(-1);
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.nextMonth:
+			case Asc.c_oAscDynamicAutoFilter.nextQuarter:
+			case Asc.c_oAscDynamicAutoFilter.nextWeek:
+			case Asc.c_oAscDynamicAutoFilter.nextYear: {
+				_calcDateInterval(1);
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.thisMonth:
+			case Asc.c_oAscDynamicAutoFilter.thisQuarter:
+			case Asc.c_oAscDynamicAutoFilter.thisWeek:
+			case Asc.c_oAscDynamicAutoFilter.thisYear: {
+				_calcDateInterval(0);
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.nullType: {
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.today: {
+				let today = new cDate().getCurrentDate();
+				val = today.getExcelDate(true);
+				today.addDays(1);
+				maxVal = today.getExcelDate(true);
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.tomorrow: {
+				let today = new cDate().getCurrentDate();
+				today.addDays(1);
+				val = today.getExcelDate(true);
+				today.addDays(1);
+				maxVal = today.getExcelDate(true);
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.yearToDate: {
+				let today = new cDate().getCurrentDate();
+				val = new cDate(today.getUTCFullYear(), 0, 1).getExcelDate(true);
+				today.addDays(1);
+				maxVal = today.getExcelDate(true);
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.yesterday: {
+				let today = new cDate().getCurrentDate();
+				maxVal = today.getExcelDate(true);
+				today.addDays(-1);
+				val = today.getExcelDate(true);
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m1: {
+				//<dynamicFilter type="m1"/>
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m10: {
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m11: {
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m12: {
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m2: {
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m3: {
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m4: {
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m5: {
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m6: {
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m7: {
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m8: {
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m9: {
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.q1: {
+				//<dynamicFilter type="Q2"/>
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.q2: {
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.q3: {
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.q4: {
+				break;
+			}
+		}
+
+		/*if (val != undefined && referenceValues[this.Type] && (val !== referenceValues[this.Type][0] || maxVal !== referenceValues[this.Type][1])) {
+			console.log(this.Type);
+		}*/
+
+
+		this.Val = val;
+		this.MaxVal = maxVal;
+	};
+
+	DynamicFilter.prototype.isHideValue = function (val) {
+		let res = false;
+		let minMonth, maxMonth;
+		switch (this.Type) {
+			case Asc.c_oAscDynamicAutoFilter.aboveAverage: {
+				res = !(val > this.Val);
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.belowAverage: {
+				res = !(val < this.Val);
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.lastMonth:
+			case Asc.c_oAscDynamicAutoFilter.lastQuarter:
+			case Asc.c_oAscDynamicAutoFilter.lastWeek:
+			case Asc.c_oAscDynamicAutoFilter.lastYear:
+			case Asc.c_oAscDynamicAutoFilter.nextMonth:
+			case Asc.c_oAscDynamicAutoFilter.nextQuarter:
+			case Asc.c_oAscDynamicAutoFilter.nextWeek:
+			case Asc.c_oAscDynamicAutoFilter.nextYear:
+			case Asc.c_oAscDynamicAutoFilter.thisMonth:
+			case Asc.c_oAscDynamicAutoFilter.thisQuarter:
+			case Asc.c_oAscDynamicAutoFilter.thisWeek:
+			case Asc.c_oAscDynamicAutoFilter.today:
+			case Asc.c_oAscDynamicAutoFilter.tomorrow:
+			case Asc.c_oAscDynamicAutoFilter.yearToDate:
+			case Asc.c_oAscDynamicAutoFilter.yesterday:
+			case Asc.c_oAscDynamicAutoFilter.thisYear: {
+				res = !(val >= this.Val && val < this.MaxVal);
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.nullType: {
+				break;
+			}
+
+			case Asc.c_oAscDynamicAutoFilter.m1: {
+				//<dynamicFilter type="m1"/>
+				//Shows the dates that are in January, regardless of year
+				minMonth = maxMonth = 0;
+
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m10: {
+				//Shows the dates that are in October, regardless of year
+				minMonth = maxMonth = 9;
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m11: {
+				//Shows the dates that are in November, regardless of year
+				minMonth = maxMonth = 10;
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m12: {
+				//Shows the dates that are in December, regardless of year
+				minMonth = maxMonth = 11;
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m2: {
+				//Shows the dates that are in Februray, regardless of year
+				minMonth = maxMonth = 1;
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m3: {
+				//Shows the dates that are in March, regardless of year
+				minMonth = maxMonth = 2;
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m4: {
+				//Shows the dates that are in April, regardless of year
+				minMonth = maxMonth = 3;
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m5: {
+				//Shows the dates that are in May, regardless of year
+				minMonth = maxMonth = 4;
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m6: {
+				//Shows the dates that are in June, regardless of year
+				minMonth = maxMonth = 5;
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m7: {
+				//Shows the dates that are in July, regardless of year
+				minMonth = maxMonth = 6;
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m8: {
+				//Shows the dates that are in August, regardless of year
+				minMonth = maxMonth = 7;
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.m9: {
+				//Shows the dates that are in September, regardless of year
+				minMonth = maxMonth = 8;
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.q1: {
+				//<dynamicFilter type="Q2"/>
+				//Shows the dates that are in the 1st quarter, regardless of year
+				minMonth = 0;
+				maxMonth = 2;
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.q2: {
+				//Shows the dates that are in the 2st quarter, regardless of year
+				minMonth = 3;
+				maxMonth = 5;
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.q3: {
+				//Shows the dates that are in the 3st quarter, regardless of year
+				minMonth = 6;
+				maxMonth = 8;
+				break;
+			}
+			case Asc.c_oAscDynamicAutoFilter.q4: {
+				//Shows the dates that are in the 4st quarter, regardless of year
+				minMonth = 9;
+				maxMonth = 11;
+				break;
+			}
+		}
+
+		if (minMonth !== undefined) {
+			let valToDate = new cDate().getDateFromExcel(val);
+			let valMonth = valToDate.getUTCMonth();
+			res = !(valMonth >= minMonth && valMonth <= maxMonth);
 		}
 
 		return res;
 	};
 
-	if(this.dxf && this.dxf.fill && cell)
-	{
-		var filterColor = this.dxf.fill.bg();
-		cell.getLeftTopCellNoEmpty(function(cell) {
-			var fontColor;
-			var xfs = cell ? cell.getCompiledStyleCustom(false, true, true) : null;
-			if(false === t.CellColor)//font color
+	DynamicFilter.prototype.asc_getType = function () { return this.Type; };
+	DynamicFilter.prototype.asc_getVal = function () { return this.Val; };
+	DynamicFilter.prototype.asc_getMaxVal = function () { return this.MaxVal; };
+
+	DynamicFilter.prototype.asc_setType = function (val) {
+		this.Type = val; };
+	DynamicFilter.prototype.asc_setVal = function (val) { this.Val = val; };
+	DynamicFilter.prototype.asc_setMaxVal = function (val) { this.MaxVal = val; };
+	DynamicFilter.prototype.readAttributes = function(attr, uq) {
+		if (attr()) {
+			var vals = attr();
+			var val;
+			val = vals["type"];
+			if (undefined !== val) {
+				val = AscCommonExcel.FromXml_ST_DynamicFilterType(val);
+				if (-1 !== val) {
+					this.Type = val;
+				}
+			}
+			val = vals["val"];
+			if (undefined !== val) {
+				this.Val = val - 0;
+			}
+			val = vals["maxVal"];
+			if (undefined !== val) {
+				this.MaxVal = val - 0;
+			}
+		}
+	};
+	DynamicFilter.prototype.toXml = function (writer, name, ns, childns) {
+		if (!ns) {
+			ns = "";
+		}
+
+		writer.WriteXmlNodeStart(ns + name/*"dynamicFilter"*/);
+
+		writer.WriteXmlAttributeString("type", AscCommonExcel.ToXml_ST_DynamicFilterType(this.Type));
+		writer.WriteXmlNullableAttributeNumber("val", this.val);
+		writer.WriteXmlNullableAttributeNumber("maxVal", this.MaxVal);
+
+		writer.WriteXmlAttributesEnd(true);
+	};
+	DynamicFilter.prototype.Write_ToBinary2 = function(writer) {
+		if (null !== this.Type) {
+			writer.WriteBool(true);
+			writer.WriteLong(this.Type);
+		} else {
+			writer.WriteBool(false);
+		}
+
+		if (null !== this.Val) {
+			writer.WriteBool(true);
+			writer.WriteLong(this.Val);
+		} else {
+			writer.WriteBool(false);
+		}
+
+		if (null !== this.MaxVal) {
+			writer.WriteBool(true);
+			writer.WriteLong(this.MaxVal);
+		} else {
+			writer.WriteBool(false);
+		}
+	};
+	DynamicFilter.prototype.Read_FromBinary2 = function(reader) {
+		if (reader.GetBool()) {
+			this.Type = reader.GetLong();
+		}
+		if (reader.GetBool()) {
+			this.Val = reader.GetLong();
+		}
+		if (reader.GetBool()) {
+			this.MaxVal = reader.GetLong();
+		}
+	};
+
+
+	var g_oColorFilter = {
+		CellColor : 0,
+		dxf	: 1
+	};
+
+	/** @constructor */
+	function ColorFilter() {
+		this.Properties = g_oColorFilter;
+
+		this.CellColor = null;
+		this.dxf = null;
+	}
+	ColorFilter.prototype.getType = function() {
+		return UndoRedoDataTypes.ColorFilter;
+	};
+	ColorFilter.prototype.getProperties = function() {
+		return this.Properties;
+	};
+	ColorFilter.prototype.getProperty = function(nType) {
+		switch (nType) {
+			case this.Properties.CellColor: return this.CellColor; break;
+			case this.Properties.dxf: return this.dxf; break;
+		}
+		return null;
+	};
+	ColorFilter.prototype.setProperty = function(nType, value) {
+		switch (nType) {
+			case this.Properties.CellColor: this.CellColor = value;break;
+			case this.Properties.dxf: this.dxf = value;break;
+		}
+	};
+	ColorFilter.prototype.clone = function() {
+		var res = new ColorFilter();
+		res.CellColor = this.CellColor;
+		if (this.dxf) {
+			res.dxf = this.dxf.clone();
+		}
+		return res;
+	};
+	ColorFilter.prototype.isHideValue = function(cell) {
+
+		var res = true;
+		var t = this;
+
+		var isEqualColors = function(filterColor, cellColor)
+		{
+			var res = false;
+			if(filterColor === cellColor)
 			{
-				var multiText;
-				if(cell && (multiText = cell.getValueMultiText()) !== null)
+				res = true;
+			}
+			else if(!filterColor && (!cellColor || null === cellColor.rgb || 0 === cellColor.rgb))
+			{
+				res = true;
+			}
+			else if(!cellColor && (!filterColor || null === filterColor.rgb || 0 === filterColor.rgb))
+			{
+				res = true;
+			}
+			else if(cellColor && filterColor && cellColor.rgb === filterColor.rgb)
+			{
+				res = true;
+			}
+
+			return res;
+		};
+
+		if(this.dxf && this.dxf.fill && cell)
+		{
+			var filterColor = this.dxf.fill.bg();
+			cell.getLeftTopCellNoEmpty(function(cell) {
+				var fontColor;
+				var xfs = cell ? cell.getCompiledStyleCustom(false, true, true) : null;
+				if(false === t.CellColor)//font color
 				{
-					for(var j = 0; j < multiText.length; j++)
+					var multiText;
+					if(cell && (multiText = cell.getValueMultiText()) !== null)
 					{
-						fontColor = multiText[j].format ? multiText[j].format.getColor() : null;
-						if(null === fontColor) {
-							fontColor = xfs && xfs.font ? xfs.font.getColor() : null;
+						for(var j = 0; j < multiText.length; j++)
+						{
+							fontColor = multiText[j].format ? multiText[j].format.getColor() : null;
+							if(null === fontColor) {
+								fontColor = xfs && xfs.font ? xfs.font.getColor() : null;
+							}
+							if(isEqualColors(filterColor,fontColor ))
+							{
+								res = false;
+								break;
+							}
 						}
-						if(isEqualColors(filterColor,fontColor ))
+					}
+					else
+					{
+						fontColor = xfs && xfs.font ? xfs.font.getColor() : null;
+						if(isEqualColors(filterColor,fontColor))
 						{
 							res = false;
-							break;
 						}
 					}
 				}
 				else
 				{
-					fontColor = xfs && xfs.font ? xfs.font.getColor() : null;
-					if(isEqualColors(filterColor,fontColor))
+					var cellColor =  xfs !== null && xfs.fill && xfs.fill.bg ? xfs.fill.bg() : null;
+
+					if(isEqualColors(filterColor, cellColor))
 					{
 						res = false;
 					}
 				}
-			}
-			else
-			{
-				var cellColor =  xfs !== null && xfs.fill && xfs.fill.bg ? xfs.fill.bg() : null;
-
-				if(isEqualColors(filterColor, cellColor))
-				{
-					res = false;
-				}
-			}
-		});
-	}
-
-	return res;
-};
-
-ColorFilter.prototype.asc_getCellColor = function () { return this.CellColor; };
-ColorFilter.prototype.asc_getDxf = function () { return this.dxf; };
-
-ColorFilter.prototype.asc_setCellColor = function (val) { this.CellColor = val; };
-ColorFilter.prototype.asc_setDxf = function (val) { this.dxf = val; };
-ColorFilter.prototype.asc_getCColor = function ()
-{
-	var res = null;
-
-	if(this.dxf && this.dxf.fill && null !== this.dxf.fill.bg() && null !== this.dxf.fill.bg().rgb)
-	{
-		var color = this.dxf.fill.bg();
-
-		var res = new Asc.asc_CColor();
-		res.asc_putR(color.getR());
-		res.asc_putG(color.getG());
-		res.asc_putB(color.getB());
-		res.asc_putA(color.getA());
-	}
-
-	return res;
-};
-ColorFilter.prototype.asc_setCColor = function (asc_CColor)
-{
-	if(!this.dxf)
-	{
-		this.dxf = new CellXfs();
-	}
-
-	if(!this.dxf.fill)
-	{
-		this.dxf.fill = new Fill();
-	}
-
-	if(null === asc_CColor)
-	{
-		this.dxf.fill.fromColor(null);
-	}
-	else
-	{
-		this.dxf.fill.fromColor(new RgbColor((asc_CColor.asc_getR() << 16) + (asc_CColor.asc_getG() << 8) + asc_CColor.asc_getB()));
-	}
-};
-ColorFilter.prototype.readAttributes = function(attr, uq) {
-	if (attr()) {
-		var vals = attr();
-		var val;
-		//todo
-		// val = vals["dxfId"];
-		// if (undefined !== val) {
-		// 	this.dxfId = val - 0;
-		// }
-		val = vals["cellColor"];
-		if (undefined !== val) {
-			this.CellColor = AscCommon.getBoolFromXml(val);
-		}
-	}
-};
-ColorFilter.prototype.toXml = function (writer, name, ns, childns) {
-	if (!ns) {
-		ns = "";
-	}
-
-	writer.WriteXmlNodeStart(ns + name/*colorFilter*/);
-	if (this.dxf != null) {
-		writer.WriteXmlNullableAttributeNumber("dxfId", writer.context.InitSaveManager.aDxfs.length);
-		writer.context.InitSaveManager.aDxfs.push(this.dxf);
-	}
-
-	if (this.CellColor === false) {
-		writer.WriteXmlNullableAttributeNumber("cellColor", 0);
-	}
-
-	writer.WriteXmlAttributesEnd(true);
-};
-ColorFilter.prototype.Write_ToBinary2 = function(writer) {
-	if (null !== this.CellColor) {
-		writer.WriteBool(true);
-		writer.WriteBool(this.CellColor);
-	} else {
-		writer.WriteBool(false);
-	}
-
-	if(null != this.dxf) {
-		var dxf = this.dxf;
-		writer.WriteBool(true);
-		var oBinaryStylesTableWriter = new AscCommonExcel.BinaryStylesTableWriter(writer);
-		oBinaryStylesTableWriter.bs.WriteItem(0, function(){oBinaryStylesTableWriter.WriteDxf(dxf);});
-	}else {
-		writer.WriteBool(false);
-	}
-};
-ColorFilter.prototype.Read_FromBinary2 = function(reader) {
-	if (reader.GetBool()) {
-		this.CellColor = reader.GetBool();
-	}
-	if (reader.GetBool()) {
-		var api_sheet = Asc['editor'];
-		var wb = api_sheet.wbModel;
-		var bsr = new AscCommonExcel.Binary_StylesTableReader(reader, wb);
-		var bcr = new AscCommon.Binary_CommonReader(reader);
-		var oDxf = new AscCommonExcel.CellXfs();
-		reader.GetUChar();
-		var length = reader.GetULongLE();
-		bcr.Read1(length, function(t,l){
-			return bsr.ReadDxf(t,l,oDxf);
-		});
-		this.dxf = oDxf;
-	}
-};
-
-
-var g_oTop10 = {
-	FilterVal : 0,
-	Percent	: 1,
-	Top: 2,
-	Val: 3
-};
-
-/** @constructor */
-function Top10() {
-	this.Properties = g_oTop10;
-
-	this.FilterVal = null;
-	this.Percent = false;
-	this.Top = true;
-	this.Val = null;
-}
-Top10.prototype.getType = function() {
-	return UndoRedoDataTypes.Top10;
-};
-Top10.prototype.getProperties = function() {
-	return this.Properties;
-};
-Top10.prototype.getProperty = function(nType) {
-	switch (nType) {
-		case this.Properties.FilterVal: return this.FilterVal; break;
-		case this.Properties.Percent: return this.Percent; break;
-		case this.Properties.Top: return this.Top; break;
-		case this.Properties.Val: return this.Val; break;
-	}
-	return null;
-};
-Top10.prototype.setProperty = function(nType, value) {
-	switch (nType) {
-		case this.Properties.FilterVal: this.FilterVal = value;break;
-		case this.Properties.Percent: this.Percent = value;break;
-		case this.Properties.Top: this.Top = value;break;
-		case this.Properties.Val: this.Val = value;break;
-	}
-};
-Top10.prototype.clone = function() {
-	var res = new Top10();
-	res.FilterVal = this.FilterVal;
-	res.Percent = this.Percent;
-	res.Top = this.Top;
-	res.Val = this.Val;
-	return res;
-};
-Top10.prototype.isHideValue = function(val) {
-	// ToDo работает не совсем правильно.
-	var res = false;
-
-	if(null !== this.FilterVal)
-	{
-		if(this.Top)
-		{
-			if(val < this.FilterVal)
-			{
-				res = true;
-			}
-		}
-		else
-		{
-			if(val > this.FilterVal)
-			{
-				res = true;
-			}
-		}
-	}
-
-	return res;
-};
-
-Top10.prototype.init = function(range, reWrite){
-	var t = this;
-
-	if(null === this.FilterVal || true === reWrite)
-	{
-		if(range)
-		{
-			var arr = [];
-			var alreadyAddValues = {};
-			var count = 0;
-			range._setPropertyNoEmpty(null, null, function(cell){
-				var val = parseFloat(cell.getValueWithoutFormat());
-
-				if(!isNaN(val) && !alreadyAddValues[val])
-				{
-					arr.push(val);
-					alreadyAddValues[val] = 1;
-					count++;
-				}
 			});
-			this.initByArray(arr);
 		}
-	}
-};
-Top10.prototype.initByArray = function(arr, isSum){
-	var res = null;
-	var t = this;
-	if(arr && arr.length)
+
+		return res;
+	};
+
+	ColorFilter.prototype.asc_getCellColor = function () { return this.CellColor; };
+	ColorFilter.prototype.asc_getDxf = function () { return this.dxf; };
+
+	ColorFilter.prototype.asc_setCellColor = function (val) { this.CellColor = val; };
+	ColorFilter.prototype.asc_setDxf = function (val) { this.dxf = val; };
+	ColorFilter.prototype.asc_getCColor = function ()
 	{
-		arr.sort(function(a, b){
-			var res;
-			if(t.Top)
-			{
-				res = b - a;
-			}
-			else
-			{
-				res = a - b;
-			}
+		var res = null;
 
-			return res;
-		});
-
-		if(this.Percent)
+		if(this.dxf && this.dxf.fill && null !== this.dxf.fill.bg() && null !== this.dxf.fill.bg().rgb)
 		{
-			var num = parseInt(arr.length * (this.Val / 100));
-			if(0 === num)
-			{
-				num = 1;
-			}
+			var color = this.dxf.fill.bg();
 
-			res = arr[num - 1];
+			var res = new Asc.asc_CColor();
+			res.asc_putR(color.getR());
+			res.asc_putG(color.getG());
+			res.asc_putB(color.getB());
+			res.asc_putA(color.getA());
+		}
+
+		return res;
+	};
+	ColorFilter.prototype.asc_setCColor = function (asc_CColor)
+	{
+		if(!this.dxf)
+		{
+			this.dxf = new CellXfs();
+		}
+
+		if(!this.dxf.fill)
+		{
+			this.dxf.fill = new Fill();
+		}
+
+		if(null === asc_CColor)
+		{
+			this.dxf.fill.fromColor(null);
 		}
 		else
 		{
-			if (isSum) {
-				var index = 0;
-				var sum = res = arr[index++];
-				while (index < arr.length && sum < this.Val) {
-					res = arr[index++];
-					sum += res;
-				}
-			} else {
-				res = arr[this.Val - 1];
+			this.dxf.fill.fromColor(new RgbColor((asc_CColor.asc_getR() << 16) + (asc_CColor.asc_getG() << 8) + asc_CColor.asc_getB()));
+		}
+	};
+	ColorFilter.prototype.readAttributes = function(attr, uq) {
+		if (attr()) {
+			var vals = attr();
+			var val;
+			//todo
+			// val = vals["dxfId"];
+			// if (undefined !== val) {
+			// 	this.dxfId = val - 0;
+			// }
+			val = vals["cellColor"];
+			if (undefined !== val) {
+				this.CellColor = AscCommon.getBoolFromXml(val);
 			}
 		}
-	}
-	if(null != res)
-	{
-		this.FilterVal = res;
-	}
-};
-
-Top10.prototype.asc_getFilterVal = function () { return this.FilterVal; };
-Top10.prototype.asc_getPercent = function () { return this.Percent; };
-Top10.prototype.asc_getTop = function () { return this.Top; };
-Top10.prototype.asc_getVal = function () { return this.Val; };
-
-Top10.prototype.asc_setFilterVal = function (val) { this.FilterVal = val; };
-Top10.prototype.asc_setPercent = function (val) { this.Percent = val; };
-Top10.prototype.asc_setTop = function (val) { this.Top = val; };
-Top10.prototype.asc_setVal = function (val) { this.Val = val; };
-Top10.prototype.readAttributes = function(attr, uq) {
-	if (attr()) {
-		var vals = attr();
-		var val;
-		val = vals["top"];
-		if (undefined !== val) {
-			this.Top = AscCommon.getBoolFromXml(val);
+	};
+	ColorFilter.prototype.toXml = function (writer, name, ns, childns) {
+		if (!ns) {
+			ns = "";
 		}
-		val = vals["percent"];
-		if (undefined !== val) {
-			this.Percent = AscCommon.getBoolFromXml(val);
+
+		writer.WriteXmlNodeStart(ns + name/*colorFilter*/);
+		if (this.dxf != null) {
+			writer.WriteXmlNullableAttributeNumber("dxfId", writer.context.InitSaveManager.aDxfs.length);
+			writer.context.InitSaveManager.aDxfs.push(this.dxf);
 		}
-		val = vals["val"];
-		if (undefined !== val) {
-			this.Val = val - 0;
+
+		if (this.CellColor === false) {
+			writer.WriteXmlNullableAttributeNumber("cellColor", 0);
 		}
-		val = vals["filterVal"];
-		if (undefined !== val) {
-			this.FilterVal = val - 0;
-		}
-	}
-};
-Top10.prototype.toXml = function (writer, name, ns) {
-	if (!ns) {
-		ns = "";
-	}
-	writer.WriteXmlNodeStart(ns + name);
-	if (true !== this.Top) {
-		writer.WriteXmlAttributeBool("top", this.Top);
-	}
-	if (false !== this.Percent) {
-		writer.WriteXmlAttributeBool("percent", this.Percent);
-	}
-	if (null !== this.Val) {
-		writer.WriteXmlAttributeNumber("val", this.Val);
-	}
-	if (null !== this.FilterVal) {
-		writer.WriteXmlAttributeNumber("filterVal", this.FilterVal);
-	}
-	writer.WriteXmlAttributesEnd(true);
-};
-Top10.prototype.Write_ToBinary2 = function(w) {
-	if (null !== this.FilterVal) {
-		w.WriteBool(true);
-		w.WriteLong(this.FilterVal);
-	} else {
-		w.WriteBool(false);
-	}
 
-	if (null !== this.Percent) {
-		w.WriteBool(true);
-		w.WriteLong(this.Percent);
-	} else {
-		w.WriteBool(false);
-	}
-
-	w.WriteBool(this.Top);
-
-	if (null != this.Val) {
-		w.WriteBool(true);
-		w.WriteLong(this.Val);
-	} else {
-		w.WriteBool(false);
-	}
-};
-Top10.prototype.Read_FromBinary2 = function(reader) {
-	if (reader.GetBool()) {
-		this.FilterVal = reader.GetLong();
-	}
-	if (reader.GetBool()) {
-		this.Percent = reader.GetLong();
-	}
-	this.Top = reader.GetBool();
-	if (reader.GetBool()) {
-		this.Val = reader.GetLong();
-	}
-};
-
-
-/** @constructor */
-function SortCondition() {
-	this.Ref = null;
-	this.ConditionSortBy = null;
-	this.ConditionDescending = null;
-	this.dxf = null;
-
-	this._hasHeaders = null;
-}
-SortCondition.prototype.clone = function() {
-	var res = new SortCondition();
-	res.Ref = this.Ref ? this.Ref.clone() : null;
-	res.ConditionSortBy = this.ConditionSortBy;
-	res.ConditionDescending = this.ConditionDescending;
-	if (this.dxf)
-		res.dxf = this.dxf.clone();
-	return res;
-};
-SortCondition.prototype.Read_FromBinary2 = function(r) {
-	if (r.GetBool()) {
-		var r1 = r.GetLong();
-		var c1 = r.GetLong();
-		var r2 = r.GetLong();
-		var c2 = r.GetLong();
-
-		this.Ref = new Asc.Range(c1, r1, c2, r2);
-	}
-	if (r.GetBool()) {
-		this.ConditionSortBy = r.GetLong();
-	}
-	if (r.GetBool()) {
-		this.ConditionDescending = r.GetBool();
-	}
-
-	if (r.GetBool()) {
-		var api_sheet = Asc['editor'];
-		var wb = api_sheet.wbModel;
-		var bsr = new AscCommonExcel.Binary_StylesTableReader(r, wb);
-		var bcr = new AscCommon.Binary_CommonReader(r);
-		var oDxf = new AscCommonExcel.CellXfs();
-		r.GetUChar();
-		var length = r.GetULongLE();
-		bcr.Read1(length, function(t,l){
-			return bsr.ReadDxf(t,l,oDxf);
-		});
-		this.dxf = oDxf;
-	}
-};
-SortCondition.prototype.Write_ToBinary2 = function(w) {
-	if (null != this.Ref) {
-		w.WriteBool(true);
-		w.WriteLong(this.Ref.r1);
-		w.WriteLong(this.Ref.c1);
-		w.WriteLong(this.Ref.r2);
-		w.WriteLong(this.Ref.c2);
-	} else {
-		w.WriteBool(false);
-	}
-	if (null != this.ConditionSortBy) {
-		w.WriteBool(true);
-		w.WriteLong(this.ConditionSortBy);
-	} else {
-		w.WriteBool(false);
-	}
-	if (null != this.ConditionDescending) {
-		w.WriteBool(true);
-		w.WriteBool(this.ConditionDescending);
-	} else {
-		w.WriteBool(false);
-	}
-
-	if(null != this.dxf) {
-		var dxf = this.dxf;
-		w.WriteBool(true);
-		var oBinaryStylesTableWriter = new AscCommonExcel.BinaryStylesTableWriter(w);
-		oBinaryStylesTableWriter.bs.WriteItem(0, function(){oBinaryStylesTableWriter.WriteDxf(dxf);});
-	}else {
-		w.WriteBool(false);
-	}
-};
-SortCondition.prototype.moveRef = function(col, row) {
-	var ref = this.Ref.clone();
-	ref.setOffset(new AscCommon.CellBase(row || 0, col || 0));
-
-	this.Ref = ref;
-};
-SortCondition.prototype.changeColumns = function(activeRange, isDelete) {
-	var bIsDeleteCurSortCondition = false;
-	var ref = this.Ref.clone();
-	var offsetCol = null;
-
-	if(isDelete)
-	{
-		if(activeRange.c1 <= ref.c1 && activeRange.c2 >= ref.c1)
-		{
-			bIsDeleteCurSortCondition = true;
-		}
-		else if(activeRange.c1 < ref.c1)
-		{
-			offsetCol = -(activeRange.c2 - activeRange.c1 + 1);
-		}
-	}
-	else
-	{
-		if(activeRange.c1 <= ref.c1)
-		{
-			offsetCol = activeRange.c2 - activeRange.c1 + 1;
-		}
-	}
-
-	if(null !== offsetCol)
-	{
-		ref.setOffset(new AscCommon.CellBase(0, offsetCol));
-		this.Ref = ref;
-	}
-
-	return bIsDeleteCurSortCondition;
-};
-
-SortCondition.prototype.setOffset = function(offset) {
-	var ref = this.Ref.clone();
-	ref.setOffset(offset);
-	this.Ref = ref;
-};
-
-SortCondition.prototype.getSortType = function() {
-	var res = null;
-
-	if(true === this.ConditionDescending) {
-		res = Asc.c_oAscSortOptions.Ascending;
-	} else if(false === this.ConditionDescending) {
-		res = Asc.c_oAscSortOptions.Descending;
-	} else if(Asc.ESortBy.sortbyCellColor === this.ConditionSortBy) {
-		res = Asc.c_oAscSortOptions.ByColorFill;
-	} else if(Asc.ESortBy.sortbyCellColor === this.sortbyFontColor) {
-		res = Asc.c_oAscSortOptions.ByColorFont;
-	}
-
-	return res;
-};
-
-SortCondition.prototype.getSortColor = function() {
-	var res = null;
-
-	if(this.dxf) {
-		if(this.dxf.fill && this.dxf.fill.notEmpty()) {
-			res = this.dxf.fill.bg();
-		} else if(this.dxf.font && this.dxf.font.c) {
-			res = this.dxf.font.c;
-		}
-	}
-
-	return res;
-};
-
-SortCondition.prototype.applySort = function(type, ref, color) {
-	this.Ref = ref;
-
-	if(type === Asc.c_oAscSortOptions.ByColorFill || type === Asc.c_oAscSortOptions.ByColorFont) {
-		var newDxf;
-		if (type === Asc.c_oAscSortOptions.ByColorFill) {
-			newDxf = new AscCommonExcel.CellXfs();
-			newDxf.fill = new AscCommonExcel.Fill();
-			newDxf.fill.fromColor(color);
-			this.ConditionSortBy = Asc.ESortBy.sortbyCellColor;
+		writer.WriteXmlAttributesEnd(true);
+	};
+	ColorFilter.prototype.Write_ToBinary2 = function(writer) {
+		if (null !== this.CellColor) {
+			writer.WriteBool(true);
+			writer.WriteBool(this.CellColor);
 		} else {
-			newDxf.font = new AscCommonExcel.Font();
-			newDxf.font.setColor(color);
-			this.ConditionSortBy = Asc.ESortBy.sortbyFontColor;
+			writer.WriteBool(false);
 		}
 
-		this.dxf = AscCommonExcel.g_StyleCache.addXf(newDxf);
-	} else if(type === Asc.c_oAscSortOptions.Ascending || type === Asc.c_oAscSortOptions.Descending) {
-		this.ConditionDescending = type !== Asc.c_oAscSortOptions.Ascending;
+		if(null != this.dxf) {
+			var dxf = this.dxf;
+			writer.WriteBool(true);
+			var oBinaryStylesTableWriter = new AscCommonExcel.BinaryStylesTableWriter(writer);
+			oBinaryStylesTableWriter.bs.WriteItem(0, function(){oBinaryStylesTableWriter.WriteDxf(dxf);});
+		}else {
+			writer.WriteBool(false);
+		}
+	};
+	ColorFilter.prototype.Read_FromBinary2 = function(reader) {
+		if (reader.GetBool()) {
+			this.CellColor = reader.GetBool();
+		}
+		if (reader.GetBool()) {
+			var api_sheet = Asc['editor'];
+			var wb = api_sheet.wbModel;
+			var bsr = new AscCommonExcel.Binary_StylesTableReader(reader, wb);
+			var bcr = new AscCommon.Binary_CommonReader(reader);
+			var oDxf = new AscCommonExcel.CellXfs();
+			reader.GetUChar();
+			var length = reader.GetULongLE();
+			bcr.Read1(length, function(t,l){
+				return bsr.ReadDxf(t,l,oDxf);
+			});
+			this.dxf = oDxf;
+		}
+	};
+
+
+	var g_oTop10 = {
+		FilterVal : 0,
+		Percent	: 1,
+		Top: 2,
+		Val: 3
+	};
+
+	/** @constructor */
+	function Top10() {
+		this.Properties = g_oTop10;
+
+		this.FilterVal = null;
+		this.Percent = false;
+		this.Top = true;
+		this.Val = null;
 	}
+	Top10.prototype.getType = function() {
+		return UndoRedoDataTypes.Top10;
+	};
+	Top10.prototype.getProperties = function() {
+		return this.Properties;
+	};
+	Top10.prototype.getProperty = function(nType) {
+		switch (nType) {
+			case this.Properties.FilterVal: return this.FilterVal; break;
+			case this.Properties.Percent: return this.Percent; break;
+			case this.Properties.Top: return this.Top; break;
+			case this.Properties.Val: return this.Val; break;
+		}
+		return null;
+	};
+	Top10.prototype.setProperty = function(nType, value) {
+		switch (nType) {
+			case this.Properties.FilterVal: this.FilterVal = value;break;
+			case this.Properties.Percent: this.Percent = value;break;
+			case this.Properties.Top: this.Top = value;break;
+			case this.Properties.Val: this.Val = value;break;
+		}
+	};
+	Top10.prototype.clone = function() {
+		var res = new Top10();
+		res.FilterVal = this.FilterVal;
+		res.Percent = this.Percent;
+		res.Top = this.Top;
+		res.Val = this.Val;
+		return res;
+	};
+	Top10.prototype.isHideValue = function(val) {
+		// ToDo работает не совсем правильно.
+		var res = false;
 
-};
+		if(null !== this.FilterVal)
+		{
+			if(this.Top)
+			{
+				if(val < this.FilterVal)
+				{
+					res = true;
+				}
+			}
+			else
+			{
+				if(val > this.FilterVal)
+				{
+					res = true;
+				}
+			}
+		}
 
-SortCondition.prototype.shift = function(range, offset, bColumnSort) {
-	var from = this.Ref;
-	var to = null;
-	var bAdd = offset.row > 0 || offset.col > 0;
-	var bHor = 0 != offset.col;
-	var nTemp1, nTemp2;
-	var diff = bHor ? range.c1 + offset.col - 1 : range.r1 + offset.row;
-	if (bHor && bColumnSort) {
-		if (from.c1 < range.c1 && range.r1 <= from.r1 && from.r2 <= range.r2) {
-			if (bAdd) {
-				to = from.clone();
-				to.setOffsetLast(new AscCommon.CellBase(0, range.c2 - range.c1 + 1));
+		return res;
+	};
+
+	Top10.prototype.init = function(range, reWrite){
+		var t = this;
+
+		if(null === this.FilterVal || true === reWrite)
+		{
+			if(range)
+			{
+				var arr = [];
+				var alreadyAddValues = {};
+				var count = 0;
+				range._setPropertyNoEmpty(null, null, function(cell){
+					var val = parseFloat(cell.getValueWithoutFormat());
+
+					if(!isNaN(val) && !alreadyAddValues[val])
+					{
+						arr.push(val);
+						alreadyAddValues[val] = 1;
+						count++;
+					}
+				});
+				this.initByArray(arr);
+			}
+		}
+	};
+	Top10.prototype.initByArray = function(arr, isSum){
+		var res = null;
+		var t = this;
+		if(arr && arr.length)
+		{
+			arr.sort(function(a, b){
+				var res;
+				if(t.Top)
+				{
+					res = b - a;
+				}
+				else
+				{
+					res = a - b;
+				}
+
+				return res;
+			});
+
+			if(this.Percent)
+			{
+				var num = parseInt(arr.length * (this.Val / 100));
+				if(0 === num)
+				{
+					num = 1;
+				}
+
+				res = arr[num - 1];
+			}
+			else
+			{
+				if (isSum) {
+					var index = 0;
+					var sum = res = arr[index++];
+					while (index < arr.length && sum < this.Val) {
+						res = arr[index++];
+						sum += res;
+					}
+				} else {
+					res = arr[this.Val - 1];
+				}
+			}
+		}
+		if(null != res)
+		{
+			this.FilterVal = res;
+		}
+	};
+
+	Top10.prototype.asc_getFilterVal = function () { return this.FilterVal; };
+	Top10.prototype.asc_getPercent = function () { return this.Percent; };
+	Top10.prototype.asc_getTop = function () { return this.Top; };
+	Top10.prototype.asc_getVal = function () { return this.Val; };
+
+	Top10.prototype.asc_setFilterVal = function (val) { this.FilterVal = val; };
+	Top10.prototype.asc_setPercent = function (val) { this.Percent = val; };
+	Top10.prototype.asc_setTop = function (val) { this.Top = val; };
+	Top10.prototype.asc_setVal = function (val) { this.Val = val; };
+	Top10.prototype.readAttributes = function(attr, uq) {
+		if (attr()) {
+			var vals = attr();
+			var val;
+			val = vals["top"];
+			if (undefined !== val) {
+				this.Top = AscCommon.getBoolFromXml(val);
+			}
+			val = vals["percent"];
+			if (undefined !== val) {
+				this.Percent = AscCommon.getBoolFromXml(val);
+			}
+			val = vals["val"];
+			if (undefined !== val) {
+				this.Val = val - 0;
+			}
+			val = vals["filterVal"];
+			if (undefined !== val) {
+				this.FilterVal = val - 0;
+			}
+		}
+	};
+	Top10.prototype.toXml = function (writer, name, ns) {
+		if (!ns) {
+			ns = "";
+		}
+		writer.WriteXmlNodeStart(ns + name);
+		if (true !== this.Top) {
+			writer.WriteXmlAttributeBool("top", this.Top);
+		}
+		if (false !== this.Percent) {
+			writer.WriteXmlAttributeBool("percent", this.Percent);
+		}
+		if (null !== this.Val) {
+			writer.WriteXmlAttributeNumber("val", this.Val);
+		}
+		if (null !== this.FilterVal) {
+			writer.WriteXmlAttributeNumber("filterVal", this.FilterVal);
+		}
+		writer.WriteXmlAttributesEnd(true);
+	};
+	Top10.prototype.Write_ToBinary2 = function(w) {
+		if (null !== this.FilterVal) {
+			w.WriteBool(true);
+			w.WriteLong(this.FilterVal);
+		} else {
+			w.WriteBool(false);
+		}
+
+		if (null !== this.Percent) {
+			w.WriteBool(true);
+			w.WriteLong(this.Percent);
+		} else {
+			w.WriteBool(false);
+		}
+
+		w.WriteBool(this.Top);
+
+		if (null != this.Val) {
+			w.WriteBool(true);
+			w.WriteLong(this.Val);
+		} else {
+			w.WriteBool(false);
+		}
+	};
+	Top10.prototype.Read_FromBinary2 = function(reader) {
+		if (reader.GetBool()) {
+			this.FilterVal = reader.GetLong();
+		}
+		if (reader.GetBool()) {
+			this.Percent = reader.GetLong();
+		}
+		this.Top = reader.GetBool();
+		if (reader.GetBool()) {
+			this.Val = reader.GetLong();
+		}
+	};
+
+
+	/** @constructor */
+	function SortCondition() {
+		this.Ref = null;
+		this.ConditionSortBy = null;
+		this.ConditionDescending = null;
+		this.dxf = null;
+
+		this._hasHeaders = null;
+	}
+	SortCondition.prototype.clone = function() {
+		var res = new SortCondition();
+		res.Ref = this.Ref ? this.Ref.clone() : null;
+		res.ConditionSortBy = this.ConditionSortBy;
+		res.ConditionDescending = this.ConditionDescending;
+		if (this.dxf)
+			res.dxf = this.dxf.clone();
+		return res;
+	};
+	SortCondition.prototype.Read_FromBinary2 = function(r) {
+		if (r.GetBool()) {
+			var r1 = r.GetLong();
+			var c1 = r.GetLong();
+			var r2 = r.GetLong();
+			var c2 = r.GetLong();
+
+			this.Ref = new Asc.Range(c1, r1, c2, r2);
+		}
+		if (r.GetBool()) {
+			this.ConditionSortBy = r.GetLong();
+		}
+		if (r.GetBool()) {
+			this.ConditionDescending = r.GetBool();
+		}
+
+		if (r.GetBool()) {
+			var api_sheet = Asc['editor'];
+			var wb = api_sheet.wbModel;
+			var bsr = new AscCommonExcel.Binary_StylesTableReader(r, wb);
+			var bcr = new AscCommon.Binary_CommonReader(r);
+			var oDxf = new AscCommonExcel.CellXfs();
+			r.GetUChar();
+			var length = r.GetULongLE();
+			bcr.Read1(length, function(t,l){
+				return bsr.ReadDxf(t,l,oDxf);
+			});
+			this.dxf = oDxf;
+		}
+	};
+	SortCondition.prototype.Write_ToBinary2 = function(w) {
+		if (null != this.Ref) {
+			w.WriteBool(true);
+			w.WriteLong(this.Ref.r1);
+			w.WriteLong(this.Ref.c1);
+			w.WriteLong(this.Ref.r2);
+			w.WriteLong(this.Ref.c2);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.ConditionSortBy) {
+			w.WriteBool(true);
+			w.WriteLong(this.ConditionSortBy);
+		} else {
+			w.WriteBool(false);
+		}
+		if (null != this.ConditionDescending) {
+			w.WriteBool(true);
+			w.WriteBool(this.ConditionDescending);
+		} else {
+			w.WriteBool(false);
+		}
+
+		if(null != this.dxf) {
+			var dxf = this.dxf;
+			w.WriteBool(true);
+			var oBinaryStylesTableWriter = new AscCommonExcel.BinaryStylesTableWriter(w);
+			oBinaryStylesTableWriter.bs.WriteItem(0, function(){oBinaryStylesTableWriter.WriteDxf(dxf);});
+		}else {
+			w.WriteBool(false);
+		}
+	};
+	SortCondition.prototype.moveRef = function(col, row) {
+		var ref = this.Ref.clone();
+		ref.setOffset(new AscCommon.CellBase(row || 0, col || 0));
+
+		this.Ref = ref;
+	};
+	SortCondition.prototype.changeColumns = function(activeRange, isDelete) {
+		var bIsDeleteCurSortCondition = false;
+		var ref = this.Ref.clone();
+		var offsetCol = null;
+
+		if(isDelete)
+		{
+			if(activeRange.c1 <= ref.c1 && activeRange.c2 >= ref.c1)
+			{
+				bIsDeleteCurSortCondition = true;
+			}
+			else if(activeRange.c1 < ref.c1)
+			{
+				offsetCol = -(activeRange.c2 - activeRange.c1 + 1);
+			}
+		}
+		else
+		{
+			if(activeRange.c1 <= ref.c1)
+			{
+				offsetCol = activeRange.c2 - activeRange.c1 + 1;
+			}
+		}
+
+		if(null !== offsetCol)
+		{
+			ref.setOffset(new AscCommon.CellBase(0, offsetCol));
+			this.Ref = ref;
+		}
+
+		return bIsDeleteCurSortCondition;
+	};
+
+	SortCondition.prototype.setOffset = function(offset) {
+		var ref = this.Ref.clone();
+		ref.setOffset(offset);
+		this.Ref = ref;
+	};
+
+	SortCondition.prototype.getSortType = function() {
+		var res = null;
+
+		if(true === this.ConditionDescending) {
+			res = Asc.c_oAscSortOptions.Ascending;
+		} else if(false === this.ConditionDescending) {
+			res = Asc.c_oAscSortOptions.Descending;
+		} else if(Asc.ESortBy.sortbyCellColor === this.ConditionSortBy) {
+			res = Asc.c_oAscSortOptions.ByColorFill;
+		} else if(Asc.ESortBy.sortbyCellColor === this.sortbyFontColor) {
+			res = Asc.c_oAscSortOptions.ByColorFont;
+		}
+
+		return res;
+	};
+
+	SortCondition.prototype.getSortColor = function() {
+		var res = null;
+
+		if(this.dxf) {
+			if(this.dxf.fill && this.dxf.fill.notEmpty()) {
+				res = this.dxf.fill.bg();
+			} else if(this.dxf.font && this.dxf.font.c) {
+				res = this.dxf.font.c;
+			}
+		}
+
+		return res;
+	};
+
+	SortCondition.prototype.applySort = function(type, ref, color) {
+		this.Ref = ref;
+
+		if(type === Asc.c_oAscSortOptions.ByColorFill || type === Asc.c_oAscSortOptions.ByColorFont) {
+			var newDxf;
+			if (type === Asc.c_oAscSortOptions.ByColorFill) {
+				newDxf = new AscCommonExcel.CellXfs();
+				newDxf.fill = new AscCommonExcel.Fill();
+				newDxf.fill.fromColor(color);
+				this.ConditionSortBy = Asc.ESortBy.sortbyCellColor;
 			} else {
-				to = from.clone();
-				nTemp1 = from.c2 - range.c1 + 1;
-				nTemp2 = range.c2 - range.c1 + 1;
-				to.setOffsetLast(new AscCommon.CellBase(0, -Math.min(nTemp1, nTemp2)));
+				newDxf.font = new AscCommonExcel.Font();
+				newDxf.font.setColor(color);
+				this.ConditionSortBy = Asc.ESortBy.sortbyFontColor;
+			}
+
+			this.dxf = AscCommonExcel.g_StyleCache.addXf(newDxf);
+		} else if(type === Asc.c_oAscSortOptions.Ascending || type === Asc.c_oAscSortOptions.Descending) {
+			this.ConditionDescending = type !== Asc.c_oAscSortOptions.Ascending;
+		}
+
+	};
+
+	SortCondition.prototype.shift = function(range, offset, bColumnSort) {
+		var from = this.Ref;
+		var to = null;
+		var bAdd = offset.row > 0 || offset.col > 0;
+		var bHor = 0 != offset.col;
+		var nTemp1, nTemp2;
+		var diff = bHor ? range.c1 + offset.col - 1 : range.r1 + offset.row;
+		if (bHor && bColumnSort) {
+			if (from.c1 < range.c1 && range.r1 <= from.r1 && from.r2 <= range.r2) {
+				if (bAdd) {
+					to = from.clone();
+					to.setOffsetLast(new AscCommon.CellBase(0, range.c2 - range.c1 + 1));
+				} else {
+					to = from.clone();
+					nTemp1 = from.c2 - range.c1 + 1;
+					nTemp2 = range.c2 - range.c1 + 1;
+					to.setOffsetLast(new AscCommon.CellBase(0, -Math.min(nTemp1, nTemp2)));
+				}
+			}
+		} else if(!bColumnSort) {
+			if (from.r1 < range.r1 && range.c1 <= from.c1 && from.c2 <= range.c2) {
+				if (bAdd) {
+					to = from.clone();
+					to.setOffsetLast(new AscCommon.CellBase(range.r2 - range.r1 + 1, 0));
+				} else {
+					to = from.clone();
+					nTemp1 = from.r2 - range.r1 + 1;
+					nTemp2 = range.r2 - range.r1 + 1;
+					to.setOffsetLast(new AscCommon.CellBase(-Math.min(nTemp1, nTemp2), 0));
+				}
 			}
 		}
-	} else if(!bColumnSort) {
-		if (from.r1 < range.r1 && range.c1 <= from.c1 && from.c2 <= range.c2) {
-			if (bAdd) {
-				to = from.clone();
-				to.setOffsetLast(new AscCommon.CellBase(range.r2 - range.r1 + 1, 0));
-			} else {
-				to = from.clone();
-				nTemp1 = from.r2 - range.r1 + 1;
-				nTemp2 = range.r2 - range.r1 + 1;
-				to.setOffsetLast(new AscCommon.CellBase(-Math.min(nTemp1, nTemp2), 0));
+		if(null != to) {
+			this.Ref = to;
+		}
+	};
+
+	function AutoFilterDateElem(start, end, dateTimeGrouping) {
+		this.start = start;
+		this.end = end;
+		this.dateTimeGrouping = dateTimeGrouping;
+	}
+	AutoFilterDateElem.prototype.Write_ToBinary2 = function(w) {
+		w.WriteLong(this.start);
+		w.WriteLong(this.end);
+		w.WriteLong(this.dateTimeGrouping);
+	};
+	AutoFilterDateElem.prototype.Read_FromBinary2 = function(r) {
+		this.start = r.GetLong();
+		this.end = r.GetLong();
+		this.dateTimeGrouping = r.GetLong();
+	};
+	AutoFilterDateElem.prototype.clone = function() {
+		var res = new AutoFilterDateElem();
+		res.start = this.start;
+		res.end = this.end;
+		res.dateTimeGrouping = this.dateTimeGrouping;
+
+		return res;
+	};
+	AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupItem) {
+		var startDate, endDate, date;
+
+		switch(oDateGroupItem.DateTimeGrouping)
+		{
+			case Asc.EDateTimeGroup.datetimegroupDay://day
+			{
+				date = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day));
+				startDate = date.getExcelDateWithTime();
+				date.addDays(1);
+				endDate = date.getExcelDateWithTime();
+				break;
+			}
+			case Asc.EDateTimeGroup.datetimegroupHour://hour
+			{
+				startDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, 1)).getExcelDateWithTime();
+				endDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, 59)).getExcelDateWithTime();
+				break;
+			}
+			case Asc.EDateTimeGroup.datetimegroupMinute://minute
+			{
+				startDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Minute, 0)).getExcelDateWithTime();
+				endDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Minute, 59)).getExcelDateWithTime();
+				break;
+			}
+			case Asc.EDateTimeGroup.datetimegroupMonth://month
+			{
+				date = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, 1));
+				startDate = date.getExcelDateWithTime();
+				date.addMonths(1);
+				endDate = date.getExcelDateWithTime();
+				break;
+			}
+			case Asc.EDateTimeGroup.datetimegroupSecond://second
+			{
+				startDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Minute, oDateGroupItem.Second, 0)).getExcelDateWithTime();
+				endDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Minute, oDateGroupItem.Second,  1000)).getExcelDateWithTime();
+				break;
+			}
+			case Asc.EDateTimeGroup.datetimegroupYear://year
+			{
+				date = new Asc.cDate(Date.UTC( oDateGroupItem.Year, 0));
+				startDate = date.getExcelDateWithTime();
+				date.addYears(1);
+				endDate = date.getExcelDateWithTime();
+				break;
 			}
 		}
+
+		this.start = startDate;
+		this.end = endDate;
+		this.dateTimeGrouping = oDateGroupItem.DateTimeGrouping;
+	};
+
+	/** @constructor */
+	function QueryTable() {
+		this.queryTableRefresh = null;
+
+		this.adjustColumnWidth = null;
+		this.applyAlignmentFormats = null;
+		this.applyBorderFormats = null;
+		this.applyFontFormats = null;
+		this.applyNumberFormats = null;
+		this.applyPatternFormats = null;
+		this.applyWidthHeightFormats = null;
+		this.autoFormatId = null;
+		this.backgroundRefresh = null;
+
+		this.connectionId = null;
+		this.disableEdit = null;
+		this.disableRefresh = null;
+		this.fillFormulas = null;
+		this.firstBackgroundRefresh = null;
+		this.growShrinkType = null;
+		this.headers = null;
+		this.intermediate = null;
+		this.name = null;
+		this.preserveFormatting = null;
+		this.refreshOnLoad = null;
+		this.removeDataOnSave = null;
+		this.rowNumbers = null;
 	}
-	if(null != to) {
-		this.Ref = to;
-	}
-};
+	QueryTable.prototype.clone = function() {
+		var res = new QueryTable();
 
-function AutoFilterDateElem(start, end, dateTimeGrouping) {
-	this.start = start;
-	this.end = end;
-	this.dateTimeGrouping = dateTimeGrouping;
-}
-AutoFilterDateElem.prototype.Write_ToBinary2 = function(w) {
-	w.WriteLong(this.start);
-	w.WriteLong(this.end);
-	w.WriteLong(this.dateTimeGrouping);
-};
-AutoFilterDateElem.prototype.Read_FromBinary2 = function(r) {
-	this.start = r.GetLong();
-	this.end = r.GetLong();
-	this.dateTimeGrouping = r.GetLong();
-};
-AutoFilterDateElem.prototype.clone = function() {
-	var res = new AutoFilterDateElem();
-	res.start = this.start;
-	res.end = this.end;
-	res.dateTimeGrouping = this.dateTimeGrouping;
+		res.queryTableRefresh = this.queryTableRefresh ? this.queryTableRefresh : null;
 
-	return res;
-};
-AutoFilterDateElem.prototype.convertDateGroupItemToRange = function(oDateGroupItem) {
-	var startDate, endDate, date;
+		res.adjustColumnWidth = this.adjustColumnWidth;
+		res.applyAlignmentFormats = this.applyAlignmentFormats;
+		res.applyBorderFormats = this.applyBorderFormats;
+		res.applyFontFormats = this.applyFontFormats;
+		res.applyNumberFormats = this.applyNumberFormats;
+		res.applyPatternFormats = this.applyPatternFormats;
+		res.applyWidthHeightFormats = this.applyWidthHeightFormats;
+		res.autoFormatId = this.autoFormatId;
+		res.backgroundRefresh = this.backgroundRefresh;
 
-	switch(oDateGroupItem.DateTimeGrouping)
-	{
-		case Asc.EDateTimeGroup.datetimegroupDay://day
-		{
-			date = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day));
-			startDate = date.getExcelDateWithTime();
-			date.addDays(1);
-			endDate = date.getExcelDateWithTime();
-			break;
+		res.connectionId = this.connectionId;
+		res.disableEdit = this.disableEdit;
+		res.disableRefresh = this.disableRefresh;
+		res.fillFormulas = this.fillFormulas;
+		res.firstBackgroundRefresh = this.firstBackgroundRefresh;
+		res.growShrinkType = this.growShrinkType;
+		res.headers = this.headers;
+		res.intermediate = this.intermediate;
+		res.name = this.name;
+		res.preserveFormatting = this.preserveFormatting;
+		res.refreshOnLoad = this.refreshOnLoad;
+		res.removeDataOnSave = this.removeDataOnSave;
+		res.rowNumbers = this.rowNumbers;
+
+		return res;
+	};
+
+	QueryTable.prototype.deleteTableColumns = function(deletedTableColumns) {
+		if (!deletedTableColumns) {
+			return;
 		}
-		case Asc.EDateTimeGroup.datetimegroupHour://hour
-		{
-			startDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, 1)).getExcelDateWithTime();
-			endDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, 59)).getExcelDateWithTime();
-			break;
+
+		if (this.queryTableRefresh) {
+			this.queryTableRefresh.deleteTableColumns(deletedTableColumns);
 		}
-		case Asc.EDateTimeGroup.datetimegroupMinute://minute
-		{
-			startDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Minute, 0)).getExcelDateWithTime();
-			endDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Minute, 59)).getExcelDateWithTime();
-			break;
+	};
+	QueryTable.prototype.syncIndexes = function(tableColumns) {
+		//при удалении приходится меняться tableColumnId, поскольку id  у колонок таблиц у нас формируются на сохранение
+		//а соотсетствие именно по id tableColumn
+
+		if (this.queryTableRefresh) {
+			this.queryTableRefresh.syncIndexes(tableColumns);
 		}
-		case Asc.EDateTimeGroup.datetimegroupMonth://month
-		{
-			date = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, 1));
-			startDate = date.getExcelDateWithTime();
-			date.addMonths(1);
-			endDate = date.getExcelDateWithTime();
-			break;
+	};
+
+
+
+	/** @constructor */
+	function QueryTableRefresh() {
+		this.queryTableDeletedFields = null;
+		this.queryTableFields = null;
+		this.sortState = null;
+
+		this.fieldIdWrapped = null;
+		this.headersInLastRefr = null;
+		this.minimumVersion = null;
+		this.nextId = null;
+		this.preserveSortFilterLayout = null;
+		this.unboundColumnsLeft = null;
+		this.unboundColumnsRight = null;
+	}
+	QueryTableRefresh.prototype.clone = function() {
+		var res = new QueryTableRefresh();
+
+		res.queryTableDeletedFields = this.queryTableDeletedFields ? this.queryTableDeletedFields.clone() : null;
+		res.queryTableFields = this.queryTableFields ? this.queryTableFields.clone() : null;
+		res.sortState = this.sortState ? this.sortState.clone() : null;
+
+		res.fieldIdWrapped = this.fieldIdWrapped;
+		res.headersInLastRefr = this.headersInLastRefr;
+		res.minimumVersion = this.minimumVersion;
+		res.nextId = this.nextId;
+		res.preserveSortFilterLayout = this.preserveSortFilterLayout;
+		res.unboundColumnsLeft = this.unboundColumnsLeft;
+		res.unboundColumnsRight = this.unboundColumnsRight;
+
+		return res;
+	};
+	QueryTableRefresh.prototype.deleteTableColumns = function(deletedTableColumns) {
+		if (!deletedTableColumns) {
+			return;
 		}
-		case Asc.EDateTimeGroup.datetimegroupSecond://second
-		{
-			startDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Minute, oDateGroupItem.Second, 0)).getExcelDateWithTime();
-			endDate = new Asc.cDate(Date.UTC( oDateGroupItem.Year, oDateGroupItem.Month - 1, oDateGroupItem.Day, oDateGroupItem.Hour, oDateGroupItem.Minute, oDateGroupItem.Second,  1000)).getExcelDateWithTime();
-			break;
+
+		if (this.queryTableFields) {
+			for (var i = 0; i < deletedTableColumns.length; i++) {
+				for (var j = 0; j < this.queryTableFields.length; j++) {
+					if (deletedTableColumns[i].queryTableFieldId === this.queryTableFields[j].tableColumnId) {
+						var deletedField = this.queryTableFields.splice(j, 1);
+						this.addDeletedField(deletedField[0]);
+					}
+				}
+			}
 		}
-		case Asc.EDateTimeGroup.datetimegroupYear://year
-		{
-			date = new Asc.cDate(Date.UTC( oDateGroupItem.Year, 0));
-			startDate = date.getExcelDateWithTime();
-			date.addYears(1);
-			endDate = date.getExcelDateWithTime();
-			break;
+	};
+	QueryTableRefresh.prototype.addDeletedField = function(deletedField) {
+		if (!this.queryTableDeletedFields) {
+			this.queryTableDeletedFields = [];
 		}
-	}
+		var newDeletedField = new QueryTableDeletedField();
+		newDeletedField.name = deletedField.name;
+		this.queryTableDeletedFields.push(newDeletedField);
+	};
+	QueryTableRefresh.prototype.syncIndexes = function(tableColumns) {
+		//при удалении приходится меняться tableColumnId, поскольку id  у колонок таблиц у нас формируются на сохранение
+		//а соотсетствие именно по id tableColumn
 
-	this.start = startDate;
-	this.end = endDate;
-	this.dateTimeGrouping = oDateGroupItem.DateTimeGrouping;
-};
+		if (this.queryTableFields) {
+			for (var i = 0; i < tableColumns.length; i++) {
+				for (var j = 0; j < this.queryTableFields.length; j++) {
+					if (tableColumns[i].queryTableFieldId === this.queryTableFields[j].tableColumnId) {
+						this.queryTableFields[j].tableColumnId = i + 1;
+					}
+				}
+			}
+		}
+	};
+	QueryTableRefresh.prototype.syncIndexes2 = function(tableColumns) {
+		//при удалении приходится меняться tableColumnId, поскольку id  у колонок таблиц у нас формируются на сохранение
+		//а соотсетствие именно по id tableColumn
 
-/** @constructor */
-function QueryTable() {
-	this.queryTableRefresh = null;
-
-	this.adjustColumnWidth = null;
-	this.applyAlignmentFormats = null;
-	this.applyBorderFormats = null;
-	this.applyFontFormats = null;
-	this.applyNumberFormats = null;
-	this.applyPatternFormats = null;
-	this.applyWidthHeightFormats = null;
-	this.autoFormatId = null;
-	this.backgroundRefresh = null;
-
-	this.connectionId = null;
-	this.disableEdit = null;
-	this.disableRefresh = null;
-	this.fillFormulas = null;
-	this.firstBackgroundRefresh = null;
-	this.growShrinkType = null;
-	this.headers = null;
-	this.intermediate = null;
-	this.name = null;
-	this.preserveFormatting = null;
-	this.refreshOnLoad = null;
-	this.removeDataOnSave = null;
-	this.rowNumbers = null;
-}
-QueryTable.prototype.clone = function() {
-	var res = new QueryTable();
-
-	res.queryTableRefresh = this.queryTableRefresh ? this.queryTableRefresh : null;
-
-	res.adjustColumnWidth = this.adjustColumnWidth;
-	res.applyAlignmentFormats = this.applyAlignmentFormats;
-	res.applyBorderFormats = this.applyBorderFormats;
-	res.applyFontFormats = this.applyFontFormats;
-	res.applyNumberFormats = this.applyNumberFormats;
-	res.applyPatternFormats = this.applyPatternFormats;
-	res.applyWidthHeightFormats = this.applyWidthHeightFormats;
-	res.autoFormatId = this.autoFormatId;
-	res.backgroundRefresh = this.backgroundRefresh;
-
-	res.connectionId = this.connectionId;
-	res.disableEdit = this.disableEdit;
-	res.disableRefresh = this.disableRefresh;
-	res.fillFormulas = this.fillFormulas;
-	res.firstBackgroundRefresh = this.firstBackgroundRefresh;
-	res.growShrinkType = this.growShrinkType;
-	res.headers = this.headers;
-	res.intermediate = this.intermediate;
-	res.name = this.name;
-	res.preserveFormatting = this.preserveFormatting;
-	res.refreshOnLoad = this.refreshOnLoad;
-	res.removeDataOnSave = this.removeDataOnSave;
-	res.rowNumbers = this.rowNumbers;
-
-	return res;
-};
-
-QueryTable.prototype.deleteTableColumns = function(deletedTableColumns) {
-	if (!deletedTableColumns) {
-		return;
-	}
-
-	if (this.queryTableRefresh) {
-		this.queryTableRefresh.deleteTableColumns(deletedTableColumns);
-	}
-};
-QueryTable.prototype.syncIndexes = function(tableColumns) {
-	//при удалении приходится меняться tableColumnId, поскольку id  у колонок таблиц у нас формируются на сохранение
-	//а соотсетствие именно по id tableColumn
-
-	if (this.queryTableRefresh) {
-		this.queryTableRefresh.syncIndexes(tableColumns);
-	}
-};
-
-
-
-/** @constructor */
-function QueryTableRefresh() {
-	this.queryTableDeletedFields = null;
-	this.queryTableFields = null;
-	this.sortState = null;
-
-	this.fieldIdWrapped = null;
-	this.headersInLastRefr = null;
-	this.minimumVersion = null;
-	this.nextId = null;
-	this.preserveSortFilterLayout = null;
-	this.unboundColumnsLeft = null;
-	this.unboundColumnsRight = null;
-}
-QueryTableRefresh.prototype.clone = function() {
-	var res = new QueryTableRefresh();
-
-	res.queryTableDeletedFields = this.queryTableDeletedFields ? this.queryTableDeletedFields.clone() : null;
-	res.queryTableFields = this.queryTableFields ? this.queryTableFields.clone() : null;
-	res.sortState = this.sortState ? this.sortState.clone() : null;
-
-	res.fieldIdWrapped = this.fieldIdWrapped;
-	res.headersInLastRefr = this.headersInLastRefr;
-	res.minimumVersion = this.minimumVersion;
-	res.nextId = this.nextId;
-	res.preserveSortFilterLayout = this.preserveSortFilterLayout;
-	res.unboundColumnsLeft = this.unboundColumnsLeft;
-	res.unboundColumnsRight = this.unboundColumnsRight;
-
-	return res;
-};
-QueryTableRefresh.prototype.deleteTableColumns = function(deletedTableColumns) {
-	if (!deletedTableColumns) {
-		return;
-	}
-
-	if (this.queryTableFields) {
-		for (var i = 0; i < deletedTableColumns.length; i++) {
+		if (this.queryTableFields) {
+			var i;
+			var changeQueryTableFieldId = [];
 			for (var j = 0; j < this.queryTableFields.length; j++) {
-				if (deletedTableColumns[i].queryTableFieldId === this.queryTableFields[j].tableColumnId) {
-					var deletedField = this.queryTableFields.splice(j, 1);
-					this.addDeletedField(deletedField[0]);
+				for (i = 0; i < tableColumns.length; i++) {
+					if (tableColumns[i].queryTableFieldId === this.queryTableFields[j].tableColumnId) {
+						this.queryTableFields[j].tableColumnId = i + 1;
+						this.queryTableFields[j].id = i + 1;
+						changeQueryTableFieldId[i] =  i + 1;
+						break;
+					}
+				}
+			}
+			for (i = 0; i < changeQueryTableFieldId.length; i++) {
+				tableColumns[i].queryTableFieldId = changeQueryTableFieldId[i];
+				if (null !== tableColumns[i].uniqueName) {
+					tableColumns[i].uniqueName = changeQueryTableFieldId[i];
 				}
 			}
 		}
+
+	};
+
+
+	/** @constructor */
+	function QueryTableField() {
+		this.name = null;
+		this.id = null;
+		this.tableColumnId = null;
+
+		this.rowNumbers = null;
+		this.fillFormulas = null;
+		this.dataBound = null;
+		this.clipped = null;
 	}
-};
-QueryTableRefresh.prototype.addDeletedField = function(deletedField) {
-	if (!this.queryTableDeletedFields) {
-		this.queryTableDeletedFields = [];
+	QueryTableField.prototype.clone = function() {
+		var res = new QueryTableField();
+
+		res.name = this.name;
+		res.id = this.id;
+		res.tableColumnId = this.tableColumnId;
+		res.rowNumbers = this.rowNumbers;
+		res.fillFormulas = this.fillFormulas;
+		res.dataBound = this.dataBound;
+		res.clipped = this.clipped;
+
+		return res;
+	};
+
+	/** @constructor */
+	function QueryTableDeletedField() {
+		this.name = null;
 	}
-	var newDeletedField = new QueryTableDeletedField();
-	newDeletedField.name = deletedField.name;
-	this.queryTableDeletedFields.push(newDeletedField);
-};
-QueryTableRefresh.prototype.syncIndexes = function(tableColumns) {
-	//при удалении приходится меняться tableColumnId, поскольку id  у колонок таблиц у нас формируются на сохранение
-	//а соотсетствие именно по id tableColumn
-
-	if (this.queryTableFields) {
-		for (var i = 0; i < tableColumns.length; i++) {
-			for (var j = 0; j < this.queryTableFields.length; j++) {
-				if (tableColumns[i].queryTableFieldId === this.queryTableFields[j].tableColumnId) {
-					this.queryTableFields[j].tableColumnId = i + 1;
-				}
-			}
-		}
-	}
-};
-QueryTableRefresh.prototype.syncIndexes2 = function(tableColumns) {
-	//при удалении приходится меняться tableColumnId, поскольку id  у колонок таблиц у нас формируются на сохранение
-	//а соотсетствие именно по id tableColumn
-
-	if (this.queryTableFields) {
-		var i;
-		var changeQueryTableFieldId = [];
-		for (var j = 0; j < this.queryTableFields.length; j++) {
-			for (i = 0; i < tableColumns.length; i++) {
-				if (tableColumns[i].queryTableFieldId === this.queryTableFields[j].tableColumnId) {
-					this.queryTableFields[j].tableColumnId = i + 1;
-					this.queryTableFields[j].id = i + 1;
-					changeQueryTableFieldId[i] =  i + 1;
-					break;
-				}
-			}
-		}
-		for (i = 0; i < changeQueryTableFieldId.length; i++) {
-			tableColumns[i].queryTableFieldId = changeQueryTableFieldId[i];
-			if (null !== tableColumns[i].uniqueName) {
-				tableColumns[i].uniqueName = changeQueryTableFieldId[i];
-			}
-		}
-	}
-
-};
-
-
-/** @constructor */
-function QueryTableField() {
-	this.name = null;
-	this.id = null;
-	this.tableColumnId = null;
-
-	this.rowNumbers = null;
-	this.fillFormulas = null;
-	this.dataBound = null;
-	this.clipped = null;
-}
-QueryTableField.prototype.clone = function() {
-	var res = new QueryTableField();
-
-	res.name = this.name;
-	res.id = this.id;
-	res.tableColumnId = this.tableColumnId;
-	res.rowNumbers = this.rowNumbers;
-	res.fillFormulas = this.fillFormulas;
-	res.dataBound = this.dataBound;
-	res.clipped = this.clipped;
-
-	return res;
-};
-
-/** @constructor */
-function QueryTableDeletedField() {
-	this.name = null;
-}
-QueryTableField.prototype.clone = function() {
-	var res = new QueryTableDeletedField();
-	res.name = this.name;
-	return res;
-};
+	QueryTableField.prototype.clone = function() {
+		var res = new QueryTableDeletedField();
+		res.name = this.name;
+		return res;
+	};
 
 	/**
 	 * @constructor
@@ -15848,6 +16038,843 @@ QueryTableField.prototype.clone = function() {
 		return isChanged ? this : null;
 	};
 
+	/**
+	 * Class representing a Series settings for fills data of context menu and dialog window - "Series"
+	 * @property {c_oAscSeriesInType} seriesIn - Series in. Contains: Rows, Columns
+	 * @property {c_oAscSeriesType} type - Type. Contains:  Linear, Growth, Date, AutoFill
+	 * @property {c_oAscDateUnitType} dateUnit - Date Unit. Contains: Day, Weekday, Month, Year
+	 * @property {number|null} stepValue - Step value
+	 * @property {number|null} stopValue - Stop value
+	 * @property {boolean|null} trend - Trend
+	 * @property {object} contextMenuAllowedProps - Allowed properties
+	 * @property {c_oAscFillType} contextMenuChosenProperty - Chosen property of context menu
+	 * @constructor
+	 * @returns {asc_CSeriesSettings}
+	 */
+	function asc_CSeriesSettings() {
+		this.seriesIn = null;
+		this.type = null;
+		this.dateUnit = null;
+
+		this.trend = null;
+
+		this.stepValue = null;
+		this.stopValue = null;
+
+		//transfer right click fill information
+		this.contextMenuAllowedProps = null;
+		this.contextMenuChosenProperty = null;
+		this.toolbarMenuAllowedProps = null;
+
+		return this;
+	}
+
+	/**
+	 * Method clones SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @returns {asc_CSeriesSettings}
+	 */
+	asc_CSeriesSettings.prototype.clone = function () {
+		let res = new asc_CSeriesSettings();
+
+		res.seriesIn = this.seriesIn;
+		res.type = this.type;
+		res.dateUnit = this.dateUnit;
+
+		res.trend = this.trend;
+
+		res.stepValue = this.stepValue;
+		res.stopValue = this.stopValue;
+
+		res.contextMenuAllowedProps = this.contextMenuAllowedProps;
+		res.contextMenuChosenProperty = this.contextMenuChosenProperty;
+		res.toolbarMenuAllowedProps = this.toolbarMenuAllowedProps;
+
+		return res;
+	};
+
+	/**
+	 * Function returns next value from range
+	 * @param {Range} oRange - Range object from Workbook model
+	 * @param {Cell} oCell
+	 * @param {boolean} bVertical
+	 * @returns {string} Value without format of next cell
+	 * @private
+	 */
+	function _getNextValueFromRange(oRange, oCell, bVertical) {
+		let ws = oRange.worksheet;
+
+		if (bVertical) {
+			let nNextItRow = oCell.nRow + 1;
+			if (nNextItRow <= oRange.bbox.r2) {
+				return ws.getCell3(nNextItRow, oCell.nCol).getValueWithoutFormat();
+			}
+		} else {
+			let nNextItCol = oCell.nCol + 1;
+			if (nNextItCol <= oRange.bbox.c2) {
+				return ws.getCell3(oCell.nRow, nNextItCol).getValueWithoutFormat();
+			}
+		}
+
+		return '';
+	}
+	/**
+	 * Function returns range with filled cells.
+	 * @param {Range} oRange - Range object from Workbook model
+	 * @param {boolean} bVertical - Vertical or horizontal direction
+	 * @returns  Range object from Workbook model
+	 * @private
+	 */
+	function _getFilledRange(oRange, bVertical) {
+		let oFilledRange = oRange.clone();
+		let nRow = oFilledRange.bbox.r1;
+		let nCol = oFilledRange.bbox.c1;
+		let sFirstValue = null;
+
+		oRange._foreach(function (oCell, nCurRow, nCurCol) {
+			if (oCell && oCell.getValueWithoutFormat()) {
+				nRow = nCurRow;
+				nCol = nCurCol;
+				if (nCurRow === oRange.bbox.r1 && nCurCol === oRange.bbox.c1) {
+					sFirstValue = oCell.getValueWithoutFormat();
+				}
+			} else {
+				let sNextValue = _getNextValueFromRange(oRange, oCell, bVertical);
+				if (!sFirstValue && sNextValue) {
+					if (bVertical) {
+						oFilledRange.bbox.r1 = nCurRow + 1;
+						oFilledRange.bbox.c1 = nCurCol;
+					} else {
+						oFilledRange.bbox.c1 = nCurCol + 1;
+						oFilledRange.bbox.r1 = nCurRow;
+					}
+				}
+			}
+		});
+		oFilledRange.bbox.r2 = nRow;
+		oFilledRange.bbox.c2 = nCol;
+
+		return oFilledRange;
+	}
+	/**
+	 * Method fills data of SeriesSettings object for context menu and dialog window
+	 * @memberof asc_CSeriesSettings
+	 * @param {WorksheetView} ws
+	 */
+	asc_CSeriesSettings.prototype.prepare = function (ws) {
+		if (!ws) {
+			return;
+		}
+
+		function calcAvg(seriesInType) {
+			let filledRangeLength = null;
+
+			if (seriesInType === Asc.c_oAscSeriesInType.rows) {
+				filledRange._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
+					if (cell && cell.getNumberValue() != null) {
+						// If columns range not starts with 0, define indexCell by difference between current column and start column
+						let indexCell = curCol - colStart;
+						ySum += cell.getNumberValue();
+						xSum += indexCell;
+					}
+				});
+				filledRangeLength = (filledRange.bbox.c2 - filledRange.bbox.c1) + 1;
+			} else {
+				filledRange._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
+					if (curCol === colStart) {
+						if (cell && cell.getNumberValue() != null) {
+							let indexCell = curRow - rowStart;
+							ySum += cell.getNumberValue();
+							xSum += indexCell;
+						}
+					}
+				});
+				filledRangeLength = (filledRange.bbox.r2 - filledRange.bbox.r1) + 1;
+			}
+
+			xAvg = xSum / filledRangeLength;
+			yAvg = ySum / filledRangeLength;
+		}
+		function actionCell(cell, curRow, curCol, rowStart, colStart) {
+			if (cell && cell.getValueWithoutFormat()) {
+				// Fill type
+				seriesSettings.asc_setType(Asc.c_oAscSeriesType.linear);
+				if (cell.xfs != null && cell.xfs.num != null && cell.xfs.num.getFormat() != null) {
+					let numFormat = AscCommon.oNumFormatCache.get(cell.xfs.num.getFormat());
+					if (numFormat.isDateTimeFormat()) {
+						seriesSettings.asc_setType(Asc.c_oAscSeriesType.date);
+
+						contextMenuAllowedProps[Asc.c_oAscFillType.fillDays] = true;
+						//contextMenuAllowedProps[Asc.c_oAscFillType.fillWeekdays] = true;
+						//contextMenuAllowedProps[Asc.c_oAscFillType.fillMonths] = true;
+						//contextMenuAllowedProps[Asc.c_oAscFillType.fillYears] = true;
+					}
+				}
+
+				// Fill step value
+				let cellNumberValue = cell.getNumberValue();
+				let isVertical = seriesSettings.asc_getSeriesIn() === Asc.c_oAscSeriesInType.columns;
+				let cellIndex = isVertical ? curRow - rowStart : curCol - colStart;
+
+				if (cell.isFormula()) {
+					seriesSettings.asc_setStepValue(1);
+				} else if (firstValue != null) {
+					if (cellNumberValue != null) {
+						numeratorOfSlope += (cellIndex - xAvg) * (cellNumberValue - yAvg);
+						denominatorOfSlope += Math.pow((cellIndex - xAvg), 2);
+					} else {
+						seriesSettings.asc_setStepValue(1);
+
+						contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
+						contextMenuAllowedProps[Asc.c_oAscFillType.series] = true;
+					}
+				} else {
+					if (cellNumberValue != null) {
+						numeratorOfSlope += (cellIndex - xAvg) * (cellNumberValue - yAvg);
+						denominatorOfSlope += Math.pow((cellIndex - xAvg), 2);
+						firstValue = cellNumberValue;
+					} else {
+						seriesSettings.asc_setStepValue(1);
+
+						let typeCell = cell.getType();
+						if (typeCell === AscCommon.CellValueType.String) {
+							let cellValue = cell.getValueWithoutFormat();
+							if (cellValue[cellValue.length - 1] >= '0' && cellValue[cellValue.length - 1] <= '9') {
+								contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
+							}
+						}
+					}
+				}
+			} else if (firstValue == null){
+				seriesSettings.asc_setStepValue(1);
+			}
+
+			if (seriesSettings.asc_getStepValue() != null) {
+				if (seriesSettings.asc_getType() == null) {
+					seriesSettings.asc_setType(Asc.c_oAscSeriesType.linear);
+				}
+				return true;
+			}
+		}
+
+		let seriesSettings = this;
+		let selection = ws.model && ws.model.getSelection();
+		let selectionRanges = selection && selection.ranges;
+		let range = selectionRanges && selectionRanges[0];
+		if(!range) {
+			return;
+		}
+		let rangeModel = ws.model.getRange3(range.r1, range.c1, range.r2, range.c2);
+		let firstValue = null;
+		let contextMenuAllowedProps = {};
+		contextMenuAllowedProps[Asc.c_oAscFillType.copyCells] = true;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillFormattingOnly] = null;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillWithoutFormatting] = null;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillDays] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillWeekdays] = null;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillMonths] = null;
+		contextMenuAllowedProps[Asc.c_oAscFillType.fillYears] = null;
+		contextMenuAllowedProps[Asc.c_oAscFillType.linearTrend] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.growthTrend] = false;
+		contextMenuAllowedProps[Asc.c_oAscFillType.flashFill] = null;
+		contextMenuAllowedProps[Asc.c_oAscFillType.series] = false;
+
+		let countOfCol = range.c2 - range.c1;
+		let countOfRow = range.r2 - range.r1;
+		let filledRange = _getFilledRange(rangeModel, countOfCol <= countOfRow);
+		let countOfFilledRow = filledRange.bbox.r2 - filledRange.bbox.r1;
+		let countOfFilledCol = filledRange.bbox.c2 - filledRange.bbox.c1;
+		// Init variables for calc step. x - index, y - value of cell.
+		let xSum = 0;
+		let ySum = 0;
+		let xAvg = 0;
+		let yAvg = 0;
+		let numeratorOfSlope = 0;
+		let denominatorOfSlope = 0;
+
+		let isApplyFilter = false;
+		//if sheet contains applyed filter -> only copy cell
+		if (ws.model && ws.model.AutoFilter && ws.model.AutoFilter.isApplyAutoFilter()) {
+			isApplyFilter = true;
+		} else if (ws.model) {
+			for (let i = 0; i < selectionRanges.length; i++) {
+				let tables =  ws.model.autoFilters.getTablesIntersectionRange(selectionRanges[i]);
+				for (let j = 0; j < tables.length; j++) {
+					if (tables[i].isApplyAutoFilter()) {
+						isApplyFilter = true;
+						break;
+					}
+				}
+				if (isApplyFilter) {
+					break;
+				}
+			}
+		}
+
+		// select one cell and use fill handle
+		if (!isApplyFilter) {
+			if (ws.activeFillHandle != null && countOfCol === countOfRow) {
+				if (ws.fillHandleDirection === 0) {
+					this.asc_setSeriesIn(Asc.c_oAscSeriesInType.rows);
+				} else {
+					this.asc_setSeriesIn(Asc.c_oAscSeriesInType.columns);
+				}
+				// Calculate xAvg, yAvg
+				calcAvg(this.asc_getSeriesIn());
+				filledRange._foreach2(actionCell);
+				if (rangeModel.getType() === AscCommon.CellValueType.Number) {
+					contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
+					contextMenuAllowedProps[Asc.c_oAscFillType.series] = true;
+				}
+			} else if (countOfCol >= countOfRow) {
+				this.asc_setSeriesIn(Asc.c_oAscSeriesInType.rows);
+				calcAvg(Asc.c_oAscSeriesInType.rows);
+				filledRange._foreach2(actionCell);
+			} else {
+				this.asc_setSeriesIn(Asc.c_oAscSeriesInType.columns);
+				calcAvg(Asc.c_oAscSeriesInType.columns);
+				filledRange._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
+					if (curCol === colStart) {
+						return actionCell(cell, curRow, curCol, rowStart, colStart);
+					}
+				});
+			}
+		}
+
+		if (!isApplyFilter && seriesSettings.asc_getStepValue() == null) {
+			let isVertical = this.asc_getSeriesIn() === Asc.c_oAscSeriesInType.columns;
+			let rangeLen = isVertical ? countOfRow + 1 : countOfCol + 1;
+			let filledRangeLen = isVertical ? countOfFilledRow + 1 : countOfFilledCol + 1;
+			let isStartPointShifted = rangeModel.bbox.r1 !== filledRange.bbox.r1 || rangeModel.bbox.c1 !== filledRange.bbox.c1;
+
+			// all selected cells are filled or only one cell is filled or first cell is empty
+			if (filledRangeLen === rangeLen || firstValue === ySum || firstValue == null || isStartPointShifted) {
+				this.asc_setStepValue(1);
+			} else {
+				let slope = numeratorOfSlope / denominatorOfSlope;
+				this.asc_setStepValue(slope);
+			}
+
+			if (firstValue != null) {
+				contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
+				contextMenuAllowedProps[Asc.c_oAscFillType.series] = true;
+				if (firstValue !== ySum && seriesSettings.asc_getType() !== Asc.c_oAscSeriesType.date) {
+					contextMenuAllowedProps[Asc.c_oAscFillType.linearTrend] = true;
+					contextMenuAllowedProps[Asc.c_oAscFillType.growthTrend] = true;
+				}
+			}
+		}
+		this.asc_setTrend(false);
+		this.asc_setDateUnit(Asc.c_oAscDateUnitType.day);
+
+		//2. init for context menu - allowed options
+		this.asc_setContextMenuAllowedProps(contextMenuAllowedProps);
+
+		//3. toolbar - allowed options
+		let toolbarMenuAllowedProps = {};
+		toolbarMenuAllowedProps[Asc.c_oAscFillType.fillDown] = true;
+		toolbarMenuAllowedProps[Asc.c_oAscFillType.fillRight] = true;
+		toolbarMenuAllowedProps[Asc.c_oAscFillType.fillUp] = true;
+		toolbarMenuAllowedProps[Asc.c_oAscFillType.fillLeft] = true;
+		toolbarMenuAllowedProps[Asc.c_oAscFillType.series] = !isApplyFilter;
+
+		if (range.isOneCol()) {
+			if (selectionRanges.c1 === 0) {
+				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillRight] = false;
+			} else if (selectionRanges.c1 === AscCommon.gc_nMaxCol0) {
+				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillLeft] = false;
+			}
+		}
+		if (range.isOneRow()) {
+			if (selectionRanges.r1 === 0) {
+				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillDown] = false;
+			} else if (selectionRanges.r1 === AscCommon.gc_nMaxRow0) {
+				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillUp] = false;
+			}
+		}
+
+		this.asc_setToolbarMenuAllowedProps(toolbarMenuAllowedProps);
+	};
+	/**
+	 * Method updates "Type", "Trend" and "Step Value" (for Date type) attributes of SeriesSettings object for chosen context menu property
+	 * @param {WorksheetView} wsView
+	 * @memberof asc_CSeriesSettings
+	 */
+	asc_CSeriesSettings.prototype.init = function (wsView) {
+		const chosenContextMenuProp = this.asc_getContextMenuChosenProperty();
+		const fillType = Asc.c_oAscFillType;
+		const seriesSettings = this;
+		function calcStepForDate() {
+			const arn = wsView.model && wsView.model.getSelection().getLast();
+			const activeFillHandle = wsView.activeFillHandle;
+			const rangeModel = wsView.model.getRange3(arn.r1, arn.c1, arn.r2, arn.c2);
+			const index = wsView.fillHandleDirection === 0 ? activeFillHandle.c2 - arn.c1 : activeFillHandle.r2 - arn.r1;
+			const dateUnitType = Asc.c_oAscDateUnitType;
+
+			let prevCellValue = null;
+
+			function actionCell(cell) {
+				if (cell && cell.getValueWithoutFormat()) {
+					let dateUnit = seriesSettings.asc_getDateUnit();
+					let cellValue;
+
+					if (dateUnit === dateUnitType.day || dateUnit === dateUnitType.weekday) {
+						cellValue = cell.getNumberValue();
+					} else if (dateUnit === dateUnitType.month) {
+						let dateVal = new Asc.cDate().getDateFromExcel(cell.getNumberValue());
+						cellValue = dateVal.getMonth();
+					} else {
+						let dateVal = new Asc.cDate().getDateFromExcel(cell.getNumberValue());
+						cellValue = dateVal.getFullYear();
+					}
+
+					if (prevCellValue != null) {
+						seriesSettings.asc_setStepValue(cellValue - prevCellValue);
+						return true;
+					} else {
+						prevCellValue = cellValue;
+					}
+				} else {
+					return true;
+				}
+			}
+
+			if (arn.isOneCell()) {
+				seriesSettings.asc_setStepValue(1);
+			} else {
+				if (seriesSettings.asc_getSeriesIn() === Asc.c_oAscSeriesInType.rows) {
+					rangeModel._foreach2(actionCell);
+				} else {
+					rangeModel._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
+						if (curCol === colStart) {
+							return actionCell(cell);
+						}
+					});
+				}
+			}
+
+			// Define direction step
+			let step = seriesSettings.asc_getStepValue();
+			if (index < 0) {
+				seriesSettings.asc_setStepValue(step * -1);
+			}
+		}
+
+		switch (chosenContextMenuProp) {
+			case fillType.linearTrend:
+				this.asc_setType(Asc.c_oAscSeriesType.linear);
+				this.asc_setTrend(true);
+				break;
+			case fillType.growthTrend:
+				this.asc_setType(Asc.c_oAscSeriesType.growth);
+				this.asc_setTrend(true);
+				break;
+			case fillType.fillDays:
+				this.asc_setType(Asc.c_oAscSeriesType.date);
+				this.asc_setDateUnit(Asc.c_oAscDateUnitType.day);
+				calcStepForDate()
+				break;
+			case fillType.fillWeekdays:
+				this.asc_setType(Asc.c_oAscSeriesType.date);
+				this.asc_setDateUnit(Asc.c_oAscDateUnitType.weekday);
+				calcStepForDate()
+				break;
+			case fillType.fillMonths:
+				this.asc_setType(Asc.c_oAscSeriesType.date);
+				this.asc_setDateUnit(Asc.c_oAscDateUnitType.month);
+				calcStepForDate()
+				break;
+			case fillType.fillYears:
+				this.asc_setType(Asc.c_oAscSeriesType.date);
+				this.asc_setDateUnit(Asc.c_oAscDateUnitType.year);
+				calcStepForDate()
+				break;
+		}
+	};
+	/**
+	 * Method returns "Series In" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @returns {c_oAscSeriesInType}
+	 */
+	asc_CSeriesSettings.prototype.asc_getSeriesIn = function () {
+		return this.seriesIn;
+	};
+	/**
+	 * Method returns "Type" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @returns {c_oAscSeriesType}
+	 */
+	asc_CSeriesSettings.prototype.asc_getType = function () {
+		return this.type;
+	};
+	/**
+	 * Method returns "Date Unit" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @returns {c_oAscDateUnitType}
+	 */
+	asc_CSeriesSettings.prototype.asc_getDateUnit = function () {
+		return this.dateUnit;
+	};
+	/**
+	 * Method returns "Trend" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @returns {boolean}
+	 */
+	asc_CSeriesSettings.prototype.asc_getTrend = function () {
+		return this.trend;
+	};
+	/**
+	 * Method returns "Step Value" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @returns {number}
+	 */
+	asc_CSeriesSettings.prototype.asc_getStepValue = function () {
+		return this.stepValue;
+	};
+	/**
+	 * Method returns "Stop Value" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @returns {number}
+	 */
+	asc_CSeriesSettings.prototype.asc_getStopValue = function () {
+		return this.stopValue;
+	};
+	/**
+	 * Method returns "contextMenuAllowedProps" attribute of SeriesSettings object.
+	 * Uses for hide and shade menu items in context menu.
+	 * @memberof asc_CSeriesSettings
+	 * @returns {object} - object with properties of Asc.c_oAscFillType
+	 */
+	asc_CSeriesSettings.prototype.asc_getContextMenuAllowedProps = function () {
+		return this.contextMenuAllowedProps;
+	};
+	/**
+	 * Method returns "contextMenuChosenProperty" attribute of SeriesSettings object.
+	 * Uses for recognize chosen item in context menu.
+	 * @memberof asc_CSeriesSettings
+	 * @returns {c_oAscFillType}
+	 */
+	asc_CSeriesSettings.prototype.asc_getContextMenuChosenProperty = function () {
+		return this.contextMenuChosenProperty;
+	};
+	/**
+	 * Method returns "toolbarMenuAllowedProps" attribute of SeriesSettings object.
+	 * Uses for hide and shade menu items in context menu.
+	 * @memberof asc_CSeriesSettings
+	 * @returns {object} - object with properties of Asc.c_oAscFillType
+	 */
+	asc_CSeriesSettings.prototype.asc_getToolbarMenuAllowedProps = function () {
+		return this.toolbarMenuAllowedProps;
+	};
+	/**
+	 * Method sets "Series In" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @param {c_oAscSeriesInType} val - attribute of c_oAscSeriesInType
+	 */
+	asc_CSeriesSettings.prototype.asc_setSeriesIn = function (val) {
+		this.seriesIn = val;
+	};
+	/**
+	 * Method sets "Type" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @param {c_oAscSeriesType} val - attribute of c_oAscSeriesType
+	 */
+	asc_CSeriesSettings.prototype.asc_setType = function (val) {
+		this.type = val;
+	};
+	/**
+	 * Method sets "Date Unit" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @param {c_oAscDateUnitType} val - attribute of c_oAscDateUnitType
+	 */
+	asc_CSeriesSettings.prototype.asc_setDateUnit = function (val) {
+		this.dateUnit = val;
+	};
+	/**
+	 * Method sets "Trend" attribute of SeriesSettings object
+	 * @memberof asc_CSeriesSettings
+	 * @param {boolean} val
+	 */
+	asc_CSeriesSettings.prototype.asc_setTrend = function (val) {
+		this.trend = val;
+	};
+	/**
+	 * Method sets "Step Value" attribute of SeriesSettings object
+	 * @param {number} val
+	 */
+	asc_CSeriesSettings.prototype.asc_setStepValue = function (val) {
+		this.stepValue = val;
+	};
+	/**
+	 * Method sets "Stop Value" attribute of SeriesSettings object
+	 * @param {number} val
+	 */
+	asc_CSeriesSettings.prototype.asc_setStopValue = function (val) {
+		this.stopValue = val;
+	};
+	/**
+	 * Method sets "contextMenuAllowedProps" attribute of SeriesSettings object.
+	 * Uses for hide and shade menu items in context menu.
+	 * * true - unshade menu item
+	 * * false - shade menu item
+	 * * null - hide menu item
+	 * @memberof asc_CSeriesSettings
+	 * @param {object} val - object with properties of Asc.c_oAscFillType as attribute and boolean or null as value
+	 */
+	asc_CSeriesSettings.prototype.asc_setContextMenuAllowedProps = function (val) {
+		this.contextMenuAllowedProps = val;
+	};
+	/**
+	 * Method sets "contextMenuChosenProperty" attribute of SeriesSettings object.
+	 * Uses for recognize chosen item in context menu.
+	 * @param {c_oAscFillType} val - attribute of c_oAscFillType
+	 */
+	asc_CSeriesSettings.prototype.asc_setContextMenuChosenProperty = function (val) {
+		this.contextMenuChosenProperty = val;
+	};
+
+	/**
+	 * Method sets "toolbarMenuAllowedProps" attribute of SeriesSettings object.
+	 * Uses for hide and shade menu items in context menu.
+	 * * true - unshade menu item
+	 * * false - shade menu item
+	 * * null - hide menu item
+	 * @memberof asc_CSeriesSettings
+	 * @param {object} val - object with properties of Asc.c_oAscFillType as attribute and boolean or null as value
+	 */
+	asc_CSeriesSettings.prototype.asc_setToolbarMenuAllowedProps = function (val) {
+		this.toolbarMenuAllowedProps = val;
+	};
+
+
+	function CTimeline() {
+		this.name = null;
+		this.cache = null;
+		this.caption = null;
+
+		this.scrollPosition = null;
+		this.uid = null;
+
+		this.level = null;
+		this.selectionLevel = null;
+		this.showHeader = null;
+
+		this.showHorizontalScrollbar = null;
+		this.showSelectionLabel = null;
+		this.showTimeLevel = null;
+		this.style = null;
+
+		return this;
+	}
+	CTimeline.prototype.clone = function () {
+		var res = new CTimeline();
+
+		res.name = this.name;
+		res.cache = this.cache;
+		res.caption = this.caption;
+
+		res.scrollPosition = this.scrollPosition;
+		res.uid = this.uid;
+
+		res.level = this.level;
+		res.selectionLevel = this.selectionLevel;
+		res.showHeader = this.showHeader;
+
+		res.showHorizontalScrollbar = this.showHorizontalScrollbar;
+		res.showSelectionLabel = this.showSelectionLabel;
+		res.showTimeLevel = this.showTimeLevel;
+		res.style = this.style;
+
+		return res;
+	};
+
+	function CTimelineCacheDefinition() {
+		this.name = null;
+		this.sourceName = null;
+		this.uid = null;
+
+		this.pivotTables = null;
+		this.state = null;
+		this.pivotFilter = null;
+
+		return this;
+	}
+	CTimelineCacheDefinition.prototype.clone = function () {
+		var res = new CTimelineCacheDefinition();
+
+		res.name = this.name;
+		res.sourceName = this.sourceName;
+		res.uid = this.uid;
+
+		res.pivotTables = this.pivotTables;
+		res.state = this.state;
+		res.pivotFilter = this.pivotFilter;
+
+		return res;
+	};
+	CTimelineCacheDefinition.prototype.initPostOpen = function (tableIds, sheetIds) {
+		if (this.pivotTables) {
+			this.pivotTables.forEach(function(elem){
+				elem.initPostOpen(tableIds, sheetIds);
+			});
+		}
+	};
+
+	CTimelineCacheDefinition.prototype.isCachePivotTable = function (sheetId, pivotName) {
+		if (this.pivotTables) {
+			for (let i = 0; i < this.pivotTables.length; i++) {
+				if (this.pivotTables[i].isCachePivotTable(sheetId, pivotName)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	};
+
+
+	function CTimelineCachePivotTable() {
+		this.name = null;
+		this.tabId = null;
+	}
+	CTimelineCachePivotTable.prototype.clone = function () {
+		var res = new CTimelineCachePivotTable();
+
+		res.name = this.name;
+		res.tabId = this.tabId;
+
+		return res;
+	};
+	CTimelineCachePivotTable.prototype.initPostOpen = function (tableIds, sheetIds) {
+		var ws = null;
+		if (null != this.tabId) {
+			ws = sheetIds[this.tabId];
+			if (ws) {
+				this.tabId = ws.getId();
+			}
+		}
+		return ws;
+	};
+	CTimelineCachePivotTable.prototype.isCachePivotTable = function (sheetId, pivotName) {
+		return this.tabId === sheetId && this.name === pivotName;
+	};
+
+
+	function CTimelineState() {
+		this.name = null;
+		this.filterState = null;
+
+		this.pivotCacheId = null;
+		this.minimalRefreshVersion = null;
+
+		this.lastRefreshVersion = null;
+		this.filterType = null;
+
+		this.selection = null;
+		this.bounds = null;
+	}
+	CTimelineState.prototype.clone = function () {
+		var res = new CTimelineState();
+
+		res.name = this.name;
+		res.filterState = this.filterState;
+
+		res.pivotCacheId = this.pivotCacheId;
+		res.minimalRefreshVersion = this.minimalRefreshVersion;
+
+		res.lastRefreshVersion = this.lastRefreshVersion;
+		res.filterType = this.filterType;
+
+		res.selection = this.selection && this.selection.clone();
+		res.bounds = this.bounds && this.bounds.clone();
+
+		return res;
+	};
+
+	function CTimelineRange() {
+		this.startDate = null;
+		this.endDate = null;
+	}
+	CTimelineRange.prototype.clone = function () {
+		var res = new CTimelineRange();
+
+		res.startDate = this.startDate;
+		res.endDate = this.endDate;
+
+		return res;
+	};
+
+	function CTimelineStyles() {
+		this.defaultTimelineStyle = null;
+		this.timelineStyles = null;
+	}
+	CTimelineStyles.prototype.clone = function () {
+		var res = new CTimelineRange();
+
+		res.defaultTimelineStyle = this.defaultTimelineStyle;
+		if (this.timelineStyles) {
+			res.timelineStyles = [];
+			for (let i = 0; i < this.timelineStyles.length; i++) {
+				res.timelineStyles.push(this.timelineStyles[i].clone());
+			}
+		}
+
+		return res;
+	};
+
+	function CTimelineStyle() {
+		this.name = null;
+		this.timelineStyleElements = null;
+	}
+	CTimelineStyle.prototype.clone = function () {
+		var res = new CTimelineRange();
+
+		res.name = this.name;
+		if (this.timelineStyleElements) {
+			res.timelineStyleElements = [];
+			for (let i = 0; i < this.timelineStyleElements.length; i++) {
+				res.timelineStyleElements.push(this.timelineStyleElements[i].clone());
+			}
+		}
+
+		return res;
+	};
+
+	function CTimelineStyleElement() {
+		this.type = null;
+		this.dxfId = null;
+	}
+	CTimelineStyleElement.prototype.clone = function () {
+		var res = new CTimelineRange();
+
+		res.type = this.type;
+		res.dxfId = this.dxfId;
+
+		return res;
+	};
+
+	function CTimelinePivotFilter() {
+		this.name = null;
+		this.description = null;
+		this.useWholeDay = null;
+		this.id = null;
+		this.fld = null;
+
+		this.autoFilter = null;
+	}
+	CTimelinePivotFilter.prototype.clone = function () {
+		var res = new CTimelinePivotFilter();
+
+		res.name = this.name;
+		res.description = this.description;
+		res.useWholeDay = this.name;
+		res.id = this.description;
+		res.fld = this.name;
+
+		res.autoFilter = this.autoFilter && this.autoFilter.clone();
+
+		return res;
+	};
 
 
 	//----------------------------------------------------------export----------------------------------------------------
@@ -16150,6 +17177,11 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_getPrintTitlesHeight"] = prot.asc_getPrintTitlesHeight;
 	prot["asc_getHeaderFooter"] = prot.asc_getHeaderFooter;
 	prot["asc_setHeaderFooter"] = prot.asc_setHeaderFooter;
+	prot["asc_getHorizontalCentered"] = prot.asc_getHorizontalCentered;
+	prot["asc_getVerticalCentered"] = prot.asc_getVerticalCentered;
+	prot["asc_setHorizontalCentered"] = prot.asc_setHorizontalCentered;
+	prot["asc_setVerticalCentered"] = prot.asc_setVerticalCentered;
+
 
 	window["Asc"]["CHeaderFooter"] = window["Asc"].CHeaderFooter = CHeaderFooter;
 	window["Asc"]["CHeaderFooterData"] = window["Asc"].CHeaderFooterData = CHeaderFooterData;
@@ -16323,6 +17355,40 @@ QueryTableField.prototype.clone = function() {
 
 	window["AscCommonExcel"].CRowColBreaks = CRowColBreaks;
 	window["AscCommonExcel"].CBreak = CBreak;
+
+	window["Asc"]["asc_CSeriesSettings"] = window["Asc"].asc_CSeriesSettings = asc_CSeriesSettings;
+	prot = asc_CSeriesSettings.prototype;
+	prot["asc_getSeriesIn"] = prot.asc_getSeriesIn;
+	prot["asc_getType"] = prot.asc_getType;
+	prot["asc_getDateUnit"] = prot.asc_getDateUnit;
+	prot["asc_getTrend"] = prot.asc_getTrend;
+	prot["asc_getStepValue"] = prot.asc_getStepValue;
+	prot["asc_getStopValue"] = prot.asc_getStopValue;
+	prot["asc_getContextMenuAllowedProps"] = prot.asc_getContextMenuAllowedProps;
+	prot["asc_getContextMenuChosenProperty"] = prot.asc_getContextMenuChosenProperty;
+	prot["asc_getToolbarMenuAllowedProps"] = prot.asc_getToolbarMenuAllowedProps;
+
+	prot["asc_setSeriesIn"] = prot.asc_setSeriesIn;
+	prot["asc_setType"] = prot.asc_setType;
+	prot["asc_setDateInit"] = prot.asc_setDateUnit;
+	prot["asc_setTrend"] = prot.asc_setTrend;
+	prot["asc_setStepValue"] = prot.asc_setStepValue;
+	prot["asc_setStopValue"] = prot.asc_setStopValue;
+	prot["asc_setContextMenuAllowedProps"] = prot.asc_setContextMenuAllowedProps;
+	prot["asc_setContextMenuChosenProperty"] = prot.asc_setContextMenuChosenProperty;
+	prot["asc_setToolbarMenuAllowedProps"] = prot.asc_setToolbarMenuAllowedProps;
+
+
+	window["AscCommonExcel"].CTimeline = CTimeline;
+	window["AscCommonExcel"].CTimelineCacheDefinition = CTimelineCacheDefinition;
+	window["AscCommonExcel"].CTimelineCachePivotTable = CTimelineCachePivotTable;
+	window["AscCommonExcel"].CTimelineState = CTimelineState;
+	window["AscCommonExcel"].CTimelineRange = CTimelineRange;
+	window["AscCommonExcel"].CTimelineStyles = CTimelineStyles;
+	window["AscCommonExcel"].CTimelineStyle = CTimelineStyle;
+	window["AscCommonExcel"].CTimelineStyleElement = CTimelineStyleElement;
+	window["AscCommonExcel"].CTimelinePivotFilter = CTimelinePivotFilter;
+
 
 
 })(window);

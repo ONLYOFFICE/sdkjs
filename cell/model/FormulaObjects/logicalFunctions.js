@@ -36,7 +36,7 @@
  * @param {Window} window
  * @param {undefined} undefined
  */
-	function (window, undefined) {
+function (window, undefined) {
 	var cErrorType = AscCommonExcel.cErrorType;
 	var cNumber = AscCommonExcel.cNumber;
 	var cString = AscCommonExcel.cString;
@@ -514,7 +514,7 @@
 					} else if (argArr[j] instanceof cString || emptyArg || argArr[j] instanceof cBool) {
 						argResult = new cBool(true);
 						nTrueValues++;
-					} else if(argArr.length === 1 && argArr[j] instanceof cNumber) {
+					} else if (argArr.length === 1 && argArr[j] instanceof cNumber) {
 						if (argResult == null) {
 							argResult = argArr[j].tocBool();
 						} else {
@@ -525,7 +525,7 @@
 							nTrueValues++;
 						}
 					}
-					if(!emptyArg) {
+					if (!emptyArg) {
 						allCellsEmpty = false;
 					}
 				}
@@ -533,7 +533,7 @@
 				//если диапазон содержит хоть одну непустую ячейку(без ошибки) - результат false
 				if (argResult == null && !allCellsEmpty) {
 					argResult = new cBool(false);
-				} else if(allCellsEmpty) {
+				} else if (allCellsEmpty) {
 					argResult = null;
 				}
 			} else {

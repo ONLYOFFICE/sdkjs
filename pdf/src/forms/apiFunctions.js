@@ -419,6 +419,74 @@
         oTargetRun.ClearContent();
         oTargetRun.AddText(sRes);
     }
+
+    function FormatDateValue(sFormat, nValue) {
+        let oNumFormat = AscCommon.oNumFormatCache.get(sFormat, AscCommon.NumFormatType.PDFFormDate);
+        oNumFormat.oNegativeFormat.bAddMinusIfNes = false;
+
+        function getShortPattern(aRawFormat) {
+            let dayDone     = false;
+            let monthDone   = false;
+            let yearDone    = false;
+            
+            let sPattern = "";
+
+            let numFormat_Year = 12;
+            let numFormat_Month = 13;
+            let numFormat_Day = 16;
+
+            for (let i = 0; i < aRawFormat.length; i++) {
+                let obj = aRawFormat[i];
+                switch (obj.type) {
+                    case numFormat_Day:
+                        if (dayDone == false) {
+                            sPattern += 1;
+                            dayDone = true;
+                        }
+                        break;
+                    case numFormat_Month:
+                        if (monthDone == false) {
+                            sPattern += 3;
+                            monthDone = true;
+                        }
+                        break;
+                    case numFormat_Year:
+                        if (yearDone == false) {
+                            if (obj.val > 2)
+                                sPattern += 5;
+                            else
+                                sPattern += 4;
+                            yearDone = true;
+                        }
+                        break;
+                            
+                }
+            }
+            return sPattern;
+        }
+
+        let oCultureInfo = {};
+        Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[9]);
+        if (null == oNumFormat.oTextFormat.ShortDatePattern) {
+            oNumFormat.oTextFormat.ShortDatePattern = getShortPattern(oNumFormat.oTextFormat.aRawFormat);
+            oNumFormat.oTextFormat._prepareFormatDatePDF();
+        }
+        oCultureInfo.ShortDatePattern = oNumFormat.oTextFormat.ShortDatePattern;
+
+        if (oCultureInfo.ShortDatePattern.indexOf("1") == -1)
+            oNumFormat.oTextFormat.bDay = false;
+
+        oCultureInfo.AbbreviatedMonthNames.length = 12;
+        oCultureInfo.MonthNames.length = 12;
+
+        let oResParsed = {
+            value: nValue / (86400 * 1000)
+        }
+
+        oNumFormat.oTextFormat.formatType = AscCommon.NumFormatType.PDFFormDate;
+        return oNumFormat.oTextFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, oCultureInfo)[0].text;
+    }
+
     /**
 	 * Check can the field accept the char or not.
 	 * @memberof CTextField
@@ -503,7 +571,6 @@
         oCultureInfo.MonthNames.length = 12;
 
         let oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oNumFormat);
-                
         if (!oResParsed) {
             oDoc.event["rc"] = false;
             oDoc.SetWarningInfo({
@@ -1125,6 +1192,7 @@
 		return new AscCommonWord.CDocumentColor(r, g, b, Auto ? Auto : false);
 	}
     
+    window["AscPDF"].FormatDateValue = FormatDateValue;
     window["AscPDF"].Api = {
         Functions: {
             AFNumber_Format:        AFNumber_Format,

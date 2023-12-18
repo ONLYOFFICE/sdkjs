@@ -9972,8 +9972,6 @@
 		var res = "";
 		if (Asc.c_oAscPivotAreaType.None === val) {
 			res = "none";
-		} else if (Asc.c_oAscPivotAreaType.Normal === val) {
-			res = "normal";
 		} else if (Asc.c_oAscPivotAreaType.Data === val) {
 			res = "data";
 		} else if (Asc.c_oAscPivotAreaType.All === val) {
@@ -9988,11 +9986,10 @@
 		return res;
 	}
 	function FromXml_ST_PivotAreaType(val) {
-		var res = -1;
+		// Normal is default.
+		var res = Asc.c_oAscPivotAreaType.Normal;
 		if ("none" === val) {
 			res = Asc.c_oAscPivotAreaType.None;
-		} else if ("normal" === val) {
-			res = Asc.c_oAscPivotAreaType.Normal;
 		} else if ("data" === val) {
 			res = Asc.c_oAscPivotAreaType.Data;
 		} else if ("all" === val) {

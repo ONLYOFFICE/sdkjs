@@ -10687,7 +10687,7 @@ CDocumentShd.prototype.GetSimpleColor = function(oTheme, oColorMap)
 		var RGBA = this.ThemeFill.getRGBAColor();
 		oFillColor = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
 	}
-	else if (undefined !== this.Fill)
+	else if (this.Fill && !this.Fill.IsAuto())
 	{
 		oFillColor = this.Fill;
 	}
@@ -10700,7 +10700,7 @@ CDocumentShd.prototype.GetSimpleColor = function(oTheme, oColorMap)
 		var RGBA = this.Unifill.getRGBAColor();
 		oStrokeColor = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
 	}
-	else if (undefined !== this.Color)
+	else if (this.Color && !this.Color.IsAuto())
 	{
 		oStrokeColor = this.Color;
 	}
@@ -10870,13 +10870,13 @@ CDocumentShd.prototype.GetSimpleColor = function(oTheme, oColorMap)
 
 	return oResultColor;
 };
-CDocumentShd.prototype.private_GetPctShdColor = function(nPct, oColor1, oColor2)
+CDocumentShd.prototype.private_GetPctShdColor = function(nPct, strokeColor, fillColor)
 {
 	var _nPct = 1 - nPct;
 	return new CDocumentColor(
-		(oColor1.r * nPct + oColor2.r * _nPct) | 0,
-		(oColor1.g * nPct + oColor2.g * _nPct) | 0,
-		(oColor1.b * nPct + oColor2.b * _nPct) | 0,
+		(strokeColor.r * nPct + fillColor.r * _nPct) | 0,
+		(strokeColor.g * nPct + fillColor.g * _nPct) | 0,
+		(strokeColor.b * nPct + fillColor.b * _nPct) | 0,
 		false
 	);
 };

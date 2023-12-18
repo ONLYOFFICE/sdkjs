@@ -216,7 +216,8 @@ var c_oSerProp_tblPrType = {
 	tblCaption: 17,
 	tblDescription: 18,
 	TableIndTwips: 19,
-	TableCellSpacingTwips: 20
+	TableCellSpacingTwips: 20,
+	tblOverlap: 21
 };
 var c_oSer_tblpPrType = {
     Page:0,
@@ -1210,6 +1211,10 @@ var EHint = {
 var ETblLayoutType = {
 	tbllayouttypeAutofit: 1,
 	tbllayouttypeFixed: 2
+};
+let ETblOverlapType = {
+	tbloverlapNever   : 1,
+	tbloverlapOverlap : 2
 };
 var ESectionMark = {
 	sectionmarkContinuous: 0,
@@ -2475,7 +2480,7 @@ function Binary_pPrWriter(memory, oNumIdMap, oBinaryHeaderFooterTableWriter, sav
         //Line
         if(null != Spacing.Line)
         {
-            var line = Asc.linerule_Auto === Spacing.LineRule ? Math.round(Spacing.Line * 240) : (this.bs.mmToTwips(Spacing.Line));
+            var line = Asc.linerule_Exact === Spacing.LineRule || Asc.linerule_AtLeast === Spacing.LineRule ? (this.bs.mmToTwips(Spacing.Line)) : Math.round(Spacing.Line * 240);
             this.memory.WriteByte(c_oSerProp_pPrType.Spacing_LineTwips);
             this.memory.WriteByte(c_oSerPropLenType.Long);
             this.memory.WriteLong(line);
@@ -3239,7 +3244,17 @@ function Binary_rPrWriter(memory, saveParams)
 		{
 			this.memory.WriteByte(c_oSerProp_rPrType.TextOutline);
             this.memory.WriteByte(c_oSerPropLenType.Variable);
+
+			let oFill = rPr.TextOutline.Fill;
+			if(oFill && null != oFill.transparent)
+			{
+				oFill.transparent = 255 - oFill.transparent;
+			}
 			this.bs.WriteItemWithLength(function () { pptx_content_writer.WriteSpPr(_this.memory, rPr.TextOutline, 0); });
+			if(oFill && null != oFill.transparent)
+			{
+				oFill.transparent = 255 - oFill.transparent;
+			}
 		}
 		if(null != rPr.TextFill)
 		{
@@ -4464,6 +4479,10 @@ Binary_tblPrWriter.prototype =
 		if (tblPr.PrChange && tblPr.ReviewInfo) {
 			this.bs.WriteItem(c_oSerProp_tblPrType.tblPrChange, function(){WriteTrackRevision(oThis.bs, oThis.saveParams.trackRevisionId++, tblPr.ReviewInfo, {btw: oThis, tblPr: tblPr.PrChange});});
 		}
+		if (table && false === table.Get_AllowOverlap())
+		{
+			this.bs.WriteItem(c_oSerProp_tblPrType.tblOverlap, function(){oThis.memory.WriteByte(ETblOverlapType.tbloverlapNever);});
+		}
     },
     WriteCellMar: function(cellMar)
     {
@@ -5341,7 +5360,7 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
                     break;
 				case para_Field:
 					let Instr = item.GetInstructionLine();
-					var oFFData = fieldtype_FORMTEXT === item.Get_FieldType() ? {} : null;
+					var oFFData = AscWord.fieldtype_FORMTEXT === item.Get_FieldType() ? {} : null;
 					if (Instr) {
 						if(this.saveParams && this.saveParams.bMailMergeDocx)
 							oThis.WriteParagraphContent(item, bUseSelection, false);
@@ -10190,8 +10209,15 @@ function Binary_rPrReader(doc, oReadResult, stream)
 			case c_oSerProp_rPrType.TextOutline:
 				if(length > 0){
 					var TextOutline = pptx_content_loader.ReadShapeProperty(this.stream, 0);
-					if(null != TextOutline)
+					if(null != TextOutline) {
 						rPr.TextOutline = TextOutline;
+						let oFill = TextOutline.Fill;
+						if(null != oFill){
+							if(null != oFill.transparent){
+								oFill.transparent = 255 - oFill.transparent;
+							}
+						}
+					}
 				}
 				else
 					res = c_oSerConstants.ReadUnknown;
@@ -10371,6 +10397,15 @@ Binary_tblPrReader.prototype =
 				return ReadTrackRevision(t, l, oThis.stream, reviewInfo, {btblPrr: oThis, tblPr: tblPrChange});
 			});
 			Pr.SetPrChange(tblPrChange, reviewInfo);
+		}
+		else if (c_oSerProp_tblPrType.tblOverlap === type && table)
+		{
+			 let overlapType = this.stream.GetUChar();
+			switch(overlapType)
+			{
+				case ETblOverlapType.tbloverlapNever: table.setAllowOverlap(false);break;
+				case ETblOverlapType.tbloverlapOverlap: table.setAllowOverlap(true);break;
+			}
 		}
 		else if(null != table)
 		{
@@ -10991,11 +11026,7 @@ function Binary_NumberingTableReader(doc, oReadResult, stream)
         {
 			if(nLevelNum < oNewNum.Lvl.length)
 			{
-				var oOldLvl = oNewNum.Lvl[nLevelNum];
-				var oNewLvl = oOldLvl.Copy();
-				//сбрасываем свойства
-				oNewLvl.ParaPr = new CParaPr();
-				oNewLvl.TextPr = new CTextPr();
+				var oNewLvl = new CNumberingLvl();
 				var tmp = {nLevelNum: nLevelNum};
 				res = this.bcr.Read2(length, function(t, l){
 					return oThis.ReadLevel(t, l, oNewLvl, tmp);
@@ -11716,12 +11747,12 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		let paragraph = paragraphContent.GetParagraph();
         if (c_oSer_FldSimpleType.Instr === type) {
 			var Instr = this.stream.GetString2LE(length);
-			let elem = new ParaField(fieldtype_UNKNOWN);
+			let elem = new ParaField(AscWord.fieldtype_UNKNOWN);
 			elem.SetParagraph(paragraph);
 			let oParser = new CFieldInstructionParser();
 			let Instruction = oParser.GetInstructionClass(Instr);
 			oParser.InitParaFieldArguments(Instruction.Type, Instr, elem);
-			if (fieldtype_UNKNOWN !== elem.FieldType) {
+			if (AscWord.fieldtype_UNKNOWN !== elem.FieldType) {
 				oFldSimpleObj.ParaField = elem;
 			} else {
 				this.ConcatContent(elem.Content);

@@ -370,7 +370,7 @@ var CPresentation = CPresentation || function(){};
                 if (isValid) {
                     oCurForm.needValidate = false; 
                     oCurForm.Commit();
-                    if (this.event["rc"] == true) {
+                    if (this.event["rc"] == true && this.IsNeedDoCalculate()) {
                         this.DoCalculateFields(oCurForm);
                         this.AddFieldToCommit(oCurForm);
                         this.CommitFields();
@@ -570,7 +570,7 @@ var CPresentation = CPresentation || function(){};
                 if (isValid) {
                     oField.needValidate = false; 
                     oField.Commit();
-                    if (this.event["rc"] == true) {
+                    if (this.event["rc"] == true && this.IsNeedDoCalculate()) {
                         this.DoCalculateFields(oField);
                         this.AddFieldToCommit(oField);
                         this.CommitFields();
@@ -644,7 +644,7 @@ var CPresentation = CPresentation || function(){};
             if (isValid) {
                 oActiveForm.needValidate = false; 
                 oActiveForm.Commit();
-                if (this.event["rc"] == true) {
+                if (this.event["rc"] == true && this.IsNeedDoCalculate()) {
                     this.DoCalculateFields(oActiveForm);
                     this.AddFieldToCommit(oActiveForm);
                     this.CommitFields();
@@ -757,6 +757,7 @@ var CPresentation = CPresentation || function(){};
         let IsOnDrawer      = oViewer.Api.isDrawInkMode();
         let IsOnEraser      = oViewer.Api.isEraseInkMode();
 
+        editor.sendEvent('asc_onHidePdfFormsActions');
         oViewer.mouseDownLinkObject = oViewer.getPageLinkByMouse();
         let oMouseDownField         = oViewer.getPageFieldByMouse();
         let oMouseDownAnnot         = oViewer.getPageAnnotByMouse();
@@ -947,9 +948,17 @@ var CPresentation = CPresentation || function(){};
             {
                 switch (mouseMoveFieldObject.GetType())
                 {
-                    case AscPDF.FIELD_TYPES.text:
+                    case AscPDF.FIELD_TYPES.text: {
                         cursorType = "text";
+                        
+                        if (mouseMoveFieldObject.IsDateFormat()) {
+                            if (pageObject.x >= mouseMoveFieldObject._markRect.x1 && pageObject.x <= mouseMoveFieldObject._markRect.x2 && pageObject.y >= mouseMoveFieldObject._markRect.y1 && pageObject.y <= mouseMoveFieldObject._markRect.y2) {
+                                cursorType = "pointer";
+                            }
+                        }
+
                         break;
+                    }
                     case AscPDF.FIELD_TYPES.combobox:
                         if (!pageObject)
                             return null;
@@ -1079,8 +1088,8 @@ var CPresentation = CPresentation || function(){};
                 
                 oField.onMouseUp();
 
-                if (oField.IsNeedCommit()) {
-                    let oDoc = oField.GetDocument();
+                let oDoc = oField.GetDocument();
+                if (oField.IsNeedCommit() && oDoc.IsNeedDoCalculate()) {
                     oDoc.DoCalculateFields();
                     oDoc.CommitFields();
                 }
@@ -1126,9 +1135,11 @@ var CPresentation = CPresentation || function(){};
 
                         // вызываем calculate actions
                         let oDoc = oParentForm.GetDocument();
-                        oDoc.DoCalculateFields();
-                        oDoc.CommitFields();
-
+                        if (oDoc.IsNeedDoCalculate()) {
+                            oDoc.DoCalculateFields();
+                            oDoc.CommitFields();
+                        }
+                        
                         // выход из формы
                         if (this.activeForm)
                         {
@@ -1273,6 +1284,12 @@ var CPresentation = CPresentation || function(){};
         this.calculateInfo.SetIsInProgress(false);
         this.calculateInfo.SetSourceField(null);
     };
+    CPDFDoc.prototype.IsNeedDoCalculate = function() {
+        if (this.calculateInfo.names.length > 0)
+            return true;
+
+        return false;
+    }
 
     CPDFDoc.prototype.GetCalculateInfo = function() {
         return this.calculateInfo;
@@ -1526,8 +1543,10 @@ var CPresentation = CPresentation || function(){};
             oAnnot.SetOpacity(opacity / 100);
         }
 
-        editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Highlight, false);
-        editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Highlight, false);
+        if (this.bOffMarkerAfterUsing) {
+            editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Highlight, false);
+            editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Highlight, false);
+        }
     };
     CPDFDoc.prototype.SetUnderline = function(r, g, b, opacity) {
         this.UnderlineColor = {
@@ -1575,8 +1594,10 @@ var CPresentation = CPresentation || function(){};
             oAnnot.SetOpacity(opacity / 100);
         }
 
-        editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Underline, false);
-        editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Underline, false);
+        if (this.bOffMarkerAfterUsing) {
+            editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Underline, false);
+            editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Underline, false);
+        }
     };
     CPDFDoc.prototype.SetStrikeout = function(r, g, b, opacity) {
         this.StrikeoutColor = {
@@ -1624,8 +1645,10 @@ var CPresentation = CPresentation || function(){};
             oAnnot.SetOpacity(opacity / 100);
         }
 
-        editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
-        editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
+        if (this.bOffMarkerAfterUsing) {
+            editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
+            editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
+        }
     };
     CPDFDoc.prototype.GetMarkerColor = function(nType) {
         switch (nType) {
@@ -1737,6 +1760,10 @@ var CPresentation = CPresentation || function(){};
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();
     }
+    CPDFDoc.prototype.TurnOnHistory = function() {
+        if (AscCommon.History.IsOn() == false)
+            AscCommon.History.TurnOn();
+    }
     CPDFDoc.prototype.ShowComment = function(arrId)
     {
         let oPos;
@@ -1771,26 +1798,32 @@ var CPresentation = CPresentation || function(){};
         }
     };
     CPDFDoc.prototype.UpdateCopyCutState = function() {
-        editor.sync_CanCopyCutCallback(this.CanCopyCut());
+        let oCanCopyCut = this.CanCopyCut();
+        editor.sync_CanCopyCutCallback(oCanCopyCut.copy, oCanCopyCut.cut);
     };
     CPDFDoc.prototype.CanCopyCut = function() {
         let oViewer = editor.getDocumentRenderer();
 
-        let isHasSelect = false;
+        let isCanCopy = false;
+        let isCanCut = false;
 
         let oSelection = oViewer.file.Selection;
         if (oSelection.Glyph1 != oSelection.Glyph2 || oSelection.Line1 != oSelection.Line2 ||
             oSelection.Page1 != oSelection.Page2) {
-                isHasSelect = true;
+                isCanCopy = true;
             }
         
 
         if (this.activeForm && this.activeForm.content && this.activeForm.content.IsSelectionUse() && 
             this.activeForm.content.IsSelectionEmpty() == false) {
-                isHasSelect = true;
+                isCanCopy = true;
+                isCanCut = true;
             }
 
-        return isHasSelect;
+        return {
+            copy: isCanCopy,
+            cut: isCanCut
+        };
     };
     CPDFDoc.prototype.RemoveComment = function(Id) {
         let oAnnot = this.annots.find(function(annot) {
@@ -1837,6 +1870,7 @@ var CPresentation = CPresentation || function(){};
 
         editor.sync_HideComment();
         editor.sync_RemoveComment(Id);
+        oViewer.DrawingObjects.resetSelection();
         oViewer._paint();
         oViewer.onUpdateOverlay();
     };
@@ -2290,12 +2324,18 @@ var CPresentation = CPresentation || function(){};
 	};
 	
     function CActionQueue(oDoc) {
-        this.doc            = oDoc;
-        this.actions        = [];
-        this.isInProgress   = false;
-        this.curAction  = null;
-        this.curActionIdx   = -1;
+        this.doc                = oDoc;
+        this.actions            = [];
+        this.isInProgress       = false;
+        this.curAction          = null;
+        this.curActionIdx       = -1;
         this.callBackAfterFocus = null;
+
+        // суть в том, что дату из пикера можем подогнать под любой формат
+		// но в цепочке actions может быть изменение значения формы, куда вводится дата с picker, что вызовет новый коммит
+		// если значение не изменилось на этапе нового коммита формы, то опять выставляем будто бы взяли с пикера
+		// в конце actions удаляем эту информацию, чтобы в дальнейшем это не влияло на обычную работу парсера даты из соответсвующих методов
+        this.datePickerInfo     = null;
     };
 
     CActionQueue.prototype.AddActions = function(aActions) {
@@ -2315,6 +2355,7 @@ var CPresentation = CPresentation || function(){};
     };
     CActionQueue.prototype.Stop = function() {
         this.SetInProgress(false);
+        this.datePickerInfo = null;
     };
     CActionQueue.prototype.IsInProgress = function() {
         return this.isInProgress;

@@ -602,6 +602,8 @@ function CDrawingStream(_writer)
 
     this.ClearMode          = false;
     this.IsRetina           = false;
+
+    this.ForceChangeFont = false;
 }
 
 CDrawingStream.prototype =
@@ -964,6 +966,7 @@ CDrawingStream.prototype =
         if (_info.SrcBold)      flag |= 0x04;
         if (_info.SrcItalic)    flag |= 0x08;
 
+        this.ForceChangeFont = true;
         this.Native["PD_LoadFont"](_info.Path, _info.FaceIndex, font.FontSize, flag);
     },
 
@@ -989,8 +992,12 @@ CDrawingStream.prototype =
         _lastFont.Name = name;
         _lastFont.Size = size;
 
-        if (_lastFont.Name != _lastFont.SetUpName || _lastFont.Size != _lastFont.SetUpSize || style != _lastFont.SetUpStyle)
+        if (_lastFont.Name != _lastFont.SetUpName || 
+            _lastFont.Size != _lastFont.SetUpSize || 
+            style != _lastFont.SetUpStyle ||
+            this.ForceChangeFont)
         {
+            this.ForceChangeFont = false;
             _lastFont.SetUpName = _lastFont.Name;
             _lastFont.SetUpSize = _lastFont.Size;
             _lastFont.SetUpStyle = style;
@@ -1063,8 +1070,12 @@ CDrawingStream.prototype =
         if (_lastFont.Bold)
             _style += 1;
 
-        if (_lastFont.Name != _lastFont.SetUpName || _lastFont.Size != _lastFont.SetUpSize || _style != _lastFont.SetUpStyle)
+        if (_lastFont.Name != _lastFont.SetUpName || 
+            _lastFont.Size != _lastFont.SetUpSize || 
+            _style != _lastFont.SetUpStyle ||
+            this.ForceChangeFont)
         {
+            this.ForceChangeFont = false;
             _lastFont.SetUpName = _lastFont.Name;
             _lastFont.SetUpSize = _lastFont.Size;
             _lastFont.SetUpStyle = _style;

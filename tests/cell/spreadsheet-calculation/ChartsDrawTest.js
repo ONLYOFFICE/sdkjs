@@ -30,53 +30,53 @@
  *
  */
 QUnit.config.autostart = false;
-$(function() {
+$(function () {
 
-	Asc.spreadsheet_api.prototype._init = function() {
+	Asc.spreadsheet_api.prototype._init = function () {
 		this._loadModules();
 	};
-	Asc.spreadsheet_api.prototype._loadFonts = function(fonts, callback) {
+	Asc.spreadsheet_api.prototype._loadFonts = function (fonts, callback) {
 		callback();
 	};
-	Asc.spreadsheet_api.prototype.onEndLoadFile = function(fonts, callback) {
+	Asc.spreadsheet_api.prototype.onEndLoadFile = function (fonts, callback) {
 		openDocument();
 	};
-	AscCommonExcel.WorkbookView.prototype._calcMaxDigitWidth = function() {
+	AscCommonExcel.WorkbookView.prototype._calcMaxDigitWidth = function () {
 	};
-	AscCommonExcel.WorkbookView.prototype._canResize = function() {
-	};
-
-	AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged = function() {
-	};
-	AscCommonExcel.WorkbookView.prototype.showWorksheet = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype._init = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype.updateRanges = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype._autoFitColumnsWidth = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype.setSelection = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype.draw = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype.getZoom = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype._getPPIY = function() {
-	};
-	AscCommonExcel.WorksheetView.prototype._getPPIX = function() {
+	AscCommonExcel.WorkbookView.prototype._canResize = function () {
 	};
 
-	AscCommonExcel.asc_CEventsController.prototype.init = function() {
+	AscCommonExcel.WorkbookView.prototype._onWSSelectionChanged = function () {
+	};
+	AscCommonExcel.WorkbookView.prototype.showWorksheet = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._init = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype.updateRanges = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._autoFitColumnsWidth = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype.setSelection = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype.draw = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._prepareDrawingObjects = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype.getZoom = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._getPPIY = function () {
+	};
+	AscCommonExcel.WorksheetView.prototype._getPPIX = function () {
+	};
+
+	AscCommonExcel.asc_CEventsController.prototype.init = function () {
 	};
 
 	AscCommon.InitBrowserInputContext = function () {
 
 	};
 
-	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function() {
+	AscCommon.baseEditorsApi.prototype._onEndLoadSdk = function () {
 		this.ImageLoader = AscCommon.g_image_loader;
 	};
 
@@ -84,7 +84,7 @@ $(function() {
 		'id-view': 'editor_sdk'
 	});
 	api.FontLoader = {
-		LoadDocumentFonts: function() {
+		LoadDocumentFonts: function () {
 			setTimeout(startTests, 0)
 		}
 	};
@@ -155,7 +155,7 @@ $(function() {
 	};
 
 	function testChartBaseTypes(doGeneratePaths) {
-		QUnit.test("Test: Base Charts Draw ", function(assert ) {
+		QUnit.test("Test: Base Charts Draw ", function (assert) {
 			let testData = [["", "2014", "2015", "2016"], ["Projected Revenue", "200", "240", "280"], ["Estimated Costs", "250", "260"]];
 			let testDataRange = new Asc.Range(0, 0, testData[0].length - 1, testData.length - 1);
 			fillData(wsData, testData, testDataRange);
@@ -199,8 +199,3751 @@ $(function() {
 				}
 			}
 		});
+	};
+
+	const isEqual = function (a, b) {
+
+		const first = a + ''
+		const second = b + ''
+
+		const firstLength = first.indexOf('.') == -1 ? 0 : first.length - (1 + first.indexOf('.'))
+		const secondLength = second.indexOf('.') == -1 ? 0 : second.length - (1 + second.indexOf('.'))
+
+		const min = Math.min(firstLength, secondLength)
+
+		if (firstLength != min) {
+			const num = Math.pow(10, min)
+			a = Math.round((a + Number.EPSILON) * num) / num
+		}
+
+		if (secondLength != min) {
+			const num = Math.pow(10, min)
+			b = Math.round((b + Number.EPSILON) * num) / num
+		}
+
+		//Math.round((num + Number.EPSILON) * 100) / 100
+		const tollerance = 0.005;
+		return Math.abs(a - b) < tollerance;
 	}
 
+	function testLinearTrendLineEquation() {
+		QUnit.test("Test: Linear trendlines equation", function (assert) {
+
+			const trendline = AscFormat.CTrendline
+			const order = 2;
+
+			let size = 6;
+			let catVals = [1, 2, 3, 4, 5, 6];
+			let valVals = [4, 6, 3, 7, 8, 9];
+			let m = 1;
+			let b = 2.6667;
+			let results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 2;
+			catVals = [1, 2];
+			valVals = [5, 15];
+			m = 10;
+			b = -5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-1, -2, -3, -4, -5, -6];
+			m = -1;
+			b = 0;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-3, 6, -9, 12, -15, 18];
+			m = 1.8;
+			b = -4.8;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 3, 6, 8, 10, 12];
+			m = 2.0857;
+			b = -0.4667;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, -3, 6, 8, 9];
+			m = 2.0571;
+			b = -3.5333;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 1, 0, 2, 0, 3];
+			m = 0.4;
+			b = -0.4;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-9, -7, -6, -5, -4, -2];
+			m = 1.2857;
+			b = -10;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
+			m = 0.1571;
+			b = -0.1;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
+			m = 0.2886;
+			b = -0.96;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 1, 4, 3, 6, 5];
+			m = 0.8286;
+			b = 0.6;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 4;
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
+			m = 15.2;
+			b = -19;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [4, -6, 3, -7, 8, 10];
+			m = 1.7714;
+			b = -4.2;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
+			m = 75838;
+			b = -172840;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
+			m = 0.2857;
+			b = 1.3333;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order)
+
+			assert.ok(isEqual(results[0], m), "LinearResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LinearResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+		})
+	}
+
+	function testLogarithmicTrendLineEquation() {
+		QUnit.test("Test: Logarithmic trendlines equation", function (assert) {
+
+			const trendline = AscFormat.CTrendline;
+			const order = 2;
+
+			let size = 6;
+			let catVals = [1, 2, 3, 4, 5, 6];
+			let valVals = [4, 6, 3, 7, 8, 9];
+			let m = 2.5453;
+			let b = 3.3757;
+			let results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 2;
+			catVals = [1, 2];
+			valVals = [5, 15];
+			m = 14.427;
+			b = 5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-1, -2, -3, -4, -5, -6];
+			m = -2.732;
+			b = -0.5044;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-3, 6, -9, 12, -15, 18];
+			m = 4.1668;
+			b = -3.0691;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 3, 6, 8, 10, 12];
+			m = 5.6474;
+			b = 0.6407;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, -3, 6, 8, 9];
+			m = 5.1404;
+			b = -1.97;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 1, 0, 2, 0, 3];
+			m = 1.0302;
+			b = -0.1296;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-9, -7, -6, -5, -4, -2];
+			m = 3.5479;
+			b = -9.3905;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
+			m = 0.4096;
+			b = 0.0008;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
+			m = 0.735;
+			b = -0.756;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 1, 4, 3, 6, 5];
+			m = 2.202;
+			b = 1.0854;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 4;
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
+			m = 29.565;
+			b = -4.4898;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [4, -6, 3, -7, 8, 10];
+			m = 3.2191;
+			b = -1.5299;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
+			m = 170659;
+			b = -94542;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
+			m = 1.3313;
+			b = 0.8735;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order)
+
+			assert.ok(isEqual(results[0], m), "LogarithmicResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "LogarithmicResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+		})
+	}
+
+	function testPowerTrendLineEquation() {
+		QUnit.test("Test: Power trendlines equation", function (assert) {
+
+			const trendline = AscFormat.CTrendline;
+			const order = 2;
+
+			let size = 6;
+			let catVals = [1, 2, 3, 4, 5, 6];
+			let valVals = [4, 6, 3, 7, 8, 9];
+			let m = 0.4178;
+			let b = 3.6391;
+			let results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
+
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 2;
+			catVals = [1, 2];
+			valVals = [5, 15];
+			m = 1.585;
+			b = 5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
+
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 3, 6, 8, 10, 12];
+			m = 1.0529;
+			b = 1.799;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
+
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
+			m = 1.1616;
+			b = 0.0984;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
+
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 1, 4, 3, 6, 5];
+			m = 0.7283;
+			b = 1.347;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
+
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 4;
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
+			m = 2.2106;
+			b = 1.8367;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
+
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
+			m = 6.2903;
+			b = 1.5974;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POWER, order)
+
+			assert.ok(isEqual(results[0], m), "PowerResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "PowerResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 0, 50000, 500000];
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			assert.strictEqual(results, undefined, "PowerResults should be undefined, due to the zero value in calculations, got:" + results);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, -1, 50000, 500000];
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			assert.strictEqual(results, undefined, "PowerResults should be undefined, due to the negative value in calculations, got:" + results);
+
+		})
+	}
+
+	function testExponentialTrendLineEquation() {
+		QUnit.test("Test: Exponential trendlines equation", function (assert) {
+
+			const trendline = AscFormat.CTrendline
+			const order = 2;
+
+			let size = 6;
+			let catVals = [1, 2, 3, 4, 5, 6];
+			let valVals = [4, 6, 3, 7, 8, 9];
+			let m = 0.1647;
+			let b = 3.2329;
+			let results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 2;
+			catVals = [1, 2];
+			valVals = [5, 15];
+			m = 1.0986;
+			b = 1.6667;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 3, 6, 8, 10, 12];
+			m = 0.3674;
+			b = 1.5776;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
+			m = 0.4127;
+			b = 0.0829;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 1, 4, 3, 6, 5];
+			m = 0.2763;
+			b = 1.1384;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 4;
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
+			m = 1.035;
+			b = 0.8;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
+			m = 2.3026;
+			b = 0.5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+
+			assert.ok(isEqual(results[0], m), "ExponentialResults are not equal to the expected results: expected slope:" + m + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], b), "ExponentialResults are not equal to the expected results: expected b:" + b + ', got:' + results[1]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 0, 50000, 500000];
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			assert.strictEqual(results, undefined, "ExponentialResults should be undefined, due to the zero value in calculations, got:" + results);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, -1, 50000, 500000];
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order)
+			assert.strictEqual(results, undefined, "ExponentialResults should be undefined, due to the negative value in calculations, got:" + results);
+
+		})
+	}
+
+	function testPolynomialTrendLineEquation() {
+		QUnit.test("Test: Polynomial trendlines equation", function (assert) {
+			// the equation is in the form of y = letiables[0] + x * letiables1 + x^2 * letiables2 ...
+			const trendline = AscFormat.CTrendline
+
+			let size = 2;
+			let catVals = [1, 2];
+			let valVals = [5, 15];
+			let letiables = [10, -5];
+			let order = 2; 
+			let results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, 6, 3, 7, 8, 9, 11];
+			letiables = [0.1667, -0.1905, 4.2857];
+			order = 3;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-1, -2, -3, -4, -5, -6, -7];
+			letiables = [0, -1, 0];
+			order = 3;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-3, 6, -9, 12, -15, 18, -21];
+			letiables = [-1.1429, 7.8571, -10.286];
+			order = 3;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 3, 6, 8, 10, 12, 14];
+			letiables = [0, 2.0714, -0.4286];
+			order = 3;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 2, -3, 6, 8, 9, 15];
+			letiables = [0.4286, -0.9286, 0.4286];
+			order = 3;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 1, 0, 2, 0, 3, 0];
+			letiables = [-0.0952, 0.9048, -0.8571];
+			order = 3;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-9, -7, -6, -5, -4, -2, -1];
+			letiables = [9e-16, 1.2857, -10];
+			order = 3;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
+			letiables = [0.0095, 0.081, 0.0143];
+			order = 3;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
+			letiables = [0.0202, 0.1202, -0.7];
+			order = 3;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 1, 4, 3, 6, 5, 7];
+			letiables = [0.0357, 0.6071, 0.8571];
+			order = 3;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+
+			size = 4;
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
+			letiables = [7, -19.8, 16];
+			order = 3;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, -6, 3, -7, 8, 10, -12];
+			letiables = [-0.5357, 3.8929, -4.8571];
+			order = 3;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
+			letiables = [43357, -227659, 231822];
+			order = 3;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
+			letiables = [-0.625, 4.6607, -4.5];
+			order = 3;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, 6, 3, 7, 8, 9, 11];
+			letiables = [-0.0278, 0.5, -1.3294, 5.2857];
+			order = 4;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-1, -2, -3, -4, -5, -6, -7];
+			letiables = [0, 0, -1, 5e-12];
+			order = 4;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-3, 6, -9, 12, -15, 18, -21];
+			letiables = [-0.6667, 6.8571, -19.476, 13.714];
+			order = 4;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 3, 6, 8, 10, 12, 14];
+			letiables = [-0.0278, 0.3333, 0.9325, 0.5714];
+			order = 4;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 2, -3, 6, 8, 9, 15];
+			letiables = [-0.0833, 1.4286, -4.3452, 3.4286];
+			order = 4;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 1, 0, 2, 0, 3, 0];
+			letiables = [-0.0556, 0.5714, -1.373, 1.1429];
+			order = 4;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-9, -7, -6, -5, -4, -2, -1];
+			letiables = [0.0278, -0.3333, 2.4246, -11];
+			order = 4;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
+			letiables = [-0.0056, 0.0762, -0.1468, 0.2143];
+			order = 4;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
+			letiables = [-0.0167, 0.2202, -0.5631, -0.1];
+			order = 4;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 1, 4, 3, 6, 5, 7];
+			letiables = [-0.0278, 0.369, -0.5317, 1.8571];
+			order = 4;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+
+			size = 4;
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
+			letiables = [4, -23, 47, -26];
+			order = 4;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, -6, 3, -7, 8, 10, -12];
+			letiables = [-1.0278, 11.798, -38.246, 32.143];
+			order = 4;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
+			letiables = [19744, -163953, 398218, -265720];
+			order = 4;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
+			letiables = [-0.2315, 1.8056, -2.6772, 1.3333];
+			order = 4;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, 6, 3, 7, 8, 9, 11];
+			letiables = [-0.0265, 0.3965, -1.7917, 3.4282, 2.2857];
+			order = 5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-1, -2, -3, -4, -5, -6, -7];
+			letiables = [0, 5e-13, 0, -1, 6e-11];
+			order = 5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-3, 6, -9, 12, -15, 18, -21];
+			letiables = [-0.7273, 10.97, -56, 111.02, -68.571];
+			order = 5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 3, 6, 8, 10, 12, 14];
+			letiables = [0.0265, -0.452, 2.625, -3.825, 3.5714];
+			order = 5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 2, -3, 6, 8, 9, 15];
+			letiables = [0.0341, -0.6288, 4.375, -10.462, 7.2857];
+			order = 5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 1, 0, 2, 0, 3, 0];
+			letiables = [-0.0606, 0.9141, -4.6667, 9.5014, -5.7143];
+			order = 5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-9, -7, -6, -5, -4, -2, -1];
+			letiables = [-0.0265, 0.452, -2.625, 7.1822, -14];
+			order = 5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
+			letiables = [-0.0045,  0.0672, -0.3167, 0.6688, -0.3];
+			order = 5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
+			letiables = [ -0.0083, 0.1167, -0.5, 0.9321, -1.0429];
+			order = 5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 1, 4, 3, 6, 5, 7];
+			letiables = [0.0492, -0.8157, 4.625, -9.3672, 7.4286];
+			order = 5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, -6, 3, -7, 8, 10, -12];
+			letiables = [-0.3144, 4.0025, -15.375, 18.165, -3.4286];
+			order = 5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
+			letiables = [7517.8, -85506, 337593, -533991, 275562];
+			order = 5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
+			letiables = [-0.1458, 1.8102, -7.9236, 15.406, -9.1667];
+			order = 5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, 6, 3, 7, 8, 9, 11];
+			letiables = [0.0833, -1.6932, 12.758, -43.458, 65.508, -29.143];
+			order = 6;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-1, -2, -3, -4, -5, -6, -7];
+			letiables = [-6e-14, 0, 7e-12, -3e-11, -1, 4e-9];
+			order = 6;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-3, 6, -9, 12, -15, 18, -21];
+			letiables = [-0.4, 7.2727, -48.364, 144, -186.96, 82.286];
+			order = 6;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 3, 6, 8, 10, 12, 14];
+			letiables = [-0.0167, 0.3598, -2.9242, 10.958, -16.241, 9.8571];
+			order = 6;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 2, -3, 6, 8, 9, 15];
+			letiables = [0.175, -3.4659, 25.33, -83.125, 119.9, -58.714];
+			order = 6;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 1, 0, 2, 0, 3, 0];
+			letiables = [-0.0333, 0.6061, -4.0303,12, -15.33, 6.8571];
+			order = 6;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-9, -7, -6, -5, -4, -2, -1];
+			letiables = [-0.0083, 0.1402, -0.7841, 1.5417, 0.9742, -10.857];
+			order = 6;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
+			letiables = [0.0042, -0.0879, 0.6852, -2.4, 3.7727, -1.8714];
+			order = 6;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
+			letiables = [0.0013, -0.0333, 0.3021, -1.125, 1.8633, -1.5143];
+			order = 6;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 1, 4, 3, 6, 5, 7];
+			letiables = [-0.0042,  0.1326, -1.4337, 6.7083, -12.471, 9];
+			order = 6;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, -6, 3, -7, 8, 10, -12];
+			letiables = [-0.2292, 4.2689, -29.991, 99.208, -152.55, 83];
+			order = 6;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
+			letiables = [2460.4, -35539, 196071, -509186, 611919, -265720];
+			order = 6;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
+			letiables = [-0.0417, 0.5833, -2.9583, 6.4167, -4, -1e-8];
+			order = 6;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, 6, 3, 7, 8, 9, 11];
+			letiables = [-0.0694,  1.75, -17.444, 87, -224.99, 279.75, -122];
+			order = 7;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-1, -2, -3, -4, -5, -6, -7];
+			letiables = [0, -3e-11, -8e-10, 2e-9, 2e-8, -1, -1e-6];
+			order = 7;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-3, 6, -9, 12, -15, 18, -21];
+			letiables = [-1.0667, 25.2, -234.67, 1092, -2644.3, 3103.8, -1344];
+			order = 7;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 3, 6, 8, 10, 12, 14];
+			letiables = [0.0083, -0.2167, 2.25, -11.833, 32.742, -41.95, 21];
+			order = 7;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 2, -3, 6, 8, 9, 15];
+			letiables = [-0.1333, 3.375, -33.708, 167.88,  -431.66, 531.25, -237];
+			order = 7;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0, 1, 0, 2, 0, 3, 0];
+			letiables = [-0.0889, 2.1, -19.556, 91, -220.36, 258.9, -112];
+			order = 7;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-9, -7, -6, -5, -4, -2, -1];
+			letiables = [-0.0083, 0.1917, -1.75, 8.125, -20.242, 26.683, -22];
+			order = 7;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
+			letiables = [-0.0036, 0.0908, -0.9069, 4.5458, -11.839, 14.913, -6.7];
+			order = 7;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9, 1];
+			letiables = [0.0076, -0.1821, 1.6993, -7.8646, 18.843, -21.703, 8.7];
+			order = 7;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [2, 1, 4, 3, 6, 5, 7];
+			letiables = [0.0875, -2.1042, 19.979, -94.979,  235.43, -282.42, 126];
+			order = 7;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [4, -6, 3, -7, 8, 10, -12];
+			letiables = [0.3792, -9.3292, 90.271, -435.35, 1090.4, -1322.3, 590];
+			order = 7;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+			assert.ok(isEqual(results[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + results[4]);
+			assert.ok(isEqual(results[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + results[5]);
+			assert.ok(isEqual(results[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + results[6]);
+
+			size = 2;
+			catVals = [1, 2];
+			valVals = [5, 15];
+			letiables = [10, -5];
+			order = 3; 
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+
+			size = 4;
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
+			letiables = [-26, 47, -23, 4];
+			letiables = [4, -23, 47, -26];
+			order = 5;
+			results = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order)
+			
+			assert.ok(isEqual(results[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + results[0]);
+			assert.ok(isEqual(results[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + results[1]);
+			assert.ok(isEqual(results[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + results[2]);
+			assert.ok(isEqual(results[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + results[3]);
+
+		})
+	}
+
+	const areSame = function (result, check){
+		for(let i=0; i< result.length; i++){
+			if(!isEqual(result[i], check[i])){
+				return false
+			}
+		}
+		return true
+	}
+
+	function testMovingAverageTrendLineResuts(){
+		QUnit.test("Test: MovingAverage trendlines results", function (assert) {
+
+			const trendline = AscFormat.CTrendline;
+			const order = 2;
+
+			let ptCount = 6;
+			let catVals = [1, 2, 3, 4, 5, 6];
+			let valVals = [4, 6, 3, 7, 8, 9];
+			let catValResults = [2, 3, 4, 5, 6];
+			let valValResults = [5, 4.5, 5, 7.5, 8.5];
+			let period = 2;
+			let results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 2;
+			catVals = [1, 2];
+			valVals = [5, 15];
+			catValResults = [];
+			valValResults = [];
+			period = 3;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-1, -2, -3, -4, -5, -6];
+			catValResults = [4, 5, 6];
+			valValResults = [-2.5, -3.5, -4.5];
+			period = 4;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-3, 6, -9, 12, -15, 18];
+			catValResults = [5, 6];
+			valValResults = [-1.8, 2.4];
+			period = 5;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 3, 6, 8, 10, 12];
+			catValResults = [];
+			valValResults = [];
+			period = 6;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, -3, 6, 8, 9];
+			catValResults = [2, 3, 4, 5, 6];
+			valValResults = [1, -0.5, 1.5, 7, 8.5];
+			period = 2;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 1, 0, 2, 0, 3];
+			catValResults = [3, 4, 5, 6];
+			valValResults = [0.333333, 1, 0.666667, 1.666667];
+			period = 3;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-9, -7, -6, -5, -4, -2];
+			catValResults = [4, 5, 6];
+			valValResults = [-6.75, -5.5, -4.25];
+			period = 4;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9];
+			catValResults = [5, 6];
+			valValResults = [0.36, 0.52];
+			period = 5;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
+			catValResults = [2, 3, 4, 5, 6];
+			valValResults = [-0.45, -0.3, -0.15, 0.25, 0.75];
+			period = 2;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 1, 4, 3, 6, 5];
+			catValResults = [3, 4, 5, 6];
+			valValResults = [2.333333, 2.666667, 4.333333, 4.666667];
+			period = 3;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 4;
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
+			catValResults = [3, 4];
+			valValResults = [8.666667, 24.666667];
+			period = 3;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [4, -6, 3, -7, 8, 10];
+			catValResults = [4, 5, 6];
+			valValResults = [-1.5, -0.5, 3.5];
+			period = 4;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
+			catValResults = [5, 6];
+			valValResults = [11111, 111110];
+			period = 5;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
+			catValResults = [2, 3, 4, 5, 6];
+			valValResults = [1, 2.5, 3.5, 4.5, 2.5];
+			period = 2;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 6;
+			catVals = [1, 2, 6];
+			valVals = [4, 6, 10];
+			catValResults = [2, 3, 6];
+			valValResults = [5, 6, 10];
+			period = 2;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 3;
+			catVals = [1, 2];
+			valVals = [4, 6];
+			catValResults = [2, 3];
+			valValResults = [5, 6];
+			period = 2;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 7;
+			catVals = [1, 2, 6, 7];
+			valVals = [4, 6, 10, 13];
+			catValResults = [2, 3, 6, 7];
+			valValResults = [5, 6, 10, 11.5];
+			period = 2;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 7;
+			catVals = [1, 4, 6, 7];
+			valVals = [4, 5, 10, 13];
+			catValResults = [2, 4, 5, 6, 7];
+			valValResults = [4, 5, 5, 10, 11.5];
+			period = 2;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 7;
+			catVals = [4, 6, 7];
+			valVals = [5, 10, 13];
+			catValResults = [4, 5, 6, 7];
+			valValResults = [5, 5, 10, 11.5];
+			period = 2;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 7;
+			catVals = [1, 2, 3, 4, 6];
+			valVals = [4, 6, 3, 7, 10];
+			catValResults = [3, 4, 5, 6, 7];
+			valValResults = [4.333333, 5.333333, 5, 8.5, 10];
+			period = 3;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 7;
+			catVals = [1, 2, 3, 6];
+			valVals = [4, 6, 3, 10];
+			catValResults = [3, 4, 5, 6, 7];
+			valValResults = [4.333333, 4.5, 3, 10, 10];
+			period = 3;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+			ptCount = 7;
+			catVals = [4, 6];
+			valVals = [5, 10];
+			catValResults = [4, 5, 6, 7];
+			valValResults = [5, 5, 10, 10];
+			period = 2;
+			results = trendline.prototype._getMAline(catVals, valVals, ptCount, period)
+
+			assert.ok(areSame(results.catVals, catValResults), "MovingAverage are not equal to the expected x results / expected are: " + catValResults + " got: " + results.catVals );
+			assert.ok(areSame(results.valVals, valValResults), "MovingAverage are not equal to the expected y results / expected are: " + valValResults + " got: " + results.valVals );
+
+		})
+	}
+
+	function testDispR(){
+		QUnit.test("Test: Check R squared", function (assert) {
+
+			const trendline = AscFormat.CTrendline
+
+			let size = 6;
+			let catVals = [1, 2, 3, 4, 5, 6];
+			let valVals = [4, 6, 3, 7, 8, 9];
+			let letiables = [1, 2.6667];
+			let rSquared = 0.6522;
+			let results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 2;
+			catVals = [1, 2];
+			valVals = [5, 15];
+			letiables = [10, -5];
+			rSquared = 1;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-1, -2, -3, -4, -5, -6];
+			letiables = [-1, 0];
+			rSquared = 1;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			catVals = [0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469];
+			valVals = [-3, 6, -9, 12, -15, 18];
+			letiables = [4.1668, -3.0691];
+			rSquared = 0.0473;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LOG);
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0.693147181, 1.098612289, 1.791759469, 2.079441542, 2.302585093, 2.48490665];
+			letiables = [0.3674, 1.5776];
+			rSquared = 0.9461;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP);
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, -3, 6, 8, 9];
+			letiables = [0.4107, -0.8179, 0.3];
+			rSquared = 0.709;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY);
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 1, 0, 2, 0, 3];
+			letiables = [ 0.1296, -1.254, 3.75973, -2.6667];
+			rSquared = 0.5397;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY);
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-9, -7, -6, -5, -4, -2];
+			letiables = [3e-14, 0.0926, -0.9722, 4.2209, -12.333];
+			rSquared = 0.9995;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY);
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			catVals = [0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469];
+			valVals = [-2.302585093, -1.203972804, -1.609437912, -0.693147181, -0.356674944, -0.105360516];
+			letiables = [1.1616, 0.0984];
+			rSquared = 0.8697;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POWER);
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
+			letiables = [-0.0217,  0.3625, -2.25, 6.4375, -8.2283, 3.2];
+			rSquared = 1;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY);
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0.693147181, 0, 1.386294361, 1.098612289, 1.791759469, 1.609437912];
+			letiables = [0.2763, 1.1384];
+			rSquared = 0.6083;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP);
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 4;
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
+			letiables = [15.2, -19];
+			rSquared = 0.8371;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [4, -6, 3, -7, 8, 10];
+			letiables = [1.7714, -4.2];
+			rSquared = 0.2197;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			catVals = [0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469];
+			valVals = [1.609437912, 3.912023005, 6.214608098, 8.517193191, 10.81977828, 13.12236338];
+			letiables = [6.2903, 1.5974];
+			rSquared = 0.9363;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POWER);
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
+			letiables = [0.2857, 1.3333];
+			rSquared = 0.067;
+			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
+
+			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
+
+		})
+	}
+
+	function testIntercept () {
+		QUnit.test("Test: Interception equation + rSquared", function (assert) {
+
+			const trendline = AscFormat.CTrendline
+
+			let size = 6;
+			let catVals = [1, 2, 3, 4, 5, 6];
+			let valVals = [4, 6, 3, 7, 8, 9];
+			let letiables = [1.6154, 0];
+			let rSquared = 0.3464;
+			let order = 2;
+			let intercept = 0;
+			let equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept);
+			let rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 2;
+			catVals = [1, 2];
+			valVals = [5, 15];
+			letiables = [7, 0];
+			rSquared = 0.9;
+			order = 2;
+			intercept = 0;
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-1, -2, -3, -4, -5, -6];
+			m = -2.732;
+			b = -0.5044;
+			letiables = [-2.732, -0.5044]
+			rSquared = 0.9363;
+			order = 2;
+			intercept = 0;
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LOG, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LOG);
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "LogarithmicResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "LogarithmicResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquaredResults + ', got:' + rSquaredResults);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-3, 6, -9, 12, -15, 18];
+			letiables = [0.7232, -2.8125, 0];
+			rSquared = 0.1269;
+			order = 3;
+			intercept = 0;
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY);
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(equationResults[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + equationResults[2]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+			
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 3, 6, 8, 10, 12];
+			letiables = [0.4726, 1];
+			rSquared = 0.85;
+			order = 2;
+			intercept = 1;
+
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP);
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "ExponentialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "ExponentialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 3, 6, 8, 10, 12];
+			letiables = [0.3126, 2];
+			rSquared = 0.9201;
+			order = 2;
+			intercept = 2;
+
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP);
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "ExponentialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "ExponentialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, -3, 6, 8, 9];
+			letiables = [-0.0662, 0.9524, -1.7176, 0];
+			rSquared = 0.719;
+			order = 4;
+			intercept = 0;
+
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY);
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(equationResults[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + equationResults[2]);
+			assert.ok(isEqual(equationResults[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + equationResults[3]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 1, 0, 2, 0, 3];
+			letiables = [0.045, -0.4827, 1.5552, -1.1891, 0];
+			rSquared = 0.5928;
+			order = 5;
+			intercept = 0;
+
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY);
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(equationResults[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + equationResults[2]);
+			assert.ok(isEqual(equationResults[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + equationResults[3]);
+			assert.ok(isEqual(equationResults[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + equationResults[4]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-9, -7, -6, -5, -4, -2];
+			letiables = [-0.0501, 0.8914, -5.857, 17.348, -21.228, 0];
+			rSquared = 0.9906;
+			order = 6;
+			intercept = 0;
+
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POLY);
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(equationResults[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + equationResults[2]);
+			assert.ok(isEqual(equationResults[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + equationResults[3]);
+			assert.ok(isEqual(equationResults[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + equationResults[4]);
+			assert.ok(isEqual(equationResults[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + equationResults[5]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 7;
+			catVals = [1, 2, 3, 4, 5, 6, 7];
+			valVals = [0.1, 0.3, 0.2, 0.5, 0.7, 0.9, 1];
+			letiables = [0.001, -0.0219, 0.1707, -0.5973, 0.9099, -0.3486, 0];
+			rSquared = 0.9822;
+			order = 7;
+			intercept = 0;
+
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_POLY, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, equationResults, AscFormat.TRENDLINE_TYPE_POLY);
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "PolynomialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "PolynomialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(equationResults[2], letiables[2]), "PolynomialResults are not equal to the expected results: expected third constant:" + letiables[2] + ', got:' + equationResults[2]);
+			assert.ok(isEqual(equationResults[3], letiables[3]), "PolynomialResults are not equal to the expected results: expected fourth constant:" + letiables[3] + ', got:' + equationResults[3]);
+			assert.ok(isEqual(equationResults[4], letiables[4]), "PolynomialResults are not equal to the expected results: expected fifth constant:" + letiables[4] + ', got:' + equationResults[4]);
+			assert.ok(isEqual(equationResults[5], letiables[5]), "PolynomialResults are not equal to the expected results: expected sixth constant:" + letiables[5] + ', got:' + equationResults[5]);
+			assert.ok(isEqual(equationResults[6], letiables[6]), "PolynomialResults are not equal to the expected results: expected seventh constant:" + letiables[6] + ', got:' + equationResults[6]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
+			letiables = [0.5286, -2];
+			rSquared = 0.1296;
+			order = 2;
+			intercept = -2;
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [2, 1, 4, 3, 6, 5];
+			letiables = [-1.8864, 12.365]
+			rSquared = -8.44;
+			order = 2;
+			intercept = 12.365;
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR)
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 4;
+			catVals = [1, 2, 3, 4];
+			valVals = [2, 8, 16, 50];
+			letiables = [0.1223, 12.365]
+			rSquared = 0.0659;
+			order = 2;
+			intercept = 12.365;
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP);
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "ExponentialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "ExponentialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [4, -6, 3, -7, 8, 10];
+			letiables = [2.4079, -6.958]
+			rSquared = 0.1845;
+			order = 2;
+			intercept = -6.958;
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [5, 50, 500, 5000, 50000, 500000];
+			letiables = [2.6197, 0.1265]
+			rSquared = 0.9765;
+			order = 2;
+			intercept = 0.1265;
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP);
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "ExponentialResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "ExponentialResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+
+			size = 6;
+			catVals = [1, 2, 3, 4, 5, 6];
+			valVals = [0, 2, 3, 4, 5, 0];
+			letiables = [0.5642, 0.1265]
+			rSquared = -0.012;
+			order = 2;
+			intercept = 0.1265;
+			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept);
+			rSquaredResults = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_LINEAR);
+
+			assert.ok(isEqual(equationResults[0], letiables[0]), "LinearResults are not equal to the expected results: expected first constant:" + letiables[0] + ', got:' + equationResults[0]);
+			assert.ok(isEqual(equationResults[1], letiables[1]), "LinearResults are not equal to the expected results: expected second constant:" + letiables[1] + ', got:' + equationResults[1]);
+			assert.ok(isEqual(rSquaredResults, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + rSquaredResults);
+		})
+	}
+
+	const _obtainEquationStorage = function (type) {
+		const storage = {
+			[AscFormat.TRENDLINE_TYPE_EXP]: {
+				calcYVal: function (val, supps, isLog) {
+					const res = supps[0] * Math.exp(val * supps[1]);
+					if (isLog && res <= 0){
+						return NaN;
+					} else {
+						return isLog ? (Math.log(res) / Math.log(isLog)) : res;
+					}
+				}, calcXVal: function (val, supps, isLog) {
+					val = isLog ? Math.pow(isLog, val) : val;
+					return Math.log(val / supps[0]) / supps[1];
+				}, calcSlope: function (val, supps, isLog) {
+					if (!isLog){
+						return supps[0] * supps[1] * Math.exp(val * supps[1]);
+					} else {
+						return (Math.log(Math.exp(1)) / Math.log(isLog)) * supps[1];
+					}
+				}
+			}, [AscFormat.TRENDLINE_TYPE_LINEAR]: {
+				calcYVal: function (val, supps, isLog) {
+					const res = supps[1] * val + supps[0];
+					if (isLog && res <= 0){
+						return NaN;
+					} else {
+						return isLog ? (Math.log(res) / Math.log(isLog)) : res;
+					}
+				}, calcXVal: function (val, supps, isLog) {
+					val = isLog ? Math.pow(isLog, val) : val;
+					return (val - supps[0]) / supps[1];
+				}, calcSlope: function (val, supps, isLog) {
+					if (!isLog){
+						return supps[1];
+					} else {
+						return supps[1] / (Math.log(isLog) * (supps[1] * val + supps[0]));
+					}
+				}
+			}, [AscFormat.TRENDLINE_TYPE_LOG]: {
+				calcYVal: function (val, supps, isLog) {
+					if(val > 0){
+						const res = supps[1] * Math.log(val) + supps[0];
+						if (isLog && res <= 0){
+							return NaN;
+						} else {
+							return isLog ? (Math.log(res) / Math.log(isLog)) : res;
+						}
+					} else {
+						return NaN;
+					}
+				}, calcXVal: function (val, supps, isLog) {
+					val = isLog ? Math.pow(isLog, val) : val;
+					return Math.exp((val - supps[0]) / supps[1]);
+				}, calcSlope: function (val, supps, isLog) {
+					if (!isLog){
+						return supps[1] / val;
+					} else {
+						return supps[1] / (Math.log(isLog) * val * (supps[1] * Math.log(val) + supps[0]));
+					}
+				}
+			}, [AscFormat.TRENDLINE_TYPE_POLY]: {
+				calcYVal: function (val, supps) {
+					let result = 0;
+					let power = 0;
+					for (let i = 0; i < supps.length; i++) {
+						result += (Math.pow(val, power) * supps[i]);
+						power++;
+					}
+					return result;
+				}
+			}, [AscFormat.TRENDLINE_TYPE_POWER]: {
+				calcYVal: function (val, supps, isLog) {
+					const res = supps[0] * Math.pow(val, supps[1]);
+					if (isLog && res <= 0){
+						return NaN;
+					} else {
+						return isLog ? (Math.log(res) / Math.log(isLog)) : res;
+					}
+				}, calcXVal: function (val, supps, isLog) {
+					val = isLog ? Math.pow(isLog, val) : val;
+					return Math.pow((val / supps[0]), 1 / supps[1]);
+				}, calcSlope: function (val, supps, isLog) {
+					if (!isLog){
+						return supps[0] * supps[1] * Math.pow(val, supps[1] - 1);
+					} else {
+						return supps[1] / (Math.log(isLog) * val);
+					}
+				}
+			}
+		}
+
+		return storage.hasOwnProperty(type) ? storage[type] : null;
+	}
+
+	function testLineBuilderApproximatedBezier () {
+		QUnit.test("Test: Line Builder approximated bezier function", function (assert) {
+
+			let chartletiables = [0.6000000000000014, 0.8285714285714283]
+			let catMin = 1;
+			let catMax = 6;
+			let valMin = null;
+			let valMax = null;
+			let logBase = null;
+			let type = 1;
+			let lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			let equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			let cutPoint = 1000;
+			let resultStartCatVals = [];
+			let resultsStartValVals = [];
+			let resultsCatVals = [1, 6];
+			let resultsValVals = [1.4285714285714297, 5.571428571428571];
+			let lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-19, 15.200000000000003]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 4];
+			resultsValVals = [-3.799999999999997, 41.80000000000001];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-4.199999999999999, 1.7714285714285714]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 6];
+			resultsValVals = [-2.428571428571428, 6.428571428571429];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-172840, 75837.85714285713]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 6];
+			resultsValVals = [-97002.14285714287, 282187.1428571428];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.333333333333334, 0.28571428571428514]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 6];
+			resultsValVals = [1.619047619047619, 3.047619047619045];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.6000000000000014, 0.8285714285714283]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.4315151945474693, 6];
+			resultsValVals = [1.4285714285714297, 3.2770831944502925, 5.57142857142857];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-19, 15.200000000000003]
+			catMin = 1;
+			catMax = 4;
+			valMin = 0.1;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1.256578947368421, 1.2814964885317515, 1.2898023355861947, 4];
+			resultsValVals = [0.10000000000000005, 4.414440786380464, 15.60154450534442, 41.800000000000004];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-4.199999999999999, 1.7714285714285714]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [2.376612903225806, 2.399797564974433, 2.4075257855573082, 6];
+			resultsValVals = [0.01000000000000001, 0.6076398272462274, 2.3888835256910106, 6.428571428571428];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-172840, 75837.85714285713]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [2.2827937611257103, 2.3006753066997625, 2.304801817216851, 6];
+			resultsValVals = [282.187142857143, 34483.62358038931, 104531.15364045568, 282187.1428571427];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.333333333333334, 0.28571428571428514]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.9798282656993273, 6];
+			resultsValVals = [1.619047619047619, 2.2961172530284593, 3.047619047619045];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.0853780304041418, 2.202033537057911]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.150111363073666, 6];
+			resultsValVals = [1.0853780304041418, 3.6179618232437427, 5.030892471985402];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-4.489845190674558, 29.565068994571178]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.8483924814931874, 4];
+			resultsValVals = [-4.489845190674558, 20.592937059146976, 36.496043242619976];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-1.5298842782486233, 3.2191057898549253]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.1501113630736657, 6];
+			resultsValVals = [-1.5298842782486233, 2.1724458695997537, 4.237979003170796];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-94541.7317212114, 170658.5375973549]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.150111363073666, 6];
+			resultsValVals = [-94541.7317212114, 101734.59157504095, 211237.3190234613];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.8734737381931108, 1.3313304643014572]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.1501113630736657, 6];
+			resultsValVals = [0.8734737381931108, 2.404652033192356, 3.2588977042770297];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.0853780304041418, 2.202033537057911]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.2988232955456442, 1.5976465910912885, 6];
+			resultsValVals = [1.0853780304041418, 1.990102532537364, 3.6489665158755145, 5.0308924719854];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-4.489845190674558, 29.565068994571178]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1.165438725217985, 1.1736988748896424, 1.174553373131538, 4];
+			resultsValVals = [0.03649604324262, 11.370596442990395, 20.593748163716384, 36.49604324261996];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-1.5298842782486233, 3.2191057898549253]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1.6134226199693829, 1.6375316351901021, 1.6409757802216334, 6];
+			resultsValVals = [0.01000000000000001, 1.2276085027998023, 2.4406022912978123, 4.2379790031707945];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-94541.7317212114, 170658.5375973549]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1.7423235984576693, 1.7547074335066466, 1.7559885198910234, 6];
+			resultsValVals = [211.23731902346108, 65857.82996110985, 119286.28973286712, 211237.31902346085];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.8734737381931108, 1.3313304643014572]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.2933202071709262, 1.6704461878192602, 6];
+			resultsValVals = [0.8734737381931108, 1.365875111651997, 2.42687128132288, 3.2588977042770293];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.3470294984018791, 0.7283261086204962]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.6012794465851243, 6];
+			resultsValVals = [1.3470294984018791, 2.918007538131848, 4.967352481769911];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.8367239858577353, 2.210556099993931]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.5676669401272707, 4];
+			resultsValVals = [1.8367239858577353, 8.201736154712346, 39.34878110454656];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.597378819226662, 6.290262865578015]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [1];
+			resultsStartValVals = [6];
+			resultsCatVals = [3.5, 4.128138791741785, 5.175036777978095, 6];
+			resultsValVals = [4224.146163889106, 8992.794563642741, 16940.541896565468, 125367.1738292479];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.3470294984018791, 0.7283261086204962]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.1501113630736657, 6];
+			resultsValVals = [1.3470294984018791, 3.112909844498046, 4.967352481769911];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.8367239858577353, 2.210556099993931]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.8483924814931876, 4];
+			resultsValVals = [1.8367239858577353, 11.981966375832453, 39.34878110454656];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.9540401412926336, 6.056432353383194]
+			catMin = 1;
+			catMax = 10;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.5844104554141858, 2.558427881104495, 10];
+			resultsValVals = [1.9540401412926336, 67.31219921189552, 24548.64985736736, 2225183.5179863917];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.1384149147480012, 0.2762585712743759]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 4.058030426393523, 6];
+			resultsValVals = [1.5006456374707577, 2.7684017513643067, 5.97263555719961];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.7999999999999979, 1.034977465516456]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.8154710586797078, 3.1745894898125546, 4];
+			resultsValVals = [2.252034239498936, 4.152738007182711, 7.3205776199890025, 50.23772863019174];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.5000000000000027, 2.302585092994045]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [1];
+			resultsStartValVals = [6];
+			resultsCatVals = [3.5, 4.925624950443996, 5.573636291554903, 6];
+			resultsValVals = [1581.1388300841957, 6771.4211390038145, 9130.640370330913, 500000.00000000064];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.1384149147480012, 0.2762585712743759]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 6];
+			resultsValVals = [1.5006456374707577, 5.9726355571996095];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.7999999999999979, 1.034977465516456]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 4];
+			resultsValVals = [2.2520342394989354, 50.237728630191725];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.5000000000000027, 2.302585092994045]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 6];
+			resultsValVals = [5.000000000000022, 499999.99999999994];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+		})
+	}
+
+	function testLineBuilderApproximatedBezier () {
+		QUnit.test("Test: Line Builder boundaries calculation", function (assert) {
+
+			let chartletiables = [0.6000000000000014, 0.8285714285714283]
+			let catMin = 1;
+			let catMax = 6;
+			let valMin = null;
+			let valMax = null;
+			let logBase = null;
+			let type = 1;
+			let lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			let equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			let cutPoint = 1000; 
+			let maxCatVal = 6;
+			let minCatVal = 1;
+			let maxValVal = 5.571428571428571;
+			let minValVal = 1.4285714285714297;
+			let lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			let boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-19, 15.200000000000003]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 41.80000000000001;
+			minValVal = -3.799999999999997;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-4.199999999999999, 1.7714285714285714]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 6.428571428571429;
+			minValVal = -2.428571428571428;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-172840, 75837.85714285713]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 282187.1428571428;
+			minValVal = -97002.14285714287;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.333333333333334, 0.28571428571428514]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 3.047619047619045;
+			minValVal = 1.619047619047619;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.6000000000000014, 0.8285714285714283]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 5.57142857142857;
+			minValVal = 1.4285714285714297;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-19, 15.200000000000003]
+			catMin = 1;
+			catMax = 4;
+			valMin = 0.1;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 41.800000000000004;
+			minValVal = 0.10000000000000005;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-4.199999999999999, 1.7714285714285714]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 2.376612903225806;
+			maxValVal = 6.428571428571428;
+			minValVal = 0.01000000000000001;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-172840, 75837.85714285713]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 2.2827937611257103;
+			maxValVal = 282187.1428571427;
+			minValVal = 282.187142857143;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.333333333333334, 0.28571428571428514]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 3.047619047619045;
+			minValVal = 1.619047619047619;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.0853780304041418, 2.202033537057911]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 5.030892471985402;
+			minValVal = 1.0853780304041418;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-4.489845190674558, 29.565068994571178]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 36.496043242619976;
+			minValVal = -4.489845190674558;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-1.5298842782486233, 3.2191057898549253]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 4.237979003170796;
+			minValVal = -1.5298842782486233;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-94541.7317212114, 170658.5375973549]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 211237.3190234613;
+			minValVal = -94541.7317212114;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.8734737381931108, 1.3313304643014572]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 3.2588977042770297;
+			minValVal = 0.8734737381931108;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.0853780304041418, 2.202033537057911]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 5.0308924719854;
+			minValVal = 1.0853780304041418;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-4.489845190674558, 29.565068994571178]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 36.49604324261996;
+			minValVal = 0.03649604324262;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-1.5298842782486233, 3.2191057898549253]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1.6134226199693829;
+			maxValVal = 4.2379790031707945;
+			minValVal = 0.01000000000000001;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-94541.7317212114, 170658.5375973549]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1.7423235984576693;
+			maxValVal = 211237.31902346085;
+			minValVal = 211.23731902346108;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.8734737381931108, 1.3313304643014572]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 3.2588977042770293;
+			minValVal = 0.8734737381931108;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.3470294984018791, 0.7283261086204962]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 4.967352481769911;
+			minValVal = 1.3470294984018791;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.8367239858577353, 2.210556099993931]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 39.34878110454656;
+			minValVal = 1.8367239858577353;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.597378819226662, 6.290262865578015]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 125367.1738292479;
+			minValVal = 6;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.3470294984018791, 0.7283261086204962]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 4.967352481769911;
+			minValVal = 1.3470294984018791;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.8367239858577353, 2.210556099993931]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 39.34878110454656;
+			minValVal = 1.8367239858577353;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.9540401412926336, 6.056432353383194]
+			catMin = 1;
+			catMax = 10;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 10;
+			minCatVal = 1;
+			maxValVal = 2225183.5179863917;
+			minValVal = 1.9540401412926336;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.1384149147480012, 0.2762585712743759]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 5.97263555719961;
+			minValVal = 1.5006456374707577;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.7999999999999979, 1.034977465516456]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 50.23772863019174;
+			minValVal = 2.252034239498936;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.5000000000000027, 2.302585092994045]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 500000.00000000064;
+			minValVal = 6;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.1384149147480012, 0.2762585712743759]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 5.9726355571996095;
+			minValVal = 1.5006456374707577;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.7999999999999979, 1.034977465516456]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 50.237728630191725;
+			minValVal = 2.2520342394989354;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.5000000000000027, 2.302585092994045]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 499999.99999999994;
+			minValVal = 5.000000000000022;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+		})
+	}
 
 	QUnit.module("ChartsDraw");
 
@@ -208,5 +3951,14 @@ $(function() {
 		QUnit.start();
 
 		testChartBaseTypes();
+		testLinearTrendLineEquation();
+		testLogarithmicTrendLineEquation();
+		testPowerTrendLineEquation();
+		testExponentialTrendLineEquation();
+		testPolynomialTrendLineEquation();
+		testMovingAverageTrendLineResuts();
+		testDispR()
+		testIntercept();
+		testLineBuilderApproximatedBezier();
 	}
 });

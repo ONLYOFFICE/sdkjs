@@ -525,7 +525,7 @@ QUnit.config.autostart = false;
 
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addTime);
 		CloseCellEditor(true);
-		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor).split(' ').join(':00 '), 'Check add time');
+		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor), 'Check add time');
 		EnterText('');
 
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addDate);
@@ -535,7 +535,7 @@ QUnit.config.autostart = false;
 
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addTime, 1);
 		CloseCellEditor(true);
-		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor).split(' ').join(':00 '), 'Check add time');
+		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor), 'Check add time');
 		EnterText('');
 
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addDate, 1);
@@ -1482,7 +1482,7 @@ QUnit.config.autostart = false;
 
 		ExecuteTableHotkey(tableHotkeyTypes.addTime);
 		CloseCellEditor(true);
-		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor).split(' ').join(':00 '), 'Check add time');
+		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor), 'Check add time');
 
 		ExecuteTableHotkey(tableHotkeyTypes.addDate, 1);
 		CloseCellEditor(true);
@@ -1490,7 +1490,7 @@ QUnit.config.autostart = false;
 
 		ExecuteTableHotkey(tableHotkeyTypes.addTime, 1);
 		CloseCellEditor(true);
-		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor).split(' ').join(':00 '), 'Check add time');
+		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor), 'Check add time');
 		
 		ExecuteTableHotkey(tableHotkeyTypes.addSeparator);
 		CloseCellEditor(true);

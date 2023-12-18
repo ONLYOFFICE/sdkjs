@@ -948,6 +948,8 @@
 		assert.strictEqual(res & keydownresult_PreventDefault, keydownresult_PreventDefault, 'Check prevent default');
 		res = ExecuteMainHotkey(mainShortcutTypes.checkScrollLock);
 		assert.strictEqual(res & keydownresult_PreventDefault, keydownresult_PreventDefault, 'Check prevent default');
+		res = ExecuteMainHotkey(mainShortcutTypes.disableBrowserZoomIn);
+		assert.strictEqual(res & keydownresult_PreventDefault, keydownresult_PreventDefault, 'Check prevent default');
 	});
 
 	QUnit.test('Check remove graphic objects', (assert) =>

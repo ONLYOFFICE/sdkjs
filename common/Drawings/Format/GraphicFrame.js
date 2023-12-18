@@ -1187,6 +1187,8 @@
 			Graphic.GraphicData.Uri = "http://schemas.openxmlformats.org/drawingml/2006/chart";
 		} else if (nDrawingType === AscDFH.historyitem_type_SlicerView) {
 			Graphic.GraphicData.Uri = "http://schemas.microsoft.com/office/drawing/2010/slicer";
+		} else if (nDrawingType === AscDFH.historyitem_type_TimelineSlicerView) {
+			Graphic.GraphicData.Uri = "http://schemas.microsoft.com/office/drawing/2012/timeslicer";
 		} else if (nDrawingType === AscDFH.historyitem_type_SmartArt) {
 			Graphic.GraphicData.Uri = "http://schemas.openxmlformats.org/drawingml/2006/diagram";
 		}

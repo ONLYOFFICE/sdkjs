@@ -349,7 +349,7 @@ function updateGlobalSkinColors(theme)
 		// demonstration
 		DemBackgroundColor              : "background-toolbar",
 		DemButtonBackgroundColor        : "background-normal",
-		DemButtonBackgroundColorHover   : "highlight-buttin-hover",
+		DemButtonBackgroundColorHover   : "highlight-button-hover",
 		DemButtonBackgroundColorActive  : "highlight-button-pressed",
 		DemButtonBorderColor            : "border-regular-control",
 		DemButtonTextColor              : "text-normal",

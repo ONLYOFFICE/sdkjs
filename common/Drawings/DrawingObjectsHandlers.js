@@ -384,11 +384,7 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
 }
 
 function handleBaseAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex) {
-    //var hit_in_inner_area = drawing.hitInInnerArea && drawing.hitInInnerArea(x, y);
-    //var hit_in_path = drawing.hitInPath && drawing.hitInPath(x, y);
-    var hit_in_text_rect = drawing.hitInTextRect && drawing.hitInTextRect(x, y);
-
-    if (drawing.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink && drawing.IsTextMarkup() == false && hit_in_text_rect) {
+    if (drawing.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink && drawing.IsTextMarkup() == false && editor.getDocumentRenderer().getPageAnnotByMouse() == drawing) {
         drawingObjectsController.arrPreTrackObjects.push(drawing.createMoveTrack());
         drawingObjectsController.changeCurrentState(new AscFormat.PreMoveState(drawingObjectsController, x, y, e.ShiftKey, e.CtrlKey, drawing, true, false, false));
         return true;

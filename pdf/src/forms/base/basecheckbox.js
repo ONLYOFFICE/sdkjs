@@ -41,13 +41,6 @@
         square:     5
     }
     
-    let CHECK_SVG = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
-    <path d='M5.2381 8.8L4 11.8L7.71429 16C12.0476 9.4 13.2857 8.2 17 4C14.5238 4 9.77778 8.8 7.71429 11.8L5.2381 8.8Z' fill='black'/>\
-    </svg>";
-
-    const CHECKED_ICON = new Image();
-    CHECKED_ICON.src = "data:image/svg+xml;utf8," + encodeURIComponent(CHECK_SVG);
-    
     /**
 	 * Class representing a base checkbox class.
 	 * @constructor
@@ -235,12 +228,11 @@
                 let nGrScale = oGraphicsPDF.GetScale();
                 let nScale = Math.min((nInsideW - nInsideW * 0.2) / imgW, (nInsideH - nInsideW * 0.2) / imgH);
 
-                let wScaled = imgW * nScale;
-                let hScaled = imgH * nScale;
+                let wScaled = Math.max(imgW * nScale, 1);
+                let hScaled = Math.max(imgH * nScale, 1);
 
                 let x = X + oMargins.bottom + (nInsideW - wScaled)/2;
                 let y = Y + oMargins.bottom + (nInsideH - hScaled)/2;
-
 
                 var canvas = document.createElement('canvas');
                 var context = canvas.getContext('2d');
@@ -251,32 +243,13 @@
 
                 // Draw the image onto the canvas
                 context.drawImage(CHECKED_ICON, 0, 0, imgW, imgH, 0, 0, canvas.width, canvas.height);
+                context.globalCompositeOperation = "source-atop";
+                context.fillStyle = "rgb(" + oRGB.r + "," + oRGB.g + "," + oRGB.b + ")";
+                context.fillRect(0, 0, canvas.width, canvas.height);
 
-                // Get the pixel data of the canvas
-                var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                var data = imageData.data;
-
-                // Loop through each pixel
-                for (let i = 0; i < data.length; i += 4) {
-                    const red = data[i];
-                    const green = data[i + 1];
-                    const blue = data[i + 2];
-
-                    // Check if the pixel is black (R = 0, G = 0, B = 0)
-                    if (red === 0 && green === 0 && blue === 0) {
-                        // Change the pixel color to red (R = 255, G = 0, B = 0)
-                        data[i] = oRGB.r; // Red
-                        data[i + 1] = oRGB.g; // Green
-                        data[i + 2] = oRGB.b; // Blue
-                        // Note: The alpha channel (transparency) remains unchanged
-                    }
-                }
-
-                // Put the modified pixel data back onto the canvas
-                context.putImageData(imageData, 0, 0);
-
-                // Draw the checkmark
-                oGraphicsPDF.DrawImage(canvas, 0, 0, wScaled, hScaled, x, y, wScaled, hScaled);
+                oGraphicsPDF.SetIntegerGrid(true);
+                oGraphicsPDF.DrawImageXY(canvas, x, y);
+                oGraphicsPDF.SetIntegerGrid(false);
             }
         }
     };
@@ -570,7 +543,34 @@
     };
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
-        
+    
+    let CHECK_SVG = "<svg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'>\
+    <path d='M5.2381 8.8L4 11.8L7.71429 16C12.0476 9.4 13.2857 8.2 17 4C14.5238 4 9.77778 8.8 7.71429 11.8L5.2381 8.8Z' fill='black'/>\
+    </svg>";
+
+    function toBase64(str) {
+		return window.btoa(unescape(encodeURIComponent(str)));
+	}
+	
+	function getSvgImage(svg) {
+		let image = new Image();
+		if (!AscCommon.AscBrowser.isIE || AscCommon.AscBrowser.isIeEdge) {
+			image.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+		}
+		else {
+			image.src = "data:image/svg+xml;base64," + toBase64(svg);
+			image.onload = function() {
+				// Почему-то IE не определяет размеры сам
+				this.width = 20;
+				this.height = 20;
+			};
+		}
+		
+		return image;
+	}
+
+    const CHECKED_ICON = getSvgImage(CHECK_SVG);
+
 	window["AscPDF"].CBaseCheckBoxField = CBaseCheckBoxField;
 	window["AscPDF"].CHECKBOX_STYLES = CHECKBOX_STYLES;
 })();

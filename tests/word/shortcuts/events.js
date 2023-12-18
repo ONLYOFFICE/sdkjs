@@ -120,7 +120,8 @@
 		moveToStartNextPage                : 80,
 		selectToStartNextPage              : 81,
 		moveToNextHeaderFooter             : 82,
-		moveToNextHeader                   : 83
+		moveToNextHeader                   : 83,
+		disableBrowserZoomIn               : 84,
 	};
 
 	const testHotkeyEvents = {};
@@ -254,6 +255,7 @@
 	];
 	testHotkeyEvents[testHotkeyActions.selectToStartNextPage] = [CreateTestEvent(34, true, true, false, false)];
 	testHotkeyEvents[testHotkeyActions.selectToNextPage] = [CreateTestEvent(34, false, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.disableBrowserZoomIn] = [CreateTestEvent(187, true, true, false, false)];
 
 function CreateTestEvent(nKeyCode, bIsCtrl, bIsShift, bIsAlt, bIsMetaKey, flags)
 {

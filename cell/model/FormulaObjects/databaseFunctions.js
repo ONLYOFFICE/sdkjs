@@ -36,7 +36,7 @@
  * @param {Window} window
  * @param {undefined} undefined
  */
-	function (window, undefined) {
+function (window, undefined) {
 	var cBaseFunction = AscCommonExcel.cBaseFunction;
 	var cFormulaFunctionGroup = AscCommonExcel.cFormulaFunctionGroup;
 	var cElementType = AscCommonExcel.cElementType;
@@ -45,10 +45,11 @@
 	var cError = AscCommonExcel.cError;
 	var argType = Asc.c_oAscFormulaArgumentType;
 
-	function StatisticOnlineAlgorithm(){
+	function StatisticOnlineAlgorithm() {
 		this.reset();
 	}
-	StatisticOnlineAlgorithm.prototype.reset = function() {
+
+	StatisticOnlineAlgorithm.prototype.reset = function () {
 		this.count = 0;
 		this.countNums = 0;
 		this.min = Number.POSITIVE_INFINITY;
@@ -59,7 +60,7 @@
 		this.M2 = 0;
 		this.errorType = null;
 	};
-	StatisticOnlineAlgorithm.prototype.union = function(val) {
+	StatisticOnlineAlgorithm.prototype.union = function (val) {
 		this.min = Math.min(this.min, val.min);
 		this.max = Math.max(this.max, val.max);
 		this.sum = this.sum + val.sum;
@@ -74,7 +75,7 @@
 		this.countNums = this.countNums + val.countNums;
 		this.errorType = this.errorType || val.errorType;
 	};
-	StatisticOnlineAlgorithm.prototype.add = function(val) {
+	StatisticOnlineAlgorithm.prototype.add = function (val) {
 		this.count++;
 		this.countNums++;
 		this.min = Math.min(this.min, val);
@@ -86,49 +87,49 @@
 		this.mean += delta / this.countNums;
 		this.M2 += delta * (val - this.mean);
 	};
-	StatisticOnlineAlgorithm.prototype.addCount = function() {
+	StatisticOnlineAlgorithm.prototype.addCount = function () {
 		this.count++;
 	};
-	StatisticOnlineAlgorithm.prototype.addError = function(errorType) {
+	StatisticOnlineAlgorithm.prototype.addError = function (errorType) {
 		this.errorType = errorType;
 	};
-	StatisticOnlineAlgorithm.prototype.getCount = function() {
+	StatisticOnlineAlgorithm.prototype.getCount = function () {
 		return this.count;
 	};
-	StatisticOnlineAlgorithm.prototype.getCountNums = function() {
+	StatisticOnlineAlgorithm.prototype.getCountNums = function () {
 		return this.countNums;
 	};
-	StatisticOnlineAlgorithm.prototype.getMin = function() {
+	StatisticOnlineAlgorithm.prototype.getMin = function () {
 		return this.min;
 	};
-	StatisticOnlineAlgorithm.prototype.getMax = function() {
+	StatisticOnlineAlgorithm.prototype.getMax = function () {
 		return this.max;
 	};
-	StatisticOnlineAlgorithm.prototype.getSum = function() {
+	StatisticOnlineAlgorithm.prototype.getSum = function () {
 		return this.sum;
 	};
-	StatisticOnlineAlgorithm.prototype.getMean = function() {
+	StatisticOnlineAlgorithm.prototype.getMean = function () {
 		return this.mean;
 	};
-	StatisticOnlineAlgorithm.prototype.getProduct = function() {
+	StatisticOnlineAlgorithm.prototype.getProduct = function () {
 		return this.countNums > 0 ? this.product : 0;
 	};
-	StatisticOnlineAlgorithm.prototype.getVar = function() {
+	StatisticOnlineAlgorithm.prototype.getVar = function () {
 		return this.countNums > 1 ? (this.M2 / (this.countNums - 1)) : 0;
 	};
-	StatisticOnlineAlgorithm.prototype.getVarP = function() {
+	StatisticOnlineAlgorithm.prototype.getVarP = function () {
 		return this.countNums > 0 ? (this.M2 / this.countNums) : 0;
 	};
-	StatisticOnlineAlgorithm.prototype.getStdDev = function() {
+	StatisticOnlineAlgorithm.prototype.getStdDev = function () {
 		return Math.sqrt(this.getVar());
 	};
-	StatisticOnlineAlgorithm.prototype.getStdDevP = function() {
+	StatisticOnlineAlgorithm.prototype.getStdDevP = function () {
 		return Math.sqrt(this.getVarP());
 	};
-	StatisticOnlineAlgorithm.prototype.isEmpty = function() {
+	StatisticOnlineAlgorithm.prototype.isEmpty = function () {
 		return 0 === this.count && 0 === this.countNums;
 	};
-	StatisticOnlineAlgorithm.prototype.getCellValue = function(dataType, fieldType, rowType, colType) {
+	StatisticOnlineAlgorithm.prototype.getCellValue = function (dataType, fieldType, rowType, colType) {
 		var oCellValue;
 		if (this.isEmpty()) {
 			return oCellValue;
@@ -166,7 +167,7 @@
 				oCellValue.number = this.countNums > 0 ? this.getMin() : 0;
 				break;
 			case Asc.c_oAscItemType.Product:
-				oCellValue.number =  this.getProduct();
+				oCellValue.number = this.getProduct();
 				break;
 			case Asc.c_oAscItemType.Avg:
 				if (this.countNums > 0) {
@@ -211,27 +212,28 @@
 			case Asc.c_oAscItemType.Blank:
 				oCellValue = undefined;
 				break;
-			default: oCellValue.number = this.getSum();
+			default:
+				oCellValue.number = this.getSum();
 		}
 		return oCellValue;
 	};
 
-	function checkValueByCondition(condition, val){
+	function checkValueByCondition(condition, val) {
 		var res = false;
 		condition = condition.tocString();
-		if(cElementType.error === condition.type){
+		if (cElementType.error === condition.type) {
 			return false;
 		}
 
 		//condition  = condition.getValue();
 
-		if("" === condition.value){
+		if ("" === condition.value) {
 			res = true;
-		}else{
+		} else {
 			var conditionObj = AscCommonExcel.matchingValue(condition);
 			//если строка, без операторов, добавляем * для поиска совпадений начинающихся с данной строки
 			//так делает MS. lo ищет строгие совпадения
-			if(null === conditionObj.op && cElementType.string === conditionObj.val.type){
+			if (null === conditionObj.op && cElementType.string === conditionObj.val.type) {
 				conditionObj.val.value += "*";
 			}
 
@@ -244,30 +246,30 @@
 		var arr = [];
 		var map = {};
 
-		for(var i = 0; i < dataBase.length; i++){
-			for(var j = 0; j < dataBase[0].length; j++){
+		for (var i = 0; i < dataBase.length; i++) {
+			for (var j = 0; j < dataBase[0].length; j++) {
 				var header = dataBase[0][j].getValue();
-				if(bIsCondition){
-					if(0 === i){
+				if (bIsCondition) {
+					if (0 === i) {
 						arr[j] = header;
-						if(map.hasOwnProperty(header)){//если находим такой же заголовок, пропускаем
+						if (map.hasOwnProperty(header)) {//если находим такой же заголовок, пропускаем
 							continue;
-						}else{
+						} else {
 							map[header] = [];
 						}
-					}else{
+					} else {
 						map[header].push(dataBase[i][j]);
 					}
-				}else{
-					if(0 === i){
-						if(map.hasOwnProperty(header)){//если находим такой же заголовок, пропускаем
+				} else {
+					if (0 === i) {
+						if (map.hasOwnProperty(header)) {//если находим такой же заголовок, пропускаем
 							continue;
-						}else{
+						} else {
 							map[header] = [];
 							arr[j] = header;
 						}
-					}else{
-						if(!map[header][i - 1]){
+					} else {
+						if (!map[header][i - 1]) {
 							map[header][i - 1] = dataBase[i][j];
 						}
 					}
@@ -278,7 +280,7 @@
 		return {arr: arr, map: map};
 	}
 
-	function getNeedValuesFromDataBase(dataBase, field, conditionData, bIsGetObjArray, doNotCheckEmptyField){
+	function getNeedValuesFromDataBase(dataBase, field, conditionData, bIsGetObjArray, doNotCheckEmptyField) {
 
 		//заполняем map название столбца-> его содержимое(из базы данных)
 		var databaseObj = convertDatabase(dataBase);
@@ -299,44 +301,44 @@
 
 		var isNumberField = field.tocNumber();
 		var isEmptyField = cElementType.empty === field.type;
-		if(cElementType.error === isNumberField.type){
+		if (cElementType.error === isNumberField.type) {
 			field = field.getValue();
-		}else{
+		} else {
 			//если поле задано числом, то выбираем заголовок столбца с данным именем
 			var number = isNumberField.getValue();
-			if(headersArr[number - 1]){
+			if (headersArr[number - 1]) {
 				field = headersArr[number - 1];
-			}else{
+			} else {
 				field = null;
 			}
 		}
 
-		if(!isEmptyField && null === field){
+		if (!isEmptyField && null === field) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
 		var previousWinArray;
 		var winElems = [];
-		for(var i = 1; i < conditionData.length; i++){
+		for (var i = 1; i < conditionData.length; i++) {
 			previousWinArray = null;
-			for(var j = 0; j < conditionData[0].length; j++){
+			for (var j = 0; j < conditionData[0].length; j++) {
 				var condition = conditionData[i][j];
 				var header = headersConditionArr[j];
 
 				//проходимся по всем строкам данного столбца из базы и смотрим что нам подходит по условию
 				var databaseData = headersDataMap[header];
 
-				if(!databaseData){
+				if (!databaseData) {
 					continue;
 				}
 
 				var winColumnArray = [];
-				for(var n = 0; n < databaseData.length; n++){
-					if(previousWinArray && previousWinArray[n]){
-						if(checkValueByCondition(condition, databaseData[n])){
+				for (var n = 0; n < databaseData.length; n++) {
+					if (previousWinArray && previousWinArray[n]) {
+						if (checkValueByCondition(condition, databaseData[n])) {
 							winColumnArray[n] = true;
 						}
-					}else if(!previousWinArray && checkValueByCondition(condition, databaseData[n])){
+					} else if (!previousWinArray && checkValueByCondition(condition, databaseData[n])) {
 						winColumnArray[n] = true;
 					}
 				}
@@ -349,26 +351,26 @@
 		var resArr = [];
 		var usuallyAddElems = [];
 		var needDataColumn;
-		if(isEmptyField && headersConditionArr && headersConditionArr[0]){
+		if (isEmptyField && headersConditionArr && headersConditionArr[0]) {
 			needDataColumn = headersDataMap[headersConditionArr[0]];
-		}else{
+		} else {
 			needDataColumn = headersDataMap[field];
 		}
 
-		if(!needDataColumn){
+		if (!needDataColumn) {
 			return new cError(cErrorType.wrong_value_type);
 		}
 
-		for(var i = 0; i < winElems.length; i++){
-			for(var j in winElems[i]){
+		for (var i = 0; i < winElems.length; i++) {
+			for (var j in winElems[i]) {
 				if (winElems[i].hasOwnProperty(j)) {
-					if(true === usuallyAddElems[j] || cElementType.empty === needDataColumn[j].type){
+					if (true === usuallyAddElems[j] || cElementType.empty === needDataColumn[j].type) {
 						continue;
 					}
 
-					if(bIsGetObjArray){
+					if (bIsGetObjArray) {
 						resArr.push(needDataColumn[j]);
-					}else{
+					} else {
 						resArr.push(needDataColumn[j].getValue());
 					}
 
@@ -412,27 +414,27 @@
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2]);
-		if(cElementType.error === resArr.type){
+		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
 
 		var summ = 0;
 		var count = 0;
-		for(var i = 0; i < resArr.length; i++){
+		for (var i = 0; i < resArr.length; i++) {
 			var val = parseFloat(resArr[i]);
-			if(!isNaN(val)){
+			if (!isNaN(val)) {
 				summ += val;
 				count++;
 			}
 		}
 
-		if(0 === count){
+		if (0 === count) {
 			return new cError(cErrorType.division_by_zero);
 		}
 
-		 var res = new cNumber(summ / count);
-		 return cElementType.error === res.type ? new cNumber(0) : res;
-	 };
+		var res = new cNumber(summ / count);
+		return cElementType.error === res.type ? new cNumber(0) : res;
+	};
 
 
 	/**
@@ -463,19 +465,19 @@
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2], null, true);
-		if(cElementType.error === resArr.type){
+		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
 
 		var isEmptyField = cElementType.empty === argClone[1].type;
 		var count = 0;
-		for(var i = 0; i < resArr.length; i++){
+		for (var i = 0; i < resArr.length; i++) {
 			//если Поле пустое, то ms игнорирует числовой формат полученных данных
-			if(isEmptyField) {
+			if (isEmptyField) {
 				count++;
 			} else {
 				var val = parseFloat(resArr[i]);
-				if(!isNaN(val)){
+				if (!isNaN(val)) {
 					count++;
 				}
 			}
@@ -513,13 +515,13 @@
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2], true, true);
-		if(cElementType.error === resArr.type){
+		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
 
 		var count = 0;
-		for(var i = 0; i < resArr.length; i++){
-			if(cElementType.empty !== resArr[i].type){
+		for (var i = 0; i < resArr.length; i++) {
+			if (cElementType.empty !== resArr[i].type) {
 				count++;
 			}
 		}
@@ -555,11 +557,11 @@
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2]);
-		if(cElementType.error === resArr.type){
+		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
-		if(1 !== resArr.length){
-			return  new cError(cErrorType.not_numeric);
+		if (1 !== resArr.length) {
+			return new cError(cErrorType.not_numeric);
 		}
 
 		var res = new cNumber(resArr[0]);
@@ -594,11 +596,11 @@
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2]);
-		if(cElementType.error === resArr.type){
+		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
 
-		resArr.sort(function(a, b) {
+		resArr.sort(function (a, b) {
 			return b - a;
 		});
 
@@ -634,11 +636,11 @@
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2]);
-		 if(cElementType.error === resArr.type){
+		if (cElementType.error === resArr.type) {
 			return resArr;
-		 }
+		}
 
-		resArr.sort(function(a, b) {
+		resArr.sort(function (a, b) {
 			return a - b;
 		});
 
@@ -675,17 +677,17 @@
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2]);
-		if(cElementType.error === resArr.type){
+		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
 
 		var res = 0;
-		for(var i = 0; i < resArr.length; i++){
+		for (var i = 0; i < resArr.length; i++) {
 			var val = parseFloat(resArr[i]);
-			if(!isNaN(val)){
-				if(0 === res){
+			if (!isNaN(val)) {
+				if (0 === res) {
 					res = val;
-				}else{
+				} else {
 					res *= val;
 				}
 			}
@@ -723,23 +725,23 @@
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2]);
-		if(cElementType.error === resArr.type){
+		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
 
 		var sum = 0;
 		var count = 0;
 		var member = [];
-		for(var i = 0; i < resArr.length; i++){
+		for (var i = 0; i < resArr.length; i++) {
 			var val = parseFloat(resArr[i]);
-			if(!isNaN(val)){
+			if (!isNaN(val)) {
 				member[count] = val;
 				sum += val;
 				count++;
 			}
 		}
 
-		if(0 === count){
+		if (0 === count) {
 			return new cError(cErrorType.division_by_zero);
 		}
 
@@ -749,7 +751,7 @@
 			res += av * av;
 		}
 		return new cNumber(Math.sqrt(res / (count - 1)));
-	 };
+	};
 
 	/**
 	 * @constructor
@@ -779,7 +781,7 @@
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2], true);
-		if(cElementType.error === resArr.type){
+		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
 
@@ -836,14 +838,14 @@
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2]);
-		if(cElementType.error === resArr.type){
+		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
 
 		var summ = 0;
-		for(var i = 0; i < resArr.length; i++){
+		for (var i = 0; i < resArr.length; i++) {
 			var val = parseFloat(resArr[i]);
-			if(!isNaN(val)){
+			if (!isNaN(val)) {
 				summ += val;
 			}
 		}
@@ -880,7 +882,7 @@
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2], true);
-		if(cElementType.error === resArr.type){
+		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
 
@@ -943,7 +945,7 @@
 		}
 
 		var resArr = getNeedValuesFromDataBase(argClone[0], argClone[1], argClone[2], true);
-		if(cElementType.error === resArr.type){
+		if (cElementType.error === resArr.type) {
 			return resArr;
 		}
 

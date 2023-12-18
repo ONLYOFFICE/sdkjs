@@ -343,9 +343,12 @@
 		{
 			for (let i in this.runnedPluginsMap)
 			{
-				let pluginType = this.pluginsMap[i] ? this.pluginsMap[i].type : -1;
+				let oPlugin = this.pluginsMap[i];
+
+				let pluginType = oPlugin ? oPlugin.type : -1;
 				if (pluginType !== Asc.PluginType.System &&
-					pluginType !== Asc.PluginType.Background)
+					pluginType !== Asc.PluginType.Background &&
+					!(oPlugin && oPlugin.isConnector))
 				{
 					this.close(i);
 				}
@@ -1144,12 +1147,12 @@
 			}
 
 			let currentCommand = this.queueCommands.shift();
+			let runObject = this.runnedPluginsMap[currentCommand.guid];
 
 			// send callback
-			let pluginDataTmp = undefined;
-			if (!currentCommand.closed)
+			if (!currentCommand.closed && runObject)
 			{
-				pluginDataTmp = new CPluginData();
+				let pluginDataTmp = new CPluginData();
 				pluginDataTmp.setAttribute("guid", currentCommand.guid);
 
 				if (currentCommand.type === CommandTaskType.Command)
@@ -1161,11 +1164,10 @@
 				{
 					pluginDataTmp.setAttribute("type", "onMethodReturn");
 					pluginDataTmp.setAttribute("methodReturnData", returnValue);
+					runObject.methodReturnAsync = false;
 				}
 
-				let runObject = this.runnedPluginsMap[currentCommand.guid];
-				if (runObject)
-					this.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginDataTmp);
+				this.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginDataTmp);
 			}
 
 			if (this.queueCommands.length > 0)

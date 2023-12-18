@@ -81,6 +81,7 @@
 		this.documentFormat      = "null";
 		this.documentTitle       = "null";
 		this.documentFormatSave  = Asc.c_oAscFileType.UNKNOWN;
+		this.documentShardKey  = undefined;
 
 		this.documentOpenOptions = undefined;		// Опции при открытии (пока только опции для CSV)
 
@@ -494,6 +495,15 @@
 					window["Asc"]["Addons"]["forms"] = false;
 					AscCommon.g_oTableId.InitOFormClasses();
 				}
+
+				if (this.documentOpenOptions["WOPISrc"])
+				{
+					this.documentShardKey = this.documentOpenOptions["WOPISrc"];
+				}
+			}
+			if (!this.documentShardKey) {
+				//todo add tenant in origin?
+				this.documentShardKey = this.documentId;
 			}
 		}
 
@@ -583,9 +593,9 @@
 	{
 		return this.copyOutEnabled;
 	};
-	baseEditorsApi.prototype.sync_CanCopyCutCallback = function (bCanCopyCut)
+	baseEditorsApi.prototype.sync_CanCopyCutCallback = function (bCanCopyCut, bCanCut)
 	{
-		this.sendEvent("asc_onCanCopyCut", bCanCopyCut);
+		this.sendEvent("asc_onCanCopyCut", bCanCopyCut, bCanCut);
 	};
 	baseEditorsApi.prototype.can_CopyCut = function ()
 	{
@@ -1848,7 +1858,7 @@
 		};
 
 		this._coAuthoringInitEnd();
-		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo);
+		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo, this.documentShardKey);
 	};
 	baseEditorsApi.prototype._coAuthoringInitEnd                 = function()
 	{
@@ -2290,7 +2300,7 @@
 		var t = this;
         if (this.WordControl) // после показа диалога может не прийти mouseUp
         	this.WordControl.m_bIsMouseLock = false;
-		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), function(error, files)
+		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, function(error, files)
 		{
 			t._uploadCallback(error, files, obj);
 		}, function(error)
@@ -2303,6 +2313,7 @@
 			{
 				t.sendStartUploadImageActionToFrameEditor();
 			}
+			obj && obj.fStartUploadImageCallback && obj.fStartUploadImageCallback();
 			t.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
 		});
 	};
@@ -2312,6 +2323,7 @@
 		if (c_oAscError.ID.No !== error)
 		{
 			this.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+			obj && obj.fErrorCallback && obj.fErrorCallback(error);
 		}
 		else
 		{
@@ -2319,12 +2331,14 @@
 			{
 				this.sendStartUploadImageActionToFrameEditor();
 			}
+			obj && obj.fStartUploadImageCallback && obj.fStartUploadImageCallback();
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
-			AscCommon.UploadImageFiles(files, this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), function(error, urls)
+			AscCommon.UploadImageFiles(files, this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, function(error, urls)
 			{
 				if (c_oAscError.ID.No !== error)
 				{
 					t.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+					obj && obj.fErrorCallback && obj.fErrorCallback(error);
 				}
 				else
 				{
@@ -2720,9 +2734,13 @@
 
 		this._loadSdkImages();
 
-		if(AscFonts.FontPickerByCharacter && this.documentTitle) {
-			AscFonts.FontPickerByCharacter.getFontsByString(this.documentTitle);
-		}
+		this.checkDocumentTitleFonts();
+	};
+	baseEditorsApi.prototype.checkDocumentTitleFonts = function() {
+		if (!AscFonts.FontPickerByCharacter || !this.documentTitle)
+			return;
+		
+		AscFonts.FontPickerByCharacter.getFontsByString(this.documentTitle);
 	};
 	baseEditorsApi.prototype._loadSdkImages = function ()
 	{
@@ -4754,6 +4772,16 @@
 		this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.DownloadAs);
 		if (0 !== error)
 			this.sendEvent("asc_onError", c_oAscError.ID.ConvertationSaveError, c_oAscError.Level.NoCritical);
+	};
+
+	// speech
+	baseEditorsApi.prototype["setSpeechEnabled"] = function(isEnabled) {
+		if (!AscCommon.EditorActionSpeaker)
+			return;
+		if (isEnabled)
+			AscCommon.EditorActionSpeaker.run();
+		else
+			AscCommon.EditorActionSpeaker.stop();
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------

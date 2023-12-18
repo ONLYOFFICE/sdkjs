@@ -2848,8 +2848,69 @@
         }
     };
 
+
+    AscDFH.changesFactory[AscDFH.historyitem_TimelineSlicerViewName] = AscDFH.CChangesDrawingsString;
+    AscDFH.drawingsChangesMap[AscDFH.historyitem_TimelineSlicerViewName] = function(oClass, value) {
+        oClass.tag = value;
+    };
+
+    function CTimeslicer() {
+        AscFormat.CShape.call(this);
+        this.name = null;
+    }
+    AscFormat.InitClass(CTimeslicer, AscFormat.CShape, AscDFH.historyitem_type_TimelineSlicerView);
+    CTimeslicer.prototype.setName = function (val) {
+        AscCommon.History.Add(new AscDFH.CChangesDrawingsString(this, AscDFH.historyitem_TimelineSlicerViewName, this.name, val));
+        this.name = val;
+    };
+
+    CTimeslicer.prototype.copy = function (oPr) {
+        const oCopy = new CTimeslicer();
+        oCopy.setTag(this.tag);
+        return oCopy;
+    };
+    CTimeslicer.prototype.fromStream = function (s) {
+        var _len = s.GetULong();
+        var _start_pos = s.cur;
+        var _end_pos = _len + _start_pos;
+        var _at;
+// attributes
+        s.GetUChar();
+        while (true) {
+            _at = s.GetUChar();
+            if (_at === AscCommon.g_nodeAttributeEnd)
+                break;
+            switch (_at) {
+                case 0: {
+                    this.setName(s.GetString2());
+                    break;
+                }
+                default: {
+                    s.Seek2(_end_pos);
+                    return;
+                }
+            }
+        }
+        s.Seek2(_end_pos);
+    };
+    CTimeslicer.prototype.toStream = function (s) {
+        s.WriteUChar(AscCommon.g_nodeAttributeStart);
+        s._WriteString2(0, this.name);
+        s.WriteUChar(AscCommon.g_nodeAttributeEnd);
+    };
+    CTimeslicer.prototype.canSelect = function () {
+        return false;
+    };
+    CTimeslicer.prototype.hit = function () {
+        return false;
+    };
+
+    CTimeslicer.prototype.onTimeSlicerDelete = function (sName) {
+        return CSlicer.prototype.onSlicerDelete.call(this, sName);
+    };
     window["AscFormat"] = window["AscFormat"] || {};
     window["AscFormat"].CSlicer = CSlicer;
+    window["AscFormat"].CTimeslicer = CTimeslicer;
 
     window["AscCommonExcel"] = window["AscCommonExcel"] || {};
     window["AscCommonExcel"].getSlicerIconsForLoad = getSlicerIconsForLoad;
