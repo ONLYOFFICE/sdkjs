@@ -36,7 +36,7 @@
 	 * Class representing a base annotation.
 	 * @constructor
     */
-    function CAnnotationBase(sName, nType, nPage, aRect, oDoc)
+    function CAnnotationBase(sName, nType, nPage, aOrigRect, oDoc)
     {
         this.type = nType;
 
@@ -55,7 +55,7 @@
         this._name                  = sName;
         this._opacity               = 1;
         this._page                  = nPage;
-        this._rect                  = aRect;
+        this._rect                  = undefined;
         this._refType               = undefined;
         this._seqNum                = undefined;
         this._strokeColor           = undefined;
@@ -82,8 +82,18 @@
             rollover:   null
         }
         this._wasChanged            = false;
+        this.Internal_InitRect(aOrigRect);
     }
-    
+    CAnnotationBase.prototype.Internal_InitRect = function(aOrigRect) {
+        let nPage = this.GetPage();
+        let oViewer = editor.getDocumentRenderer();
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        this._rect = [aOrigRect[0] * nScaleX, aOrigRect[1] * nScaleY, aOrigRect[2] * nScaleX, aOrigRect[3] * nScaleY];
+        this._origRect = aOrigRect;
+    };
+
     CAnnotationBase.prototype.SetReplyTo = function(oAnnot) {
         this._inReplyTo = oAnnot;
     };
@@ -213,6 +223,9 @@
     };
     CAnnotationBase.prototype.GetOpacity = function() {
         return this._opacity;
+    };
+    CAnnotationBase.prototype.IsPdfObject = function() {
+        return true;
     };
     /**
 	 * Invokes only on open forms.
@@ -503,7 +516,7 @@
             this.SetDrawFromStream(false);
         }
     };
-    CAnnotationBase.prototype.IsInDocument = function() {
+    CAnnotationBase.prototype.IsUseInDocument = function() {
         if (this.GetDocument().annots.indexOf(this) == -1)
             return false;
 
@@ -547,7 +560,7 @@
                 if (nCurIdxOnPage != -1)
                     oViewer.pagesInfo.pages[nCurPage].annots.splice(nCurIdxOnPage, 1);
     
-                if (this.IsInDocument() && oViewer.pagesInfo.pages[nPage].annots.indexOf(this) == -1)
+                if (this.IsUseInDocument() && oViewer.pagesInfo.pages[nPage].annots.indexOf(this) == -1)
                     oViewer.pagesInfo.pages[nPage].annots.push(this);
 
                 oDoc.History.Add(new CChangesPDFAnnotPage(this, nCurPage, nPage));
@@ -600,7 +613,7 @@
         this._replies.push(oReply);
     };
     CAnnotationBase.prototype._OnAfterSetReply = function() {
-        if (this.IsInDocument()) {
+        if (this.IsUseInDocument()) {
             let oAscCommData = this.GetAscCommentData();
             editor.sendEvent("asc_onAddComment", this.GetId(), oAscCommData);
         }
@@ -627,7 +640,7 @@
         if (bSendAddCommentEvent)
             this._OnAfterSetReply();
         
-        if (this._contents == null && this.IsInDocument())
+        if (this._contents == null && this.IsUseInDocument())
             editor.sync_RemoveComment(this.GetId());
     };
     CAnnotationBase.prototype.Recalculate = function() {
@@ -647,10 +660,6 @@
             return;
 
         this.Recalculate();
-
-        // oGraphicsPDF.CheckPoint(aRect[0], aRect[1]);
-        // oGraphicsPDF.CheckPoint(aRect[2], aRect[3]);
-        
         this.draw(oGraphicsWord);
     };
     CAnnotationBase.prototype.AddReply = function(oReply) {

@@ -91,7 +91,8 @@
         oCircle.SetFillColor(this.GetFillColor());
         oCircle.recalcInfo.recalculatePen = false;
         oCircle.recalcInfo.recalculateGeometry = true;
-        oCircle._rectDiff = this._rectDiff.slice();
+        oCircle.SetRectangleDiff(this._rectDiff.slice());
+        oCircle.SetDash(this.GetDash());
         oCircle.recalculate();
 
         return oCircle;

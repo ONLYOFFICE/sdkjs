@@ -1516,8 +1516,18 @@ MoveState.prototype =
             }
         }
 
-        for(_object_index = 0; _object_index < _objects_count; ++_object_index)
-            _arr_track_objects[_object_index].track(result_x - this.startX + min_dx, result_y - this.startY + min_dy, pageIndex);
+        if (Asc.editor.isPdfEditor() == false) {
+            for(_object_index = 0; _object_index < _objects_count; ++_object_index)
+                _arr_track_objects[_object_index].track(result_x - this.startX + min_dx, result_y - this.startY + min_dy, pageIndex);
+        }
+        // для pdf freeText аннотации нужно отлеживать взаимное положение коннектора и прямоугольника,
+        // чтобы динамически перекидывать коннектор на другую сторону прямоугольлника
+        else {
+            // для pdf freeText всегда будет 2 объкта в группе шейпов
+            for(_object_index = 0; _object_index < _objects_count; ++_object_index)
+                _arr_track_objects[_object_index].track(result_x - this.startX + min_dx, result_y - this.startY + min_dy, pageIndex);
+        }
+        
 
         this.bSamePos = (AscFormat.fApproxEqual(result_x - this.startX + min_dx, 0) && AscFormat.fApproxEqual(result_y - this.startY + min_dy, 0) && this.majorObject.selectStartPage === pageIndex);
         this.drawingObjects.updateOverlay();
@@ -1629,17 +1639,21 @@ MoveInGroupState.prototype =
 
     onMouseUp: function(e, x, y, pageIndex)
     {
-        var parent_paragraph = this.group.parent.Get_ParentParagraph();
-        var check_paragraphs = [];
-        if(this.group.parent.Is_Inline())
-        {
-            check_paragraphs.push(parent_paragraph);
+        let isPdf = Asc.editor.isPdfEditor();
+        if (false == isPdf) {
+            var parent_paragraph = this.group.parent.Get_ParentParagraph();
+            var check_paragraphs = [];
+            if(this.group.parent.Is_Inline())
+            {
+                check_paragraphs.push(parent_paragraph);
+            }
         }
-        if(false === this.drawingObjects.document.Document_Is_SelectionLocked(changestype_Drawing_Props, {Type : changestype_2_ElementsArray_and_Type , Elements : check_paragraphs, CheckType : AscCommon.changestype_Paragraph_Content}))
+        
+        if(isPdf || false === this.drawingObjects.document.Document_Is_SelectionLocked(changestype_Drawing_Props, {Type : changestype_2_ElementsArray_and_Type , Elements : check_paragraphs, CheckType : AscCommon.changestype_Paragraph_Content}))
         {
             var tracks = [].concat(this.drawingObjects.arrTrackObjects);
             this.drawingObjects.resetTrackState();
-			this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_MoveInGroup);
+			!isPdf && this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_MoveInGroup);
             var i;
             if(this instanceof MoveInGroupState && e.CtrlKey && !this.hasObjectInSmartArt)
             {
@@ -1662,6 +1676,8 @@ MoveInGroupState.prototype =
             {
                 for(i = 0; i < tracks.length; ++i)
                 {
+                    isPdf && tracks[i].originalObject.group.SetWasChanged(true);
+                    isPdf && tracks[i].originalObject.group.AddToRedraw();
                     tracks[i].trackEnd(true);
                 }
             }
@@ -1671,31 +1687,46 @@ MoveInGroupState.prototype =
             var posY = oPosObject.posY;
             this.group.spPr.xfrm.setOffX(0);
             this.group.spPr.xfrm.setOffY(0);
-            if(this.group.parent.Is_Inline())
-            {
-                this.group.parent.CheckWH();
+            
+            if (isPdf == false) {
+                if(this.group.parent.Is_Inline())
+                {
+                    this.group.parent.CheckWH();
+                }
+                else
+                {
+                    this.group.parent.CheckWH();
+                    let nPageNum;
+                    if(this.group && this.group.parent)
+                    {
+                        nPageNum = this.group.parent.pageIndex;
+                    }
+                    else if(AscFormat.isRealNumber(this.startPageIndex))
+                    {
+                        nPageNum = this.startPageIndex;
+                    }
+                    else
+                    {
+                        nPageNum = 0;
+                    }
+                    this.group.parent.Set_XY(this.group.posX + posX, this.group.posY + posY, parent_paragraph, nPageNum, false);
+                }
+                this.drawingObjects.document.Recalculate();
+                this.drawingObjects.document.FinalizeAction();
             }
-            else
-            {
-                this.group.parent.CheckWH();
-				let nPageNum;
-	            if(this.group && this.group.parent)
-				{
-		            nPageNum = this.group.parent.pageIndex;
-	            }
-				else if(AscFormat.isRealNumber(this.startPageIndex))
-				{
-		            nPageNum = this.startPageIndex;
-	            }
-				else
-	            {
-					nPageNum = 0;
-	            }
-                this.group.parent.Set_XY(this.group.posX + posX, this.group.posY + posY, parent_paragraph, nPageNum, false);
+            else {
+                let aRect = [];
+                let xMin = (this.group.posX + posX) * g_dKoef_mm_to_pix;
+                let yMin = (this.group.posY + posY) * g_dKoef_mm_to_pix;
+                let xMax = (this.group.extX * g_dKoef_mm_to_pix) + xMin;
+                let yMax = (this.group.extY * g_dKoef_mm_to_pix) + yMin;
+
+                this.group.SetRect([xMin, yMin, xMax, yMax]);
+                editor.getDocumentRenderer().DrawingObjects.drawingObjects.length = 0;
             }
-            this.drawingObjects.document.Recalculate();
-			this.drawingObjects.document.FinalizeAction();
         }
+        if (isPdf)
+            Asc.editor.getDocumentRenderer()._paint();
         this.drawingObjects.updateOverlay();
     }
 };

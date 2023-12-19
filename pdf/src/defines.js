@@ -101,7 +101,7 @@
     FIELD_TYPES["signature"]    = FIELD_TYPES.signature;
 
     Object.freeze(FIELD_TYPES);
-    asc["FIELD_TYPES"] = asc.FIELD_TYPES            = FIELD_TYPES;
-    asc["FIELD_TYPES"] = asc.BORDER_EFFECT_STYLES   = BORDER_EFFECT_STYLES;
-    asc["FIELD_TYPES"] = asc.REF_TO_REASON          = REF_TO_REASON;
+    asc["FIELD_TYPES"]          = asc.FIELD_TYPES            = FIELD_TYPES;
+    asc["BORDER_EFFECT_STYLES"] = asc.BORDER_EFFECT_STYLES   = BORDER_EFFECT_STYLES;
+    asc["REF_TO_REASON"]        = asc.REF_TO_REASON          = REF_TO_REASON;
 })();

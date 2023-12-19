@@ -88,7 +88,7 @@
         oSquare.SetFillColor(this.GetFillColor());
         oSquare.recalcInfo.recalculatePen = false;
         oSquare.recalcInfo.recalculateGeometry = true;
-        oSquare._rectDiff = this._rectDiff.slice();
+        oSquare.SetRectangleDiff(this._rectDiff.slice());
         oSquare.recalculate();
 
         return oSquare;

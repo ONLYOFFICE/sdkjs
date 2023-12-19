@@ -2578,48 +2578,47 @@ var CPresentation = CPresentation || function(){};
         let aScaledCoords = [aRect[0] * nScaleX, aRect[1] * nScaleY, aRect[2] * nScaleX, aRect[3] * nScaleY];
         switch (nAnnotType) {
             case AscPDF.ANNOTATIONS_TYPES.Text:
-                oAnnot = new AscPDF.CAnnotationText(sName, nPageNum, aScaledCoords, oPdfDoc);
+                oAnnot = new AscPDF.CAnnotationText(sName, nPageNum, aRect, oPdfDoc);
                 break;
             case AscPDF.ANNOTATIONS_TYPES.Ink:
-                oAnnot = new AscPDF.CAnnotationInk(sName, nPageNum, aScaledCoords, oPdfDoc);
+                oAnnot = new AscPDF.CAnnotationInk(sName, nPageNum, aRect, oPdfDoc);
                 break;
             case AscPDF.ANNOTATIONS_TYPES.Highlight:
-                oAnnot = new AscPDF.CAnnotationHighlight(sName, nPageNum, aScaledCoords, oPdfDoc);
+                oAnnot = new AscPDF.CAnnotationHighlight(sName, nPageNum, aRect, oPdfDoc);
                 break;
             case AscPDF.ANNOTATIONS_TYPES.Underline:
-                oAnnot = new AscPDF.CAnnotationUnderline(sName, nPageNum, aScaledCoords, oPdfDoc);
+                oAnnot = new AscPDF.CAnnotationUnderline(sName, nPageNum, aRect, oPdfDoc);
                 break;
             case AscPDF.ANNOTATIONS_TYPES.Strikeout:
-                oAnnot = new AscPDF.CAnnotationStrikeout(sName, nPageNum, aScaledCoords, oPdfDoc);
+                oAnnot = new AscPDF.CAnnotationStrikeout(sName, nPageNum, aRect, oPdfDoc);
                 break;
             case AscPDF.ANNOTATIONS_TYPES.Squiggly:
-                oAnnot = new AscPDF.CAnnotationSquiggly(sName, nPageNum, aScaledCoords, oPdfDoc);
+                oAnnot = new AscPDF.CAnnotationSquiggly(sName, nPageNum, aRect, oPdfDoc);
                 break;
             case AscPDF.ANNOTATIONS_TYPES.Caret:
-                oAnnot = new AscPDF.CAnnotationCaret(sName, nPageNum, aScaledCoords, oPdfDoc);
+                oAnnot = new AscPDF.CAnnotationCaret(sName, nPageNum, aRect, oPdfDoc);
                 oAnnot.SetQuads([[aRect[0], aRect[1], aRect[2], aRect[1], aRect[0], aRect[3], aRect[2], aRect[3]]]);
                 break;
             case AscPDF.ANNOTATIONS_TYPES.Line:
-                oAnnot = new AscPDF.CAnnotationLine(sName, nPageNum, aScaledCoords, oPdfDoc);
+                oAnnot = new AscPDF.CAnnotationLine(sName, nPageNum, aRect, oPdfDoc);
                 break;
             case AscPDF.ANNOTATIONS_TYPES.Square:
-                oAnnot = new AscPDF.CAnnotationSquare(sName, nPageNum, aScaledCoords, oPdfDoc);
+                oAnnot = new AscPDF.CAnnotationSquare(sName, nPageNum, aRect, oPdfDoc);
                 break;
             case AscPDF.ANNOTATIONS_TYPES.Circle:
-                oAnnot = new AscPDF.CAnnotationCircle(sName, nPageNum, aScaledCoords, oPdfDoc);
+                oAnnot = new AscPDF.CAnnotationCircle(sName, nPageNum, aRect, oPdfDoc);
                 break;
             case AscPDF.ANNOTATIONS_TYPES.Polygon:
-                oAnnot = new AscPDF.CAnnotationPolygon(sName, nPageNum, aScaledCoords, oPdfDoc);
+                oAnnot = new AscPDF.CAnnotationPolygon(sName, nPageNum, aRect, oPdfDoc);
                 break;
             case AscPDF.ANNOTATIONS_TYPES.PolyLine:
-                oAnnot = new AscPDF.CAnnotationPolyLine(sName, nPageNum, aScaledCoords, oPdfDoc);
+                oAnnot = new AscPDF.CAnnotationPolyLine(sName, nPageNum, aRect, oPdfDoc);
                 break;
             case AscPDF.ANNOTATIONS_TYPES.FreeText:
-                oAnnot = new AscPDF.CAnnotationFreeText(sName, nPageNum, aScaledCoords, oPdfDoc);
+                oAnnot = new AscPDF.CAnnotationFreeText(sName, nPageNum, aRect, oPdfDoc);
                 break;
             default:
-                oAnnot = new AscPDF.CAnnotationBase(sName, nAnnotType, nPageNum, aScaledCoords, oPdfDoc);
-                break;
+                return null;
         }
 
         oAnnot.SetCreationDate(sCrDate);
@@ -2628,7 +2627,6 @@ var CPresentation = CPresentation || function(){};
         oAnnot.SetDisplay(isHidden ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
         oAnnot.SetContents(sText);
 
-        oAnnot._origRect = aRect;
         oAnnot._pagePos = {
             x: aScaledCoords[0],
             y: aScaledCoords[1],
