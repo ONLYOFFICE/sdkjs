@@ -1568,32 +1568,18 @@
 		this.SetNeedRecalc(true);
 	};
 
-    function codePointToRunElement(codePoint, isMath)
+    function codePointToRunElement(codePoint)
 	{
 		let element = null;
-		if (isMath)
-		{
-			if (0x0026 === codePoint)
-			{
-				element = new AscWord.CMathAmp();
-			}
-			else
-			{
-				element = new AscWord.CMathText(false);
-				element.add(codePoint);
-			}
-		}
-		else
-		{
-			if (9 === codePoint)
-				element = new AscWord.CRunTab();
-			else if (10 === codePoint || 13 === codePoint)
-				element = new AscWord.CRunBreak(AscWord.break_Line);
-			else if (AscCommon.IsSpace(codePoint))
-				element = new AscWord.CRunSpace(codePoint);
-			else
-				element = new AscWord.CRunText(codePoint);
-		}
+		if (9 === codePoint)
+            element = new AscWord.CRunTab();
+        else if (10 === codePoint || 13 === codePoint)
+            element = new AscWord.CRunBreak(AscWord.break_Line);
+        else if (AscCommon.IsSpace(codePoint))
+            element = new AscWord.CRunSpace(codePoint);
+        else
+            element = new AscWord.CRunText(codePoint);
+
 		return element;
 	}
 	
