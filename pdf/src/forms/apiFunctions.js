@@ -409,7 +409,13 @@
         oCultureInfo.AbbreviatedMonthNames.length = 12;
         oCultureInfo.MonthNames.length = 12;
 
-        let oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oDateFormatForParse);
+        let oResParsed;
+        let sRes;
+        if (oDoc.lastDatePickerInfo) {
+            oResParsed = true;
+        }
+        else
+            oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oDateFormatForParse);
                 
         if (sCurValue == "")
             oTargetRun.ClearContent();
@@ -419,8 +425,13 @@
             return;
         }
 
-        oDateFormat.oTextFormat.formatType = AscCommon.NumFormatType.PDFFormDate;
-        let sRes = oDateFormat.oTextFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, oCultureInfo)[0].text;
+        if (oDoc.lastDatePickerInfo) {
+            sRes = oDoc.lastDatePickerInfo.value;
+        }
+        else {
+            oDateFormat.oTextFormat.formatType = AscCommon.NumFormatType.PDFFormDate;
+            sRes = oDateFormat.oTextFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, oCultureInfo)[0].text;
+        }
 
         oTargetRun.ClearContent();
         oTargetRun.AddText(sRes);
@@ -581,7 +592,13 @@
         oCultureInfo.AbbreviatedMonthNames.length = 12;
         oCultureInfo.MonthNames.length = 12;
 
-        let oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oDateFormatForParse);
+        let oResParsed;
+        if (oDoc.lastDatePickerInfo) {
+            oResParsed = true;
+        }
+        else
+            oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oDateFormatForParse);
+
         if (!oResParsed) {
             oDoc.event["rc"] = false;
             oDoc.SetWarningInfo({

@@ -486,6 +486,7 @@
 			form: oActiveForm
 		};
 
+		oActiveForm.content.SelectAll();
 		oActiveForm.EnterText(AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.lastDatePickerInfo.value));
 		oDoc.EnterDownActiveField();
 		oDoc.lastDatePickerInfo = null;
