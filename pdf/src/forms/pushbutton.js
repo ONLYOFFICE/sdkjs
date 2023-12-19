@@ -1412,16 +1412,11 @@
         let sFont = this.GetTextFontActual();
         if (oCaptionRun.Pr.GetFontFamily() != sFont) {
             if (this.content) {
-                let oPara = oCaptionRun.Paragraph;
-                var FontFamily = {
-                    Name : sFont,
-                    Index : -1
-                };
-
-                oPara.SetApplyToAll(true);
-                oPara.Add(new AscCommonWord.ParaTextPr({FontFamily : FontFamily}));
-                oPara.SetApplyToAll(false);
-                oPara.RecalcCompiledPr(true);
+                this.content.SetFont(sFont);
+                
+                let oStyle = this.GetFontStyle();
+                this.content.SetBold(oStyle.bold);
+                this.content.SetItalic(oStyle.italic);
             }
         }
     };

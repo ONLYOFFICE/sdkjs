@@ -333,8 +333,10 @@
         let oCurForm = oDoc.event["target"].field;
         oDoc.event["format"] = cFormat;
         
-        let oNumFormat = AscCommon.oNumFormatCache.get(cFormat, AscCommon.NumFormatType.PDFFormDate);
-        oNumFormat.oNegativeFormat.bAddMinusIfNes = false;
+        let oDateFormat         = AscCommon.oNumFormatCache.get(cFormat, AscCommon.NumFormatType.PDFFormDate);
+        let oDateFormatForParse = oDoc.lastDatePickerInfo ? oDateFormat : AscCommon.oNumFormatCache.get("dd.mm.yyyy", AscCommon.NumFormatType.PDFFormDate);
+
+        oDateFormat.oNegativeFormat.bAddMinusIfNes = false;
         
         let oTargetRun = oCurForm.contentFormat.GetElement(0).GetElement(0);
 
@@ -391,19 +393,23 @@
 
         let oCultureInfo = {};
         Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[9]);
-        if (null == oNumFormat.oTextFormat.ShortDatePattern) {
-            oNumFormat.oTextFormat.ShortDatePattern = getShortPattern(oNumFormat.oTextFormat.aRawFormat);
-            oNumFormat.oTextFormat._prepareFormatDatePDF();
+        if (null == oDateFormat.oTextFormat.ShortDatePattern) {
+            oDateFormat.oTextFormat.ShortDatePattern = getShortPattern(oDateFormat.oTextFormat.aRawFormat);
+            oDateFormat.oTextFormat._prepareFormatDatePDF();
         }
-        oCultureInfo.ShortDatePattern = oNumFormat.oTextFormat.ShortDatePattern;
+        if (null == oDateFormatForParse.oTextFormat.ShortDatePattern) {
+            oDateFormatForParse.oTextFormat.ShortDatePattern = getShortPattern(oDateFormatForParse.oTextFormat.aRawFormat);
+            oDateFormatForParse.oTextFormat._prepareFormatDatePDF();
+        }
+        oCultureInfo.ShortDatePattern = oDateFormatForParse.oTextFormat.ShortDatePattern;
 
         if (oCultureInfo.ShortDatePattern.indexOf("1") == -1)
-            oNumFormat.oTextFormat.bDay = false;
+            oDateFormat.oTextFormat.bDay = false;
 
         oCultureInfo.AbbreviatedMonthNames.length = 12;
         oCultureInfo.MonthNames.length = 12;
 
-        let oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oNumFormat);
+        let oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oDateFormatForParse);
                 
         if (sCurValue == "")
             oTargetRun.ClearContent();
@@ -413,8 +419,8 @@
             return;
         }
 
-        oNumFormat.oTextFormat.formatType = AscCommon.NumFormatType.PDFFormDate;
-        let sRes = oNumFormat.oTextFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, oCultureInfo)[0].text;
+        oDateFormat.oTextFormat.formatType = AscCommon.NumFormatType.PDFFormDate;
+        let sRes = oDateFormat.oTextFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, oCultureInfo)[0].text;
 
         oTargetRun.ClearContent();
         oTargetRun.AddText(sRes);
@@ -502,8 +508,9 @@
             return;
         }
 
-        let oNumFormat = AscCommon.oNumFormatCache.get(cFormat, AscCommon.NumFormatType.PDFFormDate);
-        oNumFormat.oNegativeFormat.bAddMinusIfNes = false;
+        let oDateFormat         = AscCommon.oNumFormatCache.get(cFormat, AscCommon.NumFormatType.PDFFormDate);
+        let oDateFormatForParse = oDoc.lastDatePickerInfo ? oDateFormat : AscCommon.oNumFormatCache.get("dd.mm.yyyy", AscCommon.NumFormatType.PDFFormDate);
+        oDateFormat.oNegativeFormat.bAddMinusIfNes = false;
         
         let sCurValue;
         if (oForm.GetType() == AscPDF.FIELD_TYPES.text)
@@ -558,19 +565,23 @@
 
         let oCultureInfo = {};
         Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[9]);
-        if (null == oNumFormat.oTextFormat.ShortDatePattern) {
-            oNumFormat.oTextFormat.ShortDatePattern = getShortPattern(oNumFormat.oTextFormat.aRawFormat);
-            oNumFormat.oTextFormat._prepareFormatDatePDF();
+        if (null == oDateFormat.oTextFormat.ShortDatePattern) {
+            oDateFormat.oTextFormat.ShortDatePattern = getShortPattern(oDateFormat.oTextFormat.aRawFormat);
+            oDateFormat.oTextFormat._prepareFormatDatePDF();
         }
-        oCultureInfo.ShortDatePattern = oNumFormat.oTextFormat.ShortDatePattern;
+        if (null == oDateFormatForParse.oTextFormat.ShortDatePattern) {
+            oDateFormatForParse.oTextFormat.ShortDatePattern = getShortPattern(oDateFormatForParse.oTextFormat.aRawFormat);
+            oDateFormatForParse.oTextFormat._prepareFormatDatePDF();
+        }
+        oCultureInfo.ShortDatePattern = oDateFormatForParse.oTextFormat.ShortDatePattern;
 
         if (oCultureInfo.ShortDatePattern.indexOf("1") == -1)
-            oNumFormat.oTextFormat.bDay = false;
+            oDateFormat.oTextFormat.bDay = false;
 
         oCultureInfo.AbbreviatedMonthNames.length = 12;
         oCultureInfo.MonthNames.length = 12;
 
-        let oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oNumFormat);
+        let oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oDateFormatForParse);
         if (!oResParsed) {
             oDoc.event["rc"] = false;
             oDoc.SetWarningInfo({

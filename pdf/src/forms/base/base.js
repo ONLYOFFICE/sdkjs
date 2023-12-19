@@ -1961,25 +1961,21 @@
         this.SetWasChanged(true);
         this.AddToRedraw();
     };
+    CBaseField.prototype.IsInField = function() {
+        let oDoc = this.GetDocument();
+        if (oDoc.activeForm == this) {
+            if (!this.IsNeedDrawHighlight() || this.GetType() == AscPDF.FIELD_TYPES.button)
+                return true;
+        }
+        return false;
+    };
     CBaseField.prototype.SetTextFontActual = function(sFontName) {
         if (typeof(sFontName) !== "string" && sFontName == "")
             return;
         
         this._textFontActual = sFontName;
-        
-        let oViewer = editor.getDocumentRenderer();
-        if (oViewer.IsOpenFormsInProgress == false) {
-            var loader   = AscCommon.g_font_loader;
-            var fontinfo = g_fontApplication.GetFontInfo(sFontName);
-            var isasync  = loader.LoadFont(fontinfo, setFontFamily);
 
-            if (isasync === false)
-                setFontFamily()
-
-            function setFontFamily(){}
-        }
-		
-		if (this.content)
+        if (this.content)
 			this.content.SetFont(sFontName);
 		
 		if (this.contentFormat)
@@ -1991,11 +1987,24 @@
     CBaseField.prototype.GetTextFontActual = function() {
         return this._textFontActual;
     };
-    CBaseField.prototype.GetTextFont = function(bActual) {
+    CBaseField.prototype.GetTextFont = function() {
         return this._textFont;
     };
     CBaseField.prototype.SetFontStyle = function(oStyle) {
         this._fontStyle = oStyle;
+
+        if (this.content) {
+            this.content.SetBold(oStyle.bold);
+        }
+        if (this.contentFormat) {
+            this.contentFormat.SetBold(oStyle.bold);
+        }
+        if (this.content) {
+            this.content.SetItalic(oStyle.italic);
+        }
+        if (this.contentFormat) {
+            this.contentFormat.SetItalic(oStyle.italic);
+        }
     };
     CBaseField.prototype.GetFontStyle = function() {
         return this._fontStyle;

@@ -120,6 +120,16 @@
 		this.AddToParagraph(new AscWord.ParaTextPr({FontSize : fontSize}));
 		this.SetApplyToAll(false);
 	};
+	CTextBoxContent.prototype.SetBold = function(bBold) {
+		this.SetApplyToAll(true);
+		this.AddToParagraph(new AscWord.ParaTextPr({Bold : bBold}));
+		this.SetApplyToAll(false);
+	};
+	CTextBoxContent.prototype.SetItalic = function(bItalic) {
+		this.SetApplyToAll(true);
+		this.AddToParagraph(new AscWord.ParaTextPr({Italic : bItalic}));
+		this.SetApplyToAll(false);
+	};
 	CTextBoxContent.prototype.getCurrentRun = function() {
 		let paragraph = this.GetElement(0);
 		if (!paragraph || !paragraph.IsParagraph())
@@ -148,7 +158,7 @@
 		
 		if (codePoints) {
 			for (let index = 0, inRunIndex = 0, count = codePoints.length; index < count; ++index) {
-				let runElement = AscWord.codePointToRunElement(codePoints[index]);
+				let runElement = AscPDF.codePointToRunElement(codePoints[index]);
 				if (runElement)
 					run.AddToContent(inRunIndex++, runElement, true);
 			}

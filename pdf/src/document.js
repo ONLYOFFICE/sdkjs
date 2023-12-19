@@ -108,6 +108,7 @@ var CPresentation = CPresentation || function(){};
         this.calculateInfo = new CCalculateInfo(this);
         this.fieldsToCommit = [];
         this.event = {};
+        this.lastDatePickerInfo = null;
         this.AutoCorrectSettings = new AscCommon.CAutoCorrectSettings();
         Object.defineProperties(this.event, {
             "change": {
@@ -968,7 +969,7 @@ var CPresentation = CPresentation || function(){};
                     case AscPDF.FIELD_TYPES.text: {
                         cursorType = "text";
                         
-                        if (mouseMoveFieldObject.IsDateFormat()) {
+                        if (mouseMoveFieldObject.IsDateFormat() && mouseMoveFieldObject.IsInField()) {
                             if (pageObject.x >= mouseMoveFieldObject._markRect.x1 && pageObject.x <= mouseMoveFieldObject._markRect.x2 && pageObject.y >= mouseMoveFieldObject._markRect.y1 && pageObject.y <= mouseMoveFieldObject._markRect.y2) {
                                 cursorType = "pointer";
                             }
@@ -2446,12 +2447,6 @@ var CPresentation = CPresentation || function(){};
         this.curAction          = null;
         this.curActionIdx       = -1;
         this.callBackAfterFocus = null;
-
-        // суть в том, что дату из пикера можем подогнать под любой формат
-		// но в цепочке actions может быть изменение значения формы, куда вводится дата с picker, что вызовет новый коммит
-		// если значение не изменилось на этапе нового коммита формы, то опять выставляем будто бы взяли с пикера
-		// в конце actions удаляем эту информацию, чтобы в дальнейшем это не влияло на обычную работу парсера даты из соответсвующих методов
-        this.datePickerInfo     = null;
     };
 
     CActionQueue.prototype.AddActions = function(aActions) {
@@ -2471,7 +2466,6 @@ var CPresentation = CPresentation || function(){};
     };
     CActionQueue.prototype.Stop = function() {
         this.SetInProgress(false);
-        this.datePickerInfo = null;
     };
     CActionQueue.prototype.IsInProgress = function() {
         return this.isInProgress;

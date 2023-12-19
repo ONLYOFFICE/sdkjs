@@ -3819,7 +3819,7 @@
 					if (field.GetType() == AscPDF.FIELD_TYPES.combobox)
 						field.DrawMarker(oCtx);
 					else if (field.GetType() == AscPDF.FIELD_TYPES.text && field.IsDateFormat()) {
-						field.DrawDateMarker(oCtx);
+						field.IsNeedDrawHighlight() == false && field.DrawDateMarker(oCtx);
 					}
 				});
 			}
