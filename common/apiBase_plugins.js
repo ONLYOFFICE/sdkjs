@@ -1704,9 +1704,9 @@
 			if (undefined !== items[i]["id"] && undefined !== items[i]["data"])
 				items[i]["id"] = items[i]["id"] + "_oo_sep_" + items[i]["data"];
 
-			if (items[i].icons) {
-				if (Array.isArray(items[i].icons) && baseUrl) {
-					let icons = items[i].icons;
+			if (items[i]["icons"]) {
+				if (Array.isArray(items[i]["icons"]) && baseUrl) {
+					let icons = items[i]["icons"];
 					if (typeof icons[0] === 'string') {
 						for (let index = 0; index < icons.length; index++) {
 							icons[index] = baseUrl + icons[index];
@@ -1717,14 +1717,14 @@
 							let tmp = icons[index];
 							for (let j = 0; j < arr.length; j++) {
 								let icon = tmp[ arr[j] ]
-								if (icon && icon.normal) {
-									icon.normal = baseUrl + icon.normal;
+								if (icon && icon["normal"]) {
+									icon["normal"] = baseUrl + icon["normal"];
 								}
 							}
 						}
 					}
-				} else if (items[i].icons.default) {
-					items[i].icons = createIcons(baseUrl);
+				} else if (items[i]["icons"]["default"]) {
+					items[i]["icons"] = createIcons(baseUrl);
 				}
 			}
 
