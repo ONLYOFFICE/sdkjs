@@ -19461,6 +19461,14 @@ $(function () {
 		assert.ok(oParser.parse(), "LOOKUP(3,C100:C106,B100:B106) - first and last value test");
 		oParser.setArrayFormulaRef(ws.getRange2("A2").bbox);
 		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Result of LOOKUP(3,C100:C106,B100:B106)");	// 4
+
+		// for bug 65306
+		ws.getRange2("N102").setValue("янв");
+		ws.getRange2("O102").setValue("0");
+		oParser = new parserFormula("LOOKUP(,-CODE(N102:O102),N102:O102)", "A2", ws);
+		assert.ok(oParser.parse(), "LOOKUP(,-CODE(N102:O102),N102:O102)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Result of LOOKUP(,-CODE(N102:O102),N102:O102)");
+
 	});
 
 
