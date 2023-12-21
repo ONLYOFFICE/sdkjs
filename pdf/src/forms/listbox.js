@@ -784,41 +784,41 @@
         this.WriteToBinaryBase2(memory);
 
         let value = this.GetApiValue(false);
-        if (value != null) {
+        if (value != null && Array.isArray(value) == false) {
             memory.fieldDataFlags |= (1 << 9);
-
-            if (Array.isArray(value)) {
-                // флаг что это массив
-                memory.fieldDataFlags |= (1 << 13);
-                memory.WriteLong(value.length);
-                for (let i = 0; i < value.length; i++) {
-                    memory.WriteString(value[i]);
-                }
-            }
-            else {
-                memory.WriteString(value);
-            }
+            memory.WriteString(value);
         }
 
-        // массив I (выделенные значения списка)
-        let curIdxs = [];
-        if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
-            curIdxs = this.GetApiCurIdxs(false);
-        }
-        if (curIdxs.length > 0) {
-            memory.fieldDataFlags |= (1 << 14);
-            memory.WriteLong(curIdxs.length);
-            for (let i = 0; i < curIdxs.length; i++) {
-                memory.WriteLong(curIdxs[i]);
-            }
-        }
-        
+        // элементы списка выбора
         let aOptions = this.GetOptions();
-        if (aOptions && aOptions.length != 0) {
+        if (aOptions) {
+            memory.fieldDataFlags |= (1 << 10);
             memory.WriteLong(aOptions.length);
             for (let i = 0; i < aOptions.length; i++) {
                 memory.WriteString(aOptions[i][1] != undefined ? aOptions[i][1] : "");
                 memory.WriteString(aOptions[i][0] != undefined ? aOptions[i][0] : "");
+            }
+        }
+
+        if (value != null && Array.isArray(value) == true) {
+            // флаг что значение - это массив
+            memory.fieldDataFlags |= (1 << 13);
+            memory.WriteLong(value.length);
+            for (let i = 0; i < value.length; i++) {
+                memory.WriteString(value[i]);
+            }
+        }
+
+        // массив I (выделенные значения списка)
+        let curIdxs;
+        if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
+            curIdxs = this.GetApiCurIdxs(false);
+        }
+        if (curIdxs) {
+            memory.fieldDataFlags |= (1 << 14);
+            memory.WriteLong(curIdxs.length);
+            for (let i = 0; i < curIdxs.length; i++) {
+                memory.WriteLong(curIdxs[i]);
             }
         }
         

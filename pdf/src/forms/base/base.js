@@ -2353,10 +2353,10 @@
         }
 
         // value
-        let sValue = this.GetApiValue();
-        if (sValue != null) {
+        let value = this.GetApiValue();
+        if (value != null && Array.isArray(value) == false) {
             nFlags |= (1 << 1);
-            memory.WriteString(sValue);
+            memory.WriteString(value);
         }
 
         // default value
@@ -2384,6 +2384,15 @@
         if (oParent != null) {
             nFlags |= (1 << 4);
             memory.WriteLong(oParent.GetApIdx());
+        }
+
+        if (value != null && Array.isArray(value) == true) {
+            // флаг что значение - это массив
+            nFlags |= (1 << 5);
+            memory.WriteLong(value.length);
+            for (let i = 0; i < value.length; i++) {
+                memory.WriteString(value[i]);
+            }
         }
 
         // write flags

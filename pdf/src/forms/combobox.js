@@ -687,19 +687,19 @@
         this.WriteToBinaryBase2(memory);
 
         let value = this.GetApiValue(false);
-        if (value != null) {
+        if (value != null && Array.isArray(value) == false) {
             memory.fieldDataFlags |= (1 << 9);
+            memory.WriteString(value);
+        }
 
-            if (Array.isArray(value)) {
-                // флаг что это массив (у combobox такого быть не должно)
-                memory.fieldDataFlags |= (1 << 13);
-                memory.WriteLong(value.length);
-                for (let i = 0; i < value.length; i++) {
-                    memory.WriteString(value[i]);
-                }
-            }
-            else {
-                memory.WriteString(value);
+        // элементы списка выбора
+        let aOptions = this.GetOptions();
+        if (aOptions) {
+            memory.fieldDataFlags |= (1 << 10);
+            memory.WriteLong(aOptions.length);
+            for (let i = 0; i < aOptions.length; i++) {
+                memory.WriteString(aOptions[i][1] != undefined ? aOptions[i][1] : "");
+                memory.WriteString(aOptions[i][0] != undefined ? aOptions[i][0] : "");
             }
         }
 
@@ -712,12 +712,21 @@
             memory.WriteString(sFormatValue);
         }
         
+        if (value != null && Array.isArray(value) == true) {
+            // флаг что значение - это массив
+            memory.fieldDataFlags |= (1 << 13);
+            memory.WriteLong(value.length);
+            for (let i = 0; i < value.length; i++) {
+                memory.WriteString(value[i]);
+            }
+        }
+
         // массив I (выделенные значения списка)
-        let curIdxs = [];
+        let curIdxs;
         if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
             curIdxs = this.GetApiCurIdxs(false);
         }
-        if (curIdxs.length > 0) {
+        if (curIdxs) {
             memory.fieldDataFlags |= (1 << 14);
             memory.WriteLong(curIdxs.length);
             for (let i = 0; i < curIdxs.length; i++) {
@@ -725,15 +734,6 @@
             }
         }
 
-        let aOptions = this.GetOptions();
-        if (aOptions && aOptions.length != 0) {
-            memory.WriteLong(aOptions.length);
-            for (let i = 0; i < aOptions.length; i++) {
-                memory.WriteString(aOptions[i][1] != undefined ? aOptions[i][1] : "");
-                memory.WriteString(aOptions[i][0] != undefined ? aOptions[i][0] : "");
-            }
-        }
-        
         // top index
         
         if (this.IsEditable()) {
@@ -777,6 +777,7 @@
     CComboBoxField.prototype.SetAlign               = AscPDF.CTextField.prototype.SetAlign;
     CComboBoxField.prototype.GetAlign               = AscPDF.CTextField.prototype.GetAlign;
     CComboBoxField.prototype.SetDoNotSpellCheck     = AscPDF.CTextField.prototype.SetDoNotSpellCheck;
+    CComboBoxField.prototype.IsDoNotSpellCheck      = AscPDF.CTextField.prototype.IsDoNotSpellCheck;
     CComboBoxField.prototype.CorrectHistoryPoints   = AscPDF.CTextField.prototype.CorrectHistoryPoints;
     CComboBoxField.prototype.DoValidateAction       = AscPDF.CTextField.prototype.DoValidateAction;
     CComboBoxField.prototype.DoKeystrokeAction      = AscPDF.CTextField.prototype.DoKeystrokeAction;
