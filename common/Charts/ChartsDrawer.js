@@ -3231,13 +3231,12 @@ CChartsDrawer.prototype =
 		if (values.length) {
 			for (var i = 0; i < values.length; i++) {
 				let count = 1;
-				if (values[i] < 10e-9){
+				if (values[i] != 0 && values[i] < 10e-9){
 					while(values[i] < 1){
-						values[i] *= 10;
 						count *= 10;
 					}
 				}
-				values[i] = Math.round(values[i] * kF) / (kF * count);
+				values[i] = Math.round(values[i] * kF * count) / (kF * count);
 			}
 		}
 
