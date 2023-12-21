@@ -20402,15 +20402,6 @@
 	}
 
 	/**
-	 * Checks the Range has merged cells
-	 * @param {Range} oRangeModel
-	 * @returns {boolean}
-	 * @private
-	 */
-	function _checkMergeCells(oRangeModel) {
-		return oRangeModel.worksheet.mergeManager.get(oRangeModel.bbox).all.length > 0;
-	}
-	/**
 	 * Fills cells in Linear and Growth regression except Trend mode. Works with:
 	 * - Type: Linear, Growth, Date.
 	 * - Stop value
@@ -20464,7 +20455,7 @@
 		let nStartIndex = this.getVertical() ? oTo.r1 : oTo.c1;
 		let nEndIndex = this.getVertical() ? oTo.r2 : oTo.c2;
 		let nDirectStep = 1;
-		if (_checkMergeCells(oFilledRange)) {
+		if (oFilledRange.hasMerged()) {
 			nDirectStep = this.getVertical() ? oFrom.r2 - oFrom.r1 + 1 : oFrom.c2 - oFrom.c1 + 1;
 		}
 		// Fill range cells for i row or col
