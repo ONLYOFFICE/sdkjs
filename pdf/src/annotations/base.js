@@ -456,7 +456,7 @@
     CAnnotationBase.prototype.IsLine = function() {
         return false;
     };
-    CAnnotationBase.prototype.IsCirlce = function() {
+    CAnnotationBase.prototype.IsCircle = function() {
         return false;
     };
     CAnnotationBase.prototype.IsSquare = function() {

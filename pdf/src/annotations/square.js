@@ -88,7 +88,7 @@
         oSquare.SetFillColor(this.GetFillColor());
         oSquare.recalcInfo.recalculatePen = false;
         oSquare.recalcInfo.recalculateGeometry = true;
-        oSquare.SetRectangleDiff(this._rectDiff.slice());
+        this._rectDiff && oSquare.SetRectangleDiff(this._rectDiff.slice());
         oSquare.recalculate();
 
         return oSquare;
@@ -105,7 +105,7 @@
         let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
 
         let aOrigRect   = this.GetOrigRect();
-        let aRD         = this.GetRectangleDiff();
+        let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0];
 
         let aPoints;
         if (!oGeometry)

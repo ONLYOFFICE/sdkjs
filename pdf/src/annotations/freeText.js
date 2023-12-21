@@ -385,7 +385,7 @@
         
         let aOrigRect   = this.GetOrigRect();
         let aCallout    = this.GetCallout(); // координаты выходящей стрелки
-        let aRD         = this.GetRectangleDiff(); // отступ координат фигуры с текстом от ректа аннотации
+        let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0]; // отступ координат фигуры с текстом от ректа аннотации
 
         let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom * g_dKoef_pix_to_mm;
         let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom * g_dKoef_pix_to_mm;

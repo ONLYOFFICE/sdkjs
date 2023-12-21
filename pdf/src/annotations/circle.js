@@ -91,7 +91,7 @@
         oCircle.SetFillColor(this.GetFillColor());
         oCircle.recalcInfo.recalculatePen = false;
         oCircle.recalcInfo.recalculateGeometry = true;
-        oCircle.SetRectangleDiff(this._rectDiff.slice());
+        this._rectDiff && oCircle.SetRectangleDiff(this._rectDiff.slice());
         oCircle.SetDash(this.GetDash());
         oCircle.recalculate();
 
@@ -104,7 +104,7 @@
         let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom * g_dKoef_pix_to_mm;
         let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom * g_dKoef_pix_to_mm;
 
-        let aRD         = this.GetRectangleDiff();
+        let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0];
         let aOrigRect   = this.GetOrigRect();
 
         if (!oGeometry)
@@ -204,7 +204,6 @@
         let oViewer     = editor.getDocumentRenderer();
         let nPage       = this.GetPage();
         let aOrigRect   = this.GetOrigRect();
-        let aRD         = this.GetRectangleDiff();
 
         let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
         let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
