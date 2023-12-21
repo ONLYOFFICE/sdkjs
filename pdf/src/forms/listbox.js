@@ -116,7 +116,7 @@
         this.contentRect.H = contentYLimit - contentY;
 
         this.content.Content.forEach(function(para) {
-            para.Pr.Ind.FirstLine = oMargins.left * g_dKoef_pix_to_mm;
+            para.Pr.Ind.FirstLine   = oMargins.left * g_dKoef_pix_to_mm;
             para.RecalcCompiledPr(true);
         });
 
@@ -772,6 +772,13 @@
         this.AddToRedraw();
         this.SetNeedCommit(false);
     };
+    CListBoxField.prototype.SetAlign = function(nAlignType) {
+		this.content.SetAlign(nAlignType);
+		this.SetNeedRecalc(true);
+	};
+	CListBoxField.prototype.GetAlign = function() {
+		return this.content.GetAlign();
+	};
 
     CListBoxField.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
@@ -830,10 +837,6 @@
             memory.widgetFlags |= (1 << 21);
         }
 
-        if (this.IsDoNotSpellCheck()) {
-            memory.fieldDataFlags |= (1 << 22);
-        }
-
         if (this.IsCommitOnSelChange()) {
             memory.widgetFlags |= (1 << 26);
         }
@@ -860,6 +863,6 @@
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
         
-	window["AscPDF"].CListBoxField = CListBoxField;
+    window["AscPDF"].CListBoxField      = CListBoxField;
 })();
 

@@ -1969,6 +1969,12 @@
         }
         return false;
     };
+    CBaseField.prototype.SetFontKey = function(sKey) {
+        this._fontKey = sKey;
+    };
+    CBaseField.prototype.GetFontKey = function() {
+        return this._fontKey;
+    };
     CBaseField.prototype.SetTextFontActual = function(sFontName) {
         if (typeof(sFontName) !== "string" && sFontName == "")
             return;
@@ -2245,7 +2251,7 @@
         }
 
         // align 
-        if (this.GetType() == AscPDF.FIELD_TYPES.text || this.GetType() == AscPDF.FIELD_TYPES.combobox) {
+        if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
             let nAlignType = this.GetAlign();
             memory.WriteByte(nAlignType);
         }
@@ -2279,6 +2285,12 @@
         //
         // default style
         //
+
+        let sFontKey = this.GetFontKey();
+        if (sFontKey) {
+            memory.fieldDataFlags |= (1 << 2);
+            memory.WriteString(sFontKey);
+        }
 
         // highlight
         let nHighlightType = this.GetHighlight();

@@ -1016,7 +1016,7 @@
 				}
 
 				// common
-				if (oFormInfo["alignment"] != null && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oFormInfo["type"]))
+				if (oFormInfo["alignment"] != null && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.listbox].includes(oFormInfo["type"]))
 				{
 					oForm.SetAlign(oFormInfo["alignment"]);
 				}
@@ -1090,6 +1090,9 @@
 					else if (oFormInfo["font"]["name"]) {
 						oForm.SetTextFontActual(AscFonts.getEmbeddedFontPrefix() + oFormInfo["font"]["name"]);
 					}
+
+					// внутренний ключ для пересылки обратно (зачем? - попросили)
+					oForm.SetFontKey(oFormInfo["font"]["key"]);
 
 					if (oFormInfo["font"]["size"] != null)
 						oForm.SetTextSize(oFormInfo["font"]["size"]);

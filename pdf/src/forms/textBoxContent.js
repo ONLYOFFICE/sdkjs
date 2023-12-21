@@ -86,8 +86,10 @@
 		
 		this.SetApplyToAll(true);
 		this.SetParagraphAlign(_alignType);
-		this.GetElement(0).RecalcCompiledPr(true);
 		this.SetApplyToAll(false);
+		this.Content.forEach(function(para) {
+			para.RecalcCompiledPr(true);
+		});
 	};
 	CTextBoxContent.prototype.GetAlign = function() {
 		let align = this.GetElement(0).GetParagraphAlign();
