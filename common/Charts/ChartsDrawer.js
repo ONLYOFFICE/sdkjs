@@ -2161,7 +2161,7 @@ CChartsDrawer.prototype =
 
 	_getLogArray: function (yMin, yMax, logBase, axis) {	
 		// first check dependencies to be numeric and valid
-		if((yMin !== 0 && !yMin) || (yMax != 0 && !yMax)) {
+		if((yMin !== 0 && !yMin) || (yMax !== 0 && !yMax)) {
 			return [1, logBase];
 		}
 		logBase = (logBase < 2) ? 2 : logBase;
