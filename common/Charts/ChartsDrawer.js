@@ -2174,32 +2174,23 @@ CChartsDrawer.prototype =
 		let kF = 1000000000;
 		let trueMin = (axis.scaling && axis.scaling.min) !== null ? Math.round(axis.scaling.min * kF) / kF : null;
 		let trueMax = (axis.scaling && axis.scaling.max) !== null ? Math.round(axis.scaling.max * kF) / kF : null;
-		yMin = (yMin <= 0) ? 1 : yMin;
+		yMin = (yMin <= 0 || yMin >= 1) ? 1 : yMin;
 		yMax = (yMax <= 0) ? logBase : yMax;
 		trueMin = (!trueMin || trueMin <= 0) ? yMin : trueMin;
 		trueMax = (!trueMax || trueMax <= 0) ? yMax : trueMax;
 
-		trueMin = Math.pow(logBase, Math.floor(Math.log(trueMin) / Math.log(logBase)));
-		trueMax = Math.pow(logBase, Math.ceil(Math.log(trueMax) / Math.log(logBase)));
+		const trueMaxPower = Math.ceil(Math.log(trueMax) / Math.log(logBase));
+		const trueMinPower = Math.floor(Math.log(trueMin) / Math.log(logBase));
+		trueMax = Math.pow(logBase, trueMaxPower);
+		trueMin = Math.pow(logBase, trueMinPower);
 		const result = [];
-
-		//------------------------------
-		/* Possible cases */
-
-		// trueMin is too small
-		if (trueMin > 0 && trueMin < 1e-12) {
-			trueMin = 1e-12;
-		}
-
-		// range between trueMin and trueMax is too huge
-		if (trueMax / trueMin > 1e50) {
-			trueMin = trueMax / 1e50;
-		}
-		//------------------------------
-
-		while (trueMin <= trueMax) {
+		while (trueMin != 0 && trueMin <= trueMax) {
 			result.push(trueMin);
 			trueMin *= logBase;
+		}
+		const prevVal = trueMin / logBase;
+		if (Math.abs(trueMax - prevVal) > Math.abs(trueMax - trueMin)){
+			result.push(trueMin)
 		}
 		return result;
 
@@ -2944,11 +2935,16 @@ CChartsDrawer.prototype =
 			return this.axesChart[0].axis.xPoints ? (this.calcProp.heightCanvas / this.calcProp.pxToMM) : 0;
 		}
 
+		const startingPoint = Math.log(yPoints[yPoints.length - 1].val) / Math.log(logBase);
+		const endingPoint = Math.log(yPoints[0].val) / Math.log(logBase);
+		const segments = yPoints.length - 1;
+		const multiplier = Math.ceil((startingPoint - endingPoint) / segments);
+		const currentPoint = Math.log(val) / Math.log(logBase);
+		const normStartPoint = startingPoint / multiplier;
+		const normEndPoint = currentPoint / multiplier;
+		const pointsDiff = normStartPoint - normEndPoint;
 		const startingPos = yPoints[yPoints.length - 1].pos;
 		const stepDistance = yPoints[yPoints.length - 2].pos - yPoints[yPoints.length - 1].pos;
-		const startingPoint = Math.log(yPoints[yPoints.length - 1].val) / Math.log(logBase);
-		const currentPoint = Math.log(val) / Math.log(logBase);
-		const pointsDiff = startingPoint - currentPoint;
 		return (stepDistance * pointsDiff) + startingPos;
 
 		// var logVal = Math.log(val) / Math.log(logBase);
@@ -3234,7 +3230,14 @@ CChartsDrawer.prototype =
 		var kF = 1000000000;
 		if (values.length) {
 			for (var i = 0; i < values.length; i++) {
-				values[i] = Math.round(values[i] * kF) / kF;
+				let count = 1;
+				if (values[i] < 10e-9){
+					while(values[i] < 1){
+						values[i] *= 10;
+						count *= 10;
+					}
+				}
+				values[i] = Math.round(values[i] * kF) / (kF * count);
 			}
 		}
 
