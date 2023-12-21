@@ -482,7 +482,7 @@
         // т.к. значение будет хранить родитель
         let oParent = this.GetParent();
         if (oParent == null || oParent.IsAllChildsSame() == false) {
-            memory.fieldFlags2 |= (1 << 9);
+            memory.fieldDataFlags |= (1 << 9);
             if (isChecked) {
                 memory.WriteString("Yes");
             }
@@ -495,26 +495,26 @@
 
         let sExportValue = this.GetExportValue();
         if (sExportValue != null) {
-            memory.fieldFlags2 |= (1 << 14);
+            memory.fieldDataFlags |= (1 << 14);
             memory.WriteString(sExportValue);
         }
 
         if (this.IsNoToggleToOff()) {
-            memory.fieldFlags1 |= (1 << 14);
+            memory.widgetFlags |= (1 << 14);
         }
 
         if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton) {
             if (this.IsRadiosInUnison()) {
-                memory.fieldFlags1 |= (1 << 25);
+                memory.widgetFlags |= (1 << 25);
             }
         }
         let nEndPos = memory.GetCurPosition();
 
         // запись флагов
-        memory.Seek(memory.posForFlags1);
-        memory.WriteLong(memory.fieldFlags1);
-        memory.Seek(memory.posForFlags2);
-        memory.WriteLong(memory.fieldFlags2);
+        memory.Seek(memory.posForWidgetFlags);
+        memory.WriteLong(memory.widgetFlags);
+        memory.Seek(memory.posForFieldDataFlags);
+        memory.WriteLong(memory.fieldDataFlags);
 
         // запись длины комманд
         memory.Seek(nStartPos);

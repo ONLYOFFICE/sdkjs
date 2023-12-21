@@ -924,29 +924,6 @@
 				if (oFormInfo["BG"] != null)
 					oForm.SetBackgroundColor(oFormInfo["BG"]);
 
-				if (oFormInfo["font"]) {
-					if (oFormInfo["font"]["color"] != null)
-						oForm.SetTextColor(oFormInfo["font"]["color"]);
-					if (oFormInfo["font"]["name"])
-						oForm.SetTextFont(oFormInfo["font"]["name"]);
-					if (oFormInfo["font"]["actual"]) {
-						oForm.SetTextFontActual(oFormInfo["font"]["actual"]);
-					}
-					else if (oFormInfo["font"]["name"]) {
-						oForm.SetTextFontActual(AscFonts.getEmbeddedFontPrefix() + oFormInfo["font"]["name"]);
-					}
-
-					if (oFormInfo["font"]["size"] != null)
-						oForm.SetTextSize(oFormInfo["font"]["size"]);
-
-					if (oFormInfo["font"]["style"] != null) {
-						oForm.SetFontStyle({
-							bold: Boolean((oFormInfo["font"]["style"] >> 0) & 1),
-							italic: Boolean((oFormInfo["font"]["style"] >> 1) & 1),
-						});
-					}
-				}
-
 				// text form
 				if (oFormInfo["multiline"] != null)
 				{
@@ -969,7 +946,7 @@
 
 				// button
 				if (oFormInfo["position"] != null) {
-					oForm.SetButtonPosition(oFormInfo["position"]);
+					oForm.SetHeaderPosition(oFormInfo["position"]);
 				}
 				if (oFormInfo["caption"] != null && oForm["type"] == AscPDF.FIELD_TYPES.button) {
 					oForm.SetCaption(oFormInfo["caption"]);
@@ -1075,10 +1052,20 @@
 					// to do
 					oForm.SetRequired(Boolean(oFormInfo["required"]));
 				}
-				if (oFormInfo["value"] != null && oForm.GetType() != AscPDF.FIELD_TYPES.button)
+				
+				if (oFormInfo["curIdxs"])
+				{
+					oForm.SetCurIdxs(oFormInfo["curIdxs"]);
+					if (oFormInfo["value"] != null)
+					{
+						oForm._value = oFormInfo["value"];
+					}
+				}
+				else if (oFormInfo["value"] != null && oForm.GetType() != AscPDF.FIELD_TYPES.button)
 				{
 					oForm.SetValue(oFormInfo["value"], true);
 				}
+
 				if (oFormInfo["display"])
 				{
 					// to do
@@ -1092,6 +1079,28 @@
 					oForm.SetDefaultValue(oFormInfo["defaultValue"]);
 				}
 
+				if (oFormInfo["font"]) {
+					if (oFormInfo["font"]["color"] != null)
+						oForm.SetTextColor(oFormInfo["font"]["color"]);
+					if (oFormInfo["font"]["name"])
+						oForm.SetTextFont(oFormInfo["font"]["name"]);
+					if (oFormInfo["font"]["actual"]) {
+						oForm.SetTextFontActual(oFormInfo["font"]["actual"]);
+					}
+					else if (oFormInfo["font"]["name"]) {
+						oForm.SetTextFontActual(AscFonts.getEmbeddedFontPrefix() + oFormInfo["font"]["name"]);
+					}
+
+					if (oFormInfo["font"]["size"] != null)
+						oForm.SetTextSize(oFormInfo["font"]["size"]);
+
+					if (oFormInfo["font"]["style"] != null) {
+						oForm.SetFontStyle({
+							bold: Boolean((oFormInfo["font"]["style"] >> 0) & 1),
+							italic: Boolean((oFormInfo["font"]["style"] >> 1) & 1),
+						});
+					}
+				}
 				// actions
 				if (oFormInfo["AA"] != null)
 				{

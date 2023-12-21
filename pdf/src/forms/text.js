@@ -676,12 +676,12 @@
         let oScroll, oScrollDocElm, oScrollSettings;
 
         if (typeof(bShow) != "boolean" && this._scrollInfo)
-            bShow = this._scrollInfo.scroll.canvas.style.display == "none" ? false : true;
+            bShow = this._scrollInfo.docElem.style.display == "none" ? false : true;
 
         if (nContentH < oContentRect.H || this._doNotScroll) {
             
             if (this._scrollInfo)
-                this._scrollInfo.scroll.canvas.style.display = "none";
+                this._scrollInfo.docElem.style.display = "none";
             return;
         }
 
@@ -767,9 +767,9 @@
             }
 
             if (bShow === true)
-                this._scrollInfo.scroll.canvas.style.display = "";
+                this._scrollInfo.docElem.style.display = "";
             if (bShow === false)
-                this._scrollInfo.scroll.canvas.style.display = "none";
+                this._scrollInfo.docElem.style.display = "none";
         }
     };
 
@@ -924,15 +924,13 @@
         }
         
         this.CorrectHistoryPoints();
-        if (true != editor.getDocumentRenderer().isOnUndoRedo) {
-            if (this.GetApiValue() != this.GetValue()) {
-                if (this.GetDocument().IsNeedSkipHistory() == false) {
-                    this.CreateNewHistoryPoint();
-                    AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
-                }
-                
-                this.SetApiValue(this.GetValue());
+        if (this.GetApiValue() != this.GetValue()) {
+            if (this.GetDocument().IsNeedSkipHistory() == false && true != editor.getDocumentRenderer().isOnUndoRedo) {
+                this.CreateNewHistoryPoint();
+                AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
             }
+            
+            this.SetApiValue(this.GetValue());
         }
 
         TurnOffHistory();
@@ -971,7 +969,6 @@
             if (aFields[i] == this)
                 continue;
 
-            aFields[i].SetApiValue(fieldValue);
 			aFields[i].UpdateDisplayValue(fieldValue);
             aFields[i].SetNeedRecalc(true);
         }
@@ -1079,7 +1076,7 @@
 
         this.GetDocument().SetEvent({
             "target":   this.GetFormApi(),
-            "value":    this.GetValue(),
+            "value":    this.GetValue(true),
             "change":   aChars.map(function(char) {
                 return String.fromCharCode(char);
             }).join(""),
@@ -1492,16 +1489,25 @@
         this.WriteToBinaryBase(memory);
         this.WriteToBinaryBase2(memory);
 
-        let sValue = this.GetValue();
+        let sValue = this.GetApiValue(false);
         if (sValue != null && this.IsPassword() == false) {
-            memory.fieldFlags2 |= (1 << 9);
+            memory.fieldDataFlags |= (1 << 9);
             memory.WriteString(sValue);
         }
 
         let nCharLimit = this.GetCharLimit();
         if (nCharLimit != 0) {
-            memory.fieldFlags2 |= (1 << 10);
+            memory.fieldDataFlags |= (1 << 10);
             memory.WriteLong(nCharLimit);
+        }
+
+        // форматируемое значение
+        let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
+        let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
+        if (oActionRunScript) {
+            memory.fieldDataFlags |= (1 << 12);
+            let sFormatValue = this.contentFormat.getAllText();
+            memory.WriteString(sFormatValue);
         }
 
         //
@@ -1509,34 +1515,34 @@
         //
 
         if (this.IsMultiline()) {
-            memory.fieldFlags2 |= (1 << 12);
+            memory.widgetFlags |= (1 << 12);
         }
         if (this.IsPassword()) {
-            memory.fieldFlags2 |= (1 << 13);
+            memory.widgetFlags |= (1 << 13);
         }
         if (this.IsFileSelect()) {
-            memory.fieldFlags2 |= (1 << 20);
+            memory.widgetFlags |= (1 << 20);
         }
         if (this.IsDoNotSpellCheck()) {
-            memory.fieldFlags2 |= (1 << 22);
+            memory.widgetFlags |= (1 << 22);
         }
         if (this.IsDoNotScroll()) {
-            memory.fieldFlags2 |= (1 << 23);
+            memory.widgetFlags |= (1 << 23);
         }
         if (this.IsComb()) {
-            memory.fieldFlags2 |= (1 << 24);
+            memory.widgetFlags |= (1 << 24);
         }
         // if (this.IsRichText()) {
-        //     memory.fieldFlags2 |= (1 << 25);
+        //     memory.widgetFlags |= (1 << 25);
         // }
 
         let nEndPos = memory.GetCurPosition();
 
         // запись флагов
-        memory.Seek(memory.posForFlags1);
-        memory.WriteLong(memory.fieldFlags1);
-        memory.Seek(memory.posForFlags2);
-        memory.WriteLong(memory.fieldFlags2);
+        memory.Seek(memory.posForWidgetFlags);
+        memory.WriteLong(memory.widgetFlags);
+        memory.Seek(memory.posForFieldDataFlags);
+        memory.WriteLong(memory.fieldDataFlags);
 
         // запись длины комманд
         memory.Seek(nStartPos);

@@ -180,6 +180,8 @@ var CPresentation = CPresentation || function(){};
                 oParent.SetDefaultValue(aParentsInfo[i]["defaultValue"]);
             if (aParentsInfo[i]["i"] != null)
                 oParent.SetApIdx(aParentsInfo[i]["i"]);
+            if (aParentsInfo[i]["curIdxs"])
+                oParent.SetApiCurIdxs(aParentsInfo[i]["curIdxs"]);
             oParents[nIdx] = oParent;
 
             this.rootFields.set(oParent.GetPartialName(), oParent);
@@ -198,12 +200,18 @@ var CPresentation = CPresentation || function(){};
         for (let i = 0; i < this.widgets.length; i++) {
             let oField = this.widgets[i];
             if ((oField.GetPartialName() == null || oField.GetApiValue(bInberitValue) == null) && oField.GetParent()) {
-                value = oField.GetParent().GetApiValue();
+                let oParent = oField.GetParent();
+                value = oParent.GetApiValue();
                 if (value != null && value.toString) {
                     value = value.toString();
                 }
 
-                oField.SetValue(value, true);
+                if (oParent._currentValueIndices) {
+                    oField.SetCurIdxs(Array.isArray(oParent._currentValueIndices) ? oParent._currentValueIndices : [oParent._currentValueIndices]);
+                }
+                else {
+                    oField.SetValue(value, true);
+                }
             }
         }
     };
@@ -382,7 +390,7 @@ var CPresentation = CPresentation || function(){};
 
                 let isValid = true;
                 if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oCurForm.GetType())) {
-                    isValid = oCurForm.DoValidateAction(oCurForm.GetValue());
+                    isValid = oCurForm.DoValidateAction(oCurForm.GetValue(true));
                 }
 
                 if (isValid) {
@@ -411,6 +419,7 @@ var CPresentation = CPresentation || function(){};
 
             oCurForm.SetDrawHighlight(true);
             oCurForm.Blur();
+            oCurForm.UpdateScroll && oCurForm.UpdateScroll(false);
         }
         
         if (!oNextForm)
@@ -491,6 +500,7 @@ var CPresentation = CPresentation || function(){};
 
             oCurForm.SetDrawHighlight(true);
             oCurForm.Blur();
+            oCurForm.UpdateScroll && oCurForm.UpdateScroll(false);
         }
         
         if (!oNextForm)
@@ -583,7 +593,7 @@ var CPresentation = CPresentation || function(){};
             if (oField.IsNeedCommit()) {
                 let isValid = true;
                 if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oField.GetType())) {
-                    isValid = oField.DoValidateAction(oField.GetValue());
+                    isValid = oField.DoValidateAction(oField.GetValue(true));
                 }
                 if (isValid) {
                     oField.needValidate = false; 
@@ -656,7 +666,7 @@ var CPresentation = CPresentation || function(){};
 
             let isValid = true;
             if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oActiveForm.GetType())) {
-                isValid = oActiveForm.DoValidateAction(oActiveForm.GetValue());
+                isValid = oActiveForm.DoValidateAction(oActiveForm.GetValue(true));
             }
 
             if (isValid) {
@@ -1161,6 +1171,7 @@ var CPresentation = CPresentation || function(){};
                         // выход из формы
                         if (this.activeForm)
                         {
+                            this.activeForm.UpdateScroll && this.activeForm.UpdateScroll(false);
                             this.activeForm.SetDrawHighlight(true);
                             this.activeForm = null;
                         }
@@ -1215,6 +1226,7 @@ var CPresentation = CPresentation || function(){};
                     // выход из формы
                     if (this.activeForm)
                     {
+                        this.activeForm.UpdateScroll && this.activeForm.UpdateScroll(false);
                         this.activeForm.SetDrawHighlight(true);
                         this.activeForm = null;
                     }

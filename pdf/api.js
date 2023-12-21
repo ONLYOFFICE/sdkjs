@@ -471,8 +471,6 @@
 			return;
 
 		let sDate = oPr.ToString();
-		let oActionsQueue = oDoc.GetActionsQueue();
-		
 		let oCurDate = new Date();
 
 		let parts = sDate.split(".");
@@ -498,6 +496,10 @@
 		let oField = oDoc.activeForm;
 		if (!oField)
 			return;
+		
+		if (oField.GetType() == AscPDF.FIELD_TYPES.combobox) {
+			oField.CreateNewHistoryPoint(true);
+		}
 		
 		oField.SelectOption(nIdx);
 		let isNeedRedraw = oField.IsNeedCommit();

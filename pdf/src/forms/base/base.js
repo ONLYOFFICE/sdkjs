@@ -1252,7 +1252,7 @@
     };
     CBaseField.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
         if (bRecalc == false) {
-            this._needRecalc = !this.checkFonts();
+            this._needRecalc = false;
         }
         else {
             this._needRecalc = true;
@@ -2195,8 +2195,8 @@
         memory.WriteLong(annotFlags);
         memory.Seek(nEndPos);
     };
-    CBaseField.prototype.GetFontSizeAP = function() {
-        let oPara   = this.content.GetElement(0);
+    CBaseField.prototype.GetFontSizeAP = function(oContent) {
+        let oPara   = oContent.GetElement(0);
         let oRun    = oPara.GetElement(0);
         let oTextPr = oRun.Get_CompiledPr(true);
 
@@ -2215,8 +2215,13 @@
             memory.WriteDouble(nFontSize);
         }
 
+        // форматируемое значение
+        let oFormatTrigger      = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
+        let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
+        let oContentToDraw      = oActionRunScript ? this.contentFormat : this.content;
+
         // text size for ap
-        memory.WriteDouble(this.GetFontSizeAP());
+        memory.WriteDouble(this.GetFontSizeAP(oContentToDraw));
 
         // font style
         let oStyle = this.GetFontStyle();
@@ -2240,31 +2245,31 @@
         }
 
         // align 
-        if (this.GetType() == AscPDF.FIELD_TYPES.text) {
+        if (this.GetType() == AscPDF.FIELD_TYPES.text || this.GetType() == AscPDF.FIELD_TYPES.combobox) {
             let nAlignType = this.GetAlign();
             memory.WriteByte(nAlignType);
         }
 
         // сюда пойдут 1ые флаги полей
-        memory.fieldFlags1   = 0;
-        memory.posForFlags1  = memory.GetCurPosition();
+        memory.widgetFlags   = 0;
+        memory.posForWidgetFlags  = memory.GetCurPosition();
         memory.Skip(4);
         
         if (this.IsReadOnly()) {
-            memory.fieldFlags1 |= (1 << 0);
+            memory.widgetFlags |= (1 << 0);
         }
 
         if (this.IsRequired()) {
-            memory.fieldFlags1 |= (1 << 1);
+            memory.widgetFlags |= (1 << 1);
         }
 
         if (this.IsNoExport()) {
-            memory.fieldFlags1 |= (1 << 2);
+            memory.widgetFlags |= (1 << 2);
         }
 
         // сюда пойдут 2ые флаги полей
-        memory.fieldFlags2   = 0;
-        memory.posForFlags2  = memory.GetCurPosition();
+        memory.fieldDataFlags   = 0;
+        memory.posForFieldDataFlags  = memory.GetCurPosition();
         memory.Skip(4);
         
         //
@@ -2278,13 +2283,13 @@
         // highlight
         let nHighlightType = this.GetHighlight();
         if (nHighlightType != null) {
-            memory.fieldFlags2 |= (1 << 3);
+            memory.fieldDataFlags |= (1 << 3);
             memory.WriteByte(nHighlightType);
         }
 
         let aBorderColor = this.GetBorderColor();
         if (aBorderColor && aBorderColor.length != 0) {
-            memory.fieldFlags2 |= (1 << 5);
+            memory.fieldDataFlags |= (1 << 5);
             memory.WriteLong(aBorderColor.length);
             for (let i = 0; i < aBorderColor.length; i++) {
                 memory.WriteDouble(aBorderColor[i]);
@@ -2297,7 +2302,7 @@
 
         let aBgColor = this.GetBackgroundColor();
         if (aBgColor && aBgColor.length != 0) {
-            memory.fieldFlags2 |= (1 << 7);
+            memory.fieldDataFlags |= (1 << 7);
             memory.WriteLong(aBgColor.length);
             for (let i = 0; i < aBgColor.length; i++) {
                 memory.WriteDouble(aBgColor[i]);;
@@ -2307,21 +2312,21 @@
         // default value
         let defValue = this.GetDefaultValue();
         if (defValue != null) {
-            memory.fieldFlags2 |= (1 << 8);
+            memory.fieldDataFlags |= (1 << 8);
             memory.WriteString(defValue);
         }
 
         // parent
         let oParent = this.GetParent();
         if (oParent != null) {
-            memory.fieldFlags2 |= (1 << 17);
+            memory.fieldDataFlags |= (1 << 17);
             memory.WriteLong(oParent.GetApIdx());
         }
 
         // partial name
         let sName = this.GetPartialName();
         if (sName != null) {
-            memory.fieldFlags2 |= (1 << 18);
+            memory.fieldDataFlags |= (1 << 18);
             memory.WriteString(sName);
         }
 
@@ -2361,10 +2366,23 @@
             memory.WriteString(defValue);
         }
 
+        // combobox/listbox
+        let curIdxs = [];
+        if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
+            curIdxs = this.GetApiCurIdxs();
+        }
+        if (curIdxs.length > 0) {
+            nFlags |= (1 << 3);
+            memory.WriteLong(curIdxs.length);
+            for (let i = 0; i < curIdxs.length; i++) {
+                memory.WriteLong(curIdxs[i]);
+            }
+        }
+
         // parent
         let oParent = this.GetParent();
         if (oParent != null) {
-            nFlags |= (1 << 3);
+            nFlags |= (1 << 4);
             memory.WriteLong(oParent.GetApIdx());
         }
 

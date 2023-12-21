@@ -120,7 +120,7 @@
         
         let aFields = editor.getDocumentRenderer().IsOpenFormsInProgress == false ? oDoc.GetFields(this.GetFullName()) : [this];
         aFields.forEach(function(field) {
-            if (field.GetButtonPosition() == position["textOnly"])
+            if (field.GetHeaderPosition() == position["textOnly"])
                 return;
 
             field.SetNeedRecalc(true);
@@ -304,7 +304,7 @@
         
         if (editor.getDocumentRenderer().IsOpenFormsInProgress == false) {
             aFields.forEach(function(field) {
-                if (field.GetButtonPosition() == position["textOnly"])
+                if (field.GetHeaderPosition() == position["textOnly"])
                     return;
 
                 field.SetWasChanged(true);
@@ -741,7 +741,7 @@
      */
     CPushButtonField.prototype.Internal_CorrectContentPos = function() {
         let oRect       = this.getFormRelRect();
-        let nButtonPos  = this.GetButtonPosition();
+        let nButtonPos  = this.GetHeaderPosition();
 
         let oDrawing = this.GetDrawing();
         // выставляем положение текста с картинкой
@@ -945,7 +945,7 @@
         oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
 
         // draw behind doc
-        if (this.GetButtonPosition() == position["overlay"]) {
+        if (this.GetHeaderPosition() == position["overlay"]) {
             let oDrawing = this.GetDrawing();
             if (oDrawing)
                 oDrawing.GraphicObj.draw(oGraphicsWord);
@@ -1659,7 +1659,7 @@
      * @param {number} nType
      * @typeofeditors ["PDF"]
      */
-    CPushButtonField.prototype.SetButtonPosition = function(nType) {
+    CPushButtonField.prototype.SetHeaderPosition = function(nType) {
         switch (nType) {
             case position["textOnly"]:
                 this.SetTextOnly();
@@ -1684,7 +1684,7 @@
                 break;
         }
     };
-    CPushButtonField.prototype.GetButtonPosition = function() {
+    CPushButtonField.prototype.GetHeaderPosition = function() {
         return this._buttonPosition;
     };
     CPushButtonField.prototype.SetIconPosition = function(X, Y) {
@@ -2178,28 +2178,28 @@
         // normal caption
         let sCaption = this.GetCaption(CAPTION_TYPES.normal);
         if (sCaption != null) {
-            memory.fieldFlags2 |= (1 << 10);
+            memory.fieldDataFlags |= (1 << 10);
             memory.WriteString(sCaption);
         }
 
         // rollover caption
         let sRolloverCaption = this.GetCaption(CAPTION_TYPES.rollover);
         if (sRolloverCaption != null) {
-            memory.fieldFlags2 |= (1 << 11);
+            memory.fieldDataFlags |= (1 << 11);
             memory.WriteString(sRolloverCaption);
         }
 
-        // rollover caption
+        // mouseDown caption
         let sDownCaption = this.GetCaption(CAPTION_TYPES.mouseDown);
         if (sDownCaption != null) {
-            memory.fieldFlags2 |= (1 << 12);
+            memory.fieldDataFlags |= (1 << 12);
             memory.WriteString(sDownCaption);
         }
 
-        // button caption and image position
-        let nButtonPosition = this.GetButtonPosition();
+        // button header position position
+        let nButtonPosition = this.GetHeaderPosition();
         if (nButtonPosition != null) {
-            memory.fieldFlags2 |= (1 << 13);
+            memory.fieldDataFlags |= (1 << 13);
             memory.WriteByte(nButtonPosition);
         }
 
@@ -2271,10 +2271,10 @@
         // запись флагов
         memory.Seek(nPosForButtonFlags);
         memory.WriteLong(nButtonFlags);
-        memory.Seek(memory.posForFlags1);
-        memory.WriteLong(memory.fieldFlags1);
-        memory.Seek(memory.posForFlags2);
-        memory.WriteLong(memory.fieldFlags2);
+        memory.Seek(memory.posForWidgetFlags);
+        memory.WriteLong(memory.widgetFlags);
+        memory.Seek(memory.posForFieldDataFlags);
+        memory.WriteLong(memory.fieldDataFlags);
 
         // запись длины комманд
         memory.Seek(nStartPos);

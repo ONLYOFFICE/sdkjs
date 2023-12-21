@@ -182,22 +182,29 @@
 
         let oThisBounds = this.getFormRelRect();
 
-        if (true != editor.getDocumentRenderer().isOnUndoRedo && this.GetApiValue() != this.GetValue()) {
-            if (this.GetDocument().IsNeedSkipHistory() == false) {
+        let aCurIdxs = this.GetCurIdxs();
+        if (this.GetApiValue() != this.GetValue()) {
+            if (this.GetDocument().IsNeedSkipHistory() == false && true != editor.getDocumentRenderer().isOnUndoRedo) {
                 this.CreateNewHistoryPoint();
                 AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
+                AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetApiCurIdxs(), aCurIdxs));
             }
-            this.UpdateIndexies();
+            else if (true == editor.getDocumentRenderer().isOnUndoRedo) {
+                // из истории выставляет curIdxs для родительского поля. Это выставление не меняет выделение параграфов.
+                // Поэтому вызываем SetCurIdxs
+                this._bAutoShiftContentView = true;
+                aCurIdxs = this.GetApiCurIdxs();
+                this.SetCurIdxs(aCurIdxs);
+            }
+
             this.SetApiValue(this.GetValue());
+            this.SetApiCurIdxs(aCurIdxs);
         }
         
         TurnOffHistory();
 
         aFields.forEach(function(field) {
             field.SetWasChanged(true);
-
-            field._bAutoShiftContentView = false;
-
             field.SetNeedRecalc(true);
             if (field.HasShiftView()) {
                 if (field == oThis) {
@@ -206,31 +213,11 @@
                 }
             }
 
-            field.SetApiValue(oThis.GetApiValue());
-
             if (oThis == field)
                 return;
 
-            if (oThis.IsMultipleSelection()) {
-                // снимаем выделение с тех, которые не присутсвуют в поле, от которого применяем ко всем
-                for (let i = 0; i < field._currentValueIndices.length; i++) {
-                    if (oThis._currentValueIndices.includes(field._currentValueIndices[i]) == false) {
-                        field.UnselectOption(field._currentValueIndices[i]);
-                    }
-                }
-                
-                for (let i = 0; i < oThis._currentValueIndices.length; i++) {
-                    // добавляем выделение тем, которые не присутсвуют в текущем поле, но присутсвуют в том, от которого применяем
-                    if (field._currentValueIndices.includes(oThis._currentValueIndices[i]) == false) {
-                        field.SelectOption(oThis._currentValueIndices[i], false);
-                    }
-                }
-                field._currentValueIndices = oThis._currentValueIndices.slice();
-            }
-            else {
-                field._currentValueIndices = oThis._currentValueIndices;
-                field.SelectOption(field._currentValueIndices, true);
-            }
+            field._bAutoShiftContentView = false;
+            field.SetCurIdxs(aCurIdxs);
 
             let oFieldBounds = field.getFormRelRect();
             if (Math.abs(oFieldBounds.H - oThisBounds.H) > 0.001) {
@@ -248,21 +235,19 @@
     CListBoxField.prototype.SetMultipleSelection = function(bValue) {
         if (bValue == true) {
             this._multipleSelection = true;
-            this._currentValueIndices = [this._currentValueIndices];
         }
         else {
             this._multipleSelection = false;
-            this._currentValueIndices = this._currentValueIndices[0];
-            this._currentValueIndices != -1 && this.SelectOption(this._currentValueIndices, true);
         }
     };
     CListBoxField.prototype.IsMultipleSelection = function() {
         return this._multipleSelection;
     };
+
     CListBoxField.prototype.SelectOption = function(nIdx, isSingleSelect) {
         let curIdxs = this.GetCurIdxs();
         if (Array.isArray(curIdxs)) {
-            if (curIdxs.includes(nIdx))
+            if (curIdxs.includes(nIdx) && curIdxs.length == 1)
                 return;
         }
         else if (curIdxs == nIdx)
@@ -329,14 +314,14 @@
         }
     };
     CListBoxField.prototype.SetValue = function(value) {
+        let aIndexes = [];
         if (this.IsWidget()) {
-            let aIndexes = [];
             if (Array.isArray(value)) {
                 for (let i = 0; i < value.length; i++) {
                     let sVal = value[i];
                     let isFound = false;
                     for (let i = 0; i < this._options.length; i++) {
-                        if (this._options[i][1] && this._options[i][1] == sVal) {
+                        if (Array.isArray(this._options[i]) && this._options[i][1] == sVal) {
                             if (aIndexes.includes(i))
                                 continue;
                             else {
@@ -377,7 +362,6 @@
                 }
             }
 
-            this._currentValueIndices = this.IsMultipleSelection() == true ? aIndexes : aIndexes[0];
             this.content.Content.forEach(function(para) {
                 let oApiPara = editor.private_CreateApiParagraph(para);
                 if (para.Pr.Shd && para.Pr.Shd.IsNil() == false) {
@@ -394,11 +378,16 @@
                     this.SelectOption(aIndexes[i], true);
             }
 
-            if (editor.getDocumentRenderer().IsOpenFormsInProgress)
+            if (editor.getDocumentRenderer().IsOpenFormsInProgress) {
                 this.SetApiValue(value);
+                this.SetApiCurIdxs(aIdxs);
+            }
+                
         }
-        else
+        else {
             this.SetApiValue(value);
+            this.SetApiCurIdxs(aIdxs);
+        }
     };
     CListBoxField.prototype.InsertOption = function(sName, sExport, nIdx) {
         let optToInsert = sExport ? [sName, sExport] : sName;
@@ -493,11 +482,9 @@
 
         if (this.IsMultipleSelection() == true) {
             this.SelectOption(this.content.CurPos.ContentPos, true);
-            this._currentValueIndices = [this.content.CurPos.ContentPos];
         }
         else {
             this.SelectOption(this.content.CurPos.ContentPos, true);
-            this._currentValueIndices = this.content.CurPos.ContentPos;
         }
         
         this.AddToRedraw();
@@ -510,11 +497,9 @@
 
         if (this.IsMultipleSelection() == true) {
             this.SelectOption(this.content.CurPos.ContentPos, true);
-            this._currentValueIndices = [this.content.CurPos.ContentPos];
         }
         else {
             this.SelectOption(this.content.CurPos.ContentPos, true);
-            this._currentValueIndices = this.content.CurPos.ContentPos;
         }
 
         this.AddToRedraw();
@@ -530,12 +515,12 @@
         let oScroll, oScrollDocElm, oScrollSettings;
 
         if (typeof(bShow) != "boolean" && this._scrollInfo)
-            bShow = this._scrollInfo.scroll.canvas.style.display == "none" ? false : true;
+            bShow = this._scrollInfo.docElem.style.display == "none" ? false : true;
 
         if (nContentH < oContentRect.H || this._doNotScroll) {
             
             if (this._scrollInfo)
-                this._scrollInfo.scroll.canvas.style.display = "none";
+                this._scrollInfo.docElem.style.display = "none";
             return;
         }
 
@@ -621,9 +606,9 @@
             }
 
             if (bShow === true)
-                this._scrollInfo.scroll.canvas.style.display = "";
+                this._scrollInfo.docElem.style.display = "";
             if (bShow === false)
-                this._scrollInfo.scroll.canvas.style.display = "none";
+                this._scrollInfo.docElem.style.display = "none";
         }
     };
     CListBoxField.prototype.ScrollVertical = function(scrollY, maxYscroll) {
@@ -648,51 +633,6 @@
         
         this.AddToRedraw();
         editor.getDocumentRenderer()._paint();
-    };
-    /**
-	 * Checks curValueIndices, corrects it and return.
-	 * @memberof CListBoxField
-	 * @typeofeditors ["PDF"]
-     * @returns {number}
-	 */
-    CListBoxField.prototype.UpdateIndexies = function() {
-        let nIdx;
-        if (this.IsMultipleSelection())
-            nIdx = []
-        else
-            nIdx = -1;
-
-        let oCurPara;
-        for (let i = 0; i < this.content.Content.length; i++) {
-            oCurPara = this.content.GetElement(i);
-            if (oCurPara.Pr.Shd && oCurPara.Pr.Shd.IsNil() == false) {
-                if (this.IsMultipleSelection())
-                    nIdx.push(i);
-                else {
-                    nIdx = i;
-                    break;
-                }
-            }
-        }
-
-        this._currentValueIndices = nIdx;
-        return nIdx;
-    };
-    /**
-	 * Updates the selections according to the indices.
-	 * @memberof CListBoxField
-	 * @typeofeditors ["PDF"]
-     * @returns {number}
-	 */
-    CListBoxField.prototype.UpdateSelection = function() {
-        if (Array.isArray(this._currentValueIndices)) {
-            for (let i = 0; i < this._currentValueIndices.length; i++) {
-                let nIdx = this._currentValueIndices[i];
-                this.SelectOption(nIdx, false);
-            }
-        }
-        else
-            this.SelectOption(this._currentValueIndices, true);
     };
     
     CListBoxField.prototype.CheckFormViewWindow = function()
@@ -761,15 +701,15 @@
     CListBoxField.prototype.GetValue = function() {
         let oPara, oShd;
         if (this.IsMultipleSelection()) {
-            let aIndexes = [];
+            let aValues = [];
             for (let i = 0, nCount = this.content.GetElementsCount(); i < nCount; i++) {
                 oPara = this.content.GetElement(i);
                 oShd = oPara.Pr.Shd;
                 if (oShd && oShd.IsNil() == false)
-                    aIndexes.push(Array.isArray(this._options[i]) ? this._options[i][1] : this._options[i]);
+                    aValues.push(Array.isArray(this._options[i]) ? this._options[i][1] : this._options[i]);
             }
 
-            return aIndexes;
+            return aValues;
         }
         else {
             for (let i = 0, nCount = this.content.GetElementsCount(); i < nCount; i++) {
@@ -785,25 +725,46 @@
             return this._currentValueIndices;
             
         let oPara, oShd;
+        let aIndexes = [];
         if (this.IsMultipleSelection()) {
-            let aIndexes = [];
             for (let i = 0, nCount = this.content.GetElementsCount(); i < nCount; i++) {
                 oPara = this.content.GetElement(i);
                 oShd = oPara.Pr.Shd;
                 if (oShd && oShd.IsNil() == false)
                     aIndexes.push(i);
             }
-
-            return aIndexes;
         }
         else {
             for (let i = 0, nCount = this.content.GetElementsCount(); i < nCount; i++) {
                 oPara = this.content.GetElement(i);
                 oShd = oPara.Pr.Shd;
                 if (oShd && oShd.IsNil() == false)
-                    return i;
+                    aIndexes.push(i);
             }
         }
+
+        return aIndexes;
+    };
+    CListBoxField.prototype.SetCurIdxs = function(aIdxs) {
+        if (this.IsWidget()) {
+            // сначала снимаем выделение с текущих
+            let aCurIdxs = this.GetCurIdxs();
+            for (let i = 0; i < aCurIdxs.length; i++) {
+                this.UnselectOption(aCurIdxs[i]);
+            }
+
+            this.SelectOption(aIdxs[0], true);
+            for (let i = 1; i < aIdxs.length; i++) {
+                this.SelectOption(aIdxs[i]);
+            }
+            if (editor.getDocumentRenderer().IsOpenFormsInProgress)
+                this.SetApiCurIdxs(aIdxs);
+        }
+        else {
+            this.SetApiCurIdxs(aIdxs);
+        }
+
+        this.SetNeedCommit(false);
     };
 	CListBoxField.prototype.UndoNotAppliedChanges = function() {
         this.SetValue(this.GetApiValue());
@@ -822,12 +783,36 @@
         this.WriteToBinaryBase(memory);
         this.WriteToBinaryBase2(memory);
 
-        let sValue = this.GetValue();
-        if (sValue != null) {
-            memory.fieldFlags2 |= (1 << 9);
-            memory.WriteString(sValue);
+        let value = this.GetApiValue(false);
+        if (value != null) {
+            memory.fieldDataFlags |= (1 << 9);
+
+            if (Array.isArray(value)) {
+                // флаг что это массив
+                memory.fieldDataFlags |= (1 << 13);
+                memory.WriteLong(value.length);
+                for (let i = 0; i < value.length; i++) {
+                    memory.WriteString(value[i]);
+                }
+            }
+            else {
+                memory.WriteString(value);
+            }
         }
 
+        // массив I (выделенные значения списка)
+        let curIdxs = [];
+        if ([AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.listbox].includes(this.GetType())) {
+            curIdxs = this.GetApiCurIdxs(false);
+        }
+        if (curIdxs.length > 0) {
+            memory.fieldDataFlags |= (1 << 14);
+            memory.WriteLong(curIdxs.length);
+            for (let i = 0; i < curIdxs.length; i++) {
+                memory.WriteLong(curIdxs[i]);
+            }
+        }
+        
         let aOptions = this.GetOptions();
         if (aOptions && aOptions.length != 0) {
             memory.WriteLong(aOptions.length);
@@ -842,24 +827,24 @@
         //
 
         if (this.IsMultipleSelection()) {
-            memory.fieldFlags1 |= (1 << 21);
+            memory.widgetFlags |= (1 << 21);
         }
 
-        // if (this.IsDoNotSpellCheck()) {
-        //     memory.fieldFlags2 |= (1 << 22);
-        // }
+        if (this.IsDoNotSpellCheck()) {
+            memory.fieldDataFlags |= (1 << 22);
+        }
 
         if (this.IsCommitOnSelChange()) {
-            memory.fieldFlags1 |= (1 << 26);
+            memory.widgetFlags |= (1 << 26);
         }
 
         let nEndPos = memory.GetCurPosition();
 
         // запись флагов
-        memory.Seek(memory.posForFlags1);
-        memory.WriteLong(memory.fieldFlags1);
-        memory.Seek(memory.posForFlags2);
-        memory.WriteLong(memory.fieldFlags2);
+        memory.Seek(memory.posForWidgetFlags);
+        memory.WriteLong(memory.widgetFlags);
+        memory.Seek(memory.posForFieldDataFlags);
+        memory.WriteLong(memory.fieldDataFlags);
 
         // запись длины комманд
         memory.Seek(nStartPos);

@@ -1732,6 +1732,7 @@
 	window['AscDFH'].historyitem_type_Pdf_Annot				= 2214 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Pushbutton		= 2215 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Line				= 2216 << 16;
+	window['AscDFH'].historyitem_type_Pdf_List_Form			= 2217 << 16;
 
 	
 
@@ -4010,6 +4011,8 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	AscDFH.historyitem_Pdf_Form_Value			= AscDFH.historyitem_type_Pdf_Form | 1;
+	
+	AscDFH.historyitem_Pdf_List_Form_Cur_Idxs	= AscDFH.historyitem_type_Pdf_List_Form | 1;
 
 
 	AscDFH.historyitem_Pdf_Pushbutton_Image		= AscDFH.historyitem_type_Pdf_Pushbutton | 1;
