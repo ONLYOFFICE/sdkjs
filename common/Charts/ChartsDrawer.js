@@ -2159,9 +2159,9 @@ CChartsDrawer.prototype =
 		return arrayValues;
 	},
 
-	_getLogArray: function (yMin, yMax, logBase, axis) {		
+	_getLogArray: function (yMin, yMax, logBase, axis) {	
 		// first check dependencies to be numeric and valid
-		if(yMin != 0 && !yMin && yMax != 0 && !yMax) {
+		if((yMin != 0 && !yMin) || (yMax != 0 && !yMax)) {
 			return [1, logBase];
 		}
 		logBase = (logBase < 2) ? 2 : logBase;
@@ -2171,8 +2171,8 @@ CChartsDrawer.prototype =
 		 * if they are null just use yMin lowerBound and yMax upperBound
 		*/
 		let kF = 1000000000;
-		let trueMin = (axis.scaling && axis.scaling.min) !== null ? Math.round(axis.scaling.min * kF) / kF : null;
-		let trueMax = (axis.scaling && axis.scaling.max) !== null ? Math.round(axis.scaling.max * kF) / kF : null;
+		let trueMin = (axis && axis.scaling && axis.scaling.min) !== null ? Math.round(axis.scaling.min * kF) / kF : null;
+		let trueMax = (axis && axis.scaling && axis.scaling.max) !== null ? Math.round(axis.scaling.max * kF) / kF : null;
 		yMin = (yMin <= 0 || yMin >= 1) ? 1 : yMin;
 		yMax = (yMax <= 0) ? logBase : yMax;
 		trueMin = (!trueMin || trueMin <= 0) ? yMin : trueMin;
@@ -2936,14 +2936,13 @@ CChartsDrawer.prototype =
 
 	_getYPositionLogBase: function (val, yPoints, isOx, logBase) {
 		// first check dependencies to be numeric and valid
-		if (val <= 0) {
+		if (!val && val <= 0) {
 			return this.axesChart[0].axis.xPoints ? (this.calcProp.heightCanvas / this.calcProp.pxToMM) : 0;
 		}
-		if (yPoints.length < 2) {
+		if (!yPoints || yPoints.length < 2) {
 			return null;
 		}
 		logBase = (logBase < 2) ? 2 : logBase;
-
 
 		const startingPoint = Math.log(yPoints[yPoints.length - 1].val) / Math.log(logBase);
 		const currentPoint = Math.log(val) / Math.log(logBase);
@@ -3231,17 +3230,17 @@ CChartsDrawer.prototype =
 	},
 
 	_roundValues: function (values) {
-		//ToDo пересмотреть округление. на числа << 0 могут быть проблемы!
-		var kF = 1000000000;
+		const kF = 1000000000;
 		if (values.length) {
-			for (var i = 0; i < values.length; i++) {
+			for (let i = 0; i < values.length; i++) {
 				let count = 1;
 				if (values[i] != 0 && values[i] < 10e-9){
-					while(values[i] < 1){
+					while(values[i] < 1 && values[i] > -1){
+						values[i] *= 10;
 						count *= 10;
 					}
 				}
-				values[i] = Math.round(values[i] * kF * count) / (kF * count);
+				values[i] = Math.round(values[i] * kF) / (kF * count);
 			}
 		}
 
