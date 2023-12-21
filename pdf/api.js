@@ -177,7 +177,7 @@
 				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
 		}
 		else {
-			let _text_object = {};
+			let _text_object = {Text: ""};
 			let _html_data = this.DocumentRenderer.Copy(_text_object);
 
 			if (AscCommon.c_oAscClipboardDataFormat.Text & _formats)
