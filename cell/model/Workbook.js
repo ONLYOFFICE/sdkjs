@@ -20218,6 +20218,18 @@
 				}
 			});
 		}
+
+		// Check if the filled range has merged cells
+		if (!bTrend || this.getChosenContextMenuProp() !== Asc.c_oAscFillType.series) {
+			let aMergedFilled = oFilledRange.worksheet.mergeManager.get(oFilledRange.bbox).all;
+			if (aMergedFilled.length) {
+				// Get the last merged range as the last points of the filled range for Growth and Linear trend of context menu
+				let oMergedRange = bTrend ? aMergedFilled[aMergedFilled.length - 1] : aMergedFilled[0];
+				nRow = oMergedRange.bbox.r2;
+				nCol = oMergedRange.bbox.c2;
+			}
+		}
+
 		oFilledRange.bbox.r2 = nRow;
 		oFilledRange.bbox.c2 = nCol;
 
@@ -20234,11 +20246,19 @@
 
 		this.initIndex();
 		if (this.getIndex() === 0) {
-			oTo = oFilledRange.canPromote(false, this.getVertical(), 1).to;
+			let oCanPromote = oFilledRange.canPromote(false, this.getVertical(), 1);
+			if (oCanPromote) {
+				oTo = oCanPromote.to;
+			}
 		} else {
-			oTo = oFilledRange.canPromote(false, this.getVertical(), this.getIndex()).to;
+			let oCanPromote = oFilledRange.canPromote(false, this.getVertical(), this.getIndex());
+			if (oCanPromote) {
+				oTo = oCanPromote.to;
+			}
 		}
-		this.setToRange(ws.getRange3(oTo.r1, oTo.c1, oTo.r2, oTo.c2));
+		if (oTo) {
+			this.setToRange(ws.getRange3(oTo.r1, oTo.c1, oTo.r2, oTo.c2));
+		}
 	};
 	/**
 	 * Returns an array of Objects that contains: the value of first cell, the range which will be fill data and object of the cell
@@ -20260,12 +20280,16 @@
 				if (bFirstCellInRange && nTypeCell === CellValueType.Number) {
 					oSerial.initToRange(oFilledRange);
 					let oToRange = oSerial.getToRange();
-					aFilledCells.push({
-						nValue: oCell.getNumberValue(),
-						oToRange: oToRange,
-						oCell: oCell.duplicate(),
-						oFilledRange: oFilledRange
-					});
+					if (!oToRange) {
+						return true; // break loop
+					} else {
+						aFilledCells.push({
+							nValue: oCell.getNumberValue(),
+							oToRange: oToRange,
+							oCell: oCell.duplicate(),
+							oFilledRange: oFilledRange
+						});
+					}
 				}
 			}
 		});
@@ -20378,6 +20402,15 @@
 	}
 
 	/**
+	 * Checks the Range has merged cells
+	 * @param {Range} oRangeModel
+	 * @returns {boolean}
+	 * @private
+	 */
+	function _checkMergeCells(oRangeModel) {
+		return oRangeModel.worksheet.mergeManager.get(oRangeModel.bbox).all.length > 0;
+	}
+	/**
 	 * Fills cells in Linear and Growth regression except Trend mode. Works with:
 	 * - Type: Linear, Growth, Date.
 	 * - Stop value
@@ -20422,12 +20455,18 @@
 		let oToRange = oFilledLine.oToRange;
 		let oWsTo = oFilledLine.oToRange.worksheet;
 		let oFromCell = oFilledLine.oCell;
+		let oFilledRange = oFilledLine.oFilledRange;
+		let oFrom = oFilledRange.bbox;
 		this.setPrevValue(oFilledLine.nValue);
 		// Clean exist data in autofill range
 		oToRange.cleanText();
 		// Init variables for filling cells
 		let nStartIndex = this.getVertical() ? oTo.r1 : oTo.c1;
 		let nEndIndex = this.getVertical() ? oTo.r2 : oTo.c2;
+		let nDirectStep = 1;
+		if (_checkMergeCells(oFilledRange)) {
+			nDirectStep = this.getVertical() ? oFrom.r2 - oFrom.r1 + 1 : oFrom.c2 - oFrom.c1 + 1;
+		}
 		// Fill range cells for i row or col
 		let oProgressionCalc = {
 			0: function () { // linear
@@ -20445,10 +20484,10 @@
 				let nRow = this.getVertical() ? nIndex : nIndexFilledLine;
 				let nCol = this.getVertical() ? nIndexFilledLine : nIndex;
 				bStopLoop = fillCell(nRow, nCol);
-				nIndex += 1;
+				nIndex += nDirectStep;
 			} while (!bStopLoop);
 		} else {
-			for (let j = nStartIndex; j <= nEndIndex; j++) {
+			for (let j = nStartIndex; j <= nEndIndex; j += nDirectStep) {
 				let nRow = this.getVertical() ? j : nIndexFilledLine;
 				let nCol = this.getVertical() ? nIndexFilledLine : j;
 				bStopLoop = fillCell(nRow, nCol);
@@ -20524,7 +20563,9 @@
 		let nEndIndexFilledLine = nFilledLineLength + nFilledStartIndex;
 		// Getting filled cells and calculating sum of index cell (x) and values (y) for calculate intercept and slop
 		// for linear regression formula: y = intercept + slop * x
+		let nFilledRangeLength = 0;
 		this._calcSum(nFilledStartIndex, nEndIndexFilledLine, nIndexFilledLine, function (nValue, nCellIndex) {
+			nFilledRangeLength++;
 			if (nValue === -Infinity && nFilledStartIndex === nCellIndex && oSerial.getActiveFillHandle()) {
 				bFirstCellValueInf = true;
 				return true; // break loop
@@ -20532,8 +20573,8 @@
 			nSumX += nCellIndex;
 			nSumY += nValue;
 		});
-		let nXAvg = nSumX / nFilledLineLength;
-		let nYAvg = nSumY / nFilledLineLength;
+		let nXAvg = nSumX / nFilledRangeLength;
+		let nYAvg = nSumY / nFilledRangeLength;
 		if (nFilledLineLength > 1 && !bFirstCellValueInf) {
 			this._calcSum(nFilledStartIndex, nEndIndexFilledLine, nIndexFilledLine, function (nValue, nCellIndex) {
 				nNumeratorOfSlope += (nCellIndex - nXAvg) * (nValue - nYAvg);
@@ -20557,7 +20598,6 @@
 			let nRow = this.getVertical() ? x : nIndexFilledLine;
 			let nCol = this.getVertical() ? nIndexFilledLine : x;
 			oWsTo._getCell(nRow, nCol, function (oCopyCell) {
-				oCopyCell.cleanText();
 				let oCellValue = new AscCommonExcel.CCellValue();
 				let nCellValue = nIntercept + nSlope * x;
 				if (oSerial.getType() === oSeriesType.growth) {
@@ -20590,6 +20630,49 @@
 		// Reverse direction
 		return bVertical ? oFilledRange.bbox.r2 - oToRange.bbox.r2 : oFilledRange.bbox.c2 - oToRange.bbox.c2;
 	}
+
+	/**
+	 * Creates merged cells
+	 * @param {Range} oFromRange - Filled range.
+	 * @param {Range} oToRange - The range that needs to be filled.
+	 * @private
+	 */
+	function _mergeCells(oFromRange, oToRange) {
+		const oFrom = oFromRange.bbox;
+		const oTo = oToRange.bbox;
+		const oWsFrom = oFromRange.worksheet;
+		const oWsTo = oToRange.worksheet;
+		const oMergedFrom = oWsFrom.mergeManager.get(oFrom);
+
+		let nDx = oFrom.c2 - oFrom.c1 + 1;
+		let nDy = oFrom.r2 - oFrom.r1 + 1;
+
+		if(oMergedFrom && oMergedFrom.all.length > 0) {
+			for (let i = oTo.c1; i <= oTo.c2; i += nDx) {
+				for (let j = oTo.r1; j <= oTo.r2; j += nDy) {
+					for (let k = 0, length = oMergedFrom.all.length; k < length; k++) {
+						const oMergedBBox = oMergedFrom.all[k].bbox;
+						let nC1 = i + oMergedBBox.c1 - oFrom.c1;
+						let nR1 = j + oMergedBBox.r1 - oFrom.r1;
+						let nC2 = i + oMergedBBox.c2 - oFrom.c1;
+						let nR2 = j + oMergedBBox.r2 - oFrom.r1;
+						const oNewMerged = new Asc.Range(nC1, nR1, nC2, nR2);
+						if(oTo.contains(oNewMerged.c1, oNewMerged.r1)) {
+							if(oTo.c2 < oNewMerged.c2) {
+								oNewMerged.c2 = oTo.c2;
+							}
+							if(oTo.r2 < oNewMerged.r2) {
+								oNewMerged.r2 = oTo.r2;
+							}
+							if(!oNewMerged.isOneCell()) {
+								oWsTo.mergeManager.add(oNewMerged, 1);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 	/**
 	 * Main method runs "Series" feature according to the specified parameters
 	 * @memberof CSerial
@@ -20597,6 +20680,9 @@
 	CSerial.prototype.exec = function () {
 		let bVertical = this.getVertical();
 		let nType = this.getType();
+		let oFromRange = this.getFromRange();
+		let oWs = this.getWs();
+		let oMergedFrom = oWs.mergeManager.get(oFromRange.bbox);
 
 		if (nType === oSeriesType.autoFill) {
 			let oFilledRange = this.getFilledRange();
@@ -20617,8 +20703,12 @@
 					} else {
 						this.promoteCells(aFilledCells[i]);
 					}
+					_mergeCells(oFilledRange, oToRange);
 				}
 				History.EndTransaction();
+			} else if (oMergedFrom.all.length) {
+				let oApi = Asc.editor;
+				oApi.sendEvent("asc_onError", c_oAscError.ID.CannotFillRange, c_oAscError.Level.NoCritical);
 			}
 		}
 	};

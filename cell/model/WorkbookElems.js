@@ -15994,7 +15994,7 @@ function RangeDataManagerElem(bbox, data)
 		}
 
 		function calcAvg(seriesInType) {
-			let filledRangeLength = null;
+			let filledRangeLength = 0;
 
 			if (seriesInType === Asc.c_oAscSeriesInType.rows) {
 				filledRange._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
@@ -16003,18 +16003,18 @@ function RangeDataManagerElem(bbox, data)
 						let indexCell = curCol - colStart;
 						ySum += cell.getNumberValue();
 						xSum += indexCell;
+						filledRangeLength++;
 					}
 				});
-				filledRangeLength = (filledRange.bbox.c2 - filledRange.bbox.c1) + 1;
 			} else {
 				filledRange._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
 					if ((cell && cell.getNumberValue() != null) && curCol === colStart) {
 						let indexCell = curRow - rowStart;
 						ySum += cell.getNumberValue();
 						xSum += indexCell;
+						filledRangeLength++;
 					}
 				});
-				filledRangeLength = (filledRange.bbox.r2 - filledRange.bbox.r1) + 1;
 			}
 
 			xAvg = xSum / filledRangeLength;
