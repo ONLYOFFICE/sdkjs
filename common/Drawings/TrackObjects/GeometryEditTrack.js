@@ -111,7 +111,7 @@
                 dOldAlpha = oGraphics.globalAlpha;
                 oGraphics.put_GlobalAlpha(false, 1);
             }
-            if(overlay.DrawGeomEditPoint)
+            if(overlay.DrawGeomEditPoint && !Asc.editor.isPdfEditor())
             {
                 overlay.DrawGeomEditPoint(this.transform, gmEditPoint);
             }
@@ -145,6 +145,9 @@
         oBounds.min_y -= 5;
         oBounds.max_x += 5;
         oBounds.max_y += 5;
+        if(Asc.editor.isPdfEditor()) {
+            gmEditPoint = null;
+        }
         oDrawingDocument.AutoShapesTrack.DrawGeometryEdit(matrix, pathLst, gmEditList, gmEditPoint, oBounds);
     };
 
