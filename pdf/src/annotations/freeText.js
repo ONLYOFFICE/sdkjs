@@ -393,7 +393,7 @@
         let aFreeTextPoints = [];
 
         let aFreeTextRect   = []; // прямоугольник
-        if (aCallout.length == 6) {
+        if (aCallout && aCallout.length == 6) {
             // точка выхода callout
             aFreeTextRect.push({
                 x: (aCallout[2 * 2]) * nScaleX,
@@ -453,16 +453,18 @@
         }
         
         let aCalloutLine = [];
-        // x2, y2 линии
-        aCalloutLine.push({
-            x: aCallout[1 * 2] * nScaleX,
-            y: (aCallout[1 * 2 + 1]) * nScaleY
-        });
-        // x1, y1 линии
-        aCalloutLine.push({
-            x: aCallout[0 * 2] * nScaleX,
-            y: (aCallout[0 * 2 + 1]) * nScaleY
-        });
+        if (aCallout) {
+            // x2, y2 линии
+            aCalloutLine.push({
+                x: aCallout[1 * 2] * nScaleX,
+                y: (aCallout[1 * 2 + 1]) * nScaleY
+            });
+            // x1, y1 линии
+            aCalloutLine.push({
+                x: aCallout[0 * 2] * nScaleX,
+                y: (aCallout[0 * 2 + 1]) * nScaleY
+            });
+        }
 
         aFreeTextPoints.push(aFreeTextRect);
         if (aCalloutLine.length != 0) {

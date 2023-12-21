@@ -1803,7 +1803,18 @@
 					
 					if (true !== bGetHidden && oAnnot.IsHidden() == true || oAnnot.IsComment())
 						continue;
-					
+
+					// у draw аннотаций ищем по path
+					if (oAnnot.IsInk() || oAnnot.IsLine() || oAnnot.IsSquare() || oAnnot.IsPolygon() || oAnnot.IsPolyLine() || oAnnot.IsFreeText())
+					{
+						let oPos	= oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+						let X       = oPos.X;
+						let Y       = oPos.Y;
+
+						if (oAnnot.hitInPath(X, Y) || (oAnnot.hitInInnerArea(X, Y) && oAnnot.GetFillColor() != undefined))
+							return oAnnot;
+					}
+
 					if (pageObject.x >= oAnnot._origRect[0] && pageObject.x <= oAnnot._origRect[0] + nAnnotWidth &&
 						pageObject.y >= oAnnot._origRect[1] && pageObject.y <= oAnnot._origRect[1] + nAnnotHeight)
 					{
@@ -1811,16 +1822,6 @@
 						if (oAnnot.IsTextMarkup())
 						{
 							if (oAnnot.IsInQuads(pageObject.x, pageObject.y))
-								return oAnnot;
-						}
-						// у draw аннотаций ищем по path
-						else if (oAnnot.IsInk() || oAnnot.IsLine() || oAnnot.IsSquare() || oAnnot.IsPolygon() || oAnnot.IsPolyLine() || oAnnot.IsFreeText())
-						{
-							let oPos	= oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-							let X       = oPos.X;
-        					let Y       = oPos.Y;
-
-							if (oAnnot.hitInPath(X, Y) || (oAnnot.hitInInnerArea(X, Y) && oAnnot.GetFillColor() != undefined))
 								return oAnnot;
 						}
 						else
