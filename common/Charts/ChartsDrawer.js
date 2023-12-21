@@ -3230,20 +3230,19 @@ CChartsDrawer.prototype =
 	},
 
 	_roundValues: function (values) {
-		const kF = 1000000000;
 		if (values.length) {
-			for (let i = 0; i < values.length; i++) {
-				let count = 1;
-				if (values[i] !== 0 && values[i] < 10e-9){
-					while(values[i] < 1 && values[i] > -1){
-						values[i] *= 10;
-						count *= 10;
-					}
+		  for (let i = 0; i < values.length; i++) {
+			let count = 1;
+			let kF = 1000000000;
+			if (values[i] !== 0 && Math.abs(values[i] * kF) < 1) {
+				while (Math.abs(values[i]*kF) < 1) {
+					kF *= 10;
 				}
-				values[i] = Math.round(values[i] * kF) / (kF * count);
 			}
+			values[i] = Math.round(values[i] * kF) / (kF * count);
+		  }
 		}
-
+	  
 		return values;
 	},
 	
