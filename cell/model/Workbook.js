@@ -2939,19 +2939,21 @@
 		});
 	};
 	Workbook.prototype.calculate = function (type, sheetId) {
-		var formulas;
+		let formulas;
 		if (type === Asc.c_oAscCalculateType.All) {
 			formulas = this.getAllFormulas();
-			for (var i = 0; i < formulas.length; ++i) {
-				var formula = formulas[i];
-				formula.removeDependencies();
-				formula.setFormula(formula.getFormula());
-				formula.parse();
-				formula.buildDependencies();
-			}
+			AscCommonExcel.executeInR1C1Mode(false, function () {
+				for (let i = 0; i < formulas.length; ++i) {
+					let formula = formulas[i];
+					formula.removeDependencies();
+					formula.setFormula(formula.getFormula());
+					formula.parse();
+					formula.buildDependencies();
+				}
+			});
 		} else if (type === Asc.c_oAscCalculateType.ActiveSheet) {
 			formulas = [];
-			var ws = sheetId !== undefined ? this.getWorksheetById(sheetId) : this.getActiveWs();
+			let ws = sheetId !== undefined ? this.getWorksheetById(sheetId) : this.getActiveWs();
 			ws.getAllFormulas(formulas);
 			sheetId = ws.getId();
 		} else {
