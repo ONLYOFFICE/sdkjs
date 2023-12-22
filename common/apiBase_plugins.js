@@ -1733,7 +1733,6 @@
 	{
 		let baseUrl = this.pluginsManager.pluginsMap[items.guid].baseUrl;
 		if (items["items"]) correctItemsWithData(items["items"], baseUrl);
-		console.log(items)
 		this.onPluginAddContextMenuItem(items);
 	};
 
