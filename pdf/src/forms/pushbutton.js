@@ -123,6 +123,7 @@
             if (field.GetHeaderPosition() == position["textOnly"])
                 return;
 
+            field.DoInitialRecalc();
             field.SetNeedRecalc(true);
             field.SetImageData(oImgData, nAPType);
 
@@ -1279,13 +1280,18 @@
     CPushButtonField.prototype.CheckImageOnce = function() {
         // на открытии не заполняли контент формы, но если внешнего вида нет, тогда рисуем сами, нужно заполнить форму контентом
         let oDrawing = this.GetDrawing();
-        if (!oDrawing && !this.IsChanged() && !this.IsNeedDrawFromStream() && !this.imageChecked) {
-            this.content.Recalculate_Page(0, true);
+        if (!oDrawing && !this.IsChanged() && !this.IsNeedDrawFromStream() && !this._pagePos) {
+            this.DoInitialRecalc();
             let oImgData = this._imgData.normal;
             if (oImgData)
                 this.SetImage(oImgData);
 
             this.imageChecked = true;
+        }
+    };
+    CPushButtonField.prototype.DoInitialRecalc = function() {
+        if (!this._pagePos) {
+            this.Recalculate();
         }
     };
     CPushButtonField.prototype.Recalculate = function() {
