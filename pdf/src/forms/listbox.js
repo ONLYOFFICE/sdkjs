@@ -380,13 +380,13 @@
 
             if (editor.getDocumentRenderer().IsOpenFormsInProgress) {
                 this.SetApiValue(value);
-                this.SetApiCurIdxs(aIdxs);
+                this.SetApiCurIdxs(aIndexes);
             }
                 
         }
         else {
             this.SetApiValue(value);
-            this.SetApiCurIdxs(aIdxs);
+            this.SetApiCurIdxs(aIndexes);
         }
     };
     CListBoxField.prototype.InsertOption = function(sName, sExport, nIdx) {

@@ -120,7 +120,7 @@
         let nContentHFormat = this.GetTextHeight(this.contentFormat);
 
         contentY        = Y * g_dKoef_pix_to_mm + (nHeight * g_dKoef_pix_to_mm - nContentH) / 2;
-        contentYFormat  = Y * g_dKoef_pix_to_mm + (nHeight * g_dKoef_pix_to_mm - nContentHFormat) / 2;
+        let contentYFormat  = Y * g_dKoef_pix_to_mm + (nHeight * g_dKoef_pix_to_mm - nContentHFormat) / 2;
 
         this._formRect.X = X * g_dKoef_pix_to_mm;
         this._formRect.Y = Y * g_dKoef_pix_to_mm;
