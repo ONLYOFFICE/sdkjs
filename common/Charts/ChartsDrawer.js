@@ -16588,7 +16588,7 @@ CColorObj.prototype =
 						}
 					}, calcXVal: function (val, supps, isLog) {
 						val = isLog ? Math.pow(isLog, val) : val;
-						return Math.pow((val / supps[0]), 1 / supps[1]);
+						return Math.pow((val / supps[1]), 1 / supps[0]);
 					}, calcSlope: function (val, supps, isLog) {
 						if (!isLog) {
 							return supps[1] * supps[0] * Math.pow(val, supps[0] - 1);
