@@ -565,22 +565,65 @@
 			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
 				return false;
 
-			var isRepaint = false;
 			for (var i = 0, len = pages.length; i < len; i++)
 			{
 				if (pages[i] >= this.startVisiblePage && pages[i] <= this.endVisiblePage)
 				{
-					isRepaint = true;
+					delete this.pagesInfo.pages[pages[i]].Image;
 					break;
 				}
 			}
 
-			this.paint();
+			this.scheduleRepaint();
+		};
+		this.scheduleRepaint = function() {
+			let oThis = this;
+			if (this.scheduledRepaintTimer == null) {
+				this.scheduledRepaintTimer = setTimeout(function() {
+					oThis.paint();
+	
+					if (oThis.Api && oThis.Api.printPreview)
+						oThis.Api.printPreview.update();
 
-			if (this.Api && this.Api.printPreview)
-				this.Api.printPreview.update();
+					clearTimeout(oThis.scheduledRepaintTimer);
+				});
+			}
 		};
 
+		this.onRepaintForms = function(pages) {
+			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
+				return false;
+
+			for (var i = 0, len = pages.length; i < len; i++)
+			{
+				if (pages[i] >= this.startVisiblePage && pages[i] <= this.endVisiblePage)
+				{
+					this.pagesInfo.pages[pages[i]].needRedrawForms = true;
+					this.doc.ClearCacheForms(pages[i]);
+					break;
+				}
+			}
+
+			this.scheduleRepaint();
+		};
+		this.onRepaintAnnots = function(pages) {
+			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
+				return false;
+
+			for (var i = 0, len = pages.length; i < len; i++)
+			{
+				if (pages[i] >= this.startVisiblePage && pages[i] <= this.endVisiblePage)
+				{
+					this.pagesInfo.pages[pages[i]].needRedrawAnnots = true;
+					this.pagesInfo.pages[pages[i]].needRedrawHighlights = true;
+					this.doc.ClearCacheAnnots(pages[i]);
+					break;
+				}
+			}
+
+			this.scheduleRepaint();
+		};
+		
 		this.onUpdateStatistics = function(countParagraph, countWord, countSymbol, countSpace)
 		{
 			this.statistics.paragraph += countParagraph;
@@ -701,6 +744,8 @@
 		{
 			this.checkReady();
 			this.file.onRepaintPages = this.onUpdatePages.bind(this);
+			this.file.onRepaintForms = this.onRepaintForms.bind(this);
+			this.file.onRepaintAnnots = this.onRepaintAnnots.bind(this);
 			this.file.onUpdateStatistics = this.onUpdateStatistics.bind(this);
 			this.currentPage = -1;
 			this.structure = this.file.getStructure();

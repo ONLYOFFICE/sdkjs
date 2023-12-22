@@ -334,7 +334,7 @@ var CPresentation = CPresentation || function(){};
         this.ClearFieldsToCommit();
         this.skipHistoryOnCommit = false;
     };
-    CPDFDoc.prototype.ClearCache = function(nPageIndex) {
+    CPDFDoc.prototype.ClearCacheForms = function(nPageIndex) {
         let oViewer = editor.getDocumentRenderer();
 
         if (oViewer.pagesInfo.pages[nPageIndex].fields != null) {
@@ -342,14 +342,24 @@ var CPresentation = CPresentation || function(){};
                 field.ClearCache();
             });
         }
+
+        oViewer.file.pages[nPageIndex].fieldsAPInfo = null;
+    };
+    CPDFDoc.prototype.ClearCacheAnnots = function(nPageIndex) {
+        let oViewer = editor.getDocumentRenderer();
+
         if (oViewer.pagesInfo.pages[nPageIndex].annots != null) {
             oViewer.pagesInfo.pages[nPageIndex].annots.forEach(function(annot) {
                 annot.ClearCache();
             });
         }
         
-        oViewer.file.pages[nPageIndex].fieldsAPInfo = null;
         oViewer.file.pages[nPageIndex].annotsAPInfo = null;
+    };
+
+    CPDFDoc.prototype.ClearCache = function(nPageIndex) {
+        this.ClearCacheForms(nPageIndex);
+        this.ClearCacheAnnots(nPageIndex);
     };
     CPDFDoc.prototype.IsNeedSkipHistory = function() {
         return !!this.skipHistoryOnCommit;
