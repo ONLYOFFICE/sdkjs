@@ -16209,16 +16209,16 @@ function RangeDataManagerElem(bbox, data)
 		toolbarMenuAllowedProps[Asc.c_oAscFillType.series] = !isApplyFilter;
 
 		if (range.isOneCol()) {
-			if (selectionRanges.c1 === 0) {
+			if (range.c1 === 0) {
 				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillRight] = false;
-			} else if (selectionRanges.c1 === AscCommon.gc_nMaxCol0) {
+			} else if (range.c1 === AscCommon.gc_nMaxCol0) {
 				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillLeft] = false;
 			}
 		}
 		if (range.isOneRow()) {
-			if (selectionRanges.r1 === 0) {
+			if (range.r1 === 0) {
 				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillDown] = false;
-			} else if (selectionRanges.r1 === AscCommon.gc_nMaxRow0) {
+			} else if (range.r1 === AscCommon.gc_nMaxRow0) {
 				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillUp] = false;
 			}
 		}
