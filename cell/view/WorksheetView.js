@@ -26850,7 +26850,7 @@
 					History.StartTransaction();
 
 					let isCtrlKey = true;
-					if (((type === c_oAscFillType.fillDown || type === c_oAscFillType.fillUp) && aRanges[0].c1 === aRanges[0].c2) ||
+					/*if (((type === c_oAscFillType.fillDown || type === c_oAscFillType.fillUp) && aRanges[0].c1 === aRanges[0].c2) ||
 						((type === c_oAscFillType.fillLeft || type === c_oAscFillType.fillRight) && aRanges[0].r1 === aRanges[0].r2)) {
 						let nFormatType = Asc.c_oAscNumFormatType.None;
 						this.model.getCell3(aRanges[0].r1, aRanges[0].c1)._foreachNoEmpty(function (cell) {
@@ -26862,8 +26862,9 @@
 						} else {
 							isCtrlKey = false;
 						}
-					}
+					}*/
 
+					oThis.model.setActiveFillType(type);
 					oThis.applyFillHandle(null, null, isCtrlKey, true, function (success) {
 						_setSelection(_cloneSelection);
 
@@ -26872,6 +26873,7 @@
 						History.EndTransaction();
 
 						oThis.draw();
+						oThis.model.setActiveFillType(null);
 					});
 				}
 

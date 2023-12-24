@@ -5134,6 +5134,7 @@
 		this.userProtectedRanges = [];
 
 		this.bFillHandleRightClick = false;
+		this.activeFillType = null;
 	}
 
 	Worksheet.prototype.getCompiledStyle = function (row, col, opt_cell, opt_styleComponents) {
@@ -12761,7 +12762,13 @@
 	 */
 	Worksheet.prototype.setFillHandleRightClick = function (bFillHandleRightClick) {
 		this.bFillHandleRightClick = bFillHandleRightClick;
-	}
+	};
+	Worksheet.prototype.getActiveFillType = function () {
+		return this.activeFillType;
+	};
+	Worksheet.prototype.setActiveFillType = function (val) {
+		this.activeFillType = val;
+	};
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
 	var g_nCellOffsetXf = g_nCellOffsetFlag + 1;
@@ -18912,8 +18919,13 @@
 			if(bCtrl)
 				bCopy = true;
 			//в случае одной ячейки с числом меняется смысл bCtrl
-			if(1 == nWidth && 1 == nHeight && oPromoteHelper.isOnlyIntegerSequence())
-				bCopy = !bCopy;
+			if(1 == nWidth && 1 == nHeight && oPromoteHelper.isOnlyIntegerSequence()) {
+				let fillType = wsTo && wsTo.getActiveFillType();
+				if (fillType !== Asc.c_oAscFillType.fillDown && fillType !== Asc.c_oAscFillType.fillUp
+				&& fillType !== Asc.c_oAscFillType.fillLeft && fillType !== Asc.c_oAscFillType.fillRight) {
+					bCopy = !bCopy;
+				}
+			}
 			oPromoteHelper.finishAdd(bCopy);
 			oPromoteHelper.setFillHandleRightClick(false);
 			//заполняем ячейки данными
