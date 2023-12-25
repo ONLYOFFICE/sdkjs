@@ -475,14 +475,6 @@
     };
 
     // for work with comments
-    CAnnotationLine.prototype.AddReply = function(oReply) {
-        if (!this.IsUseContentAsComment()) {
-            AscPDF.CAnnotationFreeText.prototype.AddReply.call(this, oReply);
-        }
-        else {
-            AscPDF.CAnnotationBase.prototype.AddReply.call(this, oReply);
-        }
-    };
     CAnnotationLine.prototype.RemoveComment = function() {
         if (!this.IsUseContentAsComment()) {
             AscPDF.CAnnotationFreeText.prototype.RemoveComment.call(this);

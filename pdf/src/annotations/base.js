@@ -659,22 +659,6 @@
         this.Recalculate();
         this.draw(oGraphicsWord);
     };
-    CAnnotationBase.prototype.AddReply = function(oReply) {
-        let oDoc = this.GetDocument();
-
-        oDoc.CreateNewHistoryPoint();
-        if (this._replies.length == 0) {
-            this.SetContents(oReply.GetContents());
-        }
-        else {
-            oReply.SetReplyTo(this);
-            let aNewReplies = [].concat(this._replies);
-            aNewReplies.push(oReply);
-            this.SetReplies(aNewReplies);
-        }
-        
-        oDoc.TurnOffHistory();
-    };
     CAnnotationBase.prototype.SetReplies = function(aReplies) {
         let oDoc = this.GetDocument();
         let oViewer = editor.getDocumentRenderer();
@@ -995,7 +979,7 @@
         let sContents       = this.GetContents();
         let BES             = this.GetBorderEffectStyle();
         let BEI             = this.GetBorderEffectIntensity();
-        let aStrokeColor    = this.GetStrokeColor();
+        let aStrokeColor    = this.IsFreeText() || this.IsComment() ? this.GetFillColor() : this.GetStrokeColor();
         let nBorder         = this.GetBorder();
         let nBorderW        = this.GetWidth();
         let sModDate        = this.GetModDate(true);

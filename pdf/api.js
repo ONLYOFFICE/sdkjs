@@ -639,12 +639,12 @@
 		oCommentData.Read_FromAscCommentData(AscCommentData);
 
 		let oComment = oDoc.AddComment(AscCommentData);
-		//this.sync_AddComment(oComment.GetId(), oCommentData);
 
-		oComment.AddToRedraw();
-		oViewer._paint();
-
-		return oComment.GetId()
+		if (oComment) {
+			oComment.AddToRedraw();
+			oViewer._paint();
+			return oComment.GetId()
+		}
 	};
 	PDFEditorApi.prototype.asc_showComments = function()
 	{

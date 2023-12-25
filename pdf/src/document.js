@@ -1729,13 +1729,10 @@ var CPresentation = CPresentation || function(){};
 
         this.anchorPositionToAdd = null;
 
-        let oAnnot;
+        let oStickyComm;
         if (this.mouseDownAnnot) {
-            oAnnot = CreateAnnotByProps(oProps, this);
-            oAnnot.SetApIdx(this.GetMaxApIdx() + 2);
-
-            if ((this.mouseDownAnnot.GetContents() && this.mouseDownAnnot.IsUseContentAsComment()) ||
-            this.mouseDownAnnot.GetReply(0) != null) {
+            // если есть ответ, или это аннотация, где контент идёт как текста коммента то редактируем коммент
+            if ((this.mouseDownAnnot.GetContents() && this.mouseDownAnnot.IsUseContentAsComment()) || this.mouseDownAnnot.GetReply(0) != null) {
                 let newCommentData = new AscCommon.CCommentData();
                 newCommentData.Read_FromAscCommentData(AscCommentData);
 
@@ -1745,17 +1742,34 @@ var CPresentation = CPresentation || function(){};
 
                 this.EditComment(this.mouseDownAnnot.GetId(), curCommentData);
             }
-            else
-                this.mouseDownAnnot.AddReply(oAnnot);
+            // если аннотация где контент идет как текст коммента и контента нет, то выставляем контент
+            else if (this.mouseDownAnnot.GetContents() == null && this.mouseDownAnnot.IsUseContentAsComment()) {
+                this.CreateNewHistoryPoint();
+                this.mouseDownAnnot.SetContents(AscCommentData.m_sText);
+                this.TurnOffHistory();
+            }
+            // остался вариант FreeText или line с выставленным cap (контекст идёт как текст внутри стрелки)
+            // такому случаю выставляем ответ
+            else {
+                let oReply = CreateAnnotByProps(oProps, this);
+                oReply.SetApIdx(this.GetMaxApIdx() + 2);
+
+                this.CreateNewHistoryPoint();
+                this.mouseDownAnnot.SetReplies([oReply]);
+                this.TurnOffHistory();
+            }
         }
         else {
-            oAnnot = this.AddAnnot(oProps);
-            AscCommentData.m_sUserData = oAnnot.GetApIdx();
+            oStickyComm = this.AddAnnot(oProps);
+            AscCommentData.m_sUserData = oStickyComm.GetApIdx();
             AscCommentData.m_sQuoteText = "";
-            this.CheckComment(oAnnot);
+            this.CheckComment(oStickyComm);
         }
         
-        return oAnnot;
+        if (!oStickyComm)
+            this.UpdateUndoRedo();
+        
+        return oStickyComm;
     };
     /**
 	 * Обновляет позицию всплывающего окна комментария

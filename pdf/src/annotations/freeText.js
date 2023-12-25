@@ -76,6 +76,9 @@
         return -1;
     };
 
+    CAnnotationFreeText.prototype.IsNeedDrawFromStream = function() {
+        return false;
+    };
     CAnnotationFreeText.prototype.IsFreeText = function() {
         return true;
     };
@@ -391,64 +394,40 @@
         let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom * g_dKoef_pix_to_mm;
 
         let aFreeTextPoints = [];
-
         let aFreeTextRect   = []; // прямоугольник
+        let aFreeTextLine90 = []; // перпендикуляр к прямоуольнику (x3, y3 - x2, y2) точки из callout
+
+        // левый верхний
+        aFreeTextRect.push({
+            x: (aOrigRect[0] + aRD[0]) * nScaleX,
+            y: (aOrigRect[1] + aRD[1]) * nScaleY
+        });
+        // правый верхний
+        aFreeTextRect.push({
+            x: (aOrigRect[2] - aRD[2]) * nScaleX,
+            y: (aOrigRect[1] + aRD[1]) * nScaleY
+        });
+        // правый нижний
+        aFreeTextRect.push({
+            x: (aOrigRect[2] - aRD[2]) * nScaleX,
+            y: (aOrigRect[3] - aRD[3]) * nScaleY
+        });
+        // левый нижний
+        aFreeTextRect.push({
+            x: (aOrigRect[0] + aRD[0]) * nScaleX,
+            y: (aOrigRect[3] - aRD[3]) * nScaleY
+        });
+
         if (aCallout && aCallout.length == 6) {
             // точка выхода callout
-            aFreeTextRect.push({
-                x: (aCallout[2 * 2]) * nScaleX,
-                y: (aCallout[2 * 2 + 1]) * nScaleY
-            });
-            // левый верхний
-            aFreeTextRect.push({
-                x: (aOrigRect[0] + aRD[0]) * nScaleX,
-                y: (aOrigRect[1] + aRD[1]) * nScaleY
-            });
-            // правый верхний
-            aFreeTextRect.push({
-                x: (aOrigRect[2] - aRD[2]) * nScaleX,
-                y: (aOrigRect[1] + aRD[1]) * nScaleY
-            });
-            // правый нижний
-            aFreeTextRect.push({
-                x: (aOrigRect[2] - aRD[2]) * nScaleX,
-                y: (aOrigRect[3] - aRD[3]) * nScaleY
-            });
-            // левый нижний
-            aFreeTextRect.push({
-                x: (aOrigRect[0] + aRD[0]) * nScaleX,
-                y: (aOrigRect[3] - aRD[3]) * nScaleY
-            });
-            // возврат в точку выхода callout
-            aFreeTextRect.push({
+            aFreeTextLine90.push({
                 x: (aCallout[2 * 2]) * nScaleX,
                 y: (aCallout[2 * 2 + 1]) * nScaleY
             });
             // перпендикуляр из точки выхода линии callout
-            aFreeTextRect.push({
+            aFreeTextLine90.push({
                 x: (aCallout[2 * 1]) * nScaleX,
                 y: (aCallout[2 * 1 + 1]) * nScaleY
-            });
-        }
-        else {
-            aFreeTextRect.push({
-                x: (aOrigRect[0] + aRD[0]) * nScaleX,
-                y: (aOrigRect[1] + aRD[1]) * nScaleY
-            });
-            // правый верхний
-            aFreeTextRect.push({
-                x: (aOrigRect[2] - aRD[2]) * nScaleX,
-                y: (aOrigRect[1] + aRD[1]) * nScaleY
-            });
-            // правый нижний
-            aFreeTextRect.push({
-                x: (aOrigRect[2] - aRD[2]) * nScaleX,
-                y: (aOrigRect[3] - aRD[3]) * nScaleY
-            });
-            // левый нижний
-            aFreeTextRect.push({
-                x: (aOrigRect[0] + aRD[0]) * nScaleX,
-                y: (aOrigRect[3] - aRD[3]) * nScaleY
             });
         }
         
@@ -468,6 +447,7 @@
 
         aFreeTextPoints.push(aFreeTextRect);
         if (aCalloutLine.length != 0) {
+            aFreeTextPoints.push(aFreeTextLine90);
             aFreeTextPoints.push(aCalloutLine);
         }
 
@@ -480,18 +460,6 @@
 
         this.recalcInfo.recalculateGeometry = false;
         this.CheckInnerShapesProps();
-    };
-    CAnnotationFreeText.prototype.AddReply = function(oReply) {
-        let oDoc = this.GetDocument();
-        oDoc.CreateNewHistoryPoint();
-
-        oReply.SetReplyTo(this);
-
-        let aNewReplies = [].concat(this._replies);
-        aNewReplies.push(oReply);
-        this.SetReplies(aNewReplies);
-
-        oDoc.TurnOffHistory();
     };
     CAnnotationFreeText.prototype.RemoveComment = function() {
         let oDoc = this.GetDocument();
@@ -633,12 +601,10 @@
     };
 
     function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
-        let xMax = aShapeRect[2];
         let xMin = aShapeRect[0];
         let yMin = aShapeRect[1];
-        let yMax = aShapeRect[3];
 
-        let oShapeRect = createInnerShape(arrOfArrPoints[0]);
+        let oShapeRect = createInnerShape([arrOfArrPoints[0], arrOfArrPoints[1]]);
         // прямоугольнику добавляем cnx точки
         oShapeRect.spPr.geometry.AddCnx('_3cd4', 'hc', 't');
         oShapeRect.spPr.geometry.AddCnx('cd2', 'l', 'vc');
@@ -651,8 +617,8 @@
         oShapeRect.setGroup(oParentAnnot);
         oParentAnnot.addToSpTree(0, oShapeRect);
 
-        if (arrOfArrPoints[1]) {
-            let oLineShape = createConnectorShape(arrOfArrPoints[1], oShapeRect);
+        if (arrOfArrPoints[2]) {
+            let oLineShape = createConnectorShape(arrOfArrPoints[2], oShapeRect);
             oLineShape.spPr.xfrm.setOffX(oLineShape.x - xMin);
             oLineShape.spPr.xfrm.setOffY(oLineShape.y - yMin);
             oLineShape.setGroup(oParentAnnot);
@@ -664,7 +630,7 @@
         return oParentAnnot;
     }
 
-    function generateGeometry(arrPoints, aBounds, oGeometry) {
+    function generateGeometry(arrOfArrPoints, aBounds, oGeometry) {
         let xMin = aBounds[0];
         let yMin = aBounds[1];
         let xMax = aBounds[2];
@@ -675,60 +641,64 @@
             oGeometry.pathLst = [];
         }
 
-        let bClosed     = false;
-        let min_dist    = editor.WordControl.m_oDrawingDocument.GetMMPerDot(3);
-        let oLastPoint  = arrPoints[arrPoints.length-1];
-        let nLastIndex  = arrPoints.length-1;
-        if(oLastPoint.bTemporary) {
-            nLastIndex--;
-        }
-        if(nLastIndex > 1)
-        {
-            let dx = arrPoints[0].x - arrPoints[nLastIndex].x;
-            let dy = arrPoints[0].y - arrPoints[nLastIndex].y;
-            if(Math.sqrt(dx*dx +dy*dy) < min_dist)
-            {
-                bClosed = true;
+        for (let nPath = 0; nPath < arrOfArrPoints.length; nPath++) {
+            let arrPoints   = arrOfArrPoints[nPath];
+            let bClosed     = false;
+            let min_dist    = editor.WordControl.m_oDrawingDocument.GetMMPerDot(3);
+            let oLastPoint  = arrPoints[arrPoints.length-1];
+            let nLastIndex  = arrPoints.length-1;
+            if(oLastPoint.bTemporary) {
+                nLastIndex--;
             }
-        }
+            if(nLastIndex > 1)
+            {
+                let dx = arrPoints[0].x - arrPoints[nLastIndex].x;
+                let dy = arrPoints[0].y - arrPoints[nLastIndex].y;
+                if(Math.sqrt(dx*dx +dy*dy) < min_dist)
+                {
+                    bClosed = true;
+                }
+            }
 
-        let w = xMax - xMin, h = yMax-yMin;
-        let kw, kh, pathW, pathH;
-        if(w > 0)
-        {
-            pathW = 43200;
-            kw = 43200/ w;
-        }
-        else
-        {
-            pathW = 0;
-            kw = 0;
-        }
-        if(h > 0)
-        {
-            pathH = 43200;
-            kh = 43200 / h;
-        }
-        else
-        {
-            pathH = 0;
-            kh = 0;
+            let w = xMax - xMin, h = yMax-yMin;
+            let kw, kh, pathW, pathH;
+            if(w > 0)
+            {
+                pathW = 43200;
+                kw = 43200/ w;
+            }
+            else
+            {
+                pathW = 0;
+                kw = 0;
+            }
+            if(h > 0)
+            {
+                pathH = 43200;
+                kh = 43200 / h;
+            }
+            else
+            {
+                pathH = 0;
+                kh = 0;
+            }
+            
+            geometry.AddPathCommand(0,undefined, undefined, undefined, pathW, pathH);
+            geometry.AddPathCommand(1, (((arrPoints[0].x - xMin) * kw) >> 0) + "", (((arrPoints[0].y - yMin) * kh) >> 0) + "");
+
+            let oPt, nPt;
+            for(nPt = 1; nPt < arrPoints.length; nPt++) {
+                oPt = arrPoints[nPt];
+
+                geometry.AddPathCommand(2,
+                    (((oPt.x - xMin) * kw) >> 0) + "", (((oPt.y - yMin) * kh) >> 0) + ""
+                );
+            }
+
+            if (arrPoints.length > 2)
+                geometry.AddPathCommand(6);
         }
         
-        geometry.AddPathCommand(0,undefined, "none", undefined, pathW, pathH);
-        geometry.AddPathCommand(1, (((arrPoints[0].x - xMin) * kw) >> 0) + "", (((arrPoints[0].y - yMin) * kh) >> 0) + "");
-
-        let oPt, nPt;
-        for(nPt = 1; nPt < arrPoints.length; nPt++) {
-            oPt = arrPoints[nPt];
-
-            geometry.AddPathCommand(2,
-                (((oPt.x - xMin) * kw) >> 0) + "", (((oPt.y - yMin) * kh) >> 0) + ""
-            );
-        }
-
-        if (arrPoints.length > 2)
-            geometry.AddPathCommand(6);
         geometry.preset = null;
         geometry.rectS = null;
         return geometry;
@@ -816,24 +786,28 @@
         oParentAnnot.brush = AscFormat.CreateNoFillUniFill();
     }
 
-    function createInnerShape(aPoints) {
-        function findMinRect(points) {
-            let x_min = points[0].x, y_min = points[0].y;
-            let x_max = points[0].x, y_max = points[0].y;
+    function createInnerShape(aPaths) {
+        function findMinRect(aPaths) {
+            let x_min = aPaths[0][0].x, y_min = aPaths[0][0].y;
+            let x_max = aPaths[0][0].x, y_max = aPaths[0][0].y;
         
-            for (let i = 1; i < points.length; i ++) {
-                x_min = Math.min(x_min, points[i].x);
-                x_max = Math.max(x_max, points[i].x);
-                y_min = Math.min(y_min, points[i].y);
-                y_max = Math.max(y_max, points[i].y);
+            for (let nPath = 0; nPath < aPaths.length; nPath++) {
+                let points = aPaths[nPath];
+                for (let i = 1; i < points.length; i ++) {
+                    x_min = Math.min(x_min, points[i].x);
+                    x_max = Math.max(x_max, points[i].x);
+                    y_min = Math.min(y_min, points[i].y);
+                    y_max = Math.max(y_max, points[i].y);
+                }
             }
+            
         
             return [x_min, y_min, x_max, y_max];
         }
 
         let oShape = new AscFormat.CShape();
 
-        let aShapeBounds = findMinRect(aPoints);
+        let aShapeBounds = findMinRect(aPaths);
 
         let xMax = aShapeBounds[2];
         let xMin = aShapeBounds[0];
@@ -856,7 +830,7 @@
         oShape.recalculate();
         oShape.brush = AscFormat.CreateNoFillUniFill();
 
-        let geometry = generateGeometry(aPoints, [xMin, yMin, xMax, yMax]);
+        let geometry = generateGeometry(aPaths, [xMin, yMin, xMax, yMax]);
         oShape.spPr.setGeometry(geometry);
         oShape.updatePosition(xMin, yMin);
 
@@ -922,7 +896,7 @@
         }
         oShape.nvSpPr.setUniSpPr(nvUniSpPr);
 
-        let geometry = generateGeometry(aPoints, [xMin, yMin, xMax, yMax]);
+        let geometry = generateGeometry([aPoints], [xMin, yMin, xMax, yMax]);
         geometry.preset = "line";
         oShape.spPr.setGeometry(geometry);
         oShape.updatePosition(xMin, yMin);

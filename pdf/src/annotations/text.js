@@ -214,7 +214,7 @@
 
         oNewAnnot._originView = this._originView;
         oNewAnnot._apIdx = this._apIdx;
-        oNewAnnot.SetStrokeColor(this.GetStrokeColor());
+        oNewAnnot.SetFillColor(this.GetFillColor());
         oNewAnnot.SetOriginPage(this.GetOriginPage());
         oNewAnnot.SetAuthor(this.GetAuthor());
         oNewAnnot.SetModDate(this.GetModDate());
@@ -231,7 +231,7 @@
         if (!this.graphicObjects)
             this.graphicObjects = new AscFormat.DrawingObjectsController(this);
 
-        let oRGB            = this.GetRGBColor(this.GetStrokeColor());
+        let oRGB            = this.GetRGBColor(this.GetFillColor());
         let ICON_TO_DRAW    = this.GetIconImg();
 
         let aRect       = this.GetRect();
