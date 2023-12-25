@@ -181,7 +181,7 @@
         let oDoc = this.GetDocument();
         oDoc.TurnOffHistory();
 
-        let oPolygon = new CAnnotationPolyLine(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+        let oPolygon = new CAnnotationPolyLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
         oPolygon._pagePos = {
             x: this._pagePos.x,

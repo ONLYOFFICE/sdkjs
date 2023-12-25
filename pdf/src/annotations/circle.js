@@ -67,7 +67,7 @@
         let oDoc = this.GetDocument();
         oDoc.TurnOffHistory();
 
-        let oCircle = new CAnnotationCircle(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+        let oCircle = new CAnnotationCircle(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
         oCircle._pagePos = {
             x: this._pagePos.x,

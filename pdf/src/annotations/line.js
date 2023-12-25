@@ -208,7 +208,7 @@
         let oDoc = this.GetDocument();
         oDoc.TurnOffHistory();
 
-        let oLine = new CAnnotationLine(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+        let oLine = new CAnnotationLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
         oLine._pagePos = {
             x: this._pagePos.x,
@@ -413,9 +413,6 @@
             case LINE_END_TYPE.Slash:
                 nLineEndType = AscFormat.LineEndType.Slash;
                 break;
-            default:
-                nLineEndType = AscFormat.LineEndType.Arrow;
-                break;
         }
 
         oLine.headEnd.setType(nLineEndType);
@@ -458,9 +455,6 @@
                 break;
             case LINE_END_TYPE.Slash:
                 nLineEndType = AscFormat.LineEndType.Slash;
-                break;
-            default:
-                nLineEndType = AscFormat.LineEndType.Arrow;
                 break;
         }
 

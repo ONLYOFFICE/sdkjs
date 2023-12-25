@@ -64,7 +64,7 @@
         let oDoc = this.GetDocument();
         oDoc.TurnOffHistory();
 
-        let oSquare = new CAnnotationSquare(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+        let oSquare = new CAnnotationSquare(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
         oSquare._pagePos = {
             x: this._pagePos.x,

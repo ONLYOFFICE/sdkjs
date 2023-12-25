@@ -331,7 +331,7 @@
         let oDoc = this.GetDocument();
         oDoc.TurnOffHistory();
 
-        let oFreeText = new CAnnotationFreeText(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+        let oFreeText = new CAnnotationFreeText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
         oFreeText._pagePos = {
             x: this._pagePos.x,
