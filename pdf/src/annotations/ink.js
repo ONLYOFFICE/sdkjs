@@ -520,11 +520,7 @@
         let oDrawingObjects = oViewer.DrawingObjects;
         return oDrawingObjects.selectedObjects.includes(this);
     };
-    CAnnotationInk.prototype.SetDrawing = function(oDrawing) {
-        let oRun = this.content.GetElement(0).GetElement(0);
-        oRun.Add_ToContent(oRun.Content.length, oDrawing);
-    };
-    
+        
     CAnnotationInk.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 

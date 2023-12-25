@@ -342,10 +342,6 @@
         this.SetWasChanged(true);
         this.SetDrawFromStream(false);
     };
-    CAnnotationLine.prototype.SetDrawing = function(oDrawing) {
-        let oRun = this.content.GetElement(0).GetElement(0);
-        oRun.Add_ToContent(oRun.Content.length, oDrawing);
-    };
     CAnnotationLine.prototype.SetStrokeColor = function(aColor) {
         this._strokeColor = aColor;
 
@@ -376,7 +372,7 @@
     CAnnotationLine.prototype.SetDoCaption = function(nType) {
         this._doCaption = nType;
     };
-    CAnnotationLine.prototype.GetDoCaption = function() {
+    CAnnotationLine.prototype.IsDoCaption = function() {
         return this._doCaption;
     };
     CAnnotationLine.prototype.SetLineStart = function(nType) {
@@ -478,6 +474,49 @@
         return this._lineEnd;
     };
 
+    // for work with comments
+    CAnnotationLine.prototype.AddReply = function(oReply) {
+        if (!this.IsUseContentAsComment()) {
+            AscPDF.CAnnotationFreeText.prototype.AddReply.call(this, oReply);
+        }
+        else {
+            AscPDF.CAnnotationBase.prototype.AddReply.call(this, oReply);
+        }
+    };
+    CAnnotationLine.prototype.RemoveComment = function() {
+        if (!this.IsUseContentAsComment()) {
+            AscPDF.CAnnotationFreeText.prototype.RemoveComment.call(this);
+        }
+        else {
+            AscPDF.CAnnotationBase.prototype.RemoveComment.call(this);
+        }
+    };
+    CAnnotationLine.prototype.SetContents = function(contents) {
+        if (!this.IsUseContentAsComment()) {
+            AscPDF.CAnnotationFreeText.prototype.SetContents.call(this, contents);
+        }
+        else {
+            AscPDF.CAnnotationBase.prototype.SetContents.call(this, contents);
+        }
+    };
+    CAnnotationLine.prototype.SetReplies = function(aReplies) {
+        if (!this.IsUseContentAsComment()) {
+            AscPDF.CAnnotationFreeText.prototype.SetReplies.call(this, aReplies);
+        }
+        else {
+            AscPDF.CAnnotationBase.prototype.SetReplies.call(this, aReplies);
+        }  
+    };
+    CAnnotationLine.prototype.GetAscCommentData = function() {
+        if (!this.IsUseContentAsComment()) {
+            return AscPDF.CAnnotationFreeText.prototype.GetAscCommentData.call(this);
+        }
+        else {
+            return AscPDF.CAnnotationBase.prototype.GetAscCommentData.call(this);
+        }
+    };
+    //////////////////////////////////////
+
     CAnnotationLine.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
@@ -526,7 +565,7 @@
         }
 
         // do caption
-        let bDoCaption = this.GetDoCaption();
+        let bDoCaption = this.IsDoCaption();
         if (bDoCaption) {
             memory.annotFlags |= (1 << 19);
         }

@@ -1734,7 +1734,7 @@ var CPresentation = CPresentation || function(){};
             oAnnot = CreateAnnotByProps(oProps, this);
             oAnnot.SetApIdx(this.GetMaxApIdx() + 2);
 
-            if ((this.mouseDownAnnot.GetContents() && this.mouseDownAnnot.GetType() != AscPDF.ANNOTATIONS_TYPES.FreeText) ||
+            if ((this.mouseDownAnnot.GetContents() && this.mouseDownAnnot.IsUseContentAsComment()) ||
             this.mouseDownAnnot.GetReply(0) != null) {
                 let newCommentData = new AscCommon.CCommentData();
                 newCommentData.Read_FromAscCommentData(AscCommentData);
@@ -1752,7 +1752,7 @@ var CPresentation = CPresentation || function(){};
             oAnnot = this.AddAnnot(oProps);
             AscCommentData.m_sUserData = oAnnot.GetApIdx();
             AscCommentData.m_sQuoteText = "";
-            editor.sendEvent("asc_onAddComment", oAnnot.GetId(), AscCommentData);    
+            this.CheckComment(oAnnot);
         }
         
         return oAnnot;
@@ -1797,8 +1797,16 @@ var CPresentation = CPresentation || function(){};
         this.History.Add(new CChangesPDFCommentData(oAnnotToEdit, oCurData, CommentData));
         
         oAnnotToEdit.EditCommentData(CommentData);
-
         editor.sync_ChangeCommentData(Id, CommentData);
+    };
+    CPDFDoc.prototype.CheckComment = function(oAnnot) {
+        let bUseContentsAsComment = oAnnot.IsUseContentAsComment();
+        
+        if (oAnnot.IsUseInDocument()) {
+            if ((bUseContentsAsComment && oAnnot.GetContents() != null) || (bUseContentsAsComment == false && oAnnot.GetReply(0) instanceof AscPDF.CAnnotationText)) {
+                editor.sendEvent("asc_onAddComment", oAnnot.GetId(), oAnnot.GetAscCommentData());
+            }
+        }
     };
     CPDFDoc.prototype.TurnOffHistory = function() {
         if (AscCommon.History.IsOn() == true)

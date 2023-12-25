@@ -612,12 +612,6 @@
         
         this._replies.push(oReply);
     };
-    CAnnotationBase.prototype._OnAfterSetReply = function() {
-        if (this.IsUseInDocument()) {
-            let oAscCommData = this.GetAscCommentData();
-            editor.sendEvent("asc_onAddComment", this.GetId(), oAscCommData);
-        }
-    };
     CAnnotationBase.prototype.SetContents = function(contents) {
         if (this.GetContents() == contents)
             return;
@@ -638,10 +632,13 @@
         
         this.SetWasChanged(true);
         if (bSendAddCommentEvent)
-            this._OnAfterSetReply();
+            oDoc.CheckComment(this);
         
         if (this._contents == null && this.IsUseInDocument())
             editor.sync_RemoveComment(this.GetId());
+    };
+    CAnnotationBase.prototype.IsUseContentAsComment = function() {
+        return !(this.IsFreeText() || this.IsLine() && this.IsDoCaption());
     };
     CAnnotationBase.prototype.Recalculate = function() {
         let oViewer     = editor.getDocumentRenderer();

@@ -525,7 +525,7 @@
         }
         this._replies = aReplies;
         if (aReplies.length != 0)
-            this._OnAfterSetReply();
+            oDoc.CheckComment(this);
         else
             editor.sync_RemoveComment(this.GetId());
 
@@ -538,9 +538,6 @@
         }
 
         return false;
-    };
-    CAnnotationFreeText.prototype.hitInInnerArea = function(x, y) {
-        return this.hitInBoundingRect(x,y);
     };
     CAnnotationFreeText.prototype.GetAscCommentData = function() {
         let oAscCommData = new Asc["asc_CCommentDataWord"](null);
@@ -565,6 +562,10 @@
 
         return oAscCommData;
     };
+    CAnnotationFreeText.prototype.hitInInnerArea = function(x, y) {
+        return this.hitInBoundingRect(x,y);
+    };
+    
     CAnnotationFreeText.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
