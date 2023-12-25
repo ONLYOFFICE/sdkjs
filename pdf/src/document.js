@@ -1258,7 +1258,9 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.UpdateUndoRedo = function() {
 		editor.sync_CanUndoCallback(this.History.Can_Undo());
 		editor.sync_CanRedoCallback(this.History.Can_Redo());
-
+    };
+    CPDFDoc.prototype.UpdateInterface = function() {
+        this.UpdateUndoRedo();
         editor.CheckChangedDocument();
     };
     CPDFDoc.prototype.SetEvent = function(oEventPr) {

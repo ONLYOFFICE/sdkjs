@@ -2697,7 +2697,7 @@
 			this._paintForms();
 			this._paintFormsHighlight();
 			this._paintFormsMarkers();
-			oDoc.UpdateUndoRedo();
+			oDoc.UpdateInterface();
 			oDoc.UpdateCommentPos();
 		};
 		this.Get_PageLimits = function() {

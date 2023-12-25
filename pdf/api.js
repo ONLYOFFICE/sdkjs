@@ -780,6 +780,12 @@
 			}
 		}
 	};
+	PDFEditorApi.prototype.UpdateInterfaceState = function()
+	{
+		let oDoc = this.getPDFDoc();
+		if (oDoc)
+			oDoc.UpdateInterface();
+	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
@@ -1040,6 +1046,7 @@
 	PDFEditorApi.prototype['asc_EditSelectAll']            = PDFEditorApi.prototype.asc_EditSelectAll;
 	PDFEditorApi.prototype['Undo']                         = PDFEditorApi.prototype.Undo;
 	PDFEditorApi.prototype['Redo']                         = PDFEditorApi.prototype.Redo;
+	PDFEditorApi.prototype['UpdateInterfaceState']         = PDFEditorApi.prototype.UpdateInterfaceState;
 	PDFEditorApi.prototype['asc_SelectionCut']             = PDFEditorApi.prototype.asc_SelectionCut;
 	PDFEditorApi.prototype['asc_CheckCopy']                = PDFEditorApi.prototype.asc_CheckCopy;
 	PDFEditorApi.prototype['Paste']                        = PDFEditorApi.prototype.Paste;
