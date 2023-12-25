@@ -1347,7 +1347,7 @@ CChartsDrawer.prototype =
 	//****calculate properties****
 	_calculateProperties: function (chartSpace) {
 		if (!this.calcProp.scale) {
-			this.preCalculateData(chartSpace);
+			this.preCalculateData(chartSpace, true);
 		}
 
 		//считаем маргины
@@ -2405,7 +2405,7 @@ CChartsDrawer.prototype =
 
 
 	//****functions for UP Functions****
-	preCalculateData: function (chartSpace) {
+	preCalculateData: function (chartSpace, notCalcExtremum) {
 		this._calculateChangeAxisMap(chartSpace);
 		this.cChartSpace = chartSpace;
 		this.calcProp.pxToMM = 1 / AscCommon.g_dKoef_pix_to_mm;
@@ -2420,7 +2420,10 @@ CChartsDrawer.prototype =
 		this.calcProp.yaxispos = null;
 
 		//рассчёт данных и ещё некоторых параметров(this.calcProp./min/max/ymax/ymin/)
-		this._calculateExtremumAllCharts(chartSpace);
+		if (!notCalcExtremum) {
+			console.log("here")
+			this._calculateExtremumAllCharts(chartSpace);
+		}
 
 		//***series***
 		this.calcProp.series = chartSpace.chart.plotArea.chart.series;
@@ -16273,6 +16276,7 @@ CColorObj.prototype =
 				this.continueAdding = false;
 			}
 
+			// in the case of duplicated data, no further adding should be allowed
 			if (this.continueAdding) {
 				this.storage[chartId][seriaId].addCatVal(xVal);
 				this.storage[chartId][seriaId].addValVal(yVal);
@@ -16301,7 +16305,6 @@ CColorObj.prototype =
 		},
 
 		preCalculate: function (charts, boundaries) {
-			console.log(this.cChartDrawer)
 			for (let i in charts) {
 				const index1 = charts[i].Id;
 				if (charts.hasOwnProperty(i) && this.storage[index1]) {
@@ -16321,7 +16324,6 @@ CColorObj.prototype =
 			const catAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[0]);
 			const valAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[1]);
 			const coords = storageElement.getCoords();
-
 			// moving average differs much from other trendlines
 			if (type === AscFormat.TRENDLINE_TYPE_MOVING_AVG) {
 				const period = attributes.period ? attributes.period : 2;
@@ -16400,7 +16402,7 @@ CColorObj.prototype =
 					for (let j in charts[i].chart.series) {
 						if (charts[i].chart.series.hasOwnProperty(j) && this.storage[i][charts[i].chart.series[j].Id]) {
 							this._calculateRelativeLine(charts[i].chart.series[j].parent, this.storage[i][charts[i].chart.series[j].Id]);
-							// console.log(this.getAdditionalInfo(i, charts[i].chart.series[j].Id));
+							console.log(this.getAdditionalInfo(i, charts[i].chart.series[j].Id));
 						}
 					}
 				}
@@ -16419,7 +16421,7 @@ CColorObj.prototype =
 			const _valsToPos = function (arr, cChartDrawer) {
 				const posArr = {xPos: [], yPos: []}
 				for (let i = 0; i < arr.catVals.length; i++) {
-					let pos1 = cChartDrawer.getYPosition(arr.catVals[i], catAxis);
+					let pos1 = cChartDrawer.getYPosition(arr.catVals[i], catAxis, true);
 					let pos2 = cChartDrawer.getYPosition(arr.valVals[i], valAxis, true);
 
 					let catPos = horOrientation ? pos1 : pos2;
