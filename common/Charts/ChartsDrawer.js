@@ -16246,6 +16246,7 @@ CColorObj.prototype =
 		//control trend calculate type
 		this.bAllowDrawByBezier = true;
 		this.bAllowDrawByPoints = false;
+		this.continueAdding = true;
 	}
 
 	CTrendline.prototype = {
@@ -16268,10 +16269,17 @@ CColorObj.prototype =
 			if (!this.storage[chartId][seriaId]) {
 				this.storage[chartId][seriaId] = new CTrendData();
 			}
-			this.storage[chartId][seriaId].addCatVal(xVal);
-			this.storage[chartId][seriaId].addValVal(yVal);
-			if (yVal > 0) {
-				this.storage[chartId][seriaId].setMinLogVal(yVal);
+			if (!this.storage[chartId][seriaId].isEmpty() && xVal === this.storage[chartId][seriaId].coords.catVals[0]) {
+				this.continueAdding = false;
+			}
+
+			if (this.continueAdding) {
+				this.storage[chartId][seriaId].addCatVal(xVal);
+				this.storage[chartId][seriaId].addValVal(yVal);
+	
+				if (yVal > 0) {
+					this.storage[chartId][seriaId].setMinLogVal(yVal);
+				}
 			}
 		},
 
@@ -16293,6 +16301,7 @@ CColorObj.prototype =
 		},
 
 		preCalculate: function (charts, boundaries) {
+			console.log(this.cChartDrawer)
 			for (let i in charts) {
 				const index1 = charts[i].Id;
 				if (charts.hasOwnProperty(i) && this.storage[index1]) {
@@ -16629,7 +16638,7 @@ CColorObj.prototype =
 					return true;
 				};
 
-				const mapped = _mapCoordinates();
+				const mapped = this.continueAdding ? _mapCoordinates() : true;
 
 				if (mapped) {
 
@@ -16818,7 +16827,6 @@ CColorObj.prototype =
 						const Y = _createMatrix(valVals, 1, 1, intercept);
 						const S = _matMul(X_T, Y, pow - y_intercept, 1, catVals.length);
 						const letiables = _matMul(P_I, S, pow - y_intercept, 1, pow - y_intercept);
-
 						return flatten(letiables, y_intercept, intercept);
 					}
 				}
@@ -17321,6 +17329,13 @@ CColorObj.prototype =
 	// set calcYVal! calcXVal! calcSlope!
 	CTrendData.prototype = {
 		constructor: CTrendData,
+
+		isEmpty: function () {
+			if (this.coords.catVals.length === 0 || this.coords.valVals.length === 0){
+				return true;
+			}
+			return false;
+		},
 
 		getBezierPath: function () {
 			return this.bezierPath;
