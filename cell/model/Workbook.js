@@ -14676,6 +14676,9 @@
 			case cErrorOrigin["calc"]:
 				return cErrorLocal["calc"];
 				break;
+			case cErrorOrigin["spill"]:
+				return cErrorLocal["spill"];
+				break;
 		}
 		return cErrorLocal["nil"];
 	};

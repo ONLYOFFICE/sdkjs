@@ -18752,6 +18752,10 @@
 						//t.setSelection(newFP.ref);
 						dynamicSelectionRange = newFP.ref;
 					}
+					if (newFP.dynamicRange) {
+						applyByArray = true;
+						dynamicSelectionRange = newFP.dynamicRange;
+					}
 				}
 			}
 		}
@@ -18824,6 +18828,7 @@
 				return false;
 			}
 
+			// todo Add to history UndoRedo DynamicArray and add to AscCH historyitem_DynamicArrayFormula_AddFormula 
 			//***array-formula***
 			if(applyByArray) {
 				History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_AddFormula, this.model.getId(),

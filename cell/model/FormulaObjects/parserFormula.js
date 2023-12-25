@@ -502,7 +502,8 @@ var cErrorType = {
 		not_numeric         : 6,
 		not_available       : 7,
 		getting_data        : 8,
-		array_not_calc      : 9
+		array_not_calc      : 9,
+		cannot_be_spilled	: 10
   };
 //добавляю константу cReturnFormulaType для корректной обработки формул массива
 // value - функция умеет возвращать только значение(не массив)
@@ -515,6 +516,7 @@ var cErrorType = {
 // area_to_ref - заменяем area на массив ссылок на ячейку(REF)
 // replace_only_array - в случае с Area - оставляем его в аргументах и рассчитываем только 1 значение(аналогично array)
 // replace_only_array - в слуае с массивом - обрабатываем стандартно по элементам
+// dynamic_array - в отличие от обычного массива такой тип будут использовать формулы которые могут не иметь в аргументах диапазонов/массивов, но при этом будут их возвращать(прим. SEQUENCE)
 
 /** @enum */
 var cReturnFormulaType = {
@@ -523,7 +525,8 @@ var cReturnFormulaType = {
 	array: 2,
 	area_to_ref: 3,
 	replace_only_array: 4,
-	setArrayRefAsArg: 5//для row/column если нет аргументов
+	setArrayRefAsArg: 5, //для row/column если нет аргументов
+	dynamic_array: 6
 };
 
 var cExcelSignificantDigits = 15; //количество цифр в числе после запятой
@@ -886,6 +889,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				this.errorType = cErrorType.array_not_calc;
 				break;
 			}
+			case cErrorLocal["spill"]:
+			case cErrorOrigin["spill"]:
+			case cErrorType.cannot_be_spilled: {
+				this.value = "#SPILL!";
+				this.errorType = cErrorType.cannot_be_spilled;
+				break;
+			}
 		}
 
 		return this;
@@ -947,6 +957,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			case cErrorType.array_not_calc: {
 				return cErrorLocal["calc"];
 			}
+			case cErrorOrigin["spill"]:
+			case cErrorType.cannot_be_spilled: {
+				return cErrorLocal["spill"];
+			}
 		}
 		return cErrorLocal["na"];
 	};
@@ -991,6 +1005,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 			case cErrorOrigin["calc"]: {
 				res = cErrorType.array_not_calc;
+				break;
+			}
+			case cErrorOrigin["spill"]: {
+				res = cErrorType.cannot_be_spilled;
 				break;
 			}
 			default: {
@@ -1041,6 +1059,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 			case cErrorType.array_not_calc: {
 				res = cErrorOrigin["calc"];
+				break;
+			}
+			case cErrorType.cannot_be_spilled: {
+				res = cErrorOrigin["spill"];
 				break;
 			}
 			default:
@@ -7276,18 +7298,49 @@ function parserFormula( formula, parent, _ws ) {
 		}
 
 		if (this.dynamicRange) {
+			// ref(CSE) - legacy array-formula
+			// dynamic range(DAF) - newest array-formula
+			// Differences:
+			// 1.Формула DAF вводится в одну ячейку и завершается обычным нажатием enter 'spill' происходит автоматически
+			// 2.В случае с CSE же необходимо заранее выделить диапазон и нажать сочетание cse после ввода формулы
+			// 3.Размер DAF автоматически изменяется при изменении данных в исходном диапазоне. Ссылка на динамический диапазон пишется в формате D2#
+			// 4.DAF редактируется в первой ячейке(1,1) диапазона, для редактирования cse нужно выделять весь ранее созданный диапазон
+			// 5.В CSE нельзя удалить ранее созданные строки, DAF же можно редактировать
+			// 6.CSE может расширяться на все ячейки кроме таких же массивов CSE, таблиц, сводных таблиц,
+			// DAF же может расширяться только на абсолютно пустые клетки
+
+			// todo добавить флаг cm для работы с динамическими массивами
 			this.ref = this.dynamicRange;
-			this.dynamicRange = null;
+			// this.dynamicRange = null;
 		}
 
 		//TODO заглушка для парсинга множественного диапазона в _xlnm.Print_Area. Сюда попадаем только в одном случае - из функции findCell для отображения диапазона области печати
 		if(checkMultiSelect && elemArr.length > 1 && this.parent && this.parent instanceof window['AscCommonExcel'].DefName /*&& this.parent.name === "_xlnm.Print_Area"*/) {
 			this.value = elemArr;
+
+			// check further dynamic range
+			let res = this.checkDynamicRange();
+			if (!res) {
+				// todo при возвращении ошибки невозможности развернуть массив, добавить флаг ca
+				this.value = new cError(cErrorType.cannot_be_spilled);
+				this.ref = null;
+			}
+
 			this._endCalculate();
 		} else {
 			this.value = elemArr.pop();
-			this.value.numFormat = numFormat;
 
+			// check further dynamic range
+			let res = this.checkDynamicRange();
+			if (!res) {
+				// todo при возвращении ошибки невозможности развернуть массив, добавить флаг ca
+				this.value = new cError(cErrorType.cannot_be_spilled);
+				// this.value = new cError(cErrorType.not_available);
+				this.ref = null;
+				this.dynamicRange = null;
+			}
+			this.value.numFormat = numFormat;
+			// console.log(this.value);
 			//***array-formula***
 			//для обработки формулы массива
 			//передаётся последним параметром cell и временно подменяется parent у parserFormula для того, чтобы поменялось значение в элементе массива
@@ -8263,6 +8316,50 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 		return false;
+	};
+
+	parserFormula.prototype.checkDynamicRange = function () {
+		/* this function checks if the current dynamic range can fit in the cells */
+		if (!this.dynamicRange) {
+			return true
+		}
+
+		if (this.value && (this.value.type !== cElementType.array && this.value.type !== cElementType.cellsRange)) {
+			return true
+		} else if (this.value && (this.value.type === cElementType.array || this.value.type === cElementType.cellsRange)) {
+			// go through the range and see if the array can fit into it
+			let dimensions = this.value.getDimensions(), 
+				mainCell = this.parent, isHaveNonEmptyCell;
+
+			if (this.value.isOneElement()) {
+				return true
+			}
+
+			if (mainCell) {
+				let rangeRow = mainCell.nRow,
+					rangeCol = mainCell.nCol;
+
+				for (let i = rangeRow; i < (rangeRow + dimensions.row); i++) {
+					for (let j = rangeCol; j < (rangeCol + dimensions.col); j++) {
+						if (i === rangeRow && j === rangeCol) {
+							continue
+						}
+						
+						this.ws._getCell(i, j, function(cell) {
+							if (!cell.isEmpty()) {
+								isHaveNonEmptyCell = true
+							}
+						});
+						if (isHaveNonEmptyCell) {
+							return false
+						}
+					}
+				}
+				return true
+			}
+		}
+
+		return false
 	};
 
 	function CalcRecursion() {
