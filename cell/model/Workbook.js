@@ -20125,12 +20125,20 @@
 	};
 	/**
 	 * Initializes iteration coordinates for promote cells in trend mode
+	 * @param {Object} oFilledLine - Line of cells which need to fill and first filled cell
+	 * @param {number} oFilledLine.nValue - Value of first cell in line
+	 * @param {Range} oFilledLine.oToRange - Range of cells which will be fill
+	 * @param {Cell} oFilledLine.oCell - First cell of line
+	 * @param {Range} oFilledLine.oFilledRange - Range with filled cells
+	 * @param {number} oFilledLine.nIndex - Index of shift
 	 */
-	CSerial.prototype.initTrendIterCoords = function () {
+	CSerial.prototype.initTrendIterCoords = function (oFilledLine) {
 		const bReverse = this.getIndex() < 0;
 		const bActiveFillHandleExists = !!this.getActiveFillHandle();
 		const bVertical = this.getVertical();
 		const oFrom = this.getFromRange().bbox;
+		const oFilled = oFilledLine.oFilledRange.bbox;
+		const nIndex = oFilledLine.nIndex;
 
 		if (bActiveFillHandleExists && this.getChosenContextMenuProp() !== Asc.c_oAscFillType.series) {
 			this.initToRange(this.getFromRange());
@@ -20148,11 +20156,12 @@
 			if (bReverse) {
 				let nEndIndexFilledRange = bVertical ? oFrom.r1 : oFrom.c1;
 				this.setStartIndex(bVertical ? oFrom.r2 : oFrom.c2);
-				this.setEndIndex((this.getIndex() + nEndIndexFilledRange) - 1);
+				this.setEndIndex((nIndex + nEndIndexFilledRange) - 1);
 				this.setDirectionStep(-1);
 			} else {
+				let nStartIndexFilled = bVertical ? oFilled.r1 : oFilled.c1;
 				this.setStartIndex(bVertical ? oFrom.r1 : oFrom.c1);
-				this.setEndIndex((this.getIndex() + this.getStartIndex()) + 1);
+				this.setEndIndex((nIndex + nStartIndexFilled) + 1);
 				this.setDirectionStep(1);
 			}
 		}
@@ -20243,8 +20252,21 @@
 	CSerial.prototype.initToRange = function (oFilledRange) {
 		let ws = this.getWs();
 		let oTo = null;
+		let oFrom = this.getActiveFillHandle() ? this.getActiveFillHandle(): this.getFromRange().bbox;
+		let oFilled = oFilledRange.bbox;
 
 		this.initIndex();
+		let bFilledRangeHasShift = this.getVertical() ? oFilled.r1 !== oFrom.r1 : oFilled.c1 !== oFrom.c1;
+		if (this.getIndex() < 0) {
+			bFilledRangeHasShift = this.getVertical() ? oFilled.r2 !== oFrom.r1 : oFilled.c2 !== oFrom.c1;
+			let oActiveFillHandle = this.getActiveFillHandle();
+			oFrom = new Asc.Range(oActiveFillHandle.c2, oActiveFillHandle.r2, oActiveFillHandle.c1, oActiveFillHandle.r1);
+		}
+		// For a filled range, need to correct the index according to a shift in the start point in the filled range
+		if (bFilledRangeHasShift) {
+			let nIndex = this.getIndex();
+			this.setIndex(this.getVertical() ? nIndex - oFilled.r1 : nIndex - oFilled.c1);
+		}
 		if (this.getIndex() === 0) {
 			let oCanPromote = oFilledRange.canPromote(false, this.getVertical(), 1);
 			if (oCanPromote) {
@@ -20257,6 +20279,9 @@
 			}
 		}
 		if (oTo) {
+			if (!oFrom.containsRange(oTo) && this.getStopValue() == null) {
+				return;
+			}
 			this.setToRange(ws.getRange3(oTo.r1, oTo.c1, oTo.r2, oTo.c2));
 		}
 	};
@@ -20287,7 +20312,8 @@
 							nValue: oCell.getNumberValue(),
 							oToRange: oToRange,
 							oCell: oCell.duplicate(),
-							oFilledRange: oFilledRange
+							oFilledRange: oFilledRange,
+							nIndex: oSerial.getIndex()
 						});
 					}
 				}
@@ -20412,6 +20438,7 @@
 	 * @param {Range} oFilledLine.oToRange - Range of cells which will be fill
 	 * @param {Cell} oFilledLine.oCell - First cell of line
 	 * @param {Range} oFilledLine.oFilledRange - Range with filled cells
+	 * @param {number} oFilledLine.nIndex - Index of shift
 	 */
 	CSerial.prototype.promoteCells = function (oFilledLine) {
 		function fillCell(nRow, nCol) {
@@ -20533,10 +20560,11 @@
 	 * @param {Range} oFilledLine.oToRange - Range of cells which will be fill
 	 * @param {Cell} oFilledLine.oCell - First cell of line
 	 * @param {Range} oFilledLine.oFilledRange - Range with filled cells
+	 * @param {number} oFilledLine.nIndex - Index of shift
 	 * @param {number} nFilledLineLength - Length line of filled cells
 	 */
 	CSerial.prototype.promoteCellsWithTrend = function (oFilledLine, nFilledLineLength) {
-		this.initTrendIterCoords();
+		this.initTrendIterCoords(oFilledLine);
 		let oSerial = this;
 		let oFilledRange = oFilledLine.oFilledRange;
 		let nIndexFilledLine = this.getVertical() ? oFilledLine.oCell.nCol : oFilledLine.oCell.nRow;

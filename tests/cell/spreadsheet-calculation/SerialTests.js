@@ -269,7 +269,7 @@ $(function () {
 		clearData(0, 0, 5, 5);
 		// Select vertical oFromRange
 		oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
-		oFromRange = ws.getRange4(0,0);
+		//oFromRange = ws.getRange4(0,0);
 		settings.seriesIn = oSeriesInType.columns;
 
 		cSerial = new CSerial(settings);
@@ -2912,6 +2912,37 @@ $(function () {
 		];
 		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Copy cells. Selected filled cells - A1:A6. The fill handle has a horizontal direction. Case: bug #65405');
 		clearData(0, 0, 2, 5);
+		// Vertical selected range, but "Series in" - Rows. Bug #65551
+		testData = [
+			['1']
+		];
+		getFilledData(0, 0, 0, 3, testData, [0,0]);
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
+		oSeriesSettings.prepare(wsView);
+		oSeriesSettings.asc_setSeriesIn(oSeriesInType.rows);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(1, 0, 1, 0);
+		expectedData = [
+			['']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Vertical selected range, but "Series in" - Rows.');
+		clearData(0, 0, 0, 3);
+		// Horizontal selected range, but "Series in" - Columns. Bug #65551
+		getFilledData(0, 0, 3, 0, testData, [0,0]);
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
+		oSeriesSettings.prepare(wsView);
+		oSeriesSettings.asc_setSeriesIn(oSeriesInType.columns);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 1, 0, 1);
+		expectedData = [
+			['']
+		];
+		autofillData(assert, autofillRange, expectedData, 'Horizontal selected range, but "Series in" - Columns.');
+		clearData(0, 0, 3, 0);
 	});
 	QUnit.test('Toolbar: Fill -> "Up/Down, Left/Right"', function(assert) {
 		const testData = [
