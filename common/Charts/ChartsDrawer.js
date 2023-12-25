@@ -2421,7 +2421,6 @@ CChartsDrawer.prototype =
 
 		//рассчёт данных и ещё некоторых параметров(this.calcProp./min/max/ymax/ymin/)
 		if (!notCalcExtremum) {
-			console.log("here")
 			this._calculateExtremumAllCharts(chartSpace);
 		}
 
@@ -16402,7 +16401,7 @@ CColorObj.prototype =
 					for (let j in charts[i].chart.series) {
 						if (charts[i].chart.series.hasOwnProperty(j) && this.storage[i][charts[i].chart.series[j].Id]) {
 							this._calculateRelativeLine(charts[i].chart.series[j].parent, this.storage[i][charts[i].chart.series[j].Id]);
-							console.log(this.getAdditionalInfo(i, charts[i].chart.series[j].Id));
+							// console.log(this.getAdditionalInfo(i, charts[i].chart.series[j].Id));
 						}
 					}
 				}
