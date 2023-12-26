@@ -2797,7 +2797,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
 	 * @param {string} sAuthor - The author's name (optional).
-	 * @param {string} sUserId - The user ID of the comment reply author (optional).
+	 * @param {string} sUserId - The user ID of the comment author (optional).
 	 * @returns {?ApiComment} - Returns null if the comment was not added.
 	 */
 	ApiRange.prototype.AddComment = function(sText, sAuthor, sUserId)
@@ -5025,7 +5025,7 @@
 	 * @param {ApiRun[] | DocumentElement} oElement - The element where the comment will be added. It may be applied to any element which has the *AddComment* method.
 	 * @param {string} sText - The comment text (required).
 	 * @param {string} sAuthor - The author's name (optional).
-	 * @param {string} sUserId - The user ID of the comment reply author (optional).
+	 * @param {string} sUserId - The user ID of the comment author (optional).
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
 	Api.prototype.AddComment = function(oElement, sText, sAuthor, sUserId)
@@ -6171,7 +6171,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
 	 * @param {string} sAuthor - The author's name (optional).
-	 * @param {string} sUserId - The user ID of the comment reply author (optional).
+	 * @param {string} sUserId - The user ID of the comment author (optional).
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
 	ApiDocument.prototype.AddComment = function(sText, sAuthor, sUserId)
@@ -7631,7 +7631,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
 	 * @param {string} sAuthor - The author's name (optional).
-	 * @param {string} sUserId - The user ID of the comment reply author (optional).
+	 * @param {string} sUserId - The user ID of the comment author (optional).
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
 	ApiParagraph.prototype.AddComment = function(sText, sAuthor, sUserId)
@@ -9788,7 +9788,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
 	 * @param {string} sAuthor - The author's name (optional).
-	 * @param {string} sUserId - The user ID of the comment reply author (optional).
+	 * @param {string} sUserId - The user ID of the comment author (optional).
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
 	ApiRun.prototype.AddComment = function(sText, sAuthor, sUserId)
@@ -11077,7 +11077,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
 	 * @param {string} sAuthor - The author's name (optional).
-	 * @param {string} sUserId - The user ID of the comment reply author (optional).
+	 * @param {string} sUserId - The user ID of the comment author (optional).
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
 	ApiTable.prototype.AddComment = function(sText, sAuthor, sUserId)
@@ -16403,7 +16403,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
 	 * @param {string} sAuthor - The author's name (optional).
-	 * @param {string} sUserId - The user ID of the comment reply author (optional).
+	 * @param {string} sUserId - The user ID of the comment author (optional).
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
 	ApiInlineLvlSdt.prototype.AddComment = function(sText, sAuthor, sUserId)
@@ -17343,7 +17343,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
 	 * @param {string} sAuthor - The author's name (optional).
-	 * @param {string} sUserId - The user ID of the comment reply author (optional).
+	 * @param {string} sUserId - The user ID of the comment author (optional).
 	 * @returns {?ApiComment} - Returns null if the comment was not added.
 	 */
 	ApiBlockLvlSdt.prototype.AddComment = function(sText, sAuthor, sUserId)
