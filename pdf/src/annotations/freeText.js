@@ -76,9 +76,6 @@
         return -1;
     };
 
-    CAnnotationFreeText.prototype.IsNeedDrawFromStream = function() {
-        return false;
-    };
     CAnnotationFreeText.prototype.IsFreeText = function() {
         return true;
     };
@@ -446,8 +443,8 @@
         }
 
         aFreeTextPoints.push(aFreeTextRect);
+        aFreeTextPoints.push(aFreeTextLine90);
         if (aCalloutLine.length != 0) {
-            aFreeTextPoints.push(aFreeTextLine90);
             aFreeTextPoints.push(aCalloutLine);
         }
 
@@ -642,7 +639,10 @@
         }
 
         for (let nPath = 0; nPath < arrOfArrPoints.length; nPath++) {
-            let arrPoints   = arrOfArrPoints[nPath];
+            let arrPoints = arrOfArrPoints[nPath];
+            if (arrPoints.length == 0)
+                continue;
+
             let bClosed     = false;
             let min_dist    = editor.WordControl.m_oDrawingDocument.GetMMPerDot(3);
             let oLastPoint  = arrPoints[arrPoints.length-1];
