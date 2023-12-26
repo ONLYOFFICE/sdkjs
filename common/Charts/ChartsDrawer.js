@@ -16994,7 +16994,7 @@ CColorObj.prototype =
 			if (!this.isLog && !cutPoint) {
 				cutPoint = 1000;
 			}
-			const results = this._calclApproximatedBezier(error, tailLimit, cutPoint);
+			const results = this._calcApproximatedBezier(error, tailLimit, cutPoint);
 			if (this.isLog) {
 				this._normalize(results.mainLine);
 				this._normalize(results.startPoint);
@@ -17032,7 +17032,7 @@ CColorObj.prototype =
 		// this function can return two lines 
 		// secondaryLine which is just a straight line 
 		// primaryLine which is bezier driven line
-		_calclApproximatedBezier: function (error, tailLimit, cutPoint) {
+		_calcApproximatedBezier: function (error, tailLimit, cutPoint) {
 			// error: the threshold to check the accuracy of the approximated line 
 			// tailLimit: the threshold at which the slope of the point becomes too high leading to its arctangent to become high
 			// cutPoint: the threshold at which line should be cutted. For lines with a long tails, approximation does not work, therefore they must be cutted
@@ -17044,24 +17044,32 @@ CColorObj.prototype =
 			// Step 1 find edges of line 
 			// --------------------------------------
 
-			const start = {catVal: null, valVal: null};
+			let start = {catVal: null, valVal: null};
 			const end = {catVal: null, valVal: null};
 			this._lineCoordinate(start, this.catMin, true);
 			this._lineCoordinate(end, this.catMax, true);
-
 			// yValue for log scale can not be <= 0
+			// therefore use close to 0 val 
 			if (this.isLog) {
 				const lowerBoundary = (Math.log(0.01) / Math.log(this.isLog));
 				if (isNaN(start.valVal)) {
 					this._lineCoordinate(start, lowerBoundary, false);
 				}
 				if (isNaN(end.valVal)) {
-					this._lineCoordinate(start, lowerBoundary, false);
+					this._lineCoordinate(end, lowerBoundary, false);
 				}
 			}
 
 			this._checkBoundaries(start);
 			this._checkBoundaries(end);
+
+			//start should always be lower than end
+			if (start.valVal > end.valVal) {
+				const temp = {catVal: end.catVal, valVal: end.valVal};
+				end.valVal = start.valVal;
+				end.catVal = start.catVal;
+				start = temp;
+			}
 
 			//sometimes lines can be reversed, we need to track directions
 			let direction = true;
@@ -17074,16 +17082,16 @@ CColorObj.prototype =
 
 			// sometimes graph can have huge tails, to detect them use slope of starting and end point of line
 			// if the slope of the starting point is to high, then cut the line up to certain point (lowestPoint)
-			if (Math.atan(line2Letiables[1]) < tailLimit && Math.atan(line1Letiables[1]) > tailLimit && start.valVal < lowestPoint) {
+			if (Math.atan(Math.abs(line2Letiables[1])) < tailLimit && Math.atan(Math.abs(line1Letiables[1])) > tailLimit && start.valVal < lowestPoint) {
 				this._lineCoordinate(start, lowestPoint, false);
 				line1Letiables = this._findLine(start.catVal, start.valVal);
 			}
 			// if the slope of the ending point is to high, then cut the line into 2/3 of its original size
 			const startPoint = {catVals: [], valVals: []};
-			if (Math.atan(line1Letiables[1]) < tailLimit && Math.atan(line2Letiables[1]) > tailLimit) {
+			if (Math.atan(Math.abs(line1Letiables[1])) < tailLimit && Math.atan(Math.abs(line2Letiables[1])) > tailLimit) {
 				startPoint.catVals.push(start.catVal);
-				startPoint.valVals.push(end.catVal);
-				this._lineCoordinate(start, (end.catVal + start.catVal) / 2, true);
+				startPoint.valVals.push(start.valVal);
+				start = this._cutLine(start, end);
 				line1Letiables = this._findLine(start.catVal, start.valVal);
 				direction = false;
 			}
@@ -17192,6 +17200,30 @@ CColorObj.prototype =
 			const m = this.calcSlope(catVal, this.coefficients, this.isLog);
 			const b = valVal - (m * catVal);
 			return [b, m];
+		},
+
+		//we need to cut a tail of the line
+		//up to 1 percent of its Val (Y) length 
+		_cutLine: function (start, end) {
+			let treshold = 0.05;
+			let obtainedError = 0;
+			const maxIterations = 10;
+			let i = 0;
+			let startingPoint =  {catVal: start.catVal, valVal: start.valVal};
+			let prev = null;
+			let newObtainedError = null;
+			while (obtainedError < treshold && i < maxIterations) {
+				prev = {catVal: start.catVal, valVal: start.valVal};
+				this._lineCoordinate(start, (end.catVal + start.catVal) / 2, true);
+				newObtainedError = 1 - (end.valVal - start.valVal)/ (end.valVal - startingPoint.valVal);
+				if (newObtainedError >= obtainedError) {
+					obtainedError = newObtainedError;
+				} else {
+					break;
+				}
+				i++;
+			}
+			return prev ? prev : start;
 		},
 
 		// predict catVal and valVal from bezier line using bernstein polynomials
