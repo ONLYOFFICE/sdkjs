@@ -141,6 +141,9 @@ var c_oAscError = Asc.c_oAscError;
 		if (this.isFrameEditor() || AscCommon.c_oAscAdvancedOptionsAction.None !== this.advancedOptionsAction)
 			return;
 
+		//is cell editor active - try to close
+		this.asc_closeCellEditor();
+
 		var t = this;
 		if (true !== isNoUserSave)
 			this.IsUserSave = true;
