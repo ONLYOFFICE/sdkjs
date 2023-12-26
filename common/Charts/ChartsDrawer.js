@@ -16291,6 +16291,20 @@ CColorObj.prototype =
 				const coefficients = this.storage[chartId][seriesId].getCoefficients();
 				const rSquared = this.storage[chartId][seriesId].getRSquared();
 				const lastPoint = this.storage[chartId][seriesId].getLastPoint();
+
+				let startCat = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
+				let startVal = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
+				let endCat = (this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM) + startCat;
+				let endVal = (this.cChartDrawer.calcProp.trueHeight / this.cChartDrawer.calcProp.pxToMM) + startVal;
+
+				if (lastPoint.catVal < startCat || lastPoint.catVal > endCat) {
+					lastPoint.catVal = startCat;
+				}
+
+				if (lastPoint.valVal < startVal || lastPoint.valVal > endVal) {
+					lastPoint.valVal = startVal;
+				}
+
 				if (coefficients || rSquared) {
 					const additionalInfo = {
 						coefficients : coefficients,
