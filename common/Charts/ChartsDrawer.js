@@ -2200,6 +2200,10 @@ CChartsDrawer.prototype =
 		if (Math.abs(realTrueMax - prevVal) > Math.abs(realTrueMax - realTrueMin)){
 			result.push(realTrueMin)
 		}
+
+		if (result.length === 1) {
+			result.push(result[0] * logBase);
+		}
 		return result;
 
 		// var result = [];
