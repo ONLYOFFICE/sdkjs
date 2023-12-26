@@ -16371,6 +16371,8 @@ CColorObj.prototype =
 			if (boundary) {
 				const catAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[0]);
 				const valAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[1]);
+				boundary.catMax = Math.ceil(boundary.catMax);
+				boundary.catMin = Math.floor(boundary.catMin);
 
 				if (!boundaries[catAxis.Id]) {
 					boundaries[catAxis.Id] = {min: null, max: null};
