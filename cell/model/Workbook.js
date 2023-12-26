@@ -20361,10 +20361,10 @@
 		*/
 		if (nPrevVal < 60) {
 			if (nDateUnit === oSeriesDateUnitType.day) {
-				nPrevVal += 1;
+				nPrevVal += nStep;
 			} else if (nDateUnit === oSeriesDateUnitType.weekday) {
 				let aWeekdays = [1, 2, 3, 4, 5];
-				nPrevVal += 1;
+				nPrevVal += nStep;
 				while (true) {
 					let oPrevValDate = new Asc.cDate().getDateFromExcel(nPrevVal + 1);
 					if (aWeekdays.includes(oPrevValDate.getDay())) {
@@ -20373,15 +20373,33 @@
 					nPrevVal += 1;
 				}
 			} else if (nDateUnit === oSeriesDateUnitType.month) {
-				if (nPrevVal <= 27) {
-					nPrevVal += 31;
-				} else if ([28,29,30,31].includes(nPrevVal)) {
-					nPrevVal = 59;
+				if (nStep < 3) {
+					for (let i = 1; i <= nStep; i++) {
+						if (nPrevVal <= 27) {
+							nPrevVal += 31;
+						} else if ([28, 29, 30, 31].includes(nPrevVal)) {
+							nPrevVal = 59;
+						} else {
+							nPrevVal += 29;
+						}
+					}
 				} else {
-					nPrevVal += 29;
+					if (nPrevVal === 1) {
+						nPrevVal += 31;
+					}
+					let oPrevValDate = new Asc.cDate().getDateFromExcel(nPrevVal);
+					oPrevValDate.addMonths(nStep - 1);
+					nPrevVal = oPrevValDate.getExcelDate() + 1;
 				}
 			} else {
-				nPrevVal += 366;
+				if (nStep > 1) {
+					nPrevVal += 366;
+					let oPrevValDate = new Asc.cDate().getDateFromExcel(nPrevVal);
+					oPrevValDate.addYears(nStep - 1);
+					nPrevVal = oPrevValDate.getExcelDate();
+				} else {
+					nPrevVal += 366;
+				}
 			}
 
 			return nPrevVal;

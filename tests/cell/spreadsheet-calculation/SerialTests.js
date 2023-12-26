@@ -775,7 +775,7 @@ $(function () {
 		clearData(0, 0, 6, 6);
 	});
 	QUnit.test('Autofill Date type - one filled row/column', function (assert) {
-		const testData = [
+		let testData = [
 			['09/04/2023']
 		];
 		// Horizontal dateUnit - Day
@@ -893,6 +893,106 @@ $(function () {
 		cSerial.exec();
 		autofillRange = getRange(1, 2, 1, 6);
 		autofillData(assert, autofillRange, [['45174'], ['45175'], ['45176'], [''], ['']], 'Autofill Column. Date progression - Day, Stop value - 45176. With indentation row and column');
+		// Case 01/01/1900 - 01/03/1900. Vertical dateUnit - Day, Step - 2. Bug #65559
+		testData = [
+			['01/01/1900']
+		];
+		oFromRange = getFilledData(0, 0, 0, 3, testData, [0, 0]);
+		settings.dateUnit = oSeriesDateUnitType.day;
+		settings.stepValue = 2;
+		settings.seriesIn = oSeriesInType.columns;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+		autofillRange = getRange(0, 1, 0, 3);
+		autofillData(assert, autofillRange, [['3'], ['5'], ['7']], 'Autofill Column. Date progression - Day, Step - 2. Bug #65559');
+		clearData(0, 0, 0, 3);
+		// Case 01/01/1900 - 01/03/1900. Horizontal dateUnit - Day, Step - 2. Bug #65559
+		oFromRange = getFilledData(0, 0, 3, 0, testData, [0, 0]);
+		settings.dateUnit = oSeriesDateUnitType.day;
+		settings.stepValue = 2;
+		settings.seriesIn = oSeriesInType.rows;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+		autofillRange = getRange(1, 0, 3, 0);
+		autofillData(assert, autofillRange, [['3', '5', '7']], 'Autofill Row. Date progression - Day, Step - 2. Bug #65559');
+		clearData(0, 0, 3, 0);
+		// Case 01/01/1900 - 01/03/1900. Vertical dateUnit - Weekday, Step - 2. Bug #65559
+		oFromRange = getFilledData(0, 0, 0, 3, testData, [0, 0]);
+		settings.dateUnit = oSeriesDateUnitType.weekday;
+		settings.stepValue = 2;
+		settings.seriesIn = oSeriesInType.columns;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+		autofillRange = getRange(0, 1, 0, 3);
+		autofillData(assert, autofillRange, [['3'], ['5'], ['8']], 'Autofill Column. Date progression - Weekday, Step - 2. Bug #65559');
+		clearData(0, 0, 0, 3);
+		// Case 01/01/1900 - 01/03/1900. Horizontal dateUnit - Weekday, Step - 2. Bug #65559
+		oFromRange = getFilledData(0, 0, 3, 0, testData, [0, 0]);
+		settings.dateUnit = oSeriesDateUnitType.weekday;
+		settings.stepValue = 2;
+		settings.seriesIn = oSeriesInType.rows;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+		autofillRange = getRange(1, 0, 3, 0);
+		autofillData(assert, autofillRange, [['3', '5', '8']], 'Autofill Row. Date progression - Weekday, Step - 2. Bug #65559');
+		clearData(0, 0, 3, 0);
+		// Case 01/01/1900 - 01/03/1900. Vertical dateUnit - Month, Step - 2. Bug #65559
+		oFromRange = getFilledData(0, 0, 0, 3, testData, [0, 0]);
+		settings.dateUnit = oSeriesDateUnitType.month;
+		settings.stepValue = 2;
+		settings.seriesIn = oSeriesInType.columns;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+		autofillRange = getRange(0, 1, 0, 3);
+		autofillData(assert, autofillRange, [['61'], ['122'], ['183']], 'Autofill Column. Date progression - Month, Step - 2. Bug #65559');
+		clearData(0, 0, 0, 3);
+		// Case 01/01/1900 - 01/03/1900. Horizontal dateUnit - Month, Step - 12. Bug #65559
+		oFromRange = getFilledData(0, 0, 3, 0, testData, [0, 0]);
+		settings.dateUnit = oSeriesDateUnitType.month;
+		settings.stepValue = 12;
+		settings.seriesIn = oSeriesInType.rows;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+		autofillRange = getRange(1, 0, 3, 0);
+		autofillData(assert, autofillRange, [['367', '732', '1097']], 'Autofill Row. Date progression - Month, Step - 12. Bug #65559');
+		clearData(0, 0, 3, 0);
+		// Case 01/01/1900 - 01/03/1900. Vertical dateUnit - Year, Step - 2. Bug #65559
+		oFromRange = getFilledData(0, 0, 0, 3, testData, [0, 0]);
+		settings.dateUnit = oSeriesDateUnitType.year;
+		settings.stepValue = 2;
+		settings.seriesIn = oSeriesInType.columns;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+		autofillRange = getRange(0, 1, 0, 3);
+		autofillData(assert, autofillRange, [['732'], ['1462'], ['2193']], 'Autofill Column. Date progression - Year, Step - 2. Bug #65559');
+		clearData(0, 0, 0, 3);
+		// Case 01/01/1900 - 01/03/1900. Horizontal dateUnit - Year, Step - 1. Bug #65559
+		oFromRange = getFilledData(0, 0, 3, 0, testData, [0, 0]);
+		settings.dateUnit = oSeriesDateUnitType.year;
+		settings.stepValue = 1;
+		settings.seriesIn = oSeriesInType.rows;
+
+		cSerial = new CSerial(settings);
+		cSerial.setFromRange(oFromRange);
+		cSerial.exec();
+		autofillRange = getRange(1, 0, 3, 0);
+		autofillData(assert, autofillRange, [['367', '732', '1097']], 'Autofill Row. Date progression - Year, Step - 1. Bug #65559');
+
+
 	});
 	QUnit.test('Autofill Date type - Horizontal multiple cells', function (assert) {
 		const testData = [
