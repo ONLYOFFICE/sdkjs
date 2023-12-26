@@ -16298,11 +16298,11 @@ CColorObj.prototype =
 				let endVal = (this.cChartDrawer.calcProp.trueHeight / this.cChartDrawer.calcProp.pxToMM) + startVal;
 				
 				if (lastPoint.catVal < startCat || lastPoint.catVal > endCat) {
-					lastPoint.catVal = startCat;
+					lastPoint.catVal = 0;
 				}
 
 				if (lastPoint.valVal < startVal || lastPoint.valVal > endVal) {
-					lastPoint.valVal = startVal;
+					lastPoint.valVal = 0;
 				}
 
 				if (coefficients || rSquared) {
