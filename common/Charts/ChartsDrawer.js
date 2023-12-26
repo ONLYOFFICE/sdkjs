@@ -16296,7 +16296,7 @@ CColorObj.prototype =
 				let startVal = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
 				let endCat = (this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM) + startCat;
 				let endVal = (this.cChartDrawer.calcProp.trueHeight / this.cChartDrawer.calcProp.pxToMM) + startVal;
-
+				
 				if (lastPoint.catVal < startCat || lastPoint.catVal > endCat) {
 					lastPoint.catVal = startCat;
 				}
@@ -16360,6 +16360,7 @@ CColorObj.prototype =
 						const cutPoint = valAxis.scaling.logBase ? (Math.log(1000) / Math.log(valAxis.scaling.logBase)) : 1000;
 						const lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
 						storageElement.setBezierApproximationResults(lineCoords.mainLine, lineCoords.startPoint);
+						storageElement.setLineReversed(lineCoords.isReversed);
 					}
 					if (this.bAllowDrawByPoints || type === AscFormat.TRENDLINE_TYPE_POLY) {
 						const minLogVal = storageElement.getMinLogVal();
@@ -16478,7 +16479,7 @@ CColorObj.prototype =
 					}
 				}
 
-				storageElement.setLastPoint(positions.xPos[positions.xPos.length - 1], positions.yPos[positions.yPos.length - 1]);
+				storageElement.setLastPoint(positions.xPos, positions.yPos);
 				storageElement.setBezierPath(pathId);
 			}
 
@@ -16493,7 +16494,7 @@ CColorObj.prototype =
 				for (let i = 0; i < positions.xPos.length; i++) {
 					path.lnTo(positions.xPos[i] * pathW, positions.yPos[i] * pathH);
 				}
-				storageElement.setLastPoint(positions.xPos[positions.xPos.length - 1], positions.yPos[positions.yPos.length - 1]);
+				storageElement.setLastPoint(positions.xPos, positions.yPos);
 				storageElement.setPointPath(pathId);
 			}
 		},
@@ -16880,18 +16881,7 @@ CColorObj.prototype =
 		},
 
 		_dispRSquared: function (catVals, valVals, coefficients, type) {
-			const mappingStorage = this._obtainMappingStorage(type)
-			const findYMean = function () {
-				let sum = 0;
-				let size = valVals.length;
-				for (let i = 0; i < size; i++) {
-					sum += valVals[i]
-				}
-				return sum / size;
-			};
-
-			const yMean = findYMean();
-
+			const mappingStorage = this._obtainMappingStorage(type);
 			const predictY = function (xVal) {
 				let result = mappingStorage.bValForward ? mappingStorage.bValForward(coefficients[coefficients.length - 1]) : coefficients[coefficients.length - 1];
 				let power = 1;
@@ -16902,18 +16892,32 @@ CColorObj.prototype =
 				return result;
 			};
 
-			// R squared = 1 - sumRegression/sumSquared 
-			// sumRegression is ∑(y-yPredicted)^2
-			// sumSquared is ∑(y-yMean)^2
+			// R squared = Correlation * Correlation
+			// Correlation = (N∑xy-∑x∑y) / (sqrt([N∑x^2-(∑x)^2][N∑y^2-(∑y)^2]))
 
+			const N = valVals.length;
 			let sumSquared = 0;
 			let sumRegression = 0;
-			for (let i = 0; i < valVals.length; i++) {
+			let XY = 0;
+			let X = 0;
+			let Y = 0;
+			let XSquared = 0;
+			let YSquared = 0;
+			for (let i = 0; i < N; i++) {
 				const yValPred = predictY(catVals[i]);
-				sumRegression += Math.pow((valVals[i] - yValPred), 2);
-				sumSquared += Math.pow((valVals[i] - yMean), 2);
+				const yVal = valVals[i];
+				XY += (yVal * yValPred);
+				X += yVal;
+				Y += yValPred;
+				XSquared += (yVal * yVal);
+				YSquared += (yValPred * yValPred);
 			}
-			return 1 - (sumRegression / sumSquared);
+			let divisor = (Math.sqrt((N * XSquared - Math.pow(X, 2)) * (N * YSquared - Math.pow(Y, 2))));
+			if (divisor != 0) {
+				const correlation = ((N * XY) - (X * Y)) / divisor;
+				return correlation * correlation;
+			}
+			return null;
 		},
 
 		draw: function () {
@@ -17079,15 +17083,18 @@ CColorObj.prototype =
 			this._checkBoundaries(start);
 			this._checkBoundaries(end);
 
+			//start point cant be changed with end point
+			let isReversed = false;
 			//start should always be lower than end
 			if (start.valVal > end.valVal) {
+				isReversed = true;
 				const temp = {catVal: end.catVal, valVal: end.valVal};
 				end.valVal = start.valVal;
 				end.catVal = start.catVal;
 				start = temp;
 			}
 
-			//sometimes lines can be reversed, we need to track directions
+			//sometimes lines can point in opposite direction, we need to track directions
 			let direction = true;
 			const line2Letiables = this._findLine(end.catVal, end.valVal);
 			let line1Letiables = this._findLine(start.catVal, start.valVal);
@@ -17120,7 +17127,7 @@ CColorObj.prototype =
 			if (line2Letiables[1] === line1Letiables[1]) {
 				controlPoints.catVals.push(end.catVal);
 				controlPoints.valVals.push(end.valVal);
-				return {startPoint: startPoint, mainLine: controlPoints}
+				return {isReversed: isReversed, startPoint: startPoint, mainLine: controlPoints}
 			}
 
 			// --------------------------------------
@@ -17146,7 +17153,7 @@ CColorObj.prototype =
 			const valMin = Math.min(val1, val2);
 			const predictedErr = this._check(controlPoints, valMin, valMax);
 			if (predictedErr <= error && predictedErr >= -error) {
-				return {startPoint: startPoint, mainLine: controlPoints}
+				return {isReversed: isReversed, startPoint: startPoint, mainLine: controlPoints}
 			}
 			//--------------------------------------------
 			//Step 5 find approximation of cubic bezier;
@@ -17181,7 +17188,7 @@ CColorObj.prototype =
 				controlPoints.valVals[1] = storage.cpY;
 			}
 
-			return {startPoint: startPoint, mainLine: controlPoints};
+			return {isReversed: isReversed, startPoint: startPoint, mainLine: controlPoints};
 		},
 
 		// find catVal and valVal of line at given point
@@ -17372,6 +17379,7 @@ CColorObj.prototype =
 		this.boundary = null;
 		this.minLogVal = null;
 		this.startBezierVal = null;
+		this.isReversed = false;
 		this.lastPoint = {catVal: null, valVal: null};
 	}
 
@@ -17442,6 +17450,10 @@ CColorObj.prototype =
 			this.startBezierVal = startingPoint;
 		},
 
+		setLineReversed: function (isReversed) {
+			this.isReversed = isReversed;
+		},
+
 		addCatVal: function (val) {
 			this.coords.catVals.push(val);
 		},
@@ -17474,9 +17486,9 @@ CColorObj.prototype =
 			this.boundary = boundary;
 		},
 
-		setLastPoint: function (catVal, valVal) {
-			this.lastPoint.catVal = catVal;
-			this.lastPoint.valVal = valVal;
+		setLastPoint: function (catArr, valArr) {
+			this.lastPoint.catVal = this.isReversed ? catArr[0] : catArr[catArr.length - 1];
+			this.lastPoint.valVal = this.isReversed ? valArr[0] : valArr[valArr.length - 1];
 		},
 
 		setBezierPath: function (bezierPath) {
