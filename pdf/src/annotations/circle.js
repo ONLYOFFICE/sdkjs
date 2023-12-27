@@ -307,13 +307,13 @@
                 oPt1 = arrPoints[i];
                 oPt2 = arrPoints[i + 1] || arrPoints[0];
 
+                aPoints.splice(aPoints.length - 1, 1);
                 if (oPt1.x == oPt2.x && oPt1.y == oPt2.y)
                     break;
 
                 let nLineLenght = AscFormat.getLineLength(oPt1, oPt2);
-                let nPointsCount = nLineLenght / (dR2) + 0.5 >> 0;
+                let nPointsCount = Math.ceil(nLineLenght / (dR2)) + 1;
                 aPoints = aPoints.concat(findPointsOnLine(oPt1, oPt2, nPointsCount));
-                aPoints.splice(aPoints.length - 1, 1);
             }
         }
         else {
@@ -341,6 +341,7 @@
             }
             return 0;
         }
+
         for(let nPt = 0; nPt < aPoints.length; ++nPt) {
             let oPrevPt, oCurPt, oNextPt;
             if(nPt > 0) {
