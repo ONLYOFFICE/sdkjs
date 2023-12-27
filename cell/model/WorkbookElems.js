@@ -16047,6 +16047,23 @@ function RangeDataManagerElem(bbox, data)
 					if (cellNumberValue != null) {
 						numeratorOfSlope += (cellIndex - xAvg) * (cellNumberValue - yAvg);
 						denominatorOfSlope += Math.pow((cellIndex - xAvg), 2);
+						if (seriesSettings.asc_getType() === Asc.c_oAscSeriesType.date) {
+							const MONTH_UNIT = 31;
+							const YEAR_UNIT = 366;
+
+							let roundedSlope = Math.ceil(numeratorOfSlope / denominatorOfSlope);
+							let isSequenceSeries = isVertical ? curRow === (rowStart + 1) : curCol === (colStart + 1);
+
+							if (MONTH_UNIT === roundedSlope) {
+								seriesSettings.asc_setDateUnit(Asc.c_oAscDateUnitType.month);
+								seriesSettings.asc_setStepValue(1);
+							} else if (YEAR_UNIT === roundedSlope) {
+								seriesSettings.asc_setDateUnit(Asc.c_oAscDateUnitType.year);
+								seriesSettings.asc_setStepValue(1);
+							} else if (isSequenceSeries) {
+								seriesSettings.asc_setStepValue(cellNumberValue - firstValue);
+							}
+						}
 					} else {
 						seriesSettings.asc_setStepValue(1);
 
@@ -16077,6 +16094,10 @@ function RangeDataManagerElem(bbox, data)
 			if (seriesSettings.asc_getStepValue() != null) {
 				if (seriesSettings.asc_getType() == null) {
 					seriesSettings.asc_setType(Asc.c_oAscSeriesType.linear);
+				}
+				if (seriesSettings.asc_getType() === Asc.c_oAscSeriesType.date) {
+					contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
+					contextMenuAllowedProps[Asc.c_oAscFillType.series] = true;
 				}
 				return true;
 			}
@@ -16136,7 +16157,8 @@ function RangeDataManagerElem(bbox, data)
 				}
 			}
 		}
-
+		this.asc_setDateUnit(Asc.c_oAscDateUnitType.day);
+		this.asc_setTrend(false);
 		// select one cell and use fill handle
 		if (!isApplyFilter) {
 			if (ws.activeFillHandle != null) {
@@ -16182,7 +16204,11 @@ function RangeDataManagerElem(bbox, data)
 				this.asc_setStepValue(1);
 			} else {
 				let slope = numeratorOfSlope / denominatorOfSlope;
-				this.asc_setStepValue(slope);
+				if (this.asc_getType() === Asc.c_oAscSeriesType.date && !Number.isInteger(slope)) {
+					this.asc_setStepValue(1);
+				} else {
+					this.asc_setStepValue(slope);
+				}
 			}
 
 			if (firstValue != null) {
@@ -16194,8 +16220,6 @@ function RangeDataManagerElem(bbox, data)
 				}
 			}
 		}
-		this.asc_setTrend(false);
-		this.asc_setDateUnit(Asc.c_oAscDateUnitType.day);
 
 		//2. init for context menu - allowed options
 		this.asc_setContextMenuAllowedProps(contextMenuAllowedProps);
