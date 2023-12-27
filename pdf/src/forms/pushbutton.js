@@ -2240,18 +2240,11 @@
         }
 
         function WriteImage(memory, nImgType) {
-            // let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(nImgType));
-            let oBlipFill = new AscFormat.CBlipFill();
-            oBlipFill.RasterImageId = this.GetImageRasterId(nImgType);
-            let sBase64 = oBlipFill.getBase64Data(false, false).img;
-
-            // let nExistIdx = memory.images.indexOf(sPathToImg);
-            let nExistIdx = memory.images.indexOf(sBase64);
-            // пишем индекс картинки в массиве
+            let sPathToImg = AscCommon.getFullImageSrc2(this.GetImageRasterId(nImgType));
+            let nExistIdx = memory.images.indexOf(sPathToImg);
             if (nExistIdx === -1) {
                 memory.WriteLong(memory.images.length);
-                // memory.images.push(sPathToImg);
-                memory.images.push(sBase64);
+                memory.images.push(sPathToImg);
             }
             else
                 memory.WriteLong(nExistIdx);
