@@ -79,9 +79,6 @@
         return this._vertices;
     };
 
-    CAnnotationPolygon.prototype.IsNeedDrawFromStream = function() {
-        return false;
-    };
     CAnnotationPolygon.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;

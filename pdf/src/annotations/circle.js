@@ -294,7 +294,7 @@
                 let t = i / (N - 1);
                 let x = pt1.x + t * dx;
                 let y = pt1.y + t * dy;
-                points.push({x, y});
+                points.push({x: x, y: y});
             }
         
             return points;
