@@ -26859,6 +26859,14 @@
 						History.SetSelectionRedo(_cloneSelection);
 						History.EndTransaction();
 
+						let typeSelection = _cloneSelection.getType();
+						if ((type ===  c_oAscFillType.fillDown || type ===  c_oAscFillType.fillUp) && (typeSelection === Asc.c_oAscSelectionType.RangeCol || typeSelection === Asc.c_oAscSelectionType.RangeMax)) {
+							oThis.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
+						}
+						if ((type ===  c_oAscFillType.fillLeft || type ===  c_oAscFillType.fillRight) && (typeSelection === Asc.c_oAscSelectionType.RangeRow || typeSelection === Asc.c_oAscSelectionType.RangeMax)) {
+							oThis.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
+						}
+
 						oThis.draw();
 						oThis.model.setActiveFillType(null);
 					});
