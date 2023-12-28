@@ -441,6 +441,9 @@
         this.AddToRedraw();
         this.SetWasChanged(true);
     };
+    CAnnotationBase.prototype.IsShapeBased = function() {
+        return this instanceof AscFormat.CShape || this instanceof AscFormat.CGroupShape;
+    };
     CAnnotationBase.prototype.IsHighlight = function() {
         return false;
     };

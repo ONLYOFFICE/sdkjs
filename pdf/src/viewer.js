@@ -1806,7 +1806,7 @@
 						continue;
 
 					// у draw аннотаций ищем по path
-					if (oAnnot.IsInk() || oAnnot.IsLine() || oAnnot.IsSquare() || oAnnot.IsPolygon() || oAnnot.IsPolyLine() || oAnnot.IsFreeText())
+					if (oAnnot.IsShapeBased())
 					{
 						let oPos	= oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
 						let X       = oPos.X;
@@ -1824,13 +1824,6 @@
 						{
 							if (oAnnot.IsInQuads(pageObject.x, pageObject.y))
 								return oAnnot;
-						}
-						else
-						{
-							if (bGetHidden)
-								return oAnnot;
-							else
-								return oAnnot.IsHidden() == false ? oAnnot : null;
 						}
 					}
 				}

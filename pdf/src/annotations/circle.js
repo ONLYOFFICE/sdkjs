@@ -294,7 +294,7 @@
                 let t = i / (N - 1);
                 let x = pt1.x + t * dx;
                 let y = pt1.y + t * dy;
-                points.push({x, y});
+                points.push({x: x, y: y});
             }
         
             return points;
@@ -456,9 +456,9 @@
     }
 
     function calculateAngle(x1, y1, x2, y2) {
-        var dy = y2 - y1;
-        var dx = x2 - x1;
-        var theta = Math.atan2(dy, dx); // диапазон [-PI, PI]
+        let dy = y2 - y1;
+        let dx = x2 - x1;
+        let theta = Math.atan2(dy, dx); // диапазон [-PI, PI]
         theta *= 180 / Math.PI; // радианы в градусы
         // если нужен угол в диапазоне [0, 360)
         if (theta < 0) theta = 360 + theta;

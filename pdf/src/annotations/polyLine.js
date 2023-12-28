@@ -342,54 +342,65 @@
         let shapeAtEnd      = getFigureSize(this.GetLineEnd(), nLineWidth);
 
         function calculateBoundingRectangle(line, figure1, figure2) {
-            const {x1, y1, x2, y2} = line;
+            const x1 = line.x1, y1 = line.y1, x2 = line.x2, y2 = line.y2;
         
-            // Расчет угла поворота в радианах
+            // Calculate the rotation angle in radians
             const angle = Math.atan2(y2 - y1, x2 - x1);
         
             function rotatePoint(cx, cy, angle, px, py) {
-                var cos = Math.cos(angle),
+                let cos = Math.cos(angle),
                     sin = Math.sin(angle),
                     nx = (sin * (px - cx)) + (cos * (py - cy)) + cx,
                     ny = (sin * (py - cy)) - (cos * (px - cx)) + cy;
                 return {x: nx, y: ny};
             }
-            
+        
             function getRectangleCorners(cx, cy, width, height, angle) {
-                var halfWidth = width / 2;
-                var halfHeight = height / 2;
-            
-                // Углы прямоугольника до поворота
-                var corners = [
-                    {x: cx - halfWidth, y: cy - halfHeight}, // верхний левый
-                    {x: cx + halfWidth, y: cy - halfHeight}, // верхний правый
-                    {x: cx + halfWidth, y: cy + halfHeight}, // нижний правый
-                    {x: cx - halfWidth, y: cy + halfHeight}  // нижний левый
+                let halfWidth = width / 2;
+                let halfHeight = height / 2;
+        
+                // Corners of the rectangle before rotation
+                let corners = [
+                    {x: cx - halfWidth, y: cy - halfHeight}, // top left
+                    {x: cx + halfWidth, y: cy - halfHeight}, // top right
+                    {x: cx + halfWidth, y: cy + halfHeight}, // bottom right
+                    {x: cx - halfWidth, y: cy + halfHeight}  // bottom left
                 ];
-            
-                // Поворачиваем каждую точку
-                return corners.map(function(point) {
-                    return rotatePoint(cx, cy, angle, point.x, point.y);
-                });
+        
+                // Rotate each point
+                let rotatedCorners = [];
+                for (let i = 0; i < corners.length; i++) {
+                    rotatedCorners.push(rotatePoint(cx, cy, angle, corners[i].x, corners[i].y));
+                }
+                return rotatedCorners;
             }
         
-            const cornersFigure1 = getRectangleCorners(x1, y1, figure1.width, figure1.height, angle);
-            const cornersFigure2 = getRectangleCorners(x2, y2, figure2.width, figure2.height, angle);
-
-            // Находим минимальные и максимальные координаты
+            let cornersFigure1 = getRectangleCorners(x1, y1, figure1.width, figure1.height, angle);
+            let cornersFigure2 = getRectangleCorners(x2, y2, figure2.width, figure2.height, angle);
+        
+            // Find minimum and maximum coordinates
             let minX = Math.min(x1, x2);
             let maxX = Math.max(x1, x2);
             let minY = Math.min(y1, y2);
             let maxY = Math.max(y1, y2);
-
-            [...cornersFigure1, ...cornersFigure2].forEach(point => {
+        
+            for (let i = 0; i < cornersFigure1.length; i++) {
+                let point = cornersFigure1[i];
                 minX = Math.min(minX, point.x);
                 maxX = Math.max(maxX, point.x);
                 minY = Math.min(minY, point.y);
                 maxY = Math.max(maxY, point.y);
-            });
+            }
         
-            // Возвращаем координаты прямоугольника
+            for (let i = 0; i < cornersFigure2.length; i++) {
+                let point = cornersFigure2[i];
+                minX = Math.min(minX, point.x);
+                maxX = Math.max(maxX, point.x);
+                minY = Math.min(minY, point.y);
+                maxY = Math.max(maxY, point.y);
+            }
+        
+            // Return the coordinates of the rectangle
             return [minX * nScaleX, minY * nScaleY, maxX * nScaleX, maxY * nScaleY];
         }
 
@@ -623,7 +634,7 @@
         let maxX = -Infinity;
         let maxY = -Infinity;
     
-        rects.forEach(rect => {
+        rects.forEach(function(rect) {
             minX = Math.min(minX, rect[0]);
             minY = Math.min(minY, rect[1]);
             maxX = Math.max(maxX, rect[2]);
