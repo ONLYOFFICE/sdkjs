@@ -256,13 +256,13 @@
         let shapeAtEnd      = getFigureSize(this.GetLineEnd(), nLineWidth);
 
         function calculateBoundingRectangle(line, figure1, figure2) {
-            var x1 = line.x1, y1 = line.y1, x2 = line.x2, y2 = line.y2;
+            let x1 = line.x1, y1 = line.y1, x2 = line.x2, y2 = line.y2;
         
             // Расчет угла поворота в радианах
-            var angle = Math.atan2(y2 - y1, x2 - x1);
+            let angle = Math.atan2(y2 - y1, x2 - x1);
         
             function rotatePoint(cx, cy, angle, px, py) {
-                var cos = Math.cos(angle),
+                let cos = Math.cos(angle),
                     sin = Math.sin(angle),
                     nx = (sin * (px - cx)) + (cos * (py - cy)) + cx,
                     ny = (sin * (py - cy)) - (cos * (px - cx)) + cy;
@@ -270,34 +270,34 @@
             }
             
             function getRectangleCorners(cx, cy, width, height, angle) {
-                var halfWidth = width / 2;
-                var halfHeight = height / 2;
+                let halfWidth = width / 2;
+                let halfHeight = height / 2;
             
-                var topLeft = {x: cx - halfWidth, y: cy - halfHeight},
+                let topLeft = {x: cx - halfWidth, y: cy - halfHeight},
                     topRight = {x: cx + halfWidth, y: cy - halfHeight},
                     bottomRight = {x: cx + halfWidth, y: cy + halfHeight},
                     bottomLeft = {x: cx - halfWidth, y: cy + halfHeight};
             
-                var corners = [topLeft, topRight, bottomRight, bottomLeft];
+                let corners = [topLeft, topRight, bottomRight, bottomLeft];
             
-                var rotatedCorners = [];
-                for (var i = 0; i < corners.length; i++) {
+                let rotatedCorners = [];
+                for (let i = 0; i < corners.length; i++) {
                     rotatedCorners.push(rotatePoint(cx, cy, angle, corners[i].x, corners[i].y));
                 }
                 return rotatedCorners;
             }
         
-            var cornersFigure1 = getRectangleCorners(x1, y1, figure1.width, figure1.height, angle);
-            var cornersFigure2 = getRectangleCorners(x2, y2, figure2.width, figure2.height, angle);
+            let cornersFigure1 = getRectangleCorners(x1, y1, figure1.width, figure1.height, angle);
+            let cornersFigure2 = getRectangleCorners(x2, y2, figure2.width, figure2.height, angle);
         
-            var minX = Math.min(x1, x2);
-            var maxX = Math.max(x1, x2);
-            var minY = Math.min(y1, y2);
-            var maxY = Math.max(y1, y2);
+            let minX = Math.min(x1, x2);
+            let maxX = Math.max(x1, x2);
+            let minY = Math.min(y1, y2);
+            let maxY = Math.max(y1, y2);
         
-            var allCorners = cornersFigure1.concat(cornersFigure2);
-            for (var i = 0; i < allCorners.length; i++) {
-                var point = allCorners[i];
+            let allCorners = cornersFigure1.concat(cornersFigure2);
+            for (let i = 0; i < allCorners.length; i++) {
+                let point = allCorners[i];
                 minX = Math.min(minX, point.x);
                 maxX = Math.max(maxX, point.x);
                 minY = Math.min(minY, point.y);

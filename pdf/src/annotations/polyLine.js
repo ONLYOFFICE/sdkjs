@@ -348,7 +348,7 @@
             const angle = Math.atan2(y2 - y1, x2 - x1);
         
             function rotatePoint(cx, cy, angle, px, py) {
-                var cos = Math.cos(angle),
+                let cos = Math.cos(angle),
                     sin = Math.sin(angle),
                     nx = (sin * (px - cx)) + (cos * (py - cy)) + cx,
                     ny = (sin * (py - cy)) - (cos * (px - cx)) + cy;
@@ -356,11 +356,11 @@
             }
         
             function getRectangleCorners(cx, cy, width, height, angle) {
-                var halfWidth = width / 2;
-                var halfHeight = height / 2;
+                let halfWidth = width / 2;
+                let halfHeight = height / 2;
         
                 // Corners of the rectangle before rotation
-                var corners = [
+                let corners = [
                     {x: cx - halfWidth, y: cy - halfHeight}, // top left
                     {x: cx + halfWidth, y: cy - halfHeight}, // top right
                     {x: cx + halfWidth, y: cy + halfHeight}, // bottom right
@@ -368,32 +368,32 @@
                 ];
         
                 // Rotate each point
-                var rotatedCorners = [];
-                for (var i = 0; i < corners.length; i++) {
+                let rotatedCorners = [];
+                for (let i = 0; i < corners.length; i++) {
                     rotatedCorners.push(rotatePoint(cx, cy, angle, corners[i].x, corners[i].y));
                 }
                 return rotatedCorners;
             }
         
-            var cornersFigure1 = getRectangleCorners(x1, y1, figure1.width, figure1.height, angle);
-            var cornersFigure2 = getRectangleCorners(x2, y2, figure2.width, figure2.height, angle);
+            let cornersFigure1 = getRectangleCorners(x1, y1, figure1.width, figure1.height, angle);
+            let cornersFigure2 = getRectangleCorners(x2, y2, figure2.width, figure2.height, angle);
         
             // Find minimum and maximum coordinates
-            var minX = Math.min(x1, x2);
-            var maxX = Math.max(x1, x2);
-            var minY = Math.min(y1, y2);
-            var maxY = Math.max(y1, y2);
+            let minX = Math.min(x1, x2);
+            let maxX = Math.max(x1, x2);
+            let minY = Math.min(y1, y2);
+            let maxY = Math.max(y1, y2);
         
-            for (var i = 0; i < cornersFigure1.length; i++) {
-                var point = cornersFigure1[i];
+            for (let i = 0; i < cornersFigure1.length; i++) {
+                let point = cornersFigure1[i];
                 minX = Math.min(minX, point.x);
                 maxX = Math.max(maxX, point.x);
                 minY = Math.min(minY, point.y);
                 maxY = Math.max(maxY, point.y);
             }
         
-            for (var i = 0; i < cornersFigure2.length; i++) {
-                var point = cornersFigure2[i];
+            for (let i = 0; i < cornersFigure2.length; i++) {
+                let point = cornersFigure2[i];
                 minX = Math.min(minX, point.x);
                 maxX = Math.max(maxX, point.x);
                 minY = Math.min(minY, point.y);

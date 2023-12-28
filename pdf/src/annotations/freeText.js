@@ -79,6 +79,9 @@
     CAnnotationFreeText.prototype.IsFreeText = function() {
         return true;
     };
+    CAnnotationFreeText.prototype.IsNeedDrawFromStream = function() {
+        return false;
+    };
     CAnnotationFreeText.prototype.SetDefaultStyle = function(sStyle) {
         this._defaultStyle = sStyle;
     };
@@ -168,13 +171,13 @@
         let shapeAtEnd      = getFigureSize(this.GetLineEnd(), nLineWidth);
 
         function calculateBoundingRectangle(line, figure1, figure2) {
-            var x1 = line.x1, y1 = line.y1, x2 = line.x2, y2 = line.y2;
+            let x1 = line.x1, y1 = line.y1, x2 = line.x2, y2 = line.y2;
         
             // Расчет угла поворота в радианах
-            var angle = Math.atan2(y2 - y1, x2 - x1);
+            let angle = Math.atan2(y2 - y1, x2 - x1);
         
             function rotatePoint(cx, cy, angle, px, py) {
-                var cos = Math.cos(angle),
+                let cos = Math.cos(angle),
                     sin = Math.sin(angle),
                     nx = (sin * (px - cx)) + (cos * (py - cy)) + cx,
                     ny = (sin * (py - cy)) - (cos * (px - cx)) + cy;
@@ -182,41 +185,41 @@
             }
             
             function getRectangleCorners(cx, cy, width, height, angle) {
-                var halfWidth = width / 2;
-                var halfHeight = height / 2;
+                let halfWidth = width / 2;
+                let halfHeight = height / 2;
             
-                var corners = [
+                let corners = [
                     {x: cx - halfWidth, y: cy - halfHeight},
                     {x: cx + halfWidth, y: cy - halfHeight},
                     {x: cx + halfWidth, y: cy + halfHeight},
                     {x: cx - halfWidth, y: cy + halfHeight}
                 ];
             
-                var rotatedCorners = [];
-                for (var i = 0; i < corners.length; i++) {
+                let rotatedCorners = [];
+                for (let i = 0; i < corners.length; i++) {
                     rotatedCorners.push(rotatePoint(cx, cy, angle, corners[i].x, corners[i].y));
                 }
                 return rotatedCorners;
             }
         
-            var cornersFigure1 = getRectangleCorners(x1, y1, figure1.width, figure1.height, angle);
-            var cornersFigure2 = getRectangleCorners(x2, y2, figure2.width, figure2.height, angle);
+            let cornersFigure1 = getRectangleCorners(x1, y1, figure1.width, figure1.height, angle);
+            let cornersFigure2 = getRectangleCorners(x2, y2, figure2.width, figure2.height, angle);
         
-            var minX = Math.min(x1, x2);
-            var maxX = Math.max(x1, x2);
-            var minY = Math.min(y1, y2);
-            var maxY = Math.max(y1, y2);
+            let minX = Math.min(x1, x2);
+            let maxX = Math.max(x1, x2);
+            let minY = Math.min(y1, y2);
+            let maxY = Math.max(y1, y2);
         
-            for (var i = 0; i < cornersFigure1.length; i++) {
-                var point = cornersFigure1[i];
+            for (let i = 0; i < cornersFigure1.length; i++) {
+                let point = cornersFigure1[i];
                 minX = Math.min(minX, point.x);
                 maxX = Math.max(maxX, point.x);
                 minY = Math.min(minY, point.y);
                 maxY = Math.max(maxY, point.y);
             }
         
-            for (var j = 0; j < cornersFigure2.length; j++) {
-                var point = cornersFigure2[j];
+            for (let j = 0; j < cornersFigure2.length; j++) {
+                let point = cornersFigure2[j];
                 minX = Math.min(minX, point.x);
                 maxX = Math.max(maxX, point.x);
                 minY = Math.min(minY, point.y);
@@ -512,6 +515,14 @@
 
         return false;
     };
+    CAnnotationFreeText.prototype.hitInInnerArea = function(x, y) {
+        for (let i = 0; i < this.spTree.length; i++) {
+            if (this.spTree[i].hitInBoundingRect(x,y))
+                return true;
+        }
+
+        return false;
+    };
     CAnnotationFreeText.prototype.GetAscCommentData = function() {
         let oAscCommData = new Asc["asc_CCommentDataWord"](null);
         if (this._replies.length == 0)
@@ -535,10 +546,7 @@
 
         return oAscCommData;
     };
-    CAnnotationFreeText.prototype.hitInInnerArea = function(x, y) {
-        return this.hitInBoundingRect(x,y);
-    };
-    
+        
     CAnnotationFreeText.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
