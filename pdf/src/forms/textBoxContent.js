@@ -114,7 +114,9 @@
 	};
 	CTextBoxContent.prototype.SetFont = function(fontName) {
 		this.SetApplyToAll(true);
-		this.AddToParagraph(new AscWord.ParaTextPr({RFonts : {Ascii : {Name : fontName, Index : -1}}}));
+		let oParaTextPr = new AscWord.ParaTextPr();
+		oParaTextPr.Value.RFonts.SetAll(fontName, -1);
+		this.AddToParagraph(oParaTextPr);
 		this.SetApplyToAll(false);
 	};
 	CTextBoxContent.prototype.SetFontSize = function(fontSize) {
