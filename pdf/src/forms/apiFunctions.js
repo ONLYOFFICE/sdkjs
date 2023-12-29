@@ -134,8 +134,7 @@
         }
         
         oTargetRun.RecalcInfo.TextPr = true
-        oTargetRun.ClearContent();
-        oTargetRun.AddText(sRes);
+        oCurForm.contentFormat.replaceAllText(sRes);
     }
     /**
 	 * Check can the field accept the char or not.
@@ -263,9 +262,7 @@
         }
 
         sRes = sRes + "%";
-
-        oTargetRun.ClearContent();
-        oTargetRun.AddText(sRes);
+        oCurForm.contentFormat.replaceAllText(sRes);
     }
     /**
 	 * Check can the field accept the char or not.
@@ -433,8 +430,7 @@
             sRes = oDateFormat.oTextFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, oCultureInfo)[0].text;
         }
 
-        oTargetRun.ClearContent();
-        oTargetRun.AddText(sRes);
+        oCurForm.contentFormat.replaceAllText(sRes);
     }
 
     function FormatDateValue(sFormat, nValue) {
@@ -692,9 +688,7 @@
         
         oNumFormat.oTextFormat.formatType = AscCommon.NumFormatType.PDFFormDate;
         let sRes = oNumFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, true, undefined, true)[0].text;
-
-        oTargetRun.ClearContent();
-        oTargetRun.AddText(sRes);
+        oForm.contentFormat.replaceAllText(sRes);
     }
     /**
 	 * Check can the field accept the char or not.
@@ -894,7 +888,7 @@
                 break;
         }
 
-        oTargetRun.AddText(sFormatValue);
+        oCurForm.contentFormat.replaceAllText(sFormatValue);
     }
     /**
 	 * Check can the field accept the char or not.

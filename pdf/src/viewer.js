@@ -242,6 +242,9 @@
 
 		var oThis = this;
 
+		this.onRepaintFormsCallbacks = [];
+		this.onRepaintAnnotsCallbacks = [];
+
 		this.updateSkin = function()
 		{
 			this.backgroundColor = AscCommon.GlobalSkin.BackgroundColor;
@@ -576,18 +579,32 @@
 
 			this.scheduleRepaint();
 		};
-		this.scheduleRepaint = function() {
+		this.scheduleRepaint = function(formsCallBack, annotsCallback) {
 			let oThis = this;
 			if (this.scheduledRepaintTimer == null) {
 				this.scheduledRepaintTimer = setTimeout(function() {
-					oThis.paint();
+					oThis.isRepaint = true;
 	
+					oThis.onRepaintFormsCallbacks.forEach(function(callback) {
+						callback();
+					});
+					oThis.onRepaintAnnotsCallbacks.forEach(function(callback) {
+						callback();
+					});
+					oThis.onRepaintFormsCallbacks = [];
+					oThis.onRepaintAnnotsCallbacks = [];
+
 					if (oThis.Api && oThis.Api.printPreview)
 						oThis.Api.printPreview.update();
 
-					clearTimeout(oThis.scheduledRepaintTimer);
+					oThis.scheduledRepaintTimer = null;
 				});
 			}
+			
+			if (formsCallBack)
+				this.onRepaintFormsCallbacks.push(formsCallBack);
+			if (annotsCallback)
+				this.onRepaintAnnotsCallbacks.push(annotsCallback);
 		};
 
 		this.onRepaintForms = function(pages) {
@@ -734,9 +751,12 @@
 					_t.sendEvent("onCurrentPageChanged", 0);
 
 					_t.sendEvent("onStructure", _t.structure);
+					_t.id_main.style.display = "";
 				}
-				else
+				else {
+					_t.id_main.style.display = "none";
 					_t.checkReady();
+				}
 				
 			}, 0);
 		};
@@ -943,7 +963,7 @@
 
 				if (oFormInfo["AP"] != null) {
 					oForm.SetApIdx(oFormInfo["AP"]["i"]);
-					oForm.SetDrawFromStream(Boolean(oFormInfo["AP"]["have"]));
+					oForm.SetHasOriginView(Boolean(oFormInfo["AP"]["have"]));
 				}
 
 				oForm.SetOriginPage(oFormInfo["page"]);
@@ -2288,9 +2308,9 @@
 			}
 		};
 
-		this.paint = function()
+		this.paint = function(formsCallBack, annotsCallback)
 		{
-			this.isRepaint = true;
+			this.scheduleRepaint(formsCallBack, annotsCallback);
 		};
 		
 		this.getStructure = function()
@@ -3648,12 +3668,16 @@
 		let oThis = this;
 		
 		// грузим шрифты для форм без внешнего вида
+		let isLoadedFontsSync;
 		oThis.isLoadFonts = !oThis.doc.checkFonts(aFontsToLoad, function() {
-			setTimeout(function() {
-				oThis.isLoadFonts = false;
-				oThis.isRepaint = true;
-			});
+			oThis.isLoadFonts = false;
+			isLoadedFontsSync = true;
+			oThis.scheduleRepaint();
 		});
+
+		// будет != undefined Только при синхронной загрузке
+		if (isLoadedFontsSync)
+			oThis.isLoadFonts = false;
 
 		return !oThis.isLoadFonts;
 	};
@@ -4163,8 +4187,7 @@
 			oMemory.Skip(4);
 			let nParents = 0;
 			oDoc.widgetsParents.forEach(function(field) {
-				// if (field.IsChanged()) {
-				if (true) {
+				if (field.IsChanged()) {
 					nParents++;
 					field.WriteToBinaryAsParent(oMemory);
 				}

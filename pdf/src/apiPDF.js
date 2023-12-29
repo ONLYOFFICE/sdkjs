@@ -1469,7 +1469,7 @@
             },
             get: function() {
                 let value = this.field.GetApiValue();
-                let isNumber = !isNaN(value) && isFinite(value) && value != "";
+                let isNumber = /^\d+$/.test(value);
                 return isNumber ? parseFloat(value) : value;
             }
         },
@@ -1697,7 +1697,7 @@
             },
             get: function() {
                 let value = this.field.GetApiValue();
-                let isNumber = !isNaN(value) && isFinite(value) && value != "";
+                let isNumber = /^\d+$/.test(value);
                 return isNumber ? parseFloat(value) : value;
             }
         }
@@ -1895,7 +1895,7 @@
             },
             get: function() {
                 let value = this.field.GetApiValue();
-                let isNumber = !isNaN(value) && isFinite(value) && value != "";
+                let isNumber = /^\d+$/.test(value);
                 return isNumber ? parseFloat(value) : value;
             }
         }

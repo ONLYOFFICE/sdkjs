@@ -63,6 +63,10 @@
         if (this.IsHidden() == true)
             return;
 
+        // когда выравнивание посередине или справа, то после того
+        // как ширина параграфа будет больше чем размер формы, выравнивание становится слева, пока текста вновь не станет меньше чем размер формы
+        this.CheckAlignInternal();
+        
         this.Recalculate();
         this.DrawBackground(oGraphicsPDF);
         
@@ -103,17 +107,11 @@
         let contentX        = (X + oMargins.left) * g_dKoef_pix_to_mm;
         let contentY        = (Y + oMargins.top) * g_dKoef_pix_to_mm;
         let contentXLimit   = (X + nWidth - oMargins.left) * g_dKoef_pix_to_mm;
-        let contentYLimit   = (Y + nHeight - oMargins.bottom) * g_dKoef_pix_to_mm;
         
         this._formRect.X = X * g_dKoef_pix_to_mm;
         this._formRect.Y = Y * g_dKoef_pix_to_mm;
         this._formRect.W = nWidth * g_dKoef_pix_to_mm;
         this._formRect.H = nHeight * g_dKoef_pix_to_mm;
-
-        this.contentRect.X = contentX;
-        this.contentRect.Y = contentY;
-        this.contentRect.W = contentXLimit - contentX;
-        this.contentRect.H = contentYLimit - contentY;
 
         this.content.Content.forEach(function(para) {
             para.Pr.Ind.FirstLine   = oMargins.left * g_dKoef_pix_to_mm;
@@ -126,6 +124,7 @@
             this.content.Y      = this._oldContentPos.Y        = contentY;
             this.content.XLimit = this._oldContentPos.XLimit   = contentXLimit;
             this.content.YLimit = this._oldContentPos.YLimit   = 20000;
+            this.CalculateContentRect();
             this.content.Recalculate_Page(0, true);
         }
         else if (this.IsNeedRecalc()) {
@@ -773,13 +772,55 @@
         this.SetNeedCommit(false);
     };
     CListBoxField.prototype.SetAlign = function(nAlignType) {
+        this._alignment = nAlignType;
 		this.content.SetAlign(nAlignType);
 		this.SetNeedRecalc(true);
 	};
 	CListBoxField.prototype.GetAlign = function() {
-		return this.content.GetAlign();
+		return this._alignment;
 	};
+    /**
+	 * Checks is paragraph text in form is out of form bounds.
+	 * @memberof CListBoxField
+	 * @typeofeditors ["PDF"]
+     * @returns {boolean}
+	 */
+    CListBoxField.prototype.IsParaOutOfForm = function(oPara) {
+        if (!this._pagePos)
+            this.Recalculate();
+        else
+            oPara.Recalculate_Page(0);
+        
+        let oFormBounds = this.getFormRelRect();
+        let nContentW   = oPara.GetContentWidthInRange();
+        
+        if (nContentW > oFormBounds.W) {
+            return true;
+        }
 
+        return false;
+    };
+    CListBoxField.prototype.CheckAlignInternal = function() {
+        // когда выравнивание посередине или справа, то после того
+        // как ширина параграфа будет больше чем размер формы, выравнивание становится слева, пока текста вновь не станет меньше чем размер формы
+
+        if ([AscPDF.ALIGN_TYPE.center, AscPDF.ALIGN_TYPE.right].includes(this.GetAlign())) {
+            for (let i = 0, nCount = this.content.GetElementsCount(); i < nCount; i++) {
+                let oPara = this.content.GetElement(i);
+
+                if (this.IsParaOutOfForm(oPara)) {
+                    if (getPdfAlignType(oPara.GetParagraphAlign()) != AscPDF.ALIGN_TYPE.left) {
+                        oPara.SetParagraphAlign(getInternalAlignType(AscPDF.ALIGN_TYPE.left));
+                        this.SetNeedRecalc(true);
+                    }
+                }
+                else if (getPdfAlignType(oPara.GetParagraphAlign()) != this.GetAlign()) {
+                    oPara.SetParagraphAlign(getInternalAlignType(this.GetAlign()));
+                    this.SetNeedRecalc(true);
+                }
+            }
+        }
+    };
     CListBoxField.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
@@ -802,8 +843,8 @@
             memory.fieldDataFlags |= (1 << 10);
             memory.WriteLong(aOptions.length);
             for (let i = 0; i < aOptions.length; i++) {
-                memory.WriteString(aOptions[i][1] != undefined ? aOptions[i][1] : "");
-                memory.WriteString(aOptions[i][0] != undefined ? aOptions[i][0] : "");
+                memory.WriteString(Array.isArray(aOptions[i]) ? aOptions[i][1] : "");
+                memory.WriteString(Array.isArray(aOptions[i]) ? aOptions[i][0] : aOptions[i]);
             }
         }
 
@@ -860,6 +901,30 @@
             AscCommon.History.TurnOff();
     }
 
+    function getPdfAlignType(nPdfAlign) {
+        switch (nPdfAlign) {
+			case align_Left: return AscPDF.ALIGN_TYPE.left;
+			case align_Center: return AscPDF.ALIGN_TYPE.center;
+			case align_Right: return AscPDF.ALIGN_TYPE.right;
+		}
+    }
+
+    function getInternalAlignType(nInternalAlign) {
+        let _alignType = AscCommon.align_Left;
+		switch (nInternalAlign) {
+			case AscPDF.ALIGN_TYPE.left:
+				_alignType = AscCommon.align_Left;
+				break;
+			case AscPDF.ALIGN_TYPE.center:
+				_alignType = AscCommon.align_Center;
+				break;
+			case AscPDF.ALIGN_TYPE.right:
+				_alignType = AscCommon.align_Right;
+				break;
+		}
+
+        return _alignType;
+    }
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
         

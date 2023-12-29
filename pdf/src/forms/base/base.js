@@ -199,6 +199,7 @@
         this._needRecalc            = true;
         this._wasChanged            = false; // была ли изменена форма
         this._bDrawFromStream       = false; // нужно ли рисовать из стрима
+        this._hasOriginView         = false; // имеет ли внешний вид из файла
         this._originView = {
             normal:     null,
             mouseDown:  null,
@@ -697,8 +698,10 @@
         let oParent = this.GetParent();
         if (oParent && this.IsWidget() && oParent.IsAllChildsSame())
             oParent.SetApiValue(value);
-        else
+        else {
+            this.SetWasChanged(true);
             this._value = value;
+        }
     };
 
     /**
@@ -735,6 +738,21 @@
             oActionsQueue.AddActions(oTrigger.Actions);
             oActionsQueue.Start();
         }
+    };
+
+    CBaseField.prototype.CalculateContentRect = function() {
+        if (!this.content)
+            return;
+
+        let aRect       = this.GetRect();
+        let Y           = aRect[1];
+        let nHeight     = ((aRect[3]) - (aRect[1]));
+        let oMargins    = this.GetMarginsFromBorders(false, false);
+
+        this.contentRect.X = this.content.X;
+        this.contentRect.Y = (Y + oMargins.top) * g_dKoef_pix_to_mm;
+        this.contentRect.W = this.content.XLimit - this.content.X;
+        this.contentRect.H = (nHeight - oMargins.top - oMargins.bottom) * g_dKoef_pix_to_mm;
     };
 
     CBaseField.prototype.DrawHighlight = function(oCtx) {
@@ -834,6 +852,9 @@
         nWidth  -= nLineWidth;
         nHeight -= nLineWidth;
 
+        // по умолчанию рисуется solid
+        let nBorderStyle = this.GetBorderStyle() != undefined ? this.GetBorderStyle() : BORDER_TYPES.solid;
+
         if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
             // выставляем в центр круга
             let centerX = X + nWidth / 2;
@@ -841,7 +862,7 @@
             let nRadius = Math.min(nWidth / 2, nHeight / 2);
 
             // отрисовка
-            switch (this._borderStyle) {
+            switch (nBorderStyle) {
                 case BORDER_TYPES.solid:
                 case BORDER_TYPES.underline:
                     if (color == null)
@@ -923,9 +944,6 @@
             return;
         }
         else {
-            // по умолчанию рисуется solid
-            let nBorderStyle = this.GetBorderStyle() != undefined ? this.GetBorderStyle() : BORDER_TYPES.solid;
-
             // отрисовка
             switch (nBorderStyle) {
                 case BORDER_TYPES.solid:
@@ -1124,7 +1142,7 @@
 
         // pressed border
         if (this.GetType() == AscPDF.FIELD_TYPES.button && this.IsPressed() && this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push && this._imgData.mouseDown == undefined) {
-            switch (this._borderStyle) {
+            switch (nBorderStyle) {
                 case BORDER_TYPES.solid:
                 case BORDER_TYPES.dashed:
                 case BORDER_TYPES.underline: {
@@ -1158,7 +1176,7 @@
         }
 
         // draw comb cells
-        if ((this.GetType() == AscPDF.FIELD_TYPES.text && this.IsComb() == true) && this._borderColor != null && (this.GetBorderStyle() == BORDER_TYPES.solid || this.GetBorderStyle() == BORDER_TYPES.dashed)) {
+        if ((this.GetType() == AscPDF.FIELD_TYPES.text && this.IsComb() == true) && this._borderColor != null && (nBorderStyle == BORDER_TYPES.solid || nBorderStyle == BORDER_TYPES.dashed)) {
             let nCombWidth = (nWidth / this._charLimit);
             let nIndentX = nCombWidth;
             
@@ -1268,7 +1286,7 @@
 
         if (oViewer.IsOpenFormsInProgress == false) {
             this._wasChanged = isChanged;
-            this.SetDrawFromStream(!isChanged);
+            this.IsWidget() && this.SetDrawFromStream(!isChanged);
         }
     };
     CBaseField.prototype.ClearCache = function() {
@@ -1279,11 +1297,21 @@
     CBaseField.prototype.IsChanged = function() {
         return this._wasChanged;  
     };
+    CBaseField.prototype.SetHasOriginView = function(bHas) {
+        this._hasOriginView = bHas;
+        this.SetDrawFromStream(bHas);
+    };
+    CBaseField.prototype.HasOriginView = function() {
+        return this._hasOriginView;
+    };
     CBaseField.prototype.IsNeedDrawFromStream = function() {
         return this._bDrawFromStream;
     };
     CBaseField.prototype.SetDrawFromStream = function(bFromStream) {
-        this._bDrawFromStream = bFromStream;
+        if (bFromStream && this.HasOriginView())
+            this._bDrawFromStream = true;
+        else
+            this._bDrawFromStream = false;
     };
     CBaseField.prototype.SetDrawHighlight = function(bDraw) {
         this._needDrawHighlight = bDraw;
@@ -1294,9 +1322,14 @@
 
     CBaseField.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
-        oViewer.paint();
-        if (oViewer.pagesInfo.pages[this.GetPage()])
-            oViewer.pagesInfo.pages[this.GetPage()].needRedrawForms = true;
+        let _t      = this;
+        
+        function setRedrawPageOnRepaint() {
+            if (oViewer.pagesInfo.pages[_t.GetPage()])
+                oViewer.pagesInfo.pages[_t.GetPage()].needRedrawForms = true;
+        }
+
+        oViewer.paint(setRedrawPageOnRepaint);
     };
 
     CBaseField.prototype.GetType = function() {
@@ -1580,7 +1613,6 @@
 	 * @typedef {"MouseUp" | "MouseDown" | "MouseEnter" | "MouseExit" | "OnFocus" | "OnBlur" | "Keystroke" | "Validate" | "Calculate" | "Format"} cTrigger
 	 * For a list box, use the Keystroke trigger for the Selection Change event.
      */
-    
     CBaseField.prototype.RevertContentViewToOriginal = function() {
         this.content.ResetShiftView();
         this._curShiftView.x = this._originShiftView.x;
@@ -2020,18 +2052,10 @@
         
         if (nSize != 0) {
             if (this.content) {
-                let oPara       = this.content.GetElement(0);
-                let oApiPara    = editor.private_CreateApiParagraph(oPara);
-    
-                oApiPara.SetFontSize(nSize * 2);
-                oPara.RecalcCompiledPr(true);
+                this.content.SetFontSize(nSize);
             }
             if (this.contentFormat) {
-                let oPara       = this.contentFormat.GetElement(0);
-                let oApiPara    = editor.private_CreateApiParagraph(oPara);
-    
-                oApiPara.SetFontSize(nSize * 2);
-                oPara.RecalcCompiledPr(true);
+                this.contentFormat.SetFontSize(nSize);
             }
         }
         

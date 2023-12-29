@@ -1364,11 +1364,6 @@
         this._formRect.W = nWidth * g_dKoef_pix_to_mm;
         this._formRect.H = nHeight * g_dKoef_pix_to_mm;
         
-        this.contentRect.X = contentX;
-        this.contentRect.Y = contentY;
-        this.contentRect.W = contentXLimit - contentX;
-        this.contentRect.H = contentYLimit - contentY;
-
         this.CheckImageOnce();
         this.CheckTextFont();
         this.CheckTextColor();
@@ -1379,6 +1374,8 @@
             this.content.Y      = this._oldContentPos.Y        = contentY;
             this.content.XLimit = this._oldContentPos.XLimit   = contentXLimit;
             this.content.YLimit = this._oldContentPos.YLimit   = 20000;
+            
+            this.CalculateContentRect();
             this.Internal_CorrectContentPos();
             this.content.Recalculate_Page(0, true);
         }

@@ -161,6 +161,10 @@
 		run.ClearContent();
 		
 		if (codePoints) {
+			if (this.ParentPDF.IsComb && this.ParentPDF.IsComb() && codePoints.length > this.ParentPDF.GetCharLimit()) {
+				codePoints.length = this.ParentPDF.GetCharLimit();
+			}
+
 			for (let index = 0, inRunIndex = 0, count = codePoints.length; index < count; ++index) {
 				let runElement = AscPDF.codePointToRunElement(codePoints[index]);
 				if (runElement)

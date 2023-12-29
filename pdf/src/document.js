@@ -153,11 +153,11 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.OnEndFormsActions = function() {
         let oViewer = editor.getDocumentRenderer();
         if (oViewer.needRedraw == true) { // отключали отрисовку на скроле из ActionToGo, поэтому рисуем тут
-            oViewer._paint();
+            oViewer.paint();
             oViewer.needRedraw = false;
         }
         else {
-            oViewer._paint();
+            oViewer.paint();
         }
     };
     CPDFDoc.prototype.FillFormsParents = function(aParentsInfo) {
@@ -473,7 +473,7 @@ var CPresentation = CPresentation || function(){};
         if (false == oNextForm.IsInSight())
             this.NavigateToField(oNextForm);
         else {
-            oViewer._paint();
+            oViewer.paint();
         }
         
         if (oActionsQueue.IsInProgress() == true)
@@ -550,11 +550,10 @@ var CPresentation = CPresentation || function(){};
             }
         };
 
-        
         if (false == oNextForm.IsInSight())
             this.NavigateToField(oNextForm);
         else {
-            oViewer._paint();
+            oViewer.paint();
         }
         
         if (oActionsQueue.IsInProgress() == true)
@@ -641,7 +640,7 @@ var CPresentation = CPresentation || function(){};
         if (oField.GetBackgroundColor())
             oField.AddToRedraw();
 
-        oViewer._paint();
+        oViewer.paint();
     };
     CPDFDoc.prototype.OnExitFieldByClick = function() {
         let oViewer         = editor.getDocumentRenderer();
@@ -663,7 +662,7 @@ var CPresentation = CPresentation || function(){};
             oActiveForm.Blur();
             
             if (oActionsQueue.IsInProgress() == false) {
-                oViewer._paint();
+                oViewer.paint();
             }
 
             return;
@@ -717,7 +716,7 @@ var CPresentation = CPresentation || function(){};
         oActiveForm.Blur();
         oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
         if (oActionsQueue.IsInProgress() == false && this.mouseDownField == null) {
-            oViewer._paint();
+            oViewer.paint();
         }
 
         if (oActiveForm && oActiveForm.content && oActiveForm.content.IsSelectionUse() && this.mouseDownField == null) {
@@ -764,7 +763,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (oActionsQueue.IsInProgress() == false && oViewer.pagesInfo.pages[oField.GetPage()].needRedrawForms)
-            oViewer._paint();
+            oViewer.paint();
 
         // нажали мышь - запомнили координаты и находимся ли на ссылке
         // при выходе за epsilon на mouseMove - сэмулируем нажатие
@@ -1136,7 +1135,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (oActionsQueue.IsInProgress() == false && oViewer.pagesInfo.pages[oField.GetPage()].needRedrawForms)
-            oViewer._paint();
+            oViewer.paint();
     };
     CPDFDoc.prototype.DoUndo = function() {
         let oViewer = editor.getDocumentRenderer();
@@ -1189,11 +1188,11 @@ var CPresentation = CPresentation || function(){};
                 oParentForm.AddToRedraw();
 
                 // Перерисуем страницу, на которой произошли изменения
-                // oViewer._paint();
+                // oViewer.paint();
                 oViewer.onUpdateOverlay();
             }
             
-            oViewer._paint();
+            oViewer.paint();
             oViewer.onUpdateOverlay();
             oViewer.isOnUndoRedo = false;
         }
@@ -1244,11 +1243,11 @@ var CPresentation = CPresentation || function(){};
                 oParentForm.AddToRedraw()
                 
                 // Перерисуем страницу, на которой произошли изменения
-                // oViewer._paint();
+                // oViewer.paint();
                 oViewer.onUpdateOverlay();
             }
 
-            oViewer._paint();
+            oViewer.paint();
             oViewer.onUpdateOverlay();
             oViewer.isOnUndoRedo = false;
         }
@@ -1363,7 +1362,7 @@ var CPresentation = CPresentation || function(){};
             this.activeForm.AddToRedraw();
             this.activeForm.SetDrawHighlight(true);
             oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
-            oViewer._paint();
+            oViewer.paint();
         }
     };
 
@@ -1937,7 +1936,7 @@ var CPresentation = CPresentation || function(){};
         editor.sync_HideComment();
         editor.sync_RemoveComment(Id);
         oViewer.DrawingObjects.resetSelection();
-        oViewer._paint();
+        oViewer.paint();
         oViewer.onUpdateOverlay();
     };
     /**
@@ -1994,7 +1993,7 @@ var CPresentation = CPresentation || function(){};
             this.Viewer.disabledPaintOnScroll = true; // вырубаем отрисовку на скроле
             this.Viewer.navigateToPage(nPage, yOffset, xOffset);
             this.Viewer.disabledPaintOnScroll = false;
-            this.Viewer._paint();
+            this.Viewer.paint();
         }
     };
     CPDFDoc.prototype.HideComments = function() {
@@ -2130,6 +2129,7 @@ var CPresentation = CPresentation || function(){};
         let oActionsQueue = this.GetActionsQueue();
         let oThis = this;
 
+        let aReseted = [];
         if (aNames.length > 0) {
             if (bAllExcept) {
                 for (let nField = 0; nField < this.widgets.length; nField++) {
@@ -2421,6 +2421,12 @@ var CPresentation = CPresentation || function(){};
 		return 1 === this.defaultFontsLoaded;
 	};
     CPDFDoc.prototype.checkFieldFont = function(oField, callback) {
+        if (!oField)
+            return true;
+        
+        if (oField.IsNeedDrawFromStream() && oField.GetType() == AscPDF.FIELD_TYPES.button)
+            return true;
+
 		let sFontName = oField.GetTextFontActual();
 
         if (!sFontName)
@@ -2453,7 +2459,7 @@ var CPresentation = CPresentation || function(){};
         let aMap            = [];
 
         for (let i = 0; i < aFontsNames.length; i++) {
-            if (this.loadedFonts.includes(aFontsNames[i]) == false) {
+            if (this.loadedFonts.includes(aFontsNames[i]) == false && aFontsToLoad.includes(aFontsNames[i]) == false) {
                 aFontsToLoad.push(aFontsNames[i]);
                 aMap.push({name: aFontsNames[i]});
             }

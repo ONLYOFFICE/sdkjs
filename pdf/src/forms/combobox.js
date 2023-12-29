@@ -99,17 +99,12 @@
             h: nHeight
         };
 
-        let oMargins = this.GetBordersWidth();
+        let oMargins = this.GetMarginsFromBorders(false, false);
 
         let contentX        = (X + 2 * oMargins.left) * g_dKoef_pix_to_mm;
         let contentY        = (Y + oMargins.top) * g_dKoef_pix_to_mm;
+        // let contentXLimit   = (X + nWidth - 2 * oMargins.left - (18 / nScale)) * g_dKoef_pix_to_mm; // 18 / nScale --> Размер маркера комбобокса
         let contentXLimit   = (X + nWidth - 2 * oMargins.left - (18 / nScale)) * g_dKoef_pix_to_mm; // 18 / nScale --> Размер маркера комбобокса
-        let contentYLimit   = (Y + nHeight - oMargins.bottom) * g_dKoef_pix_to_mm;
-
-        this.contentRect.X = contentX;
-        this.contentRect.Y = contentY;
-        this.contentRect.W = contentXLimit - this.contentRect.X;
-        this.contentRect.H = contentYLimit - this.contentRect.Y;
 
         if (this.GetTextSize() == 0) {
             this.ProcessAutoFitContent(this.content);
@@ -135,6 +130,7 @@
             this.content.XLimit = this.contentFormat.XLimit     = this._oldContentPos.XLimit = contentXLimit;
             this.content.YLimit = this.contentFormat.YLimit     = this._oldContentPos.YLimit = 20000;
             
+            this.CalculateContentRect();
             this.content.Recalculate_Page(0, true);
             this.contentFormat.Recalculate_Page(0, true);
         }
@@ -305,6 +301,8 @@
         this.AddToRedraw();
 
         this.content.MoveCursorToStartPos();
+        if (!Asc.editor.getDocumentRenderer().IsOpenFormsInProgress)
+            this.CheckAlignInternal();
     };
     CComboBoxField.prototype.SetCurIdxs = function(aIdxs) {
         if (this.IsWidget()) {
@@ -517,6 +515,12 @@
             aFields[i].SetNeedRecalc(true);
         }
 
+        // когда выравнивание посередине или справа, то после того
+        // как ширина контента будет больше чем размер формы, выравнивание становится слева, пока текста вновь не станет меньше чем размер формы
+        aFields.forEach(function(field) {
+            field.CheckAlignInternal();
+        });
+
         this.SetNeedCommit(false);
         this.needValidate = true;
     };
@@ -612,7 +616,6 @@
         
         return sValue;
     };
-    
 
     /**
 	 * Gets current index.
@@ -698,8 +701,8 @@
             memory.fieldDataFlags |= (1 << 10);
             memory.WriteLong(aOptions.length);
             for (let i = 0; i < aOptions.length; i++) {
-                memory.WriteString(aOptions[i][1] != undefined ? aOptions[i][1] : "");
-                memory.WriteString(aOptions[i][0] != undefined ? aOptions[i][0] : "");
+                memory.WriteString(Array.isArray(aOptions[i]) ? aOptions[i][1] : "");
+                memory.WriteString(Array.isArray(aOptions[i]) ? aOptions[i][0] : aOptions[i]);
             }
         }
 
@@ -776,6 +779,8 @@
     CComboBoxField.prototype.CheckFormViewWindow    = AscPDF.CTextField.prototype.CheckFormViewWindow;
     CComboBoxField.prototype.SetAlign               = AscPDF.CTextField.prototype.SetAlign;
     CComboBoxField.prototype.GetAlign               = AscPDF.CTextField.prototype.GetAlign;
+    CComboBoxField.prototype.CheckAlignInternal     = AscPDF.CTextField.prototype.CheckAlignInternal;
+    CComboBoxField.prototype.IsTextOutOfForm        = AscPDF.CTextField.prototype.IsTextOutOfForm;
     CComboBoxField.prototype.SetDoNotSpellCheck     = AscPDF.CTextField.prototype.SetDoNotSpellCheck;
     CComboBoxField.prototype.IsDoNotSpellCheck      = AscPDF.CTextField.prototype.IsDoNotSpellCheck;
     CComboBoxField.prototype.CorrectHistoryPoints   = AscPDF.CTextField.prototype.CorrectHistoryPoints;

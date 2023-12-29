@@ -215,15 +215,23 @@
 			_t.SetNeedRecalc(true);
         }
         else {
-            this._displayPromise = new Promise(function(resolve) {
-                AscFonts.FontPickerByCharacter.checkText(displayValue, _t, resolve);
-            }).then(function() {
-                if (_t._displayValue !== displayValue)
-                    return;
+            if (_t._displayValue !== displayValue)
+                return;
+            
+            _t.content.replaceAllText(displayValue);
+            _t.SetNeedRecalc(true);
+            _t.content.MoveCursorToStartPos();
+
+            // this._displayPromise = new Promise(function(resolve) {
+            //     AscFonts.FontPickerByCharacter.checkText(displayValue, _t, resolve);
+            // }).then(function() {
+            //     if (_t._displayValue !== displayValue)
+            //         return;
                 
-                _t.content.replaceAllText(displayValue);
-                _t.SetNeedRecalc(true);
-            });
+            //     _t.content.replaceAllText(displayValue);
+            //     _t.SetNeedRecalc(true);
+            //     _t.content.MoveCursorToStartPos();
+            // });
         }
 		
 	};
@@ -507,6 +515,7 @@
         if (this.IsNeedRecalc() == false)
             return;
 
+        this.RecalcMeasureContent();
         let aRect = this.GetRect();
 
         let X       = aRect[0];
@@ -527,12 +536,6 @@
         let contentX = this.IsComb() ? (X + oMargins.left) * g_dKoef_pix_to_mm : (X + 2 * oMargins.left) * g_dKoef_pix_to_mm;
         let contentY = (Y + (this.IsMultiline() ? (2.5 * oMargins.top) : (2 * oMargins.top))) * g_dKoef_pix_to_mm;
         let contentXLimit = this.IsComb() ? (X + nWidth - oMargins.left) * g_dKoef_pix_to_mm : (X + nWidth - 2 * oMargins.left) * g_dKoef_pix_to_mm;
-        let contentYLimit = (Y + nHeight - oMargins.bottom) * g_dKoef_pix_to_mm;
-        
-        this.contentRect.X = contentX;
-        this.contentRect.Y = contentY;
-        this.contentRect.W = contentXLimit - contentX;
-        this.contentRect.H = contentYLimit - contentY;
         
         if ((this.borderStyle == "solid" || this.borderStyle == "dashed") && 
         this._comb == true && this._charLimit > 1) {
@@ -567,6 +570,7 @@
             this.content.XLimit = this.contentFormat.XLimit     = this._oldContentPos.XLimit = contentXLimit;
             this.content.YLimit = this.contentFormat.YLimit     = this._oldContentPos.YLimit = 20000;
             
+            this.CalculateContentRect();
             this.content.Recalculate_Page(0, true);
             this.contentFormat.Recalculate_Page(0, true);
         }
@@ -810,7 +814,6 @@
     CTextField.prototype.EnterText = function(aChars)
     {
         let oDoc = this.GetDocument();
-        let oPara = this.content.GetElement(0);
         this.CreateNewHistoryPoint(true);
 
         let nChars = 0;
@@ -849,8 +852,7 @@
         this._bAutoShiftContentView = true && this._doNotScroll == false;
 
         if (this._doNotScroll) {
-            oPara.Recalculate_Page(0);
-            let isOutOfForm = this.IsTextOutOfForm();
+            let isOutOfForm = this.IsTextOutOfForm(this.content);
             if ((this.IsMultiline() && isOutOfForm.ver) || (isOutOfForm.hor && this.IsMultiline() == false))
                 AscCommon.History.Undo();
 
@@ -859,7 +861,35 @@
 
         return true;
     };
-	CTextField.prototype.InsertChars = function(aChars) {
+    CTextField.prototype.CheckAlignInternal = function() {
+        // если выравнивание по центру или справа, то оно должно переключаться на left если ширина контента выходит за пределы формы
+        // вызывается на момент коммита формы
+        if ([AscPDF.ALIGN_TYPE.center, AscPDF.ALIGN_TYPE.right].includes(this.GetAlign())) {
+
+            if (this.IsTextOutOfForm(this.content).hor) {
+                if (this.content.GetAlign() != AscPDF.ALIGN_TYPE.left) {
+                    this.content.SetAlign(AscPDF.ALIGN_TYPE.left);
+                    this.SetNeedRecalc(true);
+                }
+            }
+            else if (this.content.GetAlign() != this.GetAlign()) {
+                this.content.SetAlign(this.GetAlign());
+                this.SetNeedRecalc(true);
+            }
+
+            if (this.IsTextOutOfForm(this.contentFormat).hor) {
+                if (this.contentFormat.GetAlign() != AscPDF.ALIGN_TYPE.left) {
+                    this.contentFormat.SetAlign(AscPDF.ALIGN_TYPE.left);
+                    this.SetNeedRecalc(true);
+                }
+            }
+            else if (this.contentFormat.GetAlign() != this.GetAlign()) {
+                this.contentFormat.SetAlign(this.GetAlign());
+                this.SetNeedRecalc(true);
+            }
+        }
+    };
+    CTextField.prototype.InsertChars = function(aChars) {
 		let paragraph = this.getParagraph();
 		for (let index = 0; index < aChars.length; ++index) {
 			let runElement = AscPDF.codePointToRunElement(aChars[index]);
@@ -884,21 +914,26 @@
 	 * @typeofeditors ["PDF"]
      * @returns {object} - {hor: {boolean}, ver: {boolean}}
 	 */
-    CTextField.prototype.IsTextOutOfForm = function() {
-        let oPageBounds = this.content.GetContentBounds(0);
+    CTextField.prototype.IsTextOutOfForm = function(oContent) {
+        if (!this._pagePos)
+            this.Recalculate();
+        else
+            oContent.GetElement(0).Recalculate_Page(0);
+        
+        let oPageBounds = oContent.GetContentBounds(0);
         let oFormBounds = this.getFormRelRect();
-        let oContentW   = this.content.GetElement(0).GetContentWidthInRange();
+        let nContentW   = oContent.GetElement(0).GetContentWidthInRange();
         
         let oResult = {
             hor: false,
             ver: false
         }
 
-        if (oContentW > oFormBounds.W) {
+        if (nContentW > oFormBounds.W) {
             oResult.hor = true;
         }
 
-        if (this.IsMultiline() && oPageBounds.Bottom - oPageBounds.Top > oFormBounds.H) {
+        if (this.IsMultiline && this.IsMultiline() && oPageBounds.Bottom - oPageBounds.Top > oFormBounds.H) {
             oResult.ver = true;
         }
 
@@ -969,7 +1004,7 @@
             if (aFields[i] == this)
                 continue;
 
-			aFields[i].UpdateDisplayValue(fieldValue);
+            aFields[i].UpdateDisplayValue(fieldValue);
             aFields[i].SetNeedRecalc(true);
         }
 
@@ -993,10 +1028,17 @@
             aFields[i].SetNeedRecalc(true);
         }
 
+        // когда выравнивание посередине или справа, то после того
+        // как ширина контента будет больше чем размер формы, выравнивание становится слева, пока текста вновь не станет меньше чем размер формы
+        aFields.forEach(function(field) {
+            field.CheckAlignInternal();
+        });
+
         this.SetNeedCommit(false);
         this.needValidate = true;
     };
 	CTextField.prototype.SetAlign = function(nAlignType) {
+        this._alignment = nAlignType;
 		this.content.SetAlign(nAlignType);
 		if (this.contentFormat)
 			this.contentFormat.SetAlign(nAlignType);
@@ -1004,7 +1046,7 @@
 		this.SetNeedRecalc(true);
 	};
 	CTextField.prototype.GetAlign = function() {
-		return this.content.GetAlign();
+		return this._alignment;
 	};
 
     CTextField.prototype.DoFormatAction = function() {
@@ -1277,6 +1319,18 @@
             this.SetNeedCommit(true);
         }
     };
+    CTextField.prototype.RecalcMeasureContent = function() {
+        function setRecalc(oRun) {
+            oRun.RecalcInfo.Measure = true;
+            oRun.RecalcInfo.Recalc = true;
+        }
+        if ([AscPDF.ALIGN_TYPE.center, AscPDF.ALIGN_TYPE.right].includes(this.content.GetAlign())) {
+            this.content.CheckRunContent(setRecalc);
+        }
+        if ([AscPDF.ALIGN_TYPE.center, AscPDF.ALIGN_TYPE.right].includes(this.contentFormat.GetAlign())) {
+            this.contentFormat.CheckRunContent(setRecalc);
+        }
+    };
     /**
 	 * Synchronizes this field with fields with the same name.
 	 * @memberof CTextField
@@ -1354,11 +1408,11 @@
 
         if (Math.abs(nDx) > 0.001 || Math.abs(nDy))
         {
-            this.content.ShiftView(nDx, nDy);
             this._originShiftView = {
                 x: this.content.ShiftViewX,
                 y: this.content.ShiftViewY
             }
+            this.content.ShiftView(nDx, nDy);
         }
 
         var oCursorPos  = oParagraph.GetCalculatedCurPosXY();
