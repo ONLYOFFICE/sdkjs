@@ -6796,23 +6796,24 @@
 	/** */
 
     WorksheetView.prototype._drawSelectionElement = function (visibleRange, offsetX, offsetY, args) {
-        var range = args[0];
-        var selectionLineType = args[1];
-        var strokeColor = args[2];
-        var isAllRange = args[3];
-		var isAllowRetina = args[5] ? 1 : 0;
-        var colorN = this.settings.activeCellBorderColor2;
-        var ctx = this.overlayCtx;
-        var oIntersection = range.intersectionSimple(visibleRange);
+        let range = args[0];
+        let selectionLineType = args[1];
+        let strokeColor = args[2];
+        let isAllRange = args[3];
+		let isAllowRetina = args[5] ? 1 : 0;
+		let isAllowRetinaResize = args[6] ? 1 : 0;
+        let colorN = this.settings.activeCellBorderColor2;
+        let ctx = this.overlayCtx;
+        let oIntersection = range.intersectionSimple(visibleRange);
 
         if (!oIntersection) {
             return true;
         }
 
-        var fHorLine, fVerLine;
-        var canFill = AscCommonExcel.selectionLineType.Selection & selectionLineType;
-        var isDashLine = AscCommonExcel.selectionLineType.Dash & selectionLineType;
-        var dashThickLine = AscCommonExcel.selectionLineType.DashThick & selectionLineType;
+        let fHorLine, fVerLine;
+        let canFill = AscCommonExcel.selectionLineType.Selection & selectionLineType;
+        let isDashLine = AscCommonExcel.selectionLineType.Dash & selectionLineType;
+        let dashThickLine = AscCommonExcel.selectionLineType.DashThick & selectionLineType;
 
         if (isDashLine || dashThickLine) {
             fHorLine = ctx.dashLineCleverHor;
@@ -6822,13 +6823,13 @@
             fVerLine = ctx.lineVerPrevPx;
         }
 
-        var firstCol = oIntersection.c1 === visibleRange.c1 && !isAllRange;
-        var firstRow = oIntersection.r1 === visibleRange.r1 && !isAllRange;
+        let firstCol = oIntersection.c1 === visibleRange.c1 && !isAllRange;
+        let firstRow = oIntersection.r1 === visibleRange.r1 && !isAllRange;
 
-        var drawLeftSide = oIntersection.c1 === range.c1;
-        var drawRightSide = oIntersection.c2 === range.c2;
-        var drawTopSide = oIntersection.r1 === range.r1;
-        var drawBottomSide = oIntersection.r2 === range.r2;
+        let drawLeftSide = oIntersection.c1 === range.c1;
+        let drawRightSide = oIntersection.c2 === range.c2;
+        let drawTopSide = oIntersection.r1 === range.r1;
+        let drawBottomSide = oIntersection.r2 === range.r2;
 
         if(args[4]) {
         	if(args[4] === 1) {
@@ -6845,37 +6846,37 @@
 			}
 		}
 
-        var x1 = this._getColLeft(oIntersection.c1) - offsetX;
-        var x2 = this._getColLeft(oIntersection.c2 + 1) - offsetX;
-        var y1 = this._getRowTop(oIntersection.r1) - offsetY;
-        var y2 = this._getRowTop(oIntersection.r2 + 1) - offsetY;
+        let x1 = this._getColLeft(oIntersection.c1) - offsetX;
+        let x2 = this._getColLeft(oIntersection.c2 + 1) - offsetX;
+        let y1 = this._getRowTop(oIntersection.r1) - offsetY;
+        let y2 = this._getRowTop(oIntersection.r2 + 1) - offsetY;
 
         if (canFill) {
-            var fillColor = strokeColor.Copy();
+            let fillColor = strokeColor.Copy();
             fillColor.a = 0.15;
             ctx.setFillStyle(fillColor).fillRect(x1, y1, x2 - x1, y2 - y1);
         }
 
 
-        var isPagePreview = AscCommonExcel.selectionLineType.ResizeRange & selectionLineType;
+        let isPagePreview = AscCommonExcel.selectionLineType.ResizeRange & selectionLineType;
 		//меняю толщину линии для селекта(только в случае сплошной линии) и масштаба 200%
-		var isRetina = (!isDashLine || isAllowRetina) && this.getRetinaPixelRatio() >= 2;
-		var widthLine = isDashLine ? 1 : 2;
+		let isRetina = (!isDashLine || isAllowRetina) && this.getRetinaPixelRatio() >= 2;
+		let widthLine = isDashLine ? 1 : 2;
 
 		//TODO for scale > 200% use a multiplier of 2 . revise the rendering for scales over 200%
 		if (isRetina) {
 			widthLine = ((widthLine * 2) + 0.5) >> 0//AscCommon.AscBrowser.convertToRetinaValue(widthLine, true);
 		}
-		var thinLineDiff = 0;
+		let thinLineDiff = 0;
 		if (isPagePreview) {
 			widthLine = widthLine + 1;
 			thinLineDiff = isDashLine ? 0 : 1;
 		}
 
         //TODO проверить на следующих версиях. сдвиг, который получился опытным путём. проблема только в safari.
-        var notStroke = AscCommonExcel.selectionLineType.NotStroke & selectionLineType;
+        let notStroke = AscCommonExcel.selectionLineType.NotStroke & selectionLineType;
         if (!notStroke) {
-            var _diff = 0;
+            let _diff = 0;
             if (AscBrowser.isSafari) {
                 _diff = 1;
             }
@@ -6898,18 +6899,18 @@
 		}
 
 		// draw active cell in selection
-		var isActive = AscCommonExcel.selectionLineType.ActiveCell & selectionLineType;
+		let isActive = AscCommonExcel.selectionLineType.ActiveCell & selectionLineType;
 		if (isActive) {
-			var cell = this.model.getSelection().activeCell;
-			var fs = this.model.getMergedByCell(cell.row, cell.col);
+			let cell = this.model.getSelection().activeCell;
+			let fs = this.model.getMergedByCell(cell.row, cell.col);
 			fs = oIntersection.intersectionSimple(fs || new asc_Range(cell.col, cell.row, cell.col, cell.row));
 			if (fs) {
-			    var top = this._getRowTop(fs.r1);
-			    var left = this._getColLeft(fs.c1);
-				var _x1 = left - offsetX + 1;
-				var _y1 = top - offsetY + 1;
-				var _w = this._getColLeft(fs.c2 + 1) - left - 2 - isRetina * 1;
-				var _h = this._getRowTop(fs.r2 + 1) - top - 2  - isRetina * 1;
+			    let top = this._getRowTop(fs.r1);
+			    let left = this._getColLeft(fs.c1);
+				let _x1 = left - offsetX + 1;
+				let _y1 = top - offsetY + 1;
+				let _w = this._getColLeft(fs.c2 + 1) - left - 2 - isRetina * 1;
+				let _h = this._getRowTop(fs.r2 + 1) - top - 2  - isRetina * 1;
 				if (0 < _w && 0 < _h) {
 					ctx.clearRect(_x1, _y1, _w, _h);
 				}
@@ -6936,15 +6937,15 @@
         }
 
         // Отрисовка квадратов для move/resize
-        var isResize = AscCommonExcel.selectionLineType.Resize & selectionLineType;
-        var isPromote = AscCommonExcel.selectionLineType.Promote & selectionLineType;
+        let isResize = AscCommonExcel.selectionLineType.Resize & selectionLineType;
+        let isPromote = AscCommonExcel.selectionLineType.Promote & selectionLineType;
         if (isResize || isPromote) {
             //isResize - пока не увеличиваю квадрат при выборе диапазона в формуле, поскольку нужно менять логику очистки селекта в режиме формул
-			var retinaKf = isRetina && !isResize ? 2 : 1;
-			var size = 5 * retinaKf;
-			var sizeBorder = size + 2 * retinaKf;
-			var diff = Math.floor(size/2) + 1;
-			var diffBorder = Math.floor(sizeBorder/2) + 1 * retinaKf;
+			let retinaKf = isRetina && (!isResize || isAllowRetinaResize) ? 2 : 1;
+			let size = 5 * retinaKf;
+			let sizeBorder = size + 2 * retinaKf;
+			let diff = Math.floor(size/2) + 1;
+			let diffBorder = Math.floor(sizeBorder/2) + 1 * retinaKf;
 
 			ctx.setFillStyle(colorN);
             if (drawRightSide && drawBottomSide) {
@@ -7253,7 +7254,7 @@
 
             this._drawElements(this._drawSelectionElement, ranges[i],
                 AscCommonExcel.selectionLineType.Selection | (ranges[i].isName ? AscCommonExcel.selectionLineType.None :
-                AscCommonExcel.selectionLineType.Resize), strokeColor);
+                AscCommonExcel.selectionLineType.Resize), strokeColor, null, null, null, true);
         }
     };
 
@@ -7429,7 +7430,7 @@
         var t = this;
 		var isRetinaWidth = this.getRetinaPixelRatio() >= 2;
         var selectionRange = this.model.getSelection();
-        const isMacLinuxMozilla = true || (AscCommon.AscBrowser.isLinuxOS || AscCommon.AscBrowser.isMacOs) && AscCommon.AscBrowser.isMozilla;
+        const isMacLinuxMozilla = (AscCommon.AscBrowser.isLinuxOS || AscCommon.AscBrowser.isMacOs) && AscCommon.AscBrowser.isMozilla;
         selectionRange.ranges.forEach(function (item, index) {
             var arnIntersection = item.intersectionSimple(range);
             if (arnIntersection) {
@@ -7520,14 +7521,15 @@
 			this.overlayCtx.clear();
 		}
 
+		let retinaСoef = isRetinaWidth ? 2 : 1;
         if (this.oOtherRanges) {
             this.oOtherRanges.ranges.forEach(function (item) {
                 arnIntersection = item.intersectionSimple(range);
                 if (arnIntersection) {
-                    _x1 = t._getColLeft(arnIntersection.c1) - offsetX - 3;
-                    _x2 = arnIntersection.c2 > t.nColsCount ? width : t._getColLeft(arnIntersection.c2 + 1) - offsetX + 1 + 2;
-                    _y1 = t._getRowTop(arnIntersection.r1) - offsetY - 3;
-                    _y2 = arnIntersection.r2 > t.nRowsCount ? height : t._getRowTop(arnIntersection.r2 + 1) - offsetY + 1 + 2;
+                    _x1 = t._getColLeft(arnIntersection.c1) - offsetX - 3 * retinaСoef;
+                    _x2 = arnIntersection.c2 > t.nColsCount ? width : t._getColLeft(arnIntersection.c2 + 1) - offsetX + 3  *retinaСoef;
+                    _y1 = t._getRowTop(arnIntersection.r1) - offsetY - 3 * retinaСoef;
+                    _y2 = arnIntersection.r2 > t.nRowsCount ? height : t._getRowTop(arnIntersection.r2 + 1) - offsetY + 3 * retinaСoef;
 
                     x1 = Math.min(x1, _x1);
                     x2 = Math.max(x2, _x2);
