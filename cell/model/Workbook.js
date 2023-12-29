@@ -20372,93 +20372,95 @@
 			History.SetSelectionRedo(oSelectionRedo);
 		}
 	};
+
+	/**
+	 * Rounds a float number for correct calculation.
+	 * @param {number} nValue - The value which will be rounded.
+	 * @param {number} nFloatNumTemplate - The number template will be used for counting numbers after the decimal point.
+	 * @returns {number} - Rounded number
+	 * @private
+	 */
+	function _smartRound(nValue, nFloatNumTemplate) {
+		if (!Number.isInteger(nFloatNumTemplate)) {
+			let nCountNumsAfterDec = nFloatNumTemplate.toString().split(".")[1].length;
+			return nValue.toFixed(nCountNumsAfterDec) - 0;
+		}
+
+		return nValue;
+	}
 	/**
 	 * Fills current value for Date type
-	 * @param {number} nPrevVal - Previous cell value
-	 * @param {number} nStep - Step value
-	 * @param {c_oAscDateUnitType} nDateUnit - Date unit
+	 * @memberof CSerial
+	 * @param {object} oFilledLine - Value of first cell in line
+	 * @param {number} oFilledLine.nValue - Value of first cell in line
+	 * @param {Range} oFilledLine.oToRange - Range of cells which will be fill
+	 * @param {Cell} oFilledLine.oCell - First cell of line
+	 * @param {Range} oFilledLine.oFilledRange - Range with filled cells
+	 * @param {number} oFilledLine.nIndex - Index of shift
 	 * @returns {number} Current value in ExcelDate format
+	 * @private
 	 */
-	function _fillExcelDate(nPrevVal, nStep, nDateUnit) {
-		// It's temporary solution for "01/01/1900 - 01/03/1900" dates
+	CSerial.prototype._fillExcelDate = function (oFilledLine) {
+		const nStep = this.getStep();
+		const nDateUnit = this.getDateUnit();
+		let nPrevVal = this.getPrevValue();
+
+		// Condition: nPrevVal < 60 is temporary solution for "01/01/1900 - 01/03/1900" dates
 		/* TODO Need make system solution for cDate class for case when excelDate is 1 (01/01/1900).
 		    For now if try convert "1" to Date using getDateFromExcel method result is 31/12/1899
 		    by this reason of next methods addDays and getExcelDate work incorrect. Result of function is always "-30"
+		    If for the "1" value add 1 day and try to use getDateFromExcel method, it returns 01/01/1900 =>
+		    Temporary solution for "01/01/1900 - 01/03/1900" dates - always need add 1 day for getDateFromExcel.
 		*/
-		if (nPrevVal < 60) {
-			if (nDateUnit === oSeriesDateUnitType.day) {
-				nPrevVal += nStep;
-			} else if (nDateUnit === oSeriesDateUnitType.weekday) {
-				let aWeekdays = [1, 2, 3, 4, 5];
-				nPrevVal += nStep;
-				while (true) {
-					let oPrevValDate = new Asc.cDate().getDateFromExcel(nPrevVal + 1);
-					if (aWeekdays.includes(oPrevValDate.getDay())) {
-						break;
-					}
-					nPrevVal += 1;
-				}
-			} else if (nDateUnit === oSeriesDateUnitType.month) {
-				if (nStep < 3) {
-					for (let i = 1; i <= nStep; i++) {
-						if (nPrevVal <= 27) {
-							nPrevVal += 31;
-						} else if ([28, 29, 30, 31].includes(nPrevVal)) {
-							nPrevVal = 59;
-						} else {
-							nPrevVal += 29;
-						}
-					}
-				} else {
-					if (nPrevVal === 1) {
-						nPrevVal += 31;
-					}
-					let oPrevValDate = new Asc.cDate().getDateFromExcel(nPrevVal);
-					oPrevValDate.addMonths(nStep - 1);
-					nPrevVal = oPrevValDate.getExcelDate() + 1;
-				}
-			} else {
-				if (nStep > 1) {
-					nPrevVal += 366;
-					let oPrevValDate = new Asc.cDate().getDateFromExcel(nPrevVal);
-					oPrevValDate.addYears(nStep - 1);
-					nPrevVal = oPrevValDate.getExcelDate();
-				} else {
-					nPrevVal += 366;
+		if (nDateUnit === oSeriesDateUnitType.weekday) {
+			const aWeekdays = [1, 2, 3, 4, 5];
+			let oCurrentValDate;
+
+			while (true) {
+				nPrevVal = this.getPrevValue();
+				let nCurrentVal = _smartRound(nPrevVal + nStep, nStep);
+				// Convert number to cDate object
+				oCurrentValDate = new Asc.cDate().getDateFromExcel(nPrevVal < 60 ? nCurrentVal + 1 : nCurrentVal);
+				this.setPrevValue(nCurrentVal);
+				if (aWeekdays.includes(oCurrentValDate.getDay())) {
+					break;
 				}
 			}
 
-			return nPrevVal;
-		}
-		// Convert number to cDate object
-		let oPrevValDate = new Asc.cDate().getDateFromExcel(nPrevVal);
-
-		switch (nDateUnit) {
-			case oSeriesDateUnitType.day:
-				oPrevValDate.addDays(nStep);
-				break;
-			case oSeriesDateUnitType.weekday:
-				let aWeekdays = [1, 2, 3, 4, 5];
-				oPrevValDate.addDays(nStep);
-				while (true) {
-					if (aWeekdays.includes(oPrevValDate.getDay())) {
-						break;
-					} else {
-						oPrevValDate.addDays(1);
-					}
-				}
-				break;
-			case oSeriesDateUnitType.month:
-				oPrevValDate.addMonths(nStep);
-				break;
-			case oSeriesDateUnitType.year:
-				oPrevValDate.addYears(nStep);
-				break;
+			return oCurrentValDate.getExcelDate();
 		}
 
-		return oPrevValDate.getExcelDate();
-	}
+		let nCurrentVal = _smartRound(nPrevVal + nStep, nStep);
+		this.setPrevValue(nCurrentVal);
 
+		if (nDateUnit === oSeriesDateUnitType.day) {
+			return nCurrentVal;
+		}
+
+		let nIntegerVal = oFilledLine.nValue;
+		if (nDateUnit === oSeriesDateUnitType.month) {
+			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nPrevVal < 60 ? nIntegerVal + 1 : nIntegerVal);
+			let nFinalStep = _smartRound(nCurrentVal - nIntegerVal, nStep);
+			if (Number.isInteger(nFinalStep)) {
+				oCurrentValDate.addMonths(nFinalStep);
+				oFilledLine.nValue = oCurrentValDate.getExcelDate();
+				this.setPrevValue(oFilledLine.nValue);
+			}
+
+			return oFilledLine.nValue;
+		}
+		if (nDateUnit === oSeriesDateUnitType.year) {
+			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nPrevVal < 60 ? nIntegerVal + 1 : nIntegerVal);
+			let nFinalStep = _smartRound(nCurrentVal - nIntegerVal, nStep);
+			if (Number.isInteger(nFinalStep)) {
+				oCurrentValDate.addYears(nFinalStep);
+				oFilledLine.nValue = oCurrentValDate.getExcelDate();
+				this.setPrevValue(oFilledLine.nValue);
+			}
+
+			return oFilledLine.nValue;
+		}
+	};
 	/**
 	 * Fills cells in Linear and Growth regression except Trend mode. Works with:
 	 * - Type: Linear, Growth, Date.
@@ -20485,7 +20487,6 @@
 					}
 					oCellValue.type = CellValueType.Number;
 					oCellValue.number = nCurrentValue;
-					oSerial.setPrevValue(nCurrentValue);
 					oCopyCell.setValueData(new UndoRedoData_CellValueData(null, oCellValue));
 					// Add styles from firstCell
 					if (null != oFromCell) {
@@ -20520,11 +20521,15 @@
 		// Fill range cells for i row or col
 		let oProgressionCalc = {
 			0: function () { // linear
-				return oSerial.getPrevValue() + nStep;
+				let nCurrentVal = oSerial.getPrevValue() + nStep
+				oSerial.setPrevValue(nCurrentVal);
+				return nCurrentVal;
 			}, 1: function () { // growth
-				return oSerial.getPrevValue() * nStep;
+				let nCurrentVal = oSerial.getPrevValue() * nStep
+				oSerial.setPrevValue(nCurrentVal);
+				return nCurrentVal;
 			}, 2: function () { // date
-				return _fillExcelDate(oSerial.getPrevValue(), nStep, oSerial.getDateUnit());
+				return oSerial._fillExcelDate(oFilledLine);
 			}
 		};
 		let bStopLoop = false;

@@ -938,7 +938,7 @@ $(function () {
 		cSerial.setFromRange(oFromRange);
 		cSerial.exec();
 		autofillRange = getRange(0, 1, 0, 3);
-		autofillData(assert, autofillRange, [['3'], ['5'], ['8']], 'Autofill Column. Date progression - Weekday, Step - 2. Bug #65559');
+		autofillData(assert, autofillRange, [['3'], ['5'], ['9']], 'Autofill Column. Date progression - Weekday, Step - 2. Bug #65559');
 		clearData(0, 0, 0, 3);
 		// Case 01/01/1900 - 01/03/1900. Horizontal dateUnit - Weekday, Step - 2. Bug #65559
 		oFromRange = getFilledData(0, 0, 3, 0, testData, [0, 0]);
@@ -950,7 +950,7 @@ $(function () {
 		cSerial.setFromRange(oFromRange);
 		cSerial.exec();
 		autofillRange = getRange(1, 0, 3, 0);
-		autofillData(assert, autofillRange, [['3', '5', '8']], 'Autofill Row. Date progression - Weekday, Step - 2. Bug #65559');
+		autofillData(assert, autofillRange, [['3', '5', '9']], 'Autofill Row. Date progression - Weekday, Step - 2. Bug #65559');
 		clearData(0, 0, 3, 0);
 		// Case 01/01/1900 - 01/03/1900. Vertical dateUnit - Month, Step - 2. Bug #65559
 		oFromRange = getFilledData(0, 0, 0, 3, testData, [0, 0]);
@@ -999,8 +999,74 @@ $(function () {
 		cSerial.exec();
 		autofillRange = getRange(1, 0, 3, 0);
 		autofillData(assert, autofillRange, [['367', '732', '1097']], 'Autofill Row. Date progression - Year, Step - 1. Bug #65559');
+		clearData(1, 0, 3, 0);
+		// Horizontal dateUnit - Day. Step - 0.2. Bug #65672
+		testData = [
+			['01/01/2000']
+		];
+		oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
+		let oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(0.2);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
 
+		autofillRange = getRange(0, 0, 5, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['36526', '', '', '', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['36526', '36526.2', "36526.4", "36526.6", "36526.8", "36527"]], _desc);
+		}, "Autofill Row: Date progression - Day, Step - 0.2. Bug #65672");
+		clearData(0, 0, 5, 0);
+		// Vertical dateUnit - Weekday. Step - 0.2. Case: 01/01/1900 - 01/03/1900/ Bug #65672
+		testData = [
+			['01/01/1900']
+		];
+		oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(0.2);
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.weekday);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
 
+		autofillRange = getRange(0, 0, 0, 5);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['1'], [''], [''], [''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'], ['1'], ['1'], ['1'], ['1'], ['2']], _desc);
+		}, "Autofill Column: Date progression - Weekday, Step - 0.2. Case: 01/01/1900 - 01/03/1900. Bug #65672");
+		clearData(0, 0, 0, 5);
+		// Horizontal dateUnit - Month. Step - 0.2. Bug #65672
+		testData = [
+			['01/01/2000']
+		];
+		oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(0.2);
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.month);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 5, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['36526', '', '', '', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['36526', '36526', "36526", "36526", "36526", "36557"]], _desc);
+		}, "Autofill Row: Date progression - Month, Step - 0.2. Bug #65672");
+		clearData(0, 0, 5, 0);
+		// Vertical dateUnit - Year. Step - 0.2. Case: 01/01/1900 - 01/03/1900.  Bug #65672.
+		testData = [
+			['01/01/1900']
+		];
+		oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(0.2);
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.year);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 5);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['1'], [''], [''], [''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'], ['1'], ['1'], ['1'], ['1'], ['367']], _desc);
+		}, "Autofill Column: Date progression - Year, Step - 0.2. Case: 01/01/1900 - 01/03/1900. Bug #65672");
+		clearData(0, 0, 5, 0);
 	});
 	QUnit.test('Autofill Date type - Horizontal multiple cells', function (assert) {
 		const testData = [
@@ -1041,10 +1107,10 @@ $(function () {
 		cSerial.exec();
 		autofillRange = getRange(1, 0, 5, 3);
 		expectedData = [
-		   ['44930', '44935', '44938', '44942', '44945'],
-		   ['45176', '45180', '45183', '45187', '45190'],
-		   ['44942', '44945', '44949', '44952', '44956'],
-		   ['45275', '45278', '45281', '45285', '45288']
+		   ['44930', '44936', '44939', '44942', '44945'],
+		   ['45176', '45182', '45188', '45191', '45194'],
+		   ['44944', '44950', '44953', '44956', '44959'],
+		   ['45275', '45278', '45281', '45287', '45293']
 		];
 		autofillData(assert, autofillRange, expectedData, 'Date progression - Weekday, Step - 3');
 		clearData(0, 0, 5, 3);
@@ -1119,11 +1185,11 @@ $(function () {
 		cSerial.exec();
 		autofillRange = getRange(0, 1, 3, 5);
 		expectedData = [
-			['44930', '45176', '44942', '45275'],
-			['44935', '45180', '44945', '45278'],
-			['44938', '45183', '44949', '45281'],
-			['44942', '45187', '44952', '45285'],
-			['44945', '45190', '44956', '45288']
+			['44930', '45176', '44944', '45275'],
+			['44936', '45182', '44950', '45278'],
+			['44939', '45188', '44953', '45281'],
+			['44942', '45191', '44956', '45287'],
+			['44945', '45194', '44959', '45293']
 		];
 		autofillData(assert, autofillRange, expectedData, 'Date progression - Weekday, Step - 3');
 		clearData(0, 0, 3, 5);
