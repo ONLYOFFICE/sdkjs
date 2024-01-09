@@ -387,111 +387,111 @@
      * @constructor
      * @memberOf Asc
      */
-    function WorksheetView(workbook, model, handlers, buffers, stringRender, maxDigitWidth, collaborativeEditing, settings) {
-        this.settings = settings;
+	function WorksheetView(workbook, model, handlers, buffers, stringRender, maxDigitWidth, collaborativeEditing, settings) {
+		this.settings = settings;
 
-        this.workbook = workbook;
-        this.handlers = handlers;
-        this.model = model;
+		this.workbook = workbook;
+		this.handlers = handlers;
+		this.model = model;
 
-        this.buffers = buffers;
-        this.drawingCtx = this.buffers.main;
-        this.overlayCtx = this.buffers.overlay;
+		this.buffers = buffers;
+		this.drawingCtx = this.buffers.main;
+		this.overlayCtx = this.buffers.overlay;
 
-        this.drawingGraphicCtx = this.buffers.mainGraphic;
-        this.overlayGraphicCtx = this.buffers.overlayGraphic;
+		this.drawingGraphicCtx = this.buffers.mainGraphic;
+		this.overlayGraphicCtx = this.buffers.overlayGraphic;
 
-        this.stringRender = stringRender;
+		this.stringRender = stringRender;
 
-        // Флаг, сигнализирует о том, что мы сделали resize, но это не активный лист (поэтому как только будем показывать, нужно перерисовать и пересчитать кеш)
-        this.updateResize = false;
-        // Флаг, сигнализирует о том, что мы сменили zoom, но это не активный лист (поэтому как только будем показывать, нужно перерисовать и пересчитать кеш)
-        this.updateZoom = false;
-        this.isZooming = false;
-        // ToDo Флаг-заглушка, для того, чтобы на mobile не было изменения высоты строк при zoom (по правильному высота просто не должна меняться)
-        this.notUpdateRowHeight = false;
+		// Флаг, сигнализирует о том, что мы сделали resize, но это не активный лист (поэтому как только будем показывать, нужно перерисовать и пересчитать кеш)
+		this.updateResize = false;
+		// Флаг, сигнализирует о том, что мы сменили zoom, но это не активный лист (поэтому как только будем показывать, нужно перерисовать и пересчитать кеш)
+		this.updateZoom = false;
+		this.isZooming = false;
+		// ToDo Флаг-заглушка, для того, чтобы на mobile не было изменения высоты строк при zoom (по правильному высота просто не должна меняться)
+		this.notUpdateRowHeight = false;
 
-        this.cache = new Cache();
+		this.cache = new Cache();
 
-        //---member declaration---
-        // Максимальная ширина числа из 0,1,2...,9, померенная в нормальном шрифте(дефалтовый для книги) в px(целое)
-        // Ecma-376 Office Open XML Part 1, пункт 18.3.1.13
-        this.maxDigitWidth = maxDigitWidth;
+		//---member declaration---
+		// Максимальная ширина числа из 0,1,2...,9, померенная в нормальном шрифте(дефалтовый для книги) в px(целое)
+		// Ecma-376 Office Open XML Part 1, пункт 18.3.1.13
+		this.maxDigitWidth = maxDigitWidth;
 
-        this.defaultColWidthChars = 0;
-        this.defaultColWidthPx = 0;
-        this.defaultRowHeightPx = 0;
-        this.defaultRowDescender = 0;
-        this.defaultSpaceWidth = 0;
-        this.headersLeft = 0;
-        this.headersTop = 0;
-        this.headersWidth = 0;
-        this.headersHeight = 0;
-        this.headersHeightByFont = 0;	// Размер по шрифту (размер без скрытия заголовков)
+		this.defaultColWidthChars = 0;
+		this.defaultColWidthPx = 0;
+		this.defaultRowHeightPx = 0;
+		this.defaultRowDescender = 0;
+		this.defaultSpaceWidth = 0;
+		this.headersLeft = 0;
+		this.headersTop = 0;
+		this.headersWidth = 0;
+		this.headersHeight = 0;
+		this.headersHeightByFont = 0;	// Размер по шрифту (размер без скрытия заголовков)
 		this.groupWidth = 0;
 		this.groupHeight = 0;
-        this.cellsLeft = 0;
-        this.cellsTop = 0;
-        this.cols = [];
-        this.rows = [];
+		this.cellsLeft = 0;
+		this.cellsTop = 0;
+		this.cols = [];
+		this.rows = [];
 
-        this.highlightedCol = -1;
-        this.highlightedRow = -1;
-        this.topLeftFrozenCell = null;	// Верхняя ячейка для закрепления диапазона
-        this.visibleRange = new asc_Range(0, 0, 0, 0);
-        this.isChanged = false;
-        this.isChartAreaEditMode = false;
-        this.lockDraw = false;
-        this.isSelectOnShape = false;	// Выделен shape
+		this.highlightedCol = -1;
+		this.highlightedRow = -1;
+		this.topLeftFrozenCell = null;	// Верхняя ячейка для закрепления диапазона
+		this.visibleRange = new asc_Range(0, 0, 0, 0);
+		this.isChanged = false;
+		this.isChartAreaEditMode = false;
+		this.lockDraw = false;
+		this.isSelectOnShape = false;	// Выделен shape
 
-        this.startCellMoveResizeRange = null;
-        this.startCellMoveResizeRange2 = null;
-        this.moveRangeDrawingObjectTo = null;
+		this.startCellMoveResizeRange = null;
+		this.startCellMoveResizeRange2 = null;
+		this.moveRangeDrawingObjectTo = null;
 
-        // Координаты ячейки начала перемещения диапазона
-        this.startCellMoveRange = null;
-        // Дипазон перемещения
-        this.activeMoveRange = null;
-        // Range for drag and drop
+		// Координаты ячейки начала перемещения диапазона
+		this.startCellMoveRange = null;
+		// Дипазон перемещения
+		this.activeMoveRange = null;
+		// Range for drag and drop
 		this.dragAndDropRange = null;
-        // Range fillHandle
-        this.activeFillHandle = null;
-        this.resizeTableIndex = null;
-        // Горизонтальное (0) или вертикальное (1) направление автозаполнения
-        this.fillHandleDirection = -1;
-        // Зона автозаполнения
-        this.fillHandleArea = -1;
-        this.nRowsCount = 0;
-        this.nColsCount = 0;
-        // Other ranges for draw (sparklines info, chart ranges or formula ranges)
-        this.oOtherRanges = null;
-        //------------------------
+		// Range fillHandle
+		this.activeFillHandle = null;
+		this.resizeTableIndex = null;
+		// Горизонтальное (0) или вертикальное (1) направление автозаполнения
+		this.fillHandleDirection = -1;
+		// Зона автозаполнения
+		this.fillHandleArea = -1;
+		this.nRowsCount = 0;
+		this.nColsCount = 0;
+		// Other ranges for draw (sparklines info, chart ranges or formula ranges)
+		this.oOtherRanges = null;
+		//------------------------
 
-        this.collaborativeEditing = collaborativeEditing;
+		this.collaborativeEditing = collaborativeEditing;
 
-        this.drawingArea = new AscFormat.DrawingArea(this);
-        this.cellCommentator = new AscCommonExcel.CCellCommentator(this);
-        this.objectRender = null;
+		this.drawingArea = new AscFormat.DrawingArea(this);
+		this.cellCommentator = new AscCommonExcel.CCellCommentator(this);
+		this.objectRender = null;
 
-        this.arrRecalcRanges = [];
+		this.arrRecalcRanges = [];
 		this.arrRecalcRangesWithHeight = [];
 		this.arrRecalcRangesCanChangeColWidth = [];
-        this.skipUpdateRowHeight = false;
-        this.canChangeColWidth = c_oAscCanChangeColWidth.none;
-        this.scrollType = 0;
-        this.updateRowHeightValuePx = null;
-        this.updateColumnsStart = Number.MAX_VALUE;
+		this.skipUpdateRowHeight = false;
+		this.canChangeColWidth = c_oAscCanChangeColWidth.none;
+		this.scrollType = 0;
+		this.updateRowHeightValuePx = null;
+		this.updateColumnsStart = Number.MAX_VALUE;
 
-        this.viewPrintLines = false;
+		this.viewPrintLines = false;
 
-        this.copyCutRange = null;
+		this.copyCutRange = null;
 
-        this.usePrintScale = false;//флаг нужен для того, чтобы возвращался scale только в случае печати, а при отрисовке, допустим сектки, он был равен 1
+		this.usePrintScale = false;//флаг нужен для того, чтобы возвращался scale только в случае печати, а при отрисовке, допустим сектки, он был равен 1
 
-        this.arrRowGroups = null;
-        this.arrColGroups = null;
-        this.clickedGroupButton = null;
-        this.ignoreGroupSize = null;//для печати не нужно учитывать отступы групп
+		this.arrRowGroups = null;
+		this.arrColGroups = null;
+		this.clickedGroupButton = null;
+		this.ignoreGroupSize = null;//для печати не нужно учитывать отступы групп
 
 		//ифомарция о залоченности нового добавленного правила
 		//TODO пока сюда добавляю, пересмотреть!
@@ -509,10 +509,13 @@
 
 		this.traceDependentsManager = new AscCommonExcel.TraceDependentsManager(this);
 
-        this._init();
+		//settings for split draw/
+		this.renderingSettings = null;
 
-        return this;
-    }
+		this._init();
+
+		return this;
+	}
 
 	WorksheetView.prototype._init = function () {
 		this._initTopLeftCell();
@@ -3965,42 +3968,44 @@
 
     // ----- Drawing -----
 
-    WorksheetView.prototype.draw = function (lockDraw) {
-        if (lockDraw || this.model.workbook.bCollaborativeChanges || window['IS_NATIVE_EDITOR']) {
-            return this;
-        }
+	WorksheetView.prototype.draw = function (lockDraw) {
+		if (lockDraw || this.model.workbook.bCollaborativeChanges || window['IS_NATIVE_EDITOR']) {
+			return this;
+		}
 		if (this.workbook.printPreviewState && this.workbook.printPreviewState.isStart()) {
 			//только перерисовываю, каждый раз пересчёт - может потребовать много ресурсов
 			//если изменилось количество строк/столбцов со значениями - пересчитываю
 			//пересчёт выполянется когда пришли данные от других пользователей
 			return;
 		}
-		if(this.workbook.Api.isEyedropperStarted()) {
+		if (this.workbook.Api.isEyedropperStarted()) {
 			this.workbook.Api.clearEyedropperImgData();
 		}
 		this._recalculate();
 		this.handlers.trigger("checkLastWork");
-        this._clean();
-        this._drawCorner();
-        this._drawColumnHeaders(null);
-        this._drawRowHeaders(null);
-        this._drawGrid(null);
-        this._drawCellsAndBorders(null);
+		this.generateRenderingSettings();
+		this._clean();
+		this._drawCorner();
+		this._drawColumnHeaders(null);
+		this._drawRowHeaders(null);
+		this._drawGrid(null);
+		this._drawCellsAndBorders(null);
 		this._drawGroupData(null);
 		this._drawGroupData(null, null, undefined, undefined, true);
-        this._drawFrozenPane();
-        this._drawFrozenPaneLines();
-        this._fixSelectionOfMergedCells();
-        this._drawElements(this.af_drawButtons);
-        this.cellCommentator.drawCommentCells();
-        this.objectRender.showDrawingObjects();
-        if (this.overlayCtx) {
-            this._drawSelection();
-        }
+		this._drawFrozenPane();
+		this._drawFrozenPaneLines();
+		this._fixSelectionOfMergedCells();
+		this._drawElements(this.af_drawButtons);
+		this.cellCommentator.drawCommentCells();
+		this.objectRender.showDrawingObjects();
+		if (this.overlayCtx) {
+			this._drawSelection();
+		}
+		this.setRenderingSettings(null);
 		//this._cleanPagesModeData();
 
-        return this;
-    };
+		return this;
+	};
 
     WorksheetView.prototype._clean = function () {
         this.drawingCtx
@@ -4761,14 +4766,14 @@
 		//this._drawPageBreakPreviewLines(drawingCtx, range, leftFieldInPx, topFieldInPx, width, height);
 	};
 
-    WorksheetView.prototype._drawCellsAndBorders = function (drawingCtx, range, offsetXForDraw, offsetYForDraw) {
+	WorksheetView.prototype._drawCellsAndBorders = function (drawingCtx, range, offsetXForDraw, offsetYForDraw) {
 		if (range === undefined) {
 			range = this.visibleRange;
 		}
 
-		var left, top, cFrozen, rFrozen;
-		var offsetX = (undefined === offsetXForDraw) ? this._getColLeft(this.visibleRange.c1) - this.cellsLeft : offsetXForDraw;
-		var offsetY = (undefined === offsetYForDraw) ? this._getRowTop(this.visibleRange.r1) - this.cellsTop : offsetYForDraw;
+		let left, top, cFrozen, rFrozen;
+		let offsetX = (undefined === offsetXForDraw) ? this._getColLeft(this.visibleRange.c1) - this.cellsLeft : offsetXForDraw;
+		let offsetY = (undefined === offsetYForDraw) ? this._getRowTop(this.visibleRange.r1) - this.cellsTop : offsetYForDraw;
 		if (!drawingCtx && this.topLeftFrozenCell) {
 			if (undefined === offsetXForDraw) {
 				cFrozen = this.topLeftFrozenCell.getCol0();
@@ -4786,20 +4791,25 @@
 			// set clipping rect to cells area
 			this.drawingCtx.save()
 				.beginPath()
-				.rect(left - offsetX, top - offsetY, Math.min(this._getColLeft(range.c2 + 1) - left, this.drawingCtx.getWidth() - this.cellsLeft), Math.min(this._getRowTop(range.r2 + 1) - top, this.drawingCtx.getHeight() - this.cellsTop))
+				.rect(left - offsetX, top - offsetY, Math.min(this._getColLeft(range.c2 + 1) - left, this.drawingCtx.getWidth() - this.cellsLeft),
+					Math.min(this._getRowTop(range.r2 + 1) - top, this.drawingCtx.getHeight() - this.cellsTop))
 				.clip();
 		}
 
 		this._prepareCellTextMetricsCache(range);
 
-		var cfIterator = this.model.getConditionalFormattingRangeIterator();
+		let cfIterator = this.model.getConditionalFormattingRangeIterator();
 
-		var mergedCells = {}, mc;
-		for (var row = range.r1; row <= range.r2; ++row) {
+		let renderingSettings = this.getRenderingSettings();
+		let mergedCells = {}, mc;
+		for (let row = range.r1; row <= range.r2; ++row) {
+			if (renderingSettings && renderingSettings.isSkipRowBG(range.r1, row)) {
+				continue;
+			}
 			this._drawRowBG(drawingCtx, row, range.c1, range.c2, offsetX, offsetY, mergedCells, null, cfIterator);
 		}
 		// draw merged cells at last stage to fix cells background issue
-		for (var i in mergedCells) {
+		for (let i in mergedCells) {
 			mc = mergedCells[i];
 			this._drawRowBG(drawingCtx, mc.r1, mc.c1, mc.c1, offsetX, offsetY, null, mc, cfIterator);
 		}
@@ -26883,6 +26893,46 @@
 		}
 	};
 
+	WorksheetView.prototype.generateRenderingSettings = function () {
+		if (thumbnail.first === true) {
+			this.initRenderingSettings();
+			let renderingSettings = this.getRenderingSettings();
+			renderingSettings && renderingSettings.setSplitRowBG(2);
+		}
+	};
+
+	WorksheetView.prototype.getRenderingSettings = function () {
+		return this.renderingSettings;
+	};
+
+	WorksheetView.prototype.setRenderingSettings = function (val) {
+		this.renderingSettings = val;
+	};
+
+	WorksheetView.prototype.initRenderingSettings = function () {
+		this.renderingSettings = new CRenderingSettings();
+	};
+
+	function CRenderingSettings() {
+		this.splitRowBG = null; //number - how much row need skip, every 2,3 and..
+	}
+	CRenderingSettings.prototype.setSplitRowBG = function (val) {
+		this.splitRowBG = val;
+	};
+	CRenderingSettings.prototype.getSplitRowBG = function () {
+		return this.splitRowBG;
+	};
+	CRenderingSettings.prototype.isSkipRowBG = function (startRow, row) {
+		let res = null;
+
+		if (this.splitRowBG) {
+			if ((row - startRow + 1) % this.splitRowBG === 0) {
+				return true;
+			}
+		}
+
+		return res;
+	};
 
 	function cAsyncAction() {
 		this.timer = null;
