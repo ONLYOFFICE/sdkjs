@@ -7179,6 +7179,9 @@ Paragraph.prototype.MoveCursorToEndOfLine = function(addToSelect)
 };
 Paragraph.prototype.MoveCursorToStartOfLine = function(addToSelect)
 {
+	if (!this.IsRecalculated())
+		return this.MoveCursorToStartPos(addToSelect);
+	
 	if (this.IsSelectionUse())
 	{
 		if (addToSelect)

@@ -739,6 +739,30 @@
 			
 			ExecuteHotkey(testHotkeyActions.moveToEndLine);
 			CheckCursorPosition(43, 'Check move to end line');
+			
+			ExecuteHotkey(testHotkeyActions.moveToLeftChar);
+			ExecuteHotkey(testHotkeyActions.moveToLeftChar);
+			ExecuteHotkey(testHotkeyActions.moveToLeftChar);
+			ExecuteHotkey(testHotkeyActions.moveToLeftChar);
+			ExecuteHotkey(testHotkeyActions.moveToLeftChar);
+			CheckCursorPosition(38, 'Check move to left char');
+			
+			ExecuteHotkey(testHotkeyActions.moveToStartLine);
+			CheckCursorPosition(0, 'Check move to start line');
+			
+			ExecuteHotkey(testHotkeyActions.moveToEndDocument);
+			CheckCursorPosition(43, 'Check move to the end of the document');
+			
+			ExecuteHotkey(testHotkeyActions.moveToStartDocument);
+			CheckCursorPosition(0, 'Check move to the start of the document');
+			
+			ExecuteHotkey(testHotkeyActions.moveToRightWord);
+			ExecuteHotkey(testHotkeyActions.moveToRightWord);
+			ExecuteHotkey(testHotkeyActions.moveToRightWord);
+			CheckCursorPosition(16, 'Check move to the right by words');
+			
+			ExecuteHotkey(testHotkeyActions.moveToLeftWord);
+			CheckCursorPosition(10, 'Check move to the left by words');
 		});
 		
 		QUnit.test('Check move/select in text', (assert) =>
