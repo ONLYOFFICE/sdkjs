@@ -6807,7 +6807,7 @@ var editor;
        }
     }
 
-    this.wb.setPrintOptionsJson(spreadsheetLayout && spreadsheetLayout["sheetsProps"]);
+    this.wb.setPrintOptionsJson(_options);
 
     var _printPagesData = this.wb.calcPagesPrint(_adjustPrint);
 

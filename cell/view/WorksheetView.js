@@ -3271,6 +3271,7 @@
 		};
 		indexPrintPage = recalcIndexPrintPage(indexPrintPage);
 
+		this.generateRenderingSettings();
 		this.stringRender.fontNeedUpdate = true;
 		if (null === printPagesData) {
 			// Напечатаем пустую страницу
@@ -3555,6 +3556,7 @@
 			this.stringRender.resetTransform(drawingCtx);
 			drawingCtx.EndPage && drawingCtx.EndPage();
 		}
+		this.setRenderingSettings(null);
 	};
 
 	WorksheetView.prototype.fitOnOnePage = function(val) {
@@ -3983,7 +3985,6 @@
 		}
 		this._recalculate();
 		this.handlers.trigger("checkLastWork");
-		this.generateRenderingSettings();
 		this._clean();
 		this._drawCorner();
 		this._drawColumnHeaders(null);
@@ -4001,7 +4002,6 @@
 		if (this.overlayCtx) {
 			this._drawSelection();
 		}
-		this.setRenderingSettings(null);
 		//this._cleanPagesModeData();
 
 		return this;
@@ -26894,10 +26894,12 @@
 	};
 
 	WorksheetView.prototype.generateRenderingSettings = function () {
-		if (thumbnail.first === true) {
+		let printOptionsJson = this.workbook && this.workbook.getPrintOptionsJson();
+		if (printOptionsJson && printOptionsJson["thumbnail"] && printOptionsJson["thumbnail"]["first"] === true || this.workbook.printPreviewState.isStart()) {
 			this.initRenderingSettings();
 			let renderingSettings = this.getRenderingSettings();
-			renderingSettings && renderingSettings.setSplitRowBG(2);
+			let splitNum = 2;
+			renderingSettings && renderingSettings.setSplitRowBG(splitNum);
 		}
 	};
 
