@@ -763,6 +763,18 @@
 			
 			ExecuteHotkey(testHotkeyActions.moveToLeftWord);
 			CheckCursorPosition(10, 'Check move to the left by words');
+			
+			ExecuteHotkey(testHotkeyActions.moveUp);
+			CheckCursorPosition(10, 'Check move up');
+
+			ExecuteHotkey(testHotkeyActions.moveDown);
+			CheckCursorPosition(10, 'Check move down');
+			
+			ExecuteHotkey(testHotkeyActions.moveToNextPage);
+			CheckCursorPosition(10, 'Check move to the next page');
+
+			ExecuteHotkey(testHotkeyActions.moveToPreviousPage);
+			CheckCursorPosition(10, 'Check move to the previous page');
 		});
 		
 		QUnit.test('Check move/select in text', (assert) =>

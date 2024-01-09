@@ -15910,6 +15910,9 @@ CDocument.prototype.private_GetElementPageIndexByXY = function(ElementPos, X, Y,
 		StartColumn = 0;
 		EndColumn   = Math.min(ElementPagesCount - ElementStartColumn + (PageIndex - ElementStartPage) * ColumnsCount, ColumnsCount - 1);
 	}
+	
+	if (!PageSection.Columns[EndColumn])
+		return 0;
 
 	// TODO: Разобраться с ситуацией, когда пустые колонки стоят не только в конце
 	while (true === PageSection.Columns[EndColumn].Empty && EndColumn > StartColumn)
