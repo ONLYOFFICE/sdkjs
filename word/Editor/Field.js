@@ -718,6 +718,14 @@ ParaField.prototype.IsValid = function()
 {
 	return true;
 };
+ParaField.prototype.CheckType = function(type)
+{
+	return this.FieldType === type;
+};
+ParaField.prototype.IsAddin = function()
+{
+	return this.CheckType(AscWord.fieldtype_ADDIN);
+};
 //----------------------------------------------------------------------------------------------------------------------
 // Функции совместного редактирования
 //----------------------------------------------------------------------------------------------------------------------
