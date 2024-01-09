@@ -58,8 +58,9 @@
      * The editors which the plugin is available for:
 	 * * <b>word</b> - text document editor,
 	 * * <b>cell</b> - spreadsheet editor,
-	 * * <b>slide</b> - presentation editor.
-	 * @typedef {("word" | "cell" | "slide")} editorType
+	 * * <b>slide</b> - presentation editor,
+	 * * <b>pdf</b> - pdf editor.
+	 * @typedef {("word" | "cell" | "slide" | "pdf")} editorType
      */
 
     /**
