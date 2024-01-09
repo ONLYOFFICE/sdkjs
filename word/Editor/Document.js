@@ -6379,6 +6379,7 @@ CDocument.prototype.setMergeFormatComplexFieldOnApplyTextPr = function()
 	// Word doesn't add MERGEFORMAT for all field types (for example PAGE)
 	// So we add it to some specific types
 	if (!complexField
+		|| !(complexField instanceof AscWord.CComplexField)
 		|| !complexField.IsValid()
 		|| complexField.GetInstruction().isMergeFormat()
 		|| !complexField.CheckType(AscWord.fieldtype_REF)
