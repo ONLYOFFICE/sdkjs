@@ -730,9 +730,9 @@
 
 			oDoc.activeForm.content.SelectAll();
 			if (oDoc.activeForm.content.IsSelectionUse())
-				this.Api.WordControl.m_oDrawingDocument.TargetEnd();
+				this.WordControl.m_oDrawingDocument.TargetEnd();
 			
-			this.onUpdateOverlay();
+			oViewer.onUpdateOverlay();
 		}
 		else {
 			oViewer.file.selectAll();
