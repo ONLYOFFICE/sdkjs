@@ -123,6 +123,7 @@
             if (field.GetHeaderPosition() == position["textOnly"])
                 return;
 
+            field.SetWasChanged(true);
             field.DoInitialRecalc();
             field.SetNeedRecalc(true);
             field.SetImageData(oImgData, nAPType);
@@ -308,7 +309,6 @@
                 if (field.GetHeaderPosition() == position["textOnly"])
                     return;
 
-                field.SetWasChanged(true);
                 field.SetNeedRecalc(true);
             });
             
@@ -933,15 +933,17 @@
     CPushButtonField.prototype.SetValue = function() {
         return;
     };
+    CPushButtonField.prototype.IsNeedDrawFromStream = function() {
+        return false;
+    };
     CPushButtonField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)
             return;
 
+        this.CheckImageOnce();
         this.Recalculate();
         this.DrawBackground(oGraphicsPDF);
-        if (this.IsPressed()) {
-            this.DrawBorders(oGraphicsPDF)
-        }
+        this.DrawBorders(oGraphicsPDF)
 
         oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
 
@@ -954,10 +956,6 @@
 
         this.content.Draw(0, oGraphicsWord);
         oGraphicsWord.RemoveLastClip();
-
-        if (false == this.IsPressed()) {
-            this.IsButtonFitBounds() == false && this.DrawBorders(oGraphicsPDF);
-        }
 
         if (this.IsPressed()) {
             let oViewer = editor.getDocumentRenderer();
@@ -1289,8 +1287,26 @@
             this.imageChecked = true;
         }
     };
+    CPushButtonField.prototype.CalculateContentRect = function() {
+        if (!this.content)
+            return;
+
+        let aRect       = this.GetRect();
+        let Y           = aRect[1];
+        let nHeight     = ((aRect[3]) - (aRect[1]));
+        let oMargins    = this.GetMarginsFromBorders(false, false);
+
+        this.contentRect.X = this.content.X;
+        this.contentRect.Y = (Y + 2 * oMargins.top) * g_dKoef_pix_to_mm;
+        this.contentRect.W = this.content.XLimit - this.content.X;
+        this.contentRect.H = (nHeight - 2 * oMargins.top -  2 * oMargins.bottom) * g_dKoef_pix_to_mm;
+    };
     CPushButtonField.prototype.DoInitialRecalc = function() {
         if (!this._pagePos) {
+            let oDoc = this.GetDocument();
+            let _t = this;
+            if (!oDoc.checkFieldFont(this, function() {_t.DoInitialRecalc()}))
+                return;
             this.Recalculate();
         }
     };
@@ -1364,7 +1380,6 @@
         this._formRect.W = nWidth * g_dKoef_pix_to_mm;
         this._formRect.H = nHeight * g_dKoef_pix_to_mm;
         
-        this.CheckImageOnce();
         this.CheckTextFont();
         this.CheckTextColor();
         
