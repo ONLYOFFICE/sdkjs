@@ -719,6 +719,28 @@
 			ExecuteHotkey(testHotkeyActions.removeFrontWord, 1);
 			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello ', 'Check removing front word');
 		});
+		
+		QUnit.test('Check move/select in no calculated text', (assert) =>
+		{
+			function CheckCursorPosition(expected, description)
+			{
+				const position = logicDocument.GetContentPosition();
+				assert.strictEqual(position[position.length - 1].Position, expected, description);
+			}
+			
+			ClearDocumentAndAddParagraph('The quick brown fox jumps over the lazy dog');
+			
+			logicDocument.MoveCursorToStartPos();
+			
+			ExecuteHotkey(testHotkeyActions.moveToRightChar);
+			ExecuteHotkey(testHotkeyActions.moveToRightChar);
+			ExecuteHotkey(testHotkeyActions.moveToRightChar);
+			CheckCursorPosition(3, 'Check move to right char');
+			
+			ExecuteHotkey(testHotkeyActions.moveToEndLine);
+			CheckCursorPosition(43, 'Check move to end line');
+		});
+		
 		QUnit.test('Check move/select in text', (assert) =>
 		{
 			function CheckCursorPosition(expected, description)
