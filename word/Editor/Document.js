@@ -12351,7 +12351,16 @@ CDocument.prototype.SetWatermarkProps = function(oProps)
 		return;
 
 	this.StartAction(AscDFH.historydescription_Document_AddWatermark);
-	this.SetWatermarkPropsAction(oProps);
+    	const aSectEle = this.SectionsInfo.Elements;
+    	for (let i = 0; i < aSectEle.length; i++) {
+            const oSectPr = aSectEle[i].SectPr;
+            let oHeader = oSectPr.GetHdrFtr(true,oSectPr.IsTitlePage(),oSectPr.IsEvenAndOdd());
+            if (!oHeader) {
+                oHeader = new CHeaderFooter(this.GetHdrFtr(), this, this.Get_DrawingDocument(), hdrftr_Header);
+                oSectPr.Set_Header_Default(oHeader);
+            }
+            oHeader.SetWatermarkPropsAction(oProps);
+    	}
 	this.Recalculate();
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();
