@@ -4364,6 +4364,7 @@ background-repeat: no-repeat;\
 		let bLocked = false;
 		if (oPlaceholder)
 		{
+			this.WordControl.m_bIsMouseLock = false;
 			oPh = AscCommon.g_oTableId.Get_ById(oPlaceholder.id);
 			if (oPh)
 			{
