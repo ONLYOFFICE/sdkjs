@@ -206,8 +206,8 @@ var CPresentation = CPresentation || function(){};
                     value = value.toString();
                 }
 
-                if (oParent._currentValueIndices) {
-                    oField.SetCurIdxs(Array.isArray(oParent._currentValueIndices) ? oParent._currentValueIndices : [oParent._currentValueIndices]);
+                if (oParent._currentValueIndices && oParent._currentValueIndices.length != 0) {
+                    oField.SetCurIdxs(oParent._currentValueIndices);
                 }
                 else {
                     oField.SetValue(value, true);
@@ -388,7 +388,22 @@ var CPresentation = CPresentation || function(){};
 
         let nCurIdx = this.widgets.indexOf(this.activeForm);
         let oCurForm = this.widgets[nCurIdx];
-        let oNextForm = this.widgets[nCurIdx + 1] || this.widgets[0];
+        let oNextForm;
+
+        for (let i = nCurIdx + 1; i <= this.widgets.length; i++) {
+            if (this.widgets[i]) {
+                if (this.widgets[i].IsHidden() == false) {
+                    oNextForm = this.widgets[i];
+                    break;
+                }
+            }
+            else {
+                if (this.widgets[0] != oCurForm)
+                    oNextForm = this.widgets[0];
+                else
+                    return;
+            }
+        }
 
         let _t = this;
 		if (!this.checkFieldFont(oNextForm, function(){_t.SelectNextField();}))
@@ -492,7 +507,22 @@ var CPresentation = CPresentation || function(){};
 
         let nCurIdx = this.widgets.indexOf(this.activeForm);
         let oCurForm = this.widgets[nCurIdx];
-        let oNextForm = this.widgets[nCurIdx - 1] || this.widgets[this.widgets.length - 1];
+        let oNextForm;
+
+        for (let i = nCurIdx - 1; i >= -1; i--) {
+            if (this.widgets[i]) {
+                if (this.widgets[i].IsHidden() == false) {
+                    oNextForm = this.widgets[i];
+                    break;
+                }
+            }
+            else {
+                if (this.widgets[this.widgets.length - 1] != oCurForm)
+                    oNextForm = this.widgets[this.widgets.length - 1];
+                else
+                    return;
+            }
+        }
 
         let _t = this;
 		if (!this.checkFieldFont(oNextForm, function(){_t.SelectNextField();}))

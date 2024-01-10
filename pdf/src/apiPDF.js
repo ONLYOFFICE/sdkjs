@@ -907,7 +907,7 @@
         },
         "value": {
             get: function() {
-                return undefined;
+                return "";
             }
         }
     });
@@ -1470,7 +1470,7 @@
             get: function() {
                 let value = this.field.GetApiValue();
                 let isNumber = /^\d+$/.test(value);
-                return isNumber ? parseFloat(value) : value;
+                return isNumber ? parseFloat(value) : (value != undefined ? value : "");
             }
         },
     });
@@ -1698,7 +1698,7 @@
             get: function() {
                 let value = this.field.GetApiValue();
                 let isNumber = /^\d+$/.test(value);
-                return isNumber ? parseFloat(value) : value;
+                return isNumber ? parseFloat(value) : (value != undefined ? value : "");
             }
         }
     });
@@ -1896,7 +1896,7 @@
             get: function() {
                 let value = this.field.GetApiValue();
                 let isNumber = /^\d+$/.test(value);
-                return isNumber ? parseFloat(value) : value;
+                return isNumber ? parseFloat(value) : (value != undefined ? value : "");
             }
         }
     });
