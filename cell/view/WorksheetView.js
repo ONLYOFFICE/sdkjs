@@ -26746,6 +26746,16 @@
 			return true;
 		};
 
+		let _setScrollType = function (_typeSelection) {
+			if (_typeSelection === Asc.c_oAscSelectionType.RangeCol || _typeSelection === Asc.c_oAscSelectionType.RangeMax) {
+				oThis.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
+			}
+			if (_typeSelection === Asc.c_oAscSelectionType.RangeRow || _typeSelection === Asc.c_oAscSelectionType.RangeMax) {
+				oThis.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
+			}
+		};
+
+
 		switch (type) {
 			case c_oAscFillType.copyCells:
 				if (!this.activeFillHandle) {
@@ -26834,6 +26844,7 @@
 					//update
 					for (let i = 0; i < aRanges.length; i++) {
 						oThis._updateRange(aRanges[i]);
+						_setScrollType(aRanges[i] && aRanges[i].getType());
 					}
 					oThis.draw();
 				});
