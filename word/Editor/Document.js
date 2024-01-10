@@ -5181,7 +5181,8 @@ CDocument.prototype.private_RecalculateFlowParagraph         = function(RecalcIn
             var TempElement = this.Content[TempIndex];
             TempElement.Reset(TempElement.X, TempElement.Y, TempElement.XLimit, TempElement.YLimit, PageIndex, ColumnIndex, ColumnsCount);
         }
-
+		
+		Index += FlowCount - 1;
         RecalcResult = recalcresult_NextElement;
     }
 
