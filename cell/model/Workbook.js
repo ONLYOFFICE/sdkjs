@@ -20481,7 +20481,11 @@
 				if (oSerial.getPrevValue() != null) {
 					let oCellValue = new AscCommonExcel.CCellValue();
 					let nCurrentValue = oProgressionCalc[oSerial.getType()]();
-					if ((nStopValue && nCurrentValue > nStopValue) || (nRow === gc_nMaxRow0 || nCol === gc_nMaxCol0)) {
+					let bNeedStopLoop = false;
+					if (nStopValue != null) {
+						bNeedStopLoop = nStep > 0 ? nCurrentValue > nStopValue : nCurrentValue < nStopValue;
+					}
+					if (bNeedStopLoop || (nRow === gc_nMaxRow0 || nCol === gc_nMaxCol0)) {
 						bStopLoop = true;
 						return;
 					}
