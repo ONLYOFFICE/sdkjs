@@ -554,6 +554,52 @@ $(function () {
 		autofillRange = getRange(0, 2, 0, 5);
 		autofillData(assert, autofillRange, [['3'], ['4'], ['5'], ['6']], 'Autofill one Column');
 		clearData(0, 0, 0, 5);
+		// Select vertical oFromRange, Series in: Rows. Bug #65724
+		testData = [
+			['1']
+		];
+		oFromRange = getFilledData(0, 0, 0, 2, testData, [0, 0]);
+		let oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setSeriesIn(oSeriesInType.rows);
+		oSeriesSettings.asc_setType(oSeriesType.autoFill);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 2);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [[''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'], [''], ['']], _desc);
+		}, "Autofill one Column. Series in: Rows. Type: AutoFill. Bug #65724");
+		clearData(0, 0, 0, 2);
+		// Select horizontal oFromRange, Series in: Columns. Bug #65724
+		oFromRange = getFilledData(0, 0, 2, 0, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setSeriesIn(oSeriesInType.columns);
+		oSeriesSettings.asc_setType(oSeriesType.autoFill);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 2, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1', '', '']], _desc);
+		}, "Autofill one Row. Series in: Columns. Type: AutoFill. Bug #65724");
+		clearData(0, 0, 2, 0);
+		// FillHandle Vertical. Series in: Rows. Type: AutoFill. Bug #65724
+		oFromRange = getFilledData(0, 0, 0, 0, testData, [0, 0]);
+		wsView.activeFillHandle = getRange(0, 0, 0, 2);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setSeriesIn(oSeriesInType.rows);
+		oSeriesSettings.asc_setType(oSeriesType.autoFill);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 2);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [[''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'], [''], ['']], _desc);
+		}, "Autofill one Column fillHandle. Series in: Rows. Type: AutoFill. Bug #65724");
+		clearData(0, 0, 0, 2);
 	});
 	QUnit.test('Negative cases', function (assert) {
 		const testData = [

@@ -20755,9 +20755,12 @@
 
 		if (nType === oSeriesType.autoFill) {
 			let oFilledRange = this.getFilledRange();
+			let oFilled = oFilledRange.bbox;
 			this.initIndex();
 			let oCanPromote = oFilledRange.canPromote(false, bVertical, this.getIndex());
-			oFilledRange.promote(false, this.getVertical(), this.getIndex(), oCanPromote);
+			if (!oFilled.containsRange(oCanPromote.to)) {
+				oFilledRange.promote(false, this.getVertical(), this.getIndex(), oCanPromote);
+			}
 		} else {
 			let aFilledCells = this.getFilledCells();
 			if (aFilledCells.length) {
