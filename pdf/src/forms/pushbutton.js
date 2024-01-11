@@ -589,8 +589,8 @@
             }
                 
             case scaleWhen["never"]: {
-                dDrawingW = dCoef*dImgW;
-                dDrawingH = dCoef*dImgH;
+                dDrawingW = dCW * dImgW;
+                dDrawingH = dCH * dImgH;
                 break;
                 // dDrawingW = dImgW;
                 // dDrawingH = dImgH;
@@ -709,7 +709,7 @@
 
         oClip.setLTRB(nLC, nRC, nTC, nBC);
         oShape.spPr.Fill.fill.setSrcRect(oClip);
-        // oShape.spPr.Fill.fill.stretch = false
+        // oShape.spPr.Fill.fill.stretch = false;
 
         oRunForImg.Add_ToContent(oRunForImg.Content.length, oDrawing);
         oDrawing.Set_Parent(oRunForImg);
