@@ -147,24 +147,26 @@
             
             const dImgW = Math.max((oHTMLImg.width * AscCommon.g_dKoef_pix_to_mm), 1);
             const dImgH = Math.max((oHTMLImg.height * AscCommon.g_dKoef_pix_to_mm), 1);
-            const oRect = field.getFormRelRect();
-            let nContentWidth;
+            const oRect = field.IsButtonFitBounds() ? field.getFormRect() : field.getFormRelRect();
+            let nContentW = 0;
+            let nContentH = 0;
             switch (field._buttonPosition) {
                 case position["iconTextH"]:
                 case position["textIconH"]:
                     let oPara = field.content.GetElement(0);
                     oPara.Recalculate_Page(0);
-                    nContentWidth = oPara.GetContentWidthInRange();
+                    nContentW = oPara.GetContentWidthInRange();
                     break;
-                default:
-                    nContentWidth = 0;
+                case position["iconTextV"]:
+                case position["textIconV"]:
+                    nContentH = field.content.Get_EmptyHeight();
                     break;
             }
             
             const dFrmW = oRect.W;
             const dFrmH = oRect.H;
-            const dCW   = (dFrmW - nContentWidth)/dImgW;
-            const dCH   = dFrmH/dImgH;
+            const dCW   = (dFrmW - nContentW)/dImgW;
+            const dCH   = (dFrmH - nContentH)/dImgH;
             const dCoef = Math.min(dCW, dCH);
             let dDrawingW;
             let dDrawingH;
@@ -233,7 +235,6 @@
             oShape.spPr.setLn(new AscFormat.CreateNoFillLine());
 
             let oRunForImg;
-            let nContentH = field.content.Get_EmptyHeight();
             let oTargetPara;
             switch (field._buttonPosition) {
                 case position["iconOnly"]:
@@ -383,24 +384,27 @@
         
         const dImgW = Math.max((oHTMLImg.width * AscCommon.g_dKoef_pix_to_mm), 1);
         const dImgH = Math.max((oHTMLImg.height * AscCommon.g_dKoef_pix_to_mm), 1);
-        const oRect = this.getFormRelRect();
-        let nContentWidth;
+        const oRect = this.IsButtonFitBounds() ? this.getFormRect() : this.getFormRelRect();
+        let nContentW = 0;
+        let nContentH = 0;
+
         switch (this._buttonPosition) {
             case position["iconTextH"]:
             case position["textIconH"]:
                 let oPara = this.content.GetElement(0);
                 oPara.Recalculate_Page(0);
-                nContentWidth = oPara.GetContentWidthInRange();
+                nContentW = oPara.GetContentWidthInRange();
                 break;
-            default:
-                nContentWidth = 0;
+            case position["iconTextV"]:
+            case position["textIconV"]:
+                nContentH = this.content.Get_EmptyHeight();
                 break;
         }
 
         const dFrmW = oRect.W;
         const dFrmH = oRect.H;
-        const dCW   = (dFrmW - nContentWidth)/dImgW;
-        const dCH   = dFrmH/dImgH;
+        const dCW   = (dFrmW - nContentW)/dImgW;
+        const dCH   = (dFrmH - nContentH)/dImgH;
         const dCoef = Math.min(dCW, dCH);
         let dDrawingW;
         let dDrawingH;
@@ -463,7 +467,6 @@
         oShape.spPr.setLn(new AscFormat.CreateNoFillLine());
 
         let oRunForImg;
-        let nContentH = this.content.Get_EmptyHeight();
         let oTargetPara;
         switch (this._buttonPosition) {
             case position["iconOnly"]:
@@ -552,24 +555,27 @@
         
         const dImgW = Math.max((oHTMLImg.width * AscCommon.g_dKoef_pix_to_mm), 1);
         const dImgH = Math.max((oHTMLImg.height * AscCommon.g_dKoef_pix_to_mm), 1);
-        const oRect = this.getFormRelRect();
-        let nContentWidth;
+        const oRect = this.IsButtonFitBounds() ? this.getFormRect() : this.getFormRelRect();
+        let nContentW = 0;
+        let nContentH = 0;
+
         switch (this._buttonPosition) {
             case position["iconTextH"]:
             case position["textIconH"]:
                 let oPara = this.content.GetElement(0);
                 oPara.Recalculate_Page(0);
-                nContentWidth = oPara.GetContentWidthInRange();
+                nContentW = oPara.GetContentWidthInRange();
                 break;
-            default:
-                nContentWidth = 0;
+            case position["iconTextV"]:
+            case position["textIconV"]:
+                nContentH = this.content.Get_EmptyHeight();
                 break;
         }
 
         const dFrmW = oRect.W;
         const dFrmH = oRect.H;
-        const dCW   = (dFrmW - nContentWidth)/dImgW;
-        const dCH   = dFrmH/dImgH;
+        const dCW   = (dFrmW - nContentW)/dImgW;
+        const dCH   = (dFrmH - nContentH)/dImgH;
         const dCoef = Math.min(dCW, dCH);
         let dDrawingW;
         let dDrawingH;
@@ -583,9 +589,12 @@
             }
                 
             case scaleWhen["never"]: {
-                dDrawingW = dImgW;
-                dDrawingH = dImgH;
+                dDrawingW = dCoef*dImgW;
+                dDrawingH = dCoef*dImgH;
                 break;
+                // dDrawingW = dImgW;
+                // dDrawingH = dImgH;
+                // break;
             }
                 
             case scaleWhen["tooBig"]: {
@@ -628,11 +637,9 @@
         
         let oFill = this.CreateFill(oImgData.src);
         oShape.setFill(oFill);
-
         oShape.spPr.setLn(new AscFormat.CreateNoFillLine());
 
         let oRunForImg;
-        let nContentH = this.content.Get_EmptyHeight();
         let oTargetPara;
         switch (this._buttonPosition) {
             case position["iconOnly"]:
@@ -693,10 +700,16 @@
                 break;
         }
 
-        let nPosX = -(dDrawingW - dFrmW) * this._buttonAlignX;
-        let nPosY = (dDrawingH - dFrmH) * (this._buttonAlignY - 1);
-        oDrawing.Set_PositionH(Asc.c_oAscRelativeFromH.Column, Asc.c_oAscXAlign.Outside, nPosX, false);
-        oDrawing.Set_PositionV(Asc.c_oAscRelativeFromH.Page, Asc.c_oAscXAlign.Outside, nPosY, false);
+        let oClip = new AscFormat.CSrcRect();
+        
+        let nLC = ((dImgW - dFrmW) * this._buttonAlignX) / dImgW * 100; // left crop
+        let nRC = nLC + (dFrmW / dImgW * 100);
+        let nTC = ((dImgH - dFrmH) * (1 - this._buttonAlignY) / dImgH * 100);
+        let nBC = nTC + (dFrmH / dImgH * 100);
+
+        oClip.setLTRB(nLC, nRC, nTC, nBC);
+        oShape.spPr.Fill.fill.setSrcRect(oClip);
+        // oShape.spPr.Fill.fill.stretch = false
 
         oRunForImg.Add_ToContent(oRunForImg.Content.length, oDrawing);
         oDrawing.Set_Parent(oRunForImg);
@@ -741,7 +754,7 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.Internal_CorrectContentPos = function() {
-        let oRect       = this.getFormRelRect();
+        const oRect = this.IsButtonFitBounds() ? this.getFormRect() : this.getFormRelRect();
         let nButtonPos  = this.GetHeaderPosition();
 
         let oDrawing = this.GetDrawing();
@@ -945,7 +958,8 @@
         this.DrawBackground(oGraphicsPDF);
         this.DrawBorders(oGraphicsPDF)
 
-        oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
+        let oClipRect = this.getFormRect();
+        // oGraphicsWord.AddClipRect(oClipRect.X, oClipRect.Y, oClipRect.W, oClipRect.H);
 
         // draw behind doc
         if (this.GetHeaderPosition() == position["overlay"]) {
@@ -1070,6 +1084,7 @@
             oDoc.TurnOffHistory();
         }
     };
+    
     CPushButtonField.prototype.DrawPressed = function() {
         this.SetPressed(true);
         this.AddToRedraw();
@@ -1088,7 +1103,7 @@
             sTargetCaption = sMouseDownCaption;
             oTargetImgData = this._imgData.mouseDown;
         }
-        else {
+        else if (this._imgData.normal || sNormalCaption) {
             sTargetCaption = sNormalCaption;
             oTargetImgData = this._imgData.normal;
         }
@@ -1127,8 +1142,8 @@
         }
         
         if (this._imgData.mouseDown || this.GetCaption(CAPTION_TYPES.normal) || this.GetCaption(CAPTION_TYPES.rollover)) {
-            let oTargetImgData = this.IsHovered() ? this._imgData.rollover : this._imgData.normal;
-            let sTargetCaption = this.IsHovered() ? this.GetCaption(CAPTION_TYPES.rollover) : this.GetCaption(CAPTION_TYPES.normal);
+            let oTargetImgData = this._imgData.rollover || this._imgData.normal;
+            let sTargetCaption = this.GetCaption(CAPTION_TYPES.rollover) || this.GetCaption(CAPTION_TYPES.normal);
 
             let oCaptionRun         = this.GetCaptionRun();
             let sDefaultCaption     = this.GetCaption(CAPTION_TYPES.normal);
