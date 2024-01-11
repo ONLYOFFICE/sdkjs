@@ -26843,7 +26843,9 @@
 
 					//update
 					for (let i = 0; i < aRanges.length; i++) {
-						oThis._updateRange(aRanges[i]);
+						oThis._cleanCache(aRanges[i]);
+						oThis.arrRecalcRangesWithHeight.push(new Asc.Range(0, 0, oThis.visibleRange.c2, oThis.visibleRange.r2));
+						oThis.arrRecalcRangesCanChangeColWidth.push(oThis.canChangeColWidth);
 						_setScrollType(aRanges[i] && aRanges[i].getType());
 					}
 					oThis.draw();
