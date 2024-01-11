@@ -20507,21 +20507,15 @@
 		let nStopValue = this.getStopValue() ? this.getStopValue() : null;
 		let nIndexFilledLine = this.getVertical() ? oFilledLine.oCell.nCol : oFilledLine.oCell.nRow;
 		let oTo = oFilledLine.oToRange.bbox;
-		let oToRange = oFilledLine.oToRange;
 		let oWsTo = oFilledLine.oToRange.worksheet;
 		let oFromCell = oFilledLine.oCell;
 		let oFilledRange = oFilledLine.oFilledRange;
 		let oFrom = oFilledRange.bbox;
 		this.setPrevValue(oFilledLine.nValue);
-		// Clean exist data in autofill range
-		oToRange.cleanText();
 		// Init variables for filling cells
 		let nStartIndex = this.getVertical() ? oTo.r1 : oTo.c1;
 		let nEndIndex = this.getVertical() ? oTo.r2 : oTo.c2;
 		let nDirectStep = 1;
-		if (oFilledRange.hasMerged()) {
-			nDirectStep = this.getVertical() ? oFrom.r2 - oFrom.r1 + 1 : oFrom.c2 - oFrom.c1 + 1;
-		}
 		// Fill range cells for i row or col
 		let oProgressionCalc = {
 			0: function () { // linear
@@ -20537,6 +20531,21 @@
 			}
 		};
 		let bStopLoop = false;
+		let bIncorrectStopValue = false;
+
+		if (nStopValue != null) {
+			if (this.getType() === oSeriesType.growth) {
+				bIncorrectStopValue = nStep <= 1 || nStopValue < 0;
+			} else {
+				bIncorrectStopValue = Math.sign(nStep) !== Math.sign(nStopValue)
+			}
+		}
+		if (bIncorrectStopValue) {
+			return;
+		}
+		if (oFilledRange.hasMerged()) {
+			nDirectStep = this.getVertical() ? oFrom.r2 - oFrom.r1 + 1 : oFrom.c2 - oFrom.c1 + 1;
+		}
 		if (nStopValue != null && nStartIndex === nEndIndex) {
 			let nIndex = nStartIndex;
 			do {
