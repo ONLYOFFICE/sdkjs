@@ -214,14 +214,11 @@
             oDrawing.Set_WrappingType(WRAPPING_TYPE_SQUARE);
             oDrawing.Set_DrawingType(drawing_Inline);
             
-            let oShapeTrack = new AscFormat.NewShapeTrack("rect", 0, 0, field.content.Get_Theme(), null, null, null, 0);
-            oShapeTrack.track({}, dDrawingW, dDrawingH);
-            let oShape = oShapeTrack.getShape(true, field.content.DrawingDocument, null);
-            oShape.setParent(oDrawing);
-            oDrawing.Set_GraphicObject(oShape);
-            var oBodyPr = new AscFormat.CBodyPr();
-            oBodyPr.setAnchor(1);
-            oShape.setBodyPr(oBodyPr);
+            let oImgShape = new AscFormat.CImageShape();
+            AscFormat.fillImage(oImgShape, oImgData.src, 0, 0, dDrawingW, dDrawingH);
+
+            oImgShape.setParent(oDrawing);
+            oDrawing.Set_GraphicObject(oImgShape);
             
             let oFill;
             if (nAPType != AscPDF.APPEARANCE_TYPE.rollover && nAPType != AscPDF.APPEARANCE_TYPE.mouseDown) {
@@ -231,9 +228,6 @@
                 oFill = field.CreateFill(null);
             }
             
-            oShape.setFill(oFill);
-            oShape.spPr.setLn(new AscFormat.CreateNoFillLine());
-
             let oRunForImg;
             let oTargetPara;
             switch (field._buttonPosition) {
@@ -302,7 +296,7 @@
 
             oRunForImg.Add_ToContent(oRunForImg.Content.length, oDrawing);
             oDrawing.Set_Parent(oRunForImg);
-            oShape.recalculate();
+            oImgShape.recalculate();
         });
         
         if (editor.getDocumentRenderer().IsOpenFormsInProgress == false) {
@@ -452,19 +446,11 @@
         oDrawing.Set_WrappingType(WRAPPING_TYPE_SQUARE);
         oDrawing.Set_DrawingType(drawing_Inline);
         
-        let oShapeTrack = new AscFormat.NewShapeTrack("rect", 0, 0, this.content.Get_Theme(), null, null, null, 0);
-        oShapeTrack.track({}, dDrawingW, dDrawingH);
-        let oShape = oShapeTrack.getShape(true, this.content.DrawingDocument, null);
-        oShape.setParent(oDrawing);
-        oDrawing.Set_GraphicObject(oShape);
-        var oBodyPr = new AscFormat.CBodyPr();
-        oBodyPr.setAnchor(1);
-        oShape.setBodyPr(oBodyPr);
-        
-        let oFill = this.CreateFill(oImgData.src);
-        oShape.setFill(oFill);
+        let oImgShape = new AscFormat.CImageShape();
+        AscFormat.fillImage(oImgShape, oImgData.src, 0, 0, dDrawingW, dDrawingH);
 
-        oShape.spPr.setLn(new AscFormat.CreateNoFillLine());
+        oImgShape.setParent(oDrawing);
+        oDrawing.Set_GraphicObject(oImgShape);
 
         let oRunForImg;
         let oTargetPara;
@@ -534,7 +520,7 @@
 
         oRunForImg.Add_ToContent(oRunForImg.Content.length, oDrawing);
         oDrawing.Set_Parent(oRunForImg);
-        oShape.recalculate();
+        oImgShape.recalculate();
         this.SetNeedRecalc(true);
     };
     /**
@@ -592,9 +578,6 @@
                 dDrawingW = dCW * dImgW;
                 dDrawingH = dCH * dImgH;
                 break;
-                // dDrawingW = dImgW;
-                // dDrawingH = dImgH;
-                // break;
             }
                 
             case scaleWhen["tooBig"]: {
@@ -626,19 +609,12 @@
         oDrawing.Set_WrappingType(WRAPPING_TYPE_SQUARE);
         oDrawing.Set_DrawingType(drawing_Inline);
         
-        let oShapeTrack = new AscFormat.NewShapeTrack("rect", 0, 0, this.content.Get_Theme(), null, null, null, 0);
-        oShapeTrack.track({}, dDrawingW, dDrawingH);
-        let oShape = oShapeTrack.getShape(true, this.content.DrawingDocument, null);
-        oShape.setParent(oDrawing);
-        oDrawing.Set_GraphicObject(oShape);
-        var oBodyPr = new AscFormat.CBodyPr();
-        oBodyPr.setAnchor(1);
-        oShape.setBodyPr(oBodyPr);
-        
-        let oFill = this.CreateFill(oImgData.src);
-        oShape.setFill(oFill);
-        oShape.spPr.setLn(new AscFormat.CreateNoFillLine());
+        let oImgShape = new AscFormat.CImageShape();
+        AscFormat.fillImage(oImgShape, oImgData.src, 0, 0, dDrawingW, dDrawingH);
 
+        oImgShape.setParent(oDrawing);
+        oDrawing.Set_GraphicObject(oImgShape);
+        
         let oRunForImg;
         let oTargetPara;
         switch (this._buttonPosition) {
@@ -700,20 +676,21 @@
                 break;
         }
 
-        let oClip = new AscFormat.CSrcRect();
         
+        let oClip = new AscFormat.CSrcRect();
         let nLC = ((dImgW - dFrmW) * this._buttonAlignX) / dImgW * 100; // left crop
         let nRC = nLC + (dFrmW / dImgW * 100);
         let nTC = ((dImgH - dFrmH) * (1 - this._buttonAlignY) / dImgH * 100);
         let nBC = nTC + (dFrmH / dImgH * 100);
 
-        oClip.setLTRB(nLC, nRC, nTC, nBC);
-        oShape.spPr.Fill.fill.setSrcRect(oClip);
-        // oShape.spPr.Fill.fill.stretch = false;
+        oClip.setLTRB(nLC, nTC, nRC, nBC);
+        oImgShape.blipFill.setSrcRect(oClip);
+        oImgShape.blipFill.stretch = false;
+        oImgShape.isCrop = true;
 
         oRunForImg.Add_ToContent(oRunForImg.Content.length, oDrawing);
         oDrawing.Set_Parent(oRunForImg);
-        oShape.recalculate();
+        oImgShape.recalculate();
         this.SetNeedRecalc(true);
     };
     CPushButtonField.prototype.RemoveImage = function() {
@@ -920,14 +897,7 @@
                         this.SetCaptionRun(oCaptionRun);
                         break;
                     case position["overlay"]:
-                        let oDrawing = this.GetDrawing();
-                        if (oDrawing) {
-                            let oShapeCont = oDrawing.GraphicObj.getDocContent();
-                            oCaptionRun = oShapeCont.GetElement(0).GetElement(0);
-                        }
-                        else {
-                            oCaptionRun = oPara.GetElement(0);
-                        }
+                        oCaptionRun = oPara.GetElement(0);
                         
                         oCaptionRun.ClearContent();
                         oCaptionRun.AddText(cCaption);
@@ -1733,16 +1703,30 @@
 
         let oDrawing = this.GetDrawing();
         if (oDrawing) {
+            let oImgShape = oDrawing.GraphicObj;
+            let _image = Asc.editor.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(oImgShape.blipFill.RasterImageId)];
+            if (_image != undefined && _image.Image != null && _image.Status == window['AscFonts'].ImageLoadStatus.Complete)
+            {
+                dImgW = _image.Image.width * AscCommon.g_dKoef_pix_to_mm;
+                dImgH = _image.Image.height * AscCommon.g_dKoef_pix_to_mm;
+            }
+            else
+                return;
+
             let oRect = this.getFormRelRect();
             let dFrmW = oRect.W;
             let dFrmH = oRect.H;
-            let dDrawingW = oDrawing.Width;
-            let dDrawingH = oDrawing.Height;
 
-            let nPosX = -(dDrawingW - dFrmW) * this._buttonAlignX;
-            let nPosY = (dDrawingH - dFrmH) * (this._buttonAlignY - 1);
-            oDrawing.Set_PositionH(Asc.c_oAscRelativeFromH.Column, Asc.c_oAscXAlign.Outside, nPosX, false);
-            oDrawing.Set_PositionV(Asc.c_oAscRelativeFromH.Page, Asc.c_oAscXAlign.Outside, nPosY, false);
+            let oClip = new AscFormat.CSrcRect();
+            let nLC = ((dImgW - dFrmW) * this._buttonAlignX) / dImgW * 100; // left crop
+            let nRC = nLC + (dFrmW / dImgW * 100);
+            let nTC = ((dImgH - dFrmH) * (1 - this._buttonAlignY) / dImgH * 100);
+            let nBC = nTC + (dFrmH / dImgH * 100);
+
+            oClip.setLTRB(nLC, nTC, nRC, nBC);
+            oImgShape.blipFill.setSrcRect(oClip);
+            oImgShape.blipFill.stretch = false;
+            oImgShape.isCrop = true;
         }
     };
     CPushButtonField.prototype.GetIconPosition = function() {
@@ -2092,16 +2076,10 @@
         }
         oPara.CorrectContent();
 
-        let oDrawing = this.GetDrawing();
-        if (oDrawing && this._buttonCaption) {
-            let oShapeCont      = oDrawing.GraphicObj.getDocContent();
-            oTmpRun             = oShapeCont.GetElement(0).GetElement(0);
+        if (this._buttonCaption) {
+            oCaptionRun = oPara.GetElement(0);
             this.SetCaptionRun(oTmpRun);
-
             oTmpRun.AddText(this._buttonCaption);
-
-            oDrawing.GraphicObj.recalcInfo.recalculateTxBoxContent = true;
-            oDrawing.GraphicObj.recalculateText();
         }
 
         this.SetNeedRecalc(true);
