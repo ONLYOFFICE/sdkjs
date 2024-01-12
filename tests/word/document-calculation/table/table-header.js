@@ -34,6 +34,16 @@
 
 $(function ()
 {
+	function checkBounds(actual, expected, message)
+	{
+		let maxDifference = 0.01;
+		
+		QUnit.assert.close(actual.Left, expected.Left, maxDifference, "Left: " + message);
+		QUnit.assert.close(actual.Top, expected.Top, maxDifference, "Top: " + message);
+		QUnit.assert.close(actual.Right, expected.Right, maxDifference, "Right: " + message);
+		QUnit.assert.close(actual.Bottom, expected.Bottom, maxDifference, "Bottom: " + message);
+	}
+	
 	const logicDocument = AscTest.CreateLogicDocument()
 	
 	function setupDocument()
@@ -49,6 +59,7 @@ $(function ()
 		beforeEach : function()
 		{
 			setupDocument();
+			AscTest.SetCompatibilityMode(AscCommon.document_compatibility_mode_Current);
 		}
 	});
 	
@@ -70,22 +81,50 @@ $(function ()
 		table.GetRow(1).SetHeight(50, Asc.linerule_AtLeast);
 		table.GetRow(2).SetHeight(50, Asc.linerule_AtLeast);
 		table.GetRow(3).SetHeight(50, Asc.linerule_AtLeast);
+		
+		let cellContent = table.GetRow(0).GetCell(0).GetContent();
+		cellContent.PushToContent(AscTest.CreateParagraph());
+		cellContent.PushToContent(AscTest.CreateParagraph());
 
 		// Test a normal table divided into two pages
 		AscTest.Recalculate();
-		assert.strictEqual(table.GetPagesCount(), 2, "Check pages count");
-		assert.deepEqual(table.getRowBounds(2, 1), new AscWord.CDocumentBounds(50, 50, 350, 100), "Check row bounds of the first row on the second page");
+		assert.strictEqual(table.GetPagesCount(), 2, "Test a normal table divided into two pages");
+		checkBounds(table.getRowBounds(1, 0), new AscWord.CDocumentBounds(50, 280, 350, 330), "Check row bounds of the last row on the first page");
+		checkBounds(table.getRowBounds(2, 1), new AscWord.CDocumentBounds(50, 50, 350, 100), "Check row bounds of the first row on the second page");
 		
 		// Test table with 1 heading row divided into two pages
 		table.GetRow(0).SetHeader(true);
 		AscTest.Recalculate();
-		assert.strictEqual(table.GetPagesCount(), 2, "Check pages count");
-		assert.deepEqual(table.getRowBounds(2, 1), new AscWord.CDocumentBounds(50, 100, 350, 150), "Check row bounds of the first row on the second page");
+		assert.strictEqual(table.GetPagesCount(), 2, "Test table with 1 heading row divided into two pages");
+		checkBounds(table.getRowBounds(2, 1), new AscWord.CDocumentBounds(50, 110, 350, 160), "Check row bounds of the first row on the second page");
 		
-		// Test case when no regular rows on the first page and whole table should start from the second page (#62031)
+		AscTest.SetCompatibilityMode(AscCommon.document_compatibility_mode_Word12);
+		
+		// #62031 (next several cases)
 		paragraph.SetParagraphSpacing({Before: 200});
 		AscTest.Recalculate();
-		assert.strictEqual(table.GetPagesCount(), 2, "Check pages count");
+		assert.strictEqual(table.GetPagesCount(), 2, "The case when the table is split by the row following the header row (2010 compatibility)");
+		assert.strictEqual(table.IsEmptyPage(0), false, "First page should be empty");
+		assert.strictEqual(table.IsEmptyPage(1), false, "Check second page");
+		
+		paragraph.SetParagraphSpacing({Before: 225});
+		AscTest.Recalculate();
+		assert.strictEqual(table.GetPagesCount(), 2, "The case when the table is split by the row the header row (but row it's self can be split across multiple pages) (2010 compatibility)");
+		assert.strictEqual(table.IsEmptyPage(0), true, "First page should be empty");
+		assert.strictEqual(table.IsEmptyPage(1), false, "Check second page");
+		
+		AscTest.SetCompatibilityMode(AscCommon.document_compatibility_mode_Word15);
+		// Случай, когда таблица разбивается на строке следующей за заголовочной строкой
+		paragraph.SetParagraphSpacing({Before: 200});
+		AscTest.Recalculate();
+		assert.strictEqual(table.GetPagesCount(), 2, "The case when the table is split by the row following the header row (2015 compatibility)");
+		assert.strictEqual(table.IsEmptyPage(0), true, "First page should be empty");
+		assert.strictEqual(table.IsEmptyPage(1), false, "Check second page");
+		
+		// Случай, когда таблица разбивается на заголовочной строке
+		paragraph.SetParagraphSpacing({Before: 225});
+		AscTest.Recalculate();
+		assert.strictEqual(table.GetPagesCount(), 2, "The case when the table is split by the row the header row (but row it's self can be split across multiple pages) (2015 compatibility)");
 		assert.strictEqual(table.IsEmptyPage(0), true, "First page should be empty");
 		assert.strictEqual(table.IsEmptyPage(1), false, "Check second page");
 	});
