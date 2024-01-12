@@ -6334,42 +6334,145 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"EOMONTH\"", function (assert) {
+		// base mode
+		ws.workbook.setDate1904(false, true);
 
-		if (!AscCommon.bDate1904) {
-			oParser = new parserFormula("EOMONTH(DATE(2006,1,31),5)", "A2", ws);
-			assert.ok(oParser.parse());
-			assert.strictEqual(oParser.calculate().getValue(), 38898);
+		oParser = new parserFormula("EOMONTH(0,1)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(0,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 59, 'Result of EOMONTH(0,1)');
 
-			oParser = new parserFormula("EOMONTH(DATE(2004,2,29),12)", "A2", ws);
-			assert.ok(oParser.parse());
-			assert.strictEqual(oParser.calculate().getValue(), 38411);
+		oParser = new parserFormula("EOMONTH(1,1)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(1,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 59, 'Result of EOMONTH(1,1)');
 
-			ws.getRange2("A7").setValue("02-28-2004");
-			oParser = new parserFormula("EOMONTH(A7,12)", "A2", ws);
-			assert.ok(oParser.parse());
-			assert.strictEqual(oParser.calculate().getValue(), 38411);
+		oParser = new parserFormula("EOMONTH(2,1)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(2,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 59, 'Result of EOMONTH(2,1)');
 
-			oParser = new parserFormula("EOMONTH(DATE(2004,1,15),-23)", "A2", ws);
-			assert.ok(oParser.parse());
-			assert.strictEqual(oParser.calculate().getValue(), 37315);
-		} else {
-			oParser = new parserFormula("EOMONTH(DATE(2006,1,31),5)", "A2", ws);
-			assert.ok(oParser.parse());
-			assert.strictEqual(oParser.calculate().getValue(), 37436);
+		oParser = new parserFormula("EOMONTH(59,1)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(59,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 91, 'Result of EOMONTH(59,1)');
 
-			oParser = new parserFormula("EOMONTH(DATE(2004,2,29),12)", "A2", ws);
-			assert.ok(oParser.parse());
-			assert.strictEqual(oParser.calculate().getValue(), 36949);
+		oParser = new parserFormula("EOMONTH(60,1)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(60,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 91, 'Result of EOMONTH(60,1)');
 
-			ws.getRange2("A7").setValue("02-28-2004");
-			oParser = new parserFormula("EOMONTH(A7,12)", "A2", ws);
-			assert.ok(oParser.parse());
-			assert.strictEqual(oParser.calculate().getValue(), 36949);
+		oParser = new parserFormula("EOMONTH(61,1)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(61,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 121, 'Result of EOMONTH(61,1)');
 
-			oParser = new parserFormula("EOMONTH(DATE(2004,1,15),-23)", "A2", ws);
-			assert.ok(oParser.parse());
-			assert.strictEqual(oParser.calculate().getValue(), 35853);
-		}
+		oParser = new parserFormula("EOMONTH(62,1)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(62,1)');
+		assert.strictEqual(oParser.calculate().getValue(), 121, 'Result of EOMONTH(62,1)');
+
+
+
+		oParser = new parserFormula("EOMONTH(DATE(2006,1,31),5)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 38898);
+
+		oParser = new parserFormula("EOMONTH(DATE(2004,2,29),12)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 38411);
+
+		ws.getRange2("A7").setValue("02-28-2004");
+		oParser = new parserFormula("EOMONTH(A7,12)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 38411);
+
+		oParser = new parserFormula("EOMONTH(DATE(2004,1,15),-23)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 37315);
+
+		oParser = new parserFormula("EOMONTH(DATE(2018,3,16),10)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(DATE(2018,3,16),10)');
+		assert.strictEqual(oParser.calculate().getValue(), 43496, 'Result of EOMONTH(DATE(2018,3,16),10)');
+
+		// string
+		oParser = new parserFormula('EOMONTH("43175","10")', "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH("43175","10")');
+		assert.strictEqual(oParser.calculate().getValue(), 43496, 'Result of EOMONTH("43175","10")');
+
+		oParser = new parserFormula('EOMONTH("43175+1","10")', "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH("43175+1","10")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of EOMONTH("43175+1","10")');
+
+		oParser = new parserFormula('EOMONTH("43175","10+1")', "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH("43175","10+1")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of EOMONTH("43175","10+1")');
+
+		// bool
+		oParser = new parserFormula('EOMONTH(43175,FALSE)', "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(43175,FALSE)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of EOMONTH(43175,FALSE)');
+
+		oParser = new parserFormula('EOMONTH(43175,TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(43175,TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of EOMONTH(43175,TRUE)');
+
+		oParser = new parserFormula('EOMONTH(TRUE,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(TRUE,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of EOMONTH(TRUE,1)');
+
+		// err
+		oParser = new parserFormula('EOMONTH(#N/A,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(#N/A,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of EOMONTH(#N/A,1)');
+
+		oParser = new parserFormula('EOMONTH(#N/A,#NUM!)', "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(#N/A,#NUM!)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of EOMONTH(#N/A,#NUM!)');
+
+		oParser = new parserFormula('EOMONTH(#NUM!,#N/A)', "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(#NUM!,#N/A)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of EOMONTH(#NUM!,#N/A)');
+
+		// set 1904 mode
+		ws.workbook.setDate1904(true, true);
+
+		oParser = new parserFormula("EOMONTH(0,1)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(0,1) 1904 mode');
+		assert.strictEqual(oParser.calculate().getValue(), 59, 'Result of EOMONTH(0,1) 1904 mode');
+
+		oParser = new parserFormula("EOMONTH(1,1)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(1,1) 1904 mode');
+		assert.strictEqual(oParser.calculate().getValue(), 59, 'Result of EOMONTH(1,1) 1904 mode');
+
+		oParser = new parserFormula("EOMONTH(2,1)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(2,1) 1904 mode');
+		assert.strictEqual(oParser.calculate().getValue(), 59, 'Result of EOMONTH(2,1) 1904 mode');
+
+		oParser = new parserFormula("EOMONTH(59,1)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(59,1) 1904 mode');
+		assert.strictEqual(oParser.calculate().getValue(), 90, 'Result of EOMONTH(59,1) 1904 mode');
+
+		oParser = new parserFormula("EOMONTH(60,1)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(60,1) 1904 mode');
+		assert.strictEqual(oParser.calculate().getValue(), 120, 'Result of EOMONTH(60,1) 1904 mode');
+
+		oParser = new parserFormula("EOMONTH(61,1)", "A2", ws);
+		assert.ok(oParser.parse(), 'EOMONTH(61,1) 1904 mode');
+		assert.strictEqual(oParser.calculate().getValue(), 120, 'Result of EOMONTH(61,1) 1904 mode');
+
+		oParser = new parserFormula("EOMONTH(DATE(2006,1,31),5)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 37436);
+
+		oParser = new parserFormula("EOMONTH(DATE(2004,2,29),12)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 36949);
+
+		ws.getRange2("A7").setValue("02-28-2004");
+		oParser = new parserFormula("EOMONTH(A7,12)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 36949);
+
+		oParser = new parserFormula("EOMONTH(DATE(2004,1,15),-23)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 35853);
+
+		// base mode
+		ws.workbook.setDate1904(false, true);
 
 		testArrayFormula2(assert, "EOMONTH", 2, 2, true, null);
 	});
