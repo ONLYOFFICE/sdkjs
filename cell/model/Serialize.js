@@ -1187,12 +1187,17 @@
         Name: 2,
         Text: 3,
         User: 4,
-        UsersGroup: 5
+        UsersGroup: 5,
+        Type: 6
     };
 	var c_oSerUserProtectedRangeDesc = {
 		Id: 0,
 		Name: 1
 	};
+    var c_oSerUserProtectedRangeType = {
+        edit: 0,
+        view: 1
+    };
 
     /** @enum */
     var c_oSer_Timeline = {
@@ -6094,6 +6099,11 @@
 				var sqRef = getSqRefString([oUserProtectedRange.ref]);
             	this.bs.WriteItem(c_oSerUserProtectedRange.Sqref, function () {
                     oThis.memory.WriteString3(sqRef);
+                });
+            }
+            if (oUserProtectedRange.userProtectedType) {
+                this.bs.WriteItem(c_oSerUserProtectedRange.Type, function () {
+                    oThis.memory.WriteLong(oUserProtectedRange.userProtectedType);
                 });
             }
             if (oUserProtectedRange.warningText) {
@@ -13598,6 +13608,6 @@
     prot['pageBreakPreview'] = prot.pageBreakPreview;
     prot['pageLayout'] = prot.pageLayout;
 
-
+    window["AscCommonExcel"].c_oSerUserProtectedRangeType = c_oSerUserProtectedRangeType;
 
 })(window);

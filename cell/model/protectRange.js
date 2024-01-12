@@ -41,6 +41,8 @@
 
 		this.usersGroups = null;
 
+		this.userProtectedType = null;//default -> AscCommonExcel.c_oSerUserProtectedRangeType.edit
+
 		//for warning
 		this.warningText = null;
 
@@ -66,6 +68,8 @@
 		res.name = this.name;
 		res.users = this.users;
 		res.usersGroups = this.usersGroups;
+
+		res.userProtectedType = this.userProtectedType;
 
 		res.warningText = this.warningText;
 
@@ -120,6 +124,13 @@
 			w.WriteBool(false);
 		}
 
+		if (null != this.userProtectedType) {
+			w.WriteBool(true);
+			w.WriteLong(this.userProtectedType);
+		} else {
+			w.WriteBool(false);
+		}
+
 		if (null != this.warningText) {
 			w.WriteBool(true);
 			w.WriteString2(this.warningText);
@@ -169,6 +180,10 @@
 				newUserInfo.Read_FromBinary2(r);
 				this.usersGroups.push(newUserInfo);
 			}
+		}
+
+		if (r.GetBool()) {
+			this.userProtectedType = r.GetLong();
 		}
 
 		if (r.GetBool()) {
@@ -272,6 +287,13 @@
 	CUserProtectedRange.prototype.initPostOpen = function (ws) {
 		this._ws = ws;
 	};
+	CUserProtectedRange.prototype.asc_getUserProtectedType = function () {
+		return this.userProtectedType;
+	};
+	CUserProtectedRange.prototype.asc_setUserProtectedType = function (val) {
+		this.userProtectedType = val;
+	};
+
 
 	function CUserProtectedRangeUserInfo() {
 		this.id = null;
@@ -341,14 +363,17 @@
 	prot["asc_getName"] = prot.asc_getName;
 	prot["asc_getUsers"] = prot.asc_getUsers;
 	prot["asc_getUserGroups"] = prot.asc_getUserGroups;
+	prot["asc_getUserProtectedType"] = prot.asc_getUserProtectedType;
 
 	prot["asc_setRef"] = prot.asc_setRef;
 	prot["asc_setName"] = prot.asc_setName;
 	prot["asc_setUsers"] = prot.asc_setUsers;
+	prot["asc_setUserProtectedType"] = prot.asc_setUserProtectedType;
 
 	prot["asc_getId"] = prot.asc_getId;
 
 	prot["asc_getIsLock"] = prot.asc_getIsLock;
+
 
 
 	window["Asc"]["CUserProtectedRangeUserInfo"] = window["Asc"].CUserProtectedRangeUserInfo = CUserProtectedRangeUserInfo;

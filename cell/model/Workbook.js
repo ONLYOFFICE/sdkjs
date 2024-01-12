@@ -13809,7 +13809,7 @@
 		// if (CellValueType.Error == this.getType()) {
 		// 	return this._getValueTypeError(textValueForEdit);
 		// }
-		if (this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden()) {
+		if ((this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden()) || (this.ws.isUserProtectedRangesIntersection(oBBoxFrom))) {
 			return "";
 		}
 
@@ -13825,11 +13825,11 @@
 		var oValueArray = null;
 		var xfs = this.getCompiledStyle();
 		if (this.isFormula()) {
-			if (!(this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden())) {
-			this.processFormula(function(parsed) {
-				// ToDo если будет притормаживать, то завести переменную и не рассчитывать каждый раз!
-				oValueText = "=" + parsed.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
-			});
+			if (!((this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden() || (this.ws.isUserProtectedRangesIntersection(oBBoxFrom))))) {
+				this.processFormula(function(parsed) {
+					// ToDo если будет притормаживать, то завести переменную и не рассчитывать каждый раз!
+					oValueText = "=" + parsed.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
+				});
 			}
 		} else {
 			if(null != this.text || null != this.number)
