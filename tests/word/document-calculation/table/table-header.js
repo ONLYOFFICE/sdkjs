@@ -81,6 +81,13 @@ $(function ()
 		AscTest.Recalculate();
 		assert.strictEqual(table.GetPagesCount(), 2, "Check pages count");
 		assert.deepEqual(table.getRowBounds(2, 1), new AscWord.CDocumentBounds(50, 100, 350, 150), "Check row bounds of the first row on the second page");
+		
+		// Test case when no regular rows on the first page and whole table should start from the second page (#62031)
+		paragraph.SetParagraphSpacing({Before: 200});
+		AscTest.Recalculate();
+		assert.strictEqual(table.GetPagesCount(), 2, "Check pages count");
+		assert.strictEqual(table.IsEmptyPage(0), true, "First page should be empty");
+		assert.strictEqual(table.IsEmptyPage(1), false, "Check second page");
 	});
 	
 });

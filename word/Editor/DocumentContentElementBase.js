@@ -940,6 +940,10 @@ CDocumentContentElementBase.prototype.GetIndex = function()
 
 	return this.Index;
 };
+CDocumentContentElementBase.prototype.getPageBounds = function(iPage)
+{
+	return this.Get_PageBounds(iPage);
+};
 CDocumentContentElementBase.prototype.GetPageBounds = function(CurPage)
 {
 	return this.Get_PageBounds(CurPage);
