@@ -45,6 +45,7 @@ const allTests = [
 	'word/document-calculation/table/correctBadTable.html',
 	'word/document-calculation/table/flowTablePosition.html',
 	'word/document-calculation/table/pageBreak.html',
+	'word/document-calculation/table/table-header.html',
 	'word/document-calculation/textShaper/textShaper.html',
 	'word/document-calculation/text-hyphenator/text-hyphenator.html',
 	'word/forms/forms.html',
