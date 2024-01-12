@@ -4923,6 +4923,9 @@ function (window, undefined) {
 				}
 			} else if (cElementType.array === element.type) {
 				element.foreach(function (arrElem) {
+					if (cElementType.cell === arrElem.type || cElementType.cell3D === arrElem.type) {
+						arrElem = arrElem.getValue();
+					}
 					if (cElementType.bool !== arrElem.type && cElementType.string !== arrElem.type &&
 						cElementType.empty !== arrElem.type) {
 						arg0 = _func[arg0.type][arrElem.type](arg0, arrElem, "+");
