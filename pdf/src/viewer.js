@@ -1156,6 +1156,9 @@
 					else if (oFormInfo["font"]["name"]) {
 						oForm.SetTextFontActual(AscFonts.getEmbeddedFontPrefix() + oFormInfo["font"]["name"]);
 					}
+					else {
+						oForm.SetTextFontActual(AscPDF.DEFAULT_FIELD_FONT);
+					}
 
 					// внутренний ключ для пересылки обратно (зачем? - попросили)
 					oForm.SetFontKey(oFormInfo["font"]["key"]);

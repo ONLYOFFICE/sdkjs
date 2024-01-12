@@ -105,7 +105,7 @@
 
     const MAX_TEXT_SIZE = 32767;
 	
-	const DEFAULT_FIELD_FONT = "Times New Roman";
+	const DEFAULT_FIELD_FONT = "Arial";
 	
 	
 	// freeze objects
