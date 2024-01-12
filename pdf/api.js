@@ -470,11 +470,9 @@
 		if (!oActiveForm)
 			return;
 
-		let sDate = oPr.ToString();
+		let oDate = new Asc.cDate(oPr.GetFullDate());
 		let oCurDate = new Date();
 
-		let parts = sDate.split(".");
-		let oDate = new Date(parts[2], parts[1] - 1, parts[0]);
 		oDate.setMinutes(oCurDate.getMinutes());
 		oDate.setSeconds(oCurDate.getSeconds());
 		oDate.getMilliseconds(oCurDate.getMilliseconds());
