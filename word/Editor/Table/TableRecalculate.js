@@ -37,9 +37,7 @@ CTable.prototype.Recalculate_Page = function(PageIndex)
 	//-------------------------------------------------------------------------------------------------------------
 	// Обрабатываем настройку "не отрывать от следующего"
 	//-------------------------------------------------------------------------------------------------------------
-	let result = this.RecalculateKeepNext(PageIndex);
-	if (result !== recalcresult_NextElement)
-		return result;
+	let result = recalcresult_NextElement;
 	
 	this.SetIsRecalculated(true);
 
