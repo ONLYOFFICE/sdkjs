@@ -34,6 +34,13 @@
 var c_oAscSectionBreakType    = Asc.c_oAscSectionBreakType;
 CTable.prototype.Recalculate_Page = function(PageIndex)
 {
+	//-------------------------------------------------------------------------------------------------------------
+	// Обрабатываем настройку "не отрывать от следующего"
+	//-------------------------------------------------------------------------------------------------------------
+	let result = this.RecalculateKeepNext(PageIndex);
+	if (result !== recalcresult_NextElement)
+		return result;
+	
 	this.SetIsRecalculated(true);
 
 	if (0 === PageIndex)
@@ -52,20 +59,20 @@ CTable.prototype.Recalculate_Page = function(PageIndex)
 		return recalcresult_NextPage | recalcresultflags_Column;
 
 	this.private_RecalculatePositionX(PageIndex);
-
-	var Result = this.private_RecalculatePage(PageIndex);
-	if (Result & recalcresult_CurPage)
-		return Result;
+	
+	result = this.private_RecalculatePage(PageIndex);
+	if (result & recalcresult_CurPage)
+		return result;
 
 	this.private_RecalculatePositionY(PageIndex);
 
-	if (Result & recalcresult_NextElement)
+	if (result & recalcresult_NextElement)
 		this.RecalcInfo.Reset(false);
 
-	if (Result & recalcresult_NextElement && window['AscCommon'].g_specialPasteHelper && window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph === this.GetId())
+	if (result & recalcresult_NextElement && window['AscCommon'].g_specialPasteHelper && window['AscCommon'].g_specialPasteHelper.showButtonIdParagraph === this.GetId())
 		window['AscCommon'].g_specialPasteHelper.SpecialPasteButtonById_Show();
 
-	return Result;
+	return result;
 };
 CTable.prototype.Recalculate_SkipPage = function(PageIndex)
 {

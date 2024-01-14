@@ -680,7 +680,7 @@ Paragraph.prototype.private_RecalculatePageInternal = function(PRS, CurPage, bFi
     //-------------------------------------------------------------------------------------------------------------
     // Обрабатываем настройку "не отрывать от следующего"
     //-------------------------------------------------------------------------------------------------------------
-    if (false === this.private_RecalculatePageKeepNext(CurLine, CurPage, PRS, ParaPr))
+    if (false === this.private_RecalculatePageKeepNext(CurPage, PRS, ParaPr))
         return PRS.RecalcResult;
 
     //-------------------------------------------------------------------------------------------------------------
@@ -777,8 +777,20 @@ Paragraph.prototype.private_RecalculatePageInternal = function(PRS, CurPage, bFi
     return RecalcResult;
 };
 
-Paragraph.prototype.private_RecalculatePageKeepNext    = function(CurLine, CurPage, PRS, ParaPr)
+Paragraph.prototype.private_RecalculatePageKeepNext = function(CurPage, PRS, paraPr)
 {
+	if (paraPr.PageBreakBefore)
+		return true;
+	
+	let recalcResult = this.RecalculateKeepNext(CurPage);
+	if (recalcresult_NextElement !== recalcResult)
+	{
+		PRS.RecalcResult = recalcResult;
+		return false;
+	}
+	
+	return true;
+	
     // Такая настройка срабатывает в единственном случае:
     // У предыдущего параграфа выставлена данная настройка, а текущий параграф сразу начинается с новой страницы
     // ( при этом у него не выставлен флаг "начать с новой страницы", иначе будет зацикливание здесь ).
