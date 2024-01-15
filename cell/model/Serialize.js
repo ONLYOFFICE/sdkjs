@@ -13610,6 +13610,6 @@
     prot['pageBreakPreview'] = prot.pageBreakPreview;
     prot['pageLayout'] = prot.pageLayout;
 
-    window["AscCommonExcel"].c_oSerUserProtectedRangeType = c_oSerUserProtectedRangeType;
+    window["Asc"].c_oSerUserProtectedRangeType = c_oSerUserProtectedRangeType;
 
 })(window);

@@ -13832,7 +13832,7 @@
 		// 	return this._getValueTypeError(textValueForEdit);
 		// }
 		if ((this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden()) ||
-			(this.ws.isUserProtectedRangesIntersectionCell(this, null, null, AscCommonExcel.c_oSerUserProtectedRangeType.View))) {
+			(this.ws.isUserProtectedRangesIntersectionCell(this, null, null, Asc.c_oSerUserProtectedRangeType.View))) {
 			return "";
 		}
 
@@ -13849,7 +13849,7 @@
 		var xfs = this.getCompiledStyle();
 		if (this.isFormula()) {
 			if (!((this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden() ||
-				(this.ws.isUserProtectedRangesIntersectionCell(this, null, null, AscCommonExcel.c_oSerUserProtectedRangeType.View))))) {
+				(this.ws.isUserProtectedRangesIntersectionCell(this, null, null, Asc.c_oSerUserProtectedRangeType.View))))) {
 				this.processFormula(function (parsed) {
 					// ToDo если будет притормаживать, то завести переменную и не рассчитывать каждый раз!
 					oValueText = "=" + parsed.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
