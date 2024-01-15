@@ -182,6 +182,9 @@
 	CUserProtectedRange.prototype.intersection = function (range) {
 		return this.ref && this.ref.intersection(range);
 	};
+	CUserProtectedRange.prototype.contains2 = function (oCell) {
+		return this.ref && this.ref.contains2(oCell);
+	};
 	CUserProtectedRange.prototype.isUserCanEdit = function (userId, type) {
 		if (this.users) {
 			for (let i = 0; i < this.users.length; i++) {
