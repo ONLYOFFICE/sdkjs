@@ -20414,19 +20414,26 @@
 		*/
 		if (nDateUnit === oSeriesDateUnitType.weekday) {
 			const aWeekdays = [1, 2, 3, 4, 5];
-			let oCurrentValDate;
+			const nFirstCellVal = oFilledLine.oCell.getNumberValue();
+			let oFirstCellValDate = new Asc.cDate().getDateFromExcel(nFirstCellVal < 60 ? nFirstCellVal + 1 : nFirstCellVal);
 
-			while (true) {
-				nPrevVal = this.getPrevValue();
-				let nCurrentVal = _smartRound(nPrevVal + nStep, nStep);
-				// Convert number to cDate object
-				oCurrentValDate = new Asc.cDate().getDateFromExcel(nPrevVal < 60 ? nCurrentVal + 1 : nCurrentVal);
-				this.setPrevValue(nCurrentVal);
-				if (aWeekdays.includes(oCurrentValDate.getDay())) {
-					break;
+			if (nFirstCellVal === nPrevVal && oFirstCellValDate.getDay() === 6) {
+				nPrevVal += 1;
+			}
+			let nCurrentVal = _smartRound(nPrevVal + nStep, nStep);
+			// Convert number to cDate object
+			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nPrevVal < 60 ? nCurrentVal + 1 : nCurrentVal);
+			if (!aWeekdays.includes(oCurrentValDate.getDay())) {
+				let nWeekendStep = Math.floor(nCurrentVal) - Math.floor(nPrevVal);
+				while (true) {
+					nWeekendStep === 0 ? nCurrentVal += 1 : nCurrentVal += nWeekendStep;
+					oCurrentValDate = new Asc.cDate().getDateFromExcel(nCurrentVal < 60 ? nCurrentVal + 1 : nCurrentVal);
+					if (aWeekdays.includes(oCurrentValDate.getDay())) {
+						break;
+					}
 				}
 			}
-
+			this.setPrevValue(nCurrentVal)
 			return oCurrentValDate.getExcelDate();
 		}
 
@@ -20439,26 +20446,28 @@
 
 		let nIntegerVal = oFilledLine.nValue;
 		if (nDateUnit === oSeriesDateUnitType.month) {
-			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nPrevVal < 60 ? nIntegerVal + 1 : nIntegerVal);
+			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nIntegerVal < 60 ? nIntegerVal + 1 : nIntegerVal);
 			let nFinalStep = _smartRound(nCurrentVal - nIntegerVal, nStep);
 			if (Number.isInteger(nFinalStep)) {
 				oCurrentValDate.addMonths(nFinalStep);
 				oFilledLine.nValue = oCurrentValDate.getExcelDate();
 				this.setPrevValue(oFilledLine.nValue);
+				return oFilledLine.nValue;
 			}
-
-			return oFilledLine.nValue;
+			oCurrentValDate.addMonths(nFinalStep);
+			return oCurrentValDate.getExcelDate();
 		}
 		if (nDateUnit === oSeriesDateUnitType.year) {
-			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nPrevVal < 60 ? nIntegerVal + 1 : nIntegerVal);
+			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nIntegerVal < 60 ? nIntegerVal + 1 : nIntegerVal);
 			let nFinalStep = _smartRound(nCurrentVal - nIntegerVal, nStep);
 			if (Number.isInteger(nFinalStep)) {
 				oCurrentValDate.addYears(nFinalStep);
 				oFilledLine.nValue = oCurrentValDate.getExcelDate();
 				this.setPrevValue(oFilledLine.nValue);
+				return oFilledLine.nValue;
 			}
-
-			return oFilledLine.nValue;
+			oCurrentValDate.addYears(nFinalStep);
+			return oCurrentValDate.getExcelDate();
 		}
 	};
 	/**
