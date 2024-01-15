@@ -80,5 +80,36 @@ $(function ()
 		assert.strictEqual(p3.GetStartPageAbsolute(), 1, "check p3 start page number");
 	});
 	
+	QUnit.test("Test the case when a paragraph with the KeepNext property is followed by a table", function (assert)
+	{
+		let p1 = AscTest.CreateParagraph();
+		let p2 = AscTest.CreateParagraph();
+		
+		let table = AscTest.CreateTable(3, 3);
+		table.GetRow(0).SetHeight(50, Asc.linerule_AtLeast);
+		table.GetRow(1).SetHeight(50, Asc.linerule_AtLeast);
+		table.GetRow(2).SetHeight(50, Asc.linerule_AtLeast);
+		
+		logicDocument.PushToContent(p1);
+		logicDocument.PushToContent(p2);
+		logicDocument.PushToContent(table);
+		
+		AscTest.Recalculate();
+		assert.strictEqual(logicDocument.GetPagesCount(), 1, "Should be 1 page");
+		
+		p1.SetParagraphSpacing({After: 250});
+		
+		AscTest.Recalculate();
+		assert.strictEqual(p2.GetPagesCount(), 1, "p2 have 1 page");
+		assert.strictEqual(table.GetPagesCount(), 2, "table have 2 pages");
+		assert.strictEqual(table.IsEmptyPage(0) && !table.IsEmptyPage(1), true, "table's the first page is empty and the second is not");
+
+		p2.SetParagraphKeepNext(true);
+		AscTest.Recalculate();
+		assert.strictEqual(p2.GetPagesCount(), 2, "p2 have 2 pages");
+		assert.strictEqual(p2.IsEmptyPage(0) && !p2.IsEmptyPage(1), true, "p2 the first page is empty and the second is not");
+		assert.strictEqual(table.GetPagesCount(), 1, "table have 1 page");
+		assert.strictEqual(table.GetStartPageAbsolute(), 1, "check table start page number");
+	});
 	
 });
