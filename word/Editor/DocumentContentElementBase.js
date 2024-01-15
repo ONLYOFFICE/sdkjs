@@ -208,10 +208,13 @@ CDocumentContentElementBase.prototype.Reset_RecalculateCache = function()
  */
 CDocumentContentElementBase.prototype.RecalculateKeepNext = function(iPage)
 {
+	if (!(this.Parent instanceof CDocument))
+		return recalcresult_NextElement;
+	
 	// Такая настройка срабатывает в единственном случае:
 	// У предыдущего параграфа выставлена данная настройка, а текущий параграф сразу начинается с новой страницы
 	// ( при этом у него не выставлен флаг "начать с новой страницы", иначе будет зацикливание здесь ).
-	if (1 === iPage && this.IsEmptyPage(0) && this.Parent instanceof CDocument)
+	if (1 === iPage && this.IsEmptyPage(0))
 	{
 		// Если у предыдущего параграфа стоит настройка "не отрывать от следующего".
 		// И сам параграф не разбит на несколько страниц и не начинается с новой страницы,
