@@ -3747,6 +3747,10 @@ function (window, undefined) {
 			}
 
 			if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type || cElementType.array === arg2.type) {
+				if (cElementType.array === arg2.type && (arg2.getRowCount() > 1 && arg2.getCountElementInRow() > 1)) {
+					return new cError(cErrorType.not_available);
+				}
+
 				arg2 = arg2.getFirstElement();
 			}
 			if (arg2.type === cElementType.cell) {
@@ -3766,8 +3770,8 @@ function (window, undefined) {
 
 		
 		if (cElementType.array === arg1.type && cElementType.array === arg2.type) {		/* arg1 & arg2 is arrays */
-			if (arg1.getRowCount() !== arg2.getRowCount() &&
-				arg1.getCountElementInRow() !== arg2.getCountElementInRow()) {
+			// check two dimensional array
+			if ((arg1.getRowCount() > 1 && arg1.getCountElementInRow() > 1) || (arg2.getRowCount() > 1 && arg2.getCountElementInRow() > 1)) {
 				return new cError(cErrorType.not_available);
 			}
 
@@ -3777,10 +3781,17 @@ function (window, undefined) {
 				return new cError(cErrorType.not_available);
 			}
 
-			return arg2.getElementRowCol(resR, resC);
+			if (arg2.getRowCount() > 1) {
+				// return val by col
+				return arg2.getElementRowCol(resR > resC ? resR : resC, 0);
+			} else {
+				// return val by row
+				return arg2.getElementRowCol(0, resR > resC ? resR : resC);
+			}
+
+			// return arg2.getElementRowCol(resR, resC);
 
 		} else if (cElementType.array === arg1.type || cElementType.array === arg2.type) {	/* arg1 || arg2 is array */
-
 			let _arg1, BBox;
 			_arg1 = cElementType.array === arg1.type ? arg1 : arg1.getFullArray();	// !!! slow
 
