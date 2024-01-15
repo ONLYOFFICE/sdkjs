@@ -790,57 +790,6 @@ Paragraph.prototype.private_RecalculatePageKeepNext = function(CurPage, PRS, par
 	}
 	
 	return true;
-	
-    // Такая настройка срабатывает в единственном случае:
-    // У предыдущего параграфа выставлена данная настройка, а текущий параграф сразу начинается с новой страницы
-    // ( при этом у него не выставлен флаг "начать с новой страницы", иначе будет зацикливание здесь ).
-    if (1 === CurPage && true === this.Check_EmptyPages(0) && this.Parent instanceof CDocument && false === ParaPr.PageBreakBefore)
-    {
-        // Если у предыдущего параграфа стоит настройка "не отрывать от следующего".
-        // И сам параграф не разбит на несколько страниц и не начинается с новой страницы,
-        // тогда мы должны пересчитать предыдущую страницу, с учетом того, что предыдущий параграф
-        // надо начать с новой страницы.
-        var Curr = this.Get_DocumentPrev();
-        while (null != Curr && type_Paragraph === Curr.GetType() && undefined === Curr.Get_SectionPr())
-        {
-            var CurrKeepNext = Curr.Get_CompiledPr2(false).ParaPr.KeepNext;
-            if ((true === CurrKeepNext && Curr.Pages.length > 1) || false === CurrKeepNext || true !== Curr.Is_Inline() || true === Curr.Check_PageBreak())
-            {
-                break;
-            }
-            else
-            {
-                var Prev = Curr.Get_DocumentPrev();
-                if (null === Prev || (type_Paragraph === Prev.GetType() && undefined !== Prev.Get_SectionPr()))
-                    break;
-
-                if (type_Paragraph != Prev.GetType() || false === Prev.Get_CompiledPr2(false).ParaPr.KeepNext)
-                {
-                    if (true === this.Parent.RecalcInfo.Can_RecalcObject())
-                    {
-                        this.Parent.RecalcInfo.Set_KeepNext(Curr, this);
-                        PRS.RecalcResult = recalcresult_PrevPage | recalcresultflags_Column;
-                        return false;
-                    }
-                    else
-                        break;
-                }
-                else
-                {
-                    Curr = Prev;
-                }
-            }
-        }
-    }
-
-    if (true === this.Parent.RecalcInfo.Check_KeepNextEnd(this))
-    {
-        // Дошли до сюда, значит уже пересчитали данную ситуацию.
-        // Делаем Reset здесь, потому что Reset надо делать в том же месте, гды мы запросили пересчет заново.
-        this.Parent.RecalcInfo.Reset();
-    }
-
-    return true;
 };
 
 Paragraph.prototype.private_RecalculatePageXY          = function(CurLine, CurPage, PRS, ParaPr)
