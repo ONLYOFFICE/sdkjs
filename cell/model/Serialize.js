@@ -1187,13 +1187,13 @@
         Name: 2,
         Text: 3,
         User: 4,
-        UsersGroup: 5,
-        Type: 6
+        UsersGroup: 5
     };
-	var c_oSerUserProtectedRangeDesc = {
-		Id: 0,
-		Name: 1
-	};
+    var c_oSerUserProtectedRangeDesc = {
+        Id: 0,
+        Name: 1,
+        Type: 2
+    };
     var c_oSerUserProtectedRangeType = {
         edit: 0,
         view: 1
@@ -6085,6 +6085,11 @@
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
 				this.memory.WriteString2(desc.name);
 			}
+			if (desc.type) {
+				this.memory.WriteByte(c_oSerUserProtectedRangeDesc.Type);
+				this.memory.WriteByte(c_oSerPropLenType.Byte);
+				this.memory.WriteByte(desc.type);
+			}
 		};
         this.WriteUserProtectedRange = function (oUserProtectedRange) {
 
@@ -6099,11 +6104,6 @@
 				var sqRef = getSqRefString([oUserProtectedRange.ref]);
             	this.bs.WriteItem(c_oSerUserProtectedRange.Sqref, function () {
                     oThis.memory.WriteString3(sqRef);
-                });
-            }
-            if (oUserProtectedRange.userProtectedType) {
-                this.bs.WriteItem(c_oSerUserProtectedRange.Type, function () {
-                    oThis.memory.WriteLong(oUserProtectedRange.userProtectedType);
                 });
             }
             if (oUserProtectedRange.warningText) {
@@ -9221,13 +9221,15 @@
 		this.ReadUserProtectedRangeDesc = function (type, length, oUser) {
 			var res = c_oSerConstants.ReadOk;
 
-			if (c_oSerUserProtectedRangeDesc.Name === type) {
-				oUser.name = this.stream.GetString2LE(length);
-			} else if (c_oSerUserProtectedRangeDesc.Id === type) {
-				oUser.id = this.stream.GetString2LE(length);
-			} else {
-				res = c_oSerConstants.ReadUnknown;
-			}
+            if (c_oSerUserProtectedRangeDesc.Name === type) {
+                oUser.name = this.stream.GetString2LE(length);
+            } else if (c_oSerUserProtectedRangeDesc.Id === type) {
+                oUser.id = this.stream.GetString2LE(length);
+            } else if (c_oSerUserProtectedRangeDesc.Type === type) {
+                oUser.type = this.stream.GetByte(length);
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
 
 			return res;
 		};

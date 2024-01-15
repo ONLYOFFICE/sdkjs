@@ -12693,7 +12693,7 @@
 		return res;
 	};
 
-	Worksheet.prototype.isUserProtectedRangesIntersection = function(range, userId, notCheckUser){
+	Worksheet.prototype.isUserProtectedRangesIntersection = function (range, userId, notCheckUser, type) {
 		//range - array of ranges or range
 		let res = false;
 		if (!this.userProtectedRanges || !this.userProtectedRanges.length) {
@@ -12709,13 +12709,35 @@
 				let curUserProtectedRange = this.userProtectedRanges[i];
 				if (range && range.length) {
 					for (let j = 0; j < range.length; j++) {
-						if (curUserProtectedRange.intersection(range[j])&& (notCheckUser || !curUserProtectedRange.isUserCanEdit(userId))) {
+						if (curUserProtectedRange.intersection(range[j]) && (notCheckUser || !curUserProtectedRange.isUserCanEdit(userId, type))) {
 							return true;
 						}
 					}
-				} else if ((!range || curUserProtectedRange.intersection(range))&& (notCheckUser || !curUserProtectedRange.isUserCanEdit(userId))) {
+				} else if ((!range || curUserProtectedRange.intersection(range)) && (notCheckUser || !curUserProtectedRange.isUserCanEdit(userId, type))) {
 					res = true;
 					break;
+				}
+			}
+		}
+		return res;
+	};
+
+	Worksheet.prototype.isUserProtectedRangesIntersectionCell = function(oCell, userId, notCheckUser, type){
+		//range - array of ranges or range
+		let res = false;
+		if (!this.userProtectedRanges || !this.userProtectedRanges.length || !oCell) {
+			return res;
+		}
+		if (!userId) {
+			let oApi = Asc.editor;
+			userId = oApi.DocInfo && oApi.DocInfo.get_UserId();
+		}
+
+		if (this.userProtectedRanges && userId) {
+			for (let i = 0; i < this.userProtectedRanges.length; i++) {
+				let curUserProtectedRange = this.userProtectedRanges[i];
+				if (curUserProtectedRange.contains2(oCell) && (notCheckUser || !curUserProtectedRange.isUserCanEdit(userId, type))) {
+					return true;
 				}
 			}
 		}
@@ -13809,7 +13831,8 @@
 		// if (CellValueType.Error == this.getType()) {
 		// 	return this._getValueTypeError(textValueForEdit);
 		// }
-		if ((this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden()) || (this.ws.isUserProtectedRangesIntersection(oBBoxFrom))) {
+		if ((this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden()) ||
+			(this.ws.isUserProtectedRangesIntersectionCell(this, null, null, AscCommonExcel.c_oSerUserProtectedRangeType.View))) {
 			return "";
 		}
 
@@ -13825,8 +13848,9 @@
 		var oValueArray = null;
 		var xfs = this.getCompiledStyle();
 		if (this.isFormula()) {
-			if (!((this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden() || (this.ws.isUserProtectedRangesIntersection(oBBoxFrom))))) {
-				this.processFormula(function(parsed) {
+			if (!((this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden() ||
+				(this.ws.isUserProtectedRangesIntersectionCell(this, null, null, AscCommonExcel.c_oSerUserProtectedRangeType.View))))) {
+				this.processFormula(function (parsed) {
 					// ToDo если будет притормаживать, то завести переменную и не рассчитывать каждый раз!
 					oValueText = "=" + parsed.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
 				});
