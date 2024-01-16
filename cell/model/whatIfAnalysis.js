@@ -172,7 +172,7 @@ function (window, undefined) {
 			let nStepDirection = this.getStepDirection();
 			this.setPrevValue(nChangingVal);
 			this.setPrevFactValue(nFactValue);
-			if (nFirstChangingVal == null) {
+			if (!nFirstChangingVal) {
 				this.setChangingValue((1 / 100 * nStepDirection) + (Math.pow(2, nCurAttempt - 1) - 1) * (1 / 10 * nStepDirection));
 			} else {
 				this.setChangingValue(nFirstChangingVal + (nFirstChangingVal / 100 * nStepDirection) + (Math.pow(2, nCurAttempt - 1) - 1) * (nFirstChangingVal / 10 * nStepDirection));
