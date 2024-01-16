@@ -26918,7 +26918,6 @@
 						if ((typeSelection === Asc.c_oAscSelectionType.RangeCol || typeSelection === Asc.c_oAscSelectionType.RangeMax)) {
 							oThis.arrRecalcRangesWithHeight = [];
 							oThis.arrRecalcRangesWithHeight.push(new Asc.Range(0, 0, oThis.visibleRange.c2, oThis.visibleRange.r2));
-							oThis.arrRecalcRangesCanChangeColWidth.push(oThis.canChangeColWidth);
 						}
 
 						oThis.draw();
