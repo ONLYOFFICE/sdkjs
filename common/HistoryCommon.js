@@ -1290,6 +1290,12 @@
 			case AscDFH.historydescription_Document_ComplexField_MergeFormat:
 				sString = "Document_ComplexField_MergeFormat";
 				break;
+			case AscDFH.historydescription_Presentation_ResetSlideBackground:
+				sString = "historydescription_Presentation_ResetSlideBackground";
+				break;
+			case AscDFH.historydescription_Presentation_ApplyBackgroundToAll:
+				sString = "historydescription_Presentation_ApplyBackgroundToAll";
+				break;
 		}
 		return sString;
 	}
@@ -4489,6 +4495,8 @@
 	window['AscDFH'].historydescription_Document_RemoveMathShortcut                 = 0x01a9;
 	window['AscDFH'].historydescription_Document_SetAllFormsData                    = 0x01aa;
 	window['AscDFH'].historydescription_Document_ComplexField_MergeFormat           = 0x01ab;
+	window['AscDFH'].historydescription_Presentation_ResetSlideBackground           = 0x01ac;
+	window['AscDFH'].historydescription_Presentation_ApplyBackgroundToAll           = 0x01ad;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

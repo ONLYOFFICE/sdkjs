@@ -64,16 +64,20 @@
 
 	function CAscSlideProps()
 	{
-		this.Background     = null;
-		this.Transition     = null;
-		this.LayoutIndex    = null;
-		this.lockDelete     = null;
-		this.lockLayout     = null;
-		this.lockTiming     = null;
-		this.lockBackground = null;
-		this.lockTransition = null;
-		this.lockRemove     = null;
-		this.isHidden       = false;
+		this.Background           = null;
+		this.Transition           = null;
+		this.LayoutIndex          = null;
+		this.lockDelete           = false;
+		this.lockLayout           = false;
+		this.lockTiming           = false;
+		this.lockBackground       = false;
+		this.lockTransition       = false;
+		this.lockRemove           = false;
+		this.lockApplyToAll       = false;
+		this.lockResetBackground  = false;
+		this.isHidden             = false;
+		this.resetBackground      = false;
+		this.applyToAll           = false;
 	}
 
 	CAscSlideProps.prototype.get_background     = function()
@@ -152,7 +156,38 @@
 	{
 		return this.isHidden;
 	};
-
+	CAscSlideProps.prototype.get_LockApplyToAll     = function()
+	{
+		return this.lockApplyToAll;
+	};
+	CAscSlideProps.prototype.put_LockApplyToAll     = function(v)
+	{
+		this.lockApplyToAll = v;
+	};
+	CAscSlideProps.prototype.get_lockResetBackground     = function()
+	{
+		return this.lockResetBackground;
+	};
+	CAscSlideProps.prototype.put_lockResetBackground     = function(v)
+	{
+		this.lockResetBackground = v;
+	};
+	CAscSlideProps.prototype.get_ResetBackground     = function()
+	{
+		return this.resetBackground;
+	};
+	CAscSlideProps.prototype.put_ResetBackground     = function(v)
+	{
+		this.resetBackground = v;
+	};
+	CAscSlideProps.prototype.get_ApplyToAll     = function()
+	{
+		return this.applyToAll;
+	};
+	CAscSlideProps.prototype.put_ApplyToAll     = function(v)
+	{
+		this.applyToAll = v;
+	};
 	function CAscChartProp(obj)
 	{
 		if (obj)
@@ -3471,22 +3506,34 @@ background-repeat: no-repeat;\
 		if (null == prop)
 			return;
 
-		var arr_ind    = this.WordControl.m_oLogicDocument.GetSelectedSlides();
-		var _back_fill = prop.get_background();
+		const oLogicDocument = this.getLogicDocument();
+		if (!oLogicDocument) {
+			return;
+		}
 
-		if (_back_fill)
-		{
+		const _back_fill = prop.get_background();
+		const bResetBackground = prop.get_ResetBackground();
+		const bApplyBackgroundToAll = prop.get_ApplyToAll();
+		if (bResetBackground) {
+			const arr_ind    = oLogicDocument.GetSelectedSlides();
+			oLogicDocument.resetSlideBackground(arr_ind);
+			return;
+		} else if (bApplyBackgroundToAll) {
+			oLogicDocument.applySlideBackgroundToAll();
+			return;
+		} else if (_back_fill) {
+			const arr_ind    = oLogicDocument.GetSelectedSlides();
 			if (_back_fill.asc_getType() == c_oAscFill.FILL_TYPE_NOFILL)
 			{
 				var bg       = new AscFormat.CBg();
 				bg.bgPr      = new AscFormat.CBgPr();
 				bg.bgPr.Fill = AscFormat.CorrectUniFill(_back_fill, null, 0);
 
-				this.WordControl.m_oLogicDocument.changeBackground(bg, arr_ind);
+				oLogicDocument.changeBackground(bg, arr_ind);
 				return;
 			}
 
-			var _old_fill = this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage].backgroundFill;
+			var _old_fill = oLogicDocument.Slides[oLogicDocument.CurPage].backgroundFill;
 			if (AscCommon.isRealObject(_old_fill))
 				_old_fill = _old_fill.createDuplicate();
 			var bg        = new AscFormat.CBg();
@@ -3500,74 +3547,74 @@ background-repeat: no-repeat;\
 			}
 			if (image_url != "")
 			{
-                var sImageUrl = null;
-                if (!g_oDocumentUrls.getImageLocal(image_url))
-                {
-                    sImageUrl = image_url;
-                }
-                var oApi           = this;
-                var fApplyCallback = function()
-                {
+				var sImageUrl = null;
+				if (!g_oDocumentUrls.getImageLocal(image_url))
+				{
+					sImageUrl = image_url;
+				}
+				var oApi           = this;
+				var fApplyCallback = function()
+				{
 
-                    var _image   = oApi.ImageLoader.LoadImage(image_url, 1);
-                    var srcLocal = g_oDocumentUrls.getImageLocal(image_url);
-                    if (srcLocal)
-                    {
-                        image_url                       = srcLocal;
-                        bg.bgPr.Fill.fill.RasterImageId = image_url; // erase documentUrl
-                    }
+					var _image   = oApi.ImageLoader.LoadImage(image_url, 1);
+					var srcLocal = g_oDocumentUrls.getImageLocal(image_url);
+					if (srcLocal)
+					{
+						image_url                       = srcLocal;
+						bg.bgPr.Fill.fill.RasterImageId = image_url; // erase documentUrl
+					}
 
-                    if (null != _image || window["NATIVE_EDITOR_ENJINE"])
-                    {
-                        if (bg.bgPr.Fill != null && bg.bgPr.Fill.fill != null && bg.bgPr.Fill.fill.type == c_oAscFill.FILL_TYPE_BLIP)
-                        {
-                            oApi.WordControl.m_oDrawingDocument.DrawImageTextureFillSlide(bg.bgPr.Fill.fill.RasterImageId);
-                        }
+					if (null != _image || window["NATIVE_EDITOR_ENJINE"])
+					{
+						if (bg.bgPr.Fill != null && bg.bgPr.Fill.fill != null && bg.bgPr.Fill.fill.type == c_oAscFill.FILL_TYPE_BLIP)
+						{
+							oApi.WordControl.m_oDrawingDocument.DrawImageTextureFillSlide(bg.bgPr.Fill.fill.RasterImageId);
+						}
 
-                        oApi.WordControl.m_oLogicDocument.changeBackground(bg, arr_ind);
-                    }
-                    else
-                    {
-                        oApi.sync_StartAction(c_oAscAsyncActionType.Information, c_oAscAsyncAction.LoadImage);
+						oLogicDocument.changeBackground(bg, arr_ind);
+					}
+					else
+					{
+						oApi.sync_StartAction(c_oAscAsyncActionType.Information, c_oAscAsyncAction.LoadImage);
 
-                        var oProp                 = prop;
-                        oApi.asyncImageEndLoaded2 = function(_image)
-                        {
-                            if (bg.bgPr.Fill != null && bg.bgPr.Fill.fill != null && bg.bgPr.Fill.fill.type == c_oAscFill.FILL_TYPE_BLIP)
-                            {
-                                oApi.WordControl.m_oDrawingDocument.DrawImageTextureFillSlide(bg.bgPr.Fill.fill.RasterImageId);
-                            }
+						var oProp                 = prop;
+						oApi.asyncImageEndLoaded2 = function(_image)
+						{
+							if (bg.bgPr.Fill != null && bg.bgPr.Fill.fill != null && bg.bgPr.Fill.fill.type == c_oAscFill.FILL_TYPE_BLIP)
+							{
+								oApi.WordControl.m_oDrawingDocument.DrawImageTextureFillSlide(bg.bgPr.Fill.fill.RasterImageId);
+							}
 
-                            oApi.WordControl.m_oLogicDocument.changeBackground(bg, arr_ind);
-                            oApi.asyncImageEndLoaded2 = null;
+							oLogicDocument.changeBackground(bg, arr_ind);
+							oApi.asyncImageEndLoaded2 = null;
 
-                            oApi.sync_EndAction(c_oAscAsyncActionType.Information, c_oAscAsyncAction.LoadImage);
-                        }
-                    }
-                };
-                if (!sImageUrl)
-                {
-                    fApplyCallback();
-                }
-                else
-                {
-                    if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]())
-                    {
-                        image_url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageUrl);
-                        image_url = g_oDocumentUrls.getImageUrl(image_url);
-                        fApplyCallback();
-                        return;
-                    }
-                    AscCommon.sendImgUrls(this, [sImageUrl], function(data) {
+							oApi.sync_EndAction(c_oAscAsyncActionType.Information, c_oAscAsyncAction.LoadImage);
+						}
+					}
+				};
+				if (!sImageUrl)
+				{
+					fApplyCallback();
+				}
+				else
+				{
+					if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]())
+					{
+						image_url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](sImageUrl);
+						image_url = g_oDocumentUrls.getImageUrl(image_url);
+						fApplyCallback();
+						return;
+					}
+					AscCommon.sendImgUrls(this, [sImageUrl], function(data) {
 
-                        if (data && data[0] && data[0].url !== "error")
-                        {
-                            image_url = data[0].url;
-                            fApplyCallback();
-                        }
+						if (data && data[0] && data[0].url !== "error")
+						{
+							image_url = data[0].url;
+							fApplyCallback();
+						}
 
-                    }, undefined, sToken);
-                }
+					}, undefined, sToken);
+				}
 			}
 			else
 			{
@@ -3580,12 +3627,12 @@ background-repeat: no-repeat;\
 				{
 					if (!this.noCreatePoint && !this.exucuteHistory && this.exucuteHistoryEnd)
 					{
-						this.WordControl.m_oLogicDocument.changeBackground(bg, arr_ind, true);
+						oLogicDocument.changeBackground(bg, arr_ind, true);
 						this.exucuteHistoryEnd = false;
 					}
 					else
 					{
-						this.WordControl.m_oLogicDocument.changeBackground(bg, arr_ind);
+						oLogicDocument.changeBackground(bg, arr_ind);
 					}
 					if (this.exucuteHistory)
 					{
@@ -3598,26 +3645,24 @@ background-repeat: no-repeat;\
 				}
 				else
 				{
-					if (this.WordControl.m_oLogicDocument.Slides[this.WordControl.m_oLogicDocument.CurPage])
+					if (oLogicDocument.Slides[oLogicDocument.CurPage])
 					{
 						AscFormat.ExecuteNoHistory(function()
 						{
 
-							this.WordControl.m_oLogicDocument.changeBackground(bg, arr_ind, true);
+							oLogicDocument.changeBackground(bg, arr_ind, true);
 							for (var i = 0; i < arr_ind.length; ++i)
 							{
-								this.WordControl.m_oLogicDocument.Slides[arr_ind[i]].recalculateBackground()
+								oLogicDocument.Slides[arr_ind[i]].recalculateBackground()
 							}
 							for (i = 0; i < arr_ind.length; ++i)
 							{
-								this.WordControl.m_oLogicDocument.DrawingDocument.OnRecalculatePage(arr_ind[i], this.WordControl.m_oLogicDocument.Slides[arr_ind[i]]);
+								oLogicDocument.DrawingDocument.OnRecalculatePage(arr_ind[i], oLogicDocument.Slides[arr_ind[i]]);
 							}
-							this.WordControl.m_oLogicDocument.DrawingDocument.OnEndRecalculate(true, false);
+							oLogicDocument.DrawingDocument.OnEndRecalculate(true, false);
 						}, this, []);
 					}
 				}
-
-
 			}
 		}
 
@@ -6900,16 +6945,33 @@ background-repeat: no-repeat;\
         }
         obj.Transition.ShowLoop = this.WordControl.m_oLogicDocument.isLoopShowMode();
 
-        obj.lockDelete     = !(slide.deleteLock.Lock.Type === locktype_Mine || slide.deleteLock.Lock.Type === locktype_None);
-		obj.lockLayout     = !(slide.layoutLock.Lock.Type === locktype_Mine || slide.layoutLock.Lock.Type === locktype_None);
-		obj.lockTiming     = !(slide.timingLock.Lock.Type === locktype_Mine || slide.timingLock.Lock.Type === locktype_None);
-		obj.lockTransition = !(slide.transitionLock.Lock.Type === locktype_Mine || slide.transitionLock.Lock.Type === locktype_None);
-		obj.lockBackground = !(slide.backgroundLock.Lock.Type === locktype_Mine || slide.backgroundLock.Lock.Type === locktype_None);
-		obj.lockRemove     = obj.lockDelete ||
-			obj.lockLayout ||
-			obj.lockTiming ||
-			obj.lockTransition ||
-			obj.lockBackground || slide.isLockedObject();
+		let isCanResetBackground = false;
+		for (let i = 0; i < aSlides.length; i += 1) {
+			const oSlide = aSlides[i];
+			isCanResetBackground |= !!oSlide.cSld.Bg;
+			obj.lockDelete     |= !(oSlide.deleteLock.Lock.Type === locktype_Mine || oSlide.deleteLock.Lock.Type === locktype_None);
+			obj.lockLayout     |= !(oSlide.layoutLock.Lock.Type === locktype_Mine || oSlide.layoutLock.Lock.Type === locktype_None);
+			obj.lockTiming     |= !(oSlide.timingLock.Lock.Type === locktype_Mine || oSlide.timingLock.Lock.Type === locktype_None);
+			obj.lockTransition |= !(oSlide.transitionLock.Lock.Type === locktype_Mine || oSlide.transitionLock.Lock.Type === locktype_None);
+			obj.lockBackground |= !(oSlide.backgroundLock.Lock.Type === locktype_Mine || oSlide.backgroundLock.Lock.Type === locktype_None);
+			obj.lockRemove     |= obj.lockDelete ||
+				obj.lockLayout ||
+				obj.lockTiming ||
+				obj.lockTransition ||
+				obj.lockBackground || oSlide.isLockedObject();
+		}
+		obj.lockResetBackground = obj.lockBackground || !isCanResetBackground;
+		if (!obj.lockBackground) {
+			for (let i = 0; i < oPresentation.Slides.length; i += 1) {
+				const oSlide = oPresentation.Slides[i];
+				obj.lockApplyToAll = !(oSlide.backgroundLock.Lock.Type === locktype_Mine || oSlide.backgroundLock.Lock.Type === locktype_None);
+				if (obj.lockApplyToAll) {
+					break;
+				}
+			}
+		} else {
+			obj.lockApplyToAll = obj.lockBackground;
+		}
 
 		if(slide && slide.Layout && slide.Layout.Master){
 			var aLayouts = slide.Layout.Master.sldLayoutLst;
@@ -9557,6 +9619,14 @@ background-repeat: no-repeat;\
 	CAscSlideProps.prototype['get_LockRemove']        = CAscSlideProps.prototype.get_LockRemove;
 	CAscSlideProps.prototype['put_LockRemove']        = CAscSlideProps.prototype.put_LockRemove;
 	CAscSlideProps.prototype['get_IsHidden']          = CAscSlideProps.prototype.get_IsHidden;
+	CAscSlideProps.prototype['get_LockApplyToAll']      = CAscSlideProps.prototype.get_LockApplyToAll;
+	CAscSlideProps.prototype['put_LockApplyToAll']      = CAscSlideProps.prototype.put_LockApplyToAll;
+	CAscSlideProps.prototype['get_lockResetBackground'] = CAscSlideProps.prototype.get_lockResetBackground;
+	CAscSlideProps.prototype['put_lockResetBackground'] = CAscSlideProps.prototype.put_lockResetBackground;
+	CAscSlideProps.prototype['get_ResetBackground']     = CAscSlideProps.prototype.get_ResetBackground;
+	CAscSlideProps.prototype['put_ResetBackground']     = CAscSlideProps.prototype.put_ResetBackground;
+	CAscSlideProps.prototype['get_ApplyToAll']          = CAscSlideProps.prototype.get_ApplyToAll;
+	CAscSlideProps.prototype['put_ApplyToAll']          = CAscSlideProps.prototype.put_ApplyToAll;
 	window['Asc']['CAscChartProp']                    = CAscChartProp;
 	CAscChartProp.prototype['get_ChangeLevel']        = CAscChartProp.prototype.get_ChangeLevel;
 	CAscChartProp.prototype['put_ChangeLevel']        = CAscChartProp.prototype.put_ChangeLevel;
