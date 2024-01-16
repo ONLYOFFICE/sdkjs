@@ -26869,11 +26869,11 @@
 					for (let i = 0; i < aRanges.length; i++) {
 						let typeSelection = aRanges[i] && aRanges[i].getType();
 						if (typeSelection === Asc.c_oAscSelectionType.RangeCol || typeSelection === Asc.c_oAscSelectionType.RangeMax) {
-							oThis._updateRange(aRanges[i]);
-						} else {
 							oThis._cleanCache(aRanges[i]);
 							oThis.arrRecalcRangesWithHeight.push(new Asc.Range(0, 0, oThis.visibleRange.c2, oThis.visibleRange.r2));
 							oThis.arrRecalcRangesCanChangeColWidth.push(oThis.canChangeColWidth);
+						} else {
+							oThis._updateRange(aRanges[i]);
 						}
 						_setScrollType(typeSelection);
 					}
