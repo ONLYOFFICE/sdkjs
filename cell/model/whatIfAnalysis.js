@@ -253,6 +253,7 @@ function (window, undefined) {
 		let nFactValue = null;
 
 		oChangingCell.setValue(String(nChangingVal).replace('.', sRegNumDecimalSeparator));
+		oChangingCell.worksheet.workbook.dependencyFormulas.unlockRecal();
 		oParsedFormula.parse();
 		nFactValue = oParsedFormula.calculate().getValue();
 		// If result of formula returns type cNumber, convert to Number
