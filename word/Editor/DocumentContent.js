@@ -2807,30 +2807,23 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
 		{
 			// Если мы находимся в начале первого параграфа первой ячейки, и
 			// данная таблица - первый элемент, тогда добавляем параграф до таблицы.
+			
+			let newPos = -1;
+			if (Item.IsCursorAtBegin(true) && (0 === this.CurPos.ContentPos || !this.Content[this.CurPos.ContentPos - 1].IsParagraph()))
+				newPos = this.CurPos.ContentPos;
+			else if (Item.IsCursorAtEnd() && (this.Content.length - 1 === this.CurPos.ContentPos || !this.Content[this.CurPos.ContentPos + 1].IsParagraph()))
+				newPos = this.CurPos.ContentPos + 1;
 
-			if (0 === this.CurPos.ContentPos && Item.IsCursorAtBegin(true))
+			if (-1 !== newPos)
 			{
-				// Создаем новый параграф
-				var NewParagraph = new Paragraph(this.DrawingDocument, this, this.bPresentation === true);
-				this.Internal_Content_Add(0, NewParagraph);
-				this.CurPos.ContentPos = 0;
-
-				if (true === this.IsTrackRevisions())
-				{
-					NewParagraph.RemovePrChange();
-					NewParagraph.SetReviewType(reviewtype_Add);
-				}
-			}
-			else if (this.Content.length - 1 === this.CurPos.ContentPos && Item.IsCursorAtEnd())
-			{
-				var oNewParagraph = new Paragraph(this.DrawingDocument, this);
-				this.Internal_Content_Add(this.Content.length, oNewParagraph);
-				this.CurPos.ContentPos = this.Content.length - 1;
-
+				let newParagraph = new Paragraph(this.DrawingDocument, this);
+				this.Internal_Content_Add(newPos, newParagraph);
+				this.CurPos.ContentPos = newPos;
+				
 				if (this.IsTrackRevisions())
 				{
-					oNewParagraph.RemovePrChange();
-					oNewParagraph.SetReviewType(reviewtype_Add);
+					newParagraph.RemovePrChange();
+					newParagraph.SetReviewType(reviewtype_Add);
 				}
 			}
 			else
