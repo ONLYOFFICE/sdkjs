@@ -12304,8 +12304,13 @@ CDocument.prototype.Document_UpdateCopyCutState = function()
 	// Во время работы селекта не обновляем состояние
 	if (true === this.Selection.Start)
 		return;
+	
+	let canCopy = this.Can_CopyCut();
+	let canCut  = canCopy;
+	if (this.IsFillingFormMode() && canCut)
+		canCut = this.IsFormFieldEditing();
 
-	this.Api.sync_CanCopyCutCallback(this.Can_CopyCut());
+	this.Api.sync_CanCopyCutCallback(canCopy, canCut);
 };
 CDocument.prototype.Document_UpdateCanAddHyperlinkState = function()
 {
