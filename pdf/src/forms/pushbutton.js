@@ -116,9 +116,14 @@
             return;
         }
 
-        let oDoc = this.GetDocument();
-        
-        let aFields = editor.getDocumentRenderer().IsOpenFormsInProgress == false ? oDoc.GetFields(this.GetFullName()) : [this];
+        let oDoc    = this.GetDocument();
+        let oViewer = Asc.editor.getDocumentRenderer();
+        let aFields = oViewer.IsOpenFormsInProgress == false ? oDoc.GetFields(this.GetFullName()) : [this];
+
+        if (oViewer.IsOpenFormsInProgress == false && oDoc.History.UndoRedoInProgress == false) {
+            oDoc.CreateNewHistoryPoint();
+        }
+
         aFields.forEach(function(field) {
             if (field.GetHeaderPosition() == position["textOnly"])
                 return;
@@ -128,175 +133,12 @@
             field.SetNeedRecalc(true);
             field.SetImageData(oImgData, nAPType);
 
-            let oExistDrawing = field.GetDrawing();
-            if (oExistDrawing) {
-                if (nAPType == AscPDF.APPEARANCE_TYPE.rollover || nAPType == AscPDF.APPEARANCE_TYPE.mouseDown)
-                    return;
-
-                oExistDrawing.PreDelete();
-                var oParentRun = oExistDrawing.GetRun();
-                oParentRun.RemoveElement(oExistDrawing);
-
-                let oFirstRun = field.content.GetElement(0).GetElement(0);
-                let oRunElm = oFirstRun.GetElement(oFirstRun.GetElementsCount() - 1);
-                // удаляем таб
-                if (oRunElm && true ==  oRunElm.IsTab()) {
-                    oFirstRun.RemoveFromContent(oFirstRun.GetElementsCount() - 1, 1);
-                }
-            }
-            
-            const dImgW = Math.max((oHTMLImg.width * AscCommon.g_dKoef_pix_to_mm), 1);
-            const dImgH = Math.max((oHTMLImg.height * AscCommon.g_dKoef_pix_to_mm), 1);
-            const oRect = field.IsButtonFitBounds() ? field.getFormRect() : field.getFormRelRect();
-            let nContentW = 0;
-            let nContentH = 0;
-            switch (field._buttonPosition) {
-                case position["iconTextH"]:
-                case position["textIconH"]:
-                    let oPara = field.content.GetElement(0);
-                    oPara.Recalculate_Page(0);
-                    nContentW = oPara.GetContentWidthInRange();
-                    break;
-                case position["iconTextV"]:
-                case position["textIconV"]:
-                    nContentH = field.content.Get_EmptyHeight();
-                    break;
-            }
-            
-            const dFrmW = oRect.W;
-            const dFrmH = oRect.H;
-            const dCW   = (dFrmW - nContentW)/dImgW;
-            const dCH   = (dFrmH - nContentH)/dImgH;
-            const dCoef = Math.min(dCW, dCH);
-            let dDrawingW;
-            let dDrawingH;
-
-            let nScaleWhen = field.GetScaleWhen();
-            switch (nScaleWhen) {
-                case scaleWhen["always"]: {
-                    dDrawingW = field.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgW : dCW * dImgW;
-                    dDrawingH = field.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgH : dCH * dImgH;
-                    break;
-                }
-                    
-                case scaleWhen["never"]: {
-                    dDrawingW = dImgW;
-                    dDrawingH = dImgH;
-                    break;
-                }
-                    
-                case scaleWhen["tooBig"]: {
-                    if (dFrmW < dImgW || dFrmH < dImgH) {
-                        dDrawingW = field.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgW : dCW * dImgW;
-                        dDrawingH = field.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgH : dCH * dImgH;
-                    }
-                    else {
-                        dDrawingW = dImgW;
-                        dDrawingH = dImgH;
-                    }
-                    break;
-                }
-
-                case scaleWhen["tooSmall"]: {
-                    if (dImgW < dFrmW) {
-                        dDrawingW = field.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgW : dCW * dImgW;
-                        dDrawingH = field.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgH : dCH * dImgH;
-                    }
-                    else {
-                        dDrawingW = dImgW;
-                        dDrawingH = dImgH;
-                    }
-                    break;
-                }
-            }
-
-            const oDrawing  = new AscCommonWord.ParaDrawing(dDrawingW, dDrawingH, null, field.content.DrawingDocument, field.content, null);
-            oDrawing.Set_WrappingType(WRAPPING_TYPE_SQUARE);
-            oDrawing.Set_DrawingType(drawing_Inline);
-            
-            let oImgShape = new AscFormat.CImageShape();
-            AscFormat.fillImage(oImgShape, oImgData.src, 0, 0, dDrawingW, dDrawingH);
-
-            oImgShape.setParent(oDrawing);
-            oDrawing.Set_GraphicObject(oImgShape);
-            
-            let oFill;
+            let sTargetSrc;
             if (nAPType != AscPDF.APPEARANCE_TYPE.rollover && nAPType != AscPDF.APPEARANCE_TYPE.mouseDown) {
-                oFill = field.CreateFill(oImgData.src);
-            }
-            else {
-                oFill = field.CreateFill(null);
-            }
-            
-            let oRunForImg;
-            let oTargetPara;
-            switch (field._buttonPosition) {
-                case position["iconOnly"]:
-                    oRunForImg = field.content.GetElement(0).GetElement(0);
-                    break;
-                case position["iconTextV"]:
-                    oRunForImg = field.content.GetElement(0).GetElement(0);
-                    break;
-                case position["textIconV"]:
-                    oRunForImg = field.content.GetElement(1).GetElement(0);
-                    break;
-                case position["iconTextH"]:
-                    oTargetPara = field.content.GetElement(0);
-                    if (oTargetPara.GetElementsCount() == 1) {
-                        let oRun = new ParaRun(oTargetPara, false);
-                        oTargetPara.Add_ToContent(oTargetPara.Content.length - 1, oRun);
-                    }
-
-                    oRunForImg = oTargetPara.GetElement(0);
-                    oRunForImg.Pr.Position = -(dDrawingH / 2 - nContentH / 4);
-                    oRunForImg.RecalcInfo.TextPr = true;
-                    oRunForImg.Get_CompiledPr();
-                    break;
-                case position["textIconH"]:
-                    oTargetPara = field.content.GetElement(0);
-                    if (oTargetPara.GetElementsCount() == 1) {
-                        let oRun = new ParaRun(oTargetPara, false);
-                        oTargetPara.Add_ToContent(oTargetPara.Content.length - 1, oRun);
-                    }
-
-                    oRunForImg = oTargetPara.GetElement(1);
-                    oRunForImg.Pr.Position = -(dDrawingH / 2 - nContentH / 4);
-                    oRunForImg.RecalcInfo.TextPr = true;
-                    oRunForImg.Get_CompiledPr();
-                    break;
-                case position["overlay"]:
-                    oTargetPara = field.content.GetElement(0);
-                    oRunForImg = oTargetPara.GetElement(0);
-                    oRunForImg.ClearContent();
-
-                    if (field._buttonCaption) {
-                        let oCaptionRun = oTargetPara.GetElement(1);
-                        if (oCaptionRun && oCaptionRun.IsParaEndRun() == false) {
-                            oCaptionRun.ClearContent();
-                        }
-                        else {
-                            oCaptionRun = new ParaRun(oTargetPara, false);
-                            oTargetPara.Add_ToContent(oTargetPara.Content.length - 1, oCaptionRun);
-                        }
-
-                        oCaptionRun.AddText(field._buttonCaption);
-                        field.SetCaptionRun(oCaptionRun);
-                    }
-
-                    oDrawing.Set_DrawingType(drawing_Anchor);
-                    oDrawing.Set_WrappingType(WRAPPING_TYPE_NONE);
-                    oDrawing.Set_BehindDoc(true);
-                    break;
+                sTargetSrc = oImgData.src;
             }
 
-            let nPosX = -(dDrawingW - dFrmW) * field._buttonAlignX;
-            let nPosY = (dDrawingH - dFrmH) * (field._buttonAlignY - 1);
-            oDrawing.Set_PositionH(Asc.c_oAscRelativeFromH.Column, Asc.c_oAscXAlign.Outside, nPosX, false);
-            oDrawing.Set_PositionV(Asc.c_oAscRelativeFromH.Page, Asc.c_oAscXAlign.Outside, nPosY, false);
-
-            oRunForImg.Add_ToContent(oRunForImg.Content.length, oDrawing);
-            oDrawing.Set_Parent(oRunForImg);
-            oImgShape.recalculate();
+            field.SetImage(Object.assign({}, oImgData, {src: sTargetSrc}));
         });
         
         if (editor.getDocumentRenderer().IsOpenFormsInProgress == false) {
@@ -349,179 +191,8 @@
             return;
         }
 
-        switch (nAPType) {
-            case AscPDF.APPEARANCE_TYPE.rollover:
-                this._imgData.rollover = oImgData;
-                break;
-            case AscPDF.APPEARANCE_TYPE.mouseDown:
-                this._imgData.mouseDown = oImgData;
-                break;
-            case AscPDF.APPEARANCE_TYPE.normal:
-            default:
-                this._imgData.normal = oImgData;
-                break;
-        }
-
-        let oExistDrawing = this.GetDrawing();
-        if (oExistDrawing) {
-            oExistDrawing.PreDelete();
-            var oParentRun = oExistDrawing.GetRun();
-            oParentRun.RemoveElement(oExistDrawing);
-
-            let oFirstRun = this.content.GetElement(0).GetElement(0);
-            let oRunElm = oFirstRun.GetElement(oFirstRun.GetElementsCount() - 1);
-            // удаляем таб
-            if (oRunElm && true ==  oRunElm.IsTab()) {
-                oFirstRun.RemoveFromContent(oFirstRun.GetElementsCount() - 1, 1);
-            }
-        }
-        
-        const dImgW = Math.max((oHTMLImg.width * AscCommon.g_dKoef_pix_to_mm), 1);
-        const dImgH = Math.max((oHTMLImg.height * AscCommon.g_dKoef_pix_to_mm), 1);
-        const oRect = this.IsButtonFitBounds() ? this.getFormRect() : this.getFormRelRect();
-        let nContentW = 0;
-        let nContentH = 0;
-
-        switch (this._buttonPosition) {
-            case position["iconTextH"]:
-            case position["textIconH"]:
-                let oPara = this.content.GetElement(0);
-                oPara.Recalculate_Page(0);
-                nContentW = oPara.GetContentWidthInRange();
-                break;
-            case position["iconTextV"]:
-            case position["textIconV"]:
-                nContentH = this.content.Get_EmptyHeight();
-                break;
-        }
-
-        const dFrmW = oRect.W;
-        const dFrmH = oRect.H;
-        const dCW   = (dFrmW - nContentW)/dImgW;
-        const dCH   = (dFrmH - nContentH)/dImgH;
-        const dCoef = Math.min(dCW, dCH);
-        let dDrawingW;
-        let dDrawingH;
-
-        let nScaleWhen = this.GetScaleWhen();
-        switch (nScaleWhen) {
-            case scaleWhen["always"]: {
-                dDrawingW = this.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgW : dCW * dImgW;
-                dDrawingH = this.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgH : dCH * dImgH;
-                break;
-            }
-                
-            case scaleWhen["never"]: {
-                dDrawingW = dImgW;
-                dDrawingH = dImgH;
-                break;
-            }
-                
-            case scaleWhen["tooBig"]: {
-                if (dFrmW < dImgW || dFrmH < dImgH) {
-                    dDrawingW = this.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgW : dCW * dImgW;
-                    dDrawingH = this.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgH : dCH * dImgH;
-                }
-                else {
-                    dDrawingW = dImgW;
-                    dDrawingH = dImgH;
-                }
-                break;
-            }
-
-            case scaleWhen["tooSmall"]: {
-                if (dImgW < dFrmW) {
-                    dDrawingW = this.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgW : dCW * dImgW;
-                    dDrawingH = this.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgH : dCH * dImgH;
-                }
-                else {
-                    dDrawingW = dImgW;
-                    dDrawingH = dImgH;
-                }
-                break;
-            }
-        }
-
-        const oDrawing  = new AscCommonWord.ParaDrawing(dDrawingW, dDrawingH, null, this.content.DrawingDocument, this.content, null);
-        oDrawing.Set_WrappingType(WRAPPING_TYPE_SQUARE);
-        oDrawing.Set_DrawingType(drawing_Inline);
-        
-        let oImgShape = new AscFormat.CImageShape();
-        AscFormat.fillImage(oImgShape, oImgData.src, 0, 0, dDrawingW, dDrawingH);
-
-        oImgShape.setParent(oDrawing);
-        oDrawing.Set_GraphicObject(oImgShape);
-
-        let oRunForImg;
-        let oTargetPara;
-        switch (this._buttonPosition) {
-            case position["iconOnly"]:
-                oRunForImg = this.content.GetElement(0).GetElement(0);
-                break;
-            case position["iconTextV"]:
-                oRunForImg = this.content.GetElement(0).GetElement(0);
-                break;
-            case position["textIconV"]:
-                oRunForImg = this.content.GetElement(1).GetElement(0);
-                break;
-            case position["iconTextH"]:
-                oTargetPara = this.content.GetElement(0);
-                if (oTargetPara.GetElementsCount() == 1) {
-                    let oRun = new ParaRun(oTargetPara, false);
-                    oTargetPara.Add_ToContent(oTargetPara.Content.length - 1, oRun);
-                }
-
-                oRunForImg = oTargetPara.GetElement(0);
-                oRunForImg.Pr.Position = -(dDrawingH / 2 - nContentH / 4);
-                oRunForImg.RecalcInfo.TextPr = true;
-                oRunForImg.Get_CompiledPr();
-                break;
-            case position["textIconH"]:
-                oTargetPara = this.content.GetElement(0);
-                if (oTargetPara.GetElementsCount() == 1) {
-                    let oRun = new ParaRun(oTargetPara, false);
-                    oTargetPara.Add_ToContent(oTargetPara.Content.length - 1, oRun);
-                }
-
-                oRunForImg = oTargetPara.GetElement(1);
-                oRunForImg.Pr.Position = -(dDrawingH / 2 - nContentH / 4);
-                oRunForImg.RecalcInfo.TextPr = true;
-                oRunForImg.Get_CompiledPr();
-                break;
-            case position["overlay"]:
-                oTargetPara = this.content.GetElement(0);
-                oRunForImg = oTargetPara.GetElement(0);
-                oRunForImg.ClearContent();
-
-                if (this._buttonCaption) {
-                    let oCaptionRun = oTargetPara.GetElement(1);
-                    if (oCaptionRun && oCaptionRun.IsParaEndRun() == false) {
-                        oCaptionRun.ClearContent();
-                    }
-                    else {
-                        oCaptionRun = new ParaRun(oTargetPara, false);
-                        oTargetPara.Add_ToContent(oTargetPara.Content.length - 1, oCaptionRun);
-                    }
-
-                    oCaptionRun.AddText(this._buttonCaption);
-                    this.SetCaptionRun(oCaptionRun);
-                }
-
-                oDrawing.Set_DrawingType(drawing_Anchor);
-                oDrawing.Set_WrappingType(WRAPPING_TYPE_NONE);
-                oDrawing.Set_BehindDoc(true);
-                break;
-        }
-
-        let nPosX = -(dDrawingW - dFrmW) * this._buttonAlignX;
-        let nPosY = (dDrawingH - dFrmH) * (this._buttonAlignY - 1);
-        oDrawing.Set_PositionH(Asc.c_oAscRelativeFromH.Column, Asc.c_oAscXAlign.Outside, nPosX, false);
-        oDrawing.Set_PositionV(Asc.c_oAscRelativeFromH.Page, Asc.c_oAscXAlign.Outside, nPosY, false);
-
-        oRunForImg.Add_ToContent(oRunForImg.Content.length, oDrawing);
-        oDrawing.Set_Parent(oRunForImg);
-        oImgShape.recalculate();
-        this.SetNeedRecalc(true);
+        this.SetImageData(oImgData, nAPType);
+        this.SetImage(oImgData);
     };
     /**
      * Sets image without any changes.
@@ -546,6 +217,8 @@
         let nContentH = 0;
 
         switch (this._buttonPosition) {
+            case position["textOnly"]:
+                return;
             case position["iconTextH"]:
             case position["textIconH"]:
                 let oPara = this.content.GetElement(0);
@@ -563,48 +236,55 @@
         const dCW   = (dFrmW - nContentW)/dImgW;
         const dCH   = (dFrmH - nContentH)/dImgH;
         const dCoef = Math.min(dCW, dCH);
-        let dDrawingW;
-        let dDrawingH;
+        const dDrawingW = dCW * dImgW;
+        const dDrawingH = dCH * dImgH;
+        const nScaleHow = this.GetScaleHow();
+
+        // Мы всегда создаем drawing с максимальной доступными размерами и делаем crop картинки (если скейл пропорциональный или скейла нет вовсе).
+        // В это свойство пишем фактический размер картинки (не исходный размер), тот, который реально рисуется.
+        this.relImgSize = {
+            W: 0,
+            H: 0
+        };
 
         let nScaleWhen = this.GetScaleWhen();
         switch (nScaleWhen) {
             case scaleWhen["always"]: {
-                dDrawingW = this.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgW : dCW * dImgW;
-                dDrawingH = this.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgH : dCH * dImgH;
+                this.relImgSize.W = nScaleHow == scaleHow["proportional"] ? dCoef*dImgW : dCW * dImgW;
+                this.relImgSize.H = nScaleHow == scaleHow["proportional"] ? dCoef*dImgH : dCH * dImgH;
                 break;
             }
                 
             case scaleWhen["never"]: {
-                dDrawingW = dCW * dImgW;
-                dDrawingH = dCH * dImgH;
+                this.relImgSize.W = dImgW;
+                this.relImgSize.H = dImgH;
                 break;
             }
                 
             case scaleWhen["tooBig"]: {
-                if (dFrmW < dImgW || dFrmH < dImgH) {
-                    dDrawingW = this.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgW : dCW * dImgW;
-                    dDrawingH = this.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgH : dCH * dImgH;
+                if (dImgW > dDrawingW || dImgH > dDrawingH) {
+                    this.relImgSize.W = nScaleHow == scaleHow["proportional"] ? dCoef*dImgW : dCW * dImgW;
+                    this.relImgSize.H = nScaleHow == scaleHow["proportional"] ? dCoef*dImgH : dCH * dImgH;
                 }
                 else {
-                    dDrawingW = dImgW;
-                    dDrawingH = dImgH;
+                    this.relImgSize.W = dImgW;
+                    this.relImgSize.H = dImgH;
                 }
                 break;
             }
 
             case scaleWhen["tooSmall"]: {
-                if (dImgW < dFrmW) {
-                    dDrawingW = this.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgW : dCW * dImgW;
-                    dDrawingH = this.GetScaleHow() == scaleHow["proportional"] ? dCoef*dImgH : dCH * dImgH;
+                if (dImgW < dDrawingW && dImgH < dDrawingH) {
+                    this.relImgSize.W = nScaleHow == scaleHow["proportional"] ? dCoef*dImgW : dCW * dImgW;
+                    this.relImgSize.H = nScaleHow == scaleHow["proportional"] ? dCoef*dImgH : dCH * dImgH;
                 }
                 else {
-                    dDrawingW = dImgW;
-                    dDrawingH = dImgH;
+                    this.relImgSize.W = dImgW;
+                    this.relImgSize.H = dImgH;
                 }
                 break;
             }
         }
-
         const oDrawing  = new AscCommonWord.ParaDrawing(dDrawingW, dDrawingH, null, this.content.DrawingDocument, this.content, null);
         oDrawing.Set_WrappingType(WRAPPING_TYPE_SQUARE);
         oDrawing.Set_DrawingType(drawing_Inline);
@@ -617,6 +297,7 @@
         
         let oRunForImg;
         let oTargetPara;
+        let oCaptionRun;
         switch (this._buttonPosition) {
             case position["iconOnly"]:
                 oRunForImg = this.content.GetElement(0).GetElement(0);
@@ -635,9 +316,13 @@
                 }
 
                 oRunForImg = oTargetPara.GetElement(0);
-                oRunForImg.Pr.Position = -(dDrawingH / 2 - nContentH / 4);
-                oRunForImg.RecalcInfo.TextPr = true;
-                oRunForImg.Get_CompiledPr();
+                oCaptionRun = oTargetPara.GetElement(1);
+                if (oCaptionRun) {
+                    nContentH = this.content.Get_EmptyHeight();
+                    oCaptionRun.Pr.Position = (dFrmH - nContentH/2) / 2;
+                    oCaptionRun.RecalcInfo.TextPr = true;
+                    oCaptionRun.Get_CompiledPr();
+                }
                 break;
             case position["textIconH"]:
                 oTargetPara = this.content.GetElement(0);
@@ -647,28 +332,17 @@
                 }
 
                 oRunForImg = oTargetPara.GetElement(1);
-                oRunForImg.Pr.Position = -(dDrawingH / 2 - nContentH / 4);
-                oRunForImg.RecalcInfo.TextPr = true;
-                oRunForImg.Get_CompiledPr();
+                oCaptionRun = oTargetPara.GetElement(0);
+                if (oCaptionRun) {
+                    nContentH = this.content.Get_EmptyHeight();
+                    oCaptionRun.Pr.Position = (dFrmH - nContentH/2) / 2;
+                    oCaptionRun.RecalcInfo.TextPr = true;
+                    oCaptionRun.Get_CompiledPr();
+                }
                 break;
             case position["overlay"]:
                 oTargetPara = this.content.GetElement(0);
                 oRunForImg = oTargetPara.GetElement(0);
-                oRunForImg.ClearContent();
-
-                if (this._buttonCaption) {
-                    let oCaptionRun = oTargetPara.GetElement(1);
-                    if (oCaptionRun && oCaptionRun.IsParaEndRun() == false) {
-                        oCaptionRun.ClearContent();
-                    }
-                    else {
-                        oCaptionRun = new ParaRun(oTargetPara, false);
-                        oTargetPara.Add_ToContent(oTargetPara.Content.length - 1, oCaptionRun);
-                    }
-
-                    oCaptionRun.AddText(this._buttonCaption);
-                    this.SetCaptionRun(oCaptionRun);
-                }
 
                 oDrawing.Set_DrawingType(drawing_Anchor);
                 oDrawing.Set_WrappingType(WRAPPING_TYPE_NONE);
@@ -677,21 +351,13 @@
         }
 
         
-        let oClip = new AscFormat.CSrcRect();
-        let nLC = ((dImgW - dFrmW) * this._buttonAlignX) / dImgW * 100; // left crop
-        let nRC = nLC + (dFrmW / dImgW * 100);
-        let nTC = ((dImgH - dFrmH) * (1 - this._buttonAlignY) / dImgH * 100);
-        let nBC = nTC + (dFrmH / dImgH * 100);
-
-        oClip.setLTRB(nLC, nTC, nRC, nBC);
-        oImgShape.blipFill.setSrcRect(oClip);
-        oImgShape.blipFill.stretch = false;
-        oImgShape.isCrop = true;
-
         oRunForImg.Add_ToContent(oRunForImg.Content.length, oDrawing);
         oDrawing.Set_Parent(oRunForImg);
         oImgShape.recalculate();
         this.SetNeedRecalc(true);
+        
+        let oIconPos = this.GetIconPosition();
+        this.SetIconPosition(oIconPos.X, oIconPos.Y);
     };
     CPushButtonField.prototype.RemoveImage = function() {
         let oExistDrawing = this.GetDrawing();
@@ -735,7 +401,8 @@
         let nButtonPos  = this.GetHeaderPosition();
 
         let oDrawing = this.GetDrawing();
-        // выставляем положение текста с картинкой
+
+        // положение текста с картинкой в одном параграфе
         if (oDrawing) {
             let oPara1                      = this.content.GetElement(0);
             let oRun                        = oPara1.GetElement(0);
@@ -743,10 +410,9 @@
             oPara1.Pr.Spacing.After         = 0;
             oPara1.CompiledPr.NeedRecalc    = true;
 
-            this.content.Recalculate_Page(0, true);
-            let oContentBounds  = this.content.GetContentBounds(0);
-            
-            if ((nButtonPos == position["iconTextH"] || nButtonPos == position["textIconH"])  && this.content.GetElementsCount() == 1) {
+            if ([position["iconTextH"], position["textIconH"]].includes(nButtonPos) && this.content.GetElementsCount() == 1) {
+                this.content.Recalculate_Page(0, true);
+                let oContentBounds  = this.content.GetContentBounds(0);
                 
                 if (nButtonPos == position["iconTextH"])
                     this.content.SetAlign(AscPDF.ALIGN_TYPE.right);
@@ -762,59 +428,50 @@
                     oPara1.SetParagraphTabs(oTabs);
                 }
             }
+            else if (nButtonPos == position["overlay"]) {
+                let oPara = this.content.GetElement(0);
+                let oCaptionRun = this.GetCaptionRun();
+                oPara.Pr.Spacing.Before = 0;
+                oPara.Pr.Spacing.After  = 0;
+                oPara.CompiledPr.NeedRecalc = true;
+                if (oCaptionRun) {
+                    oCaptionRun.Pr.Position = 0;
+                    oCaptionRun.RecalcInfo.TextPr = true
+                }
+                    
+                this.content.Recalculate_Page(0, true);
+                let oContentBounds  = this.content.GetContentBounds(0);
+                let nContentH       = oContentBounds.Bottom - oContentBounds.Top;
 
-            let nFreeVerSpace = oRect.H - (oContentBounds.Bottom - oContentBounds.Top);
-
-            if (oPara1.GetAllDrawingObjects().length != 0) {
-                oPara1.Pr.Spacing.Before = nFreeVerSpace / 2;
+                oPara.Pr.Spacing.Before = (oRect.H - nContentH) / 2;
+                this.content.SetAlign(AscPDF.ALIGN_TYPE.center);
+                oPara.CompiledPr.NeedRecalc = true;
             }
-
-            oPara1.Pr.Spacing.After = nFreeVerSpace / 2;
-            oPara1.CompiledPr.NeedRecalc = true;
 
             return;
         }
         
-        // центрируем текст если картинки нет или нет заливки
-        if (this.content.GetElementsCount() == 1) {
-            let oPara = this.content.GetElement(0);
-            oPara.Pr.Spacing.Before = 0;
-            oPara.Pr.Spacing.After  = 0;
-            oPara.CompiledPr.NeedRecalc = true;
-
-            this.content.Recalculate_Page(0, true);
-            let oContentBounds  = this.content.GetContentBounds(0);
-            let oContentH       = oContentBounds.Bottom - oContentBounds.Top;
-
-            oPara.Pr.Spacing.Before = (oRect.H - oContentH) / 2;
-            this.content.SetAlign(AscPDF.ALIGN_TYPE.center);
-            oPara.CompiledPr.NeedRecalc = true;
+        // центрируем текст если картинки нет
+        let oPara = this.content.GetElement(0);
+        let oCaptionRun = this.GetCaptionRun();
+        oPara.Pr.Spacing.Before = 0;
+        oPara.Pr.Spacing.After  = 0;
+        oPara.CompiledPr.NeedRecalc = true;
+        if (oCaptionRun) {
+            oCaptionRun.Pr.Position = 0;
+            oCaptionRun.RecalcInfo.TextPr = true
         }
-        else if (this.content.GetElementsCount() == 2) {
-            let oPara1 = this.content.GetElement(0);
-            let oPara2 = this.content.GetElement(1);
-            oPara1.Pr.Spacing.Before = 0;
-            oPara2.Pr.Spacing.Before = 0;
-            oPara1.Pr.Spacing.After  = 0;
-            oPara2.Pr.Spacing.After  = 0;
 
-            oPara1.CompiledPr.NeedRecalc = true;
-            oPara2.CompiledPr.NeedRecalc = true;
+        this.content.Recalculate_Page(0, true);
+        let oContentBounds  = this.content.GetContentBounds(0);
+        let nContentH       = oContentBounds.Bottom - oContentBounds.Top;
 
-            this.content.Recalculate_Page(0, true);
-            let oContentBounds  = this.content.GetContentBounds(0);
-
-            let oContentH  = oContentBounds.Bottom - oContentBounds.Top;
-
-            if (nButtonPos == position["iconTextV"]) {
-                oPara1.Pr.Spacing.Before = (oRect.H - oContentH - oContentH / 2) / 2;
-                oPara1.CompiledPr.NeedRecalc = true;
-            }
-            else if (nButtonPos == position["textIconV"]) {
-                oPara1.Pr.Spacing.Before = (oRect.H - oContentH / 2) / 2;
-                oPara1.CompiledPr.NeedRecalc = true;
-            }
-        }
+        if (this.content.GetElementsCount() == 1)
+            oPara.Pr.Spacing.Before = (oRect.H - nContentH) / 2;
+        else if (this.content.GetElementsCount() == 2)
+            oPara.Pr.Spacing.Before = (oRect.H - nContentH/2) / 2;
+        this.content.SetAlign(AscPDF.ALIGN_TYPE.center);
+        oPara.CompiledPr.NeedRecalc = true;
     };
 
     /**
@@ -842,7 +499,7 @@
         return undefined;
     };
     /**
-     * Gets the caption associated with a button.
+     * Sets the caption associated with a button.
      * @memberof CPushButtonField
      * @param {string} cCaption - The caption associated with the button.
      * @param {number} [nFace=0] - (optional) If specified, gets a caption of the given type:
@@ -916,9 +573,6 @@
     CPushButtonField.prototype.SetValue = function() {
         return;
     };
-    CPushButtonField.prototype.IsNeedDrawFromStream = function() {
-        return false;
-    };
     CPushButtonField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)
             return;
@@ -929,7 +583,7 @@
         this.DrawBorders(oGraphicsPDF)
 
         let oClipRect = this.getFormRect();
-        // oGraphicsWord.AddClipRect(oClipRect.X, oClipRect.Y, oClipRect.W, oClipRect.H);
+        oGraphicsWord.AddClipRect(oClipRect.X, oClipRect.Y, oClipRect.W, oClipRect.H);
 
         // draw behind doc
         if (this.GetHeaderPosition() == position["overlay"]) {
@@ -1020,15 +674,10 @@
         
     };
     CPushButtonField.prototype.SetImageData = function(oImgData, nAPType) {
-        let oViewer     = editor.getDocumentRenderer();
-        let oDoc        = this.GetDocument();
-        let isOnOpen    = oViewer.IsOpenFormsInProgress;
-
-        if (isOnOpen == false && oDoc.History.UndoRedoInProgress == false) {
-            oDoc.CreateNewHistoryPoint();
-        }
-
         let oPrevImgData;
+        let oViewer = Asc.editor.getDocumentRenderer();
+        let oDoc    = this.GetDocument();
+
         switch (nAPType) {
             case AscPDF.APPEARANCE_TYPE.rollover:
                 oPrevImgData            = this._imgData.rollover;
@@ -1048,7 +697,7 @@
                 break;
         }
 
-        if (isOnOpen == false && oDoc.History.UndoRedoInProgress == false) {
+        if (oViewer.IsOpenFormsInProgress == false && oDoc.History.UndoRedoInProgress == false) {
             oDoc.History.TurnOn();
             oDoc.History.Add(new CChangesPDFPushbuttonImage(this, [oPrevImgData, nAPType], [oImgData, nAPType]));
             oDoc.TurnOffHistory();
@@ -1068,6 +717,7 @@
         let oTargetImgData;
         let sMouseDownCaption   = this.GetCaption(CAPTION_TYPES.mouseDown);
         let sNormalCaption      = this.GetCaption(CAPTION_TYPES.normal);
+        let oCaptionRun         = this.GetCaptionRun();
 
         if (this._imgData.mouseDown || sMouseDownCaption) {
             sTargetCaption = sMouseDownCaption;
@@ -1080,8 +730,7 @@
 
         if (oTargetImgData || sTargetCaption) {
 
-            if (sTargetCaption) {
-                let oCaptionRun = this.GetCaptionRun();
+            if (oCaptionRun && sTargetCaption) {
                 oCaptionRun.ClearContent();
                 oCaptionRun.AddText(sTargetCaption);
             }
@@ -1096,7 +745,7 @@
             this.SetNeedRecalc(true);
         }
 
-        if (this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push && this.IsChanged()) {
+        if (this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push) {
             this.SetNeedRecalc(true);
         }
 
@@ -1112,13 +761,13 @@
         }
         
         if (this._imgData.mouseDown || this.GetCaption(CAPTION_TYPES.normal) || this.GetCaption(CAPTION_TYPES.rollover)) {
-            let oTargetImgData = this._imgData.rollover || this._imgData.normal;
-            let sTargetCaption = this.GetCaption(CAPTION_TYPES.rollover) || this.GetCaption(CAPTION_TYPES.normal);
+            let oTargetImgData = this.IsHovered() && this.GetCaption(CAPTION_TYPES.rollover) ? this._imgData.rollover : this._imgData.normal;
+            let sTargetCaption = this.IsHovered() && this.GetCaption(CAPTION_TYPES.rollover) ? this.GetCaption(CAPTION_TYPES.rollover) : this.GetCaption(CAPTION_TYPES.normal);
 
             let oCaptionRun         = this.GetCaptionRun();
             let sDefaultCaption     = this.GetCaption(CAPTION_TYPES.normal);
 
-            if (sDefaultCaption && sTargetCaption) {
+            if (oCaptionRun && sDefaultCaption && sTargetCaption) {
                 oCaptionRun.ClearContent();
                 oCaptionRun.AddText(sTargetCaption);
             }
@@ -1133,7 +782,7 @@
             this.SetNeedRecalc(true);
         }
 
-        if (this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push && this.IsChanged()) {
+        if (this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push) {
             this.SetNeedRecalc(true);
         }
 
@@ -1694,39 +1343,41 @@
         let oViewer = editor.getDocumentRenderer();
 
         if (X != null)
-            this._buttonAlignX = X;
+            this._buttonAlignX = Math.abs(Math.min(X, 1));
         if (Y != null)
-            this._buttonAlignY = Y;
+            this._buttonAlignY = Math.abs(Math.min(Y, 1));
 
         if (oViewer.IsOpenFormsInProgress == false)
             this.SetNeedRecalc(true);
 
         let oDrawing = this.GetDrawing();
         if (oDrawing) {
-            let oImgShape = oDrawing.GraphicObj;
-            let _image = Asc.editor.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(oImgShape.blipFill.RasterImageId)];
-            if (_image != undefined && _image.Image != null && _image.Status == window['AscFonts'].ImageLoadStatus.Complete)
-            {
-                dImgW = _image.Image.width * AscCommon.g_dKoef_pix_to_mm;
-                dImgH = _image.Image.height * AscCommon.g_dKoef_pix_to_mm;
+            let nScaleWhen  = this.GetScaleWhen();
+            let nScaleHow   = this.GetScaleHow();
+            
+            let nDrawingW = oDrawing.Extent.W;
+            let nDrawingH = oDrawing.Extent.H;
+
+            // выставляем положение картинки только в случае, когда скейл пропорциональный или его нет вовсе или когда размеры картинки больше чем размеры drawing под эту картинку,
+            // т.к. в ином случае картинка будет растянута по размерам формы
+            if (nScaleHow === scaleHow["proportional"] || nScaleWhen == scaleWhen["never"] || (nScaleWhen == scaleWhen["tooSmall"] && (this.relImgSize.W > nDrawingW || this.relImgSize.H > nDrawingH))) {
+                let oImgShape = oDrawing.GraphicObj;
+                let oClip = new AscFormat.CSrcRect();
+                // кроп считается в процентах относительно размеров drawing
+                let nLC; // left crop
+                let nRC; // right crop
+                let nTC; // top crop
+                let nBC; // bottom crop
+
+                nLC = ((this.relImgSize.W - nDrawingW) * (this._buttonAlignX)) / this.relImgSize.W * 100;
+                nTC = ((this.relImgSize.H - nDrawingH) * (1 - this._buttonAlignY) / this.relImgSize.H * 100);
+                nRC = nLC + (nDrawingW / this.relImgSize.W * 100);
+                nBC = nTC + (nDrawingH / this.relImgSize.H * 100);                        
+
+                oClip.setLTRB(nLC, nTC, nRC, nBC);
+                oImgShape.blipFill.setSrcRect(oClip);
+                oImgShape.blipFill.stretch = false;
             }
-            else
-                return;
-
-            let oRect = this.getFormRelRect();
-            let dFrmW = oRect.W;
-            let dFrmH = oRect.H;
-
-            let oClip = new AscFormat.CSrcRect();
-            let nLC = ((dImgW - dFrmW) * this._buttonAlignX) / dImgW * 100; // left crop
-            let nRC = nLC + (dFrmW / dImgW * 100);
-            let nTC = ((dImgH - dFrmH) * (1 - this._buttonAlignY) / dImgH * 100);
-            let nBC = nTC + (dFrmH / dImgH * 100);
-
-            oClip.setLTRB(nLC, nTC, nRC, nBC);
-            oImgShape.blipFill.setSrcRect(oClip);
-            oImgShape.blipFill.stretch = false;
-            oImgShape.isCrop = true;
         }
     };
     CPushButtonField.prototype.GetIconPosition = function() {
