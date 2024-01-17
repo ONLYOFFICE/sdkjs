@@ -16488,7 +16488,6 @@ function RangeDataManagerElem(bbox, data)
 	 */
 	asc_CSeriesSettings.prototype.checkValidValue = function (val) {
 		let errCode = Asc.c_oAscError.ID.No;
-		let parsedVal = null;
 
 		let regstr = new RegExp('^\s*[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)\s*$');
 		if (typeof val === 'string') {
@@ -16500,13 +16499,14 @@ function RangeDataManagerElem(bbox, data)
 				let parsedRes = AscCommon.g_oFormatParser.parse(val);
 				if (parsedRes === null) {
 					errCode = Asc.c_oAscError.ID.MustIntegerOrDecimalNumber;
+					val = null;
 				} else {
-					parsedVal = parsedRes.value;
+					val = parsedRes.value;
 				}
 			}
 		}
 
-		return [errCode, parsedVal];
+		return [errCode, val];
 	};
 
 	/**
