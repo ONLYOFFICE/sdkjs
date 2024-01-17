@@ -1769,6 +1769,23 @@ $(function () {
 		];
 		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression with trend mode. Start with empty cells');
 		clearData(0, 0, 5, 1);
+		// Growth progression with trend mode. With negative numbers as values in Range. Using activeFillHandle.
+		testData = [
+			['-1', '-2']
+		];
+		oFromRange = getFilledData(0, 0, 1, 0, testData, [0, 0]);
+		wsView.activeFillHandle = getRange(0, 0, 3, 0);
+		wsView.fillHandleDirection = 0;
+		let oSeriesSettings = api.asc_GetSeriesSettings();
+		api.asc_FillCells(oRightClickOptions.growthTrend, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 3, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['-1', '-2', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['-1', '-2', '0', '0']], _desc);
+		}, 'Autofill Rows. Growth progression with trend mode. With negative numbers as values in Range. Using activeFillHandle');
+		clearData(0, 0, 3, 0);
 	});
 	QUnit.test('Fill -> Series. Trend. Vertical - Multiple cells', function (assert) {
 		let testData = [
@@ -1989,6 +2006,24 @@ $(function () {
 		]
 		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth progression with trend mode. Start with empty cells');
 		clearData(0, 0, 1, 5);
+		// Growth progression with trend mode. With negative numbers as values in Range. Using activeFillHandle.
+		testData = [
+			['-1'],
+			['-2']
+		];
+		oFromRange = getFilledData(0, 0, 0, 1, testData, [0, 0]);
+		wsView.activeFillHandle = getRange(0, 0, 0, 3);
+		wsView.fillHandleDirection = 1;
+		let oSeriesSettings = api.asc_GetSeriesSettings();
+		api.asc_FillCells(oRightClickOptions.growthTrend, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 3);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['-1'], ['-2'], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['-1'], ['-2'], ['0'], ['0']], _desc);
+		}, 'Autofill Columns. Growth progression with trend mode. With negative numbers as values in Range. Using activeFillHandle');
+		clearData(0, 0, 0, 3);
 	});
 	QUnit.test('Autofill Series. StopValue out of range', function (assert) {
 		const testData = [

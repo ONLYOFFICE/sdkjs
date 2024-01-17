@@ -20644,7 +20644,7 @@
 		let nFilledRangeLength = 0;
 		this._calcSum(nFilledStartIndex, nEndIndexFilledLine, nIndexFilledLine, function (nValue, nCellIndex) {
 			nFilledRangeLength++;
-			if (nValue === -Infinity && nFilledStartIndex === nCellIndex && oSerial.getActiveFillHandle()) {
+			if ((nValue === -Infinity || isNaN(nValue)) && nFilledStartIndex === nCellIndex && oSerial.getActiveFillHandle()) {
 				bFirstCellValueInf = true;
 				return true; // break loop
 			}
