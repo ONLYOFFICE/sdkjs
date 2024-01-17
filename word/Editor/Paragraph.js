@@ -19628,7 +19628,8 @@ CParagraphDrawStateHighlights.prototype.Reset = function(DrawColl, DrawFind, Dra
 	this.DrawComments       = DrawComments;
 	this.DrawSolvedComments = DrawSolvedComments;
 
-	this.Comments = [];
+	this.Comments     = [];
+	this.CommentsFlag = AscCommon.comments_NoComment;
 	if (null !== PageEndInfo)
 	{
 		for (var nIndex = 0, nCount = PageEndInfo.Comments.length; nIndex < nCount; ++nIndex)
