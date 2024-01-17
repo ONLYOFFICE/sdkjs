@@ -16048,18 +16048,18 @@ function RangeDataManagerElem(bbox, data)
 						numeratorOfSlope += (cellIndex - xAvg) * (cellNumberValue - yAvg);
 						denominatorOfSlope += Math.pow((cellIndex - xAvg), 2);
 						if (seriesSettings.asc_getType() === Asc.c_oAscSeriesType.date) {
-							const MONTH_UNIT = 31;
-							const YEAR_UNIT = 366;
+							const MONTH_UNIT = [28, 29, 30, 31];
+							const YEAR_UNIT = [365, 366];
 
 							let roundedSlope = Math.ceil(numeratorOfSlope / denominatorOfSlope);
 							let isSequenceSeries = isVertical ? curRow === (rowStart + 1) : curCol === (colStart + 1);
 
-							if (MONTH_UNIT === roundedSlope) {
+							if (MONTH_UNIT.includes(Math.abs(roundedSlope))) {
 								seriesSettings.asc_setDateUnit(Asc.c_oAscDateUnitType.month);
-								seriesSettings.asc_setStepValue(1);
-							} else if (YEAR_UNIT === roundedSlope) {
+								seriesSettings.asc_setStepValue(cellNumberValue < firstValue ? -1 :1);
+							} else if (YEAR_UNIT.includes(Math.abs(roundedSlope))) {
 								seriesSettings.asc_setDateUnit(Asc.c_oAscDateUnitType.year);
-								seriesSettings.asc_setStepValue(1);
+								seriesSettings.asc_setStepValue(cellNumberValue < firstValue ? -1 : 1);
 							} else if (isSequenceSeries) {
 								seriesSettings.asc_setStepValue(cellNumberValue - firstValue);
 							}
