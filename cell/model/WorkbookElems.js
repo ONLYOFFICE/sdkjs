@@ -16504,8 +16504,8 @@ function RangeDataManagerElem(bbox, data)
 				val = parsedRes.value;
 			}
 		}
-		
-		return [errCode, val !== null ? parseFloat(val) : null];
+
+		return [errCode, (val != null && val !== "") ? parseFloat(val) : null];
 	};
 
 	/**
