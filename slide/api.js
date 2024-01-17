@@ -78,7 +78,7 @@
 		this.isHidden             = false;
 		this.resetBackground      = false;
 		this.applyToAll           = false;
-		this.showMasterSp         = true;
+		this.showMasterSp         = null;
 	}
 
 	CAscSlideProps.prototype.get_background     = function()
@@ -3534,11 +3534,13 @@ background-repeat: no-repeat;\
 		}
 
 		const bNewShowMasterShapes = prop.get_ShowMasterSp();
-		for (let i = 0; i < arr_ind.length; i += 1) {
-			const oSlide = oLogicDocument.Slides[arr_ind[i]];
-			if (bNewShowMasterShapes !== oSlide.showMasterSp) {
-				oLogicDocument.setShowMasterSp(bNewShowMasterShapes, arr_ind);
-				return;
+		if (bNewShowMasterShapes !== null) {
+			for (let i = 0; i < arr_ind.length; i += 1) {
+				const oSlide = oLogicDocument.Slides[arr_ind[i]];
+				if (bNewShowMasterShapes !== oSlide.showMasterSp) {
+					oLogicDocument.setShowMasterSp(bNewShowMasterShapes, arr_ind);
+					return;
+				}
 			}
 		}
 
@@ -6967,10 +6969,11 @@ background-repeat: no-repeat;\
         obj.Transition.ShowLoop = this.WordControl.m_oLogicDocument.isLoopShowMode();
 
 		let isCanResetBackground = false;
+		let showMasterSp = true;
 		for (let i = 0; i < aSlides.length; i += 1) {
 			const oSlide = aSlides[i];
 			isCanResetBackground |= !!oSlide.cSld.Bg;
-			obj.showMasterSp   &= oSlide.showMasterSp;
+			showMasterSp         &= oSlide.showMasterSp;
 
 			obj.lockDelete     |= !(oSlide.deleteLock.Lock.Type === locktype_Mine || oSlide.deleteLock.Lock.Type === locktype_None);
 			obj.lockLayout     |= !(oSlide.layoutLock.Lock.Type === locktype_Mine || oSlide.layoutLock.Lock.Type === locktype_None);
@@ -6983,6 +6986,7 @@ background-repeat: no-repeat;\
 				obj.lockTransition ||
 				obj.lockBackground || oSlide.isLockedObject();
 		}
+		obj.showMasterSp = showMasterSp;
 		obj.lockResetBackground = obj.lockBackground || !isCanResetBackground;
 		if (!obj.lockBackground) {
 			for (let i = 0; i < oPresentation.Slides.length; i += 1) {
