@@ -1296,6 +1296,9 @@
 			case AscDFH.historydescription_Presentation_ApplyBackgroundToAll:
 				sString = "historydescription_Presentation_ApplyBackgroundToAll";
 				break;
+			case AscDFH.historydescription_Presentation_ShowMasterShapes:
+				sString = "historydescription_Presentation_ShowMasterShapes";
+				break;
 		}
 		return sString;
 	}
@@ -4497,6 +4500,7 @@
 	window['AscDFH'].historydescription_Document_ComplexField_MergeFormat           = 0x01ab;
 	window['AscDFH'].historydescription_Presentation_ResetSlideBackground           = 0x01ac;
 	window['AscDFH'].historydescription_Presentation_ApplyBackgroundToAll           = 0x01ad;
+	window['AscDFH'].historydescription_Presentation_ShowMasterShapes               = 0x01ae;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

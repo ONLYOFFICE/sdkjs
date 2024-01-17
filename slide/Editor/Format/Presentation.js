@@ -12599,9 +12599,11 @@ CPresentation.prototype.applySlideBackgroundToAll = function() {
 			return;
 		}
 		const oBg = oCurSlide.cSld.Bg;
+		const bShowMasterShapes = oCurSlide.showMasterSp;
 		for (let i = 0; i < arrSlideIndexes.length; i += 1) {
 			const oSlide = this.Slides[arrSlideIndexes[i]];
 			oSlide.changeBackground(null);
+			oSlide.setShowMasterSp(bShowMasterShapes);
 		}
 		for (let i = 0; i < this.slideMasters.length; i += 1) {
 			const oMaster = this.slideMasters[i];
@@ -12629,6 +12631,20 @@ CPresentation.prototype.resetSlideBackground = function(arrSlideIndexes) {
 		this.StartAction(AscDFH.historydescription_Presentation_ResetSlideBackground);
 		for (let i = 0; i < arrSlideIndexes.length; i += 1) {
 			this.Slides[arrSlideIndexes[i]].changeBackground(null);
+		}
+		this.FinalizeAction();
+		for (let i = 0; i < arrSlideIndexes.length; i += 1) {
+			this.DrawingDocument.OnRecalculatePage(arrSlideIndexes[i], this.Slides[arrSlideIndexes[i]]);
+		}
+		this.DrawingDocument.OnEndRecalculate(true, false);
+		this.Document_UpdateInterfaceState();
+	}
+};
+CPresentation.prototype.setShowMasterSp = function(bShow, arrSlideIndexes) {
+	if (this.Document_Is_SelectionLocked(AscCommon.changestype_SlideBg, arrSlideIndexes) === false) {
+		this.StartAction(AscDFH.historydescription_Presentation_ShowMasterShapes);
+		for (let i = 0; i < arrSlideIndexes.length; i += 1) {
+			this.Slides[arrSlideIndexes[i]].setShowMasterSp(bShow);
 		}
 		this.FinalizeAction();
 		for (let i = 0; i < arrSlideIndexes.length; i += 1) {

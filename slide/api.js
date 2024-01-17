@@ -78,6 +78,7 @@
 		this.isHidden             = false;
 		this.resetBackground      = false;
 		this.applyToAll           = false;
+		this.showMasterSp         = true;
 	}
 
 	CAscSlideProps.prototype.get_background     = function()
@@ -187,6 +188,14 @@
 	CAscSlideProps.prototype.put_ApplyToAll     = function(v)
 	{
 		this.applyToAll = v;
+	};
+	CAscSlideProps.prototype.get_ShowMasterSp     = function()
+	{
+		return this.showMasterSp;
+	};
+	CAscSlideProps.prototype.put_ShowMasterSp     = function(v)
+	{
+		this.showMasterSp = v;
 	};
 	function CAscChartProp(obj)
 	{
@@ -3511,18 +3520,30 @@ background-repeat: no-repeat;\
 			return;
 		}
 
-		const _back_fill = prop.get_background();
-		const bResetBackground = prop.get_ResetBackground();
 		const bApplyBackgroundToAll = prop.get_ApplyToAll();
-		if (bResetBackground) {
-			const arr_ind    = oLogicDocument.GetSelectedSlides();
-			oLogicDocument.resetSlideBackground(arr_ind);
-			return;
-		} else if (bApplyBackgroundToAll) {
+		if (bApplyBackgroundToAll) {
 			oLogicDocument.applySlideBackgroundToAll();
 			return;
-		} else if (_back_fill) {
-			const arr_ind    = oLogicDocument.GetSelectedSlides();
+		}
+
+		const arr_ind    = oLogicDocument.GetSelectedSlides();
+		const bResetBackground = prop.get_ResetBackground();
+		if (bResetBackground) {
+			oLogicDocument.resetSlideBackground(arr_ind);
+			return;
+		}
+
+		const bNewShowMasterShapes = prop.get_ShowMasterSp();
+		for (let i = 0; i < arr_ind.length; i += 1) {
+			const oSlide = oLogicDocument.Slides[arr_ind[i]];
+			if (bNewShowMasterShapes !== oSlide.showMasterSp) {
+				oLogicDocument.setShowMasterSp(bNewShowMasterShapes, arr_ind);
+				return;
+			}
+		}
+
+		const _back_fill = prop.get_background();
+		if (_back_fill) {
 			if (_back_fill.asc_getType() == c_oAscFill.FILL_TYPE_NOFILL)
 			{
 				var bg       = new AscFormat.CBg();
@@ -6949,6 +6970,8 @@ background-repeat: no-repeat;\
 		for (let i = 0; i < aSlides.length; i += 1) {
 			const oSlide = aSlides[i];
 			isCanResetBackground |= !!oSlide.cSld.Bg;
+			obj.showMasterSp   &= oSlide.showMasterSp;
+
 			obj.lockDelete     |= !(oSlide.deleteLock.Lock.Type === locktype_Mine || oSlide.deleteLock.Lock.Type === locktype_None);
 			obj.lockLayout     |= !(oSlide.layoutLock.Lock.Type === locktype_Mine || oSlide.layoutLock.Lock.Type === locktype_None);
 			obj.lockTiming     |= !(oSlide.timingLock.Lock.Type === locktype_Mine || oSlide.timingLock.Lock.Type === locktype_None);
@@ -9627,6 +9650,8 @@ background-repeat: no-repeat;\
 	CAscSlideProps.prototype['put_ResetBackground']     = CAscSlideProps.prototype.put_ResetBackground;
 	CAscSlideProps.prototype['get_ApplyToAll']          = CAscSlideProps.prototype.get_ApplyToAll;
 	CAscSlideProps.prototype['put_ApplyToAll']          = CAscSlideProps.prototype.put_ApplyToAll;
+	CAscSlideProps.prototype['get_ShowMasterSp']          = CAscSlideProps.prototype.get_ShowMasterSp;
+	CAscSlideProps.prototype['put_ShowMasterSp']          = CAscSlideProps.prototype.put_ShowMasterSp;
 	window['Asc']['CAscChartProp']                    = CAscChartProp;
 	CAscChartProp.prototype['get_ChangeLevel']        = CAscChartProp.prototype.get_ChangeLevel;
 	CAscChartProp.prototype['put_ChangeLevel']        = CAscChartProp.prototype.put_ChangeLevel;
