@@ -373,6 +373,22 @@ $(function () {
 			autofillData(assert, autofillRange, [['1', '2', '']], _desc);
 		}, "Autofill one Row with stop value = 0 and step value = 1. Bug #65705");
 		clearData(0, 0, 2, 0);
+		// Select vertical oFromRange with step value = -0.2. Bug #65871
+		testData = [
+			['1']
+		];
+		oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(-0.2);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 5);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['1'], [''], [''], [''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'], ['0.8'], ['0.6'], ['0.4'], ['0.2'], ['0']], _desc);
+		}, "Autofill one Column with step value = -0.2. Bug #65871");
+		clearData(0, 0, 0, 5);
 	});
 	QUnit.test('Autofill growth progression - one filled row/column', function (assert) {
 		const testData = [

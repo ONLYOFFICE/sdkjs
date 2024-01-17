@@ -20528,7 +20528,7 @@
 		// Fill range cells for i row or col
 		let oProgressionCalc = {
 			0: function () { // linear
-				let nCurrentVal = oSerial.getPrevValue() + nStep
+				let nCurrentVal = _smartRound(oSerial.getPrevValue() + nStep, nStep);
 				oSerial.setPrevValue(nCurrentVal);
 				return nCurrentVal;
 			}, 1: function () { // growth
