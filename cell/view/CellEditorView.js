@@ -1484,7 +1484,7 @@ function (window, undefined) {
 		// в новой версии сафари увеличиваем не только canvas'ы, но и дивку тоже.
 		if (AscCommon.AscBrowser.isSafariMacOs) {
 			if ((widthStyle * heightStyle) < 5000) {
-				this._originalCanvasWidth = widthStyle;
+				this._originalCanvasWidth = width;
 				widthStyle = ((5000 / heightStyle) >> 0) + 1;
 			} else {
 				this._originalCanvasWidth = null;
