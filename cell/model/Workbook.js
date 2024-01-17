@@ -20513,7 +20513,7 @@
 
 		let oSerial = this;
 		let nStep = this.getStep();
-		let nStopValue = this.getStopValue() ? this.getStopValue() : null;
+		let nStopValue = this.getStopValue() != null ? this.getStopValue() : null;
 		let nIndexFilledLine = this.getVertical() ? oFilledLine.oCell.nCol : oFilledLine.oCell.nRow;
 		let oTo = oFilledLine.oToRange.bbox;
 		let oWsTo = oFilledLine.oToRange.worksheet;
@@ -20544,9 +20544,9 @@
 
 		if (nStopValue != null) {
 			if (this.getType() === oSeriesType.growth) {
-				bIncorrectStopValue = nStep <= 1 || nStopValue < 0;
+				bIncorrectStopValue = nStep <= 1 || nStopValue <= 0;
 			} else {
-				bIncorrectStopValue = Math.sign(nStep) !== Math.sign(nStopValue)
+				bIncorrectStopValue = Math.sign(nStep) !== Math.sign(nStopValue) || nStopValue === 0;
 			}
 		}
 		if (bIncorrectStopValue) {
