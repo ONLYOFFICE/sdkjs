@@ -16493,20 +16493,19 @@ function RangeDataManagerElem(bbox, data)
 		if (typeof val === 'string') {
 			val = val.replace(',','.');
 		}
-		if (val !== '' && isNaN(parseFloat(val))) {
-			if ((!regstr.test(val.trim()) || isNaN(parseFloat(val)))) {
-				//check on format
-				let parsedRes = AscCommon.g_oFormatParser.parse(val);
-				if (parsedRes === null) {
-					errCode = Asc.c_oAscError.ID.MustIntegerOrDecimalNumber;
-					val = null;
-				} else {
-					val = parsedRes.value;
-				}
+
+		if (val !== '' && (!regstr.test(val.trim()) || isNaN(parseFloat(val)))) {
+			//check on format
+			let parsedRes = AscCommon.g_oFormatParser.parse(val);
+			if (parsedRes === null) {
+				errCode = Asc.c_oAscError.ID.MustIntegerOrDecimalNumber;
+				val = null;
+			} else {
+				val = parsedRes.value;
 			}
 		}
-
-		return [errCode, val];
+		
+		return [errCode, val !== null ? parseFloat(val) : null];
 	};
 
 	/**
