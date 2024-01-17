@@ -77,7 +77,7 @@
 		if (this.Flags & FLAGS_GAPS)
 			nWidth += this.LGap + this.RGap;
 
-		return nWidth;
+		return (nWidth > 0 ? nWidth : 0);
 	};
 	CRunSpace.prototype.GetCodePoint = function()
 	{
