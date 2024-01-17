@@ -9941,6 +9941,27 @@
 		this.Section.SetOrientation(false === isPortrait ? Asc.c_oAscPageOrientation.PageLandscape : Asc.c_oAscPageOrientation.PagePortrait, false);
 	};
 	/**
+	 * Gets page height for current section.
+	 * @memberof ApiSection
+	 * @typeofeditors ["CDE"]
+	 * @returns {twips}
+	 */
+	ApiSection.prototype.GetPageHeight = function()
+	{
+		return private_MM2Twips(this.Section.GetPageHeight());
+	};
+	/**
+	 * Gets page width for current section.
+	 * @memberof ApiSection
+	 * @typeofeditors ["CDE"]
+	 * @returns {twips}
+	 */
+	ApiSection.prototype.GetPageWidth = function()
+	{
+		return private_MM2Twips(this.Section.GetPageWidth());
+	};
+
+	/**
 	 * Specifies the page margins for all the pages in this section.
 	 * @memberof ApiSection
 	 * @typeofeditors ["CDE"]
@@ -19896,6 +19917,8 @@
 	ApiSection.prototype["SetEqualColumns"]          = ApiSection.prototype.SetEqualColumns;
 	ApiSection.prototype["SetNotEqualColumns"]       = ApiSection.prototype.SetNotEqualColumns;
 	ApiSection.prototype["SetPageSize"]              = ApiSection.prototype.SetPageSize;
+	ApiSection.prototype["GetPageHeight"]            = ApiSection.prototype.GetPageHeight;
+	ApiSection.prototype["GetPageWidth"]             = ApiSection.prototype.GetPageWidth;
 	ApiSection.prototype["SetPageMargins"]           = ApiSection.prototype.SetPageMargins;
 	ApiSection.prototype["SetHeaderDistance"]        = ApiSection.prototype.SetHeaderDistance;
 	ApiSection.prototype["SetFooterDistance"]        = ApiSection.prototype.SetFooterDistance;
