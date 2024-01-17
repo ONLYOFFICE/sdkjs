@@ -164,7 +164,7 @@ function Slide(presentation, slideLayout, slideNum)
 
     this.show = true;
     this.showMasterPhAnim = false;
-    this.showMasterSp = null;
+    this.showMasterSp = true;
 
     this.backgroundFill = null;
 
@@ -1270,20 +1270,11 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
     };
 
     Slide.prototype.needMasterSpDraw = function() {
-        if(this.showMasterSp === true) {
-            return true;
-        }
-        if(this.showMasterSp === false){
-            return false;
-        }
-        if(this.Layout.showMasterSp === false) {
-            return false;
-        }
-        return true;
+			return this.showMasterSp ? this.Layout.showMasterSp : false;
     };
 
     Slide.prototype.needLayoutSpDraw = function() {
-        return this.showMasterSp !== false;
+			return this.showMasterSp;
     };
 
     Slide.prototype.isEqualBgMasterAndLayout = function(oSlide) {

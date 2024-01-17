@@ -108,6 +108,7 @@ function SlideLayout()
     this.matchingName = "";
     this.preserve = false;
     this.showMasterPhAnim = false;
+		this.showMasterSp = true;
     this.type = null;
 
     this.userDrawn = true;
@@ -868,7 +869,7 @@ function CLayoutThumbnailDrawer()
 
         if (use_master_shapes !== false)
         {
-            if (_layout.showMasterSp == true || _layout.showMasterSp == undefined)
+            if (_layout.showMasterSp)
             {
                 if(_master.needRecalc && _master.needRecalc())
                 {

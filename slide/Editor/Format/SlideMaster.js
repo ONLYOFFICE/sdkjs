@@ -715,7 +715,7 @@ function CMasterThumbnailDrawer()
             }
             else
             {
-                if (_layout.showMasterSp == true || _layout.showMasterSp == undefined)
+                if (_layout.showMasterSp)
                 {
                     if(_master.needRecalc && _master.needRecalc())
                     {
@@ -886,7 +886,7 @@ function CMasterThumbnailDrawer()
             }
             else
             {
-                if (_layout.showMasterSp == true || _layout.showMasterSp == undefined)
+                if (_layout.showMasterSp)
                 {
                     if(_master.needRecalc && _master.needRecalc())
                     {
