@@ -1150,7 +1150,9 @@
 						oForm.SetTextColor(oFormInfo["font"]["color"]);
 					if (oFormInfo["font"]["name"])
 						oForm.SetTextFont(oFormInfo["font"]["name"]);
-					if (oFormInfo["font"]["actual"]) {
+					if (oForm.GetType() == AscPDF.FIELD_TYPES.button && oFormInfo["font"]["AP"])
+						oForm.SetTextFontActual(oFormInfo["font"]["AP"]);
+					else if (oFormInfo["font"]["actual"]) {
 						oForm.SetTextFontActual(oFormInfo["font"]["actual"]);
 					}
 					else if (oFormInfo["font"]["name"]) {
