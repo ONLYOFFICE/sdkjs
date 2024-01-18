@@ -20417,8 +20417,12 @@
 			const nFirstCellVal = oFilledLine.oCell.getNumberValue();
 			let oFirstCellValDate = new Asc.cDate().getDateFromExcel(nFirstCellVal < 60 ? nFirstCellVal + 1 : nFirstCellVal);
 
-			if (nFirstCellVal === nPrevVal && oFirstCellValDate.getDay() === 6) {
-				nPrevVal += 1;
+			if (nFirstCellVal === nPrevVal) {
+				if (nStep < 0 && oFirstCellValDate.getDay() === 0) {
+				 	nPrevVal -= 1
+				} else if (oFirstCellValDate.getDay() === 6) {
+					nPrevVal += 1;
+				}
 			}
 			let nCurrentVal = _smartRound(nPrevVal + nStep, nStep);
 			// Convert number to cDate object

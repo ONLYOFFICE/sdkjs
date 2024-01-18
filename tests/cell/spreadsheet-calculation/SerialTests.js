@@ -1478,6 +1478,23 @@ $(function () {
 			autofillData(assert, autofillRange, [['45304'], ['45306'], ['45307'], ['45308'], ['45309'], ['45313'], ['45314'], ['45315'], ['45316'], ['45317']], _desc);
 		}, "Autofill Column: Date progression - Weekday, Step - 1.2. Bug #65796");
 		clearData(0, 0, 0, 9);
+		// Horizontal dateUnit - Weekday. Step - -2. Bug #65731.
+		testData = [
+			['01/01/2023']
+		];
+		oFromRange = getFilledData(0, 0, 10, 0, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(-2);
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.weekday);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 10, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['44927', '', '', '', '', '', '', '', '', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['44927', '44924', '44922', '44918', '44916', '44914', '44910', '44908', '44904', '44902', '44900']], _desc);
+		}, "Autofill Row: Date progression - Weekday, Step - -2. Bug #65731");
+		clearData(0, 0, 10, 0);
 	});
 	QUnit.test('Autofill Date type - Horizontal multiple cells', function (assert) {
 		const testData = [
