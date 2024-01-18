@@ -331,7 +331,7 @@
         oDoc.event["format"] = cFormat;
         
         let oDateFormat         = AscCommon.oNumFormatCache.get(cFormat, AscCommon.NumFormatType.PDFFormDate);
-        let oDateFormatForParse = oDoc.lastDatePickerInfo ? oDateFormat : AscCommon.oNumFormatCache.get("dd.mm.yyyy", AscCommon.NumFormatType.PDFFormDate);
+        let oDateFormatForParse = oDoc.lastDatePickerInfo ? AscCommon.oNumFormatCache.get("dd.mm.yyyy", AscCommon.NumFormatType.PDFFormDate) : oDateFormat;
 
         oDateFormat.oNegativeFormat.bAddMinusIfNes = false;
         
@@ -516,7 +516,7 @@
         }
 
         let oDateFormat         = AscCommon.oNumFormatCache.get(cFormat, AscCommon.NumFormatType.PDFFormDate);
-        let oDateFormatForParse = oDoc.lastDatePickerInfo ? oDateFormat : AscCommon.oNumFormatCache.get("dd.mm.yyyy", AscCommon.NumFormatType.PDFFormDate);
+        let oDateFormatForParse = oDoc.lastDatePickerInfo ? AscCommon.oNumFormatCache.get("dd.mm.yyyy", AscCommon.NumFormatType.PDFFormDate) : oDateFormat;
         oDateFormat.oNegativeFormat.bAddMinusIfNes = false;
         
         let sCurValue;

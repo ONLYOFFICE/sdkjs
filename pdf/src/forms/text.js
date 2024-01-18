@@ -65,6 +65,7 @@
 		this.contentFormat = new AscPDF.CTextBoxContent(this, oDoc, true);
 
         this._scrollInfo = null;
+        this._markRect = {};
     }
     CTextField.prototype = Object.create(AscPDF.CBaseField.prototype);
 	CTextField.prototype.constructor = CTextField;
