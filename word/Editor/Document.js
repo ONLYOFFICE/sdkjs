@@ -2288,7 +2288,7 @@ CDocument.prototype.sendEvent = function()
 	if (!this.MainDocument || !this.Api)
 		return;
 	
-	this.Api.sendEvent(arguments);
+	this.Api.sendEvent.apply(this.Api, arguments);
 };
 CDocument.prototype.UpdateDefaultsDependingOnCompatibility = function()
 {
