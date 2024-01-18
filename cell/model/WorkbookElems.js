@@ -16491,7 +16491,10 @@ function RangeDataManagerElem(bbox, data)
 
 		let regstr = new RegExp('^\s*[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)\s*$');
 		if (typeof val === 'string') {
-			val = val.replace(',','.');
+			let findComma = val.match(/,/g);
+			if (findComma && findComma.length === 1) {
+				val = val.replace(',','.');
+			}
 		}
 
 		if (val !== '' && (!regstr.test(val.trim()) || isNaN(parseFloat(val)))) {
