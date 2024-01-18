@@ -16023,16 +16023,18 @@ function RangeDataManagerElem(bbox, data)
 		function actionCell(cell, curRow, curCol, rowStart, colStart) {
 			if (cell && cell.getValueWithoutFormat()) {
 				// Fill type
-				seriesSettings.asc_setType(Asc.c_oAscSeriesType.linear);
-				if (cell.xfs != null && cell.xfs.num != null && cell.xfs.num.getFormat() != null) {
-					let numFormat = AscCommon.oNumFormatCache.get(cell.xfs.num.getFormat());
-					if (numFormat.isDateTimeFormat() && numFormat.getType() === Asc.c_oAscNumFormatType.Date) {
-						seriesSettings.asc_setType(Asc.c_oAscSeriesType.date);
+				if (seriesSettings.asc_getType() == null) {
+					seriesSettings.asc_setType(Asc.c_oAscSeriesType.linear);
+					if (cell.xfs != null && cell.xfs.num != null && cell.xfs.num.getFormat() != null) {
+						let numFormat = AscCommon.oNumFormatCache.get(cell.xfs.num.getFormat());
+						if (numFormat.isDateTimeFormat() && numFormat.getType() === Asc.c_oAscNumFormatType.Date) {
+							seriesSettings.asc_setType(Asc.c_oAscSeriesType.date);
 
-						contextMenuAllowedProps[Asc.c_oAscFillType.fillDays] = true;
-						//contextMenuAllowedProps[Asc.c_oAscFillType.fillWeekdays] = true;
-						//contextMenuAllowedProps[Asc.c_oAscFillType.fillMonths] = true;
-						//contextMenuAllowedProps[Asc.c_oAscFillType.fillYears] = true;
+							contextMenuAllowedProps[Asc.c_oAscFillType.fillDays] = true;
+							//contextMenuAllowedProps[Asc.c_oAscFillType.fillWeekdays] = true;
+							//contextMenuAllowedProps[Asc.c_oAscFillType.fillMonths] = true;
+							//contextMenuAllowedProps[Asc.c_oAscFillType.fillYears] = true;
+						}
 					}
 				}
 
