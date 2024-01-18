@@ -20546,7 +20546,8 @@
 			if (this.getType() === oSeriesType.growth) {
 				bIncorrectStopValue = nStep <= 1 || nStopValue <= 0;
 			} else {
-				bIncorrectStopValue = Math.sign(nStep) !== Math.sign(nStopValue) || nStopValue === 0;
+				let nStartVal = oFilledLine.nValue;
+				bIncorrectStopValue = nStep < 0 ? nStartVal <= nStopValue : nStartVal >= nStopValue;
 			}
 		}
 		if (bIncorrectStopValue) {
