@@ -20492,7 +20492,11 @@
 					let nCurrentValue = oProgressionCalc[oSerial.getType()]();
 					let bNeedStopLoop = false;
 					if (nStopValue != null) {
-						bNeedStopLoop = nStep > 0 ? nCurrentValue > nStopValue : nCurrentValue < nStopValue;
+						if (oSerial.getType() === oSeriesType.growth) {
+							bNeedStopLoop = Number.isInteger(nStep) ? nCurrentValue	> nStopValue : nCurrentValue < nStopValue;
+						} else {
+							bNeedStopLoop = nStep > 0 ? nCurrentValue > nStopValue : nCurrentValue < nStopValue;
+						}
 					}
 					if (bNeedStopLoop || (nRow === gc_nMaxRow0 || nCol === gc_nMaxCol0)) {
 						bStopLoop = true;
@@ -20544,7 +20548,7 @@
 
 		if (nStopValue != null) {
 			if (this.getType() === oSeriesType.growth) {
-				bIncorrectStopValue = nStep <= 1 || nStopValue <= 0;
+				bIncorrectStopValue = (nStep <= 0 || nStep === 1) || nStopValue <= 0;
 			} else {
 				let nStartVal = oFilledLine.nValue;
 				bIncorrectStopValue = nStep < 0 ? nStartVal <= nStopValue : nStartVal >= nStopValue;

@@ -532,11 +532,11 @@ $(function () {
 			autofillData(assert, autofillRange, [['1', '', '']], _desc);
 		}, "Autofill one Row with stop value = -10 and step value = -1. Bug #65705");
 		clearData(0, 0, 2, 0);
-		// Select vertical oFromRange with stop value = -10 and step value = -2. Bug #65705
+		// Select vertical oFromRange with stop value = 10 and step value = -2. Bug #65705
 		oFromRange = getFilledData(0, 0, 0, 2, testData, [0, 0]);
 		oSeriesSettings = api.asc_GetSeriesSettings();
 		oSeriesSettings.asc_setStepValue(-2);
-		oSeriesSettings.asc_setStopValue(-10);
+		oSeriesSettings.asc_setStopValue(10);
 		oSeriesSettings.asc_setType(oSeriesType.growth);
 		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
 
@@ -545,37 +545,7 @@ $(function () {
 			autofillData(assert, autofillRange, [[''], [''], ['']], _desc);
 		}, function (_desc) {
 			autofillData(assert, autofillRange, [['1'], [''], ['']], _desc);
-		}, "Autofill one Column with stop value = -10 and step value = -2. Bug #65705");
-		clearData(0, 0, 0, 2);
-		// Select horizontal oFromRange with stop value = -10 and step value = 1. Bug #65705
-		oFromRange = getFilledData(0, 0, 2, 0, testData, [0, 0]);
-		oSeriesSettings = api.asc_GetSeriesSettings();
-		oSeriesSettings.asc_setStepValue(1);
-		oSeriesSettings.asc_setStopValue(-10);
-		oSeriesSettings.asc_setType(oSeriesType.growth);
-		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
-
-		autofillRange = getRange(0, 0, 2, 0);
-		checkUndoRedo(function (_desc) {
-			autofillData(assert, autofillRange, [['', '', '']], _desc);
-		}, function (_desc) {
-			autofillData(assert, autofillRange, [['1', '', '']], _desc);
-		}, "Autofill one Row with stop value = -10 and step value = 1. Bug #65705");
-		clearData(0, 0, 2, 0);
-		// Select vertical oFromRange with stop value = -10 and step value = 2. Bug #65705
-		oFromRange = getFilledData(0, 0, 0, 2, testData, [0, 0]);
-		oSeriesSettings = api.asc_GetSeriesSettings();
-		oSeriesSettings.asc_setStepValue(2);
-		oSeriesSettings.asc_setStopValue(-10);
-		oSeriesSettings.asc_setType(oSeriesType.growth);
-		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
-
-		autofillRange = getRange(0, 0, 0, 2);
-		checkUndoRedo(function (_desc) {
-			autofillData(assert, autofillRange, [[''], [''], ['']], _desc);
-		}, function (_desc) {
-			autofillData(assert, autofillRange, [['1'], [''], ['']], _desc);
-		}, "Autofill one Column with stop value = -10 and step value = 2. Bug #65705");
+		}, "Autofill one Column with stop value = 10 and step value = -2. Bug #65705");
 		clearData(0, 0, 0, 2);
 		// Select horizontal oFromRange with stop value = -10 and step value = 1. Bug #65705
 		oFromRange = getFilledData(0, 0, 2, 0, testData, [0, 0]);
@@ -607,10 +577,11 @@ $(function () {
 			autofillData(assert, autofillRange, [['1'], [''], ['']], _desc);
 		}, "Autofill one Column with stop value = 10 and step value = 1. Bug #65705");
 		clearData(0, 0, 0, 2);
-		// Select horizontal oFromRange with stop value = 0 and step value = 1. Bug #65705
+		// Select horizontal oFromRange with stop value = -10 and step value = 2. Bug #65705
 		oFromRange = getFilledData(0, 0, 2, 0, testData, [0, 0]);
 		oSeriesSettings = api.asc_GetSeriesSettings();
-		oSeriesSettings.asc_setStopValue(0);
+		oSeriesSettings.asc_setStepValue(2);
+		oSeriesSettings.asc_setStopValue(-10);
 		oSeriesSettings.asc_setType(oSeriesType.growth);
 		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
 
@@ -619,7 +590,37 @@ $(function () {
 			autofillData(assert, autofillRange, [['', '', '']], _desc);
 		}, function (_desc) {
 			autofillData(assert, autofillRange, [['1', '', '']], _desc);
-		}, "Autofill one Row with stop value = 0 and step value = 1. Bug #65705");
+		}, "Autofill one Row with stop value = -10 and step value = 2. Bug #65705");
+		clearData(0, 0, 2, 0);
+		// Select vertical oFromRange with stop value = 10 and step value = 0. Bug #65705
+		oFromRange = getFilledData(0, 0, 0, 2, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(0);
+		oSeriesSettings.asc_setStopValue(10);
+		oSeriesSettings.asc_setType(oSeriesType.growth);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 2);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [[''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'], [''], ['']], _desc);
+		}, "Autofill one Column with stop value = 10 and step value = 0. Bug #65705");
+		clearData(0, 0, 0, 2);
+		// Select horizontal oFromRange with stop value = 0.25 and step value = 0.5. Bug #65897
+		oFromRange = getFilledData(0, 0, 3, 0, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(0.5);
+		oSeriesSettings.asc_setStopValue(0.25);
+		oSeriesSettings.asc_setType(oSeriesType.growth);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 3, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['1', '', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1', '0.5', '0.25', '']], _desc);
+		}, "Autofill one Row with stop value = 0.25 and step value = 0.5. Bug #65897");
 		clearData(0, 0, 2, 0);
 	});
 	QUnit.test('Autofill default mode', function (assert) {
