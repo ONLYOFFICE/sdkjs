@@ -20458,7 +20458,7 @@
 			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nIntegerVal < 60 ? nIntegerVal + 1 : nIntegerVal);
 			let nFinalStep = _smartRound(nCurrentVal - nIntegerVal, nStep);
 			if (nFinalStep < 0) {
-				return new cError(cErrorType.not_numeric);
+				return NaN;
 			}
 			if (Number.isInteger(nFinalStep)) {
 				oCurrentValDate.addMonths(nFinalStep);
@@ -20473,7 +20473,7 @@
 			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nIntegerVal < 60 ? nIntegerVal + 1 : nIntegerVal);
 			let nFinalStep = _smartRound(nCurrentVal - nIntegerVal, nStep);
 			if (nFinalStep < 0) {
-				return new cError(cErrorType.not_numeric);
+				return NaN;
 			}
 			if (Number.isInteger(nFinalStep)) {
 				oCurrentValDate.addYears(nFinalStep);
@@ -20507,10 +20507,10 @@
 					let nCurrentValue = oProgressionCalc[oSerial.getType()]();
 					let bNeedStopLoop = false;
 					if (nStopValue != null) {
-						if (oSerial.getType() === oSeriesType.growth) {
-							bNeedStopLoop = Number.isInteger(nStep) ? nCurrentValue	> nStopValue : nCurrentValue < nStopValue;
-						} else if (nCurrentValue instanceof cError) {
+						if (isNaN(nCurrentValue)) {
 							bNeedStopLoop = true;
+						} else if (oSerial.getType() === oSeriesType.growth) {
+							bNeedStopLoop = Number.isInteger(nStep) ? nCurrentValue	> nStopValue : nCurrentValue < nStopValue;
 						} else if (oSerial.getDateUnit() === oSeriesDateUnitType.weekday) {
 							bNeedStopLoop = nCurrentValue <= 0;
 						} else {
@@ -20521,9 +20521,10 @@
 						bStopLoop = true;
 						return;
 					}
-					if (nCurrentValue instanceof cError) {
+					if (isNaN(nCurrentValue)) {
+						let oErrorValue = new cError(cErrorType.not_numeric);
 						oCellValue.type = CellValueType.Error
-						oCellValue.text = nCurrentValue.value;
+						oCellValue.text = oErrorValue.value;
 					} else {
 						oCellValue.type = CellValueType.Number;
 						oCellValue.number = nCurrentValue;
