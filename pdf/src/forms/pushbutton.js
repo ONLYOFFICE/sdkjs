@@ -919,7 +919,7 @@
     CPushButtonField.prototype.CheckImageOnce = function() {
         // на открытии не заполняли контент формы, но если внешнего вида нет, тогда рисуем сами, нужно заполнить форму контентом
         let oDrawing = this.GetDrawing();
-        if (!oDrawing && !this.IsChanged() && !this.IsNeedDrawFromStream() && !this._pagePos) {
+        if (!oDrawing && !this.IsNeedDrawFromStream() && !this._pagePos) {
             this.DoInitialRecalc();
             let oImgData = this._imgData.normal;
             if (oImgData)
@@ -1350,8 +1350,10 @@
         if (Y != null)
             this._buttonAlignY = Math.abs(Math.min(Y, 1));
 
-        if (oViewer.IsOpenFormsInProgress == false)
+        if (oViewer.IsOpenFormsInProgress == false) {
+            this.SetWasChanged(true);
             this.SetNeedRecalc(true);
+        }
 
         let oDrawing = this.GetDrawing();
         if (oDrawing) {
@@ -1886,12 +1888,10 @@
 
         // icon pos
         let oIconPos = this.GetIconPosition();
-        if (oIconPos.X && oIconPos.Y) {
-            nButtonFlags |= (1 << 0);
-            nButtonFlags |= (1 << 3);
-            memory.WriteDouble(oIconPos.X);
-            memory.WriteDouble(oIconPos.Y);
-        }
+        nButtonFlags |= (1 << 0);
+        nButtonFlags |= (1 << 3);
+        memory.WriteDouble(oIconPos.X);
+        memory.WriteDouble(oIconPos.Y);
 
         let isButtonFB = this.IsButtonFitBounds();
         if (isButtonFB) {
