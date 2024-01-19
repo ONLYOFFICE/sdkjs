@@ -20427,12 +20427,14 @@
 			let nCurrentVal = _smartRound(nPrevVal + nStep, nStep);
 			// Convert number to cDate object
 			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nPrevVal < 60 ? nCurrentVal + 1 : nCurrentVal);
-			if (!aWeekdays.includes(oCurrentValDate.getDay())) {
+			let nDayOfWeek = nPrevVal < 60 ? oCurrentValDate.getDay() - 1 : oCurrentValDate.getDay();
+			if (!aWeekdays.includes(nDayOfWeek)) {
 				let nWeekendStep = Math.floor(nCurrentVal) - Math.floor(nPrevVal);
 				while (true) {
 					nWeekendStep === 0 ? nCurrentVal += 1 : nCurrentVal += nWeekendStep;
 					oCurrentValDate = new Asc.cDate().getDateFromExcel(nCurrentVal < 60 ? nCurrentVal + 1 : nCurrentVal);
-					if (aWeekdays.includes(oCurrentValDate.getDay())) {
+					nDayOfWeek = nCurrentVal < 60 ? oCurrentValDate.getDay() - 1 : oCurrentValDate.getDay();
+					if (aWeekdays.includes(nDayOfWeek)) {
 						break;
 					}
 				}

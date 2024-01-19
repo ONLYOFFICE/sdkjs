@@ -1370,9 +1370,22 @@ $(function () {
 		checkUndoRedo(function (_desc) {
 			autofillData(assert, autofillRange, [['1'], [''], [''], [''], [''], ['']], _desc);
 		}, function (_desc) {
-			autofillData(assert, autofillRange, [['1'], ['1'], ['1'], ['1'], ['1'], ['2']], _desc);
+			autofillData(assert, autofillRange, [['1'], ['2'], ['2'], ['2'], ['2'], ['3']], _desc);
 		}, "Autofill Column: Date progression - Weekday, Step - 0.2. Case: 01/01/1900 - 01/03/1900. Bug #65672");
 		clearData(0, 0, 0, 5);
+		// Vertical dateUnit - Weekday. Step - 1. Bug #65900
+		oFromRange = getFilledData(0, 0, 0, 6, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.weekday);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 6);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['1'], [''], [''], [''], [''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'], ['2'], ['3'], ['4'], ['5'], ['6'], ['9']], _desc);
+		}, "Autofill Column: Date progression - Weekday, Step - 1. Bug #65900");
+		clearData(0, 0, 0, 6);
 		// Horizontal dateUnit - Month. Step - 0.2. Bug #65672
 		testData = [
 			['01/01/2000']
