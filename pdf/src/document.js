@@ -1047,7 +1047,7 @@ var CPresentation = CPresentation || function(){};
 
             oViewer.setCursorType(cursorType);
 
-            if (mouseMoveAnnotObject && mouseMoveAnnotObject.IsComment() == false && mouseMoveAnnotObject.IsTextMarkup() == false)
+            if ((this.mouseDownAnnot && this.mouseDownAnnot.hitToHandles && this.mouseDownAnnot.hitToHandles(X, Y) != - 1) || mouseMoveAnnotObject && mouseMoveAnnotObject.IsComment() == false && mouseMoveAnnotObject.IsTextMarkup() == false)
                 oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
         }
     };

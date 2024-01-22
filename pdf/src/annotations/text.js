@@ -86,7 +86,7 @@
         this._state         = undefined;
         this._stateModel    = undefined;
         this._width         = undefined;
-        this._strokeColor   = [1, 0.82, 0];
+        this._fillColor     = [1, 0.82, 0];
 
         // internal
         TurnOffHistory();
