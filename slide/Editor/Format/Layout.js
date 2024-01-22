@@ -311,9 +311,13 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
 
             }
         }
-        for (var i = 0; i < this.cSld.spTree.length; ++i) {
-            if (this.cSld.spTree[i].isPlaceholder && !this.cSld.spTree[i].isPlaceholder())
-                this.cSld.spTree[i].draw(graphics);
+        for (let nSp = 0; nSp < this.cSld.spTree.length; ++nSp) {
+            let oSp = this.cSld.spTree[nSp];
+            if(AscCommon.IsHiddenObj(oSp)) {
+                continue;
+            }
+            if (oSp.isPlaceholder && !oSp.isPlaceholder())
+                oSp.draw(graphics);
         }
     };
     SlideLayout.prototype.calculateType = function()
@@ -882,7 +886,7 @@ function CLayoutThumbnailDrawer()
         {
             var _sp_elem = _layout.cSld.spTree[i];
             _sp_elem.recalculate();
-            if(_sp_elem.isPlaceholder && _sp_elem.isPlaceholder())
+            if(_sp_elem.isPlaceholder && _sp_elem.isPlaceholder() && !AscCommon.IsHiddenObj(_sp_elem))
             {
                 var _ph_type = _sp_elem.getPlaceholderType();
                 var _usePH = true;

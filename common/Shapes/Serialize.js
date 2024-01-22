@@ -6617,6 +6617,7 @@ function BinaryPPTYLoader()
 
         s.Skip2(5); // type SPTREE + len
 
+        let bIsNoSlideSpTree = this.TempMainObject && AscFormat.isRealNumber(this.TempMainObject.kind) && (this.TempMainObject.kind !== AscFormat.TYPE_KIND.SLIDE);
         while (s.cur < _end_rec)
         {
             var _at = s.GetUChar();
@@ -6652,7 +6653,7 @@ function BinaryPPTYLoader()
                             case 1:
                             {
                                 var _object = this.ReadShape();
-                                if (!IsHiddenObj(_object))
+                                if (!IsHiddenObj(_object) || bIsNoSlideSpTree)
                                 {
                                     shapes[shapes.length] = _object;
                                     _object.setParent2(this.TempMainObject);
@@ -6665,7 +6666,7 @@ function BinaryPPTYLoader()
                             case 8:
                             {
                                 var _object = this.ReadPic(_type);
-                                if (!IsHiddenObj(_object))
+                                if (!IsHiddenObj(_object) || bIsNoSlideSpTree)
                                 {
                                     if(_type !== 6 || _object.checkCorrect())
                                     {
@@ -6678,7 +6679,7 @@ function BinaryPPTYLoader()
                             case 3:
                             {
                                 var _object = this.ReadCxn();
-                                if (!IsHiddenObj(_object))
+                                if (!IsHiddenObj(_object) || bIsNoSlideSpTree)
                                 {
                                     shapes[shapes.length] = _object;
                                     _object.setParent2(this.TempMainObject);
@@ -6688,7 +6689,7 @@ function BinaryPPTYLoader()
                             case 4:
                             {
                                 var _object = this.ReadGroupShape();
-                                if (!IsHiddenObj(_object))
+                                if (!IsHiddenObj(_object) || bIsNoSlideSpTree)
                                 {
                                     shapes[shapes.length] = _object;
                                     _object.setParent2(this.TempMainObject);
