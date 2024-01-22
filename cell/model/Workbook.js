@@ -20443,7 +20443,7 @@
 				} else {
 					i++;
 				}
-			} while (i < Math.abs(nIntStep) || Math.abs(nIntStep) >= MAX_LIMIT_STEP);
+			} while (i < Math.abs(nIntStep) || Math.abs(nIntStep) <= MAX_LIMIT_STEP);
 			this.setPrevValue(nCurrentVal);
 			return nCurrentVal < 0 ? nCurrentVal : oCurrentValDate.getExcelDate();
 		}
