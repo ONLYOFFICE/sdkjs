@@ -20417,32 +20417,33 @@
 		*/
 		if (nDateUnit === oSeriesDateUnitType.weekday) {
 			const aWeekdays = [1, 2, 3, 4, 5];
-			const nFirstCellVal = oFilledLine.oCell.getNumberValue();
-			let oFirstCellValDate = new Asc.cDate().getDateFromExcel(nFirstCellVal < 60 ? nFirstCellVal + 1 : nFirstCellVal);
-
-			if (nFirstCellVal === nPrevVal) {
-				if (nStep < 0 && oFirstCellValDate.getDay() === 0) {
-				 	nPrevVal -= 1
-				} else if (oFirstCellValDate.getDay() === 6) {
-					nPrevVal += 1;
+			let oCurrentValDate = null;
+			let nCurrentVal = nPrevVal;//_smartRound(nPrevVal + nStep, nStep);
+			let i = 0;
+			let nIntStep = Math.floor(nStep);
+			let nFinalStep = Math.sign(nIntStep) + _smartRound(nStep - nIntStep, nStep);
+			do {
+				if (nFinalStep !== 0) {
+					nCurrentVal = _smartRound(nCurrentVal + nFinalStep, nStep);
 				}
-			}
-			let nCurrentVal = _smartRound(nPrevVal + nStep, nStep);
-			// Convert number to cDate object
-			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nPrevVal < 60 ? nCurrentVal + 1 : nCurrentVal);
-			let nDayOfWeek = nPrevVal < 60 ? oCurrentValDate.getDay() - 1 : oCurrentValDate.getDay();
-			if (!aWeekdays.includes(nDayOfWeek)) {
-				let nWeekendStep = Math.floor(nCurrentVal) - Math.floor(nPrevVal);
-				while (true) {
-					nWeekendStep === 0 ? nCurrentVal += 1 : nCurrentVal += nWeekendStep;
-					oCurrentValDate = new Asc.cDate().getDateFromExcel(nCurrentVal < 60 ? nCurrentVal + 1 : nCurrentVal);
-					nDayOfWeek = nCurrentVal < 60 ? oCurrentValDate.getDay() - 1 : oCurrentValDate.getDay();
-					if (aWeekdays.includes(nDayOfWeek)) {
-						break;
+				// Convert number to cDate object
+				oCurrentValDate = new Asc.cDate().getDateFromExcel(nPrevVal < 60 ? nCurrentVal + 1 : nCurrentVal);
+				let nDayOfWeek = nPrevVal < 60 ? oCurrentValDate.getDay() - 1 : oCurrentValDate.getDay();
+				if (!aWeekdays.includes(nDayOfWeek)) {
+					while (true) {
+						nCurrentVal += Math.sign(nStep);
+						oCurrentValDate = new Asc.cDate().getDateFromExcel(nCurrentVal < 60 ? nCurrentVal + 1 : nCurrentVal);
+						nDayOfWeek = nCurrentVal < 60 ? oCurrentValDate.getDay() - 1 : oCurrentValDate.getDay();
+						if (aWeekdays.includes(nDayOfWeek)) {
+							i++;
+							break;
+						}
 					}
+				} else {
+					i++;
 				}
-			}
-			this.setPrevValue(nCurrentVal)
+			} while (i < Math.abs(nIntStep));
+			this.setPrevValue(nCurrentVal);
 			return nCurrentVal < 0 ? nCurrentVal : oCurrentValDate.getExcelDate();
 		}
 
