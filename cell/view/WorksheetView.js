@@ -1979,6 +1979,16 @@
 				t.getSelectionMathInfo(function (info) {
 					t.handlers.trigger("selectionMathInfoChanged", info);
 				});
+
+				let selectionType = ar.getType && ar.getType();
+				if (selectionType === c_oAscSelectionType.RangeCol) {
+					t.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
+				} else if (selectionType === c_oAscSelectionType.RangeRow) {
+					t.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
+				} else if (selectionType === c_oAscSelectionType.RangeMax) {
+					t.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical | AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
+				}
+
 				t.draw();
             };
 
