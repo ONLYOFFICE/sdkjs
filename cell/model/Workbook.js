@@ -20450,6 +20450,12 @@
 		this.setPrevValue(nCurrentVal);
 
 		if (nDateUnit === oSeriesDateUnitType.day) {
+			if (Math.sign(nStep) === -1 && Math.floor(Math.abs(nStep)) === 0 && !Number.isInteger(nStep)) {
+				if (nCurrentVal < 0) {
+					this.setPrevValue(1 + nCurrentVal);
+					return 1 + nCurrentVal;
+				}
+			}
 			return nCurrentVal;
 		}
 

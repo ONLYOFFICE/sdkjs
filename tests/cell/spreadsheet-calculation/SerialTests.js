@@ -1487,6 +1487,19 @@ $(function () {
 			autofillData(assert, autofillRange, [['1'], [''], [''], ['']], _desc);
 		}, "Autofill Column: Date progression - Weekday, Step - -1, StopValue - -10. Case: 01/01/1900 - 01/03/1900. Bug #65899");
 		clearData(0, 0, 0, 3);
+		// Horizontal dateUnit - Day. Step - -0.5. Case: 01/01/1900 - 01/03/1900. Bug #65876
+		oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(-0.5);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 5, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['1', '', '', '', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1', '0.5', '0', '0.5', '0', '0.5']], _desc);
+		}, "Autofill Row: Date progression - Day, Step - -0.5. Case: 01/01/1900 - 01/03/1900. Bug #65876");
+		clearData(0, 0, 5, 0);
 		// Horizontal dateUnit - Month. Step - 0.2. Bug #65672
 		testData = [
 			['01/01/2000']

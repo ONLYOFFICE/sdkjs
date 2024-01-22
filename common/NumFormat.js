@@ -1651,7 +1651,7 @@ NumFormat.prototype =
 			}
 			// todo test converting all positive fractional values less than one into dates
 			// else if(numberAbs === 0 || (numberAbs > 0 && numberAbs < 1))
-			else if(numberAbs === 0)
+			else if(numberAbs === 0 || (!Number.isInteger(numberAbs) && Math.floor(numberAbs) === 0))
 			{
 				//TODO необходимо использовать cDate везде
 				stDate = new Asc.cDate(Date.UTC(1899,11,31,0,0,0));
