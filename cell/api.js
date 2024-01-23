@@ -8704,7 +8704,7 @@ var editor;
 			if (!wb) {
 				return;
 			}
-			return wb.canFillHandle(range);
+			return wb.canFillHandle(range, true);
 		}
 		return false;
 	};
