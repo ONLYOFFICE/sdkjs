@@ -57,8 +57,7 @@
         if (this.IsHidden() == true)
             return;
 
-        let oViewer         = editor.getDocumentRenderer();
-        let oDoc            = this.GetDocument();
+        let oDoc = this.GetDocument();
         
         this.Recalculate();
         this.DrawBackground(oGraphicsPDF);
@@ -91,6 +90,22 @@
         let nWidth = (aRect[2] - aRect[0]);
         let nHeight = (aRect[3] - aRect[1]);
 
+        let oMargins = this.GetMarginsFromBorders(false, false);
+
+        let contentX        = (X + 2 * oMargins.left) * g_dKoef_pix_to_mm;
+        let contentY        = (Y + oMargins.top) * g_dKoef_pix_to_mm;
+        // let contentXLimit   = (X + nWidth - 2 * oMargins.left - (18 / nScale)) * g_dKoef_pix_to_mm; // 18 / nScale --> Размер маркера комбобокса
+        let contentXLimit   = (X + nWidth - 2 * oMargins.left - (18 / nScale)) * g_dKoef_pix_to_mm; // 18 / nScale --> Размер маркера комбобокса
+
+        let bNewRecalc = false;  // будет использовано только один раз при первом пересчете и случае autofit
+        if (this.GetTextSize() == 0) {
+            if (!this._pagePos) {
+                bNewRecalc = true;
+            }
+            this.ProcessAutoFitContent(this.content);
+            this.ProcessAutoFitContent(this.contentFormat);
+        }
+
         // save pos in page.
         this._pagePos = {
             x: X,
@@ -99,22 +114,10 @@
             h: nHeight
         };
 
-        let oMargins = this.GetMarginsFromBorders(false, false);
-
-        let contentX        = (X + 2 * oMargins.left) * g_dKoef_pix_to_mm;
-        let contentY        = (Y + oMargins.top) * g_dKoef_pix_to_mm;
-        // let contentXLimit   = (X + nWidth - 2 * oMargins.left - (18 / nScale)) * g_dKoef_pix_to_mm; // 18 / nScale --> Размер маркера комбобокса
-        let contentXLimit   = (X + nWidth - 2 * oMargins.left - (18 / nScale)) * g_dKoef_pix_to_mm; // 18 / nScale --> Размер маркера комбобокса
-
-        if (this.GetTextSize() == 0) {
-            this.ProcessAutoFitContent(this.content);
-            this.ProcessAutoFitContent(this.contentFormat);
-        }
-            
         let nContentH       = this.GetTextHeight(this.content);
         let nContentHFormat = this.GetTextHeight(this.contentFormat);
 
-        contentY        = Y * g_dKoef_pix_to_mm + (nHeight * g_dKoef_pix_to_mm - nContentH) / 2;
+        contentY            = Y * g_dKoef_pix_to_mm + (nHeight * g_dKoef_pix_to_mm - nContentH) / 2;
         let contentYFormat  = Y * g_dKoef_pix_to_mm + (nHeight * g_dKoef_pix_to_mm - nContentHFormat) / 2;
 
         this._formRect.X = X * g_dKoef_pix_to_mm;
@@ -143,6 +146,7 @@
             });
         }
         
+        bNewRecalc && this.Recalculate();
         this.SetNeedRecalc(false);
     };
 

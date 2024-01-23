@@ -442,6 +442,9 @@ var CPresentation = CPresentation || function(){};
                 oCurForm.SetDrawFromStream(true);
             }
 
+            if (oCurForm.IsNeedRevertShiftView()) {
+                oCurForm.RevertContentViewToOriginal();
+            }
             oCurForm.SetDrawHighlight(true);
             oCurForm.Blur();
             oCurForm.UpdateScroll && oCurForm.UpdateScroll(false);
@@ -538,6 +541,9 @@ var CPresentation = CPresentation || function(){};
                 oCurForm.SetDrawFromStream(true);
             }
 
+            if (oCurForm.IsNeedRevertShiftView()) {
+                oCurForm.RevertContentViewToOriginal();
+            }
             oCurForm.SetDrawHighlight(true);
             oCurForm.Blur();
             oCurForm.UpdateScroll && oCurForm.UpdateScroll(false);
@@ -2496,7 +2502,6 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (aMap.length == 0) {
-            this.fontLoaderCallbacks = [];
             return true;
         }
 

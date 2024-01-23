@@ -120,17 +120,18 @@
         let oViewer = Asc.editor.getDocumentRenderer();
         let aFields = oViewer.IsOpenFormsInProgress == false ? oDoc.GetFields(this.GetFullName()) : [this];
 
-        if (oViewer.IsOpenFormsInProgress == false && oDoc.History.UndoRedoInProgress == false) {
-            oDoc.CreateNewHistoryPoint();
-        }
-
         let aFonts = aFields.map(function(field) {
             return field.GetTextFontActual();
         });
 
         let oThis = this;
-        if (!oDoc.checkFonts(aFonts, function() { oThis.AddImage(oImgData, nAPType);}))
+        if (!oDoc.checkFonts(aFonts, function() { oThis.AddImage(oImgData, nAPType);})) {
             return;
+        }
+
+        if (oViewer.IsOpenFormsInProgress == false && oDoc.History.UndoRedoInProgress == false) {
+            oDoc.CreateNewHistoryPoint();
+        }
 
         aFields.forEach(function(field) {
             if (field.GetHeaderPosition() == position["textOnly"])
