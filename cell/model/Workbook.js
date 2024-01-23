@@ -20417,7 +20417,6 @@
 		*/
 		if (nDateUnit === oSeriesDateUnitType.weekday) {
 			const aWeekdays = [1, 2, 3, 4, 5];
-			const MAX_LIMIT_STEP = 2147483647;
 			let oCurrentValDate = null;
 			let nCurrentVal = nPrevVal;//_smartRound(nPrevVal + nStep, nStep);
 			let i = 0;
@@ -20443,7 +20442,7 @@
 				} else {
 					i++;
 				}
-			} while (i < Math.abs(nIntStep) || Math.abs(nIntStep) <= MAX_LIMIT_STEP);
+			} while (i < Math.abs(nIntStep));
 			this.setPrevValue(nCurrentVal);
 			return nCurrentVal < 0 ? nCurrentVal : oCurrentValDate.getExcelDate();
 		}
