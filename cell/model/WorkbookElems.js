@@ -15984,6 +15984,25 @@ function RangeDataManagerElem(bbox, data)
 		return oFilledRange;
 	}
 	/**
+	 * Rounds numbers with 0 after a point. E.g. Numbers like 0.500000001
+	 * @param {number} nValue Number to need round
+	 * @returns {number} Rounded number
+	 */
+	function _roundResult(nValue) {
+		if (!Number.isInteger(nValue)) {
+			let sValue = nValue.toString();
+			let secondPartOfNumber = sValue.split('.')[1];
+
+			if (secondPartOfNumber.includes('00000') && !sValue.includes('.00000')) {
+				let nRoundIndex = secondPartOfNumber.indexOf('00000');
+				return parseFloat(nValue.toFixed(nRoundIndex));
+			}
+		}
+
+		// Return value without changes
+		return nValue;
+	}
+	/**
 	 * Method fills data of SeriesSettings object for context menu and dialog window
 	 * @memberof asc_CSeriesSettings
 	 * @param {WorksheetView} ws
@@ -16205,7 +16224,7 @@ function RangeDataManagerElem(bbox, data)
 			if (filledRangeLen === rangeLen || firstValue === ySum || firstValue == null || isStartPointShifted) {
 				this.asc_setStepValue(1);
 			} else {
-				let slope = numeratorOfSlope / denominatorOfSlope;
+				let slope = _roundResult(numeratorOfSlope / denominatorOfSlope);
 				if (this.asc_getType() === Asc.c_oAscSeriesType.date && !Number.isInteger(slope)) {
 					this.asc_setStepValue(1);
 				} else {

@@ -3520,6 +3520,22 @@ $(function () {
 		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
 		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
 		clearData(0, 0, 3, 0);
+		// Vertical selected range. Bug #65898
+		testData = [
+			['1'],
+			['-0.2']
+		];
+		getFilledData(0, 0, 0, 2, testData, [0,0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		assert.ok(oSeriesSettings, 'Vertical selected range. Bug #65898.');
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.columns, 'oSeriesSettings: "Series in" is detected as "Columns".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, -1.2, 'oSeriesSettings: "Step" is detected as -1.2.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		clearData(0, 0, 0, 2);
 	});
 	QUnit.test('CSeriesSettings: init method for update type and trend step by chosen menu prop', function(assert) {
 		const cSeriesSettings = Asc.asc_CSeriesSettings;
