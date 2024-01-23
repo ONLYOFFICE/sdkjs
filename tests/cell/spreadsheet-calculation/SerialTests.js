@@ -359,7 +359,7 @@ $(function () {
 		clearData(0, 0, 0, 2);
 		// Select horizontal oFromRange with stop value = 0 and step value = 1. Bug #65705
 		testData = [
-			['1', '2'],
+			['1', '2']
 		];
 		oFromRange = getFilledData(0, 0, 2, 0, testData, [0, 0]);
 		oSeriesSettings = api.asc_GetSeriesSettings();
@@ -444,6 +444,37 @@ $(function () {
 			autofillData(assert, autofillRange, [['-4', '-3', '-2', '']], _desc);
 		}, "Autofill one Row. Step value = 1, stop value = -2 . Bug #65895");
 		clearData(0, 0, 3, 0);
+		// Select vertical oFromRange with active fill handle, reverse direction. Bug #65877
+		testData = [
+			['1']
+		];
+		oFromRange = getFilledData(3, 3, 3, 3, testData, [3, 3]);
+		wsView.activeFillHandle = getRange(3, 3, 3, 0);
+		wsView.fillHandleDirection = 1;
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(3, 0, 3, 3);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [[''], [''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [[''], [''], [''], ['1']], _desc);
+		}, "Autofill one Column with active fill handle, reverse direction. Bug #65877");
+		clearData(3, 0, 3, 3);
+		// Select horizontal oFromRange with active fill handle, reverse direction. Bug #65877
+		oFromRange = getFilledData(3, 3, 3, 3, testData, [3, 3]);
+		wsView.activeFillHandle = getRange(3, 3, 0, 3);
+		wsView.fillHandleDirection = 0;
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 3, 3, 3);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['', '', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['', '', '', '1']], _desc);
+		}, "Autofill one Row with active fill handle, reverse direction. Bug #65877");
+		clearData(0, 3, 3, 3);
 	});
 	QUnit.test('Autofill growth progression - one filled row/column', function (assert) {
 		const testData = [
@@ -622,6 +653,36 @@ $(function () {
 			autofillData(assert, autofillRange, [['1', '0.5', '0.25', '']], _desc);
 		}, "Autofill one Row with stop value = 0.25 and step value = 0.5. Bug #65897");
 		clearData(0, 0, 2, 0);
+		// Select vertical oFromRange with active fill handle, reverse direction. Bug #65877
+		oFromRange = getFilledData(3, 3, 3, 3, testData, [3, 3]);
+		wsView.activeFillHandle = getRange(3, 3, 3, 0);
+		wsView.fillHandleDirection = 1;
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setType(oSeriesType.growth);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(3, 0, 3, 3);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [[''], [''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [[''], [''], [''], ['1']], _desc);
+		}, "Autofill one Column with active fill handle, reverse direction. Bug #65877");
+		clearData(3, 0, 3, 3);
+		// Select horizontal oFromRange with active fill handle, reverse direction. Bug #65877
+		oFromRange = getFilledData(3, 3, 3, 3, testData, [3, 3]);
+		wsView.activeFillHandle = getRange(3, 3, 0, 3);
+		wsView.fillHandleDirection = 0;
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setType(oSeriesType.growth);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 3, 3, 3);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['', '', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['', '', '', '1']], _desc);
+		}, "Autofill one Row with active fill handle, reverse direction. Bug #65877");
+		clearData(0, 3, 3, 3);
 	});
 	QUnit.test('Autofill default mode', function (assert) {
 		let testData = [

@@ -20275,6 +20275,9 @@
 		this.initIndex();
 		let bFilledRangeHasShift = this.getVertical() ? oFilled.r1 !== oFrom.r1 : oFilled.c1 !== oFrom.c1;
 		if (this.getIndex() < 0) {
+			if (!this.getTrend()) {
+				return;
+			}
 			bFilledRangeHasShift = this.getVertical() ? oFilled.r2 !== oFrom.r1 : oFilled.c2 !== oFrom.c1;
 			let oActiveFillHandle = this.getActiveFillHandle();
 			oFrom = new Asc.Range(oActiveFillHandle.c2, oActiveFillHandle.r2, oActiveFillHandle.c1, oActiveFillHandle.r1);
