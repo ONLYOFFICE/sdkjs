@@ -524,14 +524,6 @@
         let nWidth  = ((aRect[2]) - (aRect[0]));
         let nHeight = ((aRect[3]) - (aRect[1]));
 
-        // save pos in page.
-        this._pagePos = {
-            x: X,
-            y: Y,
-            w: nWidth,
-            h: nHeight
-        };
-
         let oMargins = this.GetMarginsFromBorders(false, false);
         
         let contentX = this.IsComb() ? (X + oMargins.left) * g_dKoef_pix_to_mm : (X + 2 * oMargins.left) * g_dKoef_pix_to_mm;
@@ -544,10 +536,22 @@
             contentXLimit = (X + nWidth) * g_dKoef_pix_to_mm;
         }
         
+        let bNewRecalc = false; // будет использовано только один раз при первом пересчете и случае autofit
         if (this.GetTextSize() == 0) {
+            if (!this._pagePos) {
+                bNewRecalc = true;
+            }
             this.ProcessAutoFitContent(this.content);
-            this.ProcessAutoFitContent(this.contentFormat)
+            this.ProcessAutoFitContent(this.contentFormat);
         }
+
+        // save pos in page.
+        this._pagePos = {
+            x: X,
+            y: Y,
+            w: nWidth,
+            h: nHeight
+        };
 
         let contentYFormat = contentY;
         if (this.IsMultiline() == false) {
@@ -584,6 +588,7 @@
             });
         }
 
+        bNewRecalc && this.Recalculate();
         this.SetNeedRecalc(false);
     };
 
