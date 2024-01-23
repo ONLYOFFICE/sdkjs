@@ -871,13 +871,13 @@ CMathText.prototype.Draw = function(x, y, pGraphics, InfoTextPr)
 		{
 			pGraphics.tg(this.RecalcInfo.StyleCode, X, Y);
 		}
-		else if (editor.ShowParaMarks && (this.value === 8195 || this.value === 8194 || this.value === 160))
+		else if (Asc.editor.ShowParaMarks && (this.value === 8195 || this.value === 8194 || this.value === 160))
 		{
 			let widthOfCircle = g_oTextMeasurer.MeasureCode(176).Width / 2;
 			pGraphics.FillTextCode(X + this.size.width / 2 - widthOfCircle, Y, 176);
 			pGraphics.FillTextCode(X, Y, this.value);
 		}
-		else if (editor.ShowParaMarks && this.value === 8197) //draw \thicksp
+		else if (Asc.editor.ShowParaMarks && this.value === 8197) //draw \thicksp
 		{
 			// for some reason, word does not use a Unicode character for "Four-Per-Em Space", but a drawn rectangle
 			pGraphics.FillTextCode(X + this.size.width, Y, this.value)
@@ -1189,7 +1189,7 @@ CMathAmp.prototype.Draw = function(x, y, pGraphics, InfoTextPr)
 {
     if(this.bAlignPoint == false)
         this.AmpText.Draw(x + this.GapLeft, y, pGraphics, InfoTextPr);
-    else if(editor.ShowParaMarks) // показать метки выравнивания, если включена отметка о знаках параграфа
+    else if(Asc.editor.ShowParaMarks) // показать метки выравнивания, если включена отметка о знаках параграфа
     {
         var X  = x + this.pos.x + this.GetWidthVisible(),
             Y  = y + this.pos.y,
