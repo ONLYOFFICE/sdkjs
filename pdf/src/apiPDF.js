@@ -1433,9 +1433,9 @@
         },
         "value": {
             set: function(value) {
-                let oDoc = this.field.GetDocument();
-                let oCalcInfo = oDoc.GetCalculateInfo();
-                let oSourceField = oCalcInfo.GetSourceField();
+                let oDoc            = this.field.GetDocument();
+                let oCalcInfo       = oDoc.GetCalculateInfo();
+                let oSourceField    = oCalcInfo.GetSourceField();
 
                 if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.name)
                     throw Error('InvalidSetError: Set not possible, invalid or unknown.');
@@ -1449,19 +1449,30 @@
                 if (this.value == value)
                     return;
 
-                let isValid = this.field.DoValidateAction(value);
+                // to do: нужно чтобы действия были у родительских полей, пока делаем через ребёнка
+                let oWidget;
+                if (this.field.IsWidget() == false) {
+                    if (this.field.IsAllChildsSame()) {
+                        let aKids = this.field.GetKids();
+                        oWidget = aKids[0];
+                    }
+                    else {
+                        throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+                    }
+                }
+                else
+                    oWidget = this.field;
 
+                let isValid = oWidget.DoValidateAction(value);
                 if (isValid) {
-                    this.field.SetValue(value);
-                    if (this.field.IsWidget() == false)
-                        return;
+                    oWidget.SetValue(value);
 
-                    this.field.needValidate = false; 
-                    this.field.Commit();
+                    oWidget.needValidate = false; 
+                    oWidget.Commit();
                     if (oCalcInfo.IsInProgress() == false) {
                         if (oDoc.event["rc"] == true && oDoc.IsNeedDoCalculate()) {
                             oDoc.DoCalculateFields(this.field);
-                            oDoc.AddFieldToCommit(this.field);
+                            oDoc.AddFieldToCommit(oWidget);
                             oDoc.CommitFields();
                         }
                     }
@@ -1676,20 +1687,34 @@
                     
                 if (this.value == value)
                     return;
-                    
-                let isValid = this.field.DoValidateAction(value);
+                
+                // to do: нужно чтобы действия были у родительских полей, пока делаем через ребёнка
+                let oWidget;
+                if (this.field.IsWidget() == false) {
+                    if (this.field.IsAllChildsSame()) {
+                        let aKids = this.field.GetKids();
+                        oWidget = aKids[0];
+                    }
+                    else {
+                        throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+                    }
+                }
+                else
+                    oWidget = this.field;
+
+                let isValid = oWidget.DoValidateAction(value);
 
                 if (isValid) {
-                    this.field.SetValue(value);
-                    if (this.field.IsWidget() == false)
+                    oWidget.SetValue(value);
+                    if (oWidget.IsWidget() == false)
                         return;
 
-                    this.field.needValidate = false; 
-                    this.field.Commit();
+                    oWidget.needValidate = false; 
+                    oWidget.Commit();
                     if (oCalcInfo.IsInProgress() == false) {
                         if (oDoc.event["rc"] == true && oDoc.IsNeedDoCalculate()) {
                             oDoc.DoCalculateFields(this.field);
-                            oDoc.AddFieldToCommit(this.field);
+                            oDoc.AddFieldToCommit(oWidget);
                             oDoc.CommitFields();
                         }
                     }
@@ -1885,8 +1910,22 @@
                 if (this.value == value)
                     return;
                 
-                this.field.SetValue(value);
-                this.field.Commit();
+                // to do: сделать через родителя
+                let oWidget;
+                if (this.field.IsWidget() == false) {
+                    if (this.field.IsAllChildsSame()) {
+                        let aKids = this.field.GetKids();
+                        oWidget = aKids[0];
+                    }
+                    else {
+                        throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+                    }
+                }
+                else
+                    oWidget = this.field;
+
+                oWidget.SetValue(value);
+                oWidget.Commit();
 
                 if (oCalcInfo.IsInProgress() == false && oDoc.IsNeedDoCalculate()) {
                     oDoc.DoCalculateFields(this.field);
