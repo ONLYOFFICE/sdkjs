@@ -537,8 +537,9 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseField.prototype.SetAction = function(nTriggerType, sScript) {
-        let oCalcInfo = this.GetDocument().GetCalculateInfo();
-        let oAction = new AscPDF.CActionRunScript(sScript);
+        let oDoc        = this.GetDocument();
+        let oCalcInfo   = oDoc.GetCalculateInfo();
+        let oAction     = new AscPDF.CActionRunScript(sScript);
         oAction.SetField(this);
 
         switch (nTriggerType) {
@@ -569,7 +570,7 @@
             case AscPDF.FORMS_TRIGGERS_TYPES.Calculate:
                 this._triggers.Calculate = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
                 oCalcInfo.RemoveFieldFromOrder(this.GetFullName());
-                oCalcInfo.AddFieldToOrder(this.GetFullName());
+                oCalcInfo.AddFieldToOrder(oDoc.GetField(this.GetFullName()).GetApIdx());
                 break;
             case AscPDF.FORMS_TRIGGERS_TYPES.Format:
                 this._triggers.Format = new AscPDF.CFormTrigger(nTriggerType, [oAction]);

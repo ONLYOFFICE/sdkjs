@@ -40,7 +40,9 @@ $(function ()
 	
 	function CreateTextForm(name)
 	{
-		return pdfDoc.AddField(name, AscPDF.FIELD_TYPES.text, 0, [20, 20, 50, 20]);
+		let oField = pdfDoc.AddField(name, AscPDF.FIELD_TYPES.text, 0, [20, 20, 50, 20]);
+		oField.SetApIdx(pdfDoc.GetMaxApIdx() + 1);
+		return oField; 
 	}
 	function EnterTextToForm(form, text)
 	{
@@ -59,6 +61,7 @@ $(function ()
 	
 	QUnit.test("Test calculate action", function (assert)
 	{
+		pdfDoc.UpdateApIdx(0);
 		let textForm1 = CreateTextForm("TextForm1");
 		let textForm2 = CreateTextForm("TextForm2");
 		let textForm3 = CreateTextForm("TextForm3");
