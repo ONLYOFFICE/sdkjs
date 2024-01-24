@@ -1515,7 +1515,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseField.prototype.Reset = function() {
-        let defValue = this.GetDefaultValue();
+        let defValue = this.GetDefaultValue() || "";
         if (this.GetValue() != defValue) {
             
             this.SetValue(defValue);

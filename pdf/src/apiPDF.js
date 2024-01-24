@@ -1449,7 +1449,6 @@
                 if (this.value == value)
                     return;
 
-                // to do: нужно чтобы действия были у родительских полей, пока делаем через ребёнка
                 let oWidget;
                 if (this.field.IsWidget() == false) {
                     if (this.field.IsAllChildsSame()) {
@@ -1480,7 +1479,7 @@
             },
             get: function() {
                 let value = this.field.GetApiValue();
-                let isNumber = /^\d+$/.test(value);
+                let isNumber = /^\d+(\.\d+)?$/.test(value);
                 return isNumber ? parseFloat(value) : (value != undefined ? value : "");
             }
         },
@@ -1688,7 +1687,6 @@
                 if (this.value == value)
                     return;
                 
-                // to do: нужно чтобы действия были у родительских полей, пока делаем через ребёнка
                 let oWidget;
                 if (this.field.IsWidget() == false) {
                     if (this.field.IsAllChildsSame()) {
@@ -1722,7 +1720,7 @@
             },
             get: function() {
                 let value = this.field.GetApiValue();
-                let isNumber = /^\d+$/.test(value);
+                let isNumber = /^\d+(\.\d+)?$/.test(value);
                 return isNumber ? parseFloat(value) : (value != undefined ? value : "");
             }
         }
@@ -1910,7 +1908,6 @@
                 if (this.value == value)
                     return;
                 
-                // to do: сделать через родителя
                 let oWidget;
                 if (this.field.IsWidget() == false) {
                     if (this.field.IsAllChildsSame()) {
@@ -1934,7 +1931,7 @@
             },
             get: function() {
                 let value = this.field.GetApiValue();
-                let isNumber = /^\d+$/.test(value);
+                let isNumber = /^\d+(\.\d+)?$/.test(value);
                 return isNumber ? parseFloat(value) : (value != undefined ? value : "");
             }
         }
