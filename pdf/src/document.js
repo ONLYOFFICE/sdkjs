@@ -201,7 +201,7 @@ var CPresentation = CPresentation || function(){};
             let oField = this.widgets[i];
             if ((oField.GetPartialName() == null || oField.GetApiValue(bInberitValue) == null) && oField.GetParent()) {
                 let oParent = oField.GetParent();
-                value = oParent.GetApiValue();
+                value = oParent.GetApiValue(false);
                 if (value != null && value.toString) {
                     value = value.toString();
                 }
