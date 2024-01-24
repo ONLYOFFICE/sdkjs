@@ -5357,7 +5357,7 @@ var editor;
             }
           }
 
-          if (ignoreWords[usrWords[i]] || changeWords[isIgnoreUppercase ? usrWords[i].toLowerCase() : usrWords[i]] || usrWords[i].length === 1
+          if (ignoreWords[usrWords[i]] || changeWords[usrWords[i]] || usrWords[i].length === 1
             || (isIgnoreUppercase && AscCommon.IsAbbreviation(usrWords[i]))) {
             usrCorrect[i] = true;
           }
@@ -5637,11 +5637,12 @@ var editor;
     options.isMatchCase = true;
 
     if (replaceAll === true) {
-      if (!this.spellcheckState.isIgnoreUppercase) {
+      /*if (!this.spellcheckState.isIgnoreUppercase) {
         this.spellcheckState.changeWords[variantsFound.Word] = newWord;
       } else {
         this.spellcheckState.changeWords[variantsFound.Word.toLowerCase()] = newWord;
-      }
+      }*/
+      this.spellcheckState.changeWords[variantsFound.Word] = newWord;
       options.isReplaceAll = true;
     }
       this.spellcheckState.lockSpell = false;
