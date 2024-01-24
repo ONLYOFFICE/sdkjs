@@ -7501,9 +7501,9 @@
             var activeFillClone = this.activeFillHandle.clone(true);
 
             // Координаты для автозаполнения
-            _x1 = this._getColLeft(activeFillClone.c1) - offsetX - 2;
+            _x1 = this._getColLeft(activeFillClone.c1) - offsetX - 2 - 1;
             _x2 = this._getColLeft(activeFillClone.c2 + 1) - offsetX + 1 + 2;
-            _y1 = this._getRowTop(activeFillClone.r1) - offsetY - 2;
+            _y1 = this._getRowTop(activeFillClone.r1) - offsetY - 2 - 1;
             _y2 = this._getRowTop(activeFillClone.r2 + 1) - offsetY + 1 + 2;
 
             // Выбираем наибольший range для очистки
