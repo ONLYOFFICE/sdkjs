@@ -4489,6 +4489,13 @@
                         return false;
                     },
 
+					GetDrawingDocument: function () {
+						return {}
+					},
+					GetApi: function () {
+						return Asc.editor;
+					},
+
                     SearchEngine: {
                         Selection: []
                     }
