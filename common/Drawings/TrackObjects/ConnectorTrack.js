@@ -155,7 +155,7 @@
             var bMoveInGroup = false;
 
             if(!_startConnectionParams){
-                if(this.beginShape && oConnectorInfo.stCnxIdx !== null){
+                if(this.beginShape && oConnectorInfo.stCnxIdx !== null || Asc.editor.isPdfEditor()){
                     _startConnectionParams = this.beginShape.getConnectionParams(oConnectorInfo.stCnxIdx, null);
                 }
                 else{
@@ -192,7 +192,7 @@
                     _endConnectionParams = this.endShape.getConnectionParams(oConnectorInfo.endCnxIdx, null);
                 }
                 else{
-                    if((this.beginTrack instanceof AscFormat.MoveShapeImageTrack)){
+                    if((this.beginTrack instanceof AscFormat.MoveShapeImageTrack) && Asc.editor.isPdfEditor() == false){
                         var _dx,_dy;
                         if(this.originalObject.group){
                             bMoveInGroup = true;
@@ -237,7 +237,15 @@
                     }
                 }
                 if(!_endConnectionParams){
-                    _endConnectionParams = AscFormat.fCalculateConnectionInfo(_startConnectionParams, this.endX, this.endY);
+                    if (Asc.editor.isPdfEditor() == true) {
+                        let oTranform   = this.originalObject.transform;
+                        let oGeom       = this.originalObject.getGeometry();
+                        let aPaths      = oGeom.pathLst[0].ArrPathCommand;
+
+                        _endConnectionParams = AscFormat.fCalculateConnectionInfo(_startConnectionParams, oTranform.TransformPointX(aPaths[1].X, 0), oTranform.TransformPointY(0, aPaths[1].Y));
+                    }
+                    else
+                        _endConnectionParams = AscFormat.fCalculateConnectionInfo(_startConnectionParams, this.endX, this.endY);
                 }
             }
             if(_startConnectionParams && _endConnectionParams) {

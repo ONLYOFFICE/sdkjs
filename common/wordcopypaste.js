@@ -2285,8 +2285,8 @@ function sendImgUrls(api, images, callback, bNotShowError, token) {
     var _data = [];
     for (var i = 0; i < images.length; i++)
     {
-      var _url = window["native"]["getImageUrl"](images[i]);
-      var _full_path = window["native"]["getImagesDirectory"]() + "/" + _url;
+      var _url = window["native"]["GetImageUrl"](images[i]);
+      var _full_path = window["native"]["GetImagesPath"]() + "/" + _url;
       var _local_url = "media/" + _url;
       AscCommon.g_oDocumentUrls.addUrls({_local_url:_full_path});
       _data[i] = {url:_full_path, path:_local_url};
@@ -6513,8 +6513,8 @@ PasteProcessor.prototype =
 			var originalSrcArr = [];
 			for (var image in this.oImages) {
 				var src = this.oImages[image];
-				if (undefined !== window["Native"] && undefined !== window["Native"]["GetImageUrl"]) {
-					this.oImages[image] = window["Native"]["GetImageUrl"](this.oImages[image]);
+				if (undefined !== window["native"] && undefined !== window["native"]["GetImageUrl"]) {
+					this.oImages[image] = window["native"]["GetImageUrl"](this.oImages[image]);
 				} else if (!g_oDocumentUrls.getImageLocal(src)) {
 					if (oThis.rtfImages && oThis.rtfImages[src]) {
 						aImagesToDownload.push(oThis.rtfImages[src]);
@@ -7086,6 +7086,7 @@ PasteProcessor.prototype =
 				var oLineHeight = AscCommon.valueToMmType(line_height);
 				if (oLineHeight && ("%" === oLineHeight.type || "none" === oLineHeight.type)) {
 					Spacing.Line = oLineHeight.val;
+					Spacing.LineRule = Asc.linerule_Auto;
 				} else if (line_height && null != (line_height = AscCommon.valueToMm(line_height)) && line_height >= 0) {
 					Spacing.Line = line_height;
 					Spacing.LineRule = Asc.linerule_AtLeast;
@@ -11070,9 +11071,9 @@ function Check_LoadingDataBeforePrepaste(_api, _fonts, _images, _callback)
     for (let image in _images)
     {
         var src = _images[image];
-        if (undefined !== window["Native"] && undefined !== window["Native"]["GetImageUrl"])
+        if (undefined !== window["native"] && undefined !== window["native"]["GetImageUrl"])
         {
-            _images[image] = window["Native"]["GetImageUrl"](_images[image]);
+            _images[image] = window["native"]["GetImageUrl"](_images[image]);
         }
         else if (!g_oDocumentUrls.getImageUrl(src) && !g_oDocumentUrls.getImageLocal(src) && !g_oDocumentUrls.isThemeUrl(src))
         {

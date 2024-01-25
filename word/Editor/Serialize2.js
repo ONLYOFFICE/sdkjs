@@ -1095,7 +1095,9 @@ var c_oSerSdt = {
 	FormPrLabel    : 46,
 	FormPrHelpText : 47,
 	FormPrRequired : 48,
-
+	
+	CheckboxGroupKey: 49,
+	
 	TextFormPr              : 50,
 	TextFormPrComb          : 51,
 	TextFormPrCombWidth     : 52,
@@ -1106,8 +1108,6 @@ var c_oSerSdt = {
 	TextFormPrAutoFit       : 57,
 	TextFormPrMultiLine     : 58,
 	TextFormPrFormat        : 59,
-
-	CheckboxGroupKey: 59,
 
 	PictureFormPr                : 60,
 	PictureFormPrScaleFlag       : 61,

@@ -168,7 +168,7 @@
             this.RefillGeometry();
 
         this.recalculate();
-        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY)
+        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
     };
     CAnnotationLine.prototype.SetNeedRecalc = function(bRecalc) {
         this._needRecalc = bRecalc;
@@ -203,12 +203,12 @@
 
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
         oDrawingObjects.startEditGeometry();
-    }
+    };
     CAnnotationLine.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
         oDoc.TurnOffHistory();
 
-        let oLine = new CAnnotationLine(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+        let oLine = new CAnnotationLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
         oLine._pagePos = {
             x: this._pagePos.x,
@@ -256,13 +256,13 @@
         let shapeAtEnd      = getFigureSize(this.GetLineEnd(), nLineWidth);
 
         function calculateBoundingRectangle(line, figure1, figure2) {
-            const {x1, y1, x2, y2} = line;
+            let x1 = line.x1, y1 = line.y1, x2 = line.x2, y2 = line.y2;
         
             // Расчет угла поворота в радианах
-            const angle = Math.atan2(y2 - y1, x2 - x1);
+            let angle = Math.atan2(y2 - y1, x2 - x1);
         
             function rotatePoint(cx, cy, angle, px, py) {
-                var cos = Math.cos(angle),
+                let cos = Math.cos(angle),
                     sin = Math.sin(angle),
                     nx = (sin * (px - cx)) + (cos * (py - cy)) + cx,
                     ny = (sin * (py - cy)) - (cos * (px - cx)) + cy;
@@ -270,38 +270,39 @@
             }
             
             function getRectangleCorners(cx, cy, width, height, angle) {
-                var halfWidth = width / 2;
-                var halfHeight = height / 2;
+                let halfWidth = width / 2;
+                let halfHeight = height / 2;
             
-                // Углы прямоугольника до поворота
-                var corners = [
-                    {x: cx - halfWidth, y: cy - halfHeight}, // верхний левый
-                    {x: cx + halfWidth, y: cy - halfHeight}, // верхний правый
-                    {x: cx + halfWidth, y: cy + halfHeight}, // нижний правый
-                    {x: cx - halfWidth, y: cy + halfHeight}  // нижний левый
-                ];
+                let topLeft = {x: cx - halfWidth, y: cy - halfHeight},
+                    topRight = {x: cx + halfWidth, y: cy - halfHeight},
+                    bottomRight = {x: cx + halfWidth, y: cy + halfHeight},
+                    bottomLeft = {x: cx - halfWidth, y: cy + halfHeight};
             
-                // Поворачиваем каждую точку
-                return corners.map(function(point) {
-                    return rotatePoint(cx, cy, angle, point.x, point.y);
-                });
+                let corners = [topLeft, topRight, bottomRight, bottomLeft];
+            
+                let rotatedCorners = [];
+                for (let i = 0; i < corners.length; i++) {
+                    rotatedCorners.push(rotatePoint(cx, cy, angle, corners[i].x, corners[i].y));
+                }
+                return rotatedCorners;
             }
         
-            const cornersFigure1 = getRectangleCorners(x1, y1, figure1.width, figure1.height, angle);
-            const cornersFigure2 = getRectangleCorners(x2, y2, figure2.width, figure2.height, angle);
-
-            // Находим минимальные и максимальные координаты
+            let cornersFigure1 = getRectangleCorners(x1, y1, figure1.width, figure1.height, angle);
+            let cornersFigure2 = getRectangleCorners(x2, y2, figure2.width, figure2.height, angle);
+        
             let minX = Math.min(x1, x2);
             let maxX = Math.max(x1, x2);
             let minY = Math.min(y1, y2);
             let maxY = Math.max(y1, y2);
-
-            [...cornersFigure1, ...cornersFigure2].forEach(point => {
+        
+            let allCorners = cornersFigure1.concat(cornersFigure2);
+            for (let i = 0; i < allCorners.length; i++) {
+                let point = allCorners[i];
                 minX = Math.min(minX, point.x);
                 maxX = Math.max(maxX, point.x);
                 minY = Math.min(minY, point.y);
                 maxY = Math.max(maxY, point.y);
-            });
+            }
         
             // Возвращаем координаты прямоугольника
             return [minX * nScaleX, minY * nScaleY, maxX * nScaleX, maxY * nScaleY];
@@ -342,10 +343,6 @@
         this.SetWasChanged(true);
         this.SetDrawFromStream(false);
     };
-    CAnnotationLine.prototype.SetDrawing = function(oDrawing) {
-        let oRun = this.content.GetElement(0).GetElement(0);
-        oRun.Add_ToContent(oRun.Content.length, oDrawing);
-    };
     CAnnotationLine.prototype.SetStrokeColor = function(aColor) {
         this._strokeColor = aColor;
 
@@ -376,7 +373,7 @@
     CAnnotationLine.prototype.SetDoCaption = function(nType) {
         this._doCaption = nType;
     };
-    CAnnotationLine.prototype.GetDoCaption = function() {
+    CAnnotationLine.prototype.IsDoCaption = function() {
         return this._doCaption;
     };
     CAnnotationLine.prototype.SetLineStart = function(nType) {
@@ -416,9 +413,6 @@
                 break;
             case LINE_END_TYPE.Slash:
                 nLineEndType = AscFormat.LineEndType.Slash;
-                break;
-            default:
-                nLineEndType = AscFormat.LineEndType.Arrow;
                 break;
         }
 
@@ -463,9 +457,6 @@
             case LINE_END_TYPE.Slash:
                 nLineEndType = AscFormat.LineEndType.Slash;
                 break;
-            default:
-                nLineEndType = AscFormat.LineEndType.Arrow;
-                break;
         }
 
         oLine.tailEnd.setType(nLineEndType);
@@ -477,6 +468,41 @@
     CAnnotationLine.prototype.GetLineEnd = function() {
         return this._lineEnd;
     };
+
+    // for work with comments
+    CAnnotationLine.prototype.RemoveComment = function() {
+        if (!this.IsUseContentAsComment()) {
+            AscPDF.CAnnotationFreeText.prototype.RemoveComment.call(this);
+        }
+        else {
+            AscPDF.CAnnotationBase.prototype.RemoveComment.call(this);
+        }
+    };
+    CAnnotationLine.prototype.SetContents = function(contents) {
+        if (!this.IsUseContentAsComment()) {
+            AscPDF.CAnnotationFreeText.prototype.SetContents.call(this, contents);
+        }
+        else {
+            AscPDF.CAnnotationBase.prototype.SetContents.call(this, contents);
+        }
+    };
+    CAnnotationLine.prototype.SetReplies = function(aReplies) {
+        if (!this.IsUseContentAsComment()) {
+            AscPDF.CAnnotationFreeText.prototype.SetReplies.call(this, aReplies);
+        }
+        else {
+            AscPDF.CAnnotationBase.prototype.SetReplies.call(this, aReplies);
+        }  
+    };
+    CAnnotationLine.prototype.GetAscCommentData = function() {
+        if (!this.IsUseContentAsComment()) {
+            return AscPDF.CAnnotationFreeText.prototype.GetAscCommentData.call(this);
+        }
+        else {
+            return AscPDF.CAnnotationBase.prototype.GetAscCommentData.call(this);
+        }
+    };
+    //////////////////////////////////////
 
     CAnnotationLine.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
@@ -526,7 +552,7 @@
         }
 
         // do caption
-        let bDoCaption = this.GetDoCaption();
+        let bDoCaption = this.IsDoCaption();
         if (bDoCaption) {
             memory.annotFlags |= (1 << 19);
         }
@@ -572,124 +598,6 @@
             reply.WriteToBinary(memory); 
         });
     };
-
-    function generateGeometry(arrOfArrPoints, aBounds, oGeometry) {
-        let xMin = aBounds[0];
-        let yMin = aBounds[1];
-        let xMax = aBounds[2];
-        let yMax = aBounds[3];
-        // let xMin = Math.min(arrOfArrPoints[0][0].x, arrOfArrPoints[0][1].x);
-        // let yMin = Math.min(arrOfArrPoints[0][0].y, arrOfArrPoints[0][1].y);
-        // let xMax = Math.max(arrOfArrPoints[0][0].x, arrOfArrPoints[0][1].x);
-        // let yMax = Math.max(arrOfArrPoints[0][0].y, arrOfArrPoints[0][1].y);
-
-        let geometry = oGeometry ? oGeometry : new AscFormat.Geometry();
-        if (oGeometry) {
-            oGeometry.pathLst = [];
-        }
-
-        for (let nPath = 0; nPath < arrOfArrPoints.length; nPath++) {
-            let bClosed     = false;
-            let aPoints     = arrOfArrPoints[nPath];
-            let min_dist    = editor.WordControl.m_oDrawingDocument.GetMMPerDot(3);
-            let oLastPoint  = aPoints[aPoints.length-1];
-            let nLastIndex  = aPoints.length-1;
-            if(oLastPoint.bTemporary) {
-                nLastIndex--;
-            }
-            if(nLastIndex > 1)
-            {
-                let dx = aPoints[0].x - aPoints[nLastIndex].x;
-                let dy = aPoints[0].y - aPoints[nLastIndex].y;
-                if(Math.sqrt(dx*dx +dy*dy) < min_dist)
-                {
-                    bClosed = true;
-                }
-            }
-            let nMaxPtIdx = bClosed ? (nLastIndex - 1) : nLastIndex;
-
-            let w = xMax - xMin, h = yMax-yMin;
-            let kw, kh, pathW, pathH;
-            if(w > 0)
-            {
-                pathW = 43200;
-                kw = 43200/ w;
-            }
-            else
-            {
-                pathW = 0;
-                kw = 0;
-            }
-            if(h > 0)
-            {
-                pathH = 43200;
-                kh = 43200 / h;
-            }
-            else
-            {
-                pathH = 0;
-                kh = 0;
-            }
-            geometry.AddPathCommand(0, undefined, bClosed ? "norm": "none", undefined, pathW, pathH);
-            geometry.AddRect("l", "t", "r", "b");
-            geometry.AddPathCommand(1, (((aPoints[0].x - xMin) * kw) >> 0) + "", (((aPoints[0].y - yMin) * kh) >> 0) + "");
-            let i = 1;
-            let aRanges = [[0, aPoints.length - 1]];
-            let aRange, nRange;
-            let nEnd;
-            let nPtsCount = aPoints.length;
-            let oPt1, oPt2, oPt3, nPt;
-            for(nRange = 0; nRange < aRanges.length; ++nRange)
-            {
-                aRange = aRanges[nRange];
-                if(aRange[0] + 1 > nMaxPtIdx) {
-                    break;
-                }
-                nPt = aRange[0] + 1;
-                nEnd = Math.min(aRange[1], nMaxPtIdx);
-                while(nPt <= nEnd)
-                {
-                    if(nPt + 2 <= nEnd)
-                    {
-                        //cubic bezier curve
-                        oPt1 = aPoints[nPt++];
-                        oPt2 = aPoints[nPt++];
-                        oPt3 = aPoints[nPt++];
-                        geometry.AddPathCommand(5,
-                            (((oPt1.x - xMin) * kw) >> 0) + "", (((oPt1.y - yMin) * kh) >> 0) + "",
-                            (((oPt2.x - xMin) * kw) >> 0) + "", (((oPt2.y - yMin) * kh) >> 0) + "",
-                            (((oPt3.x - xMin) * kw) >> 0) + "", (((oPt3.y - yMin) * kh) >> 0) + ""
-                        );
-                    }
-                    else if(nPt + 1 <= nEnd)
-                    {
-                        //quad bezier curve
-                        oPt1 = aPoints[nPt++];
-                        oPt2 = aPoints[nPt++];
-                        geometry.AddPathCommand(4,
-                            (((oPt1.x - xMin) * kw) >> 0) + "", (((oPt1.y - yMin) * kh) >> 0) + "",
-                            (((oPt2.x - xMin) * kw) >> 0) + "", (((oPt2.y - yMin) * kh) >> 0) + ""
-                        );
-                    }
-                    else
-                    {
-                        //lineTo
-                        oPt1 = aPoints[nPt++];
-                        geometry.AddPathCommand(2,
-                            (((oPt1.x - xMin) * kw) >> 0) + "", (((oPt1.y - yMin) * kh) >> 0) + ""
-                        );
-                    }
-                }
-            }
-            if(bClosed)
-            {
-                geometry.AddPathCommand(6);
-            }
-        }
-        
-
-        return geometry;
-    }
 
     function getMinRect(aPoints) {
         let xMax = aPoints[0].x, yMax = aPoints[0].y, xMin = xMax, yMin = yMax;
@@ -766,6 +674,7 @@
             AscCommon.History.TurnOff();
     }
 
-    window["AscPDF"].CAnnotationLine = CAnnotationLine;
+    window["AscPDF"].CAnnotationLine    = CAnnotationLine;
+    window["AscPDF"].LINE_END_TYPE      = LINE_END_TYPE;
 })();
 

@@ -749,7 +749,7 @@
 
                 if (aFields[0] && aFields[0].IsWidget()) {
                     aFields.forEach(function(field) {
-                        field.SetButtonPosition(bValue);
+                        field.SetHeaderPosition(bValue);
                     });
                 }
                 else {
@@ -763,7 +763,7 @@
         get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
-                return oField.GetButtonPosition();
+                return oField.GetHeaderPosition();
             }
             else {
                 throw Error("InvalidGetError: Get not possible, invalid or unknown.");
@@ -907,7 +907,7 @@
         },
         "value": {
             get: function() {
-                return undefined;
+                return "";
             }
         }
     });
@@ -1469,8 +1469,8 @@
             },
             get: function() {
                 let value = this.field.GetApiValue();
-                let isNumber = !isNaN(value) && isFinite(value) && value != "";
-                return isNumber ? parseFloat(value) : value;
+                let isNumber = /^\d+$/.test(value);
+                return isNumber ? parseFloat(value) : (value != undefined ? value : "");
             }
         },
     });
@@ -1697,8 +1697,8 @@
             },
             get: function() {
                 let value = this.field.GetApiValue();
-                let isNumber = !isNaN(value) && isFinite(value) && value != "";
-                return isNumber ? parseFloat(value) : value;
+                let isNumber = /^\d+$/.test(value);
+                return isNumber ? parseFloat(value) : (value != undefined ? value : "");
             }
         }
     });
@@ -1895,8 +1895,8 @@
             },
             get: function() {
                 let value = this.field.GetApiValue();
-                let isNumber = !isNaN(value) && isFinite(value) && value != "";
-                return isNumber ? parseFloat(value) : value;
+                let isNumber = /^\d+$/.test(value);
+                return isNumber ? parseFloat(value) : (value != undefined ? value : "");
             }
         }
     });

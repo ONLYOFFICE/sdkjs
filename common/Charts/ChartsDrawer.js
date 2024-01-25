@@ -623,7 +623,7 @@ CChartsDrawer.prototype =
 					}*/
 					if (this.trendline) {
 						//CTrendLine
-						return this.trendline && this.trendline.getAdditionalInfo(obj.parent.Id, obj.parent.parent.Id);
+						return this.trendline && this.trendline.getAdditionalInfo(obj.parent.parent.Id, obj.parent.Id);
 					}
 					return null;
 				}
@@ -1127,7 +1127,7 @@ CChartsDrawer.prototype =
 
 		if (horizontalAxis && horizontalAxis.xPoints && horizontalAxis.xPoints.length && this.calcProp.widthCanvas != undefined) {
 			if (horizontalAxis instanceof AscFormat.CValAx) {
-				if (horizontalAxis.scaling.orientation == ORIENTATION_MIN_MAX) {
+				if (!horizontalAxis.isReversed()) {
 					calculateLeft = horizontalAxis.xPoints[0].pos;
 					calculateRight = this.calcProp.widthCanvas / pxToMM - horizontalAxis.xPoints[horizontalAxis.xPoints.length - 1].pos;
 				} else {
@@ -1138,7 +1138,7 @@ CChartsDrawer.prototype =
 				diffPoints = horizontalAxis.xPoints[1] ? Math.abs(horizontalAxis.xPoints[1].pos - horizontalAxis.xPoints[0].pos) : Math.abs(horizontalAxis.xPoints[0].pos - verticalAxis.posX) * 2;
 
 				curBetween = 0;
-				if (horizontalAxis.scaling.orientation === ORIENTATION_MIN_MAX) {
+				if (!horizontalAxis.isReversed()) {
 					if (crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN) {
 						curBetween = diffPoints / 2;
 					}
@@ -1158,7 +1158,7 @@ CChartsDrawer.prototype =
 
 		if (verticalAxis && verticalAxis.yPoints && verticalAxis.yPoints.length && this.calcProp.heightCanvas != undefined) {
 			if (verticalAxis instanceof AscFormat.CValAx) {
-				if (verticalAxis.scaling.orientation === ORIENTATION_MIN_MAX) {
+				if (!verticalAxis.isReversed()) {
 					calculateTop = verticalAxis.yPoints[verticalAxis.yPoints.length - 1].pos;
 					calculateBottom = this.calcProp.heightCanvas / pxToMM - verticalAxis.yPoints[0].pos;
 				} else {
@@ -1170,7 +1170,7 @@ CChartsDrawer.prototype =
 				diffPoints = verticalAxis.yPoints[1] ? Math.abs(verticalAxis.yPoints[1].pos - verticalAxis.yPoints[0].pos) : Math.abs(verticalAxis.yPoints[0].pos - horizontalAxis.posY) * 2;
 
 				curBetween = 0;
-				if (verticalAxis.scaling.orientation === ORIENTATION_MIN_MAX) {
+				if (!verticalAxis.isReversed()) {
 					if (crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN) {
 						curBetween = diffPoints / 2;
 					}
@@ -1240,7 +1240,7 @@ CChartsDrawer.prototype =
 
 		let diffPoints;
 		if(horizontalAxis && horizontalAxis.xPoints &&  horizontalAxis.xPoints.length) {
-			let orientationHorAxis = horizontalAxis.scaling.orientation === ORIENTATION_MIN_MAX;
+			let orientationHorAxis = !horizontalAxis.isReversed();
 			diffPoints = 0;
 			if((horizontalAxis instanceof AscFormat.CDateAx || horizontalAxis instanceof AscFormat.CCatAx) && crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN) {
 				diffPoints = Math.abs((horizontalAxis.interval) / 2);
@@ -1265,7 +1265,7 @@ CChartsDrawer.prototype =
 		}
 
 		if(verticalAxis && verticalAxis.yPoints && verticalAxis.yPoints.length) {
-			let orientationVerAxis = verticalAxis.scaling.orientation === ORIENTATION_MIN_MAX;
+			let orientationVerAxis = !verticalAxis.isReversed();
 			diffPoints = 0;
 			if((verticalAxis instanceof AscFormat.CDateAx || verticalAxis instanceof AscFormat.CCatAx)&& crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN) {
 				diffPoints = Math.abs((verticalAxis.interval) / 2);
@@ -1347,7 +1347,7 @@ CChartsDrawer.prototype =
 	//****calculate properties****
 	_calculateProperties: function (chartSpace) {
 		if (!this.calcProp.scale) {
-			this.preCalculateData(chartSpace);
+			this.preCalculateData(chartSpace, true);
 		}
 
 		//считаем маргины
@@ -2159,47 +2159,50 @@ CChartsDrawer.prototype =
 		return arrayValues;
 	},
 
-	/*
-	Assumptions 
-		yMin and yMax alywas nummeric
-		yMin always less than yMax
-		logBase is always >= 2
-	*/
-	_getLogArray: function (yMin, yMax, logBase, axis) {
+	_getLogArray: function (yMin, yMax, logBase, axis) {	
+		// first check dependencies to be numeric and valid
+		if((yMin !== 0 && !yMin) || (yMax !== 0 && !yMax)) {
+			return [1, logBase];
+		}
+		logBase = (logBase < 2) ? 2 : logBase;
+
 		/**
 		 * axis contains min and max values and logBase
 		 * if they are null just use yMin lowerBound and yMax upperBound
-		 * create loop from min to max, multiply each time by logBase
-		 */
+		*/
 		let kF = 1000000000;
-		let trueMin = (axis.scaling && axis.scaling.min) !== null ? Math.round(axis.scaling.min * kF) / kF : null;
-		let trueMax = (axis.scaling && axis.scaling.max) !== null ? Math.round(axis.scaling.max * kF) / kF : null;
-		yMin = (yMin <= 0) ? 1 : yMin;
+		let trueMin = (axis && axis.scaling && axis.scaling.min) !== null ? Math.round(axis.scaling.min * kF) / kF : null;
+		let trueMax = (axis && axis.scaling && axis.scaling.max) !== null ? Math.round(axis.scaling.max * kF) / kF : null;
+		yMin = (yMin <= 0 || yMin >= 1) ? 1 : yMin;
 		yMax = (yMax <= 0) ? logBase : yMax;
 		trueMin = (!trueMin || trueMin <= 0) ? yMin : trueMin;
 		trueMax = (!trueMax || trueMax <= 0) ? yMax : trueMax;
 
-		trueMin = Math.pow(logBase, Math.floor(Math.log(trueMin) / Math.log(logBase)));
-		trueMax = Math.pow(logBase, Math.ceil(Math.log(trueMax) / Math.log(logBase)));
+		//for the cases when min > max ;
+		let realTrueMax = Math.max(trueMin, trueMax);
+		let realTrueMin = Math.min(trueMin, trueMax);
+
+		// normalize min and max on the scale of logBase;
+		// create loop from min to max, multiply each time by logBase
+		const trueMaxPower = Math.ceil(Math.log(realTrueMax) / Math.log(logBase));
+		const trueMinPower = Math.floor(Math.log(realTrueMin) / Math.log(logBase));
+		realTrueMax = Math.pow(logBase, trueMaxPower);
+		realTrueMin = Math.pow(logBase, trueMinPower);
 		const result = [];
-
-		//------------------------------
-		/* Possible cases */
-
-		// trueMin is too small
-		if (trueMin > 0 && trueMin < 1e-12) {
-			trueMin = 1e-12;
+		while (realTrueMin != 0 && realTrueMin <= realTrueMax) {
+			result.push(realTrueMin);
+			realTrueMin *= logBase;
 		}
 
-		// range between trueMin and trueMax is too huge
-		if (trueMax / trueMin > 1e50) {
-			trueMin = trueMax / 1e50;
+		// fo the cases where last number was a little bit greater than target
+		// 105000000001 <= 10500000000
+		const prevVal = realTrueMin / logBase;
+		if (Math.abs(realTrueMax - prevVal) > Math.abs(realTrueMax - realTrueMin)){
+			result.push(realTrueMin)
 		}
-		//------------------------------
 
-		while (trueMin <= trueMax) {
-			result.push(trueMin);
-			trueMin *= logBase;
+		if (result.length === 1) {
+			result.push(result[0] * logBase);
 		}
 		return result;
 
@@ -2405,7 +2408,7 @@ CChartsDrawer.prototype =
 
 
 	//****functions for UP Functions****
-	preCalculateData: function (chartSpace) {
+	preCalculateData: function (chartSpace, notCalcExtremum) {
 		this._calculateChangeAxisMap(chartSpace);
 		this.cChartSpace = chartSpace;
 		this.calcProp.pxToMM = 1 / AscCommon.g_dKoef_pix_to_mm;
@@ -2420,7 +2423,9 @@ CChartsDrawer.prototype =
 		this.calcProp.yaxispos = null;
 
 		//рассчёт данных и ещё некоторых параметров(this.calcProp./min/max/ymax/ymin/)
-		this._calculateExtremumAllCharts(chartSpace);
+		if (!notCalcExtremum) {
+			this._calculateExtremumAllCharts(chartSpace);
+		}
 
 		//***series***
 		this.calcProp.series = chartSpace.chart.plotArea.chart.series;
@@ -2841,7 +2846,7 @@ CChartsDrawer.prototype =
 			resVal = test.val - yPoints[0].val;
 			diffVal = Math.abs(yPoints[yPoints.length - 1].val - val);
 
-			if (axis.scaling.orientation === ORIENTATION_MIN_MAX) {
+			if (!axis.isReversed()) {
 				if (isOx) {
 					result = yPoints[yPoints.length - 1].pos + (diffVal / resVal) * resPos;
 				} else {
@@ -2871,13 +2876,13 @@ CChartsDrawer.prototype =
 					var startPos = yPoints[s].pos;
 
 					if (!isOx) {
-						if (axis.scaling.orientation === ORIENTATION_MIN_MAX) {
+						if (!axis.isReversed()) {
 							result = -(resPos / resVal) * (Math.abs(val - yPoints[s].val)) + startPos;
 						} else {
 							result = (resPos / resVal) * (Math.abs(val - yPoints[s].val)) + startPos;
 						}
 					} else {
-						if (axis.scaling.orientation !== ORIENTATION_MIN_MAX) {
+						if (axis.isReversed()) {
 							result = -(resPos / resVal) * (Math.abs(val - yPoints[s].val)) + startPos;
 						} else {
 							result = (resPos / resVal) * (Math.abs(val - yPoints[s].val)) + startPos;
@@ -2900,13 +2905,13 @@ CChartsDrawer.prototype =
 				var startPos = yPoints[index].pos;
 
 				if (!isOx) {
-					if (axis.scaling.orientation === ORIENTATION_MIN_MAX) {
+					if (!axis.isReversed()) {
 						res = -(resPos / resVal) * (Math.abs(val - yPoints[index].val)) + startPos;
 					} else {
 						res = (resPos / resVal) * (Math.abs(val - yPoints[index].val)) + startPos;
 					}
 				} else {
-					if (axis.scaling.orientation !== ORIENTATION_MIN_MAX) {
+					if (axis.isReversed()) {
 						res = -(resPos / resVal) * (Math.abs(val - yPoints[index].val)) + startPos;
 					} else {
 						res = (resPos / resVal) * (Math.abs(val - yPoints[index].val)) + startPos;
@@ -2935,20 +2940,21 @@ CChartsDrawer.prototype =
 		return result;
 	},
 
-	// Assumptions:
-	/*	yPoints.length always >= 2
-		logBase is always 10
-	 */
 	_getYPositionLogBase: function (val, yPoints, isOx, logBase) {
-		if (val <= 0) {
+		// first check dependencies to be numeric and valid
+		if (!val && val <= 0) {
 			return this.axesChart[0].axis.xPoints ? (this.calcProp.heightCanvas / this.calcProp.pxToMM) : 0;
 		}
+		if (!yPoints || yPoints.length < 2) {
+			return null;
+		}
+		logBase = (logBase < 2) ? 2 : logBase;
 
-		const startingPos = yPoints[yPoints.length - 1].pos;
-		const stepDistance = yPoints[yPoints.length - 2].pos - yPoints[yPoints.length - 1].pos;
 		const startingPoint = Math.log(yPoints[yPoints.length - 1].val) / Math.log(logBase);
 		const currentPoint = Math.log(val) / Math.log(logBase);
 		const pointsDiff = startingPoint - currentPoint;
+		const startingPos = yPoints[yPoints.length - 1].pos;
+		const stepDistance = yPoints[yPoints.length - 2].pos - yPoints[yPoints.length - 1].pos;
 		return (stepDistance * pointsDiff) + startingPos;
 
 		// var logVal = Math.log(val) / Math.log(logBase);
@@ -3230,14 +3236,19 @@ CChartsDrawer.prototype =
 	},
 
 	_roundValues: function (values) {
-		//ToDo пересмотреть округление. на числа << 0 могут быть проблемы!
-		var kF = 1000000000;
 		if (values.length) {
-			for (var i = 0; i < values.length; i++) {
-				values[i] = Math.round(values[i] * kF) / kF;
+		  for (let i = 0; i < values.length; i++) {
+			let count = 1;
+			let kF = 1000000000;
+			if (values[i] !== 0 && Math.abs(values[i] * kF) < 1) {
+				while (Math.abs(values[i]*kF) < 1) {
+					kF *= 10;
+				}
 			}
+			values[i] = Math.round(values[i] * kF) / (kF * count);
+		  }
 		}
-
+	  
 		return values;
 	},
 	
@@ -4075,7 +4086,7 @@ CChartsDrawer.prototype =
 		if(this.calcProp.type === c_oChartTypes.Bar)
 		{
 			result = val > 0 && visible < 0 || val < 0 && visible > 0;
-			if(!(this.calcProp.subType === "stacked") && !(this.calcProp.subType === "stackedPer") && _valAx.scaling.orientation !== ORIENTATION_MIN_MAX)
+			if(!(this.calcProp.subType === "stacked") && !(this.calcProp.subType === "stackedPer") && _valAx.isReversed())
 				result = !result;
 		}
 		else if(this.calcProp.type === c_oChartTypes.Line)
@@ -4086,7 +4097,7 @@ CChartsDrawer.prototype =
 		{
 			result = val < 0 && visible < 0 || val > 0 && visible > 0;
 			
-			if(!(this.calcProp.subType === "stacked") && !(this.calcProp.subType === "stackedPer") && _valAx.scaling.orientation !== ORIENTATION_MIN_MAX)
+			if(!(this.calcProp.subType === "stacked") && !(this.calcProp.subType === "stackedPer") && _valAx.isReversed())
 				result = !result;
 		}
 
@@ -4818,7 +4829,7 @@ CChartsDrawer.prototype =
 
 		if (axis.getObjectType() === AscDFH.historyitem_type_ValAx) {
 			var yPoints = axis.yPoints;
-			var orientation = axis.scaling.orientation === AscFormat.ORIENTATION_MIN_MAX;
+			var orientation = !axis.isReversed();
 			var trueWidth = this.calcProp.trueWidth;
 			var xCenter = axis.posX;
 
@@ -5087,7 +5098,7 @@ CChartsDrawer.prototype =
 					point3 = point7;
 					point4 = point8;
 				}
-				if (this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+				if (this.cChartSpace.chart.plotArea.valAx.isReversed()) {
 					x5 = startX, y5 = startY - height / 2, z5 = 0 + gapDepth;
 					x6 = startX, y6 = startY - height / 2, z6 = perspectiveDepth + gapDepth;
 					x7 = startX + individualBarValue, y7 = startY - height / 2, z7 = perspectiveDepth + gapDepth;
@@ -5207,7 +5218,7 @@ CChartsDrawer.prototype =
 				value = hbar ? -minH: minH;
 			}
 		}
-		if (this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+		if (this.cChartSpace.chart.plotArea.valAx.isReversed()) {
 			if (subType === "stacked" || subType === "stackedPer") {
 				if (hbar) {
 					startX = val < 0 ? --startX : ++startX;
@@ -5569,7 +5580,7 @@ CChartsDrawer.prototype =
 			points = this.isConeIntersection(hbar, subType, startX, startY, height, gapDepth, individualBarWidth, perspectiveDepth,
 				val, nullPositionOX, maxH, minH);
 
-			if ((subType === "stacked" || subType === "stackedPer") && this.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+			if ((subType === "stacked" || subType === "stackedPer") && this.cChartSpace.chart.plotArea.valAx.isReversed()) {
 				sizes12 = points.wUp !== 0 ? points.wUp : individualBarWidth / 2;
 				sizes22 = points.lUp !== 0 ? points.lUp : perspectiveDepth / 2;
 				sizes1 = points.wDown;
@@ -6053,7 +6064,7 @@ drawBarChart.prototype = {
 				seriesHeight[i][idx] = height;
 
 				//стартовая позиция колонки X
-				if (this.catAx.scaling.orientation === ORIENTATION_MIN_MAX) {
+				if (!this.catAx.isReversed()) {
 					if (xPoints[1] && xPoints[1].pos && xPoints[idx]) {
 						startXPosition = xPoints[idx].pos - Math.abs((xPoints[1].pos - xPoints[0].pos) / 2);
 					} else if (xPoints[idx]) {
@@ -6071,7 +6082,7 @@ drawBarChart.prototype = {
 					}
 				}
 
-				if (this.catAx.scaling.orientation === ORIENTATION_MIN_MAX) {
+				if (!this.catAx.isReversed()) {
 					if (seriesCounter === 0) {
 						startX =
 							startXPosition * this.chartProp.pxToMM + hmargin + seriesCounter * (individualBarWidth);
@@ -6090,11 +6101,11 @@ drawBarChart.prototype = {
 				}
 
 
-				if (this.catAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+				if (this.catAx.isReversed()) {
 					startX = startX - individualBarWidth;
 				}
 
-				if (this.valAx.scaling.orientation !== ORIENTATION_MIN_MAX &&
+				if (this.valAx.isReversed() &&
 					(this.subType === "stackedPer" || this.subType === "stacked")) {
 					startY = startY + height;
 				}
@@ -6313,7 +6324,7 @@ drawBarChart.prototype = {
 				height = startBlockPosition - endBlockPosition;
 			}
 
-			if (this.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+			if (this.valAx.isReversed()) {
 				height = -height;
 			}
 		} else {
@@ -6532,7 +6543,7 @@ drawBarChart.prototype = {
 
 		var centerX, centerY;
 		//TODO check revert valAx orientation for other charts labels
-		var maxMinAxis = this.valAx && this.valAx.scaling && this.valAx.scaling.orientation === ORIENTATION_MAX_MIN;
+		var maxMinAxis = this.valAx && this.valAx.isReversed();
 
 		switch (point.compiledDlb.dLblPos) {
 			case c_oAscChartDataLabelsPos.bestFit: {
@@ -6749,7 +6760,7 @@ drawBarChart.prototype = {
 						var colors = duplicateBrush.fill.colors;
 						//ToDo проверить stacked charts!
 						var color;
-						var valAxOrientation = this.valAx.scaling.orientation;
+						var valAxOrientation = this.valAx.getOrientation();
 						if ((val > 0 && valAxOrientation === ORIENTATION_MIN_MAX) ||
 							(val < 0 && valAxOrientation !== ORIENTATION_MIN_MAX)) {
 							if (k === 4 && colors && colors[0] && colors[0].color) {
@@ -6983,7 +6994,7 @@ drawBarChart.prototype = {
 					uRadius2 = 0;
 					dRadius1 = points.wDown;
 					dRadius2 = points.lDown;
-				} else if ((t.subType === "stacked" || t.subType === "stackedPer") && t.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+				} else if ((t.subType === "stacked" || t.subType === "stackedPer") && t.cChartSpace.chart.plotArea.valAx.isReversed()) {
 					uRadius1 = points.wUp !== 0 ? points.wUp : individualBarWidth / 2;
 					uRadius2 = points.lUp !== 0 ? points.lUp : perspectiveDepth / 2;
 					dRadius1 = points.wDown;
@@ -9144,13 +9155,13 @@ drawAreaChart.prototype = {
 			var angle = Math.abs(this.cChartDrawer.processor3D.angleOy);
 			if (!this.cChartDrawer.processor3D.view3D.getRAngAx() && angle > Math.PI / 2 &&
 				angle < 3 * Math.PI / 2) {
-				if (this.serAx && this.serAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+				if (this.serAx && this.serAx.isReversed()) {
 					this._standardDraw(false);
 				} else {
 					this._standardDraw(true);
 				}
 			} else {
-				if (this.serAx && this.serAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+				if (this.serAx && this.serAx.isReversed()) {
 					this._standardDraw(true);
 				} else {
 					this._standardDraw(false);
@@ -9215,8 +9226,8 @@ drawAreaChart.prototype = {
 		var cZ = k.x * n.y - n.x * k.y;
 		var visible = (aX + bY + cZ) < 0;
 
-		var valOrientation = this.valAx.scaling.orientation === ORIENTATION_MIN_MAX;
-		var catOrientation = this.catAx.scaling.orientation === ORIENTATION_MIN_MAX;
+		var valOrientation = !this.valAx.isReversed();
+		var catOrientation = !this.catAx.isReversed();
 
 		if ((!valOrientation && !isSideFace) || (!valOrientation && catOrientation)) {
 			return !visible;
@@ -9383,7 +9394,7 @@ drawHBarChart.prototype = {
 
 
 				//стартовая позиция колонки Y
-				if (this.catAx.scaling.orientation === ORIENTATION_MIN_MAX) {
+				if (!this.catAx.isReversed()) {
 					if (yPoints[1] && yPoints[1].pos && yPoints[idx]) {
 						startYPosition = yPoints[idx].pos + Math.abs((yPoints[1].pos - yPoints[0].pos) / 2);
 					} else if(yPoints[idx]){
@@ -9402,7 +9413,7 @@ drawHBarChart.prototype = {
 				}
 
 
-				if (this.catAx.scaling.orientation === ORIENTATION_MIN_MAX) {
+				if (!this.catAx.isReversed()) {
 					if (seriesCounter === 0) {
 						startY = startYPosition * this.chartProp.pxToMM - hmargin - seriesCounter * (individualBarHeight);
 					} else {
@@ -9417,12 +9428,12 @@ drawHBarChart.prototype = {
 				}
 
 				newStartY = startY;
-				if (this.catAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+				if (this.catAx.isReversed()) {
 					newStartY = startY + individualBarHeight;
 				}
 
 				newStartX = startX;
-				if (this.valAx.scaling.orientation !== ORIENTATION_MIN_MAX &&
+				if (this.valAx.isReversed() &&
 					(this.subType === "stackedPer" || this.subType === "stacked")) {
 					newStartX = startX - width;
 				}
@@ -9604,7 +9615,7 @@ drawHBarChart.prototype = {
 			startY = startBlockPosition;
 			width = endBlockPosition - startBlockPosition;
 
-			if (this.valAx.scaling.orientation !== ORIENTATION_MIN_MAX) {
+			if (this.valAx.isReversed()) {
 				width = -width;
 			}
 		} else {
@@ -9988,7 +9999,7 @@ drawHBarChart.prototype = {
 		};
 
 		if (this.subType === "stacked" || this.subType === "stackedPer") {
-			if (this.valAx.scaling.orientation === ORIENTATION_MIN_MAX) {
+			if (!this.valAx.isReversed()) {
 				drawReverse(true);
 				draw(false);
 			} else {
@@ -9996,7 +10007,7 @@ drawHBarChart.prototype = {
 				draw(true);
 			}
 		} else {
-			if (this.catAx.scaling.orientation === ORIENTATION_MIN_MAX) {
+			if (!this.catAx.isReversed()) {
 				draw();
 			} else {
 				drawReverse();
@@ -12357,7 +12368,7 @@ drawRadarChart.prototype = {
 		let yPoints = this.valAx.yPoints;
 
 		let xCenter = this.valAx.posX;
-		let yCenter = this.valAx.scaling.orientation === AscFormat.ORIENTATION_MIN_MAX ? yPoints[0].pos : yPoints[yPoints.length - 1].pos;
+		let yCenter = !this.valAx.isReversed() ? yPoints[0].pos : yPoints[yPoints.length - 1].pos;
 
 		let valueMinMax;
 		if (yPoints && yPoints.length > 1) {
@@ -12696,7 +12707,7 @@ drawRadarChart.prototype = {
 				let yPoints = this.valAx.yPoints;
 				if (yPoints && yPoints.length > 1) {
 					let xCenter = this.valAx.posX;
-					let yCenter = this.valAx.scaling.orientation === AscFormat.ORIENTATION_MIN_MAX ? yPoints[0].pos : yPoints[yPoints.length - 1].pos;
+					let yCenter = !this.valAx.isReversed() ? yPoints[0].pos : yPoints[yPoints.length - 1].pos;
 
 					let radius1 = this._getRadius(point.val, this._minMaxValue);
 					let alpha1 = this._getAlpha(point.idx);
@@ -12729,7 +12740,7 @@ drawRadarChart.prototype = {
 
 	_getRadius: function (val) {
 		var yPoints = this.valAx.yPoints;
-		var orientation = this.valAx.scaling.orientation === AscFormat.ORIENTATION_MIN_MAX;
+		var orientation = !this.valAx.isReversed();
 		return (orientation ? yPoints[0].pos : yPoints[yPoints.length - 1].pos) - this.cChartDrawer.getYPosition(val, this.valAx);
 	},
 
@@ -14360,7 +14371,7 @@ axisChart.prototype = {
 
 			var axis = this.axis;
 			var yPoints = axis.yPoints;
-			var orientation = axis.scaling.orientation === AscFormat.ORIENTATION_MIN_MAX;
+			var orientation = !axis.isReversed();
 			var xCenter = axis.posX;
 
 			var yCenter, trueHeight;
@@ -14534,7 +14545,7 @@ axisChart.prototype = {
 		var widthLine = tickmarksProps.widthLine, widthMinorLine = tickmarksProps.widthMinorLine;
 		var crossMajorStep = tickmarksProps.crossMajorStep, crossMinorStep = tickmarksProps.crossMinorStep;
 
-		var orientation = this.axis ? this.axis.scaling.orientation : ORIENTATION_MIN_MAX;
+		var orientation = this.axis ? this.axis.getOrientation() : ORIENTATION_MIN_MAX;
 		var minorStep, posX, posY, k, firstDiff = 0;
 		var tickMarkSkip = this.axis.tickMarkSkip ? this.axis.tickMarkSkip : 1;
 
@@ -14672,7 +14683,7 @@ axisChart.prototype = {
 	},
 
 	_calculateValTickMark: function () {
-		let orientation = this.axis ? this.axis.scaling.orientation : ORIENTATION_MIN_MAX;
+		let orientation = this.axis ? this.axis.getOrientation() : ORIENTATION_MIN_MAX;
 		let tickmarksProps = this._getTickmarksProps();
 		let widthLine = tickmarksProps.widthLine;
 		let widthMinorLine = tickmarksProps.widthMinorLine / this.chartProp.pxToMM;
@@ -16192,7 +16203,7 @@ CColorObj.prototype =
 		if(this.chartsDrawer.calcProp.type === c_oChartTypes.Bar)
 		{
 			result = val > 0 && visible < 0 || val < 0 && visible > 0;
-			if(!(this.chartsDrawer.calcProp.subType === "stacked") && !(this.chartsDrawer.calcProp.subType === "stackedPer") && this.chartsDrawer.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX)
+			if(!(this.chartsDrawer.calcProp.subType === "stacked") && !(this.chartsDrawer.calcProp.subType === "stackedPer") && this.chartsDrawer.cChartSpace.chart.plotArea.valAx.isReversed())
 				result = !result;
 		}
 		else if(this.chartsDrawer.calcProp.type === c_oChartTypes.Line)
@@ -16203,7 +16214,7 @@ CColorObj.prototype =
 		{
 			result = val < 0 && visible < 0 || val > 0 && visible > 0;
 
-			if(!(this.chartsDrawer.calcProp.subType === "stacked") && !(this.chartsDrawer.calcProp.subType === "stackedPer") && this.chartsDrawer.cChartSpace.chart.plotArea.valAx.scaling.orientation !== ORIENTATION_MIN_MAX)
+			if(!(this.chartsDrawer.calcProp.subType === "stacked") && !(this.chartsDrawer.calcProp.subType === "stackedPer") && this.chartsDrawer.cChartSpace.chart.plotArea.valAx.isReversed())
 				result = !result;
 		}
 		if (cylinder) {
@@ -16246,6 +16257,7 @@ CColorObj.prototype =
 		//control trend calculate type
 		this.bAllowDrawByBezier = true;
 		this.bAllowDrawByPoints = false;
+		this.continueAdding = true;
 	}
 
 	CTrendline.prototype = {
@@ -16268,10 +16280,18 @@ CColorObj.prototype =
 			if (!this.storage[chartId][seriaId]) {
 				this.storage[chartId][seriaId] = new CTrendData();
 			}
-			this.storage[chartId][seriaId].addCatVal(xVal);
-			this.storage[chartId][seriaId].addValVal(yVal);
-			if (yVal > 0) {
-				this.storage[chartId][seriaId].setMinLogVal(yVal);
+			if (!this.storage[chartId][seriaId].isEmpty() && xVal === this.storage[chartId][seriaId].coords.catVals[0]) {
+				this.continueAdding = false;
+			}
+
+			// in the case of duplicated data, no further adding should be allowed
+			if (this.continueAdding) {
+				this.storage[chartId][seriaId].addCatVal(xVal);
+				this.storage[chartId][seriaId].addValVal(yVal);
+	
+				if (yVal > 0) {
+					this.storage[chartId][seriaId].setMinLogVal(yVal);
+				}
 			}
 		},
 
@@ -16280,6 +16300,20 @@ CColorObj.prototype =
 				const coefficients = this.storage[chartId][seriesId].getCoefficients();
 				const rSquared = this.storage[chartId][seriesId].getRSquared();
 				const lastPoint = this.storage[chartId][seriesId].getLastPoint();
+
+				let startCat = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
+				let startVal = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
+				let endCat = (this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM) + startCat;
+				let endVal = (this.cChartDrawer.calcProp.trueHeight / this.cChartDrawer.calcProp.pxToMM) + startVal;
+				
+				if (lastPoint.catVal < startCat || lastPoint.catVal > endCat) {
+					lastPoint.catVal = 0;
+				}
+
+				if (lastPoint.valVal < startVal || lastPoint.valVal > endVal) {
+					lastPoint.valVal = 0;
+				}
+
 				if (coefficients || rSquared) {
 					const additionalInfo = {
 						coefficients : coefficients,
@@ -16312,7 +16346,6 @@ CColorObj.prototype =
 			const catAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[0]);
 			const valAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[1]);
 			const coords = storageElement.getCoords();
-
 			// moving average differs much from other trendlines
 			if (type === AscFormat.TRENDLINE_TYPE_MOVING_AVG) {
 				const period = attributes.period ? attributes.period : 2;
@@ -16336,6 +16369,7 @@ CColorObj.prototype =
 						const cutPoint = valAxis.scaling.logBase ? (Math.log(1000) / Math.log(valAxis.scaling.logBase)) : 1000;
 						const lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
 						storageElement.setBezierApproximationResults(lineCoords.mainLine, lineCoords.startPoint);
+						storageElement.setLineReversed(lineCoords.isReversed);
 					}
 					if (this.bAllowDrawByPoints || type === AscFormat.TRENDLINE_TYPE_POLY) {
 						const minLogVal = storageElement.getMinLogVal();
@@ -16361,6 +16395,8 @@ CColorObj.prototype =
 			if (boundary) {
 				const catAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[0]);
 				const valAxis = this.cChartDrawer._searchChangedAxis(oChart.axId[1]);
+				boundary.catMax = Math.ceil(boundary.catMax);
+				boundary.catMin = Math.floor(boundary.catMin);
 
 				if (!boundaries[catAxis.Id]) {
 					boundaries[catAxis.Id] = {min: null, max: null};
@@ -16410,7 +16446,7 @@ CColorObj.prototype =
 			const _valsToPos = function (arr, cChartDrawer) {
 				const posArr = {xPos: [], yPos: []}
 				for (let i = 0; i < arr.catVals.length; i++) {
-					let pos1 = cChartDrawer.getYPosition(arr.catVals[i], catAxis);
+					let pos1 = cChartDrawer.getYPosition(arr.catVals[i], catAxis, true);
 					let pos2 = cChartDrawer.getYPosition(arr.valVals[i], valAxis, true);
 
 					let catPos = horOrientation ? pos1 : pos2;
@@ -16452,7 +16488,7 @@ CColorObj.prototype =
 					}
 				}
 
-				storageElement.setLastPoint(positions.xPos[positions.xPos.length - 1], positions.yPos[positions.yPos.length - 1]);
+				storageElement.setLastPoint(positions.xPos, positions.yPos);
 				storageElement.setBezierPath(pathId);
 			}
 
@@ -16467,7 +16503,7 @@ CColorObj.prototype =
 				for (let i = 0; i < positions.xPos.length; i++) {
 					path.lnTo(positions.xPos[i] * pathW, positions.yPos[i] * pathH);
 				}
-				storageElement.setLastPoint(positions.xPos[positions.xPos.length - 1], positions.yPos[positions.yPos.length - 1]);
+				storageElement.setLastPoint(positions.xPos, positions.yPos);
 				storageElement.setPointPath(pathId);
 			}
 		},
@@ -16588,7 +16624,7 @@ CColorObj.prototype =
 						}
 					}, calcXVal: function (val, supps, isLog) {
 						val = isLog ? Math.pow(isLog, val) : val;
-						return Math.pow((val / supps[0]), 1 / supps[1]);
+						return Math.pow((val / supps[1]), 1 / supps[0]);
 					}, calcSlope: function (val, supps, isLog) {
 						if (!isLog) {
 							return supps[1] * supps[0] * Math.pow(val, supps[0] - 1);
@@ -16629,7 +16665,7 @@ CColorObj.prototype =
 					return true;
 				};
 
-				const mapped = _mapCoordinates();
+				const mapped = this.continueAdding ? _mapCoordinates() : true;
 
 				if (mapped) {
 
@@ -16818,7 +16854,6 @@ CColorObj.prototype =
 						const Y = _createMatrix(valVals, 1, 1, intercept);
 						const S = _matMul(X_T, Y, pow - y_intercept, 1, catVals.length);
 						const letiables = _matMul(P_I, S, pow - y_intercept, 1, pow - y_intercept);
-
 						return flatten(letiables, y_intercept, intercept);
 					}
 				}
@@ -16855,18 +16890,7 @@ CColorObj.prototype =
 		},
 
 		_dispRSquared: function (catVals, valVals, coefficients, type) {
-			const mappingStorage = this._obtainMappingStorage(type)
-			const findYMean = function () {
-				let sum = 0;
-				let size = valVals.length;
-				for (let i = 0; i < size; i++) {
-					sum += valVals[i]
-				}
-				return sum / size;
-			};
-
-			const yMean = findYMean();
-
+			const mappingStorage = this._obtainMappingStorage(type);
 			const predictY = function (xVal) {
 				let result = mappingStorage.bValForward ? mappingStorage.bValForward(coefficients[coefficients.length - 1]) : coefficients[coefficients.length - 1];
 				let power = 1;
@@ -16877,18 +16901,32 @@ CColorObj.prototype =
 				return result;
 			};
 
-			// R squared = 1 - sumRegression/sumSquared 
-			// sumRegression is ∑(y-yPredicted)^2
-			// sumSquared is ∑(y-yMean)^2
+			// R squared = Correlation * Correlation
+			// Correlation = (N∑xy-∑x∑y) / (sqrt([N∑x^2-(∑x)^2][N∑y^2-(∑y)^2]))
 
+			const N = valVals.length;
 			let sumSquared = 0;
 			let sumRegression = 0;
-			for (let i = 0; i < valVals.length; i++) {
+			let XY = 0;
+			let X = 0;
+			let Y = 0;
+			let XSquared = 0;
+			let YSquared = 0;
+			for (let i = 0; i < N; i++) {
 				const yValPred = predictY(catVals[i]);
-				sumRegression += Math.pow((valVals[i] - yValPred), 2);
-				sumSquared += Math.pow((valVals[i] - yMean), 2);
+				const yVal = valVals[i];
+				XY += (yVal * yValPred);
+				X += yVal;
+				Y += yValPred;
+				XSquared += (yVal * yVal);
+				YSquared += (yValPred * yValPred);
 			}
-			return 1 - (sumRegression / sumSquared);
+			let divisor = (Math.sqrt((N * XSquared - Math.pow(X, 2)) * (N * YSquared - Math.pow(Y, 2))));
+			if (divisor != 0) {
+				const correlation = ((N * XY) - (X * Y)) / divisor;
+				return correlation * correlation;
+			}
+			return null;
 		},
 
 		draw: function () {
@@ -16903,7 +16941,7 @@ CColorObj.prototype =
 					if (!this.storage[i].hasOwnProperty(j) || !oSeries || !this.storage[i][j]) {
 						continue;
 					}
-					let pen = oSeries.trendline.pen;
+					let pen = oSeries.trendline.getPen();
 					if (!pen) {
 						pen = this.cChartDrawer.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines;
 					}
@@ -16985,7 +17023,7 @@ CColorObj.prototype =
 			if (!this.isLog && !cutPoint) {
 				cutPoint = 1000;
 			}
-			const results = this._calclApproximatedBezier(error, tailLimit, cutPoint);
+			const results = this._calcApproximatedBezier(error, tailLimit, cutPoint);
 			if (this.isLog) {
 				this._normalize(results.mainLine);
 				this._normalize(results.startPoint);
@@ -17023,7 +17061,7 @@ CColorObj.prototype =
 		// this function can return two lines 
 		// secondaryLine which is just a straight line 
 		// primaryLine which is bezier driven line
-		_calclApproximatedBezier: function (error, tailLimit, cutPoint) {
+		_calcApproximatedBezier: function (error, tailLimit, cutPoint) {
 			// error: the threshold to check the accuracy of the approximated line 
 			// tailLimit: the threshold at which the slope of the point becomes too high leading to its arctangent to become high
 			// cutPoint: the threshold at which line should be cutted. For lines with a long tails, approximation does not work, therefore they must be cutted
@@ -17035,26 +17073,37 @@ CColorObj.prototype =
 			// Step 1 find edges of line 
 			// --------------------------------------
 
-			const start = {catVal: null, valVal: null};
+			let start = {catVal: null, valVal: null};
 			const end = {catVal: null, valVal: null};
 			this._lineCoordinate(start, this.catMin, true);
 			this._lineCoordinate(end, this.catMax, true);
-
 			// yValue for log scale can not be <= 0
+			// therefore use close to 0 val 
 			if (this.isLog) {
 				const lowerBoundary = (Math.log(0.01) / Math.log(this.isLog));
 				if (isNaN(start.valVal)) {
 					this._lineCoordinate(start, lowerBoundary, false);
 				}
 				if (isNaN(end.valVal)) {
-					this._lineCoordinate(start, lowerBoundary, false);
+					this._lineCoordinate(end, lowerBoundary, false);
 				}
 			}
 
 			this._checkBoundaries(start);
 			this._checkBoundaries(end);
 
-			//sometimes lines can be reversed, we need to track directions
+			//start point cant be changed with end point
+			let isReversed = false;
+			//start should always be lower than end
+			if (start.valVal > end.valVal) {
+				isReversed = true;
+				const temp = {catVal: end.catVal, valVal: end.valVal};
+				end.valVal = start.valVal;
+				end.catVal = start.catVal;
+				start = temp;
+			}
+
+			//sometimes lines can point in opposite direction, we need to track directions
 			let direction = true;
 			const line2Letiables = this._findLine(end.catVal, end.valVal);
 			let line1Letiables = this._findLine(start.catVal, start.valVal);
@@ -17065,16 +17114,16 @@ CColorObj.prototype =
 
 			// sometimes graph can have huge tails, to detect them use slope of starting and end point of line
 			// if the slope of the starting point is to high, then cut the line up to certain point (lowestPoint)
-			if (Math.atan(line2Letiables[1]) < tailLimit && Math.atan(line1Letiables[1]) > tailLimit && start.valVal < lowestPoint) {
+			if (Math.atan(Math.abs(line2Letiables[1])) < tailLimit && Math.atan(Math.abs(line1Letiables[1])) > tailLimit && start.valVal < lowestPoint) {
 				this._lineCoordinate(start, lowestPoint, false);
 				line1Letiables = this._findLine(start.catVal, start.valVal);
 			}
 			// if the slope of the ending point is to high, then cut the line into 2/3 of its original size
 			const startPoint = {catVals: [], valVals: []};
-			if (Math.atan(line1Letiables[1]) < tailLimit && Math.atan(line2Letiables[1]) > tailLimit) {
+			if (Math.atan(Math.abs(line1Letiables[1])) < tailLimit && Math.atan(Math.abs(line2Letiables[1])) > tailLimit) {
 				startPoint.catVals.push(start.catVal);
-				startPoint.valVals.push(end.catVal);
-				this._lineCoordinate(start, (end.catVal + start.catVal) / 2, true);
+				startPoint.valVals.push(start.valVal);
+				start = this._cutLine(start, end);
 				line1Letiables = this._findLine(start.catVal, start.valVal);
 				direction = false;
 			}
@@ -17087,7 +17136,7 @@ CColorObj.prototype =
 			if (line2Letiables[1] === line1Letiables[1]) {
 				controlPoints.catVals.push(end.catVal);
 				controlPoints.valVals.push(end.valVal);
-				return {startPoint: startPoint, mainLine: controlPoints}
+				return {isReversed: isReversed, startPoint: startPoint, mainLine: controlPoints}
 			}
 
 			// --------------------------------------
@@ -17113,7 +17162,7 @@ CColorObj.prototype =
 			const valMin = Math.min(val1, val2);
 			const predictedErr = this._check(controlPoints, valMin, valMax);
 			if (predictedErr <= error && predictedErr >= -error) {
-				return {startPoint: startPoint, mainLine: controlPoints}
+				return {isReversed: isReversed, startPoint: startPoint, mainLine: controlPoints}
 			}
 			//--------------------------------------------
 			//Step 5 find approximation of cubic bezier;
@@ -17148,7 +17197,7 @@ CColorObj.prototype =
 				controlPoints.valVals[1] = storage.cpY;
 			}
 
-			return {startPoint: startPoint, mainLine: controlPoints};
+			return {isReversed: isReversed, startPoint: startPoint, mainLine: controlPoints};
 		},
 
 		// find catVal and valVal of line at given point
@@ -17183,6 +17232,30 @@ CColorObj.prototype =
 			const m = this.calcSlope(catVal, this.coefficients, this.isLog);
 			const b = valVal - (m * catVal);
 			return [b, m];
+		},
+
+		//we need to cut a tail of the line
+		//up to 1 percent of its Val (Y) length 
+		_cutLine: function (start, end) {
+			let treshold = 0.05;
+			let obtainedError = 0;
+			const maxIterations = 10;
+			let i = 0;
+			let startingPoint =  {catVal: start.catVal, valVal: start.valVal};
+			let prev = null;
+			let newObtainedError = null;
+			while (obtainedError < treshold && i < maxIterations) {
+				prev = {catVal: start.catVal, valVal: start.valVal};
+				this._lineCoordinate(start, (end.catVal + start.catVal) / 2, true);
+				newObtainedError = 1 - (end.valVal - start.valVal)/ (end.valVal - startingPoint.valVal);
+				if (newObtainedError >= obtainedError) {
+					obtainedError = newObtainedError;
+				} else {
+					break;
+				}
+				i++;
+			}
+			return prev ? prev : start;
 		},
 
 		// predict catVal and valVal from bezier line using bernstein polynomials
@@ -17315,12 +17388,20 @@ CColorObj.prototype =
 		this.boundary = null;
 		this.minLogVal = null;
 		this.startBezierVal = null;
+		this.isReversed = false;
 		this.lastPoint = {catVal: null, valVal: null};
 	}
 
 	// set calcYVal! calcXVal! calcSlope!
 	CTrendData.prototype = {
 		constructor: CTrendData,
+
+		isEmpty: function () {
+			if (this.coords.catVals.length === 0 || this.coords.valVals.length === 0){
+				return true;
+			}
+			return false;
+		},
 
 		getBezierPath: function () {
 			return this.bezierPath;
@@ -17378,6 +17459,10 @@ CColorObj.prototype =
 			this.startBezierVal = startingPoint;
 		},
 
+		setLineReversed: function (isReversed) {
+			this.isReversed = isReversed;
+		},
+
 		addCatVal: function (val) {
 			this.coords.catVals.push(val);
 		},
@@ -17410,8 +17495,9 @@ CColorObj.prototype =
 			this.boundary = boundary;
 		},
 
-		setLastPoint: function (lastPoint) {
-			this.lastPoint = lastPoint;
+		setLastPoint: function (catArr, valArr) {
+			this.lastPoint.catVal = this.isReversed ? catArr[0] : catArr[catArr.length - 1];
+			this.lastPoint.valVal = this.isReversed ? valArr[0] : valArr[valArr.length - 1];
 		},
 
 		setBezierPath: function (bezierPath) {

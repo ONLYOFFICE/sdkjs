@@ -102,9 +102,11 @@
 	{
 		return new AscWord.CRun();
 	}
-	function CreateTable(rows, cols)
+	function CreateTable(rows, cols, tableGrid)
 	{
-		return new AscWord.CTable(AscTest.DrawingDocument, null, true, rows, cols);
+		let t = new AscWord.CTable(AscTest.DrawingDocument, null, true, rows, cols, tableGrid);
+		t.CorrectBadTable();
+		return t;
 	}
 	function CreateImage(w, h)
 	{

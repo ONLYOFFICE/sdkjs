@@ -404,6 +404,7 @@
         oOverlay.ClearAll   = true;
 
         editor.getDocumentRenderer().onUpdateOverlay();
+        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseUp);
     };
     CBaseCheckBoxField.prototype.SetExportValue = function(sValue) {
         this._exportValue = sValue;
@@ -466,32 +467,6 @@
         }
     };
     CBaseCheckBoxField.prototype.WriteToBinary = function(memory) {
-        // TODO
-		/*
-		if (шрифт_у_CTextField_как-либо_изменялся)
-		{
-			// Также как функция SetFont в common/Drawings/Metafile.js
-			
-			if (шрифт_изменялся)
-			{
-				memory.WriteByte(AscCommon.CommandType.ctFontName);
-				memory.WriteString(this.m_oFont.Name);
-			}
-			
-			if (размер_шрифта_изменялся)
-			{
-				memory.WriteByte(AscCommon.CommandType.ctFontSize);
-				memory.WriteDouble(this.m_oFont.FontSize);
-			}
-			
-			if (стиль_шрифта_изменялся)
-			{
-				memory.WriteByte(AscCommon.CommandType.ctFontStyle);
-				memory.WriteLong(style);
-			}
-		}
-		*/
-
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
         // длина комманд
@@ -503,38 +478,43 @@
 
         // checked
         let isChecked = this.IsChecked();
-        if (isChecked) {
-            memory.fieldFlags2 |= (1 << 9);
+        // не пишем значение, если есть родитель с такими же видджет полями,
+        // т.к. значение будет хранить родитель
+        let oParent = this.GetParent();
+        if (oParent == null || oParent.IsAllChildsSame() == false) {
+            memory.fieldDataFlags |= (1 << 9);
+            if (isChecked) {
+                memory.WriteString("Yes");
+            }
+            else
+                memory.WriteString("Off");
         }
-        
-        // just some flags (need to write, but used only in pushbutton)
-        memory.WriteLong(0);
         
         // check symbol
         memory.WriteByte(this.GetStyle());
 
         let sExportValue = this.GetExportValue();
         if (sExportValue != null) {
-            memory.fieldFlags2 |= (1 << 14);
+            memory.fieldDataFlags |= (1 << 14);
             memory.WriteString(sExportValue);
         }
 
         if (this.IsNoToggleToOff()) {
-            memory.fieldFlags1 |= (1 << 14);
+            memory.widgetFlags |= (1 << 14);
         }
 
         if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton) {
             if (this.IsRadiosInUnison()) {
-                memory.fieldFlags1 |= (1 << 25);
+                memory.widgetFlags |= (1 << 25);
             }
         }
         let nEndPos = memory.GetCurPosition();
 
         // запись флагов
-        memory.Seek(memory.posForFlags1);
-        memory.WriteLong(memory.fieldFlags1);
-        memory.Seek(memory.posForFlags2);
-        memory.WriteLong(memory.fieldFlags2);
+        memory.Seek(memory.posForWidgetFlags);
+        memory.WriteLong(memory.widgetFlags);
+        memory.Seek(memory.posForFieldDataFlags);
+        memory.WriteLong(memory.fieldDataFlags);
 
         // запись длины комманд
         memory.Seek(nStartPos);

@@ -337,9 +337,9 @@
 			"pdf/src/annotations/square.js",
 			"common/geometry/geometry.js",
 			"pdf/src/graphics.js",
-			"pdf/src/documentChanges.js",
-			"pdf/src/annotations/annotsChanges.js",
-			"pdf/src/forms/formsChanges.js",
+			"pdf/src/history/documentChanges.js",
+			"pdf/src/history/annotsChanges.js",
+			"pdf/src/history/formsChanges.js",
 			"pdf/src/apiPDF.js",
 			"pdf/src/document.js",
 			"word/document/empty.js",
@@ -388,24 +388,7 @@
 				"word/Local/api.js"
 			]
 		},
-		"mobile_banners": {
-			"min": [
-				"common/Native/Wrappers/memory.js"
-			],
-			"common": []
-		},
 		"mobile": [
-			"common/libfont/engine/fonts_native.js",
-			"common/Charts/ChartStyles.js",
-			
-			"common/Native/Wrappers/serialize.js",
-			"common/Native/Wrappers/DrawingStream.js",
-			"common/Native/Wrappers/ShapeDrawer.js",
-			"common/Native/Wrappers/Overlay.js",
-
-			"word/Native/HtmlPage.js",
-			"word/Native/DrawingDocument.js",
-			"word/Native/api.js"
 		],
 		"exclude_mobile": [
 			"vendor/iscroll.js",

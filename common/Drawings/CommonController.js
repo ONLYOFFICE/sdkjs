@@ -786,11 +786,6 @@
 										});
 										if (this.isSlideShow()) {
 											ret.cursorType = "pointer";
-											if (AscCommon.IsLinkPPAction(sHyperlink)) {
-												MMData = new AscCommon.CMouseMoveData();
-												MMData.X_abs = Coords.X;
-												MMData.Y_abs = Coords.Y;
-											}
 											oDD.SetCursorType("pointer", MMData);
 										} else {
 											editor.sync_MouseMoveCallback(MMData);
@@ -2179,7 +2174,7 @@
 						}
 					} else if (oGrp) {
 						if (oGrp.selectStartPage === pageIndex) {
-							drawingDocument.DrawTrack(
+							!Asc.editor.isPdfEditor() && drawingDocument.DrawTrack(
 								AscFormat.TYPE_TRACK.GROUP_PASSIVE,
 								oGrp.getTransformMatrix(),
 								0,
@@ -2241,7 +2236,8 @@
 					} else {
 						for (i = 0; i < this.selectedObjects.length; ++i) {
 							let oDrawing = this.selectedObjects[i];
-							if (oDrawing.selectStartPage === pageIndex) {
+							// if (oDrawing.selectStartPage === pageIndex) {
+							if (oDrawing.selectStartPage === pageIndex && !oDrawing.IsFreeText || (oDrawing.IsFreeText && !oDrawing.IsFreeText())) {
 								let nType = oDrawing.isForm && oDrawing.isForm() ? AscFormat.TYPE_TRACK.FORM : AscFormat.TYPE_TRACK.SHAPE
 								drawingDocument.DrawTrack(
 									nType,
@@ -4556,7 +4552,7 @@
 						case c_oAscChartTypeSettings.barNormal3dPerspective:
 							return AscFormat.CreateBarChart(chartSeries, BAR_GROUPING_STANDARD, bUseCache, options, true, true);
 						case c_oAscChartTypeSettings.hBarNormal:
-							return AscFormat.CreateHBarChart(chartSeries, `BAR_GROUPING_CLUSTERED`, bUseCache, options);
+							return AscFormat.CreateHBarChart(chartSeries, BAR_GROUPING_CLUSTERED, bUseCache, options);
 						case c_oAscChartTypeSettings.hBarStacked:
 							return AscFormat.CreateHBarChart(chartSeries, BAR_GROUPING_STACKED, bUseCache, options);
 						case c_oAscChartTypeSettings.hBarStackedPer:
@@ -10652,22 +10648,9 @@
 		}
 
 
-		function fCheckObjectHyperlink(object, x, y) {
-			var content = object.getDocContent && object.getDocContent();
-			var invert_transform_text = object.invertTransformText, tx, ty, hit_paragraph, check_hyperlink, par;
-			if (content && invert_transform_text) {
-				tx = invert_transform_text.TransformPointX(x, y);
-				ty = invert_transform_text.TransformPointY(x, y);
-				hit_paragraph = content.Internal_GetContentPosByXY(tx, ty, 0);
-				par = content.Content[hit_paragraph];
-				if (isRealObject(par)) {
-					if (par.IsInText && par.IsInText(tx, ty, 0)) {
-						check_hyperlink = par.CheckHyperlink(tx, ty, 0);
-						if (isRealObject(check_hyperlink)) {
-							return check_hyperlink;
-						}
-					}
-				}
+		function fCheckObjectHyperlink(oDrawing, x, y) {
+			if(oDrawing.hitInTextHyperlink) {
+				return oDrawing.hitInTextHyperlink(x, y);
 			}
 			return null;
 		}

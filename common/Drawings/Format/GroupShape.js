@@ -819,22 +819,6 @@
 				}
 			}
 		};
-
-		CGroupShape.prototype.getPlaceholderType = function () {
-			return this.isPlaceholder() ? this.nvGrpSpPr.nvPr.ph.type : null;
-		};
-
-		CGroupShape.prototype.getPlaceholderIndex = function () {
-			return this.isPlaceholder() ? this.nvGrpSpPr.nvPr.ph.idx : null;
-		};
-
-		CGroupShape.prototype.getPhType = function () {
-			return this.isPlaceholder() ? this.nvGrpSpPr.nvPr.ph.type : null;
-		};
-
-		CGroupShape.prototype.getPhIndex = function () {
-			return this.isPlaceholder() ? this.nvGrpSpPr.nvPr.ph.idx : null;
-		};
 		CGroupShape.prototype.getSelectedArray = function () {
 			return this.selectedObjects;
 		};

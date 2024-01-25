@@ -130,7 +130,7 @@
             for (let i = 0; i < this.fontInfos.length; i++)
             {
                 let info = this.fontInfos[i];
-                if (info.name !== "ASCW3")
+                if (info.Name !== "ASCW3")
                     gui_fonts[gui_count++] = new AscFonts.CFont(info.Name, "", info.Thumbnail);
             }
 

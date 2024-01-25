@@ -5669,11 +5669,12 @@ var editor;
     options.isMatchCase = true;
 
     if (replaceAll === true) {
-      if (!this.spellcheckState.isIgnoreUppercase) {
+      /*if (!this.spellcheckState.isIgnoreUppercase) {
         this.spellcheckState.changeWords[variantsFound.Word] = newWord;
       } else {
         this.spellcheckState.changeWords[variantsFound.Word.toLowerCase()] = newWord;
-      }
+      }*/
+      this.spellcheckState.changeWords[variantsFound.Word] = newWord;
       options.isReplaceAll = true;
     }
       this.spellcheckState.lockSpell = false;
@@ -6836,7 +6837,7 @@ var editor;
        }
     }
 
-    this.wb.setPrintOptionsJson(spreadsheetLayout && spreadsheetLayout["sheetsProps"]);
+    this.wb.setPrintOptionsJson(_options);
 
     var _printPagesData = this.wb.calcPagesPrint(_adjustPrint);
 
@@ -6904,6 +6905,15 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_nativeGetPDF = function(options) {
+    if (options && options["watermark"])
+    {
+      this.watermarkDraw = new AscCommon.CWatermarkOnDraw(options["watermark"], this);
+      this.watermarkDraw.generateNative();
+    }
+    else
+    {
+      this.watermarkDraw = null;
+    }
     var _ret = this.asc_nativePrint(undefined, undefined, options);
 
     window["native"]["Save_End"]("", _ret.GetCurPosition());

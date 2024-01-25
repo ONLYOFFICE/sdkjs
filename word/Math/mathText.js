@@ -815,6 +815,11 @@ CMathText.prototype.PreRecalc = function(Parent, ParaMath)
 };
 CMathText.prototype.Draw = function(x, y, pGraphics, InfoTextPr)
 {
+	// bug 46069
+	// 0x200C has a non-empty glyph in CambriaMath
+	if (this.value === 0x200C)
+		return;
+	
     var X = this.pos.x + x,
         Y = this.pos.y + y;
 

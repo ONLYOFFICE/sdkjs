@@ -564,6 +564,15 @@
 			  }, "onContextMenu": function (event, type) {
 				  self.handlers.trigger("asc_onContextMenu", event, type);
 			  },
+			  "isRightClickFill": function () {
+				  let ws = self.getWorksheet();
+				  let selection = ws && ws.model && ws.model.getSelection();
+				  selection = selection && selection.isSingleRange() && selection.getLast();
+				  if (ws.activeFillHandle && selection && !selection.containsRange(ws.activeFillHandle)) {
+					  return true;
+				  }
+				  return false;
+			  },
 
 			  // DataValidation
 			  "onDataValidation": function () {
@@ -4997,13 +5006,18 @@
 		this.printOptionsJson = val;
 	};
 
+	WorkbookView.prototype.getPrintOptionsJson = function () {
+		return this.printOptionsJson;
+	};
+
 	WorkbookView.prototype.getPrintHeaderFooterFromJson = function (index) {
 		var res = null;
 		if (this.printOptionsJson) {
+			let sheetsProps = this.printOptionsJson["spreadsheetLayout"] && this.printOptionsJson["spreadsheetLayout"]["sheetsProps"];
 			var ws = this.model.getWorksheet(index);
 			res = new Asc.CHeaderFooter(ws);
-			if (this.printOptionsJson[index] && this.printOptionsJson[index]["pageSetup"] && this.printOptionsJson[index]["pageSetup"]["headerFooter"]) {
-				res.initFromJson(this.printOptionsJson[index]["pageSetup"]["headerFooter"]);
+			if (sheetsProps[index] && sheetsProps[index]["pageSetup"] && sheetsProps[index]["pageSetup"]["headerFooter"]) {
+				res.initFromJson(sheetsProps[index]["pageSetup"]["headerFooter"]);
 			}
 		}
 		return res;

@@ -2283,6 +2283,13 @@ CDocument.prototype.On_EndLoad                     = function()
 
 	this.End_SilentMode();
 };
+CDocument.prototype.sendEvent = function()
+{
+	if (!this.MainDocument || !this.Api)
+		return;
+	
+	this.Api.sendEvent.apply(this.Api, arguments);
+};
 CDocument.prototype.UpdateDefaultsDependingOnCompatibility = function()
 {
 	this.Styles.UpdateDefaultsDependingOnCompatibility(this.GetCompatibilityMode());
@@ -2549,7 +2556,7 @@ CDocument.prototype.GetColorMap = function()
  */
 CDocument.prototype.StartAction = function(nDescription, oSelectionState)
 {
-	this.Api.sendEvent("asc_onUserActionStart");
+	this.sendEvent("asc_onUserActionStart");
 	
 	var isNewPoint = this.History.Create_NewPoint(nDescription, oSelectionState);
 
@@ -2840,7 +2847,7 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	
 	this.Action.UpdateStates = false;
 	
-	this.Api.sendEvent("asc_onUserActionEnd");
+	this.sendEvent("asc_onUserActionEnd");
 };
 /**
  * Сообщаем, что нужно отменить начатое действие
@@ -5181,7 +5188,8 @@ CDocument.prototype.private_RecalculateFlowParagraph         = function(RecalcIn
             var TempElement = this.Content[TempIndex];
             TempElement.Reset(TempElement.X, TempElement.Y, TempElement.XLimit, TempElement.YLimit, PageIndex, ColumnIndex, ColumnsCount);
         }
-
+		
+		Index += FlowCount - 1;
         RecalcResult = recalcresult_NextElement;
     }
 
@@ -6379,6 +6387,7 @@ CDocument.prototype.setMergeFormatComplexFieldOnApplyTextPr = function()
 	// Word doesn't add MERGEFORMAT for all field types (for example PAGE)
 	// So we add it to some specific types
 	if (!complexField
+		|| !(complexField instanceof AscWord.CComplexField)
 		|| !complexField.IsValid()
 		|| complexField.GetInstruction().isMergeFormat()
 		|| !complexField.CheckType(AscWord.fieldtype_REF)
@@ -8575,7 +8584,7 @@ CDocument.prototype.IsUseInDocument = function(Id)
 };
 CDocument.prototype.OnKeyDown = function(e)
 {
-	this.Api.sendEvent("asc_onBeforeKeyDown", e);
+	this.sendEvent("asc_onBeforeKeyDown", e);
 	
 	// if (e.KeyCode < 34 || e.KeyCode > 40)
 	// 	this.CloseAllWindowsPopups();
@@ -9932,7 +9941,7 @@ CDocument.prototype.OnKeyDown = function(e)
         this.Document_UpdateSelectionState();
 	
 	
-	this.Api.sendEvent("asc_onKeyDown", e);
+	this.sendEvent("asc_onKeyDown", e);
 	return bRetValue;
 };
 CDocument.prototype.CompareReviewInfo = function(ReviewInfo1, ReviewInfo2)
@@ -12146,7 +12155,7 @@ CDocument.prototype.CheckTextFormFormatOnBlur = function(oForm)
 
 	if (!format.Check(sText))
 	{
-		this.Api.sendEvent("asc_onError", Asc.c_oAscError.ID.TextFormWrongFormat, Asc.c_oAscError.Level.NoCritical, oTextFormPr);
+		this.sendEvent("asc_onError", Asc.c_oAscError.ID.TextFormWrongFormat, Asc.c_oAscError.Level.NoCritical, oTextFormPr);
 
 		if (this.CollaborativeEditing.Is_SingleUser() || !this.CollaborativeEditing.Is_Fast())
 		{
@@ -12295,8 +12304,13 @@ CDocument.prototype.Document_UpdateCopyCutState = function()
 	// Во время работы селекта не обновляем состояние
 	if (true === this.Selection.Start)
 		return;
+	
+	let canCopy = this.Can_CopyCut();
+	let canCut  = canCopy;
+	if (this.IsFillingFormMode() && canCut)
+		canCut = this.IsFormFieldEditing();
 
-	this.Api.sync_CanCopyCutCallback(this.Can_CopyCut());
+	this.Api.sync_CanCopyCutCallback(canCopy, canCut);
 };
 CDocument.prototype.Document_UpdateCanAddHyperlinkState = function()
 {
@@ -12643,12 +12657,12 @@ CDocument.prototype.Document_Undo = function(Options)
 	{
 		if (this.History.Can_Undo())
 		{
-			this.Api.sendEvent("asc_onBeforeUndoRedo");
+			this.sendEvent("asc_onBeforeUndoRedo");
 			this.StartUndoRedoAction();
 			let changes = this.History.Undo(Options);
 			this.UpdateAfterUndoRedo(changes);
 			this.FinalizeUndoRedoAction();
-			this.Api.sendEvent("asc_onUndoRedo");
+			this.sendEvent("asc_onUndoRedo");
 		}
 	}
 
@@ -12665,12 +12679,12 @@ CDocument.prototype.Document_Redo = function()
 
 	if (this.History.Can_Redo())
 	{
-		this.Api.sendEvent("asc_onBeforeUndoRedo");
+		this.sendEvent("asc_onBeforeUndoRedo");
 		this.StartUndoRedoAction();
 		let changes = this.History.Redo();
 		this.UpdateAfterUndoRedo(changes);
 		this.FinalizeUndoRedoAction();
-		this.Api.sendEvent("asc_onUndoRedo");
+		this.sendEvent("asc_onUndoRedo");
 	}
 
 	if (this.IsFillingFormMode())
@@ -15910,6 +15924,9 @@ CDocument.prototype.private_GetElementPageIndexByXY = function(ElementPos, X, Y,
 		StartColumn = 0;
 		EndColumn   = Math.min(ElementPagesCount - ElementStartColumn + (PageIndex - ElementStartPage) * ColumnsCount, ColumnsCount - 1);
 	}
+	
+	if (!PageSection.Columns[EndColumn])
+		return 0;
 
 	// TODO: Разобраться с ситуацией, когда пустые колонки стоят не только в конце
 	while (true === PageSection.Columns[EndColumn].Empty && EndColumn > StartColumn)
@@ -16296,15 +16313,15 @@ CDocument.prototype.GetColumnSize = function()
 };
 CDocument.prototype.private_OnSelectionEnd = function()
 {
-	this.Api.sendEvent("asc_onSelectionEnd");
+	this.sendEvent("asc_onSelectionEnd");
 };
 CDocument.prototype.private_OnSelectionCancel = function()
 {
-	this.Api.sendEvent("asc_onSelectionCancel");
+	this.sendEvent("asc_onSelectionCancel");
 };
 CDocument.prototype.private_OnCursorMove = function()
 {
-	this.Api.sendEvent("asc_onCursorMove");
+	this.sendEvent("asc_onCursorMove");
 };
 CDocument.prototype.AddPageCount = function()
 {
@@ -18699,30 +18716,23 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 	{
 		// Если мы находимся в начале первого параграфа первой ячейки, и
 		// данная таблица - первый элемент, тогда добавляем параграф до таблицы.
-
-		if (0 === this.CurPos.ContentPos && Item.IsCursorAtBegin(true))
+		
+		let newPos = -1;
+		if (Item.IsCursorAtBegin(true) && (0 === this.CurPos.ContentPos || !this.Content[this.CurPos.ContentPos - 1].IsParagraph()))
+			newPos = this.CurPos.ContentPos;
+		else if (Item.IsCursorAtEnd() && (this.Content.length - 1 === this.CurPos.ContentPos || !this.Content[this.CurPos.ContentPos + 1].IsParagraph()))
+			newPos = this.CurPos.ContentPos + 1;
+		
+		if (-1 !== newPos)
 		{
-			// Создаем новый параграф
-			var NewParagraph = new Paragraph(this.DrawingDocument, this);
-			this.Internal_Content_Add(0, NewParagraph);
-			this.CurPos.ContentPos = 0;
-
-			if (true === this.IsTrackRevisions())
-			{
-				NewParagraph.RemovePrChange();
-				NewParagraph.SetReviewType(reviewtype_Add);
-			}
-		}
-		else if (this.Content.length - 1 === this.CurPos.ContentPos && Item.IsCursorAtEnd())
-		{
-			var oNewParagraph = new Paragraph(this.DrawingDocument, this);
-			this.Internal_Content_Add(this.Content.length, oNewParagraph);
-			this.CurPos.ContentPos = this.Content.length - 1;
-
+			let newParagraph = new Paragraph(this.DrawingDocument, this);
+			this.Internal_Content_Add(newPos, newParagraph);
+			this.CurPos.ContentPos = newPos;
+			
 			if (this.IsTrackRevisions())
 			{
-				oNewParagraph.RemovePrChange();
-				oNewParagraph.SetReviewType(reviewtype_Add);
+				newParagraph.RemovePrChange();
+				newParagraph.SetReviewType(reviewtype_Add);
 			}
 		}
 		else
@@ -21921,9 +21931,9 @@ CDocument.prototype.IsFillingOFormMode = function()
 {
 	if (!this.IsFillingFormMode())
 		return false;
-
-	var oApi = this.GetApi();
-	return !!(oApi.DocInfo &&  oApi.DocInfo.Format && (this.Api.DocInfo.Format === "oform" || this.Api.DocInfo.Format === "docxf"));
+	
+	let api = this.GetApi();
+	return !!(api.DocInfo && api.DocInfo.isFormatWithForms());
 };
 CDocument.prototype.CheckOFormUserMaster = function(form)
 {
@@ -22369,7 +22379,7 @@ CDocument.prototype.CallSignatureDblClickEvent = function(sGuid)
     {
         if(allSpr[i].getSignatureLineGuid() === sGuid)
         {
-            this.Api.sendEvent("asc_onSignatureDblClick", sGuid, allSpr[i].extX, allSpr[i].extY);
+            this.sendEvent("asc_onSignatureDblClick", sGuid, allSpr[i].extX, allSpr[i].extY);
         }
     }
 };
@@ -22477,7 +22487,7 @@ CDocument.prototype.SetDisplayModeInReview = function(nMode, isSendEvent)
 		return;
 
 	if (isSendEvent)
-		this.Api.sendEvent("asc_onChangeDisplayModeInReview", nMode);
+		this.sendEvent("asc_onChangeDisplayModeInReview", nMode);
 
 	if (Asc.c_oAscDisplayModeInReview.Edit === nMode || Asc.c_oAscDisplayModeInReview.Simple === nMode)
 	{

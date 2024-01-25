@@ -2382,6 +2382,74 @@ $(function () {
 		clearData(0, 0, 8, 11);
 	});
 
+	QUnit.test('Autofill: test toolbar down/up/left/right', function (assert) {
+		clearData(0, 0, 6, 11);
+
+		const testData = [
+			['1', 'Test', 'Test1', '01/01/2000']
+		];
+
+		// Asc cases
+		let range = ws.getRange4(0, 0);
+		range.fillData(testData);
+
+		let fillRange = new Asc.Range(0, 0, 0, 3);
+		wsView.setSelection(fillRange);
+		api.asc_FillCells(Asc.c_oAscFillType.fillDown);
+
+		checkUndoRedo(function (_desc) {
+			compareData(assert, fillRange, [["1"], [""], [""], [""]], _desc);
+		}, function (_desc) {
+			compareData(assert, fillRange, [["1"], ["1"], ["1"], ["1"]], _desc);
+		}, "Autofill: down fill number");
+
+		fillRange = new Asc.Range(1, 0, 1, 3);
+		wsView.setSelection(fillRange);
+		api.asc_FillCells(Asc.c_oAscFillType.fillDown);
+
+		checkUndoRedo(function (_desc) {
+			compareData(assert, fillRange, [["Test"], [""], [""], [""]], _desc);
+		}, function (_desc) {
+			compareData(assert, fillRange, [["Test"], ["Test"], ["Test"], ["Test"]], _desc);
+		}, "Autofill: down fill text");
+
+		fillRange = new Asc.Range(2, 0, 2, 3);
+		wsView.setSelection(fillRange);
+		api.asc_FillCells(Asc.c_oAscFillType.fillDown);
+
+		checkUndoRedo(function (_desc) {
+			compareData(assert, fillRange, [["Test1"], [""], [""], [""]], _desc);
+		}, function (_desc) {
+			compareData(assert, fillRange, [["Test1"], ["Test1"], ["Test1"], ["Test1"]], _desc);
+		}, "Autofill: down fill text + number");
+
+
+		fillRange = new Asc.Range(3, 0, 3, 3);
+		wsView.setSelection(fillRange);
+		api.asc_FillCells(Asc.c_oAscFillType.fillDown);
+
+		checkUndoRedo(function (_desc) {
+			compareData(assert, fillRange, [["36526"], [""], [""], [""]], _desc);
+		}, function (_desc) {
+			compareData(assert, fillRange, [["36526"], ["36526"], ["36526"], ["36526"]], _desc);
+		}, "Autofill: down fill date");
+
+
+		fillRange = new Asc.Range(2, 0, 4, 0);
+		wsView.setSelection(fillRange);
+		api.asc_FillCells(Asc.c_oAscFillType.fillRight);
+
+		checkUndoRedo(function (_desc) {
+			compareData(assert, fillRange, [["Test1", "36526", "", ""]], _desc);
+		}, function (_desc) {
+			compareData(assert, fillRange, [["Test1", "Test1", "Test1", "Test1"]], _desc);
+		}, "Autofill: right fill text + number");
+
+
+		clearData(0, 0, 6, 11);
+
+	});
+
 	QUnit.test('Conditional formatting: test apply to', function (assert) {
 
 		let tableOptions = new AscCommonExcel.AddFormatTableOptions();

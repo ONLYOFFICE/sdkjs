@@ -3003,9 +3003,9 @@ window.AscCommon.g_cIsBeta = "false";
 
 	/** enum {number} */
 	var c_oAscNumberingSuff = {
-		Tab   : 0x01,
-		Space : 0x02,
-		None  : 0x03
+		None  : 0x00,
+		Space : 0x01,
+		Tab   : 0x02
 	};
 
 	var c_oAscNumberingLvlTextType = {
@@ -3763,6 +3763,25 @@ window.AscCommon.g_cIsBeta = "false";
 
 
 	var c_oAscDateTimeFormat = {};
+	c_oAscDateTimeFormat[lcid_arSA] = [
+		"dd/MM/yyyy",
+		"dddd, dd MMMM, yyyy",
+		"dd MMMM, yyyy",
+		"dd/MM/yy",
+		"yyyy-MM-dd",
+		"d-MMM-yy",
+		"dd.MM.yyyy",
+		"dd MMM, yy",
+		"d MMMM yyyy",
+		"MMMM yy",
+		"MMM-yy",
+		"dd/MM/yyyy hh:mm am/pm",
+		"dd/MM/yyyy hh:mm:ss am/pm",
+		"h:mm am/pm",
+		"h:mm:ss am/pm",
+		"HH:mm",
+		"HH:mm:ss"
+	];
 	c_oAscDateTimeFormat[lcid_azLatnAZ] = [
 		"dd.mm.yyyy",
 		"d mmmm yyyy, dddd",
@@ -4324,17 +4343,17 @@ window.AscCommon.g_cIsBeta = "false";
 		"HH:mm:ss"
 	];
 	c_oAscDateTimeFormat[lcid_zhCN]     = [
-		"yyyy/m/d",
-		"yyyy年m月d日",
-		"yyyy年m月d日dddd",
-		"yy.m.d",
-		"yyyy年MM月",
+		"yyyy/M/d",
+		"yyyy'年'M'月'd'日'",
+		"yyyy年M月d日星期W",
+		"yy.M.d",
+		"yyyy年M月",
 		"h时m分s秒",
 		"h时m分",
-		"HH时mm分",
-		"JYYYY年mmmmd日",
-		"JYYYY年JM月JD日dddd",
-		"JYYYY年JM月JD"
+		"AM/PMh时m分",
+		"YYYY年M月d日",
+		"YYYY年M月d日星期W",
+		"YYYY年M月"
 	];
 	c_oAscDateTimeFormat[lcid_enUS]     = [
 		"M/d/yyyy",

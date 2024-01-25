@@ -1580,44 +1580,39 @@
 
 
 		CShape.prototype.getHierarchy = function (bIsSingleBody, info) {
-			//if(this.recalcInfo.recalculateShapeHierarchy)
-			{
-				this.compiledHierarchy = [];
-				if (this.parent) {
-					var hierarchy = this.compiledHierarchy;
-					if (this.isPlaceholder()) {
-						var ph_type = this.getPlaceholderType();
-						var ph_index = this.getPlaceholderIndex();
-						var b_is_single_body;
-						if (AscFormat.isRealBool(bIsSingleBody)) {
-							b_is_single_body = bIsSingleBody;
-						} else {
-							b_is_single_body = this.getIsSingleBody && this.getIsSingleBody();
+			let hierarchy = [];
+			if (this.parent) {
+				if (this.isPlaceholder()) {
+					var ph_type = this.getPlaceholderType();
+					var ph_index = this.getPlaceholderIndex();
+					var b_is_single_body;
+					if (AscFormat.isRealBool(bIsSingleBody)) {
+						b_is_single_body = bIsSingleBody;
+					} else {
+						b_is_single_body = this.getIsSingleBody && this.getIsSingleBody();
+					}
+					switch (this.parent.kind) {
+						case AscFormat.TYPE_KIND.SLIDE: {
+							hierarchy.push(this.parent.Layout.getMatchingShape(ph_type, ph_index, b_is_single_body, info));
+							hierarchy.push(this.parent.Layout.Master.getMatchingShape(ph_type, ph_index, true));
+							break;
 						}
-						switch (this.parent.kind) {
-							case AscFormat.TYPE_KIND.SLIDE: {
-								hierarchy.push(this.parent.Layout.getMatchingShape(ph_type, ph_index, b_is_single_body, info));
-								hierarchy.push(this.parent.Layout.Master.getMatchingShape(ph_type, ph_index, true));
-								break;
-							}
 
-							case AscFormat.TYPE_KIND.LAYOUT: {
+						case AscFormat.TYPE_KIND.LAYOUT: {
+							hierarchy.push(this.parent.Master.getMatchingShape(ph_type, ph_index, true));
+							break;
+						}
+
+						case AscFormat.TYPE_KIND.NOTES: {
+							if (this.parent.Master) {
 								hierarchy.push(this.parent.Master.getMatchingShape(ph_type, ph_index, true));
-								break;
 							}
-
-							case AscFormat.TYPE_KIND.NOTES: {
-								if (this.parent.Master) {
-									hierarchy.push(this.parent.Master.getMatchingShape(ph_type, ph_index, true));
-								}
-								break;
-							}
+							break;
 						}
 					}
-					this.recalcInfo.recalculateShapeHierarchy = true;
 				}
 			}
-			return this.compiledHierarchy;
+			return hierarchy;
 		};
 
 
@@ -1810,24 +1805,13 @@
 		};
 
 		CShape.prototype.getPlaceholderType = function () {
-			return this.isPlaceholder() ? this.nvSpPr.nvPr.ph.type : null;
-		};
-
-		CShape.prototype.getPlaceholderIndex = function () {
-			return this.isPlaceholder() ? this.nvSpPr.nvPr.ph.idx : null;
-		};
-
-		CShape.prototype.getPhType = function () {
-			var point = this.getSmartArtShapePoint();
+			let point = this.getSmartArtShapePoint();
 			if (point) {
 				return AscFormat.phType_pic;
 			}
-			return this.isPlaceholder() ? this.nvSpPr.nvPr.ph.type : null;
+			return this.superclass.prototype.getPlaceholderType.call(this);
 		};
 
-		CShape.prototype.getPhIndex = function () {
-			return this.isPlaceholder() ? this.nvSpPr.nvPr.ph.idx : null;
-		};
 
 		CShape.prototype.setVerticalAlign = function (align) {
 			var content_to_add = this.getDocContent();
@@ -3067,7 +3051,7 @@
 				}
 			}
 			if (this.isPlaceholder()) {
-				var phldrType = this.getPhType();
+				var phldrType = this.getPlaceholderType();
 				if (phldrType == AscFormat.phType_title
 					|| phldrType == AscFormat.phType_ctrTitle
 					|| phldrType == AscFormat.phType_body
@@ -6022,7 +6006,24 @@
 				HitInLine(_hit_context, x_t, y_t, 0, this.extY, 0, 0) ||
 				(this.canRotate && this.canRotate() && HitInLine(_hit_context, x_t, y_t, this.extX * 0.5, 0, this.extX * 0.5, -this.convertPixToMM(AscCommon.TRACK_DISTANCE_ROTATE))));
 		};
-
+		CShape.prototype.hitInTextHyperlink = function(x, y) {
+			let oContent = this.getDocContent();
+			let oInvTextTransform = this.invertTransformText;
+			if (oContent && oInvTextTransform) {
+				let tx = oInvTextTransform.TransformPointX(x, y);
+				let ty = oInvTextTransform.TransformPointY(x, y);
+				let oHitParagraph = oContent.IsInText(tx, ty, 0);
+				if (oHitParagraph) {
+					if (oHitParagraph.IsInText(tx, ty, 0)) {
+						let oHyperlink = oHitParagraph.CheckHyperlink(tx, ty, 0);
+						if (oHyperlink) {
+							return oHyperlink;
+						}
+					}
+				}
+			}
+			return null;
+		};
 		CShape.prototype.canRotate = function () {
 			if (this.cropObject) {
 				return false;

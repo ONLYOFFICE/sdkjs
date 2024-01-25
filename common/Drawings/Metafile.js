@@ -840,7 +840,7 @@
 		}
 		this.WriteStringA = function(text)
 		{
-			var count = text.length & 0xFFFF;
+			var count = text.length;
 			this.WriteULong(count);
 			this.CheckSize(count);
 			for (var i=0;i<count;i++)
@@ -1543,6 +1543,7 @@
 		this.ctDocInfo			= 163;
 		this.ctAnnotField		= 164;
 		this.ctAnnotFieldDelete	= 165;
+		this.ctWidgetsInfo		= 166;
 
 		this.ctPageWidth  = 200;
 		this.ctPageHeight = 201;

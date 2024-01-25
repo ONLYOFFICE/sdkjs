@@ -896,6 +896,10 @@
 	{
 		return !this.isViewMode && this.restrictions === Asc.c_oAscRestrictionType.None;
 	};
+	baseEditorsApi.prototype.isTargetHandMode = function()
+	{
+		return this.isRestrictionForms();
+	};
 	baseEditorsApi.prototype.isRestrictionForms              = function()
 	{
 		return !!(this.restrictions & Asc.c_oAscRestrictionType.OnlyForms);
@@ -2674,22 +2678,21 @@
 		}
 		if (this.isLoadFullApi && this.DocInfo && this.openResult && this._isLoadedModules())
 		{
-			let error = c_oAscError.ID.No, errorData;
 			let editorId = AscCommon.getEditorBySignature(this.openResult.data);
-			//todo AscCommon.checkNativeViewerSignature(this.openResult.data);
-			let isNativeViewerFormat = -1 !== Asc.c_sNativeViewerFormats.indexOf(this.documentFormat);
-			if (!(!isNativeViewerFormat && this.editorId === editorId || (isNativeViewerFormat && editorId === null))) {
-				error = c_oAscError.ID.ConvertationOpenFormat;
-				switch(editorId) {
+			let isNativeFormat = AscCommon.checkNativeViewerSignature(this.openResult.data);
+			if (this.isPdfEditor() ? !isNativeFormat : this.editorId !== editorId) {
+				let errorData;
+				switch (editorId) {
 					case AscCommon.c_oEditorId.Word: errorData = 'docx';break;
 					case AscCommon.c_oEditorId.Spreadsheet: errorData = 'xlsx';break;
 					case AscCommon.c_oEditorId.Presentation: errorData = 'pptx';break;
-					default: errorData = 'pdf';break;
+					default:
+						if (isNativeFormat) {
+							errorData = 'pdf'
+						}
+						break;
 				}
-			}
-			if (c_oAscError.ID.No !== error)
-			{
-				this.sendEvent("asc_onError", error, c_oAscError.Level.Critical, errorData);
+				this.sendEvent("asc_onError", c_oAscError.ID.ConvertationOpenFormat, c_oAscError.Level.Critical, errorData);
 				return;
 			}
 

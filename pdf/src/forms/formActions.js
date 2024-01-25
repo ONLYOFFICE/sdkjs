@@ -260,6 +260,14 @@
         return this.zoom;
     };
 
+    CActionGoTo.prototype.GetPage = function() {
+        return this.page;
+    };
+
+    CActionGoTo.prototype.GetKind = function() {
+        return this.goToType;
+    };
+
     CActionGoTo.prototype.Do = function() {
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.field.GetDocument();
@@ -301,6 +309,55 @@
         }
 
         oActionsQueue.Continue();
+    };
+    
+    CActionGoTo.prototype.WriteToBinary = function(memory) {
+        memory.WriteByte(this.GetType());
+        memory.WriteLong(this.GetPage());
+
+        let nKind = this.GetKind();
+        memory.WriteByte(nKind);
+
+        switch (nKind) {
+            case 0:
+            case 2:
+            case 3:
+            case 6:
+            case 7:
+            {
+                let nFlag = 0;
+                let nStartPos = memory.GetCurPosition();
+                memory.Skip(4);
+
+                if (this.rect.left != null) {
+                    nFlag |= (1 << 4);
+                    memory.WriteDouble(this.rect.left);
+                }
+                if (this.rect.top != null) {
+                    nFlag |= (1 << 4);
+                    memory.WriteDouble(this.rect.top);
+                }
+                if (this.zoom != null) {
+                    nFlag |= (1 << 4);
+                    memory.WriteDouble(this.zoom);
+                }
+
+                // write flags
+                let nEndPos = memory.GetCurPosition();
+                memory.Seek(nStartPos);
+                memory.WriteLong(nFlag);
+                memory.Seek(nEndPos);
+                break;
+            }
+            case 4:
+            {
+                memory.WriteDouble(this.rect.left);
+                memory.WriteDouble(this.rect.bottom);
+                memory.WriteDouble(this.rect.right);
+                memory.WriteDouble(this.rect.top);
+                break;
+            }
+        }
     };
 
     function CActionNamed(nType) {
@@ -438,11 +495,11 @@
     CActionHideShow.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(this.GetType());
         if (this.hidden)
-            memory.WriteLong(1);
+            memory.WriteByte(1);
         else
-            memory.WriteLong(0);
+            memory.WriteByte(0);
 
-        if (this.names && this.names.length != 0) {
+        if (this.names) {
             memory.WriteLong(this.names.length);
             for (let i = 0; i < this.names.length; i++) {
                 memory.WriteString(this.names[i]);
@@ -479,7 +536,7 @@
         else
             memory.WriteLong(0);
 
-        if (this.names && this.names.length != 0) {
+        if (this.names) {
             memory.WriteLong(this.names.length);
             for (let i = 0; i < this.names.length; i++) {
                 memory.WriteString(this.names[i]);
@@ -557,7 +614,6 @@
     
         let oApiConsole = {
             "println": function(value) {
-                console.log("\n");
                 console.log(value);
             },
             "clear": function() {

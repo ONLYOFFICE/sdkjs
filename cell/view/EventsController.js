@@ -1545,7 +1545,7 @@
 			if (this.isFillHandleMode) {
 				// Закончили автозаполнение
 				this.isFillHandleMode = false;
-				if (2 === button) {
+				if (2 === button && this.handlers.trigger('isRightClickFill')) {
 					this.handlers.trigger('onContextMenu', event, Asc.c_oAscContextMenuTypes.changeSeries);
 				} else {
 					this._changeFillHandleDone(event);

@@ -134,8 +134,7 @@
         }
         
         oTargetRun.RecalcInfo.TextPr = true
-        oTargetRun.ClearContent();
-        oTargetRun.AddText(sRes);
+        oCurForm.contentFormat.replaceAllText(sRes);
     }
     /**
 	 * Check can the field accept the char or not.
@@ -263,9 +262,7 @@
         }
 
         sRes = sRes + "%";
-
-        oTargetRun.ClearContent();
-        oTargetRun.AddText(sRes);
+        oCurForm.contentFormat.replaceAllText(sRes);
     }
     /**
 	 * Check can the field accept the char or not.
@@ -333,8 +330,10 @@
         let oCurForm = oDoc.event["target"].field;
         oDoc.event["format"] = cFormat;
         
-        let oNumFormat = AscCommon.oNumFormatCache.get(cFormat, AscCommon.NumFormatType.PDFFormDate);
-        oNumFormat.oNegativeFormat.bAddMinusIfNes = false;
+        let oDateFormat         = AscCommon.oNumFormatCache.get(cFormat, AscCommon.NumFormatType.PDFFormDate);
+        let oDateFormatForParse = oDoc.lastDatePickerInfo ? AscCommon.oNumFormatCache.get("dd.mm.yyyy", AscCommon.NumFormatType.PDFFormDate) : oDateFormat;
+
+        oDateFormat.oNegativeFormat.bAddMinusIfNes = false;
         
         let oTargetRun = oCurForm.contentFormat.GetElement(0).GetElement(0);
 
@@ -391,19 +390,29 @@
 
         let oCultureInfo = {};
         Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[9]);
-        if (null == oNumFormat.oTextFormat.ShortDatePattern) {
-            oNumFormat.oTextFormat.ShortDatePattern = getShortPattern(oNumFormat.oTextFormat.aRawFormat);
-            oNumFormat.oTextFormat._prepareFormatDatePDF();
+        if (null == oDateFormat.oTextFormat.ShortDatePattern) {
+            oDateFormat.oTextFormat.ShortDatePattern = getShortPattern(oDateFormat.oTextFormat.aRawFormat);
+            oDateFormat.oTextFormat._prepareFormatDatePDF();
         }
-        oCultureInfo.ShortDatePattern = oNumFormat.oTextFormat.ShortDatePattern;
+        if (null == oDateFormatForParse.oTextFormat.ShortDatePattern) {
+            oDateFormatForParse.oTextFormat.ShortDatePattern = getShortPattern(oDateFormatForParse.oTextFormat.aRawFormat);
+            oDateFormatForParse.oTextFormat._prepareFormatDatePDF();
+        }
+        oCultureInfo.ShortDatePattern = oDateFormatForParse.oTextFormat.ShortDatePattern;
 
         if (oCultureInfo.ShortDatePattern.indexOf("1") == -1)
-            oNumFormat.oTextFormat.bDay = false;
+            oDateFormat.oTextFormat.bDay = false;
 
         oCultureInfo.AbbreviatedMonthNames.length = 12;
         oCultureInfo.MonthNames.length = 12;
 
-        let oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oNumFormat);
+        let oResParsed;
+        let sRes;
+        if (oDoc.lastDatePickerInfo) {
+            oResParsed = true;
+        }
+        else
+            oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oDateFormatForParse);
                 
         if (sCurValue == "")
             oTargetRun.ClearContent();
@@ -413,11 +422,15 @@
             return;
         }
 
-        oNumFormat.oTextFormat.formatType = AscCommon.NumFormatType.PDFFormDate;
-        let sRes = oNumFormat.oTextFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, oCultureInfo)[0].text;
+        if (oDoc.lastDatePickerInfo) {
+            sRes = oDoc.lastDatePickerInfo.value;
+        }
+        else {
+            oDateFormat.oTextFormat.formatType = AscCommon.NumFormatType.PDFFormDate;
+            sRes = oDateFormat.oTextFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, oCultureInfo)[0].text;
+        }
 
-        oTargetRun.ClearContent();
-        oTargetRun.AddText(sRes);
+        oCurForm.contentFormat.replaceAllText(sRes);
     }
 
     function FormatDateValue(sFormat, nValue) {
@@ -502,8 +515,9 @@
             return;
         }
 
-        let oNumFormat = AscCommon.oNumFormatCache.get(cFormat, AscCommon.NumFormatType.PDFFormDate);
-        oNumFormat.oNegativeFormat.bAddMinusIfNes = false;
+        let oDateFormat         = AscCommon.oNumFormatCache.get(cFormat, AscCommon.NumFormatType.PDFFormDate);
+        let oDateFormatForParse = oDoc.lastDatePickerInfo ? AscCommon.oNumFormatCache.get("dd.mm.yyyy", AscCommon.NumFormatType.PDFFormDate) : oDateFormat;
+        oDateFormat.oNegativeFormat.bAddMinusIfNes = false;
         
         let sCurValue;
         if (oForm.GetType() == AscPDF.FIELD_TYPES.text)
@@ -558,19 +572,29 @@
 
         let oCultureInfo = {};
         Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[9]);
-        if (null == oNumFormat.oTextFormat.ShortDatePattern) {
-            oNumFormat.oTextFormat.ShortDatePattern = getShortPattern(oNumFormat.oTextFormat.aRawFormat);
-            oNumFormat.oTextFormat._prepareFormatDatePDF();
+        if (null == oDateFormat.oTextFormat.ShortDatePattern) {
+            oDateFormat.oTextFormat.ShortDatePattern = getShortPattern(oDateFormat.oTextFormat.aRawFormat);
+            oDateFormat.oTextFormat._prepareFormatDatePDF();
         }
-        oCultureInfo.ShortDatePattern = oNumFormat.oTextFormat.ShortDatePattern;
+        if (null == oDateFormatForParse.oTextFormat.ShortDatePattern) {
+            oDateFormatForParse.oTextFormat.ShortDatePattern = getShortPattern(oDateFormatForParse.oTextFormat.aRawFormat);
+            oDateFormatForParse.oTextFormat._prepareFormatDatePDF();
+        }
+        oCultureInfo.ShortDatePattern = oDateFormatForParse.oTextFormat.ShortDatePattern;
 
         if (oCultureInfo.ShortDatePattern.indexOf("1") == -1)
-            oNumFormat.oTextFormat.bDay = false;
+            oDateFormat.oTextFormat.bDay = false;
 
         oCultureInfo.AbbreviatedMonthNames.length = 12;
         oCultureInfo.MonthNames.length = 12;
 
-        let oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oNumFormat);
+        let oResParsed;
+        if (oDoc.lastDatePickerInfo) {
+            oResParsed = true;
+        }
+        else
+            oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oDateFormatForParse);
+
         if (!oResParsed) {
             oDoc.event["rc"] = false;
             oDoc.SetWarningInfo({
@@ -664,9 +688,7 @@
         
         oNumFormat.oTextFormat.formatType = AscCommon.NumFormatType.PDFFormDate;
         let sRes = oNumFormat.format(oResParsed.value, 0, AscCommon.gc_nMaxDigCount, true, undefined, true)[0].text;
-
-        oTargetRun.ClearContent();
-        oTargetRun.AddText(sRes);
+        oForm.contentFormat.replaceAllText(sRes);
     }
     /**
 	 * Check can the field accept the char or not.
@@ -866,7 +888,7 @@
                 break;
         }
 
-        oTargetRun.AddText(sFormatValue);
+        oCurForm.contentFormat.replaceAllText(sFormatValue);
     }
     /**
 	 * Check can the field accept the char or not.
@@ -1053,18 +1075,22 @@
 
         let aFields = [];
         aFieldsNames.forEach(function(name) {
-            let aTmpFields = oDoc.GetFields(name);
+            let oField = oDoc.GetField(name);
 
-            // смысл в том, что одно поле из многих с таким именем может быть изменено, но еще не применено, ищем его
-            // если нет, то просто берем первое из массива
-            let oChangedField = aTmpFields.find(function(field) {
-                return field.IsNeedCommit();
-            });
-
-            if (oChangedField)
-                aFields.push(oChangedField);
-            else if (aTmpFields[0])
-                aFields.push(aTmpFields[0]);
+            // если по полному имени получили виджет, значит остальные с таким именем тоже виджеты
+            if (oField.IsWidget() == true) {
+                // если имя поля совпадает с именем source поля (вызвавшего calculate), то нужно взять значение source поля
+                let oSourceField = oDoc.GetCalculateInfo().GetSourceField();
+                if (oSourceField && oSourceField.GetFullName() == name)
+                    aFields.push(oSourceField);
+                else
+                    aFields.push(oField);
+            }
+            // если не виджет, значит родитель, значит получаем все дочерние виджеты без повторений имён
+            else {
+                let aTmpFields = oDoc.GetFields(name);
+                aFields = aFields.concat(aTmpFields);
+            }
         });
 
         function extractNumber(str) {
@@ -1124,15 +1150,15 @@
             case "MIN":
                 let nMin = extractNumber(aValues[0]);
                 for (let i = 1; i < aValues.length; i++) {
-                    if (aValues[i] < nMin)
+                    if (extractNumber(aValues[i]) < nMin)
                         nMin = aValues[i];
                 }
                 nResult = nMin;
                 break;
             case "MAX":
-                let nMax = aValues[0];
+                let nMax = extractNumber(aValues[0]);
                 for (let i = 1; i < aValues.length; i++) {
-                    if (aValues[i] > nMax)
+                    if (extractNumber(aValues[i]) > nMax)
                         nMax = aValues[i];
                 }
 

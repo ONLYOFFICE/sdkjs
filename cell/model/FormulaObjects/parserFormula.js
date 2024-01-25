@@ -5302,6 +5302,8 @@ _func.binarySearch = function ( sElem, arrTagert, regExp ) {
 				if (sElem.value <= arrTagert[mid].value) {
 					// cEmpty.tocNumber() ?
 					last = mid;
+				} else {
+					first = mid + 1;
 				}
 			} else {
 				if (cElementTypeWeight.get(sElem.type) < cElementTypeWeight.get(arrTagert[mid].type)) {

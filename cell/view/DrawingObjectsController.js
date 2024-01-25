@@ -192,6 +192,7 @@ DrawingObjectsController.prototype.recalculate = function(bAll, Point, bCheckPoi
 {
     if(bCheckPoint !== false)
     {
+        this.objectsForRecalculate = {};
         History.Get_RecalcData(Point);//Только для таблиц
     }
     this.recalculate2(bAll);
@@ -596,17 +597,21 @@ DrawingObjectsController.prototype.paragraphIncDecIndent = function(bIncrease)
 
 DrawingObjectsController.prototype.canIncreaseParagraphLevel = function(bIncrease)
 {
-    var content = this.getTargetDocContent();
-    if(content)
+    let oDocContent = this.getTargetDocContent();
+    if(oDocContent)
     {
-        var target_text_object = AscFormat.getTargetTextObject(this);
-        if(target_text_object && target_text_object.getObjectType() === AscDFH.historyitem_type_Shape)
+        let oTextObject = AscFormat.getTargetTextObject(this);
+        if(oTextObject && oTextObject.getObjectType() === AscDFH.historyitem_type_Shape)
         {
-            if(target_text_object.isPlaceholder() && (target_text_object.getPhType() === AscFormat.phType_title || target_text_object.getPhType() === AscFormat.phType_ctrTitle))
+            if(oTextObject.isPlaceholder())
             {
-                return false;
+                let nPhType = oTextObject.getPlaceholderType();
+                if(nPhType === AscFormat.phType_title || nPhType === AscFormat.phType_ctrTitle)
+                {
+                    return false;
+                }
             }
-            return content.Can_IncreaseParagraphLevel(bIncrease);
+            return oDocContent.Can_IncreaseParagraphLevel(bIncrease);
         }
     }
     return false;

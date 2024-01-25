@@ -455,7 +455,7 @@
         let oDoc = this.GetDocument();
         oDoc.TurnOffHistory();
 
-        let oNewInk = new CAnnotationInk(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+        let oNewInk = new CAnnotationInk(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
         oNewInk._pagePos = {
             x: this._pagePos.x,
@@ -520,11 +520,7 @@
         let oDrawingObjects = oViewer.DrawingObjects;
         return oDrawingObjects.selectedObjects.includes(this);
     };
-    CAnnotationInk.prototype.SetDrawing = function(oDrawing) {
-        let oRun = this.content.GetElement(0).GetElement(0);
-        oRun.Add_ToContent(oRun.Content.length, oDrawing);
-    };
-    
+        
     CAnnotationInk.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
 
@@ -649,6 +645,7 @@
         oParentAnnot.setBDeleted(false);
         oParentAnnot.recalcInfo.recalculateGeometry = false;
         oParentAnnot.recalculate();
+        oParentAnnot.brush = AscFormat.CreateNoFillUniFill();
     }
     function generateGeometry(arrOfArrPoints, aBounds, oGeometry) {
         let xMin = aBounds[0];

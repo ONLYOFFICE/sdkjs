@@ -36,7 +36,12 @@ const {S3Client, GetObjectCommand} = require("@aws-sdk/client-s3");
 
 async function run(accessKeyId, secretAccessKey, inputFile = "unique.txt", mapsDir = "maps", region = "eu-west-1",
 				   endpoint = "https://s3.eu-west-1.amazonaws.com", bucketName = "repo-doc-onlyoffice-com",
-				   keyPrefix = "closure-maps/{version}/commercial") {
+				   keyPrefix = "closure-maps/commercial/{version}") {
+	if (!accessKeyId || !secretAccessKey) {
+		console.error(`missing arguments.USAGE: download-maps.js [accessKeyId] [secretAccessKey] [inputFile=${inputFile}] [mapsDir=${mapsDir}] [region=${region}] [endpoint=${endpoint}] [bucketName=${bucketName}] [keyPrefix=${keyPrefix}]`);
+		console.error(`inputFile must contain at least one line like: "/7.5.1-23/sdkjs/"`);
+		return;
+	}
 	const configS3 = {
 		region: region,
 		endpoint: endpoint,

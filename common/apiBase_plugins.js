@@ -58,8 +58,9 @@
      * The editors which the plugin is available for:
 	 * * <b>word</b> - text document editor,
 	 * * <b>cell</b> - spreadsheet editor,
-	 * * <b>slide</b> - presentation editor.
-	 * @typedef {("word" | "cell" | "slide")} editorType
+	 * * <b>slide</b> - presentation editor,
+	 * * <b>pdf</b> - pdf editor.
+	 * @typedef {("word" | "cell" | "slide" | "pdf")} editorType
      */
 
     /**
@@ -1698,17 +1699,20 @@
         return langName;
     };
 
-	function correctItemsWithData(items)
+	function correctItemsWithData(items, baseUrl)
 	{
 		for (let i = 0, itemsLen = items.length; i < itemsLen; i++)
 		{
 			if (undefined !== items[i]["id"] && undefined !== items[i]["data"])
 				items[i]["id"] = items[i]["id"] + "_oo_sep_" + items[i]["data"];
 
+			if (items[i]["icons"]) 
+				items[i]["icons"] = baseUrl + items[i]["icons"];
+
 			if (items[i]["items"])
-				correctItemsWithData(items[i]["items"]);
+				correctItemsWithData(items[i]["items"], baseUrl);
 		}
-	}
+	};
 
 	/**
 	 * @typedef {Object} ContextMenuItem
@@ -1729,7 +1733,8 @@
 	 */
 	Api.prototype["pluginMethod_AddContextMenuItem"] = function(items)
 	{
-		if (items["items"]) correctItemsWithData(items["items"]);
+		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
+		if (items["items"]) correctItemsWithData(items["items"], baseUrl);
 		this.onPluginAddContextMenuItem(items);
 	};
 
@@ -1743,7 +1748,8 @@
 	 */
 	Api.prototype["pluginMethod_UpdateContextMenuItem"] = function(items)
 	{
-		if (items["items"]) correctItemsWithData(items["items"]);
+		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
+		if (items["items"]) correctItemsWithData(items["items"], baseUrl);
 		this.onPluginUpdateContextMenuItem([items]);
 	};
 

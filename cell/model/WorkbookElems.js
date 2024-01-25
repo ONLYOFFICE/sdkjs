@@ -13656,7 +13656,8 @@ function RangeDataManagerElem(bbox, data)
 			} else {
 				this.evenFooter = new Asc.CHeaderFooterData();
 				this.evenFooter.setStr(newVal);
-				this.evenFooter.setType(Asc.c_oAscPageHFType.evenFooter);
+				//TODO separate on read/init in open
+				this.evenFooter.setType(Asc.c_oAscPageHFType && Asc.c_oAscPageHFType.evenFooter);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13674,7 +13675,8 @@ function RangeDataManagerElem(bbox, data)
 			} else {
 				this.evenHeader = new Asc.CHeaderFooterData();
 				this.evenHeader.setStr(newVal);
-				this.evenHeader.setType(Asc.c_oAscPageHFType.evenHeader);
+				//TODO separate on read/init in open
+				this.evenHeader.setType(Asc.c_oAscPageHFType && Asc.c_oAscPageHFType.evenHeader);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13692,7 +13694,8 @@ function RangeDataManagerElem(bbox, data)
 			} else {
 				this.firstFooter = new Asc.CHeaderFooterData();
 				this.firstFooter.setStr(newVal);
-				this.firstFooter.setType(Asc.c_oAscPageHFType.firstFooter);
+				//TODO separate on read/init in open
+				this.firstFooter.setType(Asc.c_oAscPageHFType && Asc.c_oAscPageHFType.firstFooter);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13710,7 +13713,8 @@ function RangeDataManagerElem(bbox, data)
 			} else {
 				this.firstHeader = new Asc.CHeaderFooterData();
 				this.firstHeader.setStr(newVal);
-				this.firstHeader.setType(Asc.c_oAscPageHFType.firstHeader);
+				//TODO separate on read/init in open
+				this.firstHeader.setType(Asc.c_oAscPageHFType && Asc.c_oAscPageHFType.firstHeader);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13728,7 +13732,8 @@ function RangeDataManagerElem(bbox, data)
 			} else {
 				this.oddFooter = new Asc.CHeaderFooterData();
 				this.oddFooter.setStr(newVal);
-				this.oddFooter.setType(Asc.c_oAscPageHFType.oddFooter);
+				//TODO separate on read/init in open
+				this.oddFooter.setType(Asc.c_oAscPageHFType && Asc.c_oAscPageHFType.oddFooter);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -13746,7 +13751,8 @@ function RangeDataManagerElem(bbox, data)
 			} else {
 				this.oddHeader = new Asc.CHeaderFooterData();
 				this.oddHeader.setStr(newVal);
-				this.oddHeader.setType(Asc.c_oAscPageHFType.oddHeader);
+				//TODO separate on read/init in open
+				this.oddHeader.setType(Asc.c_oAscPageHFType && Asc.c_oAscPageHFType.oddHeader);
 			}
 
 			if (this.ws && History.Is_On()) {
@@ -16167,29 +16173,27 @@ function RangeDataManagerElem(bbox, data)
 		}
 
 		function calcAvg(seriesInType) {
-			let filledRangeLength = null;
+			let filledRangeLength = 0;
 
 			if (seriesInType === Asc.c_oAscSeriesInType.rows) {
 				filledRange._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
-					if (cell && cell.getNumberValue() != null) {
+					if ((cell && cell.getNumberValue() != null) && curRow === rowStart) {
 						// If columns range not starts with 0, define indexCell by difference between current column and start column
 						let indexCell = curCol - colStart;
 						ySum += cell.getNumberValue();
 						xSum += indexCell;
+						filledRangeLength++;
 					}
 				});
-				filledRangeLength = (filledRange.bbox.c2 - filledRange.bbox.c1) + 1;
 			} else {
 				filledRange._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
-					if (curCol === colStart) {
-						if (cell && cell.getNumberValue() != null) {
-							let indexCell = curRow - rowStart;
-							ySum += cell.getNumberValue();
-							xSum += indexCell;
-						}
+					if ((cell && cell.getNumberValue() != null) && curCol === colStart) {
+						let indexCell = curRow - rowStart;
+						ySum += cell.getNumberValue();
+						xSum += indexCell;
+						filledRangeLength++;
 					}
 				});
-				filledRangeLength = (filledRange.bbox.r2 - filledRange.bbox.r1) + 1;
 			}
 
 			xAvg = xSum / filledRangeLength;
@@ -16198,16 +16202,18 @@ function RangeDataManagerElem(bbox, data)
 		function actionCell(cell, curRow, curCol, rowStart, colStart) {
 			if (cell && cell.getValueWithoutFormat()) {
 				// Fill type
-				seriesSettings.asc_setType(Asc.c_oAscSeriesType.linear);
-				if (cell.xfs != null && cell.xfs.num != null && cell.xfs.num.getFormat() != null) {
-					let numFormat = AscCommon.oNumFormatCache.get(cell.xfs.num.getFormat());
-					if (numFormat.isDateTimeFormat()) {
-						seriesSettings.asc_setType(Asc.c_oAscSeriesType.date);
+				if (seriesSettings.asc_getType() == null) {
+					seriesSettings.asc_setType(Asc.c_oAscSeriesType.linear);
+					if (cell.xfs != null && cell.xfs.num != null && cell.xfs.num.getFormat() != null) {
+						let numFormat = AscCommon.oNumFormatCache.get(cell.xfs.num.getFormat());
+						if (numFormat.isDateTimeFormat() && numFormat.getType() === Asc.c_oAscNumFormatType.Date) {
+							seriesSettings.asc_setType(Asc.c_oAscSeriesType.date);
 
-						contextMenuAllowedProps[Asc.c_oAscFillType.fillDays] = true;
-						//contextMenuAllowedProps[Asc.c_oAscFillType.fillWeekdays] = true;
-						//contextMenuAllowedProps[Asc.c_oAscFillType.fillMonths] = true;
-						//contextMenuAllowedProps[Asc.c_oAscFillType.fillYears] = true;
+							contextMenuAllowedProps[Asc.c_oAscFillType.fillDays] = true;
+							//contextMenuAllowedProps[Asc.c_oAscFillType.fillWeekdays] = true;
+							//contextMenuAllowedProps[Asc.c_oAscFillType.fillMonths] = true;
+							//contextMenuAllowedProps[Asc.c_oAscFillType.fillYears] = true;
+						}
 					}
 				}
 
@@ -16222,6 +16228,23 @@ function RangeDataManagerElem(bbox, data)
 					if (cellNumberValue != null) {
 						numeratorOfSlope += (cellIndex - xAvg) * (cellNumberValue - yAvg);
 						denominatorOfSlope += Math.pow((cellIndex - xAvg), 2);
+						if (seriesSettings.asc_getType() === Asc.c_oAscSeriesType.date) {
+							const MONTH_UNIT = 31;
+							const YEAR_UNIT = 366;
+
+							let roundedSlope = Math.ceil(numeratorOfSlope / denominatorOfSlope);
+							let isSequenceSeries = isVertical ? curRow === (rowStart + 1) : curCol === (colStart + 1);
+
+							if (MONTH_UNIT === roundedSlope) {
+								seriesSettings.asc_setDateUnit(Asc.c_oAscDateUnitType.month);
+								seriesSettings.asc_setStepValue(1);
+							} else if (YEAR_UNIT === roundedSlope) {
+								seriesSettings.asc_setDateUnit(Asc.c_oAscDateUnitType.year);
+								seriesSettings.asc_setStepValue(1);
+							} else if (isSequenceSeries) {
+								seriesSettings.asc_setStepValue(cellNumberValue - firstValue);
+							}
+						}
 					} else {
 						seriesSettings.asc_setStepValue(1);
 
@@ -16252,6 +16275,10 @@ function RangeDataManagerElem(bbox, data)
 			if (seriesSettings.asc_getStepValue() != null) {
 				if (seriesSettings.asc_getType() == null) {
 					seriesSettings.asc_setType(Asc.c_oAscSeriesType.linear);
+				}
+				if (seriesSettings.asc_getType() === Asc.c_oAscSeriesType.date) {
+					contextMenuAllowedProps[Asc.c_oAscFillType.fillSeries] = true;
+					contextMenuAllowedProps[Asc.c_oAscFillType.series] = true;
 				}
 				return true;
 			}
@@ -16311,10 +16338,11 @@ function RangeDataManagerElem(bbox, data)
 				}
 			}
 		}
-
+		this.asc_setDateUnit(Asc.c_oAscDateUnitType.day);
+		this.asc_setTrend(false);
 		// select one cell and use fill handle
 		if (!isApplyFilter) {
-			if (ws.activeFillHandle != null && countOfCol === countOfRow) {
+			if (ws.activeFillHandle != null) {
 				if (ws.fillHandleDirection === 0) {
 					this.asc_setSeriesIn(Asc.c_oAscSeriesInType.rows);
 				} else {
@@ -16330,7 +16358,11 @@ function RangeDataManagerElem(bbox, data)
 			} else if (countOfCol >= countOfRow) {
 				this.asc_setSeriesIn(Asc.c_oAscSeriesInType.rows);
 				calcAvg(Asc.c_oAscSeriesInType.rows);
-				filledRange._foreach2(actionCell);
+				filledRange._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
+					if (curRow === rowStart) {
+						return actionCell(cell, curRow, curCol, rowStart, colStart);
+					}
+				});
 			} else {
 				this.asc_setSeriesIn(Asc.c_oAscSeriesInType.columns);
 				calcAvg(Asc.c_oAscSeriesInType.columns);
@@ -16353,7 +16385,11 @@ function RangeDataManagerElem(bbox, data)
 				this.asc_setStepValue(1);
 			} else {
 				let slope = numeratorOfSlope / denominatorOfSlope;
-				this.asc_setStepValue(slope);
+				if (this.asc_getType() === Asc.c_oAscSeriesType.date && !Number.isInteger(slope)) {
+					this.asc_setStepValue(1);
+				} else {
+					this.asc_setStepValue(slope);
+				}
 			}
 
 			if (firstValue != null) {
@@ -16365,8 +16401,6 @@ function RangeDataManagerElem(bbox, data)
 				}
 			}
 		}
-		this.asc_setTrend(false);
-		this.asc_setDateUnit(Asc.c_oAscDateUnitType.day);
 
 		//2. init for context menu - allowed options
 		this.asc_setContextMenuAllowedProps(contextMenuAllowedProps);
@@ -16380,16 +16414,16 @@ function RangeDataManagerElem(bbox, data)
 		toolbarMenuAllowedProps[Asc.c_oAscFillType.series] = !isApplyFilter;
 
 		if (range.isOneCol()) {
-			if (selectionRanges.c1 === 0) {
+			if (range.c1 === 0) {
 				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillRight] = false;
-			} else if (selectionRanges.c1 === AscCommon.gc_nMaxCol0) {
+			} else if (range.c1 === AscCommon.gc_nMaxCol0) {
 				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillLeft] = false;
 			}
 		}
 		if (range.isOneRow()) {
-			if (selectionRanges.r1 === 0) {
+			if (range.r1 === 0) {
 				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillDown] = false;
-			} else if (selectionRanges.r1 === AscCommon.gc_nMaxRow0) {
+			} else if (range.r1 === AscCommon.gc_nMaxRow0) {
 				toolbarMenuAllowedProps[Asc.c_oAscFillType.fillUp] = false;
 			}
 		}
@@ -16613,6 +16647,51 @@ function RangeDataManagerElem(bbox, data)
 	asc_CSeriesSettings.prototype.asc_setStopValue = function (val) {
 		this.stopValue = val;
 	};
+	/**
+	 * Method checks "Step Value" attribute of SeriesSettings object
+	 * @param {number} val
+	 */
+	asc_CSeriesSettings.prototype.asc_isValidStepValue = function (val) {
+		return this.checkValidValue(val);
+	};
+
+	/**
+	 * Method checks "Stop Value" attribute of SeriesSettings object
+	 * @param {number} val
+	 */
+	asc_CSeriesSettings.prototype.asc_isValidStopValue = function (val) {
+		return this.checkValidValue(val);
+	};
+
+	/**
+	 * Method checks input values
+	 * @param {number} val
+	 */
+	asc_CSeriesSettings.prototype.checkValidValue = function (val) {
+		let errCode = Asc.c_oAscError.ID.No;
+
+		let regstr = new RegExp('^\s*[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)\s*$');
+		if (typeof val === 'string') {
+			let findComma = val.match(/,/g);
+			if (findComma && findComma.length === 1) {
+				val = val.replace(',','.');
+			}
+		}
+
+		if (val !== '' && (!regstr.test(val.trim()) || isNaN(parseFloat(val)))) {
+			//check on format
+			let parsedRes = AscCommon.g_oFormatParser.parse(val);
+			if (parsedRes === null) {
+				errCode = Asc.c_oAscError.ID.MustIntegerOrDecimalNumber;
+				val = null;
+			} else {
+				val = parsedRes.value;
+			}
+		}
+
+		return [errCode, (val != null && val !== "") ? parseFloat(val) : null];
+	};
+
 	/**
 	 * Method sets "contextMenuAllowedProps" attribute of SeriesSettings object.
 	 * Uses for hide and shade menu items in context menu.
@@ -17370,10 +17449,12 @@ function RangeDataManagerElem(bbox, data)
 
 	prot["asc_setSeriesIn"] = prot.asc_setSeriesIn;
 	prot["asc_setType"] = prot.asc_setType;
-	prot["asc_setDateInit"] = prot.asc_setDateUnit;
+	prot["asc_setDateUnit"] = prot.asc_setDateUnit;
 	prot["asc_setTrend"] = prot.asc_setTrend;
 	prot["asc_setStepValue"] = prot.asc_setStepValue;
 	prot["asc_setStopValue"] = prot.asc_setStopValue;
+	prot["asc_isValidStepValue"] = prot.asc_isValidStepValue;
+	prot["asc_isValidStopValue"] = prot.asc_isValidStopValue;
 	prot["asc_setContextMenuAllowedProps"] = prot.asc_setContextMenuAllowedProps;
 	prot["asc_setContextMenuChosenProperty"] = prot.asc_setContextMenuChosenProperty;
 	prot["asc_setToolbarMenuAllowedProps"] = prot.asc_setToolbarMenuAllowedProps;

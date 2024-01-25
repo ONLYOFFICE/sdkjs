@@ -962,6 +962,8 @@
 		this.isDarkMode = false;
 
 		this.TableStylesPreviewGenerator = null;
+		
+		this.isHandMode = false;
 
 		//g_clipboardBase.Init(this);
 
@@ -1512,8 +1514,11 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.navigate(value);
 	};
 	asc_docs_api.prototype["asc_setViewerTargetType"] = function(type) {
-		if (this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
-			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.setTargetType(type);
+		
+		this.isHandMode = ("hand" === type);
+		this.WordControl.checkMouseHandMode();
+		this.WordControl.onMouseMove();
+		let logicDocument = this.private_GetLogicDocument();
 	};
 
 	function BeforeOpenDocument()
@@ -8011,7 +8016,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.pre_Paste = function(_fonts, _images, callback)
 	{
-		if (undefined !== window["Native"] && undefined !== window["Native"]["GetImageUrl"])
+		if (undefined !== window["native"] && undefined !== window["native"]["GetImageUrl"])
 		{
 			callback();
 			return;
@@ -8754,7 +8759,8 @@ background-repeat: no-repeat;\
 			oAdditionalData["format"] = this.documentFormat;
 			dataContainer.data = options.pdfChanges;
 		}
-		else if (null == options.oDocumentMailMerge && (c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType))
+		else if ((c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType) &&
+			null == options.oDocumentMailMerge && (options.isPdfPrint || !(this.DocInfo && this.DocInfo.isFormatWithForms())))
 		{
             var isSelection = false;
             if (options.advancedOptions && options.advancedOptions && (Asc.c_oAscPrintType.Selection === options.advancedOptions.asc_getPrintType()))
@@ -12443,9 +12449,6 @@ background-repeat: no-repeat;\
 			};
 		}
 
-		if (undefined != window["Native"])
-			return;
-
 		//callback
 		this.DocumentOrientation = (null == editor.WordControl.m_oLogicDocument) ? true : !editor.WordControl.m_oLogicDocument.Orientation;
 		var sizeMM;
@@ -12776,6 +12779,10 @@ background-repeat: no-repeat;\
 			var page = this.WordControl.m_oDrawingDocument.m_arrPages[_page];
 			_printer.BeginPage(page.width_mm, page.height_mm);
 			oLogicDocument.DrawPage(_page, _printer);
+
+			if (this.watermarkDraw)
+				this.watermarkDraw.DrawOnRenderer(_printer, page.width_mm, page.height_mm);
+
 			_printer.EndPage();
 			oLogicDocument.RestoreAfterNativePrint();
 		}
@@ -12788,6 +12795,16 @@ background-repeat: no-repeat;\
 
 	window["asc_docs_api"].prototype["asc_nativeGetPDF"] = function(options)
 	{
+		if (options && options["watermark"])
+		{
+			this.watermarkDraw = new AscCommon.CWatermarkOnDraw(options["watermark"], this);
+			this.watermarkDraw.generateNative();
+		}
+		else
+		{
+			this.watermarkDraw = null;
+		}
+
 		var pagescount = this["asc_nativePrintPagesCount"]();
 		if (options && options["printOptions"] && options["printOptions"]["onlyFirstPage"])
             pagescount = 1;
@@ -13592,6 +13609,11 @@ background-repeat: no-repeat;\
 			return null;
 		
 		return logicDocument.getSpeechDescription(prevState, action);
+	};
+	
+	asc_docs_api.prototype.isTargetHandMode = function()
+	{
+		return this.isHandMode && this.isRestrictionForms();
 	};
 	
 	//-------------------------------------------------------------export---------------------------------------------------

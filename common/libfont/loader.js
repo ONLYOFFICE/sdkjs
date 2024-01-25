@@ -83,7 +83,7 @@
 		window['AscFonts'].onSuccess = onSuccess;
 		window['AscFonts'].onError = onError;
 
-		if (window["NATIVE_EDITOR_ENJINE"] === true || window["IS_NATIVE_EDITOR"] === true || window["Native"] !== undefined)
+		if (window["NATIVE_EDITOR_ENJINE"] === true || window["IS_NATIVE_EDITOR"] === true || window["native"] !== undefined)
 		{
 			window['AscFonts'].onSuccess && window['AscFonts'].onSuccess.call(window['AscFonts'].api);
 			return;

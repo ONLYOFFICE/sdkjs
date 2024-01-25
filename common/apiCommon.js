@@ -202,18 +202,6 @@
 		return false;
 	}
 
-	function asc_menu_ReadPaddings(_params, _cursor){
-		const _paddings = new Asc.asc_CPaddings();
-		_paddings.read(_params, _cursor);
-		return _paddings;
-	}
-
-	function asc_menu_ReadColor(_params, _cursor) {
-		const _color = new Asc.asc_CColor();
-		_color.read(_params, _cursor);
-		return _color;
-	}
-
 	var c_oLicenseResult = {
 		Error         : 1,
 		Expired       : 2,
@@ -705,188 +693,6 @@
 	asc_ValAxisSettings.prototype.putNumFmt = function(v) {
 		this.numFmt = v;
 	};
-	asc_ValAxisSettings.prototype.read = function(_params, _cursor){
-		var _continue = true;
-		while (_continue)
-		{
-			var _attr = _params[_cursor.pos++];
-			switch (_attr)
-			{
-				case 0:
-				{
-					this.putMinValRule(_params[_cursor.pos++]);
-					break;
-				}
-				case 1:
-				{
-					this.putMinVal(_params[_cursor.pos++]);
-					break;
-				}
-				case 2:
-				{
-					this.putMaxValRule(_params[_cursor.pos++]);
-					break;
-				}
-				case 3:
-				{
-					this.putMaxVal(_params[_cursor.pos++]);
-					break;
-				}
-				case 4:
-				{
-					this.putInvertValOrder(_params[_cursor.pos++]);
-					break;
-				}
-				case 5:
-				{
-					this.putLogScale(_params[_cursor.pos++]);
-					break;
-				}
-				case 6:
-				{
-					this.putLogBase(_params[_cursor.pos++]);
-					break;
-				}
-				case 7:
-				{
-					this.putDispUnitsRule(_params[_cursor.pos++]);
-					break;
-				}
-				case 8:
-				{
-					this.putUnits(_params[_cursor.pos++]);
-					break;
-				}
-				case 9:
-				{
-					this.putShowUnitsOnChart(_params[_cursor.pos++]);
-					break;
-				}
-				case 10:
-				{
-					this.putMajorTickMark(_params[_cursor.pos++]);
-					break;
-				}
-				case 11:
-				{
-					this.putMinorTickMark(_params[_cursor.pos++]);
-					break;
-				}
-				case 12:
-				{
-					this.putTickLabelsPos(_params[_cursor.pos++]);
-					break;
-				}
-				case 13:
-				{
-					this.putCrossesRule(_params[_cursor.pos++]);
-					break;
-				}
-				case 14:
-				{
-					this.putCrosses(_params[_cursor.pos++]);
-					break;
-				}
-				case 15:
-				{
-					this.putAxisType(_params[_cursor.pos++]);
-					break;
-				}
-				case 255:
-				default:
-				{
-					_continue = false;
-					break;
-				}
-			}
-		}
-	};
-	asc_ValAxisSettings.prototype.write = function(_type, _stream) {
-		_stream["WriteByte"](_type);
-
-		if (this.minValRule !== undefined && this.minValRule !== null)
-		{
-			_stream["WriteByte"](0);
-			_stream["WriteLong"](this.minValRule);
-		}
-		if (this.minVal !== undefined && this.minVal !== null)
-		{
-			_stream["WriteByte"](1);
-			_stream["WriteLong"](this.minVal);
-		}
-		if (this.maxValRule !== undefined && this.maxValRule !== null)
-		{
-			_stream["WriteByte"](2);
-			_stream["WriteLong"](this.maxValRule);
-		}
-		if (this.maxVal !== undefined && this.maxVal !== null)
-		{
-			_stream["WriteByte"](3);
-			_stream["WriteLong"](this.maxVal);
-		}
-		if (this.invertValOrder !== undefined && this.invertValOrder !== null)
-		{
-			_stream["WriteByte"](4);
-			_stream["WriteBool"](this.invertValOrder);
-		}
-		if (this.logScale !== undefined && this.logScale !== null)
-		{
-			_stream["WriteByte"](5);
-			_stream["WriteBool"](this.logScale);
-		}
-		if (this.logBase !== undefined && this.logBase !== null)
-		{
-			_stream["WriteByte"](6);
-			_stream["WriteLong"](this.logBase);
-		}
-		if (this.dispUnitsRule !== undefined && this.dispUnitsRule !== null)
-		{
-			_stream["WriteByte"](7);
-			_stream["WriteLong"](this.dispUnitsRule);
-		}
-		if (this.units !== undefined && this.units !== null)
-		{
-			_stream["WriteByte"](8);
-			_stream["WriteLong"](this.units);
-		}
-		if (this.showUnitsOnChart !== undefined && this.showUnitsOnChart !== null)
-		{
-			_stream["WriteByte"](9);
-			_stream["WriteBool"](this.showUnitsOnChart);
-		}
-		if (this.majorTickMark !== undefined && this.majorTickMark !== null)
-		{
-			_stream["WriteByte"](10);
-			_stream["WriteLong"](this.majorTickMark);
-		}
-		if (this.minorTickMark !== undefined && this.minorTickMark !== null)
-		{
-			_stream["WriteByte"](11);
-			_stream["WriteLong"](this.minorTickMark);
-		}
-		if (this.tickLabelsPos !== undefined && this.tickLabelsPos !== null)
-		{
-			_stream["WriteByte"](12);
-			_stream["WriteLong"](this.tickLabelsPos);
-		}
-		if (this.crossesRule !== undefined && this.crossesRule !== null)
-		{
-			_stream["WriteByte"](13);
-			_stream["WriteLong"](this.crossesRule);
-		}
-		if (this.crosses !== undefined && this.crosses !== null)
-		{
-			_stream["WriteByte"](14);
-			_stream["WriteLong"](this.crosses);
-		}
-		if (this.axisType !== undefined && this.axisType !== null)
-		{
-			_stream["WriteByte"](15);
-			_stream["WriteLong"](this.axisType);
-		}
-
-		_stream["WriteByte"](255);
-	};
 	asc_ValAxisSettings.prototype.isRadarAxis = function() {
 		return this.isRadar;
 	};
@@ -1112,168 +918,6 @@
 	};
 	asc_CatAxisSettings.prototype.putAuto = function(v) {
 		this.auto = v;
-	};
-	asc_CatAxisSettings.prototype.read = function(_params, _cursor){
-		var _continue = true;
-		while (_continue)
-		{
-			var _attr = _params[_cursor.pos++];
-			switch (_attr)
-			{
-				case 0:
-				{
-					this.putIntervalBetweenTick(_params[_cursor.pos++]);
-					break;
-				}
-				case 1:
-				{
-					this.putIntervalBetweenLabelsRule(_params[_cursor.pos++]);
-					break;
-				}
-				case 2:
-				{
-					this.putIntervalBetweenLabels(_params[_cursor.pos++]);
-					break;
-				}
-				case 3:
-				{
-					this.putInvertCatOrder(_params[_cursor.pos++]);
-					break;
-				}
-				case 4:
-				{
-					this.putLabelsAxisDistance(_params[_cursor.pos++]);
-					break;
-				}
-				case 5:
-				{
-					this.putLabelsPosition(_params[_cursor.pos++]);
-					break;
-				}
-				case 6:
-				{
-					this.putMajorTickMark(_params[_cursor.pos++]);
-					break;
-				}
-				case 7:
-				{
-					this.putMinorTickMark(_params[_cursor.pos++]);
-					break;
-				}
-				case 8:
-				{
-					this.putTickLabelsPos(_params[_cursor.pos++]);
-					break;
-				}
-				case 9:
-				{
-					this.putCrossesRule(_params[_cursor.pos++]);
-					break;
-				}
-				case 10:
-				{
-					this.putCrosses(_params[_cursor.pos++]);
-					break;
-				}
-				case 11:
-				{
-					this.putAxisType(_params[_cursor.pos++]);
-					break;
-				}
-				case 12:
-				{
-					this.putCrossMinVal(_params[_cursor.pos++]);
-					break;
-				}
-				case 13:
-				{
-					this.putCrossMaxVal(_params[_cursor.pos++]);
-					break;
-				}
-				case 255:
-				default:
-				{
-					_continue = false;
-					break;
-				}
-			}
-		}
-	};
-	asc_CatAxisSettings.prototype.write = function(_type, _stream) {
-		_stream["WriteByte"](_type);
-
-		if (this.getIntervalBetweenTick() !== undefined && this.getIntervalBetweenTick() !== null)
-		{
-			_stream["WriteByte"](0);
-			_stream["WriteDouble2"](this.getIntervalBetweenTick());
-		}
-		if (this.getIntervalBetweenLabelsRule() !== undefined && this.getIntervalBetweenLabelsRule() !== null)
-		{
-			_stream["WriteByte"](1);
-			_stream["WriteLong"](this.getIntervalBetweenLabelsRule());
-		}
-		if (this.getIntervalBetweenLabels() !== undefined && this.getIntervalBetweenLabels() !== null)
-		{
-			_stream["WriteByte"](2);
-			_stream["WriteDouble2"](this.getIntervalBetweenLabels());
-		}
-		if (this.getInvertCatOrder() !== undefined && this.getInvertCatOrder() !== null)
-		{
-			_stream["WriteByte"](3);
-			_stream["WriteBool"](this.getInvertCatOrder());
-		}
-		if (this.getLabelsAxisDistance() !== undefined && this.getLabelsAxisDistance() !== null)
-		{
-			_stream["WriteByte"](4);
-			_stream["WriteDouble2"](this.getLabelsAxisDistance());
-		}
-		if (this.getTickLabelsPos() !== undefined && this.getTickLabelsPos() !== null)
-		{
-			_stream["WriteByte"](5);
-			_stream["WriteLong"](this.getTickLabelsPos());
-		}
-		if (this.getMajorTickMark() !== undefined && this.getMajorTickMark() !== null)
-		{
-			_stream["WriteByte"](6);
-			_stream["WriteLong"](this.getMajorTickMark());
-		}
-		if (this.getMinorTickMark() !== undefined && this.getMinorTickMark() !== null)
-		{
-			_stream["WriteByte"](7);
-			_stream["WriteLong"](this.getMinorTickMark());
-		}
-		if (this.getTickLabelsPos() !== undefined && this.getTickLabelsPos() !== null)
-		{
-			_stream["WriteByte"](8);
-			_stream["WriteLong"](this.getTickLabelsPos());
-		}
-		if (this.getCrossesRule() !== undefined && this.getCrossesRule() !== null)
-		{
-			_stream["WriteByte"](9);
-			_stream["WriteLong"](this.getCrossesRule());
-		}
-		if (this.getCrosses() !== undefined && this.getCrosses() !== null)
-		{
-			_stream["WriteByte"](10);
-			_stream["WriteLong"](this.getCrosses());
-		}
-		if (this.getAxisType() !== undefined && this.getAxisType() !== null)
-		{
-			_stream["WriteByte"](11);
-			_stream["WriteLong"](this.getAxisType());
-		}
-		if (this.getCrossMinVal() !== undefined && this.getCrossMinVal() !== null)
-		{
-			_stream["WriteByte"](12);
-			_stream["WriteLong"](this.getCrossMinVal());
-		}
-		if (this.getCrossMaxVal() !== undefined && this.getCrossMaxVal() !== null)
-		{
-			_stream["WriteByte"](13);
-			_stream["WriteLong"](this.getCrossMaxVal());
-		}
-
-		_stream["WriteByte"](255);
 	};
 	asc_CatAxisSettings.prototype.isRadarAxis = function() {
 		return this.isRadar;
@@ -1907,316 +1551,6 @@
 			this.chartSpace.onDataUpdate();
 		}
 	};
-	asc_ChartSettings.prototype.read = function(_params, _cursor) {
-		var _continue = true;
-		var oAxPr;
-		var nHorAxislabel = null, nVertAxisLabel = null;
-		var nHorGridlines = null, nVertGridlines = null;
-		while (_continue)
-		{
-			var _attr = _params[_cursor.pos++];
-			switch (_attr)
-			{
-				case 0:
-				{
-					this.putStyle(_params[_cursor.pos++]);
-					break;
-				}
-				case 1:
-				{
-					this.putTitle(_params[_cursor.pos++]);
-					break;
-				}
-				case 2:
-				{
-					this.putRowCols(_params[_cursor.pos++]);
-					break;
-				}
-				case 3:
-				{
-					nHorAxislabel = _params[_cursor.pos++];
-					break;
-				}
-				case 4:
-				{
-					nVertAxisLabel = _params[_cursor.pos++];
-					break;
-				}
-				case 5:
-				{
-					this.putLegendPos(_params[_cursor.pos++]);
-					break;
-				}
-				case 6:
-				{
-					this.putDataLabelsPos(_params[_cursor.pos++]);
-					break;
-				}
-				case 7:
-				{
-					_cursor.pos++;
-					break;
-				}
-				case 8:
-				{
-					_cursor.pos++;
-					break;
-				}
-				case 9:
-				{
-					nHorGridlines = _params[_cursor.pos++];
-					break;
-				}
-				case 10:
-				{
-					nVertGridlines = _params[_cursor.pos++];
-					break;
-				}
-				case 11:
-				{
-					this.putType(_params[_cursor.pos++]);
-					break;
-				}
-				case 12:
-				{
-					this.putShowSerName(_params[_cursor.pos++]);
-					break;
-				}
-				case 13:
-				{
-					this.putShowCatName(_params[_cursor.pos++]);
-					break;
-				}
-				case 14:
-				{
-					this.putShowVal(_params[_cursor.pos++]);
-					break;
-				}
-				case 15:
-				{
-					this.putSeparator(_params[_cursor.pos++]);
-					break;
-				}
-				case 16:
-				{
-					oAxPr = new asc_ValAxisSettings();
-					oAxPr.read(_params, _cursor);
-					this.addHorAxesProps(oAxPr);
-					break;
-				}
-				case 17:
-				{
-					oAxPr = new asc_ValAxisSettings();
-					oAxPr.read(_params, _cursor);
-					this.addVertAxesProps(oAxPr);
-					break;
-				}
-				case 18:
-				{
-					this.putRange(_params[_cursor.pos++]);
-					break;
-				}
-				case 19:
-				{
-					this.putInColumns(_params[_cursor.pos++]);
-					break;
-				}
-				case 20:
-				{
-					this.putShowMarker(_params[_cursor.pos++]);
-					break;
-				}
-				case 21:
-				{
-					this.putLine(_params[_cursor.pos++]);
-					break;
-				}
-				case 22:
-				{
-					this.putSmooth(_params[_cursor.pos++]);
-					break;
-				}
-				case 23:
-				{
-					oAxPr = new asc_CatAxisSettings();
-					oAxPr.read(_params, _cursor);
-					this.addHorAxesProps(oAxPr);
-					break;
-				}
-				case 24:
-				{
-					oAxPr = new asc_CatAxisSettings();
-					oAxPr.read(_params, _cursor);
-					this.addVertAxesProps(oAxPr);
-					break;
-				}
-
-				case 255:
-				default:
-				{
-					_continue = false;
-					break;
-				}
-			}
-		}
-		oAxPr = this.horizontalAxes[0];
-		if(oAxPr) {
-			if(nHorAxislabel !== null) {
-				oAxPr.putLabel(nHorAxislabel);
-			}
-			if(nVertGridlines !== null) {
-				oAxPr.putGridlines(nVertGridlines);
-			}
-		}
-		oAxPr = this.verticalAxes[0];
-		if(oAxPr) {
-			if(nVertAxisLabel !== null) {
-				oAxPr.putLabel(nVertAxisLabel);
-			}
-			if(nHorGridlines !== null) {
-				oAxPr.putGridlines(nHorGridlines);
-			}
-		}
-
-	};
-	asc_ChartSettings.prototype.write = function(_type, _stream) {
-		if(_type !== undefined && _type !== null) {
-			_stream["WriteByte"](_type);
-		}
-
-		if (this.style !== undefined && this.style !== null)
-		{
-			_stream["WriteByte"](0);
-			_stream["WriteLong"](this.style);
-		}
-		if (this.title !== undefined && this.title !== null)
-		{
-			_stream["WriteByte"](1);
-			_stream["WriteLong"](this.title);
-		}
-		if (this.rowCols !== undefined && this.rowCols !== null)
-		{
-			_stream["WriteByte"](2);
-			_stream["WriteLong"](this.rowCols);
-		}
-		var nLabel = this.horizontalAxes[0] && this.horizontalAxes[0].getLabel();
-		if (nLabel !== undefined && nLabel !== null)
-		{
-			_stream["WriteByte"](3);
-			_stream["WriteLong"](nLabel);
-		}
-		nLabel = this.verticalAxes[0] && this.verticalAxes[0].getLabel();
-		if (nLabel !== undefined && nLabel !== null)
-		{
-			_stream["WriteByte"](4);
-			_stream["WriteLong"](nLabel);
-		}
-		if (this.legendPos !== undefined && this.legendPos !== null)
-		{
-			_stream["WriteByte"](5);
-			_stream["WriteLong"](this.legendPos);
-		}
-		if (this.dataLabelsPos !== undefined && this.dataLabelsPos !== null)
-		{
-			_stream["WriteByte"](6);
-			_stream["WriteLong"](this.dataLabelsPos);
-		}
-		var nGridlines = this.verticalAxes[0] && this.verticalAxes[0].getGridlines();
-		if (nGridlines !== undefined && nGridlines !== null)
-		{
-			_stream["WriteByte"](9);
-			_stream["WriteLong"](nGridlines);
-		}
-		nGridlines = this.horizontalAxes[0] && this.horizontalAxes[0].getGridlines();
-		if (nGridlines !== undefined && nGridlines !== null)
-		{
-			_stream["WriteByte"](10);
-			_stream["WriteLong"](nGridlines);
-		}
-		if (this.type !== undefined && this.type !== null)
-		{
-			_stream["WriteByte"](11);
-			_stream["WriteLong"](this.type);
-		}
-
-		if (this.showSerName !== undefined && this.showSerName !== null)
-		{
-			_stream["WriteByte"](12);
-			_stream["WriteBool"](this.showSerName);
-		}
-		if (this.showCatName !== undefined && this.showCatName !== null)
-		{
-			_stream["WriteByte"](13);
-			_stream["WriteBool"](this.showCatName);
-		}
-		if (this.showVal !== undefined && this.showVal !== null)
-		{
-			_stream["WriteByte"](14);
-			_stream["WriteBool"](this.showVal);
-		}
-
-		if (this.separator !== undefined && this.separator !== null)
-		{
-			_stream["WriteByte"](15);
-			_stream["WriteString2"](this.separator);
-		}
-
-
-		var oHorAx = this.getHorAxesProps()[0];
-		var oVertAx = this.getVertAxesProps()[0];
-		if (undefined != oHorAx
-			&& null != oHorAx
-			&& oHorAx.getAxisType() == Asc.c_oAscAxisType.val) {
-			oHorAx.write(16, _stream);
-		}
-
-		if (undefined != oVertAx
-			&& null != oVertAx
-			&& oVertAx.getAxisType() == Asc.c_oAscAxisType.val) {
-			oVertAx.write(17, _stream);
-		}
-		var sRange = this.getRange();
-		if (sRange !== undefined && sRange !== null)
-		{
-			_stream["WriteByte"](18);
-			_stream["WriteString2"](sRange);
-		}
-
-		if (this.inColumns !== undefined && this.inColumns !== null)
-		{
-			_stream["WriteByte"](19);
-			_stream["WriteBool"](this.inColumns);
-		}
-		if (this.showMarker !== undefined && this.showMarker !== null)
-		{
-			_stream["WriteByte"](20);
-			_stream["WriteBool"](this.showMarker);
-		}
-		if (this.bLine !== undefined && this.bLine !== null)
-		{
-			_stream["WriteByte"](21);
-			_stream["WriteBool"](this.bLine);
-		}
-		if (this.smooth !== undefined && this.smooth !== null)
-		{
-			_stream["WriteByte"](22);
-			_stream["WriteBool"](this.showVal);
-		}
-
-		if (undefined != oHorAx
-			&& null != oHorAx
-			&& oHorAx.getAxisType() == Asc.c_oAscAxisType.cat) {
-			oHorAx.write(23, _stream);
-		}
-
-		if (undefined != oVertAx
-			&& null != oVertAx
-			&& oVertAx.getAxisType() == Asc.c_oAscAxisType.cat) {
-			oVertAx.write(24, _stream);
-		}
-
-		_stream["WriteByte"](255);
-	};
 	/** @constructor */
 	function asc_CRect(x, y, width, height) {
 		// private members
@@ -2700,119 +2034,6 @@
 		if(!AscFormat.isRealNumber(this.ColorSchemeId)) {
 			this.ColorSchemeId = -1;
 		}
-	};
-	asc_CColor.prototype.read = function (_params, _cursor) {
-		let _continue = true;
-		while (_continue) {
-			let _attr = _params[_cursor.pos++];
-			switch (_attr) {
-				case 0: {
-					this.type = _params[_cursor.pos++];
-					break;
-				}
-				case 1: {
-					this.r = _params[_cursor.pos++];
-					break;
-				}
-				case 2: {
-					this.g = _params[_cursor.pos++];
-					break;
-				}
-				case 3: {
-					this.b = _params[_cursor.pos++];
-					break;
-				}
-				case 4: {
-					this.a = _params[_cursor.pos++];
-					break;
-				}
-				case 5: {
-					this.Auto = _params[_cursor.pos++];
-					break;
-				}
-				case 6: {
-					this.value = _params[_cursor.pos++];
-					break;
-				}
-				case 7: {
-					this.ColorSchemeId = _params[_cursor.pos++];
-					break;
-				}
-				case 8: {
-					let _count = _params[_cursor.pos++];
-					for (let i = 0; i < _count; i++) {
-						let _mod = new AscFormat.CColorMod();
-						_mod.name = _params[_cursor.pos++];
-						_mod.val = _params[_cursor.pos++];
-						this.Mods.push(_mod);
-					}
-					break;
-				}
-				case 255:
-				default: {
-					_continue = false;
-					break;
-				}
-			}
-		}
-	};
-	asc_CColor.prototype.write = function (_type, _stream) {
-		_stream["WriteByte"](_type);
-		if (this.type !== undefined && this.type !== null)
-		{
-			_stream["WriteByte"](0);
-			_stream["WriteLong"](this.type);
-		}
-		if (this.r !== undefined && this.r !== null)
-		{
-			_stream["WriteByte"](1);
-			_stream["WriteByte"](this.r);
-		}
-		if (this.g !== undefined && this.g !== null)
-		{
-			_stream["WriteByte"](2);
-			_stream["WriteByte"](this.g);
-		}
-		if (this.b !== undefined && this.b !== null)
-		{
-			_stream["WriteByte"](3);
-			_stream["WriteByte"](this.b);
-		}
-		if (this.a !== undefined && this.a !== null)
-		{
-			_stream["WriteByte"](4);
-			_stream["WriteByte"](this.a);
-		}
-		if (this.Auto !== undefined && this.Auto !== null)
-		{
-			_stream["WriteByte"](5);
-			_stream["WriteBool"](this.Auto);
-		}
-		if (this.value !== undefined && this.value !== null)
-		{
-			_stream["WriteByte"](6);
-			_stream["WriteLong"](this.value);
-		}
-		if (this.ColorSchemeId !== undefined && this.ColorSchemeId !== null)
-		{
-			_stream["WriteByte"](7);
-			_stream["WriteLong"](this.ColorSchemeId);
-		}
-		if (this.Mods !== undefined && this.Mods !== null)
-		{
-			_stream["WriteByte"](8);
-
-			var _len = this.Mods.length;
-			_stream["WriteLong"](_len);
-
-			for (var i = 0; i < _len; i++)
-			{
-				_stream["WriteString1"](this.Mods[i].name);
-				_stream["WriteLong"](this.Mods[i].val);
-			}
-		}
-
-		_stream["WriteByte"](255);
 	};
 
 	/** @constructor */
@@ -3772,68 +2993,6 @@
 	asc_CPaddings.prototype.asc_putRight = function (v) {
 			this.Right = v;
 		};
-	asc_CPaddings.prototype.write = function(_type, _stream) {
-		_stream["WriteByte"](_type);
-
-		if (this.Left !== undefined && this.Left !== null)
-		{
-			_stream["WriteByte"](0);
-			_stream["WriteDouble2"](this.Left);
-		}
-		if (this.Top !== undefined && this.Top !== null)
-		{
-			_stream["WriteByte"](1);
-			_stream["WriteDouble2"](this.Top);
-		}
-		if (this.Right !== undefined && this.Right !== null)
-		{
-			_stream["WriteByte"](2);
-			_stream["WriteDouble2"](this.Right);
-		}
-		if (this.Bottom !== undefined && this.Bottom !== null)
-		{
-			_stream["WriteByte"](3);
-			_stream["WriteDouble2"](this.Bottom);
-		}
-
-		_stream["WriteByte"](255);
-	};
-	asc_CPaddings.prototype.read = function(_params, _cursor) {
-		let _continue = true;
-		while (_continue)
-		{
-			let _attr = _params[_cursor.pos++];
-			switch (_attr)
-			{
-				case 0:
-				{
-					this.Left = _params[_cursor.pos++];
-					break;
-				}
-				case 1:
-				{
-					this.Top = _params[_cursor.pos++];
-					break;
-				}
-				case 2:
-				{
-					this.Right = _params[_cursor.pos++];
-					break;
-				}
-				case 3:
-				{
-					this.Bottom = _params[_cursor.pos++];
-					break;
-				}
-				case 255:
-				default:
-				{
-					_continue = false;
-					break;
-				}
-			}
-		}
-	};
 
 	/** @constructor */
 	function asc_CShapeProperty() {
@@ -4112,116 +3271,6 @@
 	asc_CShapeProperty.prototype.asc_getIsMotionPath = function () {
 			return this.isMotionPath;
 		};
-	asc_CShapeProperty.prototype.write = function (_type, _stream) {
-
-		if(_type !== undefined && _type !== null) {
-			_stream["WriteByte"](_type);
-		}
-
-		if (this.type !== undefined && this.type !== null) {
-			_stream["WriteByte"](0);
-			_stream["WriteString2"](this.type);
-		}
-
-		if(this.fill) {
-			this.fill.write(1, _stream);
-		}
-		if(this.stroke) {
-			this.stroke.write(2, _stream);
-		}
-		if(this.paddings) {
-			this.paddings.write(3, _stream);
-		}
-
-		if (this.canFill !== undefined && this.canFill !== null) {
-			_stream["WriteByte"](4);
-			_stream["WriteBool"](this.canFill);
-		}
-		if (this.bFromChart !== undefined && this.bFromChart !== null) {
-			_stream["WriteByte"](5);
-			_stream["WriteBool"](this.bFromChart);
-		}
-		//6 - InsertPageNum
-		if (this.bFromGroup !== undefined && this.bFromGroup !== null) {
-			_stream["WriteByte"](7);
-			_stream["WriteBool"](this.bFromGroup);
-		}
-		if (this.shadow) {
-			this.shadow.write(8, _stream);
-		}
-
-		if(this.verticalTextAlign !== null && this.verticalTextAlign !== undefined) {
-			_stream["WriteByte"](9);
-			_stream["WriteLong"](this.verticalTextAlign);
-		}
-		if(this.vert !== null && this.vert !== undefined) {
-			_stream["WriteByte"](10);
-			_stream["WriteLong"](this.vert);
-		}
-
-		_stream["WriteByte"](255);
-	};
-	asc_CShapeProperty.prototype.read = function (_params, _cursor) {
-		let _continue = true;
-		while (_continue) {
-			let _attr = _params[_cursor.pos++];
-			switch (_attr) {
-				case 0: {
-					this.type = _params[_cursor.pos++];
-					break;
-				}
-				case 1: {
-					this.fill = new Asc.asc_CShapeFill();
-					this.fill.read(_params, _cursor);
-					break;
-				}
-				case 2: {
-					this.stroke = new Asc.asc_CStroke();
-					this.stroke.read(_params, _cursor);
-					break;
-				}
-				case 3: {
-					this.paddings = asc_menu_ReadPaddings(_params, _cursor);
-					break;
-				}
-				case 4: {
-					this.canFill = _params[_cursor.pos++];
-					break;
-				}
-				case 5: {
-					this.bFromChart = _params[_cursor.pos++];
-					break;
-				}
-				case 6: {
-					this.InsertPageNum = _params[_cursor.pos++];
-					break;
-				}
-				case 7: {
-					this.bFromGroup = _params[_cursor.pos++];
-					break;
-				}
-				case 8: {
-					const oShadow = new Asc.asc_CShadowProperty();
-					this.shadow = oShadow.read(_params, _cursor);
-					break;
-				}
-				case 9: {
-					this.verticalTextAlign = _params[_cursor.pos++];
-					break;
-				}
-				case 10: {
-					this.vert = _params[_cursor.pos++];
-					break;
-				}
-				case 255:
-				default: {
-					_continue = false;
-					break;
-				}
-			}
-		}
-
-	};
 
 	/** @constructor */
 	function asc_TextArtProperties(obj) {
@@ -4885,87 +3934,6 @@
 		}
 		return false;
 	};
-	asc_CShapeFill.prototype.write = function(_type, _stream) {
-
-		_stream["WriteByte"](_type);
-
-		if (this.type !== undefined && this.type !== null)
-		{
-			_stream["WriteByte"](0);
-			_stream["WriteLong"](this.type);
-		}
-
-		if(this.fill) {
-			this.fill.write(1, _stream);
-		}
-
-		if (this.transparent !== undefined && this.transparent !== null)
-		{
-			_stream["WriteByte"](2);
-			_stream["WriteLong"](this.transparent);
-		}
-
-		_stream["WriteByte"](255);
-	};
-	asc_CShapeFill.prototype.read = function(_params, _cursor) {
-		let _continue = true;
-		while (_continue)
-		{
-			let _attr = _params[_cursor.pos++];
-			switch (_attr)
-			{
-				case 0:
-				{
-					this.type = _params[_cursor.pos++];
-					break;
-				}
-				case 1:
-				{
-					switch (this.type)
-					{
-						case Asc.c_oAscFill.FILL_TYPE_SOLID:
-						{
-							this.fill = new Asc.asc_CFillSolid();
-							this.fill.read(_params, _cursor);
-							break;
-						}
-						case Asc.c_oAscFill.FILL_TYPE_PATT:
-						{
-							this.fill = new Asc.asc_CFillHatch();
-							this.fill.read(_params, _cursor);
-							break;
-						}
-						case Asc.c_oAscFill.FILL_TYPE_GRAD:
-						{
-							this.fill = new Asc.asc_CFillGrad();
-							this.fill.read(_params, _cursor);
-							break;
-						}
-						case Asc.c_oAscFill.FILL_TYPE_BLIP:
-						{
-							this.fill = new Asc.asc_CFillBlip();
-							this.fill.read(_params, _cursor);
-							break;
-						}
-						default:
-							break;
-					}
-					break;
-				}
-				case 2:
-				{
-					this.transparent = _params[_cursor.pos++];
-					break;
-				}
-				case 255:
-				default:
-				{
-					_continue = false;
-					break;
-				}
-			}
-		}
-	};
 
 	/** @constructor */
 	function asc_CFillBlip() {
@@ -4993,60 +3961,6 @@
 		};
 	asc_CFillBlip.prototype.asc_putTextureId = function (v) {
 			this.texture_id = v;
-		};
-	asc_CFillBlip.prototype.write = function(_type, _stream) {
-		_stream["WriteByte"](_type);
-
-		if (this.type !== undefined && this.type !== null)
-		{
-			_stream["WriteByte"](0);
-			_stream["WriteLong"](this.type);
-		}
-
-		if (this.url !== undefined && this.url !== null)
-		{
-			_stream["WriteByte"](1);
-			_stream["WriteString2"](this.url);
-		}
-
-		if (this.texture_id !== undefined && this.texture_id !== null)
-		{
-			_stream["WriteByte"](2);
-			_stream["WriteLong"](this.texture_id);
-		}
-
-		_stream["WriteByte"](255);
-	};
-	asc_CFillBlip.prototype.read = function(_params, _cursor) {
-		let _continue = true;
-		while (_continue)
-		{
-			let _attr = _params[_cursor.pos++];
-			switch (_attr)
-			{
-				case 0:
-				{
-					this.type = _params[_cursor.pos++];
-					break;
-				}
-				case 1:
-				{
-					this.url = _params[_cursor.pos++];
-					break;
-				}
-				case 2:
-				{
-					this.texture_id = _params[_cursor.pos++];
-					break;
-				}
-				case 255:
-				default:
-				{
-					_continue = false;
-					break;
-				}
-			}
-		}
 	};
 
 	/** @constructor */
@@ -5073,56 +3987,6 @@
 	};
 	asc_CFillHatch.prototype.asc_putColorBg = function (v) {
 		this.bgClr = v;
-	};
-	asc_CFillHatch.prototype.write = function(_type, _stream) {
-		_stream["WriteByte"](_type);
-
-		if (this.PatternType !== undefined && this.PatternType !== null)
-		{
-			_stream["WriteByte"](0);
-			_stream["WriteLong"](this.PatternType);
-		}
-
-		if(this.bgClr) {
-			this.bgClr.write(1, _stream);
-		}
-		if(this.fgClr) {
-			this.fgClr.write(2, _stream);
-		}
-
-		_stream["WriteByte"](255);
-	};
-	asc_CFillHatch.prototype.read = function(_params, _cursor) {
-		let _continue = true;
-		while (_continue)
-		{
-			let _attr = _params[_cursor.pos++];
-			switch (_attr)
-			{
-				case 0:
-				{
-					this.PatternType = _params[_cursor.pos++];
-					break;
-				}
-				case 1:
-				{
-					this.bgClr = asc_menu_ReadColor(_params, _cursor);
-					break;
-				}
-				case 2:
-				{
-					this.fgClr = asc_menu_ReadColor(_params, _cursor);
-					break;
-				}
-				case 255:
-				default:
-				{
-					_continue = false;
-					break;
-				}
-			}
-		}
-
 	};
 	/** @constructor */
 	function asc_CFillGrad() {
@@ -5172,135 +4036,6 @@
 	asc_CFillGrad.prototype.asc_putPathType = function (v) {
 			this.PathType = v;
 		};
-	asc_CFillGrad.prototype.write = function(_type, _stream) {
-		_stream["WriteByte"](_type);
-
-		if (this.GradType !== undefined && this.GradType !== null)
-		{
-			_stream["WriteByte"](0);
-			_stream["WriteLong"](this.GradType);
-		}
-
-		if (this.LinearAngle !== undefined && this.LinearAngle !== null)
-		{
-			_stream["WriteByte"](1);
-			_stream["WriteDouble2"](this.LinearAngle);
-		}
-
-		if (this.LinearScale !== undefined && this.LinearScale !== null)
-		{
-			_stream["WriteByte"](2);
-			_stream["WriteBool"](this.LinearScale);
-		}
-
-		if (this.PathType !== undefined && this.PathType !== null)
-		{
-			_stream["WriteByte"](3);
-			_stream["WriteLong"](this.PathType);
-		}
-
-		if (this.Colors !== null && this.Colors !== undefined && this.Positions !== null && this.Positions !== undefined)
-		{
-			if (this.Colors.length == this.Positions.length)
-			{
-				var _count = this.Colors.length;
-				_stream["WriteByte"](4);
-				_stream["WriteLong"](_count);
-
-				for (var i = 0; i < _count; i++)
-				{
-					this.Colors[i].write(0, _stream);
-					if (this.Positions[i] !== undefined && this.Positions[i] !== null)
-					{
-						_stream["WriteByte"](1);
-						_stream["WriteLong"](this.Positions[i]);
-					}
-
-					_stream["WriteByte"](255);
-				}
-			}
-		}
-
-		_stream["WriteByte"](255);
-	};
-	asc_CFillGrad.prototype.read = function(_params, _cursor) {
-		let _continue = true;
-		while (_continue)
-		{
-			let _attr = _params[_cursor.pos++];
-			switch (_attr)
-			{
-				case 0:
-				{
-					this.GradType = _params[_cursor.pos++];
-					break;
-				}
-				case 1:
-				{
-					this.LinearAngle = _params[_cursor.pos++];
-					break;
-				}
-				case 2:
-				{
-					this.LinearScale = _params[_cursor.pos++];
-					break;
-				}
-				case 3:
-				{
-					this.PathType = _params[_cursor.pos++];
-					break;
-				}
-				case 4:
-				{
-					var _count = _params[_cursor.pos++];
-
-					if (_count > 0)
-					{
-						this.Colors = [];
-						this.Positions = [];
-					}
-					for (var i = 0; i < _count; i++)
-					{
-						this.Colors[i] = null;
-						this.Positions[i] = null;
-
-						var _continue2 = true;
-						while (_continue2)
-						{
-							var _attr2 = _params[_cursor.pos++];
-							switch (_attr2)
-							{
-								case 0:
-								{
-									this.Colors[i] = asc_menu_ReadColor(_params, _cursor);
-									break;
-								}
-								case 1:
-								{
-									this.Positions[i] = _params[_cursor.pos++];
-									break;
-								}
-								case 255:
-								default:
-								{
-									_continue2 = false;
-									break;
-								}
-							}
-						}
-					}
-					_cursor.pos++;
-					break;
-				}
-				case 255:
-				default:
-				{
-					_continue = false;
-					break;
-				}
-			}
-		}
-	};
 
 	/** @constructor */
 	function asc_CFillSolid() {
@@ -5313,32 +4048,7 @@
 	asc_CFillSolid.prototype.asc_putColor = function (v) {
 			this.color = v;
 		};
-	asc_CFillSolid.prototype.write = function(_type, _stream) {
-		_stream["WriteByte"](_type);
-		if(this.color) {
-			this.color.write(0, _stream);
-		}
-		_stream["WriteByte"](255);
-	};
 
-	asc_CFillSolid.prototype.read = function (_params, _cursor) {
-		let _continue = true;
-		while (_continue) {
-			let _attr = _params[_cursor.pos++];
-			switch (_attr) {
-				case 0: {
-					this.color = new Asc.asc_CColor();
-					this.color.read(_params, _cursor);
-					break;
-				}
-				case 255:
-				default: {
-					_continue = false;
-					break;
-				}
-			}
-		}
-	};
 
 	/** @constructor */
 	function asc_CStroke() {
@@ -5428,131 +4138,6 @@
 	};
 	asc_CStroke.prototype.asc_getPrstDash = function () {
 		return this.prstDash;
-	};
-	asc_CStroke.prototype.write = function (_type, _stream) {
-		_stream["WriteByte"](_type);
-
-		if (this.type !== undefined && this.type !== null) {
-			_stream["WriteByte"](0);
-			_stream["WriteLong"](this.type);
-		}
-		if (this.width !== undefined && this.width !== null) {
-			_stream["WriteByte"](1);
-			_stream["WriteDouble2"](this.width);
-		}
-
-		if (this.color) {
-			this.color.write(2, _stream);
-		}
-
-		if (this.LineJoin !== undefined && this.LineJoin !== null) {
-			_stream["WriteByte"](3);
-			_stream["WriteByte"](this.LineJoin);
-		}
-		if (this.LineCap !== undefined && this.LineCap !== null) {
-			_stream["WriteByte"](4);
-			_stream["WriteByte"](this.LineCap);
-		}
-		if (this.LineBeginStyle !== undefined && this.LineBeginStyle !== null) {
-			_stream["WriteByte"](5);
-			_stream["WriteByte"](this.LineBeginStyle);
-		}
-		if (this.LineBeginSize !== undefined && this.LineBeginSize !== null) {
-			_stream["WriteByte"](6);
-			_stream["WriteByte"](this.LineBeginSize);
-		}
-		if (this.LineEndStyle !== undefined && this.LineEndStyle !== null) {
-			_stream["WriteByte"](7);
-			_stream["WriteByte"](this.LineEndStyle);
-		}
-		if (this.LineEndSize !== undefined && this.LineEndSize !== null) {
-			_stream["WriteByte"](8);
-			_stream["WriteByte"](this.LineEndSize);
-		}
-
-		if (this.canChangeArrows !== undefined && this.canChangeArrows !== null) {
-			_stream["WriteByte"](9);
-			_stream["WriteBool"](this.canChangeArrows);
-		}
-		if (this.prstDash !== undefined && this.prstDash !== null) {
-			_stream["WriteByte"](10);
-			_stream["WriteLong"](this.prstDash);
-		}
-
-		_stream["WriteByte"](255);
-	};
-	asc_CStroke.prototype.read = function(_params, _cursor) {
-		let _continue = true;
-		while (_continue)
-		{
-			let _attr = _params[_cursor.pos++];
-			switch (_attr)
-			{
-				case 0:
-				{
-					this.type = _params[_cursor.pos++];
-					break;
-				}
-				case 1:
-				{
-					this.width = _params[_cursor.pos++];
-					break;
-				}
-				case 2:
-				{
-					this.color = new Asc.asc_CColor();
-					this.color.read(_params, _cursor);
-					break;
-				}
-				case 3:
-				{
-					this.LineJoin = _params[_cursor.pos++];
-					break;
-				}
-				case 4:
-				{
-					this.LineCap = _params[_cursor.pos++];
-					break;
-				}
-				case 5:
-				{
-					this.LineBeginStyle = _params[_cursor.pos++];
-					break;
-				}
-				case 6:
-				{
-					this.LineBeginSize = _params[_cursor.pos++];
-					break;
-				}
-				case 7:
-				{
-					this.LineEndStyle = _params[_cursor.pos++];
-					break;
-				}
-				case 8:
-				{
-					this.LineEndSize = _params[_cursor.pos++];
-					break;
-				}
-				case 9:
-				{
-					this.canChangeArrows = _params[_cursor.pos++];
-					break;
-				}
-				case 10:
-				{
-					this.prstDash = _params[_cursor.pos++];
-					break;
-				}
-				case 255:
-				default:
-				{
-					_continue = false;
-					break;
-				}
-			}
-		}
-
 	};
 
 	// цвет. может быть трех типов:
@@ -5899,6 +4484,9 @@
 	}
 
 	prot = asc_CDocInfo.prototype;
+	prot.isFormatWithForms = function () {
+		return this.Format === "oform" || this.Format === "docxf" || this.Format === "pdf";
+	};
 	prot.get_Id = prot.asc_getId = function () {
 		return this.Id
 	};
@@ -6286,6 +4874,9 @@
 
 		this.StartRenderer = function()
 		{
+			if (window["NATIVE_EDITOR_ENJINE"])
+				return;
+
 			var canvasTransparent = document.createElement("canvas");
 			canvasTransparent.width = this.image.width;
 			canvasTransparent.height = this.image.height;
@@ -6297,6 +4888,9 @@
 		};
 		this.EndRenderer = function()
 		{
+			if (window["NATIVE_EDITOR_ENJINE"])
+				return;
+
 			delete this.imageBase64;
 			this.imageBase64 = undefined;
 		};
@@ -6307,9 +4901,21 @@
 			var x = (w - wMM) / 2;
 			var y = (h - hMM) / 2;
 
-			renderer.UseOriginImageUrl = true;
-			renderer.drawImage(this.imageBase64, x, y, wMM, hMM);
-			renderer.UseOriginImageUrl = false;
+			if (window["NATIVE_EDITOR_ENJINE"])
+			{
+				renderer.put_brushTexture(this.imageBase64, 0);
+				renderer.put_BrushTextureAlpha((255 * this.transparent) >> 0);
+				renderer._e();
+				renderer.rect(x, y, wMM, hMM);
+				renderer.df();
+				renderer._e();
+			}
+			else
+			{
+				renderer.UseOriginImageUrl = true;
+				renderer.drawImage(this.imageBase64, x, y, wMM, hMM);
+				renderer.UseOriginImageUrl = false;
+			}
 		};
 
 		this.privateGenerateShape = function(obj)
@@ -6508,15 +5114,32 @@
 
 				var _ctx = this.image.getContext('2d');
 
-				var g = new AscCommon.CGraphics();
-				g.init(_ctx, w_px, h_px, w_mm, h_mm);
-				g.m_oFontManager = AscCommon.g_fontManager;
+				var g = null;
 
-				g.m_oCoordTransform.tx = -_bounds_cheker.Bounds.min_x;
-				g.m_oCoordTransform.ty = -_bounds_cheker.Bounds.min_y;
-				g.transform(1,0,0,1,0,0);
+				if (window["NATIVE_EDITOR_ENJINE"])
+				{
+					g = new AscCommon.CNativeGraphics();
+					g.width  = _need_pix_width;
+					g.height = _need_pix_height;
+					g.create(window["native"], _need_pix_width, _need_pix_height, _need_pix_width / AscCommon.g_dKoef_mm_to_pix, _need_pix_height / AscCommon.g_dKoef_mm_to_pix);
+					g.CoordTransformOffset(-_bounds_cheker.Bounds.min_x, -_bounds_cheker.Bounds.min_y);
+					g.transform(1, 0, 0, 1, 0, 0);
+				}
+				else
+				{
+					g = new AscCommon.CGraphics();
+					g.init(_ctx, w_px, h_px, w_mm, h_mm);
+					g.m_oFontManager = AscCommon.g_fontManager;
+
+					g.m_oCoordTransform.tx = -_bounds_cheker.Bounds.min_x;
+					g.m_oCoordTransform.ty = -_bounds_cheker.Bounds.min_y;
+					g.transform(1, 0, 0, 1, 0, 0);
+				}
 
 				oShape.draw(g, 0);
+
+				if (window["NATIVE_EDITOR_ENJINE"])
+					this.imageBase64 = g.toDataURL("image/png");
 
 				AscCommon.IsShapeToImageConverter = false;
 
@@ -6647,6 +5270,15 @@
 				Asc["editor"].watermarkDraw.onReady();
 			};
 			this.imageBackground.src = this.imageBackgroundUrl;
+		};
+
+		this.generateNative = function()
+		{
+			this.isFontsLoaded = true;
+			this.zoom = 1;
+			this.calculatezoom = 0;
+			this.CheckParams();
+			this.Generate();
 		};
 	}
 
@@ -8083,18 +6715,16 @@
 	prot["asc_getType"] = prot["get_Type"] = prot.asc_getType;
 	prot["asc_getImage"] = prot.asc_getImage;
 
-    window["AscCommon"].asc_CSpellCheckProperty = asc_CSpellCheckProperty;
-    prot = asc_CSpellCheckProperty.prototype;
-    prot["get_Word"] = prot.get_Word;
-    prot["get_Checked"] = prot.get_Checked;
-    prot["get_Variants"] = prot.get_Variants;
+	window["AscCommon"].asc_CSpellCheckProperty = asc_CSpellCheckProperty;
+	prot = asc_CSpellCheckProperty.prototype;
+	prot["get_Word"] = prot.get_Word;
+	prot["get_Checked"] = prot.get_Checked;
+	prot["get_Variants"] = prot.get_Variants;
 
-    window["AscCommon"].CWatermarkOnDraw = CWatermarkOnDraw;
-    window["AscCommon"].isFileBuild = isFileBuild;
-    window["AscCommon"].checkCanvasInDiv = checkCanvasInDiv;
-    window["AscCommon"].isValidJs = isValidJs;
-    window["AscCommon"].asc_menu_ReadPaddings = asc_menu_ReadPaddings;
-    window["AscCommon"].asc_menu_ReadColor = asc_menu_ReadColor;
+	window["AscCommon"].CWatermarkOnDraw = CWatermarkOnDraw;
+	window["AscCommon"].isFileBuild = isFileBuild;
+	window["AscCommon"].checkCanvasInDiv = checkCanvasInDiv;
+	window["AscCommon"].isValidJs = isValidJs;
 
 	window["Asc"]["PluginType"] = window["Asc"].PluginType = PluginType;
 	window["Asc"]["CPluginVariation"] = window["Asc"].CPluginVariation = CPluginVariation;

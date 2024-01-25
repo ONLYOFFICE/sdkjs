@@ -86,7 +86,7 @@
         this._state         = undefined;
         this._stateModel    = undefined;
         this._width         = undefined;
-        this._strokeColor   = [1, 0.82, 0];
+        this._fillColor     = [1, 0.82, 0];
 
         // internal
         TurnOffHistory();
@@ -197,7 +197,7 @@
         let oDoc = this.GetDocument();
         oDoc.TurnOffHistory();
 
-        let oNewAnnot = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+        let oNewAnnot = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
 
         if (this._pagePos) {
             oNewAnnot._pagePos = {
@@ -214,7 +214,7 @@
 
         oNewAnnot._originView = this._originView;
         oNewAnnot._apIdx = this._apIdx;
-        oNewAnnot.SetStrokeColor(this.GetStrokeColor());
+        oNewAnnot.SetFillColor(this.GetFillColor());
         oNewAnnot.SetOriginPage(this.GetOriginPage());
         oNewAnnot.SetAuthor(this.GetAuthor());
         oNewAnnot.SetModDate(this.GetModDate());
@@ -231,7 +231,7 @@
         if (!this.graphicObjects)
             this.graphicObjects = new AscFormat.DrawingObjectsController(this);
 
-        let oRGB            = this.GetRGBColor(this.GetStrokeColor());
+        let oRGB            = this.GetRGBColor(this.GetFillColor());
         let ICON_TO_DRAW    = this.GetIconImg();
 
         let aRect       = this.GetRect();

@@ -97,6 +97,10 @@ CAscSlideTransition.prototype.createDuplicate = function(v)
 };
 CAscSlideTransition.prototype.makeDuplicate = function(_slideT)
 {
+    this.fillObject(_slideT);
+};
+CAscSlideTransition.prototype.fillObject = function(_slideT)
+{
     if (!_slideT)
         return;
 
@@ -108,6 +112,13 @@ CAscSlideTransition.prototype.makeDuplicate = function(_slideT)
     _slideT.SlideAdvanceAfter          = this.SlideAdvanceAfter;
     _slideT.SlideAdvanceDuration       = this.SlideAdvanceDuration;
     _slideT.ShowLoop                   = this.ShowLoop;
+};
+
+CAscSlideTransition.prototype.createDuplicate = function()
+{
+    let oCopy = new CAscSlideTransition();
+    this.fillObject(oCopy);
+    return oCopy;
 };
 CAscSlideTransition.prototype.setUndefinedOptions = function()
 {
@@ -929,7 +940,7 @@ CAscHFProps.prototype['updateView'] = CAscHFProps.prototype.updateView = functio
                     if(b <= oCanvas.height && b + nLineWidth >= oCanvas.height) {
                         b = oCanvas.height - nLineWidth - 1;
                     }
-                    nPhType = oSp.getPhType();
+                    nPhType = oSp.getPlaceholderType();
                     oContext.beginPath();
                     if(nPhType === AscFormat.phType_dt ||
                     nPhType === AscFormat.phType_ftr ||

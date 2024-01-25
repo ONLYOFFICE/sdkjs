@@ -119,6 +119,10 @@
 		this.value = "";
 		this.valueEqualAddon = false;
 
+		this.equalAddon = "&nbsp;";
+		if (AscCommon.AscBrowser.isMacOs)
+			this.equalAddon = "<br/>";
+
 		this.setEnabled = function(isEnabled)
 		{
 			if (this.isEnabled === isEnabled)
@@ -214,7 +218,7 @@
 				this.valueEqualAddon = !this.valueEqualAddon;
 				if (this.valueEqualAddon)
 				{
-					this.speechElement.innerHTML = this.value + "&nbsp;";
+					this.speechElement.innerHTML = this.value + this.equalAddon;
 				}
 				else
 				{

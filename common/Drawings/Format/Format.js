@@ -2713,89 +2713,6 @@
 		CUniColor.prototype.isUnicolor = function (sName) {
 			return !!CUniColor.prototype.UNICOLOR_MAP[sName];
 		};
-		CUniColor.prototype.read = function (_params, _cursor) {
-			let _continue = true;
-			while (_continue) {
-				let _attr = _params[_cursor.pos++];
-				switch (_attr) {
-					case 0: {
-						this.color = new AscFormat.CPrstColor();
-						this.color.type = _params[_cursor.pos++];
-						this.color.id = _params[_cursor.pos++];
-						this.color.RGBA = {
-							R: _params[_cursor.pos++],
-							G: _params[_cursor.pos++],
-							B: _params[_cursor.pos++],
-							A: _params[_cursor.pos++],
-							needRecalc: _params[_cursor.pos++]
-						};
-						break;
-					}
-					case 1: {
-						var _count = _params[_cursor.pos++];
-						for (var i = 0; i < _count; i++) {
-							var _mod = new AscFormat.CColorMod();
-							_mod.name = _params[_cursor.pos++];
-							_mod.val = _params[_cursor.pos++];
-							this.Mods.push(_mod);
-						}
-						break;
-					}
-					case 2: {
-						this.RGBA = {
-							R: _params[_cursor.pos++],
-							G: _params[_cursor.pos++],
-							B: _params[_cursor.pos++],
-							A: _params[_cursor.pos++]
-						}
-						break;
-					}
-					case 255:
-					default: {
-						_continue = false;
-						break;
-					}
-				}
-			}
-		};
-		CUniColor.prototype.write = function (_type, _stream) {
-			_stream["WriteByte"](_type);
-
-			if (this.color !== undefined && this.color !== null)
-			{
-				_stream["WriteByte"](0);
-				_stream["WriteLong"](this.color.type);
-				_stream["WriteStringA"](this.color.id);
-				_stream["WriteByte"](this.color.RGBA.R);
-				_stream["WriteByte"](this.color.RGBA.G);
-				_stream["WriteByte"](this.color.RGBA.B);
-				_stream["WriteByte"](this.color.RGBA.A);
-				_stream["WriteBool"](this.color.RGBA.needRecalc);
-			}
-			if (this.Mods !== undefined && this.Mods !== null)
-			{
-				_stream["WriteByte"](1);
-
-				var _len = this.Mods.length;
-				_stream["WriteLong"](_len);
-
-				for (var i = 0; i < _len; i++)
-				{
-					_stream["WriteStringA"](this.Mods[i].name);
-					_stream["WriteLong"](this.Mods[i].val);
-				}
-			}
-			if (this.RGBA !== undefined && this.RGBA !== null)
-			{
-				_stream["WriteByte"](2);
-				_stream["WriteByte"](this.RGBA.R);
-				_stream["WriteByte"](this.RGBA.G);
-				_stream["WriteByte"](this.RGBA.B);
-				_stream["WriteByte"](this.RGBA.A);
-			}
-
-			_stream["WriteByte"](255);
-		};
 
 		function CreateUniColorRGB(r, g, b) {
 			var ret = new CUniColor();
@@ -4139,84 +4056,6 @@
 			}
 			return null;
 		};
-		asc_CShadowProperty.prototype.write = function (_type, _stream) {
-			_stream["WriteByte"](_type);
-
-			if (this.color) {
-				this.color.write(0, _stream);
-			}
-
-			if (this.algn !== undefined && this.algn !== null) {
-				_stream["WriteByte"](1);
-				_stream["WriteLong"](this.algn);
-			}
-			if (this.blurRad !== undefined && this.blurRad !== null) {
-				_stream["WriteByte"](2);
-				_stream["WriteLong"](this.blurRad);
-			}
-			if (this.dir !== undefined && this.dir !== null) {
-				_stream["WriteByte"](3);
-				_stream["WriteLong"](this.dir);
-			}
-			if (this.dist !== undefined && this.dist !== null) {
-				_stream["WriteByte"](4);
-				_stream["WriteLong"](this.dist);
-			}
-			if (this.rotWithShape !== undefined && this.rotWithShape !== null) {
-				_stream["WriteByte"](5);
-				_stream["WriteBool"](this.dist);
-			}
-			_stream["WriteByte"](6);
-			_stream["WriteBool"](true);
-
-			_stream["WriteByte"](255);
-		};
-		asc_CShadowProperty.prototype.read = function (_params, _cursor) {
-			let _continue = true;
-			while (_continue) {
-				let _attr = _params[_cursor.pos++];
-
-				switch (_attr) {
-					case 0: {
-						this.color = new AscFormat.CUniColor();
-						this.color.read(_params, _cursor);
-						break;
-					}
-					case 1: {
-						this.algn = _params[_cursor.pos++];
-						break;
-					}
-					case 2: {
-						this.blurRad = _params[_cursor.pos++];
-						break;
-					}
-					case 3: {
-						this.dir = _params[_cursor.pos++];
-						break;
-					}
-					case 4: {
-						this.dist = _params[_cursor.pos++];
-						break;
-					}
-					case 5: {
-						this.rotWithShape = _params[_cursor.pos++];
-						break;
-					}
-					case 6: {
-						if (!_params[_cursor.pos++]) {
-							return null;
-						}
-						break;
-					}
-					case 255:
-					default: {
-						_continue = false;
-						break;
-					}
-				}
-			}
-			return this;
-		};
 		asc_CShadowProperty.prototype.createDuplicate = function () {
 			var oCopy = new asc_CShadowProperty();
 			this.fillObject(oCopy);
@@ -5166,10 +5005,10 @@
 			return color.R * 0.2126 + color.G * 0.7152 + color.B * 0.0722;
 		}
 
-		function FormatRGBAColor() {
-			this.R = 0;
-			this.G = 0;
-			this.B = 0;
+		function FormatRGBAColor(r, g, b) {
+			this.R = r || 0;
+			this.G = g || 0;
+			this.B = b || 0;
 			this.A = 255;
 		}
 
@@ -5430,6 +5269,47 @@
 				}
 			}
 			return new FormatRGBAColor();
+		};
+
+		CUniFill.prototype.getStartAnimRGBA = function () {
+			let oFill = this.fill;
+			if(!oFill) {
+				return new FormatRGBAColor(255, 255, 255);
+			}
+			switch (oFill.type) {
+				case c_oAscFill.FILL_TYPE_SOLID: {
+					if (oFill.color) {
+						return this.fill.color.RGBA;
+					}
+					else {
+						return new FormatRGBAColor(255, 255, 255);
+					}
+				}
+				case c_oAscFill.FILL_TYPE_GRAD: {
+					let _colors = this.fill.colors;
+					let _len = _colors.length;
+
+					if (0 === _len) {
+						return new FormatRGBAColor(255, 255, 255);
+					}
+
+					let oFirstColor = _colors[0].color;
+					if(!oFirstColor) {
+						return new FormatRGBAColor(255, 255, 255);
+					}
+					return oFirstColor.RGBA;
+				}
+				case c_oAscFill.FILL_TYPE_PATT: {
+					if(oFill.fgClr) {
+						return oFill.fgClr.RGBA
+					}
+					return new FormatRGBAColor(255, 255, 255);
+				}
+				case c_oAscFill.FILL_TYPE_NOFILL: {
+					return new FormatRGBAColor(255, 255, 255);
+				}
+			}
+			return new FormatRGBAColor(255, 255, 255);
 		};
 		CUniFill.prototype.createDuplicate = function () {
 			var duplicate = new CUniFill();

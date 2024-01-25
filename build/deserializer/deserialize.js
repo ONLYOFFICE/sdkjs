@@ -76,8 +76,8 @@ async function run(inputFile = "unique.txt", outputFile = "deserialized.docx", m
 			}
 			if (maps) {
 				let propsReplacedOld = propsReplaced;
-				line = line.replace(/(new )?([a-zA-z0-9$]*)(@http| \(http)/, (match, p1, p2, p3) => {
-					let props = p1 ? maps.vars[p2] : maps.props[p2];
+				line = line.replace(/(new )?([a-zA-z0-9$]*)(@http| \(http)/, (match, p1, p2, p3, offset) => {
+					let props = (p1 || '.' !== line[offset-1]) ? maps.vars[p2] : maps.props[p2];
 					if (props) {
 						propsReplaced++;
 						let toReplace;

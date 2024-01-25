@@ -732,7 +732,12 @@ function MoveAnnotationTrack(originalObject)
         oGraphicsPDF.SetCurPage(this.objectToDraw.GetPage());
         switch (this.objectToDraw.GetType()) {
             case AscPDF.ANNOTATIONS_TYPES.Ink:
-            case AscPDF.ANNOTATIONS_TYPES.Line: {
+            case AscPDF.ANNOTATIONS_TYPES.Line:
+            case AscPDF.ANNOTATIONS_TYPES.Square:
+            case AscPDF.ANNOTATIONS_TYPES.Polygon:
+            case AscPDF.ANNOTATIONS_TYPES.PolyLine:
+            case AscPDF.ANNOTATIONS_TYPES.FreeText:
+            case AscPDF.ANNOTATIONS_TYPES.Circle: {
                 let nScale  = AscCommon.AscBrowser.retinaPixelRatio * this.viewer.zoom;
                 oGraphicsWord   = new AscCommon.CGraphics();
 
@@ -868,9 +873,21 @@ function MoveChartObjectTrack(oObject, oChartSpace)
             oObjectToSet.layout.setW(fLayoutW);
             oObjectToSet.layout.setH(fLayoutH);
         }
-        var pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject);
-        var fLayoutX = this.chartSpace.calculateLayoutByPos(pos.x, oObjectToSet.layout.xMode, this.x, this.chartSpace.extX);
-        var fLayoutY = this.chartSpace.calculateLayoutByPos(pos.y, oObjectToSet.layout.yMode, this.y, this.chartSpace.extY);
+
+
+        let fLayoutX;
+        let fLayoutY;
+        let pos;
+        if(this.originalObject.parent && this.originalObject.parent.getObjectType() === AscDFH.historyitem_type_TrendLine) {
+            pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject.parent);
+            fLayoutX = this.chartSpace.calculateLayoutByPos(pos.coordinate.catVal, oObjectToSet.layout.xMode, this.x, this.chartSpace.extX);
+            fLayoutY = this.chartSpace.calculateLayoutByPos(pos.coordinate.valVal, oObjectToSet.layout.yMode, this.y, this.chartSpace.extY);
+        }
+        else {
+            pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject);
+            fLayoutX = this.chartSpace.calculateLayoutByPos(pos.x, oObjectToSet.layout.xMode, this.x, this.chartSpace.extX);
+            fLayoutY = this.chartSpace.calculateLayoutByPos(pos.y, oObjectToSet.layout.yMode, this.y, this.chartSpace.extY);
+        }
 
         oObjectToSet.layout.setX(fLayoutX);
         oObjectToSet.layout.setY(fLayoutY);

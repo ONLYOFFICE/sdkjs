@@ -124,11 +124,11 @@
 	};
 
 	/**
-	 * Starts presentation slide show
+	 * Starts the presentation slide show.
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
-	 * @alias RemoveComments
-	 * @since 7.6.0
+	 * @alias StartSlideShow
+	 * @since 8.0.0
 	 */
 	Api.prototype["pluginMethod_StartSlideShow"] = function()
 	{
@@ -136,11 +136,11 @@
 	};
 
 	/**
-	 * Pauses current slide show
+	 * Pauses the current slide show.
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
-	 * @alias RemoveComments
-	 * @since 7.6.0
+	 * @alias PauseSlideShow
+	 * @since 8.0.0
 	 */
 	Api.prototype["pluginMethod_PauseSlideShow"] = function()
 	{
@@ -148,11 +148,11 @@
 		this.sendEvent("asc_onDemonstrationStatus", "pause");
 	};
 	/**
-	 * Resumes current slide show
+	 * Resumes the current slide show.
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
-	 * @alias RemoveComments
-	 * @since 7.6.0
+	 * @alias ResumeSlideShow
+	 * @since 8.0.0
 	 */
 	Api.prototype["pluginMethod_ResumeSlideShow"] = function()
 	{
@@ -162,11 +162,11 @@
 
 
 	/**
-	 * Ends current slide show
+	 * Ends the current slide show.
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
-	 * @alias RemoveComments
-	 * @since 7.6.0
+	 * @alias EndSlideShow
+	 * @since 8.0.0
 	 */
 	Api.prototype["pluginMethod_EndSlideShow"] = function()
 	{
@@ -174,11 +174,11 @@
 	};
 
 	/**
-	 * Displays the slide following the current slide in slide show.
+	 * Displays the slide following the current slide in the slide show.
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
-	 * @alias RemoveComments
-	 * @since 7.6.0
+	 * @alias GoToNextSlideInSlideShow
+	 * @since 8.0.0
 	 */
 	Api.prototype["pluginMethod_GoToNextSlideInSlideShow"] = function()
 	{
@@ -186,11 +186,11 @@
 	};
 
 	/**
-	 * Displays the slide following the current slide in slide show.
+	 * Displays the slide following the current slide in the slide show.
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
-	 * @alias RemoveComments
-	 * @since 7.6.0
+	 * @alias GoToPreviousSlideInSlideShow
+	 * @since 8.0.0
 	 */
 	Api.prototype["pluginMethod_GoToPreviousSlideInSlideShow"] = function()
 	{
@@ -198,12 +198,12 @@
 	};
 
 	/**
-	 * Displays the slide with specific index.
+	 * Displays the slide with the specific index.
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
-	 * @alias RemoveComments
-	 * @param {number} nSlideIndex - index of slide
-	 * @since 7.6.0
+	 * @alias GoToSlideInSlideShow
+	 * @param {number} nSlideIndex - The slide index.
+	 * @since 8.0.0
 	 */
 	Api.prototype["pluginMethod_GoToSlideInSlideShow"] = function(nSlideIndex)
 	{

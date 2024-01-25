@@ -3643,8 +3643,24 @@ ParaRun.prototype.private_MeasureCombForm = function(nCombBorderW, nCombWidth, n
 			}
 			else
 			{
-				oItem.SetGapBackground(nMaxComb - nCharsCount, 0, nCombWidth, g_oTextMeasurer, null, oTextPr, oTheme, nCombBorderW);
-				nRightGap += (nMaxComb - nCharsCount) * Math.max(nCombWidth, nCombBorderW);
+				if (Asc.editor.isPdfEditor())
+				{
+					let nCellsToGap;
+					if (oTextForm.GetAlign() == AscPDF.ALIGN_TYPE.center)
+						nCellsToGap = (nMaxComb - nCharsCount) % 2 == 0 ? 0 : 1;
+					else if (oTextForm.GetAlign() == AscPDF.ALIGN_TYPE.right)
+						nCellsToGap = 0;
+					else
+						nCellsToGap = nMaxComb - nCharsCount;
+					
+					oItem.SetGapBackground(nCellsToGap, 0, nCombWidth, g_oTextMeasurer, null, oTextPr, oTheme, nCombBorderW);
+					nRightGap += nCellsToGap * Math.max(nCombWidth, nCombBorderW);
+				}
+				else
+				{
+					oItem.SetGapBackground(nMaxComb - nCharsCount, 0, nCombWidth, g_oTextMeasurer, null, oTextPr, oTheme, nCombBorderW);
+					nRightGap += (nMaxComb - nCharsCount) * Math.max(nCombWidth, nCombBorderW);
+				}
 			}
 		}
 
