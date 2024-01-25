@@ -18800,7 +18800,7 @@
 
 			c.setValue(AscCommonExcel.getFragmentsText(val), function (r) {
 				ret = r;
-			}, null, applyByArray ? bbox : ((!applyByArray && ctrlKey) ? null : undefined));
+			}, null, applyByArray ? bbox : ((!applyByArray && ctrlKey) ? null : undefined), null, dynamicSelectionRange);
 
 			if (!applyByArray) {
 				t.model._getCell(c.bbox.r1, c.bbox.c1, function(cell){
@@ -19071,6 +19071,7 @@
 
 				//***array-formula***
 				var ref = null;
+				let isDynamicRef = null;
 				if (flags.ctrlKey && flags.shiftKey) {
 					//необходимо проверить на выделение массива частично
 					var activeRange = t.getSelectedRange();
@@ -19112,11 +19113,17 @@
 					//проверяем activeCell на наличие форулы массива
 					c._foreachNoEmpty(function (cell) {
 						ref = cell.formulaParsed && cell.formulaParsed.ref ? cell.formulaParsed.ref : null;
+						isDynamicRef = cell.formulaParsed && cell.formulaParsed.dynamicRange ? true : isDynamicRef;
 					});
 					if (ref && !ref.isOneCell()) {
-						t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray,
+						if (isDynamicRef) {
+							// todo пересчет всех ячеек (в большинстве случаев нужно менять значение на ошибку SPILL для диапазона)
+							return saveCellValueCallback(true);
+						} else {
+							t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray,
 							c_oAscError.Level.NoCritical);
-						return false;
+							return false;
+						}
 					} else {
 						return saveCellValueCallback(true);
 					}

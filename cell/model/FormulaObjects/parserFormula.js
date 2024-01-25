@@ -7309,10 +7309,27 @@ function parserFormula( formula, parent, _ws ) {
 			// 6.CSE может расширяться на все ячейки кроме таких же массивов CSE, таблиц, сводных таблиц,
 			// DAF же может расширяться только на абсолютно пустые клетки
 
-			// todo добавить флаг cm для работы с динамическими массивами
 			this.ref = this.dynamicRange;
 			// this.dynamicRange = null;
-		}
+		} 
+		else if (!this.value) {
+			let elem = elemArr[elemArr.length ? elemArr.length - 1 : 0];
+			if (elem.type === cElementType.array || elem.type === cElementType.cellsRange || elem.type === cElementType.cellsRange3D) {
+				// single element in PF, if it's array/range use dynamic array formula
+				if (!this.ref) {
+					let arraySize = elem.getDimensions();
+					if (arraySize && this.parent && this.parent.nCol != null && this.parent.nRow != null) {
+						let dynamicRange = Asc.Range(this.parent.nCol, this.parent.nRow, arraySize.col + this.parent.nCol - 1, arraySize.row + this.parent.nRow - 1);
+						this.ref = dynamicRange;
+						this.dynamicRange = dynamicRange;
+						this.bArrayFormula = true;
+					}
+				}
+			}
+		} 
+		// else if (this.value && this.value.type === cElementType.error && this.value.errorType === cErrorType.cannot_be_spilled) {
+
+		// }
 
 		//TODO заглушка для парсинга множественного диапазона в _xlnm.Print_Area. Сюда попадаем только в одном случае - из функции findCell для отображения диапазона области печати
 		if(checkMultiSelect && elemArr.length > 1 && this.parent && this.parent instanceof window['AscCommonExcel'].DefName /*&& this.parent.name === "_xlnm.Print_Area"*/) {
@@ -7321,26 +7338,32 @@ function parserFormula( formula, parent, _ws ) {
 			// check further dynamic range
 			let res = this.checkDynamicRange();
 			if (!res) {
-				// todo при возвращении ошибки невозможности развернуть массив, добавить флаг ca
+				// todo add aca flag to use
+				// this.aca = true;
+				this.ca = true;
 				this.value = new cError(cErrorType.cannot_be_spilled);
 				this.ref = null;
+				// todo чтобы получить ошибку spill на второй итерации сохранения значения(_saveCellValueAfterEdit->Range.setValue), сохраняем dynamicRange, но при этом удаляем ref значение
+				this.dynamicRange = null;
 			}
 
 			this._endCalculate();
 		} else {
-			this.value = elemArr.pop();
-
+			if (!(this.value && this.value.type === cElementType.error && this.value.errorType === cErrorType.cannot_be_spilled)) {
+				this.value = elemArr.pop();
+			}
 			// check further dynamic range
 			let res = this.checkDynamicRange();
 			if (!res) {
-				// todo при возвращении ошибки невозможности развернуть массив, добавить флаг ca
+				// todo add aca flag to use
+				// this.aca = true;
+				this.ca = true;
 				this.value = new cError(cErrorType.cannot_be_spilled);
-				// this.value = new cError(cErrorType.not_available);
 				this.ref = null;
+				// todo чтобы получить ошибку spill на второй итерации сохранения значения(_saveCellValueAfterEdit->Range.setValue), сохраняем dynamicRange, но при этом удаляем ref значение
 				this.dynamicRange = null;
 			}
 			this.value.numFormat = numFormat;
-			// console.log(this.value);
 			//***array-formula***
 			//для обработки формулы массива
 			//передаётся последним параметром cell и временно подменяется parent у parserFormula для того, чтобы поменялось значение в элементе массива
@@ -8336,6 +8359,7 @@ function parserFormula( formula, parent, _ws ) {
 			}
 
 			if (mainCell) {
+				const t = this;
 				let rangeRow = mainCell.nRow,
 					rangeCol = mainCell.nCol;
 
@@ -8346,9 +8370,28 @@ function parserFormula( formula, parent, _ws ) {
 						}
 						
 						this.ws._getCell(i, j, function(cell) {
-							if (!cell.isEmpty()) {
+							if (cell.formulaParsed && cell.formulaParsed.dynamicRange) {
+								// check if cell belong to current dynamicRange
+								// todo найти оптимальный способ сравнить два range
+								// это нужно для того чтобы не возникало ошибки spill при второй проверке диапазона(т.к. значения в нем уже проставлены ранее)
+								// рассмотреть возможность использования флагов cm для ячейки и vm для spill диапазонов
+								if (!t.dynamicRange.isEqual(cell.formulaParsed.dynamicRange)) {
+									// ??? если ячейка является частью другого динамического диапазона, то выводится тот диапазон который находится в зоне предыдущего диапазона(кроме первой яччейки, но её мы не проверяем)
+									// то есть если один из диапазонов "ниже" или "правее" в редакторе, то он и будет выводиться, а другой получит ошибку SPILL
+									// if (!cell.isEmpty()) {
+									// 	isHaveNonEmptyCell = true
+									// }
+									isHaveNonEmptyCell = true
+								}
+								// if (this.dynamicRange.r1 === cell.formulaParsed.dynamicRange.r1 )
+								// console.log(t.dynamicRange.difference(cell.formulaParsed.dynamicRange));
+								// console.log(t.dynamicRange.containsRange(cell.formulaParsed.dynamicRange));
+								// console.log(t.dynamicRange.isEqual(cell.formulaParsed.dynamicRange));
+							} 
+							else if (!cell.isEmpty()) {
 								isHaveNonEmptyCell = true
 							}
+
 						});
 						if (isHaveNonEmptyCell) {
 							return false

@@ -13199,7 +13199,7 @@
 		this.textIndex = null;
 		this._hasChanged = true;
 	};
-	Cell.prototype.setValue=function(val,callback, isCopyPaste, byRef, ignoreHyperlink) {
+	Cell.prototype.setValue=function(val,callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRange) {
 		var ws = this.ws;
 		var wb = ws.workbook;
 		var DataOld = null;
@@ -13207,7 +13207,7 @@
 			DataOld = this.getValueData();
 		}
 		var isFirstArrayFormulaCell = byRef && this.nCol === byRef.c1 && this.nRow === byRef.r1;
-		var newFP = this.setValueGetParsed(val, callback, isCopyPaste, byRef);
+		var newFP = this.setValueGetParsed(val, callback, isCopyPaste, byRef, dynamicRange);
 		if (undefined === newFP) {
 			return;
 		}
@@ -13220,6 +13220,10 @@
 		if (newFP) {
 			this.setFormulaInternal(newFP);
 			if(byRef) {
+				if (dynamicRange) {
+					// todo add vm flags to use
+					this.setDynamicArrayFlags();
+				}
 				if(isFirstArrayFormulaCell) {
 					wb.dependencyFormulas.addToBuildDependencyArray(newFP);
 				}
@@ -13308,7 +13312,7 @@
 		}
 	};
 
-	Cell.prototype.setValueGetParsed=function(val,callback, isCopyPaste, byRef) {
+	Cell.prototype.setValueGetParsed=function(val,callback, isCopyPaste, byRef, dynamicRange) {
 		var ws = this.ws;
 		var wb = ws.workbook;
 		var bIsTextFormat = false;
@@ -13373,8 +13377,14 @@
 						}
 					} else {
 						newFP.setFormulaString(newFP.assemble());
+						//***dynamic-array-formula***
+						if(byRef && dynamicRange) {
+							newFP.dynamicRange = byRef;
+							newFP.ref = byRef;
+							this.ws.formulaArrayLink = newFP;
+						} 
 						//***array-formula***
-						if(byRef) {
+						else if(byRef) {
 							newFP.ref = byRef;
 							this.ws.formulaArrayLink = newFP;
 						}
@@ -15148,6 +15158,10 @@
 			stream.WriteULong(formulaToWrite.si);
 		}
 	};
+	Cell.prototype.setDynamicArrayFlags = function () {
+		this.cm = true;
+		// todo flag vm is used as a counter for arrays that cannot be expanded
+	};
 //-------------------------------------------------------------------------------------------------
 
 	function CCellWithFormula(ws, row, col) {
@@ -15768,7 +15782,7 @@
 			return new Range(this.worksheet, r1, c1, r2, c2);
 		}
 	};
-	Range.prototype.setValue=function(val, callback, isCopyPaste, byRef, ignoreHyperlink){
+	Range.prototype.setValue=function(val, callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRange){
 		History.Create_NewPoint();
 		History.StartTransaction();
 		//не хотелось бы вводить дополнительный параметр, поэтому если byRef == null
@@ -15793,7 +15807,9 @@
 				var offset = new AscCommon.CellBase(cell.nRow - activeCell.row, cell.nCol - activeCell.col);
 				_val = "=" + _formula.changeOffset(offset, null, true).assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true, true);
 			}
-			cell.setValue(_val, callback, isCopyPaste, byRef, ignoreHyperlink);
+			// при формировании новых формул массива необходимо передавать информацию о динамическом массиве т.к. используется обычный ref 
+			// как вариант получать значение уже сформированной формулы для первой ячейки и проверять свойство dynamicRange(которое мы выставляем при первом создании PF для ячейки)
+			cell.setValue(_val, callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRange);
 		});
 		History.EndTransaction();
 	};
