@@ -228,7 +228,7 @@
 				AscFormat.G_O_HLINK_COLOR.check(this.Theme, this.ColorMap);
 				RGBA = AscFormat.G_O_HLINK_COLOR.getRGBAColor();
 			}
-			else if (true !== this.Graphics.m_bIsTextDrawer)
+			else if (!this.isTextArtDraw())
 			{
 				textPr.Unifill.check(this.Theme, this.ColorMap);
 				RGBA = textPr.Unifill.getRGBAColor();
@@ -277,16 +277,28 @@
 		}
 		
 		let color = this.getTextColor();
-		this.Graphics.b_color1(color.r, color.g, color.b, 255);
-		this.Graphics.p_color(color.r, color.g, color.b, 255);
+		if(color)
+		{
+			this.Graphics.b_color1(color.r, color.g, color.b, 255);
+			this.Graphics.p_color(color.r, color.g, color.b, 255);
+		}
 	};
 	ParagraphContentDrawState.prototype.getTextColor = function()
 	{
 		if (this.reviewColor)
 			return this.reviewColor;
-		else if (this.themeColor)
+		if (this.themeColor)
 			return this.themeColor;
-		else if (this.textPr.Color.IsAuto())
+
+
+		if(this.isTextArtDraw())
+		{
+			if(this.textPr.Color.IsAuto() && !this.textPr.TextFill)
+				return this.autoColor;
+			return null;
+		}
+
+		if (this.textPr.Color.IsAuto())
 			return this.autoColor;
 		
 		return this.textPr.Color;
@@ -399,6 +411,10 @@
 	ParagraphContentDrawState.prototype.isSlideEditor = function()
 	{
 		return this.Paragraph && !this.Paragraph.bFromDocument;
+	};
+	ParagraphContentDrawState.prototype.isTextArtDraw = function()
+	{
+		return this.Graphics && this.Graphics.m_bIsTextDrawer;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphContentDrawState = ParagraphContentDrawState;
