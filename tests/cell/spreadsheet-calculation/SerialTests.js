@@ -3549,6 +3549,171 @@ $(function () {
 		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
 		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
 		clearData(0, 0, 3, 0);
+		// Type Date. Date unit - Day. Step - 60. Horizontal. Bug #65671.
+		testData = [
+			['01/01/2000', '03/01/2000', '01/01/2000']
+		];
+		getFilledData(0, 0, 3, 0, testData, [0,0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		assert.ok(oSeriesSettings, 'Type Date. Date unit - Day. Selected cells: A1:D1. Step - 60. Bug #65671.');
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.date, 'oSeriesSettings: "Type" is detected as "Date".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 60, 'oSeriesSettings: "Step" is detected as 60.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		clearData(0, 0, 3, 0);
+		// Type Date. Date unit - Day. Step - 0. Vertical. Bug #65671.
+		testData = [
+			['01/01/2000'],
+			['01/01/2000'],
+			['03/01/2000'],
+			['05/01/2000']
+		];
+		getFilledData(0, 0, 0, 4, testData, [0,0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		assert.ok(oSeriesSettings, 'Type Date. Date unit - Day. Selected cells: A1:A5. Step - 0. Bug #65671.');
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.columns, 'oSeriesSettings: "Series in" is detected as "Columns".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.date, 'oSeriesSettings: "Type" is detected as "Date".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 0, 'oSeriesSettings: "Step" is detected as 0.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		clearData(0, 0, 0, 4);
+		// Type Date. Date unit - Year. Step - 2. Horizontal. Bug #65671.
+		testData = [
+			['01/01/1900', '01/01/1902', '01/01/1904', '01/01/1906']
+		];
+		getFilledData(0, 0, 4, 0, testData, [0,0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		assert.ok(oSeriesSettings, 'Type Date. Date unit - Year. Selected cells: A1:E1. Step - 2. Bug #65671.');
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.date, 'oSeriesSettings: "Type" is detected as "Date".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.year, 'oSeriesSettings: "Date unit" is detected as "Year".');
+		assert.strictEqual(oSeriesSettings.stepValue, 2, 'oSeriesSettings: "Step" is detected as 2.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		clearData(0, 0, 4, 0);
+		// Type Date. Date unit - Month. Step - 16. Vertical. Bug #65671.
+		testData = [
+			['01/01/1900'],
+			['05/01/1901'],
+			['01/01/1902'],
+			['01/01/1903']
+		];
+		getFilledData(0, 0, 0, 4, testData, [0,0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		assert.ok(oSeriesSettings, 'Type Date. Date unit - Month. Selected cells: A1:A5. Step - 16. Bug #65671.');
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.columns, 'oSeriesSettings: "Series in" is detected as "Columns".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.date, 'oSeriesSettings: "Type" is detected as "Date".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.month, 'oSeriesSettings: "Date unit" is detected as "Month".');
+		assert.strictEqual(oSeriesSettings.stepValue, 16, 'oSeriesSettings: "Step" is detected as 16.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		clearData(0, 0, 0, 4);
+		// Type Date. Date unit - Year. Step - 1. Horizontal. Bug #65671.
+		testData = [
+			['02/01/1900', '02/01/1901', '06/01/1902', '08/01/1903']
+		];
+		getFilledData(0, 0, 4, 0, testData, [0,0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		assert.ok(oSeriesSettings, 'Type Date. Date unit - Year. Selected cells: A1:E1. Step - 1. Bug #65671.');
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.date, 'oSeriesSettings: "Type" is detected as "Date".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.year, 'oSeriesSettings: "Date unit" is detected as "Year".');
+		assert.strictEqual(oSeriesSettings.stepValue, 1, 'oSeriesSettings: "Step" is detected as 1.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		clearData(0, 0, 4, 0);
+		// Type Date. Date unit - Day. Step - 370. Vertical. Bug #65671.
+		testData = [
+			['01/01/1900'],
+			['01/05/1901'],
+			['01/01/1902'],
+			['01/01/1903']
+		];
+		getFilledData(0, 0, 0, 4, testData, [0,0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		assert.ok(oSeriesSettings, 'Type Date. Date unit - Day. Selected cells: A1:A5. Step - 370. Bug #65671.');
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.columns, 'oSeriesSettings: "Series in" is detected as "Columns".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.date, 'oSeriesSettings: "Type" is detected as "Date".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 370, 'oSeriesSettings: "Step" is detected as 370.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		clearData(0, 0, 0, 4);
+		// Type Date. Date unit - Day. Step - 365. Horizontal. Bug #65671.
+		testData = [
+			['10/10/2000', '10/10/2001', '10/05/2002', '10/10/2003']
+		];
+		getFilledData(0, 0, 4, 0, testData, [0,0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		assert.ok(oSeriesSettings, 'Type Date. Date unit - Day. Selected cells: A1:E1. Step - 365. Bug #65671.');
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.date, 'oSeriesSettings: "Type" is detected as "Date".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 365, 'oSeriesSettings: "Step" is detected as 365.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		clearData(0, 0, 4, 0);
+		// Type Date. Date unit - Year. Step - -1. Vertical. Bug #65671.
+		testData = [
+			['01/01/1903'],
+			['01/01/1902'],
+			['01/01/1901'],
+			['01/01/1900']
+		];
+		getFilledData(0, 0, 0, 4, testData, [0,0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		assert.ok(oSeriesSettings, 'Type Date. Date unit - Year. Selected cells: A1:A5. Step - -1. Bug #65671.');
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.columns, 'oSeriesSettings: "Series in" is detected as "Columns".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.date, 'oSeriesSettings: "Type" is detected as "Date".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.year, 'oSeriesSettings: "Date unit" is detected as "Year".');
+		assert.strictEqual(oSeriesSettings.stepValue, -1, 'oSeriesSettings: "Step" is detected as -1.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		clearData(0, 0, 0, 4);
+		// Type Date. Date unit - Day. Step - 0. Horizontal. Bug #65671.
+		testData = [
+			['10/10/2000', '10/10/2000', '10/05/2002', '10/10/2003']
+		];
+		getFilledData(0, 0, 4, 0, testData, [0,0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		assert.ok(oSeriesSettings, 'Type Date. Date unit - Day. Selected cells: A1:E1. Step - 0. Bug #65671.');
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.date, 'oSeriesSettings: "Type" is detected as "Date".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 0, 'oSeriesSettings: "Step" is detected as 0.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		clearData(0, 0, 4, 0);
+		// Type Date. Date unit - Day. Step - 365. Vertical. Bug #65671.
+		testData = [
+			['01/01/1905'],
+			['01/01/1906'],
+			['01/01/1905'],
+			['01/01/1904']
+		];
+		getFilledData(0, 0, 0, 4, testData, [0,0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		assert.ok(oSeriesSettings, 'Type Date. Date unit - Day. Selected cells: A1:A5. Step - 365. Bug #65671.');
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.columns, 'oSeriesSettings: "Series in" is detected as "Columns".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.date, 'oSeriesSettings: "Type" is detected as "Date".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 365, 'oSeriesSettings: "Step" is detected as 365.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		clearData(0, 0, 0, 4);
 		// Vertical selected range, first cell in range has type Date, another cells General. Bug #65873
 		testData = [
 			['01/01/1900'],
