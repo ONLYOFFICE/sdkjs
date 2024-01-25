@@ -885,7 +885,7 @@
 	 * Converts the specified JSON object into the Document Builder object of the corresponding type.
 	 * @memberof Api
 	 * @param {JSON} sMessage - The JSON object to convert.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CPE"]
 	 */
 	Api.prototype.FromJSON = function(sMessage)
 	{
