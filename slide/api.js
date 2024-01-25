@@ -6972,15 +6972,15 @@ background-repeat: no-repeat;\
 		let showMasterSp = true;
 		for (let i = 0; i < aSlides.length; i += 1) {
 			const oSlide = aSlides[i];
-			isCanResetBackground |= !!oSlide.cSld.Bg;
-			showMasterSp         &= oSlide.showMasterSp;
+			isCanResetBackground = isCanResetBackground || !!oSlide.cSld.Bg;
+			showMasterSp         = showMasterSp && oSlide.showMasterSp;
 
-			obj.lockDelete     |= !(oSlide.deleteLock.Lock.Type === locktype_Mine || oSlide.deleteLock.Lock.Type === locktype_None);
-			obj.lockLayout     |= !(oSlide.layoutLock.Lock.Type === locktype_Mine || oSlide.layoutLock.Lock.Type === locktype_None);
-			obj.lockTiming     |= !(oSlide.timingLock.Lock.Type === locktype_Mine || oSlide.timingLock.Lock.Type === locktype_None);
-			obj.lockTransition |= !(oSlide.transitionLock.Lock.Type === locktype_Mine || oSlide.transitionLock.Lock.Type === locktype_None);
-			obj.lockBackground |= !(oSlide.backgroundLock.Lock.Type === locktype_Mine || oSlide.backgroundLock.Lock.Type === locktype_None);
-			obj.lockRemove     |= obj.lockDelete ||
+			obj.lockDelete     = obj.lockDelete || !(oSlide.deleteLock.Lock.Type === locktype_Mine || oSlide.deleteLock.Lock.Type === locktype_None);
+			obj.lockLayout     = obj.lockLayout || !(oSlide.layoutLock.Lock.Type === locktype_Mine || oSlide.layoutLock.Lock.Type === locktype_None);
+			obj.lockTiming     = obj.lockTiming || !(oSlide.timingLock.Lock.Type === locktype_Mine || oSlide.timingLock.Lock.Type === locktype_None);
+			obj.lockTransition = obj.lockTransition || !(oSlide.transitionLock.Lock.Type === locktype_Mine || oSlide.transitionLock.Lock.Type === locktype_None);
+			obj.lockBackground = obj.lockBackground || !(oSlide.backgroundLock.Lock.Type === locktype_Mine || oSlide.backgroundLock.Lock.Type === locktype_None);
+			obj.lockRemove     = obj.lockRemove || obj.lockDelete ||
 				obj.lockLayout ||
 				obj.lockTiming ||
 				obj.lockTransition ||
