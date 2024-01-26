@@ -106,15 +106,8 @@
             if (this._charLimit != nChars) {
 
                 if (oViewer.IsOpenFormsInProgress != true) {
-                    let aChars = [];
                     let sText = this.content.GetElement(0).GetText({ParaEndToSpace: false});
-                    if (sText.length > nChars) {
-                        for (let i = 0, nCount = Math.min(nChars, sText.length); i < nCount; i++) {
-                            aChars.push(sText[i].charCodeAt(0));
-                        }
-    
-                        this.EnterText(aChars);
-                    }
+                    this.content.replaceAllText(sText.slice(0, Math.min(nChars, sText.length)));
                 }
             }
 
@@ -155,11 +148,15 @@
             this.content.SetUseXLimit(true);
             this.contentFormat.SetUseXLimit(true);
             this._multiline = true;
+            this.SetWasChanged(true);
+            this.SetNeedRecalc(true);
         }
         else if (bMultiline === false) {
             this.content.SetUseXLimit(false);
             this.contentFormat.SetUseXLimit(false);
             this._multiline = false;
+            this.SetWasChanged(true);
+            this.SetNeedRecalc(true);
         }
     };
     CTextField.prototype.IsMultiline = function() {
@@ -199,14 +196,20 @@
 		}
 	};
 	CTextField.prototype.UpdateDisplayValue = function(displayValue) {
+        let oViewer = Asc.editor.getDocumentRenderer();
+        if (oViewer.IsOpenFormsInProgress == false) {
+            let nCharLimit = this.GetCharLimit();
+            if (nCharLimit !== 0)
+                displayValue = displayValue.slice(0, nCharLimit);
+        }
+
         if (displayValue === this._displayValue && this._useDisplayValue == true)
 			return;
 		
-		this._displayValue = displayValue;
-		this._useDisplayValue = true;
-		
-		let _t = this;
-		
+		this._displayValue      = displayValue;
+		this._useDisplayValue   = true;
+		let _t                  = this;
+
         let args = arguments; // args[1] == true -> флаг, что вызывается на открытии
         if (args[1] == true) {
             if (_t._displayValue !== displayValue)
@@ -222,38 +225,31 @@
             _t.content.replaceAllText(displayValue);
             _t.SetNeedRecalc(true);
             _t.content.MoveCursorToStartPos();
-
-            // this._displayPromise = new Promise(function(resolve) {
-            //     AscFonts.FontPickerByCharacter.checkText(displayValue, _t, resolve);
-            // }).then(function() {
-            //     if (_t._displayValue !== displayValue)
-            //         return;
-                
-            //     _t.content.replaceAllText(displayValue);
-            //     _t.SetNeedRecalc(true);
-            //     _t.content.MoveCursorToStartPos();
-            // });
         }
 		
 	};
     CTextField.prototype.GetCalcOrderIndex = function() {
-        return this.field.GetDocument().GetCalculateInfo().ids.indexOf(this.field.GetFullName());
+        return this.GetDocument().GetCalculateInfo().ids.indexOf(this.GetApIdx());
     };
     CTextField.prototype.SetCalcOrderIndex = function(nIdx) {
-        let oCalcInfo = this.GetDocument().GetCalculateInfo();
-        let oCalcTrigget = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Calculate);
+        let oCalcInfo   = this.GetDocument().GetCalculateInfo();
+        let oWidget     = null;
+        if (this.IsWidget() || this.IsAllKidsWidgets()) {
+            oWidget = this.GetKid(0) || this;
+        }
+        let oCalcTrigget = oWidget.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Calculate);
         if (oCalcTrigget == null || nIdx < 0)
             return false;
 
-        let nCurIdx = oCalcInfo.ids.indexOf(this.GetFullName());
+        let nCurIdx = oCalcInfo.ids.indexOf(this.GetApIdx());
         if (nCurIdx == nIdx)
             return true;
 
         oCalcInfo.ids.splice(nCurIdx, 1);
         if (nIdx > oCalcInfo.ids.length)
-            oCalcInfo.ids.splice(nIdx, 0, this.GetFullName());
+            oCalcInfo.ids.push(this.GetApIdx());
         else
-            oCalcInfo.ids.push(this.GetFullName());
+            oCalcInfo.ids.splice(nIdx, 0, this.GetApIdx());
 
         return true;
     };
@@ -953,7 +949,7 @@
 	 */
     CTextField.prototype.Commit = function() {
         let oDoc        = this.GetDocument();
-        let aFields     = this._doc.GetFields(this.GetFullName());
+        let aFields     = this.GetDocument().GetAllWidgets(this.GetFullName());
         let oThisPara   = this.content.GetElement(0);
         
         if (this.DoFormatAction() == false) {
@@ -984,13 +980,6 @@
             return;
         }
 
-        // устанавливаем дефолтное значение формы
-        if (this.GetValue() == "" && this.GetDefaultValue() != null) {
-            this.SetValue(this.GetDefaultValue());
-            this.SetNeedRecalc(true);
-            this.AddToRedraw();
-        }
-		
 		let fieldValue = this.GetValue();
         this.UpdateDisplayValue(fieldValue);
 
@@ -1049,6 +1038,7 @@
 		if (this.contentFormat)
 			this.contentFormat.SetAlign(nAlignType);
 		
+        this.SetWasChanged(true);
 		this.SetNeedRecalc(true);
 	};
 	CTextField.prototype.GetAlign = function() {
@@ -1343,7 +1333,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CTextField.prototype.SyncField = function() {
-        let aFields = this._doc.GetFields(this.GetFullName());
+        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
         TurnOffHistory();
 

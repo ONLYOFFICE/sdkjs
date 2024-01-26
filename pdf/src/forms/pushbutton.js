@@ -118,7 +118,7 @@
 
         let oDoc    = this.GetDocument();
         let oViewer = Asc.editor.getDocumentRenderer();
-        let aFields = oViewer.IsOpenFormsInProgress == false ? oDoc.GetFields(this.GetFullName()) : [this];
+        let aFields = oViewer.IsOpenFormsInProgress == false ? oDoc.GetAllWidgets(this.GetFullName()) : [this];
 
         let aFonts = aFields.map(function(field) {
             return field.GetTextFontActual();
@@ -1749,7 +1749,7 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.SyncField = function() {
-        let aFields = this._doc.GetFields(this.GetFullName());
+        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
         TurnOffHistory();
 
@@ -1794,7 +1794,7 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.Commit = function() {
-        let aFields = this._doc.GetFields(this.GetFullName());
+        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         let oThisPara = this.content.GetElement(0);
         
         TurnOffHistory();

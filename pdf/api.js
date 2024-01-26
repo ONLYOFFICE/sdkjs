@@ -502,7 +502,7 @@
 		oField.SelectOption(nIdx);
 		let isNeedRedraw = oField.IsNeedCommit();
 		if (oField.IsCommitOnSelChange() && oField.IsNeedCommit()) {
-			oField.Commit();
+			oDoc.EnterDownActiveField();
 			isNeedRedraw = true;
 			
 			oDoc.activeForm = null;
@@ -510,7 +510,6 @@
 			
 			this.WordControl.m_oDrawingDocument.TargetEnd();
 		}
-		
 		
 		if (isNeedRedraw) {
 			oViewer._paint();

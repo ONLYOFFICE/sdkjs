@@ -371,7 +371,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CComboBoxField.prototype.SyncField = function() {
-        let aFields = this._doc.GetFields(this.GetFullName());
+        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
         TurnOffHistory();
 
@@ -445,7 +445,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CComboBoxField.prototype.Commit = function() {
-        let aFields = this._doc.GetFields(this.GetFullName());
+        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         let oThisPara = this.content.GetElement(0);
         
         if (this.DoFormatAction() == false) {

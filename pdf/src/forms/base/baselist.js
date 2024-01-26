@@ -99,7 +99,7 @@
 
     CBaseListField.prototype.SetApiCurIdxs = function(aIdxs) {
         let oParent = this.GetParent();
-        if (oParent && this.IsWidget() && oParent.IsAllChildsSame())
+        if (oParent && this.IsWidget() && oParent.IsAllKidsWidgets())
             oParent.SetApiCurIdxs(aIdxs);
         else
             this._currentValueIndices = aIdxs;
@@ -118,6 +118,7 @@
 
     CBaseListField.prototype.SetCommitOnSelChange = function(bValue) {
         this._commitOnSelChange = bValue;
+        this.SetWasChanged(true);
     };
     CBaseListField.prototype.IsCommitOnSelChange = function() {
         return this._commitOnSelChange;

@@ -71,24 +71,10 @@
         "thick":  3
     }
 
-    // please use copy of this object
-    let DEFAULT_SPAN = {
-        "alignment":        ALIGN_TYPE.left,
-        "fontFamily":       ["sans-serif"],
-        "fontStretch":      "normal",
-        "fontStyle":        "normal",
-        "fontWeight":       400,
-        "strikethrough":    false,
-        "subscript":        false,
-        "superscript":      false,
-        "text":             "",
-        "color":            AscPDF.Api.Objects.color["black"],
-        "textSize":         12.0,
-        "underline":        false
-    }
-
-    let highlight   = AscPDF.Api.Objects.highlight;
-    let style       = AscPDF.Api.Objects.style;
+    const highlight     = AscPDF.Api.Objects.highlight;
+    const style         = AscPDF.Api.Objects.style;
+    const display       = AscPDF.Api.Objects.display;
+    const border        = AscPDF.Api.Objects.border;
 
     /**
 	 * A string that sets the trigger for the action. Values are:
@@ -110,33 +96,10 @@
 	 * @returns {ApiBaseField}
 	 */
     ApiDocument.prototype.getField = function(sName) {
-        sName = sName != null && sName.toString ? sName.toString() : undefined;
-        if (!sName)
-            return null;
+        let oField = this.doc.GetField(sName);
+        if (oField)
+            return oField.GetFormApi();
 
-        let aPartNames = sName.split('.').filter(function(item) {
-            if (item != "")
-                return item;
-        })
-
-        let oRootField = this.doc.rootFields.get(aPartNames[0]);
-        if (oRootField) {
-            for (let i = 1; i < aPartNames.length; i++) {
-                if (!oRootField)
-                    return null;
-                
-                oRootField = oRootField.GetField(aPartNames[i]);
-            }
-    
-            return oRootField.GetFormApi();
-        }
-        else {
-            for (let i = 0; i < this.doc.widgets.length; i++) {
-                if (this.doc.widgets[i].GetFullName() == sName)
-                    return this.doc.widgets[i].GetFormApi();
-            }
-        }
-            
         return null;        
     };
 
@@ -153,25 +116,20 @@
 	 */
     Object.defineProperty(ApiBaseField.prototype, "borderStyle", {
         set: function(sValue) {
-            if (Object.values(AscPDF.BORDER_TYPES).includes(sValue)) {
-                if (this.field.IsWidget()) {
-                    let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-                    aFields.forEach(function(field) {
-                        field.SetBorderStyle(private_GetIntBorderStyle(sValue));
-                    });
-                }
-                else {
-                    this.field.GetKids().forEach(function(field) {
-                        field.GetFormApi()["borderStyle"] = sValue;
-                    });
-                }
+            if (Object.values(border).includes(sValue)) {
+                let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                aFields.forEach(function(field) {
+                    field.SetBorderStyle(private_GetIntBorderStyle(sValue));
+                });
             }
         },
         get: function() {
-            if (this.IsWidget())
+            if (this.field.IsWidget())
                 return private_GetStrBorderStyle(this.field.GetBorderStyle());
+            else if (this.field.IsAllKidsWidgets())
+                return private_GetStrBorderStyle(this.field.GetKid(0).GetBorderStyle());
             else
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+                throw Error("InvalidGetError: Field is not a widget");
         }
 	});
 
@@ -184,25 +142,27 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiBaseField.prototype, "defaultValue", {
-        set: function(bValue) {
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+        set: function(value) {
+            if (value && value.toString) {
+                value = value.toString();
 
-            if (aFields[0] && aFields[0].IsWidget()) {
-                aFields.forEach(function(field) {
-                    field.SetDefaultValue(bValue);
-                });
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    this.field.SetDefaultValue(value);
+                }
+                else {
+                    throw Error("InvalidGetError: Field is not a widget");
+                }
             }
             else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                throw Error("InvalidSetError: Set not possible, invalid value.");
             }
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.GetDefaultValue();
+            if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                return this.field.GetDefaultValue();
             }
             else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+                throw Error("InvalidGetError: Field is not a widget");
             }
         }
 	});
@@ -215,25 +175,24 @@
 	 */
     Object.defineProperty(ApiBaseField.prototype, "display", {
         set: function(nType) {
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-            if (aFields[0] && aFields[0].IsWidget()) {
+            if (Object.values(display).includes(nType)) {
+                let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
                 aFields.forEach(function(field) {
                     field.SetDisplay(nType);
                 });
             }
             else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                throw Error("InvalidSetError: Set not possible, invalid value.");
             }
+           
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.GetType();
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            if (this.field.IsWidget())
+                return this.field.GetDisplay();
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKid(0).GetDisplay();
+            else
+                throw Error("InvalidGetError: Field is not a widget");
         }
 	});
 
@@ -245,25 +204,23 @@
 	 */
     Object.defineProperty(ApiBaseField.prototype, "hidden", {
         set: function(bValue) {
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-            if (aFields[0] && aFields[0].IsWidget()) {
+            if (typeof bValue == "boolean") {
+                let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
                 aFields.forEach(function(field) {
-                    field.SetDisplay(window["AscPDF"].Api.Objects.display["hidden"]);
+                    field.SetDisplay(bValue ? display["hidden"] : display["visible"]);
                 });
             }
             else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                throw Error("InvalidSetError: Set not possible, invalid value.");
             }
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.GetDisplay() == window["AscPDF"].Api.Objects.display["hidden"];
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            if (this.field.IsWidget())
+                return this.field.GetDisplay() == display["hidden"];
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKid(0).GetDisplay() == display["hidden"];
+            else
+                throw Error("InvalidGetError: Field is not a widget");
         }
 	});
 
@@ -278,26 +235,25 @@
 	 */
     Object.defineProperty(ApiBaseField.prototype, "fillColor", {
         set: function(value) {
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-            if (aFields[0] && aFields[0].IsWidget()) {
-                let aColor = private_correctApiColor(value).slice(1);
+            if (Array.isArray(value)) {
+                let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                let aColor  = private_correctApiColor(value).slice(1);
                 aFields.forEach(function(field) {
                     field.SetBackgroundColor(aColor);
                 });
             }
             else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                throw Error("InvalidSetError: Set not possible, invalid value.");
             }
+            
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return private_getApiColor(oField.GetBackgroundColor());
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            if (this.field.IsWidget())
+                return private_getApiColor(this.field.GetBackgroundColor());
+            else if (this.field.IsAllKidsWidgets())
+                return private_getApiColor(this.field.GetKid(0).GetBackgroundColor());
+            else
+                throw Error("InvalidGetError: Field is not a widget");
         }
 	});
 
@@ -312,26 +268,10 @@
 	 */
     Object.defineProperty(ApiBaseField.prototype, "bgColor", {
         set: function(value) {
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-            if (aFields[0] && aFields[0].IsWidget()) {
-                let aColor = private_correctApiColor(value).slice(1);
-                aFields.forEach(function(field) {
-                    field.SetBackgroundColor(aColor);
-                });
-            }
-            else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
-            }
+            this["fillColor"] = value;
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return private_getApiColor(oField.GetBackgroundColor());
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            return this["fillColor"];
         }
 	});
 
@@ -346,229 +286,296 @@
         }
 	});
 
-    Object.defineProperties(ApiBaseField.prototype, {
-        // private
-        "parent": {
-            enumerable: false,
-            writable: true,
-            value: null
-        },
-        "pagePos": {
-            writable: true,
-            enumerable: false,
-            value: {
-                x: 0,
-                y: 0,
-                w: 0,
-                h: 0
+    /**
+	 * Specifies the thickness of the border when stroking the perimeter of a field’s rectangle. If the stroke color is transparent,
+     * this parameter has no effect except in the case of a beveled border. Values are:
+     * 0 — none
+     * 1 — thin
+     * 2 — medium
+     * 3 — thick
+     * In older versions of this specification, this property was borderWidth. The use of borderWidth is now discouraged,
+     * although it is still valid for backward compatibility.
+     * The default value for lineWidth is 1 (thin). Any integer value can be used; however, values beyond 5 may distort the
+     * field’s appearance
+     * @memberof ApiBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseField.prototype, "lineWidth", {
+        set: function(nValue) {
+            nValue = parseInt(nValue);
+            if (Object.values(LINE_WIDTH).includes(nValue)) {
+                let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                aFields.forEach(function(field) {
+                    field.SetBorderWidth(nValue);
+                });
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid value.");
             }
         },
-        "kids": {
-            enumerable: false,
-            value: [],
-        },
-        "partialName": {
-            writable: true,
-            enumerable: false
-        },
+        get: function() {
+            if (this.field.IsWidget())
+                return this.field.GetBorderWidth();
+            else
+                throw Error("InvalidGetError: Field is not a widget");
+        }
+	});
 
-        
-        "delay": {
-            set: function(bValue) {
-                if (typeof(bValue) == "boolean")
-                    this._delay = bValue;
-            },
-            get: function() {
-                return this._delay;
-            }
+    Object.defineProperty(ApiBaseField.prototype, "borderWidth", {
+        set: function(nValue) {
+            this["lineWidth"] = nValue;
         },
-        "lineWidth": {
-            set: function(nValue) {
-                nValue = parseInt(nValue);
-                if (Object.values(LINE_WIDTH).includes(nValue)) {
-                    let aFields = this._doc.GetFields(this.name);
-                    aFields.forEach(function(field) {
-                        field._lineWidth = nValue;
-                        field.SetNeedRecalc(true);
-                        field.content.GetElement(0).Content.forEach(function(run) {
-                            run.RecalcInfo.Measure = true;
-                        });
-                    });
-                }
-            },
-            get: function() {
-                return this._lineWidth;
-            }
-        },
-        "borderWidth": {
-            set: function(nValue) {
-                this.lineWidth = nValue;
-            },
-            get: function() {
-                return this.lineWidth;
-            }
-        },
-        "name": {
-            get: function() {
-                return this.field.GetFullName();
-            }
-        },
-        "page": {
-            get: function() {
-                return this.GetPage();
-            }
-        },
-        "print": {
-            set: function(bValue) {
-                if (typeof(bValue) == "boolean")
-                    this._print = bValue;
-            },
-            get: function() {
-                return this._print;
-            }
-        },
-        "readonly": {
-            set: function(bValue) {
-                if (typeof(bValue) == "boolean") {
-                    let aFields = this._doc.GetFields(this.name);
-                    aFields.forEach(function(field) {
-                        field.SetReadOnly(bValue);
-                    })
-                }
-                    
-            },
-            get: function() {
-                return this._readonly;
-            }
-        },
-        "rect": {
-            set: function(aRect) {
-                if (Array.isArray(aRect)) {
-                    let isValidRect = true;
-                    for (let i = 0; i < 4; i++) {
-                        if (typeof(aRect[i]) != "number") {
-                            isValidRect = false;
-                            break;
-                        }
-                    }
-                  
-                    if (isValidRect)
-                        this._rect = aRect;
-                }
-            },
-            get: function() {
-                return this._rect;
-            }
-        },
-        "required": {
-            set: function(bValue) {
-                if (typeof(bValue) == "boolean" && this.GetType() != AscPDF.FIELD_TYPES.button) {
-                    let aFields = this._doc.GetFields(this.name);
+        get: function() {
+            return this["lineWidth"];
+        }
+	});
 
-                    aFields.forEach(function(field) {
-                        field.SetRequired(bValue);
-                    })
-                }
-            },
-            get: function() {
-                if (this.GetType() != AscPDF.FIELD_TYPES.button)
-                    return this._required;
+    /**
+	 * This property returns the fully qualified field name of the field as a string object.
+     * Beginning with Acrobat 6.0, if the Field object represents one individual widget, the returned name includes an
+     * appended '.' followed by the widget index.
+     * @memberof ApiBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseField.prototype, "name", {
+        get: function() {
+            return this.field.GetFullName();
+        }
+	});
 
-                return undefined;
+    /**
+	 * The page number or an array of page numbers of a field. If the field has only one appearance in the document, the page
+     * property returns an integer representing the 0-based page number of the page on which the field appears. If the field
+     * has multiple appearances, it returns an array of integers, each member of which is a 0-based page number of an
+     * appearance of the field. The order in which the page numbers appear in the array is determined by the order in which
+     * the individual widgets of this field were created (and is unaffected by tab-order). If an appearance of the field is on a
+     * hidden template page, page returns a value of -1 for that appearance.
+     * @memberof ApiBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseField.prototype, "page", {
+        get: function() {
+            if (this.field.IsWidget()) {
+                return this.field.GetPage();
             }
-        },
-        "rotation": {
-            set: function(nValue) {
-                if (AscPDF.VALID_ROTATIONS.includes(nValue))
-                    this._rotation = nValue;
-            },
-            get: function() {
-                return this._rotation;
-            }
-        },
-        "strokeColor": {
-            set: function(aColor) {
-                if (Array.isArray(aColor))
-                    this._strokeColor = aColor;
-            },
-            get: function() {
-                return this._strokeColor;
-            }
-        },
-        "borderColor": {
-            set: function(aColor) {
-                if (Array.isArray(aColor))
-                    this._borderColor = aColor;
-            },
-            get: function() {
-                return this._borderColor;
-            }
-        },
-        "submitName": {
-            set: function(sValue) {
-                if (typeof(sValue) == "string")
-                    this._submitName = sValue;
-            },
-            get: function() {
-                return this._submitName;
-            }
-        },
-        "textColor": {
-            set: function(aColor) {
-                if (Array.isArray(aColor)) {
-                    let aFields = this.field.GetDocument().GetFields(this.name);
-                    aFields.forEach(function(field) {
-                        field.SetApiTextColor(aColor);
-                    });
-                }
-            },
-            get: function() {
-                return private_getApiColor(this.field.GetTextColor());
-            }
-        },
-        "fgColor": {
-            set: function(aColor) {
-                if (Array.isArray(aColor))
-                    this._fgColor = aColor;
-            },
-            get: function() {
-                return this._fgColor;
-            }
-        },
-        "textSize": {
-            set: function(nValue) {
-                if (typeof(nValue) == "number" && nValue >= 0 && nValue < AscPDF.MAX_TEXT_SIZE) {
-                    let aFields = this._doc.GetFields(this.name);
-                    let oField;
-                    for (var i = 0; i < aFields.length; i++) {
-                        oField = aFields[i];
-                        oField._textSize = nValue;
+            else {
+                let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                let aPages = aFields.map(function(field) {
+                    return field.GetPage();
+                })
 
-                        let aParas = oField.content.Content;
-                        aParas.forEach(function(para) {
-                           para.SetApplyToAll(true);
-                           para.Add(new AscCommonWord.ParaTextPr({FontSize : nValue}));
-                           para.SetApplyToAll(false);
-                           para.private_CompileParaPr(true);
-                        });
-                    }
-                }
-                    
-            },
-            get: function() {
-                return 
-            }
-        },
-        "userName": {
-            set: function(sValue) {
-                if (typeof(sValue) == "string")
-                    this._userName = sValue;
-            },
-            get: function() {
-                return this._userName;
+                return aPages;
             }
         }
-    });
+	});
+
+    /**
+	 * The read-only characteristic of a field. If a field is read-only, the user can see the field but cannot change it.
+     * @memberof ApiBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseField.prototype, "readonly", {
+        set: function(bValue) {
+            if (typeof(bValue) == "boolean") {
+                let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                aFields.forEach(function(field) {
+                    field.SetReadOnly(bValue);
+                });
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid value.");
+            }
+        },
+        get: function() {
+            if (this.field.IsWidget())
+                return this.field.IsReadOnly();
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKid(0).IsReadOnly();
+            else
+                throw Error("InvalidGetError: Field is not a widget");
+        }
+	});
+
+    /**
+	 * An array of four numbers in rotated user space that specify the size and placement of the form field. These four numbers
+     * are the coordinates of the bounding rectangle and are listed in the following order: upper-left x, upper-left y, lower-right
+     * x and lower-right y.
+     * @memberof ApiBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseField.prototype, "rect", {
+        // set: function(aRect) {
+        //     if (Array.isArray(aRect)) {
+        //         let isValidRect = true;
+        //         for (let i = 0; i < 4; i++) {
+        //             if (typeof(aRect[i]) != "number") {
+        //                 isValidRect = false;
+        //                 break;
+        //             }
+        //         }
+              
+        //         if (isValidRect) {
+                    
+        //         }
+        //     }
+        // },
+        get: function() {
+            if (this.field.IsWidget())
+                return this.field.GetOrigRect();
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKid(0).GetOrigRect();
+            else
+                throw Error("InvalidGetError: Field is not a widget");
+        }
+	});
+
+    /**
+	 * An array of four numbers in rotated user space that specify the size and placement of the form field. These four numbers
+     * are the coordinates of the bounding rectangle and are listed in the following order: upper-left x, upper-left y, lower-right
+     * x and lower-right y.
+     * @memberof ApiBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseField.prototype, "required", {
+        set: function(bValue) {
+            if (typeof(bValue) == "boolean") {
+                if (this.field.GetType() == AscPDF.FIELD_TYPES.button) {
+                    throw Error("InvalidSetError: button field doesn't have 'required' prop.");
+                }
+
+                let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                aFields.forEach(function(field) {
+                    if (field.GetType() != AscPDF.FIELD_TYPES.button)
+                        field.SetRequired(bValue);
+                });
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid value.");
+            }
+        },
+        get: function() {
+            if (this.field.GetType() != AscPDF.FIELD_TYPES.button) {
+                if (this.field.IsWidget())
+                    return this.field.IsRequired();
+                else if (this.field.IsAllKidsWidgets())
+                    return this.field.GetKid(0).IsRequired();
+                else
+                    throw Error("InvalidGetError: Field is not a widget");
+            }
+            else {
+                throw Error("InvalidGetError: button field doesn't have 'required' prop.");
+            }
+        }
+	});
+
+    /**
+	 * Specifies the stroke color for a field that is used to stroke the rectangle of the field with a line as large as the line width.
+     * Values are defined by using transparent, gray, RGB or CMYK color. See Color arrays for information on defining color
+     * arrays and how values are used with this property.
+     * In older versions of this specification, this property was borderColor. The use of borderColor is now discouraged,
+     * although it is still valid for backward compatibility.
+     * @memberof ApiBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseField.prototype, "strokeColor", {
+        set: function(value) {
+            if (Array.isArray(value)) {
+                let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                let aColor  = private_correctApiColor(value).slice(1);
+                aFields.forEach(function(field) {
+                    field.SetBorderColor(aColor);
+                });
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid value.");
+            }
+            
+        },
+        get: function() {
+            if (this.field.IsWidget())
+                return private_getApiColor(this.field.GetBorderColor());
+            else if (this.field.IsAllKidsWidgets())
+                return private_getApiColor(this.field.GetKid(0).GetBorderColor());
+            else
+                throw Error("InvalidGetError: Field is not a widget");
+        }
+	});
+
+    Object.defineProperty(ApiBaseField.prototype, "borderColor", {
+        set: function(value) {
+            this["strokeColor"] = value;
+        },
+        get: function() {
+            return this["strokeColor"];
+        }
+	});
+
+    /**
+	 * The foreground color of a field. It represents the text color for text, button, or list box fields and the check color for check
+     * box or radio button fields. Values are defined the same as the fillColor. See Color arrays for information on defining
+     * color arrays and how values are set and used with this property.
+     * In older versions of this specification, this property was fgColor. The use of fgColor is now discouraged, although it is
+     * still valid for backward compatibility.
+     * @memberof ApiBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseField.prototype, "textColor", {
+        set: function(aColor) {
+            if (Array.isArray(aColor)) {
+                let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                aFields.forEach(function(field) {
+                    field.SetApiTextColor(aColor);
+                });
+            }
+        },
+        get: function() {
+            if (this.field.IsWidget())
+                return private_getApiColor(this.field.GetTextColor());
+            else if (this.field.IsAllKidsWidgets())
+                return private_getApiColor(this.field.GetKid(0).GetTextColor());
+            else
+                throw Error("InvalidGetError: Field is not a widget");
+        }
+	});
+
+    Object.defineProperty(ApiBaseField.prototype, "fgColor", {
+        set: function(aColor) {
+            this["textColor"] = aColor;
+        },
+        get: function() {
+            return this["textColor"];
+        }
+	});
+
+    /**
+	 * Specifies the text size (in points) to be used in all controls. In check box and radio button fields, the text size determines
+     * the size of the check. Valid text sizes range from 0 to 32767, inclusive. A value of zero means the largest point size that
+     * allows all text data to fit in the field’s rectangle.
+     * @memberof ApiBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseField.prototype, "textSize", {
+        set: function(nValue) {
+            if (typeof(nValue) == "number" && nValue >= 0 && nValue < AscPDF.MAX_TEXT_SIZE) {
+                let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                aFields.forEach(function(field) {
+                    field.SetTextSize(Math.round(nValue));
+                });
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid value.");
+            }
+                
+        },
+        get: function() {
+            if (this.field.IsWidget())
+                return this.field.GetTextSize();
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKid(0).GetTextSize();
+            else
+                throw Error("InvalidGetError: Field is not a widget");
+        }
+	});
 
     /**
 	 * Sets the JavaScript action of the field for a given trigger.
@@ -579,7 +586,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     ApiBaseField.prototype.setAction = function(cTrigger, cScript) {
-        let aFields = this.field._doc.GetFields(this.name);
+        let aFields = this.field._doc.GetAllWidgets(this.field.GetFullName());
         let nInternalType;
         switch (cTrigger) {
             case "MouseUp":
@@ -639,29 +646,27 @@
         set: function(nValue) {
             if (typeof(nValue) == "number") {
                 nValue = Math.round(nValue);
-                let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-                if (aFields[0] && aFields[0].IsWidget()) {
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
                     aFields.forEach(function(field) {
                         field.SetIconPosition(nValue, field.GetIconPosition().Y);
                     });
                 }
                 else {
-                    throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                    throw Error("InvalidSetError: Set not possible, invalid value.");
                 }
             }
             else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                throw Error("InvalidSetError: Set not possible, field is not a widget.");
             }
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.GetIconPosition().X;
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            if (this.field.IsWidget())
+                return this.field.GetIconPosition().X;
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKid(0).GetIconPosition().X;
+            else
+                throw Error("InvalidGetError: Field is not a widget");
         }
 	});
     /**
@@ -675,242 +680,29 @@
         set: function(nValue) {
             if (typeof(nValue) == "number") {
                 nValue = Math.round(nValue);
-                let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-                if (aFields[0] && aFields[0].IsWidget()) {
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
                     aFields.forEach(function(field) {
                         field.SetIconPosition(field.GetIconPosition().X, nValue);
                     });
                 }
                 else {
-                    throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                    throw Error("InvalidSetError: Set not possible, invalid value.");
                 }
             }
             else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                throw Error("InvalidSetError: Set not possible, field is not a widget.");
             }
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.GetIconPosition().Y;
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            if (this.field.IsWidget())
+                return this.field.GetIconPosition().Y;
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKid(0).GetIconPosition().Y;
+            else
+                throw Error("InvalidGetError: Field is not a widget");
         }
 	});
-
-    /**
-	 * If true, the extent to which the icon may be scaled is set to the bounds of the button field. The additional icon
-     * placement properties are still used to scale and position the icon within the button face.
-	 * @memberof ApiPushButtonField
-	 * @typeofeditors ["PDF"]
-	 */
-    Object.defineProperty(ApiPushButtonField.prototype, "buttonFitBounds", {
-        set: function(bValue) {
-            if (typeof(bValue) == "boolean") {
-                let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-                if (aFields[0] && aFields[0].IsWidget()) {
-                    aFields.forEach(function(field) {
-                        field.SetButtonFitBounds(bValue);
-                    });
-                }
-                else {
-                    throw Error("InvalidSetError: Set not possible, invalid or unknown.");
-                }
-            }
-            else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
-            }
-        },
-        get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.IsButtonFitBounds();
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
-        }
-	});
-
-    /**
-	 * Controls how the text and the icon of the button are positioned with respect to each other within the button face. The
-     * convenience position object defines all of the valid alternatives.
-	 * @memberof ApiPushButtonField
-	 * @typeofeditors ["PDF"]
-	 */
-    Object.defineProperty(ApiPushButtonField.prototype, "buttonPosition", {
-        set: function(bValue) {
-            if (typeof(bValue) == "boolean") {
-                let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-                if (aFields[0] && aFields[0].IsWidget()) {
-                    aFields.forEach(function(field) {
-                        field.SetHeaderPosition(bValue);
-                    });
-                }
-                else {
-                    throw Error("InvalidSetError: Set not possible, invalid or unknown.");
-                }
-            }
-            else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
-            }
-        },
-        get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.GetHeaderPosition();
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
-        }
-	});
-
-    /**
-	 * Controls how the icon is scaled (if necessary) to fit inside the button face. he convenience scaleHow object defines all
-     * of the valid alternatives:
-     * Proportionally:      scaleHow.proportional
-     * Non-proportionally:  scaleHow.anamorphic
-     * @param {number}
-	 * @memberof ApiPushButtonField
-	 * @typeofeditors ["PDF"]
-	 */
-    Object.defineProperty(ApiPushButtonField.prototype, "buttonScaleHow", {
-        set: function(nType) {
-            if (typeof(nType) == "number") {
-                nType = Math.round(nType);
-                let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-                if (aFields[0] && aFields[0].IsWidget()) {
-                    aFields.forEach(function(field) {
-                        field.SetScaleHow(nType);
-                    });
-                }
-                else {
-                    throw Error("InvalidSetError: Set not possible, invalid or unknown.");
-                }
-            }
-            else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
-            }
-        },
-        get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.GetScaleHow();
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
-        }
-	});
-
-    /**
-	 * Controls when an icon is scaled to fit inside the button face. The convenience scaleWhen object defines all of the valid 
-     * alternatives:
-     * Always:                  scaleWhen.always
-     * Never:                   scaleWhen.never
-     * If icon is too big:      scaleWhen.tooBig
-     * If icon is too small:    scaleWhen.tooSmall
-     * @param {number} - scaleHow.proportional or scaleHow.anamorphic
-	 * @memberof ApiPushButtonField
-	 * @typeofeditors ["PDF"]
-	 */
-    Object.defineProperty(ApiPushButtonField.prototype, "buttonScaleWhen", {
-        set: function(nType) {
-            if (typeof(nType) == "number") {
-                nType = Math.round(nType);
-                let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-                if (aFields[0] && aFields[0].IsWidget()) {
-                    aFields.forEach(function(field) {
-                        field.SetScaleWhen(nType);
-                    });
-                }
-                else {
-                    throw Error("InvalidSetError: Set not possible, invalid or unknown.");
-                }
-            }
-            else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
-            }
-        },
-        get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.GetScaleWhen();
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
-        }
-	});
-
-    /**
-	 * Defines how a button reacts when a user clicks it. The four highlight modes supported are:
-	 * none — No visual indication that the button has been clicked.
-	 * invert — The region encompassing the button’s rectangle inverts momentarily.
-	 * push — The down face for the button (if any) is displayed momentarily.
-	 * outline — The border of the rectangle inverts momentarily.
-	 * The convenience highlight object defines each state, as follows:
-     * none - highlight.n
-     * invert - highlight.i
-     * push - highlight.p
-     * outline - highlight.o
-	 * @memberof ApiPushButtonField
-	 * @typeofeditors ["PDF"]
-	 */
-    Object.defineProperty(ApiPushButtonField.prototype, "highlight", {
-        set: function(sType) {
-            if (typeof(sType) == "string" && highlight.includes(sType)) {
-                sType = Math.round(sType);
-                let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-                if (aFields[0] && aFields[0].IsWidget()) {
-                    aFields.forEach(function(field) {
-                        field.SetHighlight(private_GetIntHighlight(sType));
-                    });
-                }
-                else {
-                    throw Error("InvalidSetError: Set not possible, invalid or unknown.");
-                }
-            }
-            else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
-            }
-        },
-        get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return private_GetStrHighlight(oField.GetHighlight());
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
-        }
-	});
-
-    Object.defineProperties(ApiPushButtonField.prototype, {
-        "textFont": {
-            set: function(sValue) {
-                if (typeof(sValue) == "string" && sValue !== "")
-                    this._textFont = sValue;
-            },
-            get: function() {
-                return this.textFont;
-            }
-        },
-        "value": {
-            get: function() {
-                return "";
-            }
-        }
-    });
 
     ApiPushButtonField.prototype.buttonImportIcon = function() {
         this.field.buttonImportIcon();
@@ -933,57 +725,96 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiBaseCheckBoxField.prototype, "exportValues", {
-        set: function(arrValues) {
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+        // set: function(arrValues) {
+        //     if (Array.isArray(arrValues)) {
+        //         if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+        //             let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsWidget()) {
-                for (let i = 0; i < arrValues.length; i++) {
-                    if (typeof(arrValues[i]) !== "string")
-                        arrValues[i] = String(arrValues[i]);
-                }
+        //             let aOpt = this.field.GetOptions();
+        //             let apiValueToSet;
+        //             let apiExpValue = this["value"];
 
-                for (let i = 0; i < aFields.length; i++) {
-                    if (arrValues[i] != "" && arrValues[i] != undefined) {
-                        aFields[i].SetExportValue(arrValues[i]);
-                        if (aFields[i].GetExportValue() == this.field.GetApiValue())
-                            aFields[i].SetChecked(true);
-                        else
-                            aFields[i].SetChecked(false);
-                    }
-                }
-            }
-            else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
-            }
-        },
+        //             for (let i = 0; i < aFields.length; i++) {
+        //                 let oField  = aFields[i];
+        //                 let sExport = undefined;
+        //                 if (arrValues[i] != undefined && arrValues[i] !== "") {
+        //                     sExport = String(arrValues[i]);
+        //                 }
+
+        //                 if (sExport != undefined) {
+        //                     oField.SetExportValue(arrValues[i]);
+        //                     if (aOpt) {
+        //                         aOpt[i] = arrValues[i];
+        //                     }
+        //                     if (oField.GetExportValue() == apiExpValue) {
+        //                         apiValueToSet = oField.GetApiValue();
+        //                     }
+        //                 }
+        //             }
+        //             if (apiValueToSet != undefined)
+        //                 this["value"] = apiValueToSet;
+        //             else
+        //                 this["value"] = "Off";
+        //         }
+        //         else {
+        //             throw Error("InvalidSetError: Set not possible, field is not a widget.");
+        //         }
+        //     }
+        //     else {
+        //         throw Error("InvalidSetError: Set not possible, invalid value.");
+        //     }
+            
+        // },
         get: function() {
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-            if (aFields[0] && aFields[0].IsWidget()) {
-                let aExpValues = [];
-                for (let i = 0; i < aFields.length; i++) {
-                    aExpValues.push(aFields[i].GetExportValue())
-                }
-
-                return aExpValues;
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            if (this.field.IsWidget())
+                return [this.field.GetExportValue()];
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKids().map(function(field) { return field.GetExportValue()});
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
         }
 	});
 
-    Object.defineProperties(ApiBaseCheckBoxField.prototype, {
-        "style": {
-            set: function(sStyle) {
-                if (Object.values(style).includes(sStyle))
-                    this._style = sStyle;
-            },
-            get: function() {
-                return this._style;
+    /**
+	 * Allows the user to set the glyph style of a check box or radio button. The glyph style is the graphic used to indicate that
+     * the item has been selected.
+     * The style values are associated with keywords as follows:
+     * check    - style.ch
+     * cross    - style.cr
+     * diamond  - style.di
+     * circle   - style.ci
+     * star     - style.st
+     * square   - style.sq
+	 * @memberof ApiBaseCheckBoxField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseCheckBoxField.prototype, "style", {
+        set: function(sStyle) {
+            if (Object.values(style).includes(sStyle)) {
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                    aFields.forEach(function(field) {
+                        field.SetStyle(private_GetIntChStyle(sStyle));
+                    })
+                }
+                else {
+                    throw Error("InvalidSetError: Set not possible, field is not a widget.");
+                }
             }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid value.");
+            }
+            
+        },
+        get: function() {
+            if (this.field.IsWidget())
+                return private_GetStrChStyle(this.field.GetStyle());
+            else if (this.field.IsAllKidsWidgets())
+                return private_GetStrChStyle(this.field.GetKid(0).GetStyle());
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
         }
-        
-    });
+	});
 
     /**
 	 * Determines whether the specified widget is checked.
@@ -998,20 +829,18 @@
      * @returns {string}
 	 */
     ApiBaseCheckBoxField.prototype.isBoxChecked = function(nWidget) {
-        let aFields = this.field._doc.GetFields(this.name);
-        let oField = aFields[nWidget];
-        if (!oField)
-            return false;
+        if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+            let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+            let oField  = aFields[nWidget];
+            if (!oField)
+                throw Error("InvalidGetError: checkbox with this index doesn't exist");
 
-        if (oField._exportValue == oField._value)
-            return true;
-
-        return false;
+            return oField.IsChecked();
+        }
+        else {
+            throw Error("InvalidGetError: Field doesn't have widgets");
+        }
     };
-
-    // for radiobutton
-    const CheckedSymbol   = 0x25C9;
-	const UncheckedSymbol = 0x25CB;
 
     function ApiCheckBoxField(oField)
     {
@@ -1021,36 +850,42 @@
 	ApiCheckBoxField.prototype.constructor = ApiCheckBoxField;
     Object.defineProperties(ApiCheckBoxField.prototype, {
         "value": {
-            set: function(sValue) {
-                let oDoc = this.field.GetDocument();
-                let oCalcInfo = oDoc.GetCalculateInfo();
-                let oSourceField = oCalcInfo.GetSourceField();
+            set: function(value) {
+                if (value != undefined) {
+                    value = String(value);
+                    if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                        let oDoc            = this.field.GetDocument();
+                        let oCalcInfo       = oDoc.GetCalculateInfo();
+                        let oSourceField    = oCalcInfo.GetSourceField();
 
-                if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.name)
-                    throw Error('InvalidSetError: Set not possible, invalid or unknown.');;
+                        if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.field.GetFullName())
+                            throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+                        if (oDoc.isOnValidate)
+                            throw Error('InvalidSetError: Set not possible, invalid or unknown.');
 
-                if (oDoc.isOnValidate)
-                    return;
+                        let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                        aFields.forEach(function(field) {
+                            field.SetValue(value);
+                        });
 
-                let aFields = this.field.GetDocument().GetFields(this.name);
-                if (this.exportValues.includes(sValue)) {
-                    aFields.forEach(function(field) {
-                        field._value = sValue;
-                    });
+                        this.field.SetApiValue(value);
+
+                        if (oCalcInfo.IsInProgress() == false && oDoc.IsNeedDoCalculate()) {
+                            oDoc.DoCalculateFields(this.field);
+                            oDoc.CommitFields();
+                        }
+                    }
+                    else {
+                        this.field.SetApiValue(value);
+                    }
                 }
                 else {
-                    aFields.forEach(function(field) {
-                        field._value = "Off";
-                    });
+                    throw Error("InvalidSetError: Set not possible, invalid value.");
                 }
-
-                if (oCalcInfo.IsInProgress() == false && oDoc.IsNeedDoCalculate()) {
-                    oDoc.DoCalculateFields(this.field);
-                    oDoc.CommitFields();
-                }
+                
             },
             get: function() {
-                return this.field._value;
+                return this.field.GetApiValue();
             }
         }
     });
@@ -1061,62 +896,88 @@
     }
     ApiRadioButtonField.prototype = Object.create(ApiBaseCheckBoxField.prototype);
 	ApiRadioButtonField.prototype.constructor = ApiRadioButtonField;
-    Object.defineProperties(ApiRadioButtonField.prototype, {
-        "radiosInUnison": {
-            set: function(bValue) {
-                if (typeof(bValue) == "boolean") {
-                    let aFields = this._doc.GetFields(this.name);
+
+    /**
+	 * If false, even if a group of radio buttons have the same name and export value, they behave in a mutually exclusive
+     * fashion, like HTML radio buttons. The default for new radio buttons is false.
+     * If true, if a group of radio buttons have the same name and export value, they turn on and off in unison, as in Acrobat
+     * 4.0.
+	 * @memberof ApiRadioButtonField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiRadioButtonField.prototype, "radiosInUnison", {
+        set: function(bValue) {
+            if (typeof(bValue) == "boolean") {
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
                     aFields.forEach(function(field) {
                         field.SetRadiosInUnison(bValue);
                     });
+                    aFields[0].UpdateAll();
                 }
-            },
-            get: function() {
-                return this.IsRadiosInUnison();
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid value.");
             }
         },
+        get: function() {
+            if (this.field.IsWidget())
+                return this.field.IsRadiosInUnison();
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKid(0).IsRadiosInUnison();
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
+        }
+	});
+
+    Object.defineProperties(ApiRadioButtonField.prototype, {
         "value": {
             set: function(sValue) {
-                let oDoc = this.field.GetDocument();
-                let oCalcInfo = oDoc.GetCalculateInfo();
-                let oSourceField = oCalcInfo.GetSourceField();
+                if (sValue != undefined) {
+                    sValue = String(sValue);
+                    if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                        let oDoc            = this.field.GetDocument();
+                        let oCalcInfo       = oDoc.GetCalculateInfo();
+                        let oSourceField    = oCalcInfo.GetSourceField();
+    
+                        if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.field.GetFullName())
+                            throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+                        if (oDoc.isOnValidate)
+                            throw Error('InvalidSetError: Set not possible, invalid or unknown.');;
+    
+                        
+                        let sApiValueToSet = sValue;
+                        let aOpt = this.field.GetOptions();
+                        if (aOpt) {
+                            let nIdx = aOpt.indexOf(sValue);
+                            if (nIdx != -1)
+                                sApiValueToSet = String(nIdx);
+                        }
 
-                if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.name)
-                    throw Error('InvalidSetError: Set not possible, invalid or unknown.');
- 
-                if (oDoc.isOnValidate)
-                    return;
-
-                let aFields = this._doc.GetFields(this.name);
-                if (this._exportValues.includes(sValue)) {
-                    aFields.forEach(function(field) {
-                        field._value = sValue;
-                    });
+                        this.field.SetApiValue(sApiValueToSet);
+                        this.field.GetKid(0).UpdateAll();
+    
+                        if (oCalcInfo.IsInProgress() == false && oDoc.IsNeedDoCalculate()) {
+                            oDoc.DoCalculateFields(this.field);
+                            oDoc.CommitFields();
+                        }
+                    }
+                    else {
+                        this.field.SetApiValue(sValue);
+                    }
                 }
                 else {
-                    aFields.forEach(function(field) {
-                        field._value = "Off";
-                    });
-                }
-
-                if (oCalcInfo.IsInProgress() == false && oDoc.IsNeedDoCalculate()) {
-                    oDoc.DoCalculateFields(this.field);
-                    oDoc.CommitFields();
+                    throw Error("InvalidSetError: Set not possible, invalid value.");
                 }
             },
             get: function() {
-                let aFields = this.field.GetDocument().GetFields(this.name);
-                for (let i = 0; i < aFields.length; i++) {
-                    if (aFields[i]._value != "Off" && aFields[i].IsNeedCommit()) {
-                        return aFields[i]._value;
-                    }
+                let aOpt = this.field.GetOptions();
+                if (aOpt) {
+                    return aOpt[this.field.GetApiValue()];
                 }
-                for (let i = 0; i < aFields.length; i++) {
-                    if (aFields[i]._value != "Off") {
-                        return aFields[i]._value;
-                    }
+                else {
+                    return this.field.GetApiValue();
                 }
-                return "Off";
             }
         }
     });
@@ -1135,29 +996,28 @@
 	 */
     Object.defineProperty(ApiTextField.prototype, "alignment", {
         set: function(sValue) {
-            if (Object.values(ALIGN_TYPE).includes(sValue) == false)
-                return;
-
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-            if (aFields[0] && aFields[0].IsWidget()) {
-                var nJcType = private_GetIntAlign(sValue);
-                aFields.forEach(function(field) {
-                    field.SetAlign(nJcType);
-                });
+            if (Object.values(ALIGN_TYPE).includes(sValue)) {
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                    var nJcType = private_GetIntAlign(sValue);
+                    aFields.forEach(function(field) {
+                        field.SetAlign(nJcType);
+                    });
+                }
+                else {
+                    throw Error("InvalidSetError: Set not possible, field is not a widget.");
+                }
             }
-            else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
-            }
+            else
+                throw Error("InvalidSetError: Set not possible, invalid value.");
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return private_GetStrAlign(oField.GetAlign());
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            if (this.field.IsWidget())
+                return private_GetStrAlign(this.field.GetAlign());
+            else if (this.field.IsAllKidsWidgets())
+                return private_GetStrAlign(this.field.GetKid(0).GetAlign());
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
         }
 	});
 
@@ -1171,23 +1031,25 @@
 	 */
     Object.defineProperty(ApiTextField.prototype, "calcOrderIndex", {
         set: function(nValue) {
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-            if (aFields[0] && aFields[0].IsWidget()) {
-                aFields[0].SetCalcOrderIndex(nValue);
+            let nIdx = parseInt(nValue);
+            if (isNaN(parseInt(nIdx)) == false) {
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    this.field.SetCalcOrderIndex(nIdx)
+                }
+                else {
+                    throw Error("InvalidGetError: Get not possible, field is not a widget.");
+                }
             }
             else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                throw Error("InvalidSetError: Set not possible, invalid value.");
             }
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.GetCalcOrderIndex();
+            if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                return this.field.GetCalcOrderIndex();
             }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
         }
 	});
 
@@ -1198,25 +1060,30 @@
 	 */
     Object.defineProperty(ApiTextField.prototype, "charLimit", {
         set: function(nValue) {
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-            if (aFields[0] && aFields[0].IsWidget()) {
-                aFields.forEach(function(field) {
-                    field.SetCharLimit(nValue);
-                });
+            let nCharLimit = parseInt(nValue);
+            if (isNaN(nCharLimit) == false) {
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                    aFields.forEach(function(field) {
+                        field.SetCharLimit(nCharLimit);
+                    });
+                }
+                else {
+                    throw Error("InvalidGetError: Get not possible, field is not a widget.");
+                }
             }
             else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                throw Error("InvalidSetError: Set not possible, invalid value.");
             }
+            
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.GetCharLimit();
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            if (this.field.IsWidget())
+                return this.field.GetCharLimit();
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKid(0).GetCharLimit();
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
         }
 	});
 
@@ -1230,26 +1097,29 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiTextField.prototype, "comb", {
-        set: function(bValue) {
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-            if (aFields[0] && aFields[0].IsWidget()) {
-                aFields.forEach(function(field) {
-                    field.SetComb(bValue);
-                });
-            }
-            else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
-            }
-        },
+        // set: function(bComb) {
+        //     if (typeof bComb == "boolean") {
+        //         if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+        //             let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+        //             aFields.forEach(function(field) {
+        //                 field.SetComb(bComb);
+        //             });
+        //         }
+        //         else {
+        //             throw Error("InvalidGetError: Get not possible, field is not a widget.");
+        //         }
+        //     }
+        //     else {
+        //         throw Error("InvalidSetError: Set not possible, invalid value.");
+        //     }
+        // },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.IsComb();
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            if (this.field.IsWidget())
+                return this.field.IsComb();
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKid(0).IsComb();
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
         }
 	});
 
@@ -1261,33 +1131,29 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiTextField.prototype, "doNotScroll", {
-        set: function(bValue) {
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-            if (aFields[0] && aFields[0].IsWidget()) {
-                aFields.forEach(function(field) {
-                    field.SetDoNotScroll(bValue);
-                });
-
-                if (editor.getDocumentRenderer().activeForm == aFields[0]) {
-                    if (bValue == true)
-                        editor.getDocumentRenderer().activeForm.UpdateScroll(false, false);
-                    else
-                        editor.getDocumentRenderer().activeForm.UpdateScroll();
+        set: function(bDoNot) {
+            if (typeof bDoNot == "boolean") {
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                    aFields.forEach(function(field) {
+                        field.SetDoNotScroll(bDoNot);
+                    });
+                }
+                else {
+                    throw Error("InvalidGetError: Get not possible, field is not a widget.");
                 }
             }
             else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                throw Error("InvalidSetError: Set not possible, invalid value.");
             }
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.IsDoNotScroll();
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            if (this.field.IsWidget())
+                return this.field.IsDoNotScroll();
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKid(0).IsDoNotScroll();
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
         }
     });
 
@@ -1298,183 +1164,108 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiTextField.prototype, "doNotSpellCheck", {
-        set: function(bValue) {
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-            if (aFields[0] && aFields[0].IsWidget()) {
-                aFields.forEach(function(field) {
-                    field.SetDoNotSpellCheck(bValue);
-                });
+        set: function(bDoNot) {
+            if (typeof bDoNot == "boolean") {
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                    aFields.forEach(function(field) {
+                        field.SetDoNotSpellCheck(bDoNot);
+                    });
+                }
+                else {
+                    throw Error("InvalidGetError: Get not possible, field is not a widget.");
+                }
             }
             else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                throw Error("InvalidSetError: Set not possible, invalid value.");
             }
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.IsDoNotSpellCheck();
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            if (this.field.IsWidget())
+                return this.field.IsDoNotSpellCheck();
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKid(0).IsDoNotSpellCheck();
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
         }
     });
 
     /**
-	 * If true, sets the file-select flag in the Options tab of the text field (Field is Used for File Selection). This indicates that the
-	 * value of the field represents a path of a file whose contents may be submitted with the form.
-	 * The path may be entered directly into the field by the user, or the user can browse for the file. (See the
-	 * browseForFileToSubmit method.)
-	 * Note: The file select flag is mutually exclusive with the multiline, charLimit, password, and defaultValue
-	 * properties. Also, on the Mac OS platform, when setting the file select flag, the field gets treated as read-only.
-	 * Therefore, the user must browse for the file to enter into the field. (See browseForFileToSubmit.)
-	 * This property can only be set during a batch or console event. See Privileged versus non-privileged context for
-	 * details. The event object contains a discussion of JavaScript events.
+	 * Controls how text is wrapped within the field. If false (the default), the text field can be a single line only. If true,
+     * multiple lines are allowed and they wrap to field boundaries.
 	 * @memberof ApiTextField
 	 * @typeofeditors ["PDF"]
 	 */
-    Object.defineProperty(ApiTextField.prototype, "fileSelect", {
-        set: function(bValue) {
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-            if (aFields[0] && aFields[0].IsWidget()) {
-                aFields.forEach(function(field) {
-                    field.SetFileSelect(bValue);
-                });
-            }
-            else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
-            }
-        },
+    Object.defineProperty(ApiTextField.prototype, "multiline", {
+        // set: function(bValue) {
+        //     if (typeof bValue == "boolean") {
+        //         if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+        //             let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+        //             aFields.forEach(function(field) {
+        //                 field.SetMultiline(bValue);
+        //             });
+        //         }
+        //         else {
+        //             throw Error("InvalidGetError: Get not possible, field is not a widget.");
+        //         }
+        //     }
+        //     else {
+        //         throw Error("InvalidSetError: Set not possible, invalid value.");
+        //     }
+        // },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.IsFileSelect();
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            if (this.field.IsWidget())
+                return this.field.IsMultiline();
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKid(0).IsMultiline();
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
         }
     });
 
     Object.defineProperties(ApiTextField.prototype, {
-        "multiline": {
-            set: function(bValue) {
-                if (typeof(bValue) != "boolean")
-                    return;
-
-                let aFields = this._doc.GetFields(this.name);
-                aFields.forEach(function(field) {
-                    field.SetMultiline(bValue);
-                });
-            },
-            get: function() {
-                return this._multiline;
-            }
-        },
-        "password": {
-            set: function(bValue) {
-                if (typeof(bValue) != "boolean")
-                    return;
-
-                let aFields = this._doc.GetFields(this.name);
-                aFields.forEach(function(field) {
-                    field.SetPassword(bValue);
-                });
-            },
-            get: function() {
-                return this._password;
-            }
-        },
-        "richText": {
-            set: function(bValue) {
-                if (typeof(bValue) == "boolean") {
-                    let aFields = this._doc.GetFields(this.name);
-                    aFields.forEach(function(field) {
-                        field.SetRichText(bValue);
-                    });
-                }
-            },
-            get: function() {
-                return this._richText;
-            }
-        },
-        "richValue": {
-            set: function(aSpans) {
-                if (Array.isArray(aSpans)) {
-                    let aCorrectVals = aSpans.filter(function(item) {
-                        if (Array.isArray(item) == false && typeof(item) == "object" && item != null)
-                            return item;
-                    });
-
-                    let aFields = this._doc.GetFields(this.name);
-                    aFields.forEach(function(field) {
-                        field._richValue = aCorrectVals;
-                    });
-                }
-            },
-            get: function() {
-                return this._richValue;
-            }
-        },
-        "textFont": {
-            set: function(sValue) {
-                if (typeof(sValue) == "string" && sValue !== "") {
-                    let aFields = this._doc.GetFields(this.name);
-                    aFields.forEach(function(field) {
-                        field._textFont = sValue;
-                    });
-                }
-            },
-            get: function() {
-                return this.textFont;
-            }
-        },
         "value": {
             set: function(value) {
-                let oDoc            = this.field.GetDocument();
-                let oCalcInfo       = oDoc.GetCalculateInfo();
-                let oSourceField    = oCalcInfo.GetSourceField();
+                if (value != undefined) {
+                    value = String(value);
+                    if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                        let oDoc            = this.field.GetDocument();
+                        let oCalcInfo       = oDoc.GetCalculateInfo();
+                        let oSourceField    = oCalcInfo.GetSourceField();
 
-                if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.name)
-                    throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+                        if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.field.GetFullName())
+                            throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+                        if (oDoc.isOnValidate)
+                            throw Error('InvalidSetError: Set not possible, invalid or unknown.');
 
-                if (oDoc.isOnValidate)
-                    return;
+                        if (value != null && value.toString)
+                            value = value.toString();
+                            
+                        if (this["value"] == value)
+                            return;
 
-                if (value != null && value.toString)
-                    value = value.toString();
-                    
-                if (this.value == value)
-                    return;
+                        let oWidget = this.field.GetKid(0);
+                        let isValid = oWidget.DoValidateAction(value);
+                        if (isValid) {
+                            oWidget.SetValue(value);
 
-                let oWidget;
-                if (this.field.IsWidget() == false) {
-                    if (this.field.IsAllChildsSame()) {
-                        let aKids = this.field.GetKids();
-                        oWidget = aKids[0];
-                    }
-                    else {
-                        throw Error('InvalidSetError: Set not possible, invalid or unknown.');
-                    }
-                }
-                else
-                    oWidget = this.field;
-
-                let isValid = oWidget.DoValidateAction(value);
-                if (isValid) {
-                    oWidget.SetValue(value);
-
-                    oWidget.needValidate = false; 
-                    oWidget.Commit();
-                    if (oCalcInfo.IsInProgress() == false) {
-                        if (oDoc.event["rc"] == true && oDoc.IsNeedDoCalculate()) {
-                            oDoc.DoCalculateFields(this.field);
-                            oDoc.AddFieldToCommit(oWidget);
-                            oDoc.CommitFields();
+                            oWidget.needValidate = false; 
+                            oWidget.Commit();
+                            if (oCalcInfo.IsInProgress() == false) {
+                                if (oDoc.event["rc"] !== false && oDoc.IsNeedDoCalculate()) {
+                                    oDoc.DoCalculateFields(this.field);
+                                    oDoc.AddFieldToCommit(oWidget);
+                                    oDoc.CommitFields();
+                                }
+                            }
                         }
                     }
+                    else {
+                        this.field.SetApiValue(value);
+                    }
+                }
+                else {
+                    throw Error("InvalidSetError: Set not possible, invalid value.");
                 }
             },
             get: function() {
@@ -1502,44 +1293,30 @@
 	 */
     Object.defineProperty(ApiBaseListField.prototype, "commitOnSelChange", {
         set: function(bValue) {
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-            if (aFields[0] && aFields[0].IsWidget()) {
-                aFields.forEach(function(field) {
-                    field.SetCommitOnSelChange(bValue);
-                });
+            if (typeof bValue == "boolean") {
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                    aFields.forEach(function(field) {
+                        field.SetCommitOnSelChange(bValue);
+                    });
+                }
+                else {
+                    throw Error("InvalidGetError: Get not possible, field is not a widget.");
+                }
             }
             else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                throw Error("InvalidSetError: Set not possible, invalid value.");
             }
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.IsCommitOnSelChange();
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            if (this.field.IsWidget())
+                return this.field.IsCommitOnSelChange();
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKid(0).IsCommitOnSelChange();
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
         }
 	});
-
-    Object.defineProperties(ApiBaseListField.prototype, {
-        "numItems": {
-            get: function() {
-                return this._options.length;
-            }
-        },
-        "textFont": {
-            set: function(sValue) {
-                if (typeof(sValue) == "string" && sValue !== "")
-                    this._textFont = sValue;
-            },
-            get: function() {
-                return this.textFont;
-            }
-        }
-    });
 
     /**
 	 * Gets the internal value of an item in a combo box or a list box.
@@ -1550,18 +1327,24 @@
      * @returns {string}
 	 */
     ApiBaseListField.prototype.getItemAt = function(nIdx, bExportValue) {
-        if (typeof(bExportValue) != "boolean")
-            bExportValue = true;
-
-        if (this.field._options[nIdx]) {
-            if (typeof(this.field._options[nIdx]) == "string")
-                return this.field._options[nIdx];
+        if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+            let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+            let oWidget = aFields[0];
+            let aOptions = oWidget.GetOptions();
+            if (aOptions[nIdx]) {
+                if (bExportValue == false) {
+                    return Array.isArray(aOptions[nIdx]) ? aOptions[nIdx][0] : aOptions[nIdx];
+                }
+                else {
+                    return Array.isArray(aOptions[nIdx]) ? aOptions[nIdx][1] : aOptions[nIdx];
+                }
+            }
             else {
-                if (bExportValue)
-                    return this.field._options[nIdx][1];
-
-                return this.field._options[nIdx][0];
-            } 
+                throw Error("InvalidSetError: Set not possible, invalid value.");
+            }
+        }
+        else {
+            throw Error("InvalidGetError: Get not possible, field is not a widget.");
         }
     };
 
@@ -1573,6 +1356,38 @@
 	ApiComboBoxField.prototype.constructor = ApiComboBoxField;
 
     /**
+	 * Controls how the text is laid out within the text field. Values are left/center/right.
+	 * @memberof ApiComboBoxField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiComboBoxField.prototype, "alignment", {
+        set: function(sValue) {
+            if (Object.values(ALIGN_TYPE).includes(sValue)) {
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                    var nJcType = private_GetIntAlign(sValue);
+                    aFields.forEach(function(field) {
+                        field.SetAlign(nJcType);
+                    });
+                }
+                else {
+                    throw Error("InvalidSetError: Set not possible, field is not a widget.");
+                }
+            }
+            else
+                throw Error("InvalidSetError: Set not possible, invalid value.");
+        },
+        get: function() {
+            if (this.field.IsWidget())
+                return private_GetStrAlign(this.field.GetAlign());
+            else if (this.field.IsAllKidsWidgets())
+                return private_GetStrAlign(this.field.GetKid(0).GetAlign());
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
+        }
+	});
+
+    /**
 	 * Changes the calculation order of fields in the document. When a computable text or combo box field is added to a
 	 * document, the field’s name is appended to the calculation order array. The calculation order array determines in what
 	 * order the fields are calculated. The calcOrderIndex property works similarly to the Calculate tab used by the Acrobat
@@ -1582,23 +1397,25 @@
 	 */
     Object.defineProperty(ApiComboBoxField.prototype, "calcOrderIndex", {
         set: function(nValue) {
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-            if (aFields[0] && aFields[0].IsWidget()) {
-                aFields[0].SetCalcOrderIndex(nValue);
+            let nIdx = parseInt(nValue);
+            if (isNaN(parseInt(nIdx)) == false) {
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    this.field.SetCalcOrderIndex(nIdx)
+                }
+                else {
+                    throw Error("InvalidGetError: Get not possible, field is not a widget.");
+                }
             }
             else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                throw Error("InvalidSetError: Set not possible, invalid value.");
             }
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.GetCalcOrderIndex();
+            if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                this.field.GetCalcOrderIndex();
             }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
         }
 	});
 
@@ -1609,34 +1426,54 @@
 	 */
     Object.defineProperty(ApiComboBoxField.prototype, "currentValueIndices", {
         set: function(nValue) {
-            if (typeof(nValue) !== "number" || this.getItemAt(nValue, false) == undefined)
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+            let nIdx = parseInt(nValue);
+            if (isNaN(parseInt(nIdx)) == false) {
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    let oDoc            = this.field.GetDocument();
+                    let oCalcInfo       = oDoc.GetCalculateInfo();
+                    let oSourceField    = oCalcInfo.GetSourceField();
 
-            let oDoc = this.field.GetDocument();
-            let oCalcInfo = oDoc.GetCalculateInfo();
-            let oSourceField = oCalcInfo.GetSourceField();
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+                    if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.field.GetFullName())
+                        throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+                    if (oDoc.isOnValidate)
+                        throw Error('InvalidSetError: Set not possible, invalid or unknown.');
 
-            if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.field.GetFullName() || aFields[0].IsWidget() == false)
-                throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+                    let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                    let oWidget = aFields[0];
+                    if (oWidget.GetCurIdxs()[0] == nIdx)
+                        return;
 
-            aFields[0].SelectOption(nValue);
-            aFields[0].Commit();
+                    let sDisplayValue = this.getItemAt(nIdx, false);
+                    let isValid = oWidget.DoValidateAction(sDisplayValue);
 
-            if (oCalcInfo.IsInProgress() == false && oDoc.IsNeedDoCalculate()) {
-                oDoc.DoCalculateFields(this.field);
-                oDoc.AddFieldToCommit(this.field);
-                oDoc.CommitFields();
+                    if (isValid) {
+                        oWidget.SetCurIdxs([nIdx]);
+                        oWidget.needValidate = false; 
+                        oWidget.Commit();
+                        if (oCalcInfo.IsInProgress() == false) {
+                            if (oDoc.event["rc"] !== false && oDoc.IsNeedDoCalculate()) {
+                                oDoc.DoCalculateFields(this.field);
+                                oDoc.AddFieldToCommit(oWidget);
+                                oDoc.CommitFields();
+                            }
+                        }
+                    }
+                }
+                else {
+                    throw Error("InvalidGetError: Get not possible, field is not a widget.");
+                }
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid value.");
             }
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.GetCurIdxs(true);
+            if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                let aCurIdxs = this.field.GetCurIdxs(true);
+                return aCurIdxs[0] != undefined ? aCurIdxs[0] : -1;
             }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
         }
 	});
 
@@ -1648,74 +1485,74 @@
 	 */
     Object.defineProperty(ApiComboBoxField.prototype, "editable", {
         set: function(bValue) {
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-            if (aFields[0] && aFields[0].IsWidget()) {
-                aFields[0].SetEditable(bValue);
+            if (typeof bValue == "boolean") {
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                    aFields.forEach(function(field) {
+                        field.SetEditable(bValue);
+                    });
+                }
+                else {
+                    throw Error("InvalidGetError: Get not possible, field is not a widget.");
+                }
             }
             else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                throw Error("InvalidSetError: Set not possible, invalid value.");
             }
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.IsEditable();
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            if (this.field.IsWidget())
+                return this.field.IsEditable();
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKid(0).IsEditable();
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
         }
 	});
 
     Object.defineProperties(ApiComboBoxField.prototype, {
         "value": {
             set: function(value) {
-                let oDoc = this.field.GetDocument();
-                let oCalcInfo = oDoc.GetCalculateInfo();
-                let oSourceField = oCalcInfo.GetSourceField();
+                if (value != undefined) {
+                    value = String(value);
+                    if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                        let oDoc = this.field.GetDocument();
+                        let oCalcInfo = oDoc.GetCalculateInfo();
+                        let oSourceField = oCalcInfo.GetSourceField();
 
-                if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.name)
-                    throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+                        if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.field.GetFullName())
+                            throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+                        if (oDoc.isOnValidate)
+                            throw Error('InvalidSetError: Set not possible, invalid or unknown.');
 
-                if (oDoc.isOnValidate)
-                    return;
+                        if (value != null && value.toString)
+                            value = value.toString();
+                            
+                        if (this["value"] == value)
+                            return;
+                        
+                        let oWidget = this.field.GetKid(0);
+                        let isValid = oWidget.DoValidateAction(value);
 
-                if (value != null && value.toString)
-                    value = value.toString();
-                    
-                if (this.value == value)
-                    return;
-                
-                let oWidget;
-                if (this.field.IsWidget() == false) {
-                    if (this.field.IsAllChildsSame()) {
-                        let aKids = this.field.GetKids();
-                        oWidget = aKids[0];
-                    }
-                    else {
-                        throw Error('InvalidSetError: Set not possible, invalid or unknown.');
-                    }
-                }
-                else
-                    oWidget = this.field;
-
-                let isValid = oWidget.DoValidateAction(value);
-
-                if (isValid) {
-                    oWidget.SetValue(value);
-                    if (oWidget.IsWidget() == false)
-                        return;
-
-                    oWidget.needValidate = false; 
-                    oWidget.Commit();
-                    if (oCalcInfo.IsInProgress() == false) {
-                        if (oDoc.event["rc"] == true && oDoc.IsNeedDoCalculate()) {
-                            oDoc.DoCalculateFields(this.field);
-                            oDoc.AddFieldToCommit(oWidget);
-                            oDoc.CommitFields();
+                        if (isValid) {
+                            oWidget.SetValue(value);
+                            oWidget.needValidate = false; 
+                            oWidget.Commit();
+                            if (oCalcInfo.IsInProgress() == false) {
+                                if (oDoc.event["rc"] !== false && oDoc.IsNeedDoCalculate()) {
+                                    oDoc.DoCalculateFields(this.field);
+                                    oDoc.AddFieldToCommit(oWidget);
+                                    oDoc.CommitFields();
+                                }
+                            }
                         }
                     }
+                    else {
+                        this.field.SetApiValue(value);
+                    }
+                }
+                else {
+                    throw Error("InvalidSetError: Set not possible, invalid value.");
                 }
             },
             get: function() {
@@ -1733,68 +1570,31 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiComboBoxField.prototype, "doNotSpellCheck", {
-        set: function(bValue) {
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-
-            if (aFields[0] && aFields[0].IsWidget()) {
-                aFields.forEach(function(field) {
-                    field.SetDoNotSpellCheck(bValue);
-                });
+        set: function(bDoNot) {
+            if (typeof bDoNot == "boolean") {
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                    aFields.forEach(function(field) {
+                        field.SetDoNotSpellCheck(bDoNot);
+                    });
+                }
+                else {
+                    throw Error("InvalidGetError: Get not possible, field is not a widget.");
+                }
             }
             else {
-                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                throw Error("InvalidSetError: Set not possible, invalid value.");
             }
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.IsDoNotSpellCheck();
-            }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            if (this.field.IsWidget())
+                return this.field.IsDoNotSpellCheck();
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKid(0).IsDoNotSpellCheck();
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
         }
     });
-
-    /**
-	 * Sets the list of items for a combo box.
-	 * @memberof ApiComboBoxField
-     * @param {string[]} values - An array in which each element is either an object convertible to a string or another array:
-        For an element that can be converted to a string, the user and export values for the list item are equal to the string.
-        For an element that is an array, the array must have two subelements convertible to strings, where the first is the user value and the second is the export value.
-	 * @typeofeditors ["PDF"]
-	 */
-    ApiComboBoxField.prototype.setItems = function(values) {
-        let aOptToPush = [];
-        let oThis = this;
-
-        for (let i = 0; i < values.length; i++) {
-            if (values[i] == null)
-                continue;
-            if (typeof(values[i]) == "string" && values[i] != "")
-                aOptToPush.push(values[i]);
-            else if (Array.isArray(values[i]) && values[i][0] != undefined && values[i][1] != undefined) {
-                if (values[i][0].toString && values[i][1].toString) {
-                    aOptToPush.push([values[i][0].toString(), values[i][1].toString()])
-                }
-            }
-            else if (typeof(values[i]) != "string" && values[i].toString) {
-                aOptToPush.push(values[i].toString());
-            }
-        }
-
-        let aFields = this._doc.GetFields(this.name);
-        aFields.forEach(function(field) {
-            field._options = aOptToPush.slice();
-            if (field == oThis) {
-                field.SelectOption(0, true);
-                field.UnionLastHistoryPoints();
-                field.SetNeedCommit(false);
-            }
-            else
-                field.SelectOption(0, false);
-        });
-    };
 
     function ApiListBoxField(oField)
     {
@@ -1805,129 +1605,161 @@
 	ApiListBoxField.prototype.constructor = ApiListBoxField;
 
     /**
+	 * Controls how the text is laid out within the text field. Values are left/center/right.
+	 * @memberof ApiListBoxField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiListBoxField.prototype, "alignment", {
+        set: function(sValue) {
+            if (Object.values(ALIGN_TYPE).includes(sValue)) {
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                    var nJcType = private_GetIntAlign(sValue);
+                    aFields.forEach(function(field) {
+                        field.SetAlign(nJcType);
+                    });
+                }
+                else {
+                    throw Error("InvalidSetError: Set not possible, field is not a widget.");
+                }
+            }
+            else
+                throw Error("InvalidSetError: Set not possible, invalid value.");
+        },
+        get: function() {
+            if (this.field.IsWidget())
+                return private_GetStrAlign(this.field.GetAlign());
+            else if (this.field.IsAllKidsWidgets())
+                return private_GetStrAlign(this.field.GetKid(0).GetAlign());
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
+        }
+	});
+
+    /**
 	 * Reads and writes single or multiply value index of a listbox.
 	 * @memberof ApiListBoxField
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiListBoxField.prototype, "currentValueIndices", {
-        set: function(value) {
-            let oDoc = this.field.GetDocument();
-            let oCalcInfo = oDoc.GetCalculateInfo();
-            let oSourceField = oCalcInfo.GetSourceField();
-            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-            let curValues = this.field.GetCurIdxs(true);
+        set: function(aIdxs) {
+            if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                let oDoc            = this.field.GetDocument();
+                let oCalcInfo       = oDoc.GetCalculateInfo();
+                let oSourceField    = oCalcInfo.GetSourceField();
+                let aFields         = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                let oWidget         = aFields[0];
 
-            if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.field.GetFullName() || aFields[0].IsWidget() == false)
-                throw Error('InvalidSetError: Set not possible, invalid or unknown.');
-
-            if (Array.isArray(value) && this.multipleSelection === true) {
-                let isValid = true;
-                for (let i = 0; i < value.length; i++) {
-                    if (typeof(value[i]) != "number" || this.getItemAt(value[i], false) === undefined) {
-                        isValid = false;
-                        break;
-                    }
-                }
-
-                if (isValid == false)
+                if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.field.GetFullName())
                     throw Error('InvalidSetError: Set not possible, invalid or unknown.');
-
-                // снимаем выделение с тех, которые не присутсвуют в новых значениях (value)
-                for (let i = 0; i < curValues.length; i++) {
-                    if (value.includes(curValues[i]) == false) {
-                        this.UnselectOption(curValues[i]);
-                    }
-                }
+                if (oDoc.isOnValidate)
+                    throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+                if (Array.isArray(aIdxs) && oWidget.IsMultipleSelection() === false)
+                    throw Error("InvalidSetError: Set not possible, invalid value.");
                 
-                for (let i = 0; i < value.length; i++) {
-                    // добавляем выделение тем, которые не присутсвуют в текущем поле
-                    if (this.curValues.includes(value[i]) == false) {
-                        this.SelectOption(value[i], false);
+                if (Array.isArray(aIdxs))
+                    oWidget.SetCurIdxs(aIdxs);
+                else
+                    oWidget.SetCurIdxs([aIdxs]);
+
+                oWidget.Commit();
+                if (oCalcInfo.IsInProgress() == false) {
+                    if (oDoc.event["rc"] !== false && oDoc.IsNeedDoCalculate()) {
+                        oDoc.DoCalculateFields(this.field);
+                        oDoc.AddFieldToCommit(oWidget);
+                        oDoc.CommitFields();
                     }
                 }
-
-                this.Commit();
             }
-            else if (this.multipleSelection === false && typeof(value) === "number" && this.getItemAt(value, false) !== undefined) {
-                this.SelectOption(value, true);
-                this.Commit();
-            }
-            else
-                return;
-
-            aFields[0].Commit();
-            if (oCalcInfo.IsInProgress() == false && oDoc.IsNeedDoCalculate()) {
-                oDoc.DoCalculateFields(this.field);
-                oDoc.AddFieldToCommit(this.field);
-                oDoc.CommitFields();
+            else {
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
             }
         },
         get: function() {
-            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsWidget()) {
-                return oField.GetCurIdxs(true);
+            if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                let aFields     = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
+                let aCurIdxs    = this.field.GetCurIdxs(true);
+                if (aFields[0].IsMultipleSelection() == false) {
+                    return aCurIdxs[0] != undefined ? aCurIdxs[0] : -1;
+                }
+                else
+                    return aCurIdxs.slice();
             }
-            else {
-                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
-            }
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
         }
 	});
 
-    Object.defineProperties(ApiListBoxField.prototype, {
-        "multipleSelection": {
-            set: function(bValue) {
-                if (typeof(bValue) == "boolean") {
-                    if (bValue == this.multipleSelection)
-                        return;
-
-                    let aFields = this._doc.GetFields(this.name);
+    /**
+	 * If true, indicates that a list box allows a multiple selection of items.
+	 * @memberof ApiTextField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiListBoxField.prototype, "multipleSelection", {
+        set: function(bValue) {
+            if (typeof bValue == "boolean") {
+                if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                    let aFields = this.field.GetDocument().GetAllWidgets(this.field.GetFullName());
                     aFields.forEach(function(field) {
                         field.SetMultipleSelection(bValue);
                     });
                 }
-            },
-            get: function() {
-                return this.field.IsMultipleSelection();
+                else {
+                    throw Error("InvalidGetError: Get not possible, field is not a widget.");
+                }
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid value.");
             }
         },
+        get: function() {
+            if (this.field.IsWidget())
+                return this.field.IsMultipleSelection();
+            else if (this.field.IsAllKidsWidgets())
+                return this.field.GetKid(0).IsMultipleSelection();
+            else
+                throw Error("InvalidGetError: Get not possible, field is not a widget.");
+        }
+    });
+
+    Object.defineProperties(ApiListBoxField.prototype, {
         "value": {
             set: function(value) {
-                let oDoc = this.field.GetDocument();
-                let oCalcInfo = oDoc.GetCalculateInfo();
-                let oSourceField = oCalcInfo.GetSourceField();
+                if (value != undefined) {
+                    value = String(value);
+                    if (this.field.IsWidget() || this.field.IsAllKidsWidgets()) {
+                        let oDoc = this.field.GetDocument();
+                        let oCalcInfo = oDoc.GetCalculateInfo();
+                        let oSourceField = oCalcInfo.GetSourceField();
 
-                if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.name)
-                    throw Error('InvalidSetError: Set not possible, invalid or unknown.');;
+                        if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.field.GetFullName())
+                            throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+                        if (oDoc.isOnValidate)
+                            throw Error('InvalidSetError: Set not possible, invalid or unknown.');
 
-                if (oDoc.isOnValidate)
-                    return;
+                        if (value != null && value.toString)
+                            value = value.toString();
+                        
+                        if (this["value"] == value)
+                            return;
+                        
+                        let oWidget = this.field.GetKid(0);
+                        oWidget.SetValue(value);
+                        oWidget.Commit();
 
-                if (value != null && value.toString)
-                    value = value.toString();
-                
-                if (this.value == value)
-                    return;
-                
-                let oWidget;
-                if (this.field.IsWidget() == false) {
-                    if (this.field.IsAllChildsSame()) {
-                        let aKids = this.field.GetKids();
-                        oWidget = aKids[0];
+                        if (oCalcInfo.IsInProgress() == false && oDoc.IsNeedDoCalculate()) {
+                            oDoc.DoCalculateFields(this.field);
+                            oDoc.CommitFields();
+                        }
                     }
                     else {
-                        throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+                        this.field.SetApiValue(value);
                     }
                 }
-                else
-                    oWidget = this.field;
-
-                oWidget.SetValue(value);
-                oWidget.Commit();
-
-                if (oCalcInfo.IsInProgress() == false && oDoc.IsNeedDoCalculate()) {
-                    oDoc.DoCalculateFields(this.field);
-                    oDoc.CommitFields();
+                else {
+                    throw Error("InvalidSetError: Set not possible, invalid value.");
                 }
+                
             },
             get: function() {
                 let value = this.field.GetApiValue();
@@ -1937,183 +1769,10 @@
         }
     });
 
-    /**
-	 * Sets the list of items for a list box.
-	 * @memberof ApiListBoxField
-     * @param {string[]} values - An array in which each element is either an object convertible to a string or another array:
-        For an element that can be converted to a string, the user and export values for the list item are equal to the string.
-        For an element that is an array, the array must have two subelements convertible to strings, where the first is the user value and the second is the export value.
-	 * @typeofeditors ["PDF"]
-	 */
-    ApiListBoxField.prototype.setItems = function(values) {
-        let aFields = this._doc.GetFields(this.name);
-
-        aFields.forEach(function(field) {
-            field._options = [];
-            field.content.Internal_Content_RemoveAll();
-            let sCaption, oPara, oRun;
-            
-            for (let i = 0; i < values.length; i++) {
-                if (values[i] == null)
-                    continue;
-                sCaption = "";
-                if (typeof(values[i]) == "string" && values[i] != "") {
-                    sCaption = values[i];
-                    field._options.push(values[i]);
-                }
-                else if (Array.isArray(values[i]) && values[i][0] != undefined && values[i][1] != undefined) {
-                    if (values[i][0].toString && values[i][1].toString) {
-                        field._options.push([values[i][0].toString(), values[i][1].toString()]);
-                        sCaption = values[i][0].toString();
-                    }
-                }
-                else if (typeof(values[i]) != "string" && values[i].toString) {
-                    field._options.push(values[i].toString());
-                    sCaption = values[i].toString();
-                }
-
-                if (sCaption != "") {
-                    oPara = new AscCommonWord.Paragraph(field.content.DrawingDocument, field.content, false);
-                    oRun = new AscCommonWord.ParaRun(oPara, false);
-                    field.content.Internal_Content_Add(i, oPara);
-                    oPara.Add(oRun);
-                    oRun.AddText(sCaption);
-                }
-            }
-
-            field.content.Recalculate_Page(0, true);
-            field._curShiftView.x = 0;
-            field._curShiftView.y = 0;
-        });
-
-        this.SelectOption(0, true);
-        this.UnionLastHistoryPoints();
-
-        if (this.field.IsMultipleSelection())
-            this._currentValueIndices = [0];
-        else
-            this._currentValueIndices = 0;
-
-        if (aFields.length > 1)
-            this.Commit(this);
-    };
-    /**
-	 * Inserts a new item into a list box
-	 * @memberof ApiListBoxField
-     * @param {string} cName - The item name that will appear in the form.
-     * @param {string} cExport - (optional) The export value of the field when this item is selected. If not provided, the
-     * cName is used as the export value.
-     * @param {number} nIdx - (optional) The index in the list at which to insert the item. If 0 (the default), the new
-     *  item is inserted at the top of the list. If –1, the new item is inserted at the end of the
-     *  list.
-	 * @typeofeditors ["PDF"]
-	 */
-    ApiListBoxField.prototype.insertItemAt = function(cName, cExport, nIdx) {
-        let aFields = this.field._doc.GetFields(this.name);
-
-        aFields.forEach(function(field) {
-            field.InsertOption(cName, cExport, nIdx);
-        })
-    };
-
     function ApiSignatureField(oField)
     {
         ApiBaseField.call(this, oField);
     };
-
-    function CSpan()
-    {
-        this._alignment = ALIGN_TYPE.left;
-        this._fontFamily = ["sans-serif"];
-        this._fontStretch = "normal";
-        this._fontStyle = "normal";
-        this._fontWeight = 400;
-        this._strikethrough = false;
-        this._subscript = false;
-        this._superscript = false;
-
-        Object.defineProperties(this, {
-            "alignment": {
-                set: function(sValue) {
-                    if (Object.values(ALIGN_TYPE).includes(sValue))
-                        this._alignment = sValue;
-                },
-                get: function() {
-                    return this._alignment;
-                }
-            },
-            "fontFamily": {
-                set: function(arrValue) {
-                    if (Array.isArray(arrValue))
-                    {
-                        let aCorrectFonts = [];
-
-                        if (arrValue[0] !== undefined && typeof(arrValue[0]) == "string" && arrValue[0] === "")
-                            aCorrectFonts.push(arrValue[0]);
-                        if (arrValue[1] !== undefined && typeof(arrValue[1]) == "string" && arrValue[1] === "")
-                            aCorrectFonts.push(arrValue[1]);
-
-                        this._fontFamily = aCorrectFonts;
-                    }
-                }
-            },
-            "fontStretch": {
-                set: function(sValue) {
-                    if (AscPDF.FONT_STRETCH.includes(sValue))
-                        this._fontStretch = sValue;
-                },
-                get: function() {
-                    return this._fontStretch;
-                }
-            },
-            "fontStyle": {
-                set: function(sValue) {
-                    if (Object.values(AscPDF.FONT_STYLE).includes(sValue))
-                        this._fontStyle = sValue;
-                },
-                get: function() {
-                    return this._fontStyle;
-                }
-            },
-            "fontWeight": {
-                set: function(nValue) {
-                    if (AscPDF.FONT_WEIGHT.includes(nValue))
-                        this._fontWeight = nValue;
-                },
-                get: function() {
-                    return this._fontWeight;
-                }
-            },
-            "strikethrough": {
-                set: function(bValue) {
-                    if (typeof(bValue) == "boolean")
-                        this._strikethrough = bValue;
-                },
-                get: function() {
-                    return this._strikethrough;
-                }
-            },
-            "subscript": {
-                set: function(bValue) {
-                    if (typeof(bValue) == "boolean")
-                        this._subscript = bValue;
-                },
-                get: function() {
-                    return this._subscript;
-                }
-            },
-            "superscript": {
-                set: function(bValue) {
-                    if (typeof(bValue) == "boolean")
-                        this._superscript = bValue;
-                },
-                get: function() {
-                    return this._superscript;
-                }
-            },
-
-        });
-    }
 
     function private_GetIntAlign(sType)
 	{
@@ -2197,7 +1856,43 @@
         }
     }
 
+    function private_GetIntChStyle(sType) {
+        switch (sType) {
+            case "check":
+                return AscPDF.CHECKBOX_STYLES.check;
+            case "cross":
+                return AscPDF.CHECKBOX_STYLES.cross;
+            case "diamond":
+                return AscPDF.CHECKBOX_STYLES.diamond;
+            case "circle":
+                return AscPDF.CHECKBOX_STYLES.circle;
+            case "star":
+                return AscPDF.CHECKBOX_STYLES.star;
+            case "square":
+                return AscPDF.CHECKBOX_STYLES.square;
+        }
+    }
+    function private_GetStrChStyle(nType) {
+        switch (nType) {
+            case AscPDF.CHECKBOX_STYLES.check:
+                return "check";
+            case AscPDF.CHECKBOX_STYLES.cross:
+                return "cross";
+            case AscPDF.CHECKBOX_STYLES.diamond:
+                return "diamond";
+            case AscPDF.CHECKBOX_STYLES.circle:
+                return "circle";
+            case AscPDF.CHECKBOX_STYLES.star:
+                return "star";
+            case AscPDF.CHECKBOX_STYLES.square:
+                return "square";
+        }
+    }
+
     function private_getApiColor(oInternalColor) {
+        if (!oInternalColor)
+            return ["T"];
+
         if (oInternalColor.length == 1)
             return ["G", oInternalColor[0]]
         else if (oInternalColor.length == 3)
@@ -2266,12 +1961,6 @@
     ApiBaseListField.prototype["getItemAt"]             = ApiBaseListField.prototype.getItemAt;
     
     
-    ApiComboBoxField.prototype["setItems"]              = ApiComboBoxField.prototype.setItems;
-    
-
-    ApiListBoxField.prototype["setItems"]               = ApiListBoxField.prototype.setItems;
-    ApiListBoxField.prototype["insertItemAt"]           = ApiListBoxField.prototype.insertItemAt;
-
 	window["AscPDF"].ApiDocument          = ApiDocument;
 	window["AscPDF"].ApiTextField         = ApiTextField;
 	window["AscPDF"].ApiPushButtonField   = ApiPushButtonField;
