@@ -4292,8 +4292,6 @@ CMathContent.prototype.drawSelectionInRange = function(line, range, drawSelectio
 	let rangeInfo  = this.getRangePos(line, range);
 	let rangeStart = rangeInfo[0];
 	let rangeEnd   = rangeInfo[1];
-	if (rangeStart >= rangeEnd)
-		return;
 	
 	let selectionStart = this.Selection.StartPos;
 	let selectionEnd   = this.Selection.EndPos;
