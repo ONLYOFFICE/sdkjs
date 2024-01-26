@@ -3416,7 +3416,11 @@ CPresentation.prototype.getHFProperties = function () {
 
 
 CPresentation.prototype.setHFProperties = function (oProps, bAll) {
-	//TODO: check locks
+	const arrIndexes = bAll ? this.GetAllSlideIndexes() : this.GetSelectedSlides();
+	if (this.Document_Is_SelectionLocked(AscCommon.changestype_HdrFtr, arrIndexes)) {
+		return;
+	}
+
 	History.Create_NewPoint(AscDFH.historydescription_Presentation_SetHF);
 	let oSlideProps = oProps.get_Slide();
 	let oNotesProps = oProps.get_Notes();
@@ -6267,7 +6271,13 @@ CPresentation.prototype.GetFocusObjType = function () {
 		return FOCUS_OBJECT_THUMBNAILS;
 	}
 };
-
+CPresentation.prototype.GetAllSlideIndexes = function () {
+	const arrIndexes = [];
+	for (let i = 0; i < this.Slides.length; i++) {
+		arrIndexes.push(i);
+	}
+	return arrIndexes;
+};
 CPresentation.prototype.GetSelectedSlides = function () {
 	if (!window["NATIVE_EDITOR_ENJINE"] && this.Api.WordControl.Thumbnails) {
 		return this.Api.WordControl.Thumbnails.GetSelectedArray();
@@ -11441,6 +11451,18 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 			this.Slides[selectedSlideIndexes[i]].backgroundLock.Lock.Check(check_obj);
 		}
 	}
+	if (CheckType === AscCommon.changestype_HdrFtr) {
+		const selectedSlideIndexes = AdditionalData;
+		for (let i = 0; i < selectedSlideIndexes.length; ++i) {
+			const check_obj =
+				{
+					"type": c_oAscLockTypeElemPresentation.Slide,
+					"val": this.Slides[selectedSlideIndexes[i]].headerLock.Get_Id(),
+					"guid": this.Slides[selectedSlideIndexes[i]].headerLock.Get_Id()
+				};
+			this.Slides[selectedSlideIndexes[i]].headerLock.Lock.Check(check_obj);
+		}
+	}
 	if (CheckType === AscCommon.changestype_SlideHide) {
 		var selected_slides = AdditionalData;
 		for (var i = 0; i < selected_slides.length; ++i) {
@@ -12663,6 +12685,24 @@ CPresentation.prototype.setShowMasterSp = function(bShow, arrSlideIndexes) {
 		this.DrawingDocument.OnEndRecalculate(true, false);
 		this.Document_UpdateInterfaceState();
 	}
+};
+CPresentation.prototype.getLockApplyBackgroundToAll = function() {
+	for (let i = 0; i < this.Slides.length; i++) {
+		const oSlide = this.Slides[i];
+		if (!(oSlide.backgroundLock.Lock.Type === AscCommon.locktype_Mine || oSlide.backgroundLock.Lock.Type === AscCommon.locktype_None)) {
+			return true;
+		}
+	}
+	return false;
+};
+CPresentation.prototype.getLockApplyHeaderToAll = function() {
+	for (let i = 0; i < this.Slides.length; i++) {
+		const oSlide = this.Slides[i];
+		if (!(oSlide.headerLock.Lock.Type === AscCommon.locktype_Mine || oSlide.headerLock.Lock.Type === AscCommon.locktype_None)) {
+			return true;
+		}
+	}
+	return false;
 };
 
 function collectSelectedObjects(aSpTree, aCollectArray, bRecursive, oIdMap, bSourceFormatting) {

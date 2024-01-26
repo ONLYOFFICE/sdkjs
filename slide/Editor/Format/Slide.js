@@ -201,6 +201,7 @@ function Slide(presentation, slideLayout, slideNum)
     this.transitionLock = null;
     this.layoutLock     = null;
     this.showLock       = null;
+    this.headerLock     = null;
 
     this.Lock = new AscCommon.CLock();
 
@@ -220,7 +221,7 @@ function Slide(presentation, slideLayout, slideNum)
         this.Width = presentation.GetWidthMM();
         this.Height = presentation.GetHeightMM();
         this.setSlideComments(new SlideComments(this));
-        this.setLocks(new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id));
+        this.setLocks(new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id));
     }
 
     if(slideLayout)
@@ -815,7 +816,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
        History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideSetBg, this.cSld.Bg , bg));
         this.cSld.Bg = bg;
     };
-    Slide.prototype.setLocks = function(deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock)
+    Slide.prototype.setLocks = function(deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock, headerLock)
     {
         this.deleteLock = deleteLock;
         this.backgroundLock = backgroundLock;
@@ -823,7 +824,8 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         this.transitionLock = transitionLock;
         this.layoutLock = layoutLock;
         this.showLock = showLock;
-       History.Add(new AscDFH.CChangesDrawingSlideLocks(this, deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock));
+        this.headerLock = headerLock;
+       History.Add(new AscDFH.CChangesDrawingSlideLocks(this, deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock, headerLock));
     };
     Slide.prototype.shapeAdd = function(pos, item)
     {

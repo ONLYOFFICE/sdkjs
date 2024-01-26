@@ -64,21 +64,23 @@
 
 	function CAscSlideProps()
 	{
-		this.Background           = null;
-		this.Transition           = null;
-		this.LayoutIndex          = null;
-		this.lockDelete           = false;
-		this.lockLayout           = false;
-		this.lockTiming           = false;
-		this.lockBackground       = false;
-		this.lockTransition       = false;
-		this.lockRemove           = false;
-		this.lockApplyToAll       = false;
-		this.lockResetBackground  = false;
-		this.isHidden             = false;
-		this.resetBackground      = false;
-		this.applyToAll           = false;
-		this.showMasterSp         = null;
+		this.Background               = null;
+		this.Transition               = null;
+		this.LayoutIndex              = null;
+		this.lockDelete               = false;
+		this.lockLayout               = false;
+		this.lockTiming               = false;
+		this.lockBackground           = false;
+		this.lockTransition           = false;
+		this.lockRemove               = false;
+		this.lockHeader               = false;
+		this.lockApplyBackgroundToAll = false;
+		this.lockApplyHeaderToAll     = false;
+		this.lockResetBackground      = false;
+		this.isHidden                 = false;
+		this.resetBackground          = false;
+		this.applyBackgroundToAll     = false;
+		this.showMasterSp             = null;
 	}
 
 	CAscSlideProps.prototype.get_background     = function()
@@ -157,21 +159,37 @@
 	{
 		return this.isHidden;
 	};
-	CAscSlideProps.prototype.get_LockApplyToAll     = function()
+	CAscSlideProps.prototype.get_LockApplyBackgroundToAll     = function()
 	{
-		return this.lockApplyToAll;
+		return this.lockApplyBackgroundToAll;
 	};
-	CAscSlideProps.prototype.put_LockApplyToAll     = function(v)
+	CAscSlideProps.prototype.put_LockApplyBackgroundToAll     = function(v)
 	{
-		this.lockApplyToAll = v;
+		this.lockApplyBackgroundToAll = v;
 	};
-	CAscSlideProps.prototype.get_lockResetBackground     = function()
+	CAscSlideProps.prototype.get_LockApplyHeaderToAll     = function()
+	{
+		return this.lockApplyHeaderToAll;
+	};
+	CAscSlideProps.prototype.put_LockApplyHeaderToAll     = function(v)
+	{
+		this.lockApplyHeaderToAll = v;
+	};
+	CAscSlideProps.prototype.get_LockResetBackground     = function()
 	{
 		return this.lockResetBackground;
 	};
-	CAscSlideProps.prototype.put_lockResetBackground     = function(v)
+	CAscSlideProps.prototype.put_LockResetBackground     = function(v)
 	{
 		this.lockResetBackground = v;
+	};
+	CAscSlideProps.prototype.get_LockHeader     = function()
+	{
+		return this.lockHeader;
+	};
+	CAscSlideProps.prototype.put_LockHeader     = function(v)
+	{
+		this.lockHeader = v;
 	};
 	CAscSlideProps.prototype.get_ResetBackground     = function()
 	{
@@ -181,13 +199,13 @@
 	{
 		this.resetBackground = v;
 	};
-	CAscSlideProps.prototype.get_ApplyToAll     = function()
+	CAscSlideProps.prototype.get_ApplyBackgroundToAll     = function()
 	{
-		return this.applyToAll;
+		return this.applyBackgroundToAll;
 	};
-	CAscSlideProps.prototype.put_ApplyToAll     = function(v)
+	CAscSlideProps.prototype.put_ApplyBackgroundToAll     = function(v)
 	{
-		this.applyToAll = v;
+		this.applyBackgroundToAll = v;
 	};
 	CAscSlideProps.prototype.get_ShowMasterSp     = function()
 	{
@@ -3520,7 +3538,7 @@ background-repeat: no-repeat;\
 			return;
 		}
 
-		const bApplyBackgroundToAll = prop.get_ApplyToAll();
+		const bApplyBackgroundToAll = prop.get_ApplyBackgroundToAll();
 		if (bApplyBackgroundToAll) {
 			oLogicDocument.applySlideBackgroundToAll();
 			return;
@@ -6980,25 +6998,18 @@ background-repeat: no-repeat;\
 			obj.lockTiming     = obj.lockTiming || !(oSlide.timingLock.Lock.Type === locktype_Mine || oSlide.timingLock.Lock.Type === locktype_None);
 			obj.lockTransition = obj.lockTransition || !(oSlide.transitionLock.Lock.Type === locktype_Mine || oSlide.transitionLock.Lock.Type === locktype_None);
 			obj.lockBackground = obj.lockBackground || !(oSlide.backgroundLock.Lock.Type === locktype_Mine || oSlide.backgroundLock.Lock.Type === locktype_None);
+			obj.lockHeader     = obj.lockHeader || !(oSlide.headerLock.Lock.Type === locktype_Mine || oSlide.headerLock.Lock.Type === locktype_None);
 			obj.lockRemove     = obj.lockRemove || obj.lockDelete ||
 				obj.lockLayout ||
 				obj.lockTiming ||
 				obj.lockTransition ||
+				obj.lockHeader ||
 				obj.lockBackground || oSlide.isLockedObject();
 		}
 		obj.showMasterSp = showMasterSp;
 		obj.lockResetBackground = obj.lockBackground || !isCanResetBackground;
-		if (!obj.lockBackground) {
-			for (let i = 0; i < oPresentation.Slides.length; i += 1) {
-				const oSlide = oPresentation.Slides[i];
-				obj.lockApplyToAll = !(oSlide.backgroundLock.Lock.Type === locktype_Mine || oSlide.backgroundLock.Lock.Type === locktype_None);
-				if (obj.lockApplyToAll) {
-					break;
-				}
-			}
-		} else {
-			obj.lockApplyToAll = obj.lockBackground;
-		}
+		obj.lockApplyBackgroundToAll = obj.lockBackground || oPresentation.getLockApplyBackgroundToAll();
+		obj.lockApplyHeaderToAll     = obj.lockHeader || oPresentation.getLockApplyHeaderToAll();
 
 		if(slide && slide.Layout && slide.Layout.Master){
 			var aLayouts = slide.Layout.Master.sldLayoutLst;
@@ -9661,16 +9672,20 @@ background-repeat: no-repeat;\
 	CAscSlideProps.prototype['get_LockRemove']        = CAscSlideProps.prototype.get_LockRemove;
 	CAscSlideProps.prototype['put_LockRemove']        = CAscSlideProps.prototype.put_LockRemove;
 	CAscSlideProps.prototype['get_IsHidden']          = CAscSlideProps.prototype.get_IsHidden;
-	CAscSlideProps.prototype['get_LockApplyToAll']      = CAscSlideProps.prototype.get_LockApplyToAll;
-	CAscSlideProps.prototype['put_LockApplyToAll']      = CAscSlideProps.prototype.put_LockApplyToAll;
-	CAscSlideProps.prototype['get_lockResetBackground'] = CAscSlideProps.prototype.get_lockResetBackground;
-	CAscSlideProps.prototype['put_lockResetBackground'] = CAscSlideProps.prototype.put_lockResetBackground;
-	CAscSlideProps.prototype['get_ResetBackground']     = CAscSlideProps.prototype.get_ResetBackground;
-	CAscSlideProps.prototype['put_ResetBackground']     = CAscSlideProps.prototype.put_ResetBackground;
-	CAscSlideProps.prototype['get_ApplyToAll']          = CAscSlideProps.prototype.get_ApplyToAll;
-	CAscSlideProps.prototype['put_ApplyToAll']          = CAscSlideProps.prototype.put_ApplyToAll;
-	CAscSlideProps.prototype['get_ShowMasterSp']          = CAscSlideProps.prototype.get_ShowMasterSp;
-	CAscSlideProps.prototype['put_ShowMasterSp']          = CAscSlideProps.prototype.put_ShowMasterSp;
+	CAscSlideProps.prototype['get_LockApplyHeaderToAll']     = CAscSlideProps.prototype.get_LockApplyHeaderToAll;
+	CAscSlideProps.prototype['put_LockApplyHeaderToAll']     = CAscSlideProps.prototype.put_LockApplyHeaderToAll;
+	CAscSlideProps.prototype['get_LockApplyBackgroundToAll'] = CAscSlideProps.prototype.get_LockApplyBackgroundToAll;
+	CAscSlideProps.prototype['put_LockApplyBackgroundToAll'] = CAscSlideProps.prototype.put_LockApplyBackgroundToAll;
+	CAscSlideProps.prototype['get_LockResetBackground']      = CAscSlideProps.prototype.get_LockResetBackground;
+	CAscSlideProps.prototype['put_LockResetBackground']      = CAscSlideProps.prototype.put_LockResetBackground;
+	CAscSlideProps.prototype['get_LockHeader']               = CAscSlideProps.prototype.get_LockHeader;
+	CAscSlideProps.prototype['put_LockHeader']               = CAscSlideProps.prototype.put_LockHeader;
+	CAscSlideProps.prototype['get_ResetBackground']          = CAscSlideProps.prototype.get_ResetBackground;
+	CAscSlideProps.prototype['put_ResetBackground']          = CAscSlideProps.prototype.put_ResetBackground;
+	CAscSlideProps.prototype['get_ApplyBackgroundToAll']     = CAscSlideProps.prototype.get_ApplyBackgroundToAll;
+	CAscSlideProps.prototype['put_ApplyBackgroundToAll']     = CAscSlideProps.prototype.put_ApplyBackgroundToAll;
+	CAscSlideProps.prototype['get_ShowMasterSp']             = CAscSlideProps.prototype.get_ShowMasterSp;
+	CAscSlideProps.prototype['put_ShowMasterSp']             = CAscSlideProps.prototype.put_ShowMasterSp;
 	window['Asc']['CAscChartProp']                    = CAscChartProp;
 	CAscChartProp.prototype['get_ChangeLevel']        = CAscChartProp.prototype.get_ChangeLevel;
 	CAscChartProp.prototype['put_ChangeLevel']        = CAscChartProp.prototype.put_ChangeLevel;

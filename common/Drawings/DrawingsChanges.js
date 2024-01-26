@@ -767,7 +767,7 @@
     window['AscDFH'].CChangesDrawingChangeTheme = CChangesDrawingChangeTheme;
 
 
-    function CChangesDrawingSlideLocks(Class, deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock){
+    function CChangesDrawingSlideLocks(Class, deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock, headerLock){
         this.Type = AscDFH.historyitem_SlideSetLocks;
         this.deleteLock = deleteLock;
         this.backgroundLock = backgroundLock;
@@ -775,6 +775,7 @@
         this.transitionLock = transitionLock;
         this.layoutLock = layoutLock;
         this.showLock = showLock;
+        this.headerLock = headerLock;
 		AscDFH.CChangesBase.call(this, Class);
     }
 
@@ -788,6 +789,7 @@
         AscFormat.writeObject(Writer, this.transitionLock);
         AscFormat.writeObject(Writer, this.layoutLock);
         AscFormat.writeObject(Writer, this.showLock);
+        AscFormat.writeObject(Writer, this.headerLock);
     };
 
     CChangesDrawingSlideLocks.prototype.ReadFromBinary = function(Reader){
@@ -797,6 +799,7 @@
         this.transitionLock = AscFormat.readObject(Reader);
         this.layoutLock = AscFormat.readObject(Reader);
         this.showLock = AscFormat.readObject(Reader);
+        this.headerLock = AscFormat.readObject(Reader);
     };
 
     CChangesDrawingSlideLocks.prototype.Undo = function(){
@@ -807,6 +810,7 @@
         oSlide.transitionLock = null;
         oSlide.layoutLock = null;
         oSlide.showLock = null;
+        oSlide.headerLock = null;
     };
 
     CChangesDrawingSlideLocks.prototype.Redo = function(){
@@ -817,6 +821,7 @@
          oSlide.transitionLock = this.transitionLock;
          oSlide.layoutLock = this.layoutLock;
          oSlide.showLock = this.showLock;
+         oSlide.headerLock = this.headerLock;
     };
     CChangesDrawingSlideLocks.prototype.Load = function(){
         this.Redo();
@@ -824,7 +829,7 @@
     };
     CChangesDrawingSlideLocks.prototype.CreateReverseChange = function()
     {
-        return new this.constructor(this.Class, null, null, null, null, null);
+        return new this.constructor(this.Class, null, null, null, null, null, null);
     };
 
     window['AscDFH'].CChangesDrawingSlideLocks = CChangesDrawingSlideLocks;
