@@ -1753,50 +1753,33 @@ CMathBase.prototype.Set_ParaContentPos = function(ContentPos, Depth)
         this.Content[this.CurPos].Set_ParaContentPos(ContentPos, Depth + 1);
     }
 };
-CMathBase.prototype.Selection_DrawRange = function(_CurLine, _CurRange, SelectionDraw)
+CMathBase.prototype.Selection_DrawRange = function(line, range, drawSelectionState)
 {
-    var CurLine  = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
-
-    var SelectionStartPos = this.Selection.StartPos;
-    var SelectionEndPos   = this.Selection.EndPos;
-
-    var SelectionUse = this.Selection.Use;
-    // для каждой новой строки в ParaMath FindStart будет true независимо от того нашли или нет начало селекта на предыдущей строке
-    // поэтому для контентов разбивающихся на несколько строк сделаем проверку, чтобы не попасть в контенты, которые не относятся к текущей строке
-
-    var ContentSelect = true;
-
-    if(this.bOneLine == false)
-    {
-        var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-        var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-        ContentSelect = SelectionStartPos >= StartPos && SelectionEndPos <= EndPos;
-    }
-
-    if(SelectionUse == true && SelectionStartPos !== SelectionEndPos)
-    {
-        var Bound = this.Bounds.Get_LineBound(CurLine, CurRange);
-
-        SelectionDraw.FindStart = false;
-        SelectionDraw.W += Bound.W;
-    }
-    else if(SelectionUse == true && ContentSelect == true)
-    {
-        var Item = this.Content[SelectionStartPos];
-        var BoundItem = Item.Get_LineBound(_CurLine, _CurRange);
-
-        SelectionDraw.StartX = BoundItem.X;
-
-
-        Item.Selection_DrawRange(_CurLine, _CurRange, SelectionDraw);
-    }
-    else if(SelectionDraw.FindStart == true)
-    {
-        SelectionDraw.StartX += this.Bounds.GetWidth(CurLine, CurRange);
-    }
-
+	let selectionStart = this.Selection.StartPos;
+	let selectionEnd   = this.Selection.EndPos;
+	
+	let isSelected = this.Selection.Use;
+	if (isSelected && !this.bOneLine)
+	{
+		let rangeInfo  = this.getRangePos(line, range);
+		let rangeStart = rangeInfo[0];
+		let rangeEnd   = rangeInfo[1];
+		
+		isSelected = selectionStart >= rangeStart && selectionEnd <= rangeEnd;
+	}
+	
+	if (isSelected && selectionStart === selectionEnd)
+	{
+		let item   = this.Content[this.Selection.StartPos];
+		let bounds = item.Get_LineBound(line, range);
+		
+		drawSelectionState.x = bounds.X;
+		item.Selection_DrawRange(line, range, drawSelectionState);
+	}
+	else
+	{
+		drawSelectionState.handleMathElement(this, isSelected);
+	}
 };
 CMathBase.prototype.IsSelectionEmpty = function()
 {

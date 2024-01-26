@@ -181,17 +181,22 @@
 		
 		this.x += w;
 	};
-	ParagraphDrawSelectionState.prototype.handleMathElement = function(mathElement)
+	ParagraphDrawSelectionState.prototype.handleMathElement = function(mathElement, isSelected)
 	{
 		this.bidi.end();
 		
 		let w = mathElement.GetWidth(this.line, this.range);
 		
-		let lastRange = this.selectionRanges.length ? this.selectionRanges[this.selectionRanges.length - 1] : null;
-		if (lastRange && Math.abs(lastRange.x + lastRange.w - this.x) < EPSILON)
-			lastRange.w += w;
-		else
-			this.selectionRanges.push({x : this.x, w : w, y : this.y, h : this.h});
+		if (isSelected)
+		{
+			let lastRange = this.selectionRanges.length ? this.selectionRanges[this.selectionRanges.length - 1] : null;
+			if (lastRange && Math.abs(lastRange.x + lastRange.w - this.x) < EPSILON)
+				lastRange.w += w;
+			else
+				this.selectionRanges.push({x : this.x, w : w, y : this.y, h : this.h});
+		}
+		
+		this.x += w;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphDrawSelectionState = ParagraphDrawSelectionState;

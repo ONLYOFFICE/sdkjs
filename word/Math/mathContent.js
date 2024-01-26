@@ -4307,8 +4307,8 @@ CMathContent.prototype.Selection_DrawRange = function(line, range, drawSelection
 	if (!this.bRoot)
 	{
 		let bounds = this.Get_LineBound(line, range);
-		drawSelectionState.startY   = bounds.Y;
-		drawSelectionState.h        = bounds.H;
+		drawSelectionState.y = bounds.Y;
+		drawSelectionState.h = bounds.H;
 	}
 	
 	for (var pos = rangeStart; pos <= rangeEnd; ++pos)
@@ -4316,7 +4316,7 @@ CMathContent.prototype.Selection_DrawRange = function(line, range, drawSelection
 		let item = this.Content[pos];
 		let isSelect = this.Selection.Use && selectionStart <= pos && pos <= selectionEnd && selectionStart !== selectionEnd;
 		if (para_Math_Composition === item.Type && isSelect)
-			drawSelectionState.handleMathElement(item);
+			drawSelectionState.handleMathElement(item, true);
 		else
 			item.Selection_DrawRange(line, range, drawSelectionState);
 	}
