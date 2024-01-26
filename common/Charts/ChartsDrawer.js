@@ -16427,7 +16427,7 @@ CColorObj.prototype =
 					for (let j in charts[i].chart.series) {
 						if (charts[i].chart.series.hasOwnProperty(j) && this.storage[i][charts[i].chart.series[j].Id]) {
 							this._calculateRelativeLine(charts[i].chart.series[j].parent, this.storage[i][charts[i].chart.series[j].Id]);
-							console.log(this.getAdditionalInfo(i, charts[i].chart.series[j].Id));
+							// console.log(this.getAdditionalInfo(i, charts[i].chart.series[j].Id));
 						}
 					}
 				}
@@ -16895,7 +16895,6 @@ CColorObj.prototype =
 
 		_dispRSquared: function (catVals, valVals, coefficients, type) {
 			const mappingStorage = this._obtainMappingStorage(type);
-			console.log(catVals, valVals, coefficients, type)
 			const predictY = function (xVal) {
 				let result = mappingStorage.bValForward ? mappingStorage.bValForward(coefficients[coefficients.length - 1]) : coefficients[coefficients.length - 1];
 				let power = 1;
@@ -16919,10 +16918,9 @@ CColorObj.prototype =
 			let XSquared = 0;
 			let YSquared = 0;
 			for (let i = 0; i < N; i++) {
-				catVals[i] = mappingStorage.xValBackward ? mappingStorage.xValBackward(catVals[i]) : catVals[i];
-				valVals[i] = mappingStorage.yValBackward ? mappingStorage.yValBackward(valVals[i]) : valVals[i];
-				const yValPred = predictY(catVals[i]);
-				const yVal = valVals[i];
+				const x = mappingStorage.xValBackward ? mappingStorage.xValBackward(catVals[i]) : catVals[i];
+				const yVal = mappingStorage.yValBackward ? mappingStorage.yValBackward(valVals[i]) : valVals[i];
+				const yValPred = predictY(x);
 				XY += (yVal * yValPred);
 				X += yVal;
 				Y += yValPred;
