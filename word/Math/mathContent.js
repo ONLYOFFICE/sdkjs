@@ -4295,13 +4295,13 @@ CMathContent.prototype.drawSelectionInRange = function(line, range, drawSelectio
 	if (rangeStart >= rangeEnd)
 		return;
 	
-	let selectionStart = this.State.Selection.StartPos;
-	let selectionEnd   = this.State.Selection.EndPos;
+	let selectionStart = this.Selection.StartPos;
+	let selectionEnd   = this.Selection.EndPos;
 	
 	if (selectionStart > selectionEnd)
 	{
-		selectionStart = this.State.Selection.EndPos;
-		selectionEnd   = this.State.Selection.StartPos;
+		selectionStart = this.Selection.EndPos;
+		selectionEnd   = this.Selection.StartPos;
 	}
 	
 	if (!this.bRoot)
@@ -4314,11 +4314,12 @@ CMathContent.prototype.drawSelectionInRange = function(line, range, drawSelectio
 	for (var pos = rangeStart; pos <= rangeEnd; ++pos)
 	{
 		let item = this.Content[pos];
-		let isSelect = this.Selection.Use && selectionStart <= pos && pos <= selectionEnd && selectionStart !== selectionEnd;
-		if (para_Math_Composition === item.Type && isSelect)
-			drawSelectionState.handleMathElement(item, true);
-		else
+		let isSelected = this.Selection.Use && selectionStart <= pos && pos <= selectionEnd;
+		
+		if (para_Math_Composition !== item.Type || (isSelected && selectionStart === selectionEnd))
 			item.drawSelectionInRange(line, range, drawSelectionState);
+		else
+			drawSelectionState.handleMathElement(item, isSelected);
 	}
 };
 CMathContent.prototype.SelectElementByPos = function(nPos)
