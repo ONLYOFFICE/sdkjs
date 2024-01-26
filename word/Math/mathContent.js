@@ -4287,7 +4287,7 @@ CMathContent.prototype.SelectAll = function(Direction)
         this.Content[nPos].SelectAll(Direction);
     }
 };
-CMathContent.prototype.Selection_DrawRange = function(line, range, drawSelectionState)
+CMathContent.prototype.drawSelectionInRange = function(line, range, drawSelectionState)
 {
 	let rangeInfo  = this.getRangePos(line, range);
 	let rangeStart = rangeInfo[0];
@@ -4318,7 +4318,7 @@ CMathContent.prototype.Selection_DrawRange = function(line, range, drawSelection
 		if (para_Math_Composition === item.Type && isSelect)
 			drawSelectionState.handleMathElement(item, true);
 		else
-			item.Selection_DrawRange(line, range, drawSelectionState);
+			item.drawSelectionInRange(line, range, drawSelectionState);
 	}
 };
 CMathContent.prototype.SelectElementByPos = function(nPos)

@@ -626,7 +626,7 @@ CParagraphContentBase.prototype.RemoveSelection = function()
 CParagraphContentBase.prototype.SelectAll = function(Direction)
 {
 };
-CParagraphContentBase.prototype.Selection_DrawRange = function(_CurLine, _CurRange, SelectionDraw)
+CParagraphContentBase.prototype.drawSelectionInRange = function(line, range, drawState)
 {
 };
 CParagraphContentBase.prototype.IsSelectionEmpty = function(CheckEnd)
@@ -3818,18 +3818,15 @@ CParagraphContentWithParagraphLikeContent.prototype.SelectAll = function(Directi
         this.Content[CurPos].SelectAll( Direction );
     }
 };
-CParagraphContentWithParagraphLikeContent.prototype.Selection_DrawRange = function(_CurLine, _CurRange, SelectionDraw)
+CParagraphContentWithParagraphLikeContent.prototype.drawSelectionInRange = function(line, range, drawState)
 {
-    var CurLine = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
-
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-    for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
-    {
-        this.Content[CurPos].Selection_DrawRange( _CurLine, _CurRange, SelectionDraw );
-    }
+	let rangeInfo  = this.getRangePos(line, range);
+	let rangeStart = rangeInfo[0];
+	let rangeEnd   = rangeInfo[1];
+	for (let pos = rangeStart; pos <= rangeEnd; ++pos)
+	{
+		this.Content[pos].drawSelectionInRange(line, range, drawState);
+	}
 };
 CParagraphContentWithParagraphLikeContent.prototype.IsSelectionEmpty = function(CheckEnd)
 {

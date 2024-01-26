@@ -1753,7 +1753,7 @@ CMathBase.prototype.Set_ParaContentPos = function(ContentPos, Depth)
         this.Content[this.CurPos].Set_ParaContentPos(ContentPos, Depth + 1);
     }
 };
-CMathBase.prototype.Selection_DrawRange = function(line, range, drawSelectionState)
+CMathBase.prototype.drawSelectionInRange = function(line, range, drawSelectionState)
 {
 	let selectionStart = this.Selection.StartPos;
 	let selectionEnd   = this.Selection.EndPos;
@@ -1774,7 +1774,7 @@ CMathBase.prototype.Selection_DrawRange = function(line, range, drawSelectionSta
 		let bounds = item.Get_LineBound(line, range);
 		
 		drawSelectionState.x = bounds.X;
-		item.Selection_DrawRange(line, range, drawSelectionState);
+		item.drawSelectionInRange(line, range, drawSelectionState);
 	}
 	else
 	{

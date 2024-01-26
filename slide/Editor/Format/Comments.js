@@ -456,7 +456,7 @@ ParaComment.prototype =
     {
     },
 
-    Selection_DrawRange : function(_CurLine, _CurRange, SelectionDraw)
+    drawSelectionInRange : function(line, range, drawState)
     {
     },
 

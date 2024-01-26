@@ -7227,7 +7227,7 @@ ParaRun.prototype.SelectAll = function(nDirection)
 	}
 };
 
-ParaRun.prototype.Selection_DrawRange = function(line, range, drawSelectionState)
+ParaRun.prototype.drawSelectionInRange = function(line, range, drawSelectionState)
 {
 	let rangeInfo  = this.getRangePos(line, range);
 	let rangeStart = rangeInfo[0];
