@@ -16256,8 +16256,8 @@ CColorObj.prototype =
 
 		//control trend calculate type
 		this.bAllowDrawByBezier = true;
-		this.bAllowDrawByPoints = false;
-		this.continueAdding = true;
+		this.bAllowDrawByPoints = true;
+		this.stopAdding = false;
 	}
 
 	CTrendline.prototype = {
@@ -16281,11 +16281,11 @@ CColorObj.prototype =
 				this.storage[chartId][seriaId] = new CTrendData();
 			}
 			if (!this.storage[chartId][seriaId].isEmpty() && xVal === this.storage[chartId][seriaId].coords.catVals[0]) {
-				this.continueAdding = false;
+				this.stopAdding = true;
 			}
 
 			// in the case of duplicated data, no further adding should be allowed
-			if (this.continueAdding) {
+			if (!this.stopAdding) {
 				this.storage[chartId][seriaId].addCatVal(xVal);
 				this.storage[chartId][seriaId].addValVal(yVal);
 	
@@ -16427,7 +16427,7 @@ CColorObj.prototype =
 					for (let j in charts[i].chart.series) {
 						if (charts[i].chart.series.hasOwnProperty(j) && this.storage[i][charts[i].chart.series[j].Id]) {
 							this._calculateRelativeLine(charts[i].chart.series[j].parent, this.storage[i][charts[i].chart.series[j].Id]);
-							// console.log(this.getAdditionalInfo(i, charts[i].chart.series[j].Id));
+							console.log(this.getAdditionalInfo(i, charts[i].chart.series[j].Id));
 						}
 					}
 				}
@@ -16665,7 +16665,7 @@ CColorObj.prototype =
 					return true;
 				};
 
-				const mapped = this.continueAdding ? _mapCoordinates() : true;
+				const mapped = this.stopAdding ? true : _mapCoordinates();
 
 				if (mapped) {
 
@@ -16869,6 +16869,8 @@ CColorObj.prototype =
 						return Math.exp(val);
 					}, bValForward: function (val) {
 						return Math.log(val);
+					}, yValBackward: function (val) {
+						return Math.pow(Math.exp(1), val);
 					}
 				}, [AscFormat.TRENDLINE_TYPE_LOG]: {
 					xVal: function (val) {
@@ -16883,6 +16885,8 @@ CColorObj.prototype =
 						return Math.exp(val);
 					}, bValForward: function (val) {
 						return Math.log(val);
+					}, yValBackward: function (val) {
+						return Math.pow(Math.exp(1), val);
 					}
 				}
 			};
@@ -16891,6 +16895,7 @@ CColorObj.prototype =
 
 		_dispRSquared: function (catVals, valVals, coefficients, type) {
 			const mappingStorage = this._obtainMappingStorage(type);
+			console.log(catVals, valVals, coefficients, type)
 			const predictY = function (xVal) {
 				let result = mappingStorage.bValForward ? mappingStorage.bValForward(coefficients[coefficients.length - 1]) : coefficients[coefficients.length - 1];
 				let power = 1;
@@ -16898,6 +16903,7 @@ CColorObj.prototype =
 					result += (Math.pow(xVal, power) * coefficients[i]);
 					power++;
 				}
+				result = mappingStorage.yValBackward ? mappingStorage.yValBackward(result) : result;
 				return result;
 			};
 
@@ -16913,6 +16919,8 @@ CColorObj.prototype =
 			let XSquared = 0;
 			let YSquared = 0;
 			for (let i = 0; i < N; i++) {
+				catVals[i] = mappingStorage.xValBackward ? mappingStorage.xValBackward(catVals[i]) : catVals[i];
+				valVals[i] = mappingStorage.yValBackward ? mappingStorage.yValBackward(valVals[i]) : valVals[i];
 				const yValPred = predictY(catVals[i]);
 				const yVal = valVals[i];
 				XY += (yVal * yValPred);
@@ -17512,6 +17520,8 @@ CColorObj.prototype =
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscFormat'] = window['AscFormat'] || {};
 	window['AscFormat'].CChartsDrawer = CChartsDrawer;
+	window['AscFormat'].CTrendline = CTrendline;
+	window['AscFormat'].CLineBuilder = CLineBuilder;
 	window['AscFormat'].CColorObj = CColorObj;
 	window["AscFormat"].c_oChartTypes = c_oChartTypes;
 })(window);
