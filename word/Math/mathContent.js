@@ -3734,10 +3734,17 @@ CMathContent.prototype.Add_MatrixWithBrackets = function(begChr, endChr, ctrPr, 
 };
 CMathContent.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
-	if (-1 === this.StartLine || !isCurrent)
-		return;
+	let line  = positionCalculator.line;
+	let range = positionCalculator.range;
 	
-	this.Content[this.CurPos].recalculateCursorPosition(positionCalculator, true);
+	let rangeInfo  = this.getRangePos(line, range);
+	let rangeStart = rangeInfo[0];
+	let rangeEnd   = rangeInfo[1];
+	
+	for (var pos = rangeStart; pos <= rangeEnd; ++pos)
+	{
+		this.Content[pos].recalculateCursorPosition(positionCalculator, isCurrent && pos === this.CurPos);
+	}
 };
 CMathContent.prototype.GetCurrentParaPos = function(align)
 {

@@ -151,6 +151,18 @@
 		
 		this.x += w;
 	};
+	ParagraphPositionCalculator.prototype.handleParaMath = function(math, isCurrent)
+	{
+		this.bidi.end();
+		
+		let mathW = math.Root.GetWidth(this.line, this.range);
+		let x = this.x;
+		
+		if (isCurrent)
+			math.Root.recalculateCursorPosition(this, true);
+		
+		this.x = x + mathW;
+	};
 	ParagraphPositionCalculator.prototype.handleMathRun = function(run, isCurrentRun, currentPos)
 	{
 		this.bidi.end();
@@ -190,6 +202,11 @@
 		this.posInfo.y     = this.y;
 		this.posInfo.mathY = mathY;
 		this.posInfo.run   = run;
+	};
+	ParagraphPositionCalculator.prototype.handleMathElement = function(element)
+	{
+		let w = element.GetWidth(this.line, this.range);
+		this.x += w;
 	};
 	ParagraphPositionCalculator.prototype.getXY = function()
 	{

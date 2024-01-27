@@ -2053,7 +2053,7 @@ ParaMath.prototype.Get_ParaPosByContentPos = function(ContentPos, Depth)
 };
 ParaMath.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
-	this.Root.recalculateCursorPosition(positionCalculator, isCurrent);
+	positionCalculator.handleParaMath(this, isCurrent);
 };
 ParaMath.prototype.Refresh_RecalcData = function(Data)
 {

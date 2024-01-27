@@ -1716,10 +1716,10 @@ CMathBase.prototype.Create_FontMap = function(Map)
 };
 CMathBase.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
-	if (!isCurrent)
-		return;
-	
-	this.Content[this.CurPos].recalculateCursorPosition(positionCalculator, isCurrent);
+	if (isCurrent)
+		this.Content[this.CurPos].recalculateCursorPosition(positionCalculator, true);
+	else
+		positionCalculator.handleMathElement(this);
 };
 CMathBase.prototype.getParagraphContentPosByXY = function(searchState)
 {
