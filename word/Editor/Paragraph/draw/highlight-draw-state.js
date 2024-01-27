@@ -344,7 +344,7 @@
 		if (!this.shdColor || this.shdColor.IsAuto() || (run.IsMathRun() && run.IsPlaceholder()))
 			this.shdColor = null;
 		
-		this.highlight = textPr.highlight;
+		this.highlight = textPr.HighLight;
 		if (textPr.HighlightColor)
 		{
 			textPr.HighlightColor.check(this.drawState.getTheme(), this.drawState.getColorMap());
