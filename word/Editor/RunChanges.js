@@ -1582,7 +1582,7 @@ CChangesRunTextPr.prototype.Load = function(Color)
 	}
 
 	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
+		this.Class.setCollPrChangeColor(Color);
 };
 CChangesRunTextPr.prototype.Merge = function(oChange)
 {
@@ -1840,7 +1840,7 @@ CChangesRunUnifill.prototype.Load = function(Color)
 	}
 
 	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
+		this.Class.setCollPrChangeColor(Color);
 };
 CChangesRunUnifill.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
 /**
@@ -1882,7 +1882,7 @@ CChangesRunShd.prototype.Load = function(Color)
 	}
 
 	if (this.Color && Color)
-		this.Class.private_AddCollPrChangeOther(Color);
+		this.Class.setCollPrChangeColor(Color);
 };
 CChangesRunShd.prototype.Merge = private_ParaRunChangesOnMergeTextPr;
 /**
