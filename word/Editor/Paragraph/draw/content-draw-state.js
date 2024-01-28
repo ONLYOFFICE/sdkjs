@@ -277,7 +277,7 @@
 		}
 		
 		let color = this.getTextColor();
-		if(color)
+		if (color)
 		{
 			this.Graphics.b_color1(color.r, color.g, color.b, 255);
 			this.Graphics.p_color(color.r, color.g, color.b, 255);
@@ -289,15 +289,14 @@
 			return this.reviewColor;
 		if (this.themeColor)
 			return this.themeColor;
-
-
-		if(this.isTextArtDraw())
+		
+		if (this.isTextArtDraw())
 		{
-			if(this.textPr.Color.IsAuto() && !this.textPr.TextFill)
+			if (this.textPr.Color.IsAuto() && !this.textPr.TextFill)
 				return this.autoColor;
 			return null;
 		}
-
+		
 		if (this.textPr.Color.IsAuto())
 			return this.autoColor;
 		

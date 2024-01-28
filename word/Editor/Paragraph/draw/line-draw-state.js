@@ -176,6 +176,9 @@
 		if (para_FieldChar === element.Type)
 			this.ComplexFields.ProcessFieldChar(element);
 		
+		if (para_Drawing === element.Type && !element.IsInline())
+			return;
+		
 		this.bidiFlow.add([element, run, inRunPos, misspell], element.getBidiType());
 	};
 	ParagraphLineDrawState.prototype.handleBidiFlow = function(data)
