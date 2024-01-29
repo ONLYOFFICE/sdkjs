@@ -990,8 +990,8 @@
         if (sName != null)
             Flags |= (1 << 0);
 
-        // contents
-        Flags |= (1 << 1);
+        if (sContents != null)
+            Flags |= (1 << 1);
         
         if (BES != null || BEI != null)
             Flags |= (1 << 2);
@@ -1014,9 +1014,6 @@
                 sContents = sContents.GetContents();
 
             memory.WriteString(sContents);
-        }
-        else {
-            memory.WriteString("");
         }
 
         // border effect
