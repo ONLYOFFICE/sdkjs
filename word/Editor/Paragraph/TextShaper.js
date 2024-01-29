@@ -154,6 +154,9 @@
 	};
 	CParagraphTextShaper.prototype.FlushGrapheme = function(nGrapheme, nWidth, nCodePointsCount, isLigature)
 	{
+		if (nCodePointsCount <= 0)
+			return;
+		
 		let curIndex = 0;
 		
 		if (this.IsRtlDirection())
@@ -173,14 +176,28 @@
 			this.BufferIndex += nCodePointsCount;
 		}
 		
-		let _isLigature = isLigature && nCodePointsCount > 1;
-		
 		let _nWidth = (nWidth + (this.Spacing / this.FontSize)) / nCodePointsCount;
-		this.private_HandleItem(this.Buffer[curIndex++], nGrapheme, _nWidth, this.FontSize, this.FontSlot, _isLigature ? CODEPOINT_TYPE.LIGATURE : CODEPOINT_TYPE.BASE);
-		
-		for (let nIndex = 1; nIndex < nCodePointsCount; ++nIndex)
+		if (1 === nCodePointsCount)
 		{
-			this.private_HandleItem(this.Buffer[curIndex++], AscFonts.NO_GRAPHEME, _nWidth, this.FontSize, AscWord.fontslot_ASCII, _isLigature ? CODEPOINT_TYPE.LIGATURE_CONTINUE : CODEPOINT_TYPE.COMBINING_MARK);
+			this.private_HandleItem(this.Buffer[curIndex], nGrapheme, _nWidth, this.FontSize, this.FontSlot, CODEPOINT_TYPE.BASE);
+		}
+		else
+		{
+			if (this.IsRtlDirection())
+			{
+				this.private_HandleItem(this.Buffer[curIndex], AscFonts.NO_GRAPHEME, _nWidth, this.FontSize, this.FontSlot, isLigature ? CODEPOINT_TYPE.LIGATURE : CODEPOINT_TYPE.BASE);
+				this.private_HandleItem(this.Buffer[curIndex + nCodePointsCount - 1], nGrapheme, _nWidth, this.FontSize, this.FontSlot, isLigature ? CODEPOINT_TYPE.LIGATURE_CONTINUE : CODEPOINT_TYPE.COMBINING_MARK);
+			}
+			else
+			{
+				this.private_HandleItem(this.Buffer[curIndex], nGrapheme, _nWidth, this.FontSize, this.FontSlot, isLigature ? CODEPOINT_TYPE.LIGATURE : CODEPOINT_TYPE.BASE);
+				this.private_HandleItem(this.Buffer[curIndex + nCodePointsCount - 1], AscFonts.NO_GRAPHEME, _nWidth, this.FontSize, this.FontSlot, isLigature ? CODEPOINT_TYPE.LIGATURE_CONTINUE : CODEPOINT_TYPE.COMBINING_MARK);
+			}
+			
+			for (let nIndex = 1; nIndex < nCodePointsCount - 1; ++nIndex)
+			{
+				this.private_HandleItem(this.Buffer[++curIndex], AscFonts.NO_GRAPHEME, _nWidth, this.FontSize, AscWord.fontslot_ASCII, isLigature ? CODEPOINT_TYPE.LIGATURE_CONTINUE : CODEPOINT_TYPE.COMBINING_MARK);
+			}
 		}
 	};
 	CParagraphTextShaper.prototype.private_CheckRun = function(oRun)
