@@ -476,10 +476,10 @@
 		return (((diff <= 0 && Math.abs(diff) < this.diffX - EPSILON) || (diff > 0 && diff < this.diffX + EPSILON))
 			&& (this.centerMode || this.x > this.curX));
 	}
-	ParagraphSearchPositionXY.prototype.checkInText = function(y)
+	ParagraphSearchPositionXY.prototype.checkInText = function()
 	{
 		this.inText = false;
-		if (!this.inTextX || undefined === y)
+		if (!this.inTextX || undefined === this.y)
 			return;
 		
 		let p = this.paragraph;
@@ -487,7 +487,7 @@
 		let lineTop    = p.Pages[this.page].Y + p.Lines[this.line].Y - p.Lines[this.line].Metrics.Ascent - EPSILON;
 		let lineBottom = p.Pages[this.page].Y + p.Lines[this.line].Y + p.Lines[this.line].Metrics.Descent + p.Lines[this.line].Metrics.LineGap + EPSILON;
 		
-		return (lineTop <= y && y <= lineBottom);
+		this.inText = lineTop <= this.y && this.y <= lineBottom;
 	};
 	ParagraphSearchPositionXY.prototype.getPosByPosInfo = function(posInfo)
 	{
