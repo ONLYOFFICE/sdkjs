@@ -15164,7 +15164,8 @@ CTextPr.prototype.FillFromExcelFont = function(oFont)
 	this.SetFontSize(oFont.getSize());
 	this.SetBold(oFont.getBold());
 	this.SetItalic(oFont.getItalic());
-	this.SetUnderline(oFont.getUnderline());
+	let bUnderline = (oFont.getUnderline() !== Asc.EUnderline.underlineNone);
+	this.SetUnderline(bUnderline);
 	var oColor = oFont.getColor();
 	this.SetUnifill(AscFormat.CreateSolidFillRGBA(oColor.getR(), oColor.getG(), oColor.getB(), 255));
 };
