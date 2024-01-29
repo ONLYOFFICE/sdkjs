@@ -290,18 +290,18 @@
 		let diffL = this.x - this.curX;
 		let diffR = this.x - this.curX - w + (item.RGap ? item.RGap : 0);
 		
-		if (direction === AscWord.BidiType.rtl)
-		{
-			let tmp = diffR;
-			diffR = diffL;
-			diffL = tmp;
-		}
-		
 		if (-EPSILON <= diffL && diffL <= w + EPSILON)
 		{
 			this.inTextX = true;
 			this.inTextPosInfo.run = run;
 			this.inTextPosInfo.pos = inRunPos;
+		}
+		
+		if (direction === AscWord.BidiType.rtl)
+		{
+			let tmp = diffR;
+			diffR = diffL;
+			diffL = tmp;
 		}
 		
 		if (this.checkPosition(diffL))
