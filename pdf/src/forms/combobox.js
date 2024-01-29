@@ -71,7 +71,7 @@
         oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
         oContentToDraw.Draw(0, oGraphicsWord);
         // redraw target cursor if field is selected
-        if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsEditable())
+        if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsCanEditText())
             oContentToDraw.RecalculateCurPos();
         
         oGraphicsWord.RemoveLastClip();
@@ -583,7 +583,14 @@
         this._editable = bValue;
     };
     CComboBoxField.prototype.IsEditable = function() {
-        return this._editable && this.IsNeedDrawHighlight() == false;
+        return this._editable;
+    };
+    CComboBoxField.prototype.IsCanEditText = function() {
+        let oDoc = this.GetDocument();
+        if (oDoc.activeForm == this && this.IsNeedDrawHighlight() == false && this.IsEditable())
+            return true;
+        
+        return false;
     };
     CComboBoxField.prototype.SetOptions = function(aOpt) {
         let aOptToPush = [];

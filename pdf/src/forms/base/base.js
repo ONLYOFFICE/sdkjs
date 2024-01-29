@@ -239,7 +239,7 @@
 	 * @memberof CBaseField
 	 * @typeofeditors ["PDF"]
 	 */
-    CBaseField.prototype.IsEditable = function() {
+    CBaseField.prototype.IsCanEditText = function() {
         return false;
     };
 	/**

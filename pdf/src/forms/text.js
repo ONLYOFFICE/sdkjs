@@ -95,8 +95,12 @@
     CTextField.prototype.IsComb = function() {
         return this._comb;
     };
-    CTextField.prototype.IsEditable = function() {
-        return this.IsNeedDrawHighlight() == false;
+    CTextField.prototype.IsCanEditText = function() {
+        let oDoc = this.GetDocument();
+        if (oDoc.activeForm == this && this.IsNeedDrawHighlight() == false)
+            return true;
+        
+        return false;
     };
     CTextField.prototype.SetCharLimit = function(nChars) {
         let oViewer = editor.getDocumentRenderer();
@@ -317,7 +321,7 @@
         oGraphicsWord.RemoveLastClip();
         this.DrawBorders(oGraphicsPDF);
         // redraw target cursor if field is selected
-        if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsEditable())
+        if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsCanEditText())
             oContentToDraw.RecalculateCurPos();
     };
     CTextField.prototype.DrawDateMarker = function(oCtx) {

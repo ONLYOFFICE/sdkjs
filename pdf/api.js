@@ -192,7 +192,7 @@
 			return;
 		let oDoc = this.DocumentRenderer.getPDFDoc();
 		let oField = oDoc.activeForm;
-		if (oField && (oField.GetType() === AscPDF.FIELD_TYPES.text || (oField.GetType() === AscPDF.FIELD_TYPES.combobox && oField.IsEditable()))) {
+		if (oField && oField.IsCanEditText()) {
 			if (oField.content.IsSelectionUse()) {
 				oField.Remove(-1);
 				this.DocumentRenderer._paint();
@@ -217,7 +217,7 @@
 		if (oField && (oField.GetType() != AscPDF.FIELD_TYPES.text || oField.IsMultiline() == false))
 			data = data.trim().replace(/[\n\r]/g, ' ');
 
-		if (oField && (oField.GetType() === AscPDF.FIELD_TYPES.text || (oField.GetType() === AscPDF.FIELD_TYPES.combobox && oField.IsEditable()))) {
+		if (oField && oField.IsCanEditText()) {
 			let aChars = [];
 			for (let i = 0; i < data.length; i++)
 				aChars.push(data[i].charCodeAt(0));
@@ -375,7 +375,7 @@
 		if (!viewer
 			|| !oDoc.checkFieldFont(oDoc.activeForm)
 			|| !oDoc.activeForm
-			|| !oDoc.activeForm.IsEditable()) {
+			|| !oDoc.activeForm.IsCanEditText()) {
 			return false;
 		}
 		
@@ -546,7 +546,7 @@
 			return false;
 		
 		let pdfDoc = viewer.getPDFDoc();
-		if (!pdfDoc.activeForm || !pdfDoc.activeForm.IsEditable())
+		if (!pdfDoc.activeForm || !pdfDoc.activeForm.IsCanEditText())
 			return false;
 		
 		function begin() {
@@ -561,21 +561,21 @@
 	};
 	PDFEditorApi.prototype.Add_CompositeText = function(codePoint) {
 		let form = this._getActiveForm();
-		if (!form || !form.IsEditable())
+		if (!form || !form.IsCanEditText())
 			return;
 		
 		form.addCompositeText(codePoint);
 	};
 	PDFEditorApi.prototype.Remove_CompositeText = function(count) {
 		let form = this._getActiveForm();
-		if (!form || !form.IsEditable())
+		if (!form || !form.IsCanEditText())
 			return;
 		
 		form.removeCompositeText(count);
 	};
 	PDFEditorApi.prototype.Replace_CompositeText = function(codePoints) {
 		let form = this._getActiveForm();
-		if (!form || !form.IsEditable())
+		if (!form || !form.IsCanEditText())
 			return;
 		
 		form.replaceCompositeText(codePoints);
@@ -583,28 +583,28 @@
 	PDFEditorApi.prototype.End_CompositeInput = function()
 	{
 		let form = this._getActiveForm();
-		if (!form || !form.IsEditable())
+		if (!form || !form.IsCanEditText())
 			return;
 		
 		form.endCompositeInput();
 	};
 	PDFEditorApi.prototype.Set_CursorPosInCompositeText = function(pos) {
 		let form = this._getActiveForm();
-		if (!form || !form.IsEditable())
+		if (!form || !form.IsCanEditText())
 			return;
 		
 		form.setPosInCompositeInput(pos);
 	};
 	PDFEditorApi.prototype.Get_CursorPosInCompositeText = function() {
 		let form = this._getActiveForm();
-		if (!form || !form.IsEditable())
+		if (!form || !form.IsCanEditText())
 			return 0;
 		
 		return form.getPosInCompositeInput();
 	};
 	PDFEditorApi.prototype.Get_MaxCursorPosInCompositeText = function() {
 		let form = this._getActiveForm();
-		if (!form || !form.IsEditable())
+		if (!form || !form.IsCanEditText())
 			return 0;
 		
 		return form.getMaxPosInCompositeInput();

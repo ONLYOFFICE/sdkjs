@@ -3115,7 +3115,7 @@
 
 			if (e.KeyCode === 8) // BackSpace
 			{
-				if (oDoc.activeForm && oDoc.activeForm.IsEditable())
+				if (oDoc.activeForm && oDoc.activeForm.IsCanEditText())
 				{
 					oDoc.activeForm.Remove(-1, e.CtrlKey == true);
 					if (oDoc.activeForm.IsNeedRecalc())
@@ -3142,7 +3142,7 @@
 			else if (e.KeyCode === 13 && e.ShiftKey == false) // Enter
 			{
 				window.event.stopPropagation();
-				if (this.doc.activeForm && this.doc.activeForm.IsEditable() && this.doc.activeForm.IsMultiline && this.doc.activeForm.IsMultiline())
+				if (this.doc.activeForm && this.doc.activeForm.GetType() == AscPDF.FIELD_TYPES.text && this.doc.activeForm.IsCanEditText() && this.doc.activeForm.IsMultiline())
 					this.Api.asc_enterText([13]);
 				else
 					this.doc.EnterDownActiveField(oDoc.activeForm);
@@ -3150,7 +3150,7 @@
 			else if (e.KeyCode === 13 && e.ShiftKey == true) // Enter
 			{
 				window.event.stopPropagation();
-				if (this.doc.activeForm && this.doc.activeForm.IsEditable() && this.doc.activeForm.IsMultiline && this.doc.activeForm.IsMultiline())
+				if (this.doc.activeForm && this.doc.activeForm.GetType() == AscPDF.FIELD_TYPES.text && this.doc.activeForm.IsCanEditText() && this.doc.activeForm.IsMultiline())
 					this.Api.asc_enterText([13]);
 				else
 					this.doc.EnterDownActiveField(oDoc.activeForm);
@@ -3239,7 +3239,7 @@
 			}
 			else if ( e.KeyCode == 37 ) // Left Arrow
 			{
-				if (oDoc.activeForm && (oDoc.activeForm.IsEditable() || oDoc.activeForm.GetType() == AscPDF.FIELD_TYPES.combobox))
+				if (oDoc.activeForm && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oDoc.activeForm.GetType()))
 				{
 					// сбрасываем счетчик до появления курсора
 					if (true !== e.ShiftKey)
@@ -3316,7 +3316,7 @@
 			}
 			else if ( e.KeyCode == 39 ) // Right Arrow
 			{	
-				if (oDoc.activeForm && (oDoc.activeForm.IsEditable() || oDoc.activeForm.GetType() == AscPDF.FIELD_TYPES.combobox))
+				if (oDoc.activeForm && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oDoc.activeForm.GetType()))
 				{
 					// сбрасываем счетчик до появления курсора
 					if (true !== e.ShiftKey)
@@ -3395,7 +3395,7 @@
 			{
 				let oDoc = this.getPDFDoc();
 
-				if (oDoc.activeForm && oDoc.activeForm.IsEditable())
+				if (oDoc.activeForm && oDoc.activeForm.IsCanEditText())
 				{
 					oDoc.activeForm.Remove(1, e.CtrlKey == true);
 					if (oDoc.activeForm._needRecalc)
