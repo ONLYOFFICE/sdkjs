@@ -497,6 +497,12 @@
             oDoc.History.Add(new CChangesPDFAnnotReplies(this, this._replies, aReplies));
         }
         this._replies = aReplies;
+
+        let oThis = this;
+        aReplies.forEach(function(reply) {
+            reply.SetReplyTo(oThis);
+        });
+
         if (aReplies.length != 0)
             oDoc.CheckComment(this);
         else

@@ -611,7 +611,7 @@
         oReply.SetSubject(oReplyInfo["Subj"]);
 
         oReply.SetReplyTo(this);
-        oReply.SetApIdx(this.GetDocument().GetMaxApIdx() + 2);
+        oReply.SetApIdx(oReplyInfo["AP"]["i"]);
         
         this._replies.push(oReply);
     };
