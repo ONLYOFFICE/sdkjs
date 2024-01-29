@@ -389,9 +389,10 @@
         else {
             let oParent = this.GetParent();
             let aOpt    = oParent ? oParent.GetOptions() : undefined;
+            let aKids   = oParent ? oParent.GetKids() : undefined;
             this.SetChecked(true);
-            if (aOpt) {
-                this.SetApiValue(String(aOpt.indexOf(this.GetExportValue())));
+            if (aOpt && aKids) {
+                this.SetApiValue(String(aKids.indexOf(this)));
             }
             else {
                 this.SetApiValue(this.GetExportValue());
