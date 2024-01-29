@@ -95,8 +95,8 @@ AscCommon.darkModeCorrectColor2 = function(r, g, b)
 			
 			let textPr = new AscWord.CTextPr();
 			textPr.RFonts.SetAll(fontName);
-			textPr.FontSize   = fontSize * 2;
-			textPr.FontSizeCS = fontSize * 2;
+			textPr.FontSize   = fontSize;
+			textPr.FontSizeCS = fontSize;
 			textPr.Color      = new AscWord.CDocumentColor(68, 68, 68);
 			run.SetPr(textPr);
 			
@@ -111,7 +111,7 @@ AscCommon.darkModeCorrectColor2 = function(r, g, b)
 		});
 		
 		this.dc       = dc;
-		this.fontSize = fontSize * 2;
+		this.fontSize = fontSize;
 	}
 	/**
 	 * @returns {{w:number, h:number}}
