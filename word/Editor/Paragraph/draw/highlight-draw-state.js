@@ -70,7 +70,6 @@
 		
 		this.DrawComments       = true;
 		this.DrawSolvedComments = true;
-		this.commentCounter     = 0;
 		this.haveCurrentComment = false;
 		this.currentCommentId   = null;
 		this.comments           = []; // current list of comments
@@ -128,7 +127,8 @@
 		
 		this.searchCounter = 0;
 		
-		this.commentCounter     = 0;
+		this.comments           = [];
+		this.runComments        = [];
 		this.haveCurrentComment = false;
 		
 		let pageEndInfo = this.Paragraph.GetEndInfoByPage(page - 1);
@@ -189,7 +189,7 @@
 		if (commentId === this.currentCommentId)
 			this.haveCurrentComment = true;
 		
-		this.comments.push(comment);
+		this.comments.push(commentId);
 	};
 	ParagraphHighlightDrawState.prototype.removeComment = function(commentId)
 	{
@@ -200,7 +200,7 @@
 		if (commentId === this.currentCommentId)
 			this.haveCurrentComment = false;
 		
-		let index = this.comments.indexOf(comment);
+		let index = this.comments.indexOf(commentId);
 		if (-1 !== index)
 			this.comments.splice(index, 1);
 	};
@@ -369,7 +369,7 @@
 		if (flags & FLAG_COMPLEX_FIELD)
 			this.CFields.Add(startY, endY, startX, endX, 0, 0, 0, 0);
 		
-		if (flags & FLAG_COMMENT)
+		if (flags & FLAG_COMMENT && this.runComments.length)
 			this.Comm.Add(startY, endY, startX, endX, 0, 0, 0, 0, {Active : this.haveCurrentComment, CommentId : this.runComments});
 		
 		if ((flags & FLAG_HIGHLIGHT) && (this.highlight && highlight_None !== this.highlight))
