@@ -507,8 +507,6 @@
             oDoc.CheckComment(this);
         else
             editor.sync_RemoveComment(this.GetId());
-
-        this.SetWasChanged(true);   
     };
     CAnnotationFreeText.prototype.hitInPath = function(x,y) {
         for (let i = 0; i < this.spTree.length; i++) {
@@ -610,10 +608,6 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
-
-        this._replies.forEach(function(reply) {
-            reply.WriteToBinary(memory); 
-        });
     };
 
     function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {

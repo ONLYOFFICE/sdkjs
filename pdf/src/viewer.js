@@ -4148,7 +4148,10 @@
 			
 			if (aPages[i].annots) {
 				for (let nAnnot = 0; nAnnot < aPages[i].annots.length; nAnnot++) {
-					aPages[i].annots[nAnnot].WriteToBinary && aPages[i].annots[nAnnot].IsChanged() && aPages[i].annots[nAnnot].WriteToBinary(oMemory);
+					aPages[i].annots[nAnnot].IsChanged() && aPages[i].annots[nAnnot].WriteToBinary(oMemory);
+					aPages[i].annots[nAnnot].GetReplies().forEach(function(reply) {
+						reply.IsChanged() && reply.WriteToBinary(oMemory); 
+					});
 				}
 			}
 

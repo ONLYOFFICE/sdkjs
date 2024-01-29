@@ -669,9 +669,10 @@
         if (oDoc.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
             oDoc.History.Add(new CChangesPDFAnnotReplies(this, this._replies, aReplies));
         }
-        this.SetWasChanged(true);
-
         this._replies = aReplies;
+    };
+    CAnnotationBase.prototype.GetReplies = function() {
+        return this._replies;
     };
     CAnnotationBase.prototype.GetReply = function(nPos) {
         return this._replies[nPos];
@@ -694,8 +695,10 @@
             });
         }
         
-        oFirstCommToEdit.SetContents(oCommentData.m_sText);
-        oFirstCommToEdit.SetModDate(oCommentData.m_sOOTime);
+        if (oFirstCommToEdit.GetContents() != oCommentData.m_sText) {
+            oFirstCommToEdit.SetContents(oCommentData.m_sText);
+            oFirstCommToEdit.SetModDate(oCommentData.m_sOOTime);
+        }
 
         let aReplyToDel = [];
         let oReply, oReplyCommentData;
