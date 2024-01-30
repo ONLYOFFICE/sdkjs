@@ -60,7 +60,7 @@ function (window, undefined) {
 
 	cFormulaFunctionGroup['TextAndData'] = cFormulaFunctionGroup['TextAndData'] || [];
 	cFormulaFunctionGroup['TextAndData'].push(cARRAYTOTEXT, cASC, cBAHTTEXT, cCHAR, cCLEAN, cCODE, cCONCATENATE, cCONCAT, cDOLLAR,
-		cEXACT, cFIND, cFINDB, cFIXED, cJIS, cLEFT, cLEFTB, cLEN, cLENB, cLOWER, cMID, cMIDB, cNUMBERVALUE, cPHONETIC,
+		cEXACT, cFIND, cFINDB, cFIXED, cIMPORTRANGE, cJIS, cLEFT, cLEFTB, cLEN, cLENB, cLOWER, cMID, cMIDB, cNUMBERVALUE, cPHONETIC,
 		cPROPER, cREPLACE, cREPLACEB, cREPT, cRIGHT, cRIGHTB, cSEARCH, cSEARCHB, cSUBSTITUTE, cT, cTEXT, cTEXTJOIN,
 		cTRIM, cUNICHAR, cUNICODE, cUPPER, cVALUE, cTEXTBEFORE, cTEXTAFTER, cTEXTSPLIT);
 
@@ -1170,6 +1170,46 @@ function (window, undefined) {
 		return new cString(oNumFormatCache.get("#" + (arg2.toBool() ? "" : ",") + "##0" + cNull)
 			.format(roundHelper(number, num_digits).getValue(), CellValueType.Number,
 				AscCommon.gc_nMaxDigCount)[0].text)
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cIMPORTRANGE() {
+	}
+
+	cIMPORTRANGE.prototype = Object.create(cBaseFunction.prototype);
+	cIMPORTRANGE.prototype.constructor = cIMPORTRANGE;
+	cIMPORTRANGE.prototype.name = 'IMPORTRANGE';
+	cIMPORTRANGE.prototype.argumentsMin = 2;
+	cIMPORTRANGE.prototype.argumentsMax = 2;
+	cIMPORTRANGE.prototype.argumentsType = [argType.reference, argType.text];
+	cIMPORTRANGE.prototype.Calculate = function (arg) {
+		//gs -> allow array(get first element), cRef, cRef3D, cName, cName3d
+		//not allow area/area3d
+		//if first argument - link, when - text only inside " "
+		//if second argument - link, when - text only without " "
+
+		if (cElementType.cellsRange === arg[i].type || cElementType.array === arg[i].type) {
+
+		} else if (cElementType.cellsRange3D === arg[i].type) {
+			/*if (arg[i].isSingleSheet()) {
+				resArr[i] = arg[i].getMatrix()[0];
+			} else {
+				return new cError(cErrorType.bad_reference);
+			}*/
+		} else if (cElementType.cell === arg[i].type || cElementType.cell3D === arg[i].type) {
+			/*let val = arg[i].getValue();
+			if (cElementType.empty === val.type) {
+				return new cError(cErrorType.wrong_value_type);
+			} else {
+				resArr[i] = [[val]];
+			}*/
+		} else {
+
+		}
+
 	};
 
 	/**
