@@ -4194,41 +4194,33 @@ CMathContent.prototype.Get_EndPos = function(BehindEnd, ContentPos, Depth)
     if(undefined !== this.Content[nLastPos])
         this.Content[nLastPos].Get_EndPos(BehindEnd, ContentPos, Depth + 1);
 };
-CMathContent.prototype.Draw_HighLights = function(PDSH, bAll)
+CMathContent.prototype.Draw_HighLights = function(drawState)
 {
 	if (!this.bRoot && this.Parent && true !== this.ParentElement.Is_ContentUse(this))
 		return;
-
-    var Bound = this.Get_LineBound(PDSH.Line, PDSH.Range);
-    PDSH.X    = Bound.X;
-
-    var CurLine  = PDSH.Line - this.StartLine;
-    var CurRange = ( 0 === CurLine ? PDSH.Range - this.StartRange : PDSH.Range );
-
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-    var Y0 = PDSH.Y0,
-        Y1 = PDSH.Y1;
-
-    var FirstRunInRootNotShd = this.bRoot && this.Content.length > 0 && this.Content[StartPos].IsShade() == false;
-
-    if(FirstRunInRootNotShd || this.bRoot == false)
-    {
-        Y0 = Bound.Y;
-        Y1 = Bound.Y + Bound.H;
-    }
-
-    for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
-    {
-        PDSH.Y0 = Y0;
-        PDSH.Y1 = Y1;
-
-        if(bAll && this.Content[CurPos].Type == para_Math_Run)
-            this.Content[CurPos].SelectAll();
-
-        this.Content[CurPos].Draw_HighLights(PDSH, bAll);
-    }
+	
+	let rangeInfo  = this.getRangePos(drawState.Line, drawState.Range);
+	let rangeStart = rangeInfo[0];
+	let rangeEnd   = rangeInfo[1];
+	
+	let Y0 = drawState.Y0;
+	let Y1 = drawState.Y1;
+	
+	// TODO: Переделать тут. На самом деле если первый (в корне) непустой элемент идет с заливкой, то Word заливает всю формулу
+	let bounds = this.Get_LineBound(drawState.Line, drawState.Range);
+	if (!this.bRoot || !this.Content.length || !this.Content[rangeStart].IsShade())
+	{
+		Y0 = bounds.Y;
+		Y1 = bounds.Y + bounds.H;
+	}
+	drawState.X = bounds.X;
+	
+	for (let pos = rangeStart; pos <= rangeEnd; ++pos)
+	{
+		drawState.Y0 = Y0;
+		drawState.Y1 = Y1;
+		this.Content[pos].Draw_HighLights(drawState);
+	}
 };
 CMathContent.prototype.Draw_Lines = function(PDSL)
 {

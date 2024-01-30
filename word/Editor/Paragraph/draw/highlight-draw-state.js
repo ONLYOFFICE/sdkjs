@@ -175,7 +175,7 @@
 	ParagraphHighlightDrawState.prototype.endRange = function()
 	{
 		this.bidiFlow.end();
-	}
+	};
 	ParagraphHighlightDrawState.prototype.AddInlineSdt = function(oSdt)
 	{
 		this.InlineSdt.push(oSdt);
@@ -271,6 +271,82 @@
 		this.addHighlight(this.X, this.X + w, flags, hyperlink, collColor);
 		
 		this.X += w;
+	};
+	ParagraphHighlightDrawState.prototype.handleParaMath = function(math)
+	{
+		if (!math || math.Root.IsEmptyRange(this.Line, this.Range))
+			return;
+		
+		this.bidiFlow.end();
+		
+		let y0 = this.Y0;
+		let y1 = this.Y1;
+		
+		let coll = this.Coll;
+		let comm = this.Comm;
+		
+		this.Coll = new CParaDrawingRangeLines();
+		this.Comm = new CParaDrawingRangeLines();
+		
+		math.Root.Draw_HighLights(this);
+		
+		let mathComments = this.Comm.getNext();
+		if (mathComments)
+		{
+			let bounds = math.Root.Get_LineBound(this.Line, this.Range);
+			comm.Add(bounds.Y, bounds.Y + bounds.H, bounds.X, bounds.X + bounds.W, 0, 0, 0, 0, mathComments.Additional);
+		}
+		
+		let mathColl = this.Coll.getNext();
+		if (mathColl)
+		{
+			let bounds = math.Root.Get_LineBound(this.Line, this.Range);
+			comm.Add(bounds.Y, bounds.Y + bounds.H, bounds.X, bounds.X + bounds.W, 0, mathColl.r, mathColl.g, mathColl.b);
+		}
+		
+		this.Coll = coll;
+		this.Comm = comm;
+		
+		this.Y0 = y0;
+		this.Y1 = y1;
+	};
+	ParagraphHighlightDrawState.prototype.handleMathBase = function(element)
+	{
+		this.bidiFlow.end();
+		
+		let textPr = element.Get_CompiledCtrPrp();
+		
+		let shdColor = (textPr.Shd && !textPr.Shd.IsNil() ? textPr.Shd.GetSimpleColor(this.drawState.getTheme(), this.drawState.getColorMap()) : null);
+		
+		let w = element.Get_LineBound(this.Line, this.Range).W;
+		
+		let x  = this.X;
+		let y0 = this.Y0;
+		let y1 = this.Y1;
+		
+		let startPos = 0;
+		let endPos   = element.Content.length - 1;
+		if (!element.bOneLine)
+		{
+			let rangeInfo = element.getRangePos(this.Line, this.Range);
+			
+			startPos = rangeInfo[0];
+			endPos   = rangeInfo[1];
+		}
+		
+		for (let pos = startPos; pos <= endPos; ++pos)
+		{
+			element.Content[pos].Draw_HighLights(this);
+		}
+		
+		// Add after because we are rendering in reverse direction
+		if (shdColor)
+			this.Shd.Add(y0, y1, x, x + w, 0, shdColor.r, shdColor.g, shdColor.b);
+		
+		if (highlight_None !== textPr.HighLight)
+			this.High.Add(y0, y1, x, x + w, 0, textPr.HighLight.r, textPr.HighLight.g, textPr.HighLight.b);
+		
+		this.X = x + w;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area

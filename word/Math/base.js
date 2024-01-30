@@ -1840,50 +1840,9 @@ CMathBase.prototype.SetCurrentMathContent = function(oMathContent)
 		}
 	}
 };
-CMathBase.prototype.Draw_HighLights = function(PDSH, bAll)
+CMathBase.prototype.Draw_HighLights = function(drawState, bAll)
 {
-    var ComplCtrPrp = this.Get_CompiledCtrPrp();
-    var oShd = ComplCtrPrp.Shd;
-    var bDrawShd  = ( oShd === undefined || Asc.c_oAscShdNil === oShd.Value ? false : true );
-    var ShdColor  = ( true === bDrawShd ? oShd.Get_Color( PDSH.Paragraph ) : null );
-
-    var X = PDSH.X,
-        Y0 = PDSH.Y0,
-        Y1 = PDSH.Y1;
-
-    var CurLine  = PDSH.Line - this.StartLine;
-    var CurRange = ( 0 === CurLine ? PDSH.Range - this.StartRange : PDSH.Range );
-
-    var StartPos, EndPos;
-    if(this.bOneLine)
-    {
-        StartPos = 0;
-        EndPos   = this.Content.length - 1;
-    }
-    else
-    {
-        StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-        EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-    }
-
-
-    var bAllCont = this.Selection.StartPos !== this.Selection.EndPos;
-
-    for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
-		this.Content[CurPos].Draw_HighLights(PDSH, bAllCont);
-
-    var Bound = this.Get_LineBound(PDSH.Line, PDSH.Range);
-
-    if (true === bDrawShd)
-        PDSH.Shd.Add(Y0, Y1, X, X + Bound.W, 0, ShdColor.r, ShdColor.g, ShdColor.b );
-
-    var HighLight = ComplCtrPrp.HighLight;
-
-    if ( highlight_None != HighLight )
-        PDSH.High.Add( Y0, Y1, X, X + Bound.W, 0, HighLight.r, HighLight.g, HighLight.b );
-
-
-    PDSH.X = Bound.X + Bound.W;
+	drawState.handleMathBase(this);
 };
 CMathBase.prototype.Draw_Lines = function(PDSL)
 {

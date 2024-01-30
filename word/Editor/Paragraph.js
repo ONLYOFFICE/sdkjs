@@ -19006,6 +19006,11 @@ CParaDrawingRangeLines.prototype =
 
         return Element;
     },
+	
+	getNext : function(saveIntermediate)
+	{
+		return this.Get_Next(saveIntermediate);
+	},
 
     Get_NextForward : function()
     {

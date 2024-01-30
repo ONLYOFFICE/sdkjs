@@ -2511,44 +2511,9 @@ ParaMath.prototype.Get_Default_TPrp = function()
 //-----------------------------------------------------------------------------------
 // Функции отрисовки
 //-----------------------------------------------------------------------------------
-ParaMath.prototype.Draw_HighLights = function(PDSH)
+ParaMath.prototype.Draw_HighLights = function(drawState)
 {
-    if(false == this.Root.IsEmptyRange(PDSH.Line, PDSH.Range))
-    {
-        var X  = PDSH.X;
-        var Y0 = PDSH.Y0;
-        var Y1 = PDSH.Y1;
-
-        var Comm = PDSH.Save_Comm();
-        var Coll = PDSH.Save_Coll();
-
-        this.Root.Draw_HighLights(PDSH, false);
-
-        var CommFirst = PDSH.Comm.Get_Next();
-        var CollFirst = PDSH.Coll.Get_Next();
-
-        PDSH.Load_Comm(Comm);
-        PDSH.Load_Coll(Coll);
-
-        if (null !== CommFirst)
-        {
-            var CommentsCount = PDSH.Comments.length;
-            var CommentId     = ( CommentsCount > 0 ? PDSH.Comments[CommentsCount - 1] : null );
-            var CommentsFlag  = PDSH.CommentsFlag;
-
-            var Bounds = this.Root.Get_LineBound(PDSH.Line, PDSH.Range);
-            Comm.Add(Bounds.Y, Bounds.Y + Bounds.H, Bounds.X, Bounds.X + Bounds.W, 0, 0, 0, 0, { Active : CommentsFlag === AscCommon.comments_ActiveComment ? true : false, CommentId : CommentId } );
-        }
-
-        if (null !== CollFirst)
-        {
-            var Bounds = this.Root.Get_LineBound(PDSH.Line, PDSH.Range);
-            Coll.Add(Bounds.Y, Bounds.Y + Bounds.H, Bounds.X, Bounds.X + Bounds.W, 0, CollFirst.r, CollFirst.g, CollFirst.b);
-        }
-
-        PDSH.Y0 = Y0;
-        PDSH.Y1 = Y1;
-    }
+	drawState.handleParaMath(this);
 };
 ParaMath.prototype.Draw_Elements = function(PDSE)
 {
