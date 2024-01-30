@@ -12744,6 +12744,30 @@
 		return res;
 	};
 
+	Worksheet.prototype.isUserProtectedRangesCanView = function(oCell, userId){
+		//range - array of ranges or range
+		let res = true;
+		if (!this.userProtectedRanges || !this.userProtectedRanges.length || !oCell) {
+			return res;
+		}
+		if (!userId) {
+			let oApi = Asc.editor;
+			userId = oApi.DocInfo && oApi.DocInfo.get_UserId();
+		}
+
+		if (this.userProtectedRanges && userId) {
+			for (let i = 0; i < this.userProtectedRanges.length; i++) {
+				let curUserProtectedRange = this.userProtectedRanges[i];
+				if (curUserProtectedRange.asc_getHideContent()) {
+					if (curUserProtectedRange.contains2(oCell) && !curUserProtectedRange.isUserCanEdit(userId)) {
+						return false;
+					}
+				}
+			}
+		}
+		return res;
+	};
+
 	Worksheet.prototype.updateUserProtectedRangesOffset = function (range, offset) {
 		if (offset.row < 0 || offset.col < 0) {
 			this.deleteUserProtectedRanges(range);
@@ -13832,7 +13856,8 @@
 		// 	return this._getValueTypeError(textValueForEdit);
 		// }
 		if ((this.ws && this.ws.getSheetProtection() && this.xfs && this.xfs.getHidden()) ||
-			(this.ws.isUserProtectedRangesIntersectionCell(this, null, null, Asc.c_oSerUserProtectedRangeType.View))) {
+			(this.ws.isUserProtectedRangesIntersectionCell(this, null, null, Asc.c_oSerUserProtectedRangeType.View))
+			|| !this.ws.isUserProtectedRangesCanView(this, null)) {
 			return "";
 		}
 

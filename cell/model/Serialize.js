@@ -1187,7 +1187,8 @@
         Name: 2,
         Text: 3,
         User: 4,
-        UsersGroup: 5
+        UsersGroup: 5,
+        HideContent: 6
     };
     var c_oSerUserProtectedRangeDesc = {
         Id: 0,
@@ -6066,14 +6067,14 @@
             }
         };
 
-        this.WriteUserProtectedRanges = function (aUserProtectedRanges) {
-            var oThis = this;
-            for (var i = 0, length = aUserProtectedRanges.length; i < length; ++i) {
-                this.bs.WriteItem(c_oSerUserProtectedRange.UserProtectedRange, function () {
-                    oThis.WriteUserProtectedRange(aUserProtectedRanges[i]);
-                });
-            }
-        };
+		this.WriteUserProtectedRanges = function (aUserProtectedRanges) {
+			var oThis = this;
+			for (var i = 0, length = aUserProtectedRanges.length; i < length; ++i) {
+				this.bs.WriteItem(c_oSerUserProtectedRange.UserProtectedRange, function () {
+					oThis.WriteUserProtectedRange(aUserProtectedRanges[i]);
+				});
+			}
+		};
 		this.WriteUserProtectedRangeDesc = function (desc) {
 			if (desc.id) {
 				this.memory.WriteByte(c_oSerUserProtectedRangeDesc.Id);
@@ -6091,45 +6092,50 @@
 				this.memory.WriteByte(desc.type);
 			}
 		};
-        this.WriteUserProtectedRange = function (oUserProtectedRange) {
+		this.WriteUserProtectedRange = function (oUserProtectedRange) {
+			var oThis = this;
 
-            var oThis = this;
-
-            if (oUserProtectedRange.name) {
+			if (oUserProtectedRange.name) {
 				this.bs.WriteItem(c_oSerUserProtectedRange.Name, function () {
-                    oThis.memory.WriteString3(oUserProtectedRange.name);
-                });
-            }
-            if (oUserProtectedRange.ref) {
+					oThis.memory.WriteString3(oUserProtectedRange.name);
+				});
+			}
+			if (oUserProtectedRange.ref) {
 				var sqRef = getSqRefString([oUserProtectedRange.ref]);
-            	this.bs.WriteItem(c_oSerUserProtectedRange.Sqref, function () {
-                    oThis.memory.WriteString3(sqRef);
-                });
-            }
-            if (oUserProtectedRange.warningText) {
-                this.bs.WriteItem(c_oSerUserProtectedRange.Text, function () {
-                    oThis.memory.WriteString3(oUserProtectedRange.warningText);
-                });
-            }
+				this.bs.WriteItem(c_oSerUserProtectedRange.Sqref, function () {
+					oThis.memory.WriteString3(sqRef);
+				});
+			}
+			if (oUserProtectedRange.warningText) {
+				this.bs.WriteItem(c_oSerUserProtectedRange.Text, function () {
+					oThis.memory.WriteString3(oUserProtectedRange.warningText);
+				});
+			}
 
-            let i;
-            let users = oUserProtectedRange.asc_getUsers();
-            if (null != users) {
-                for (i = 0; i < users.length; i++) {
-                    this.bs.WriteItem(c_oSerUserProtectedRange.User, function () {
-                        oThis.WriteUserProtectedRangeDesc(users[i]);
-                    });
-                }
-            }
+			if (oUserProtectedRange.hideContent != null) {
+				this.bs.WriteItem(c_oSerUserProtectedRange.HideContent, function () {
+					oThis.memory.WriteBool(oUserProtectedRange.hideContent);
+				});
+			}
+
+			let i;
+			let users = oUserProtectedRange.asc_getUsers();
+			if (null != users) {
+				for (i = 0; i < users.length; i++) {
+					this.bs.WriteItem(c_oSerUserProtectedRange.User, function () {
+						oThis.WriteUserProtectedRangeDesc(users[i]);
+					});
+				}
+			}
 			let userGroups = oUserProtectedRange.asc_getUserGroups();
-            if (null != userGroups) {
+			if (null != userGroups) {
 				for (i = 0; i < userGroups.length; i++) {
 					this.bs.WriteItem(c_oSerUserProtectedRange.UsersGroup, function () {
 						oThis.WriteUserProtectedRangeDesc(userGroups[i]);
 					});
 				}
-            }
-        };
+			}
+		};
 
         this.WriteTimelines = function (aTimelines) {
             var oThis = this;
@@ -9245,6 +9251,8 @@
                 }
             } else if (c_oSerUserProtectedRange.Text === type) {
                 oUserProtectedRange.warningText = this.stream.GetString2(length);
+            } else if (c_oSerUserProtectedRange.HideContent === type) {
+                oUserProtectedRange.hideContent = this.stream.GetBool();
             } else if (c_oSerUserProtectedRange.User === type)
 			{
 

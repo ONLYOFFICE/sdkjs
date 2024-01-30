@@ -44,6 +44,8 @@
 		//for warning
 		this.warningText = null;
 
+		this.hideContent = null;//bool, default -> false
+
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
 		this._ws = ws;
 		this.isLock = null;
@@ -68,6 +70,8 @@
 		res.usersGroups = this.usersGroups;
 
 		res.warningText = this.warningText;
+
+		res.hideContent = this.hideContent;
 
 		return res;
 	};
@@ -127,9 +131,16 @@
 			w.WriteBool(false);
 		}
 
-		if (null != this.Id) {
+		if (null != this.warningText) {
 			w.WriteBool(true);
-			w.WriteString2(this.Id);
+			w.WriteString2(this.warningText);
+		} else {
+			w.WriteBool(false);
+		}
+
+		if (null != this.hideContent) {
+			w.WriteBool(true);
+			w.WriteBool(this.hideContent);
 		} else {
 			w.WriteBool(false);
 		}
@@ -173,6 +184,10 @@
 
 		if (r.GetBool()) {
 			this.warningText = r.GetString2();
+		}
+
+		if (r.GetBool()) {
+			this.hideContent = r.GetBool();
 		}
 
 		if (r.GetBool()) {
@@ -266,15 +281,22 @@
 	CUserProtectedRange.prototype.asc_setUsers = function (val) {
 		this.users = val;
 	};
+	CUserProtectedRange.prototype.asc_setHideContent = function (val) {
+		this.hideContent = val;
+	};
 	CUserProtectedRange.prototype.asc_getIsLock = function () {
 		return this.isLock;
 	};
 	CUserProtectedRange.prototype.asc_getId = function () {
 		return this.Id;
 	};
+	CUserProtectedRange.prototype.asc_getHideContent = function () {
+		return this.hideContent;
+	};
 	CUserProtectedRange.prototype.initPostOpen = function (ws) {
 		this._ws = ws;
 	};
+
 
 
 	function CUserProtectedRangeUserInfo() {
@@ -375,11 +397,12 @@
 	prot["asc_getUsers"] = prot.asc_getUsers;
 	prot["asc_getUserGroups"] = prot.asc_getUserGroups;
 	prot["asc_getUserProtectedType"] = prot.asc_getUserProtectedType;
+	prot["asc_getHideContent"] = prot.asc_getHideContent;
 
 	prot["asc_setRef"] = prot.asc_setRef;
 	prot["asc_setName"] = prot.asc_setName;
 	prot["asc_setUsers"] = prot.asc_setUsers;
-	prot["asc_setUserProtectedType"] = prot.asc_setUserProtectedType;
+	prot["asc_setHideContent"] = prot.asc_setHideContent;
 
 	prot["asc_getId"] = prot.asc_getId;
 
