@@ -3142,18 +3142,22 @@
 			else if (e.KeyCode === 13 && e.ShiftKey == false) // Enter
 			{
 				window.event.stopPropagation();
-				if (this.doc.activeForm && this.doc.activeForm.GetType() == AscPDF.FIELD_TYPES.text && this.doc.activeForm.IsCanEditText() && this.doc.activeForm.IsMultiline())
+				if (this.doc.activeForm) {
+					if (this.doc.activeForm.GetType() == AscPDF.FIELD_TYPES.text && this.doc.activeForm.IsCanEditText() && this.doc.activeForm.IsMultiline())
 					this.Api.asc_enterText([13]);
 				else
 					this.doc.EnterDownActiveField(oDoc.activeForm);
+				}
 			}
 			else if (e.KeyCode === 13 && e.ShiftKey == true) // Enter
 			{
 				window.event.stopPropagation();
-				if (this.doc.activeForm && this.doc.activeForm.GetType() == AscPDF.FIELD_TYPES.text && this.doc.activeForm.IsCanEditText() && this.doc.activeForm.IsMultiline())
-					this.Api.asc_enterText([13]);
-				else
-					this.doc.EnterDownActiveField(oDoc.activeForm);
+				if (this.doc.activeForm) {
+					if (this.doc.activeForm.GetType() == AscPDF.FIELD_TYPES.text && this.doc.activeForm.IsCanEditText() && this.doc.activeForm.IsMultiline())
+						this.Api.asc_enterText([13]);
+					else
+						this.doc.EnterDownActiveField();
+				}
 			}
 			else if (e.KeyCode === 27) // Esc
 			{

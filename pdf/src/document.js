@@ -634,6 +634,9 @@ var CPresentation = CPresentation || function(){};
         let oViewer = editor.getDocumentRenderer();
         let oField = this.activeForm;
 
+        if (!oField)
+            return;
+        
         if (oField.IsNeedDrawHighlight())
             return;
 
