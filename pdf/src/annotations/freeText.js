@@ -955,6 +955,7 @@
         oShape.setStyle(AscFormat.CreateDefaultShapeStyle());
         oShape.setBDeleted(false);
         oShape.recalcInfo.recalculateGeometry = false;
+        oShape.setGroup(oParentAnnot);
         oShape.recalculate();
         oShape.brush = AscFormat.CreateNoFillUniFill();
 
