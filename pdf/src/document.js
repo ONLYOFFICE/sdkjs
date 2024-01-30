@@ -918,7 +918,8 @@ var CPresentation = CPresentation || function(){};
             oViewer.onUpdateOverlay();
         }
         
-        if (false == oDrawingObjects.selectedObjects.includes(this.mouseDownAnnot)) {
+        // если в селекте нет аннотации по которой кликнули, то сбрасываем селект
+        if (false == oDrawingObjects.selectedObjects.includes(this.mouseDownAnnot) && oDrawingObjects.selection.groupSelection != this.mouseDownAnnot) {
             oDrawingObjects.resetSelection();
         }
     };

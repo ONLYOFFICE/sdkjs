@@ -2207,7 +2207,9 @@
 							} else {
 								for (i = 0; i < aGrpSelected.length; ++i) {
 									let oDrawing = aGrpSelected[i];
-
+									if (Asc.editor.isPdfEditor() && oDrawing instanceof AscFormat.CConnectionShape) {
+										continue;
+									}
 									drawingDocument.DrawTrack(
 										AscFormat.TYPE_TRACK.SHAPE,
 										oDrawing.transform,
@@ -2216,7 +2218,7 @@
 										oDrawing.extX,
 										oDrawing.extY,
 										AscFormat.CheckObjectLine(oDrawing),
-										oDrawing.canRotate(),
+										oDrawing.canRotate() && !Asc.editor.isPdfEditor(),
 										undefined,
 										isDrawHandles && oGrp.canEdit());
 								}

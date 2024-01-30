@@ -1124,6 +1124,14 @@ CAutoshapeTrack.prototype =
         var epsForCenter = 30 * rPR;
         var bIsRectsTrackX = (_len_x >= epsForCenter) ? true : false;
         var bIsRectsTrackY = (_len_y >= epsForCenter) ? true : false;
+
+        // для free text аннотации прямоугольника не рисуем
+        if (Asc.editor.isPdfEditor()) {
+            let oViewer = Asc.editor.getDocumentRenderer();
+            if (oViewer.curDrawingTrack)
+                bIsRectsTrackY = false;
+        }
+
         var bIsRectsTrack = (bIsRectsTrackX || bIsRectsTrackY) ? true : false;
 
         if (bIsRectsTrack && (type == AscFormat.TYPE_TRACK.CHART_TEXT))
