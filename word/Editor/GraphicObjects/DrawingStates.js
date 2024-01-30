@@ -1682,14 +1682,15 @@ MoveInGroupState.prototype =
                     tracks[i].trackEnd(true);
                 }
             }
-            var oPosObject = this.group.updateCoordinatesAfterInternalResize();
-            this.group.recalculate();
-            var posX = oPosObject.posX;
-            var posY = oPosObject.posY;
-            this.group.spPr.xfrm.setOffX(0);
-            this.group.spPr.xfrm.setOffY(0);
             
             if (isPdf == false) {
+                var oPosObject = this.group.updateCoordinatesAfterInternalResize();
+                this.group.recalculate();
+                var posX = oPosObject.posX;
+                var posY = oPosObject.posY;
+                this.group.spPr.xfrm.setOffX(0);
+                this.group.spPr.xfrm.setOffY(0);
+
                 if(this.group.parent.Is_Inline())
                 {
                     this.group.parent.CheckWH();
@@ -1716,13 +1717,134 @@ MoveInGroupState.prototype =
                 this.drawingObjects.document.FinalizeAction();
             }
             else {
-                let aRect = [];
-                let xMin = (this.group.posX + posX) * g_dKoef_mm_to_pix;
-                let yMin = (this.group.posY + posY) * g_dKoef_mm_to_pix;
-                let xMax = (this.group.extX * g_dKoef_mm_to_pix) + xMin;
-                let yMax = (this.group.extY * g_dKoef_mm_to_pix) + yMin;
+                let oViewer = Asc.editor.getDocumentRenderer();
+                let nPage   = this.group.GetPage();
+                let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+                let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
 
-                this.group.SetRect([xMin, yMin, xMax, yMax]);
+                // let xMin = (this.group.posX + posX) * g_dKoef_mm_to_pix;
+                // let yMin = (this.group.posY + posY) * g_dKoef_mm_to_pix;
+                // let xMax = (this.group.extX * g_dKoef_mm_to_pix) + xMin;
+                // let yMax = (this.group.extY * g_dKoef_mm_to_pix) + yMin;
+                let xMin;
+                let yMin;
+                let xMax;
+                let yMax;
+
+                let oFreeTextRect   = this.group.GetRect();
+                let aTextBoxRect    = this.group.GetTextBoxRect();
+                let aNewCallout     = this.group.GetCallout().slice();
+                let aCurRD          = this.group.GetRectangleDiff();
+                let aNewRD          = [];
+                let aNewRect        = [];
+
+                function findBoundingRectangle(points) {
+                    let minX = points[0];
+                    let minY = points[1];
+                    let maxX = points[0];
+                    let maxY = points[1];
+                
+                    for (let i = 2; i < points.length; i += 2) {
+                        minX = Math.min(minX, points[i]);
+                        maxX = Math.max(maxX, points[i]);
+                        minY = Math.min(minY, points[i + 1]);
+                        maxY = Math.max(maxY, points[i + 1]);
+                    }
+                
+                    return [minX, minY, maxX, maxY];
+                }
+
+                let oTrack = tracks[0];
+                if (this.majorObject.getPresetGeom() == "line") { 
+                     // если изменяли callout
+                    if (this.handleNum == 0) { // x1, y1 точка callout
+                        let oXY = oTrack.correctXYForPdfFreeText(x, y);
+                        aNewCallout[0 * 2] = oXY.x * g_dKoef_mm_to_pix / nScaleX;
+                        aNewCallout[0 * 2 + 1] = oXY.y * g_dKoef_mm_to_pix / nScaleY;
+                    }
+                    else if (this.handleNum === 4) { // x2, y2 точка callout
+                        let oXY = oTrack.correctXYForPdfFreeText(x, y);
+                        aNewCallout[1 * 2] = oXY.x * g_dKoef_mm_to_pix / nScaleX;
+                        aNewCallout[1 * 2 + 1] = oXY.y * g_dKoef_mm_to_pix / nScaleY;
+                    }
+
+                    aNewRect = AscPDF.unionRectangles([aTextBoxRect, findBoundingRectangle(aNewCallout)]).map(function(measure, idx) {
+                        return idx % 2 ? measure * nScaleY : measure * nScaleX;
+                    });
+
+                    // пересчитываем RD.
+                    aNewRD = [
+                        aCurRD[0] + (oFreeTextRect[0] - aNewRect[0]) / nScaleX,
+                        aCurRD[1] + (oFreeTextRect[1] - aNewRect[1]) / nScaleY,
+                        aCurRD[2] + (aNewRect[2] - oFreeTextRect[2]) / nScaleX,
+                        aCurRD[3] + (aNewRect[3] - oFreeTextRect[3]) / nScaleY
+                    ];
+                }
+                else {
+                    // находим координаты textbox
+                    xMin = oTrack.transform.TransformPointX(0, 0) * g_dKoef_mm_to_pix;
+                    yMin = oTrack.transform.TransformPointY(0, 0) * g_dKoef_mm_to_pix;
+                    xMax = (oTrack.transform.TransformPointX(0, 0) + oTrack.resizedExtX) * g_dKoef_mm_to_pix;
+                    yMax = (oTrack.transform.TransformPointY(0, 0) + oTrack.resizedExtY) * g_dKoef_mm_to_pix;
+
+                    // пересчитываем callout
+                    let nCalloutExitPos = this.group.GetCalloutExitPos();
+                    switch (nCalloutExitPos) {
+                        case AscPDF.CALLOUT_EXIT_POS.left: {
+                            // точка выхода (x3, y3)
+                            aNewCallout[2 * 2]      = xMin / nScaleX;
+                            aNewCallout[2 * 2 + 1]  = (yMin + (yMax - yMin) / 2) / nScaleY;
+
+                            // точка начала стрелки
+                            aNewCallout[2 * 1]      = xMin / nScaleX - this.group.defaultPerpLength;
+                            aNewCallout[2 * 1 + 1]  = (yMin + (yMax - yMin) / 2) / nScaleY;
+                            break;
+                        }
+                        case AscPDF.CALLOUT_EXIT_POS.top: {
+                            aNewCallout[2 * 2]      = (xMin + (xMax - xMin) / 2) / nScaleX;
+                            aNewCallout[2 * 2 + 1]  = yMin / nScaleY;
+
+                            aNewCallout[2 * 2]      = (xMin + (xMax - xMin) / 2) / nScaleX;
+                            aNewCallout[2 * 2 + 1]  = yMin / nScaleY - this.group.defaultPerpLength;
+                            break;
+                        }
+                        case AscPDF.CALLOUT_EXIT_POS.right: {
+                            aNewCallout[2 * 2]      = xMax / nScaleX;
+                            aNewCallout[2 * 2 + 1]  = (yMin + (xMax - yMin) / 2) / nScaleY;
+
+                            aNewCallout[2 * 2]      = xMax / nScaleX + this.group.defaultPerpLength;
+                            aNewCallout[2 * 2 + 1]  = (yMin + (xMax - yMin) / 2) / nScaleY;
+                            break;
+                        }
+                        case AscPDF.CALLOUT_EXIT_POS.bottom: {
+                            aNewCallout[2 * 2]      = (xMin + (xMax - xMin) / 2) / nScaleX;
+                            aNewCallout[2 * 2 + 1]  = yMax / nScaleY;
+
+                            aNewCallout[2 * 2]      = (xMin + (xMax - xMin) / 2) / nScaleX;
+                            aNewCallout[2 * 2 + 1]  = yMax / nScaleY + this.group.defaultPerpLength;
+                            break;
+                        }
+                    }
+
+                    let aNewTextBoxRect = [xMin / nScaleX, yMin / nScaleY, xMax / nScaleX, yMax / nScaleY];
+                    // находим результирующий rect аннотации
+                    aNewRect = AscPDF.unionRectangles([aNewTextBoxRect, findBoundingRectangle(aNewCallout)]).map(function(measure, idx) {
+                        return idx % 2 ? measure * nScaleY : measure * nScaleX;
+                    });
+
+                    // пересчитываем RD.
+                    aNewRD = [
+                        (xMin - aNewRect[0]) / nScaleX,
+                        (yMin - aNewRect[1]) / nScaleY,
+                        (aNewRect[2] - xMax) / nScaleX,
+                        (aNewRect[3] - yMax) / nScaleY
+                    ];
+                }
+
+                this.group.SetCallout(aNewCallout);
+                this.group.SetRectangleDiff(aNewRD);
+                this.group.SetRect(aNewRect);
+
                 editor.getDocumentRenderer().DrawingObjects.drawingObjects.length = 0;
             }
         }

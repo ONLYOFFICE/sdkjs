@@ -398,6 +398,9 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 }
             }
 
+            if (Asc.editor.isPdfEditor())
+                oConnectionInfo = null;
+            
             var _beginConnectionInfo, _endConnectionInfo;
             if(this.numberHandle === 0){
                 if(oEndShape){
@@ -514,6 +517,120 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 this.resize(kd1, kd2, e.ShiftKey);
             }
         };
+        this.correctKDForPdfFreeText = function(kd1, kd2) {
+            // точка коннектора соединённая с перпендикулярной линией должна двигаться только по одной из осей
+            // этот метод обрабатывает данный случай и корректирует координаты
+
+            let oFreeText               = this.originalObject.group;
+            let oFreeTextRect           = oFreeText.GetTextBoxRect(true).map(function(measure) {
+                return measure * g_dKoef_pix_to_mm;
+            });
+            let aCallout                = oFreeText.GetCallout();
+            let oExitPoint              = undefined; // перпендикулярная линия выходящая из freetext аннотации
+            let oCalloutArrowPt         = undefined; // x2, y2 точка линии (точка начала стрелки)
+            let oCalloutArrowEndPt      = undefined; // x1, y1 точка линии (точка конца стрелки)
+            let oViewer = Asc.editor.getDocumentRenderer();
+            let nPage   = oFreeText.GetPage();
+            let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
+            let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
+
+            if (aCallout && aCallout.length == 6) {
+                // точка выхода callout из аннотации
+                oExitPoint = {
+                    x: (aCallout[2 * 2]) * nScaleX,
+                    y: (aCallout[2 * 2 + 1]) * nScaleY
+                };
+
+                // x2, y2 линии
+                oCalloutArrowPt = {
+                    x: aCallout[1 * 2] * nScaleX,
+                    y: (aCallout[1 * 2 + 1]) * nScaleY
+                };
+
+                oCalloutArrowEndPt = {
+                    x: aCallout[0 * 2] * nScaleX,
+                    y: (aCallout[0 * 2 + 1]) * nScaleY
+                }
+            }
+            else {
+                return;
+            }
+
+            let nFreeTextW = oFreeTextRect[2] - oFreeTextRect[0];
+            let nFreeTextH = oFreeTextRect[3] - oFreeTextRect[1];
+
+            if (this.numberHandle == 4) {
+                // если x начала стрелки находится в пределах ректа аннотации то фиксируем x
+                if (oCalloutArrowPt.x < oFreeTextRect[0] || oCalloutArrowPt.x > oFreeTextRect[2]) {
+                    kd2 = 1;
+                }
+                else {
+                    kd1 = 1;
+                }
+            }
+
+            return {kd1: kd1, kd2: kd2};
+        };
+        this.correctXYForPdfFreeText = function(x, y) {
+            // точка коннектора соединённая с перпендикулярной линией должна двигаться только по одной из осей
+            // этот метод обрабатывает данный случай и корректирует координаты
+
+            let oFreeText               = this.originalObject.group;
+            let oFreeTextRect           = oFreeText.GetTextBoxRect(true).map(function(measure) {
+                return measure * g_dKoef_pix_to_mm;
+            });
+            let aCallout                = oFreeText.GetCallout();
+            let oExitPoint              = undefined; // перпендикулярная линия выходящая из freetext аннотации
+            let oCalloutArrowPt         = undefined; // x2, y2 точка линии (точка начала стрелки)
+            let oViewer = Asc.editor.getDocumentRenderer();
+            let nPage   = oFreeText.GetPage();
+            let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
+            let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
+
+            if (aCallout && aCallout.length == 6) {
+                // точка выхода callout из аннотации
+                oExitPoint = {
+                    x: (aCallout[2 * 2]) * nScaleX,
+                    y: (aCallout[2 * 2 + 1]) * nScaleY
+                };
+
+                // x2, y2 линии
+                oCalloutArrowPt = {
+                    x: aCallout[1 * 2] * nScaleX,
+                    y: (aCallout[1 * 2 + 1]) * nScaleY
+                };
+            }
+            else {
+                return {x: x, y: y};
+            }
+
+            let nFreeTextW = oFreeTextRect[2] - oFreeTextRect[0];
+            let nFreeTextH = oFreeTextRect[3] - oFreeTextRect[1];
+
+            if (this.numberHandle == 4) {
+                if (oCalloutArrowPt.x < oFreeTextRect[0] || oCalloutArrowPt.x > oFreeTextRect[2]) {
+                    y = oExitPoint.y;
+                }
+                else {
+                    x = oExitPoint.x;
+                }
+            }
+            else if (this.numberHandle == 0) {
+                // если попадаем в рект textbox от freetext аннотации, то корректируем координаты
+                if (x >= oFreeTextRect[0] || x <= oFreeTextRect[2]) {
+                    if (y >= oFreeTextRect[1] && y <= oFreeTextRect[3]) {
+                        if (y <= oFreeTextRect[1] + nFreeTextH / 2) {
+                            y = oFreeTextRect[1] - nFreeTextH / 2;
+                        }
+                        else {
+                            y = oFreeTextRect[3] + nFreeTextH / 2;
+                        }
+                    }
+                }
+            }
+
+            return {x: x, y: y};
+        };
 
         this.track = function(kd1, kd2, e, x, y){
             AscFormat.ExecuteNoHistory(function () {
@@ -543,6 +660,12 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             var _new_used_half_width;
             var _new_used_half_height;
             var _temp;
+
+            if (Asc.editor.isPdfEditor() && this.originalObject.getPresetGeom() == "line" && this.numberHandle == 4) {
+                let oXY = this.correctKDForPdfFreeText(kd1, kd2);
+                kd1 = oXY.kd1;
+                kd2 = oXY.kd2;
+            }
 
            if(this.originalObject.getObjectType && this.originalObject.getObjectType() === AscDFH.historyitem_type_GraphicFrame){
                if(kd1 < 0){

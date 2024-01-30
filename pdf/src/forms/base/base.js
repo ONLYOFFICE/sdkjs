@@ -2474,7 +2474,7 @@
      * @param {Number} x
      * @param {Number} y
      * @param {Number} nPage
-     * @param {boolean} isNotMM - coordinates in millimeters or not 
+     * @param {boolean} [isNotMM = false] - coordinates in millimeters or not 
 	 * @typeofeditors ["PDF"]
 	 */
     function GetPageCoordsByGlobalCoords(x, y, nPage, isNotMM) {
