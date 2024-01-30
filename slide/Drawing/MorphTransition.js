@@ -530,10 +530,9 @@
 
         const oGeometryMorph = new CGeometryMorphObject(this.cache, this.relHeight1, this.relHeight2,
             oGeometry1, oDrawData1.brush, oDrawData1.pen, oDrawData1.transform,
-            oGeometry2, oDrawData2.brush, oDrawData2.pen, oDrawData2.transform, !!(oDrawData1.animParams || oDrawData2.animParams));
+            oGeometry2, oDrawData2.brush, oDrawData2.pen, oDrawData2.transform, !!(oDrawData1.animParams || oDrawData2.animParams || oShape1.group || oShape2.group));
         if(oGeometryMorph.isValid()) {
             this.addMorphObject(oGeometryMorph);
-
         }
         else {
             this.addMorphObject(new CStretchTextureTransform(oTexturesCache, nRelH1, nRelH2, this.shape1, this.shape2, true));
@@ -1300,6 +1299,14 @@
     };
 
 
+    function CGroupComplexMorph(oTexturesCache, nRelH1, nRelH2, oGroup1, oGroup2) {
+        CComplexMorphObject.call(this, oTexturesCache, nRelH1, nRelH2);
+        let aDrawings1 = oGroup1.arrGraphicObjects;
+        let aDrawings2 = oGroup2.arrGraphicObjects;
+        this.getMorph().addComparisonMorph(aDrawings1, aDrawings2)
+    }
+    AscFormat.InitClassWithoutType(CGroupComplexMorph, CComplexMorphObject);
+
     function CWrapperBase(oMorph, oTransform, oTheme, oColorMap, oFormatDrawing) {
         this.morph = oMorph;
         this.theme = oTheme;
@@ -1518,6 +1525,9 @@
     CSlideMorphEffect.prototype.addTableMorphs = function (oGrFrame1, nRelH1, oGrFrame2, nRelH2) {
         this.pushMorphObject(new CTableComplexMorph(this.texturesCache, nRelH1, nRelH2, oGrFrame1, oGrFrame2));
     };
+    CSlideMorphEffect.prototype.addGroupMorphs = function (oGroup1, nRelH1, oGroup2, nRelH2) {
+        this.pushMorphObject(new CGroupComplexMorph(this.texturesCache, nRelH1, nRelH2, oGroup1, oGroup2));
+    };
     CSlideMorphEffect.prototype.addObjectMorphs = function(oDrawing1, nRelH1, oDrawing2, nRelH2, bNoText) {
         if(!oDrawing1 || !oDrawing2) {
             return;
@@ -1536,6 +1546,11 @@
             }
             case AscDFH.historyitem_type_GraphicFrame: {
                 this.addTableMorphs(oDrawing1, nRelH1, oDrawing2, nRelH2);
+                break;
+            }
+            case AscDFH.historyitem_type_GroupShape:
+            case AscDFH.historyitem_type_SmartArt: {
+                this.addGroupMorphs(oDrawing1, nRelH1, oDrawing2, nRelH2);
                 break;
             }
             default: {

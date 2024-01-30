@@ -3416,14 +3416,11 @@ PasteProcessor.prototype =
 			presentationSelectedContent.DocContent.Elements[i] = oSelectedElement;
 		}
 
-		if(presentation.InsertContent(presentationSelectedContent)) {
-			presentation.Recalculate();
-            editor.checkChangesSize();
-			presentation.Document_UpdateInterfaceState();
-
+		let bInsert = presentation.InsertContent(presentationSelectedContent);
+		presentation.FinalizeAction();
+		presentation.UpdateInterface();
+		if(bInsert) {
 			this._setSpecialPasteShowOptionsPresentation();
-		} else {
-			//window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
 		}
 
 		window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
@@ -4008,15 +4005,12 @@ PasteProcessor.prototype =
 					var presentationSelectedContent = new PresentationSelectedContent();
 					presentationSelectedContent.Drawings = arr_shapes;
 
-
-					if (presentation.InsertContent(presentationSelectedContent)) {
-						presentation.Recalculate();
-                        editor.checkChangesSize();
-						presentation.Document_UpdateInterfaceState();
-					} else {
-						window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
+					let bInsert = presentation.InsertContent(presentationSelectedContent);
+					presentation.FinalizeAction();
+					presentation.UpdateInterface();
+					if (!bInsert) {
+						window['AscCommon'].g_specialPasteHelper.CleanButtonInfo()
 					}
-
 					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 				}
 			};
@@ -4105,17 +4099,15 @@ PasteProcessor.prototype =
 			var paste_callback_presentation = function () {
 				if (false == oThis.bNested) {
 
-					if (presentation.InsertContent(presentationSelectedContent)) {
-						presentation.Recalculate();
-                        editor.checkChangesSize();
-						presentation.Document_UpdateInterfaceState();
-
-						var props = [Asc.c_oSpecialPasteProps.destinationFormatting, Asc.c_oSpecialPasteProps.keepTextOnly];
+					let bInsert = presentation.InsertContent(presentationSelectedContent);
+					presentation.FinalizeAction();
+					presentation.UpdateInterface();
+					if (bInsert) {
+						let props = [Asc.c_oSpecialPasteProps.destinationFormatting, Asc.c_oSpecialPasteProps.keepTextOnly];
 						oThis._setSpecialPasteShowOptionsPresentation(props);
 					} else {
 						window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
 					}
-
 					window['AscCommon'].g_specialPasteHelper.Paste_Process_End();
 				}
 			};
@@ -4344,13 +4336,12 @@ PasteProcessor.prototype =
 					}
 				}
 
-				if (presentation.InsertContent(presentationSelectedContent)) {
-					presentation.Recalculate();
-                    editor.checkChangesSize();
-					presentation.Document_UpdateInterfaceState();
-
+				let bInsert = presentation.InsertContent(presentationSelectedContent);
+				presentation.FinalizeAction();
+				presentation.UpdateInterface();
+				if (bInsert) {
 					if (!onlyImages) {
-						var props = [Asc.c_oSpecialPasteProps.destinationFormatting, Asc.c_oSpecialPasteProps.keepTextOnly];
+						let props = [Asc.c_oSpecialPasteProps.destinationFormatting, Asc.c_oSpecialPasteProps.keepTextOnly];
 						oThis._setSpecialPasteShowOptionsPresentation(props);
 					} else {
 						window['AscCommon'].g_specialPasteHelper.CleanButtonInfo();
@@ -4619,9 +4610,9 @@ PasteProcessor.prototype =
 				if (false === oThis.bNested) {
 					var bPaste = presentation.InsertContent2(aContents, nIndex);
 
-					presentation.Recalculate();
-                    editor.checkChangesSize();
-					presentation.Document_UpdateInterfaceState();
+
+					presentation.FinalizeAction();
+					presentation.UpdateInterface();
 
 					//пока не показываю значок специальной вставки после copy/paste слайдов
 					var bSlideObjects = aContents[nIndex] && aContents[nIndex].SlideObjects && aContents[nIndex].SlideObjects.length > 0;
@@ -5167,9 +5158,8 @@ PasteProcessor.prototype =
 					let oSelectedContent = new PresentationSelectedContent();
 					oSelectedContent.Drawings = aCopyObjects;
 					let bPaste = oPresentation.InsertContent(oSelectedContent);
-					oPresentation.Recalculate();
+					oPresentation.FinalizeAction();
 					oPresentation.UpdateInterface();
-					oAPI.checkChangesSize();
 
 					//check only images
 					let bOnlyImg = false;

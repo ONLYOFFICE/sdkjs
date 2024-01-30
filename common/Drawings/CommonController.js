@@ -4088,14 +4088,7 @@
 					}
 
 					if (bCheckConnectors) {
-						var aConnectors = this.getConnectorsForCheck();
-						for (i = 0; i < aConnectors.length; ++i) {
-							aConnectors[i].calculateTransform(bMoveFlag);
-							var oGroup = aConnectors[i].getMainGroup();
-							if (oGroup) {
-								checkObjectInArray(aGroups, oGroup);
-							}
-						}
+						this.updateConnectors(bMoveFlag);
 					}
 
 					for (i = 0; i < aGroups.length; ++i) {
@@ -4185,6 +4178,21 @@
 						}
 					}
 					return objects_by_type;
+				},
+
+				updateConnectors: function(bMove) {
+					let aGroups = [];
+					let aConnectors = this.getConnectorsForCheck();
+					for (let nIdx = 0; nIdx < aConnectors.length; ++nIdx) {
+						aConnectors[nIdx].calculateTransform(bMove);
+						let oGroup = aConnectors[nIdx].getMainGroup();
+						if (oGroup) {
+							checkObjectInArray(aGroups, oGroup);
+						}
+					}
+					for (let nIdx = 0; nIdx < aGroups.length; ++nIdx) {
+						aGroups[nIdx].updateCoordinatesAfterInternalResize();
+					}
 				},
 
 				getSelectedObjectsByTypes: function (bGroupedObjects) {

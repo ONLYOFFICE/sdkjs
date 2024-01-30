@@ -547,19 +547,32 @@ function (window, undefined) {
 	cCONCAT.prototype.argumentsType = [[argType.text]];
 	cCONCAT.prototype.isXLFN = true;
 	cCONCAT.prototype.Calculate = function (arg) {
-		var arg0 = new cString(""), argI;
+		let arg0 = new cString(""), argI;
 
-		for (var i = 0; i < arg.length; i++) {
+
+		let _checkMaxStringLength = function () {
+			let maxStringLength = 32767;
+			let _str = arg0 && arg0.toString && arg0.toString();
+			if (_str && _str.length > maxStringLength) {
+				return false;
+			}
+			return true;
+		};
+
+		for (let i = 0; i < arg.length; i++) {
 			argI = arg[i];
 
 			if (cElementType.cellsRange === argI.type || cElementType.cellsRange3D === argI.type) {
-				var _arrVal = argI.getValue(this.checkExclude, this.excludeHiddenRows);
-				for (var j = 0; j < _arrVal.length; j++) {
-					var _arrElem = _arrVal[j].toLocaleString();
+				let _arrVal = argI.getValue(this.checkExclude, this.excludeHiddenRows);
+				for (let j = 0; j < _arrVal.length; j++) {
+					let _arrElem = _arrVal[j].toLocaleString();
 					if (cElementType.error === _arrElem.type) {
 						return _arrVal[j];
 					} else {
 						arg0 = new cString(arg0.toString().concat(_arrElem));
+					}
+					if (!_checkMaxStringLength()) {
+						return new cError(cErrorType.wrong_value_type)
 					}
 				}
 			} else if (cElementType.cell === argI.type || cElementType.cell3D === argI.type) {
@@ -580,6 +593,10 @@ function (window, undefined) {
 
 						arg0 = new cString(arg0.toString().concat(elem.toLocaleString()));
 
+						if (!_checkMaxStringLength()) {
+							arg0 = new cError(cErrorType.wrong_value_type);
+							return true;
+						}
 					});
 					if (cElementType.error === arg0.type) {
 						return arg0;
@@ -589,6 +606,11 @@ function (window, undefined) {
 				}
 			}
 		}
+
+		if (!_checkMaxStringLength()) {
+			return new cError(cErrorType.wrong_value_type)
+		}
+
 		return arg0;
 	};
 

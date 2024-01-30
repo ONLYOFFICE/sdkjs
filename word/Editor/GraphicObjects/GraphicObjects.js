@@ -926,6 +926,7 @@ CGraphicObjects.prototype =
     },
 
     applyDrawingProps: DrawingObjectsController.prototype.applyDrawingProps,
+    updateConnectors: function (bMoveFlag) {},
     sendCropState: DrawingObjectsController.prototype.sendCropState,
 
     CheckAutoFit : function()

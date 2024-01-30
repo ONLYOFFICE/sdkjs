@@ -7596,7 +7596,7 @@ $(function () {
 		testArrayFormula2(assert, "TEXT", 2, 2);
 
 		//____________________________________en_____________________________________________
-		AscCommon.setCurrentCultureInfo(1025);
+		AscCommon.setCurrentCultureInfo(1033);
 		oParser = new parserFormula("TEXT(123,\"yy-mm-dd\")", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "00-05-02");
