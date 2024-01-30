@@ -132,9 +132,19 @@ AscCommon.darkModeCorrectColor2 = function(r, g, b)
 	};
 	TextLine.prototype.draw = function(graphics, x, y)
 	{
+		let showParaMarks = false;
+		if (editor && editor.ShowParaMarks)
+		{
+			editor.ShowParaMarks = false;
+			showParaMarks = true;
+		}
+		
 		this.dc.Reset(x, y, AscWord.MAX_MM_VALUE, AscWord.MAX_MM_VALUE);
 		this.dc.Recalculate_Page(0, true, false);
 		this.dc.Draw(0, graphics);
+		
+		if (showParaMarks)
+			editor.ShowParaMarks = true;
 	};
 
 function CGraphics()
