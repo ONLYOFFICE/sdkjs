@@ -114,7 +114,7 @@ AscCommon.darkModeCorrectColor2 = function(r, g, b)
 		this.fontSize = fontSize;
 	}
 	/**
-	 * @returns {{w:number, h:number}}
+	 * @returns {{w:number, h:number, ascent: number, descent: number}}
 	 */
 	TextLine.prototype.getSize = function()
 	{
@@ -122,15 +122,16 @@ AscCommon.darkModeCorrectColor2 = function(r, g, b)
 		this.dc.Recalculate_Page(0, true, false);
 		let p = this.dc.GetElement(0);
 		let bounds = this.dc.GetContentBounds(0);
+		let lineMetrics = p.getLineMetrics(0);
 		return {
 			w : p.GetAutoWidthForDropCap(),
-			h : bounds.Bottom - bounds.Top
+			h : bounds.Bottom - bounds.Top,
+			ascent : lineMetrics.TextAscent2,
+			descent : lineMetrics.TextDescent,
 		};
 	};
 	TextLine.prototype.draw = function(graphics, x, y)
 	{
-		y -= this.fontSize * g_dKoef_pt_to_mm;
-		
 		this.dc.Reset(x, y, AscWord.MAX_MM_VALUE, AscWord.MAX_MM_VALUE);
 		this.dc.Recalculate_Page(0, true, false);
 		this.dc.Draw(0, graphics);
@@ -1585,7 +1586,7 @@ CGraphics.prototype =
 		
 		let _koef_px_to_mm = 25.4 / this.m_dDpiY;
 		
-		let textH = textSize.h / _koef_px_to_mm;
+		let textH = textSize.ascent / _koef_px_to_mm;
 		let textW = textSize.w / _koef_px_to_mm;
 		
 		var _ctx = this.m_oContext;
@@ -1623,14 +1624,17 @@ CGraphics.prototype =
 		_ctx.stroke();
 		_ctx.beginPath();
 		
-		y -= _yPxOffset * _koef_px_to_mm;
-		if (isHeader)
-			y += __h * _koef_px_to_mm;
+		y += _yPxOffset * _koef_px_to_mm;
+		if (!isHeader)
+			y -= __h * _koef_px_to_mm ;
 		
 		x += _xPxOffset * _koef_px_to_mm;
 		if (fromRight)
-			x -= __w * _koef_px_to_mm
+			x -= __w * _koef_px_to_mm;
 		
+		// Мы обрезаем высоту и ширину по пиксельной сетке, из-за этого текст кажется прижатым к низу
+		// Корректируем горизонтальную позицию, чтобы он был ближе к верху
+		y = ((y / _koef_px_to_mm) >> 0) * _koef_px_to_mm;
 		textLine.draw(this, x, y);
 	},
 
