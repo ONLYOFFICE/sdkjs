@@ -73,12 +73,8 @@
 		this.haveCurrentComment = false;
 		this.currentCommentId   = null;
 		this.comments           = []; // current list of comments
-		this.runComments        = []; // comments we use for a particular run
 		
 		this.hyperlinks = [];
-
-		this.Comments           = [];
-		this.CommentsFlag       = AscCommon.comments_NoComment;
 		
 		this.searchCounter = 0;
 		
@@ -128,7 +124,6 @@
 		this.searchCounter = 0;
 		
 		this.comments           = [];
-		this.runComments        = [];
 		this.haveCurrentComment = false;
 		
 		let pageEndInfo = this.Paragraph.GetEndInfoByPage(page - 1);
@@ -212,26 +207,6 @@
 	{
 		--this.searchCounter;
 	};
-	ParagraphHighlightDrawState.prototype.Save_Coll = function()
-	{
-		var Coll  = this.Coll;
-		this.Coll = new CParaDrawingRangeLines();
-		return Coll;
-	};
-	ParagraphHighlightDrawState.prototype.Save_Comm = function()
-	{
-		var Comm  = this.Comm;
-		this.Comm = new CParaDrawingRangeLines();
-		return Comm;
-	};
-	ParagraphHighlightDrawState.prototype.Load_Coll = function(Coll)
-	{
-		this.Coll = Coll;
-	};
-	ParagraphHighlightDrawState.prototype.Load_Comm = function(Comm)
-	{
-		this.Comm = Comm;
-	};
 	ParagraphHighlightDrawState.prototype.IsCollectFixedForms = function()
 	{
 		return this.CollectFixedForms;
@@ -255,20 +230,22 @@
 		
 		let flags = this.getFlags(element, !!collaborationColor);
 		let hyperlink = this.getHyperlinkObject();
-		this.bidiFlow.add([element, run, flags, hyperlink, collaborationColor], element.getBidiType());
+		this.bidiFlow.add([element, run, flags, hyperlink, collaborationColor, this.comments.slice(), this.haveCurrentComment], element.getBidiType());
 	};
 	ParagraphHighlightDrawState.prototype.handleBidiFlow = function(data)
 	{
-		let element   = data[0];
-		let run       = data[1];
-		let flags     = data[2];
-		let hyperlink = data[3];
-		let collColor = data[4];
+		let element    = data[0];
+		let run        = data[1];
+		let flags      = data[2];
+		let hyperlink  = data[3];
+		let collColor  = data[4];
+		let comments   = data[5];
+		let curComment = data[6];
 		
 		let w = element.GetWidthVisible();
 		
 		this.handleRun(run);
-		this.addHighlight(this.X, this.X + w, flags, hyperlink, collColor);
+		this.addHighlight(this.X, this.X + w, flags, hyperlink, collColor, comments, curComment);
 		
 		this.X += w;
 	};
@@ -410,8 +387,6 @@
 		
 		this.run = run;
 		
-		this.runComments = this.comments.slice();
-		
 		let textPr = run.getCompiledPr();
 		let shd    = textPr.Shd;
 		
@@ -431,7 +406,7 @@
 	/**
 	 *
 	 */
-	ParagraphHighlightDrawState.prototype.addHighlight = function(startX, endX, flags, hyperlink, collColor)
+	ParagraphHighlightDrawState.prototype.addHighlight = function(startX, endX, flags, hyperlink, collColor, comments, curComment)
 	{
 		let startY = this.Y0;
 		let endY   = this.Y1;
@@ -445,8 +420,8 @@
 		if (flags & FLAG_COMPLEX_FIELD)
 			this.CFields.Add(startY, endY, startX, endX, 0, 0, 0, 0);
 		
-		if (flags & FLAG_COMMENT && this.runComments.length)
-			this.Comm.Add(startY, endY, startX, endX, 0, 0, 0, 0, {Active : this.haveCurrentComment, CommentId : this.runComments});
+		if (flags & FLAG_COMMENT && comments.length)
+			this.Comm.Add(startY, endY, startX, endX, 0, 0, 0, 0, {Active : curComment, CommentId : comments});
 		
 		if ((flags & FLAG_HIGHLIGHT) && (this.highlight && highlight_None !== this.highlight))
 			this.High.Add(startY, endY, startX, endX, 0, this.highlight.r, this.highlight.g, this.highlight.b, undefined, this.highlight);
