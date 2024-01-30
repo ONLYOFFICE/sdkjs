@@ -14469,8 +14469,14 @@
 			return;
 		}
 		if ("empty" === prop && this.intersectionFormulaArray(arn)) {
-			t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
-			return;
+			// if dynamic range - check if we if we touched the first cell of the array
+			// if it happen - delete array, else remove values then recalculate array
+			if (!this.intersectionDynamicFormulaArray(arn)) {
+				t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
+				return;
+			}
+			// t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
+			// return;
 		}
 		if ("sort" === prop) {
 			var aMerged = this.model.mergeManager.get(checkRange);
@@ -19192,7 +19198,7 @@
 					});
 					if (ref && !ref.isOneCell()) {
 						if (isDynamicRef) {
-							// todo пересчет всех ячеек (в большинстве случаев нужно менять значение на ошибку SPILL для диапазона)
+							// todo recalculation of all cells (in most cases we need to change the value to the SPILL error for the range)
 							return saveCellValueCallback(true);
 						} else {
 							t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray,
@@ -22186,6 +22192,27 @@
 						res = true;
 					} else if(!notCheckContains && !range.containsRange(arrayFormulaRef)){
 						res = true;
+					}
+				}
+			}
+		});
+		return res;
+	};
+	WorksheetView.prototype.intersectionDynamicFormulaArray = function(range, notCheckContains, checkOneCellArray) {
+		let res = false;
+		this.model.getRange3(range.r1, range.c1, range.r2, range.c2)._foreachNoEmpty(function(cell) {
+			if(cell.isFormula()) {
+				let formulaParsed = cell.getFormulaParsed();
+				let arrayFormulaRef = formulaParsed.getArrayFormulaRef();
+				let dynamicRef = formulaParsed.getDynamicRef();
+				if (!dynamicRef) {
+					return false
+				}
+				if(dynamicRef && (!checkOneCellArray || (checkOneCellArray && !dynamicRef.isOneCell()))) {
+					if(notCheckContains) {
+						res = true;
+					} else if(!notCheckContains && !range.containsRange(dynamicRef)){
+						res = true;	
 					}
 				}
 			}

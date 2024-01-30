@@ -1363,6 +1363,29 @@
 			}
 			changedSheet[name] = bbox;
 		},
+		addToChangedDynamicRange: function(sheetId, bbox) {
+			if (!this.changedDynamicRange) {
+				this.changedDynamicRange = {};
+			}
+			let changedSheet = this.changedDynamicRange[sheetId];
+			if (!changedSheet) {
+				changedSheet = {};
+				this.changedDynamicRange[sheetId] = changedSheet;
+			}
+			let name = getVertexIndex(bbox);
+			if (this.isInCalc && !changedSheet[name]) {
+				if (!this.changedDynamicRangeRepeated) {
+					this.changedDynamicRangeRepeated = {};
+				}
+				let changedSheetRepeated = this.changedDynamicRangeRepeated[sheetId];
+				if (!changedSheetRepeated) {
+					changedSheetRepeated = {};
+					this.changedDynamicRangeRepeated[sheetId] = changedSheetRepeated;
+				}
+				changedSheetRepeated[name] = bbox;
+			}
+			changedSheet[name] = bbox;
+		},
 		addToChangedCell: function(cell) {
 			var t = this;
 			var sheetId = cell.ws.getId();
@@ -1549,16 +1572,17 @@
 			}
 			this.buildDependency();
 			this.addToChangedHiddenRows();
-			if (!(this.changedCell || this.changedRange || this.changedDefName)) {
+			if (!(this.changedCell || this.changedRange || this.changedDefName || this.changedDynamicRange)) {
 				return;
 			}
 			var notifyData = {type: c_oNotifyType.Dirty, areaData: undefined};
 			this._broadscastVolatile(notifyData);
 			this._broadcastCellsStart();
-			while (this.changedCellRepeated || this.changedRangeRepeated || this.changedDefNameRepeated) {
+			while (this.changedCellRepeated || this.changedRangeRepeated || this.changedDefNameRepeated || this.changedDynamicRangeRepeated) {
 				this._broadcastDefNames(notifyData);
 				this._broadcastCells(notifyData);
 				this._broadcastRanges(notifyData);
+				this._broadcastDynamicRanges(notifyData);
 			}
 			this._broadcastCellsEnd();
 
@@ -1791,6 +1815,31 @@
 				}
 			}
 		},
+		_broadcastDynamicRanges: function(notifyData) {
+			if (this.changedRangeRepeated) {
+				let changedRange = this.changedDynamicRangeRepeated;
+				this.changedDynamicRangeRepeated = null;
+				for (let sheetId in changedRange) {
+					let changedSheet = changedRange[sheetId];
+					let sheetContainer = this.sheetListeners[sheetId];
+					if (sheetContainer) {
+						if (sheetContainer) {
+							let rangesTop = [];
+							let rangesBottom = [];
+							for (let name in changedSheet) {
+								let range = changedSheet[name];
+								rangesTop.push(range);
+								rangesBottom.push(range);
+							}
+							rangesTop.sort(Asc.Range.prototype.compareByLeftTop);
+							rangesBottom.sort(Asc.Range.prototype.compareByRightBottom);
+							this._broadcastCellsByRanges(sheetContainer, rangesTop, rangesBottom, notifyData);
+							this._broadcastRangesByRanges(sheetContainer, rangesTop, rangesBottom, notifyData);
+						}
+					}
+				}
+			}
+		},
 		_broadcastCellsStart: function() {
 			this.isInCalc = true;
 			this.changedCellRepeated = this.changedCell;
@@ -1843,7 +1892,18 @@
 			this.tempGetByCells = [];
 		},
 		_calculateDirty: function() {
-			var t = this;
+			const t = this;
+			// parserFormula does not exist after clearing the cell
+			// before deleting a value from a cell, check its PF for dynamicRange and if there is one, then leave the PF which can then be recalculated (should only work for deleting values)
+			this._foreachChangedDynamicRange(function(cell){
+				cell.setIsDirty(true);
+				// if first cell of dynamic range is empty, delete all PF from all cells in range
+				if (cell && cell.formulaParsed && cell.formulaParsed.isFirstDynamicCellEmpty()) {
+					cell.setValue("");
+				} else if (cell.formulaParsed && cell.formulaParsed.dynamicRange && !cell.formulaParsed.isFirstDynamicCellEmpty() && (cell.nCol === cell.formulaParsed.dynamicRange.c1 && cell.nRow === cell.formulaParsed.dynamicRange.r1)) {
+					// if the first cell is not empty, need to recalculate the entire range to possibly get a spill error
+				}
+			});
 			this._foreachChanged(function(cell){
 				if (cell && cell.isFormula()) {
 					cell.setIsDirty(true);
@@ -1854,6 +1914,7 @@
 			});
 			this.changedCell = null;
 			this.changedRange = null;
+			this.changedDynamicRange = null;
 		},
 		_foreachChanged: function(callback) {
 			var sheetId, changedSheet, ws, bbox;
@@ -1880,6 +1941,23 @@
 							if (changedSheet.hasOwnProperty(name)) {
 								bbox = changedSheet[name];
 								ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2)._foreachNoEmpty(callback);
+							}
+						}
+					}
+				}
+			}
+		},
+		_foreachChangedDynamicRange: function(callback) {
+			let sheetId, changedSheet, ws, bbox;
+			for (sheetId in this.changedDynamicRange) {
+				if (this.changedDynamicRange.hasOwnProperty(sheetId)) {
+					changedSheet = this.changedDynamicRange[sheetId];
+					ws = this.wb.getWorksheetById(sheetId);
+					if (changedSheet && ws) {
+						for (let name in changedSheet) {
+							if (changedSheet.hasOwnProperty(name)) {
+								bbox = changedSheet[name];
+								ws.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2)._foreach(callback);
 							}
 						}
 					}
@@ -13247,11 +13325,15 @@
 		if (newFP) {
 			this.setFormulaInternal(newFP);
 			if(byRef) {
-				if (dynamicRange) {
-					// todo add vm flags to use
-					this.setDynamicArrayFlags();
-				}
+				// should do this for all array cells or just for the parent one?
+				// if (dynamicRange) {
+				// 	this.setDynamicArrayFlags();
+				// }
 				if(isFirstArrayFormulaCell) {
+					if (dynamicRange) {
+						// todo add vm flags to use
+						this.setDynamicArrayFlags();
+					}
 					wb.dependencyFormulas.addToBuildDependencyArray(newFP);
 				}
 			} else {
@@ -13267,7 +13349,30 @@
 			}
 			wb.dependencyFormulas.addToChangedCell(this);
 		} else {
-			wb.dependencyFormulas.addToChangedCell(this);
+			// when deleting a cell value we get here
+			if (oldFP && oldFP.dynamicRange) {
+				isFirstArrayFormulaCell = this.nCol === oldFP.dynamicRange.c1 && this.nRow === oldFP.dynamicRange.r1;
+				// we check here and add the range with daf to the dependency sheet
+				// the problem arises in the absence of recalculation of the internal cell of the range because the isDirty flag is set to false
+				// wb.dependencyFormulas.addToBuildDependencyArray(oldFP);
+				wb.dependencyFormulas.addToChangedRange2(oldFP.getWs().getId(), oldFP.getDynamicRef());
+				wb.dependencyFormulas.addToChangedDynamicRange(oldFP.getWs().getId(), oldFP.getDynamicRef());
+
+				// there is also a need to save PF for dynamic range cells (except the first)
+				// if we delete the first one, we delete all the others, otherwise we save the PF of the cell and set the flag isDirty = true
+				if (!isFirstArrayFormulaCell) {
+					// if the first daf cell is not empty (has PF), then we assign the old PF to the cell
+					if (!oldFP.isFirstDynamicCellEmpty()) {
+						this.setFormulaInternal(oldFP);	// newFP = oldFP;
+					}
+					
+				}
+				// if (this.ws.workbook.handlers) {
+				// 	this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.rangeValues, this, null, this.ws.getId());
+				// }
+			} else {
+				wb.dependencyFormulas.addToChangedCell(this);
+			}
 			if (this.ws.workbook.handlers) {
 				this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this, null, this.ws.getId());
 			}
@@ -13431,6 +13536,7 @@
 		this.setFormulaInternal(null);
 		this.cleanText();
 		this._setValue2(array, undefined, xfTableAndCond);
+		// add check for dynamic ranges and adding to the dependency sheet
 		this.ws.workbook.dependencyFormulas.addToChangedCell(this);
 		this.ws.workbook.sortDependency();
 		var DataNew = null;
@@ -13499,8 +13605,9 @@
 	};
 	Cell.prototype.setFormulaInternal = function(formula, dontTouchPrev) {
 		if (!dontTouchPrev && this.formulaParsed) {
-			var shared = this.formulaParsed.getShared();
-			var arrayFormula = this.formulaParsed.getArrayFormulaRef();
+			let shared = this.formulaParsed.getShared();
+			let arrayFormula = this.formulaParsed.getArrayFormulaRef();
+			let dynamicRange = this.formulaParsed.getDynamicRef();
 			if (shared) {
 				if (shared.ref.isOnTheEdge(this.nCol, this.nRow)) {
 					this.ws.workbook.dependencyFormulas.addToChangedShared(this.formulaParsed);
@@ -13513,7 +13620,11 @@
 				var fText = "=" + this.formulaParsed.getFormula();
 				History.Add(AscCommonExcel.g_oUndoRedoArrayFormula, AscCH.historyitem_ArrayFromula_DeleteFormula, this.ws.getId(),
 					new Asc.Range(this.nCol, this.nRow, this.nCol, this.nRow), new AscCommonExcel.UndoRedoData_ArrayFormula(arrayFormula, fText), true);
-			} else {
+			} 
+			// else if (arrayFormula && dynamicRange) {
+			// 	//***dynamic-array-formula***
+			// } 
+			else {
 				this.formulaParsed.removeDependencies();
 			}
 		}

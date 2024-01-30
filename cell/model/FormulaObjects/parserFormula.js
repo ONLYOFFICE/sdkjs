@@ -8199,6 +8199,9 @@ function parserFormula( formula, parent, _ws ) {
 	parserFormula.prototype.getArrayFormulaRef = function() {
 		return this.ref;
 	};
+	parserFormula.prototype.getDynamicRef = function() {
+		return this.dynamicRange;
+	};
 	parserFormula.prototype.setArrayFormulaRef = function(ref) {
 		this.ref = ref;
 	};
@@ -8244,7 +8247,7 @@ function parserFormula( formula, parent, _ws ) {
 		return false;
 	};
 	parserFormula.prototype.simplifyRefType = function (val, opt_ws, opt_row, opt_col) {
-		var ref = this.getArrayFormulaRef(), row, col;
+		let ref = this.getArrayFormulaRef(), dynamicRef = this.getDynamicRef(), row, col;
 
 		if (val == null) {
 			return;
@@ -8292,7 +8295,9 @@ function parserFormula( formula, parent, _ws ) {
 						} else {
 							val = val.getValueByRowCol(row, col);
 						}
-						if (!val) {
+						if (dynamicRef && !val) {
+							val = new cNumber(0);
+						} else if (!val) {
 							val = new window['AscCommonExcel'].cError(window['AscCommonExcel'].cErrorType.not_available);
 						}
 					} else {
@@ -8374,23 +8379,18 @@ function parserFormula( formula, parent, _ws ) {
 						this.ws._getCell(i, j, function(cell) {
 							if (cell.formulaParsed && cell.formulaParsed.dynamicRange) {
 								// check if cell belong to current dynamicRange
-								// todo найти оптимальный способ сравнить два range
-								// это нужно для того чтобы не возникало ошибки spill при второй проверке диапазона(т.к. значения в нем уже проставлены ранее)
-								// рассмотреть возможность использования флагов cm для ячейки и vm для spill диапазонов
+								// this is necessary so that spill errors do not occur during the second check of the range (since the values ​​in it have already been entered earlier)
+								// todo consider using cm flags for cell and vm for spill ranges
 								if (!t.dynamicRange.isEqual(cell.formulaParsed.dynamicRange)) {
-									// ??? если ячейка является частью другого динамического диапазона, то выводится тот диапазон который находится в зоне предыдущего диапазона(кроме первой яччейки, но её мы не проверяем)
-									// то есть если один из диапазонов "ниже" или "правее" в редакторе, то он и будет выводиться, а другой получит ошибку SPILL
-									// if (!cell.isEmpty()) {
+									// if a cell is part of another dynamic range, then the range that is in the area of ​​the previous range is displayed (except for the first cell, but we do not check it)
+									// that is, if one of the ranges is “lower” or “to the right” in the editor, then it will be displayed, and the other will receive a SPILL error
+									// if (!cell.isEmptyTextString()) {
 									// 	isHaveNonEmptyCell = true
 									// }
 									isHaveNonEmptyCell = true
 								}
-								// if (this.dynamicRange.r1 === cell.formulaParsed.dynamicRange.r1 )
-								// console.log(t.dynamicRange.difference(cell.formulaParsed.dynamicRange));
-								// console.log(t.dynamicRange.containsRange(cell.formulaParsed.dynamicRange));
-								// console.log(t.dynamicRange.isEqual(cell.formulaParsed.dynamicRange));
 							} 
-							else if (!cell.isEmpty()) {
+							else if (!cell.isEmptyTextString()) {
 								isHaveNonEmptyCell = true
 							}
 
@@ -8405,6 +8405,21 @@ function parserFormula( formula, parent, _ws ) {
 		}
 
 		return false
+	};
+
+	parserFormula.prototype.isFirstDynamicCellEmpty = function () {
+		if (!this.dynamicRange) {
+			return true
+		}
+
+		let i = this.dynamicRange.r1, j = this.dynamicRange.c1, res;
+		this.ws._getCell(i, j, function(cell) {
+			if (!(cell && cell.formulaParsed && cell.formulaParsed.dynamicRange)) {
+				res = true
+			}
+		});
+
+		return res
 	};
 
 	function CalcRecursion() {
