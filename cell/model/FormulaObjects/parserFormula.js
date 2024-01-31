@@ -3539,7 +3539,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var t = this;
 
 		let dynamicRange = null;
-		parserFormula.dynamicRange = null;
+		// parserFormula.dynamicRange = null;
 		if (!parserFormula.ref) {
 			let dynamicArraySize = this.getDynamicArraySize(arg);
 			if (dynamicArraySize && parserFormula.parent && parserFormula.parent.nCol != null && parserFormula.parent.nRow != null) {
@@ -3733,7 +3733,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 
 		if (dynamicRange) {
-			parserFormula.ref = null;
+			// parserFormula.ref = null;
 			this.bArrayFormula = null;
 		}
 
@@ -7191,6 +7191,8 @@ function parserFormula( formula, parent, _ws ) {
 			this._endCalculate();
 			return this.value;
 		}
+		// todo при повторном расчете теряем dynamicRange, но получаем ref
+		// рассмотреть варианты распознавания именно динамического массива при расчете(почему теряется именно для формулы)
 		if (!opt_bbox && this.parent && this.parent.onFormulaEvent) {
 			opt_bbox = this.parent.onFormulaEvent(AscCommon.c_oNotifyParentType.GetRangeCell);
 		}
@@ -7333,13 +7335,14 @@ function parserFormula( formula, parent, _ws ) {
 
 		// }
 
+		let isRangeCanFitIntoCells;
 		//TODO заглушка для парсинга множественного диапазона в _xlnm.Print_Area. Сюда попадаем только в одном случае - из функции findCell для отображения диапазона области печати
 		if(checkMultiSelect && elemArr.length > 1 && this.parent && this.parent instanceof window['AscCommonExcel'].DefName /*&& this.parent.name === "_xlnm.Print_Area"*/) {
 			this.value = elemArr;
 
 			// check further dynamic range
-			let res = this.checkDynamicRange();
-			if (!res) {
+			isRangeCanFitIntoCells = this.checkDynamicRange();
+			if (!isRangeCanFitIntoCells) {
 				// todo add aca flag to use
 				// this.aca = true;
 				this.ca = true;
@@ -7355,8 +7358,8 @@ function parserFormula( formula, parent, _ws ) {
 				this.value = elemArr.pop();
 			}
 			// check further dynamic range
-			let res = this.checkDynamicRange();
-			if (!res) {
+			isRangeCanFitIntoCells = this.checkDynamicRange();
+			if (!isRangeCanFitIntoCells) {
 				// todo add aca flag to use
 				// this.aca = true;
 				this.ca = true;
