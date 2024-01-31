@@ -1184,6 +1184,7 @@ function (window, undefined) {
 	cIMPORTRANGE.prototype.name = 'IMPORTRANGE';
 	cIMPORTRANGE.prototype.argumentsMin = 2;
 	cIMPORTRANGE.prototype.argumentsMax = 2;
+	cIMPORTRANGE.prototype.isXLUDF = true;
 	cIMPORTRANGE.prototype.argumentsType = [argType.reference, argType.text];
 	cIMPORTRANGE.prototype.Calculate = function (arg) {
 		//gs -> allow array(get first element), cRef, cRef3D, cName, cName3d
@@ -1191,24 +1192,71 @@ function (window, undefined) {
 		//if first argument - link, when - text only inside " "
 		//if second argument - link, when - text only without " "
 
-		if (cElementType.cellsRange === arg[i].type || cElementType.array === arg[i].type) {
+		let arg0 = arg[0], arg1 = arg[1];
 
-		} else if (cElementType.cellsRange3D === arg[i].type) {
-			/*if (arg[i].isSingleSheet()) {
-				resArr[i] = arg[i].getMatrix()[0];
-			} else {
-				return new cError(cErrorType.bad_reference);
-			}*/
-		} else if (cElementType.cell === arg[i].type || cElementType.cell3D === arg[i].type) {
-			/*let val = arg[i].getValue();
-			if (cElementType.empty === val.type) {
-				return new cError(cErrorType.wrong_value_type);
-			} else {
-				resArr[i] = [[val]];
-			}*/
-		} else {
-
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			arg0 = arg0.cross(arguments[1]);
 		}
+		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
+			arg1 = arg1.cross(arguments[1]);
+		}
+
+		if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			arg0 = arg0.getValue();
+		}
+		if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
+			arg1 = arg1.getValue();
+		}
+
+		arg0 = arg0.tocNumber();
+		arg1 = arg1.tocNumber();
+
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
+
+		if (cElementType.array === arg0.type && cElementType.array === arg1.type) {
+			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
+				return new cError(cErrorType.not_available);
+			} else {
+				arg0.foreach(function (elem, r, c) {
+					let a = elem;
+					let b = arg1.getElementRowCol(r, c);
+					if (cElementType.number === a.type && cElementType.number === b.type) {
+
+					} else {
+						this.array[r][c] = new cError(cErrorType.wrong_value_type);
+					}
+				});
+				return arg0;
+			}
+		} else if (cElementType.array === arg0.type) {
+			arg0.foreach(function (elem, r, c) {
+				let a = elem;
+				let b = arg1;
+				if (cElementType.number === a.type && cElementType.number === b.type) {
+
+				} else {
+					this.array[r][c] = new cError(cErrorType.wrong_value_type);
+				}
+			});
+			return arg0;
+		} else if (cElementType.array === arg1.type) {
+			arg1.foreach(function (elem, r, c) {
+				let a = arg0;
+				let b = elem;
+				if (cElementType.number === a.type && cElementType.number === b.type) {
+					
+				} else {
+					this.array[r][c] = new cError(cErrorType.wrong_value_type);
+				}
+			});
+			return arg1;
+		}
+
 
 	};
 
