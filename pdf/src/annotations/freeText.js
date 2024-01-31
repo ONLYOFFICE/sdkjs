@@ -752,6 +752,7 @@
             bFlipH && oLineShape.spPr.xfrm.setFlipH(true);
             bFlipV && oLineShape.spPr.xfrm.setFlipV(true);
             if (bFlipH || bFlipV) {
+                oLineShape.recalculateTransform();
                 oLineShape.updateTransformMatrix();
             }
 
