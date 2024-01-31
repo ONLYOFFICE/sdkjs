@@ -306,8 +306,18 @@
         
         this._callout = aCallout;
     };
-    CAnnotationFreeText.prototype.GetCallout = function() {
-        return this._callout;
+    CAnnotationFreeText.prototype.GetCallout = function(bScaled) {
+        if (bScaled != true || !this._callout)
+            return this._callout;
+
+        let oViewer = Asc.editor.getDocumentRenderer();
+        let nPage   = this.GetPage();
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        return this._callout.slice().map(function(measure, idx) {
+            return idx % 2 == 0 ? measure * nScaleX : measure * nScaleY;
+        });
     };
     CAnnotationFreeText.prototype.SetWidth = function(nWidthPt) {
         this._width = nWidthPt; 
@@ -366,14 +376,16 @@
 
         this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
         this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
-        
+        this.spPr.xfrm.setOffX(aRect[0] * g_dKoef_pix_to_mm);
+        this.spPr.xfrm.setOffY(aRect[1] * g_dKoef_pix_to_mm);
+        this.updateTransformMatrix();
+
         this.recalcGeometry();
-        this.AddToRedraw();
+        this.SetNeedRecalc(true);
         this.SetWasChanged(true);
-        this.SetDrawFromStream(false);
     };
     CAnnotationFreeText.prototype.GetTextBoxRect = function(bScale) {
-        let oViewer     = editor.getDocumentRenderer();
+        let oViewer     = Asc.editor.getDocumentRenderer();
         let aOrigRect   = this.GetOrigRect();
         let aRD         = this.GetRectangleDiff() || [0, 0, 0, 0]; // отступ координат фигуры с текстом от ректа аннотации
         let nPage       = this.GetPage();
@@ -429,11 +441,11 @@
         if (this.IsNeedRecalc() == false)
             return;
 
-        // this.handleUpdatePosition();
         if (this.recalcInfo.recalculateGeometry)
             this.RefillGeometry();
 
         this.recalculate();
+        this.SetNeedRecalc(false);
     };
     CAnnotationFreeText.prototype.RefillGeometry = function() {
         this.spTree.length = 0;
@@ -713,8 +725,6 @@
         let oRectShape = createInnerShape(arrOfArrPoints[0], oParentAnnot);
         // прямоугольнику добавляем cnx точки
 
-        // oRectShape.spPr.xfrm.setOffX(oRectShape.x - xMin);
-        // oRectShape.spPr.xfrm.setOffY(oRectShape.y - yMin);
         oRectShape.setGroup(oParentAnnot);
         oParentAnnot.addToSpTree(0, oRectShape);
         
@@ -739,19 +749,17 @@
             }
 
             oLineShape = createInnerShape(aArrowPts, oParentAnnot);
-            // oLineShape.spPr.xfrm.setOffX(oLineShape.x - xMin);
-            // oLineShape.spPr.xfrm.setOffY(oLineShape.y - yMin);
             bFlipH && oLineShape.spPr.xfrm.setFlipH(true);
             bFlipV && oLineShape.spPr.xfrm.setFlipV(true);
-            oLineShape.setGroup(oParentAnnot);
+            if (bFlipH || bFlipV) {
+                oLineShape.updateTransformMatrix();
+            }
+
             oParentAnnot.addToSpTree(1, oLineShape);
         }
 
         if (arrOfArrPoints[2]) {
             let oConnShape = createConnectorShape(arrOfArrPoints[2], oRectShape, oLineShape, oParentAnnot);
-            // oConnShape.spPr.xfrm.setOffX(oConnShape.x - xMin);
-            // oConnShape.spPr.xfrm.setOffY(oConnShape.y - yMin);
-            oConnShape.setGroup(oParentAnnot);
             oParentAnnot.addToSpTree(2, oConnShape);
         }
         
@@ -893,8 +901,8 @@
         return [minX, minY, maxX, maxY];
     }
 
-    function initGroupShape(oParentAnnot) {
-        let aShapeRectInMM = oParentAnnot.GetRect().map(function(measure) {
+    function initGroupShape(oParentFreeText) {
+        let aShapeRectInMM = oParentFreeText.GetRect().map(function(measure) {
             return measure * g_dKoef_pix_to_mm;
         });
         let xMax = aShapeRectInMM[2];
@@ -902,18 +910,20 @@
         let yMin = aShapeRectInMM[1];
         let yMax = aShapeRectInMM[3];
 
-        oParentAnnot.setSpPr(new AscFormat.CSpPr());
-        oParentAnnot.spPr.setParent(oParentAnnot);
-        oParentAnnot.spPr.setXfrm(new AscFormat.CXfrm());
-        oParentAnnot.spPr.xfrm.setParent(oParentAnnot.spPr);
+        oParentFreeText.setSpPr(new AscFormat.CSpPr());
+        oParentFreeText.spPr.setParent(oParentFreeText);
+        oParentFreeText.spPr.setXfrm(new AscFormat.CXfrm());
+        oParentFreeText.spPr.xfrm.setParent(oParentFreeText.spPr);
         
-        oParentAnnot.spPr.xfrm.setOffX(xMin);
-        oParentAnnot.spPr.xfrm.setOffY(yMin);
-        oParentAnnot.spPr.xfrm.setExtX(Math.abs(xMax - xMin));
-        oParentAnnot.spPr.xfrm.setExtY(Math.abs(yMax - yMin));
-        oParentAnnot.setBDeleted(false);
-        oParentAnnot.recalculate();
-        oParentAnnot.brush = AscFormat.CreateNoFillUniFill();
+        oParentFreeText.spPr.xfrm.setOffX(xMin);
+        oParentFreeText.spPr.xfrm.setOffY(yMin);
+        oParentFreeText.spPr.xfrm.setExtX(Math.abs(xMax - xMin));
+        oParentFreeText.spPr.xfrm.setExtY(Math.abs(yMax - yMin));
+        oParentFreeText.setBDeleted(false);
+        oParentFreeText.recalculate();
+        oParentFreeText.updateTransformMatrix();
+
+        oParentFreeText.brush = AscFormat.CreateNoFillUniFill();
     }
 
     function createInnerShape(aPoints, oParentAnnot) {
@@ -957,6 +967,7 @@
         oShape.recalcInfo.recalculateGeometry = false;
         oShape.setGroup(oParentAnnot);
         oShape.recalculate();
+        oShape.updateTransformMatrix();
         oShape.brush = AscFormat.CreateNoFillUniFill();
 
         let geometry = generateGeometry(aPoints, [xMin, yMin, xMax, yMax]);
@@ -1005,7 +1016,9 @@
         oShape.setStyle(AscFormat.CreateDefaultShapeStyle());
         oShape.setBDeleted(false);
         oShape.recalcInfo.recalculateGeometry = false;
+        oShape.setGroup(oParentAnnot);
         oShape.recalculate();
+        oShape.updateTransformMatrix();
         oShape.brush = AscFormat.CreateNoFillUniFill();
 
         let nv_sp_pr = new AscFormat.UniNvPr();

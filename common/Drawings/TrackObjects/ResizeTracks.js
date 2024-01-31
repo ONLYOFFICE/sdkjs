@@ -572,63 +572,42 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             return {kd1: kd1, kd2: kd2};
         };
         this.correctXYForPdfFreeText = function(x, y) {
-            // точка коннектора соединённая с перпендикулярной линией должна двигаться только по одной из осей
-            // этот метод обрабатывает данный случай и корректирует координаты
+            let oFreeText       = this.originalObject.group;
+            let aCallout        = oFreeText.GetCallout(true);
+            let aCalloutMM      = aCallout ? aCallout.map(function(measure) {return measure * g_dKoef_pix_to_mm}) : undefined;
+            let aTextBoxRectMM  = oFreeText.GetTextBoxRect(true).map(function(measure) {return measure * g_dKoef_pix_to_mm});
+            let nExitPos        = oFreeText.GetCalloutExitPos();
 
-            let oFreeText               = this.originalObject.group;
-            let oFreeTextRect           = oFreeText.GetTextBoxRect(true).map(function(measure) {
-                return measure * g_dKoef_pix_to_mm;
-            });
-            let aCallout                = oFreeText.GetCallout();
-            let oExitPoint              = undefined; // перпендикулярная линия выходящая из freetext аннотации
-            let oCalloutArrowPt         = undefined; // x2, y2 точка линии (точка начала стрелки)
-            let oViewer = Asc.editor.getDocumentRenderer();
-            let nPage   = oFreeText.GetPage();
-            let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm;
-            let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm;
-
-            if (aCallout && aCallout.length == 6) {
-                // точка выхода callout из аннотации
-                oExitPoint = {
-                    x: (aCallout[2 * 2]) * nScaleX,
-                    y: (aCallout[2 * 2 + 1]) * nScaleY
-                };
-
-                // x2, y2 линии
-                oCalloutArrowPt = {
-                    x: aCallout[1 * 2] * nScaleX,
-                    y: (aCallout[1 * 2 + 1]) * nScaleY
-                };
-            }
-            else {
+            if (!aCalloutMM)
                 return {x: x, y: y};
-            }
 
-            let nFreeTextW = oFreeTextRect[2] - oFreeTextRect[0];
-            let nFreeTextH = oFreeTextRect[3] - oFreeTextRect[1];
-
-            if (this.numberHandle == 4) {
-                if (oCalloutArrowPt.x < oFreeTextRect[0] || oCalloutArrowPt.x > oFreeTextRect[2]) {
-                    y = oExitPoint.y;
-                }
-                else {
-                    x = oExitPoint.x;
-                }
-            }
-            else if (this.numberHandle == 0) {
-                // если попадаем в рект textbox от freetext аннотации, то корректируем координаты
-                if (x >= oFreeTextRect[0] || x <= oFreeTextRect[2]) {
-                    if (y >= oFreeTextRect[1] && y <= oFreeTextRect[3]) {
-                        if (y <= oFreeTextRect[1] + nFreeTextH / 2) {
-                            y = oFreeTextRect[1] - nFreeTextH / 2;
-                        }
-                        else {
-                            y = oFreeTextRect[3] + nFreeTextH / 2;
-                        }
+            // x1, y1 линии callout
+            if (this.numberHandle == 0) {
+                // если конец стрелки внутри textbox то поднимаем выше/ниже
+                if (x >= aTextBoxRectMM[0] && x <= aTextBoxRectMM[2] && y >= aTextBoxRectMM[1] && y <= aTextBoxRectMM[3]) {
+                    if (y <= aTextBoxRectMM[1] + (aTextBoxRectMM[3] - aTextBoxRectMM[1]) / 2) {
+                        y = aTextBoxRectMM[1] - 10;
+                    }
+                    else if (y >= aTextBoxRectMM[3] - (aTextBoxRectMM[3] - aTextBoxRectMM[1]) / 2) {
+                        y = aTextBoxRectMM[3] + 10;
                     }
                 }
             }
-
+            // x2, y2 линии
+            else if (this.numberHandle == 4) {
+                // фиксируем x или y в зависимости от положения стрелки
+                switch (nExitPos) {
+                    case AscPDF.CALLOUT_EXIT_POS.left:
+                    case AscPDF.CALLOUT_EXIT_POS.right:
+                        y = aCalloutMM[1 * 2 + 1];
+                        break;
+                    case AscPDF.CALLOUT_EXIT_POS.top:
+                    case AscPDF.CALLOUT_EXIT_POS.bottom:
+                        x = aCalloutMM[1 * 2];
+                        break;
+                }
+            }
+            
             return {x: x, y: y};
         };
 
