@@ -73,9 +73,7 @@
 		this.lockBackground           = false;
 		this.lockTransition           = false;
 		this.lockRemove               = false;
-		this.lockHeader               = false;
 		this.lockApplyBackgroundToAll = false;
-		this.lockApplyHeaderToAll     = false;
 		this.lockResetBackground      = false;
 		this.isHidden                 = false;
 		this.resetBackground          = false;
@@ -167,14 +165,6 @@
 	{
 		this.lockApplyBackgroundToAll = v;
 	};
-	CAscSlideProps.prototype.get_LockApplyHeaderToAll     = function()
-	{
-		return this.lockApplyHeaderToAll;
-	};
-	CAscSlideProps.prototype.put_LockApplyHeaderToAll     = function(v)
-	{
-		this.lockApplyHeaderToAll = v;
-	};
 	CAscSlideProps.prototype.get_LockResetBackground     = function()
 	{
 		return this.lockResetBackground;
@@ -182,14 +172,6 @@
 	CAscSlideProps.prototype.put_LockResetBackground     = function(v)
 	{
 		this.lockResetBackground = v;
-	};
-	CAscSlideProps.prototype.get_LockHeader     = function()
-	{
-		return this.lockHeader;
-	};
-	CAscSlideProps.prototype.put_LockHeader     = function(v)
-	{
-		this.lockHeader = v;
 	};
 	CAscSlideProps.prototype.get_ResetBackground     = function()
 	{
@@ -844,6 +826,10 @@
 								{
 									editor.sendEvent("asc_onLockViewProps");
 								}
+								else if (Class === oPresentation.hdrFtrLock)
+								{
+									editor.sendEvent("asc_onLockSlideHdrFtrApplyToAll");
+								}
 							}
 						}
 						if (Class instanceof AscCommon.CComment)
@@ -1004,6 +990,17 @@
 									else
 									{
 										editor.sendEvent("asc_onUnLockViewProps");
+									}
+								}
+								if (Class === object.hdrFtrLock)
+								{
+									if (NewType !== locktype_Mine && NewType !== locktype_None)
+									{
+										editor.sendEvent("asc_onLockSlideHdrFtrApplyToAll");
+									}
+									else
+									{
+										editor.sendEvent("asc_onUnLockSlideHdrFtrApplyToAll");
 									}
 								}
 							}
@@ -6995,18 +6992,15 @@ background-repeat: no-repeat;\
 			obj.lockTiming     = obj.lockTiming || !(oSlide.timingLock.Lock.Type === locktype_Mine || oSlide.timingLock.Lock.Type === locktype_None);
 			obj.lockTransition = obj.lockTransition || !(oSlide.transitionLock.Lock.Type === locktype_Mine || oSlide.transitionLock.Lock.Type === locktype_None);
 			obj.lockBackground = obj.lockBackground || !(oSlide.backgroundLock.Lock.Type === locktype_Mine || oSlide.backgroundLock.Lock.Type === locktype_None);
-			obj.lockHeader     = obj.lockHeader || !(oSlide.headerLock.Lock.Type === locktype_Mine || oSlide.headerLock.Lock.Type === locktype_None);
 			obj.lockRemove     = obj.lockRemove || obj.lockDelete ||
 				obj.lockLayout ||
 				obj.lockTiming ||
 				obj.lockTransition ||
-				obj.lockHeader ||
 				obj.lockBackground || oSlide.isLockedObject();
 		}
 		obj.showMasterSp = showMasterSp;
 		obj.lockResetBackground = obj.lockBackground || !isCanResetBackground;
 		obj.lockApplyBackgroundToAll = obj.lockBackground || oPresentation.getLockApplyBackgroundToAll();
-		obj.lockApplyHeaderToAll     = obj.lockHeader || oPresentation.getLockApplyHeaderToAll();
 
 		if(slide && slide.Layout && slide.Layout.Master){
 			var aLayouts = slide.Layout.Master.sldLayoutLst;
@@ -9669,14 +9663,10 @@ background-repeat: no-repeat;\
 	CAscSlideProps.prototype['get_LockRemove']        = CAscSlideProps.prototype.get_LockRemove;
 	CAscSlideProps.prototype['put_LockRemove']        = CAscSlideProps.prototype.put_LockRemove;
 	CAscSlideProps.prototype['get_IsHidden']          = CAscSlideProps.prototype.get_IsHidden;
-	CAscSlideProps.prototype['get_LockApplyHeaderToAll']     = CAscSlideProps.prototype.get_LockApplyHeaderToAll;
-	CAscSlideProps.prototype['put_LockApplyHeaderToAll']     = CAscSlideProps.prototype.put_LockApplyHeaderToAll;
 	CAscSlideProps.prototype['get_LockApplyBackgroundToAll'] = CAscSlideProps.prototype.get_LockApplyBackgroundToAll;
 	CAscSlideProps.prototype['put_LockApplyBackgroundToAll'] = CAscSlideProps.prototype.put_LockApplyBackgroundToAll;
 	CAscSlideProps.prototype['get_LockResetBackground']      = CAscSlideProps.prototype.get_LockResetBackground;
 	CAscSlideProps.prototype['put_LockResetBackground']      = CAscSlideProps.prototype.put_LockResetBackground;
-	CAscSlideProps.prototype['get_LockHeader']               = CAscSlideProps.prototype.get_LockHeader;
-	CAscSlideProps.prototype['put_LockHeader']               = CAscSlideProps.prototype.put_LockHeader;
 	CAscSlideProps.prototype['get_ResetBackground']          = CAscSlideProps.prototype.get_ResetBackground;
 	CAscSlideProps.prototype['put_ResetBackground']          = CAscSlideProps.prototype.put_ResetBackground;
 	CAscSlideProps.prototype['get_ApplyBackgroundToAll']     = CAscSlideProps.prototype.get_ApplyBackgroundToAll;

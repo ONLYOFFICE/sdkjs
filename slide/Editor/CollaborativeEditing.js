@@ -301,6 +301,10 @@ CCollaborativeEditing.prototype.Release_Locks = function()
                     {
                         editor.sendEvent("asc_onUnLockViewProps");
                     }
+                    else if (Class === editor.WordControl.m_oLogicDocument.hdrFtrLock)
+                    {
+	                    editor.sendEvent("asc_onUnLockSlideHdrFtrApplyToAll");
+                    }
                 }
                 if(object.getObjectType && object.getObjectType() === AscDFH.historyitem_type_Slide && object.deleteLock === Class)
                 {
