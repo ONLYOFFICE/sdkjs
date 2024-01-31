@@ -4795,7 +4795,7 @@
 				if (Array.isArray(file)) {
 					file = file[0];
 				}
-				callback(_file);
+				callback(file);
 			});
 		} else {
 			callback(null);
