@@ -108,7 +108,7 @@
 		let logicDocument = paragraph.GetLogicDocument();
 		let commentManager = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetCommentsManager() : null;
 		
-		this.DrawColl           = undefined !== graphics.RENDERER_PDF_FLAG;
+		this.DrawColl           = undefined === graphics.RENDERER_PDF_FLAG;
 		this.DrawSearch         = logicDocument && logicDocument.IsDocumentEditor() && logicDocument.SearchEngine.Selection;
 		this.DrawComments       = commentManager && commentManager.isUse();
 		this.DrawSolvedComments = commentManager && commentManager.isUseSolved();
@@ -278,7 +278,7 @@
 		if (mathColl)
 		{
 			let bounds = math.Root.Get_LineBound(this.Line, this.Range);
-			comm.Add(bounds.Y, bounds.Y + bounds.H, bounds.X, bounds.X + bounds.W, 0, mathColl.r, mathColl.g, mathColl.b);
+			coll.Add(bounds.Y, bounds.Y + bounds.H, bounds.X, bounds.X + bounds.W, 0, mathColl.r, mathColl.g, mathColl.b);
 		}
 		
 		this.Coll = coll;
