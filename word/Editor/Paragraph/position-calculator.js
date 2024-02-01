@@ -64,9 +64,23 @@
 			run   : null,
 			mathY : -1
 		};
+		
+		// Track prev element for the case when cursor is placed between elements with different directions
+		this.prev = {
+			x        : 0,
+			y        : 0,
+			run      : null,
+			element  : null,
+			inRunPos : 0,
+			find     : false,
+			usePos   : false
+		};
 	}
 	ParagraphPositionCalculator.prototype.reset = function(page, line, range)
 	{
+		this.prev.element = null;
+		this.prev.find    = false;
+		
 		this.isNextCurrent = false;
 		this.nextRun       = null;
 		
@@ -108,7 +122,7 @@
 			this.isNextCurrent = false;
 		}
 	};
-	ParagraphPositionCalculator.prototype.handleRunElement = function(element, run, isCurrent, isNearFootnoteRef)
+	ParagraphPositionCalculator.prototype.handleRunElement = function(element, run, isCurrent, isNearFootnoteRef, inRunPos)
 	{
 		if (para_Drawing === element.Type && !element.IsInline())
 		{
@@ -125,6 +139,17 @@
 			this.nextRun = null;
 		}
 		
+		if (isCurrent)
+			this.prev.find = true;
+		
+		if (!this.prev.find)
+		{
+			this.prev.element  = element;
+			this.prev.run      = run;
+			this.prev.inRunPos = inRunPos;
+			this.prev.usePos   = false;
+		}
+		
 		this.bidi.add([element, run, isCurrent, isNearFootnoteRef], element.getBidiType());
 	};
 	ParagraphPositionCalculator.prototype.handleBidiFlow = function(data)
@@ -133,20 +158,47 @@
 		let run       = data[1];
 		let isCurrent = data[2];
 		
+		if (element === this.prev.element)
+		{
+			this.prev.x      = this.x;
+			this.prev.y      = this.y;
+			this.prev.usePos = true;
+		}
+		
 		let w = element.GetWidthVisible();
 		if (isCurrent)
 		{
-			this.posInfo.x = this.x;
-			this.posInfo.y = this.y;
-			
-			if (element.getBidiType() === AscWord.BidiType.rtl)
-				this.posInfo.x += w;
-			
-			this.posInfo.run = run;
-			
-			// for comb forms
-			if (element.LGap)
-				this.posInfo.x += element.LGap;
+			let lastElement = this.prev.element && this.prev.find && this.prev.usePos && this.prev.element.IsText() ? this.prev.element : null;
+			if (lastElement
+				&& AscCommon.History.checkAsYouTypeEnterText
+				&& AscCommon.History.checkAsYouTypeEnterText(this.prev.run, this.prev.inRunPos + 1, lastElement.GetCodePoint()))
+			{
+				this.posInfo.x = this.prev.x;
+				this.posInfo.y = this.prev.y;
+				
+				if (lastElement.getBidiType() !== AscWord.BidiType.rtl)
+					this.posInfo.x += lastElement.GetWidthVisible();
+				
+				this.posInfo.run = this.prev.run;
+				
+				// for comb forms
+				if (element.LGap)
+					this.posInfo.x += element.LGap;
+			}
+			else
+			{
+				this.posInfo.x = this.x;
+				this.posInfo.y = this.y;
+				
+				if (element.getBidiType() === AscWord.BidiType.rtl)
+					this.posInfo.x += w;
+				
+				this.posInfo.run = run;
+				
+				// for comb forms
+				if (element.LGap)
+					this.posInfo.x += element.LGap;
+			}
 		}
 		
 		this.x += w;
