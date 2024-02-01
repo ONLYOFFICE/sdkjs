@@ -152,6 +152,11 @@
 		NeedTransform: 2,
 		PreProcessed: 3
 	};
+
+
+	window.importRangeLinks = [];
+	window.startBuildImportRangeLinks = null;
+
 	var emptyStyleComponents = {table: [], conditional: []};
 	function getRangeType(oBBox){
 		if(null == oBBox)
@@ -1842,13 +1847,57 @@
 			}
 			this.tempGetByCells = [];
 		},
+
+
+
 		_calculateDirty: function() {
 			var t = this;
+
+			
+			window.startBuildImportRangeLinks = true;
+
 			this._foreachChanged(function(cell){
 				if (cell && cell.isFormula()) {
 					cell.setIsDirty(true);
+
+					//check on import functions
+					for (let i = 0; i < cell.formulaParsed.outStack.length; i++) {
+						if (cell.formulaParsed.outStack[i].type === cElementType.func && cell.formulaParsed.outStack[i].name === "IMPORTRANGE") {
+
+							//need temporary calculate and check on external links
+							cell.formulaParsed.calculate();
+
+							//window.importRangeLinks = [];
+							//window.startBuildImportRangeLinks = null;
+
+						}
+					}
 				}
 			});
+
+			window.startBuildImportRangeLinks = false;
+			if (window.importRangeLinks) {
+				//need update
+
+				var newExternalReferences = [];
+				for (let i in window.importRangeLinks) {
+					let newExternalReference = new AscCommonExcel.ExternalReference();
+					//newExternalReference.referenceData = referenceData;
+					newExternalReference.Id = i;
+
+					for (var j = 0; j < window.importRangeLinks[i].length; j++) {
+						let newSheet = window.importRangeLinks[i][j];
+						newExternalReference.addSheetName(newSheet, true);
+						newExternalReference.initWorksheetFromSheetDataSet(newSheet);
+					}
+
+					newExternalReferences.push(newExternalReference);
+				}
+
+				this.wb.addExternalReferences(newExternalReferences);
+			}
+
+
 			this._foreachChanged(function(cell){
 				cell && cell._checkDirty();
 			});
