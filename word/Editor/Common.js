@@ -632,9 +632,12 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 	function checkAsYouTypeEnterText(run, inRunPos, codePoint)
 	{
 		let localHistory = AscCommon.History;
+		if (!localHistory.checkAsYouTypeEnterText)
+			return false;
+		
 		if (!localHistory.isEmpty())
-			return AscCommon.History.checkAsYouTypeEnterText(run, inRunPos, codePoint);
-		else (AscCommon.CollaborativeEditing.Is_Fast() && !AscCommon.CollaborativeEditing.Is_SingleUser())
+			return localHistory.checkAsYouTypeEnterText(run, inRunPos, codePoint);
+		else if (AscCommon.CollaborativeEditing.Is_Fast() && !AscCommon.CollaborativeEditing.Is_SingleUser())
 			return AscCommon.CollaborativeEditing.getCoHistory().checkAsYouTypeEnterText(run, inRunPos, codePoint);
 		
 		return false;

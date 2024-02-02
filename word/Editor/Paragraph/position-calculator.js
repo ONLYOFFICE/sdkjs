@@ -169,9 +169,7 @@
 		if (isCurrent)
 		{
 			let lastElement = this.prev.element && this.prev.find && this.prev.usePos && this.prev.element.IsText() ? this.prev.element : null;
-			if (lastElement
-				&& AscCommon.History.checkAsYouTypeEnterText
-				&& AscCommon.History.checkAsYouTypeEnterText(this.prev.run, this.prev.inRunPos + 1, lastElement.GetCodePoint()))
+			if (lastElement && AscWord.checkAsYouTypeEnterText(this.prev.run, this.prev.inRunPos + 1, lastElement.GetCodePoint()))
 			{
 				this.posInfo.x = this.prev.x;
 				this.posInfo.y = this.prev.y;
