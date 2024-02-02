@@ -1722,10 +1722,6 @@ MoveInGroupState.prototype =
                 let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
                 let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
 
-                // let xMin = (this.group.posX + posX) * g_dKoef_mm_to_pix;
-                // let yMin = (this.group.posY + posY) * g_dKoef_mm_to_pix;
-                // let xMax = (this.group.extX * g_dKoef_mm_to_pix) + xMin;
-                // let yMax = (this.group.extY * g_dKoef_mm_to_pix) + yMin;
                 let xMin;
                 let yMin;
                 let xMax;
@@ -1784,8 +1780,19 @@ MoveInGroupState.prototype =
                     // находим координаты textbox
                     xMin = oTrack.transform.TransformPointX(0, 0) * g_dKoef_mm_to_pix;
                     yMin = oTrack.transform.TransformPointY(0, 0) * g_dKoef_mm_to_pix;
-                    xMax = (oTrack.transform.TransformPointX(0, 0) + oTrack.resizedExtX) * g_dKoef_mm_to_pix;
-                    yMax = (oTrack.transform.TransformPointY(0, 0) + oTrack.resizedExtY) * g_dKoef_mm_to_pix;
+                    if (oTrack.resizedExtX) {
+                        xMax = (oTrack.transform.TransformPointX(0, 0) + oTrack.resizedExtX) * g_dKoef_mm_to_pix;
+                    }
+                    else {
+                        xMax = (oTrack.transform.TransformPointX(0, 0) + oTrack.originalShape.extX) * g_dKoef_mm_to_pix;
+                    }
+                    if (oTrack.resizedExtY) {
+                        yMax = (oTrack.transform.TransformPointY(0, 0) + oTrack.resizedExtY) * g_dKoef_mm_to_pix;
+                    }
+                    else {
+                        yMax = (oTrack.transform.TransformPointY(0, 0) + oTrack.originalShape.extY) * g_dKoef_mm_to_pix;
+                    }
+                    
 
                     // пересчитываем callout
                     let nCalloutExitPos = this.group.GetCalloutExitPos();
@@ -1844,12 +1851,16 @@ MoveInGroupState.prototype =
                 this.group.SetCallout(aNewCallout);
                 this.group.SetRectangleDiff(aNewRD);
                 this.group.SetRect(aNewRect);
-
+                this.group.onAfterMove();
                 editor.getDocumentRenderer().DrawingObjects.drawingObjects.length = 0;
             }
         }
-        if (isPdf)
-            Asc.editor.getDocumentRenderer()._paint();
+        if (isPdf) {
+            let oViewer = Asc.editor.getDocumentRenderer();
+            oViewer._paint();
+            oViewer.onUpdateOverlay();
+        }
+        
         this.drawingObjects.updateOverlay();
     }
 };

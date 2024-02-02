@@ -941,8 +941,9 @@ var CPresentation = CPresentation || function(){};
         
         if (oViewer.isMouseDown)
         {
+            let oMouseMoveAnnot = oViewer.getPageAnnotByMouse();
             if (oAPI.isEraseInkMode()) {
-                let oMouseMoveAnnot = oViewer.getPageAnnotByMouse();
+                
                 if (oMouseMoveAnnot && oMouseMoveAnnot.IsInk()) {
                     this.EraseInk(oMouseMoveAnnot);
                     return;
@@ -957,6 +958,9 @@ var CPresentation = CPresentation || function(){};
 
                 if (oDrawingObjects.arrTrackObjects.length != 0 && this.mouseDownAnnot && this.mouseDownAnnot.IsInk() == true)
                     oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
+
+                if (this.mouseDownAnnot.IsFreeText())
+                    this.mouseDownAnnot.onPreMove(e);
 
                 oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
             }
@@ -2460,7 +2464,7 @@ var CPresentation = CPresentation || function(){};
 		
 		this.defaultFontsLoaded = 0;
 		let _t = this;
-		this.fontLoader.LoadDocumentFonts2([{name : AscPDF.DEFAULT_FIELD_FONT}],
+		this.fontLoader.LoadDocumentFonts2([{name : "Times New Roman"}],
 			Asc.c_oAscAsyncActionType.Empty,
 			function()
 			{
@@ -2479,7 +2483,8 @@ var CPresentation = CPresentation || function(){};
         if (!oField)
             return true;
         
-        if (oField.IsNeedDrawFromStream() && oField.GetType() == AscPDF.FIELD_TYPES.button)
+        // при клике по кнопке внешний вид остается прежним, поэтому грузить шрифт не надо
+        if (oField.GetType() == AscPDF.FIELD_TYPES.button && oField.IsNeedDrawFromStream())
             return true;
 
 		let sFontName = oField.GetTextFontActual();
