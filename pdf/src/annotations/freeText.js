@@ -181,7 +181,7 @@
         }
 
         let nLineEndType = this.GetLineEnd();
-        if (this.spTree.length == 2) {
+        if (this.spTree[1] && this.spTree[1].getPresetGeom() == "line") {
             let oTargetSp = this.spTree[1];
             let oLine = oTargetSp.pen;
             oLine.setTailEnd(new AscFormat.EndArrow());
@@ -192,7 +192,6 @@
         }
 
         this.recalculate();
-
     };
     CAnnotationFreeText.prototype.GetMinShapeRect = function() {
         let oViewer     = editor.getDocumentRenderer();
@@ -448,8 +447,6 @@
         this.SetNeedRecalc(false);
     };
     CAnnotationFreeText.prototype.RefillGeometry = function() {
-        this.spTree.length = 0;
-        
         let oViewer = editor.getDocumentRenderer();
         let oDoc    = oViewer.getPDFDoc();
         
@@ -615,6 +612,33 @@
     CAnnotationFreeText.prototype.onMouseDown = function(e) {
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
+        
+        let _t = this;
+        // селектим все фигуры в группе если до сих пор не заселекчены
+        oDrawingObjects.selection.groupSelection = this;
+        this.selectedObjects.length = 0;
+
+        this.spTree.forEach(function(sp) {
+            if (!(sp instanceof AscFormat.CConnectionShape)) {
+                sp.selectStartPage = 0;
+                _t.selectedObjects.push(sp);
+            }
+        });
+
+        this.selectStartPage = this.GetPage();
+    };
+    CAnnotationFreeText.prototype.onAfterMove = function() {
+        this.onMouseDown();
+        this.isInMove = false;
+    };
+    CAnnotationFreeText.prototype.onPreMove = function(e) {
+        if (this.isInMove)
+            return;
+
+        this.isInMove = true; // происходит ли resize/move действие
+
+        let oViewer         = editor.getDocumentRenderer();
+        let oDrawingObjects = oViewer.DrawingObjects;
         let oDoc            = this.GetDocument();
         let oDrDoc          = oDoc.GetDrawingDocument();
 
@@ -626,30 +650,45 @@
         let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
 
         let oCursorInfo = oDrawingObjects.getGraphicInfoUnderCursor(oPos.DrawPage, X, Y);
-        let sShapeId    = oCursorInfo.cursorType.indexOf("resize") != -1 ? oCursorInfo.objectId : -1;
+        if (oCursorInfo.cursorType == null) {
+            this.isInMove = false;
+            return;
+        }
 
-        this.selectedObjects.length                 = 0;
-        oDrawingObjects.selection.groupSelection    = this;
+        let isResize    = oCursorInfo.cursorType.indexOf("resize") != -1 ? true : false;
+        let sShapeId    = oCursorInfo.objectId;
+
+        // если фигуры в селекте группы, тогда смотрим в какую попали
+        this.selectedObjects.length = 0;
 
         let _t = this;
-        if (sShapeId == -1) {
-            this.spTree.forEach(function(sp) {
-                if (!(sp instanceof AscFormat.CConnectionShape)) {
-                    sp.selectStartPage = 0;
-                    _t.selectedObjects.push(sp);
-                }
-            });
-        }
-        else {
+        // если в handles то телектим внутри группы нужную фигуру
+        if (isResize) {
             this.spTree.forEach(function(sp) {
                 if (sp.GetId() == sShapeId) {
                     sp.selectStartPage = 0;
                     _t.selectedObjects.push(sp);
                 }
             });
-
-            oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
         }
+        // иначе move 
+        else {
+            // если попали в стрелку, тогда селектим группу, т.к. будем перемещать всю аннотацию целиком
+            if (this.spTree[1] && sShapeId == this.spTree[1].GetId() && this.spTree[1].getPresetGeom() == "line") {
+                _t.selectedObjects.length = 0;
+                oDrawingObjects.selection.groupSelection = null;
+                oDrawingObjects.selectedObjects.length = 0;
+                oDrawingObjects.selectedObjects.push(this.spTree[1]);
+            }
+            // если попали в textbox, тогда селектим textbox фигуру внутри группы, т.к. будем перемещать только её
+            else if (this.spTree[0] && sShapeId == this.spTree[0].GetId()) {
+                this.selectedObjects.length                 = 0;
+                oDrawingObjects.selection.groupSelection    = this;
+                this.selectedObjects.push(this.spTree[0]);
+            }
+        }
+
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
     CAnnotationFreeText.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
@@ -722,11 +761,21 @@
         let xMin = aShapeRect[0];
         let yMin = aShapeRect[1];
 
-        let oRectShape = createInnerShape(arrOfArrPoints[0], oParentAnnot);
+        let oRectShape = createInnerShape(arrOfArrPoints[0], oParentAnnot.spTree[0], oParentAnnot);
+        oRectShape.createTextBoxContent();
+        oRectShape.textBoxContent.GetElement(0).GetElement(0).AddText('1234');
+        let oPara       = oRectShape.textBoxContent.GetElement(0);
+        let oApiPara    = editor.private_CreateApiParagraph(oPara);
+
+        oApiPara.SetColor(55, 55, 55, false);
+        oPara.RecalcCompiledPr(true);
+
+        // oRectShape.textBoxContent.Recalculate_Page(0, true);
         // прямоугольнику добавляем cnx точки
 
         oRectShape.setGroup(oParentAnnot);
-        oParentAnnot.addToSpTree(0, oRectShape);
+        if (!oParentAnnot.spTree[0])
+            oParentAnnot.addToSpTree(0, oRectShape);
         
         let oLineShape;
         // координаты стрелки
@@ -748,20 +797,22 @@
                 bFlipV = true;
             }
 
-            oLineShape = createInnerShape(aArrowPts, oParentAnnot);
-            bFlipH && oLineShape.spPr.xfrm.setFlipH(true);
-            bFlipV && oLineShape.spPr.xfrm.setFlipV(true);
+            oLineShape = createInnerShape(aArrowPts, oParentAnnot.spTree[1], oParentAnnot);
+            oLineShape.spPr.xfrm.setFlipH(bFlipH);
+            oLineShape.spPr.xfrm.setFlipV(bFlipV);
             if (bFlipH || bFlipV) {
                 oLineShape.recalculateTransform();
                 oLineShape.updateTransformMatrix();
             }
 
-            oParentAnnot.addToSpTree(1, oLineShape);
+            if (!oParentAnnot.spTree[1])
+                oParentAnnot.addToSpTree(1, oLineShape);
         }
 
         if (arrOfArrPoints[2]) {
-            let oConnShape = createConnectorShape(arrOfArrPoints[2], oRectShape, oLineShape, oParentAnnot);
-            oParentAnnot.addToSpTree(2, oConnShape);
+            let oConnShape = createConnectorShape(arrOfArrPoints[2], oParentAnnot.spTree[2], oParentAnnot);
+            if (!oParentAnnot.spTree[2])
+                oParentAnnot.addToSpTree(2, oConnShape);
         }
         
         oParentAnnot.x = xMin;
@@ -927,7 +978,7 @@
         oParentFreeText.brush = AscFormat.CreateNoFillUniFill();
     }
 
-    function createInnerShape(aPoints, oParentAnnot) {
+    function createInnerShape(aPoints, oExistShape, oParentAnnot) {
         function findMinRect(points) {
             let x_min = points[0].x, y_min = points[0].y;
             let x_max = points[0].x, y_max = points[0].y;
@@ -942,8 +993,7 @@
             return [x_min, y_min, x_max, y_max];
         }
 
-        let oShape = new AscFormat.CShape();
-
+        
         let aShapeBounds = findMinRect(aPoints);
 
         let xMax = aShapeBounds[2];
@@ -951,10 +1001,13 @@
         let yMin = aShapeBounds[1];
         let yMax = aShapeBounds[3];
 
-        oShape.setSpPr(new AscFormat.CSpPr());
-        oShape.spPr.setParent(oShape);
-        oShape.spPr.setXfrm(new AscFormat.CXfrm());
-        oShape.spPr.xfrm.setParent(oShape.spPr);
+        let oShape = oExistShape ? oExistShape : new AscFormat.CShape();
+        if (!oExistShape) {
+            oShape.setSpPr(new AscFormat.CSpPr());
+            oShape.spPr.setParent(oShape);
+            oShape.spPr.setXfrm(new AscFormat.CXfrm());
+            oShape.spPr.xfrm.setParent(oShape.spPr);
+        }
         
         let aAnnotRect = oParentAnnot.GetRect().map(function(measure) {
             return measure * g_dKoef_pix_to_mm;
@@ -977,7 +1030,7 @@
         return oShape;
     }
 
-    function createConnectorShape(aPoints, oStartShape, oEndShape, oParentAnnot) {
+    function createConnectorShape(aPoints, oExistShape, oParentAnnot) {
         function findMinRect(points) {
             let x_min = points[0].x, y_min = points[0].y;
             let x_max = points[0].x, y_max = points[0].y;
@@ -992,8 +1045,7 @@
             return [x_min, y_min, x_max, y_max];
         }
 
-        let oShape = new AscFormat.CConnectionShape();
-
+        let oShape = oExistShape || new AscFormat.CConnectionShape();
         let aShapeBounds = findMinRect(aPoints);
 
         let xMax = aShapeBounds[2];
@@ -1001,10 +1053,12 @@
         let yMin = aShapeBounds[1];
         let yMax = aShapeBounds[3];
 
-        oShape.setSpPr(new AscFormat.CSpPr());
-        oShape.spPr.setParent(oShape);
-        oShape.spPr.setXfrm(new AscFormat.CXfrm());
-        oShape.spPr.xfrm.setParent(oShape.spPr);
+        if (!oExistShape) {
+            oShape.setSpPr(new AscFormat.CSpPr());
+            oShape.spPr.setParent(oShape);
+            oShape.spPr.setXfrm(new AscFormat.CXfrm());
+            oShape.spPr.xfrm.setParent(oShape.spPr);
+        }
         
         let aAnnotRect = oParentAnnot.GetRect().map(function(measure) {
             return measure * g_dKoef_pix_to_mm;
@@ -1027,17 +1081,17 @@
         oShape.setNvSpPr(nv_sp_pr);
 
         let nvUniSpPr = new AscFormat.CNvUniSpPr();
-        if(oStartShape)
+        if(oParentAnnot.spTree[1])
         {
             // nvUniSpPr.stCnxIdx = this.startConnectionInfo.idx;
             nvUniSpPr.stCnxIdx = 1;
-            nvUniSpPr.stCnxId  = oStartShape.Id;
+            nvUniSpPr.stCnxId  = oParentAnnot.spTree[0].Id;
         }
-        if(oEndShape)
+        if(oParentAnnot.spPr[0])
         {
             // nvUniSpPr.endCnxIdx = this.endConnectionInfo.idx;
             nvUniSpPr.endCnxIdx = 1;
-            nvUniSpPr.endCnxId  = oEndShape.Id;
+            nvUniSpPr.endCnxId  = oParentAnnot.spPr[1].Id;
         }
         oShape.nvSpPr.setUniSpPr(nvUniSpPr);
 
