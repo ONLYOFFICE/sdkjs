@@ -2365,6 +2365,9 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.Is_OnRecalculate = function() {
         return false;
     };
+	CPDFDoc.prototype.IsActionStarted = function() {
+		return false;
+	};
     CPDFDoc.prototype.GetSelectionState = function() {
         return null;
     };

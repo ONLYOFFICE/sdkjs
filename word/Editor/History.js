@@ -710,7 +710,7 @@ CHistory.prototype =
     {
         // Не объединяем точки в истории, когда отключается пересчет.
         // TODO: Неправильно изменяется RecalcIndex
-        if (this.Document && true !== this.Document.Is_OnRecalculate())
+        if (this.Document && (!this.Document.Is_OnRecalculate() || this.Document.IsActionStarted()))
             return false;
 
         // Не объединяем точки во время Undo/Redo
