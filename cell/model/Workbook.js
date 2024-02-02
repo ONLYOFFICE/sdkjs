@@ -154,7 +154,7 @@
 	};
 
 
-	window.importRangeLinks = [];
+	window.importRangeLinks = null;
 	window.startBuildImportRangeLinks = null;
 
 	var emptyStyleComponents = {table: [], conditional: []};
@@ -1879,7 +1879,8 @@
 			if (window.importRangeLinks) {
 				//need update
 
-				var newExternalReferences = [];
+				let needUpdateExternalReference = [];
+				let newExternalReferences = [];
 				for (let i in window.importRangeLinks) {
 					let newExternalReference = new AscCommonExcel.ExternalReference();
 					//newExternalReference.referenceData = referenceData;
@@ -1892,17 +1893,31 @@
 					}
 
 					newExternalReferences.push(newExternalReference);
+					needUpdateExternalReference.push(newExternalReference.getAscLink())
 				}
 
+				window.importRangeLinks = null;
+
 				this.wb.addExternalReferences(newExternalReferences);
+
+
+				this.wb.dependencyFormulas.lockRecal();
+				let t = this;
+				this.wb.oApi.asc_updateExternalReferences(needUpdateExternalReference, function () {
+					t.wb.dependencyFormulas.unlockRecal(true);
+					t._foreachChanged(function(cell){
+						cell && cell._checkDirty();
+					});
+					t.changedCell = null;
+					t.changedRange = null;
+				});
+			} else {
+				this._foreachChanged(function(cell){
+					cell && cell._checkDirty();
+				});
+				this.changedCell = null;
+				this.changedRange = null;
 			}
-
-
-			this._foreachChanged(function(cell){
-				cell && cell._checkDirty();
-			});
-			this.changedCell = null;
-			this.changedRange = null;
 		},
 		_foreachChanged: function(callback) {
 			var sheetId, changedSheet, ws, bbox;

@@ -8679,11 +8679,11 @@ var editor;
 		return this.wb.getExternalReferences();
 	};
 
-	spreadsheet_api.prototype.asc_updateExternalReferences = function(arr) {
+	spreadsheet_api.prototype.asc_updateExternalReferences = function(arr, callback) {
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 			return;
 		}
-		this.wb.updateExternalReferences(arr);
+		this.wb.updateExternalReferences(arr, callback);
 	};
 
 	spreadsheet_api.prototype.asc_openExternalReference = function(externalReference) {
