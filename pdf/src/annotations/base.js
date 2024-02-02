@@ -414,6 +414,15 @@
                 this._vertices[i+1] += nDeltaY / nScaleY;
             }
         }
+        else if (this.IsFreeText()) {
+            let aCallout = this.GetCallout();
+            if (aCallout) {
+                for (let i = 0; i < aCallout.length; i+=2) {
+                    aCallout[i] += nDeltaX / nScaleX;
+                    aCallout[i+1] += nDeltaY / nScaleY;
+                }
+            }
+        }
 
         oDoc.History.Add(new CChangesPDFAnnotPos(this, [this._rect[0], this._rect[1]], [x, y]));
 

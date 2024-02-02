@@ -82,17 +82,17 @@
     AscFormat.InitClass(CAnnotationFreeText, AscFormat.CGroupShape, AscDFH.historyitem_type_GroupShape);
     Object.assign(CAnnotationFreeText.prototype, AscPDF.CAnnotationBase.prototype);
 
-    CAnnotationFreeText.prototype.GetCalloutExitPos = function() {
+    CAnnotationFreeText.prototype.GetCalloutExitPos = function(aTxBoxRect) {
         let aCallout = this.GetCallout();
         if (!aCallout)
             return CALLOUT_EXIT_POS.none;
         
-        let aTextBoxRect = this.GetTextBoxRect();
+        let aTextBoxRect = aTxBoxRect || this.GetTextBoxRect();
 
         // x1, y1 линии
         let oArrowEndPt = {
-            x: aCallout[1 * 2],
-            y: (aCallout[1 * 2 + 1])
+            x: aCallout[0 * 2],
+            y: (aCallout[0 * 2 + 1])
         };
 
         if (oArrowEndPt.x < aTextBoxRect[0]) {
@@ -440,6 +440,16 @@
         if (this.IsNeedRecalc() == false)
             return;
 
+        let aRect = this.GetRect();
+        this.spPr.xfrm.setOffX(aRect[0] * g_dKoef_pix_to_mm);
+        this.spPr.xfrm.setOffY(aRect[1] * g_dKoef_pix_to_mm);
+        this.recalculateTransform();
+        this.updateTransformMatrix();
+        this.spTree.forEach(function(sp) {
+            sp.recalculateTransform();
+            sp.updateTransformMatrix();
+        });
+
         if (this.recalcInfo.recalculateGeometry)
             this.RefillGeometry();
 
@@ -675,10 +685,10 @@
         else {
             // если попали в стрелку, тогда селектим группу, т.к. будем перемещать всю аннотацию целиком
             if (this.spTree[1] && sShapeId == this.spTree[1].GetId() && this.spTree[1].getPresetGeom() == "line") {
-                _t.selectedObjects.length = 0;
+                this.selectedObjects.length = 0;
                 oDrawingObjects.selection.groupSelection = null;
                 oDrawingObjects.selectedObjects.length = 0;
-                oDrawingObjects.selectedObjects.push(this.spTree[1]);
+                oDrawingObjects.selectedObjects.push(this);
             }
             // если попали в textbox, тогда селектим textbox фигуру внутри группы, т.к. будем перемещать только её
             else if (this.spTree[0] && sShapeId == this.spTree[0].GetId()) {
@@ -762,13 +772,9 @@
         let yMin = aShapeRect[1];
 
         let oRectShape = createInnerShape(arrOfArrPoints[0], oParentAnnot.spTree[0], oParentAnnot);
-        oRectShape.createTextBoxContent();
-        oRectShape.textBoxContent.GetElement(0).GetElement(0).AddText('1234');
-        let oPara       = oRectShape.textBoxContent.GetElement(0);
-        let oApiPara    = editor.private_CreateApiParagraph(oPara);
-
-        oApiPara.SetColor(55, 55, 55, false);
-        oPara.RecalcCompiledPr(true);
+        oRectShape.createTextBody();
+        oRectShape.txBody.content.GetElement(0).GetElement(0).AddText('1234');
+        oRectShape.txBody.bodyPr.setInsets(0,0,0,0);
 
         // oRectShape.textBoxContent.Recalculate_Page(0, true);
         // прямоугольнику добавляем cnx точки
