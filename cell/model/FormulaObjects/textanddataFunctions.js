@@ -1236,10 +1236,43 @@ function (window, undefined) {
 			if (!window.importRangeLinks[linkName]) {
 				window.importRangeLinks[linkName] = [];
 			}
-			window.importRangeLinks[linkName].push(is3DRef.sheet);
+			window.importRangeLinks[linkName].push(is3DRef);
 
 			return new cError(cErrorType.bad_reference);
 		} else {
+			let api = window["Asc"]["editor"];
+			let wb = api && api.wbModel;
+			let eR = wb && wb.getExternalLinkByName(arg0.toString());
+			if (eR) {
+				let externalWs = eR.worksheets[is3DRef.sheet];
+				if (externalWs) {
+					let range = new cArea(is3DRef.range, externalWs);
+
+
+					var sheetName = range && range.worksheet && range.worksheet.sName;
+					if (sheetName) {
+						var index = this.getSheetByName(sheetName);
+						if (index != null) {
+							var externalSheetDataSet = this.SheetDataSet[index];
+							if (!externalSheetDataSet) {
+								externalSheetDataSet = new ExternalSheetDataSet();
+								externalSheetDataSet.SheetId = this.SheetNames.length - 1;
+								this.SheetDataSet.push(externalSheetDataSet);
+							}
+
+							for (var i = range.bbox.r1; i <= range.bbox.r2; i++) {
+								var row = externalSheetDataSet.getRow(i + 1, true);
+								for (var j = range.bbox.c1; j <= range.bbox.c2; j++) {
+									row.getCell(j, true);
+								}
+							}
+						}
+					}
+
+					return range.getFullArray();
+				}
+
+			}
 			return new cError(cErrorType.bad_reference);
 		}
 

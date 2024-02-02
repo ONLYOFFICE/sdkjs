@@ -1853,10 +1853,13 @@
 		_calculateDirty: function() {
 			var t = this;
 
-			
-			window.startBuildImportRangeLinks = true;
+			if (window.startBuildImportRangeLinks === null) {
+				window.startBuildImportRangeLinks = true;
+			}
 
-			this._foreachChanged(function(cell){
+			let needUpdateCells = [];
+
+			this._foreachChanged(function (cell) {
 				if (cell && cell.isFormula()) {
 					cell.setIsDirty(true);
 
@@ -1864,8 +1867,15 @@
 					for (let i = 0; i < cell.formulaParsed.outStack.length; i++) {
 						if (cell.formulaParsed.outStack[i].type === cElementType.func && cell.formulaParsed.outStack[i].name === "IMPORTRANGE") {
 
+							let lengthBefore = window.importRangeLinks && window.importRangeLinks.length;
 							//need temporary calculate and check on external links
 							cell.formulaParsed.calculate();
+							let lengthAfter = window.importRangeLinks && window.importRangeLinks.length;
+
+							//if (lengthAfter !== lengthAfter) {
+								needUpdateCells.push(cell);
+							//}
+							cell.setIsDirty(false);
 
 							//window.importRangeLinks = [];
 							//window.startBuildImportRangeLinks = null;
@@ -1876,6 +1886,13 @@
 			});
 
 			window.startBuildImportRangeLinks = false;
+
+			this._foreachChanged(function(cell){
+				cell && cell._checkDirty();
+			});
+			this.changedCell = null;
+			this.changedRange = null;
+
 			if (window.importRangeLinks) {
 				//need update
 
@@ -1887,10 +1904,16 @@
 					newExternalReference.Id = i;
 
 					for (var j = 0; j < window.importRangeLinks[i].length; j++) {
-						let newSheet = window.importRangeLinks[i][j];
+						let newSheet = window.importRangeLinks[i][j].sheet;
 						newExternalReference.addSheetName(newSheet, true);
 						newExternalReference.initWorksheetFromSheetDataSet(newSheet);
+
+						let ws = newExternalReference.worksheets[newSheet];
+
+						newExternalReference.initRows(ws.getRange2(window.importRangeLinks[i][j].range));
 					}
+
+					newExternalReference.notUpdateId = true;
 
 					newExternalReferences.push(newExternalReference);
 					needUpdateExternalReference.push(newExternalReference.getAscLink())
@@ -1905,19 +1928,21 @@
 				let t = this;
 				this.wb.oApi.asc_updateExternalReferences(needUpdateExternalReference, function () {
 					t.wb.dependencyFormulas.unlockRecal(true);
-					t._foreachChanged(function(cell){
-						cell && cell._checkDirty();
-					});
-					t.changedCell = null;
-					t.changedRange = null;
+
+					//needUpdateCells
+					for (let i = 0; i < needUpdateCells.length; i++) {
+						t.wb.dependencyFormulas.addToChangedCell(needUpdateCells[i]);
+					}
+					t.wb.sortDependency();
+					window.startBuildImportRangeLinks = null;
+
+					
+					t.wb.drawWorksheet();
 				});
 			} else {
-				this._foreachChanged(function(cell){
-					cell && cell._checkDirty();
-				});
-				this.changedCell = null;
-				this.changedRange = null;
+				window.startBuildImportRangeLinks = null;
 			}
+
 		},
 		_foreachChanged: function(callback) {
 			var sheetId, changedSheet, ws, bbox;

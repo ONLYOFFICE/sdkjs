@@ -15004,7 +15004,7 @@ function RangeDataManagerElem(bbox, data)
 		}
 		//path also can changed
 		var path = oPortalData && oPortalData["path"];
-		if (path && this.Id !== path) {
+		if (path && this.Id !== path && !this.notUpdateId) {
 			this.setId(path);
 			isChanged = true;
 		}
