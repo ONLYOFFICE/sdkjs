@@ -5921,7 +5921,7 @@ function parserFormula( formula, parent, _ws ) {
 		var needAssemble = false;
 		var cFormulaList;
 
-		var startArrayFunc = false, counterArrayFunc = 0;
+		var startArrayFunc = false, counterArrayFunc = 0, isFoundImportFunctions;
 
 		if (this.isParsed) {
 			return this.isParsed;
@@ -6944,6 +6944,10 @@ function parserFormula( formula, parent, _ws ) {
 						startArrayFunc = true;
 					}
 
+					if (found_operator.name === "IMPORTRANGE") {
+						isFoundImportFunctions = true;
+					}
+
 					if (needCalcArgPos) {
 						if (activePos === undefined) {
 							needFuncLevel++;
@@ -7110,6 +7114,68 @@ function parserFormula( formula, parent, _ws ) {
 		if (0 !== this.outStack.length) {
 			if (needAssemble) {
 				this.Formula = this.assemble();
+			}
+			if (isFoundImportFunctions) {
+				//share external links
+				window.startBuildImportRangeLinks = true;
+				this.calculate();
+				window.startBuildImportRangeLinks = null;
+				if (window.importRangeLinks) {
+
+
+					for (let i in window.importRangeLinks) {
+
+
+						let externalLink = this.wb.getExternalLinkIndexByName(i);
+						if (externalLink === null) {
+							externalLink = i;
+							if (!parseResult.externalReferenesNeedAdd) {
+								parseResult.externalReferenesNeedAdd = [];
+							}
+							if (!parseResult.externalReferenesNeedAdd[externalLink]) {
+								parseResult.externalReferenesNeedAdd[externalLink] = [];
+							}
+
+							for (var j = 0; j < window.importRangeLinks[i].length; j++) {
+								parseResult.externalReferenesNeedAdd[externalLink].push(window.importRangeLinks[i][j].sheet);
+							}
+						}
+
+
+						/*for (let i in window.importRangeLinks) {
+							let newExternalReference = new AscCommonExcel.ExternalReference();
+							//newExternalReference.referenceData = referenceData;
+							newExternalReference.Id = i;
+
+							for (var j = 0; j < window.importRangeLinks[i].length; j++) {
+								let newSheet = window.importRangeLinks[i][j].sheet;
+								newExternalReference.addSheetName(newSheet, true);
+								newExternalReference.initWorksheetFromSheetDataSet(newSheet);
+
+								let ws = newExternalReference.worksheets[newSheet];
+
+								newExternalReference.initRows(ws.getRange2(window.importRangeLinks[i][j].range));
+							}
+
+							newExternalReference.notUpdateId = true;
+
+							newExternalReferences.push(newExternalReference);
+							needUpdateExternalReference.push(newExternalReference.getAscLink())
+						}*/
+
+
+						/*let newSheet = window.importRangeLinks[i][j].sheet;
+						newExternalReference.addSheetName(newSheet, true);
+						newExternalReference.initWorksheetFromSheetDataSet(newSheet);
+
+						let ws = newExternalReference.worksheets[newSheet];
+
+						newExternalReference.initRows(ws.getRange2(window.importRangeLinks[i][j].range));*/
+
+					}
+
+					window.importRangeLinks = null;
+				}
 			}
 			return this.isParsed = true;
 		} else {

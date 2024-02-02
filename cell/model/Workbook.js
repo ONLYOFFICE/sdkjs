@@ -157,6 +157,10 @@
 	window.importRangeLinks = null;
 	window.startBuildImportRangeLinks = null;
 
+	window.importRangeOnRecalc= false;
+	window.importRangeAsUpdateER = true;
+
+
 	var emptyStyleComponents = {table: [], conditional: []};
 	function getRangeType(oBBox){
 		if(null == oBBox)
@@ -1863,25 +1867,28 @@
 				if (cell && cell.isFormula()) {
 					cell.setIsDirty(true);
 
-					//check on import functions
-					for (let i = 0; i < cell.formulaParsed.outStack.length; i++) {
-						if (cell.formulaParsed.outStack[i].type === cElementType.func && cell.formulaParsed.outStack[i].name === "IMPORTRANGE") {
+					if (window.importRangeOnRecalc) {
+						//check on import functions
+						for (let i = 0; i < cell.formulaParsed.outStack.length; i++) {
+							if (cell.formulaParsed.outStack[i].type === cElementType.func && cell.formulaParsed.outStack[i].name === "IMPORTRANGE") {
 
-							let lengthBefore = window.importRangeLinks && window.importRangeLinks.length;
-							//need temporary calculate and check on external links
-							cell.formulaParsed.calculate();
-							let lengthAfter = window.importRangeLinks && window.importRangeLinks.length;
+								let lengthBefore = window.importRangeLinks && window.importRangeLinks.length;
+								//need temporary calculate and check on external links
+								cell.formulaParsed.calculate();
+								let lengthAfter = window.importRangeLinks && window.importRangeLinks.length;
 
-							//if (lengthAfter !== lengthAfter) {
+								//if (lengthAfter !== lengthAfter) {
 								needUpdateCells.push(cell);
-							//}
-							cell.setIsDirty(false);
+								//}
+								cell.setIsDirty(false);
 
-							//window.importRangeLinks = [];
-							//window.startBuildImportRangeLinks = null;
+								//window.importRangeLinks = [];
+								//window.startBuildImportRangeLinks = null;
 
+							}
 						}
 					}
+
 				}
 			});
 
@@ -1936,7 +1943,7 @@
 					t.wb.sortDependency();
 					window.startBuildImportRangeLinks = null;
 
-					
+
 					t.wb.drawWorksheet();
 				});
 			} else {

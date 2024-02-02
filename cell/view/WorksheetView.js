@@ -26481,6 +26481,7 @@
 		t.model._getCell(c.bbox.r1, c.bbox.c1, function (cell) {
 			if (cell && cell.isFormula()) {
 				let fP = cell.formulaParsed;
+				let needCalc = false;
 				if (fP) {
 					for (let i = 0; i < fP.outStack.length; i++) {
 						if ((AscCommonExcel.cElementType.cellsRange3D === fP.outStack[i].type || AscCommonExcel.cElementType.cell3D === fP.outStack[i].type) && fP.outStack[i].externalLink) {
@@ -26491,8 +26492,15 @@
 									eR.initRows(fP.outStack[i].getRange());
 								}
 							}
+						} else if (window.importRangeAsUpdateER && fP.outStack[i].type === AscCommonExcel.cElementType.func && fP.outStack[i].name === "IMPORTRANGE") {
+							needCalc = true;
 						}
 					}
+				}
+				if (needCalc) {
+					window.startBuildImportRangeLinks = true;
+					cell.formulaParsed.calculate();
+					window.startBuildImportRangeLinks = null;
 				}
 			}
 		});
