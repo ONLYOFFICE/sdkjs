@@ -959,7 +959,7 @@ var CPresentation = CPresentation || function(){};
                 if (oDrawingObjects.arrTrackObjects.length != 0 && this.mouseDownAnnot && this.mouseDownAnnot.IsInk() == true)
                     oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
 
-                if (this.mouseDownAnnot.IsFreeText())
+                if (this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText())
                     this.mouseDownAnnot.onPreMove(e);
 
                 oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
@@ -2464,7 +2464,7 @@ var CPresentation = CPresentation || function(){};
 		
 		this.defaultFontsLoaded = 0;
 		let _t = this;
-		this.fontLoader.LoadDocumentFonts2([{name : "Times New Roman"}],
+		this.fontLoader.LoadDocumentFonts2([{name : "Arial"}],
 			Asc.c_oAscAsyncActionType.Empty,
 			function()
 			{

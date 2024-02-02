@@ -782,6 +782,9 @@ function MoveAnnotationTrack(originalObject)
             Y = nPageHeight - this.originalObject._pagePos.h;
         }
 
+        if (this.originalObject.IsFreeText())
+            this.originalObject.onAfterMove();
+        
         let oDoc = this.viewer.getPDFDoc();
         oDoc.CreateNewHistoryPoint();
         this.originalObject.SetPosition(X, Y);

@@ -1795,7 +1795,10 @@ MoveInGroupState.prototype =
                     
 
                     // пересчитываем callout
-                    let nCalloutExitPos = this.group.GetCalloutExitPos();
+                    let nCalloutExitPos = this.group.GetCalloutExitPos([xMin, yMin, xMax, yMax].map(function(measure, idx) {
+                        return idx % 2 ? measure / nScaleY : measure / nScaleX;
+                    }));
+
                     switch (nCalloutExitPos) {
                         case AscPDF.CALLOUT_EXIT_POS.left: {
                             // точка выхода (x3, y3)
@@ -1811,24 +1814,24 @@ MoveInGroupState.prototype =
                             aNewCallout[2 * 2]      = (xMin + (xMax - xMin) / 2) / nScaleX;
                             aNewCallout[2 * 2 + 1]  = yMin / nScaleY;
 
-                            aNewCallout[2 * 2]      = (xMin + (xMax - xMin) / 2) / nScaleX;
-                            aNewCallout[2 * 2 + 1]  = yMin / nScaleY - this.group.defaultPerpLength;
+                            aNewCallout[2 * 1]      = (xMin + (xMax - xMin) / 2) / nScaleX;
+                            aNewCallout[2 * 1 + 1]  = yMin / nScaleY - this.group.defaultPerpLength;
                             break;
                         }
                         case AscPDF.CALLOUT_EXIT_POS.right: {
                             aNewCallout[2 * 2]      = xMax / nScaleX;
-                            aNewCallout[2 * 2 + 1]  = (yMin + (xMax - yMin) / 2) / nScaleY;
+                            aNewCallout[2 * 2 + 1]  = (yMin + (yMax - yMin) / 2) / nScaleY;
 
-                            aNewCallout[2 * 2]      = xMax / nScaleX + this.group.defaultPerpLength;
-                            aNewCallout[2 * 2 + 1]  = (yMin + (xMax - yMin) / 2) / nScaleY;
+                            aNewCallout[2 * 1]      = xMax / nScaleX + this.group.defaultPerpLength;
+                            aNewCallout[2 * 1 + 1]  = (yMin + (yMax - yMin) / 2) / nScaleY;
                             break;
                         }
                         case AscPDF.CALLOUT_EXIT_POS.bottom: {
                             aNewCallout[2 * 2]      = (xMin + (xMax - xMin) / 2) / nScaleX;
                             aNewCallout[2 * 2 + 1]  = yMax / nScaleY;
 
-                            aNewCallout[2 * 2]      = (xMin + (xMax - xMin) / 2) / nScaleX;
-                            aNewCallout[2 * 2 + 1]  = yMax / nScaleY + this.group.defaultPerpLength;
+                            aNewCallout[2 * 1]      = (xMin + (xMax - xMin) / 2) / nScaleX;
+                            aNewCallout[2 * 1 + 1]  = yMax / nScaleY + this.group.defaultPerpLength;
                             break;
                         }
                     }
