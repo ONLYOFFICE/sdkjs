@@ -9022,26 +9022,32 @@ Paragraph.prototype.GetSelectionBounds = function()
 				if (!BeginRect)
 				{
 					let beginInfo = drawSelectionState.getBeginInfo();
-					BeginRect = {
-						X    : beginInfo.x,
-						Y    : beginInfo.y,
-						W    : beginInfo.w,
-						H    : beginInfo.h,
-						Page : absPage
+					if (beginInfo)
+					{
+						BeginRect = {
+							X    : beginInfo.x,
+							Y    : beginInfo.y,
+							W    : beginInfo.w,
+							H    : beginInfo.h,
+							Page : absPage
+						}
 					}
 				}
 				
 				let endInfo = drawSelectionState.getEndInfo();
-				EndRect     = {
-					X    : endInfo.x,
-					Y    : endInfo.y,
-					W    : endInfo.w,
-					H    : endInfo.h,
-					Page : absPage
-				};
-				
-				_EndX = endInfo.x;
-				_EndY = endInfo.y;
+				if (endInfo)
+				{
+					EndRect = {
+						X    : endInfo.x,
+						Y    : endInfo.y,
+						W    : endInfo.w,
+						H    : endInfo.h,
+						Page : absPage
+					};
+					
+					_EndX = endInfo.x;
+					_EndY = endInfo.y;
+				}
 			}
 		}
 	}

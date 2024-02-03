@@ -107,16 +107,10 @@
 	};
 	ParagraphDrawSelectionState.prototype.getBeginInfo = function()
 	{
-		if (!this.beginInfo)
-			return {x : this.x, y : this.y, w : 0, h : this.h};
-		
 		return this.beginInfo;
 	};
 	ParagraphDrawSelectionState.prototype.getEndInfo = function()
 	{
-		if (!this.endInfo)
-			return {x : this.x, y : this.y, w : 0, h : this.h};
-		
 		return this.endInfo;
 	};
 	/**
