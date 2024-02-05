@@ -26494,13 +26494,28 @@
 							}
 						} else if (window.importRangeAsUpdateER && fP.outStack[i].type === AscCommonExcel.cElementType.func && fP.outStack[i].name === "IMPORTRANGE") {
 							needCalc = true;
+
+
+
+
 						}
 					}
 				}
 				if (needCalc) {
 					window.startBuildImportRangeLinks = true;
-					cell.formulaParsed.calculate();
+					fP.calculate();
 					window.startBuildImportRangeLinks = null;
+					if (window.importRangeLinks) {
+						for (let i in window.importRangeLinks) {
+							let eR = t.model.workbook.getExternalWorksheet(i);
+							if (eR) {
+								externalReferences.push(opt_get_only_ids ? eR.Id : eR.getAscLink());
+								if (initStructure) {
+									//eR.initRows(fP.outStack[i].getRange());
+								}
+							}
+						}
+					}
 				}
 			}
 		});
