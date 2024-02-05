@@ -7120,6 +7120,9 @@ function parserFormula( formula, parent, _ws ) {
 				window.startBuildImportRangeLinks = true;
 				this.calculate();
 				window.startBuildImportRangeLinks = null;
+
+				this.importFunctionsRangeLinks = window.importRangeLinks;
+
 				if (window.importRangeLinks) {
 
 
@@ -7973,6 +7976,22 @@ function parserFormula( formula, parent, _ws ) {
 					}
 				}
 			}
+		}
+
+		if (this.importFunctionsRangeLinks) {
+			for (let i in this.importFunctionsRangeLinks) {
+				let externalLink = this.wb.getExternalLinkByName(i);
+				for (let j in this.importFunctionsRangeLinks[i]) {
+					let _rangeInfo = this.importFunctionsRangeLinks[i][j];
+					let _ws = externalLink.worksheets[_rangeInfo.sheet];
+					if (_ws) {
+						this._buildDependenciesRef(_ws.getId(), AscCommonExcel.g_oRangeCache.getRangesFromSqRef(_rangeInfo.range)[0], null, true);
+					}
+
+				}
+
+			}
+
 		}
 	};
 	parserFormula.prototype.removeDependencies = function() {

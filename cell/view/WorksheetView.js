@@ -26492,7 +26492,7 @@
 									eR.initRows(fP.outStack[i].getRange());
 								}
 							}
-						} else if (window.importRangeAsUpdateER && fP.outStack[i].type === AscCommonExcel.cElementType.func && fP.outStack[i].name === "IMPORTRANGE") {
+						} else if (initStructure && window.importRangeAsUpdateER && fP.outStack[i].type === AscCommonExcel.cElementType.func && fP.outStack[i].name === "IMPORTRANGE") {
 							needCalc = true;
 
 
@@ -26502,19 +26502,25 @@
 					}
 				}
 				if (needCalc) {
-					window.startBuildImportRangeLinks = true;
+					/*window.startBuildImportRangeLinks = true;
 					fP.calculate();
-					window.startBuildImportRangeLinks = null;
-					if (window.importRangeLinks) {
-						for (let i in window.importRangeLinks) {
+					window.startBuildImportRangeLinks = null;*/
+					let importRangeLinks = fP.importFunctionsRangeLinks;
+					if (importRangeLinks) {
+						for (let i in importRangeLinks) {
 							let eR = t.model.workbook.getExternalWorksheet(i);
 							if (eR) {
 								externalReferences.push(opt_get_only_ids ? eR.Id : eR.getAscLink());
 								if (initStructure) {
-									//eR.initRows(fP.outStack[i].getRange());
+									for (let j in importRangeLinks[i]) {
+										let rangeOptions = importRangeLinks[i][j];
+										let _range = eR.worksheets[rangeOptions.sheet].getRange2(rangeOptions.range);
+										eR.initRows(_range);
+									}
 								}
 							}
 						}
+						//window.importRangeLinks = null;
 					}
 				}
 			}

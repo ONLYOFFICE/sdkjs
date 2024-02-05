@@ -157,7 +157,7 @@
 	window.importRangeLinks = null;
 	window.startBuildImportRangeLinks = null;
 
-	window.importRangeOnRecalc= false;
+	window.importRangeOnRecalc = false;
 	window.importRangeAsUpdateER = true;
 
 
@@ -1857,7 +1857,7 @@
 		_calculateDirty: function() {
 			var t = this;
 
-			if (window.startBuildImportRangeLinks === null) {
+			if (window.startBuildImportRangeLinks === null && window.importRangeOnRecalc) {
 				window.startBuildImportRangeLinks = true;
 			}
 

@@ -1246,18 +1246,17 @@ function (window, undefined) {
 			if (eR) {
 				let externalWs = eR.worksheets[is3DRef.sheet];
 				if (externalWs) {
-					let range = new cArea(is3DRef.range, externalWs);
+					let range = new cArea3D(is3DRef.range, externalWs, externalWs);
 
 
-					var sheetName = range && range.worksheet && range.worksheet.sName;
-					if (sheetName) {
-						var index = this.getSheetByName(sheetName);
+					if (is3DRef.sheet) {
+						/*var index = eR.getSheetByName(is3DRef.sheet);
 						if (index != null) {
-							var externalSheetDataSet = this.SheetDataSet[index];
+							var externalSheetDataSet = eR.SheetDataSet[index];
 							if (!externalSheetDataSet) {
 								externalSheetDataSet = new ExternalSheetDataSet();
-								externalSheetDataSet.SheetId = this.SheetNames.length - 1;
-								this.SheetDataSet.push(externalSheetDataSet);
+								externalSheetDataSet.SheetId = eR.SheetNames.length - 1;
+								eR.SheetDataSet.push(externalSheetDataSet);
 							}
 
 							for (var i = range.bbox.r1; i <= range.bbox.r2; i++) {
@@ -1266,10 +1265,10 @@ function (window, undefined) {
 									row.getCell(j, true);
 								}
 							}
-						}
+						}*/
 					}
 
-					return range.getFullArray();
+					return new cError(cErrorType.bad_reference)//range.getFullArray();
 				}
 
 			}
