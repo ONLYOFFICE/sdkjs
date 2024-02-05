@@ -156,6 +156,9 @@
 			&& AscFonts.HB_SCRIPT.HB_SCRIPT_INHERITED !== nScript
 			&& AscFonts.HB_SCRIPT.HB_SCRIPT_INHERITED !== this.Script)
 			this.FlushWord();
+		
+		if (this.GetDirection(this.Script) !== this.GetDirection(nScript))
+			this.FlushWord();
 
 		let nFontSlot = this.GetFontSlot(nUnicode);
 		this.private_CheckFont(nFontSlot);
