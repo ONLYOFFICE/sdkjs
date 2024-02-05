@@ -1246,29 +1246,35 @@ function (window, undefined) {
 			if (eR) {
 				let externalWs = eR.worksheets[is3DRef.sheet];
 				if (externalWs) {
-					let range = new cArea3D(is3DRef.range, externalWs, externalWs);
-
+					let bbox = AscCommonExcel.g_oRangeCache.getRangesFromSqRef(is3DRef.range)[0];
 
 					if (is3DRef.sheet) {
-						/*var index = eR.getSheetByName(is3DRef.sheet);
+						var index = eR.getSheetByName(is3DRef.sheet);
 						if (index != null) {
 							var externalSheetDataSet = eR.SheetDataSet[index];
-							if (!externalSheetDataSet) {
+							/*if (!externalSheetDataSet) {
 								externalSheetDataSet = new ExternalSheetDataSet();
 								externalSheetDataSet.SheetId = eR.SheetNames.length - 1;
 								eR.SheetDataSet.push(externalSheetDataSet);
-							}
+							}*/
 
-							for (var i = range.bbox.r1; i <= range.bbox.r2; i++) {
-								var row = externalSheetDataSet.getRow(i + 1, true);
-								for (var j = range.bbox.c1; j <= range.bbox.c2; j++) {
-									row.getCell(j, true);
+							var ret = new cArray();
+							for (var i = bbox.r1; i <= bbox.r2; i++) {
+								var row = externalSheetDataSet.getRow(i + 1);
+								if (!row) {
+									continue;
+								}
+								if (!ret.array[i - bbox.r1]) {
+									ret.addRow();
+								}
+								for (var j = bbox.c1; j <= bbox.c2; j++) {
+									let externalCell = row.getCell(j);
+									ret.addElement(new cString(externalCell.CellValue));
 								}
 							}
-						}*/
+						}
 					}
-
-					return new cError(cErrorType.bad_reference)//range.getFullArray();
+					return ret;
 				}
 
 			}

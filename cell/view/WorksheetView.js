@@ -18841,9 +18841,13 @@
 					newExternalReference.Id = i;
 
 					for (var j = 0; j < parseResult.externalReferenesNeedAdd[i].length; j++) {
-						var newSheet = parseResult.externalReferenesNeedAdd[i][j];
+						var oNewSheet = parseResult.externalReferenesNeedAdd[i][j];
+						let newSheet = oNewSheet.sheet;
 						newExternalReference.addSheetName(newSheet, true);
 						newExternalReference.initWorksheetFromSheetDataSet(newSheet);
+						if (oNewSheet.notUpdateId) {
+							newExternalReference.notUpdateId = true;
+						}
 					}
 
 

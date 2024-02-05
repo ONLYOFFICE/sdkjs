@@ -6771,7 +6771,7 @@ function parserFormula( formula, parent, _ws ) {
 							if (!parseResult.externalReferenesNeedAdd[externalLink]) {
 								parseResult.externalReferenesNeedAdd[externalLink] = [];
 							}
-							parseResult.externalReferenesNeedAdd[externalLink].push(_3DRefTmp[1]);
+							parseResult.externalReferenesNeedAdd[externalLink].push({sheet: _3DRefTmp[1]});
 						}
 					}
 
@@ -7140,10 +7140,11 @@ function parserFormula( formula, parent, _ws ) {
 							}
 
 							for (var j = 0; j < window.importRangeLinks[i].length; j++) {
-								parseResult.externalReferenesNeedAdd[externalLink].push(window.importRangeLinks[i][j].sheet);
+								parseResult.externalReferenesNeedAdd[externalLink].push({sheet: window.importRangeLinks[i][j].sheet, notUpdateId: true});
 							}
 						}
 
+						//!!!newExternalReference.notUpdateId = true;
 
 						/*for (let i in window.importRangeLinks) {
 							let newExternalReference = new AscCommonExcel.ExternalReference();
