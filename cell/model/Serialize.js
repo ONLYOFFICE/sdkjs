@@ -3785,73 +3785,41 @@
 		};
 		this.WriteFileSharing = function(fileSharing)
 		{
-			var oThis = this;
 			if (null != fileSharing.algorithmName) {
 				this.memory.WriteByte(c_oSerFileSharing.AlgorithmName);
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
 				this.memory.WriteByte(fileSharing.algorithmName);
-
-				/*this.bs.WriteItem(c_oSerFileSharing.AlgorithmName, function() {
-					oThis.memory.WriteByte(fileSharing.algorithmName);
-				});*/
 			}
 			if (null != fileSharing.spinCount) {
 				this.memory.WriteByte(c_oSerFileSharing.SpinCount);
 				this.memory.WriteByte(c_oSerPropLenType.Long);
 				this.memory.WriteLong(fileSharing.spinCount);
-
-				/*this.bs.WriteItem(c_oSerFileSharing.SpinCount, function() {
-					oThis.memory.WriteLong(fileSharing.spinCount);
-				});*/
 			}
 			if (null != fileSharing.hashValue) {
-				/*this.bs.WriteItem(c_oSerFileSharing.HashValue, function() {
-					oThis.memory.WriteString3(fileSharing.hashValue);
-				});*/
-
 				this.memory.WriteByte(c_oSerFileSharing.HashValue);
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
 				this.memory.WriteString2(fileSharing.hashValue);
 			}
 			if (null != fileSharing.saltValue) {
-				/*this.bs.WriteItem(c_oSerFileSharing.SaltValue, function() {
-					oThis.memory.WriteString3(fileSharing.saltValue);
-				});*/
-
 				this.memory.WriteByte(c_oSerFileSharing.SaltValue);
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
 				this.memory.WriteString2(fileSharing.saltValue);
 			}
 
 			if (null != fileSharing.password) {
-				/*this.bs.WriteItem(c_oSerFileSharing.Password, function() {
-					oThis.memory.WriteString3(fileSharing.password);
-				});*/
-
 				this.memory.WriteByte(c_oSerFileSharing.Password);
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
 				this.memory.WriteString2(fileSharing.password);
 			}
 			if (null != fileSharing.userName) {
-				/*this.bs.WriteItem(c_oSerFileSharing.UserName, function() {
-					oThis.memory.WriteString3(fileSharing.userName);
-				});*/
-
 				this.memory.WriteByte(c_oSerFileSharing.UserName);
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
 				this.memory.WriteString2(fileSharing.userName);
 			}
 			if (null != fileSharing.readOnly) {
-				/*this.bs.WriteItem(c_oSerFileSharing.ReadOnly, function() {
-					oThis.memory.WriteBool(fileSharing.readOnly);
-				});*/
 				this.memory.WriteByte(c_oSerFileSharing.ReadOnly);
 				this.memory.WriteByte(c_oSerPropLenType.Byte);
 				this.memory.WriteBool(fileSharing.readOnly);
-
-				/*this.memory.WriteByte(c_oSerWorksheetsTypes.Picture);
-				this.memory.WriteString2(ws.picture);*/
-
 			}
 		};
     }
@@ -7693,7 +7661,7 @@
 				var fileSharing = Asc.CFileSharing ? new Asc.CFileSharing(this.oWorkbook) : null;
 				if (fileSharing) {
 					this.oWorkbook.fileSharing = fileSharing;
-					res = this.bcr.Read1(length, function (t, l) {
+					res = this.bcr.Read2Spreadsheet(length, function (t, l) {
 						return oThis.ReadFileSharing(t, l, oThis.oWorkbook.fileSharing);
 					});
 				} else {
