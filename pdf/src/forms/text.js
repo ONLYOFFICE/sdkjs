@@ -623,7 +623,7 @@
 
             this.content.RecalculateCurPos();
             
-            if (this._doNotScroll == false && this.IsMultiline())
+            if (this.IsDoNotScroll() == false && this.IsMultiline())
                 this.UpdateScroll(true);
 
             this.SetDrawHighlight(false);

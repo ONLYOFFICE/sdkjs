@@ -1718,6 +1718,7 @@ MoveInGroupState.prototype =
             }
             else {
                 let oViewer = Asc.editor.getDocumentRenderer();
+                let oDoc    = oViewer.getPDFDoc();
                 let nPage   = this.group.GetPage();
                 let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
                 let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
@@ -1851,11 +1852,13 @@ MoveInGroupState.prototype =
                     ];
                 }
 
+                oDoc.CreateNewHistoryPoint();
                 this.group.SetCallout(aNewCallout);
                 this.group.SetRectangleDiff(aNewRD);
                 this.group.SetRect(aNewRect);
                 this.group.onAfterMove();
-                editor.getDocumentRenderer().DrawingObjects.drawingObjects.length = 0;
+                oViewer.DrawingObjects.drawingObjects.length = 0;
+                oDoc.TurnOffHistory();
             }
         }
         if (isPdf) {

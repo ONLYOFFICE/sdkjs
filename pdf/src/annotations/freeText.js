@@ -73,8 +73,9 @@
         this._defaultStyle  = undefined;
 
         this.recalcInfo.recalculateGeometry = true;
-        this.defaultPerpLength = 12; // длина выступающего перпендикуляра callout по умолчанию
-
+        this.isInTextBox                    = false; // флаг, что внутри текстбокса
+        this.defaultPerpLength              = 12; // длина выступающего перпендикуляра callout по умолчанию
+        
         // internal
         TurnOffHistory();
     }
@@ -148,6 +149,15 @@
     };
     CAnnotationFreeText.prototype.GetLineEnd = function() {
         return this._lineEnd;
+    };
+    CAnnotationFreeText.prototype.SetRectangleDiff = function(aDiff) {
+        let oDoc = this.GetDocument();
+        oDoc.History.Add(new CChangesPDFAnnotRD(this, this.GetRectangleDiff(), aDiff));
+
+        this._rectDiff = aDiff;
+        this.recalcGeometry();
+        this.SetWasChanged(true);
+        this.AddToRedraw();
     };
     /**
 	 * Выставлят настройки ширины линии, цвета и тд для внутренних фигур.
@@ -301,9 +311,13 @@
         return unionRectangles([aSourceRect, aStartLineRect, aEndLineRect]);
     };
     CAnnotationFreeText.prototype.SetCallout = function(aCallout) {
-        this.recalcGeometry();
+        let oDoc = this.GetDocument();
+        oDoc.History.Add(new CChangesFreeTextCallout(this, this.GetCallout(), aCallout));
         
         this._callout = aCallout;
+        this.recalcGeometry();
+        this.SetWasChanged(true);
+        this.AddToRedraw();
     };
     CAnnotationFreeText.prototype.GetCallout = function(bScaled) {
         if (bScaled != true || !this._callout)
@@ -622,20 +636,75 @@
     CAnnotationFreeText.prototype.onMouseDown = function(e) {
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
-        
-        let _t = this;
-        // селектим все фигуры в группе если до сих пор не заселекчены
-        oDrawingObjects.selection.groupSelection = this;
-        this.selectedObjects.length = 0;
-
-        this.spTree.forEach(function(sp) {
-            if (!(sp instanceof AscFormat.CConnectionShape)) {
-                sp.selectStartPage = 0;
-                _t.selectedObjects.push(sp);
-            }
-        });
+        let oDoc            = this.GetDocument();
+        let oDrDoc          = oDoc.GetDrawingDocument();
 
         this.selectStartPage = this.GetPage();
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
+        
+        if (this.selectedObjects.length != this.spTree.length - 1) {
+            let _t = this;
+            // селектим все фигуры в группе (кроме перпендикулярной линии) если до сих пор не заселекчены
+            oDrawingObjects.selection.groupSelection = this;
+            this.selectedObjects.length = 0;
+
+            this.spTree.forEach(function(sp) {
+                if (!(sp instanceof AscFormat.CConnectionShape)) {
+                    sp.selectStartPage = 0;
+                    _t.selectedObjects.push(sp);
+                }
+            });
+        }
+        else if (this.spTree[0].hitInTextRect(X, Y)) {
+            let oContent = this.spTree[0].getDocContent();
+            oContent.Selection_SetStart(X, Y, 0, e);
+            oContent.RecalculateCurPos();
+            oDrDoc.TargetStart();
+            oDrDoc.showTarget(true);
+            this.SetInTextBox(true);
+        }
+
+        this.selectStartPage = this.GetPage();
+    };
+    CAnnotationFreeText.prototype.SetInTextBox = function(isIn) {
+        this.isInTextBox = isIn;
+    };
+    CAnnotationFreeText.prototype.IsInTextBox = function() {
+        return this.isInTextBox;
+    };
+    CAnnotationFreeText.prototype.GetDocContent = function() {
+        return this.spTree[0].getDocContent();
+    };
+
+    CAnnotationFreeText.prototype.onMouseUp = function() {
+        this.GetDocument().ShowComment([this.GetId()]);
+
+        let oViewer         = editor.getDocumentRenderer();
+        let oDrawingObjects = oViewer.DrawingObjects;
+        let oDoc            = this.GetDocument();
+        let oDrDoc          = oDoc.GetDrawingDocument();
+
+        this.selectStartPage = this.GetPage();
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
+        
+        if (this.spTree[0].hitInTextRect(X, Y)) {
+            let oContent = this.spTree[0].getDocContent();
+            
+            if (global_mouseEvent.ClickCount == 2)
+            {
+                oContent.SelectAll();
+                if (oContent.IsSelectionEmpty() == false)
+                    oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
+                else
+                    oContent.RemoveSelection();
+
+                oViewer.onUpdateOverlay();
+            }
+        }
     };
     CAnnotationFreeText.prototype.onAfterMove = function() {
         this.onMouseDown();
@@ -772,12 +841,16 @@
         let yMin = aShapeRect[1];
 
         let oRectShape = createInnerShape(arrOfArrPoints[0], oParentAnnot.spTree[0], oParentAnnot);
-        oRectShape.createTextBody();
-        oRectShape.txBody.content.GetElement(0).GetElement(0).AddText('1234');
-        oRectShape.txBody.bodyPr.setInsets(0,0,0,0);
+        oRectShape.spPr.xfrm.setFlipH(false);
+        oRectShape.spPr.xfrm.setFlipV(false);
 
-        // oRectShape.textBoxContent.Recalculate_Page(0, true);
-        // прямоугольнику добавляем cnx точки
+        if (oRectShape.getDocContent() == null) {
+            oRectShape.createTextBody();
+
+            let oTextRun = oRectShape.txBody.content.GetElement(0).GetElement(0);
+            oTextRun.AddText(oParentAnnot.GetContents());
+            oRectShape.txBody.bodyPr.setInsets(0.5,0.5,0.5,0.5);
+        }
 
         oRectShape.setGroup(oParentAnnot);
         if (!oParentAnnot.spTree[0])
@@ -806,10 +879,8 @@
             oLineShape = createInnerShape(aArrowPts, oParentAnnot.spTree[1], oParentAnnot);
             oLineShape.spPr.xfrm.setFlipH(bFlipH);
             oLineShape.spPr.xfrm.setFlipV(bFlipV);
-            if (bFlipH || bFlipV) {
-                oLineShape.recalculateTransform();
-                oLineShape.updateTransformMatrix();
-            }
+            oLineShape.recalculateTransform();
+            oLineShape.updateTransformMatrix();
 
             if (!oParentAnnot.spTree[1])
                 oParentAnnot.addToSpTree(1, oLineShape);
