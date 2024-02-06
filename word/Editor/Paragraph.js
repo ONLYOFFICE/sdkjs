@@ -8497,6 +8497,8 @@ Paragraph.prototype.RemoveSelection = function()
 {
 	if (true === this.Selection.Use)
 	{
+		let selectionEndPos = this.getSelectionEndPos();
+		
 		var StartPos = this.Selection.StartPos;
 		var EndPos   = this.Selection.EndPos;
 
@@ -8513,6 +8515,8 @@ Paragraph.prototype.RemoveSelection = function()
 		{
 			this.Content[CurPos].RemoveSelection();
 		}
+		
+		this.Set_ParaContentPos(selectionEndPos, true, -1, -1);
 	}
 
 	this.Selection.Use      = false;
@@ -8901,28 +8905,33 @@ Paragraph.prototype.SetSelectionToBeginEnd = function(isSelectionStart, isElemen
 {
 	this.Selection_SetBegEnd(isSelectionStart, isElementStart);
 };
-Paragraph.prototype.SelectAll = function(Direction)
+/**
+ * @param direction {AscWord.Direction}
+ */
+Paragraph.prototype.SelectAll = function(direction)
 {
 	this.Selection.Use = true;
-
-	var StartPos = null, EndPos = null;
-	if (-1 === Direction)
+	
+	let startPos, endPos, curPos;
+	if (AscWord.Direction.BACKWARD === direction)
 	{
-		StartPos = this.Get_EndPos(true);
-		EndPos   = this.Get_StartPos();
+		startPos = this.Get_EndPos(true);
+		endPos   = this.Get_StartPos();
+		curPos   = endPos;
 	}
 	else
 	{
-		StartPos = this.Get_StartPos();
-		EndPos   = this.Get_EndPos(true);
+		startPos = this.Get_StartPos();
+		endPos   = this.Get_EndPos(true);
+		curPos   = this.Get_EndPos(false);
 	}
-
+	
 	this.Selection.StartManually  = false;
 	this.Selection.EndManually    = false;
 	this.Selection.StartBehindEnd = false;
 	
-	this.Set_ParaContentPos(EndPos, true, -1, -1);
-	this.Set_SelectionContentPos(StartPos, EndPos);
+	this.Set_ParaContentPos(curPos, true, -1, -1);
+	this.Set_SelectionContentPos(startPos, endPos);
 };
 Paragraph.prototype.Select_Math = function(ParaMath)
 {
