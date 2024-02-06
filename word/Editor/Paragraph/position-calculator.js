@@ -270,12 +270,12 @@
 	};
 	ParagraphPositionCalculator.prototype.getXY = function()
 	{
-		this.bidi.end();
+		this.finalize();
 		return {x : this.posInfo.x, y : this.posInfo.y};
 	};
 	ParagraphPositionCalculator.prototype.getTargetXY = function()
 	{
-		this.bidi.end();
+		this.finalize();
 		let run = this.posInfo.run;
 		if (!run)
 			return {x : this.posInfo.x, y : this.posInfo.y, h : 0, ascent : 0};
@@ -362,6 +362,17 @@
 	ParagraphPositionCalculator.prototype.finalize = function()
 	{
 		this.bidi.end();
+		
+		if (this.isNextCurrent)
+		{
+			this.posInfo.x   = this.x;
+			this.posInfo.y   = this.y;
+			this.posInfo.run = this.nextRun;
+			
+			this.isNextCurrent = false;
+			this.nextRun       = null;
+		}
+		
 		return !!this.posInfo.run;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
