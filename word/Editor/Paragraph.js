@@ -8497,8 +8497,6 @@ Paragraph.prototype.RemoveSelection = function()
 {
 	if (true === this.Selection.Use)
 	{
-		let selectionEndPos = this.getSelectionEndPos();
-		
 		var StartPos = this.Selection.StartPos;
 		var EndPos   = this.Selection.EndPos;
 
@@ -8515,8 +8513,6 @@ Paragraph.prototype.RemoveSelection = function()
 		{
 			this.Content[CurPos].RemoveSelection();
 		}
-		
-		this.Set_ParaContentPos(selectionEndPos, true, -1, -1);
 	}
 
 	this.Selection.Use      = false;
