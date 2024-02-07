@@ -452,6 +452,10 @@ function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pag
     let hit_in_inner_area = drawing.hitInInnerArea && drawing.hitInInnerArea(x, y);
     let hit_in_path = drawing.hitInPath && drawing.hitInPath(x, y);
     let hit_in_text_rect = drawing.hitInTextRect && drawing.hitInTextRect(x, y);
+    if (drawing.group && drawing.group.IsFreeText && drawing.group.IsFreeText() && drawing.group.IsInTextBox() == false) {
+        hit_in_text_rect = false;
+    }
+
     if(hit_in_inner_area || hit_in_path || hit_in_text_rect)
     {
         let oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, hit_in_text_rect, x, y, pageIndex);
@@ -552,6 +556,10 @@ function handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x,
     var hit_in_inner_area = shape.hitInInnerArea && shape.hitInInnerArea(x, y);
     var hit_in_path = shape.hitInPath && shape.hitInPath(x, y);
     var hit_in_text_rect = shape.hitInTextRect && shape.hitInTextRect(x, y);
+    if (shape.group.IsFreeText && shape.group.IsFreeText() && shape.group.IsInTextBox() == false) {
+        hit_in_text_rect = false;
+    }
+
     var ret;
     if(hit_in_inner_area || hit_in_path || hit_in_text_rect)
     {

@@ -1098,11 +1098,22 @@ CHistory.prototype =
 			this.Points[nIndex].Additional.FormFilling = oForm;
 		}
 	};
+	CHistory.prototype.GetLastPointSourceObjPdf = function() {
+		if (this.Index != -1) {
+			return this.Points[this.Index].Additional.Pdf;
+		}
+	};
+	CHistory.prototype.SetSourceObjToPointPdf = function(Obj) {
+		if (this.Index != -1) {
+			this.Points[this.Index].Additional.Pdf = Obj;
+		}
+	};
 	CHistory.prototype.GetLastPointFormFilling = function()
 	{
 		let additional = this.Index >= 0 ? this.Points[this.Index].Additional : null;
 		return (additional && additional.FormFilling ? additional.FormFilling : null);
 	};
+	
 	CHistory.prototype.ClearFormFillingInfo = function()
 	{
 		if (this.Points[this.Index] && this.Points[this.Index].Additional.FormFilling)
@@ -1136,8 +1147,9 @@ CHistory.prototype.ClearAdditional = function()
 		// TODO: На создании новой точки не удаляем информацию о заполнении формы
 		//       надо переназвать функции по-нормальному
 
-		let form = this.GetLastPointFormFilling();
-		let isCanUnion = this.Points[this.Index].Additional && this.Points[this.Index].Additional.CanUnion === false ? false : true;
+		let form			= this.GetLastPointFormFilling();
+		let pdfSourceObj	= this.GetLastPointSourceObjPdf();
+		let isCanUnion		= this.Points[this.Index].Additional && this.Points[this.Index].Additional.CanUnion === false ? false : true;
 
 		this.Points[this.Index].Additional = {};
 		if (isCanUnion == false)
@@ -1145,6 +1157,9 @@ CHistory.prototype.ClearAdditional = function()
 
 		if (form)
 			this.SetAdditionalFormFilling(form);
+
+		if (pdfSourceObj)
+			this.SetSourceObjToPointPdf(pdfSourceObj);
 	}
 
 	if(this.Api)

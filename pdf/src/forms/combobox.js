@@ -803,6 +803,7 @@
     CComboBoxField.prototype.SetCalcOrderIndex      = AscPDF.CTextField.prototype.SetCalcOrderIndex;
     CComboBoxField.prototype.UndoNotAppliedChanges  = AscPDF.CTextField.prototype.UndoNotAppliedChanges;
     CComboBoxField.prototype.UnionLastHistoryPoints = AscPDF.CTextField.prototype.UnionLastHistoryPoints;
+    CComboBoxField.prototype.SelectAllText          = AscPDF.CTextField.prototype.SelectAllText;
 
 	window["AscPDF"].CComboBoxField = CComboBoxField;
 })();

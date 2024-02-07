@@ -164,9 +164,21 @@
 			return;
 
 		let oDoc = this.DocumentRenderer.getPDFDoc();
-		var oActiveForm = oDoc.activeForm;
+		let oActiveForm = oDoc.activeForm;
+		let oActiveAnnot = oDoc.mouseDownAnnot;
 		if (oActiveForm && oActiveForm.content.IsSelectionUse()) {
 			let sText = oActiveForm.content.GetSelectedText(true);
+			if (!sText)
+				return;
+
+			if (AscCommon.c_oAscClipboardDataFormat.Text & _formats)
+				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Text, sText);
+
+			if (AscCommon.c_oAscClipboardDataFormat.Html & _formats)
+				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
+		}
+		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
+			let sText = oActiveAnnot.GetDocContent().GetSelectedText(true);
 			if (!sText)
 				return;
 
@@ -192,10 +204,20 @@
 			return;
 		let oDoc = this.DocumentRenderer.getPDFDoc();
 		let oField = oDoc.activeForm;
+		let oActiveAnnot = oDoc.mouseDownAnnot;
 		if (oField && oField.IsCanEditText()) {
 			if (oField.content.IsSelectionUse()) {
 				oField.Remove(-1);
-				this.DocumentRenderer._paint();
+				this.DocumentRenderer.onUpdateOverlay();
+				this.WordControl.m_oDrawingDocument.TargetStart();
+				this.WordControl.m_oDrawingDocument.showTarget(true);
+				oDoc.UpdateCopyCutState();
+			}
+		}
+		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
+			let oContent = oActiveAnnot.GetDocContent();
+			if (oContent.IsSelectionUse()) {
+				oActiveAnnot.Remove(-1);
 				this.DocumentRenderer.onUpdateOverlay();
 				this.WordControl.m_oDrawingDocument.TargetStart();
 				this.WordControl.m_oDrawingDocument.showTarget(true);
@@ -372,14 +394,18 @@
 		
 		let viewer	= this.DocumentRenderer;
 		let oDoc	= viewer.getPDFDoc();
-		if (!viewer
-			|| !oDoc.checkFieldFont(oDoc.activeForm)
-			|| !oDoc.activeForm
-			|| !oDoc.activeForm.IsCanEditText()) {
-			return false;
-		}
+		let oActiveForm		= oDoc.activeForm;
+		let oActiveAnnot	= oDoc.mouseDownAnnot;
 		
-		let isEntered = oDoc.activeForm.EnterText(text);
+		if (!oDoc || !viewer || (!oActiveForm && !oActiveAnnot))
+			return false;
+
+		let isEntered = false;
+		if (oActiveForm && oDoc.checkFieldFont(oActiveForm) && oActiveForm.IsCanEditText()) {
+			isEntered = oActiveForm.EnterText(text);
+		}
+		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox())
+			isEntered = oActiveAnnot.EnterText(text);
 		
 		if (isEntered) {
 			this.WordControl.m_oDrawingDocument.TargetStart();

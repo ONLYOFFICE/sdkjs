@@ -161,7 +161,7 @@
 		run.ClearContent();
 		
 		if (codePoints) {
-			if (this.ParentPDF.IsComb && this.ParentPDF.IsComb() && codePoints.length > this.ParentPDF.GetCharLimit()) {
+			if (this.ParentPDF && this.ParentPDF.IsComb && this.ParentPDF.IsComb() && codePoints.length > this.ParentPDF.GetCharLimit()) {
 				codePoints.length = this.ParentPDF.GetCharLimit();
 			}
 

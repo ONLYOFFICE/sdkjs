@@ -459,7 +459,8 @@
         this.spPr.xfrm.setOffY(aRect[1] * g_dKoef_pix_to_mm);
         this.recalculateTransform();
         this.updateTransformMatrix();
-        this.spTree.forEach(function(sp) {
+        this.spTree.forEach(function(sp, idx) {
+            idx == 0 && sp.recalculateContent();
             sp.recalculateTransform();
             sp.updateTransformMatrix();
         });
@@ -567,12 +568,22 @@
         let oDoc            = this.GetDocument();
         let oCurContents    = this.GetContents();
 
-        this._contents  = contents;
+        this._contents = contents;
         
-        if (oDoc.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
-            oDoc.History.Add(new CChangesPDFAnnotContents(this, oCurContents, contents));
+        if (oViewer.IsOpenAnnotsInProgress == false) {
+            if (oDoc.History.UndoRedoInProgress == false) {
+                oDoc.History.Add(new CChangesPDFAnnotContents(this, oCurContents, contents));
+            }
+    
+            let oContent    = this.GetDocContent();
+            let sText       = AscPDF.CTextBoxContent.prototype.getAllText.call(oContent);
+
+            if (sText != contents && this.IsInTextBox() == false) {
+                AscPDF.CTextBoxContent.prototype.replaceAllText.call(this.GetDocContent(), contents);
+                this.SetNeedRecalc(true);
+            }
         }
-        
+
         this.SetWasChanged(true);
     };
     CAnnotationFreeText.prototype.SetReplies = function(aReplies) {
@@ -633,56 +644,357 @@
 
         return oAscCommData;
     };
+    CAnnotationFreeText.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
+        if (this.IsHidden() == true)
+            return;
+
+        this.Recalculate();
+        if (this.IsInTextBox())
+            this.GetDocContent().RecalculateCurPos();
+
+        this.draw(oGraphicsWord);
+    };
     CAnnotationFreeText.prototype.onMouseDown = function(e) {
-        let oViewer         = editor.getDocumentRenderer();
-        let oDrawingObjects = oViewer.DrawingObjects;
-        let oDoc            = this.GetDocument();
-        let oDrDoc          = oDoc.GetDrawingDocument();
-
-        this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
+        let oViewer             = editor.getDocumentRenderer();
+        let oDrawingObjects     = oViewer.DrawingObjects;
+        this.selectStartPage    = this.GetPage();
         
-        if (this.selectedObjects.length != this.spTree.length - 1) {
-            let _t = this;
-            // селектим все фигуры в группе (кроме перпендикулярной линии) если до сих пор не заселекчены
-            oDrawingObjects.selection.groupSelection = this;
-            this.selectedObjects.length = 0;
+        if (this.IsInTextBox() == false) {
+            if (this.selectedObjects.length != this.spTree.length - 1) {
+                let _t = this;
+                // селектим все фигуры в группе (кроме перпендикулярной линии) если до сих пор не заселекчены
+                oDrawingObjects.selection.groupSelection = this;
+                this.selectedObjects.length = 0;
 
-            this.spTree.forEach(function(sp) {
-                if (!(sp instanceof AscFormat.CConnectionShape)) {
-                    sp.selectStartPage = 0;
-                    _t.selectedObjects.push(sp);
-                }
-            });
+                this.spTree.forEach(function(sp) {
+                    if (!(sp instanceof AscFormat.CConnectionShape)) {
+                        sp.selectStartPage = 0;
+                        _t.selectedObjects.push(sp);
+                    }
+                });
+            }
         }
-        else if (this.spTree[0].hitInTextRect(X, Y)) {
-            let oContent = this.spTree[0].getDocContent();
-            oContent.Selection_SetStart(X, Y, 0, e);
-            oContent.RecalculateCurPos();
-            oDrDoc.TargetStart();
-            oDrDoc.showTarget(true);
-            this.SetInTextBox(true);
+        else {
+            this.SelectionSetStart(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
         }
 
         this.selectStartPage = this.GetPage();
     };
+    CAnnotationFreeText.prototype.SelectionSetStart = function(x, y, e) {
+        let oDoc    = this.GetDocument();
+        let oDrDoc  = oDoc.GetDrawingDocument();
+
+        this.selectStartPage = this.GetPage();
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
+
+        let oTextBoxShape   = this.GetTextBoxShape();
+        let oContent        = this.GetDocContent();
+        
+        let oTransform  = oTextBoxShape.invertTransformText;
+        let xContent    = oTransform.TransformPointX(X, 0);
+        let yContent    = oTransform.TransformPointY(0, Y);
+
+        oContent.Selection_SetStart(xContent, yContent, 0, e);
+        oContent.RecalculateCurPos();
+        oDrDoc.TargetStart();
+        oDrDoc.showTarget(true);
+    };
+    CAnnotationFreeText.prototype.SelectionSetEnd = function(x, y, e) {
+        let oDoc    = this.GetDocument();
+        let oDrDoc  = oDoc.GetDrawingDocument();
+
+        this.selectStartPage = this.GetPage();
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
+
+        let oTextBoxShape   = this.GetTextBoxShape();
+        let oContent        = this.GetDocContent();
+        
+        let oTransform  = oTextBoxShape.invertTransformText;
+        let xContent    = oTransform.TransformPointX(X, 0);
+        let yContent    = oTransform.TransformPointY(0, Y);
+
+        oContent.Selection_SetEnd(xContent, yContent, 0, e);
+        
+        if (oContent.IsSelectionEmpty() == false) {
+            oDrDoc.TargetEnd();
+        }
+        else {
+            oDrDoc.TargetStart();
+            oDrDoc.showTarget(true);
+        }
+    };
+    CAnnotationFreeText.prototype.MoveCursorLeft = function(isShiftKey, isCtrlKey)
+    {
+        let oViewer = Asc.editor.getDocumentRenderer();
+        let oDoc    = this.GetDocument();
+        let oDrDoc  = oDoc.GetDrawingDocument();
+
+        let oContent = this.GetDocContent()
+        oContent.MoveCursorLeft(isShiftKey, isCtrlKey);
+        oContent.RecalculateCurPos();
+
+        oDrDoc.TargetStart();
+        oDrDoc.showTarget(true);
+        if (oContent.IsSelectionEmpty() == false)
+            oDrDoc.TargetEnd();
+
+        oViewer.onUpdateOverlay();
+    };
+    CAnnotationFreeText.prototype.MoveCursorRight = function(isShiftKey, isCtrlKey)
+    {
+        let oViewer = Asc.editor.getDocumentRenderer();
+        let oDoc    = this.GetDocument();
+        let oDrDoc  = oDoc.GetDrawingDocument();
+
+        let oContent = this.GetDocContent()
+        oContent.MoveCursorRight(isShiftKey, isCtrlKey);
+        oContent.RecalculateCurPos();
+
+        oDrDoc.TargetStart();
+        oDrDoc.showTarget(true);
+        if (oContent.IsSelectionEmpty() == false)
+            oDrDoc.TargetEnd();
+
+        oViewer.onUpdateOverlay();
+    };
+    CAnnotationFreeText.prototype.MoveCursorDown = function(isShiftKey, isCtrlKey) {
+        let oViewer = Asc.editor.getDocumentRenderer();
+        let oDoc    = this.GetDocument();
+        let oDrDoc  = oDoc.GetDrawingDocument();
+
+        let oContent = this.GetDocContent()
+        oContent.MoveCursorDown(isShiftKey, isCtrlKey);
+        oContent.RecalculateCurPos();
+
+        oDrDoc.TargetStart();
+        oDrDoc.showTarget(true);
+        if (oContent.IsSelectionEmpty() == false)
+            oDrDoc.TargetEnd();
+
+        oViewer.onUpdateOverlay();
+    };
+    CAnnotationFreeText.prototype.MoveCursorUp = function(isShiftKey, isCtrlKey) {
+        let oViewer = Asc.editor.getDocumentRenderer();
+        let oDoc    = this.GetDocument();
+        let oDrDoc  = oDoc.GetDrawingDocument();
+
+        let oContent = this.GetDocContent()
+        oContent.MoveCursorUp(isShiftKey, isCtrlKey);
+        oContent.RecalculateCurPos();
+
+        oDrDoc.TargetStart();
+        oDrDoc.showTarget(true);
+        if (oContent.IsSelectionEmpty() == false)
+            oDrDoc.TargetEnd();
+
+        oViewer.onUpdateOverlay();
+    };
     CAnnotationFreeText.prototype.SetInTextBox = function(isIn) {
+        let oDoc = this.GetDocument();
+        if (isIn)
+            oDoc.SetLocalHistory();
+        else
+            oDoc.SetGlobalHistory();
+
         this.isInTextBox = isIn;
     };
     CAnnotationFreeText.prototype.IsInTextBox = function() {
         return this.isInTextBox;
     };
     CAnnotationFreeText.prototype.GetDocContent = function() {
-        return this.spTree[0].getDocContent();
+        if (this.spTree[0])
+            return this.spTree[0].getDocContent();
+
+        return null;
+    };
+    CAnnotationFreeText.prototype.EnterText = function(aChars) {
+        let oDoc        = this.GetDocument();
+        let oContent    = this.GetDocContent();
+        let oParagraph  = oContent.GetElement(0);
+
+        oDoc.CreateNewHistoryPoint(this);
+		for (let index = 0; index < aChars.length; ++index) {
+			let oRun = AscPDF.codePointToRunElement(aChars[index]);
+			if (oRun)
+				oParagraph.AddToParagraph(oRun, true);
+		}
+
+        this.FitTextBox();
+        this.SetNeedRecalc(true);
+        oContent.RecalculateCurPos();
+        return true;
+    };
+    /**
+	 * Removes char in current position by direction.
+	 * @memberof CTextField
+	 * @typeofeditors ["PDF"]
+	 */
+    CAnnotationFreeText.prototype.Remove = function(nDirection, bWord) {
+        let oDoc = this.GetDocument();
+        oDoc.CreateNewHistoryPoint(this);
+
+        let oContent = this.GetDocContent();
+        oContent.Remove(nDirection, true, false, false, bWord);
+        oContent.RecalculateCurPos();
+        this.SetNeedRecalc(true);
+
+        if (AscCommon.History.Is_LastPointEmpty()) {
+            AscCommon.History.Remove_LastPoint();
+        }
+        else {
+            this.SetNeedRecalc(true);
+        }
+    };
+    CAnnotationFreeText.prototype.SelectAllText = function() {
+        let oViewer = editor.getDocumentRenderer();
+        let oDoc    = this.GetDocument();
+        let oDrDoc  = oDoc.GetDrawingDocument();
+
+        let oContent = this.GetDocContent();
+        oContent.SelectAll();
+        if (oContent.IsSelectionUse() && !oContent.IsSelectionEmpty())
+            oViewer.onUpdateOverlay();
+        else
+            oDrDoc.TargetEnd();
+    };
+    /**
+	 * Exit from this annot.
+	 * @memberof CTextField
+	 * @typeofeditors ["PDF"]
+	 */
+    CAnnotationFreeText.prototype.Blur = function() {
+        let oDoc        = this.GetDocument();
+        let oContent    = this.GetDocContent();
+        let oPara       = oContent.GetElement(0);
+
+        oPara.SetApplyToAll(true);
+		let sText = oPara.GetSelectedText(true, {NewLine: true});
+		oPara.SetApplyToAll(false);
+
+        this.SetInTextBox(false);
+
+        if (this.GetContents() != sText) {
+            oDoc.CreateNewHistoryPoint();
+            this.SetContents(sText);
+            oDoc.TurnOffHistory();
+        }
+        
+        oDoc.GetDrawingDocument().TargetEnd();
     };
 
-    CAnnotationFreeText.prototype.onMouseUp = function() {
+    CAnnotationFreeText.prototype.FitTextBox = function() {
+        let oDocContent     = this.GetDocContent();
+        let oTextBoxShape   = this.GetTextBoxShape();
+        let nPage           = this.GetPage();
+        oTextBoxShape.recalculateContent();                
+
+        let oContentBounds  = oDocContent.GetContentBounds(nPage);
+        let nContentH       = oContentBounds.Bottom - oContentBounds.Top;
+
+        if (nContentH > oTextBoxShape.extY) {
+            let oViewer = Asc.editor.getDocumentRenderer();
+            let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+            let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+            let aCurTextBoxRect = this.GetTextBoxRect();
+            
+            // Находим новый textbox rect 
+            let xMin = aCurTextBoxRect[0];
+            let yMin = aCurTextBoxRect[1];
+            let xMax = aCurTextBoxRect[2];
+            let yMax = aCurTextBoxRect[3] + (nContentH - oTextBoxShape.extY + 0.5) * g_dKoef_mm_to_pix / nScaleY;
+
+            let aNewTextBoxRect = [xMin, yMin, xMax, yMax];
+
+            // находит точку выхода callout для нового ректа textbox
+            let nCalloutExitPos = this.GetCalloutExitPos(aNewTextBoxRect);
+
+            // пересчитываем callout
+            let aNewCallout = this.GetCallout().slice();
+            switch (nCalloutExitPos) {
+                case AscPDF.CALLOUT_EXIT_POS.left: {
+                    // точка выхода (x3, y3)
+                    aNewCallout[2 * 2]      = xMin;
+                    aNewCallout[2 * 2 + 1]  = (yMin + (yMax - yMin) / 2);
+
+                    // точка начала стрелки
+                    aNewCallout[2 * 1]      = xMin - this.defaultPerpLength;
+                    aNewCallout[2 * 1 + 1]  = (yMin + (yMax - yMin) / 2);
+                    break;
+                }
+                case AscPDF.CALLOUT_EXIT_POS.top: {
+                    aNewCallout[2 * 2]      = (xMin + (xMax - xMin) / 2);
+                    aNewCallout[2 * 2 + 1]  = yMin;
+
+                    aNewCallout[2 * 1]      = (xMin + (xMax - xMin) / 2);
+                    aNewCallout[2 * 1 + 1]  = yMin - this.defaultPerpLength;
+                    break;
+                }
+                case AscPDF.CALLOUT_EXIT_POS.right: {
+                    aNewCallout[2 * 2]      = xMax;
+                    aNewCallout[2 * 2 + 1]  = (yMin + (yMax - yMin) / 2);
+
+                    aNewCallout[2 * 1]      = xMax + this.defaultPerpLength;
+                    aNewCallout[2 * 1 + 1]  = (yMin + (yMax - yMin) / 2);
+                    break;
+                }
+                case AscPDF.CALLOUT_EXIT_POS.bottom: {
+                    aNewCallout[2 * 2]      = (xMin + (xMax - xMin) / 2);
+                    aNewCallout[2 * 2 + 1]  = yMax;
+
+                    aNewCallout[2 * 1]      = (xMin + (xMax - xMin) / 2);
+                    aNewCallout[2 * 1 + 1]  = yMax + this.defaultPerpLength;
+                    break;
+                }
+            }
+
+            function findBoundingRectangle(points) {
+                let minX = points[0];
+                let minY = points[1];
+                let maxX = points[0];
+                let maxY = points[1];
+            
+                for (let i = 2; i < points.length; i += 2) {
+                    minX = Math.min(minX, points[i]);
+                    maxX = Math.max(maxX, points[i]);
+                    minY = Math.min(minY, points[i + 1]);
+                    maxY = Math.max(maxY, points[i + 1]);
+                }
+            
+                return [minX, minY, maxX, maxY];
+            }
+
+            // находим результирующий rect аннотации
+            aNewRect = AscPDF.unionRectangles([aNewTextBoxRect, findBoundingRectangle(aNewCallout)]).map(function(measure, idx) {
+                return idx % 2 ? measure * nScaleY : measure * nScaleX;
+            });
+            
+            // пересчитываем RD.
+            let aNewRD = [
+                xMin - aNewRect[0] / nScaleX,
+                yMin - aNewRect[1] / nScaleY,
+                aNewRect[2] / nScaleX - xMax,
+                aNewRect[3] / nScaleY - yMax
+            ];
+
+            this.SetCallout(aNewCallout);
+            this.SetRectangleDiff(aNewRD);
+            this.SetRect(aNewRect);
+        }
+    };
+
+    CAnnotationFreeText.prototype.GetTextBoxShape = function() {
+        return this.spTree[0];
+    };
+
+    CAnnotationFreeText.prototype.onMouseUp = function(e) {
         this.GetDocument().ShowComment([this.GetId()]);
 
         let oViewer         = editor.getDocumentRenderer();
-        let oDrawingObjects = oViewer.DrawingObjects;
         let oDoc            = this.GetDocument();
         let oDrDoc          = oDoc.GetDrawingDocument();
 
@@ -691,19 +1003,39 @@
         let X       = oPos.X;
         let Y       = oPos.Y;
         
-        if (this.spTree[0].hitInTextRect(X, Y)) {
-            let oContent = this.spTree[0].getDocContent();
-            
-            if (global_mouseEvent.ClickCount == 2)
-            {
-                oContent.SelectAll();
-                if (oContent.IsSelectionEmpty() == false)
-                    oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
-                else
-                    oContent.RemoveSelection();
+        let oTextBoxShape = this.GetTextBoxShape();
+        if (oTextBoxShape.hitInTextRect(X, Y)) {
+            let oContent = this.GetDocContent();
 
-                oViewer.onUpdateOverlay();
+            if (global_mouseEvent.ClickCount == 2) {
+                let oTransform  = oTextBoxShape.invertTransformText;
+                let xContent    = oTransform.TransformPointX(X, 0);
+                let yContent    = oTransform.TransformPointY(0, Y);
+
+                if (this.IsInTextBox() == false) {
+                    this.selectedObjects.length = 0;
+                    oContent.Selection_SetStart(xContent, yContent, 0, e);
+                    oContent.RemoveSelection();
+                    oContent.RecalculateCurPos();
+                    oDrDoc.TargetStart();
+                    oDrDoc.showTarget(true);
+                    this.SetInTextBox(true);
+                    this.FitTextBox();
+                }
+                else {
+                    oContent.SelectAll();
+                    if (oContent.IsSelectionEmpty() == false)
+                        oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
+                    else
+                        oContent.RemoveSelection();
+                }
             }
+            else {
+                if (oContent.IsSelectionEmpty())
+                    oContent.RemoveSelection();
+            }
+
+            oViewer.onUpdateOverlay();
         }
     };
     CAnnotationFreeText.prototype.onAfterMove = function() {
@@ -850,6 +1182,8 @@
             let oTextRun = oRectShape.txBody.content.GetElement(0).GetElement(0);
             oTextRun.AddText(oParentAnnot.GetContents());
             oRectShape.txBody.bodyPr.setInsets(0.5,0.5,0.5,0.5);
+            oRectShape.txBody.bodyPr.horzOverflow = AscFormat.nHOTClip;
+            oRectShape.txBody.bodyPr.vertOverflow = AscFormat.nVOTClip;
         }
 
         oRectShape.setGroup(oParentAnnot);

@@ -483,8 +483,15 @@
     CAnnotationBase.prototype.IsFreeText = function() {
         return false;
     };
-    CAnnotationBase.prototype.SetNeedRecalc = function(bRecalc) {
-        this._needRecalc = bRecalc;
+    CAnnotationBase.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
+        if (bRecalc == false) {
+            this._needRecalc = false;
+        }
+        else {
+            this._needRecalc = true;
+            if (bSkipAddToRedraw != true)
+                this.AddToRedraw();
+        }
     };
     CAnnotationBase.prototype.IsNeedRecalc = function() {
         return this._needRecalc;
@@ -828,8 +835,14 @@
     };
     CAnnotationBase.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
-        if (oViewer.pagesInfo.pages[this.GetPage()])
-            oViewer.pagesInfo.pages[this.GetPage()].needRedrawAnnots = true;
+        let _t      = this;
+        
+        function setRedrawPageOnRepaint() {
+            if (oViewer.pagesInfo.pages[_t.GetPage()])
+                oViewer.pagesInfo.pages[_t.GetPage()].needRedrawAnnots = true;
+        }
+
+        oViewer.paint(setRedrawPageOnRepaint);
     };
     /**
 	 * Gets rgb color object from internal color array.
