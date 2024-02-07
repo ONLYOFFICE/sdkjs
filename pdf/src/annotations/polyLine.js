@@ -175,7 +175,6 @@
         
         this.AddToRedraw();
         this.SetWasChanged(true);
-        this.SetDrawFromStream(false);
     };
     CAnnotationPolyLine.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();

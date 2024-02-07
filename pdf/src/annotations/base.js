@@ -243,6 +243,7 @@
 
         if (oViewer.IsOpenAnnotsInProgress == false) {
             this._wasChanged = isChanged;
+            this.SetDrawFromStream(!isChanged);
         }
     };
     CAnnotationBase.prototype.IsChanged = function() {
@@ -531,9 +532,6 @@
         this._origRect[3] = this._rect[3] / nScaleY;
 
         this.SetWasChanged(true);
-        if (oViewer.IsOpenAnnotsInProgress == false) {
-            this.SetDrawFromStream(false);
-        }
     };
     CAnnotationBase.prototype.IsUseInDocument = function() {
         if (this.GetDocument().annots.indexOf(this) == -1)
@@ -937,13 +935,8 @@
     };
 
     CAnnotationBase.prototype.SetStrokeColor = function(aColor) {
-        let oViewer = editor.getDocumentRenderer();
-
         this._strokeColor = aColor;
         this.SetWasChanged(true);
-        if (oViewer.IsOpenAnnotsInProgress == false) {
-            this.SetDrawFromStream(false);
-        }
     };
     CAnnotationBase.prototype.GetStrokeColor = function() {
         return this._strokeColor;

@@ -154,7 +154,6 @@
         this.recalcGeometry();
         this.AddToRedraw();
         this.SetWasChanged(true);
-        this.SetDrawFromStream(false);
     };
     CAnnotationCircle.prototype.SetRectangleDiff = function(aDiff) {
         let oDoc = this.GetDocument();
