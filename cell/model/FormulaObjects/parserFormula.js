@@ -7315,6 +7315,13 @@ function parserFormula( formula, parent, _ws ) {
 
 			this.ref = this.dynamicRange;
 			// this.dynamicRange = null;
+
+			// если это не первая ячейка, проверить первую ячейку на ошибку
+			if (this.isDynamicRangeErr2()) {
+				// this.dynamicRange = null;
+				// this.ref = null;
+			}
+
 		} 
 		else if (!this.value) {
 			let elem = elemArr[elemArr.length ? elemArr.length - 1 : 0];
@@ -7331,9 +7338,6 @@ function parserFormula( formula, parent, _ws ) {
 				}
 			}
 		} 
-		// else if (this.value && this.value.type === cElementType.error && this.value.errorType === cErrorType.cannot_be_spilled) {
-
-		// }
 
 		let isRangeCanFitIntoCells;
 		//TODO заглушка для парсинга множественного диапазона в _xlnm.Print_Area. Сюда попадаем только в одном случае - из функции findCell для отображения диапазона области печати
@@ -7343,13 +7347,18 @@ function parserFormula( formula, parent, _ws ) {
 			// check further dynamic range
 			isRangeCanFitIntoCells = this.checkDynamicRange();
 			if (!isRangeCanFitIntoCells) {
+				// todo если первая ячейка не пусти и массив не может поместиться, нужно очистить остальные ячейки динамического диапазона
+				// важно различать ситуации когда ячейка была отредактирована или удалена внутри диапазона
+				// при редактировании мы будем в любом случае очищать её, поэтому проверка на старую PF обязательна(если её нет, пропускаем ячейку иначе очищаем)
+
 				// todo add aca flag to use
 				// this.aca = true;
 				this.ca = true;
 				this.value = new cError(cErrorType.cannot_be_spilled);
+				this.vm = true;
 				this.ref = null;
 				// todo чтобы получить ошибку spill на второй итерации сохранения значения(_saveCellValueAfterEdit->Range.setValue), сохраняем dynamicRange, но при этом удаляем ref значение
-				this.dynamicRange = null;
+				// this.dynamicRange = null;
 			}
 
 			this._endCalculate();
@@ -7364,9 +7373,10 @@ function parserFormula( formula, parent, _ws ) {
 				// this.aca = true;
 				this.ca = true;
 				this.value = new cError(cErrorType.cannot_be_spilled);
+				this.vm = true;
 				this.ref = null;
 				// todo чтобы получить ошибку spill на второй итерации сохранения значения(_saveCellValueAfterEdit->Range.setValue), сохраняем dynamicRange, но при этом удаляем ref значение
-				this.dynamicRange = null;
+				// this.dynamicRange = null;
 			}
 			this.value.numFormat = numFormat;
 			//***array-formula***
@@ -8425,6 +8435,33 @@ function parserFormula( formula, parent, _ws ) {
 		return res
 	};
 
+	parserFormula.prototype.isDynamicRangeErr = function () {
+		if (!this.dynamicRange) {
+			return true
+		}
+
+		let i = this.dynamicRange.r1, j = this.dynamicRange.c1, res;
+		this.ws._getCell(i, j, function(cell) {
+			if (cell && cell.formulaParsed && cell.formulaParsed.getDynamicRef()) {
+				let val = cell.formulaParsed.value;
+				// TODO
+				if (cell.formulaParsed.vm) {
+					res = true
+				} else if (val && val.type === cElementType.error && val.errorType === cErrorType.cannot_be_spilled) {
+					res = true
+				}
+			}
+		});
+
+		return res
+	};
+	parserFormula.prototype.isDynamicRangeErr2 = function () {
+		if (!this.dynamicRange || this.vm /* && this.cm*/) {
+			return true
+		}
+
+		return false
+	};
 	function CalcRecursion() {
 		this.level = 0;
 		this.elemsPart = [];

@@ -1893,20 +1893,53 @@
 		},
 		_calculateDirty: function() {
 			const t = this;
-			// parserFormula does not exist after clearing the cell
-			// before deleting a value from a cell, check its PF for dynamicRange and if there is one, then leave the PF which can then be recalculated (should only work for deleting values)
-			this._foreachChangedDynamicRange(function(cell){
-				cell.setIsDirty(true);
-				// if first cell of dynamic range is empty, delete all PF from all cells in range
-				if (cell && cell.formulaParsed && cell.formulaParsed.isFirstDynamicCellEmpty()) {
-					cell.setValue("");
-				} else if (cell.formulaParsed && cell.formulaParsed.dynamicRange && !cell.formulaParsed.isFirstDynamicCellEmpty() && (cell.nCol === cell.formulaParsed.dynamicRange.c1 && cell.nRow === cell.formulaParsed.dynamicRange.r1)) {
-					// if the first cell is not empty, need to recalculate the entire range to possibly get a spill error
-				}
-			});
 			this._foreachChanged(function(cell){
 				if (cell && cell.isFormula()) {
 					cell.setIsDirty(true);
+				}
+			});
+
+			// before deleting a value from a cell, check its PF for dynamicRange and if there is one, then leave the PF which can then be recalculated (should only work for deleting values)
+			this._foreachChangedDynamicRange(function(cell, i, j, r1, c1){
+				if (cell) {
+					// todo пересчет только первой ячейки ?
+					// затем каждый раз проверка формулы на ошибку
+					// если да, то не пересчитываем текущую ячейку, а полностью очищаем её? 
+
+					let parsedF = cell.formulaParsed, dynamicRange;
+					if (parsedF) {
+						cell.setIsDirty(true);
+						
+						// caclulate cell, then check result
+						cell._checkDirty();
+
+						dynamicRange = parsedF.getDynamicRef();
+						// if first cell of dynamic range is empty, delete all PF from all cells in range
+						if (dynamicRange) {
+							// work only with non first cell
+							if (cell.nCol !== dynamicRange.c1 || cell.nRow !== dynamicRange.r1) {
+								if (parsedF.isDynamicRangeErr2()) {
+									// cell.setValue("");	!!!
+									// or
+									// this.cleanText();
+									// this.setFormulaInternal(null);
+								}
+							}
+						}
+
+					} else {
+						// if (cell.nRow === r1 && cell.nCol === c1) {
+							// first cell without formula
+						// }
+						// cell without formula
+						// check if it's empty cell
+						if (cell.isEmptyTextString()) {
+							// set PF? or just recalc?
+						} else {
+							// non empty cell without formula
+							// set flag cm and ca to the main cell of DAF
+						}
+					}
 				}
 			});
 			this._foreachChanged(function(cell){
@@ -13337,6 +13370,14 @@
 					wb.dependencyFormulas.addToBuildDependencyArray(newFP);
 				}
 			} else {
+				if ( oldFP && oldFP.dynamicRange && oldFP.parent && (oldFP.parent.nCol !== newFP.parent.nCol || oldFP.parent.nRow !== newFP.parent.nRow) ) {
+					// add to changedDynamicRange
+					// wb.dependencyFormulas.addToChangedRange2(oldFP.getWs().getId(), oldFP.getDynamicRef());
+					wb.dependencyFormulas.addToChangedDynamicRange(oldFP.getWs().getId(), oldFP.getDynamicRef());
+					// addToBuildDependencyArray ?
+				} else {
+					// wb.dependencyFormulas.addToBuildDependencyCell(this);
+				}
 				wb.dependencyFormulas.addToBuildDependencyCell(this);
 			}
 			if (this.ws.workbook.handlers) {
@@ -13537,6 +13578,10 @@
 		this.cleanText();
 		this._setValue2(array, undefined, xfTableAndCond);
 		// add check for dynamic ranges and adding to the dependency sheet
+		if (/*this.isEmptyTextString()*/oldFP && oldFP.getDynamicRef()) {
+			// check when deletion or when new text
+			this.ws.workbook.dependencyFormulas.addToChangedDynamicRange(oldFP.getWs().getId(), oldFP.getDynamicRef());
+		}
 		this.ws.workbook.dependencyFormulas.addToChangedCell(this);
 		this.ws.workbook.sortDependency();
 		var DataNew = null;
@@ -14148,9 +14193,20 @@
 			var DataNew = null;
 			if (History.Is_On())
 				DataOld = this.getValueData();
-			this.setFormulaInternal(null);
+			if (this.formulaParsed && this.formulaParsed.getDynamicRef()) {
+				this.ws.workbook.dependencyFormulas.addToChangedDynamicRange(this.formulaParsed.getWs().getId(), this.formulaParsed.getDynamicRef());
+				if (Val.value.getTextValue()) {
+					// non empty val, delete PF from cell
+					this.setFormulaInternal(null);
+				}
+			} else {
+				this.setFormulaInternal(null);
+				this.ws.workbook.dependencyFormulas.addToChangedCell(this);
+			}
+
+			// this.setFormulaInternal(null);
 			this._setValueData(Val.value);
-			this.ws.workbook.dependencyFormulas.addToChangedCell(this);
+			// this.ws.workbook.dependencyFormulas.addToChangedCell(this);
 			this.ws.workbook.sortDependency();
 			if (History.Is_On()) {
 				DataNew = this.getValueData();
@@ -14307,6 +14363,7 @@
 					this.setValueNumberInternal(res.value ? 1 : 0);
 					break;
 				case cElementType.error:
+					// todo если ошибка spill не в первой ячейке массива, очищать ли ячейку?
 					this.setTypeInternal(CellValueType.Error);
 					this.setValueTextInternal(res.getValue().toString());
 					break;

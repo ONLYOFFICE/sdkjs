@@ -14415,9 +14415,12 @@
 
 					}*/
 					if (this.intersectionFormulaArray(_checkRange)) {
-						t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
-						revertSelection();
-						return false;
+						// ???
+						if (!this.intersectionDynamicFormulaArray(_checkRange)) {
+							t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
+							revertSelection();
+							return false;
+						}
 					}
 					if (val.data && val.data.pivotTables && val.data.pivotTables.length > 0) {
 						var intersectionTableParts = this.model.autoFilters.getTablesIntersectionRange(_checkRange);
@@ -22178,7 +22181,7 @@
 		return res;
 	};
 
-	WorksheetView.prototype.intersectionFormulaArray = function(range, notCheckContains, checkOneCellArray) {
+	WorksheetView.prototype.intersectionFormulaArrayOld = function(range, notCheckContains, checkOneCellArray) {
 		//checkOneCellArray - ф/т можно добавить поверх формулы массива, которая содержит 1 ячейку, если более - то ошибка
 		//notCheckContains - ф/т нельзя добавить, если мы пересекаемся или содержим ф/т
 
@@ -22188,6 +22191,29 @@
 				var formulaParsed = cell.getFormulaParsed();
 				var arrayFormulaRef = formulaParsed.getArrayFormulaRef();
 				if(arrayFormulaRef && (!checkOneCellArray || (checkOneCellArray && !arrayFormulaRef.isOneCell()))) {
+					if(notCheckContains) {
+						res = true;
+					} else if(!notCheckContains && !range.containsRange(arrayFormulaRef)){
+						res = true;
+					}
+				}
+			}
+		});
+		return res;
+	};
+	WorksheetView.prototype.intersectionFormulaArray = function(range, notCheckContains, checkOneCellArray) {
+		//checkOneCellArray - ф/т можно добавить поверх формулы массива, которая содержит 1 ячейку, если более - то ошибка
+		//notCheckContains - ф/т нельзя добавить, если мы пересекаемся или содержим ф/т
+
+		let res = false;
+		this.model.getRange3(range.r1, range.c1, range.r2, range.c2)._foreachNoEmpty(function(cell) {
+			if(cell.isFormula()) {
+				let formulaParsed = cell.getFormulaParsed();
+				let arrayFormulaRef = formulaParsed.getArrayFormulaRef();
+				let dynamicRef = formulaParsed.getDynamicRef();
+				if (arrayFormulaRef && dynamicRef) {
+					res = false;
+				} else if(arrayFormulaRef && (!checkOneCellArray || (checkOneCellArray && !arrayFormulaRef.isOneCell()))) {
 					if(notCheckContains) {
 						res = true;
 					} else if(!notCheckContains && !range.containsRange(arrayFormulaRef)){
