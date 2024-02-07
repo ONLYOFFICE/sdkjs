@@ -111,7 +111,78 @@
             }
         }
     };
+    CAnnotationFreeText.prototype.GetArrowRect = function(aArrowPts) {
+        let aCallout = this.GetCallout();
+        if (!aCallout && !aArrowPts)
+            return undefined;
 
+        let nLineWidth = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+
+        let oLine = {
+            x1: aArrowPts ? aArrowPts[0] : aCallout[1 * 2],
+            y1: aArrowPts ? aArrowPts[1] : aCallout[1 * 2 + 1],
+            x2: aArrowPts ? aArrowPts[2] : aCallout[0 * 2],
+            y2: aArrowPts ? aArrowPts[3] : aCallout[0 * 2 + 1]
+        };
+
+        let oShapeEndSize = getFigureSize(this.GetLineEnd(), nLineWidth);
+        
+        function calculateBoundingRectangle(line, figure) {
+            const x1 = line.x1, y1 = line.y1, x2 = line.x2, y2 = line.y2;
+        
+            // Calculate the rotation angle in radians
+            const angle = Math.atan2(y2 - y1, x2 - x1);
+        
+            function rotatePoint(cx, cy, angle, px, py) {
+                let cos = Math.cos(angle),
+                    sin = Math.sin(angle),
+                    nx = (sin * (px - cx)) + (cos * (py - cy)) + cx,
+                    ny = (sin * (py - cy)) - (cos * (px - cx)) + cy;
+                return {x: nx, y: ny};
+            }
+        
+            function getRectangleCorners(cx, cy, width, height, angle) {
+                let halfWidth = width / 2;
+                let halfHeight = height / 2;
+        
+                // Corners of the rectangle before rotation
+                let corners = [
+                    {x: cx - halfWidth, y: cy - halfHeight}, // top left
+                    {x: cx + halfWidth, y: cy - halfHeight}, // top right
+                    {x: cx + halfWidth, y: cy + halfHeight}, // bottom right
+                    {x: cx - halfWidth, y: cy + halfHeight}  // bottom left
+                ];
+        
+                // Rotate each point
+                let rotatedCorners = [];
+                for (let i = 0; i < corners.length; i++) {
+                    rotatedCorners.push(rotatePoint(cx, cy, angle, corners[i].x, corners[i].y));
+                }
+                return rotatedCorners;
+            }
+        
+            let cornersFigure = getRectangleCorners(x2, y2, figure.width, figure.height, angle);
+        
+            // Find minimum and maximum coordinates
+            let minX = Math.min(x1, x2);
+            let maxX = Math.max(x1, x2);
+            let minY = Math.min(y1, y2);
+            let maxY = Math.max(y1, y2);
+        
+            for (let i = 0; i < cornersFigure.length; i++) {
+                let point = cornersFigure[i];
+                minX = Math.min(minX, point.x);
+                maxX = Math.max(maxX, point.x);
+                minY = Math.min(minY, point.y);
+                maxY = Math.max(maxY, point.y);
+            }
+        
+            // Return the coordinates of the rectangle
+            return [minX, minY, maxX, maxY];
+        }
+
+        return calculateBoundingRectangle(oLine, oShapeEndSize);
+    };
     CAnnotationFreeText.prototype.IsNeedDrawFromStream = function() {
         return false;
     };
@@ -202,113 +273,6 @@
         }
 
         this.recalculate();
-    };
-    CAnnotationFreeText.prototype.GetMinShapeRect = function() {
-        let oViewer     = editor.getDocumentRenderer();
-        let nLineWidth  = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
-        let aVertices     = this.GetVertices();
-        let nPage       = this.GetPage();
-
-        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
-        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
-
-        let shapeAtStart    = getFigureSize(this.GetLineStart(), nLineWidth);
-        let shapeAtEnd      = getFigureSize(this.GetLineEnd(), nLineWidth);
-
-        function calculateBoundingRectangle(line, figure1, figure2) {
-            let x1 = line.x1, y1 = line.y1, x2 = line.x2, y2 = line.y2;
-        
-            // Расчет угла поворота в радианах
-            let angle = Math.atan2(y2 - y1, x2 - x1);
-        
-            function rotatePoint(cx, cy, angle, px, py) {
-                let cos = Math.cos(angle),
-                    sin = Math.sin(angle),
-                    nx = (sin * (px - cx)) + (cos * (py - cy)) + cx,
-                    ny = (sin * (py - cy)) - (cos * (px - cx)) + cy;
-                return {x: nx, y: ny};
-            }
-            
-            function getRectangleCorners(cx, cy, width, height, angle) {
-                let halfWidth = width / 2;
-                let halfHeight = height / 2;
-            
-                let corners = [
-                    {x: cx - halfWidth, y: cy - halfHeight},
-                    {x: cx + halfWidth, y: cy - halfHeight},
-                    {x: cx + halfWidth, y: cy + halfHeight},
-                    {x: cx - halfWidth, y: cy + halfHeight}
-                ];
-            
-                let rotatedCorners = [];
-                for (let i = 0; i < corners.length; i++) {
-                    rotatedCorners.push(rotatePoint(cx, cy, angle, corners[i].x, corners[i].y));
-                }
-                return rotatedCorners;
-            }
-        
-            let cornersFigure1 = getRectangleCorners(x1, y1, figure1.width, figure1.height, angle);
-            let cornersFigure2 = getRectangleCorners(x2, y2, figure2.width, figure2.height, angle);
-        
-            let minX = Math.min(x1, x2);
-            let maxX = Math.max(x1, x2);
-            let minY = Math.min(y1, y2);
-            let maxY = Math.max(y1, y2);
-        
-            for (let i = 0; i < cornersFigure1.length; i++) {
-                let point = cornersFigure1[i];
-                minX = Math.min(minX, point.x);
-                maxX = Math.max(maxX, point.x);
-                minY = Math.min(minY, point.y);
-                maxY = Math.max(maxY, point.y);
-            }
-        
-            for (let j = 0; j < cornersFigure2.length; j++) {
-                let point = cornersFigure2[j];
-                minX = Math.min(minX, point.x);
-                maxX = Math.max(maxX, point.x);
-                minY = Math.min(minY, point.y);
-                maxY = Math.max(maxY, point.y);
-            }
-        
-            // Возвращаем координаты прямоугольника
-            return [minX * nScaleX, minY * nScaleY, maxX * nScaleX, maxY * nScaleY];
-        }
-
-        let oStartLine = {
-            x1: aVertices[0],
-            y1: aVertices[1],
-            x2: aVertices[2],
-            y2: aVertices[3]
-        }
-        let oEndLine = {
-            x1: aVertices[aVertices.length - 4],
-            y1: aVertices[aVertices.length - 3],
-            x2: aVertices[aVertices.length - 2],
-            y2: aVertices[aVertices.length - 1]
-        }
-
-        function findBoundingRectangle(points) {
-            let x_min = points[0], y_min = points[1];
-            let x_max = points[0], y_max = points[1];
-        
-            for (let i = 2; i < points.length; i += 2) {
-                x_min = Math.min(x_min, points[i]);
-                x_max = Math.max(x_max, points[i]);
-                y_min = Math.min(y_min, points[i + 1]);
-                y_max = Math.max(y_max, points[i + 1]);
-            }
-        
-            return [x_min * nScaleX, y_min * nScaleY, x_max * nScaleX, y_max * nScaleY];
-        }
-
-        // находим ректы исходных точек. Стартовой линии учитывая lineStart фигуру, и такую же для конца
-        // далее нахоим объединения всех прямоугольников для получения результирующего
-        let aSourceRect     = findBoundingRectangle(aVertices);
-        let aStartLineRect  = calculateBoundingRectangle(oStartLine, shapeAtStart, {width: 0, height: 0});
-        let aEndLineRect    = calculateBoundingRectangle(oEndLine, {width: 0, height: 0} , shapeAtEnd);
-
-        return unionRectangles([aSourceRect, aStartLineRect, aEndLineRect]);
     };
     CAnnotationFreeText.prototype.SetCallout = function(aCallout) {
         let oDoc = this.GetDocument();
@@ -698,6 +662,8 @@
 
         oContent.Selection_SetStart(xContent, yContent, 0, e);
         oContent.RecalculateCurPos();
+
+        oDrDoc.UpdateTargetFromPaint = true;
         oDrDoc.TargetStart();
         oDrDoc.showTarget(true);
     };
@@ -817,6 +783,11 @@
         let oParagraph  = oContent.GetElement(0);
 
         oDoc.CreateNewHistoryPoint(this);
+
+        // удаляем текст в селекте
+        if (oContent.IsSelectionUse())
+            oContent.Remove(-1);
+
 		for (let index = 0; index < aChars.length; ++index) {
 			let oRun = AscPDF.codePointToRunElement(aChars[index]);
 			if (oRun)
@@ -856,10 +827,12 @@
 
         let oContent = this.GetDocContent();
         oContent.SelectAll();
-        if (oContent.IsSelectionUse() && !oContent.IsSelectionEmpty())
-            oViewer.onUpdateOverlay();
-        else
+        if (oContent.IsSelectionUse() && !oContent.IsSelectionEmpty()) {
             oDrDoc.TargetEnd();
+            oViewer.onUpdateOverlay();
+        }
+        else
+            oContent.RemoveSelection();
     };
     /**
 	 * Exit from this annot.
@@ -968,8 +941,11 @@
                 return [minX, minY, maxX, maxY];
             }
 
+            // находим рект стрелки, учитывая окончание линии
+            let aArrowRect = this.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]])
+
             // находим результирующий rect аннотации
-            aNewRect = AscPDF.unionRectangles([aNewTextBoxRect, findBoundingRectangle(aNewCallout)]).map(function(measure, idx) {
+            aNewRect = AscPDF.unionRectangles([aArrowRect, aNewTextBoxRect, findBoundingRectangle(aNewCallout)]).map(function(measure, idx) {
                 return idx % 2 ? measure * nScaleY : measure * nScaleX;
             });
             
@@ -1017,6 +993,8 @@
                     oContent.Selection_SetStart(xContent, yContent, 0, e);
                     oContent.RemoveSelection();
                     oContent.RecalculateCurPos();
+
+                    oDrDoc.UpdateTargetFromPaint = true;
                     oDrDoc.TargetStart();
                     oDrDoc.showTarget(true);
                     this.SetInTextBox(true);
@@ -1178,12 +1156,11 @@
 
         if (oRectShape.getDocContent() == null) {
             oRectShape.createTextBody();
-
-            let oTextRun = oRectShape.txBody.content.GetElement(0).GetElement(0);
-            oTextRun.AddText(oParentAnnot.GetContents());
             oRectShape.txBody.bodyPr.setInsets(0.5,0.5,0.5,0.5);
             oRectShape.txBody.bodyPr.horzOverflow = AscFormat.nHOTClip;
             oRectShape.txBody.bodyPr.vertOverflow = AscFormat.nVOTClip;
+
+            AscPDF.CTextBoxContent.prototype.replaceAllText.call(oRectShape.getDocContent(), oParentAnnot.GetContents());
         }
 
         oRectShape.setGroup(oParentAnnot);

@@ -2287,7 +2287,6 @@ function CDrawingDocument()
 		if(window["NATIVE_EDITOR_ENJINE"])
 			return;
 
-		this.UpdateTargetFromPaint = true;
 		if (this.UpdateTargetFromPaint === false && this.m_lCurrentPage != -1)
 		{
 			this.isDisableScrollToTarget = this.m_oWordControl.m_oApi.isLockScrollToTarget;

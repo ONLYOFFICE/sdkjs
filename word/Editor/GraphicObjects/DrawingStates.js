@@ -1728,10 +1728,11 @@ MoveInGroupState.prototype =
                 let xMax;
                 let yMax;
 
-                let oFreeTextRect   = this.group.GetRect();
-                let aTextBoxRect    = this.group.GetTextBoxRect();
-                let aNewCallout     = this.group.GetCallout().slice();
-                let aCurRD          = this.group.GetRectangleDiff();
+                let oFreeText       = this.group;
+                let oFreeTextRect   = oFreeText.GetRect();
+                let aTextBoxRect    = oFreeText.GetTextBoxRect();
+                let aNewCallout     = oFreeText.GetCallout().slice();
+                let aCurRD          = oFreeText.GetRectangleDiff();
                 let aNewRD          = [];
                 let aNewRect        = [];
 
@@ -1765,7 +1766,10 @@ MoveInGroupState.prototype =
                         aNewCallout[1 * 2 + 1] = oXY.y * g_dKoef_mm_to_pix / nScaleY;
                     }
 
-                    aNewRect = AscPDF.unionRectangles([aTextBoxRect, findBoundingRectangle(aNewCallout)]).map(function(measure, idx) {
+                    // находим рект стрелки, учитывая окончание линии
+                    let aArrowRect = oFreeText.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]])
+
+                    aNewRect = AscPDF.unionRectangles([aArrowRect, aTextBoxRect, findBoundingRectangle(aNewCallout)]).map(function(measure, idx) {
                         return idx % 2 ? measure * nScaleY : measure * nScaleX;
                     });
 
@@ -1794,11 +1798,58 @@ MoveInGroupState.prototype =
                         yMax = (oTrack.transform.TransformPointY(0, 0) + oTrack.originalShape.extY) * g_dKoef_mm_to_pix;
                     }
                     
-
-                    // находит точку выхода callout для нового ректа textbox
-                    let nCalloutExitPos = this.group.GetCalloutExitPos([xMin, yMin, xMax, yMax].map(function(measure, idx) {
+                    // находим точку выхода callout для нового ректа textbox
+                    let nCalloutExitPos = oFreeText.GetCalloutExitPos([xMin, yMin, xMax, yMax].map(function(measure, idx) {
                         return idx % 2 ? measure / nScaleY : measure / nScaleX;
                     }));
+
+                    // значит стрелка внутри textbox, нужно скорректировать координаты textbox
+                    if (nCalloutExitPos == undefined) {
+                        let x = aNewCallout[0 * 2] * nScaleX;
+                        let y = aNewCallout[0 * 2 + 1] * nScaleY;
+
+                        // Проверяем, находится ли точка внутри прямоугольника
+                        if (x > xMin && x < xMax && y > yMin && y < yMax) {
+                            // Находим центр прямоугольника
+                            const centerX   = (xMin + xMax) / 2;
+                            const centerY   = (yMin + yMax) / 2;
+                            const nWidth    = (xMax - xMin) / 2;
+                            const nHeight   = (yMax - yMin) / 2;
+
+                            // Определяем направление сдвига прямоугольника
+                            const deltaX = x - centerX;
+                            const deltaY = y - centerY;
+                    
+                            // Сдвигаем прямоугольник в направлении, противоположном положению точки
+                            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                                // Сдвигаем по горизонтали
+                                if (deltaX < 0) {
+                                    // Точка справа от центра, сдвигаем прямоугольник влево
+                                    xMin += Math.max(nWidth + 1, 2 * oFreeText.defaultPerpLength);
+                                    xMax += Math.max(nWidth + 1, 2 * oFreeText.defaultPerpLength);
+                                } else {
+                                    // Точка слева от центра, сдвигаем прямоугольник вправо
+                                    xMin -= Math.max(nWidth + 1, 2 * oFreeText.defaultPerpLength);
+                                    xMax -= Math.max(nWidth + 1, 2 * oFreeText.defaultPerpLength);
+                                }
+                            } else {
+                                // Сдвигаем по вертикали
+                                if (deltaY < 0) {
+                                    // Точка выше центра, сдвигаем прямоугольник вниз
+                                    yMin += Math.max(nHeight + 1, 2 * oFreeText.defaultPerpLength);
+                                    yMax += Math.max(nHeight + 1, 2 * oFreeText.defaultPerpLength);
+                                } else {
+                                    // Точка ниже центра, сдвигаем прямоугольник вверх
+                                    yMin -= Math.max(nHeight + 1, 2 * oFreeText.defaultPerpLength);
+                                    yMax -= Math.max(nHeight + 1, 2 * oFreeText.defaultPerpLength);
+                                }
+                            }
+                        }
+
+                        nCalloutExitPos = oFreeText.GetCalloutExitPos([xMin, yMin, xMax, yMax].map(function(measure, idx) {
+                            return idx % 2 ? measure / nScaleY : measure / nScaleX;
+                        }));
+                    }
 
                     // пересчитываем callout
                     switch (nCalloutExitPos) {
@@ -1808,7 +1859,7 @@ MoveInGroupState.prototype =
                             aNewCallout[2 * 2 + 1]  = (yMin + (yMax - yMin) / 2) / nScaleY;
 
                             // точка начала стрелки
-                            aNewCallout[2 * 1]      = xMin / nScaleX - this.group.defaultPerpLength;
+                            aNewCallout[2 * 1]      = xMin / nScaleX - oFreeText.defaultPerpLength;
                             aNewCallout[2 * 1 + 1]  = (yMin + (yMax - yMin) / 2) / nScaleY;
                             break;
                         }
@@ -1817,14 +1868,14 @@ MoveInGroupState.prototype =
                             aNewCallout[2 * 2 + 1]  = yMin / nScaleY;
 
                             aNewCallout[2 * 1]      = (xMin + (xMax - xMin) / 2) / nScaleX;
-                            aNewCallout[2 * 1 + 1]  = yMin / nScaleY - this.group.defaultPerpLength;
+                            aNewCallout[2 * 1 + 1]  = yMin / nScaleY - oFreeText.defaultPerpLength;
                             break;
                         }
                         case AscPDF.CALLOUT_EXIT_POS.right: {
                             aNewCallout[2 * 2]      = xMax / nScaleX;
                             aNewCallout[2 * 2 + 1]  = (yMin + (yMax - yMin) / 2) / nScaleY;
 
-                            aNewCallout[2 * 1]      = xMax / nScaleX + this.group.defaultPerpLength;
+                            aNewCallout[2 * 1]      = xMax / nScaleX + oFreeText.defaultPerpLength;
                             aNewCallout[2 * 1 + 1]  = (yMin + (yMax - yMin) / 2) / nScaleY;
                             break;
                         }
@@ -1833,14 +1884,18 @@ MoveInGroupState.prototype =
                             aNewCallout[2 * 2 + 1]  = yMax / nScaleY;
 
                             aNewCallout[2 * 1]      = (xMin + (xMax - xMin) / 2) / nScaleX;
-                            aNewCallout[2 * 1 + 1]  = yMax / nScaleY + this.group.defaultPerpLength;
+                            aNewCallout[2 * 1 + 1]  = yMax / nScaleY + oFreeText.defaultPerpLength;
                             break;
                         }
                     }
 
                     let aNewTextBoxRect = [xMin / nScaleX, yMin / nScaleY, xMax / nScaleX, yMax / nScaleY];
+
+                    // находим рект стрелки, учитывая окончание линии
+                    let aArrowRect = oFreeText.GetArrowRect([aNewCallout[2], aNewCallout[3], aNewCallout[0], aNewCallout[1]]);
+
                     // находим результирующий rect аннотации
-                    aNewRect = AscPDF.unionRectangles([aNewTextBoxRect, findBoundingRectangle(aNewCallout)]).map(function(measure, idx) {
+                    aNewRect = AscPDF.unionRectangles([aArrowRect, aNewTextBoxRect, findBoundingRectangle(aNewCallout)]).map(function(measure, idx) {
                         return idx % 2 ? measure * nScaleY : measure * nScaleX;
                     });
 
@@ -1854,10 +1909,10 @@ MoveInGroupState.prototype =
                 }
 
                 oDoc.CreateNewHistoryPoint();
-                this.group.SetCallout(aNewCallout);
-                this.group.SetRectangleDiff(aNewRD);
-                this.group.SetRect(aNewRect);
-                this.group.onAfterMove();
+                oFreeText.SetCallout(aNewCallout);
+                oFreeText.SetRectangleDiff(aNewRD);
+                oFreeText.SetRect(aNewRect);
+                oFreeText.onAfterMove();
                 oViewer.DrawingObjects.drawingObjects.length = 0;
                 oDoc.TurnOffHistory();
             }

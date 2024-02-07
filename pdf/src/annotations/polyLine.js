@@ -332,7 +332,7 @@
     CAnnotationPolyLine.prototype.GetMinShapeRect = function() {
         let oViewer     = editor.getDocumentRenderer();
         let nLineWidth  = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
-        let aVertices     = this.GetVertices();
+        let aVertices   = this.GetVertices();
         let nPage       = this.GetPage();
 
         let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
