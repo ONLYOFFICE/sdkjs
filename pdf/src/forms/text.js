@@ -906,6 +906,20 @@
 	CTextField.prototype.canBeginCompositeInput = function() {
 		return true;
 	};
+    CTextField.prototype.SelectAllText = function() {
+        let oViewer = editor.getDocumentRenderer();
+        let oDoc    = this.GetDocument();
+        let oDrDoc  = oDoc.GetDrawingDocument();
+
+        this.content.SelectAll();
+        if (this.content.IsSelectionUse() && !this.content.IsSelectionEmpty()) {
+            oDrDoc.TargetEnd();
+        }
+        else
+            this.content.RemoveSelection();
+            
+        oViewer.onUpdateOverlay();
+    };
 	CTextField.prototype.beforeCompositeInput = function() {
 		this.DoKeystrokeAction();
 		this.removeBeforePaste();

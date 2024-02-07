@@ -128,7 +128,9 @@ var CPresentation = CPresentation || function(){};
         // internal
         this._id = AscCommon.g_oIdCounter.Get_NewId();
 
-        this.History    = AscCommon.History;
+        this.History        = AscCommon.History;
+        this.LocalHistory   = new AscCommon.CHistory();
+
 		this.Spelling   = new AscCommonWord.CDocumentSpellChecker();
         this.Viewer     = viewer;
 
@@ -195,6 +197,13 @@ var CPresentation = CPresentation || function(){};
                 oParents[nParentIdx].AddKid(child);
             });
         }
+    };
+    CPDFDoc.prototype.SetLocalHistory = function() {
+        AscCommon.History = this.LocalHistory;
+    };
+    CPDFDoc.prototype.SetGlobalHistory = function() {
+        this.LocalHistory.Clear();
+        AscCommon.History = this.History;
     };
     CPDFDoc.prototype.OnAfterFillFormsParents = function() {
         let bInberitValue = false;
@@ -876,6 +885,10 @@ var CPresentation = CPresentation || function(){};
                 }
             }
             else {
+                if (this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText() && oMouseDownAnnot != this.mouseDownAnnot) {
+                    this.mouseDownAnnot.Blur();
+                }
+                
                 if (oMouseDownField) {
                     this.mouseDownField = oMouseDownField;
                     this.mouseDownAnnot = null;
@@ -949,25 +962,18 @@ var CPresentation = CPresentation || function(){};
                     return;
                 }
             }
-            else if (oAPI.isDrawInkMode() || this.mouseDownAnnot) {
+            else if (oAPI.isDrawInkMode()) {
                 e.IsLocked = true;
                 oViewer.overlay.ClearAll = true;
                 oViewer.overlay.max_x = 0;
                 oViewer.overlay.max_y = 0;
                 
-
-                if (oDrawingObjects.arrTrackObjects.length != 0 && this.mouseDownAnnot && this.mouseDownAnnot.IsInk() == true)
-                    oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
-
-                if (this.mouseDownAnnot && this.mouseDownAnnot.IsFreeText())
-                    this.mouseDownAnnot.onPreMove(e);
-
                 oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
             }
             else if (this.activeForm)
             {
                 // селект текста внутри формы
-                if (this.activeForm.GetType() == AscPDF.FIELD_TYPES.text || this.activeForm.GetType() == AscPDF.FIELD_TYPES.combobox)
+                if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(this.activeForm.GetType()))
                 {
                     this.activeForm.SelectionSetEnd(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
                     if (this.activeForm.content.IsSelectionEmpty() == false) {
@@ -992,6 +998,20 @@ var CPresentation = CPresentation || function(){};
                         this.activeForm.DrawPressed();
                     }
                 }
+            }
+            else if (this.mouseDownAnnot) {
+                if (this.mouseDownAnnot.IsFreeText()) {
+                    if (this.mouseDownAnnot.IsInTextBox()) {
+                        this.mouseDownAnnot.SelectionSetEnd(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+                        oViewer.onUpdateOverlay();
+                    }
+                    else {
+                        this.mouseDownAnnot.onPreMove(e)
+                    }
+                    
+                }
+
+                oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
             }
             else if (oViewer.mouseDownLinkObject)
             {
@@ -1141,7 +1161,7 @@ var CPresentation = CPresentation || function(){};
                 oViewer.onUpdateOverlay();
             }
             if (this.mouseDownAnnot == oMouseUpAnnot)
-                this.mouseDownAnnot.onMouseUp();
+                this.mouseDownAnnot.onMouseUp(e);
         }
         else if (!oViewer.isMouseMoveBetweenDownUp)
         {
@@ -1209,6 +1229,7 @@ var CPresentation = CPresentation || function(){};
             
             AscCommon.History.Undo();
             let oParentForm = oCurPoint.Additional.FormFilling;
+            let oSourceObj = oCurPoint.Additional.Pdf;
             if (oParentForm) {
                 // если форма активна, то изменения (undo) применяются только для неё
                 // иначе для всех с таким именем (для checkbox и radiobutton всегда применяем для всех)
@@ -1244,12 +1265,12 @@ var CPresentation = CPresentation || function(){};
                 oParentForm.SetNeedRecalc(true);
                 oParentForm.AddToRedraw();
 
-                // Перерисуем страницу, на которой произошли изменения
-                // oViewer.paint();
                 oViewer.onUpdateOverlay();
             }
+            else if (oSourceObj) {
+                oSourceObj.SetNeedRecalc(true);
+            }
             
-            oViewer.paint();
             oViewer.onUpdateOverlay();
             oViewer.isOnUndoRedo = false;
         }
@@ -1268,6 +1289,7 @@ var CPresentation = CPresentation || function(){};
             let oCurPoint = AscCommon.History.Points[nCurPoindIdx];
 
             let oParentForm = oCurPoint.Additional.FormFilling;
+            let oSourceObj = oCurPoint.Additional.Pdf;
             if (oParentForm) {
                 // если мы в форме, то изменения (undo) применяются только для неё
                 // иначе для всех с таким именем
@@ -1299,9 +1321,10 @@ var CPresentation = CPresentation || function(){};
                 oParentForm.SetNeedRecalc(true);
                 oParentForm.AddToRedraw()
                 
-                // Перерисуем страницу, на которой произошли изменения
-                // oViewer.paint();
                 oViewer.onUpdateOverlay();
+            }
+            else if (oSourceObj) {
+                oSourceObj.SetNeedRecalc(true);
             }
 
             oViewer.paint();
@@ -1310,8 +1333,8 @@ var CPresentation = CPresentation || function(){};
         }
     };
     CPDFDoc.prototype.UpdateUndoRedo = function() {
-		editor.sync_CanUndoCallback(this.History.Can_Undo());
-		editor.sync_CanRedoCallback(this.History.Can_Redo());
+		editor.sync_CanUndoCallback(AscCommon.History.Can_Undo());
+		editor.sync_CanRedoCallback(AscCommon.History.Can_Redo());
     };
     CPDFDoc.prototype.UpdateInterface = function() {
         this.UpdateUndoRedo();
@@ -1851,10 +1874,14 @@ var CPresentation = CPresentation || function(){};
         }
     };
 
-    CPDFDoc.prototype.CreateNewHistoryPoint = function() {
+    CPDFDoc.prototype.CreateNewHistoryPoint = function(oSourceObj) {
         if (AscCommon.History.IsOn() == false)
             AscCommon.History.TurnOn();
         AscCommon.History.Create_NewPoint();
+
+        if (oSourceObj) {
+            AscCommon.History.SetSourceObjToPointPdf(oSourceObj);
+        }
     };
     CPDFDoc.prototype.EditComment = function(Id, CommentData) {
         let oAnnotToEdit = this.annots.find(function(annot) {
@@ -1924,7 +1951,9 @@ var CPresentation = CPresentation || function(){};
         editor.sync_CanCopyCutCallback(oCanCopyCut.copy, oCanCopyCut.cut);
     };
     CPDFDoc.prototype.CanCopyCut = function() {
-        let oViewer = editor.getDocumentRenderer();
+        let oViewer         = editor.getDocumentRenderer();
+        let oActiveForm     = this.activeForm;
+        let oActiveAnnot    = this.mouseDownAnnot;
 
         let isCanCopy = false;
         let isCanCut = false;
@@ -1936,11 +1965,15 @@ var CPresentation = CPresentation || function(){};
             }
         
 
-        if (this.activeForm && this.activeForm.content && this.activeForm.content.IsSelectionUse() && 
-            this.activeForm.content.IsSelectionEmpty() == false) {
+        if (oActiveForm && oActiveForm.content && oActiveForm.content.IsSelectionUse() && 
+            oActiveForm.content.IsSelectionEmpty() == false) {
                 isCanCopy = true;
                 isCanCut = true;
-            }
+        }
+        else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox() && oActiveAnnot.GetDocContent().IsSelectionUse()) {
+            isCanCopy = true;
+            isCanCut = true;
+        }
 
         return {
             copy: isCanCopy,

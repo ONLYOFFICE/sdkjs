@@ -4805,20 +4805,27 @@ function CDrawingDocument()
 		}
 		else
 		{
-			let oViewer = this.m_oDocumentRenderer;
-			let oPdfDoc = oViewer.getPDFDoc();
-			let nPage	= oPdfDoc.activeForm.GetPage();
+			let oViewer		= this.m_oDocumentRenderer;
+			let oPdfDoc		= oViewer.getPDFDoc();
+			let oTargetObj	= oPdfDoc.activeForm || oPdfDoc.mouseDownAnnot;
+			let nPage		= oTargetObj.GetPage();
 
-			page = {
-				width_mm: this.m_oDocumentRenderer.drawingPages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm,
-				height_mm: this.m_oDocumentRenderer.drawingPages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm
+			if (oPdfDoc.activeForm) {
+				page = {
+					width_mm: this.m_oDocumentRenderer.drawingPages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm,
+					height_mm: this.m_oDocumentRenderer.drawingPages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm
+				}
+				drawPage = {
+					left:	0,
+					right:	this.m_oDocumentRenderer.drawingPages[nPage].W,
+					top:	0,
+					bottom:	this.m_oDocumentRenderer.drawingPages[nPage].H
+				}
 			}
-			drawPage = {
-				left:	0,
-				right:	this.m_oDocumentRenderer.drawingPages[nPage].W,
-				top:	0,
-				bottom:	this.m_oDocumentRenderer.drawingPages[nPage].H
+			else if (oPdfDoc.mouseDownAnnot) {
+				drawPage = page.drawingPage;
 			}
+			
 			this.Overlay = this.m_oDocumentRenderer.overlay;
 		}
 

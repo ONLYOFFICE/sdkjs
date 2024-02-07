@@ -1795,11 +1795,12 @@ MoveInGroupState.prototype =
                     }
                     
 
-                    // пересчитываем callout
+                    // находит точку выхода callout для нового ректа textbox
                     let nCalloutExitPos = this.group.GetCalloutExitPos([xMin, yMin, xMax, yMax].map(function(measure, idx) {
                         return idx % 2 ? measure / nScaleY : measure / nScaleX;
                     }));
 
+                    // пересчитываем callout
                     switch (nCalloutExitPos) {
                         case AscPDF.CALLOUT_EXIT_POS.left: {
                             // точка выхода (x3, y3)

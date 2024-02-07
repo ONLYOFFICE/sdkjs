@@ -1932,7 +1932,7 @@
 				return;
 
 			AscCommon.check_MouseDownEvent(e, true);
-			AscCommon.global_mouseEvent.LockMouse();
+			e.IsLocked = true;
 
 			oThis.mouseDownCoords.X = AscCommon.global_mouseEvent.X;
 			oThis.mouseDownCoords.Y = AscCommon.global_mouseEvent.Y;
@@ -2059,6 +2059,8 @@
 
 			let oDoc = oThis.getPDFDoc();
 			AscCommon.check_MouseMoveEvent(e);
+			e.IsLocked = true;
+
 			if (e && e.preventDefault)
 				e.preventDefault();
 
@@ -2502,6 +2504,12 @@
 				}
 				else if (oDoc.mouseDownAnnot)
 				{
+					if (oDoc.mouseDownAnnot.IsFreeText() && oDoc.mouseDownAnnot.IsInTextBox() && oDoc.mouseDownAnnot.GetDocContent().IsSelectionUse()) {
+						ctx.beginPath();
+						oDoc.mouseDownAnnot.GetDocContent().DrawSelectionOnPage(oDoc.mouseDownAnnot.GetPage());
+						ctx.globalAlpha = 0.2;
+						ctx.fill();
+					}
 					if (oDoc.mouseDownAnnot.IsTextMarkup())
 					{
 						oDoc.mouseDownAnnot.DrawSelected(this.overlay);
@@ -2520,7 +2528,7 @@
 			if (oDoc.activeForm && oDoc.activeForm.content && oDoc.activeForm.content.IsSelectionUse() && oDoc.activeForm.content.IsSelectionEmpty() == false)
 			{
 				ctx.beginPath();
-				oDoc.activeForm.content.DrawSelectionOnPage(0);
+				oDoc.activeForm.content.DrawSelectionOnPage(oDoc.activeForm.GetPage());
 				ctx.globalAlpha = 0.2;
 				ctx.fill();
 			}
@@ -3124,8 +3132,6 @@
 				if (oDoc.activeForm && oDoc.activeForm.IsCanEditText())
 				{
 					oDoc.activeForm.Remove(-1, e.CtrlKey == true);
-					if (oDoc.activeForm.IsNeedRecalc())
-						this._paint();
 
 					this.onUpdateOverlay();
 					// сбрасываем счетчик до появления курсора
@@ -3135,6 +3141,13 @@
 					oThis.Api.WordControl.m_oDrawingDocument.showTarget(true);
 					
 					bRetValue = true;
+				}
+				else if (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsFreeText() && oDoc.mouseDownAnnot.IsInTextBox()) {
+					oDoc.mouseDownAnnot.Remove(-1, e.CtrlKey == true);
+					// сбрасываем счетчик до появления курсора
+					if (true !== e.ShiftKey)
+						oThis.Api.WordControl.m_oDrawingDocument.TargetStart();
+					oThis.Api.WordControl.m_oDrawingDocument.showTarget(true)
 				}
 			}
 			else if (e.KeyCode === 9) // Tab
@@ -3150,9 +3163,12 @@
 				window.event.stopPropagation();
 				if (this.doc.activeForm) {
 					if (this.doc.activeForm.GetType() == AscPDF.FIELD_TYPES.text && this.doc.activeForm.IsCanEditText() && this.doc.activeForm.IsMultiline())
+						this.Api.asc_enterText([13]);
+					else
+						this.doc.EnterDownActiveField();
+				}
+				else if (this.doc.mouseDownAnnot && this.doc.mouseDownAnnot.IsFreeText() && this.doc.mouseDownAnnot.IsInTextBox()) {
 					this.Api.asc_enterText([13]);
-				else
-					this.doc.EnterDownActiveField(oDoc.activeForm);
 				}
 			}
 			else if (e.KeyCode === 13 && e.ShiftKey == true) // Enter
@@ -3163,6 +3179,9 @@
 						this.Api.asc_enterText([13]);
 					else
 						this.doc.EnterDownActiveField();
+				}
+				else if (this.doc.mouseDownAnnot && this.doc.mouseDownAnnot.IsFreeText() && this.doc.mouseDownAnnot.IsInTextBox()) {
+					this.Api.asc_enterText([13]);
 				}
 			}
 			else if (e.KeyCode === 27) // Esc
@@ -3274,10 +3293,7 @@
 					this.onUpdateOverlay();
 				}
 				else if (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsFreeText() && oDoc.mouseDownAnnot.IsInTextBox()) {
-					oThis.Api.WordControl.m_oDrawingDocument.showTarget(true)
-					let oContent = oDoc.mouseDownAnnot.GetDocContent();
-					oContent.MoveCursorLeft(true === e.ShiftKey, true === e.CtrlKey);
-					oContent.RecalculateCurPos();
+					oDoc.mouseDownAnnot.MoveCursorLeft(true === e.ShiftKey, true === e.CtrlKey);
 				}
 				else if (!this.isFocusOnThumbnails && this.isVisibleHorScroll)
 				{
@@ -3324,6 +3340,9 @@
 							break;
 					}
 				}
+				else if (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsFreeText() && oDoc.mouseDownAnnot.IsInTextBox()) {
+					oDoc.mouseDownAnnot.MoveCursorUp(true === e.ShiftKey, true === e.CtrlKey);
+				}
 				else if (!this.isFocusOnThumbnails)
 				{
 					this.m_oScrollVerApi.scrollByY(-40);
@@ -3357,10 +3376,7 @@
 					this.onUpdateOverlay();
 				}
 				else if (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsFreeText() && oDoc.mouseDownAnnot.IsInTextBox()) {
-					oThis.Api.WordControl.m_oDrawingDocument.showTarget(true)
-					let oContent = oDoc.mouseDownAnnot.GetDocContent();
-					oContent.MoveCursorRight(true === e.ShiftKey, true === e.CtrlKey);
-					oContent.RecalculateCurPos();
+					oDoc.mouseDownAnnot.MoveCursorRight(true === e.ShiftKey, true === e.CtrlKey);
 				}
 				else if (!this.isFocusOnThumbnails && this.isVisibleHorScroll)
 				{
@@ -3407,6 +3423,9 @@
 					}
 					
 				}
+				else if (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsFreeText() && oDoc.mouseDownAnnot.IsInTextBox()) {
+					oDoc.mouseDownAnnot.MoveCursorDown(true === e.ShiftKey, true === e.CtrlKey);
+				}
 				else if (!this.isFocusOnThumbnails)
 				{
 					this.m_oScrollVerApi.scrollByY(40);
@@ -3439,14 +3458,13 @@
 			{
 				if (oDoc.activeForm && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oDoc.activeForm.GetType()))
 				{
-					if (oDoc.activeForm.IsNeedDrawHighlight())
+					if (oDoc.activeForm.IsCanEditText() == false)
 						return;
-					oDoc.activeForm.content.SelectAll();
-					if (oDoc.activeForm.content.IsSelectionUse())
-						this.Api.WordControl.m_oDrawingDocument.TargetEnd();
-					
-					this.onUpdateOverlay();
+					oDoc.activeForm.SelectAllText();
 					bRetValue = true;
+				}
+				else if (this.doc.mouseDownAnnot && this.doc.mouseDownAnnot.IsFreeText() && this.doc.mouseDownAnnot.IsInTextBox()) {
+					this.doc.mouseDownAnnot.SelectAllText();
 				}
 				else
 				{
