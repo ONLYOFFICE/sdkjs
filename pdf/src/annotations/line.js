@@ -341,7 +341,6 @@
         
         this.AddToRedraw();
         this.SetWasChanged(true);
-        this.SetDrawFromStream(false);
     };
     CAnnotationLine.prototype.SetStrokeColor = function(aColor) {
         this._strokeColor = aColor;

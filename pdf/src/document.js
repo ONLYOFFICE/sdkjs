@@ -2497,7 +2497,7 @@ var CPresentation = CPresentation || function(){};
 		
 		this.defaultFontsLoaded = 0;
 		let _t = this;
-		this.fontLoader.LoadDocumentFonts2([{name : "Arial"}],
+		this.fontLoader.LoadDocumentFonts2([{name : AscPDF.DEFAULT_FIELD_FONT}],
 			Asc.c_oAscAsyncActionType.Empty,
 			function()
 			{

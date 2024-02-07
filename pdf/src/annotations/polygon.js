@@ -183,7 +183,6 @@
         
         this.AddToRedraw();
         this.SetWasChanged(true);
-        this.SetDrawFromStream(false);
     };
     CAnnotationPolygon.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();

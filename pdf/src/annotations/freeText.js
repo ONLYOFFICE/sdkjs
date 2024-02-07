@@ -183,9 +183,6 @@
 
         return calculateBoundingRectangle(oLine, oShapeEndSize);
     };
-    CAnnotationFreeText.prototype.IsNeedDrawFromStream = function() {
-        return false;
-    };
 
     CAnnotationFreeText.prototype.IsFreeText = function() {
         return true;

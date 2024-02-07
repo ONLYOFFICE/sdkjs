@@ -246,7 +246,6 @@
         this.RefillGeometry(this.spPr.geometry, [aRect[0] * g_dKoef_pix_to_mm, aRect[1] * g_dKoef_pix_to_mm, aRect[2] * g_dKoef_pix_to_mm, aRect[3] * g_dKoef_pix_to_mm]);
 
         this.SetWasChanged(true);
-        this.SetDrawFromStream(false);
     };
     CAnnotationInk.prototype.SetFlipV = function(bFlip) {
         let oDoc = this.GetDocument();

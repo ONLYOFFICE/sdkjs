@@ -185,7 +185,6 @@
         this.recalcGeometry();
         this.AddToRedraw();
         this.SetWasChanged(true);
-        this.SetDrawFromStream(false);
     };
     CAnnotationSquare.prototype.SetRectangleDiff = function(aDiff) {
         let oDoc = this.GetDocument();

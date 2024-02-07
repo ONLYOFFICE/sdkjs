@@ -1263,9 +1263,7 @@
 			this.doc.FillButtonsIconsOnOpen();
 		};
 		this.openAnnots = function() {
-			let oThis = this;
-
-			this.doc.checkDefaultFieldFonts();
+			// this.doc.checkDefaultFieldFonts();
 			let oAnnotsMap = {};
 			let oDoc = this.getPDFDoc();
 			let aAnnotsInfo = this.file.nativeFile["getAnnotationsInfo"]();
