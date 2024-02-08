@@ -49,8 +49,9 @@
 	 * @property {Array} Sheets - Returns the Sheets collection that represents all the sheets in the active workbook.
 	 * @property {ApiWorksheet} ActiveSheet - Returns an object that represents the active sheet.
 	 * @property {ApiRange} Selection - Returns an object that represents the selected range.
-	 * @property {ApiComment[]} Comments - Returns an array of ApiComment objects.
+	 * @property {ApiComment[]} Comments - Returns all comments related to the whole workbook.
 	 * @property {FreezePaneType} FreezePanes - Returns or sets the type of freeze panes.
+	 * @property {ApiComment[]} AllComments - Returns all comments from the current workbook including comments from all worksheets.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
@@ -82,7 +83,7 @@
 	 * @property {boolean} PrintHeadings - Returns or sets the page PrintHeadings property.
 	 * @property {boolean} PrintGridlines - Returns or sets the page PrintGridlines property.
 	 * @property {Array} Defnames - Returns an array of the ApiName objects.
-	 * @property {Array} Comments - Returns an array of the ApiComment objects.
+	 * @property {Array} Comments - Returns all comments from the current worksheet.
 	 * @property {ApiFreezePanes} FreezePanes - Returns the freeze panes for the current worksheet.
 	 */
 	function ApiWorksheet(worksheet) {
@@ -892,7 +893,7 @@
 	};
 
 	/**
-	 * Returns an array of ApiComment objects.
+	 * Returns all comments related to the whole workbook.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiComment[]}
@@ -1643,7 +1644,7 @@
 	});
 
 	/**
-	 * Returns an array of ApiComment objects.
+	 * Returns all comments from the current worksheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiComment[]}
