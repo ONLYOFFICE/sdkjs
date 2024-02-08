@@ -77,6 +77,8 @@
 			run : null,
 			pos : 0
 		};
+		
+		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 	}
 	ParagraphSearchPositionXY.prototype.init = function(paragraph, stepEnd, centerMode)
 	{
@@ -109,6 +111,8 @@
 		this.range = this.calculateRangeNumber(x);
 		if (-1 === this.range)
 			return;
+		
+		this.complexFields.resetRange(this.paragraph, this.line, this.range);
 		
 		let para = this.paragraph;
 		let paraRange = para.Lines[this.line].Ranges[this.range];
@@ -268,6 +272,9 @@
 	};
 	ParagraphSearchPositionXY.prototype.handleRunElement = function(element, run, inRunPos)
 	{
+		if (!this.complexFields.checkRunElement(element))
+			return;
+		
 		this.bidiFlow.add([element, run, inRunPos], element.getBidiType());
 	};
 	ParagraphSearchPositionXY.prototype.handleBidiFlow = function(data, direction)

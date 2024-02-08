@@ -1003,6 +1003,7 @@ Paragraph.prototype.private_RecalculateLine            = function(CurLine, CurPa
     //-------------------------------------------------------------------------------------------------------------
     this.Lines.length   = CurLine + 1;
     this.Lines[CurLine] = new CParaLine();
+	this.Lines[CurLine].CF = PRS.ComplexFields.getState();
 
     //-------------------------------------------------------------------------------------------------------------
     // 2. Проверяем, является ли данная строка висячей
@@ -2711,6 +2712,7 @@ function CParaLine()
                        // 2 бит : пустая ли строка (без учета PageBreak)
                        // 3 бит : последняя ли это строка (т.е. строка с ParaEnd)
                        // 4 бит : строка переносится по Y по обтекаемому объекту
+	this.CF      = [];
 }
 
 CParaLine.prototype =

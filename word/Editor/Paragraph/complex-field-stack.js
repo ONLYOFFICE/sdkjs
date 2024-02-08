@@ -53,6 +53,37 @@
 		else
 			this.CF = [];
 	};
+	ParagraphComplexFieldStack.prototype.resetRange = function(paragraph, line, range)
+	{
+		if (!paragraph.IsRecalculated() || !paragraph.Lines[line] || !paragraph.Lines[line].Ranges[range])
+			return;
+		
+		this.setState(paragraph.Lines[line].CF);
+		if (range > 0)
+		{
+			let startPos = paragraph.Get_StartRangePos2(line, 0);
+			let endPos   = paragraph.Get_EndRangePos2(line, range - 1);
+			
+			let _t = this;
+			paragraph.CheckRunContent(function(run, startPos, endPos)
+			{
+				let isRemovedInReview = (reviewtype_Remove === run.GetReviewType());
+				for (let pos = startPos; pos < endPos; ++pos)
+				{
+					let item     = run.private_CheckInstrText(run.Content[pos]);
+					var itemType = item.Type;
+					
+					if (_t.isHiddenFieldContent() && para_End !== itemType && para_FieldChar !== itemType)
+						continue;
+					
+					if (para_FieldChar === itemType)
+						_t.processFieldCharAndCollectComplexField(item);
+					else if (para_InstrText === itemType && !isRemovedInReview)
+						_t.processInstruction(item);
+				}
+			}, startPos, endPos);
+		}
+	};
 	/**
 	 * @param element {AscWord.CRunElementBase}
 	 * @returns {boolean}

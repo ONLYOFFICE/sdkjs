@@ -75,6 +75,8 @@
 			find     : false,
 			usePos   : false
 		};
+		
+		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 	}
 	ParagraphPositionCalculator.prototype.reset = function(page, line, range)
 	{
@@ -97,6 +99,8 @@
 			this.x += p.Numbering.WidthVisible;
 		
 		this.bidi.begin();
+		
+		this.complexFields.resetRange(this.paragraph, this.line, this.range);
 	};
 	ParagraphPositionCalculator.prototype.setNextCurrent = function(run, lastCombItem)
 	{
@@ -124,6 +128,9 @@
 	};
 	ParagraphPositionCalculator.prototype.handleRunElement = function(element, run, isCurrent, isNearFootnoteRef, inRunPos)
 	{
+		if (!this.complexFields.checkRunElement(element))
+			return;
+		
 		if (para_Drawing === element.Type && !element.IsInline())
 		{
 			if (isCurrent)
