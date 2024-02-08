@@ -1362,8 +1362,8 @@
 
 
 	/**
-	 * Returns all comments from the current document.
-	 * @memberof ApiDocument
+	 * Returns all comments from the current presentation.
+	 * @memberof ApiPresentation
 	 * @typeofeditors ["CPE"]
 	 * @returns {ApiComment[]}
 	 */
