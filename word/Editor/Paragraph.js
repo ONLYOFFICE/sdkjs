@@ -19255,6 +19255,26 @@ CParagraphComplexFieldsInfo.prototype.ResetPage = function(Paragraph, CurPage)
 	else
 		this.CF = [];
 };
+CParagraphComplexFieldsInfo.prototype.resetPage = function(paragraph, page)
+{
+	this.ResetPage(paragraph, page);
+};
+/**
+ * @param element {AscWord.CRunElementBase}
+ * @returns {boolean}
+ */
+CParagraphComplexFieldsInfo.prototype.checkRunElement = function(element)
+{
+	if ((this.IsHiddenFieldContent() || this.IsComplexFieldCode())
+		&& para_End !== element.Type
+		&& para_FieldChar !== element.Type)
+		return false;
+	
+	if (para_FieldChar === element.Type)
+		this.ProcessFieldChar(element);
+	
+	return true;
+};
 /**
  * Находимся ли мы внутри содержимого скрытого поля
  * @returns {boolean}

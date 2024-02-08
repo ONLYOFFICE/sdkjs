@@ -64,10 +64,14 @@
 		this.endInfo      = null;
 		
 		this.anchoredObjects = [];
+		
+		this.complexFields = new CParagraphComplexFieldsInfo();
 	}
 	ParagraphDrawSelectionState.prototype.resetPage = function(page)
 	{
 		this.page = page;
+		
+		this.complexFields.resetPage(this.paragraph, page);
 	};
 	ParagraphDrawSelectionState.prototype.resetLine = function(line)
 	{
@@ -119,6 +123,9 @@
 	 */
 	ParagraphDrawSelectionState.prototype.handleRunElement = function(element, isSelected)
 	{
+		if (!this.complexFields.checkRunElement(element))
+			return;
+		
 		if (para_Drawing === element.Type && !element.IsInline())
 		{
 			if (isSelected)
