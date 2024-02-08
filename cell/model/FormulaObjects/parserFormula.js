@@ -533,6 +533,7 @@ var c_Date1900Const = 25568; //разница в днях между 01.01.1970 
 var rx_sFuncPref = /_xlfn\./i;
 var rx_sFuncPrefXlWS = /_xlws\./i;// /_xlfn\.(_xlws\.)?/i;
 var rx_sDefNamePref = /_xlnm\./i;
+var rx_sFuncPrefXLUFD = /__xludf.DUMMYFUNCTION\./i;
 var cNumFormatFirstCell = -1;
 var cNumFormatNone = -2;
 var cNumFormatNull = -3;
@@ -3120,8 +3121,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				str += ",";
 			}
 		}
-		if (this.isXLFN || this.isXLWS) {
-			return new cString((this.isXLFN ? "_xlfn." : "") + (this.isXLWS ? "_xlws." : "") + this.name + "(" + str + ")");
+		if (this.isXLFN || this.isXLWS || this.isXLUDF) {
+			return new cString((this.isXLFN ? "_xlfn." : "") + (this.isXLWS ? "_xlws." : "") + (this.isXLUDF ? "__xludf.DUMMYFUNCTION." : "") + this.name + "(" + str + ")");
 		}
 		return new cString(this.toString() + "(" + str + ")");
 	};
@@ -3144,7 +3145,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseFunction.prototype.toString = function (/*locale*/) {
 		/*var name = this.toString();
 		var localeName = locale ? locale[name] : name;*/
-		return this.name.replace(rx_sFuncPref, "_xlfn.").replace(rx_sFuncPrefXlWS, "_xlws.");
+		return this.name.replace(rx_sFuncPref, "_xlfn.").replace(rx_sFuncPrefXlWS, "_xlws.").replace(rx_sFuncPrefXLUFD, "__xludf.DUMMYFUNCTION.");
 	};
 	cBaseFunction.prototype.toLocaleString = function (/*locale*/) {
 		var name = this.toString();
@@ -3706,6 +3707,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		this.name = name;
 		this.isXLFN = null;
 		this.isXLWS = null;
+		this.isXLUDF = null;
 	}
 	cUnknownFunction.prototype = Object.create(cBaseFunction.prototype);
 	cUnknownFunction.prototype.constructor = cUnknownFunction;
@@ -6123,6 +6125,7 @@ function parserFormula( formula, parent, _ws ) {
 								elem = new cUnknownFunction(val);
 								let xlfnFrefix = "_xlfn.";
 								let xlwsFrefix = "_xlws.";
+								//let xludfFrefix = "__xludf.DUMMYFUNCTION.";
 								//_xlws only together with _xlfn
 								elem.isXLFN = (val.indexOf(xlfnFrefix) === 0);
 								elem.isXLWS = elem.isXLFN && xlfnFrefix.length === val.indexOf(xlwsFrefix);
@@ -6925,6 +6928,8 @@ function parserFormula( formula, parent, _ws ) {
 					found_operator = new cUnknownFunction(operandStr);
 					let xlfnFrefix = "_xlfn.";
 					let xlwsFrefix = "_xlws.";
+					//let xludfFrefix = "__xludf.DUMMYFUNCTION.";
+
 					//_xlws only together with _xlfn
 					found_operator.isXLFN = (ph.operand_str.indexOf(xlfnFrefix) === 0);
 					found_operator.isXLWS = found_operator.isXLFN && xlfnFrefix.length === ph.operand_str.indexOf(xlwsFrefix);

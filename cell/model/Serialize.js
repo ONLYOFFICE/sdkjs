@@ -13217,11 +13217,16 @@
         } else {
             formula = parsed.getFormula();
         }
+        //TODO пока едиственный идентификатор, что внутри есть функция import - importFunctionsRangeLinks
+        //обходить каждый раз колстек - не хотелось бы замедлять сохранение, так же как и искать в строке
+        if (formula && parsed && parsed.importFunctionsRangeLinks) {
+            formula = "IFERROR(" + formula + "," + cell.getValue() + ")";
+        }
         return {formula: formula, si: si, ref: ref, type: type, ca: parsed.ca};
     };
 
     function ReadWbComments (wb, contentWorkbookComment, InitOpenManager) {
-        var stream = new AscCommon.FT_Stream2(contentWorkbookComment, contentWorkbookComment.length)
+        var stream = new AscCommon.FT_Stream2(contentWorkbookComment, contentWorkbookComment.length);
         var bwtr = new Binary_WorksheetTableReader(stream, InitOpenManager, wb);
         var bcr = new AscCommon.Binary_CommonReader(stream);
         bcr.Read1(contentWorkbookComment.length, function(t,l){
