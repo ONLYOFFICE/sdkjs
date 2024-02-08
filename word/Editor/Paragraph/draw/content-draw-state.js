@@ -68,7 +68,7 @@
 		this.LineBottom = 0;
 		this.BaseLine   = 0;
 		
-		this.ComplexFields = new CParagraphComplexFieldsInfo();
+		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 		
 		this.run            = null;
 		this.yOffset        = 0;
@@ -102,7 +102,7 @@
 	ParagraphContentDrawState.prototype.resetPage = function(page)
 	{
 		this.Page = page;
-		this.ComplexFields.ResetPage(this.Paragraph, page);
+		this.complexFields.resetPage(this.Paragraph, page);
 	};
 	ParagraphContentDrawState.prototype.resetLine = function(line, baseLine, lineTop, lineBottom)
 	{
@@ -133,13 +133,8 @@
 	 */
 	ParagraphContentDrawState.prototype.handleRunElement = function(element, run)
 	{
-		if ((this.ComplexFields.IsHiddenFieldContent() || this.ComplexFields.IsComplexFieldCode())
-			&& para_End !== element.Type
-			&& para_FieldChar !== element.Type)
+		if (!this.complexFields.checkRunElement(element))
 			return;
-		
-		if (para_FieldChar === element.Type)
-			this.ComplexFields.ProcessFieldChar(element);
 		
 		this.bidiFlow.add([element, run], element.getBidiType());
 	};

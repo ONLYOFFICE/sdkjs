@@ -90,7 +90,7 @@
 		this.InlineSdt = [];
 		this.CollectFixedForms = false;
 		
-		this.ComplexFields = new CParagraphComplexFieldsInfo();
+		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 		
 		this.rtl = false;
 		this.bidiFlow = new AscWord.BidiFlow(this);
@@ -134,7 +134,7 @@
 				this.addComment(pageEndInfo.Comments[index]);
 			}
 		}
-		this.ComplexFields.ResetPage(this.Paragraph, page);
+		this.complexFields.resetPage(this.Paragraph, page);
 	};
 	ParagraphHighlightDrawState.prototype.resetLine = function(line, top, bottom)
 	{
@@ -217,13 +217,8 @@
 	};
 	ParagraphHighlightDrawState.prototype.handleRunElement = function(element, run, collaborationColor)
 	{
-		if ((this.ComplexFields.IsHiddenFieldContent() || this.ComplexFields.IsComplexFieldCode())
-			&& para_End !== element.Type
-			&& para_FieldChar !== element.Type)
+		if (!this.complexFields.checkRunElement(element))
 			return;
-		
-		if (para_FieldChar === element.Type)
-			this.ComplexFields.ProcessFieldChar(element);
 		
 		if (para_Drawing === element.Type && !element.IsInline())
 			return;
@@ -449,17 +444,17 @@
 			return this.hyperlinks[this.hyperlinks.length - 1];
 		
 		let complexField = null;
-		if (this.ComplexFields.IsComplexField() && (complexField = this.ComplexFields.GetREForHYPERLINK()))
+		if (this.complexFields.isComplexField() && (complexField = this.complexFields.getReferenceToHyperlink()))
 			return complexField.GetInstruction();
 		
 		return null;
 	};
 	ParagraphHighlightDrawState.prototype.isComplexFieldHighlight = function()
 	{
-		return (this.ComplexFields.IsComplexField()
-			&& !this.ComplexFields.IsComplexFieldCode()
-			&& this.ComplexFields.IsCurrentComplexField()
-			&& !this.ComplexFields.IsHyperlinkField());
+		return (this.complexFields.isComplexField()
+			&& !this.complexFields.isComplexFieldCode()
+			&& this.complexFields.isCurrentComplexField()
+			&& !this.complexFields.isHyperlinkField());
 	};
 	ParagraphHighlightDrawState.prototype.getFlags = function(element, isCollaboration)
 	{

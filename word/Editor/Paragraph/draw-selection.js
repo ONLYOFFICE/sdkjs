@@ -65,7 +65,7 @@
 		
 		this.anchoredObjects = [];
 		
-		this.complexFields = new CParagraphComplexFieldsInfo();
+		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 	}
 	ParagraphDrawSelectionState.prototype.resetPage = function(page)
 	{

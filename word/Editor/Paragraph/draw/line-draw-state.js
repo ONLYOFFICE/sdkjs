@@ -74,7 +74,7 @@
 		this.UnderlineOffset = 0;
 		this.Spaces          = 0;
 		
-		this.ComplexFields = new CParagraphComplexFieldsInfo();
+		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 		
 		this.run = null;
 		
@@ -126,7 +126,7 @@
 		this.CurPos   = new AscWord.CParagraphContentPos();
 		this.CurDepth = 0;
 		
-		this.ComplexFields.ResetPage(this.Paragraph, page);
+		this.complexFields.resetPage(this.Paragraph, page);
 	};
 	ParagraphLineDrawState.prototype.resetLine = function(Line, Baseline, UnderlineOffset)
 	{
@@ -168,13 +168,8 @@
 	 */
 	ParagraphLineDrawState.prototype.handleRunElement = function(element, run, inRunPos, misspell)
 	{
-		if ((this.ComplexFields.IsHiddenFieldContent() || this.ComplexFields.IsComplexFieldCode())
-			&& para_End !== element.Type
-			&& para_FieldChar !== element.Type)
+		if (!this.complexFields.checkRunElement(element))
 			return;
-		
-		if (para_FieldChar === element.Type)
-			this.ComplexFields.ProcessFieldChar(element);
 		
 		if (para_Drawing === element.Type && !element.IsInline())
 			return;

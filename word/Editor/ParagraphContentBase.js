@@ -854,7 +854,7 @@ CParagraphContentBase.prototype.CheckRunContent = function(fCheck, oStartPos, oE
 };
 /**
  * Собираем сложные поля параграфа
- * @param {CParagraphComplexFieldsInfo} oComplexFields
+ * @param {AscWord.ParagraphComplexFieldStack} oComplexFields
  */
 CParagraphContentBase.prototype.ProcessComplexFields = function(oComplexFields)
 {

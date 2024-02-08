@@ -3583,7 +3583,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 	let isSkipFillRange = false;
 
 	// TODO: Сделать возможность показывать инструкцию
-    var isHiddenCFPart = PRS.ComplexFields.IsComplexFieldCode();
+    var isHiddenCFPart = PRS.ComplexFields.isComplexFieldCode();
 
     PRS.CheckUpdateLBP(Pos, Depth);
 
@@ -3599,13 +3599,13 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
             var Item = this.Content[Pos];
             var ItemType = Item.Type;
 
-            if (PRS.ComplexFields.IsHiddenFieldContent() && para_End !== ItemType && para_FieldChar !== ItemType)
+            if (PRS.ComplexFields.isHiddenFieldContent() && para_End !== ItemType && para_FieldChar !== ItemType)
             	continue;
 
 			if (para_InstrText === ItemType && !PRS.IsFastRecalculate())
 			{
 				var oInstrText = Item;
-				if (!PRS.ComplexFields.IsComplexFieldCode())
+				if (!PRS.ComplexFields.isComplexFieldCode())
 				{
 					if (32 === Item.Value)
 					{
@@ -4566,9 +4566,9 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 					Item.SetPage(Para.Get_AbsolutePage(PRS.Page));
 
 					Item.SetRun(this);
-					PRS.ComplexFields.ProcessFieldChar(Item);
+					PRS.ComplexFields.processFieldChar(Item);
 
-					isHiddenCFPart = PRS.ComplexFields.IsComplexFieldCode();
+					isHiddenCFPart = PRS.ComplexFields.isComplexFieldCode();
 
 					if (Item.IsSeparate() && !isHiddenCFPart)
 					{
@@ -4965,13 +4965,13 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
 	let textPr = this.Get_CompiledPr(false);
 
 	// TODO: Сделать возможность показывать инструкцию
-	var isHiddenCFPart = PRSC.ComplexFields.IsComplexFieldCode();
+	var isHiddenCFPart = PRSC.ComplexFields.isComplexFieldCode();
     for ( var Pos = StartPos; Pos < EndPos; Pos++ )
     {
 		var Item = this.private_CheckInstrText(this.Content[Pos]);
         var ItemType = Item.Type;
 
-		if (PRSC.ComplexFields.IsHiddenFieldContent() && para_End !== ItemType && para_FieldChar !== ItemType)
+		if (PRSC.ComplexFields.isHiddenFieldContent() && para_End !== ItemType && para_FieldChar !== ItemType)
 			continue;
 
 		if (isHiddenCFPart && para_End !== ItemType && para_FieldChar !== ItemType && para_InstrText !== ItemType)
@@ -5125,11 +5125,11 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
 			case para_FieldChar:
 			{
 				if (PRSC.isFastRecalculation())
-					PRSC.ComplexFields.ProcessFieldChar(Item);
+					PRSC.ComplexFields.processFieldChar(Item);
 				else
-					PRSC.ComplexFields.ProcessFieldCharAndCollectComplexField(Item);
+					PRSC.ComplexFields.processFieldCharAndCollectComplexField(Item);
 
-				isHiddenCFPart = PRSC.ComplexFields.IsComplexFieldCode();
+				isHiddenCFPart = PRSC.ComplexFields.isComplexFieldCode();
 
 				if (Item.IsNumValue())
 				{
@@ -5156,7 +5156,7 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
 					|| reviewtype_Remove === this.GetReviewType())
 					break;
 
-				PRSC.ComplexFields.ProcessInstruction(Item);
+				PRSC.ComplexFields.processInstruction(Item);
 				break;
 			}
         }
@@ -5172,13 +5172,13 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
     var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
 
 	// TODO: Сделать возможность показывать инструкцию
-	var isHiddenCFPart = PRSA.ComplexFields.IsComplexFieldCode();
+	var isHiddenCFPart = PRSA.ComplexFields.isComplexFieldCode();
     for ( var Pos = StartPos; Pos < EndPos; Pos++ )
     {
 		var Item = this.private_CheckInstrText(this.Content[Pos]);
         var ItemType = Item.Type;
 
-		if (PRSA.ComplexFields.IsHiddenFieldContent() && para_End !== ItemType && para_FieldChar !== ItemType)
+		if (PRSA.ComplexFields.isHiddenFieldContent() && para_End !== ItemType && para_FieldChar !== ItemType)
 		{
 			// Чтобы правильно позиционировался курсор и селект
 			Item.WidthVisible = 0;
@@ -5544,8 +5544,8 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
             }
 			case para_FieldChar:
 			{
-				PRSA.ComplexFields.ProcessFieldChar(Item);
-				isHiddenCFPart = PRSA.ComplexFields.IsComplexFieldCode();
+				PRSA.ComplexFields.processFieldChar(Item);
+				isHiddenCFPart = PRSA.ComplexFields.isComplexFieldCode();
 
 				if (Item.IsNumValue())
 				{
@@ -5573,7 +5573,7 @@ ParaRun.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
 		var Item = this.Content[Pos];
 		if (para_FieldChar === Item.Type)
 		{
-			PRSI.ProcessFieldChar(Item);
+			PRSI.processFieldChar(Item);
 		}
 	}
 };
@@ -5589,11 +5589,11 @@ ParaRun.prototype.RecalculateEndInfo = function(PRSI)
 		var oItem = this.Content[nCurPos];
 		if (para_FieldChar === oItem.Type)
 		{
-			PRSI.ProcessFieldCharAndCollectComplexField(oItem);
+			PRSI.processFieldCharAndCollectComplexField(oItem);
 		}
 		else if (para_InstrText === oItem.Type && !isRemovedInReview)
 		{
-			PRSI.ProcessInstruction(oItem);
+			PRSI.processInstruction(oItem);
 		}
 	}
 };
@@ -6575,9 +6575,9 @@ ParaRun.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, UseConten
 {
 	var CurPos = true === UseContentPos ? ContentPos.Get(Depth) : this.Content.length;
 
-	var isFieldCode  = SearchPos.IsComplexFieldCode();
-	var isFieldValue = SearchPos.IsComplexFieldValue();
-	var isHiddenCF   = SearchPos.IsHiddenComplexField();
+	var isFieldCode  = SearchPos.isComplexFieldCode();
+	var isFieldValue = SearchPos.isComplexFieldValue();
+	var isHiddenCF   = SearchPos.isHiddenComplexField();
 
 	while (true)
 	{
@@ -6588,9 +6588,9 @@ ParaRun.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, UseConten
 		if (CurPos >= 0 && para_FieldChar === Item.Type)
 		{
 			SearchPos.ProcessComplexFieldChar(-1, Item);
-			isFieldCode  = SearchPos.IsComplexFieldCode();
-			isFieldValue = SearchPos.IsComplexFieldValue();
-			isHiddenCF   = SearchPos.IsHiddenComplexField();
+			isFieldCode  = SearchPos.isComplexFieldCode();
+			isFieldValue = SearchPos.isComplexFieldValue();
+			isHiddenCF   = SearchPos.isHiddenComplexField();
 		}
 
 		if (CurPos >= 0 && (isFieldCode || isHiddenCF))
@@ -6611,9 +6611,9 @@ ParaRun.prototype.Get_RightPos = function(SearchPos, ContentPos, Depth, UseConte
 {
 	var CurPos = ( true === UseContentPos ? ContentPos.Get(Depth) : 0 );
 
-	var isFieldCode  = SearchPos.IsComplexFieldCode();
-	var isFieldValue = SearchPos.IsComplexFieldValue();
-	var isHiddenCF   = SearchPos.IsHiddenComplexField();
+	var isFieldCode  = SearchPos.isComplexFieldCode();
+	var isFieldValue = SearchPos.isComplexFieldValue();
+	var isHiddenCF   = SearchPos.isHiddenComplexField();
 
 	var Count = this.Content.length;
 	while (true)
@@ -6634,9 +6634,9 @@ ParaRun.prototype.Get_RightPos = function(SearchPos, ContentPos, Depth, UseConte
 			if (para_FieldChar === PrevItem.Type)
 			{
 				SearchPos.ProcessComplexFieldChar(1, PrevItem);
-				isFieldCode  = SearchPos.IsComplexFieldCode();
-				isFieldValue = SearchPos.IsComplexFieldValue();
-				isHiddenCF   = SearchPos.IsHiddenComplexField();
+				isFieldCode  = SearchPos.isComplexFieldCode();
+				isFieldValue = SearchPos.isComplexFieldValue();
+				isHiddenCF   = SearchPos.isHiddenComplexField();
 			}
 
 			if (isFieldCode || isHiddenCF)
@@ -6658,9 +6658,9 @@ ParaRun.prototype.Get_RightPos = function(SearchPos, ContentPos, Depth, UseConte
 		if (para_FieldChar === Item.Type)
 		{
 			SearchPos.ProcessComplexFieldChar(1, Item);
-			isFieldCode  = SearchPos.IsComplexFieldCode();
-			isFieldValue = SearchPos.IsComplexFieldValue();
-			isHiddenCF   = SearchPos.IsHiddenComplexField();
+			isFieldCode  = SearchPos.isComplexFieldCode();
+			isFieldValue = SearchPos.isComplexFieldValue();
+			isHiddenCF   = SearchPos.isHiddenComplexField();
 		}
 
 		if (isFieldCode || isHiddenCF)
@@ -6689,9 +6689,9 @@ ParaRun.prototype.Get_WordStartPos = function(SearchPos, ContentPos, Depth, UseC
 
     SearchPos.Shift = true;
 
-	var isFieldCode  = SearchPos.IsComplexFieldCode();
-	var isFieldValue = SearchPos.IsComplexFieldValue();
-	var isHiddenCF   = SearchPos.IsHiddenComplexField();
+	var isFieldCode  = SearchPos.isComplexFieldCode();
+	var isFieldValue = SearchPos.isComplexFieldValue();
+	var isHiddenCF   = SearchPos.isHiddenComplexField();
 
     // На первом этапе ищем позицию первого непробельного элемента
     if ( 0 === SearchPos.Stage )
@@ -6706,9 +6706,9 @@ ParaRun.prototype.Get_WordStartPos = function(SearchPos, ContentPos, Depth, UseC
 			if (para_FieldChar === Type)
 			{
 				SearchPos.ProcessComplexFieldChar(-1, Item);
-				isFieldCode  = SearchPos.IsComplexFieldCode();
-				isFieldValue = SearchPos.IsComplexFieldValue();
-				isHiddenCF   = SearchPos.IsHiddenComplexField();
+				isFieldCode  = SearchPos.isComplexFieldCode();
+				isFieldValue = SearchPos.isComplexFieldValue();
+				isHiddenCF   = SearchPos.isHiddenComplexField();
 			}
 
             if ( para_Space === Type || para_Tab === Type || ( para_Text === Type && true === Item.IsNBSP() ) || ( para_Drawing === Type && true !== Item.Is_Inline() ) )
@@ -6762,9 +6762,9 @@ ParaRun.prototype.Get_WordStartPos = function(SearchPos, ContentPos, Depth, UseC
 		if (para_FieldChar === Item.Type)
 		{
 			SearchPos.ProcessComplexFieldChar(-1, Item);
-			isFieldCode  = SearchPos.IsComplexFieldCode();
-			isFieldValue = SearchPos.IsComplexFieldValue();
-			isHiddenCF   = SearchPos.IsHiddenComplexField();
+			isFieldCode  = SearchPos.isComplexFieldCode();
+			isFieldValue = SearchPos.isComplexFieldValue();
+			isHiddenCF   = SearchPos.isHiddenComplexField();
 		}
 
 		if (isFieldCode || isHiddenCF)
@@ -6793,9 +6793,9 @@ ParaRun.prototype.Get_WordEndPos = function(SearchPos, ContentPos, Depth, UseCon
 	if (CurPos >= ContentLen || ContentLen <= 0)
 		return;
 
-	var isFieldCode  = SearchPos.IsComplexFieldCode();
-	var isFieldValue = SearchPos.IsComplexFieldValue();
-	var isHiddenCF   = SearchPos.IsHiddenComplexField();
+	var isFieldCode  = SearchPos.isComplexFieldCode();
+	var isFieldValue = SearchPos.isComplexFieldValue();
+	var isHiddenCF   = SearchPos.isHiddenComplexField();
 
     if ( 0 === SearchPos.Stage )
     {
@@ -6809,9 +6809,9 @@ ParaRun.prototype.Get_WordEndPos = function(SearchPos, ContentPos, Depth, UseCon
 			if (para_FieldChar === Type)
 			{
 				SearchPos.ProcessComplexFieldChar(1, Item);
-				isFieldCode  = SearchPos.IsComplexFieldCode();
-				isFieldValue = SearchPos.IsComplexFieldValue();
-				isHiddenCF   = SearchPos.IsHiddenComplexField();
+				isFieldCode  = SearchPos.isComplexFieldCode();
+				isFieldValue = SearchPos.isComplexFieldValue();
+				isHiddenCF   = SearchPos.isHiddenComplexField();
 			}
 
             if ( (para_Text === Type || para_Math_Text === Type) && true != Item.IsNBSP() && ( true === SearchPos.First || ( SearchPos.Punctuation === Item.IsPunctuation() ) ) )
@@ -6907,9 +6907,9 @@ ParaRun.prototype.Get_WordEndPos = function(SearchPos, ContentPos, Depth, UseCon
 			if (para_FieldChar === Item.Type)
 			{
 				SearchPos.ProcessComplexFieldChar(1, Item);
-				isFieldCode  = SearchPos.IsComplexFieldCode();
-				isFieldValue = SearchPos.IsComplexFieldValue();
-				isHiddenCF   = SearchPos.IsHiddenComplexField();
+				isFieldCode  = SearchPos.isComplexFieldCode();
+				isFieldValue = SearchPos.isComplexFieldValue();
+				isHiddenCF   = SearchPos.isHiddenComplexField();
 			}
 
 			if (isFieldCode || isHiddenCF)
@@ -11547,13 +11547,13 @@ ParaRun.prototype.ProcessComplexFields = function(oComplexFields)
 		var oItem     = this.private_CheckInstrText(this.Content[nPos]);
 		var nItemType = oItem.Type;
 
-		if (oComplexFields.IsHiddenFieldContent() && para_End !== nItemType && para_FieldChar !== nItemType)
+		if (oComplexFields.isHiddenFieldContent() && para_End !== nItemType && para_FieldChar !== nItemType)
 			continue;
 
 		if (para_FieldChar === nItemType)
-			oComplexFields.ProcessFieldCharAndCollectComplexField(oItem);
+			oComplexFields.processFieldCharAndCollectComplexField(oItem);
 		else if (para_InstrText === nItemType && !isRemovedInReview)
-			oComplexFields.ProcessInstruction(oItem);
+			oComplexFields.processInstruction(oItem);
 	}
 };
 ParaRun.prototype.GetSelectedElementsInfo = function(oInfo)
