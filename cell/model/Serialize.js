@@ -1542,7 +1542,7 @@
         pageLayout: 2
     };
 
-    var g_nNumsMaxId = 160;
+    var g_nNumsMaxId = 164;
 
     var DocumentPageSize = new function() {
         this.oSizes = [
