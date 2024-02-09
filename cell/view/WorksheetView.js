@@ -7617,9 +7617,9 @@
 			arnIntersection = activeMoveRange.intersectionSimple(range);
 			if (arnIntersection) {
 				// Координаты для перемещения диапазона
-				_x1 = this._getColLeft(arnIntersection.c1) - offsetX - 2 - 1*isRetinaWidth*bInsertBetweenRowCol;
+				_x1 = this._getColLeft(arnIntersection.c1) - offsetX - 2 - 1*isRetinaWidth;
 				_x2 = this._getColLeft(arnIntersection.c2 + 1) - offsetX + 1 + 2;
-				_y1 = this._getRowTop(arnIntersection.r1) - offsetY - 2 - 1*isRetinaWidth*bInsertBetweenRowCol;
+				_y1 = this._getRowTop(arnIntersection.r1) - offsetY - 2 - 1*isRetinaWidth;
 				_y2 = this._getRowTop(arnIntersection.r2 + 1) - offsetY + 1 + 2;
 
 				// Выбираем наибольший range для очистки
