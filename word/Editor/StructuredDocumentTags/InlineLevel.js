@@ -335,9 +335,11 @@ CInlineLevelSdt.prototype.GetSelectedElementsInfo = function(Info)
 };
 CInlineLevelSdt.prototype.IsSolid = function()
 {
+	let logicDocument = this.Paragraph ? this.Paragraph.GetLogicDocument() : null;
+	
 	// В обычном режиме редактирования мы не даем редактировать форму (кроме составных)
-	return !!(this.Paragraph
-		&& !this.Paragraph.LogicDocument.IsFillingFormMode()
+	return !!(logicDocument
+		&& !logicDocument.IsFillingFormMode()
 		&& this.IsForm()
 		&& !this.IsComplexForm());
 };
@@ -843,13 +845,14 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 		if (!this.CanBeDeleted() && !bOnAddText)
 			return true;
 
+		let logicDocument = this.GetLogicDocument();
 		if (!bOnAddText && !this.IsSelectionUse())
 		{
 			this.SelectAll(1);
 			this.SelectThisElement();
 			return true;
 		}
-		else if (bOnAddText || !this.Paragraph.LogicDocument.IsFillingFormMode())
+		else if (bOnAddText || !logicDocument || !logicDocument.IsFillingFormMode())
 		{
 			this.private_ReplacePlaceHolderWithContent();
 		}

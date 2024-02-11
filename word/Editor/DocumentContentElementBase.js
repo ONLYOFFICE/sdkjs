@@ -1319,6 +1319,9 @@ CDocumentContentElementBase.prototype.RecalculateEndInfo = function() {};
  */
 CDocumentContentElementBase.prototype.GetLogicDocument = function()
 {
+	if (!this.LogicDocument && this.Parent && this.Parent.GetLogicDocument)
+		this.LogicDocument = this.Parent.GetLogicDocument();
+	
 	return this.LogicDocument;
 };
 /**

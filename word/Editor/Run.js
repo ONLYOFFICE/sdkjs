@@ -5268,7 +5268,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                 var PageRel = Para.private_GetRelativePageIndex(CurPage);
                 var ColumnAbs = Para.Get_AbsoluteColumn(CurPage);
 
-                var LogicDocument = this.Paragraph.GetLogicDocument();
+                var LogicDocument = PRSA.getLogicDocument();
                 var LD_PageLimits = LogicDocument.Get_PageLimits(PageAbs);
                 var LD_PageFields = LogicDocument.Get_PageFields(PageAbs, isInHdrFtr);
 
