@@ -729,7 +729,7 @@
      */
     Api.prototype.CreateParagraph = function()
     {
-        return this.private_CreateApiParagraph(new Paragraph(private_GetDrawingDocument(), null, true));
+        return this.private_CreateApiParagraph(new AscWord.Paragraph(null, true));
     };
 
     /**

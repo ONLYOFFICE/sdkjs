@@ -96,7 +96,7 @@
 	}
 	function CreateParagraph()
 	{
-		return new AscWord.CParagraph(AscTest.DrawingDocument);
+		return new AscWord.Paragraph();
 	}
 	function CreateRun()
 	{
@@ -322,7 +322,7 @@
 	}
 	function MoveCursorToParagraph(paragraph, isToStart)
 	{
-		if (!paragraph || !(paragraph instanceof AscWord.CParagraph))
+		if (!paragraph || !(paragraph instanceof AscWord.Paragraph))
 			return;
 		
 		paragraph.SetThisElementCurrent();

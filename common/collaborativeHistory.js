@@ -461,7 +461,7 @@
 			{
 				mapDocumentContents[oClass.Get_Id()] = oClass;
 			}
-			else if (oClass instanceof AscCommonWord.Paragraph)
+			else if (oClass instanceof AscWord.Paragraph)
 			{
 				mapParagraphs[oClass.Get_Id()] = oClass;
 			}
@@ -704,7 +704,7 @@
 			nContentLen = oDocumentContent.Content.length;
 			if (nContentLen <= 0 || AscCommonWord.type_Paragraph !== oDocumentContent.Content[nContentLen - 1].GetType())
 			{
-				var oNewParagraph = new AscCommonWord.Paragraph(oLogicDocument.Get_DrawingDocument(), oDocumentContent, 0, 0, 0, 0, 0, false);
+				var oNewParagraph = new AscWord.Paragraph(oDocumentContent, 0, 0, 0, 0, 0, false);
 				oDocumentContent.Add_ToContent(nContentLen, oNewParagraph);
 			}
 		}

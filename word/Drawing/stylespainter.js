@@ -377,7 +377,7 @@ CStylesPainter.prototype.drawStyle = function(_api, graphics, style, styleName)
 		var hdr = new CHeaderFooter(editor.WordControl.m_oLogicDocument.HdrFtr, editor.WordControl.m_oLogicDocument, editor.WordControl.m_oDrawingDocument, AscCommon.hdrftr_Header);
 		var _dc = hdr.Content;//new CDocumentContent(editor.WordControl.m_oLogicDocument, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, false, true, false);
 
-		var par = new Paragraph(editor.WordControl.m_oDrawingDocument, _dc, false);
+		var par = new AscWord.Paragraph(_dc, false);
 		var run = new ParaRun(par, false);
 		run.AddText(styleName);
 

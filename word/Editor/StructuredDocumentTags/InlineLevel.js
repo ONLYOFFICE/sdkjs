@@ -1083,22 +1083,24 @@ CInlineLevelSdt.prototype.GetFixedFormBounds = function(isUsePaddings)
 };
 CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPage, isCheckHit)
 {
-	if (!this.Paragraph && this.Paragraph.LogicDocument)
+	if (!this.Paragraph)
 		return;
-	
-	var oLogicDocument   = this.Paragraph.LogicDocument;
-	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
+
+	let logicDocument   = this.Paragraph.GetLogicDocument();
+	let drawingDocument = this.Paragraph.getDrawingDocument();
+	if (!logicDocument || !drawingDocument)
+		return;
 	
 	if (this.IsContentControlEquation())
 	{
-		oDrawingDocument.OnDrawContentControl(null, nType);
+		drawingDocument.OnDrawContentControl(null, nType);
 		return;
 	}
 
 	// Не рисуем трек для фиксед форм, т.к. он уже есть от рамки автофигуры
-	if (this.IsFixedForm() && this.IsCurrent() && oLogicDocument.IsDocumentEditor() && !oLogicDocument.IsFillingOFormMode())
+	if (this.IsFixedForm() && this.IsCurrent() && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingOFormMode())
 	{
-		oDrawingDocument.OnDrawContentControl(null, nType);
+		drawingDocument.OnDrawContentControl(null, nType);
 		return;
 	}
 	
@@ -1112,10 +1114,10 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 		else
 		{
 			// В режиме заполнения, у внутренних текстовых форм и чекбоксов не рисуем собственный трек, а только внешний
-			if (oLogicDocument.IsFillingFormMode()
+			if (logicDocument.IsFillingFormMode()
 				&& (this.IsTextForm() || this.IsCheckBox()))
 			{
-				oDrawingDocument.OnDrawContentControl(null, nType);
+				drawingDocument.OnDrawContentControl(null, nType);
 				oMainForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Main, X, Y, nCurPage, isCheckHit);
 				return;
 			}
@@ -1145,12 +1147,12 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 		if (AscCommon.ContentControlTrack.Hover === nType && this.IsForm() && (sHelpText = this.GetFormPr().HelpText))
 		{
 			var oMMData   = new AscCommon.CMouseMoveData();
-			var oCoords   = oDrawingDocument.ConvertCoordsToCursorWR(X, Y, this.Paragraph.GetAbsolutePage(nCurPage), this.Paragraph.Get_ParentTextTransform());
+			var oCoords   = drawingDocument.ConvertCoordsToCursorWR(X, Y, this.Paragraph.GetAbsolutePage(nCurPage), this.Paragraph.Get_ParentTextTransform());
 			oMMData.X_abs = oCoords.X - 5;
 			oMMData.Y_abs = oCoords.Y;
 			oMMData.Type  = Asc.c_oAscMouseMoveDataTypes.Form;
 			oMMData.Text  = sHelpText;
-			oLogicDocument.GetApi().sync_MouseMoveCallback(oMMData);
+			logicDocument.GetApi().sync_MouseMoveCallback(oMMData);
 		}
 	}
 
@@ -1159,21 +1161,21 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 	{
 		let oPolygon = new AscCommon.CPolygon();
 		oPolygon.fill([[oShape.getFormRelRect()]]);
-		oDrawingDocument.OnDrawContentControl(this, nType, oPolygon.GetPaths(0));
+		drawingDocument.OnDrawContentControl(this, nType, oPolygon.GetPaths(0));
 		return;
 	}
 
 	if (this.IsHideContentControlTrack())
 	{
-		oDrawingDocument.OnDrawContentControl(null, nType);
+		drawingDocument.OnDrawContentControl(null, nType);
 		return;
 	}
 
 	let oPolygon = this.GetBoundingPolygon();
 	if (!oPolygon || !oPolygon.length)
-		oDrawingDocument.OnDrawContentControl(null, nType);
+		drawingDocument.OnDrawContentControl(null, nType);
 	else
-		oDrawingDocument.OnDrawContentControl(this, nType, oPolygon);
+		drawingDocument.OnDrawContentControl(this, nType, oPolygon);
 };
 CInlineLevelSdt.prototype.IsDrawContentControlsTrackBounds = function()
 {

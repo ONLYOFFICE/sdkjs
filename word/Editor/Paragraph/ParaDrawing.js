@@ -2102,7 +2102,7 @@ ParaDrawing.prototype.AddToDocument = function(oAnchorPos, oRunPr, oRun, oPictur
 	let oAnchorParagraph = oAnchorPos.Paragraph;
 	oAnchorParagraph.Check_NearestPos(oAnchorPos);
 
-	let oInsertParagraph = new AscCommonWord.Paragraph(this.DrawingDocument);
+	let oInsertParagraph = new AscWord.Paragraph();
 	var oDrawingRun = new AscCommonWord.ParaRun();
 	oDrawingRun.AddToContent(0, this);
 

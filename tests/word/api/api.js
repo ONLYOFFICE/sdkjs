@@ -41,7 +41,7 @@ $(function () {
 	{
 		AscTest.ClearDocument();
 
-		let p = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let p = new AscWord.Paragraph();
 		logicDocument.AddToContent(0, p);
 
 		logicDocument.SelectAll();
@@ -52,7 +52,7 @@ $(function () {
 		logicDocument.SelectAll();
 		assert.strictEqual(logicDocument.GetSelectedText(false, {NewLineParagraph : true}), "Hello World!\r\n", "Add text 'Hello World!'");
 
-		let p2 = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let p2 = new AscWord.Paragraph();
 		logicDocument.AddToContent(1, p2);
 
 		logicDocument.RemoveSelection();
@@ -71,7 +71,7 @@ $(function () {
 		function StartTest(text)
 		{
 			AscTest.ClearDocument();
-			let p = new AscWord.CParagraph(AscTest.DrawingDocument);
+			let p = new AscWord.Paragraph();
 			logicDocument.AddToContent(0, p);
 			logicDocument.AddTextWithPr(text);
 			logicDocument.MoveCursorToEndPos();

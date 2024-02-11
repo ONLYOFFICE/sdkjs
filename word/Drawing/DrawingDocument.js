@@ -2882,7 +2882,7 @@ function CDrawingDocument()
 		var _oldTurn = editor.isViewMode;
 		editor.isViewMode = true;
 
-		var par = new Paragraph(this, this.m_oWordControl.m_oLogicDocument);
+		var par = new AscWord.Paragraph(this.m_oWordControl.m_oLogicDocument);
 
 		par.MoveCursorToStartPos();
 
@@ -3193,7 +3193,7 @@ function CDrawingDocument()
 			{
 				var sStyleName = AscCommon.translateManager.getValue(arrLevels[nLvl].Styles[nStyle]);
 
-				var oParagraph = new Paragraph(this, oDocumentContent, false);
+				var oParagraph = new AscWord.Paragraph(oDocumentContent, false);
 				oDocumentContent.AddToContent(oParaIndex++, oParagraph);
 				oParagraph.SetParagraphStyleById(sStyleId);
 
@@ -3400,7 +3400,7 @@ function CDrawingDocument()
 				{
 					var sStyleName = AscCommon.translateManager.getValue(arrLevels[nCurrentLevel - 1].Styles[nStyle]);
 
-					var oParagraph = new Paragraph(this, oDocumentContent, false);
+					var oParagraph = new AscWord.Paragraph(oDocumentContent, false);
 					oDocumentContent.AddToContent(nCurrentLevel - 1, oParagraph);
 					oParagraph.SetParagraphStyleById(sStyleId);
 
@@ -3599,7 +3599,7 @@ function CDrawingDocument()
 		var bIncludeLabel = props.get_IncludeLabelAndNumber();
 		for (var nIndex = 0; nIndex < nCount; ++nIndex)
 		{
-			var oParagraph = new Paragraph(this, oDocumentContent, false);
+			var oParagraph = new AscWord.Paragraph(oDocumentContent, false);
 			oDocumentContent.AddToContent(oParaIndex++, oParagraph);
 			oParagraph.SetParagraphStyleById(sStyleId);
 

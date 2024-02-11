@@ -1605,7 +1605,7 @@ CBlockLevelSdt.prototype.GetSearchElementId = function(bNext, bCurrent)
 //----------------------------------------------------------------------------------------------------------------------
 CBlockLevelSdt.prototype.ClearContentControl = function()
 {
-	var oParagraph = new Paragraph(this.LogicDocument.Get_DrawingDocument(), this.Content);
+	var oParagraph = new AscWord.Paragraph(this.Content);
 	oParagraph.Correct_Content();
 
 	oParagraph.SelectAll();
@@ -1689,7 +1689,7 @@ CBlockLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(isSkip
 
 	this.Content.RemoveFromContent(0, this.Content.GetElementsCount(), false);
 
-	var oParagraph = new Paragraph(this.LogicDocument ? this.LogicDocument.GetDrawingDocument() : null, this.Content, false);
+	var oParagraph = new AscWord.Paragraph(this.Content, false);
 	oParagraph.Correct_Content();
 
 	oParagraph.SelectAll();
@@ -1762,7 +1762,7 @@ CBlockLevelSdt.prototype.private_FillPlaceholderContent = function()
 	}
 	else
 	{
-		var oParagraph = new Paragraph(this.LogicDocument ? this.LogicDocument.GetDrawingDocument() : null, this.Content, false);
+		var oParagraph = new AscWord.Paragraph(this.Content, false);
 		oParagraph.Correct_Content();
 
 		oParagraph.SelectAll();
@@ -1944,7 +1944,7 @@ CBlockLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 		var oDocContent = this.Content;
 		if (oDocContent.Content.length <= 0 || !oDocContent.Content[0].IsParagraph())
 		{
-			oFirstParagraph = new Paragraph(this.LogicDocument.GetDrawingDocument(), oDocContent);
+			oFirstParagraph = new AscWord.Paragraph(oDocContent);
 			oDocContent.AddToContent(0, oFirstParagraph);
 		}
 		else
@@ -2234,7 +2234,7 @@ CBlockLevelSdt.prototype.SelectListItem = function(sValue)
 				}
 				else
 				{
-					oParagraph = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.Content);
+					oParagraph = new AscWord.Paragraph(this.Content);
 					this.Content.AddToParagraph(this.Content.length, oParagraph);
 				}
 
@@ -2380,7 +2380,7 @@ CBlockLevelSdt.prototype.private_UpdateDatePickerContent = function()
 				}
 				else
 				{
-					oParagraph = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.Content);
+					oParagraph = new AscWord.Paragraph(this.Content);
 					this.Content.AddToParagraph(this.Content.length, oParagraph);
 				}
 

@@ -2880,7 +2880,7 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 						// Параграф начинается до заданной страницы и заканчивается после. Нам нужно разделить его на
 						// 2 параграфа в заданной точке.
 
-						var NewParagraph = new Paragraph(NewDocContent.DrawingDocument, NewDocContent);
+						var NewParagraph = new AscWord.Paragraph();
 						NearestPos.Paragraph.Split(NewParagraph, NearestPos.ContentPos);
 						NewDocContent.Internal_Content_Add(NewIndex + 1, NewParagraph);
 
@@ -2896,7 +2896,7 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 						// в конец добавляем новый пустой параграф
 						NewIndex++;
 						if (NewIndex >= NewDocContent.Content.length - 1)
-							NewDocContent.Internal_Content_Add(NewDocContent.Content.length, new Paragraph(NewDocContent.DrawingDocument, NewDocContent));
+							NewDocContent.Internal_Content_Add(NewDocContent.Content.length, new AscWord.Paragraph());
 					}
 
 				}
@@ -3024,7 +3024,7 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 				}
 				else if (true != TarParagraph.IsCursorAtBegin(ParaContentPos))
 				{
-					var NewParagraph = new Paragraph(NewDocContent.DrawingDocument, NewDocContent);
+					var NewParagraph = new AscWord.Paragraph();
 					NearestPos.Paragraph.Split(NewParagraph, NearestPos.ContentPos);
 					NewDocContent.Internal_Content_Add(NewIndex + 1, NewParagraph);
 

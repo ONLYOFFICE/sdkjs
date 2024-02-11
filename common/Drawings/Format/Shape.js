@@ -390,8 +390,8 @@
 			var _drawing_document = isRealObject(drawingDocument) ? drawingDocument : paragraph.DrawingDocument;
 			var _new_parent = isRealObject(newParent) ? newParent : null;
 
-			var new_paragraph = new Paragraph(_drawing_document, _new_parent, true);
-			if (!(paragraph instanceof Paragraph))
+			var new_paragraph = new AscWord.Paragraph(_new_parent, true);
+			if (!(paragraph instanceof AscWord.Paragraph))
 				return new_paragraph;
 			var oCopyPr = paragraph.Pr.Copy();
 
@@ -434,7 +434,7 @@
 			var i, j, oElement;
 			for (i = 0; i < aElements.length; ++i) {
 				oElement = aElements[i];
-				if (oElement instanceof AscCommonWord.Paragraph) {
+				if (oElement instanceof AscWord.Paragraph) {
 					aResult.push(ConvertParagraphToPPTX(oElement));
 				} else if (oElement instanceof AscCommonWord.CTable) {
 					var paragraphs = [];
@@ -1074,7 +1074,7 @@
 				let aNewParagraphs = [];
 				for (let nIdx = 0; nIdx < aContent.length; ++nIdx) {
 					let oCurElement = aContent[nIdx];
-					if (oCurElement instanceof AscCommonWord.Paragraph) {
+					if (oCurElement instanceof AscWord.Paragraph) {
 						let oParagraph = ConvertParagraphToPPTX(oCurElement, drawingDocument, new_content, bIsAddMath);
 						aNewParagraphs.push(oParagraph);
 					}

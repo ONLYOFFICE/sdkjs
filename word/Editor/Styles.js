@@ -7742,7 +7742,7 @@ CStyle.prototype.wholeToTablePr = function() {
 };
 /**
  * Получаем список параграфов, использующих данный стиль, либо стиль, основанный на данном
- * @returns {AscWord.CParagraph[]}
+ * @returns {AscWord.Paragraph[]}
  */
 CStyle.prototype.GetRelatedParagraphs = function()
 {

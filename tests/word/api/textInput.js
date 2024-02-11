@@ -42,7 +42,7 @@ $(function () {
 	{
 		AscTest.ClearDocument();
 		
-		let p = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let p = new AscWord.Paragraph();
 		logicDocument.AddToContent(0, p);
 		
 		logicDocument.SelectAll();
@@ -100,7 +100,7 @@ $(function () {
 		AscTest.StartCollaboration();
 		
 		AscTest.ClearDocument();
-		let p = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let p = new AscWord.Paragraph();
 		logicDocument.AddToContent(0, p);
 		
 		AscTest.EnterText("ABC");
@@ -145,7 +145,7 @@ $(function () {
 		{
 			AscTest.ClearDocument();
 
-			let p = new AscWord.CParagraph(AscTest.DrawingDocument);
+			let p = new AscWord.Paragraph();
 			logicDocument.AddToContent(0, p);
 
 			let overallText = "";

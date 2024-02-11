@@ -4376,7 +4376,7 @@ function (window, undefined) {
 		this.Anchor = sBookmark;
 	};
 	CHyperlinkProperty.prototype.is_Heading = function () {
-		return (this.Heading instanceof AscCommonWord.Paragraph ? true : false)
+		return (this.Heading instanceof AscWord.Paragraph ? true : false)
 	};
 	CHyperlinkProperty.prototype.put_Heading = function (oParagraph) {
 		this.Heading = oParagraph;
@@ -4978,7 +4978,7 @@ function (window, undefined) {
 				}
 				for (let i = 0; i < aParagraphsS.length; ++i) {
 					let oCurParS = aParagraphsS[i];
-					let oNewParagraph = new AscCommonWord.Paragraph(oContent.DrawingDocument, oContent, !bWord);
+					let oNewParagraph = new AscWord.Paragraph(oContent, !bWord);
 					if (AscFormat.isRealNumber(oCurParS['align'])) {
 						oNewParagraph.Set_Align(oCurParS['align'])
 					}

@@ -141,8 +141,8 @@ $(function () {
 	{
 		AscTest.ClearDocument();
 		
-		let p1 = new AscWord.CParagraph(editor.WordControl);
-		let p2 = new AscWord.CParagraph(editor.WordControl);
+		let p1 = new AscWord.Paragraph();
+		let p2 = new AscWord.Paragraph();
 		
 		logicDocument.AddToContent(0, p1);
 		logicDocument.AddToContent(1, p2);
@@ -215,7 +215,7 @@ $(function () {
 	QUnit.test("Check format in text form", function (assert)
 	{
 		AscTest.ClearDocument();
-		let p = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let p = new AscWord.Paragraph();
 		logicDocument.AddToContent(0, p);
 		logicDocument.MoveCursorToEndPos();
 		
@@ -262,7 +262,7 @@ $(function () {
 
 		assert.strictEqual(textForm.GetInnerText(), "ABC", "Check inner text after entering 'AB12C3'");
 
-		p = new AscWord.CParagraph(AscTest.DrawingDocument);
+		p = new AscWord.Paragraph();
 		logicDocument.AddToContent(1, p);
 
 		p.SetThisElementCurrent();
@@ -328,9 +328,9 @@ $(function () {
 	{
 		AscTest.SetEditingMode();
 		AscTest.ClearDocument();
-		let p1 = new AscWord.CParagraph(AscTest.DrawingDocument);
-		let p2 = new AscWord.CParagraph(AscTest.DrawingDocument);
-		let p3 = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let p1 = new AscWord.Paragraph();
+		let p2 = new AscWord.Paragraph();
+		let p3 = new AscWord.Paragraph();
 		logicDocument.AddToContent(0, p1);
 		logicDocument.AddToContent(1, p2);
 		logicDocument.AddToContent(1, p3);

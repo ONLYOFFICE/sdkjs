@@ -1322,6 +1322,16 @@ CDocumentContentElementBase.prototype.GetLogicDocument = function()
 	return this.LogicDocument;
 };
 /**
+ * @returns {?CDrawingDocument}
+ */
+CDocumentContentElementBase.prototype.getDrawingDocument = function()
+{
+	if (this.DrawingDocument)
+		return this.DrawingDocument;
+	
+	return this.Parent && this.Parent.getDrawingDocument ? this.Parent.getDrawingDocument() : null;
+};
+/**
  * Получаем настройки рамки для данного элемента
  * @returns {?CFramePr}
  */

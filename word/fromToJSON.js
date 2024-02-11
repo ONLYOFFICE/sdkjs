@@ -3779,7 +3779,7 @@
 		{
 			TempElm = aContent[nElm];
 
-			if (TempElm instanceof AscCommonWord.Paragraph)
+			if (TempElm instanceof AscWord.Paragraph)
 				aResult.push(this.SerParagraph(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
 			else if (TempElm instanceof AscCommonWord.CTable)
 				aResult.push(this.SerTable(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
@@ -4196,7 +4196,7 @@
 		{
 			TempElm = oFootEndnote.Content[nElm];
 
-			if (TempElm instanceof AscCommonWord.Paragraph)
+			if (TempElm instanceof AscWord.Paragraph)
 				oFootEndnoteObj["content"].push(this.SerParagraph(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
 			else if (TempElm instanceof AscCommonWord.CTable)
 				oFootEndnoteObj["content"].push(this.SerTable(TempElm, aComplexFieldsToSave, oMapCommentsInfo, oMapBookmarksInfo));
@@ -4345,7 +4345,7 @@
 		{
 			TempElm = oDocument.Content[nElm];
 
-			if (TempElm instanceof AscCommonWord.Paragraph)
+			if (TempElm instanceof AscWord.Paragraph)
 				oDocObject["content"].push(this.SerParagraph(TempElm, aComplexFieldsToSave));
 			else if (TempElm instanceof AscCommonWord.CTable)
 				oDocObject["content"].push(this.SerTable(TempElm, aComplexFieldsToSave));
@@ -5371,7 +5371,7 @@
 			var oFieldEndPos          = null;
 			var arrTemp               = [];
 
-			if (oElm instanceof AscCommonWord.Paragraph)
+			if (oElm instanceof AscWord.Paragraph)
 			{
 				arrTemp = oElm.GetAllFields();
 				if (!bAll)
@@ -5429,7 +5429,7 @@
 		{
 			var oElm = arrContent[nElm];
 
-			if (oElm instanceof AscCommonWord.Paragraph)
+			if (oElm instanceof AscWord.Paragraph)
 			{
 				var aParaComments = oElm.GetAllComments();
 				for (var nComment = 0; nComment < aParaComments.length; nComment++)
@@ -5484,7 +5484,7 @@
 		{
 			var oElm = arrContent[nElm];
 
-			if (oElm instanceof AscCommonWord.Paragraph)
+			if (oElm instanceof AscWord.Paragraph)
 			{
 				for (var nItem = 0; nItem < oElm.Content.length; nItem++)
 				{
@@ -8907,7 +8907,7 @@
 		var aContent  = oParsedPara["content"];
 		var oDocument = private_GetLogicDocument();
 		var oParaPr   = oParsedPara["bFromDocument"] === true ? this.ParaPrFromJSON(oParsedPara["pPr"], oPrevNumIdInfo) : this.ParaPrDrawingFromJSON(oParsedPara["pPr"]);
-		var oPara     = new AscCommonWord.Paragraph(private_GetDrawingDocument(), oParent || oDocument, !oParsedPara["bFromDocument"]);
+		var oPara     = new AscWord.Paragraph(oParent || oDocument, !oParsedPara["bFromDocument"]);
 
 		// символ конца параграфа
 		oPara.TextPr.Set_Value(oParsedPara["bFromDocument"] === true ? this.TextPrFromJSON(oParsedPara["rPr"]) : this.TextPrDrawingFromJSON(oParsedPara["rPr"]));

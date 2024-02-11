@@ -345,7 +345,7 @@ CDocumentOutline.prototype.InsertHeader = function(nIndex, isBefore)
 	{
 		this.LogicDocument.StartAction(AscDFH.historydescription_Document_AddElementToOutline);
 
-		var oParagraph = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.LogicDocument);
+		var oParagraph = new AscWord.Paragraph();
 		oParagraph.SetParagraphStyleById(this.LogicDocument.GetStyles().GetDefaultHeading(nLevel));
 		this.LogicDocument.AddToContent(nPos, oParagraph);
 		this.LogicDocument.Recalculate();
@@ -372,7 +372,7 @@ CDocumentOutline.prototype.InsertSubHeader = function(nIndex)
 	{
 		this.LogicDocument.StartAction(AscDFH.historydescription_Document_AddElementToOutline);
 
-		var oParagraph = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.LogicDocument);
+		var oParagraph = new AscWord.Paragraph();
 		oParagraph.SetParagraphStyleById(this.LogicDocument.GetStyles().GetDefaultHeading(nLevel + 1));
 		this.LogicDocument.AddToContent(nPos, oParagraph);
 		this.LogicDocument.Recalculate();
