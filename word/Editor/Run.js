@@ -7600,22 +7600,9 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 	if (this.Paragraph.IsInFixedForm())
 		TextPr.Position = 0;
 
-	let oLogicDocument = this.Paragraph.GetLogicDocument();
-	let oLayout;
-	if (oLogicDocument
-		&& oLogicDocument.IsDocumentEditor()
-		&& (oLayout = oLogicDocument.GetDocumentLayout()))
-	{
-		let nFontCoef = oLayout.GetFontScale();
-
-		let shape   = this.Paragraph.GetParentShape();
-		let drawing = shape ? shape.GetParaDrawing() : null;
-		if (drawing)
-			nFontCoef = drawing.GetScaleCoefficient();
-
-		TextPr.FontSize *= nFontCoef;
-		TextPr.FontSizeCS *= nFontCoef;
-	}
+	let layoutCoeff = this.Paragraph.getLayoutFontSizeCoefficient();
+	TextPr.FontSize   *= layoutCoeff;
+	TextPr.FontSizeCS *= layoutCoeff;
 
 	return TextPr;
 };

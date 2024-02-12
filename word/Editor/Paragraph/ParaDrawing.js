@@ -1283,25 +1283,8 @@ ParaDrawing.prototype.Measure = function()
 };
 ParaDrawing.prototype.GetScaleCoefficient = function ()
 {
-	let oParagraph = this.GetParagraph();
-	let oLogicDocument;
-
-	if (oParagraph
-		&& (oLogicDocument = oParagraph.GetLogicDocument())
-		&& oLogicDocument.IsDocumentEditor())
-	{
-		let oLayout = oLogicDocument.Layout;
-		oLogicDocument.Layout = oLogicDocument.Layouts.Print;
-		let oSectPr = oParagraph.Get_SectPr();
-		oLogicDocument.Layout = oLayout;
-
-		if (!oSectPr)
-			return 1;
-
-		return oLogicDocument.GetDocumentLayout().GetScaleBySection(oSectPr);
-	}
-
-	return 1;
+	let paragraph = this.GetParagraph();
+	return paragraph ? paragraph.getLayoutScaleCoefficient() : 1;
 };
 ParaDrawing.prototype.createPlaceholderControl = function (arrObjects)
 {

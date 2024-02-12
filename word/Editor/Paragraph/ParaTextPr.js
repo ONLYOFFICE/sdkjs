@@ -94,19 +94,22 @@ ParaTextPr.prototype.IsParagraphSimpleChanges = function()
 };
 ParaTextPr.prototype.GetCompiledPr = function()
 {
-	let oTextPr;
+	let textPr;
 	if (!this.Parent || !this.Parent.Get_CompiledPr2)
 	{
-		oTextPr = new CTextPr();
-		oTextPr.InitDefault();
+		textPr = new CTextPr();
+		textPr.InitDefault();
 	}
 	else
 	{
-		oTextPr = this.Parent.Get_CompiledPr2(false).TextPr.Copy();
+		textPr = this.Parent.Get_CompiledPr2(false).TextPr.Copy();
+		let layoutCoeff = this.Parent.getLayoutFontSizeCoefficient();
+		textPr.FontSize   *= layoutCoeff;
+		textPr.FontSizeCS *= layoutCoeff;
 	}
-
-	oTextPr.Merge(this.Value);
-	return oTextPr;
+	
+	textPr.Merge(this.Value);
+	return textPr;
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для изменения свойств

@@ -17381,6 +17381,11 @@ Paragraph.prototype.GetParaEndCompiledPr = function()
 
 	oTextPr.Merge(this.TextPr.Value);
 	oTextPr.CheckFontScale();
+	
+	let layoutCoeff = this.getLayoutFontSizeCoefficient();
+	oTextPr.FontSize   *= layoutCoeff;
+	oTextPr.FontSizeCS *= layoutCoeff;
+	
 	return oTextPr;
 };
 Paragraph.prototype.GetLastParagraph = function()
@@ -18755,6 +18760,22 @@ Paragraph.prototype.SelectFotMath = function()
 	
 	this.Document_SetThisElementCurrent(false);
 }
+Paragraph.prototype.getLayoutFontSizeCoefficient = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return 1;
+	
+	let shape   = this.GetParentShape();
+	let drawing = shape ? shape.GetParaDrawing() : null;
+	if (drawing)
+		return drawing.GetScaleCoefficient();
+	
+	if (this.IsTableCellContent())
+		return this.getLayoutScaleCoefficient();
+	
+	return logicDocument.GetDocumentLayout().GetFontScale();
+};
 
 Paragraph.prototype.asc_getText = function()
 {

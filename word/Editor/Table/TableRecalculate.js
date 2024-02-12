@@ -258,17 +258,19 @@ CTable.prototype.private_RecalculateGrid = function()
 
 	if (this.RecalcInfo.TableGrid)
 	{
+		let layoutCoeff = Math.min(1, this.getLayoutScaleCoefficient());
+		
 		var arrSumGrid = [];
 		var nTempSum   = 0;
 		arrSumGrid[-1] = 0;
 		for (var nIndex = 0, nCount = this.TableGrid.length; nIndex < nCount; ++nIndex)
 		{
-			nTempSum += this.TableGrid[nIndex];
+			nTempSum += this.TableGrid[nIndex] * layoutCoeff;
 			arrSumGrid[nIndex] = nTempSum;
 		}
 
 		PctWidth = this.private_RecalculatePercentWidth();
-		MinWidth = this.private_GetTableMinWidth();
+		MinWidth = this.private_GetTableMinWidth() * layoutCoeff;
 
 		nTableW = 0;
 		if (tblwidth_Auto === TablePr.TableW.Type)
@@ -284,7 +286,7 @@ CTable.prototype.private_RecalculateGrid = function()
 			if (tblwidth_Pct === TablePr.TableW.Type)
 				nTableW = PctWidth * TablePr.TableW.W / 100;
 			else
-				nTableW = TablePr.TableW.W;
+				nTableW = TablePr.TableW.W * layoutCoeff;
 
 			if (0.001 > nTableW)
 				nTableW = 0;
@@ -341,7 +343,7 @@ CTable.prototype.private_RecalculateGrid = function()
 					if (tblwidth_Pct === oCellW.Type)
 						nCellWidth = PctWidth * oCellW.W / 100;
 					else
-						nCellWidth = oCellW.W;
+						nCellWidth = oCellW.W * layoutCoeff;
 
 					if (null !== nCellSpacing)
 					{
@@ -1339,6 +1341,8 @@ CTable.prototype.private_RecalculateBorders = function()
     this.MaxTopBorder = MaxTopBorder;
     this.MaxBotBorder = MaxBotBorder;
     this.MaxBotMargin = MaxBotMargin;
+	
+	let layoutCoeff = this.getLayoutScaleCoefficient();
 
     // Также для каждой ячейки обсчитаем ее метрики и левую и правую границы
     for ( var CurRow = 0; CurRow < this.Content.length; CurRow++  )
@@ -1424,21 +1428,21 @@ CTable.prototype.private_RecalculateBorders = function()
             var CellBorders = Cell.Get_Borders();
             if ( null != CellSpacing )
             {
-                X_content_start += CellMar.Left.W;
-                X_content_end   -= CellMar.Right.W;
+                X_content_start += CellMar.Left.W * layoutCoeff;
+                X_content_end   -= CellMar.Right.W * layoutCoeff;
 
                 if ( border_Single === CellBorders.Left.Value )
-                    X_content_start += CellBorders.Left.Size;
+                    X_content_start += CellBorders.Left.Size * layoutCoeff;
 
                 if ( border_Single === CellBorders.Right.Value )
-                    X_content_end -= CellBorders.Right.Size;
+                    X_content_end -= CellBorders.Right.Size * layoutCoeff;
             }
             else
             {
                 if ( vmerge_Continue === Vmerge )
                 {
-                    X_content_start += CellMar.Left.W;
-                    X_content_end   -= CellMar.Right.W;
+                    X_content_start += CellMar.Left.W * layoutCoeff;
+                    X_content_end   -= CellMar.Right.W * layoutCoeff;
 					
 					// Границы для этих ячеек рассчитываются во время расчета границ первой ячейки в вертикальном
 					// объединении. Но может случиться, что если что-то пошло не так и у нас первая же ячейка первой строки
@@ -1529,14 +1533,14 @@ CTable.prototype.private_RecalculateBorders = function()
                     Borders_Info.Left_Max  = Max_l_w;
 
                     if ( Max_l_w / 2 > CellMar.Left.W )
-                        X_content_start += Max_l_w / 2;
+                        X_content_start += Max_l_w / 2 * layoutCoeff;
                     else
-                        X_content_start += CellMar.Left.W;
+                        X_content_start += CellMar.Left.W * layoutCoeff;
 
                     if ( Max_r_w / 2 > CellMar.Right.W )
-                        X_content_end -= Max_r_w / 2;
+                        X_content_end -= Max_r_w / 2 * layoutCoeff;
                     else
-                        X_content_end -= CellMar.Right.W;
+                        X_content_end -= CellMar.Right.W * layoutCoeff;
 
                     Cell.Set_BorderInfo_Left ( Borders_Info.Left,  Max_l_w );
                     Cell.Set_BorderInfo_Right( Borders_Info.Right, Max_r_w );
