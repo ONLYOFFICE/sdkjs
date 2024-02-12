@@ -206,11 +206,11 @@
 		let res = false;
 
 		switch (type) {
-			case AscCommonExcel.c_oSerUserProtectedRangeType.view: {
+			case Asc.c_oSerUserProtectedRangeType.view: {
 				res = this.isUserCanView(userId);
 				break;
 			}
-			case AscCommonExcel.c_oSerUserProtectedRangeType.edit: {
+			case Asc.c_oSerUserProtectedRangeType.edit: {
 				res = this.isUserCanEdit(userId);
 				break;
 			}
@@ -335,7 +335,7 @@
 	CUserProtectedRangeUserInfo.prototype.isCanEdit = function (id) {
 		let res = false;
 		if (id === this.id) {
-			res = this.asc_getType() === AscCommonExcel.c_oSerUserProtectedRangeType.edit;
+			res = this.asc_getType() === Asc.c_oSerUserProtectedRangeType.edit;
 		}
 		return res;
 	};
@@ -343,8 +343,7 @@
 	CUserProtectedRangeUserInfo.prototype.isCanView = function (id) {
 		let res = false;
 		if (id === this.id) {
-			let type = this.asc_getType();
-			res = type !== AscCommonExcel.c_oSerUserProtectedRangeType.notView;
+			res = this.asc_getType() !== Asc.c_oSerUserProtectedRangeType.notView;
 		}
 		return res;
 	};
