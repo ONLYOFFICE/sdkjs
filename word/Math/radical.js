@@ -661,24 +661,12 @@ CRadical.prototype.setPosition = function(pos, PosInfo)
 
     pos.x += this.size.width;
 };
-CRadical.prototype.Get_ParaContentPosByXY = function(SearchPos, Depth, _CurLine, _CurRange, StepEnd)
+CRadical.prototype.getParagraphContentPosByXY = function(searchState)
 {
-    var bResult;
-
-    if(this.Pr.type == DEGREE_RADICAL)
-    {
-        bResult = CMathBase.prototype.Get_ParaContentPosByXY.call(this, SearchPos, Depth, _CurLine, _CurRange, StepEnd);
-    }
-    else
-    {
-        if(true === this.Content[1].Get_ParaContentPosByXY(SearchPos, Depth + 1, _CurLine, _CurRange, StepEnd))
-        {
-            SearchPos.Pos.Update2(1, Depth);
-            bResult = true;
-        }
-    }
-
-    return bResult;
+	if (DEGREE_RADICAL === this.Pr.type)
+		CMathBase.prototype.getParagraphContentPosByXY.call(this, searchState);
+	else
+		this.Content[1].getParagraphContentPosByXY(searchState);
 };
 CRadical.prototype.Draw_LinesForContent = function(PDSL)
 {

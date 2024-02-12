@@ -248,10 +248,6 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
-
-        this._replies.forEach(function(reply) {
-            reply.WriteToBinary(memory); 
-        });
     };
     
     function TurnOffHistory() {
@@ -315,6 +311,9 @@
                 let nPointsCount = Math.ceil(nLineLenght / (dR2)) + 1;
                 aPoints = aPoints.concat(findPointsOnLine(oPt1, oPt2, nPointsCount));
             }
+
+            if (Math.abs(aPoints[0].x - aPoints[aPoints.length - 1].x) < 0.001 && Math.abs(aPoints[0].y - aPoints[aPoints.length - 1].y) < 0.001)
+                aPoints.length = aPoints.length - 1;
         }
         else {
             while (dAlpha < 2* Math.PI) {

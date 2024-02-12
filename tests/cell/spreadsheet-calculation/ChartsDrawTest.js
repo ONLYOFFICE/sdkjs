@@ -1920,7 +1920,7 @@ $(function () {
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [0.693147181, 1.098612289, 1.791759469, 2.079441542, 2.302585093, 2.48490665];
 			letiables = [0.3674, 1.5776];
-			rSquared = 0.9461;
+			rSquared = 0.9291;
 			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
@@ -1956,7 +1956,7 @@ $(function () {
 			catVals = [0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469];
 			valVals = [-2.302585093, -1.203972804, -1.609437912, -0.693147181, -0.356674944, -0.105360516];
 			letiables = [1.1616, 0.0984];
-			rSquared = 0.8697;
+			rSquared = 0.9217;
 			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POWER);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
@@ -1974,7 +1974,7 @@ $(function () {
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [0.693147181, 0, 1.386294361, 1.098612289, 1.791759469, 1.609437912];
 			letiables = [0.2763, 1.1384];
-			rSquared = 0.6083;
+			rSquared = 0.6496;
 			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_EXP);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
@@ -2001,7 +2001,7 @@ $(function () {
 			catVals = [0, 0.693147181, 1.098612289, 1.386294361, 1.609437912, 1.791759469];
 			valVals = [1.609437912, 3.912023005, 6.214608098, 8.517193191, 10.81977828, 13.12236338];
 			letiables = [6.2903, 1.5974];
-			rSquared = 0.9363;
+			rSquared = 0.9537;
 			results = trendline.prototype._dispRSquared(catVals, valVals, letiables, AscFormat.TRENDLINE_TYPE_POWER);
 
 			assert.ok(isEqual(results, rSquared), "The dispRSquared function works incorrectly: expected rSquared:" + rSquared + ', got:' + results);
@@ -2027,7 +2027,7 @@ $(function () {
 			let catVals = [1, 2, 3, 4, 5, 6];
 			let valVals = [4, 6, 3, 7, 8, 9];
 			let letiables = [1.6154, 0];
-			let rSquared = 0.3464;
+			let rSquared = 0.6522;
 			let order = 2;
 			let intercept = 0;
 			let equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept);
@@ -2087,7 +2087,7 @@ $(function () {
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [2, 3, 6, 8, 10, 12];
 			letiables = [0.4726, 1];
-			rSquared = 0.85;
+			rSquared = 0.8936;
 			order = 2;
 			intercept = 1;
 
@@ -2102,7 +2102,7 @@ $(function () {
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [2, 3, 6, 8, 10, 12];
 			letiables = [0.3126, 2];
-			rSquared = 0.9201;
+			rSquared = 0.9455;
 			order = 2;
 			intercept = 2;
 
@@ -2191,7 +2191,7 @@ $(function () {
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [-0.5, -0.4, -0.2, -0.1, 0.6, 0.9];
 			letiables = [0.5286, -2];
-			rSquared = 0.1296;
+			rSquared = 0.9023;
 			order = 2;
 			intercept = -2;
 			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept);
@@ -2205,7 +2205,7 @@ $(function () {
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [2, 1, 4, 3, 6, 5];
 			letiables = [-1.8864, 12.365]
-			rSquared = -8.44;
+			rSquared = 0.6865;
 			order = 2;
 			intercept = 12.365;
 			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept)
@@ -2219,7 +2219,7 @@ $(function () {
 			catVals = [1, 2, 3, 4];
 			valVals = [2, 8, 16, 50];
 			letiables = [0.1223, 12.365]
-			rSquared = 0.0659;
+			rSquared = 0.873;
 			order = 2;
 			intercept = 12.365;
 			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept);
@@ -2233,7 +2233,7 @@ $(function () {
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [4, -6, 3, -7, 8, 10];
 			letiables = [2.4079, -6.958]
-			rSquared = 0.1845;
+			rSquared = 0.2197;
 			order = 2;
 			intercept = -6.958;
 			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept);
@@ -2247,7 +2247,7 @@ $(function () {
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [5, 50, 500, 5000, 50000, 500000];
 			letiables = [2.6197, 0.1265]
-			rSquared = 0.9765;
+			rSquared = 0.9993;
 			order = 2;
 			intercept = 0.1265;
 			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_EXP, order, intercept);
@@ -2261,7 +2261,7 @@ $(function () {
 			catVals = [1, 2, 3, 4, 5, 6];
 			valVals = [0, 2, 3, 4, 5, 0];
 			letiables = [0.5642, 0.1265]
-			rSquared = -0.012;
+			rSquared = 0.067;
 			order = 2;
 			intercept = 0.1265;
 			equationResults = trendline.prototype._getEquationCoefficients(catVals, valVals, AscFormat.TRENDLINE_TYPE_LINEAR, order, intercept);
@@ -3164,9 +3164,9 @@ $(function () {
 			let boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [-19, 15.200000000000003]
 			catMin = 1;
@@ -3189,9 +3189,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [-4.199999999999999, 1.7714285714285714]
 			catMin = 1;
@@ -3214,9 +3214,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [-172840, 75837.85714285713]
 			catMin = 1;
@@ -3239,9 +3239,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [1.333333333333334, 0.28571428571428514]
 			catMin = 1;
@@ -3264,9 +3264,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [0.6000000000000014, 0.8285714285714283]
 			catMin = 1;
@@ -3289,9 +3289,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [-19, 15.200000000000003]
 			catMin = 1;
@@ -3314,9 +3314,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [-4.199999999999999, 1.7714285714285714]
 			catMin = 1;
@@ -3339,9 +3339,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [-172840, 75837.85714285713]
 			catMin = 1;
@@ -3364,9 +3364,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [1.333333333333334, 0.28571428571428514]
 			catMin = 1;
@@ -3389,9 +3389,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [1.0853780304041418, 2.202033537057911]
 			catMin = 1;
@@ -3414,9 +3414,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [-4.489845190674558, 29.565068994571178]
 			catMin = 1;
@@ -3439,9 +3439,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [-1.5298842782486233, 3.2191057898549253]
 			catMin = 1;
@@ -3465,8 +3465,8 @@ $(function () {
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
 			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [-94541.7317212114, 170658.5375973549]
 			catMin = 1;
@@ -3489,9 +3489,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [0.8734737381931108, 1.3313304643014572]
 			catMin = 1;
@@ -3514,9 +3514,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [1.0853780304041418, 2.202033537057911]
 			catMin = 1;
@@ -3539,9 +3539,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [-4.489845190674558, 29.565068994571178]
 			catMin = 1;
@@ -3564,9 +3564,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [-1.5298842782486233, 3.2191057898549253]
 			catMin = 1;
@@ -3589,9 +3589,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [-94541.7317212114, 170658.5375973549]
 			catMin = 1;
@@ -3614,9 +3614,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [0.8734737381931108, 1.3313304643014572]
 			catMin = 1;
@@ -3639,9 +3639,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [1.3470294984018791, 0.7283261086204962]
 			catMin = 1;
@@ -3664,9 +3664,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [1.8367239858577353, 2.210556099993931]
 			catMin = 1;
@@ -3689,9 +3689,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [1.597378819226662, 6.290262865578015]
 			catMin = 1;
@@ -3709,14 +3709,14 @@ $(function () {
 			maxCatVal = 6;
 			minCatVal = 1;
 			maxValVal = 125367.1738292479;
-			minValVal = 6;
+			minValVal = 1.5974;
 			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [1.3470294984018791, 0.7283261086204962]
 			catMin = 1;
@@ -3789,9 +3789,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [1.1384149147480012, 0.2762585712743759]
 			catMin = 1;
@@ -3814,9 +3814,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [0.7999999999999979, 1.034977465516456]
 			catMin = 1;
@@ -3839,9 +3839,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [0.5000000000000027, 2.302585092994045]
 			catMin = 1;
@@ -3859,14 +3859,14 @@ $(function () {
 			maxCatVal = 6;
 			minCatVal = 1;
 			maxValVal = 500000.00000000064;
-			minValVal = 6;
+			minValVal = 5.00007;
 			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [1.1384149147480012, 0.2762585712743759]
 			catMin = 1;
@@ -3889,9 +3889,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [0.7999999999999979, 1.034977465516456]
 			catMin = 1;
@@ -3914,9 +3914,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 
 			chartletiables = [0.5000000000000027, 2.302585092994045]
 			catMin = 1;
@@ -3939,9 +3939,9 @@ $(function () {
 			boundaries = lineBuilder.getBoundary();
 
 			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
-			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
-			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
-			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly:" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly:" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly:" + minValVal + ', got:' + boundaries.valMin);
 		})
 	}
 

@@ -90,7 +90,10 @@
         }, this, []);
     }
     EditShapeGeometryTrack.prototype.getOriginalObjectGeometry = function() {
-        return this.originalObject instanceof AscPDF.CAnnotationPolygon ? this.originalObject.GetGeometryEdit() : this.originalObject.spPr.geometry;
+        if(Asc.editor.isPdfEditor() && this.originalObject instanceof AscPDF.CAnnotationPolygon) {
+            return this.originalObject.GetGeometryEdit();
+        }
+        return this.originalObject.spPr.geometry;
     };
     EditShapeGeometryTrack.prototype.draw = function(overlay)
     {

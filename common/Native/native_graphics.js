@@ -761,3 +761,5 @@ CNativeGraphics.prototype =
 		return this.RENDERER_PDF_FLAG;
 	}
 };
+
+AscCommon.CNativeGraphics = CNativeGraphics;

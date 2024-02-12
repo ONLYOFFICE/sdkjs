@@ -185,6 +185,11 @@
 			"word/Editor/Paragraph/RunContent/Tab.js",
 			"word/Editor/Paragraph/RunContent/ParagraphMark.js",
 			"word/Editor/ParagraphContent.js",
+			"word/Editor/Paragraph/bidi-flow.js",
+			"word/Editor/Paragraph/complex-field-stack.js",
+			"word/Editor/Paragraph/draw-selection.js",
+			"word/Editor/Paragraph/position-calculator.js",
+			"word/Editor/Paragraph/search-position-by-coords.js",
 			"word/Editor/Paragraph/ParaTextPr.js",
 			"word/Editor/Paragraph/ParaTextPrChanges.js",
 			"word/Editor/Paragraph/ParaDrawing.js",
@@ -218,6 +223,10 @@
 			"word/Editor/Paragraph.js",
 			"word/Editor/ParagraphChanges.js",
 			"word/Editor/Paragraph_Recalculate.js",
+			"word/Editor/Paragraph/draw/content-draw-state.js",
+			"word/Editor/Paragraph/draw/highlight-draw-state.js",
+			"word/Editor/Paragraph/draw/line-draw-state.js",
+			"word/Editor/Paragraph/draw/paragraph-draw-state.js",
 			"word/Editor/Sections.js",
 			"word/Editor/SectionsChanges.js",
 			"word/Editor/Numbering/NumberingApplicator.js",
@@ -389,8 +398,6 @@
 			]
 		},
 		"mobile": [
-			"common/libfont/engine/fonts_native.js",
-			"common/Charts/ChartStyles.js"
 		],
 		"exclude_mobile": [
 			"vendor/iscroll.js",

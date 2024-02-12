@@ -815,6 +815,11 @@ CMathText.prototype.PreRecalc = function(Parent, ParaMath)
 };
 CMathText.prototype.Draw = function(x, y, pGraphics, InfoTextPr)
 {
+	// bug 46069
+	// 0x200C has a non-empty glyph in CambriaMath
+	if (this.value === 0x200C)
+		return;
+	
     var X = this.pos.x + x,
         Y = this.pos.y + y;
 
@@ -862,11 +867,42 @@ CMathText.prototype.Draw = function(x, y, pGraphics, InfoTextPr)
             pGraphics.SetFontSlot(this.FontSlot, FontKoef);
         }
 
-        if(this.RecalcInfo.bAccentIJ)
-            pGraphics.tg(this.RecalcInfo.StyleCode, X, Y);
-        else
-            pGraphics.FillTextCode(X, Y, this.RecalcInfo.StyleCode);    //на отрисовку символа отправляем положение baseLine
-    }
+		if (this.RecalcInfo.bAccentIJ)
+		{
+			pGraphics.tg(this.RecalcInfo.StyleCode, X, Y);
+		}
+		else if (Asc.editor.ShowParaMarks && (this.value === 8195 || this.value === 8194 || this.value === 160))
+		{
+			let widthOfCircle = g_oTextMeasurer.MeasureCode(176).Width / 2;
+			pGraphics.FillTextCode(X + this.size.width / 2 - widthOfCircle, Y, 176);
+			pGraphics.FillTextCode(X, Y, this.value);
+		}
+		else if (Asc.editor.ShowParaMarks && this.value === 8197) //draw \thicksp
+		{
+			// for some reason, word does not use a Unicode character for "Four-Per-Em Space", but a drawn rectangle
+			pGraphics.FillTextCode(X + this.size.width, Y, this.value)
+			let heightOfRect = this.size.width * 3;
+
+			let penW = 0.02;
+
+			let nWidth = this.size.width;
+			let nShrinkWidth = nWidth * 0.9;
+			let nPadding = (nWidth - nShrinkWidth) / 2;
+
+			let x1 = X + nPadding;
+			let x2 = X + nShrinkWidth + nPadding;
+			let y1 = Y;
+			let y2 = y - heightOfRect;
+
+			pGraphics.drawHorLine(0, y1, x1, x2, penW);
+			pGraphics.drawHorLine(0, y2, x1, x2, penW);
+			pGraphics.drawVerLine(0, x1, y1, y2, penW);
+			pGraphics.drawVerLine(0, x2, y1, y2, penW);
+		} else
+		{
+			pGraphics.FillTextCode(X, Y, this.RecalcInfo.StyleCode);    //на отрисовку символа отправляем положение baseLine}
+		}
+	}
 };
 CMathText.prototype.setPosition = function(pos)
 {
@@ -1153,7 +1189,7 @@ CMathAmp.prototype.Draw = function(x, y, pGraphics, InfoTextPr)
 {
     if(this.bAlignPoint == false)
         this.AmpText.Draw(x + this.GapLeft, y, pGraphics, InfoTextPr);
-    else if(editor.ShowParaMarks) // показать метки выравнивания, если включена отметка о знаках параграфа
+    else if(Asc.editor.ShowParaMarks) // показать метки выравнивания, если включена отметка о знаках параграфа
     {
         var X  = x + this.pos.x + this.GetWidthVisible(),
             Y  = y + this.pos.y,

@@ -1993,7 +1993,9 @@
 
 									ctx.fillStyle = (_object.ActiveButtonIndex == -1) ? AscCommon.GlobalSkin.ContentControlsTextActive : AscCommon.GlobalSkin.ContentControlsText;
 									ctx.font = Math.round(11 * rPR) + "px Helvetica, Arial, sans-serif";
-									_object.fillText(ctx, _object.Name, xText + Math.round(3 * rPR), _y + Math.round(20 * rPR) - Math.round(6 * rPR), _object.CalculateNameRectNatural() * rPR);
+									
+									let _textShift = ctx.direction === "rtl" ? _object.CalculateNameRectNatural() * rPR : 0;
+									_object.fillText(ctx, _object.Name, xText + Math.round(3 * rPR) + _textShift, _y + Math.round(20 * rPR) - Math.round(6 * rPR), _object.CalculateNameRectNatural() * rPR);
 
 									if (_object.IsNameAdvanced() && !_object.IsNoUseButtons())
 									{
@@ -2207,7 +2209,8 @@
 
 									ctx.fillStyle = (_object.ActiveButtonIndex == -1) ? AscCommon.GlobalSkin.ContentControlsTextActive : AscCommon.GlobalSkin.ContentControlsText;
 									ctx.font = this.getFont(_koefY);
-									_object.fillText(ctx, _object.Name, xText + 3 / _koefX, _y + (20 - 6) / _koefY, _object.CalculateNameRectNatural() / _koefX);
+									let _textShift = ctx.direction === "rtl" ? _object.CalculateNameRectNatural() / _koefX : 0;
+									_object.fillText(ctx, _object.Name, xText + 3 / _koefX + _textShift, _y + (20 - 6) / _koefY, _object.CalculateNameRectNatural() / _koefX);
 
 									if (_object.IsNameAdvanced() && !_object.IsNoUseButtons())
 									{

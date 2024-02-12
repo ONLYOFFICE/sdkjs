@@ -49,8 +49,9 @@
 	 * @property {Array} Sheets - Returns the Sheets collection that represents all the sheets in the active workbook.
 	 * @property {ApiWorksheet} ActiveSheet - Returns an object that represents the active sheet.
 	 * @property {ApiRange} Selection - Returns an object that represents the selected range.
-	 * @property {ApiComment[]} Comments - Returns an array of ApiComment objects.
+	 * @property {ApiComment[]} Comments - Returns all comments related to the whole workbook.
 	 * @property {FreezePaneType} FreezePanes - Returns or sets the type of freeze panes.
+	 * @property {ApiComment[]} AllComments - Returns all comments from the current workbook including comments from all worksheets.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
@@ -82,7 +83,7 @@
 	 * @property {boolean} PrintHeadings - Returns or sets the page PrintHeadings property.
 	 * @property {boolean} PrintGridlines - Returns or sets the page PrintGridlines property.
 	 * @property {Array} Defnames - Returns an array of the ApiName objects.
-	 * @property {Array} Comments - Returns an array of the ApiComment objects.
+	 * @property {Array} Comments - Returns all comments from the current worksheet.
 	 * @property {ApiFreezePanes} FreezePanes - Returns the freeze panes for the current worksheet.
 	 */
 	function ApiWorksheet(worksheet) {
@@ -623,7 +624,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {Range} range - The internal Range class (not a ApiRange). For more details see any new ApiRange.
-	 * @param {[Range]} areas - A collection of the ranges (not a ApiRange) from the specified range. For more details see any new ApiRange.
+	 * @param {Range[]} areas - A collection of the ranges (not a ApiRange) from the specified range. For more details see any new ApiRange.
 	 * @returns {ApiRange}
 	 */
 	Api.prototype.private_GetRange = function (range, areas) {
@@ -892,7 +893,7 @@
 	};
 
 	/**
-	 * Returns an array of ApiComment objects.
+	 * Returns all comments related to the whole workbook.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiComment[]}
@@ -907,6 +908,28 @@
 	Object.defineProperty(Api.prototype, "Comments", {
 		get: function () {
 			return this.GetComments();
+		}
+	});
+
+
+	/**
+	 * Returns all comments from the current workbook including comments from all worksheets.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiComment[]}
+	 */
+	Api.prototype.GetAllComments = function () {
+		let aApiComments = this.GetComments();
+
+		let aWS = this.GetSheets();
+		for(let nWS = 0; nWS < aWS.length; ++nWS) {
+			aApiComments = aApiComments.concat(aWS[nWS].GetComments())
+		}
+		return aApiComments;
+	};
+	Object.defineProperty(Api.prototype, "AllComments", {
+		get: function () {
+			return this.GetAllComments();
 		}
 	});
 
@@ -1621,7 +1644,7 @@
 	});
 
 	/**
-	 * Returns an array of ApiComment objects.
+	 * Returns all comments from the current worksheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiComment[]}
@@ -3872,7 +3895,7 @@
 	};
 	/**
 	 * Returns the lock value for the specified lock type of the current drawing.
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CSE"]
 	 * @param {"noGrp" | "noUngrp" | "noSelect" | "noRot" | "noChangeAspect" | "noMove" | "noResize" | "noEditPoints" | "noAdjustHandles"
 	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - Lock type in the string format.
 	 * @returns {bool}
@@ -3891,7 +3914,7 @@
 
 	/**
 	 * Sets the lock value to the specified lock type of the current drawing.
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CSE"]
 	 * @param {"noGrp" | "noUngrp" | "noSelect" | "noRot" | "noChangeAspect" | "noMove" | "noResize" | "noEditPoints" | "noAdjustHandles"
 	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - Lock type in the string format.
 	 * @param {bool} bValue - Specifies if the specified lock is applied to the current drawing.
@@ -6557,6 +6580,7 @@
 	Api.prototype["RecalculateAllFormulas"] = Api.prototype.RecalculateAllFormulas;
 	Api.prototype["AddComment"]  = Api.prototype.AddComment;
 	Api.prototype["GetComments"] = Api.prototype.GetComments;
+	Api.prototype["GetAllComments"] = Api.prototype.GetAllComments;
 	Api.prototype["GetCommentById"] = Api.prototype.GetCommentById;
 	Api.prototype["SetFreezePanesType"] = Api.prototype.SetFreezePanesType;
 	Api.prototype["GetFreezePanesType"] = Api.prototype.GetFreezePanesType;

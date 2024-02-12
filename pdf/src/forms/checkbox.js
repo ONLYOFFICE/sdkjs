@@ -63,7 +63,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CCheckBoxField.prototype.Commit2 = function() {
-        let aFields = this._doc.GetFields(this.GetFullName());
+        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         let oThis = this;
 
         aFields.forEach(function(field) {

@@ -331,7 +331,7 @@
         oDoc.event["format"] = cFormat;
         
         let oDateFormat         = AscCommon.oNumFormatCache.get(cFormat, AscCommon.NumFormatType.PDFFormDate);
-        let oDateFormatForParse = oDoc.lastDatePickerInfo ? oDateFormat : AscCommon.oNumFormatCache.get("dd.mm.yyyy", AscCommon.NumFormatType.PDFFormDate);
+        let oDateFormatForParse = oDoc.lastDatePickerInfo ? AscCommon.oNumFormatCache.get("dd.mm.yyyy", AscCommon.NumFormatType.PDFFormDate) : oDateFormat;
 
         oDateFormat.oNegativeFormat.bAddMinusIfNes = false;
         
@@ -516,7 +516,7 @@
         }
 
         let oDateFormat         = AscCommon.oNumFormatCache.get(cFormat, AscCommon.NumFormatType.PDFFormDate);
-        let oDateFormatForParse = oDoc.lastDatePickerInfo ? oDateFormat : AscCommon.oNumFormatCache.get("dd.mm.yyyy", AscCommon.NumFormatType.PDFFormDate);
+        let oDateFormatForParse = oDoc.lastDatePickerInfo ? AscCommon.oNumFormatCache.get("dd.mm.yyyy", AscCommon.NumFormatType.PDFFormDate) : oDateFormat;
         oDateFormat.oNegativeFormat.bAddMinusIfNes = false;
         
         let sCurValue;
@@ -1088,8 +1088,16 @@
             }
             // если не виджет, значит родитель, значит получаем все дочерние виджеты без повторений имён
             else {
-                let aTmpFields = oDoc.GetFields(name);
-                aFields = aFields.concat(aTmpFields);
+                let aTmpFields = oDoc.GetAllWidgets(name);
+                let aFullNames = [];
+                aTmpFields.forEach(function(field) {
+                    let sFullName = field.GetFullName();
+                    if (aFullNames.includes(sFullName))
+                        return;
+
+                    aFullNames.push(sFullName);
+                    aFields.push(oField);
+                });
             }
         });
 

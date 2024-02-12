@@ -568,6 +568,7 @@ MoveInlineObject.prototype =
 
     onMouseUp: function(e, x,y,pageIndex)
     {
+        this.drawingObjects.resetTrackState();
         var check_paragraphs = [];
 
 		if (this.majorObject.parent.CanInsertToPos(this.InlinePos))
@@ -1648,11 +1649,11 @@ MoveInGroupState.prototype =
                 check_paragraphs.push(parent_paragraph);
             }
         }
-        
+
+        var tracks = [].concat(this.drawingObjects.arrTrackObjects);
+        this.drawingObjects.resetTrackState();
         if(isPdf || false === this.drawingObjects.document.Document_Is_SelectionLocked(changestype_Drawing_Props, {Type : changestype_2_ElementsArray_and_Type , Elements : check_paragraphs, CheckType : AscCommon.changestype_Paragraph_Content}))
         {
-            var tracks = [].concat(this.drawingObjects.arrTrackObjects);
-            this.drawingObjects.resetTrackState();
 			!isPdf && this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_MoveInGroup);
             var i;
             if(this instanceof MoveInGroupState && e.CtrlKey && !this.hasObjectInSmartArt)
@@ -2144,10 +2145,10 @@ ChangeWrapContourAddPoint.prototype.onMouseMove = function(e, x, y, pageIndex)
 };
 ChangeWrapContourAddPoint.prototype.onMouseUp = function(e, x, y, pageIndex)
 {
+    const aTracks = [].concat(this.drawingObjects.arrTrackObjects);
+    this.drawingObjects.resetTrackState();
     if(false === this.drawingObjects.document.Document_Is_SelectionLocked(changestype_Drawing_Props))
     {
-        const aTracks = [].concat(this.drawingObjects.arrTrackObjects);
-        this.drawingObjects.resetTrackState();
 		this.drawingObjects.document.StartAction(AscDFH.historydescription_Document_ChangeWrapContourAddPoint);
         var calc_points = [], calc_points2 = [], i;
         for(i = 0; i < aTracks[0].arrPoints.length; ++i)

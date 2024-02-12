@@ -4020,6 +4020,9 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
                 }
             }
         }
+        else if(AscFormat.isRealNumber(objectProperties.ChangeLevel)) {
+            this.setGraphicObjectLayer(objectProperties.ChangeLevel);
+        }
         else {
             objectProperties.ImageUrl = null;
             _this.applySliderCallbacks(

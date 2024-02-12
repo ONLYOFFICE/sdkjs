@@ -2254,6 +2254,31 @@ CTable.prototype.GetPageBounds = function(nCurPage)
 {
 	return this.Get_PageBounds(nCurPage);
 };
+CTable.prototype.getRowBounds = function(iRow, relPage)
+{
+	let page = this.Pages[relPage];
+	let rowInfo = this.RowsInfo[iRow];
+	if (!this.IsRecalculated()
+		|| undefined === page
+		|| undefined === rowInfo
+		|| undefined === rowInfo.Y[relPage])
+		return new CDocumentBounds(0, 0, 0, 0);
+	
+	return new CDocumentBounds(
+		rowInfo.X0 + page.X_origin,
+		rowInfo.Y[relPage],
+		rowInfo.X1 + page.X_origin,
+		rowInfo.Y[relPage] + rowInfo.H[relPage]
+	);
+};
+CTable.prototype.getRowPageRange = function(iRow)
+{
+	let rowInfo = this.RowsInfo[iRow];
+	if (!this.IsRecalculate() || undefined === rowInfo)
+		return [0, 0];
+	
+	return [rowInfo.StartPage, rowInfo.StartPage + rowInfo.Pages - 1];
+};
 CTable.prototype.GetContentBounds = function(CurPage)
 {
 	return this.Get_PageBounds(CurPage);

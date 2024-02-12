@@ -5224,7 +5224,7 @@ function (window, undefined) {
 					continue;
 				}
 				for (j = 0; j < arg1Matrix[i].length; ++j) {
-					if (arg0Matrix[i] && arg0Matrix[i][j] && !matching(arg1Matrix[i][j], matchingInfo, true, true)) {
+					if (arg0Matrix[i] && arg0Matrix[i][j] && arg1Matrix[i] && arg1Matrix[i][j] && !matching(arg1Matrix[i][j], matchingInfo, true, true)) {
 						arg0Matrix[i][j] = null;
 					}
 				}

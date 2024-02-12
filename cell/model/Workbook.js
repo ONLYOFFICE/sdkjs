@@ -84,6 +84,9 @@
 	var c_oNotifyType = AscCommon.c_oNotifyType;
 	var g_cCalcRecursion = AscCommonExcel.g_cCalcRecursion;
 
+	var cError = AscCommonExcel.cError;
+	var cErrorType = AscCommonExcel.cErrorType;
+
 	var g_nVerticalTextAngle = 255;
 	//определяется в WorksheetView.js
 	var oDefaultMetrics = {
@@ -19990,9 +19993,9 @@
 
 
 	function tryTranslateToPrintArea(val) {
-		var printAreaStr = "Print_Area";
-		var printAreaStrLocale = AscCommon.translateManager.getValue(printAreaStr);
-		if(printAreaStrLocale.toLowerCase() === val.toLowerCase()) {
+		const printAreaStr = "Print_Area";
+		const printAreaStrLocale = AscCommon.translateManager && AscCommon.translateManager.getValue(printAreaStr);
+		if(printAreaStrLocale && printAreaStrLocale.toLowerCase() === val.toLowerCase()) {
 			return printAreaStr;
 		}
 		return null;
@@ -20443,6 +20446,9 @@
 		this.initIndex();
 		let bFilledRangeHasShift = this.getVertical() ? oFilled.r1 !== oFrom.r1 : oFilled.c1 !== oFrom.c1;
 		if (this.getIndex() < 0) {
+			if (!this.getTrend()) {
+				return;
+			}
 			bFilledRangeHasShift = this.getVertical() ? oFilled.r2 !== oFrom.r1 : oFilled.c2 !== oFrom.c1;
 			let oActiveFillHandle = this.getActiveFillHandle();
 			oFrom = new Asc.Range(oActiveFillHandle.c2, oActiveFillHandle.r2, oActiveFillHandle.c1, oActiveFillHandle.r1);
@@ -20585,51 +20591,78 @@
 		*/
 		if (nDateUnit === oSeriesDateUnitType.weekday) {
 			const aWeekdays = [1, 2, 3, 4, 5];
-			let oCurrentValDate;
-
-			while (true) {
-				nPrevVal = this.getPrevValue();
-				let nCurrentVal = _smartRound(nPrevVal + nStep, nStep);
+			const MAX_LIMIT_STEP = 2147483647;
+			let oCurrentValDate = null;
+			let nCurrentVal = nPrevVal;//_smartRound(nPrevVal + nStep, nStep);
+			let i = 0;
+			let nIntStep = Math.floor(nStep);
+			let nFinalStep = Math.sign(nIntStep) + _smartRound(nStep - nIntStep, nStep);
+			do {
+				if (nFinalStep !== 0) {
+					nCurrentVal = _smartRound(nCurrentVal + nFinalStep, nStep);
+				}
 				// Convert number to cDate object
 				oCurrentValDate = new Asc.cDate().getDateFromExcel(nPrevVal < 60 ? nCurrentVal + 1 : nCurrentVal);
-				this.setPrevValue(nCurrentVal);
-				if (aWeekdays.includes(oCurrentValDate.getDay())) {
-					break;
+				let nDayOfWeek = nPrevVal < 60 ? oCurrentValDate.getDay() - 1 : oCurrentValDate.getDay();
+				if (!aWeekdays.includes(nDayOfWeek)) {
+					while (true) {
+						nCurrentVal += Math.sign(nStep);
+						oCurrentValDate = new Asc.cDate().getDateFromExcel(nCurrentVal < 60 ? nCurrentVal + 1 : nCurrentVal);
+						nDayOfWeek = nCurrentVal < 60 ? oCurrentValDate.getDay() - 1 : oCurrentValDate.getDay();
+						if (aWeekdays.includes(nDayOfWeek)) {
+							i++;
+							break;
+						}
+					}
+				} else {
+					i++;
 				}
-			}
-
-			return oCurrentValDate.getExcelDate();
+			} while (i < Math.abs(nIntStep) && Math.abs(nIntStep) <= MAX_LIMIT_STEP);
+			this.setPrevValue(nCurrentVal);
+			return nCurrentVal < 0 ? nCurrentVal : oCurrentValDate.getExcelDate();
 		}
 
 		let nCurrentVal = _smartRound(nPrevVal + nStep, nStep);
 		this.setPrevValue(nCurrentVal);
 
 		if (nDateUnit === oSeriesDateUnitType.day) {
+			if (nStep > -1 && nStep < 0 && nCurrentVal < 0)  {
+				this.setPrevValue(1 + nCurrentVal);
+				return 1 + nCurrentVal;
+			}
 			return nCurrentVal;
 		}
 
 		let nIntegerVal = oFilledLine.nValue;
 		if (nDateUnit === oSeriesDateUnitType.month) {
-			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nPrevVal < 60 ? nIntegerVal + 1 : nIntegerVal);
+			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nIntegerVal < 60 ? nIntegerVal + 1 : nIntegerVal);
 			let nFinalStep = _smartRound(nCurrentVal - nIntegerVal, nStep);
+			if (nFinalStep < 0) {
+				return NaN;
+			}
 			if (Number.isInteger(nFinalStep)) {
 				oCurrentValDate.addMonths(nFinalStep);
 				oFilledLine.nValue = oCurrentValDate.getExcelDate();
 				this.setPrevValue(oFilledLine.nValue);
+				return oFilledLine.nValue;
 			}
-
-			return oFilledLine.nValue;
+			oCurrentValDate.addMonths(nFinalStep);
+			return oCurrentValDate.getExcelDate();
 		}
 		if (nDateUnit === oSeriesDateUnitType.year) {
-			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nPrevVal < 60 ? nIntegerVal + 1 : nIntegerVal);
+			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nIntegerVal < 60 ? nIntegerVal + 1 : nIntegerVal);
 			let nFinalStep = _smartRound(nCurrentVal - nIntegerVal, nStep);
+			if (nFinalStep < 0) {
+				return NaN;
+			}
 			if (Number.isInteger(nFinalStep)) {
 				oCurrentValDate.addYears(nFinalStep);
 				oFilledLine.nValue = oCurrentValDate.getExcelDate();
 				this.setPrevValue(oFilledLine.nValue);
+				return oFilledLine.nValue;
 			}
-
-			return oFilledLine.nValue;
+			oCurrentValDate.addYears(nFinalStep);
+			return oCurrentValDate.getExcelDate();
 		}
 	};
 	/**
@@ -20654,14 +20687,28 @@
 					let nCurrentValue = oProgressionCalc[oSerial.getType()]();
 					let bNeedStopLoop = false;
 					if (nStopValue != null) {
-						bNeedStopLoop = nStep > 0 ? nCurrentValue > nStopValue : nCurrentValue < nStopValue;
+						if (isNaN(nCurrentValue)) {
+							bNeedStopLoop = true;
+						} else if (oSerial.getType() === oSeriesType.growth) {
+							bNeedStopLoop = Number.isInteger(nStep) ? nCurrentValue	> nStopValue : nCurrentValue < nStopValue;
+						} else if (oSerial.getDateUnit() === oSeriesDateUnitType.weekday) {
+							bNeedStopLoop = nCurrentValue <= 0;
+						} else {
+							bNeedStopLoop = nStep > 0 ? nCurrentValue > nStopValue : nCurrentValue < nStopValue;
+						}
 					}
 					if (bNeedStopLoop || (nRow === gc_nMaxRow0 || nCol === gc_nMaxCol0)) {
 						bStopLoop = true;
 						return;
 					}
-					oCellValue.type = CellValueType.Number;
-					oCellValue.number = nCurrentValue;
+					if (isNaN(nCurrentValue)) {
+						let oErrorValue = new cError(cErrorType.not_numeric);
+						oCellValue.type = CellValueType.Error
+						oCellValue.text = oErrorValue.value;
+					} else {
+						oCellValue.type = CellValueType.Number;
+						oCellValue.number = nCurrentValue;
+					}
 					oCopyCell.setValueData(new UndoRedoData_CellValueData(null, oCellValue));
 					// Add styles from firstCell
 					if (null != oFromCell) {
@@ -20675,7 +20722,7 @@
 
 		let oSerial = this;
 		let nStep = this.getStep();
-		let nStopValue = this.getStopValue() ? this.getStopValue() : null;
+		let nStopValue = this.getStopValue() != null ? this.getStopValue() : null;
 		let nIndexFilledLine = this.getVertical() ? oFilledLine.oCell.nCol : oFilledLine.oCell.nRow;
 		let oTo = oFilledLine.oToRange.bbox;
 		let oWsTo = oFilledLine.oToRange.worksheet;
@@ -20690,7 +20737,7 @@
 		// Fill range cells for i row or col
 		let oProgressionCalc = {
 			0: function () { // linear
-				let nCurrentVal = oSerial.getPrevValue() + nStep
+				let nCurrentVal = _smartRound(oSerial.getPrevValue() + nStep, nStep);
 				oSerial.setPrevValue(nCurrentVal);
 				return nCurrentVal;
 			}, 1: function () { // growth
@@ -20706,9 +20753,10 @@
 
 		if (nStopValue != null) {
 			if (this.getType() === oSeriesType.growth) {
-				bIncorrectStopValue = nStep <= 1 || nStopValue < 0;
+				bIncorrectStopValue = (nStep <= 0 || nStep === 1) || nStopValue <= 0;
 			} else {
-				bIncorrectStopValue = Math.sign(nStep) !== Math.sign(nStopValue)
+				let nStartVal = oFilledLine.nValue;
+				bIncorrectStopValue = nStep < 0 ? nStartVal <= nStopValue : nStartVal >= nStopValue;
 			}
 		}
 		if (bIncorrectStopValue) {
@@ -20806,7 +20854,7 @@
 		let nFilledRangeLength = 0;
 		this._calcSum(nFilledStartIndex, nEndIndexFilledLine, nIndexFilledLine, function (nValue, nCellIndex) {
 			nFilledRangeLength++;
-			if (nValue === -Infinity && nFilledStartIndex === nCellIndex && oSerial.getActiveFillHandle()) {
+			if ((nValue === -Infinity || isNaN(nValue)) && nFilledStartIndex === nCellIndex && oSerial.getActiveFillHandle()) {
 				bFirstCellValueInf = true;
 				return true; // break loop
 			}
@@ -20926,9 +20974,12 @@
 
 		if (nType === oSeriesType.autoFill) {
 			let oFilledRange = this.getFilledRange();
+			let oFilled = oFilledRange.bbox;
 			this.initIndex();
 			let oCanPromote = oFilledRange.canPromote(false, bVertical, this.getIndex());
-			oFilledRange.promote(false, this.getVertical(), this.getIndex(), oCanPromote);
+			if (!oFilled.containsRange(oCanPromote.to)) {
+				oFilledRange.promote(false, this.getVertical(), this.getIndex(), oCanPromote);
+			}
 		} else {
 			let aFilledCells = this.getFilledCells();
 			if (aFilledCells.length) {

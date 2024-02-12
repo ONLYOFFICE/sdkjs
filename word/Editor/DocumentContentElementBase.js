@@ -202,6 +202,59 @@ CDocumentContentElementBase.prototype.IsEmptyPage = function(nCurPage)
 CDocumentContentElementBase.prototype.Reset_RecalculateCache = function()
 {
 };
+/**
+ * @param iPage {number} relative page index
+ * @returns {recalcresult}
+ */
+CDocumentContentElementBase.prototype.RecalculateKeepNext = function(iPage)
+{
+	if (!(this.Parent instanceof CDocument))
+		return recalcresult_NextElement;
+	
+	// Такая настройка срабатывает в единственном случае:
+	// У предыдущего параграфа выставлена данная настройка, а текущий параграф сразу начинается с новой страницы
+	// ( при этом у него не выставлен флаг "начать с новой страницы", иначе будет зацикливание здесь ).
+	if (1 === iPage && this.IsEmptyPage(0))
+	{
+		// Если у предыдущего параграфа стоит настройка "не отрывать от следующего".
+		// И сам параграф не разбит на несколько страниц и не начинается с новой страницы,
+		// тогда мы должны пересчитать предыдущую страницу, с учетом того, что предыдущий параграф
+		// надо начать с новой страницы.
+		let curr = this.Get_DocumentPrev();
+		while (curr && curr.IsParagraph() && !curr.Get_SectionPr())
+		{
+			let currKeepNext = curr.Get_CompiledPr2(false).ParaPr.KeepNext;
+			if (!currKeepNext || curr.getPageCount() > 1 || !curr.IsInline() || curr.Check_PageBreak())
+				break;
+			
+			let prev = curr.Get_DocumentPrev();
+			if (!prev || (prev.IsParagraph() && prev.Get_SectionPr()))
+				break;
+			
+			if (!prev.IsParagraph() || !prev.Get_CompiledPr2(false).ParaPr.KeepNext)
+			{
+				if (this.Parent.RecalcInfo.Can_RecalcObject())
+				{
+					this.Parent.RecalcInfo.Set_KeepNext(curr, this);
+					return recalcresult_PrevPage | recalcresultflags_Column;
+				}
+				
+				break;
+			}
+			
+			curr = prev;
+		}
+	}
+	
+	if (this.Parent.RecalcInfo.Check_KeepNextEnd(this))
+	{
+		// Дошли до сюда, значит уже пересчитали данную ситуацию.
+		// Делаем Reset здесь, потому что Reset надо делать в том же месте, гды мы запросили пересчет заново.
+		this.Parent.RecalcInfo.Reset();
+	}
+	
+	return recalcresult_NextElement;
+};
 CDocumentContentElementBase.prototype.Write_ToBinary2 = function(Writer)
 {
 	Writer.WriteLong(AscDFH.historyitem_type_Unknown);
@@ -928,6 +981,10 @@ CDocumentContentElementBase.prototype.GetPagesCount = function()
 {
 	return this.Get_PagesCount();
 };
+CDocumentContentElementBase.prototype.getPageCount = function()
+{
+	return this.Get_PagesCount();
+};
 CDocumentContentElementBase.prototype.GetIndex = function()
 {
 	if (!this.Parent)
@@ -939,6 +996,10 @@ CDocumentContentElementBase.prototype.GetIndex = function()
 		this.Index = -1;
 
 	return this.Index;
+};
+CDocumentContentElementBase.prototype.getPageBounds = function(iPage)
+{
+	return this.Get_PageBounds(iPage);
 };
 CDocumentContentElementBase.prototype.GetPageBounds = function(CurPage)
 {

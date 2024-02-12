@@ -3611,7 +3611,7 @@ CInlineLevelSdt.prototype.MoveCursorOutsideForm = function(isBefore)
 	{
 		let oParaDrawing = oShape.GetParaDrawing();
 		if (oParaDrawing)
-			oParaDrawing.GoTo_Text(isBefore);
+			oParaDrawing.GoToText(isBefore);
 	}
 	else
 	{

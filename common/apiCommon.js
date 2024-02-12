@@ -36,57 +36,48 @@
  * @param {Window} window
  * @param {undefined} undefined
  */
-	function (window, undefined) {
+function (window, undefined) {
 
-	var Asc = window['Asc'];
-	var AscCommon = window['AscCommon'];
+	const Asc = window['Asc'];
+	const AscCommon = window['AscCommon'];
 
 	// Import
-	var prot;
-	var c_oAscMouseMoveDataTypes = Asc.c_oAscMouseMoveDataTypes;
+	let prot;
+	const c_oAscMouseMoveDataTypes = Asc.c_oAscMouseMoveDataTypes;
 
-	var c_oAscColor = Asc.c_oAscColor;
-	var c_oAscFill = Asc.c_oAscFill;
-	var c_oAscFillBlipType = Asc.c_oAscFillBlipType;
-	var c_oAscChartTypeSettings = Asc.c_oAscChartTypeSettings;
-	var c_oAscTickMark = Asc.c_oAscTickMark;
-	var c_oAscAxisType = Asc.c_oAscAxisType;
+	const c_oAscColor = Asc.c_oAscColor;
+	const c_oAscFill = Asc.c_oAscFill;
+	const c_oAscFillBlipType = Asc.c_oAscFillBlipType;
+	const c_oAscChartTypeSettings = Asc.c_oAscChartTypeSettings;
+	const c_oAscTickMark = Asc.c_oAscTickMark;
+	const c_oAscAxisType = Asc.c_oAscAxisType;
 	// ---------------------------------------------------------------------------------------------------------------
 
-	var c_oAscArrUserColors = [10646501, 16749875, 1087211, 103817, 16760641, 16272775, 8765789, 14707685, 48336,
-		5729515, 16757719, 56805, 10081791, 12884479, 16751001, 6748927, 16762931, 6865407,
-		15650047, 16737894, 3407768, 16759142, 10852863, 6750176, 16774656, 13926655, 13815039, 3397375, 11927347, 16752947,
-		9404671, 4980531, 16744678, 3407830, 15919360, 16731553, 52479, 13330175, 16743219, 3386367, 14221056, 16737966,
-		1896960, 65484, 10970879, 16759296, 16711680, 13496832, 62072, 49906, 16734720, 10682112, 7890687, 16731610, 65406,
-		38655, 16747008, 59890, 12733951, 15859712, 47077, 15050496, 15224319, 10154496, 58807, 16724950, 1759488, 9981439,
-		15064320, 15893248, 16724883, 58737, 15007744, 36594, 12772608, 12137471, 6442495, 15039488, 16718470, 14274816,
-		53721, 16718545, 1625088, 15881472, 13419776, 32985, 16711800, 1490688, 16711884, 8991743, 13407488, 41932, 7978752,
-		15028480, 52387, 15007927, 12114176, 1421824, 55726, 13041893, 10665728, 30924, 49049, 14241024, 36530, 11709440,
-		13397504, 45710, 34214];
+	const c_oAscArrUserColors = [10646501, 16749875, 1087211, 103817, 16760641, 16272775, 8765789, 14707685, 48336, 5729515, 16757719, 56805, 10081791, 12884479, 16751001, 6748927, 16762931, 6865407, 15650047, 16737894, 3407768, 16759142, 10852863, 6750176, 16774656, 13926655, 13815039, 3397375, 11927347, 16752947, 9404671, 4980531, 16744678, 3407830, 15919360, 16731553, 52479, 13330175, 16743219, 3386367, 14221056, 16737966, 1896960, 65484, 10970879, 16759296, 16711680, 13496832, 62072, 49906, 16734720, 10682112, 7890687, 16731610, 65406, 38655, 16747008, 59890, 12733951, 15859712, 47077, 15050496, 15224319, 10154496, 58807, 16724950, 1759488, 9981439, 15064320, 15893248, 16724883, 58737, 15007744, 36594, 12772608, 12137471, 6442495, 15039488, 16718470, 14274816, 53721, 16718545, 1625088, 15881472, 13419776, 32985, 16711800, 1490688, 16711884, 8991743, 13407488, 41932, 7978752, 15028480, 52387, 15007927, 12114176, 1421824, 55726, 13041893, 10665728, 30924, 49049, 14241024, 36530, 11709440, 13397504, 45710, 34214];
 
 	function CreateAscColorCustom(r, g, b, auto) {
-		var ret = new asc_CColor();
+		let ret = new asc_CColor();
 		ret.type = c_oAscColor.COLOR_TYPE_SRGB;
 		ret.r = r;
 		ret.g = g;
 		ret.b = b;
 		ret.a = 255;
-		ret.Auto = ( undefined === auto ? false : auto );
+		ret.Auto = (undefined === auto ? false : auto);
 		return ret;
 	}
 
 	function CreateAscColor(unicolor) {
-      if (null == unicolor || null == unicolor.color) {
-          return new asc_CColor();
-      }
+		if (null == unicolor || null == unicolor.color) {
+			return new asc_CColor();
+		}
 
-		var ret = new asc_CColor();
+		let ret = new asc_CColor();
 		ret.r = unicolor.RGBA.R;
 		ret.g = unicolor.RGBA.G;
 		ret.b = unicolor.RGBA.B;
 		ret.a = unicolor.RGBA.A;
 
-		var _color = unicolor.color;
+		let _color = unicolor.color;
 		switch (_color.type) {
 			case c_oAscColor.COLOR_TYPE_SRGB:
 			case c_oAscColor.COLOR_TYPE_SYS: {
@@ -104,84 +95,77 @@
 		return ret;
 	}
 
-	var uuid = [];
-	for (var i = 0; i < 256; i++)
-	{
+	let uuid = [];
+	for (let i = 0; i < 256; i++) {
 		uuid[i] = (i < 16 ? "0" : "") + (i).toString(16);
 	}
-	function CreateUUID(isNoDashes)
-	{
-		var d0 = Math.random() * 0xffffffff | 0;
-		var d1 = Math.random() * 0xffffffff | 0;
-		var d2 = Math.random() * 0xffffffff | 0;
-		var d3 = Math.random() * 0xffffffff | 0;
 
-		if (isNoDashes)
-			return uuid[d0 & 0xff] + uuid[d0 >> 8 & 0xff] + uuid[d0 >> 16 & 0xff] + uuid[d0 >> 24 & 0xff] +
+	function CreateUUID(isNoDashes) {
+		let d0 = Math.random() * 0xffffffff | 0;
+		let d1 = Math.random() * 0xffffffff | 0;
+		let d2 = Math.random() * 0xffffffff | 0;
+		let d3 = Math.random() * 0xffffffff | 0;
+
+		if (isNoDashes) return uuid[d0 & 0xff] + uuid[d0 >> 8 & 0xff] + uuid[d0 >> 16 & 0xff] + uuid[d0 >> 24 & 0xff] +
 			uuid[d1 & 0xff] + uuid[d1 >> 8 & 0xff] + uuid[d1 >> 16 & 0x0f | 0x40] + uuid[d1 >> 24 & 0xff] +
 			uuid[d2 & 0x3f | 0x80] + uuid[d2 >> 8 & 0xff] + uuid[d2 >> 16 & 0xff] + uuid[d2 >> 24 & 0xff] +
 			uuid[d3 & 0xff] + uuid[d3 >> 8 & 0xff] + uuid[d3 >> 16 & 0xff] + uuid[d3 >> 24 & 0xff];
 		else
 			return uuid[d0 & 0xff] + uuid[d0 >> 8 & 0xff] + uuid[d0 >> 16 & 0xff] + uuid[d0 >> 24 & 0xff] + "-" +
-			uuid[d1 & 0xff] + uuid[d1 >> 8 & 0xff] + "-" + uuid[d1 >> 16 & 0x0f | 0x40] + uuid[d1 >> 24 & 0xff] + "-" +
-			uuid[d2 & 0x3f | 0x80] + uuid[d2 >> 8 & 0xff] + "-" + uuid[d2 >> 16 & 0xff] + uuid[d2 >> 24 & 0xff] +
-			uuid[d3 & 0xff] + uuid[d3 >> 8 & 0xff] + uuid[d3 >> 16 & 0xff] + uuid[d3 >> 24 & 0xff];
+				uuid[d1 & 0xff] + uuid[d1 >> 8 & 0xff] + "-" + uuid[d1 >> 16 & 0x0f | 0x40] + uuid[d1 >> 24 & 0xff] + "-" +
+				uuid[d2 & 0x3f | 0x80] + uuid[d2 >> 8 & 0xff] + "-" + uuid[d2 >> 16 & 0xff] + uuid[d2 >> 24 & 0xff] +
+				uuid[d3 & 0xff] + uuid[d3 >> 8 & 0xff] + uuid[d3 >> 16 & 0xff] + uuid[d3 >> 24 & 0xff];
 	}
-	function CreateGUID()
-	{
-		function s4() { return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);	}
 
-		var val = '{' + s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4() + '}';
+	function CreateGUID() {
+		function s4() {
+			return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+		}
+
+		let val = '{' + s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4() + '}';
 		val = val.toUpperCase();
 		return val;
 	}
-	function CreateUInt32()
-	{
+
+	function CreateUInt32() {
 		return Math.floor(Math.random() * 0x100000000);
 	}
-	function FixDurableId(val)
-	{
+
+	function FixDurableId(val) {
 		//numbers greater than 0x7FFFFFFE cause MS Office errors(ST_LongHexNumber by spec)
-		var res = val & 0x7FFFFFFF;
+		let res = val & 0x7FFFFFFF;
 		return (0x7FFFFFFF !== res) ? res : res - 1;
 	}
-	function CreateDurableId()
-	{
+
+	function CreateDurableId() {
 		return FixDurableId(CreateUInt32());
 	}
-	function ExtendPrototype(dst, src)
-	{
-		for (var k in src.prototype)
-		{
+
+	function ExtendPrototype(dst, src) {
+		for (let k in src.prototype) {
 			dst.prototype[k] = src.prototype[k];
 		}
 	}
 
-	function isFileBuild()
-	{
+	function isFileBuild() {
 		return window["NATIVE_EDITOR_ENJINE"] && !window["IS_NATIVE_EDITOR"] && !window["DoctRendererMode"];
 	}
 
-	function checkCanvasInDiv(sDivId)
-	{
-		var oDiv = document.getElementById(sDivId);
-		if(!oDiv)
-		{
+	function checkCanvasInDiv(sDivId) {
+		let oDiv = document.getElementById(sDivId);
+		if (!oDiv) {
 			return null;
 		}
-		var aChildren = oDiv.children;
-		var oCanvas = null, i;
-		for(i = 0; i < aChildren.length; ++i)
-		{
-			if(aChildren[i].nodeName && aChildren[i].nodeName.toUpperCase() === 'CANVAS')
-			{
+		let aChildren = oDiv.children;
+		let oCanvas = null, i;
+		for (i = 0; i < aChildren.length; ++i) {
+			if (aChildren[i].nodeName && aChildren[i].nodeName.toUpperCase() === 'CANVAS') {
 				oCanvas = aChildren[i];
 				break;
 			}
 		}
-		if(null === oCanvas)
-		{
-			var rPR = AscCommon.AscBrowser.retinaPixelRatio;
+		if (null === oCanvas) {
+			let rPR = AscCommon.AscBrowser.retinaPixelRatio;
 			oCanvas = document.createElement('canvas');
 			oCanvas.style.width = "100%";
 			oCanvas.style.height = "100%";
@@ -195,36 +179,23 @@
 	function isValidJs(str) {
 		try {
 			eval("throw 0;" + str);
-		} catch(e) {
-			if (e === 0)
-				return true;
+		} catch (e) {
+			if (e === 0) return true;
 		}
 		return false;
 	}
 
-	function asc_menu_ReadPaddings(_params, _cursor){
-		const _paddings = new Asc.asc_CPaddings();
-		_paddings.read(_params, _cursor);
-		return _paddings;
-	}
-
-	function asc_menu_ReadColor(_params, _cursor) {
-		const _color = new Asc.asc_CColor();
-		_color.read(_params, _cursor);
-		return _color;
-	}
-
-	var c_oLicenseResult = {
-		Error         : 1,
-		Expired       : 2,
-		Success       : 3,
-		UnknownUser   : 4,
-		Connections   : 5,
-		ExpiredTrial  : 6,
-		SuccessLimit  : 7,
-		UsersCount    : 8,
-		ConnectionsOS : 9,
-		UsersCountOS  : 10,
+	let c_oLicenseResult = {
+		Error: 1,
+		Expired: 2,
+		Success: 3,
+		UnknownUser: 4,
+		Connections: 5,
+		ExpiredTrial: 6,
+		SuccessLimit: 7,
+		UsersCount: 8,
+		ConnectionsOS: 9,
+		UsersCountOS: 10,
 		ExpiredLimited: 11,
 		ConnectionsLiveOS: 12,
 		ConnectionsLive: 13,
@@ -233,32 +204,20 @@
 		NotBefore: 16
 	};
 
-	var c_oRights = {
-		None    : 0,
-		Edit    : 1,
-		Review  : 2,
-		Comment : 3,
-		View    : 4
+	let c_oRights = {
+		None: 0, Edit: 1, Review: 2, Comment: 3, View: 4
 	};
 
-	var c_oLicenseMode = {
-		None: 0,
-		Trial: 1,
-		Developer: 2,
-		Limited: 4
+	let c_oLicenseMode = {
+		None: 0, Trial: 1, Developer: 2, Limited: 4
 	};
 
-	var EPluginDataType = {
-		none: "none",
-		text: "text",
-		ole: "ole",
-		html: "html",
-        desktop: "desktop"
+	let EPluginDataType = {
+		none: "none", text: "text", ole: "ole", html: "html", desktop: "desktop"
 	};
 
 	/** @constructor */
-	function asc_CSignatureLine()
-	{
+	function asc_CSignatureLine() {
 		this.id = undefined;
 		this.guid = "";
 		this.signer1 = "";
@@ -276,53 +235,86 @@
 		this.isvisible = false;
 		this.isrequested = false;
 	}
-	asc_CSignatureLine.prototype.correct = function()
-	{
-		if (this.id == null)
-			this.id = "0";
-		if (this.guid == null)
-			this.guid = "";
-		if (this.signer1 == null)
-			this.signer1 = "";
-		if (this.signer2 == null)
-			this.signer2 = "";
-		if (this.email == null)
-			this.email = "";
-		if (this.instructions == null)
-			this.instructions = "";
-		if (this.showDate == null)
-			this.showDate = false;
-		if (this.valid == null)
-			this.valid = 0;
-		if (this.image == null)
-			this.image = "";
-		if (this.date == null)
-			this.date = "";
-		if (this.isvisible == null)
-			this.isvisible = false;
+
+	asc_CSignatureLine.prototype.correct = function () {
+		if (this.id == null) this.id = "0";
+		if (this.guid == null) this.guid = "";
+		if (this.signer1 == null) this.signer1 = "";
+		if (this.signer2 == null) this.signer2 = "";
+		if (this.email == null) this.email = "";
+		if (this.instructions == null) this.instructions = "";
+		if (this.showDate == null) this.showDate = false;
+		if (this.valid == null) this.valid = 0;
+		if (this.image == null) this.image = "";
+		if (this.date == null) this.date = "";
+		if (this.isvisible == null) this.isvisible = false;
 	};
-	asc_CSignatureLine.prototype.asc_getId = function(){ return this.id; };
-	asc_CSignatureLine.prototype.asc_setId = function(v){ this.id = v; };
-	asc_CSignatureLine.prototype.asc_getGuid = function(){ return this.guid; };
-	asc_CSignatureLine.prototype.asc_setGuid = function(v){ this.guid = v; };
-	asc_CSignatureLine.prototype.asc_getSigner1 = function(){ return this.signer1; };
-	asc_CSignatureLine.prototype.asc_setSigner1 = function(v){ this.signer1 = v; };
-	asc_CSignatureLine.prototype.asc_getSigner2 = function(){ return this.signer2; };
-	asc_CSignatureLine.prototype.asc_setSigner2 = function(v){ this.signer2 = v; };
-	asc_CSignatureLine.prototype.asc_getEmail = function(){ return this.email; };
-	asc_CSignatureLine.prototype.asc_setEmail = function(v){ this.email = v; };
-	asc_CSignatureLine.prototype.asc_getInstructions = function(){ return this.instructions; };
-	asc_CSignatureLine.prototype.asc_setInstructions = function(v){ this.instructions = v; };
-	asc_CSignatureLine.prototype.asc_getShowDate = function(){ return this.showDate !== false; };
-	asc_CSignatureLine.prototype.asc_setShowDate = function(v){ this.showDate = v; };
-	asc_CSignatureLine.prototype.asc_getValid = function(){ return this.valid; };
-	asc_CSignatureLine.prototype.asc_setValid = function(v){ this.valid = v; };
-	asc_CSignatureLine.prototype.asc_getDate = function(){ return this.date; };
-	asc_CSignatureLine.prototype.asc_setDate = function(v){ this.date = v; };
-	asc_CSignatureLine.prototype.asc_getVisible = function(){ return this.isvisible; };
-	asc_CSignatureLine.prototype.asc_setVisible = function(v){ this.isvisible = v; };
-	asc_CSignatureLine.prototype.asc_getRequested = function(){ return this.isrequested; };
-	asc_CSignatureLine.prototype.asc_setRequested = function(v){ this.isrequested = v; };
+	asc_CSignatureLine.prototype.asc_getId = function () {
+		return this.id;
+	};
+	asc_CSignatureLine.prototype.asc_setId = function (v) {
+		this.id = v;
+	};
+	asc_CSignatureLine.prototype.asc_getGuid = function () {
+		return this.guid;
+	};
+	asc_CSignatureLine.prototype.asc_setGuid = function (v) {
+		this.guid = v;
+	};
+	asc_CSignatureLine.prototype.asc_getSigner1 = function () {
+		return this.signer1;
+	};
+	asc_CSignatureLine.prototype.asc_setSigner1 = function (v) {
+		this.signer1 = v;
+	};
+	asc_CSignatureLine.prototype.asc_getSigner2 = function () {
+		return this.signer2;
+	};
+	asc_CSignatureLine.prototype.asc_setSigner2 = function (v) {
+		this.signer2 = v;
+	};
+	asc_CSignatureLine.prototype.asc_getEmail = function () {
+		return this.email;
+	};
+	asc_CSignatureLine.prototype.asc_setEmail = function (v) {
+		this.email = v;
+	};
+	asc_CSignatureLine.prototype.asc_getInstructions = function () {
+		return this.instructions;
+	};
+	asc_CSignatureLine.prototype.asc_setInstructions = function (v) {
+		this.instructions = v;
+	};
+	asc_CSignatureLine.prototype.asc_getShowDate = function () {
+		return this.showDate !== false;
+	};
+	asc_CSignatureLine.prototype.asc_setShowDate = function (v) {
+		this.showDate = v;
+	};
+	asc_CSignatureLine.prototype.asc_getValid = function () {
+		return this.valid;
+	};
+	asc_CSignatureLine.prototype.asc_setValid = function (v) {
+		this.valid = v;
+	};
+	asc_CSignatureLine.prototype.asc_getDate = function () {
+		return this.date;
+	};
+	asc_CSignatureLine.prototype.asc_setDate = function (v) {
+		this.date = v;
+	};
+	asc_CSignatureLine.prototype.asc_getVisible = function () {
+		return this.isvisible;
+	};
+	asc_CSignatureLine.prototype.asc_setVisible = function (v) {
+		this.isvisible = v;
+	};
+	asc_CSignatureLine.prototype.asc_getRequested = function () {
+		return this.isrequested;
+	};
+	asc_CSignatureLine.prototype.asc_setRequested = function (v) {
+		this.isrequested = v;
+	};
 
 	/**
 	 * Класс asc_CAscEditorPermissions для прав редакторов
@@ -431,18 +423,18 @@
 		this.formatCode = "General";
 		this.sourceLinked = true;
 		this.axis = oAxis;
-		if(oAxis) {
-			var oNumFmt = oAxis.numFmt;
-			if(oNumFmt) {
+		if (oAxis) {
+			let oNumFmt = oAxis.numFmt;
+			if (oNumFmt) {
 				this.formatCode = oNumFmt.formatCode;
 				this.sourceLinked = oNumFmt.sourceLinked;
 			}
 		}
 	}
 
-	asc_CAxNumFmt.prototype.getFormatCode = function() {
-		if(this.sourceLinked) {
-			if(this.axis) {
+	asc_CAxNumFmt.prototype.getFormatCode = function () {
+		if (this.sourceLinked) {
+			if (this.axis) {
 				return this.axis.getSourceFormatCode();
 			}
 			else {
@@ -451,26 +443,26 @@
 		}
 		return this.formatCode || "General";
 	};
-	asc_CAxNumFmt.prototype.putFormatCode = function(v) {
+	asc_CAxNumFmt.prototype.putFormatCode = function (v) {
 		this.formatCode = v;
 	};
-	asc_CAxNumFmt.prototype.getFormatCellsInfo = function() {
-		var num_format = AscCommon.oNumFormatCache.get(this.getFormatCode());
+	asc_CAxNumFmt.prototype.getFormatCellsInfo = function () {
+		let num_format = AscCommon.oNumFormatCache.get(this.getFormatCode());
 		return num_format.getTypeInfo();
 	};
-	asc_CAxNumFmt.prototype.getSourceLinked = function() {
+	asc_CAxNumFmt.prototype.getSourceLinked = function () {
 		return this.sourceLinked;
 	};
-	asc_CAxNumFmt.prototype.putSourceLinked = function(v) {
+	asc_CAxNumFmt.prototype.putSourceLinked = function (v) {
 		this.sourceLinked = v;
 	};
-	asc_CAxNumFmt.prototype.isEqual = function(v) {
-		if(!v) {
+	asc_CAxNumFmt.prototype.isEqual = function (v) {
+		if (!v) {
 			return false;
 		}
 		return this.formatCode === v.formatCode && this.sourceLinked === v.sourceLinked;
 	};
-	asc_CAxNumFmt.prototype.isCorrect = function() {
+	asc_CAxNumFmt.prototype.isCorrect = function () {
 		return typeof this.formatCode === "string" && this.formatCode.length > 0;
 	};
 
@@ -501,176 +493,177 @@
 		this.numFmt = null;
 		this.isRadar = false;
 	}
-	asc_ValAxisSettings.prototype.isEqual = function(oPr){
-		if(!oPr){
+
+	asc_ValAxisSettings.prototype.isEqual = function (oPr) {
+		if (!oPr) {
 			return false;
 		}
-		if(this.minValRule !== oPr.minValRule){
+		if (this.minValRule !== oPr.minValRule) {
 			return false;
 		}
-		if(this.minVal !== oPr.minVal){
+		if (this.minVal !== oPr.minVal) {
 			return false;
 		}
-		if(this.maxValRule !== oPr.maxValRule){
+		if (this.maxValRule !== oPr.maxValRule) {
 			return false;
 		}
-		if(this.maxVal !== oPr.maxVal){
+		if (this.maxVal !== oPr.maxVal) {
 			return false;
 		}
-		if(this.invertValOrder !== oPr.invertValOrder){
+		if (this.invertValOrder !== oPr.invertValOrder) {
 			return false;
 		}
-		if(this.logScale !== oPr.logScale){
+		if (this.logScale !== oPr.logScale) {
 			return false;
 		}
-		if(this.logBase !== oPr.logBase){
+		if (this.logBase !== oPr.logBase) {
 			return false;
 		}
-		if(this.dispUnitsRule !== oPr.dispUnitsRule){
+		if (this.dispUnitsRule !== oPr.dispUnitsRule) {
 			return false;
 		}
-		if(this.units !== oPr.units){
+		if (this.units !== oPr.units) {
 			return false;
 		}
-		if(this.showUnitsOnChart !== oPr.showUnitsOnChart){
+		if (this.showUnitsOnChart !== oPr.showUnitsOnChart) {
 			return false;
 		}
-		if(this.majorTickMark !== oPr.majorTickMark){
+		if (this.majorTickMark !== oPr.majorTickMark) {
 			return false;
 		}
-		if(this.minorTickMark !== oPr.minorTickMark){
+		if (this.minorTickMark !== oPr.minorTickMark) {
 			return false;
 		}
-		if(this.tickLabelsPos !== oPr.tickLabelsPos){
+		if (this.tickLabelsPos !== oPr.tickLabelsPos) {
 			return false;
 		}
-		if(this.crossesRule !== oPr.crossesRule){
+		if (this.crossesRule !== oPr.crossesRule) {
 			return false;
 		}
-		if(this.crosses !== oPr.crosses){
+		if (this.crosses !== oPr.crosses) {
 			return false;
 		}
-		if(this.axisType !== oPr.axisType){
+		if (this.axisType !== oPr.axisType) {
 			return false;
 		}
-		if(this.show !== oPr.show) {
+		if (this.show !== oPr.show) {
 			return false;
 		}
-		if(this.label !== oPr.label) {
+		if (this.label !== oPr.label) {
 			return false;
 		}
-		if(this.gridlines !== oPr.gridlines) {
+		if (this.gridlines !== oPr.gridlines) {
 			return false;
 		}
-		var bEqualNumFmt = false;
-		if(this.numFmt) {
+		let bEqualNumFmt = false;
+		if (this.numFmt) {
 			bEqualNumFmt = this.numFmt.isEqual(oPr.numFmt);
 		}
 		else {
 			bEqualNumFmt = (this.numFmt === oPr.numFmt);
 		}
-		if(!bEqualNumFmt) {
+		if (!bEqualNumFmt) {
 			return false;
 		}
 		return true;
 	};
-	asc_ValAxisSettings.prototype.putAxisType = function(v) {
+	asc_ValAxisSettings.prototype.putAxisType = function (v) {
 		this.axisType = v;
 	};
-	asc_ValAxisSettings.prototype.putMinValRule = function(v) {
+	asc_ValAxisSettings.prototype.putMinValRule = function (v) {
 		this.minValRule = v;
 	};
-	asc_ValAxisSettings.prototype.putMinVal = function(v) {
+	asc_ValAxisSettings.prototype.putMinVal = function (v) {
 		this.minVal = v;
 	};
-	asc_ValAxisSettings.prototype.putMaxValRule = function(v) {
+	asc_ValAxisSettings.prototype.putMaxValRule = function (v) {
 		this.maxValRule = v;
 	};
-	asc_ValAxisSettings.prototype.putMaxVal = function(v) {
+	asc_ValAxisSettings.prototype.putMaxVal = function (v) {
 		this.maxVal = v;
 	};
-	asc_ValAxisSettings.prototype.putInvertValOrder = function(v) {
+	asc_ValAxisSettings.prototype.putInvertValOrder = function (v) {
 		this.invertValOrder = v;
 	};
-	asc_ValAxisSettings.prototype.putLogScale = function(v) {
+	asc_ValAxisSettings.prototype.putLogScale = function (v) {
 		this.logScale = v;
 	};
-	asc_ValAxisSettings.prototype.putLogBase = function(v) {
+	asc_ValAxisSettings.prototype.putLogBase = function (v) {
 		this.logBase = v;
 	};
-	asc_ValAxisSettings.prototype.putUnits = function(v) {
+	asc_ValAxisSettings.prototype.putUnits = function (v) {
 		this.units = v;
 	};
-	asc_ValAxisSettings.prototype.putShowUnitsOnChart = function(v) {
+	asc_ValAxisSettings.prototype.putShowUnitsOnChart = function (v) {
 		this.showUnitsOnChart = v;
 	};
-	asc_ValAxisSettings.prototype.putMajorTickMark = function(v) {
+	asc_ValAxisSettings.prototype.putMajorTickMark = function (v) {
 		this.majorTickMark = v;
 	};
-	asc_ValAxisSettings.prototype.putMinorTickMark = function(v) {
+	asc_ValAxisSettings.prototype.putMinorTickMark = function (v) {
 		this.minorTickMark = v;
 	};
-	asc_ValAxisSettings.prototype.putTickLabelsPos = function(v) {
+	asc_ValAxisSettings.prototype.putTickLabelsPos = function (v) {
 		this.tickLabelsPos = v;
 	};
-	asc_ValAxisSettings.prototype.putCrossesRule = function(v) {
+	asc_ValAxisSettings.prototype.putCrossesRule = function (v) {
 		this.crossesRule = v;
 	};
-	asc_ValAxisSettings.prototype.putCrosses = function(v) {
+	asc_ValAxisSettings.prototype.putCrosses = function (v) {
 		this.crosses = v;
 	};
-	asc_ValAxisSettings.prototype.putDispUnitsRule = function(v) {
+	asc_ValAxisSettings.prototype.putDispUnitsRule = function (v) {
 		this.dispUnitsRule = v;
 	};
-	asc_ValAxisSettings.prototype.getAxisType = function() {
+	asc_ValAxisSettings.prototype.getAxisType = function () {
 		return this.axisType;
 	};
-	asc_ValAxisSettings.prototype.getDispUnitsRule = function() {
+	asc_ValAxisSettings.prototype.getDispUnitsRule = function () {
 		return this.dispUnitsRule;
 	};
-	asc_ValAxisSettings.prototype.getMinValRule = function() {
+	asc_ValAxisSettings.prototype.getMinValRule = function () {
 		return this.minValRule;
 	};
-	asc_ValAxisSettings.prototype.getMinVal = function() {
+	asc_ValAxisSettings.prototype.getMinVal = function () {
 		return this.minVal;
 	};
-	asc_ValAxisSettings.prototype.getMaxValRule = function() {
+	asc_ValAxisSettings.prototype.getMaxValRule = function () {
 		return this.maxValRule;
 	};
-	asc_ValAxisSettings.prototype.getMaxVal = function() {
+	asc_ValAxisSettings.prototype.getMaxVal = function () {
 		return this.maxVal;
 	};
-	asc_ValAxisSettings.prototype.getInvertValOrder = function() {
+	asc_ValAxisSettings.prototype.getInvertValOrder = function () {
 		return this.invertValOrder;
 	};
-	asc_ValAxisSettings.prototype.getLogScale = function() {
+	asc_ValAxisSettings.prototype.getLogScale = function () {
 		return this.logScale;
 	};
-	asc_ValAxisSettings.prototype.getLogBase = function() {
+	asc_ValAxisSettings.prototype.getLogBase = function () {
 		return this.logBase;
 	};
-	asc_ValAxisSettings.prototype.getUnits = function() {
+	asc_ValAxisSettings.prototype.getUnits = function () {
 		return this.units;
 	};
-	asc_ValAxisSettings.prototype.getShowUnitsOnChart = function() {
+	asc_ValAxisSettings.prototype.getShowUnitsOnChart = function () {
 		return this.showUnitsOnChart;
 	};
-	asc_ValAxisSettings.prototype.getMajorTickMark = function() {
+	asc_ValAxisSettings.prototype.getMajorTickMark = function () {
 		return this.majorTickMark;
 	};
-	asc_ValAxisSettings.prototype.getMinorTickMark = function() {
+	asc_ValAxisSettings.prototype.getMinorTickMark = function () {
 		return this.minorTickMark;
 	};
-	asc_ValAxisSettings.prototype.getTickLabelsPos = function() {
+	asc_ValAxisSettings.prototype.getTickLabelsPos = function () {
 		return this.tickLabelsPos;
 	};
-	asc_ValAxisSettings.prototype.getCrossesRule = function() {
+	asc_ValAxisSettings.prototype.getCrossesRule = function () {
 		return this.crossesRule;
 	};
-	asc_ValAxisSettings.prototype.getCrosses = function() {
+	asc_ValAxisSettings.prototype.getCrosses = function () {
 		return this.crosses;
 	};
-	asc_ValAxisSettings.prototype.setDefault = function() {
+	asc_ValAxisSettings.prototype.setDefault = function () {
 		this.putMinValRule(Asc.c_oAscValAxisRule.auto);
 		this.putMaxValRule(Asc.c_oAscValAxisRule.auto);
 		this.putTickLabelsPos(Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO);
@@ -681,34 +674,34 @@
 		this.putCrossesRule(Asc.c_oAscCrossesRule.auto);
 		this.putShow(true);
 	};
-	asc_ValAxisSettings.prototype.getShow = function() {
+	asc_ValAxisSettings.prototype.getShow = function () {
 		return this.show;
 	};
-	asc_ValAxisSettings.prototype.putShow = function(val) {
+	asc_ValAxisSettings.prototype.putShow = function (val) {
 		this.show = val;
 	};
-	asc_ValAxisSettings.prototype.getLabel = function() {
+	asc_ValAxisSettings.prototype.getLabel = function () {
 		return this.label;
 	};
-	asc_ValAxisSettings.prototype.putLabel = function(v) {
+	asc_ValAxisSettings.prototype.putLabel = function (v) {
 		this.label = v;
 	};
-	asc_ValAxisSettings.prototype.getGridlines = function() {
+	asc_ValAxisSettings.prototype.getGridlines = function () {
 		return this.gridlines;
 	};
-	asc_ValAxisSettings.prototype.putGridlines = function(v) {
+	asc_ValAxisSettings.prototype.putGridlines = function (v) {
 		this.gridlines = v;
 	};
-	asc_ValAxisSettings.prototype.getNumFmt = function() {
+	asc_ValAxisSettings.prototype.getNumFmt = function () {
 		return this.numFmt;
 	};
-	asc_ValAxisSettings.prototype.putNumFmt = function(v) {
+	asc_ValAxisSettings.prototype.putNumFmt = function (v) {
 		this.numFmt = v;
 	};
-	asc_ValAxisSettings.prototype.isRadarAxis = function() {
+	asc_ValAxisSettings.prototype.isRadarAxis = function () {
 		return this.isRadar;
 	};
-	asc_ValAxisSettings.prototype.putIsRadarAxis = function(v) {
+	asc_ValAxisSettings.prototype.putIsRadarAxis = function (v) {
 		this.isRadar = v;
 	};
 
@@ -735,161 +728,162 @@
 		this.auto = false;
 		this.isRadar = false;
 	}
-	asc_CatAxisSettings.prototype.isEqual = function(oPr){
-		if(!oPr){
+
+	asc_CatAxisSettings.prototype.isEqual = function (oPr) {
+		if (!oPr) {
 			return false;
 		}
-		if(this.intervalBetweenTick !== oPr.intervalBetweenTick){
+		if (this.intervalBetweenTick !== oPr.intervalBetweenTick) {
 			return false;
 		}
-		if(this.intervalBetweenLabelsRule !== oPr.intervalBetweenLabelsRule){
+		if (this.intervalBetweenLabelsRule !== oPr.intervalBetweenLabelsRule) {
 			return false;
 		}
-		if(this.intervalBetweenLabels !== oPr.intervalBetweenLabels){
+		if (this.intervalBetweenLabels !== oPr.intervalBetweenLabels) {
 			return false;
 		}
-		if(this.invertCatOrder !== oPr.invertCatOrder){
+		if (this.invertCatOrder !== oPr.invertCatOrder) {
 			return false;
 		}
-		if(this.labelsAxisDistance !== oPr.labelsAxisDistance){
+		if (this.labelsAxisDistance !== oPr.labelsAxisDistance) {
 			return false;
 		}
-		if(this.majorTickMark !== oPr.majorTickMark){
+		if (this.majorTickMark !== oPr.majorTickMark) {
 			return false;
 		}
-		if(this.minorTickMark !== oPr.minorTickMark){
+		if (this.minorTickMark !== oPr.minorTickMark) {
 			return false;
 		}
-		if(this.tickLabelsPos !== oPr.tickLabelsPos){
+		if (this.tickLabelsPos !== oPr.tickLabelsPos) {
 			return false;
 		}
-		if(this.crossesRule !== oPr.crossesRule){
+		if (this.crossesRule !== oPr.crossesRule) {
 			return false;
 		}
-		if(this.crosses !== oPr.crosses){
+		if (this.crosses !== oPr.crosses) {
 			return false;
 		}
-		if(this.labelsPosition !== oPr.labelsPosition){
+		if (this.labelsPosition !== oPr.labelsPosition) {
 			return false;
 		}
-		if(this.axisType !==  oPr.axisType){
+		if (this.axisType !== oPr.axisType) {
 			return false;
 		}
-		if(this.crossMinVal !== oPr.crossMinVal){
+		if (this.crossMinVal !== oPr.crossMinVal) {
 			return false;
 		}
-		if(this.crossMaxVal !== oPr.crossMaxVal){
+		if (this.crossMaxVal !== oPr.crossMaxVal) {
 			return false;
 		}
-		if(this.show !== oPr.show) {
+		if (this.show !== oPr.show) {
 			return false;
 		}
-		if(this.label !== oPr.label) {
+		if (this.label !== oPr.label) {
 			return false;
 		}
-		if(this.gridlines !== oPr.gridlines) {
+		if (this.gridlines !== oPr.gridlines) {
 			return false;
 		}
-		if(this.auto !== oPr.auto) {
+		if (this.auto !== oPr.auto) {
 			return false;
 		}
-		var bEqualNumFmt = false;
-		if(this.numFmt) {
+		let bEqualNumFmt = false;
+		if (this.numFmt) {
 			bEqualNumFmt = this.numFmt.isEqual(oPr.numFmt);
 		}
 		else {
 			bEqualNumFmt = (this.numFmt === oPr.numFmt);
 		}
-		if(!bEqualNumFmt) {
+		if (!bEqualNumFmt) {
 			return false;
 		}
 		return true;
 	};
-	asc_CatAxisSettings.prototype.putIntervalBetweenTick = function(v) {
+	asc_CatAxisSettings.prototype.putIntervalBetweenTick = function (v) {
 		this.intervalBetweenTick = v;
 	};
-	asc_CatAxisSettings.prototype.putIntervalBetweenLabelsRule = function(v) {
+	asc_CatAxisSettings.prototype.putIntervalBetweenLabelsRule = function (v) {
 		this.intervalBetweenLabelsRule = v;
 	};
-	asc_CatAxisSettings.prototype.putIntervalBetweenLabels = function(v) {
+	asc_CatAxisSettings.prototype.putIntervalBetweenLabels = function (v) {
 		this.intervalBetweenLabels = v;
 	};
-	asc_CatAxisSettings.prototype.putInvertCatOrder = function(v) {
+	asc_CatAxisSettings.prototype.putInvertCatOrder = function (v) {
 		this.invertCatOrder = v;
 	};
-	asc_CatAxisSettings.prototype.putLabelsAxisDistance = function(v) {
+	asc_CatAxisSettings.prototype.putLabelsAxisDistance = function (v) {
 		this.labelsAxisDistance = v;
 	};
-	asc_CatAxisSettings.prototype.putMajorTickMark = function(v) {
+	asc_CatAxisSettings.prototype.putMajorTickMark = function (v) {
 		this.majorTickMark = v;
 	};
-	asc_CatAxisSettings.prototype.putMinorTickMark = function(v) {
+	asc_CatAxisSettings.prototype.putMinorTickMark = function (v) {
 		this.minorTickMark = v;
 	};
-	asc_CatAxisSettings.prototype.putTickLabelsPos = function(v) {
+	asc_CatAxisSettings.prototype.putTickLabelsPos = function (v) {
 		this.tickLabelsPos = v;
 	};
-	asc_CatAxisSettings.prototype.putCrossesRule = function(v) {
+	asc_CatAxisSettings.prototype.putCrossesRule = function (v) {
 		this.crossesRule = v;
 	};
-	asc_CatAxisSettings.prototype.putCrosses = function(v) {
+	asc_CatAxisSettings.prototype.putCrosses = function (v) {
 		this.crosses = v;
 	};
-	asc_CatAxisSettings.prototype.putAxisType = function(v) {
+	asc_CatAxisSettings.prototype.putAxisType = function (v) {
 		this.axisType = v;
 	};
-	asc_CatAxisSettings.prototype.putLabelsPosition = function(v) {
+	asc_CatAxisSettings.prototype.putLabelsPosition = function (v) {
 		this.labelsPosition = v;
 	};
-	asc_CatAxisSettings.prototype.getIntervalBetweenTick = function(v) {
+	asc_CatAxisSettings.prototype.getIntervalBetweenTick = function () {
 		return this.intervalBetweenTick;
 	};
-	asc_CatAxisSettings.prototype.getIntervalBetweenLabelsRule = function() {
+	asc_CatAxisSettings.prototype.getIntervalBetweenLabelsRule = function () {
 		return this.intervalBetweenLabelsRule;
 	};
-	asc_CatAxisSettings.prototype.getIntervalBetweenLabels = function() {
+	asc_CatAxisSettings.prototype.getIntervalBetweenLabels = function () {
 		return this.intervalBetweenLabels;
 	};
-	asc_CatAxisSettings.prototype.getInvertCatOrder = function() {
+	asc_CatAxisSettings.prototype.getInvertCatOrder = function () {
 		return this.invertCatOrder;
 	};
-	asc_CatAxisSettings.prototype.getLabelsAxisDistance = function() {
+	asc_CatAxisSettings.prototype.getLabelsAxisDistance = function () {
 		return this.labelsAxisDistance;
 	};
-	asc_CatAxisSettings.prototype.getMajorTickMark = function() {
+	asc_CatAxisSettings.prototype.getMajorTickMark = function () {
 		return this.majorTickMark;
 	};
-	asc_CatAxisSettings.prototype.getMinorTickMark = function() {
+	asc_CatAxisSettings.prototype.getMinorTickMark = function () {
 		return this.minorTickMark;
 	};
-	asc_CatAxisSettings.prototype.getTickLabelsPos = function() {
+	asc_CatAxisSettings.prototype.getTickLabelsPos = function () {
 		return this.tickLabelsPos;
 	};
-	asc_CatAxisSettings.prototype.getCrossesRule = function() {
+	asc_CatAxisSettings.prototype.getCrossesRule = function () {
 		return this.crossesRule;
 	};
-	asc_CatAxisSettings.prototype.getCrosses = function() {
+	asc_CatAxisSettings.prototype.getCrosses = function () {
 		return this.crosses;
 	};
-	asc_CatAxisSettings.prototype.getAxisType = function() {
+	asc_CatAxisSettings.prototype.getAxisType = function () {
 		return this.axisType;
 	};
-	asc_CatAxisSettings.prototype.getLabelsPosition = function() {
+	asc_CatAxisSettings.prototype.getLabelsPosition = function () {
 		return this.labelsPosition;
 	};
-	asc_CatAxisSettings.prototype.getCrossMinVal = function() {
+	asc_CatAxisSettings.prototype.getCrossMinVal = function () {
 		return this.crossMinVal;
 	};
-	asc_CatAxisSettings.prototype.getCrossMaxVal = function() {
+	asc_CatAxisSettings.prototype.getCrossMaxVal = function () {
 		return this.crossMaxVal;
 	};
-	asc_CatAxisSettings.prototype.putCrossMinVal = function(val) {
+	asc_CatAxisSettings.prototype.putCrossMinVal = function (val) {
 		this.crossMinVal = val;
 	};
-	asc_CatAxisSettings.prototype.putCrossMaxVal = function(val) {
+	asc_CatAxisSettings.prototype.putCrossMaxVal = function (val) {
 		this.crossMaxVal = val;
 	};
-	asc_CatAxisSettings.prototype.setDefault = function() {
+	asc_CatAxisSettings.prototype.setDefault = function () {
 		this.putIntervalBetweenLabelsRule(Asc.c_oAscBetweenLabelsRule.auto);
 		this.putLabelsPosition(Asc.c_oAscLabelsPosition.betweenDivisions);
 		this.putTickLabelsPos(Asc.c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO);
@@ -901,40 +895,40 @@
 		this.putShow(true);
 		this.putAuto(true);
 	};
-	asc_CatAxisSettings.prototype.getShow = function() {
+	asc_CatAxisSettings.prototype.getShow = function () {
 		return this.show;
 	};
-	asc_CatAxisSettings.prototype.putShow = function(val) {
+	asc_CatAxisSettings.prototype.putShow = function (val) {
 		this.show = val;
 	};
-	asc_CatAxisSettings.prototype.getLabel = function() {
+	asc_CatAxisSettings.prototype.getLabel = function () {
 		return this.label;
 	};
-	asc_CatAxisSettings.prototype.putLabel = function(v) {
+	asc_CatAxisSettings.prototype.putLabel = function (v) {
 		this.label = v;
 	};
-	asc_CatAxisSettings.prototype.getGridlines = function() {
+	asc_CatAxisSettings.prototype.getGridlines = function () {
 		return this.gridlines;
 	};
-	asc_CatAxisSettings.prototype.putGridlines = function(v) {
+	asc_CatAxisSettings.prototype.putGridlines = function (v) {
 		this.gridlines = v;
 	};
-	asc_CatAxisSettings.prototype.getNumFmt = function() {
+	asc_CatAxisSettings.prototype.getNumFmt = function () {
 		return this.numFmt;
 	};
-	asc_CatAxisSettings.prototype.putNumFmt = function(v) {
+	asc_CatAxisSettings.prototype.putNumFmt = function (v) {
 		this.numFmt = v;
 	};
-	asc_CatAxisSettings.prototype.getAuto = function() {
+	asc_CatAxisSettings.prototype.getAuto = function () {
 		return this.auto;
 	};
-	asc_CatAxisSettings.prototype.putAuto = function(v) {
+	asc_CatAxisSettings.prototype.putAuto = function (v) {
 		this.auto = v;
 	};
-	asc_CatAxisSettings.prototype.isRadarAxis = function() {
+	asc_CatAxisSettings.prototype.isRadarAxis = function () {
 		return this.isRadar;
 	};
-	asc_CatAxisSettings.prototype.putIsRadarAxis = function(v) {
+	asc_CatAxisSettings.prototype.putIsRadarAxis = function (v) {
 		this.isRadar = v;
 	};
 
@@ -969,130 +963,130 @@
 	}
 
 	//TODO:remove this---------------------
-	asc_ChartSettings.prototype.putHorAxisProps = function(v) {
-		if(!AscCommon.isRealObject(v)) {
+	asc_ChartSettings.prototype.putHorAxisProps = function (v) {
+		if (!AscCommon.isRealObject(v)) {
 			this.horizontalAxes.length = 0;
 		}
 		else {
 			this.horizontalAxes[0] = v;
 		}
 	};
-	asc_ChartSettings.prototype.getHorAxisProps = function() {
+	asc_ChartSettings.prototype.getHorAxisProps = function () {
 		return this.horizontalAxes[0] || null;
 	};
-	asc_ChartSettings.prototype.putVertAxisProps = function(v) {
-		if(!AscCommon.isRealObject(v)) {
+	asc_ChartSettings.prototype.putVertAxisProps = function (v) {
+		if (!AscCommon.isRealObject(v)) {
 			this.verticalAxes.length = 0;
 		}
 		else {
 			this.verticalAxes[0] = v;
 		}
 	};
-	asc_ChartSettings.prototype.getVertAxisProps = function() {
+	asc_ChartSettings.prototype.getVertAxisProps = function () {
 		return this.verticalAxes[0] || null;
 	};
-	asc_ChartSettings.prototype.putShowHorAxis = function(v) {
-		var oAx = this.horizontalAxes[0];
-		if(oAx) {
+	asc_ChartSettings.prototype.putShowHorAxis = function (v) {
+		let oAx = this.horizontalAxes[0];
+		if (oAx) {
 			oAx.putShow(v);
 		}
 	};
-	asc_ChartSettings.prototype.getShowHorAxis = function() {
-		var oAx = this.horizontalAxes[0];
-		if(oAx) {
+	asc_ChartSettings.prototype.getShowHorAxis = function () {
+		let oAx = this.horizontalAxes[0];
+		if (oAx) {
 			return oAx.getShow();
 		}
 		return false;
 	};
-	asc_ChartSettings.prototype.putShowVerAxis = function(v) {
-		var oAx = this.verticalAxes[0];
-		if(oAx) {
+	asc_ChartSettings.prototype.putShowVerAxis = function (v) {
+		let oAx = this.verticalAxes[0];
+		if (oAx) {
 			oAx.putShow(v);
 		}
 	};
-	asc_ChartSettings.prototype.getShowVerAxis = function() {
-		var oAx = this.verticalAxes[0];
-		if(oAx) {
+	asc_ChartSettings.prototype.getShowVerAxis = function () {
+		let oAx = this.verticalAxes[0];
+		if (oAx) {
 			return oAx.getShow();
 		}
 		return false;
 	};
-	asc_ChartSettings.prototype.putHorAxisLabel = function(v) {
-		var oAx = this.horizontalAxes[0];
-		if(oAx) {
+	asc_ChartSettings.prototype.putHorAxisLabel = function (v) {
+		let oAx = this.horizontalAxes[0];
+		if (oAx) {
 			oAx.putLabel(v);
 		}
 	};
-	asc_ChartSettings.prototype.getHorAxisLabel = function() {
-		var oAx = this.horizontalAxes[0];
-		if(oAx) {
+	asc_ChartSettings.prototype.getHorAxisLabel = function () {
+		let oAx = this.horizontalAxes[0];
+		if (oAx) {
 			return oAx.getLabel();
 		}
 		return null;
 	};
-	asc_ChartSettings.prototype.putVertAxisLabel = function(v) {
-		var oAx = this.verticalAxes[0];
-		if(oAx) {
+	asc_ChartSettings.prototype.putVertAxisLabel = function () {
+		let oAx = this.verticalAxes[0];
+		if (oAx) {
 			return oAx.getLabel();
 		}
 		return null;
 	};
-	asc_ChartSettings.prototype.getVertAxisLabel = function() {
-		var oAx = this.verticalAxes[0];
-		if(oAx) {
+	asc_ChartSettings.prototype.getVertAxisLabel = function () {
+		let oAx = this.verticalAxes[0];
+		if (oAx) {
 			return oAx.getLabel();
 		}
 		return null;
 	};
-	asc_ChartSettings.prototype.putHorGridLines = function(v) {
-		var oAx = this.verticalAxes[0];
-		if(oAx) {
+	asc_ChartSettings.prototype.putHorGridLines = function (v) {
+		let oAx = this.verticalAxes[0];
+		if (oAx) {
 			oAx.putGridlines(v);
 		}
 	};
-	asc_ChartSettings.prototype.getHorGridLines = function() {
-		var oAx = this.verticalAxes[0];
-		if(oAx) {
+	asc_ChartSettings.prototype.getHorGridLines = function () {
+		let oAx = this.verticalAxes[0];
+		if (oAx) {
 			return oAx.getGridlines();
 		}
 		return null;
 	};
-	asc_ChartSettings.prototype.putVertGridLines = function(v) {
-		var oAx = this.horizontalAxes[0];
-		if(oAx) {
+	asc_ChartSettings.prototype.putVertGridLines = function (v) {
+		let oAx = this.horizontalAxes[0];
+		if (oAx) {
 			oAx.putGridlines(v);
 		}
 	};
-	asc_ChartSettings.prototype.getVertGridLines = function() {
-		var oAx = this.horizontalAxes[0];
-		if(oAx) {
+	asc_ChartSettings.prototype.getVertGridLines = function () {
+		let oAx = this.horizontalAxes[0];
+		if (oAx) {
 			return oAx.getGridlines();
 		}
 		return null;
 	};
 	//------------------------------
-	asc_ChartSettings.prototype.getHorAxesProps = function() {
+	asc_ChartSettings.prototype.getHorAxesProps = function () {
 		return this.horizontalAxes;
 	};
-	asc_ChartSettings.prototype.getVertAxesProps = function() {
+	asc_ChartSettings.prototype.getVertAxesProps = function () {
 		return this.verticalAxes;
 	};
-	asc_ChartSettings.prototype.getDepthAxesProps = function() {
+	asc_ChartSettings.prototype.getDepthAxesProps = function () {
 		return this.depthAxes;
 	};
-	asc_ChartSettings.prototype.getView3d = function() {
-		if(this.chartSpace) {
+	asc_ChartSettings.prototype.getView3d = function () {
+		if (this.chartSpace) {
 			return this.chartSpace.getView3d();
 		}
 		return this.view3D ? this.view3D.createDuplicate() : null;
 	};
-	asc_ChartSettings.prototype.putView3d = function(v) {
+	asc_ChartSettings.prototype.putView3d = function (v) {
 		this.view3D = v;
 	};
-	asc_ChartSettings.prototype.setView3d = function(v) {
+	asc_ChartSettings.prototype.setView3d = function (v) {
 		this.putView3d(v);
-		if(this.chartSpace) {
-			if(v) {
+		if (this.chartSpace) {
+			if (v) {
 				this.chartSpace.changeView3d(v.createDuplicate());
 			}
 			else {
@@ -1102,120 +1096,119 @@
 		}
 	};
 
-	asc_ChartSettings.prototype.addHorAxesProps = function(v) {
+	asc_ChartSettings.prototype.addHorAxesProps = function (v) {
 		this.horizontalAxes.push(v);
 	};
-	asc_ChartSettings.prototype.addVertAxesProps = function(v) {
+	asc_ChartSettings.prototype.addVertAxesProps = function (v) {
 		this.verticalAxes.push(v);
 	};
-	asc_ChartSettings.prototype.addDepthAxesProps = function(v) {
+	asc_ChartSettings.prototype.addDepthAxesProps = function (v) {
 		this.depthAxes.push(v);
 	};
-	asc_ChartSettings.prototype.removeAllAxesProps = function(v) {
+	asc_ChartSettings.prototype.removeAllAxesProps = function () {
 		this.horizontalAxes.length = 0;
 		this.verticalAxes.length = 0;
 		this.depthAxes.length = 0;
 	};
-	asc_ChartSettings.prototype.equalBool = function(a, b){
+	asc_ChartSettings.prototype.equalBool = function (a, b) {
 		return ((!!a) === (!!b));
 	};
-	asc_ChartSettings.prototype.isEqual = function(oPr){
-		if(!oPr){
+	asc_ChartSettings.prototype.isEqual = function (oPr) {
+		if (!oPr) {
 			return false;
 		}
-		if(this.style !== oPr.style){
+		if (this.style !== oPr.style) {
 			return false;
 		}
-		if(this.title !== oPr.title){
+		if (this.title !== oPr.title) {
 			return false;
 		}
-		if(this.rowCols !== oPr.rowCols){
+		if (this.rowCols !== oPr.rowCols) {
 			return false;
 		}
-		if(this.legendPos !== oPr.legendPos){
+		if (this.legendPos !== oPr.legendPos) {
 			return false;
 		}
-		if(this.dataLabelsPos !== oPr.dataLabelsPos){
+		if (this.dataLabelsPos !== oPr.dataLabelsPos) {
 			return false;
 		}
-		if(this.type !== oPr.type){
+		if (this.type !== oPr.type) {
 			return false;
 		}
-		if(!this.equalBool(this.showSerName, oPr.showSerName)){
+		if (!this.equalBool(this.showSerName, oPr.showSerName)) {
 			return false;
 		}
-		if(!this.equalBool(this.showCatName, oPr.showCatName)){
+		if (!this.equalBool(this.showCatName, oPr.showCatName)) {
 			return false;
 		}
-		if(!this.equalBool(this.showVal, oPr.showVal)){
-			return false;
-		}
-
-		if(this.separator !== oPr.separator &&
-		!(this.separator === ' ' && oPr.separator == null || oPr.separator === ' ' && this.separator == null)){
-			return false;
-		}
-		if(this.sRange !== oPr.sRange){
-			return false;
-		}
-		if(!this.equalBool(this.inColumns, oPr.inColumns)){
+		if (!this.equalBool(this.showVal, oPr.showVal)) {
 			return false;
 		}
 
-		if(!this.equalBool(this.showMarker, oPr.showMarker)){
+		if (this.separator !== oPr.separator && !(this.separator === ' ' && oPr.separator == null || oPr.separator === ' ' && this.separator == null)) {
 			return false;
 		}
-		if(!this.equalBool(this.bLine, oPr.bLine)){
+		if (this.sRange !== oPr.sRange) {
 			return false;
 		}
-		if(!this.equalBool(this.smooth, oPr.smooth)){
+		if (!this.equalBool(this.inColumns, oPr.inColumns)) {
 			return false;
 		}
-		if(this.verticalAxes.length !== oPr.verticalAxes.length) {
+
+		if (!this.equalBool(this.showMarker, oPr.showMarker)) {
 			return false;
 		}
-		if(this.horizontalAxes.length !== oPr.horizontalAxes.length) {
+		if (!this.equalBool(this.bLine, oPr.bLine)) {
 			return false;
 		}
-		var nAx;
-		for(nAx = 0; nAx < this.verticalAxes.length; ++nAx) {
-			if(!this.verticalAxes[nAx].isEqual(oPr.verticalAxes[nAx])) {
+		if (!this.equalBool(this.smooth, oPr.smooth)) {
+			return false;
+		}
+		if (this.verticalAxes.length !== oPr.verticalAxes.length) {
+			return false;
+		}
+		if (this.horizontalAxes.length !== oPr.horizontalAxes.length) {
+			return false;
+		}
+		let nAx;
+		for (nAx = 0; nAx < this.verticalAxes.length; ++nAx) {
+			if (!this.verticalAxes[nAx].isEqual(oPr.verticalAxes[nAx])) {
 				return false;
 			}
 		}
-		for(nAx = 0; nAx < this.horizontalAxes.length; ++nAx) {
-			if(!this.horizontalAxes[nAx].isEqual(oPr.horizontalAxes[nAx])) {
+		for (nAx = 0; nAx < this.horizontalAxes.length; ++nAx) {
+			if (!this.horizontalAxes[nAx].isEqual(oPr.horizontalAxes[nAx])) {
 				return false;
 			}
 		}
-		if(this.view3D && !oPr.view3D || !this.view3D && oPr.view3D) {
+		if (this.view3D && !oPr.view3D || !this.view3D && oPr.view3D) {
 			return false;
 		}
-		if(this.view3D && oPr.view3D && !this.view3D.isEqual(oPr.view3D)) {
+		if (this.view3D && oPr.view3D && !this.view3D.isEqual(oPr.view3D)) {
 			return false;
 		}
 		return true;
 	};
-	asc_ChartSettings.prototype.isEmpty = function() {
+	asc_ChartSettings.prototype.isEmpty = function () {
 		return this.isEqual(new asc_ChartSettings());
 	};
-	asc_ChartSettings.prototype.putShowMarker = function(v) {
+	asc_ChartSettings.prototype.putShowMarker = function (v) {
 		this.showMarker = v;
 	};
-	asc_ChartSettings.prototype.getShowMarker = function() {
+	asc_ChartSettings.prototype.getShowMarker = function () {
 		return this.showMarker;
 	};
-	asc_ChartSettings.prototype.putLine = function(v) {
+	asc_ChartSettings.prototype.putLine = function (v) {
 		this.bLine = v;
 	};
-	asc_ChartSettings.prototype.getLine = function() {
+	asc_ChartSettings.prototype.getLine = function () {
 		return this.bLine;
 	};
-	asc_ChartSettings.prototype.putRanges = function(aRanges) {
-		if(Array.isArray(aRanges) && aRanges.length > 0) {
-			var sRange = "=";
-			for(var nRange = 0; nRange < aRanges.length; ++nRange) {
-				if(nRange > 0) {
+	asc_ChartSettings.prototype.putRanges = function (aRanges) {
+		if (Array.isArray(aRanges) && aRanges.length > 0) {
+			let sRange = "=";
+			for (let nRange = 0; nRange < aRanges.length; ++nRange) {
+				if (nRange > 0) {
 					sRange += ",";
 				}
 				sRange += aRanges[nRange];
@@ -1226,10 +1219,10 @@
 			this.sRange = null;
 		}
 	};
-	asc_ChartSettings.prototype.getRanges = function() {
-		var sRange = this.sRange;
-		if(typeof sRange === "string" && sRange > 0) {
-			if(sRange.charAt(0) === '=') {
+	asc_ChartSettings.prototype.getRanges = function () {
+		let sRange = this.sRange;
+		if (typeof sRange === "string" && sRange > 0) {
+			if (sRange.charAt(0) === '=') {
 				sRange = sRange.slice(1);
 			}
 			return sRange.split(",");
@@ -1238,39 +1231,39 @@
 			return [];
 		}
 	};
-	asc_ChartSettings.prototype.putSmooth = function(v) {
+	asc_ChartSettings.prototype.putSmooth = function (v) {
 		this.smooth = v;
 	};
-	asc_ChartSettings.prototype.getSmooth = function() {
+	asc_ChartSettings.prototype.getSmooth = function () {
 		return this.smooth;
 	};
-	asc_ChartSettings.prototype.putStyle = function(index) {
-		if(!AscFormat.isRealNumber(index)) {
+	asc_ChartSettings.prototype.putStyle = function (index) {
+		if (!AscFormat.isRealNumber(index)) {
 			this.style = null;
 			return;
 		}
 		this.style = parseInt(index, 10);
-		if(this.bStartEdit && this.chartSpace) {
-			if(AscFormat.isRealNumber(this.style)){
-				var aStyle = AscCommon.g_oChartStyles[this.type] && AscCommon.g_oChartStyles[this.type][this.style - 1];
-				if(Array.isArray(aStyle)) {
+		if (this.bStartEdit && this.chartSpace) {
+			if (AscFormat.isRealNumber(this.style)) {
+				let aStyle = AscCommon.g_oChartStyles[this.type] && AscCommon.g_oChartStyles[this.type][this.style - 1];
+				if (Array.isArray(aStyle)) {
 					this.chartSpace.applyChartStyleByIds(aStyle);
 					this.updateChart();
 				}
 			}
 		}
 	};
-	asc_ChartSettings.prototype.getStyle = function() {
+	asc_ChartSettings.prototype.getStyle = function () {
 		return this.style;
 	};
-	asc_ChartSettings.prototype.putRange = function(range) {
+	asc_ChartSettings.prototype.putRange = function (range) {
 		this.sRange = range;
 	};
-	asc_ChartSettings.prototype.setRange = function(sRange) {
-		if(this.chartSpace) {
+	asc_ChartSettings.prototype.setRange = function (sRange) {
+		if (this.chartSpace) {
 			const oDataRefs = new AscFormat.CChartDataRefs(null);
 			const nCheckResult = oDataRefs.checkDataRange(sRange, this.getInRows(), this.getType());
-			if(nCheckResult !== Asc.c_oAscError.ID.No) {
+			if (nCheckResult !== Asc.c_oAscError.ID.No) {
 				this.sendError(nCheckResult);
 				return;
 			}
@@ -1278,159 +1271,153 @@
 			this.updateChart();
 		}
 	};
-	asc_ChartSettings.prototype.isValidRange = function(sRange) {
-		if(this.getRange() !== sRange) {
+	asc_ChartSettings.prototype.isValidRange = function (sRange) {
+		if (this.getRange() !== sRange) {
 			const oDataRefs = new AscFormat.CChartDataRefs(null);
 			const nCheckResult = oDataRefs.checkDataRange(sRange, this.getInRows(), this.getType());
-			if(nCheckResult === Asc.c_oAscError.ID.MaxDataPointsError) {
+			if (nCheckResult === Asc.c_oAscError.ID.MaxDataPointsError) {
 				return nCheckResult;
 			}
 		}
 		return AscFormat.isValidChartRange(sRange);
 	};
-	asc_ChartSettings.prototype.getRange = function() {
-		if(this.chartSpace) {
+	asc_ChartSettings.prototype.getRange = function () {
+		if (this.chartSpace) {
 			return this.chartSpace.getCommonRange();
 		}
 		return this.sRange;
 	};
-	asc_ChartSettings.prototype.putInColumns = function(inColumns) {
+	asc_ChartSettings.prototype.putInColumns = function (inColumns) {
 		this.inColumns = inColumns;
 	};
-	asc_ChartSettings.prototype.getInColumns = function() {
+	asc_ChartSettings.prototype.getInColumns = function () {
 		return this.inColumns;
 	};
-	asc_ChartSettings.prototype.getInRows = function() {
-		if(this.inColumns === true || this.inColumns === false) {
+	asc_ChartSettings.prototype.getInRows = function () {
+		if (this.inColumns === true || this.inColumns === false) {
 			return !this.inColumns;
 		}
 		return null;
 	};
-	asc_ChartSettings.prototype.putTitle = function(v) {
+	asc_ChartSettings.prototype.putTitle = function (v) {
 		this.title = v;
 	};
-	asc_ChartSettings.prototype.getTitle = function() {
+	asc_ChartSettings.prototype.getTitle = function () {
 		return this.title;
 	};
-	asc_ChartSettings.prototype.putRowCols = function(v) {
+	asc_ChartSettings.prototype.putRowCols = function (v) {
 		this.rowCols = v;
 	};
-	asc_ChartSettings.prototype.getRowCols = function() {
+	asc_ChartSettings.prototype.getRowCols = function () {
 		return this.rowCols;
 	};
-	asc_ChartSettings.prototype.putLegendPos = function(v) {
+	asc_ChartSettings.prototype.putLegendPos = function (v) {
 		this.legendPos = v;
 	};
-	asc_ChartSettings.prototype.putDataLabelsPos = function(v) {
+	asc_ChartSettings.prototype.putDataLabelsPos = function (v) {
 		this.dataLabelsPos = v;
 	};
-	asc_ChartSettings.prototype.getLegendPos = function(v) {
+	asc_ChartSettings.prototype.getLegendPos = function () {
 		return this.legendPos;
 	};
-	asc_ChartSettings.prototype.getDataLabelsPos = function(v) {
+	asc_ChartSettings.prototype.getDataLabelsPos = function () {
 		return this.dataLabelsPos;
 	};
-	asc_ChartSettings.prototype.getType = function() {
-		if(this.chartSpace) {
+	asc_ChartSettings.prototype.getType = function () {
+		if (this.chartSpace) {
 			return this.chartSpace.getChartType();
 		}
 		return this.type;
 	};
-	asc_ChartSettings.prototype.checkParams = function() {
-		if(this.type === null || this.type === Asc.c_oAscChartTypeSettings.comboAreaBar
-			|| this.type === Asc.c_oAscChartTypeSettings.comboBarLine
-		|| this.type === Asc.c_oAscChartTypeSettings.comboBarLineSecondary
-		|| this.type === Asc.c_oAscChartTypeSettings.comboCustom) {
+	asc_ChartSettings.prototype.checkParams = function () {
+		if (this.type === null || this.type === Asc.c_oAscChartTypeSettings.comboAreaBar || this.type === Asc.c_oAscChartTypeSettings.comboBarLine || this.type === Asc.c_oAscChartTypeSettings.comboBarLineSecondary || this.type === Asc.c_oAscChartTypeSettings.comboCustom) {
 			return;
 		}
-		if(AscFormat.getIsMarkerByType(this.type)) {
+		if (AscFormat.getIsMarkerByType(this.type)) {
 			this.showMarker = true;
 		}
 		else {
 			this.showMarker = false;
 		}
-		if(AscFormat.getIsSmoothByType(this.type)) {
+		if (AscFormat.getIsSmoothByType(this.type)) {
 			this.smooth = true;
 		}
 		else {
 			this.smooth = false;
 		}
-		if(AscFormat.getIsLineByType(this.type)) {
+		if (AscFormat.getIsLineByType(this.type)) {
 			this.bLine = true;
 		}
 		else {
 			this.bLine = false;
 		}
 	};
-	asc_ChartSettings.prototype.putType = function(v) {
+	asc_ChartSettings.prototype.putType = function (v) {
 		this.type = v;
 		this.checkParams();
 	};
-	asc_ChartSettings.prototype.putShowSerName = function(v) {
+	asc_ChartSettings.prototype.putShowSerName = function (v) {
 		this.showSerName = v;
 	};
-	asc_ChartSettings.prototype.putShowCatName = function(v) {
+	asc_ChartSettings.prototype.putShowCatName = function (v) {
 		this.showCatName = v;
 	};
-	asc_ChartSettings.prototype.putShowVal = function(v) {
+	asc_ChartSettings.prototype.putShowVal = function (v) {
 		this.showVal = v;
 	};
-	asc_ChartSettings.prototype.getShowSerName = function() {
+	asc_ChartSettings.prototype.getShowSerName = function () {
 		return this.showSerName;
 	};
-	asc_ChartSettings.prototype.getShowCatName = function() {
+	asc_ChartSettings.prototype.getShowCatName = function () {
 		return this.showCatName;
 	};
-	asc_ChartSettings.prototype.getShowVal = function() {
+	asc_ChartSettings.prototype.getShowVal = function () {
 		return this.showVal;
 	};
-	asc_ChartSettings.prototype.putSeparator = function(v) {
+	asc_ChartSettings.prototype.putSeparator = function (v) {
 		this.separator = v;
 	};
-	asc_ChartSettings.prototype.getSeparator = function() {
+	asc_ChartSettings.prototype.getSeparator = function () {
 		return this.separator;
 	};
-	asc_ChartSettings.prototype.sendErrorOnChangeType = function(nType) {
+	asc_ChartSettings.prototype.sendErrorOnChangeType = function (nType) {
 		this.sendError(nType);
 	};
-	asc_ChartSettings.prototype.sendError = function(nType) {
-		var oApi = Asc.editor || editor;
-		if(oApi) {
+	asc_ChartSettings.prototype.sendError = function (nType) {
+		let oApi = Asc.editor || editor;
+		if (oApi) {
 			oApi.sendEvent("asc_onError", nType, Asc.c_oAscError.Level.NoCritical);
-			if(oApi.UpdateInterfaceState) {
+			if (oApi.UpdateInterfaceState) {
 				oApi.UpdateInterfaceState();
 			}
 		}
 	};
-	asc_ChartSettings.prototype.changeType = function(type) {
-		if(this.chartSpace) {
-			if(type === Asc.c_oAscChartTypeSettings.stock) {
-				if(!this.chartSpace.canChangeToStockChart()){
+	asc_ChartSettings.prototype.changeType = function (type) {
+		if (this.chartSpace) {
+			if (type === Asc.c_oAscChartTypeSettings.stock) {
+				if (!this.chartSpace.canChangeToStockChart()) {
 					this.sendErrorOnChangeType(Asc.c_oAscError.ID.StockChartError);
 					return false;
 				}
 			}
-			if(type === Asc.c_oAscChartTypeSettings.comboCustom
-				|| type === Asc.c_oAscChartTypeSettings.comboAreaBar
-				|| type === Asc.c_oAscChartTypeSettings.comboBarLine
-				|| type === Asc.c_oAscChartTypeSettings.comboBarLineSecondary) {
-				if(!this.chartSpace.canChangeToComboChart()){
+			if (type === Asc.c_oAscChartTypeSettings.comboCustom || type === Asc.c_oAscChartTypeSettings.comboAreaBar || type === Asc.c_oAscChartTypeSettings.comboBarLine || type === Asc.c_oAscChartTypeSettings.comboBarLineSecondary) {
+				if (!this.chartSpace.canChangeToComboChart()) {
 					this.sendErrorOnChangeType(Asc.c_oAscError.ID.ComboSeriesError);
 					return false;
 				}
 			}
 			this.putType(type);
-			if(this.chartSpace) {
-				var oController = this.chartSpace.getDrawingObjectsController();
-				if(oController) {
-					var oThis = this;
-					var oChartSpace = this.chartSpace;
-					oController.checkSelectedObjectsAndCallback(function() {
+			if (this.chartSpace) {
+				let oController = this.chartSpace.getDrawingObjectsController();
+				if (oController) {
+					let oThis = this;
+					let oChartSpace = this.chartSpace;
+					oController.checkSelectedObjectsAndCallback(function () {
 						oChartSpace.changeChartType(type);
 						oThis.updateChart();
-						var oApi = Asc.editor || editor;
-						if(oApi) {
-							if(oApi.UpdateInterfaceState) {
+						let oApi = Asc.editor || editor;
+						if (oApi) {
+							if (oApi.UpdateInterfaceState) {
 								oApi.UpdateInterfaceState();
 							}
 						}
@@ -1443,81 +1430,81 @@
 		}
 		return true;
 	};
-	asc_ChartSettings.prototype.getSeries = function() {
-		if(this.chartSpace) {
+	asc_ChartSettings.prototype.getSeries = function () {
+		if (this.chartSpace) {
 			return this.chartSpace.getAllSeries();
 		}
 		return [];
 	};
-	asc_ChartSettings.prototype.getCatValues = function() {
-		if(this.chartSpace) {
+	asc_ChartSettings.prototype.getCatValues = function () {
+		if (this.chartSpace) {
 			return this.chartSpace.getCatValues();
 		}
 		return [];
 	};
-	asc_ChartSettings.prototype.getCatFormula = function() {
-		if(this.chartSpace) {
+	asc_ChartSettings.prototype.getCatFormula = function () {
+		if (this.chartSpace) {
 			return this.chartSpace.getCatFormula();
 		}
 		return "";
 	};
-	asc_ChartSettings.prototype.setCatFormula = function(sFormula) {
-		if(this.chartSpace) {
+	asc_ChartSettings.prototype.setCatFormula = function (sFormula) {
+		if (this.chartSpace) {
 			return this.chartSpace.setCatFormula(sFormula);
 		}
 		this.updateChart();
 	};
-	asc_ChartSettings.prototype.isValidCatFormula = function(sFormula) {
-		if(sFormula === "" || sFormula === null) {
+	asc_ChartSettings.prototype.isValidCatFormula = function (sFormula) {
+		if (sFormula === "" || sFormula === null) {
 			return Asc.c_oAscError.ID.No;
 		}
-		return AscFormat.ExecuteNoHistory(function(){
-			var oCat = new AscFormat.CCat();
+		return AscFormat.ExecuteNoHistory(function () {
+			let oCat = new AscFormat.CCat();
 			return oCat.setValues(sFormula).getError();
 		}, this, []);
 	};
-	asc_ChartSettings.prototype.switchRowCol = function() {
-		var nError = Asc.c_oAscError.ID.No;
-		if(this.chartSpace) {
+	asc_ChartSettings.prototype.switchRowCol = function () {
+		let nError = Asc.c_oAscError.ID.No;
+		if (this.chartSpace) {
 			nError = this.chartSpace.switchRowCol();
 		}
 		this.updateChart();
 		return nError;
 	};
-	asc_ChartSettings.prototype.addSeries = function() {
-		var oRet = null;
-		if(this.chartSpace) {
+	asc_ChartSettings.prototype.addSeries = function () {
+		let oRet = null;
+		if (this.chartSpace) {
 			oRet = this.chartSpace.addNewSeries();
 		}
 		this.updateChart();
 		return oRet;
 	};
-	asc_ChartSettings.prototype.addScatterSeries = function() {
-		var oRet = null;
-		if(this.chartSpace) {
+	asc_ChartSettings.prototype.addScatterSeries = function () {
+		let oRet = null;
+		if (this.chartSpace) {
 			oRet = this.chartSpace.addNewSeries();
 		}
 		this.updateChart();
 		return oRet;
 	};
-	asc_ChartSettings.prototype.startEdit = function() {
+	asc_ChartSettings.prototype.startEdit = function () {
 		this.bStartEdit = true;
 		AscCommon.History.Create_NewPoint();
 		AscCommon.History.StartTransaction();
 	};
 	asc_ChartSettings.prototype.updateInterface = function () {
-		var oApi = Asc.editor || editor;
-		if(oApi) {
-			if(oApi.UpdateInterfaceState) {
+		let oApi = Asc.editor || editor;
+		if (oApi) {
+			if (oApi.UpdateInterfaceState) {
 				oApi.UpdateInterfaceState();
 			}
 			else {
-				var oWbView = oApi.wb;
-				if(oWbView) {
-					var oWSView = oWbView.getWorksheet();
-					if(oWSView) {
-						var oRender = oWSView.objectRender;
-						if(oRender) {
+				let oWbView = oApi.wb;
+				if (oWbView) {
+					let oWSView = oWbView.getWorksheet();
+					if (oWSView) {
+						let oRender = oWSView.objectRender;
+						if (oRender) {
 							oRender.sendGraphicObjectProps();
 						}
 					}
@@ -1525,8 +1512,8 @@
 			}
 		}
 	};
-	asc_ChartSettings.prototype.endEdit = function() {
-		if(AscCommon.History.Is_LastPointEmpty()) {
+	asc_ChartSettings.prototype.endEdit = function () {
+		if (AscCommon.History.Is_LastPointEmpty()) {
 			this.cancelEdit();
 			return;
 		}
@@ -1535,11 +1522,11 @@
 		this.updateChart();
 		this.updateInterface();
 	};
-	asc_ChartSettings.prototype.cancelEdit = function() {
+	asc_ChartSettings.prototype.cancelEdit = function () {
 		this.bStartEdit = false;
 		const bLastPointEmpty = AscCommon.History.Is_LastPointEmpty();
 		AscCommon.History.EndTransaction();
-		if(!bLastPointEmpty) {
+		if (!bLastPointEmpty) {
 			AscCommon.History.Undo();
 			AscCommon.History.Clear_Redo();
 		}
@@ -1547,22 +1534,23 @@
 		this.updateChart();
 		this.updateInterface();
 	};
-	asc_ChartSettings.prototype.startEditData = function() {
+	asc_ChartSettings.prototype.startEditData = function () {
 		AscCommon.History.SavePointIndex();
 	};
-	asc_ChartSettings.prototype.cancelEditData = function() {
+	asc_ChartSettings.prototype.cancelEditData = function () {
 		AscCommon.History.UndoToPointIndex();
 		this.updateChart();
 	};
-	asc_ChartSettings.prototype.endEditData = function() {
+	asc_ChartSettings.prototype.endEditData = function () {
 		AscCommon.History.ClearPointIndex();
 		this.updateChart();
 	};
-	asc_ChartSettings.prototype.updateChart = function() {
-		if(this.chartSpace) {
+	asc_ChartSettings.prototype.updateChart = function () {
+		if (this.chartSpace) {
 			this.chartSpace.onDataUpdate();
 		}
 	};
+
 	/** @constructor */
 	function asc_CRect(x, y, width, height) {
 		// private members
@@ -1572,16 +1560,17 @@
 		this._height = height;
 	}
 
-	asc_CRect.prototype = {
-		asc_getX: function () {
-			return this._x;
-		}, asc_getY: function () {
-			return this._y;
-		}, asc_getWidth: function () {
-			return this._width;
-		}, asc_getHeight: function () {
-			return this._height;
-		}
+	asc_CRect.prototype.asc_getX = function () {
+		return this._x;
+	};
+	asc_CRect.prototype.asc_getY = function () {
+		return this._y;
+	};
+	asc_CRect.prototype.asc_getWidth = function () {
+		return this._width;
+	};
+	asc_CRect.prototype.asc_getHeight = function () {
+		return this._height;
 	};
 
 
@@ -1649,53 +1638,63 @@
 		this.a = (undefined == a) ? 1 : a;
 	}
 
-	CColor.prototype = {
-		constructor: CColor, getR: function () {
-			return this.r
-		}, get_r: function () {
-			return this.r
-		}, put_r: function (v) {
-			this.r = v;
-			this.hex = undefined;
-		}, getG: function () {
-			return this.g
-		}, get_g: function () {
-			return this.g;
-		}, put_g: function (v) {
-			this.g = v;
-			this.hex = undefined;
-		}, getB: function () {
-			return this.b
-		}, get_b: function () {
-			return this.b;
-		}, put_b: function (v) {
-			this.b = v;
-			this.hex = undefined;
-		}, getA: function () {
-			return this.a
-		}, get_hex: function () {
-			if (!this.hex) {
-				var r = this.r.toString(16);
-				var g = this.g.toString(16);
-				var b = this.b.toString(16);
-				this.hex = ( r.length == 1 ? "0" + r : r) + ( g.length == 1 ? "0" + g : g) + ( b.length == 1 ? "0" + b : b);
-			}
-			return this.hex;
-		},
-
-		Compare: function (Color) {
-			return (this.r === Color.r && this.g === Color.g && this.b === Color.b && this.a === Color.a);
-		}, Copy: function () {
-			return new CColor(this.r, this.g, this.b, this.a);
-		},
-
-		getVal: function () {
-			return (((this.r << 16) & 0xFF0000) + ((this.g << 8)&0xFF00)+this.b);
-		},
-
-		getColorName: function() {
-			return (new asc_CColor(this.r, this.g, this.b)).asc_getName();
+	CColor.prototype.constructor = CColor;
+	CColor.prototype.getR = function () {
+		return this.r
+	};
+	CColor.prototype.get_r = function () {
+		return this.r
+	};
+	CColor.prototype.put_r = function (v) {
+		this.r = v;
+		this.hex = undefined;
+	};
+	CColor.prototype.getG = function () {
+		return this.g
+	};
+	CColor.prototype.get_g = function () {
+		return this.g;
+	};
+	CColor.prototype.put_g = function (v) {
+		this.g = v;
+		this.hex = undefined;
+	};
+	CColor.prototype.getB = function () {
+		return this.b
+	};
+	CColor.prototype.get_b = function () {
+		return this.b;
+	};
+	CColor.prototype.put_b = function (v) {
+		this.b = v;
+		this.hex = undefined;
+	};
+	CColor.prototype.getA = function () {
+		return this.a;
+	};
+	CColor.prototype.get_hex = function () {
+		if (!this.hex) {
+			let r = this.r.toString(16);
+			let g = this.g.toString(16);
+			let b = this.b.toString(16);
+			this.hex = (r.length == 1 ? "0" + r : r) + (g.length == 1 ? "0" + g : g) + (b.length == 1 ? "0" + b : b);
 		}
+		return this.hex;
+	};
+
+	CColor.prototype.Compare = function (Color) {
+		return (this.r === Color.r && this.g === Color.g && this.b === Color.b && this.a === Color.a);
+	};
+	CColor.prototype.Copy = function () {
+		return new CColor(this.r, this.g, this.b, this.a);
+	};
+
+	CColor.prototype.getVal = function () {
+		return (((this.r << 16) & 0xFF0000) + ((this.g << 8) & 0xFF00) + this.b);
+	};
+
+	CColor.prototype.getColorName = function () {
+		return (new asc_CColor(this.r, this.g, this.b)).asc_getName();
 	};
 
 	/** @constructor */
@@ -1711,20 +1710,21 @@
 
 		this.Mods = [];
 		this.ColorSchemeId = -1;
-		this.EffectValue  = 0;
+		this.EffectValue = 0;
 		if (1 === arguments.length) {
 			this.r = arguments[0].r;
 			this.g = arguments[0].g;
 			this.b = arguments[0].b;
-		} else {
+		}
+		else {
 			if (3 <= arguments.length) {
 				this.r = arguments[0];
 				this.g = arguments[1];
 				this.b = arguments[2];
 			}
-        if (4 === arguments.length) {
-            this.a = arguments[3];
-        }
+			if (4 === arguments.length) {
+				this.a = arguments[3];
+			}
 		}
 	}
 
@@ -1771,12 +1771,11 @@
 	};
 	asc_CColor.prototype.asc_getHex = function () {
 		if (!this.hex) {
-			var a = this.a.toString(16);
-			var r = this.r.toString(16);
-			var g = this.g.toString(16);
-			var b = this.b.toString(16);
-			this.hex = ( a.length == 1 ? "0" + a : a) + ( r.length == 1 ? "0" + r : r) + ( g.length == 1 ? "0" + g : g) +
-				( b.length == 1 ? "0" + b : b);
+			let a = this.a.toString(16);
+			let r = this.r.toString(16);
+			let g = this.g.toString(16);
+			let b = this.b.toString(16);
+			this.hex = (a.length == 1 ? "0" + a : a) + (r.length == 1 ? "0" + r : r) + (g.length == 1 ? "0" + g : g) + (b.length == 1 ? "0" + b : b);
 		}
 		return this.hex;
 	};
@@ -1826,34 +1825,23 @@
 		const fAE = function (a, b) {
 			return Math.abs(a - b) < 1e-15;
 		};
-		if (fAE(b1, 0.0) && fAE(a1Prime, 0.0))
-			hPrime1 = 0.0;
-		else {
+		if (fAE(b1, 0.0) && fAE(a1Prime, 0.0)) hPrime1 = 0.0; else {
 			hPrime1 = Math.atan2(b1, a1Prime);
-			if (hPrime1 < 0)
-				hPrime1 += deg360InRad;
+			if (hPrime1 < 0) hPrime1 += deg360InRad;
 		}
 		let hPrime2;
-		if (fAE(b2, 0.0) && fAE(a2Prime, 0.0))
-			hPrime2 = 0.0;
-		else {
+		if (fAE(b2, 0.0) && fAE(a2Prime, 0.0)) hPrime2 = 0.0; else {
 			hPrime2 = Math.atan2(b2, a2Prime);
-			if (hPrime2 < 0)
-				hPrime2 += deg360InRad;
+			if (hPrime2 < 0) hPrime2 += deg360InRad;
 		}
 
 		let deltaLPrime = L2 - L1;
 		let deltaCPrime = CPrime2 - CPrime1;
 		let deltahPrime;
 		let CPrimeProduct = CPrime1 * CPrime2;
-		if (fAE(CPrimeProduct, 0.0))
-			deltahPrime = 0;
-		else {
+		if (fAE(CPrimeProduct, 0.0)) deltahPrime = 0; else {
 			deltahPrime = hPrime2 - hPrime1;
-			if (deltahPrime < -deg180InRad)
-				deltahPrime += deg360InRad;
-			else if (deltahPrime > deg180InRad)
-				deltahPrime -= deg360InRad;
+			if (deltahPrime < -deg180InRad) deltahPrime += deg360InRad; else if (deltahPrime > deg180InRad) deltahPrime -= deg360InRad;
 		}
 		let deltaHPrime = 2.0 * Math.sqrt(CPrimeProduct) * Math.sin(deltahPrime / 2.0);
 
@@ -1862,35 +1850,21 @@
 		let barhPrime, hPrimeSum = hPrime1 + hPrime2;
 		if (fAE(CPrime1 * CPrime2, 0.0)) {
 			barhPrime = hPrimeSum;
-		} else {
-			if (Math.abs(hPrime1 - hPrime2) <= deg180InRad)
-				barhPrime = hPrimeSum / 2.0;
-			else {
-				if (hPrimeSum < deg360InRad)
-					barhPrime = (hPrimeSum + deg360InRad) / 2.0;
-				else
-					barhPrime = (hPrimeSum - deg360InRad) / 2.0;
+		}
+		else {
+			if (Math.abs(hPrime1 - hPrime2) <= deg180InRad) barhPrime = hPrimeSum / 2.0; else {
+				if (hPrimeSum < deg360InRad) barhPrime = (hPrimeSum + deg360InRad) / 2.0; else barhPrime = (hPrimeSum - deg360InRad) / 2.0;
 			}
 		}
-		let T = 1.0 - (0.17 * Math.cos(barhPrime - d2r(30.0))) +
-			(0.24 * Math.cos(2.0 * barhPrime)) +
-			(0.32 * Math.cos((3.0 * barhPrime) + d2r(6.0))) -
-			(0.20 * Math.cos((4.0 * barhPrime) - d2r(63.0)));
-		let deltaTheta = d2r(30.0) *
-			Math.exp(-Math.pow((barhPrime - d2r(275.0)) / d2r(25.0), 2.0));
-		let R_C = 2.0 * Math.sqrt(Math.pow(barCPrime, 7.0) /
-			(Math.pow(barCPrime, 7.0) + pow25To7));
-		let S_L = 1 + ((0.015 * Math.pow(barLPrime - 50.0, 2.0)) /
-			Math.sqrt(20 + Math.pow(barLPrime - 50.0, 2.0)));
+		let T = 1.0 - (0.17 * Math.cos(barhPrime - d2r(30.0))) + (0.24 * Math.cos(2.0 * barhPrime)) + (0.32 * Math.cos((3.0 * barhPrime) + d2r(6.0))) - (0.20 * Math.cos((4.0 * barhPrime) - d2r(63.0)));
+		let deltaTheta = d2r(30.0) * Math.exp(-Math.pow((barhPrime - d2r(275.0)) / d2r(25.0), 2.0));
+		let R_C = 2.0 * Math.sqrt(Math.pow(barCPrime, 7.0) / (Math.pow(barCPrime, 7.0) + pow25To7));
+		let S_L = 1 + ((0.015 * Math.pow(barLPrime - 50.0, 2.0)) / Math.sqrt(20 + Math.pow(barLPrime - 50.0, 2.0)));
 		let S_C = 1 + (0.045 * barCPrime);
 		let S_H = 1 + (0.015 * barCPrime * T);
 		let R_T = (-Math.sin(2.0 * deltaTheta)) * R_C;
 
-		let deltaE = Math.sqrt(
-			Math.pow(deltaLPrime / (k_L * S_L), 2.0) +
-			Math.pow(deltaCPrime / (k_C * S_C), 2.0) +
-			Math.pow(deltaHPrime / (k_H * S_H), 2.0) +
-			(R_T * (deltaCPrime / (k_C * S_C)) * (deltaHPrime / (k_H * S_H))));
+		let deltaE = Math.sqrt(Math.pow(deltaLPrime / (k_L * S_L), 2.0) + Math.pow(deltaCPrime / (k_C * S_C), 2.0) + Math.pow(deltaHPrime / (k_H * S_H), 2.0) + (R_T * (deltaCPrime / (k_C * S_C)) * (deltaHPrime / (k_H * S_H))));
 
 		return deltaE;
 	};
@@ -1910,20 +1884,11 @@
 		b = B / 255; //B 0..1
 
 		// assuming sRGB (D65)
-		if (r <= 0.04045)
-			r = r / 12;
-		else
-			r = Math.pow((r + 0.055) / 1.055, 2.4);
+		if (r <= 0.04045) r = r / 12; else r = Math.pow((r + 0.055) / 1.055, 2.4);
 
-		if (g <= 0.04045)
-			g = g / 12;
-		else
-			g = Math.pow((g + 0.055) / 1.055, 2.4);
+		if (g <= 0.04045) g = g / 12; else g = Math.pow((g + 0.055) / 1.055, 2.4);
 
-		if (b <= 0.04045)
-			b = b / 12;
-		else
-			b = Math.pow((b + 0.055) / 1.055, 2.4);
+		if (b <= 0.04045) b = b / 12; else b = Math.pow((b + 0.055) / 1.055, 2.4);
 
 
 		X = 0.436052025 * r + 0.385081593 * g + 0.143087414 * b;
@@ -1935,20 +1900,11 @@
 		yr = Y / Yr;
 		zr = Z / Zr;
 
-		if (xr > eps)
-			fx = Math.pow(xr, 1 / 3.);
-		else
-			fx = ((k * xr + 16.) / 116.);
+		if (xr > eps) fx = Math.pow(xr, 1 / 3.); else fx = ((k * xr + 16.) / 116.);
 
-		if (yr > eps)
-			fy = Math.pow(yr, 1 / 3.);
-		else
-			fy = ((k * yr + 16.) / 116.);
+		if (yr > eps) fy = Math.pow(yr, 1 / 3.); else fy = ((k * yr + 16.) / 116.);
 
-		if (zr > eps)
-			fz = Math.pow(zr, 1 / 3.);
-		else
-			fz = ((k * zr + 16.) / 116);
+		if (zr > eps) fz = Math.pow(zr, 1 / 3.); else fz = ((k * zr + 16.) / 116);
 
 		Ls = (116 * fy) - 16;
 		as = 500 * (fx - fy);
@@ -1960,17 +1916,17 @@
 		lab[2] = (bs + .5) >> 0;
 		return lab;
 	};
-	asc_CColor.prototype.asc_getName = function() {
+	asc_CColor.prototype.asc_getName = function () {
 		const nColorVal = this.getVal();
-		if(STANDART_COLORS_MAP.hasOwnProperty(nColorVal)) {
+		if (STANDART_COLORS_MAP.hasOwnProperty(nColorVal)) {
 			return STANDART_COLORS_MAP[nColorVal];
 		}
 		let dMinDistance = 1000000;
 		let sMinName = "Black";
-		for(let nCurColor in STANDART_COLORS_MAP) {
-			if(STANDART_COLORS_MAP.hasOwnProperty(nCurColor)) {
+		for (let nCurColor in STANDART_COLORS_MAP) {
+			if (STANDART_COLORS_MAP.hasOwnProperty(nCurColor)) {
 				let dDist = this.getColorDiff(nColorVal, nCurColor);
-				if(dDist < dMinDistance) {
+				if (dDist < dMinDistance) {
 					dMinDistance = dDist;
 					sMinName = STANDART_COLORS_MAP[nCurColor];
 				}
@@ -1979,12 +1935,12 @@
 		return sMinName;
 	};
 	asc_CColor.prototype.getVal = function () {
-		return (((this.r << 16) & 0xFF0000) + ((this.g << 8)&0xFF00)+this.b);
+		return (((this.r << 16) & 0xFF0000) + ((this.g << 8) & 0xFF00) + this.b);
 	};
 	asc_CColor.prototype.asc_putEffectValue = function (v) {
 		let dVal = Math.abs(v);
 		dVal = ((dVal * 100 + 0.5) >> 0) / 100;
-		if(v < 0) {
+		if (v < 0) {
 			dVal = -dVal;
 		}
 		this.EffectValue = dVal;
@@ -1992,7 +1948,7 @@
 	asc_CColor.prototype.asc_getEffectValue = function () {
 		return this.EffectValue;
 	};
-	asc_CColor.prototype.print = function() {
+	asc_CColor.prototype.print = function () {
 		console.log("Color");
 		console.log("r: " + this.r);
 		console.log("g: " + this.g);
@@ -2003,7 +1959,7 @@
 		console.log("---------------");
 	};
 	asc_CColor.prototype.asc_getNameInColorScheme = function () {
-		if(this.ColorSchemeId === -1) {
+		if (this.ColorSchemeId === -1) {
 			return null;
 		}
 		switch (this.ColorSchemeId) {
@@ -2043,7 +1999,7 @@
 	};
 	asc_CColor.prototype.setColorSchemeId = function (v) {
 		this.ColorSchemeId = v;
-		if(!AscFormat.isRealNumber(this.ColorSchemeId)) {
+		if (!AscFormat.isRealNumber(this.ColorSchemeId)) {
 			this.ColorSchemeId = -1;
 		}
 	};
@@ -2053,15 +2009,15 @@
 		if (obj) {
 			if (obj.Color instanceof asc_CColor) {
 				this.Color = obj.Color;
-			} else {
-				this.Color =
-					(undefined != obj.Color && null != obj.Color) ? CreateAscColorCustom(obj.Color.r, obj.Color.g, obj.Color.b) :
-						null;
+			}
+			else {
+				this.Color = (undefined != obj.Color && null != obj.Color) ? CreateAscColorCustom(obj.Color.r, obj.Color.g, obj.Color.b) : null;
 			}
 			this.Size = (undefined != obj.Size) ? obj.Size : null;
 			this.Value = (undefined != obj.Value) ? obj.Value : null;
 			this.Space = (undefined != obj.Space) ? obj.Space : null;
-		} else {
+		}
+		else {
 			this.Color = CreateAscColorCustom(0, 0, 0);
 			this.Size = 0.5 * window["AscCommonWord"].g_dKoef_pt_to_mm;
 			this.Value = window["AscCommonWord"].border_Single;
@@ -2109,7 +2065,8 @@
 			this.Right = (undefined != obj.Right && null != obj.Right) ? new asc_CTextBorder(obj.Right) : null;
 			this.Bottom = (undefined != obj.Bottom && null != obj.Bottom) ? new asc_CTextBorder(obj.Bottom) : null;
 			this.Between = (undefined != obj.Between && null != obj.Between) ? new asc_CTextBorder(obj.Between) : null;
-		} else {
+		}
+		else {
 			this.Left = null;
 			this.Top = null;
 			this.Right = null;
@@ -2118,28 +2075,35 @@
 		}
 	}
 
-	asc_CParagraphBorders.prototype = {
-		asc_getLeft: function () {
-			return this.Left;
-		}, asc_putLeft: function (v) {
-			this.Left = (v) ? new asc_CTextBorder(v) : null;
-		}, asc_getTop: function () {
-			return this.Top;
-		}, asc_putTop: function (v) {
-			this.Top = (v) ? new asc_CTextBorder(v) : null;
-		}, asc_getRight: function () {
-			return this.Right;
-		}, asc_putRight: function (v) {
-			this.Right = (v) ? new asc_CTextBorder(v) : null;
-		}, asc_getBottom: function () {
-			return this.Bottom;
-		}, asc_putBottom: function (v) {
-			this.Bottom = (v) ? new asc_CTextBorder(v) : null;
-		}, asc_getBetween: function () {
-			return this.Between;
-		}, asc_putBetween: function (v) {
-			this.Between = (v) ? new asc_CTextBorder(v) : null;
-		}
+	asc_CParagraphBorders.prototype.asc_getLeft = function () {
+		return this.Left;
+	};
+	asc_CParagraphBorders.prototype.asc_putLeft = function (v) {
+		this.Left = (v) ? new asc_CTextBorder(v) : null;
+	};
+	asc_CParagraphBorders.prototype.asc_getTop = function () {
+		return this.Top;
+	};
+	asc_CParagraphBorders.prototype.asc_putTop = function (v) {
+		this.Top = (v) ? new asc_CTextBorder(v) : null;
+	};
+	asc_CParagraphBorders.prototype.asc_getRight = function () {
+		return this.Right;
+	};
+	asc_CParagraphBorders.prototype.asc_putRight = function (v) {
+		this.Right = (v) ? new asc_CTextBorder(v) : null;
+	};
+	asc_CParagraphBorders.prototype.asc_getBottom = function () {
+		return this.Bottom;
+	};
+	asc_CParagraphBorders.prototype.asc_putBottom = function (v) {
+		this.Bottom = (v) ? new asc_CTextBorder(v) : null;
+	};
+	asc_CParagraphBorders.prototype.asc_getBetween = function () {
+		return this.Between;
+	};
+	asc_CParagraphBorders.prototype.asc_putBetween = function (v) {
+		this.Between = (v) ? new asc_CTextBorder(v) : null;
 	};
 
 	/** @constructor */
@@ -2159,47 +2123,47 @@
 	}
 
 	asc_CCustomListType.prototype.fillFromObject = function (obj) {
-		if (obj.type)           this.type          = obj.type;
-		if (obj.imageId)        this.imageId       = obj.imageId;
-		if (obj.token)          this.token         = obj.token;
-		if (obj.char)           this.char          = obj.char;
-		if (obj.specialFont)    this.specialFont   = obj.specialFont;
-		if (obj.numberingType)  this.numberingType = obj.numberingType;
+		if (obj.type) this.type = obj.type;
+		if (obj.imageId) this.imageId = obj.imageId;
+		if (obj.token) this.token = obj.token;
+		if (obj.char) this.char = obj.char;
+		if (obj.specialFont) this.specialFont = obj.specialFont;
+		if (obj.numberingType) this.numberingType = obj.numberingType;
 	};
-	asc_CCustomListType.prototype.setType = function(pr) {
+	asc_CCustomListType.prototype.setType = function (pr) {
 		this.type = pr;
 	};
-	asc_CCustomListType.prototype.setImageId = function(pr) {
+	asc_CCustomListType.prototype.setImageId = function (pr) {
 		this.imageId = pr;
 	};
-	asc_CCustomListType.prototype.setToken = function(pr) {
+	asc_CCustomListType.prototype.setToken = function (pr) {
 		this.token = pr;
 	};
-	asc_CCustomListType.prototype.setChar = function(pr) {
+	asc_CCustomListType.prototype.setChar = function (pr) {
 		this.char = pr;
 	};
-	asc_CCustomListType.prototype.setSpecialFont = function(pr) {
+	asc_CCustomListType.prototype.setSpecialFont = function (pr) {
 		this.specialFont = pr;
 	};
-	asc_CCustomListType.prototype.setNumberingType = function(pr) {
+	asc_CCustomListType.prototype.setNumberingType = function (pr) {
 		this.numberingType = pr;
 	};
-	asc_CCustomListType.prototype.getType = function() {
+	asc_CCustomListType.prototype.getType = function () {
 		return this.type;
 	};
-	asc_CCustomListType.prototype.getImageId = function() {
+	asc_CCustomListType.prototype.getImageId = function () {
 		return this.imageId;
 	};
-	asc_CCustomListType.prototype.getToken = function() {
+	asc_CCustomListType.prototype.getToken = function () {
 		return this.token;
 	};
-	asc_CCustomListType.prototype.getChar = function() {
+	asc_CCustomListType.prototype.getChar = function () {
 		return this.char;
 	};
-	asc_CCustomListType.prototype.getSpecialFont = function() {
+	asc_CCustomListType.prototype.getSpecialFont = function () {
 		return this.specialFont;
 	};
-	asc_CCustomListType.prototype.getNumberingType = function() {
+	asc_CCustomListType.prototype.getNumberingType = function () {
 		return this.numberingType;
 	};
 
@@ -2210,7 +2174,8 @@
 			this.Type = (undefined == obj.Type) ? null : obj.Type;
 			this.SubType = (undefined == obj.Type) ? null : obj.SubType;
 			this.Custom = (undefined == obj.Type) ? null : new asc_CCustomListType(obj.Custom);
-		} else {
+		}
+		else {
 			this.Type = null;
 			this.SubType = null;
 			this.Custom = null;
@@ -2234,58 +2199,52 @@
 		if (obj) {
 			this.Name = (undefined != obj.Name) ? obj.Name : null; 		// "Times New Roman"
 			this.Index = (undefined != obj.Index) ? obj.Index : null;	// -1
-		} else {
+		}
+		else {
 			this.Name = "Times New Roman";
 			this.Index = -1;
 		}
 	}
 
-	asc_CTextFontFamily.prototype = {
-		asc_getName: function () {
-			var _name = AscFonts.g_fontApplication ? AscFonts.g_fontApplication.NameToInterface[this.Name] : null;
-			return _name ? _name : this.Name;
-		}, asc_getIndex: function () {
-			return this.Index;
-		},
-		asc_putName: function (v) {
-			this.Name = v;
-		}, asc_putIndex: function (v) {
-			this.Index = v;
-		}
+	asc_CTextFontFamily.prototype.asc_getName = function () {
+		let _name = AscFonts.g_fontApplication ? AscFonts.g_fontApplication.NameToInterface[this.Name] : null;
+		return _name ? _name : this.Name;
+	};
+	asc_CTextFontFamily.prototype.asc_getIndex = function () {
+		return this.Index;
+	};
+	asc_CTextFontFamily.prototype.asc_putName = function (v) {
+		this.Name = v;
+	};
+	asc_CTextFontFamily.prototype.asc_putIndex = function (v) {
+		this.Index = v;
 	};
 
 	/** @constructor */
-	function asc_CParagraphTab(Pos, Value, Leader)
-	{
-		this.Pos    = Pos;
-		this.Value  = Value;
+	function asc_CParagraphTab(Pos, Value, Leader) {
+		this.Pos = Pos;
+		this.Value = Value;
 		this.Leader = Leader;
 	}
-	asc_CParagraphTab.prototype.asc_getValue = function()
-	{
+
+	asc_CParagraphTab.prototype.asc_getValue = function () {
 		return this.Value;
 	};
-	asc_CParagraphTab.prototype.asc_putValue = function(v)
-	{
+	asc_CParagraphTab.prototype.asc_putValue = function (v) {
 		this.Value = v;
 	};
-	asc_CParagraphTab.prototype.asc_getPos = function()
-	{
+	asc_CParagraphTab.prototype.asc_getPos = function () {
 		return this.Pos;
 	};
-	asc_CParagraphTab.prototype.asc_putPos = function(v)
-	{
+	asc_CParagraphTab.prototype.asc_putPos = function (v) {
 		this.Pos = v;
 	};
-	asc_CParagraphTab.prototype.asc_getLeader = function()
-	{
-		if (Asc.c_oAscTabLeader.Heavy === this.Leader)
-			return Asc.c_oAscTabLeader.Underscore;
+	asc_CParagraphTab.prototype.asc_getLeader = function () {
+		if (Asc.c_oAscTabLeader.Heavy === this.Leader) return Asc.c_oAscTabLeader.Underscore;
 
 		return this.Leader;
 	};
-	asc_CParagraphTab.prototype.asc_putLeader = function(v)
-	{
+	asc_CParagraphTab.prototype.asc_putLeader = function (v) {
 		this.Leader = v;
 	};
 
@@ -2294,23 +2253,24 @@
 		this.Tabs = [];
 
 		if (undefined != obj) {
-			var Count = obj.Tabs.length;
-			for (var Index = 0; Index < Count; Index++) {
+			let Count = obj.Tabs.length;
+			for (let Index = 0; Index < Count; Index++) {
 				this.Tabs.push(new asc_CParagraphTab(obj.Tabs[Index].Pos, obj.Tabs[Index].Value, obj.Tabs[Index].Leader));
 			}
 		}
 	}
 
-	asc_CParagraphTabs.prototype = {
-		asc_getCount: function () {
-			return this.Tabs.length;
-		}, asc_getTab: function (Index) {
-			return this.Tabs[Index];
-		}, asc_addTab: function (Tab) {
-			this.Tabs.push(Tab)
-		}, asc_clear: function () {
-			this.Tabs.length = 0;
-		}
+	asc_CParagraphTabs.prototype.asc_getCount = function () {
+		return this.Tabs.length;
+	};
+	asc_CParagraphTabs.prototype.asc_getTab = function (Index) {
+		return this.Tabs[Index];
+	};
+	asc_CParagraphTabs.prototype.asc_addTab = function (Tab) {
+		this.Tabs.push(Tab)
+	};
+	asc_CParagraphTabs.prototype.asc_clear = function () {
+		this.Tabs.length = 0;
 	};
 
 	/** @constructor */
@@ -2320,55 +2280,48 @@
 			this.Value = (undefined != obj.Value) ? obj.Value : null;
 
 			// TODO: В UI пока поддерживается ровно два типа заливки Nil, Clear
-			if (null !== this.Value && this.Value !== Asc.c_oAscShd.Nil)
-				this.Value = Asc.c_oAscShd.Clear;
+			if (null !== this.Value && this.Value !== Asc.c_oAscShd.Nil) this.Value = Asc.c_oAscShd.Clear;
 
 			if (obj.GetSimpleColor) {
 
-				if (Asc.c_oAscShd.Clear === obj.Value
-					&& obj.Unifill
-					&& obj.Unifill.fill
-					&& obj.Unifill.fill.type === c_oAscFill.FILL_TYPE_SOLID
-					&& obj.Unifill.fill.color) {
+				if (Asc.c_oAscShd.Clear === obj.Value && obj.Unifill && obj.Unifill.fill && obj.Unifill.fill.type === c_oAscFill.FILL_TYPE_SOLID && obj.Unifill.fill.color) {
 					this.Color = CreateAscColor(obj.Unifill.fill.color);
-				} else {
-					var oColor = obj.GetSimpleColor();
-					if (oColor.Auto)
-						this.Color = null;
-					else
-						this.Color = CreateAscColorCustom(oColor.r, oColor.g, oColor.b, oColor.Auto);
+				}
+				else {
+					let oColor = obj.GetSimpleColor();
+					if (oColor.Auto) this.Color = null; else this.Color = CreateAscColorCustom(oColor.r, oColor.g, oColor.b, oColor.Auto);
 				}
 			}
 			else {
-				if (obj.Unifill && obj.Unifill.fill && obj.Unifill.fill.type === c_oAscFill.FILL_TYPE_SOLID &&
-					obj.Unifill.fill.color) {
+				if (obj.Unifill && obj.Unifill.fill && obj.Unifill.fill.type === c_oAscFill.FILL_TYPE_SOLID && obj.Unifill.fill.color) {
 					this.Color = CreateAscColor(obj.Unifill.fill.color);
-				} else {
-					this.Color =
-						(undefined != obj.Color && null != obj.Color) ? CreateAscColorCustom(obj.Color.r, obj.Color.g, obj.Color.b) :
-							null;
+				}
+				else {
+					this.Color = (undefined != obj.Color && null != obj.Color) ? CreateAscColorCustom(obj.Color.r, obj.Color.g, obj.Color.b) : null;
 				}
 			}
-		} else {
+		}
+		else {
 
 			// TODO: Пока мы не работает отдельно с Color и Fill, поэтому пишем и тот и другой
 			this.Value = Asc.c_oAscShdNil;
 			this.Color = CreateAscColorCustom(255, 255, 255);
-			this.Fill  = CreateAscColorCustom(255, 255, 255);
+			this.Fill = CreateAscColorCustom(255, 255, 255);
 		}
 	}
 
-	asc_CParagraphShd.prototype = {
-		asc_getValue: function () {
-			return this.Value;
-		}, asc_putValue: function (v) {
-			this.Value = v;
-		}, asc_getColor: function () {
-			return this.Color;
-		}, asc_putColor: function (v) {
-			this.Color = (v) ? v : null;
-			this.Fill  = (v) ? v : null;
-		}
+	asc_CParagraphShd.prototype.asc_getValue = function () {
+		return this.Value;
+	};
+	asc_CParagraphShd.prototype.asc_putValue = function (v) {
+		this.Value = v;
+	};
+	asc_CParagraphShd.prototype.asc_getColor = function () {
+		return this.Color;
+	};
+	asc_CParagraphShd.prototype.asc_putColor = function (v) {
+		this.Color = (v) ? v : null;
+		this.Fill = (v) ? v : null;
 	};
 
 	/** @constructor */
@@ -2392,9 +2345,9 @@
 			this.YAlign = obj.YAlign;
 			this.Brd = (undefined != obj.Brd && null != obj.Brd) ? new asc_CParagraphBorders(obj.Brd) : null;
 			this.Shd = (undefined != obj.Shd && null != obj.Shd) ? new asc_CParagraphShd(obj.Shd) : null;
-			this.FontFamily =
-				(undefined != obj.FontFamily && null != obj.FontFamily) ? new asc_CTextFontFamily(obj.FontFamily) : null;
-		} else {
+			this.FontFamily = (undefined != obj.FontFamily && null != obj.FontFamily) ? new asc_CTextFontFamily(obj.FontFamily) : null;
+		}
+		else {
 			this.FromDropCapMenu = false;
 
 			this.DropCap = undefined;
@@ -2527,11 +2480,12 @@
 	function asc_CParagraphSpacing(obj) {
 
 		if (obj) {
-			this.Line = (undefined != obj.Line    ) ? obj.Line : null; // Расстояние между строками внутри абзаца
+			this.Line = (undefined != obj.Line) ? obj.Line : null; // Расстояние между строками внутри абзаца
 			this.LineRule = (undefined != obj.LineRule) ? obj.LineRule : null; // Тип расстрояния между строками
-			this.Before = (undefined != obj.Before  ) ? obj.Before : null; // Дополнительное расстояние до абзаца
-			this.After = (undefined != obj.After   ) ? obj.After : null; // Дополнительное расстояние после абзаца
-		} else {
+			this.Before = (undefined != obj.Before) ? obj.Before : null; // Дополнительное расстояние до абзаца
+			this.After = (undefined != obj.After) ? obj.After : null; // Дополнительное расстояние после абзаца
+		}
+		else {
 			this.Line = undefined; // Расстояние между строками внутри абзаца
 			this.LineRule = undefined; // Тип расстрояния между строками
 			this.Before = undefined; // Дополнительное расстояние до абзаца
@@ -2539,57 +2493,62 @@
 		}
 	}
 
-	asc_CParagraphSpacing.prototype = {
-		asc_getLine: function () {
-			return this.Line;
-		}, asc_getLineRule: function () {
-			return this.LineRule;
-		}, asc_getBefore: function () {
-			return this.Before;
-		}, asc_getAfter: function () {
-			return this.After;
-		},
-		asc_putLine: function(v) {
-			this.Line = v;
-		},
-		asc_putLineRule: function(v){
-			this.LineRule = v;
-		},
-		asc_putBefore: function(v){
-			this.Before = v;
-		},
-		asc_putAfter: function(v){
-			this.After = v;
-		}
+	asc_CParagraphSpacing.prototype.asc_getLine = function () {
+		return this.Line;
+	};
+	asc_CParagraphSpacing.prototype.asc_getLineRule = function () {
+		return this.LineRule;
+	};
+	asc_CParagraphSpacing.prototype.asc_getBefore = function () {
+		return this.Before;
+	};
+	asc_CParagraphSpacing.prototype.asc_getAfter = function () {
+		return this.After;
+	};
+	asc_CParagraphSpacing.prototype.asc_putLine = function (v) {
+		this.Line = v;
+	};
+	asc_CParagraphSpacing.prototype.asc_putLineRule = function (v) {
+		this.LineRule = v;
+	};
+	asc_CParagraphSpacing.prototype.asc_putBefore = function (v) {
+		this.Before = v;
+	};
+	asc_CParagraphSpacing.prototype.asc_putAfter = function (v) {
+		this.After = v;
 	};
 
 	/** @constructor */
 	function asc_CParagraphInd(obj) {
 		if (obj) {
-			this.Left = (undefined != obj.Left     ) ? obj.Left : null; // Левый отступ
-			this.Right = (undefined != obj.Right    ) ? obj.Right : null; // Правый отступ
+			this.Left = (undefined != obj.Left) ? obj.Left : null; // Левый отступ
+			this.Right = (undefined != obj.Right) ? obj.Right : null; // Правый отступ
 			this.FirstLine = (undefined != obj.FirstLine) ? obj.FirstLine : null; // Первая строка
-		} else {
+		}
+		else {
 			this.Left = undefined; // Левый отступ
 			this.Right = undefined; // Правый отступ
 			this.FirstLine = undefined; // Первая строка
 		}
 	}
 
-	asc_CParagraphInd.prototype = {
-		asc_getLeft: function () {
-			return this.Left;
-		}, asc_putLeft: function (v) {
-			this.Left = v;
-		}, asc_getRight: function () {
-			return this.Right;
-		}, asc_putRight: function (v) {
-			this.Right = v;
-		}, asc_getFirstLine: function () {
-			return this.FirstLine;
-		}, asc_putFirstLine: function (v) {
-			this.FirstLine = v;
-		}
+	asc_CParagraphInd.prototype.asc_getLeft = function () {
+		return this.Left;
+	};
+	asc_CParagraphInd.prototype.asc_putLeft = function (v) {
+		this.Left = v;
+	};
+	asc_CParagraphInd.prototype.asc_getRight = function () {
+		return this.Right;
+	};
+	asc_CParagraphInd.prototype.asc_putRight = function (v) {
+		this.Right = v;
+	};
+	asc_CParagraphInd.prototype.asc_getFirstLine = function () {
+		return this.FirstLine;
+	};
+	asc_CParagraphInd.prototype.asc_putFirstLine = function (v) {
+		this.FirstLine = v;
 	};
 
 	/** @constructor */
@@ -2600,19 +2559,19 @@
 			this.Ind = (undefined != obj.Ind && null != obj.Ind) ? new asc_CParagraphInd(obj.Ind) : null;
 			this.KeepLines = (undefined != obj.KeepLines) ? obj.KeepLines : null;
 			this.KeepNext = (undefined != obj.KeepNext) ? obj.KeepNext : undefined;
-			this.WidowControl = (undefined != obj.WidowControl ? obj.WidowControl : undefined );
+			this.WidowControl = (undefined != obj.WidowControl ? obj.WidowControl : undefined);
 			this.PageBreakBefore = (undefined != obj.PageBreakBefore) ? obj.PageBreakBefore : null;
 			this.Spacing = (undefined != obj.Spacing && null != obj.Spacing) ? new asc_CParagraphSpacing(obj.Spacing) : null;
 			this.Brd = (undefined != obj.Brd && null != obj.Brd) ? new asc_CParagraphBorders(obj.Brd) : null;
 			this.Shd = (undefined != obj.Shd && null != obj.Shd) ? new asc_CParagraphShd(obj.Shd) : null;
 			this.Tabs = (undefined != obj.Tabs) ? new asc_CParagraphTabs(obj.Tabs) : undefined;
 			this.DefaultTab = obj.DefaultTab != null ? obj.DefaultTab : window["AscCommonWord"].Default_Tab_Stop;
-			this.Locked = (undefined != obj.Locked && null != obj.Locked ) ? obj.Locked : false;
-			this.CanAddTable = (undefined != obj.CanAddTable ) ? obj.CanAddTable : true;
+			this.Locked = (undefined != obj.Locked && null != obj.Locked) ? obj.Locked : false;
+			this.CanAddTable = (undefined != obj.CanAddTable) ? obj.CanAddTable : true;
 
-			this.FramePr = (undefined != obj.FramePr ) ? new asc_CParagraphFrame(obj.FramePr) : undefined;
-			this.CanAddDropCap = (undefined != obj.CanAddDropCap ) ? obj.CanAddDropCap : false;
-			this.CanAddImage = (undefined != obj.CanAddImage ) ? obj.CanAddImage : false;
+			this.FramePr = (undefined != obj.FramePr) ? new asc_CParagraphFrame(obj.FramePr) : undefined;
+			this.CanAddDropCap = (undefined != obj.CanAddDropCap) ? obj.CanAddDropCap : false;
+			this.CanAddImage = (undefined != obj.CanAddImage) ? obj.CanAddImage : false;
 
 			this.Subscript = (undefined != obj.Subscript) ? obj.Subscript : undefined;
 			this.Superscript = (undefined != obj.Superscript) ? obj.Superscript : undefined;
@@ -2628,18 +2587,19 @@
 			this.OutlineLvlStyle = (undefined != obj.OutlineLvlStyle) ? obj.OutlineLvlStyle : false;
 			this.SuppressLineNumbers = undefined !== obj.SuppressLineNumbers ? obj.SuppressLineNumbers : false;
 			this.Bullet = obj.Bullet;
-			var oBullet = obj.Bullet;
-			if(oBullet) {
+			let oBullet = obj.Bullet;
+			if (oBullet) {
 				oBullet.FirstTextPr = obj.FirstTextPr;
 			}
 			this.Ligatures = undefined !== obj.Ligatures ? obj.Ligatures : undefined;
 
-			this.CanDeleteBlockCC  = undefined !== obj.CanDeleteBlockCC ? obj.CanDeleteBlockCC : true;
-			this.CanEditBlockCC    = undefined !== obj.CanEditBlockCC ? obj.CanEditBlockCC : true;
+			this.CanDeleteBlockCC = undefined !== obj.CanDeleteBlockCC ? obj.CanDeleteBlockCC : true;
+			this.CanEditBlockCC = undefined !== obj.CanEditBlockCC ? obj.CanEditBlockCC : true;
 			this.CanDeleteInlineCC = undefined !== obj.CanDeleteInlineCC ? obj.CanDeleteInlineCC : true;
-			this.CanEditInlineCC   = undefined !== obj.CanEditInlineCC ? obj.CanEditInlineCC : true;
+			this.CanEditInlineCC = undefined !== obj.CanEditInlineCC ? obj.CanEditInlineCC : true;
 
-		} else {
+		}
+		else {
 			//ContextualSpacing : false,            // Удалять ли интервал между параграфами одинакового стиля
 			//
 			//    Ind :
@@ -2686,252 +2646,249 @@
 			this.Bullet = undefined;
 			this.Ligatures = undefined;
 
-			this.CanDeleteBlockCC  = true;
-			this.CanEditBlockCC    = true;
+			this.CanDeleteBlockCC = true;
+			this.CanEditBlockCC = true;
 			this.CanDeleteInlineCC = true;
-			this.CanEditInlineCC   = true;
+			this.CanEditInlineCC = true;
 		}
 	}
 
-	asc_CParagraphProperty.prototype = {
-
-		asc_getContextualSpacing: function () {
-			return this.ContextualSpacing;
-		},
-		asc_putContextualSpacing: function (v) {
-			this.ContextualSpacing = v;
-		},
-		asc_getInd: function () {
-			return this.Ind;
-		},
-		asc_putInd: function (v) {
-			this.Ind = v;
-		},
-		asc_getJc: function () {
-			return this.Jc;
-		},
-		asc_putJc: function (v) {
-			this.Jc = v;
-		},
-		asc_getKeepLines: function () {
-			return this.KeepLines;
-		},
-		asc_putKeepLines: function (v) {
-			this.KeepLines = v;
-		},
-		asc_getKeepNext: function () {
-			return this.KeepNext;
-		},
-		asc_putKeepNext: function (v) {
-			this.KeepNext = v;
-		},
-		asc_getPageBreakBefore: function () {
-			return this.PageBreakBefore;
-		},
-		asc_putPageBreakBefore: function (v) {
-			this.PageBreakBefore = v;
-		},
-		asc_getWidowControl: function () {
-			return this.WidowControl;
-		},
-		asc_putWidowControl: function (v) {
-			this.WidowControl = v;
-		},
-		asc_getSpacing: function () {
-			return this.Spacing;
-		},
-		asc_putSpacing: function (v) {
-			this.Spacing = v;
-		},
-		asc_getBorders: function () {
-			return this.Brd;
-		},
-		asc_putBorders: function (v) {
-			this.Brd = v;
-		},
-		asc_getShade: function () {
-			return this.Shd;
-		},
-		asc_putShade: function (v) {
-			this.Shd = v;
-		},
-		asc_getLocked: function () {
-			return this.Locked;
-		},
-		asc_getCanAddTable: function () {
-			return this.CanAddTable;
-		},
-		asc_getSubscript: function () {
-			return this.Subscript;
-		},
-		asc_putSubscript: function (v) {
-			this.Subscript = v;
-		},
-		asc_getSuperscript: function () {
-			return this.Superscript;
-		},
-		asc_putSuperscript: function (v) {
-			this.Superscript = v;
-		},
-		asc_getSmallCaps: function () {
-			return this.SmallCaps;
-		},
-		asc_putSmallCaps: function (v) {
-			this.SmallCaps = v;
-		},
-		asc_getAllCaps: function () {
-			return this.AllCaps;
-		},
-		asc_putAllCaps: function (v) {
-			this.AllCaps = v;
-		},
-		asc_getStrikeout: function () {
-			return this.Strikeout;
-		},
-		asc_putStrikeout: function (v) {
-			this.Strikeout = v;
-		},
-		asc_getDStrikeout: function () {
-			return this.DStrikeout;
-		},
-		asc_putDStrikeout: function (v) {
-			this.DStrikeout = v;
-		},
-		asc_getTextSpacing: function () {
-			return this.TextSpacing;
-		},
-		asc_putTextSpacing: function (v) {
-			this.TextSpacing = v;
-		},
-		asc_getPosition: function () {
-			return this.Position;
-		},
-		asc_putPosition: function (v) {
-			this.Position = v;
-		},
-		asc_getTabs: function () {
-			return this.Tabs;
-		},
-		asc_putTabs: function (v) {
-			this.Tabs = v;
-		},
-		asc_getDefaultTab: function () {
-			return this.DefaultTab;
-		},
-		asc_putDefaultTab: function (v) {
-			this.DefaultTab = v;
-		},
-		asc_getFramePr: function () {
-			return this.FramePr;
-		},
-		asc_putFramePr: function (v) {
-			this.FramePr = v;
-		},
-		asc_getCanAddDropCap: function () {
-			return this.CanAddDropCap;
-		},
-		asc_getCanAddImage: function () {
-			return this.CanAddImage;
-		},
-		asc_getOutlineLvl: function() {
-			return this.OutlineLvl;
-		},
-		asc_putOutLineLvl: function(nLvl) {
-			this.OutlineLvl = nLvl;
-		},
-		asc_getOutlineLvlStyle: function() {
-			return this.OutlineLvlStyle;
-		},
-		asc_getSuppressLineNumbers: function() {
-			return this.SuppressLineNumbers;
-		},
-		asc_putSuppressLineNumbers: function(isSuppress) {
-			this.SuppressLineNumbers = isSuppress;
-		},
-		asc_putBullet: function(val) {
-			this.Bullet = val;
-		},
-		asc_getBullet: function() {
-			return this.Bullet;
-		},
-		asc_putBulletSize: function(size) {
-			if(!this.Bullet) {
-				this.Bullet = new Asc.asc_CBullet();
-			}
-			this.Bullet.asc_putSize(size);
-		},
-		asc_getBulletSize: function() {
-			if(!this.Bullet) {
-				return undefined;
-			}
-			return this.Bullet.asc_getSize();
-		},
-		asc_putBulletColor: function(color) {
-			if(!this.Bullet) {
-				this.Bullet = new Asc.asc_CBullet();
-			}
-			this.Bullet.asc_putColor(color);
-		},
-		asc_getBulletColor: function() {
-			if(!this.Bullet) {
-				return undefined;
-			}
-			return this.Bullet.asc_getColor();
-		},
-		asc_putNumStartAt: function(NumStartAt) {
-			if(!this.Bullet) {
-				this.Bullet = new Asc.asc_CBullet();
-			}
-			this.Bullet.asc_putNumStartAt(NumStartAt);
-		},
-		asc_getNumStartAt: function() {
-			if(!this.Bullet) {
-				return undefined;
-			}
-			return this.Bullet.asc_getNumStartAt();
-		},
-		asc_getBulletFont: function() {
-			if(!this.Bullet) {
-				return undefined;
-			}
-			return this.Bullet.asc_getFont();
-		},
-		asc_putBulletFont: function(v) {
-			if(!this.Bullet) {
-				this.Bullet = new Asc.asc_CBullet();
-			}
-			this.Bullet.asc_putFont(v);
-		},
-		asc_getBulletSymbol: function() {
-			if(!this.Bullet) {
-				return undefined;
-			}
-			return this.Bullet.asc_getSymbol();
-		},
-		asc_putBulletSymbol: function(v) {
-			if(!this.Bullet) {
-				this.Bullet = new Asc.asc_CBullet();
-			}
-			this.Bullet.asc_putSymbol(v);
-		},
-		asc_canDeleteBlockContentControl: function() {
-			return this.CanDeleteBlockCC;
-		},
-		asc_canEditBlockContentControl: function() {
-			return this.CanEditBlockCC;
-		},
-		asc_canDeleteInlineContentControl: function() {
-			return this.CanDeleteInlineCC;
-		},
-		asc_canEditInlineContentControl: function() {
-			return this.CanEditInlineCC;
-		},
-		asc_getLigatures: function(){
-			return this.Ligatures;
-		},
-		asc_putLigatures: function(v){
-			this.Ligatures = v;
+	asc_CParagraphProperty.prototype.asc_getContextualSpacing = function () {
+		return this.ContextualSpacing;
+	};
+	asc_CParagraphProperty.prototype.asc_putContextualSpacing = function (v) {
+		this.ContextualSpacing = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getInd = function () {
+		return this.Ind;
+	};
+	asc_CParagraphProperty.prototype.asc_putInd = function (v) {
+		this.Ind = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getJc = function () {
+		return this.Jc;
+	};
+	asc_CParagraphProperty.prototype.asc_putJc = function (v) {
+		this.Jc = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getKeepLines = function () {
+		return this.KeepLines;
+	};
+	asc_CParagraphProperty.prototype.asc_putKeepLines = function (v) {
+		this.KeepLines = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getKeepNext = function () {
+		return this.KeepNext;
+	};
+	asc_CParagraphProperty.prototype.asc_putKeepNext = function (v) {
+		this.KeepNext = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getPageBreakBefore = function () {
+		return this.PageBreakBefore;
+	};
+	asc_CParagraphProperty.prototype.asc_putPageBreakBefore = function (v) {
+		this.PageBreakBefore = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getWidowControl = function () {
+		return this.WidowControl;
+	};
+	asc_CParagraphProperty.prototype.asc_putWidowControl = function (v) {
+		this.WidowControl = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getSpacing = function () {
+		return this.Spacing;
+	};
+	asc_CParagraphProperty.prototype.asc_putSpacing = function (v) {
+		this.Spacing = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getBorders = function () {
+		return this.Brd;
+	};
+	asc_CParagraphProperty.prototype.asc_putBorders = function (v) {
+		this.Brd = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getShade = function () {
+		return this.Shd;
+	};
+	asc_CParagraphProperty.prototype.asc_putShade = function (v) {
+		this.Shd = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getLocked = function () {
+		return this.Locked;
+	};
+	asc_CParagraphProperty.prototype.asc_getCanAddTable = function () {
+		return this.CanAddTable;
+	};
+	asc_CParagraphProperty.prototype.asc_getSubscript = function () {
+		return this.Subscript;
+	};
+	asc_CParagraphProperty.prototype.asc_putSubscript = function (v) {
+		this.Subscript = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getSuperscript = function () {
+		return this.Superscript;
+	};
+	asc_CParagraphProperty.prototype.asc_putSuperscript = function (v) {
+		this.Superscript = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getSmallCaps = function () {
+		return this.SmallCaps;
+	};
+	asc_CParagraphProperty.prototype.asc_putSmallCaps = function (v) {
+		this.SmallCaps = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getAllCaps = function () {
+		return this.AllCaps;
+	};
+	asc_CParagraphProperty.prototype.asc_putAllCaps = function (v) {
+		this.AllCaps = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getStrikeout = function () {
+		return this.Strikeout;
+	};
+	asc_CParagraphProperty.prototype.asc_putStrikeout = function (v) {
+		this.Strikeout = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getDStrikeout = function () {
+		return this.DStrikeout;
+	};
+	asc_CParagraphProperty.prototype.asc_putDStrikeout = function (v) {
+		this.DStrikeout = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getTextSpacing = function () {
+		return this.TextSpacing;
+	};
+	asc_CParagraphProperty.prototype.asc_putTextSpacing = function (v) {
+		this.TextSpacing = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getPosition = function () {
+		return this.Position;
+	};
+	asc_CParagraphProperty.prototype.asc_putPosition = function (v) {
+		this.Position = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getTabs = function () {
+		return this.Tabs;
+	};
+	asc_CParagraphProperty.prototype.asc_putTabs = function (v) {
+		this.Tabs = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getDefaultTab = function () {
+		return this.DefaultTab;
+	};
+	asc_CParagraphProperty.prototype.asc_putDefaultTab = function (v) {
+		this.DefaultTab = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getFramePr = function () {
+		return this.FramePr;
+	};
+	asc_CParagraphProperty.prototype.asc_putFramePr = function (v) {
+		this.FramePr = v;
+	};
+	asc_CParagraphProperty.prototype.asc_getCanAddDropCap = function () {
+		return this.CanAddDropCap;
+	};
+	asc_CParagraphProperty.prototype.asc_getCanAddImage = function () {
+		return this.CanAddImage;
+	};
+	asc_CParagraphProperty.prototype.asc_getOutlineLvl = function () {
+		return this.OutlineLvl;
+	};
+	asc_CParagraphProperty.prototype.asc_putOutLineLvl = function (nLvl) {
+		this.OutlineLvl = nLvl;
+	};
+	asc_CParagraphProperty.prototype.asc_getOutlineLvlStyle = function () {
+		return this.OutlineLvlStyle;
+	};
+	asc_CParagraphProperty.prototype.asc_getSuppressLineNumbers = function () {
+		return this.SuppressLineNumbers;
+	};
+	asc_CParagraphProperty.prototype.asc_putSuppressLineNumbers = function (isSuppress) {
+		this.SuppressLineNumbers = isSuppress;
+	};
+	asc_CParagraphProperty.prototype.asc_putBullet = function (val) {
+		this.Bullet = val;
+	};
+	asc_CParagraphProperty.prototype.asc_getBullet = function () {
+		return this.Bullet;
+	};
+	asc_CParagraphProperty.prototype.asc_putBulletSize = function (size) {
+		if (!this.Bullet) {
+			this.Bullet = new Asc.asc_CBullet();
 		}
+		this.Bullet.asc_putSize(size);
+	};
+	asc_CParagraphProperty.prototype.asc_getBulletSize = function () {
+		if (!this.Bullet) {
+			return undefined;
+		}
+		return this.Bullet.asc_getSize();
+	};
+	asc_CParagraphProperty.prototype.asc_putBulletColor = function (color) {
+		if (!this.Bullet) {
+			this.Bullet = new Asc.asc_CBullet();
+		}
+		this.Bullet.asc_putColor(color);
+	};
+	asc_CParagraphProperty.prototype.asc_getBulletColor = function () {
+		if (!this.Bullet) {
+			return undefined;
+		}
+		return this.Bullet.asc_getColor();
+	};
+	asc_CParagraphProperty.prototype.asc_putNumStartAt = function (NumStartAt) {
+		if (!this.Bullet) {
+			this.Bullet = new Asc.asc_CBullet();
+		}
+		this.Bullet.asc_putNumStartAt(NumStartAt);
+	};
+	asc_CParagraphProperty.prototype.asc_getNumStartAt = function () {
+		if (!this.Bullet) {
+			return undefined;
+		}
+		return this.Bullet.asc_getNumStartAt();
+	};
+	asc_CParagraphProperty.prototype.asc_getBulletFont = function () {
+		if (!this.Bullet) {
+			return undefined;
+		}
+		return this.Bullet.asc_getFont();
+	};
+	asc_CParagraphProperty.prototype.asc_putBulletFont = function (v) {
+		if (!this.Bullet) {
+			this.Bullet = new Asc.asc_CBullet();
+		}
+		this.Bullet.asc_putFont(v);
+	};
+	asc_CParagraphProperty.prototype.asc_getBulletSymbol = function () {
+		if (!this.Bullet) {
+			return undefined;
+		}
+		return this.Bullet.asc_getSymbol();
+	};
+	asc_CParagraphProperty.prototype.asc_putBulletSymbol = function (v) {
+		if (!this.Bullet) {
+			this.Bullet = new Asc.asc_CBullet();
+		}
+		this.Bullet.asc_putSymbol(v);
+	};
+	asc_CParagraphProperty.prototype.asc_canDeleteBlockContentControl = function () {
+		return this.CanDeleteBlockCC;
+	};
+	asc_CParagraphProperty.prototype.asc_canEditBlockContentControl = function () {
+		return this.CanEditBlockCC;
+	};
+	asc_CParagraphProperty.prototype.asc_canDeleteInlineContentControl = function () {
+		return this.CanDeleteInlineCC;
+	};
+	asc_CParagraphProperty.prototype.asc_canEditInlineContentControl = function () {
+		return this.CanEditInlineCC;
+	};
+	asc_CParagraphProperty.prototype.asc_getLigatures = function () {
+		return this.Ligatures;
+	};
+	asc_CParagraphProperty.prototype.asc_putLigatures = function (v) {
+		this.Ligatures = v;
 	};
 
 	/** @constructor */
@@ -2940,12 +2897,11 @@
 		this.Image = "";
 	}
 
-	asc_CTexture.prototype = {
-		asc_getId: function () {
-			return this.Id;
-		}, asc_getImage: function () {
-			return this.Image;
-		}
+	asc_CTexture.prototype.asc_getId = function () {
+		return this.Id;
+	};
+	asc_CTexture.prototype.asc_getImage = function () {
+		return this.Image;
 	};
 
 	/** @constructor */
@@ -2955,14 +2911,14 @@
 		this.IsCorrect = isCorrect;
 	}
 
-	asc_CImageSize.prototype = {
-		asc_getImageWidth: function () {
-			return this.Width;
-		}, asc_getImageHeight: function () {
-			return this.Height;
-		}, asc_getIsCorrect: function () {
-			return this.IsCorrect;
-		}
+	asc_CImageSize.prototype.asc_getImageWidth = function () {
+		return this.Width;
+	};
+	asc_CImageSize.prototype.asc_getImageHeight = function () {
+		return this.Height;
+	};
+	asc_CImageSize.prototype.asc_getIsCorrect = function () {
+		return this.IsCorrect;
 	};
 
 	/** @constructor */
@@ -2973,7 +2929,8 @@
 			this.Top = (undefined == obj.Top) ? null : obj.Top;
 			this.Bottom = (undefined == obj.Bottom) ? null : obj.Bottom;
 			this.Right = (undefined == obj.Right) ? null : obj.Right;
-		} else {
+		}
+		else {
 			this.Left = null;
 			this.Top = null;
 			this.Bottom = null;
@@ -2982,29 +2939,29 @@
 	}
 
 	asc_CPaddings.prototype.asc_getLeft = function () {
-			return this.Left;
-		};
+		return this.Left;
+	};
 	asc_CPaddings.prototype.asc_putLeft = function (v) {
-			this.Left = v;
-		};
+		this.Left = v;
+	};
 	asc_CPaddings.prototype.asc_getTop = function () {
-			return this.Top;
-		};
+		return this.Top;
+	};
 	asc_CPaddings.prototype.asc_putTop = function (v) {
-			this.Top = v;
-		};
+		this.Top = v;
+	};
 	asc_CPaddings.prototype.asc_getBottom = function () {
-			return this.Bottom;
-		};
+		return this.Bottom;
+	};
 	asc_CPaddings.prototype.asc_putBottom = function (v) {
-			this.Bottom = v;
-		};
+		this.Bottom = v;
+	};
 	asc_CPaddings.prototype.asc_getRight = function () {
-			return this.Right;
-		};
+		return this.Right;
+	};
 	asc_CPaddings.prototype.asc_putRight = function (v) {
-			this.Right = v;
-		};
+		this.Right = v;
+	};
 
 	/** @constructor */
 	function asc_CShapeProperty() {
@@ -3030,11 +2987,11 @@
 		this.description = null;
 		this.name = null;
 
-        this.columnNumber = null;
-        this.columnSpace = null;
-        this.textFitType = null;
+		this.columnNumber = null;
+		this.columnSpace = null;
+		this.textFitType = null;
 		this.vertOverflowType = null;
-        this.signatureId = null;
+		this.signatureId = null;
 
 		this.rot = null;
 		this.rotAdd = null;
@@ -3051,238 +3008,239 @@
 		this.protectionPrint = null;
 		this.isMotionPath = false;
 	}
+
 	asc_CShapeProperty.prototype.constructor = asc_CShapeProperty;
 	asc_CShapeProperty.prototype.asc_getType = function () {
-			return this.type;
-		};
+		return this.type;
+	};
 	asc_CShapeProperty.prototype.asc_putType = function (v) {
-			this.type = v;
-		};
+		this.type = v;
+	};
 	asc_CShapeProperty.prototype.asc_getFill = function () {
-			return this.fill;
-		};
+		return this.fill;
+	};
 	asc_CShapeProperty.prototype.asc_putFill = function (v) {
-			this.fill = v;
-		};
+		this.fill = v;
+	};
 	asc_CShapeProperty.prototype.asc_getStroke = function () {
-			return this.stroke;
-		};
+		return this.stroke;
+	};
 	asc_CShapeProperty.prototype.asc_putStroke = function (v) {
-			this.stroke = v;
-		};
+		this.stroke = v;
+	};
 	asc_CShapeProperty.prototype.asc_getPaddings = function () {
-			return this.paddings;
-		};
+		return this.paddings;
+	};
 	asc_CShapeProperty.prototype.asc_putPaddings = function (v) {
-			this.paddings = v;
-		};
+		this.paddings = v;
+	};
 	asc_CShapeProperty.prototype.asc_getCanFill = function () {
-			return this.canFill;
-		};
+		return this.canFill;
+	};
 	asc_CShapeProperty.prototype.asc_putCanFill = function (v) {
-			this.canFill = v;
-		};
+		this.canFill = v;
+	};
 	asc_CShapeProperty.prototype.asc_getCanChangeArrows = function () {
-			return this.canChangeArrows;
-		};
+		return this.canChangeArrows;
+	};
 	asc_CShapeProperty.prototype.asc_setCanChangeArrows = function (v) {
-			this.canChangeArrows = v;
-		};
+		this.canChangeArrows = v;
+	};
 	asc_CShapeProperty.prototype.asc_getFromChart = function () {
-			return this.bFromChart;
-		};
+		return this.bFromChart;
+	};
 	asc_CShapeProperty.prototype.asc_setFromChart = function (v) {
-			this.bFromChart = v;
-		};
+		this.bFromChart = v;
+	};
 	asc_CShapeProperty.prototype.asc_getFromSmartArt = function () {
-			return this.bFromSmartArt;
-		};
+		return this.bFromSmartArt;
+	};
 	asc_CShapeProperty.prototype.asc_setFromSmartArt = function (v) {
-			this.bFromSmartArt = v;
-		};
+		this.bFromSmartArt = v;
+	};
 	asc_CShapeProperty.prototype.asc_getFromSmartArtInternal = function () {
-			return this.bFromSmartArtInternal;
-		};
+		return this.bFromSmartArtInternal;
+	};
 	asc_CShapeProperty.prototype.asc_setFromSmartArtInternal = function (v) {
-			this.bFromSmartArtInternal = v;
-		};
+		this.bFromSmartArtInternal = v;
+	};
 	asc_CShapeProperty.prototype.asc_getFromGroup = function () {
-			return this.bFromGroup;
-		};
+		return this.bFromGroup;
+	};
 	asc_CShapeProperty.prototype.asc_setFromGroup = function (v) {
-			this.bFromGroup = v;
-		};
+		this.bFromGroup = v;
+	};
 	asc_CShapeProperty.prototype.asc_getLocked = function () {
-			return this.Locked;
-		};
+		return this.Locked;
+	};
 	asc_CShapeProperty.prototype.asc_setLocked = function (v) {
-			this.Locked = v;
-		};
+		this.Locked = v;
+	};
 	asc_CShapeProperty.prototype.asc_getWidth = function () {
-			return this.w;
-		};
+		return this.w;
+	};
 	asc_CShapeProperty.prototype.asc_putWidth = function (v) {
-			this.w = v;
-		};
+		this.w = v;
+	};
 	asc_CShapeProperty.prototype.asc_getHeight = function () {
-			return this.h;
-		};
+		return this.h;
+	};
 	asc_CShapeProperty.prototype.asc_putHeight = function (v) {
-			this.h = v;
-		};
+		this.h = v;
+	};
 	asc_CShapeProperty.prototype.asc_getVerticalTextAlign = function () {
-			return this.verticalTextAlign;
-		};
+		return this.verticalTextAlign;
+	};
 	asc_CShapeProperty.prototype.asc_putVerticalTextAlign = function (v) {
-			this.verticalTextAlign = v;
-		};
+		this.verticalTextAlign = v;
+	};
 	asc_CShapeProperty.prototype.asc_getVert = function () {
-			return this.vert;
-		};
+		return this.vert;
+	};
 	asc_CShapeProperty.prototype.asc_putVert = function (v) {
-			this.vert = v;
-		};
+		this.vert = v;
+	};
 	asc_CShapeProperty.prototype.asc_getTextArtProperties = function () {
-			return this.textArtProperties;
-		};
+		return this.textArtProperties;
+	};
 	asc_CShapeProperty.prototype.asc_putTextArtProperties = function (v) {
-			this.textArtProperties = v;
-		};
+		this.textArtProperties = v;
+	};
 	asc_CShapeProperty.prototype.asc_getLockAspect = function () {
-			return this.lockAspect
-		};
+		return this.lockAspect
+	};
 	asc_CShapeProperty.prototype.asc_putLockAspect = function (v) {
-			this.lockAspect = v;
-		};
+		this.lockAspect = v;
+	};
 	asc_CShapeProperty.prototype.asc_getTitle = function () {
-			return this.title;
-		};
+		return this.title;
+	};
 	asc_CShapeProperty.prototype.asc_putTitle = function (v) {
-			this.title = v;
-		};
+		this.title = v;
+	};
 	asc_CShapeProperty.prototype.asc_getDescription = function () {
-			return this.description;
-		};
+		return this.description;
+	};
 	asc_CShapeProperty.prototype.asc_putDescription = function (v) {
-			this.description = v;
-		};
+		this.description = v;
+	};
 	asc_CShapeProperty.prototype.asc_getName = function () {
-			return this.name;
-		};
+		return this.name;
+	};
 	asc_CShapeProperty.prototype.asc_putName = function (v) {
-			this.name = v;
-		};
-	asc_CShapeProperty.prototype.asc_getColumnNumber = function(){
-			return this.columnNumber;
-		};
-	asc_CShapeProperty.prototype.asc_putColumnNumber = function(v){
-			this.columnNumber = v;
-		};
-	asc_CShapeProperty.prototype.asc_getColumnSpace = function(){
-			return this.columnSpace;
-		};
-	asc_CShapeProperty.prototype.asc_getTextFitType = function(){
-			return this.textFitType;
-		};
-	asc_CShapeProperty.prototype.asc_getVertOverflowType = function(){
-			return this.vertOverflowType;
-		};
-	asc_CShapeProperty.prototype.asc_putColumnSpace = function(v){
-			this.columnSpace = v;
-		};
-	asc_CShapeProperty.prototype.asc_putTextFitType = function(v){
-			this.textFitType = v;
-		};
-	asc_CShapeProperty.prototype.asc_putVertOverflowType = function(v){
-			this.vertOverflowType = v;
-		};
-	asc_CShapeProperty.prototype.asc_getSignatureId = function(){
-			return this.signatureId;
-		};
-	asc_CShapeProperty.prototype.asc_putSignatureId = function(v){
-			this.signatureId = v;
-		};
-	asc_CShapeProperty.prototype.asc_getFromImage = function(){
-			return this.bFromImage;
-		};
-	asc_CShapeProperty.prototype.asc_putFromImage = function(v){
-			this.bFromImage = v;
-		};
-	asc_CShapeProperty.prototype.asc_getRot = function(){
-			return this.rot;
-		};
-	asc_CShapeProperty.prototype.asc_putRot = function(v){
-			this.rot = v;
-		};
-	asc_CShapeProperty.prototype.asc_getRotAdd = function(){
-			return this.rotAdd;
-		};
-	asc_CShapeProperty.prototype.asc_putRotAdd = function(v){
-			this.rotAdd = v;
-		};
-	asc_CShapeProperty.prototype.asc_getFlipH = function(){
-			return this.flipH;
-		};
-	asc_CShapeProperty.prototype.asc_putFlipH = function(v){
-			this.flipH = v;
-		};
-	asc_CShapeProperty.prototype.asc_getFlipV = function(){
-			return this.flipV;
-		};
-	asc_CShapeProperty.prototype.asc_putFlipV = function(v){
-			this.flipV = v;
-		};
-	asc_CShapeProperty.prototype.asc_getFlipHInvert = function(){
-			return this.flipHInvert;
-		};
-	asc_CShapeProperty.prototype.asc_putFlipHInvert = function(v){
-			this.flipHInvert = v;
-		};
-	asc_CShapeProperty.prototype.asc_getFlipVInvert = function(){
-			return this.flipVInvert;
-		};
-	asc_CShapeProperty.prototype.asc_putFlipVInvert = function(v){
-			this.flipVInvert = v;
-		};
-	asc_CShapeProperty.prototype.asc_getShadow = function(){
-			return this.shadow;
-		};
-	asc_CShapeProperty.prototype.asc_putShadow = function(v){
-			this.shadow = v;
-		};
-	asc_CShapeProperty.prototype.asc_getAnchor = function(){
-			return this.anchor;
-		};
-	asc_CShapeProperty.prototype.asc_putAnchor = function(v){
-			this.anchor = v;
-		};
-	asc_CShapeProperty.prototype.asc_getProtectionLockText = function(){
-			return this.protectionLockText;
-		};
-	asc_CShapeProperty.prototype.asc_putProtectionLockText = function(v){
-			this.protectionLockText = v;
-		};
-	asc_CShapeProperty.prototype.asc_getProtectionLocked = function(){
-			return this.protectionLocked;
-		};
-	asc_CShapeProperty.prototype.asc_putProtectionLocked = function(v){
-			this.protectionLocked = v;
-		};
-	asc_CShapeProperty.prototype.asc_getProtectionPrint = function(){
-			return this.protectionPrint;
-		};
-	asc_CShapeProperty.prototype.asc_putProtectionPrint = function(v){
-			this.protectionPrint = v;
-		};
+		this.name = v;
+	};
+	asc_CShapeProperty.prototype.asc_getColumnNumber = function () {
+		return this.columnNumber;
+	};
+	asc_CShapeProperty.prototype.asc_putColumnNumber = function (v) {
+		this.columnNumber = v;
+	};
+	asc_CShapeProperty.prototype.asc_getColumnSpace = function () {
+		return this.columnSpace;
+	};
+	asc_CShapeProperty.prototype.asc_getTextFitType = function () {
+		return this.textFitType;
+	};
+	asc_CShapeProperty.prototype.asc_getVertOverflowType = function () {
+		return this.vertOverflowType;
+	};
+	asc_CShapeProperty.prototype.asc_putColumnSpace = function (v) {
+		this.columnSpace = v;
+	};
+	asc_CShapeProperty.prototype.asc_putTextFitType = function (v) {
+		this.textFitType = v;
+	};
+	asc_CShapeProperty.prototype.asc_putVertOverflowType = function (v) {
+		this.vertOverflowType = v;
+	};
+	asc_CShapeProperty.prototype.asc_getSignatureId = function () {
+		return this.signatureId;
+	};
+	asc_CShapeProperty.prototype.asc_putSignatureId = function (v) {
+		this.signatureId = v;
+	};
+	asc_CShapeProperty.prototype.asc_getFromImage = function () {
+		return this.bFromImage;
+	};
+	asc_CShapeProperty.prototype.asc_putFromImage = function (v) {
+		this.bFromImage = v;
+	};
+	asc_CShapeProperty.prototype.asc_getRot = function () {
+		return this.rot;
+	};
+	asc_CShapeProperty.prototype.asc_putRot = function (v) {
+		this.rot = v;
+	};
+	asc_CShapeProperty.prototype.asc_getRotAdd = function () {
+		return this.rotAdd;
+	};
+	asc_CShapeProperty.prototype.asc_putRotAdd = function (v) {
+		this.rotAdd = v;
+	};
+	asc_CShapeProperty.prototype.asc_getFlipH = function () {
+		return this.flipH;
+	};
+	asc_CShapeProperty.prototype.asc_putFlipH = function (v) {
+		this.flipH = v;
+	};
+	asc_CShapeProperty.prototype.asc_getFlipV = function () {
+		return this.flipV;
+	};
+	asc_CShapeProperty.prototype.asc_putFlipV = function (v) {
+		this.flipV = v;
+	};
+	asc_CShapeProperty.prototype.asc_getFlipHInvert = function () {
+		return this.flipHInvert;
+	};
+	asc_CShapeProperty.prototype.asc_putFlipHInvert = function (v) {
+		this.flipHInvert = v;
+	};
+	asc_CShapeProperty.prototype.asc_getFlipVInvert = function () {
+		return this.flipVInvert;
+	};
+	asc_CShapeProperty.prototype.asc_putFlipVInvert = function (v) {
+		this.flipVInvert = v;
+	};
+	asc_CShapeProperty.prototype.asc_getShadow = function () {
+		return this.shadow;
+	};
+	asc_CShapeProperty.prototype.asc_putShadow = function (v) {
+		this.shadow = v;
+	};
+	asc_CShapeProperty.prototype.asc_getAnchor = function () {
+		return this.anchor;
+	};
+	asc_CShapeProperty.prototype.asc_putAnchor = function (v) {
+		this.anchor = v;
+	};
+	asc_CShapeProperty.prototype.asc_getProtectionLockText = function () {
+		return this.protectionLockText;
+	};
+	asc_CShapeProperty.prototype.asc_putProtectionLockText = function (v) {
+		this.protectionLockText = v;
+	};
+	asc_CShapeProperty.prototype.asc_getProtectionLocked = function () {
+		return this.protectionLocked;
+	};
+	asc_CShapeProperty.prototype.asc_putProtectionLocked = function (v) {
+		this.protectionLocked = v;
+	};
+	asc_CShapeProperty.prototype.asc_getProtectionPrint = function () {
+		return this.protectionPrint;
+	};
+	asc_CShapeProperty.prototype.asc_putProtectionPrint = function (v) {
+		this.protectionPrint = v;
+	};
 	asc_CShapeProperty.prototype.asc_getPosition = function () {
-			return this.Position;
-		};
+		return this.Position;
+	};
 	asc_CShapeProperty.prototype.asc_putPosition = function (v) {
-			this.Position = v;
-		};
+		this.Position = v;
+	};
 	asc_CShapeProperty.prototype.asc_getIsMotionPath = function () {
-			return this.isMotionPath;
-		};
+		return this.isMotionPath;
+	};
 
 	/** @constructor */
 	function asc_TextArtProperties(obj) {
@@ -3291,7 +3249,8 @@
 			this.Line = obj.Line;//asc_Stroke
 			this.Form = obj.Form;//srting
 			this.Style = obj.Style;//
-		} else {
+		}
+		else {
 			this.Fill = undefined;
 			this.Line = undefined;
 			this.Form = undefined;
@@ -3326,12 +3285,13 @@
 
 	function CImagePositionH(obj) {
 		if (obj) {
-			this.RelativeFrom = ( undefined === obj.RelativeFrom ) ? undefined : obj.RelativeFrom;
-			this.UseAlign = ( undefined === obj.UseAlign     ) ? undefined : obj.UseAlign;
-			this.Align = ( undefined === obj.Align        ) ? undefined : obj.Align;
-			this.Value = ( undefined === obj.Value        ) ? undefined : obj.Value;
-			this.Percent = ( undefined === obj.Percent      ) ? undefined : obj.Percent;
-		} else {
+			this.RelativeFrom = (undefined === obj.RelativeFrom) ? undefined : obj.RelativeFrom;
+			this.UseAlign = (undefined === obj.UseAlign) ? undefined : obj.UseAlign;
+			this.Align = (undefined === obj.Align) ? undefined : obj.Align;
+			this.Value = (undefined === obj.Value) ? undefined : obj.Value;
+			this.Percent = (undefined === obj.Percent) ? undefined : obj.Percent;
+		}
+		else {
 			this.RelativeFrom = undefined;
 			this.UseAlign = undefined;
 			this.Align = undefined;
@@ -3373,12 +3333,13 @@
 
 	function CImagePositionV(obj) {
 		if (obj) {
-			this.RelativeFrom = ( undefined === obj.RelativeFrom ) ? undefined : obj.RelativeFrom;
-			this.UseAlign = ( undefined === obj.UseAlign     ) ? undefined : obj.UseAlign;
-			this.Align = ( undefined === obj.Align        ) ? undefined : obj.Align;
-			this.Value = ( undefined === obj.Value        ) ? undefined : obj.Value;
-			this.Percent = ( undefined === obj.Percent      ) ? undefined : obj.Percent;
-		} else {
+			this.RelativeFrom = (undefined === obj.RelativeFrom) ? undefined : obj.RelativeFrom;
+			this.UseAlign = (undefined === obj.UseAlign) ? undefined : obj.UseAlign;
+			this.Align = (undefined === obj.Align) ? undefined : obj.Align;
+			this.Value = (undefined === obj.Value) ? undefined : obj.Value;
+			this.Percent = (undefined === obj.Percent) ? undefined : obj.Percent;
+		}
+		else {
 			this.RelativeFrom = undefined;
 			this.UseAlign = undefined;
 			this.Align = undefined;
@@ -3422,7 +3383,8 @@
 		if (obj) {
 			this.X = (undefined == obj.X) ? null : obj.X;
 			this.Y = (undefined == obj.Y) ? null : obj.Y;
-		} else {
+		}
+		else {
 			this.X = null;
 			this.Y = null;
 		}
@@ -3447,14 +3409,14 @@
 		if (obj) {
 			this.CanBeFlow = (undefined != obj.CanBeFlow) ? obj.CanBeFlow : true;
 
-			this.Width = (undefined != obj.Width        ) ? obj.Width : undefined;
-			this.Height = (undefined != obj.Height       ) ? obj.Height : undefined;
+			this.Width = (undefined != obj.Width) ? obj.Width : undefined;
+			this.Height = (undefined != obj.Height) ? obj.Height : undefined;
 			this.WrappingStyle = (undefined != obj.WrappingStyle) ? obj.WrappingStyle : undefined;
-			this.Paddings = (undefined != obj.Paddings     ) ? new asc_CPaddings(obj.Paddings) : undefined;
-			this.Position = (undefined != obj.Position     ) ? new CPosition(obj.Position) : undefined;
-			this.AllowOverlap = (undefined != obj.AllowOverlap ) ? obj.AllowOverlap : undefined;
-			this.PositionH = (undefined != obj.PositionH    ) ? new CImagePositionH(obj.PositionH) : undefined;
-			this.PositionV = (undefined != obj.PositionV    ) ? new CImagePositionV(obj.PositionV) : undefined;
+			this.Paddings = (undefined != obj.Paddings) ? new asc_CPaddings(obj.Paddings) : undefined;
+			this.Position = (undefined != obj.Position) ? new CPosition(obj.Position) : undefined;
+			this.AllowOverlap = (undefined != obj.AllowOverlap) ? obj.AllowOverlap : undefined;
+			this.PositionH = (undefined != obj.PositionH) ? new CImagePositionH(obj.PositionH) : undefined;
+			this.PositionV = (undefined != obj.PositionV) ? new CImagePositionV(obj.PositionV) : undefined;
 
 			this.SizeRelH = (undefined != obj.SizeRelH) ? new CImagePositionH(obj.SizeRelH) : undefined;
 			this.SizeRelV = (undefined != obj.SizeRelV) ? new CImagePositionV(obj.SizeRelV) : undefined;
@@ -3489,23 +3451,26 @@
 			this.description = obj.description != undefined ? obj.description : undefined;
 			this.name = obj.name != undefined ? obj.name : undefined;
 
-            this.columnNumber =  obj.columnNumber != undefined ? obj.columnNumber : undefined;
-            this.columnSpace =  obj.columnSpace != undefined ? obj.columnSpace : undefined;
-            this.textFitType =  obj.textFitType != undefined ? obj.textFitType : undefined;
-            this.vertOverflowType =  obj.vertOverflowType != undefined ? obj.vertOverflowType : undefined;
-            this.shadow =  obj.shadow != undefined ? obj.shadow : undefined;
+			this.columnNumber = obj.columnNumber != undefined ? obj.columnNumber : undefined;
+			this.columnSpace = obj.columnSpace != undefined ? obj.columnSpace : undefined;
+			this.textFitType = obj.textFitType != undefined ? obj.textFitType : undefined;
+			this.vertOverflowType = obj.vertOverflowType != undefined ? obj.vertOverflowType : undefined;
+			this.shadow = obj.shadow != undefined ? obj.shadow : undefined;
 
 			this.rot = obj.rot != undefined ? obj.rot : undefined;
 			this.flipH = obj.flipH != undefined ? obj.flipH : undefined;
 			this.flipV = obj.flipV != undefined ? obj.flipV : undefined;
-			this.resetCrop =  obj.resetCrop != undefined ? obj.resetCrop : undefined;
-			this.anchor =  obj.anchor != undefined ? obj.anchor : undefined;
+			this.resetCrop = obj.resetCrop != undefined ? obj.resetCrop : undefined;
+			this.anchor = obj.anchor != undefined ? obj.anchor : undefined;
 
 			this.protectionLockText = obj.protectionLockText;
 			this.protectionLocked = obj.protectionLocked;
 			this.protectionPrint = obj.protectionPrint;
 
-		} else {
+			this.bSetOriginalSize = obj.bSetOriginalSize;
+
+		}
+		else {
 			this.CanBeFlow = true;
 			this.Width = undefined;
 			this.Height = undefined;
@@ -3540,14 +3505,14 @@
 			this.pluginGuid = undefined;
 			this.pluginData = undefined;
 
-            this.title = undefined;
-            this.description = undefined;
-            this.name = undefined;
+			this.title = undefined;
+			this.description = undefined;
+			this.name = undefined;
 
-            this.columnNumber = undefined;
-            this.columnSpace =  undefined;
-            this.textFitType =  undefined;
-            this.vertOverflowType =  undefined;
+			this.columnNumber = undefined;
+			this.columnSpace = undefined;
+			this.textFitType = undefined;
+			this.vertOverflowType = undefined;
 
 
 			this.rot = undefined;
@@ -3560,344 +3525,385 @@
 			this.protectionLockText = undefined;
 			this.protectionLocked = undefined;
 			this.protectionPrint = undefined;
+			this.bSetOriginalSize = undefined;
 		}
 	}
 
-	asc_CImgProperty.prototype = {
-		constructor: asc_CImgProperty,
-		asc_getChangeLevel: function () {
-			return this.ChangeLevel;
-		}, asc_putChangeLevel: function (v) {
-			this.ChangeLevel = v;
-		},
+	asc_CImgProperty.prototype.constructor = asc_CImgProperty;
+	asc_CImgProperty.prototype.asc_getChangeLevel = function () {
+		return this.ChangeLevel;
+	};
+	asc_CImgProperty.prototype.asc_putChangeLevel = function (v) {
+		this.ChangeLevel = v;
+	};
 
-		asc_getCanBeFlow: function () {
-			return this.CanBeFlow;
-		}, asc_getWidth: function () {
-			return this.Width;
-		}, asc_putWidth: function (v) {
-			this.Width = v;
-		}, asc_getHeight: function () {
-			return this.Height;
-		}, asc_putHeight: function (v) {
-			this.Height = v;
-		}, asc_getWrappingStyle: function () {
-			return this.WrappingStyle;
-		}, asc_putWrappingStyle: function (v) {
-			this.WrappingStyle = v;
-		},
+	asc_CImgProperty.prototype.asc_getCanBeFlow = function () {
+		return this.CanBeFlow;
+	};
+	asc_CImgProperty.prototype.asc_getWidth = function () {
+		return this.Width;
+	};
+	asc_CImgProperty.prototype.asc_putWidth = function (v) {
+		this.Width = v;
+	};
+	asc_CImgProperty.prototype.asc_getHeight = function () {
+		return this.Height;
+	};
+	asc_CImgProperty.prototype.asc_putHeight = function (v) {
+		this.Height = v;
+	};
+	asc_CImgProperty.prototype.asc_getWrappingStyle = function () {
+		return this.WrappingStyle;
+	};
+	asc_CImgProperty.prototype.asc_putWrappingStyle = function (v) {
+		this.WrappingStyle = v;
+	};
 
-		// Возвращается объект класса Asc.asc_CPaddings
-		asc_getPaddings: function () {
-			return this.Paddings;
-		}, // Аргумент объект класса Asc.asc_CPaddings
-		asc_putPaddings: function (v) {
-			this.Paddings = v;
-		}, asc_getAllowOverlap: function () {
-			return this.AllowOverlap;
-		}, asc_putAllowOverlap: function (v) {
-			this.AllowOverlap = v;
-		}, // Возвращается объект класса CPosition
-		asc_getPosition: function () {
-			return this.Position;
-		}, // Аргумент объект класса CPosition
-		asc_putPosition: function (v) {
-			this.Position = v;
-		}, asc_getPositionH: function () {
-			return this.PositionH;
-		}, asc_putPositionH: function (v) {
-			this.PositionH = v;
-		}, asc_getPositionV: function () {
-			return this.PositionV;
-		}, asc_putPositionV: function (v) {
-			this.PositionV = v;
-		},
+	// Возвращается объект класса Asc.asc_CPaddings
+	asc_CImgProperty.prototype.asc_getPaddings = function () {
+		return this.Paddings;
+	}; // Аргумент объект класса Asc.asc_CPaddings
+	asc_CImgProperty.prototype.asc_putPaddings = function (v) {
+		this.Paddings = v;
+	};
+	asc_CImgProperty.prototype.asc_getAllowOverlap = function () {
+		return this.AllowOverlap;
+	};
+	asc_CImgProperty.prototype.asc_putAllowOverlap = function (v) {
+		this.AllowOverlap = v;
+	}; // Возвращается объект класса CPosition
+	asc_CImgProperty.prototype.asc_getPosition = function () {
+		return this.Position;
+	}; // Аргумент объект класса CPosition
+	asc_CImgProperty.prototype.asc_putPosition = function (v) {
+		this.Position = v;
+	};
+	asc_CImgProperty.prototype.asc_getPositionH = function () {
+		return this.PositionH;
+	};
+	asc_CImgProperty.prototype.asc_putPositionH = function (v) {
+		this.PositionH = v;
+	};
+	asc_CImgProperty.prototype.asc_getPositionV = function () {
+		return this.PositionV;
+	};
+	asc_CImgProperty.prototype.asc_putPositionV = function (v) {
+		this.PositionV = v;
+	};
 
-		asc_getSizeRelH: function () {
-			return this.SizeRelH;
-		},
+	asc_CImgProperty.prototype.asc_getSizeRelH = function () {
+		return this.SizeRelH;
+	};
 
-		asc_putSizeRelH: function (v) {
-			this.SizeRelH = v;
-		},
+	asc_CImgProperty.prototype.asc_putSizeRelH = function (v) {
+		this.SizeRelH = v;
+	};
 
-		asc_getSizeRelV: function () {
-			return this.SizeRelV;
-		},
+	asc_CImgProperty.prototype.asc_getSizeRelV = function () {
+		return this.SizeRelV;
+	};
 
-		asc_putSizeRelV: function (v) {
-			this.SizeRelV = v;
-		},
+	asc_CImgProperty.prototype.asc_putSizeRelV = function (v) {
+		this.SizeRelV = v;
+	};
 
-		asc_getValue_X: function (RelativeFrom) {
-        if (null != this.Internal_Position) {
-            return this.Internal_Position.Calculate_X_Value(RelativeFrom);
-        }
-			return 0;
-		}, asc_getValue_Y: function (RelativeFrom) {
-          if (null != this.Internal_Position) {
-              return this.Internal_Position.Calculate_Y_Value(RelativeFrom);
-          }
-			return 0;
-		},
+	asc_CImgProperty.prototype.asc_getValue_X = function (RelativeFrom) {
+		if (null != this.Internal_Position) {
+			return this.Internal_Position.Calculate_X_Value(RelativeFrom);
+		}
+		return 0;
+	};
+	asc_CImgProperty.prototype.asc_getValue_Y = function (RelativeFrom) {
+		if (null != this.Internal_Position) {
+			return this.Internal_Position.Calculate_Y_Value(RelativeFrom);
+		}
+		return 0;
+	};
 
-		asc_getImageUrl: function () {
-			return this.ImageUrl;
-		}, asc_putImageUrl: function (v, sToken) {
-			this.ImageUrl = v;
-			this.Token = sToken;
-		}, asc_getGroup: function () {
-			return this.Group;
-		}, asc_putGroup: function (v) {
-			this.Group = v;
-		}, asc_getFromGroup: function () {
-			return this.fromGroup;
-		}, asc_putFromGroup: function (v) {
-			this.fromGroup = v;
-		},
+	asc_CImgProperty.prototype.asc_getImageUrl = function () {
+		return this.ImageUrl;
+	};
+	asc_CImgProperty.prototype.asc_putImageUrl = function (v, sToken) {
+		this.ImageUrl = v;
+		this.Token = sToken;
+	};
+	asc_CImgProperty.prototype.asc_getGroup = function () {
+		return this.Group;
+	};
+	asc_CImgProperty.prototype.asc_putGroup = function (v) {
+		this.Group = v;
+	};
+	asc_CImgProperty.prototype.asc_getFromGroup = function () {
+		return this.fromGroup;
+	};
+	asc_CImgProperty.prototype.asc_putFromGroup = function (v) {
+		this.fromGroup = v;
+	};
 
-		asc_getisChartProps: function () {
-			return this.isChartProps;
-		}, asc_putisChartPross: function (v) {
-			this.isChartProps = v;
-		},
+	asc_CImgProperty.prototype.asc_getisChartProps = function () {
+		return this.isChartProps;
+	};
+	asc_CImgProperty.prototype.asc_putisChartPross = function (v) {
+		this.isChartProps = v;
+	};
 
-		asc_getSeveralCharts: function () {
-			return this.severalCharts;
-		}, asc_putSeveralCharts: function (v) {
-			this.severalCharts = v;
-		}, asc_getSeveralChartTypes: function () {
-			return this.severalChartTypes;
-		}, asc_putSeveralChartTypes: function (v) {
-			this.severalChartTypes = v;
-		},
+	asc_CImgProperty.prototype.asc_getSeveralCharts = function () {
+		return this.severalCharts;
+	};
+	asc_CImgProperty.prototype.asc_putSeveralCharts = function (v) {
+		this.severalCharts = v;
+	};
+	asc_CImgProperty.prototype.asc_getSeveralChartTypes = function () {
+		return this.severalChartTypes;
+	};
+	asc_CImgProperty.prototype.asc_putSeveralChartTypes = function (v) {
+		this.severalChartTypes = v;
+	};
 
-		asc_getSeveralChartStyles: function () {
-			return this.severalChartStyles;
-		}, asc_putSeveralChartStyles: function (v) {
-			this.severalChartStyles = v;
-		},
+	asc_CImgProperty.prototype.asc_getSeveralChartStyles = function () {
+		return this.severalChartStyles;
+	};
+	asc_CImgProperty.prototype.asc_putSeveralChartStyles = function (v) {
+		this.severalChartStyles = v;
+	};
 
-		asc_getVerticalTextAlign: function () {
-			return this.verticalTextAlign;
-		}, asc_putVerticalTextAlign: function (v) {
-			this.verticalTextAlign = v;
-		}, asc_getVert: function () {
-			return this.vert;
-		}, asc_putVert: function (v) {
-			this.vert = v;
-		},
+	asc_CImgProperty.prototype.asc_getVerticalTextAlign = function () {
+		return this.verticalTextAlign;
+	};
+	asc_CImgProperty.prototype.asc_putVerticalTextAlign = function (v) {
+		this.verticalTextAlign = v;
+	};
+	asc_CImgProperty.prototype.asc_getVert = function () {
+		return this.vert;
+	};
+	asc_CImgProperty.prototype.asc_putVert = function (v) {
+		this.vert = v;
+	};
 
-		asc_getLocked: function () {
-			return this.Locked;
-		}, asc_getLockAspect: function () {
-			return this.lockAspect;
-		}, asc_putLockAspect: function (v) {
-			this.lockAspect = v;
-		}, asc_getChartProperties: function () {
-			return this.ChartProperties;
-		}, asc_putChartProperties: function (v) {
-			this.ChartProperties = v;
-		}, asc_getShapeProperties: function () {
-			return this.ShapeProperties;
-		}, asc_putShapeProperties: function (v) {
-			this.ShapeProperties = v;
-		}, asc_getSlicerProperties: function() {
-			return this.SlicerProperties;
-		}, asc_putSlicerProperties: function(v) {
-			this.SlicerProperties = v;
-		},
+	asc_CImgProperty.prototype.asc_getLocked = function () {
+		return this.Locked;
+	};
+	asc_CImgProperty.prototype.asc_getLockAspect = function () {
+		return this.lockAspect;
+	};
+	asc_CImgProperty.prototype.asc_putLockAspect = function (v) {
+		this.lockAspect = v;
+	};
+	asc_CImgProperty.prototype.asc_getChartProperties = function () {
+		return this.ChartProperties;
+	};
+	asc_CImgProperty.prototype.asc_putChartProperties = function (v) {
+		this.ChartProperties = v;
+	};
+	asc_CImgProperty.prototype.asc_getShapeProperties = function () {
+		return this.ShapeProperties;
+	};
+	asc_CImgProperty.prototype.asc_putShapeProperties = function (v) {
+		this.ShapeProperties = v;
+	};
+	asc_CImgProperty.prototype.asc_getSlicerProperties = function () {
+		return this.SlicerProperties;
+	};
+	asc_CImgProperty.prototype.asc_putSlicerProperties = function (v) {
+		this.SlicerProperties = v;
+	};
 
-		asc_getOriginSize: function (api)
-		{
-			if (this.ImageUrl === null)
-			{
-				return new asc_CImageSize(50, 50, false);
+	asc_CImgProperty.prototype.asc_getOriginSize = function (api) {
+		if (this.ImageUrl === null) {
+			return new asc_CImageSize(50, 50, false);
+		}
+
+		let origW = 0;
+		let origH = 0;
+
+		if(window["IS_NATIVE_EDITOR"]) {
+			let fGetOriginalImageSize = window["native"]["GetOriginalImageSize"] ||
+				window["native"]["DD_GetOriginalImageSize"];
+			let sizes = fGetOriginalImageSize(this.ImageUrl);
+			let w = sizes[0];
+			let h = sizes[1];
+			let isN = AscFormat.isRealNumber;
+			if (isN(w) && isN(h)) {
+				origW = w;
+				origH = h;
 			}
-
-			var origW = 0;
-			var origH = 0;
-			var _image = api.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(this.ImageUrl)];
-			if (_image != undefined && _image.Image != null && _image.Status == window['AscFonts'].ImageLoadStatus.Complete)
-			{
+		}
+		else {
+			let _image = api.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(this.ImageUrl)];
+			if (_image != undefined && _image.Image != null && _image.Status == window['AscFonts'].ImageLoadStatus.Complete) {
 				origW = _image.Image.width;
 				origH = _image.Image.height;
 			}
-			else if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["GetImageOriginalSize"])
-			{
-				var _size = window["AscDesktopEditor"]["GetImageOriginalSize"](this.ImageUrl);
-				if (_size["W"] != 0 && _size["H"] != 0)
-				{
+			else if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["GetImageOriginalSize"]) {
+				let _size = window["AscDesktopEditor"]["GetImageOriginalSize"](this.ImageUrl);
+				if (_size["W"] != 0 && _size["H"] != 0) {
 					origW = _size["W"];
 					origH = _size["H"];
 				}
 			}
-
-			if (origW != 0 && origH != 0)
-			{
-				var __w = Math.max((origW * AscCommon.g_dKoef_pix_to_mm), 1);
-				var __h = Math.max((origH * AscCommon.g_dKoef_pix_to_mm), 1);
-
-				return new asc_CImageSize(__w, __h, true);
-			}
-			return new asc_CImageSize(50, 50, false);
-		},
-
-		//oleObjects
-		asc_getPluginGuid: function () {
-			return this.pluginGuid;
-		},
-
-		asc_putPluginGuid: function (v) {
-			this.pluginGuid = v;
-		},
-
-		asc_getPluginData: function () {
-			return this.pluginData;
-		},
-
-		asc_putPluginData: function (v) {
-			this.pluginData = v;
-		},
-
-		asc_getTitle: function(){
-			return this.title;
-		},
-
-		asc_putTitle: function(v){
-			this.title = v;
-		},
-
-		asc_getDescription: function(){
-			return this.description;
-		},
-
-		asc_putDescription: function(v){
-			this.description = v;
-		},
-		asc_getName: function(){
-			return this.name;
-		},
-
-		asc_putName: function(v){
-			this.name = v;
-		},
-
-		asc_getColumnNumber: function(){
-			return this.columnNumber;
-		},
-
-		asc_putColumnNumber: function(v){
-			this.columnNumber = v;
-		},
-
-		asc_getColumnSpace: function(){
-			return this.columnSpace;
-		},
-
-		asc_getTextFitType: function(){
-			return this.textFitType;
-		},
-		asc_getVertOverflowType: function(){
-			return this.vertOverflowType;
-		},
-
-		asc_putColumnSpace: function(v){
-			this.columnSpace = v;
-		},
-		asc_putTextFitType: function(v){
-			this.textFitType = v;
-		},
-		asc_putVertOverflowType: function(v){
-			this.vertOverflowType = v;
-		},
-
-		asc_getSignatureId : function() {
-			if (this.ShapeProperties)
-				return this.ShapeProperties.asc_getSignatureId();
-			return undefined;
-		},
-
-		asc_getRot: function(){
-			return this.rot;
-		},
-
-		asc_putRot: function(v){
-			this.rot = v;
-		},
-		asc_getRotAdd: function(){
-			return this.rotAdd;
-		},
-
-		asc_putRotAdd: function(v){
-			this.rotAdd = v;
-		},
-
-		asc_getFlipH: function(){
-			return this.flipH;
-		},
-
-		asc_putFlipH: function(v){
-			this.flipH = v;
-		},
-		asc_getFlipHInvert: function(){
-			return this.flipHInvert;
-		},
-
-		asc_putFlipHInvert: function(v){
-			this.flipHInvert = v;
-		},
-
-		asc_getFlipV: function(){
-			return this.flipV;
-		},
-
-		asc_putFlipV: function(v){
-			this.flipV = v;
-		},
-		asc_getFlipVInvert: function(){
-			return this.flipVInvert;
-		},
-
-		asc_putFlipVInvert: function(v){
-			this.flipVInvert = v;
-		},
-		asc_putResetCrop: function(v){
-			this.resetCrop = v;
-		},
-		asc_getShadow: function(){
-			return this.shadow;
-		},
-
-		asc_putShadow: function(v){
-			this.shadow = v;
-		},
-		asc_getAnchor: function(){
-			return this.anchor;
-		},
-
-		asc_putAnchor: function(v){
-			this.anchor = v;
-		},
-		asc_getProtectionLockText: function(){
-			return this.protectionLockText;
-		},
-		asc_putProtectionLockText: function(v){
-			this.protectionLockText = v;
-		},
-		asc_getProtectionLocked: function(){
-			return this.protectionLocked;
-		},
-
-		asc_putProtectionLocked: function(v){
-			this.protectionLocked = v;
-		},
-		asc_getProtectionPrint: function(){
-			return this.protectionPrint;
-		},
-		asc_putProtectionPrint: function(v){
-			this.protectionPrint = v;
 		}
+		if (origW != 0 && origH != 0) {
+			let __w = Math.max((origW * AscCommon.g_dKoef_pix_to_mm), 1);
+			let __h = Math.max((origH * AscCommon.g_dKoef_pix_to_mm), 1);
+
+			return new asc_CImageSize(__w, __h, true);
+		}
+		return new asc_CImageSize(50, 50, false);
+	};
+
+	//oleObjects
+	asc_CImgProperty.prototype.asc_getPluginGuid = function () {
+		return this.pluginGuid;
+	};
+
+	asc_CImgProperty.prototype.asc_putPluginGuid = function (v) {
+		this.pluginGuid = v;
+	};
+
+	asc_CImgProperty.prototype.asc_getPluginData = function () {
+		return this.pluginData;
+	};
+
+	asc_CImgProperty.prototype.asc_putPluginData = function (v) {
+		this.pluginData = v;
+	};
+
+	asc_CImgProperty.prototype.asc_getTitle = function () {
+		return this.title;
+	};
+
+	asc_CImgProperty.prototype.asc_putTitle = function (v) {
+		this.title = v;
+	};
+
+	asc_CImgProperty.prototype.asc_getDescription = function () {
+		return this.description;
+	};
+
+	asc_CImgProperty.prototype.asc_putDescription = function (v) {
+		this.description = v;
+	};
+	asc_CImgProperty.prototype.asc_getName = function () {
+		return this.name;
+	};
+
+	asc_CImgProperty.prototype.asc_putName = function (v) {
+		this.name = v;
+	};
+
+	asc_CImgProperty.prototype.asc_getColumnNumber = function () {
+		return this.columnNumber;
+	};
+
+	asc_CImgProperty.prototype.asc_putColumnNumber = function (v) {
+		this.columnNumber = v;
+	};
+
+	asc_CImgProperty.prototype.asc_getColumnSpace = function () {
+		return this.columnSpace;
+	};
+
+	asc_CImgProperty.prototype.asc_getTextFitType = function () {
+		return this.textFitType;
+	};
+	asc_CImgProperty.prototype.asc_getVertOverflowType = function () {
+		return this.vertOverflowType;
+	};
+
+	asc_CImgProperty.prototype.asc_putColumnSpace = function (v) {
+		this.columnSpace = v;
+	};
+	asc_CImgProperty.prototype.asc_putTextFitType = function (v) {
+		this.textFitType = v;
+	};
+	asc_CImgProperty.prototype.asc_putVertOverflowType = function (v) {
+		this.vertOverflowType = v;
+	};
+
+	asc_CImgProperty.prototype.asc_getSignatureId = function () {
+		if (this.ShapeProperties) return this.ShapeProperties.asc_getSignatureId();
+		return undefined;
+	};
+
+	asc_CImgProperty.prototype.asc_getRot = function () {
+		return this.rot;
+	};
+
+	asc_CImgProperty.prototype.asc_putRot = function (v) {
+		this.rot = v;
+	};
+	asc_CImgProperty.prototype.asc_getRotAdd = function () {
+		return this.rotAdd;
+	};
+
+	asc_CImgProperty.prototype.asc_putRotAdd = function (v) {
+		this.rotAdd = v;
+	};
+
+	asc_CImgProperty.prototype.asc_getFlipH = function () {
+		return this.flipH;
+	};
+
+	asc_CImgProperty.prototype.asc_putFlipH = function (v) {
+		this.flipH = v;
+	};
+	asc_CImgProperty.prototype.asc_getFlipHInvert = function () {
+		return this.flipHInvert;
+	};
+
+	asc_CImgProperty.prototype.asc_putFlipHInvert = function (v) {
+		this.flipHInvert = v;
+	};
+
+	asc_CImgProperty.prototype.asc_getFlipV = function () {
+		return this.flipV;
+	};
+
+	asc_CImgProperty.prototype.asc_putFlipV = function (v) {
+		this.flipV = v;
+	};
+	asc_CImgProperty.prototype.asc_getFlipVInvert = function () {
+		return this.flipVInvert;
+	};
+
+	asc_CImgProperty.prototype.asc_putFlipVInvert = function (v) {
+		this.flipVInvert = v;
+	};
+	asc_CImgProperty.prototype.asc_putResetCrop = function (v) {
+		this.resetCrop = v;
+	};
+	asc_CImgProperty.prototype.asc_getShadow = function () {
+		return this.shadow;
+	};
+
+	asc_CImgProperty.prototype.asc_putShadow = function (v) {
+		this.shadow = v;
+	};
+	asc_CImgProperty.prototype.asc_getAnchor = function () {
+		return this.anchor;
+	};
+
+	asc_CImgProperty.prototype.asc_putAnchor = function (v) {
+		this.anchor = v;
+	};
+	asc_CImgProperty.prototype.asc_getProtectionLockText = function () {
+		return this.protectionLockText;
+	};
+	asc_CImgProperty.prototype.asc_putProtectionLockText = function (v) {
+		this.protectionLockText = v;
+	};
+	asc_CImgProperty.prototype.asc_getProtectionLocked = function () {
+		return this.protectionLocked;
+	};
+
+	asc_CImgProperty.prototype.asc_putProtectionLocked = function (v) {
+		this.protectionLocked = v;
+	};
+	asc_CImgProperty.prototype.asc_getProtectionPrint = function () {
+		return this.protectionPrint;
+	};
+	asc_CImgProperty.prototype.asc_putProtectionPrint = function (v) {
+		this.protectionPrint = v;
 	};
 
 	/** @constructor */
@@ -3919,6 +3925,7 @@
 		this.fill = null;
 		this.transparent = null;
 	}
+
 	asc_CShapeFill.prototype.asc_getType = function () {
 		return this.type;
 	};
@@ -3955,24 +3962,24 @@
 		this.texture_id = null;
 	}
 
-		asc_CFillBlip.prototype.asc_getType = function () {
-			return this.type
-		};
+	asc_CFillBlip.prototype.asc_getType = function () {
+		return this.type
+	};
 	asc_CFillBlip.prototype.asc_putType = function (v) {
-			this.type = v;
-		};
+		this.type = v;
+	};
 	asc_CFillBlip.prototype.asc_getUrl = function () {
-			return this.url;
-		};
+		return this.url;
+	};
 	asc_CFillBlip.prototype.asc_putUrl = function (v, sToken) {
-			this.url = v;
-			this.token = sToken;
-		};
+		this.url = v;
+		this.token = sToken;
+	};
 	asc_CFillBlip.prototype.asc_getTextureId = function () {
-			return this.texture_id;
-		};
+		return this.texture_id;
+	};
 	asc_CFillBlip.prototype.asc_putTextureId = function (v) {
-			this.texture_id = v;
+		this.texture_id = v;
 	};
 
 	/** @constructor */
@@ -4000,6 +4007,7 @@
 	asc_CFillHatch.prototype.asc_putColorBg = function (v) {
 		this.bgClr = v;
 	};
+
 	/** @constructor */
 	function asc_CFillGrad() {
 		this.Colors = undefined;
@@ -4013,41 +4021,41 @@
 	}
 
 	asc_CFillGrad.prototype.asc_getColors = function () {
-			return this.Colors;
-		};
+		return this.Colors;
+	};
 	asc_CFillGrad.prototype.asc_putColors = function (v) {
-			this.Colors = v;
-		};
+		this.Colors = v;
+	};
 	asc_CFillGrad.prototype.asc_getPositions = function () {
-			return this.Positions;
-		};
+		return this.Positions;
+	};
 	asc_CFillGrad.prototype.asc_putPositions = function (v) {
-			this.Positions = v;
-		};
+		this.Positions = v;
+	};
 	asc_CFillGrad.prototype.asc_getGradType = function () {
-			return this.GradType;
-		};
+		return this.GradType;
+	};
 	asc_CFillGrad.prototype.asc_putGradType = function (v) {
-			this.GradType = v;
-		};
+		this.GradType = v;
+	};
 	asc_CFillGrad.prototype.asc_getLinearAngle = function () {
-			return this.LinearAngle;
-		};
+		return this.LinearAngle;
+	};
 	asc_CFillGrad.prototype.asc_putLinearAngle = function (v) {
-			this.LinearAngle = v;
-		};
+		this.LinearAngle = v;
+	};
 	asc_CFillGrad.prototype.asc_getLinearScale = function () {
-			return this.LinearScale;
-		};
+		return this.LinearScale;
+	};
 	asc_CFillGrad.prototype.asc_putLinearScale = function (v) {
-			this.LinearScale = v;
-		};
+		this.LinearScale = v;
+	};
 	asc_CFillGrad.prototype.asc_getPathType = function () {
-			return this.PathType;
-		};
+		return this.PathType;
+	};
 	asc_CFillGrad.prototype.asc_putPathType = function (v) {
-			this.PathType = v;
-		};
+		this.PathType = v;
+	};
 
 	/** @constructor */
 	function asc_CFillSolid() {
@@ -4055,11 +4063,11 @@
 	}
 
 	asc_CFillSolid.prototype.asc_getColor = function () {
-			return this.color
-		};
+		return this.color
+	};
 	asc_CFillSolid.prototype.asc_putColor = function (v) {
-			this.color = v;
-		};
+		this.color = v;
+	};
 
 
 	/** @constructor */
@@ -4211,14 +4219,11 @@
 		this.summ += color.getVal();
 	};
 	CAscColorScheme.prototype.isEqual = function (oColorScheme) {
-		if(this.summ === oColorScheme.summ)
-		{
-			for(var i = 0; i < this.colors.length; ++i)
-			{
-				var oColor1 = this.colors[i];
-				var oColor2 = oColorScheme.colors[i];
-				if(!(!oColor1 && !oColor2 || oColor2 && oColor2 && oColor1.Compare(oColor2)))
-				{
+		if (this.summ === oColorScheme.summ) {
+			for (let i = 0; i < this.colors.length; ++i) {
+				let oColor1 = this.colors[i];
+				let oColor2 = oColorScheme.colors[i];
+				if (!(!oColor1 && !oColor2 || oColor2 && oColor2 && oColor1.Compare(oColor2))) {
 					return false;
 				}
 			}
@@ -4231,47 +4236,38 @@
 	//-----------------------------------------------------------------
 	// События движения мыши
 	//-----------------------------------------------------------------
-	function CMouseMoveData(obj)
-	{
-		if (obj)
-		{
-			this.Type  = ( undefined != obj.Type ) ? obj.Type : c_oAscMouseMoveDataTypes.Common;
-			this.X_abs = ( undefined != obj.X_abs ) ? obj.X_abs : 0;
-			this.Y_abs = ( undefined != obj.Y_abs ) ? obj.Y_abs : 0;
-			this.EyedropperColor = ( undefined != obj.EyedropperColor ) ? obj.EyedropperColor : undefined;
+	function CMouseMoveData(obj) {
+		if (obj) {
+			this.Type = (undefined != obj.Type) ? obj.Type : c_oAscMouseMoveDataTypes.Common;
+			this.X_abs = (undefined != obj.X_abs) ? obj.X_abs : 0;
+			this.Y_abs = (undefined != obj.Y_abs) ? obj.Y_abs : 0;
+			this.EyedropperColor = (undefined != obj.EyedropperColor) ? obj.EyedropperColor : undefined;
 			this.PlaceholderType = obj.PlaceholderType;
-			switch (this.Type)
-			{
-				case c_oAscMouseMoveDataTypes.Hyperlink :
-				{
-					this.Hyperlink = ( undefined != obj.PageNum ) ? obj.PageNum : 0;
+			switch (this.Type) {
+				case c_oAscMouseMoveDataTypes.Hyperlink : {
+					this.Hyperlink = (undefined != obj.PageNum) ? obj.PageNum : 0;
 					break;
 				}
 
-				case c_oAscMouseMoveDataTypes.LockedObject :
-				{
-					this.UserId           = ( undefined != obj.UserId ) ? obj.UserId : "";
-					this.HaveChanges      = ( undefined != obj.HaveChanges ) ? obj.HaveChanges : false;
-					this.LockedObjectType =
-						( undefined != obj.LockedObjectType ) ? obj.LockedObjectType : Asc.c_oAscMouseMoveLockedObjectType.Common;
+				case c_oAscMouseMoveDataTypes.LockedObject : {
+					this.UserId = (undefined != obj.UserId) ? obj.UserId : "";
+					this.HaveChanges = (undefined != obj.HaveChanges) ? obj.HaveChanges : false;
+					this.LockedObjectType = (undefined != obj.LockedObjectType) ? obj.LockedObjectType : Asc.c_oAscMouseMoveLockedObjectType.Common;
 					break;
 				}
-				case c_oAscMouseMoveDataTypes.Footnote:
-				{
-					this.Text   = "";
+				case c_oAscMouseMoveDataTypes.Footnote: {
+					this.Text = "";
 					this.Number = 1;
 					break;
 				}
-				case c_oAscMouseMoveDataTypes.Review:
-				{
+				case c_oAscMouseMoveDataTypes.Review: {
 					this.ReviewChange = obj && obj.ReviewChange ? obj.ReviewChange : null;
 					break;
 				}
 			}
 		}
-		else
-		{
-			this.Type  = c_oAscMouseMoveDataTypes.Common;
+		else {
+			this.Type = c_oAscMouseMoveDataTypes.Common;
 			this.X_abs = 0;
 			this.Y_abs = 0;
 			this.EyedropperColor = undefined;
@@ -4299,28 +4295,22 @@
 	CMouseMoveData.prototype.get_LockedObjectType = function () {
 		return this.LockedObjectType;
 	};
-	CMouseMoveData.prototype.get_FootnoteText = function()
-	{
+	CMouseMoveData.prototype.get_FootnoteText = function () {
 		return this.Text;
 	};
-	CMouseMoveData.prototype.get_FootnoteNumber = function()
-	{
+	CMouseMoveData.prototype.get_FootnoteNumber = function () {
 		return this.Number;
 	};
-	CMouseMoveData.prototype.get_FormHelpText = function()
-	{
+	CMouseMoveData.prototype.get_FormHelpText = function () {
 		return this.Text;
 	};
-	CMouseMoveData.prototype.get_ReviewChange = function()
-	{
+	CMouseMoveData.prototype.get_ReviewChange = function () {
 		return this.ReviewChange;
 	};
-	CMouseMoveData.prototype.get_EyedropperColor = function()
-	{
+	CMouseMoveData.prototype.get_EyedropperColor = function () {
 		return this.EyedropperColor;
 	};
-	CMouseMoveData.prototype.get_PlaceholderType = function()
-	{
+	CMouseMoveData.prototype.get_PlaceholderType = function () {
 		return this.PlaceholderType;
 	};
 
@@ -4330,104 +4320,87 @@
 	 * @param obj
 	 * @constructor
 	 */
-    function CHyperlinkProperty(obj)
-	{
-		if (obj)
-		{
-			this.Text    = (undefined != obj.Text   ) ? obj.Text : null;
-			this.Value   = (undefined != obj.Value  ) ? obj.Value : "";
+	function CHyperlinkProperty(obj) {
+		if (obj) {
+			this.Text = (undefined != obj.Text) ? obj.Text : null;
+			this.Value = (undefined != obj.Value) ? obj.Value : "";
 			this.ToolTip = (undefined != obj.ToolTip) ? obj.ToolTip : "";
-			this.Class   = (undefined !== obj.Class ) ? obj.Class : null;
-			this.Anchor  = (undefined !== obj.Anchor) ? obj.Anchor : null;
+			this.Class = (undefined !== obj.Class) ? obj.Class : null;
+			this.Anchor = (undefined !== obj.Anchor) ? obj.Anchor : null;
 			this.Heading = (obj.Heading ? obj.Heading : null);
 		}
-		else
-		{
-			this.Text    = null;
-			this.Value   = "";
+		else {
+			this.Text = null;
+			this.Value = "";
 			this.ToolTip = "";
-			this.Class   = null;
-			this.Anchor  = null;
+			this.Class = null;
+			this.Anchor = null;
 			this.Heading = null;
 		}
 	}
-    CHyperlinkProperty.prototype.get_Value   = function()
-    {
-        return this.Value;
-    };
-    CHyperlinkProperty.prototype.put_Value   = function(v)
-    {
-        this.Value = v;
-    };
-    CHyperlinkProperty.prototype.get_ToolTip = function()
-    {
-        return this.ToolTip;
-    };
-    CHyperlinkProperty.prototype.put_ToolTip = function(v)
-    {
-        this.ToolTip = v ? v.slice(0, Asc.c_oAscMaxTooltipLength) : v;
-    };
-    CHyperlinkProperty.prototype.get_Text    = function()
-    {
-        return this.Text;
-    };
-    CHyperlinkProperty.prototype.put_Text    = function(v)
-    {
-        this.Text = v;
-    };
-    CHyperlinkProperty.prototype.put_InternalHyperlink = function(oClass)
-    {
-        this.Class = oClass;
-    };
-    CHyperlinkProperty.prototype.get_InternalHyperlink = function()
-    {
-        return this.Class;
-    };
-    CHyperlinkProperty.prototype.is_TopOfDocument = function()
-	{
+
+	CHyperlinkProperty.prototype.get_Value = function () {
+		return this.Value;
+	};
+	CHyperlinkProperty.prototype.put_Value = function (v) {
+		this.Value = v;
+	};
+	CHyperlinkProperty.prototype.get_ToolTip = function () {
+		return this.ToolTip;
+	};
+	CHyperlinkProperty.prototype.put_ToolTip = function (v) {
+		this.ToolTip = v ? v.slice(0, Asc.c_oAscMaxTooltipLength) : v;
+	};
+	CHyperlinkProperty.prototype.get_Text = function () {
+		return this.Text;
+	};
+	CHyperlinkProperty.prototype.put_Text = function (v) {
+		this.Text = v;
+	};
+	CHyperlinkProperty.prototype.put_InternalHyperlink = function (oClass) {
+		this.Class = oClass;
+	};
+	CHyperlinkProperty.prototype.get_InternalHyperlink = function () {
+		return this.Class;
+	};
+	CHyperlinkProperty.prototype.is_TopOfDocument = function () {
 		return (this.Anchor === "_top");
 	};
-    CHyperlinkProperty.prototype.put_TopOfDocument = function()
-	{
+	CHyperlinkProperty.prototype.put_TopOfDocument = function () {
 		this.Anchor = "_top";
 	};
-    CHyperlinkProperty.prototype.get_Bookmark = function()
-	{
+	CHyperlinkProperty.prototype.get_Bookmark = function () {
 		return this.Anchor;
 	};
-    CHyperlinkProperty.prototype.put_Bookmark = function(sBookmark)
-	{
+	CHyperlinkProperty.prototype.put_Bookmark = function (sBookmark) {
 		this.Anchor = sBookmark;
 	};
-	CHyperlinkProperty.prototype.is_Heading = function()
-	{
+	CHyperlinkProperty.prototype.is_Heading = function () {
 		return (this.Heading instanceof AscCommonWord.Paragraph ? true : false)
 	};
-	CHyperlinkProperty.prototype.put_Heading = function(oParagraph)
-	{
+	CHyperlinkProperty.prototype.put_Heading = function (oParagraph) {
 		this.Heading = oParagraph;
 	};
-	CHyperlinkProperty.prototype.get_Heading = function()
-	{
+	CHyperlinkProperty.prototype.get_Heading = function () {
 		return this.Heading;
 	};
 
 	window['Asc']['CHyperlinkProperty'] = window['Asc'].CHyperlinkProperty = CHyperlinkProperty;
-	CHyperlinkProperty.prototype['get_Value']             = CHyperlinkProperty.prototype.get_Value;
-	CHyperlinkProperty.prototype['put_Value']             = CHyperlinkProperty.prototype.put_Value;
-	CHyperlinkProperty.prototype['get_ToolTip']           = CHyperlinkProperty.prototype.get_ToolTip;
-	CHyperlinkProperty.prototype['put_ToolTip']           = CHyperlinkProperty.prototype.put_ToolTip;
-	CHyperlinkProperty.prototype['get_Text']              = CHyperlinkProperty.prototype.get_Text;
-	CHyperlinkProperty.prototype['put_Text']              = CHyperlinkProperty.prototype.put_Text;
+	CHyperlinkProperty.prototype['get_Value'] = CHyperlinkProperty.prototype.get_Value;
+	CHyperlinkProperty.prototype['put_Value'] = CHyperlinkProperty.prototype.put_Value;
+	CHyperlinkProperty.prototype['get_ToolTip'] = CHyperlinkProperty.prototype.get_ToolTip;
+	CHyperlinkProperty.prototype['put_ToolTip'] = CHyperlinkProperty.prototype.put_ToolTip;
+	CHyperlinkProperty.prototype['get_Text'] = CHyperlinkProperty.prototype.get_Text;
+	CHyperlinkProperty.prototype['put_Text'] = CHyperlinkProperty.prototype.put_Text;
 	CHyperlinkProperty.prototype['get_InternalHyperlink'] = CHyperlinkProperty.prototype.get_InternalHyperlink;
 	CHyperlinkProperty.prototype['put_InternalHyperlink'] = CHyperlinkProperty.prototype.put_InternalHyperlink;
-	CHyperlinkProperty.prototype['is_TopOfDocument']      = CHyperlinkProperty.prototype.is_TopOfDocument;
-	CHyperlinkProperty.prototype['put_TopOfDocument']     = CHyperlinkProperty.prototype.put_TopOfDocument;
-	CHyperlinkProperty.prototype['get_Bookmark']          = CHyperlinkProperty.prototype.get_Bookmark;
-	CHyperlinkProperty.prototype['put_Bookmark']          = CHyperlinkProperty.prototype.put_Bookmark;
-	CHyperlinkProperty.prototype['is_Heading']            = CHyperlinkProperty.prototype.is_Heading;
-	CHyperlinkProperty.prototype['put_Heading']           = CHyperlinkProperty.prototype.put_Heading;
-	CHyperlinkProperty.prototype['get_Heading']           = CHyperlinkProperty.prototype.get_Heading;
+	CHyperlinkProperty.prototype['is_TopOfDocument'] = CHyperlinkProperty.prototype.is_TopOfDocument;
+	CHyperlinkProperty.prototype['put_TopOfDocument'] = CHyperlinkProperty.prototype.put_TopOfDocument;
+	CHyperlinkProperty.prototype['get_Bookmark'] = CHyperlinkProperty.prototype.get_Bookmark;
+	CHyperlinkProperty.prototype['put_Bookmark'] = CHyperlinkProperty.prototype.put_Bookmark;
+	CHyperlinkProperty.prototype['is_Heading'] = CHyperlinkProperty.prototype.is_Heading;
+	CHyperlinkProperty.prototype['put_Heading'] = CHyperlinkProperty.prototype.put_Heading;
+	CHyperlinkProperty.prototype['get_Heading'] = CHyperlinkProperty.prototype.get_Heading;
 
 
 	/** @constructor */
@@ -4489,7 +4462,7 @@
 		this.Encrypted;
 		this.EncryptedInfo;
 		this.IsEnabledPlugins = true;
-        this.IsEnabledMacroses = true;
+		this.IsEnabledMacroses = true;
 
 		//for external reference
 		this.ReferenceData = null;
@@ -4548,19 +4521,19 @@
 		this.OfflineApp = v;
 	};
 	prot.get_UserId = prot.asc_getUserId = function () {
-		return (this.UserInfo ? this.UserInfo.get_Id() : null );
+		return (this.UserInfo ? this.UserInfo.get_Id() : null);
 	};
 	prot.get_UserName = prot.asc_getUserName = function () {
-		return (this.UserInfo ? this.UserInfo.get_FullName() : null );
+		return (this.UserInfo ? this.UserInfo.get_FullName() : null);
 	};
 	prot.get_FirstName = prot.asc_getFirstName = function () {
-		return (this.UserInfo ? this.UserInfo.get_FirstName() : null );
+		return (this.UserInfo ? this.UserInfo.get_FirstName() : null);
 	};
 	prot.get_LastName = prot.asc_getLastName = function () {
-		return (this.UserInfo ? this.UserInfo.get_LastName() : null );
+		return (this.UserInfo ? this.UserInfo.get_LastName() : null);
 	};
 	prot.get_IsAnonymousUser = prot.get_IsAnonymousUser = function () {
-		return (this.UserInfo ? this.UserInfo.get_IsAnonymousUser() : null );
+		return (this.UserInfo ? this.UserInfo.get_IsAnonymousUser() : null);
 	};
 	prot.get_Options = prot.asc_getOptions = function () {
 		return this.Options;
@@ -4616,18 +4589,18 @@
 	prot.put_EncryptedInfo = prot.asc_putEncryptedInfo = function (v) {
 		this.EncryptedInfo = v;
 	};
-    prot.get_IsEnabledPlugins = prot.asc_getIsEnabledPlugins = function () {
-        return this.IsEnabledPlugins;
-    };
-    prot.put_IsEnabledPlugins = prot.asc_putIsEnabledPlugins = function (v) {
-        this.IsEnabledPlugins = v;
-    };
-    prot.get_IsEnabledMacroses = prot.asc_getIsEnabledMacroses = function () {
-        return this.IsEnabledMacroses;
-    };
-    prot.put_IsEnabledMacroses = prot.asc_putIsEnabledMacroses = function (v) {
-        this.IsEnabledMacroses = v;
-    };
+	prot.get_IsEnabledPlugins = prot.asc_getIsEnabledPlugins = function () {
+		return this.IsEnabledPlugins;
+	};
+	prot.put_IsEnabledPlugins = prot.asc_putIsEnabledPlugins = function (v) {
+		this.IsEnabledPlugins = v;
+	};
+	prot.get_IsEnabledMacroses = prot.asc_getIsEnabledMacroses = function () {
+		return this.IsEnabledMacroses;
+	};
+	prot.put_IsEnabledMacroses = prot.asc_putIsEnabledMacroses = function (v) {
+		this.IsEnabledMacroses = v;
+	};
 	prot.get_CoEditingMode = prot.asc_getCoEditingMode = function () {
 		return this.coEditingMode;
 	};
@@ -4729,7 +4702,9 @@
 	CStyleImage.prototype.asc_getId = CStyleImage.prototype.asc_getName = CStyleImage.prototype.get_Name = function () {
 		return this.name;
 	};
-	CStyleImage.prototype.asc_getDisplayName = function () { return this.displayName; };
+	CStyleImage.prototype.asc_getDisplayName = function () {
+		return this.displayName;
+	};
 	CStyleImage.prototype.asc_getType = CStyleImage.prototype.get_Type = function () {
 		return this.type;
 	};
@@ -4738,31 +4713,26 @@
 	};
 
 	/** @constructor */
-    function asc_CSpellCheckProperty(Word, Checked, Variants, ParaId, Element)
-    {
-        this.Word     = Word;
-        this.Checked  = Checked;
-        this.Variants = Variants;
+	function asc_CSpellCheckProperty(Word, Checked, Variants, ParaId, Element) {
+		this.Word = Word;
+		this.Checked = Checked;
+		this.Variants = Variants;
 
-        this.ParaId  = ParaId;
-        this.Element = Element;
-    }
+		this.ParaId = ParaId;
+		this.Element = Element;
+	}
 
-    asc_CSpellCheckProperty.prototype.get_Word     = function()
-    {
-        return this.Word;
-    };
-    asc_CSpellCheckProperty.prototype.get_Checked  = function()
-    {
-        return this.Checked;
-    };
-    asc_CSpellCheckProperty.prototype.get_Variants = function()
-    {
-        return this.Variants;
-    };
+	asc_CSpellCheckProperty.prototype.get_Word = function () {
+		return this.Word;
+	};
+	asc_CSpellCheckProperty.prototype.get_Checked = function () {
+		return this.Checked;
+	};
+	asc_CSpellCheckProperty.prototype.get_Variants = function () {
+		return this.Variants;
+	};
 
-    function CWatermarkOnDraw(htmlContent, api)
-	{
+	function CWatermarkOnDraw(htmlContent, api) {
 		// example content:
 		/*
 		{
@@ -4806,8 +4776,7 @@
 		this.isFontsLoaded = false;
 
 		this.inputContentSrc = htmlContent;
-		if (typeof this.inputContentSrc === "object")
-			this.inputContentSrc = JSON.stringify(this.inputContentSrc);
+		if (typeof this.inputContentSrc === "object") this.inputContentSrc = JSON.stringify(this.inputContentSrc);
 
 		this.replaceMap = {};
 
@@ -4825,138 +4794,134 @@
 
 		this.contentObjects = null;
 
-		this.CheckParams = function()
-		{
+		this.CheckParams = function () {
 			this.replaceMap["%user_name%"] = this.api.User.userName;
 
-            var content = this.inputContentSrc;
-            for (var key in this.replaceMap)
-            {
-                if (!this.replaceMap.hasOwnProperty(key))
-                    continue;
-                content = content.replace(new RegExp(key, 'g'), this.replaceMap[key]);
-            }
-            this.contentObjects = {};
-            try {
-                var _objTmp = JSON.parse(content);
-                this.contentObjects = _objTmp;
-            }
-            catch (err) {
-            }
+			let content = this.inputContentSrc;
+			for (let key in this.replaceMap) {
+				if (!this.replaceMap.hasOwnProperty(key)) continue;
+				content = content.replace(new RegExp(key, 'g'), this.replaceMap[key]);
+			}
+			this.contentObjects = {};
+			try {
+				let _objTmp = JSON.parse(content);
+				this.contentObjects = _objTmp;
+			} catch (err) {
+			}
 
-            this.transparent = (undefined == this.contentObjects['transparent']) ? 0.3 : this.contentObjects['transparent'];
+			this.transparent = (undefined == this.contentObjects['transparent']) ? 0.3 : this.contentObjects['transparent'];
 		};
 
-		this.Generate = function()
-		{
-			if (!this.isFontsLoaded)
-				return;
+		this.Generate = function () {
+			if (!this.isFontsLoaded) return;
 
-			if (this.zoom == this.calculatezoom)
-				return;
+			if (this.zoom == this.calculatezoom) return;
 
 			this.calculatezoom = this.zoom;
 			this.privateGenerateShape(this.contentObjects);
 			//console.log( this.image.toDataURL("image/png"));
 		};
 
-		this.Draw = function(context, dw_or_dx, dh_or_dy, dw, dh)
-		{
-			if (!this.image || !this.isFontsLoaded)
-				return;
+		this.Draw = function (context, dw_or_dx, dh_or_dy, dw, dh) {
+			if (!this.image || !this.isFontsLoaded) return;
 
-			var x = 0;
-			var y = 0;
+			let x = 0;
+			let y = 0;
 
-			if (undefined == dw)
-			{
+			if (undefined == dw) {
 				x = (dw_or_dx - this.width) >> 1;
 				y = (dh_or_dy - this.height) >> 1;
 			}
-			else
-			{
+			else {
 				x = (dw_or_dx + ((dw - this.width) / 2)) >> 0;
 				y = (dh_or_dy + ((dh - this.height) / 2)) >> 0;
 			}
-			var oldGlobalAlpha = context.globalAlpha;
+			let oldGlobalAlpha = context.globalAlpha;
 			context.globalAlpha = this.transparent;
 			context.drawImage(this.image, x, y);
 			context.globalAlpha = oldGlobalAlpha;
 		};
 
-		this.StartRenderer = function()
-		{
-			var canvasTransparent = document.createElement("canvas");
+		this.StartRenderer = function () {
+			if (window["NATIVE_EDITOR_ENJINE"]) return;
+
+			let canvasTransparent = document.createElement("canvas");
 			canvasTransparent.width = this.image.width;
 			canvasTransparent.height = this.image.height;
-			var ctx = canvasTransparent.getContext("2d");
+			let ctx = canvasTransparent.getContext("2d");
 			ctx.globalAlpha = this.transparent;
 			ctx.drawImage(this.image, 0, 0);
 			this.imageBase64 = canvasTransparent.toDataURL("image/png");
 			canvasTransparent = null;
 		};
-		this.EndRenderer = function()
-		{
+		this.EndRenderer = function () {
+			if (window["NATIVE_EDITOR_ENJINE"]) return;
+
 			delete this.imageBase64;
 			this.imageBase64 = undefined;
 		};
-		this.DrawOnRenderer = function(renderer, w, h)
-		{
-			var wMM = this.width * AscCommon.g_dKoef_pix_to_mm / this.zoom;
-			var hMM = this.height * AscCommon.g_dKoef_pix_to_mm / this.zoom;
-			var x = (w - wMM) / 2;
-			var y = (h - hMM) / 2;
+		this.DrawOnRenderer = function (renderer, w, h) {
+			let wMM = this.width * AscCommon.g_dKoef_pix_to_mm / this.zoom;
+			let hMM = this.height * AscCommon.g_dKoef_pix_to_mm / this.zoom;
+			let x = (w - wMM) / 2;
+			let y = (h - hMM) / 2;
 
-			renderer.UseOriginImageUrl = true;
-			renderer.drawImage(this.imageBase64, x, y, wMM, hMM);
-			renderer.UseOriginImageUrl = false;
+			if (window["NATIVE_EDITOR_ENJINE"]) {
+				renderer.put_brushTexture(this.imageBase64, 0);
+				renderer.put_BrushTextureAlpha((255 * this.transparent) >> 0);
+				renderer._e();
+				renderer.rect(x, y, wMM, hMM);
+				renderer.df();
+				renderer._e();
+			}
+			else {
+				renderer.UseOriginImageUrl = true;
+				renderer.drawImage(this.imageBase64, x, y, wMM, hMM);
+				renderer.UseOriginImageUrl = false;
+			}
 		};
 
-		this.privateGenerateShape = function(obj)
-		{
+		this.privateGenerateShape = function (obj) {
 
-			AscFormat.ExecuteNoHistory(function(obj) {
+			AscFormat.ExecuteNoHistory(function (obj) {
 
-                var oShape = new AscFormat.CShape();
-                var bWord = false;
-                var oApi = Asc['editor'] || editor;
-                if(!oApi){
-                    return null;
-                }
-                switch(oApi.getEditorId()){
-                    case AscCommon.c_oEditorId.Word:{
-                        oShape.setWordShape(true);
-                        bWord = true;
-                        break;
-                    }
-                    case AscCommon.c_oEditorId.Presentation:{
-                        oShape.setWordShape(false);
-                        oShape.setParent(oApi.WordControl.m_oLogicDocument.Slides[oApi.WordControl.m_oLogicDocument.CurPage]);
-                        break;
-                    }
-					case AscCommon.c_oEditorId.Spreadsheet:{
-                        oShape.setWordShape(false);
-                        oShape.setWorksheet(oApi.wb.getWorksheet().model);
+				let oShape = new AscFormat.CShape();
+				let bWord = false;
+				let oApi = Asc['editor'] || editor;
+				if (!oApi) {
+					return null;
+				}
+				switch (oApi.getEditorId()) {
+					case AscCommon.c_oEditorId.Word: {
+						oShape.setWordShape(true);
+						bWord = true;
+						break;
+					}
+					case AscCommon.c_oEditorId.Presentation: {
+						oShape.setWordShape(false);
+						oShape.setParent(oApi.WordControl.m_oLogicDocument.Slides[oApi.WordControl.m_oLogicDocument.CurPage]);
+						break;
+					}
+					case AscCommon.c_oEditorId.Spreadsheet: {
+						oShape.setWordShape(false);
+						oShape.setWorksheet(oApi.wb.getWorksheet().model);
 						break;
 					}
 				}
 
-				var _oldTrackRevision = false;
-                if (oApi.getEditorId() == AscCommon.c_oEditorId.Word && oApi.WordControl && oApi.WordControl.m_oLogicDocument)
-                    _oldTrackRevision = oApi.WordControl.m_oLogicDocument.GetLocalTrackRevisions();
+				let _oldTrackRevision = false;
+				if (oApi.getEditorId() == AscCommon.c_oEditorId.Word && oApi.WordControl && oApi.WordControl.m_oLogicDocument) _oldTrackRevision = oApi.WordControl.m_oLogicDocument.GetLocalTrackRevisions();
 
-                if (false !== _oldTrackRevision)
-                    oApi.WordControl.m_oLogicDocument.SetLocalTrackRevisions(false);
+				if (false !== _oldTrackRevision) oApi.WordControl.m_oLogicDocument.SetLocalTrackRevisions(false);
 
-                var bRemoveDocument = false;
-                if(oApi.WordControl && !oApi.WordControl.m_oLogicDocument)
-				{
+				let bRemoveDocument = false;
+				if (oApi.WordControl && !oApi.WordControl.m_oLogicDocument) {
 					// TODO: Зачем это здесь вообще?
 					bRemoveDocument = true;
 					oApi.WordControl.m_oLogicDocument = new AscWord.CDocument(null, false);
 					oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = oApi.WordControl.m_oLogicDocument;
 				}
-                oShape.setBDeleted(false);
+				oShape.setBDeleted(false);
 				oShape.spPr = new AscFormat.CSpPr();
 				oShape.spPr.setParent(oShape);
 				oShape.spPr.setXfrm(new AscFormat.CXfrm());
@@ -4967,51 +4932,58 @@
 				oShape.spPr.xfrm.setExtY(obj['height']);
 				oShape.spPr.xfrm.setRot(AscFormat.normalizeRotate(obj['rotate'] ? (obj['rotate'] * Math.PI / 180) : 0));
 				oShape.spPr.setGeometry(AscFormat.CreateGeometry(obj['type'] || "rect"));
-				if(obj['fill'] && obj['fill'].length === 3){
+				if (obj['fill'] && obj['fill'].length === 3) {
 					oShape.spPr.setFill(AscFormat.CreateSolidFillRGB(obj['fill'][0], obj['fill'][1], obj['fill'][2]));
 				}
 				else if (this.imageBackground) {
-					oApi.ImageLoader.map_image_index[this.imageBackgroundUrl] = { Image : this.imageBackground, Status : AscFonts.ImageLoadStatus.Complete };
+					oApi.ImageLoader.map_image_index[this.imageBackgroundUrl] = {
+						Image: this.imageBackground, Status: AscFonts.ImageLoadStatus.Complete
+					};
 					oShape.spPr.setFill(AscFormat.builder_CreateBlipFill(this.imageBackgroundUrl, "stretch"));
 				}
-				if(AscFormat.isRealNumber(obj['stroke-width']) || Array.isArray(obj['stroke']) && obj['stroke'].length === 3){
-					var oUnifill;
-					if(Array.isArray(obj['stroke']) && obj['stroke'].length === 3){
+				if (AscFormat.isRealNumber(obj['stroke-width']) || Array.isArray(obj['stroke']) && obj['stroke'].length === 3) {
+					let oUnifill;
+					if (Array.isArray(obj['stroke']) && obj['stroke'].length === 3) {
 						oUnifill = AscFormat.CreateSolidFillRGB(obj['stroke'][0], obj['stroke'][1], obj['stroke'][2]);
 					}
-					else{
+					else {
 						oUnifill = AscFormat.CreateSolidFillRGB(0, 0, 0);
 					}
-					oShape.spPr.setLn(AscFormat.CreatePenFromParams(oUnifill, undefined, undefined, undefined, undefined, AscFormat.isRealNumber(obj['stroke-width']) ? obj['stroke-width'] : 12700.0/36000.0));
+					oShape.spPr.setLn(AscFormat.CreatePenFromParams(oUnifill, undefined, undefined, undefined, undefined, AscFormat.isRealNumber(obj['stroke-width']) ? obj['stroke-width'] : 12700.0 / 36000.0));
 				}
 
-				if(bWord){
+				if (bWord) {
 					oShape.createTextBoxContent();
 				}
-				else{
+				else {
 					oShape.createTextBody();
 				}
-				var align = obj['align'];
-				if(undefined != align){
+				let align = obj['align'];
+				if (undefined != align) {
 					oShape.setVerticalAlign(align);
 				}
 
-				if(Array.isArray(obj['margins']) && obj['margins'].length === 4){
-					oShape.setPaddings({Left: obj['margins'][0], Top: obj['margins'][1], Right: obj['margins'][2], Bottom: obj['margins'][3]});
+				if (Array.isArray(obj['margins']) && obj['margins'].length === 4) {
+					oShape.setPaddings({
+						Left: obj['margins'][0],
+						Top: obj['margins'][1],
+						Right: obj['margins'][2],
+						Bottom: obj['margins'][3]
+					});
 				}
-				var oContent = oShape.getDocContent();
-				var aParagraphsS = obj['paragraphs'] || [];
-				if(aParagraphsS.length > 0){
-                    oContent.Content.length = 0;
+				let oContent = oShape.getDocContent();
+				let aParagraphsS = obj['paragraphs'] || [];
+				if (aParagraphsS.length > 0) {
+					oContent.Content.length = 0;
 				}
-				for(var i = 0; i < aParagraphsS.length; ++i){
-					var oCurParS = aParagraphsS[i];
-					var oNewParagraph = new AscCommonWord.Paragraph(oContent.DrawingDocument, oContent, !bWord);
-					if(AscFormat.isRealNumber(oCurParS['align'])){
+				for (let i = 0; i < aParagraphsS.length; ++i) {
+					let oCurParS = aParagraphsS[i];
+					let oNewParagraph = new AscCommonWord.Paragraph(oContent.DrawingDocument, oContent, !bWord);
+					if (AscFormat.isRealNumber(oCurParS['align'])) {
 						oNewParagraph.Set_Align(oCurParS['align'])
 					}
-					if(Array.isArray(oCurParS['fill']) && oCurParS['fill'].length === 3){
-						var oShd = new AscCommonWord.CDocumentShd();
+					if (Array.isArray(oCurParS['fill']) && oCurParS['fill'].length === 3) {
+						let oShd = new AscCommonWord.CDocumentShd();
 						oShd.Value = Asc.c_oAscShdClear;
 						oShd.Color.r = oCurParS['fill'][0];
 						oShd.Color.g = oCurParS['fill'][1];
@@ -5022,23 +4994,25 @@
 						oShd.Fill.b = oCurParS['fill'][2];
 						oNewParagraph.Set_Shd(oShd, true);
 					}
-					if(AscFormat.isRealNumber(oCurParS['linespacing'])){
-						oNewParagraph.Set_Spacing({Line: oCurParS['linespacing'], Before: 0, After: 0, LineRule: Asc.linerule_Auto}, true);
+					if (AscFormat.isRealNumber(oCurParS['linespacing'])) {
+						oNewParagraph.Set_Spacing({
+							Line: oCurParS['linespacing'], Before: 0, After: 0, LineRule: Asc.linerule_Auto
+						}, true);
 					}
-					var aRunsS = oCurParS['runs'];
-					for(var j = 0; j < aRunsS.length; ++j){
-						var oRunS = aRunsS[j];
-						var oRun = new AscCommonWord.ParaRun(oNewParagraph, false);
-						if(Array.isArray(oRunS['fill']) && oRunS['fill'].length === 3){
+					let aRunsS = oCurParS['runs'];
+					for (let j = 0; j < aRunsS.length; ++j) {
+						let oRunS = aRunsS[j];
+						let oRun = new AscCommonWord.ParaRun(oNewParagraph, false);
+						if (Array.isArray(oRunS['fill']) && oRunS['fill'].length === 3) {
 							oRun.Set_Unifill(AscFormat.CreateSolidFillRGB(oRunS['fill'][0], oRunS['fill'][1], oRunS['fill'][2]));
 						}
-						var fontFamilyName = oRunS['font-family'] ? oRunS['font-family'] : "Arial";
-						var fontSize = (oRunS['font-size'] != null) ? oRunS['font-size'] : 50;
+						let fontFamilyName = oRunS['font-family'] ? oRunS['font-family'] : "Arial";
+						let fontSize = (oRunS['font-size'] != null) ? oRunS['font-size'] : 50;
 
-						oRun.SetRFontsAscii({Name : fontFamilyName, Index : -1});
-						oRun.SetRFontsCS({Name : fontFamilyName, Index : -1});
-						oRun.SetRFontsEastAsia({Name : fontFamilyName, Index : -1});
-						oRun.SetRFontsHAnsi({Name : fontFamilyName, Index : -1});
+						oRun.SetRFontsAscii({Name: fontFamilyName, Index: -1});
+						oRun.SetRFontsCS({Name: fontFamilyName, Index: -1});
+						oRun.SetRFontsEastAsia({Name: fontFamilyName, Index: -1});
+						oRun.SetRFontsHAnsi({Name: fontFamilyName, Index: -1});
 
 						oRun.SetFontSize(fontSize);
 
@@ -5047,11 +5021,11 @@
 						oRun.SetStrikeout(oRunS['strikeout'] === true);
 						oRun.SetUnderline(oRunS['underline'] === true);
 
-						var sCustomText = oRunS['text'];
-						if(sCustomText === "<%br%>"){
+						let sCustomText = oRunS['text'];
+						if (sCustomText === "<%br%>") {
 							oRun.AddToContent(0, new AscWord.CRunBreak(AscWord.break_Line), false);
 						}
-						else{
+						else {
 							oRun.AddText(sCustomText);
 						}
 
@@ -5060,202 +5034,195 @@
 					oContent.Internal_Content_Add(oContent.Content.length, oNewParagraph);
 				}
 
-				var bLoad = AscCommon.g_oIdCounter.m_bLoad;
+				let bLoad = AscCommon.g_oIdCounter.m_bLoad;
 				AscCommon.g_oIdCounter.Set_Load(false);
 				oShape.recalculate();
-				if (oShape.bWordShape)
-				{
+				if (oShape.bWordShape) {
 					oShape.recalculateText();
 				}
 
 				AscCommon.g_oIdCounter.Set_Load(bLoad);
-				var oldShowParaMarks;
-				if (window.editor)
-				{
+				let oldShowParaMarks;
+				if (window.editor) {
 					oldShowParaMarks = oApi.ShowParaMarks;
-                    oApi.ShowParaMarks = false;
+					oApi.ShowParaMarks = false;
 				}
 
 				AscCommon.IsShapeToImageConverter = true;
-				var _bounds_cheker = new AscFormat.CSlideBoundsChecker();
+				let _bounds_cheker = new AscFormat.CSlideBoundsChecker();
 
-				var w_mm = 210;
-				var h_mm = 297;
-				var w_px = AscCommon.AscBrowser.convertToRetinaValue(w_mm * AscCommon.g_dKoef_mm_to_pix * this.zoom, true);
-				var h_px = AscCommon.AscBrowser.convertToRetinaValue(h_mm * AscCommon.g_dKoef_mm_to_pix * this.zoom, true);
+				let w_mm = 210;
+				let h_mm = 297;
+				let w_px = AscCommon.AscBrowser.convertToRetinaValue(w_mm * AscCommon.g_dKoef_mm_to_pix * this.zoom, true);
+				let h_px = AscCommon.AscBrowser.convertToRetinaValue(h_mm * AscCommon.g_dKoef_mm_to_pix * this.zoom, true);
 
 				_bounds_cheker.init(w_px, h_px, w_mm, h_mm);
-				_bounds_cheker.transform(1,0,0,1,0,0);
+				_bounds_cheker.transform(1, 0, 0, 1, 0, 0);
 
 				_bounds_cheker.AutoCheckLineWidth = true;
 				_bounds_cheker.CheckLineWidth(oShape);
 				oShape.draw(_bounds_cheker, 0);
 				_bounds_cheker.CorrectBounds2();
 
-				var _need_pix_width     = _bounds_cheker.Bounds.max_x - _bounds_cheker.Bounds.min_x + 1;
-				var _need_pix_height    = _bounds_cheker.Bounds.max_y - _bounds_cheker.Bounds.min_y + 1;
+				let _need_pix_width = _bounds_cheker.Bounds.max_x - _bounds_cheker.Bounds.min_x + 1;
+				let _need_pix_height = _bounds_cheker.Bounds.max_y - _bounds_cheker.Bounds.min_y + 1;
 
-				if (_need_pix_width <= 0 || _need_pix_height <= 0)
-					return;
+				if (_need_pix_width <= 0 || _need_pix_height <= 0) return;
 
-				if (!this.image)
-					this.image = document.createElement("canvas");
+				if (!this.image) this.image = document.createElement("canvas");
 
 				this.image.width = _need_pix_width;
 				this.image.height = _need_pix_height;
 				this.width = _need_pix_width;
 				this.height = _need_pix_height;
 
-				var _ctx = this.image.getContext('2d');
+				let _ctx = this.image.getContext('2d');
 
-				var g = new AscCommon.CGraphics();
-				g.init(_ctx, w_px, h_px, w_mm, h_mm);
-				g.m_oFontManager = AscCommon.g_fontManager;
+				let g = null;
 
-				g.m_oCoordTransform.tx = -_bounds_cheker.Bounds.min_x;
-				g.m_oCoordTransform.ty = -_bounds_cheker.Bounds.min_y;
-				g.transform(1,0,0,1,0,0);
+				if (window["NATIVE_EDITOR_ENJINE"]) {
+					g = new AscCommon.CNativeGraphics();
+					g.width = _need_pix_width;
+					g.height = _need_pix_height;
+					g.create(window["native"], _need_pix_width, _need_pix_height, _need_pix_width / AscCommon.g_dKoef_mm_to_pix, _need_pix_height / AscCommon.g_dKoef_mm_to_pix);
+					g.CoordTransformOffset(-_bounds_cheker.Bounds.min_x, -_bounds_cheker.Bounds.min_y);
+					g.transform(1, 0, 0, 1, 0, 0);
+				}
+				else {
+					g = new AscCommon.CGraphics();
+					g.init(_ctx, w_px, h_px, w_mm, h_mm);
+					g.m_oFontManager = AscCommon.g_fontManager;
+
+					g.m_oCoordTransform.tx = -_bounds_cheker.Bounds.min_x;
+					g.m_oCoordTransform.ty = -_bounds_cheker.Bounds.min_y;
+					g.transform(1, 0, 0, 1, 0, 0);
+				}
 
 				oShape.draw(g, 0);
 
+				if (window["NATIVE_EDITOR_ENJINE"]) this.imageBase64 = g.toDataURL("image/png");
+
 				AscCommon.IsShapeToImageConverter = false;
 
-				if(bRemoveDocument)
-				{
+				if (bRemoveDocument) {
 					oApi.WordControl.m_oLogicDocument = null;
 					oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = null;
 				}
-				if (window.editor)
-				{
-                    oApi.ShowParaMarks = oldShowParaMarks;
+				if (window.editor) {
+					oApi.ShowParaMarks = oldShowParaMarks;
 				}
 
-				if (false !== _oldTrackRevision)
-					oApi.WordControl.m_oLogicDocument.SetLocalTrackRevisions(_oldTrackRevision);
+				if (false !== _oldTrackRevision) oApi.WordControl.m_oLogicDocument.SetLocalTrackRevisions(_oldTrackRevision);
 
-				if (this.imageBackground)
-					delete oApi.ImageLoader.map_image_index[this.imageBackgroundUrl];
+				if (this.imageBackground) delete oApi.ImageLoader.map_image_index[this.imageBackgroundUrl];
 
 			}, this, [obj]);
 
 		};
 
-		this.onReady = function()
-		{
+		this.onReady = function () {
 			this.isFontsLoaded = true;
-            var oApi = this.api;
+			let oApi = this.api;
 
-            switch (oApi.editorId)
-            {
-                case AscCommon.c_oEditorId.Word:
-                {
-                    if (oApi.WordControl)
-                    {
-                        if (oApi.watermarkDraw)
-                        {
-                            oApi.watermarkDraw.zoom = oApi.WordControl.m_nZoomValue / 100;
-                            oApi.watermarkDraw.Generate();
-                        }
+			switch (oApi.editorId) {
+				case AscCommon.c_oEditorId.Word: {
+					if (oApi.WordControl) {
+						if (oApi.watermarkDraw) {
+							oApi.watermarkDraw.zoom = oApi.WordControl.m_nZoomValue / 100;
+							oApi.watermarkDraw.Generate();
+						}
 
-                        oApi.WordControl.OnRePaintAttack();
-                    }
+						oApi.WordControl.OnRePaintAttack();
+					}
 
-                    break;
-                }
-                case AscCommon.c_oEditorId.Presentation:
-                {
-                    if (oApi.WordControl)
-                    {
-                        if (oApi.watermarkDraw)
-                        {
-                            oApi.watermarkDraw.zoom = oApi.WordControl.m_nZoomValue / 100;
-                            oApi.watermarkDraw.Generate();
-                        }
+					break;
+				}
+				case AscCommon.c_oEditorId.Presentation: {
+					if (oApi.WordControl) {
+						if (oApi.watermarkDraw) {
+							oApi.watermarkDraw.zoom = oApi.WordControl.m_nZoomValue / 100;
+							oApi.watermarkDraw.Generate();
+						}
 
-                        oApi.WordControl.OnRePaintAttack();
-                    }
-                    break;
-                }
-                case AscCommon.c_oEditorId.Spreadsheet:
-                {
-                    var ws = oApi.wb && oApi.wb.getWorksheet();
-                    if (ws && ws.objectRender && ws.objectRender)
-                    {
-                        ws.objectRender.OnUpdateOverlay();
-                    }
-                    break;
-                }
-            }
+						oApi.WordControl.OnRePaintAttack();
+					}
+					break;
+				}
+				case AscCommon.c_oEditorId.Spreadsheet: {
+					let ws = oApi.wb && oApi.wb.getWorksheet();
+					if (ws && ws.objectRender && ws.objectRender) {
+						ws.objectRender.OnUpdateOverlay();
+					}
+					break;
+				}
+			}
 		};
 
-		this.checkOnReady = function()
-		{
-            this.CheckParams();
+		this.checkOnReady = function () {
+			this.CheckParams();
 
-            var fonts = [];
-            var pars = this.contentObjects['paragraphs'] || [];
-            var i, j;
-            for (i = 0; i < pars.length; i++)
-            {
-                var runs = pars[i]['runs'];
-                for (j = 0; j < runs.length; j++)
-                {
-                	if (undefined === runs[j]["font-family"])
-                        runs[j]["font-family"] = "Arial";
-                	fonts.push(runs[j]["font-family"]);
-                }
-            }
+			let fonts = [];
+			let pars = this.contentObjects['paragraphs'] || [];
+			let i, j;
+			for (i = 0; i < pars.length; i++) {
+				let runs = pars[i]['runs'];
+				for (j = 0; j < runs.length; j++) {
+					if (undefined === runs[j]["font-family"]) runs[j]["font-family"] = "Arial";
+					fonts.push(runs[j]["font-family"]);
+				}
+			}
 
-            for (i = 0; i < fonts.length; i++)
-            {
-                fonts[i] = new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(fonts[i]));
-            }
+			for (i = 0; i < fonts.length; i++) {
+				fonts[i] = new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(fonts[i]));
+			}
 
-			if ("string" === typeof this.contentObjects["fill"])
-				this.imageBackgroundUrl = this.contentObjects["fill"];
+			if ("string" === typeof this.contentObjects["fill"]) this.imageBackgroundUrl = this.contentObjects["fill"];
 
-			if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(fonts))
-            {
-                this.loadBackgroundImage();
-                return;
-            }
+			if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(fonts)) {
+				this.loadBackgroundImage();
+				return;
+			}
 
-            this.api.asyncMethodCallback = function() {
-                var oApi = Asc['editor'] || editor;
-                oApi.watermarkDraw.loadBackgroundImage();
-            };
+			this.api.asyncMethodCallback = function () {
+				let oApi = Asc['editor'] || editor;
+				oApi.watermarkDraw.loadBackgroundImage();
+			};
 
-            AscCommon.g_font_loader.LoadDocumentFonts2(fonts);
+			AscCommon.g_font_loader.LoadDocumentFonts2(fonts);
 		};
 
-		this.loadBackgroundImage = function()
-		{
-			if ("" === this.imageBackgroundUrl)
-			{
+		this.loadBackgroundImage = function () {
+			if ("" === this.imageBackgroundUrl) {
 				this.onReady();
 				return;
 			}
 
 			this.imageBackground = new Image();
-			this.imageBackground.onload = function()
-			{
+			this.imageBackground.onload = function () {
 				Asc["editor"].watermarkDraw.onReady();
 			};
-			this.imageBackground.onerror = function()
-			{
+			this.imageBackground.onerror = function () {
 				Asc["editor"].watermarkDraw.imageBackground = null;
 				Asc["editor"].watermarkDraw.onReady();
 			};
 			this.imageBackground.src = this.imageBackgroundUrl;
 		};
+
+		this.generateNative = function () {
+			this.isFontsLoaded = true;
+			this.zoom = 1;
+			this.calculatezoom = 0;
+			this.CheckParams();
+			this.Generate();
+		};
 	}
 
 	// ----------------------------- plugins ------------------------------- //
-	var PluginType = {
-		System     : 0, // Системный, неотключаемый плагин.
-		Background : 1, // Фоновый плагин. Тоже самое, что и системный, но отключаемый.
-		Window     : 2, // Окно
-		Panel      : 3  // Панель
+	let PluginType = {
+		System: 0, // Системный, неотключаемый плагин.
+		Background: 1, // Фоновый плагин. Тоже самое, что и системный, но отключаемый.
+		Window: 2, // Окно
+		Panel: 3  // Панель
 	};
 
 	PluginType["System"] = PluginType.System;
@@ -5263,31 +5230,30 @@
 	PluginType["Window"] = PluginType.Window;
 	PluginType["Panel"] = PluginType.Panel;
 
-	function CPluginVariation()
-	{
+	function CPluginVariation() {
 		this.description = "";
-		this.url         = "";
-		this.help        = "";
-		this.baseUrl     = "";
-		this.index       = 0;     // сверху не выставляем. оттуда в каком порядке пришли - в таком порядке и работают
+		this.url = "";
+		this.help = "";
+		this.baseUrl = "";
+		this.index = 0;     // сверху не выставляем. оттуда в каком порядке пришли - в таком порядке и работают
 
-		this.descriptionLocale   = undefined;
-		this.icons               = ["1x", "2x"];
-		this.isViewer            = false;
+		this.descriptionLocale = undefined;
+		this.icons = ["1x", "2x"];
+		this.isViewer = false;
 		this.isDisplayedInViewer = undefined;
-		this.EditorsSupport      = ["word", "cell", "slide"];
+		this.EditorsSupport = ["word", "cell", "slide"];
 
 		this.type = PluginType.Background;
 
 		this.isCustomWindow = false;	// используется только если this.type === PluginType.Window
-		this.isModal        = true;     // используется только если this.type === PluginType.Window
+		this.isModal = true;     // используется только если this.type === PluginType.Window
 
 		this.initDataType = EPluginDataType.none;
-		this.initData     = "";
+		this.initData = "";
 
 		this.isUpdateOleOnResize = false;
 
-		this.buttons = [{"text" : "Ok", "primary" : true}, {"text" : "Cancel", "primary" : false}];
+		this.buttons = [{"text": "Ok", "primary": true}, {"text": "Cancel", "primary": false}];
 
 		this.size = undefined;
 		this.initOnSelectionChanged = undefined;
@@ -5299,108 +5265,89 @@
 		this.menu = null;
 	}
 
-	CPluginVariation.prototype["get_Description"] = function()
-	{
+	CPluginVariation.prototype["get_Description"] = function () {
 		return this.description;
 	};
-	CPluginVariation.prototype["get_Url"]         = function()
-	{
+	CPluginVariation.prototype["get_Url"] = function () {
 		return this.url;
 	};
-	CPluginVariation.prototype["get_Help"]         = function()
-	{
+	CPluginVariation.prototype["get_Help"] = function () {
 		return this.help;
 	};
 
-	CPluginVariation.prototype["get_Icons"] = function()
-	{
+	CPluginVariation.prototype["get_Icons"] = function () {
 		return this.icons;
 	};
 
-	CPluginVariation.prototype["get_Type"]         = function()
-	{
+	CPluginVariation.prototype["get_Type"] = function () {
 		return this.type;
 	};
 
-	CPluginVariation.prototype["get_Visual"] = function()
-	{
+	CPluginVariation.prototype["get_Visual"] = function () {
 		return (this.type === PluginType.Window || this.type === PluginType.Panel) ? true : false;
 	};
 
-	CPluginVariation.prototype["get_Viewer"]         = function()
-	{
+	CPluginVariation.prototype["get_Viewer"] = function () {
 		return this.isViewer;
 	};
-	CPluginVariation.prototype["get_EditorsSupport"] = function()
-	{
+	CPluginVariation.prototype["get_EditorsSupport"] = function () {
 		return this.EditorsSupport;
 	};
 
-	CPluginVariation.prototype["get_Modal"] = function()
-	{
+	CPluginVariation.prototype["get_Modal"] = function () {
 		return this.isModal;
 	};
-	CPluginVariation.prototype["get_InsideMode"] = function()
-	{
+	CPluginVariation.prototype["get_InsideMode"] = function () {
 		return (this.type === PluginType.Panel) ? true : false;
 	};
-	CPluginVariation.prototype["get_CustomWindow"] = function()
-	{
+	CPluginVariation.prototype["get_CustomWindow"] = function () {
 		return this.isCustomWindow;
 	};
 
-	CPluginVariation.prototype["get_Buttons"]           = function()
-	{
+	CPluginVariation.prototype["get_Buttons"] = function () {
 		return this.buttons;
 	};
-	CPluginVariation.prototype["get_Size"]           = function()
-	{
+	CPluginVariation.prototype["get_Size"] = function () {
 		return this.size;
 	};
-    CPluginVariation.prototype["get_Events"]           = function()
-    {
-        return this.events;
-    };
-    CPluginVariation.prototype["set_Events"]           = function(value)
-    {
-    	if (!value)
-    		return;
+	CPluginVariation.prototype["get_Events"] = function () {
+		return this.events;
+	};
+	CPluginVariation.prototype["set_Events"] = function (value) {
+		if (!value) return;
 
-        this.events = value.slice(0, value.length);
-        this.eventsMap = {};
-        for (var i = 0; i < this.events.length; i++)
-        	this.eventsMap[this.events[i]] = true;
-    };
-	CPluginVariation.prototype["get_Menu"]           = function()
-	{
+		this.events = value.slice(0, value.length);
+		this.eventsMap = {};
+		for (let i = 0; i < this.events.length; i++) this.eventsMap[this.events[i]] = true;
+	};
+	CPluginVariation.prototype["get_Menu"] = function () {
 		return this.menu;
 	};
 
-	CPluginVariation.prototype["serialize"]   = function()
-	{
-		var _object            = {};
+	CPluginVariation.prototype["serialize"] = function () {
+		let _object = {};
 		_object["description"] = this.description;
-		_object["url"]         = this.url;
-		_object["help"]        = this.help;
-		_object["index"]       = this.index;
+		_object["url"] = this.url;
+		_object["help"] = this.help;
+		_object["index"] = this.index;
 
 		_object["descriptionLocale"] = this.descriptionLocale;
 
-		_object["icons"]          = this.icons;
-		_object["icons2"]         = this.icons2;
+		_object["icons"] = this.icons;
+		_object["icons2"] = this.icons2;
 
-		_object["isViewer"]            = this.isViewer;
+		_object["isViewer"] = this.isViewer;
 		_object["isDisplayedInViewer"] = this.isDisplayedInViewer;
-		_object["EditorsSupport"]      = this.EditorsSupport;
+		_object["EditorsSupport"] = this.EditorsSupport;
 
-		_object["menu"]           = this.menu;
-		_object["type"]           = this.type;
+		_object["menu"] = this.menu;
+		_object["type"] = this.type;
 
 		_object["isCustomWindow"] = this.isCustomWindow;
-		_object["isModal"]        = this.isModal;
+		_object["isModal"] = this.isModal;
 
 		_object["initDataType"] = this.initDataType;
-		_object["initData"]     = this.initData;
+		_object["initData"] = this.initData;
 
 		_object["isUpdateOleOnResize"] = this.isUpdateOleOnResize;
 
@@ -5413,47 +5360,39 @@
 
 		return _object;
 	};
-	CPluginVariation.prototype["deserialize"] = function(_object)
-	{
+	CPluginVariation.prototype["deserialize"] = function (_object) {
 		this.description = (_object["description"] != null) ? _object["description"] : this.description;
-		this.url         = (_object["url"] != null) ? _object["url"] : this.url;
-		this.help        = (_object["help"] != null) ? _object["help"] : this.help;
-		this.index       = (_object["index"] != null) ? _object["index"] : this.index;
-		
-		this.descriptionLocale   = (_object["descriptionLocale"] != null) ? _object["descriptionLocale"] : this.descriptionLocale;
-		this.icons               = (_object["icons"] != null) ? _object["icons"] : this.icons;
-		this.icons2              = (_object["icons2"] != null) ? _object["icons2"] : this.icons2;
-		this.isViewer            = (_object["isViewer"] != null) ? _object["isViewer"] : this.isViewer;
+		this.url = (_object["url"] != null) ? _object["url"] : this.url;
+		this.help = (_object["help"] != null) ? _object["help"] : this.help;
+		this.index = (_object["index"] != null) ? _object["index"] : this.index;
+
+		this.descriptionLocale = (_object["descriptionLocale"] != null) ? _object["descriptionLocale"] : this.descriptionLocale;
+		this.icons = (_object["icons"] != null) ? _object["icons"] : this.icons;
+		this.icons2 = (_object["icons2"] != null) ? _object["icons2"] : this.icons2;
+		this.isViewer = (_object["isViewer"] != null) ? _object["isViewer"] : this.isViewer;
 		this.isDisplayedInViewer = (_object["isDisplayedInViewer"] != null) ? _object["isDisplayedInViewer"] : this.isDisplayedInViewer;
-		this.EditorsSupport      = (_object["EditorsSupport"] != null) ? _object["EditorsSupport"] : this.EditorsSupport;
-		this.menu                = (_object["menu"] != null) ? _object["menu"] : this.menu;
+		this.EditorsSupport = (_object["EditorsSupport"] != null) ? _object["EditorsSupport"] : this.EditorsSupport;
+		this.menu = (_object["menu"] != null) ? _object["menu"] : this.menu;
 
 		// default: background
 		this.type = PluginType.Background;
 
 		let _type = _object["type"];
-		if (undefined !== _type)
-		{
-			if ("system" === _type)
-				this.type = PluginType.System;
-			if ("window" === _type)
-				this.type = PluginType.Window;
-			if ("panel" === _type)
-				this.type = PluginType.Panel;
+		if (undefined !== _type) {
+			if ("system" === _type) this.type = PluginType.System;
+			if ("window" === _type) this.type = PluginType.Window;
+			if ("panel" === _type) this.type = PluginType.Panel;
 		}
-		else
-		{
-			if (true === _object["isSystem"])
-				this.type = PluginType.System;
-			if (true === _object["isVisual"])
-				this.type = (true === _object["isInsideMode"]) ? PluginType.Panel : PluginType.Window;
+		else {
+			if (true === _object["isSystem"]) this.type = PluginType.System;
+			if (true === _object["isVisual"]) this.type = (true === _object["isInsideMode"]) ? PluginType.Panel : PluginType.Window;
 		}
 
 		this.isCustomWindow = (_object["isCustomWindow"] != null) ? _object["isCustomWindow"] : this.isCustomWindow;
-		this.isModal        = (_object["isModal"] != null) ? _object["isModal"] : this.isModal;
+		this.isModal = (_object["isModal"] != null) ? _object["isModal"] : this.isModal;
 
 		this.initDataType = (_object["initDataType"] != null) ? _object["initDataType"] : this.initDataType;
-		this.initData     = (_object["initData"] != null) ? _object["initData"] : this.initData;
+		this.initData = (_object["initData"] != null) ? _object["initData"] : this.initData;
 
 		this.isUpdateOleOnResize = (_object["isUpdateOleOnResize"] != null) ? _object["isUpdateOleOnResize"] : this.isUpdateOleOnResize;
 
@@ -5467,11 +5406,10 @@
 		this.initOnSelectionChanged = (_object["initOnSelectionChanged"] != null) ? _object["initOnSelectionChanged"] : this.initOnSelectionChanged;
 	};
 
-	function CPlugin()
-	{
-		this.name    = "";
+	function CPlugin() {
+		this.name = "";
 		this.nameLocale = {};
-		this.guid    = "";
+		this.guid = "";
 		this.baseUrl = "";
 		this.minVersion = "";
 		this.version = "";
@@ -5481,242 +5419,193 @@
 		this.variations = [];
 	}
 
-	CPlugin.prototype["get_Name"]    = function(locale)
-	{
-		if (locale && this.nameLocale && this.nameLocale[locale])
-			return this.nameLocale[locale];
+	CPlugin.prototype["get_Name"] = function (locale) {
+		if (locale && this.nameLocale && this.nameLocale[locale]) return this.nameLocale[locale];
 		return this.name;
 	};
-	CPlugin.prototype["set_Name"]    = function(value)
-	{
+	CPlugin.prototype["set_Name"] = function (value) {
 		this.name = value;
 	};
-	CPlugin.prototype["get_NameLocale"]    = function()
-	{
+	CPlugin.prototype["get_NameLocale"] = function () {
 		return this.nameLocale;
 	};
-	CPlugin.prototype["set_NameLocale"]    = function(value)
-	{
+	CPlugin.prototype["set_NameLocale"] = function (value) {
 		this.nameLocale = value;
 	};
-	CPlugin.prototype["get_Guid"]    = function()
-	{
+	CPlugin.prototype["get_Guid"] = function () {
 		return this.guid;
 	};
-	CPlugin.prototype["set_Guid"]    = function(value)
-	{
+	CPlugin.prototype["set_Guid"] = function (value) {
 		this.guid = value;
 	};
-	CPlugin.prototype["get_BaseUrl"] = function()
-	{
+	CPlugin.prototype["get_BaseUrl"] = function () {
 		return this.baseUrl;
 	};
-	CPlugin.prototype["set_BaseUrl"] = function(value)
-	{
+	CPlugin.prototype["set_BaseUrl"] = function (value) {
 		this.baseUrl = value;
 	};
-	CPlugin.prototype["get_MinVersion"] = function()
-	{
+	CPlugin.prototype["get_MinVersion"] = function () {
 		return this.minVersion;
 	};
-	CPlugin.prototype["set_MinVersion"] = function(value)
-	{
+	CPlugin.prototype["set_MinVersion"] = function (value) {
 		this.minVersion = value;
 	};
-	CPlugin.prototype["get_Version"] = function()
-	{
+	CPlugin.prototype["get_Version"] = function () {
 		return this.version;
 	};
-	CPlugin.prototype["set_Version"] = function(value)
-	{
+	CPlugin.prototype["set_Version"] = function (value) {
 		this.version = value;
 	};
 
-	CPlugin.prototype["get_Variations"] = function()
-	{
+	CPlugin.prototype["get_Variations"] = function () {
 		return this.variations;
 	};
-	CPlugin.prototype["set_Variations"] = function(value)
-	{
+	CPlugin.prototype["set_Variations"] = function (value) {
 		this.variations = value;
 	};
 
-	CPlugin.prototype["get_Loader"] = function()
-	{
+	CPlugin.prototype["get_Loader"] = function () {
 		return this.loader;
 	};
-	CPlugin.prototype["set_Loader"] = function(value)
-	{
+	CPlugin.prototype["set_Loader"] = function (value) {
 		this.loader = value;
 	};
 
-	CPlugin.prototype["serialize"]   = function()
-	{
-		var _object           = {};
-		_object["name"]       = this.name;
+	CPlugin.prototype["serialize"] = function () {
+		let _object = {};
+		_object["name"] = this.name;
 		_object["nameLocale"] = this.nameLocale;
-		_object["guid"]       = this.guid;
-		_object["version"]    = this.version;
-		_object["baseUrl"]    = this.baseUrl;
+		_object["guid"] = this.guid;
+		_object["version"] = this.version;
+		_object["baseUrl"] = this.baseUrl;
 		_object["minVersion"] = this.minVersion;
 		_object["isConnector"] = this.isConnector;
-		_object["loader"]     = this.loader;
+		_object["loader"] = this.loader;
 
-		if (this.group)
-		{
+		if (this.group) {
 			_object["group"] = {};
 			_object["group"]["name"] = this.group.name;
 			_object["group"]["rank"] = this.group.rank;
 		}
 
 		_object["variations"] = [];
-		for (var i = 0; i < this.variations.length; i++)
-		{
+		for (let i = 0; i < this.variations.length; i++) {
 			_object["variations"].push(this.variations[i].serialize());
 		}
 		return _object;
 	};
-	CPlugin.prototype["deserialize"] = function(_object)
-	{
-		this.name       = (_object["name"] != null) ? _object["name"] : this.name;
+	CPlugin.prototype["deserialize"] = function (_object) {
+		this.name = (_object["name"] != null) ? _object["name"] : this.name;
 		this.nameLocale = (_object["nameLocale"] != null) ? _object["nameLocale"] : this.nameLocale;
-		this.guid       = (_object["guid"] != null) ? _object["guid"] : this.guid;
-		this.version    = (_object["version"] != null) ? _object["version"] : this.version;
-		this.baseUrl    = (_object["baseUrl"] != null) ? _object["baseUrl"] : this.baseUrl;
+		this.guid = (_object["guid"] != null) ? _object["guid"] : this.guid;
+		this.version = (_object["version"] != null) ? _object["version"] : this.version;
+		this.baseUrl = (_object["baseUrl"] != null) ? _object["baseUrl"] : this.baseUrl;
 		this.minVersion = (_object["minVersion"] != null) ? _object["minVersion"] : this.minVersion;
 		this.isConnector = (_object["isConnector"] != null) ? _object["isConnector"] : this.isConnector;
-		this.loader     = (_object["loader"] != null) ? _object["loader"] : this.loader;
+		this.loader = (_object["loader"] != null) ? _object["loader"] : this.loader;
 
-		if (true)
-		{
+		if (true) {
 			// удалим этот if, как передем на просто прокидку объекта в интерфейсе
-			if (_object["groupName"] || _object["groupRank"])
-				this.group = {};
+			if (_object["groupName"] || _object["groupRank"]) this.group = {};
 
-			if (_object["groupName"])
-				this.group.name = _object["groupName"];
-			if (_object["groupRank"])
-				this.group.rank = _object["groupRank"];
+			if (_object["groupName"]) this.group.name = _object["groupName"];
+			if (_object["groupRank"]) this.group.rank = _object["groupRank"];
 		}
 
-		if (_object["group"])
-		{
+		if (_object["group"]) {
 			this.group = {};
 			this.group.name = (_object["group"]["name"] != null) ? _object["group"]["name"] : "";
 			this.group.rank = (_object["group"]["rank"] != null) ? _object["group"]["rank"] : 0;
 		}
 
 		this.variations = [];
-		for (var i = 0; i < _object["variations"].length; i++)
-		{
-			var _variation = new CPluginVariation();
+		for (let i = 0; i < _object["variations"].length; i++) {
+			let _variation = new CPluginVariation();
 			_variation["deserialize"](_object["variations"][i]);
 			this.variations.push(_variation);
 		}
 	};
 
 	// no export
-	CPlugin.prototype.isType = function(type)
-	{
-		if (this.variations && this.variations[0] && this.variations[0].type === type)
-			return true;
+	CPlugin.prototype.isType = function (type) {
+		if (this.variations && this.variations[0] && this.variations[0].type === type) return true;
 		return false;
 	};
-	CPlugin.prototype.isSystem = function()
-	{
+	CPlugin.prototype.isSystem = function () {
 		return this.isType(PluginType.System);
 	};
-	CPlugin.prototype.isBackground = function()
-	{
+	CPlugin.prototype.isBackground = function () {
 		return this.isType(PluginType.Background);
 	};
-	CPlugin.prototype.getIntVersion = function()
-	{
-		if (!this.version)
-			return 0;
+	CPlugin.prototype.getIntVersion = function () {
+		if (!this.version) return 0;
 		let arrayVersion = this.version.split(".");
 
-		while (arrayVersion.length < 3)
-			arrayVersion.push("0");
+		while (arrayVersion.length < 3) arrayVersion.push("0");
 
-		try
-		{
+		try {
 			let intVer = parseInt(arrayVersion[0]) * 10000 + parseInt(arrayVersion[1]) * 100 + parseInt(arrayVersion[2]);
 			return intVer;
-		}
-		catch (e)
-		{
+		} catch (e) {
 		}
 		return 0;
 	};
-	
+
 	/**
 	 * @constructor
 	 */
-	function CDocInfoProp(obj)
-	{
-		if (obj)
-		{
-			this.PageCount      = obj.PageCount;
-			this.WordsCount     = obj.WordsCount;
+	function CDocInfoProp(obj) {
+		if (obj) {
+			this.PageCount = obj.PageCount;
+			this.WordsCount = obj.WordsCount;
 			this.ParagraphCount = obj.ParagraphCount;
-			this.SymbolsCount   = obj.SymbolsCount;
+			this.SymbolsCount = obj.SymbolsCount;
 			this.SymbolsWSCount = obj.SymbolsWSCount;
 		}
-		else
-		{
-			this.PageCount      = -1;
-			this.WordsCount     = -1;
+		else {
+			this.PageCount = -1;
+			this.WordsCount = -1;
 			this.ParagraphCount = -1;
-			this.SymbolsCount   = -1;
+			this.SymbolsCount = -1;
 			this.SymbolsWSCount = -1;
 		}
 	}
-	CDocInfoProp.prototype.get_PageCount      = function()
-	{
+
+	CDocInfoProp.prototype.get_PageCount = function () {
 		return this.PageCount;
 	};
-	CDocInfoProp.prototype.put_PageCount      = function(v)
-	{
+	CDocInfoProp.prototype.put_PageCount = function (v) {
 		this.PageCount = v;
 	};
-	CDocInfoProp.prototype.get_WordsCount     = function()
-	{
+	CDocInfoProp.prototype.get_WordsCount = function () {
 		return this.WordsCount;
 	};
-	CDocInfoProp.prototype.put_WordsCount     = function(v)
-	{
+	CDocInfoProp.prototype.put_WordsCount = function (v) {
 		this.WordsCount = v;
 	};
-	CDocInfoProp.prototype.get_ParagraphCount = function()
-	{
+	CDocInfoProp.prototype.get_ParagraphCount = function () {
 		return this.ParagraphCount;
 	};
-	CDocInfoProp.prototype.put_ParagraphCount = function(v)
-	{
+	CDocInfoProp.prototype.put_ParagraphCount = function (v) {
 		this.ParagraphCount = v;
 	};
-	CDocInfoProp.prototype.get_SymbolsCount   = function()
-	{
+	CDocInfoProp.prototype.get_SymbolsCount = function () {
 		return this.SymbolsCount;
 	};
-	CDocInfoProp.prototype.put_SymbolsCount   = function(v)
-	{
+	CDocInfoProp.prototype.put_SymbolsCount = function (v) {
 		this.SymbolsCount = v;
 	};
-	CDocInfoProp.prototype.get_SymbolsWSCount = function()
-	{
+	CDocInfoProp.prototype.get_SymbolsWSCount = function () {
 		return this.SymbolsWSCount;
 	};
-	CDocInfoProp.prototype.put_SymbolsWSCount = function(v)
-	{
+	CDocInfoProp.prototype.put_SymbolsWSCount = function (v) {
 		this.SymbolsWSCount = v;
 	};
-	
-    /*
-     * Export
-     * -----------------------------------------------------------------------------
-     */
+
+	/*
+	 * Export
+	 * -----------------------------------------------------------------------------
+	 */
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['Asc'] = window['Asc'] || {};
 
@@ -5766,10 +5655,10 @@
 	prot['Limited'] = prot.Limited;
 
 	window["Asc"]["EPluginDataType"] = window["Asc"].EPluginDataType = EPluginDataType;
-	prot         = EPluginDataType;
+	prot = EPluginDataType;
 	prot['none'] = prot.none;
 	prot['text'] = prot.text;
-	prot['ole']  = prot.ole;
+	prot['ole'] = prot.ole;
 	prot['html'] = prot.html;
 
 	window["AscCommon"]["asc_CSignatureLine"] = window["AscCommon"].asc_CSignatureLine = asc_CSignatureLine;
@@ -6231,8 +6120,8 @@
 	prot["get_BulletColor"] = prot["asc_getBulletColor"] = prot.asc_getBulletColor;
 	prot["put_NumStartAt"] = prot["asc_putNumStartAt"] = prot.asc_putNumStartAt;
 	prot["get_NumStartAt"] = prot["asc_getNumStartAt"] = prot.asc_getNumStartAt;
-	prot["get_BulletFont"]   = prot["asc_getBulletFont"] = prot.asc_getBulletFont;
-	prot["put_BulletFont"]   = prot["asc_putBulletFont"] = prot.asc_putBulletFont;
+	prot["get_BulletFont"] = prot["asc_getBulletFont"] = prot.asc_getBulletFont;
+	prot["put_BulletFont"] = prot["asc_putBulletFont"] = prot.asc_putBulletFont;
 	prot["get_BulletSymbol"] = prot["asc_getBulletSymbol"] = prot.asc_getBulletSymbol;
 	prot["put_BulletSymbol"] = prot["asc_putBulletSymbol"] = prot.asc_putBulletSymbol;
 	prot["can_DeleteBlockContentControl"] = prot["asc_canDeleteBlockContentControl"] = prot.asc_canDeleteBlockContentControl;
@@ -6491,8 +6380,6 @@
 	prot["put_ProtectionPrint"] = prot["asc_putProtectionPrint"] = prot.asc_putProtectionPrint;
 
 
-
-
 	window["AscCommon"].asc_CSelectedObject = asc_CSelectedObject;
 	prot = asc_CSelectedObject.prototype;
 	prot["get_ObjectType"] = prot["asc_getObjectType"] = prot.asc_getObjectType;
@@ -6586,7 +6473,7 @@
 	prot["get_UserId"] = prot.get_UserId;
 	prot["get_HaveChanges"] = prot.get_HaveChanges;
 	prot["get_LockedObjectType"] = prot.get_LockedObjectType;
-	prot["get_FootnoteText"] =  prot.get_FootnoteText;
+	prot["get_FootnoteText"] = prot.get_FootnoteText;
 	prot["get_FootnoteNumber"] = prot.get_FootnoteNumber;
 	prot["get_FormHelpText"] = prot.get_FormHelpText;
 	prot["get_ReviewChange"] = prot.get_ReviewChange;
@@ -6643,9 +6530,9 @@
 	prot["get_EncryptedInfo"] = prot["asc_getEncryptedInfo"] = prot.asc_getEncryptedInfo;
 	prot["put_EncryptedInfo"] = prot["asc_putEncryptedInfo"] = prot.asc_putEncryptedInfo;
 	prot["get_IsEnabledPlugins"] = prot["asc_getIsEnabledPlugins"] = prot.asc_getIsEnabledPlugins;
-    prot["put_IsEnabledPlugins"] = prot["asc_putIsEnabledPlugins"] = prot.asc_putIsEnabledPlugins;
-    prot["get_IsEnabledMacroses"] = prot["asc_getIsEnabledMacroses"] = prot.asc_getIsEnabledMacroses;
-    prot["put_IsEnabledMacroses"] = prot["asc_putIsEnabledMacroses"] = prot.asc_putIsEnabledMacroses;
+	prot["put_IsEnabledPlugins"] = prot["asc_putIsEnabledPlugins"] = prot.asc_putIsEnabledPlugins;
+	prot["get_IsEnabledMacroses"] = prot["asc_getIsEnabledMacroses"] = prot.asc_getIsEnabledMacroses;
+	prot["put_IsEnabledMacroses"] = prot["asc_putIsEnabledMacroses"] = prot.asc_putIsEnabledMacroses;
 	prot["get_CoEditingMode"] = prot["asc_getCoEditingMode"] = prot.asc_getCoEditingMode;
 	prot["put_CoEditingMode"] = prot["asc_putCoEditingMode"] = prot.asc_putCoEditingMode;
 	prot["put_ReferenceData"] = prot["asc_putReferenceData"] = prot.asc_putReferenceData;
@@ -6683,33 +6570,31 @@
 	prot["asc_getType"] = prot["get_Type"] = prot.asc_getType;
 	prot["asc_getImage"] = prot.asc_getImage;
 
-    window["AscCommon"].asc_CSpellCheckProperty = asc_CSpellCheckProperty;
-    prot = asc_CSpellCheckProperty.prototype;
-    prot["get_Word"] = prot.get_Word;
-    prot["get_Checked"] = prot.get_Checked;
-    prot["get_Variants"] = prot.get_Variants;
+	window["AscCommon"].asc_CSpellCheckProperty = asc_CSpellCheckProperty;
+	prot = asc_CSpellCheckProperty.prototype;
+	prot["get_Word"] = prot.get_Word;
+	prot["get_Checked"] = prot.get_Checked;
+	prot["get_Variants"] = prot.get_Variants;
 
-    window["AscCommon"].CWatermarkOnDraw = CWatermarkOnDraw;
-    window["AscCommon"].isFileBuild = isFileBuild;
-    window["AscCommon"].checkCanvasInDiv = checkCanvasInDiv;
-    window["AscCommon"].isValidJs = isValidJs;
-    window["AscCommon"].asc_menu_ReadPaddings = asc_menu_ReadPaddings;
-    window["AscCommon"].asc_menu_ReadColor = asc_menu_ReadColor;
+	window["AscCommon"].CWatermarkOnDraw = CWatermarkOnDraw;
+	window["AscCommon"].isFileBuild = isFileBuild;
+	window["AscCommon"].checkCanvasInDiv = checkCanvasInDiv;
+	window["AscCommon"].isValidJs = isValidJs;
 
 	window["Asc"]["PluginType"] = window["Asc"].PluginType = PluginType;
 	window["Asc"]["CPluginVariation"] = window["Asc"].CPluginVariation = CPluginVariation;
 	window["Asc"]["CPlugin"] = window["Asc"].CPlugin = CPlugin;
-	
+
 	window["AscCommon"].CDocInfoProp = CDocInfoProp;
-	CDocInfoProp.prototype['get_PageCount']      = CDocInfoProp.prototype.get_PageCount;
-	CDocInfoProp.prototype['put_PageCount']      = CDocInfoProp.prototype.put_PageCount;
-	CDocInfoProp.prototype['get_WordsCount']     = CDocInfoProp.prototype.get_WordsCount;
-	CDocInfoProp.prototype['put_WordsCount']     = CDocInfoProp.prototype.put_WordsCount;
+	CDocInfoProp.prototype['get_PageCount'] = CDocInfoProp.prototype.get_PageCount;
+	CDocInfoProp.prototype['put_PageCount'] = CDocInfoProp.prototype.put_PageCount;
+	CDocInfoProp.prototype['get_WordsCount'] = CDocInfoProp.prototype.get_WordsCount;
+	CDocInfoProp.prototype['put_WordsCount'] = CDocInfoProp.prototype.put_WordsCount;
 	CDocInfoProp.prototype['get_ParagraphCount'] = CDocInfoProp.prototype.get_ParagraphCount;
 	CDocInfoProp.prototype['put_ParagraphCount'] = CDocInfoProp.prototype.put_ParagraphCount;
-	CDocInfoProp.prototype['get_SymbolsCount']   = CDocInfoProp.prototype.get_SymbolsCount;
-	CDocInfoProp.prototype['put_SymbolsCount']   = CDocInfoProp.prototype.put_SymbolsCount;
+	CDocInfoProp.prototype['get_SymbolsCount'] = CDocInfoProp.prototype.get_SymbolsCount;
+	CDocInfoProp.prototype['put_SymbolsCount'] = CDocInfoProp.prototype.put_SymbolsCount;
 	CDocInfoProp.prototype['get_SymbolsWSCount'] = CDocInfoProp.prototype.get_SymbolsWSCount;
 	CDocInfoProp.prototype['put_SymbolsWSCount'] = CDocInfoProp.prototype.put_SymbolsWSCount;
-	
+
 })(window);

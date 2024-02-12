@@ -2176,7 +2176,7 @@
 		// установим MasterSlide для Layout, если не задан
 		if (!oLayout.Master)
 		{
-			oMaster = oPresentation.lastMaster ? oPresentation.lastMaster : oPresentation.slideMasters[0];
+			oMaster = oPresentation.getDefaultMasterSlide();
 			oLayout.setMaster(oMaster);
 			oMaster.addToSldLayoutLstToPos(oMaster.length, oLayout);
 		}

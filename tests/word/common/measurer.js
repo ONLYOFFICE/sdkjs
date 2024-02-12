@@ -127,6 +127,7 @@
 			}
 			else
 			{
+				this.Direction = this.GetDirection(HB_String[nIndex]);
 				this.FlushGrapheme(GraphemeNormal, GetCharWidth(HB_String[nIndex]), 1, false);
 			}
 		}

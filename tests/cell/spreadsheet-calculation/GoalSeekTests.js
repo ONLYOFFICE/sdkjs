@@ -35,12 +35,12 @@ $(function () {
     let CParserFormula = AscCommonExcel.parserFormula;
     let g_oIdCounter = AscCommon.g_oIdCounter;
     let sData = AscCommon.getEmpty();
-    let wb, ws, oParserFormula, oGoalSeek, nResult, nChangingVal, nExpectedVal;
+    let wb, ws, oParserFormula, oGoalSeek, nResult, nChangingVal, nExpectedVal, api;
 
     if (AscCommon.c_oSerFormat.Signature === sData.substring(0, AscCommon.c_oSerFormat.Signature.length)) {
         Asc.spreadsheet_api.prototype._init = function() {
         };
-        let api = new Asc.spreadsheet_api({
+        api = new Asc.spreadsheet_api({
             'id-view': 'editor_sdk'
         });
 
@@ -149,7 +149,7 @@ $(function () {
         const aTestData = [
             ['', '180', '100000'],
             ['0.072', '1', '100000'],
-            ['0.072', '180', ''],
+            ['0.072', '180', '0'],
             ['0.01', '180', '100000'],
             ['0.072', '10', '100000'],
             ['0.072', '180', '100'],
@@ -556,7 +556,7 @@ $(function () {
            ['', '0.1' ],
            ['10', ''],
            ['', '41', '228'],
-           ['1000', '', '228'],
+           ['1000', '0', '228'],
            ['1000', '41', '1'],
            ['5', '10', '0.1', '2.59374246'],
            ['-3', '0.1' ],
@@ -670,7 +670,7 @@ $(function () {
     QUnit.test('FV Formula', function (assert) {
         const aTestData = [
             ['', '12', '-1000'],
-            ['0.1230', '', '-1000'],
+            ['0.1230', '0', '-1000'],
             ['0.1230', '12', ''],
             ['0.1', '12', '-1000'],
             ['0.1230', '0.5', '-1000'],
@@ -973,5 +973,23 @@ $(function () {
         assert.strictEqual(Number(nChangingVal.toFixed(4)), 0.0702, `Case: Test step method. Result ChangingVal: ${nChangingVal}`);
         // Clear data
         clearData(0, 0, 3, 0);
+    });
+    QUnit.test('Test: Financial formula. Bug #65864', function(assert) {
+       const testData = [
+           ['Q.1', '200000', '0.12', '=B1*C1'],
+           ['Q.2', '300000', '0.13', '=B2*C2'],
+           ['Q.3', '100000', '0.11', '=B3*C3'],
+           ['Q.4', '0', '0.14', '=B4*C4'],
+           ['Total', '', '', '=SUM(D1:D4)']
+       ];
+       // Fill data
+       let oRange = ws.getRange4(0, 0);
+       oRange.fillData(testData);
+       // Trying to find parameter for Financial formula
+       nExpectedVal = 100000;
+       [nResult, nChangingVal] = getResult(nExpectedVal, ws.getRange4(3, 1), 'SUM(D1:D4)', 'D5');
+       assert.strictEqual(Number(nResult.toFixed(0)), nExpectedVal, `Case: Trying to find first parameter for Financial formula Bug #65864. Result formula: ${nResult}`);
+       assert.strictEqual(Number(nChangingVal.toFixed(0)), 185714, `Case: Trying to find first parameter for Financial formula Bug #65864. Result ChangingVal: ${nChangingVal}`);
+       clearData(0, 0, 3, 4);
     });
 });

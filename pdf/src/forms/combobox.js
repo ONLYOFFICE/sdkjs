@@ -48,7 +48,7 @@
         // Note: draw this content instead of main if form has a "format" action
 		this.contentFormat = new AscPDF.CTextBoxContent(this, oDoc, true);
 
-        this._markRect = null;
+        this._markRect = {};
     }
     CComboBoxField.prototype = Object.create(AscPDF.CBaseListField.prototype);
 	CComboBoxField.prototype.constructor = CComboBoxField;
@@ -57,8 +57,7 @@
         if (this.IsHidden() == true)
             return;
 
-        let oViewer         = editor.getDocumentRenderer();
-        let oDoc            = this.GetDocument();
+        let oDoc = this.GetDocument();
         
         this.Recalculate();
         this.DrawBackground(oGraphicsPDF);
@@ -72,7 +71,7 @@
         oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
         oContentToDraw.Draw(0, oGraphicsWord);
         // redraw target cursor if field is selected
-        if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsEditable())
+        if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsCanEditText())
             oContentToDraw.RecalculateCurPos();
         
         oGraphicsWord.RemoveLastClip();
@@ -91,6 +90,22 @@
         let nWidth = (aRect[2] - aRect[0]);
         let nHeight = (aRect[3] - aRect[1]);
 
+        let oMargins = this.GetMarginsFromBorders(false, false);
+
+        let contentX        = (X + 2 * oMargins.left) * g_dKoef_pix_to_mm;
+        let contentY        = (Y + oMargins.top) * g_dKoef_pix_to_mm;
+        // let contentXLimit   = (X + nWidth - 2 * oMargins.left - (18 / nScale)) * g_dKoef_pix_to_mm; // 18 / nScale --> Размер маркера комбобокса
+        let contentXLimit   = (X + nWidth - 2 * oMargins.left - (18 / nScale)) * g_dKoef_pix_to_mm; // 18 / nScale --> Размер маркера комбобокса
+
+        let bNewRecalc = false;  // будет использовано только один раз при первом пересчете и случае autofit
+        if (this.GetTextSize() == 0) {
+            if (!this._pagePos) {
+                bNewRecalc = true;
+            }
+            this.ProcessAutoFitContent(this.content);
+            this.ProcessAutoFitContent(this.contentFormat);
+        }
+
         // save pos in page.
         this._pagePos = {
             x: X,
@@ -99,22 +114,10 @@
             h: nHeight
         };
 
-        let oMargins = this.GetMarginsFromBorders(false, false);
-
-        let contentX        = (X + 2 * oMargins.left) * g_dKoef_pix_to_mm;
-        let contentY        = (Y + oMargins.top) * g_dKoef_pix_to_mm;
-        // let contentXLimit   = (X + nWidth - 2 * oMargins.left - (18 / nScale)) * g_dKoef_pix_to_mm; // 18 / nScale --> Размер маркера комбобокса
-        let contentXLimit   = (X + nWidth - 2 * oMargins.left - (18 / nScale)) * g_dKoef_pix_to_mm; // 18 / nScale --> Размер маркера комбобокса
-
-        if (this.GetTextSize() == 0) {
-            this.ProcessAutoFitContent(this.content);
-            this.ProcessAutoFitContent(this.contentFormat);
-        }
-            
         let nContentH       = this.GetTextHeight(this.content);
         let nContentHFormat = this.GetTextHeight(this.contentFormat);
 
-        contentY        = Y * g_dKoef_pix_to_mm + (nHeight * g_dKoef_pix_to_mm - nContentH) / 2;
+        contentY            = Y * g_dKoef_pix_to_mm + (nHeight * g_dKoef_pix_to_mm - nContentH) / 2;
         let contentYFormat  = Y * g_dKoef_pix_to_mm + (nHeight * g_dKoef_pix_to_mm - nContentHFormat) / 2;
 
         this._formRect.X = X * g_dKoef_pix_to_mm;
@@ -143,6 +146,7 @@
             });
         }
         
+        bNewRecalc && this.Recalculate();
         this.SetNeedRecalc(false);
     };
 
@@ -367,7 +371,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CComboBoxField.prototype.SyncField = function() {
-        let aFields = this._doc.GetFields(this.GetFullName());
+        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
         TurnOffHistory();
 
@@ -441,7 +445,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CComboBoxField.prototype.Commit = function() {
-        let aFields = this._doc.GetFields(this.GetFullName());
+        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         let oThisPara = this.content.GetElement(0);
         
         if (this.DoFormatAction() == false) {
@@ -579,7 +583,14 @@
         this._editable = bValue;
     };
     CComboBoxField.prototype.IsEditable = function() {
-        return this._editable && this.IsNeedDrawHighlight() == false;
+        return this._editable;
+    };
+    CComboBoxField.prototype.IsCanEditText = function() {
+        let oDoc = this.GetDocument();
+        if (oDoc.activeForm == this && this.IsNeedDrawHighlight() == false && this.IsEditable())
+            return true;
+        
+        return false;
     };
     CComboBoxField.prototype.SetOptions = function(aOpt) {
         let aOptToPush = [];

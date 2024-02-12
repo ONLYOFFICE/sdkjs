@@ -164,7 +164,7 @@ function Slide(presentation, slideLayout, slideNum)
 
     this.show = true;
     this.showMasterPhAnim = false;
-    this.showMasterSp = null;
+    this.showMasterSp = true;
 
     this.backgroundFill = null;
 
@@ -220,7 +220,7 @@ function Slide(presentation, slideLayout, slideNum)
         this.Width = presentation.GetWidthMM();
         this.Height = presentation.GetHeightMM();
         this.setSlideComments(new SlideComments(this));
-        this.setLocks(new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id));
+        this.setLocks(new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id), new PropLocker(this.Id));
     }
 
     if(slideLayout)
@@ -1270,20 +1270,11 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
     };
 
     Slide.prototype.needMasterSpDraw = function() {
-        if(this.showMasterSp === true) {
-            return true;
-        }
-        if(this.showMasterSp === false){
-            return false;
-        }
-        if(this.Layout.showMasterSp === false) {
-            return false;
-        }
-        return true;
+			return this.showMasterSp ? this.Layout.showMasterSp : false;
     };
 
     Slide.prototype.needLayoutSpDraw = function() {
-        return this.showMasterSp !== false;
+			return this.showMasterSp;
     };
 
     Slide.prototype.isEqualBgMasterAndLayout = function(oSlide) {
@@ -1349,6 +1340,9 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         let oIdentityMtx = new AscCommon.CMatrix();
         for(i = 0; i < this.cSld.spTree.length; ++i) {
             let oSp = this.cSld.spTree[i];
+            if(AscCommon.IsHiddenObj(oSp)) {
+                continue;
+            }
             if(this.collaborativeMarks) {
                 oCollColor = this.collaborativeMarks.Check(i);
                 if(oCollColor) {
@@ -1934,7 +1928,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             {
                 if(sp.isPlaceholder && sp.isPlaceholder())
                 {
-                    sp.recalcInfo.recalculateShapeHierarchy = true;
                     var hierarchy = sp.getHierarchy();
                     for(var j = 0; j < hierarchy.length; ++j)
                     {

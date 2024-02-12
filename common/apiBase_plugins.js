@@ -1748,7 +1748,7 @@
 	 */
 	Api.prototype["pluginMethod_UpdateContextMenuItem"] = function(items)
 	{
-		let baseUrl = this.pluginsManager.pluginsMap[items.guid].baseUrl;
+		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
 		if (items["items"]) correctItemsWithData(items["items"], baseUrl);
 		this.onPluginUpdateContextMenuItem([items]);
 	};

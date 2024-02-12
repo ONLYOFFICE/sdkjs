@@ -449,16 +449,15 @@ function handleBaseAnnot(drawing, drawingObjectsController, e, x, y, group, page
 
 function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord)
 {
-    var hit_in_inner_area = drawing.hitInInnerArea && drawing.hitInInnerArea(x, y);
-    var hit_in_path = drawing.hitInPath && drawing.hitInPath(x, y);
-    var hit_in_text_rect = drawing.hitInTextRect && drawing.hitInTextRect(x, y);
+    let hit_in_inner_area = drawing.hitInInnerArea && drawing.hitInInnerArea(x, y);
+    let hit_in_path = drawing.hitInPath && drawing.hitInPath(x, y);
+    let hit_in_text_rect = drawing.hitInTextRect && drawing.hitInTextRect(x, y);
     if(hit_in_inner_area || hit_in_path || hit_in_text_rect)
     {
-        if(drawingObjectsController.checkDrawingHyperlinkAndMacro){
-            var ret =  drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, hit_in_text_rect, x, y, pageIndex);
-            if(ret){
-                return ret;
-            }
+        let oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, hit_in_text_rect, x, y, pageIndex);
+        if(oCheckResult)
+        {
+            return oCheckResult;
         }
     }
 
@@ -556,11 +555,10 @@ function handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x,
     var ret;
     if(hit_in_inner_area || hit_in_path || hit_in_text_rect)
     {
-        if(drawingObjectsController.checkDrawingHyperlinkAndMacro){
-            var ret =  drawingObjectsController.checkDrawingHyperlinkAndMacro(shape, e, hit_in_text_rect, x, y, pageIndex);
-            if(ret){
-                return ret;
-            }
+        let oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(shape, e, hit_in_text_rect, x, y, pageIndex);
+        if(oCheckResult)
+        {
+            return oCheckResult;
         }
     }
     if(!hit_in_text_rect && (hit_in_inner_area || hit_in_path))
@@ -2150,6 +2148,14 @@ function handleMouseUpPreMoveState(drawingObjects, e, x, y, pageIndex, bWord)
 
 function handleFloatTable(drawing, drawingObjectsController, e, x, y, group, pageIndex)
 {
+    if(drawing.hitInInnerArea(x, y))
+    {
+        let oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, true, x, y, pageIndex);
+        if(oCheckResult)
+        {
+            return oCheckResult;
+        }
+    }
     if(drawingObjectsController.isSlideShow())
     {
         if(drawing.hitInInnerArea(x, y))

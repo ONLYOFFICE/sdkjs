@@ -4407,22 +4407,13 @@ function CEditorPage(api)
 		if(window["NATIVE_EDITOR_ENJINE"] === true){
 			return;
 		}
-		var master = null;
-		if (-1 == this.m_oDrawingDocument.SlideCurrent && 0 == this.m_oLogicDocument.slideMasters.length)
+		let master = null;
+		if (this.m_oLogicDocument.IsEmpty())
 			return;
 
-		if (-1 != this.m_oDrawingDocument.SlideCurrent)
-			master = this.m_oLogicDocument.Slides[this.m_oDrawingDocument.SlideCurrent].Layout.Master;
-		else
-		{
-			master = this.m_oLogicDocument.lastMaster;
-			if(!master)
-			{
-				master = this.m_oLogicDocument.slideMasters[0];
-			}
-		}
+		master = this.m_oLogicDocument.getLayoutsMasterSlide();
 
-		if (this.MasterLayouts != master || Math.abs(this.m_oLayoutDrawer.WidthMM - this.m_oLogicDocument.GetWidthMM()) > MOVE_DELTA || Math.abs(this.m_oLayoutDrawer.HeightMM - this.m_oLogicDocument.GetHeightMM()) > MOVE_DELTA || bIsAttack === true)
+		if (this.MasterLayouts !== master || Math.abs(this.m_oLayoutDrawer.WidthMM - this.m_oLogicDocument.GetWidthMM()) > MOVE_DELTA || Math.abs(this.m_oLayoutDrawer.HeightMM - this.m_oLogicDocument.GetHeightMM()) > MOVE_DELTA || bIsAttack === true)
 		{
 			this.MasterLayouts = master;
 

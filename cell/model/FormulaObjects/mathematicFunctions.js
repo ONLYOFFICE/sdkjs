@@ -4923,6 +4923,9 @@ function (window, undefined) {
 				}
 			} else if (cElementType.array === element.type) {
 				element.foreach(function (arrElem) {
+					if (cElementType.cell === arrElem.type || cElementType.cell3D === arrElem.type) {
+						arrElem = arrElem.getValue();
+					}
 					if (cElementType.bool !== arrElem.type && cElementType.string !== arrElem.type &&
 						cElementType.empty !== arrElem.type) {
 						arg0 = _func[arg0.type][arrElem.type](arg0, arrElem, "+");
@@ -5089,7 +5092,7 @@ function (window, undefined) {
 	cSUMIFS.prototype.arrayIndexes = {0: 1, 1: 1, 3: 1, 5: 1, 7: 1};
 	cSUMIFS.prototype.argumentsType = [argType.reference, [argType.reference, argType.any]];
 	cSUMIFS.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
+		let arg0 = arg[0];
 		if (cElementType.cell !== arg0.type && cElementType.cell3D !== arg0.type && cElementType.cellsRange !== arg0.type) {
 			if (cElementType.cellsRange3D === arg0.type) {
 				arg0 = arg0.tocArea();
@@ -5101,36 +5104,36 @@ function (window, undefined) {
 			}
 		}
 
-		var getRange = function (curArg) {
-			var res = null;
+		let getRange = function (curArg) {
+			let res = null;
 			if (cElementType.cellsRange === curArg.type || cElementType.cell === curArg.type) {
 				res = curArg.range && curArg.range.bbox ? curArg.range.bbox : null;
 			} else if (cElementType.cellsRange3D === curArg.type || cElementType.cell3D === curArg.type) {
-				res = curArg.bbox ? curArg.bbox : null;
+				res = curArg.getBBox0();
 			}
 			return res;
 		};
 
-		var getMatrixFromCache = function (area, searchVal, parent) {
-			var range = area.getRange();
-			var ws = area.getWS();
-			var bb = range.getBBox0();
-			var oSearchRange = ws.getRange3(bb.r1, bb.c1, bb.r2, bb.c2);
+		let getMatrixFromCache = function (area, searchVal, parent) {
+			let range = area.getRange();
+			let ws = area.getWS();
+			let bb = range.getBBox0();
+			let oSearchRange = ws.getRange3(bb.r1, bb.c1, bb.r2, bb.c2);
 			return g_oSUMIFSCache._get(oSearchRange, range, searchVal, parent);
 		};
 
-		var getElems = function (a1, a2, p, calcSum) {
-			var matchingInfo = AscCommonExcel.matchingValue(a2);
+		let getElems = function (a1, a2, p, calcSum) {
+			let matchingInfo = AscCommonExcel.matchingValue(a2);
 
-			var arg1Matrix = a1.getMatrix(), enterMatrix;
+			let arg1Matrix = a1.getMatrix(), enterMatrix;
 			if (p && p.length) {
 				enterMatrix = p;
 			} else {
 				enterMatrix = arg1Matrix;
 			}
 
-			var res = undefined;
-			for (var i = 0; i < enterMatrix.length; ++i) {
+			let res = undefined;
+			for (let i = 0; i < enterMatrix.length; ++i) {
 				if (!arg1Matrix[i]) {
 					continue;
 				}
@@ -5138,7 +5141,7 @@ function (window, undefined) {
 					continue;
 				}
 
-				for (var j = 0; j < enterMatrix[i].length; ++j) {
+				for (let j = 0; j < enterMatrix[i].length; ++j) {
 					if (!enterMatrix[i][j] || !arg1Matrix[i][j]) {
 						continue;
 					}
@@ -5161,20 +5164,20 @@ function (window, undefined) {
 			return res;
 		};
 
-		var _calcSum = function (i, j) {
-			var arg0Val = arg0.getValueByRowCol ? arg0.getValueByRowCol(i, j) : arg0.tocNumber();
+		let _calcSum = function (i, j) {
+			let arg0Val = arg0.getValueByRowCol ? arg0.getValueByRowCol(i, j) : arg0.tocNumber();
 			if (arg0Val && cElementType.number === arg0Val.type) {
 				_sum += arg0Val.getValue();
 			}
 		};
 
-		var _sum = 0;
-		var arg0Range = getRange(arg0);
-		var arg0C = arg0Range.c2 - arg0Range.c1 + 1;
-		var arg0R = arg0Range.r2 - arg0Range.r1 + 1;
-		var cacheElem, parent;
-		var arg1, arg2, arg1Range;
-		for (var k = 1; k < arg.length; k += 2) {
+		let _sum = 0;
+		let arg0Range = getRange(arg0);
+		let arg0C = arg0Range.c2 - arg0Range.c1 + 1;
+		let arg0R = arg0Range.r2 - arg0Range.r1 + 1;
+		let cacheElem, parent;
+		let arg1, arg2, arg1Range;
+		for (let k = 1; k < arg.length; k += 2) {
 			arg1 = arg[k];
 			arg2 = arg[k + 1];
 
@@ -5184,8 +5187,8 @@ function (window, undefined) {
 				return new cError(cErrorType.wrong_value_type);
 			}
 
-			var arg1C = arg1Range.c2 - arg1Range.c1 + 1;
-			var arg1R = arg1Range.r2 - arg1Range.r1 + 1;
+			let arg1C = arg1Range.c2 - arg1Range.c1 + 1;
+			let arg1R = arg1Range.r2 - arg1Range.r1 + 1;
 			if (arg0R !== arg1R || arg0C !== arg1C) {
 				return new cError(cErrorType.wrong_value_type);
 			}
@@ -5221,9 +5224,9 @@ function (window, undefined) {
 
 				cacheElem.elems = getElems(arg1, arg2, parent ? parent.elems : null, k + 1 === arg.length - 1);
 			} else if (k + 1 === arg.length - 1 && cacheElem.elems) {
-				for (var i = 0; i < cacheElem.elems.length; i++) {
+				for (let i = 0; i < cacheElem.elems.length; i++) {
 					if (cacheElem.elems[i]) {
-						for (var j = 0; j < cacheElem.elems[i].length; j++) {
+						for (let j = 0; j < cacheElem.elems[i].length; j++) {
 							if (cacheElem.elems[i][j]) {
 								_calcSum(i, j);
 							}

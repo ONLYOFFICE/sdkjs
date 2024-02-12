@@ -106,15 +106,11 @@ function CBinaryFileWriter()
     // memory functions ----------
     this.Init = function()
     {
-        var _canvas = document.createElement('canvas');
-        var _ctx = _canvas.getContext('2d');
         this.len = 1024*1024*2;
-        this.ImData = _ctx.createImageData(this.len / 4, 1);
-        this.data = this.ImData.data;
+        this.data = new Uint8Array(this.len);
         this.pos = 0;
     };
 
-    this.ImData = null;
     this.data = null;
     this.len = 0;
     this.pos = 0;
@@ -142,14 +138,12 @@ function CBinaryFileWriter()
     };
 
     this.ImportFromMemory = function(memory) {
-        this.ImData = memory.ImData;
         this.data = memory.data;
         this.len = memory.len;
         this.pos = memory.pos;
     };
 
     this.ExportToMemory = function(memory) {
-        memory.ImData = this.ImData;
         memory.data = this.data;
         memory.len = this.len;
         memory.pos = this.pos;
@@ -183,17 +177,10 @@ function CBinaryFileWriter()
     {
         if (this.pos + count >= this.len)
         {
-            var _canvas = document.createElement('canvas');
-            var _ctx = _canvas.getContext('2d');
-
-            var oldImData = this.ImData;
             var oldData = this.data;
-            var oldPos = this.pos;
 
             this.len = Math.max(this.len * 2, this.pos + ((3 * count / 2) >> 0));
-
-            this.ImData = _ctx.createImageData(this.len / 4, 1);
-            this.data = this.ImData.data;
+            this.data = new Uint8Array(this.len);
             var newData = this.data;
 
             for (var i=0;i<this.pos;i++)
@@ -210,14 +197,8 @@ function CBinaryFileWriter()
     };
     this.GetData   = function(nPos, nLen)
     {
-        var _canvas = document.createElement('canvas');
-        var _ctx    = _canvas.getContext('2d');
-
         var len = this.GetCurPosition();
-
-        //todo ImData.data.length multiple of 4
-        var ImData = _ctx.createImageData(Math.ceil(len / 4), 1);
-        var res = ImData.data;
+        var res = new Uint8Array(len);
 
         for (var i = 0; i < len; i++)
             res[i] = this.data[i];
@@ -1003,21 +984,18 @@ function CBinaryFileWriter()
 
 	this.WriteDocument3 = function(presentation, base64) {
 		var _memory = new AscCommon.CMemory(true);
-		_memory.ImData = this.ImData;
 		_memory.data = this.data;
 		_memory.len = this.len;
 		_memory.pos = this.pos;
 
 		_memory.WriteXmlString("PPTY;v" + Asc.c_nVersionNoBase64 + ";0;");
 
-		this.ImData = _memory.ImData;
 		this.data = _memory.data;
 		this.len = _memory.len;
 		this.pos = _memory.pos;
 
 		this.WriteDocument2(presentation);
 
-		_memory.ImData = this.ImData;
 		_memory.data = this.data;
 		_memory.len = this.len;
 		_memory.pos = this.pos;
@@ -1028,14 +1006,12 @@ function CBinaryFileWriter()
 	};
 	this.WriteByMemory = function(callback) {
 		var _memory = new AscCommon.CMemory(true);
-		_memory.ImData = this.ImData;
 		_memory.data = this.data;
 		_memory.len = this.len;
 		_memory.pos = this.pos;
 
 		callback(_memory);
 
-		this.ImData = _memory.ImData;
 		this.data = _memory.data;
 		this.len = _memory.len;
 		this.pos = _memory.pos;
@@ -3173,7 +3149,6 @@ function CBinaryFileWriter()
                                     oThis.StartRecord(0); // subtype
                                     oThis.StartRecord(AscFormat.PARRUN_TYPE_MATHPARA);
                                     var _memory = new AscCommon.CMemory(true);
-                                    _memory.ImData = oThis.ImData;
                                     _memory.data = oThis.data;
                                     _memory.len = oThis.len;
                                     _memory.pos = oThis.pos;
@@ -3185,13 +3160,11 @@ function CBinaryFileWriter()
                                     var boMaths = new Binary_oMathWriter(_memory, null, oThis.DocSaveParams);
                                     boMaths.bs.WriteItemWithLength(function(){boMaths.WriteOMathPara(_elem_h)});
 
-                                    oThis.ImData = _memory.ImData;
                                     oThis.data = _memory.data;
                                     oThis.len = _memory.len;
                                     oThis.pos = _memory.pos;
                                     oThis.UseContinueWriter--;
 
-                                    _memory.ImData = null;
                                     _memory.data = null;
 
                                     oThis.EndRecord();
@@ -3213,7 +3186,6 @@ function CBinaryFileWriter()
 						oThis.StartRecord(0); // subtype
 						oThis.StartRecord(AscFormat.PARRUN_TYPE_MATHPARA);
 						var _memory = new AscCommon.CMemory(true);
-						_memory.ImData = oThis.ImData;
 						_memory.data = oThis.data;
 						_memory.len = oThis.len;
 						_memory.pos = oThis.pos;
@@ -3225,13 +3197,11 @@ function CBinaryFileWriter()
 						var boMaths = new Binary_oMathWriter(_memory, null, oThis.DocSaveParams);
 						boMaths.bs.WriteItemWithLength(function(){boMaths.WriteOMathPara(_elem)});
 
-						oThis.ImData = _memory.ImData;
 						oThis.data = _memory.data;
 						oThis.len = _memory.len;
 						oThis.pos = _memory.pos;
 						oThis.UseContinueWriter--;
 
-						_memory.ImData = null;
 						_memory.data = null;
 
 						oThis.EndRecord();
@@ -3583,7 +3553,6 @@ function CBinaryFileWriter()
     this.WriteChart2 = function(grObj)
     {
         var _memory = new AscCommon.CMemory(true);
-        _memory.ImData = oThis.ImData;
         _memory.data = oThis.data;
         _memory.len = oThis.len;
         _memory.pos = oThis.pos;
@@ -3593,14 +3562,12 @@ function CBinaryFileWriter()
         var oBinaryChartWriter = new AscCommon.BinaryChartWriter(_memory);
         oBinaryChartWriter.WriteCT_ChartSpace(grObj);
 
-        oThis.ImData = _memory.ImData;
         oThis.data = _memory.data;
         oThis.len = _memory.len;
         oThis.pos = _memory.pos;
 
         oThis.UseContinueWriter--;
 
-        _memory.ImData = null;
         _memory.data = null;
     };
 
@@ -5080,7 +5047,6 @@ function CBinaryFileWriter()
         this.WritePPTXObject = function(memory, fCallback) {
             if (this.BinaryFileWriter.UseContinueWriter > 0)
             {
-                this.BinaryFileWriter.ImData = memory.ImData;
                 this.BinaryFileWriter.data = memory.data;
                 this.BinaryFileWriter.len = memory.len;
                 this.BinaryFileWriter.pos = memory.pos;
@@ -5095,7 +5061,6 @@ function CBinaryFileWriter()
 
             if (this.BinaryFileWriter.UseContinueWriter > 0)
             {
-                memory.ImData = this.BinaryFileWriter.ImData;
                 memory.data = this.BinaryFileWriter.data;
                 memory.len = this.BinaryFileWriter.len;
                 memory.pos = this.BinaryFileWriter.pos;

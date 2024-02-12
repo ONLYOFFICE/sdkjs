@@ -3218,15 +3218,17 @@ function CEditorPage(api)
 		this.m_oBody.Resize(this.Width * g_dKoef_pix_to_mm, this.Height * g_dKoef_pix_to_mm, this);
 		this.onButtonTabsDraw();
 
+		let areaParent = "id_main_view";
 		if (this.m_oApi.isUseNativeViewer)
 		{
+			areaParent = "id_main";
 			var oViewer = this.m_oDrawingDocument.m_oDocumentRenderer;
 			if (oViewer)
 				oViewer.resize();
 		}
 
 		if (AscCommon.g_inputContext)
-			AscCommon.g_inputContext.onResize("id_main_view");
+			AscCommon.g_inputContext.onResize(areaParent);
 
 		if (this.TextBoxBackground != null)
 		{

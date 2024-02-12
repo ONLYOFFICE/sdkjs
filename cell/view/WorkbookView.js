@@ -1757,9 +1757,9 @@
 		ws.fillHandleDone(range);
 	};
 
-	WorkbookView.prototype.canFillHandle = function(range) {
+	WorkbookView.prototype.canFillHandle = function(range, checkColRowLimits) {
 		var ws = this.getWorksheet();
-		return ws.canFillHandle(range);
+		return ws.canFillHandle(range, checkColRowLimits);
 	};
 
 

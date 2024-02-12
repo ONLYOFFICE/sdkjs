@@ -172,7 +172,7 @@ function (window, undefined) {
 			let nStepDirection = this.getStepDirection();
 			this.setPrevValue(nChangingVal);
 			this.setPrevFactValue(nFactValue);
-			if (nFirstChangingVal == null) {
+			if (!nFirstChangingVal) {
 				this.setChangingValue((1 / 100 * nStepDirection) + (Math.pow(2, nCurAttempt - 1) - 1) * (1 / 10 * nStepDirection));
 			} else {
 				this.setChangingValue(nFirstChangingVal + (nFirstChangingVal / 100 * nStepDirection) + (Math.pow(2, nCurAttempt - 1) - 1) * (nFirstChangingVal / 10 * nStepDirection));
@@ -253,6 +253,7 @@ function (window, undefined) {
 		let nFactValue = null;
 
 		oChangingCell.setValue(String(nChangingVal).replace('.', sRegNumDecimalSeparator));
+		oChangingCell.worksheet.workbook.dependencyFormulas.unlockRecal();
 		oParsedFormula.parse();
 		nFactValue = oParsedFormula.calculate().getValue();
 		// If result of formula returns type cNumber, convert to Number

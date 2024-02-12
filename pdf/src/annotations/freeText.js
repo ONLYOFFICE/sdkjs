@@ -497,12 +497,16 @@
             oDoc.History.Add(new CChangesPDFAnnotReplies(this, this._replies, aReplies));
         }
         this._replies = aReplies;
+
+        let oThis = this;
+        aReplies.forEach(function(reply) {
+            reply.SetReplyTo(oThis);
+        });
+
         if (aReplies.length != 0)
             oDoc.CheckComment(this);
         else
             editor.sync_RemoveComment(this.GetId());
-
-        this.SetWasChanged(true);   
     };
     CAnnotationFreeText.prototype.hitInPath = function(x,y) {
         for (let i = 0; i < this.spTree.length; i++) {
@@ -604,10 +608,6 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
-
-        this._replies.forEach(function(reply) {
-            reply.WriteToBinary(memory); 
-        });
     };
 
     function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {

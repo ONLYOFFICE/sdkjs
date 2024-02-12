@@ -12793,6 +12793,23 @@ drawScatterChart.prototype = {
 	_recalculateScatter: function () {
 		let seria, yVal, xVal, points, yNumCache, compiledMarkerSize, compiledMarkerSymbol, yPoint, idx, xPoint;
 		let dispBlanksAs =  this.cChartSpace.chart.dispBlanksAs;
+
+		let t = this;
+		let _initObjs = function (_index) {
+			if (!t.paths.points) {
+				t.paths.points = [];
+			}
+			if (!t.paths.points[_index]) {
+				t.paths.points[_index] = [];
+			}
+			if (!points) {
+				points = [];
+			}
+			if (!points[_index]) {
+				points[_index] = [];
+			}
+		};
+
 		for (let i = 0; i < this.chart.series.length; i++) {
 			seria = this.chart.series[i];
 			yNumCache = this.cChartDrawer.getNumCache(seria.yVal);
@@ -12811,6 +12828,7 @@ drawScatterChart.prototype = {
 				if (dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO || dispBlanksAs === AscFormat.DISP_BLANKS_AS_GAP) {
 					if (yNumCache.pts[n-1] && yNumCache.pts[n] && yNumCache.pts[n].idx - yNumCache.pts[n-1].idx > 1) {
 						for (let k = 0; k < yNumCache.pts[n].idx - yNumCache.pts[n-1].idx - 1; k++) {
+							_initObjs(i);
 							this.paths.points[i].push(null);
 							points[i].push(dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO ? {x: 0, y: 0} : null);
 						}
@@ -12831,19 +12849,7 @@ drawScatterChart.prototype = {
 						compiledMarkerSymbol = yPoint.compiledMarker.symbol;
 					}
 
-					if (!this.paths.points) {
-						this.paths.points = [];
-					}
-					if (!this.paths.points[i]) {
-						this.paths.points[i] = [];
-					}
-
-					if (!points) {
-						points = [];
-					}
-					if (!points[i]) {
-						points[i] = [];
-					}
+					_initObjs(i);
 
 					if (yVal != null) {
 						let x = this.cChartDrawer.getYPosition(xVal, this.catAx);
@@ -16257,7 +16263,7 @@ CColorObj.prototype =
 		//control trend calculate type
 		this.bAllowDrawByBezier = true;
 		this.bAllowDrawByPoints = false;
-		this.continueAdding = true;
+		this.stopAdding = false;
 	}
 
 	CTrendline.prototype = {
@@ -16281,11 +16287,11 @@ CColorObj.prototype =
 				this.storage[chartId][seriaId] = new CTrendData();
 			}
 			if (!this.storage[chartId][seriaId].isEmpty() && xVal === this.storage[chartId][seriaId].coords.catVals[0]) {
-				this.continueAdding = false;
+				this.stopAdding = true;
 			}
 
 			// in the case of duplicated data, no further adding should be allowed
-			if (this.continueAdding) {
+			if (!this.stopAdding) {
 				this.storage[chartId][seriaId].addCatVal(xVal);
 				this.storage[chartId][seriaId].addValVal(yVal);
 	
@@ -16665,7 +16671,7 @@ CColorObj.prototype =
 					return true;
 				};
 
-				const mapped = this.continueAdding ? _mapCoordinates() : true;
+				const mapped = this.stopAdding ? true : _mapCoordinates();
 
 				if (mapped) {
 
@@ -16869,6 +16875,8 @@ CColorObj.prototype =
 						return Math.exp(val);
 					}, bValForward: function (val) {
 						return Math.log(val);
+					}, yValBackward: function (val) {
+						return Math.pow(Math.exp(1), val);
 					}
 				}, [AscFormat.TRENDLINE_TYPE_LOG]: {
 					xVal: function (val) {
@@ -16883,6 +16891,8 @@ CColorObj.prototype =
 						return Math.exp(val);
 					}, bValForward: function (val) {
 						return Math.log(val);
+					}, yValBackward: function (val) {
+						return Math.pow(Math.exp(1), val);
 					}
 				}
 			};
@@ -16898,6 +16908,7 @@ CColorObj.prototype =
 					result += (Math.pow(xVal, power) * coefficients[i]);
 					power++;
 				}
+				result = mappingStorage.yValBackward ? mappingStorage.yValBackward(result) : result;
 				return result;
 			};
 
@@ -16913,8 +16924,8 @@ CColorObj.prototype =
 			let XSquared = 0;
 			let YSquared = 0;
 			for (let i = 0; i < N; i++) {
+				const yVal = mappingStorage.yValBackward ? mappingStorage.yValBackward(valVals[i]) : valVals[i];
 				const yValPred = predictY(catVals[i]);
-				const yVal = valVals[i];
 				XY += (yVal * yValPred);
 				X += yVal;
 				Y += yValPred;
@@ -17512,6 +17523,8 @@ CColorObj.prototype =
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscFormat'] = window['AscFormat'] || {};
 	window['AscFormat'].CChartsDrawer = CChartsDrawer;
+	window['AscFormat'].CTrendline = CTrendline;
+	window['AscFormat'].CLineBuilder = CLineBuilder;
 	window['AscFormat'].CColorObj = CColorObj;
 	window["AscFormat"].c_oChartTypes = c_oChartTypes;
 })(window);
