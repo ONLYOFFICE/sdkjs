@@ -2776,6 +2776,7 @@
 
 		CShape.prototype.recalculateTextStyles = function (level) {
 			return AscFormat.ExecuteNoHistory(function () {
+				const logicDocument = this.getLogicDocument();
 				var parent_objects = this.getParentObjects();
 				var default_style = new CStyle("defaultStyle", null, null, null, true);
 				default_style.ParaPr.Spacing.LineRule = Asc.linerule_Auto;
@@ -2784,6 +2785,12 @@
 				default_style.ParaPr.Spacing.After = 0;
 				default_style.ParaPr.DefaultTab = 25.4;
 				default_style.ParaPr.Align = AscCommon.align_Center;
+				if (logicDocument && logicDocument.IsDocumentEditor()) {
+					const documentStyles = logicDocument.Get_Styles();
+					if (documentStyles) {
+						default_style.TextPr.Lang.Merge(documentStyles.Default.TextPr.Lang);
+					}
+				}
 				if (parent_objects.theme) {
 					default_style.TextPr.RFonts.SetFontStyle(AscFormat.fntStyleInd_minor);
 				}
