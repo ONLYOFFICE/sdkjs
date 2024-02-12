@@ -202,10 +202,36 @@
 	CUserProtectedRange.prototype.contains2 = function (oCell) {
 		return this.ref && this.ref.contains2(oCell);
 	};
-	CUserProtectedRange.prototype.isUserCanEdit = function (userId, type) {
+	CUserProtectedRange.prototype.isUserCanDoByType = function (userId, type) {
+		let res = false;
+
+		switch (type) {
+			case AscCommonExcel.c_oSerUserProtectedRangeType.view: {
+				res = this.isUserCanView(userId);
+				break;
+			}
+			case AscCommonExcel.c_oSerUserProtectedRangeType.edit: {
+				res = this.isUserCanEdit(userId);
+				break;
+			}
+		}
+
+		return res;
+	};
+	CUserProtectedRange.prototype.isUserCanEdit = function (userId) {
 		if (this.users) {
 			for (let i = 0; i < this.users.length; i++) {
-				if (this.users[i].isCanEdit(userId, type)) {
+				if (this.users[i].isCanEdit(userId)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	};
+	CUserProtectedRange.prototype.isUserCanView = function (userId) {
+		if (this.users) {
+			for (let i = 0; i < this.users.length; i++) {
+				if (this.users[i].isCanView(userId)) {
 					return true;
 				}
 			}
@@ -306,14 +332,19 @@
 		this.type = null;//default -> AscCommonExcel.c_oSerUserProtectedRangeType.edit
 	}
 
-	CUserProtectedRangeUserInfo.prototype.isCanEdit = function (id, type) {
+	CUserProtectedRangeUserInfo.prototype.isCanEdit = function (id) {
 		let res = false;
 		if (id === this.id) {
-			if (!type || !this.type) {
-				res = true;
-			} else if (this.type === type) {
-				res = true;
-			}
+			res = this.asc_getType() === AscCommonExcel.c_oSerUserProtectedRangeType.edit;
+		}
+		return res;
+	};
+
+	CUserProtectedRangeUserInfo.prototype.isCanView = function (id) {
+		let res = false;
+		if (id === this.id) {
+			let type = this.asc_getType();
+			res = type !== AscCommonExcel.c_oSerUserProtectedRangeType.notView;
 		}
 		return res;
 	};
@@ -372,7 +403,7 @@
 		return this.name;
 	};
 	CUserProtectedRangeUserInfo.prototype.asc_getType = function () {
-		return this.type;
+		return this.type == null ? AscCommonExcel.c_oSerUserProtectedRangeType.edit : this.type;
 	};
 
 	CUserProtectedRangeUserInfo.prototype.asc_setId = function (val) {
