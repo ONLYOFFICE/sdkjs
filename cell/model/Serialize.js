@@ -6085,6 +6085,11 @@
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
 				this.memory.WriteString2(desc.name);
 			}
+            if (desc.type) {
+                this.memory.WriteByte(c_oSerUserProtectedRangeDesc.Type);
+                this.memory.WriteByte(c_oSerPropLenType.Byte);
+                this.memory.WriteByte(desc.type);
+            }
 		};
         this.WriteUserProtectedRange = function (oUserProtectedRange) {
 
@@ -6123,6 +6128,11 @@
 						oThis.WriteUserProtectedRangeDesc(userGroups[i]);
 					});
 				}
+            }
+            if (oUserProtectedRange.type) {
+                this.bs.WriteItem(c_oSerUserProtectedRange.Type, function () {
+                    oThis.memory.WriteByte(oUserProtectedRange.type);
+                });
             }
         };
 
@@ -9220,7 +9230,9 @@
 				oUser.name = this.stream.GetString2LE(length);
 			} else if (c_oSerUserProtectedRangeDesc.Id === type) {
 				oUser.id = this.stream.GetString2LE(length);
-			} else {
+			} else if (c_oSerUserProtectedRangeDesc.Type === type) {
+                oUser.type = this.stream.GetByte();
+            } else {
 				res = c_oSerConstants.ReadUnknown;
 			}
 

@@ -44,7 +44,8 @@
 		//for warning
 		this.warningText = null;
 
-		this.type = null;//c_oSerUserProtectedRangeType -> notView/view/edit
+		//everyone edit/view type
+		this.type = null;//c_oSerUserProtectedRangeType -> notView/view/edit, //default -> AscCommonExcel.c_oSerUserProtectedRangeType.view
 
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
 		this._ws = ws;
@@ -370,7 +371,7 @@
 	CUserProtectedRangeUserInfo.prototype.asc_getName = function () {
 		return this.name;
 	};
-	CUserProtectedRangeUserInfo.prototype.asc_getUserProtectedType = function () {
+	CUserProtectedRangeUserInfo.prototype.asc_getType = function () {
 		return this.type;
 	};
 
@@ -380,7 +381,7 @@
 	CUserProtectedRangeUserInfo.prototype.asc_setName = function (val) {
 		this.name = val;
 	};
-	CUserProtectedRangeUserInfo.prototype.asc_setUserProtectedType = function (val) {
+	CUserProtectedRangeUserInfo.prototype.asc_setType = function (val) {
 		this.type = val;
 	};
 
@@ -396,17 +397,16 @@
 	prot["asc_getName"] = prot.asc_getName;
 	prot["asc_getUsers"] = prot.asc_getUsers;
 	prot["asc_getUserGroups"] = prot.asc_getUserGroups;
-	prot["asc_getUserProtectedType"] = prot.asc_getUserProtectedType;
-	prot["asc_getHideContent"] = prot.asc_getHideContent;
+	prot["asc_getType"] = prot.asc_getType;
 
 	prot["asc_setRef"] = prot.asc_setRef;
 	prot["asc_setName"] = prot.asc_setName;
 	prot["asc_setUsers"] = prot.asc_setUsers;
-	prot["asc_setHideContent"] = prot.asc_setHideContent;
 
 	prot["asc_getId"] = prot.asc_getId;
 
 	prot["asc_getIsLock"] = prot.asc_getIsLock;
+	prot["asc_setType"] = prot.asc_setType;
 
 
 
@@ -414,9 +414,9 @@
 	prot = CUserProtectedRangeUserInfo.prototype;
 	prot["asc_getId"] = prot.asc_getId;
 	prot["asc_getName"] = prot.asc_getName;
-	prot["asc_getUserProtectedType"] = prot.asc_getUserProtectedType;
+	prot["asc_getType"] = prot.asc_getType;
 	prot["asc_setId"] = prot.asc_setId;
 	prot["asc_setName"] = prot.asc_setName;
-	prot["asc_setUserProtectedType"] = prot.asc_setUserProtectedType;
+	prot["asc_setType"] = prot.asc_setType;
 
 })(window);
