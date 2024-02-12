@@ -44,7 +44,7 @@
 		//for warning
 		this.warningText = null;
 
-		this.hideContent = null;//bool, default -> false
+		this.type = null;//c_oSerUserProtectedRangeType -> notView/view/edit
 
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
 		this._ws = ws;
@@ -71,7 +71,7 @@
 
 		res.warningText = this.warningText;
 
-		res.hideContent = this.hideContent;
+		res.type = this.type;
 
 		return res;
 	};
@@ -131,16 +131,16 @@
 			w.WriteBool(false);
 		}
 
-		if (null != this.warningText) {
+		if (null != this.Id) {
 			w.WriteBool(true);
-			w.WriteString2(this.warningText);
+			w.WriteString2(this.Id);
 		} else {
 			w.WriteBool(false);
 		}
 
-		if (null != this.hideContent) {
+		if (null != this.type) {
 			w.WriteBool(true);
-			w.WriteBool(this.hideContent);
+			w.WriteLong(this.type);
 		} else {
 			w.WriteBool(false);
 		}
@@ -185,14 +185,15 @@
 		if (r.GetBool()) {
 			this.warningText = r.GetString2();
 		}
-
-		if (r.GetBool()) {
-			this.hideContent = r.GetBool();
-		}
-
+		
 		if (r.GetBool()) {
 			this.Id = r.GetString2();
 		}
+
+		if (r.GetBool()) {
+			this.type = r.GetLong();
+		}
+
 	};
 	CUserProtectedRange.prototype.intersection = function (range) {
 		return this.ref && this.ref.intersection(range);
@@ -281,8 +282,8 @@
 	CUserProtectedRange.prototype.asc_setUsers = function (val) {
 		this.users = val;
 	};
-	CUserProtectedRange.prototype.asc_setHideContent = function (val) {
-		this.hideContent = val;
+	CUserProtectedRange.prototype.asc_setType = function (val) {
+		this.type = val;
 	};
 	CUserProtectedRange.prototype.asc_getIsLock = function () {
 		return this.isLock;
@@ -290,13 +291,12 @@
 	CUserProtectedRange.prototype.asc_getId = function () {
 		return this.Id;
 	};
-	CUserProtectedRange.prototype.asc_getHideContent = function () {
-		return this.hideContent;
+	CUserProtectedRange.prototype.asc_getType = function () {
+		return this.type;
 	};
 	CUserProtectedRange.prototype.initPostOpen = function (ws) {
 		this._ws = ws;
 	};
-
 
 
 	function CUserProtectedRangeUserInfo() {

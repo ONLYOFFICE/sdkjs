@@ -1188,16 +1188,16 @@
         Text: 3,
         User: 4,
         UsersGroup: 5,
-        HideContent: 6
+        Type: 6
     };
-    var c_oSerUserProtectedRangeDesc = {
-        Id: 0,
-        Name: 1,
-        Type: 2
-    };
+	var c_oSerUserProtectedRangeDesc = {
+		Id: 0,
+		Name: 1
+	};
     var c_oSerUserProtectedRangeType = {
-        edit: 0,
-        view: 1
+        notView: 0,
+        view: 1,
+        edit: 2
     };
 
     /** @enum */
@@ -6066,14 +6066,14 @@
             }
         };
 
-		this.WriteUserProtectedRanges = function (aUserProtectedRanges) {
-			var oThis = this;
-			for (var i = 0, length = aUserProtectedRanges.length; i < length; ++i) {
-				this.bs.WriteItem(c_oSerUserProtectedRange.UserProtectedRange, function () {
-					oThis.WriteUserProtectedRange(aUserProtectedRanges[i]);
-				});
-			}
-		};
+        this.WriteUserProtectedRanges = function (aUserProtectedRanges) {
+            var oThis = this;
+            for (var i = 0, length = aUserProtectedRanges.length; i < length; ++i) {
+                this.bs.WriteItem(c_oSerUserProtectedRange.UserProtectedRange, function () {
+                    oThis.WriteUserProtectedRange(aUserProtectedRanges[i]);
+                });
+            }
+        };
 		this.WriteUserProtectedRangeDesc = function (desc) {
 			if (desc.id) {
 				this.memory.WriteByte(c_oSerUserProtectedRangeDesc.Id);
@@ -6085,56 +6085,46 @@
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
 				this.memory.WriteString2(desc.name);
 			}
-			if (desc.type) {
-				this.memory.WriteByte(c_oSerUserProtectedRangeDesc.Type);
-				this.memory.WriteByte(c_oSerPropLenType.Byte);
-				this.memory.WriteByte(desc.type);
-			}
 		};
-		this.WriteUserProtectedRange = function (oUserProtectedRange) {
-			var oThis = this;
+        this.WriteUserProtectedRange = function (oUserProtectedRange) {
 
-			if (oUserProtectedRange.name) {
+            var oThis = this;
+
+            if (oUserProtectedRange.name) {
 				this.bs.WriteItem(c_oSerUserProtectedRange.Name, function () {
-					oThis.memory.WriteString3(oUserProtectedRange.name);
-				});
-			}
-			if (oUserProtectedRange.ref) {
+                    oThis.memory.WriteString3(oUserProtectedRange.name);
+                });
+            }
+            if (oUserProtectedRange.ref) {
 				var sqRef = getSqRefString([oUserProtectedRange.ref]);
-				this.bs.WriteItem(c_oSerUserProtectedRange.Sqref, function () {
-					oThis.memory.WriteString3(sqRef);
-				});
-			}
-			if (oUserProtectedRange.warningText) {
-				this.bs.WriteItem(c_oSerUserProtectedRange.Text, function () {
-					oThis.memory.WriteString3(oUserProtectedRange.warningText);
-				});
-			}
+            	this.bs.WriteItem(c_oSerUserProtectedRange.Sqref, function () {
+                    oThis.memory.WriteString3(sqRef);
+                });
+            }
+            if (oUserProtectedRange.warningText) {
+                this.bs.WriteItem(c_oSerUserProtectedRange.Text, function () {
+                    oThis.memory.WriteString3(oUserProtectedRange.warningText);
+                });
+            }
 
-			if (oUserProtectedRange.hideContent != null) {
-				this.bs.WriteItem(c_oSerUserProtectedRange.HideContent, function () {
-					oThis.memory.WriteBool(oUserProtectedRange.hideContent);
-				});
-			}
-
-			let i;
-			let users = oUserProtectedRange.asc_getUsers();
-			if (null != users) {
-				for (i = 0; i < users.length; i++) {
-					this.bs.WriteItem(c_oSerUserProtectedRange.User, function () {
-						oThis.WriteUserProtectedRangeDesc(users[i]);
-					});
-				}
-			}
+            let i;
+            let users = oUserProtectedRange.asc_getUsers();
+            if (null != users) {
+                for (i = 0; i < users.length; i++) {
+                    this.bs.WriteItem(c_oSerUserProtectedRange.User, function () {
+                        oThis.WriteUserProtectedRangeDesc(users[i]);
+                    });
+                }
+            }
 			let userGroups = oUserProtectedRange.asc_getUserGroups();
-			if (null != userGroups) {
+            if (null != userGroups) {
 				for (i = 0; i < userGroups.length; i++) {
 					this.bs.WriteItem(c_oSerUserProtectedRange.UsersGroup, function () {
 						oThis.WriteUserProtectedRangeDesc(userGroups[i]);
 					});
 				}
-			}
-		};
+            }
+        };
 
         this.WriteTimelines = function (aTimelines) {
             var oThis = this;
@@ -9226,15 +9216,13 @@
 		this.ReadUserProtectedRangeDesc = function (type, length, oUser) {
 			var res = c_oSerConstants.ReadOk;
 
-            if (c_oSerUserProtectedRangeDesc.Name === type) {
-                oUser.name = this.stream.GetString2LE(length);
-            } else if (c_oSerUserProtectedRangeDesc.Id === type) {
-                oUser.id = this.stream.GetString2LE(length);
-            } else if (c_oSerUserProtectedRangeDesc.Type === type) {
-                oUser.type = this.stream.GetByte(length);
-            } else {
-                res = c_oSerConstants.ReadUnknown;
-            }
+			if (c_oSerUserProtectedRangeDesc.Name === type) {
+				oUser.name = this.stream.GetString2LE(length);
+			} else if (c_oSerUserProtectedRangeDesc.Id === type) {
+				oUser.id = this.stream.GetString2LE(length);
+			} else {
+				res = c_oSerConstants.ReadUnknown;
+			}
 
 			return res;
 		};
@@ -9250,8 +9238,8 @@
                 }
             } else if (c_oSerUserProtectedRange.Text === type) {
                 oUserProtectedRange.warningText = this.stream.GetString2(length);
-            } else if (c_oSerUserProtectedRange.HideContent === type) {
-                oUserProtectedRange.hideContent = this.stream.GetBool();
+            } else if (c_oSerUserProtectedRange.Type === type) {
+                oUserProtectedRange.type = this.stream.GetByte(length);
             } else if (c_oSerUserProtectedRange.User === type)
 			{
 
