@@ -45,7 +45,7 @@
 		this.warningText = null;
 
 		//everyone edit/view type
-		this.type = null;//c_oSerUserProtectedRangeType -> notView/view/edit, //default -> AscCommonExcel.c_oSerUserProtectedRangeType.view
+		this.type = null;//c_oSerUserProtectedRangeType -> notView/view/edit, //default -> Asc.c_oSerUserProtectedRangeType.view
 
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
 		this._ws = ws;
@@ -329,7 +329,7 @@
 	function CUserProtectedRangeUserInfo() {
 		this.id = null;
 		this.name = null;
-		this.type = null;//default -> AscCommonExcel.c_oSerUserProtectedRangeType.edit
+		this.type = null;//default -> Asc.c_oSerUserProtectedRangeType.edit
 	}
 
 	CUserProtectedRangeUserInfo.prototype.isCanEdit = function (id) {
@@ -402,7 +402,7 @@
 		return this.name;
 	};
 	CUserProtectedRangeUserInfo.prototype.asc_getType = function () {
-		return this.type == null ? AscCommonExcel.c_oSerUserProtectedRangeType.edit : this.type;
+		return this.type == null ? Asc.c_oSerUserProtectedRangeType.edit : this.type;
 	};
 
 	CUserProtectedRangeUserInfo.prototype.asc_setId = function (val) {
