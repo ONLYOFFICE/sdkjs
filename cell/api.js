@@ -8789,7 +8789,7 @@ var editor;
 		if (this.wb && this.wb.getCellEditMode()) {
 			return;
 		}
-		obj.asc_setType(Asc.c_oSerUserProtectedRangeType.notView);
+		
 		this.wb.changeUserProtectedRanges(null, obj);
 	};
 
