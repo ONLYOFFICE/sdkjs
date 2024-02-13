@@ -210,7 +210,8 @@
 				res = this.isUserCanView(userId);
 				break;
 			}
-			case Asc.c_oSerUserProtectedRangeType.edit: {
+			case Asc.c_oSerUserProtectedRangeType.edit:
+			default: {
 				res = this.isUserCanEdit(userId);
 				break;
 			}
