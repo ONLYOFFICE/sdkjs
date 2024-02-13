@@ -255,10 +255,10 @@ CTable.prototype.private_RecalculateGrid = function()
 
 		// Запускаем пересчет границ, потому что там пересчитываются метрики ячеек, которые зависят от X, XLimit
 	}
-
+	
 	if (this.RecalcInfo.TableGrid)
 	{
-		let layoutCoeff = Math.min(1, this.getLayoutScaleCoefficient());
+		let layoutCoeff = this.getLayoutScaleCoefficient();
 		
 		var arrSumGrid = [];
 		var nTempSum   = 0;
@@ -1798,13 +1798,15 @@ CTable.prototype.private_RecalculatePositionX = function(CurPage)
 
 	var LD_PageLimits = this.LogicDocument.Get_PageLimits(this.Get_StartPage_Absolute());
 	var LD_PageFields = this.LogicDocument.Get_PageFields(this.Get_StartPage_Absolute(), isHdtFtr);
+	
+	let tableInd = TablePr.TableInd;
 
     if ( true === this.Is_Inline() )
     {
         var Page = this.Pages[CurPage];
         if (0 === CurPage)
         {
-            this.AnchorPosition.CalcX = this.X_origin + TablePr.TableInd;
+            this.AnchorPosition.CalcX = this.X_origin + tableInd;
             this.AnchorPosition.Set_X(this.TableSumGrid[this.TableSumGrid.length - 1], this.X_origin, LD_PageFields.X, LD_PageFields.XLimit, LD_PageLimits.XLimit, PageLimits.X, PageLimits.XLimit);
         }
 
@@ -1812,7 +1814,7 @@ CTable.prototype.private_RecalculatePositionX = function(CurPage)
         {
             case AscCommon.align_Left :
             {
-                Page.X = Page.X_origin + this.GetTableOffsetCorrection() + TablePr.TableInd;
+                Page.X = Page.X_origin + this.GetTableOffsetCorrection() + tableInd;
                 break;
             }
             case AscCommon.align_Right :
@@ -1847,7 +1849,7 @@ CTable.prototype.private_RecalculatePositionX = function(CurPage)
 
             // Непонятно по какой причине, но Word для плавающих таблиц добаляется значение TableInd
 			this.AnchorPosition.Calculate_X(this.PositionH.RelativeFrom, this.PositionH.Align, this.PositionH.Value);
-			this.AnchorPosition.CalcX += TablePr.TableInd;
+			this.AnchorPosition.CalcX += tableInd;
 
             this.X        = this.AnchorPosition.CalcX;
             this.X_origin = this.X - OffsetCorrection_Left;

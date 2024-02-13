@@ -151,6 +151,10 @@
 
 		return nCoef;
 	};
+	CDocumentReadView.prototype.isZeroIndents = function()
+	{
+		return true;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CDocumentReadView = CDocumentReadView;
 

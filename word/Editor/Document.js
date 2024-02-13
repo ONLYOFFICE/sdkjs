@@ -16471,6 +16471,16 @@ CDocument.prototype.SetDocumentReadMode = function(nW, nH, nScale)
 	{
 		oRun.Recalc_CompiledPr(true);
 	});
+	
+	this.GetAllParagraphs().forEach(function(paragraph)
+	{
+		paragraph.RecalcCompiledPr();
+	});
+	
+	this.GetAllTables().forEach(function(table)
+	{
+		table.Recalc_CompiledPr();
+	});
 
 	this.RecalculateFromStart(true);
 };
@@ -16481,6 +16491,16 @@ CDocument.prototype.SetDocumentPrintMode = function()
 	this.CheckAllRunContent(function(oRun)
 	{
 		oRun.Recalc_CompiledPr(true);
+	});
+	
+	this.GetAllParagraphs().forEach(function(paragraph)
+	{
+		paragraph.RecalcCompiledPr();
+	});
+	
+	this.GetAllTables().forEach(function(table)
+	{
+		table.RecalcCompiledPr();
 	});
 
 	this.RecalculateFromStart(true);

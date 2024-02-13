@@ -10852,8 +10852,14 @@ Paragraph.prototype.Internal_CompileParaPr2 = function()
 			Pr.ParaPr.NumPr.Lvl = Lvl;
 		else
 			Pr.ParaPr.NumPr = undefined;
-
-
+		
+		let logicDocument = this.GetLogicDocument();
+		if (logicDocument && logicDocument.IsDocumentEditor() && logicDocument.Layout.isZeroIndents())
+		{
+			Pr.ParaPr.Ind.Left  = 0;
+			Pr.ParaPr.Ind.Right = 0;
+		}
+		
 		return Pr;
 	}
 	else
