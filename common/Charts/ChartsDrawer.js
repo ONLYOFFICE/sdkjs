@@ -16368,16 +16368,21 @@ CColorObj.prototype =
 					const midPointsNum = 100;
 					const lineBuilder = new CLineBuilder(coefficients, catMin, catMax, valAxis.scaling.min, valAxis.scaling.max, valAxis.scaling.logBase);
 					lineBuilder.setCalcYVal(equationStorage.calcYVal);
+					let bezierFailed = false;
 					//poly lines can not be drawn with approximated bezier
 					if (this.bAllowDrawByBezier && type !== AscFormat.TRENDLINE_TYPE_POLY) {
 						lineBuilder.setCalcXVal(equationStorage.calcXVal);
 						lineBuilder.setCalcSlope(equationStorage.calcSlope);
 						const cutPoint = valAxis.scaling.logBase ? (Math.log(1000) / Math.log(valAxis.scaling.logBase)) : 1000;
 						const lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
-						storageElement.setBezierApproximationResults(lineCoords.mainLine, lineCoords.startPoint);
-						storageElement.setLineReversed(lineCoords.isReversed);
+						if (!lineCoords.failed) {
+							storageElement.setBezierApproximationResults(lineCoords.mainLine, lineCoords.startPoint);
+							storageElement.setLineReversed(lineCoords.isReversed);
+						} else {
+							bezierFailed = true;
+						}
 					}
-					if (this.bAllowDrawByPoints || type === AscFormat.TRENDLINE_TYPE_POLY) {
+					if (this.bAllowDrawByPoints || type === AscFormat.TRENDLINE_TYPE_POLY || bezierFailed) {
 						const minLogVal = storageElement.getMinLogVal();
 						const pointVals = lineBuilder.drawWithPoints(midPointsNum, minLogVal);
 						storageElement.setPointVals(pointVals);
@@ -17035,37 +17040,41 @@ CColorObj.prototype =
 				cutPoint = 1000;
 			}
 			const results = this._calcApproximatedBezier(error, tailLimit, cutPoint);
-			if (this.isLog) {
-				this._normalize(results.mainLine);
-				this._normalize(results.startPoint);
+
+			if (!results.failed) {
+				if (this.isLog) {
+					this._normalize(results.mainLine);
+					this._normalize(results.startPoint);
+				}
+	
+				let catMinStart = results.startPoint.catVals.length > 0 ? results.startPoint.catVals[0] : null;
+				let catMaxStart = results.startPoint.catVals.length > 0 ? results.startPoint.catVals[0] : null;
+				let valMinStart = results.startPoint.valVals.length > 0 ? results.startPoint.valVals[0] : null;
+				let valMaxStart = results.startPoint.valVals.length > 0 ? results.startPoint.valVals[0] : null;
+	
+				let size = results.mainLine.catVals.length;
+				let catMin = Math.min(results.mainLine.catVals[0], results.mainLine.catVals[size - 1]);
+				let catMax = Math.max(results.mainLine.catVals[0], results.mainLine.catVals[size - 1]);
+				let valMin = Math.min(results.mainLine.valVals[0], results.mainLine.valVals[size - 1]);
+				let valMax = Math.max(results.mainLine.valVals[0], results.mainLine.valVals[size - 1]);
+	
+				if (results.startPoint.valVals.length > 0) {
+					catMin = Math.min(catMin, catMinStart);
+					catMax = Math.max(catMax, catMaxStart);
+					valMin = Math.min(valMin, valMinStart);
+					valMax = Math.max(valMax, valMaxStart);
+				}
+	
+				if (!this.boundary) {
+					this.boundary = {catMin: catMin, catMax: catMax, valMin: valMin, valMax: valMax};
+				} else {
+					this.boundary.catMin = Math.min(this.boundary.catMin, catMin);
+					this.boundary.catMax = Math.max(this.boundary.catMax, catMax);
+					this.boundary.valMin = Math.min(this.boundary.valMin, valMin);
+					this.boundary.valMax = Math.max(this.boundary.valMax, valMax);
+				}
 			}
 
-			let catMinStart = results.startPoint.catVals.length > 0 ? results.startPoint.catVals[0] : null;
-			let catMaxStart = results.startPoint.catVals.length > 0 ? results.startPoint.catVals[0] : null;
-			let valMinStart = results.startPoint.valVals.length > 0 ? results.startPoint.valVals[0] : null;
-			let valMaxStart = results.startPoint.valVals.length > 0 ? results.startPoint.valVals[0] : null;
-
-			let size = results.mainLine.catVals.length;
-			let catMin = Math.min(results.mainLine.catVals[0], results.mainLine.catVals[size - 1]);
-			let catMax = Math.max(results.mainLine.catVals[0], results.mainLine.catVals[size - 1]);
-			let valMin = Math.min(results.mainLine.valVals[0], results.mainLine.valVals[size - 1]);
-			let valMax = Math.max(results.mainLine.valVals[0], results.mainLine.valVals[size - 1]);
-
-			if (results.startPoint.valVals.length > 0) {
-				catMin = Math.min(catMin, catMinStart);
-				catMax = Math.max(catMax, catMaxStart);
-				valMin = Math.min(valMin, valMinStart);
-				valMax = Math.max(valMax, valMaxStart);
-			}
-
-			if (!this.boundary) {
-				this.boundary = {catMin: catMin, catMax: catMax, valMin: valMin, valMax: valMax};
-			} else {
-				this.boundary.catMin = Math.min(this.boundary.catMin, catMin);
-				this.boundary.catMax = Math.max(this.boundary.catMax, catMax);
-				this.boundary.valMin = Math.min(this.boundary.valMin, valMin);
-				this.boundary.valMax = Math.max(this.boundary.valMax, valMax);
-			}
 			return results;
 		},
 
@@ -17184,6 +17193,7 @@ CColorObj.prototype =
 			let lineStart = start.valVal;
 			let lineEnd = midValVal;
 			const storage = {minError: null, cpY: null, cpX: null};
+			let failed = true;
 			for (let i = 0; i < 10; i++) {
 				controlPoints.valVals[1] = (0.5 * lineEnd) + (0.5 * lineStart);
 				controlPoints.catVals[1] = (controlPoints.valVals[1] - line1Letiables[0]) / line1Letiables[1];
@@ -17199,8 +17209,13 @@ CColorObj.prototype =
 				} else if ((predictedError > error && !direction) || (predictedError < -error && direction)) {
 					lineStart = controlPoints.valVals[1];
 				} else {
+					failed = false;
 					break;
 				}
+			}
+
+			if (failed) {
+				return {failed : true};
 			}
 
 			if (controlPoints.catVals[1] !== storage.cpX || controlPoints.valVals[1] !== storage.cpY) {
