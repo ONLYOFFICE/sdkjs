@@ -2051,12 +2051,10 @@ ParaMath.prototype.Get_ParaPosByContentPos = function(ContentPos, Depth)
 {
     return this.Root.Get_ParaPosByContentPos(ContentPos, Depth);
 };
-
-ParaMath.prototype.Recalculate_CurPos = function(_X, Y, CurrentRun, _CurRange, _CurLine, _CurPage, UpdateCurPos, UpdateTarget, ReturnTarget)
+ParaMath.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
-    return this.Root.Recalculate_CurPos(_X, Y, CurrentRun, _CurRange, _CurLine, _CurPage, UpdateCurPos, UpdateTarget, ReturnTarget);
+	positionCalculator.handleParaMath(this, isCurrent);
 };
-
 ParaMath.prototype.Refresh_RecalcData = function(Data)
 {
     this.Paragraph.Refresh_RecalcData2(0);
@@ -2513,44 +2511,9 @@ ParaMath.prototype.Get_Default_TPrp = function()
 //-----------------------------------------------------------------------------------
 // Функции отрисовки
 //-----------------------------------------------------------------------------------
-ParaMath.prototype.Draw_HighLights = function(PDSH)
+ParaMath.prototype.Draw_HighLights = function(drawState)
 {
-    if(false == this.Root.IsEmptyRange(PDSH.Line, PDSH.Range))
-    {
-        var X  = PDSH.X;
-        var Y0 = PDSH.Y0;
-        var Y1 = PDSH.Y1;
-
-        var Comm = PDSH.Save_Comm();
-        var Coll = PDSH.Save_Coll();
-
-        this.Root.Draw_HighLights(PDSH, false);
-
-        var CommFirst = PDSH.Comm.Get_Next();
-        var CollFirst = PDSH.Coll.Get_Next();
-
-        PDSH.Load_Comm(Comm);
-        PDSH.Load_Coll(Coll);
-
-        if (null !== CommFirst)
-        {
-            var CommentsCount = PDSH.Comments.length;
-            var CommentId     = ( CommentsCount > 0 ? PDSH.Comments[CommentsCount - 1] : null );
-            var CommentsFlag  = PDSH.CommentsFlag;
-
-            var Bounds = this.Root.Get_LineBound(PDSH.Line, PDSH.Range);
-            Comm.Add(Bounds.Y, Bounds.Y + Bounds.H, Bounds.X, Bounds.X + Bounds.W, 0, 0, 0, 0, { Active : CommentsFlag === AscCommon.comments_ActiveComment ? true : false, CommentId : CommentId } );
-        }
-
-        if (null !== CollFirst)
-        {
-            var Bounds = this.Root.Get_LineBound(PDSH.Line, PDSH.Range);
-            Coll.Add(Bounds.Y, Bounds.Y + Bounds.H, Bounds.X, Bounds.X + Bounds.W, 0, CollFirst.r, CollFirst.g, CollFirst.b);
-        }
-
-        PDSH.Y0 = Y0;
-        PDSH.Y1 = Y1;
-    }
+	drawState.handleParaMath(this);
 };
 ParaMath.prototype.Draw_Elements = function(PDSE)
 {
@@ -2670,42 +2633,9 @@ ParaMath.prototype.MoveCursorToEndPos = function(SelectFromEnd)
 	this.Root.MoveCursorToEndPos(SelectFromEnd);
 };
 
-ParaMath.prototype.Get_ParaContentPosByXY = function(SearchPos, Depth, _CurLine, _CurRange, StepEnd, Flag) // получить логическую позицию по XY
+ParaMath.prototype.getParagraphContentPosByXY = function(searchState)
 {
-	var Result = false;
-
-	var CurX = SearchPos.CurX;
-
-	var MathX = SearchPos.CurX;
-	var MathW = this.Root.GetWidth(_CurLine, _CurRange);
-
-	// Если мы попадаем четко в формулу, тогда ищем внутри нее, если нет, тогда не заходим внутрь
-	if ((SearchPos.X > MathX && SearchPos.X < MathX + MathW) || SearchPos.DiffX > 1000000 - 1)
-	{
-		var bFirstItem = SearchPos.DiffX > 1000000 - 1 ? true : false;
-
-		Result = this.Root.Get_ParaContentPosByXY(SearchPos, Depth, _CurLine, _CurRange, StepEnd);
-
-		if (SearchPos.InText)
-			SearchPos.DiffX = 0.001; // чтобы всегда встать в формулу, если попали в текст
-
-		// TODO: Пересмотреть данную проверку. Надо выяснить насколько сильно она вообще нужна
-		// Если мы попадаем в формулу, тогда не ищем позицию вне ее. За исключением, случая когда формула идет в начале
-		// строки. Потому что в последнем случае из формулы 100% придет true, а позиция, возможно, находится за формулой.
-		if (Result && !bFirstItem)
-			SearchPos.DiffX = 0;
-	}
-
-	// Такое возможно, если все элементы до этого (в том числе и этот) были пустыми, тогда, чтобы не возвращать
-	// неправильную позицию вернем позицию начала данного элемента.
-	if (SearchPos.DiffX > 1000000 - 1)
-	{
-		this.Get_StartPos(SearchPos.Pos, Depth);
-		Result = true;
-	}
-
-	SearchPos.CurX = CurX + MathW;
-	return Result;
+	searchState.handleParaMath(this);
 };
 
 ParaMath.prototype.Get_ParaContentPos = function(bSelection, bStart, ContentPos, bUseCorrection)
@@ -2828,9 +2758,9 @@ ParaMath.prototype.SelectAll = function(Direction)
     this.Root.SelectAll(Direction);
 };
 
-ParaMath.prototype.Selection_DrawRange = function(_CurLine, _CurRange, SelectionDraw)
+ParaMath.prototype.drawSelectionInRange = function(line, range, drawState)
 {
-    this.Root.Selection_DrawRange(_CurLine, _CurRange, SelectionDraw);
+    this.Root.drawSelectionInRange(line, range, drawState);
 };
 
 ParaMath.prototype.IsSelectionEmpty = function(CheckEnd)

@@ -118,19 +118,20 @@
 
         let oDoc    = this.GetDocument();
         let oViewer = Asc.editor.getDocumentRenderer();
-        let aFields = oViewer.IsOpenFormsInProgress == false ? oDoc.GetFields(this.GetFullName()) : [this];
-
-        if (oViewer.IsOpenFormsInProgress == false && oDoc.History.UndoRedoInProgress == false) {
-            oDoc.CreateNewHistoryPoint();
-        }
+        let aFields = oViewer.IsOpenFormsInProgress == false ? oDoc.GetAllWidgets(this.GetFullName()) : [this];
 
         let aFonts = aFields.map(function(field) {
             return field.GetTextFontActual();
         });
 
         let oThis = this;
-        if (!oDoc.checkFonts(aFonts, function() { oThis.AddImage(oImgData, nAPType);}))
+        if (!oDoc.checkFonts(aFonts, function() { oThis.AddImage(oImgData, nAPType);})) {
             return;
+        }
+
+        if (oViewer.IsOpenFormsInProgress == false && oDoc.History.UndoRedoInProgress == false) {
+            oDoc.CreateNewHistoryPoint();
+        }
 
         aFields.forEach(function(field) {
             if (field.GetHeaderPosition() == position["textOnly"])
@@ -1242,7 +1243,7 @@
             oActionsQueue.bContinueAfterEval = false;
         
         Api.oSaveObjectForAddImage = this;
-        if (window["AscDesktopEditor"]) {
+        if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
             window["AscDesktopEditor"]["OpenFilenameDialog"]("images", false, function(_file) {
                 var file = _file;
                 if (Array.isArray(file))
@@ -1748,7 +1749,7 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.SyncField = function() {
-        let aFields = this._doc.GetFields(this.GetFullName());
+        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         
         TurnOffHistory();
 
@@ -1793,7 +1794,7 @@
      * @typeofeditors ["PDF"]
      */
     CPushButtonField.prototype.Commit = function() {
-        let aFields = this._doc.GetFields(this.GetFullName());
+        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
         let oThisPara = this.content.GetElement(0);
         
         TurnOffHistory();

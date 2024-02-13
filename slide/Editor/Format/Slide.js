@@ -201,7 +201,6 @@ function Slide(presentation, slideLayout, slideNum)
     this.transitionLock = null;
     this.layoutLock     = null;
     this.showLock       = null;
-    this.headerLock     = null;
 
     this.Lock = new AscCommon.CLock();
 
@@ -816,7 +815,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
        History.Add(new AscDFH.CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SlideSetBg, this.cSld.Bg , bg));
         this.cSld.Bg = bg;
     };
-    Slide.prototype.setLocks = function(deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock, headerLock)
+    Slide.prototype.setLocks = function(deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock)
     {
         this.deleteLock = deleteLock;
         this.backgroundLock = backgroundLock;
@@ -824,8 +823,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         this.transitionLock = transitionLock;
         this.layoutLock = layoutLock;
         this.showLock = showLock;
-        this.headerLock = headerLock;
-       History.Add(new AscDFH.CChangesDrawingSlideLocks(this, deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock, headerLock));
+       History.Add(new AscDFH.CChangesDrawingSlideLocks(this, deleteLock, backgroundLock, timingLock, transitionLock, layoutLock, showLock));
     };
     Slide.prototype.shapeAdd = function(pos, item)
     {

@@ -87,6 +87,7 @@ var gc_nMaxMantissa = Math.pow(10, gc_nMaxDigCount);
 var gc_aTimeFormats = ['[$-F400]h:mm:ss AM/PM', 'h:mm;@', 'h:mm AM/PM;@', 'h:mm:ss;@', 'h:mm:ss AM/PM;@', 'mm:ss.0;@',
 	'[h]:mm:ss;@'];
 var gc_aFractionFormats = ['# ?/?', '# ??/??', '# ???/???', '# ?/2', '# ?/4', '# ?/8', '# ??/16', '# ?/10', '# ??/100'];
+const dBNum1Numbers = ['\u3007','\u4E00','\u4E8C','\u4E09','\u56DB','\u4E94','\u516D','\u4E03','\u516B','\u4E5D'];
 
 var NumComporationOperators =
 {
@@ -653,7 +654,8 @@ function NumFormat(bAddMinusIfNes)
 	this.ComporationOperator = null;
 	this.LCID = null;
 	this.CurrencyString = null;
-    
+	this.DBNum = 0;
+
 	this.bGeneralChart = false;//если в формате только один текст(например в chart "Основной")
     this.bAddMinusIfNes = bAddMinusIfNes;//когда не задано форматирование для отрицательных чисел иногда надо вставлять минус
 }
@@ -1843,6 +1845,29 @@ NumFormat.prototype =
         }
         return aRes;
     },
+	_replaceDBNumDigit: function (val) {
+		//todo DBNum 1-4
+		if (1 !== this.DBNum) {
+			return val;
+		}
+		let locale = Asc.g_oLcidIdToNameMap[this.LCID];
+		if (!locale) {
+			return val;
+		}
+		locale = locale.substring(0, 2);
+		if ('zh' === locale || 'ja' === locale || 'ko' === locale) {
+			let dBNumVal = '';
+			for (let j = 0; j < val.length; ++j) {
+				if ('0' <= val[j] && val[j] <= '9') {
+					dBNumVal += dBNum1Numbers[val[j] - '0'];
+				} else {
+					dBNumVal += val[j];
+				}
+			}
+			val = dBNumVal;
+		}
+		return val;
+	},
     _AddDigItem : function(res, oCurText, item)
     {
         if(numFormat_Text == item.type)
@@ -1935,14 +1960,19 @@ NumFormat.prototype =
                     if (numFormat_Text == item.type) {
                         sText += item.val;
                     } else if (numFormat_Bracket == item.type) {
-                        if (null != item.CurrencyString) {
-							this.bCurrency = true;
-							this.CurrencyString = item.CurrencyString;
-                            sText += item.CurrencyString;
-                        }
-						if (null != item.Lid) {
-							//Excel sometimes add 0x10000(0x442 and 0x10442)
-							this.LCID = parseInt(item.Lid, 16) & 0xFFFF;
+						let dbnum = item.val.match(/DBNum(\d)/);
+						if (dbnum) {
+							this.DBNum = parseInt(dbnum[1]);
+						} else {
+							if (null != item.CurrencyString) {
+								this.bCurrency = true;
+								this.CurrencyString = item.CurrencyString;
+								sText += item.CurrencyString;
+							}
+							if (null != item.Lid) {
+								//Excel sometimes add 0x10000(0x442 and 0x10442)
+								this.LCID = parseInt(item.Lid, 16) & 0xFFFF;
+							}
 						}
                     }
                     else if (numFormat_DecimalPoint == item.type) {
@@ -2398,8 +2428,10 @@ NumFormat.prototype =
 		var nLen = 0;
 		for(var i = 0; i < res.length; ++i){
 			var elem = res[i];
-			if(elem.text)
+			if (elem.text) {
+				elem.text = this._replaceDBNumDigit(elem.text);
 				nLen += elem.text.length;
+			}
 		}
 		if(nLen > Asc.c_oAscMaxColumnWidth){
 			var oNewFont = new AscCommonExcel.Font();
@@ -2516,6 +2548,10 @@ NumFormat.prototype =
 				case NumComporationOperators.lessorequal: res += "[<=" + this.ComporationOperator.operatorValue +"]";break;
 				case NumComporationOperators.notequal: res += "[<>" + this.ComporationOperator.operatorValue +"]";break;
 			}
+		}
+		if (this.DBNum > 0)
+		{
+			res += '[DBNum' + this.DBNum + ']';
 		}
 
         var nFormatLength = this.aRawFormat.length;    

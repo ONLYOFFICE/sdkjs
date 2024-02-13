@@ -874,6 +874,9 @@
 			g_fontApplication.LoadFont = g_fontApplication.LoadFontWithEmbed;
 			
 			AscCommon.g_oIdCounter.Set_Load(false); // to do возможно не тут стоит выключать флаг
+
+			if (this.file && !this.file.isNeedPassword() && !this.file.isValid())
+				this.Api.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationOpenError, Asc.c_oAscError.Level.Critical);
 		};
 		this.close = function()
 		{
@@ -2530,9 +2533,7 @@
 				return;
 
 			let ctx = this.canvas.getContext("2d");
-			ctx.strokeStyle = AscCommon.GlobalSkin.PageOutline;
 			let lineW = AscCommon.AscBrowser.retinaPixelRatio >> 0;
-			ctx.lineWidth = lineW;
 
 			let yPos = this.scrollY >> 0;
 			let yMax = yPos + this.height;
@@ -2581,6 +2582,10 @@
 				return;
 
 			this.canvas.width = this.canvas.width;
+
+			ctx.strokeStyle = AscCommon.GlobalSkin.PageOutline;
+			ctx.lineWidth = lineW;
+
 			this.pageDetector = new CCurrentPageDetector(this.canvas.width, this.canvas.height);
 
 			let oDrDoc = oDoc.GetDrawingDocument();
@@ -3112,7 +3117,7 @@
 
 			if (e.KeyCode === 8) // BackSpace
 			{
-				if (oDoc.activeForm && oDoc.activeForm.IsEditable())
+				if (oDoc.activeForm && oDoc.activeForm.IsCanEditText())
 				{
 					oDoc.activeForm.Remove(-1, e.CtrlKey == true);
 					if (oDoc.activeForm.IsNeedRecalc())
@@ -3139,18 +3144,22 @@
 			else if (e.KeyCode === 13 && e.ShiftKey == false) // Enter
 			{
 				window.event.stopPropagation();
-				if (this.doc.activeForm && this.doc.activeForm.IsEditable() && this.doc.activeForm.IsMultiline && this.doc.activeForm.IsMultiline())
+				if (this.doc.activeForm) {
+					if (this.doc.activeForm.GetType() == AscPDF.FIELD_TYPES.text && this.doc.activeForm.IsCanEditText() && this.doc.activeForm.IsMultiline())
 					this.Api.asc_enterText([13]);
 				else
 					this.doc.EnterDownActiveField(oDoc.activeForm);
+				}
 			}
 			else if (e.KeyCode === 13 && e.ShiftKey == true) // Enter
 			{
 				window.event.stopPropagation();
-				if (this.doc.activeForm && this.doc.activeForm.IsEditable() && this.doc.activeForm.IsMultiline && this.doc.activeForm.IsMultiline())
-					this.Api.asc_enterText([13]);
-				else
-					this.doc.EnterDownActiveField(oDoc.activeForm);
+				if (this.doc.activeForm) {
+					if (this.doc.activeForm.GetType() == AscPDF.FIELD_TYPES.text && this.doc.activeForm.IsCanEditText() && this.doc.activeForm.IsMultiline())
+						this.Api.asc_enterText([13]);
+					else
+						this.doc.EnterDownActiveField();
+				}
 			}
 			else if (e.KeyCode === 27) // Esc
 			{
@@ -3236,7 +3245,7 @@
 			}
 			else if ( e.KeyCode == 37 ) // Left Arrow
 			{
-				if (oDoc.activeForm && (oDoc.activeForm.IsEditable() || oDoc.activeForm.GetType() == AscPDF.FIELD_TYPES.combobox))
+				if (oDoc.activeForm && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oDoc.activeForm.GetType()))
 				{
 					// сбрасываем счетчик до появления курсора
 					if (true !== e.ShiftKey)
@@ -3313,7 +3322,7 @@
 			}
 			else if ( e.KeyCode == 39 ) // Right Arrow
 			{	
-				if (oDoc.activeForm && (oDoc.activeForm.IsEditable() || oDoc.activeForm.GetType() == AscPDF.FIELD_TYPES.combobox))
+				if (oDoc.activeForm && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oDoc.activeForm.GetType()))
 				{
 					// сбрасываем счетчик до появления курсора
 					if (true !== e.ShiftKey)
@@ -3392,7 +3401,7 @@
 			{
 				let oDoc = this.getPDFDoc();
 
-				if (oDoc.activeForm && oDoc.activeForm.IsEditable())
+				if (oDoc.activeForm && oDoc.activeForm.IsCanEditText())
 				{
 					oDoc.activeForm.Remove(1, e.CtrlKey == true);
 					if (oDoc.activeForm._needRecalc)
@@ -4145,7 +4154,10 @@
 			
 			if (aPages[i].annots) {
 				for (let nAnnot = 0; nAnnot < aPages[i].annots.length; nAnnot++) {
-					aPages[i].annots[nAnnot].WriteToBinary && aPages[i].annots[nAnnot].IsChanged() && aPages[i].annots[nAnnot].WriteToBinary(oMemory);
+					aPages[i].annots[nAnnot].IsChanged() && aPages[i].annots[nAnnot].WriteToBinary(oMemory);
+					aPages[i].annots[nAnnot].GetReplies().forEach(function(reply) {
+						reply.IsChanged() && reply.WriteToBinary(oMemory); 
+					});
 				}
 			}
 

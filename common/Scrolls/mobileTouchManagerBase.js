@@ -288,14 +288,14 @@
 
 		var selectionBounds = this.LogicDocument.GetSelectionBounds();
 		var eps = 0.0001;
-		if ((selectionBounds && selectionBounds.Start && selectionBounds.End &&
-			(Math.abs(selectionBounds.Start.W) > eps) &&
-			(Math.abs(selectionBounds.End.W) > eps)) || this.LogicDocument.IsNumberingSelection())
+		if (selectionBounds && selectionBounds.Start && selectionBounds.End &&
+			((Math.abs(selectionBounds.Start.W) > eps) || (Math.abs(selectionBounds.End.W) > eps) || Math.abs(selectionBounds.Start.X - selectionBounds.End.X) > eps) ||
+			this.LogicDocument.IsNumberingSelection())
 		{
             _mode = AscCommon.MobileTouchContextMenuType.Select;
         }
 
-		if (_mode == 0 && this.LogicDocument.DrawingObjects.getSelectedObjectsBounds())
+		if (_mode === 0 && this.LogicDocument.DrawingObjects.getSelectedObjectsBounds())
 			_mode = AscCommon.MobileTouchContextMenuType.Object;
 
 		return _mode;

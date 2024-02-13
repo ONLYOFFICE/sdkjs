@@ -182,8 +182,10 @@ var CPresentation = CPresentation || function(){};
                 oParent.SetApIdx(aParentsInfo[i]["i"]);
             if (aParentsInfo[i]["curIdxs"])
                 oParent.SetApiCurIdxs(aParentsInfo[i]["curIdxs"]);
-            oParents[nIdx] = oParent;
+            if (aParentsInfo[i]["Opt"] && oParent instanceof AscPDF.CBaseCheckBoxField)
+                oParent.SetOptions(aParentsInfo[i]["Opt"]);
 
+            oParents[nIdx] = oParent;
             this.rootFields.set(oParent.GetPartialName(), oParent);
             this.widgetsParents.push(oParent);
         }
@@ -197,11 +199,17 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.OnAfterFillFormsParents = function() {
         let bInberitValue = false;
         let value;
+
+        let aRadios = []; // обновляем состояние радиокнопок в конце
+
         for (let i = 0; i < this.widgets.length; i++) {
             let oField = this.widgets[i];
             if ((oField.GetPartialName() == null || oField.GetApiValue(bInberitValue) == null) && oField.GetParent()) {
                 let oParent = oField.GetParent();
-                value = oParent.GetApiValue();
+                if (oParent.GetType() == AscPDF.FIELD_TYPES.radiobutton && oParent.IsAllKidsWidgets())
+                    aRadios.push(oParent);
+
+                value = oParent.GetApiValue(false);
                 if (value != null && value.toString) {
                     value = value.toString();
                 }
@@ -210,10 +218,15 @@ var CPresentation = CPresentation || function(){};
                     oField.SetCurIdxs(oParent._currentValueIndices);
                 }
                 else {
-                    oField.SetValue(value, true);
+                    if (oField.GetType() !== AscPDF.FIELD_TYPES.radiobutton)
+                        oField.SetValue(value, true);
                 }
             }
         }
+
+        aRadios.forEach(function(field) {
+            field.GetKid(0).UpdateAll();
+        });
     };
     CPDFDoc.prototype.FillButtonsIconsOnOpen = function() {
         let oViewer = editor.getDocumentRenderer();
@@ -442,6 +455,9 @@ var CPresentation = CPresentation || function(){};
                 oCurForm.SetDrawFromStream(true);
             }
 
+            if (oCurForm.IsNeedRevertShiftView()) {
+                oCurForm.RevertContentViewToOriginal();
+            }
             oCurForm.SetDrawHighlight(true);
             oCurForm.Blur();
             oCurForm.UpdateScroll && oCurForm.UpdateScroll(false);
@@ -538,6 +554,9 @@ var CPresentation = CPresentation || function(){};
                 oCurForm.SetDrawFromStream(true);
             }
 
+            if (oCurForm.IsNeedRevertShiftView()) {
+                oCurForm.RevertContentViewToOriginal();
+            }
             oCurForm.SetDrawHighlight(true);
             oCurForm.Blur();
             oCurForm.UpdateScroll && oCurForm.UpdateScroll(false);
@@ -615,6 +634,9 @@ var CPresentation = CPresentation || function(){};
         let oViewer = editor.getDocumentRenderer();
         let oField = this.activeForm;
 
+        if (!oField)
+            return;
+        
         if (oField.IsNeedDrawHighlight())
             return;
 
@@ -1325,7 +1347,8 @@ var CPresentation = CPresentation || function(){};
     };
 
     CPDFDoc.prototype.DoCalculateFields = function(oSourceField) {
-		
+        this.TurnOffHistory();
+        
         // при изменении любого поля (с коммитом) вызывается calculate у всех
         let oThis = this;
         this.calculateInfo.SetIsInProgress(true);
@@ -1345,7 +1368,6 @@ var CPresentation = CPresentation || function(){};
             let oActionRunScript = oCalcTrigget ? oCalcTrigget.GetActions()[0] : null;
 
             if (oActionRunScript) {
-                oThis.activeForm = oField;
                 // oField.Recalculate();
                 oActionRunScript.RunScript();
                 if (oField.IsNeedCommit()) {
@@ -2159,7 +2181,6 @@ var CPresentation = CPresentation || function(){};
         let oActionsQueue = this.GetActionsQueue();
         let oThis = this;
 
-        let aReseted = [];
         if (aNames.length > 0) {
             if (bAllExcept) {
                 for (let nField = 0; nField < this.widgets.length; nField++) {
@@ -2170,7 +2191,7 @@ var CPresentation = CPresentation || function(){};
             }
             else {
                 aNames.forEach(function(name) {
-                    let aFields = oThis.GetFields(name);
+                    let aFields = oThis.GetAllWidgets(name);
                     if (aFields.length > 0)
                         AscCommon.History.Clear()
     
@@ -2204,7 +2225,7 @@ var CPresentation = CPresentation || function(){};
 
         if (aNames.length > 0) {
             aNames.forEach(function(name) {
-                let aFields = oThis.GetFields(name);
+                let aFields = oThis.GetAllWidgets(name);
                 aFields.forEach(function(field) {
                     if (bHidden)
                         field.SetDisplay(window["AscPDF"].Api.Objects.display["hidden"]);
@@ -2269,12 +2290,12 @@ var CPresentation = CPresentation || function(){};
     };
 
     /**
-	 * Returns array with widjets fields by specified name.
+	 * Returns array with widgets fields by specified name.
 	 * @memberof CPDFDoc
 	 * @typeofeditors ["PDF"]
 	 * @returns {boolean}
 	 */
-    CPDFDoc.prototype.GetFields = function(sName) {
+    CPDFDoc.prototype.GetAllWidgets = function(sName) {
         let aFields = [];
         for (let i = 0; i < this.widgets.length; i++) {
             if (this.widgets[i].GetFullName() == sName)
@@ -2313,6 +2334,12 @@ var CPresentation = CPresentation || function(){};
 	 * @returns {?CBaseField}
 	 */
     CPDFDoc.prototype.GetField = function(sName) {
+        for (let i = 0; i < this.widgetsParents.length; i++) {
+            if (this.widgetsParents[i].GetFullName() == sName) {
+                return this.widgetsParents[i];
+            }
+        }
+
         let aPartNames = sName.split('.').filter(function(item) {
             if (item != "")
                 return item;
@@ -2327,12 +2354,6 @@ var CPresentation = CPresentation || function(){};
             sPartName += "." + aPartNames[i + 1];
         }
 
-        for (let i = 0; i < this.widgetsParents.length; i++) {
-            if (this.widgetsParents[i].GetFullName() == sName) {
-                return this.widgetsParents[i];
-            }
-        }
-
         return null;
     };
 	
@@ -2345,6 +2366,9 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.Is_OnRecalculate = function() {
         return false;
     };
+	CPDFDoc.prototype.IsActionStarted = function() {
+		return false;
+	};
     CPDFDoc.prototype.GetSelectionState = function() {
         return null;
     };
@@ -2496,7 +2520,6 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (aMap.length == 0) {
-            this.fontLoaderCallbacks = [];
             return true;
         }
 

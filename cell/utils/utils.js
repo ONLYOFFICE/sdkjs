@@ -3811,7 +3811,9 @@
 		};
 
 		cDate.prototype.getDateFromExcelWithTime2 = function (val) {
-			return new cDate(val * c_msPerDay + this.getExcelNullDate());
+			let value = val * c_msPerDay + this.getExcelNullDate();
+			//double value is truncated in cDate constructor so use round
+			return new cDate(Math.round(value));
 		};
 
 		cDate.prototype.addYears = function (counts) {

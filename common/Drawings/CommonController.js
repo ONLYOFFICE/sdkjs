@@ -2331,6 +2331,7 @@
 							}
 						}
 					}
+					this.lastSelectedObject = null;
 				},
 
 				deselectObject: function (object) {
@@ -2338,6 +2339,9 @@
 						if (this.selectedObjects[i] === object) {
 							object.selected = false;
 							this.selectedObjects.splice(i, 1);
+							if(this.selectedObjects.length === 0) {
+								this.lastSelectedObject = object;
+							}
 							return;
 						}
 					}
@@ -2877,14 +2881,14 @@
 								this.selectedObjects[0].applyTextFunction(docContentFunction, tableFunction, args);
 								this.selection.textSelection.select(this, this.selection.textSelection.selectStartPage);
 							}
-						} else if (this.parent && this.parent.GoTo_Text) {
-							this.parent.GoTo_Text();
+						} else if (this.parent && this.parent.GoToText) {
+							this.parent.GoToText();
 							this.resetSelection();
 							if (this.document && (docpostype_DrawingObjects !== this.document.GetDocPosType() || isRealObject(getTargetTextObject(this.document.DrawingObjects))) && CDocumentContent.prototype.AddNewParagraph === docContentFunction) {
 								this.document.AddNewParagraph(args[0]);
 							}
-						} else if (this.selectedObjects.length > 0 && this.selectedObjects[0].parent && this.selectedObjects[0].parent.GoTo_Text) {
-							this.selectedObjects[0].parent.GoTo_Text();
+						} else if (this.selectedObjects.length > 0 && this.selectedObjects[0].parent && this.selectedObjects[0].parent.GoToText) {
+							this.selectedObjects[0].parent.GoToText();
 							this.resetSelection();
 							if (this.document && (docpostype_DrawingObjects !== this.document.GetDocPosType() || isRealObject(getTargetTextObject(this))) && CDocumentContent.prototype.AddNewParagraph === docContentFunction) {
 								this.document.AddNewParagraph(args[0]);
@@ -3529,8 +3533,8 @@
 				},
 
 				applyDrawingProps: function (props) {
-					var objects_by_type = this.getSelectedObjectsByTypes(true);
-					var i;
+					let objects_by_type = this.getSelectedObjectsByTypes(true);
+					let i;
 					if (AscFormat.isRealNumber(props.verticalTextAlign)) {
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
 							objects_by_type.shapes[i].setVerticalAlign(props.verticalTextAlign);
@@ -3854,62 +3858,47 @@
 							}
 						}
 					}
-					var oApi = editor || Asc['editor'];
+					var oApi = Asc.editor;
 					var editorId = oApi.getEditorId();
 					var bMoveFlag = true;
+
+
+
+					function fApplyDrawingSize(oSp, oPr) {
+						oSp.applyDrawingSize(oPr)
+						if (oSp.group) {
+							checkObjectInArray(aGroups, oSp.group.getMainGroup());
+						}
+					}
+
+					if(props.bSetOriginalSize) {
+						let aImages = objects_by_type.images;
+						for (let nImg = 0; nImg < aImages.length; ++nImg) {
+							let oImg = aImages[nImg];
+							let sUrl = oImg.getImageUrl();
+							if(sUrl) {
+								let oProps = new Asc.asc_CImgProperty();
+								oProps.ImageUrl = sUrl;
+								let oSize = oProps.asc_getOriginSize(oApi);
+								if(oSize.asc_getIsCorrect()) {
+									oProps.Width = oSize.asc_getImageWidth();
+									oProps.Height = oSize.asc_getImageHeight();
+									fApplyDrawingSize(oImg, oProps);
+								}
+							}
+						}
+					}
 					if (AscFormat.isRealNumber(props.Width) || AscFormat.isRealNumber(props.Height)) {
 
-						function fApplyDrawingSize(oSp) {
-							let oSpParent = oSp.parent;
-							let oXfrm = oSp.spPr.xfrm;
-							CheckSpPrXfrm3(oSp);
-							if (!props.SizeRelH && AscFormat.isRealNumber(props.Width)) {
-								oXfrm.setExtX(props.Width);
-								if (oSpParent instanceof AscCommonWord.ParaDrawing) {
-									oSpParent.SetSizeRelH({
-										RelativeFrom: c_oAscSizeRelFromH.sizerelfromhPage,
-										Percent: 0
-									});
-								}
-							}
-							if (!props.SizeRelV && AscFormat.isRealNumber(props.Height)) {
-								oXfrm.setExtY(props.Height);
-								if (oSpParent instanceof AscCommonWord.ParaDrawing) {
-									oSpParent.SetSizeRelV({
-										RelativeFrom: c_oAscSizeRelFromV.sizerelfromvPage,
-										Percent: 0
-									});
-								}
-							}
-							if (oSpParent instanceof AscCommonWord.ParaDrawing) {
-								if (oSpParent.SizeRelH && !oSpParent.SizeRelV) {
-									oSpParent.SetSizeRelV({
-										RelativeFrom: c_oAscSizeRelFromV.sizerelfromvPage,
-										Percent: 0
-									});
-								}
-								if (oSpParent.SizeRelV && !oSpParent.SizeRelH) {
-									oSpParent.SetSizeRelH({
-										RelativeFrom: c_oAscSizeRelFromH.sizerelfromhPage,
-										Percent: 0
-									});
-								}
-							}
-							oSp.ResetParametersWithResize(true);
-							if (oSp.group) {
-								checkObjectInArray(aGroups, oSp.group.getMainGroup());
-							}
-							oSp.checkDrawingBaseCoords();
-						}
 
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
-							fApplyDrawingSize(objects_by_type.shapes[i]);
+							fApplyDrawingSize(objects_by_type.shapes[i], props);
 						}
 						for (i = 0; i < objects_by_type.images.length; ++i) {
-							fApplyDrawingSize(objects_by_type.images[i]);
+							fApplyDrawingSize(objects_by_type.images[i], props);
 						}
 						for (i = 0; i < objects_by_type.charts.length; ++i) {
-							fApplyDrawingSize(objects_by_type.charts[i]);
+							fApplyDrawingSize(objects_by_type.charts[i], props);
 						}
 						for (i = 0; i < objects_by_type.smartArts.length; ++i) {
 							let oSmartArt = objects_by_type.smartArts[i];
@@ -3926,7 +3915,7 @@
 						}
 						for (i = 0; i < objects_by_type.oleObjects.length; ++i) {
 							let oOleObject = objects_by_type.oleObjects[i];
-							fApplyDrawingSize(oOleObject);
+							fApplyDrawingSize(oOleObject, props);
 							var api = window.editor || window["Asc"]["editor"];
 							if (api) {
 								var pluginData = new Asc.CPluginData();
@@ -6322,19 +6311,19 @@
 						this.checkChartTextSelection();
 					}
 					this.resetInternalSelection(noResetContentSelect, bDoNotRedraw);
-					for (var i = 0; i < this.selectedObjects.length; ++i) {
-						this.selectedObjects[i].selected = false;
+					let aSelected = [].concat(this.selectedObjects);
+					for (let nDrawing = 0; nDrawing < aSelected.length; ++nDrawing) {
+						this.deselectObject(aSelected[nDrawing]);
 					}
 					this.selectedObjects.length = 0;
-					this.selection =
-						{
+					this.selection = {
 							selectedObjects: [],
 							groupSelection: null,
 							chartSelection: null,
 							textSelection: null,
 							cropSelection: null,
 							geometrySelection: null
-						};
+					};
 					if (bNoCheckAnim !== true) {
 						this.onChangeDrawingsSelection();
 					}

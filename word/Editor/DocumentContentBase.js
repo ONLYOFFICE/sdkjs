@@ -1534,8 +1534,9 @@ CDocumentContentBase.prototype.GetTablesOfFigures = function(arrComplexFields)
 /**
  * Добавляем заданный текст в текущей позиции
  * @param {String} sText
+ * @param {AscWord.CTextPr} textPr
  */
-CDocumentContentBase.prototype.AddText = function(sText)
+CDocumentContentBase.prototype.AddText = function(sText, textPr)
 {
 	if (this.IsSelectionUse())
 		this.Remove(1, true, false, true, false);
@@ -1544,12 +1545,14 @@ CDocumentContentBase.prototype.AddText = function(sText)
 	if (!oParagraph)
 		return;
 
-	var oTextPr = oParagraph.GetDirectTextPr();
-	if (!oTextPr)
-		oTextPr = new CTextPr();
-
+	if (!textPr)
+		textPr = oParagraph.GetDirectTextPr();
+	
 	var oRun = new ParaRun(oParagraph);
-	oRun.SetPr(oTextPr);
+	
+	if (textPr)
+		oRun.SetPr(textPr);
+	
 	oRun.AddText(sText);
 	oParagraph.Add(oRun);
 };
@@ -2645,6 +2648,20 @@ CDocumentContentBase.prototype.GetSelectedParagraphs = function()
 	
 	return logicDocument.GetSelectedParagraphs();
 };
+CDocumentContentBase.prototype.setSelectionStateSilent = function(state)
+{
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && !logicDocument.IsDocumentEditor())
+		logicDocument = null;
+
+	if (logicDocument)
+		logicDocument.Start_SilentMode();
+	
+	this.SetSelectionState(state);
+	
+	if (logicDocument)
+		logicDocument.End_SilentMode(false);
+};
 CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action)
 {
 	if (!prevState)
@@ -2661,10 +2678,10 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 	let obj  = {};
 	let type = AscCommon.SpeechWorkerCommands.Text;
 	
-	this.SetSelectionState(prevState);
+	this.setSelectionStateSilent(prevState);
 	let prevInfo = this.getSelectionInfo();
 	
-	this.SetSelectionState(curState);
+	this.setSelectionStateSilent(curState);
 	let curInfo = this.getSelectionInfo();
 	
 	let isActionSelectionChange = action && action.type === AscCommon.SpeakerActionType.keyDown && action.event.ShiftKey;
@@ -2698,10 +2715,10 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 		if (prevInfo.isSelection && !curInfo.isSelection && isActionSelectionChange)
 		{
 			obj.cancelSelection = true;
-			this.SetSelectionState(prevState);
+			this.setSelectionStateSilent(prevState);
 			type     = AscCommon.SpeechWorkerCommands.TextUnselected;
 			obj.text = this.GetSelectedText(false);
-			this.SetSelectionState(curState);
+			this.setSelectionStateSilent(curState);
 		}
 		else if (!curInfo.isSelection || 0 === AscWord.CompareDocumentPositions(curInfo.selectionStart, curInfo.selectionEnd))
 		{
@@ -2712,10 +2729,10 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 			{
 				if (prevInfo.isSelection && 0 !== AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd))
 				{
-					this.SetSelectionState(prevState);
+					this.setSelectionStateSilent(prevState);
 					type     = AscCommon.SpeechWorkerCommands.TextUnselected;
 					obj.text = this.GetSelectedText(false);
-					this.SetSelectionState(curState);
+					this.setSelectionStateSilent(curState);
 				}
 				else
 				{
@@ -2782,10 +2799,10 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 							&& AscWord.CompareDocumentPositions(prevInfo.selectionStart, curInfo.selectionEnd) < 0)))
 				{
 					// TODO: Нужно ли посылать два ивента?
-					// this.SetSelectionState(prevState);
+					// this.setSelectionStateSilent(prevState);
 					// type     = AscCommon.SpeechWorkerCommands.TextUnselected;
 					// obj.text = this.GetSelectedText(false);
-					// this.SetSelectionState(curState);
+					// this.setSelectionStateSilent(curState);
 					
 					type     = AscCommon.SpeechWorkerCommands.TextSelected;
 					obj.text = this.GetSelectedText(false);
@@ -2803,7 +2820,7 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 					type     = isAdd ? AscCommon.SpeechWorkerCommands.TextSelected : AscCommon.SpeechWorkerCommands.TextUnselected;
 					obj.text = this.GetSelectedText(false);
 					
-					this.SetSelectionState(curState);
+					this.setSelectionStateSilent(curState);
 				}
 			}
 		}
