@@ -15660,6 +15660,28 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
+	ExternalCell.prototype.getFormulaValue = function () {
+		let res;
+
+		switch (this.CellType) {
+			case CellValueType.String:
+				res = new AscCommonExcel.cString(this.CellValue);
+				break;
+			case CellValueType.Bool:
+				res = new AscCommonExcel.cBool(this.CellValue);
+				break;
+			case CellValueType.Error:
+				res = new AscCommonExcel.cError(this.CellValue);
+				break;
+			case CellValueType.Number:
+			default:
+				res = new AscCommonExcel.cNumber(this.CellValue);
+				break;
+		}
+
+		return res;
+	};
+
 	function ExternalDefinedName() {
 		this.Name = null;
 		this.RefersTo = null;
@@ -15708,6 +15730,7 @@ function RangeDataManagerElem(bbox, data)
 
 		return newObj;
 	};
+
 
 	//CellWatch
 	function CCellWatch(ws) {

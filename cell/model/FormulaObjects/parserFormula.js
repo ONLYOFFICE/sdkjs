@@ -6949,7 +6949,7 @@ function parserFormula( formula, parent, _ws ) {
 						startArrayFunc = true;
 					}
 
-					if (found_operator.name === "IMPORTRANGE") {
+					if (found_operator.name === "IMPORTRANGE" && window.importRangeAsUpdateER) {
 						isFoundImportFunctions = true;
 					}
 

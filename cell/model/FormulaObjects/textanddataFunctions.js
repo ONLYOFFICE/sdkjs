@@ -1195,12 +1195,9 @@ function (window, undefined) {
 
 		//window.startBuildImportRangeLinks
 
-
-
 		let arg0 = arg[0], arg1 = arg[1];
 
-		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type
-		|| cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type || cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
 			return new cError(cErrorType.not_available);
 		}
 
@@ -1243,44 +1240,37 @@ function (window, undefined) {
 			let api = window["Asc"]["editor"];
 			let wb = api && api.wbModel;
 			let eR = wb && wb.getExternalLinkByName(arg0.toString());
+			let ret = new cArray();
 			if (eR) {
 				let externalWs = eR.worksheets[is3DRef.sheet];
 				if (externalWs) {
 					let bbox = AscCommonExcel.g_oRangeCache.getRangesFromSqRef(is3DRef.range)[0];
 
 					if (is3DRef.sheet) {
-						var index = eR.getSheetByName(is3DRef.sheet);
+						let index = eR.getSheetByName(is3DRef.sheet);
 						if (index != null) {
-							var externalSheetDataSet = eR.SheetDataSet[index];
-							/*if (!externalSheetDataSet) {
-								externalSheetDataSet = new ExternalSheetDataSet();
-								externalSheetDataSet.SheetId = eR.SheetNames.length - 1;
-								eR.SheetDataSet.push(externalSheetDataSet);
-							}*/
-
-							var ret = new cArray();
-							for (var i = bbox.r1; i <= bbox.r2; i++) {
-								var row = externalSheetDataSet.getRow(i + 1);
+							let externalSheetDataSet = eR.SheetDataSet[index];
+							for (let i = bbox.r1; i <= bbox.r2; i++) {
+								let row = externalSheetDataSet.getRow(i + 1);
 								if (!row) {
 									continue;
 								}
 								if (!ret.array[i - bbox.r1]) {
 									ret.addRow();
 								}
-								for (var j = bbox.c1; j <= bbox.c2; j++) {
+								for (let j = bbox.c1; j <= bbox.c2; j++) {
 									let externalCell = row.getCell(j);
-									ret.addElement(new cString(externalCell.CellValue));
+									let cellValue = externalCell.getFormulaValue();
+									ret.addElement(cellValue);
 								}
 							}
 						}
 					}
 					return ret;
 				}
-
 			}
 			return new cError(cErrorType.bad_reference);
 		}
-
 	};
 
 	/**
