@@ -18780,8 +18780,10 @@ Paragraph.prototype.getLayoutFontSizeCoefficient = function()
 	if (drawing)
 		return drawing.GetScaleCoefficient();
 	
-	if (this.IsTableCellContent())
-		return this.getLayoutScaleCoefficient();
+	// TODO: В MSWord в режиме readmode не скейлится размер шрифта вне таблицы, а уменьшается вместе с самой таблицой
+	//       у нас пока было решено скейлить текст в таблицах и вне таблицы одинаково
+	// if (this.IsTableCellContent())
+	// 	return this.getLayoutScaleCoefficient();
 	
 	return logicDocument.GetDocumentLayout().GetFontScale();
 };

@@ -16500,7 +16500,7 @@ CDocument.prototype.SetDocumentPrintMode = function()
 	
 	this.GetAllTables().forEach(function(table)
 	{
-		table.RecalcCompiledPr();
+		table.Recalc_CompiledPr();
 	});
 
 	this.RecalculateFromStart(true);
