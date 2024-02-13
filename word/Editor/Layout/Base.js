@@ -165,11 +165,11 @@
 		return 1;
 	};
 	/**
-	 * @returns {boolean}
+	 * @returns {number}
 	 */
-	CDocumentLayoutBase.prototype.isZeroIndents = function()
+	CDocumentLayoutBase.prototype.calculateIndent = function(ind, sectPr)
 	{
-		return false;
+		return ind;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.CDocumentLayoutBase = CDocumentLayoutBase;
