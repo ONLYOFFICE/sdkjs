@@ -12736,6 +12736,8 @@
 			userId = oApi.DocInfo && oApi.DocInfo.get_UserId();
 		}
 
+		oCell = {col: oCell.nCol, row: oCell.nRow};
+
 		if (this.userProtectedRanges && userId) {
 			for (let i = 0; i < this.userProtectedRanges.length; i++) {
 				let curUserProtectedRange = this.userProtectedRanges[i];
@@ -12758,13 +12760,13 @@
 			userId = oApi.DocInfo && oApi.DocInfo.get_UserId();
 		}
 
+		oCell = {col: oCell.nCol, row: oCell.nRow};
+
 		if (this.userProtectedRanges && userId) {
 			for (let i = 0; i < this.userProtectedRanges.length; i++) {
 				let curUserProtectedRange = this.userProtectedRanges[i];
-				if (curUserProtectedRange.asc_getHideContent()) {
-					if (curUserProtectedRange.contains2(oCell) && !curUserProtectedRange.isUserCanEdit(userId)) {
-						return false;
-					}
+				if (curUserProtectedRange.contains2(oCell) && !curUserProtectedRange.isUserCanView(userId)) {
+					return false;
 				}
 			}
 		}

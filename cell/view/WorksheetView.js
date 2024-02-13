@@ -8070,7 +8070,7 @@
         }
 
         let c = this._getCell(col, row);
-        if (null === c) {
+        if (null === c || !this.model.isUserProtectedRangesCanView({nCol: col, nRow: row})) {
             return col;
         }
 
@@ -8081,13 +8081,6 @@
             showFormulas = true;
         }
         let getValue2Func = showFormulas ? c.getValueForEdit2 : c.getValue2;
-
-		if (!this.model.isUserProtectedRangesCanView()) {
-			getValue2Func = function () {
-				return "";
-			};
-		}
-
         let str, tm, strCopy;
 
         // Range для замерженной ячейки
