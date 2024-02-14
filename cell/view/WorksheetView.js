@@ -18867,29 +18867,7 @@
 
 			//проверим, нет ли новых ссылок на внешние данные
 			if (parseResult.externalReferenesNeedAdd) {
-				var newExternalReferences = [];
-				for (var i in parseResult.externalReferenesNeedAdd) {
-					var newExternalReference = new AscCommonExcel.ExternalReference();
-					//newExternalReference.referenceData = referenceData;
-					newExternalReference.Id = i;
-
-					for (var j = 0; j < parseResult.externalReferenesNeedAdd[i].length; j++) {
-						var oNewSheet = parseResult.externalReferenesNeedAdd[i][j];
-						let newSheet = oNewSheet.sheet;
-						newExternalReference.addSheetName(newSheet, true);
-						newExternalReference.initWorksheetFromSheetDataSet(newSheet);
-						if (oNewSheet.notUpdateId) {
-							newExternalReference.notUpdateId = true;
-						}
-					}
-
-
-					newExternalReferences.push(newExternalReference);
-				}
-
-				//добавляем внешние данные
-				//TODO lock не далаю, а надо бы
-				t.model.workbook.addExternalReferences(newExternalReferences);
+				t.model.workbook.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
 			}
 
 

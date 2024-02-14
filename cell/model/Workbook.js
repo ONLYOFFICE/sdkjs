@@ -4867,6 +4867,29 @@
 		return null;
 	};
 
+	Workbook.prototype.addExternalReferencesAfterParseFormulas = function (externalReferenesNeedAdd) {
+		let newExternalReferences = [];
+		for (let i in externalReferenesNeedAdd) {
+			let newExternalReference = new AscCommonExcel.ExternalReference();
+			//newExternalReference.referenceData = referenceData;
+			newExternalReference.Id = i;
+
+			for (let j = 0; j < externalReferenesNeedAdd[i].length; j++) {
+				let oNewSheet = externalReferenesNeedAdd[i][j];
+				let newSheet = oNewSheet.sheet;
+				newExternalReference.addSheetName(newSheet, true);
+				newExternalReference.initWorksheetFromSheetDataSet(newSheet);
+				if (oNewSheet.notUpdateId) {
+					newExternalReference.notUpdateId = true;
+				}
+			}
+
+			newExternalReferences.push(newExternalReference);
+		}
+
+		this.addExternalReferences(newExternalReferences);
+	};
+
 	Workbook.prototype.unlockUserProtectedRanges = function(){
 		this.forEach(function (ws) {
 			ws.unlockUserProtectedRanges();

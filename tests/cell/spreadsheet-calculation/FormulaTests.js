@@ -30733,5 +30733,48 @@ $(function () {
 		ws.getRange2("A1:Z10000").cleanAll();
 	});
 
+	QUnit.test("Test: \"External reference test: importRange function\"", function (assert) {
+
+		oParser = new parserFormula('IMPORTRANGE("http://localhost/editor?fileName=new%20(51).xlsx&userid=uid-1&lang=en&directUrl=false","Sheet1!A1")', 'A2', ws);
+		assert.ok(oParser.parse(), 'IMPORTRANGE("http://localhost/editor?fileName=new%20(51).xlsx&userid=uid-1&lang=en&directUrl=false","Sheet1!A1")');
+
+		//wb.addExternalReferencesAfterParseFormulas();
+
+		assert.strictEqual(oParser.calculate().getValue(), "#REF!", 'IMPORTRANGE_1');
+
+
+
+
+		//проверим, нет ли новых ссылок на внешние данные
+		/*if (parseResult.externalReferenesNeedAdd) {
+			var newExternalReferences = [];
+			for (var i in parseResult.externalReferenesNeedAdd) {
+				var newExternalReference = new AscCommonExcel.ExternalReference();
+				//newExternalReference.referenceData = referenceData;
+				newExternalReference.Id = i;
+
+				for (var j = 0; j < parseResult.externalReferenesNeedAdd[i].length; j++) {
+					var oNewSheet = parseResult.externalReferenesNeedAdd[i][j];
+					let newSheet = oNewSheet.sheet;
+					newExternalReference.addSheetName(newSheet, true);
+					newExternalReference.initWorksheetFromSheetDataSet(newSheet);
+					if (oNewSheet.notUpdateId) {
+						newExternalReference.notUpdateId = true;
+					}
+				}
+
+
+				newExternalReferences.push(newExternalReference);
+			}
+
+			//добавляем внешние данные
+			//TODO lock не далаю, а надо бы
+			t.model.workbook.addExternalReferences(newExternalReferences);
+		}*/
+
+		//check external reference added
+
+	});
+
 	wb.dependencyFormulas.unlockRecal();
 });
