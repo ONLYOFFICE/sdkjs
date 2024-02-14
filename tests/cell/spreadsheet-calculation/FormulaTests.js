@@ -626,6 +626,8 @@ $(function () {
 		wb.maxDigitWidth = 7;
 		wb.paddingPlusBorder = 5;
 
+		api.wbModel = wb;
+
 		AscCommon.g_oTableId.init();
 		if (this.User) {
 			g_oIdCounter.Set_UserId(this.User.asc_getId());
@@ -30735,45 +30737,35 @@ $(function () {
 
 	QUnit.test("Test: \"External reference test: importRange function\"", function (assert) {
 
-		oParser = new parserFormula('IMPORTRANGE("http://localhost/editor?fileName=new%20(51).xlsx&userid=uid-1&lang=en&directUrl=false","Sheet1!A1")', 'A2', ws);
-		assert.ok(oParser.parse(), 'IMPORTRANGE("http://localhost/editor?fileName=new%20(51).xlsx&userid=uid-1&lang=en&directUrl=false","Sheet1!A1")');
-
-		//wb.addExternalReferencesAfterParseFormulas();
-
-		assert.strictEqual(oParser.calculate().getValue(), "#REF!", 'IMPORTRANGE_1');
-
-
-
-
-		//проверим, нет ли новых ссылок на внешние данные
-		/*if (parseResult.externalReferenesNeedAdd) {
-			var newExternalReferences = [];
-			for (var i in parseResult.externalReferenesNeedAdd) {
-				var newExternalReference = new AscCommonExcel.ExternalReference();
-				//newExternalReference.referenceData = referenceData;
-				newExternalReference.Id = i;
-
-				for (var j = 0; j < parseResult.externalReferenesNeedAdd[i].length; j++) {
-					var oNewSheet = parseResult.externalReferenesNeedAdd[i][j];
-					let newSheet = oNewSheet.sheet;
-					newExternalReference.addSheetName(newSheet, true);
-					newExternalReference.initWorksheetFromSheetDataSet(newSheet);
-					if (oNewSheet.notUpdateId) {
-						newExternalReference.notUpdateId = true;
-					}
+		let initReference = function (eR, sheetName, range, val) {
+			range = AscCommonExcel.g_oRangeCache.getAscRange(range);
+			let externalSheetDataSet = eR.getSheetDataSetByName(sheetName);
+			for (let i = range.r1; i <= range.r2; i++) {
+				let row = externalSheetDataSet.getRow(i + 1, true);
+				for (let j = range.c1; j <= range.c2; j++) {
+					let cell = row.getCell(j, true);
+					cell.CellValue = val[i][j];
 				}
-
-
-				newExternalReferences.push(newExternalReference);
 			}
+		};
 
-			//добавляем внешние данные
-			//TODO lock не далаю, а надо бы
-			t.model.workbook.addExternalReferences(newExternalReferences);
-		}*/
+		let parseResult = new AscCommonExcel.ParseResult([]);
+		oParser = new parserFormula('IMPORTRANGE("http://localhost/editor?fileName=new%20(51).xlsx&userid=uid-1&lang=en&directUrl=false","Sheet1!A1")', 'A2', ws);
+		assert.ok(oParser.parse(null, null, parseResult), 'IMPORTRANGE("http://localhost/editor?fileName=new%20(51).xlsx&userid=uid-1&lang=en&directUrl=false","Sheet1!A1")');
+		let res = oParser.calculate().getValue();
+		assert.strictEqual(res, "#REF!", 'IMPORTRANGE_1');
 
-		//check external reference added
+		assert.strictEqual(wb.externalReferences.length, 0, 'IMPORTRANGE_1_external_reference_length_before_add');
+		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_after_add');
 
+		res = oParser.calculate();
+		let dimension = res.getDimensions();
+		assert.strictEqual(dimension.row, 0, 'IMPORTRANGE_1_after_add_references_row_count');
+
+		initReference(wb.externalReferences[0], "Sheet1", "A1", [[1000]]);
+		res = oParser.calculate();
+		assert.strictEqual(res.getElementRowCol(0, 0).getValue(), 1000, 'IMPORTRANGE_1_AFTER_INIT');
 	});
 
 	wb.dependencyFormulas.unlockRecal();
