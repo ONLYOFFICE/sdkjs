@@ -42,7 +42,7 @@
 	{
 		this.FullDate   = (new Date()).toISOString().slice(0, 19) + 'Z';
 		this.LangId     = 1033;
-		this.DateFormat = "dd.MM.yyyy";
+		this.DateFormat = "mm/dd/yyyy";
 		this.Calendar   = Asc.c_oAscCalendarType.Gregorian;
 		
 		// Специальный параметр, чтобы при выставлении значения из интерфейса, но не из календаря мы помечали, что реально дата не проставлена
