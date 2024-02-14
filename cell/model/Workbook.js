@@ -4807,7 +4807,7 @@
 	};
 
 	Workbook.prototype.addExternalReferences = function (arr) {
-		if (arr) {
+		if (arr && arr.length) {
 			for (var i = 0; i < arr.length; i++) {
 				this.externalReferences.push(arr[i]);
 				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
@@ -4870,21 +4870,31 @@
 	Workbook.prototype.addExternalReferencesAfterParseFormulas = function (externalReferenesNeedAdd) {
 		let newExternalReferences = [];
 		for (let i in externalReferenesNeedAdd) {
-			let newExternalReference = new AscCommonExcel.ExternalReference();
-			//newExternalReference.referenceData = referenceData;
-			newExternalReference.Id = i;
+			let needAdd = false;
+			let newExternalReference = this.getExternalReferenceById(i);
+			if (!newExternalReference) {
+				newExternalReference = new AscCommonExcel.ExternalReference();
+				newExternalReference.Id = i;
+				needAdd = true;
+			}
 
 			for (let j = 0; j < externalReferenesNeedAdd[i].length; j++) {
 				let oNewSheet = externalReferenesNeedAdd[i][j];
-				let newSheet = oNewSheet.sheet;
-				newExternalReference.addSheetName(newSheet, true);
-				newExternalReference.initWorksheetFromSheetDataSet(newSheet);
+				if (null === newExternalReference.getSheetByName(oNewSheet.sheet)) {
+					let newSheet = oNewSheet.sheet;
+					newExternalReference.addSheetName(newSheet, true);
+					newExternalReference.initWorksheetFromSheetDataSet(newSheet);
+				}
 				if (oNewSheet.notUpdateId) {
 					newExternalReference.notUpdateId = true;
 				}
 			}
 
-			newExternalReferences.push(newExternalReference);
+			if (needAdd) {
+				newExternalReferences.push(newExternalReference);
+			} else {
+				//this.changeExternalReference();
+			}
 		}
 
 		this.addExternalReferences(newExternalReferences);

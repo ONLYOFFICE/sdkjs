@@ -30766,6 +30766,10 @@ $(function () {
 		initReference(wb.externalReferences[0], "Sheet1", "A1", [[1000]]);
 		res = oParser.calculate();
 		assert.strictEqual(res.getElementRowCol(0, 0).getValue(), 1000, 'IMPORTRANGE_1_AFTER_INIT');
+
+		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_before_add');
+		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
+		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_before_add');
 	});
 
 	wb.dependencyFormulas.unlockRecal();
