@@ -30749,9 +30749,10 @@ $(function () {
 			}
 		};
 
+		let tempLink = '"http://localhost/editor?fileName=new%20(51).xlsx"';
 		let parseResult = new AscCommonExcel.ParseResult([]);
-		oParser = new parserFormula('IMPORTRANGE("http://localhost/editor?fileName=new%20(51).xlsx&userid=uid-1&lang=en&directUrl=false","Sheet1!A1")', 'A2', ws);
-		assert.ok(oParser.parse(null, null, parseResult), 'IMPORTRANGE("http://localhost/editor?fileName=new%20(51).xlsx&userid=uid-1&lang=en&directUrl=false","Sheet1!A1")');
+		oParser = new parserFormula('IMPORTRANGE(' + tempLink + ',"Sheet1!A1")', 'A2', ws);
+		assert.ok(oParser.parse(null, null, parseResult), 'IMPORTRANGE(' + tempLink + ',"Sheet1!A1")');
 		let res = oParser.calculate().getValue();
 		assert.strictEqual(res, "#REF!", 'IMPORTRANGE_1');
 
@@ -30767,9 +30768,9 @@ $(function () {
 		res = oParser.calculate();
 		assert.strictEqual(res.getElementRowCol(0, 0).getValue(), 1000, 'IMPORTRANGE_1_AFTER_INIT');
 
-		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_before_add');
+		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_before_add_clone_2');
 		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
-		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_before_add');
+		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_after_add_clone_2');
 	});
 
 	wb.dependencyFormulas.unlockRecal();
