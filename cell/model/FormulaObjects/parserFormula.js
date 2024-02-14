@@ -2686,7 +2686,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.getElementRowCol = function (row, col, checkRealSize) {
 		if (row > this.rowCount || col > this.getCountElementInRow()) {
-			if (checkRealSize && this.realColCount && this.realRowCount && row <= this.realRowCount && col <= this.realColCount) {
+			if (checkRealSize && this.realSize && row <= this.realSize.row && col <= this.realSize.col) {
 				return new cEmpty();
 			}
 			return new cError(cErrorType.not_available);
@@ -2741,20 +2741,31 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this.countElement;
 	};
 	cArray.prototype.getCountElementInRow = function (getRealSize) {
-		return getRealSize && this.realColCount ? this.realColCount : this.countElementInRow[0];
+		return getRealSize && this.realSize ? this.realSize.col : this.countElementInRow[0];
 	};
 	cArray.prototype.getRowCount = function (getRealSize) {
-		return getRealSize && this.realRowCount ? this.realRowCount : this.rowCount;
+		return getRealSize && this.realSize ? this.realSize.row : this.rowCount;
 	};
 	cArray.prototype.geMaxElementInRow = function () {
 		return Math.max.apply(null, this.countElementInRow);
 	};
+	cArray.prototype.getRealArraySize = function () {
+		if (!this.realSize) {
+			return
+		}
+
+		return this.realSize
+	};
+	cArray.prototype.setRealArraySize = function (row, col) {
+		if (row > 0 && col > 0) {
+			this.realSize = {row: row, col: col}
+		}
+	};
 	cArray.prototype.tocNumber = function () {
-		var retArr = new cArray();
-		retArr.realRowCount = this.realRowCount;
-		retArr.realColCount = this.realColCount;
-		for (var ir = 0; ir < this.rowCount; ir++, retArr.addRow()) {
-			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
+		let retArr = new cArray();
+		retArr.realSize = this.getRealArraySize();
+		for (let ir = 0; ir < this.rowCount; ir++, retArr.addRow()) {
+			for (let ic = 0; ic < this.countElementInRow[ir]; ic++) {
 				retArr.addElement(this.array[ir][ic].tocNumber());
 			}
 			if (ir === this.rowCount - 1) {
@@ -2883,6 +2894,18 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			this.addRow();
 			for(var j = range.c1; j <= range.c2; j++) {
 				this.addElement(null);
+			}
+		}
+	};
+	cArray.prototype.fillWithElement = function (row, col, elem) {
+		if(!row && !col && !elem) {
+			return;
+		}
+
+		for(let i = 0; i < row; i++) {
+			this.addRow();
+			for(let j = 0; j < col; j++) {
+				this.addElement(elem);
 			}
 		}
 	};
@@ -5180,27 +5203,54 @@ _func[cElementType.array][cElementType.array] = function ( arg0, arg1, what, bbo
 _func[cElementType.array][cElementType.number] = _func[cElementType.array][cElementType.string] =
     _func[cElementType.array][cElementType.bool] = _func[cElementType.array][cElementType.error] =
         _func[cElementType.array][cElementType.empty] = function ( arg0, arg1, what ) {
-            var res = new cArray();
-            arg0.foreach( function ( elem, r ) {
-                if ( !res.array[r] ) {
-                    res.addRow();
-                }
-                res.addElement( _func[elem.type][arg1.type]( elem, arg1, what ) );
-            } );
+			// TODO optimize array filling or use the missedValue flag 
+            let res = new cArray(), realArraySize, rowDiff, colDiff, funcResult, arrayDimensions = arg0.getDimensions();
+
+			if (arg0.realSize && arg0.missedValue) {
+				realArraySize = arg0.getRealArraySize();
+				rowDiff = realArraySize.row - arg0.getRowCount();
+				colDiff = realArraySize.col - arg0.getCountElementInRow();
+				funcResult = _func[arg0.missedValue.type][arg1.type](arg0.missedValue, arg1, what);
+			}
+
+			for (let row = 0; row < (realArraySize ? realArraySize.row : arg0.getRowCount()); row++) {
+				res.addRow();
+				for (let col = 0; col < (realArraySize ? realArraySize.col : arg0.getCountElementInRow()); col++) {
+					if (row > arrayDimensions.row || col > arrayDimensions.col && funcResult) {
+						res.addElement(funcResult);
+						continue
+					}
+					let curElem = arg0.getElementRowCol(row, col);
+					res.addElement( _func[curElem.type][arg1.type]( curElem, arg1, what ) );
+				}
+			}
             return res;
         };
-
 
 _func[cElementType.number][cElementType.array] = _func[cElementType.string][cElementType.array] =
     _func[cElementType.bool][cElementType.array] = _func[cElementType.error][cElementType.array] =
         _func[cElementType.empty][cElementType.array] = function ( arg0, arg1, what ) {
-            var res = new cArray();
-            arg1.foreach( function ( elem, r ) {
-                if ( !res.array[r] ) {
-                    res.addRow();
-                }
-                res.addElement( _func[arg0.type][elem.type]( arg0, elem, what ) );
-            } );
+			// TODO optimize array filling or use the missedValue flag 
+			let res = new cArray(), realArraySize, rowDiff, colDiff, funcResult, arrayDimensions = arg1.getDimensions();
+
+			if (arg1.realSize && arg1.missedValue) {
+				realArraySize = arg1.getRealArraySize();
+				rowDiff = realArraySize.row - arg1.getRowCount();
+				colDiff = realArraySize.col - arg1.getCountElementInRow();
+				funcResult = _func[arg0.type][arg1.missedValue.type](arg0, arg1.missedValue, what);
+			}
+
+			for (let row = 0; row < (realArraySize ? realArraySize.row : arg1.getRowCount()); row++) {
+				res.addRow();
+				for (let col = 0; col < (realArraySize ? realArraySize.col : arg1.getCountElementInRow()); col++) {
+					if (row > arrayDimensions.row || col > arrayDimensions.col && funcResult) {
+						res.addElement(funcResult);
+						continue
+					}
+					let curElem = arg1.getElementRowCol(row, col);
+					res.addElement( _func[arg0.type][curElem.type]( arg0, curElem, what ) );
+				}
+			}
             return res;
         };
 
@@ -8754,10 +8804,9 @@ function parserFormula( formula, parent, _ws ) {
 
 	function convertAreaToArray(area){
 		let retArr = new cArray(), _arg0;
-		
 		let dimension = area.getDimensions();
-		retArr.realRowCount = dimension.row;
-		retArr.realColCount = dimension.col;
+
+		retArr.realSize = {row: dimension.row, col: dimension.col}
 		
 		let ws;
 		if(cElementType.cellsRange3D === area.type) {
@@ -8769,15 +8818,29 @@ function parserFormula( formula, parent, _ws ) {
 		}
 
 		if (dimension) {
-			let oBBox = dimension.bbox, minC = Math.min( ws.getColDataLength(), oBBox.c2 ), minR = Math.min( ws.cellsByColRowsCount - 1, oBBox.r2 );
-			let rowCount = (minR - oBBox.r1) >= 0 ? minR - oBBox.r1 + 1 : 0;
-			let colCount = (minC - oBBox.c1) >= 0 ? minC - oBBox.c1 + 1 : 0;
+			let oBBox = dimension.bbox, 
+				minC = Math.min( ws.getColDataLength(), oBBox.c2 ), 
+				minR = Math.min( ws.cellsByColRowsCount - 1, oBBox.r2 ),
+				rowCount = (minR - oBBox.r1) >= 0 ? minR - oBBox.r1 + 1 : 0,
+				colCount = (minC - oBBox.c1) >= 0 ? minC - oBBox.c1 + 1 : 0;
 
-			for ( let iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? retArr.addRow() : true ) {
-				for ( let iCol = 0; iCol < colCount; iCol++ ) {
-					_arg0 = area[iRow] && area[iRow][iCol] ? area[iRow][iCol] : new cEmpty();
-					retArr.addElement(_arg0);
+			if (area && area.length < 1) {
+				// let emptyElem = new cEmpty();
+				// empty array, fill with empty elements or return empty array
+				// retArr.fillWithElement(dimension.row, dimension.col, emptyElem);
+			} else {
+				for ( let iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? retArr.addRow() : true ) {
+					for ( let iCol = 0; iCol < colCount; iCol++ ) {
+						_arg0 = area[iRow] && area[iRow][iCol] ? area[iRow][iCol] : new cEmpty();
+						retArr.addElement(_arg0);
+					}
 				}
+			}
+
+			if (rowCount < dimension.row || colCount < dimension.col) {
+				retArr.missedValue = new cEmpty();
+			} else {
+				retArr.realSize = null;
 			}
 		}
 
@@ -8830,10 +8893,10 @@ function parserFormula( formula, parent, _ws ) {
 		let retArr = null, _arg0, _arg1;
 		let iRow, iCol;
 		
-		let arg0RowCount = arg0.getRowCount(true);
-		let arg0ColCount = arg0.getCountElementInRow(true);
-		let arg1RowCount = arg1.getRowCount(true);
-		let arg1ColCount = arg1.getCountElementInRow(true);
+		let arg0RowCount = arg0.getRowCount(true),
+			arg0ColCount = arg0.getCountElementInRow(true),
+			arg1RowCount = arg1.getRowCount(true),
+			arg1ColCount = arg1.getCountElementInRow(true);
 		
 		if (arg0RowCount === arg1RowCount && 1 === arg0ColCount) {
 			retArr = new cArray();
@@ -8889,107 +8952,75 @@ function parserFormula( formula, parent, _ws ) {
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
-		} else if (arg0.getCountElement() !== arg1.getCountElement()) {
-			let arg0Copy = new cArray(), arg1Copy = new cArray();
+		} else if (arg0.getCountElement() !== arg1.getCountElement() || arg0RowCount !== arg1RowCount || arg0ColCount !== arg1ColCount) {
 			let errNA = new cError(cErrorType.not_available);
-
-			arg0Copy.fillFromArray(arg0.array);
-			arg1Copy.fillFromArray(arg1.array);
 
 			// if there is only one element in the range, get this element and call the function again
 			if (arg0.isOneElement()) {
-				arg0Copy = arg0.getFirstElement();
-				return _func[arg0Copy.type][arg1.type](arg0Copy, arg1, what);
+				let arg0FirstElem = arg0.getFirstElement();
+				return _func[arg0FirstElem.type][arg1.type](arg0FirstElem, arg1, what);
 			} else if (arg1.isOneElement()) {
-				arg1Copy = arg1.getFirstElement();
-				return _func[arg0.type][arg1Copy.type](arg0, arg1Copy, what);
+				let arg1FirstElem = arg1.getFirstElement();
+				return _func[arg0.type][arg1FirstElem.type](arg0, arg1FirstElem, what);
 			}
 
-			let arg0Dimensions = arg0.getDimensions(),
+			// Logic:
+			// find the effective range (the one that is involved in the calculations)
+			// calculate it 
+			// then fill the remaining rows and columns with N/A errors
+
+			let arrayMaxRows = Math.max(arg0RowCount, arg1RowCount), arrayMaxCols = Math.max(arg0ColCount, arg1ColCount);
+			retArr = new cArray();
+			retArr.setRealArraySize(arrayMaxRows, arrayMaxCols);
+				
+			// arg0RowCount, arg0ColCount, arg1RowCount, arg1ColCount
+			let usefulCol = Math.min(arg0ColCount, arg1ColCount), 
+				usefulRow = Math.min(arg0RowCount, arg1RowCount),
+				arg0Dimensions = arg0.getDimensions(),
 				arg1Dimensions = arg1.getDimensions();
 
-			let arrayMaxRows = Math.max(arg0RowCount, arg1RowCount),
-				arrayMaxCols = Math.max(arg0ColCount, arg1ColCount);
-				retArr = new cArray();
+			// if we have one of the element with single row|col, set the value to be obtained from this particular row or column
+			let fromArg0Row, fromArg1Row, fromArg0Col, fromArg1Col;
+			if (arg0Dimensions.row === 1 && arrayMaxRows > 1) {
+				// arg1.row more than arg0.row
+				usefulRow = arrayMaxRows;
+				fromArg0Row = 0;
+			}
+			if (arg1Dimensions.row === 1 && arrayMaxRows > 1) {
+				// arg0.row more than arg1.row
+				usefulRow = arrayMaxRows;
+				fromArg1Row = 0;
+			}
+			if (arg0Dimensions.col === 1 && arrayMaxCols > 1) {
+				// arg1.col more than arg0.col
+				usefulCol = arrayMaxCols;
+				fromArg0Col = 0;
+			}
+			if (arg1Dimensions.col === 1 && arrayMaxCols > 1) {
+				// arg0.col more than arg1.col
+				usefulCol = arrayMaxCols;
+				fromArg1Col = 0;
+			}
 
-			// The logic for creating the final array when the argument sizes do not match:
-			// If we have arrays consisting of a single row/column, we fill a copy of that array with these columns/rows (up to the maximum number of rows/columns).
-			// Then we redefine dimensions based on the copies.
-			// Next, we iterate over the missing columns (those that are less than maxCol) and fill the missing columns with #N/A errors (for correct calculations, as in normal conditions, an empty cell would return cEmpty).
-			// We do the same for rows, but we fill them entirely since they are completely empty.
-			// Then, we fill the final array with two loops, with its dimensions being maxRows and maxCols.
-			// In MS returns the maximum RowCol in the dynamic array.
+			// fill the array
+			for (let iRow = 0; iRow < arrayMaxRows; iRow++, iRow < usefulRow ? retArr.addRow() : true) {
+				if (iRow >= usefulRow) {
+					// fill row with N/A and continue
+					let errRow = new Array(arrayMaxCols).fill(errNA);
+					retArr.pushRow([errRow], 0);
+					continue
+				}
 
-			// check if we have single row/col in arg0
-			if ((arg0Dimensions.row === 1 && arrayMaxRows > 1) || (arg0Dimensions.col === 1 && arrayMaxCols > 1)) {
-				if (arg0Dimensions.row === 1) {
-					let firstRow = arg0._getRow(0);
-					for (let i = 1; i < arrayMaxRows; i++) {
-						arg0Copy.pushRow(firstRow, 0);
+				for (let iCol = 0; iCol < arrayMaxCols; iCol++) {
+					if (iCol >= usefulCol) {
+						// add N/A error and continue
+						retArr.addElement(errNA);
+						continue
 					}
- 				} else if (arg0Dimensions.col === 1) {
-					let firstCol = arg0._getCol(0);
-					for (let i = 1; i < arrayMaxCols; i++) {
-						arg0Copy.pushCol(firstCol, 0);
-					}
-				}
-			}
 
-			// check arg0 col dimensions and fill missing positions with errors
-			arg0Dimensions = arg0Copy.getDimensions();
-			if (arg0Dimensions.col < arrayMaxCols) {
-				// fill the cols with N/A
-				let errArray = new Array(arg0Dimensions.row).fill([errNA]);
-				for (let i = arg0Dimensions.col; i < arrayMaxCols; i++) {
-					arg0Copy.pushCol(errArray, 0);
-				}
-			}
-			// check arg0 row dimensions and fill missing positions with errors
-			if (arg0Dimensions.row < arrayMaxRows) {
-				// fill rows with N/A
-				let errArray = new Array(arrayMaxCols).fill(errNA);
-				for (let i = arg0Dimensions.row; i < arrayMaxRows; i++) {
-					arg0Copy.pushRow([errArray], 0);
-				}
-			}
+					_arg0 = arg0.getElementRowCol(fromArg0Row !== undefined ? fromArg0Row : iRow, fromArg0Col !== undefined ? fromArg0Col : iCol, true);
+					_arg1 = arg1.getElementRowCol(fromArg1Row !== undefined ? fromArg1Row : iRow, fromArg1Col !== undefined ? fromArg1Col : iCol, true);
 
-			// check if we have single row/col in arg1
-			if ((arg1Dimensions.row === 1 && arrayMaxRows > 1) || (arg1Dimensions.col === 1 && arrayMaxCols > 1)) {
-				if (arg1Dimensions.row === 1) {
-					for (let i = 0; i < arrayMaxRows; i++) {
-						arg1Copy.pushRow(arg1._getRow(0), 0);
-					}
- 				} else if (arg1Dimensions.col === 1) {
-					let firstCol = arg0._getCol(0);
-					for (let i = 1; i < arrayMaxCols; i++) {
-						arg0Copy.pushCol(firstCol, 0);
-					}
-				}
-			}
-
-			// check arg1 col dimensions and fill missing positions with errors
-			arg1Dimensions = arg1Copy.getDimensions();
-			if (arg1Dimensions.col < arrayMaxCols) {
-				// fill cols with N/A
-				let errArray = new Array(arg1Dimensions.row).fill([errNA]);
-				for (let i = arg1Dimensions.col; i < arrayMaxCols; i++) {
-					arg1Copy.pushCol(errArray, 0);
-				}
-			}
-			// check arg1 row dimensions and fill missing positions with errors
-			if (arg1Dimensions.row < arrayMaxRows) {
-				// fill rows with N/A
-				let errArray = new Array(arrayMaxCols).fill(errNA);
-				for (let i = arg1Dimensions.row; i < arrayMaxRows; i++) {
-					arg1Copy.pushRow([errArray], 0);
-				}
-			}
-
-			// fill result array
-			for (iRow = 0; iRow < arrayMaxRows; iRow++, iRow < arrayMaxRows ? retArr.addRow() : true) {
-				for (iCol = 0; iCol < arrayMaxCols; iCol++) {
-					_arg0 = arg0Copy.getElementRowCol(iRow, iCol, true);
-					_arg1 = arg1Copy.getElementRowCol(iRow, iCol, true);
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
