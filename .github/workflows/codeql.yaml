@@ -10,15 +10,7 @@ on:
       - '**/README.md'
       - '**/LICENSE'
       - '.github/**'
-  pull_request:
-    branches:
-      - 'master'
-      - 'hotfix/**'
-      - 'release/**'
-    paths-ignore:
-      - '**/README.md'
-      - '**/LICENSE'
-      - '.github/**'
+
   schedule:
     - cron: '0 0 * * 6'
 
@@ -46,6 +38,7 @@ jobs:
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
+        config-file: ./.github/codeql/codeql-config.yaml
 
     # Autobuild attempts to build any compiled languages (C/C++, C#, Go, Java, or Swift).
     # If this step fails, then you should remove it and run the build manually (see below)
