@@ -13751,7 +13751,7 @@ Paragraph.prototype.SetSelectionState = function(State, StateIndex)
 	this.CurPos.RealY    = ParaState.CurPos.RealY;
 	this.CurPos.PagesPos = ParaState.CurPos.PagesPos;
 
-	this.Set_ParaContentPos(ParaState.CurPos.ContentPos, true, -1, -1);
+	this.Set_ParaContentPos(ParaState.CurPos.ContentPos, true, -1, -1, false);
 
 	this.RemoveSelection();
 

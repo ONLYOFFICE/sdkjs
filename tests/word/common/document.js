@@ -433,10 +433,18 @@
 	{
 		AscCommon.CollaborativeEditing.End_CollaborationEditing();
 	}
-	
+	function StartTextSpeaker()
+	{
+		AscCommon.EditorActionSpeaker.run();
+	}
+	function StopTextSpeaker()
+	{
+		AscCommon.EditorActionSpeaker.stop();
+	}
 	
 	//--------------------------------------------------------export----------------------------------------------------
 	AscTest.CreateLogicDocument      = CreateLogicDocument;
+	AscTest.GetLogicDocument         = CreateLogicDocument;
 	AscTest.CreateParagraph          = CreateParagraph;
 	AscTest.CreateRun                = CreateRun;
 	AscTest.CreateTable              = CreateTable;
@@ -474,6 +482,8 @@
 	AscTest.SyncCollaboration        = SyncCollaboration;
 	AscTest.EndCollaboration         = EndCollaboration;
 	AscTest.SelectParagraphRange     = SelectParagraphRange;
+	AscTest.StartTextSpeaker         = StartTextSpeaker;
+	AscTest.StopTextSpeaker          = StopTextSpeaker;
 
 })(window);
 
