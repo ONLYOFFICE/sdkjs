@@ -710,7 +710,7 @@ CHistory.prototype =
     {
         // Не объединяем точки в истории, когда отключается пересчет.
         // TODO: Неправильно изменяется RecalcIndex
-        if (this.Document && true !== this.Document.Is_OnRecalculate())
+        if (this.Document && (!this.Document.Is_OnRecalculate() || this.Document.IsActionStarted()))
             return false;
 
         // Не объединяем точки во время Undo/Redo
@@ -1551,7 +1551,7 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 	/**
 	 * Специальная функция для отмены последнего ввода через композитный ввод
 	 */
-	CHistory.prototype.UndoCompositeInput = function()
+	CHistory.prototype.UndoCompositeInput = function(documentState)
 	{
 		if (this.UndoRedoInProgress)
 			return [];
@@ -1582,6 +1582,10 @@ CHistory.prototype.private_PostProcessingRecalcData = function()
 		}
 
 		this.UndoRedoInProgress = false;
+		
+		if (documentState)
+			this.Document.SetSelectionState(documentState);
+		
 		return changes;
 	};
 	/**

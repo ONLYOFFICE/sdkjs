@@ -52,7 +52,7 @@ function ParaField(FieldType, Arguments, Switches)
     this.Type    = para_Field;
 
     this.Istruction = null;
-    this.FieldType = (undefined === FieldType ? fieldtype_UNKNOWN : FieldType);
+    this.FieldType = (undefined === FieldType ? AscWord.fieldtype_UNKNOWN : FieldType);
     this.Arguments = (undefined === Arguments ? []                : Arguments);
     this.Switches  = (undefined === Switches  ? []                : Switches);
 
@@ -207,7 +207,7 @@ ParaField.prototype.Draw_HighLights = function(PDSH)
 
     var X1 = PDSH.X;
 
-    if (Math.abs(X0 - X1) > 0.001 && (true === PDSH.DrawMMFields || fieldtype_FORMTEXT === this.Get_FieldType()))
+    if (Math.abs(X0 - X1) > 0.001 && (true === PDSH.DrawMMFields || AscWord.fieldtype_FORMTEXT === this.Get_FieldType()))
     {
         PDSH.MMFields.Add(Y0, Y1, X0, X1, 0, 0, 0, 0  );
     }
@@ -243,7 +243,7 @@ ParaField.prototype.Remove = function(nDirection, bOnAddText)
 {
 	CParagraphContentWithParagraphLikeContent.prototype.Remove.call(this, nDirection, bOnAddText);
 
-	if (this.Is_Empty() && !bOnAddText && fieldtype_FORMTEXT === this.Get_FieldType() && this.Paragraph && this.Paragraph.LogicDocument && true === this.Paragraph.LogicDocument.IsFillingFormMode())
+	if (this.Is_Empty() && !bOnAddText && AscWord.fieldtype_FORMTEXT === this.Get_FieldType() && this.Paragraph && this.Paragraph.LogicDocument && true === this.Paragraph.LogicDocument.IsFillingFormMode())
 	{
 		var sDefaultText = this.FormFieldDefaultText == "" ? "     " : this.FormFieldDefaultText;
 		this.SetValue(sDefaultText);
@@ -331,7 +331,7 @@ ParaField.prototype.GetAllFields = function(isUseSelection, arrFields)
 };
 ParaField.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 {
-	if(this.FieldType === fieldtype_SEQ)
+	if(this.FieldType === AscWord.fieldtype_SEQ)
 	{
 		if(this.Arguments[0] === sType)
 		{
@@ -378,7 +378,7 @@ ParaField.prototype.Restore_StandardTemplate = function()
     // В любом случае сначала восстанавливаем исходное содержимое.
     this.Restore_Template();
 
-    if (fieldtype_MERGEFIELD === this.FieldType && true === AscCommon.CollaborativeEditing.Is_SingleUser() && 1 === this.Arguments.length)
+    if (AscWord.fieldtype_MERGEFIELD === this.FieldType && true === AscCommon.CollaborativeEditing.Is_SingleUser() && 1 === this.Arguments.length)
     {
         var oRun = this.private_GetMappedRun("«" + this.Arguments[0] + "»");
         this.Remove_FromContent(0, this.Content.length);
@@ -400,7 +400,7 @@ ParaField.prototype.Is_NeedRestoreTemplate = function()
         return true;
 
     var oRun = this.TemplateContent[0];
-    if (fieldtype_MERGEFIELD === this.FieldType)
+    if (AscWord.fieldtype_MERGEFIELD === this.FieldType)
     {
         var sStandardText = "«" + this.Arguments[0] + "»";
 
@@ -486,7 +486,7 @@ ParaField.prototype.SetValue = function(sValue)
 };
 ParaField.prototype.IsFillingForm = function()
 {
-	if (fieldtype_FORMTEXT === this.Get_FieldType())
+	if (AscWord.fieldtype_FORMTEXT === this.Get_FieldType())
 		return true;
 
 	return false;
@@ -527,7 +527,7 @@ ParaField.prototype.Update = function(isCreateHistoryPoint, isRecalculate)
 		return;
 
 	var sReplaceString = null;
-	if (this.FieldType === fieldtype_SEQ)
+	if (this.FieldType === AscWord.fieldtype_SEQ)
 	{
 		var oInstruction           = new CFieldInstructionSEQ();
 		oInstruction.ComplexField  = this;
@@ -535,7 +535,7 @@ ParaField.prototype.Update = function(isCreateHistoryPoint, isRecalculate)
 		oInstruction.Id            = this.Arguments[0];
 		sReplaceString             = oInstruction.GetText();
 	}
-	else if (this.FieldType === fieldtype_STYLEREF)
+	else if (this.FieldType === AscWord.fieldtype_STYLEREF)
 	{
 		var oInstruction             = new CFieldInstructionSTYLEREF();
 		oInstruction.ComplexField    = this;
@@ -558,77 +558,77 @@ ParaField.prototype.GetInstructionLine = function()
 	let name;
 	switch (this.FieldType)
 	{
-		case fieldtype_MERGEFIELD :
+		case AscWord.fieldtype_MERGEFIELD :
 		{
 			name = "MERGEFIELD";
 			break;
 		}
-		case fieldtype_PAGE :
+		case AscWord.fieldtype_PAGE :
 		{
 			name = "PAGE";
 			break;
 		}
-		case fieldtype_NUMPAGES :
+		case AscWord.fieldtype_NUMPAGES :
 		{
 			name = "NUMPAGES";
 			break;
 		}
-		case fieldtype_FORMTEXT :
+		case AscWord.fieldtype_FORMTEXT :
 		{
 			name = "FORMTEXT";
 			break;
 		}
-		case fieldtype_TOC :
+		case AscWord.fieldtype_TOC :
 		{
 			name = "TOC";
 			break;
 		}
-		case fieldtype_PAGEREF :
+		case AscWord.fieldtype_PAGEREF :
 		{
 			name = "PAGEREF";
 			break;
 		}
-		case fieldtype_ASK :
+		case AscWord.fieldtype_ASK :
 		{
 			name = "ASK";
 			break;
 		}
-		case fieldtype_REF :
+		case AscWord.fieldtype_REF :
 		{
 			name = "REF";
 			break;
 		}
-		case fieldtype_HYPERLINK :
+		case AscWord.fieldtype_HYPERLINK :
 		{
 			name = "HYPERLINK";
 			break;
 		}
-		case fieldtype_TIME :
+		case AscWord.fieldtype_TIME :
 		{
 			name = "TIME";
 			break;
 		}
-		case fieldtype_DATE :
+		case AscWord.fieldtype_DATE :
 		{
 			name = "DATE";
 			break;
 		}
-		case fieldtype_FORMULA :
+		case AscWord.fieldtype_FORMULA :
 		{
 			name = "FORMULA";
 			break;
 		}
-		case fieldtype_SEQ :
+		case AscWord.fieldtype_SEQ :
 		{
 			name = "SEQ";
 			break;
 		}
-		case fieldtype_STYLEREF :
+		case AscWord.fieldtype_STYLEREF :
 		{
 			name = "STYLEREF";
 			break;
 		}
-		case fieldtype_NOTEREF :
+		case AscWord.fieldtype_NOTEREF :
 		{
 			name = "NOTEREF";
 			break;
@@ -698,14 +698,14 @@ ParaField.prototype.ReplaceWithComplexField = function()
 ParaField.prototype.GetRunWithPageField = function(paragraph)
 {
 	let res = null;
-	if (fieldtype_PAGENUM == this.FieldType || fieldtype_PAGECOUNT == this.FieldType) {
+	if (AscWord.fieldtype_PAGENUM == this.FieldType || AscWord.fieldtype_PAGECOUNT == this.FieldType) {
 		res = new ParaRun(paragraph);
 		let run = this.GetFirstRunNonEmpty();
 		let rPr = run && run.Get_FirstTextPr();
 		if (rPr) {
 			res.Set_Pr(rPr);
 		}
-		if (fieldtype_PAGENUM == this.FieldType) {
+		if (AscWord.fieldtype_PAGENUM == this.FieldType) {
 			res.AddToContentToEnd(new AscWord.CRunPageNum());
 		} else {
 			var pageCount = parseInt(this.GetSelectedText(true));
@@ -717,6 +717,14 @@ ParaField.prototype.GetRunWithPageField = function(paragraph)
 ParaField.prototype.IsValid = function()
 {
 	return true;
+};
+ParaField.prototype.CheckType = function(type)
+{
+	return this.FieldType === type;
+};
+ParaField.prototype.IsAddin = function()
+{
+	return this.CheckType(AscWord.fieldtype_ADDIN);
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Функции совместного редактирования

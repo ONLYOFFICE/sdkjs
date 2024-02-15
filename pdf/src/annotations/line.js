@@ -67,6 +67,8 @@
     function CAnnotationLine(sName, nPage, aRect, oDoc)
     {
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Line, nPage, aRect, oDoc);
+        AscFormat.CShape.call(this);
+        AscPDF.initShape(this);
 
         this._popupOpen     = false;
         this._popupRect     = undefined;
@@ -85,13 +87,14 @@
         this._leaderLineOffset  = undefined; // LLO
         this._captionPos        = CAPTION_POSITIONING.Inline; // CP
         this._captionOffset     = undefined;  // CO
+        this._needRecalc        = false;
 
         // internal
         TurnOffHistory();
-        this.content        = new AscPDF.CTextBoxContent(this, oDoc);
     }
-    CAnnotationLine.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationLine.prototype.constructor = CAnnotationLine;
+    AscFormat.InitClass(CAnnotationLine, AscFormat.CShape, AscDFH.historyitem_type_Shape);
+    Object.assign(CAnnotationLine.prototype, AscPDF.CAnnotationBase.prototype);
 
     CAnnotationLine.prototype.SetCaptionOffset = function(array) {
         this._captionOffset = array;
@@ -106,7 +109,31 @@
     CAnnotationLine.prototype.GetCaptionPos = function() {
         return this._captionPos;
     };
+    CAnnotationLine.prototype.RefillGeometry = function() {
+        let oViewer = editor.getDocumentRenderer();
+        let oDoc    = oViewer.getPDFDoc();
+        
+        let aPoints = this.GetLinePoints();
+        let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom;
 
+        let aLinePoints = [];
+        for (let i = 0; i < aPoints.length - 1; i += 2) {
+            aLinePoints.push({
+                x: aPoints[i] * g_dKoef_pix_to_mm * nScaleX,
+                y: (aPoints[i + 1])* g_dKoef_pix_to_mm * nScaleY
+            });
+        }
+        
+        let aShapeRectInMM = this.GetRect().map(function(measure) {
+            return measure * g_dKoef_pix_to_mm;
+        });
+
+        oDoc.TurnOffHistory();
+        AscPDF.fillShapeByPoints([aLinePoints], aShapeRectInMM, this);
+        
+        this._points = aPoints;
+    }
     CAnnotationLine.prototype.SetLeaderLineOffset = function(nValue) {
         this._leaderLineOffset = nValue;
     };
@@ -125,8 +152,220 @@
     CAnnotationLine.prototype.GetLeaderExtend = function() {
         return this._leaderExtend;
     };
+    CAnnotationLine.prototype.Recalculate = function() {
+        if (this.IsNeedRecalc() == false)
+            return;
+
+        let oViewer     = editor.getDocumentRenderer();
+        let nPage       = this.GetPage();
+        let aOrigRect   = this.GetOrigRect();
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+        
+        this.handleUpdatePosition();
+        if (this.recalcInfo.recalculateGeometry)
+            this.RefillGeometry();
+
+        this.recalculate();
+        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
+    };
+    CAnnotationLine.prototype.SetNeedRecalc = function(bRecalc) {
+        this._needRecalc = bRecalc;
+    };
+    CAnnotationLine.prototype.IsNeedRecalc = function() {
+        return this._needRecalc;
+    };
     CAnnotationLine.prototype.SetLinePoints = function(aPoints) {
+        let oViewer = editor.getDocumentRenderer();
+        let oDoc    = oViewer.getPDFDoc();
+        
+        this.recalcGeometry();
+        oDoc.History.Add(new CChangesPDFLinePoints(this, this.GetLinePoints(), aPoints));
+
         this._points = aPoints;
+    };
+    CAnnotationLine.prototype.GetLinePoints = function() {
+        return this._points;
+    };
+    CAnnotationLine.prototype.onMouseDown = function(e) {
+        let oViewer         = editor.getDocumentRenderer();
+        let oDrawingObjects = oViewer.DrawingObjects;
+        let oDoc            = this.GetDocument();
+        let oDrDoc          = oDoc.GetDrawingDocument();
+
+        this.selectStartPage = this.GetPage();
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
+
+        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
+        oDrawingObjects.startEditGeometry();
+    };
+    CAnnotationLine.prototype.LazyCopy = function() {
+        let oDoc = this.GetDocument();
+        oDoc.TurnOffHistory();
+
+        let oLine = new CAnnotationLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+
+        oLine._pagePos = {
+            x: this._pagePos.x,
+            y: this._pagePos.y,
+            w: this._pagePos.w,
+            h: this._pagePos.h
+        }
+        oLine._origRect = this._origRect.slice();
+
+        this.fillObject(oLine);
+
+        oLine.pen = new AscFormat.CLn();
+        oLine._apIdx = this._apIdx;
+        oLine._originView = this._originView;
+        oLine.SetOriginPage(this.GetOriginPage());
+        oLine.SetAuthor(this.GetAuthor());
+        oLine.SetModDate(this.GetModDate());
+        oLine.SetCreationDate(this.GetCreationDate());
+        oLine.SetWidth(this.GetWidth());
+        oLine.SetStrokeColor(this.GetStrokeColor().slice());
+        oLine.SetLineStart(this.GetLineStart());
+        oLine.SetLineEnd(this.GetLineEnd());
+        oLine.SetContents(this.GetContents());
+        oLine.SetFillColor(this.GetFillColor());
+        oLine.recalcInfo.recalculatePen = false;
+        oLine.recalcInfo.recalculateGeometry = true;
+        oLine._points = this._points.slice();
+        oLine.recalculate();
+
+        return oLine;
+    };
+    CAnnotationLine.prototype.IsLine = function() {
+        return true;
+    };
+    CAnnotationLine.prototype.GetMinShapeRect = function() {
+        let oViewer     = editor.getDocumentRenderer();
+        let nLineWidth  = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+        let aPoints     = this.GetLinePoints();
+        let nPage       = this.GetPage();
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        let shapeAtStart    = getFigureSize(this.GetLineStart(), nLineWidth);
+        let shapeAtEnd      = getFigureSize(this.GetLineEnd(), nLineWidth);
+
+        function calculateBoundingRectangle(line, figure1, figure2) {
+            let x1 = line.x1, y1 = line.y1, x2 = line.x2, y2 = line.y2;
+        
+            // Расчет угла поворота в радианах
+            let angle = Math.atan2(y2 - y1, x2 - x1);
+        
+            function rotatePoint(cx, cy, angle, px, py) {
+                let cos = Math.cos(angle),
+                    sin = Math.sin(angle),
+                    nx = (sin * (px - cx)) + (cos * (py - cy)) + cx,
+                    ny = (sin * (py - cy)) - (cos * (px - cx)) + cy;
+                return {x: nx, y: ny};
+            }
+            
+            function getRectangleCorners(cx, cy, width, height, angle) {
+                let halfWidth = width / 2;
+                let halfHeight = height / 2;
+            
+                let topLeft = {x: cx - halfWidth, y: cy - halfHeight},
+                    topRight = {x: cx + halfWidth, y: cy - halfHeight},
+                    bottomRight = {x: cx + halfWidth, y: cy + halfHeight},
+                    bottomLeft = {x: cx - halfWidth, y: cy + halfHeight};
+            
+                let corners = [topLeft, topRight, bottomRight, bottomLeft];
+            
+                let rotatedCorners = [];
+                for (let i = 0; i < corners.length; i++) {
+                    rotatedCorners.push(rotatePoint(cx, cy, angle, corners[i].x, corners[i].y));
+                }
+                return rotatedCorners;
+            }
+        
+            let cornersFigure1 = getRectangleCorners(x1, y1, figure1.width, figure1.height, angle);
+            let cornersFigure2 = getRectangleCorners(x2, y2, figure2.width, figure2.height, angle);
+        
+            let minX = Math.min(x1, x2);
+            let maxX = Math.max(x1, x2);
+            let minY = Math.min(y1, y2);
+            let maxY = Math.max(y1, y2);
+        
+            let allCorners = cornersFigure1.concat(cornersFigure2);
+            for (let i = 0; i < allCorners.length; i++) {
+                let point = allCorners[i];
+                minX = Math.min(minX, point.x);
+                maxX = Math.max(maxX, point.x);
+                minY = Math.min(minY, point.y);
+                maxY = Math.max(maxY, point.y);
+            }
+        
+            // Возвращаем координаты прямоугольника
+            return [minX * nScaleX, minY * nScaleY, maxX * nScaleX, maxY * nScaleY];
+        }
+
+        return calculateBoundingRectangle({x1: aPoints[0], y1: aPoints[1], x2: aPoints[2], y2: aPoints[3]}, shapeAtStart, shapeAtEnd);
+    };
+    CAnnotationLine.prototype.SetRect = function(aRect) {
+        let oViewer     = editor.getDocumentRenderer();
+        let oDoc        = oViewer.getPDFDoc();
+        let nPage       = this.GetPage();
+
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aRect));
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        this._rect = aRect;
+
+        this._pagePos = {
+            x: aRect[0],
+            y: aRect[1],
+            w: (aRect[2] - aRect[0]),
+            h: (aRect[3] - aRect[1])
+        };
+
+        this._origRect[0] = this._rect[0] / nScaleX;
+        this._origRect[1] = this._rect[1] / nScaleY;
+        this._origRect[2] = this._rect[2] / nScaleX;
+        this._origRect[3] = this._rect[3] / nScaleY;
+
+        oDoc.TurnOffHistory();
+
+        this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
+        this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
+        
+        this.AddToRedraw();
+        this.SetWasChanged(true);
+        this.SetDrawFromStream(false);
+    };
+    CAnnotationLine.prototype.SetStrokeColor = function(aColor) {
+        this._strokeColor = aColor;
+
+        let oRGB    = this.GetRGBColor(aColor);
+        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+        let oLine   = this.pen;
+        oLine.setFill(oFill);
+    };
+    CAnnotationLine.prototype.SetOpacity = function(value) {
+        this._opacity = value;
+        this.SetWasChanged(true);
+
+        this.pen.Fill.transparent = value * 100 * 2.55;
+    };
+    CAnnotationLine.prototype.GetDrawing = function() {
+        return this.content.GetAllDrawingObjects()[0];
+    };
+    CAnnotationLine.prototype.SetWidth = function(nWidthPt) {
+        this._width = nWidthPt; 
+
+        nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
+        let oLine = this.pen;
+        oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
     };
     CAnnotationLine.prototype.GetLinePoints = function() {
         return this._points;
@@ -134,14 +373,94 @@
     CAnnotationLine.prototype.SetDoCaption = function(nType) {
         this._doCaption = nType;
     };
-    CAnnotationLine.prototype.GetDoCaption = function() {
+    CAnnotationLine.prototype.IsDoCaption = function() {
         return this._doCaption;
     };
     CAnnotationLine.prototype.SetLineStart = function(nType) {
         this._lineStart = nType;
+
+        this.SetWasChanged(true);
+        let oLine = this.pen;
+        oLine.setHeadEnd(new AscFormat.EndArrow());
+        let nLineEndType;
+        switch (nType) {
+            case LINE_END_TYPE.None:
+                nLineEndType = AscFormat.LineEndType.None;
+                break;
+            case LINE_END_TYPE.OpenArrow:
+                nLineEndType = AscFormat.LineEndType.Arrow;
+                break;
+            case LINE_END_TYPE.Diamond:
+                nLineEndType = AscFormat.LineEndType.Diamond;
+                break;
+            case LINE_END_TYPE.Circle:
+                nLineEndType = AscFormat.LineEndType.Oval;
+                break;
+            case LINE_END_TYPE.ClosedArrow:
+                nLineEndType = AscFormat.LineEndType.Triangle;
+                break;
+            case LINE_END_TYPE.ROpenArrow:
+                nLineEndType = AscFormat.LineEndType.ReverseArrow;
+                break;
+            case LINE_END_TYPE.RClosedArrow:
+                nLineEndType = AscFormat.LineEndType.ReverseTriangle;
+                break;
+            case LINE_END_TYPE.Butt:
+                nLineEndType = AscFormat.LineEndType.Butt;
+                break;
+            case LINE_END_TYPE.Square:
+                nLineEndType = AscFormat.LineEndType.Square;
+                break;
+            case LINE_END_TYPE.Slash:
+                nLineEndType = AscFormat.LineEndType.Slash;
+                break;
+        }
+
+        oLine.headEnd.setType(nLineEndType);
+        oLine.headEnd.setLen(AscFormat.LineEndSize.Mid);
     };
     CAnnotationLine.prototype.SetLineEnd = function(nType) {
         this._lineEnd = nType;
+        
+        this.SetWasChanged(true);
+        let oLine = this.pen;
+        oLine.setTailEnd(new AscFormat.EndArrow());
+        let nLineEndType;
+        switch (nType) {
+            case LINE_END_TYPE.None:
+                nLineEndType = AscFormat.LineEndType.None;
+                break;
+            case LINE_END_TYPE.OpenArrow:
+                nLineEndType = AscFormat.LineEndType.Arrow;
+                break;
+            case LINE_END_TYPE.Diamond:
+                nLineEndType = AscFormat.LineEndType.Diamond;
+                break;
+            case LINE_END_TYPE.Circle:
+                nLineEndType = AscFormat.LineEndType.Oval;
+                break;
+            case LINE_END_TYPE.ClosedArrow:
+                nLineEndType = AscFormat.LineEndType.Triangle;
+                break;
+            case LINE_END_TYPE.ROpenArrow:
+                nLineEndType = AscFormat.LineEndType.ReverseArrow;
+                break;
+            case LINE_END_TYPE.RClosedArrow:
+                nLineEndType = AscFormat.LineEndType.ReverseTriangle;
+                break;
+            case LINE_END_TYPE.Butt:
+                nLineEndType = AscFormat.LineEndType.Butt;
+                break;
+            case LINE_END_TYPE.Square:
+                nLineEndType = AscFormat.LineEndType.Square;
+                break;
+            case LINE_END_TYPE.Slash:
+                nLineEndType = AscFormat.LineEndType.Slash;
+                break;
+        }
+
+        oLine.tailEnd.setType(nLineEndType);
+        oLine.tailEnd.setLen(AscFormat.LineEndSize.Mid);
     };
     CAnnotationLine.prototype.GetLineStart = function() {
         return this._lineStart;
@@ -150,62 +469,40 @@
         return this._lineEnd;
     };
 
-    CAnnotationLine.prototype.Draw = function(oGraphics) {
-        if (this.IsHidden() == true)
-            return;
-
-        let oViewer = editor.getDocumentRenderer();
-        let oGraphicsWord = oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
-        
-        this.Recalculate();
-
-        oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
-
-        this.content.Draw(0, oGraphicsWord);
-        oGraphicsWord.RemoveClip();
-    };
-    CAnnotationLine.prototype.Recalculate = function() {
-        // if (this.IsNeedRecalc() == false)
-        //     return;
-
-        let oViewer = editor.getDocumentRenderer();
-        let aRect   = this.GetRect();
-        
-        let X = aRect[0];
-        let Y = aRect[1];
-        let nWidth = (aRect[2] - aRect[0]);
-        let nHeight = (aRect[3] - aRect[1]);
-
-        let contentX;
-        let contentY;
-        let contentXLimit;
-        let contentYLimit;
-        
-        contentX = (X) * g_dKoef_pix_to_mm;
-        contentY = (Y) * g_dKoef_pix_to_mm;
-        contentXLimit = (X + nWidth) * g_dKoef_pix_to_mm;
-        contentYLimit = (Y + nHeight) * g_dKoef_pix_to_mm;
-
-        if (!this.contentRect)
-            this.contentRect = {};
-
-        this.contentRect.X = contentX;
-        this.contentRect.Y = contentY;
-        this.contentRect.W = contentXLimit - contentX;
-        this.contentRect.H = contentYLimit - contentY;
-
-        if (!this._oldContentPos)
-            this._oldContentPos = {};
-
-        if (contentX != this._oldContentPos.X || contentY != this._oldContentPos.Y ||
-            contentXLimit != this._oldContentPos.XLimit) {
-            this.content.X      = this._oldContentPos.X        = contentX;
-            this.content.Y      = this._oldContentPos.Y        = contentY;
-            this.content.XLimit = this._oldContentPos.XLimit   = contentXLimit;
-            this.content.YLimit = this._oldContentPos.YLimit   = 20000;
-            this.content.Recalculate_Page(0, true);
+    // for work with comments
+    CAnnotationLine.prototype.RemoveComment = function() {
+        if (!this.IsUseContentAsComment()) {
+            AscPDF.CAnnotationFreeText.prototype.RemoveComment.call(this);
+        }
+        else {
+            AscPDF.CAnnotationBase.prototype.RemoveComment.call(this);
         }
     };
+    CAnnotationLine.prototype.SetContents = function(contents) {
+        if (!this.IsUseContentAsComment()) {
+            AscPDF.CAnnotationFreeText.prototype.SetContents.call(this, contents);
+        }
+        else {
+            AscPDF.CAnnotationBase.prototype.SetContents.call(this, contents);
+        }
+    };
+    CAnnotationLine.prototype.SetReplies = function(aReplies) {
+        if (!this.IsUseContentAsComment()) {
+            AscPDF.CAnnotationFreeText.prototype.SetReplies.call(this, aReplies);
+        }
+        else {
+            AscPDF.CAnnotationBase.prototype.SetReplies.call(this, aReplies);
+        }  
+    };
+    CAnnotationLine.prototype.GetAscCommentData = function() {
+        if (!this.IsUseContentAsComment()) {
+            return AscPDF.CAnnotationFreeText.prototype.GetAscCommentData.call(this);
+        }
+        else {
+            return AscPDF.CAnnotationBase.prototype.GetAscCommentData.call(this);
+        }
+    };
+    //////////////////////////////////////
 
     CAnnotationLine.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
@@ -255,7 +552,7 @@
         }
 
         // do caption
-        let bDoCaption = this.GetDoCaption();
+        let bDoCaption = this.IsDoCaption();
         if (bDoCaption) {
             memory.annotFlags |= (1 << 19);
         }
@@ -296,17 +593,84 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
-
-        this._replies.forEach(function(reply) {
-            reply.WriteToBinary(memory); 
-        });
     };
+
+    function getMinRect(aPoints) {
+        let xMax = aPoints[0].x, yMax = aPoints[0].y, xMin = xMax, yMin = yMax;
+        for(let i = 1; i < aPoints.length; i++)
+        {
+            if(aPoints[i].x > xMax)
+            {
+                xMax = aPoints[i].x;
+            }
+            if(aPoints[i].y > yMax)
+            {
+                yMax = aPoints[i].y;
+            }
+
+            if(aPoints[i].x < xMin)
+            {
+                xMin = aPoints[i].x;
+            }
+
+            if(aPoints[i].y < yMin)
+            {
+                yMin = aPoints[i].y;
+            }
+        }
+
+        return [xMin, yMin, xMax, yMax];
+    }
+
+    function getFigureSize(nType, nLineW) {
+        let oSize = {width: 0, height: 0};
+
+        switch (nType) {
+            case LINE_END_TYPE.None:
+                oSize.width = nLineW;
+                oSize.height = nLineW;
+            case LINE_END_TYPE.OpenArrow:
+            case LINE_END_TYPE.ClosedArrow:
+                oSize.width = 4 * nLineW;
+                oSize.height = 2 * nLineW;
+                break;
+            case LINE_END_TYPE.Diamond:
+            case LINE_END_TYPE.Square:
+                oSize.width = 4 * nLineW;
+                oSize.height = 4 * nLineW;
+                break;
+            case LINE_END_TYPE.Circle:
+                oSize.width = 4 * nLineW;
+                oSize.height = 4 * nLineW;
+                break;
+            case LINE_END_TYPE.RClosedArrow:
+                oSize.width = 6 * nLineW;
+                oSize.height = 6 * nLineW;
+                break;
+            case LINE_END_TYPE.ROpenArrow:
+                oSize.width = 5 * nLineW;
+                oSize.height = 5 * nLineW;
+                break;
+            case LINE_END_TYPE.Butt:
+                oSize.width = 5 * nLineW;
+                oSize.height = 1.5 * nLineW;
+                break;
+            case LINE_END_TYPE.Slash:
+                oSize.width = 4 * nLineW;
+                oSize.height = 3.5 * nLineW;
+                break;
+            
+        }
+
+        return oSize;
+    }
 
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();
     }
 
-    window["AscPDF"].CAnnotationLine = CAnnotationLine;
+    window["AscPDF"].CAnnotationLine    = CAnnotationLine;
+    window["AscPDF"].LINE_END_TYPE      = LINE_END_TYPE;
 })();
 

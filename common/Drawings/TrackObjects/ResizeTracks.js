@@ -862,7 +862,7 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 this.resizedflipV = false;
             }
             
-            if (Asc.editor.isPdfEditor()) {
+            if (Asc.editor.isPdfEditor() && this.originalObject.IsPdfObject) {
                 let xMin = this.resizedPosX;
                 let xMax = this.resizedPosX + this.resizedExtX;
                 let yMin = this.resizedPosY;
@@ -1234,7 +1234,14 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 {
                     oObjectToSet.setLayout(new AscFormat.CLayout());
                 }
-                var pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject);
+                let pos;
+                if(this.originalObject.parent && this.originalObject.parent.getObjectType() === AscDFH.historyitem_type_TrendLine) {
+                    pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject.parent);
+                    pos = {x: pos.coordinate.catVal, y: pos.coordinate.valVal};
+                }
+                else {
+                    pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject);
+                }
                 oObjectToSet.layout.setXMode(AscFormat.LAYOUT_MODE_EDGE);
                 oObjectToSet.layout.setYMode(AscFormat.LAYOUT_MODE_EDGE);
                 if(oObjectToSet instanceof AscFormat.CPlotArea)

@@ -2254,6 +2254,31 @@ CTable.prototype.GetPageBounds = function(nCurPage)
 {
 	return this.Get_PageBounds(nCurPage);
 };
+CTable.prototype.getRowBounds = function(iRow, relPage)
+{
+	let page = this.Pages[relPage];
+	let rowInfo = this.RowsInfo[iRow];
+	if (!this.IsRecalculated()
+		|| undefined === page
+		|| undefined === rowInfo
+		|| undefined === rowInfo.Y[relPage])
+		return new CDocumentBounds(0, 0, 0, 0);
+	
+	return new CDocumentBounds(
+		rowInfo.X0 + page.X_origin,
+		rowInfo.Y[relPage],
+		rowInfo.X1 + page.X_origin,
+		rowInfo.Y[relPage] + rowInfo.H[relPage]
+	);
+};
+CTable.prototype.getRowPageRange = function(iRow)
+{
+	let rowInfo = this.RowsInfo[iRow];
+	if (!this.IsRecalculate() || undefined === rowInfo)
+		return [0, 0];
+	
+	return [rowInfo.StartPage, rowInfo.StartPage + rowInfo.Pages - 1];
+};
 CTable.prototype.GetContentBounds = function(CurPage)
 {
 	return this.Get_PageBounds(CurPage);
@@ -2392,7 +2417,9 @@ CTable.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 		}
 	}
 };
-CTable.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
+
+
+CTable.prototype.FindParagraph = function (fCondition, bBackward, nStartIdx)
 {
 	var nSearchStartIdx, nIdx, oResult;
 	if(bBackward)
@@ -2407,7 +2434,7 @@ CTable.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
 		}
 		for(nIdx = nSearchStartIdx; nIdx >= 0; --nIdx)
 		{
-			oResult = this.Content[nIdx].FindParaWithStyle(sStyleId, bBackward, null);
+			oResult = this.Content[nIdx].FindParagraph(fCondition, bBackward, null);
 			if(oResult)
 			{
 				return oResult
@@ -2426,7 +2453,7 @@ CTable.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
 		}
 		for(nIdx = nSearchStartIdx; nIdx < this.Content.length; ++nIdx)
 		{
-			oResult = this.Content[nIdx].FindParaWithStyle(sStyleId, bBackward, null);
+			oResult = this.Content[nIdx].FindParagraph(fCondition, bBackward, null);
 			if(oResult)
 			{
 				return oResult
@@ -2434,6 +2461,23 @@ CTable.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
 		}
 	}
 	return null;
+};
+
+CTable.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
+{
+	let fCondition = function (oParagraph)
+	{
+		return oParagraph.GetParagraphStyle() === sStyleId;
+	};
+	return this.FindParagraph(fCondition, bBackward, nStartIdx);
+};
+
+CTable.prototype.FindParaWithOutlineLvl = function (nOutlineLvl, bBackward, nStartIdx)
+{
+	let fCondition = function (oParagraph) {
+		return oParagraph.GetOutlineLvl() === nOutlineLvl;
+	};
+	return this.FindParagraph(fCondition, bBackward, nStartIdx);
 };
 /**
  * Данная функция запрашивает новую позицию для содержимого у ячейки, разбивающейся на несколько страниц
@@ -8608,6 +8652,10 @@ CTable.prototype.Set_TableLook = function(TableLook)
 CTable.prototype.Get_TableLook = function()
 {
 	return this.TableLook;
+};
+CTable.prototype.setAllowOverlap = function(isAllow)
+{
+	this.Set_AllowOverlap(isAllow);
 };
 CTable.prototype.Set_AllowOverlap = function(AllowOverlap)
 {

@@ -72,7 +72,16 @@
 		else {
 			let strLiteral = "";
 			while (this.oLookahead.class === arrTypeOfLiteral[0]) {
-				strLiteral += this.EatToken(arrTypeOfLiteral[0]).data;
+				let strConvert = AscMath.AutoCorrection[this.oLookahead.data];
+				if (strConvert)
+				{
+					this.EatToken(this.oLookahead.class);
+					strLiteral += strConvert
+				}
+				else
+				{
+					strLiteral += this.EatToken(arrTypeOfLiteral[0]).data;
+				}
 			}
 			arrLiterals.push({
 				type: arrTypeOfLiteral[num],
@@ -225,12 +234,12 @@
 	};
 	CLaTeXParser.prototype.IsFractionLiteral = function ()
 	{
-		return (this.oLookahead.class === "\\frac" || this.oLookahead.class === "\\binom" || this.oLookahead.class === "\\cfrac" || this.oLookahead.class === "\\sfrac");
+		return (this.oLookahead.class === "\\frac" || this.oLookahead.data === "\\binom" || this.oLookahead.class === "\\cfrac" || this.oLookahead.class === "\\sfrac");
 	};
 	CLaTeXParser.prototype.GetFractionLiteral = function ()
 	{
 		let type;
-		if (this.oLookahead.class === "\\binom") {
+		if (this.oLookahead.data === "\\binom") {
 			type = oLiteralNames.binomLiteral[num];
 		}
 		else if (this.oLookahead.class === "\\sfrac") {
@@ -735,10 +744,6 @@
 			{
 				return this.GetSubSupLiteral(oWrapperContent);
 			}
-			else if (this.oLookahead.class === MathLiterals.accent.id)
-			{
-				return this.GetAccentLiteral(oWrapperContent);
-			}
 			else if (this.IsGetBelowAboveLiteral())
 			{
 				return this.GetBelowAboveLiteral(oWrapperContent)
@@ -840,6 +845,12 @@
 			isLimits: isLimits
 		};
 	};
+	CLaTeXParser.prototype.GetOneChar = function ()
+	{
+		let char = this.oLookahead.data;
+		this.EatToken(this.oLookahead.class);
+		return char;
+	}
 	CLaTeXParser.prototype.GetPartOfSupSup = function ()
 	{
 		let oElement;
@@ -856,7 +867,7 @@
 		else {
 			oElement = (this.oLookahead.data === "{")
 				? this.GetArguments(1)
-				: this.GetWrapperElement2();
+				: this.GetOneChar();
 		}
 
 		if (this.oLookahead.class === strSymbol) {

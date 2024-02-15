@@ -719,6 +719,64 @@
 			ExecuteHotkey(testHotkeyActions.removeFrontWord, 1);
 			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello ', 'Check removing front word');
 		});
+		
+		QUnit.test('Check move/select in no calculated text', (assert) =>
+		{
+			function CheckCursorPosition(expected, description)
+			{
+				const position = logicDocument.GetContentPosition();
+				assert.strictEqual(position[position.length - 1].Position, expected, description);
+			}
+			
+			ClearDocumentAndAddParagraph('The quick brown fox jumps over the lazy dog');
+			
+			logicDocument.MoveCursorToStartPos();
+			
+			ExecuteHotkey(testHotkeyActions.moveToRightChar);
+			ExecuteHotkey(testHotkeyActions.moveToRightChar);
+			ExecuteHotkey(testHotkeyActions.moveToRightChar);
+			CheckCursorPosition(3, 'Check move to right char');
+			
+			ExecuteHotkey(testHotkeyActions.moveToEndLine);
+			CheckCursorPosition(43, 'Check move to end line');
+			
+			ExecuteHotkey(testHotkeyActions.moveToLeftChar);
+			ExecuteHotkey(testHotkeyActions.moveToLeftChar);
+			ExecuteHotkey(testHotkeyActions.moveToLeftChar);
+			ExecuteHotkey(testHotkeyActions.moveToLeftChar);
+			ExecuteHotkey(testHotkeyActions.moveToLeftChar);
+			CheckCursorPosition(38, 'Check move to left char');
+			
+			ExecuteHotkey(testHotkeyActions.moveToStartLine);
+			CheckCursorPosition(0, 'Check move to start line');
+			
+			ExecuteHotkey(testHotkeyActions.moveToEndDocument);
+			CheckCursorPosition(43, 'Check move to the end of the document');
+			
+			ExecuteHotkey(testHotkeyActions.moveToStartDocument);
+			CheckCursorPosition(0, 'Check move to the start of the document');
+			
+			ExecuteHotkey(testHotkeyActions.moveToRightWord);
+			ExecuteHotkey(testHotkeyActions.moveToRightWord);
+			ExecuteHotkey(testHotkeyActions.moveToRightWord);
+			CheckCursorPosition(16, 'Check move to the right by words');
+			
+			ExecuteHotkey(testHotkeyActions.moveToLeftWord);
+			CheckCursorPosition(10, 'Check move to the left by words');
+			
+			ExecuteHotkey(testHotkeyActions.moveUp);
+			CheckCursorPosition(10, 'Check move up');
+
+			ExecuteHotkey(testHotkeyActions.moveDown);
+			CheckCursorPosition(10, 'Check move down');
+			
+			ExecuteHotkey(testHotkeyActions.moveToNextPage);
+			CheckCursorPosition(10, 'Check move to the next page');
+
+			ExecuteHotkey(testHotkeyActions.moveToPreviousPage);
+			CheckCursorPosition(10, 'Check move to the previous page');
+		});
+		
 		QUnit.test('Check move/select in text', (assert) =>
 		{
 			function CheckCursorPosition(expected, description)
@@ -1093,6 +1151,7 @@
 		{
 			assert.strictEqual(ExecuteHotkey(testHotkeyActions.disableNumLock) & keydownresult_PreventAll, keydownresult_PreventAll);
 			assert.strictEqual(ExecuteHotkey(testHotkeyActions.disableScrollLock) & keydownresult_PreventAll, keydownresult_PreventAll);
+			assert.strictEqual(ExecuteHotkey(testHotkeyActions.disableBrowserZoomIn) & keydownresult_PreventAll, keydownresult_PreventAll);
 		});
 
 		QUnit.test('Check filling forms', (assert) =>

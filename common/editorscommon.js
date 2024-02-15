@@ -198,6 +198,10 @@
 			return;
 		}
 		var result = [];
+		if (number === 0)
+		{
+			return [0];
+		}
 		while (number > 0) {
 			var remainder = number % base;
 			if (remainder === 0) {
@@ -948,9 +952,12 @@
 			return;
 		}
 		rdata["userconnectionid"] = editor.CoAuthoringApi.getUserConnectionId();
+		let url = sDownloadServiceLocalUrl + '/' + rdata["id"];
+		url += '?cmd=' + encodeURIComponent(JSON.stringify(rdata));
+		url += '&' + Asc.c_sShardKeyName + '=' + encodeURIComponent(editor.documentShardKey);
 		asc_ajax({
 			type:        'POST',
-			url:         sDownloadServiceLocalUrl + '/' + rdata["id"] + '?cmd=' + encodeURIComponent(JSON.stringify(rdata)),
+			url:         url,
 			data:        dataContainer.part || dataContainer.data,
 			contentType: "application/octet-stream",
 			error:       function (httpRequest, statusText, status)
@@ -970,12 +977,15 @@
 		});
 	}
 
-	function sendSaveFile(docId, userId, title, jwt, data, fError, fsuccess)
+	function sendSaveFile(docId, userId, title, jwt, shardKey, data, fError, fsuccess)
 	{
-		var cmd = {'id': docId, "userid": userId, "tokenSession": jwt, 'outputpath': title};
+		let cmd = {'id': docId, "userid": userId, "tokenSession": jwt, 'outputpath': title};
+		let url =sSaveFileLocalUrl + '/' + docId;
+		url += '?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+		url += '&' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
 		asc_ajax({
 			type:        'POST',
-			url:         sSaveFileLocalUrl + '/' + docId + '?cmd=' + encodeURIComponent(JSON.stringify(cmd)),
+			url:         url,
 			data:        data,
 			contentType: "application/octet-stream",
 			error:       fError,
@@ -1419,7 +1429,8 @@
 		"num": "#NUM!",
 		"na": "#N\/A",
 		"getdata": "#GETTING_DATA",
-		"uf": "#UNSUPPORTED_FUNCTION!"
+		"uf": "#UNSUPPORTED_FUNCTION!",
+		"calc": "#CALC!"
 	};
 	var cErrorLocal = {};
 	let cCellFunctionLocal = {};
@@ -1456,7 +1467,22 @@
 			structured_tables_userColumn     = new XRegExp('(?:\'\\[|\'\\]|[^[\\]])+'),
 			structured_tables_reservedColumn = new XRegExp('\\#(?:' + loc_all + '|' + loc_headers + '|' + loc_totals + '|' + loc_data + '|' + loc_this_row + ')|@');
 
-		return XRegExp.build('^(?<tableName>{{tableName}})\\[(?<columnName>{{columnName}})?\\]', {
+
+		//Table4[[#Data];[#Totals]]
+		//Table1[[#Headers],[#Data],[Column1]]
+		//Table4[[#Headers];[Column1]:[Column2]]
+		//Table1[[#Data],[#Totals],[Column1]]
+		//Table4[[#Totals];[Column1]:[Column2]]
+
+		//Table1[[#All];[Column1]:[Column2]]
+
+		//Table1[[#Data],[#Totals]]
+		//Table1[[#Headers],[#Data]]
+
+		//Table1[[#Headers],[#Data],[Column1]:[Column2]]
+
+		let argsSeparator = FormulaSeparators.functionArgumentSeparator;
+		return XRegExp.build('^(?<tableName>{{tableName}})\\[(?<columnName1>{{columnName}})?\\]', {
 			"tableName":  new XRegExp("^(:?[" + str_namedRanges + "][" + str_namedRanges + "\\d.]*)"),
 			"columnName": XRegExp.build('(?<reservedColumn>{{reservedColumn}})|(?<oneColumn>{{userColumn}})|(?<columnRange>{{userColumnRange}})|(?<hdtcc>{{hdtcc}})', {
 				"userColumn":      structured_tables_userColumn,
@@ -1464,7 +1490,10 @@
 				"userColumnRange": XRegExp.build('\\[(?<colStart>{{uc}})\\]\\:\\[(?<colEnd>{{uc}})\\]', {
 					"uc": structured_tables_userColumn
 				}),
-				"hdtcc":           XRegExp.build('(?<hdt>\\[{{rc}}\\]|{{hd}}|{{dt}})(?:\\' + FormulaSeparators.functionArgumentSeparator + '(?:\\[(?<hdtcstart>{{uc}})\\])(?:\\:(?:\\[(?<hdtcend>{{uc}})\\]))?)?', {
+				//fixed: added [{{rc}}\\]' + argsSeparator + '\\[{{rc}}\\] for:
+				//Table1[[#Data],[#Totals]]
+				//Table1[[#Headers],[#Data]]
+				"hdtcc":           XRegExp.build('(?<hdt>\\[{{rc}}\\]' + argsSeparator + '\\[{{rc}}\\]|\\[{{rc}}\\]|{{hd}}|{{dt}})(?:\\' + argsSeparator + '(?:\\[(?<hdtcstart>{{uc}})\\])(?:\\:(?:\\[(?<hdtcend>{{uc}})\\]))?)?', {
 					"rc": structured_tables_reservedColumn,
 					"hd": structured_tables_headata,
 					"dt": structured_tables_datals,
@@ -1494,7 +1523,8 @@
 			"num":     "#NUM!",
 			"na":      "#N\/A",
 			"getdata": "#GETTING_DATA",
-			"uf":      "#UNSUPPORTED_FUNCTION!"
+			"uf":      "#UNSUPPORTED_FUNCTION!",
+			"calc":    "#CALC!"
 		};
 		cErrorLocal['nil'] = local['nil'];
 		cErrorLocal['div'] = local['div'];
@@ -1505,6 +1535,7 @@
 		cErrorLocal['na'] = local['na'];
 		cErrorLocal['getdata'] = local['getdata'];
 		cErrorLocal['uf'] = local['uf'];
+		cErrorLocal['calc'] = local['calc'];
 
 		return new RegExp("^(" + cErrorLocal["nil"] + "|" +
 			cErrorLocal["div"] + "|" +
@@ -1514,7 +1545,8 @@
 			cErrorLocal["num"] + "|" +
 			cErrorLocal["na"] + "|" +
 			cErrorLocal["getdata"] + "|" +
-			cErrorLocal["uf"] + ")", "i");
+			cErrorLocal["uf"] + "|" +
+			cErrorLocal["calc"] + ")", "i");
 	}
 
 	function build_rx_cell_func(local)
@@ -2018,12 +2050,13 @@
 			return false;
 		}
 	}
-	function ShowImageFileDialog(documentId, documentUserId, jwt, callback, callbackOld)
+	function ShowImageFileDialog(documentId, documentUserId, jwt, shardKey, callback, callbackOld)
 	{
 		if (false === _ShowFileDialog(getAcceptByArray(c_oAscImageUploadProp.SupportedFormats), true, true, ValidateUploadImage, callback)) {
 			//todo remove this compatibility
 			var frameWindow = GetUploadIFrame();
-			var url = sUploadServiceLocalUrlOld + '/' + documentId;
+			let url = sUploadServiceLocalUrlOld + '/' + documentId;
+			url += '?' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
 			if (jwt)
 			{
 				url += '?token=' + encodeURIComponent(jwt);
@@ -2168,13 +2201,15 @@
 	}
 
 	function DownloadOriginalFile(documentId, url, urlPathInToken, token, fError, fSuccess) {
+		let data = JSON.stringify({
+			"url": url,
+			"token": token
+		});
 		asc_ajax({
 			url: sDownloadFileLocalUrl + '/' + documentId,
+			type: "POST",
 			responseType: "arraybuffer",
-			headers: {
-				'Authorization': 'Bearer ' + token,
-				'x-url': encodeURI(url)
-			},
+			data: data,
 			success: function(resp) {
 				fSuccess(AscCommon.initStreamFromResponse(resp));
 			},
@@ -2233,12 +2268,12 @@
 		callback(nError, [file], obj);
 	}
 
-	function UploadImageFiles(files, documentId, documentUserId, jwt, callback)
+	function UploadImageFiles(files, documentId, documentUserId, jwt, shardKey, callback)
 	{
 		if (files.length > 0)
 		{
-			var url = sUploadServiceLocalUrl + '/' + documentId;
-
+			let url = sUploadServiceLocalUrl + '/' + documentId;
+			url += '?' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
 			var aFiles = [];
 			for(var i = files.length - 1;  i > - 1; --i){
                 aFiles.push(files[i]);
@@ -2265,8 +2300,6 @@
                         else{
                             file = aFiles.pop();
                             var xhr = new XMLHttpRequest();
-
-                            url = sUploadServiceLocalUrl + '/' + documentId;
 
                             xhr.open('POST', url, true);
                             xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
@@ -2299,12 +2332,12 @@
 		}
 	}
 
-    function UploadImageUrls(files, documentId, documentUserId, jwt, callback)
+    function UploadImageUrls(files, documentId, documentUserId, jwt, shardKey, callback)
     {
         if (files.length > 0)
         {
-            var url = sUploadServiceLocalUrl + '/' + documentId;
-
+            let url = sUploadServiceLocalUrl + '/' + documentId;
+			url += '?' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
             var aFiles = [];
             for(var i = files.length - 1;  i > - 1; --i){
                 aFiles.push(files[i]);
@@ -2336,8 +2369,6 @@
 						{
                             file = aFiles.pop();
                             var xhr = new XMLHttpRequest();
-
-                            url = sUploadServiceLocalUrl + '/' + documentId;
 
                             xhr.open('POST', url, true);
                             xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
@@ -3146,7 +3177,7 @@
 			this.operand_str = match[1];
 			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null, external];
 		}
-		return [false, null, null];
+		return [false, null, null, external, externalLength];
 	};
 	parserHelper.prototype.isNextPtg = function (formula, start_pos, digitDelim)
 	{
@@ -4441,6 +4472,7 @@
 		{
 			case "bg-BG":
 				alphaBet = {
+					0: ['нулевят'],
 					1:
 						{
 						'един': 'първият',
@@ -4469,6 +4501,7 @@
 				break;
 			case "cs-CZ":
 				alphaBet = {
+					'nula': 'nultý',
 					'jedna': 'první',
 					'dva': 'druhý',
 					'tři': 'třetí',
@@ -4511,6 +4544,7 @@
 				break;
 			case "de-DE":
 				alphaBet = {
+					'null': 'nullte',
 					'eins': 'erste',
 					'zwei': 'zweite',
 					'drei': 'dritte',
@@ -4534,6 +4568,7 @@
 				break;
 			case "el-GR":
 				alphaBet = {
+					0: ['μηδενικό'],
 					1: [
 						'πρώτο',
 						'δεύτερο',
@@ -4602,6 +4637,7 @@
 				break;
 			case "es-ES":
 				alphaBet = {
+					'cero': 'cero',
 					'uno': 'primero',
 					'dos': 'segundo',
 					'tres': 'tercero',
@@ -4649,6 +4685,7 @@
 				break;
 			case "it-IT":
 				alphaBet = {
+					'zero': 'zero',
 					'uno': 'primo',
 					'due': 'secondo',
 					'tre': 'terzo',
@@ -4663,6 +4700,7 @@
 				break;
 			case "lv-LV":
 				alphaBet = {
+					'nulle': 'nultais',
 					'viens': 'pirmais',
 					'divi': 'otrais',
 					'trīs': 'trešais',
@@ -4703,6 +4741,7 @@
 					},
 					'numbers':
 					{
+						'zero': 'zerowy',
 						'jeden': 'pierwszy',
 						'dwa': 'drugi',
 						'trzy': 'trzeci',
@@ -4791,6 +4830,7 @@
 			case "pt-BR":
 			case "pt-PT":
 				alphaBet = {
+					'zero': 'zero',
 					'um': 'primeiro',
 					'dois': 'segundo',
 					'três': 'terceiro',
@@ -4835,6 +4875,7 @@
 				alphaBet = {
 					'numbers':
 					{
+						'ноль': 'нулевой',
 						'один': 'первый',
 						'два': 'второй',
 						'три': 'третий',
@@ -4923,6 +4964,7 @@
 				break;
 			case "sk-SK":
 				alphaBet = {
+					'nula': 'nultý',
 					'jeden': 'prvý',
 					'dva': 'druhý',
 					'tri': 'tretí',
@@ -4987,6 +5029,7 @@
 				break;
 			case "sv-SE":
 				alphaBet = {
+					'noll': 'nollte',
 					'ett': 'första',
 					'två': 'andra',
 					'tre': 'tredje',
@@ -5005,6 +5048,7 @@
 				alphaBet = {
 					'numbers':
 					{
+						"нуль": "нульовий",
 						"один": "перший",
 						"два": "другий",
 						"три": "третій",
@@ -5125,6 +5169,7 @@
 		{
 			case"bg-BG":
 				alphaBet = {
+					0: ['нула'],
 					1: [
 						'един',
 						'два',
@@ -5180,6 +5225,7 @@
 				break;
 			case"cs-CZ":
 				alphaBet = {
+					0: ['nula'],
 					1: [
 						'jedna',
 						'dva',
@@ -5235,6 +5281,7 @@
 				break;
 			case"de-DE":
 				alphaBet = {
+					0: ['null'],
 					1: [
 						'eins',
 						'zwei',
@@ -5270,6 +5317,7 @@
 				break;
 			case"el-GR":
 				alphaBet = {
+					0: ['μηδέν'],
 					1: [
 						'ένα',
 						'δύο',
@@ -5325,6 +5373,7 @@
 				break;
 			case"es-ES":
 				alphaBet = {
+					0: ['cero'],
 					1: [
 						'uno',
 						'dos',
@@ -5377,6 +5426,7 @@
 				break;
 			case"fr-FR":
 				alphaBet = {
+					0: ['zéro'],
 					1: [
 						'un',
 						'deux',
@@ -5412,6 +5462,7 @@
 				break;
 			case"it-IT":
 				alphaBet = {
+					0: ['zero'],
 					1: [
 						'uno',
 						'due',
@@ -5447,6 +5498,7 @@
 				break;
 			case"lv-LV":
 				alphaBet = {
+					0: ['nulle'],
 					1: [
 						'viens',
 						'divi',
@@ -5502,6 +5554,7 @@
 				break;
 			case"nl-NL":
 				alphaBet = {
+					0: ['nul'],
 					1: [
 						'één',
 						'twee',
@@ -5537,6 +5590,7 @@
 				break;
 			case"pl-PL":
 				alphaBet = {
+					0: ['zero'],
 					1: [
 						'jeden',
 						'dwa',
@@ -5593,6 +5647,7 @@
 			case"pt-BR":
 			case"pt-PT":
 				alphaBet = {
+					0: ['zero'],
 					1: [
 						'um',
 						'dois',
@@ -5639,6 +5694,7 @@
 				break;
 			case"ru-RU":
 				alphaBet = {
+					0: ['ноль'],
 					1: [
 						'один',
 						'два',
@@ -5694,6 +5750,7 @@
 				break;
 			case"sk-SK":
 				alphaBet = {
+					0: ['nula'],
 					1: [
 						'jeden',
 						'dva',
@@ -5729,6 +5786,7 @@
 				break;
 			case"sv-SE":
 				alphaBet = {
+					0: ['noll'],
 					1: [
 						'ett',
 						'två',
@@ -5764,6 +5822,7 @@
 				break;
 			case"uk-UA":
 				alphaBet = {
+					0: ['нуль'],
 					1: [
 						"один",
 						"два",
@@ -5826,6 +5885,7 @@
 			case 'ko-KR':
 			default:
 				alphaBet = {
+					0: ['zero'],
 					1: [
 						'one',
 						'two',
@@ -5870,6 +5930,11 @@
 		var getConcatStringByRule = function (array)
 		{
 			return array.join(' ');
+		}
+
+		if (nValue === 0)
+		{
+			return {arrAnswer: [alphaBet[0][0]], getConcatStringByRule: getConcatStringByRule};
 		}
 
 		switch (lang)
@@ -6875,6 +6940,10 @@
 		var addFirstDegreeSymbol = true;
 		if (nFormat === Asc.c_oAscNumberingFormat.KoreanCounting)
 		{
+			if (nValue === 0)
+			{
+				return String.fromCharCode(0xC601);
+			}
 			addFirstDegreeSymbol = false;
 			var digits = [
 				String.fromCharCode(0xC77C),
@@ -6895,6 +6964,10 @@
 			];
 		} else if (nFormat === Asc.c_oAscNumberingFormat.JapaneseLegal)
 		{
+			if (nValue === 0)
+			{
+				return String.fromCharCode(0x3007);
+			}
 			digits = [
 				String.fromCharCode(0x58F1),
 				String.fromCharCode(0x5F10),
@@ -6914,6 +6987,10 @@
 			];
 		} else if (nFormat === Asc.c_oAscNumberingFormat.JapaneseCounting)
 		{
+			if (nValue === 0)
+			{
+				return String.fromCharCode(0x3007);
+			}
 			addFirstDegreeSymbol = false;
 			digits = [
 				String.fromCharCode(0x4E00),
@@ -7065,6 +7142,10 @@
 
 	function IntToAiueo(nValue)
 	{
+		if (nValue === 0)
+		{
+			return '0';
+		}
 		var sResult = '';
 		var count = 1, numberOfLetters = 46;
 		nValue = repeatNumberingLvl(nValue, 46);
@@ -7092,34 +7173,47 @@
 			++count;
 			nValue -= numberOfLetters;
 		}
-		if (nValue >= 1 && nValue <= 5)
+		if (nValue === 0)
+		{
+			letter = 0x0030;
+		}
+		else if (nValue >= 1 && nValue <= 5)
 		{
 			letter = 0x30A2 + (nValue - 1) * 2;
-		} else if (nValue >= 6 && nValue <= 17)
+		}
+		else if (nValue >= 6 && nValue <= 17)
 		{
 			letter = 0x30AB + (nValue - 6) * 2;
-		} else if (nValue >= 18 && nValue <= 21)
+		}
+		else if (nValue >= 18 && nValue <= 21)
 		{
 			letter = 0x30C4 + (nValue - 18) * 2;
-		} else if (nValue >= 22 && nValue <= 26)
+		}
+		else if (nValue >= 22 && nValue <= 26)
 		{
 			letter = 0x30CB + nValue - 22;
-		} else if (nValue >= 27 && nValue <= 31)
+		}
+		else if (nValue >= 27 && nValue <= 31)
 		{
 			letter = 0x30D2 + (nValue - 27) * 3;
-		} else if (nValue >= 32 && nValue <= 35)
+		}
+		else if (nValue >= 32 && nValue <= 35)
 		{
 			letter = 0x30DF + nValue - 32;
-		} else if (nValue >= 36 && nValue <= 38)
+		}
+		else if (nValue >= 36 && nValue <= 38)
 		{
 			letter = 0x30E4 + nValue - 36;
-		} else if (nValue >= 39 && nValue <= 43)
+		}
+		else if (nValue >= 39 && nValue <= 43)
 		{
 			letter = 0x30E9 + nValue - 39;
-		} else if (nValue === 44)
+		}
+		else if (nValue === 44)
 		{
 			letter = 0x30EF + nValue - 44;
-		} else if (nValue >= 45 && nValue <= 46)
+		}
+		else if (nValue >= 45 && nValue <= 46)
 		{
 			letter = 0x30F2 + nValue - 45;
 		}
@@ -7165,6 +7259,10 @@
 			charArr = [0x002A, 0x2020, 0x2021, 0x00A7]
 		} else if(nFormat === Asc.c_oAscNumberingFormat.Chosung)
 		{
+			if (nValue === 0)
+			{
+				return '0';
+			}
 			nValue = repeatNumberingLvl(nValue, 14);
 			charArr = [
 				0x3131, 0x3134, 0x3137, 0x3139,
@@ -7174,6 +7272,10 @@
 			]
 		} else if (nFormat === Asc.c_oAscNumberingFormat.Ganada)
 		{
+			if (nValue === 0)
+			{
+				return '0';
+			}
 			nValue = repeatNumberingLvl(nValue, 14);
 			charArr = [
 				0xAC00, 0xB098, 0xB2E4, 0xB77C,
@@ -7333,12 +7435,16 @@
 				0x7533, 0x9149, 0x620C, 0x4EA5
 			];
 
-		sResult += nValue <= digits.length ? String.fromCharCode(digits[nValue - 1]) : nValue;
+		sResult += (nValue >= 1 && nValue <= digits.length) ? String.fromCharCode(digits[nValue - 1]) : nValue;
 		return sResult;
 	}
 
 	function IntToIdeographZodiacTraditional(nValue)
 	{
+		if (nValue === 0)
+		{
+			return '0';
+		}
 		var sResult = '';
 		var digits = [
 			0x7532, 0x5B50, 0x4E59, 0x4E11, 0x4E19, 0x5BC5,
@@ -7374,6 +7480,10 @@
 
 	function IntToIroha(nValue, nFormat)
 	{
+		if (nValue === 0)
+		{
+			return '0';
+		}
 		var sResult = '';
 		var digits = [];
 		if (nFormat === Asc.c_oAscNumberingFormat.Iroha)
@@ -7485,7 +7595,11 @@
 			1000  : String.fromCharCode(0x5343),
 			10000 : String.fromCharCode(0x4E07)
 		};
-		if (nValue < 1000000)
+		if (nValue === 0)
+		{
+			sResult += arrChinese[0];
+		}
+		else if (nValue < 1000000)
 		{
 			var nRemValue = nValue;
 
@@ -7610,7 +7724,11 @@
 			1000  : String.fromCharCode(0x4EDF),
 			10000 : String.fromCharCode(0x842C)
 		};
-		if (nValue < 1000000)
+		if (nValue === 0)
+		{
+			sResult += arrChinese[0];
+		}
+		else if (nValue < 1000000)
 		{
 			var nRemValue = nValue;
 
@@ -7790,7 +7908,11 @@
 			'拾'
 		];
 
-		if (nValue < 10000)
+		if (nValue === 0)
+		{
+			sResult = String.fromCharCode(0x96F6);
+		}
+		else if (nValue < 10000)
 		{
 			sResult = IdeographLegalTraditionalSplitting(digits, degrees, nValue).join('');
 		} else {
@@ -7879,7 +8001,7 @@
 			String.fromCharCode(0x4E5D)
 		];
 		var conv = decimalNumberConversion(nValue, digits.length);
-		if(nValue >= digits.length * 10)
+		if(nValue >= digits.length * 10 || nValue === 0)
 		{
 			digits[0] = String.fromCharCode(0x25CB);
 			sResult = conv.map(function (num)
@@ -8030,7 +8152,7 @@
 				if (nValue === 1)
 				{
 					sResult += 'er';
-				} else {
+				} else if (nValue !== 0) {
 					sResult += 'e';
 				}
 				break;
@@ -8202,8 +8324,11 @@
 			'百',
 			'十'
 		];
-
-		if (nValue < 100000)
+		if (nValue === 0)
+		{
+			return String.fromCharCode(0x96F6);
+		}
+		else if (nValue < 100000)
 		{
 			sResult = taiwaneseCountingSplitting(digits, degrees, nValue).join('');
 		} else if (nValue >= 100000 && nValue < 1000000)
@@ -8216,7 +8341,11 @@
 	function IntToKoreanLegal(nValue, nFormat)
 	{
 		var sResult = '';
-		if (nValue < 100)
+		if (nValue === 0)
+		{
+			return '0';
+		}
+		else if (nValue < 100)
 		{
 			var answer = [];
 			var digits = {
@@ -8261,8 +8390,15 @@
 	function IntToOrdinalText(nValue, nLang)
 	{
 		var textLang = languages[nLang];
-		var ordinalText = getCardinalTextFromValue(textLang, nValue);
 		var alphaBet = getAlphaBetForOrdinalText(textLang);
+		if (nValue === 0)
+		{
+			if (alphaBet[0] && alphaBet[0][0])
+			{
+				return alphaBet[0][0].sentenceCase();
+			}
+		}
+		var ordinalText = getCardinalTextFromValue(textLang, nValue);
 		switch (textLang)
 		{
 			case 'de-DE':
@@ -8406,7 +8542,7 @@
 					{
 						switchingValue[switchingValue.length - 1] = lastWord.slice(0, lastWord.length - 1);
 					}
-					if (switchingValue[switchingValue.length - 1] !== 'premier')
+					if (lastWord !== 'premier' && lastWord !== 'zéro')
 					{
 						switchingValue[switchingValue.length - 1] += 'ième';
 					}
@@ -8742,6 +8878,10 @@
 
 	function IntToHindiCounting(nValue)
 	{
+		if (nValue === 0)
+		{
+			return "शून्य";
+		}
 		var alphaBet = [
 			"एक","दो","तीन","चार","पांच","छह","सात","आठ","नौ","दस","ग्यारह",
 			"बारह","तेरह","चौदह","पंद्रह","सोलह","सत्रह","अठारह","उन्नीस","बीस",
@@ -8815,7 +8955,7 @@
 
 	function splitThaiCounting(num, digits)
 	{
-		if (num >= 1000000000)
+		if (num >= 1000000000 || num === 0)
 		{
 			return ['ศูนย์'];
 		}
@@ -8945,6 +9085,10 @@
 
 	function IntToVietnameseCounting(nValue)
 	{
+		if (nValue === 0)
+		{
+			return 'không';
+		}
 		var digits = ['một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín', 'mười'];
 
 		return vietnameseCounting(nValue, digits).join(' ');
@@ -8974,6 +9118,67 @@
 
 		return sResult.join('');
 	}
+	
+	function IsLessMinimumNumberingFormat(nFormat, nValue)
+	{
+		switch (nFormat)
+		{
+			case Asc.c_oAscNumberingFormat.Decimal:
+			case Asc.c_oAscNumberingFormat.CustomDecimalFourZero:
+			case Asc.c_oAscNumberingFormat.CustomDecimalThreeZero:
+			case Asc.c_oAscNumberingFormat.CustomDecimalTwoZero:
+			case Asc.c_oAscNumberingFormat.DecimalZero:
+			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircleChinese:
+			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircle:
+			case Asc.c_oAscNumberingFormat.Aiueo:
+			case Asc.c_oAscNumberingFormat.AiueoFullWidth:
+			case Asc.c_oAscNumberingFormat.Chosung:
+			case Asc.c_oAscNumberingFormat.Ganada:
+			case Asc.c_oAscNumberingFormat.DecimalEnclosedFullstop:
+			case Asc.c_oAscNumberingFormat.DecimalEnclosedParen:
+			case Asc.c_oAscNumberingFormat.DecimalFullWidth:
+			case Asc.c_oAscNumberingFormat.DecimalFullWidth2:
+			case Asc.c_oAscNumberingFormat.DecimalHalfWidth:
+			case Asc.c_oAscNumberingFormat.Hex:
+			case Asc.c_oAscNumberingFormat.HindiNumbers:
+			case Asc.c_oAscNumberingFormat.IdeographDigital:
+			case Asc.c_oAscNumberingFormat.JapaneseDigitalTenThousand:
+			case Asc.c_oAscNumberingFormat.IdeographEnclosedCircle:
+			case Asc.c_oAscNumberingFormat.IdeographTraditional:
+			case Asc.c_oAscNumberingFormat.IdeographZodiac:
+			case Asc.c_oAscNumberingFormat.IdeographZodiacTraditional:
+			case Asc.c_oAscNumberingFormat.Iroha:
+			case Asc.c_oAscNumberingFormat.IrohaFullWidth:
+			case Asc.c_oAscNumberingFormat.ChineseCounting:
+			case Asc.c_oAscNumberingFormat.ChineseCountingThousand:
+			case Asc.c_oAscNumberingFormat.ChineseLegalSimplified:
+			case Asc.c_oAscNumberingFormat.IdeographLegalTraditional:
+			case Asc.c_oAscNumberingFormat.JapaneseLegal:
+			case Asc.c_oAscNumberingFormat.KoreanCounting:
+			case Asc.c_oAscNumberingFormat.JapaneseCounting:
+			case Asc.c_oAscNumberingFormat.KoreanDigital:
+			case Asc.c_oAscNumberingFormat.ThaiNumbers:
+			case Asc.c_oAscNumberingFormat.KoreanDigital2:
+			case Asc.c_oAscNumberingFormat.TaiwaneseDigital:
+			case Asc.c_oAscNumberingFormat.None:
+			case Asc.c_oAscNumberingFormat.NumberInDash:
+			case Asc.c_oAscNumberingFormat.TaiwaneseCounting:
+			case Asc.c_oAscNumberingFormat.CardinalText:
+			case Asc.c_oAscNumberingFormat.Custom:
+			case Asc.c_oAscNumberingFormat.Ordinal:
+			case Asc.c_oAscNumberingFormat.TaiwaneseCountingThousand:
+			case Asc.c_oAscNumberingFormat.KoreanLegal:
+			case Asc.c_oAscNumberingFormat.OrdinalText:
+			case Asc.c_oAscNumberingFormat.HindiCounting:
+			case Asc.c_oAscNumberingFormat.ThaiCounting:
+			case Asc.c_oAscNumberingFormat.DollarText:
+			case Asc.c_oAscNumberingFormat.BahtText:
+			case Asc.c_oAscNumberingFormat.VietnameseCounting:
+				return nValue < 0;
+			default:
+				return nValue < 1;
+		}
+	}
 
 	/**
 	 * Переводим числовое значение в строку с заданным форматом нумерации
@@ -8997,6 +9202,10 @@
 			}
 		}
 		var sResult = "";
+		if (IsLessMinimumNumberingFormat(nFormat, nValue))
+		{
+			return sResult;
+		}
 
 		switch (nFormat)
 		{
@@ -9049,7 +9258,7 @@
 
 			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircleChinese:
 			{
-				if (nValue <= 10)
+				if (nValue >= 1 && nValue <= 10)
 				{
 					sResult = String.fromCharCode(0x2460 + nValue - 1);
 				}
@@ -9062,7 +9271,7 @@
 
 			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircle:
 			{
-				if (nValue <= 20)
+				if (nValue >= 1 && nValue <= 20)
 				{
 					sResult = String.fromCharCode(0x2460 + nValue - 1);
 				}
@@ -9133,11 +9342,11 @@
 			case Asc.c_oAscNumberingFormat.DecimalFullWidth2:
 			case Asc.c_oAscNumberingFormat.DecimalHalfWidth:
 			{
-				var zeroInHex = nFormat === Asc.c_oAscNumberingFormat.DecimalFullWidth ? 0xFF10 : 0x0030;
+				var zero = (nFormat === Asc.c_oAscNumberingFormat.DecimalFullWidth || nFormat === Asc.c_oAscNumberingFormat.DecimalFullWidth2) ? 0xFF10 : 0x0030;
 				var strValue = String(nValue);
 				for(var i = 0; i < strValue.length; i++)
 				{
-					sResult += String.fromCharCode(zeroInHex + parseInt(strValue[i]));
+					sResult += String.fromCharCode(zero + parseInt(strValue[i]));
 				}
 				break;
 			}
@@ -9150,7 +9359,11 @@
 
 			case Asc.c_oAscNumberingFormat.Hex:
 			{
-				if (nValue <= 0xFFFF)
+				if (nValue === 0)
+				{
+					sResult = '0';
+				}
+				else if (nValue <= 0xFFFF)
 				{
 					sResult = (nValue+0x10000).toString(16).substr(-4).toUpperCase();
 					sResult = sResult.replace(/^0+/, '');
@@ -9180,7 +9393,7 @@
 
 			case Asc.c_oAscNumberingFormat.IdeographEnclosedCircle:
 			{
-				sResult += nValue <= 10 ? String.fromCharCode(0x3220 + nValue - 1) : nValue;
+				sResult += (nValue >= 1 && nValue <= 10) ? String.fromCharCode(0x3220 + nValue - 1) : nValue;
 				break;
 			}
 
@@ -10003,7 +10216,7 @@
 
 	function loadScript(url, onSuccess, onError)
 	{
-		if (window["NATIVE_EDITOR_ENJINE"] === true || window["Native"] !== undefined)
+		if (window["NATIVE_EDITOR_ENJINE"] === true || window["native"] !== undefined)
 		{
 			onSuccess();
 			return;
@@ -10993,7 +11206,7 @@
 						obj.options.callback(Asc.c_oAscError.ID.No, data);
 					else
 					{
-						AscCommon.UploadImageUrls(data, obj.options.api.documentId, obj.options.api.documentUserId, obj.options.api.CoAuthoringApi.get_jwt(), function(urls)
+						AscCommon.UploadImageUrls(data, obj.options.api.documentId, obj.options.api.documentUserId, obj.options.api.CoAuthoringApi.get_jwt(), obj.options.api.documentShardKey, function(urls)
                         {
                             obj.options.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 
@@ -13412,6 +13625,14 @@
 	{
 		return rad * 180.0 / Math.PI;
 	}
+
+	function trimMinMaxValue(value, min, max) {
+		if (value < min)
+			return min;
+		if (value > max)
+			return max;
+		return value;
+	}
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -13621,7 +13842,7 @@
 		word = word.replaceAll("\"", "&#34;");
 		word = word.replaceAll("\'", "&#39;");
 		return word;
-	}
+	};
 	window["AscCommon"].CFormatPainter = CFormatPainter;
 	window["AscCommon"].CFormattingPasteDataBase = CFormattingPasteDataBase;
 	window["AscCommon"].CTextFormattingPasteData = CTextFormattingPasteData;
@@ -13632,6 +13853,8 @@
 	window['AscCommon'].deg2rad = deg2rad;
 	window['AscCommon'].rad2deg = rad2deg;
 	window["AscCommon"].c_oAscImageUploadProp = c_oAscImageUploadProp;
+	window["AscCommon"].trimMinMaxValue = trimMinMaxValue;
+	window["AscCommon"].cStrucTableReservedWords = cStrucTableReservedWords;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
@@ -13849,7 +14072,7 @@ window["buildCryptoFile_End"] = function(url, error, hash, password)
 					ext = ".docxf";
 			}
 
-			AscCommon.sendSaveFile(_editor.documentId, _editor.documentUserId, "output" + ext, _editor.asc_getSessionToken(), fileData, function(err) {
+			AscCommon.sendSaveFile(_editor.documentId, _editor.documentUserId, "output" + ext, _editor.asc_getSessionToken(), _editor.documentShardKey, fileData, function(err) {
 
                 _editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Save);
                 _editor.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationSaveError, Asc.c_oAscError.Level.Critical);

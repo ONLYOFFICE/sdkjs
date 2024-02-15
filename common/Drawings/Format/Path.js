@@ -2670,6 +2670,81 @@ function partition_bezier4(x0, y0, x1, y1, x2, y2, x3, y3, epsilon)
         return splitBezier4(x0, y0, x1, y1, x2, y2, x3, y3, aParameters);
     }
 
+
+    function getEllipsePoint(dXCE, dYCE, dA, dB, dAlpha) {
+        return {
+            x: dXCE + dA * Math.cos(dAlpha),
+            y: dYCE + dB * Math.sin(dAlpha)
+        };
+    }
+
+    function getLineLength(oPt1, oPt2) {
+        return Math.sqrt(Math.pow(oPt2.x - oPt1.x, 2) + Math.pow(oPt2.y - oPt1.y, 2));
+    }
+
+    function isInsideEllipse(dXCE, dYCE, dA, dB, p) {
+        let dX = p.x;
+        let dY = p.y;
+        let dXVal = dX - dXCE;
+        let dYVal = dY - dYCE;
+        return (dXVal * dXVal) / (dA * dA) + (dYVal * dYVal) / (dB * dB) < 1;
+    }
+
+    function ellipseCircleIntersection(dXCE, dYCE, dA, dB, dStartAngle, dR) {
+        const dTolerance = 0.001;
+        let dAlpha1 = dStartAngle;
+        let dAlpha2 = dStartAngle + Math.PI / 4;
+        let pStart = getEllipsePoint(dXCE, dYCE, dA, dB, dStartAngle);
+        let p1 = getEllipsePoint(dXCE, dYCE, dA, dB, dAlpha1);
+        let p2 = getEllipsePoint(dXCE, dYCE, dA, dB, dAlpha2);
+
+        let dAlphaMiddle = (dAlpha1 + dAlpha2) / 2.0;
+        while (Math.abs(dAlpha1 - dAlpha2) > dTolerance) {
+            dAlphaMiddle = (dAlpha1 + dAlpha2) / 2.0;
+            let pMiddle = getEllipsePoint(dXCE, dYCE, dA, dB, dAlphaMiddle);
+            if(isInsideEllipse(pStart.x, pStart.y, dR, dR, pMiddle)) {
+                p1 = pMiddle;
+                dAlpha1 = dAlphaMiddle;
+            }
+            else {
+                p2 = pMiddle;
+                dAlpha2 = dAlphaMiddle;
+            }
+        }
+        return {p: p1, alpha: dAlphaMiddle};
+    }
+
+
+    function circlesIntersection(x1, y1, r1, x2, y2, r2) {
+        let dDx = x1 - x2;
+        let dDy = y1 - y2;
+        let R = Math.sqrt(dDx * dDx + dDy * dDy);
+        if (!(Math.abs(r1 - r2) <= R && R <= r1 + r2)) {
+            return [];
+        }
+
+        let R2 = R * R;
+        let R4 = R2 * R2;
+        let a = (r1 * r1 - r2 * r2) / (2 * R2);
+        let r2r2 = (r1 * r1 - r2 * r2);
+        let c = Math.sqrt(2 * (r1 * r1 + r2 * r2) / R2 - (r2r2 * r2r2) / R4 - 1);
+
+        let fx = (x1+x2) / 2 + a * (x2 - x1);
+        let gx = c * (y2 - y1) / 2;
+        let ix1 = fx + gx;
+        let ix2 = fx - gx;
+
+        let fy = (y1+y2) / 2 + a * (y2 - y1);
+        let gy = c * (x1 - x2) / 2;
+        let iy1 = fy + gy;
+        let iy2 = fy - gy;
+
+        return [{x: ix1, y: iy1}, {x:ix2, y: iy2}];
+    }
+
+
+
+
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].moveTo = moveTo;
@@ -2686,4 +2761,8 @@ function partition_bezier4(x0, y0, x1, y1, x2, y2, x3, y3, epsilon)
     window['AscFormat'].partition_bezier4 = partition_bezier4;
     window['AscFormat'].splitBezier4 = splitBezier4;
     window['AscFormat'].splitBezier4OnParts = splitBezier4OnParts;
+    window['AscFormat'].ellipseCircleIntersection = ellipseCircleIntersection;
+    window['AscFormat'].getLineLength = getLineLength;
+    window['AscFormat'].getEllipsePoint = getEllipsePoint;
+    window['AscFormat'].circlesIntersection = circlesIntersection;
 })(window);

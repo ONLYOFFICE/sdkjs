@@ -3483,13 +3483,13 @@ function CDemonstrationManager(htmlpage)
         return oSlide.getAnimationPlayer();
 	};
 
-    this.OnNextSlide = function()
+    this.OnNextSlide = function(isNoSendFormReporter)
     {
         if(this.OnNextSlideAnimPlayer())
         {
             return;
         }
-        this.NextSlide();
+        this.NextSlide(isNoSendFormReporter);
     };
 
     this.OnNextSlideAnimPlayer = function ()
@@ -3550,7 +3550,7 @@ function CDemonstrationManager(htmlpage)
         return (this.HtmlPage.m_oApi.WordControl.m_oLogicDocument.isLoopShowMode() || this.HtmlPage.m_oApi.isEmbedVersion);
     };
 
-    this.OnPrevSlide = function()
+    this.OnPrevSlide = function(isNoSendFormReporter)
     {
         var oPlayer = this.GetCurrentAnimPlayer();
         if(oPlayer)
@@ -3560,7 +3560,7 @@ function CDemonstrationManager(htmlpage)
                 return;
             }
         }
-        return this.PrevSlide();
+        return this.PrevSlide(isNoSendFormReporter);
     };
 
     this.PrevSlide = function(isNoSendFormReporter)
@@ -3933,6 +3933,9 @@ function CDemonstrationManager(htmlpage)
 		_x -= parseInt(oThis.HtmlPage.m_oMainParent.HtmlElement.style.left);
 		_y -= parseInt(oThis.HtmlPage.m_oMainParent.HtmlElement.style.top);
 
+        _x *= AscCommon.AscBrowser.retinaPixelRatio;
+        _y *= AscCommon.AscBrowser.retinaPixelRatio;
+
 		var _rect = oThis.Transition.Rect;
 		_x -= _rect.x;
 		_y -= _rect.y;
@@ -4128,8 +4131,8 @@ function CDemonstrationManager(htmlpage)
 			this.DemonstrationDiv.appendChild(this.PointerDiv);
         }
         var _rect = this.Transition.Rect;
-		this.PointerDiv.style.left = ((_rect.x + x * _rect.w - 14) >> 0) + "px";
-		this.PointerDiv.style.top = ((_rect.y + y * _rect.h - 14) >> 0) + "px";
+		this.PointerDiv.style.left = ((((_rect.x + x * _rect.w) / AscCommon.AscBrowser.retinaPixelRatio) - 14) >> 0) + "px";
+		this.PointerDiv.style.top  = ((((_rect.y + y * _rect.h) / AscCommon.AscBrowser.retinaPixelRatio) - 14) >> 0) + "px";
 
 		if (this.HtmlPage.m_oApi.isReporterMode)
         {

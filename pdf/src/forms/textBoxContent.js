@@ -51,13 +51,14 @@
 	 * @constructor
 	 * @extends {AscWord.CDocumentContent}
 	 */
-	function CTextBoxContent(parent, pdfDocument) {
+	function CTextBoxContent(parent, pdfDocument, isFormatContent) {
 		AscWord.CDocumentContent.call(this, null, pdfDocument ? pdfDocument.GetDrawingDocument() : undefined, 0, 0, 0, 0, false, false, false);
 		
 		this.Content[0].LogicDocument = pdfDocument;
 		
-		this.ParentPDF = parent;
-		this.PdfDoc    = pdfDocument;
+		this.ParentPDF 			= parent;
+		this.PdfDoc    			= pdfDocument;
+		this.isFormatContent	= !!isFormatContent;
 		
 		this.SetUseXLimit(false);
 		this.MoveCursorToStartPos();
@@ -85,8 +86,10 @@
 		
 		this.SetApplyToAll(true);
 		this.SetParagraphAlign(_alignType);
-		this.GetElement(0).RecalcCompiledPr(true);
 		this.SetApplyToAll(false);
+		this.Content.forEach(function(para) {
+			para.RecalcCompiledPr(true);
+		});
 	};
 	CTextBoxContent.prototype.GetAlign = function() {
 		let align = this.GetElement(0).GetParagraphAlign();
@@ -111,13 +114,78 @@
 	};
 	CTextBoxContent.prototype.SetFont = function(fontName) {
 		this.SetApplyToAll(true);
-		this.AddToParagraph(new AscWord.ParaTextPr({RFonts : {Ascii : {Name : fontName, Index : -1}}}));
+		let oParaTextPr = new AscWord.ParaTextPr();
+		oParaTextPr.Value.RFonts.SetAll(fontName, -1);
+		this.AddToParagraph(oParaTextPr);
 		this.SetApplyToAll(false);
 	};
 	CTextBoxContent.prototype.SetFontSize = function(fontSize) {
 		this.SetApplyToAll(true);
 		this.AddToParagraph(new AscWord.ParaTextPr({FontSize : fontSize}));
 		this.SetApplyToAll(false);
+	};
+	CTextBoxContent.prototype.SetBold = function(bBold) {
+		this.SetApplyToAll(true);
+		this.AddToParagraph(new AscWord.ParaTextPr({Bold : bBold}));
+		this.SetApplyToAll(false);
+	};
+	CTextBoxContent.prototype.SetItalic = function(bItalic) {
+		this.SetApplyToAll(true);
+		this.AddToParagraph(new AscWord.ParaTextPr({Italic : bItalic}));
+		this.SetApplyToAll(false);
+	};
+	CTextBoxContent.prototype.getCurrentRun = function() {
+		let paragraph = this.GetElement(0);
+		if (!paragraph || !paragraph.IsParagraph())
+			return null;
+		
+		let paraPos = paragraph.Get_ParaContentPos(false);
+		let run = paragraph.GetElementByPos(paraPos);
+		if (!run || !(run instanceof AscWord.CRun))
+			return null;
+		
+		return run;
+	};
+	CTextBoxContent.prototype.replaceAllText = function(value) {
+		let codePoints = typeof(value) === "string" ? value.codePointsArray() : value;
+		
+		let paragraph = this.GetElement(0);
+		if (!paragraph || !paragraph.IsParagraph())
+			return;
+		
+		let run = paragraph.GetElement(0);
+		if (!run || !(run instanceof AscWord.CRun))
+			return;
+		
+		paragraph.RemoveFromContent(1, paragraph.GetElementsCount() - 1);
+		run.ClearContent();
+		
+		if (codePoints) {
+			if (this.ParentPDF.IsComb && this.ParentPDF.IsComb() && codePoints.length > this.ParentPDF.GetCharLimit()) {
+				codePoints.length = this.ParentPDF.GetCharLimit();
+			}
+
+			for (let index = 0, inRunIndex = 0, count = codePoints.length; index < count; ++index) {
+				let runElement = AscPDF.codePointToRunElement(codePoints[index]);
+				if (runElement)
+					run.AddToContent(inRunIndex++, runElement, true);
+			}
+			this.MoveCursorToEndPos();
+		}
+	};
+	CTextBoxContent.prototype.getAllText = function() {
+		let paragraph = this.GetElement(0);
+		if (!paragraph || !paragraph.IsParagraph())
+			return "";
+		
+		paragraph.SetApplyToAll(true);
+		let text = paragraph.GetSelectedText(true, {NewLine: true});
+		paragraph.SetApplyToAll(false);
+		return text;
+	};
+	CTextBoxContent.prototype.OnContentChange = function() {
+		if (this.ParentPDF && this.ParentPDF.OnContentChange && this.isFormatContent == false)
+			this.ParentPDF.OnContentChange();
 	};
 	
 	//--------------------------------------------------------export----------------------------------------------------

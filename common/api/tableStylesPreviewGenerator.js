@@ -128,29 +128,6 @@
 
 		return arrPreviews;
 	};
-	CTableStylesPreviewGenerator.prototype.GetAllPreviewsNative = function(isDefaultTableLook, oGraphics, oStream, oNative, dW, dH, nW, nH)
-	{
-		let oTableLookOld = this.TableLook;
-		this.TableLook    = this.DrawingDocument.GetTableLook(isDefaultTableLook);
-		let arrStyles = this.LogicDocument.GetAllTableStyles();
-		oNative["DD_PrepareNativeDraw"]();
-		for (let nIndex = 0 , nCount = arrStyles.length; nIndex < nCount; ++nIndex)
-		{
-			let oStyle = arrStyles[nIndex];
-			let oTable = this.GetTable(oStyle);
-			oNative["DD_StartNativeDraw"](nW, nH, dW, dH);
-			this.DrawTable(oGraphics, oTable);
-			oStream["ClearNoAttack"]();
-			oStream["WriteByte"](2);
-			oStream["WriteString2"]("" + oStyle.GetId());
-			oNative["DD_EndNativeDraw"](oStream);
-			oGraphics.ClearParams();
-		}
-		oStream["ClearNoAttack"]();
-		oStream["WriteByte"](3);
-		oNative["DD_EndNativeDraw"](oStream);
-		this.TableLook = oTableLookOld;
-	};
 	CTableStylesPreviewGenerator.prototype.GetPreview = function(oStyle)
 	{
 		if (!oStyle)

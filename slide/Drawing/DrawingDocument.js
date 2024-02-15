@@ -3030,11 +3030,12 @@ function CDrawingDocument()
 
 		for (var i = start; i <= end; i++)
 		{
-			if (true === isSelection)
-			{
-				if (!this.m_oWordControl.Thumbnails.isSelectedPage(i))
-					continue;
-			}
+			if ((true === isSelection) && !this.m_oWordControl.Thumbnails.isSelectedPage(i))
+				continue;
+
+			if (!this.m_oLogicDocument.IsVisibleSlide(i))
+				continue;
+
 			renderer.BeginPage(this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
 			this.m_oLogicDocument.DrawPage(i, renderer);
 			renderer.EndPage();
@@ -4603,15 +4604,18 @@ function CThumbnailsManager()
 				context.stroke();
 				context.beginPath();
 			}
+			page.animateLabelRect = null;
 			if (_logicDocument.isSlideAnimated(i))
 			{
 				let nX = (_bounds.x + _bounds.r) / 2 - AscCommon.AscBrowser.convertToRetinaValue(9.5, true);
 				let nY = _bounds.b + 3;
-				let oColor = text_color;
-				let resCords = this.DrawAnimLabel(g, nX, nY, oColor);
-				page.animateLabelRect = resCords
-			} else {
-				delete page.animateLabelRect;
+				let nIconH = AscCommon.AscBrowser.convertToRetinaValue(15, true);
+				if(nY + nIconH < page.bottom)
+				{
+					let oColor = text_color;
+					let resCords = this.DrawAnimLabel(g, nX, nY, oColor);
+					page.animateLabelRect = resCords
+				}
 			}
 		}
 
@@ -6033,7 +6037,7 @@ function CNotesDrawer(page)
 		_y += oThis.Scroll;
 		_x *= g_dKoef_pix_to_mm;
 		_y *= g_dKoef_pix_to_mm;
-		return { Page : oThis.GetCurrentSlideNumber(), X : _x, Y : _y, isNotes : false };
+		return { Page : oThis.GetCurrentSlideNumber(), X : _x, Y : _y, isNotes : true };
 	};
 
 	this.GetNotesWidth = function()
@@ -6458,7 +6462,7 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 	{
 		return -1 === oThis.GetCurrentSlideNumber();
 	};
-	oThis.GetPosition = function (e)
+	oThis.GetPosition = function ()
 	{
 		var _x = global_mouseEvent.X - oThis.HtmlPage.X - ((oThis.HtmlPage.m_oMainParent.AbsolutePosition.L * g_dKoef_mm_to_pix + 0.5) >> 0);
 		var nTopPos = oThis.HtmlPage.m_oBottomPanesContainer.AbsolutePosition.T;

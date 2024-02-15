@@ -148,6 +148,7 @@
 			
 			"word/Editor/Paragraph/Run/FontClassification.js",
 			"word/Editor/Paragraph/Run/FontCalculator.js",
+			"word/Editor/Paragraph/Run/run-composite-input.js",
 			"word/Editor/Paragraph/Run/RunAutoCorrect.js",
 			"slide/Drawing/ThemeLoader.js",
 			"word/Editor/Serialize2.js",
@@ -217,16 +218,24 @@
 			"word/Editor/Paragraph/RunContent/ParagraphMark.js",
 			"word/Editor/ParagraphContent.js",
 			"word/Editor/ParagraphContentBase.js",
+			"word/Editor/Paragraph/bidi-flow.js",
+			"word/Editor/Paragraph/complex-field-stack.js",
+			"word/Editor/Paragraph/draw-selection.js",
+			"word/Editor/Paragraph/position-calculator.js",
+			"word/Editor/Paragraph/search-position-by-coords.js",
 			"word/Editor/Paragraph/ParaTextPr.js",
 			"word/Editor/Paragraph/ParaTextPrChanges.js",
 			"word/Editor/Paragraph/ParaDrawing.js",
 			"word/Editor/Paragraph/ParaDrawingChanges.js",
 			"word/Editor/Paragraph/ParagraphContentPos.js",
+			"word/Editor/Paragraph/ComplexFields/types.js",
+			"word/Editor/Paragraph/ComplexFields/instruction-base.js",
 			"word/Editor/Paragraph/ComplexFieldInstruction.js",
 			"word/Editor/Paragraph/ComplexFields/Addin.js",
 			"word/Editor/Paragraph/ComplexFields/AddinData.js",
 			"word/Editor/Paragraph/ComplexFields/FormText.js",
 			"word/Editor/Paragraph/ComplexFields/MergeField.js",
+			"word/Editor/Paragraph/ComplexFields/ref.js",
 			"word/Editor/Paragraph/ComplexField.js",
 			"word/Editor/Paragraph/DisplayStyleCalculator.js",
 			"word/Editor/Paragraph/ParaRevisionMove.js",
@@ -260,11 +269,16 @@
 			"word/Editor/Paragraph.js",
 			"word/Editor/ParagraphChanges.js",
 			"word/Editor/Paragraph_Recalculate.js",
+			"word/Editor/Paragraph/draw/content-draw-state.js",
+			"word/Editor/Paragraph/draw/highlight-draw-state.js",
+			"word/Editor/Paragraph/draw/line-draw-state.js",
+			"word/Editor/Paragraph/draw/paragraph-draw-state.js",
 			"word/Editor/Layout/Base.js",
 			"word/Editor/Layout/PrintView.js",
 			"word/Editor/Layout/ReadView.js",
 			"word/Editor/DocumentContentBase.js",
 			"word/Editor/Document.js",
+			"word/Editor/document-composite-input.js",
 			"word/Editor/ChangeCase.js",
 			"word/Editor/SelectedContent.js",
 			"word/Editor/DocumentOutline.js",
@@ -348,25 +362,7 @@
 				"slide/Local/api.js"
 			]
 		},
-		"mobile_banners": {
-			"min": [
-				"common/Native/Wrappers/memory.js"
-			],
-			"common": []
-		},
 		"mobile": [
-			"common/libfont/engine/fonts_native.js",
-			"common/Charts/ChartStyles.js",
-
-			"common/Native/Wrappers/serialize.js",
-			"common/Native/Wrappers/DrawingStream.js",
-			"common/Native/Wrappers/ShapeDrawer.js",
-			"common/Native/Wrappers/Overlay.js",
-
-			"slide/Native/api.js",
-			"slide/Native/HtmlPage.js",
-			"slide/Native/DrawingDocument.js",
-			"slide/Native/native.js"
 		],
 		"exclude_mobile": [
 			"vendor/iscroll.js",

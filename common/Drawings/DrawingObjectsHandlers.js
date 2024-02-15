@@ -384,11 +384,7 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
 }
 
 function handleBaseAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex) {
-    //var hit_in_inner_area = drawing.hitInInnerArea && drawing.hitInInnerArea(x, y);
-    //var hit_in_path = drawing.hitInPath && drawing.hitInPath(x, y);
-    var hit_in_text_rect = drawing.hitInTextRect && drawing.hitInTextRect(x, y);
-
-    if (drawing.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink && drawing.IsTextMarkup() == false && hit_in_text_rect) {
+    if (drawing.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink && drawing.IsTextMarkup() == false && editor.getDocumentRenderer().getPageAnnotByMouse() == drawing) {
         drawingObjectsController.arrPreTrackObjects.push(drawing.createMoveTrack());
         drawingObjectsController.changeCurrentState(new AscFormat.PreMoveState(drawingObjectsController, x, y, e.ShiftKey, e.CtrlKey, drawing, true, false, false));
         return true;
@@ -453,16 +449,15 @@ function handleBaseAnnot(drawing, drawingObjectsController, e, x, y, group, page
 
 function handleShapeImage(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord)
 {
-    var hit_in_inner_area = drawing.hitInInnerArea && drawing.hitInInnerArea(x, y);
-    var hit_in_path = drawing.hitInPath && drawing.hitInPath(x, y);
-    var hit_in_text_rect = drawing.hitInTextRect && drawing.hitInTextRect(x, y);
+    let hit_in_inner_area = drawing.hitInInnerArea && drawing.hitInInnerArea(x, y);
+    let hit_in_path = drawing.hitInPath && drawing.hitInPath(x, y);
+    let hit_in_text_rect = drawing.hitInTextRect && drawing.hitInTextRect(x, y);
     if(hit_in_inner_area || hit_in_path || hit_in_text_rect)
     {
-        if(drawingObjectsController.checkDrawingHyperlinkAndMacro){
-            var ret =  drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, hit_in_text_rect, x, y, pageIndex);
-            if(ret){
-                return ret;
-            }
+        let oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, hit_in_text_rect, x, y, pageIndex);
+        if(oCheckResult)
+        {
+            return oCheckResult;
         }
     }
 
@@ -560,11 +555,10 @@ function handleShapeImageInGroup(drawingObjectsController, drawing, shape, e, x,
     var ret;
     if(hit_in_inner_area || hit_in_path || hit_in_text_rect)
     {
-        if(drawingObjectsController.checkDrawingHyperlinkAndMacro){
-            var ret =  drawingObjectsController.checkDrawingHyperlinkAndMacro(shape, e, hit_in_text_rect, x, y, pageIndex);
-            if(ret){
-                return ret;
-            }
+        let oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(shape, e, hit_in_text_rect, x, y, pageIndex);
+        if(oCheckResult)
+        {
+            return oCheckResult;
         }
     }
     if(!hit_in_text_rect && (hit_in_inner_area || hit_in_path))
@@ -1563,7 +1557,85 @@ function handleInternalChart(drawing, drawingObjectsController, e, x, y, group, 
                             }
                         }
                     }
+                }
+                let oTrendlineLbl = ser.trendline && ser.trendline.trendlineLbl;
+                if(oTrendlineLbl && oTrendlineLbl.hit(x, y))
+                {
+                    if(drawing.selection.trendlineLbl === oTrendlineLbl)
+                    {
+                        var hit_in_inner_area = oTrendlineLbl.hitInInnerArea(x, y);
+                        var hit_in_path = oTrendlineLbl.hitInPath(x, y);
+                        var hit_in_text_rect = oTrendlineLbl.hitInTextRect(x, y);
 
+                        if((hit_in_inner_area && (!hit_in_text_rect) || (hit_in_path && bIsMobileVersion !== true)) && !window["NATIVE_EDITOR_ENJINE"])
+                        {
+                            if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
+                            {
+                                drawing.selection.trendlineLbl = oTrendlineLbl;
+                                drawingObjectsController.arrPreTrackObjects.length = 0;
+                                drawingObjectsController.arrPreTrackObjects.push(new AscFormat.MoveChartObjectTrack(oTrendlineLbl, drawing));
+                                drawingObjectsController.changeCurrentState(new AscFormat.PreMoveState(drawingObjectsController, x, y, false, false, drawing, true, true));
+                                drawingObjectsController.updateSelectionState();
+                                drawingObjectsController.updateOverlay();
+                                return true;
+                            }
+                            else
+                            {
+                                return {objectId: drawing.Get_Id(), cursorType: "move", title: null};
+                            }
+                        }
+                        else if(hit_in_text_rect)
+                        {
+                            if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
+                            {
+                                drawing.selection.trendlineLbl = oTrendlineLbl;
+                                drawing.selection.textSelection = oTrendlineLbl;
+                                oTrendlineLbl.selectionSetStart(e, x, y, pageIndex);
+                                drawingObjectsController.changeCurrentState(new AscFormat.TextAddState(drawingObjectsController, oTrendlineLbl, x, y, e.Button));
+                                if(e.ClickCount <= 1)
+                                {
+                                    drawingObjectsController.updateSelectionState();
+                                }
+                                return true;
+                            }
+                            else
+                            {
+                                if(drawingObjectsController.document)
+                                {
+                                    var content = oTrendlineLbl.getDocContent();
+                                    var invert_transform_text = oTrendlineLbl.invertTransformText, tx, ty;
+                                    if(content && invert_transform_text)
+                                    {
+                                        tx = invert_transform_text.TransformPointX(x, y);
+                                        ty = invert_transform_text.TransformPointY(x, y);
+                                        content.UpdateCursorType(tx, ty, 0);
+                                    }
+                                }
+                                return {objectId: drawing.Get_Id(), cursorType: "text", title: oTrendlineLbl};
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
+                        {
+                            drawingObjectsController.checkChartTextSelection();
+                            selector.resetSelection();
+                            selector.selectObject(drawing, pageIndex);
+                            selector.selection.chartSelection = drawing;
+                            drawing.selection.trendlineLbl = oTrendlineLbl;
+                            drawingObjectsController.arrPreTrackObjects.length = 0;
+                            drawingObjectsController.arrPreTrackObjects.push(new AscFormat.MoveChartObjectTrack(oTrendlineLbl, drawing));
+                            drawingObjectsController.changeCurrentState(new AscFormat.PreMoveState(drawingObjectsController, x, y, false, false, drawing, true, true));
+                            drawingObjectsController.updateSelectionState();
+                            drawingObjectsController.updateOverlay();
+                            return true;
+                        }
+                        else
+                        {
+                            return {objectId: drawing.Get_Id(), cursorType: "default", title: oTrendlineLbl};
+                        }
+                    }
                 }
             }
 
@@ -2031,7 +2103,7 @@ function handleMouseUpPreMoveState(drawingObjects, e, x, y, pageIndex, bWord)
                 state.drawingObjects.OnMouseDown(e,x, y,pageIndex);
                 state.drawingObjects.OnMouseUp(e, x, y, pageIndex);
                 state.drawingObjects.drawingObjects && state.drawingObjects.drawingObjects.sendGraphicObjectProps &&  state.drawingObjects.drawingObjects.sendGraphicObjectProps();
-                state.drawingObjects.document && state.drawingObjects.document.Document_UpdateInterfaceState();
+                state.drawingObjects.document && state.drawingObjects.document.Document_UpdateInterfaceState && state.drawingObjects.document.Document_UpdateInterfaceState();
                 bHandle = true;
                 break;
             }
@@ -2076,6 +2148,14 @@ function handleMouseUpPreMoveState(drawingObjects, e, x, y, pageIndex, bWord)
 
 function handleFloatTable(drawing, drawingObjectsController, e, x, y, group, pageIndex)
 {
+    if(drawing.hitInInnerArea(x, y))
+    {
+        let oCheckResult = drawingObjectsController.checkDrawingHyperlinkAndMacro(drawing, e, true, x, y, pageIndex);
+        if(oCheckResult)
+        {
+            return oCheckResult;
+        }
+    }
     if(drawingObjectsController.isSlideShow())
     {
         if(drawing.hitInInnerArea(x, y))

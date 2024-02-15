@@ -100,6 +100,14 @@ $(function () {
 	};
 	Asc.ReadDefTableStyles = function(){};
 
+	function openDocument(){
+		AscCommon.g_oTableId.init();
+		api._onEndLoadSdk();
+		api.isOpenOOXInBrowser = false;
+		api._openDocument(AscCommon.getEmpty());
+		api._openOnClient();
+	}
+
 	var api = new Asc.spreadsheet_api({
 		'id-view': 'editor_sdk'
 	});
@@ -1915,7 +1923,7 @@ $(function () {
 		//nFillHandleArea: 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
 		getVerticalAutofillCases(0, 9, 0, 12, assert, [expectedDataCapitalized,
 			expectedDataUpper, expectedDataLower, expectedDataShortCapitalized, expectedDataShortUpper, expectedDataShortLower], 3);
-		clearData(0, 0, 0, 12)
+		clearData(0, 0, 0, 12);
 
 		// Reverse case
 		expectedDataCapitalized = [['November'], ['September'], ['July']];
@@ -1999,7 +2007,7 @@ $(function () {
 		//nFillHandleArea: 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
 		getVerticalAutofillCases(0, 1, 0, 4, assert, [expectedDataCapitalized,
 			expectedDataUpper, expectedDataLower, expectedDataShortCapitalized, expectedDataShortUpper, expectedDataShortLower], 3);
-		clearData(0, 0, 0, 4)
+		clearData(0, 0, 0, 4);
 
 		// Reverse case
 		expectedDataCapitalized = [['January'], ['November'], ['September']];
@@ -2084,7 +2092,7 @@ $(function () {
 		//nFillHandleArea: 1 - Reverse, 3 - asc sequence, 2 - Reverse 1 elem.
 		getVerticalAutofillCases(0, 1, 0, 4, assert, [expectedDataCapitalized,
 			expectedDataUpper, expectedDataLower, expectedDataShortCapitalized, expectedDataShortUpper, expectedDataShortLower], 3);
-		clearData(0, 0, 0, 4)
+		clearData(0, 0, 0, 4);
 
 		// Reverse case
 		expectedDataCapitalized = [['April'], ['March'], ['February']];
@@ -2280,7 +2288,7 @@ $(function () {
 			['jan.'],
 			['jan.', 'feb'],
 			['mon.day']
-		]
+		];
 		// Asc cases
 		let range = ws.getRange4(0, 0);
 		range.fillData(testData);
@@ -2374,6 +2382,257 @@ $(function () {
 		clearData(0, 0, 8, 11);
 	});
 
+	QUnit.test('Autofill: test toolbar down/up/left/right', function (assert) {
+		clearData(0, 0, 6, 11);
+
+		const testData = [
+			['1', 'Test', 'Test1', '01/01/2000']
+		];
+
+		// Asc cases
+		let range = ws.getRange4(0, 0);
+		range.fillData(testData);
+
+		let fillRange = new Asc.Range(0, 0, 0, 3);
+		wsView.setSelection(fillRange);
+		api.asc_FillCells(Asc.c_oAscFillType.fillDown);
+
+		checkUndoRedo(function (_desc) {
+			compareData(assert, fillRange, [["1"], [""], [""], [""]], _desc);
+		}, function (_desc) {
+			compareData(assert, fillRange, [["1"], ["1"], ["1"], ["1"]], _desc);
+		}, "Autofill: down fill number");
+
+		fillRange = new Asc.Range(1, 0, 1, 3);
+		wsView.setSelection(fillRange);
+		api.asc_FillCells(Asc.c_oAscFillType.fillDown);
+
+		checkUndoRedo(function (_desc) {
+			compareData(assert, fillRange, [["Test"], [""], [""], [""]], _desc);
+		}, function (_desc) {
+			compareData(assert, fillRange, [["Test"], ["Test"], ["Test"], ["Test"]], _desc);
+		}, "Autofill: down fill text");
+
+		fillRange = new Asc.Range(2, 0, 2, 3);
+		wsView.setSelection(fillRange);
+		api.asc_FillCells(Asc.c_oAscFillType.fillDown);
+
+		checkUndoRedo(function (_desc) {
+			compareData(assert, fillRange, [["Test1"], [""], [""], [""]], _desc);
+		}, function (_desc) {
+			compareData(assert, fillRange, [["Test1"], ["Test1"], ["Test1"], ["Test1"]], _desc);
+		}, "Autofill: down fill text + number");
+
+
+		fillRange = new Asc.Range(3, 0, 3, 3);
+		wsView.setSelection(fillRange);
+		api.asc_FillCells(Asc.c_oAscFillType.fillDown);
+
+		checkUndoRedo(function (_desc) {
+			compareData(assert, fillRange, [["36526"], [""], [""], [""]], _desc);
+		}, function (_desc) {
+			compareData(assert, fillRange, [["36526"], ["36526"], ["36526"], ["36526"]], _desc);
+		}, "Autofill: down fill date");
+
+
+		fillRange = new Asc.Range(2, 0, 4, 0);
+		wsView.setSelection(fillRange);
+		api.asc_FillCells(Asc.c_oAscFillType.fillRight);
+
+		checkUndoRedo(function (_desc) {
+			compareData(assert, fillRange, [["Test1", "36526", "", ""]], _desc);
+		}, function (_desc) {
+			compareData(assert, fillRange, [["Test1", "Test1", "Test1", "Test1"]], _desc);
+		}, "Autofill: right fill text + number");
+
+
+		clearData(0, 0, 6, 11);
+
+	});
+
+	QUnit.test('Conditional formatting: test apply to', function (assert) {
+
+		let tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A1:B3";
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
+
+		let cf = new AscCommonExcel.CConditionalFormattingRule();
+		cf.asc_setType(Asc.c_oAscCFType.cellIs);
+		cf.asc_setLocation("A5");
+
+		api.asc_setCF([cf]);
+
+		wsView.setSelection(new Asc.Range(0, 4, 0, 4));
+		let modelCf = api.asc_getCF(Asc.c_oAscSelectionForCFType.selection, 0);
+		let cfLocation;
+		if (modelCf) {
+			modelCf = modelCf[0] && modelCf[0][0];
+			cfLocation = modelCf.asc_getLocation();
+		}
+
+		let ref = cfLocation && cfLocation[1];
+		assert.strictEqual(ref, "=$A$5", "compare location conditional formatting in cell");
+
+
+		cf = new AscCommonExcel.CConditionalFormattingRule();
+		cf.asc_setType(Asc.c_oAscCFType.cellIs);
+		cf.asc_setLocation("=Table1[Column1]");
+
+		api.asc_setCF([cf]);
+
+		wsView.setSelection(new Asc.Range(0, 1, 0, 1));
+		modelCf = api.asc_getCF(Asc.c_oAscSelectionForCFType.selection, 0);
+
+		if (modelCf) {
+			modelCf = modelCf[0] && modelCf[0][0];
+			cfLocation = modelCf.asc_getLocation();
+		}
+
+		ref = cfLocation && cfLocation[1];
+		assert.strictEqual(ref, "=$A$2:$A$4", "compare location conditional formatting in table");
+
+
+		clearData(0, 6, 0, 6);
+	});
+
+	QUnit.test('Table selection for formula', function (assert) {
+
+		let tableOptions = new AscCommonExcel.AddFormatTableOptions();
+		tableOptions.range = "A100:C103";
+		api.asc_addAutoFilter("TableStyleMedium2", tableOptions);
+
+		let tables = wsView.model.autoFilters.getTablesIntersectionRange(new Asc.Range(0, 100, 0, 100));
+		assert.strictEqual(tables.length, 1, "compare tables length");
+
+		let table = tables[0];
+		let tableName = table.DisplayName;
+		let activeCell = new AscCommon.CellBase(10, 10);
+		let handleSelectionRange = new Asc.Range(0, 1, 0, 1);
+		let sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, null, "check selection not table");
+
+		activeCell = new AscCommon.CellBase(10, 10);
+		handleSelectionRange = new Asc.Range(0, 100, 0, 100);
+		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, null, "check selection not table_2");
+
+
+		activeCell = new AscCommon.CellBase(10, 10);
+		handleSelectionRange = new Asc.Range(0, 100, 0, 103);
+		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, tableName + "[Column1]", "check selection column1");
+
+		activeCell = new AscCommon.CellBase(10, 10);
+		handleSelectionRange = new Asc.Range(0, 100, 1, 103);
+		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, tableName + "[[Column1]:[Column2]]", "check selection table data from column1 to column2");
+
+		activeCell = new AscCommon.CellBase(10, 10);
+		handleSelectionRange = new Asc.Range(0, 100, 2, 103);
+		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, tableName, "check selection all table");
+
+		activeCell = new AscCommon.CellBase(10, 10);
+		handleSelectionRange = new Asc.Range(0, 100, 2, 103);
+		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, tableName, "check selection table data from column1 to column2");
+
+		activeCell = new AscCommon.CellBase(10, 10);
+		handleSelectionRange = new Asc.Range(0, 99, 1, 103);
+		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, tableName + "[[#All],[Column1]:[Column2]]", "check selection table data from column1 to column2 + header");
+
+
+		activeCell = new AscCommon.CellBase(10, 10);
+		handleSelectionRange = new Asc.Range(0, 99, 2, 103);
+		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, tableName + "[#All]", "check all selection table");
+
+		activeCell = new AscCommon.CellBase(10, 10);
+		handleSelectionRange = new Asc.Range(0, 99, 2, 99);
+		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, tableName + "[#Headers]", "check all selection table");
+
+		assert.strictEqual(table.isTotalsRow(), false, "check total before total added");
+		wsView.af_changeFormatTableInfo(tableName, Asc.c_oAscChangeTableStyleInfo.rowTotal, true);
+		assert.strictEqual(table.isTotalsRow(), true, "check total added");
+
+		activeCell = new AscCommon.CellBase(10, 10);
+		handleSelectionRange = new Asc.Range(0, 100, 2, 104);
+		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, tableName + "[[#Data],[#Totals]]", "check data + totals selection table");
+
+		//Table5[[#Data];[#Totals];[Column1]:[Column2]]
+		activeCell = new AscCommon.CellBase(10, 10);
+		handleSelectionRange = new Asc.Range(0, 100, 1, 104);
+		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, tableName + "[[#Data],[#Totals],[Column1]:[Column2]]", "check data + totals selection table");
+
+		//Table5[[#All];[Column1]]
+		activeCell = new AscCommon.CellBase(10, 10);
+		handleSelectionRange = new Asc.Range(0, 99, 0, 104);
+		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, tableName + "[[#All],[Column1]]", "check all column1 selection table");
+
+
+		//Table5[[#All];[Column1]:[Column2]]
+		activeCell = new AscCommon.CellBase(10, 10);
+		handleSelectionRange = new Asc.Range(0, 99, 1, 104);
+		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, tableName + "[[#All],[Column1]:[Column2]]", "check all column1:column2 selection table");
+
+		//Table5[[#Headers];[#Data];[Column1]:[Column2]]
+		activeCell = new AscCommon.CellBase(10, 10);
+		handleSelectionRange = new Asc.Range(0, 99, 1, 103);
+		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, tableName + "[[#Headers],[#Data],[Column1]:[Column2]]", "check headers + data + column1:column2 selection table");
+
+		//@
+		//Table5[@]
+		activeCell = new AscCommon.CellBase(101, 4);
+		handleSelectionRange = new Asc.Range(0, 101, 2, 101);
+		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, tableName + "[@]", "check intersection all row");
+
+		//Table5[@[Column1]:[Column2]]
+		activeCell = new AscCommon.CellBase(101, 4);
+		handleSelectionRange = new Asc.Range(0, 101, 1, 101);
+		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, tableName + "[@[Column1]:[Column2]]", "check intersection column1:column2 row");
+
+
+		//Table5[@Column1]
+		activeCell = new AscCommon.CellBase(101, 4);
+		handleSelectionRange = new Asc.Range(0, 101, 0, 101);
+		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, tableName + "[@Column1]", "check intersection column1 row");
+
+		//Table5[#Headers]
+		activeCell = new AscCommon.CellBase(99, 4);
+		handleSelectionRange = new Asc.Range(0, 99, 2, 99);
+		sTableData = table.getSelectionString(activeCell, handleSelectionRange);
+
+		assert.strictEqual(sTableData, tableName + "[#Headers]", "check selection Headers");
+
+		clearData(0, 99, 0, 105);
+	});
 
 	QUnit.module("Sheet structure");
 });

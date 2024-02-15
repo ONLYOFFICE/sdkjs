@@ -34,7 +34,7 @@
 
 (function (window, builder) {
 	function checkFormat(value) {
-		if (value.getTime){
+		if (value.getTime) {
 			return new AscCommonExcel.cNumber(new Asc.cDate(value.getTime()).getExcelDateWithTime(true));
 		} else {
 			return new AscCommonExcel.cString(value + '');
@@ -49,17 +49,18 @@
 	 * @property {Array} Sheets - Returns the Sheets collection that represents all the sheets in the active workbook.
 	 * @property {ApiWorksheet} ActiveSheet - Returns an object that represents the active sheet.
 	 * @property {ApiRange} Selection - Returns an object that represents the selected range.
-	 * @property {ApiComment[]} Comments - Returns an array of ApiComment objects.
-	 * @property {FreezePaneType} FreezePanes - Returns or sets a freeze panes type.
+	 * @property {ApiComment[]} Comments - Returns all comments related to the whole workbook.
+	 * @property {FreezePaneType} FreezePanes - Returns or sets the type of freeze panes.
+	 * @property {ApiComment[]} AllComments - Returns all comments from the current workbook including comments from all worksheets.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
 	/**
- 	* The callback function which is called when the specified range of the current sheet changes.
- 	* <note>Please note that the event is not called for the undo/redo operations.</note>
-	* @event Api#onWorksheetChange
-	* @param {ApiRange} range - The modified range represented as the ApiRange object.
- 	*/
+	 * The callback function which is called when the specified range of the current sheet changes.
+	 * <note>Please note that the event is not called for the undo/redo operations.</note>
+	 * @event Api#onWorksheetChange
+	 * @param {ApiRange} range - The modified range represented as the ApiRange object.
+	 */
 
 	/**
 	 * Class representing a sheet.
@@ -82,8 +83,8 @@
 	 * @property {boolean} PrintHeadings - Returns or sets the page PrintHeadings property.
 	 * @property {boolean} PrintGridlines - Returns or sets the page PrintGridlines property.
 	 * @property {Array} Defnames - Returns an array of the ApiName objects.
-	 * @property {Array} Comments - Returns an array of the ApiComment objects.
-	 * @property {ApiFreezePanes} FreezePanes - Returns a freeze Panes for a current worsheet.
+	 * @property {Array} Comments - Returns all comments from the current worksheet.
+	 * @property {ApiFreezePanes} FreezePanes - Returns the freeze panes for the current worksheet.
 	 */
 	function ApiWorksheet(worksheet) {
 		this.worksheet = worksheet;
@@ -138,8 +139,7 @@
 	 * Class representing a graphical object.
 	 * @constructor
 	 */
-	function ApiDrawing(Drawing)
-	{
+	function ApiDrawing(Drawing) {
 		this.Drawing = Drawing;
 	}
 
@@ -147,10 +147,11 @@
 	 * Class representing a shape.
 	 * @constructor
 	 */
-	function ApiShape(oShape){
+	function ApiShape(oShape) {
 		ApiDrawing.call(this, oShape);
 		this.Shape = oShape;
 	}
+
 	ApiShape.prototype = Object.create(ApiDrawing.prototype);
 	ApiShape.prototype.constructor = ApiShape;
 
@@ -158,9 +159,10 @@
 	 * Class representing an image.
 	 * @constructor
 	 */
-	function ApiImage(oImage){
+	function ApiImage(oImage) {
 		ApiDrawing.call(this, oImage);
 	}
+
 	ApiImage.prototype = Object.create(ApiDrawing.prototype);
 	ApiImage.prototype.constructor = ApiImage;
 
@@ -168,26 +170,27 @@
 	 * Class representing a chart.
 	 * @constructor
 	 */
-	function ApiChart(oChart){
+	function ApiChart(oChart) {
 		ApiDrawing.call(this, oChart);
 		this.Chart = oChart;
 	}
+
 	ApiChart.prototype = Object.create(ApiDrawing.prototype);
 	ApiChart.prototype.constructor = ApiChart;
 
-	 /**
+	/**
 	 * Class representing an OLE object.
 	 * @constructor
 	 */
-	function ApiOleObject(OleObject)
-	{
+	function ApiOleObject(OleObject) {
 		ApiDrawing.call(this, OleObject);
 	}
+
 	ApiOleObject.prototype = Object.create(ApiDrawing.prototype);
 	ApiOleObject.prototype.constructor = ApiOleObject;
 
 	/**
-     * The available preset color names.
+	 * The available preset color names.
 	 * @typedef {("aliceBlue" | "antiqueWhite" | "aqua" | "aquamarine" | "azure" | "beige" | "bisque" | "black" |
 	 *     "blanchedAlmond" | "blue" | "blueViolet" | "brown" | "burlyWood" | "cadetBlue" | "chartreuse" | "chocolate"
 	 *     | "coral" | "cornflowerBlue" | "cornsilk" | "crimson" | "cyan" | "darkBlue" | "darkCyan" | "darkGoldenrod" |
@@ -218,14 +221,14 @@
 	 * */
 
 	/**
-     * Possible values for the position of chart tick labels (either horizontal or vertical).
-     * * <b>"none"</b> - does not display the selected tick labels.
-     * * <b>"nextTo"</b> - sets the position of the selected tick labels next to the main label.
-     * * <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
-     * * <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
+	 * Possible values for the position of chart tick labels (either horizontal or vertical).
+	 * * <b>"none"</b> - does not display the selected tick labels.
+	 * * <b>"nextTo"</b> - sets the position of the selected tick labels next to the main label.
+	 * * <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
+	 * * <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
 	 * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
 	 * **/
-	
+
 	/**
 	 * The page orientation type.
 	 * @typedef {("xlLandscape" | "xlPortrait")} PageOrientation
@@ -237,7 +240,7 @@
 	 * */
 
 	/**
-     * Text transform type.
+	 * Text transform type.
 	 * @typedef {("textArchDown" | "textArchDownPour" | "textArchUp" | "textArchUpPour" | "textButton" | "textButtonPour" | "textCanDown"
 	 * | "textCanUp" | "textCascadeDown" | "textCascadeUp" | "textChevron" | "textChevronInverted" | "textCircle" | "textCirclePour"
 	 * | "textCurveDown" | "textCurveUp" | "textDeflate" | "textDeflateBottom" | "textDeflateInflate" | "textDeflateInflateDeflate" | "textDeflateTop"
@@ -305,8 +308,7 @@
 	 * @property {number | string} TimeUTC - Returns or sets the timestamp of the comment reply creation in UTC format.
 	 * @property {number | string} Time - Returns or sets the timestamp of the comment reply creation in the current time zone format.
 	 */
-	function ApiCommentReply(oParentComm, oCommentReply)
-	{
+	function ApiCommentReply(oParentComm, oCommentReply) {
 		this.Comment = oParentComm;
 		this.Data = oCommentReply;
 	}
@@ -358,7 +360,7 @@
 	}
 
 	/**
-	 * Class representing a freeze Panes.
+	 * Class representing freeze panes.
 	 * @constructor
 	 */
 	function ApiFreezePanes(ws) {
@@ -505,7 +507,7 @@
 	 */
 	Api.prototype.AddSheet = function (sName) {
 		if (this.GetSheet(sName))
-			private_makeError('Worksheet with such a name already exists.', true);
+			throwException(new Error('Worksheet with such a name already exists.'));
 		else
 			this.asc_addWorksheet(sName);
 	};
@@ -535,17 +537,17 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} LCID - The locale specified.
 	 */
-	Api.prototype.SetLocale = function(LCID) {
+	Api.prototype.SetLocale = function (LCID) {
 		this.asc_setLocale(LCID, null, null);
 	};
-	
+
 	/**
 	 * Returns the current locale ID.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {number}
 	 */
-	Api.prototype.GetLocale = function() {
+	Api.prototype.GetLocale = function () {
 		return this.asc_getLocale();
 	};
 
@@ -613,7 +615,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 */
-	Api.prototype.CreateNewHistoryPoint = function(){
+	Api.prototype.CreateNewHistoryPoint = function () {
 		History.Create_NewPoint();
 	};
 
@@ -655,12 +657,12 @@
 		if (Range1.GetWorksheet().Id === Range2.GetWorksheet().Id) {
 			var res = Range1.range.bbox.intersection(Range2.range.bbox);
 			if (!res) {
-				private_makeError('Ranges do not intersect.', false);
+				logError(new Error('Ranges do not intersect.'));
 			} else {
 				result = new ApiRange(this.GetActiveSheet().worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
 			}
 		} else {
-			private_makeError('Ranges should be from one worksheet.', false);
+			logError(new Error('Ranges should be from one worksheet.'));
 		}
 		return result;
 	};
@@ -685,8 +687,8 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName - The range name.
-	 * @param {string} sRef - The reference to the specified range. It must contain the sheet name, followed by sign ! and a range of cells. 
-	 * Example: "Sheet1!$A$1:$B$2".  
+	 * @param {string} sRef - The reference to the specified range. It must contain the sheet name, followed by sign ! and a range of cells.
+	 * Example: "Sheet1!$A$1:$B$2".
 	 * @param {boolean} isHidden - Defines if the range name is hidden or not.
 	 * @returns {boolean} - returns false if sName or sRef are invalid.
 	 */
@@ -724,7 +726,7 @@
 	 * @param {string} sRange - The range of cells from the current sheet.
 	 * @returns {ApiRange}
 	 */
-	Api.prototype.GetRange = function(sRange) {
+	Api.prototype.GetRange = function (sRange) {
 		var ws;
 		var res = AscCommon.parserHelp.parse3DRef(sRange);
 		if (res) {
@@ -741,10 +743,10 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {Range} range - The internal Range class (not a ApiRange). For more details see any new ApiRange.
-	 * @param {[Range]} areas - A collection of the ranges (not a ApiRange) from the specified range. For more details see any new ApiRange.
+	 * @param {Range[]} areas - A collection of the ranges (not a ApiRange) from the specified range. For more details see any new ApiRange.
 	 * @returns {ApiRange}
 	 */
-	Api.prototype.private_GetRange = function(range, areas) {
+	Api.prototype.private_GetRange = function (range, areas) {
 		return new ApiRange(range, areas);
 	};
 
@@ -756,11 +758,11 @@
 	 * @returns {string[]}
 	 */
 	Api.prototype.private_GetMailMergeFields = function (nSheet) {
-		var oSheet     = this.GetSheet(nSheet);
-		var arrFields  = [];
-		var colIndex   = 0;
-		var colsCount  = 0;
-		var oRange     = oSheet.GetRangeByNumber(1, colIndex);
+		var oSheet = this.GetSheet(nSheet);
+		var arrFields = [];
+		var colIndex = 0;
+		var colsCount = 0;
+		var oRange = oSheet.GetRangeByNumber(1, colIndex);
 		var fieldValue = undefined;
 
 		while (oRange.GetValue() !== "") {
@@ -768,14 +770,14 @@
 			colIndex++;
 			oRange = oSheet.GetRangeByNumber(1, colIndex);
 		}
-			
+
 		for (var nCol = 0; nCol < colsCount; nCol++) {
-			oRange     = oSheet.GetRangeByNumber(0, nCol);
+			oRange = oSheet.GetRangeByNumber(0, nCol);
 			fieldValue = oRange.GetValue();
 
 			if (fieldValue !== "")
 				arrFields.push(oRange.GetValue());
-			else 
+			else
 				arrFields.push("F" + String(nCol + 1));
 		}
 
@@ -791,18 +793,18 @@
 	 * @returns {string[][]}
 	 */
 	Api.prototype.private_GetMailMergeMap = function (nSheet, bWithFormat) {
-		var oSheet           = this.GetSheet(nSheet);
-		var arrMailMergeMap  = [];
-		var valuesInRow      = null;
+		var oSheet = this.GetSheet(nSheet);
+		var arrMailMergeMap = [];
+		var valuesInRow = null;
 
-		var rowIndex         = 1;
-		var rowsCount        = 0;
-		var colIndex         = 0;
-		var colsCount        = 0;
+		var rowIndex = 1;
+		var rowsCount = 0;
+		var colIndex = 0;
+		var colsCount = 0;
 
-		var mergeValue       = undefined;
-		
-		var oRange           = oSheet.GetRangeByNumber(rowIndex, 0);
+		var mergeValue = undefined;
+
+		var oRange = oSheet.GetRangeByNumber(rowIndex, 0);
 
 		// определяем количество строк с данными
 		while (oRange.GetValue() !== "") {
@@ -811,27 +813,27 @@
 			oRange = oSheet.GetRangeByNumber(rowIndex, 0);
 		}
 
-		oRange     = oSheet.GetRangeByNumber(1, colIndex);
+		oRange = oSheet.GetRangeByNumber(1, colIndex);
 		// определяем количество столбцов с данными
 		while (oRange.GetValue() !== "") {
 			colsCount++;
 			colIndex++;
 			oRange = oSheet.GetRangeByNumber(1, colIndex);
-		}	
-		
+		}
+
 		for (var nRow = 1; nRow < rowsCount + 1; nRow++) {
 			valuesInRow = [];
 
 			for (var nCol = 0; nCol < colsCount; nCol++) {
-				oRange     = oSheet.GetRangeByNumber(nRow, nCol);
+				oRange = oSheet.GetRangeByNumber(nRow, nCol);
 				mergeValue = bWithFormat ? oRange.GetText() : oRange.GetValue();
-	
+
 				valuesInRow.push(mergeValue);
 			}
-			
+
 			arrMailMergeMap.push(valuesInRow);
 		}
-		
+
 
 		return arrMailMergeMap;
 	};
@@ -842,15 +844,15 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nSheet - The sheet index.
 	 * @param {boolean} [bWithFormat=false] - Specifies that the data will be received with the format.
-	 * @returns {string[][]} 
+	 * @returns {string[][]}
 	 */
-	Api.prototype.GetMailMergeData = function(nSheet, bWithFormat) {
+	Api.prototype.GetMailMergeData = function (nSheet, bWithFormat) {
 		if (bWithFormat !== true)
 			bWithFormat = false;
 
-		var arrFields       = this.private_GetMailMergeFields(nSheet);
+		var arrFields = this.private_GetMailMergeFields(nSheet);
 		var arrMailMergeMap = this.private_GetMailMergeMap(nSheet, arrFields, bWithFormat);
-		var resultList      = [arrFields];
+		var resultList = [arrFields];
 
 		for (var nMailMergeMap = 0; nMailMergeMap < arrMailMergeMap.length; nMailMergeMap++) {
 			resultList.push(arrMailMergeMap[nMailMergeMap]);
@@ -866,9 +868,9 @@
 	 * @param {Function} fLogger - A function which specifies the logger object for checking recalculation of formulas.
 	 * @returns {boolean}
 	 */
-	Api.prototype.RecalculateAllFormulas = function(fLogger) {
+	Api.prototype.RecalculateAllFormulas = function (fLogger) {
 		var formulas = this.wbModel.getAllFormulas(true);
-		var _compare = function(_val1, _val2) {
+		var _compare = function (_val1, _val2) {
 			if (!isNaN(parseFloat(_val1)) && isFinite(_val1) && !isNaN(parseFloat(_val2)) && isFinite(_val2)) {
 				var eps = 1e-12;
 				if (Math.abs(_val2 - _val1) < eps) {
@@ -976,13 +978,13 @@
 	 * @returns {ApiComment | null}
 	 * @since 7.5.0
 	 */
-	Api.prototype.AddComment = function(sText, sAuthor) {
+	Api.prototype.AddComment = function (sText, sAuthor) {
 		let result = null;
-		let isValidData = typeof(sText) === 'string' && sText.trim() !== '';
+		let isValidData = typeof (sText) === 'string' && sText.trim() !== '';
 		if (isValidData) {
 			var comment = new Asc.asc_CCommentData();
 			comment.asc_putText(sText);
-			let author = ( (typeof(sAuthor) === 'string' && sAuthor.trim() !== '') ? sAuthor : Asc['editor'].User.asc_getUserName());
+			let author = ((typeof (sAuthor) === 'string' && sAuthor.trim() !== '') ? sAuthor : Asc['editor'].User.asc_getUserName());
 			comment.asc_putUserName(author);
 			// todo проверить как в документа добавлются (надо ли выставлять этот параметр)
 			// comment.asc_putUserId(Asc['editor'].User.asc_getId());
@@ -1001,7 +1003,7 @@
 	 * @param {string} sId - The comment ID.
 	 * @returns {?ApiComment}
 	 */
-	Api.prototype.GetCommentById = function(sId) {
+	Api.prototype.GetCommentById = function (sId) {
 		let comment = this.asc_findComment(sId);
 		if (!comment)
 			comment = this.wb.cellCommentator.findComment(sId);
@@ -1010,7 +1012,7 @@
 	};
 
 	/**
-	 * Returns an array of ApiComment objects.
+	 * Returns all comments related to the whole workbook.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiComment[]}
@@ -1028,25 +1030,47 @@
 		}
 	});
 
+
 	/**
-	 * Specifies freeze panes type.
+	 * Returns all comments from the current workbook including comments from all worksheets.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiComment[]}
+	 */
+	Api.prototype.GetAllComments = function () {
+		let aApiComments = this.GetComments();
+
+		let aWS = this.GetSheets();
+		for(let nWS = 0; nWS < aWS.length; ++nWS) {
+			aApiComments = aApiComments.concat(aWS[nWS].GetComments())
+		}
+		return aApiComments;
+	};
+	Object.defineProperty(Api.prototype, "AllComments", {
+		get: function () {
+			return this.GetAllComments();
+		}
+	});
+
+	/**
+	 * Specifies a type of freeze panes.
 	 * @typedef {("row" | "column" | "cell" | null )} FreezePaneType
 	 */
 
 	/**
-	 * Sets freeze panes type.
+	 * Sets a type to the freeze panes.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @param {FreezePaneType} FreezePaneType - The type of freezing ('null' to unfreeze).
-	 * @since 7.6.0
+	 * @param {FreezePaneType} FreezePaneType - The freeze panes type ("null" to unfreeze).
+	 * @since 8.0.0
 	 */
-	Api.prototype.SetFreezePanesType = function(FreezePaneType) {
+	Api.prototype.SetFreezePanesType = function (FreezePaneType) {
 		if (typeof FreezePaneType === 'string' || FreezePaneType === null) {
 			//detect current freeze type
 			let curType = this.GetFreezePanesType();
 
 			let type = null;
-			if (FreezePaneType === 'cell' && ( ( curType && curType !== 'cell' ) || ( !curType ) ) ) {
+			if (FreezePaneType === 'cell' && ((curType && curType !== 'cell') || (!curType))) {
 				// make unfreeze and freeze then
 				if (curType)
 					this.asc_freezePane(undefined);
@@ -1059,23 +1083,23 @@
 			} else if (FreezePaneType === 'column' && curType !== 'column') {
 				type = 2;
 			}
-			
+
 			if (type !== null)
 				this.asc_freezePane(type);
 
 		} else {
-			private_makeError('Invalid parametr "FreezePaneType".', false);
+			logError(new Error('Invalid parametr "FreezePaneType".'));
 		}
 	};
 
 	/**
-	 * Rerutns freeze panes type.
+	 * Returns the freeze panes type.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @returns {FreezePaneType} FreezePaneType - The type of freezing ('null' - if there is no frozen pane).
-	 * @since 7.6.0
+	 * @returns {FreezePaneType} FreezePaneType - The freeze panes type ("null" if there are no freeze panes).
+	 * @since 8.0.0
 	 */
-	Api.prototype.GetFreezePanesType = function() {
+	Api.prototype.GetFreezePanesType = function () {
 		let cell = this.wb.getWorksheet().topLeftFrozenCell;
 		//detect current freeze type
 		let curType = null;
@@ -1100,7 +1124,7 @@
 		get: function () {
 			return this.GetFreezePanesType();
 		},
-		set: function(FreezePaneType) {
+		set: function (FreezePaneType) {
 			this.SetFreezePanesType(FreezePaneType);
 		}
 	});
@@ -1200,7 +1224,7 @@
 		let result;
 		if (typeof col == "number" && typeof row == "number") {
 			if (col < 1 || row < 1 || col > AscCommon.gc_nMaxCol0 || row > AscCommon.gc_nMaxRow0) {
-				private_makeError('Invalid paremert "row" or "col".', false);
+				logError(new Error('Invalid paremert "row" or "col".'));
 				result = null;
 			} else {
 				row--;
@@ -1209,19 +1233,19 @@
 			}
 		} else if (typeof row == "number") {
 			if (row < 1 || row > AscCommon.gc_nMaxRow0) {
-				private_makeError('Invalid paremert "row".', false);
+				logError(new Error('Invalid paremert "row".'));
 				result = null;
 			} else {
 				row--;
-				let r = (row) ?  (row / AscCommon.gc_nMaxCol0) >> 0 : row;
+				let r = (row) ? (row / AscCommon.gc_nMaxCol0) >> 0 : row;
 				let c = (row) ? row % AscCommon.gc_nMaxCol0 : row;
 				if (r && c) c--;
 				result = new ApiRange(this.worksheet.getRange3(r, c, r, c));
 			}
-			
+
 		} else if (typeof col == "number") {
 			if (col < 1 || col > AscCommon.gc_nMaxCol0) {
-				private_makeError('Invalid paremert "col".', false);
+				logError(new Error('Invalid paremert "col".'));
 				result = null;
 			} else {
 				col--;
@@ -1252,14 +1276,14 @@
 	 * @returns {ApiRange | null}
 	 */
 	ApiWorksheet.prototype.GetRows = function (value) {
-		if (typeof  value === "undefined") {
+		if (typeof value === "undefined") {
 			return this.GetCells();
 		} else if (typeof value == "number" || value.indexOf(':') == -1) {
 			value = parseInt(value);
-			if (value > 0 && value <=  AscCommon.gc_nMaxRow0 + 1 && value[0] !== NaN) {
-				value --;
+			if (value > 0 && value <= AscCommon.gc_nMaxRow0 + 1 && value[0] !== NaN) {
+				value--;
 			} else {
-				private_makeError('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1), false);
+				logError(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
 				return null;
 			}
 			return new ApiRange(this.worksheet.getRange3(value, 0, value, AscCommon.gc_nMaxCol0));
@@ -1269,13 +1293,13 @@
 			for (var i = 0; i < value.length; ++i) {
 				value[i] = parseInt(value[i]);
 				if (value[i] > 0 && value[i] <= AscCommon.gc_nMaxRow0 + 1 && value[0] !== NaN) {
-					value[i] --;
+					value[i]--;
 				} else {
 					isError = true;
 				}
 			}
 			if (isError) {
-				private_makeError('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1), false);
+				logError(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
 				return null;
 			} else {
 				return new ApiRange(this.worksheet.getRange3(value[0], 0, value[1], AscCommon.gc_nMaxCol0));
@@ -1343,7 +1367,7 @@
 		// it's temporary solution (we should use oWorkbookView instead of oWorkbook)
 		let oWorkbook = this.worksheet.workbook;
 		oWorkbook.oApi.sheetsChanged();
-		if(oWorkbook)
+		if (oWorkbook)
 			oWorkbook.handleChartsOnChangeSheetName(this.worksheet, sOldName, sName);
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "Name", {
@@ -1384,10 +1408,10 @@
 		Range1 = (Range1 instanceof ApiRange) ? Range1.range : (typeof Range1 == 'string') ? this.worksheet.getRange2(Range1) : null;
 
 		if (!Range1) {
-			private_makeError('Incorrect "Range1" or it is empty.', false);
+			logError(new Error('Incorrect "Range1" or it is empty.'));
 			return null;
 		}
-		
+
 		Range2 = (Range2 instanceof ApiRange) ? Range2.range : (typeof Range2 == 'string') ? this.worksheet.getRange2(Range2) : null;
 
 		if (Range2) {
@@ -1406,7 +1430,7 @@
 
 		if (!Range)
 			return null;
-		
+
 		return new ApiRange(Range);
 	};
 
@@ -1435,19 +1459,24 @@
 
 	/**
 	 * Sets the width of the specified column.
-	 * One unit of column width is equal to the width of one character in the Normal style. 
+	 * One unit of column width is equal to the width of one character in the Normal style.
 	 * For proportional fonts, the width of the character 0 (zero) is used.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nColumn - The number of the column to set the width to.
 	 * @param {number} nWidth - The width of the column divided by 7 pixels.
+	 * @param {boolean} [bWithotPaddings=false] - Specifies whether nWidth will be set without standard paddings.
 	 */
-	ApiWorksheet.prototype.SetColumnWidth = function (nColumn, nWidth) {
+	ApiWorksheet.prototype.SetColumnWidth = function (nColumn, nWidth, bWithotPaddings) {
+		if (bWithotPaddings) {
+			let wb = this.worksheet.workbook;
+			nWidth = (nWidth * wb.maxDigitWidth - wb.paddingPlusBorder) / wb.maxDigitWidth;
+		}
 		this.worksheet.setColWidth(nWidth, nColumn, nColumn);
 	};
 
 	/**
-	 * Sets the height of the specified row measured in points. 
+	 * Sets the height of the specified row measured in points.
 	 * A point is 1/72 inch.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
@@ -1485,7 +1514,7 @@
 	 * @param {number} nPoints - The left margin size measured in points.
 	 */
 	ApiWorksheet.prototype.SetLeftMargin = function (nPoints) {
-		nPoints = (typeof nPoints !== 'number') ? 0 : nPoints;		
+		nPoints = (typeof nPoints !== 'number') ? 0 : nPoints;
 		this.worksheet.PagePrintOptions.pageMargins.asc_setLeft(nPoints);
 	};
 	/**
@@ -1513,7 +1542,7 @@
 	 * @param {number} nPoints - The right margin size measured in points.
 	 */
 	ApiWorksheet.prototype.SetRightMargin = function (nPoints) {
-		nPoints = (typeof nPoints !== 'number') ? 0 : nPoints;				
+		nPoints = (typeof nPoints !== 'number') ? 0 : nPoints;
 		this.worksheet.PagePrintOptions.pageMargins.asc_setRight(nPoints);
 	};
 	/**
@@ -1541,7 +1570,7 @@
 	 * @param {number} nPoints - The top margin size measured in points.
 	 */
 	ApiWorksheet.prototype.SetTopMargin = function (nPoints) {
-		nPoints = (typeof nPoints !== 'number') ? 0 : nPoints;				
+		nPoints = (typeof nPoints !== 'number') ? 0 : nPoints;
 		this.worksheet.PagePrintOptions.pageMargins.asc_setTop(nPoints);
 	};
 	/**
@@ -1569,7 +1598,7 @@
 	 * @param {number} nPoints - The bottom margin size measured in points.
 	 */
 	ApiWorksheet.prototype.SetBottomMargin = function (nPoints) {
-		nPoints = (typeof nPoints !== 'number') ? 0 : nPoints;				
+		nPoints = (typeof nPoints !== 'number') ? 0 : nPoints;
 		this.worksheet.PagePrintOptions.pageMargins.asc_setBottom(nPoints);
 	};
 	/**
@@ -1606,7 +1635,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {PageOrientation}
 	 * */
-	ApiWorksheet.prototype.GetPageOrientation = function ()	{
+	ApiWorksheet.prototype.GetPageOrientation = function () {
 		var PageOrientation = this.worksheet.PagePrintOptions.pageSetup.asc_getOrientation();
 		return (PageOrientation) ? 'xlLandscape' : 'xlPortrait';
 	};
@@ -1627,7 +1656,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean} - Specifies whether the current sheet row/column headings must be printed or not.
 	 * */
-	ApiWorksheet.prototype.GetPrintHeadings = function ()	{
+	ApiWorksheet.prototype.GetPrintHeadings = function () {
 		return this.worksheet.PagePrintOptions.asc_getHeadings();
 	};
 
@@ -1637,7 +1666,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bPrint - Specifies whether the current sheet row/column headers must be printed or not.
 	 * */
-	ApiWorksheet.prototype.SetPrintHeadings = function (bPrint)	{
+	ApiWorksheet.prototype.SetPrintHeadings = function (bPrint) {
 		this.worksheet.PagePrintOptions.asc_setHeadings(!!bPrint);
 	};
 
@@ -1656,7 +1685,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {boolean} - True if cell gridlines are printed on this page.
 	 * */
-	ApiWorksheet.prototype.GetPrintGridlines = function ()	{
+	ApiWorksheet.prototype.GetPrintGridlines = function () {
 		return this.worksheet.PagePrintOptions.asc_getGridLines();
 	};
 
@@ -1666,7 +1695,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {boolean} bPrint - Defines if cell gridlines are printed on this page or not.
 	 * */
-	ApiWorksheet.prototype.SetPrintGridlines = function (bPrint)	{
+	ApiWorksheet.prototype.SetPrintGridlines = function (bPrint) {
 		this.worksheet.PagePrintOptions.asc_setGridLines(!!bPrint);
 	};
 
@@ -1686,7 +1715,7 @@
 	 * @returns {ApiName[]}
 	 */
 	ApiWorksheet.prototype.GetDefNames = function () {
-		var res =  this.worksheet.workbook.getDefinedNamesWS(this.worksheet.getId());
+		var res = this.worksheet.workbook.getDefinedNamesWS(this.worksheet.getId());
 		var name = [];
 		if (!res.length) {
 			return [new ApiName(undefined)]
@@ -1718,8 +1747,8 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sName - The range name.
-	 * @param {string} sRef  - Must contain the sheet name, followed by sign ! and a range of cells. 
-	 * Example: "Sheet1!$A$1:$B$2".  
+	 * @param {string} sRef  - Must contain the sheet name, followed by sign ! and a range of cells.
+	 * Example: "Sheet1!$A$1:$B$2".
 	 * @param {boolean} isHidden - Defines if the range name is hidden or not.
 	 * @returns {boolean} - returns false if sName or sRef are invalid.
 	 */
@@ -1734,7 +1763,7 @@
 	});
 
 	/**
-	 * Returns an array of ApiComment objects.
+	 * Returns all comments from the current worksheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiComment[]}
@@ -1774,29 +1803,29 @@
 	ApiWorksheet.prototype.SetHyperlink = function (sRange, sAddress, subAddress, sScreenTip, sTextToDisplay) {
 		var range = new ApiRange(this.worksheet.getRange2(sRange));
 		var address;
-		if ( range && range.range.isOneCell() && (sAddress || subAddress) ) {
+		if (range && range.range.isOneCell() && (sAddress || subAddress)) {
 			var externalLink = sAddress ? AscCommon.rx_allowedProtocols.test(sAddress) : false;
 			if (externalLink && AscCommonExcel.getFullHyperlinkLength(sAddress) > Asc.c_nMaxHyperlinkLength) {
-				private_makeError('Incorrect "sAddress".', true);
+				throwException(new Error('Incorrect "sAddress".'));
 			}
 			if (!externalLink) {
 				address = subAddress.split("!");
-				if (address.length == 1) 
+				if (address.length == 1)
 					address.unshift(this.GetName());
 				else if (this.worksheet.workbook.getWorksheetByName(address[0]) === null) {
-					private_makeError('Invalid "subAddress".', true);
+					throwException(new Error('Invalid "subAddress".'));
 				}
 				var res = this.worksheet.workbook.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.FormatTable, address[1], false);
 				if (res === Asc.c_oAscError.ID.DataRangeError) {
-					private_makeError('Invalid "subAddress".', true);
+					throwException(new Error('Invalid "subAddress".'));
 				}
 			}
 			this.worksheet.selectionRange.assign2(range.range.bbox);
-			var  Hyperlink = new Asc.asc_CHyperlink();
+			var Hyperlink = new Asc.asc_CHyperlink();
 			if (sScreenTip) {
 				Hyperlink.asc_setText(sScreenTip);
 			} else {
-				Hyperlink.asc_setText( (externalLink ? sAddress : subAddress) );
+				Hyperlink.asc_setText((externalLink ? sAddress : subAddress));
 			}
 			if (sTextToDisplay) {
 				Hyperlink.asc_setTooltip(sTextToDisplay);
@@ -1830,21 +1859,20 @@
 	 * @returns {ApiChart}
 	 */
 	ApiWorksheet.prototype.AddChart =
-		function (sDataRange, bInRows, sType, nStyleIndex, nExtX, nExtY, nFromCol, nColOffset,  nFromRow, nRowOffset) {
+		function (sDataRange, bInRows, sType, nStyleIndex, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset) {
 			var settings = new Asc.asc_ChartSettings();
 			settings.type = AscFormat.ChartBuilderTypeToInternal(sType);
 			settings.style = nStyleIndex;
 			settings.inColumns = !bInRows;
 			settings.putRange(sDataRange);
 			var oChart = AscFormat.DrawingObjectsController.prototype.getChartSpace(settings);
-			if(arguments.length === 8){//support old variant
+			if (arguments.length === 8) {//support old variant
 				oChart.setBDeleted(false);
 				oChart.setWorksheet(this.worksheet);
 				oChart.addToDrawingObjects();
 				oChart.setDrawingBaseCoords(arguments[4], 0, arguments[5], 0, arguments[6], 0, arguments[7], 0, 0, 0, 0, 0);
-			}
-			else{
-				private_SetCoords(oChart, this.worksheet, nExtX, nExtY, nFromCol, nColOffset,  nFromRow, nRowOffset);
+			} else {
+				private_SetCoords(oChart, this.worksheet, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset);
 			}
 			if (AscFormat.isRealNumber(nStyleIndex)) {
 				oChart.setStyle(nStyleIndex);
@@ -1872,9 +1900,9 @@
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the shape measured in English measure units.
 	 * @returns {ApiShape}
 	 * */
-	ApiWorksheet.prototype.AddShape = function(sType, nWidth, nHeight, oFill, oStroke, nFromCol, nColOffset, nFromRow, nRowOffset){
-		var oShape = AscFormat.builder_CreateShape(sType, nWidth/36000, nHeight/36000, oFill.UniFill, oStroke.Ln, null, this.worksheet.workbook.theme, this.worksheet.getDrawingDocument(), false, this.worksheet);
-		private_SetCoords(oShape, this.worksheet, nWidth, nHeight, nFromCol, nColOffset,  nFromRow, nRowOffset);
+	ApiWorksheet.prototype.AddShape = function (sType, nWidth, nHeight, oFill, oStroke, nFromCol, nColOffset, nFromRow, nRowOffset) {
+		var oShape = AscFormat.builder_CreateShape(sType, nWidth / 36000, nHeight / 36000, oFill.UniFill, oStroke.Ln, null, this.worksheet.workbook.theme, this.worksheet.getDrawingDocument(), false, this.worksheet);
+		private_SetCoords(oShape, this.worksheet, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset);
 		return new ApiShape(oShape);
 	};
 
@@ -1892,9 +1920,9 @@
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the image measured in English measure units.
 	 * @returns {ApiImage}
 	 */
-	ApiWorksheet.prototype.AddImage = function(sImageSrc, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset){
-		var oImage = AscFormat.DrawingObjectsController.prototype.createImage(sImageSrc, 0, 0, nWidth/36000, nHeight/36000);
-		private_SetCoords(oImage, this.worksheet, nWidth, nHeight, nFromCol, nColOffset,  nFromRow, nRowOffset);
+	ApiWorksheet.prototype.AddImage = function (sImageSrc, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset) {
+		var oImage = AscFormat.DrawingObjectsController.prototype.createImage(sImageSrc, 0, 0, nWidth / 36000, nHeight / 36000);
+		private_SetCoords(oImage, this.worksheet, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset);
 		return new ApiImage(oImage);
 	};
 
@@ -1912,26 +1940,26 @@
 	 * @param {EMU} [nHeight=1828800] - The Text Art heigth measured in English measure units.
 	 * @param {number} [nFromCol=0] - The column number where the beginning of the Text Art object will be placed.
 	 * @param {number} [nFromRow=0] - The row number where the beginning of the Text Art object will be placed.
-     * @param {EMU} [nColOffset=0] - The offset from the nFromCol column to the left part of the Text Art object measured in English measure units.
+	 * @param {EMU} [nColOffset=0] - The offset from the nFromCol column to the left part of the Text Art object measured in English measure units.
 	 * @param {EMU} [nRowOffset=0] - The offset from the nFromRow row to the upper part of the Text Art object measured in English measure units.
 	 * @returns {ApiDrawing}
 	 */
-	ApiWorksheet.prototype.AddWordArt = function(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight, nFromCol, nFromRow, nColOffset, nRowOffset) {
-		oTextPr    = oTextPr && oTextPr.TextPr ? oTextPr.TextPr : null;
-		nRotAngle  = typeof(nRotAngle) === "number" && nRotAngle > 0 ? nRotAngle : 0;
-		nWidth     = typeof(nWidth) === "number" && nWidth > 0 ? nWidth : 1828800;
-		nHeight    = typeof(nHeight) === "number" && nHeight > 0 ? nHeight : 1828800;
-		oFill      = oFill && oFill.UniFill ? oFill.UniFill : Asc.editor.CreateNoFill().UniFill;
-		oStroke    = oStroke && oStroke.Ln ? oStroke.Ln : Asc.editor.CreateStroke(0, Asc.editor.CreateNoFill()).Ln;
-		nFromCol   = typeof(nFromCol) === "number" && nFromCol > 0 ? nFromCol : 0;
-		nFromRow   = typeof(nFromRow) === "number" && nFromRow > 0 ? nFromRow : 0;
-		nColOffset = typeof(nColOffset) === "number" && nColOffset > 0 ? nColOffset : 0;
-		nRowOffset = typeof(nRowOffset) === "number" && nRowOffset > 0 ? nRowOffset : 0;
-		sTransform = typeof(sTransform) === "string" && sTransform !== "" ? sTransform : "textNoShape";
+	ApiWorksheet.prototype.AddWordArt = function (oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight, nFromCol, nFromRow, nColOffset, nRowOffset) {
+		oTextPr = oTextPr && oTextPr.TextPr ? oTextPr.TextPr : null;
+		nRotAngle = typeof (nRotAngle) === "number" && nRotAngle > 0 ? nRotAngle : 0;
+		nWidth = typeof (nWidth) === "number" && nWidth > 0 ? nWidth : 1828800;
+		nHeight = typeof (nHeight) === "number" && nHeight > 0 ? nHeight : 1828800;
+		oFill = oFill && oFill.UniFill ? oFill.UniFill : Asc.editor.CreateNoFill().UniFill;
+		oStroke = oStroke && oStroke.Ln ? oStroke.Ln : Asc.editor.CreateStroke(0, Asc.editor.CreateNoFill()).Ln;
+		nFromCol = typeof (nFromCol) === "number" && nFromCol > 0 ? nFromCol : 0;
+		nFromRow = typeof (nFromRow) === "number" && nFromRow > 0 ? nFromRow : 0;
+		nColOffset = typeof (nColOffset) === "number" && nColOffset > 0 ? nColOffset : 0;
+		nRowOffset = typeof (nRowOffset) === "number" && nRowOffset > 0 ? nRowOffset : 0;
+		sTransform = typeof (sTransform) === "string" && sTransform !== "" ? sTransform : "textNoShape";
 
 		var oArt = Asc.editor.private_createWordArt(oTextPr, sText, sTransform, oFill, oStroke, nRotAngle, nWidth, nHeight);
 
-        private_SetCoords(oArt, this.worksheet, nWidth, nHeight, nFromCol, nColOffset,  nFromRow, nRowOffset);
+		private_SetCoords(oArt, this.worksheet, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset);
 
 		return new ApiDrawing(oArt);
 	};
@@ -1951,18 +1979,17 @@
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the OLE object measured in English measure units.
 	 * @returns {ApiOleObject}
 	 */
-	ApiWorksheet.prototype.AddOleObject = function(sImageSrc, nWidth, nHeight, sData, sAppId, nFromCol, nColOffset, nFromRow, nRowOffset)
-	{
+	ApiWorksheet.prototype.AddOleObject = function (sImageSrc, nWidth, nHeight, sData, sAppId, nFromCol, nColOffset, nFromRow, nRowOffset) {
 		if (typeof sImageSrc === "string" && sImageSrc.length > 0 && typeof sData === "string"
 			&& typeof sAppId === "string" && sAppId.length > 0
 			&& AscFormat.isRealNumber(nWidth) && AscFormat.isRealNumber(nHeight)
 		)
 
-		var nW = nWidth / 36000.0;
+			var nW = nWidth / 36000.0;
 		var nH = nHeight / 36000.0;
-		
+
 		var oImage = AscFormat.DrawingObjectsController.prototype.createOleObject(sData, sAppId, sImageSrc, 0, 0, nW, nH);
-		private_SetCoords(oImage, this.worksheet, nWidth, nHeight, nFromCol, nColOffset,  nFromRow, nRowOffset);
+		private_SetCoords(oImage, this.worksheet, nWidth, nHeight, nFromCol, nColOffset, nFromRow, nRowOffset);
 		return new ApiOleObject(oImage);
 	};
 
@@ -1974,12 +2001,12 @@
 	 * @param {EMU} nWidth - The image width in English measure units.
 	 * @param {EMU} nHeight - The image height in English measure units.
 	 */
-	ApiWorksheet.prototype.ReplaceCurrentImage = function(sImageUrl, nWidth, nHeight){
+	ApiWorksheet.prototype.ReplaceCurrentImage = function (sImageUrl, nWidth, nHeight) {
 		let oWorksheet = Asc['editor'].wb.getWorksheet();
-		if(oWorksheet && oWorksheet.objectRender && oWorksheet.objectRender.controller){
+		if (oWorksheet && oWorksheet.objectRender && oWorksheet.objectRender.controller) {
 			let oController = oWorksheet.objectRender.controller;
 			let dK = 1 / 36000 / AscCommon.g_dKoef_pix_to_mm;
-			oController.putImageToSelection(sImageUrl, nWidth * dK, nHeight * dK );
+			oController.putImageToSelection(sImageUrl, nWidth * dK, nHeight * dK);
 		}
 	};
 
@@ -1988,13 +2015,13 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiDrawing[]}.
-	*/
-	ApiWorksheet.prototype.GetAllDrawings = function(){
+	 */
+	ApiWorksheet.prototype.GetAllDrawings = function () {
 		var allDrawings = this.worksheet.Drawings;
 		var allApiDrawings = [];
 
-		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++){
-			if (allDrawings[nDrawing].graphicObject){
+		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++) {
+			if (allDrawings[nDrawing].graphicObject) {
 				allApiDrawings.push(new ApiDrawing(allDrawings[nDrawing].graphicObject));
 			}
 		}
@@ -2006,13 +2033,13 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiImage[]}.
-	*/
-	ApiWorksheet.prototype.GetAllImages = function(){
+	 */
+	ApiWorksheet.prototype.GetAllImages = function () {
 		var allDrawings = this.worksheet.Drawings;
 		var allApiDrawings = [];
 
-		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++){
-			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].isImage()){
+		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++) {
+			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].isImage()) {
 				allApiDrawings.push(new ApiImage(allDrawings[nDrawing].graphicObject));
 			}
 		}
@@ -2024,13 +2051,13 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiShape[]}.
-	*/
-	ApiWorksheet.prototype.GetAllShapes = function(){
+	 */
+	ApiWorksheet.prototype.GetAllShapes = function () {
 		var allDrawings = this.worksheet.Drawings;
 		var allApiDrawings = [];
 
-		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++){
-			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].isShape()){
+		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++) {
+			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].isShape()) {
 				allApiDrawings.push(new ApiShape(allDrawings[nDrawing].graphicObject));
 			}
 		}
@@ -2042,13 +2069,13 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiChart[]}.
-	*/
-	ApiWorksheet.prototype.GetAllCharts = function(){
+	 */
+	ApiWorksheet.prototype.GetAllCharts = function () {
 		var allDrawings = this.worksheet.Drawings;
 		var allApiDrawings = [];
 
-		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++){
-			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].isChart()){
+		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++) {
+			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].isChart()) {
 				allApiDrawings.push(new ApiChart(allDrawings[nDrawing].graphicObject));
 			}
 		}
@@ -2060,13 +2087,13 @@
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiOleObject[]}.
-	*/
-	ApiWorksheet.prototype.GetAllOleObjects = function(){
+	 */
+	ApiWorksheet.prototype.GetAllOleObjects = function () {
 		var allDrawings = this.worksheet.Drawings;
 		var allApiDrawings = [];
 
-		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++){
-			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].graphicObject instanceof AscFormat.COleObject){
+		for (var nDrawing = 0; nDrawing < allDrawings.length; nDrawing++) {
+			if (allDrawings[nDrawing].graphicObject && allDrawings[nDrawing].graphicObject instanceof AscFormat.COleObject) {
 				allApiDrawings.push(new ApiOleObject(allDrawings[nDrawing].graphicObject));
 			}
 		}
@@ -2079,26 +2106,27 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiWorksheet} before - The sheet before which the current sheet will be placed. You cannot specify "before" if you specify "after".
 	 * @param {ApiWorksheet} after - The sheet after which the current sheet will be placed. You cannot specify "after" if you specify "before".
-	*/
-	ApiWorksheet.prototype.Move = function(before, after) {
+	 */
+	ApiWorksheet.prototype.Move = function (before, after) {
 		let bb = before instanceof ApiWorksheet;
 		let ba = after instanceof ApiWorksheet;
-		if ( (bb && ba) || (!bb && !ba) ) {
-			private_makeError('Incorrect parametrs.', true);
+		if ((bb && ba) || (!bb && !ba)) {
+			throwException(new Error('Incorrect parametrs.'));
 		} else {
 			let curIndex = this.GetIndex();
-			let newIndex = ( bb ? ( before.GetIndex() ) : (after.GetIndex() + 1) );
-			this.worksheet.workbook.oApi.asc_moveWorksheet( newIndex, [curIndex] );
+			let newIndex = (bb ? (before.GetIndex()) : (after.GetIndex() + 1));
+			this.worksheet.workbook.oApi.asc_moveWorksheet(newIndex, [curIndex]);
 		}
 	};
 
 	/**
-	 * Returns a freezePanes for a current worsheet.
+	 * Returns the freeze panes from the current worksheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiFreezePanes}
-	*/
-	ApiWorksheet.prototype.GetFreezePanes = function() {
+	 * @since 8.0.0
+	 */
+	ApiWorksheet.prototype.GetFreezePanes = function () {
 		return new ApiFreezePanes(this.worksheet);
 	};
 
@@ -2152,8 +2180,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {"range"}
 	 */
-	ApiRange.prototype.GetClassType = function()
-	{
+	ApiRange.prototype.GetClassType = function () {
 		return "range";
 	};
 
@@ -2192,7 +2219,16 @@
 	 * @typeofeditors ["CSE"]
 	 */
 	ApiRange.prototype.Clear = function () {
-		this.range.cleanAll();
+		let range = this.range,
+			bbox = range.bbox,
+			ws = range.worksheet,
+			wsView = Asc['editor'].wb.getWorksheet(ws.getIndex());
+		range.cleanAll();
+		ws.deletePivotTables(bbox);
+		ws.removeSparklines(bbox);
+		ws.clearDataValidation([bbox], true);
+		ws.clearConditionalFormattingRulesByRanges([bbox]);
+		wsView.cellCommentator.deleteCommentsRange(bbox, null);
 	};
 
 	/**
@@ -2214,7 +2250,7 @@
 				if (r < 0) r = 0;
 				result = new ApiRange(this.range.worksheet.getRange3(r, this.range.bbox.c1, r, this.range.bbox.c2));
 			} else {
-				private_makeError('The nRow must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1), false);
+				logError(new Error('The nRow must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
 			}
 		}
 		return result;
@@ -2229,7 +2265,7 @@
 	 * Returns a Range object that represents the columns in the specified range.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @param {number} nCol - The column number. * 
+	 * @param {number} nCol - The column number. *
 	 * @returns {ApiRange | null}
 	 */
 	ApiRange.prototype.GetCols = function (nCol) {
@@ -2237,17 +2273,16 @@
 		if (typeof nCol === "undefined") {
 			result = this;
 		} else {
-			if (typeof nCol === "number")
-			{
+			if (typeof nCol === "number") {
 				nCol--;
 				let c = this.range.bbox.c1 + nCol;
 				if (c > AscCommon.gc_nMaxCol0) c = AscCommon.gc_nMaxCol0;
 				if (c < 0) c = 0;
 				result = new ApiRange(this.range.worksheet.getRange3(this.range.bbox.r1, c, this.range.bbox.r2, c));
 			} else {
-				private_makeError('The nCol must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1), false);
+				logError(new Error('The nCol must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1)));
 			}
-		} 
+		}
 		return result;
 	};
 	Object.defineProperty(ApiRange.prototype, "Cols", {
@@ -2340,8 +2375,8 @@
 			c1 = bbox.c1 + col;
 		} else if (typeof row == "number") {
 			row--;
-			let cellCount = bbox.c2 - bbox.c1 + 1; 
-			r1 = bbox.r1 + ((row) ?  (row / cellCount) >> 0 : row);
+			let cellCount = bbox.c2 - bbox.c1 + 1;
+			r1 = bbox.r1 + ((row) ? (row / cellCount) >> 0 : row);
 			c1 = bbox.c1 + ((r1) ? 1 : 0) + ((row) ? row % cellCount : row);
 			if (r1 && c1) c1--;
 		} else if (typeof col == "number") {
@@ -2387,9 +2422,9 @@
 	 * @param {string} RefStyle - The reference style.
 	 * @param {boolean} External - Defines if the range is in the current file or not.
 	 * @param {range} RelativeTo - The range which the current range is relative to.
-	 * @returns {string | null} - returns address of range as string. 
+	 * @returns {string | null} - returns address of range as string.
 	 */
-	 ApiRange.prototype.GetAddress = function (RowAbs, ColAbs, RefStyle, External, RelativeTo) {
+	ApiRange.prototype.GetAddress = function (RowAbs, ColAbs, RefStyle, External, RelativeTo) {
 		// todo поправить, чтобы возвращал адреса всех areas внутри range
 		var range = this.range.bbox;
 		var isOneCell = this.range.isOneCell();
@@ -2397,10 +2432,10 @@
 		var isOneRow = (this.range.bbox.r1 === this.range.bbox.r2 && this.range.bbox.c1 === 0 && this.range.bbox.c2 === AscCommon.gc_nMaxCol0);
 		var ws = this.range.worksheet;
 		var value;
-		var row1 = range.r1 + ( (RowAbs || RefStyle != "xlR1C1") ? 1 : 0),
-			col1 = range.c1 + ( (ColAbs || RefStyle != "xlR1C1") ? 1 : 0),
-			row2 = range.r2 + ( (RowAbs || RefStyle != "xlR1C1") ? 1 : 0),
-			col2 = range.c2 + ( (ColAbs || RefStyle != "xlR1C1") ? 1 : 0);
+		var row1 = range.r1 + ((RowAbs || RefStyle != "xlR1C1") ? 1 : 0),
+			col1 = range.c1 + ((ColAbs || RefStyle != "xlR1C1") ? 1 : 0),
+			row2 = range.r2 + ((RowAbs || RefStyle != "xlR1C1") ? 1 : 0),
+			col2 = range.c2 + ((ColAbs || RefStyle != "xlR1C1") ? 1 : 0);
 		if (RefStyle == 'xlR1C1') {
 			if (RowAbs) {
 				row1 = "R" + row1;
@@ -2424,8 +2459,8 @@
 			// xlA1 - default
 			row1 = (RowAbs ? "$" : "") + row1;
 			col1 = (ColAbs ? "$" : "") + AscCommon.g_oCellAddressUtils.colnumToColstr(col1);
-			row2 = isOneCell ? "" : ( (RowAbs ? "$" : "") + row2);
-			col2 = isOneCell ? "" : ( (ColAbs ? ":$" : ":") + AscCommon.g_oCellAddressUtils.colnumToColstr(col2) );
+			row2 = isOneCell ? "" : ((RowAbs ? "$" : "") + row2);
+			col2 = isOneCell ? "" : ((ColAbs ? ":$" : ":") + AscCommon.g_oCellAddressUtils.colnumToColstr(col2));
 			value = isOneCol ? col1 + col2 : isOneRow ? row1 + ":" + row2 : col1 + row1 + col2 + row2;
 		}
 		return (External) ? '[' + ws.workbook.oApi.DocInfo.Title + ']' + AscCommon.parserHelp.get3DRef(ws.sName, value) : value;
@@ -2444,7 +2479,7 @@
 	 */
 	ApiRange.prototype.GetCount = function () {
 		var range = this.range.bbox;
-		var	count;
+		var count;
 		switch (range.getType()) {
 			case Asc.c_oAscSelectionType.RangeCells:
 				count = (range.c2 - range.c1 + 1) * (range.r2 - range.r1 + 1);
@@ -2488,7 +2523,7 @@
 			for (var i = 0; i < nRow; i++) {
 				var arr = [];
 				for (var k = 0; k < nCol; k++) {
-					var cell = this.range.worksheet.getRange3( (bbox.r1 + i), (bbox.c1 + k), (bbox.r1 + i), (bbox.c1 + k) );
+					var cell = this.range.worksheet.getRange3((bbox.r1 + i), (bbox.c1 + k), (bbox.r1 + i), (bbox.c1 + k));
 					arr.push(cell.getValue());
 				}
 				res.push(arr);
@@ -2511,7 +2546,9 @@
 		let worksheet = this.range.worksheet;
 
 		if (Array.isArray(data)) {
-			let checkDepth = function(x) { return Array.isArray(x) ? 1 + Math.max.apply(this, x.map(checkDepth)) : 0;};
+			let checkDepth = function (x) {
+				return Array.isArray(x) ? 1 + Math.max.apply(this, x.map(checkDepth)) : 0;
+			};
 			let maxDepth = checkDepth(data);
 			if (maxDepth <= 2) {
 				if (this.range.isOneCell()) {
@@ -2522,11 +2559,11 @@
 					let nCol = bbox.c2 - bbox.c1 + 1;
 					for (let indC = 0; indC < nCol; indC++) {
 						for (let indR = 0; indR < nRow; indR++) {
-							let value = (maxDepth == 1 ? data[indC] : data[indR]? data[indR][indC]: null);
+							let value = (maxDepth == 1 ? data[indC] : data[indR] ? data[indR][indC] : null);
 							if (value === undefined || value === null)
 								value = AscCommon.cErrorLocal["na"];
 
-							let cell = this.range.worksheet.getRange3( (bbox.r1 + indR), (bbox.c1 + indC), (bbox.r1 + indR), (bbox.c1 + indC) );
+							let cell = this.range.worksheet.getRange3((bbox.r1 + indR), (bbox.c1 + indC), (bbox.r1 + indR), (bbox.c1 + indC));
 							let merged = cell.hasMerged();
 							if (merged)
 								cell = this.range.worksheet.getRange3(merged.r1, merged.c1, merged.r1, merged.c1);
@@ -2543,7 +2580,10 @@
 				}
 			}
 		}
-		data = checkFormat(data || 0);
+		if (data === undefined || data === null)
+			data = AscCommon.cErrorLocal["na"];
+
+		data = checkFormat(data);
 		let range = this.range;
 		let merged = range.hasMerged();
 		if (merged)
@@ -2576,7 +2616,7 @@
 	ApiRange.prototype.GetFormula = function () {
 		if (this.range.isFormula())
 			return "= " + this.range.getFormula();
-		else 
+		else
 			return this.GetValue2();
 	};
 
@@ -2607,7 +2647,7 @@
 			for (var i = 0; i < nRow; i++) {
 				var arr = [];
 				for (var k = 0; k < nCol; k++) {
-					var cell = this.range.worksheet.getRange3( (bbox.r1 + i), (bbox.c1 + k), (bbox.r1 + i), (bbox.c1 + k) );
+					var cell = this.range.worksheet.getRange3((bbox.r1 + i), (bbox.c1 + k), (bbox.r1 + i), (bbox.c1 + k));
 					arr.push(cell.getValueWithoutFormat());
 				}
 				res.push(arr);
@@ -2643,7 +2683,7 @@
 			for (var i = 0; i < nRow; i++) {
 				var arr = [];
 				for (var k = 0; k < nCol; k++) {
-					var cell = this.range.worksheet.getRange3( (bbox.r1 + i), (bbox.c1 + k), (bbox.r1 + i), (bbox.c1 + k) );
+					var cell = this.range.worksheet.getRange3((bbox.r1 + i), (bbox.c1 + k), (bbox.r1 + i), (bbox.c1 + k));
 					arr.push(cell.getValueWithFormat());
 				}
 				res.push(arr);
@@ -2688,10 +2728,10 @@
 		var bbox = range.bbox;
 		switch (bbox.getType()) {
 			case Asc.c_oAscSelectionType.RangeCol:
-				return worksheet.getColHidden(bbox.c1);	
+				return worksheet.getColHidden(bbox.c1);
 
 			case Asc.c_oAscSelectionType.RangeRow:
-				return worksheet.getRowHidden(bbox.r1);				
+				return worksheet.getRowHidden(bbox.r1);
 
 			default:
 				return false;
@@ -2709,12 +2749,12 @@
 		var bbox = range.bbox;
 		switch (bbox.getType()) {
 			case Asc.c_oAscSelectionType.RangeCol:
-				worksheet.setColHidden(isHidden, bbox.c1, bbox.c2);	
+				worksheet.setColHidden(isHidden, bbox.c1, bbox.c2);
 				break;
 
 			case Asc.c_oAscSelectionType.RangeRow:
 				worksheet.setRowHidden(isHidden, bbox.r1, bbox.r2);
-				break;				
+				break;
 		}
 	};
 	Object.defineProperty(ApiRange.prototype, "Hidden", {
@@ -2735,13 +2775,13 @@
 	ApiRange.prototype.GetColumnWidth = function () {
 		var ws = this.range.worksheet;
 		var width = ws.getColWidth(this.range.bbox.c1);
-		width = (width < 0) ? AscCommonExcel.oDefaultMetrics.ColWidthChars : width; 
+		width = (width < 0) ? AscCommonExcel.oDefaultMetrics.ColWidthChars : width;
 		return ws.colWidthToCharCount(ws.modelColWidthToColWidth(width));
 	};
 	/**
 	 * Sets the width of all the columns in the current range.
-	 * One unit of column width is equal to the width of one character in the Normal style. 
-	 * For proportional fonts, the width of the character 0 (zero) is used. 
+	 * One unit of column width is equal to the width of one character in the Normal style.
+	 * For proportional fonts, the width of the character 0 (zero) is used.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nWidth - The width of the column divided by 7 pixels.
@@ -2783,10 +2823,10 @@
 	};
 
 	/**
-	* Sets the row height value.
-	* @memberof ApiRange
-	* @typeofeditors ["CSE"]
-	* @param {pt} nHeight - The row height in the current range measured in points.
+	 * Sets the row height value.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {pt} nHeight - The row height in the current range measured in points.
 	 */
 	ApiRange.prototype.SetRowHeight = function (nHeight) {
 		this.range.worksheet.setRowHeight(nHeight, this.range.bbox.r1, this.range.bbox.r2, true);
@@ -2848,30 +2888,24 @@
 	 * @returns {boolean} - return false if sAligment doesn't exist.
 	 */
 	ApiRange.prototype.SetAlignVertical = function (sAligment) {
-		switch(sAligment)
-		{
-			case "center":
-			{
+		switch (sAligment) {
+			case "center": {
 				this.range.setAlignVertical(Asc.c_oAscVAlign.Center);
 				break;
 			}
-			case "bottom":
-			{
+			case "bottom": {
 				this.range.setAlignVertical(Asc.c_oAscVAlign.Bottom);
 				break;
 			}
-			case "top":
-			{
+			case "top": {
 				this.range.setAlignVertical(Asc.c_oAscVAlign.Top);
 				break;
 			}
-			case "distributed":
-			{
+			case "distributed": {
 				this.range.setAlignVertical(Asc.c_oAscVAlign.Dist);
 				break;
 			}
-			case "justify":
-			{
+			case "justify": {
 				this.range.setAlignVertical(Asc.c_oAscVAlign.Just);
 				break;
 			}
@@ -2895,25 +2929,20 @@
 	 * @returns {boolean} - return false if sAligment doesn't exist.
 	 */
 	ApiRange.prototype.SetAlignHorizontal = function (sAlignment) {
-		switch(sAlignment)
-		{
-			case "left":
-			{
+		switch (sAlignment) {
+			case "left": {
 				this.range.setAlignHorizontal(AscCommon.align_Left);
 				break;
 			}
-			case "right":
-			{
+			case "right": {
 				this.range.setAlignHorizontal(AscCommon.align_Right);
 				break;
 			}
-			case "justify":
-			{
+			case "justify": {
 				this.range.setAlignHorizontal(AscCommon.align_Justify);
 				break;
 			}
-			case "center":
-			{
+			case "center": {
 				this.range.setAlignHorizontal(AscCommon.align_Center);
 				break;
 			}
@@ -3082,11 +3111,11 @@
 		var nCol = bbox.c2 - bbox.c1 + 1;
 		var nRow = bbox.r2 - bbox.r1 + 1;
 		var res = this.range.getNumFormatStr();
-		if ( !this.range.isOneCell() ) {
+		if (!this.range.isOneCell()) {
 			for (var i = 0; i < nRow; i++) {
 				for (var k = 0; k < nCol; k++) {
-					var cell = this.range.worksheet.getRange3( (bbox.r1 + i), (bbox.c1 + k), (bbox.r1 + i), (bbox.c1 + k) );
-					if ( res !== cell.getNumFormatStr() )
+					var cell = this.range.worksheet.getRange3((bbox.r1 + i), (bbox.c1 + k), (bbox.r1 + i), (bbox.c1 + k));
+					if (res !== cell.getNumFormatStr())
 						return null;
 				}
 			}
@@ -3180,7 +3209,7 @@
 	ApiRange.prototype.UnMerge = function () {
 		this.range.unmerge();
 	};
-	
+
 	/**
 	 * Returns one cell or cells from the merge area.
 	 * @memberof ApiRange
@@ -3194,7 +3223,7 @@
 				var bb = this.range.hasMerged();
 				result = new ApiRange((bb) ? AscCommonExcel.Range.prototype.createFromBBox(this.range.worksheet, bb) : this.range);
 			} else {
-				private_makeError('Range must be is one cell.', false);
+				logError(new Error('Range must be is one cell.'));
 			}
 			return result;
 		}
@@ -3226,11 +3255,11 @@
 	ApiRange.prototype.AddComment = function (sText, sAuthor) {
 		let result = null;
 		let ws = Asc['editor'].wb.getWorksheet(this.range.getWorksheet().getIndex());
-		let isValidData = typeof(sText) === 'string' && sText.trim() !== '';
+		let isValidData = typeof (sText) === 'string' && sText.trim() !== '';
 		if (ws && isValidData) {
 			var comment = new Asc.asc_CCommentData();
 			comment.asc_putText(sText);
-			let author = ( (typeof(sAuthor) === 'string' && sAuthor.trim() !== '') ? sAuthor : Asc['editor'].User.asc_getUserName());
+			let author = ((typeof (sAuthor) === 'string' && sAuthor.trim() !== '') ? sAuthor : Asc['editor'].User.asc_getUserName());
 			comment.asc_putUserName(author);
 			// todo проверить как в документа добавлются (надо ли выставлять этот параметр)
 			// comment.asc_putUserId(Asc['editor'].User.asc_getId());
@@ -3313,7 +3342,7 @@
 			let bbox = this.range.bbox;
 			newSelection.assign2(bbox);
 			if (this.areas) {
-				this.areas.forEach(function(el){
+				this.areas.forEach(function (el) {
 					if (!bbox.isEqual(el.bbox))
 						newSelection.ranges.push(el.bbox);
 				})
@@ -3328,8 +3357,8 @@
 	 * @typeofeditors ["CSE"]
 	 * @return {Angle}
 	 */
-	ApiRange.prototype.GetOrientation = function() {
-	  return this.range.getAngle();
+	ApiRange.prototype.GetOrientation = function () {
+		return this.range.getAngle();
 	};
 
 	/**
@@ -3338,8 +3367,8 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {Angle} angle - Specifies the range angle.
 	 */
-	ApiRange.prototype.SetOrientation = function(angle) {
-        switch(angle) {
+	ApiRange.prototype.SetOrientation = function (angle) {
+		switch (angle) {
 			case 'xlDownward':
 				angle = -90;
 				break;
@@ -3391,7 +3420,7 @@
 		sortSettings.hasHeaders = sHeader === "xlYes";
 		var columnSort = sortSettings.columnSort = sOrientation !== "xlSortRows";
 
-		var getSortLevel = function(_key, _order) {
+		var getSortLevel = function (_key, _order) {
 			var index = null;
 			if (_key instanceof ApiRange) {
 				index = columnSort ? _key.range.bbox.c1 - range.c1 : _key.range.bbox.r1 - range.r1;
@@ -3440,9 +3469,9 @@
 		var oWorksheet = Asc['editor'].wb.getWorksheet();
 		var tables = ws.autoFilters.getTablesIntersectionRange(range);
 		var obj;
-		if(tables && tables.length) {
+		if (tables && tables.length) {
 			obj = tables[0];
-		} else if(ws.AutoFilter && ws.AutoFilter.Ref && ws.AutoFilter.Ref.intersection(range)) {
+		} else if (ws.AutoFilter && ws.AutoFilter.Ref && ws.AutoFilter.Ref.intersection(range)) {
 			obj = ws.AutoFilter;
 		}
 		ws.setCustomSort(sortSettings, obj, null, oWorksheet && oWorksheet.cellCommentator, range);
@@ -3462,19 +3491,36 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {?string} shift - Specifies how to shift cells to replace the deleted cells ("up", "left").
 	 */
-	ApiRange.prototype.Delete = function(shift) {
+	ApiRange.prototype.Delete = function (shift) {
+		let preDeleteAction = function() {
+			cellCommentator.updateCommentsDependencies(false, val, checkRange);
+			wsView.shiftCellWatches(false, val, bbox);
+			wsView.model.shiftDataValidation(false, val, checkRange, true);
+			wsView._cleanCache(lockRange);
+		};
+		let val;
+		let ws = this.Worksheet.worksheet;
+		let wsView = Asc['editor'].wb.getWorksheet(ws.getIndex());
+		let cellCommentator = wsView.cellCommentator;
+		let bbox = this.range.bbox;
+		let checkRange = bbox.clone();
+		let lockRange;
 		if (shift && shift.toLocaleLowerCase) {
 			shift = shift.toLocaleLowerCase();
 		} else {
-			var bbox = this.range.bbox;
-			var rows = bbox.r2 - bbox.r1 + 1;
-			var cols = bbox.c2 - bbox.c1 + 1;
+			let rows = bbox.r2 - bbox.r1 + 1;
+			let cols = bbox.c2 - bbox.c1 + 1;
 			shift = (rows <= cols) ? "up" : "left";
 		}
-		if (shift == "up")
-			this.range.deleteCellsShiftUp();
-		else
-			this.range.deleteCellsShiftLeft()
+		if (shift == "up") {
+			val = Asc.c_oAscDeleteOptions.DeleteCellsAndShiftTop;
+			lockRange = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, AscCommon.gc_nMaxCol0);
+			this.range.deleteCellsShiftUp(preDeleteAction);
+		} else {
+			val = Asc.c_oAscDeleteOptions.DeleteCellsAndShiftLeft;
+			lockRange = ws.getRange3(bbox.r1, bbox.c1, AscCommon.gc_nMaxRow0, AscCommon.c2);
+			this.range.deleteCellsShiftLeft(preDeleteAction);
+		}
 	};
 
 	/**
@@ -3483,7 +3529,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {?string} shift - Specifies which way to shift the cells ("right", "down").
 	 */
-	ApiRange.prototype.Insert = function(shift) {
+	ApiRange.prototype.Insert = function (shift) {
 		if (shift && shift.toLocaleLowerCase) {
 			shift = shift.toLocaleLowerCase();
 		} else {
@@ -3505,7 +3551,7 @@
 	 * @param {?bool} bRows - Specifies if the width of the columns will be autofit.
 	 * @param {?bool} bCols - Specifies if the height of the rows will be autofit.
 	 */
-	ApiRange.prototype.AutoFit = function(bRows, bCols) {
+	ApiRange.prototype.AutoFit = function (bRows, bCols) {
 		var index = this.range.worksheet.getIndex();
 		if (bRows)
 			this.range.worksheet.workbook.oApi.wb.getWorksheet(index).autoFitRowHeight(this.range.bbox.r1, this.range.bbox.r2);
@@ -3520,7 +3566,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @return {ApiAreas}
 	 */
-	ApiRange.prototype.GetAreas = function() {
+	ApiRange.prototype.GetAreas = function () {
 		return new ApiAreas(this.areas || [this.range], this);
 	};
 	Object.defineProperty(ApiRange.prototype, "Areas", {
@@ -3535,15 +3581,15 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} destination - Specifies a new range to which the specified range will be copied.
 	 */
-	ApiRange.prototype.Copy = function(destination) {
+	ApiRange.prototype.Copy = function (destination) {
 		if (destination && destination instanceof ApiRange) {
 			var cols = this.GetCols().Count - 1;
 			var rows = this.GetRows().Count - 1;
 			var bbox = destination.range.bbox;
-			var range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols) );
+			var range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
 			this.range.move(range.bbox, true, destination.range.worksheet);
 		} else {
-			private_makeError('Invalid destination', false);
+			logError(new Error('Invalid destination'));
 		}
 	};
 
@@ -3553,15 +3599,15 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} rangeFrom - Specifies the range to be pasted to the current range
 	 */
-	ApiRange.prototype.Paste = function(rangeFrom) {
+	ApiRange.prototype.Paste = function (rangeFrom) {
 		if (rangeFrom && rangeFrom instanceof ApiRange) {
 			var cols = rangeFrom.GetCols().Count - 1;
 			var rows = rangeFrom.GetRows().Count - 1;
 			var bbox = this.range.bbox;
-			var range = this.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols) );
+			var range = this.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols));
 			rangeFrom.range.move(range.bbox, true, range.worksheet);
 		} else {
-			private_makeError('Invalid range', false);
+			logError(new Error('Invalid range'));
 		}
 	};
 
@@ -3628,11 +3674,11 @@
 	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
 	 * @returns {ApiRange | null} - Returns null if the current range does not contain such text.
 	 */
-	ApiRange.prototype.Find = function(oSearchData) {
+	ApiRange.prototype.Find = function (oSearchData) {
 		let What, After, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase;
 
 		if (arguments.length === 1) {
-			if(AscCommon.isRealObject(oSearchData)) {
+			if (AscCommon.isRealObject(oSearchData)) {
 				What = oSearchData['What'];
 				After = oSearchData['After'];
 				LookIn = oSearchData['LookIn'];
@@ -3663,12 +3709,12 @@
 			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
 			options.asc_setSpecificRange(this.Address);
 			options.asc_setScanByRows(SearchOrder === 'xlByRows');
-			options.asc_setLookIn( (LookIn === 'xlValues' ? 2 : 1) );
-			options.asc_setNotSearchEmptyCells( !(What === "" && !options.isWholeCell) );
-			let start = ( After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range) )
-						? { row: After.range.bbox.r1, col: After.range.bbox.c1 }
-						: { row: this.range.bbox.r1, col: this.range.bbox.c1 };
-						
+			options.asc_setLookIn((LookIn === 'xlValues' ? 2 : 1));
+			options.asc_setNotSearchEmptyCells(!(What === "" && !options.isWholeCell));
+			let start = (After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range))
+				? {row: After.range.bbox.r1, col: After.range.bbox.c1}
+				: {row: this.range.bbox.r1, col: this.range.bbox.c1};
+
 			start.row += (options.scanByRows ? (options.scanForward ? 1 : -1) : 0);
 			start.col += (!options.scanByRows ? (options.scanForward ? 1 : -1) : 0);
 			options.asc_setActiveCell(start);
@@ -3681,7 +3727,7 @@
 			this._searchOptions = options;
 			return res;
 		} else {
-			private_makeError('Invalid parametr "What".', false);
+			logError(new Error('Invalid parametr "What".'));
 			return null;
 		}
 	};
@@ -3692,16 +3738,16 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} After - The cell after which the search will start. If this argument is not specified, the search starts from the last cell found.
 	 * @returns {ApiRange | null} - Returns null if the range does not contain such text.
-	 * 
-	*/
-	ApiRange.prototype.FindNext = function(After) {
+	 *
+	 */
+	ApiRange.prototype.FindNext = function (After) {
 		if (this._searchOptions) {
 			let res = null;
 			let activeCell;
 			let engine;
 			this._searchOptions.asc_setScanForward(true);
 			if (After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range)) {
-				activeCell = { row: After.range.bbox.r1, col: After.range.bbox.c1 };
+				activeCell = {row: After.range.bbox.r1, col: After.range.bbox.c1};
 				activeCell.row += (this._searchOptions.scanByRows ? 1 : 0);
 				activeCell.col += (!this._searchOptions.scanByRows ? 1 : 0);
 			} else {
@@ -3721,7 +3767,7 @@
 			}
 			return res;
 		} else {
-			private_makeError('You should use "Find" method before this.', false);
+			logError(new Error('You should use "Find" method before this.'));
 			return null;
 		}
 	};
@@ -3732,16 +3778,16 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {ApiRange} Before - The cell before which the search will start. If this argument is not specified, the search starts from the last cell found.
 	 * @returns {ApiRange | null} - Returns null if the range does not contain such text.
-	 * 
-	*/
-	ApiRange.prototype.FindPrevious = function(Before) {
+	 *
+	 */
+	ApiRange.prototype.FindPrevious = function (Before) {
 		if (this._searchOptions) {
 			let res = null;
 			let activeCell;
 			let engine;
 			this._searchOptions.asc_setScanForward(false);
 			if (Before instanceof ApiRange && Before.range.isOneCell() && this.range.containsRange(Before.range)) {
-				activeCell = { row: Before.range.bbox.r1, col: Before.range.bbox.c1 };
+				activeCell = {row: Before.range.bbox.r1, col: Before.range.bbox.c1};
 				activeCell.row += (this._searchOptions.scanByRows ? -1 : 0);
 				activeCell.col += (!this._searchOptions.scanByRows ? -1 : 0);
 			} else {
@@ -3761,7 +3807,7 @@
 			}
 			return res;
 		} else {
-			private_makeError('You should use "Find" method before this.', false);
+			logError(new Error('You should use "Find" method before this.'));
 			return null;
 		}
 	};
@@ -3784,11 +3830,11 @@
 	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
 	 * @param {boolean} ReplaceAll - Specifies if all the found data will be replaced or not. The default value is "true".
 	 */
-	ApiRange.prototype.Replace = function(oReplaceData) {
+	ApiRange.prototype.Replace = function (oReplaceData) {
 		let What, Replacement, LookAt, SearchOrder, SearchDirection, MatchCase, ReplaceAll;
-		
+
 		if (arguments.length === 1) {
-			if(AscCommon.isRealObject(oReplaceData)) {
+			if (AscCommon.isRealObject(oReplaceData)) {
 				What = oReplaceData['What'];
 				Replacement = oReplaceData['Replacement'];
 				LookAt = oReplaceData['LookAt'];
@@ -3839,7 +3885,7 @@
 				this.range.worksheet.workbook.oApi.wb.replaceCellText(options);
 			}
 		} else {
-			private_makeError('Invalid type of parametr "What" or "Replacement".', false);
+			logError(new Error('Invalid type of parametr "What" or "Replacement".'));
 		}
 	};
 
@@ -3852,7 +3898,7 @@
 	 * @return {ApiCharacters}
 	 * @since 7.4.0
 	 */
-	ApiRange.prototype.GetCharacters = function(Start, Length) {
+	ApiRange.prototype.GetCharacters = function (Start, Length) {
 		let options = {
 			fragments: this.range.getValueForEdit2(),
 			// user start
@@ -3860,7 +3906,7 @@
 			// user length
 			uLength: Length,
 			// real start
-			start: ( typeof Start !== "number" || Start < 1 ) ? 1 : Start,
+			start: (typeof Start !== "number" || Start < 1) ? 1 : Start,
 			// user corrected length
 			length: Length,
 			// real length
@@ -3868,7 +3914,7 @@
 		};
 
 		options.len = AscCommonExcel.getFragmentsCharCodesLength(options.fragments);
-		if ( typeof Length !== "number" || options.len < (options.start + Length) ) {
+		if (typeof Length !== "number" || options.len < (options.start + Length)) {
 			options.length = options.len - options.start + 1;
 		}
 
@@ -3893,8 +3939,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {"drawing"}
 	 */
-	ApiDrawing.prototype.GetClassType = function()
-	{
+	ApiDrawing.prototype.GetClassType = function () {
 		return "drawing";
 	};
 
@@ -3905,12 +3950,10 @@
 	 * @param {EMU} nWidth - The object width measured in English measure units.
 	 * @param {EMU} nHeight - The object height measured in English measure units.
 	 */
-	ApiDrawing.prototype.SetSize = function(nWidth, nHeight)
-	{
-		var fWidth = nWidth/36000.0;
-		var fHeight = nHeight/36000.0;
-		if(this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm)
-		{
+	ApiDrawing.prototype.SetSize = function (nWidth, nHeight) {
+		var fWidth = nWidth / 36000.0;
+		var fHeight = nHeight / 36000.0;
+		if (this.Drawing && this.Drawing.spPr && this.Drawing.spPr.xfrm) {
 			this.Drawing.spPr.xfrm.setExtX(fWidth);
 			this.Drawing.spPr.xfrm.setExtY(fHeight);
 			this.Drawing.setDrawingBaseExt(fWidth, fHeight);
@@ -3928,28 +3971,27 @@
 	 * @param {EMU} nColOffset - The offset from the nFromCol column to the left part of the drawing object measured in English measure units.
 	 * @param {number} nFromRow - The number of the row where the beginning of the drawing object will be placed.
 	 * @param {EMU} nRowOffset - The offset from the nFromRow row to the upper part of the drawing object measured in English measure units.
-	* */
-	ApiDrawing.prototype.SetPosition = function(nFromCol, nColOffset, nFromRow, nRowOffset){
+	 * */
+	ApiDrawing.prototype.SetPosition = function (nFromCol, nColOffset, nFromRow, nRowOffset) {
 		var extX = null, extY = null;
-		if(this.Drawing.drawingBase){
-			if(this.Drawing.drawingBase.Type === AscCommon.c_oAscCellAnchorType.cellanchorOneCell ||
-				this.Drawing.drawingBase.Type === AscCommon.c_oAscCellAnchorType.cellanchorAbsolute){
+		if (this.Drawing.drawingBase) {
+			if (this.Drawing.drawingBase.Type === AscCommon.c_oAscCellAnchorType.cellanchorOneCell ||
+				this.Drawing.drawingBase.Type === AscCommon.c_oAscCellAnchorType.cellanchorAbsolute) {
 				extX = this.Drawing.drawingBase.ext.cx;
 				extY = this.Drawing.drawingBase.ext.cy;
 			}
 		}
-		if(!AscFormat.isRealNumber(extX) || !AscFormat.isRealNumber(extY)){
-			if(this.Drawing.spPr && this.Drawing.spPr.xfrm){
+		if (!AscFormat.isRealNumber(extX) || !AscFormat.isRealNumber(extY)) {
+			if (this.Drawing.spPr && this.Drawing.spPr.xfrm) {
 				extX = this.Drawing.spPr.xfrm.extX;
 				extY = this.Drawing.spPr.xfrm.extY;
-			}
-			else{
+			} else {
 				extX = 5;
 				extY = 5;
 			}
 		}
 		this.Drawing.setDrawingBaseType(AscCommon.c_oAscCellAnchorType.cellanchorOneCell);
-		this.Drawing.setDrawingBaseCoords(nFromCol, nColOffset/36000.0, nFromRow, nRowOffset/36000.0, 0, 0, 0, 0, 0, 0, extX, extY);
+		this.Drawing.setDrawingBaseCoords(nFromCol, nColOffset / 36000.0, nFromRow, nRowOffset / 36000.0, 0, 0, 0, 0, 0, 0, extX, extY);
 	};
 
 	/**
@@ -3958,8 +4000,7 @@
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {EMU}
 	 */
-	ApiDrawing.prototype.GetWidth = function()
-	{
+	ApiDrawing.prototype.GetWidth = function () {
 		return private_MM2EMU(this.Drawing.GetWidth());
 	};
 	/**
@@ -3968,19 +4009,17 @@
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {EMU}
 	 */
-	ApiDrawing.prototype.GetHeight = function()
-	{
+	ApiDrawing.prototype.GetHeight = function () {
 		return private_MM2EMU(this.Drawing.GetHeight());
 	};
 	/**
-     * Returns the lock value for the specified lock type of the current drawing.
-     * @typeofeditors ["CPE"]
+	 * Returns the lock value for the specified lock type of the current drawing.
+	 * @typeofeditors ["CSE"]
 	 * @param {"noGrp" | "noUngrp" | "noSelect" | "noRot" | "noChangeAspect" | "noMove" | "noResize" | "noEditPoints" | "noAdjustHandles"
 	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - Lock type in the string format.
-     * @returns {bool}
-     */
-	ApiDrawing.prototype.GetLockValue = function(sType)
-	{
+	 * @returns {bool}
+	 */
+	ApiDrawing.prototype.GetLockValue = function (sType) {
 		var nLockType = private_GetDrawingLockType(sType);
 
 		if (nLockType === -1)
@@ -3993,22 +4032,20 @@
 	};
 
 	/**
-     * Sets the lock value to the specified lock type of the current drawing.
-     * @typeofeditors ["CPE"]
+	 * Sets the lock value to the specified lock type of the current drawing.
+	 * @typeofeditors ["CSE"]
 	 * @param {"noGrp" | "noUngrp" | "noSelect" | "noRot" | "noChangeAspect" | "noMove" | "noResize" | "noEditPoints" | "noAdjustHandles"
 	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - Lock type in the string format.
-     * @param {bool} bValue - Specifies if the specified lock is applied to the current drawing.
+	 * @param {bool} bValue - Specifies if the specified lock is applied to the current drawing.
 	 * @returns {bool}
-     */
-	ApiDrawing.prototype.SetLockValue = function(sType, bValue)
-	{
+	 */
+	ApiDrawing.prototype.SetLockValue = function (sType, bValue) {
 		var nLockType = private_GetDrawingLockType(sType);
 
 		if (nLockType === -1)
 			return false;
 
-		if (this.Drawing)
-		{
+		if (this.Drawing) {
 			this.Drawing.setLockValue(nLockType, bValue);
 			return true;
 		}
@@ -4030,8 +4067,7 @@
 	 * @typeofeditors ["CDE", "CSE"]
 	 * @returns {"image"}
 	 */
-	ApiImage.prototype.GetClassType = function()
-	{
+	ApiImage.prototype.GetClassType = function () {
 		return "image";
 	};
 
@@ -4047,38 +4083,33 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {"shape"}
 	 */
-	ApiShape.prototype.GetClassType = function()
-	{
+	ApiShape.prototype.GetClassType = function () {
 		return "shape";
 	};
 
 	/**
-	 * Returns the shape inner contents where a paragraph or text runs can be inserted. 
+	 * Returns the shape inner contents where a paragraph or text runs can be inserted.
 	 * @memberof ApiShape
 	 * @typeofeditors ["CSE"]
 	 * @returns {?ApiDocumentContent}
 	 */
-	ApiShape.prototype.GetContent = function()
-	{
+	ApiShape.prototype.GetContent = function () {
 		var oApi = Asc["editor"];
-		if(oApi && this.Drawing && this.Drawing.txBody && this.Drawing.txBody.content)
-		{
+		if (oApi && this.Drawing && this.Drawing.txBody && this.Drawing.txBody.content) {
 			return oApi.private_CreateApiDocContent(this.Drawing.txBody.content);
 		}
 		return null;
 	};
 
 	/**
-	 * Returns the shape inner contents where a paragraph or text runs can be inserted. 
+	 * Returns the shape inner contents where a paragraph or text runs can be inserted.
 	 * @memberof ApiShape
 	 * @typeofeditors ["CSE"]
 	 * @returns {?ApiDocumentContent}
 	 */
-	ApiShape.prototype.GetDocContent = function()
-	{
+	ApiShape.prototype.GetDocContent = function () {
 		var oApi = Asc["editor"];
-		if(oApi && this.Drawing && this.Drawing.txBody && this.Drawing.txBody.content)
-		{
+		if (oApi && this.Drawing && this.Drawing.txBody && this.Drawing.txBody.content) {
 			return oApi.private_CreateApiDocContent(this.Drawing.txBody.content);
 		}
 		return null;
@@ -4091,28 +4122,22 @@
 	 * @param {"top" | "center" | "bottom" } sVerticalAlign - The vertical alignment type for the shape inner contents.
 	 * @returns {boolean} - returns false if shape or aligment doesn't exist.
 	 */
-	ApiShape.prototype.SetVerticalTextAlign = function(sVerticalAlign)
-	{
-		if(this.Shape)
-		{
-			switch(sVerticalAlign)
-			{
-				case "top":
-				{
+	ApiShape.prototype.SetVerticalTextAlign = function (sVerticalAlign) {
+		if (this.Shape) {
+			switch (sVerticalAlign) {
+				case "top": {
 					this.Shape.setVerticalAlign(4);
 					break;
 				}
-				case "center":
-				{
+				case "center": {
 					this.Shape.setVerticalAlign(1);
 					break;
 				}
-				case "bottom":
-				{
+				case "bottom": {
 					this.Shape.setVerticalAlign(0);
 					break;
 				}
-				default: 
+				default:
 					return false;
 			}
 			return true;
@@ -4133,8 +4158,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {"chart"}
 	 */
-	ApiChart.prototype.GetClassType = function()
-	{
+	ApiChart.prototype.GetClassType = function () {
 		return "chart";
 	};
 
@@ -4146,8 +4170,7 @@
 	 *  @param {pt} nFontSize - The text size value measured in points.
 	 *  @param {?bool} bIsBold - Specifies if the chart title is written in bold font or not.
 	 */
-	ApiChart.prototype.SetTitle = function (sTitle, nFontSize, bIsBold)
-	{
+	ApiChart.prototype.SetTitle = function (sTitle, nFontSize, bIsBold) {
 		AscFormat.builder_SetChartTitle(this.Chart, sTitle, nFontSize, bIsBold);
 	};
 
@@ -4159,8 +4182,7 @@
 	 *  @param {pt} nFontSize - The text size value measured in points.
 	 *  @param {?bool} bIsBold - Specifies if the horizontal axis title is written in bold font or not.
 	 * */
-	ApiChart.prototype.SetHorAxisTitle = function (sTitle, nFontSize, bIsBold)
-	{
+	ApiChart.prototype.SetHorAxisTitle = function (sTitle, nFontSize, bIsBold) {
 		AscFormat.builder_SetChartHorAxisTitle(this.Chart, sTitle, nFontSize, bIsBold);
 	};
 
@@ -4172,8 +4194,7 @@
 	 *  @param {pt} nFontSize - The text size value measured in points.
 	 *  @param {?bool} bIsBold - Specifies if the vertical axis title is written in bold font or not.
 	 * */
-	ApiChart.prototype.SetVerAxisTitle = function (sTitle, nFontSize, bIsBold)
-	{
+	ApiChart.prototype.SetVerAxisTitle = function (sTitle, nFontSize, bIsBold) {
 		AscFormat.builder_SetChartVertAxisTitle(this.Chart, sTitle, nFontSize, bIsBold);
 	};
 
@@ -4185,7 +4206,7 @@
 	 * @param {boolean} bIsMinMax - The <code>true</code> value sets the normal data direction for the vertical axis (from minimum to maximum).
 	 * The <code>false</code> value sets the inverted data direction for the vertical axis (from maximum to minimum).
 	 * */
-	ApiChart.prototype.SetVerAxisOrientation = function(bIsMinMax){
+	ApiChart.prototype.SetVerAxisOrientation = function (bIsMinMax) {
 		AscFormat.builder_SetChartVertAxisOrientation(this.Chart, bIsMinMax);
 	};
 
@@ -4196,7 +4217,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
 	 * */
-	ApiChart.prototype.SetHorAxisMajorTickMark = function(sTickMark){
+	ApiChart.prototype.SetHorAxisMajorTickMark = function (sTickMark) {
 		AscFormat.builder_SetChartHorAxisMajorTickMark(this.Chart, sTickMark);
 	};
 
@@ -4206,7 +4227,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
 	 * */
-	ApiChart.prototype.SetHorAxisMinorTickMark = function(sTickMark){
+	ApiChart.prototype.SetHorAxisMinorTickMark = function (sTickMark) {
 		AscFormat.builder_SetChartHorAxisMinorTickMark(this.Chart, sTickMark);
 	};
 
@@ -4216,7 +4237,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
 	 * */
-	ApiChart.prototype.SetVertAxisMajorTickMark = function(sTickMark){
+	ApiChart.prototype.SetVertAxisMajorTickMark = function (sTickMark) {
 		AscFormat.builder_SetChartVerAxisMajorTickMark(this.Chart, sTickMark);
 	};
 
@@ -4226,7 +4247,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {TickMark} sTickMark - The type of tick mark appearance.
 	 * */
-	ApiChart.prototype.SetVertAxisMinorTickMark = function(sTickMark){
+	ApiChart.prototype.SetVertAxisMinorTickMark = function (sTickMark) {
 		AscFormat.builder_SetChartVerAxisMinorTickMark(this.Chart, sTickMark);
 	};
 
@@ -4237,7 +4258,7 @@
 	 * @param {boolean} bIsMinMax - The <code>true</code> value sets the normal data direction for the horizontal axis
 	 * (from minimum to maximum). The <code>false</code> value sets the inverted data direction for the horizontal axis (from maximum to minimum).
 	 * */
-	ApiChart.prototype.SetHorAxisOrientation = function(bIsMinMax){
+	ApiChart.prototype.SetHorAxisOrientation = function (bIsMinMax) {
 		AscFormat.builder_SetChartHorAxisOrientation(this.Chart, bIsMinMax);
 	};
 
@@ -4247,11 +4268,10 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {"left" | "top" | "right" | "bottom" | "none"} sLegendPos - The position of the chart legend inside the chart window.
 	 * */
-	ApiChart.prototype.SetLegendPos = function(sLegendPos)
-	{
+	ApiChart.prototype.SetLegendPos = function (sLegendPos) {
 		if (sLegendPos === "left" || sLegendPos === "top" || sLegendPos === "right" || sLegendPos === "bottom" || sLegendPos === "none")
 			AscFormat.builder_SetChartLegendPos(this.Chart, sLegendPos);
-		else 
+		else
 			AscFormat.builder_SetChartLegendPos(this.Chart, "none");
 	};
 
@@ -4261,8 +4281,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {pt} nFontSize - The text size value measured in points.
 	 * */
-	ApiChart.prototype.SetLegendFontSize = function(nFontSize)
-	{
+	ApiChart.prototype.SetLegendFontSize = function (nFontSize) {
 		AscFormat.builder_SetLegendFontSize(this.Chart, nFontSize);
 	};
 
@@ -4275,8 +4294,7 @@
 	 * @param {boolean} bShowVal - Whether to show or hide the chart data values.
 	 * @param {boolean} bShowPercent - Whether to show or hide the percent for the data values (works with stacked chart types).
 	 * */
-	ApiChart.prototype.SetShowDataLabels = function(bShowSerName, bShowCatName, bShowVal, bShowPercent)
-	{
+	ApiChart.prototype.SetShowDataLabels = function (bShowSerName, bShowCatName, bShowVal, bShowPercent) {
 		AscFormat.builder_SetShowDataLabels(this.Chart, bShowSerName, bShowCatName, bShowVal, bShowPercent);
 	};
 
@@ -4291,8 +4309,7 @@
 	 * @param {boolean} bShowVal - Whether to show or hide the chart data values.
 	 * @param {boolean} bShowPercent - Whether to show or hide the percent for the data values (works with stacked chart types).
 	 * */
-	ApiChart.prototype.SetShowPointDataLabel = function(nSeriesIndex, nPointIndex, bShowSerName, bShowCatName, bShowVal, bShowPercent)
-	{
+	ApiChart.prototype.SetShowPointDataLabel = function (nSeriesIndex, nPointIndex, bShowSerName, bShowCatName, bShowVal, bShowPercent) {
 		AscFormat.builder_SetShowPointDataLabel(this.Chart, nSeriesIndex, nPointIndex, bShowSerName, bShowCatName, bShowVal, bShowPercent);
 	};
 
@@ -4302,8 +4319,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {TickLabelPosition} sTickLabelPosition - The type for the position of chart vertical tick labels.
 	 * */
-	ApiChart.prototype.SetVertAxisTickLabelPosition = function(sTickLabelPosition)
-	{
+	ApiChart.prototype.SetVertAxisTickLabelPosition = function (sTickLabelPosition) {
 		AscFormat.builder_SetChartVertAxisTickLablePosition(this.Chart, sTickLabelPosition);
 	};
 
@@ -4313,8 +4329,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {TickLabelPosition} sTickLabelPosition - The type for the position of chart horizontal tick labels.
 	 * */
-	ApiChart.prototype.SetHorAxisTickLabelPosition = function(sTickLabelPosition)
-	{
+	ApiChart.prototype.SetHorAxisTickLabelPosition = function (sTickLabelPosition) {
 		AscFormat.builder_SetChartHorAxisTickLablePosition(this.Chart, sTickLabelPosition);
 	};
 
@@ -4324,9 +4339,8 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
 	 * */
-	ApiChart.prototype.SetMajorVerticalGridlines = function(oStroke)
-	{
-		AscFormat.builder_SetVerAxisMajorGridlines(this.Chart, oStroke ?  oStroke.Ln : null);
+	ApiChart.prototype.SetMajorVerticalGridlines = function (oStroke) {
+		AscFormat.builder_SetVerAxisMajorGridlines(this.Chart, oStroke ? oStroke.Ln : null);
 	};
 
 	/**
@@ -4335,9 +4349,8 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
 	 * */
-	ApiChart.prototype.SetMinorVerticalGridlines = function(oStroke)
-	{
-		AscFormat.builder_SetVerAxisMinorGridlines(this.Chart, oStroke ?  oStroke.Ln : null);
+	ApiChart.prototype.SetMinorVerticalGridlines = function (oStroke) {
+		AscFormat.builder_SetVerAxisMinorGridlines(this.Chart, oStroke ? oStroke.Ln : null);
 	};
 
 
@@ -4347,9 +4360,8 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
 	 * */
-	ApiChart.prototype.SetMajorHorizontalGridlines = function(oStroke)
-	{
-		AscFormat.builder_SetHorAxisMajorGridlines(this.Chart, oStroke ?  oStroke.Ln : null);
+	ApiChart.prototype.SetMajorHorizontalGridlines = function (oStroke) {
+		AscFormat.builder_SetHorAxisMajorGridlines(this.Chart, oStroke ? oStroke.Ln : null);
 	};
 
 	/**
@@ -4358,9 +4370,8 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {?ApiStroke} oStroke - The stroke used to create the element shadow.
 	 */
-	ApiChart.prototype.SetMinorHorizontalGridlines = function(oStroke)
-	{
-		AscFormat.builder_SetHorAxisMinorGridlines(this.Chart, oStroke ?  oStroke.Ln : null);
+	ApiChart.prototype.SetMinorHorizontalGridlines = function (oStroke) {
+		AscFormat.builder_SetHorAxisMinorGridlines(this.Chart, oStroke ? oStroke.Ln : null);
 	};
 
 
@@ -4369,8 +4380,8 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CSE"]
 	 * @param {pt} nFontSize - The text size value measured in points.
-	*/
-	ApiChart.prototype.SetHorAxisLablesFontSize = function(nFontSize){
+	 */
+	ApiChart.prototype.SetHorAxisLablesFontSize = function (nFontSize) {
 		AscFormat.builder_SetHorAxisFontSize(this.Chart, nFontSize);
 	};
 
@@ -4379,8 +4390,8 @@
 	 * @memberof ApiChart
 	 * @typeofeditors ["CSE"]
 	 * @param {pt} nFontSize - The text size value measured in points.
-	*/
-	ApiChart.prototype.SetVertAxisLablesFontSize = function(nFontSize){
+	 */
+	ApiChart.prototype.SetVertAxisLablesFontSize = function (nFontSize) {
 		AscFormat.builder_SetVerAxisFontSize(this.Chart, nFontSize);
 	};
 
@@ -4390,24 +4401,22 @@
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @param nStyleId - One of the styles available in the editor.
 	 * @returns {boolean}
-	*/
-	ApiChart.prototype.ApplyChartStyle = function(nStyleId)
-	{
-		if (typeof(nStyleId) !== "number" || nStyleId < 0)
+	 */
+	ApiChart.prototype.ApplyChartStyle = function (nStyleId) {
+		if (typeof (nStyleId) !== "number" || nStyleId < 0)
 			return false;
 
 		var nChartType = this.Chart.getChartType();
 		var aStyle = AscCommon.g_oChartStyles[nChartType] && AscCommon.g_oChartStyles[nChartType][nStyleId];
 
-		if (aStyle)
-		{
+		if (aStyle) {
 			this.Chart.applyChartStyleByIds(aStyle);
 			return true;
 		}
 
 		return false;
 	};
-	
+
 	/**
 	 * Sets values from the specified range to the specified series.
 	 * @memberof ApiChart
@@ -4419,8 +4428,7 @@
 	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
 	 */
-	ApiChart.prototype.SetSeriaValues = function(sRange, nSeria)
-	{
+	ApiChart.prototype.SetSeriaValues = function (sRange, nSeria) {
 		return this.Chart.SetSeriaValues(sRange, nSeria);
 	};
 
@@ -4435,8 +4443,7 @@
 	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
 	 */
-	ApiChart.prototype.SetSeriaXValues = function(sRange, nSeria)
-	{
+	ApiChart.prototype.SetSeriaXValues = function (sRange, nSeria) {
 		return this.Chart.SetSeriaXValues(sRange, nSeria);
 	};
 
@@ -4451,8 +4458,7 @@
 	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
 	 */
-	ApiChart.prototype.SetSeriaName = function(sNameRange, nSeria)
-	{
+	ApiChart.prototype.SetSeriaName = function (sNameRange, nSeria) {
 		return this.Chart.SetSeriaName(sNameRange, nSeria);
 	};
 
@@ -4464,8 +4470,7 @@
 	 * * "'sheet 1'!$A$2:$A$5" - must be a single cell, row or column,
 	 * * "A1:A5" - must be a single cell, row or column.
 	 */
-	ApiChart.prototype.SetCatFormula = function(sRange)
-	{
+	ApiChart.prototype.SetCatFormula = function (sRange) {
 		return this.Chart.SetCatFormula(sRange);
 	};
 
@@ -4484,13 +4489,10 @@
 	 * * "'sheet 1'!$A$2:$A$5" - must be a single cell, row or column,
 	 * * "A1:A5" - must be a single cell, row or column.
 	 */
-	ApiChart.prototype.AddSeria = function(sNameRange, sValuesRange, sXValuesRange)
-	{
-		if (this.Chart.isScatterChartType() && typeof(sXValuesRange) === "string" && sXValuesRange !== "")
-		{
+	ApiChart.prototype.AddSeria = function (sNameRange, sValuesRange, sXValuesRange) {
+		if (this.Chart.isScatterChartType() && typeof (sXValuesRange) === "string" && sXValuesRange !== "") {
 			this.Chart.addScatterSeries(sNameRange, sXValuesRange, sValuesRange);
-		}
-		else
+		} else
 			this.Chart.addSeries(sNameRange, sValuesRange);
 	};
 
@@ -4501,8 +4503,7 @@
 	 * @param {number} nSeria - The index of the chart series.
 	 * @returns {boolean}
 	 */
-	ApiChart.prototype.RemoveSeria = function(nSeria)
-	{
+	ApiChart.prototype.RemoveSeria = function (nSeria) {
 		return this.Chart.RemoveSeria(nSeria);
 	};
 
@@ -4513,8 +4514,7 @@
 	 * @param {ApiFill} oFill - The fill type used to fill the plot area.
 	 * @returns {boolean}
 	 */
-	ApiChart.prototype.SetPlotAreaFill = function(oFill)
-	{
+	ApiChart.prototype.SetPlotAreaFill = function (oFill) {
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 
@@ -4529,8 +4529,7 @@
 	 * @param {ApiStroke} oStroke - The stroke used to create the plot area outline.
 	 * @returns {boolean}
 	 */
-	ApiChart.prototype.SetPlotAreaOutLine = function(oStroke)
-	{
+	ApiChart.prototype.SetPlotAreaOutLine = function (oStroke) {
 		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
 			return false;
 
@@ -4547,8 +4546,7 @@
 	 * @param {boolean} [bAll=false] - Specifies if the fill will be applied to all series.
 	 * @returns {boolean}
 	 */
-	ApiChart.prototype.SetSeriesFill = function(oFill, nSeries, bAll)
-	{
+	ApiChart.prototype.SetSeriesFill = function (oFill, nSeries, bAll) {
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 
@@ -4564,8 +4562,7 @@
 	 * @param {boolean} [bAll=false] - Specifies if the outline will be applied to all series.
 	 * @returns {boolean}
 	 */
-	ApiChart.prototype.SetSeriesOutLine = function(oStroke, nSeries, bAll)
-	{
+	ApiChart.prototype.SetSeriesOutLine = function (oStroke, nSeries, bAll) {
 		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
 			return false;
 
@@ -4582,8 +4579,7 @@
 	 * @param {boolean} [bAllSeries=false] - Specifies if the fill will be applied to the specified data point in all series.
 	 * @returns {boolean}
 	 */
-	ApiChart.prototype.SetDataPointFill = function(oFill, nSeries, nDataPoint, bAllSeries)
-	{
+	ApiChart.prototype.SetDataPointFill = function (oFill, nSeries, nDataPoint, bAllSeries) {
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 
@@ -4600,8 +4596,7 @@
 	 * @param {boolean} bAllSeries - Specifies if the outline will be applied to the specified data point in all series.
 	 * @returns {boolean}
 	 */
-	ApiChart.prototype.SetDataPointOutLine = function(oStroke, nSeries, nDataPoint, bAllSeries)
-	{
+	ApiChart.prototype.SetDataPointOutLine = function (oStroke, nSeries, nDataPoint, bAllSeries) {
 		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
 			return false;
 
@@ -4618,8 +4613,7 @@
 	 * @param {boolean} [bAllMarkers=false] - Specifies if the fill will be applied to all markers in the specified chart series.
 	 * @returns {boolean}
 	 */
-	ApiChart.prototype.SetMarkerFill = function(oFill, nSeries, nMarker, bAllMarkers)
-	{
+	ApiChart.prototype.SetMarkerFill = function (oFill, nSeries, nMarker, bAllMarkers) {
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 
@@ -4636,8 +4630,7 @@
 	 * @param {boolean} [bAllMarkers=false] - Specifies if the outline will be applied to all markers in the specified chart series.
 	 * @returns {boolean}
 	 */
-	ApiChart.prototype.SetMarkerOutLine = function(oStroke, nSeries, nMarker, bAllMarkers)
-	{
+	ApiChart.prototype.SetMarkerOutLine = function (oStroke, nSeries, nMarker, bAllMarkers) {
 		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
 			return false;
 
@@ -4651,8 +4644,7 @@
 	 * @param {ApiFill} oFill - The fill type used to fill the title.
 	 * @returns {boolean}
 	 */
-	ApiChart.prototype.SetTitleFill = function(oFill)
-	{
+	ApiChart.prototype.SetTitleFill = function (oFill) {
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 
@@ -4666,8 +4658,7 @@
 	 * @param {ApiStroke} oStroke - The stroke used to create the title outline.
 	 * @returns {boolean}
 	 */
-	ApiChart.prototype.SetTitleOutLine = function(oStroke)
-	{
+	ApiChart.prototype.SetTitleOutLine = function (oStroke) {
 		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
 			return false;
 
@@ -4681,8 +4672,7 @@
 	 * @param {ApiFill} oFill - The fill type used to fill the legend.
 	 * @returns {boolean}
 	 */
-	ApiChart.prototype.SetLegendFill = function(oFill)
-	{
+	ApiChart.prototype.SetLegendFill = function (oFill) {
 		if (!oFill || !oFill.GetClassType || oFill.GetClassType() !== "fill")
 			return false;
 
@@ -4696,8 +4686,7 @@
 	 * @param {ApiStroke} oStroke - The stroke used to create the legend outline.
 	 * @returns {boolean}
 	 */
-	ApiChart.prototype.SetLegendOutLine = function(oStroke)
-	{
+	ApiChart.prototype.SetLegendOutLine = function (oStroke) {
 		if (!oStroke || !oStroke.GetClassType || oStroke.GetClassType() !== "stroke")
 			return false;
 
@@ -4712,11 +4701,9 @@
 	 * @param {AxisPos} - Axis position.
 	 * @returns {boolean}
 	 */
-	ApiChart.prototype.SetAxieNumFormat = function(sFormat, sAxiePos)
-	{
+	ApiChart.prototype.SetAxieNumFormat = function (sFormat, sAxiePos) {
 		var nAxiePos = -1;
-		switch (sAxiePos)
-		{
+		switch (sAxiePos) {
 			case "bottom":
 				nAxiePos = AscFormat.AX_POS_B;
 				break;
@@ -4741,15 +4728,14 @@
 	// ApiOleObject
 	//
 	//------------------------------------------------------------------------------------------------------------------
-	
+
 	/**
 	 * Returns a type of the ApiOleObject class.
 	 * @memberof ApiOleObject
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {"oleObject"}
 	 */
-	ApiOleObject.prototype.GetClassType = function()
-	{
+	ApiOleObject.prototype.GetClassType = function () {
 		return "oleObject";
 	};
 
@@ -4760,9 +4746,8 @@
 	 * @param {string} sData - The OLE object string data.
 	 * @returns {boolean}
 	 */
-	ApiOleObject.prototype.SetData = function(sData)
-	{
-		if (typeof(sData) !== "string" || sData === "")
+	ApiOleObject.prototype.SetData = function (sData) {
+		if (typeof (sData) !== "string" || sData === "")
 			return false;
 
 		this.Drawing.setData(sData);
@@ -4775,11 +4760,10 @@
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
 	 */
-	ApiOleObject.prototype.GetData = function()
-	{
-		if (typeof(this.Drawing.m_sData) === "string")
+	ApiOleObject.prototype.GetData = function () {
+		if (typeof (this.Drawing.m_sData) === "string")
 			return this.Drawing.m_sData;
-		
+
 		return "";
 	};
 
@@ -4790,9 +4774,8 @@
 	 * @param {string} sAppId - The application ID associated with the current OLE object.
 	 * @returns {boolean}
 	 */
-	ApiOleObject.prototype.SetApplicationId = function(sAppId)
-	{
-		if (typeof(sAppId) !== "string" || sAppId === "")
+	ApiOleObject.prototype.SetApplicationId = function (sAppId) {
+		if (typeof (sAppId) !== "string" || sAppId === "")
 			return false;
 
 		this.Drawing.setApplicationId(sAppId);
@@ -4805,11 +4788,10 @@
 	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
 	 */
-	ApiOleObject.prototype.GetApplicationId = function()
-	{
-		if (typeof(this.Drawing.m_sApplicationId) === "string")
+	ApiOleObject.prototype.GetApplicationId = function () {
+		if (typeof (this.Drawing.m_sApplicationId) === "string")
 			return this.Drawing.m_sApplicationId;
-		
+
 		return "";
 	};
 
@@ -4828,7 +4810,7 @@
 	ApiColor.prototype.GetClassType = function () {
 		return "color";
 	};
-	
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiName
@@ -4839,7 +4821,7 @@
 	 * Returns a type of the ApiName class.
 	 * @memberof ApiName
 	 * @typeofeditors ["CSE"]
-	 * @returns {string} 
+	 * @returns {string}
 	 */
 	ApiName.prototype.GetName = function () {
 		if (this.DefName) {
@@ -4858,13 +4840,13 @@
 	 */
 	ApiName.prototype.SetName = function (sName) {
 		if (!sName || typeof sName !== 'string' || !this.DefName) {
-			private_makeError('Invalid name or Defname is undefined.', false);
+			logError(new Error('Invalid name or Defname is undefined.'));
 			return false;
 		}
 		var res = this.DefName.wb.checkDefName(sName);
 		if (!res.status) {
-			private_makeError('Invalid name.', false); // invalid name
-			return false; 
+			logError(new Error('Invalid name.')); // invalid name
+			return false;
 		}
 		var oldName = this.DefName.getAscCDefName(false);
 		var newName = this.DefName.getAscCDefName(false);
@@ -4877,7 +4859,7 @@
 	Object.defineProperty(ApiName.prototype, "Name", {
 		get: function () {
 			return this.GetName();
-		}, 
+		},
 		set: function (sName) {
 			return this.SetName(sName);
 		}
@@ -4896,7 +4878,7 @@
 	 * Sets a formula that the name is defined to refer to.
 	 * @memberof ApiName
 	 * @typeofeditors ["CSE"]
-	 * @param {string} sRef	- The range reference which must contain the sheet name, followed by sign ! and a range of cells. 
+	 * @param {string} sRef    - The range reference which must contain the sheet name, followed by sign ! and a range of cells.
 	 * Example: "Sheet1!$A$1:$B$2".
 	 */
 	ApiName.prototype.SetRefersTo = function (sRef) {
@@ -4907,7 +4889,7 @@
 	 * Returns a formula that the name is defined to refer to.
 	 * @memberof ApiName
 	 * @typeofeditors ["CSE"]
-	 * @returns {string} 
+	 * @returns {string}
 	 */
 	ApiName.prototype.GetRefersTo = function () {
 		return (this.DefName) ? this.DefName.ref : this.DefName;
@@ -4916,7 +4898,7 @@
 	Object.defineProperty(ApiName.prototype, "RefersTo", {
 		get: function () {
 			return this.GetRefersTo();
-		}, 
+		},
 		set: function (sRef) {
 			return this.SetRefersTo(sRef);
 		}
@@ -4953,8 +4935,8 @@
 	 * @memberof ApiComment
 	 * @typeofeditors ["CSE"]
 	 * @returns {"comment"}
-	*/
-	ApiComment.prototype.GetClassType = function() {
+	 */
+	ApiComment.prototype.GetClassType = function () {
 		return "comment";
 	};
 
@@ -4964,10 +4946,10 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
 	 */
-	ApiComment.prototype.GetText = function() {
+	ApiComment.prototype.GetText = function () {
 		return this.Comment.asc_getText();
 	};
-	
+
 	/**
 	 * Sets the comment text.
 	 * @memberof ApiComment
@@ -4975,7 +4957,7 @@
 	 * @param {string} text - New text for comment.
 	 * @since 7.5.0
 	 */
-	ApiComment.prototype.SetText = function(text) {
+	ApiComment.prototype.SetText = function (text) {
 		if (typeof text === 'string' && text.trim() !== '') {
 			this.Comment.asc_putText(text);
 			this.private_OnChange();
@@ -4983,10 +4965,10 @@
 	};
 
 	Object.defineProperty(ApiComment.prototype, "Text", {
-		get: function() {
+		get: function () {
 			return this.GetText();
 		},
-		set: function(text) {
+		set: function (text) {
 			return this.SetText(text);
 		}
 	});
@@ -4998,12 +4980,12 @@
 	 * @returns {string}
 	 * @since 7.5.0
 	 */
-	ApiComment.prototype.GetId = function() {		
+	ApiComment.prototype.GetId = function () {
 		return this.Comment.asc_getId();
 	};
 
 	Object.defineProperty(ApiComment.prototype, "Id", {
-		get: function() {
+		get: function () {
 			return this.GetId();
 		}
 	});
@@ -5015,7 +4997,7 @@
 	 * @returns {string}
 	 * @since 7.5.0
 	 */
-	ApiComment.prototype.GetAuthorName = function() {
+	ApiComment.prototype.GetAuthorName = function () {
 		return this.Comment.asc_getUserName();
 	};
 
@@ -5026,16 +5008,16 @@
 	 * @param {string} sAuthorName - The comment author's name.
 	 * @since 7.5.0
 	 */
-	ApiComment.prototype.SetAuthorName = function(sAuthorName) {
+	ApiComment.prototype.SetAuthorName = function (sAuthorName) {
 		this.Comment.asc_putUserName(sAuthorName);
 		this.private_OnChange();
 	};
 
 	Object.defineProperty(ApiComment.prototype, "AuthorName", {
-		get: function() {
+		get: function () {
 			return this.GetAuthorName();
 		},
-		set: function(sAuthorName) {
+		set: function (sAuthorName) {
 			return this.SetAuthorName(sAuthorName);
 		}
 	});
@@ -5047,7 +5029,7 @@
 	 * @returns {string}
 	 * @since 7.5.0
 	 */
-	ApiComment.prototype.GetUserId = function() {
+	ApiComment.prototype.GetUserId = function () {
 		return this.Comment.asc_getUserId();
 	};
 
@@ -5058,16 +5040,16 @@
 	 * @param {string} sUserId - The user ID of the comment author.
 	 * @since 7.5.0
 	 */
-	ApiComment.prototype.SetUserId = function(sUserId) {
+	ApiComment.prototype.SetUserId = function (sUserId) {
 		this.Comment.asc_putUserId(sUserId);
 		this.private_OnChange();
 	};
 
 	Object.defineProperty(ApiComment.prototype, "UserId", {
-		get: function() {
+		get: function () {
 			return this.GetUserId();
 		},
-		set: function(sUserId) {
+		set: function (sUserId) {
 			return this.SetUserId(sUserId);
 		}
 	});
@@ -5079,7 +5061,7 @@
 	 * @returns {boolean}
 	 * @since 7.5.0
 	 */
-	ApiComment.prototype.IsSolved = function() {
+	ApiComment.prototype.IsSolved = function () {
 		return this.Comment.getSolved();
 	};
 
@@ -5090,16 +5072,16 @@
 	 * @param {boolean} bSolved - Specifies if a comment is solved or not.
 	 * @since 7.5.0
 	 */
-	ApiComment.prototype.SetSolved = function(bSolved) {
+	ApiComment.prototype.SetSolved = function (bSolved) {
 		this.Comment.setSolved(bSolved);
 		this.private_OnChange();
 	};
 
 	Object.defineProperty(ApiComment.prototype, "Solved", {
-		get: function() {
+		get: function () {
 			return this.IsSolved();
 		},
-		set: function(bSolved) {
+		set: function (bSolved) {
 			return this.SetSolved(bSolved);
 		}
 	});
@@ -5111,7 +5093,7 @@
 	 * @returns {Number}
 	 * @since 7.5.0
 	 */
-	ApiComment.prototype.GetTimeUTC = function() {
+	ApiComment.prototype.GetTimeUTC = function () {
 		let nTime = parseInt(this.Comment.asc_getOnlyOfficeTime());
 		if (isNaN(nTime))
 			return 0;
@@ -5125,7 +5107,7 @@
 	 * @param {Number | String} nTimeStamp - The timestamp of the comment creation in UTC format.
 	 * @since 7.5.0
 	 */
-	ApiComment.prototype.SetTimeUTC = function(timeStamp) {
+	ApiComment.prototype.SetTimeUTC = function (timeStamp) {
 		let nTime = parseInt(timeStamp);
 		if (isNaN(nTime))
 			this.Comment.asc_putOnlyOfficeTime("0");
@@ -5136,10 +5118,10 @@
 	};
 
 	Object.defineProperty(ApiComment.prototype, "TimeUTC", {
-		get: function() {
+		get: function () {
 			return this.GetTimeUTC();
 		},
-		set: function(timeStamp) {
+		set: function (timeStamp) {
 			return this.SetTimeUTC(timeStamp);
 		}
 	});
@@ -5151,7 +5133,7 @@
 	 * @returns {Number}
 	 * @since 7.5.0
 	 */
-	ApiComment.prototype.GetTime = function() {
+	ApiComment.prototype.GetTime = function () {
 		let nTime = parseInt(this.Comment.asc_getTime());
 		if (isNaN(nTime))
 			return 0;
@@ -5165,21 +5147,21 @@
 	 * @param {Number | String} nTimeStamp - The timestamp of the comment creation in the current time zone format.
 	 * @since 7.5.0
 	 */
-	ApiComment.prototype.SetTime = function(timeStamp) {
+	ApiComment.prototype.SetTime = function (timeStamp) {
 		let nTime = parseInt(timeStamp);
 		if (isNaN(nTime))
 			this.Comment.asc_putTime("0");
 		else
 			this.Comment.asc_putTime(String(nTime));
-		
+
 		this.private_OnChange();
 	};
 
 	Object.defineProperty(ApiComment.prototype, "Time", {
-		get: function() {
+		get: function () {
 			return this.GetTime();
 		},
-		set: function(timeStamp) {
+		set: function (timeStamp) {
 			return this.SetTime(timeStamp);
 		}
 	});
@@ -5190,13 +5172,13 @@
 	 * @typeofeditors ["CSE"]
 	 * @returns {String | null}
 	 * @since 7.5.0
-	*/
-	ApiComment.prototype.GetQuoteText = function() {
+	 */
+	ApiComment.prototype.GetQuoteText = function () {
 		let text = null;
 		let ws = this.WB.getWorksheetById(this.Comment.wsId);
 		if (!this.Comment.asc_getDocumentFlag() && ws)
 			text = ws._getRange(this.Comment.nCol, this.Comment.nRow, this.Comment.nCol, this.Comment.nRow).getValue();
-		
+
 		return text;
 	};
 
@@ -5213,7 +5195,7 @@
 	 * @returns {Number?}
 	 * @since 7.5.0
 	 */
-	ApiComment.prototype.GetRepliesCount = function() {
+	ApiComment.prototype.GetRepliesCount = function () {
 		return this.Comment.asc_getRepliesCount()
 	};
 
@@ -5231,10 +5213,10 @@
 	 * @returns {ApiCommentReply?}
 	 * @since 7.5.0
 	 */
-	ApiComment.prototype.GetReply = function(nIndex) {
-		if (typeof(nIndex) != "number" || nIndex < 0 || nIndex >= this.GetRepliesCount())
+	ApiComment.prototype.GetReply = function (nIndex) {
+		if (typeof (nIndex) != "number" || nIndex < 0 || nIndex >= this.GetRepliesCount())
 			nIndex = 0;
-			
+
 		let oReply = this.Comment.asc_getReply(nIndex);
 		if (!oReply)
 			return null;
@@ -5252,20 +5234,20 @@
 	 * @param {Number} [nPos=this.GetRepliesCount()] - The comment reply position.
 	 * @since 7.5.0
 	 */
-	ApiComment.prototype.AddReply = function(sText, sAuthorName, sUserId, nPos) {
-		if (typeof(sText) !== "string" || sText.trim() === "")
+	ApiComment.prototype.AddReply = function (sText, sAuthorName, sUserId, nPos) {
+		if (typeof (sText) !== "string" || sText.trim() === "")
 			return null;
-		
-		if (typeof(nPos) !== "number" || nPos < 0 || nPos > this.GetRepliesCount())
+
+		if (typeof (nPos) !== "number" || nPos < 0 || nPos > this.GetRepliesCount())
 			nPos = this.GetRepliesCount();
 
 		let oReply = new Asc.asc_CCommentData();
 		oReply.asc_putText(sText);
 
-		if (typeof(sAuthorName) === "string" && sAuthorName !== "")
+		if (typeof (sAuthorName) === "string" && sAuthorName !== "")
 			oReply.asc_putUserName(sAuthorName);
 
-		if (sUserId != undefined && typeof(sUserId) === "string" && sUserId.trim() !== "")
+		if (sUserId != undefined && typeof (sUserId) === "string" && sUserId.trim() !== "")
 			oReply.asc_putUserId(sUserId);
 
 		this.Comment.aReplies.splice(nPos, 0, oReply);
@@ -5281,14 +5263,14 @@
 	 * @param {boolean} [bRemoveAll = false] - Specifies whether to remove all comment replies or not.
 	 * @since 7.5.0
 	 */
-	ApiComment.prototype.RemoveReplies = function(nPos, nCount, bRemoveAll) {
-		if (typeof(nPos) !== "number" || nPos < 0 || nPos > this.GetRepliesCount())
+	ApiComment.prototype.RemoveReplies = function (nPos, nCount, bRemoveAll) {
+		if (typeof (nPos) !== "number" || nPos < 0 || nPos > this.GetRepliesCount())
 			nPos = 0;
 
-		if (typeof(nCount) !== "number" || nCount < 0)
+		if (typeof (nCount) !== "number" || nCount < 0)
 			nCount = 1;
 
-		if (typeof(bRemoveAll) !== "boolean")
+		if (typeof (bRemoveAll) !== "boolean")
 			bRemoveAll = false;
 
 		if (bRemoveAll) {
@@ -5305,14 +5287,14 @@
 	 * @memberof ApiComment
 	 * @typeofeditors ["CSE"]
 	 */
-	ApiComment.prototype.Delete = function() {
+	ApiComment.prototype.Delete = function () {
 		this.WB.Api.asc_removeComment(this.Comment.asc_getId());
 	};
 
-	ApiComment.prototype.private_OnChange = function() {
+	ApiComment.prototype.private_OnChange = function () {
 		this.WB.Api.asc_changeComment(this.Comment.asc_getId(), this.Comment);
 	};
-	
+
 
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -5327,7 +5309,7 @@
 	 * @returns {"commentReply"}
 	 * @since 7.5.0
 	 */
-	ApiCommentReply.prototype.GetClassType = function() {
+	ApiCommentReply.prototype.GetClassType = function () {
 		return "commentReply";
 	};
 
@@ -5338,7 +5320,7 @@
 	 * @returns {string}
 	 * @since 7.5.0
 	 */
-	ApiCommentReply.prototype.GetText = function() {
+	ApiCommentReply.prototype.GetText = function () {
 		return this.Data.asc_getText();
 	};
 
@@ -5348,17 +5330,17 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sText - The comment reply text.
 	 * @since 7.5.0
-	*/
-	ApiCommentReply.prototype.SetText = function(sText) {
+	 */
+	ApiCommentReply.prototype.SetText = function (sText) {
 		this.Data.asc_putText(sText);
 		this.private_OnChange();
 	};
 
 	Object.defineProperty(ApiCommentReply.prototype, "Text", {
-		get: function() {
+		get: function () {
 			return this.GetText();
 		},
-		set: function(sText) {
+		set: function (sText) {
 			return this.SetText(sText);
 		}
 	});
@@ -5370,7 +5352,7 @@
 	 * @returns {string}
 	 * @since 7.5.0
 	 */
-	ApiCommentReply.prototype.GetAuthorName = function() {
+	ApiCommentReply.prototype.GetAuthorName = function () {
 		return this.Data.asc_getUserName();
 	};
 
@@ -5381,16 +5363,16 @@
 	 * @param {string} sAuthorName - The comment reply author's name.
 	 * @since 7.5.0
 	 */
-	ApiCommentReply.prototype.SetAuthorName = function(sAuthorName) {
+	ApiCommentReply.prototype.SetAuthorName = function (sAuthorName) {
 		this.Data.asc_putUserName(sAuthorName);
 		this.private_OnChange();
 	};
 
 	Object.defineProperty(ApiCommentReply.prototype, "AuthorName", {
-		get: function() {
+		get: function () {
 			return this.GetAuthorName();
 		},
-		set: function(sAuthorName) {
+		set: function (sAuthorName) {
 			return this.SetAuthorName(sAuthorName);
 		}
 	});
@@ -5402,7 +5384,7 @@
 	 * @returns {string}
 	 * @since 7.5.0
 	 */
-	ApiCommentReply.prototype.GetUserId = function() {
+	ApiCommentReply.prototype.GetUserId = function () {
 		return this.Data.asc_getUserId();
 	};
 
@@ -5413,16 +5395,16 @@
 	 * @param {string} sUserId - The user ID of the comment reply author.
 	 * @since 7.5.0
 	 */
-	ApiCommentReply.prototype.SetUserId = function(sUserId) {
+	ApiCommentReply.prototype.SetUserId = function (sUserId) {
 		this.Data.asc_putUserId(sUserId);
 		this.private_OnChange();
 	};
 
 	Object.defineProperty(ApiCommentReply.prototype, "UserId", {
-		get: function() {
+		get: function () {
 			return this.GetUserId();
 		},
-		set: function(sUserId) {
+		set: function (sUserId) {
 			return this.SetUserId(sUserId);
 		}
 	});
@@ -5434,7 +5416,7 @@
 	 * @returns {Number}
 	 * @since 7.5.0
 	 */
-	ApiCommentReply.prototype.GetTimeUTC = function() {
+	ApiCommentReply.prototype.GetTimeUTC = function () {
 		let nTime = parseInt(this.Data.asc_getOnlyOfficeTime());
 		if (isNaN(nTime))
 			return 0;
@@ -5448,7 +5430,7 @@
 	 * @param {Number | String} nTimeStamp - The timestamp of the comment reply creation in UTC format.
 	 * @since 7.5.0
 	 */
-	ApiCommentReply.prototype.SetTimeUTC = function(timeStamp) {
+	ApiCommentReply.prototype.SetTimeUTC = function (timeStamp) {
 		let nTime = parseInt(timeStamp);
 		if (isNaN(nTime))
 			this.Data.asc_putOnlyOfficeTime("0");
@@ -5459,10 +5441,10 @@
 	};
 
 	Object.defineProperty(ApiCommentReply.prototype, "TimeUTC", {
-		get: function() {
+		get: function () {
 			return this.GetTimeUTC();
 		},
-		set: function(timeStamp) {
+		set: function (timeStamp) {
 			return this.SetTimeUTC(timeStamp);
 		}
 	});
@@ -5474,7 +5456,7 @@
 	 * @returns {Number}
 	 * @since 7.5.0
 	 */
-	ApiCommentReply.prototype.GetTime = function() {
+	ApiCommentReply.prototype.GetTime = function () {
 		let nTime = parseInt(this.Data.asc_getTime());
 		if (isNaN(nTime))
 			return 0;
@@ -5488,26 +5470,26 @@
 	 * @param {Number | String} nTimeStamp - The timestamp of the comment reply creation in the current time zone format.
 	 * @since 7.5.0
 	 */
-	ApiCommentReply.prototype.SetTime = function(timeStamp) {
+	ApiCommentReply.prototype.SetTime = function (timeStamp) {
 		let nTime = parseInt(timeStamp);
 		if (isNaN(nTime))
 			this.Data.asc_putTime("0");
 		else
 			this.Data.asc_putTime(String(nTime));
-		
+
 		this.private_OnChange();
 	};
 
 	Object.defineProperty(ApiCommentReply.prototype, "Time", {
-		get: function() {
+		get: function () {
 			return this.GetTime();
 		},
-		set: function(timeStamp) {
+		set: function (timeStamp) {
 			return this.SetTime(timeStamp);
 		}
 	});
 
-	ApiCommentReply.prototype.private_OnChange = function() {
+	ApiCommentReply.prototype.private_OnChange = function () {
 		this.Comment.private_OnChange();
 	};
 
@@ -5664,7 +5646,7 @@
 			if (excess) {
 				length -= excess;
 				if (!length) {
-					private_makeError('Max symbols in one cell.', false);
+					logError(new Error('Max symbols in one cell.'));
 					return;
 				}
 				String = String.slice(0, length);
@@ -5673,14 +5655,13 @@
 			let pos = this._options.start <= this._options.len ? begin : this._options.len;
 			let fr;
 			if (textFormat) {
-				let newFr = new AscCommonExcel.Fragment( { format: textFormat, charCodes: String } );
+				let newFr = new AscCommonExcel.Fragment({format: textFormat, charCodes: String});
 				fr = editor._findFragment(pos, fragments);
-				if ( fr && pos < fr.end ) {
+				if (fr && pos < fr.end) {
 					editor._splitFragment(fr, pos, fragments);
 					fr = editor._findFragment(pos, fragments);
-					Array.prototype.splice.apply( fragments, [fr.index, 0].concat(newFr) );
-				}
-				else {
+					Array.prototype.splice.apply(fragments, [fr.index, 0].concat(newFr));
+				} else {
 					fragments = fragments.concat(newFr);
 				}
 				editor._mergeFragments(fragments);
@@ -5847,7 +5828,7 @@
 	 */
 	ApiFont.prototype.SetBold = function (isBold) {
 		if (typeof isBold !== 'boolean') {
-			private_makeError('Invalid type of parametr "isBold".', false);
+			logError(new Error('Invalid type of parametr "isBold".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5927,7 +5908,7 @@
 	 */
 	ApiFont.prototype.SetItalic = function (isItalic) {
 		if (typeof isItalic !== 'boolean') {
-			private_makeError('Invalid type of parametr "isItalic".', false);
+			logError(new Error('Invalid type of parametr "isItalic".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6007,7 +5988,7 @@
 	 */
 	ApiFont.prototype.SetSize = function (Size) {
 		if (typeof Size !== 'number' || Size < 0 || Size > 409) {
-			private_makeError('Invalid type of parametr "Size".', false);
+			logError(new Error('Invalid type of parametr "Size".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6087,7 +6068,7 @@
 	 */
 	ApiFont.prototype.SetStrikethrough = function (isStrikethrough) {
 		if (typeof isStrikethrough !== 'boolean') {
-			private_makeError('Invalid type of parametr "isStrikethrough".', false);
+			logError(new Error('Invalid type of parametr "isStrikethrough".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6179,7 +6160,7 @@
 					// todo doesn't work
 					Underline = "xlUnderlineStyleSingleAccounting";
 					break;
-	
+
 				default:
 					Underline = null;
 					break;
@@ -6198,7 +6179,7 @@
 	 */
 	ApiFont.prototype.SetUnderline = function (Underline) {
 		if (typeof Underline !== 'string') {
-			private_makeError('Invalid type of parametr "isUnderline".', false);
+			logError(new Error('Invalid type of parametr "isUnderline".'));
 			return;
 		}
 		switch (Underline) {
@@ -6303,7 +6284,7 @@
 	 */
 	ApiFont.prototype.SetSubscript = function (isSubscript) {
 		if (typeof isSubscript !== 'boolean') {
-			private_makeError('Invalid type of parametr "isSubscript".', false);
+			logError(new Error('Invalid type of parametr "isSubscript".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6383,7 +6364,7 @@
 	 */
 	ApiFont.prototype.SetSuperscript = function (isSuperscript) {
 		if (typeof isSuperscript !== 'boolean') {
-			private_makeError('Invalid type of parametr "isSuperscript".', false);
+			logError(new Error('Invalid type of parametr "isSuperscript".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6463,7 +6444,7 @@
 	 */
 	ApiFont.prototype.SetName = function (FontName) {
 		if (typeof FontName !== 'string') {
-			private_makeError('Invalid type of parametr "FontName".', false);
+			logError(new Error('Invalid type of parametr "FontName".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6544,7 +6525,7 @@
 	 */
 	ApiFont.prototype.SetColor = function (Color) {
 		if (!Color instanceof ApiColor) {
-			private_makeError('Invalid type of parametr "Color".', false);
+			logError(new Error('Invalid type of parametr "Color".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6584,7 +6565,7 @@
 		}
 	});
 
-	
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiFreezePanes
@@ -6592,13 +6573,13 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Sets the frozen cells in the active worksheet view. The range provided corresponds to cells that will be frozen in the top- and left-most pane.
+	 * Sets the frozen cells in the active worksheet view. The range provided corresponds to the cells that will be frozen in the top- and left-most pane.
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | String} frozenRange - A range that represents the cells to be frozen panes.
-	 * @since 7.6.0
+	 * @param {ApiRange | String} frozenRange - A range that represents the cells to be frozen.
+	 * @since 8.0.0
 	 */
-	ApiFreezePanes.prototype.FreezeAt = function(frozenRange) {
+	ApiFreezePanes.prototype.FreezeAt = function (frozenRange) {
 		let api = this.ws.workbook.oApi;
 		let tempRange = (typeof frozenRange === 'string') ? api.GetRange(frozenRange) : frozenRange;
 
@@ -6608,18 +6589,18 @@
 			let c = bbox.c2 < AscCommon.gc_nMaxCol0 ? bbox.c2 + 1 : bbox.c2;
 			api.asc_freezePane(null, c, r);
 		} else {
-			private_makeError('Invalid parametr "frozenRange".', false);
+			logError(new Error('Invalid parametr "frozenRange".'));
 		}
 	};
 
 	/**
-	 * Freeze the first column or columns of the worksheet in place.
+	 * Freezes the first column or columns of the current worksheet.
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
 	 * @param {Number?} [count=0] - Optional number of columns to freeze, or zero to unfreeze all columns.
-	 * @since 7.6.0
+	 * @since 8.0.0
 	 */
-	ApiFreezePanes.prototype.FreezeColumns = function(count) {
+	ApiFreezePanes.prototype.FreezeColumns = function (count) {
 		let api = this.ws.workbook.oApi;
 		if (count == undefined) count = 0;
 		if (typeof count === 'number' && count > 0 && count <= AscCommon.gc_nMaxCol0) {
@@ -6627,18 +6608,18 @@
 		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
 			api.asc_freezePane(undefined);
 		} else {
-			private_makeError('Invalid parametr "count".', false);
+			logError(new Error('Invalid parametr "count".'));
 		}
 	};
 
 	/**
-	 * Freeze the top row or rows of the worksheet in place.
+	 * Freezes the top row or rows of the current worksheet.
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
 	 * @param {Number?} [count=0] - Optional number of rows to freeze, or zero to unfreeze all rows.
-	 * @since 7.6.0
+	 * @since 8.0.0
 	 */
-	ApiFreezePanes.prototype.FreezeRows = function(count) {
+	ApiFreezePanes.prototype.FreezeRows = function (count) {
 		let api = this.ws.workbook.oApi;
 		if (count == undefined) count = 0;
 		if (typeof count === 'number' && count > 0 && count <= AscCommon.gc_nMaxRow0) {
@@ -6646,18 +6627,18 @@
 		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
 			api.asc_freezePane(undefined);
 		} else {
-			private_makeError('Invalid parametr "count".', false);
+			logError(new Error('Invalid parametr "count".'));
 		}
 	};
 
 	/**
-	 * Gets a range that describes the frozen cells in the active worksheet view.
+	 * Returns a range that describes the frozen cells in the active worksheet view.
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange | null} - Returns null if there is no frozen pane.
-	 * @since 7.6.0
+	 * @since 8.0.0
 	 */
-	ApiFreezePanes.prototype.GetLocation = function() {
+	ApiFreezePanes.prototype.GetLocation = function () {
 		let result = null;
 		let api = this.ws.workbook.oApi;
 		let cell = api.wb.getWorksheet().topLeftFrozenCell;
@@ -6683,12 +6664,12 @@
 	};
 
 	/**
-	 * Removes all frozen panes in the worksheet.
+	 * Removes all frozen panes in the current worksheet.
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
-	 * @since 7.6.0
+	 * @since 8.0.0
 	 */
-	ApiFreezePanes.prototype.Unfreeze = function() {
+	ApiFreezePanes.prototype.Unfreeze = function () {
 		if (!!this.ws.workbook.oApi.wb.getWorksheet().topLeftFrozenCell)
 			this.ws.workbook.oApi.asc_freezePane(undefined);
 	};
@@ -6718,6 +6699,7 @@
 	Api.prototype["RecalculateAllFormulas"] = Api.prototype.RecalculateAllFormulas;
 	Api.prototype["AddComment"]  = Api.prototype.AddComment;
 	Api.prototype["GetComments"] = Api.prototype.GetComments;
+	Api.prototype["GetAllComments"] = Api.prototype.GetAllComments;
 	Api.prototype["GetCommentById"] = Api.prototype.GetCommentById;
 	Api.prototype["SetFreezePanesType"] = Api.prototype.SetFreezePanesType;
 	Api.prototype["GetFreezePanesType"] = Api.prototype.GetFreezePanesType;
@@ -6995,20 +6977,20 @@
 	ApiFreezePanes.prototype["Unfreeze"]         = ApiFreezePanes.prototype.Unfreeze;
 
 
-	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset,  nFromRow, nRowOffset, pos){
+	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset, nFromRow, nRowOffset, pos) {
 		oDrawing.x = 0;
 		oDrawing.y = 0;
 		oDrawing.extX = 0;
 		oDrawing.extY = 0;
 		AscFormat.CheckSpPrXfrm(oDrawing);
-		oDrawing.spPr.xfrm.setExtX(nExtX/36000.0);
-		oDrawing.spPr.xfrm.setExtY(nExtY/36000.0);
+		oDrawing.spPr.xfrm.setExtX(nExtX / 36000.0);
+		oDrawing.spPr.xfrm.setExtY(nExtY / 36000.0);
 		oDrawing.setBDeleted(false);
 		oDrawing.setWorksheet(oWorksheet);
 		oDrawing.addToDrawingObjects(pos);
 		oDrawing.setDrawingBaseType(AscCommon.c_oAscCellAnchorType.cellanchorOneCell);
-		oDrawing.setDrawingBaseCoords(nFromCol, nColOffset/36000.0, nFromRow, nRowOffset/36000.0, 0, 0, 0, 0, 0, 0, 0, 0);
-		oDrawing.setDrawingBaseExt(nExtX/36000.0, nExtY/36000.0);
+		oDrawing.setDrawingBaseCoords(nFromCol, nColOffset / 36000.0, nFromRow, nRowOffset / 36000.0, 0, 0, 0, 0, 0, 0, 0, 0);
+		oDrawing.setDrawingBaseExt(nExtX / 36000.0, nExtY / 36000.0);
 	}
 
 	function private_MakeBorder(lineStyle, color) {
@@ -7068,12 +7050,12 @@
 	function private_AddDefName(wb, name, ref, sheetInd, hidden) {
 		let res = wb.checkDefName(name);
 		if (!res.status) {
-			private_makeError('Invalid name.', false);
+			logError(new Error('Invalid name.'));
 			return false;
 		}
 		res = wb.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.Chart, ref, false);
 		if (res === Asc.c_oAscError.ID.DataRangeError) {
-			private_makeError('Invalid range.', false);
+			logError(new Error('Invalid range.'));
 			return false;
 		}
 		if (sheetInd) {
@@ -7084,16 +7066,14 @@
 
 		return true;
 	}
-	function private_MM2EMU(mm)
-	{
+
+	function private_MM2EMU(mm) {
 		return mm * 36000.0;
 	}
-	
-	function private_GetDrawingLockType(sType)
-	{
+
+	function private_GetDrawingLockType(sType) {
 		var nLockType = -1;
-		switch (sType)
-		{
+		switch (sType) {
 			case "noGrp":
 				nLockType = AscFormat.LOCKS_MASKS.noGrp;
 				break;
@@ -7144,15 +7124,17 @@
 		return nLockType;
 	}
 
-	function private_makeError(message, bMakeThrow) {
-		let err = new Error(message);
-		if (!console.error)
+	function logError(err) {
+		if (console.error)
+			console.error(err);
+		else
 			console.log(err);
-		
-		if (!bMakeThrow && console.error)
-			console.error(err)
-		else if (bMakeThrow)
-			throw err;
+	};
+
+	function throwException(err) {
+		if (!console.error)
+			logError(err);
+		throw err;
 	};
 
 }(window, null));

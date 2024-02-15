@@ -73,8 +73,6 @@
 		AscFormat.CGraphicObjectBase.call(this);
 		this.graphicObject = null;
 		this.nvGraphicFramePr = null;
-
-		this.compiledHierarchy = [];
 		this.Pages = [];
 		this.compiledStyles = [];
 		this.recalcInfo =
@@ -82,7 +80,6 @@
 				recalculateTransform: true,
 				recalculateSizes: true,
 				recalculateNumbering: true,
-				recalculateShapeHierarchy: true,
 				recalculateTable: true
 			};
 		this.RecalcInfo = {};
@@ -100,7 +97,57 @@
 	CGraphicFrame.prototype.IsUseInDocument = CShape.prototype.IsUseInDocument;
 	CGraphicFrame.prototype.convertPixToMM = CShape.prototype.convertPixToMM;
 	CGraphicFrame.prototype.hit = CShape.prototype.hit;
+	CGraphicFrame.prototype.hitInPath = function () {
+		return false;
+	};
+	CGraphicFrame.prototype.hitInInnerArea = function (x, y) {
+		let oInvTransform = this.getInvertTransform();
+		if (!oInvTransform) {
+			return false;
+		}
+		let tx = oInvTransform.TransformPointX(x, y);
+		let ty = oInvTransform.TransformPointY(x, y);
+		return tx > 0 && tx < this.extX && ty > 0 && ty < this.extY;
+	};
 
+	CGraphicFrame.prototype.hitInTextRect = function (x, y) {
+		return this.hitInInnerArea(x, y);
+	};
+	CGraphicFrame.prototype.hitInTextHyperlink = function(x, y) {
+		if(!this.graphicObject || !(this.graphicObject instanceof AscWord.CTable)) {
+			return null;
+		}
+		let oInvTransform = this.getInvertTransform();
+		if (!oInvTransform) {
+			return false;
+		}
+		let tx = oInvTransform.TransformPointX(x, y);
+		let ty = oInvTransform.TransformPointY(x, y);
+
+		let oCellPos = this.graphicObject.private_GetCellByXY(tx, ty, 0);
+		if(!oCellPos) {
+			return null;
+		}
+		let oRow = this.graphicObject.GetRow(oCellPos.Row);
+		if(!oRow) {
+			return null;
+		}
+		let oCell    = oRow.GetCell(oCellPos.Cell);
+		let oContent = oCell.Content;
+		if(!oContent) {
+			return null;
+		}
+		let oHitParagraph = oContent.IsInText(tx, ty, 0);
+		if (oHitParagraph) {
+			if (oHitParagraph.IsInText(tx, ty, 0)) {
+				let oHyperlink = oHitParagraph.CheckHyperlink(tx, ty, 0);
+				if (oHyperlink) {
+					return oHyperlink;
+				}
+			}
+		}
+		return null;
+	};
 	CGraphicFrame.prototype.GetDocumentPositionFromObject = function (arrPos) {
 		if (!arrPos)
 			arrPos = [];
@@ -140,7 +187,6 @@
 			this.graphicObject.Recalc_CompiledPr2();
 			this.graphicObject.RecalcInfo.Recalc_AllCells();
 			this.recalcInfo.recalculateSizes = true;
-			this.recalcInfo.recalculateShapeHierarchy = true;
 			this.recalcInfo.recalculateTable = true;
 			this.addToRecalculate();
 		}
@@ -309,9 +355,6 @@
 		}
 	};
 
-	CGraphicFrame.prototype.hitInPath = function () {
-		return false;
-	};
 
 	CGraphicFrame.prototype.pasteFormatting = function (oFormatData) {
 		if (isRealObject(this.graphicObject)) {
@@ -520,19 +563,7 @@
 		snapY.push(transform.ty + this.extY);
 	};
 
-	CGraphicFrame.prototype.hitInInnerArea = function (x, y) {
-		var invert_transform = this.getInvertTransform();
-		if (!invert_transform) {
-			return false;
-		}
-		var x_t = invert_transform.TransformPointX(x, y);
-		var y_t = invert_transform.TransformPointY(x, y);
-		return x_t > 0 && x_t < this.extX && y_t > 0 && y_t < this.extY;
-	};
 
-	CGraphicFrame.prototype.hitInTextRect = function (x, y) {
-		return this.hitInInnerArea(x, y);
-	};
 
 	CGraphicFrame.prototype.getInvertTransform = function () {
 		if (this.recalcInfo.recalculateTransform)
@@ -782,28 +813,6 @@
 
 	CGraphicFrame.prototype.setTextSelectionState = function (Sate) {
 		return this.graphicObject.SetSelectionState(Sate, Sate.length - 1);
-	};
-
-	CGraphicFrame.prototype.getPhType = function () {
-		if (this.isPlaceholder()) {
-			return this.nvGraphicFramePr.nvPr.ph.type;
-		}
-		return null;
-	};
-
-	CGraphicFrame.prototype.getPhIndex = function () {
-		if (this.isPlaceholder()) {
-			return this.nvGraphicFramePr.nvPr.ph.idx;
-		}
-		return null;
-	};
-
-	CGraphicFrame.prototype.getPlaceholderType = function () {
-		return this.getPhType();
-	};
-
-	CGraphicFrame.prototype.getPlaceholderIndex = function () {
-		return this.getPhIndex();
 	};
 
 	CGraphicFrame.prototype.paragraphAdd = function (paraItem, bRecalculate) {
@@ -1187,6 +1196,8 @@
 			Graphic.GraphicData.Uri = "http://schemas.openxmlformats.org/drawingml/2006/chart";
 		} else if (nDrawingType === AscDFH.historyitem_type_SlicerView) {
 			Graphic.GraphicData.Uri = "http://schemas.microsoft.com/office/drawing/2010/slicer";
+		} else if (nDrawingType === AscDFH.historyitem_type_TimelineSlicerView) {
+			Graphic.GraphicData.Uri = "http://schemas.microsoft.com/office/drawing/2012/timeslicer";
 		} else if (nDrawingType === AscDFH.historyitem_type_SmartArt) {
 			Graphic.GraphicData.Uri = "http://schemas.openxmlformats.org/drawingml/2006/diagram";
 		}

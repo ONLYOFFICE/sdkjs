@@ -1046,6 +1046,8 @@ function (window, undefined) {
 
 		this.needAddPicturesMap = null;
 
+		this.startAddImageAction = null;
+
 		if (idArr) {
 			window.Asc.g_header_footer_editor = this;
 			this.init(idArr, opt_objForSave);
@@ -1131,7 +1133,10 @@ function (window, undefined) {
 			prevField.canvasObj.canvas.style.display = "block";
 
 			this.cellEditor.close();
-			document.getElementById(this.editorElemId).remove();
+			let elem = document.getElementById(this.editorElemId);
+			if (elem) {
+				elem.parentNode.removeChild(elem);
+			}
 		}
 
 		this.curParentFocusId = null;
@@ -1335,6 +1340,11 @@ function (window, undefined) {
 			wb.cellEditor = this.wbCellEditor;
 		}
 		delete window.Asc.g_header_footer_editor;
+
+		if (t.startAddImageAction) {
+			t.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+			t.startAddImageAction = null;
+		}
 
 		return null;
 	};
@@ -1689,7 +1699,6 @@ function (window, undefined) {
 	CHeaderFooterEditor.prototype.addPictureField = function () {
 		let t = this;
 		let showFileDialog = function (needPushField) {
-			t.api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 			t.api.asc_addImage({
 				callback: function (oImage) {
 					if (oImage) {
@@ -1704,7 +1713,18 @@ function (window, undefined) {
 							}
 						}
 					}
-					t.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+					if (t.startAddImageAction) {
+						t.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+						t.startAddImageAction = null;
+					}
+				}, fErrorCallback: function (error) {
+					if (t.startAddImageAction) {
+						t.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+						t.startAddImageAction = null;
+					}
+				}, fStartUploadImageCallback: function () {
+					t.api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
+					t.startAddImageAction = true;
 				}
 			});
 		};

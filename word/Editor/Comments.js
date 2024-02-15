@@ -830,12 +830,20 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	AscCommon.g_oTableId.Add( this, this.Id );
 }
+	CComments.prototype.isUse = function()
+	{
+		return this.Is_Use();
+	};
 	CComments.prototype.GetById = function(sId)
 	{
 		if (this.m_arrCommentsById[sId])
 			return this.m_arrCommentsById[sId];
 
 		return null;
+	};
+	CComments.prototype.getCurrentCommentId = function()
+	{
+		return this.m_sCurrent;
 	};
 	CComments.prototype.Add = function(oComment)
 	{
@@ -969,6 +977,10 @@ function CCommentDrawingRect(X, Y, W, H, CommentId, InvertTransform)
 		this.m_bUseSolved = isUse;
 	};
 	CComments.prototype.IsUseSolved                 = function()
+	{
+		return this.m_bUseSolved;
+	};
+	CComments.prototype.isUseSolved = function()
 	{
 		return this.m_bUseSolved;
 	};
@@ -1298,9 +1310,9 @@ ParaComment.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPa
 ParaComment.prototype.Draw_HighLights = function(PDSH)
 {
 	if (true === this.Start)
-		PDSH.AddComment(this.CommentId);
+		PDSH.addComment(this.CommentId);
 	else
-		PDSH.RemoveComment(this.CommentId);
+		PDSH.removeComment(this.CommentId);
 };
 ParaComment.prototype.Refresh_RecalcData = function()
 {
@@ -1379,10 +1391,6 @@ ParaComment.prototype.MoveCursorToMark = function()
 };
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommon'] = window['AscCommon'] || {};
-
-window['AscCommon'].comments_NoComment = comments_NoComment;
-window['AscCommon'].comments_NonActiveComment = comments_NonActiveComment;
-window['AscCommon'].comments_ActiveComment = comments_ActiveComment;
 
 window['AscCommon'].comment_type_Common = comment_type_Common;
 window['AscCommon'].comment_type_HdrFtr = comment_type_HdrFtr;

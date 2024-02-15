@@ -37,7 +37,7 @@ function CNumberingLvl()
 	this.Jc      = AscCommon.align_Left;
 	this.Format  = Asc.c_oAscNumberingFormat.Bullet;
 	this.PStyle  = undefined;
-	this.Start   = 1;
+	this.Start   = 0;
 	this.Restart = -1; // -1 - делаем нумерацию сначала всегда, 0 - никогда не начинаем нумерацию заново
 	this.Suff    = Asc.c_oAscNumberingSuff.Tab;
 	this.TextPr  = new CTextPr();

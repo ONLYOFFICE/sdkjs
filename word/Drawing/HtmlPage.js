@@ -566,7 +566,7 @@ function CEditorPage(api)
 	// mouse hand mode ---
 	this.checkMouseHandMode = function()
 	{
-		if (!this.m_oApi || !this.m_oApi.isRestrictionForms())
+		if (!this.m_oApi || !this.m_oApi.isTargetHandMode())
 		{
 			this.MouseHandObject = null;
 			return;
@@ -577,6 +577,7 @@ function CEditorPage(api)
 				var logicDoc = _this.m_oLogicDocument;
 				if (!logicDoc)
 					return true;
+
 				var isForms = (logicDoc.IsInForm(_pos.X, _pos.Y, _pos.Page) || logicDoc.IsInContentControl(_pos.X, _pos.Y, _pos.Page)) ? true : false;
 				var isButtons = _this.m_oDrawingDocument.contentControls.checkPointerInButtons(_pos);
 
@@ -2201,6 +2202,10 @@ function CEditorPage(api)
 
 		global_mouseEvent.Type = AscCommon.g_mouse_event_type_up;
 
+		let bIsSendedToEditor = true;
+		if (!global_mouseEvent.IsLocked && 0 == oWordControl.MouseDownDocumentCounter)
+			bIsSendedToEditor = false;
+
 		AscCommon.MouseUpLock.MouseUpLockedSend = true;
 
 		if (oWordControl.m_oHorRuler.m_bIsMouseDown)
@@ -2287,7 +2292,8 @@ function CEditorPage(api)
 		}
 		if(!oThis.checkFinishEyedropper())
 		{
-			oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+			if (bIsSendedToEditor)
+				oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
 		}
 		oWordControl.MouseDownDocumentCounter--;
 		if (oWordControl.MouseDownDocumentCounter < 0)
@@ -3212,15 +3218,17 @@ function CEditorPage(api)
 		this.m_oBody.Resize(this.Width * g_dKoef_pix_to_mm, this.Height * g_dKoef_pix_to_mm, this);
 		this.onButtonTabsDraw();
 
+		let areaParent = "id_main_view";
 		if (this.m_oApi.isUseNativeViewer)
 		{
+			areaParent = "id_main";
 			var oViewer = this.m_oDrawingDocument.m_oDocumentRenderer;
 			if (oViewer)
 				oViewer.resize();
 		}
 
 		if (AscCommon.g_inputContext)
-			AscCommon.g_inputContext.onResize("id_main_view");
+			AscCommon.g_inputContext.onResize(areaParent);
 
 		if (this.TextBoxBackground != null)
 		{

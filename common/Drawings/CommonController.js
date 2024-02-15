@@ -786,9 +786,6 @@
 										});
 										if (this.isSlideShow()) {
 											ret.cursorType = "pointer";
-											if (AscCommon.IsLinkPPAction(sHyperlink)) {
-												MMData.Hyperlink = null;
-											}
 											oDD.SetCursorType("pointer", MMData);
 										} else {
 											editor.sync_MouseMoveCallback(MMData);
@@ -2177,7 +2174,7 @@
 						}
 					} else if (oGrp) {
 						if (oGrp.selectStartPage === pageIndex) {
-							drawingDocument.DrawTrack(
+							!Asc.editor.isPdfEditor() && drawingDocument.DrawTrack(
 								AscFormat.TYPE_TRACK.GROUP_PASSIVE,
 								oGrp.getTransformMatrix(),
 								0,
@@ -2239,7 +2236,8 @@
 					} else {
 						for (i = 0; i < this.selectedObjects.length; ++i) {
 							let oDrawing = this.selectedObjects[i];
-							if (oDrawing.selectStartPage === pageIndex) {
+							// if (oDrawing.selectStartPage === pageIndex) {
+							if (oDrawing.selectStartPage === pageIndex && !oDrawing.IsFreeText || (oDrawing.IsFreeText && !oDrawing.IsFreeText())) {
 								let nType = oDrawing.isForm && oDrawing.isForm() ? AscFormat.TYPE_TRACK.FORM : AscFormat.TYPE_TRACK.SHAPE
 								drawingDocument.DrawTrack(
 									nType,
@@ -2333,6 +2331,7 @@
 							}
 						}
 					}
+					this.lastSelectedObject = null;
 				},
 
 				deselectObject: function (object) {
@@ -2340,6 +2339,9 @@
 						if (this.selectedObjects[i] === object) {
 							object.selected = false;
 							this.selectedObjects.splice(i, 1);
+							if(this.selectedObjects.length === 0) {
+								this.lastSelectedObject = object;
+							}
 							return;
 						}
 					}
@@ -2879,14 +2881,14 @@
 								this.selectedObjects[0].applyTextFunction(docContentFunction, tableFunction, args);
 								this.selection.textSelection.select(this, this.selection.textSelection.selectStartPage);
 							}
-						} else if (this.parent && this.parent.GoTo_Text) {
-							this.parent.GoTo_Text();
+						} else if (this.parent && this.parent.GoToText) {
+							this.parent.GoToText();
 							this.resetSelection();
 							if (this.document && (docpostype_DrawingObjects !== this.document.GetDocPosType() || isRealObject(getTargetTextObject(this.document.DrawingObjects))) && CDocumentContent.prototype.AddNewParagraph === docContentFunction) {
 								this.document.AddNewParagraph(args[0]);
 							}
-						} else if (this.selectedObjects.length > 0 && this.selectedObjects[0].parent && this.selectedObjects[0].parent.GoTo_Text) {
-							this.selectedObjects[0].parent.GoTo_Text();
+						} else if (this.selectedObjects.length > 0 && this.selectedObjects[0].parent && this.selectedObjects[0].parent.GoToText) {
+							this.selectedObjects[0].parent.GoToText();
 							this.resetSelection();
 							if (this.document && (docpostype_DrawingObjects !== this.document.GetDocPosType() || isRealObject(getTargetTextObject(this))) && CDocumentContent.prototype.AddNewParagraph === docContentFunction) {
 								this.document.AddNewParagraph(args[0]);
@@ -3531,8 +3533,8 @@
 				},
 
 				applyDrawingProps: function (props) {
-					var objects_by_type = this.getSelectedObjectsByTypes(true);
-					var i;
+					let objects_by_type = this.getSelectedObjectsByTypes(true);
+					let i;
 					if (AscFormat.isRealNumber(props.verticalTextAlign)) {
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
 							objects_by_type.shapes[i].setVerticalAlign(props.verticalTextAlign);
@@ -3856,102 +3858,73 @@
 							}
 						}
 					}
-					var oApi = editor || Asc['editor'];
+					var oApi = Asc.editor;
 					var editorId = oApi.getEditorId();
 					var bMoveFlag = true;
-					if (AscFormat.isRealNumber(props.Width) || AscFormat.isRealNumber(props.Height)) {
-						for (i = 0; i < objects_by_type.shapes.length; ++i) {
-							CheckSpPrXfrm(objects_by_type.shapes[i]);
-							if (!props.SizeRelH && AscFormat.isRealNumber(props.Width)) {
-								objects_by_type.shapes[i].spPr.xfrm.setExtX(props.Width);
-								if (objects_by_type.shapes[i].parent instanceof AscCommonWord.ParaDrawing) {
-									objects_by_type.shapes[i].parent.SetSizeRelH({
-										RelativeFrom: c_oAscSizeRelFromH.sizerelfromhPage,
-										Percent: 0
-									});
-								}
-							}
-							if (!props.SizeRelV && AscFormat.isRealNumber(props.Height)) {
-								objects_by_type.shapes[i].spPr.xfrm.setExtY(props.Height);
-								if (objects_by_type.shapes[i].parent instanceof AscCommonWord.ParaDrawing) {
-									objects_by_type.shapes[i].parent.SetSizeRelV({
-										RelativeFrom: c_oAscSizeRelFromV.sizerelfromvPage,
-										Percent: 0
-									});
-								}
-							}
-							if (objects_by_type.shapes[i].parent instanceof AscCommonWord.ParaDrawing) {
-								var oDrawing = objects_by_type.shapes[i].parent;
-								if (oDrawing.SizeRelH && !oDrawing.SizeRelV) {
-									oDrawing.SetSizeRelV({
-										RelativeFrom: c_oAscSizeRelFromV.sizerelfromvPage,
-										Percent: 0
-									});
-								}
-								if (oDrawing.SizeRelV && !oDrawing.SizeRelH) {
-									oDrawing.SetSizeRelH({
-										RelativeFrom: c_oAscSizeRelFromH.sizerelfromhPage,
-										Percent: 0
-									});
-								}
-							}
-							objects_by_type.shapes[i].ResetParametersWithResize(true);
-							if (objects_by_type.shapes[i].group) {
-								checkObjectInArray(aGroups, objects_by_type.shapes[i].group.getMainGroup());
-							}
-							objects_by_type.shapes[i].checkDrawingBaseCoords();
-						}
-						if (!props.SizeRelH && !props.SizeRelV && AscFormat.isRealNumber(props.Width) && AscFormat.isRealNumber(props.Height)) {
-							for (i = 0; i < objects_by_type.images.length; ++i) {
-								CheckSpPrXfrm3(objects_by_type.images[i]);
-								objects_by_type.images[i].spPr.xfrm.setExtX(props.Width);
-								objects_by_type.images[i].spPr.xfrm.setExtY(props.Height);
-								if (objects_by_type.images[i].group) {
-									checkObjectInArray(aGroups, objects_by_type.images[i].group.getMainGroup());
-								}
-								objects_by_type.images[i].checkDrawingBaseCoords();
-							}
-							for (i = 0; i < objects_by_type.charts.length; ++i) {
-								CheckSpPrXfrm3(objects_by_type.charts[i]);
-								objects_by_type.charts[i].spPr.xfrm.setExtX(props.Width);
-								objects_by_type.charts[i].spPr.xfrm.setExtY(props.Height);
-								if (objects_by_type.charts[i].group) {
-									checkObjectInArray(aGroups, objects_by_type.charts[i].group.getMainGroup());
-								}
-								objects_by_type.charts[i].checkDrawingBaseCoords();
-							}
-							for (i = 0; i < objects_by_type.smartArts.length; ++i) {
-								var oSmartArt = objects_by_type.smartArts[i];
-								CheckSpPrXfrm3(oSmartArt);
-								var kw, kh;
-								kw = props.Width / oSmartArt.spPr.xfrm.extX;
-								kh = props.Height / oSmartArt.spPr.xfrm.extY;
-								oSmartArt.changeSize(kw, kh);
-								if (oSmartArt.group) {
-									checkObjectInArray(aGroups, oSmartArt.group.getMainGroup());
-								}
-								oSmartArt.checkDrawingBaseCoords();
-								oSmartArt.checkExtentsByDocContent(true, true);
-							}
-							for (i = 0; i < objects_by_type.oleObjects.length; ++i) {
-								CheckSpPrXfrm3(objects_by_type.oleObjects[i]);
-								objects_by_type.oleObjects[i].spPr.xfrm.setExtX(props.Width);
-								objects_by_type.oleObjects[i].spPr.xfrm.setExtY(props.Height);
-								if (objects_by_type.oleObjects[i].group) {
-									checkObjectInArray(aGroups, objects_by_type.oleObjects[i].group.getMainGroup());
-								}
 
-								var api = window.editor || window["Asc"]["editor"];
-								if (api) {
-									var pluginData = new Asc.CPluginData();
-									pluginData.setAttribute("data", objects_by_type.oleObjects[i].m_sData);
-									pluginData.setAttribute("guid", objects_by_type.oleObjects[i].m_sApplicationId);
-									pluginData.setAttribute("width", objects_by_type.oleObjects[i].spPr.xfrm.extX);
-									pluginData.setAttribute("height", objects_by_type.oleObjects[i].spPr.xfrm.extY);
-									pluginData.setAttribute("objectId", objects_by_type.oleObjects[i].Get_Id());
-									api.asc_pluginResize(pluginData);
+
+
+					function fApplyDrawingSize(oSp, oPr) {
+						oSp.applyDrawingSize(oPr)
+						if (oSp.group) {
+							checkObjectInArray(aGroups, oSp.group.getMainGroup());
+						}
+					}
+
+					if(props.bSetOriginalSize) {
+						let aImages = objects_by_type.images;
+						for (let nImg = 0; nImg < aImages.length; ++nImg) {
+							let oImg = aImages[nImg];
+							let sUrl = oImg.getImageUrl();
+							if(sUrl) {
+								let oProps = new Asc.asc_CImgProperty();
+								oProps.ImageUrl = sUrl;
+								let oSize = oProps.asc_getOriginSize(oApi);
+								if(oSize.asc_getIsCorrect()) {
+									oProps.Width = oSize.asc_getImageWidth();
+									oProps.Height = oSize.asc_getImageHeight();
+									fApplyDrawingSize(oImg, oProps);
 								}
-								objects_by_type.oleObjects[i].checkDrawingBaseCoords();
+							}
+						}
+					}
+					if (AscFormat.isRealNumber(props.Width) || AscFormat.isRealNumber(props.Height)) {
+
+
+						for (i = 0; i < objects_by_type.shapes.length; ++i) {
+							fApplyDrawingSize(objects_by_type.shapes[i], props);
+						}
+						for (i = 0; i < objects_by_type.images.length; ++i) {
+							fApplyDrawingSize(objects_by_type.images[i], props);
+						}
+						for (i = 0; i < objects_by_type.charts.length; ++i) {
+							fApplyDrawingSize(objects_by_type.charts[i], props);
+						}
+						for (i = 0; i < objects_by_type.smartArts.length; ++i) {
+							let oSmartArt = objects_by_type.smartArts[i];
+							CheckSpPrXfrm3(oSmartArt);
+							let kw, kh;
+							kw = props.Width / oSmartArt.spPr.xfrm.extX;
+							kh = props.Height / oSmartArt.spPr.xfrm.extY;
+							oSmartArt.changeSize(kw, kh);
+							if (oSmartArt.group) {
+								checkObjectInArray(aGroups, oSmartArt.group.getMainGroup());
+							}
+							oSmartArt.checkDrawingBaseCoords();
+							oSmartArt.checkExtentsByDocContent(true, true);
+						}
+						for (i = 0; i < objects_by_type.oleObjects.length; ++i) {
+							let oOleObject = objects_by_type.oleObjects[i];
+							fApplyDrawingSize(oOleObject, props);
+							var api = window.editor || window["Asc"]["editor"];
+							if (api) {
+								var pluginData = new Asc.CPluginData();
+								pluginData.setAttribute("data", oOleObject.m_sData);
+								pluginData.setAttribute("guid", oOleObject.m_sApplicationId);
+								pluginData.setAttribute("width", oOleObject.spPr.xfrm.extX);
+								pluginData.setAttribute("height", oOleObject.spPr.xfrm.extY);
+								pluginData.setAttribute("objectId", oOleObject.Get_Id());
+								api.asc_pluginResize(pluginData);
 							}
 						}
 
@@ -4104,14 +4077,7 @@
 					}
 
 					if (bCheckConnectors) {
-						var aConnectors = this.getConnectorsForCheck();
-						for (i = 0; i < aConnectors.length; ++i) {
-							aConnectors[i].calculateTransform(bMoveFlag);
-							var oGroup = aConnectors[i].getMainGroup();
-							if (oGroup) {
-								checkObjectInArray(aGroups, oGroup);
-							}
-						}
+						this.updateConnectors(bMoveFlag);
 					}
 
 					for (i = 0; i < aGroups.length; ++i) {
@@ -4201,6 +4167,21 @@
 						}
 					}
 					return objects_by_type;
+				},
+
+				updateConnectors: function(bMove) {
+					let aGroups = [];
+					let aConnectors = this.getConnectorsForCheck();
+					for (let nIdx = 0; nIdx < aConnectors.length; ++nIdx) {
+						aConnectors[nIdx].calculateTransform(bMove);
+						let oGroup = aConnectors[nIdx].getMainGroup();
+						if (oGroup) {
+							checkObjectInArray(aGroups, oGroup);
+						}
+					}
+					for (let nIdx = 0; nIdx < aGroups.length; ++nIdx) {
+						aGroups[nIdx].updateCoordinatesAfterInternalResize();
+					}
 				},
 
 				getSelectedObjectsByTypes: function (bGroupedObjects) {
@@ -6330,19 +6311,19 @@
 						this.checkChartTextSelection();
 					}
 					this.resetInternalSelection(noResetContentSelect, bDoNotRedraw);
-					for (var i = 0; i < this.selectedObjects.length; ++i) {
-						this.selectedObjects[i].selected = false;
+					let aSelected = [].concat(this.selectedObjects);
+					for (let nDrawing = 0; nDrawing < aSelected.length; ++nDrawing) {
+						this.deselectObject(aSelected[nDrawing]);
 					}
 					this.selectedObjects.length = 0;
-					this.selection =
-						{
+					this.selection = {
 							selectedObjects: [],
 							groupSelection: null,
 							chartSelection: null,
 							textSelection: null,
 							cropSelection: null,
 							geometrySelection: null
-						};
+					};
 					if (bNoCheckAnim !== true) {
 						this.onChangeDrawingsSelection();
 					}
@@ -8924,6 +8905,7 @@
 
 
 				bringToFront: function () {
+					AscCommon.IsChangingDrawingZIndex = true;
 					var sp_tree = this.getDrawingObjects();
 					if (!(this.selection.groupSelection)) {
 						var selected = [];
@@ -8944,9 +8926,11 @@
 						this.selection.groupSelection.bringToFront();
 					}
 					this.drawingObjects.showDrawingObjects();
+					AscCommon.IsChangingDrawingZIndex = false;
 				},
 
 				bringForward: function () {
+					AscCommon.IsChangingDrawingZIndex = true;
 					var sp_tree = this.getDrawingObjects();
 					if (!(this.selection.groupSelection)) {
 						for (var i = sp_tree.length - 1; i > -1; --i) {
@@ -8960,9 +8944,12 @@
 						this.selection.groupSelection.bringForward();
 					}
 					this.drawingObjects.showDrawingObjects();
+					AscCommon.IsChangingDrawingZIndex = false;
 				},
 
 				sendToBack: function () {
+
+					AscCommon.IsChangingDrawingZIndex = true;
 					var sp_tree = this.getDrawingObjects();
 
 					if (!(this.selection.groupSelection)) {
@@ -8979,10 +8966,14 @@
 						this.selection.groupSelection.sendToBack();
 					}
 					this.drawingObjects.showDrawingObjects();
+
+					AscCommon.IsChangingDrawingZIndex = false;
 				},
 
 
 				bringBackward: function () {
+
+					AscCommon.IsChangingDrawingZIndex = true;
 					var sp_tree = this.getDrawingObjects();
 					if (!(this.selection.groupSelection)) {
 						for (var i = 0; i < sp_tree.length; ++i) {
@@ -8996,6 +8987,7 @@
 						this.selection.groupSelection.bringBackward();
 					}
 					this.drawingObjects.showDrawingObjects();
+					AscCommon.IsChangingDrawingZIndex = false;
 				},
 
 				addEventListener: function (drawing) {
@@ -10653,22 +10645,9 @@
 		}
 
 
-		function fCheckObjectHyperlink(object, x, y) {
-			var content = object.getDocContent && object.getDocContent();
-			var invert_transform_text = object.invertTransformText, tx, ty, hit_paragraph, check_hyperlink, par;
-			if (content && invert_transform_text) {
-				tx = invert_transform_text.TransformPointX(x, y);
-				ty = invert_transform_text.TransformPointY(x, y);
-				hit_paragraph = content.Internal_GetContentPosByXY(tx, ty, 0);
-				par = content.Content[hit_paragraph];
-				if (isRealObject(par)) {
-					if (par.IsInText && par.IsInText(tx, ty, 0)) {
-						check_hyperlink = par.CheckHyperlink(tx, ty, 0);
-						if (isRealObject(check_hyperlink)) {
-							return check_hyperlink;
-						}
-					}
-				}
+		function fCheckObjectHyperlink(oDrawing, x, y) {
+			if(oDrawing.hitInTextHyperlink) {
+				return oDrawing.hitInTextHyperlink(x, y);
 			}
 			return null;
 		}

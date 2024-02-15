@@ -2940,6 +2940,13 @@ void main() {\n\
             file.nativeFile["onRepaintPages"] = function(pages) {
                 file.onRepaintPages && file.onRepaintPages(pages);
             };
+            file.nativeFile["onRepaintAnnotations"] = function(pages) {
+                file.onRepaintAnnotations && file.onRepaintAnnotations(pages);
+            };
+            file.nativeFile["onRepaintForms"] = function(pages) {
+                file.onRepaintForms && file.onRepaintForms(pages);
+            };
+
             file.nativeFile["onUpdateStatistics"] = function(par, word, symbol, space) {
                 file.onUpdateStatistics && file.onUpdateStatistics(par, word, symbol, space);
             };

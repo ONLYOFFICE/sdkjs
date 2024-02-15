@@ -37,17 +37,17 @@
 	/**
 	 * MERGEFIELD field
 	 * @constructor
-	 * @extends AscWord.CFieldInstructionBase
+	 * @extends AscWord.FieldInstructionBase
 	 */
 	function CFieldInstructionMERGEFIELD()
 	{
-		AscWord.CFieldInstructionBase.call(this);
+		AscWord.FieldInstructionBase.call(this);
 		
 		this.Name = "";
 	}
-	CFieldInstructionMERGEFIELD.prototype = Object.create(AscWord.CFieldInstructionBase.prototype);
+	CFieldInstructionMERGEFIELD.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 	CFieldInstructionMERGEFIELD.prototype.constructor = CFieldInstructionMERGEFIELD;
-	CFieldInstructionMERGEFIELD.prototype.Type = fieldtype_MERGEFIELD;
+	CFieldInstructionMERGEFIELD.prototype.Type = AscWord.fieldtype_MERGEFIELD;
 	
 	CFieldInstructionMERGEFIELD.prototype.SetName = function(value)
 	{

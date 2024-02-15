@@ -35,7 +35,7 @@
  * @param {Window} window
  * @param {undefined} undefined
  */
-	function (window, undefined) {
+function (window, undefined) {
 	var cDate = Asc.cDate;
 	var g_oFormatParser = AscCommon.g_oFormatParser;
 
@@ -83,7 +83,7 @@
 				return new cNumber(Math.abs(GetDiffDate360(date1, month1, year1, date2, month2, year2, true)) / 360);
 			case DayCountBasis.ActualActual:
 				var yc = Math.abs(year2 - year1), sd = year1 > year2 ? new cDate(d2) : new cDate(d1),
-					yearAverage = sd.isLeapYear() ? 366 : 365, dayDiff = /*Math.abs*/( d2 - d1 );
+					yearAverage = sd.isLeapYear() ? 366 : 365, dayDiff = /*Math.abs*/(d2 - d1);
 				for (var i = 0; i < yc; i++) {
 					sd.addYears(1);
 					yearAverage += sd.isLeapYear() ? 366 : 365;
@@ -149,14 +149,14 @@
 
 				var dayDiff;
 
-				if (nYears && ( month1 > month2 || ( month1 == month2 && date1 > date2 ) )) {
+				if (nYears && (month1 > month2 || (month1 == month2 && date1 > date2))) {
 					nYears--;
 				}
 
 				if (nYears) {
 					dayDiff = parseInt((d2 - new cDate(Date.UTC(year2, month1, date1))) / c_msPerDay);
 				} else {
-					dayDiff = parseInt(( d2 - d1 ) / c_msPerDay);
+					dayDiff = parseInt((d2 - d1) / c_msPerDay);
 				}
 
 				if (dayDiff < 0) {
@@ -165,13 +165,13 @@
 				return new cNumber(nYears + dayDiff / nDaysInYear);
 			case DayCountBasis.Actual360:
 				nDaysInYear = 360;
-				nYears = parseInt(( d2 - d1 ) / c_msPerDay / nDaysInYear);
+				nYears = parseInt((d2 - d1) / c_msPerDay / nDaysInYear);
 				nDayDiff = (d2 - d1) / c_msPerDay;
 				nDayDiff %= nDaysInYear;
 				return new cNumber(nYears + nDayDiff / nDaysInYear);
 			case DayCountBasis.Actual365:
 				nDaysInYear = 365;
-				nYears = parseInt(( d2 - d1 ) / c_msPerDay / nDaysInYear);
+				nYears = parseInt((d2 - d1) / c_msPerDay / nDaysInYear);
 				nDayDiff = (d2 - d1) / c_msPerDay;
 				nDayDiff %= nDaysInYear;
 				return new cNumber(nYears + nDayDiff / nDaysInYear);
@@ -205,7 +205,7 @@
 
 				nMonths = nM2 - nM1;
 				nDays = nD2 - nD1;
-				nMonths += ( nY2 - nY1 ) * 12;
+				nMonths += (nY2 - nY1) * 12;
 				nRet = nMonths * 30 + nDays;
 				if (nMode == 0 && nM1 == 2 && nM2 != 2 && nY1 == nY2) {
 					nRet -= bLeap ? 1 : 2;
@@ -232,9 +232,7 @@
 	}
 
 	function days360(date1, date2, flag, isAccrint) {
-		// special modifying a function to call from ACCRINT formula
 		let sign;
-
 		let nY1 = date1.getUTCFullYear(), nM1 = date1.getUTCMonth() + 1, nD1 = date1.getUTCDate(),
 			nY2 = date2.getUTCFullYear(), nM2 = date2.getUTCMonth() + 1, nD2 = date2.getUTCDate();
 
@@ -271,7 +269,7 @@
 				nD2 = 30;
 			}
 		}
-		return sign * ( nD2 - nD1 + ( nM2 - nM1 ) * 30 + ( nY2 - nY1 ) * 360 );
+		return sign * (nD2 - nD1 + (nM2 - nM1) * 30 + (nY2 - nY1) * 360);
 	}
 
 	function daysInYear(date, basis) {
@@ -314,6 +312,7 @@
 		}
 		return val;
 	}
+
 
 	function getWeekends(val) {
 		var res = [];
@@ -432,14 +431,14 @@
 						if (res instanceof cError || res instanceof cEmpty) {
 							var d = new cDate(elem.getValue());
 							if (isNaN(d)) {
-								d = g_oFormatParser.parseDate(elem.getValue());
+								d = g_oFormatParser.parseDate(elem.getValue(), AscCommon.g_oDefaultCultureInfo);
 								if (d === null) {
 									return new cError(cErrorType.wrong_value_type);
 								}
 								res = d.value;
 							} else {
-								res = ( d.getTime() / 1000 - d.getTimezoneOffset() * 60 ) / c_sPerDay +
-									( AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1) );
+								res = (d.getTime() / 1000 - d.getTimezoneOffset() * 60) / c_sPerDay +
+									(AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1));
 							}
 						} else {
 							res = elem.tocNumber().getValue();
@@ -481,6 +480,7 @@
 		}
 		return false;
 	}
+
 	function _includeInHolidaysTime(time, holidays) {
 		for (var i = 0; i < holidays.length; i++) {
 			if (time == holidays[i].getTime()) {
@@ -621,7 +621,7 @@
 	cDATEDIF.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cDATEDIF.prototype.Calculate = function (arg) {
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
-		
+
 		// --------------- check first argument[arg0] ----------------//
 		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			arg0 = arg0.cross(arguments[1]);
@@ -670,11 +670,11 @@
 		function newDateDiff(date1, date2) {
 			const results = {
 				years: date2.getUTCFullYear() - date1.getUTCFullYear(),
-				months:	date2.getUTCMonth() - date1.getUTCMonth(),
-				days: date2.getUTCDate()  - date1.getUTCDate(),
+				months: date2.getUTCMonth() - date1.getUTCMonth(),
+				days: date2.getUTCDate() - date1.getUTCDate(),
 				hours: date2.getUTCHours() - date1.getUTCHours()
 			}
-			
+
 			if (results.hours < 0) {
 				results.days--;
 				results.hours += 24;
@@ -689,7 +689,7 @@
 				results.years--;
 				results.months += 12;
 			}
-		
+
 			let years = results.years;
 			let months = results.years * 12 + results.months;
 			let days = results.days;
@@ -725,8 +725,8 @@
 			case "MD":
 				if (val0.getUTCDate() > val1.getUTCDate()) {
 					return new cNumber(Math.abs(
-							new cDate(Date.UTC(val0.getUTCFullYear(), val0.getUTCMonth(), val0.getUTCDate())) -
-							new cDate(Date.UTC(val0.getUTCFullYear(), val0.getUTCMonth() + 1, val1.getUTCDate()))) /
+						new cDate(Date.UTC(val0.getUTCFullYear(), val0.getUTCMonth(), val0.getUTCDate())) -
+						new cDate(Date.UTC(val0.getUTCFullYear(), val0.getUTCMonth() + 1, val1.getUTCDate()))) /
 						c_msPerDay);
 				} else {
 					return new cNumber(val1.getUTCDate() - val0.getUTCDate());
@@ -739,13 +739,13 @@
 			case "YD":
 				if (val0.getUTCMonth() > val1.getUTCMonth()) {
 					return new cNumber(Math.abs(
-							new cDate(Date.UTC(val0.getUTCFullYear(), val0.getUTCMonth(), val0.getUTCDate())) -
-							new cDate(Date.UTC(val0.getUTCFullYear() + 1, val1.getUTCMonth(), val1.getUTCDate()))) /
+						new cDate(Date.UTC(val0.getUTCFullYear(), val0.getUTCMonth(), val0.getUTCDate())) -
+						new cDate(Date.UTC(val0.getUTCFullYear() + 1, val1.getUTCMonth(), val1.getUTCDate()))) /
 						c_msPerDay);
 				} else {
 					return new cNumber(Math.abs(
-							new cDate(Date.UTC(val0.getUTCFullYear(), val0.getUTCMonth(), val0.getUTCDate())) -
-							new cDate(Date.UTC(val0.getUTCFullYear(), val1.getUTCMonth(), val1.getUTCDate()))) /
+						new cDate(Date.UTC(val0.getUTCFullYear(), val0.getUTCMonth(), val0.getUTCDate())) -
+						new cDate(Date.UTC(val0.getUTCFullYear(), val1.getUTCMonth(), val1.getUTCDate()))) /
 						c_msPerDay);
 				}
 				break;
@@ -812,7 +812,7 @@
 		var t = this;
 		var bIsSpecialFunction = arguments[4];
 
-		var calculateFunc = function(curArg) {
+		var calculateFunc = function (curArg) {
 			var val;
 			if (curArg instanceof cArray) {
 				curArg = curArg.getElement(0);
@@ -838,8 +838,8 @@
 					if (isNaN(d)) {
 						return new cError(cErrorType.wrong_value_type);
 					} else {
-						val = Math.floor(( d.getTime() / 1000 - d.getTimezoneOffset() * 60 ) / c_sPerDay +
-							( AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1) ));
+						val = Math.floor((d.getTime() / 1000 - d.getTimezoneOffset() * 60) / c_sPerDay +
+							(AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1)));
 					}
 				} else {
 					val = curArg.tocNumber().getValue();
@@ -850,23 +850,23 @@
 			} else if (!AscCommon.bDate1904) {
 				if (val < 60) {
 					return t.setCalcValue(
-						new cNumber(( new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay) ).getUTCDate()), 0);
+						new cNumber((new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay)).getUTCDate()), 0);
 				} else if (val == 60) {
 					return t.setCalcValue(new cNumber(
-						( new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay) ).getUTCDate() + 1), 0);
+						(new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay)).getUTCDate() + 1), 0);
 				} else {
 					return t.setCalcValue(
-						new cNumber(( new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay) ).getUTCDate()),
+						new cNumber((new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay)).getUTCDate()),
 						0);
 				}
 			} else {
 				return t.setCalcValue(
-					new cNumber(( new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay) ).getUTCDate()), 0);
+					new cNumber((new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay)).getUTCDate()), 0);
 			}
 		};
 
 		var arg0 = arg[0], res;
-		if(!bIsSpecialFunction) {
+		if (!bIsSpecialFunction) {
 
 			if (arg0 instanceof cArray) {
 				arg0 = arg0.getElement(0);
@@ -901,7 +901,7 @@
 		let oArguments = this._prepareArguments(arg, arguments[1], true);
 		let argClone = oArguments.args;
 
-		const calulateDay = function(curArg) {
+		const calulateDay = function (curArg) {
 			let val;
 			if (curArg.type === cElementType.cell || curArg.type === cElementType.cell3D) {
 				curArg = curArg.getValue();
@@ -912,7 +912,7 @@
 			}
 
 			val = curArg ? curArg : new cNumber(0);
-			
+
 			if (val.type === cElementType.error) {
 				return val;
 			} else if (val.type === cElementType.number || val.type === cElementType.bool || val.type === cElementType.empty) {
@@ -924,8 +924,8 @@
 					if (isNaN(d)) {
 						return new cError(cErrorType.wrong_value_type);
 					} else {
-						val = Math.floor(( d.getTime() / 1000 - d.getTimezoneOffset() * 60 ) / c_sPerDay +
-							( AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1) ));
+						val = Math.floor((d.getTime() / 1000 - d.getTimezoneOffset() * 60) / c_sPerDay +
+							(AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1)));
 					}
 				} else {
 					val = val.tocNumber().getValue();
@@ -950,7 +950,7 @@
 				let endInteger = Math.floor(end_date);
 				let startInteger = Math.floor(start_date);
 				return new cNumber(endInteger - startInteger);
-				
+
 			}
 		};
 
@@ -1038,61 +1038,110 @@
 	cEDATE.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cEDATE.prototype.argumentsType = [argType.any, argType.any];
 	cEDATE.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1];
+		let arg0 = arg[0], arg1 = arg[1];
 
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
-			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
+			let dimensions = arg0.getDimensions();
+			if (dimensions.row > 1 || dimensions.col > 1) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+			arg0 = arg0.getFirstElement();
+		} else if (arg0.type === cElementType.array) {
 			arg0 = arg0.getElementRowCol(0, 0);
+		} else if (arg0.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
-			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cArray) {
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
+			let dimensions = arg1.getDimensions();
+			if (dimensions.row > 1 || dimensions.col > 1) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+			arg1 = arg1.getFirstElement();
+		} else if (arg1.type === cElementType.array) {
 			arg1 = arg1.getElementRowCol(0, 0);
+		} else if (arg1.type === cElementType.bool) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		if (arg0.type === cElementType.empty || arg1.type === cElementType.empty) {
+			return new cError(cErrorType.not_available);
 		}
 
 		arg0 = arg0.tocNumber();
 		arg1 = arg1.tocNumber();
 
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (arg1.type === cElementType.error) {
 			return arg1;
 		}
 
-		var val = arg0.getValue(), date, _date;
+		let val = arg0.getValue(), addedMonths = arg1.getValue(), date, _date;
+		let now = new cDate();
+
+		let offsetInMinutes = now.getTimezoneOffset();
+		let offsetInHours = (offsetInMinutes / 60) * -1;
+		let UTCshift = offsetInHours >= 0 ? 1 : 0;
 
 		if (val < 0) {
 			return new cError(cErrorType.not_numeric);
+		} else if (addedMonths === 0) {
+			return arg0;
 		} else if (!AscCommon.bDate1904) {
 			if (val < 60) {
-				val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
-			} else if (val == 60) {
-				val = new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay);
+				val = new cDate((Math.floor(val) - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
+			} else if (val === 60) {
+				// 29 february 1900 - exception - this date doesn't exist in js
+				// val = new cDate(Date.UTC( 1900, 1, 29 ));
+				val = new cDate((Math.floor(val) - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
 			} else {
-				val = new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay);
+				val = new cDate((Math.floor(val) - AscCommonExcel.c_DateCorrectConst - UTCshift) * c_msPerDay);
 			}
 		} else {
-			val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
+			val = new cDate((Math.floor(val) - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
 		}
 
 		date = new cDate(val);
 
-		if (0 <= date.getUTCDate() && 28 >= date.getUTCDate()) {
-			val = new cDate(val.setUTCMonth(val.getUTCMonth() + arg1.getValue()))
-		} else if (29 <= date.getUTCDate() && 31 >= date.getUTCDate()) {
-			date.setUTCDate(1);
-			date.setUTCMonth(date.getUTCMonth() + arg1.getValue());
-			if (val.getUTCDate() > (_date = date.getDaysInMonth())) {
-				val.setUTCDate(_date);
+		let localDay = date.getDate(),
+			localMonth = date.getMonth(),
+			isLeap = date.isLeapYear();
+
+		if (0 <= localDay && 28 >= localDay) {
+			val = new cDate(val.setUTCMonth(val.getUTCMonth() + addedMonths))
+		} else if (29 <= localDay && 31 >= localDay) {
+			// Add the month separately. If the target month is February, the year is a leap year, and the day is greater than 28, return 28 or 29.
+			// It should not depend on UTC since we are working with an isolated date.
+			let newDay = localDay;
+			if (localMonth + addedMonths == 1) {
+				// set day to the last day of february
+				newDay = isLeap ? 29 : 28;
 			}
-			val = new cDate(val.setUTCMonth(val.getUTCMonth() + arg1.getValue()));
+			date.setDate(1);
+			date.setMonth(localMonth + addedMonths);
+
+			// get and compare last day of month
+			if (newDay > (_date = date.getLocalDaysInMonth())) {
+				date.setDate(_date)
+			} else {
+				date.setDate(newDay);
+			}
+
+			val = new cDate(date);
 		}
 
-		return new cNumber(Math.floor(( val.getTime() / 1000 - val.getTimezoneOffset() * 60 ) / c_sPerDay +
-			(AscCommonExcel.c_DateCorrectConst + 1)))
+		let res = Math.floor((val.getTime() / 1000 - val.getTimezoneOffset() * 60) / c_sPerDay + (AscCommonExcel.c_DateCorrectConst + 1));
+		if (res < 0) {
+			return new cError(cErrorType.not_numeric);
+		}
+		// shift for 1904 mode
+		if (AscCommon.bDate1904) {
+			res -= 1;
+		}
+
+		return new cNumber(res);
 	};
 
 	/**
@@ -1112,36 +1161,47 @@
 	cEOMONTH.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cEOMONTH.prototype.argumentsType = [argType.any, argType.any];
 	cEOMONTH.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1];
-
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		let arg0 = arg[0], arg1 = arg[1];
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
+		} else if (cElementType.array === arg0.type) {
 			arg0 = arg0.getElementRowCol(0, 0);
+		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			arg0 = arg0.getValue();
 		}
 
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
+		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
 			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cArray) {
+		} else if (cElementType.array === arg1.type) {
 			arg1 = arg1.getElementRowCol(0, 0);
+		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
+			arg1 = arg1.getValue();
+		}
+
+		if (cElementType.bool === arg0.type) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+		if (cElementType.bool === arg1.type) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		arg0 = arg0.tocNumber();
 		arg1 = arg1.tocNumber();
 
-		if (arg0 instanceof cError) {
+		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (cElementType.error === arg1.type) {
 			return arg1;
 		}
 
-		var val = arg0.getValue();
-
+		let val = arg0.getValue();
 		if (val < 0) {
 			return new cError(cErrorType.not_numeric);
 		} else if (!AscCommon.bDate1904) {
-			if (val < 60) {
+			if (val === 0) {
+				val = new cDate((val - AscCommonExcel.c_DateCorrectConst + 1) * c_msPerDay);
+			} else if (val < 60) {
 				val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
 			} else if (val == 60) {
 				val = new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay);
@@ -1152,13 +1212,16 @@
 			val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
 		}
 
+		// setUTCDate doesn't work properly for -UTC time
 		val.setUTCDate(1);
 		val.setUTCMonth(val.getUTCMonth() + arg1.getValue());
 		val.setUTCDate(val.getDaysInMonth());
 
-		return new cNumber(Math.floor(( val.getTime() / 1000 - val.getTimezoneOffset() * 60 ) / c_sPerDay +
-			(AscCommonExcel.c_DateCorrectConst + 1)));
+		return new cNumber(Math.round(val.getExcelDateWithTime()));
+		// return new cNumber(Math.floor((val.getTime() / 1000 - val.getTimezoneOffset() * 60) / c_sPerDay +
+		// 	(AscCommonExcel.c_DateCorrectConst + 1)));
 	};
+
 
 	/**
 	 * @constructor
@@ -1179,7 +1242,7 @@
 		var t = this;
 		var bIsSpecialFunction = arguments[4];
 
-		var calculateFunc = function(curArg) {
+		var calculateFunc = function (curArg) {
 			var val;
 			if (curArg instanceof cArray) {
 				curArg = curArg.getElement(0);
@@ -1205,13 +1268,13 @@
 				if (val instanceof cError || val instanceof cEmpty) {
 					var d = new cDate(curArg.getValue());
 					if (isNaN(d)) {
-						d = g_oFormatParser.parseDate(curArg.getValue());
+						d = g_oFormatParser.parseDate(curArg.getValue(), AscCommon.g_oDefaultCultureInfo);
 						if (d == null) {
 							return new cError(cErrorType.wrong_value_type);
 						}
 						val = d.value;
 					} else {
-						val = ( d.getTime() / 1000 - d.getTimezoneOffset() * 60 ) / c_sPerDay + ( AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1) );
+						val = (d.getTime() / 1000 - d.getTimezoneOffset() * 60) / c_sPerDay + (AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1));
 					}
 				} else {
 					val = curArg.tocNumber().getValue();
@@ -1221,12 +1284,12 @@
 				return new cError(cErrorType.not_numeric);
 			} else                             //1		 2 3 4					   4	3		 	 					2 1
 			{
-				return t.setCalcValue(new cNumber(parseInt(( ( val - Math.floor(val) ) * 24 ).toFixed(cExcelDateTimeDigits))), 0);
+				return t.setCalcValue(new cNumber(parseInt(((val - Math.floor(val)) * 24).toFixed(cExcelDateTimeDigits))), 0);
 			}
 		};
 
 		var arg0 = arg[0], res;
-		if(!bIsSpecialFunction) {
+		if (!bIsSpecialFunction) {
 
 			if (arg0 instanceof cArray) {
 				arg0 = arg0.getElement(0);
@@ -1258,23 +1321,24 @@
 	cISOWEEKNUM.prototype.isXLFN = true;
 	cISOWEEKNUM.prototype.argumentsType = [argType.number];
 	cISOWEEKNUM.prototype.Calculate = function (arg) {
-		//TODO есть различия в результатах с формулой ISOWEEKNUM(1)
-		var oArguments = this._prepareArguments(arg, arguments[1], true);
-		var argClone = oArguments.args;
+		let oArguments = this._prepareArguments(arg, arguments[1], true);
+		let argClone = oArguments.args;
 
 		argClone[0] = argClone[0].tocNumber();
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var arg0 = argClone[0];
+		let arg0 = argClone[0];
 		if (arg0.getValue() < 0) {
 			return new cError(cErrorType.not_numeric);
 		}
 
-		return new cNumber(weekNumber(cDate.prototype.getDateFromExcel(arg0.getValue())));
+		let weekdayStartDay = [6, 7, 8, 9, 10, 4, 5], type = 1;
+
+		return new cNumber(weekNumber(cDate.prototype.getDateFromExcel(arg0.getValue()), weekdayStartDay, type));
 	};
 
 	/**
@@ -1296,7 +1360,7 @@
 		var t = this;
 		var bIsSpecialFunction = arguments[4];
 
-		var calculateFunc = function(curArg) {
+		var calculateFunc = function (curArg) {
 			var val;
 			if (curArg instanceof cArray) {
 				curArg = curArg.getElement(0);
@@ -1322,13 +1386,13 @@
 				if (val instanceof cError || val instanceof cEmpty) {
 					var d = new cDate(curArg.getValue());
 					if (isNaN(d)) {
-						d = g_oFormatParser.parseDate(curArg.getValue());
+						d = g_oFormatParser.parseDate(curArg.getValue(), AscCommon.g_oDefaultCultureInfo);
 						if (d == null) {
 							return new cError(cErrorType.wrong_value_type);
 						}
 						val = d.value;
 					} else {
-						val = ( d.getTime() / 1000 - d.getTimezoneOffset() * 60 ) / c_sPerDay + ( AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1) );
+						val = (d.getTime() / 1000 - d.getTimezoneOffset() * 60) / c_sPerDay + (AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1));
 					}
 				} else {
 					val = curArg.tocNumber().getValue();
@@ -1346,7 +1410,7 @@
 		};
 
 		var arg0 = arg[0], res;
-		if(!bIsSpecialFunction) {
+		if (!bIsSpecialFunction) {
 
 			if (arg0 instanceof cArray) {
 				arg0 = arg0.getElement(0);
@@ -1380,13 +1444,13 @@
 		let t = this;
 		let bIsSpecialFunction = arguments[4];
 
-		let calculateFunc = function(curArg) {
+		let calculateFunc = function (curArg) {
 			let val;
 
 			if (curArg.type === cElementType.cell || curArg.type === cElementType.cell3D) {
 				curArg = curArg.getValue();
 			}
-			
+
 			if (curArg.type === cElementType.error) {
 				return curArg;
 			} else if (curArg.type === cElementType.number || curArg.type === cElementType.bool || curArg.type === cElementType.empty) {
@@ -1398,7 +1462,7 @@
 					if (isNaN(d)) {
 						return new cError(cErrorType.wrong_value_type);
 					} else {
-						val = Math.floor(( d.getTime() / 1000 - d.getTimezoneOffset() * 60 ) / c_sPerDay + ( AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1) ));
+						val = Math.floor((d.getTime() / 1000 - d.getTimezoneOffset() * 60) / c_sPerDay + (AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1)));
 					}
 				} else {
 					val = curArg.tocNumber().getValue();
@@ -1411,15 +1475,15 @@
 				if (val === 60) {
 					return t.setCalcValue(new cNumber(2), 0);
 				} else {
-					return t.setCalcValue(new cNumber(( new cDate(( (val === 0 ? 1 : val) - AscCommonExcel.c_DateCorrectConst - 1 ) * c_msPerDay) ).getUTCMonth() + 1), 0);
+					return t.setCalcValue(new cNumber((new cDate(((val === 0 ? 1 : val) - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay)).getUTCMonth() + 1), 0);
 				}
 			} else {
-				return t.setCalcValue(new cNumber(( new cDate(( (val === 0 ? 1 : val) - AscCommonExcel.c_DateCorrectConst ) * c_msPerDay) ).getUTCMonth() + 1), 0);
+				return t.setCalcValue(new cNumber((new cDate(((val === 0 ? 1 : val) - AscCommonExcel.c_DateCorrectConst) * c_msPerDay)).getUTCMonth() + 1), 0);
 			}
 		};
 
 		let arg0 = arg[0], res;
-		if(!bIsSpecialFunction) {
+		if (!bIsSpecialFunction) {
 			if (arg0.type === cElementType.array) {
 				arg0 = arg0.getElement(0);
 			} else if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
@@ -1540,8 +1604,8 @@
 				end = val0;
 			}
 
-			let difAbs = ( end - start );
-			difAbs = ( difAbs + (c_msPerDay) ) / c_msPerDay;
+			let difAbs = (end - start);
+			difAbs = (difAbs + (c_msPerDay)) / c_msPerDay;
 
 			for (let i = 0; i < difAbs; i++) {
 				let date = new cDate(start);
@@ -1623,8 +1687,8 @@
 				end = val0;
 			}
 
-			var difAbs = ( end - start );
-			difAbs = ( difAbs + (c_msPerDay) ) / c_msPerDay;
+			var difAbs = (end - start);
+			difAbs = (difAbs + (c_msPerDay)) / c_msPerDay;
 
 			var date = new cDate(start);
 			var startTime = date.getTime();
@@ -1634,7 +1698,7 @@
 					count++;
 				}
 				startDay = (startDay + 1) % 7;
-				startTime +=  AscCommonExcel.c_msPerDay;
+				startTime += AscCommonExcel.c_msPerDay;
 
 				// date.setTime(startTime + i * AscCommonExcel.c_msPerDay);
 				//
@@ -1690,7 +1754,7 @@
 		var t = this;
 		var bIsSpecialFunction = arguments[4];
 
-		var calculateFunc = function(curArg) {
+		var calculateFunc = function (curArg) {
 			var val;
 			if (curArg instanceof cArray) {
 				curArg = curArg.getElement(0);
@@ -1716,14 +1780,14 @@
 				if (val instanceof cError || val instanceof cEmpty) {
 					var d = new cDate(curArg.getValue());
 					if (isNaN(d)) {
-						d = g_oFormatParser.parseDate(curArg.getValue());
+						d = g_oFormatParser.parseDate(curArg.getValue(), AscCommon.g_oDefaultCultureInfo);
 						if (d == null) {
 							return new cError(cErrorType.wrong_value_type);
 						}
 						val = d.value;
 					} else {
-						val = ( d.getTime() / 1000 - d.getTimezoneOffset() * 60 ) / c_sPerDay +
-							( AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1) );
+						val = (d.getTime() / 1000 - d.getTimezoneOffset() * 60) / c_sPerDay +
+							(AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1));
 					}
 				} else {
 					val = curArg.tocNumber().getValue();
@@ -1733,13 +1797,13 @@
 				return new cError(cErrorType.not_numeric);
 			} else {
 				//val = parseInt((( val * 24 * 60 - Math.floor(val * 24 * 60) ) * 60).toFixed(cExcelDateTimeDigits)) % 60;
-				val = Math.floor(( val * c_sPerDay + 0.5).toFixed(cExcelDateTimeDigits)) % 60;
+				val = Math.floor((val * c_sPerDay + 0.5).toFixed(cExcelDateTimeDigits)) % 60;
 				return t.setCalcValue(new cNumber(val), 0);
 			}
 		};
 
 		var arg0 = arg[0], res;
-		if(!bIsSpecialFunction) {
+		if (!bIsSpecialFunction) {
 
 			if (arg0 instanceof cArray) {
 				arg0 = arg0.getElement(0);
@@ -1807,7 +1871,7 @@
 		second = parseInt(second.getValue());
 
 		var v = (hour * 60 * 60 + minute * 60 + second) / c_sPerDay;
-		if(v < 0) {
+		if (v < 0) {
 			return new cError(cErrorType.not_numeric);
 		}
 
@@ -1951,7 +2015,7 @@
 		if (arg0.getValue() < 0) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-
+		// ???
 		return new cNumber(
 			weekday[new cDate((arg0.getValue() - (AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1))) * c_msPerDay).getUTCDay()]);
 	};
@@ -2097,8 +2161,8 @@
 				//TODO поверить когда переходим через argVal0 = 60
 				var dayOfWeek;
 				var argVal0 = argClone && argClone[0] ? argClone[0].getValue() : null;
-				if(argVal0 !== null && argVal0 < 60) {
-					dayOfWeek = ( currentDate.getUTCDay() > 0) ? currentDate.getUTCDay() - 1 : 6;
+				if (argVal0 !== null && argVal0 < 60) {
+					dayOfWeek = (currentDate.getUTCDay() > 0) ? currentDate.getUTCDay() - 1 : 6;
 				} else {
 					dayOfWeek = currentDate.getUTCDay();
 				}
@@ -2111,7 +2175,7 @@
 			return currentDate;
 		};
 
-		if(undefined === arg1.getValue()) {
+		if (undefined === arg1.getValue()) {
 			return new cError(cErrorType.not_numeric);
 		}
 
@@ -2139,7 +2203,7 @@
 	cWORKDAY_INTL.prototype.argumentsMin = 2;
 	cWORKDAY_INTL.prototype.argumentsMax = 4;
 	cWORKDAY_INTL.prototype.numFormat = AscCommonExcel.cNumFormatNone;
-	cWORKDAY_INTL.prototype.arrayIndexes = {2: 1, 3: 1};
+	cWORKDAY_INTL.prototype.arrayIndexes = {2: 0, 3: 1};
 	cWORKDAY_INTL.prototype.argumentsType = [argType.any, argType.any, argType.number, argType.any];
 	//TODO в данном случае есть различия с ms. при 3 и 4 аргументах - замена результата на ошибку не происходит.
 	cWORKDAY_INTL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
@@ -2164,7 +2228,7 @@
 		if (val0 < 0) {
 			return new cError(cErrorType.not_numeric);
 		}
-		val0 = getCorrectDate(val0);
+		val0 = val0 < 61 ? new cDate((val0 - (AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1))) * c_msPerDay) : getCorrectDate(val0);
 
 		// Weekend
 		if (arg2 && "1111111" === arg2.getValue()) {
@@ -2181,16 +2245,17 @@
 			return holidays;
 		}
 
-		let calcDate = function () {
-			let dif = arg1.getValue(), count = 0, dif1 = dif > 0 ? 1 : dif < 0 ? -1 : 0, val, date = val0, isEndOfCycle = false;
+		const calcDate = function () {
+			let dif = arg1.getValue(), count = 0, dif1 = dif > 0 ? 1 : dif < 0 ? -1 : 0, val, date = val0,
+				isEndOfCycle = false;
 			while (Math.abs(dif) > count) {
 				date = new cDate(val0.getTime() + dif1 * c_msPerDay);
 				if (!_includeInHolidays(date, holidays) && !weekends[date.getUTCDay()]) {
 					count++;
 				}
-				//если последняя итерация
+				// if last iteration:
 				if (!(Math.abs(dif) > count)) {
-					//проверяем не оказалось ли следом выходных. если оказались - прибавляем
+					// check if it's next weekend. if found - add
 					date = new cDate(val0.getTime() + dif1 * c_msPerDay);
 					for (let i = 0; i < 7; i++) {
 						if (weekends[date.getUTCDay()]) {
@@ -2209,6 +2274,10 @@
 
 			if (val < 0) {
 				return new cError(cErrorType.not_numeric);
+			}
+			// shift for date less than 1/3/1900
+			if (arg0.getValue() < 61) {
+				val++;
 			}
 
 			return t.setCalcValue(new cNumber(val), 14);
@@ -2236,26 +2305,26 @@
 		let t = this;
 		let bIsSpecialFunction = arguments[4];
 
-		let calculateFunc = function(curArg) {
+		let calculateFunc = function (curArg) {
 			let val;
 			if (curArg.type === cElementType.cell || curArg.type === cElementType.cell3D) {
 				curArg = curArg.getValue();
 			}
-			
+
 			if (curArg.type === cElementType.error) {
 				return curArg;
 			} else if (curArg.type === cElementType.number || curArg.type === cElementType.bool || curArg.type === cElementType.empty) {
 				val = curArg.tocNumber().getValue();
 			} else if (curArg.type === cElementType.cellsRange || curArg.type === cElementType.cellsRange3D) {
 				return new cError(cErrorType.wrong_value_type);
- 			} else if (curArg.type === cElementType.string) {
+			} else if (curArg.type === cElementType.string) {
 				val = curArg.tocNumber();
 				if (val.type === cElementType.error || val.type === cElementType.empty) {
 					let d = new cDate(curArg.getValue());
 					if (isNaN(d)) {
 						return new cError(cErrorType.wrong_value_type);
 					} else {
-						val = Math.floor(( d.getTime() / 1000 - d.getTimezoneOffset() * 60 ) / c_sPerDay + ( AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1) ));
+						val = Math.floor((d.getTime() / 1000 - d.getTimezoneOffset() * 60) / c_sPerDay + (AscCommonExcel.c_DateCorrectConst + (AscCommon.bDate1904 ? 0 : 1)));
 					}
 				} else {
 					val = curArg.tocNumber().getValue();
@@ -2273,7 +2342,7 @@
 		};
 
 		let arg0 = arg[0], res;
-		if(!bIsSpecialFunction) {
+		if (!bIsSpecialFunction) {
 			if (arg0.type === cElementType.array) {
 				arg0 = arg0.getElement(0);
 			} else if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
@@ -2357,5 +2426,6 @@
 	window['AscCommonExcel'].yearFrac = yearFrac;
 	window['AscCommonExcel'].diffDate = diffDate;
 	window['AscCommonExcel'].days360 = days360;
+	window['AscCommonExcel'].getCorrectDate = getCorrectDate;
 	window['AscCommonExcel'].daysInYear = daysInYear;
 })(window);

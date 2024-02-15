@@ -52,6 +52,11 @@
 	var cErrorLocal = AscCommon.cErrorLocal;
 	var cErrorOrigin = AscCommon.cErrorOrigin;
 	var c_oAscNumFormatType = Asc.c_oAscNumFormatType;
+	var oSeriesInType = Asc.c_oAscSeriesInType;
+	var oSeriesType = Asc.c_oAscSeriesType;
+	var oSeriesDateUnitType = Asc.c_oAscDateUnitType;
+	var oFillType = Asc.c_oAscFillType;
+
 
 	var UndoRedoItemSerializable = AscCommonExcel.UndoRedoItemSerializable;
 	var UndoRedoData_CellSimpleData = AscCommonExcel.UndoRedoData_CellSimpleData;
@@ -78,6 +83,9 @@
 	var c_oAscDefinedNameReason = Asc.c_oAscDefinedNameReason;
 	var c_oNotifyType = AscCommon.c_oNotifyType;
 	var g_cCalcRecursion = AscCommonExcel.g_cCalcRecursion;
+
+	var cError = AscCommonExcel.cError;
+	var cErrorType = AscCommonExcel.cErrorType;
 
 	var g_nVerticalTextAngle = 255;
 	//определяется в WorksheetView.js
@@ -797,6 +805,11 @@
 				}
 				for (var listenerId in sheetContainer.defName3d) {
 					listeners[listenerId] = sheetContainer.defName3d[listenerId];
+				}
+			}
+			if (this.volatileListeners) {
+				for (var listenerId in this.volatileListeners) {
+					listeners[listenerId] = this.volatileListeners[listenerId];
 				}
 			}
 			if(tableNamesMap){
@@ -1557,6 +1570,7 @@
 			for (var i in tmpCellCache) {
 				this.wb.handlers && this.wb.handlers.trigger("cleanCellCache", i, [tmpCellCache[i]], true);
 			}
+			AscCommonExcel.g_oLOOKUPCache.clean();
 			AscCommonExcel.g_oVLOOKUPCache.clean();
 			AscCommonExcel.g_oHLOOKUPCache.clean();
 			AscCommonExcel.g_oMatchCache.clean();
@@ -2329,6 +2343,9 @@
 
 		this.customXmls = null;//[]
 		this.oGoalSeek = null;
+
+		this.timelineCaches = [];
+		this.TimelineStyles = null;
 	}
 	Workbook.prototype.init=function(tableCustomFunc, tableIds, sheetIds, bNoBuildDep, bSnapshot){
 		if(this.nActive < 0)
@@ -2362,6 +2379,10 @@
 		//ws
 		this.forEach(function (ws) {
 			ws.initPostOpen(self.wsHandlers, tableIds, sheetIds);
+		});
+		//timelinecache
+		this.timelineCaches.forEach(function(elem){
+			elem.initPostOpen(tableIds, sheetIds);
 		});
 		//show active if it hidden
 		var wsActive = this.getActiveWs();
@@ -2426,7 +2447,7 @@
 	Workbook.prototype.initPostOpenZip=function(pivotCaches, xmlParserContext){
 		var t = this;
 		this.forEach(function (ws) {
-			ws.initPostOpenZip(pivotCaches, t.oNumFmtsOpen);
+			ws.initPostOpenZip(pivotCaches, t.oNumFmtsOpen, t.dxfsOpen);
 		});
 		if (xmlParserContext) {
 			AscCommon.pptx_content_loader.Reader.ImageMapChecker = AscCommon.pptx_content_loader.ImageMapChecker;
@@ -2776,6 +2797,15 @@
 			var removedSheetId = removedSheet.getId();
 			this.dependencyFormulas.lockRecal();
 			var prepared = this.dependencyFormulas.prepareRemoveSheet(removedSheetId, removedSheet.getTableNames());
+
+			//remove timeline
+			if (removedSheet.timelines) {
+				for (let i = 0; i < removedSheet.timelines.length; i++) {
+					this.onTimeSlicerDelete(removedSheet.timelines[i].name);
+					this.onTimelineCacheDelete(removedSheet.timelines[i].name, true);
+				}
+			}
+
 			//delete sheet
 			var wsActive = this.getActiveWs();
 			var oVisibleWs = null;
@@ -2929,19 +2959,21 @@
 		});
 	};
 	Workbook.prototype.calculate = function (type, sheetId) {
-		var formulas;
+		let formulas;
 		if (type === Asc.c_oAscCalculateType.All) {
 			formulas = this.getAllFormulas();
-			for (var i = 0; i < formulas.length; ++i) {
-				var formula = formulas[i];
-				formula.removeDependencies();
-				formula.setFormula(formula.getFormula());
-				formula.parse();
-				formula.buildDependencies();
-			}
+			AscCommonExcel.executeInR1C1Mode(false, function () {
+				for (let i = 0; i < formulas.length; ++i) {
+					let formula = formulas[i];
+					formula.removeDependencies();
+					formula.setFormula(formula.getFormula());
+					formula.parse();
+					formula.buildDependencies();
+				}
+			});
 		} else if (type === Asc.c_oAscCalculateType.ActiveSheet) {
 			formulas = [];
-			var ws = sheetId !== undefined ? this.getWorksheetById(sheetId) : this.getActiveWs();
+			let ws = sheetId !== undefined ? this.getWorksheetById(sheetId) : this.getActiveWs();
 			ws.getAllFormulas(formulas);
 			sheetId = ws.getId();
 		} else {
@@ -3832,6 +3864,17 @@
 		}
 		return res.length ? res : null;
 	};
+	Workbook.prototype.getTimelineCachesByPivotTable = function (sheetId, pivotName) {
+		var res = [];
+		if (this.timelineCaches) {
+			for (var i = 0, l = this.timelineCaches.length; i < l; ++i) {
+				if (this.timelineCaches[i].isCachePivotTable(sheetId, pivotName)) {
+					res.push(this.timelineCaches[i]);
+				}
+			}
+		}
+		return res;
+	};
 	Workbook.prototype.getDrawingDocument = function() {
 		return this.DrawingDocument;
 	};
@@ -3958,6 +4001,60 @@
 		}
 
 		History.EndTransaction();
+	};
+
+	Workbook.prototype.deleteTimelinesByPivotTable = function (sheetId, pivotName) {
+		var wb = this;
+		var timelineCaches = wb.getTimelineCachesByPivotTable(sheetId, pivotName);
+		timelineCaches.forEach(function (timelineCache) {
+			wb.onTimeSlicerDelete(timelineCache.sourceName);
+			wb.onTimelineCacheDelete(timelineCache.sourceName, true);
+			wb.onTimelinesDelete(timelineCache.sourceName, true);
+		});
+	};
+
+	Workbook.prototype.deleteTimelinesByCacheSourceName = function (name) {
+		this.forEach(function (ws) {
+			ws.deleteTimelinesByCacheSourceName(name);
+		});
+	};
+
+	Workbook.prototype.onTimeSlicerDelete = function(sName) {
+		if(AscCommon.isFileBuild()) {
+			return false;
+		}
+		var bRet = false;
+		for(let i = 0; i < this.aWorksheets.length; ++i) {
+			bRet = bRet || this.aWorksheets[i].onTimeSlicerDelete(sName);
+		}
+
+		return bRet;
+	};
+	Workbook.prototype.onTimelineCacheDelete = function (sName, addToHistory) {
+		if (this.timelineCaches) {
+			for(let i = 0; i < this.timelineCaches.length; ++i) {
+				if (this.timelineCaches[i].sourceName === sName) {
+					if (addToHistory) {
+						History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_TimelineCacheDelete,
+							null, null, new UndoRedoData_FromTo(this.timelineCaches[i], null));
+					}
+					this.timelineCaches.splice(i, 1);
+					i--;
+					break;
+				}
+			}
+		}
+	};
+	Workbook.prototype.onTimelinesDelete = function(sName, addToHistory) {
+		if(AscCommon.isFileBuild()) {
+			return false;
+		}
+		var bRet = false;
+		for(let i = 0; i < this.aWorksheets.length; ++i) {
+			bRet = bRet || this.aWorksheets[i].onTimelinesDelete(sName, addToHistory);
+		}
+
+		return bRet;
 	};
 	Workbook.prototype.handleDrawings = function (fCallback) {
 		for(var i = 0; i < this.aWorksheets.length; ++i) {
@@ -5104,6 +5201,7 @@
 		this.bExcludeCollapsed = false;
 
 		this.oNumFmtsOpen = {};
+		this.dxfsOpen = [];//todo move to InitOpenManager
 
 		/*handlers*/
 		this.handlers = null;
@@ -5119,6 +5217,10 @@
 		this.aCellWatches = [];
 		
 		this.userProtectedRanges = [];
+
+		this.bFillHandleRightClick = false;
+		this.activeFillType = null;
+		this.timelines = [];
 	}
 
 	Worksheet.prototype.getCompiledStyle = function (row, col, opt_cell, opt_styleComponents) {
@@ -5538,9 +5640,9 @@
 			elem.initPostOpen(t);
 		});
 	};
-	Worksheet.prototype.initPostOpenZip = function (pivotCaches, oNumFmts) {
+	Worksheet.prototype.initPostOpenZip = function (pivotCaches, oNumFmts, dxfsOpen) {
 		this.pivotTables.forEach(function(pivotTable){
-			pivotTable.initPostOpenZip(oNumFmts);
+			pivotTable.initPostOpenZip(oNumFmts, dxfsOpen);
 		});
 		this.aSlicers.forEach(function(slicer){
 			slicer.initPostOpenZip(pivotCaches);
@@ -8537,7 +8639,9 @@
 		var range = this.getRange3(0, 0, gc_nMaxRow0, gc_nMaxCol0);
 		range._setPropertyNoEmpty(null, null, function(cell) {
 			if (cell.isFormula()) {
-				formulas.push(needReturnCellProps ? {f: cell.getFormulaParsed(), c: cell.nCol, r: cell.nRow} : cell.getFormulaParsed());
+				if (!cell.formulaParsed.ref || (cell.formulaParsed.ref && cell.formulaParsed.checkFirstCellArray(cell))) {
+					formulas.push(needReturnCellProps ? {f: cell.getFormulaParsed(), c: cell.nCol, r: cell.nRow} : cell.getFormulaParsed());
+				}
 			}
 		});
 		for (var i = 0; i < this.TableParts.length; ++i) {
@@ -8672,11 +8776,6 @@
 		}
 		return res;
 	};
-	Worksheet.prototype.initPivotTables = function () {
-		for (var i = 0; i < this.pivotTables.length; ++i) {
-			this.pivotTables[i].init();
-		}
-	};
 	Worksheet.prototype.updatePivotTable = function(pivotTable, changed, dataRow, canModifyDocument) {
 		if (!changed.data && !changed.style) {
 			return;
@@ -8717,26 +8816,60 @@
 		oCellValue.text = text.toString();
 		cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 	};
+	/**
+	 * @param {CT_pivotTableDefinition} pivotTable 
+	 */
 	Worksheet.prototype._updatePivotTableCellsPage = function (pivotTable) {
 		//CT_pivotTableDefinition.prototype.getLayoutByCellPage
 		if (pivotTable.pageFieldsPositions) {
-			for (var i = 0; i < pivotTable.pageFieldsPositions.length; ++i) {
-				var pos = pivotTable.pageFieldsPositions[i];
-				var cells = this.getRange4(pos.row, pos.col);
+			const fieldValuesCache = [];
+			for (let i = 0; i < pivotTable.pageFieldsPositions.length; ++i) {
+				const pos = pivotTable.pageFieldsPositions[i];
+				let cells = this.getRange4(pos.row, pos.col);
 				this._updatePivotTableSetCellValue(cells, pivotTable.getPageFieldName(i));
+				const pageField = pivotTable.asc_getPageFields()[i];
+				const index = pageField.asc_getIndex();
+				cells.setStyle(pivotTable.getFormatting({
+					axis: Asc.c_oAscAxis.AxisPage,
+					type: Asc.c_oAscPivotAreaType.Button,
+					isData: false,
+					field: index
+				}));
 				cells = this.getRange4(pos.row, pos.col + 1);
-				var num = pivotTable.getPivotFieldNum(pos.pageField.fld);
+				const num = pivotTable.getPivotFieldNum(pos.pageField.fld);
 				if (num) {
 					cells.setNum(num);
 				}
-				var oCellValue = pivotTable.getPageFieldCellValue(i);
+				const oCellValue = pivotTable.getPageFieldCellValue(i);
 				if (oCellValue.type !== AscCommon.CellValueType.String) {
 					cells.setAlignHorizontal(AscCommon.align_Left);
 				}
+				const fieldValues = {
+					fieldIndex: index,
+					value: pageField.item,
+					type: Asc.c_oAscItemType.Data
+				};
+				let valuesInfo;
+				if (pageField.item !== null) {
+					fieldValuesCache.push(fieldValues);
+					valuesInfo = fieldValuesCache;
+				} else {
+					valuesInfo = fieldValuesCache.concat([fieldValues]);
+				}
+				cells.setStyle(pivotTable.getFormatting({
+					axis: Asc.c_oAscAxis.AxisPage,
+					type: Asc.c_oAscPivotAreaType.Normal,
+					isData: false,
+					field: index,
+					valuesInfo: valuesInfo
+				}));
 				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 			}
 		}
 	};
+	/**
+	 * @param {CT_pivotTableDefinition} pivotTable
+	 */
 	Worksheet.prototype._updatePivotTableCellsHeader = function (pivotTable) {
 		//CT_pivotTableDefinition.prototype.getLayoutByCellHeader
 		var location = pivotTable.location;
@@ -8763,6 +8896,13 @@
 				}
 			}
 			this._updatePivotTableSetCellValue(cells, pivotTable.getDataFieldName(0));
+			const formatting = pivotTable.getFormatting({
+				type: Asc.c_oAscPivotAreaType.Normal,
+				axis: Asc.c_oAscAxis.AxisValues,
+				isData: false,
+				field: null
+			});
+			cells.setStyle(formatting);
 		}
 		if (pivotTable.showHeaders && colFields) {
 			cells = this.getRange4(pivotRange.r1, pivotRange.c1 + location.firstDataCol);
@@ -8786,17 +8926,167 @@
 					cells.setOffset(offset);
 				}
 			}
+			// update all col buttons area formats
+			for(let i = 0; i < colFields.length; i += 1) {
+				const cells = this.getRange4(pivotRange.r1, pivotRange.c1 + location.firstDataCol + i);
+				const index = colFields[i].asc_getIndex();
+				const formatting = pivotTable.getFormatting({
+					type: Asc.c_oAscPivotAreaType.Button,
+					axis: Asc.c_oAscAxis.AxisCol,
+					isData: false,
+					field: index
+				});
+				cells.setStyle(formatting);
+			}
+			// update topRight pivot area formats
+			const pivotTableLenC = pivotRange.c2 - pivotRange.c1;
+			const lenC = pivotTableLenC - location.firstDataCol - colFields.length + 1;
+			this.updatePivotTableCellsLablesOriginOffsets(pivotTable, {
+				isData: false,
+				type: Asc.c_oAscPivotAreaType.TopRight,
+				field: null
+			},  pivotRange.r1, pivotRange.c1 + location.firstDataCol + colFields.length, 1, lenC);
 		}
+		// update origin pivot area formats
+		this.updatePivotTableCellsLablesOriginOffsets(pivotTable, {
+			isData: false,
+			type: Asc.c_oAscPivotAreaType.Origin,
+			field: null
+		},  pivotRange.r1, pivotRange.c1, location.firstDataRow - 1, location.firstDataCol);
 	};
+	/**
+	 * @param {CT_pivotTableDefinition} pivotTable
+	 * @param {PivotFormatsManagerQuery} query
+	 * @param {number} startR
+	 * @param {number} startC
+	 * @param {number} endR
+	 * @param {number} endC
+	 */
+	Worksheet.prototype.updatePivotTableCellsLablesOriginOffsets = function(pivotTable, query, startR, startC, lenR, lenC) {
+		for (let i = 0; i < lenR; i += 1) {
+			for (let j = 0; j < lenC; j += 1) {
+				const offset = new Asc.Range(j, i, j, i);
+				const cell = this.getRange4(startR + i, startC + j);
+				query.offset = offset;
+				const formatting = pivotTable.getFormatting(query);
+				cell.setStyle(formatting);
+			}
+		}
+		query.offset = null;
+		return;
+	};
+	/**
+	 * @param {CT_pivotTableDefinition} pivotTable
+	 * @param {number[]} rowFieldsOffset
+	 * @param {boolean} isRowItem
+	 * @param {number} itemIndex
+	 * @param {PivotFormatsManagerQuery} query
+	 */
+	Worksheet.prototype.updatePivotTableCellsRowColLablesSubtotalsOffsets = function(pivotTable, rowFieldsOffset, isRowItem, itemIndex, itemXIndex, query) {
+		const pivotRange = pivotTable.getRange();
+		const location = pivotTable.location;
+		const items = isRowItem ? pivotTable.getRowItems() : pivotTable.getColItems();
+		const itemR = items[itemIndex].getR();
+		const r1 = isRowItem ? pivotRange.r1 + location.firstDataRow : pivotRange.r1 + location.firstHeaderRow;
+		const c1 = isRowItem ? pivotRange.c1 : pivotRange.c1 + location.firstDataCol;
+		const startRow = isRowItem ? r1 + itemIndex : r1 + itemR;
+		const startCol = isRowItem ? c1 + rowFieldsOffset[itemXIndex] : c1 + itemIndex;
+		// using for colItems Labels
+		const endRow = r1 + location.firstDataRow - 1;
+		// using for rowItems Labels
+		const endCol = c1 + location.firstDataCol;
+		const startIndex = isRowItem ? startCol : startRow;
+		const endIndex = isRowItem ? endCol : endRow;
+		for (let i = startIndex; i < endIndex; i += 1) {
+			const r = isRowItem ? startRow : i;
+			const c = isRowItem ? i : startCol;
+			const offsetR = isRowItem ? Asc.st_PIVOT_AREA_OFFSET_END : (i === endIndex - 1 ? Asc.st_PIVOT_AREA_OFFSET_END : i - startIndex);
+			const offsetC = isRowItem ? (i === endIndex - 1 ? Asc.st_PIVOT_AREA_OFFSET_END : i - startIndex) : Asc.st_PIVOT_AREA_OFFSET_END;
+			
+			const offset = new Asc.Range(offsetC, offsetR, offsetC, offsetR);
+			const cell = this.getRange4(r, c);
+
+			query.offset = offset;
+			const formatting = pivotTable.getFormatting(query);
+			cell.setStyle(formatting);
+		}
+		query.offset = null;
+		return;
+	};
+	/**
+	 * @param {CT_pivotTableDefinition} pivotTable
+	 * @param {number[]} rowFieldsOffset
+	 * @param {boolean} isRowItem
+	 * @param {number} itemIndex
+	 * @param {PivotFormatsManagerQuery} query
+	 */
+	Worksheet.prototype.updatePivotTableCellsRowColLablesDataOffsets = function(pivotTable, rowFieldsOffset, isRowItem, itemIndex, itemXIndex, query) {
+		const pivotRange = pivotTable.getRange();
+		const location = pivotTable.location;
+		const items = isRowItem ? pivotTable.getRowItems() : pivotTable.getColItems();
+		const itemR = items[itemIndex].getR();
+		const itemSummaryR = itemR + itemXIndex;
+
+		const r1 = isRowItem ? pivotRange.r1 + location.firstDataRow : pivotRange.r1 + location.firstHeaderRow;
+		const c1 = isRowItem ? pivotRange.c1 : pivotRange.c1 + location.firstDataCol;
+		const startRow = isRowItem ? r1 + itemIndex: r1 + itemSummaryR;
+		const startCol = isRowItem ? c1 + rowFieldsOffset[itemSummaryR] : c1 + itemIndex;
+		for (let i = itemIndex; i < items.length; i += 1) {
+			const item = items[i];
+			const nextItem = items[i + 1];
+			const r = isRowItem ? r1 + i : startRow;
+			const c = isRowItem ? startCol : c1 + i;
+			if (isRowItem && c1 + rowFieldsOffset[item.getR()] <= startCol && i !== itemIndex) {
+				break;
+			}
+			if (!isRowItem && r1 + item.getR() <= startRow && i !== itemIndex) {
+				break;
+			}
+			const offsetR = isRowItem ? ((!nextItem || (c1 + rowFieldsOffset[nextItem.getR()] <= startCol)) ? Asc.st_PIVOT_AREA_OFFSET_END : r - startRow) : Asc.st_PIVOT_AREA_OFFSET_END;
+			const offsetC = isRowItem ? Asc.st_PIVOT_AREA_OFFSET_END : ((!nextItem || (r1 + nextItem.getR() <= startRow)) ? Asc.st_PIVOT_AREA_OFFSET_END : c - startCol);
+			
+			const offset = new Asc.Range(offsetC, offsetR, offsetC, offsetR);
+			const cell = this.getRange4(r, c);
+
+			query.offset = offset;
+			const formatting = pivotTable.getFormatting(query);
+			cell.setStyle(formatting);
+		}
+		query.offset = null;
+		return;
+	};
+	/**
+	 * @param {CT_pivotTableDefinition} pivotTable
+	 * @param {number[]} rowFieldsOffset
+	 * @param {boolean} isRowItem
+	 * @param {number} itemIndex
+	 * @param {PivotFormatsManagerQuery} query
+	 */
+	Worksheet.prototype._updatePivotTableCellsRowColLablesOffsets = function(pivotTable, rowFieldsOffset, isRowItem, itemIndex, itemXIndex, query) {
+		const items = isRowItem ? pivotTable.getRowItems() : pivotTable.getColItems();
+		query.axis = isRowItem ? Asc.c_oAscAxis.AxisRow : Asc.c_oAscAxis.AxisCol;
+		const item = items[itemIndex];
+		if (item.t === Asc.c_oAscItemType.Data) {
+			this.updatePivotTableCellsRowColLablesDataOffsets(pivotTable, rowFieldsOffset, isRowItem, itemIndex, itemXIndex, query);
+		} else {
+			this.updatePivotTableCellsRowColLablesSubtotalsOffsets(pivotTable, rowFieldsOffset, isRowItem, itemIndex, itemXIndex, query);
+		}
+		return;
+	};
+	/**
+	 * @param {CT_pivotTableDefinition} pivotTable 
+	 * @param {number[]} rowFieldsOffset 
+	 */
 	Worksheet.prototype._updatePivotTableCellsRowColLables = function(pivotTable, rowFieldsOffset) {
 		//CT_pivotTableDefinition.prototype.getLayoutByCellHeaderRowColLables
-		var items, fields, field, oCellValue, fieldIndex, cells, r1, c1, i, j, valuesIndex;
+		var items, fields, field, oCellValue, fieldIndex, cells, r1, c1, i, j, valuesIndex, isRowItems = false;
 		var pivotRange = pivotTable.getRange();
 		var location = pivotTable.location;
 		var hasLeftAlignInRowLables = false;
 		var outlines = [0];
 		if (rowFieldsOffset) {
 			items = pivotTable.getRowItems();
+			isRowItems = true;
 			fields = pivotTable.asc_getRowFields();
 			r1 = pivotRange.r1 + location.firstDataRow;
 			c1 = pivotRange.c1;
@@ -8836,12 +9126,16 @@
 		var pivotFields = pivotTable.asc_getPivotFields();
 
 		var totalTitleRange = [];
+		var valuesCache = [];
 		for (i = 0; i < items.length; ++i) {
 			var item = items[i];
+			/** @type {PivotItemFieldsInfo[]} */
+			var fieldValues = [];
 			var r = item.getR();
 			for (j = 0; j < r; ++j) {
 				fieldIndex = fields[j].asc_getIndex();
 				field = pivotFields[fieldIndex];
+				fieldValues.push(valuesCache[j]);
 				if (AscCommonExcel.st_VALUES !== fieldIndex && field.asc_getFillDownLabelsDefault() && totalTitleRange[j]) {
 					if (rowFieldsOffset) {
 						cells = this.getRange4(r1 + i, c1 + rowFieldsOffset[j]);
@@ -8853,6 +9147,15 @@
 				}
 			}
 			for (j = 0; j < item.x.length; ++j) {
+				/** @type {PivotFormatsManagerQuery} */
+				const query = {
+					valuesInfo: fieldValues,
+					isData: false,
+					isGrandRow: isRowItems && item.t === Asc.c_oAscItemType.Grand,
+					isGrandCol: !isRowItems && item.t === Asc.c_oAscItemType.Grand,
+					type: Asc.c_oAscPivotAreaType.Normal,
+					field: null
+				};
 				fieldIndex = null;
 				var outline = 0;
 				if (rowFieldsOffset) {
@@ -8867,7 +9170,22 @@
 					fieldIndex = fields[r + j].asc_getIndex();
 					if (AscCommonExcel.st_VALUES !== fieldIndex) {
 						oCellValue = pivotTable.getPivotFieldCellValue(fieldIndex, item.x[j].getV());
+						fieldValues.push({
+							fieldIndex: fieldIndex,
+							value: item.x[j].getV(),
+							type: Asc.c_oAscItemType.Data
+						});
+						query.field = fieldIndex;
+						this._updatePivotTableCellsRowColLablesOffsets(pivotTable, rowFieldsOffset, isRowItems, i, j, query);
 					} else {
+						fieldValues.push({
+							fieldIndex: AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD,
+							value: item.i,
+							type: Asc.c_oAscItemType.Data
+						});
+						query.field = AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD;
+						const formatting = pivotTable.getFormatting(query);
+						cells.setStyle(formatting);
 						oCellValue = new AscCommonExcel.CCellValue();
 						oCellValue.type = AscCommon.CellValueType.String;
 						oCellValue.text = pivotTable.getDataFieldName(item.i);
@@ -8878,9 +9196,21 @@
 					oCellValue.type = AscCommon.CellValueType.String;
 					if (-1 === valuesIndex) {
 						oCellValue.text = pivotTable.grandTotalCaption || AscCommon.translateManager.getValue(AscCommonExcel.GRAND_TOTAL_CAPTION);
+						this._updatePivotTableCellsRowColLablesOffsets(pivotTable, rowFieldsOffset, isRowItems, i, j, query);
 					} else {
 						oCellValue.text = AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(item.t));
 						oCellValue.text += ' ' + pivotTable.getDataFieldName(item.i);
+						fieldValues.push({
+							fieldIndex: AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD,
+							value: item.i,
+							type: Asc.c_oAscItemType.Data
+						});
+						this._updatePivotTableCellsRowColLablesOffsets(pivotTable, rowFieldsOffset, isRowItems, i, j, query);
+					}
+					if (fields && fields[0]) {
+						if (pivotFields[fields[0].asc_getIndex()] && pivotFields[fields[0].asc_getIndex()].num) {
+							cells.setNum(pivotFields[fields[0].asc_getIndex()].num);
+						}
 					}
 				} else if (Asc.c_oAscItemType.Blank === item.t) {
 					break;
@@ -8893,17 +9223,37 @@
 					if (r + j > valuesIndex) {
 						fieldIndex = fields[r + j].asc_getIndex();
 						field = pivotFields[fieldIndex];
+						fieldValues.push({
+							fieldIndex: fieldIndex,
+							value: item.x[j].getV(),
+							type: item.t
+						});
 						if (AscCommonExcel.st_VALUES !== fieldIndex) {
 							if (field.subtotalCaption) {
 								oCellValue.text = field.subtotalCaption;
 							} else {
 								oCellValue.text = totalTitleRange[r + j].getValueWithFormatSkipToSpace();
 								oCellValue.text += ' ' + AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(item.t));
+								query.field = fieldIndex;
+								this._updatePivotTableCellsRowColLablesOffsets(pivotTable, rowFieldsOffset, isRowItems, i, j, query);
 							}
 						}
 					} else {
+						fieldIndex = fields[r + j].asc_getIndex();
+						field = pivotFields[fieldIndex];
+						fieldValues.push({
+							fieldIndex: fieldIndex,
+							value: item.x[j].getV(),
+							type: item.t
+						}, {
+							fieldIndex: AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD,
+							value: item.i,
+							type: Asc.c_oAscItemType.Data
+						});
+						query.field = fieldIndex;
 						oCellValue.text = totalTitleRange[r + j].getValueWithFormatSkipToSpace();
 						oCellValue.text += ' ' + pivotTable.getDataFieldName(item.i);
+						this._updatePivotTableCellsRowColLablesOffsets(pivotTable, rowFieldsOffset, isRowItems, i, j, query);
 					}
 				}
 				if (null !== fieldIndex) {
@@ -8919,6 +9269,7 @@
 					cells.setIndent(outline);
 				}
 				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
+				valuesCache = fieldValues;
 			}
 		}
 	};
@@ -8935,15 +9286,15 @@
 		var location = pivotTable.location;
 		var c1 = pivotRange.c1;
 		var r1 = pivotRange.r1 + location.firstDataRow - 1;
+		cells = this.getRange4(r1, c1);
 		if (pivotTable.showHeaders) {
 			if (pivotTable.compact || location.firstDataCol !== rowFields.length) {
 				if(1 === rowFields.length && AscCommonExcel.st_VALUES === rowFields[0].asc_getIndex()){
-					this._updatePivotTableSetCellValue(this.getRange4(r1, c1), pivotTable.dataCaption || AscCommon.translateManager.getValue(AscCommonExcel.DATA_CAPTION));
+					this._updatePivotTableSetCellValue(cells, pivotTable.dataCaption || AscCommon.translateManager.getValue(AscCommonExcel.DATA_CAPTION));
 				} else {
-					this._updatePivotTableSetCellValue(this.getRange4(r1, c1), pivotTable.rowHeaderCaption || AscCommon.translateManager.getValue(AscCommonExcel.ROW_HEADER_CAPTION));
+					this._updatePivotTableSetCellValue(cells, pivotTable.rowHeaderCaption || AscCommon.translateManager.getValue(AscCommonExcel.ROW_HEADER_CAPTION));
 				}
 			} else {
-				cells = this.getRange4(r1, c1);
 				index = rowFields[0].asc_getIndex();
 				if (AscCommonExcel.st_VALUES !== index) {
 					this._updatePivotTableSetCellValue(cells, pivotTable.getPivotFieldName(index));
@@ -8975,7 +9326,51 @@
 			}
 			rowFieldsOffset[i] = c1 - pivotRange.c1;
 		}
+		r1 = pivotRange.r1 + location.firstDataRow - 1;
+		c1 =  pivotRange.c1;
+		if (pivotTable.compact) {
+			const cells = this.getRange4(r1, c1);
+			const index = rowFields[0].asc_getIndex();
+			const formatting = pivotTable.getFormatting({
+				type: Asc.c_oAscPivotAreaType.Button,
+				axis: Asc.c_oAscAxis.AxisRow,
+				isData: false,
+				field: index
+			});
+			cells.setStyle(formatting);
+		} else {
+			for (let i = 0; i < rowFields.length; i += 1) {
+				const cells = this.getRange4(r1, c1 + i);
+				const index = rowFields[i].asc_getIndex();
+				const formatting = pivotTable.getFormatting({
+					type: Asc.c_oAscPivotAreaType.Button,
+					axis: Asc.c_oAscAxis.AxisRow,
+					isData: false,
+					field: index
+				});
+				cells.setStyle(formatting);
+			}
+		}
 		return rowFieldsOffset;
+	};
+	/**
+	 * @param {CT_pivotTableDefinition} pivotTable 
+	 */
+	Worksheet.prototype.setFormatsCellsDataNoDataField = function(pivotTable) {
+		const pivotRange = pivotTable.getRange();
+		const location = pivotTable.location;
+		const r1 = pivotRange.r1 + location.firstDataRow;
+		const c1 = pivotRange.c1 + location.firstDataCol;
+		const r2 = pivotRange.r2;
+		const c2 = pivotRange.c2;
+		for(let i = r1; i <= r2; i += 1) {
+			for(let j = c1; j <= c2; j += 1) {
+				const cell = this.getRange4(i, j);
+				cell.setStyle(pivotTable.getFormatting({
+					type: Asc.c_oAscPivotAreaType.All,
+				}));
+			}
+		}
 	};
 	/**
 	 * A function that updates the data in the cells of a pivot table.
@@ -8983,68 +9378,90 @@
 	 * @param {PivotDataElem} dataRow
 	 */
 	Worksheet.prototype._updatePivotTableCellsData = function(pivotTable, dataRow) {
-		var rowFields = pivotTable.asc_getRowFields();
-		var rowItems = pivotTable.getRowItems();
-		var colFields = pivotTable.asc_getColumnFields();
-		var colItems = pivotTable.getColItems();
-		var pivotFields = pivotTable.asc_getPivotFields();
-		var dataFields = pivotTable.asc_getDataFields();
+		const rowFields = pivotTable.asc_getRowFields();
+		const rowItems = pivotTable.getRowItems();
+		const colFields = pivotTable.asc_getColumnFields();
+		const colItems = pivotTable.getColItems();
+		const pivotFields = pivotTable.asc_getPivotFields();
+		const dataFields = pivotTable.asc_getDataFields();
 		if (!rowItems || !colItems || !dataFields) {
+			this.setFormatsCellsDataNoDataField(pivotTable);
 			return;
 		}
-		var valuesIndex = pivotTable.getRowFieldsValuesIndex();
-		var pivotRange = pivotTable.getRange();
-		var location = pivotTable.location;
-		var r1 = pivotRange.r1 + location.firstDataRow;
-		var c1 = pivotRange.c1 + location.firstDataCol;
-		let traversal = new AscCommonExcel.DataRowTraversal(pivotFields, dataFields, rowItems, colItems, rowFields, colFields);
+		const valuesIndex = pivotTable.getRowFieldsValuesIndex();
+		const pivotRange = pivotTable.getRange();
+		const location = pivotTable.location;
+		const r1 = pivotRange.r1 + location.firstDataRow;
+		const c1 = pivotRange.c1 + location.firstDataCol;
+
+		const traversal = new AscCommonExcel.DataRowTraversal(pivotFields, dataFields, rowItems, colItems, rowFields, colFields);
 		traversal.initRow(dataRow);
-		
-		var fieldIndex;
-		let props = {rowFieldSubtotal: undefined, itemSd: undefined};
-		var oCellValue;
-		for (var rowItemsIndex = 0; rowItemsIndex < rowItems.length; ++rowItemsIndex) {
-			var rowItem = rowItems[rowItemsIndex];
+
+		const props = {rowFieldSubtotal: undefined, itemSd: undefined};
+		let fieldIndex;
+		for (let rowItemsIndex = 0; rowItemsIndex < rowItems.length; ++rowItemsIndex) {
+			const rowItem = rowItems[rowItemsIndex];
 			if (Asc.c_oAscItemType.Blank === rowItem.t) {
 				continue;
 			}
-			var rowR = rowItem.getR();
+			const rowR = rowItem.getR();
 			traversal.setStartRowIndex(rowR);
 			props.rowFieldSubtotal = Asc.c_oAscItemType.Default;
 			props.itemSd = true;
 			if (Asc.c_oAscItemType.Grand !== rowItem.t && rowFields) {
-				for (var rowItemsXIndex = 0; rowItemsXIndex < rowItem.x.length; ++rowItemsXIndex) {
+				for (let rowItemsXIndex = 0; rowItemsXIndex < rowItem.x.length; ++rowItemsXIndex) {
 					fieldIndex = rowFields[rowR + rowItemsXIndex].asc_getIndex();
 					if (!traversal.setRowIndex(pivotFields, fieldIndex, rowItem, rowR, rowItemsXIndex, props)) {
 						break;
 					}
 				}
 			} else {
+				traversal.rowValueCache = [];
 				traversal.rowFieldItemCache = [];
 			}
-			//todo
 			if (Asc.c_oAscItemType.Data !== rowItem.t || !rowFields || rowR + rowItem.x.length === rowFields.length ||
 				(AscCommonExcel.st_VALUES !== fieldIndex && pivotFields[fieldIndex] &&
 				(pivotFields[fieldIndex].checkSubtotalTop() || !props.itemSd) && rowR > valuesIndex)) {
-				traversal.initCol(dataRow);
 
-				for (var colItemsIndex = 0; colItemsIndex < colItems.length; ++colItemsIndex) {
-					var colItem = colItems[colItemsIndex];
-					var colR = colItem.getR();
-					traversal.setStartColIndex(pivotFields, fieldIndex, colItem, colR, colFields, rowItem);
-					oCellValue = traversal.getCellValue(dataFields, rowItem, colItem, props, dataRow, rowItemsIndex, colItemsIndex);
+				traversal.initCol(dataRow);
+				for (let colItemsIndex = 0; colItemsIndex < colItems.length; ++colItemsIndex) {
+					const colItem = colItems[colItemsIndex];
+					const colR = colItem.getR();
+					traversal.setStartColIndex(pivotFields, colItem, colR, colFields);
+					const oCellValue = traversal.getCellValue(dataFields, rowItem, colItem, props, dataRow, rowItemsIndex, colItemsIndex);
 					if (oCellValue) {
-						var cells = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
-						if (traversal.dataField && traversal.dataField.num) {
-							cells.setNum(traversal.dataField.num);
+						const dataIndex = Math.max(rowItem.i, colItem.i);
+						const cell = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
+						const isGrandRow = rowItem.t === Asc.c_oAscItemType.Grand;
+						const isGrandCol = colItem.t === Asc.c_oAscItemType.Grand;
+						const axis = isGrandRow ? Asc.c_oAscAxis.AxisCol : Asc.c_oAscAxis.AxisRow;
+						const formatting = pivotTable.getFormatting({
+							valuesInfo: traversal.getCurrentItemFieldsInfo(rowItem, colItem),
+							isGrandRow: isGrandRow,
+							isGrandCol: isGrandCol,
+							isData: true,
+							type: Asc.c_oAscPivotAreaType.Normal,
+							field: isGrandRow ? traversal.fieldIndex : fieldIndex,
+							axis: axis,
+						});
+						if (formatting !== null) {
+							formatting.num = formatting.num || (dataFields[dataIndex].num)
+							cell.setStyle(formatting);
+						} else if (dataFields[dataIndex].num){
+							cell.setNum(dataFields[dataIndex].num);
 						}
-						cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
+						cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 					}
 				}
 			}
 		}
 	};
+	/**
+	 * @param {CT_pivotTableDefinition} pivotTable 
+	 * @param {PivotDataElem} dataRow 
+	 */
 	Worksheet.prototype._updatePivotTableCells = function (pivotTable, dataRow) {
+		pivotTable.formatsManager.updateCollection();
 		this._updatePivotTableCellsPage(pivotTable);
 		this._updatePivotTableCellsHeader(pivotTable);
 		this._updatePivotTableCellsRowColLables(pivotTable);
@@ -9449,6 +9866,7 @@
 	};
 	Worksheet.prototype._deletePivotTable = function (pivotTables, pivotTable, index, withoutCells) {
 		this.workbook.deleteSlicersByPivotTable(this.getId(), pivotTable.asc_getName());
+		this.workbook.deleteTimelinesByPivotTable(this.getId(), pivotTable.asc_getName());
 
 		if (!withoutCells) {
 			this.clearPivotTableCell(pivotTable);
@@ -9482,6 +9900,15 @@
 			if (this.pivotTables[i].contains(col, row)) {
 				res = this.pivotTables[i];
 				break;
+			}
+		}
+		return res;
+	};
+	Worksheet.prototype.getPivotTablesIntersectingRange = function (bbox) {
+		var res = [];
+		for (var i = 0; i < this.pivotTables.length; ++i) {
+			if (this.pivotTables[i].intersection(bbox)) {
+				res.push(this.pivotTables[i]);
 			}
 		}
 		return res;
@@ -10560,6 +10987,11 @@
 	Worksheet.prototype.onSlicerChangeName = function (sName, sNewName) {
 		for(var i = 0; i < this.Drawings.length; ++i) {
 			this.Drawings[i].onSlicerChangeName(sName, sNewName);
+		}
+	};
+	Worksheet.prototype.onTimeSlicerDelete = function (sName) {
+		for(var i = 0; i < this.Drawings.length; ++i) {
+			this.Drawings[i].onTimeSlicerDelete(sName);
 		}
 	};
 
@@ -12420,6 +12852,41 @@
 		});
 		return count;
 	};
+	/**
+	 * The method returns a flag that recognizes fill handle was called from right click
+	 * @returns {boolean}
+	 */
+	Worksheet.prototype.getFillHandleRightClick = function () {
+		return this.bFillHandleRightClick;
+	};
+	/**
+	 * The method sets a flag that recognizes fill handle was called from right click
+	 * @param {boolean} bFillHandleRightClick
+	 */
+	Worksheet.prototype.setFillHandleRightClick = function (bFillHandleRightClick) {
+		this.bFillHandleRightClick = bFillHandleRightClick;
+	};
+	Worksheet.prototype.getActiveFillType = function () {
+		return this.activeFillType;
+	};
+	Worksheet.prototype.setActiveFillType = function (val) {
+		this.activeFillType = val;
+	};
+	Worksheet.prototype.onTimelinesDelete = function(name, addToHistory) {
+		if (this.timelines && this.timelines.length) {
+			for (let i = 0; i < this.timelines.length; i++) {
+				if (this.timelines[i].name === name) {
+					if (addToHistory) {
+						History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_TimelineDelete,
+							this.getId(), null, new UndoRedoData_FromTo(this.timelines[i], null));
+					}
+
+					this.timelines.splice(i, 1);
+					i--;
+				}
+			}
+		}
+	};
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
@@ -13679,6 +14146,8 @@
 					if (aStandartNumFormatsId[t.getNumFormatStr()] == 0) {
 						t.setNum(new AscCommonExcel.Num({id: valueCalc.numFormat}));
 					}
+				} else if (typeof valueCalc.numFormat === "string") {
+					t.setNum(new AscCommonExcel.Num({f: valueCalc.numFormat}));
 				} else if (AscCommonExcel.cNumFormatFirstCell === valueCalc.numFormat) {
 					//ищет в формуле первый рэндж и устанавливает формат ячейки как формат первой ячейки в рэндже
 					//принимают формат первой ячейки в рейндже только функции с inheritFormat = true
@@ -13749,6 +14218,7 @@
 			}
 
 			this.ws.workbook.dependencyFormulas.addToCleanCellCache(this.ws.getId(), this.nRow, this.nCol);
+			AscCommonExcel.g_oLOOKUPCache.remove(this);
 			AscCommonExcel.g_oVLOOKUPCache.remove(this);
 			AscCommonExcel.g_oHLOOKUPCache.remove(this);
 			AscCommonExcel.g_oMatchCache.remove(this);
@@ -14231,6 +14701,9 @@
 				break;
 			case cErrorOrigin["uf"]:
 				return cErrorLocal["uf"];
+				break;
+			case cErrorOrigin["calc"]:
+				return cErrorLocal["calc"];
 				break;
 		}
 		return cErrorLocal["nil"];
@@ -15405,6 +15878,9 @@
 						  });
 	};
 	Range.prototype.setStyle=function(val){
+		if (val === null) {
+			return;
+		}
 		History.Create_NewPoint();
 		this.createCellOnRowColCross();
 		var fSetProperty = this._setProperty;
@@ -18472,6 +18948,7 @@
 			if(nIndex < 0)
 				bReverse = true;
 			var oPromoteHelper = new PromoteHelper(bVertical, bReverse, from);
+			oPromoteHelper.setFillHandleRightClick(wsFrom.getFillHandleRightClick());
 			let aInputDaysOfWeek = _addAInputTimePeriod(oDefaultCultureInfo.DayNames, false);
 			let aInputShortDaysOfWeek = _addAInputTimePeriod(oDefaultCultureInfo.AbbreviatedDayNames, false);
 			let aInputMonths = _addAInputTimePeriod(oDefaultCultureInfo.MonthNames, true);
@@ -18567,9 +19044,15 @@
 			if(bCtrl)
 				bCopy = true;
 			//в случае одной ячейки с числом меняется смысл bCtrl
-			if(1 == nWidth && 1 == nHeight && oPromoteHelper.isOnlyIntegerSequence())
-				bCopy = !bCopy;
+			if(1 == nWidth && 1 == nHeight && oPromoteHelper.isOnlyIntegerSequence()) {
+				let fillType = wsTo && wsTo.getActiveFillType();
+				if (fillType !== Asc.c_oAscFillType.fillDown && fillType !== Asc.c_oAscFillType.fillUp
+				&& fillType !== Asc.c_oAscFillType.fillLeft && fillType !== Asc.c_oAscFillType.fillRight) {
+					bCopy = !bCopy;
+				}
+			}
 			oPromoteHelper.finishAdd(bCopy);
+			oPromoteHelper.setFillHandleRightClick(false);
 			//заполняем ячейки данными
 			var nStartRow, nEndRow, nStartCol, nEndCol, nColDx, bRowFirst;
 			if(bVertical)
@@ -19023,6 +19506,7 @@
 			this.nRowLength = this.bbox.r2 - this.bbox.r1 + 1;
 			this.nColLength = this.bbox.c2 - this.bbox.c1 + 1;
 		}
+		this.bFillHandleRightClick = false;
 	}
 	PromoteHelper.prototype = {
 		add: function(nRow, nCol, nVal, bDelimiter, sPrefix, padding, bDate, oAdditional, aTimePeriods){
@@ -19122,8 +19606,9 @@
 			if(aCurSequence.length > 0) {
 				var oFirstData = aCurSequence[0];
 				var bCanPromote = true;
+				const bFillHandleRightClick = this.getFillHandleRightClick();
 				//если последовательность состоит из одного числа и той же колонке есть еще последовательности, то надо копировать, а не автозаполнять
-				if(1 == aCurSequence.length) {
+				if(aCurSequence.length === 1 && !bFillHandleRightClick) {
 					var bVisitRowIndex = false;
 					var oVisitData = null;
 					for(var i = 0, length = aSortRowIndex.length; i < length; i++) {
@@ -19134,8 +19619,7 @@
 								bCanPromote = false;
 								break;
 							}
-						}
-						else {
+						} else {
 							var oCurRow = this.oDataRow[nCurRowIndex];
 							if(oCurRow) {
 								var data = oCurRow[oFirstData.getCol()];
@@ -19328,6 +19812,12 @@
 					this.nCurColIndex = 0;
 			}
 			return oRes;
+		},
+		getFillHandleRightClick: function () {
+			return this.bFillHandleRightClick;
+		},
+		setFillHandleRightClick: function (bFillHandleRightClick) {
+			this.bFillHandleRightClick = bFillHandleRightClick;
 		}
 	};
 
@@ -19454,9 +19944,9 @@
 
 
 	function tryTranslateToPrintArea(val) {
-		var printAreaStr = "Print_Area";
-		var printAreaStrLocale = AscCommon.translateManager.getValue(printAreaStr);
-		if(printAreaStrLocale.toLowerCase() === val.toLowerCase()) {
+		const printAreaStr = "Print_Area";
+		const printAreaStrLocale = AscCommon.translateManager && AscCommon.translateManager.getValue(printAreaStr);
+		if(printAreaStrLocale && printAreaStrLocale.toLowerCase() === val.toLowerCase()) {
 			return printAreaStr;
 		}
 		return null;
@@ -19476,7 +19966,6 @@
 		this.aTimePeriods = aTimePeriods;
 		this.oSequence = null;
 		this.nCurValue = null;
-
 	}
 	cDataRow.prototype.getCol = function() {
 		return this.nCol;
@@ -19538,8 +20027,934 @@
 
 		return sComparedPrefix === sPrefix && bComparedDate === bDate;
 	};
+	//-------------------------------------------------------------------------------------------------
+	/**
+	 * Class representing a Series feature
+	 * @param {asc_CSeriesSettings} settings - Data from dialog window
+	 * @constructor
+	 */
+	function CSerial (settings) {
+		this.bVertical = settings.seriesIn === oSeriesInType.columns;
+		this.nType = settings.type;
+		this.nDateUnit = settings.dateUnit;
+		this.nStep = settings.stepValue;
+		this.nStopValue = settings.stopValue;
+		this.bTrend = settings.trend;
+		this.nChosenContextMenuProp = settings.contextMenuChosenProperty;
 
+		this.oFromRange = null;
+		this.oToRange = null;
+		this.oActiveFillHandle = null;
+		this.ws = null;
+		this.nPrevValue = null;
+		this.nIndex = null;
 
+		// Iteration coordinates for range who needs to be fill
+		this.nStartIndex = null;
+		this.nEndIndex = null;
+		this.nDirectionStep = null;
+	}
+	/**
+	 * Returns the range direction flag. Vertical or horizontal direction
+	 * @memberof CSerial
+	 * @returns {boolean}
+	 */
+	CSerial.prototype.getVertical = function () {
+		return this.bVertical;
+	};
+	/**
+	 * Returns modes of progressions.
+	 * @memberof CSerial
+	 * @returns {c_oAscSeriesType}
+	 */
+	CSerial.prototype.getType = function () {
+		return this.nType;
+	};
+	/**
+	 * Returns modes for work with date
+	 * @memberof CSerial
+	 * @returns {c_oAscDateUnitType}
+	 */
+	CSerial.prototype.getDateUnit = function () {
+		return this.nDateUnit;
+	};
+	/**
+	 * Returns a step of progression
+	 * @memberof CSerial
+	 * @returns {number}
+	 */
+	CSerial.prototype.getStep = function () {
+		return this.nStep;
+	};
+	/**
+	 * Returns a stop value. Fills a progression to value inputted in "Stop value"
+	 * @memberof CSerial
+	 * @returns {number}
+	 */
+	CSerial.prototype.getStopValue = function () {
+		return this.nStopValue;
+	};
+	/**
+	 * Returns a flag of trend mode. true - Fills cells in trend mode. Step defines automatically. false - Fills cells according step value
+	 * @memberof CSerial
+	 * @returns {boolean}
+	 */
+	CSerial.prototype.getTrend = function () {
+		return this.bTrend;
+	};
+	/**
+	 * Returns a chosen context menu property
+	 * @returns {asc_CSeriesSettings.contextMenuChosenProperty|c_oAscFillType}
+	 */
+	CSerial.prototype.getChosenContextMenuProp = function () {
+		return this.nChosenContextMenuProp;
+	};
+	/**
+	 * Sets a range of selected cells
+	 * @memberof CSerial
+	 * @param {Range} oFromRange
+	 */
+	CSerial.prototype.setFromRange = function (oFromRange) {
+		this.oFromRange = oFromRange;
+		this.setWs(oFromRange.worksheet);
+	};
+	/**
+	 * Returns a range of selected cells
+	 * @memberof CSerial
+	 * @returns {Range}
+	 */
+	CSerial.prototype.getFromRange = function () {
+		return this.oFromRange;
+	};
+	/**
+	 * Sets a range of cells who will be fill
+	 * @memberof CSerial
+	 * @param {Range} oRange
+	 */
+	CSerial.prototype.setToRange = function (oRange) {
+		this.oToRange = oRange;
+	};
+	/**
+	 * Returns a range of cells who will be fill
+	 * @memberof CSerial
+	 * @returns {Range}
+	 */
+	CSerial.prototype.getToRange = function () {
+		return this.oToRange;
+	};
+	/**
+	 * Sets an active fill handle.
+	 * @param {Asc.Range} oActiveFillHandle
+	 */
+	CSerial.prototype.setActiveFillHandle = function (oActiveFillHandle) {
+		this.oActiveFillHandle = oActiveFillHandle;
+	};
+	/**
+	 * Returns an active fill handle
+	 * @returns {Asc.Range}
+	 */
+	CSerial.prototype.getActiveFillHandle = function () {
+		return this.oActiveFillHandle;
+	};
+	/**
+	 * Sets a worksheet of selected range
+	 * @param {Worksheet} ws
+	 */
+	CSerial.prototype.setWs = function (ws) {
+		this.ws = ws;
+	};
+	/**
+	 * Returns a worksheet of selected range
+	 * @memberof CSerial
+	 * @returns {Worksheet}
+	 */
+	CSerial.prototype.getWs = function () {
+		return this.ws;
+	};
+	/**
+	 * Sets a previous value of progression
+	 * @memberof CSerial
+	 * @param {number} nValue
+	 */
+	CSerial.prototype.setPrevValue = function (nValue) {
+		this.nPrevValue = nValue;
+	};
+	/**
+	 * Returns a previous value of progression
+	 * @memberof CSerial
+	 * @returns {number}
+	 */
+	CSerial.prototype.getPrevValue = function () {
+		return this.nPrevValue;
+	};
+	/**
+	 * Sets a last index of selected range
+	 * @memberof CSerial
+	 * @param {number} nIndex
+	 */
+	CSerial.prototype.setIndex = function (nIndex) {
+		this.nIndex = nIndex;
+	};
+	/**
+	 * Returns a last index of selected range
+	 * @memberof CSerial
+	 * @returns {number}
+	 */
+	CSerial.prototype.getIndex = function () {
+		return this.nIndex;
+	};
+	/**
+	 * Initialize a last index of selected range
+	 * @memberof CSerial
+	 */
+	CSerial.prototype.initIndex = function () {
+		let ws = this.getWs();
+		let oActiveFillHandle = this.getActiveFillHandle();
+		let oRange = ws.selectionRange.getLast();
+
+		if (oActiveFillHandle) {
+			this.setIndex(this.getVertical() ? oActiveFillHandle.r2 - oRange.r1 : oActiveFillHandle.c2 - oRange.c1);
+		} else {
+			this.setIndex(this.getVertical() ? oRange.r2 - oRange.r1 : oRange.c2 - oRange.c1);
+		}
+	};
+	/**
+	 * Sets a start point of a range needs to be fill
+	 * @memberof CSerial
+	 * @param {number} nStartIndex
+	 */
+	CSerial.prototype.setStartIndex = function (nStartIndex) {
+		this.nStartIndex = nStartIndex;
+	};
+	/**
+	 * Returns a start point of a range needs to be fill
+	 * @memberof CSerial
+	 * @returns {number}
+	 */
+	CSerial.prototype.getStartIndex = function () {
+		return this.nStartIndex;
+	};
+	/**
+	 * Sets a finish point of a range who needs to be fill
+	 * @param {number} nEndIndex
+	 */
+	CSerial.prototype.setEndIndex = function (nEndIndex) {
+		this.nEndIndex = nEndIndex;
+	};
+	/**
+	 * Returns a finish point of a range who needs to be fill
+	 * @returns {number}
+	 */
+	CSerial.prototype.getEndIndex = function () {
+		return this.nEndIndex;
+	};
+	/**
+	 * Sets a direction step
+	 * @param {number} nDirectionStep
+	 */
+	CSerial.prototype.setDirectionStep = function (nDirectionStep) {
+		this.nDirectionStep = nDirectionStep;
+	};
+	/**
+	 * Returns a direction step
+	 * @returns {number}
+	 */
+	CSerial.prototype.getDirectionStep = function () {
+		return this.nDirectionStep;
+	};
+	/**
+	 * Initializes iteration coordinates for promote cells in trend mode
+	 * @param {Object} oFilledLine - Line of cells which need to fill and first filled cell
+	 * @param {number} oFilledLine.nValue - Value of first cell in line
+	 * @param {Range} oFilledLine.oToRange - Range of cells which will be fill
+	 * @param {Cell} oFilledLine.oCell - First cell of line
+	 * @param {Range} oFilledLine.oFilledRange - Range with filled cells
+	 * @param {number} oFilledLine.nIndex - Index of shift
+	 */
+	CSerial.prototype.initTrendIterCoords = function (oFilledLine) {
+		const bReverse = this.getIndex() < 0;
+		const bActiveFillHandleExists = !!this.getActiveFillHandle();
+		const bVertical = this.getVertical();
+		const oFrom = this.getFromRange().bbox;
+		const oFilled = oFilledLine.oFilledRange.bbox;
+		const nIndex = oFilledLine.nIndex;
+
+		if (bActiveFillHandleExists && this.getChosenContextMenuProp() !== Asc.c_oAscFillType.series) {
+			this.initToRange(this.getFromRange());
+			const oTo = this.getToRange().bbox;
+			if (bReverse) {
+				this.setStartIndex(bVertical ? oTo.r2 : oTo.c2);
+				this.setEndIndex(bVertical ? oTo.r1 - 1 : oTo.c1 - 1);
+				this.setDirectionStep(-1);
+			} else {
+				this.setStartIndex(bVertical ? oTo.r1 : oTo.c1);
+				this.setEndIndex(bVertical ? oTo.r2 + 1 : oTo.c2 + 1);
+				this.setDirectionStep(1);
+			}
+		} else {
+			if (bReverse) {
+				let nEndIndexFilledRange = bVertical ? oFrom.r1 : oFrom.c1;
+				this.setStartIndex(bVertical ? oFrom.r2 : oFrom.c2);
+				this.setEndIndex((nIndex + nEndIndexFilledRange) - 1);
+				this.setDirectionStep(-1);
+			} else {
+				let nStartIndexFilled = bVertical ? oFilled.r1 : oFilled.c1;
+				this.setStartIndex(bVertical ? oFrom.r1 : oFrom.c1);
+				this.setEndIndex((nIndex + nStartIndexFilled) + 1);
+				this.setDirectionStep(1);
+			}
+		}
+	};
+	/**
+	 * Creates and returns a range with filled cells
+	 * @memberof CSerial
+	 * @param {number} [nIndexLine] - Line index of filled cells. Not required param
+	 * @returns {Range}
+	 */
+	CSerial.prototype.getFilledRange = function (nIndexLine) {
+		let oFilledRange = this.getFromRange().clone();
+		let bVertical = this.getVertical();
+		let bTrend = this.getTrend();
+		let nRow = oFilledRange.bbox.r1;
+		let nCol = oFilledRange.bbox.c1;
+		let sFirstValue = null;
+		let ws = oFilledRange.worksheet;
+		let oBBox = oFilledRange.bbox;
+		let nType = this.getType();
+
+		if (nIndexLine != null) {
+			if (bVertical) {
+				oFilledRange.bbox.c1 = nIndexLine;
+				oFilledRange.bbox.c2 = nIndexLine;
+			} else {
+				oFilledRange.bbox.r1 = nIndexLine;
+				oFilledRange.bbox.r2 = nIndexLine;
+			}
+		}
+		if (bTrend) {
+			oFilledRange._foreach(function (oCell, nCurRow, nCurCol) {
+				if (oCell && oCell.getValueWithoutFormat()) {
+					nRow = nCurRow;
+					nCol = nCurCol;
+					if (nCurRow === oFilledRange.bbox.r1 && nCurCol === oFilledRange.bbox.c1) {
+						sFirstValue = oCell.getValueWithoutFormat();
+					}
+				} else {
+					let sNextValue = _getNextValue(ws, oCell, bVertical, oBBox);
+					if (!sFirstValue && sNextValue) {
+						if (bVertical) {
+							oFilledRange.bbox.r1 = nCurRow + 1;
+							oFilledRange.bbox.c1 = nCurCol;
+						} else {
+							oFilledRange.bbox.c1 = nCurCol + 1;
+							oFilledRange.bbox.r1 = nCurRow;
+						}
+					}
+				}
+			});
+		} else {
+			oFilledRange._foreachNoEmpty(function (oCell, nCurRow, nCurCol) {
+				if (oCell && oCell.getValueWithoutFormat()) {
+					if (nType === oSeriesType.autoFill) {
+						nRow = nCurRow;
+						nCol = nCurCol;
+					} else { // for other modes use only first filled cell in range
+						nRow = nCurRow;
+						nCol = nCurCol;
+						return true; // break loop
+					}
+				}
+			});
+		}
+
+		// Check if the filled range has merged cells
+		if (!bTrend || this.getChosenContextMenuProp() !== Asc.c_oAscFillType.series) {
+			let aMergedFilled = oFilledRange.worksheet.mergeManager.get(oFilledRange.bbox).all;
+			if (aMergedFilled.length) {
+				// Get the last merged range as the last points of the filled range for Growth and Linear trend of context menu
+				let oMergedRange = bTrend ? aMergedFilled[aMergedFilled.length - 1] : aMergedFilled[0];
+				nRow = oMergedRange.bbox.r2;
+				nCol = oMergedRange.bbox.c2;
+			}
+		}
+
+		oFilledRange.bbox.r2 = nRow;
+		oFilledRange.bbox.c2 = nCol;
+
+		return oFilledRange;
+	};
+	/**
+	 * Creates a range to be filled
+	 * @memberof CSerial
+	 * @param {Range} oFilledRange - Range of filled line of cells.
+	 */
+	CSerial.prototype.initToRange = function (oFilledRange) {
+		let ws = this.getWs();
+		let oTo = null;
+		let oFrom = this.getActiveFillHandle() ? this.getActiveFillHandle(): this.getFromRange().bbox;
+		let oFilled = oFilledRange.bbox;
+
+		this.initIndex();
+		let bFilledRangeHasShift = this.getVertical() ? oFilled.r1 !== oFrom.r1 : oFilled.c1 !== oFrom.c1;
+		if (this.getIndex() < 0) {
+			if (!this.getTrend()) {
+				return;
+			}
+			bFilledRangeHasShift = this.getVertical() ? oFilled.r2 !== oFrom.r1 : oFilled.c2 !== oFrom.c1;
+			let oActiveFillHandle = this.getActiveFillHandle();
+			oFrom = new Asc.Range(oActiveFillHandle.c2, oActiveFillHandle.r2, oActiveFillHandle.c1, oActiveFillHandle.r1);
+		}
+		// For a filled range, need to correct the index according to a shift in the start point in the filled range
+		if (bFilledRangeHasShift) {
+			let nIndex = this.getIndex();
+			this.setIndex(this.getVertical() ? nIndex - oFilled.r1 : nIndex - oFilled.c1);
+		}
+		if (this.getIndex() === 0) {
+			let oCanPromote = oFilledRange.canPromote(false, this.getVertical(), 1);
+			if (oCanPromote) {
+				oTo = oCanPromote.to;
+			}
+		} else {
+			let oCanPromote = oFilledRange.canPromote(false, this.getVertical(), this.getIndex());
+			if (oCanPromote) {
+				oTo = oCanPromote.to;
+			}
+		}
+		if (oTo) {
+			if (!oFrom.containsRange(oTo) && this.getStopValue() == null) {
+				return;
+			}
+			this.setToRange(ws.getRange3(oTo.r1, oTo.c1, oTo.r2, oTo.c2));
+		}
+	};
+	/**
+	 * Returns an array of Objects that contains: the value of first cell, the range which will be fill data and object of the cell
+	 * @memberof CSerial
+	 * @returns {Object[]}
+	 */
+	CSerial.prototype.getFilledCells = function () {
+		let oSerial = this;
+		let oFromRange = this.getFromRange();
+		let bVertical = this.getVertical();
+		let nType = this.getType();
+		let aFilledCells = [];
+
+		oFromRange._foreachNoEmpty(function (oCell, nRow, nCol) {
+			if (oCell && oCell.getValueWithoutFormat() && nType !== oSeriesType.autoFill) {
+				let nTypeCell = oCell.getType();
+				let oFilledRange = oSerial.getFilledRange(bVertical ? nCol : nRow);
+				let bFirstCellInRange = bVertical ? nRow === oFilledRange.bbox.r1 : nCol === oFilledRange.bbox.c1;
+				if (bFirstCellInRange && nTypeCell === CellValueType.Number) {
+					oSerial.initToRange(oFilledRange);
+					let oToRange = oSerial.getToRange();
+					if (!oToRange) {
+						return true; // break loop
+					} else {
+						aFilledCells.push({
+							nValue: oCell.getNumberValue(),
+							oToRange: oToRange,
+							oCell: oCell.duplicate(),
+							oFilledRange: oFilledRange,
+							nIndex: oSerial.getIndex()
+						});
+					}
+				}
+			}
+		});
+
+		return aFilledCells;
+	};
+	/**
+	 * Creates a history point for "Series" feature
+	 * @memberof CSerial
+	 */
+	CSerial.prototype.initHistoryPoint = function () {
+		let nIndex = this.getIndex();
+		let oBBox = this.getFromRange().bbox;
+		let nWidth = oBBox.c2 - oBBox.c1 + 1;
+		let nHeight = oBBox.r2 - oBBox.r1 + 1;
+
+		History.Create_NewPoint();
+		let oSelection = History.GetSelection();
+		if (null != oSelection) {
+			oSelection = oSelection.clone();
+			oSelection.assign(oBBox.c1, oBBox.r1, oBBox.c2, oBBox.r2);
+			History.SetSelection(oSelection);
+		}
+		let oSelectionRedo = History.GetSelectionRedo();
+		if (null != oSelectionRedo) {
+			oSelectionRedo = oSelectionRedo.clone();
+			if (this.getVertical()) {
+				if (nIndex >= nHeight) {
+					oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c2, oBBox.r1 + nIndex);
+				} else {
+					oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c2, oBBox.r1 + nIndex - 1);
+				}
+			} else {
+				if (nIndex >= nWidth) {
+					oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c1 + nIndex, oBBox.r2);
+				} else {
+					oSelectionRedo.assign(oBBox.c1, oBBox.r1, oBBox.c1 + nIndex - 1, oBBox.r2);
+				}
+			}
+			History.SetSelectionRedo(oSelectionRedo);
+		}
+	};
+
+	/**
+	 * Rounds a float number for correct calculation.
+	 * @param {number} nValue - The value which will be rounded.
+	 * @param {number} nFloatNumTemplate - The number template will be used for counting numbers after the decimal point.
+	 * @returns {number} - Rounded number
+	 * @private
+	 */
+	function _smartRound(nValue, nFloatNumTemplate) {
+		if (!Number.isInteger(nFloatNumTemplate)) {
+			let nCountNumsAfterDec = nFloatNumTemplate.toString().split(".")[1].length;
+			return nValue.toFixed(nCountNumsAfterDec) - 0;
+		}
+
+		return nValue;
+	}
+	/**
+	 * Fills current value for Date type
+	 * @memberof CSerial
+	 * @param {object} oFilledLine - Value of first cell in line
+	 * @param {number} oFilledLine.nValue - Value of first cell in line
+	 * @param {Range} oFilledLine.oToRange - Range of cells which will be fill
+	 * @param {Cell} oFilledLine.oCell - First cell of line
+	 * @param {Range} oFilledLine.oFilledRange - Range with filled cells
+	 * @param {number} oFilledLine.nIndex - Index of shift
+	 * @returns {number} Current value in ExcelDate format
+	 * @private
+	 */
+	CSerial.prototype._fillExcelDate = function (oFilledLine) {
+		const nStep = this.getStep();
+		const nDateUnit = this.getDateUnit();
+		let nPrevVal = this.getPrevValue();
+
+		// Condition: nPrevVal < 60 is temporary solution for "01/01/1900 - 01/03/1900" dates
+		/* TODO Need make system solution for cDate class for case when excelDate is 1 (01/01/1900).
+		    For now if try convert "1" to Date using getDateFromExcel method result is 31/12/1899
+		    by this reason of next methods addDays and getExcelDate work incorrect. Result of function is always "-30"
+		    If for the "1" value add 1 day and try to use getDateFromExcel method, it returns 01/01/1900 =>
+		    Temporary solution for "01/01/1900 - 01/03/1900" dates - always need add 1 day for getDateFromExcel.
+		*/
+		if (nDateUnit === oSeriesDateUnitType.weekday) {
+			const aWeekdays = [1, 2, 3, 4, 5];
+			const MAX_LIMIT_STEP = 2147483647;
+			let oCurrentValDate = null;
+			let nCurrentVal = nPrevVal;//_smartRound(nPrevVal + nStep, nStep);
+			let i = 0;
+			let nIntStep = Math.floor(nStep);
+			let nFinalStep = Math.sign(nIntStep) + _smartRound(nStep - nIntStep, nStep);
+			do {
+				if (nFinalStep !== 0) {
+					nCurrentVal = _smartRound(nCurrentVal + nFinalStep, nStep);
+				}
+				// Convert number to cDate object
+				oCurrentValDate = new Asc.cDate().getDateFromExcel(nPrevVal < 60 ? nCurrentVal + 1 : nCurrentVal);
+				let nDayOfWeek = nPrevVal < 60 ? oCurrentValDate.getDay() - 1 : oCurrentValDate.getDay();
+				if (!aWeekdays.includes(nDayOfWeek)) {
+					while (true) {
+						nCurrentVal += Math.sign(nStep);
+						oCurrentValDate = new Asc.cDate().getDateFromExcel(nCurrentVal < 60 ? nCurrentVal + 1 : nCurrentVal);
+						nDayOfWeek = nCurrentVal < 60 ? oCurrentValDate.getDay() - 1 : oCurrentValDate.getDay();
+						if (aWeekdays.includes(nDayOfWeek)) {
+							i++;
+							break;
+						}
+					}
+				} else {
+					i++;
+				}
+			} while (i < Math.abs(nIntStep) && Math.abs(nIntStep) <= MAX_LIMIT_STEP);
+			this.setPrevValue(nCurrentVal);
+			return nCurrentVal < 0 ? nCurrentVal : oCurrentValDate.getExcelDate();
+		}
+
+		let nCurrentVal = _smartRound(nPrevVal + nStep, nStep);
+		this.setPrevValue(nCurrentVal);
+
+		if (nDateUnit === oSeriesDateUnitType.day) {
+			if (nStep > -1 && nStep < 0 && nCurrentVal < 0)  {
+				this.setPrevValue(1 + nCurrentVal);
+				return 1 + nCurrentVal;
+			}
+			return nCurrentVal;
+		}
+
+		let nIntegerVal = oFilledLine.nValue;
+		if (nDateUnit === oSeriesDateUnitType.month) {
+			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nIntegerVal < 60 ? nIntegerVal + 1 : nIntegerVal);
+			let nFinalStep = _smartRound(nCurrentVal - nIntegerVal, nStep);
+			if (nFinalStep < 0) {
+				return NaN;
+			}
+			if (Number.isInteger(nFinalStep)) {
+				oCurrentValDate.addMonths(nFinalStep);
+				oFilledLine.nValue = oCurrentValDate.getExcelDate();
+				this.setPrevValue(oFilledLine.nValue);
+				return oFilledLine.nValue;
+			}
+			oCurrentValDate.addMonths(nFinalStep);
+			return oCurrentValDate.getExcelDate();
+		}
+		if (nDateUnit === oSeriesDateUnitType.year) {
+			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nIntegerVal < 60 ? nIntegerVal + 1 : nIntegerVal);
+			let nFinalStep = _smartRound(nCurrentVal - nIntegerVal, nStep);
+			if (nFinalStep < 0) {
+				return NaN;
+			}
+			if (Number.isInteger(nFinalStep)) {
+				oCurrentValDate.addYears(nFinalStep);
+				oFilledLine.nValue = oCurrentValDate.getExcelDate();
+				this.setPrevValue(oFilledLine.nValue);
+				return oFilledLine.nValue;
+			}
+			oCurrentValDate.addYears(nFinalStep);
+			return oCurrentValDate.getExcelDate();
+		}
+	};
+	/**
+	 * Fills cells in Linear and Growth regression except Trend mode. Works with:
+	 * - Type: Linear, Growth, Date.
+	 * - Stop value
+	 * - Step value
+	 * @memberof CSerial
+	 * @param {Object} oFilledLine - Line of cells which need to fill and first filled cell
+	 * @param {number} oFilledLine.nValue - Value of first cell in line
+	 * @param {Range} oFilledLine.oToRange - Range of cells which will be fill
+	 * @param {Cell} oFilledLine.oCell - First cell of line
+	 * @param {Range} oFilledLine.oFilledRange - Range with filled cells
+	 * @param {number} oFilledLine.nIndex - Index of shift
+	 */
+	CSerial.prototype.promoteCells = function (oFilledLine) {
+		function fillCell(nRow, nCol) {
+			let bStopLoop = false
+			oWsTo._getCell(nRow, nCol, function (oCopyCell) {
+				if (oSerial.getPrevValue() != null) {
+					let oCellValue = new AscCommonExcel.CCellValue();
+					let nCurrentValue = oProgressionCalc[oSerial.getType()]();
+					let bNeedStopLoop = false;
+					if (nStopValue != null) {
+						if (isNaN(nCurrentValue)) {
+							bNeedStopLoop = true;
+						} else if (oSerial.getType() === oSeriesType.growth) {
+							bNeedStopLoop = Number.isInteger(nStep) ? nCurrentValue	> nStopValue : nCurrentValue < nStopValue;
+						} else if (oSerial.getDateUnit() === oSeriesDateUnitType.weekday) {
+							bNeedStopLoop = nCurrentValue <= 0;
+						} else {
+							bNeedStopLoop = nStep > 0 ? nCurrentValue > nStopValue : nCurrentValue < nStopValue;
+						}
+					}
+					if (bNeedStopLoop || (nRow === gc_nMaxRow0 || nCol === gc_nMaxCol0)) {
+						bStopLoop = true;
+						return;
+					}
+					if (isNaN(nCurrentValue)) {
+						let oErrorValue = new cError(cErrorType.not_numeric);
+						oCellValue.type = CellValueType.Error
+						oCellValue.text = oErrorValue.value;
+					} else {
+						oCellValue.type = CellValueType.Number;
+						oCellValue.number = nCurrentValue;
+					}
+					oCopyCell.setValueData(new UndoRedoData_CellValueData(null, oCellValue));
+					// Add styles from firstCell
+					if (null != oFromCell) {
+						oCopyCell.setStyle(oFromCell.getStyle());
+					}
+				}
+			});
+
+			return bStopLoop;
+		}
+
+		let oSerial = this;
+		let nStep = this.getStep();
+		let nStopValue = this.getStopValue() != null ? this.getStopValue() : null;
+		let nIndexFilledLine = this.getVertical() ? oFilledLine.oCell.nCol : oFilledLine.oCell.nRow;
+		let oTo = oFilledLine.oToRange.bbox;
+		let oWsTo = oFilledLine.oToRange.worksheet;
+		let oFromCell = oFilledLine.oCell;
+		let oFilledRange = oFilledLine.oFilledRange;
+		let oFrom = oFilledRange.bbox;
+		this.setPrevValue(oFilledLine.nValue);
+		// Init variables for filling cells
+		let nStartIndex = this.getVertical() ? oTo.r1 : oTo.c1;
+		let nEndIndex = this.getVertical() ? oTo.r2 : oTo.c2;
+		let nDirectStep = 1;
+		// Fill range cells for i row or col
+		let oProgressionCalc = {
+			0: function () { // linear
+				let nCurrentVal = _smartRound(oSerial.getPrevValue() + nStep, nStep);
+				oSerial.setPrevValue(nCurrentVal);
+				return nCurrentVal;
+			}, 1: function () { // growth
+				let nCurrentVal = oSerial.getPrevValue() * nStep
+				oSerial.setPrevValue(nCurrentVal);
+				return nCurrentVal;
+			}, 2: function () { // date
+				return oSerial._fillExcelDate(oFilledLine);
+			}
+		};
+		let bStopLoop = false;
+		let bIncorrectStopValue = false;
+
+		if (nStopValue != null) {
+			if (this.getType() === oSeriesType.growth) {
+				bIncorrectStopValue = (nStep <= 0 || nStep === 1) || nStopValue <= 0;
+			} else {
+				let nStartVal = oFilledLine.nValue;
+				bIncorrectStopValue = nStep < 0 ? nStartVal <= nStopValue : nStartVal >= nStopValue;
+			}
+		}
+		if (bIncorrectStopValue) {
+			return;
+		}
+		if (oFilledRange.hasMerged()) {
+			nDirectStep = this.getVertical() ? oFrom.r2 - oFrom.r1 + 1 : oFrom.c2 - oFrom.c1 + 1;
+		}
+		if (nStopValue != null && nStartIndex === nEndIndex) {
+			let nIndex = nStartIndex;
+			do {
+				let nRow = this.getVertical() ? nIndex : nIndexFilledLine;
+				let nCol = this.getVertical() ? nIndexFilledLine : nIndex;
+				bStopLoop = fillCell(nRow, nCol);
+				nIndex += nDirectStep;
+			} while (!bStopLoop);
+		} else {
+			for (let j = nStartIndex; j <= nEndIndex; j += nDirectStep) {
+				let nRow = this.getVertical() ? j : nIndexFilledLine;
+				let nCol = this.getVertical() ? nIndexFilledLine : j;
+				bStopLoop = fillCell(nRow, nCol);
+				if (bStopLoop) {
+					break;
+				}
+			}
+		}
+	};
+	/**
+	 * Gets value and index filled cell in loop for calculate sum in fAction. Uses for linear regression formula
+	 * in promoteCellsWithTrend method. Trend mode
+	 * @memberof CSerial
+	 * @param {number} nStartIndex - Index for start loop
+	 * @param {number} nEndIndex - Index for finish loop
+	 * @param {number} nFilledCellIter - Iteration of filled cell. Uses for define nRow or nCol at getting cell
+	 * @param fAction - Callback function for calculate sum with parameters: nValue, nIndexCell
+	 */
+	CSerial.prototype._calcSum = function (nStartIndex, nEndIndex, nFilledCellIter, fAction) {
+		if (fAction) {
+			let oSerial = this;
+			let oWsFrom = this.getWs();
+			let oRes = null;
+			for (let i = nStartIndex; i < nEndIndex; i++) {
+				let nRow = this.getVertical() ? i : nFilledCellIter;
+				let nCol = this.getVertical() ? nFilledCellIter : i;
+				oWsFrom._getCell(nRow, nCol, function (oCell) {
+					let nValue = oCell.getNumberValue();
+					if (nValue !== null) {
+						// For Growth type take ln from value
+						if (oSerial.getType() === oSeriesType.growth) {
+							nValue = Math.log(nValue);
+						}
+						oRes = fAction(nValue, i);
+					}
+				});
+				if (oRes != null) {
+					return oRes;
+				}
+			}
+		}
+	};
+	/**
+	 * Fills cells in Trend mode. For fill cells Trend mode uses linear regression formula - y = a + bx, when:
+	 * a - intercept,
+	 * b - slop,
+	 * x - index of cell who must be fill.
+	 * Works only for Linear and Growth types and without "Step value" and "Stop value" data.
+	 * @memberof CSerial
+	 * @param {Object} oFilledLine - Line of filled cells and cells which need to fill
+	 * @param {number} oFilledLine.nValue - Value of first cell in line
+	 * @param {Range} oFilledLine.oToRange - Range of cells which will be fill
+	 * @param {Cell} oFilledLine.oCell - First cell of line
+	 * @param {Range} oFilledLine.oFilledRange - Range with filled cells
+	 * @param {number} oFilledLine.nIndex - Index of shift
+	 * @param {number} nFilledLineLength - Length line of filled cells
+	 */
+	CSerial.prototype.promoteCellsWithTrend = function (oFilledLine, nFilledLineLength) {
+		this.initTrendIterCoords(oFilledLine);
+		let oSerial = this;
+		let oFilledRange = oFilledLine.oFilledRange;
+		let nIndexFilledLine = this.getVertical() ? oFilledLine.oCell.nCol : oFilledLine.oCell.nRow;
+		let nFilledStartIndex = this.getVertical() ? oFilledRange.bbox.r1 : oFilledRange.bbox.c1;
+		// If the first cell after calculating the linear regression for "growth trend" is Infinity, then the next cells in range fill 0.
+		// This flag is only uses for the Growth trend with an active fill handle
+		let bFirstCellValueInf = false;
+		// Define variables for calculate linear regression
+		let nSumX = 0;
+		let nSumY = 0;
+		let nNumeratorOfSlope = 0;
+		let nDenominatorOfSlope = 0;
+		let nSlope = null;
+		// Calculate nEndIndex for Filled line with taking into account the shift first element in the filled range
+		let nEndIndexFilledLine = nFilledLineLength + nFilledStartIndex;
+		// Getting filled cells and calculating sum of index cell (x) and values (y) for calculate intercept and slop
+		// for linear regression formula: y = intercept + slop * x
+		let nFilledRangeLength = 0;
+		this._calcSum(nFilledStartIndex, nEndIndexFilledLine, nIndexFilledLine, function (nValue, nCellIndex) {
+			nFilledRangeLength++;
+			if ((nValue === -Infinity || isNaN(nValue)) && nFilledStartIndex === nCellIndex && oSerial.getActiveFillHandle()) {
+				bFirstCellValueInf = true;
+				return true; // break loop
+			}
+			nSumX += nCellIndex;
+			nSumY += nValue;
+		});
+		let nXAvg = nSumX / nFilledRangeLength;
+		let nYAvg = nSumY / nFilledRangeLength;
+		if (nFilledLineLength > 1 && !bFirstCellValueInf) {
+			this._calcSum(nFilledStartIndex, nEndIndexFilledLine, nIndexFilledLine, function (nValue, nCellIndex) {
+				nNumeratorOfSlope += (nCellIndex - nXAvg) * (nValue - nYAvg);
+				nDenominatorOfSlope += Math.pow((nCellIndex - nXAvg), 2);
+			});
+			nSlope = nNumeratorOfSlope / nDenominatorOfSlope;
+		} else {
+			nSlope = this.getType() === oSeriesType.growth ? 0 : 1;
+		}
+		let nIntercept = nYAvg - nSlope * nXAvg;
+		if (isNaN(nSlope) || isNaN(nIntercept)) {
+			return;
+		}
+		// Fill cells in selection range
+		let nStartIndex = this.getStartIndex();
+		let nEndIndex = this.getEndIndex();
+		let nDirectionStep = this.getDirectionStep();
+		let oFromCell = oFilledLine.oCell;
+		let oWsTo = oFilledLine.oToRange.worksheet;
+		for (let x = nStartIndex; x !== nEndIndex; x += nDirectionStep) {
+			let nRow = this.getVertical() ? x : nIndexFilledLine;
+			let nCol = this.getVertical() ? nIndexFilledLine : x;
+			oWsTo._getCell(nRow, nCol, function (oCopyCell) {
+				let oCellValue = new AscCommonExcel.CCellValue();
+				let nCellValue = nIntercept + nSlope * x;
+				if (oSerial.getType() === oSeriesType.growth) {
+					nCellValue = bFirstCellValueInf ? nCellValue : Math.exp(nCellValue);
+				}
+				oCellValue.type = CellValueType.Number;
+				oCellValue.number = nCellValue;
+				oCopyCell.setValueData(new UndoRedoData_CellValueData(null, oCellValue));
+				// Add styles from firstCell
+				if (null != oFromCell) {
+					oCopyCell.setStyle(oFromCell.getStyle());
+				}
+			});
+		}
+	};
+
+	/**
+	 * Gets length of filled line
+	 * @param {Range} oToRange - Range of cells which will be fill
+	 * @param {Range} oFilledRange - Range with filled cells
+	 * @param {boolean} bVertical - Flag recognizes is vertical or horizontal direction
+	 * @param {number} nIndex - Index of cell who must be fill
+	 * @returns {number}
+	 * @private
+	 */
+	function _getFilledLineLength(oToRange, oFilledRange, bVertical, nIndex) {
+		if (nIndex > 0) {
+			return bVertical ? oToRange.bbox.r1 - oFilledRange.bbox.r1 : oToRange.bbox.c1 - oFilledRange.bbox.c1;
+		}
+		// Reverse direction
+		return bVertical ? oFilledRange.bbox.r2 - oToRange.bbox.r2 : oFilledRange.bbox.c2 - oToRange.bbox.c2;
+	}
+
+	/**
+	 * Creates merged cells
+	 * @param {Range} oFromRange - Filled range.
+	 * @param {Range} oToRange - The range that needs to be filled.
+	 * @private
+	 */
+	function _mergeCells(oFromRange, oToRange) {
+		const oFrom = oFromRange.bbox;
+		const oTo = oToRange.bbox;
+		const oWsFrom = oFromRange.worksheet;
+		const oWsTo = oToRange.worksheet;
+		const oMergedFrom = oWsFrom.mergeManager.get(oFrom);
+
+		let nDx = oFrom.c2 - oFrom.c1 + 1;
+		let nDy = oFrom.r2 - oFrom.r1 + 1;
+
+		if(oMergedFrom && oMergedFrom.all.length > 0) {
+			for (let i = oTo.c1; i <= oTo.c2; i += nDx) {
+				for (let j = oTo.r1; j <= oTo.r2; j += nDy) {
+					for (let k = 0, length = oMergedFrom.all.length; k < length; k++) {
+						const oMergedBBox = oMergedFrom.all[k].bbox;
+						let nC1 = i + oMergedBBox.c1 - oFrom.c1;
+						let nR1 = j + oMergedBBox.r1 - oFrom.r1;
+						let nC2 = i + oMergedBBox.c2 - oFrom.c1;
+						let nR2 = j + oMergedBBox.r2 - oFrom.r1;
+						const oNewMerged = new Asc.Range(nC1, nR1, nC2, nR2);
+						if(oTo.contains(oNewMerged.c1, oNewMerged.r1)) {
+							if(oTo.c2 < oNewMerged.c2) {
+								oNewMerged.c2 = oTo.c2;
+							}
+							if(oTo.r2 < oNewMerged.r2) {
+								oNewMerged.r2 = oTo.r2;
+							}
+							if(!oNewMerged.isOneCell()) {
+								oWsTo.mergeManager.add(oNewMerged, 1);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	/**
+	 * Main method runs "Series" feature according to the specified parameters
+	 * @memberof CSerial
+	 */
+	CSerial.prototype.exec = function () {
+		let bVertical = this.getVertical();
+		let nType = this.getType();
+		let oFromRange = this.getFromRange();
+		let oWs = this.getWs();
+		let oMergedFrom = oWs.mergeManager.get(oFromRange.bbox);
+
+		if (nType === oSeriesType.autoFill) {
+			let oFilledRange = this.getFilledRange();
+			let oFilled = oFilledRange.bbox;
+			this.initIndex();
+			let oCanPromote = oFilledRange.canPromote(false, bVertical, this.getIndex());
+			if (!oFilled.containsRange(oCanPromote.to)) {
+				oFilledRange.promote(false, this.getVertical(), this.getIndex(), oCanPromote);
+			}
+		} else {
+			let aFilledCells = this.getFilledCells();
+			if (aFilledCells.length) {
+				this.initHistoryPoint();
+				History.StartTransaction();
+				for (let i = 0, length = aFilledCells.length; i < length; i++) {
+					let oToRange = aFilledCells[i].oToRange;
+					let oFilledRange = aFilledCells[i].oFilledRange;
+					let nFilledLineLength = _getFilledLineLength(oToRange, oFilledRange, bVertical, this.getIndex());
+					if (this.getTrend()) {
+						this.promoteCellsWithTrend(aFilledCells[i], nFilledLineLength);
+					} else {
+						this.promoteCells(aFilledCells[i]);
+					}
+					_mergeCells(oFilledRange, oToRange);
+				}
+				History.EndTransaction();
+			} else if (oMergedFrom.all.length) {
+				let oApi = Asc.editor;
+				oApi.sendEvent("asc_onError", c_oAscError.ID.CannotFillRange, c_oAscError.Level.NoCritical);
+			}
+		}
+	};
+	// Export
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].g_nVerticalTextAngle = g_nVerticalTextAngle;
 	window['AscCommonExcel'].g_nSheetNameMaxLength = g_nSheetNameMaxLength;
@@ -19574,5 +20989,6 @@
 	window['AscCommonExcel'].g_nDefNameMaxLength = g_nDefNameMaxLength;
 	window['AscCommonExcel'].changeTextCase = changeTextCase;
 	window['AscCommonExcel'].g_sNewSheetNamePattern = g_sNewSheetNamePattern;
+	window['AscCommonExcel'].CSerial = CSerial;
 
 })(window);

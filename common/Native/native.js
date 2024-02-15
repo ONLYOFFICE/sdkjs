@@ -294,7 +294,8 @@ var console = {
 	log: function (param) { window.native.ConsoleLog(param); },
 	time: function (param) {},
 	timeEnd: function (param) {},
-	warn: function() {}
+	warn: function() {},
+	error: function() {}
 };
 
 var performance = window.performance = (function(){

@@ -84,6 +84,7 @@
 	function checkIntegerType(val) {
 		return val && AscCommonExcel.cElementType.number === val.type;
 	}
+
 	function isNum(value) {
 		return !isNaN(parseFloat(value)) && isFinite(value);
 	}
@@ -94,7 +95,7 @@
 	}
 
 	CDataFormula.prototype._init = function (ws, locale, doNotBuildDependencies) {
-		if (this._formula || this.text == null ) {
+		if (this._formula || this.text == null) {
 			return;
 		}
 		var t = this;
@@ -158,7 +159,6 @@
 	};
 
 
-
 	function CDataValidation() {
 		this.ranges = null;
 
@@ -178,6 +178,9 @@
 		this.formula1 = null;
 		this.formula2 = null;
 
+		//while on open
+		this.list = null;
+
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
 		this._tempSelection = null;
@@ -195,6 +198,14 @@
 		return AscCommonExcel.UndoRedoDataTypes.DataValidationInner;
 	};
 	CDataValidation.prototype._init = function (ws, doNotBuildDependencies) {
+		//list convert to formula
+		if (this.list) {
+			if (!this.formula1 && !this.formula2) {
+				this.formula1 = this.list;
+			}
+			this.list = null;
+		}
+
 		if (this.formula1) {
 			this.formula1._init(ws, null, doNotBuildDependencies);
 		}
@@ -458,18 +469,28 @@
 			return true;
 		}
 
-		var cellType = cell.getType();
-		var val = cell.getValueWithoutFormat();
+		let cleanFormulaCaches = function () {
+			AscCommonExcel.g_oLOOKUPCache.clean();
+			AscCommonExcel.g_oVLOOKUPCache.clean();
+			AscCommonExcel.g_oHLOOKUPCache.clean();
+			AscCommonExcel.g_oMatchCache.clean();
+			AscCommonExcel.g_oSUMIFSCache.clean();
+			AscCommonExcel.g_oFormulaRangesCache.clean();
+			AscCommonExcel.g_oCountIfCache.clean();
+		};
+
+		let cellType = cell.getType();
+		let val = cell.getValueWithoutFormat();
 
 		if (EDataValidationType.List === this.type) {
-			var list = this._getListValues(ws);
-			var aValue = list[0];
+			let list = this._getListValues(ws);
+			let aValue = list[0];
 			if (!aValue) {
 				return false;
 			}
-			var aData = list[1];
+			let aData = list[1];
 			if (aData) {
-				for (var i = 0; i < aData.length; ++i) {
+				for (let i = 0; i < aData.length; ++i) {
 					if (aData[i].isEqualCell(cell)) {
 						return true;
 					}
@@ -478,7 +499,8 @@
 				return -1 !== aValue.indexOf(val);
 			}
 		} else if (EDataValidationType.Custom === this.type) {
-			var v = this.formula1 && this.formula1.clone().getValue(ws, true, null, this.calculateOffset(ws));
+			cleanFormulaCaches();
+			let v = this.formula1 && this.formula1.clone().getValue(ws, true, null, this.calculateOffset(ws));
 			v = v && v.tocBool();
 			return !!(v && AscCommonExcel.cElementType.bool === v.type && v.toBool());
 		} else {
@@ -495,14 +517,32 @@
 				}
 			}
 
-			var v1 = this.formula1 && this.formula1.getValue(ws, true);
-			var v2 = this.formula2 && this.formula2.getValue(ws, true);
+			cleanFormulaCaches();
+
+			let v1 = this.formula1 && this.formula1.getValue(ws, true);
+			let v2 = this.formula2 && this.formula2.getValue(ws, true);
+
+
+			let res = false;
+			if (v1 == null && v2 == null) {
+				switch (this.type) {
+					case EDataValidationType.None:
+					case EDataValidationType.Date:
+					case EDataValidationType.Decimal:
+					case EDataValidationType.TextLength:
+					case EDataValidationType.Time:
+					case EDataValidationType.Whole:
+						res = true;
+						break;
+				}
+				return res;
+			}
+
 			if (!checkIntegerType(v1)) {
 				return false;
 			}
 			v1 = v1.toNumber();
 
-			var res = false;
 			switch (this.operator) {
 				case EDataValidationOperator.Between:
 					res = checkIntegerType(v2) && v1 <= val && val <= v2.toNumber();
@@ -555,7 +595,7 @@
 						//обрезаем только вначале строки
 						if (aValue[i] && aValue[i].length) {
 							var pos = 0;
-							while((pos < aValue[i].length) && (aValue[i][pos] == ' ')){
+							while ((pos < aValue[i].length) && (aValue[i][pos] == ' ')) {
 								++pos;
 							}
 							aValue[i] = pos ? aValue[i].substr(pos) : aValue[i];
@@ -1218,7 +1258,7 @@
 		}
 		return res;
 	};
-	CDataValidations.prototype.shift = function(ws, bInsert, type, updateRange, addToHistory) {
+	CDataValidations.prototype.shift = function (ws, bInsert, type, updateRange, addToHistory) {
 		for (var i = 0; i < this.elems.length; i++) {
 			var isUpdate = this.elems[i].shift(bInsert, type, updateRange);
 			if (isUpdate === -1) {
@@ -1228,12 +1268,12 @@
 			} else if (isUpdate) {
 				var to = this.elems[i].clone();
 				to.ranges = isUpdate;
-				this.change(ws, this.elems[i], to , addToHistory);
+				this.change(ws, this.elems[i], to, addToHistory);
 			}
 		}
 	};
 
-	CDataValidations.prototype.add = function(ws, val, addToHistory) {
+	CDataValidations.prototype.add = function (ws, val, addToHistory) {
 		this.elems.push(val);
 		if (addToHistory) {
 			History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_DataValidationAdd, ws.getId(), null,
@@ -1585,7 +1625,7 @@
 		return res.concat(_notExpandRanges);
 	};
 
-	CDataValidations.prototype.getSameSettingsElems = function(_elem) {
+	CDataValidations.prototype.getSameSettingsElems = function (_elem) {
 		var res = null;
 		if (!_elem) {
 			return res;

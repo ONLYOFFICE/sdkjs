@@ -902,6 +902,9 @@
         return this.state === TIME_NODE_STATE_FINISHED;
     };
     CTimeNodeBase.prototype.isDrawable = function () {
+        if(this.isAtEnd() && this.getRewind()) {
+            return false;
+        }
         return this.isActive() || this.isFrozen() || (this.isTimingContainer() || this.isFinished());
     };
     CTimeNodeBase.prototype.isAtEnd = function () {
@@ -1026,10 +1029,6 @@
         }
     };
     CTimeNodeBase.prototype.getRewind = function () {
-        var oParentTimeNode = this.getParentTimeNode();
-        if (oParentTimeNode) {
-            return oParentTimeNode.getRewind();
-        }
         return false;
     };
     CTimeNodeBase.prototype.getRelativeTime = function (nElapsedTime) {
@@ -1813,19 +1812,7 @@
                             oConnectedObject.setSpid(sObjectId);
                         }
                     }
-                    if(oColor) {
-                        let aSimpleEffects = oPar.getChildrenTimeNodes();
-
-                        for(let nEffect = 0; nEffect < aSimpleEffects.length; ++nEffect) {
-                            let oEffect = aSimpleEffects[nEffect];
-                            if(oEffect instanceof CAnimClr) {
-                                if(oEffect.to) {
-                                    let oUniColor = AscFormat.CorrectUniColor(oColor, new AscFormat.CUniColor(), 0);
-                                    oEffect.setTo(oUniColor);
-                                }
-                            }
-                        }
-                    }
+                    oPar.changeColor(oColor);
                     return oPar;
                 }
             }
@@ -2064,6 +2051,14 @@
             if (aSelectedEffects.length === 0) {
                 return this.addAnimationToSelectedObjects(nPresetClass, nPresetId, nPresetSubtype, oColor);
             } else {
+
+                if(oColor) {
+                    for(let nEffect = 0; nEffect < aSelectedEffects.length; ++nEffect) {
+                        aSelectedEffects[nEffect].changeColor(oColor);
+                    }
+                    aAddedEffects = aAddedEffects.concat(aSelectedEffects);
+                    return aAddedEffects;
+                }
                 var oMapOfObjects = {};
                 var aSelectedObjects = this.parent.graphicObjects.selectedObjects;
                 var bNeedRemoveExtra = (aSelectedObjects.length > 0);
@@ -3414,8 +3409,7 @@
     };
 
     CBldBase.prototype.assignConnection = function (oObjectsMap) {
-        if (AscCommon.isRealObject(oObjectsMap[this.spid]) &&
-            (oObjectsMap[this.spid].getObjectType && oObjectsMap[this.spid].getObjectType() === AscDFH.historyitem_type_ChartSpace)) {
+        if (AscCommon.isRealObject(oObjectsMap[this.spid]) && oObjectsMap[this.spid].isDrawing) {
             this.setSpid(oObjectsMap[this.spid].Id);
         } else {
             if (this.parent) {
@@ -5457,7 +5451,7 @@
     CCTn.prototype.changeRewind = function (v) {
         this.setFill(v === true ? NODE_FILL_REMOVE : NODE_FILL_HOLD);
     };
-    CCTn.prototype.getObjectId = function (v) {
+    CCTn.prototype.getObjectId = function () {
         var sObjectId = null;
         this.traverse(function (oChild) {
             if (oChild.isTimeNode() && (sObjectId = oChild.getTargetObjectId())) {
@@ -6841,7 +6835,7 @@
             }
 
             if (oBrush) {
-                oStartRGBColor = oBrush.getRGBAColor();
+                oStartRGBColor = oBrush.getStartAnimRGBA();
                 oStartUniColor = AscFormat.CreateUniColorRGB(oStartRGBColor.R, oStartRGBColor.G, oStartRGBColor.B);
             } else {
                 oStartUniColor = AscFormat.CreateUniColorRGB(255, 255, 255);
@@ -7042,6 +7036,9 @@
     };
     CAnimEffect.prototype.getChildren = function () {
         return [this.cBhvr, this.progress];
+    };
+    CAnimEffect.prototype.isRemoveAfterFill = function () {
+        return true;
     };
     CAnimEffect.prototype.calculateAttributes = function (nElapsedTime, oAttributes) {
         if (!this.filter) {
@@ -8395,7 +8392,12 @@
     CTimeNodeContainer.prototype.getIndexInSequence = function () {
         var aHierarchy = this.getHierarchy();
         if (aHierarchy[1] && aHierarchy[2]) {
-            return aHierarchy[1].getChildNodeIdx(aHierarchy[2]);
+            let nIdx = aHierarchy[1].getChildNodeIdx(aHierarchy[2]);
+            let aAllEffects = aHierarchy[1].getAllAnimEffects();
+            if(aAllEffects[0] && !aAllEffects[0].isClickEffect()) {
+                nIdx -= 1;
+            }
+            return nIdx;
         }
         return -1;
     };
@@ -9000,6 +9002,21 @@
         return AscCommon.CreateAscColor(oResultUnicolor)
     };
     CTimeNodeContainer.prototype["asc_getColor"] = CTimeNodeContainer.prototype.asc_getColor;
+
+    CTimeNodeContainer.prototype.changeColor = function(oColor) {
+        if(oColor) {
+            let aSimpleEffects = this.getChildrenTimeNodes();
+            for(let nEffect = 0; nEffect < aSimpleEffects.length; ++nEffect) {
+                let oEffect = aSimpleEffects[nEffect];
+                if(oEffect instanceof CAnimClr) {
+                    if(oEffect.to) {
+                        let oUniColor = AscFormat.CorrectUniColor(oColor, new AscFormat.CUniColor(), 0);
+                        oEffect.setTo(oUniColor);
+                    }
+                }
+            }
+        }
+    };
 
     function CPar() {
         CTimeNodeContainer.call(this);
@@ -12152,7 +12169,14 @@
         let bStrokeOn = oAttributesMap["stroke.on"];
 
 
-        let oCurBrush = oDrawing.brush;
+        let oCurBrush;
+        if(oDrawing.blipFill) {
+            oCurBrush = new AscFormat.CUniFill();
+            oCurBrush.fill = oDrawing.blipFill;
+        }
+        else {
+            oCurBrush = oDrawing.brush;
+        }
         let oCurPen = oDrawing.pen;
         let oNewBrush = oCurBrush;
         let oNewPen = oCurPen;
@@ -12172,15 +12196,6 @@
                 if (oStrokeColor) {
                     if (oCurPen) {
                         oNewPen = oCurPen.createDuplicate();
-                        let oMods;
-                        if (oNewPen.Fill &&
-                            oNewPen.Fill.fill &&
-                            oNewPen.Fill.fill.color &&
-                            oNewPen.Fill.fill.color.Mods &&
-                            oNewPen.Fill.fill.color.Mods.Mods.length !== 0) {
-                            oMods = oNewPen.Fill.fill.color.Mods;
-                            oMods.Apply(oStrokeColor.RGBA);
-                        }
                     } else {
                         oNewPen = AscFormat.CreateNoFillLine();
                     }

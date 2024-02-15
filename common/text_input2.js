@@ -49,6 +49,23 @@
 	// baseEditorsApi.prototype.onKeyUp = function(e)
 	///
 
+	window['AscCommon'] = window['AscCommon'] || {};
+	window['AscCommon'].inputMethodAddInitEvent = function(callback)
+	{
+		AscCommon.g_inputContext_create_events = AscCommon.g_inputContext_create_events || [];
+		AscCommon.g_inputContext_create_events.push(callback);
+	};
+	window['AscCommon'].inputMethodCheckInitEvents = function()
+	{
+		if (!AscCommon.g_inputContext_create_events)
+			return;
+
+		for (let i = 0, len = AscCommon.g_inputContext_create_events.length; i < len; i++)
+			AscCommon.g_inputContext_create_events[i]();
+
+		delete AscCommon.g_inputContext_create_events;
+	};
+
 	var InputTextElementType = {
 		TextArea           : 0,
 		ContentEditableDiv : 1
@@ -109,6 +126,8 @@
 
 		// для сброса текста при фокусе
 		this.checkClearTextOnFocusTimerId = -1;
+
+		this.isDisableKeyboard = false;
 	}
 
 	var CTextInputPrototype = CTextInput2.prototype;
@@ -266,9 +285,11 @@
 		if (!isSpaceAsText)
 			ret = this.Api.onKeyDown(e);
 
+		let isSpecialClearInComposition = true;
 		switch (e.keyCode)
 		{
 			case 8:		// backspace
+				isSpecialClearInComposition = false;
 			case 9:		// tab
 			case 13:	// enter
 			case 37:	// left
@@ -281,7 +302,8 @@
 			case 36: 	// home
 			case 46:	// delete
 			{
-				this.clear();
+				if (!this.IsComposition || isSpecialClearInComposition)
+					this.clear();
 			}
 			default:
 				break;
@@ -835,7 +857,7 @@
 	};
 	CTextInputPrototype.setReadOnlyWrapper = function(val)
 	{
-		this.HtmlArea.readOnly = this.Api.isViewMode ? true : val;
+		this.HtmlArea.readOnly = this.isDisableKeyboard ? true : val;
 	};
 	CTextInputPrototype.setInterfaceEnableKeyEvents = function(value)
 	{
@@ -985,6 +1007,8 @@
 		}
 
 		this.Api.Input_UpdatePos();
+
+		this.checkViewMode();
 	};
 	CTextInputPrototype.appendInputToCanvas = function(parent_id)
 	{
@@ -1151,6 +1175,17 @@
 		this.setReadOnlyWrapper(false);
 	};
 
+	CTextInputPrototype.checkViewMode = function()
+	{
+		let oldDisableKeyboard = this.isDisableKeyboard;
+		this.isDisableKeyboard = (this.Api.isViewMode || (0 !== (this.Api.restrictions & Asc.c_oAscRestrictionType.View)));
+
+		if (oldDisableKeyboard !== this.isDisableKeyboard)
+		{
+			this.setReadOnlyWrapper(false);
+		}
+	};
+
 	function _getAttirbute(_elem, _attr, _depth)
 	{
 		var _elemTest = _elem;
@@ -1202,6 +1237,8 @@
 		window['AscCommon'].g_inputContext.init(target_id, parent_id);
 		window['AscCommon'].g_clipboardBase.Init(api);
 		window['AscCommon'].g_clipboardBase.inputContext = window['AscCommon'].g_inputContext;
+
+		window['AscCommon'].inputMethodCheckInitEvents();
 
 		if (window['AscCommon'].TextBoxInputMode === true)
 		{

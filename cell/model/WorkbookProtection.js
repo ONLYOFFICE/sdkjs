@@ -32,7 +32,7 @@
 
 "use strict";
 
-(function(window, undefined){
+(function (window, undefined) {
 
 
 	/*this.sheet = true;+
@@ -173,7 +173,7 @@
 		return this;
 	}
 
-	CSheetProtection.prototype.clone = function(ws) {
+	CSheetProtection.prototype.clone = function (ws) {
 		var res = new CSheetProtection(ws);
 
 		res.algorithmName = this.algorithmName;
@@ -203,7 +203,7 @@
 		return res;
 	};
 
-	CSheetProtection.prototype.default = function() {
+	CSheetProtection.prototype.default = function () {
 		this.algorithmName = null;
 		this.hashValue = null;
 		this.saltValue = null;
@@ -228,7 +228,7 @@
 		this.selectUnlockedCells = false;
 	};
 
-	CSheetProtection.prototype.setDefaultInterface = function() {
+	CSheetProtection.prototype.setDefaultInterface = function () {
 		this.algorithmName = null;
 		this.hashValue = null;
 		this.saltValue = null;
@@ -301,7 +301,7 @@
 		return propOld;
 	};
 
-	CSheetProtection.prototype.Write_ToBinary2 = function(w) {
+	CSheetProtection.prototype.Write_ToBinary2 = function (w) {
 		var _writeBool = function (val) {
 			if (null != val) {
 				w.WriteBool(true);
@@ -365,7 +365,7 @@
 		_writeBool(this.selectUnlockedCells);
 	};
 
-	CSheetProtection.prototype.Read_FromBinary2 = function(r) {
+	CSheetProtection.prototype.Read_FromBinary2 = function (r) {
 		if (r.GetBool()) {
 			this.algorithmName = r.GetLong();
 		}
@@ -523,7 +523,7 @@
 			var hashParams = AscCommon.generateHashParams();
 			this.saltValue = hashParams.saltValue;
 			this.spinCount = hashParams.spinCount;
-			this.algorithmName =  AscCommon.c_oSerAlgorithmNameTypes.SHA_512;
+			this.algorithmName = AscCommon.c_oSerAlgorithmNameTypes.SHA_512;
 		}
 		this.temporaryPassword = password;
 		if (callback) {
@@ -609,7 +609,7 @@
 		return this;
 	}
 
-	CWorkbookProtection.prototype.clone = function(wb) {
+	CWorkbookProtection.prototype.clone = function (wb) {
 		var res = new CWorkbookProtection(wb);
 
 		res.lockStructure = this.lockStructure;
@@ -660,7 +660,7 @@
 		return propOld;
 	};
 
-	CWorkbookProtection.prototype.Write_ToBinary2 = function(w) {
+	CWorkbookProtection.prototype.Write_ToBinary2 = function (w) {
 		if (null != this.lockStructure) {
 			w.WriteBool(true);
 			w.WriteBool(this.lockStructure);
@@ -747,7 +747,7 @@
 		}
 	};
 
-	CWorkbookProtection.prototype.Read_FromBinary2 = function(r) {
+	CWorkbookProtection.prototype.Read_FromBinary2 = function (r) {
 		if (r.GetBool()) {
 			this.lockStructure = r.GetBool();
 		}
@@ -827,7 +827,7 @@
 			var hashParams = AscCommon.generateHashParams();
 			this.workbookSaltValue = hashParams.saltValue;
 			this.workbookSpinCount = hashParams.spinCount;
-			this.workbookAlgorithmName =  AscCommon.c_oSerAlgorithmNameTypes.SHA_512;
+			this.workbookAlgorithmName = AscCommon.c_oSerAlgorithmNameTypes.SHA_512;
 		}
 		this.temporaryPassword = password;
 		if (callback) {
@@ -918,7 +918,7 @@
 		return AscCommonExcel.UndoRedoDataTypes.ProtectedRangeDataInner;
 	};
 
-	CProtectedRange.prototype.clone = function(ws) {
+	CProtectedRange.prototype.clone = function (ws) {
 		var res = new CProtectedRange(ws);
 
 		res.sqref = this.sqref;
@@ -933,7 +933,7 @@
 	};
 
 	CProtectedRange.prototype.set = function (val, addToHistory, ws) {
-		
+
 		this.cleanTemp();
 
 		this.name = this.checkProperty(this.name, val.name, AscCH.historyitem_Protected_SetName, ws, addToHistory);
@@ -992,7 +992,7 @@
 		this.sqref = location;
 	};
 
-	CProtectedRange.prototype.setOffset = function(offset, range, ws, addToHistory) {
+	CProtectedRange.prototype.setOffset = function (offset, range, ws, addToHistory) {
 		var newRanges = [];
 		var isChange = false;
 
@@ -1069,7 +1069,7 @@
 		}
 	};
 
-	CProtectedRange.prototype.Write_ToBinary2 = function(w) {
+	CProtectedRange.prototype.Write_ToBinary2 = function (w) {
 		if (null != this.sqref) {
 			w.WriteBool(true);
 			w.WriteLong(this.sqref.length);
@@ -1115,7 +1115,7 @@
 		}
 	};
 
-	CProtectedRange.prototype.Read_FromBinary2 = function(r) {
+	CProtectedRange.prototype.Read_FromBinary2 = function (r) {
 		if (r.GetBool()) {
 			var length = r.GetULong();
 			for (var i = 0; i < length; ++i) {
@@ -1268,7 +1268,7 @@
 			var hashParams = AscCommon.generateHashParams();
 			this.saltValue = hashParams.saltValue;
 			this.spinCount = hashParams.spinCount;
-			this.algorithmName =  AscCommon.c_oSerAlgorithmNameTypes.SHA_512;
+			this.algorithmName = AscCommon.c_oSerAlgorithmNameTypes.SHA_512;
 		}
 		//генерируем хэш
 		this.temporaryPassword = val;
@@ -1280,7 +1280,12 @@
 		return this.isLock;
 	};
 	CProtectedRange.prototype.asc_checkPassword = function (val, callback) {
-		var checkHash = {password: val, salt: this.saltValue, spinCount: this.spinCount, alg: AscCommon.fromModelAlgorithmName(this.algorithmName)};
+		var checkHash = {
+			password: val,
+			salt: this.saltValue,
+			spinCount: this.spinCount,
+			alg: AscCommon.fromModelAlgorithmName(this.algorithmName)
+		};
 		AscCommon.calculateProtectHash([checkHash], function (hash) {
 			callback(hash && hash[0] === this.hashValue);
 		});
@@ -1311,7 +1316,7 @@
 		return this;
 	}
 
-	CFileSharing.prototype.clone = function(wb) {
+	CFileSharing.prototype.clone = function (wb) {
 		var res = new CFileSharing(wb);
 
 		res.algorithmName = this.algorithmName;
@@ -1351,7 +1356,7 @@
 		return propOld;*/
 	};
 
-	CFileSharing.prototype.Write_ToBinary2 = function(w) {
+	CFileSharing.prototype.Write_ToBinary2 = function (w) {
 		if (null != this.algorithmName) {
 			w.WriteBool(true);
 			w.WriteLong(this.algorithmName);
@@ -1396,7 +1401,7 @@
 		}
 	};
 
-	CFileSharing.prototype.Read_FromBinary2 = function(r) {
+	CFileSharing.prototype.Read_FromBinary2 = function (r) {
 		if (r.GetBool()) {
 			this.algorithmName = r.GetLong();
 		}
@@ -1548,6 +1553,6 @@
 
 	window["AscCommonExcel"].getPasswordHash = getPasswordHash;
 	window["AscCommonExcel"].FromXml_ST_AlgorithmName = FromXml_ST_AlgorithmName;
-	window["AscCommonExcel"].ToXml_ST_AlgorithmName   = ToXml_ST_AlgorithmName;
+	window["AscCommonExcel"].ToXml_ST_AlgorithmName = ToXml_ST_AlgorithmName;
 
 })(window);

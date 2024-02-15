@@ -30,41 +30,41 @@
  *
  */
 
-"use strict";
-
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Value]		= CChangesPDFFormValue;
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Pushbutton_Image]	= CChangesPDFPushbuttonImage;
-
-/**
- * @constructor
- * @extends {AscDFH.CChangesBaseStringProperty}
- */
-function CChangesPDFFormValue(Class, Old, New, Color)
+$(function ()
 {
-	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New, Color);
-}
-CChangesPDFFormValue.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
-CChangesPDFFormValue.prototype.constructor = CChangesPDFFormValue;
-CChangesPDFFormValue.prototype.Type = AscDFH.historyitem_Pdf_Form_Value;
-CChangesPDFFormValue.prototype.private_SetValue = function(Value)
-{
-	var oField = this.Class;
-	oField.SetValue(Value);
-};
-
-/**
- * @constructor
- * @extends {AscDFH.CChangesBaseStringProperty}
- */
-function CChangesPDFPushbuttonImage(Class, Old, New, Color)
-{
-	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New, Color);
-}
-CChangesPDFPushbuttonImage.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
-CChangesPDFPushbuttonImage.prototype.constructor = CChangesPDFPushbuttonImage;
-CChangesPDFPushbuttonImage.prototype.Type = AscDFH.historyitem_Pdf_Pushbutton_Image;
-CChangesPDFPushbuttonImage.prototype.private_SetValue = function(Value)
-{
-	var oField = this.Class;
-	oField.AddImage2(Value[0], Value[1]);
-};
+	// For correct calculation of a tab position we need to create logic document
+	// since position depends on overall document margins
+	let logicDocument = AscTest.CreateLogicDocument();
+	let charWidth     = AscTest.CharWidth * AscTest.FontSize;
+	
+	let sectPr = AscTest.GetFinalSection();
+	sectPr.SetPageSize(100 * charWidth, 1000);
+	sectPr.SetPageMargins(10 * charWidth, 50, 15 * charWidth, 50);
+	
+	let p = AscTest.CreateParagraph();
+	logicDocument.AddToContent(0, p);
+	
+	let r = AscTest.CreateRun();
+	p.AddToContent(0, r);
+	
+	function setTabs(tabs)
+	{
+		let paraTabs = new CParaTabs();
+		tabs.forEach(t => paraTabs.Add(new CParaTab(t.value, t.pos, t.leader)));
+		p.SetParagraphTabs(paraTabs);
+	}
+	
+	QUnit.module("Paragraph tabs calculation");
+	
+	QUnit.test("Special case for left tab which exceed right edge", function (assert)
+	{
+		// Check situation when left tab lies between right edge of a paragraph and right field of the document
+		r.AddText("Before\tafter");
+		p.SetParagraphIndent({Right : 20 * charWidth});
+		setTabs([{value : tab_Left, pos : 70 * charWidth}]);
+		
+		AscTest.Recalculate();
+		assert.strictEqual(p.GetLinesCount(), 1, "Check number of lines");
+		assert.strictEqual(p.GetTextOnLine(0), "Before after", "Text on line 0 'Before after'");
+	});
+});

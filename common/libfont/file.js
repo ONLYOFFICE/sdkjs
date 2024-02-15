@@ -137,6 +137,14 @@
 		glyphstateMiss : 2  	// символ не отрисовался
 	};
 
+	function get_raster_bounds_safe(rasterBitmap)
+	{
+		if (!rasterBitmap)
+			return {dist_l: 0, dist_t: 0, dist_r: 0, dist_b: 0};
+
+		return get_raster_bounds(rasterBitmap.data, rasterBitmap.width, rasterBitmap.rows, rasterBitmap.pitch);
+	}
+
 	function get_raster_bounds(data, width, height, stride)
 	{
 		var ret = {dist_l: 0, dist_t: 0, dist_r: 0, dist_b: 0};
@@ -1196,7 +1204,7 @@
 					if (rasterInfo)
 					{
 						var rasterBitmap = AscFonts.FT_Get_Glyph_Render_Buffer(this.m_pFace, rasterInfo, false);
-						oSizes.oBBox.rasterDistances = get_raster_bounds(rasterBitmap.data, rasterBitmap.width, rasterBitmap.rows, rasterBitmap.pitch);
+						oSizes.oBBox.rasterDistances = get_raster_bounds_safe(rasterBitmap);
 					}
 				}
 				return oSizes;

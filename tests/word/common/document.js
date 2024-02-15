@@ -102,9 +102,11 @@
 	{
 		return new AscWord.CRun();
 	}
-	function CreateTable(rows, cols)
+	function CreateTable(rows, cols, tableGrid)
 	{
-		return new AscWord.CTable(AscTest.DrawingDocument, null, true, rows, cols);
+		let t = new AscWord.CTable(AscTest.DrawingDocument, null, true, rows, cols, tableGrid);
+		t.CorrectBadTable();
+		return t;
 	}
 	function CreateImage(w, h)
 	{
@@ -141,6 +143,23 @@
 	function GetParagraphText(paragraph)
 	{
 		return paragraph.GetText({ParaEndToSpace : false});
+	}
+	function GetParagraphReviewText(paragraph)
+	{
+		let result = [];
+		paragraph.CheckRunContent(function(run)
+		{
+			let text = run.GetText();
+			if (!text || !text.length)
+				return;
+			
+			let reviewType = run.GetReviewType();
+			if (result.length && reviewType === result[result.length - 1][0])
+				result[result.length - 1][1] += text;
+			else
+				result.push([reviewType, text]);
+		});
+		return result;
 	}
 	function RemoveTableBorders(table)
 	{
@@ -279,21 +298,21 @@
 		if (!logicDocument)
 			return;
 
-		logicDocument.Begin_CompositeInput();
+		logicDocument.getCompositeInput().begin();
 	}
 	function ReplaceCompositeInput(text)
 	{
 		if (!logicDocument)
 			return;
 
-		logicDocument.Replace_CompositeText(text);
+		logicDocument.getCompositeInput().replace(text);
 	}
 	function EndCompositeInput()
 	{
 		if (!logicDocument)
 			return;
 
-		logicDocument.End_CompositeInput();
+		logicDocument.getCompositeInput().end();
 	}
 	function EnterTextCompositeInput(text)
 	{
@@ -361,6 +380,28 @@
 			logicDocument.Content[pos].SelectAll(direction);
 		}
 	}
+	function SelectParagraphRange(paragraph, start, end)
+	{
+		if (!paragraph || start >= end)
+			return;
+		
+		if (logicDocument)
+			logicDocument.RemoveSelection();
+		
+		paragraph.RemoveSelection();
+		paragraph.MoveCursorToStartPos();
+		for (let i = 0; i < start; ++i)
+			paragraph.MoveCursorRight(false, false);
+		
+		let startPos = paragraph.getCurrentPos();
+		for (let i = start; i < end; ++i)
+			paragraph.MoveCursorRight(false, false);
+		
+		let endPos = paragraph.getCurrentPos();
+		paragraph.StartSelectionFromCurPos();
+		paragraph.SetSelectionContentPos(startPos, endPos, false);
+		paragraph.Document_SetThisElementCurrent();
+	}
 	function GetFinalSection()
 	{
 		if (!logicDocument)
@@ -404,6 +445,7 @@
 	AscTest.CreateParagraphStyle     = CreateParagraphStyle;
 	AscTest.CreateRunStyle           = CreateRunStyle;
 	AscTest.GetParagraphText         = GetParagraphText;
+	AscTest.GetParagraphReviewText   = GetParagraphReviewText;
 	AscTest.RemoveTableBorders       = RemoveTableBorders;
 	AscTest.SetFillingFormMode       = SetFillingFormMode;
 	AscTest.SetEditingMode           = SetEditingMode;
@@ -431,6 +473,7 @@
 	AscTest.StartCollaboration       = StartCollaboration;
 	AscTest.SyncCollaboration        = SyncCollaboration;
 	AscTest.EndCollaboration         = EndCollaboration;
+	AscTest.SelectParagraphRange     = SelectParagraphRange;
 
 })(window);
 

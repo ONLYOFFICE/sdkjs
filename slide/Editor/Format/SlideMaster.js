@@ -169,7 +169,7 @@ MasterSlide.prototype.draw = function (graphics, slide) {
 		}
 	}
 	this.cSld.forEachSp(function(oSp) {
-		if (!oSp.isPlaceholder()) {
+		if (!oSp.isPlaceholder() && !AscCommon.IsHiddenObj(oSp)) {
 			oSp.draw(graphics);
 		}
 	});
@@ -715,7 +715,7 @@ function CMasterThumbnailDrawer()
             }
             else
             {
-                if (_layout.showMasterSp == true || _layout.showMasterSp == undefined)
+                if (_layout.showMasterSp)
                 {
                     if(_master.needRecalc && _master.needRecalc())
                     {
@@ -886,7 +886,7 @@ function CMasterThumbnailDrawer()
             }
             else
             {
-                if (_layout.showMasterSp == true || _layout.showMasterSp == undefined)
+                if (_layout.showMasterSp)
                 {
                     if(_master.needRecalc && _master.needRecalc())
                     {

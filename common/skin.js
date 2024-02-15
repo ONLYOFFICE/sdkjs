@@ -142,10 +142,10 @@ var EditorSkins = {
 		ColorHighlighted         : "#6a6a70",
 		ColorFiltering           : "#008636",
 
-		SheetViewCellBackground        : "#73bf92",
+		SheetViewCellBackground        : "#73bf91",
 		SheetViewCellBackgroundPressed : "#aaffcc",
-		SheetViewCellBackgroundHover   : "#97e3b7",
-		SheetViewCellTitleLabel        : "#121213",
+		SheetViewCellBackgroundHover   : "#97e3b6",
+		SheetViewCellTitleLabel        : "#121212",
 
 		ColorDark                : "#ffffff",
 		ColorDarkActive          : "#ffffff",
@@ -262,10 +262,10 @@ var EditorSkins = {
 		ColorHighlighted         : "#d9d9d9",
 		ColorFiltering           : "#6BEC9F",
 
-		SheetViewCellBackground        : "#73bf93",
+		SheetViewCellBackground        : "#73bf91",
 		SheetViewCellBackgroundPressed : "#aaffcc",
-		SheetViewCellBackgroundHover   : "#97e3b8",
-		SheetViewCellTitleLabel        : "#121214",
+		SheetViewCellBackgroundHover   : "#97e3b6",
+		SheetViewCellTitleLabel        : "#121212",
 
 		ColorDark                : "#333",
 		ColorDarkActive          : "#333",
@@ -349,7 +349,7 @@ function updateGlobalSkinColors(theme)
 		// demonstration
 		DemBackgroundColor              : "background-toolbar",
 		DemButtonBackgroundColor        : "background-normal",
-		DemButtonBackgroundColorHover   : "highlight-buttin-hover",
+		DemButtonBackgroundColorHover   : "highlight-button-hover",
 		DemButtonBackgroundColorActive  : "highlight-button-pressed",
 		DemButtonBorderColor            : "border-regular-control",
 		DemButtonTextColor              : "text-normal",

@@ -58,7 +58,7 @@ CChangesPDFDocumentAddItem.prototype.Undo = function()
 		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
 		let oItem = this.Items[nIndex];
 
-		if (oItem instanceof AscPDF.CAnnotationBase) {
+		if (oItem.IsAnnot()) {
 			let nPage = oItem.GetPage();
 			oItem.AddToRedraw();
 
@@ -68,6 +68,7 @@ CChangesPDFDocumentAddItem.prototype.Undo = function()
 			if (oItem.IsComment())
 				editor.sync_RemoveComment(oItem.GetId());
 			
+			oViewer.DrawingObjects.resetSelection();
 		}
 	}
 
@@ -83,7 +84,7 @@ CChangesPDFDocumentAddItem.prototype.Redo = function()
 		let nPos = true !== this.UseArray ? this.Pos : this.PosArray[nIndex];
 		let oItem = this.Items[nIndex];
 
-		if (oItem instanceof AscPDF.CAnnotationBase) {
+		if (oItem.IsAnnot()) {
 			let nPage = oItem.GetPage();
 			oItem.AddToRedraw();
 
@@ -93,6 +94,8 @@ CChangesPDFDocumentAddItem.prototype.Redo = function()
 				editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
 
 			oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
+
+			oViewer.DrawingObjects.resetSelection();
 		}
 	}
 	oDocument.mouseDownAnnot = null;
@@ -122,7 +125,7 @@ CChangesPDFDocumentRemoveItem.prototype.Undo = function()
 
 		let oItem = this.Items[nIndex];
 
-		if (oItem instanceof AscPDF.CAnnotationBase) {
+		if (oItem.IsAnnot()) {
 			let nPage = oItem.GetPage();
 			oItem.AddToRedraw();
 
@@ -149,7 +152,7 @@ CChangesPDFDocumentRemoveItem.prototype.Redo = function()
 
 		let oItem = this.Items[nIndex];
 
-		if (oItem instanceof AscPDF.CAnnotationBase) {
+		if (oItem.IsAnnot()) {
 			let nPage = oItem.GetPage();
 			oItem.AddToRedraw();
 

@@ -45,6 +45,8 @@
     function CAnnotationPolyLine(sName, nPage, aRect, oDoc)
     {
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.PolyLine, nPage, aRect, oDoc);
+        AscFormat.CShape.call(this);
+        AscPDF.initShape(this);
 
         this._point         = undefined;
         this._popupOpen     = false;
@@ -57,97 +59,385 @@
         this._lineStart     = undefined;
         this._lineEnd       = undefined;
         this._vertices      = undefined;
+        this._width         = undefined;
 
         // internal
         TurnOffHistory();
-        this.content        = new AscPDF.CTextBoxContent(this, oDoc);
     }
-    CAnnotationPolyLine.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
-	CAnnotationPolyLine.prototype.constructor = CAnnotationPolyLine;
+    CAnnotationPolyLine.prototype.constructor = CAnnotationPolyLine;
+    AscFormat.InitClass(CAnnotationPolyLine, AscFormat.CShape, AscDFH.historyitem_type_Shape);
+    Object.assign(CAnnotationPolyLine.prototype, AscPDF.CAnnotationBase.prototype);
 
-    CAnnotationPolyLine.prototype.Draw = function(oGraphics) {
-        if (this.IsHidden() == true)
-            return;
-
-        let oViewer = editor.getDocumentRenderer();
-        let oGraphicsWord = oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
-        
-        this.Recalculate();
-        //this.DrawBackground();
-
-        oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
-
-        this.content.Draw(0, oGraphicsWord);
-        oGraphicsWord.RemoveClip();
-    };
-    CAnnotationPolyLine.prototype.Recalculate = function() {
-        // if (this.IsNeedRecalc() == false)
-        //     return;
-
-        let oViewer = editor.getDocumentRenderer();
-        let aRect   = this.GetRect();
-        
-        let X = aRect[0];
-        let Y = aRect[1];
-        let nWidth = (aRect[2] - aRect[0]);
-        let nHeight = (aRect[3] - aRect[1]);
-
-        let contentX;
-        let contentY;
-        let contentXLimit;
-        let contentYLimit;
-        
-        contentX = (X) * g_dKoef_pix_to_mm;
-        contentY = (Y) * g_dKoef_pix_to_mm;
-        contentXLimit = (X + nWidth) * g_dKoef_pix_to_mm;
-        contentYLimit = (Y + nHeight) * g_dKoef_pix_to_mm;
-
-        // this._formRect.X = X * g_dKoef_pix_to_mm;
-        // this._formRect.Y = Y * g_dKoef_pix_to_mm;
-        // this._formRect.W = nWidth * g_dKoef_pix_to_mm;
-        // this._formRect.H = nHeight * g_dKoef_pix_to_mm;
-        
-        if (!this.contentRect)
-            this.contentRect = {};
-
-        this.contentRect.X = contentX;
-        this.contentRect.Y = contentY;
-        this.contentRect.W = contentXLimit - contentX;
-        this.contentRect.H = contentYLimit - contentY;
-
-        if (!this._oldContentPos)
-            this._oldContentPos = {};
-
-        if (contentX != this._oldContentPos.X || contentY != this._oldContentPos.Y ||
-            contentXLimit != this._oldContentPos.XLimit) {
-            this.content.X      = this._oldContentPos.X        = contentX;
-            this.content.Y      = this._oldContentPos.Y        = contentY;
-            this.content.XLimit = this._oldContentPos.XLimit   = contentXLimit;
-            this.content.YLimit = this._oldContentPos.YLimit   = 20000;
-            this.content.Recalculate_Page(0, true);
-        }
-        // else if (this.IsNeedRecalc()) {
-        //     this.content.Recalculate_Page(0, false);
-        // }
-    };
-    
     CAnnotationPolyLine.prototype.SetVertices = function(aVertices) {
+        let oViewer = editor.getDocumentRenderer();
+        let oDoc    = oViewer.getPDFDoc();
+        
+        this.recalcGeometry();
+        oDoc.History.Add(new CChangesPDFAnnotVertices(this, this.GetVertices(), aVertices));
+
         this._vertices = aVertices;
     };
     CAnnotationPolyLine.prototype.GetVertices = function() {
         return this._vertices;
     };
+
+    CAnnotationPolyLine.prototype.Recalculate = function() {
+        if (this.IsNeedRecalc() == false)
+            return;
+
+        let oViewer     = editor.getDocumentRenderer();
+        let nPage       = this.GetPage();
+        let aOrigRect   = this.GetOrigRect();
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+        
+        this.handleUpdatePosition();
+        if (this.recalcInfo.recalculateGeometry)
+            this.RefillGeometry();
+
+        this.recalculate();
+        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY);
+    };
+    CAnnotationPolyLine.prototype.RefillGeometry = function() {
+        let oViewer = editor.getDocumentRenderer();
+        let oDoc    = oViewer.getPDFDoc();
+        
+        let aPoints = this.GetVertices();
+        let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom;
+
+        let aPolygonPoints = [];
+        for (let i = 0; i < aPoints.length - 1; i += 2) {
+            aPolygonPoints.push({
+                x: aPoints[i] * g_dKoef_pix_to_mm * nScaleX,
+                y: (aPoints[i + 1])* g_dKoef_pix_to_mm * nScaleY
+            });
+        }
+        
+        let aShapeRectInMM = this.GetRect().map(function(measure) {
+            return measure * g_dKoef_pix_to_mm;
+        });
+
+        oDoc.TurnOffHistory();
+        fillShapeByPoints([aPolygonPoints], aShapeRectInMM, this);
+    };
+    CAnnotationPolyLine.prototype.SetWidth = function(nWidthPt) {
+        this._width = nWidthPt; 
+
+        nWidthPt = nWidthPt > 0 ? nWidthPt : 0.5;
+        let oLine = this.pen;
+        oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
+    };
+    CAnnotationPolyLine.prototype.SetStrokeColor = function(aColor) {
+        this._strokeColor = aColor;
+
+        let oRGB    = this.GetRGBColor(aColor);
+        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+        let oLine   = this.pen;
+        oLine.setFill(oFill);
+    };
+    CAnnotationPolyLine.prototype.SetFillColor = function(aColor) {
+        this._fillColor = aColor;
+
+        let oRGB    = this.GetRGBColor(aColor);
+        let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+        this.setFill(oFill);
+    };
+    CAnnotationPolyLine.prototype.SetRect = function(aRect) {
+        let oViewer     = editor.getDocumentRenderer();
+        let oDoc        = oViewer.getPDFDoc();
+        let nPage       = this.GetPage();
+
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aRect));
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        this._rect = aRect;
+
+        this._pagePos = {
+            x: aRect[0],
+            y: aRect[1],
+            w: (aRect[2] - aRect[0]),
+            h: (aRect[3] - aRect[1])
+        };
+
+        this._origRect[0] = this._rect[0] / nScaleX;
+        this._origRect[1] = this._rect[1] / nScaleY;
+        this._origRect[2] = this._rect[2] / nScaleX;
+        this._origRect[3] = this._rect[3] / nScaleY;
+
+        oDoc.TurnOffHistory();
+
+        this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
+        this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
+        
+        this.AddToRedraw();
+        this.SetWasChanged(true);
+        this.SetDrawFromStream(false);
+    };
+    CAnnotationPolyLine.prototype.LazyCopy = function() {
+        let oDoc = this.GetDocument();
+        oDoc.TurnOffHistory();
+
+        let oPolygon = new CAnnotationPolyLine(AscCommon.CreateGUID(), this.GetPage(), this.GetOrigRect().slice(), oDoc);
+
+        oPolygon._pagePos = {
+            x: this._pagePos.x,
+            y: this._pagePos.y,
+            w: this._pagePos.w,
+            h: this._pagePos.h
+        }
+        oPolygon._origRect = this._origRect.slice();
+
+        this.fillObject(oPolygon);
+
+        oPolygon.pen = new AscFormat.CLn();
+        oPolygon._apIdx = this._apIdx;
+        oPolygon._originView = this._originView;
+        oPolygon.SetOriginPage(this.GetOriginPage());
+        oPolygon.SetAuthor(this.GetAuthor());
+        oPolygon.SetModDate(this.GetModDate());
+        oPolygon.SetCreationDate(this.GetCreationDate());
+        oPolygon.SetWidth(this.GetWidth());
+        oPolygon.SetStrokeColor(this.GetStrokeColor().slice());
+        oPolygon.SetContents(this.GetContents());
+        oPolygon.SetFillColor(this.GetFillColor());
+        oPolygon.SetLineStart(this.GetLineStart());
+        oPolygon.SetLineEnd(this.GetLineEnd());
+        oPolygon.recalcInfo.recalculatePen = false;
+        oPolygon.recalcInfo.recalculateGeometry = true;
+        oPolygon._vertices = this._vertices.slice();
+        oPolygon.SetWasChanged(oPolygon.IsChanged());
+        return oPolygon;
+    };
+    CAnnotationPolyLine.prototype.onMouseDown = function(e) {
+        let oViewer         = editor.getDocumentRenderer();
+        let oDrawingObjects = oViewer.DrawingObjects;
+        let oDoc            = this.GetDocument();
+        let oDrDoc          = oDoc.GetDrawingDocument();
+
+        this.selectStartPage = this.GetPage();
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
+
+        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
+        oDrawingObjects.startEditGeometry();
+    };
+    CAnnotationPolyLine.prototype.IsPolyLine = function() {
+        return true;
+    };
     CAnnotationPolyLine.prototype.SetLineStart = function(nType) {
         this._lineStart = nType;
+
+        this.SetWasChanged(true);
+        let oLine = this.pen;
+        oLine.setHeadEnd(new AscFormat.EndArrow());
+        let nLineEndType;
+        switch (nType) {
+            case AscPDF.LINE_END_TYPE.None:
+                nLineEndType = AscFormat.LineEndType.None;
+                break;
+            case AscPDF.LINE_END_TYPE.OpenArrow:
+                nLineEndType = AscFormat.LineEndType.Arrow;
+                break;
+            case AscPDF.LINE_END_TYPE.Diamond:
+                nLineEndType = AscFormat.LineEndType.Diamond;
+                break;
+            case AscPDF.LINE_END_TYPE.Circle:
+                nLineEndType = AscFormat.LineEndType.Oval;
+                break;
+            case AscPDF.LINE_END_TYPE.ClosedArrow:
+                nLineEndType = AscFormat.LineEndType.Triangle;
+                break;
+            case AscPDF.LINE_END_TYPE.ROpenArrow:
+                nLineEndType = AscFormat.LineEndType.ReverseArrow;
+                break;
+            case AscPDF.LINE_END_TYPE.RClosedArrow:
+                nLineEndType = AscFormat.LineEndType.ReverseTriangle;
+                break;
+            case AscPDF.LINE_END_TYPE.Butt:
+                nLineEndType = AscFormat.LineEndType.Butt;
+                break;
+            case AscPDF.LINE_END_TYPE.Square:
+                nLineEndType = AscFormat.LineEndType.Square;
+                break;
+            case AscPDF.LINE_END_TYPE.Slash:
+                nLineEndType = AscFormat.LineEndType.Slash;
+                break;
+            default:
+                nLineEndType = AscFormat.LineEndType.Arrow;
+                break;
+        }
+
+        oLine.headEnd.setType(nLineEndType);
+        oLine.headEnd.setLen(AscFormat.LineEndSize.Mid);
+    };
+    CAnnotationPolyLine.prototype.SetLineEnd = function(nType) {
+        this._lineEnd = nType;
+        
+        this.SetWasChanged(true);
+        let oLine = this.pen;
+        oLine.setTailEnd(new AscFormat.EndArrow());
+        let nLineEndType;
+        switch (nType) {
+            case AscPDF.LINE_END_TYPE.None:
+                nLineEndType = AscFormat.LineEndType.None;
+                break;
+            case AscPDF.LINE_END_TYPE.OpenArrow:
+                nLineEndType = AscFormat.LineEndType.Arrow;
+                break;
+            case AscPDF.LINE_END_TYPE.Diamond:
+                nLineEndType = AscFormat.LineEndType.Diamond;
+                break;
+            case AscPDF.LINE_END_TYPE.Circle:
+                nLineEndType = AscFormat.LineEndType.Oval;
+                break;
+            case AscPDF.LINE_END_TYPE.ClosedArrow:
+                nLineEndType = AscFormat.LineEndType.Triangle;
+                break;
+            case AscPDF.LINE_END_TYPE.ROpenArrow:
+                nLineEndType = AscFormat.LineEndType.ReverseArrow;
+                break;
+            case AscPDF.LINE_END_TYPE.RClosedArrow:
+                nLineEndType = AscFormat.LineEndType.ReverseTriangle;
+                break;
+            case AscPDF.LINE_END_TYPE.Butt:
+                nLineEndType = AscFormat.LineEndType.Butt;
+                break;
+            case AscPDF.LINE_END_TYPE.Square:
+                nLineEndType = AscFormat.LineEndType.Square;
+                break;
+            case AscPDF.LINE_END_TYPE.Slash:
+                nLineEndType = AscFormat.LineEndType.Slash;
+                break;
+            default:
+                nLineEndType = AscFormat.LineEndType.Arrow;
+                break;
+        }
+
+        oLine.tailEnd.setType(nLineEndType);
+        oLine.tailEnd.setLen(AscFormat.LineEndSize.Mid);
     };
     CAnnotationPolyLine.prototype.GetLineStart = function() {
         return this._lineStart;
     };
-    CAnnotationPolyLine.prototype.SetLineEnd = function(nType) {
-        this._lineEnd = nType;
-    };
     CAnnotationPolyLine.prototype.GetLineEnd = function() {
         return this._lineEnd;
+    };
+    CAnnotationPolyLine.prototype.GetMinShapeRect = function() {
+        let oViewer     = editor.getDocumentRenderer();
+        let nLineWidth  = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+        let aVertices     = this.GetVertices();
+        let nPage       = this.GetPage();
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        let shapeAtStart    = getFigureSize(this.GetLineStart(), nLineWidth);
+        let shapeAtEnd      = getFigureSize(this.GetLineEnd(), nLineWidth);
+
+        function calculateBoundingRectangle(line, figure1, figure2) {
+            const x1 = line.x1, y1 = line.y1, x2 = line.x2, y2 = line.y2;
+        
+            // Calculate the rotation angle in radians
+            const angle = Math.atan2(y2 - y1, x2 - x1);
+        
+            function rotatePoint(cx, cy, angle, px, py) {
+                let cos = Math.cos(angle),
+                    sin = Math.sin(angle),
+                    nx = (sin * (px - cx)) + (cos * (py - cy)) + cx,
+                    ny = (sin * (py - cy)) - (cos * (px - cx)) + cy;
+                return {x: nx, y: ny};
+            }
+        
+            function getRectangleCorners(cx, cy, width, height, angle) {
+                let halfWidth = width / 2;
+                let halfHeight = height / 2;
+        
+                // Corners of the rectangle before rotation
+                let corners = [
+                    {x: cx - halfWidth, y: cy - halfHeight}, // top left
+                    {x: cx + halfWidth, y: cy - halfHeight}, // top right
+                    {x: cx + halfWidth, y: cy + halfHeight}, // bottom right
+                    {x: cx - halfWidth, y: cy + halfHeight}  // bottom left
+                ];
+        
+                // Rotate each point
+                let rotatedCorners = [];
+                for (let i = 0; i < corners.length; i++) {
+                    rotatedCorners.push(rotatePoint(cx, cy, angle, corners[i].x, corners[i].y));
+                }
+                return rotatedCorners;
+            }
+        
+            let cornersFigure1 = getRectangleCorners(x1, y1, figure1.width, figure1.height, angle);
+            let cornersFigure2 = getRectangleCorners(x2, y2, figure2.width, figure2.height, angle);
+        
+            // Find minimum and maximum coordinates
+            let minX = Math.min(x1, x2);
+            let maxX = Math.max(x1, x2);
+            let minY = Math.min(y1, y2);
+            let maxY = Math.max(y1, y2);
+        
+            for (let i = 0; i < cornersFigure1.length; i++) {
+                let point = cornersFigure1[i];
+                minX = Math.min(minX, point.x);
+                maxX = Math.max(maxX, point.x);
+                minY = Math.min(minY, point.y);
+                maxY = Math.max(maxY, point.y);
+            }
+        
+            for (let i = 0; i < cornersFigure2.length; i++) {
+                let point = cornersFigure2[i];
+                minX = Math.min(minX, point.x);
+                maxX = Math.max(maxX, point.x);
+                minY = Math.min(minY, point.y);
+                maxY = Math.max(maxY, point.y);
+            }
+        
+            // Return the coordinates of the rectangle
+            return [minX * nScaleX, minY * nScaleY, maxX * nScaleX, maxY * nScaleY];
+        }
+
+        let oStartLine = {
+            x1: aVertices[0],
+            y1: aVertices[1],
+            x2: aVertices[2],
+            y2: aVertices[3]
+        }
+        let oEndLine = {
+            x1: aVertices[aVertices.length - 4],
+            y1: aVertices[aVertices.length - 3],
+            x2: aVertices[aVertices.length - 2],
+            y2: aVertices[aVertices.length - 1]
+        }
+
+        function findBoundingRectangle(points) {
+            let x_min = points[0], y_min = points[1];
+            let x_max = points[0], y_max = points[1];
+        
+            for (let i = 2; i < points.length; i += 2) {
+                x_min = Math.min(x_min, points[i]);
+                x_max = Math.max(x_max, points[i]);
+                y_min = Math.min(y_min, points[i + 1]);
+                y_max = Math.max(y_max, points[i + 1]);
+            }
+        
+            return [x_min * nScaleX, y_min * nScaleY, x_max * nScaleX, y_max * nScaleY];
+        }
+
+        // находим ректы исходных точек. Стартовой линии учитывая lineStart фигуру, и такую же для конца
+        // далее нахоим объединения всех прямоугольников для получения результирующего
+        let aSourceRect     = findBoundingRectangle(aVertices);
+        let aStartLineRect  = calculateBoundingRectangle(oStartLine, shapeAtStart, {width: 0, height: 0});
+        let aEndLineRect    = calculateBoundingRectangle(oEndLine, {width: 0, height: 0} , shapeAtEnd);
+
+        return unionRectangles([aSourceRect, aStartLineRect, aEndLineRect]);
     };
     CAnnotationPolyLine.prototype.WriteToBinary = function(memory) {
         memory.WriteByte(AscCommon.CommandType.ctAnnotField);
@@ -199,16 +489,158 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
-
-        this._replies.forEach(function(reply) {
-            reply.WriteToBinary(memory); 
-        });
     };
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();
     }
 
+    function fillShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
+        let xMax = aShapeRect[2];
+        let xMin = aShapeRect[0];
+        let yMin = aShapeRect[1];
+        let yMax = aShapeRect[3];
+
+        let geometry = generateGeometry(arrOfArrPoints, [xMin, yMin, xMax, yMax]);
+        oParentAnnot.spPr.setGeometry(geometry);
+        oParentAnnot.updatePosition(xMin, yMin);
+
+        oParentAnnot.x = xMin;
+        oParentAnnot.y = yMin;
+        return oParentAnnot;
+    }
+
+    function generateGeometry(arrOfArrPoints, aBounds, oGeometry) {
+        let xMin = aBounds[0];
+        let yMin = aBounds[1];
+        let xMax = aBounds[2];
+        let yMax = aBounds[3];
+
+        let geometry = oGeometry ? oGeometry : new AscFormat.Geometry();
+        if (oGeometry) {
+            oGeometry.pathLst = [];
+        }
+
+        for (let nPath = 0; nPath < arrOfArrPoints.length; nPath++) {
+            let bClosed     = false;
+            let aPoints     = arrOfArrPoints[nPath];
+            let min_dist    = editor.WordControl.m_oDrawingDocument.GetMMPerDot(3);
+            let oLastPoint  = aPoints[aPoints.length-1];
+            let nLastIndex  = aPoints.length-1;
+            if(oLastPoint.bTemporary) {
+                nLastIndex--;
+            }
+            if(nLastIndex > 1)
+            {
+                let dx = aPoints[0].x - aPoints[nLastIndex].x;
+                let dy = aPoints[0].y - aPoints[nLastIndex].y;
+                if(Math.sqrt(dx*dx +dy*dy) < min_dist)
+                {
+                    bClosed = true;
+                }
+            }
+
+            let w = xMax - xMin, h = yMax-yMin;
+            let kw, kh, pathW, pathH;
+            if(w > 0)
+            {
+                pathW = 43200;
+                kw = 43200/ w;
+            }
+            else
+            {
+                pathW = 0;
+                kw = 0;
+            }
+            if(h > 0)
+            {
+                pathH = 43200;
+                kh = 43200 / h;
+            }
+            else
+            {
+                pathH = 0;
+                kh = 0;
+            }
+            
+            geometry.AddPathCommand(0,undefined, "none", undefined, pathW, pathH);
+            geometry.AddPathCommand(1, (((aPoints[0].x - xMin) * kw) >> 0) + "", (((aPoints[0].y - yMin) * kh) >> 0) + "");
+
+            let oPt, nPt;
+            for(nPt = 1; nPt < aPoints.length; nPt++) {
+                oPt = aPoints[nPt];
+
+                geometry.AddPathCommand(2,
+                    (((oPt.x - xMin) * kw) >> 0) + "", (((oPt.y - yMin) * kh) >> 0) + ""
+                );
+            }
+        }
+
+        geometry.preset = null;
+        geometry.rectS = null;
+        return geometry;
+    }
+
+    function getFigureSize(nType, nLineW) {
+        let oSize = {width: 0, height: 0};
+
+        switch (nType) {
+            case AscPDF.LINE_END_TYPE.None:
+                oSize.width = nLineW;
+                oSize.height = nLineW;
+            case AscPDF.LINE_END_TYPE.OpenArrow:
+            case AscPDF.LINE_END_TYPE.ClosedArrow:
+                oSize.width = 4 * nLineW;
+                oSize.height = 2 * nLineW;
+                break;
+            case AscPDF.LINE_END_TYPE.Diamond:
+            case AscPDF.LINE_END_TYPE.Square:
+                oSize.width = 4 * nLineW;
+                oSize.height = 4 * nLineW;
+                break;
+            case AscPDF.LINE_END_TYPE.Circle:
+                oSize.width = 4 * nLineW;
+                oSize.height = 4 * nLineW;
+                break;
+            case AscPDF.LINE_END_TYPE.RClosedArrow:
+                oSize.width = 6 * nLineW;
+                oSize.height = 6 * nLineW;
+                break;
+            case AscPDF.LINE_END_TYPE.ROpenArrow:
+                oSize.width = 5 * nLineW;
+                oSize.height = 5 * nLineW;
+                break;
+            case AscPDF.LINE_END_TYPE.Butt:
+                oSize.width = 5 * nLineW;
+                oSize.height = 1.5 * nLineW;
+                break;
+            case AscPDF.LINE_END_TYPE.Slash:
+                oSize.width = 4 * nLineW;
+                oSize.height = 3.5 * nLineW;
+                break;
+            
+        }
+
+        return oSize;
+    }
+
+    function unionRectangles(rects) {
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+    
+        rects.forEach(function(rect) {
+            minX = Math.min(minX, rect[0]);
+            minY = Math.min(minY, rect[1]);
+            maxX = Math.max(maxX, rect[2]);
+            maxY = Math.max(maxY, rect[3]);
+        });
+    
+        return [minX, minY, maxX, maxY];
+    }
+
     window["AscPDF"].CAnnotationPolyLine = CAnnotationPolyLine;
+    window["AscPDF"].unionRectangles = unionRectangles;
 })();
 

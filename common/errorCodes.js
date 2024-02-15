@@ -244,7 +244,9 @@
 			ProtectedRangeByOtherUser: 1050,
 
 			TraceDependentsNoFormulas: 1060,
-			TracePrecedentsNoValidReference: 1061
+			TracePrecedentsNoValidReference: 1061,
+
+			MustIntegerOrDecimalNumber: 1070
 		}
 	};
 
@@ -410,6 +412,8 @@
 	prot['ProtectedRangeByOtherUser']        = prot.ProtectedRangeByOtherUser;
 	prot['TraceDependentsNoFormulas']        = prot.TraceDependentsNoFormulas;
 	prot['TracePrecedentsNoValidReference']  = prot.TracePrecedentsNoValidReference;
+	prot['MustIntegerOrDecimalNumber']       = prot.MustIntegerOrDecimalNumber;
+
 
 
 })(window);

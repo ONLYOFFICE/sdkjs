@@ -48,6 +48,10 @@
     CAnnotationTextMarkup.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationTextMarkup.prototype.constructor = CAnnotationTextMarkup;
 
+    CAnnotationTextMarkup.prototype.getObjectType = function() {
+        return -1;
+    };
+
     CAnnotationTextMarkup.prototype.SetQuads = function(aQuads) {
         this._quads = aQuads;
     };
@@ -194,10 +198,6 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
-
-        this._replies.forEach(function(reply) {
-            reply.WriteToBinary(memory); 
-        });
     };
     /**
 	 * Class representing a highlight annotation.
@@ -611,7 +611,7 @@
         this.WriteToBinaryBase2(memory);
         
         // rectange diff
-        let aRD = this.GetReqtangleDiff();
+        let aRD = this.GetRectangleDiff();
         if (aRD) {
             memory.annotFlags |= (1 << 15);
             for (let i = 0; i < 4; i++) {
@@ -633,10 +633,6 @@
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
-
-        this._replies.forEach(function(reply) {
-            reply.WriteToBinary(memory); 
-        });
     };
 
     function findMaxSideWithRotation(x1, y1, x2, y2, x3, y3, x4, y4) {

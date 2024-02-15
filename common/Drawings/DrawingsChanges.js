@@ -824,7 +824,7 @@
     };
     CChangesDrawingSlideLocks.prototype.CreateReverseChange = function()
     {
-        return new this.constructor(this.Class, null, null, null, null, null);
+        return new this.constructor(this.Class, null, null, null, null, null, null);
     };
 
     window['AscDFH'].CChangesDrawingSlideLocks = CChangesDrawingSlideLocks;

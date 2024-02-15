@@ -35,7 +35,7 @@
  * @param {Window} window
  * @param {undefined} undefined
  */
-	function (window, undefined) {
+function (window, undefined) {
 
 
 	/*
@@ -102,10 +102,10 @@
 	 * @param {Number} padding
 	 * @param {Boolean} menuEditor
 	 */
-	function CellEditor( elem, input, fmgrGraphics, oFont, handlers, padding, menuEditor ) {
+	function CellEditor(elem, input, fmgrGraphics, oFont, handlers, padding, menuEditor) {
 		this.element = elem;
 		this.input = input;
-		this.handlers = new asc_HL( handlers );
+		this.handlers = new asc_HL(handlers);
 		this.options = {};
 		this.sides = undefined;
 		this.menuEditor = menuEditor;
@@ -162,8 +162,8 @@
 
 		/** @type RegExp */
 		this.rangeChars = ["=", "-", "+", "*", "/", "(", "{", "<", ">", "^", "!", "&", ":", " ", "."];
-		this.reNotFormula = new XRegExp( "[^\\p{L}\\\\_\\#\\]\\[\\p{N}\\.\"\]", "i" );
-		this.reFormula = new XRegExp( "^([\\p{L}\\\\_\\]\\[][\\p{L}\\\\_\\#\\]\\[\\p{N}\\.]*)", "i" );
+		this.reNotFormula = new XRegExp("[^\\p{L}\\\\_\\#\\]\\[\\p{N}\\.\"\]", "i");
+		this.reFormula = new XRegExp("^([\\p{L}\\\\_\\]\\[][\\p{L}\\\\_\\#\\]\\[\\p{N}\\.]*)", "i");
 
 		this.defaults = {
 			padding: padding,
@@ -181,6 +181,9 @@
 
 		// Обработчик кликов
 		this.clickCounter = new AscFormat.ClickCounter();
+
+		//temporary - for safari rendering. remove after fixed
+		this._originalCanvasWidth = null;
 
 		this._init();
 
@@ -343,7 +346,7 @@
 			if (this.cursorPos !== b) {
 				this._moveCursor(kPosition, b);
 			}
-		} else if (options.enterOptions.cursorPos){
+		} else if (options.enterOptions.cursorPos) {
 			this._moveCursor(kPosition, options.enterOptions.cursorPos);
 		} else if (options.enterOptions.eventPos) {
 			this._onMouseDown(options.enterOptions.eventPos);
@@ -371,11 +374,11 @@
 			saveValue = false;
 		}
 
-		var localSaveValueCallback = function(isSuccess) {
-			if(!isSuccess) {
+		var localSaveValueCallback = function (isSuccess) {
+			if (!isSuccess) {
 				t.setFocus(true);
 				t.cleanSelectRange();
-				if(callback) {
+				if (callback) {
 					callback(false);
 				}
 				return false;
@@ -406,7 +409,7 @@
 			t._setEditorState(c_oAscCellEditorState.editEnd);
 			t.handlers.trigger("closed");
 
-			if(callback) {
+			if (callback) {
 				callback(true);
 			} else {
 				return true;
@@ -461,7 +464,7 @@
 		// Сброс состояния редактора
 		this._setEditorState(c_oAscCellEditorState.editEnd);
 		this.handlers.trigger("closed");
-		if(callback) {
+		if (callback) {
 			callback(true);
 		}
 
@@ -553,7 +556,7 @@
 		if (fragmentsMap) {
 			let _undoFragments = {};
 			for (let i in fragmentsMap) {
-				if(fragmentsMap.hasOwnProperty(i)) {
+				if (fragmentsMap.hasOwnProperty(i)) {
 					_undoFragments[i] = opt.fragments[i].clone();
 					opt.fragments[i] = fragmentsMap[i];
 				}
@@ -572,9 +575,9 @@
 		this.endAction();
 	};
 
-	CellEditor.prototype.empty = function ( options ) {
+	CellEditor.prototype.empty = function (options) {
 		// Чистка для редактирования только All
-		if ( Asc.c_oAscCleanOptions.All !== options ) {
+		if (Asc.c_oAscCleanOptions.All !== options) {
 			return;
 		}
 
@@ -588,7 +591,7 @@
 			return;
 		}
 		api.sendEvent("asc_onBeforeUndoRedo");
-		this._performAction( this.undoList, this.redoList );
+		this._performAction(this.undoList, this.redoList);
 		api.sendEvent("asc_onUndoRedo");
 	};
 
@@ -598,7 +601,7 @@
 			return;
 		}
 		api.sendEvent("asc_onBeforeUndoRedo");
-		this._performAction( this.redoList, this.undoList );
+		this._performAction(this.redoList, this.undoList);
 		api.sendEvent("asc_onUndoRedo");
 	};
 
@@ -632,10 +635,10 @@
 	};
 
 	CellEditor.prototype.checkSymbolBeforeRange = function (char) {
-		if (!char.trim) {
+		if (char && !char.trim) {
 			char = AscCommon.convertUnicodeToUTF16(char);
 		}
-		return this.rangeChars.indexOf(char) >= 0 || char === AscCommon.FormulaSeparators.functionArgumentSeparator;
+		return (this.rangeChars && this.rangeChars.indexOf(char) >= 0) || char === AscCommon.FormulaSeparators.functionArgumentSeparator;
 	};
 
 	CellEditor.prototype.changeCellRange = function (range, moveEndOfText) {
@@ -742,15 +745,15 @@
 	CellEditor.prototype.copySelection = function () {
 		var t = this;
 		var res = null;
-		if ( t.selectionBegin !== t.selectionEnd ) {
+		if (t.selectionBegin !== t.selectionEnd) {
 			var start = t.selectionBegin;
 			var end = t.selectionEnd;
-			if ( start > end ) {
+			if (start > end) {
 				var temp = start;
 				start = end;
 				end = temp;
 			}
-			res = t._getFragments( start, end - start );
+			res = t._getFragments(start, end - start);
 		}
 		return res;
 	};
@@ -758,15 +761,15 @@
 	CellEditor.prototype.cutSelection = function () {
 		var t = this;
 		var f = null;
-		if ( t.selectionBegin !== t.selectionEnd ) {
+		if (t.selectionBegin !== t.selectionEnd) {
 			var start = t.selectionBegin;
 			var end = t.selectionEnd;
-			if ( start > end ) {
+			if (start > end) {
 				var temp = start;
 				start = end;
 				end = temp;
 			}
-			f = t._getFragments( start, end - start );
+			f = t._getFragments(start, end - start);
 			t._removeChars();
 		}
 		return f;
@@ -854,7 +857,7 @@
 	};
 
 	CellEditor.prototype.setFontRenderingMode = function () {
-		if ( this.isOpened ) {
+		if (this.isOpened) {
 			this._draw();
 		}
 	};
@@ -928,7 +931,7 @@
 		var cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
 		this._formula = new AscCommonExcel.parserFormula(s.substr(1), cellWithFormula, ws);
 		this._formula.parse(true, true, this._parseResult, true);
-		if(this.needFindFirstFunction) {
+		if (this.needFindFirstFunction) {
 			this.argPosArr = this._parseResult.argPosArr;
 			this.needFindFirstFunction = null;
 		}
@@ -1142,7 +1145,7 @@
 
 	// Обновляем состояние Undo/Redo
 	CellEditor.prototype._updateUndoRedoChanged = function () {
-		this.handlers.trigger( "updateUndoRedoChanged", 0 < this.undoList.length, 0 < this.redoList.length );
+		this.handlers.trigger("updateUndoRedoChanged", 0 < this.undoList.length, 0 < this.redoList.length);
 	};
 
 	CellEditor.prototype._haveTextInEdit = function () {
@@ -1158,7 +1161,8 @@
 	};
 
 	CellEditor.prototype._getRenderFragments = function () {
-		var opt = this.options, fragments = opt.fragments, i, k, l, first, last, val, lengthColors, tmpColors, colorIndex, uniqueColorIndex;
+		var opt = this.options, fragments = opt.fragments, i, k, l, first, last, val, lengthColors, tmpColors,
+			colorIndex, uniqueColorIndex;
 		if (this.isFormula()) {
 			var ranges = this.handlers.trigger("getFormulaRanges");
 			if (ranges) {
@@ -1224,7 +1228,7 @@
 
 		this._renderText();  // вызов нужен для пересчета поля line.startX, которое используется в _updateCursorPosition
 		// вызов нужен для обновление текста верхней строки, перед обновлением позиции курсора
-		if(!this.getMenuEditorMode()) {
+		if (!this.getMenuEditorMode()) {
 			this._fireUpdated();
 		}
 		this._updateCursorPosition(true);
@@ -1289,22 +1293,22 @@
 	CellEditor.prototype._getEditableFunction = function (parseResult, bEndCurPos) {
 		//TODO оставляю текст!
 		var findOpenFunc = [], editableFunction = null, level = -1;
-		if(!parseResult) {
+		if (!parseResult) {
 			//в этом случае запускаю парсинг формулы до текущей позиции
 			//получаю строку без двухбайтовых символов
 			var s = this.options.fragments.reduce(function (pv, cv) {
 				return pv + AscCommonExcel.convertUnicodeToSimpleString(cv.getCharCodes());
 			}, "");
 			var isFormula = -1 === this.beginCompositePos && s.charAt(0) === "=";
-			if(isFormula) {
+			if (isFormula) {
 				var pos = this.cursorPos;
 				var ws = this.handlers.trigger("getActiveWS");
 				var bbox = this.options.bbox;
 
 				var endPos = pos;
-				if(!bEndCurPos) {
-					for(var n = pos; n < s.length; n++) {
-						if("(" === s[n]) {
+				if (!bEndCurPos) {
+					for (var n = pos; n < s.length; n++) {
+						if ("(" === s[n]) {
 							endPos = n;
 						}
 					}
@@ -1319,29 +1323,29 @@
 		}
 
 		var elements = parseResult ? parseResult.elems : null;
-		if(elements) {
-			for(var i = 0; i < elements.length; i++) {
-				if(cElementType.func === elements[i].type && elements[i + 1] && "(" === elements[i + 1].name) {
+		if (elements) {
+			for (var i = 0; i < elements.length; i++) {
+				if (cElementType.func === elements[i].type && elements[i + 1] && "(" === elements[i + 1].name) {
 					level++;
 					findOpenFunc[level] = {elem: elements[i], counter: 1};
 					i++;
-				} else if(-1 !== level) {
-					if("(" === elements[i].name) {
+				} else if (-1 !== level) {
+					if ("(" === elements[i].name) {
 						findOpenFunc[level].counter++;
-					} else if(")" === elements[i].name) {
+					} else if (")" === elements[i].name) {
 						findOpenFunc[level].counter--;
 					}
 				}
-				if(level > -1 && findOpenFunc[level].counter === 0) {
-					findOpenFunc.splice(level,1);
+				if (level > -1 && findOpenFunc[level].counter === 0) {
+					findOpenFunc.splice(level, 1);
 					level--;
 				}
 			}
 		}
 
-		if(findOpenFunc) {
-			for(var j = findOpenFunc.length - 1; j >= 0; j--) {
-				if(findOpenFunc[j].counter > 0 && !(findOpenFunc[j].elem instanceof window['AscCommonExcel'].cUnknownFunction)) {
+		if (findOpenFunc) {
+			for (var j = findOpenFunc.length - 1; j >= 0; j--) {
+				if (findOpenFunc[j].counter > 0 && !(findOpenFunc[j].elem instanceof window['AscCommonExcel'].cUnknownFunction)) {
 					editableFunction = findOpenFunc[j].elem.name;
 					break;
 				}
@@ -1466,10 +1470,10 @@
 		width = widthStyle = (this.right - this.left) * this.kx - borderSize;
 		height = heightStyle = (this.bottom - this.top) * this.ky - borderSize;
 
-        left = AscCommon.AscBrowser.convertToRetinaValue(left);
-        top = AscCommon.AscBrowser.convertToRetinaValue(top);
-        widthStyle = AscCommon.AscBrowser.convertToRetinaValue(widthStyle);
-        heightStyle = AscCommon.AscBrowser.convertToRetinaValue(heightStyle);
+		left = AscCommon.AscBrowser.convertToRetinaValue(left);
+		top = AscCommon.AscBrowser.convertToRetinaValue(top);
+		widthStyle = AscCommon.AscBrowser.convertToRetinaValue(widthStyle);
+		heightStyle = AscCommon.AscBrowser.convertToRetinaValue(heightStyle);
 
 		// в сафари с включенным аппаратным ускорением баг при вводе текста.
 		// видимо они кешируют по особенному текстуры, которые размером (w*h<5000)
@@ -1478,14 +1482,20 @@
 		// canvas'ы прозрачные и их увеличенный размер не влияет на результат.
 		//
 		// в новой версии сафари увеличиваем не только canvas'ы, но и дивку тоже.
-		if (AscCommon.AscBrowser.isSafariMacOs && (widthStyle * heightStyle) < 5000)
-			widthStyle = ((5000 / heightStyle) >> 0) + 1;
+		if (AscCommon.AscBrowser.isSafariMacOs) {
+			if ((widthStyle * heightStyle) < 5000) {
+				this._originalCanvasWidth = width;
+				widthStyle = ((5000 / heightStyle) >> 0) + 1;
+			} else {
+				this._originalCanvasWidth = null;
+			}
+		}
 
 		this.canvasOuterStyle.left = left + 'px';
 		this.canvasOuterStyle.top = top + 'px';
 		this.canvasOuterStyle.width = widthStyle + 'px';
 		this.canvasOuterStyle.height = heightStyle + 'px';
-		if(!this.getMenuEditorMode()) {
+		if (!this.getMenuEditorMode()) {
 			this.canvasOuterStyle.zIndex = this.top < 0 ? -1 : z;
 		}
 
@@ -1508,8 +1518,9 @@
 		var t = this, opt = t.options, ctx = t.drawingCtx;
 
 		if (!window['IS_NATIVE_EDITOR']) {
+			let _width = this._originalCanvasWidth ? this._originalCanvasWidth : ctx.getWidth();
 			ctx.setFillStyle(opt.background)
-				.fillRect(0, 0, ctx.getWidth(), ctx.getHeight());
+				.fillRect(0, 0, _width, ctx.getHeight());
 		}
 
 		if (opt.fragments.length > 0) {
@@ -1588,14 +1599,14 @@
 
 	// Cursor
 
-    CellEditor.prototype._updateCursorStyle = function (cursor) {
-        var newHtmlCursor = AscCommon.g_oHtmlCursor.value(cursor);
-        if (this.canvasOverlay.style.cursor !== newHtmlCursor) {
-            this.canvasOverlay.style.cursor = newHtmlCursor;
-        }
-    };
+	CellEditor.prototype._updateCursorStyle = function (cursor) {
+		var newHtmlCursor = AscCommon.g_oHtmlCursor.value(cursor);
+		if (this.canvasOverlay.style.cursor !== newHtmlCursor) {
+			this.canvasOverlay.style.cursor = newHtmlCursor;
+		}
+	};
 
-    CellEditor.prototype._updateCursor = function () {
+	CellEditor.prototype._updateCursor = function () {
 		if (window['IS_NATIVE_EDITOR']) {
 			return;
 		}
@@ -1698,8 +1709,8 @@
 			this._updateTopLineCurPos();
 		}
 
-		if(this.getMenuEditorMode()) {
-			this.handlers.trigger( "updateMenuEditorCursorPosition", curTop, curHeight );
+		if (this.getMenuEditorMode()) {
+			this.handlers.trigger("updateMenuEditorCursorPosition", curTop, curHeight);
 		}
 
 		//let fCurrent = this._getEditableFunction(null, true);
@@ -1759,18 +1770,18 @@
 		t._updateCursor();
 	};
 
-	CellEditor.prototype._findCursorPosition = function ( coord ) {
+	CellEditor.prototype._findCursorPosition = function (coord) {
 		var t = this;
 		var lc = t.textRender.getLinesCount();
 		var i, h, w, li, chw;
 		var zoom = this.getZoom();
-		for ( h = 0, i = Math.max( t.topLineIndex, 0 ); i < lc; ++i ) {
-			li = t.textRender.getLineInfo( i );
+		for (h = 0, i = Math.max(t.topLineIndex, 0); i < lc; ++i) {
+			li = t.textRender.getLineInfo(i);
 			h += asc_round(li.th * zoom);
-			if ( coord.y <= h ) {
-				for ( w = li.startX, i = li.beg; i <= li.end; ++i ) {
-					chw = t.textRender.getCharWidth( i );
-					if ( coord.x <= w + chw ) {
+			if (coord.y <= h) {
+				for (w = li.startX, i = li.beg; i <= li.end; ++i) {
+					chw = t.textRender.getCharWidth(i);
+					if (coord.x <= w + chw) {
 						return coord.x <= w + chw / 2 ? i : i + 1 > li.end ? kEndOfLine : i + 1;
 					}
 					w += chw;
@@ -1961,7 +1972,9 @@
 			}
 
 			this.cursorPos = pos + str.length;
-			if (-1 !== window["Asc"].search(str, function (val) {return val === codeNewLine})) {
+			if (-1 !== window["Asc"].search(str, function (val) {
+				return val === codeNewLine
+			})) {
 				this._wrapText();
 			}
 		}
@@ -1976,7 +1989,7 @@
 
 	CellEditor.prototype._addNewLine = function () {
 		this._wrapText();
-		this._addChars( /*codeNewLine*/"\n" );
+		this._addChars( /*codeNewLine*/"\n");
 	};
 
 	CellEditor.prototype._removeChars = function (pos, length, isRange) {
@@ -2122,69 +2135,68 @@
 		return pos === end ? {index: i - 1, begin: begin, end: end} : undefined;
 	};
 
-	CellEditor.prototype._findFragmentToInsertInto = function ( pos, fragments ) {
+	CellEditor.prototype._findFragmentToInsertInto = function (pos, fragments) {
 		var i, begin, end;
 
 		if (!fragments) {
 			fragments = this.options.fragments;
 		}
 
-		for ( i = 0, begin = 0; i < fragments.length; ++i ) {
+		for (i = 0, begin = 0; i < fragments.length; ++i) {
 			end = begin + fragments[i].getCharCodesLength();
-			if ( pos >= begin && pos <= end ) {
+			if (pos >= begin && pos <= end) {
 				return {index: i, begin: begin, end: end};
 			}
-			if ( i < fragments.length - 1 ) {
+			if (i < fragments.length - 1) {
 				begin = end;
 			}
 		}
 		return undefined;
 	};
 
-	CellEditor.prototype._isWholeFragment = function ( pos, len ) {
-		var fr = this._findFragment( pos );
+	CellEditor.prototype._isWholeFragment = function (pos, len) {
+		var fr = this._findFragment(pos);
 		return fr && pos === fr.begin && len === fr.end - fr.begin;
 	};
 
-	CellEditor.prototype._splitFragment = function ( f, pos, fragments ) {
+	CellEditor.prototype._splitFragment = function (f, pos, fragments) {
 		var fr;
-		if ( !fragments ) {
+		if (!fragments) {
 			fragments = this.options.fragments;
 		}
 
-		if ( pos > f.begin && pos < f.end ) {
+		if (pos > f.begin && pos < f.end) {
 			fr = fragments[f.index];
-			Array.prototype.splice.apply( fragments, [f.index, 1].concat( [new Fragment( {
-				format: fr.format.clone(), charCodes: fr.getCharCodes().slice( 0, pos - f.begin )
-			} ), new Fragment( {format: fr.format.clone(), charCodes: fr.getCharCodes().slice( pos - f.begin )} )] ) );
+			Array.prototype.splice.apply(fragments, [f.index, 1].concat([new Fragment({
+				format: fr.format.clone(), charCodes: fr.getCharCodes().slice(0, pos - f.begin)
+			}), new Fragment({format: fr.format.clone(), charCodes: fr.getCharCodes().slice(pos - f.begin)})]));
 		}
 	};
 
-	CellEditor.prototype._getFragments = function ( startPos, length ) {
+	CellEditor.prototype._getFragments = function (startPos, length) {
 		var t = this, opt = t.options, endPos = startPos + length - 1, res = [], fr, i;
-		var first = t._findFragment( startPos );
-		var last = t._findFragment( endPos );
+		var first = t._findFragment(startPos);
+		var last = t._findFragment(endPos);
 
-		if ( !first || !last ) {
+		if (!first || !last) {
 			throw new Error("Can not extract fragment of text");
 		}
 
-		if ( first.index === last.index ) {
+		if (first.index === last.index) {
 			fr = opt.fragments[first.index].clone();
-			fr.charCodes = fr.getCharCodes().slice( startPos - first.begin, endPos - first.begin + 1 );
-			res.push( fr );
-		}
-		else {
+			fr.charCodes = fr.getCharCodes().slice(startPos - first.begin, endPos - first.begin + 1);
+			res.push(fr);
+		} else {
 			fr = opt.fragments[first.index].clone();
-			fr.charCodes = fr.getCharCodes().slice( startPos - first.begin );
-			res.push( fr );
-			for ( i = first.index + 1; i < last.index; ++i ) {
+			fr.charCodes = fr.getCharCodes().slice(startPos - first.begin);
+			res.push(fr);
+			for (i = first.index + 1; i < last.index; ++i) {
 				fr = opt.fragments[i].clone();
-				res.push( fr );
+				res.push(fr);
 			}
 			fr = opt.fragments[last.index].clone();
-			fr.charCodes = fr.getCharCodes().slice( 0, endPos - last.begin + 1 );
-			res.push( fr );
+			fr.charCodes = fr.getCharCodes().slice(0, endPos - last.begin + 1);
+			res.push(fr);
 		}
 
 		return res;
@@ -2206,24 +2218,23 @@
 		this._splitFragment(fr, startPos + length, fragments);
 	};
 
-	CellEditor.prototype._addFragments = function ( f, pos ) {
+	CellEditor.prototype._addFragments = function (f, pos) {
 		var t = this, opt = t.options, fr;
 
-		fr = t._findFragment( pos );
-		if ( fr && pos < fr.end ) {
-			t._splitFragment( fr, pos );
-			fr = t._findFragment( pos );
-			Array.prototype.splice.apply( opt.fragments, [fr.index, 0].concat( f ) );
-		}
-		else {
-			opt.fragments = opt.fragments.concat( f );
+		fr = t._findFragment(pos);
+		if (fr && pos < fr.end) {
+			t._splitFragment(fr, pos);
+			fr = t._findFragment(pos);
+			Array.prototype.splice.apply(opt.fragments, [fr.index, 0].concat(f));
+		} else {
+			opt.fragments = opt.fragments.concat(f);
 		}
 
 		// merge fragments with equal formats
 		t._mergeFragments();
 
 		t.cursorPos = pos + AscCommonExcel.getFragmentsLength(f);
-		if ( !t.noUpdateMode ) {
+		if (!t.noUpdateMode) {
 			t._update();
 		}
 	};
@@ -2244,7 +2255,10 @@
 				var fr = fragments[i];
 				var nextFr = fragments[i + 1];
 				if (fr.format.isEqual(nextFr.format)) {
-					fragments.splice(i, 2, new Fragment({format: fr.format, charCodes: fr.getCharCodes().concat(nextFr.getCharCodes())}));
+					fragments.splice(i, 2, new Fragment({
+						format: fr.format,
+						charCodes: fr.getCharCodes().concat(nextFr.getCharCodes())
+					}));
 					continue;
 				}
 			}
@@ -2257,7 +2271,9 @@
 
 		for (i = 0; i < fr.length; ++i) {
 			s = fr[i].getCharCodes();
-			if (!wrap && -1 !== window["Asc"].search(s, function (val) {return val === codeNewLine})) {
+			if (!wrap && -1 !== window["Asc"].search(s, function (val) {
+				return val === codeNewLine
+			})) {
 				this._wrapText();
 			}
 			fr[i].setCharCodes(s);
@@ -2317,36 +2333,32 @@
 		return val;
 	};
 
-	CellEditor.prototype._performAction = function ( list1, list2 ) {
+	CellEditor.prototype._performAction = function (list1, list2) {
 		var t = this, action, str, pos, len;
 
-		if ( list1.length < 1 ) {
+		if (list1.length < 1) {
 			return;
 		}
 
 		action = list1.pop();
 
-		if ( action.fn === t._removeChars ) {
+		if (action.fn === t._removeChars) {
 			pos = action.args[0];
 			len = action.args[1];
-			if ( len < 2 && !t._isWholeFragment( pos, len ) ) {
-				list2.push( {fn: t._addChars, args: [t.textRender.getChars( pos, len ), pos], isRange: action.isRange} );
+			if (len < 2 && !t._isWholeFragment(pos, len)) {
+				list2.push({fn: t._addChars, args: [t.textRender.getChars(pos, len), pos], isRange: action.isRange});
+			} else {
+				list2.push({fn: t._addFragments, args: [t._getFragments(pos, len), pos], isRange: action.isRange});
 			}
-			else {
-				list2.push( {fn: t._addFragments, args: [t._getFragments( pos, len ), pos], isRange: action.isRange} );
-			}
-		}
-		else if ( action.fn === t._addChars ) {
+		} else if (action.fn === t._addChars) {
 			str = action.args[0];
 			pos = action.args[1];
-			list2.push( {fn: t._removeChars, args: [pos, str.length], isRange: action.isRange} );
-		}
-		else if ( action.fn === t._addFragments ) {
+			list2.push({fn: t._removeChars, args: [pos, str.length], isRange: action.isRange});
+		} else if (action.fn === t._addFragments) {
 			pos = action.args[1];
 			len = AscCommonExcel.getFragmentsLength(action.args[0]);
-			list2.push( {fn: t._removeChars, args: [pos, len], isRange: action.isRange} );
-		}
-		else if ( action.fn === t._changeFragments ) {
+			list2.push({fn: t._removeChars, args: [pos, len], isRange: action.isRange});
+		} else if (action.fn === t._changeFragments) {
 			let _fragments = action.args[0];
 			let _redoFragments = {};
 			for (let i in _fragments) {
@@ -2356,27 +2368,26 @@
 					}
 				}
 			}
-			list2.push( {fn: t._changeFragments, args: [_redoFragments]} );
-		}
-		else {
+			list2.push({fn: t._changeFragments, args: [_redoFragments]});
+		} else {
 			return;
 		}
 
 		t.undoMode = true;
-		if ( t.selectionBegin !== t.selectionEnd ) {
+		if (t.selectionBegin !== t.selectionEnd) {
 			t.selectionBegin = t.selectionEnd = -1;
 			t._cleanSelection();
 		}
-		action.fn.apply( t, action.args );
+		action.fn.apply(t, action.args);
 		t.undoMode = false;
 	};
 
 	CellEditor.prototype._tryCloseEditor = function (event) {
 		var t = this;
-		var callback = function(success) {
+		var callback = function (success) {
 			//для случая, когда пользователь нажимает ctrl+shift+enter/crtl+enter переход на новую строку не осуществляется
 			var applyByArray = t.textFlags && t.textFlags.ctrlKey;
-			if(!applyByArray && success) {
+			if (!applyByArray && success) {
 				t.handlers.trigger("applyCloseEvent", event);
 			}
 		};
@@ -2470,7 +2481,7 @@
 					if (!(event.altKey && event.shiftKey)) {
 						if (event.altKey) {
 							t._addNewLine();
-						} else if(this.getMenuEditorMode()) {
+						} else if (this.getMenuEditorMode()) {
 							t._addNewLine();
 						} else {
 							if (false === t.handlers.trigger("isGlobalLockEditCell")) {
@@ -2572,12 +2583,9 @@
 				if (hieroglyph) {
 					t._syncEditors();
 				}
-				if (bIsMacOs && ctrlKey)
-				{
+				if (bIsMacOs && ctrlKey) {
 					event.shiftKey ? t._selectChars(kBeginOfLine) : t._moveCursor(kBeginOfLine);
-				}
-				else
-				{
+				} else {
 					const bWord = bIsMacOs ? event.altKey : ctrlKey;
 					kind = bWord ? kPrevWord : kPrevChar;
 					event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);
@@ -2616,12 +2624,9 @@
 				if (hieroglyph) {
 					t._syncEditors();
 				}
-				if (bIsMacOs && ctrlKey)
-				{
+				if (bIsMacOs && ctrlKey) {
 					event.shiftKey ? t._selectChars(kEndOfLine) : t._moveCursor(kEndOfLine);
-				}
-				else
-				{
+				} else {
 					const bWord = bIsMacOs ? event.altKey : ctrlKey;
 					kind = bWord ? kNextWord : kNextChar;
 					event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);
@@ -2843,13 +2848,12 @@
 
 		//TODO перевод из кода в символы!
 		var newChar;
-		if(Array.isArray(codePoints)) {
-			for(let nIdx = 0; nIdx < codePoints.length; ++nIdx) {
+		if (Array.isArray(codePoints)) {
+			for (let nIdx = 0; nIdx < codePoints.length; ++nIdx) {
 				newChar = String.fromCharCode(codePoints[nIdx]);
 				t._addChars(newChar);
 			}
-		}
-		else {
+		} else {
 			newChar = String.fromCharCode(codePoints);
 			t._addChars(newChar);
 		}
@@ -2868,7 +2872,7 @@
 		}
 		if (t.textRender.getEndOfText() === t.cursorPos && !t.isFormula()) {
 			var s = AscCommonExcel.getFragmentsText(t.options.fragments);
-			if (!AscCommon.isNumber(s)) {
+			if (!AscCommon.isNumber(s) && s.length !== 0) {
 				var arrAutoComplete = t._getAutoComplete(s.toLowerCase());
 				var lengthInput = s.length;
 				if (1 === arrAutoComplete.length) {
@@ -2886,11 +2890,11 @@
 	};
 
 	/** @param event {KeyboardEvent} */
-	CellEditor.prototype._onWindowKeyUp = function ( event ) {
+	CellEditor.prototype._onWindowKeyUp = function (event) {
 		var t = this;
 
 		// для исправления Bug 15902 - Alt забирает фокус из приложения
-		if ( t.lastKeyCode === 18 && event.which === 18 ) {
+		if (t.lastKeyCode === 18 && event.which === 18) {
 			return false;
 		}
 	};
@@ -2994,7 +2998,7 @@
 	};
 
 	/** @param event {MouseEvent} */
-	CellEditor.prototype._onMouseLeave = function ( event ) {
+	CellEditor.prototype._onMouseLeave = function (event) {
 		this.hasCursor = false;
 		return true;
 	};
@@ -3092,8 +3096,12 @@
 	CellEditor.prototype.End_CompositeInput = function () {
 		var tmpBegin = this.selectionBegin, tmpEnd = this.selectionEnd;
 
-		this.selectionBegin = this.beginCompositePos;
-		this.selectionEnd = this.beginCompositePos + this.compositeLength;
+		//TODO linux(popOs + portuguese lang.) composite input - doesn't come Replace_CompositeText on remove chars
+		let checkFragments = this._findFragment(this.beginCompositePos) && this._findFragment(this.beginCompositePos + this.compositeLength);
+		if (checkFragments) {
+			this.selectionBegin = this.beginCompositePos;
+			this.selectionEnd = this.beginCompositePos + this.compositeLength;
+		}
 		this.setTextStyle('u', Asc.EUnderline.underlineNone);
 
 		this.beginCompositePos = -1;

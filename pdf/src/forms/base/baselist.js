@@ -97,17 +97,36 @@
             AscCommon.History.Points[i].Additional.CanUnion = !bForbidToUnion; // запрещаем объединять последнюю добавленную точку
     };
 
-    CBaseListField.prototype.SetCommitOnSelChange = function(bValue) {
-        this._commitOnSelChange = bValue;
+    CBaseListField.prototype.SetApiCurIdxs = function(aIdxs) {
+        let oParent = this.GetParent();
+        if (oParent && this.IsWidget() && oParent.IsAllKidsWidgets())
+            oParent.SetApiCurIdxs(aIdxs);
+        else
+            this._currentValueIndices = aIdxs;
     };
-    CBaseListField.prototype.GetCommitOnSelChange = function() {
-        return this._commitOnSelChange;
-    };
-    CBaseListField.prototype.GetApiCurIdxs = function() {
-        // значение здесь всегда обновлено после commit
-        return this._currentValueIndices;
+    CBaseListField.prototype.GetApiCurIdxs = function(bInherit) {
+        let oParent = this.GetParent();
+        if (oParent == null)
+            return this._currentValueIndices;
+        else if (bInherit === false || (this.GetPartialName() != null)) {
+            return this._currentValueIndices;
+        }
+        
+        if (oParent)
+            return oParent.GetApiCurIdxs();
     };
 
+    CBaseListField.prototype.SetCommitOnSelChange = function(bValue) {
+        this._commitOnSelChange = bValue;
+        this.SetWasChanged(true);
+    };
+    CBaseListField.prototype.IsCommitOnSelChange = function() {
+        return this._commitOnSelChange;
+    };
+
+    CBaseListField.prototype.GetOptions = function() {
+        return this._options;
+    };
 	// export
 	CBaseListField.prototype["getOptions"] = function() {
 		return this._options;

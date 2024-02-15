@@ -81,6 +81,7 @@
 		this.documentFormat      = "null";
 		this.documentTitle       = "null";
 		this.documentFormatSave  = Asc.c_oAscFileType.UNKNOWN;
+		this.documentShardKey  = undefined;
 
 		this.documentOpenOptions = undefined;		// Опции при открытии (пока только опции для CSV)
 
@@ -494,6 +495,15 @@
 					window["Asc"]["Addons"]["forms"] = false;
 					AscCommon.g_oTableId.InitOFormClasses();
 				}
+
+				if (this.documentOpenOptions["WOPISrc"])
+				{
+					this.documentShardKey = this.documentOpenOptions["WOPISrc"];
+				}
+			}
+			if (!this.documentShardKey) {
+				//todo add tenant in origin?
+				this.documentShardKey = this.documentId;
 			}
 		}
 
@@ -583,9 +593,9 @@
 	{
 		return this.copyOutEnabled;
 	};
-	baseEditorsApi.prototype.sync_CanCopyCutCallback = function (bCanCopyCut)
+	baseEditorsApi.prototype.sync_CanCopyCutCallback = function (bCanCopyCut, bCanCut)
 	{
-		this.sendEvent("asc_onCanCopyCut", bCanCopyCut);
+		this.sendEvent("asc_onCanCopyCut", bCanCopyCut, bCanCut);
 	};
 	baseEditorsApi.prototype.can_CopyCut = function ()
 	{
@@ -666,6 +676,7 @@
 
 		this.restrictions = val;
 		this.onUpdateRestrictions(additionalSettings);
+		this.checkInputMode();
 	};
 	baseEditorsApi.prototype.getViewMode                     = function()
 	{
@@ -675,12 +686,21 @@
 	{
 		this.restrictions |= val;
 		this.onUpdateRestrictions();
+		this.checkInputMode();
 	};
 	baseEditorsApi.prototype.asc_removeRestriction           = function(val)
 	{
 		this.restrictions &= ~val;
 		this.onUpdateRestrictions();
+		this.checkInputMode();
 	};
+
+	baseEditorsApi.prototype.checkInputMode                  = function()
+	{
+		if (AscCommon.g_inputContext)
+			AscCommon.g_inputContext.checkViewMode();
+	};
+
 	baseEditorsApi.prototype.addTableOleObject = function(oleBinary)
 	{
 		var _this = this;
@@ -885,6 +905,10 @@
 	baseEditorsApi.prototype.canEdit                         = function()
 	{
 		return !this.isViewMode && this.restrictions === Asc.c_oAscRestrictionType.None;
+	};
+	baseEditorsApi.prototype.isTargetHandMode = function()
+	{
+		return this.isRestrictionForms();
 	};
 	baseEditorsApi.prototype.isRestrictionForms              = function()
 	{
@@ -1848,7 +1872,7 @@
 		};
 
 		this._coAuthoringInitEnd();
-		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo);
+		this.CoAuthoringApi.init(this.User, this.documentId, this.documentCallbackUrl, 'fghhfgsjdgfjs', this.editorId, this.documentFormatSave, this.DocInfo, this.documentShardKey);
 	};
 	baseEditorsApi.prototype._coAuthoringInitEnd                 = function()
 	{
@@ -2290,7 +2314,7 @@
 		var t = this;
         if (this.WordControl) // после показа диалога может не прийти mouseUp
         	this.WordControl.m_bIsMouseLock = false;
-		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), function(error, files)
+		AscCommon.ShowImageFileDialog(this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, function(error, files)
 		{
 			t._uploadCallback(error, files, obj);
 		}, function(error)
@@ -2303,6 +2327,7 @@
 			{
 				t.sendStartUploadImageActionToFrameEditor();
 			}
+			obj && obj.fStartUploadImageCallback && obj.fStartUploadImageCallback();
 			t.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
 		});
 	};
@@ -2312,6 +2337,7 @@
 		if (c_oAscError.ID.No !== error)
 		{
 			this.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+			obj && obj.fErrorCallback && obj.fErrorCallback(error);
 		}
 		else
 		{
@@ -2319,12 +2345,14 @@
 			{
 				this.sendStartUploadImageActionToFrameEditor();
 			}
+			obj && obj.fStartUploadImageCallback && obj.fStartUploadImageCallback();
 			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
-			AscCommon.UploadImageFiles(files, this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), function(error, urls)
+			AscCommon.UploadImageFiles(files, this.documentId, this.documentUserId, this.CoAuthoringApi.get_jwt(), this.documentShardKey, function(error, urls)
 			{
 				if (c_oAscError.ID.No !== error)
 				{
 					t.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
+					obj && obj.fErrorCallback && obj.fErrorCallback(error);
 				}
 				else
 				{
@@ -2660,22 +2688,21 @@
 		}
 		if (this.isLoadFullApi && this.DocInfo && this.openResult && this._isLoadedModules())
 		{
-			let error = c_oAscError.ID.No, errorData;
 			let editorId = AscCommon.getEditorBySignature(this.openResult.data);
-			//todo AscCommon.checkNativeViewerSignature(this.openResult.data);
-			let isNativeViewerFormat = -1 !== Asc.c_sNativeViewerFormats.indexOf(this.documentFormat);
-			if (!(!isNativeViewerFormat && this.editorId === editorId || (isNativeViewerFormat && editorId === null))) {
-				error = c_oAscError.ID.ConvertationOpenFormat;
-				switch(editorId) {
+			let isNativeFormat = AscCommon.checkNativeViewerSignature(this.openResult.data);
+			if (this.isPdfEditor() ? !isNativeFormat : this.editorId !== editorId) {
+				let errorData;
+				switch (editorId) {
 					case AscCommon.c_oEditorId.Word: errorData = 'docx';break;
 					case AscCommon.c_oEditorId.Spreadsheet: errorData = 'xlsx';break;
 					case AscCommon.c_oEditorId.Presentation: errorData = 'pptx';break;
-					default: errorData = 'pdf';break;
+					default:
+						if (isNativeFormat) {
+							errorData = 'pdf'
+						}
+						break;
 				}
-			}
-			if (c_oAscError.ID.No !== error)
-			{
-				this.sendEvent("asc_onError", error, c_oAscError.Level.Critical, errorData);
+				this.sendEvent("asc_onError", c_oAscError.ID.ConvertationOpenFormat, c_oAscError.Level.Critical, errorData);
 				return;
 			}
 
@@ -2720,9 +2747,13 @@
 
 		this._loadSdkImages();
 
-		if(AscFonts.FontPickerByCharacter && this.documentTitle) {
-			AscFonts.FontPickerByCharacter.getFontsByString(this.documentTitle);
-		}
+		this.checkDocumentTitleFonts();
+	};
+	baseEditorsApi.prototype.checkDocumentTitleFonts = function() {
+		if (!AscFonts.FontPickerByCharacter || !this.documentTitle)
+			return;
+		
+		AscFonts.FontPickerByCharacter.getFontsByString(this.documentTitle);
 	};
 	baseEditorsApi.prototype._loadSdkImages = function ()
 	{
@@ -4756,6 +4787,34 @@
 			this.sendEvent("asc_onError", c_oAscError.ID.ConvertationSaveError, c_oAscError.Level.NoCritical);
 	};
 
+	// speech
+	baseEditorsApi.prototype["setSpeechEnabled"] = function(isEnabled) {
+		if (!AscCommon.EditorActionSpeaker)
+		{
+			AscCommon.EditorActionSpeakerInitData = { isEnabled : isEnabled };
+			return;
+		}
+		if (isEnabled)
+			AscCommon.EditorActionSpeaker.run();
+		else
+			AscCommon.EditorActionSpeaker.stop();
+	};
+
+	baseEditorsApi.prototype.asc_getFilePath = function(callback)
+	{
+		if (window["AscDesktopEditor"]) {
+			window["AscDesktopEditor"]["OpenFilenameDialog"]("All files (*.*)", false, function(_file) {
+				var file = _file;
+				if (Array.isArray(file)) {
+					file = file[0];
+				}
+				callback(file);
+			});
+		} else {
+			callback(null);
+		}
+	};
+
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;
@@ -4824,5 +4883,6 @@
 	prot['asc_findText'] = prot.asc_findText;
 	prot['asc_endFindText'] = prot.asc_endFindText;
 	prot['asc_setContentDarkMode'] = prot.asc_setContentDarkMode;
+	prot['asc_getFilePath'] = prot.asc_getFilePath;
 
 })(window);

@@ -319,29 +319,26 @@
 		};
 
 		CImageShape.prototype.getHierarchy = function () {
-			if (this.recalcInfo.recalculateShapeHierarchy) {
-				this.compiledHierarchy.length = 0;
-				var hierarchy = this.compiledHierarchy;
-				if (this.isPlaceholder()) {
-					var ph_type = this.getPlaceholderType();
-					var ph_index = this.getPlaceholderIndex();
-					var b_is_single_body = this.getIsSingleBody();
-					switch (this.parent.kind) {
-						case AscFormat.TYPE_KIND.SLIDE: {
-							hierarchy.push(this.parent.Layout.getMatchingShape(ph_type, ph_index, b_is_single_body));
-							hierarchy.push(this.parent.Layout.Master.getMatchingShape(ph_type, ph_index, b_is_single_body));
-							break;
-						}
 
-						case AscFormat.TYPE_KIND.LAYOUT: {
-							hierarchy.push(this.parent.Master.getMatchingShape(ph_type, ph_index, b_is_single_body));
-							break;
-						}
+			let hierarchy = [];
+			if (this.isPlaceholder()) {
+				var ph_type = this.getPlaceholderType();
+				var ph_index = this.getPlaceholderIndex();
+				var b_is_single_body = this.getIsSingleBody();
+				switch (this.parent.kind) {
+					case AscFormat.TYPE_KIND.SLIDE: {
+						hierarchy.push(this.parent.Layout.getMatchingShape(ph_type, ph_index, b_is_single_body));
+						hierarchy.push(this.parent.Layout.Master.getMatchingShape(ph_type, ph_index, b_is_single_body));
+						break;
+					}
+
+					case AscFormat.TYPE_KIND.LAYOUT: {
+						hierarchy.push(this.parent.Master.getMatchingShape(ph_type, ph_index, b_is_single_body));
+						break;
 					}
 				}
-				this.recalcInfo.recalculateShapeHierarchy = true;
 			}
-			return this.compiledHierarchy;
+			return hierarchy;
 		};
 
 		CImageShape.prototype.recalculateTransform = function () {
@@ -641,22 +638,6 @@
 		};
 
 		CImageShape.prototype.hitToAdjustment = CShape.prototype.hitToAdjustment;
-
-		CImageShape.prototype.getPlaceholderType = function () {
-			return this.isPlaceholder() ? this.nvPicPr.nvPr.ph.type : null;
-		};
-
-		CImageShape.prototype.getPlaceholderIndex = function () {
-			return this.isPlaceholder() ? this.nvPicPr.nvPr.ph.idx : null;
-		};
-
-		CImageShape.prototype.getPhType = function () {
-			return this.isPlaceholder() ? this.nvPicPr.nvPr.ph.type : null;
-		};
-
-		CImageShape.prototype.getPhIndex = function () {
-			return this.isPlaceholder() ? this.nvPicPr.nvPr.ph.idx : null;
-		};
 
 		CImageShape.prototype.getMediaFileName = function () {
 			if (this.nvPicPr && this.nvPicPr.nvPr && this.nvPicPr.nvPr.unimedia) {
