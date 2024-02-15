@@ -173,20 +173,20 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CListBoxField.prototype.Commit = function() {
-        let aFields = this.GetDocument().GetAllWidgets(this.GetFullName());
-        let oThis = this;
+        let oDoc    = this.GetDocument();
+        let aFields = oDoc.GetAllWidgets(this.GetFullName());
+        let oThis   = this;
         
         let oThisBounds = this.getFormRelRect();
         let aCurIdxs    = this.GetCurIdxs();
 
         if (this.GetApiValue() != this.GetValue()) {
-            if (this.GetDocument().IsNeedSkipHistory() == false && true != editor.getDocumentRenderer().isOnUndoRedo) {
-                this.CreateNewHistoryPoint();
-                AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
-                AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetApiCurIdxs(), aCurIdxs));
-            }
-            else if (true == editor.getDocumentRenderer().isOnUndoRedo) {
-                // из истории выставляет curIdxs для родительского поля. Это выставление не меняет выделение параграфов.
+            oDoc.CreateNewHistoryPoint(this);
+            AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetApiValue(), this.GetValue()));
+            AscCommon.History.Add(new CChangesPDFListFormCurIdxs(this, this.GetApiCurIdxs(), aCurIdxs));
+
+            if (oDoc.isUndoRedoInProgress) {
+                // из истории выставляем curIdxs для родительского поля. Это выставление не меняет выделение параграфов.
                 // Поэтому вызываем SetCurIdxs
                 this._bAutoShiftContentView = true;
                 aCurIdxs = this.GetApiCurIdxs();
@@ -404,32 +404,37 @@
 
     CListBoxField.prototype.onMouseDown = function(x, y, e) {
         let oDoc            = this.GetDocument();
+        let oDrDoc          = oDoc.GetDrawingDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
+        oDrDoc.TargetEnd();
+
+        let isInFocus   = oDoc.activeForm === this;
+        let isInForm    = this.IsInForm();
+        
+        oDoc.activeForm = this;
+
         function callbackAfterFocus(x, y, e) {
+            this.SetInForm(true);
+            this.SetDrawHighlight(false);
+
             if (this._options.length == 0)
                 return;
-
-            let bHighlight = this.IsNeedDrawHighlight();
-            this.SetDrawHighlight(false);
 
             let oPos    = AscPDF.GetPageCoordsByGlobalCoords(x, y, this.GetPage());
             let X       = oPos["X"];
             let Y       = oPos["Y"];
 
-            editor.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
-            editor.WordControl.m_oDrawingDocument.m_lCurrentPage = 0;
-
-            let nPos = this.content.Internal_GetContentPosByXY(X, Y, 0);
-            let oPara = this.content.GetElement(nPos);
-            let oShd = oPara.Pr.Shd;
+            let nPos    = this.content.Internal_GetContentPosByXY(X, Y, 0);
+            let oPara   = this.content.GetElement(nPos);
+            let oShd    = oPara.Pr.Shd;
 
             this.UpdateScroll(true);
             if (this.IsNeedDrawFromStream() == true) {
                 this.SetDrawFromStream(false);
                 this.AddToRedraw();
             }
-            else if (bHighlight) {
+            else if (false == isInForm) {
                 this.AddToRedraw();
             }
 
@@ -450,27 +455,25 @@
                 this.SelectOption(nPos, true);
             }
 
-            oDoc.activeForm = this;
-
             if (this.IsNeedCommit()) {
                 this._bAutoShiftContentView = true;
-                this.UnionLastHistoryPoints(false);
-
                 if (this.IsCommitOnSelChange() == true) {
                     oDoc.EnterDownActiveField();
                 }
             }
         }
 
-        // вызываем выставление курсора после onFocus, если уже в фокусе, тогда сразу.
-        if (oDoc.activeForm != this && this._triggers.OnFocus && this._triggers.OnFocus.Actions.length > 0)
-            oActionsQueue.callBackAfterFocus = callbackAfterFocus.bind(this, x, y, e);
+        let oOnFocus = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+        // вызываем выставление курсора после onFocus. Если уже в фокусе, тогда сразу.
+        if (false == isInFocus && oOnFocus && oOnFocus.Actions.length > 0)
+            oActionsQueue.callbackAfterFocus = callbackAfterFocus.bind(this, x, y, e);
         else
             callbackAfterFocus.bind(this, x, y, e)();
 
         this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
-        if (oDoc.activeForm != this)
-            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+        if (false == isInFocus) {
+            this.onFocus();
+        }
     };
     CListBoxField.prototype.MoveSelectDown = function() {
         this._bAutoShiftContentView = true;
@@ -760,12 +763,6 @@
             this.SetApiCurIdxs(aIdxs);
         }
 
-        this.SetNeedCommit(false);
-    };
-	CListBoxField.prototype.UndoNotAppliedChanges = function() {
-        this.SetValue(this.GetApiValue());
-        this.SetNeedRecalc(true);
-        this.AddToRedraw();
         this.SetNeedCommit(false);
     };
     CListBoxField.prototype.SetAlign = function(nAlignType) {

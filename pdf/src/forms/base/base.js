@@ -373,16 +373,14 @@
         return false;
     };
 
-    CBaseField.prototype.GetDocContent = function() {
-        return this.content;
+    CBaseField.prototype.GetDocContent = function(bFormatContent) {
+        return bFormatContent ? this.contentFormat : this.content;
     };
 
-    CBaseField.prototype.getFormRelRect = function()
-    {
+    CBaseField.prototype.getFormRelRect = function() {
         return this.contentRect;
     };
-    CBaseField.prototype.getFormRect = function()
-    {
+    CBaseField.prototype.getFormRect = function() {
         return this._formRect;
     };
     
@@ -580,6 +578,19 @@
         }
     };
 
+    /**
+	 * Sets a flag that we have entered the field.
+     * This is not the same as an doc.activeField.
+	 * @memberof CBaseField
+     * @param {boolean} bInField
+	 */
+    CBaseField.prototype.SetInForm = function(bInField) {
+        this.isInForm = bInField;
+    };
+    CBaseField.prototype.IsInForm = function() {
+        return this.isInForm;
+    };
+    
     /**
 	 * Gets the JavaScript action of the field for a given trigger.
 	 * @memberof CBaseField
@@ -1233,23 +1244,7 @@
 
         return oColor;
     };
-    /**
-	 * Creates new history point for cur field.
-	 * @memberof CComboBoxField
-	 * @typeofeditors ["PDF"]
-     * @param {boolean} isCanUnion - is it possible to union a point with others
-     * @returns {object}
-	 */
-    CBaseField.prototype.CreateNewHistoryPoint = function(isCanUnion) {
-        if (isCanUnion == null)
-            isCanUnion = false;
-
-        if (AscCommon.History.IsOn() == false)
-            AscCommon.History.TurnOn();
-        AscCommon.History.Create_NewPoint();
-        AscCommon.History.SetAdditionalFormFilling(this);
-        AscCommon.History.Points[AscCommon.History.Points.length - 1].Additional.CanUnion = isCanUnion;
-    };
+    
     CBaseField.prototype.DrawSelected = function() {
         return;
         /*
@@ -1297,6 +1292,17 @@
             this.IsWidget() && this.SetDrawFromStream(!isChanged);
         }
     };
+
+    CBaseField.prototype.UndoNotAppliedChanges = function() {
+        let isChanged = this.IsChanged();
+        this.SetValue(this.GetApiValue());
+        this.SetNeedRecalc(true);
+        this.SetNeedCommit(false);
+
+        if (!isChanged)
+            this.SetWasChanged(false);
+    };
+
     CBaseField.prototype.ClearCache = function() {
         this._originView.normal     = null;
         this._originView.mouseDown  = null;
@@ -1450,7 +1456,9 @@
 		if (!this.canBeginCompositeInput() || this.compositeInput)
 			return;
 		
-		this.CreateNewHistoryPoint(true);
+        let oDoc = this.GetDocument();
+            
+		oDoc.CreateNewHistoryPoint(this);
 		this.beforeCompositeInput();
 		let run = this.getRunForCompositeInput();
 		if (!run) {
@@ -1485,7 +1493,9 @@
 		if (!this.compositeInput)
 			return;
 		
-		this.CreateNewHistoryPoint(true);
+        let oDoc = this.GetDocument();
+
+		oDoc.CreateNewHistoryPoint(this);
 		this.compositeReplaceCount++;
 		this.compositeInput.add(codePoint);
 		this.SetNeedRecalc(true);
@@ -1495,7 +1505,9 @@
 		if (!this.compositeInput)
 			return;
 		
-		this.CreateNewHistoryPoint(true);
+        let oDoc = this.GetDocument();
+
+		oDoc.CreateNewHistoryPoint(this);
 		this.compositeReplaceCount++;
 		this.compositeInput.remove(count);
 		this.SetNeedRecalc(true);
@@ -1505,7 +1517,9 @@
 		if (!this.compositeInput)
 			return;
 		
-		this.CreateNewHistoryPoint(true);
+        let oDoc = this.GetDocument();
+
+		oDoc.CreateNewHistoryPoint(this);
 		this.compositeReplaceCount++;
 		this.compositeInput.replace(codePoints);
 		this.SetNeedRecalc(true);
@@ -2007,14 +2021,6 @@
         this.SetWasChanged(true);
         this.AddToRedraw();
     };
-    CBaseField.prototype.IsInField = function() {
-        let oDoc = this.GetDocument();
-        if (oDoc.activeForm == this) {
-            if (!this.IsNeedDrawHighlight() || this.GetType() == AscPDF.FIELD_TYPES.button)
-                return true;
-        }
-        return false;
-    };
     CBaseField.prototype.SetFontKey = function(sKey) {
         this._fontKey = sKey;
     };
@@ -2146,12 +2152,19 @@
 	 */
     CBaseField.prototype.Blur = function() {
         let oDoc = this.GetDocument();
+        oDoc.SetGlobalHistory();
+
+        this.SetInForm(false);
+
+        if (this.content && this.content.IsSelectionUse()) {
+            this.content.RemoveSelection();
+        }
+        
         if (oDoc.activeForm == this) {
             oDoc.activeForm = null;
             this.onBlur();
         }
     };
-
     // export
     CBaseField.prototype["getType"] = function() {
         return this.type;

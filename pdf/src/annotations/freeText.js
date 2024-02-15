@@ -641,14 +641,8 @@
 
         this.selectStartPage = this.GetPage();
     };
-    CAnnotationFreeText.prototype.SelectionSetStart = function(x, y, e) {
-        let oDoc    = this.GetDocument();
-        let oDrDoc  = oDoc.GetDrawingDocument();
-
+    CAnnotationFreeText.prototype.SelectionSetStart = function(X, Y, e) {
         this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
 
         let oTextBoxShape   = this.GetTextBoxShape();
         let oContent        = this.GetDocContent();
@@ -659,20 +653,8 @@
 
         oContent.Selection_SetStart(xContent, yContent, 0, e);
         oContent.RecalculateCurPos();
-
-        oDrDoc.UpdateTargetFromPaint = true;
-        oDrDoc.TargetStart();
-        oDrDoc.showTarget(true);
     };
-    CAnnotationFreeText.prototype.SelectionSetEnd = function(x, y, e) {
-        let oDoc    = this.GetDocument();
-        let oDrDoc  = oDoc.GetDrawingDocument();
-
-        this.selectStartPage = this.GetPage();
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        let X       = oPos.X;
-        let Y       = oPos.Y;
-
+    CAnnotationFreeText.prototype.SelectionSetEnd = function(X, Y, e) {
         let oTextBoxShape   = this.GetTextBoxShape();
         let oContent        = this.GetDocContent();
         
@@ -681,80 +663,26 @@
         let yContent    = oTransform.TransformPointY(0, Y);
 
         oContent.Selection_SetEnd(xContent, yContent, 0, e);
-        
-        if (oContent.IsSelectionEmpty() == false) {
-            oDrDoc.TargetEnd();
-        }
-        else {
-            oDrDoc.TargetStart();
-            oDrDoc.showTarget(true);
-        }
     };
-    CAnnotationFreeText.prototype.MoveCursorLeft = function(isShiftKey, isCtrlKey)
-    {
-        let oViewer = Asc.editor.getDocumentRenderer();
-        let oDoc    = this.GetDocument();
-        let oDrDoc  = oDoc.GetDrawingDocument();
-
+    CAnnotationFreeText.prototype.MoveCursorLeft = function(isShiftKey, isCtrlKey) {
         let oContent = this.GetDocContent()
         oContent.MoveCursorLeft(isShiftKey, isCtrlKey);
         oContent.RecalculateCurPos();
-
-        oDrDoc.TargetStart();
-        oDrDoc.showTarget(true);
-        if (oContent.IsSelectionEmpty() == false)
-            oDrDoc.TargetEnd();
-
-        oViewer.onUpdateOverlay();
     };
-    CAnnotationFreeText.prototype.MoveCursorRight = function(isShiftKey, isCtrlKey)
-    {
-        let oViewer = Asc.editor.getDocumentRenderer();
-        let oDoc    = this.GetDocument();
-        let oDrDoc  = oDoc.GetDrawingDocument();
-
+    CAnnotationFreeText.prototype.MoveCursorRight = function(isShiftKey, isCtrlKey) {
         let oContent = this.GetDocContent()
         oContent.MoveCursorRight(isShiftKey, isCtrlKey);
         oContent.RecalculateCurPos();
-
-        oDrDoc.TargetStart();
-        oDrDoc.showTarget(true);
-        if (oContent.IsSelectionEmpty() == false)
-            oDrDoc.TargetEnd();
-
-        oViewer.onUpdateOverlay();
     };
     CAnnotationFreeText.prototype.MoveCursorDown = function(isShiftKey, isCtrlKey) {
-        let oViewer = Asc.editor.getDocumentRenderer();
-        let oDoc    = this.GetDocument();
-        let oDrDoc  = oDoc.GetDrawingDocument();
-
         let oContent = this.GetDocContent()
         oContent.MoveCursorDown(isShiftKey, isCtrlKey);
         oContent.RecalculateCurPos();
-
-        oDrDoc.TargetStart();
-        oDrDoc.showTarget(true);
-        if (oContent.IsSelectionEmpty() == false)
-            oDrDoc.TargetEnd();
-
-        oViewer.onUpdateOverlay();
     };
     CAnnotationFreeText.prototype.MoveCursorUp = function(isShiftKey, isCtrlKey) {
-        let oViewer = Asc.editor.getDocumentRenderer();
-        let oDoc    = this.GetDocument();
-        let oDrDoc  = oDoc.GetDrawingDocument();
-
         let oContent = this.GetDocContent()
         oContent.MoveCursorUp(isShiftKey, isCtrlKey);
         oContent.RecalculateCurPos();
-
-        oDrDoc.TargetStart();
-        oDrDoc.showTarget(true);
-        if (oContent.IsSelectionEmpty() == false)
-            oDrDoc.TargetEnd();
-
-        oViewer.onUpdateOverlay();
     };
     CAnnotationFreeText.prototype.SetInTextBox = function(isIn) {
         let oDoc = this.GetDocument();
@@ -794,6 +722,7 @@
         this.FitTextBox();
         this.SetNeedRecalc(true);
         oContent.RecalculateCurPos();
+
         return true;
     };
     /**
@@ -801,12 +730,12 @@
 	 * @memberof CTextField
 	 * @typeofeditors ["PDF"]
 	 */
-    CAnnotationFreeText.prototype.Remove = function(nDirection, bWord) {
+    CAnnotationFreeText.prototype.Remove = function(nDirection, isCtrlKey) {
         let oDoc = this.GetDocument();
         oDoc.CreateNewHistoryPoint(this);
 
         let oContent = this.GetDocContent();
-        oContent.Remove(nDirection, true, false, false, bWord);
+        oContent.Remove(nDirection, true, false, false, isCtrlKey);
         oContent.RecalculateCurPos();
         this.SetNeedRecalc(true);
 
@@ -818,18 +747,7 @@
         }
     };
     CAnnotationFreeText.prototype.SelectAllText = function() {
-        let oViewer = editor.getDocumentRenderer();
-        let oDoc    = this.GetDocument();
-        let oDrDoc  = oDoc.GetDrawingDocument();
-
-        let oContent = this.GetDocContent();
-        oContent.SelectAll();
-        if (oContent.IsSelectionUse() && !oContent.IsSelectionEmpty()) {
-            oDrDoc.TargetEnd();
-            oViewer.onUpdateOverlay();
-        }
-        else
-            oContent.RemoveSelection();
+        this.GetDocContent().SelectAll();
     };
     /**
 	 * Exit from this annot.
@@ -1005,10 +923,9 @@
                         oContent.RemoveSelection();
                 }
             }
-            else {
-                if (oContent.IsSelectionEmpty())
-                    oContent.RemoveSelection();
-            }
+
+            if (oContent.IsSelectionEmpty())
+                oContent.RemoveSelection();
 
             oViewer.onUpdateOverlay();
         }

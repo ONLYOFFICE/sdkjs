@@ -2437,6 +2437,9 @@
 
 		this.onUpdateOverlay = function()
 		{
+			if (!this.overlay)
+				return;
+
 			this.overlay.Clear()
 
 			if (!this.file)
@@ -2526,7 +2529,7 @@
 			if (oDoc.activeForm && oDoc.activeForm.content && oDoc.activeForm.content.IsSelectionUse() && oDoc.activeForm.content.IsSelectionEmpty() == false)
 			{
 				ctx.beginPath();
-				oDoc.activeForm.content.DrawSelectionOnPage(oDoc.activeForm.GetPage());
+				oDoc.activeForm.content.DrawSelectionOnPage(0);
 				ctx.globalAlpha = 0.2;
 				ctx.fill();
 			}
@@ -2750,13 +2753,13 @@
 				YLimit: H * g_dKoef_pix_to_mm / scaleCoef
 			}
 		};
-		this.SelectNextField = function()
+		this.SelectNextForm = function()
 		{
-			this.doc.SelectNextField();
+			this.doc.SelectNextForm();
 		};
-		this.SelectPrevField = function()
+		this.SelectPrevForm = function()
 		{
-			this.doc.SelectPrevField();
+			this.doc.SelectPrevForm();
 		};
 		
 		this.checkPagesLinks = function()
@@ -3122,65 +3125,25 @@
 		
 		this.OnKeyDown = function(e)
 		{
-			var bRetValue = false;
-			let oDoc = this.getPDFDoc();
+			var bRetValue	= false;
+			let oDoc		= this.getPDFDoc();
 
 			if (e.KeyCode === 8) // BackSpace
 			{
-				if (oDoc.activeForm && oDoc.activeForm.IsCanEditText())
-				{
-					oDoc.activeForm.Remove(-1, e.CtrlKey == true);
-
-					this.onUpdateOverlay();
-					// сбрасываем счетчик до появления курсора
-					if (true !== e.ShiftKey)
-						oThis.Api.WordControl.m_oDrawingDocument.TargetStart();
-					// Чтобы при зажатой клавише курсор не пропадал
-					oThis.Api.WordControl.m_oDrawingDocument.showTarget(true);
-					
-					bRetValue = true;
-				}
-				else if (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsFreeText() && oDoc.mouseDownAnnot.IsInTextBox()) {
-					oDoc.mouseDownAnnot.Remove(-1, e.CtrlKey == true);
-					// сбрасываем счетчик до появления курсора
-					if (true !== e.ShiftKey)
-						oThis.Api.WordControl.m_oDrawingDocument.TargetStart();
-					oThis.Api.WordControl.m_oDrawingDocument.showTarget(true)
-				}
+				oDoc.Remove(-1, e.CtrlKey == true);
 			}
 			else if (e.KeyCode === 9) // Tab
 			{
 				window.event.preventDefault();
 				if (true == e.ShiftKey)
-					this.SelectPrevField();
+					this.SelectPrevForm();
 				else
-					this.SelectNextField();
+					this.SelectNextForm();
 			}
-			else if (e.KeyCode === 13 && e.ShiftKey == false) // Enter
+			else if (e.KeyCode === 13) // Enter
 			{
 				window.event.stopPropagation();
-				if (this.doc.activeForm) {
-					if (this.doc.activeForm.GetType() == AscPDF.FIELD_TYPES.text && this.doc.activeForm.IsCanEditText() && this.doc.activeForm.IsMultiline())
-						this.Api.asc_enterText([13]);
-					else
-						this.doc.EnterDownActiveField();
-				}
-				else if (this.doc.mouseDownAnnot && this.doc.mouseDownAnnot.IsFreeText() && this.doc.mouseDownAnnot.IsInTextBox()) {
-					this.Api.asc_enterText([13]);
-				}
-			}
-			else if (e.KeyCode === 13 && e.ShiftKey == true) // Enter
-			{
-				window.event.stopPropagation();
-				if (this.doc.activeForm) {
-					if (this.doc.activeForm.GetType() == AscPDF.FIELD_TYPES.text && this.doc.activeForm.IsCanEditText() && this.doc.activeForm.IsMultiline())
-						this.Api.asc_enterText([13]);
-					else
-						this.doc.EnterDownActiveField();
-				}
-				else if (this.doc.mouseDownAnnot && this.doc.mouseDownAnnot.IsFreeText() && this.doc.mouseDownAnnot.IsInTextBox()) {
-					this.Api.asc_enterText([13]);
-				}
+				oDoc.EnterDown(e.ShiftKey === true);
 			}
 			else if (e.KeyCode === 27) // Esc
 			{
@@ -3266,32 +3229,8 @@
 			}
 			else if ( e.KeyCode == 37 ) // Left Arrow
 			{
-				if (oDoc.activeForm && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oDoc.activeForm.GetType()))
-				{
-					// сбрасываем счетчик до появления курсора
-					if (true !== e.ShiftKey)
-						oThis.Api.WordControl.m_oDrawingDocument.TargetStart();
-					// Чтобы при зажатой клавише курсор не пропадал
-					oThis.Api.WordControl.m_oDrawingDocument.showTarget(true);
-
-					let oFieldBounds = oDoc.activeForm.getFormRelRect();
-					let oCurPos = oDoc.activeForm.MoveCursorLeft(true === e.ShiftKey, true === e.CtrlKey);
-					if (oDoc.activeForm.content.IsSelectionUse())
-						this.Api.WordControl.m_oDrawingDocument.TargetEnd();
-						
-					let nCursorH = g_oTextMeasurer.GetHeight();
-					if ((oCurPos.X < oFieldBounds.X || oCurPos.Y - nCursorH * 0.75 < oFieldBounds.Y) && oDoc.activeForm._doNotScroll != true)
-					{
-						oDoc.activeForm.AddToRedraw();
-						this._paint();
-						if (oDoc.activeForm.UpdateScroll)
-							oDoc.activeForm.UpdateScroll(true);
-					}
-					
-					this.onUpdateOverlay();
-				}
-				else if (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsFreeText() && oDoc.mouseDownAnnot.IsInTextBox()) {
-					oDoc.mouseDownAnnot.MoveCursorLeft(true === e.ShiftKey, true === e.CtrlKey);
+				if (oDoc.activeForm || oDoc.mouseDownAnnot) {
+					oDoc.MoveCursorLeft(true === e.ShiftKey, true === e.CtrlKey);
 				}
 				else if (!this.isFocusOnThumbnails && this.isVisibleHorScroll)
 				{
@@ -3306,82 +3245,23 @@
 			}
 			else if ( e.KeyCode == 38 ) // Top Arrow
 			{
-				if (oDoc.activeForm && !oDoc.activeForm.IsNeedDrawHighlight())
-				{
-					switch (oDoc.activeForm.GetType())
-					{
-						case AscPDF.FIELD_TYPES.listbox:
-							oDoc.activeForm.MoveSelectUp();
-							break;
-						case AscPDF.FIELD_TYPES.text:
-							// сбрасываем счетчик до появления курсора
-							if (true !== e.ShiftKey)
-								oThis.Api.WordControl.m_oDrawingDocument.TargetStart();
-							// Чтобы при зажатой клавише курсор не пропадал
-							oThis.Api.WordControl.m_oDrawingDocument.showTarget(true);
-
-							let oFieldBounds = oDoc.activeForm.getFormRelRect();
-							let oCurPos = oDoc.activeForm.MoveCursorUp(true === e.ShiftKey, true === e.CtrlKey);
-							if (oDoc.activeForm.content.IsSelectionUse())
-								this.Api.WordControl.m_oDrawingDocument.TargetEnd();
-
-							let nCursorH = g_oTextMeasurer.GetHeight();
-							if (oCurPos.Y - nCursorH * 0.75 < oFieldBounds.Y && oDoc.activeForm._doNotScroll != true)
-							{
-								oDoc.activeForm.AddToRedraw();
-								this._paint();
-								if (oDoc.activeForm.UpdateScroll)
-									oDoc.activeForm.UpdateScroll(true);
-							}
-														
-							this.onUpdateOverlay();
-							break;
-					}
+				if (oDoc.activeForm || oDoc.mouseDownAnnot) {
+					oDoc.MoveCursorUp(true === e.ShiftKey, true === e.CtrlKey);
 				}
-				else if (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsFreeText() && oDoc.mouseDownAnnot.IsInTextBox()) {
-					oDoc.mouseDownAnnot.MoveCursorUp(true === e.ShiftKey, true === e.CtrlKey);
-				}
-				else if (!this.isFocusOnThumbnails)
-				{
+				else if (!this.isFocusOnThumbnails) {
 					this.m_oScrollVerApi.scrollByY(-40);
 				}
 				bRetValue = true;
 			}
 			else if ( e.KeyCode == 39 ) // Right Arrow
 			{	
-				if (oDoc.activeForm && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oDoc.activeForm.GetType()))
-				{
-					// сбрасываем счетчик до появления курсора
-					if (true !== e.ShiftKey)
-						oThis.Api.WordControl.m_oDrawingDocument.TargetStart();
-					// Чтобы при зажатой клавише курсор не пропадал
-					oThis.Api.WordControl.m_oDrawingDocument.showTarget(true);
-
-					let oFieldBounds = oDoc.activeForm.getFormRelRect();
-					let oCurPos = oDoc.activeForm.MoveCursorRight(true === e.ShiftKey, true === e.CtrlKey);
-					
-					if (oDoc.activeForm.content.IsSelectionUse())
-						this.Api.WordControl.m_oDrawingDocument.TargetEnd();
-
-					if ((oCurPos.X > oFieldBounds.X + oFieldBounds.W || oCurPos.Y > oFieldBounds.Y + oFieldBounds.H) && oDoc.activeForm._doNotScroll != true)
-					{
-						oDoc.activeForm.AddToRedraw();
-						this._paint();
-						if (oDoc.activeForm.UpdateScroll)
-							oDoc.activeForm.UpdateScroll(true);
-					}
-
-					this.onUpdateOverlay();
+				if (oDoc.activeForm || oDoc.mouseDownAnnot) {
+					oDoc.MoveCursorRight(true === e.ShiftKey, true === e.CtrlKey);
 				}
-				else if (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsFreeText() && oDoc.mouseDownAnnot.IsInTextBox()) {
-					oDoc.mouseDownAnnot.MoveCursorRight(true === e.ShiftKey, true === e.CtrlKey);
-				}
-				else if (!this.isFocusOnThumbnails && this.isVisibleHorScroll)
-				{
+				else if (!this.isFocusOnThumbnails && this.isVisibleHorScroll) {
 					this.m_oScrollHorApi.scrollByX(40);
 				}
-				else if (this.isFocusOnThumbnails)
-				{
+				else if (this.isFocusOnThumbnails) {
 					if (this.currentPage < (this.getPagesCount() - 1))
 						this.navigateToPage(this.currentPage + 1);
 				}
@@ -3389,40 +3269,8 @@
 			}
 			else if ( e.KeyCode == 40 ) // Bottom Arrow
 			{
-				if (oDoc.activeForm && !oDoc.activeForm.IsNeedDrawHighlight())
-				{
-					switch (oDoc.activeForm.GetType())
-					{
-						case AscPDF.FIELD_TYPES.listbox:
-							oDoc.activeForm.MoveSelectDown();
-							break;
-						case AscPDF.FIELD_TYPES.text:
-							// сбрасываем счетчик до появления курсора
-							if (true !== e.ShiftKey)
-								oThis.Api.WordControl.m_oDrawingDocument.TargetStart();
-							// Чтобы при зажатой клавише курсор не пропадал
-							oThis.Api.WordControl.m_oDrawingDocument.showTarget(true);
-
-							let oFieldBounds = oDoc.activeForm.getFormRelRect();
-							let oCurPos = oDoc.activeForm.MoveCursorDown(true === e.ShiftKey, true === e.CtrlKey);
-							if (oDoc.activeForm.content.IsSelectionUse())
-								this.Api.WordControl.m_oDrawingDocument.TargetEnd();
-								
-							if (oCurPos.Y > oFieldBounds.Y + oFieldBounds.H && oDoc.activeForm._doNotScroll != true)
-							{
-								oDoc.activeForm.AddToRedraw();
-								this._paint();
-								if (oDoc.activeForm.UpdateScroll)
-									oDoc.activeForm.UpdateScroll(true);
-							}
-
-							this.onUpdateOverlay();
-							break;
-					}
-					
-				}
-				else if (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsFreeText() && oDoc.mouseDownAnnot.IsInTextBox()) {
-					oDoc.mouseDownAnnot.MoveCursorDown(true === e.ShiftKey, true === e.CtrlKey);
+				if (oDoc.activeForm || oDoc.mouseDownAnnot) {
+					oDoc.MoveCursorDown(true === e.ShiftKey, true === e.CtrlKey);
 				}
 				else if (!this.isFocusOnThumbnails)
 				{
@@ -3432,56 +3280,11 @@
 			}
 			else if (e.KeyCode === 46) // Delete
 			{
-				let oDoc = this.getPDFDoc();
-
-				if (oDoc.activeForm && oDoc.activeForm.IsCanEditText())
-				{
-					oDoc.activeForm.Remove(1, e.CtrlKey == true);
-					if (oDoc.activeForm._needRecalc)
-						this._paint();
-
-					this.onUpdateOverlay();
-					// сбрасываем счетчик до появления курсора
-					if (true !== e.ShiftKey)
-						oThis.Api.WordControl.m_oDrawingDocument.TargetStart();
-					// Чтобы при зажатой клавише курсор не пропадал
-					oThis.Api.WordControl.m_oDrawingDocument.showTarget(true);
-					bRetValue = true;
-				}
-				else if (oDoc.mouseDownAnnot && this.isMouseDown == false) {
-					oDoc.RemoveAnnot(oDoc.mouseDownAnnot.GetId());
-				}
+				oDoc.Remove(1, e.CtrlKey == true);
 			}
 			else if ( e.KeyCode == 65 && true === e.CtrlKey ) // Ctrl + A
 			{
-				if (oDoc.activeForm && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oDoc.activeForm.GetType()))
-				{
-					if (oDoc.activeForm.IsCanEditText() == false)
-						return;
-					oDoc.activeForm.SelectAllText();
-					bRetValue = true;
-				}
-				else if (this.doc.mouseDownAnnot && this.doc.mouseDownAnnot.IsFreeText() && this.doc.mouseDownAnnot.IsInTextBox()) {
-					this.doc.mouseDownAnnot.SelectAllText();
-				}
-				else
-				{
-					bRetValue = true;
-					if (!this.isFullTextMessage) {
-						if (!this.isFullText)
-						{
-							this.fullTextMessageCallbackArgs = [];
-							this.fullTextMessageCallback = function() {
-								this.file.selectAll();
-							};
-							this.showTextMessage();
-						}
-						else
-						{
-							this.file.selectAll();
-						}
-					}
-				} 
+				oDoc.SelectAll();
 			}
 			else if ( e.KeyCode == 80 && true === e.CtrlKey ) // Ctrl + P + ...
 			{

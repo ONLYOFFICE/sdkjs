@@ -47,6 +47,7 @@
 		TargetStart : function(){},
 		TargetShow : function(){},
 		TargetEnd : function(){},
+		showTarget : function(){},
 		Set_RulerState_Start : function(){},
 		Set_RulerState_Paragraph : function(){},
 		Set_RulerState_End : function(){},
