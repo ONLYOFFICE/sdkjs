@@ -129,9 +129,7 @@
             return;
         }
 
-        if (oViewer.IsOpenFormsInProgress == false && oDoc.History.UndoRedoInProgress == false) {
-            oDoc.CreateNewHistoryPoint();
-        }
+        oDoc.CreateNewHistoryPoint(this);
 
         aFields.forEach(function(field) {
             if (field.GetHeaderPosition() == position["textOnly"])
@@ -1211,10 +1209,24 @@
         let oDoc = this.GetDocument();
         this.DrawPressed();
 
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
-        if (oDoc.activeForm != this)
-            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+        let isInFocus   = oDoc.activeForm === this;
         oDoc.activeForm = this;
+
+        function callbackAfterFocus() {
+            this.SetInForm(true);
+        }
+        
+        let oOnFocus = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+        // вызываем выставление курсора после onFocus. Если уже в фокусе, тогда сразу.
+        if (false == isInFocus && oOnFocus && oOnFocus.Actions.length > 0)
+            oActionsQueue.callbackAfterFocus = callbackAfterFocus.bind(this);
+        else
+            callbackAfterFocus.bind(this)();
+
+        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
+        if (false == isInFocus) {
+            this.onFocus();
+        }
     };
     CPushButtonField.prototype.onMouseUp = function() {
         this.SetPressed(false); // флаг что нужно рисовать нажатие
@@ -1798,10 +1810,6 @@
         let oThisPara = this.content.GetElement(0);
         
         TurnOffHistory();
-
-        if (true != editor.getDocumentRenderer().isOnUndoRedo) {
-            this.UnionLastHistoryPoints();
-        }
 
         if (aFields.length == 1)
             this.SetNeedCommit(false);

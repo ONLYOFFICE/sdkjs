@@ -1149,11 +1149,8 @@ CHistory.prototype.ClearAdditional = function()
 
 		let form			= this.GetLastPointFormFilling();
 		let pdfSourceObj	= this.GetLastPointSourceObjPdf();
-		let isCanUnion		= this.Points[this.Index].Additional && this.Points[this.Index].Additional.CanUnion === false ? false : true;
 
 		this.Points[this.Index].Additional = {};
-		if (isCanUnion == false)
-			this.Points[this.Index].Additional.CanUnion = false;
 
 		if (form)
 			this.SetAdditionalFormFilling(form);
