@@ -26509,7 +26509,6 @@
 							}
 						} else if (initStructure && window.importRangeAsUpdateER && fP.outStack[i].type === AscCommonExcel.cElementType.func && fP.outStack[i].name === "IMPORTRANGE") {
 							needCalc = true;
-
 						}
 					}
 				}

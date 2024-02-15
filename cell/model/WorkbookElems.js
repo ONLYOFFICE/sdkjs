@@ -15675,7 +15675,7 @@ function RangeDataManagerElem(bbox, data)
 				break;
 			case CellValueType.Number:
 			default:
-				res = new AscCommonExcel.cNumber(this.CellValue);
+				res = new AscCommonExcel.cNumber(this.CellValue - 0);
 				break;
 		}
 

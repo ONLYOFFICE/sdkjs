@@ -30771,6 +30771,8 @@ $(function () {
 		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_before_add_clone_2');
 		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
 		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_after_add_clone_2');
+
+
 	});
 
 	wb.dependencyFormulas.unlockRecal();

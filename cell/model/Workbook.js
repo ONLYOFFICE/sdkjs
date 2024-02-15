@@ -13427,15 +13427,43 @@
 		let externalLinks;
 		let i;
 		if (fOld && (!fNew || fNew.Formula !== fOld.Formula) && fOld.outStack) {
+			let needCheckImportFuncs = false;
 			for (i = 0; i < fOld.outStack.length; i++) {
 				if (fOld.outStack[i].externalLink) {
 					if (!externalLinks) {
 						externalLinks = {};
 					}
 					externalLinks[fOld.outStack[i].externalLink] = fOld.outStack[i].getWsId();
+				} else if (fOld.outStack[i].type === cElementType.func && fOld.outStack[i].name === "IMPORTRANGE") {
+					needCheckImportFuncs = true;
 				}
 			}
+
+			if (needCheckImportFuncs) {
+				window.startBuildImportRangeLinks = true;
+				fOld.calculate();
+				window.startBuildImportRangeLinks = null;
+
+				if (window.importRangeLinks) {
+					for (i in window.importRangeLinks) {
+						for (let j = 0; j < window.importRangeLinks[i].length; j++) {
+							if (window.importRangeLinks[i][j]) {
+								let ws = this.ws.workbook.getExternalWorksheet(i, window.importRangeLinks[i][j].sheet);
+								if (ws) {
+									if (!externalLinks) {
+										externalLinks = {};
+									}
+									externalLinks[i] = ws.getId();
+								}
+							}
+
+						}
+					}
+				}
+				window.importRangeLinks = null;
+			}
 		}
+
 
 		//2. проверяем, каких ссылок не осталось в новых данных
 		if (externalLinks && fNew && fNew.outStack) {
