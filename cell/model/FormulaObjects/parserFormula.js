@@ -2687,6 +2687,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArray.prototype.getElementRowCol = function (row, col, checkRealSize) {
 		if (row > this.rowCount || col > this.getCountElementInRow()) {
 			if (checkRealSize && this.realSize && row <= this.realSize.row && col <= this.realSize.col) {
+				if (this.missedValue) {
+					return this.missedValue
+				}
 				return new cEmpty();
 			}
 			return new cError(cErrorType.not_available);
@@ -2756,6 +2759,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 
 		return this.realSize
 	};
+	cArray.prototype.getMissedValue = function () {
+		if (!this.missedValue) {
+			return
+		}
+
+		return this.missedValue
+	};
 	cArray.prototype.setRealArraySize = function (row, col) {
 		if (row > 0 && col > 0) {
 			this.realSize = {row: row, col: col}
@@ -2764,6 +2774,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArray.prototype.tocNumber = function () {
 		let retArr = new cArray();
 		retArr.realSize = this.getRealArraySize();
+		retArr.missedValue = this.getMissedValue();
 		for (let ir = 0; ir < this.rowCount; ir++, retArr.addRow()) {
 			for (let ic = 0; ic < this.countElementInRow[ir]; ic++) {
 				retArr.addElement(this.array[ir][ic].tocNumber());
@@ -2909,8 +2920,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 	};
-	cArray.prototype.getDimensions = function () {
-		return {col: this.getCountElementInRow(), row: this.getRowCount()};
+	cArray.prototype.getDimensions = function (getRealSize) {
+		let realSize = getRealSize ? this.getRealArraySize() : false;
+
+		return {col: getRealSize && realSize ? realSize.col : this.getCountElementInRow(), row: realSize && realSize ? realSize.row : this.getRowCount()};
 	};
 	cArray.prototype.fillMatrix = function (replace_empty) {
 		let maxColCount = Math.max.apply(null, this.countElementInRow);
@@ -2947,10 +2960,20 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		this.recalculate();
 	};
-	cArray.prototype.pushRow = function (matrix, colNum) {
-		if (matrix && matrix[colNum]) {
-			this.array.push(matrix[colNum]);
+	cArray.prototype.pushRow = function (matrix, rowNum) {
+		if (matrix && matrix[rowNum]) {
+			this.array.push(matrix[rowNum]);
 			this.recalculate();
+		}
+	};
+	cArray.prototype.pushRow2 = function (matrix, rowNum) {
+		// rowNum - row number in the received matrix
+		if (matrix && matrix[rowNum]) {
+			this.array.push(matrix[rowNum]);
+			let lastElement = this.array.length - 1;
+			this.countElementInRow[lastElement] = matrix[rowNum].length;
+			this.countElement += matrix[rowNum].length;
+			this.rowCount++;
 		}
 	};
 	cArray.prototype.crop = function (row, col) {
@@ -3098,8 +3121,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 				res = new cArray();
 				for (var iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? res.addRow() : true) {
 					for (var iCol = 0; iCol < colCount; iCol++) {
-						var elem1 = matrix1 ? matrix1.getElementRowCol(dimension1.row === 1 ? 0 : iRow, dimension1.col === 1 ? 0 : iCol) : operand1;
-						var elem2 = matrix2 ? matrix2.getElementRowCol(dimension2.row === 1 ? 0 : iRow, dimension2.col === 1 ? 0 : iCol) : operand2;
+						var elem1 = matrix1 ? matrix1.getElementRowCol(dimension1.row === 1 ? 0 : iRow, dimension1.col === 1 ? 0 : iCol, true) : operand1;
+						var elem2 = matrix2 ? matrix2.getElementRowCol(dimension2.row === 1 ? 0 : iRow, dimension2.col === 1 ? 0 : iCol, true) : operand2;
 						res.addElement(func(elem1, elem2));
 					}
 				}
@@ -5203,7 +5226,6 @@ _func[cElementType.array][cElementType.array] = function ( arg0, arg1, what, bbo
 _func[cElementType.array][cElementType.number] = _func[cElementType.array][cElementType.string] =
     _func[cElementType.array][cElementType.bool] = _func[cElementType.array][cElementType.error] =
         _func[cElementType.array][cElementType.empty] = function ( arg0, arg1, what ) {
-			// TODO optimize array filling or use the missedValue flag 
             let res = new cArray(), realArraySize, rowDiff, colDiff, funcResult, arrayDimensions = arg0.getDimensions();
 
 			if (arg0.realSize && arg0.missedValue) {
@@ -5211,26 +5233,25 @@ _func[cElementType.array][cElementType.number] = _func[cElementType.array][cElem
 				rowDiff = realArraySize.row - arg0.getRowCount();
 				colDiff = realArraySize.col - arg0.getCountElementInRow();
 				funcResult = _func[arg0.missedValue.type][arg1.type](arg0.missedValue, arg1, what);
+				
+				// set realSize to res
+				res.setRealArraySize(realArraySize.row, realArraySize.col);
+				res.missedValue = funcResult;
 			}
 
-			for (let row = 0; row < (realArraySize ? realArraySize.row : arg0.getRowCount()); row++) {
-				res.addRow();
-				for (let col = 0; col < (realArraySize ? realArraySize.col : arg0.getCountElementInRow()); col++) {
-					if (row > arrayDimensions.row || col > arrayDimensions.col && funcResult) {
-						res.addElement(funcResult);
-						continue
-					}
-					let curElem = arg0.getElementRowCol(row, col);
-					res.addElement( _func[curElem.type][arg1.type]( curElem, arg1, what ) );
-				}
-			}
+			arg0.foreach( function ( elem, r ) {
+                if ( !res.array[r] ) {
+                    res.addRow();
+                }
+                res.addElement( _func[elem.type][arg1.type]( elem, arg1, what ) );
+            } );
+
             return res;
         };
 
 _func[cElementType.number][cElementType.array] = _func[cElementType.string][cElementType.array] =
     _func[cElementType.bool][cElementType.array] = _func[cElementType.error][cElementType.array] =
         _func[cElementType.empty][cElementType.array] = function ( arg0, arg1, what ) {
-			// TODO optimize array filling or use the missedValue flag 
 			let res = new cArray(), realArraySize, rowDiff, colDiff, funcResult, arrayDimensions = arg1.getDimensions();
 
 			if (arg1.realSize && arg1.missedValue) {
@@ -5238,19 +5259,19 @@ _func[cElementType.number][cElementType.array] = _func[cElementType.string][cEle
 				rowDiff = realArraySize.row - arg1.getRowCount();
 				colDiff = realArraySize.col - arg1.getCountElementInRow();
 				funcResult = _func[arg0.type][arg1.missedValue.type](arg0, arg1.missedValue, what);
+
+				// set realSize to res
+				res.setRealArraySize(realArraySize.row, realArraySize.col);
+				res.missedValue = funcResult;
 			}
 
-			for (let row = 0; row < (realArraySize ? realArraySize.row : arg1.getRowCount()); row++) {
-				res.addRow();
-				for (let col = 0; col < (realArraySize ? realArraySize.col : arg1.getCountElementInRow()); col++) {
-					if (row > arrayDimensions.row || col > arrayDimensions.col && funcResult) {
-						res.addElement(funcResult);
-						continue
-					}
-					let curElem = arg1.getElementRowCol(row, col);
-					res.addElement( _func[arg0.type][curElem.type]( arg0, curElem, what ) );
-				}
-			}
+			arg1.foreach( function ( elem, r ) {
+                if ( !res.array[r] ) {
+                    res.addRow();
+                }
+                res.addElement( _func[arg0.type][elem.type]( arg0, elem, what ) );
+            } );
+
             return res;
         };
 
@@ -8824,10 +8845,18 @@ function parserFormula( formula, parent, _ws ) {
 				rowCount = (minR - oBBox.r1) >= 0 ? minR - oBBox.r1 + 1 : 0,
 				colCount = (minC - oBBox.c1) >= 0 ? minC - oBBox.c1 + 1 : 0;
 
+			if (rowCount < dimension.row || colCount < dimension.col) {
+				retArr.missedValue = new cEmpty();
+			} else {
+				retArr.realSize = null;
+			}
+
 			if (area && area.length < 1) {
 				// let emptyElem = new cEmpty();
 				// empty array, fill with empty elements or return empty array
 				// retArr.fillWithElement(dimension.row, dimension.col, emptyElem);
+				retArr.setRealArraySize(dimension.row, dimension.col);
+				retArr.missedValue = new cEmpty();
 			} else {
 				for ( let iRow = 0; iRow < rowCount; iRow++, iRow < rowCount ? retArr.addRow() : true ) {
 					for ( let iCol = 0; iCol < colCount; iCol++ ) {
@@ -8835,12 +8864,6 @@ function parserFormula( formula, parent, _ws ) {
 						retArr.addElement(_arg0);
 					}
 				}
-			}
-
-			if (rowCount < dimension.row || colCount < dimension.col) {
-				retArr.missedValue = new cEmpty();
-			} else {
-				retArr.realSize = null;
 			}
 		}
 
@@ -9007,7 +9030,7 @@ function parserFormula( formula, parent, _ws ) {
 				if (iRow >= usefulRow) {
 					// fill row with N/A and continue
 					let errRow = new Array(arrayMaxCols).fill(errNA);
-					retArr.pushRow([errRow], 0);
+					retArr.pushRow2([errRow], 0);
 					continue
 				}
 
