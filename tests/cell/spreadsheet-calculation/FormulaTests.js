@@ -30772,7 +30772,9 @@ $(function () {
 		wb.addExternalReferencesAfterParseFormulas(parseResult.externalReferenesNeedAdd);
 		assert.strictEqual(wb.externalReferences.length, 1, 'IMPORTRANGE_1_external_reference_length_after_add_clone_2');
 
-
+		//need check remove on setValue
+		/*ws.getRange2("A2").setValue("1");
+		assert.strictEqual(wb.externalReferences.length, 0, 'IMPORTRANGE_1_external_reference_length_after_remove_value');*/
 	});
 
 	wb.dependencyFormulas.unlockRecal();
