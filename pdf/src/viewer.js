@@ -1263,7 +1263,7 @@
 			this.doc.FillButtonsIconsOnOpen();
 		};
 		this.openAnnots = function() {
-			// this.doc.checkDefaultFieldFonts();
+			this.doc.checkDefaultFieldFonts();
 			let oAnnotsMap = {};
 			let oDoc = this.getPDFDoc();
 			let aAnnotsInfo = this.file.nativeFile["getAnnotationsInfo"]();
@@ -1364,7 +1364,7 @@
 					// FreeText
 					if (oAnnotInfo["defaultStyle"] != null)
 						oAnnot.SetDefaultStyle(oAnnotInfo["defaultStyle"]);
-					
+
 					// border effect
 					if (oAnnotInfo["BE"] != null) {
 						if (oAnnotInfo["BE"]["I"] != null)
