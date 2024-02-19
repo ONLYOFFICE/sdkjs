@@ -5850,6 +5850,7 @@
 		AscCommonExcel.cFormulaFunctionGroup['custom'] = AscCommonExcel.cFormulaFunctionGroup['custom'] || [];
 		AscCommonExcel.cFormulaFunctionGroup["custom"].push(newFunc);
 		window['AscCommonExcel'].getFormulasInfo();
+		this.initFormulasList();
 	};
 
 
