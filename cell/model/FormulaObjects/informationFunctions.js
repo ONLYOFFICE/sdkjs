@@ -320,7 +320,7 @@ function (window, undefined) {
 				}
 				case _cCellFunctionLocal["protect"]: {
 					//default - protect, do not support on open
-					let isLocked;
+					let isLocked = true;
 					cell = ws.getCell3(bbox.r1, bbox.c1);
 					cell._foreachNoEmpty(function (cell) {
 						if (cell) {
