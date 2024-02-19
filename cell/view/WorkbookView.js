@@ -5700,7 +5700,7 @@
 				"defaultValue": ""
 				"description": "First number. *"
 				"name": "first"
-				"optional": false
+				"isOptional": false
 				"parentName": ""
 				"type": "number"
 			},
@@ -5708,12 +5708,21 @@
 				"defaultValue": ""
 				"description": "Second number. *"
 				"name": "second"
-				"optional": true
+				"isOptional": true
 				"parentName": ""
 				"type": "string"
 			}
 		]
 		*/
+
+		/*{
+			type,  - тип параметра ( то, что указано в {})
+			name, - имя параметра
+			isOptional, - обязательный он или нет
+			defaultValue, - если есть дефолтное значение
+			description - описание параметра
+		}*/
+
 
 		let getType = function (_type) {
 			let res =  AscCommonExcel.cElementType.number;
@@ -5756,17 +5765,37 @@
 		let argumentsMin = 0;
 		let argumentsMax = 255;
 		//let argumentsType = [];
+		if (typeof options === "string" ) {
+			options = AscCommon.parseJSDoc(options);
+			//TODO array ?
+			if (options) {
+				options = options[0];
+			}
+		}
 		let params = options["params"];
 		if (params) {
 			argumentsMax = 0;
 			for (let i = 0; i < params.length; i++) {
-				if (false === params[i]["optional"]) {
+				if (false === params[i]["isOptional"]) {
 					argumentsMin++;
 				}
 				argumentsMax++;
 				//let type = params[i]["type"];
 				//argumentsType.push(getType(type));
 			}
+		}
+
+		//TODO check function arguments length
+		let argsFuncLength = func.length;
+		if (argsFuncLength > argumentsMax) {
+
+		}
+
+		//TODO check duplicated name
+		let oFormulaList = AscCommonExcel.cFormulaFunctionLocalized ? AscCommonExcel.cFormulaFunctionLocalized :
+			AscCommonExcel.cFormulaFunction;
+		if (oFormulaList[funcName]) {
+
 		}
 
 		/**
@@ -5785,32 +5814,36 @@
 		//argumentsType - other arguments type, need convert
 		//newFunc.prototype.argumentsType = argumentsType;
 		newFunc.prototype.Calculate = function (arg) {
-			//prepare arguments
-			let args = [];
-			for (let i = 0; i < params.length; i++) {
-				let type = getType(params[i]["type"]);
-				let defaultValue = params[i]["defaultValue"];
-				if (arg[i] && arg[i].type === AscCommonExcel.cElementType.error && type === AscCommonExcel.cElementType.error) {
-					args.push(arg[i].toString());
-				} else {
-					if (arg[i].type === AscCommonExcel.cElementType.error) {
-						return arg[i];
-					}
+			try {
+				//prepare arguments
+				let args = [];
+				for (let i = 0; i < params.length; i++) {
+					let type = getType(params[i]["type"]);
+					let defaultValue = params[i]["defaultValue"];
+					if (arg[i] && arg[i].type === AscCommonExcel.cElementType.error && type === AscCommonExcel.cElementType.error) {
+						args.push(arg[i].toString());
+					} else {
+						if (arg[i].type === AscCommonExcel.cElementType.error) {
+							return arg[i];
+						}
 
-					let elem = getElement(arg[i], type, defaultValue);
-					if (elem && elem.type === AscCommonExcel.cElementType.error) {
-						return elem;
-					}
+						let elem = getElement(arg[i], type, defaultValue);
+						if (elem && elem.type === AscCommonExcel.cElementType.error) {
+							return elem;
+						}
 
-					args.push(elem);
+						args.push(elem);
+					}
 				}
+
+				let res = func.apply(this, args);
+
+				//prepare result
+
+				return new AscCommonExcel.cNumber(res);
+			} catch (e) {
+				console.log("ERROR CUSTOM FUNCTION CALCULATE")
 			}
-
-			let res = func.apply(this, args);
-
-			//prepare result
-
-			return new AscCommonExcel.cNumber(res);
 		};
 
 
