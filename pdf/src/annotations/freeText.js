@@ -527,25 +527,71 @@
 
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.GetDocument();
-        let oCurContents    = this.GetContents();
-
+        let sCurContents    = this.GetContents();
+        
         this._contents = contents;
         
-        if (oViewer.IsOpenAnnotsInProgress == false) {
+        if (oViewer.IsOpenAnnotsInProgress == false && contents != sCurContents) {
             if (oDoc.History.UndoRedoInProgress == false) {
-                oDoc.History.Add(new CChangesPDFAnnotContents(this, oCurContents, contents));
-            }
-    
-            let oContent    = this.GetDocContent();
-            let sText       = AscPDF.CTextBoxContent.prototype.getAllText.call(oContent);
-
-            if (sText != contents && this.IsInTextBox() == false) {
-                AscPDF.CTextBoxContent.prototype.replaceAllText.call(this.GetDocContent(), contents);
-                this.SetNeedRecalc(true);
+                oDoc.History.Add(new CChangesPDFAnnotContents(this, sCurContents, contents));
             }
         }
 
         this.SetWasChanged(true);
+    };
+    CAnnotationFreeText.prototype.SetNeedUpdateRC = function(bUpdate) {
+        this._needUpdateRC = bUpdate;
+    };
+    CAnnotationFreeText.prototype.IsNeedUpdateRC = function() {
+        return this._needUpdateRC;
+    };
+    CAnnotationFreeText.prototype.SetRichContents = function(aRCInfo) {
+        let oDoc            = this.GetDocument();
+        let oContent        = this.GetDocContent();
+        oContent.ClearContent();
+        
+        let oLastUsedPara   = oContent.GetElement(0);
+        oLastUsedPara.RemoveFromContent(0, oLastUsedPara.GetElementsCount());
+
+        let oRCInfo;
+        let oRun, oRFonts;
+
+        this._richContents = aRCInfo;
+        oDoc.History.Add(new CChangesPDFFreeTextRC(this, this.GetRichContents(), aRCInfo));
+
+        for (let i = 0; i < aRCInfo.length; i++) {
+            oRCInfo = aRCInfo[i];
+
+            oRun = new ParaRun(oLastUsedPara, false);
+            oRFonts = new CRFonts();
+            // oRFonts.SetAll(oRCInfo["name"], -1);
+            oRFonts.SetAll("Arial", -1);
+
+            oRun.SetBold(Boolean(oRCInfo["bold"]));
+            oRun.SetItalic(Boolean(oRCInfo["italic"]));
+            oRun.SetStrikeout(Boolean(oRCInfo["strikethrough"]));
+            oRun.SetUnderline(Boolean(oRCInfo["underlined"]));
+            oRun.SetFontSize(oRCInfo["size"]);
+            oRun.Set_RFonts2(oRFonts);
+
+            let oIterator = oRCInfo["text"].replace('\r', '').getUnicodeIterator();
+            while (oIterator.check()) {
+                let runElement = AscPDF.codePointToRunElement(oIterator.value());
+				oRun.Add(runElement);
+                
+                oIterator.next();
+            }
+
+            oLastUsedPara.AddToContentToEnd(oRun);
+
+            if (oRCInfo["text"].indexOf('\r') != -1) {
+                oLastUsedPara = new AscCommonWord.Paragraph(oContent.DrawingDocument, oContent, true);
+                oContent.Internal_Content_Add(oContent.GetElementsCount(), oLastUsedPara);
+            }
+        }
+
+        this.SetNeedRecalc(true);
+        this.SetNeedUpdateRC(false);
     };
     CAnnotationFreeText.prototype.SetReplies = function(aReplies) {
         let oDoc = this.GetDocument();
@@ -691,6 +737,11 @@
         else
             oDoc.SetGlobalHistory();
 
+        if (false == this.IsChanged()) {
+            this.SetDrawFromStream(!isIn);
+            this.AddToRedraw();
+        }
+        
         this.isInTextBox = isIn;
     };
     CAnnotationFreeText.prototype.IsInTextBox = function() {
@@ -705,7 +756,7 @@
     CAnnotationFreeText.prototype.EnterText = function(aChars) {
         let oDoc        = this.GetDocument();
         let oContent    = this.GetDocContent();
-        let oParagraph  = oContent.GetElement(0);
+        let oParagraph  = oContent.GetCurrentParagraph();
 
         oDoc.CreateNewHistoryPoint(this);
 
@@ -721,6 +772,7 @@
 
         this.FitTextBox();
         this.SetNeedRecalc(true);
+        this.SetNeedUpdateRC(true);
         oContent.RecalculateCurPos();
 
         return true;
@@ -744,6 +796,7 @@
         }
         else {
             this.SetNeedRecalc(true);
+            this.SetNeedUpdateRC(true);
         }
     };
     CAnnotationFreeText.prototype.SelectAllText = function() {
@@ -757,21 +810,57 @@
     CAnnotationFreeText.prototype.Blur = function() {
         let oDoc        = this.GetDocument();
         let oContent    = this.GetDocContent();
-        let oPara       = oContent.GetElement(0);
 
-        oPara.SetApplyToAll(true);
-		let sText = oPara.GetSelectedText(true, {NewLine: true});
-		oPara.SetApplyToAll(false);
+        oContent.SetApplyToAll(true);
+		let sText = oContent.GetSelectedText(false, {NewLineParagraph: true}).replace(/\r\n$/, '');
+		oContent.SetApplyToAll(false);
 
         this.SetInTextBox(false);
 
         if (this.GetContents() != sText) {
             oDoc.CreateNewHistoryPoint();
             this.SetContents(sText);
+            
+            if (this.IsNeedUpdateRC()) {
+                oDoc.History.Add(new CChangesPDFFreeTextRC(this, this.GetRichContents(), this.GetRichContents(true)));
+            }
+
             oDoc.TurnOffHistory();
         }
         
         oDoc.GetDrawingDocument().TargetEnd();
+    };
+    CAnnotationFreeText.prototype.GetRichContents = function(bCalced) {
+        if (!bCalced)
+            return this._richContents;
+
+        let oContent = this.GetDocContent();
+        let aRCInfo = [];
+
+        for (let i = 0, nCount = oContent.GetElementsCount(); i < nCount; i++) {
+            let oPara = oContent.GetElement(i);
+
+            for (let j = 0, nRunsCount = oPara.GetElementsCount(); j < nRunsCount; j++) {
+                let oRun = oPara.GetElement(j);
+                let sText = oRun.GetText();
+                if (sText) {
+                    aRCInfo.push({
+                        "bold":             oRun.GetBold(),
+                        "italic":           oRun.GetItalic(),
+                        "strikethrough":    oRun.Get_Strikeout(),
+                        "underlined":       oRun.Get_Underline(),
+                        "size":             oRun.Get_FontSize(),
+                        "name":             oRun.Get_RFonts().Ascii.Name,
+                        "text":             sText
+                    });
+                }
+            }
+
+            if (aRCInfo[aRCInfo.length - 1])
+                aRCInfo[aRCInfo.length - 1]["text"] += '\r';
+        }
+
+        return aRCInfo;
     };
 
     CAnnotationFreeText.prototype.FitTextBox = function() {
@@ -1278,6 +1367,17 @@
         oParentFreeText.updateTransformMatrix();
 
         oParentFreeText.brush = AscFormat.CreateNoFillUniFill();
+
+        let oTxBoxShape = createInnerShape([{x: 0, y: 0}], null, oParentFreeText);
+        oTxBoxShape.spPr.xfrm.setFlipH(false);
+        oTxBoxShape.spPr.xfrm.setFlipV(false);
+
+        oTxBoxShape.createTextBody();
+        oTxBoxShape.txBody.bodyPr.setInsets(0.5,0.5,0.5,0.5);
+        oTxBoxShape.txBody.bodyPr.horzOverflow = AscFormat.nHOTClip;
+        oTxBoxShape.txBody.bodyPr.vertOverflow = AscFormat.nVOTClip;
+
+        oParentFreeText.addToSpTree(0, oTxBoxShape);
     }
 
     function createInnerShape(aPoints, oExistShape, oParentAnnot) {
