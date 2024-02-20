@@ -2913,8 +2913,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.getDimensions = function (getRealSize) {
 		let realSize = getRealSize ? this.getRealArraySize() : false;
-
-		return {col: getRealSize && realSize ? realSize.col : this.getCountElementInRow(), row: realSize && realSize ? realSize.row : this.getRowCount()};
+		return {col: realSize ? realSize.col : this.getCountElementInRow(), row: realSize ? realSize.row : this.getRowCount()};
 	};
 	cArray.prototype.fillMatrix = function (replace_empty) {
 		let maxColCount = Math.max.apply(null, this.countElementInRow);
