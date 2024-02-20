@@ -13986,6 +13986,42 @@
 				return false;
 			};
 
+			const recalculateVolatileArrays = function() {
+				if (t.model && t.model.workbook && t.model.workbook.dependencyFormulas) {
+					let depGraph = t.model.workbook.dependencyFormulas;
+					// get volatileArraysList
+					let volatileArrayList = depGraph.getVolatileArrays();
+					if (volatileArrayList) {
+						for (let listenerId in volatileArrayList) {
+							let formula = volatileArrayList[listenerId];
+							let formulaResult = formula.calculate();
+							if (formulaResult.type !== AscCommonExcel.cElementType.error || (formulaResult.type === AscCommonExcel.cElementType.error && formulaResult.errorType !== AscCommonExcel.cErrorType.cannot_be_spilled)) {
+								// daf can now fit in the cells, do setValue for each cell
+								let bbox = formula.getDynamicRef();
+								if (bbox) {
+									for (let row = bbox.r1; row <= bbox.r2; row++) {
+										for (let col = bbox.c1; col <= bbox.c2; col++) {
+											if (row === bbox.r1 && col === bbox.c1) {
+												continue
+											}
+											// get cell and setPF to it
+											t.model._getCell(row, col, function(cell) {
+												cell && cell.setFormulaInternal(formula);
+											});
+										}
+									}
+								}
+								// todo
+								// addToChangedDynamicRange
+								depGraph.addToChangedDynamicRange(formula.getWs().getId(), formula.getDynamicRef());
+								// delete from volatilelistener
+								depGraph.endListeningVolatileArray(listenerId);
+							}
+						}
+					}
+				}
+			};
+
             History.Create_NewPoint();
             History.StartTransaction();
 
@@ -14206,6 +14242,7 @@
                             t.handlers.trigger("slowOperation", true);
                         }
                         /* отключаем отрисовку на случай необходимости пересчета ячеек, заносим ячейку, при необходимости в список перерисовываемых */
+
                         t.model.workbook.dependencyFormulas.lockRecal();
 
                         switch(val) {
@@ -14240,6 +14277,10 @@
 								t.model.removeSparklineGroups(range.bbox);
 								break;
                         }
+
+						// TODO не удаляется массив при удалении первой ячейки, удаляются дочерние элементы
+						// пересчитываем все волатильные массивы
+						recalculateVolatileArrays();
 
 						t.model.excludeHiddenRows(false);
 
@@ -18761,16 +18802,17 @@
     };
 
 	WorksheetView.prototype._saveCellValueAfterEdit = function (c, val, flags, isNotHistory, lockDraw) {
-		var bbox = c.bbox;
-		var t = this;
+		const t = this;
+		const ws = t.model
+		let bbox = c.bbox;
 
-		var ctrlKey = flags && flags.ctrlKey;
-		var shiftKey = flags && flags.shiftKey;
-		var applyByArray = ctrlKey && shiftKey;
+		let ctrlKey = flags && flags.ctrlKey;
+		let shiftKey = flags && flags.shiftKey;
+		let applyByArray = ctrlKey && shiftKey;
 		//t.model.workbook.dependencyFormulas.lockRecal();
 
 		//***array-formula***
-		var changeRangesIfArrayFormula = function() {
+		const changeRangesIfArrayFormula = function() {
 			if(ctrlKey) {
 				//TODO есть баг с тем, что не лочатся все ячейки при данном действии
 				c = dynamicSelectionRange ? t._getRange(dynamicSelectionRange.c1, dynamicSelectionRange.r1, dynamicSelectionRange.c2, dynamicSelectionRange.r2) : t.getSelectedRange();
@@ -18812,13 +18854,160 @@
 			}
 		};
 
-		let dynamicSelectionRange = null;
+		//***dynamic array-formula***
+		const checkDynamicRanges = function(bbox) {
+			let changedArrayList;
 
-		var isFormula = this._isFormula(val);
-		var newFP, parseResult;
+			// const ws = t.model
+			if (bbox && ws) {
+				for (let row = bbox.r1; row <= bbox.r2; row++) {
+					for (let col = bbox.c1; col <= bbox.c2; col++) {
+						ws._getCell(row, col, function(cell) {
+							let formulaParsed = cell && cell.formulaParsed;
+							if (formulaParsed && formulaParsed.getDynamicRef()) {
+								let dynamicRange = formulaParsed.getDynamicRef();
+
+								if (!changedArrayList) {
+									changedArrayList = {}
+								}
+
+								// let name = getVertexIndex(dynamicRange);
+								let name = dynamicRange.getName(AscCommonExcel.referenceType.R);
+								if (!changedArrayList[name]) {
+									changedArrayList[name] = {range: dynamicRange, doDelete: false, doRecalc: true}
+								}
+
+								// check this cell. If this is the first cell of dynamic range, delete this range, else delete all elements except the first
+								if (cell.nRow === dynamicRange.r1 && cell.nCol === dynamicRange.c1) {
+									changedArrayList[name].doRecalc = false
+									changedArrayList[name].doDelete = true
+								}
+							}
+						});
+					}
+				}
+			}
+
+			return changedArrayList
+		};
+
+		const recalculateVolatileArrays = function() {
+			if (ws && ws.workbook && ws.workbook.dependencyFormulas) {
+				let depGraph = ws.workbook.dependencyFormulas;
+				// get volatileArraysList
+				let volatileArrayList = depGraph.getVolatileArrays();
+				if (volatileArrayList) {
+					for (let listenerId in volatileArrayList) {
+						let formula = volatileArrayList[listenerId];
+						let formulaResult = formula.calculate();
+						if (formulaResult.type !== AscCommonExcel.cElementType.error || (formulaResult.type === AscCommonExcel.cElementType.error && formulaResult.errorType !== AscCommonExcel.cErrorType.cannot_be_spilled)) {
+							// daf can now fit in the cells, do setValue for each cell
+							let bbox = formula.getDynamicRef();
+							if (bbox) {
+								for (let row = bbox.r1; row <= bbox.r2; row++) {
+									for (let col = bbox.c1; col <= bbox.c2; col++) {
+										if (row === bbox.r1 && col === bbox.c1) {
+											continue
+										}
+										// get cell and setPF to it
+										ws._getCell(row, col, function(cell) {
+											cell && cell.setFormulaInternal(formula);
+											// if (cell) {
+											// 	cell.setFormulaInternal(formula);
+											// }
+										});
+									}
+								}
+							}
+							// todo
+							// addToChangedDynamicRange
+							depGraph.addToChangedDynamicRange(formula.getWs().getId(), formula.getDynamicRef());
+							// depGraph.endListeningVolatileArray(formula);
+							// or
+							depGraph.endListeningVolatileArray(listenerId);
+
+							// bbox.setValue();
+							// c.setValue(AscCommonExcel.getFragmentsText(val), null, null, applyByArray ? bbox : ((!applyByArray && ctrlKey) ? null : undefined), null, dynamicSelectionRange);
+							// forEach cell setInternal formula - cell.setFormulaInternal(volatileArrayList[arrayPF])
+						}
+					}
+				}
+			}
+		};
+
+		const recalculateDynamicArrays = function(arrayList) {
+			// на вход получаем список, непосредственно затронутых текущим изменением, динамических массивов
+			// перед тем как добавлять(или нет) их в volatileArrays, нужно пересчитать все формулы в volatileArrays
+
+			if (arrayList && ws) {
+				for (let array in arrayList) {
+					let bbox = arrayList[array].range;
+					let isError, mainPF;
+
+					// calculate first cell, if error setIsError true and flags aca=true to PF
+					// if array can expand, set to each cell in dynamic range PF
+					for (let row = bbox.r1; row <= bbox.r2; row++) {
+						for (let col = bbox.c1; col <= bbox.c2; col++) {
+							if (!isError) {
+								// TODO daf закончить функцию пересчета динамических массивов
+								// TODO добавить удаление формулы из списка volatileListener (parserFormula.prototype.removeDependencies) ?
+
+								ws._getCell(row, col, function(cell) {
+									if (cell.nRow === bbox.r1 && cell.nCol === bbox.c1) {
+										mainPF = cell && cell.formulaParsed;
+										if (mainPF && mainPF.getDynamicRef()) {
+											// first cell. do calc without PF assignment
+
+											// cell.calculate? cell.PF.calculate ?
+											// Cell.prototype._updateCellValue - здесь проставляем значение из PF в ячейку (parsed.simplifyRefType)
+											let res = mainPF.calculate();
+
+											console.log(res);
+
+											if (res.type === AscCommonExcel.cElementType.error && mainPF.ca && mainPF.aca) {
+												isError = true
+												// add formula To VolatileListeners?
+												// volatileArrays
+												ws.workbook.dependencyFormulas.addToVolatileArrays(mainPF);		// add more than single formula? mb {pf:formula, range: A3:A5, expanded: false} 
+
+												// либо использовать parserFormula.buildDependencies()
+												// либо добавлять формулу в ws.workbook.dependencyFormulas.addToBuildDependencyArray
+												// флаг aca можно выставлять внутри calculate у parserFormula
+												// cell.PF.aca = true
+												// cell.vm = true
+											}
+										} else {
+											isError = true;
+										}
+									} else {
+										// TODO daf
+										// set mainPF to cell 
+										// or
+										// cell.setValue(=A3:A5,null,null,byRef,null,dynamicRange)
+									}
+								});
+							} else {
+								// set flag aca = true
+								
+								break
+							}
+
+						}
+					}
+				}
+			}
+		};
+
+		let dynamicSelectionRange = null;
+		// const dynamicArrayList = {
+		// 	// A3:A5: {delete: true|false, recalc: true|false}
+		// }
+
+		let isFormula = this._isFormula(val);
+		let newFP, parseResult;
 		if (isFormula) {
 			//перед созданием точки в истории, проверяю, валидная ли формула
-			var cellWithFormula = new AscCommonExcel.CCellWithFormula(this.model, bbox.r1, bbox.c1);
+			let cellWithFormula = new AscCommonExcel.CCellWithFormula(this.model, bbox.r1, bbox.c1);
 			newFP = new AscCommonExcel.parserFormula(val[0].getFragmentText().substring(1), cellWithFormula, this.model);
 			parseResult = new AscCommonExcel.ParseResult();
 			if (!newFP.parse(AscCommonExcel.oFormulaLocaleInfo.Parse, AscCommonExcel.oFormulaLocaleInfo.DigitSep, parseResult)) {
@@ -18849,25 +19038,27 @@
 			History.StartTransaction();
 		}
 
+		// если есть формула используем setValue, иначе setValue2
 		if (isFormula) {
 			// ToDo - при вводе формулы в заголовок автофильтра надо писать "0"
 			//***array-formula***
-			var ret = true;
+			let ret = true;
 			changeRangesIfArrayFormula();
+			let changedDynamicArraysList = checkDynamicRanges(bbox);
 			if(ctrlKey) {
 				this.model.workbook.dependencyFormulas.lockRecal();
 			}
 
 			//проверим, нет ли новых ссылок на внешние данные
 			if (parseResult.externalReferenesNeedAdd) {
-				var newExternalReferences = [];
-				for (var i in parseResult.externalReferenesNeedAdd) {
-					var newExternalReference = new AscCommonExcel.ExternalReference();
+				let newExternalReferences = [];
+				for (let i in parseResult.externalReferenesNeedAdd) {
+					let newExternalReference = new AscCommonExcel.ExternalReference();
 					//newExternalReference.referenceData = referenceData;
 					newExternalReference.Id = i;
 
-					for (var j = 0; j < parseResult.externalReferenesNeedAdd[i].length; j++) {
-						var newSheet = parseResult.externalReferenesNeedAdd[i][j];
+					for (let j = 0; j < parseResult.externalReferenesNeedAdd[i].length; j++) {
+						let newSheet = parseResult.externalReferenesNeedAdd[i][j];
 						newExternalReference.addSheetName(newSheet, true);
 						newExternalReference.initWorksheetFromSheetDataSet(newSheet);
 					}
@@ -18881,14 +19072,35 @@
 				t.model.workbook.addExternalReferences(newExternalReferences);
 			}
 
+			// перед тем как проставлять значение выбранным ячейка, необходимо проверить касается ли данный диапазон любого из массивов(daf) на странице
+			// собираем список всех затронутых массивов и проходимся по каждому из них
+			// если главная ячейка была затронута, то необходимо очистить весь массив(также нужно будет обновить список зависимостей DepGraph)
+			// если главная ячейка НЕ была затронута, нужно выполнить cell.setValue("") или Range.setValue("") для всех дочерних ячеек массива, а для главной выставить флаг aca=true
+			// далее проставлять значение для изначально измененных ячеек, а уже после этого ...
+			if (changedDynamicArraysList) {
+				// go through changed dynamic arrays, and delete all|partitional values?
+				for (let array in changedDynamicArraysList) {
+					let dynamicbbox = changedDynamicArraysList[array].range;
+					let range = t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
+					// todo create clear function for cells (clearRange?)
+					if (changedDynamicArraysList[array].doDelete) {
+						// delete all cells
+						range.cleanText();
+					} else if (changedDynamicArraysList[array].doRecalc) {
+						// delete all cells except the first one
+						range.cleanTextExceptFirst();
+					}
+				}
+			}
 
+			// устанавливаем значение в выбранный диапазон
 			c.setValue(AscCommonExcel.getFragmentsText(val), function (r) {
 				ret = r;
 			}, null, applyByArray ? bbox : ((!applyByArray && ctrlKey) ? null : undefined), null, dynamicSelectionRange);
 
 			if (!applyByArray) {
 				t.model._getCell(c.bbox.r1, c.bbox.c1, function(cell){
-					var formulaParsed = cell && cell.formulaParsed;
+					let formulaParsed = cell && cell.formulaParsed;
 					if(formulaParsed && !formulaParsed.ref) {
 						formulaParsed.calculate();
 						if (formulaParsed.ref) {
@@ -18900,6 +19112,11 @@
 				});
 			}
 
+			// recalc all non expanded arrays on the sheet
+			recalculateVolatileArrays();
+
+			// after setValue, try to calculate affected arrays?
+			recalculateDynamicArrays(changedDynamicArraysList);
 
 			//***array-formula***
 			if(ctrlKey) {
@@ -18924,7 +19141,33 @@
 		} else {
 			//***array-formula***
 			changeRangesIfArrayFormula();
+
+			let changedDynamicArraysList = checkDynamicRanges(bbox);
+			if (changedDynamicArraysList) {
+				// go through changed dynamic arrays, and delete all|partitional values?
+				for (let array in changedDynamicArraysList) {
+					let dynamicbbox = changedDynamicArraysList[array].range;
+					let range = t.model.getRange3(dynamicbbox.r1, dynamicbbox.c1, dynamicbbox.r2, dynamicbbox.c2);
+					// todo create clear function for cells (clearRange?)
+					if (changedDynamicArraysList[array].doDelete) {
+						// delete all cells
+						range.cleanText();
+						// delete changedDynamicArraysList[array]
+					} else if (changedDynamicArraysList[array].doRecalc) {
+						// delete all cells except the first one
+						range.cleanTextExceptFirst();
+					}
+				}
+			}
+
+			// set the value to the selected range 
 			c.setValue2(val, true);
+
+			// recalc all non expanded arrays on the sheet
+			recalculateVolatileArrays();
+
+			// after setValue, try to calculate array?
+			recalculateDynamicArrays(changedDynamicArraysList);
 
 			// Вызываем функцию пересчета для заголовков форматированной таблицы
 			this.model.checkChangeTablesContent(bbox);

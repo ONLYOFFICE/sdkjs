@@ -597,6 +597,7 @@
 		this.volatileListeners = {};
 		this.defNameListeners = {};
 		this.tempGetByCells = [];
+		this.volatileArrays = {};	// contains all daf formulas on the sheet that could not be expanded (vm="1")
 		//set dirty
 		this.isInCalc = false;
 		this.changedCell = null;
@@ -1338,6 +1339,27 @@
 			}
 			this.calcTree();
 		},
+		addToVolatileArrays: function(formula) {
+			if (!this.volatileArrays) {
+				this.volatileArrays = {};
+			}
+			// todo хранить VM массивы по порядку возрастания как в МС (counter)
+			let listenerId = formula.getListenerId();
+			this.volatileArrays[listenerId] = formula;
+		},
+		getVolatileArrays: function() {
+			if (!this.volatileArrays) {
+				return
+			}
+
+			return this.volatileArrays
+		},
+		endListeningVolatileArray: function(listenerId) {
+			// let listenerId = listener.getListenerId();
+			if (listenerId) {
+				delete this.volatileArrays[listenerId];
+			}
+		},
 		//set dirty
 		addToChangedRange2: function(sheetId, bbox) {
 			if (!this.changedRange) {
@@ -1926,7 +1948,6 @@
 								}
 							}
 						}
-
 					} else {
 						// if (cell.nRow === r1 && cell.nCol === c1) {
 							// first cell without formula
@@ -13338,6 +13359,7 @@
 		this._hasChanged = true;
 	};
 	Cell.prototype.setValue=function(val,callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRange) {
+		// TODO lockCounter 2 после одного из изменений
 		var ws = this.ws;
 		var wb = ws.workbook;
 		var DataOld = null;
@@ -13404,7 +13426,7 @@
 				if (!isFirstArrayFormulaCell) {
 					// if the first daf cell is not empty (has PF), then we assign the old PF to the cell
 					if (!oldFP.isFirstDynamicCellEmpty()) {
-						this.setFormulaInternal(oldFP);	// newFP = oldFP;
+						// this.setFormulaInternal(oldFP);	// newFP = oldFP; ???
 					}
 					
 				}
@@ -14195,8 +14217,13 @@
 				DataOld = this.getValueData();
 			if (this.formulaParsed && this.formulaParsed.getDynamicRef()) {
 				this.ws.workbook.dependencyFormulas.addToChangedDynamicRange(this.formulaParsed.getWs().getId(), this.formulaParsed.getDynamicRef());
+				// todo если первая ячейка была затронута, удаляем весь массив здесь
 				if (Val.value.getTextValue()) {
+					let dynamicRef = this.formulaParsed.getDynamicRef();
 					// non empty val, delete PF from cell
+					if (this.nRow === dynamicRef.r1 && this.nCol === dynamicRef.c1) {
+						// delete all the range
+					}
 					this.setFormulaInternal(null);
 				}
 			} else {
@@ -17957,6 +17984,17 @@
 									 // if(cell.isEmpty())
 									 // cell.Remove();
 								 });
+		History.EndTransaction();
+	};
+	Range.prototype.cleanTextExceptFirst=function(){
+		History.Create_NewPoint();
+		History.StartTransaction();
+		this._setPropertyNoEmpty(null, null,
+								function(cell, nRow0, nCol0, nRowStart, nColStart){
+									if (!(cell.nRow === nRowStart && cell.nCol === nColStart)) {
+										cell.setValue("");
+									}
+								});
 		History.EndTransaction();
 	};
 	Range.prototype.cleanAll=function(){

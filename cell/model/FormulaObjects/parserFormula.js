@@ -7347,36 +7347,41 @@ function parserFormula( formula, parent, _ws ) {
 			// check further dynamic range
 			isRangeCanFitIntoCells = this.checkDynamicRange();
 			if (!isRangeCanFitIntoCells) {
-				// todo если первая ячейка не пусти и массив не может поместиться, нужно очистить остальные ячейки динамического диапазона
-				// важно различать ситуации когда ячейка была отредактирована или удалена внутри диапазона
-				// при редактировании мы будем в любом случае очищать её, поэтому проверка на старую PF обязательна(если её нет, пропускаем ячейку иначе очищаем)
-
 				// todo add aca flag to use
-				// this.aca = true;
+				this.aca = true;
 				this.ca = true;
 				this.value = new cError(cErrorType.cannot_be_spilled);
 				this.vm = true;
-				this.ref = null;
+				// this.ref = null;
 				// todo чтобы получить ошибку spill на второй итерации сохранения значения(_saveCellValueAfterEdit->Range.setValue), сохраняем dynamicRange, но при этом удаляем ref значение
 				// this.dynamicRange = null;
+			} else {
+				this.ca = false;
+				this.aca = false;
+				this.vm = false;
 			}
 
 			this._endCalculate();
 		} else {
-			if (!(this.value && this.value.type === cElementType.error && this.value.errorType === cErrorType.cannot_be_spilled)) {
-				this.value = elemArr.pop();
-			}
+			this.value = elemArr.pop();
+			// if (!(this.value && this.value.type === cElementType.error && this.value.errorType === cErrorType.cannot_be_spilled)) {
+			// 	this.value = elemArr.pop();
+			// }
 			// check further dynamic range
 			isRangeCanFitIntoCells = this.checkDynamicRange();
 			if (!isRangeCanFitIntoCells) {
 				// todo add aca flag to use
-				// this.aca = true;
+				this.aca = true;
 				this.ca = true;
 				this.value = new cError(cErrorType.cannot_be_spilled);
 				this.vm = true;
-				this.ref = null;
+				// this.ref = null;
 				// todo чтобы получить ошибку spill на второй итерации сохранения значения(_saveCellValueAfterEdit->Range.setValue), сохраняем dynamicRange, но при этом удаляем ref значение
 				// this.dynamicRange = null;
+			} else {
+				this.ca = false;
+				this.aca = false;
+				this.vm = false;
 			}
 			this.value.numFormat = numFormat;
 			//***array-formula***
