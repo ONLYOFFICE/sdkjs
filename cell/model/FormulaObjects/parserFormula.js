@@ -2911,18 +2911,6 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			}
 		}
 	};
-	cArray.prototype.fillWithElement = function (row, col, elem) {
-		if(!row && !col && !elem) {
-			return;
-		}
-
-		for(let i = 0; i < row; i++) {
-			this.addRow();
-			for(let j = 0; j < col; j++) {
-				this.addElement(elem);
-			}
-		}
-	};
 	cArray.prototype.getDimensions = function (getRealSize) {
 		let realSize = getRealSize ? this.getRealArraySize() : false;
 
@@ -8857,7 +8845,6 @@ function parserFormula( formula, parent, _ws ) {
 			if (area && area.length < 1) {
 				// let emptyElem = new cEmpty();
 				// empty array, fill with empty elements or return empty array
-				// retArr.fillWithElement(dimension.row, dimension.col, emptyElem);
 				retArr.setRealArraySize(dimension.row, dimension.col);
 				retArr.missedValue = new cEmpty();
 			} else {
