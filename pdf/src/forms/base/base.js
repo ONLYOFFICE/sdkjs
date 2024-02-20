@@ -223,6 +223,9 @@
     CBaseField.prototype.IsForm = function() {
         return true;
     };
+    CBaseField.prototype.IsTextShape = function() {
+        return false;
+     };
     CBaseField.prototype.SetApIdx = function(nIdx) {
         this.GetDocument().UpdateApIdx(nIdx);
         this._apIdx = nIdx;

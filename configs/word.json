@@ -345,6 +345,7 @@
 			"pdf/src/annotations/freeText.js",
 			"pdf/src/annotations/polyLine.js",
 			"pdf/src/annotations/square.js",
+			"pdf/src/textShape.js",
 			"common/geometry/geometry.js",
 			"pdf/src/graphics.js",
 			"pdf/src/history/documentChanges.js",

@@ -432,7 +432,15 @@ NullState.prototype =
         }
         else {
             let oViewer     = editor.getDocumentRenderer();
-            let aDrawings   = (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].annots) || [];
+            let oDoc        = oViewer.getPDFDoc();
+
+            let aDrawings;
+            if (oDoc.IsTextEditMode()) {
+                aDrawings = (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].textShapes) || [];
+            }
+            else {
+                aDrawings = (oViewer.pagesInfo.pages[pageIndex] && oViewer.pagesInfo.pages[pageIndex].annots) || [];
+            }
 
             return AscFormat.handleFloatObjects(this.drawingObjects, aDrawings, e, x, y, null, pageIndex, true);
         }

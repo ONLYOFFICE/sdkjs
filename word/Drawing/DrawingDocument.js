@@ -4806,7 +4806,7 @@ function CDrawingDocument()
 		{
 			let oViewer		= this.m_oDocumentRenderer;
 			let oPdfDoc		= oViewer.getPDFDoc();
-			let oTargetObj	= oPdfDoc.activeForm || oPdfDoc.mouseDownAnnot;
+			let oTargetObj	= oPdfDoc.GetActiveObject();
 			let nPage		= oTargetObj.GetPage();
 
 			if (oPdfDoc.activeForm) {
@@ -4821,7 +4821,7 @@ function CDrawingDocument()
 					bottom:	this.m_oDocumentRenderer.drawingPages[nPage].H
 				}
 			}
-			else if (oPdfDoc.mouseDownAnnot) {
+			else if (oPdfDoc.mouseDownAnnot || oPdfDoc.activeTextShape) {
 				drawPage = page.drawingPage;
 			}
 			

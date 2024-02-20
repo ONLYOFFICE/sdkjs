@@ -824,6 +824,12 @@
     CAnnotationBase.prototype.IsAnnot = function() {
         return true;
     };
+    CAnnotationBase.prototype.IsTextShape = function() {
+        return false;
+    };
+    CAnnotationBase.prototype.IsForm = function() {
+        return false;
+    };
     CAnnotationBase.prototype.SetApIdx = function(nIdx) {
         this.GetDocument().UpdateApIdx(nIdx);
         this._apIdx = nIdx;
