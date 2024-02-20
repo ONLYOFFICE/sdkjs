@@ -663,6 +663,7 @@
     };
     CAnnotationFreeText.prototype.onMouseDown = function(e) {
         let oViewer             = editor.getDocumentRenderer();
+        let oDoc                = this.GetDocument();
         let oDrawingObjects     = oViewer.DrawingObjects;
         this.selectStartPage    = this.GetPage();
         
@@ -682,10 +683,8 @@
             }
         }
         else {
-            this.SelectionSetStart(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+            oDoc.SelectionSetStart(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
         }
-
-        this.selectStartPage = this.GetPage();
     };
     CAnnotationFreeText.prototype.SelectionSetStart = function(X, Y, e) {
         this.selectStartPage = this.GetPage();

@@ -1860,6 +1860,35 @@
 			}
 			return null;
 		};
+		this.getPageTextShapeByMouse = function(bGetHidden)
+		{
+			let oDoc = this.getPDFDoc();
+			let oDrDoc = oDoc.GetDrawingDocument();
+			var pageObject = this.getPageByCoords(AscCommon.global_mouseEvent.X - this.x, AscCommon.global_mouseEvent.Y - this.y);
+			if (!pageObject)
+				return null;
+
+			var page = this.pagesInfo.pages[pageObject.index];
+			
+			if (page.textShapes)
+			{
+				for (var i = page.textShapes.length -1; i >= 0; i--)
+				{
+					let oTextShape	= page.textShapes[i];
+					let aOrigRect	= oTextShape.GetOrigRect();
+
+					let nWidth		= (aOrigRect[2] - aOrigRect[0]);
+					let nHeight		= (aOrigRect[3] - aOrigRect[1]);
+					
+					if (pageObject.x >= aOrigRect[0] && pageObject.x <= aOrigRect[0] + nWidth &&
+						pageObject.y >= aOrigRect[1] && pageObject.y <= aOrigRect[1] + nHeight)
+					{
+						return oTextShape;
+					}
+				}
+			}
+			return null;
+		};
 
 		this.onMouseDown = function(e)
 		{
@@ -2507,7 +2536,7 @@
 				{
 					if (oDoc.mouseDownAnnot.IsFreeText() && oDoc.mouseDownAnnot.IsInTextBox() && oDoc.mouseDownAnnot.GetDocContent().IsSelectionUse()) {
 						ctx.beginPath();
-						oDoc.mouseDownAnnot.GetDocContent().DrawSelectionOnPage(oDoc.mouseDownAnnot.GetPage());
+						oDoc.mouseDownAnnot.GetDocContent().DrawSelectionOnPage(0);
 						ctx.globalAlpha = 0.2;
 						ctx.fill();
 					}
@@ -2525,6 +2554,20 @@
 							oDoc.mouseDownAnnot.DrawSelected(this.overlay)
 					}
 				}
+				else if (oDoc.activeTextShape) {
+					let nPage = oDoc.activeTextShape.GetPage();
+					let oContent = oDoc.activeTextShape.GetDocContent();
+
+					if (oContent.IsSelectionUse()) {
+						ctx.beginPath();
+						oContent.DrawSelectionOnPage(0);
+						ctx.globalAlpha = 0.2;
+						ctx.fill();
+					}
+
+					this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = nPage;
+					this.DrawingObjects.drawSelect(nPage);
+				}
 			}
 			if (oDoc.activeForm && oDoc.activeForm.content && oDoc.activeForm.content.IsSelectionUse() && oDoc.activeForm.content.IsSelectionEmpty() == false)
 			{
@@ -2539,6 +2582,10 @@
 
 		this._paint = function()
 		{
+			
+			if (!this.doc.checkDefaultFieldFonts(this._paint.bind(this)))
+				return;
+
 			if (this.isLoadFonts || this.IsOpenFormsInProgress)
 				return;
 			
@@ -2718,6 +2765,8 @@
 
 				if (false == this.bCachedMarkupAnnnots)
 					this._paintMarkupAnnotsOnPage(i, ctx);
+
+				this._paintTextShapes(i, ctx);
 			}
 			
 			this.isClearPages = false;
@@ -3229,7 +3278,7 @@
 			}
 			else if ( e.KeyCode == 37 ) // Left Arrow
 			{
-				if (oDoc.activeForm || oDoc.mouseDownAnnot) {
+				if (oDoc.activeForm || oDoc.mouseDownAnnot || oDoc.activeTextShape) {
 					oDoc.MoveCursorLeft(true === e.ShiftKey, true === e.CtrlKey);
 				}
 				else if (!this.isFocusOnThumbnails && this.isVisibleHorScroll)
@@ -3245,7 +3294,7 @@
 			}
 			else if ( e.KeyCode == 38 ) // Top Arrow
 			{
-				if (oDoc.activeForm || oDoc.mouseDownAnnot) {
+				if (oDoc.activeForm || oDoc.mouseDownAnnot || oDoc.activeTextShape) {
 					oDoc.MoveCursorUp(true === e.ShiftKey, true === e.CtrlKey);
 				}
 				else if (!this.isFocusOnThumbnails) {
@@ -3255,7 +3304,7 @@
 			}
 			else if ( e.KeyCode == 39 ) // Right Arrow
 			{	
-				if (oDoc.activeForm || oDoc.mouseDownAnnot) {
+				if (oDoc.activeForm || oDoc.mouseDownAnnot || oDoc.activeTextShape) {
 					oDoc.MoveCursorRight(true === e.ShiftKey, true === e.CtrlKey);
 				}
 				else if (!this.isFocusOnThumbnails && this.isVisibleHorScroll) {
@@ -3269,7 +3318,7 @@
 			}
 			else if ( e.KeyCode == 40 ) // Bottom Arrow
 			{
-				if (oDoc.activeForm || oDoc.mouseDownAnnot) {
+				if (oDoc.activeForm || oDoc.mouseDownAnnot || oDoc.activeTextShape) {
 					oDoc.MoveCursorDown(true === e.ShiftKey, true === e.CtrlKey);
 				}
 				else if (!this.isFocusOnThumbnails)
@@ -3606,40 +3655,17 @@
 				this.pagesInfo.pages[i].needRedrawAnnots = false;
 			}
 			
-			// if (this.pagesInfo.pages[i].annots != null) {
-			// 	let bFromStream = this.pagesInfo.pages[i].annots.find(function(field) {
-			// 		if (field.IsNeedDrawFromStream() == true)
-			// 			return true;
-			// 	});
-				
-			// 	if (bFromStream) {
-			// 		this.pagesInfo.pages[i].annots.forEach(function(field) {
-			// 			// если форма не менялась, рисуем внешний вид из потока
-			// 			if (field.IsNeedDrawFromStream() == true)
-			// 				field.DrawFromStream();
-			// 		});
-			// 	}
-			// }
-			
 			let x = (((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0)) - (w >> 1);
 			let y = (((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0);
-			// let x = (((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0)) - (w >> 1) + page.ImageAnnots.maxRect.xMin;
-			// let y = (((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0) + page.ImageAnnots.maxRect.yMin;
-			
+						
 			ctx.drawImage(page.ImageAnnots, 0, 0, page.ImageAnnots.width, page.ImageAnnots.height, x, y, w, h);
-
-			// let wCropped = page.ImageAnnots.maxRect.xMax - page.ImageAnnots.maxRect.xMin;
-			// let hCropped = page.ImageAnnots.maxRect.yMax - page.ImageAnnots.maxRect.yMin;
-
-			// ctx.drawImage(page.ImageAnnots, page.ImageAnnots.maxRect.xMin, page.ImageAnnots.maxRect.yMin, wCropped, hCropped, x, y, wCropped, hCropped);
-			//let time2 = performance.now();
-			// console.log("time: " + (time2 - time1));
 		}
 		
-		// if (this.activeForm && this.activeForm.UpdateScroll)
-		// 	this.activeForm.UpdateScroll(true);
-		// if (this.activeForm && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(this.activeForm.GetType()))
-		// 	this.activeForm.content.RecalculateCurPos();
+		if (this.doc.mouseDownAnnot && this.doc.mouseDownAnnot.IsFreeText()) {
+			let oContent = this.doc.mouseDownAnnot.GetDocContent();
+			if (oContent.IsSelectionUse() === false)
+				oContent.RecalculateCurPos();
+		}
 	};
 	CHtmlPage.prototype._paintMarkupAnnotsOnPage = function(pageIndex, ctx)
 	{
@@ -3704,6 +3730,71 @@
 			}
 
 			this.pagesInfo.pages[pageIndex].needRedrawHighlights = false;
+		}
+	};
+	CHtmlPage.prototype._paintTextShapes = function(pageIndex, ctx) {
+		let xCenter = this.width >> 1;
+		let yPos = this.scrollY >> 0;
+		if (this.documentWidth > this.width)
+		{
+			xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
+		}
+		
+        let aTextShapes = this.pagesInfo.pages[pageIndex].textShapes != null ? this.pagesInfo.pages[pageIndex].textShapes : null;
+		if (this.pagesInfo.pages[pageIndex].graphics == null)
+			this.pagesInfo.pages[pageIndex].graphics = {};
+		
+		if (!aTextShapes)
+			return;
+		
+		let page = this.drawingPages[pageIndex];
+		if (!page)
+			return;
+		if (this.pagesInfo.pages[pageIndex].needRedrawTextShapes == false)
+			return;
+
+		let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+		let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+
+		// рисуем на отдельном канвасе, кешируем
+		let tmpCanvas		= page.ImageTextShapes ? page.ImageTextShapes : document.createElement('canvas');
+		let tmpCanvasCtx	= tmpCanvas.getContext('2d');
+
+		tmpCanvas.width		= w;
+		tmpCanvas.height	= h;
+		
+		nScale			= AscCommon.AscBrowser.retinaPixelRatio * this.zoom;
+		let widthPx		= this.canvas.width;
+		let heightPx	= this.canvas.height;
+		
+		let oGraphicsWord = new AscCommon.CGraphics();
+		this.pagesInfo.pages[pageIndex].graphics.word = oGraphicsWord;
+		oGraphicsWord.init(tmpCanvasCtx, widthPx * nScale, heightPx * nScale, widthPx * g_dKoef_pix_to_mm, heightPx * g_dKoef_pix_to_mm);
+		oGraphicsWord.m_oFontManager = AscCommon.g_fontManager;
+		oGraphicsWord.endGlobalAlphaColor = [255, 255, 255];
+		oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
+
+		aTextShapes.forEach(function(shape) {
+			if (false == shape.IsNeedDrawFromStream()) {
+				shape.Draw(oGraphicsWord);
+			}
+			else {
+				shape.DrawFromStream(oGraphicsWord);
+			}
+		});
+		
+		page.ImageTextShapes = tmpCanvas;
+		this.pagesInfo.pages[pageIndex].needRedrawHighlights = false;
+
+		let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
+        let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+		
+		ctx.drawImage(page.ImageTextShapes, 0, 0, page.ImageTextShapes.width, page.ImageTextShapes.height, indLeft, indTop, w, h);
+
+		if (this.doc.activeTextShape) {
+			let oContent = this.doc.activeTextShape.GetDocContent();
+			if (oContent.IsSelectionUse() === false)
+				oContent.RecalculateCurPos();
 		}
 	};
 	CHtmlPage.prototype._paintFormsHighlight = function()

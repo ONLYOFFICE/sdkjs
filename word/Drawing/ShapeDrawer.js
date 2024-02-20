@@ -626,6 +626,12 @@ CShapeDrawer.prototype =
                 aDash = this.Shape.GetDash();
             else if (this.Shape.group)
                 aDash = this.Shape.group.GetDash();
+            else if (this.Shape.IsTextShape && this.Shape.IsTextShape()) {
+                var _arr = AscCommon.DashPatternPresets[this.Ln.prstDash].slice();
+                for (var indexD = 0; indexD < _arr.length; indexD++)
+                    _arr[indexD] *= this.StrokeWidth;
+                this.Graphics.p_dash(_arr);
+            }
 
             if (aDash) {
                 this.Graphics.p_dash(aDash.map(function(measure) {

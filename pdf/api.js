@@ -393,8 +393,9 @@
 		let oDrDoc	= oDoc.GetDrawingDocument();
 		let oActiveForm		= oDoc.activeForm;
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
+		let oActiveTxShape	= oDoc.activeTextShape;
 		
-		if (!oDoc || !viewer || (!oActiveForm && !oActiveAnnot))
+		if (!oDoc || !viewer || (!oActiveForm && !oActiveAnnot && !oActiveTxShape))
 			return false;
 
 		oDrDoc.showTarget(true);
@@ -408,6 +409,10 @@
 		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
 			oActiveAnnot.EnterText(text);
 			oContent = oActiveAnnot.GetDocContent();
+		}
+		else if (oActiveTxShape) {
+			oActiveTxShape.EnterText(text);
+			oContent = oActiveTxShape.GetDocContent();
 		}
 		
 		if (oContent && oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
