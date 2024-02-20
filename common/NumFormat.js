@@ -5423,10 +5423,11 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 		let localeStart = cultureInfo.Name.substring(0, 2);
 		let LCID = cultureInfo.LCID;
 		if ('zh' === localeStart) {
-			if (4 === LCID || 2052 === LCID || 30724 === LCID) {
+			if (4 === LCID || 2052 === LCID || 4100 === LCID || 30724 === LCID) {
 				// zh
 				// zh-Hans
 				// zh-CN
+				// zh-SG
 				formats = {
 					27: 'yyyy"年"m"月"',
 					28: 'm"月"d"日"',
@@ -5452,7 +5453,6 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 				// zh-Hant
 				// zh-TW
 				// zh-HK
-				// zh-SG
 				// zh-MO
 				formats = {
 					27: '[$-404]e/m/d',
