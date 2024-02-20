@@ -2639,6 +2639,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		this.rowCount = 0;
 		this.countElementInRow = [];
 		this.countElement = 0;
+
+		this.realSize = null;
+		this.missedValue = null;
 	}
 
 	cArray.prototype = Object.create(cBaseType.prototype);
@@ -2754,17 +2757,17 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.getRealArraySize = function () {
 		if (!this.realSize) {
-			return
+			return;
 		}
 
-		return this.realSize
+		return this.realSize;
 	};
 	cArray.prototype.getMissedValue = function () {
 		if (!this.missedValue) {
-			return
+			return;
 		}
 
-		return this.missedValue
+		return this.missedValue;
 	};
 	cArray.prototype.setRealArraySize = function (row, col) {
 		if (row > 0 && col > 0) {
