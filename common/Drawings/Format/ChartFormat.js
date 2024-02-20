@@ -2324,6 +2324,10 @@
         return false;
     };
     CBaseChartObject.prototype.GetParaDrawing = function() {
+        let oChartSpace = this.getChartSpace();
+        if(oChartSpace) {
+            return oChartSpace.GetParaDrawing();
+        }
         return null;
     };
     CBaseChartObject.prototype.isObjectInSmartArt = function() {

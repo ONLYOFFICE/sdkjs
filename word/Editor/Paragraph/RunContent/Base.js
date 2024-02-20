@@ -348,6 +348,13 @@
 		return false;
 	};
 	/**
+	 * return {AscWord.BidiType}
+	 */
+	CRunElementBase.prototype.getBidiType = function()
+	{
+		return AscWord.BidiType.neutral;
+	};
+	/**
 	 * @return {number}
 	 */
 	CRunElementBase.prototype.GetCombWidth = function()
@@ -380,7 +387,7 @@
 			oCurTextPr.SetFontFamily(sFont);
 
 			oContext.SetTextPr(oCurTextPr, oTheme);
-			oContext.SetFontSlot(this.RGapFontSlot, oTextPr.Get_FontKoef());
+			oContext.SetFontSlot(this.RGapFontSlot, oTextPr.getFontCoef());
 		}
 
 		this.RGapCharWidth = !nCharCode ? nCombBorderW : Math.max(oContext.MeasureCode(nCharCode).Width + oTextPr.Spacing + nCombBorderW, nCombBorderW);
@@ -400,7 +407,7 @@
 			oCurTextPr.SetFontFamily(this.RGapFont);
 
 			oGraphics.SetTextPr(oCurTextPr, PDSE.Theme);
-			oGraphics.SetFontSlot(this.RGapFontSlot, oTextPr.Get_FontKoef());
+			oGraphics.SetFontSlot(this.RGapFontSlot, oTextPr.getFontCoef());
 		}
 
 		if (this.RGap && this.RGapCount)

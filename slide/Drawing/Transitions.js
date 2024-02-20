@@ -3933,6 +3933,9 @@ function CDemonstrationManager(htmlpage)
 		_x -= parseInt(oThis.HtmlPage.m_oMainParent.HtmlElement.style.left);
 		_y -= parseInt(oThis.HtmlPage.m_oMainParent.HtmlElement.style.top);
 
+        _x *= AscCommon.AscBrowser.retinaPixelRatio;
+        _y *= AscCommon.AscBrowser.retinaPixelRatio;
+
 		var _rect = oThis.Transition.Rect;
 		_x -= _rect.x;
 		_y -= _rect.y;
@@ -4128,8 +4131,8 @@ function CDemonstrationManager(htmlpage)
 			this.DemonstrationDiv.appendChild(this.PointerDiv);
         }
         var _rect = this.Transition.Rect;
-		this.PointerDiv.style.left = ((_rect.x + x * _rect.w - 14) >> 0) + "px";
-		this.PointerDiv.style.top = ((_rect.y + y * _rect.h - 14) >> 0) + "px";
+		this.PointerDiv.style.left = ((((_rect.x + x * _rect.w) / AscCommon.AscBrowser.retinaPixelRatio) - 14) >> 0) + "px";
+		this.PointerDiv.style.top  = ((((_rect.y + y * _rect.h) / AscCommon.AscBrowser.retinaPixelRatio) - 14) >> 0) + "px";
 
 		if (this.HtmlPage.m_oApi.isReporterMode)
         {

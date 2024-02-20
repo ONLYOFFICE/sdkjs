@@ -2429,7 +2429,8 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
         "tab-stops": 1, "list-style-type": 1, "mso-special-character": 1, "mso-column-break-before": 1, "mso-break-type": 1, "mso-padding-alt": 1, "mso-border-insidev": 1,
         "mso-border-insideh": 1, "mso-row-margin-left": 1, "mso-row-margin-right": 1, "mso-cellspacing": 1, "mso-border-alt": 1,
         "mso-border-left-alt": 1, "mso-border-top-alt": 1, "mso-border-right-alt": 1, "mso-border-bottom-alt": 1, "mso-border-between": 1, "mso-list": 1,
-		"mso-comment-reference": 1, "mso-comment-date": 1, "mso-comment-continuation": 1, "mso-data-placement": 1};
+		"mso-comment-reference": 1, "mso-comment-date": 1, "mso-comment-continuation": 1, "mso-data-placement": 1, "mso-table-layout-alt": 1, "mso-table-left": 1,
+		"mso-table-top": 1};
     this.oBorderCache = {};
 
 	this.msoListMap = [];
@@ -8980,19 +8981,19 @@ PasteProcessor.prototype =
 		}
 	},
 
-	_ExecuteTable: function (tableNode, node, table, aSumGrid, aColsCountByRow, pPr, bUseScaleKoef, dScaleKoef, arrShapes, arrImages, arrTables) {
+	_ExecuteTable: function (tableBodyNode, node, table, aSumGrid, aColsCountByRow, pPr, bUseScaleKoef, dScaleKoef, arrShapes, arrImages, arrTables) {
 		var bPresentation = !PasteElementsId.g_bIsDocumentCopyPaste;
 
 		table.SetTableLayout(tbllayout_AutoFit);
 		//Pr
 		var Pr = table.Pr;
-		//align смотрим у parent tableNode
+		//align смотрим у parent tableBodyNode
 		var sTableAlign = null;
-		if (null != tableNode.align)
-			sTableAlign = tableNode.align;
-		else if (null != tableNode.parentNode && this.oRootNode !== tableNode.parentNode) {
-			var computedStyleParent = this._getComputedStyle(tableNode.parentNode);
-			sTableAlign = this._getStyle(tableNode.parentNode, computedStyleParent, "text-align");
+		if (null != tableBodyNode.align)
+			sTableAlign = tableBodyNode.align;
+		else if (null != tableBodyNode.parentNode && this.oRootNode !== tableBodyNode.parentNode) {
+			var computedStyleParent = this._getComputedStyle(tableBodyNode.parentNode);
+			sTableAlign = this._getStyle(tableBodyNode.parentNode, computedStyleParent, "text-align");
 		}
 		if (null != sTableAlign) {
 			if (-1 !== sTableAlign.indexOf('center'))
@@ -9004,6 +9005,7 @@ PasteProcessor.prototype =
 		table.Set_TableBorder_InsideH(new CDocumentBorder());
 		table.Set_TableBorder_InsideV(new CDocumentBorder());
 
+		let tableNode = tableBodyNode.parentNode && tableBodyNode.parentNode.nodeName && "table" === tableBodyNode.parentNode.nodeName.toLowerCase() ? tableBodyNode.parentNode : tableBodyNode;
 		var style = tableNode.getAttribute("style");
 		if (style) {
 			var tblPrMso = {};
@@ -9045,34 +9047,69 @@ PasteProcessor.prototype =
 			var insidev = tblPrMso["mso-border-insidev"];
 			if (null != insidev)
 				table.Set_TableBorder_InsideV(this._ExecuteParagraphBorder(insidev));
+
+			//todo need support
+			/*
+				border-collapse:collapse;
+				mso-table-layout-alt:fixed;
+				border:none;
+				mso-border-alt:solid windowtext .5pt;
+				mso-yfti-tbllook:1184;
+				mso-table-lspace:7.1pt;
+				margin-left:4.85pt;
+				mso-table-rspace:7.1pt;
+				margin-right:4.85pt;
+
+				mso-table-anchor-vertical:page;
+				mso-table-anchor-horizontal:page;
+				mso-table-left:17.0pt;
+				mso-table-top:14.25pt;
+				mso-padding-alt:0cm 5.4pt 0cm 5.4pt
+			*/
+			
+			/*let tableLayout = tblPrMso["mso-table-layout-alt"];
+			if (null != tableLayout && tableLayout === "fixed") {
+				table.SetTableLayout(tbllayout_Fixed);
+			}
+
+			let tablePositionH = tblPrMso["mso-table-left"];
+			if (null != tablePositionH && null != (tablePositionH = AscCommon.valueToMm(tablePositionH))) {
+				table.Set_PositionH(c_oAscHAnchor.Page, false, tablePositionH);
+			}
+
+			let tablePositionV = tblPrMso["mso-table-top"];
+			if (null != tablePositionV && null != (tablePositionV = AscCommon.valueToMm(tablePositionV))) {
+				table.Set_PositionV(c_oAscHAnchor.Page, false, tablePositionV);
+			}*/
 		}
-		var computedStyle = this._getComputedStyle(tableNode);
+
+		var computedStyle = this._getComputedStyle(tableBodyNode);
 		if (align_Left === table.Get_TableAlign()) {
-			var margin_left = this._getStyle(tableNode, computedStyle, "margin-left");
+			var margin_left = this._getStyle(tableBodyNode, computedStyle, "margin-left");
 			//todo возможно надо еще учесть ширину таблицы
 			if (margin_left && null != (margin_left = AscCommon.valueToMm(margin_left)) && margin_left < Page_Width - X_Left_Margin)
 				table.Set_TableInd(margin_left);
 		}
-		var background_color = this._getStyle(tableNode, computedStyle, "background-color");
+		var background_color = this._getStyle(tableBodyNode, computedStyle, "background-color");
 		if (null != background_color && (background_color = this._ParseColor(background_color)))
 			table.Set_TableShd(c_oAscShdClear, background_color.r, background_color.g, background_color.b);
-		var oLeftBorder = this._ExecuteBorder(computedStyle, tableNode, "left", "Left", bPresentation);
+		var oLeftBorder = this._ExecuteBorder(computedStyle, tableBodyNode, "left", "Left", bPresentation);
 		if (null != oLeftBorder)
 			table.Set_TableBorder_Left(oLeftBorder);
-		var oTopBorder = this._ExecuteBorder(computedStyle, tableNode, "top", "Top", bPresentation);
+		var oTopBorder = this._ExecuteBorder(computedStyle, tableBodyNode, "top", "Top", bPresentation);
 		if (null != oTopBorder)
 			table.Set_TableBorder_Top(oTopBorder);
-		var oRightBorder = this._ExecuteBorder(computedStyle, tableNode, "right", "Right", bPresentation);
+		var oRightBorder = this._ExecuteBorder(computedStyle, tableBodyNode, "right", "Right", bPresentation);
 		if (null != oRightBorder)
 			table.Set_TableBorder_Right(oRightBorder);
-		var oBottomBorder = this._ExecuteBorder(computedStyle, tableNode, "bottom", "Bottom", bPresentation);
+		var oBottomBorder = this._ExecuteBorder(computedStyle, tableBodyNode, "bottom", "Bottom", bPresentation);
 		if (null != oBottomBorder)
 			table.Set_TableBorder_Bottom(oBottomBorder);
 
 		if (null == spacing) {
-			spacing = this._getStyle(tableNode, computedStyle, "padding");
+			spacing = this._getStyle(tableBodyNode, computedStyle, "padding");
 			if (!spacing)
-				spacing = tableNode.style.padding;
+				spacing = tableBodyNode.style.padding;
 			if (!spacing)
 				spacing = null;
 			if (spacing && null != (spacing = AscCommon.valueToMm(spacing)))

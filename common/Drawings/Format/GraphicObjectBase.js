@@ -3562,6 +3562,47 @@
 		}
 		return sResult;
 	};
+
+
+	CGraphicObjectBase.prototype.applyDrawingSize = function(props) {
+		let oSpParent = this.parent;
+		let oXfrm = this.spPr.xfrm;
+		AscFormat.CheckSpPrXfrm3(this);
+		if (!props.SizeRelH && AscFormat.isRealNumber(props.Width)) {
+			oXfrm.setExtX(props.Width);
+			if (oSpParent instanceof AscCommonWord.ParaDrawing) {
+				oSpParent.SetSizeRelH({
+					RelativeFrom: AscCommon.c_oAscSizeRelFromH.sizerelfromhPage,
+					Percent: 0
+				});
+			}
+		}
+		if (!props.SizeRelV && AscFormat.isRealNumber(props.Height)) {
+			oXfrm.setExtY(props.Height);
+			if (oSpParent instanceof AscCommonWord.ParaDrawing) {
+				oSpParent.SetSizeRelV({
+					RelativeFrom: AscCommon.c_oAscSizeRelFromV.sizerelfromvPage,
+					Percent: 0
+				});
+			}
+		}
+		if (oSpParent instanceof AscCommonWord.ParaDrawing) {
+			if (oSpParent.SizeRelH && !oSpParent.SizeRelV) {
+				oSpParent.SetSizeRelV({
+					RelativeFrom: AscCommon.c_oAscSizeRelFromV.sizerelfromvPage,
+					Percent: 0
+				});
+			}
+			if (oSpParent.SizeRelV && !oSpParent.SizeRelH) {
+				oSpParent.SetSizeRelH({
+					RelativeFrom: AscCommon.c_oAscSizeRelFromH.sizerelfromhPage,
+					Percent: 0
+				});
+			}
+		}
+		this.ResetParametersWithResize(true);
+		this.checkDrawingBaseCoords();
+	};
 	var ANIM_LABEL_WIDTH_PIX = 22;
 	var ANIM_LABEL_HEIGHT_PIX = 17;
 

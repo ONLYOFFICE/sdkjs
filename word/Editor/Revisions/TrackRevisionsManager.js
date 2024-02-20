@@ -597,15 +597,6 @@
 			return;
 
 		var oEditor = this.LogicDocument.GetApi();
-		if (this.LogicDocument.IsSimpleMarkupInReview())
-		{
-			this.SelectedChanges = [];
-
-			oEditor.sync_BeginCatchRevisionsChanges();
-			oEditor.sync_EndCatchRevisionsChanges();
-			return;
-		}
-
 		if (this.CurChange)
 			this.SelectedChanges = [this.CurChange];
 

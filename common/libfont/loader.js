@@ -144,9 +144,9 @@
 
 	function CPointer()
 	{
-		this.obj    = null;
-		this.data   = null;
-		this.pos    = 0;
+		this.obj  = null; // TODO: remove
+		this.data = null;
+		this.pos  = 0;
 	}
 
 	function FT_Memory()
@@ -159,8 +159,7 @@
 		this.Alloc = function(size)
 		{
 			var p = new CPointer();
-			p.obj = this.ctx.createImageData(1, ((size + 3) >> 2));
-			p.data = p.obj.data;
+			p.data = new Uint8Array(size);
 			p.pos = 0;
 			return p;
 		};
@@ -171,9 +170,7 @@
 		};
 		this.CreateStream = function(size)
 		{
-			var _size = ((size + 3) >> 2);
-			var obj = this.ctx.createImageData(1, _size);
-			return new FontStream(obj.data, _size);
+			return new FontStream(new Uint8Array(size), size);
 		};
 	}
 

@@ -6127,7 +6127,7 @@ CDocumentContent.prototype.RemoveSelection = function(bNoCheckDrawing)
 	{
 		var oParaDrawing = this.LogicDocument.DrawingObjects.getMajorParaDrawing();
 		if (oParaDrawing)
-			oParaDrawing.GoTo_Text(undefined, false);
+			oParaDrawing.GoToText(undefined, false);
 
 		return this.LogicDocument.DrawingObjects.resetSelection(undefined, bNoCheckDrawing);
 	}
@@ -8931,7 +8931,7 @@ CDocumentContent.prototype.GetSearchElementId = function(bNext, bCurrent)
 			if ( null != Id )
 				return Id;
 
-			ParaDrawing.GoTo_Text( true !== bNext, false );
+			ParaDrawing.GoToText( true !== bNext, false );
 		}
 
 		var Pos = this.CurPos.ContentPos;

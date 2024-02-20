@@ -289,6 +289,18 @@
 			}
 		};
 
+		CGroupShape.prototype.handleUpdateExtents = function() {
+			this.recalcTransform();
+			for(let nSp = 0; nSp < this.spTree.length; ++nSp) {
+				this.spTree[nSp].handleUpdateExtents();
+			}
+			if(!this.group) {
+				if(this.addToRecalculate) {
+					this.addToRecalculate();
+				}
+			}
+		};
+
 		CGroupShape.prototype.copy = function (oPr) {
 			var copy = new CGroupShape();
 			this.copy2(copy, oPr);
@@ -670,7 +682,7 @@
 						this.selection.textSelection.select(this, this.selection.textSelection.selectStartPage);
 				} else if (this.selectedObjects.length > 0) {
 					if (this.parent) {
-						this.parent.GoTo_Text();
+						this.parent.GoToText();
 						this.resetSelection();
 					}
 				}

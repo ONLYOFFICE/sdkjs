@@ -76,8 +76,8 @@ CPDFGraphics.prototype.Transform = function(sx,shy,shx,sy,tx,ty)
 CPDFGraphics.prototype.Clip = function() {
     this.context.clip();
 };
-CPDFGraphics.prototype.SetIntegerGrid = function() {
-    this.bIntegerGrid = true;
+CPDFGraphics.prototype.SetIntegerGrid = function(bInteger) {
+    this.bIntegerGrid = bInteger;
 };
 CPDFGraphics.prototype.GetIntegerGrid = function() {
     return this.bIntegerGrid;

@@ -4521,6 +4521,14 @@
                         return false;
                     },
 
+					GetApi: function() {
+						return Asc.editor;
+					},
+
+					GetDrawingDocument: function() {
+						return Asc.editor.getDrawingDocument();
+					},
+
                     SearchEngine: {
                         Selection: []
                     }
@@ -7538,9 +7546,9 @@
             var activeFillClone = this.activeFillHandle.clone(true);
 
             // Координаты для автозаполнения
-            _x1 = this._getColLeft(activeFillClone.c1) - offsetX - 2;
+            _x1 = this._getColLeft(activeFillClone.c1) - offsetX - 2 - 1;
             _x2 = this._getColLeft(activeFillClone.c2 + 1) - offsetX + 1 + 2;
-            _y1 = this._getRowTop(activeFillClone.r1) - offsetY - 2;
+            _y1 = this._getRowTop(activeFillClone.r1) - offsetY - 2 - 1;
             _y2 = this._getRowTop(activeFillClone.r2 + 1) - offsetY + 1 + 2;
 
             // Выбираем наибольший range для очистки
@@ -7646,9 +7654,9 @@
 			arnIntersection = activeMoveRange.intersectionSimple(range);
 			if (arnIntersection) {
 				// Координаты для перемещения диапазона
-				_x1 = this._getColLeft(arnIntersection.c1) - offsetX - 2 - 1*isRetinaWidth*bInsertBetweenRowCol;
+				_x1 = this._getColLeft(arnIntersection.c1) - offsetX - 2 - 1*isRetinaWidth;
 				_x2 = this._getColLeft(arnIntersection.c2 + 1) - offsetX + 1 + 2;
-				_y1 = this._getRowTop(arnIntersection.r1) - offsetY - 2 - 1*isRetinaWidth*bInsertBetweenRowCol;
+				_y1 = this._getRowTop(arnIntersection.r1) - offsetY - 2 - 1*isRetinaWidth;
 				_y2 = this._getRowTop(arnIntersection.r2 + 1) - offsetY + 1 + 2;
 
 				// Выбираем наибольший range для очистки
@@ -10213,7 +10221,7 @@
 		}
 
 		let isMobileVersion = this.workbook && this.workbook.Api && this.workbook.Api.isMobileVersion;
-		var epsChangeSize = 3 * AscCommon.global_mouseEvent.KoefPixToMM;
+		var epsChangeSize = AscCommon.AscBrowser.convertToRetinaValue(3 * AscCommon.global_mouseEvent.KoefPixToMM, true);
 		if (x <= this.cellsLeft && y >= this.cellsTop && x >= this.headersLeft) {
 			r = this._findRowUnderCursor(y, true);
 			if (r === null) {
@@ -11365,7 +11373,27 @@
 					}
 				}
 			}
+		}
+		for (let i = 0; i < ranges.length; ++i) {
+			var name, res = [];
+			absName = absName || this.workbook.dialogAbsName;
+			addSheet = addSheet || this.workbook.getDialogSheetName();
+			if (this.model.selectionRange) {
+				var ranges = this.model.selectionRange.ranges;
 
+				if (ranges.length === 1 && ranges[0].isOneCell() && this.getFormulaEditMode()) {
+					let range = ranges[0];
+					/**@type {CT_pivotTableDefinition[]} */
+					let pivotTables = this.model.getPivotTablesIntersectingRange(range);
+					if (pivotTables.length === 1) {
+						let formula = pivotTables[0].getGetPivotDataFormulaByActiveCell(range.r1, range.c1);
+						if (formula) {
+							res.push(formula);
+							return res;
+						}
+					}
+				}
+			}
 			for (let i = 0; i < ranges.length; ++i) {
 				var range = ranges[i];
 				//делаю условие только для формул, просмотреть все остальные диапазоны
@@ -12128,7 +12156,7 @@
 		}
     };
 
-	WorksheetView.prototype.canFillHandle = function (range) {
+	WorksheetView.prototype.canFillHandle = function (range, checkColRowLimits) {
 		//if don't have empty rows/columns
 		//if all range is empty
 		if (!range) {
@@ -12138,6 +12166,11 @@
 		range = typeof range === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(range) : range;
 
 		if (this.model.autoFilters._isEmptyRange(range)) {
+			return false;
+		}
+
+		let rangeType = range && range.getType();
+		if (checkColRowLimits && (rangeType === c_oAscSelectionType.RangeRow || rangeType === c_oAscSelectionType.RangeCol || rangeType === c_oAscSelectionType.RangeMax)) {
 			return false;
 		}
 

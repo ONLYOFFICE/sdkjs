@@ -3030,11 +3030,12 @@ function CDrawingDocument()
 
 		for (var i = start; i <= end; i++)
 		{
-			if (true === isSelection)
-			{
-				if (!this.m_oWordControl.Thumbnails.isSelectedPage(i))
-					continue;
-			}
+			if ((true === isSelection) && !this.m_oWordControl.Thumbnails.isSelectedPage(i))
+				continue;
+
+			if (!this.m_oLogicDocument.IsVisibleSlide(i))
+				continue;
+
 			renderer.BeginPage(this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM());
 			this.m_oLogicDocument.DrawPage(i, renderer);
 			renderer.EndPage();

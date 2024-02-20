@@ -215,7 +215,7 @@ ParaDrawing.prototype.Get_Type = function()
 };
 ParaDrawing.prototype.GetWidth = function()
 {
-	return this.Width;
+	return this.Width * this.GetScaleCoefficient();
 };
 ParaDrawing.prototype.GetInlineWidth = function()
 {
@@ -226,11 +226,15 @@ ParaDrawing.prototype.GetInlineWidth = function()
 };
 ParaDrawing.prototype.Get_Height = function()
 {
-	return this.Height;
+	return this.Height * this.GetScaleCoefficient();
+};
+ParaDrawing.prototype.getHeight = function()
+{
+	return this.Get_Height();
 };
 ParaDrawing.prototype.GetWidthVisible = function()
 {
-	return this.WidthVisible;
+	return this.WidthVisible * this.GetScaleCoefficient();
 };
 ParaDrawing.prototype.SetWidthVisible = function(WidthVisible)
 {
@@ -1947,7 +1951,7 @@ ParaDrawing.prototype.Get_ParentTextTransform = function()
 	}
 	return null;
 };
-ParaDrawing.prototype.GoTo_Text = function(bBefore, bUpdateStates)
+ParaDrawing.prototype.GoToText = function(bBefore, bUpdateStates)
 {
 	var Paragraph = this.Get_ParentParagraph();
 	if (Paragraph)

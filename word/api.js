@@ -8663,6 +8663,8 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oDrawingDocument.ClearCachePages();
 			this.WordControl.OnResize(true);
 		}
+
+		this.checkInputMode();
 	};
 
 	asc_docs_api.prototype.OnMouseUp = function(x, y)
@@ -12641,7 +12643,7 @@ background-repeat: no-repeat;\
 			var _header = AscCommon.c_oSerFormat.Signature + ";v" + Asc.c_nVersionNoBase64 + ";" + _memory.GetCurPosition() + ";";
 			window["native"]["Save_End"](_header, _memory.GetCurPosition());
 
-			return _memory.ImData.data;
+			return _memory.data;
 		}
 	};
 	

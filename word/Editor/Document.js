@@ -7959,7 +7959,7 @@ CDocument.prototype.Selection_SetEnd = function(X, Y, MouseEvent)
 };
 /**
  * Получаем направление селекта
- * @returns {number} Возвращается направление селекта. 1 - нормальное направление, -1 - обратное
+ * @returns {AscWord.Direction} Возвращается направление селекта. 1 - нормальное направление, -1 - обратное
  */
 CDocument.prototype.GetSelectDirection = function()
 {
@@ -7969,15 +7969,15 @@ CDocument.prototype.GetSelectDirection = function()
 	for (var nPos = 0, nLen = Math.min(oStartPos.length, oEndPos.length); nPos < nLen; ++nPos)
 	{
 		if (!oEndPos[nPos] || !oStartPos[nPos] || oStartPos[nPos].Class !== oEndPos[nPos].Class)
-			return 1;
+			return AscWord.Direction.FORWARD;
 
 		if (oStartPos[nPos].Position < oEndPos[nPos].Position)
-			return 1;
+			return AscWord.Direction.FORWARD;
 		else if (oStartPos[nPos].Position > oEndPos[nPos].Position)
-			return -1;
+			return AscWord.Direction.BACKWARD;
 	}
 
-	return 1;
+	return AscWord.Direction.FORWARD;
 };
 CDocument.prototype.IsMovingTableBorder = function()
 {
@@ -9430,7 +9430,7 @@ CDocument.prototype.OnKeyDown = function(e)
 			}
 
 			this.private_CheckCursorPosInFillingFormMode();
-			this.CheckComplexFieldsInSelection();
+			this.CheckComplexFieldsInSelection(AscWord.Direction.BACKWARD);
 			bRetValue = keydownresult_PreventAll;
 		}
 		else if (e.KeyCode === 34) // PgDn
@@ -9476,7 +9476,7 @@ CDocument.prototype.OnKeyDown = function(e)
 			}
 
 			this.private_CheckCursorPosInFillingFormMode();
-			this.CheckComplexFieldsInSelection();
+			this.CheckComplexFieldsInSelection(AscWord.Direction.FORWARD);
 			bRetValue = keydownresult_PreventAll;
 		}
 		else if (e.KeyCode === 35) // End
@@ -9494,7 +9494,7 @@ CDocument.prototype.OnKeyDown = function(e)
 			this.Document_UpdateRulersState();
 
 			this.private_CheckCursorPosInFillingFormMode();
-			this.CheckComplexFieldsInSelection();
+			this.CheckComplexFieldsInSelection(AscWord.Direction.FORWARD);
 			bRetValue = keydownresult_PreventAll;
 		}
 		else if (e.KeyCode === 36) // Home
@@ -9512,7 +9512,7 @@ CDocument.prototype.OnKeyDown = function(e)
 			this.Document_UpdateRulersState();
 
 			this.private_CheckCursorPosInFillingFormMode();
-			this.CheckComplexFieldsInSelection();
+			this.CheckComplexFieldsInSelection(AscWord.Direction.BACKWARD);
 			bRetValue = keydownresult_PreventAll;
 		}
 		else if (e.KeyCode === 37) // Left Arrow
@@ -9536,7 +9536,7 @@ CDocument.prototype.OnKeyDown = function(e)
 			}
 
 			this.private_CheckCursorPosInFillingFormMode();
-			this.CheckComplexFieldsInSelection();
+			this.CheckComplexFieldsInSelection(AscWord.Direction.BACKWARD);
 			bRetValue = keydownresult_PreventAll;
 		}
 		else if (e.KeyCode === 38) // Top Arrow
@@ -9562,7 +9562,7 @@ CDocument.prototype.OnKeyDown = function(e)
 				this.DrawingDocument.UpdateTargetFromPaint = true;
 				this.MoveCursorUp(true === e.ShiftKey, true === e.CtrlKey);
 				this.private_CheckCursorPosInFillingFormMode();
-				this.CheckComplexFieldsInSelection();
+				this.CheckComplexFieldsInSelection(AscWord.Direction.BACKWARD);
 			}
 
 			bRetValue = keydownresult_PreventAll;
@@ -9588,7 +9588,7 @@ CDocument.prototype.OnKeyDown = function(e)
 			}
 
 			this.private_CheckCursorPosInFillingFormMode();
-			this.CheckComplexFieldsInSelection();
+			this.CheckComplexFieldsInSelection(AscWord.Direction.FORWARD);
 			bRetValue = keydownresult_PreventAll;
 		}
 		else if (e.KeyCode === 40) // Bottom Arrow
@@ -9614,7 +9614,7 @@ CDocument.prototype.OnKeyDown = function(e)
 				this.DrawingDocument.UpdateTargetFromPaint = true;
 				this.MoveCursorDown(true === e.ShiftKey, true === e.CtrlKey);
 				this.private_CheckCursorPosInFillingFormMode();
-				this.CheckComplexFieldsInSelection();
+				this.CheckComplexFieldsInSelection(AscWord.Direction.FORWARD);
 			}
 			bRetValue = keydownresult_PreventAll;
 		}
@@ -14226,7 +14226,7 @@ CDocument.prototype.Is_MailMergePreviewResult = function()
 {
 	return this.MailMergePreview;
 };
-CDocument.prototype.Is_HighlightMailMergeFields = function()
+CDocument.prototype.isHighlightMailMergeFields = function()
 {
 	return this.MailMergeFieldsHighlight;
 };
@@ -21990,7 +21990,7 @@ CDocument.prototype.MoveToFillingForm = function(isNext)
 		if (!oRes)
 		{
 			this.DrawingObjects.resetSelection();
-			oParaDrawing.GoTo_Text(true !== isNext, false);
+			oParaDrawing.GoToText(true !== isNext, false);
 
 			// В случаях, когда у нас автофигура внутри другой автофигуры
 			var arrPassedParagraphs = [];
@@ -22025,7 +22025,7 @@ CDocument.prototype.MoveToFillingForm = function(isNext)
 				}
 				else
 				{
-					oParaDrawing.GoTo_Text(true !== isNext, false);
+					oParaDrawing.GoToText(true !== isNext, false);
 					oParagraph = this.GetCurrentParagraph();
 					oShape     = oParagraph.GetParent() ? oParagraph.GetParent().Is_DrawingShape(true) : null;
 				}
@@ -22531,7 +22531,7 @@ CDocument.prototype.AddField = function(nType, oPr)
 
 	return false;
 };
-CDocument.prototype.AddFieldWithInstruction = function(sInstruction)
+CDocument.prototype.AddFieldWithInstruction = function(sInstruction, textPr)
 {
 	var oParagraph = this.GetCurrentParagraph(false, false, {ReplacePlaceHolder : true});
 	if (!oParagraph)
@@ -22558,6 +22558,10 @@ CDocument.prototype.AddFieldWithInstruction = function(sInstruction)
     oComplexField.SetSeparateChar(oSeparateChar);
     oComplexField.SetEndChar(oEndChar);
     oComplexField.Update(false);
+	
+	if (textPr)
+		oRun.SetPr(textPr);
+	
     return oComplexField;
 };
 CDocument.prototype.AddDateTime = function(oPr)
@@ -22930,7 +22934,10 @@ CDocument.prototype.IsFastCollaborationBeforeViewModeInReview = function()
 {
 	return this.ViewModeInReview.isFastCollaboration;
 };
-CDocument.prototype.CheckComplexFieldsInSelection = function()
+/**
+ * @param direction {AscWord.Direction} if not specified then we use the current selection direction
+ */
+CDocument.prototype.CheckComplexFieldsInSelection = function(direction)
 {
 	if (true !== this.Selection.Use || this.Controller !== this.LogicDocumentController)
 		return;
@@ -22980,8 +22987,8 @@ CDocument.prototype.CheckComplexFieldsInSelection = function()
 		}
 	}
 
-	var nDirection = this.GetSelectDirection();
-	if (nDirection > 0)
+	let _direction = undefined === direction ? this.GetSelectDirection() : direction;
+	if (_direction === AscWord.Direction.FORWARD)
 	{
 		if (arrStartFields.length > 0 && arrStartFields[0].IsValid())
 			oStartPos = arrStartFields[0].GetStartDocumentPosition();
@@ -23129,7 +23136,9 @@ CDocument.prototype.AddAddinField = function(data)
 	else if (this.IsSelectionUse())
 		this.RemoveSelection();
 	
-	let field = this.AddFieldWithInstruction(" ADDIN " + instruction + " ");
+	let textPr = this.GetDirectTextPr();
+	
+	let field = this.AddFieldWithInstruction(" ADDIN " + instruction + " ", textPr);
 	if (field)
 	{
 		field.SelectFieldValue();
@@ -25083,7 +25092,7 @@ CDocument.prototype.AddTextWithPr = function(sText, oSettings)
 	if (!oSettings)
 		oSettings = new AscCommon.CAddTextSettings();
 
-	if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_AddText))
+	if (!this.IsSelectionLocked(AscCommon.changestype_Paragraph_AddText, null, false, this.IsFormFieldEditing()))
 	{
 		this.StartAction(AscDFH.historydescription_Document_AddTextWithProperties);
 
@@ -26712,7 +26721,7 @@ CDocument.prototype.GetSearchElementId = function(bNext)
 			return Id;
 
 		this.DrawingObjects.resetSelection();
-		ParaDrawing.GoTo_Text(true !== bNext, false);
+		ParaDrawing.GoToText(true !== bNext, false);
 	}
 
 	if (docpostype_Content === this.CurPos.Type)

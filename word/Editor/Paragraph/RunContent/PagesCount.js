@@ -65,7 +65,7 @@
 	};
 	CRunPagesCount.prototype.Measure = function(Context, TextPr)
 	{
-		this.FontKoef = TextPr.Get_FontKoef();
+		this.FontKoef = TextPr.getFontCoef();
 		Context.SetFontSlot(AscWord.fontslot_ASCII, this.FontKoef);
 
 		for (var Index = 0; Index < 10; Index++)

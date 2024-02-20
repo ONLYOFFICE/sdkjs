@@ -972,7 +972,7 @@ CFieldInstructionSTYLEREF.prototype.GetText = function()
 					let oParagraph = null;
 					let sRet = "";
 					let bAbove = true;
-					let oStyles = this.ParentContent.Styles;
+					let oStyles = this.ParentContent.GetStyles();
 					let sStyleId;
 					let nOutlineLvl;
 					let nStartIndex, oTmpContent;

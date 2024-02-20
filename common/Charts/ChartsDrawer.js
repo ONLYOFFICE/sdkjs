@@ -12793,6 +12793,23 @@ drawScatterChart.prototype = {
 	_recalculateScatter: function () {
 		let seria, yVal, xVal, points, yNumCache, compiledMarkerSize, compiledMarkerSymbol, yPoint, idx, xPoint;
 		let dispBlanksAs =  this.cChartSpace.chart.dispBlanksAs;
+
+		let t = this;
+		let _initObjs = function (_index) {
+			if (!t.paths.points) {
+				t.paths.points = [];
+			}
+			if (!t.paths.points[_index]) {
+				t.paths.points[_index] = [];
+			}
+			if (!points) {
+				points = [];
+			}
+			if (!points[_index]) {
+				points[_index] = [];
+			}
+		};
+
 		for (let i = 0; i < this.chart.series.length; i++) {
 			seria = this.chart.series[i];
 			yNumCache = this.cChartDrawer.getNumCache(seria.yVal);
@@ -12811,6 +12828,7 @@ drawScatterChart.prototype = {
 				if (dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO || dispBlanksAs === AscFormat.DISP_BLANKS_AS_GAP) {
 					if (yNumCache.pts[n-1] && yNumCache.pts[n] && yNumCache.pts[n].idx - yNumCache.pts[n-1].idx > 1) {
 						for (let k = 0; k < yNumCache.pts[n].idx - yNumCache.pts[n-1].idx - 1; k++) {
+							_initObjs(i);
 							this.paths.points[i].push(null);
 							points[i].push(dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO ? {x: 0, y: 0} : null);
 						}
@@ -12831,19 +12849,7 @@ drawScatterChart.prototype = {
 						compiledMarkerSymbol = yPoint.compiledMarker.symbol;
 					}
 
-					if (!this.paths.points) {
-						this.paths.points = [];
-					}
-					if (!this.paths.points[i]) {
-						this.paths.points[i] = [];
-					}
-
-					if (!points) {
-						points = [];
-					}
-					if (!points[i]) {
-						points[i] = [];
-					}
+					_initObjs(i);
 
 					if (yVal != null) {
 						let x = this.cChartDrawer.getYPosition(xVal, this.catAx);
@@ -16257,7 +16263,7 @@ CColorObj.prototype =
 		//control trend calculate type
 		this.bAllowDrawByBezier = true;
 		this.bAllowDrawByPoints = false;
-		this.continueAdding = true;
+		this.stopAdding = false;
 	}
 
 	CTrendline.prototype = {
@@ -16281,11 +16287,11 @@ CColorObj.prototype =
 				this.storage[chartId][seriaId] = new CTrendData();
 			}
 			if (!this.storage[chartId][seriaId].isEmpty() && xVal === this.storage[chartId][seriaId].coords.catVals[0]) {
-				this.continueAdding = false;
+				this.stopAdding = true;
 			}
 
 			// in the case of duplicated data, no further adding should be allowed
-			if (this.continueAdding) {
+			if (!this.stopAdding) {
 				this.storage[chartId][seriaId].addCatVal(xVal);
 				this.storage[chartId][seriaId].addValVal(yVal);
 	
@@ -16362,16 +16368,21 @@ CColorObj.prototype =
 					const midPointsNum = 100;
 					const lineBuilder = new CLineBuilder(coefficients, catMin, catMax, valAxis.scaling.min, valAxis.scaling.max, valAxis.scaling.logBase);
 					lineBuilder.setCalcYVal(equationStorage.calcYVal);
+					let bezierFailed = false;
 					//poly lines can not be drawn with approximated bezier
 					if (this.bAllowDrawByBezier && type !== AscFormat.TRENDLINE_TYPE_POLY) {
 						lineBuilder.setCalcXVal(equationStorage.calcXVal);
 						lineBuilder.setCalcSlope(equationStorage.calcSlope);
 						const cutPoint = valAxis.scaling.logBase ? (Math.log(1000) / Math.log(valAxis.scaling.logBase)) : 1000;
 						const lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
-						storageElement.setBezierApproximationResults(lineCoords.mainLine, lineCoords.startPoint);
-						storageElement.setLineReversed(lineCoords.isReversed);
+						if (!lineCoords.failed) {
+							storageElement.setBezierApproximationResults(lineCoords.mainLine, lineCoords.startPoint);
+							storageElement.setLineReversed(lineCoords.isReversed);
+						} else {
+							bezierFailed = true;
+						}
 					}
-					if (this.bAllowDrawByPoints || type === AscFormat.TRENDLINE_TYPE_POLY) {
+					if (this.bAllowDrawByPoints || type === AscFormat.TRENDLINE_TYPE_POLY || bezierFailed) {
 						const minLogVal = storageElement.getMinLogVal();
 						const pointVals = lineBuilder.drawWithPoints(midPointsNum, minLogVal);
 						storageElement.setPointVals(pointVals);
@@ -16545,9 +16556,9 @@ CColorObj.prototype =
 		},
 
 		_obtainEquationStorage: function (type) {
-			const storage = {
-				[AscFormat.TRENDLINE_TYPE_EXP]: {
-					calcYVal: function (val, supps, isLog) {
+			switch (type) {
+				case AscFormat.TRENDLINE_TYPE_EXP :
+					return {calcYVal: function (val, supps, isLog) {
 						const res = supps[1] * Math.exp(val * supps[0]);
 						if (isLog && res <= 0) {
 							return NaN;
@@ -16563,9 +16574,9 @@ CColorObj.prototype =
 						} else {
 							return (Math.log(Math.exp(1)) / Math.log(isLog)) * supps[0];
 						}
-					}
-				}, [AscFormat.TRENDLINE_TYPE_LINEAR]: {
-					calcYVal: function (val, supps, isLog) {
+					}};
+				case AscFormat.TRENDLINE_TYPE_LINEAR :
+					return {calcYVal: function (val, supps, isLog) {
 						const res = supps[0] * val + supps[1];
 						if (isLog && res <= 0) {
 							return NaN;
@@ -16581,9 +16592,9 @@ CColorObj.prototype =
 						} else {
 							return supps[0] / (Math.log(isLog) * (supps[0] * val + supps[1]));
 						}
-					}
-				}, [AscFormat.TRENDLINE_TYPE_LOG]: {
-					calcYVal: function (val, supps, isLog) {
+					}};
+				case AscFormat.TRENDLINE_TYPE_LOG :
+					return {calcYVal: function (val, supps, isLog) {
 						if (val > 0) {
 							const res = supps[0] * Math.log(val) + supps[1];
 							if (isLog && res <= 0) {
@@ -16603,9 +16614,9 @@ CColorObj.prototype =
 						} else {
 							return supps[0] / (Math.log(isLog) * val * (supps[0] * Math.log(val) + supps[1]));
 						}
-					}
-				}, [AscFormat.TRENDLINE_TYPE_POLY]: {
-					calcYVal: function (val, supps) {
+					}};
+				case AscFormat.TRENDLINE_TYPE_POLY :
+					return {calcYVal: function (val, supps) {
 						let result = 0;
 						let power = 0;
 						for (let i = supps.length - 1; i >= 0; i--) {
@@ -16613,9 +16624,9 @@ CColorObj.prototype =
 							power++;
 						}
 						return result;
-					}
-				}, [AscFormat.TRENDLINE_TYPE_POWER]: {
-					calcYVal: function (val, supps, isLog) {
+					}};
+				case AscFormat.TRENDLINE_TYPE_POWER :
+					return {calcYVal: function (val, supps, isLog) {
 						const res = supps[1] * Math.pow(val, supps[0]);
 						if (isLog && res <= 0) {
 							return NaN;
@@ -16631,11 +16642,11 @@ CColorObj.prototype =
 						} else {
 							return supps[0] / (Math.log(isLog) * val);
 						}
-					}
-				}
-			}
+					}};
+				default : 
+					return null;
 
-			return storage.hasOwnProperty(type) ? storage[type] : null;
+			}
 		},
 
 		_getEquationCoefficients: function (catVals, valVals, type, pow, intercept) {
@@ -16665,7 +16676,7 @@ CColorObj.prototype =
 					return true;
 				};
 
-				const mapped = this.continueAdding ? _mapCoordinates() : true;
+				const mapped = this.stopAdding ? true : _mapCoordinates();
 
 				if (mapped) {
 
@@ -16861,32 +16872,39 @@ CColorObj.prototype =
 		},
 
 		_obtainMappingStorage: function (type) {
-			const storage = {
-				[AscFormat.TRENDLINE_TYPE_EXP]: {
-					yVal: function (val) {
-						return val > 0 ? Math.log(val) : NaN;
-					}, bValBackward: function (val) {
-						return Math.exp(val);
-					}, bValForward: function (val) {
-						return Math.log(val);
-					}
-				}, [AscFormat.TRENDLINE_TYPE_LOG]: {
-					xVal: function (val) {
-						return val > 0 ? Math.log(val) : NaN;
-					}
-				}, [AscFormat.TRENDLINE_TYPE_POWER]: {
-					xVal: function (val) {
-						return val > 0 ? Math.log(val) : NaN;
-					}, yVal: function (val) {
-						return val > 0 ? Math.log(val) : NaN;
-					}, bValBackward: function (val) {
-						return Math.exp(val);
-					}, bValForward: function (val) {
-						return Math.log(val);
-					}
-				}
-			};
-			return storage.hasOwnProperty(type) ? storage[type] : {};
+			switch (type) {
+				case AscFormat.TRENDLINE_TYPE_EXP :
+					return {
+						yVal: function (val) {
+							return val > 0 ? Math.log(val) : NaN;
+						}, bValBackward: function (val) {
+							return Math.exp(val);
+						}, bValForward: function (val) {
+							return Math.log(val);
+						}, yValBackward: function (val) {
+							return Math.pow(Math.exp(1), val);
+						}};
+				case AscFormat.TRENDLINE_TYPE_LOG :
+					return {
+						xVal: function (val) {
+							return val > 0 ? Math.log(val) : NaN;
+						}};
+				case AscFormat.TRENDLINE_TYPE_POWER :
+					return {
+						xVal: function (val) {
+							return val > 0 ? Math.log(val) : NaN;
+						}, yVal: function (val) {
+							return val > 0 ? Math.log(val) : NaN;
+						}, bValBackward: function (val) {
+							return Math.exp(val);
+						}, bValForward: function (val) {
+							return Math.log(val);
+						}, yValBackward: function (val) {
+							return Math.pow(Math.exp(1), val);
+						}};
+				default : 
+						return {};
+			}
 		},
 
 		_dispRSquared: function (catVals, valVals, coefficients, type) {
@@ -16898,6 +16916,7 @@ CColorObj.prototype =
 					result += (Math.pow(xVal, power) * coefficients[i]);
 					power++;
 				}
+				result = mappingStorage.yValBackward ? mappingStorage.yValBackward(result) : result;
 				return result;
 			};
 
@@ -16913,8 +16932,8 @@ CColorObj.prototype =
 			let XSquared = 0;
 			let YSquared = 0;
 			for (let i = 0; i < N; i++) {
+				const yVal = mappingStorage.yValBackward ? mappingStorage.yValBackward(valVals[i]) : valVals[i];
 				const yValPred = predictY(catVals[i]);
-				const yVal = valVals[i];
 				XY += (yVal * yValPred);
 				X += yVal;
 				Y += yValPred;
@@ -17024,37 +17043,41 @@ CColorObj.prototype =
 				cutPoint = 1000;
 			}
 			const results = this._calcApproximatedBezier(error, tailLimit, cutPoint);
-			if (this.isLog) {
-				this._normalize(results.mainLine);
-				this._normalize(results.startPoint);
+
+			if (!results.failed) {
+				if (this.isLog) {
+					this._normalize(results.mainLine);
+					this._normalize(results.startPoint);
+				}
+	
+				let catMinStart = results.startPoint.catVals.length > 0 ? results.startPoint.catVals[0] : null;
+				let catMaxStart = results.startPoint.catVals.length > 0 ? results.startPoint.catVals[0] : null;
+				let valMinStart = results.startPoint.valVals.length > 0 ? results.startPoint.valVals[0] : null;
+				let valMaxStart = results.startPoint.valVals.length > 0 ? results.startPoint.valVals[0] : null;
+	
+				let size = results.mainLine.catVals.length;
+				let catMin = Math.min(results.mainLine.catVals[0], results.mainLine.catVals[size - 1]);
+				let catMax = Math.max(results.mainLine.catVals[0], results.mainLine.catVals[size - 1]);
+				let valMin = Math.min(results.mainLine.valVals[0], results.mainLine.valVals[size - 1]);
+				let valMax = Math.max(results.mainLine.valVals[0], results.mainLine.valVals[size - 1]);
+	
+				if (results.startPoint.valVals.length > 0) {
+					catMin = Math.min(catMin, catMinStart);
+					catMax = Math.max(catMax, catMaxStart);
+					valMin = Math.min(valMin, valMinStart);
+					valMax = Math.max(valMax, valMaxStart);
+				}
+	
+				if (!this.boundary) {
+					this.boundary = {catMin: catMin, catMax: catMax, valMin: valMin, valMax: valMax};
+				} else {
+					this.boundary.catMin = Math.min(this.boundary.catMin, catMin);
+					this.boundary.catMax = Math.max(this.boundary.catMax, catMax);
+					this.boundary.valMin = Math.min(this.boundary.valMin, valMin);
+					this.boundary.valMax = Math.max(this.boundary.valMax, valMax);
+				}
 			}
 
-			let catMinStart = results.startPoint.catVals.length > 0 ? results.startPoint.catVals[0] : null;
-			let catMaxStart = results.startPoint.catVals.length > 0 ? results.startPoint.catVals[0] : null;
-			let valMinStart = results.startPoint.valVals.length > 0 ? results.startPoint.valVals[0] : null;
-			let valMaxStart = results.startPoint.valVals.length > 0 ? results.startPoint.valVals[0] : null;
-
-			let size = results.mainLine.catVals.length;
-			let catMin = Math.min(results.mainLine.catVals[0], results.mainLine.catVals[size - 1]);
-			let catMax = Math.max(results.mainLine.catVals[0], results.mainLine.catVals[size - 1]);
-			let valMin = Math.min(results.mainLine.valVals[0], results.mainLine.valVals[size - 1]);
-			let valMax = Math.max(results.mainLine.valVals[0], results.mainLine.valVals[size - 1]);
-
-			if (results.startPoint.valVals.length > 0) {
-				catMin = Math.min(catMin, catMinStart);
-				catMax = Math.max(catMax, catMaxStart);
-				valMin = Math.min(valMin, valMinStart);
-				valMax = Math.max(valMax, valMaxStart);
-			}
-
-			if (!this.boundary) {
-				this.boundary = {catMin: catMin, catMax: catMax, valMin: valMin, valMax: valMax};
-			} else {
-				this.boundary.catMin = Math.min(this.boundary.catMin, catMin);
-				this.boundary.catMax = Math.max(this.boundary.catMax, catMax);
-				this.boundary.valMin = Math.min(this.boundary.valMin, valMin);
-				this.boundary.valMax = Math.max(this.boundary.valMax, valMax);
-			}
 			return results;
 		},
 
@@ -17173,6 +17196,7 @@ CColorObj.prototype =
 			let lineStart = start.valVal;
 			let lineEnd = midValVal;
 			const storage = {minError: null, cpY: null, cpX: null};
+			let failed = true;
 			for (let i = 0; i < 10; i++) {
 				controlPoints.valVals[1] = (0.5 * lineEnd) + (0.5 * lineStart);
 				controlPoints.catVals[1] = (controlPoints.valVals[1] - line1Letiables[0]) / line1Letiables[1];
@@ -17188,8 +17212,13 @@ CColorObj.prototype =
 				} else if ((predictedError > error && !direction) || (predictedError < -error && direction)) {
 					lineStart = controlPoints.valVals[1];
 				} else {
+					failed = false;
 					break;
 				}
+			}
+
+			if (failed) {
+				return {failed : true};
 			}
 
 			if (controlPoints.catVals[1] !== storage.cpX || controlPoints.valVals[1] !== storage.cpY) {
@@ -17512,6 +17541,8 @@ CColorObj.prototype =
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscFormat'] = window['AscFormat'] || {};
 	window['AscFormat'].CChartsDrawer = CChartsDrawer;
+	window['AscFormat'].CTrendline = CTrendline;
+	window['AscFormat'].CLineBuilder = CLineBuilder;
 	window['AscFormat'].CColorObj = CColorObj;
 	window["AscFormat"].c_oChartTypes = c_oChartTypes;
 })(window);

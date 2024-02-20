@@ -180,12 +180,13 @@ ParaNumbering.prototype.Measure = function (oContext, oNumbering, oTextPr, oThem
 	this.WidthSuff    = 0;
 	this.Height       = nAscent; // Это не вся высота, а только высота над BaseLine
 };
-ParaNumbering.prototype.Check_Range = function(Range, Line)
+ParaNumbering.prototype.checkRange = function(range, line)
 {
-	if (null !== this.Item && null !== this.Run && Range === this.Range && Line === this.Line)
-		return true;
-
-	return false;
+	return (this.Item
+		&& this.Run
+		&& range === this.Range
+		&& line === this.Line
+	);
 };
 ParaNumbering.prototype.CanAddNumbering = function()
 {
@@ -297,7 +298,7 @@ ParaPresentationNumbering.prototype.Write_ToBinary = function(Writer)
 ParaPresentationNumbering.prototype.Read_FromBinary = function(Reader)
 {
 };
-ParaPresentationNumbering.prototype.Check_Range = function(Range, Line)
+ParaPresentationNumbering.prototype.checkRange = function(Range, Line)
 {
 	if (null !== this.Item && null !== this.Run && Range === this.Range && Line === this.Line)
 		return true;

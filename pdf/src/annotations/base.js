@@ -611,7 +611,7 @@
         oReply.SetSubject(oReplyInfo["Subj"]);
 
         oReply.SetReplyTo(this);
-        oReply.SetApIdx(this.GetDocument().GetMaxApIdx() + 2);
+        oReply.SetApIdx(oReplyInfo["AP"]["i"]);
         
         this._replies.push(oReply);
     };
@@ -669,9 +669,10 @@
         if (oDoc.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
             oDoc.History.Add(new CChangesPDFAnnotReplies(this, this._replies, aReplies));
         }
-        this.SetWasChanged(true);
-
         this._replies = aReplies;
+    };
+    CAnnotationBase.prototype.GetReplies = function() {
+        return this._replies;
     };
     CAnnotationBase.prototype.GetReply = function(nPos) {
         return this._replies[nPos];
@@ -694,8 +695,10 @@
             });
         }
         
-        oFirstCommToEdit.SetContents(oCommentData.m_sText);
-        oFirstCommToEdit.SetModDate(oCommentData.m_sOOTime);
+        if (oFirstCommToEdit.GetContents() != oCommentData.m_sText) {
+            oFirstCommToEdit.SetContents(oCommentData.m_sText);
+            oFirstCommToEdit.SetModDate(oCommentData.m_sOOTime);
+        }
 
         let aReplyToDel = [];
         let oReply, oReplyCommentData;
@@ -990,8 +993,8 @@
         if (sName != null)
             Flags |= (1 << 0);
 
-        // contents
-        Flags |= (1 << 1);
+        if (sContents != null)
+            Flags |= (1 << 1);
         
         if (BES != null || BEI != null)
             Flags |= (1 << 2);
@@ -1014,9 +1017,6 @@
                 sContents = sContents.GetContents();
 
             memory.WriteString(sContents);
-        }
-        else {
-            memory.WriteString("");
         }
 
         // border effect

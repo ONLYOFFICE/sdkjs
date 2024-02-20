@@ -2924,6 +2924,7 @@ function CPresentation(DrawingDocument) {
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	g_oTableId.Add(this, this.Id);
 	//
+	this.hdrFtrLock = new PropLocker(this.Id);
 	this.themeLock = new PropLocker(this.Id);
 	this.schemeLock = new PropLocker(this.Id);
 	this.slideSizeLock = new PropLocker(this.Id);
@@ -3416,8 +3417,7 @@ CPresentation.prototype.getHFProperties = function () {
 
 
 CPresentation.prototype.setHFProperties = function (oProps, bAll) {
-	const arrIndexes = bAll ? this.GetAllSlideIndexes() : this.GetSelectedSlides();
-	if (this.Document_Is_SelectionLocked(AscCommon.changestype_HdrFtr, arrIndexes)) {
+	if (bAll && this.Document_Is_SelectionLocked(AscCommon.changestype_HdrFtr)) {
 		return;
 	}
 
@@ -6271,13 +6271,6 @@ CPresentation.prototype.GetFocusObjType = function () {
 		return FOCUS_OBJECT_THUMBNAILS;
 	}
 };
-CPresentation.prototype.GetAllSlideIndexes = function () {
-	const arrIndexes = [];
-	for (let i = 0; i < this.Slides.length; i++) {
-		arrIndexes.push(i);
-	}
-	return arrIndexes;
-};
 CPresentation.prototype.GetSelectedSlides = function () {
 	if (!window["NATIVE_EDITOR_ENJINE"] && this.Api.WordControl.Thumbnails) {
 		return this.Api.WordControl.Thumbnails.GetSelectedArray();
@@ -6404,10 +6397,15 @@ CPresentation.prototype.ResolveAllComments = function (isMine, isCurrent, arrIds
 	}
 };
 CPresentation.prototype.GetAllComments = function (aAllComments, isMine, isCurrent, aIds) {
-	this.comments.getAllComments(aAllComments, isMine, isCurrent, aIds);
-	for (var i = 0; i < this.Slides.length; ++i) {
-		this.Slides[i].getAllComments(aAllComments, isMine, isCurrent, aIds);
+	let aResult = aAllComments;
+	if(!Array.isArray(aAllComments)) {
+		aResult = [];
 	}
+	this.comments.getAllComments(aResult, isMine, isCurrent, aIds);
+	for (var i = 0; i < this.Slides.length; ++i) {
+		this.Slides[i].getAllComments(aResult, isMine, isCurrent, aIds);
+	}
+	return aResult;
 };
 
 CPresentation.prototype.Remove = function (Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord) {
@@ -11410,16 +11408,13 @@ CPresentation.prototype.Document_Is_SelectionLocked = function (CheckType, Addit
 		}
 	}
 	if (CheckType === AscCommon.changestype_HdrFtr) {
-		const selectedSlideIndexes = AdditionalData;
-		for (let i = 0; i < selectedSlideIndexes.length; ++i) {
-			const check_obj =
-				{
-					"type": c_oAscLockTypeElemPresentation.Slide,
-					"val": this.Slides[selectedSlideIndexes[i]].headerLock.Get_Id(),
-					"guid": this.Slides[selectedSlideIndexes[i]].headerLock.Get_Id()
-				};
-			this.Slides[selectedSlideIndexes[i]].headerLock.Lock.Check(check_obj);
-		}
+		const check_obj =
+			{
+				"type": c_oAscLockTypeElemPresentation.Slide,
+				"val": this.hdrFtrLock.Get_Id(),
+				"guid": this.hdrFtrLock.Get_Id()
+			};
+		this.hdrFtrLock.Lock.Check(check_obj);
 	}
 	if (CheckType === AscCommon.changestype_SlideHide) {
 		var selected_slides = AdditionalData;
@@ -12648,15 +12643,6 @@ CPresentation.prototype.getLockApplyBackgroundToAll = function() {
 	for (let i = 0; i < this.Slides.length; i++) {
 		const oSlide = this.Slides[i];
 		if (!(oSlide.backgroundLock.Lock.Type === AscCommon.locktype_Mine || oSlide.backgroundLock.Lock.Type === AscCommon.locktype_None)) {
-			return true;
-		}
-	}
-	return false;
-};
-CPresentation.prototype.getLockApplyHeaderToAll = function() {
-	for (let i = 0; i < this.Slides.length; i++) {
-		const oSlide = this.Slides[i];
-		if (!(oSlide.headerLock.Lock.Type === AscCommon.locktype_Mine || oSlide.headerLock.Lock.Type === AscCommon.locktype_None)) {
 			return true;
 		}
 	}

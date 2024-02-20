@@ -1088,8 +1088,16 @@
             }
             // если не виджет, значит родитель, значит получаем все дочерние виджеты без повторений имён
             else {
-                let aTmpFields = oDoc.GetFields(name);
-                aFields = aFields.concat(aTmpFields);
+                let aTmpFields = oDoc.GetAllWidgets(name);
+                let aFullNames = [];
+                aTmpFields.forEach(function(field) {
+                    let sFullName = field.GetFullName();
+                    if (aFullNames.includes(sFullName))
+                        return;
+
+                    aFullNames.push(sFullName);
+                    aFields.push(oField);
+                });
             }
         });
 

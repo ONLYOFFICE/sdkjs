@@ -71,6 +71,81 @@ AscCommon.darkModeCorrectColor2 = function(r, g, b)
 	AscFormat.CColorModifiers.prototype.HSL2RGB(oHSL, oRGB);
 	return oRGB;
 };
+	
+	/**
+	 * Special class to handle single line text
+	 * @param text
+	 * @param fontName
+	 * @param fontSize
+	 * @constructor
+	 */
+	function TextLine(text, fontName, fontSize)
+	{
+		let dc = null;
+		AscCommon.ExecuteNoHistory(function()
+		{
+			dc = new AscWord.CDocumentContent();
+			dc.ClearContent(false);
+			
+			let p   = new AscWord.Paragraph();
+			let run = new AscWord.Run();
+			run.AddText(text);
+			p.AddToContentToEnd(run);
+			dc.PushToContent(p);
+			
+			let textPr = new AscWord.CTextPr();
+			textPr.RFonts.SetAll(fontName);
+			textPr.FontSize   = fontSize;
+			textPr.FontSizeCS = fontSize;
+			textPr.Color      = new AscWord.CDocumentColor(68, 68, 68);
+			run.SetPr(textPr);
+			
+			let paraPr            = new AscWord.CParaPr();
+			paraPr.Spacing.After  = 0;
+			paraPr.Spacing.Before = 0;
+			paraPr.Spacing.Line   = 1;
+			paraPr.Spacing.Line   = Asc.linerule_Auto;
+			
+			p.SetPr(paraPr);
+			
+		});
+		
+		this.dc       = dc;
+		this.fontSize = fontSize;
+	}
+	/**
+	 * @returns {{w:number, h:number, ascent: number, descent: number}}
+	 */
+	TextLine.prototype.getSize = function()
+	{
+		this.dc.Reset(0, 0, AscWord.MAX_MM_VALUE, AscWord.MAX_MM_VALUE);
+		this.dc.Recalculate_Page(0, true, false);
+		let p = this.dc.GetElement(0);
+		let bounds = this.dc.GetContentBounds(0);
+		let lineMetrics = p.getLineMetrics(0);
+		return {
+			w : p.GetAutoWidthForDropCap(),
+			h : bounds.Bottom - bounds.Top,
+			ascent : lineMetrics.TextAscent2,
+			descent : lineMetrics.TextDescent,
+		};
+	};
+	TextLine.prototype.draw = function(graphics, x, y)
+	{
+		let showParaMarks = false;
+		if (editor && editor.ShowParaMarks)
+		{
+			editor.ShowParaMarks = false;
+			showParaMarks = true;
+		}
+		
+		this.dc.Reset(x, y, AscWord.MAX_MM_VALUE, AscWord.MAX_MM_VALUE);
+		this.dc.Recalculate_Page(0, true, false);
+		this.dc.Draw(0, graphics);
+		
+		if (showParaMarks)
+			editor.ShowParaMarks = true;
+	};
 
 function CGraphics()
 {
@@ -1505,120 +1580,73 @@ CGraphics.prototype =
 
     DrawStringASCII : function(name, size, bold, italic, text, x, y, bIsHeader)
     {
-        var _textProp = {
-            RFonts : { Ascii : { Name : name, Index : -1 } },
-            FontSize : (((size * 2 * 96 / this.m_dDpiY) + 0.5) >> 0) / 2,
-            Bold : false,
-            Italic : false
-        };
-
-        this.m_oTextPr = _textProp;
-        this.m_oGrFonts.Ascii.Name = this.m_oTextPr.RFonts.Ascii.Name;
-        this.m_oGrFonts.Ascii.Index = -1;
-
-        this.SetFontSlot(fontslot_ASCII, 1);
-
-        this.m_oFontManager.LoadString2(text, 0, 0);
-        var measure = this.m_oFontManager.MeasureString2();
-
-        var _ctx = this.m_oContext;
-        _ctx.beginPath();
-        _ctx.fillStyle = "#E1E1E1";
-        _ctx.strokeStyle = this.isDarkMode ? "#E1E1E1" : GlobalSkin.RulerOutline;
-        this.m_bBrushColorInit = false;
-        this.m_bPenColorInit = false;
-
-        var _xPxOffset = 10;
-        var _yPxOffset = 5;
-        _xPxOffset = (_xPxOffset * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        _yPxOffset = (_yPxOffset * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-
-        var __x = this.m_oFullTransform.TransformPointX(x, y) >> 0;
-        var __y = this.m_oFullTransform.TransformPointY(x, y) >> 0;
-        var __w = (measure.fWidth >> 0) + 2 * _xPxOffset;
-        var __h = (Math.abs(measure.fY) >> 0) + 2 * _yPxOffset;
-
-        if (!bIsHeader)
-            __y -= __h;
-
-        if (!AscBrowser.isCustomScalingAbove2())
-            _ctx.rect(__x + 0.5, __y + 0.5, __w, __h);
-        else
-            _ctx.rect(__x, __y, __w, __h);
-
-        _ctx.fill();
-        _ctx.stroke();
-        _ctx.beginPath();
-
-        this.b_color1(68, 68, 68, 255);
-
-        var _koef_px_to_mm = 25.4 / this.m_dDpiY;
-
-        if (bIsHeader)
-            this.t(text, x + _xPxOffset * _koef_px_to_mm, y + (__h - _yPxOffset) * _koef_px_to_mm);
-        else
-            this.t(text, x + _xPxOffset * _koef_px_to_mm, y - _yPxOffset * _koef_px_to_mm);
+		this._DrawStringASCII(name, size, bold, italic, text, x, y, bIsHeader, false);
     },
 
     DrawStringASCII2 : function(name, size, bold, italic, text, x, y, bIsHeader)
     {
-        var _textProp = {
-            RFonts : { Ascii : { Name : name, Index : -1 } },
-            FontSize : (((size * 2 * 96 / this.m_dDpiY) + 0.5) >> 0) / 2,
-            Bold : false,
-            Italic : false
-        };
-
-        this.m_oTextPr = _textProp;
-        this.m_oGrFonts.Ascii.Name = this.m_oTextPr.RFonts.Ascii.Name;
-        this.m_oGrFonts.Ascii.Index = -1;
-
-        this.SetFontSlot(fontslot_ASCII, 1);
-
-        this.m_oFontManager.LoadString2(text, 0, 0);
-        var measure = this.m_oFontManager.MeasureString2();
-
-        var _ctx = this.m_oContext;
-        _ctx.beginPath();
-        _ctx.fillStyle = "#E1E1E1";
-        _ctx.strokeStyle = this.isDarkMode ? "#E1E1E1" : GlobalSkin.RulerOutline;
-        this.m_bBrushColorInit = false;
-        this.m_bPenColorInit = false;
-
-        var _xPxOffset = 10;
-        var _yPxOffset = 5;
-        _xPxOffset = (_xPxOffset * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-		_yPxOffset = (_yPxOffset * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-
-        var __x = this.m_oFullTransform.TransformPointX(this.m_dWidthMM - x, y) >> 0;
-        var __y = this.m_oFullTransform.TransformPointY(this.m_dWidthMM - x, y) >> 0;
-        var __w = (measure.fWidth >> 0) + 2 * _xPxOffset;
-        var __h = (Math.abs(measure.fY) >> 0) + 2 * _yPxOffset;
-        __x -= __w;
-
-        if (!bIsHeader)
-            __y -= __h;
-
-        if (!AscBrowser.isCustomScalingAbove2())
-            _ctx.rect(__x + 0.5, __y + 0.5, __w, __h);
-        else
-            _ctx.rect(__x, __y, __w, __h);
-
-        _ctx.fill();
-        _ctx.stroke();
-        _ctx.beginPath();
-
-        this.b_color1(68, 68, 68, 255);
-
-        var _koef_px_to_mm = 25.4 / this.m_dDpiY;
-
-        var xPos = this.m_dWidthMM - x - (__w - _xPxOffset) * _koef_px_to_mm;
-
-        if (bIsHeader)
-            this.t(text, xPos, y + (__h - _yPxOffset) * _koef_px_to_mm);
-        else
-            this.t(text, xPos, y - _yPxOffset * _koef_px_to_mm);
+		this._DrawStringASCII(name, size, bold, italic, text, x, y, bIsHeader, true);
     },
+	
+	_DrawStringASCII : function(name, size, bold, italic, text, x, y, isHeader, fromRight)
+	{
+		let fontSize = (((size * 2 * 96 / this.m_dDpiY) + 0.5) >> 0) / 2;
+		let textLine = new TextLine(text, name, fontSize);
+		let textSize = textLine.getSize();
+		
+		let _koef_px_to_mm = 25.4 / this.m_dDpiY;
+		
+		let textH = textSize.ascent / _koef_px_to_mm;
+		let textW = textSize.w / _koef_px_to_mm;
+		
+		var _ctx = this.m_oContext;
+		_ctx.beginPath();
+		_ctx.fillStyle = "#E1E1E1";
+		_ctx.strokeStyle = this.isDarkMode ? "#E1E1E1" : GlobalSkin.RulerOutline;
+		this.m_bBrushColorInit = false;
+		this.m_bPenColorInit = false;
+		
+		var _xPxOffset = 10;
+		var _yPxOffset = 5;
+		_xPxOffset = (_xPxOffset * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+		_yPxOffset = (_yPxOffset * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+		
+		if (fromRight)
+			x = this.m_dWidthMM - x;
+		
+		var __x = this.m_oFullTransform.TransformPointX(x, y) >> 0;
+		var __y = this.m_oFullTransform.TransformPointY(x, y) >> 0;
+		var __w = (textW >> 0) + 2 * _xPxOffset;
+		var __h = (textH >> 0) + 2 * _yPxOffset;
+		
+		if (fromRight)
+			__x -= __w;
+		
+		if (!isHeader)
+			__y -= __h;
+		
+		if (!AscBrowser.isCustomScalingAbove2())
+			_ctx.rect(__x + 0.5, __y + 0.5, __w, __h);
+		else
+			_ctx.rect(__x, __y, __w, __h);
+		
+		_ctx.fill();
+		_ctx.stroke();
+		_ctx.beginPath();
+		
+		y += _yPxOffset * _koef_px_to_mm;
+		if (!isHeader)
+			y -= __h * _koef_px_to_mm ;
+		
+		x += _xPxOffset * _koef_px_to_mm;
+		if (fromRight)
+			x -= __w * _koef_px_to_mm;
+		
+		// Мы обрезаем высоту и ширину по пиксельной сетке, из-за этого текст кажется прижатым к низу
+		// Корректируем горизонтальную позицию, чтобы он был ближе к верху
+		y = ((y / _koef_px_to_mm) >> 0) * _koef_px_to_mm;
+		textLine.draw(this, x, y);
+	},
 
     DrawHeaderEdit : function(yPos, lock_type, sectionNum, bIsRepeat, type)
     {
