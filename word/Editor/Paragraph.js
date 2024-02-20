@@ -1860,12 +1860,36 @@ Paragraph.prototype.GetNumberingText = function(bWithoutLvlText)
 {
 	var oParent = this.GetParent();
 	var oNumPr  = this.GetNumPr();
-	if (!oNumPr || !oParent)
+	
+	// При копировании иногда неправильно проставляется родительский класс, поэтому проверяем не только наличие
+	// родительского класса и что данный параграф в нем присутсвует
+	if (!oNumPr || !oParent || -1 === this.GetIndex())
 		return "";
 
 	var oNumbering = oParent.GetNumbering();
 	var oNumInfo   = oParent.CalculateNumberingValues(this, oNumPr);
 	return oNumbering.GetText(oNumPr.NumId, oNumPr.Lvl, oNumInfo, bWithoutLvlText);
+};
+/**
+ * Получаем рассчитанное значение нумерации для данного параграфа вместе с суффиксом
+ * @returns {string}
+ */
+Paragraph.prototype.GetNumberingTextWithSuffix = function()
+{
+	let numText = this.GetNumberingText(false);
+	if (!numText)
+		return "";
+	
+	let parent = this.GetParent();
+	let numPr  = this.GetNumPr();
+	
+	let suff = parent.GetNumbering().GetNum(numPr.NumId).GetLvl(numPr.Lvl).GetSuff();
+	if (Asc.c_oAscNumberingSuff.Tab === suff)
+		numText += "	";
+	else if (Asc.c_oAscNumberingSuff.Space === suff)
+		numText += " ";
+	
+	return numText;
 };
 /**
  * Есть ли у параграфа нумерованная нумерация
@@ -9224,15 +9248,7 @@ Paragraph.prototype.GetSelectedText = function(bClearText, oPr)
 	{
 		var oNumPr = this.GetNumPr();
 		if (oNumPr && oNumPr.IsValid() && this.IsSelectionFromStart(false))
-		{
-			Str += this.GetNumberingText(false);
-
-			var nSuff = this.Parent.GetNumbering().GetNum(oNumPr.NumId).GetLvl(oNumPr.Lvl).GetSuff();
-			if (Asc.c_oAscNumberingSuff.Tab === nSuff)
-				Str += "	";
-			else if (Asc.c_oAscNumberingSuff.Space === nSuff)
-				Str += " ";
-		}
+			Str += this.GetNumberingTextWithSuffix();
 	}
 
 	var Count = this.Content.length;
@@ -16178,15 +16194,7 @@ Paragraph.prototype.GetText = function(oPr)
 	{
 		var oNumPr = this.GetNumPr();
 		if (oNumPr && oNumPr.IsValid())
-		{
-			oText.Text += this.GetNumberingText(false);
-
-			var nSuff = this.Parent.GetNumbering().GetNum(oNumPr.NumId).GetLvl(oNumPr.Lvl).GetSuff();
-			if (Asc.c_oAscNumberingSuff.Tab === nSuff)
-				oText.Text += "	";
-			else if (Asc.c_oAscNumberingSuff.Space === nSuff)
-				oText.Text += " ";
-		}
+			oText.Text += this.GetNumberingTextWithSuffix();
 	}
 
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
@@ -18803,12 +18811,7 @@ Paragraph.prototype.asc_getText = function()
 				sText += " ";
 			}
 		}
-		var sNumText = this.GetNumberingText();
-		if(typeof sNumText === "string" && sNumText.length > 0)
-		{
-			sText += sNumText;
-			sText += " ";
-		}
+		sText += this.GetNumberingTextWithSuffix();
 	}
 	sText += this.GetText();
 	return sText;
