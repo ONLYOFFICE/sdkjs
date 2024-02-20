@@ -16556,9 +16556,9 @@ CColorObj.prototype =
 		},
 
 		_obtainEquationStorage: function (type) {
-			const storage = {
-				[AscFormat.TRENDLINE_TYPE_EXP]: {
-					calcYVal: function (val, supps, isLog) {
+			switch (type) {
+				case AscFormat.TRENDLINE_TYPE_EXP :
+					return {calcYVal: function (val, supps, isLog) {
 						const res = supps[1] * Math.exp(val * supps[0]);
 						if (isLog && res <= 0) {
 							return NaN;
@@ -16574,9 +16574,9 @@ CColorObj.prototype =
 						} else {
 							return (Math.log(Math.exp(1)) / Math.log(isLog)) * supps[0];
 						}
-					}
-				}, [AscFormat.TRENDLINE_TYPE_LINEAR]: {
-					calcYVal: function (val, supps, isLog) {
+					}};
+				case AscFormat.TRENDLINE_TYPE_LINEAR :
+					return {calcYVal: function (val, supps, isLog) {
 						const res = supps[0] * val + supps[1];
 						if (isLog && res <= 0) {
 							return NaN;
@@ -16592,9 +16592,9 @@ CColorObj.prototype =
 						} else {
 							return supps[0] / (Math.log(isLog) * (supps[0] * val + supps[1]));
 						}
-					}
-				}, [AscFormat.TRENDLINE_TYPE_LOG]: {
-					calcYVal: function (val, supps, isLog) {
+					}};
+				case AscFormat.TRENDLINE_TYPE_LOG :
+					return {calcYVal: function (val, supps, isLog) {
 						if (val > 0) {
 							const res = supps[0] * Math.log(val) + supps[1];
 							if (isLog && res <= 0) {
@@ -16614,9 +16614,9 @@ CColorObj.prototype =
 						} else {
 							return supps[0] / (Math.log(isLog) * val * (supps[0] * Math.log(val) + supps[1]));
 						}
-					}
-				}, [AscFormat.TRENDLINE_TYPE_POLY]: {
-					calcYVal: function (val, supps) {
+					}};
+				case AscFormat.TRENDLINE_TYPE_POLY :
+					return {calcYVal: function (val, supps) {
 						let result = 0;
 						let power = 0;
 						for (let i = supps.length - 1; i >= 0; i--) {
@@ -16624,9 +16624,9 @@ CColorObj.prototype =
 							power++;
 						}
 						return result;
-					}
-				}, [AscFormat.TRENDLINE_TYPE_POWER]: {
-					calcYVal: function (val, supps, isLog) {
+					}};
+				case AscFormat.TRENDLINE_TYPE_POWER :
+					return {calcYVal: function (val, supps, isLog) {
 						const res = supps[1] * Math.pow(val, supps[0]);
 						if (isLog && res <= 0) {
 							return NaN;
@@ -16642,11 +16642,11 @@ CColorObj.prototype =
 						} else {
 							return supps[0] / (Math.log(isLog) * val);
 						}
-					}
-				}
-			}
+					}};
+				default : 
+					return null;
 
-			return storage.hasOwnProperty(type) ? storage[type] : null;
+			}
 		},
 
 		_getEquationCoefficients: function (catVals, valVals, type, pow, intercept) {
@@ -16872,36 +16872,39 @@ CColorObj.prototype =
 		},
 
 		_obtainMappingStorage: function (type) {
-			const storage = {
-				[AscFormat.TRENDLINE_TYPE_EXP]: {
-					yVal: function (val) {
-						return val > 0 ? Math.log(val) : NaN;
-					}, bValBackward: function (val) {
-						return Math.exp(val);
-					}, bValForward: function (val) {
-						return Math.log(val);
-					}, yValBackward: function (val) {
-						return Math.pow(Math.exp(1), val);
-					}
-				}, [AscFormat.TRENDLINE_TYPE_LOG]: {
-					xVal: function (val) {
-						return val > 0 ? Math.log(val) : NaN;
-					}
-				}, [AscFormat.TRENDLINE_TYPE_POWER]: {
-					xVal: function (val) {
-						return val > 0 ? Math.log(val) : NaN;
-					}, yVal: function (val) {
-						return val > 0 ? Math.log(val) : NaN;
-					}, bValBackward: function (val) {
-						return Math.exp(val);
-					}, bValForward: function (val) {
-						return Math.log(val);
-					}, yValBackward: function (val) {
-						return Math.pow(Math.exp(1), val);
-					}
-				}
-			};
-			return storage.hasOwnProperty(type) ? storage[type] : {};
+			switch (type) {
+				case AscFormat.TRENDLINE_TYPE_EXP :
+					return {
+						yVal: function (val) {
+							return val > 0 ? Math.log(val) : NaN;
+						}, bValBackward: function (val) {
+							return Math.exp(val);
+						}, bValForward: function (val) {
+							return Math.log(val);
+						}, yValBackward: function (val) {
+							return Math.pow(Math.exp(1), val);
+						}};
+				case AscFormat.TRENDLINE_TYPE_LOG :
+					return {
+						xVal: function (val) {
+							return val > 0 ? Math.log(val) : NaN;
+						}};
+				case AscFormat.TRENDLINE_TYPE_POWER :
+					return {
+						xVal: function (val) {
+							return val > 0 ? Math.log(val) : NaN;
+						}, yVal: function (val) {
+							return val > 0 ? Math.log(val) : NaN;
+						}, bValBackward: function (val) {
+							return Math.exp(val);
+						}, bValForward: function (val) {
+							return Math.log(val);
+						}, yValBackward: function (val) {
+							return Math.pow(Math.exp(1), val);
+						}};
+				default : 
+						return {};
+			}
 		},
 
 		_dispRSquared: function (catVals, valVals, coefficients, type) {
