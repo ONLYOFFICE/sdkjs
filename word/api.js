@@ -2785,17 +2785,26 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype._haveOtherChanges = function () {
 		return AscCommon.CollaborativeEditing.Have_OtherChanges();
 	};
-	asc_docs_api.prototype.asc_DownloadOrigin = function(bIsDownloadEvent)
+	asc_docs_api.prototype.asc_DownloadOrigin = function(options)
 	{
+		if (!options) {
+			options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.UNKNOWN);
+		}
+		let bIsDownloadEvent = options.isDownloadEvent;
 		let changes = null;
 		if (this.isUseNativeViewer && this.isDocumentRenderer())
 			changes = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Save();
 
 		if (changes) {
-			let options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.PDF, bIsDownloadEvent);
+			options.asc_setFileType(Asc.c_oAscFileType.PDF);
 			options.pdfChanges = changes;
 			this.asc_DownloadAs(options);
 			return;
+		} else if(this.documentIsWopi && options.isSaveAs) {
+			//todo server request
+			// options.asc_setFileType(Asc.c_oAscFileType.PDF);
+			// this.asc_DownloadAs(options);
+			// return;
 		}
 		//скачивание оригинального pdf, djvu, xps
 		var downloadType = bIsDownloadEvent ? DownloadType.Download : DownloadType.None;

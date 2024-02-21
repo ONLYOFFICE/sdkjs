@@ -82,6 +82,7 @@
 		this.documentTitle       = "null";
 		this.documentFormatSave  = Asc.c_oAscFileType.UNKNOWN;
 		this.documentShardKey  = undefined;
+		this.documentIsWopi = false;
 
 		this.documentOpenOptions = undefined;		// Опции при открытии (пока только опции для CSV)
 
@@ -499,6 +500,7 @@
 				if (this.documentOpenOptions["WOPISrc"])
 				{
 					this.documentShardKey = this.documentOpenOptions["WOPISrc"];
+					this.documentIsWopi = true;
 				}
 			}
 			if (!this.documentShardKey) {
@@ -2112,6 +2114,7 @@
 		oAdditionalData["outputformat"] = options.fileType;
 		oAdditionalData["title"] = AscCommon.changeFileExtention(this.documentTitle, AscCommon.getExtentionByFormat(options.fileType), Asc.c_nMaxDownloadTitleLen);
 		oAdditionalData["nobase64"] = isNoBase64;
+		oAdditionalData["isSaveAs"] = options.isSaveAs;
 		let locale = this.asc_getLocale() || undefined;
 		if (typeof locale === "string") {
 			locale = Asc.g_oLcidNameToIdMap[locale];
