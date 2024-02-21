@@ -275,7 +275,8 @@
         FileSharing: 25,
         ExternalLinksAutoRefresh: 26,
         TimelineCaches: 27,
-        TimelineCache: 28
+        TimelineCache: 28,
+		Metadata: 29
     };
     /** @enum */
     var c_oSerWorkbookPrTypes =
@@ -1253,6 +1254,117 @@
         TimelineStyleElementType : 5,
         TimelineStyleElementDxfId : 6
     };
+
+
+	var c_oSer_Metadata =
+	{
+		MetadataTypes: 0,
+		MetadataStrings: 1,
+		MdxMetadata: 2,
+		CellMetadata: 3,
+		ValueMetadata: 4,
+		FutureMetadata: 5
+	};
+	var c_oSer_MetadataType =
+	{
+		MetadataType: 0,
+		Name: 1,
+		MinSupportedVersion: 2,
+		GhostRow: 3,
+		GhostCol: 4,
+		Edit: 5,
+		Delete: 6,
+		Copy: 7,
+		PasteAll: 8,
+		PasteFormulas: 9,
+		PasteValues: 10,
+		PasteFormats: 11,
+		PasteComments: 12,
+		PasteDataValidation: 13,
+		PasteBorders: 14,
+		PasteColWidths: 15,
+		PastberFormats: 16,
+		Merge: 17,
+		SplitFirst: 18,
+		SplitAll: 19,
+		RowColShift: 30,
+		ClearAll: 21,
+		ClearFormats: 22,
+		ClearContents: 23,
+		ClearComments: 24,
+		Assign: 25,
+		Coerce: 26,
+		CellMeta: 27
+	};
+	var c_oSer_MetadataString =
+	{
+		MetadataString: 0
+
+	};
+	var c_oSer_MetadataBlock =
+	{
+		MetadataBlock: 0,
+		MetadataRecord: 1,
+		MetadataRecordType: 2,
+		MetadataRecordValue: 3
+	};
+	var c_oSer_FutureMetadataBlock =
+	{
+		Name: 0,
+		FutureMetadataBlock: 1,
+		RichValueBlock: 2,
+		DynamicArrayProperties: 3,
+		DynamicArray: 4,
+		CollapsedArray: 5
+	};
+	var c_oSer_MdxMetadata =
+	{
+		Mdx: 0,
+		NameIndex: 1,
+		FunctionTag: 2,
+		MdxTuple: 3,
+		MdxSet: 4,
+		MdxKPI: 5,
+		MdxMemeberProp: 6
+	};
+	var c_oSer_MetadataMdxTuple =
+	{
+		IndexCount: 0,
+		CultureCurrency: 1,
+		StringIndex: 2,
+		NumFmtIndex: 3,
+		BackColor: 4,
+		ForeColor: 5,
+		Italic: 6,
+		Underline: 7,
+		Strike: 8,
+		Bold: 9,
+		MetadataStringIndex: 10
+	};
+	var c_oSer_MetadataStringIndex =
+	{
+		StringIsSet: 0,
+		IndexValue: 1
+	};
+	var c_oSer_MetadataMdxSet =
+	{
+		Count: 0,
+		Index: 1,
+		SortOrder: 2,
+		MetadataStringIndex: 3
+	};
+	var c_oSer_MetadataMdxKPI =
+	{
+		NameIndex: 0,
+		Index: 1,
+		Property: 2
+	};
+	var c_oSer_MetadataMemberProperty =
+	{
+		NameIndex: 0,
+		Index: 1
+	};
+	
 
     /** @enum */
     var EBorderStyle =
@@ -3514,6 +3626,10 @@
             if (this.wb.timelineCaches) {
                 this.bs.WriteItem(c_oSerWorkbookTypes.TimelineCaches, function () {oThis.WriteTimelineCaches(oThis.wb.timelineCaches);});
             }
+
+			if (this.wb.metadata) {
+				this.bs.WriteItem(c_oSerWorkbookTypes.Metadata, function () {oThis.WriteMetaData(oThis.wb.metadata);});
+			}
 
         };
         this.WriteWorkbookPr = function()
@@ -8127,6 +8243,13 @@
                     return oThis.ReadTimelineCaches(t, l, oThis.oWorkbook.timelineCaches);
                 });
             }
+            else if (c_oSerWorkbookTypes.Metadata === type)
+			{
+				this.oWorkbook.metadata = new AscCommonExcel.CMetadata();
+				res = this.bcr.Read1(length, function (t, l) {
+					return oThis.ReadMetadata(t, l, oThis.oWorkbook.metadata);
+				});
+			}
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;
@@ -8292,7 +8415,7 @@
             }
 
             return res;
-        }
+        };
         this.ReadTimelinePivotFilter = function (type, length, oTimelinePivotFilter) {
             let res = c_oSerConstants.ReadOk;
 
@@ -8317,6 +8440,75 @@
             }
             return res;
         };
+
+		this.ReadMetadata = function (type, length, oTimelinePivotFilter) {
+
+
+
+			/*OOX::Spreadsheet::CMetadata* pMetadata = static_cast<OOX::Spreadsheet::CMetadata*>(poResult);
+
+			int res = c_oSerConstants::ReadOk;
+			if (c_oSer_Metadata::MetadataTypes == type)
+			{
+				pMetadata->m_oMetadataTypes.Init();
+				READ1_DEF(length, res, this->ReadMetadataTypes, pMetadata->m_oMetadataTypes.GetPointer());
+			}
+			else if (c_oSer_Metadata::MetadataStrings == type)
+			{
+				pMetadata->m_oMetadataStrings.Init();
+				READ1_DEF(length, res, this->ReadMetadataStrings, pMetadata->m_oMetadataStrings.GetPointer());
+			}
+			else if (c_oSer_Metadata::MdxMetadata == type)
+			{
+				pMetadata->m_oMdxMetadata.Init();
+				READ1_DEF(length, res, this->ReadMdxMetadata, pMetadata->m_oMdxMetadata.GetPointer());
+			}
+			else if (c_oSer_Metadata::CellMetadata == type)
+			{
+				pMetadata->m_oCellMetadata.Init();
+				READ1_DEF(length, res, this->ReadMetadataBlocks, pMetadata->m_oCellMetadata.GetPointer());
+			}
+			else if (c_oSer_Metadata::ValueMetadata == type)
+			{
+				pMetadata->m_oValueMetadata.Init();
+				READ1_DEF(length, res, this->ReadMetadataBlocks, pMetadata->m_oValueMetadata.GetPointer());
+			}
+			else if (c_oSer_Metadata::FutureMetadata == type)
+			{
+				OOX::Spreadsheet::CFutureMetadata* pFutureMetadata = new OOX::Spreadsheet::CFutureMetadata();
+				READ1_DEF(length, res, this->ReadFutureMetadata, pFutureMetadata);
+				pMetadata->m_arFutureMetadata.push_back(pFutureMetadata);
+			}
+			else
+				res = c_oSerConstants::ReadUnknown;
+			return res;
+		}*/
+
+
+
+			let res = c_oSerConstants.ReadOk;
+
+			if (c_oSer_TimelinePivotFilter.Name === type) {
+				oTimelinePivotFilter.name = this.stream.GetString2LE(length);
+			} else if (c_oSer_TimelinePivotFilter.Description === type) {
+				oTimelinePivotFilter.description = this.stream.GetString2LE(length);
+			} else if (c_oSer_TimelinePivotFilter.UseWholeDay === type) {
+				oTimelinePivotFilter.useWholeDay = this.stream.GetBool();
+			} else if (c_oSer_TimelinePivotFilter.Id === type) {
+				oTimelinePivotFilter.id = this.stream.Getlong();
+			} else if (c_oSer_TimelinePivotFilter.Fld === type) {
+				oTimelinePivotFilter.fld = this.stream.Getlong();
+			} else if (c_oSer_TimelinePivotFilter.AutoFilter === type) {
+				let oBinary_TableReader = new Binary_TableReader(this.stream, this.InitOpenManager, /*ws*/null);
+				oTimelinePivotFilter.autoFilter = new AscCommonExcel.AutoFilter();
+				res = this.bcr.Read1(length, function (t, l) {
+					return oBinary_TableReader.ReadAutoFilter(t, l, oTimelinePivotFilter.autoFilter);
+				});
+			} else {
+				res = c_oSerConstants.ReadUnknown;
+			}
+			return res;
+		};
 
         this.ReadWorkbookPr = function(type, length, WorkbookPr)
         {

@@ -16979,6 +16979,19 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
+	function CMetadata() {
+		this.type = null;
+		this.dxfId = null;
+	}
+	CMetadata.prototype.clone = function () {
+		var res = new CMetadata();
+
+		res.type = this.type;
+		res.dxfId = this.dxfId;
+
+		return res;
+	};
+
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
@@ -17493,6 +17506,8 @@ function RangeDataManagerElem(bbox, data)
 	window["AscCommonExcel"].CTimelineStyle = CTimelineStyle;
 	window["AscCommonExcel"].CTimelineStyleElement = CTimelineStyleElement;
 	window["AscCommonExcel"].CTimelinePivotFilter = CTimelinePivotFilter;
+
+	window["AscCommonExcel"].CMetadata = CMetadata;
 
 
 
