@@ -8441,252 +8441,175 @@
             return res;
         };
 
-		this.ReadMetadata = function (type, length, metadata) {
+        this.ReadMetadata = function (type, length, metadata) {
             var oThis = this;
-			let res = c_oSerConstants.ReadOk;
-			if (c_oSer_Metadata.MetadataTypes === type)
-			{
-                res = this.bcr.Read1(length, function(t,l){
-                    return oThis.ReadMetadataTypes(t,l, metadata.metadataTypes);
+            let res = c_oSerConstants.ReadOk;
+            if (c_oSer_Metadata.MetadataTypes === type) {
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataTypes(t, l, metadata.metadataTypes);
                 });
-			}
-			else if (c_oSer_Metadata.MetadataStrings === type)
-			{
-                res = this.bcr.Read1(length, function(t,l){
-                    return oThis.ReadMetadataStrings(t,l, metadata.metadataStrings);
+            } else if (c_oSer_Metadata.MetadataStrings === type) {
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataStrings(t, l, metadata.metadataStrings);
                 });
-			}
-			else if (c_oSer_Metadata.MdxMetadata === type)
-			{
-                res = this.bcr.Read1(length, function(t,l){
-                    return oThis.ReadMdxMetadata(t,l, metadata.mdxMetadata);
+            } else if (c_oSer_Metadata.MdxMetadata === type) {
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMdxMetadata(t, l, metadata.mdxMetadata);
                 });
-			}
-			else if (c_oSer_Metadata.CellMetadata === type)
-			{
-                res = this.bcr.Read1(length, function(t,l){
-                    return oThis.ReadMetadataBlocks(t,l, metadata.metadataBlocks);
+            } else if (c_oSer_Metadata.CellMetadata === type) {
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataBlocks(t, l, metadata.metadataBlocks);
                 });
-			}
-			else if (c_oSer_Metadata.ValueMetadata === type)
-			{
-                res = this.bcr.Read1(length, function(t,l){
-                    return oThis.ReadMetadataBlocks(t,l, metadata.valueMetadata);
+            } else if (c_oSer_Metadata.ValueMetadata === type) {
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataBlocks(t, l, metadata.valueMetadata);
                 });
-			}
-			else if (c_oSer_Metadata.FutureMetadata === type)
-			{
-				/*OOX::Spreadsheet::CFutureMetadata* pFutureMetadata = new OOX::Spreadsheet::CFutureMetadata();
+            } else if (c_oSer_Metadata.FutureMetadata === type) {
+                /*OOX::Spreadsheet::CFutureMetadata* pFutureMetadata = new OOX::Spreadsheet::CFutureMetadata();
 				READ1_DEF(length, res, this->ReadFutureMetadata, pFutureMetadata);
 				pMetadata->m_arFutureMetadata.push_back(pFutureMetadata);*/
-			}
-			else
+            } else {
                 res = c_oSerConstants.ReadUnknown;
-			return res;
-		};
-
-
-
-
-        /*this.ReadMetadataTypes = function ( type, long length, void* poResult)
-        {
-            var res = c_oSerConstants.ReadOk;
-            if (c_oSer_MetadataType.MetadataType === type)
-            {
-                OOX.Spreadsheet.CMetadataType* pMetadataType = new OOX.Spreadsheet.CMetadataType();
-                READ1_DEF(length, res, this.ReadMetadataType, pMetadataType);
-                pMetadataTypes.m_arrItems.push_back(pMetadataType);
             }
-            else
-                res = c_oSerConstants.ReadUnknown;
             return res;
-        }
-        this.ReadMetadataType = function ( type, long length, void* poResult)
-        {
-            var res = c_oSerConstants.ReadOk;
-            OOX.Spreadsheet.CMetadataType* pMetadataType = static_cast<OOX.Spreadsheet.CMetadataType*>(poResult);
+        };
 
-            if (c_oSer_MetadataType.Name === type)
-            {
-                pMetadataType.m_oName = m_oBufferedStream.GetString3(length);
-            }
-            else if (c_oSer_MetadataType.MinSupportedVersion === type)
-            {
-                pMetadataType.m_oMinSupportedVersion = m_oBufferedStream.GetULong();
-            }
-            else if (c_oSer_MetadataType.GhostRow === type)
-            {
-                pMetadataType.m_oGhostRow = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.GhostCol === type)
-            {
-                pMetadataType.m_oGhostCol = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.Edit === type)
-            {
-                pMetadataType.m_oEdit = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.Delete === type)
-            {
-                pMetadataType.m_oDelete = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.Copy === type)
-            {
-                pMetadataType.m_oCopy = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.PasteAll === type)
-            {
-                pMetadataType.m_oPasteAll = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.PasteFormulas === type)
-            {
-                pMetadataType.m_oPasteFormulas = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.PasteValues === type)
-            {
-                pMetadataType.m_oPasteValues = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.PasteFormats === type)
-            {
-                pMetadataType.m_oPasteFormats = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.PasteComments === type)
-            {
-                pMetadataType.m_oPasteComments = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.PasteDataValidation === type)
-            {
-                pMetadataType.m_oPasteDataValidation = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.PasteBorders === type)
-            {
-                pMetadataType.m_oPasteBorders = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.PasteColWidths === type)
-            {
-                pMetadataType.m_oPasteColWidths = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.PasteNumberFormats === type)
-            {
-                pMetadataType.m_oPasteNumberFormats = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.Merge === type)
-            {
-                pMetadataType.m_oMerge = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.SplitFirst === type)
-            {
-                pMetadataType.m_oSplitFirst = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.SplitAll === type)
-            {
-                pMetadataType.m_oSplitAll = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.RowColShift === type)
-            {
-                pMetadataType.m_oRowColShift = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.ClearAll === type)
-            {
-                pMetadataType.m_oClearAll = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.ClearFormats === type)
-            {
-                pMetadataType.m_oClearFormats = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.ClearContents === type)
-            {
-                pMetadataType.m_oClearContents = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.ClearComments === type)
-            {
-                pMetadataType.m_oClearComments = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.Assign === type)
-            {
-                pMetadataType.m_oAssign = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.Coerce === type)
-            {
-                pMetadataType.m_oCoerce = m_oBufferedStream.GetBool();
-            }
-            else if (c_oSer_MetadataType.CellMeta === type)
-            {
-                pMetadataType.m_oCellMeta = m_oBufferedStream.GetBool();
-            }
-            else
-                res = c_oSerConstants.ReadUnknown;
-            return res;
-        }
-        this.ReadMetadataStrings = function ( type, long length, void* poResult)
-        {
-            OOX.Spreadsheet.CMetadataStrings* pMetadataStrings = static_cast<OOX.Spreadsheet.CMetadataStrings*>(poResult);
 
+        this.ReadMetadataTypes = function (type, length, aMetadataTypes) {
+            var oThis = this;
             var res = c_oSerConstants.ReadOk;
-            if (c_oSer_MetadataString.MetadataString === type)
-            {
-                OOX.Spreadsheet.CMetadataString* pMetadataString = new OOX.Spreadsheet.CMetadataString();
-                pMetadataString.m_oV = m_oBufferedStream.GetString3(length);
-                pMetadataStrings.m_arrItems.push_back(pMetadataString);
-            }
-            else
+            if (c_oSer_MetadataType.MetadataType === type) {
+                var metadataType = new AscCommonExcel.CMetadataType();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataType(t, l, metadataType);
+                });
+                aMetadataTypes.push(metadataType);
+            } else {
                 res = c_oSerConstants.ReadUnknown;
+            }
             return res;
-        }
-        this.ReadMdxMetadata = function ( type, long length, void* poResult)
-        {
-            OOX.Spreadsheet.CMdxMetadata* pMdxMetadata = static_cast<OOX.Spreadsheet.CMdxMetadata*>(poResult);
+        };
 
+        this.ReadMetadataType = function (type, length, pMetadataType) {
             var res = c_oSerConstants.ReadOk;
-            if (c_oSer_MdxMetadata.Mdx === type)
-            {
-                OOX.Spreadsheet.CMdx* pMdx = new OOX.Spreadsheet.CMdx();
-                READ1_DEF(length, res, this.ReadMdx, pMdx);
-                pMdxMetadata.m_arrItems.push_back(pMdx);
-            }
-            else
-                res = c_oSerConstants.ReadUnknown;
-            return res;
-        }
-        this.ReadMdx = function ( type, long length, void* poResult)
-        {
-            OOX.Spreadsheet.CMdx* pMdx = static_cast<OOX.Spreadsheet.CMdx*>(poResult);
 
-            var res = c_oSerConstants.ReadOk;
-            if (c_oSer_MdxMetadata.NameIndex === type)
-            {
-                pMdx.m_oN = m_oBufferedStream.GetULong();
-            }
-            else if (c_oSer_MdxMetadata.FunctionTag === type)
-            {
-                pMdx.m_oF.Init();
-                pMdx.m_oF.SetValueFromByte(m_oBufferedStream.GetUChar());
-            }
-            else if (c_oSer_MdxMetadata.MdxTuple === type)
-            {
-                pMdx.m_oMdxTuple.Init();
-                READ1_DEF(length, res, this.ReadMdxTuple, pMdx.m_oMdxTuple.GetPovarer());
-            }
-            else if (c_oSer_MdxMetadata.MdxSet === type)
-            {
-                pMdx.m_oMdxSet.Init();
-                READ1_DEF(length, res, this.ReadMdxSet, pMdx.m_oMdxSet.GetPovarer());
-            }
-            else if (c_oSer_MdxMetadata.MdxKPI === type)
-            {
-                pMdx.m_oCMdxKPI.Init();
-                READ1_DEF(length, res, this.ReadMdxKPI, pMdx.m_oCMdxKPI.GetPovarer());
-            }
-            else if (c_oSer_MdxMetadata.MdxMemeberProp === type)
-            {
-                pMdx.m_oMdxMemeberProp.Init();
-                READ1_DEF(length, res, this.ReadMdxMemeberProp, pMdx.m_oMdxMemeberProp.GetPovarer());
-            }
-            else
+            if (c_oSer_MetadataType.Name === type) {
+                pMetadataType.name = this.stream.GetString2LE(length);
+            } else if (c_oSer_MetadataType.MinSupportedVersion === type) {
+                pMetadataType.minSupportedVersion = this.stream.GetULong();
+            } else if (c_oSer_MetadataType.GhostRow === type) {
+                pMetadataType.ghostRow = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.GhostCol === type) {
+                pMetadataType.ghostCol = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.Edit === type) {
+                pMetadataType.edit = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.Delete === type) {
+                pMetadataType.delete = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.Copy === type) {
+                pMetadataType.copy = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteAll === type) {
+                pMetadataType.pasteAll = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteFormulas === type) {
+                pMetadataType.pasteFormulas = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteValues === type) {
+                pMetadataType.pasteValues = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteFormats === type) {
+                pMetadataType.pasteFormats = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteComments === type) {
+                pMetadataType.pasteComments = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteDataValidation === type) {
+                pMetadataType.pasteDataValidation = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteBorders === type) {
+                pMetadataType.pasteBorders = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteColWidths === type) {
+                pMetadataType.pasteColWidths = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.PasteNumberFormats === type) {
+                pMetadataType.pasteNumberFormats = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.Merge === type) {
+                pMetadataType.merge = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.SplitFirst === type) {
+                pMetadataType.splitFirst = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.SplitAll === type) {
+                pMetadataType.splitAll = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.RowColShift === type) {
+                pMetadataType.rowColShift = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.ClearAll === type) {
+                pMetadataType.clearAll = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.ClearFormats === type) {
+                pMetadataType.clearFormats = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.ClearContents === type) {
+                pMetadataType.clearContents = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.ClearComments === type) {
+                pMetadataType.clearComments = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.Assign === type) {
+                pMetadataType.assign = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.Coerce === type) {
+                pMetadataType.coerce = this.stream.GetBool();
+            } else if (c_oSer_MetadataType.CellMeta === type) {
+                pMetadataType.cellMeta = this.stream.GetBool();
+            } else {
                 res = c_oSerConstants.ReadUnknown;
+            }
             return res;
-        }
-        this.ReadMetadataBlocks = function ( type, long length, void* poResult)
+        };
+        this.ReadMetadataStrings = function (type, length, aMetadataStrings) {
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_MetadataString.MetadataString === type) {
+                let pMetadataString = new AscCommonExcel.CMetadataString();
+                pMetadataString.m_oV = this.stream.GetString2LE(length);
+                aMetadataStrings.push(pMetadataString);
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadMdxMetadata = function (type, length, aMdxMetadata) {
+            var oThis = this;
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_MdxMetadata.Mdx === type) {
+                let pMdx = new AscCommonExcel.CMdx();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMdx(t, l, pMdx);
+                });
+                aMdxMetadata.push(pMdx);
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadMdx = function (type, length, pMdx) {
+            var oThis = this;
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_MdxMetadata.NameIndex === type) {
+                pMdx.n = this.stream.GetULong();
+            } else if (c_oSer_MdxMetadata.FunctionTag === type) {
+                //pMdx.m_oF.SetValueFromByte(this.stream.GetUChar());
+                pMdx.f = this.stream.GetUChar();
+            } else if (c_oSer_MdxMetadata.MdxTuple === type) {
+                //READ1_DEF(length, res, this.ReadMdxTuple, pMdx.m_oMdxTuple.GetPovarer());
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMdx(t, l, pMdx.mdxTuple);
+                });
+            } else if (c_oSer_MdxMetadata.MdxSet === type) {
+                //READ1_DEF(length, res, this.ReadMdxSet, pMdx.m_oMdxSet.GetPovarer());
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMdx(t, l, pMdx.mdxSet);
+                });
+            } else if (c_oSer_MdxMetadata.MdxKPI === type) {
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMdx(t, l, pMdx.mdxKPI);
+                });
+            } else if (c_oSer_MdxMetadata.MdxMemeberProp === type) {
+                //READ1_DEF(length, res, this.ReadMdxMemeberProp, pMdx.m_oMdxMemeberProp.GetPovarer());
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMdx(t, l, pMdx.mdxMemeberProp);
+                });
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        /*this.ReadMetadataBlocks = function ( type, long length, void* poResult)
         {
             OOX.Spreadsheet.CMetadataBlocks* pMetadataBlocks = static_cast<OOX.Spreadsheet.CMetadataBlocks*>(poResult);
 
@@ -8723,11 +8646,11 @@
             var res = c_oSerConstants.ReadOk;
             if (c_oSer_MetadataBlock.MetadataRecordType === type)
             {
-                pMetadataRecord.m_oT = m_oBufferedStream.GetULong();
+                pMetadataRecord.m_oT = this.stream.GetULong();
             }
             else if (c_oSer_MetadataBlock.MetadataRecordValue === type)
             {
-                pMetadataRecord.m_oV = m_oBufferedStream.GetULong();
+                pMetadataRecord.m_oV = this.stream.GetULong();
             }
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -8740,11 +8663,11 @@
 
             if (c_oSer_FutureMetadataBlock.DynamicArray === type)
             {
-                pDynamicArrayProperties.m_oFDynamic = m_oBufferedStream.GetBool();
+                pDynamicArrayProperties.m_oFDynamic = this.stream.GetBool();
             }
             else if (c_oSer_FutureMetadataBlock.CollapsedArray === type)
             {
-                pDynamicArrayProperties.m_oFCollapsed = m_oBufferedStream.GetBool();
+                pDynamicArrayProperties.m_oFCollapsed = this.stream.GetBool();
             }
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -8757,11 +8680,11 @@
             var res = c_oSerConstants.ReadOk;
             if (c_oSer_MetadataStringIndex.StringIsSet === type)
             {
-                pStringIndex.m_oS = m_oBufferedStream.GetULong();
+                pStringIndex.m_oS = this.stream.GetULong();
             }
             else if (c_oSer_MetadataStringIndex.IndexValue === type)
             {
-                pStringIndex.m_oX = m_oBufferedStream.GetULong();
+                pStringIndex.m_oX = this.stream.GetULong();
             }
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -8774,11 +8697,11 @@
             var res = c_oSerConstants.ReadOk;
             if (c_oSer_MetadataMemberProperty.NameIndex === type)
             {
-                pMdxMemeberProp.m_oN = m_oBufferedStream.GetULong();
+                pMdxMemeberProp.m_oN = this.stream.GetULong();
             }
             else if (c_oSer_MetadataMemberProperty.Index === type)
             {
-                pMdxMemeberProp.m_oNp = m_oBufferedStream.GetULong();
+                pMdxMemeberProp.m_oNp = this.stream.GetULong();
             }
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -8791,16 +8714,16 @@
             var res = c_oSerConstants.ReadOk;
             if (c_oSer_MetadataMdxKPI.NameIndex === type)
             {
-                pMdxKPI.m_oN = m_oBufferedStream.GetULong();
+                pMdxKPI.m_oN = this.stream.GetULong();
             }
             else if (c_oSer_MetadataMdxKPI.Index === type)
             {
-                pMdxKPI.m_oNp = m_oBufferedStream.GetULong();
+                pMdxKPI.m_oNp = this.stream.GetULong();
             }
             else if (c_oSer_MetadataMdxKPI.Property === type)
             {
                 pMdxKPI.m_oP.Init();
-                pMdxKPI.m_oP.SetValueFromByte(m_oBufferedStream.GetUChar());
+                pMdxKPI.m_oP.SetValueFromByte(this.stream.GetUChar());
             }
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -8813,16 +8736,16 @@
             var res = c_oSerConstants.ReadOk;
             if (c_oSer_MetadataMdxSet.Count === type)
             {
-                pMdxSet.m_oC = m_oBufferedStream.GetULong();
+                pMdxSet.m_oC = this.stream.GetULong();
             }
             else if (c_oSer_MetadataMdxSet.Index === type)
             {
-                pMdxSet.m_oNs = m_oBufferedStream.GetULong();
+                pMdxSet.m_oNs = this.stream.GetULong();
             }
             else if (c_oSer_MetadataMdxSet.SortOrder === type)
             {
                 pMdxSet.m_oO.Init();
-                pMdxSet.m_oO.SetValueFromByte(m_oBufferedStream.GetUChar());
+                pMdxSet.m_oO.SetValueFromByte(this.stream.GetUChar());
             }
             else if (c_oSer_MetadataMdxSet.MetadataStringIndex === type)
             {
@@ -8841,43 +8764,43 @@
             var res = c_oSerConstants.ReadOk;
             if (c_oSer_MetadataMdxTuple.IndexCount === type)
             {
-                pMdxTuple.m_oC = m_oBufferedStream.GetULong();
+                pMdxTuple.m_oC = this.stream.GetULong();
             }
             else if (c_oSer_MetadataMdxTuple.StringIndex === type)
             {
-                pMdxTuple.m_oSi = m_oBufferedStream.GetULong();
+                pMdxTuple.m_oSi = this.stream.GetULong();
             }
             else if (c_oSer_MetadataMdxTuple.CultureCurrency === type)
             {
-                pMdxTuple.m_oCt = m_oBufferedStream.GetString3(length);
+                pMdxTuple.m_oCt = this.stream.GetString3(length);
             }
             else if (c_oSer_MetadataMdxTuple.NumFmtIndex === type)
             {
-                pMdxTuple.m_oFi = m_oBufferedStream.GetULong();
+                pMdxTuple.m_oFi = this.stream.GetULong();
             }
             else if (c_oSer_MetadataMdxTuple.BackColor === type)
             {
-                pMdxTuple.m_oBc = m_oBufferedStream.GetULong();
+                pMdxTuple.m_oBc = this.stream.GetULong();
             }
             else if (c_oSer_MetadataMdxTuple.ForeColor === type)
             {
-                pMdxTuple.m_oFc = m_oBufferedStream.GetULong();
+                pMdxTuple.m_oFc = this.stream.GetULong();
             }
             else if (c_oSer_MetadataMdxTuple.Italic === type)
             {
-                pMdxTuple.m_oI = m_oBufferedStream.GetBool();
+                pMdxTuple.m_oI = this.stream.GetBool();
             }
             else if (c_oSer_MetadataMdxTuple.Bold === type)
             {
-                pMdxTuple.m_oB = m_oBufferedStream.GetBool();
+                pMdxTuple.m_oB = this.stream.GetBool();
             }
             else if (c_oSer_MetadataMdxTuple.Underline === type)
             {
-                pMdxTuple.m_oU = m_oBufferedStream.GetBool();
+                pMdxTuple.m_oU = this.stream.GetBool();
             }
             else if (c_oSer_MetadataMdxTuple.Strike === type)
             {
-                pMdxTuple.m_oSt = m_oBufferedStream.GetBool();
+                pMdxTuple.m_oSt = this.stream.GetBool();
             }
             else if (c_oSer_MetadataMdxTuple.MetadataStringIndex === type)
             {
@@ -8897,7 +8820,7 @@
 
             if (c_oSer_FutureMetadataBlock.Name === type)
             {
-                pCFutureMetadata.m_oName = m_oBufferedStream.GetString3(length);
+                pCFutureMetadata.m_oName = this.stream.GetString3(length);
             }
             else if (c_oSer_FutureMetadataBlock.FutureMetadataBlock === type)
             {
@@ -8921,7 +8844,7 @@
                 OOX.Drawing.COfficeArtExtension* pExt = new OOX.Drawing.COfficeArtExtension();
                 pExt.m_sUri = L"{3e2802c4-a4d2-4d8b-9148-e3be6c30e623}";
                 pExt.m_oRichValueBlock.Init();
-                pExt.m_oRichValueBlock.m_oI = m_oBufferedStream.GetULong();
+                pExt.m_oRichValueBlock.m_oI = this.stream.GetULong();
 
                 pFutureMetadataBlock.m_oExtLst.m_arrExt.push_back(pExt);
             }
