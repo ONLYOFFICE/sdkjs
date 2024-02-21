@@ -8809,31 +8809,44 @@
         };
         this.ReadFutureMetadataBlock = function (type, length, pFutureMetadataBlock)
         {
+            var oThis = this;
             var res = c_oSerConstants.ReadOk;
-            /*if (c_oSer_FutureMetadataBlock.RichValueBlock === type)
+            if (c_oSer_FutureMetadataBlock.RichValueBlock === type)
             {
-                if (false === pFutureMetadataBlock.ExtLst.IsInit()) pFutureMetadataBlock.ExtLst.Init();
-
-                OOX.Drawing.COfficeArtExtension* pExt = new OOX.Drawing.COfficeArtExtension();
+                if (!pFutureMetadataBlock.extLst) {
+                    pFutureMetadataBlock.extLst = [];
+                }
+                /*let pExt = new Asc.COfficeArtExtension();
                 pExt.m_sUri = L"{3e2802c4-a4d2-4d8b-9148-e3be6c30e623}";
                 pExt.RichValueBlock.Init();
-                pExt.RichValueBlock.I = this.stream.GetULong();
+                pExt.RichValueBlock.I = this.stream.GetULong();*/
 
-                pFutureMetadataBlock.ExtLst.m_arrExt.push_back(pExt);
+                let pExt = new AscCommonExcel.CRichValueBlock();
+                pExt.RichValueBlock.i = this.stream.GetULong();
+                pFutureMetadataBlock.extLst.push(pExt);
             }
             else if (c_oSer_FutureMetadataBlock.DynamicArrayProperties === type)
             {
-                if (false === pFutureMetadataBlock.ExtLst.IsInit()) pFutureMetadataBlock.ExtLst.Init();
 
-                OOX.Drawing.COfficeArtExtension* pExt = new OOX.Drawing.COfficeArtExtension();
+                if (!pFutureMetadataBlock.extLst) {
+                    pFutureMetadataBlock.extLst = [];
+                }
+
+                /*OOX.Drawing.COfficeArtExtension* pExt = new OOX.Drawing.COfficeArtExtension();
                 pExt.m_sUri = L"{bdbb8cdc-fa1e-496e-a857-3c3f30c029c3}";
                 pExt.DynamicArrayProperties.Init();
 
                 READ1_DEF(length, res, this.ReadDynamicArrayProperties, pExt.DynamicArrayProperties.GetPovarer());
-                pFutureMetadataBlock.ExtLst.m_arrExt.push_back(pExt);
+                pFutureMetadataBlock.ExtLst.m_arrExt.push_back(pExt);*/
+
+                let pExt = new AscCommonExcel.CDynamicArrayProperties();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadDynamicArrayProperties(t, l, pExt);
+                });
+                pFutureMetadataBlock.extLst.push(pExt);
             }
             else
-                res = c_oSerConstants.ReadUnknown;*/
+                res = c_oSerConstants.ReadUnknown;
             return res;
         };
 
