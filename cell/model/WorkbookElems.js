@@ -16979,15 +16979,148 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
+	//****metadata****
 	function CMetadata() {
-		this.type = null;
-		this.dxfId = null;
+		this.metadataTypes = null;
+		this.metadataStrings = null;
+		this.mdxMetadata = null;
+		this.cellMetadata = null;
+		this.valueMetadata = null;
+
+		this.aFutureMetadata = null;
 	}
 	CMetadata.prototype.clone = function () {
 		var res = new CMetadata();
 
-		res.type = this.type;
-		res.dxfId = this.dxfId;
+		return res;
+	};
+
+	function CFutureMetadata() {
+		this.name = null;
+		this.futureMetadataBlocks = null;
+	}
+	CFutureMetadata.prototype.clone = function () {
+		var res = new CFutureMetadata();
+
+		return res;
+	};
+
+	function CMetadataType() {
+		this.minSupportedVersion = null;
+		this.ghostRow = null;
+		this.ghostCol = null;
+		this.edit = null;
+		this.delete = null;
+		this.copy = null;
+		this.pasteAll = null;
+		this.pasteFormulas = null;
+		this.pasteValues = null;
+		this.pasteFormats = null;
+		this.pasteComments = null;
+		this.pasteDataValidation = null;
+		this.pasteBorders = null;
+		this.pasteColWidths = null;
+		this.pasteNumberFormats = null;
+		this.merge = null;
+		this.splitFirst = null;
+		this.splitAll = null;
+		this.rowColShift = null;
+		this.clearAll = null;
+		this.clearFormats = null;
+		this.clearContents = null;
+		this.clearComments = null;
+		this.assign = null;
+		this.coerce = null;
+		this.cellMeta = null;
+	}
+	CFutureMetadata.prototype.clone = function () {
+		var res = new CMetadataType();
+
+		return res;
+	};
+
+	function CMetadataString() {
+		this.v = null;
+	}
+	CMetadataString.prototype.clone = function () {
+		var res = new CMetadataString();
+
+		return res;
+	};
+
+	function CMdx() {
+		this.mdxTuple = null;
+		this.mdxSet = null;
+		this.cMdxKPI = null;
+		this.mdxMemeberProp = null;
+
+		this.n = null;
+		this.f = null;
+	}
+	CMdx.prototype.clone = function () {
+		var res = new CMdx();
+
+		return res;
+	};
+
+	function CMdxTuple() {
+		this.c = null;
+		this.ct = null;
+		this.si = null;
+		this.fi = null;
+		this.bc = null;
+		this.fc = null;
+		this.i = null;
+		this.u = null;
+		this.st = null;
+		this.b = null;
+	}
+	CMdxTuple.prototype.clone = function () {
+		var res = new CMdxTuple();
+
+		return res;
+	};
+
+	function CMdxSet() {
+		this.ns = null;
+		this.c = null;
+		this.o = null;
+	}
+	CMdxSet.prototype.clone = function () {
+		var res = new CMdxSet();
+
+		return res;
+	};
+
+	function CMetadataStringIndex() {
+		this.x = null;
+		this.s = null;
+
+	}
+	CMetadataStringIndex.prototype.clone = function () {
+		var res = new CMetadataStringIndex();
+
+		return res;
+	};
+
+	function CMdxMemeberProp() {
+		this.n = null;
+		this.np = null;
+
+	}
+	CMdxMemeberProp.prototype.clone = function () {
+		var res = new CMdxMemeberProp();
+
+		return res;
+	};
+
+	function CMdxKPI() {
+		this.n = null;
+		this.np = null;
+		this.p = null;
+	}
+	CMdxKPI.prototype.clone = function () {
+		var res = new CMdxKPI();
 
 		return res;
 	};
@@ -17508,7 +17641,15 @@ function RangeDataManagerElem(bbox, data)
 	window["AscCommonExcel"].CTimelinePivotFilter = CTimelinePivotFilter;
 
 	window["AscCommonExcel"].CMetadata = CMetadata;
-
+	window["AscCommonExcel"].CMetadataType = CMetadataType;
+	window["AscCommonExcel"].CMetadataString = CMetadataString;
+	window["AscCommonExcel"].CFutureMetadata = CFutureMetadata;
+	window["AscCommonExcel"].CMdx = CMdx;
+	window["AscCommonExcel"].CMdxTuple = CMdxTuple;
+	window["AscCommonExcel"].CMdxSet = CMdxSet;
+	window["AscCommonExcel"].CMetadataStringIndex = CMetadataStringIndex;
+	window["AscCommonExcel"].CMdxMemeberProp = CMdxMemeberProp;
+	window["AscCommonExcel"].CMdxKPI = CMdxKPI;
 
 
 })(window);

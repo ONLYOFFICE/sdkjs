@@ -8441,40 +8441,45 @@
             return res;
         };
 
-        this.ReadMetadata = function (type, length, metadata) {
+        //****metadata****
+        this.ReadMetadata = function (type, length, pMetadata) {
             var oThis = this;
             let res = c_oSerConstants.ReadOk;
             if (c_oSer_Metadata.MetadataTypes === type) {
+                if (!pMetadata.metadataTypes) {
+                    pMetadata.metadataTypes = [];
+                }
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadMetadataTypes(t, l, metadata.metadataTypes);
+                    return oThis.ReadMetadataTypes(t, l, pMetadata.metadataTypes);
                 });
             } else if (c_oSer_Metadata.MetadataStrings === type) {
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadMetadataStrings(t, l, metadata.metadataStrings);
+                    return oThis.ReadMetadataStrings(t, l, pMetadata.metadataStrings);
                 });
             } else if (c_oSer_Metadata.MdxMetadata === type) {
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadMdxMetadata(t, l, metadata.mdxMetadata);
+                    return oThis.ReadMdxMetadata(t, l, pMetadata.mdxMetadata);
                 });
             } else if (c_oSer_Metadata.CellMetadata === type) {
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadMetadataBlocks(t, l, metadata.metadataBlocks);
+                    return oThis.ReadMetadataBlocks(t, l, pMetadata.cellMetadata);
                 });
             } else if (c_oSer_Metadata.ValueMetadata === type) {
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadMetadataBlocks(t, l, metadata.valueMetadata);
+                    return oThis.ReadMetadataBlocks(t, l, pMetadata.valueMetadata);
                 });
             } else if (c_oSer_Metadata.FutureMetadata === type) {
-                /*OOX::Spreadsheet::CFutureMetadata* pFutureMetadata = new OOX::Spreadsheet::CFutureMetadata();
-				READ1_DEF(length, res, this->ReadFutureMetadata, pFutureMetadata);
-				pMetadata->m_arFutureMetadata.push_back(pFutureMetadata);*/
+
+                let pMetadataRecord = new AscCommonExcel.CFutureMetadata();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFutureMetadata(t, l, pMetadataRecord);
+                });
+                pMetadata.aFutureMetadata.push(pMetadataRecord);
             } else {
                 res = c_oSerConstants.ReadUnknown;
             }
             return res;
         };
-
-
         this.ReadMetadataTypes = function (type, length, aMetadataTypes) {
             var oThis = this;
             var res = c_oSerConstants.ReadOk;
@@ -8556,7 +8561,7 @@
             var res = c_oSerConstants.ReadOk;
             if (c_oSer_MetadataString.MetadataString === type) {
                 let pMetadataString = new AscCommonExcel.CMetadataString();
-                pMetadataString.m_oV = this.stream.GetString2LE(length);
+                pMetadataString.v = this.stream.GetString2LE(length);
                 aMetadataStrings.push(pMetadataString);
             } else {
                 res = c_oSerConstants.ReadUnknown;
@@ -8583,15 +8588,15 @@
             if (c_oSer_MdxMetadata.NameIndex === type) {
                 pMdx.n = this.stream.GetULong();
             } else if (c_oSer_MdxMetadata.FunctionTag === type) {
-                //pMdx.m_oF.SetValueFromByte(this.stream.GetUChar());
+                //pMdx.F.SetValueFromByte(this.stream.GetUChar());
                 pMdx.f = this.stream.GetUChar();
             } else if (c_oSer_MdxMetadata.MdxTuple === type) {
-                //READ1_DEF(length, res, this.ReadMdxTuple, pMdx.m_oMdxTuple.GetPovarer());
+                //READ1_DEF(length, res, this.ReadMdxTuple, pMdx.MdxTuple.GetPovarer());
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadMdx(t, l, pMdx.mdxTuple);
                 });
             } else if (c_oSer_MdxMetadata.MdxSet === type) {
-                //READ1_DEF(length, res, this.ReadMdxSet, pMdx.m_oMdxSet.GetPovarer());
+                //READ1_DEF(length, res, this.ReadMdxSet, pMdx.MdxSet.GetPovarer());
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadMdx(t, l, pMdx.mdxSet);
                 });
@@ -8600,7 +8605,7 @@
                     return oThis.ReadMdx(t, l, pMdx.mdxKPI);
                 });
             } else if (c_oSer_MdxMetadata.MdxMemeberProp === type) {
-                //READ1_DEF(length, res, this.ReadMdxMemeberProp, pMdx.m_oMdxMemeberProp.GetPovarer());
+                //READ1_DEF(length, res, this.ReadMdxMemeberProp, pMdx.MdxMemeberProp.GetPovarer());
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadMdx(t, l, pMdx.mdxMemeberProp);
                 });
@@ -8609,263 +8614,212 @@
             }
             return res;
         };
-        /*this.ReadMetadataBlocks = function ( type, long length, void* poResult)
-        {
-            OOX.Spreadsheet.CMetadataBlocks* pMetadataBlocks = static_cast<OOX.Spreadsheet.CMetadataBlocks*>(poResult);
-
+        //TODO CMetadataBlock -> CMetadataRecord array into array???
+        this.ReadMetadataBlocks = function (type, length, aMetadataBlocks) {
+            var oThis = this;
             var res = c_oSerConstants.ReadOk;
-            if (c_oSer_MetadataBlock.MetadataBlock === type)
-            {
-                OOX.Spreadsheet.CMetadataBlock* pMetadataBlock = new OOX.Spreadsheet.CMetadataBlock();
-                READ1_DEF(length, res, this.ReadMetadataBlock, pMetadataBlock);
-                pMetadataBlocks.m_arrItems.push_back(pMetadataBlock);
-            }
-            else
+            if (c_oSer_MetadataBlock.MetadataBlock === type) {
+                let pMetadataBlock = new AscCommonExcel.CMetadataBlock();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataBlock(t, l, pMetadataBlock);
+                });
+                aMetadataBlocks.push(pMetadataBlock);
+            } else {
                 res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadMetadataBlock = function (type, length, aMetadataBlocks) {
+            var oThis = this;
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_MetadataBlock.MetadataRecord === type) {
+                let pMetadataRecord = new AscCommonExcel.CMetadataRecord();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataRecord(t, l, pMetadataRecord);
+                });
+                aMetadataBlocks.push(pMetadataRecord);
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadMetadataRecord = function (type, length, pMetadataRecord) {
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_MetadataBlock.MetadataRecordType === type) {
+                pMetadataRecord.t = this.stream.GetULong();
+            } else if (c_oSer_MetadataBlock.MetadataRecordValue === type) {
+                pMetadataRecord.v = this.stream.GetULong();
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
+            return res;
+        };
+        this.ReadDynamicArrayProperties = function (type, length, pDynamicArrayProperties) {
+            var res = c_oSerConstants.ReadOk;
+            if (c_oSer_FutureMetadataBlock.DynamicArray === type) {
+                pDynamicArrayProperties.fDynamic = this.stream.GetBool();
+            } else if (c_oSer_FutureMetadataBlock.CollapsedArray === type) {
+                pDynamicArrayProperties.fCollapsed = this.stream.GetBool();
+            } else {
+                res = c_oSerConstants.ReadUnknown;
+            }
             return res;
         }
-        this.ReadMetadataBlock = function ( type, long length, void* poResult)
-        {
-            OOX.Spreadsheet.CMetadataBlock* pMetadataBlock = static_cast<OOX.Spreadsheet.CMetadataBlock*>(poResult);
-
+        this.ReadMetadataStringIndex = function (type, length, pStringIndex) {
             var res = c_oSerConstants.ReadOk;
-            if (c_oSer_MetadataBlock.MetadataRecord === type)
-            {
-                OOX.Spreadsheet.CMetadataRecord* pMetadataRecord = new OOX.Spreadsheet.CMetadataRecord();
-                READ1_DEF(length, res, this.ReadMetadataRecord, pMetadataRecord);
-                pMetadataBlock.m_arrItems.push_back(pMetadataRecord);
-            }
-            else
+            if (c_oSer_MetadataStringIndex.StringIsSet === type) {
+                pStringIndex.s = this.stream.GetULong();
+            } else if (c_oSer_MetadataStringIndex.IndexValue === type) {
+                pStringIndex.x = this.stream.GetULong();
+            } else {
                 res = c_oSerConstants.ReadUnknown;
+            }
             return res;
         }
-        this.ReadMetadataRecord = function ( type, long length, void* poResult)
-        {
-            OOX.Spreadsheet.CMetadataRecord* pMetadataRecord = static_cast<OOX.Spreadsheet.CMetadataRecord*>(poResult);
-
+        this.ReadMdxMemeberProp = function (type, length, pMdxMemeberProp) {
             var res = c_oSerConstants.ReadOk;
-            if (c_oSer_MetadataBlock.MetadataRecordType === type)
-            {
-                pMetadataRecord.m_oT = this.stream.GetULong();
-            }
-            else if (c_oSer_MetadataBlock.MetadataRecordValue === type)
-            {
-                pMetadataRecord.m_oV = this.stream.GetULong();
-            }
-            else
+            if (c_oSer_MetadataMemberProperty.NameIndex === type) {
+                pMdxMemeberProp.n = this.stream.GetULong();
+            } else if (c_oSer_MetadataMemberProperty.Index === type) {
+                pMdxMemeberProp.np = this.stream.GetULong();
+            } else {
                 res = c_oSerConstants.ReadUnknown;
+            }
             return res;
         }
-        this.ReadDynamicArrayProperties = function ( type, long length, void* poResult)
-        {
-            OOX.Spreadsheet.CDynamicArrayProperties* pDynamicArrayProperties = static_cast<OOX.Spreadsheet.CDynamicArrayProperties*>(poResult);
+        this.ReadMdxKPI = function (type, length, pMetadataRecord) {
             var res = c_oSerConstants.ReadOk;
-
-            if (c_oSer_FutureMetadataBlock.DynamicArray === type)
-            {
-                pDynamicArrayProperties.m_oFDynamic = this.stream.GetBool();
-            }
-            else if (c_oSer_FutureMetadataBlock.CollapsedArray === type)
-            {
-                pDynamicArrayProperties.m_oFCollapsed = this.stream.GetBool();
-            }
-            else
+            if (c_oSer_MetadataMdxKPI.NameIndex === type) {
+                pMetadataRecord.n = this.stream.GetULong();
+            } else if (c_oSer_MetadataMdxKPI.Index === type) {
+                pMetadataRecord.np = this.stream.GetULong();
+            } else if (c_oSer_MetadataMdxKPI.Property === type) {
+                //pMdxKPI.P.Init();
+                //pMdxKPI.P.SetValueFromByte(this.stream.GetUChar());
+                pMetadataRecord.op = this.stream.GetUChar();
+            } else {
                 res = c_oSerConstants.ReadUnknown;
+            }
             return res;
-        }
-        this.ReadMetadataStringIndex = function ( type, long length, void* poResult)
+        };
+        this.ReadMdxSet = function (type, length, pMdxSet)
         {
-            OOX.Spreadsheet.CMetadataStringIndex* pStringIndex = static_cast<OOX.Spreadsheet.CMetadataStringIndex*>(poResult);
-
-            var res = c_oSerConstants.ReadOk;
-            if (c_oSer_MetadataStringIndex.StringIsSet === type)
-            {
-                pStringIndex.m_oS = this.stream.GetULong();
-            }
-            else if (c_oSer_MetadataStringIndex.IndexValue === type)
-            {
-                pStringIndex.m_oX = this.stream.GetULong();
-            }
-            else
-                res = c_oSerConstants.ReadUnknown;
-            return res;
-        }
-        this.ReadMdxMemeberProp = function ( type, long length, void* poResult)
-        {
-            OOX.Spreadsheet.CMdxMemeberProp* pMdxMemeberProp = static_cast<OOX.Spreadsheet.CMdxMemeberProp*>(poResult);
-
-            var res = c_oSerConstants.ReadOk;
-            if (c_oSer_MetadataMemberProperty.NameIndex === type)
-            {
-                pMdxMemeberProp.m_oN = this.stream.GetULong();
-            }
-            else if (c_oSer_MetadataMemberProperty.Index === type)
-            {
-                pMdxMemeberProp.m_oNp = this.stream.GetULong();
-            }
-            else
-                res = c_oSerConstants.ReadUnknown;
-            return res;
-        }
-        this.ReadMdxKPI = function ( type, long length, void* poResult)
-        {
-            OOX.Spreadsheet.CMdxKPI* pMdxKPI = static_cast<OOX.Spreadsheet.CMdxKPI*>(poResult);
-
-            var res = c_oSerConstants.ReadOk;
-            if (c_oSer_MetadataMdxKPI.NameIndex === type)
-            {
-                pMdxKPI.m_oN = this.stream.GetULong();
-            }
-            else if (c_oSer_MetadataMdxKPI.Index === type)
-            {
-                pMdxKPI.m_oNp = this.stream.GetULong();
-            }
-            else if (c_oSer_MetadataMdxKPI.Property === type)
-            {
-                pMdxKPI.m_oP.Init();
-                pMdxKPI.m_oP.SetValueFromByte(this.stream.GetUChar());
-            }
-            else
-                res = c_oSerConstants.ReadUnknown;
-            return res;
-        }
-        this.ReadMdxSet = function ( type, long length, void* poResult)
-        {
-            OOX.Spreadsheet.CMdxSet* pMdxSet = static_cast<OOX.Spreadsheet.CMdxSet*>(poResult);
-
+            var oThis = this;
             var res = c_oSerConstants.ReadOk;
             if (c_oSer_MetadataMdxSet.Count === type)
             {
-                pMdxSet.m_oC = this.stream.GetULong();
+                pMdxSet.c = this.stream.GetULong();
             }
             else if (c_oSer_MetadataMdxSet.Index === type)
             {
-                pMdxSet.m_oNs = this.stream.GetULong();
+                pMdxSet.ns = this.stream.GetULong();
             }
             else if (c_oSer_MetadataMdxSet.SortOrder === type)
             {
-                pMdxSet.m_oO.Init();
-                pMdxSet.m_oO.SetValueFromByte(this.stream.GetUChar());
+                //pMdxSet.O.Init();
+                //pMdxSet.O.SetValueFromByte(this.stream.GetUChar());
+                pMdxSet.o = this.stream.GetUChar();
             }
             else if (c_oSer_MetadataMdxSet.MetadataStringIndex === type)
             {
-                OOX.Spreadsheet.CMetadataStringIndex* pMetadataStringIndex = new OOX.Spreadsheet.CMetadataStringIndex();
-                READ1_DEF(length, res, this.ReadMetadataStringIndex, pMetadataStringIndex);
-                pMdxSet.m_arrItems.push_back(pMetadataStringIndex);
+               let pMetadataStringIndex = new AscCommonExcel.CMetadataStringIndex();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataStringIndex(t, l, pMetadataStringIndex);
+                });
+                pMdxSet.metadataStringIndexes.push(pMetadataStringIndex);
             }
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;
         }
-        this.ReadMdxTuple = function ( type, long length, void* poResult)
-        {
-            OOX.Spreadsheet.CMdxTuple* pMdxTuple = static_cast<OOX.Spreadsheet.CMdxTuple*>(poResult);
-
+        this.ReadMdxTuple = function (type, length, pMdxTuple) {
+            var oThis = this;
             var res = c_oSerConstants.ReadOk;
-            if (c_oSer_MetadataMdxTuple.IndexCount === type)
-            {
-                pMdxTuple.m_oC = this.stream.GetULong();
-            }
-            else if (c_oSer_MetadataMdxTuple.StringIndex === type)
-            {
-                pMdxTuple.m_oSi = this.stream.GetULong();
-            }
-            else if (c_oSer_MetadataMdxTuple.CultureCurrency === type)
-            {
-                pMdxTuple.m_oCt = this.stream.GetString3(length);
-            }
-            else if (c_oSer_MetadataMdxTuple.NumFmtIndex === type)
-            {
-                pMdxTuple.m_oFi = this.stream.GetULong();
-            }
-            else if (c_oSer_MetadataMdxTuple.BackColor === type)
-            {
-                pMdxTuple.m_oBc = this.stream.GetULong();
-            }
-            else if (c_oSer_MetadataMdxTuple.ForeColor === type)
-            {
-                pMdxTuple.m_oFc = this.stream.GetULong();
-            }
-            else if (c_oSer_MetadataMdxTuple.Italic === type)
-            {
-                pMdxTuple.m_oI = this.stream.GetBool();
-            }
-            else if (c_oSer_MetadataMdxTuple.Bold === type)
-            {
-                pMdxTuple.m_oB = this.stream.GetBool();
-            }
-            else if (c_oSer_MetadataMdxTuple.Underline === type)
-            {
-                pMdxTuple.m_oU = this.stream.GetBool();
-            }
-            else if (c_oSer_MetadataMdxTuple.Strike === type)
-            {
-                pMdxTuple.m_oSt = this.stream.GetBool();
-            }
-            else if (c_oSer_MetadataMdxTuple.MetadataStringIndex === type)
-            {
-                OOX.Spreadsheet.CMetadataStringIndex* pMetadataStringIndex = new OOX.Spreadsheet.CMetadataStringIndex();
-                READ1_DEF(length, res, this.ReadMetadataStringIndex, pMetadataStringIndex);
-                pMdxTuple.m_arrItems.push_back(pMetadataStringIndex);
-            }
-            else
+            if (c_oSer_MetadataMdxTuple.IndexCount === type) {
+                pMdxTuple.c = this.stream.GetULong();
+            } else if (c_oSer_MetadataMdxTuple.StringIndex === type) {
+                pMdxTuple.si = this.stream.GetULong();
+            } else if (c_oSer_MetadataMdxTuple.CultureCurrency === type) {
+                pMdxTuple.ct = this.stream.GetString2LE(length);
+            } else if (c_oSer_MetadataMdxTuple.NumFmtIndex === type) {
+                pMdxTuple.fi = this.stream.GetULong();
+            } else if (c_oSer_MetadataMdxTuple.BackColor === type) {
+                pMdxTuple.bc = this.stream.GetULong();
+            } else if (c_oSer_MetadataMdxTuple.ForeColor === type) {
+                pMdxTuple.fc = this.stream.GetULong();
+            } else if (c_oSer_MetadataMdxTuple.Italic === type) {
+                pMdxTuple.i = this.stream.GetBool();
+            } else if (c_oSer_MetadataMdxTuple.Bold === type) {
+                pMdxTuple.b = this.stream.GetBool();
+            } else if (c_oSer_MetadataMdxTuple.Underline === type) {
+                pMdxTuple.u = this.stream.GetBool();
+            } else if (c_oSer_MetadataMdxTuple.Strike === type) {
+                pMdxTuple.st = this.stream.GetBool();
+            } else if (c_oSer_MetadataMdxTuple.MetadataStringIndex === type) {
+                let pMetadataStringIndex = new AscCommonExcel.CMetadataStringIndex();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadMetadataStringIndex(t, l, pMetadataStringIndex);
+                });
+                pMdxTuple.metadataStringIndexes.push(pMetadataStringIndex);
+            } else {
                 res = c_oSerConstants.ReadUnknown;
+            }
             return res;
-        }
-        this.ReadFutureMetadata = function ( type, long length, void* poResult)
+        };
+        this.ReadFutureMetadata = function (type, length, pCFutureMetadata)
         {
-            OOX.Spreadsheet.CFutureMetadata* pCFutureMetadata = static_cast<OOX.Spreadsheet.CFutureMetadata*>(poResult);
-
+            var oThis = this;
             var res = c_oSerConstants.ReadOk;
 
             if (c_oSer_FutureMetadataBlock.Name === type)
             {
-                pCFutureMetadata.m_oName = this.stream.GetString3(length);
+                pCFutureMetadata.name = this.stream.GetString2LE(length);
             }
             else if (c_oSer_FutureMetadataBlock.FutureMetadataBlock === type)
             {
-                OOX.Spreadsheet.CFutureMetadataBlock* pFutureMetadataBlock = new OOX.Spreadsheet.CFutureMetadataBlock();
-                READ1_DEF(length, res, this.ReadFutureMetadataBlock, pFutureMetadataBlock);
-                pCFutureMetadata.m_arrItems.push_back(pFutureMetadataBlock);
+                if (!pCFutureMetadata.futureMetadataBlocks) {
+                    pCFutureMetadata.futureMetadataBlocks = [];
+                }
+                let pFutureMetadataBlock = new AscCommonExcel.CFutureMetadataBlock();
+                res = this.bcr.Read1(length, function (t, l) {
+                    return oThis.ReadFutureMetadataBlock(t, l, pFutureMetadataBlock);
+                });
+                pCFutureMetadata.futureMetadataBlocks.push(pFutureMetadataBlock);
             }
             else
                 res = c_oSerConstants.ReadUnknown;
             return res;
-        }
-        this.ReadFutureMetadataBlock = function ( type, long length, void* poResult)
+        };
+        this.ReadFutureMetadataBlock = function (type, length, pFutureMetadataBlock)
         {
-            OOX.Spreadsheet.CFutureMetadataBlock* pFutureMetadataBlock = static_cast<OOX.Spreadsheet.CFutureMetadataBlock*>(poResult);
-
             var res = c_oSerConstants.ReadOk;
-            if (c_oSer_FutureMetadataBlock.RichValueBlock === type)
+            /*if (c_oSer_FutureMetadataBlock.RichValueBlock === type)
             {
-                if (false === pFutureMetadataBlock.m_oExtLst.IsInit()) pFutureMetadataBlock.m_oExtLst.Init();
+                if (false === pFutureMetadataBlock.ExtLst.IsInit()) pFutureMetadataBlock.ExtLst.Init();
 
                 OOX.Drawing.COfficeArtExtension* pExt = new OOX.Drawing.COfficeArtExtension();
                 pExt.m_sUri = L"{3e2802c4-a4d2-4d8b-9148-e3be6c30e623}";
-                pExt.m_oRichValueBlock.Init();
-                pExt.m_oRichValueBlock.m_oI = this.stream.GetULong();
+                pExt.RichValueBlock.Init();
+                pExt.RichValueBlock.I = this.stream.GetULong();
 
-                pFutureMetadataBlock.m_oExtLst.m_arrExt.push_back(pExt);
+                pFutureMetadataBlock.ExtLst.m_arrExt.push_back(pExt);
             }
             else if (c_oSer_FutureMetadataBlock.DynamicArrayProperties === type)
             {
-                if (false === pFutureMetadataBlock.m_oExtLst.IsInit()) pFutureMetadataBlock.m_oExtLst.Init();
+                if (false === pFutureMetadataBlock.ExtLst.IsInit()) pFutureMetadataBlock.ExtLst.Init();
 
                 OOX.Drawing.COfficeArtExtension* pExt = new OOX.Drawing.COfficeArtExtension();
                 pExt.m_sUri = L"{bdbb8cdc-fa1e-496e-a857-3c3f30c029c3}";
-                pExt.m_oDynamicArrayProperties.Init();
+                pExt.DynamicArrayProperties.Init();
 
-                READ1_DEF(length, res, this.ReadDynamicArrayProperties, pExt.m_oDynamicArrayProperties.GetPovarer());
-                pFutureMetadataBlock.m_oExtLst.m_arrExt.push_back(pExt);
+                READ1_DEF(length, res, this.ReadDynamicArrayProperties, pExt.DynamicArrayProperties.GetPovarer());
+                pFutureMetadataBlock.ExtLst.m_arrExt.push_back(pExt);
             }
             else
-                res = c_oSerConstants.ReadUnknown;
+                res = c_oSerConstants.ReadUnknown;*/
             return res;
-        }*/
-        
-        
-        
+        };
+
         this.ReadWorkbookPr = function(type, length, WorkbookPr)
         {
             var res = c_oSerConstants.ReadOk;
@@ -9285,8 +9239,8 @@
                 oNewWorksheet.aFormulaExt = [];
                 var DrawingDocument = oNewWorksheet.getDrawingDocument();
 				//TODO при copy/paste в word из excel необходимо подменить DrawingDocument из word - пересмотреть правку!
-				if(typeof editor != "undefined" && editor && editor.WordControl && editor.WordControl.m_oLogicDocument && editor.WordControl.m_oLogicDocument.DrawingDocument) {
-                   this.wb.DrawingDocument = editor.WordControl.m_oLogicDocument.DrawingDocument;
+				if(typeof editor != "undefined" && editor && editor.WordControl && editor.WordControl.LogicDocument && editor.WordControl.LogicDocument.DrawingDocument) {
+                   this.wb.DrawingDocument = editor.WordControl.LogicDocument.DrawingDocument;
                 }
 
 
@@ -9395,7 +9349,7 @@
                 oBinary_TableReader = new Binary_TableReader(this.stream, this.InitOpenManager, oWorksheet);
                 oBinary_TableReader.Read(length, oWorksheet.TableParts);
             } else if ( c_oSerWorksheetsTypes.Comments == type
-                && !(typeof editor !== "undefined" && editor.WordControl && editor.WordControl.m_oLogicDocument && Array.isArray(editor.WordControl.m_oLogicDocument.Slides))) {
+                && !(typeof editor !== "undefined" && editor.WordControl && editor.WordControl.LogicDocument && Array.isArray(editor.WordControl.LogicDocument.Slides))) {
                 res = this.bcr.Read1(length, function(t,l){
                     return oThis.ReadComments(t,l, oWorksheet);
                 });
