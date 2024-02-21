@@ -440,7 +440,12 @@ function (window, undefined)
 	var _safe_eval_closure = new Function("Function", "Api", "window", "alert", "document", "XMLHttpRequest", "self", "globalThis", "value", "return eval(\"\\\"use strict\\\";\\r\\n\" + value)");
 	window['AscCommon'].safePluginEval = function(value) {
 		Object.getPrototypeOf(function(){}).constructor = function(){};
-		return _safe_eval_closure.call(null, {}, window.g_asc_plugins.api, {}, function(){}, {}, customXMLHttpRequest, {}, {}, value);
+		const Api = window.g_asc_plugins.api;
+		// check if we add a custom function into this macros we will parse a jsdoc
+		if (value.includes('AddCustomFunction') && value.includes('@customfunction')) {
+			Api.parsedJSDoc = AscCommon.parseJSDoc(value);
+		}
+		return _safe_eval_closure.call(null, {}, Api, {}, function(){}, {}, customXMLHttpRequest, {}, {}, value);
 	};
 
 

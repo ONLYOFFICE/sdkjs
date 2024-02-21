@@ -381,6 +381,13 @@
 	};
 
 	Api.prototype.AddCustomFunction = function (func, options) {
+		// get parsedJSDoc from a macros (we receive it from the Api class)
+		const parsedJSDoc = this.parsedJSDoc;
+		// remove it from this class and use it from the variable
+		delete this.parsedJSDoc;
+		console.log(parsedJSDoc);
+
+		// now we have to decide what we're going to use (make the priority order) - parsedJSDoc or options
 
 		//1. jsdoc example, js excel api
 		/**
