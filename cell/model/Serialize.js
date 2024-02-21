@@ -4128,6 +4128,565 @@
 			}
 		};
 
+        
+        
+        
+        //****write metadata****
+        this.WriteMetadata = function (pMetadata) {
+            if (!pMetadata) {
+                return;
+            }
+
+            var oThis = this;
+            if (pMetadata.metadataTypes) {
+                this.bs.WriteItem(c_oSer_Metadata.MetadataTypes, function () {
+                    oThis.WriteMetadataTypes(pMetadata.metadataTypes);
+                });
+            }
+            if (pMetadata.metadataTypes) {
+                this.bs.WriteItem(c_oSer_Metadata.MetadataStrings, function () {
+                    oThis.WriteMetadataStrings(pMetadata.metadataTypes);
+                });
+            }
+            if (pMetadata.mdxMetadata) {
+                this.bs.WriteItem(c_oSer_Metadata.MdxMetadata, function () {
+                    oThis.WriteMdxMetadata(pMetadata.mdxMetadata);
+                });
+            }
+            if (pMetadata.cellMetadata) {
+                this.bs.WriteItem(c_oSer_Metadata.CellMetadata, function () {
+                    oThis.WriteMetadataBlocks(pMetadata.cellMetadata);
+                });
+            }
+            if (pMetadata.valueMetadata) {
+                this.bs.WriteItem(c_oSer_Metadata.ValueMetadata, function () {
+                    oThis.WriteMetadataBlocks(pMetadata.valueMetadata);
+                });
+            }
+            if (pMetadata.aFutureMetadata) {
+                for (let i = 0; i < pMetadata.aFutureMetadata.length; ++i) {
+                    this.bs.WriteItem(c_oSer_Metadata.FutureMetadata, function () {
+                        oThis.WriteFutureMetadata(pMetadata.aFutureMetadata[i]);
+                    });
+                }
+            }
+        };
+
+        /*this.WriteMetadataTypes(CMetadataTypes* pMetadataTypes)
+        {
+            if (!pMetadataTypes) return;
+
+            for (size_t i = 0; i < pMetadataTypes->m_arrItems.size(); ++i)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.MetadataType);
+                WriteMetadataType(pMetadataTypes->m_arrItems[i]);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+        }
+        this.WriteMetadataType(CMetadataType* pMetadataType)
+        {
+            if (!pMetadataType) return;
+
+            if (pMetadataType.Name)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.Name);
+                m_oBcw.m_oStream.WriteStringW3(*pMetadataType.Name);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.MinSupportedVersion)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.MinSupportedVersion);
+                m_oBcw.m_oStream.WriteULONG(*pMetadataType.MinSupportedVersion);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.GhostRow)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.GhostRow);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.GhostRow);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.GhostCol)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.GhostCol);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.GhostCol);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.Edit)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.Edit);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.Edit);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.Delete)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.Delete);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.Delete);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.Copy)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.Copy);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.Copy);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.PasteAll)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.PasteAll);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.PasteAll);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.PasteFormulas)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.PasteFormulas);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.PasteFormulas);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.PasteValues)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.PasteValues);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.PasteValues);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.PasteFormats)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.PasteFormats);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.PasteFormats);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.PasteComments)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.PasteComments);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.PasteComments);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.PasteDataValidation)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.PasteDataValidation);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.PasteDataValidation);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.PasteBorders)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.PasteBorders);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.PasteBorders);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.PasteColWidths)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.PasteColWidths);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.PasteColWidths);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.PasteNumberFormats)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.PasteNumberFormats);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.PasteNumberFormats);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.Merge)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.Merge);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.Merge);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.SplitFirst)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.SplitFirst);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.SplitFirst);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.SplitAll)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.SplitAll);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.SplitAll);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.RowColShift)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.RowColShift);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.RowColShift);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.ClearAll)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.ClearAll);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.ClearAll);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.ClearFormats)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.ClearFormats);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.ClearFormats);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.ClearContents)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.ClearContents);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.ClearContents);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.ClearComments)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.ClearComments);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.ClearComments);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.Assign)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.Assign);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.Assign);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.Coerce)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.Coerce);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.Coerce);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataType.CellMeta)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataType.CellMeta);
+                m_oBcw.m_oStream.WriteBOOL(*pMetadataType.CellMeta);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+        }
+        this.WriteMetadataStrings(CMetadataStrings* pMetadataStrings)
+        {
+            if (!pMetadataStrings) return;
+
+            for (size_t i = 0; i < pMetadataStrings->m_arrItems.size(); ++i)
+            {
+                if ((pMetadataStrings->m_arrItems[i]) && (pMetadataStrings->m_arrItems[i].V))
+                {
+                    int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataString.MetadataString);
+                    m_oBcw.m_oStream.WriteStringW3(pMetadataStrings->m_arrItems[i].V.get());
+                    m_oBcw.WriteItemWithLengthEnd(nCurPos);
+                }
+            }
+        }
+        this.WriteMdxMetadata(CMdxMetadata* pMdxMetadata)
+        {
+            if (!pMdxMetadata) return;
+
+            for (size_t i = 0; i < pMdxMetadata->m_arrItems.size(); ++i)
+            {
+                if (!pMdxMetadata->m_arrItems[i]) continue;
+
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MdxMetadata.Mdx);
+                WriteMdx(pMdxMetadata->m_arrItems[i]);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+        }
+        this.WriteMdx(CMdx* pMdx)
+        {
+            if (!pMdx) return;
+
+            if (pMdx.N)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MdxMetadata.NameIndex);
+                m_oBcw.m_oStream.WriteULONG(*pMdx.N);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdx.F)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MdxMetadata.NameIndex);
+                m_oBcw.m_oStream.WriteBYTE(pMdx.F->GetValue());
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdx.MdxTuple)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MdxMetadata.MdxTuple);
+                WriteMdxTuple(pMdx.MdxTuple.GetPointer());
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdx.MdxSet)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MdxMetadata.MdxSet);
+                WriteMdxSet(pMdx.MdxSet.GetPointer());
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdx.CMdxKPI)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MdxMetadata.MdxKPI);
+                WriteMdxKPI(pMdx.CMdxKPI.GetPointer());
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdx.MdxMemeberProp)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MdxMetadata.MdxMemeberProp);
+                WriteMdxMemeberProp(pMdx.MdxMemeberProp.GetPointer());
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+        }
+        this.WriteMdxTuple(CMdxTuple* pMdxTuple)
+        {
+            if (!pMdxTuple) return;
+
+            if (pMdxTuple.C)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxTuple.IndexCount);
+                m_oBcw.m_oStream.WriteULONG(*pMdxTuple.C);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdxTuple.Ct)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxTuple.CultureCurrency);
+                m_oBcw.m_oStream.WriteStringW3(*pMdxTuple.Ct);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdxTuple.Si)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxTuple.StringIndex);
+                m_oBcw.m_oStream.WriteULONG(*pMdxTuple.Si);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdxTuple.Fi)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxTuple.NumFmtIndex);
+                m_oBcw.m_oStream.WriteULONG(*pMdxTuple.Fi);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdxTuple.Bc)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxTuple.BackColor);
+                m_oBcw.m_oStream.WriteULONG(*pMdxTuple.Bc);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdxTuple.Fc)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxTuple.ForeColor);
+                m_oBcw.m_oStream.WriteULONG(*pMdxTuple.Fc);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdxTuple.I)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxTuple.Italic);
+                m_oBcw.m_oStream.WriteBOOL(*pMdxTuple.I);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdxTuple.B)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxTuple.Bold);
+                m_oBcw.m_oStream.WriteBOOL(*pMdxTuple.B);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdxTuple.U)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxTuple.Underline);
+                m_oBcw.m_oStream.WriteBOOL(*pMdxTuple.U);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdxTuple.St)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxTuple.Strike);
+                m_oBcw.m_oStream.WriteBOOL(*pMdxTuple.St);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            for (size_t i = 0; i < pMdxTuple->m_arrItems.size(); ++i)
+            {
+                if (!pMdxTuple->m_arrItems[i]) continue;
+
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxTuple.MetadataStringIndex);
+                WriteMetadataStringIndex(pMdxTuple->m_arrItems[i]);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+        }
+        this.WriteMetadataStringIndex(CMetadataStringIndex* pStringIndex)
+        {
+            if (!pStringIndex) return;
+
+            if (pStringIndex.X)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataStringIndex.IndexValue);
+                m_oBcw.m_oStream.WriteULONG(*pStringIndex.X);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pStringIndex.S)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataStringIndex.StringIsSet);
+                m_oBcw.m_oStream.WriteULONG(*pStringIndex.S);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+        }
+        this.WriteMdxSet(CMdxSet* pMdxSet)
+        {
+            if (!pMdxSet) return;
+
+            if (pMdxSet.C)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxSet.Count);
+                m_oBcw.m_oStream.WriteULONG(*pMdxSet.C);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdxSet.Ns)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxSet.Index);
+                m_oBcw.m_oStream.WriteULONG(*pMdxSet.Ns);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdxSet.O)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxSet.SortOrder);
+                m_oBcw.m_oStream.WriteBYTE(pMdxSet.O->GetValue());
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            for (size_t i = 0; i < pMdxSet->m_arrItems.size(); ++i)
+            {
+                if (!pMdxSet->m_arrItems[i]) continue;
+
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxSet.MetadataStringIndex);
+                WriteMetadataStringIndex(pMdxSet->m_arrItems[i]);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+        }
+        this.WriteMdxKPI(CMdxKPI* pMdxKPI)
+        {
+            if (!pMdxKPI) return;
+
+            if (pMdxKPI.N)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxKPI.NameIndex);
+                m_oBcw.m_oStream.WriteULONG(*pMdxKPI.N);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdxKPI.Np)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxKPI.Index);
+                m_oBcw.m_oStream.WriteULONG(*pMdxKPI.Np);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdxKPI.P)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMdxKPI.Property);
+                m_oBcw.m_oStream.WriteBYTE(pMdxKPI.P->GetValue());
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+        }
+        this.WriteMdxMemeberProp(CMdxMemeberProp* pMdxMemeberProp)
+        {
+            if (!pMdxMemeberProp) return;
+
+            if (pMdxMemeberProp.N)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMemberProperty.NameIndex);
+                m_oBcw.m_oStream.WriteULONG(*pMdxMemeberProp.N);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMdxMemeberProp.Np)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMemberProperty.Index);
+                m_oBcw.m_oStream.WriteULONG(*pMdxMemeberProp.Np);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+        }
+        this.WriteMetadataBlocks(CMetadataBlocks* pMetadataBlocks)
+        {
+            if (!pMetadataBlocks) return;
+
+            for (size_t i = 0; i < pMetadataBlocks->m_arrItems.size(); ++i)
+            {
+                if (!pMetadataBlocks->m_arrItems[i]) continue;
+
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataBlock.MetadataBlock);
+                WriteMetadataBlock(pMetadataBlocks->m_arrItems[i]);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+        }
+        this.WriteMetadataBlock(CMetadataBlock* pMetadataBlock)
+        {
+            if (!pMetadataBlock) return;
+
+            for (size_t i = 0; i < pMetadataBlock->m_arrItems.size(); ++i)
+            {
+                if (!pMetadataBlock->m_arrItems[i]) continue;
+
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataBlock.MetadataRecord);
+                WriteMetadataRecord(pMetadataBlock->m_arrItems[i]);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+        }
+        this.WriteMetadataRecord(CMetadataRecord* pMetadataRecord)
+        {
+            if (!pMetadataRecord) return;
+
+            if (pMetadataRecord.T)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataBlock.MetadataRecordType);
+                m_oBcw.m_oStream.WriteULONG(*pMetadataRecord.T);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            if (pMetadataRecord.V)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataBlock.MetadataRecordValue);
+                m_oBcw.m_oStream.WriteULONG(*pMetadataRecord.V);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+        }
+        this.WriteFutureMetadataBlock(CFutureMetadataBlock* pFutureMetadataBlock)
+        {
+            if (!pFutureMetadataBlock) return;
+            if (false == pFutureMetadataBlock.ExtLst) return;
+
+            for (size_t i = 0; i < pFutureMetadataBlock.ExtLst->m_arrExt.size(); ++i)
+            {
+                if (!pFutureMetadataBlock.ExtLst->m_arrExt[i]) continue;
+
+                if (pFutureMetadataBlock.ExtLst->m_arrExt[i].DynamicArrayProperties)
+                {
+                    int nCurPos = m_oBcw.WriteItemStart(c_oSer_FutureMetadataBlock.DynamicArrayProperties);
+                    {
+                        if (pFutureMetadataBlock.ExtLst->m_arrExt[i].DynamicArrayProperties.FDynamic)
+                        {
+                            int nCurPos2 = m_oBcw.WriteItemStart(c_oSer_FutureMetadataBlock.DynamicArray);
+                            m_oBcw.m_oStream.WriteBOOL(*pFutureMetadataBlock.ExtLst->m_arrExt[i].DynamicArrayProperties.FDynamic);
+                            m_oBcw.WriteItemWithLengthEnd(nCurPos2);
+
+                        }
+                        if (pFutureMetadataBlock.ExtLst->m_arrExt[i].DynamicArrayProperties.FCollapsed)
+                        {
+                            int nCurPos2 = m_oBcw.WriteItemStart(c_oSer_FutureMetadataBlock.CollapsedArray);
+                            m_oBcw.m_oStream.WriteBOOL(*pFutureMetadataBlock.ExtLst->m_arrExt[i].DynamicArrayProperties.FCollapsed);
+                            m_oBcw.WriteItemWithLengthEnd(nCurPos2);
+                        }
+                    }
+                    m_oBcw.WriteItemWithLengthEnd(nCurPos);
+                }
+                if ((pFutureMetadataBlock.ExtLst->m_arrExt[i].RichValueBlock) &&
+                (pFutureMetadataBlock.ExtLst->m_arrExt[i].RichValueBlock.I))
+                {
+                    int nCurPos = m_oBcw.WriteItemStart(c_oSer_FutureMetadataBlock.RichValueBlock);
+                    m_oBcw.m_oStream.WriteULONG(*pFutureMetadataBlock.ExtLst->m_arrExt[i].RichValueBlock.I);
+                    m_oBcw.WriteItemWithLengthEnd(nCurPos);
+                }
+            }
+        }
+        this.WriteFutureMetadata(CFutureMetadata* pFutureMetadata)
+        {
+            if (!pFutureMetadata) return;
+
+            if (pFutureMetadata.Name)
+            {
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_FutureMetadataBlock.Name);
+                m_oBcw.m_oStream.WriteStringW3(*pFutureMetadata.Name);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+            for (size_t i = 0; i < pFutureMetadata->m_arrItems.size(); ++i)
+            {
+                if (!pFutureMetadata->m_arrItems[i]) continue;
+
+                int nCurPos = m_oBcw.WriteItemStart(c_oSer_FutureMetadataBlock.FutureMetadataBlock);
+                WriteFutureMetadataBlock(pFutureMetadata->m_arrItems[i]);
+                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+            }
+        }*/
+        
+        
+        
+        
+        
+        
+        
+        
         this.WriteComments = function(aComments) {
             var t = this;
             for (var i = 0; i < aComments.length; ++i) {
@@ -8822,7 +9381,7 @@
                 pExt.RichValueBlock.I = this.stream.GetULong();*/
 
                 let pExt = new AscCommonExcel.CRichValueBlock();
-                pExt.RichValueBlock.i = this.stream.GetULong();
+                pExt.i = this.stream.GetULong();
                 pFutureMetadataBlock.extLst.push(pExt);
             }
             else if (c_oSer_FutureMetadataBlock.DynamicArrayProperties === type)
