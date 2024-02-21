@@ -2768,6 +2768,9 @@ var CPresentation = CPresentation || function(){};
         return;
     };
     CPDFDoc.prototype.RemoveSelection = function() {};
+    
+    CPDFDoc.prototype.GetDocPosType = function() {};
+    
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Extension required for CTextBoxContent
