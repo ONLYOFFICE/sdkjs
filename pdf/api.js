@@ -206,6 +206,7 @@
 		let oDoc			= this.DocumentRenderer.getPDFDoc();
 		let oField			= oDoc.activeForm;
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
+		let oActiveTxShape	= oDoc.activeTextShape;
 
 		if (oField && oField.IsCanEditText()) {
 			if (oField.content.IsSelectionUse()) {
@@ -220,6 +221,13 @@
 				oDoc.UpdateCopyCutState();
 			}
 		}
+		else if (oActiveTxShape && oActiveTxShape.IsInTextBox()) {
+			let oContent = oActiveTxShape.GetDocContent();
+			if (oContent.IsSelectionUse()) {
+				oActiveTxShape.Remove(-1);
+				oDoc.UpdateCopyCutState();
+			}
+		}
 	};
 	PDFEditorApi.prototype.asc_PasteData = function(_format, data1, data2, text_data, useCurrentPoint, callback, checkLocks) {
 		if (!this.DocumentRenderer)
@@ -229,6 +237,7 @@
 		let data			= text_data || data1;
 		let oActiveForm		= oDoc.activeForm;
 		let oActiveAnnot	= oDoc.mouseDownAnnot;
+		let oActiveTxShape	= oDoc.activeTextShape;
 
 		if (!data)
 			return;
@@ -236,16 +245,21 @@
 		if (oActiveForm && (oActiveForm.GetType() != AscPDF.FIELD_TYPES.text || oActiveForm.IsMultiline() == false))
 			data = data.trim().replace(/[\n\r]/g, ' ');
 
+		let aChars = [];
+		for (let i = 0; i < data.length; i++)
+			aChars.push(data[i].charCodeAt(0));
+
 		if (oActiveForm && oActiveForm.IsCanEditText()) {
-			let aChars = [];
-			for (let i = 0; i < data.length; i++)
-				aChars.push(data[i].charCodeAt(0));
-			
 			oActiveForm.EnterText(aChars);
 			oDoc.UpdateCopyCutState();
 		}
 		else if (oActiveAnnot && oActiveAnnot.IsFreeText() && oActiveAnnot.IsInTextBox()) {
-			oActiveAnnot.EnterText(text);
+			oActiveAnnot.EnterText(aChars);
+			oDoc.UpdateCopyCutState();
+		}
+		else if (oActiveTxShape && oActiveTxShape.IsInTextBox()) {
+			oActiveAnnot.EnterText(aChars);
+			oDoc.UpdateCopyCutState();
 		}
 	};
 	PDFEditorApi.prototype.asc_setAdvancedOptions = function(idOption, option) {
@@ -398,9 +412,6 @@
 		if (!oDoc || !viewer || (!oActiveForm && !oActiveAnnot && !oActiveTxShape))
 			return false;
 
-		oDrDoc.showTarget(true);
-		oDrDoc.TargetStart();
-
 		let oContent;
 		if (oActiveForm && oDoc.checkFieldFont(oActiveForm) && oActiveForm.IsCanEditText()) {
 			oActiveForm.EnterText(text);
@@ -410,13 +421,18 @@
 			oActiveAnnot.EnterText(text);
 			oContent = oActiveAnnot.GetDocContent();
 		}
-		else if (oActiveTxShape) {
+		else if (oActiveTxShape && oActiveTxShape.IsInTextBox()) {
 			oActiveTxShape.EnterText(text);
 			oContent = oActiveTxShape.GetDocContent();
 		}
 		
-		if (oContent && oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
-			oDrDoc.TargetEnd();
+		if (oContent) {
+			oDrDoc.showTarget(true);
+			oDrDoc.TargetStart();
+
+			if (oContent.IsSelectionUse() && false == oContent.IsSelectionEmpty())
+				oDrDoc.TargetEnd();
+		}
 
 		return true;
 	};

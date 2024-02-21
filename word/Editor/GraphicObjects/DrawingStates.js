@@ -195,7 +195,6 @@ StartAddNewShape.prototype =
                 let oViewer = editor.getDocumentRenderer();
                 if (oLogicDocument.currInkInDrawingProcess && oLogicDocument.currInkInDrawingProcess.GetPage() == this.pageIndex) {
                     oLogicDocument.currInkInDrawingProcess.AddPath(oTrack.arrPoint);
-                    oViewer._paint();
                 }
                 else {
                     let nScaleY = oViewer.drawingPages[this.pageIndex].H / oViewer.file.pages[this.pageIndex].H / oViewer.zoom;
@@ -223,7 +222,6 @@ StartAddNewShape.prototype =
                     oInkAnnot.AddToRedraw();
                     shape.recalculate();
 
-                    oViewer._paint();
                     oLogicDocument.currInkInDrawingProcess = oInkAnnot;
                 }
             }
@@ -785,7 +783,7 @@ RotateState.prototype =
             if (Asc.editor.isPdfEditor()) {
                 let oViewer = editor.getDocumentRenderer();
                 let oDoc = oViewer.getPDFDoc();
-
+                oDoc.SetGlobalHistory();
                 for(i = 0; i < aTracks.length; ++i)
                 {   
                     var oTrack  = aTracks[i];
@@ -802,7 +800,7 @@ RotateState.prototype =
                             oDoc.History.Add(new CChangesPDFInkFlipH(oTrack.originalObject, oTrack.originalFlipH, oTrack.resizedflipH));
 
                         // для аннотации линии свой расчет ректа и точек, потому что меняем саму геометрию при редактировании
-                        if (oTrack.originalObject.IsLine()) {
+                        else if (oTrack.originalObject.IsAnnot() && oTrack.originalObject.IsLine()) {
                             
                             let aPaths = oTrack.geometry.pathLst[0].ArrPathCommand;
 
@@ -823,7 +821,7 @@ RotateState.prototype =
 
                             oDoc.TurnOnHistory();
                         }
-                        else if (oTrack.originalObject.IsPolygon()) {
+                        else if (oTrack.originalObject.IsAnnot() && oTrack.originalObject.IsPolygon()) {
                             // меняем только редактируемую точку в массиве vertices
                             var pageObject  = oViewer.getPageByCoords(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
                             let aVertices   = oTrack.originalObject.GetVertices().slice();
@@ -864,7 +862,7 @@ RotateState.prototype =
 
                             oTrack.originalObject.SetRect(aRect);
                         }
-                        else if (oTrack.originalObject.IsPolyLine()) {
+                        else if (oTrack.originalObject.IsAnnot() && oTrack.originalObject.IsPolyLine()) {
                             // меняем только редактируемую точку в массиве vertices
                             var pageObject  = oViewer.getPageByCoords(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
                             let aVertices   = oTrack.originalObject.GetVertices().slice();
@@ -899,9 +897,17 @@ RotateState.prototype =
                         
                         oDoc.TurnOffHistory();
                     }
+                    // pdf text shape
+                    else if (oTrack instanceof AscFormat.MoveShapeImageTrack || oTrack instanceof AscFormat.RotateTrackShapeImage) {
+                        oDoc.CreateNewHistoryPoint();
+                        let aRect = [bounds.posX * g_dKoef_mm_to_pix, bounds.posY * g_dKoef_mm_to_pix, (bounds.posX + bounds.extX) * g_dKoef_mm_to_pix, (bounds.posY + bounds.extY) * g_dKoef_mm_to_pix];
+                        oTrack.originalObject.SetRect(aRect);
+                        if (oTrack.angle != undefined)
+                            oTrack.originalObject.SetRot(oTrack.angle);
+                        oDoc.TurnOffHistory();
+                    }
                     
                     oTrack.originalObject.AddToRedraw();
-                    editor.getDocumentRenderer()._paint();
                 }
 
                 this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
@@ -1927,7 +1933,6 @@ MoveInGroupState.prototype =
         }
         if (isPdf) {
             let oViewer = Asc.editor.getDocumentRenderer();
-            oViewer._paint();
             oViewer.onUpdateOverlay();
         }
         

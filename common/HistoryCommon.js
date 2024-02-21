@@ -1744,6 +1744,7 @@
 	window['AscDFH'].historyitem_type_Pdf_Line				= 2216 << 16;
 	window['AscDFH'].historyitem_type_Pdf_List_Form			= 2217 << 16;
 	window['AscDFH'].historyitem_Pdf_FreeText				= 2218 << 16;
+	window['AscDFH'].historyitem_Pdf_TextShape				= 2219 << 16;
 
 	
 
@@ -4059,6 +4060,15 @@
 	// annot line
 	AscDFH.historyitem_Pdf_Line_Points			= AscDFH.historyitem_type_Pdf_Line | 1;
 	
+	//------------------------------------------------------------------------------------------------------------------
+	// Типы изменений в PDF Text Shape 
+	//------------------------------------------------------------------------------------------------------------------
+
+	AscDFH.historyitem_Pdf_TxShape_Rect	= AscDFH.historyitem_Pdf_TextShape | 0;
+	AscDFH.historyitem_Pdf_TxShape_Page	= AscDFH.historyitem_Pdf_TextShape | 1;
+	AscDFH.historyitem_Pdf_TxShape_RC	= AscDFH.historyitem_Pdf_TextShape | 2;
+	AscDFH.historyitem_Pdf_TxShape_Rot	= AscDFH.historyitem_Pdf_TextShape | 2;
+
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CPDFDoc
 	//------------------------------------------------------------------------------------------------------------------
