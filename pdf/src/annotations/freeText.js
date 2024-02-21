@@ -822,6 +822,7 @@
             
             if (this.IsNeedUpdateRC()) {
                 oDoc.History.Add(new CChangesPDFFreeTextRC(this, this.GetRichContents(), this.GetRichContents(true)));
+                this.SetNeedUpdateRC(false);
             }
 
             oDoc.TurnOffHistory();
@@ -844,8 +845,8 @@
                 let sText = oRun.GetText();
                 if (sText) {
                     aRCInfo.push({
-                        "bold":             oRun.GetBold(),
-                        "italic":           oRun.GetItalic(),
+                        "bold":             oRun.Get_Bold(),
+                        "italic":           oRun.Get_Italic(),
                         "strikethrough":    oRun.Get_Strikeout(),
                         "underlined":       oRun.Get_Underline(),
                         "size":             oRun.Get_FontSize(),

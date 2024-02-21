@@ -1862,8 +1862,12 @@
 		};
 		this.getPageTextShapeByMouse = function(bGetHidden)
 		{
-			let oDoc = this.getPDFDoc();
-			let oDrDoc = oDoc.GetDrawingDocument();
+			let oDoc	= this.getPDFDoc();
+			let oDrDoc	= oDoc.GetDrawingDocument();
+			let oPos	= oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+			let X       = oPos.X;
+			let Y       = oPos.Y;
+
 			var pageObject = this.getPageByCoords(AscCommon.global_mouseEvent.X - this.x, AscCommon.global_mouseEvent.Y - this.y);
 			if (!pageObject)
 				return null;
@@ -1872,17 +1876,14 @@
 			
 			if (page.textShapes)
 			{
+				if (oDoc.activeTextShape && (oDoc.activeTextShape.hitInInnerArea(X, Y) || oDoc.activeTextShape.hitInBoundingRect(X, Y) || oDoc.activeTextShape.hitToHandles(X, Y) !== -1)) {
+					return oDoc.activeTextShape;
+				}
 				for (var i = page.textShapes.length -1; i >= 0; i--)
 				{
-					let oTextShape	= page.textShapes[i];
-					let aOrigRect	= oTextShape.GetOrigRect();
+					let oTextShape = page.textShapes[i];
 
-					let nWidth		= (aOrigRect[2] - aOrigRect[0]);
-					let nHeight		= (aOrigRect[3] - aOrigRect[1]);
-					
-					if (pageObject.x >= aOrigRect[0] && pageObject.x <= aOrigRect[0] + nWidth &&
-						pageObject.y >= aOrigRect[1] && pageObject.y <= aOrigRect[1] + nHeight)
-					{
+					if (oTextShape.hitInInnerArea(X, Y) || oTextShape.hitInBoundingRect(X, Y) || oTextShape.hitToHandles(X, Y) != -1) {
 						return oTextShape;
 					}
 				}
@@ -2107,7 +2108,7 @@
 
 			if (oThis.MouseHandObject)
 			{
-				if (oThis.MouseHandObject.Active && !oDoc.mouseDownAnnot && !oThis.Api.isInkDrawerOn())
+				if (oThis.MouseHandObject.Active && !oDoc.activeTextShape && !oDoc.mouseDownAnnot && !oThis.Api.isInkDrawerOn())
 				{
 					// двигаем рукой
 					oThis.setCursorType(AscCommon.Cursors.Grabbing);
@@ -2158,7 +2159,7 @@
 
 				if (oThis.isMouseDown)
 				{
-					if (oThis.isMouseMoveBetweenDownUp && !oDoc.activeForm && (!oDoc.mouseDownAnnot || (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsTextMarkup() == true)) && !oThis.Api.isInkDrawerOn())
+					if (oThis.isMouseMoveBetweenDownUp && !oDoc.activeTextShape && !oDoc.activeForm && (!oDoc.mouseDownAnnot || (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsTextMarkup() == true)) && !oThis.Api.isInkDrawerOn())
 					{
 						// нажатая мышка - курсор всегда default (так как за eps вышли)
 						oThis.setCursorType("default");

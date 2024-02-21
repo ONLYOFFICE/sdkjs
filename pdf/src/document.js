@@ -790,9 +790,9 @@ var CPresentation = CPresentation || function(){};
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDrDoc          = this.GetDrawingDocument();
 
-        let oPos        = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
-        let X           = oPos.X;
-        let Y           = oPos.Y;
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
 
         // если режим редактора текста
         if (this.IsTextEditMode()) {
@@ -804,6 +804,17 @@ var CPresentation = CPresentation || function(){};
             if (oMouseDownTextShape) {
                 this.activeTextShape = oMouseDownTextShape;
                 this.activeTextShape.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+
+                if (this.activeTextShape.IsInTextBox() == false) {
+                    oDrDoc.TargetEnd();
+                }
+
+                let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+                let X       = oPos.X;
+                let Y       = oPos.Y;
+
+                oDrawingObjects.OnMouseDown(e, X, Y, oMouseDownTextShape.selectStartPage);
+                oViewer.onUpdateOverlay();
             }
 
             oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
@@ -905,7 +916,7 @@ var CPresentation = CPresentation || function(){};
         if (oObject.IsTextShape()) {
             oDrawingObjects.resetSelection();
             oContent = oObject.GetDocContent();
-
+            oObject.SetInTextBox(false);
             this.activeTextShape = null;
         }
 
@@ -961,12 +972,23 @@ var CPresentation = CPresentation || function(){};
         let Y       = oPos.Y;
 
         if (this.IsTextEditMode()) {
-            let isUpdated = oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
-            if (!isUpdated) {
-                oViewer.setCursorType(AscCommon.Cursors.Grab);
+            let isCursorUpdated = oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
+            if (this.activeTextShape && this.activeTextShape.IsInTextBox()) {
+                if (oViewer.isMouseDown) {
+                    oViewer.setCursorType('text');
+                    this.SelectionSetEnd(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+                    isCursorUpdated = true;
+                }
+            }
+            else {
+                oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
             }
 
-            // oDrawingObjects.OnMouseMove(e, X, Y, oPos.DrawPage);
+            if (!isCursorUpdated) {
+                oViewer.setCursorType(AscCommon.Cursors.Grab);
+            }
+            
+            this.Viewer.onUpdateOverlay();
             return;
         }
 
@@ -1111,9 +1133,13 @@ var CPresentation = CPresentation || function(){};
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDrDoc          = this.GetDrawingDocument();
-
+        
         if (oViewer.Api.isEraseInkMode())
             return;
+
+        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+		if (!pageObject)
+			return;
 
         let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
         let X       = oPos.X;
@@ -1121,13 +1147,16 @@ var CPresentation = CPresentation || function(){};
 
         // если режим редактора текста
         if (this.IsTextEditMode()) {
+            oDrawingObjects.OnMouseUp(e, X, Y, pageObject.index);
+
             let oMouseUpTextShape = oViewer.getPageTextShapeByMouse();
             if (oMouseUpTextShape) {
                 this.activeTextShape = oMouseUpTextShape;
                 this.activeTextShape.onMouseUp(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
             }
-            
+
             oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
+            oViewer.onUpdateOverlay();
             return;
         }
 
@@ -1139,10 +1168,6 @@ var CPresentation = CPresentation || function(){};
         let oMouseUpField = oViewer.getPageFieldByMouse();
 		let oMouseUpAnnot = oViewer.getPageAnnotByMouse();
         
-        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
-		if (!pageObject)
-			return;
-
         // если рисование, то просто заканчиваем его
         if (oViewer.Api.isDrawInkMode()) {
             oDrawingObjects.OnMouseUp(e, X, Y, pageObject.index);
@@ -1250,7 +1275,7 @@ var CPresentation = CPresentation || function(){};
 
                 oSourceObj.SetNeedRecalc(true);
             }
-            else if (oSourceObj.IsAnnot()) {
+            else if (oSourceObj.IsAnnot() || oSourceObj.IsTextShape()) {
                 oSourceObj.SetNeedRecalc(true);
             }
             
@@ -1297,7 +1322,7 @@ var CPresentation = CPresentation || function(){};
 
                 oSourceObj.SetNeedRecalc(true);
             }
-            else if (oSourceObj.IsAnnot()) {
+            else if (oSourceObj.IsAnnot() || oSourceObj.IsTextShape()) {
                 oSourceObj.SetNeedRecalc(true);
             }
 
@@ -1320,7 +1345,7 @@ var CPresentation = CPresentation || function(){};
             oFreeText.MoveCursorLeft(isShiftKey, isCtrlKey);
             oContent = oFreeText.GetDocContent();
         }
-        else if (oTextShape) {
+        else if (oTextShape && oTextShape.IsInTextBox()) {
             oTextShape.MoveCursorLeft(isShiftKey, isCtrlKey);
             oContent = oTextShape.GetDocContent();
         }
@@ -1366,7 +1391,7 @@ var CPresentation = CPresentation || function(){};
             oFreeText.MoveCursorUp(isShiftKey, isCtrlKey);
             oContent = oFreeText.GetDocContent();
         }
-        else if (oTextShape) {
+        else if (oTextShape && oTextShape.IsInTextBox()) {
             oTextShape.MoveCursorUp(isShiftKey, isCtrlKey);
             oContent = oTextShape.GetDocContent();
         }
@@ -1400,7 +1425,7 @@ var CPresentation = CPresentation || function(){};
             oFreeText.MoveCursorRight(isShiftKey, isCtrlKey);
             oContent = oFreeText.GetDocContent();
         }
-        else if (oTextShape) {
+        else if (oTextShape && oTextShape.IsInTextBox()) {
             oTextShape.MoveCursorRight(isShiftKey, isCtrlKey);
             oContent = oTextShape.GetDocContent();
         }
@@ -1448,7 +1473,7 @@ var CPresentation = CPresentation || function(){};
             oFreeText.MoveCursorDown(isShiftKey, isCtrlKey);
             oContent = oFreeText.GetDocContent();
         }
-        else if (oTextShape) {
+        else if (oTextShape && oTextShape.IsInTextBox()) {
             oTextShape.MoveCursorDown(isShiftKey, isCtrlKey);
             oContent = oTextShape.GetDocContent();
         }

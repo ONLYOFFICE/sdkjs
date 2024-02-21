@@ -50,8 +50,8 @@ CChangesPDFDocumentAddItem.prototype.Type = AscDFH.historyitem_PDF_Document_AddI
 
 CChangesPDFDocumentAddItem.prototype.Undo = function()
 {
-	var oDocument = this.Class;
-	let oViewer = editor.getDocumentRenderer();
+	var oDocument	= this.Class;
+	let oViewer		= Asc.editor.getDocumentRenderer();
 	
 	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
 	{
@@ -68,6 +68,15 @@ CChangesPDFDocumentAddItem.prototype.Undo = function()
 			if (oItem.IsComment())
 				editor.sync_RemoveComment(oItem.GetId());
 			
+			oViewer.DrawingObjects.resetSelection();
+		}
+		else if (oItem.IsTextShape()) {
+			let nPage = oItem.GetPage();
+			oItem.AddToRedraw();
+
+			oDocument.textShapes.splice(nPos, 1);
+			this.PosInPage = oViewer.pagesInfo.pages[nPage].textShapes.indexOf(oItem);
+			oViewer.pagesInfo.pages[nPage].textShapes.splice(this.PosInPage, 1);
 			oViewer.DrawingObjects.resetSelection();
 		}
 	}
@@ -94,6 +103,15 @@ CChangesPDFDocumentAddItem.prototype.Redo = function()
 				editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
 
 			oItem.SetDisplay(oDocument.IsAnnotsHidden() ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
+
+			oViewer.DrawingObjects.resetSelection();
+		}
+		else if (oItem.IsTextShape()) {
+			let nPage = oItem.GetPage();
+			oItem.AddToRedraw();
+
+			oDocument.textShapes.splice(nPos, 0, oItem);
+			oViewer.pagesInfo.pages[nPage].textShapes.splice(this.PosInPage, 0, oItem);
 
 			oViewer.DrawingObjects.resetSelection();
 		}
