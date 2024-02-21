@@ -8453,23 +8453,37 @@
                     return oThis.ReadMetadataTypes(t, l, pMetadata.metadataTypes);
                 });
             } else if (c_oSer_Metadata.MetadataStrings === type) {
+                if (!pMetadata.metadataStrings) {
+                    pMetadata.metadataStrings = [];
+                }
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadMetadataStrings(t, l, pMetadata.metadataStrings);
                 });
             } else if (c_oSer_Metadata.MdxMetadata === type) {
+                if (!pMetadata.mdxMetadata) {
+                    pMetadata.mdxMetadata = [];
+                }
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadMdxMetadata(t, l, pMetadata.mdxMetadata);
                 });
             } else if (c_oSer_Metadata.CellMetadata === type) {
+                if (!pMetadata.cellMetadata) {
+                    pMetadata.cellMetadata = [];
+                }
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadMetadataBlocks(t, l, pMetadata.cellMetadata);
                 });
             } else if (c_oSer_Metadata.ValueMetadata === type) {
+                if (!pMetadata.valueMetadata) {
+                    pMetadata.valueMetadata = [];
+                }
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadMetadataBlocks(t, l, pMetadata.valueMetadata);
                 });
             } else if (c_oSer_Metadata.FutureMetadata === type) {
-
+                if (!pMetadata.aFutureMetadata) {
+                    pMetadata.aFutureMetadata = [];
+                }
                 let pMetadataRecord = new AscCommonExcel.CFutureMetadata();
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadFutureMetadata(t, l, pMetadataRecord);
@@ -8620,8 +8634,11 @@
             var res = c_oSerConstants.ReadOk;
             if (c_oSer_MetadataBlock.MetadataBlock === type) {
                 let pMetadataBlock = new AscCommonExcel.CMetadataBlock();
+                if (!pMetadataBlock.elems) {
+                    pMetadataBlock.elems = [];
+                }
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadMetadataBlock(t, l, pMetadataBlock);
+                    return oThis.ReadMetadataBlock(t, l, pMetadataBlock.elems);
                 });
                 aMetadataBlocks.push(pMetadataBlock);
             } else {

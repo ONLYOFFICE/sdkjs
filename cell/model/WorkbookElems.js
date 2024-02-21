@@ -17125,6 +17125,35 @@ function RangeDataManagerElem(bbox, data)
 		return res;
 	};
 
+	function CMetadataBlock() {
+		this.elems = null;
+	}
+	CMetadataBlock.prototype.clone = function () {
+		var res = new CMetadataBlock();
+
+		return res;
+	};
+
+	function CMetadataRecord() {
+		this.t = null;
+		this.v = null;
+	}
+	CMetadataRecord.prototype.clone = function () {
+		var res = new CMetadataRecord();
+
+		return res;
+	};
+
+	function CFutureMetadataBlock() {
+		this.extLst = null;
+	}
+	CFutureMetadataBlock.prototype.clone = function () {
+		var res = new CFutureMetadataBlock();
+
+		return res;
+	};
+	
+
 
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
@@ -17650,6 +17679,9 @@ function RangeDataManagerElem(bbox, data)
 	window["AscCommonExcel"].CMetadataStringIndex = CMetadataStringIndex;
 	window["AscCommonExcel"].CMdxMemeberProp = CMdxMemeberProp;
 	window["AscCommonExcel"].CMdxKPI = CMdxKPI;
+	window["AscCommonExcel"].CMetadataBlock = CMetadataBlock;
+	window["AscCommonExcel"].CMetadataRecord = CMetadataRecord;
+	window["AscCommonExcel"].CFutureMetadataBlock = CFutureMetadataBlock;
 
 
 })(window);
