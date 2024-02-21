@@ -2930,13 +2930,30 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 			this.countElement += this.array[i].length;
 		}
 	};
-	cArray.prototype.recalculate = function () {
+	cArray.prototype.recalculateOld = function () {
 		this.rowCount = this.array.length;
 		this.countElementInRow = [];
 		this.countElement = 0;
 		for (var i = 0; i < this.array.length; i++) {
 			this.countElementInRow[i] = this.array[i].length;
 			this.countElement += this.array[i].length;
+		}
+	};
+	cArray.prototype.recalculate = function (row) {
+		this.rowCount = this.array.length;
+		if (row === undefined) {
+			// full recalculation of the number of elements in the entire array, long execution
+			this.countElementInRow = [];
+			this.countElement = 0;
+			for (let i = 0; i < this.array.length; i++) {
+				this.countElementInRow[i] = this.array[i].length;
+				this.countElement += this.array[i].length;
+			}
+		} else {
+			// changing only the affected values ​​(by row)
+			let lookingRow = this.array[row];
+			this.countElementInRow[row] = lookingRow.length;
+			this.countElement += lookingRow.length;
 		}
 	};
 	cArray.prototype.pushCol = function (matrix, colNum) {
@@ -2953,17 +2970,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cArray.prototype.pushRow = function (matrix, rowNum) {
 		if (matrix && matrix[rowNum]) {
 			this.array.push(matrix[rowNum]);
-			this.recalculate();
-		}
-	};
-	cArray.prototype.pushRow2 = function (matrix, rowNum) {
-		// rowNum - row number in the received matrix
-		if (matrix && matrix[rowNum]) {
-			this.array.push(matrix[rowNum]);
-			let lastElement = this.array.length - 1;
-			this.countElementInRow[lastElement] = matrix[rowNum].length;
-			this.countElement += matrix[rowNum].length;
-			this.rowCount++;
+			this.recalculate(this.array.length - 1);	
 		}
 	};
 	cArray.prototype.crop = function (row, col) {
@@ -9019,7 +9026,7 @@ function parserFormula( formula, parent, _ws ) {
 				if (iRow >= usefulRow) {
 					// fill row with N/A and continue
 					let errRow = new Array(arrayMaxCols).fill(errNA);
-					retArr.pushRow2([errRow], 0);
+					retArr.pushRow([errRow], 0);
 					continue
 				}
 
