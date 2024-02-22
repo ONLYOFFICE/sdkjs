@@ -301,8 +301,8 @@
             }
 
             if (sCaption !== "") {
-                let oPara = new AscCommonWord.Paragraph(this.content.DrawingDocument, this.content, false);
-                let oRun = new AscCommonWord.ParaRun(oPara, false);
+                let oPara = new AscWord.Paragraph(this.content, false);
+                let oRun = new AscWord.ParaRun(oPara, false);
                 this.content.Internal_Content_Add(i, oPara);
                 oPara.Add(oRun);
                 oRun.AddText(sCaption);
@@ -395,8 +395,8 @@
 
         this._options = this._options.splice(nIdx, 0, optToInsert);
         
-        let oPara = new AscCommonWord.Paragraph(this.content.DrawingDocument, this.content, false);
-        let oRun = new AscCommonWord.ParaRun(oPara, false);
+        let oPara = new AscWord.Paragraph(this.content, false);
+        let oRun = new AscWord.ParaRun(oPara, false);
         this.content.Internal_Content_Add(nIdx, oPara);
         oPara.Add(oRun);
         oRun.AddText(sName);

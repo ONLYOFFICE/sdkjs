@@ -390,8 +390,8 @@
 			var _drawing_document = isRealObject(drawingDocument) ? drawingDocument : paragraph.DrawingDocument;
 			var _new_parent = isRealObject(newParent) ? newParent : null;
 
-			var new_paragraph = new Paragraph(_drawing_document, _new_parent, true);
-			if (!(paragraph instanceof Paragraph))
+			var new_paragraph = new AscWord.Paragraph(_new_parent, true);
+			if (!(paragraph instanceof AscWord.Paragraph))
 				return new_paragraph;
 			var oCopyPr = paragraph.Pr.Copy();
 
@@ -434,7 +434,7 @@
 			var i, j, oElement;
 			for (i = 0; i < aElements.length; ++i) {
 				oElement = aElements[i];
-				if (oElement instanceof AscCommonWord.Paragraph) {
+				if (oElement instanceof AscWord.Paragraph) {
 					aResult.push(ConvertParagraphToPPTX(oElement));
 				} else if (oElement instanceof AscCommonWord.CTable) {
 					var paragraphs = [];
@@ -1074,7 +1074,7 @@
 				let aNewParagraphs = [];
 				for (let nIdx = 0; nIdx < aContent.length; ++nIdx) {
 					let oCurElement = aContent[nIdx];
-					if (oCurElement instanceof AscCommonWord.Paragraph) {
+					if (oCurElement instanceof AscWord.Paragraph) {
 						let oParagraph = ConvertParagraphToPPTX(oCurElement, drawingDocument, new_content, bIsAddMath);
 						aNewParagraphs.push(oParagraph);
 					}
@@ -2776,6 +2776,7 @@
 
 		CShape.prototype.recalculateTextStyles = function (level) {
 			return AscFormat.ExecuteNoHistory(function () {
+				const logicDocument = this.getLogicDocument();
 				var parent_objects = this.getParentObjects();
 				var default_style = new CStyle("defaultStyle", null, null, null, true);
 				default_style.ParaPr.Spacing.LineRule = Asc.linerule_Auto;
@@ -2784,6 +2785,12 @@
 				default_style.ParaPr.Spacing.After = 0;
 				default_style.ParaPr.DefaultTab = 25.4;
 				default_style.ParaPr.Align = AscCommon.align_Center;
+				if (logicDocument && logicDocument.IsDocumentEditor()) {
+					const documentStyles = logicDocument.Get_Styles();
+					if (documentStyles) {
+						default_style.TextPr.Lang.Merge(documentStyles.Default.TextPr.Lang);
+					}
+				}
 				if (parent_objects.theme) {
 					default_style.TextPr.RFonts.SetFontStyle(AscFormat.fntStyleInd_minor);
 				}

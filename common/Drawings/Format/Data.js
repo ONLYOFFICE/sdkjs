@@ -10255,6 +10255,7 @@ Because of this, the display is sometimes not correct.
         const oLogicDocument = oApi.getLogicDocument();
 
         const pReader = new AscCommon.BinaryPPTYLoader();
+	      pReader.IsFillingSmartArt = true;
 	      pReader.presentation = oLogicDocument;
 	      pReader.DrawingDocument = oDrawingDocument;
 
@@ -10281,6 +10282,8 @@ Because of this, the display is sometimes not correct.
         this.extX = smXfrm.extX;
         this.extY = smXfrm.extY;
         this.drawing.setXfrmByParent();
+
+	      pReader.IsFillingSmartArt = false;
       }
       return this;
     }

@@ -36,7 +36,7 @@
 {
 	const DEFAULT_PAGE_WIDTH  = 210;
 	const DEFAULT_PAGE_HEIGHT = 297;
-
+	
 	/**
 	 * Базовый класс для вида документа
 	 * @param oLogicDocument {CDocument}
@@ -47,6 +47,7 @@
 		this.LogicDocument = oLogicDocument;
 		this.SectInfo      = new CDocumentSectionsInfoElement(oLogicDocument.GetLastSection(), 0);
 	}
+	
 	CDocumentLayoutBase.prototype.IsPrintMode = function()
 	{
 		return false;
@@ -162,6 +163,13 @@
 	CDocumentLayoutBase.prototype.GetScaleBySection = function(oSectPr)
 	{
 		return 1;
+	};
+	/**
+	 * @returns {number}
+	 */
+	CDocumentLayoutBase.prototype.calculateIndent = function(ind, sectPr)
+	{
+		return ind;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.CDocumentLayoutBase = CDocumentLayoutBase;

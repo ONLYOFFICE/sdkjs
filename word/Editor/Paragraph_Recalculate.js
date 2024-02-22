@@ -4280,6 +4280,10 @@ CParagraphRecalculateStateAlign.prototype.IsFastRangeRecalc = function()
 {
 	return this.RecalcFast;
 };
+CParagraphRecalculateStateAlign.prototype.getLogicDocument = function()
+{
+	return this.wrapState.Paragraph.GetLogicDocument();
+};
 
 function CParagraphRecalculateStateInfo()
 {

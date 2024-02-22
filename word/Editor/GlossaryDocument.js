@@ -553,6 +553,14 @@ CDocPart.prototype.CheckDocPartBehavior = function(nType)
 {
 	return !!(this.Pr.Behavior & nType);
 };
+CDocPart.prototype.IsTableCellContent = function()
+{
+	return false;
+};
+CDocPart.prototype.Is_DrawingShape = function(returnShape)
+{
+	return returnShape ? null : false;
+};
 
 /** @enum {number} */
 var c_oAscDocPartType = {

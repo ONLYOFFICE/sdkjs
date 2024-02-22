@@ -4376,7 +4376,7 @@ function (window, undefined) {
 		this.Anchor = sBookmark;
 	};
 	CHyperlinkProperty.prototype.is_Heading = function () {
-		return (this.Heading instanceof AscCommonWord.Paragraph ? true : false)
+		return (this.Heading instanceof AscWord.Paragraph ? true : false)
 	};
 	CHyperlinkProperty.prototype.put_Heading = function (oParagraph) {
 		this.Heading = oParagraph;
@@ -4792,6 +4792,8 @@ function (window, undefined) {
 		this.zoom = 1;
 		this.calculatezoom = -1;
 
+		this.isNativeGlobalAlpha = false;
+
 		this.contentObjects = null;
 
 		this.CheckParams = function () {
@@ -4978,7 +4980,7 @@ function (window, undefined) {
 				}
 				for (let i = 0; i < aParagraphsS.length; ++i) {
 					let oCurParS = aParagraphsS[i];
-					let oNewParagraph = new AscCommonWord.Paragraph(oContent.DrawingDocument, oContent, !bWord);
+					let oNewParagraph = new AscWord.Paragraph(oContent, !bWord);
 					if (AscFormat.isRealNumber(oCurParS['align'])) {
 						oNewParagraph.Set_Align(oCurParS['align'])
 					}
@@ -5087,6 +5089,9 @@ function (window, undefined) {
 					g.create(window["native"], _need_pix_width, _need_pix_height, _need_pix_width / AscCommon.g_dKoef_mm_to_pix, _need_pix_height / AscCommon.g_dKoef_mm_to_pix);
 					g.CoordTransformOffset(-_bounds_cheker.Bounds.min_x, -_bounds_cheker.Bounds.min_y);
 					g.transform(1, 0, 0, 1, 0, 0);
+
+					if (this.isNativeGlobalAlpha)
+						g.CreateLayer(this.transparent);
 				}
 				else {
 					g = new AscCommon.CGraphics();
@@ -5100,7 +5105,12 @@ function (window, undefined) {
 
 				oShape.draw(g, 0);
 
-				if (window["NATIVE_EDITOR_ENJINE"]) this.imageBase64 = g.toDataURL("image/png");
+				if (window["NATIVE_EDITOR_ENJINE"])
+				{
+					if (this.isNativeGlobalAlpha)
+						g.BlendLayer();
+					this.imageBase64 = g.toDataURL("image/png");
+				}
 
 				AscCommon.IsShapeToImageConverter = false;
 

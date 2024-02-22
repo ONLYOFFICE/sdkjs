@@ -144,8 +144,8 @@ Asc['asc_docs_api'].prototype._saveLocalCheck = function()
 	return !this.isLongAction();
 };
 
-Asc['asc_docs_api'].prototype.asc_setCurrentPasswordBase = Asc['asc_docs_api'].prototype.asc_setCurrentPassword;
-Asc['asc_docs_api'].prototype.asc_setCurrentPassword = Asc['asc_docs_api'].prototype["asc_setCurrentPassword"] = function(password)
+AscCommon.baseEditorsApi.prototype.asc_setCurrentPasswordBase = AscCommon.baseEditorsApi.prototype.asc_setCurrentPassword;
+AscCommon.baseEditorsApi.prototype.asc_setCurrentPassword = AscCommon.baseEditorsApi.prototype["asc_setCurrentPassword"] = function(password)
 {
 	this.currentPasswordOld = this.currentPassword;
 	return this.asc_setCurrentPasswordBase(password);

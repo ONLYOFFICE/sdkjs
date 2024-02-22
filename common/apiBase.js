@@ -82,6 +82,7 @@
 		this.documentTitle       = "null";
 		this.documentFormatSave  = Asc.c_oAscFileType.UNKNOWN;
 		this.documentShardKey  = undefined;
+		this.documentIsWopi = false;
 
 		this.documentOpenOptions = undefined;		// Опции при открытии (пока только опции для CSV)
 
@@ -499,6 +500,7 @@
 				if (this.documentOpenOptions["WOPISrc"])
 				{
 					this.documentShardKey = this.documentOpenOptions["WOPISrc"];
+					this.documentIsWopi = true;
 				}
 			}
 			if (!this.documentShardKey) {
@@ -2112,6 +2114,7 @@
 		oAdditionalData["outputformat"] = options.fileType;
 		oAdditionalData["title"] = AscCommon.changeFileExtention(this.documentTitle, AscCommon.getExtentionByFormat(options.fileType), Asc.c_nMaxDownloadTitleLen);
 		oAdditionalData["nobase64"] = isNoBase64;
+		oAdditionalData["isSaveAs"] = options.isSaveAs;
 		let locale = this.asc_getLocale() || undefined;
 		if (typeof locale === "string") {
 			locale = Asc.g_oLcidNameToIdMap[locale];
@@ -4814,6 +4817,11 @@
 			callback(null);
 		}
 	};
+	
+	baseEditorsApi.prototype["asc_getUserColorById"] = function(id)
+	{
+		return '#' + ('000000' + AscCommon.getUserColorById(id, null, false, true).toString(16)).substr(-6);
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
@@ -4884,5 +4892,9 @@
 	prot['asc_endFindText'] = prot.asc_endFindText;
 	prot['asc_setContentDarkMode'] = prot.asc_setContentDarkMode;
 	prot['asc_getFilePath'] = prot.asc_getFilePath;
+
+	// passwords
+	prot["asc_setCurrentPassword"] = prot.asc_setCurrentPassword;
+	prot["asc_resetPassword"] = prot.asc_resetPassword;
 
 })(window);

@@ -4161,7 +4161,7 @@
 	 */
 	Api.prototype.CreateParagraph = function()
 	{
-		return new ApiParagraph(new Paragraph(private_GetDrawingDocument(), private_GetLogicDocument()));
+		return new ApiParagraph(new AscWord.Paragraph(private_GetLogicDocument()));
 	};
 	/**
 	 * Creates an element range.
@@ -4888,7 +4888,7 @@
 				var aContent = oReader.ContentFromJSON(oParsedObj["content"]);
 				for (var nElm = 0; nElm < aContent.length; nElm++)
 				{
-					if (aContent[nElm] instanceof AscCommonWord.Paragraph)
+					if (aContent[nElm] instanceof AscWord.Paragraph)
 						aContent[nElm] = new ApiParagraph(aContent[nElm]);
 					else if (aContent[nElm] instanceof AscCommonWord.CTable)
 						aContent[nElm] = new ApiTable(aContent[nElm]);
@@ -5297,7 +5297,7 @@
 
 			if (oTempElm instanceof AscCommonWord.CTable)
 				aContent.push(new ApiTable(oTempElm));
-			else if (oTempElm instanceof AscCommonWord.Paragraph)
+			else if (oTempElm instanceof AscWord.Paragraph)
 				aContent.push(new ApiParagraph(oTempElm));
 			else if (oTempElm instanceof AscCommonWord.CBlockLevelSdt)
 				aContent.push(new ApiBlockLvlSdt(oTempElm));
@@ -18900,7 +18900,7 @@
 
 			for (var nPara = arrSelectedParas.length; nPara < arrString.length; nPara++)
 			{
-				var oPara = new AscCommonWord.Paragraph(private_GetDrawingDocument(), oParaParent, isPres);
+				var oPara = new AscWord.Paragraph(oParaParent, isPres);
 				var oRun = new ParaRun(oPara, false);
 				oRun.AddText(arrString[nPara]);
 				private_PushElementToParagraph(oPara, oRun);

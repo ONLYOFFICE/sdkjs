@@ -1178,7 +1178,15 @@
 	CTextInputPrototype.checkViewMode = function()
 	{
 		let oldDisableKeyboard = this.isDisableKeyboard;
-		this.isDisableKeyboard = (this.Api.isViewMode || (0 !== (this.Api.restrictions & Asc.c_oAscRestrictionType.View)));
+		this.isDisableKeyboard = this.Api.isViewMode;
+
+		if (!this.isDisableKeyboard)
+		{
+			if (this.Api.isRestrictionView() && !this.Api.isRestrictionForms())
+			{
+				this.isDisableKeyboard = true;
+			}
+		}
 
 		if (oldDisableKeyboard !== this.isDisableKeyboard)
 		{

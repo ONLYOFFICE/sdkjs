@@ -70,11 +70,11 @@
 
 	/**
 	 * Отправляем элемент на проверку на наличие рецензирования
-	 * @param oElement {AscWord.CParagraph | AscWord.CTable}
+	 * @param oElement {AscWord.Paragraph | AscWord.CTable}
 	 */
 	CTrackRevisionsManager.prototype.CheckElement = function(oElement)
 	{
-		if (!(oElement instanceof AscWord.CParagraph) && !(oElement instanceof AscWord.CTable))
+		if (!(oElement instanceof AscWord.Paragraph) && !(oElement instanceof AscWord.CTable))
 			return;
 
 		let Id = oElement.GetId();
@@ -597,15 +597,6 @@
 			return;
 
 		var oEditor = this.LogicDocument.GetApi();
-		if (this.LogicDocument.IsSimpleMarkupInReview())
-		{
-			this.SelectedChanges = [];
-
-			oEditor.sync_BeginCatchRevisionsChanges();
-			oEditor.sync_EndCatchRevisionsChanges();
-			return;
-		}
-
 		if (this.CurChange)
 			this.SelectedChanges = [this.CurChange];
 

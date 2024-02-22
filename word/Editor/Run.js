@@ -5268,7 +5268,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
                 var PageRel = Para.private_GetRelativePageIndex(CurPage);
                 var ColumnAbs = Para.Get_AbsoluteColumn(CurPage);
 
-                var LogicDocument = this.Paragraph.LogicDocument;
+                var LogicDocument = PRSA.getLogicDocument();
                 var LD_PageLimits = LogicDocument.Get_PageLimits(PageAbs);
                 var LD_PageFields = LogicDocument.Get_PageFields(PageAbs, isInHdrFtr);
 
@@ -6240,7 +6240,7 @@ ParaRun.prototype.Draw_HighLights = function(drawState)
 		for (let iMark = 0, nMarks = this.SearchMarks.length; iMark < nMarks; ++iMark)
 		{
 			let mark    = this.SearchMarks[iMark];
-			let markPos = mark.SearchResult.StartPos.Get(mark.Depth);
+			let markPos = mark.SearchResult.EndPos.Get(mark.Depth);
 			
 			if (pos + 1 === markPos && !mark.Start)
 				drawState.decreaseSearchCounter();
@@ -7600,22 +7600,9 @@ ParaRun.prototype.Internal_Compile_Pr = function ()
 	if (this.Paragraph.IsInFixedForm())
 		TextPr.Position = 0;
 
-	let oLogicDocument = this.Paragraph.GetLogicDocument();
-	let oLayout;
-	if (oLogicDocument
-		&& oLogicDocument.IsDocumentEditor()
-		&& (oLayout = oLogicDocument.GetDocumentLayout()))
-	{
-		let nFontCoef = oLayout.GetFontScale();
-
-		let shape   = this.Paragraph.GetParentShape();
-		let drawing = shape ? shape.GetParaDrawing() : null;
-		if (drawing)
-			nFontCoef = drawing.GetScaleCoefficient();
-
-		TextPr.FontSize *= nFontCoef;
-		TextPr.FontSizeCS *= nFontCoef;
-	}
+	let layoutCoeff = this.Paragraph.getLayoutFontSizeCoefficient();
+	TextPr.FontSize   *= layoutCoeff;
+	TextPr.FontSizeCS *= layoutCoeff;
 
 	return TextPr;
 };

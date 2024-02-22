@@ -919,8 +919,136 @@
 			}
 		},
 
+		isUseNewCopy : function()
+		{
+			if (this.Api.isMobileVersion)
+			{
+				if (this.Api.isViewMode || this.Api.isRestrictionView())
+					return true;
+			}
+			return false;
+		},
+
+		isUseNewPaste : function()
+		{
+			return false;
+		},
+
+		Button_Copy_New : function(isCut)
+		{
+			if (navigator.clipboard)
+			{
+				let copy_data = {
+					data : {},
+					pushData: function (format, value) {
+						this.data[format] = value;
+					}
+				};
+
+				try
+				{
+					this.Api.asc_CheckCopy(copy_data, c_oAscClipboardDataFormat.Text | c_oAscClipboardDataFormat.Html | c_oAscClipboardDataFormat.Internal);
+
+					const data = [new ClipboardItem({
+						["text/plain"]    : new Blob([copy_data.data[c_oAscClipboardDataFormat.Text]], {type: "text/plain"}),
+						["text/html"]     : new Blob([copy_data.data[c_oAscClipboardDataFormat.Html]], {type: "text/html"}),
+						["web text/x-custom"] : new Blob(["asc_internalData2;" + copy_data.data[c_oAscClipboardDataFormat.Internal]], {type: "web text/x-custom"})
+					})];
+
+					navigator.clipboard.write(data).then(function(){},function(){});
+
+					if (isCut === true)
+						this.Api.asc_SelectionCut();
+
+					return true;
+				}
+				catch (e)
+				{
+				}
+			}
+			return false;
+		},
+
+		Button_Paste_New : function()
+		{
+			if (navigator.clipboard)
+			{
+				try
+				{
+					navigator.clipboard.read()
+						.then(function(items){
+
+							var paste_data = {};
+							var item = items[0];
+							var Api = this.Api;
+
+							function getData(item, type) {
+								if (item.types.includes(type))
+									return item.getType(type);
+								return Promise.resolve({text : Promise.resolve(undefined)});
+							}
+
+							getData(item, "web text/x-custom")
+								.then(function(value){ return value.text(); })
+								.then(function(value){
+									paste_data[c_oAscClipboardDataFormat.Internal] = value;
+									return getData(item, "text/html");
+								})
+								.then(function(value){ return value.text(); })
+								.then(function(value){
+									paste_data[c_oAscClipboardDataFormat.Html] = value;
+									return getData(item, "text/plain");
+								})
+								.then(function(value){ return value.text(); })
+								.then(function(value){
+									paste_data[c_oAscClipboardDataFormat.Text] = value;
+								})
+								.then(function(){
+
+									if (undefined !== paste_data[AscCommon.c_oAscClipboardDataFormat.Internal])
+									{
+										Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Internal,
+											paste_data[AscCommon.c_oAscClipboardDataFormat.Internal].substr("asc_internalData2;".length),
+											null,
+											paste_data[AscCommon.c_oAscClipboardDataFormat.Text] || "");
+										return;
+									}
+
+									if (undefined !== paste_data[AscCommon.c_oAscClipboardDataFormat.Html])
+									{
+										this.CommonIframe_PasteStart(paste_data[AscCommon.c_oAscClipboardDataFormat.Html],
+											paste_data[AscCommon.c_oAscClipboardDataFormat.Text] || "");
+										return false;
+									}
+
+									if (undefined !== paste_data[AscCommon.c_oAscClipboardDataFormat.Text])
+									{
+										Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Text,
+											paste_data[AscCommon.c_oAscClipboardDataFormat.Text]);
+										return false;
+									}
+
+								})
+								.catch(function(){});
+						});
+
+					return true;
+				}
+				catch (e)
+				{
+				}
+			}
+			return false;
+		},
+
 		Button_Copy : function()
 		{
+			if (this.isUseNewCopy())
+			{
+				if (this.Button_Copy_New())
+					return true;
+			}
+
 			if (this.inputContext)
 			{
                 if (this.inputContext.isHardCheckKeyboard)
@@ -951,6 +1079,12 @@
 
 		Button_Cut : function()
 		{
+			if (this.isUseNewCopy())
+			{
+				if (this.Button_Copy_New(true))
+					return true;
+			}
+
 			if (this.inputContext)
 			{
                 if (this.inputContext.isHardCheckKeyboard)
@@ -985,6 +1119,12 @@
 
 		Button_Paste : function()
 		{
+			if (this.isUseNewPaste())
+			{
+				if (this.Button_Paste_New())
+					return true;
+			}
+
 			if (this.inputContext)
 			{
 				if (this.inputContext.isHardCheckKeyboard)

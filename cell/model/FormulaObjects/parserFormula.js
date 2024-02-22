@@ -1404,6 +1404,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return oRes;
 	};
 	cArea3D.prototype.wsRange = function () {
+		if (this.externalLink != null) {
+			return [this.wsFrom];
+		}
 		var wb = this.wsFrom.workbook;
 		var wsF = this.wsFrom.getIndex(), wsL = this.wsTo.getIndex(), r = [];
 		for (var i = wsF; i <= wsL; i++) {

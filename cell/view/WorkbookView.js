@@ -1978,9 +1978,9 @@
     var ct = ws.getCursorTypeFromXY(x, y);
 
     if (ct.target === c_oTargetType.FillHandle) {
-		ws.applyFillHandleDoubleClick();
-    	asc_applyFunction(callback);
-	} else if (ct.target === c_oTargetType.ColumnResize || ct.target === c_oTargetType.RowResize) {
+        ws.applyFillHandleDoubleClick();
+        asc_applyFunction(callback);
+    } else if (ct.target === c_oTargetType.ColumnResize || ct.target === c_oTargetType.RowResize) {
       if (ct.target === c_oTargetType.ColumnResize) {
       	ws.autoFitColumnsWidth(ct.col);
       } else {
@@ -1990,8 +1990,9 @@
     } else {
       // In view mode or click on column | row | all | frozenMove | drawing object do not process
       if (!this.canEdit() || c_oTargetType.ColumnHeader === ct.target || c_oTargetType.RowHeader === ct.target ||
-		  c_oTargetType.Corner === ct.target || c_oTargetType.FrozenAnchorH === ct.target ||
-		  c_oTargetType.FrozenAnchorV === ct.target || ws.objectRender.checkCursorDrawingObject(x, y)) {
+          c_oTargetType.Corner === ct.target || c_oTargetType.FrozenAnchorH === ct.target ||
+          c_oTargetType.FrozenAnchorV === ct.target || ws.objectRender.checkCursorDrawingObject(x, y) ||
+          c_oTargetType.ColumnRowHeaderMove === ct.target) {
         asc_applyFunction(callback);
         return;
       }

@@ -2785,17 +2785,26 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype._haveOtherChanges = function () {
 		return AscCommon.CollaborativeEditing.Have_OtherChanges();
 	};
-	asc_docs_api.prototype.asc_DownloadOrigin = function(bIsDownloadEvent)
+	asc_docs_api.prototype.asc_DownloadOrigin = function(options)
 	{
+		if (!options) {
+			options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.UNKNOWN);
+		}
+		let bIsDownloadEvent = options.isDownloadEvent;
 		let changes = null;
 		if (this.isUseNativeViewer && this.isDocumentRenderer())
 			changes = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Save();
 
 		if (changes) {
-			let options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.PDF, bIsDownloadEvent);
+			options.asc_setFileType(Asc.c_oAscFileType.PDF);
 			options.pdfChanges = changes;
 			this.asc_DownloadAs(options);
 			return;
+		} else if(this.documentIsWopi && options.isSaveAs) {
+			//todo server request
+			// options.asc_setFileType(Asc.c_oAscFileType.PDF);
+			// this.asc_DownloadAs(options);
+			// return;
 		}
 		//скачивание оригинального pdf, djvu, xps
 		var downloadType = bIsDownloadEvent ? DownloadType.Download : DownloadType.None;
@@ -12838,6 +12847,25 @@ background-repeat: no-repeat;\
 		return _renderer.Memory.data;
 	};
 
+	window["asc_docs_api"].prototype["asc_nativeGetWatermark"] = function(options)
+	{
+		if (options && options["watermark"])
+		{
+			if (!this.User)
+			{
+				this.User = new AscCommon.asc_CUser();
+				this.User.setId("TM");
+				this.User.setUserName("native");
+			}
+
+			this.watermarkDraw = new AscCommon.CWatermarkOnDraw(options["watermark"], this);
+			this.watermarkDraw.isNativeGlobalAlpha = true;
+			this.watermarkDraw.generateNative();
+			return this.watermarkDraw.imageBase64;
+		}
+		return "";
+	};
+
 	// cool api (autotests)
 	window["asc_docs_api"].prototype["Add_Text"]                     = function(_text)
 	{
@@ -14372,10 +14400,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_RemoveAllSignatures"] 					= asc_docs_api.prototype.asc_RemoveAllSignatures;
 	asc_docs_api.prototype["asc_gotoSignature"] 						= asc_docs_api.prototype.asc_gotoSignature;
 	asc_docs_api.prototype["asc_getSignatureSetup"] 					= asc_docs_api.prototype.asc_getSignatureSetup;
-
-	// passwords
-	asc_docs_api.prototype["asc_setCurrentPassword"] 					= asc_docs_api.prototype.asc_setCurrentPassword;
-	asc_docs_api.prototype["asc_resetPassword"] 						= asc_docs_api.prototype.asc_resetPassword;
 
 	// view modes
     asc_docs_api.prototype["asc_setContentDarkMode"]					= asc_docs_api.prototype.asc_setContentDarkMode;
