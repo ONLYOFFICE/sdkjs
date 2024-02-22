@@ -2583,10 +2583,6 @@
 
 		this._paint = function()
 		{
-			
-			if (!this.doc.checkDefaultFieldFonts(this._paint.bind(this)))
-				return;
-
 			if (this.isLoadFonts || this.IsOpenFormsInProgress)
 				return;
 			
@@ -2639,7 +2635,7 @@
 				}
 			}
 
-			if (this._checkFieldsFontsOnPages(lStartPage, lEndPage) == false)
+			if (this._checkFontsOnPages(lStartPage, lEndPage) == false)
 				return;
 
 			this.canvas.width = this.canvas.width;
@@ -3538,7 +3534,7 @@
 		if (oDoc.activeForm && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oDoc.activeForm.GetType()))
 			oDoc.activeForm.content.RecalculateCurPos();
 	};
-	CHtmlPage.prototype._checkFieldsFontsOnPages = function(nStart, nEnd) {
+	CHtmlPage.prototype._checkFontsOnPages = function(nStart, nEnd) {
 		let aFontsToLoad = [];
 
 		for (let i = nStart; i <= nEnd; i++)
@@ -3547,23 +3543,33 @@
 			if (!page)
 				break;
 
-			let aForms = this.pagesInfo.pages[i].fields != null ? this.pagesInfo.pages[i].fields : null;
-			if (!aForms)
-				continue;
+			let aForms		= this.pagesInfo.pages[i].fields != null ? this.pagesInfo.pages[i].fields : [];
+			let aTextShapes	= this.pagesInfo.pages[i].textShapes != null ? this.pagesInfo.pages[i].textShapes : [];
 
 			if (this.pagesInfo.pages[i].needRedrawForms)
 			{
-				if (this.pagesInfo.pages[i].fields != null) {
-					this.pagesInfo.pages[i].fields.forEach(function(field) {
-						if (field.IsNeedDrawFromStream() == false) {
-							let sFont = field.GetTextFontActual();
-							if (sFont)
-								aFontsToLoad.push(sFont);
-						}
-					});
-				}
+				aForms.forEach(function(field) {
+					if (field.IsNeedDrawFromStream() == false) {
+						let sFont = field.GetTextFontActual();
+						if (sFont)
+							aFontsToLoad.push(sFont);
+					}
+				});
 			}
+
+			let aTextShapesFonts = [];
+			if (this.pagesInfo.pages[i].needRedrawTextShapes)
+			{
+				aTextShapes.forEach(function(shape) {
+					if (shape.IsNeedDrawFromStream() == false) {
+						shape.GetAllFonts(aTextShapesFonts);
+					}
+				});
+			}
+
+			aFontsToLoad = aFontsToLoad.concat(aTextShapesFonts);
 		}
+
 		let oThis = this;
 		
 		// грузим шрифты для форм без внешнего вида
