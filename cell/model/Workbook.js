@@ -12636,7 +12636,16 @@
 			}
 
 			if (addToHistory) {
-				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ChangeUserProtectedRange, this.getId(), null,
+				let updateRange = null;
+				if (oldObj && newObj && oldObj.ref && newObj.ref) {
+					updateRange = oldObj.ref.clone().union2(newObj.ref);
+				} else if (oldObj && oldObj.ref) {
+					updateRange = oldObj.ref.clone();
+				} else if (newObj && newObj.ref) {
+					updateRange = newObj.ref.clone();
+				}
+				
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_ChangeUserProtectedRange, this.getId(), updateRange,
 					new UndoRedoData_FromTo(oldObj, newObj));
 			}
 		}
