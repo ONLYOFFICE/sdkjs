@@ -1321,6 +1321,52 @@ CHeaderFooter.prototype =
 		return this.Content.CanAddComment();
 	}
 };
+CHeaderFooter.prototype.SetWatermarkPropsAction = function (oProps) {
+    const oLogicDocument = this.LogicDocument;
+    let oWatermark = this.FindWatermark();
+    if(oWatermark)
+    {
+        if(oWatermark.GraphicObj.selected)
+        {
+            this.RemoveSelection(true);
+        }
+        oWatermark.Remove_FromDocument(false);
+    }
+    oWatermark = oLogicDocument.DrawingObjects.createWatermark(oProps);
+    if(oWatermark)
+    {
+        const oDocState = oLogicDocument.Get_SelectionState2();
+        const oContent = this.Content;
+        let oWatermarkCC = null;
+        const aAllContentControls = oContent.GetAllContentControls();
+        const nCount = aAllContentControls.length;
+        for(let nContentControl = 0; nContentControl < nCount; ++nContentControl)
+        {
+            let oContentControl = aAllContentControls[nContentControl];
+            let oDocPart = oContentControl.Pr.DocPartObj;
+            if(oDocPart.Gallery === "Watermarks" && oDocPart.Unique)
+            {
+                oWatermarkCC = oContentControl;
+                break;
+            }
+        }
+        if(!oWatermarkCC)
+        {
+            oWatermarkCC = oContent.AddContentControl(c_oAscSdtLevelType.Inline);
+            oWatermarkCC.SetDocPartObj(undefined, "Watermarks", true);
+        }
+        if(oWatermarkCC.IsBlockLevel())
+        {
+            oWatermarkCC.AddToParagraph(oWatermark);
+        }
+        else
+        {
+            oWatermarkCC.Add(oWatermark);
+        }
+        oLogicDocument.Set_SelectionState2(oDocState);
+        return oWatermark;
+    }
+};
 CHeaderFooter.prototype.UpdateContentToDefaults = function()
 {
 	this.Content.ClearContent(true);
