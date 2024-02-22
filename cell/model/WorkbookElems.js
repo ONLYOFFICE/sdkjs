@@ -17159,7 +17159,7 @@ function RangeDataManagerElem(bbox, data)
 
 	function CMetadataBlockExt() {
 		this.richValueBlock = null;
-		this.DynamicArrayProperties = null;
+		this.dynamicArrayProperties = null;
 	}
 	CMetadataBlockExt.prototype.clone = function () {
 		var res = new CMetadataBlockExt();

@@ -3628,7 +3628,7 @@
             }
 
 			if (this.wb.metadata) {
-				this.bs.WriteItem(c_oSerWorkbookTypes.Metadata, function () {oThis.WriteMetaData(oThis.wb.metadata);});
+				this.bs.WriteItem(c_oSerWorkbookTypes.Metadata, function () {oThis.WriteMetadata(oThis.wb.metadata);});
 			}
 
         };
@@ -4564,21 +4564,15 @@
 				});
 			}
 		};
-		this.WriteMetadataBlock = function (aMetadataBlock) {
-			if (!aMetadataBlock) {
+		this.WriteMetadataBlock = function (metadataBlock) {
+			if (!metadataBlock) {
 				return;
 			}
 
 			var oThis = this;
-			for (let i = 0; i < aMetadataBlock.length; ++i) {
-				if (!aMetadataBlock[i]) {
-					continue;
-				}
-
-				this.bs.WriteItem(c_oSer_MetadataBlock.MetadataRecord, function () {
-					oThis.WriteMetadataRecord(aMetadataBlock[i]);
-				});
-			}
+			this.bs.WriteItem(c_oSer_MetadataBlock.MetadataRecord, function () {
+				oThis.WriteMetadataRecord(metadataBlock);
+			});
 		};
 		this.WriteMetadataRecord = function (pMetadataRecord) {
 			if (!pMetadataRecord) {
@@ -4608,27 +4602,27 @@
 					continue;
 				}
 
-				if (pFutureMetadataBlock.extLst[i].DynamicArrayProperties) {
+				if (pFutureMetadataBlock.extLst[i].dynamicArrayProperties) {
 
 					this.bs.WriteItem(c_oSer_FutureMetadataBlock.DynamicArrayProperties, function () {
 
-						if (pFutureMetadataBlock.extLst[i].DynamicArrayProperties.fDynamic) {
+						if (pFutureMetadataBlock.extLst[i].dynamicArrayProperties.fDynamic) {
 							oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.DynamicArray, function () {
-								oThis.memory.WriteBool(pFutureMetadataBlock.extLst[i].DynamicArrayProperties.fDynamic);
+								oThis.memory.WriteBool(pFutureMetadataBlock.extLst[i].dynamicArrayProperties.fDynamic);
 							});
 
 						}
-						if (pFutureMetadataBlock.extLst[i].DynamicArrayProperties.fCollapsed) {
+						if (pFutureMetadataBlock.extLst[i].dynamicArrayProperties.fCollapsed) {
 							oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.CollapsedArray, function () {
-								oThis.memory.WriteBool(pFutureMetadataBlock.extLst[i].DynamicArrayProperties.fCollapsed);
+								oThis.memory.WriteBool(pFutureMetadataBlock.extLst[i].dynamicArrayProperties.fCollapsed);
 							});
 						}
 					});
 				}
 
-				if ((pFutureMetadataBlock.ExtLst[i].RichValueBlock) && (pFutureMetadataBlock.ExtLst[i].RichValueBlock.i)) {
+				if ((pFutureMetadataBlock.extLst[i].richValueBlock) && (pFutureMetadataBlock.extLst[i].richValueBlock.i)) {
 					oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.RichValueBlock, function () {
-						oThis.memory.WriteLong(pFutureMetadataBlock.extLst[i].RichValueBlock.i);
+						oThis.memory.WriteLong(pFutureMetadataBlock.extLst[i].richValueBlock.i);
 					});
 				}
 			}
@@ -9163,14 +9157,9 @@
             var oThis = this;
             var res = c_oSerConstants.ReadOk;
             if (c_oSer_MetadataBlock.MetadataBlock === type) {
-                let pMetadataBlock = new AscCommonExcel.CMetadataBlock();
-                if (!pMetadataBlock.elems) {
-                    pMetadataBlock.elems = [];
-                }
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadMetadataBlock(t, l, pMetadataBlock.elems);
+                    return oThis.ReadMetadataBlock(t, l, aMetadataBlocks);
                 });
-                aMetadataBlocks.push(pMetadataBlock);
             } else {
                 res = c_oSerConstants.ReadUnknown;
             }
@@ -9328,9 +9317,14 @@
                     pCFutureMetadata.futureMetadataBlocks = [];
                 }
                 let pFutureMetadataBlock = new AscCommonExcel.CFutureMetadataBlock();
+				if (!pFutureMetadataBlock.extLst) {
+					pFutureMetadataBlock.extLst = [];
+				}
+				let elemExtList = new AscCommonExcel.CMetadataBlockExt();
                 res = this.bcr.Read1(length, function (t, l) {
-                    return oThis.ReadFutureMetadataBlock(t, l, pFutureMetadataBlock);
+                    return oThis.ReadFutureMetadataBlock(t, l, elemExtList);
                 });
+				pFutureMetadataBlock.extLst.push(elemExtList);
                 pCFutureMetadata.futureMetadataBlocks.push(pFutureMetadataBlock);
             }
             else
@@ -9339,28 +9333,21 @@
         };
         this.ReadFutureMetadataBlock = function (type, length, pFutureMetadataBlock)
         {
-            var oThis = this;
+        	var oThis = this;
             var res = c_oSerConstants.ReadOk;
             if (c_oSer_FutureMetadataBlock.RichValueBlock === type)
             {
-                if (!pFutureMetadataBlock.extLst) {
-                    pFutureMetadataBlock.extLst = [];
-                }
                 /*let pExt = new Asc.COfficeArtExtension();
                 pExt.m_sUri = L"{3e2802c4-a4d2-4d8b-9148-e3be6c30e623}";
                 pExt.RichValueBlock.Init();
                 pExt.RichValueBlock.I = this.stream.GetULong();*/
 
-                let pExt = new AscCommonExcel.CRichValueBlock();
-                pExt.i = this.stream.GetULong();
-                pFutureMetadataBlock.extLst.push(pExt);
+                let richValueBlock = new AscCommonExcel.CRichValueBlock();
+				richValueBlock.i = this.stream.GetULong();
+				pFutureMetadataBlock.richValueBlock = richValueBlock;
             }
             else if (c_oSer_FutureMetadataBlock.DynamicArrayProperties === type)
             {
-
-                if (!pFutureMetadataBlock.extLst) {
-                    pFutureMetadataBlock.extLst = [];
-                }
 
                 /*OOX.Drawing.COfficeArtExtension* pExt = new OOX.Drawing.COfficeArtExtension();
                 pExt.m_sUri = L"{bdbb8cdc-fa1e-496e-a857-3c3f30c029c3}";
@@ -9373,7 +9360,7 @@
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadDynamicArrayProperties(t, l, pExt);
                 });
-                pFutureMetadataBlock.extLst.push(pExt);
+				pFutureMetadataBlock.dynamicArrayProperties = pExt;
             }
             else
                 res = c_oSerConstants.ReadUnknown;
