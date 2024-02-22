@@ -2338,7 +2338,7 @@ function CDrawingDocument()
 		}
 		// pdf
 		else
-			pos = this.ConvertCoordsToCursor5(x, y, this.m_lCurrentPage);
+			pos = this.ConvertCoordsToCursor5(this.TextMatrix.TransformPointX(x, y), this.TextMatrix.TransformPointY(x, y), this.m_lCurrentPage);
 
 		if (true == pos.Error && (false == bIsPageChanged))
 			return;

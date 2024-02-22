@@ -60,6 +60,7 @@
 		this.PdfDoc    			= pdfDocument;
 		this.isFormatContent	= !!isFormatContent;
 		
+		this.transform = new AscCommon.CMatrix();
 		this.SetUseXLimit(false);
 		this.MoveCursorToStartPos();
 	}
@@ -186,6 +187,9 @@
 	CTextBoxContent.prototype.OnContentChange = function() {
 		if (this.ParentPDF && this.ParentPDF.OnContentChange && this.isFormatContent == false)
 			this.ParentPDF.OnContentChange();
+	};
+	CTextBoxContent.prototype.Get_ParentTextTransform = function() {
+		return this.transform;
 	};
 	
 	//--------------------------------------------------------export----------------------------------------------------
