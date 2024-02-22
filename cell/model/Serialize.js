@@ -4562,130 +4562,151 @@
 
             }
         };
-        /*this.WriteMdxMemeberProp(CMdxMemeberProp* pMdxMemeberProp)
+        this.WriteMdxMemeberProp = function(pMdxMemeberProp)
         {
-            if (!pMdxMemeberProp) return;
+            if (!pMdxMemeberProp) {
+            	return;
+			}
 
-            if (pMdxMemeberProp.N)
+			var oThis = this;
+            if (pMdxMemeberProp.n)
             {
-                let nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMemberProperty.NameIndex);
-                m_oBcw.m_oStream.WriteULONG(*pMdxMemeberProp.N);
-                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+				this.bs.WriteItem(c_oSer_MetadataMemberProperty.NameIndex, function () {
+					oThis.memory.WriteLong(pMdxMemeberProp.n);
+				});
             }
-            if (pMdxMemeberProp.Np)
+            if (pMdxMemeberProp.np)
             {
-                let nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataMemberProperty.Index);
-                m_oBcw.m_oStream.WriteULONG(*pMdxMemeberProp.Np);
-                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+				this.bs.WriteItem(c_oSer_MetadataMemberProperty.Index, function () {
+					oThis.memory.WriteLong(pMdxMemeberProp.np);
+				});
             }
-        }
-        this.WriteMetadataBlocks(CMetadataBlocks* pMetadataBlocks)
+        };
+        this.WriteMetadataBlocks = function(aMetadataBlocks)
         {
-            if (!pMetadataBlocks) return;
+            if (!aMetadataBlocks) {
+            	return;
+			}
 
-            for (let i = 0; i < pMetadataBlocks.length; ++i)
-            {
-                if (!pMetadataBlocks.arrItems[i]) continue;
+			var oThis = this;
+			for (let i = 0; i < aMetadataBlocks.length; ++i)
+			{
+				if (!aMetadataBlocks[i]) {
+					continue;
+				}
 
-                let nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataBlock.MetadataBlock);
-                WriteMetadataBlock(pMetadataBlocks.arrItems[i]);
-                m_oBcw.WriteItemWithLengthEnd(nCurPos);
-            }
-        }
-        this.WriteMetadataBlock(CMetadataBlock* pMetadataBlock)
+				this.bs.WriteItem(c_oSer_MetadataBlock.MetadataBlock, function () {
+					oThis.WriteMetadataBlock(aMetadataBlocks[i]);
+				});
+			}
+        };
+        this.WriteMetadataBlock = function(aMetadataBlock)
         {
-            if (!pMetadataBlock) return;
+            if (!aMetadataBlock) {
+            	return;
+			}
 
-            for (let i = 0; i < pMetadataBlock.length; ++i)
+			var oThis = this;
+            for (let i = 0; i < aMetadataBlock.length; ++i)
             {
-                if (!pMetadataBlock.arrItems[i]) continue;
+                if (!aMetadataBlock[i]) {
+					continue;
+				}
 
-                let nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataBlock.MetadataRecord);
-                WriteMetadataRecord(pMetadataBlock.arrItems[i]);
-                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+				this.bs.WriteItem(c_oSer_MetadataBlock.MetadataRecord, function () {
+					oThis.WriteMetadataRecord(aMetadataBlock[i]);
+				});
             }
-        }
-        this.WriteMetadataRecord(CMetadataRecord* pMetadataRecord)
+        };
+        this.WriteMetadataRecord = function(pMetadataRecord)
         {
-            if (!pMetadataRecord) return;
+            if (!pMetadataRecord) {
+            	return;
+			}
 
-            if (pMetadataRecord.T)
+			var oThis = this;
+            if (pMetadataRecord.t)
             {
-                let nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataBlock.MetadataRecordType);
-                m_oBcw.m_oStream.WriteULONG(*pMetadataRecord.T);
-                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+				this.bs.WriteItem(c_oSer_MetadataBlock.MetadataRecordType, function () {
+					oThis.memory.WriteLong(pMetadataRecord.t);
+				});
             }
-            if (pMetadataRecord.V)
+            if (pMetadataRecord.v)
             {
-                let nCurPos = m_oBcw.WriteItemStart(c_oSer_MetadataBlock.MetadataRecordValue);
-                m_oBcw.m_oStream.WriteULONG(*pMetadataRecord.V);
-                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+				this.bs.WriteItem(c_oSer_MetadataBlock.MetadataRecordValue, function () {
+					oThis.memory.WriteLong(pMetadataRecord.v);
+				});
             }
-        }
-        this.WriteFutureMetadataBlock(CFutureMetadataBlock* pFutureMetadataBlock)
+        };
+        this.WriteFutureMetadataBlock = function(pFutureMetadataBlock)
         {
-            if (!pFutureMetadataBlock) return;
-            if (false == pFutureMetadataBlock.ExtLst) return;
+            if (!pFutureMetadataBlock || !pFutureMetadataBlock.extLst) {
+            	return;
+			}
 
-            for (let i = 0; i < pFutureMetadataBlock.ExtLst.arrExt.size(); ++i)
+			var oThis = this;
+            for (let i = 0; i < pFutureMetadataBlock.extLst.length; ++i)
             {
-                if (!pFutureMetadataBlock.ExtLst.arrExt[i]) continue;
+                if (!pFutureMetadataBlock.extLst[i]) {
+                	continue;
+				}
 
-                if (pFutureMetadataBlock.ExtLst.arrExt[i].DynamicArrayProperties)
+                if (pFutureMetadataBlock.extLst[i].DynamicArrayProperties)
                 {
-                    let nCurPos = m_oBcw.WriteItemStart(c_oSer_FutureMetadataBlock.DynamicArrayProperties);
-                    {
-                        if (pFutureMetadataBlock.ExtLst.arrExt[i].DynamicArrayProperties.FDynamic)
-                        {
-                            let nCurPos2 = m_oBcw.WriteItemStart(c_oSer_FutureMetadataBlock.DynamicArray);
-                            m_oBcw.m_oStream.WriteBOOL(*pFutureMetadataBlock.ExtLst.arrExt[i].DynamicArrayProperties.FDynamic);
-                            m_oBcw.WriteItemWithLengthEnd(nCurPos2);
 
-                        }
-                        if (pFutureMetadataBlock.ExtLst.arrExt[i].DynamicArrayProperties.FCollapsed)
-                        {
-                            let nCurPos2 = m_oBcw.WriteItemStart(c_oSer_FutureMetadataBlock.CollapsedArray);
-                            m_oBcw.m_oStream.WriteBOOL(*pFutureMetadataBlock.ExtLst.arrExt[i].DynamicArrayProperties.FCollapsed);
-                            m_oBcw.WriteItemWithLengthEnd(nCurPos2);
-                        }
-                    }
-                    m_oBcw.WriteItemWithLengthEnd(nCurPos);
+					this.bs.WriteItem(c_oSer_FutureMetadataBlock.DynamicArrayProperties, function () {
+
+						if (pFutureMetadataBlock.extLst[i].DynamicArrayProperties.fDynamic)
+						{
+							oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.DynamicArray, function () {
+								oThis.memory.WriteBool(pFutureMetadataBlock.extLst[i].DynamicArrayProperties.fDynamic);
+							});
+
+						}
+						if (pFutureMetadataBlock.extLst[i].DynamicArrayProperties.fCollapsed)
+						{
+							oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.CollapsedArray, function () {
+								oThis.memory.WriteBool(pFutureMetadataBlock.extLst[i].DynamicArrayProperties.fCollapsed);
+							});
+						}
+					});
                 }
-                if ((pFutureMetadataBlock.ExtLst.arrExt[i].RichValueBlock) &&
-                (pFutureMetadataBlock.ExtLst.arrExt[i].RichValueBlock.I))
+
+                if ((pFutureMetadataBlock.ExtLst[i].RichValueBlock) && (pFutureMetadataBlock.ExtLst[i].RichValueBlock.i))
                 {
-                    let nCurPos = m_oBcw.WriteItemStart(c_oSer_FutureMetadataBlock.RichValueBlock);
-                    m_oBcw.m_oStream.WriteULONG(*pFutureMetadataBlock.ExtLst.arrExt[i].RichValueBlock.I);
-                    m_oBcw.WriteItemWithLengthEnd(nCurPos);
+					oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.RichValueBlock, function () {
+						oThis.memory.WriteLong(pFutureMetadataBlock.extLst[i].RichValueBlock.i);
+					});
                 }
             }
-        }
-        this.WriteFutureMetadata(CFutureMetadata* pFutureMetadata)
+        };
+        this.WriteFutureMetadata = function(pFutureMetadata)
         {
-            if (!pFutureMetadata) return;
+            if (!pFutureMetadata) {
+            	return;
+			}
 
-            if (pFutureMetadata.Name)
+			var oThis = this;
+            if (pFutureMetadata.name)
             {
-                let nCurPos = m_oBcw.WriteItemStart(c_oSer_FutureMetadataBlock.Name);
-                m_oBcw.m_oStream.WriteStringW3(*pFutureMetadata.Name);
-                m_oBcw.WriteItemWithLengthEnd(nCurPos);
+				oThis.bs.WriteItem(c_oSer_FutureMetadataBlock.Name, function () {
+					oThis.memory.WriteString3(pFutureMetadata.name);
+				});
             }
-            for (let i = 0; i < pFutureMetadata.length; ++i)
-            {
-                if (!pFutureMetadata.arrItems[i]) continue;
+            if (pFutureMetadata.futureMetadataBlocks) {
+				for (let i = 0; i < pFutureMetadata.futureMetadataBlocks.length; ++i)
+				{
+					if (!pFutureMetadata.futureMetadataBlocks[i]) {
+						continue;
+					}
 
-                let nCurPos = m_oBcw.WriteItemStart(c_oSer_FutureMetadataBlock.FutureMetadataBlock);
-                WriteFutureMetadataBlock(pFutureMetadata.arrItems[i]);
-                m_oBcw.WriteItemWithLengthEnd(nCurPos);
-            }
-        }*/
-        
-        
-        
-        
-        
-        
-        
+					this.bs.WriteItem(c_oSer_FutureMetadataBlock.FutureMetadataBlock, function () {
+						oThis.WriteFutureMetadataBlock(pFutureMetadata.futureMetadataBlocks[i]);
+					});
+				}
+			}
+        };
+
         
         this.WriteComments = function(aComments) {
             var t = this;
