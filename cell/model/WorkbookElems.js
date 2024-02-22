@@ -17074,6 +17074,8 @@ function RangeDataManagerElem(bbox, data)
 		this.u = null;
 		this.st = null;
 		this.b = null;
+
+		this.metadataStringIndexes = null;
 	}
 	CMdxTuple.prototype.clone = function () {
 		var res = new CMdxTuple();
@@ -17085,6 +17087,8 @@ function RangeDataManagerElem(bbox, data)
 		this.ns = null;
 		this.c = null;
 		this.o = null;
+
+		this.metadataStringIndexes = null;
 	}
 	CMdxSet.prototype.clone = function () {
 		var res = new CMdxSet();
